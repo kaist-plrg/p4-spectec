@@ -80,8 +80,9 @@ rule Call_convention_expr_ok/empty-not-action:
   p C NOACTION |- (`EMPTY typeIR_param _ _) `@ typedExpressionIR_arg
                 : typedExpressionIR_arg
   ---- ;; may not insert implicit casts for direction out or inout
-  -- if _ `# `( typeIR_arg ctk_arg ) = typedExpressionIR_arg
-  -- Type_alpha: typeIR_param ~~ typeIR_arg
+  -- if typedExpressionIR_arg_cast
+      = $coerce_unary(typedExpressionIR_arg, typeIR_param)
+  -- if _ `# `( _ ctk_arg ) = typedExpressionIR_arg
   ---- ;; the argument must be compile-time known
   -- if ctk_arg =/= DYN
 
