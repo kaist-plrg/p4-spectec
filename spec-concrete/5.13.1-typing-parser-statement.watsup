@@ -188,32 +188,40 @@ rule SelectCase_keyset_ok/simpleKeysetExpression-range:
 
 ;;;;;;; DEFAULT
 
-rule SelectCase_keyset_ok/simpleKeysetExpression-default-zero-to-one:
-  TC eps |- DEFAULT : DEFAULT
+rulegroup SelectCase_keyset_ok/simpleKeysetExpression-default {
 
-rule SelectCase_keyset_ok/simpleKeysetExpression-default-one-to-one:
-  TC typeIR_key |- DEFAULT : simpleKeysetExpressionIR
-  -- SelectCase_keyset_simple_ok:
-      TC typeIR_key |- DEFAULT : simpleKeysetExpressionIR
+  rule SelectCase_keyset_ok/zero-to-one:
+    TC eps |- DEFAULT : DEFAULT
 
-rule SelectCase_keyset_ok/simpleKeysetExpression-default-many-to-one:
-  TC typeIR_key* |- DEFAULT : simpleKeysetExpressionIR
-  -- if $(|typeIR_key*| > 1)
-  -- SelectCase_keyset_simple_ok:
-      TC (SEQ `< typeIR_key* >) |- DEFAULT : simpleKeysetExpressionIR
+  rule SelectCase_keyset_ok/one-to-one:
+    TC typeIR_key |- DEFAULT : simpleKeysetExpressionIR
+    -- SelectCase_keyset_simple_ok:
+        TC typeIR_key |- DEFAULT : simpleKeysetExpressionIR
+
+  rule SelectCase_keyset_ok/many-to-one:
+    TC typeIR_key* |- DEFAULT : simpleKeysetExpressionIR
+    -- if $(|typeIR_key*| > 1)
+    -- SelectCase_keyset_simple_ok:
+        TC (SEQ `< typeIR_key* >) |- DEFAULT : simpleKeysetExpressionIR
+
+}
 
 ;;;;;;; `_
 
-rule SelectCase_keyset_ok/simpleKeysetExpression-dontcare-one-to-one:
-  TC typeIR_key |- `_ : simpleKeysetExpressionIR
-  -- SelectCase_keyset_simple_ok:
-      TC typeIR_key |- `_ : simpleKeysetExpressionIR
+rulegroup SelectCase_keyset_ok/simpleKeysetExpression-dontcare {
 
-rule SelectCase_keyset_ok/simpleKeysetExpression-dontcare-many-to-one:
-  TC typeIR_key* |- `_ : simpleKeysetExpressionIR
-  -- if $(|typeIR_key*| > 1)
-  -- SelectCase_keyset_simple_ok:
-      TC (SEQ `< typeIR_key* >) |- `_ : simpleKeysetExpressionIR
+  rule SelectCase_keyset_ok/one-to-one:
+    TC typeIR_key |- `_ : simpleKeysetExpressionIR
+    -- SelectCase_keyset_simple_ok:
+        TC typeIR_key |- `_ : simpleKeysetExpressionIR
+
+  rule SelectCase_keyset_ok/many-to-one:
+    TC typeIR_key* |- `_ : simpleKeysetExpressionIR
+    -- if $(|typeIR_key*| > 1)
+    -- SelectCase_keyset_simple_ok:
+        TC (SEQ `< typeIR_key* >) |- `_ : simpleKeysetExpressionIR
+
+}
 
 ;;;;;; tupleKeysetExpression
 ;;;;;; syntax tupleKeysetExpression
@@ -234,29 +242,37 @@ rule SelectCase_keyset_ok/tupleKeysetExpression-range:
 
 ;;;;;;; `( DEFAULT )
 
-rule SelectCase_keyset_ok/tupleKeysetExpression-default-one-to-one:
-  TC typeIR_key |- `( DEFAULT ) : `( simpleKeysetExpressionIR )
-  -- SelectCase_keyset_simple_ok:
-      TC typeIR_key |- DEFAULT : simpleKeysetExpressionIR
+rulegroup SelectCase_keyset_ok/tupleKeysetExpression-default {
 
-rule SelectCase_keyset_ok/tupleKeysetExpression-default-many-to-one:
-  TC typeIR_key* |- `( DEFAULT ) : `( simpleKeysetExpressionIR )
-  -- if $(|typeIR_key*| > 1)
-  -- SelectCase_keyset_simple_ok:
-      TC (SEQ `< typeIR_key* >) |- DEFAULT : simpleKeysetExpressionIR
+  rule SelectCase_keyset_ok/one-to-one:
+    TC typeIR_key |- `( DEFAULT ) : `( simpleKeysetExpressionIR )
+    -- SelectCase_keyset_simple_ok:
+        TC typeIR_key |- DEFAULT : simpleKeysetExpressionIR
+
+  rule SelectCase_keyset_ok/many-to-one:
+    TC typeIR_key* |- `( DEFAULT ) : `( simpleKeysetExpressionIR )
+    -- if $(|typeIR_key*| > 1)
+    -- SelectCase_keyset_simple_ok:
+        TC (SEQ `< typeIR_key* >) |- DEFAULT : simpleKeysetExpressionIR
+
+}
 
 ;;;;;;; `( `_ )
 
-rule SelectCase_keyset_ok/tupleKeysetExpression-dontcare-one-to-one:
-  TC typeIR_key |- `( `_ ) : `( simpleKeysetExpressionIR )
-  -- SelectCase_keyset_simple_ok:
-      TC typeIR_key |- `_ : simpleKeysetExpressionIR
+rulegroup SelectCase_keyset_ok/tupleKeysetExpression-dontcare {
 
-rule SelectCase_keyset_ok/tupleKeysetExpression-dontcare-many-to-one:
-  TC typeIR_key* |- `( `_ ) : `( simpleKeysetExpressionIR )
-  -- if $(|typeIR_key*| > 1)
-  -- SelectCase_keyset_simple_ok:
-      TC (SEQ `< typeIR_key* >) |- `_ : simpleKeysetExpressionIR
+  rule SelectCase_keyset_ok/one-to-one:
+    TC typeIR_key |- `( `_ ) : `( simpleKeysetExpressionIR )
+    -- SelectCase_keyset_simple_ok:
+        TC typeIR_key |- `_ : simpleKeysetExpressionIR
+
+  rule SelectCase_keyset_ok/many-to-one:
+    TC typeIR_key* |- `( `_ ) : `( simpleKeysetExpressionIR )
+    -- if $(|typeIR_key*| > 1)
+    -- SelectCase_keyset_simple_ok:
+        TC (SEQ `< typeIR_key* >) |- `_ : simpleKeysetExpressionIR
+
+}
 
 ;;;;;;; `( simpleKeysetExpression `, simpleKeysetExpressionList )
 
@@ -323,41 +339,45 @@ rule ParserStmt_ok/constantDeclaration:
 ;;; syntax variableDeclaration =
 ;;;   annotationList type name initializerOpt `;
 
-rule ParserStmt_ok/variableDeclaration-empty:
-  TC_0 |- annotationList type name `EMPTY `;
-        : TC_1 variableDeclarationIR
-  ---- ;; check type
-  -- Type_ok: LOCAL TC_0 |- type : typeIR `# eps
-  -- Type_wf: $bound(LOCAL, TC_0) |- typeIR
-  ---- ;; check that the type is assignable
-  -- if $is_assignable_typeIR(typeIR)
-  ---- ;; update the context
-  -- if nameIR = $name(name)
-  -- if TC_1 = $add_var(LOCAL, TC_0, nameIR, INOUT typeIR DYN eps)
-  ---- ;; create IR
-  -- if variableDeclarationIR
-      = annotationList typeIR nameIR eps `;
+rulegroup ParserStmt_ok/variableDeclaration {
 
-rule ParserStmt_ok/variableDeclaration-initializer:
-  TC_0 |- annotationList type name (`= expression_init) `;
-        : TC_1 variableDeclarationIR
-  ---- ;; check type
-  -- Type_ok: LOCAL TC_0 |- type : typeIR `# eps
-  -- Type_wf: $bound(LOCAL, TC_0) |- typeIR
-  ---- ;; check that the type is assignable
-  -- if $is_assignable_typeIR(typeIR)
-  ---- ;; check expression
-  -- Expr_ok: LOCAL TC_0 |- expression_init : typedExpressionIR_init
-  ---- ;; check that the expression matches the type
-  ---- ;; while inserting implicit casts if necessary
-  -- if typedExpressionIR_init_cast
-      = $coerce_unary(typedExpressionIR_init, typeIR)
-  ---- ;; update the context
-  -- if nameIR = $name(name)
-  -- if TC_1 = $add_var(LOCAL, TC_0, nameIR, INOUT typeIR DYN eps)
-  ---- ;; create IR
-  -- if variableDeclarationIR
-      = annotationList typeIR nameIR (`= typedExpressionIR_init_cast) `;
+  rule ParserStmt_ok/empty:
+    TC_0 |- annotationList type name `EMPTY `;
+          : TC_1 variableDeclarationIR
+    ---- ;; check type
+    -- Type_ok: LOCAL TC_0 |- type : typeIR `# eps
+    -- Type_wf: $bound(LOCAL, TC_0) |- typeIR
+    ---- ;; check that the type is assignable
+    -- if $is_assignable_typeIR(typeIR)
+    ---- ;; update the context
+    -- if nameIR = $name(name)
+    -- if TC_1 = $add_var(LOCAL, TC_0, nameIR, INOUT typeIR DYN eps)
+    ---- ;; create IR
+    -- if variableDeclarationIR
+        = annotationList typeIR nameIR eps `;
+
+  rule ParserStmt_ok/initializer:
+    TC_0 |- annotationList type name (`= expression_init) `;
+          : TC_1 variableDeclarationIR
+    ---- ;; check type
+    -- Type_ok: LOCAL TC_0 |- type : typeIR `# eps
+    -- Type_wf: $bound(LOCAL, TC_0) |- typeIR
+    ---- ;; check that the type is assignable
+    -- if $is_assignable_typeIR(typeIR)
+    ---- ;; check expression
+    -- Expr_ok: LOCAL TC_0 |- expression_init : typedExpressionIR_init
+    ---- ;; check that the expression matches the type
+    ---- ;; while inserting implicit casts if necessary
+    -- if typedExpressionIR_init_cast
+        = $coerce_unary(typedExpressionIR_init, typeIR)
+    ---- ;; update the context
+    -- if nameIR = $name(name)
+    -- if TC_1 = $add_var(LOCAL, TC_0, nameIR, INOUT typeIR DYN eps)
+    ---- ;; create IR
+    -- if variableDeclarationIR
+        = annotationList typeIR nameIR (`= typedExpressionIR_init_cast) `;
+
+}
 
 ;;; emptyStatement
 

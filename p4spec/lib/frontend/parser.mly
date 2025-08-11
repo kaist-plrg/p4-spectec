@@ -73,7 +73,7 @@ let exit_scope () = vars := List.hd !scopes; scopes := List.tl !scopes
 %token HOLE_MULTI HOLE_NIL
 %token EQ NEQ UP BAR
 %token LATEX BOOL NAT INT TEXT
-%token SYNTAX RELATION RULE VAR DEC DEF
+%token SYNTAX RELATION RULEGROUP RULE VAR DEC DEF
 %token IF OTHERWISE DEBUG HINT_LPAREN EPS
 %token<bool> BOOLLIT
 %token<Bigint.t> NATLIT HEXLIT
@@ -137,6 +137,10 @@ dash_list(X) :
   | (* empty *) { [] }
   | DASH DASH dash_list(X) { $3 }
   | DASH X dash_list(X) { $2 :: $3 }
+
+newline_list(X) :
+  | (* empty *) { [] }
+  | X NL2 newline_list(X) { $1 :: $3 }
 
 (* Identifiers *)
 
@@ -710,6 +714,18 @@ hint :
   | HINT_LPAREN hintid RPAREN
     { { hintid = $2 @@@ $loc($2); hintexp = SeqE [] @@@ $loc($2) } }
 
+(* Rules *)
+
+rule :
+  | RULE relid ruleids COLON exp prem_list
+    { let id = if $3 = "" then "" else String.sub $3 1 (String.length $3 - 1) in
+      ($2, id @@@ $loc($3), $5, $6) }
+
+rules :
+  | (* empty *) { [] }
+  | NL3 rules { $2 }
+  | NL2* rule NL2* rules { $2 :: $4 }
+
 (* Definitions *)
 
 def :
@@ -732,6 +748,9 @@ def_ :
   | RULE relid ruleids COLON exp prem_list
     { let id = if $3 = "" then "" else String.sub $3 1 (String.length $3 - 1) in
       RuleD ($2, id @@@ $loc($3), $5, $6) }
+  | RULEGROUP relid ruleids LBRACE rules RBRACE
+    { let id = if $3 = "" then "" else String.sub $3 1 (String.length $3 - 1) in
+      RuleGroupD ($2, id @@@ $loc($3), []) }
   | DEC DOLLAR defid COLON plaintyp hint*
     { DecD ($3, [], [], $5, $6) }
   | DEC DOLLAR defid_lparen enter_scope comma_list(param) RPAREN COLON plaintyp hint* exit_scope

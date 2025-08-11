@@ -1421,6 +1421,8 @@ let rec elab_def (ctx : Ctx.t) (def : def) : Ctx.t * Il.Ast.def option =
   | RelD (id, nottyp, hints) -> elab_rel_def ctx at id nottyp hints |> wrap_some
   | RuleD (id_rel, id_rule, exp, prems) ->
       elab_rule_def ctx at id_rel id_rule exp prems |> wrap_none
+  | RuleGroupD (id_rel, id_group, rules) ->
+      elab_rule_group_def ctx at id_rel id_group rules |> wrap_none
   | DecD (id, tparams, params, plaintyp, _hints) ->
       elab_dec_def ctx at id tparams params plaintyp |> wrap_some
   | DefD (id, tparams, args, exp, prems) ->
@@ -1596,6 +1598,19 @@ and elab_rule_def (ctx : Ctx.t) (at : region) (id_rel : id) (id_rule : id)
   in
   let rule = (id_rule, notexp_il, prems_il) $ at in
   Ctx.add_rule ctx id_rel rule
+
+(* Elaboration of rule groups *)
+
+and elab_rule_group_def (ctx : Ctx.t) (at : region) (id_rel : id) (_id_group : id)
+    (rules : rule list) : Ctx.t =
+  List.fold_left
+    (fun ctx (id_rel_inner, id_rule, exp, prems) ->
+      check (id_rel.it = id_rel_inner.it) at
+        (Format.asprintf
+           "rule group contains a rule with a different relation identifier %s"
+           (Id.to_string id_rel_inner));
+      elab_rule_def ctx at id_rel id_rule exp prems)
+    ctx rules
 
 (* Elaboration of function declarations *)
 

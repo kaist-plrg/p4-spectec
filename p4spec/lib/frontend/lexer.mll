@@ -278,6 +278,7 @@ and token = parse
   | "text" { TEXT }
   | "syntax" { SYNTAX }
   | "relation" { RELATION }
+  | "rulegroup" { RULEGROUP }
   | "rule" { RULE }
   | "var" { VAR }
   | "dec" { DEC }

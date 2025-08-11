@@ -17,172 +17,219 @@ rule Sub_expl_canon/not-equals:
   -- Type_alpha:/ typeIR_a ~~ typeIR_b
   -- Sub_expl_canon_neq: typeIR_a <: typeIR_b
 
-rule Sub_expl_canon_neq/fixbit-boolean:
-  BIT `< 1 > <: BOOL
+;;
+;;;; Explicit subtyping, when types are unequal
+;;
 
 rule Sub_expl_canon_neq/boolean-fixbit:
   BOOL <: BIT `< 1 >
 
-rule Sub_expl_canon_neq/arbint-boolean:
-  INT <: BOOL
+rulegroup Sub_expl_canon_neq/arbint {
 
-rule Sub_expl_canon_neq/arbint-fixint:
-  INT <: INT `< _ >
+  rule Sub_expl_canon_neq/boolean:
+    INT <: BOOL
 
-rule Sub_expl_canon_neq/arbint-fixbit:
-  INT <: BIT `< _ >
+  rule Sub_expl_canon_neq/fixint:
+    INT <: INT `< _ >
 
-rule Sub_expl_canon_neq/fixint-fixint:
-  INT `< _ > <: INT
+  rule Sub_expl_canon_neq/fixbit:
+    INT <: BIT `< _ >
 
-rule Sub_expl_canon_neq/fixint-fixint:
-  INT `< w_a > <: INT `< w_b >
+}
 
-rule Sub_expl_canon_neq/fixint-fixbit:
-  INT `< w > <: BIT `< w >
+rulegroup Sub_expl_canon_neq/fixint {
 
-rule Sub_expl_canon_neq/fixbit-arbint:
-  BIT `< _ > <: INT
+  rule Sub_expl_canon_neq/arbint:
+    INT `< _ > <: INT
 
-rule Sub_expl_canon_neq/fixbit-fixint:
-  BIT `< w > <: INT `< w >
+  rule Sub_expl_canon_neq/fixint:
+    INT `< w_a > <: INT `< w_b >
 
-rule Sub_expl_canon_neq/fixbit-fixbit:
-  BIT `< w_a > <: BIT `< w_b >
+  rule Sub_expl_canon_neq/fixbit:
+    INT `< w > <: BIT `< w >
 
-rule Sub_expl_canon_neq/newtype-left:
-  TYPE _ typeIR_a <: typeIR_b
-  -- Sub_impl: typeIR_a <: typeIR_b
+}
 
-rule Sub_expl_canon_neq/newtype-right:
-  typeIR_a <: TYPE _ typeIR_b
-  -- Sub_impl: typeIR_a <: typeIR_b
+rulegroup Sub_expl_canon_neq/fixbit {
 
-rule Sub_expl_canon_neq/serenum-left:
-  ENUM _ `# typeIR_a `{ _ } <: typeIR_b
-  -- Sub_impl: typeIR_a <: typeIR_b
+  rule Sub_expl_canon_neq/boolean:
+    BIT `< 1 > <: BOOL
 
-rule Sub_expl_canon_neq/serenum-right:
-  typeIR_a <: ENUM _ `# typeIR_b `{ _ }
-  -- Sub_impl: typeIR_a <: typeIR_b
+  rule Sub_expl_canon_neq/arbint:
+    BIT `< _ > <: INT
+
+  rule Sub_expl_canon_neq/fixint:
+    BIT `< w > <: INT `< w >
+
+  rule Sub_expl_canon_neq/fixbit:
+    BIT `< w_a > <: BIT `< w_b >
+
+}
+
+rulegroup Sub_expl_canon_neq/newtype {
+
+  rule Sub_expl_canon_neq/left:
+    TYPE _ typeIR_a <: typeIR_b
+    -- Sub_impl: typeIR_a <: typeIR_b
+
+  rule Sub_expl_canon_neq/right:
+    typeIR_a <: TYPE _ typeIR_b
+    -- Sub_impl: typeIR_a <: typeIR_b
+
+}
+
+rulegroup Sub_expl_canon_neq/serenum {
+
+  rule Sub_expl_canon_neq/left:
+    ENUM _ `# typeIR_a `{ _ } <: typeIR_b
+    -- Sub_impl: typeIR_a <: typeIR_b
+
+  rule Sub_expl_canon_neq/right:
+    typeIR_a <: ENUM _ `# typeIR_b `{ _ }
+    -- Sub_impl: typeIR_a <: typeIR_b
+
+}
 
 rule Sub_expl_canon_neq/default:
   DEFAULT <: typeIR_b
   -- if $is_defaultable_typeIR(typeIR_b)
 
-rule Sub_expl_canon_neq/invalidheader-header:
-  HEADER_INVALID <: HEADER _ `{ _ }
+rulegroup Sub_expl_canon_neq/invalidheader {
 
-rule Sub_expl_canon_neq/invalidheader-headerunion:
-  HEADER_INVALID <: HEADER_UNION _ `{ _ }
+  rule Sub_expl_canon_neq/header:
+    HEADER_INVALID <: HEADER _ `{ _ }
 
-rule Sub_expl_canon_neq/seq-list:
-  SEQ `< typeIR_a* > <: LIST `< typeIR_b >
-  -- (Sub_expl: typeIR_a <: typeIR_b)*
+  rule Sub_expl_canon_neq/headerunion:
+    HEADER_INVALID <: HEADER_UNION _ `{ _ }
+}
 
-rule Sub_expl_canon_neq/seq-tuple:
-  SEQ `< typeIR_a* > <: TUPLE `< typeIR_b* >
-  -- (Sub_expl: typeIR_a <: typeIR_b)*
+rulegroup Sub_expl_canon_neq/seq {
 
-rule Sub_expl_canon_neq/seq-stack:
-  SEQ `< typeIR_a* > <: typeIR_b `[ n_size ]
-  -- if $(|typeIR_a*| <= n_size)
-  -- (Sub_expl: typeIR_a <: typeIR_b)*
+  rule Sub_expl_canon_neq/list:
+    SEQ `< typeIR_a* > <: LIST `< typeIR_b >
+    -- (Sub_expl: typeIR_a <: typeIR_b)*
 
-rule Sub_expl_canon_neq/seq-struct:
-  SEQ `< typeIR_a* > <: STRUCT _ `{ (typeIR_b _ `;)* }
-  -- (Sub_expl: typeIR_a <: typeIR_b)*
+  rule Sub_expl_canon_neq/tuple:
+    SEQ `< typeIR_a* > <: TUPLE `< typeIR_b* >
+    -- (Sub_expl: typeIR_a <: typeIR_b)*
 
-rule Sub_expl_canon_neq/seq-header:
-  SEQ `< typeIR_a* > <: HEADER _ `{ (typeIR_b _ `;)* }
-  -- (Sub_expl: typeIR_a <: typeIR_b)*
+  rule Sub_expl_canon_neq/headerstack:
+    SEQ `< typeIR_a* > <: typeIR_b `[ n_size ]
+    -- if $(|typeIR_a*| <= n_size)
+    -- (Sub_expl: typeIR_a <: typeIR_b)*
 
-rule Sub_expl_canon_neq/seqdefault-tuple:
-  SEQ `< typeIR_a* `, `... > <: TUPLE `< typeIR_b* >
-  -- if $(|typeIR_a*| < |typeIR_b*|)
-  -- if (typeIR_b_non_default*, typeIR_b_default*)
-      = $partition_<typeIR>(typeIR_b*, |typeIR_a*|)
-  -- (Sub_expl: typeIR_a <: typeIR_b_non_default)*
-  -- if $is_defaultable_typeIR(typeIR_b_default)*
+  rule Sub_expl_canon_neq/struct:
+    SEQ `< typeIR_a* > <: STRUCT _ `{ (typeIR_b _ `;)* }
+    -- (Sub_expl: typeIR_a <: typeIR_b)*
 
-rule Sub_expl_canon_neq/seqdefault-stack:
-  SEQ `< typeIR_a* `, `... > <: typeIR_b `[ n_size ]
-  -- if $(|typeIR_a*| < n_size)
-  -- (Sub_expl: typeIR_a <: typeIR_b)*
-  -- if $is_defaultable_typeIR(typeIR_b)
+  rule Sub_expl_canon_neq/header:
+    SEQ `< typeIR_a* > <: HEADER _ `{ (typeIR_b _ `;)* }
+    -- (Sub_expl: typeIR_a <: typeIR_b)*
 
-rule Sub_expl_canon_neq/seqdefault-struct:
-  SEQ `< typeIR_a* `, `... > <: STRUCT _ `{ (typeIR_b _ `;)* }
-  -- if $(|typeIR_a*| < |typeIR_b*|)
-  -- if (typeIR_b_non_default*, typeIR_b_default*)
-      = $partition_<typeIR>(typeIR_b*, |typeIR_a*|)
-  -- (Sub_expl: typeIR_a <: typeIR_b_non_default)*
-  -- if $is_defaultable_typeIR(typeIR_b_default)*
+}
 
-rule Sub_expl_canon_neq/seqdefault-header:
-  SEQ `< typeIR_a* `, `... > <: HEADER _ `{ (typeIR_b _ `;)* }
-  -- if $(|typeIR_a*| < |typeIR_b*|)
-  -- if (typeIR_b_non_default*, typeIR_b_default*)
-      = $partition_<typeIR>(typeIR_b*, |typeIR_a*|)
-  -- (Sub_expl: typeIR_a <: typeIR_b_non_default)*
-  -- if $is_defaultable_typeIR(typeIR_b_default)*
+rulegroup Sub_expl_canon_neq/seqdefault {
 
-rule Sub_expl_canon_neq/record-struct:
-  RECORD `{ (typeIR_a id_a `;)* } <: STRUCT _ `{ (typeIR_b id_b `;)* }
-  -- if $eq_set<id>(`{ id_a* }, `{ id_b* })
-  -- if (typeIR_a_aligned
-        = $find_map<id, typeIR>(`{ (id_a `: typeIR_a)* }, id_a))*
-  -- if (typeIR_b_aligned
-        = $find_map<id, typeIR>(`{ (id_b `: typeIR_b)* }, id_a))*
-  -- (Sub_expl: typeIR_a_aligned <: typeIR_b_aligned)*
+  rule Sub_expl_canon_neq/tuple:
+    SEQ `< typeIR_a* `, `... > <: TUPLE `< typeIR_b* >
+    -- if $(|typeIR_a*| < |typeIR_b*|)
+    -- if (typeIR_b_non_default*, typeIR_b_default*)
+        = $partition_<typeIR>(typeIR_b*, |typeIR_a*|)
+    -- (Sub_expl: typeIR_a <: typeIR_b_non_default)*
+    -- if $is_defaultable_typeIR(typeIR_b_default)*
 
-rule Sub_expl_canon_neq/record-header:
-  RECORD `{ (typeIR_a id_a `;)* } <: HEADER _ `{ (typeIR_b id_b `;)* }
-  -- if $eq_set<id>(`{ id_a* }, `{ id_b* })
-  -- if (typeIR_a_aligned
-        = $find_map<id, typeIR>(`{ (id_a `: typeIR_a)* }, id_a))*
-  -- if (typeIR_b_aligned
-        = $find_map<id, typeIR>(`{ (id_b `: typeIR_b)* }, id_a))*
-  -- (Sub_expl: typeIR_a_aligned <: typeIR_b_aligned)*
+  rule Sub_expl_canon_neq/headerstack:
+    SEQ `< typeIR_a* `, `... > <: typeIR_b `[ n_size ]
+    -- if $(|typeIR_a*| < n_size)
+    -- (Sub_expl: typeIR_a <: typeIR_b)*
+    -- if $is_defaultable_typeIR(typeIR_b)
 
-rule Sub_expl_canon_neq/recorddefault-struct:
-  RECORD `{ (typeIR_a id_a `;)* `, `... } <: STRUCT _ `{ (typeIR_b id_b `;)* }
-  -- if $sub_set<id>(`{ id_a* }, `{ id_b* })
-  ----
-  -- if (typeIR_a_aligned
-        = $find_map<id, typeIR>(`{ (id_a `: typeIR_a)* }, id_a))*
-  -- if (typeIR_b_non_default_aligned
-        = $find_map<id, typeIR>(`{ (id_b `: typeIR_b)* }, id_a))*
-  -- (Sub_expl: typeIR_a_aligned <: typeIR_b_non_default_aligned)*
-  ----
-  -- if `{ id_default* } = $diff_set<id>(`{ id_b* }, `{ id_a* })
-  -- if (typeIR_b_default
-        = $find_map<id, typeIR>(`{ (id_b `: typeIR_b)* }, id_default))*
-  -- if $is_defaultable_typeIR(typeIR_b_default)*
+  rule Sub_expl_canon_neq/struct:
+    SEQ `< typeIR_a* `, `... > <: STRUCT _ `{ (typeIR_b _ `;)* }
+    -- if $(|typeIR_a*| < |typeIR_b*|)
+    -- if (typeIR_b_non_default*, typeIR_b_default*)
+        = $partition_<typeIR>(typeIR_b*, |typeIR_a*|)
+    -- (Sub_expl: typeIR_a <: typeIR_b_non_default)*
+    -- if $is_defaultable_typeIR(typeIR_b_default)*
 
-rule Sub_expl_canon_neq/recorddefault-header:
-  RECORD `{ (typeIR_a id_a `;)* `, `... } <: HEADER _ `{ (typeIR_b id_b `;)* }
-  -- if $sub_set<id>(`{ id_a* }, `{ id_b* })
-  ----
-  -- if (typeIR_a_aligned
-        = $find_map<id, typeIR>(`{ (id_a `: typeIR_a)* }, id_a))*
-  -- if (typeIR_b_non_default_aligned
-        = $find_map<id, typeIR>(`{ (id_b `: typeIR_b)* }, id_a))*
-  -- (Sub_expl: typeIR_a_aligned <: typeIR_b_non_default_aligned)*
-  ----
-  -- if `{ id_default* } = $diff_set<id>(`{ id_b* }, `{ id_a* })
-  -- if (typeIR_b_default
-        = $find_map<id, typeIR>(`{ (id_b `: typeIR_b)* }, id_default))*
-  -- if $is_defaultable_typeIR(typeIR_b_default)*
+  rule Sub_expl_canon_neq/header:
+    SEQ `< typeIR_a* `, `... > <: HEADER _ `{ (typeIR_b _ `;)* }
+    -- if $(|typeIR_a*| < |typeIR_b*|)
+    -- if (typeIR_b_non_default*, typeIR_b_default*)
+        = $partition_<typeIR>(typeIR_b*, |typeIR_a*|)
+    -- (Sub_expl: typeIR_a <: typeIR_b_non_default)*
+    -- if $is_defaultable_typeIR(typeIR_b_default)*
 
-rule Sub_expl_canon_neq/set-set:
-  SET `< typeIR_a > <: SET `< typeIR_b >
-  -- Sub_expl: typeIR_a <: typeIR_b
+}
 
-rule Sub_expl_canon_neq/non-set-set:
-  typeIR_a <: SET `< typeIR_b >
-  -- if ~$is_set_typeIR(typeIR_a)
-  -- Sub_expl: typeIR_a <: typeIR_b
+rulegroup Sub_expl_canon_neq/record {
+
+  rule Sub_expl_canon_neq/struct:
+    RECORD `{ (typeIR_a id_a `;)* } <: STRUCT _ `{ (typeIR_b id_b `;)* }
+    -- if $eq_set<id>(`{ id_a* }, `{ id_b* })
+    -- if (typeIR_a_aligned
+          = $find_map<id, typeIR>(`{ (id_a `: typeIR_a)* }, id_a))*
+    -- if (typeIR_b_aligned
+          = $find_map<id, typeIR>(`{ (id_b `: typeIR_b)* }, id_a))*
+    -- (Sub_expl: typeIR_a_aligned <: typeIR_b_aligned)*
+
+  rule Sub_expl_canon_neq/header:
+    RECORD `{ (typeIR_a id_a `;)* } <: HEADER _ `{ (typeIR_b id_b `;)* }
+    -- if $eq_set<id>(`{ id_a* }, `{ id_b* })
+    -- if (typeIR_a_aligned
+          = $find_map<id, typeIR>(`{ (id_a `: typeIR_a)* }, id_a))*
+    -- if (typeIR_b_aligned
+          = $find_map<id, typeIR>(`{ (id_b `: typeIR_b)* }, id_a))*
+    -- (Sub_expl: typeIR_a_aligned <: typeIR_b_aligned)*
+
+}
+
+rulegroup Sub_expl_canon_neq/recorddefault {
+
+  rule Sub_expl_canon_neq/struct:
+    RECORD `{ (typeIR_a id_a `;)* `, `... } <: STRUCT _ `{ (typeIR_b id_b `;)* }
+    -- if $sub_set<id>(`{ id_a* }, `{ id_b* })
+    ----
+    -- if (typeIR_a_aligned
+          = $find_map<id, typeIR>(`{ (id_a `: typeIR_a)* }, id_a))*
+    -- if (typeIR_b_non_default_aligned
+          = $find_map<id, typeIR>(`{ (id_b `: typeIR_b)* }, id_a))*
+    -- (Sub_expl: typeIR_a_aligned <: typeIR_b_non_default_aligned)*
+    ----
+    -- if `{ id_default* } = $diff_set<id>(`{ id_b* }, `{ id_a* })
+    -- if (typeIR_b_default
+          = $find_map<id, typeIR>(`{ (id_b `: typeIR_b)* }, id_default))*
+    -- if $is_defaultable_typeIR(typeIR_b_default)*
+
+  rule Sub_expl_canon_neq/header:
+    RECORD `{ (typeIR_a id_a `;)* `, `... } <: HEADER _ `{ (typeIR_b id_b `;)* }
+    -- if $sub_set<id>(`{ id_a* }, `{ id_b* })
+    ----
+    -- if (typeIR_a_aligned
+          = $find_map<id, typeIR>(`{ (id_a `: typeIR_a)* }, id_a))*
+    -- if (typeIR_b_non_default_aligned
+          = $find_map<id, typeIR>(`{ (id_b `: typeIR_b)* }, id_a))*
+    -- (Sub_expl: typeIR_a_aligned <: typeIR_b_non_default_aligned)*
+    ----
+    -- if `{ id_default* } = $diff_set<id>(`{ id_b* }, `{ id_a* })
+    -- if (typeIR_b_default
+          = $find_map<id, typeIR>(`{ (id_b `: typeIR_b)* }, id_default))*
+    -- if $is_defaultable_typeIR(typeIR_b_default)*
+
+}
+
+rulegroup Sub_expl_canon_neq/set {
+
+  rule Sub_expl_canon_neq/set:
+    SET `< typeIR_a > <: SET `< typeIR_b >
+    -- Sub_expl: typeIR_a <: typeIR_b
+
+  rule Sub_expl_canon_neq/non-set:
+    typeIR_a <: SET `< typeIR_b >
+    -- if ~$is_set_typeIR(typeIR_a)
+    -- Sub_expl: typeIR_a <: typeIR_b
+
+}
 
 ;;
 ;; Implicit subtyping
@@ -203,11 +250,19 @@ rule Sub_impl_canon/not-equals:
   -- Type_alpha:/ typeIR_a ~~ typeIR_b
   -- Sub_impl_canon_neq: typeIR_a <: typeIR_b
 
-rule Sub_impl_canon_neq/arbint-fixint:
-  INT <: INT `< _ >
+;;
+;;;; Implicit subtyping, when types are unequal
+;;
 
-rule Sub_impl_canon_neq/arbint-fixbit:
-  INT <: BIT `< _ >
+rulegroup Sub_impl_canon_neq/arbint {
+
+  rule Sub_impl_canon_neq/fixint:
+    INT <: INT `< _ >
+
+  rule Sub_impl_canon_neq/fixbit:
+    INT <: BIT `< _ >
+
+}
 
 rule Sub_impl_canon_neq/serenum-left:
   ENUM _ `# typeIR_a `{ _ } <: typeIR_b
@@ -217,114 +272,133 @@ rule Sub_impl_canon_neq/default:
   DEFAULT <: typeIR_b
   -- if $is_defaultable_typeIR(typeIR_b)
 
-rule Sub_impl_canon_neq/invalidheader-header:
-  HEADER_INVALID <: HEADER _ `{ _ }
+rulegroup Sub_impl_canon_neq/invalidheader {
 
-rule Sub_impl_canon_neq/invalidheader-headerunion:
-  HEADER_INVALID <: HEADER_UNION _ `{ _ }
+  rule Sub_impl_canon_neq/header:
+    HEADER_INVALID <: HEADER _ `{ _ }
 
-rule Sub_impl_canon_neq/seq-list:
-  SEQ `< typeIR_a* > <: LIST `< typeIR_b >
-  -- (Sub_impl: typeIR_a <: typeIR_b)*
+  rule Sub_impl_canon_neq/headerunion:
+    HEADER_INVALID <: HEADER_UNION _ `{ _ }
+}
 
-rule Sub_impl_canon_neq/seq-tuple:
-  SEQ `< typeIR_a* > <: TUPLE `< typeIR_b* >
-  -- (Sub_impl: typeIR_a <: typeIR_b)*
+rulegroup Sub_impl_canon_neq/seq {
 
-rule Sub_impl_canon_neq/seq-stack:
-  SEQ `< typeIR_a* > <: typeIR_b `[ n_size ]
-  -- if $(|typeIR_a*| <= n_size)
-  -- (Sub_impl: typeIR_a <: typeIR_b)*
+  rule Sub_impl_canon_neq/list:
+    SEQ `< typeIR_a* > <: LIST `< typeIR_b >
+    -- (Sub_impl: typeIR_a <: typeIR_b)*
 
-rule Sub_impl_canon_neq/seq-struct:
-  SEQ `< typeIR_a* > <: STRUCT _ `{ (typeIR_b _ `;)* }
-  -- (Sub_impl: typeIR_a <: typeIR_b)*
+  rule Sub_impl_canon_neq/tuple:
+    SEQ `< typeIR_a* > <: TUPLE `< typeIR_b* >
+    -- (Sub_impl: typeIR_a <: typeIR_b)*
 
-rule Sub_impl_canon_neq/seq-header:
-  SEQ `< typeIR_a* > <: HEADER _ `{ (typeIR_b _ `;)* }
-  -- (Sub_impl: typeIR_a <: typeIR_b)*
+  rule Sub_impl_canon_neq/headerstack:
+    SEQ `< typeIR_a* > <: typeIR_b `[ n_size ]
+    -- if $(|typeIR_a*| <= n_size)
+    -- (Sub_impl: typeIR_a <: typeIR_b)*
 
-rule Sub_impl_canon_neq/seq-seq:
-  SEQ `< typeIR_a* > <: SEQ `< typeIR_b* >
-  -- (Sub_impl: typeIR_a <: typeIR_b)*
+  rule Sub_impl_canon_neq/struct:
+    SEQ `< typeIR_a* > <: STRUCT _ `{ (typeIR_b _ `;)* }
+    -- (Sub_impl: typeIR_a <: typeIR_b)*
 
-rule Sub_impl_canon_neq/seqdefault-tuple:
-  SEQ `< typeIR_a* `, `... > <: TUPLE `< typeIR_b* >
-  -- if $(|typeIR_a*| < |typeIR_b*|)
-  -- if (typeIR_b_non_default*, typeIR_b_default*)
-      = $partition_<typeIR>(typeIR_b*, |typeIR_a*|)
-  -- (Sub_impl: typeIR_a <: typeIR_b_non_default)*
-  -- if $is_defaultable_typeIR(typeIR_b_default)*
+  rule Sub_impl_canon_neq/header:
+    SEQ `< typeIR_a* > <: HEADER _ `{ (typeIR_b _ `;)* }
+    -- (Sub_impl: typeIR_a <: typeIR_b)*
 
-rule Sub_impl_canon_neq/seqdefault-stack:
-  SEQ `< typeIR_a* `, `... > <: typeIR_b `[ n_size ]
-  -- if $(|typeIR_a*| < n_size)
-  -- (Sub_impl: typeIR_a <: typeIR_b)*
-  -- if $is_defaultable_typeIR(typeIR_b)
+  rule Sub_impl_canon_neq/seq:
+    SEQ `< typeIR_a* > <: SEQ `< typeIR_b* >
+    -- (Sub_impl: typeIR_a <: typeIR_b)*
 
-rule Sub_impl_canon_neq/seqdefault-struct:
-  SEQ `< typeIR_a* `, `... > <: STRUCT _ `{ (typeIR_b _ `;)* }
-  -- if $(|typeIR_a*| < |typeIR_b*|)
-  -- if (typeIR_b_non_default*, typeIR_b_default*)
-      = $partition_<typeIR>(typeIR_b*, |typeIR_a*|)
-  -- (Sub_impl: typeIR_a <: typeIR_b_non_default)*
-  -- if $is_defaultable_typeIR(typeIR_b_default)*
+}
 
-rule Sub_impl_canon_neq/seqdefault-header:
-  SEQ `< typeIR_a* `, `... > <: HEADER _ `{ (typeIR_b _ `;)* }
-  -- if $(|typeIR_a*| < |typeIR_b*|)
-  -- if (typeIR_b_non_default*, typeIR_b_default*)
-      = $partition_<typeIR>(typeIR_b*, |typeIR_a*|)
-  -- (Sub_impl: typeIR_a <: typeIR_b_non_default)*
-  -- if $is_defaultable_typeIR(typeIR_b_default)*
+rulegroup Sub_impl_canon_neq/seqdefault {
 
-rule Sub_impl_canon_neq/record-struct:
-  RECORD `{ (typeIR_a id_a `;)* } <: STRUCT _ `{ (typeIR_b id_b `;)* }
-  -- if $eq_set<id>(`{ id_a* }, `{ id_b* })
-  -- if (typeIR_a_aligned
-        = $find_map<id, typeIR>(`{ (id_a `: typeIR_a)* }, id_a))*
-  -- if (typeIR_b_aligned
-        = $find_map<id, typeIR>(`{ (id_b `: typeIR_b)* }, id_a))*
-  -- (Sub_impl: typeIR_a_aligned <: typeIR_b_aligned)*
+  rule Sub_impl_canon_neq/tuple:
+    SEQ `< typeIR_a* `, `... > <: TUPLE `< typeIR_b* >
+    -- if $(|typeIR_a*| < |typeIR_b*|)
+    -- if (typeIR_b_non_default*, typeIR_b_default*)
+        = $partition_<typeIR>(typeIR_b*, |typeIR_a*|)
+    -- (Sub_impl: typeIR_a <: typeIR_b_non_default)*
+    -- if $is_defaultable_typeIR(typeIR_b_default)*
 
-rule Sub_impl_canon_neq/record-header:
-  RECORD `{ (typeIR_a id_a `;)* } <: HEADER _ `{ (typeIR_b id_b `;)* }
-  -- if $eq_set<id>(`{ id_a* }, `{ id_b* })
-  -- if (typeIR_a_aligned
-        = $find_map<id, typeIR>(`{ (id_a `: typeIR_a)* }, id_a))*
-  -- if (typeIR_b_aligned
-        = $find_map<id, typeIR>(`{ (id_b `: typeIR_b)* }, id_a))*
-  -- (Sub_impl: typeIR_a_aligned <: typeIR_b_aligned)*
+  rule Sub_impl_canon_neq/stack:
+    SEQ `< typeIR_a* `, `... > <: typeIR_b `[ n_size ]
+    -- if $(|typeIR_a*| < n_size)
+    -- (Sub_impl: typeIR_a <: typeIR_b)*
+    -- if $is_defaultable_typeIR(typeIR_b)
 
-rule Sub_impl_canon_neq/recorddefault-struct:
-  RECORD `{ (typeIR_a id_a `;)* `, `... } <: STRUCT _ `{ (typeIR_b id_b `;)* }
-  -- if $sub_set<id>(`{ id_a* }, `{ id_b* })
-  ----
-  -- if (typeIR_a_aligned
-        = $find_map<id, typeIR>(`{ (id_a `: typeIR_a)* }, id_a))*
-  -- if (typeIR_b_non_default_aligned
-        = $find_map<id, typeIR>(`{ (id_b `: typeIR_b)* }, id_a))*
-  -- (Sub_impl: typeIR_a_aligned <: typeIR_b_non_default_aligned)*
-  ----
-  -- if `{ id_default* } = $diff_set<id>(`{ id_b* }, `{ id_a* })
-  -- if (typeIR_b_default
-        = $find_map<id, typeIR>(`{ (id_b `: typeIR_b)* }, id_default))*
-  -- if $is_defaultable_typeIR(typeIR_b_default)*
+  rule Sub_impl_canon_neq/struct:
+    SEQ `< typeIR_a* `, `... > <: STRUCT _ `{ (typeIR_b _ `;)* }
+    -- if $(|typeIR_a*| < |typeIR_b*|)
+    -- if (typeIR_b_non_default*, typeIR_b_default*)
+        = $partition_<typeIR>(typeIR_b*, |typeIR_a*|)
+    -- (Sub_impl: typeIR_a <: typeIR_b_non_default)*
+    -- if $is_defaultable_typeIR(typeIR_b_default)*
 
-rule Sub_impl_canon_neq/recorddefault-header:
-  RECORD `{ (typeIR_a id_a `;)* `, `... } <: HEADER _ `{ (typeIR_b id_b `;)* }
-  -- if $sub_set<id>(`{ id_a* }, `{ id_b* })
-  ----
-  -- if (typeIR_a_aligned
-        = $find_map<id, typeIR>(`{ (id_a `: typeIR_a)* }, id_a))*
-  -- if (typeIR_b_non_default_aligned
-        = $find_map<id, typeIR>(`{ (id_b `: typeIR_b)* }, id_a))*
-  -- (Sub_impl: typeIR_a_aligned <: typeIR_b_non_default_aligned)*
-  ----
-  -- if `{ id_default* } = $diff_set<id>(`{ id_b* }, `{ id_a* })
-  -- if (typeIR_b_default
-        = $find_map<id, typeIR>(`{ (id_b `: typeIR_b)* }, id_default))*
-  -- if $is_defaultable_typeIR(typeIR_b_default)*
+  rule Sub_impl_canon_neq/header:
+    SEQ `< typeIR_a* `, `... > <: HEADER _ `{ (typeIR_b _ `;)* }
+    -- if $(|typeIR_a*| < |typeIR_b*|)
+    -- if (typeIR_b_non_default*, typeIR_b_default*)
+        = $partition_<typeIR>(typeIR_b*, |typeIR_a*|)
+    -- (Sub_impl: typeIR_a <: typeIR_b_non_default)*
+    -- if $is_defaultable_typeIR(typeIR_b_default)*
+
+}
+
+rulegroup Sub_impl_canon_neq/record {
+
+  rule Sub_impl_canon_neq/struct:
+    RECORD `{ (typeIR_a id_a `;)* } <: STRUCT _ `{ (typeIR_b id_b `;)* }
+    -- if $eq_set<id>(`{ id_a* }, `{ id_b* })
+    -- if (typeIR_a_aligned
+          = $find_map<id, typeIR>(`{ (id_a `: typeIR_a)* }, id_a))*
+    -- if (typeIR_b_aligned
+          = $find_map<id, typeIR>(`{ (id_b `: typeIR_b)* }, id_a))*
+    -- (Sub_impl: typeIR_a_aligned <: typeIR_b_aligned)*
+
+  rule Sub_impl_canon_neq/header:
+    RECORD `{ (typeIR_a id_a `;)* } <: HEADER _ `{ (typeIR_b id_b `;)* }
+    -- if $eq_set<id>(`{ id_a* }, `{ id_b* })
+    -- if (typeIR_a_aligned
+          = $find_map<id, typeIR>(`{ (id_a `: typeIR_a)* }, id_a))*
+    -- if (typeIR_b_aligned
+          = $find_map<id, typeIR>(`{ (id_b `: typeIR_b)* }, id_a))*
+    -- (Sub_impl: typeIR_a_aligned <: typeIR_b_aligned)*
+
+}
+
+rulegroup Sub_impl_canon_neq/recorddefault {
+
+  rule Sub_impl_canon_neq/struct:
+    RECORD `{ (typeIR_a id_a `;)* `, `... } <: STRUCT _ `{ (typeIR_b id_b `;)* }
+    -- if $sub_set<id>(`{ id_a* }, `{ id_b* })
+    ----
+    -- if (typeIR_a_aligned
+          = $find_map<id, typeIR>(`{ (id_a `: typeIR_a)* }, id_a))*
+    -- if (typeIR_b_non_default_aligned
+          = $find_map<id, typeIR>(`{ (id_b `: typeIR_b)* }, id_a))*
+    -- (Sub_impl: typeIR_a_aligned <: typeIR_b_non_default_aligned)*
+    ----
+    -- if `{ id_default* } = $diff_set<id>(`{ id_b* }, `{ id_a* })
+    -- if (typeIR_b_default
+          = $find_map<id, typeIR>(`{ (id_b `: typeIR_b)* }, id_default))*
+    -- if $is_defaultable_typeIR(typeIR_b_default)*
+
+  rule Sub_impl_canon_neq/header:
+    RECORD `{ (typeIR_a id_a `;)* `, `... } <: HEADER _ `{ (typeIR_b id_b `;)* }
+    -- if $sub_set<id>(`{ id_a* }, `{ id_b* })
+    ----
+    -- if (typeIR_a_aligned
+          = $find_map<id, typeIR>(`{ (id_a `: typeIR_a)* }, id_a))*
+    -- if (typeIR_b_non_default_aligned
+          = $find_map<id, typeIR>(`{ (id_b `: typeIR_b)* }, id_a))*
+    -- (Sub_impl: typeIR_a_aligned <: typeIR_b_non_default_aligned)*
+    ----
+    -- if `{ id_default* } = $diff_set<id>(`{ id_b* }, `{ id_a* })
+    -- if (typeIR_b_default
+          = $find_map<id, typeIR>(`{ (id_b `: typeIR_b)* }, id_default))*
+    -- if $is_defaultable_typeIR(typeIR_b_default)*
+
+}
 
 ;;
 ;; Serializable enum reduction
