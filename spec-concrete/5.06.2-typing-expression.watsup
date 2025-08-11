@@ -811,14 +811,14 @@ rule Expr_ok/accessExpression-memberAccessExpression-expression-struct:
   ---- ;; check expression
   -- Expr_ok: p C |- expression_base : typedExpressionIR_base
   ---- ;; fetch annotation
-  -- if _ `# `( typeIR_base _ ) = typedExpressionIR_base
+  -- if _ `# `( typeIR_base ctk_base ) = typedExpressionIR_base
   ---- ;; check that the expression is a struct
   -- if STRUCT _ `{ (typeIR_f nameIR_f `;)* } = $canon(typeIR_base)
   ---- ;; find the field
   -- if nameIR = $name(member)
   -- if typeIR = $assoc_<nameIR, typeIR>(nameIR, (nameIR_f, typeIR_f)*)
   ---- ;; create typed expression
-  -- if expressionNoteIR = `( typeIR DYN )
+  -- if expressionNoteIR = `( typeIR ctk_base )
 
 rule Expr_ok/accessExpression-memberAccessExpression-expression-header:
   p C |- expression_base `. member
@@ -826,14 +826,14 @@ rule Expr_ok/accessExpression-memberAccessExpression-expression-header:
   ---- ;; check expression
   -- Expr_ok: p C |- expression_base : typedExpressionIR_base
   ---- ;; fetch annotation
-  -- if _ `# `( typeIR_base _ ) = typedExpressionIR_base
+  -- if _ `# `( typeIR_base ctk_base ) = typedExpressionIR_base
   ---- ;; check that the expression is a header
   -- if HEADER _ `{ (typeIR_f nameIR_f `;)* } = $canon(typeIR_base)
   ---- ;; find the field
   -- if nameIR = $name(member)
   -- if typeIR = $assoc_<nameIR, typeIR>(nameIR, (nameIR_f, typeIR_f)*)
   ---- ;; create typed expression
-  -- if expressionNoteIR = `( typeIR DYN )
+  -- if expressionNoteIR = `( typeIR ctk_base )
 
 rule Expr_ok/accessExpression-memberAccessExpression-expression-headerunion:
   p C |- expression_base `. member
@@ -841,14 +841,14 @@ rule Expr_ok/accessExpression-memberAccessExpression-expression-headerunion:
   ---- ;; check expression
   -- Expr_ok: p C |- expression_base : typedExpressionIR_base
   ---- ;; fetch annotation
-  -- if _ `# `( typeIR_base _ ) = typedExpressionIR_base
+  -- if _ `# `( typeIR_base ctk_base ) = typedExpressionIR_base
   ---- ;; check that the expression is a header union 
   -- if HEADER_UNION _ `{ (typeIR_f nameIR_f `;)* } = $canon(typeIR_base)
   ---- ;; find the field
   -- if nameIR = $name(member)
   -- if typeIR = $assoc_<nameIR, typeIR>(nameIR, (nameIR_f, typeIR_f)*)
   ---- ;; create typed expression
-  -- if expressionNoteIR = `( typeIR DYN )
+  -- if expressionNoteIR = `( typeIR ctk_base )
 
 rule Expr_ok/accessExpression-memberAccessExpression-expression-tablestruct:
   p C |- expression_base `. member
@@ -906,7 +906,7 @@ rule Expr_ok/indexAccessExpression-tuple:
   -- if n_index = $to_number(value_index)
   -- if $(n_index < |typeIR_e*|)
   ---- ;; create typed expression
-  -- if expressionNoteIR = `( typeIR_e*[n_index] DYN )
+  -- if expressionNoteIR = `( typeIR_e*[n_index] ctk_base )
 
 rule Expr_ok/indexAccessExpression-stack-lctk:
   p C |- expression_base `[ expression_index ]
@@ -933,7 +933,7 @@ rule Expr_ok/indexAccessExpression-stack-lctk:
   -- if n_index = $to_number(value_index)
   -- if $(n_index < n_size)
   ---- ;; create typed expression
-  -- if expressionNoteIR = `( typeIR DYN )
+  -- if expressionNoteIR = `( typeIR ctk_base )
 
 rule Expr_ok/indexAccessExpression-stack-non-lctk:
   p C |- expression_base `[ expression_index ]
@@ -957,7 +957,8 @@ rule Expr_ok/indexAccessExpression-stack-non-lctk:
   -- if typeIR `[ n_size ] = $canon(typeIR_base)
   -- if ctk_index =/= LCTK
   ---- ;; create typed expression
-  -- if expressionNoteIR = `( typeIR DYN )
+  -- if ctk = $join_ctk(ctk_base, ctk_index)
+  -- if expressionNoteIR = `( typeIR ctk )
 
 ;;;;; expression `[ expression `: expression ]
 
