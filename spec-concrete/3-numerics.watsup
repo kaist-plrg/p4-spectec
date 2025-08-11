@@ -260,10 +260,11 @@ def $bin_eq(
   = (tid_a = tid_b)
     /\ $bin_eqs_fields((value_f_a, id_f_a)*, (value_f_b, id_f_b)*)
 def $bin_eq(
-    HEADER tid_a `{ (value_f_a id_f_a `;)* },
-    HEADER tid_b `{ (value_f_b id_f_b `;)* }
+    HEADER tid_a `{ b_a (value_f_a id_f_a `;)* },
+    HEADER tid_b `{ b_b (value_f_b id_f_b `;)* }
   )
   = (tid_a = tid_b)
+    /\ (b_a = b_b)
     /\ $bin_eqs_fields((value_f_a, id_f_a)*, (value_f_b, id_f_b)*)
 def $bin_eq(
     HEADER_UNION tid_a `{ (value_f_a id_f_a `;)* },
@@ -464,17 +465,17 @@ def $cast_op(typeIR, STRUCT tid `{ (value_f id_f `;)* })
 
 ;;; Cast from header
 
-dec $cast_header(typeIR, tid, (value, id)*) : value
-dec $cast_header'(typeIR, tid, (value, id)*) : value
+dec $cast_header(typeIR, tid, bool, (value, id)*) : value
+dec $cast_header'(typeIR, tid, bool, (value, id)*) : value
 
-def $cast_header(typeIR, tid, (value_f, id_f)*)
-  = $cast_header'($canon(typeIR), tid, (value_f, id_f)*)
+def $cast_header(typeIR, tid, b, (value_f, id_f)*)
+  = $cast_header'($canon(typeIR), tid, b, (value_f, id_f)*)
 
-def $cast_header'(HEADER tid `{ _ }, tid, (value_f, id_f)*)
-  = HEADER tid `{ (value_f id_f `;)* }
+def $cast_header'(HEADER tid `{ _ }, tid, b, (value_f, id_f)*)
+  = HEADER tid `{ b (value_f id_f `;)* }
 
-def $cast_op(typeIR, HEADER tid `{ (value_f id_f `;)* })
-  = $cast_header(typeIR, tid, (value_f, id_f)*)
+def $cast_op(typeIR, HEADER tid `{ b (value_f id_f `;)* })
+  = $cast_header(typeIR, tid, b, (value_f, id_f)*)
 
 ;;; Cast from serializable enum field
 
@@ -504,7 +505,7 @@ def $cast_sequence'(STRUCT tid `{ (typeIR_f id_f `;)* }, value*)
   -- if (value_cast = $cast_op(typeIR_f, value))*
 
 def $cast_sequence'(HEADER tid `{ (typeIR_f id_f `;)* }, value*)
-  = HEADER tid `{ (value_cast id_f `;)* }
+  = HEADER tid `{ true (value_cast id_f `;)* }
   -- if (value_cast = $cast_op(typeIR_f, value))*
 
 def $cast_op(typeIR, SEQ `( value* )) = $cast_sequence(typeIR, value*)
@@ -531,7 +532,7 @@ def $cast_record'(
     HEADER tid `{ (typeIR_t_f id_t_f `;)* },
     (value_f, id_f)*
   )
-  = HEADER tid `{ (value_f_cast id_f `;)* }
+  = HEADER tid `{ true (value_f_cast id_f `;)* }
   -- if (value_f' = $find_map<id, value>(`{ (id_f `: value_f)* }, id_t_f))*
   -- if (value_f_cast = $cast_op(typeIR_t_f, value_f'))*
 
@@ -625,7 +626,7 @@ def $default'(STRUCT tid `{ (typeIR_f id_f `;)* })
   = STRUCT tid `{ ($default(typeIR_f) id_f `;)* }
 
 def $default'(HEADER tid `{ (typeIR_f id_f `;)* })
-  = HEADER tid `{ ($default(typeIR_f) id_f `;)* }
+  = HEADER tid `{ false ($default(typeIR_f) id_f `;)* }
 
 def $default'(HEADER_UNION tid `{ (typeIR_f id_f `;)* })
   = HEADER_UNION tid `{ ($default(typeIR_f) id_f `;)* }
