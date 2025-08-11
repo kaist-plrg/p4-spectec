@@ -544,7 +544,20 @@ def $cast_op(typeIR, RECORD `{ (value id `;)* })
 
 def $cast_op(typeIR, DEFAULT) = $default(typeIR)
 
-;; Cast from invalueid
+;; Cast from invalid
+
+dec $cast_invalid(typeIR) : value
+dec $cast_invalid'(typeIR) : value
+
+def $cast_invalid(typeIR) = $cast_invalid'($canon(typeIR))
+
+def $cast_invalid'(typeIR) = $default(typeIR)
+  -- if HEADER _ `{ (_ _ `;)* } = typeIR
+
+def $cast_invalid'(typeIR) = $default(typeIR)
+  -- if HEADER_UNION _ `{ (_ _ `;)* } = typeIR
+
+def $cast_op(typeIR, `{#}) = $cast_invalid(typeIR)
 
 ;; Cast from set
 
