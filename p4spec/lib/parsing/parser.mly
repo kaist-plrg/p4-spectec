@@ -84,7 +84,8 @@
 (**************************** TYPES ******************************)
 %type <Il.Ast.value>
   (* Aux *) int externName declarationList
-  (* Misc *) trailingCommaOpt (* Numbers *) number (* Strings *) stringLiteral
+  (* Misc *) trailingCommaOpt (* Booleans *) booleanLiteral
+  (* Numbers *) numberLiteral (* Strings *) stringLiteral
   (* Names *)
   identifier typeIdentifier nonTypeName prefixedNonTypeName typeName prefixedTypeName tableCustomName name nameList member
   (* Directions *) direction
@@ -225,10 +226,15 @@ trailingCommaOpt:
     { [ Term "," ] #@ "trailingCommaOpt" }
 ;
 
+(* Booleans *)
+%inline booleanLiteral:
+  | TRUE { [ Term "TRUE" ] #@ "booleanLiteral" }
+  | FALSE { [ Term "FALSE" ] #@ "booleanLiteral" }
+
 (* Numbers *)
-number:
+numberLiteral:
 	| int = int
-    { [ Term "D"; NT int ] #@ "number" }
+    { [ Term "D"; NT int ] #@ "numberLiteral" }
 (* Processed by lexer *)
 	| number = NUMBER
     { fst number }
@@ -451,9 +457,8 @@ namedExpressionList:
 (* Expressions *)
 (* >> Literal expressions *)
 %inline literalExpression:
-	| TRUE { [ Term "TRUE" ] #@ "literalExpression" }
-	| FALSE { [ Term "FALSE" ] #@ "literalExpression" }
-	| num = number { num }
+  | bool = booleanLiteral { bool }
+	| num = numberLiteral { num }
 	| str = stringLiteral { str }
 ;
 
@@ -1366,7 +1371,7 @@ tableActionList:
 
 (* >>>>>> Table entry property *)
 tableEntryPriority:
-  | PRIORITY ASSIGN num = number COLON
+  | PRIORITY ASSIGN num = numberLiteral COLON
     { [ Term "PRIORITY"; Term "="; NT num; Term ":" ] #@ "tableEntryPriority" }
   | PRIORITY ASSIGN L_PAREN e = expression R_PAREN COLON
     { [ Term "PRIORITY"; Term "="; Term "("; NT e; Term ")"; Term ":" ] #@ "tableEntryPriority" }
@@ -1596,7 +1601,7 @@ annotationToken:
     { tid }
 	| str = stringLiteral
     { str }
-	| num = number
+	| num = numberLiteral
     { num }
 	| MASK
     { [ Term "&&&" ] #@ "annotationToken" }

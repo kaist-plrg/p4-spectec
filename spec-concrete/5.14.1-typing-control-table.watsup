@@ -680,21 +680,21 @@ rulegroup TableEntry_priority_ok/non-specified {
 rulegroup TableEntry_priority_ok/specified-number {
 
   rule TableEntry_priority_ok/pri-prilpm-number-init:
-    TC TBLC_0 TBLS |- PRIORITY `= number `:
-                    : TBLC_2 (PRIORITY `= number `:)
+    TC TBLC_0 TBLS |- PRIORITY `= numberLiteral `:
+                    : TBLC_2 (PRIORITY `= numberLiteral `:)
     ---- ;; check match mode
     -- if TBLC_0.MODE = PRI \/ TBLC_0.MODE = PRILPM
     -- if ~TBLC_0.ENTRIES.CONST
     ---- ;; if no priority has been specified yet
     -- if TBLC_0.PRIORITIES.VALUES = eps
     ---- ;; evaluate and initialize the priority
-    -- if n = $to_number(number)
+    -- if n = $to_number(numberLiteral)
     -- if TBLC_1 = TBLC_0[ .PRIORITIES.INIT = true ]
     -- if TBLC_2 = $add_table_priority(TBLC_1, n)
 
   rule TableEntry_priority_ok/pri-prilpm-number-non-init:
-    TC TBLC_0 TBLS |- PRIORITY `= number `:
-                    : TBLC_1 (PRIORITY `= number `:)
+    TC TBLC_0 TBLS |- PRIORITY `= numberLiteral `:
+                    : TBLC_1 (PRIORITY `= numberLiteral `:)
     ---- ;; check match mode
     -- if TBLC_0.MODE = PRI \/ TBLC_0.MODE = PRILPM
     -- if ~TBLC_0.ENTRIES.CONST
@@ -702,7 +702,7 @@ rulegroup TableEntry_priority_ok/specified-number {
     -- if TBLC_0.PRIORITIES.VALUES =/= eps
     -- if TBLC_0.PRIORITIES.INIT
     ---- ;; evaluate and initialize the priority
-    -- if n = $to_number(number)
+    -- if n = $to_number(numberLiteral)
     -- if TBLC_1 = $add_table_priority(TBLC_0, n)
 
 }

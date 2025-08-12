@@ -181,25 +181,30 @@ syntax trailingCommaOpt =
    | 
    | ,
 
-;; ../../../../spec-concrete/1-syntax.watsup:14.1-16.35
-syntax number = 
+;; ../../../../spec-concrete/1-syntax.watsup:14.1-15.10
+syntax booleanLiteral = 
+   | true
+   | false
+
+;; ../../../../spec-concrete/1-syntax.watsup:22.1-24.35
+syntax numberLiteral = 
    | d int hint(print %)
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
 
-;; ../../../../spec-concrete/1-syntax.watsup:22.24-22.57
+;; ../../../../spec-concrete/1-syntax.watsup:30.24-30.57
 syntax stringLiteral = 
    | " text " hint(print "#%#")
 
-;; ../../../../spec-concrete/1-syntax.watsup:35.21-35.29
+;; ../../../../spec-concrete/1-syntax.watsup:43.21-43.29
 syntax identifier = 
    | text
 
-;; ../../../../spec-concrete/1-syntax.watsup:36.25-36.34
+;; ../../../../spec-concrete/1-syntax.watsup:44.25-44.34
 syntax typeIdentifier = 
    | text
 
-;; ../../../../spec-concrete/1-syntax.watsup:43.1-45.30
+;; ../../../../spec-concrete/1-syntax.watsup:51.1-53.30
 syntax nonTypeName = 
    | text
    | apply
@@ -210,7 +215,7 @@ syntax nonTypeName =
    | type
    | priority
 
-;; ../../../../spec-concrete/1-syntax.watsup:48.1-49.23
+;; ../../../../spec-concrete/1-syntax.watsup:56.1-57.23
 syntax prefixedNonTypeName = 
    | text
    | apply
@@ -222,15 +227,15 @@ syntax prefixedNonTypeName =
    | priority
    | . nonTypeName
 
-;; ../../../../spec-concrete/1-syntax.watsup:55.19-55.33
+;; ../../../../spec-concrete/1-syntax.watsup:63.19-63.33
 syntax typeName = typeIdentifier
 
-;; ../../../../spec-concrete/1-syntax.watsup:58.1-59.21
+;; ../../../../spec-concrete/1-syntax.watsup:66.1-67.21
 syntax prefixedTypeName = 
    | text
    | . typeName
 
-;; ../../../../spec-concrete/1-syntax.watsup:66.1-68.36
+;; ../../../../spec-concrete/1-syntax.watsup:74.1-76.36
 syntax tableCustomName = 
    | text
    | text
@@ -239,7 +244,7 @@ syntax tableCustomName =
    | type
    | priority
 
-;; ../../../../spec-concrete/1-syntax.watsup:75.1-77.9
+;; ../../../../spec-concrete/1-syntax.watsup:83.1-85.9
 syntax name = 
    | text
    | apply
@@ -252,7 +257,7 @@ syntax name =
    | text
    | list
 
-;; ../../../../spec-concrete/1-syntax.watsup:80.1-81.21
+;; ../../../../spec-concrete/1-syntax.watsup:88.1-89.21
 syntax nameList = 
    | text
    | apply
@@ -266,7 +271,7 @@ syntax nameList =
    | list
    | nameList , name
 
-;; ../../../../spec-concrete/1-syntax.watsup:83.1-83.40
+;; ../../../../spec-concrete/1-syntax.watsup:91.1-91.40
 def $flatten_nameList(nameList'')
 
 1. If ((nameList'' has type name)), then
@@ -281,17 +286,17 @@ def $flatten_nameList(nameList'')
 
   2. Return $flatten_nameList(nameList'') ++ [name]
 
-;; ../../../../spec-concrete/1-syntax.watsup:88.17-88.21
+;; ../../../../spec-concrete/1-syntax.watsup:96.17-96.21
 syntax member = name
 
-;; ../../../../spec-concrete/1-syntax.watsup:94.20-94.45
+;; ../../../../spec-concrete/1-syntax.watsup:102.20-102.45
 syntax direction = 
    | 
    | in
    | out
    | inout
 
-;; ../../../../spec-concrete/1-syntax.watsup:107.1-118.32
+;; ../../../../spec-concrete/1-syntax.watsup:115.1-126.32
 syntax baseType = 
    | bool
    | error
@@ -306,29 +311,29 @@ syntax baseType =
    | varbit< int >
    | varbit<( expression )>
 
-;; ../../../../spec-concrete/1-syntax.watsup:126.26-126.64
+;; ../../../../spec-concrete/1-syntax.watsup:134.26-134.64
 syntax specializedType = 
    | prefixedTypeName < typeArgumentList >
 
-;; ../../../../spec-concrete/1-syntax.watsup:129.1-130.20
+;; ../../../../spec-concrete/1-syntax.watsup:137.1-138.20
 syntax namedType = 
    | text
    | . typeName
    | prefixedTypeName < typeArgumentList >
 
-;; ../../../../spec-concrete/1-syntax.watsup:136.26-136.51
+;; ../../../../spec-concrete/1-syntax.watsup:144.26-144.51
 syntax headerStackType = 
    | namedType [ expression ]
 
-;; ../../../../spec-concrete/1-syntax.watsup:144.19-144.41
+;; ../../../../spec-concrete/1-syntax.watsup:152.19-152.41
 syntax listType = 
    | list< typeArgument >
 
-;; ../../../../spec-concrete/1-syntax.watsup:150.20-150.47
+;; ../../../../spec-concrete/1-syntax.watsup:158.20-158.47
 syntax tupleType = 
    | tuple< typeArgumentList >
 
-;; ../../../../spec-concrete/1-syntax.watsup:157.1-161.14
+;; ../../../../spec-concrete/1-syntax.watsup:165.1-169.14
 syntax type = 
    | bool
    | error
@@ -349,7 +354,7 @@ syntax type =
    | list< typeArgument >
    | tuple< typeArgumentList >
 
-;; ../../../../spec-concrete/1-syntax.watsup:164.1-166.15
+;; ../../../../spec-concrete/1-syntax.watsup:172.1-174.15
 syntax typeOrVoid = 
    | bool
    | error
@@ -372,10 +377,10 @@ syntax typeOrVoid =
    | void
    | text
 
-;; ../../../../spec-concrete/1-syntax.watsup:172.24-172.28
+;; ../../../../spec-concrete/1-syntax.watsup:180.24-180.28
 syntax typeParameter = name
 
-;; ../../../../spec-concrete/1-syntax.watsup:175.1-176.39
+;; ../../../../spec-concrete/1-syntax.watsup:183.1-184.39
 syntax typeParameterList = 
    | text
    | apply
@@ -389,7 +394,7 @@ syntax typeParameterList =
    | list
    | typeParameterList , typeParameter
 
-;; ../../../../spec-concrete/1-syntax.watsup:178.1-178.67
+;; ../../../../spec-concrete/1-syntax.watsup:186.1-186.67
 def $flatten_typeParameterList(typeParameterList'')
 
 1. If ((typeParameterList'' has type typeParameter)), then
@@ -404,12 +409,12 @@ def $flatten_typeParameterList(typeParameterList'')
 
   2. Return $flatten_typeParameterList(typeParameterList'') ++ [typeParameter]
 
-;; ../../../../spec-concrete/1-syntax.watsup:184.1-185.27
+;; ../../../../spec-concrete/1-syntax.watsup:192.1-193.27
 syntax typeParameterListOpt = 
    | 
    | < typeParameterList >
 
-;; ../../../../spec-concrete/1-syntax.watsup:187.1-187.73
+;; ../../../../spec-concrete/1-syntax.watsup:195.1-195.73
 def $flatten_typeParameterListOpt(typeParameterListOpt)
 
 1. Case analysis on typeParameterListOpt
@@ -424,22 +429,22 @@ def $flatten_typeParameterListOpt(typeParameterListOpt)
 
     2. Return $flatten_typeParameterList(typeParameterList)
 
-;; ../../../../spec-concrete/1-syntax.watsup:199.3-199.52
+;; ../../../../spec-concrete/1-syntax.watsup:207.3-207.52
 syntax parameter = 
    | annotationList direction type name initializerOpt
 
-;; ../../../../spec-concrete/1-syntax.watsup:202.1-203.39
+;; ../../../../spec-concrete/1-syntax.watsup:210.1-211.39
 syntax nonEmptyParameterList = 
    | annotationList direction type name initializerOpt
    | nonEmptyParameterList , parameter
 
-;; ../../../../spec-concrete/1-syntax.watsup:206.1-207.26
+;; ../../../../spec-concrete/1-syntax.watsup:214.1-215.26
 syntax parameterList = 
    | 
    | annotationList direction type name initializerOpt
    | nonEmptyParameterList , parameter
 
-;; ../../../../spec-concrete/1-syntax.watsup:209.1-209.55
+;; ../../../../spec-concrete/1-syntax.watsup:217.1-217.55
 def $flatten_parameterList(parameterList)
 
 1. If ((parameterList matches pattern ``EMPTY`)), then
@@ -462,18 +467,18 @@ def $flatten_parameterList(parameterList)
 
     2. Return $flatten_parameterList((nonEmptyParameterList as parameterList)) ++ [parameter]
 
-;; ../../../../spec-concrete/1-syntax.watsup:219.31-219.40
+;; ../../../../spec-concrete/1-syntax.watsup:227.31-227.40
 syntax constructorParameter = parameter
 
-;; ../../../../spec-concrete/1-syntax.watsup:221.35-221.48
+;; ../../../../spec-concrete/1-syntax.watsup:229.35-229.48
 syntax constructorParameterList = parameterList
 
-;; ../../../../spec-concrete/1-syntax.watsup:224.1-225.23
+;; ../../../../spec-concrete/1-syntax.watsup:232.1-233.23
 syntax constructorParameterListOpt = 
    | 
    | ( parameterList )
 
-;; ../../../../spec-concrete/1-syntax.watsup:227.1-228.26
+;; ../../../../spec-concrete/1-syntax.watsup:235.1-236.26
 def $flatten_constructorParameterListOpt(constructorParameterListOpt)
 
 1. Case analysis on constructorParameterListOpt
@@ -488,16 +493,16 @@ def $flatten_constructorParameterListOpt(constructorParameterListOpt)
 
     2. Return $flatten_parameterList(parameterList)
 
-;; ../../../../spec-concrete/1-syntax.watsup:238.26-238.44
+;; ../../../../spec-concrete/1-syntax.watsup:246.26-246.44
 syntax namedExpression = 
    | name = expression
 
-;; ../../../../spec-concrete/1-syntax.watsup:241.1-242.43
+;; ../../../../spec-concrete/1-syntax.watsup:249.1-250.43
 syntax namedExpressionList = 
    | name = expression
    | namedExpressionList , namedExpression
 
-;; ../../../../spec-concrete/1-syntax.watsup:244.1-244.73
+;; ../../../../spec-concrete/1-syntax.watsup:252.1-252.73
 def $flatten_namedExpressionList(namedExpressionList'')
 
 1. If ((namedExpressionList'' has type namedExpression)), then
@@ -512,7 +517,7 @@ def $flatten_namedExpressionList(namedExpressionList'')
 
   2. Return $flatten_namedExpressionList(namedExpressionList'') ++ [namedExpression]
 
-;; ../../../../spec-concrete/1-syntax.watsup:258.1-260.18
+;; ../../../../spec-concrete/1-syntax.watsup:266.1-268.18
 syntax literalExpression = 
    | true
    | false
@@ -521,7 +526,7 @@ syntax literalExpression =
    | nat s int hint(print %#S#%)
    | " text " hint(print "#%#")
 
-;; ../../../../spec-concrete/1-syntax.watsup:267.1-268.9
+;; ../../../../spec-concrete/1-syntax.watsup:275.1-276.9
 syntax referenceExpression = 
    | text
    | apply
@@ -534,22 +539,22 @@ syntax referenceExpression =
    | . nonTypeName
    | this
 
-;; ../../../../spec-concrete/1-syntax.watsup:274.28-274.32
+;; ../../../../spec-concrete/1-syntax.watsup:282.28-282.32
 syntax defaultExpression = 
    | ...
 
-;; ../../../../spec-concrete/1-syntax.watsup:282.15-282.32
+;; ../../../../spec-concrete/1-syntax.watsup:290.15-290.32
 syntax unop = 
    | !
    | ~
    | -
    | +
 
-;; ../../../../spec-concrete/1-syntax.watsup:284.26-284.41
+;; ../../../../spec-concrete/1-syntax.watsup:292.26-292.41
 syntax unaryExpression = 
    | unop expression
 
-;; ../../../../spec-concrete/1-syntax.watsup:287.1-289.35
+;; ../../../../spec-concrete/1-syntax.watsup:295.1-297.35
 syntax binop = 
    | *
    | /
@@ -573,82 +578,82 @@ syntax binop =
    | &&
    | ||
 
-;; ../../../../spec-concrete/1-syntax.watsup:291.27-291.54
+;; ../../../../spec-concrete/1-syntax.watsup:299.27-299.54
 syntax binaryExpression = 
    | expression binop expression
 
-;; ../../../../spec-concrete/1-syntax.watsup:294.3-294.38
+;; ../../../../spec-concrete/1-syntax.watsup:302.3-302.38
 syntax binaryExpressionNonBrace = 
    | expressionNonBrace binop expression
 
-;; ../../../../spec-concrete/1-syntax.watsup:297.3-297.41
+;; ../../../../spec-concrete/1-syntax.watsup:305.3-305.41
 syntax ternaryExpression = 
    | expression ? expression : expression
 
-;; ../../../../spec-concrete/1-syntax.watsup:300.3-300.49
+;; ../../../../spec-concrete/1-syntax.watsup:308.3-308.49
 syntax ternaryExpressionNonBrace = 
    | expressionNonBrace ? expression : expression
 
-;; ../../../../spec-concrete/1-syntax.watsup:306.25-306.45
+;; ../../../../spec-concrete/1-syntax.watsup:314.25-314.45
 syntax castExpression = 
    | ( type ) expression
 
-;; ../../../../spec-concrete/1-syntax.watsup:315.1-316.48
+;; ../../../../spec-concrete/1-syntax.watsup:323.1-324.48
 syntax dataExpression = 
    | {#}
    | { dataElementExpression trailingCommaOpt }
 
-;; ../../../../spec-concrete/1-syntax.watsup:325.3-325.18
+;; ../../../../spec-concrete/1-syntax.watsup:333.3-333.18
 syntax errorAccessExpression = 
    | error. member
 
-;; ../../../../spec-concrete/1-syntax.watsup:328.3-328.29
+;; ../../../../spec-concrete/1-syntax.watsup:336.3-336.29
 syntax memberAccessExpression = 
    | memberAccessBase . member
 
-;; ../../../../spec-concrete/1-syntax.watsup:331.1-332.45
+;; ../../../../spec-concrete/1-syntax.watsup:339.1-340.45
 syntax indexAccessExpression = 
    | expression [ expression ]
    | expression [ expression : expression ]
 
-;; ../../../../spec-concrete/1-syntax.watsup:335.1-337.26
+;; ../../../../spec-concrete/1-syntax.watsup:343.1-345.26
 syntax accessExpression = 
    | error. member
    | memberAccessBase . member
    | expression [ expression ]
    | expression [ expression : expression ]
 
-;; ../../../../spec-concrete/1-syntax.watsup:340.3-340.37
+;; ../../../../spec-concrete/1-syntax.watsup:348.3-348.37
 syntax memberAccessExpressionNonBrace = 
    | memberAccessBaseNonBrace . member
 
-;; ../../../../spec-concrete/1-syntax.watsup:343.1-344.53
+;; ../../../../spec-concrete/1-syntax.watsup:351.1-352.53
 syntax indexAccessExpressionNonBrace = 
    | expressionNonBrace [ expression ]
    | expressionNonBrace [ expression : expression ]
 
-;; ../../../../spec-concrete/1-syntax.watsup:347.1-349.34
+;; ../../../../spec-concrete/1-syntax.watsup:355.1-357.34
 syntax accessExpressionNonBrace = 
    | error. member
    | memberAccessBaseNonBrace . member
    | expressionNonBrace [ expression ]
    | expressionNonBrace [ expression : expression ]
 
-;; ../../../../spec-concrete/1-syntax.watsup:363.1-364.62
+;; ../../../../spec-concrete/1-syntax.watsup:371.1-372.62
 syntax callExpression = 
    | callTarget ( argumentList )
    | routineTarget < realTypeArgumentList >( argumentList )
 
-;; ../../../../spec-concrete/1-syntax.watsup:367.1-368.70
+;; ../../../../spec-concrete/1-syntax.watsup:375.1-376.70
 syntax callExpressionNonBrace = 
    | callTargetNonBrace ( argumentList )
    | routineTargetNonBrace < realTypeArgumentList >( argumentList )
 
-;; ../../../../spec-concrete/1-syntax.watsup:374.34-374.49
+;; ../../../../spec-concrete/1-syntax.watsup:382.34-382.49
 syntax parenthesizedExpression = 
    | ( expression )
 
-;; ../../../../spec-concrete/1-syntax.watsup:381.1-391.28
+;; ../../../../spec-concrete/1-syntax.watsup:389.1-399.28
 syntax expression = 
    | true
    | false
@@ -681,7 +686,7 @@ syntax expression =
    | routineTarget < realTypeArgumentList >( argumentList )
    | ( expression )
 
-;; ../../../../spec-concrete/1-syntax.watsup:395.1-397.33
+;; ../../../../spec-concrete/1-syntax.watsup:403.1-405.33
 syntax expressionList = 
    | 
    | true
@@ -716,7 +721,7 @@ syntax expressionList =
    | ( expression )
    | expressionList , expression
 
-;; ../../../../spec-concrete/1-syntax.watsup:399.1-399.58
+;; ../../../../spec-concrete/1-syntax.watsup:407.1-407.58
 def $flatten_expressionList(expressionList'')
 
 1. Case analysis on expressionList''
@@ -737,7 +742,7 @@ def $flatten_expressionList(expressionList'')
 
   2. Return [expression]
 
-;; ../../../../spec-concrete/1-syntax.watsup:406.1-407.15
+;; ../../../../spec-concrete/1-syntax.watsup:414.1-415.15
 syntax memberAccessBase = 
    | text
    | . typeName
@@ -772,17 +777,17 @@ syntax memberAccessBase =
    | routineTarget < realTypeArgumentList >( argumentList )
    | ( expression )
 
-;; ../../../../spec-concrete/1-syntax.watsup:409.36-409.50
+;; ../../../../spec-concrete/1-syntax.watsup:417.36-417.50
 syntax sequenceElementExpression = expressionList
 
-;; ../../../../spec-concrete/1-syntax.watsup:412.1-415.54
+;; ../../../../spec-concrete/1-syntax.watsup:420.1-423.54
 syntax recordElementExpression = 
    | name = expression
    | name = expression ,...
    | name = expression , namedExpressionList
    | name = expression , namedExpressionList ,...
 
-;; ../../../../spec-concrete/1-syntax.watsup:418.1-419.28
+;; ../../../../spec-concrete/1-syntax.watsup:426.1-427.28
 syntax dataElementExpression = 
    | 
    | true
@@ -821,13 +826,13 @@ syntax dataElementExpression =
    | name = expression , namedExpressionList
    | name = expression , namedExpressionList ,...
 
-;; ../../../../spec-concrete/1-syntax.watsup:421.24-421.34
+;; ../../../../spec-concrete/1-syntax.watsup:429.24-429.34
 syntax routineTarget = expression
 
-;; ../../../../spec-concrete/1-syntax.watsup:422.28-422.37
+;; ../../../../spec-concrete/1-syntax.watsup:430.28-430.37
 syntax constructorTarget = namedType
 
-;; ../../../../spec-concrete/1-syntax.watsup:425.1-426.22
+;; ../../../../spec-concrete/1-syntax.watsup:433.1-434.22
 syntax callTarget = 
    | true
    | false
@@ -863,7 +868,7 @@ syntax callTarget =
    | . typeName
    | prefixedTypeName < typeArgumentList >
 
-;; ../../../../spec-concrete/1-syntax.watsup:433.1-441.28
+;; ../../../../spec-concrete/1-syntax.watsup:441.1-449.28
 syntax expressionNonBrace = 
    | true
    | false
@@ -893,7 +898,7 @@ syntax expressionNonBrace =
    | routineTargetNonBrace < realTypeArgumentList >( argumentList )
    | ( expression )
 
-;; ../../../../spec-concrete/1-syntax.watsup:444.1-445.23
+;; ../../../../spec-concrete/1-syntax.watsup:452.1-453.23
 syntax memberAccessBaseNonBrace = 
    | text
    | . typeName
@@ -925,10 +930,10 @@ syntax memberAccessBaseNonBrace =
    | routineTargetNonBrace < realTypeArgumentList >( argumentList )
    | ( expression )
 
-;; ../../../../spec-concrete/1-syntax.watsup:447.32-447.50
+;; ../../../../spec-concrete/1-syntax.watsup:455.32-455.50
 syntax routineTargetNonBrace = expressionNonBrace
 
-;; ../../../../spec-concrete/1-syntax.watsup:450.1-451.22
+;; ../../../../spec-concrete/1-syntax.watsup:458.1-459.22
 syntax callTargetNonBrace = 
    | true
    | false
@@ -961,7 +966,7 @@ syntax callTargetNonBrace =
    | . typeName
    | prefixedTypeName < typeArgumentList >
 
-;; ../../../../spec-concrete/1-syntax.watsup:453.1-453.57
+;; ../../../../spec-concrete/1-syntax.watsup:461.1-461.57
 def $expressionNonBrace(expressionNonBrace'')
 
 1. Case analysis on expressionNonBrace''
@@ -1094,7 +1099,7 @@ def $expressionNonBrace(expressionNonBrace'')
 
     2. Return (parenthesizedExpression as expression)
 
-;; ../../../../spec-concrete/1-syntax.watsup:505.1-509.7
+;; ../../../../spec-concrete/1-syntax.watsup:513.1-517.7
 syntax simpleKeysetExpression = 
    | true
    | false
@@ -1131,7 +1136,7 @@ syntax simpleKeysetExpression =
    | default
    | _
 
-;; ../../../../spec-concrete/1-syntax.watsup:512.1-513.57
+;; ../../../../spec-concrete/1-syntax.watsup:520.1-521.57
 syntax simpleKeysetExpressionList = 
    | true
    | false
@@ -1169,7 +1174,7 @@ syntax simpleKeysetExpressionList =
    | _
    | simpleKeysetExpressionList , simpleKeysetExpression
 
-;; ../../../../spec-concrete/1-syntax.watsup:515.1-516.28
+;; ../../../../spec-concrete/1-syntax.watsup:523.1-524.28
 def $flatten_simpleKeysetExpressionList(simpleKeysetExpressionList'')
 
 1. If ((simpleKeysetExpressionList'' has type simpleKeysetExpression)), then
@@ -1184,7 +1189,7 @@ def $flatten_simpleKeysetExpressionList(simpleKeysetExpressionList'')
 
   2. Return $flatten_simpleKeysetExpressionList(simpleKeysetExpressionList'') ++ [simpleKeysetExpression]
 
-;; ../../../../spec-concrete/1-syntax.watsup:526.1-530.62
+;; ../../../../spec-concrete/1-syntax.watsup:534.1-538.62
 syntax tupleKeysetExpression = 
    | ( expression &&& expression )
    | ( expression .. expression )
@@ -1192,7 +1197,7 @@ syntax tupleKeysetExpression =
    | (_)
    | ( simpleKeysetExpression , simpleKeysetExpressionList )
 
-;; ../../../../spec-concrete/1-syntax.watsup:533.1-534.26
+;; ../../../../spec-concrete/1-syntax.watsup:541.1-542.26
 syntax keysetExpression = 
    | true
    | false
@@ -1234,7 +1239,7 @@ syntax keysetExpression =
    | (_)
    | ( simpleKeysetExpression , simpleKeysetExpressionList )
 
-;; ../../../../spec-concrete/1-syntax.watsup:541.1-543.7
+;; ../../../../spec-concrete/1-syntax.watsup:549.1-551.7
 syntax realTypeArgument = 
    | bool
    | error
@@ -1257,7 +1262,7 @@ syntax realTypeArgument =
    | void
    | _
 
-;; ../../../../spec-concrete/1-syntax.watsup:546.1-547.45
+;; ../../../../spec-concrete/1-syntax.watsup:554.1-555.45
 syntax realTypeArgumentList = 
    | bool
    | error
@@ -1281,7 +1286,7 @@ syntax realTypeArgumentList =
    | _
    | realTypeArgumentList , realTypeArgument
 
-;; ../../../../spec-concrete/1-syntax.watsup:549.1-549.76
+;; ../../../../spec-concrete/1-syntax.watsup:557.1-557.76
 def $flatten_realTypeArgumentList(realTypeArgumentList'')
 
 1. If ((realTypeArgumentList'' has type realTypeArgument)), then
@@ -1296,7 +1301,7 @@ def $flatten_realTypeArgumentList(realTypeArgumentList'')
 
   2. Return $flatten_realTypeArgumentList(realTypeArgumentList'') ++ [realTypeArgument]
 
-;; ../../../../spec-concrete/1-syntax.watsup:555.1-556.16
+;; ../../../../spec-concrete/1-syntax.watsup:563.1-564.16
 syntax typeArgument = 
    | bool
    | error
@@ -1327,7 +1332,7 @@ syntax typeArgument =
    | type
    | priority
 
-;; ../../../../spec-concrete/1-syntax.watsup:560.1-562.37
+;; ../../../../spec-concrete/1-syntax.watsup:568.1-570.37
 syntax typeArgumentList = 
    | 
    | bool
@@ -1360,7 +1365,7 @@ syntax typeArgumentList =
    | priority
    | typeArgumentList , typeArgument
 
-;; ../../../../spec-concrete/1-syntax.watsup:564.1-564.64
+;; ../../../../spec-concrete/1-syntax.watsup:572.1-572.64
 def $flatten_typeArgumentList(typeArgumentList'')
 
 1. Case analysis on typeArgumentList''
@@ -1381,7 +1386,7 @@ def $flatten_typeArgumentList(typeArgumentList'')
 
   2. Return [typeArgument]
 
-;; ../../../../spec-concrete/1-syntax.watsup:575.1-578.7
+;; ../../../../spec-concrete/1-syntax.watsup:583.1-586.7
 syntax argument = 
    | true
    | false
@@ -1417,7 +1422,7 @@ syntax argument =
    | name =_
    | _
 
-;; ../../../../spec-concrete/1-syntax.watsup:581.1-582.37
+;; ../../../../spec-concrete/1-syntax.watsup:589.1-590.37
 syntax argumentListNonEmpty = 
    | true
    | false
@@ -1454,7 +1459,7 @@ syntax argumentListNonEmpty =
    | _
    | argumentListNonEmpty , argument
 
-;; ../../../../spec-concrete/1-syntax.watsup:585.1-586.25
+;; ../../../../spec-concrete/1-syntax.watsup:593.1-594.25
 syntax argumentList = 
    | 
    | true
@@ -1492,7 +1497,7 @@ syntax argumentList =
    | _
    | argumentListNonEmpty , argument
 
-;; ../../../../spec-concrete/1-syntax.watsup:588.1-588.52
+;; ../../../../spec-concrete/1-syntax.watsup:596.1-596.52
 def $flatten_argumentList(argumentList)
 
 1. If ((argumentList matches pattern ``EMPTY`)), then
@@ -1515,7 +1520,7 @@ def $flatten_argumentList(argumentList)
 
     2. Return $flatten_argumentList((argumentListNonEmpty as argumentList)) ++ [argument]
 
-;; ../../../../spec-concrete/1-syntax.watsup:599.1-603.16
+;; ../../../../spec-concrete/1-syntax.watsup:607.1-611.16
 syntax lvalue = 
    | text
    | apply
@@ -1532,11 +1537,11 @@ syntax lvalue =
    | lvalue [ expression : expression ]
    | ( lvalue )
 
-;; ../../../../spec-concrete/1-syntax.watsup:613.25-613.27
+;; ../../../../spec-concrete/1-syntax.watsup:621.25-621.27
 syntax emptyStatement = 
    | ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:620.1-622.34
+;; ../../../../spec-concrete/1-syntax.watsup:628.1-630.34
 syntax assignop = 
    | =
    | +=
@@ -1552,45 +1557,45 @@ syntax assignop =
    | ^=
    | |=
 
-;; ../../../../spec-concrete/1-syntax.watsup:624.30-624.59
+;; ../../../../spec-concrete/1-syntax.watsup:632.30-632.59
 syntax assignmentStatement = 
    | lvalue assignop expression ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:631.1-632.54
+;; ../../../../spec-concrete/1-syntax.watsup:639.1-640.54
 syntax callStatement = 
    | lvalue ( argumentList );
    | lvalue < typeArgumentList >( argumentList );
 
-;; ../../../../spec-concrete/1-syntax.watsup:638.37-638.76
+;; ../../../../spec-concrete/1-syntax.watsup:646.37-646.76
 syntax directApplicationStatement = 
    | namedType .apply( argumentList );
 
-;; ../../../../spec-concrete/1-syntax.watsup:645.1-646.25
+;; ../../../../spec-concrete/1-syntax.watsup:653.1-654.25
 syntax returnStatement = 
    | return;
    | return expression ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:652.24-652.31
+;; ../../../../spec-concrete/1-syntax.watsup:660.24-660.31
 syntax exitStatement = 
    | exit;
 
-;; ../../../../spec-concrete/1-syntax.watsup:660.25-660.70
+;; ../../../../spec-concrete/1-syntax.watsup:668.25-668.70
 syntax blockStatement = 
    | annotationList { blockElementStatementList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:669.1-670.48
+;; ../../../../spec-concrete/1-syntax.watsup:677.1-678.48
 syntax conditionalStatement = 
    | if( expression ) statement
    | if( expression ) statement else statement
 
-;; ../../../../spec-concrete/1-syntax.watsup:679.1-682.31
+;; ../../../../spec-concrete/1-syntax.watsup:687.1-690.31
 syntax forInitStatement = 
    | annotationList type name initializerOpt
    | lvalue ( argumentList )
    | lvalue < typeArgumentList >( argumentList )
    | lvalue assignop expression
 
-;; ../../../../spec-concrete/1-syntax.watsup:685.1-686.53
+;; ../../../../spec-concrete/1-syntax.watsup:693.1-694.53
 syntax forInitStatementListNonEmpty = 
    | annotationList type name initializerOpt
    | lvalue ( argumentList )
@@ -1598,7 +1603,7 @@ syntax forInitStatementListNonEmpty =
    | lvalue assignop expression
    | forInitStatementListNonEmpty , forInitStatement
 
-;; ../../../../spec-concrete/1-syntax.watsup:689.1-690.33
+;; ../../../../spec-concrete/1-syntax.watsup:697.1-698.33
 syntax forInitStatementList = 
    | 
    | annotationList type name initializerOpt
@@ -1607,10 +1612,10 @@ syntax forInitStatementList =
    | lvalue assignop expression
    | forInitStatementListNonEmpty , forInitStatement
 
-;; ../../../../spec-concrete/1-syntax.watsup:692.29-692.45
+;; ../../../../spec-concrete/1-syntax.watsup:700.29-700.45
 syntax forUpdateStatement = forInitStatement
 
-;; ../../../../spec-concrete/1-syntax.watsup:695.1-696.57
+;; ../../../../spec-concrete/1-syntax.watsup:703.1-704.57
 syntax forUpdateStatementListNonEmpty = 
    | annotationList type name initializerOpt
    | lvalue ( argumentList )
@@ -1618,7 +1623,7 @@ syntax forUpdateStatementListNonEmpty =
    | lvalue assignop expression
    | forUpdateStatementListNonEmpty , forUpdateStatement
 
-;; ../../../../spec-concrete/1-syntax.watsup:699.1-700.35
+;; ../../../../spec-concrete/1-syntax.watsup:707.1-708.35
 syntax forUpdateStatementList = 
    | 
    | annotationList type name initializerOpt
@@ -1627,7 +1632,7 @@ syntax forUpdateStatementList =
    | lvalue assignop expression
    | forUpdateStatementListNonEmpty , forUpdateStatement
 
-;; ../../../../spec-concrete/1-syntax.watsup:703.1-704.30
+;; ../../../../spec-concrete/1-syntax.watsup:711.1-712.30
 syntax forCollectionExpression = 
    | true
    | false
@@ -1661,13 +1666,13 @@ syntax forCollectionExpression =
    | ( expression )
    | expression .. expression
 
-;; ../../../../spec-concrete/1-syntax.watsup:707.1-712.81
+;; ../../../../spec-concrete/1-syntax.watsup:715.1-720.81
 syntax forStatement = 
    | annotationList for( forInitStatementList ; expression ; forUpdateStatementList ) statement
    | annotationList for( type name in forCollectionExpression ) statement
    | annotationList for( annotationListNonEmpty type name in forCollectionExpression ) statement
 
-;; ../../../../spec-concrete/1-syntax.watsup:719.1-720.23
+;; ../../../../spec-concrete/1-syntax.watsup:727.1-728.23
 syntax switchLabel = 
    | default
    | true
@@ -1698,17 +1703,17 @@ syntax switchLabel =
    | routineTargetNonBrace < realTypeArgumentList >( argumentList )
    | ( expression )
 
-;; ../../../../spec-concrete/1-syntax.watsup:723.1-724.19
+;; ../../../../spec-concrete/1-syntax.watsup:731.1-732.19
 syntax switchCase = 
    | switchLabel : blockStatement
    | switchLabel :
 
-;; ../../../../spec-concrete/1-syntax.watsup:727.1-728.30
+;; ../../../../spec-concrete/1-syntax.watsup:735.1-736.30
 syntax switchCaseList = 
    | 
    | switchCaseList switchCase
 
-;; ../../../../spec-concrete/1-syntax.watsup:730.1-730.58
+;; ../../../../spec-concrete/1-syntax.watsup:738.1-738.58
 def $flatten_switchCaseList(switchCaseList'')
 
 1. Case analysis on switchCaseList''
@@ -1723,19 +1728,19 @@ def $flatten_switchCaseList(switchCaseList'')
 
     2. Return $flatten_switchCaseList(switchCaseList'') ++ [switchCase]
 
-;; ../../../../spec-concrete/1-syntax.watsup:735.26-735.68
+;; ../../../../spec-concrete/1-syntax.watsup:743.26-743.68
 syntax switchStatement = 
    | switch( expression ){ switchCaseList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:741.25-741.33
+;; ../../../../spec-concrete/1-syntax.watsup:749.25-749.33
 syntax breakStatement = 
    | break;
 
-;; ../../../../spec-concrete/1-syntax.watsup:743.28-743.39
+;; ../../../../spec-concrete/1-syntax.watsup:751.28-751.39
 syntax continueStatement = 
    | continue;
 
-;; ../../../../spec-concrete/1-syntax.watsup:750.1-761.20
+;; ../../../../spec-concrete/1-syntax.watsup:758.1-769.20
 syntax statement = 
    | ;
    | lvalue assignop expression ;
@@ -1755,24 +1760,24 @@ syntax statement =
    | continue;
    | switch( expression ){ switchCaseList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:771.22-771.35
+;; ../../../../spec-concrete/1-syntax.watsup:779.22-779.35
 syntax initializer = 
    | = expression
 
-;; ../../../../spec-concrete/1-syntax.watsup:774.3-774.48
+;; ../../../../spec-concrete/1-syntax.watsup:782.3-782.48
 syntax constantDeclaration = 
    | annotationList const type name initializer ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:777.1-778.16
+;; ../../../../spec-concrete/1-syntax.watsup:785.1-786.16
 syntax initializerOpt = 
    | 
    | = expression
 
-;; ../../../../spec-concrete/1-syntax.watsup:781.3-781.45
+;; ../../../../spec-concrete/1-syntax.watsup:789.3-789.45
 syntax variableDeclaration = 
    | annotationList type name initializerOpt ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:784.1-786.14
+;; ../../../../spec-concrete/1-syntax.watsup:792.1-794.14
 syntax blockElementStatement = 
    | annotationList const type name initializer ;
    | annotationList type name initializerOpt ;
@@ -1794,12 +1799,12 @@ syntax blockElementStatement =
    | continue;
    | switch( expression ){ switchCaseList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:789.1-790.52
+;; ../../../../spec-concrete/1-syntax.watsup:797.1-798.52
 syntax blockElementStatementList = 
    | 
    | blockElementStatementList blockElementStatement
 
-;; ../../../../spec-concrete/1-syntax.watsup:792.1-793.27
+;; ../../../../spec-concrete/1-syntax.watsup:800.1-801.27
 def $flatten_blockElementStatementList(blockElementStatementList'')
 
 1. Case analysis on blockElementStatementList''
@@ -1814,39 +1819,39 @@ def $flatten_blockElementStatementList(blockElementStatementList'')
 
     2. Return $flatten_blockElementStatementList(blockElementStatementList'') ++ [blockElementStatement]
 
-;; ../../../../spec-concrete/1-syntax.watsup:806.3-806.58
+;; ../../../../spec-concrete/1-syntax.watsup:814.3-814.58
 syntax functionPrototype = 
    | typeOrVoid name typeParameterListOpt ( parameterList )
 
-;; ../../../../spec-concrete/1-syntax.watsup:809.3-809.50
+;; ../../../../spec-concrete/1-syntax.watsup:817.3-817.50
 syntax functionDeclaration = 
    | annotationList functionPrototype blockStatement
 
-;; ../../../../spec-concrete/1-syntax.watsup:816.3-816.63
+;; ../../../../spec-concrete/1-syntax.watsup:824.3-824.63
 syntax actionDeclaration = 
    | annotationList action name ( parameterList ) blockStatement
 
-;; ../../../../spec-concrete/1-syntax.watsup:824.28-824.57
+;; ../../../../spec-concrete/1-syntax.watsup:832.28-832.57
 syntax objectInitializer = 
    | ={ objectDeclarationList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:828.1-829.68
+;; ../../../../spec-concrete/1-syntax.watsup:836.1-837.68
 syntax instantiation = 
    | annotationList type ( argumentList ) name ;
    | annotationList type ( argumentList ) name objectInitializer ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:832.1-833.18
+;; ../../../../spec-concrete/1-syntax.watsup:840.1-841.18
 syntax objectDeclaration = 
    | annotationList functionPrototype blockStatement
    | annotationList type ( argumentList ) name ;
    | annotationList type ( argumentList ) name objectInitializer ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:836.1-837.44
+;; ../../../../spec-concrete/1-syntax.watsup:844.1-845.44
 syntax objectDeclarationList = 
    | 
    | objectDeclarationList objectDeclaration
 
-;; ../../../../spec-concrete/1-syntax.watsup:839.1-839.79
+;; ../../../../spec-concrete/1-syntax.watsup:847.1-847.79
 def $flatten_objectDeclarationList(objectDeclarationList'')
 
 1. Case analysis on objectDeclarationList''
@@ -1861,29 +1866,29 @@ def $flatten_objectDeclarationList(objectDeclarationList'')
 
     2. Return $flatten_objectDeclarationList(objectDeclarationList'') ++ [objectDeclaration]
 
-;; ../../../../spec-concrete/1-syntax.watsup:851.27-851.46
+;; ../../../../spec-concrete/1-syntax.watsup:859.27-859.46
 syntax errorDeclaration = 
    | error{ nameList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:857.31-857.72
+;; ../../../../spec-concrete/1-syntax.watsup:865.31-865.72
 syntax matchKindDeclaration = 
    | match_kind{ nameList trailingCommaOpt }
 
-;; ../../../../spec-concrete/1-syntax.watsup:868.1-869.76
+;; ../../../../spec-concrete/1-syntax.watsup:876.1-877.76
 syntax enumTypeDeclaration = 
    | annotationList enum name { nameList trailingCommaOpt }
    | annotationList enum type name { namedExpressionList trailingCommaOpt }
 
-;; ../../../../spec-concrete/1-syntax.watsup:875.20-875.47
+;; ../../../../spec-concrete/1-syntax.watsup:883.20-883.47
 syntax typeField = 
    | annotationList type name ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:878.1-879.28
+;; ../../../../spec-concrete/1-syntax.watsup:886.1-887.28
 syntax typeFieldList = 
    | 
    | typeFieldList typeField
 
-;; ../../../../spec-concrete/1-syntax.watsup:881.1-881.55
+;; ../../../../spec-concrete/1-syntax.watsup:889.1-889.55
 def $flatten_typeFieldList(typeFieldList'')
 
 1. Case analysis on typeFieldList''
@@ -1898,19 +1903,19 @@ def $flatten_typeFieldList(typeFieldList'')
 
     2. Return $flatten_typeFieldList(typeFieldList'') ++ [typeField]
 
-;; ../../../../spec-concrete/1-syntax.watsup:887.3-887.69
+;; ../../../../spec-concrete/1-syntax.watsup:895.3-895.69
 syntax structTypeDeclaration = 
    | annotationList struct name typeParameterListOpt { typeFieldList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:890.3-890.69
+;; ../../../../spec-concrete/1-syntax.watsup:898.3-898.69
 syntax headerTypeDeclaration = 
    | annotationList header name typeParameterListOpt { typeFieldList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:893.3-893.75
+;; ../../../../spec-concrete/1-syntax.watsup:901.3-901.75
 syntax headerUnionTypeDeclaration = 
    | annotationList header_union name typeParameterListOpt { typeFieldList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:896.1-899.31
+;; ../../../../spec-concrete/1-syntax.watsup:904.1-907.31
 syntax derivedTypeDeclaration = 
    | annotationList enum name { nameList trailingCommaOpt }
    | annotationList enum type name { namedExpressionList trailingCommaOpt }
@@ -1918,7 +1923,7 @@ syntax derivedTypeDeclaration =
    | annotationList header name typeParameterListOpt { typeFieldList }
    | annotationList header_union name typeParameterListOpt { typeFieldList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:906.1-907.27
+;; ../../../../spec-concrete/1-syntax.watsup:914.1-915.27
 syntax typedefType = 
    | bool
    | error
@@ -1944,27 +1949,27 @@ syntax typedefType =
    | annotationList header name typeParameterListOpt { typeFieldList }
    | annotationList header_union name typeParameterListOpt { typeFieldList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:910.1-911.37
+;; ../../../../spec-concrete/1-syntax.watsup:918.1-919.37
 syntax typedefDeclaration = 
    | annotationList typedef typedefType name ;
    | annotationList type type name ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:918.3-918.45
+;; ../../../../spec-concrete/1-syntax.watsup:926.3-926.45
 syntax externFunctionDeclaration = 
    | annotationList extern functionPrototype ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:921.1-923.49
+;; ../../../../spec-concrete/1-syntax.watsup:929.1-931.49
 syntax methodPrototype = 
    | annotationList typeIdentifier ( parameterList );
    | annotationList functionPrototype ;
    | annotationList abstract functionPrototype ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:926.1-927.40
+;; ../../../../spec-concrete/1-syntax.watsup:934.1-935.40
 syntax methodPrototypeList = 
    | 
    | methodPrototypeList methodPrototype
 
-;; ../../../../spec-concrete/1-syntax.watsup:929.1-929.73
+;; ../../../../spec-concrete/1-syntax.watsup:937.1-937.73
 def $flatten_methodPrototypeList(methodPrototypeList'')
 
 1. Case analysis on methodPrototypeList''
@@ -1979,25 +1984,25 @@ def $flatten_methodPrototypeList(methodPrototypeList'')
 
     2. Return $flatten_methodPrototypeList(methodPrototypeList'') ++ [methodPrototype]
 
-;; ../../../../spec-concrete/1-syntax.watsup:937.3-937.82
+;; ../../../../spec-concrete/1-syntax.watsup:945.3-945.82
 syntax externObjectDeclaration = 
    | annotationList extern nonTypeName typeParameterListOpt { methodPrototypeList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:940.1-941.28
+;; ../../../../spec-concrete/1-syntax.watsup:948.1-949.28
 syntax externDeclaration = 
    | annotationList extern functionPrototype ;
    | annotationList extern nonTypeName typeParameterListOpt { methodPrototypeList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:951.21-951.48
+;; ../../../../spec-concrete/1-syntax.watsup:959.21-959.48
 syntax selectCase = 
    | keysetExpression : name ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:954.1-955.30
+;; ../../../../spec-concrete/1-syntax.watsup:962.1-963.30
 syntax selectCaseList = 
    | 
    | selectCaseList selectCase
 
-;; ../../../../spec-concrete/1-syntax.watsup:957.1-957.58
+;; ../../../../spec-concrete/1-syntax.watsup:965.1-965.58
 def $flatten_selectCaseList(selectCaseList'')
 
 1. Case analysis on selectCaseList''
@@ -2012,21 +2017,21 @@ def $flatten_selectCaseList(selectCaseList'')
 
     2. Return $flatten_selectCaseList(selectCaseList'') ++ [selectCase]
 
-;; ../../../../spec-concrete/1-syntax.watsup:962.27-962.73
+;; ../../../../spec-concrete/1-syntax.watsup:970.27-970.73
 syntax selectExpression = 
    | select( expressionList ){ selectCaseList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:969.1-970.21
+;; ../../../../spec-concrete/1-syntax.watsup:977.1-978.21
 syntax stateExpression = 
    | name ;
    | select( expressionList ){ selectCaseList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:973.1-974.31
+;; ../../../../spec-concrete/1-syntax.watsup:981.1-982.31
 syntax transitionStatement = 
    | 
    | transition stateExpression
 
-;; ../../../../spec-concrete/1-syntax.watsup:981.1-983.21
+;; ../../../../spec-concrete/1-syntax.watsup:989.1-991.21
 syntax valueSetType = 
    | bool
    | error
@@ -2044,19 +2049,19 @@ syntax valueSetType =
    | text
    | . typeName
 
-;; ../../../../spec-concrete/1-syntax.watsup:986.3-986.69
+;; ../../../../spec-concrete/1-syntax.watsup:994.3-994.69
 syntax valueSetDeclaration = 
    | annotationList value_set< valueSetType >( expression ) name ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:993.3-993.72
+;; ../../../../spec-concrete/1-syntax.watsup:1001.3-1001.72
 syntax parserTypeDeclaration = 
    | annotationList parser name typeParameterListOpt ( parameterList );
 
-;; ../../../../spec-concrete/1-syntax.watsup:1001.31-1001.70
+;; ../../../../spec-concrete/1-syntax.watsup:1009.31-1009.70
 syntax parserBlockStatement = 
    | annotationList { parserStatementList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:1004.1-1011.25
+;; ../../../../spec-concrete/1-syntax.watsup:1012.1-1019.25
 syntax parserStatement = 
    | annotationList const type name initializer ;
    | annotationList type name initializerOpt ;
@@ -2069,12 +2074,12 @@ syntax parserStatement =
    | if( expression ) statement
    | if( expression ) statement else statement
 
-;; ../../../../spec-concrete/1-syntax.watsup:1014.1-1015.40
+;; ../../../../spec-concrete/1-syntax.watsup:1022.1-1023.40
 syntax parserStatementList = 
    | 
    | parserStatementList parserStatement
 
-;; ../../../../spec-concrete/1-syntax.watsup:1017.1-1017.73
+;; ../../../../spec-concrete/1-syntax.watsup:1025.1-1025.73
 def $flatten_parserStatementList(parserStatementList'')
 
 1. Case analysis on parserStatementList''
@@ -2089,16 +2094,16 @@ def $flatten_parserStatementList(parserStatementList'')
 
     2. Return $flatten_parserStatementList(parserStatementList'') ++ [parserStatement]
 
-;; ../../../../spec-concrete/1-syntax.watsup:1023.3-1023.73
+;; ../../../../spec-concrete/1-syntax.watsup:1031.3-1031.73
 syntax parserState = 
    | annotationList state name { parserStatementList transitionStatement }
 
-;; ../../../../spec-concrete/1-syntax.watsup:1026.1-1027.32
+;; ../../../../spec-concrete/1-syntax.watsup:1034.1-1035.32
 syntax parserStateList = 
    | annotationList state name { parserStatementList transitionStatement }
    | parserStateList parserState
 
-;; ../../../../spec-concrete/1-syntax.watsup:1029.1-1029.61
+;; ../../../../spec-concrete/1-syntax.watsup:1037.1-1037.61
 def $flatten_parserStateList(parserStateList'')
 
 1. If ((parserStateList'' has type parserState)), then
@@ -2113,7 +2118,7 @@ def $flatten_parserStateList(parserStateList'')
 
   2. Return $flatten_parserStateList(parserStateList'') ++ [parserState]
 
-;; ../../../../spec-concrete/1-syntax.watsup:1035.1-1038.24
+;; ../../../../spec-concrete/1-syntax.watsup:1043.1-1046.24
 syntax parserLocalDeclaration = 
    | annotationList const type name initializer ;
    | annotationList type ( argumentList ) name ;
@@ -2121,12 +2126,12 @@ syntax parserLocalDeclaration =
    | annotationList type name initializerOpt ;
    | annotationList value_set< valueSetType >( expression ) name ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:1041.1-1042.54
+;; ../../../../spec-concrete/1-syntax.watsup:1049.1-1050.54
 syntax parserLocalDeclarationList = 
    | 
    | parserLocalDeclarationList parserLocalDeclaration
 
-;; ../../../../spec-concrete/1-syntax.watsup:1044.1-1045.28
+;; ../../../../spec-concrete/1-syntax.watsup:1052.1-1053.28
 def $flatten_parserLocalDeclarationList(parserLocalDeclarationList'')
 
 1. Case analysis on parserLocalDeclarationList''
@@ -2141,20 +2146,20 @@ def $flatten_parserLocalDeclarationList(parserLocalDeclarationList'')
 
     2. Return $flatten_parserLocalDeclarationList(parserLocalDeclarationList'') ++ [parserLocalDeclaration]
 
-;; ../../../../spec-concrete/1-syntax.watsup:1054.3-1056.52
+;; ../../../../spec-concrete/1-syntax.watsup:1062.3-1064.52
 syntax parserDeclaration = 
    | annotationList parser name typeParameterListOpt ( parameterList ) constructorParameterListOpt { parserLocalDeclarationList parserStateList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:1066.16-1066.21
+;; ../../../../spec-concrete/1-syntax.watsup:1074.16-1074.21
 syntax const = 
    | const
 
-;; ../../../../spec-concrete/1-syntax.watsup:1069.1-1070.10
+;; ../../../../spec-concrete/1-syntax.watsup:1077.1-1078.10
 syntax constOpt = 
    | 
    | const
 
-;; ../../../../spec-concrete/1-syntax.watsup:1072.1-1072.41
+;; ../../../../spec-concrete/1-syntax.watsup:1080.1-1080.41
 def $flatten_constOpt(constOpt)
 
 1. If ((constOpt matches pattern ``EMPTY`)), then
@@ -2167,16 +2172,16 @@ def $flatten_constOpt(constOpt)
 
   2. Return ?(const)
 
-;; ../../../../spec-concrete/1-syntax.watsup:1080.19-1080.55
+;; ../../../../spec-concrete/1-syntax.watsup:1088.19-1088.55
 syntax tableKey = 
    | expression : name annotationList ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:1083.1-1084.26
+;; ../../../../spec-concrete/1-syntax.watsup:1091.1-1092.26
 syntax tableKeyList = 
    | 
    | tableKeyList tableKey
 
-;; ../../../../spec-concrete/1-syntax.watsup:1086.1-1086.52
+;; ../../../../spec-concrete/1-syntax.watsup:1094.1-1094.52
 def $flatten_tableKeyList(tableKeyList'')
 
 1. Case analysis on tableKeyList''
@@ -2191,7 +2196,7 @@ def $flatten_tableKeyList(tableKeyList'')
 
     2. Return $flatten_tableKeyList(tableKeyList'') ++ [tableKey]
 
-;; ../../../../spec-concrete/1-syntax.watsup:1096.1-1097.42
+;; ../../../../spec-concrete/1-syntax.watsup:1104.1-1105.42
 syntax tableActionReference = 
    | text
    | apply
@@ -2204,16 +2209,16 @@ syntax tableActionReference =
    | . nonTypeName
    | prefixedNonTypeName ( argumentList )
 
-;; ../../../../spec-concrete/1-syntax.watsup:1099.22-1099.60
+;; ../../../../spec-concrete/1-syntax.watsup:1107.22-1107.60
 syntax tableAction = 
    | annotationList tableActionReference ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:1102.1-1103.32
+;; ../../../../spec-concrete/1-syntax.watsup:1110.1-1111.32
 syntax tableActionList = 
    | 
    | tableActionList tableAction
 
-;; ../../../../spec-concrete/1-syntax.watsup:1105.1-1105.61
+;; ../../../../spec-concrete/1-syntax.watsup:1113.1-1113.61
 def $flatten_tableActionList(tableActionList'')
 
 1. Case analysis on tableActionList''
@@ -2228,22 +2233,22 @@ def $flatten_tableActionList(tableActionList'')
 
     2. Return $flatten_tableActionList(tableActionList'') ++ [tableAction]
 
-;; ../../../../spec-concrete/1-syntax.watsup:1115.1-1116.35
+;; ../../../../spec-concrete/1-syntax.watsup:1123.1-1124.35
 syntax tableEntryPriority = 
-   | priority= number :
+   | priority= numberLiteral :
    | priority=( expression ):
 
-;; ../../../../spec-concrete/1-syntax.watsup:1119.1-1120.72
+;; ../../../../spec-concrete/1-syntax.watsup:1127.1-1128.72
 syntax tableEntry = 
    | constOpt tableEntryPriority keysetExpression : tableActionReference annotationList ;
    | constOpt keysetExpression : tableActionReference annotationList ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:1123.1-1124.30
+;; ../../../../spec-concrete/1-syntax.watsup:1131.1-1132.30
 syntax tableEntryList = 
    | 
    | tableEntryList tableEntry
 
-;; ../../../../spec-concrete/1-syntax.watsup:1126.1-1126.58
+;; ../../../../spec-concrete/1-syntax.watsup:1134.1-1134.58
 def $flatten_tableEntryList(tableEntryList'')
 
 1. Case analysis on tableEntryList''
@@ -2258,19 +2263,19 @@ def $flatten_tableEntryList(tableEntryList'')
 
     2. Return $flatten_tableEntryList(tableEntryList'') ++ [tableEntry]
 
-;; ../../../../spec-concrete/1-syntax.watsup:1136.1-1139.59
+;; ../../../../spec-concrete/1-syntax.watsup:1144.1-1147.59
 syntax tableProperty = 
    | key={ tableKeyList }
    | actions={ tableActionList }
    | annotationList constOpt entries={ tableEntryList }
    | annotationList constOpt tableCustomName initializer ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:1142.1-1143.36
+;; ../../../../spec-concrete/1-syntax.watsup:1150.1-1151.36
 syntax tablePropertyList = 
    | 
    | tablePropertyList tableProperty
 
-;; ../../../../spec-concrete/1-syntax.watsup:1145.1-1145.67
+;; ../../../../spec-concrete/1-syntax.watsup:1153.1-1153.67
 def $flatten_tablePropertyList(tablePropertyList'')
 
 1. Case analysis on tablePropertyList''
@@ -2285,18 +2290,18 @@ def $flatten_tablePropertyList(tablePropertyList'')
 
     2. Return $flatten_tablePropertyList(tablePropertyList'') ++ [tableProperty]
 
-;; ../../../../spec-concrete/1-syntax.watsup:1151.3-1151.51
+;; ../../../../spec-concrete/1-syntax.watsup:1159.3-1159.51
 syntax tableDeclaration = 
    | annotationList table name { tablePropertyList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:1158.3-1158.73
+;; ../../../../spec-concrete/1-syntax.watsup:1166.3-1166.73
 syntax controlTypeDeclaration = 
    | annotationList control name typeParameterListOpt ( parameterList );
 
-;; ../../../../spec-concrete/1-syntax.watsup:1164.22-1164.36
+;; ../../../../spec-concrete/1-syntax.watsup:1172.22-1172.36
 syntax controlBody = blockStatement
 
-;; ../../../../spec-concrete/1-syntax.watsup:1167.1-1171.21
+;; ../../../../spec-concrete/1-syntax.watsup:1175.1-1179.21
 syntax controlLocalDeclaration = 
    | annotationList const type name initializer ;
    | annotationList type ( argumentList ) name ;
@@ -2305,12 +2310,12 @@ syntax controlLocalDeclaration =
    | annotationList action name ( parameterList ) blockStatement
    | annotationList table name { tablePropertyList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:1174.1-1175.56
+;; ../../../../spec-concrete/1-syntax.watsup:1182.1-1183.56
 syntax controlLocalDeclarationList = 
    | 
    | controlLocalDeclarationList controlLocalDeclaration
 
-;; ../../../../spec-concrete/1-syntax.watsup:1177.1-1178.29
+;; ../../../../spec-concrete/1-syntax.watsup:1185.1-1186.29
 def $flatten_controlLocalDeclarationList(controlLocalDeclarationList'')
 
 1. Case analysis on controlLocalDeclarationList''
@@ -2325,15 +2330,15 @@ def $flatten_controlLocalDeclarationList(controlLocalDeclarationList'')
 
     2. Return $flatten_controlLocalDeclarationList(controlLocalDeclarationList'') ++ [controlLocalDeclaration]
 
-;; ../../../../spec-concrete/1-syntax.watsup:1188.3-1190.55
+;; ../../../../spec-concrete/1-syntax.watsup:1196.3-1198.55
 syntax controlDeclaration = 
    | annotationList control name typeParameterListOpt ( parameterList ) constructorParameterListOpt { controlLocalDeclarationList apply controlBody }
 
-;; ../../../../spec-concrete/1-syntax.watsup:1197.3-1197.73
+;; ../../../../spec-concrete/1-syntax.watsup:1205.3-1205.73
 syntax packageTypeDeclaration = 
    | annotationList package name typeParameterListOpt ( parameterList );
 
-;; ../../../../spec-concrete/1-syntax.watsup:1204.1-1208.27
+;; ../../../../spec-concrete/1-syntax.watsup:1212.1-1216.27
 syntax typeDeclaration = 
    | annotationList enum name { nameList trailingCommaOpt }
    | annotationList enum type name { namedExpressionList trailingCommaOpt }
@@ -2346,7 +2351,7 @@ syntax typeDeclaration =
    | annotationList control name typeParameterListOpt ( parameterList );
    | annotationList package name typeParameterListOpt ( parameterList );
 
-;; ../../../../spec-concrete/1-syntax.watsup:1215.1-1224.20
+;; ../../../../spec-concrete/1-syntax.watsup:1223.1-1232.20
 syntax declaration = 
    | annotationList const type name initializer ;
    | annotationList type ( argumentList ) name ;
@@ -2370,7 +2375,7 @@ syntax declaration =
    | annotationList control name typeParameterListOpt ( parameterList );
    | annotationList package name typeParameterListOpt ( parameterList );
 
-;; ../../../../spec-concrete/1-syntax.watsup:1231.1-1248.27
+;; ../../../../spec-concrete/1-syntax.watsup:1239.1-1256.27
 syntax annotationToken = 
    | unexpected_token
    | abstract
@@ -2464,30 +2469,30 @@ syntax annotationToken =
    | ;
    | @
 
-;; ../../../../spec-concrete/1-syntax.watsup:1251.1-1253.35
+;; ../../../../spec-concrete/1-syntax.watsup:1259.1-1261.35
 syntax annotationBody = 
    | 
    | annotationBody ( annotationBody )
    | annotationBody annotationToken
 
-;; ../../../../spec-concrete/1-syntax.watsup:1256.3-1256.41
+;; ../../../../spec-concrete/1-syntax.watsup:1264.3-1264.41
 syntax structuredAnnotationBody = 
    | dataElementExpression trailingCommaOpt
 
-;; ../../../../spec-concrete/1-syntax.watsup:1259.1-1261.42
+;; ../../../../spec-concrete/1-syntax.watsup:1267.1-1269.42
 syntax annotation = 
    | @ name
    | @ name ( annotationBody )
    | @ name [ structuredAnnotationBody ]
 
-;; ../../../../spec-concrete/1-syntax.watsup:1264.1-1265.38
+;; ../../../../spec-concrete/1-syntax.watsup:1272.1-1273.38
 syntax annotationListNonEmpty = 
    | @ name
    | @ name ( annotationBody )
    | @ name [ structuredAnnotationBody ]
    | annotationListNonEmpty annotation
 
-;; ../../../../spec-concrete/1-syntax.watsup:1268.1-1269.27
+;; ../../../../spec-concrete/1-syntax.watsup:1276.1-1277.27
 syntax annotationList = 
    | 
    | @ name
@@ -2495,13 +2500,13 @@ syntax annotationList =
    | @ name [ structuredAnnotationBody ]
    | annotationListNonEmpty annotation
 
-;; ../../../../spec-concrete/1-syntax.watsup:1276.1-1278.17
+;; ../../../../spec-concrete/1-syntax.watsup:1284.1-1286.17
 syntax p4program = 
    | 
    | p4program declaration
    | p4program ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:1280.1-1280.49
+;; ../../../../spec-concrete/1-syntax.watsup:1288.1-1288.49
 def $flatten_p4program(p4program'')
 
 1. Case analysis on p4program''
@@ -2740,12 +2745,12 @@ def $expression_as_lvalue(expression'')
 ;; ../../../../spec-concrete/2.0-domain.watsup:99.14-99.17
 syntax oid = id*
 
-;; ../../../../spec-concrete/2.1.1-value.watsup:14.1-17.15
+;; ../../../../spec-concrete/2.1.1-value.watsup:14.1-17.18
 syntax primitiveValue = 
    | b bool
    | error. id
    | match_kind. id
-   | " text "
+   | " text " hint(print "#%#")
 
 ;; ../../../../spec-concrete/2.1.1-value.watsup:24.1-25.21
 syntax numberValue = 
@@ -2759,7 +2764,7 @@ syntax baseValue =
    | b bool
    | error. id
    | match_kind. id
-   | " text "
+   | " text " hint(print "#%#")
    | d int hint(print %)
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
@@ -2861,7 +2866,7 @@ syntax value =
    | b bool
    | error. id
    | match_kind. id
-   | " text "
+   | " text " hint(print "#%#")
    | d int hint(print %)
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
@@ -2900,27 +2905,27 @@ def $to_bitstr
 ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:18.1-18.28
 def $to_number(value)
 
-1. If ((value has type number)), then
+1. If ((value has type numberLiteral)), then
 
-  1. (Let number be (value as number))
+  1. (Let numberLiteral be (value as numberLiteral))
 
-  2. Case analysis on number
+  2. Case analysis on numberLiteral
 
     1. Case (% matches pattern `D%`)
 
-      1. (Let (d i) be number)
+      1. (Let (d i) be numberLiteral)
 
       2. Return i
 
     2. Case (% matches pattern `%S%`)
 
-      1. (Let (w s i) be number)
+      1. (Let (w s i) be numberLiteral)
 
       2. Return $to_int((w as int), i)
 
     3. Case (% matches pattern `%W%`)
 
-      1. (Let (w w i) be number)
+      1. (Let (w w i) be numberLiteral)
 
       2. Return i
 
@@ -5865,13 +5870,13 @@ def $bitacc
 ;; ../../../../spec-concrete/3-numerics.watsup:24.1-24.28
 def $un_bnot(value)
 
-1. If ((value has type number)), then
+1. If ((value has type numberLiteral)), then
 
-  1. (Let number be (value as number))
+  1. (Let numberLiteral be (value as numberLiteral))
 
-  2. If ((number matches pattern `%W%`)), then
+  2. If ((numberLiteral matches pattern `%W%`)), then
 
-    1. (Let (w w i) be number)
+    1. (Let (w w i) be numberLiteral)
 
     2. (Let i' be $bneg(i))
 
@@ -5893,48 +5898,48 @@ def $un_lnot(value)
 ;; ../../../../spec-concrete/3-numerics.watsup:37.1-37.28
 def $un_plus(value)
 
-1. If ((value has type number)), then
+1. If ((value has type numberLiteral)), then
 
-  1. (Let number be (value as number))
+  1. (Let numberLiteral be (value as numberLiteral))
 
-  2. Case analysis on number
+  2. Case analysis on numberLiteral
 
     1. Case (% matches pattern `D%`)
 
-      1. (Let (d i) be number)
+      1. (Let (d i) be numberLiteral)
 
       2. Return ((d i) as value)
 
     2. Case (% matches pattern `%W%`)
 
-      1. (Let (w w i) be number)
+      1. (Let (w w i) be numberLiteral)
 
       2. Return ((w w i) as value)
 
     3. Case (% matches pattern `%S%`)
 
-      1. (Let (w s i) be number)
+      1. (Let (w s i) be numberLiteral)
 
       2. Return ((w s i) as value)
 
 ;; ../../../../spec-concrete/3-numerics.watsup:45.1-45.29
 def $un_minus(value)
 
-1. If ((value has type number)), then
+1. If ((value has type numberLiteral)), then
 
-  1. (Let number be (value as number))
+  1. (Let numberLiteral be (value as numberLiteral))
 
-  2. Case analysis on number
+  2. Case analysis on numberLiteral
 
     1. Case (% matches pattern `D%`)
 
-      1. (Let (d i) be number)
+      1. (Let (d i) be numberLiteral)
 
       2. Return ((d -i) as value)
 
     2. Case (% matches pattern `%W%`)
 
-      1. (Let (w w i) be number)
+      1. (Let (w w i) be numberLiteral)
 
       2. (Let i' be ($pow2(w) - i))
 
@@ -5942,7 +5947,7 @@ def $un_minus(value)
 
     3. Case (% matches pattern `%S%`)
 
-      1. (Let (w s i) be number)
+      1. (Let (w s i) be numberLiteral)
 
       2. (Let i' be $to_bitstr((w as int), $to_int((w as int), -i)))
 
@@ -5951,37 +5956,37 @@ def $un_minus(value)
 ;; ../../../../spec-concrete/3-numerics.watsup:59.1-59.36
 def $bin_plus(value, value')
 
-1. If ((value has type number)), then
+1. If ((value has type numberLiteral)), then
 
-  1. (Let number be (value as number))
+  1. (Let numberLiteral be (value as numberLiteral))
 
-  2. Case analysis on number
+  2. Case analysis on numberLiteral
 
     1. Case (% matches pattern `D%`)
 
-      1. (Let (d i_l) be number)
+      1. (Let (d i_l) be numberLiteral)
 
-      2. If ((value' has type number)), then
+      2. If ((value' has type numberLiteral)), then
 
-        1. (Let number' be (value' as number))
+        1. (Let numberLiteral' be (value' as numberLiteral))
 
-        2. If ((number' matches pattern `D%`)), then
+        2. If ((numberLiteral' matches pattern `D%`)), then
 
-          1. (Let (d i_r) be number')
+          1. (Let (d i_r) be numberLiteral')
 
           2. Return ((d (i_l + i_r)) as value)
 
     2. Case (% matches pattern `%W%`)
 
-      1. (Let (w w i_l) be number)
+      1. (Let (w w i_l) be numberLiteral)
 
-      2. If ((value' has type number)), then
+      2. If ((value' has type numberLiteral)), then
 
-        1. (Let number' be (value' as number))
+        1. (Let numberLiteral' be (value' as numberLiteral))
 
-        2. If ((number' matches pattern `%W%`)), then
+        2. If ((numberLiteral' matches pattern `%W%`)), then
 
-          1. (Let (w' w i_r) be number')
+          1. (Let (w' w i_r) be numberLiteral')
 
           2. If ((w = w')), then
 
@@ -5995,15 +6000,15 @@ def $bin_plus(value, value')
 
     3. Case (% matches pattern `%S%`)
 
-      1. (Let (w s i_l) be number)
+      1. (Let (w s i_l) be numberLiteral)
 
-      2. If ((value' has type number)), then
+      2. If ((value' has type numberLiteral)), then
 
-        1. (Let number' be (value' as number))
+        1. (Let numberLiteral' be (value' as numberLiteral))
 
-        2. If ((number' matches pattern `%S%`)), then
+        2. If ((numberLiteral' matches pattern `%S%`)), then
 
-          1. (Let (w' s i_r) be number')
+          1. (Let (w' s i_r) be numberLiteral')
 
           2. If ((w = w')), then
 
@@ -6031,37 +6036,37 @@ def $bin_satplus
 ;; ../../../../spec-concrete/3-numerics.watsup:77.1-77.37
 def $bin_minus(value, value')
 
-1. If ((value has type number)), then
+1. If ((value has type numberLiteral)), then
 
-  1. (Let number be (value as number))
+  1. (Let numberLiteral be (value as numberLiteral))
 
-  2. Case analysis on number
+  2. Case analysis on numberLiteral
 
     1. Case (% matches pattern `D%`)
 
-      1. (Let (d i_l) be number)
+      1. (Let (d i_l) be numberLiteral)
 
-      2. If ((value' has type number)), then
+      2. If ((value' has type numberLiteral)), then
 
-        1. (Let number' be (value' as number))
+        1. (Let numberLiteral' be (value' as numberLiteral))
 
-        2. If ((number' matches pattern `D%`)), then
+        2. If ((numberLiteral' matches pattern `D%`)), then
 
-          1. (Let (d i_r) be number')
+          1. (Let (d i_r) be numberLiteral')
 
           2. Return ((d (i_l - i_r)) as value)
 
     2. Case (% matches pattern `%W%`)
 
-      1. (Let (w w i_l) be number)
+      1. (Let (w w i_l) be numberLiteral)
 
-      2. If ((value' has type number)), then
+      2. If ((value' has type numberLiteral)), then
 
-        1. (Let number' be (value' as number))
+        1. (Let numberLiteral' be (value' as numberLiteral))
 
-        2. If ((number' matches pattern `%W%`)), then
+        2. If ((numberLiteral' matches pattern `%W%`)), then
 
-          1. (Let (w' w i_r) be number')
+          1. (Let (w' w i_r) be numberLiteral')
 
           2. If ((w = w')), then
 
@@ -6085,100 +6090,100 @@ def $bin_satminus
 ;; ../../../../spec-concrete/3-numerics.watsup:95.1-95.35
 def $bin_mul(value, value')
 
-1. If ((value has type number)), then
+1. If ((value has type numberLiteral)), then
 
-  1. (Let number be (value as number))
+  1. (Let numberLiteral be (value as numberLiteral))
 
-  2. If ((number matches pattern `D%`)), then
+  2. If ((numberLiteral matches pattern `D%`)), then
 
-    1. (Let (d i_l) be number)
+    1. (Let (d i_l) be numberLiteral)
 
-    2. If ((value' has type number)), then
+    2. If ((value' has type numberLiteral)), then
 
-      1. (Let number' be (value' as number))
+      1. (Let numberLiteral' be (value' as numberLiteral))
 
-      2. If ((number' matches pattern `D%`)), then
+      2. If ((numberLiteral' matches pattern `D%`)), then
 
-        1. (Let (d i_r) be number')
+        1. (Let (d i_r) be numberLiteral')
 
         2. Return ((d (i_l * i_r)) as value)
 
 ;; ../../../../spec-concrete/3-numerics.watsup:109.1-109.35
 def $bin_div(value, value')
 
-1. If ((value has type number)), then
+1. If ((value has type numberLiteral)), then
 
-  1. (Let number be (value as number))
+  1. (Let numberLiteral be (value as numberLiteral))
 
-  2. If ((number matches pattern `D%`)), then
+  2. If ((numberLiteral matches pattern `D%`)), then
 
-    1. (Let (d i_l) be number)
+    1. (Let (d i_l) be numberLiteral)
 
-    2. If ((value' has type number)), then
+    2. If ((value' has type numberLiteral)), then
 
-      1. (Let number' be (value' as number))
+      1. (Let numberLiteral' be (value' as numberLiteral))
 
-      2. If ((number' matches pattern `D%`)), then
+      2. If ((numberLiteral' matches pattern `D%`)), then
 
-        1. (Let (d i_r) be number')
+        1. (Let (d i_r) be numberLiteral')
 
         2. Return ((d (i_l / i_r)) as value)
 
 ;; ../../../../spec-concrete/3-numerics.watsup:115.1-115.35
 def $bin_mod(value, value')
 
-1. If ((value has type number)), then
+1. If ((value has type numberLiteral)), then
 
-  1. (Let number be (value as number))
+  1. (Let numberLiteral be (value as numberLiteral))
 
-  2. If ((number matches pattern `D%`)), then
+  2. If ((numberLiteral matches pattern `D%`)), then
 
-    1. (Let (d i_l) be number)
+    1. (Let (d i_l) be numberLiteral)
 
-    2. If ((value' has type number)), then
+    2. If ((value' has type numberLiteral)), then
 
-      1. (Let number' be (value' as number))
+      1. (Let numberLiteral' be (value' as numberLiteral))
 
-      2. If ((number' matches pattern `D%`)), then
+      2. If ((numberLiteral' matches pattern `D%`)), then
 
-        1. (Let (d i_r) be number')
+        1. (Let (d i_r) be numberLiteral')
 
         2. Return ((d (i_l \ i_r)) as value)
 
 ;; ../../../../spec-concrete/3-numerics.watsup:121.1-121.35
 def $bin_shl(value, value')
 
-1. If ((value has type number)), then
+1. If ((value has type numberLiteral)), then
 
-  1. (Let number be (value as number))
+  1. (Let numberLiteral be (value as numberLiteral))
 
-  2. Case analysis on number
+  2. Case analysis on numberLiteral
 
     1. Case (% matches pattern `D%`)
 
-      1. (Let (d i_l) be number)
+      1. (Let (d i_l) be numberLiteral)
 
-      2. If ((value' has type number)), then
+      2. If ((value' has type numberLiteral)), then
 
-        1. (Let number' be (value' as number))
+        1. (Let numberLiteral' be (value' as numberLiteral))
 
-        2. Case analysis on number'
+        2. Case analysis on numberLiteral'
 
           1. Case (% matches pattern `D%`)
 
-            1. (Let (d i_r) be number')
+            1. (Let (d i_r) be numberLiteral')
 
             2. Return ((d $shl(i_l, i_r)) as value)
 
           2. Case (% matches pattern `%W%`)
 
-            1. (Let (w_r w i_r) be number')
+            1. (Let (w_r w i_r) be numberLiteral')
 
             2. Return ((d $shl(i_l, i_r)) as value)
 
           3. Case (% matches pattern `%S%`)
 
-            1. (Let (w_r s i_r) be number')
+            1. (Let (w_r s i_r) be numberLiteral')
 
             2. (Let i_r' be $to_int((w_r as int), i_r))
 
@@ -6186,23 +6191,23 @@ def $bin_shl(value, value')
 
     2. Case (% matches pattern `%W%`)
 
-      1. (Let (w_l w i_l) be number)
+      1. (Let (w_l w i_l) be numberLiteral)
 
-      2. If ((value' has type number)), then
+      2. If ((value' has type numberLiteral)), then
 
-        1. (Let number' be (value' as number))
+        1. (Let numberLiteral' be (value' as numberLiteral))
 
-        2. Case analysis on number'
+        2. Case analysis on numberLiteral'
 
           1. Case (% matches pattern `D%`)
 
-            1. (Let (d i_r) be number')
+            1. (Let (d i_r) be numberLiteral')
 
             2. Return $bin_shl(((w_l w i_l) as value), ((w_l w $to_int((w_l as int), i_r)) as value))
 
           2. Case (% matches pattern `%W%`)
 
-            1. (Let (w_r w i_r) be number')
+            1. (Let (w_r w i_r) be numberLiteral')
 
             2. (Let i' be $to_bitstr((w_l as int), $shl(i_l, i_r)))
 
@@ -6210,7 +6215,7 @@ def $bin_shl(value, value')
 
           3. Case (% matches pattern `%S%`)
 
-            1. (Let (w_r s i_r) be number')
+            1. (Let (w_r s i_r) be numberLiteral')
 
             2. (Let i_r' be $to_int((w_r as int), i_r))
 
@@ -6220,23 +6225,23 @@ def $bin_shl(value, value')
 
     3. Case (% matches pattern `%S%`)
 
-      1. (Let (w_l s i_l) be number)
+      1. (Let (w_l s i_l) be numberLiteral)
 
-      2. If ((value' has type number)), then
+      2. If ((value' has type numberLiteral)), then
 
-        1. (Let number' be (value' as number))
+        1. (Let numberLiteral' be (value' as numberLiteral))
 
-        2. Case analysis on number'
+        2. Case analysis on numberLiteral'
 
           1. Case (% matches pattern `D%`)
 
-            1. (Let (d i_r) be number')
+            1. (Let (d i_r) be numberLiteral')
 
             2. Return $bin_shl(((w_l s i_l) as value), ((w_l s $to_int((w_l as int), i_r)) as value))
 
           2. Case (% matches pattern `%W%`)
 
-            1. (Let (w_r w i_r) be number')
+            1. (Let (w_r w i_r) be numberLiteral')
 
             2. (Let i_l' be $to_int((w_l as int), i_l))
 
@@ -6246,7 +6251,7 @@ def $bin_shl(value, value')
 
           3. Case (% matches pattern `%S%`)
 
-            1. (Let (w_r s i_r) be number')
+            1. (Let (w_r s i_r) be numberLiteral')
 
             2. (Let i_l' be $to_int((w_l as int), i_l))
 
@@ -6259,37 +6264,37 @@ def $bin_shl(value, value')
 ;; ../../../../spec-concrete/3-numerics.watsup:148.1-148.35
 def $bin_shr(value, value')
 
-1. If ((value has type number)), then
+1. If ((value has type numberLiteral)), then
 
-  1. (Let number be (value as number))
+  1. (Let numberLiteral be (value as numberLiteral))
 
-  2. Case analysis on number
+  2. Case analysis on numberLiteral
 
     1. Case (% matches pattern `D%`)
 
-      1. (Let (d i_l) be number)
+      1. (Let (d i_l) be numberLiteral)
 
-      2. If ((value' has type number)), then
+      2. If ((value' has type numberLiteral)), then
 
-        1. (Let number' be (value' as number))
+        1. (Let numberLiteral' be (value' as numberLiteral))
 
-        2. Case analysis on number'
+        2. Case analysis on numberLiteral'
 
           1. Case (% matches pattern `D%`)
 
-            1. (Let (d i_r) be number')
+            1. (Let (d i_r) be numberLiteral')
 
             2. Return ((d $shr(i_l, i_r)) as value)
 
           2. Case (% matches pattern `%W%`)
 
-            1. (Let (w_r w i_r) be number')
+            1. (Let (w_r w i_r) be numberLiteral')
 
             2. Return ((d $shr(i_l, i_r)) as value)
 
           3. Case (% matches pattern `%S%`)
 
-            1. (Let (w_r s i_r) be number')
+            1. (Let (w_r s i_r) be numberLiteral')
 
             2. (Let i_r' be $to_int((w_r as int), i_r))
 
@@ -6297,23 +6302,23 @@ def $bin_shr(value, value')
 
     2. Case (% matches pattern `%W%`)
 
-      1. (Let (w_l w i_l) be number)
+      1. (Let (w_l w i_l) be numberLiteral)
 
-      2. If ((value' has type number)), then
+      2. If ((value' has type numberLiteral)), then
 
-        1. (Let number' be (value' as number))
+        1. (Let numberLiteral' be (value' as numberLiteral))
 
-        2. Case analysis on number'
+        2. Case analysis on numberLiteral'
 
           1. Case (% matches pattern `D%`)
 
-            1. (Let (d i_r) be number')
+            1. (Let (d i_r) be numberLiteral')
 
             2. Return $bin_shr(((w_l w i_l) as value), ((w_l w $to_int((w_l as int), i_r)) as value))
 
           2. Case (% matches pattern `%W%`)
 
-            1. (Let (w_r w i_r) be number')
+            1. (Let (w_r w i_r) be numberLiteral')
 
             2. (Let i' be $to_bitstr((w_l as int), $shr(i_l, i_r)))
 
@@ -6321,7 +6326,7 @@ def $bin_shr(value, value')
 
           3. Case (% matches pattern `%S%`)
 
-            1. (Let (w_r s i_r) be number')
+            1. (Let (w_r s i_r) be numberLiteral')
 
             2. (Let i_r' be $to_int((w_r as int), i_r))
 
@@ -6331,17 +6336,17 @@ def $bin_shr(value, value')
 
     3. Case (% matches pattern `%S%`)
 
-      1. (Let (w_l s i_l) be number)
+      1. (Let (w_l s i_l) be numberLiteral)
 
-      2. If ((value' has type number)), then
+      2. If ((value' has type numberLiteral)), then
 
-        1. (Let number' be (value' as number))
+        1. (Let numberLiteral' be (value' as numberLiteral))
 
-        2. Case analysis on number'
+        2. Case analysis on numberLiteral'
 
           1. Case (% matches pattern `D%`)
 
-            1. (Let (d i_r) be number')
+            1. (Let (d i_r) be numberLiteral')
 
             2. (Let i_l' be $to_int((w_l as int), i_l))
 
@@ -6363,7 +6368,7 @@ def $bin_shr(value, value')
 
           2. Case (% matches pattern `%W%`)
 
-            1. (Let (w_r w i_r) be number')
+            1. (Let (w_r w i_r) be numberLiteral')
 
             2. (Let i_l' be $to_int((w_l as int), i_l))
 
@@ -6385,7 +6390,7 @@ def $bin_shr(value, value')
 
           3. Case (% matches pattern `%S%`)
 
-            1. (Let (w_r s i_r) be number')
+            1. (Let (w_r s i_r) be numberLiteral')
 
             2. (Let i_l' be $to_int((w_l as int), i_l))
 
@@ -6410,37 +6415,37 @@ def $bin_shr(value, value')
 ;; ../../../../spec-concrete/3-numerics.watsup:198.1-198.33
 def $bin_le(value, value')
 
-1. If ((value has type number)), then
+1. If ((value has type numberLiteral)), then
 
-  1. (Let number be (value as number))
+  1. (Let numberLiteral be (value as numberLiteral))
 
-  2. Case analysis on number
+  2. Case analysis on numberLiteral
 
     1. Case (% matches pattern `D%`)
 
-      1. (Let (d i_l) be number)
+      1. (Let (d i_l) be numberLiteral)
 
-      2. If ((value' has type number)), then
+      2. If ((value' has type numberLiteral)), then
 
-        1. (Let number' be (value' as number))
+        1. (Let numberLiteral' be (value' as numberLiteral))
 
-        2. If ((number' matches pattern `D%`)), then
+        2. If ((numberLiteral' matches pattern `D%`)), then
 
-          1. (Let (d i_r) be number')
+          1. (Let (d i_r) be numberLiteral')
 
           2. Return (i_l <= i_r)
 
     2. Case (% matches pattern `%W%`)
 
-      1. (Let (w w i_l) be number)
+      1. (Let (w w i_l) be numberLiteral)
 
-      2. If ((value' has type number)), then
+      2. If ((value' has type numberLiteral)), then
 
-        1. (Let number' be (value' as number))
+        1. (Let numberLiteral' be (value' as numberLiteral))
 
-        2. If ((number' matches pattern `%W%`)), then
+        2. If ((numberLiteral' matches pattern `%W%`)), then
 
-          1. (Let (w' w i_r) be number')
+          1. (Let (w' w i_r) be numberLiteral')
 
           2. If ((w = w')), then
 
@@ -6448,15 +6453,15 @@ def $bin_le(value, value')
 
     3. Case (% matches pattern `%S%`)
 
-      1. (Let (w s i_l) be number)
+      1. (Let (w s i_l) be numberLiteral)
 
-      2. If ((value' has type number)), then
+      2. If ((value' has type numberLiteral)), then
 
-        1. (Let number' be (value' as number))
+        1. (Let numberLiteral' be (value' as numberLiteral))
 
-        2. If ((number' matches pattern `%S%`)), then
+        2. If ((numberLiteral' matches pattern `%S%`)), then
 
-          1. (Let (w' s i_r) be number')
+          1. (Let (w' s i_r) be numberLiteral')
 
           2. If ((w = w')), then
 
@@ -6469,37 +6474,37 @@ def $bin_le(value, value')
 ;; ../../../../spec-concrete/3-numerics.watsup:208.1-208.33
 def $bin_ge(value, value')
 
-1. If ((value has type number)), then
+1. If ((value has type numberLiteral)), then
 
-  1. (Let number be (value as number))
+  1. (Let numberLiteral be (value as numberLiteral))
 
-  2. Case analysis on number
+  2. Case analysis on numberLiteral
 
     1. Case (% matches pattern `D%`)
 
-      1. (Let (d i_l) be number)
+      1. (Let (d i_l) be numberLiteral)
 
-      2. If ((value' has type number)), then
+      2. If ((value' has type numberLiteral)), then
 
-        1. (Let number' be (value' as number))
+        1. (Let numberLiteral' be (value' as numberLiteral))
 
-        2. If ((number' matches pattern `D%`)), then
+        2. If ((numberLiteral' matches pattern `D%`)), then
 
-          1. (Let (d i_r) be number')
+          1. (Let (d i_r) be numberLiteral')
 
           2. Return (i_l >= i_r)
 
     2. Case (% matches pattern `%W%`)
 
-      1. (Let (w w i_l) be number)
+      1. (Let (w w i_l) be numberLiteral)
 
-      2. If ((value' has type number)), then
+      2. If ((value' has type numberLiteral)), then
 
-        1. (Let number' be (value' as number))
+        1. (Let numberLiteral' be (value' as numberLiteral))
 
-        2. If ((number' matches pattern `%W%`)), then
+        2. If ((numberLiteral' matches pattern `%W%`)), then
 
-          1. (Let (w' w i_r) be number')
+          1. (Let (w' w i_r) be numberLiteral')
 
           2. If ((w = w')), then
 
@@ -6507,15 +6512,15 @@ def $bin_ge(value, value')
 
     3. Case (% matches pattern `%S%`)
 
-      1. (Let (w s i_l) be number)
+      1. (Let (w s i_l) be numberLiteral)
 
-      2. If ((value' has type number)), then
+      2. If ((value' has type numberLiteral)), then
 
-        1. (Let number' be (value' as number))
+        1. (Let numberLiteral' be (value' as numberLiteral))
 
-        2. If ((number' matches pattern `%S%`)), then
+        2. If ((numberLiteral' matches pattern `%S%`)), then
 
-          1. (Let (w' s i_r) be number')
+          1. (Let (w' s i_r) be numberLiteral')
 
           2. If ((w = w')), then
 
@@ -6528,37 +6533,37 @@ def $bin_ge(value, value')
 ;; ../../../../spec-concrete/3-numerics.watsup:218.1-218.33
 def $bin_lt(value, value')
 
-1. If ((value has type number)), then
+1. If ((value has type numberLiteral)), then
 
-  1. (Let number be (value as number))
+  1. (Let numberLiteral be (value as numberLiteral))
 
-  2. Case analysis on number
+  2. Case analysis on numberLiteral
 
     1. Case (% matches pattern `D%`)
 
-      1. (Let (d i_l) be number)
+      1. (Let (d i_l) be numberLiteral)
 
-      2. If ((value' has type number)), then
+      2. If ((value' has type numberLiteral)), then
 
-        1. (Let number' be (value' as number))
+        1. (Let numberLiteral' be (value' as numberLiteral))
 
-        2. If ((number' matches pattern `D%`)), then
+        2. If ((numberLiteral' matches pattern `D%`)), then
 
-          1. (Let (d i_r) be number')
+          1. (Let (d i_r) be numberLiteral')
 
           2. Return (i_l < i_r)
 
     2. Case (% matches pattern `%W%`)
 
-      1. (Let (w w i_l) be number)
+      1. (Let (w w i_l) be numberLiteral)
 
-      2. If ((value' has type number)), then
+      2. If ((value' has type numberLiteral)), then
 
-        1. (Let number' be (value' as number))
+        1. (Let numberLiteral' be (value' as numberLiteral))
 
-        2. If ((number' matches pattern `%W%`)), then
+        2. If ((numberLiteral' matches pattern `%W%`)), then
 
-          1. (Let (w' w i_r) be number')
+          1. (Let (w' w i_r) be numberLiteral')
 
           2. If ((w = w')), then
 
@@ -6566,15 +6571,15 @@ def $bin_lt(value, value')
 
     3. Case (% matches pattern `%S%`)
 
-      1. (Let (w s i_l) be number)
+      1. (Let (w s i_l) be numberLiteral)
 
-      2. If ((value' has type number)), then
+      2. If ((value' has type numberLiteral)), then
 
-        1. (Let number' be (value' as number))
+        1. (Let numberLiteral' be (value' as numberLiteral))
 
-        2. If ((number' matches pattern `%S%`)), then
+        2. If ((numberLiteral' matches pattern `%S%`)), then
 
-          1. (Let (w' s i_r) be number')
+          1. (Let (w' s i_r) be numberLiteral')
 
           2. If ((w = w')), then
 
@@ -6587,37 +6592,37 @@ def $bin_lt(value, value')
 ;; ../../../../spec-concrete/3-numerics.watsup:228.1-228.33
 def $bin_gt(value, value')
 
-1. If ((value has type number)), then
+1. If ((value has type numberLiteral)), then
 
-  1. (Let number be (value as number))
+  1. (Let numberLiteral be (value as numberLiteral))
 
-  2. Case analysis on number
+  2. Case analysis on numberLiteral
 
     1. Case (% matches pattern `D%`)
 
-      1. (Let (d i_l) be number)
+      1. (Let (d i_l) be numberLiteral)
 
-      2. If ((value' has type number)), then
+      2. If ((value' has type numberLiteral)), then
 
-        1. (Let number' be (value' as number))
+        1. (Let numberLiteral' be (value' as numberLiteral))
 
-        2. If ((number' matches pattern `D%`)), then
+        2. If ((numberLiteral' matches pattern `D%`)), then
 
-          1. (Let (d i_r) be number')
+          1. (Let (d i_r) be numberLiteral')
 
           2. Return (i_l > i_r)
 
     2. Case (% matches pattern `%W%`)
 
-      1. (Let (w w i_l) be number)
+      1. (Let (w w i_l) be numberLiteral)
 
-      2. If ((value' has type number)), then
+      2. If ((value' has type numberLiteral)), then
 
-        1. (Let number' be (value' as number))
+        1. (Let numberLiteral' be (value' as numberLiteral))
 
-        2. If ((number' matches pattern `%W%`)), then
+        2. If ((numberLiteral' matches pattern `%W%`)), then
 
-          1. (Let (w' w i_r) be number')
+          1. (Let (w' w i_r) be numberLiteral')
 
           2. If ((w = w')), then
 
@@ -6625,15 +6630,15 @@ def $bin_gt(value, value')
 
     3. Case (% matches pattern `%S%`)
 
-      1. (Let (w s i_l) be number)
+      1. (Let (w s i_l) be numberLiteral)
 
-      2. If ((value' has type number)), then
+      2. If ((value' has type numberLiteral)), then
 
-        1. (Let number' be (value' as number))
+        1. (Let numberLiteral' be (value' as numberLiteral))
 
-        2. If ((number' matches pattern `%S%`)), then
+        2. If ((numberLiteral' matches pattern `%S%`)), then
 
-          1. (Let (w' s i_r) be number')
+          1. (Let (w' s i_r) be numberLiteral')
 
           2. If ((w = w')), then
 
@@ -6658,51 +6663,51 @@ def $bin_eq(value, value')
 
       2. Return (primitiveValue_a = primitiveValue_b)
 
-  2. Case (% has type number)
+  2. Case (% has type numberLiteral)
 
-    1. (Let number be (value as number))
+    1. (Let numberLiteral be (value as numberLiteral))
 
-    2. Case analysis on number
+    2. Case analysis on numberLiteral
 
       1. Case (% matches pattern `D%`)
 
-        1. (Let (d i_a) be number)
+        1. (Let (d i_a) be numberLiteral)
 
-        2. If ((value' has type number)), then
+        2. If ((value' has type numberLiteral)), then
 
-          1. (Let number' be (value' as number))
+          1. (Let numberLiteral' be (value' as numberLiteral))
 
-          2. If ((number' matches pattern `D%`)), then
+          2. If ((numberLiteral' matches pattern `D%`)), then
 
-            1. (Let (d i_b) be number')
+            1. (Let (d i_b) be numberLiteral')
 
             2. Return (i_a = i_b)
 
       2. Case (% matches pattern `%W%`)
 
-        1. (Let (w_a w i_a) be number)
+        1. (Let (w_a w i_a) be numberLiteral)
 
-        2. If ((value' has type number)), then
+        2. If ((value' has type numberLiteral)), then
 
-          1. (Let number' be (value' as number))
+          1. (Let numberLiteral' be (value' as numberLiteral))
 
-          2. If ((number' matches pattern `%W%`)), then
+          2. If ((numberLiteral' matches pattern `%W%`)), then
 
-            1. (Let (w_b w i_b) be number')
+            1. (Let (w_b w i_b) be numberLiteral')
 
             2. Return ((w_a = w_b) /\ (i_a = i_b))
 
       3. Case (% matches pattern `%S%`)
 
-        1. (Let (w_a s i_a) be number)
+        1. (Let (w_a s i_a) be numberLiteral)
 
-        2. If ((value' has type number)), then
+        2. If ((value' has type numberLiteral)), then
 
-          1. (Let number' be (value' as number))
+          1. (Let numberLiteral' be (value' as numberLiteral))
 
-          2. If ((number' matches pattern `%S%`)), then
+          2. If ((numberLiteral' matches pattern `%S%`)), then
 
-            1. (Let (w_b s i_b) be number')
+            1. (Let (w_b s i_b) be numberLiteral')
 
             2. Return ((w_a = w_b) /\ (i_a = i_b))
 
@@ -6902,23 +6907,23 @@ def $bin_ne(value_l, value_r)
 ;; ../../../../spec-concrete/3-numerics.watsup:303.1-303.36
 def $bin_band(value, value')
 
-1. If ((value has type number)), then
+1. If ((value has type numberLiteral)), then
 
-  1. (Let number be (value as number))
+  1. (Let numberLiteral be (value as numberLiteral))
 
-  2. Case analysis on number
+  2. Case analysis on numberLiteral
 
     1. Case (% matches pattern `%W%`)
 
-      1. (Let (w w i_l) be number)
+      1. (Let (w w i_l) be numberLiteral)
 
-      2. If ((value' has type number)), then
+      2. If ((value' has type numberLiteral)), then
 
-        1. (Let number' be (value' as number))
+        1. (Let numberLiteral' be (value' as numberLiteral))
 
-        2. If ((number' matches pattern `%W%`)), then
+        2. If ((numberLiteral' matches pattern `%W%`)), then
 
-          1. (Let (w' w i_r) be number')
+          1. (Let (w' w i_r) be numberLiteral')
 
           2. If ((w = w')), then
 
@@ -6928,15 +6933,15 @@ def $bin_band(value, value')
 
     2. Case (% matches pattern `%S%`)
 
-      1. (Let (w s i_l) be number)
+      1. (Let (w s i_l) be numberLiteral)
 
-      2. If ((value' has type number)), then
+      2. If ((value' has type numberLiteral)), then
 
-        1. (Let number' be (value' as number))
+        1. (Let numberLiteral' be (value' as numberLiteral))
 
-        2. If ((number' matches pattern `%S%`)), then
+        2. If ((numberLiteral' matches pattern `%S%`)), then
 
-          1. (Let (w' s i_r) be number')
+          1. (Let (w' s i_r) be numberLiteral')
 
           2. If ((w = w')), then
 
@@ -6951,23 +6956,23 @@ def $bin_band(value, value')
 ;; ../../../../spec-concrete/3-numerics.watsup:315.1-315.36
 def $bin_bxor(value, value')
 
-1. If ((value has type number)), then
+1. If ((value has type numberLiteral)), then
 
-  1. (Let number be (value as number))
+  1. (Let numberLiteral be (value as numberLiteral))
 
-  2. Case analysis on number
+  2. Case analysis on numberLiteral
 
     1. Case (% matches pattern `%W%`)
 
-      1. (Let (w w i_l) be number)
+      1. (Let (w w i_l) be numberLiteral)
 
-      2. If ((value' has type number)), then
+      2. If ((value' has type numberLiteral)), then
 
-        1. (Let number' be (value' as number))
+        1. (Let numberLiteral' be (value' as numberLiteral))
 
-        2. If ((number' matches pattern `%W%`)), then
+        2. If ((numberLiteral' matches pattern `%W%`)), then
 
-          1. (Let (w' w i_r) be number')
+          1. (Let (w' w i_r) be numberLiteral')
 
           2. If ((w = w')), then
 
@@ -6977,15 +6982,15 @@ def $bin_bxor(value, value')
 
     2. Case (% matches pattern `%S%`)
 
-      1. (Let (w s i_l) be number)
+      1. (Let (w s i_l) be numberLiteral)
 
-      2. If ((value' has type number)), then
+      2. If ((value' has type numberLiteral)), then
 
-        1. (Let number' be (value' as number))
+        1. (Let numberLiteral' be (value' as numberLiteral))
 
-        2. If ((number' matches pattern `%S%`)), then
+        2. If ((numberLiteral' matches pattern `%S%`)), then
 
-          1. (Let (w' s i_r) be number')
+          1. (Let (w' s i_r) be numberLiteral')
 
           2. If ((w = w')), then
 
@@ -7000,23 +7005,23 @@ def $bin_bxor(value, value')
 ;; ../../../../spec-concrete/3-numerics.watsup:327.1-327.35
 def $bin_bor(value, value')
 
-1. If ((value has type number)), then
+1. If ((value has type numberLiteral)), then
 
-  1. (Let number be (value as number))
+  1. (Let numberLiteral be (value as numberLiteral))
 
-  2. Case analysis on number
+  2. Case analysis on numberLiteral
 
     1. Case (% matches pattern `%W%`)
 
-      1. (Let (w w i_l) be number)
+      1. (Let (w w i_l) be numberLiteral)
 
-      2. If ((value' has type number)), then
+      2. If ((value' has type numberLiteral)), then
 
-        1. (Let number' be (value' as number))
+        1. (Let numberLiteral' be (value' as numberLiteral))
 
-        2. If ((number' matches pattern `%W%`)), then
+        2. If ((numberLiteral' matches pattern `%W%`)), then
 
-          1. (Let (w' w i_r) be number')
+          1. (Let (w' w i_r) be numberLiteral')
 
           2. If ((w = w')), then
 
@@ -7026,15 +7031,15 @@ def $bin_bor(value, value')
 
     2. Case (% matches pattern `%S%`)
 
-      1. (Let (w s i_l) be number)
+      1. (Let (w s i_l) be numberLiteral)
 
-      2. If ((value' has type number)), then
+      2. If ((value' has type numberLiteral)), then
 
-        1. (Let number' be (value' as number))
+        1. (Let numberLiteral' be (value' as numberLiteral))
 
-        2. If ((number' matches pattern `%S%`)), then
+        2. If ((numberLiteral' matches pattern `%S%`)), then
 
-          1. (Let (w' s i_r) be number')
+          1. (Let (w' s i_r) be numberLiteral')
 
           2. If ((w = w')), then
 
@@ -7049,25 +7054,25 @@ def $bin_bor(value, value')
 ;; ../../../../spec-concrete/3-numerics.watsup:339.1-339.38
 def $bin_concat(value, value')
 
-1. If ((value has type number)), then
+1. If ((value has type numberLiteral)), then
 
-  1. (Let number be (value as number))
+  1. (Let numberLiteral be (value as numberLiteral))
 
-  2. Case analysis on number
+  2. Case analysis on numberLiteral
 
     1. Case (% matches pattern `%W%`)
 
-      1. (Let (w_l w i_l) be number)
+      1. (Let (w_l w i_l) be numberLiteral)
 
-      2. If ((value' has type number)), then
+      2. If ((value' has type numberLiteral)), then
 
-        1. (Let number' be (value' as number))
+        1. (Let numberLiteral' be (value' as numberLiteral))
 
-        2. Case analysis on number'
+        2. Case analysis on numberLiteral'
 
           1. Case (% matches pattern `%W%`)
 
-            1. (Let (w_r w i_r) be number')
+            1. (Let (w_r w i_r) be numberLiteral')
 
             2. (Let i_l' be $shl(i_l, (w_r as int)))
 
@@ -7081,7 +7086,7 @@ def $bin_concat(value, value')
 
           2. Case (% matches pattern `%S%`)
 
-            1. (Let (w_r s i_r) be number')
+            1. (Let (w_r s i_r) be numberLiteral')
 
             2. (Let i_l' be $shl(i_l, (w_r as int)))
 
@@ -7095,17 +7100,17 @@ def $bin_concat(value, value')
 
     2. Case (% matches pattern `%S%`)
 
-      1. (Let (w_l s i_l) be number)
+      1. (Let (w_l s i_l) be numberLiteral)
 
-      2. If ((value' has type number)), then
+      2. If ((value' has type numberLiteral)), then
 
-        1. (Let number' be (value' as number))
+        1. (Let numberLiteral' be (value' as numberLiteral))
 
-        2. Case analysis on number'
+        2. Case analysis on numberLiteral'
 
           1. Case (% matches pattern `%W%`)
 
-            1. (Let (w_r w i_r) be number')
+            1. (Let (w_r w i_r) be numberLiteral')
 
             2. (Let i_l' be $to_int((w_l as int), i_l))
 
@@ -7121,7 +7126,7 @@ def $bin_concat(value, value')
 
           2. Case (% matches pattern `%S%`)
 
-            1. (Let (w_r s i_r) be number')
+            1. (Let (w_r s i_r) be numberLiteral')
 
             2. (Let i_l' be $to_int((w_l as int), i_l))
 
@@ -7192,27 +7197,27 @@ def $cast_op(typeIR, value'')
 
       2. Return $cast_bool(typeIR, b)
 
-  2. Case (% has type number)
+  2. Case (% has type numberLiteral)
 
-    1. (Let number be (value'' as number))
+    1. (Let numberLiteral be (value'' as numberLiteral))
 
-    2. Case analysis on number
+    2. Case analysis on numberLiteral
 
       1. Case (% matches pattern `D%`)
 
-        1. (Let (d i) be number)
+        1. (Let (d i) be numberLiteral)
 
         2. Return $cast_arbint(typeIR, i)
 
       2. Case (% matches pattern `%W%`)
 
-        1. (Let (w w i) be number)
+        1. (Let (w w i) be numberLiteral)
 
         2. Return $cast_fixbit(typeIR, w, i)
 
       3. Case (% matches pattern `%S%`)
 
-        1. (Let (w s i) be number)
+        1. (Let (w s i) be numberLiteral)
 
         2. Return $cast_fixint(typeIR, w, i)
 
@@ -8674,7 +8679,7 @@ syntax tableActionListIR = tableActionIR*
 
 ;; ../../../../spec-concrete/4-ir-syntax.watsup:650.1-651.42
 syntax tableEntryPriorityIR = 
-   | priority= number :
+   | priority= numberLiteral :
    | priority=( typedExpressionIR ):
 
 ;; ../../../../spec-concrete/4-ir-syntax.watsup:653.34-653.55
@@ -10235,13 +10240,13 @@ def $tableEntry_lpm_prefix(value)
 ;; ../../../../spec-concrete/5.03-table-context.watsup:172.1-172.46
 def $tableEntry_lpm_prefix'(value, n_prefix')
 
-1. If ((value has type number)), then
+1. If ((value has type numberLiteral)), then
 
-  1. (Let number be (value as number))
+  1. (Let numberLiteral be (value as numberLiteral))
 
-  2. If ((number matches pattern `%W%`)), then
+  2. If ((numberLiteral matches pattern `%W%`)), then
 
-    1. (Let (nat w _int) be number)
+    1. (Let (nat w _int) be numberLiteral)
 
     2. If ((nat = 0)), then
 
@@ -12914,27 +12919,27 @@ relation Eval_static:
 
   literalExpressionIR-number: p TC |- expressionIR # ( _typeIR _ctk ) ~> % {
 
-    1. If ((expressionIR has type number)), then
+    1. If ((expressionIR has type numberLiteral)), then
 
-      1. (Let number be (expressionIR as number))
+      1. (Let numberLiteral be (expressionIR as numberLiteral))
 
-      2. Case analysis on number
+      2. Case analysis on numberLiteral
 
         1. Case (% matches pattern `D%`)
 
-          1. (Let (d i) be number)
+          1. (Let (d i) be numberLiteral)
 
           2. Result in ((d i) as value)
 
         2. Case (% matches pattern `%W%`)
 
-          1. (Let (n w i) be number)
+          1. (Let (n w i) be numberLiteral)
 
           2. Result in ((n w i) as value)
 
         3. Case (% matches pattern `%S%`)
 
-          1. (Let (n s i) be number)
+          1. (Let (n s i) be numberLiteral)
 
           2. Result in ((n s i) as value)
 
@@ -14820,15 +14825,15 @@ relation Expr_ok:
 
   literalExpression-number: p TC |- expression : % {
 
-    1. If ((expression has type number)), then
+    1. If ((expression has type numberLiteral)), then
 
-      1. (Let number be (expression as number))
+      1. (Let numberLiteral be (expression as numberLiteral))
 
-      2. Case analysis on number
+      2. Case analysis on numberLiteral
 
         1. Case (% matches pattern `D%`)
 
-          1. (Let (d i) be number)
+          1. (Let (d i) be numberLiteral)
 
           2. (Let expressionNoteIR be (( ((int) as typeIR) (lctk) )))
 
@@ -14836,7 +14841,7 @@ relation Expr_ok:
 
         2. Case (% matches pattern `%S%`)
 
-          1. (Let (n s i) be number)
+          1. (Let (n s i) be numberLiteral)
 
           2. (Let expressionNoteIR be (( ((int< n >) as typeIR) (lctk) )))
 
@@ -14844,7 +14849,7 @@ relation Expr_ok:
 
         3. Case (% matches pattern `%W%`)
 
-          1. (Let (n w i) be number)
+          1. (Let (n w i) be numberLiteral)
 
           2. (Let expressionNoteIR be (( ((bit< n >) as typeIR) (lctk) )))
 
@@ -18154,7 +18159,7 @@ relation TableEntry_priority_ok:
 
       2. If ((tableEntryPriority matches pattern `PRIORITY=%:`)), then
 
-        1. (Let (priority= number :) be tableEntryPriority)
+        1. (Let (priority= numberLiteral :) be tableEntryPriority)
 
         2. If (((TBLC_0.mode = (pri)) \/ (TBLC_0.mode = (prilpm)))), then
 
@@ -18164,7 +18169,7 @@ relation TableEntry_priority_ok:
 
               1. Case (% = [])
 
-                1. (Let int be $to_number((number as value)))
+                1. (Let int be $to_number((numberLiteral as value)))
 
                 2. If ((int has type nat)), then
 
@@ -18174,13 +18179,13 @@ relation TableEntry_priority_ok:
 
                   3. (Let TBLC_2 be $add_table_priority(TBLC_1, n))
 
-                  4. Result in TBLC_2, ?((priority= number :))
+                  4. Result in TBLC_2, ?((priority= numberLiteral :))
 
               2. Case (% =/= [])
 
                 1. If (TBLC_0.priorities.init), then
 
-                  1. (Let int be $to_number((number as value)))
+                  1. (Let int be $to_number((numberLiteral as value)))
 
                   2. If ((int has type nat)), then
 
@@ -18188,7 +18193,7 @@ relation TableEntry_priority_ok:
 
                     2. (Let TBLC_1 be $add_table_priority(TBLC_0, n))
 
-                    3. Result in TBLC_1, ?((priority= number :))
+                    3. Result in TBLC_1, ?((priority= numberLiteral :))
 
   }
 
@@ -24750,13 +24755,13 @@ relation Expr_inst:
 
   literalExpressionIR-number-arbint: p Ci sto |- expressionIR # _expressionNoteIR ==> % % {
 
-    1. If ((expressionIR has type number)), then
+    1. If ((expressionIR has type numberLiteral)), then
 
-      1. (Let number be (expressionIR as number))
+      1. (Let numberLiteral be (expressionIR as numberLiteral))
 
-      2. If ((number matches pattern `D%`)), then
+      2. If ((numberLiteral matches pattern `D%`)), then
 
-        1. (Let (d i) be number)
+        1. (Let (d i) be numberLiteral)
 
         2. Result in sto, ((d i) as value)
 
@@ -24764,13 +24769,13 @@ relation Expr_inst:
 
   literalExpressionIR-number-fixint: p Ci sto |- expressionIR # _expressionNoteIR ==> % % {
 
-    1. If ((expressionIR has type number)), then
+    1. If ((expressionIR has type numberLiteral)), then
 
-      1. (Let number be (expressionIR as number))
+      1. (Let numberLiteral be (expressionIR as numberLiteral))
 
-      2. If ((number matches pattern `%S%`)), then
+      2. If ((numberLiteral matches pattern `%S%`)), then
 
-        1. (Let (n s i) be number)
+        1. (Let (n s i) be numberLiteral)
 
         2. Result in sto, ((n s i) as value)
 
@@ -24778,13 +24783,13 @@ relation Expr_inst:
 
   literalExpressionIR-number-fixbit: p Ci sto |- expressionIR # _expressionNoteIR ==> % % {
 
-    1. If ((expressionIR has type number)), then
+    1. If ((expressionIR has type numberLiteral)), then
 
-      1. (Let number be (expressionIR as number))
+      1. (Let numberLiteral be (expressionIR as numberLiteral))
 
-      2. If ((number matches pattern `%W%`)), then
+      2. If ((numberLiteral matches pattern `%W%`)), then
 
-        1. (Let (n w i) be number)
+        1. (Let (n w i) be numberLiteral)
 
         2. Result in sto, ((n w i) as value)
 
