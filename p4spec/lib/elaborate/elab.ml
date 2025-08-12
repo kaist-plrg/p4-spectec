@@ -1407,6 +1407,52 @@ and elab_hint (ctx : Ctx.t) (hint : hint) : Il.Ast.hint =
 and elab_hints (ctx : Ctx.t) (hints : hint list) : Il.Ast.hint list =
   List.map (elab_hint ctx) hints
 
+(* Elaboration of rules *)
+
+let rec elab_rule_input_with_bind (ctx : Ctx.t)
+    (exps_il : (int * Il.Ast.exp) list) :
+    Ctx.t * (int * Il.Ast.exp) list * Il.Ast.prem list =
+  let idxs, exps_il = List.split exps_il in
+  let ctx, exps_il, sideconditions_il =
+    Dataflow.Analysis.analyze_exps_as_bind ctx exps_il
+  in
+  let exps_il = List.combine idxs exps_il in
+  (ctx, exps_il, sideconditions_il)
+
+and elab_rule_output_with_bind (ctx : Ctx.t) (exps_il : (int * Il.Ast.exp) list)
+    : (int * Il.Ast.exp) list =
+  let idxs, exps_il = List.split exps_il in
+  let exps_il = Dataflow.Analysis.analyze_exps_as_bound ctx exps_il in
+  List.combine idxs exps_il
+
+and elab_rule (ctx : Ctx.t) (rule : rule) : Il.Ast.rule =
+  let id_rel, id_rule, exp, prems = rule.it in
+  let nottyp, inputs = Ctx.find_rel ctx id_rel in
+  let ctx_local = { ctx with frees = IdSet.empty } in
+  let ctx_local = El.Free.free_rule rule |> Ctx.add_frees ctx_local in
+  let+ ctx_local, notexp_il = elab_exp_not ctx_local (NotationT nottyp) exp in
+  let mixop, exps_il = notexp_il in
+  let exps_il_input, exps_il_output =
+    exps_il
+    |> List.mapi (fun idx exp -> (idx, exp))
+    |> List.partition (fun (idx, _) -> List.mem idx inputs)
+  in
+  let ctx_local, exps_il_input, sideconditions_il =
+    elab_rule_input_with_bind ctx_local exps_il_input
+  in
+  let ctx_local, prems_il = elab_prems_with_bind ctx_local prems in
+  let prems_il = sideconditions_il @ prems_il in
+  let exps_il_output = elab_rule_output_with_bind ctx_local exps_il_output in
+  let notexp_il =
+    let exps_il =
+      exps_il_input @ exps_il_output
+      |> List.sort (fun (idx_a, _) (idx_b, _) -> compare idx_a idx_b)
+      |> List.map snd
+    in
+    (mixop, exps_il)
+  in
+  (id_rule, notexp_il, prems_il) $ rule.at
+
 (* Elaboration of definitions *)
 
 let rec elab_def (ctx : Ctx.t) (def : def) : Ctx.t * Il.Ast.def option =
@@ -1419,10 +1465,8 @@ let rec elab_def (ctx : Ctx.t) (def : def) : Ctx.t * Il.Ast.def option =
       elab_typ_def ctx id tparams deftyp |> wrap_some
   | VarD (id, plaintyp, _hints) -> elab_var_def ctx id plaintyp |> wrap_none
   | RelD (id, nottyp, hints) -> elab_rel_def ctx at id nottyp hints |> wrap_some
-  | RuleD (id_rel, id_rule, exp, prems) ->
-      elab_rule_def ctx at id_rel id_rule exp prems |> wrap_none
-  | RuleGroupD (id_rel, id_group, rules) ->
-      elab_rule_group_def ctx at id_rel id_group rules |> wrap_none
+  | RuleGroupD (id_rel, id_rulegroup, rules) ->
+      elab_rule_group_def ctx at id_rel id_rulegroup rules |> wrap_none
   | DecD (id, tparams, params, plaintyp, _hints) ->
       elab_dec_def ctx at id tparams params plaintyp |> wrap_some
   | DefD (id, tparams, args, exp, prems) ->
@@ -1550,67 +1594,13 @@ and elab_rel_def (ctx : Ctx.t) (at : region) (id : id) (nottyp : nottyp)
   let def_il = Il.Ast.RelD (id, nottyp_il, inputs, []) $ at in
   (ctx, def_il)
 
-(* Elaboration of rules *)
-
-and elab_rule_input_with_bind (ctx : Ctx.t) (exps_il : (int * Il.Ast.exp) list)
-    : Ctx.t * (int * Il.Ast.exp) list * Il.Ast.prem list =
-  let idxs, exps_il = List.split exps_il in
-  let ctx, exps_il, sideconditions_il =
-    Dataflow.Analysis.analyze_exps_as_bind ctx exps_il
-  in
-  let exps_il = List.combine idxs exps_il in
-  (ctx, exps_il, sideconditions_il)
-
-and elab_rule_output_with_bind (ctx : Ctx.t) (exps_il : (int * Il.Ast.exp) list)
-    : (int * Il.Ast.exp) list =
-  let idxs, exps_il = List.split exps_il in
-  let exps_il = Dataflow.Analysis.analyze_exps_as_bound ctx exps_il in
-  List.combine idxs exps_il
-
-and elab_rule_def (ctx : Ctx.t) (at : region) (id_rel : id) (id_rule : id)
-    (exp : exp) (prems : prem list) : Ctx.t =
-  let nottyp, inputs = Ctx.find_rel ctx id_rel in
-  let ctx_local = { ctx with frees = IdSet.empty } in
-  let ctx_local =
-    let def = RuleD (id_rel, id_rule, exp, prems) $ at in
-    El.Free.free_id_def def |> Ctx.add_frees ctx_local
-  in
-  let+ ctx_local, notexp_il = elab_exp_not ctx_local (NotationT nottyp) exp in
-  let mixop, exps_il = notexp_il in
-  let exps_il_input, exps_il_output =
-    exps_il
-    |> List.mapi (fun idx exp -> (idx, exp))
-    |> List.partition (fun (idx, _) -> List.mem idx inputs)
-  in
-  let ctx_local, exps_il_input, sideconditions_il =
-    elab_rule_input_with_bind ctx_local exps_il_input
-  in
-  let ctx_local, prems_il = elab_prems_with_bind ctx_local prems in
-  let prems_il = sideconditions_il @ prems_il in
-  let exps_il_output = elab_rule_output_with_bind ctx_local exps_il_output in
-  let notexp_il =
-    let exps_il =
-      exps_il_input @ exps_il_output
-      |> List.sort (fun (idx_a, _) (idx_b, _) -> compare idx_a idx_b)
-      |> List.map snd
-    in
-    (mixop, exps_il)
-  in
-  let rule = (id_rule, notexp_il, prems_il) $ at in
-  Ctx.add_rule ctx id_rel rule
-
 (* Elaboration of rule groups *)
 
-and elab_rule_group_def (ctx : Ctx.t) (at : region) (id_rel : id) (_id_group : id)
-    (rules : rule list) : Ctx.t =
-  List.fold_left
-    (fun ctx (id_rel_inner, id_rule, exp, prems) ->
-      check (id_rel.it = id_rel_inner.it) at
-        (Format.asprintf
-           "rule group contains a rule with a different relation identifier %s"
-           (Id.to_string id_rel_inner));
-      elab_rule_def ctx at id_rel id_rule exp prems)
-    ctx rules
+and elab_rule_group_def (ctx : Ctx.t) (at : region) (id_rel : id)
+    (id_rulegroup : id) (rules : rule list) : Ctx.t =
+  let rules_il = List.map (elab_rule ctx) rules in
+  let rulegroup_il = (id_rulegroup, rules_il) $ at in
+  Ctx.add_rulegroup ctx id_rel rulegroup_il
 
 (* Elaboration of function declarations *)
 
@@ -1674,8 +1664,8 @@ and elab_def_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
 let populate_rule (ctx : Ctx.t) (def_il : Il.Ast.def) : Il.Ast.def =
   match def_il.it with
   | Il.Ast.RelD (id, nottyp_il, inputs, []) ->
-      let rules_il = Ctx.find_rules ctx id in
-      Il.Ast.RelD (id, nottyp_il, inputs, rules_il) $ def_il.at
+      let rulegroups_il = Ctx.find_rulegroups ctx id in
+      Il.Ast.RelD (id, nottyp_il, inputs, rulegroups_il) $ def_il.at
   | Il.Ast.RelD _ -> error def_il.at "relation was already populated"
   | _ -> def_il
 

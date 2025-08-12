@@ -966,13 +966,20 @@ and invoke_rel (ctx : Ctx.t) (id : id) (values_input : value list) :
 and invoke_rel' (ctx : Ctx.t) (id : id) (values_input : value list) :
     (Ctx.t * value list) attempt =
   (* Find the relation *)
-  let inputs, rules = Ctx.find_rel Local ctx id in
+  let inputs, rulegroups = Ctx.find_rel Local ctx id in
+  let rules =
+    List.concat_map
+      (fun rulegroup ->
+        let id_rulegroup, rules = rulegroup.it in
+        List.map (fun rule -> (id_rulegroup, rule)) rules)
+      rulegroups
+  in
   guard (rules <> []) id.at "relation has no rules";
   (* Apply the first matching rule *)
   let attempt_rules () =
     let attempt_rules' =
       List.map
-        (fun rule ->
+        (fun (id_rulegroup, rule) ->
           let id_rule, _, _ = rule.it in
           let attempt_rule' (ctx_local : Ctx.t) (prems : prem list)
               (exps_output : exp list) : (Ctx.t * value list) attempt =
@@ -995,7 +1002,8 @@ and invoke_rel' (ctx : Ctx.t) (id : id) (values_input : value list) :
             (* Try evaluating the rule *)
             attempt_rule' ctx_local prems exps_output
             |> nest id.at
-                 (F.asprintf "application of rule %s/%s failed" id.it id_rule.it)
+                 (F.asprintf "application of rule %s/%s/%s failed" id.it
+                    id_rulegroup.it id_rule.it)
           in
           attempt_rule)
         rules
@@ -1157,8 +1165,8 @@ let load_def (ctx : Ctx.t) (def : def) : Ctx.t =
   | TypD (id, tparams, deftyp) ->
       let typdef = (tparams, deftyp) in
       Ctx.add_typdef Global ctx id typdef
-  | RelD (id, _, inputs, rules) ->
-      let rel = (inputs, rules) in
+  | RelD (id, _, inputs, rulegroups) ->
+      let rel = (inputs, rulegroups) in
       Ctx.add_rel Global ctx id rel
   | DecD (id, tparams, _, _, clauses) ->
       let func = (tparams, clauses) in

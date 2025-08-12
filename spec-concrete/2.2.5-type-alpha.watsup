@@ -32,34 +32,42 @@ rule Type_alpha/basetype:
 rule Type_alpha/nametype:
   (TID tid) ~~  (TID tid)
 
-rule Type_alpha/spectype-nominal:
-  (polyTypeDefIR_a `< typeIR_a* >) ~~ (polyTypeDefIR_b `< typeIR_b* >)
-  -- if typeIR_a_spec = $specialize_typeDef(polyTypeDefIR_a, typeIR_a*)
-  -- if typeIR_b_spec = $specialize_typeDef(polyTypeDefIR_b, typeIR_b*)
-  -- Type_alpha: typeIR_a_spec ~~ typeIR_b_spec
-  ---- ;; for nominal types, the type arguments must also match
-  -- if $is_nominal_typeIR(typeIR_a_spec)
-        /\ $is_nominal_typeIR(typeIR_b_spec)
-  -- (Type_alpha: typeIR_a ~~ typeIR_b)*
+rulegroup Type_alpha/spectype {
 
-rule Type_alpha/spectype-structural:
-  (polyTypeDefIR_a `< typeIR_a* >) ~~ (polyTypeDefIR_b `< typeIR_b* >)
-  -- if typeIR_a_spec = $specialize_typeDef(polyTypeDefIR_a, typeIR_a*)
-  -- if typeIR_b_spec = $specialize_typeDef(polyTypeDefIR_b, typeIR_b*)
-  -- Type_alpha: typeIR_a_spec ~~ typeIR_b_spec
-  ---- ;; for structural types, the type arguments do not need to match
-  -- if ~$is_nominal_typeIR(typeIR_a_spec)
-        /\ ~$is_nominal_typeIR(typeIR_b_spec)
+  rule Type_alpha/nominal:
+    (polyTypeDefIR_a `< typeIR_a* >) ~~ (polyTypeDefIR_b `< typeIR_b* >)
+    -- if typeIR_a_spec = $specialize_typeDef(polyTypeDefIR_a, typeIR_a*)
+    -- if typeIR_b_spec = $specialize_typeDef(polyTypeDefIR_b, typeIR_b*)
+    -- Type_alpha: typeIR_a_spec ~~ typeIR_b_spec
+    ---- ;; for nominal types, the type arguments must also match
+    -- if $is_nominal_typeIR(typeIR_a_spec)
+          /\ $is_nominal_typeIR(typeIR_b_spec)
+    -- (Type_alpha: typeIR_a ~~ typeIR_b)*
+
+  rule Type_alpha/structural:
+    (polyTypeDefIR_a `< typeIR_a* >) ~~ (polyTypeDefIR_b `< typeIR_b* >)
+    -- if typeIR_a_spec = $specialize_typeDef(polyTypeDefIR_a, typeIR_a*)
+    -- if typeIR_b_spec = $specialize_typeDef(polyTypeDefIR_b, typeIR_b*)
+    -- Type_alpha: typeIR_a_spec ~~ typeIR_b_spec
+    ---- ;; for structural types, the type arguments do not need to match
+    -- if ~$is_nominal_typeIR(typeIR_a_spec)
+          /\ ~$is_nominal_typeIR(typeIR_b_spec)
+
+}
 
 ;;; Typedef types
 
-rule Type_alpha/typedeftype-left:
-  (TYPEDEF _ typeIR_a) ~~ typeIR_b
-  -- Type_alpha: typeIR_a ~~ typeIR_b
+rulegroup Type_alpha/typedeftype {
 
-rule Type_alpha/typedeftype-right:
-  typeIR_a ~~ (TYPEDEF _ typeIR_b)
-  -- Type_alpha: typeIR_a ~~ typeIR_b
+  rule Type_alpha/left:
+    (TYPEDEF _ typeIR_a) ~~ typeIR_b
+    -- Type_alpha: typeIR_a ~~ typeIR_b
+
+  rule Type_alpha/right:
+    typeIR_a ~~ (TYPEDEF _ typeIR_b)
+    -- Type_alpha: typeIR_a ~~ typeIR_b
+
+}
 
 rule Type_alpha/newtype:
   (TYPE tid typeIR_a) ~~ (TYPE tid typeIR_b)

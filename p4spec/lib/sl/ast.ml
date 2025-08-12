@@ -137,6 +137,11 @@ and instr' =
   | ReturnI of exp
   | DebugI of exp
 
+(* Instruction groups *)
+
+type instrgroup = instrgroup' phrase
+and instrgroup' = id * exp list * instr list
+
 (* Hints *)
 
 type hint = { hintid : id; hintexp : El.Ast.exp }
@@ -147,8 +152,8 @@ type def = def' phrase
 and def' =
   (* `syntax` id `<` list(tparam, `,`) `>` `=` deftyp *)
   | TypD of id * tparam list * deftyp
-  (* `relation` id `:` mixop `hint(input` `%`int* `)` list(exp, `,`) `:` instr* *)
-  | RelD of id * (mixop * int list) * exp list * instr list
+  (* `relation` id `:` mixop `hint(input` `%`int* `)` list(exp, `,`) `:` instrgroup* *)
+  | RelD of id * (mixop * int list) * instrgroup list
   (* `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ instr* *)
   | DecD of id * tparam list * arg list * instr list
 

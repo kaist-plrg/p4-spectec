@@ -299,24 +299,40 @@ and string_of_targs targs =
 
 and string_of_rule rule =
   let ruleid, notexp, prems = rule.it in
-  ";; " ^ string_of_region rule.at ^ "\n   rule " ^ string_of_ruleid ruleid
-  ^ ": " ^ string_of_notexp notexp ^ string_of_prems prems
+  ";; " ^ string_of_region rule.at ^ "\n" ^ indent 2 ^ "rule "
+  ^ string_of_ruleid ruleid ^ ": " ^ string_of_notexp notexp
+  ^ string_of_prems ~level:2 prems
 
 and string_of_rules rules =
   String.concat ""
-    (List.map (fun rule -> "\n\n   " ^ string_of_rule rule) rules)
+    (List.map (fun rule -> "\n\n" ^ indent 2 ^ string_of_rule rule) rules)
+
+and string_of_rulegroup rulegroup =
+  let rulegroupid, rules = rulegroup.it in
+  ";; "
+  ^ string_of_region rulegroup.at
+  ^ "\n" ^ indent 1 ^ "rulegroup "
+  ^ string_of_ruleid rulegroupid
+  ^ " {\n" ^ string_of_rules rules ^ "\n" ^ indent 1 ^ "}"
+
+and string_of_rulegroups rulegroups =
+  String.concat ""
+    (List.map
+       (fun rulegroup -> "\n\n" ^ indent 1 ^ string_of_rulegroup rulegroup)
+       rulegroups)
 
 (* Clause *)
 
 and string_of_clause idx clause =
   let args, exp, prems = clause.it in
-  ";; " ^ string_of_region clause.at ^ "\n   clause " ^ string_of_int idx
-  ^ string_of_args args ^ " = " ^ string_of_exp exp ^ string_of_prems prems
+  ";; " ^ string_of_region clause.at ^ "\n" ^ indent 1 ^ "clause "
+  ^ string_of_int idx ^ string_of_args args ^ " = " ^ string_of_exp exp
+  ^ string_of_prems ~level:1 prems
 
 and string_of_clauses clauses =
   String.concat ""
     (List.mapi
-       (fun idx clause -> "\n\n   " ^ string_of_clause idx clause)
+       (fun idx clause -> "\n\n" ^ indent 1 ^ string_of_clause idx clause)
        clauses)
 
 (* Premises *)
@@ -334,9 +350,10 @@ and string_of_prem prem =
       "(" ^ string_of_prem prem ^ ")" ^ string_of_iterexp iterexp
   | DebugPr exp -> "debug " ^ string_of_exp exp
 
-and string_of_prems prems =
+and string_of_prems ?(level = 0) prems =
+  let indent = indent level in
   String.concat ""
-    (List.map (fun prem -> "\n      -- " ^ string_of_prem prem) prems)
+    (List.map (fun prem -> "\n" ^ indent ^ "-- " ^ string_of_prem prem) prems)
 
 (* Hints *)
 
@@ -354,9 +371,9 @@ let rec string_of_def def =
   | TypD (typid, tparams, deftyp) ->
       "syntax " ^ string_of_typid typid ^ string_of_tparams tparams ^ " = "
       ^ string_of_deftyp deftyp
-  | RelD (relid, nottyp, _, rules) ->
+  | RelD (relid, nottyp, _, rulegroups) ->
       "relation " ^ string_of_relid relid ^ ": " ^ string_of_nottyp nottyp
-      ^ string_of_rules rules
+      ^ string_of_rulegroups rulegroups
   | DecD (defid, tparams, params, typ, clauses) ->
       "def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : " ^ string_of_typ typ ^ " ="

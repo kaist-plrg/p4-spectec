@@ -152,3 +152,18 @@ and eq_instr (instr_a : instr) (instr_b : instr) : bool =
 and eq_instrs (instrs_a : instr list) (instrs_b : instr list) : bool =
   List.length instrs_a = List.length instrs_b
   && List.for_all2 eq_instr instrs_a instrs_b
+
+(* Instruction groups *)
+
+let rec eq_instrgroup (instrgroup_a : instrgroup) (instrgroup_b : instrgroup) :
+    bool =
+  let id_instrgroup_a, exps_input_a, instrs_a = instrgroup_a.it in
+  let id_instrgroup_b, exps_input_b, instrs_b = instrgroup_b.it in
+  eq_id id_instrgroup_a id_instrgroup_b
+  && eq_exps exps_input_a exps_input_b
+  && eq_instrs instrs_a instrs_b
+
+and eq_instrgroups (instrgroups_a : instrgroup list)
+    (instrgroups_b : instrgroup list) : bool =
+  List.length instrgroups_a = List.length instrgroups_b
+  && List.for_all2 eq_instrgroup instrgroups_a instrgroups_b

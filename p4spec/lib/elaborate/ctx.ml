@@ -108,13 +108,23 @@ let find_rel (ctx : t) (rid : RId.t) : nottyp * int list =
 let bound_rel (ctx : t) (rid : RId.t) : bool =
   find_rel_opt ctx rid |> Option.is_some
 
-let find_rules_opt (ctx : t) (rid : RId.t) : Il.Ast.rule list option =
-  REnv.find_opt rid ctx.renv |> Option.map (fun (_, _, rules) -> rules)
+let find_rulegroups_opt (ctx : t) (rid : RId.t) : Il.Ast.rulegroup list option =
+  REnv.find_opt rid ctx.renv
+  |> Option.map (fun (_, _, rulegroups) -> rulegroups)
 
-let find_rules (ctx : t) (rid : RId.t) : Il.Ast.rule list =
-  match find_rules_opt ctx rid with
-  | Some rules -> rules
+let find_rulegroups (ctx : t) (rid : RId.t) : Il.Ast.rulegroup list =
+  match find_rulegroups_opt ctx rid with
+  | Some rulegroups -> rulegroups
   | None -> error_undef rid.at "relation" rid.it
+
+let bound_rulegroup (ctx : t) (rid : RId.t) (rulegroupid : Id.t) : bool =
+  let rulegroups_opt = find_rulegroups_opt ctx rid in
+  match rulegroups_opt with
+  | Some rulegroups ->
+      List.exists
+        (fun rulegroup -> rulegroup |> it |> fst |> Id.eq rulegroupid)
+        rulegroups
+  | None -> false
 
 (* Finders for definitions *)
 
@@ -191,10 +201,14 @@ let add_rel (ctx : t) (rid : RId.t) (nottyp : nottyp) (inputs : int list) : t =
   let renv = REnv.add rid rel ctx.renv in
   { ctx with renv }
 
-let add_rule (ctx : t) (rid : RId.t) (rule : Il.Ast.rule) : t =
+let add_rulegroup (ctx : t) (rid : RId.t) (rulegroup : Il.Ast.rulegroup) : t =
   if not (bound_rel ctx rid) then error_undef rid.at "relation" rid.it;
-  let nottyp, inputs, rules = REnv.find rid ctx.renv in
-  let rel = (nottyp, inputs, rules @ [ rule ]) in
+  let rulegroupid = rulegroup |> it |> fst in
+  if bound_rulegroup ctx rid rulegroupid then
+    error_dup rulegroupid.at "rulegroup" rulegroupid.it;
+  let nottyp, inputs, rulegroups = REnv.find rid ctx.renv in
+  let rulegroups = rulegroups @ [ rulegroup ] in
+  let rel = (nottyp, inputs, rulegroups) in
   let renv = REnv.add rid rel ctx.renv in
   { ctx with renv }
 

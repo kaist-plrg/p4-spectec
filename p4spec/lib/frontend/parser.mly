@@ -717,6 +717,8 @@ hint :
 (* Rules *)
 
 rule :
+  | rule_ { $1 @@@ $sloc }
+rule_ :
   | RULE relid ruleids COLON exp prem_list
     { let id = if $3 = "" then "" else String.sub $3 1 (String.length $3 - 1) in
       ($2, id @@@ $loc($3), $5, $6) }
@@ -747,10 +749,12 @@ def_ :
     { RelD ($2, $4, $5) }
   | RULE relid ruleids COLON exp prem_list
     { let id = if $3 = "" then "" else String.sub $3 1 (String.length $3 - 1) in
-      RuleD ($2, id @@@ $loc($3), $5, $6) }
+      let region = over_region [ (at $loc($1)); (at $loc($6)) ] in
+      let rule = ($2, id @@@ $loc($3), $5, $6) $ region in
+      RuleGroupD ($2, id @@@ $loc($3), [ rule ]) }
   | RULEGROUP relid ruleids LBRACE rules RBRACE
     { let id = if $3 = "" then "" else String.sub $3 1 (String.length $3 - 1) in
-      RuleGroupD ($2, id @@@ $loc($3), []) }
+      RuleGroupD ($2, id @@@ $loc($3), $5) }
   | DEC DOLLAR defid COLON plaintyp hint*
     { DecD ($3, [], [], $5, $6) }
   | DEC DOLLAR defid_lparen enter_scope comma_list(param) RPAREN COLON plaintyp hint* exit_scope

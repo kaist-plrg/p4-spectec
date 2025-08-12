@@ -1466,9 +1466,10 @@ let load_def (ctx : Ctx.t) (def : def) : Ctx.t =
   | TypD (id, tparams, deftyp) ->
       let typdef = (tparams, deftyp) in
       Ctx.add_typdef Global ctx id typdef
-  | RelD (id, (_, inputs), exps_input, instrs) ->
-      let rel = (inputs, exps_input, instrs) in
-      Ctx.add_rel Global ctx id rel
+  | RelD _ -> assert false
+  (* | RelD (id, (_, inputs), exps_input, instrs) -> *)
+  (*     let rel = (inputs, exps_input, instrs) in *)
+  (*     Ctx.add_rel Global ctx id rel *)
   | DecD (id, tparams, args_input, instrs) ->
       let func = (tparams, args_input, instrs) in
       Ctx.add_func Global ctx id func

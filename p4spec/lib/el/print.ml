@@ -237,12 +237,11 @@ and string_of_prems prems =
 (* Rules *)
 
 and string_of_rule rule =
-  let relid, ruleid, exp, prems = rule in
+  let relid, ruleid, exp, prems = rule.it in
   "rule " ^ string_of_relid relid ^ string_of_ruleid ruleid ^ ":\n  "
   ^ string_of_exp exp ^ string_of_prems prems
 
-and string_of_rules rules =
-  String.concat "\n" (List.map string_of_rule rules)
+and string_of_rules rules = String.concat "\n" (List.map string_of_rule rules)
 
 (* Definitions *)
 
@@ -262,10 +261,9 @@ let string_of_def def =
       "var " ^ string_of_varid varid ^ " : " ^ string_of_plaintyp plaintyp
   | RelD (relid, nottyp, _hints) ->
       "relation " ^ string_of_relid relid ^ ": " ^ string_of_nottyp nottyp
-  | RuleD rule -> string_of_rule rule
   | RuleGroupD (relid, groupid, rules) ->
       "rulegroup " ^ string_of_relid relid ^ string_of_ruleid groupid ^ ":\n  "
-      ^ (String.concat "\n  " (List.map string_of_rule rules))
+      ^ String.concat "\n  " (List.map string_of_rule rules)
   | DecD (defid, tparams, params, plaintyp, _hints) ->
       "dec " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : "

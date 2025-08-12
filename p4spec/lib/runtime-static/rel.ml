@@ -34,9 +34,9 @@ end
 
 (* Relation *)
 
-type t = El.Ast.nottyp * Hint.t * Il.Ast.rule list
+type t = El.Ast.nottyp * Hint.t * Il.Ast.rulegroup list
 
-let to_string (nottyp, inputs, rules) =
+let to_string (nottyp, inputs, rulegroups) =
   El.Print.string_of_nottyp nottyp
   ^ " " ^ Hint.to_string inputs ^ " =\n"
-  ^ String.concat "\n   " (List.map Il.Print.string_of_rule rules)
+  ^ String.concat "\n   " (List.map Il.Print.string_of_rulegroup rulegroups)

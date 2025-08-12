@@ -169,6 +169,9 @@ and targ' = typ'
 and rule = rule' phrase
 and rule' = id * notexp * prem list
 
+and rulegroup = rulegroup' phrase
+and rulegroup' = id * rule list
+
 (* Clauses *)
 
 and clause = clause' phrase
@@ -195,8 +198,8 @@ type def = def' phrase
 and def' =
   (* `syntax` id `<` list(tparam, `,`) `>` `=` deftyp *)
   | TypD of id * tparam list * deftyp
-  (* `relation` id `:` nottyp `hint(input` `%`int* `)` rule* *)
-  | RelD of id * nottyp * int list * rule list
+  (* `relation` id `:` nottyp `hint(input` `%`int* `)` rulegroup* *)
+  | RelD of id * nottyp * int list * rulegroup list
   (* `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ clause* *)
   | DecD of id * tparam list * param list * typ * clause list
 

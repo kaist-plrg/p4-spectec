@@ -89,6 +89,13 @@ let free_rule (rule : rule) : t =
 let free_rules (rules : rule list) : t =
   rules |> List.map free_rule |> List.fold_left ( + ) empty
 
+let free_rulegroup (rulegroup : rulegroup) : t =
+  let _, rules = rulegroup.it in
+  free_rules rules
+
+let free_rulegroups (rulegroups : rulegroup list) : t =
+  rulegroups |> List.map free_rulegroup |> List.fold_left ( + ) empty
+
 let free_clause (clause : clause) : t =
   let args, exp, prems = clause.it in
   free_args args + free_exp exp + free_prems prems
@@ -98,6 +105,6 @@ let free_clauses (clauses : clause list) : t =
 
 let free_def (def : def) : t =
   match def.it with
-  | RelD (_, _, _, rules) -> free_rules rules
+  | RelD (_, _, _, rulegroups) -> free_rulegroups rulegroups
   | DecD (_, _, _, _, clauses) -> free_clauses clauses
   | _ -> empty

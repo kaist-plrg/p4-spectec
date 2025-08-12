@@ -62,6 +62,7 @@ module Id = struct
 
   let to_string t = t.it
   let compare t_a t_b = compare t_a.it t_b.it
+  let eq t_a t_b = compare t_a t_b = 0
 end
 
 module IdSet = struct

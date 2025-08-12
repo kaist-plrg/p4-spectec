@@ -303,6 +303,20 @@ and string_of_rules rules =
   String.concat ""
     (List.map (fun rule -> "\n\n   " ^ string_of_rule rule) rules)
 
+and string_of_rulegroup rulegroup =
+  let rulegroupid, rules = rulegroup.it in
+  ";; "
+  ^ string_of_region rulegroup.at
+  ^ "\n   rulegroup "
+  ^ string_of_ruleid rulegroupid
+  ^ " {\n" ^ string_of_rules rules ^ "}"
+
+and string_of_rulegroups rulegroups =
+  String.concat ""
+    (List.map
+       (fun rulegroup -> "\n\n   " ^ string_of_rulegroup rulegroup)
+       rulegroups)
+
 (* Clause *)
 
 and string_of_clause idx clause =
@@ -351,9 +365,9 @@ let rec string_of_def def =
   | TypD (typid, tparams, deftyp) ->
       "syntax " ^ string_of_typid typid ^ string_of_tparams tparams ^ " = "
       ^ string_of_deftyp deftyp
-  | RelD (relid, nottyp, _, rules) ->
+  | RelD (relid, nottyp, _, rulegroups) ->
       "relation " ^ string_of_relid relid ^ ": " ^ string_of_nottyp nottyp
-      ^ string_of_rules rules
+      ^ string_of_rulegroups rulegroups
   | DecD (defid, tparams, params, typ, clauses) ->
       "def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : " ^ string_of_typ typ ^ " ="
