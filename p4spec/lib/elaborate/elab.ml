@@ -70,124 +70,6 @@ let as_struct_plaintyp (ctx : Ctx.t) (plaintyp : plaintyp) :
       | _ -> fail plaintyp.at "cannot destruct type as a struct")
   | _ -> fail plaintyp.at "cannot destruct type as a struct"
 
-(* Type equivalence and subtyping *)
-
-let rec equiv_typ (ctx : Ctx.t) (typ_a : typ) (typ_b : typ) : bool =
-  match (typ_a, typ_b) with
-  | PlainT plaintyp_a, PlainT plaintyp_b ->
-      equiv_plaintyp ctx plaintyp_a plaintyp_b
-  | NotationT nottyp_a, NotationT nottyp_b -> equiv_nottyp ctx nottyp_a nottyp_b
-  | _ -> false
-
-and equiv_plaintyp (ctx : Ctx.t) (plaintyp_a : plaintyp) (plaintyp_b : plaintyp)
-    : bool =
-  let plaintyp_a = Plaintyp.expand_plaintyp ctx.tdenv plaintyp_a in
-  let plaintyp_b = Plaintyp.expand_plaintyp ctx.tdenv plaintyp_b in
-  match (plaintyp_a.it, plaintyp_b.it) with
-  | BoolT, BoolT -> true
-  | NumT numtyp_a, NumT numtyp_b -> Num.equiv numtyp_a numtyp_b
-  | TextT, TextT -> true
-  | VarT (tid_a, targs_a), VarT (tid_b, targs_b) ->
-      tid_a.it = tid_b.it
-      && List.length targs_a = List.length targs_b
-      && List.for_all2 (equiv_plaintyp ctx) targs_a targs_b
-  | ParenT plaintyp_a, _ -> equiv_plaintyp ctx plaintyp_a plaintyp_b
-  | _, ParenT plaintyp_b -> equiv_plaintyp ctx plaintyp_a plaintyp_b
-  | TupleT plaintyps_a, TupleT plaintyps_b ->
-      List.length plaintyps_a = List.length plaintyps_b
-      && List.for_all2 (equiv_plaintyp ctx) plaintyps_a plaintyps_b
-  | IterT (plaintyp_a, iter_a), IterT (plaintyp_b, iter_b) ->
-      equiv_plaintyp ctx plaintyp_a plaintyp_b && iter_a = iter_b
-  | _ -> false
-
-and equiv_nottyp (ctx : Ctx.t) (nottyp_a : nottyp) (nottyp_b : nottyp) : bool =
-  match (nottyp_a.it, nottyp_b.it) with
-  | AtomT atom_a, AtomT atom_b -> atom_a.it = atom_b.it
-  | SeqT typs_a, SeqT typs_b ->
-      List.length typs_a = List.length typs_b
-      && List.for_all2 (equiv_typ ctx) typs_a typs_b
-  | InfixT (typ_l_a, atom_a, typ_r_a), InfixT (typ_l_b, atom_b, typ_r_b) ->
-      equiv_typ ctx typ_l_a typ_l_b
-      && atom_a.it = atom_b.it
-      && equiv_typ ctx typ_r_a typ_r_b
-  | BrackT (atom_l_a, typ_a, atom_r_a), BrackT (atom_l_b, typ_b, atom_r_b) ->
-      atom_l_a.it = atom_l_b.it && equiv_typ ctx typ_a typ_b
-      && atom_r_a.it = atom_r_b.it
-  | _ -> false
-
-let rec sub_plaintyp (ctx : Ctx.t) (plaintyp_a : plaintyp)
-    (plaintyp_b : plaintyp) : bool =
-  equiv_plaintyp ctx plaintyp_a plaintyp_b
-  || sub_plaintyp' ctx plaintyp_a plaintyp_b
-
-and sub_plaintyp' (ctx : Ctx.t) (plaintyp_a : plaintyp) (plaintyp_b : plaintyp)
-    : bool =
-  let plaintyp_a = Plaintyp.expand_plaintyp ctx.tdenv plaintyp_a in
-  let plaintyp_b = Plaintyp.expand_plaintyp ctx.tdenv plaintyp_b in
-  match (plaintyp_a.it, plaintyp_b.it) with
-  | NumT numtyp_a, NumT numtyp_b -> Num.sub numtyp_a numtyp_b
-  | VarT _, VarT _ -> (
-      let kind_a = Plaintyp.kind_plaintyp ctx.tdenv plaintyp_a in
-      let kind_b = Plaintyp.kind_plaintyp ctx.tdenv plaintyp_b in
-      match (kind_a, kind_b) with
-      | Variant typcases_a, Variant typcases_b ->
-          let nottyps_a = List.map fst typcases_a |> List.map fst in
-          let nottyps_b = List.map fst typcases_b |> List.map fst in
-          List.for_all
-            (fun nottyp_a -> List.exists (equiv_nottyp ctx nottyp_a) nottyps_b)
-            nottyps_a
-      | _ -> false)
-  | ParenT plaintyp_a, _ -> sub_plaintyp ctx plaintyp_a plaintyp_b
-  | _, ParenT plaintyp_b -> sub_plaintyp ctx plaintyp_a plaintyp_b
-  | TupleT plaintyps_a, TupleT plaintyps_b ->
-      List.length plaintyps_a = List.length plaintyps_b
-      && List.for_all2 (sub_plaintyp ctx) plaintyps_a plaintyps_b
-  | IterT (plaintyp_a, iter_a), IterT (plaintyp_b, iter_b) when iter_a = iter_b
-    ->
-      sub_plaintyp ctx plaintyp_a plaintyp_b
-  | IterT (plaintyp_a, Opt), IterT (plaintyp_b, List) ->
-      sub_plaintyp ctx plaintyp_a plaintyp_b
-  | _, IterT (plaintyp_b, Opt) -> sub_plaintyp ctx plaintyp_a plaintyp_b
-  | _, IterT (plaintyp_b, List) -> sub_plaintyp ctx plaintyp_a plaintyp_b
-  | _ -> false
-
-and equiv_param (ctx : Ctx.t) (param_a : param) (param_b : param) : bool =
-  match (param_a.it, param_b.it) with
-  | ExpP plaintyp_a, ExpP plaintyp_b -> equiv_plaintyp ctx plaintyp_a plaintyp_b
-  | ( DefP (_, tparams_a, params_a, plaintyp_a),
-      DefP (_, tparams_b, params_b, plaintyp_b) ) ->
-      equiv_functyp ctx param_a.at tparams_a params_a plaintyp_a tparams_b
-        params_b plaintyp_b
-  | _ -> false
-
-and equiv_functyp (ctx : Ctx.t) (at : region) (tparams_a : tparam list)
-    (params_a : param list) (plaintyp_a : plaintyp) (tparams_b : tparam list)
-    (params_b : param list) (plaintyp_b : plaintyp) : bool =
-  check
-    (List.length tparams_a = List.length tparams_b)
-    no_region "type parameters do not match";
-  let ctx, theta_a, theta_b =
-    List.fold_left2
-      (fun (ctx, theta_a, theta_b) tparam_a tparam_b ->
-        let tid_fresh = "__FRESH" ^ string_of_int (Ctx.fresh ()) $ no_region in
-        let plaintyp_fresh = VarT (tid_fresh, []) $ no_region in
-        let ctx = Ctx.add_tparam ctx tid_fresh in
-        let theta_a = TIdMap.add tparam_a plaintyp_fresh theta_a in
-        let theta_b = TIdMap.add tparam_b plaintyp_fresh theta_b in
-        (ctx, theta_a, theta_b))
-      (ctx, TIdMap.empty, TIdMap.empty)
-      tparams_a tparams_b
-  in
-  check
-    (List.length params_a = List.length params_b)
-    at "parameters do not match";
-  let params_a = Plaintyp.subst_params theta_a params_a in
-  let params_b = Plaintyp.subst_params theta_b params_b in
-  let plaintyp_a = Plaintyp.subst_plaintyp theta_a plaintyp_a in
-  let plaintyp_b = Plaintyp.subst_plaintyp theta_b plaintyp_b in
-  List.for_all2 (equiv_param ctx) params_a params_b
-  && equiv_plaintyp ctx plaintyp_a plaintyp_b
-
 (* Elaboration of plain types *)
 
 let rec elab_plaintyp (ctx : Ctx.t) (plaintyp : plaintyp) : Il.Ast.typ =
@@ -604,7 +486,7 @@ and infer_list_exp (ctx : Ctx.t) (at : region) (exps : exp list) :
   | exp :: exps ->
       let* ctx, exp_il, plaintyp = infer_exp ctx exp in
       let* ctx, exps_il, plaintyps = infer_exps ctx exps in
-      if List.for_all (equiv_plaintyp ctx plaintyp) plaintyps then
+      if List.for_all (Equiv.equiv_plaintyp ctx.tdenv plaintyp) plaintyps then
         let exp_il = Il.Ast.ListE (exp_il :: exps_il) in
         let plaintyp = IterT (plaintyp, List) in
         Ok (ctx, exp_il, plaintyp)
@@ -846,8 +728,9 @@ and fail_cast (at : region) (plaintyp_a : plaintyp) (plaintyp_b : plaintyp) =
 
 and cast_exp (ctx : Ctx.t) (plaintyp_expect : plaintyp)
     (plaintyp_infer : plaintyp) (exp_il : Il.Ast.exp) : Il.Ast.exp attempt =
-  if equiv_plaintyp ctx plaintyp_expect plaintyp_infer then Ok exp_il
-  else if sub_plaintyp ctx plaintyp_infer plaintyp_expect then
+  if Equiv.equiv_plaintyp ctx.tdenv plaintyp_expect plaintyp_infer then
+    Ok exp_il
+  else if Sub.sub_plaintyp ctx.tdenv plaintyp_infer plaintyp_expect then
     let typ_il_expect = elab_plaintyp ctx plaintyp_expect in
     let exp_il =
       Il.Ast.UpCastE (typ_il_expect, exp_il) $$ (exp_il.at, typ_il_expect.it)
@@ -1267,8 +1150,8 @@ and elab_arg ?(as_def = false) (ctx : Ctx.t) (param : param) (arg : arg) :
   | DefP (id_p, tparams_p, params_p, plaintyp_p), DefA id_a ->
       let tparams_a, params_a, plaintyp_a = Ctx.find_dec ctx id_a in
       check
-        (equiv_functyp ctx arg.at tparams_p params_p plaintyp_p tparams_a
-           params_a plaintyp_a)
+        (Equiv.equiv_functyp ctx.tdenv arg.at tparams_p params_p plaintyp_p
+           tparams_a params_a plaintyp_a)
         arg.at
         (Format.asprintf
            "function argument does not match the declared function parameter %s"
@@ -1453,6 +1336,147 @@ and elab_rule (ctx : Ctx.t) (rule : rule) : Il.Ast.rule =
   in
   (id_rule, notexp_il, prems_il) $ rule.at
 
+and elab_rule_input_with_bind' (ctx : Ctx.t) (exps_il : Il.Ast.exp list) :
+    Ctx.t * Il.Ast.exp list * Il.Ast.prem list =
+  Dataflow.Analysis.analyze_exps_as_bind ctx exps_il
+
+and elab_rule_output_with_bind' (ctx : Ctx.t) (exps_il : Il.Ast.exp list) :
+    Il.Ast.exp list =
+  Dataflow.Analysis.analyze_exps_as_bound ctx exps_il
+
+and elab_rulegroup (ctx : Ctx.t) (id_rel : id) (id_rulegroup : id)
+    (rules : rule list) :
+    Id.t
+    * Il.Ast.exp list
+    * Il.Ast.exp list
+    * Il.Ast.prem list
+    * (Id.t * Il.Ast.prem list * Il.Ast.exp list) list =
+  (* Find the relation *)
+  let nottyp, inputs = Ctx.find_rel ctx id_rel in
+  (* Create local context per rule *)
+  let ctxs_local =
+    List.map
+      (fun rule ->
+        let ctx_local = { ctx with frees = IdSet.empty } in
+        El.Free.free_rule rule |> Ctx.add_frees ctx_local)
+      rules
+  in
+  (* Split and aggregate rules *)
+  let id_rule_group, exp_group, prems_group =
+    List.fold_left
+      (fun (id_rule_group, exp_group, prems_group) rule ->
+        let id_rel_, id_rule, exp, prems = rule.it in
+        check (Id.eq id_rel id_rel_) id_rule.at
+          "rule group identifier does not match relation identifier";
+        let id_rule_group = id_rule_group @ [ id_rule ] in
+        let exp_group = exp_group @ [ exp ] in
+        let prems_group = prems_group @ [ prems ] in
+        (id_rule_group, exp_group, prems_group))
+      ([], [], []) rules
+  in
+  (* Elaborate rule signatures *)
+  let ctxs_local, notexps_il =
+    List.map2
+      (fun ctx_local exp ->
+        let+ ctx_local, notexp_il =
+          elab_exp_not ctx_local (NotationT nottyp) exp
+        in
+        (ctx_local, notexp_il))
+      ctxs_local exp_group
+    |> List.split
+  in
+  (* Split inputs and outputs of the rules *)
+  let exps_il_input_group, exps_il_output_group =
+    List.map
+      (fun notexp_il ->
+        let _, exps_il = notexp_il in
+        Rel.Hint.split_exps_without_idx inputs exps_il)
+      notexps_il
+    |> List.split
+  in
+  (* Create temporary local context for anti-unification *)
+  let ctx_local_unified =
+    let ctx_local_unified = { ctx with frees = IdSet.empty } in
+    let frees =
+      ctxs_local
+      |> List.map (fun (ctx_local : Ctx.t) -> ctx_local.frees)
+      |> List.fold_left IdSet.union IdSet.empty
+    in
+    Ctx.add_frees ctx_local_unified frees
+  in
+  (* Anti-unify inputs of the rules *)
+  let ctx_local_unified, exps_il_input_unified, prems_il_unified_group =
+    Antiunify.antiunify ctx_local_unified exps_il_input_group
+  in
+  (* Elaborate rule inputs, with binding analysis *)
+  let ctx_local_unified, exps_il_input_unified_match, prems_il_match =
+    elab_rule_input_with_bind' ctx_local_unified exps_il_input_unified
+  in
+  (* Promote anti-unified context to local contexts *)
+  let ctxs_local =
+    List.map
+      (fun (ctx_local : Ctx.t) ->
+        {
+          ctx_local with
+          frees = ctx_local_unified.frees;
+          venv = ctx_local_unified.venv;
+        })
+      ctxs_local
+  in
+  (* Elaborate premises from anti-unification, with binding analysis *)
+  let ctxs_local, prems_il_unified_group =
+    List.map2
+      (fun ctx_local prems_il_unified ->
+        let ctx_local, prems_il_unified =
+          List.fold_left
+            (fun (ctx_local, prems_il_unified) prem_il_unified ->
+              let ctx_local, prem_il_unified, sideconditions_il =
+                Dataflow.Analysis.analyze_prem ctx_local prem_il_unified
+              in
+              ( ctx_local,
+                prems_il_unified @ [ prem_il_unified ] @ sideconditions_il ))
+            (ctx_local, []) prems_il_unified
+        in
+        (ctx_local, prems_il_unified))
+      ctxs_local prems_il_unified_group
+    |> List.split
+  in
+  (* Elaborate premises, with binding analysis *)
+  let ctxs_local, prems_il_group =
+    List.map2
+      (fun ctx_local prems ->
+        let ctx_local, prems_il = elab_prems_with_bind ctx_local prems in
+        (ctx_local, prems_il))
+      ctxs_local prems_group
+    |> List.split
+  in
+  (* Combine anti-unified and original premises *)
+  let prems_il_group =
+    List.map2
+      (fun prems_il_unified prems_il -> prems_il_unified @ prems_il)
+      prems_il_unified_group prems_il_group
+  in
+  (* Elaborate rule outputs, with binding analysis *)
+  let exps_il_output_group =
+    List.map2
+      (fun ctx_local exps_il_output ->
+        elab_rule_output_with_bind' ctx_local exps_il_output)
+      ctxs_local exps_il_output_group
+  in
+  (* Create the rule group *)
+  let paths_il =
+    List.combine prems_il_group exps_il_output_group
+    |> List.map2
+         (fun id_rule (prems_il, exps_il_output) ->
+           (id_rule, prems_il, exps_il_output))
+         id_rule_group
+  in
+  ( id_rulegroup,
+    exps_il_input_unified,
+    exps_il_input_unified_match,
+    prems_il_match,
+    paths_il )
+
 (* Elaboration of definitions *)
 
 let rec elab_def (ctx : Ctx.t) (def : def) : Ctx.t * Il.Ast.def option =
@@ -1466,7 +1490,7 @@ let rec elab_def (ctx : Ctx.t) (def : def) : Ctx.t * Il.Ast.def option =
   | VarD (id, plaintyp, _hints) -> elab_var_def ctx id plaintyp |> wrap_none
   | RelD (id, nottyp, hints) -> elab_rel_def ctx at id nottyp hints |> wrap_some
   | RuleGroupD (id_rel, id_rulegroup, rules) ->
-      elab_rule_group_def ctx at id_rel id_rulegroup rules |> wrap_none
+      elab_rulegroup_def ctx at id_rel id_rulegroup rules |> wrap_none
   | DecD (id, tparams, params, plaintyp, _hints) ->
       elab_dec_def ctx at id tparams params plaintyp |> wrap_some
   | DefD (id, tparams, args, exp, prems) ->
@@ -1596,8 +1620,14 @@ and elab_rel_def (ctx : Ctx.t) (at : region) (id : id) (nottyp : nottyp)
 
 (* Elaboration of rule groups *)
 
-and elab_rule_group_def (ctx : Ctx.t) (at : region) (id_rel : id)
+and elab_rulegroup_def (ctx : Ctx.t) (at : region) (id_rel : id)
     (id_rulegroup : id) (rules : rule list) : Ctx.t =
+  let id_rulegroup, exps_il_input_expl, exps_il_input_impl, matches_il, paths_il
+      =
+    elab_rulegroup ctx id_rel id_rulegroup rules
+  in
+  (id_rulegroup, exps_il_input_expl, exps_il_input_impl, matches_il, paths_il)
+  |> ignore;
   let rules_il = List.map (elab_rule ctx) rules in
   let rulegroup_il = (id_rulegroup, rules_il) $ at in
   Ctx.add_rulegroup ctx id_rel rulegroup_il

@@ -15,6 +15,24 @@ let fresh_id (ids : IdSet.t) (id : Id.t) : Id.t =
   in
   fresh_id' id
 
+let fresh_from_plaintyp ?(wildcard = false) (ids : IdSet.t)
+    (plaintyp : El.Ast.plaintyp) : Id.t =
+  let id = El.Print.string_of_plaintyp plaintyp $ plaintyp.at in
+  let id = if wildcard then "_" ^ id.it $ id.at else id in
+  fresh_id ids id
+
+let as_exp (id : Id.t) (typ : Il.Ast.typ) (iters : Il.Ast.iter list) :
+    Il.Ast.exp =
+  List.fold_left
+    (fun exp iter ->
+      let typ =
+        let typ = exp.note $ exp.at in
+        Il.Ast.IterT (typ, iter)
+      in
+      Il.Ast.IterE (exp, (iter, [])) $$ (exp.at, typ))
+    (Il.Ast.VarE id $$ (id.at, typ.it))
+    iters
+
 let rec fresh_from_typ (at : region) (typ : Il.Ast.typ) :
     Id.t * Il.Ast.typ * Il.Ast.iter list =
   match typ.it with
@@ -31,9 +49,3 @@ let fresh_from_exp ?(wildcard = false) (ids : IdSet.t) (exp : Il.Ast.exp) :
   let id = if wildcard then "_" ^ id.it $ id.at else id in
   let id = fresh_id ids id in
   (id, typ, iters)
-
-let fresh_from_plaintyp ?(wildcard = false) (ids : IdSet.t)
-    (plaintyp : El.Ast.plaintyp) : Id.t =
-  let id = El.Print.string_of_plaintyp plaintyp $ plaintyp.at in
-  let id = if wildcard then "_" ^ id.it $ id.at else id in
-  fresh_id ids id
