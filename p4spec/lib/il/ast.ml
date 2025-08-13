@@ -164,19 +164,6 @@ and arg' =
 and targ = targ' phrase
 and targ' = typ'
 
-(* Rules *)
-
-and rule = rule' phrase
-and rule' = id * notexp * prem list
-
-and rulegroup = rulegroup' phrase
-and rulegroup' = id * rule list
-
-(* Clauses *)
-
-and clause = clause' phrase
-and clause' = arg list * exp * prem list
-
 (* Premises *)
 
 and prem = prem' phrase
@@ -187,6 +174,19 @@ and prem' =
   | LetPr of exp * exp             (* `let` exp `=` exp *)
   | IterPr of prem * iterexp       (* prem iterexp *)
   | DebugPr of exp                 (* `debug` exp *)
+
+(* Rules *)
+
+and rulematch = exp list * exp list * prem list
+and rulepath = id * prem list * exp list
+
+and rulegroup = rulegroup' phrase
+and rulegroup' = id * rulematch * rulepath list
+
+(* Clauses *)
+
+and clause = clause' phrase
+and clause' = arg list * exp * prem list
 
 (* Hints *)
 

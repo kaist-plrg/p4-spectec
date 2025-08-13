@@ -47,10 +47,14 @@ and struct_prems' (prems_internalized : (prem * iterexp list) list)
 
 (* Structuring rules *)
 
-let struct_rule_path ((prems, exps_output) : prem list * exp list) :
+let struct_rulepath (prems_input : prem list) (rulepath : rulepath) :
     Ol.Ast.instr list =
-  let at = exps_output |> List.map at |> over_region in
-  let instr_ret = Ol.Ast.ResultI exps_output $ at in
+  let _, prems, exps_output = rulepath in
+  let prems = prems_input @ prems in
+  let instr_ret =
+    let at = exps_output |> List.map at |> over_region in
+    Ol.Ast.ResultI exps_output $ at
+  in
   struct_prems prems instr_ret
 
 (* Structuring clauses *)
@@ -81,9 +85,9 @@ and struct_rel_def (henv : HEnv.t) (tdenv : TDEnv.t) (at : region) (id_rel : id)
   let instrgroups =
     List.map
       (fun rulegroup ->
-        let id_rulegroup, rules = rulegroup.it in
-        let exps_input, paths = Antiunify.antiunify_rules inputs rules in
-        let instrs = List.concat_map struct_rule_path paths in
+        let id_rulegroup, rulematch, rulepaths = rulegroup.it in
+        let _, exps_input, prems_input = rulematch in
+        let instrs = List.concat_map (struct_rulepath prems_input) rulepaths in
         let instrs = Optimize.optimize henv tdenv instrs in
         let instrs = Instrument.instrument tdenv instrs in
         (id_rulegroup, exps_input, instrs) $ rulegroup.at)

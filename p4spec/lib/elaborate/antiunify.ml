@@ -56,7 +56,7 @@ let rec overlap_exp (tdenv : Envs.TDEnv.t) (frees : IdSet.t)
                (Il.Print.string_of_exp exp))
         else
           let id_fresh, typ_fresh, iter_fresh =
-            Fresh.fresh_from_typ exp_template.at typ_template
+            Fresh.fresh_from_typ frees exp_template.at typ_template
           in
           let frees = IdSet.add id_fresh frees in
           let unifiers = IdSet.add id_fresh unifiers in

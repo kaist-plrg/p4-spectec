@@ -4913,29 +4913,31 @@ relation Type_alpha:
 
   }
 
-  typedeftype: typeIR' ~~ typeIR_b' {
+  typedeftype: typeIR ~~ typeIR' {
 
-    1. If ((typeIR' has type aliasTypeIR)), then
+    1. If ((typeIR has type aliasTypeIR)), then
 
-      1. (Let aliasTypeIR be (typeIR' as aliasTypeIR))
+      1. (Let aliasTypeIR be (typeIR as aliasTypeIR))
 
       2. If ((aliasTypeIR matches pattern `TYPEDEF%%`)), then
 
         1. (Let (typedef _tid typeIR_a) be aliasTypeIR)
 
-        2. If ((Type_alpha: typeIR_a ~~ typeIR_b' holds)), then
+        2. (Let typeIR_b be typeIR')
+
+        3. If ((Type_alpha: typeIR_a ~~ typeIR_b holds)), then
 
           1. The relation holds
 
-    2. If ((typeIR_b' has type aliasTypeIR)), then
+    2. If ((typeIR' has type aliasTypeIR)), then
 
-      1. (Let aliasTypeIR be (typeIR_b' as aliasTypeIR))
+      1. (Let aliasTypeIR be (typeIR' as aliasTypeIR))
 
       2. If ((aliasTypeIR matches pattern `TYPEDEF%%`)), then
 
-        1. (Let (typedef _tid typeIR_b') be aliasTypeIR)
+        1. (Let (typedef _tid typeIR_b) be aliasTypeIR)
 
-        2. If ((Type_alpha: typeIR' ~~ typeIR_b' holds)), then
+        2. If ((Type_alpha: typeIR ~~ typeIR_b holds)), then
 
           1. The relation holds
 
@@ -12907,13 +12909,17 @@ relation Eval_static:
 
   literalExpressionIR-boolean: p TC |- expressionIR # ( _typeIR _ctk ) ~> % {
 
-    1. If ((expressionIR = ((true) as expressionIR))), then
+    1. If ((expressionIR has type booleanLiteral)), then
 
-      1. Result in ((b true) as value)
+      1. (Let booleanLiteral be (expressionIR as booleanLiteral))
 
-    2. If ((expressionIR = ((false) as expressionIR))), then
+      2. If (((true) = booleanLiteral)), then
 
-      1. Result in ((b false) as value)
+        1. Result in ((b true) as value)
+
+      3. If (((false) = booleanLiteral)), then
+
+        1. Result in ((b false) as value)
 
   }
 
@@ -12923,23 +12929,25 @@ relation Eval_static:
 
       1. (Let numberLiteral be (expressionIR as numberLiteral))
 
-      2. Case analysis on numberLiteral
+      2. (Let numberLiteral' be numberLiteral)
+
+      3. Case analysis on numberLiteral'
 
         1. Case (% matches pattern `D%`)
 
-          1. (Let (d i) be numberLiteral)
+          1. (Let (d i) be numberLiteral')
 
           2. Result in ((d i) as value)
 
         2. Case (% matches pattern `%W%`)
 
-          1. (Let (n w i) be numberLiteral)
+          1. (Let (n w i) be numberLiteral')
 
           2. Result in ((n w i) as value)
 
         3. Case (% matches pattern `%S%`)
 
-          1. (Let (n s i) be numberLiteral)
+          1. (Let (n s i) be numberLiteral')
 
           2. Result in ((n s i) as value)
 
@@ -12981,31 +12989,29 @@ relation Eval_static:
 
       1. (Let (unop typedExpressionIR) be (expressionIR as unaryExpressionIR))
 
-      2. Case analysis on unop
+      2. If (((~) = unop)), then
 
-        1. Case (% matches pattern `~`)
+        1. (Eval_static: p TC |- typedExpressionIR ~> value)
 
-          1. (Eval_static: p TC |- typedExpressionIR ~> value)
+        2. Result in $un_bnot(value)
 
-          2. Result in $un_bnot(value)
+      3. If (((!) = unop)), then
 
-        2. Case (% matches pattern `!`)
+        1. (Eval_static: p TC |- typedExpressionIR ~> value)
 
-          1. (Eval_static: p TC |- typedExpressionIR ~> value)
+        2. Result in $un_lnot(value)
 
-          2. Result in $un_lnot(value)
+      4. If (((+) = unop)), then
 
-        3. Case (% matches pattern `+`)
+        1. (Eval_static: p TC |- typedExpressionIR ~> value)
 
-          1. (Eval_static: p TC |- typedExpressionIR ~> value)
+        2. Result in $un_plus(value)
 
-          2. Result in $un_plus(value)
+      5. If (((-) = unop)), then
 
-        4. Case (% matches pattern `-`)
+        1. (Eval_static: p TC |- typedExpressionIR ~> value)
 
-          1. (Eval_static: p TC |- typedExpressionIR ~> value)
-
-          2. Result in $un_minus(value)
+        2. Result in $un_minus(value)
 
   }
 
@@ -13015,167 +13021,165 @@ relation Eval_static:
 
       1. (Let (typedExpressionIR_l binop typedExpressionIR_r) be (expressionIR as binaryExpressionIR))
 
-      2. Case analysis on binop
+      2. If (((+) = binop)), then
 
-        1. Case (% matches pattern `+`)
+        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+        3. Result in $bin_plus(value_l, value_r)
 
-          3. Result in $bin_plus(value_l, value_r)
+      3. If (((|+|) = binop)), then
 
-        2. Case (% matches pattern `|+|`)
+        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+        3. Result in $bin_satplus(value_l, value_r)
 
-          3. Result in $bin_satplus(value_l, value_r)
+      4. If (((-) = binop)), then
 
-        3. Case (% matches pattern `-`)
+        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+        3. Result in $bin_minus(value_l, value_r)
 
-          3. Result in $bin_minus(value_l, value_r)
+      5. If (((|-|) = binop)), then
 
-        4. Case (% matches pattern `|-|`)
+        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+        3. Result in $bin_satminus(value_l, value_r)
 
-          3. Result in $bin_satminus(value_l, value_r)
+      6. If (((*) = binop)), then
 
-        5. Case (% matches pattern `*`)
+        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+        3. Result in $bin_mul(value_l, value_r)
 
-          3. Result in $bin_mul(value_l, value_r)
+      7. If (((/) = binop)), then
 
-        6. Case (% matches pattern `/`)
+        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+        3. Result in $bin_div(value_l, value_r)
 
-          3. Result in $bin_div(value_l, value_r)
+      8. If (((<<) = binop)), then
 
-        7. Case (% matches pattern `<<`)
+        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+        3. Result in $bin_shl(value_l, value_r)
 
-          3. Result in $bin_shl(value_l, value_r)
+      9. If (((>>) = binop)), then
 
-        8. Case (% matches pattern `>>`)
+        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+        3. Result in $bin_shr(value_l, value_r)
 
-          3. Result in $bin_shr(value_l, value_r)
+      10. If (((<=) = binop)), then
 
-        9. Case (% matches pattern `<=`)
+        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+        3. Result in ((b $bin_le(value_l, value_r)) as value)
 
-          3. Result in ((b $bin_le(value_l, value_r)) as value)
+      11. If (((>=) = binop)), then
 
-        10. Case (% matches pattern `>=`)
+        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+        3. Result in ((b $bin_ge(value_l, value_r)) as value)
 
-          3. Result in ((b $bin_ge(value_l, value_r)) as value)
+      12. If (((<) = binop)), then
 
-        11. Case (% matches pattern `<`)
+        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+        3. Result in ((b $bin_lt(value_l, value_r)) as value)
 
-          3. Result in ((b $bin_lt(value_l, value_r)) as value)
+      13. If (((>) = binop)), then
 
-        12. Case (% matches pattern `>`)
+        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+        3. Result in ((b $bin_gt(value_l, value_r)) as value)
 
-          3. Result in ((b $bin_gt(value_l, value_r)) as value)
+      14. If (((==) = binop)), then
 
-        13. Case (% matches pattern `==`)
+        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+        3. Result in ((b $bin_eq(value_l, value_r)) as value)
 
-          3. Result in ((b $bin_eq(value_l, value_r)) as value)
+      15. If (((!=) = binop)), then
 
-        14. Case (% matches pattern `!=`)
+        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+        3. Result in ((b $bin_ne(value_l, value_r)) as value)
 
-          3. Result in ((b $bin_ne(value_l, value_r)) as value)
+      16. If (((&) = binop)), then
 
-        15. Case (% matches pattern `&`)
+        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+        3. Result in $bin_band(value_l, value_r)
 
-          3. Result in $bin_band(value_l, value_r)
+      17. If (((^) = binop)), then
 
-        16. Case (% matches pattern `^`)
+        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+        3. Result in $bin_bxor(value_l, value_r)
 
-          3. Result in $bin_bxor(value_l, value_r)
+      18. If (((|) = binop)), then
 
-        17. Case (% matches pattern `|`)
+        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+        3. Result in $bin_bor(value_l, value_r)
 
-          3. Result in $bin_bor(value_l, value_r)
+      19. If (((++) = binop)), then
 
-        18. Case (% matches pattern `++`)
+        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+        3. Result in $bin_concat(value_l, value_r)
 
-          3. Result in $bin_concat(value_l, value_r)
+      20. If (((&&) = binop)), then
 
-        19. Case (% matches pattern `&&`)
+        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+        3. Result in $bin_land(value_l, value_r)
 
-          3. Result in $bin_land(value_l, value_r)
+      21. If (((||) = binop)), then
 
-        20. Case (% matches pattern `||`)
+        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
-
-          3. Result in $bin_lor(value_l, value_r)
+        3. Result in $bin_lor(value_l, value_r)
 
   }
 
@@ -13229,11 +13233,13 @@ relation Eval_static:
 
       1. (Let dataExpressionIR be (expressionIR as dataExpressionIR))
 
-      2. Case analysis on dataExpressionIR
+      2. (Let dataExpressionIR' be dataExpressionIR)
+
+      3. Case analysis on dataExpressionIR'
 
         1. Case (% matches pattern `SEQ{%}`)
 
-          1. (Let (seq{ typedExpressionIR* }) be dataExpressionIR)
+          1. (Let (seq{ typedExpressionIR* }) be dataExpressionIR')
 
           2. (Eval_static: p TC |- typedExpressionIR ~> value)*
 
@@ -13241,7 +13247,7 @@ relation Eval_static:
 
         2. Case (% matches pattern `SEQ{%,...}`)
 
-          1. (Let (seq{ typedExpressionIR* ,...}) be dataExpressionIR)
+          1. (Let (seq{ typedExpressionIR* ,...}) be dataExpressionIR')
 
           2. (Eval_static: p TC |- typedExpressionIR ~> value)*
 
@@ -13255,11 +13261,13 @@ relation Eval_static:
 
       1. (Let dataExpressionIR be (expressionIR as dataExpressionIR))
 
-      2. Case analysis on dataExpressionIR
+      2. (Let dataExpressionIR' be dataExpressionIR)
+
+      3. Case analysis on dataExpressionIR'
 
         1. Case (% matches pattern `RECORD{%}`)
 
-          1. (Let (record{ (nameIR = typedExpressionIR)* }) be dataExpressionIR)
+          1. (Let (record{ (nameIR = typedExpressionIR)* }) be dataExpressionIR')
 
           2. (Eval_static: p TC |- typedExpressionIR ~> value)*
 
@@ -13267,7 +13275,7 @@ relation Eval_static:
 
         2. Case (% matches pattern `RECORD{%,...}`)
 
-          1. (Let (record{ (nameIR = typedExpressionIR)* ,...}) be dataExpressionIR)
+          1. (Let (record{ (nameIR = typedExpressionIR)* ,...}) be dataExpressionIR')
 
           2. (Eval_static: p TC |- typedExpressionIR ~> value)*
 
@@ -13530,11 +13538,13 @@ relation Type_ok:
 
       1. (Let baseType be (typeOrVoid as baseType))
 
-      2. Case analysis on baseType
+      2. (Let baseType' be baseType)
+
+      3. Case analysis on baseType'
 
         1. Case (% matches pattern `INT<%>`)
 
-          1. (Let (int< int >) be baseType)
+          1. (Let (int< int >) be baseType')
 
           2. If ((int has type nat)), then
 
@@ -13544,7 +13554,7 @@ relation Type_ok:
 
         2. Case (% matches pattern `INT<(%)>`)
 
-          1. (Let (int<( expression )>) be baseType)
+          1. (Let (int<( expression )>) be baseType')
 
           2. (Expr_ok: p TC |- expression : typedExpressionIR)
 
@@ -13562,19 +13572,21 @@ relation Type_ok:
 
   fixbit: p TC |- typeOrVoid : % # % {
 
-    1. If ((typeOrVoid = ((bit) as typeOrVoid))), then
-
-      1. Result in ((bit< 1 >) as typeIR), []
-
-    2. If ((typeOrVoid has type baseType)), then
+    1. If ((typeOrVoid has type baseType)), then
 
       1. (Let baseType be (typeOrVoid as baseType))
 
-      2. Case analysis on baseType
+      2. If (((bit) = baseType)), then
+
+        1. Result in ((bit< 1 >) as typeIR), []
+
+      3. (Let baseType' be baseType)
+
+      4. Case analysis on baseType'
 
         1. Case (% matches pattern `BIT<%>`)
 
-          1. (Let (bit< int >) be baseType)
+          1. (Let (bit< int >) be baseType')
 
           2. If ((int has type nat)), then
 
@@ -13584,7 +13596,7 @@ relation Type_ok:
 
         2. Case (% matches pattern `BIT<(%)>`)
 
-          1. (Let (bit<( expression )>) be baseType)
+          1. (Let (bit<( expression )>) be baseType')
 
           2. (Expr_ok: p TC |- expression : typedExpressionIR)
 
@@ -13606,11 +13618,13 @@ relation Type_ok:
 
       1. (Let baseType be (typeOrVoid as baseType))
 
-      2. Case analysis on baseType
+      2. (Let baseType' be baseType)
+
+      3. Case analysis on baseType'
 
         1. Case (% matches pattern `VARBIT<%>`)
 
-          1. (Let (varbit< int >) be baseType)
+          1. (Let (varbit< int >) be baseType')
 
           2. If ((int has type nat)), then
 
@@ -13620,7 +13634,7 @@ relation Type_ok:
 
         2. Case (% matches pattern `VARBIT<(%)>`)
 
-          1. (Let (varbit<( expression )>) be baseType)
+          1. (Let (varbit<( expression )>) be baseType')
 
           2. (Expr_ok: p TC |- expression : typedExpressionIR)
 
@@ -13670,9 +13684,9 @@ relation Type_ok:
 
     1. If ((typeOrVoid has type specializedType)), then
 
-      1. (Let (prefixedTypeName < typeArgumentList >) be (typeOrVoid as specializedType))
+      1. (Let (prefixedTypeName < typeArgumentList' >) be (typeOrVoid as specializedType))
 
-      2. If ((typeArgumentList matches pattern ``EMPTY`)), then
+      2. If ((() = typeArgumentList')), then
 
         1. (Let prefixedNameIR be $prefixedTypeName(prefixedTypeName))
 
@@ -13688,11 +13702,13 @@ relation Type_ok:
 
             2. Result in typeIR, []
 
-      3. (Let prefixedNameIR be $prefixedTypeName(prefixedTypeName))
+      3. (Let typeArgumentList be typeArgumentList')
 
-      4. (Let typeDefIR'? be $find_type(p, TC, prefixedNameIR))
+      4. (Let prefixedNameIR be $prefixedTypeName(prefixedTypeName))
 
-      5. If ((typeDefIR'? matches pattern (_))), then
+      5. (Let typeDefIR'? be $find_type(p, TC, prefixedNameIR))
+
+      6. If ((typeDefIR'? matches pattern (_))), then
 
         1. (Let ?(typeDefIR) be typeDefIR'?)
 
@@ -13716,11 +13732,13 @@ relation Type_ok:
 
       1. (Let (namedType [ expression_size ]) be (typeOrVoid as headerStackType))
 
-      2. Case analysis on namedType
+      2. (Let namedType' be namedType)
+
+      3. Case analysis on namedType'
 
         1. Case (% has type prefixedTypeName)
 
-          1. (Let prefixedTypeName be (namedType as prefixedTypeName))
+          1. (Let prefixedTypeName be (namedType' as prefixedTypeName))
 
           2. (Type_ok: p TC |- (prefixedTypeName as typeOrVoid) : typeIR_base # tid*)
 
@@ -13744,7 +13762,7 @@ relation Type_ok:
 
         2. Case (% has type specializedType)
 
-          1. (Let specializedType be (namedType as specializedType))
+          1. (Let specializedType be (namedType' as specializedType))
 
           2. (Type_ok: p TC |- (specializedType as typeOrVoid) : typeIR_base # tid_fresh*)
 
@@ -13933,17 +13951,19 @@ relation Sub_expl_canon_neq:
 
   }
 
-  arbint: typeIR <: typeIR' {
+  arbint: typeIR' <: typeIR {
 
-    1. If ((typeIR = ((int) as typeIR))), then
+    1. If ((typeIR' = ((int) as typeIR))), then
 
-      1. If ((typeIR' = ((bool) as typeIR))), then
+      1. If ((((bool) as typeIR) = typeIR)), then
 
         1. The relation holds
 
-      2. If ((typeIR' has type numberTypeIR)), then
+      2. (Let typeIR'' be typeIR)
 
-        1. (Let numberTypeIR be (typeIR' as numberTypeIR))
+      3. If ((typeIR'' has type numberTypeIR)), then
+
+        1. (Let numberTypeIR be (typeIR'' as numberTypeIR))
 
         2. Case analysis on numberTypeIR
 
@@ -13965,131 +13985,131 @@ relation Sub_expl_canon_neq:
 
     1. If ((typeIR has type numberTypeIR)), then
 
-      1. (Let numberTypeIR be (typeIR as numberTypeIR))
+      1. (Let numberTypeIR' be (typeIR as numberTypeIR))
 
-      2. If ((numberTypeIR matches pattern `INT<%>`)), then
+      2. If ((numberTypeIR' matches pattern `INT<%>`)), then
 
-        1. (Let (int< _nat >) be numberTypeIR)
+        1. (Let (int< nat >) be numberTypeIR')
 
-        2. If ((typeIR' = ((int) as typeIR))), then
+        2. If ((typeIR' has type numberTypeIR)), then
 
-          1. The relation holds
+          1. (Let numberTypeIR be (typeIR' as numberTypeIR))
 
-        3. If ((typeIR' has type numberTypeIR)), then
+          2. (Let _nat be nat)
 
-          1. (Let numberTypeIR' be (typeIR' as numberTypeIR))
+          3. If (((int) = numberTypeIR)), then
 
-          2. Case analysis on numberTypeIR'
+            1. The relation holds
 
-            1. Case (% matches pattern `INT<%>`)
+          4. (Let numberTypeIR'' be numberTypeIR)
 
-              1. (Let (int< w_b >) be numberTypeIR')
+          5. If ((numberTypeIR'' matches pattern `INT<%>`)), then
 
-              2. The relation holds
+            1. (Let (int< w_b >) be numberTypeIR'')
 
-            2. Case (% matches pattern `BIT<%>`)
+            2. The relation holds
 
-              1. (Let (bit< w' >) be numberTypeIR')
+          6. If (((bit< _nat >) = numberTypeIR)), then
 
-              2. If ((_nat = w')), then
-
-                1. The relation holds
+            1. The relation holds
 
   }
 
-  fixbit: typeIR <: typeIR' {
+  fixbit: typeIR' <: typeIR {
 
-    1. If ((typeIR = ((bit< 1 >) as typeIR))), then
+    1. If ((typeIR' has type numberTypeIR)), then
 
-      1. If ((typeIR' = ((bool) as typeIR))), then
-
-        1. The relation holds
-
-    2. If ((typeIR has type numberTypeIR)), then
-
-      1. (Let numberTypeIR be (typeIR as numberTypeIR))
+      1. (Let numberTypeIR be (typeIR' as numberTypeIR))
 
       2. If ((numberTypeIR matches pattern `BIT<%>`)), then
 
-        1. (Let (bit< _nat >) be numberTypeIR)
+        1. (Let (bit< nat >) be numberTypeIR)
 
-        2. If ((typeIR' = ((int) as typeIR))), then
+        2. If ((1 = nat)), then
+
+          1. If ((((bool) as typeIR) = typeIR)), then
+
+            1. The relation holds
+
+        3. (Let _nat be nat)
+
+        4. If ((((int) as typeIR) = typeIR)), then
 
           1. The relation holds
 
-        3. If ((typeIR' has type numberTypeIR)), then
+        5. If ((((int< _nat >) as typeIR) = typeIR)), then
 
-          1. (Let numberTypeIR' be (typeIR' as numberTypeIR))
+          1. The relation holds
 
-          2. Case analysis on numberTypeIR'
+        6. (Let typeIR'' be typeIR)
 
-            1. Case (% matches pattern `INT<%>`)
+        7. If ((typeIR'' has type numberTypeIR)), then
 
-              1. (Let (int< w' >) be numberTypeIR')
+          1. (Let numberTypeIR' be (typeIR'' as numberTypeIR))
 
-              2. If ((_nat = w')), then
+          2. If ((numberTypeIR' matches pattern `BIT<%>`)), then
 
-                1. The relation holds
+            1. (Let (bit< w_b >) be numberTypeIR')
 
-            2. Case (% matches pattern `BIT<%>`)
-
-              1. (Let (bit< w_b >) be numberTypeIR')
-
-              2. The relation holds
+            2. The relation holds
 
   }
 
-  newtype: typeIR' <: typeIR_b' {
+  newtype: typeIR <: typeIR' {
 
-    1. If ((typeIR' has type aliasTypeIR)), then
+    1. If ((typeIR has type aliasTypeIR)), then
 
-      1. (Let aliasTypeIR be (typeIR' as aliasTypeIR))
+      1. (Let aliasTypeIR be (typeIR as aliasTypeIR))
 
       2. If ((aliasTypeIR matches pattern `TYPE%%`)), then
 
         1. (Let (type _tid typeIR_a) be aliasTypeIR)
 
-        2. If ((Sub_impl: typeIR_a <: typeIR_b' holds)), then
+        2. (Let typeIR_b be typeIR')
+
+        3. If ((Sub_impl: typeIR_a <: typeIR_b holds)), then
 
           1. The relation holds
 
-    2. If ((typeIR_b' has type aliasTypeIR)), then
+    2. If ((typeIR' has type aliasTypeIR)), then
 
-      1. (Let aliasTypeIR be (typeIR_b' as aliasTypeIR))
+      1. (Let aliasTypeIR be (typeIR' as aliasTypeIR))
 
       2. If ((aliasTypeIR matches pattern `TYPE%%`)), then
 
-        1. (Let (type _tid typeIR_b') be aliasTypeIR)
+        1. (Let (type _tid typeIR_b) be aliasTypeIR)
 
-        2. If ((Sub_impl: typeIR' <: typeIR_b' holds)), then
+        2. If ((Sub_impl: typeIR <: typeIR_b holds)), then
 
           1. The relation holds
 
   }
 
-  serenum: typeIR' <: typeIR_b' {
+  serenum: typeIR <: typeIR' {
 
-    1. If ((typeIR' has type enumTypeIR)), then
+    1. If ((typeIR has type enumTypeIR)), then
 
-      1. (Let enumTypeIR be (typeIR' as enumTypeIR))
+      1. (Let enumTypeIR be (typeIR as enumTypeIR))
 
       2. If ((enumTypeIR matches pattern `ENUM%#%{%}`)), then
 
         1. (Let (enum _tid # typeIR_a { _valueFieldIR* }) be enumTypeIR)
 
-        2. If ((Sub_impl: typeIR_a <: typeIR_b' holds)), then
+        2. (Let typeIR_b be typeIR')
+
+        3. If ((Sub_impl: typeIR_a <: typeIR_b holds)), then
 
           1. The relation holds
 
-    2. If ((typeIR_b' has type enumTypeIR)), then
+    2. If ((typeIR' has type enumTypeIR)), then
 
-      1. (Let enumTypeIR be (typeIR_b' as enumTypeIR))
+      1. (Let enumTypeIR be (typeIR' as enumTypeIR))
 
       2. If ((enumTypeIR matches pattern `ENUM%#%{%}`)), then
 
-        1. (Let (enum _tid # typeIR_b' { _valueFieldIR* }) be enumTypeIR)
+        1. (Let (enum _tid # typeIR_b { _valueFieldIR* }) be enumTypeIR)
 
-        2. If ((Sub_impl: typeIR' <: typeIR_b' holds)), then
+        2. If ((Sub_impl: typeIR <: typeIR_b holds)), then
 
           1. The relation holds
 
@@ -14105,41 +14125,45 @@ relation Sub_expl_canon_neq:
 
   }
 
-  invalidheader: typeIR <: typeIR' {
+  invalidheader: typeIR' <: typeIR {
 
-    1. If ((typeIR = ((header_invalid) as typeIR))), then
+    1. If ((typeIR' = ((header_invalid) as typeIR))), then
 
-      1. Case analysis on typeIR'
+      1. (Let typeIR'' be typeIR)
+
+      2. Case analysis on typeIR''
 
         1. Case (% has type headerTypeIR)
 
-          1. (Let (header _tid { _fieldTypeIR* }) be (typeIR' as headerTypeIR))
+          1. (Let (header _tid { _fieldTypeIR* }) be (typeIR'' as headerTypeIR))
 
           2. The relation holds
 
         2. Case (% has type headerUnionTypeIR)
 
-          1. (Let (header_union _tid { _fieldTypeIR* }) be (typeIR' as headerUnionTypeIR))
+          1. (Let (header_union _tid { _fieldTypeIR* }) be (typeIR'' as headerUnionTypeIR))
 
           2. The relation holds
 
   }
 
-  seq: typeIR <: typeIR' {
+  seq: typeIR' <: typeIR {
 
-    1. If ((typeIR has type sequenceTypeIR)), then
+    1. If ((typeIR' has type sequenceTypeIR)), then
 
-      1. (Let sequenceTypeIR be (typeIR as sequenceTypeIR))
+      1. (Let sequenceTypeIR be (typeIR' as sequenceTypeIR))
 
       2. If ((sequenceTypeIR matches pattern `SEQ<%>`)), then
 
         1. (Let (seq< typeIR_a* >) be sequenceTypeIR)
 
-        2. Case analysis on typeIR'
+        2. (Let typeIR'' be typeIR)
+
+        3. Case analysis on typeIR''
 
           1. Case (% has type listTypeIR)
 
-            1. (Let (list< typeIR_b >) be (typeIR' as listTypeIR))
+            1. (Let (list< typeIR_b >) be (typeIR'' as listTypeIR))
 
             2. If ((Sub_expl: typeIR_a <: typeIR_b holds))*, then
 
@@ -14147,7 +14171,7 @@ relation Sub_expl_canon_neq:
 
           2. Case (% has type tupleTypeIR)
 
-            1. (Let (tuple< typeIR_b* >) be (typeIR' as tupleTypeIR))
+            1. (Let (tuple< typeIR_b* >) be (typeIR'' as tupleTypeIR))
 
             2. If ((Sub_expl: typeIR_a <: typeIR_b holds))*, then
 
@@ -14155,7 +14179,7 @@ relation Sub_expl_canon_neq:
 
           3. Case (% has type headerStackTypeIR)
 
-            1. (Let (typeIR_b [ n_size ]) be (typeIR' as headerStackTypeIR))
+            1. (Let (typeIR_b [ n_size ]) be (typeIR'' as headerStackTypeIR))
 
             2. If ((|typeIR_a*| <= n_size)), then
 
@@ -14165,7 +14189,7 @@ relation Sub_expl_canon_neq:
 
           4. Case (% has type structTypeIR)
 
-            1. (Let (struct _tid { (typeIR_b _id ;)* }) be (typeIR' as structTypeIR))
+            1. (Let (struct _tid { (typeIR_b _id ;)* }) be (typeIR'' as structTypeIR))
 
             2. If ((Sub_expl: typeIR_a <: typeIR_b holds))*, then
 
@@ -14173,7 +14197,7 @@ relation Sub_expl_canon_neq:
 
           5. Case (% has type headerTypeIR)
 
-            1. (Let (header _tid { (typeIR_b _id ;)* }) be (typeIR' as headerTypeIR))
+            1. (Let (header _tid { (typeIR_b _id ;)* }) be (typeIR'' as headerTypeIR))
 
             2. If ((Sub_expl: typeIR_a <: typeIR_b holds))*, then
 
@@ -14181,21 +14205,23 @@ relation Sub_expl_canon_neq:
 
   }
 
-  seqdefault: typeIR <: typeIR' {
+  seqdefault: typeIR' <: typeIR {
 
-    1. If ((typeIR has type sequenceTypeIR)), then
+    1. If ((typeIR' has type sequenceTypeIR)), then
 
-      1. (Let sequenceTypeIR be (typeIR as sequenceTypeIR))
+      1. (Let sequenceTypeIR be (typeIR' as sequenceTypeIR))
 
       2. If ((sequenceTypeIR matches pattern `SEQ<%,...>`)), then
 
         1. (Let (seq< typeIR_a* ,...>) be sequenceTypeIR)
 
-        2. Case analysis on typeIR'
+        2. (Let typeIR'' be typeIR)
+
+        3. Case analysis on typeIR''
 
           1. Case (% has type tupleTypeIR)
 
-            1. (Let (tuple< typeIR_b* >) be (typeIR' as tupleTypeIR))
+            1. (Let (tuple< typeIR_b* >) be (typeIR'' as tupleTypeIR))
 
             2. If ((|typeIR_a*| < |typeIR_b*|)), then
 
@@ -14209,7 +14235,7 @@ relation Sub_expl_canon_neq:
 
           2. Case (% has type headerStackTypeIR)
 
-            1. (Let (typeIR_b [ n_size ]) be (typeIR' as headerStackTypeIR))
+            1. (Let (typeIR_b [ n_size ]) be (typeIR'' as headerStackTypeIR))
 
             2. If ((|typeIR_a*| < n_size)), then
 
@@ -14221,7 +14247,7 @@ relation Sub_expl_canon_neq:
 
           3. Case (% has type structTypeIR)
 
-            1. (Let (struct _tid { (typeIR_b _id ;)* }) be (typeIR' as structTypeIR))
+            1. (Let (struct _tid { (typeIR_b _id ;)* }) be (typeIR'' as structTypeIR))
 
             2. If ((|typeIR_a*| < |typeIR_b*|)), then
 
@@ -14235,7 +14261,7 @@ relation Sub_expl_canon_neq:
 
           4. Case (% has type headerTypeIR)
 
-            1. (Let (header _tid { (typeIR_b _id ;)* }) be (typeIR' as headerTypeIR))
+            1. (Let (header _tid { (typeIR_b _id ;)* }) be (typeIR'' as headerTypeIR))
 
             2. If ((|typeIR_a*| < |typeIR_b*|)), then
 
@@ -14249,35 +14275,37 @@ relation Sub_expl_canon_neq:
 
   }
 
-  record: typeIR <: typeIR' {
+  record: typeIR' <: typeIR {
 
-    1. If ((typeIR has type recordTypeIR)), then
+    1. If ((typeIR' has type recordTypeIR)), then
 
-      1. (Let recordTypeIR be (typeIR as recordTypeIR))
+      1. (Let recordTypeIR be (typeIR' as recordTypeIR))
 
       2. If ((recordTypeIR matches pattern `RECORD{%}`)), then
 
         1. (Let (record{ (typeIR_a id_a ;)* }) be recordTypeIR)
 
-        2. Case analysis on typeIR'
+        2. (Let typeIR'' be typeIR)
+
+        3. Case analysis on typeIR''
 
           1. Case (% has type structTypeIR)
 
-            1. (Let (struct _tid { (typeIR_b id_b ;)* }) be (typeIR' as structTypeIR))
+            1. (Let (struct _tid { (typeIR_b id_b ;)* }) be (typeIR'' as structTypeIR))
 
             2. If ($eq_set<id>(({ id_a* }), ({ id_b* }))), then
 
-              1. (Let typeIR''? be $find_map<id, typeIR>(({ (id_a : typeIR_a)* }), id_a))*
+              1. (Let typeIR'''? be $find_map<id, typeIR>(({ (id_a : typeIR_a)* }), id_a))*
 
-              2. If ((typeIR''? matches pattern (_)))*, then
+              2. If ((typeIR'''? matches pattern (_)))*, then
 
-                1. (Let ?(typeIR_a_aligned) be typeIR''?)*
+                1. (Let ?(typeIR_a_aligned) be typeIR'''?)*
 
-                2. (Let typeIR'''? be $find_map<id, typeIR>(({ (id_b : typeIR_b)* }), id_a))*
+                2. (Let typeIR''''? be $find_map<id, typeIR>(({ (id_b : typeIR_b)* }), id_a))*
 
-                3. If ((typeIR'''? matches pattern (_)))*, then
+                3. If ((typeIR''''? matches pattern (_)))*, then
 
-                  1. (Let ?(typeIR_b_aligned) be typeIR'''?)*
+                  1. (Let ?(typeIR_b_aligned) be typeIR''''?)*
 
                   2. If ((Sub_expl: typeIR_a_aligned <: typeIR_b_aligned holds))*, then
 
@@ -14285,21 +14313,21 @@ relation Sub_expl_canon_neq:
 
           2. Case (% has type headerTypeIR)
 
-            1. (Let (header _tid { (typeIR_b id_b ;)* }) be (typeIR' as headerTypeIR))
+            1. (Let (header _tid { (typeIR_b id_b ;)* }) be (typeIR'' as headerTypeIR))
 
             2. If ($eq_set<id>(({ id_a* }), ({ id_b* }))), then
 
-              1. (Let typeIR''? be $find_map<id, typeIR>(({ (id_a : typeIR_a)* }), id_a))*
+              1. (Let typeIR'''? be $find_map<id, typeIR>(({ (id_a : typeIR_a)* }), id_a))*
 
-              2. If ((typeIR''? matches pattern (_)))*, then
+              2. If ((typeIR'''? matches pattern (_)))*, then
 
-                1. (Let ?(typeIR_a_aligned) be typeIR''?)*
+                1. (Let ?(typeIR_a_aligned) be typeIR'''?)*
 
-                2. (Let typeIR'''? be $find_map<id, typeIR>(({ (id_b : typeIR_b)* }), id_a))*
+                2. (Let typeIR''''? be $find_map<id, typeIR>(({ (id_b : typeIR_b)* }), id_a))*
 
-                3. If ((typeIR'''? matches pattern (_)))*, then
+                3. If ((typeIR''''? matches pattern (_)))*, then
 
-                  1. (Let ?(typeIR_b_aligned) be typeIR'''?)*
+                  1. (Let ?(typeIR_b_aligned) be typeIR''''?)*
 
                   2. If ((Sub_expl: typeIR_a_aligned <: typeIR_b_aligned holds))*, then
 
@@ -14307,45 +14335,47 @@ relation Sub_expl_canon_neq:
 
   }
 
-  recorddefault: typeIR <: typeIR' {
+  recorddefault: typeIR' <: typeIR {
 
-    1. If ((typeIR has type recordTypeIR)), then
+    1. If ((typeIR' has type recordTypeIR)), then
 
-      1. (Let recordTypeIR be (typeIR as recordTypeIR))
+      1. (Let recordTypeIR be (typeIR' as recordTypeIR))
 
       2. If ((recordTypeIR matches pattern `RECORD{%,...}`)), then
 
         1. (Let (record{ (typeIR_a id_a ;)* ,...}) be recordTypeIR)
 
-        2. Case analysis on typeIR'
+        2. (Let typeIR'' be typeIR)
+
+        3. Case analysis on typeIR''
 
           1. Case (% has type structTypeIR)
 
-            1. (Let (struct _tid { (typeIR_b id_b ;)* }) be (typeIR' as structTypeIR))
+            1. (Let (struct _tid { (typeIR_b id_b ;)* }) be (typeIR'' as structTypeIR))
 
             2. If ($sub_set<id>(({ id_a* }), ({ id_b* }))), then
 
-              1. (Let typeIR''? be $find_map<id, typeIR>(({ (id_a : typeIR_a)* }), id_a))*
+              1. (Let typeIR'''? be $find_map<id, typeIR>(({ (id_a : typeIR_a)* }), id_a))*
 
-              2. If ((typeIR''? matches pattern (_)))*, then
+              2. If ((typeIR'''? matches pattern (_)))*, then
 
-                1. (Let ?(typeIR_a_aligned) be typeIR''?)*
+                1. (Let ?(typeIR_a_aligned) be typeIR'''?)*
 
-                2. (Let typeIR'''? be $find_map<id, typeIR>(({ (id_b : typeIR_b)* }), id_a))*
+                2. (Let typeIR''''? be $find_map<id, typeIR>(({ (id_b : typeIR_b)* }), id_a))*
 
-                3. If ((typeIR'''? matches pattern (_)))*, then
+                3. If ((typeIR''''? matches pattern (_)))*, then
 
-                  1. (Let ?(typeIR_b_non_default_aligned) be typeIR'''?)*
+                  1. (Let ?(typeIR_b_non_default_aligned) be typeIR''''?)*
 
                   2. If ((Sub_expl: typeIR_a_aligned <: typeIR_b_non_default_aligned holds))*, then
 
                     1. (Let ({ id_default* }) be $diff_set<id>(({ id_b* }), ({ id_a* })))
 
-                    2. (Let typeIR''''? be $find_map<id, typeIR>(({ (id_b : typeIR_b)* }), id_default))*
+                    2. (Let typeIR'''''? be $find_map<id, typeIR>(({ (id_b : typeIR_b)* }), id_default))*
 
-                    3. If ((typeIR''''? matches pattern (_)))*, then
+                    3. If ((typeIR'''''? matches pattern (_)))*, then
 
-                      1. (Let ?(typeIR_b_default) be typeIR''''?)*
+                      1. (Let ?(typeIR_b_default) be typeIR'''''?)*
 
                       2. If ($is_defaultable_typeIR(typeIR_b_default))*, then
 
@@ -14353,31 +14383,31 @@ relation Sub_expl_canon_neq:
 
           2. Case (% has type headerTypeIR)
 
-            1. (Let (header _tid { (typeIR_b id_b ;)* }) be (typeIR' as headerTypeIR))
+            1. (Let (header _tid { (typeIR_b id_b ;)* }) be (typeIR'' as headerTypeIR))
 
             2. If ($sub_set<id>(({ id_a* }), ({ id_b* }))), then
 
-              1. (Let typeIR''? be $find_map<id, typeIR>(({ (id_a : typeIR_a)* }), id_a))*
+              1. (Let typeIR'''? be $find_map<id, typeIR>(({ (id_a : typeIR_a)* }), id_a))*
 
-              2. If ((typeIR''? matches pattern (_)))*, then
+              2. If ((typeIR'''? matches pattern (_)))*, then
 
-                1. (Let ?(typeIR_a_aligned) be typeIR''?)*
+                1. (Let ?(typeIR_a_aligned) be typeIR'''?)*
 
-                2. (Let typeIR'''? be $find_map<id, typeIR>(({ (id_b : typeIR_b)* }), id_a))*
+                2. (Let typeIR''''? be $find_map<id, typeIR>(({ (id_b : typeIR_b)* }), id_a))*
 
-                3. If ((typeIR'''? matches pattern (_)))*, then
+                3. If ((typeIR''''? matches pattern (_)))*, then
 
-                  1. (Let ?(typeIR_b_non_default_aligned) be typeIR'''?)*
+                  1. (Let ?(typeIR_b_non_default_aligned) be typeIR''''?)*
 
                   2. If ((Sub_expl: typeIR_a_aligned <: typeIR_b_non_default_aligned holds))*, then
 
                     1. (Let ({ id_default* }) be $diff_set<id>(({ id_b* }), ({ id_a* })))
 
-                    2. (Let typeIR''''? be $find_map<id, typeIR>(({ (id_b : typeIR_b)* }), id_default))*
+                    2. (Let typeIR'''''? be $find_map<id, typeIR>(({ (id_b : typeIR_b)* }), id_default))*
 
-                    3. If ((typeIR''''? matches pattern (_)))*, then
+                    3. If ((typeIR'''''? matches pattern (_)))*, then
 
-                      1. (Let ?(typeIR_b_default) be typeIR''''?)*
+                      1. (Let ?(typeIR_b_default) be typeIR'''''?)*
 
                       2. If ($is_defaultable_typeIR(typeIR_b_default))*, then
 
@@ -14385,37 +14415,31 @@ relation Sub_expl_canon_neq:
 
   }
 
-  set: typeIR'''' <: typeIR''''' {
+  set: typeIR <: typeIR'' {
 
-    1. If ((typeIR'''' has type setTypeIR)), then
+    1. If ((typeIR'' has type setTypeIR)), then
 
-      1. (Let (set< typeIR* >) be (typeIR'''' as setTypeIR))
+      1. (Let (set< typeIR'* >) be (typeIR'' as setTypeIR))
 
-      2. If ((typeIR* matches pattern [ _/1 ])), then
+      2. If ((typeIR'* matches pattern [ _/1 ])), then
 
-        1. (Let [typeIR_a] be typeIR*)
+        1. (Let [typeIR_b] be typeIR'*)
 
-        2. If ((typeIR''''' has type setTypeIR)), then
+        2. (Let typeIR'''' be typeIR)
 
-          1. (Let (set< typeIR''* >) be (typeIR''''' as setTypeIR))
+        3. If ((typeIR'''' has type setTypeIR)), then
 
-          2. If ((typeIR''* matches pattern [ _/1 ])), then
+          1. (Let (set< typeIR'''* >) be (typeIR'''' as setTypeIR))
 
-            1. (Let [typeIR_b] be typeIR''*)
+          2. If ((typeIR'''* matches pattern [ _/1 ])), then
+
+            1. (Let [typeIR_a] be typeIR'''*)
 
             2. If ((Sub_expl: typeIR_a <: typeIR_b holds)), then
 
               1. The relation holds
 
-    2. If ((typeIR''''' has type setTypeIR)), then
-
-      1. (Let (set< typeIR* >) be (typeIR''''' as setTypeIR))
-
-      2. If ((typeIR* matches pattern [ _/1 ])), then
-
-        1. (Let [typeIR_b] be typeIR*)
-
-        2. If (~$is_set_typeIR(typeIR'''')), then
+        4. If (~$is_set_typeIR(typeIR'''')), then
 
           1. If ((Sub_expl: typeIR'''' <: typeIR_b holds)), then
 
@@ -14470,17 +14494,19 @@ relation Sub_impl_canon_neq:
 
         1. (Let numberTypeIR be (typeIR' as numberTypeIR))
 
-        2. Case analysis on numberTypeIR
+        2. (Let numberTypeIR' be numberTypeIR)
+
+        3. Case analysis on numberTypeIR'
 
           1. Case (% matches pattern `INT<%>`)
 
-            1. (Let (int< _nat >) be numberTypeIR)
+            1. (Let (int< _nat >) be numberTypeIR')
 
             2. The relation holds
 
           2. Case (% matches pattern `BIT<%>`)
 
-            1. (Let (bit< _nat >) be numberTypeIR)
+            1. (Let (bit< _nat >) be numberTypeIR')
 
             2. The relation holds
 
@@ -14512,41 +14538,45 @@ relation Sub_impl_canon_neq:
 
   }
 
-  invalidheader: typeIR <: typeIR' {
+  invalidheader: typeIR' <: typeIR {
 
-    1. If ((typeIR = ((header_invalid) as typeIR))), then
+    1. If ((typeIR' = ((header_invalid) as typeIR))), then
 
-      1. Case analysis on typeIR'
+      1. (Let typeIR'' be typeIR)
+
+      2. Case analysis on typeIR''
 
         1. Case (% has type headerTypeIR)
 
-          1. (Let (header _tid { _fieldTypeIR* }) be (typeIR' as headerTypeIR))
+          1. (Let (header _tid { _fieldTypeIR* }) be (typeIR'' as headerTypeIR))
 
           2. The relation holds
 
         2. Case (% has type headerUnionTypeIR)
 
-          1. (Let (header_union _tid { _fieldTypeIR* }) be (typeIR' as headerUnionTypeIR))
+          1. (Let (header_union _tid { _fieldTypeIR* }) be (typeIR'' as headerUnionTypeIR))
 
           2. The relation holds
 
   }
 
-  seq: typeIR <: typeIR' {
+  seq: typeIR' <: typeIR {
 
-    1. If ((typeIR has type sequenceTypeIR)), then
+    1. If ((typeIR' has type sequenceTypeIR)), then
 
-      1. (Let sequenceTypeIR be (typeIR as sequenceTypeIR))
+      1. (Let sequenceTypeIR be (typeIR' as sequenceTypeIR))
 
       2. If ((sequenceTypeIR matches pattern `SEQ<%>`)), then
 
         1. (Let (seq< typeIR_a* >) be sequenceTypeIR)
 
-        2. Case analysis on typeIR'
+        2. (Let typeIR'' be typeIR)
+
+        3. Case analysis on typeIR''
 
           1. Case (% has type listTypeIR)
 
-            1. (Let (list< typeIR_b >) be (typeIR' as listTypeIR))
+            1. (Let (list< typeIR_b >) be (typeIR'' as listTypeIR))
 
             2. If ((Sub_impl: typeIR_a <: typeIR_b holds))*, then
 
@@ -14554,7 +14584,7 @@ relation Sub_impl_canon_neq:
 
           2. Case (% has type tupleTypeIR)
 
-            1. (Let (tuple< typeIR_b* >) be (typeIR' as tupleTypeIR))
+            1. (Let (tuple< typeIR_b* >) be (typeIR'' as tupleTypeIR))
 
             2. If ((Sub_impl: typeIR_a <: typeIR_b holds))*, then
 
@@ -14562,7 +14592,7 @@ relation Sub_impl_canon_neq:
 
           3. Case (% has type headerStackTypeIR)
 
-            1. (Let (typeIR_b [ n_size ]) be (typeIR' as headerStackTypeIR))
+            1. (Let (typeIR_b [ n_size ]) be (typeIR'' as headerStackTypeIR))
 
             2. If ((|typeIR_a*| <= n_size)), then
 
@@ -14572,7 +14602,7 @@ relation Sub_impl_canon_neq:
 
           4. Case (% has type structTypeIR)
 
-            1. (Let (struct _tid { (typeIR_b _id ;)* }) be (typeIR' as structTypeIR))
+            1. (Let (struct _tid { (typeIR_b _id ;)* }) be (typeIR'' as structTypeIR))
 
             2. If ((Sub_impl: typeIR_a <: typeIR_b holds))*, then
 
@@ -14580,7 +14610,7 @@ relation Sub_impl_canon_neq:
 
           5. Case (% has type headerTypeIR)
 
-            1. (Let (header _tid { (typeIR_b _id ;)* }) be (typeIR' as headerTypeIR))
+            1. (Let (header _tid { (typeIR_b _id ;)* }) be (typeIR'' as headerTypeIR))
 
             2. If ((Sub_impl: typeIR_a <: typeIR_b holds))*, then
 
@@ -14588,7 +14618,7 @@ relation Sub_impl_canon_neq:
 
           6. Case (% has type sequenceTypeIR)
 
-            1. (Let sequenceTypeIR' be (typeIR' as sequenceTypeIR))
+            1. (Let sequenceTypeIR' be (typeIR'' as sequenceTypeIR))
 
             2. If ((sequenceTypeIR' matches pattern `SEQ<%>`)), then
 
@@ -14600,21 +14630,23 @@ relation Sub_impl_canon_neq:
 
   }
 
-  seqdefault: typeIR <: typeIR' {
+  seqdefault: typeIR' <: typeIR {
 
-    1. If ((typeIR has type sequenceTypeIR)), then
+    1. If ((typeIR' has type sequenceTypeIR)), then
 
-      1. (Let sequenceTypeIR be (typeIR as sequenceTypeIR))
+      1. (Let sequenceTypeIR be (typeIR' as sequenceTypeIR))
 
       2. If ((sequenceTypeIR matches pattern `SEQ<%,...>`)), then
 
         1. (Let (seq< typeIR_a* ,...>) be sequenceTypeIR)
 
-        2. Case analysis on typeIR'
+        2. (Let typeIR'' be typeIR)
+
+        3. Case analysis on typeIR''
 
           1. Case (% has type tupleTypeIR)
 
-            1. (Let (tuple< typeIR_b* >) be (typeIR' as tupleTypeIR))
+            1. (Let (tuple< typeIR_b* >) be (typeIR'' as tupleTypeIR))
 
             2. If ((|typeIR_a*| < |typeIR_b*|)), then
 
@@ -14628,7 +14660,7 @@ relation Sub_impl_canon_neq:
 
           2. Case (% has type headerStackTypeIR)
 
-            1. (Let (typeIR_b [ n_size ]) be (typeIR' as headerStackTypeIR))
+            1. (Let (typeIR_b [ n_size ]) be (typeIR'' as headerStackTypeIR))
 
             2. If ((|typeIR_a*| < n_size)), then
 
@@ -14640,7 +14672,7 @@ relation Sub_impl_canon_neq:
 
           3. Case (% has type structTypeIR)
 
-            1. (Let (struct _tid { (typeIR_b _id ;)* }) be (typeIR' as structTypeIR))
+            1. (Let (struct _tid { (typeIR_b _id ;)* }) be (typeIR'' as structTypeIR))
 
             2. If ((|typeIR_a*| < |typeIR_b*|)), then
 
@@ -14654,7 +14686,7 @@ relation Sub_impl_canon_neq:
 
           4. Case (% has type headerTypeIR)
 
-            1. (Let (header _tid { (typeIR_b _id ;)* }) be (typeIR' as headerTypeIR))
+            1. (Let (header _tid { (typeIR_b _id ;)* }) be (typeIR'' as headerTypeIR))
 
             2. If ((|typeIR_a*| < |typeIR_b*|)), then
 
@@ -14668,35 +14700,37 @@ relation Sub_impl_canon_neq:
 
   }
 
-  record: typeIR <: typeIR' {
+  record: typeIR' <: typeIR {
 
-    1. If ((typeIR has type recordTypeIR)), then
+    1. If ((typeIR' has type recordTypeIR)), then
 
-      1. (Let recordTypeIR be (typeIR as recordTypeIR))
+      1. (Let recordTypeIR be (typeIR' as recordTypeIR))
 
       2. If ((recordTypeIR matches pattern `RECORD{%}`)), then
 
         1. (Let (record{ (typeIR_a id_a ;)* }) be recordTypeIR)
 
-        2. Case analysis on typeIR'
+        2. (Let typeIR'' be typeIR)
+
+        3. Case analysis on typeIR''
 
           1. Case (% has type structTypeIR)
 
-            1. (Let (struct _tid { (typeIR_b id_b ;)* }) be (typeIR' as structTypeIR))
+            1. (Let (struct _tid { (typeIR_b id_b ;)* }) be (typeIR'' as structTypeIR))
 
             2. If ($eq_set<id>(({ id_a* }), ({ id_b* }))), then
 
-              1. (Let typeIR''? be $find_map<id, typeIR>(({ (id_a : typeIR_a)* }), id_a))*
+              1. (Let typeIR'''? be $find_map<id, typeIR>(({ (id_a : typeIR_a)* }), id_a))*
 
-              2. If ((typeIR''? matches pattern (_)))*, then
+              2. If ((typeIR'''? matches pattern (_)))*, then
 
-                1. (Let ?(typeIR_a_aligned) be typeIR''?)*
+                1. (Let ?(typeIR_a_aligned) be typeIR'''?)*
 
-                2. (Let typeIR'''? be $find_map<id, typeIR>(({ (id_b : typeIR_b)* }), id_a))*
+                2. (Let typeIR''''? be $find_map<id, typeIR>(({ (id_b : typeIR_b)* }), id_a))*
 
-                3. If ((typeIR'''? matches pattern (_)))*, then
+                3. If ((typeIR''''? matches pattern (_)))*, then
 
-                  1. (Let ?(typeIR_b_aligned) be typeIR'''?)*
+                  1. (Let ?(typeIR_b_aligned) be typeIR''''?)*
 
                   2. If ((Sub_impl: typeIR_a_aligned <: typeIR_b_aligned holds))*, then
 
@@ -14704,21 +14738,21 @@ relation Sub_impl_canon_neq:
 
           2. Case (% has type headerTypeIR)
 
-            1. (Let (header _tid { (typeIR_b id_b ;)* }) be (typeIR' as headerTypeIR))
+            1. (Let (header _tid { (typeIR_b id_b ;)* }) be (typeIR'' as headerTypeIR))
 
             2. If ($eq_set<id>(({ id_a* }), ({ id_b* }))), then
 
-              1. (Let typeIR''? be $find_map<id, typeIR>(({ (id_a : typeIR_a)* }), id_a))*
+              1. (Let typeIR'''? be $find_map<id, typeIR>(({ (id_a : typeIR_a)* }), id_a))*
 
-              2. If ((typeIR''? matches pattern (_)))*, then
+              2. If ((typeIR'''? matches pattern (_)))*, then
 
-                1. (Let ?(typeIR_a_aligned) be typeIR''?)*
+                1. (Let ?(typeIR_a_aligned) be typeIR'''?)*
 
-                2. (Let typeIR'''? be $find_map<id, typeIR>(({ (id_b : typeIR_b)* }), id_a))*
+                2. (Let typeIR''''? be $find_map<id, typeIR>(({ (id_b : typeIR_b)* }), id_a))*
 
-                3. If ((typeIR'''? matches pattern (_)))*, then
+                3. If ((typeIR''''? matches pattern (_)))*, then
 
-                  1. (Let ?(typeIR_b_aligned) be typeIR'''?)*
+                  1. (Let ?(typeIR_b_aligned) be typeIR''''?)*
 
                   2. If ((Sub_impl: typeIR_a_aligned <: typeIR_b_aligned holds))*, then
 
@@ -14726,45 +14760,47 @@ relation Sub_impl_canon_neq:
 
   }
 
-  recorddefault: typeIR <: typeIR' {
+  recorddefault: typeIR' <: typeIR {
 
-    1. If ((typeIR has type recordTypeIR)), then
+    1. If ((typeIR' has type recordTypeIR)), then
 
-      1. (Let recordTypeIR be (typeIR as recordTypeIR))
+      1. (Let recordTypeIR be (typeIR' as recordTypeIR))
 
       2. If ((recordTypeIR matches pattern `RECORD{%,...}`)), then
 
         1. (Let (record{ (typeIR_a id_a ;)* ,...}) be recordTypeIR)
 
-        2. Case analysis on typeIR'
+        2. (Let typeIR'' be typeIR)
+
+        3. Case analysis on typeIR''
 
           1. Case (% has type structTypeIR)
 
-            1. (Let (struct _tid { (typeIR_b id_b ;)* }) be (typeIR' as structTypeIR))
+            1. (Let (struct _tid { (typeIR_b id_b ;)* }) be (typeIR'' as structTypeIR))
 
             2. If ($sub_set<id>(({ id_a* }), ({ id_b* }))), then
 
-              1. (Let typeIR''? be $find_map<id, typeIR>(({ (id_a : typeIR_a)* }), id_a))*
+              1. (Let typeIR'''? be $find_map<id, typeIR>(({ (id_a : typeIR_a)* }), id_a))*
 
-              2. If ((typeIR''? matches pattern (_)))*, then
+              2. If ((typeIR'''? matches pattern (_)))*, then
 
-                1. (Let ?(typeIR_a_aligned) be typeIR''?)*
+                1. (Let ?(typeIR_a_aligned) be typeIR'''?)*
 
-                2. (Let typeIR'''? be $find_map<id, typeIR>(({ (id_b : typeIR_b)* }), id_a))*
+                2. (Let typeIR''''? be $find_map<id, typeIR>(({ (id_b : typeIR_b)* }), id_a))*
 
-                3. If ((typeIR'''? matches pattern (_)))*, then
+                3. If ((typeIR''''? matches pattern (_)))*, then
 
-                  1. (Let ?(typeIR_b_non_default_aligned) be typeIR'''?)*
+                  1. (Let ?(typeIR_b_non_default_aligned) be typeIR''''?)*
 
                   2. If ((Sub_impl: typeIR_a_aligned <: typeIR_b_non_default_aligned holds))*, then
 
                     1. (Let ({ id_default* }) be $diff_set<id>(({ id_b* }), ({ id_a* })))
 
-                    2. (Let typeIR''''? be $find_map<id, typeIR>(({ (id_b : typeIR_b)* }), id_default))*
+                    2. (Let typeIR'''''? be $find_map<id, typeIR>(({ (id_b : typeIR_b)* }), id_default))*
 
-                    3. If ((typeIR''''? matches pattern (_)))*, then
+                    3. If ((typeIR'''''? matches pattern (_)))*, then
 
-                      1. (Let ?(typeIR_b_default) be typeIR''''?)*
+                      1. (Let ?(typeIR_b_default) be typeIR'''''?)*
 
                       2. If ($is_defaultable_typeIR(typeIR_b_default))*, then
 
@@ -14772,31 +14808,31 @@ relation Sub_impl_canon_neq:
 
           2. Case (% has type headerTypeIR)
 
-            1. (Let (header _tid { (typeIR_b id_b ;)* }) be (typeIR' as headerTypeIR))
+            1. (Let (header _tid { (typeIR_b id_b ;)* }) be (typeIR'' as headerTypeIR))
 
             2. If ($sub_set<id>(({ id_a* }), ({ id_b* }))), then
 
-              1. (Let typeIR''? be $find_map<id, typeIR>(({ (id_a : typeIR_a)* }), id_a))*
+              1. (Let typeIR'''? be $find_map<id, typeIR>(({ (id_a : typeIR_a)* }), id_a))*
 
-              2. If ((typeIR''? matches pattern (_)))*, then
+              2. If ((typeIR'''? matches pattern (_)))*, then
 
-                1. (Let ?(typeIR_a_aligned) be typeIR''?)*
+                1. (Let ?(typeIR_a_aligned) be typeIR'''?)*
 
-                2. (Let typeIR'''? be $find_map<id, typeIR>(({ (id_b : typeIR_b)* }), id_a))*
+                2. (Let typeIR''''? be $find_map<id, typeIR>(({ (id_b : typeIR_b)* }), id_a))*
 
-                3. If ((typeIR'''? matches pattern (_)))*, then
+                3. If ((typeIR''''? matches pattern (_)))*, then
 
-                  1. (Let ?(typeIR_b_non_default_aligned) be typeIR'''?)*
+                  1. (Let ?(typeIR_b_non_default_aligned) be typeIR''''?)*
 
                   2. If ((Sub_impl: typeIR_a_aligned <: typeIR_b_non_default_aligned holds))*, then
 
                     1. (Let ({ id_default* }) be $diff_set<id>(({ id_b* }), ({ id_a* })))
 
-                    2. (Let typeIR''''? be $find_map<id, typeIR>(({ (id_b : typeIR_b)* }), id_default))*
+                    2. (Let typeIR'''''? be $find_map<id, typeIR>(({ (id_b : typeIR_b)* }), id_default))*
 
-                    3. If ((typeIR''''? matches pattern (_)))*, then
+                    3. If ((typeIR'''''? matches pattern (_)))*, then
 
-                      1. (Let ?(typeIR_b_default) be typeIR''''?)*
+                      1. (Let ?(typeIR_b_default) be typeIR'''''?)*
 
                       2. If ($is_defaultable_typeIR(typeIR_b_default))*, then
 
@@ -14809,17 +14845,21 @@ relation Expr_ok:
 
   literalExpression-boolean: p TC |- expression : % {
 
-    1. If ((expression = ((true) as expression))), then
+    1. If ((expression has type booleanLiteral)), then
 
-      1. (Let expressionNoteIR be (( ((bool) as typeIR) (lctk) )))
+      1. (Let booleanLiteral be (expression as booleanLiteral))
 
-      2. Result in (((true) as expressionIR) # expressionNoteIR)
+      2. If (((true) = booleanLiteral)), then
 
-    2. If ((expression = ((false) as expression))), then
+        1. (Let expressionNoteIR be (( ((bool) as typeIR) (lctk) )))
 
-      1. (Let expressionNoteIR be (( ((bool) as typeIR) (lctk) )))
+        2. Result in (((true) as expressionIR) # expressionNoteIR)
 
-      2. Result in (((false) as expressionIR) # expressionNoteIR)
+      3. If (((false) = booleanLiteral)), then
+
+        1. (Let expressionNoteIR be (( ((bool) as typeIR) (lctk) )))
+
+        2. Result in (((false) as expressionIR) # expressionNoteIR)
 
   }
 
@@ -14829,11 +14869,13 @@ relation Expr_ok:
 
       1. (Let numberLiteral be (expression as numberLiteral))
 
-      2. Case analysis on numberLiteral
+      2. (Let numberLiteral' be numberLiteral)
+
+      3. Case analysis on numberLiteral'
 
         1. Case (% matches pattern `D%`)
 
-          1. (Let (d i) be numberLiteral)
+          1. (Let (d i) be numberLiteral')
 
           2. (Let expressionNoteIR be (( ((int) as typeIR) (lctk) )))
 
@@ -14841,7 +14883,7 @@ relation Expr_ok:
 
         2. Case (% matches pattern `%S%`)
 
-          1. (Let (n s i) be numberLiteral)
+          1. (Let (n s i) be numberLiteral')
 
           2. (Let expressionNoteIR be (( ((int< n >) as typeIR) (lctk) )))
 
@@ -14849,7 +14891,7 @@ relation Expr_ok:
 
         3. Case (% matches pattern `%W%`)
 
-          1. (Let (n w i) be numberLiteral)
+          1. (Let (n w i) be numberLiteral')
 
           2. (Let expressionNoteIR be (( ((bit< n >) as typeIR) (lctk) )))
 
@@ -14887,7 +14929,7 @@ relation Expr_ok:
 
         3. Result in ((prefixedNameIR as expressionIR) # expressionNoteIR)
 
-    2. If ((expression = ((this) as expression))), then
+    2. If ((((this) as expression) = expression)), then
 
       1. (Let prefixedNameIR be (` "this"))
 
@@ -15473,11 +15515,13 @@ relation Expr_ok:
 
           1. (Let recordElementExpression be (dataElementExpression as recordElementExpression))
 
-          2. Case analysis on recordElementExpression
+          2. (Let recordElementExpression' be recordElementExpression)
+
+          3. Case analysis on recordElementExpression'
 
             1. Case (% matches pattern `%=%`)
 
-              1. (Let (name_f = expression_f) be recordElementExpression)
+              1. (Let (name_f = expression_f) be recordElementExpression')
 
               2. (Let nameIR_f be $name(name_f))
 
@@ -15493,7 +15537,7 @@ relation Expr_ok:
 
             2. Case (% matches pattern `%=%,...`)
 
-              1. (Let (name_f = expression_f ,...) be recordElementExpression)
+              1. (Let (name_f = expression_f ,...) be recordElementExpression')
 
               2. (Let nameIR_f be $name(name_f))
 
@@ -15509,7 +15553,7 @@ relation Expr_ok:
 
             3. Case (% matches pattern `%=%,%`)
 
-              1. (Let (name_f_h = expression_f_h , namedExpressionList_t) be recordElementExpression)
+              1. (Let (name_f_h = expression_f_h , namedExpressionList_t) be recordElementExpression')
 
               2. (Let (name_f_t = expression_f_t)* be $flatten_namedExpressionList(namedExpressionList_t))
 
@@ -15533,7 +15577,7 @@ relation Expr_ok:
 
             4. Case (% matches pattern `%=%,%,...`)
 
-              1. (Let (name_f_h = expression_f_h , namedExpressionList_t ,...) be recordElementExpression)
+              1. (Let (name_f_h = expression_f_h , namedExpressionList_t ,...) be recordElementExpression')
 
               2. (Let (name_f_t = expression_f_t)* be $flatten_namedExpressionList(namedExpressionList_t))
 
@@ -15813,13 +15857,13 @@ relation Expr_ok:
 
           1. (Let ?(typedExpressionIR_index_reduced) be typedExpressionIR?)
 
-          2. (Let typeIR be $canon(typeIR_base))
+          2. (Let typeIR' be $canon(typeIR_base))
 
-          3. Case analysis on typeIR
+          3. Case analysis on typeIR'
 
             1. Case (% has type tupleTypeIR)
 
-              1. (Let (tuple< typeIR_e* >) be (typeIR as tupleTypeIR))
+              1. (Let (tuple< typeIR_e* >) be (typeIR' as tupleTypeIR))
 
               2. If ((ctk_index matches pattern `LCTK`)), then
 
@@ -15839,7 +15883,7 @@ relation Expr_ok:
 
             2. Case (% has type headerStackTypeIR)
 
-              1. (Let (typeIR [ n_size ]) be (typeIR as headerStackTypeIR))
+              1. (Let (typeIR [ n_size ]) be (typeIR' as headerStackTypeIR))
 
               2. Case analysis on (ctk_index matches pattern `LCTK`)
 
@@ -15943,11 +15987,13 @@ relation Expr_ok:
 
       1. (Let callExpression be (expression as callExpression))
 
-      2. Case analysis on callExpression
+      2. (Let callExpression' be callExpression)
+
+      3. Case analysis on callExpression'
 
         1. Case (% matches pattern `%(%)`)
 
-          1. (Let (callTarget ( argumentList )) be callExpression)
+          1. (Let (callTarget ( argumentList )) be callExpression')
 
           2. If ((callTarget has type routineTarget)), then
 
@@ -15977,7 +16023,7 @@ relation Expr_ok:
 
         2. Case (% matches pattern `%<%>(%)`)
 
-          1. (Let (routineTarget < realTypeArgumentList >( argumentList )) be callExpression)
+          1. (Let (routineTarget < realTypeArgumentList >( argumentList )) be callExpression')
 
           2. (RoutineTarget_ok: p TC |- routineTarget : routineTargetIR)
 
@@ -16017,11 +16063,13 @@ relation Expr_ok:
 
         1. (Let (callTarget ( argumentList )) be callExpression)
 
-        2. Case analysis on callTarget
+        2. (Let callTarget' be callTarget)
+
+        3. Case analysis on callTarget'
 
           1. Case (% has type prefixedTypeName)
 
-            1. (Let prefixedTypeName be (callTarget as prefixedTypeName))
+            1. (Let prefixedTypeName be (callTarget' as prefixedTypeName))
 
             2. (Let argument* be $flatten_argumentList(argumentList))
 
@@ -16043,7 +16091,7 @@ relation Expr_ok:
 
           2. Case (% has type specializedType)
 
-            1. (Let (prefixedTypeName < typeArgumentList >) be (callTarget as specializedType))
+            1. (Let (prefixedTypeName < typeArgumentList >) be (callTarget' as specializedType))
 
             2. (Let typeArgument* be $flatten_typeArgumentList(typeArgumentList))
 
@@ -16412,11 +16460,13 @@ relation Stmt_ok:
 
       1. (Let callStatement be (statement as callStatement))
 
-      2. Case analysis on callStatement
+      2. (Let callStatement' be callStatement)
+
+      3. Case analysis on callStatement'
 
         1. Case (% matches pattern `%(%);`)
 
-          1. (Let (lvalue_routine ( argumentList );) be callStatement)
+          1. (Let (lvalue_routine ( argumentList );) be callStatement')
 
           2. (RoutineTarget_lvalue_ok: p TC |- lvalue_routine : routineTargetIR)
 
@@ -16434,7 +16484,7 @@ relation Stmt_ok:
 
         2. Case (% matches pattern `%<%>(%);`)
 
-          1. (Let (lvalue_routine < typeArgumentList >( argumentList );) be callStatement)
+          1. (Let (lvalue_routine < typeArgumentList >( argumentList );) be callStatement')
 
           2. (RoutineTarget_lvalue_ok: p TC |- lvalue_routine : routineTargetIR)
 
@@ -16508,19 +16558,21 @@ relation Stmt_ok:
 
     1. If ((cursor matches pattern `LOCAL`)), then
 
-      1. If ((statement = ((return;) as statement))), then
-
-        1. If ((?(((void) as typeIR)) = $find_return_type(TC))), then
-
-          1. Result in TC, (ret), ((return;) as statementIR)
-
-      2. If ((statement has type returnStatement)), then
+      1. If ((statement has type returnStatement)), then
 
         1. (Let returnStatement be (statement as returnStatement))
 
-        2. If ((returnStatement matches pattern `RETURN%;`)), then
+        2. If (((return;) = returnStatement)), then
 
-          1. (Let (return expression ;) be returnStatement)
+          1. If ((?(((void) as typeIR)) = $find_return_type(TC))), then
+
+            1. Result in TC, (ret), ((return;) as statementIR)
+
+        3. (Let returnStatement' be returnStatement)
+
+        4. If ((returnStatement' matches pattern `RETURN%;`)), then
+
+          1. (Let (return expression ;) be returnStatement')
 
           2. (Expr_ok: (local) TC |- expression : typedExpressionIR)
 
@@ -16570,11 +16622,13 @@ relation Stmt_ok:
 
       1. (Let conditionalStatement be (statement as conditionalStatement))
 
-      2. Case analysis on conditionalStatement
+      2. (Let conditionalStatement' be conditionalStatement)
+
+      3. Case analysis on conditionalStatement'
 
         1. Case (% matches pattern `IF(%)%`)
 
-          1. (Let (if( expression_cond ) statement_then) be conditionalStatement)
+          1. (Let (if( expression_cond ) statement_then) be conditionalStatement')
 
           2. (Expr_ok: p TC |- expression_cond : typedExpressionIR_cond)
 
@@ -16588,7 +16642,7 @@ relation Stmt_ok:
 
         2. Case (% matches pattern `IF(%)%ELSE%`)
 
-          1. (Let (if( expression_cond ) statement_then else statement_else) be conditionalStatement)
+          1. (Let (if( expression_cond ) statement_then else statement_else) be conditionalStatement')
 
           2. (Expr_ok: p TC |- expression_cond : typedExpressionIR_cond)
 
@@ -16698,7 +16752,7 @@ relation BlockElementStmt_ok:
 
       1. (Let (annotationList type name initializerOpt ;) be (blockElementStatement as variableDeclaration))
 
-      2. If ((initializerOpt matches pattern ``EMPTY`)), then
+      2. If ((() = initializerOpt)), then
 
         1. (Type_ok: (local) TC_0 |- (type as typeOrVoid) : typeIR # tid*)
 
@@ -16716,9 +16770,11 @@ relation BlockElementStmt_ok:
 
               4. Result in TC_1, f, (variableDeclarationIR as blockElementStatementIR)
 
-      3. If ((initializerOpt has type initializer)), then
+      3. (Let initializerOpt' be initializerOpt)
 
-        1. (Let (= expression_init) be (initializerOpt as initializer))
+      4. If ((initializerOpt' has type initializer)), then
+
+        1. (Let (= expression_init) be (initializerOpt' as initializer))
 
         2. (Type_ok: (local) TC_0 |- (type as typeOrVoid) : typeIR # tid*)
 
@@ -17198,7 +17254,7 @@ relation ParserStmt_ok:
 
       1. (Let (annotationList type name initializerOpt ;) be (parserStatement as variableDeclaration))
 
-      2. If ((initializerOpt matches pattern ``EMPTY`)), then
+      2. If ((() = initializerOpt)), then
 
         1. (Type_ok: (local) TC_0 |- (type as typeOrVoid) : typeIR # tid*)
 
@@ -17216,9 +17272,11 @@ relation ParserStmt_ok:
 
               4. Result in TC_1, (variableDeclarationIR as parserStatementIR)
 
-      3. If ((initializerOpt has type initializer)), then
+      3. (Let initializerOpt' be initializerOpt)
 
-        1. (Let (= expression_init) be (initializerOpt as initializer))
+      4. If ((initializerOpt' has type initializer)), then
+
+        1. (Let (= expression_init) be (initializerOpt' as initializer))
 
         2. (Type_ok: (local) TC_0 |- (type as typeOrVoid) : typeIR # tid*)
 
@@ -17470,7 +17528,7 @@ relation ParserLocalDecl_ok:
 
       1. (Let (annotationList type name initializerOpt ;) be (parserLocalDeclaration as variableDeclaration))
 
-      2. If ((initializerOpt matches pattern ``EMPTY`)), then
+      2. If ((() = initializerOpt)), then
 
         1. (Type_ok: (block) TC_0 |- (type as typeOrVoid) : typeIR # tid*)
 
@@ -17488,9 +17546,11 @@ relation ParserLocalDecl_ok:
 
               4. Result in TC_1, (variableDeclarationIR as parserLocalDeclarationIR)
 
-      3. If ((initializerOpt has type initializer)), then
+      3. (Let initializerOpt' be initializerOpt)
 
-        1. (Let (= expression_init) be (initializerOpt as initializer))
+      4. If ((initializerOpt' has type initializer)), then
+
+        1. (Let (= expression_init) be (initializerOpt' as initializer))
 
         2. (Type_ok: (block) TC_0 |- (type as typeOrVoid) : typeIR # tid*)
 
@@ -18073,17 +18133,19 @@ relation TableEntry_action_ok:
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:219.1-222.26
 relation TableEntry_priority_ok: 
 
-  non-specified: TC TBLC' TBLS |- tableEntryPriority?{tableEntryPriority <- tableEntryPriority?} : % % {
+  non-specified: TC tableContext TBLS |- tableEntryPriority?{tableEntryPriority <- tableEntryPriority?} : % % {
 
     1. If ((tableEntryPriority? matches pattern ())), then
 
-      1. If ((TBLC'.mode matches pattern `NOPRI`)), then
+      1. (Let TBLC be tableContext)
 
-        1. Result in TBLC', ?()
+      2. If ((TBLC.mode matches pattern `NOPRI`)), then
 
-      2. (Let matchMode be TBLC'.mode)
+        1. Result in TBLC, ?()
 
-      3. If ((matchMode matches pattern `NOPRILPM%`)), then
+      3. (Let matchMode be TBLC.mode)
+
+      4. If ((matchMode matches pattern `NOPRILPM%`)), then
 
         1. (Let (noprilpm n) be matchMode)
 
@@ -18093,59 +18155,59 @@ relation TableEntry_priority_ok:
 
           1. (Let (lpm n_prefix) be tableEntryState)
 
-          2. Result in TBLC', ?()
+          2. Result in TBLC, ?()
 
-      4. If (((TBLC'.mode = (pri)) \/ (TBLC'.mode = (prilpm)))), then
+      5. If (((TBLC.mode = (pri)) \/ (TBLC.mode = (prilpm)))), then
 
-        1. Case analysis on TBLC'.priorities.values
+        1. Case analysis on TBLC.priorities.values
 
           1. Case (% = [])
 
-            1. Case analysis on TBLC'.priorities.largest_wins
+            1. Case analysis on TBLC.priorities.largest_wins
 
               1. Case true
 
-                1. (Let n_size be TBLC'.entries.size)
+                1. (Let n_size be TBLC.entries.size)
 
-                2. (Let n_delta be TBLC'.priorities.delta)
+                2. (Let n_delta be TBLC.priorities.delta)
 
                 3. (Let n be (((n_size - 1) * n_delta) + 1))
 
-                4. (Let TBLC_1 be $add_table_priority(TBLC', n))
+                4. (Let TBLC_1 be $add_table_priority(TBLC, n))
 
                 5. Result in TBLC_1, ?((priority= (d (n as int)) :))
 
               2. Case false
 
-                1. (Let TBLC_1 be $add_table_priority(TBLC', 1))
+                1. (Let TBLC_1 be $add_table_priority(TBLC, 1))
 
                 2. Result in TBLC_1, ?((priority= (d (1 as int)) :))
 
           2. Case (% =/= [])
 
-            1. Case analysis on TBLC'.priorities.largest_wins
+            1. Case analysis on TBLC.priorities.largest_wins
 
               1. Case true
 
-                1. (Let n_last be $find_table_priority_last(TBLC'))
+                1. (Let n_last be $find_table_priority_last(TBLC))
 
-                2. (Let n_delta be TBLC'.priorities.delta)
+                2. (Let n_delta be TBLC.priorities.delta)
 
                 3. (Let n be (n_last - n_delta))
 
-                4. (Let TBLC_1 be $add_table_priority(TBLC', n))
+                4. (Let TBLC_1 be $add_table_priority(TBLC, n))
 
                 5. Result in TBLC_1, ?((priority= (d (n as int)) :))
 
               2. Case false
 
-                1. (Let n_last be $find_table_priority_last(TBLC'))
+                1. (Let n_last be $find_table_priority_last(TBLC))
 
-                2. (Let n_delta be TBLC'.priorities.delta)
+                2. (Let n_delta be TBLC.priorities.delta)
 
                 3. (Let n be (n_last + n_delta))
 
-                4. (Let TBLC_1 be $add_table_priority(TBLC', n))
+                4. (Let TBLC_1 be $add_table_priority(TBLC, n))
 
                 5. Result in TBLC_1, ?((priority= (d (n as int)) :))
 
@@ -18398,13 +18460,15 @@ relation TableProperty_ok:
 
   }
 
-  custom: TC TBLC' |- tableProperty : % % {
+  custom: TC tableContext |- tableProperty : % % {
 
     1. If ((tableProperty matches pattern `%%%%;`)), then
 
       1. (Let (annotationList constOpt tableCustomName (= expression) ;) be tableProperty)
 
-      2. If (("size" = $tableCustomName(tableCustomName))), then
+      2. (Let TBLC be tableContext)
+
+      3. If (("size" = $tableCustomName(tableCustomName))), then
 
         1. (Expr_ok: (local) TC |- expression : typedExpressionIR)
 
@@ -18416,27 +18480,27 @@ relation TableProperty_ok:
 
           2. (Let tablePropertyIR be (annotationList constOptIR custom "size" (= typedExpressionIR) ;))
 
-          3. Result in TBLC', tablePropertyIR
+          3. Result in TBLC, tablePropertyIR
 
-      3. If (("largest_priority_wins" = $tableCustomName(tableCustomName))), then
+      4. If (("largest_priority_wins" = $tableCustomName(tableCustomName))), then
 
         1. (Expr_ok: (local) TC |- expression : typedExpressionIR)
 
-        2. (Let (_expressionIR # (( typeIR _ctk ))) be typedExpressionIR)
+        2. (Let (_expressionIR # (( typeIR' _ctk ))) be typedExpressionIR)
 
-        3. If ((typeIR = ((bool) as typeIR))), then
+        3. If ((typeIR' = ((bool) as typeIR))), then
 
-          1. (Eval_static: (local) TC |- typedExpressionIR ~> value)
+          1. (Eval_static: (local) TC |- typedExpressionIR ~> value')
 
-          2. If ((value has type primitiveValue)), then
+          2. If ((value' has type primitiveValue)), then
 
-            1. (Let primitiveValue be (value as primitiveValue))
+            1. (Let primitiveValue be (value' as primitiveValue))
 
             2. If ((primitiveValue matches pattern `B%`)), then
 
               1. (Let (b b_largest_priority_wins) be primitiveValue)
 
-              2. (Let TBLC_1 be TBLC'[priorities.largest_wins = b_largest_priority_wins])
+              2. (Let TBLC_1 be TBLC[priorities.largest_wins = b_largest_priority_wins])
 
               3. (Let constOptIR be $flatten_constOpt(constOpt))
 
@@ -18444,7 +18508,7 @@ relation TableProperty_ok:
 
               5. Result in TBLC_1, tablePropertyIR
 
-      4. If (("priority_delta" = $tableCustomName(tableCustomName))), then
+      5. If (("priority_delta" = $tableCustomName(tableCustomName))), then
 
         1. (Expr_ok: (local) TC |- expression : typedExpressionIR)
 
@@ -18462,7 +18526,7 @@ relation TableProperty_ok:
 
             2. If ((n_delta > 0)), then
 
-              1. (Let TBLC_1 be TBLC'[priorities.delta = n_delta])
+              1. (Let TBLC_1 be TBLC[priorities.delta = n_delta])
 
               2. (Let constOptIR be $flatten_constOpt(constOpt))
 
@@ -18470,9 +18534,9 @@ relation TableProperty_ok:
 
               4. Result in TBLC_1, tablePropertyIR
 
-      5. (Let nameIR be $tableCustomName(tableCustomName))
+      6. (Let nameIR be $tableCustomName(tableCustomName))
 
-      6. If ((((nameIR =/= "size") /\ (nameIR =/= "largest_priority_wins")) /\ (nameIR =/= "priority_delta"))), then
+      7. If ((((nameIR =/= "size") /\ (nameIR =/= "largest_priority_wins")) /\ (nameIR =/= "priority_delta"))), then
 
         1. (Expr_ok: (local) TC |- expression : typedExpressionIR)
 
@@ -18480,7 +18544,7 @@ relation TableProperty_ok:
 
         3. (Let tablePropertyIR be (annotationList constOptIR custom nameIR (= typedExpressionIR) ;))
 
-        4. Result in TBLC', tablePropertyIR
+        4. Result in TBLC, tablePropertyIR
 
   }
 
@@ -18598,7 +18662,7 @@ relation ControlLocalDecl_ok:
 
       1. (Let (annotationList type name initializerOpt ;) be (controlLocalDeclaration as variableDeclaration))
 
-      2. If ((initializerOpt matches pattern ``EMPTY`)), then
+      2. If ((() = initializerOpt)), then
 
         1. (Type_ok: (block) TC_0 |- (type as typeOrVoid) : typeIR # tid*)
 
@@ -18616,9 +18680,11 @@ relation ControlLocalDecl_ok:
 
               4. Result in TC_1, (variableDeclarationIR as controlLocalDeclarationIR)
 
-      3. If ((initializerOpt has type initializer)), then
+      3. (Let initializerOpt' be initializerOpt)
 
-        1. (Let (= expression_init) be (initializerOpt as initializer))
+      4. If ((initializerOpt' has type initializer)), then
+
+        1. (Let (= expression_init) be (initializerOpt' as initializer))
 
         2. (Type_ok: (block) TC_0 |- (type as typeOrVoid) : typeIR # tid*)
 
@@ -18760,11 +18826,13 @@ relation Decl_ok:
 
         1. (Let (annotationList type ( argumentList ) name ;) be instantiation)
 
-        2. Case analysis on type
+        2. (Let type' be type)
+
+        3. Case analysis on type'
 
           1. Case (% has type prefixedTypeName)
 
-            1. (Let prefixedTypeName be (type as prefixedTypeName))
+            1. (Let prefixedTypeName be (type' as prefixedTypeName))
 
             2. (Let argument* be $flatten_argumentList(argumentList))
 
@@ -18786,7 +18854,7 @@ relation Decl_ok:
 
           2. Case (% has type specializedType)
 
-            1. (Let (prefixedTypeName < typeArgumentList >) be (type as specializedType))
+            1. (Let (prefixedTypeName < typeArgumentList >) be (type' as specializedType))
 
             2. (Let typeArgument* be $flatten_typeArgumentList(typeArgumentList))
 
@@ -18824,11 +18892,13 @@ relation Decl_ok:
 
         1. (Let (annotationList type ( argumentList ) name (={ objectDeclarationList }) ;) be instantiation)
 
-        2. Case analysis on type
+        2. (Let type' be type)
+
+        3. Case analysis on type'
 
           1. Case (% has type prefixedTypeName)
 
-            1. (Let prefixedTypeName be (type as prefixedTypeName))
+            1. (Let prefixedTypeName be (type' as prefixedTypeName))
 
             2. (Let argument* be $flatten_argumentList(argumentList))
 
@@ -18884,7 +18954,7 @@ relation Decl_ok:
 
           2. Case (% has type specializedType)
 
-            1. (Let (prefixedTypeName < typeArgumentList >) be (type as specializedType))
+            1. (Let (prefixedTypeName < typeArgumentList >) be (type' as specializedType))
 
             2. (Let typeArgument* be $flatten_typeArgumentList(typeArgumentList))
 
@@ -19504,15 +19574,17 @@ relation Decl_ok:
 
           1. (Let (annotationList typedef typedefType name ;) be typedefDeclaration)
 
-          2. Case analysis on typedefType
+          2. (Let typedefType' be typedefType)
+
+          3. Case analysis on typedefType'
 
             1. Case (% has type type)
 
-              1. (Let type be (typedefType as type))
+              1. (Let type be (typedefType' as type))
 
-              2. (Type_ok: (global) TC_0 |- (type as typeOrVoid) : typeIR # tid*)
+              2. (Type_ok: (global) TC_0 |- (type as typeOrVoid) : typeIR # tid'*)
 
-              3. If ((tid* matches pattern [])), then
+              3. If ((tid'* matches pattern [])), then
 
                 1. If ((Type_wf: $bound((global), TC_0) |- typeIR holds)), then
 
@@ -19530,7 +19602,7 @@ relation Decl_ok:
 
             2. Case (% has type derivedTypeDeclaration)
 
-              1. (Let derivedTypeDeclaration be (typedefType as derivedTypeDeclaration))
+              1. (Let derivedTypeDeclaration be (typedefType' as derivedTypeDeclaration))
 
               2. (Decl_ok: (global) TC_0 |- (derivedTypeDeclaration as declaration) : TC_1 declarationIR)
 
@@ -19840,31 +19912,27 @@ relation Call_convention_expr_ok:
 
   empty: p TC actctxt |- direction typeIR_param _id _value?{_value <- _value?} @ typedExpressionIR_arg : % {
 
-    1. Case analysis on actctxt
+    1. If ((direction matches pattern ``EMPTY`)), then
 
-      1. Case (% matches pattern `ACTION`)
+      1. If (((action) = actctxt)), then
 
-        1. If ((direction matches pattern ``EMPTY`)), then
+        1. (Let typedExpressionIR? be $coerce_unary(typedExpressionIR_arg, typeIR_param))
 
-          1. (Let typedExpressionIR? be $coerce_unary(typedExpressionIR_arg, typeIR_param))
+        2. If ((typedExpressionIR? matches pattern (_))), then
 
-          2. If ((typedExpressionIR? matches pattern (_))), then
+          1. (Let ?(typedExpressionIR_arg_cast) be typedExpressionIR?)
 
-            1. (Let ?(typedExpressionIR_arg_cast) be typedExpressionIR?)
+          2. Result in typedExpressionIR_arg_cast
 
-            2. Result in typedExpressionIR_arg_cast
+      2. If (((noaction) = actctxt)), then
 
-      2. Case (% matches pattern `NOACTION`)
+        1. (Let (_expressionIR # (( typeIR_arg ctk_arg ))) be typedExpressionIR_arg)
 
-        1. If ((direction matches pattern ``EMPTY`)), then
+        2. If ((Type_alpha: typeIR_param ~~ typeIR_arg holds)), then
 
-          1. (Let (_expressionIR # (( typeIR_arg ctk_arg ))) be typedExpressionIR_arg)
+          1. If (~(ctk_arg matches pattern `DYN`)), then
 
-          2. If ((Type_alpha: typeIR_param ~~ typeIR_arg holds)), then
-
-            1. If (~(ctk_arg matches pattern `DYN`)), then
-
-              1. Result in typedExpressionIR_arg
+            1. Result in typedExpressionIR_arg
 
   }
 
@@ -22586,49 +22654,45 @@ relation SelectCase_keyset_ok:
 
   simpleKeysetExpression-default: TC typeIR'*{typeIR' <- typeIR'*} |- keysetExpression : % {
 
-    1. Case analysis on typeIR'*
+    1. If ((keysetExpression = ((default) as keysetExpression))), then
 
-      1. Case (% matches pattern [])
+      1. If (([] = typeIR'*)), then
 
-        1. If ((keysetExpression = ((default) as keysetExpression))), then
+        1. Result in ((default) as keysetExpressionIR)
 
-          1. Result in ((default) as keysetExpressionIR)
+      2. (Let typeIR''* be typeIR'*)
 
-      2. Case (% matches pattern [ _/1 ])
+      3. If ((typeIR''* matches pattern [ _/1 ])), then
 
-        1. (Let [typeIR_key] be typeIR'*)
+        1. (Let [typeIR_key] be typeIR''*)
 
-        2. If ((keysetExpression = ((default) as keysetExpression))), then
+        2. (SelectCase_keyset_simple_ok: TC typeIR_key |- (default) : simpleKeysetExpressionIR)
 
-          1. (SelectCase_keyset_simple_ok: TC typeIR_key |- (default) : simpleKeysetExpressionIR)
+        3. Result in (simpleKeysetExpressionIR as keysetExpressionIR)
 
-          2. Result in (simpleKeysetExpressionIR as keysetExpressionIR)
+      4. If ((|typeIR''*| > 1)), then
 
-    2. If ((keysetExpression = ((default) as keysetExpression))), then
-
-      1. If ((|typeIR'*| > 1)), then
-
-        1. (SelectCase_keyset_simple_ok: TC ((seq< typeIR'* >) as typeIR) |- (default) : simpleKeysetExpressionIR)
+        1. (SelectCase_keyset_simple_ok: TC ((seq< typeIR''* >) as typeIR) |- (default) : simpleKeysetExpressionIR)
 
         2. Result in (simpleKeysetExpressionIR as keysetExpressionIR)
 
   }
 
-  simpleKeysetExpression-dontcare: TC typeIR'*{typeIR' <- typeIR'*} |- keysetExpression : % {
+  simpleKeysetExpression-dontcare: TC typeIR*{typeIR <- typeIR*} |- keysetExpression : % {
 
-    1. If ((typeIR'* matches pattern [ _/1 ])), then
+    1. If ((keysetExpression = ((_) as keysetExpression))), then
 
-      1. (Let [typeIR_key] be typeIR'*)
+      1. (Let typeIR'* be typeIR*)
 
-      2. If ((keysetExpression = ((_) as keysetExpression))), then
+      2. If ((typeIR'* matches pattern [ _/1 ])), then
 
-        1. (SelectCase_keyset_simple_ok: TC typeIR_key |- (_) : simpleKeysetExpressionIR)
+        1. (Let [typeIR_key] be typeIR'*)
 
-        2. Result in (simpleKeysetExpressionIR as keysetExpressionIR)
+        2. (SelectCase_keyset_simple_ok: TC typeIR_key |- (_) : simpleKeysetExpressionIR)
 
-    2. If ((keysetExpression = ((_) as keysetExpression))), then
+        3. Result in (simpleKeysetExpressionIR as keysetExpressionIR)
 
-      1. If ((|typeIR'*| > 1)), then
+      3. If ((|typeIR'*| > 1)), then
 
         1. (SelectCase_keyset_simple_ok: TC ((seq< typeIR'* >) as typeIR) |- (_) : simpleKeysetExpressionIR)
 
@@ -22676,21 +22740,21 @@ relation SelectCase_keyset_ok:
 
   }
 
-  tupleKeysetExpression-default: TC typeIR'*{typeIR' <- typeIR'*} |- keysetExpression : % {
+  tupleKeysetExpression-default: TC typeIR*{typeIR <- typeIR*} |- keysetExpression : % {
 
-    1. If ((typeIR'* matches pattern [ _/1 ])), then
+    1. If ((keysetExpression = (((default)) as keysetExpression))), then
 
-      1. (Let [typeIR_key] be typeIR'*)
+      1. (Let typeIR'* be typeIR*)
 
-      2. If ((keysetExpression = (((default)) as keysetExpression))), then
+      2. If ((typeIR'* matches pattern [ _/1 ])), then
 
-        1. (SelectCase_keyset_simple_ok: TC typeIR_key |- (default) : simpleKeysetExpressionIR)
+        1. (Let [typeIR_key] be typeIR'*)
 
-        2. Result in ((( [simpleKeysetExpressionIR] )) as keysetExpressionIR)
+        2. (SelectCase_keyset_simple_ok: TC typeIR_key |- (default) : simpleKeysetExpressionIR)
 
-    2. If ((keysetExpression = (((default)) as keysetExpression))), then
+        3. Result in ((( [simpleKeysetExpressionIR] )) as keysetExpressionIR)
 
-      1. If ((|typeIR'*| > 1)), then
+      3. If ((|typeIR'*| > 1)), then
 
         1. (SelectCase_keyset_simple_ok: TC ((seq< typeIR'* >) as typeIR) |- (default) : simpleKeysetExpressionIR)
 
@@ -22698,21 +22762,21 @@ relation SelectCase_keyset_ok:
 
   }
 
-  tupleKeysetExpression-dontcare: TC typeIR'*{typeIR' <- typeIR'*} |- keysetExpression : % {
+  tupleKeysetExpression-dontcare: TC typeIR*{typeIR <- typeIR*} |- keysetExpression : % {
 
-    1. If ((typeIR'* matches pattern [ _/1 ])), then
+    1. If ((keysetExpression = (((_)) as keysetExpression))), then
 
-      1. (Let [typeIR_key] be typeIR'*)
+      1. (Let typeIR'* be typeIR*)
 
-      2. If ((keysetExpression = (((_)) as keysetExpression))), then
+      2. If ((typeIR'* matches pattern [ _/1 ])), then
 
-        1. (SelectCase_keyset_simple_ok: TC typeIR_key |- (_) : simpleKeysetExpressionIR)
+        1. (Let [typeIR_key] be typeIR'*)
 
-        2. Result in ((( [simpleKeysetExpressionIR] )) as keysetExpressionIR)
+        2. (SelectCase_keyset_simple_ok: TC typeIR_key |- (_) : simpleKeysetExpressionIR)
 
-    2. If ((keysetExpression = (((_)) as keysetExpression))), then
+        3. Result in ((( [simpleKeysetExpressionIR] )) as keysetExpressionIR)
 
-      1. If ((|typeIR'*| > 1)), then
+      3. If ((|typeIR'*| > 1)), then
 
         1. (SelectCase_keyset_simple_ok: TC ((seq< typeIR'* >) as typeIR) |- (_) : simpleKeysetExpressionIR)
 
@@ -22932,17 +22996,17 @@ def $split_dataplane_parameters(parameterTypeIR*)
 ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:236.1-239.26
 relation TableEntry_keyset_simple_ok: 
 
-  expression: TC TBLC |- (typeIR_key, text') @ simpleKeysetExpression : % % {
+  expression: TC TBLC |- (typeIR_key, text) @ simpleKeysetExpression : % % {
 
-    1. If ((text' = "lpm")), then
+    1. If ((simpleKeysetExpression has type expression)), then
 
-      1. If ((simpleKeysetExpression has type expression)), then
+      1. (Let expression be (simpleKeysetExpression as expression))
 
-        1. (Let expression be (simpleKeysetExpression as expression))
+      2. If (("lpm" = text)), then
 
-        2. (Let matchMode be TBLC.mode)
+        1. (Let matchMode be TBLC.mode)
 
-        3. If ((matchMode matches pattern `NOPRILPM%`)), then
+        2. If ((matchMode matches pattern `NOPRILPM%`)), then
 
           1. (Let (noprilpm n) be matchMode)
 
@@ -22958,11 +23022,9 @@ relation TableEntry_keyset_simple_ok:
 
             3. Result in (lpm n), (typedExpressionIR_set as simpleKeysetExpressionIR)
 
-    2. If ((simpleKeysetExpression has type expression)), then
+      3. (Let nameIR_matchkind be text)
 
-      1. (Let expression be (simpleKeysetExpression as expression))
-
-      2. If ((text' =/= "lpm")), then
+      4. If ((nameIR_matchkind =/= "lpm")), then
 
         1. (Expr_ok: (local) TC |- expression : typedExpressionIR)
 
@@ -22980,55 +23042,17 @@ relation TableEntry_keyset_simple_ok:
 
   mask: TC TBLC |- (typeIR_key, text) @ simpleKeysetExpression : % % {
 
-    1. Case analysis on text
+    1. If ((simpleKeysetExpression matches pattern `%&&&%`)), then
 
-      1. Case (% = "lpm")
+      1. (Let (expression_l &&& expression_r) be simpleKeysetExpression)
 
-        1. If ((simpleKeysetExpression matches pattern `%&&&%`)), then
+      2. If (("lpm" = text)), then
 
-          1. (Let (expression_l &&& expression_r) be simpleKeysetExpression)
+        1. (Let matchMode be TBLC.mode)
 
-          2. (Let matchMode be TBLC.mode)
+        2. If ((matchMode matches pattern `NOPRILPM%`)), then
 
-          3. If ((matchMode matches pattern `NOPRILPM%`)), then
-
-            1. (Let (noprilpm n) be matchMode)
-
-            2. (Expr_ok: (local) TC |- expression_l : typedExpressionIR_l)
-
-            3. (Expr_ok: (local) TC |- expression_r : typedExpressionIR_r)
-
-            4. (Let (typedExpressionIR, typedExpressionIR)? be $coerce_binary(typedExpressionIR_l, typedExpressionIR_r))
-
-            5. If (((typedExpressionIR, typedExpressionIR)? matches pattern (_))), then
-
-              1. (Let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) be (typedExpressionIR, typedExpressionIR)?)
-
-              2. (Let (typedExpressionIR, typedExpressionIR)'? be $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_mask))
-
-              3. If (((typedExpressionIR, typedExpressionIR)'? matches pattern (_))), then
-
-                1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)'?)
-
-                2. (Let (_expressionIR # (( typeIR_reduced ctk_r_reduced ))) be typedExpressionIR_r_reduced)
-
-                3. If ((Sub_impl: typeIR_reduced <: typeIR_key holds)), then
-
-                  1. If ((ctk_r_reduced matches pattern `LCTK`)), then
-
-                    1. (Eval_static: (local) TC |- typedExpressionIR_r_reduced ~> value_r)
-
-                    2. (Let i_r be $to_number(value_r))
-
-                    3. (Let n_prefix be $tableEntry_lpm_prefix(((n w $to_bitstr((n as int), i_r)) as value)))
-
-                    4. Result in (lpm n_prefix), (typedExpressionIR_l_reduced &&& typedExpressionIR_r_reduced)
-
-      2. Case (% = "ternary")
-
-        1. If ((simpleKeysetExpression matches pattern `%&&&%`)), then
-
-          1. (Let (expression_l &&& expression_r) be simpleKeysetExpression)
+          1. (Let (noprilpm n) be matchMode)
 
           2. (Expr_ok: (local) TC |- expression_l : typedExpressionIR_l)
 
@@ -23050,7 +23074,39 @@ relation TableEntry_keyset_simple_ok:
 
               3. If ((Sub_impl: typeIR_reduced <: typeIR_key holds)), then
 
-                1. Result in (nolpm), (typedExpressionIR_l_reduced &&& typedExpressionIR_r_reduced)
+                1. If ((ctk_r_reduced matches pattern `LCTK`)), then
+
+                  1. (Eval_static: (local) TC |- typedExpressionIR_r_reduced ~> value_r)
+
+                  2. (Let i_r be $to_number(value_r))
+
+                  3. (Let n_prefix be $tableEntry_lpm_prefix(((n w $to_bitstr((n as int), i_r)) as value)))
+
+                  4. Result in (lpm n_prefix), (typedExpressionIR_l_reduced &&& typedExpressionIR_r_reduced)
+
+      3. If (("ternary" = text)), then
+
+        1. (Expr_ok: (local) TC |- expression_l : typedExpressionIR_l)
+
+        2. (Expr_ok: (local) TC |- expression_r : typedExpressionIR_r)
+
+        3. (Let (typedExpressionIR, typedExpressionIR)? be $coerce_binary(typedExpressionIR_l, typedExpressionIR_r))
+
+        4. If (((typedExpressionIR, typedExpressionIR)? matches pattern (_))), then
+
+          1. (Let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) be (typedExpressionIR, typedExpressionIR)?)
+
+          2. (Let (typedExpressionIR, typedExpressionIR)'? be $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_mask))
+
+          3. If (((typedExpressionIR, typedExpressionIR)'? matches pattern (_))), then
+
+            1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)'?)
+
+            2. (Let (_expressionIR # (( typeIR_reduced ctk_r_reduced ))) be typedExpressionIR_r_reduced)
+
+            3. If ((Sub_impl: typeIR_reduced <: typeIR_key holds)), then
+
+              1. Result in (nolpm), (typedExpressionIR_l_reduced &&& typedExpressionIR_r_reduced)
 
   }
 
@@ -23086,11 +23142,11 @@ relation TableEntry_keyset_simple_ok:
 
   }
 
-  default: TC TBLC |- (typeIR_key, text') @ simpleKeysetExpression : % % {
+  default: TC TBLC |- (typeIR_key, text) @ simpleKeysetExpression : % % {
 
-    1. If ((text' = "lpm")), then
+    1. If ((simpleKeysetExpression matches pattern `DEFAULT`)), then
 
-      1. If ((simpleKeysetExpression matches pattern `DEFAULT`)), then
+      1. If (("lpm" = text)), then
 
         1. (Let matchMode be TBLC.mode)
 
@@ -23100,21 +23156,21 @@ relation TableEntry_keyset_simple_ok:
 
           2. Result in (lpm n), (default)
 
-    2. If ((simpleKeysetExpression matches pattern `DEFAULT`)), then
+      2. (Let nameIR_matchkind be text)
 
-      1. If ((text' =/= "lpm")), then
+      3. If ((nameIR_matchkind =/= "lpm")), then
 
-        1. If ((text' =/= "exact")), then
+        1. If ((nameIR_matchkind =/= "exact")), then
 
           1. Result in (nolpm), (default)
 
   }
 
-  dontcare: TC TBLC |- (typeIR_key, text') @ simpleKeysetExpression : % % {
+  dontcare: TC TBLC |- (typeIR_key, text) @ simpleKeysetExpression : % % {
 
-    1. If ((text' = "lpm")), then
+    1. If ((simpleKeysetExpression matches pattern `_`)), then
 
-      1. If ((simpleKeysetExpression matches pattern `_`)), then
+      1. If (("lpm" = text)), then
 
         1. (Let matchMode be TBLC.mode)
 
@@ -23124,11 +23180,11 @@ relation TableEntry_keyset_simple_ok:
 
           2. Result in (lpm 0), (_)
 
-    2. If ((simpleKeysetExpression matches pattern `_`)), then
+      2. (Let nameIR_matchkind be text)
 
-      1. If ((text' =/= "lpm")), then
+      3. If ((nameIR_matchkind =/= "lpm")), then
 
-        1. If ((text' =/= "exact")), then
+        1. If ((nameIR_matchkind =/= "exact")), then
 
           1. Result in (nolpm), (_)
 

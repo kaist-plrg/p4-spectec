@@ -33,19 +33,23 @@ let as_exp (id : Id.t) (typ : Il.Ast.typ) (iters : Il.Ast.iter list) :
     (Il.Ast.VarE id $$ (id.at, typ.it))
     iters
 
-let rec fresh_from_typ (at : region) (typ : Il.Ast.typ) :
-    Id.t * Il.Ast.typ * Il.Ast.iter list =
-  match typ.it with
-  | IterT (typ, iter) ->
-      let id, typ, iters = fresh_from_typ at typ in
-      (id, typ, iters @ [ iter ])
-  | _ ->
-      let id = Il.Print.string_of_typ typ $ at in
-      (id, typ, [])
-
-let fresh_from_exp ?(wildcard = false) (ids : IdSet.t) (exp : Il.Ast.exp) :
-    Id.t * Il.Ast.typ * Il.Ast.iter list =
-  let id, typ, iters = fresh_from_typ exp.at (exp.note $ exp.at) in
+let fresh_from_typ ?(wildcard = false) (ids : IdSet.t) (at : region)
+    (typ : Il.Ast.typ) : Id.t * Il.Ast.typ * Il.Ast.iter list =
+  let rec fresh_from_typ' (typ : Il.Ast.typ) :
+      Id.t * Il.Ast.typ * Il.Ast.iter list =
+    match typ.it with
+    | IterT (typ, iter) ->
+        let id, typ, iters = fresh_from_typ' typ in
+        (id, typ, iters @ [ iter ])
+    | _ ->
+        let id = Il.Print.string_of_typ typ $ at in
+        (id, typ, [])
+  in
+  let id, typ, iters = fresh_from_typ' typ in
   let id = if wildcard then "_" ^ id.it $ id.at else id in
   let id = fresh_id ids id in
   (id, typ, iters)
+
+let fresh_from_exp ?(wildcard = false) (ids : IdSet.t) (exp : Il.Ast.exp) :
+    Id.t * Il.Ast.typ * Il.Ast.iter list =
+  fresh_from_typ ~wildcard ids exp.at (exp.note $ exp.at)

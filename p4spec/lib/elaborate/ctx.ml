@@ -122,7 +122,9 @@ let bound_rulegroup (ctx : t) (rid : RId.t) (rulegroupid : Id.t) : bool =
   match rulegroups_opt with
   | Some rulegroups ->
       List.exists
-        (fun rulegroup -> rulegroup |> it |> fst |> Id.eq rulegroupid)
+        (fun rulegroup ->
+          let id, _, _ = rulegroup.it in
+          Id.eq id rulegroupid)
         rulegroups
   | None -> false
 
@@ -203,7 +205,7 @@ let add_rel (ctx : t) (rid : RId.t) (nottyp : nottyp) (inputs : int list) : t =
 
 let add_rulegroup (ctx : t) (rid : RId.t) (rulegroup : Il.Ast.rulegroup) : t =
   if not (bound_rel ctx rid) then error_undef rid.at "relation" rid.it;
-  let rulegroupid = rulegroup |> it |> fst in
+  let rulegroupid, _, _ = rulegroup.it in
   if bound_rulegroup ctx rid rulegroupid then
     error_dup rulegroupid.at "rulegroup" rulegroupid.it;
   let nottyp, inputs, rulegroups = REnv.find rid ctx.renv in

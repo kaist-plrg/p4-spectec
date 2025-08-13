@@ -1213,6 +1213,22 @@ and elab_prems_with_bind (ctx : Ctx.t) (prems : prem list) :
       (ctx, prems_il_acc @ prems_il))
     (ctx, []) prems
 
+and elab_prem_il_with_bind (ctx : Ctx.t) (prem_il : Il.Ast.prem) :
+    Ctx.t * Il.Ast.prem list =
+  let ctx, prem_il, sideconditions_il =
+    Dataflow.Analysis.analyze_prem ctx prem_il
+  in
+  let prems_il = prem_il :: sideconditions_il in
+  (ctx, prems_il)
+
+and elab_prems_il_with_bind (ctx : Ctx.t) (prems_il : Il.Ast.prem list) :
+    Ctx.t * Il.Ast.prem list =
+  List.fold_left
+    (fun (ctx, prems_il_analyzed) prem_il ->
+      let ctx, prems_il = elab_prem_il_with_bind ctx prem_il in
+      (ctx, prems_il_analyzed @ prems_il))
+    (ctx, []) prems_il
+
 (* Elaboration of variable premises *)
 
 and elab_var_prem (ctx : Ctx.t) (id : id) (plaintyp : plaintyp) : Ctx.t =
@@ -1292,68 +1308,92 @@ and elab_hints (ctx : Ctx.t) (hints : hint list) : Il.Ast.hint list =
 
 (* Elaboration of rules *)
 
-let rec elab_rule_input_with_bind (ctx : Ctx.t)
-    (exps_il : (int * Il.Ast.exp) list) :
-    Ctx.t * (int * Il.Ast.exp) list * Il.Ast.prem list =
-  let idxs, exps_il = List.split exps_il in
-  let ctx, exps_il, sideconditions_il =
-    Dataflow.Analysis.analyze_exps_as_bind ctx exps_il
-  in
-  let exps_il = List.combine idxs exps_il in
-  (ctx, exps_il, sideconditions_il)
-
-and elab_rule_output_with_bind (ctx : Ctx.t) (exps_il : (int * Il.Ast.exp) list)
-    : (int * Il.Ast.exp) list =
-  let idxs, exps_il = List.split exps_il in
-  let exps_il = Dataflow.Analysis.analyze_exps_as_bound ctx exps_il in
-  List.combine idxs exps_il
-
-and elab_rule (ctx : Ctx.t) (rule : rule) : Il.Ast.rule =
-  let id_rel, id_rule, exp, prems = rule.it in
-  let nottyp, inputs = Ctx.find_rel ctx id_rel in
-  let ctx_local = { ctx with frees = IdSet.empty } in
-  let ctx_local = El.Free.free_rule rule |> Ctx.add_frees ctx_local in
-  let+ ctx_local, notexp_il = elab_exp_not ctx_local (NotationT nottyp) exp in
-  let mixop, exps_il = notexp_il in
-  let exps_il_input, exps_il_output =
-    exps_il
-    |> List.mapi (fun idx exp -> (idx, exp))
-    |> List.partition (fun (idx, _) -> List.mem idx inputs)
-  in
-  let ctx_local, exps_il_input, sideconditions_il =
-    elab_rule_input_with_bind ctx_local exps_il_input
-  in
-  let ctx_local, prems_il = elab_prems_with_bind ctx_local prems in
-  let prems_il = sideconditions_il @ prems_il in
-  let exps_il_output = elab_rule_output_with_bind ctx_local exps_il_output in
-  let notexp_il =
-    let exps_il =
-      exps_il_input @ exps_il_output
-      |> List.sort (fun (idx_a, _) (idx_b, _) -> compare idx_a idx_b)
-      |> List.map snd
-    in
-    (mixop, exps_il)
-  in
-  (id_rule, notexp_il, prems_il) $ rule.at
-
-and elab_rule_input_with_bind' (ctx : Ctx.t) (exps_il : Il.Ast.exp list) :
+let rec elab_rule_input_with_bind (ctx : Ctx.t) (exps_il : Il.Ast.exp list) :
     Ctx.t * Il.Ast.exp list * Il.Ast.prem list =
   Dataflow.Analysis.analyze_exps_as_bind ctx exps_il
 
-and elab_rule_output_with_bind' (ctx : Ctx.t) (exps_il : Il.Ast.exp list) :
+and elab_rule_output_with_bind (ctx : Ctx.t) (exps_il : Il.Ast.exp list) :
     Il.Ast.exp list =
   Dataflow.Analysis.analyze_exps_as_bound ctx exps_il
 
-and elab_rulegroup (ctx : Ctx.t) (id_rel : id) (id_rulegroup : id)
-    (rules : rule list) :
-    Id.t
-    * Il.Ast.exp list
-    * Il.Ast.exp list
-    * Il.Ast.prem list
-    * (Id.t * Il.Ast.prem list * Il.Ast.exp list) list =
-  (* Find the relation *)
+and elab_rulematch (ctx : Ctx.t) (ctxs_local : Ctx.t list)
+    (exps_il_input_group : Il.Ast.exp list list) :
+    Ctx.t list * Il.Ast.rulematch * Il.Ast.prem list list =
+  let ctx_local_unified =
+    let ctx_local_unified = { ctx with frees = IdSet.empty } in
+    let frees =
+      ctxs_local
+      |> List.map (fun (ctx_local : Ctx.t) -> ctx_local.frees)
+      |> List.fold_left IdSet.union IdSet.empty
+    in
+    Ctx.add_frees ctx_local_unified frees
+  in
+  let ctx_local_unified, exps_il_input_unified, prems_il_unified_group =
+    Antiunify.antiunify ctx_local_unified exps_il_input_group
+  in
+  let ctx_local_unified, exps_il_input_unified_match, prems_il_match =
+    elab_rule_input_with_bind ctx_local_unified exps_il_input_unified
+  in
+  let ctxs_local =
+    List.map
+      (fun (ctx_local : Ctx.t) ->
+        {
+          ctx_local with
+          frees = ctx_local_unified.frees;
+          venv = ctx_local_unified.venv;
+        })
+      ctxs_local
+  in
+  let ctxs_local, prems_il_unified_group =
+    List.map2
+      (fun ctx_local prems_il_unified ->
+        let ctx_local, prems_il_unified =
+          elab_prems_il_with_bind ctx_local prems_il_unified
+        in
+        (ctx_local, prems_il_unified))
+      ctxs_local prems_il_unified_group
+    |> List.split
+  in
+  let rulematch_il =
+    (exps_il_input_unified, exps_il_input_unified_match, prems_il_match)
+  in
+  (ctxs_local, rulematch_il, prems_il_unified_group)
+
+and elab_rulepaths (ctxs_local : Ctx.t list) (id_rule_group : id list)
+    (prems_il_unified_group : Il.Ast.prem list list)
+    (prems_group : prem list list) (exps_il_output_group : Il.Ast.exp list list)
+    : Il.Ast.rulepath list =
+  let ctxs_local, prems_il_group =
+    List.map2
+      (fun ctx_local prems ->
+        let ctx_local, prems_il = elab_prems_with_bind ctx_local prems in
+        (ctx_local, prems_il))
+      ctxs_local prems_group
+    |> List.split
+  in
+  let prems_il_group =
+    List.map2
+      (fun prems_il_unified prems_il -> prems_il_unified @ prems_il)
+      prems_il_unified_group prems_il_group
+  in
+  let exps_il_output_group =
+    List.map2
+      (fun ctx_local exps_il_output ->
+        elab_rule_output_with_bind ctx_local exps_il_output)
+      ctxs_local exps_il_output_group
+  in
+  let rulepaths_il =
+    List.combine prems_il_group exps_il_output_group
+    |> List.map2
+         (fun id_rule (prems_il, exps_il_output) ->
+           (id_rule, prems_il, exps_il_output))
+         id_rule_group
+  in
+  rulepaths_il
+
+and elab_rulegroup (ctx : Ctx.t) (at : region) (id_rel : id) (id_rulegroup : id)
+    (rules : rule list) : Il.Ast.rulegroup =
   let nottyp, inputs = Ctx.find_rel ctx id_rel in
-  (* Create local context per rule *)
   let ctxs_local =
     List.map
       (fun rule ->
@@ -1361,7 +1401,6 @@ and elab_rulegroup (ctx : Ctx.t) (id_rel : id) (id_rulegroup : id)
         El.Free.free_rule rule |> Ctx.add_frees ctx_local)
       rules
   in
-  (* Split and aggregate rules *)
   let id_rule_group, exp_group, prems_group =
     List.fold_left
       (fun (id_rule_group, exp_group, prems_group) rule ->
@@ -1374,7 +1413,6 @@ and elab_rulegroup (ctx : Ctx.t) (id_rel : id) (id_rulegroup : id)
         (id_rule_group, exp_group, prems_group))
       ([], [], []) rules
   in
-  (* Elaborate rule signatures *)
   let ctxs_local, notexps_il =
     List.map2
       (fun ctx_local exp ->
@@ -1385,7 +1423,6 @@ and elab_rulegroup (ctx : Ctx.t) (id_rel : id) (id_rulegroup : id)
       ctxs_local exp_group
     |> List.split
   in
-  (* Split inputs and outputs of the rules *)
   let exps_il_input_group, exps_il_output_group =
     List.map
       (fun notexp_il ->
@@ -1394,88 +1431,14 @@ and elab_rulegroup (ctx : Ctx.t) (id_rel : id) (id_rulegroup : id)
       notexps_il
     |> List.split
   in
-  (* Create temporary local context for anti-unification *)
-  let ctx_local_unified =
-    let ctx_local_unified = { ctx with frees = IdSet.empty } in
-    let frees =
-      ctxs_local
-      |> List.map (fun (ctx_local : Ctx.t) -> ctx_local.frees)
-      |> List.fold_left IdSet.union IdSet.empty
-    in
-    Ctx.add_frees ctx_local_unified frees
+  let ctxs_local, rulematch_il, prems_il_unified_group =
+    elab_rulematch ctx ctxs_local exps_il_input_group
   in
-  (* Anti-unify inputs of the rules *)
-  let ctx_local_unified, exps_il_input_unified, prems_il_unified_group =
-    Antiunify.antiunify ctx_local_unified exps_il_input_group
+  let rulepaths_il =
+    elab_rulepaths ctxs_local id_rule_group prems_il_unified_group prems_group
+      exps_il_output_group
   in
-  (* Elaborate rule inputs, with binding analysis *)
-  let ctx_local_unified, exps_il_input_unified_match, prems_il_match =
-    elab_rule_input_with_bind' ctx_local_unified exps_il_input_unified
-  in
-  (* Promote anti-unified context to local contexts *)
-  let ctxs_local =
-    List.map
-      (fun (ctx_local : Ctx.t) ->
-        {
-          ctx_local with
-          frees = ctx_local_unified.frees;
-          venv = ctx_local_unified.venv;
-        })
-      ctxs_local
-  in
-  (* Elaborate premises from anti-unification, with binding analysis *)
-  let ctxs_local, prems_il_unified_group =
-    List.map2
-      (fun ctx_local prems_il_unified ->
-        let ctx_local, prems_il_unified =
-          List.fold_left
-            (fun (ctx_local, prems_il_unified) prem_il_unified ->
-              let ctx_local, prem_il_unified, sideconditions_il =
-                Dataflow.Analysis.analyze_prem ctx_local prem_il_unified
-              in
-              ( ctx_local,
-                prems_il_unified @ [ prem_il_unified ] @ sideconditions_il ))
-            (ctx_local, []) prems_il_unified
-        in
-        (ctx_local, prems_il_unified))
-      ctxs_local prems_il_unified_group
-    |> List.split
-  in
-  (* Elaborate premises, with binding analysis *)
-  let ctxs_local, prems_il_group =
-    List.map2
-      (fun ctx_local prems ->
-        let ctx_local, prems_il = elab_prems_with_bind ctx_local prems in
-        (ctx_local, prems_il))
-      ctxs_local prems_group
-    |> List.split
-  in
-  (* Combine anti-unified and original premises *)
-  let prems_il_group =
-    List.map2
-      (fun prems_il_unified prems_il -> prems_il_unified @ prems_il)
-      prems_il_unified_group prems_il_group
-  in
-  (* Elaborate rule outputs, with binding analysis *)
-  let exps_il_output_group =
-    List.map2
-      (fun ctx_local exps_il_output ->
-        elab_rule_output_with_bind' ctx_local exps_il_output)
-      ctxs_local exps_il_output_group
-  in
-  (* Create the rule group *)
-  let paths_il =
-    List.combine prems_il_group exps_il_output_group
-    |> List.map2
-         (fun id_rule (prems_il, exps_il_output) ->
-           (id_rule, prems_il, exps_il_output))
-         id_rule_group
-  in
-  ( id_rulegroup,
-    exps_il_input_unified,
-    exps_il_input_unified_match,
-    prems_il_match,
-    paths_il )
+  (id_rulegroup, rulematch_il, rulepaths_il) $ at
 
 (* Elaboration of definitions *)
 
@@ -1622,14 +1585,7 @@ and elab_rel_def (ctx : Ctx.t) (at : region) (id : id) (nottyp : nottyp)
 
 and elab_rulegroup_def (ctx : Ctx.t) (at : region) (id_rel : id)
     (id_rulegroup : id) (rules : rule list) : Ctx.t =
-  let id_rulegroup, exps_il_input_expl, exps_il_input_impl, matches_il, paths_il
-      =
-    elab_rulegroup ctx id_rel id_rulegroup rules
-  in
-  (id_rulegroup, exps_il_input_expl, exps_il_input_impl, matches_il, paths_il)
-  |> ignore;
-  let rules_il = List.map (elab_rule ctx) rules in
-  let rulegroup_il = (id_rulegroup, rules_il) $ at in
+  let rulegroup_il = elab_rulegroup ctx at id_rel id_rulegroup rules in
   Ctx.add_rulegroup ctx id_rel rulegroup_il
 
 (* Elaboration of function declarations *)

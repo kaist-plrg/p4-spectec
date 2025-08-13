@@ -945,18 +945,14 @@ and eval_debug_prem (ctx : Ctx.t) (exp : exp) : Ctx.t attempt =
 
 (* Invoke a relation *)
 
-and match_rule (ctx : Ctx.t) (inputs : Hint.t) (rule : rule)
-    (values_input : value list) : Ctx.t * prem list * exp list =
-  let _, notexp, prems = rule.it in
-  let exps_input, exps_output =
-    let _, exps = notexp in
-    Hint.split_exps_without_idx inputs exps
-  in
+and match_rule (ctx : Ctx.t) (at : region) (rulematch : rulematch)
+    (values_input : value list) : Ctx.t * prem list =
+  let _, exps_input, prems_input = rulematch in
   check
     (List.length exps_input = List.length values_input)
-    rule.at "arity mismatch in rule";
+    at "arity mismatch in rule";
   let ctx = assign_exps ctx exps_input values_input in
-  (ctx, prems, exps_output)
+  (ctx, prems_input)
 
 and invoke_rel (ctx : Ctx.t) (id : id) (values_input : value list) :
     (Ctx.t * value list) attempt =
@@ -966,49 +962,49 @@ and invoke_rel (ctx : Ctx.t) (id : id) (values_input : value list) :
 and invoke_rel' (ctx : Ctx.t) (id : id) (values_input : value list) :
     (Ctx.t * value list) attempt =
   (* Find the relation *)
-  let inputs, rulegroups = Ctx.find_rel Local ctx id in
-  let rules =
-    List.concat_map
-      (fun rulegroup ->
-        let id_rulegroup, rules = rulegroup.it in
-        List.map (fun rule -> (id_rulegroup, rule)) rules)
-      rulegroups
-  in
-  guard (rules <> []) id.at "relation has no rules";
+  let _inputs, rulegroups = Ctx.find_rel Local ctx id in
+  guard (rulegroups <> []) id.at "relation has no rules";
   (* Apply the first matching rule *)
   let attempt_rules () =
-    let attempt_rules' =
-      List.map
-        (fun (id_rulegroup, rule) ->
-          let id_rule, _, _ = rule.it in
-          let attempt_rule' (ctx_local : Ctx.t) (prems : prem list)
-              (exps_output : exp list) : (Ctx.t * value list) attempt =
-            let* ctx_local = eval_prems ctx_local prems in
-            let ctx_local, values_output = eval_exps ctx_local exps_output in
-            let ctx_local = Ctx.trace_close ctx_local in
-            let ctx = Ctx.trace_commit ctx ctx_local.trace in
-            Ok (ctx, values_output)
-          in
-          let attempt_rule () : (Ctx.t * value list) attempt =
-            (* Create a subtrace for the rule *)
-            let ctx_local = Ctx.localize ctx in
-            let ctx_local =
-              Ctx.trace_open_rel ctx_local id id_rule values_input
-            in
-            (* Try to match the rule *)
-            let ctx_local, prems, exps_output =
-              match_rule ctx_local inputs rule values_input
-            in
-            (* Try evaluating the rule *)
-            attempt_rule' ctx_local prems exps_output
-            |> nest id.at
-                 (F.asprintf "application of rule %s/%s/%s failed" id.it
-                    id_rulegroup.it id_rule.it)
-          in
-          attempt_rule)
-        rules
+    let attempt_rules =
+      rulegroups
+      |> List.concat_map (fun rulegroup ->
+             let id_rulegroup, rulematch, rulepaths = rulegroup.it in
+             rulepaths
+             |> List.map (fun rulepath ->
+                    let id_rulepath, prems, exps_output = rulepath in
+                    let attempt_rulepath' (ctx_local : Ctx.t)
+                        (prems : prem list) (exps_output : exp list) :
+                        (Ctx.t * value list) attempt =
+                      let* ctx_local = eval_prems ctx_local prems in
+                      let ctx_local, values_output =
+                        eval_exps ctx_local exps_output
+                      in
+                      let ctx_local = Ctx.trace_close ctx_local in
+                      let ctx = Ctx.trace_commit ctx ctx_local.trace in
+                      Ok (ctx, values_output)
+                    in
+                    let attempt_rulepath () : (Ctx.t * value list) attempt =
+                      (* Create a subtrace for the rule path *)
+                      let ctx_local = Ctx.localize ctx in
+                      let ctx_local =
+                        Ctx.trace_open_rel ctx_local id id_rulepath values_input
+                      in
+                      (* Try matching the rule *)
+                      let ctx_local, prems_input =
+                        match_rule ctx_local id_rulepath.at rulematch
+                          values_input
+                      in
+                      (* Try evaluating the rule *)
+                      attempt_rulepath' ctx_local (prems_input @ prems)
+                        exps_output
+                      |> nest id.at
+                           (F.asprintf "application of rule %s/%s/%s failed"
+                              id.it id_rulegroup.it id_rulepath.it)
+                    in
+                    attempt_rulepath))
     in
-    choice attempt_rules'
+    choice attempt_rules
   in
   if Cache.is_cached_rule id.it then (
     let cache_result = Cache.Cache.find !rule_cache (id.it, values_input) in

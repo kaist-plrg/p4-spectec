@@ -80,21 +80,28 @@ let rec free_prem (prem : prem) : t =
 and free_prems (prems : prem list) : t =
   prems |> List.map free_prem |> List.fold_left ( + ) empty
 
-(* Definitions *)
+(* Rules *)
 
-let free_rule (rule : rule) : t =
-  let _, (_, exps), prems = rule.it in
-  free_exps exps + free_prems prems
+let free_rulematch (rulematch : rulematch) : t =
+  let exps_input_expl, exps_input_impl, prems_input_impl = rulematch in
+  free_exps exps_input_expl + free_exps exps_input_impl
+  + free_prems prems_input_impl
 
-let free_rules (rules : rule list) : t =
-  rules |> List.map free_rule |> List.fold_left ( + ) empty
+let free_rulepath (rulepath : rulepath) : t =
+  let _, prems, exps_output = rulepath in
+  free_prems prems + free_exps exps_output
+
+let free_rulepaths (rulepaths : rulepath list) : t =
+  rulepaths |> List.map free_rulepath |> List.fold_left ( + ) empty
 
 let free_rulegroup (rulegroup : rulegroup) : t =
-  let _, rules = rulegroup.it in
-  free_rules rules
+  let _, rulematch, rulepaths = rulegroup.it in
+  free_rulematch rulematch + free_rulepaths rulepaths
 
 let free_rulegroups (rulegroups : rulegroup list) : t =
   rulegroups |> List.map free_rulegroup |> List.fold_left ( + ) empty
+
+(* Clauses *)
 
 let free_clause (clause : clause) : t =
   let args, exp, prems = clause.it in
@@ -102,6 +109,8 @@ let free_clause (clause : clause) : t =
 
 let free_clauses (clauses : clause list) : t =
   clauses |> List.map free_clause |> List.fold_left ( + ) empty
+
+(* Definitions *)
 
 let free_def (def : def) : t =
   match def.it with
