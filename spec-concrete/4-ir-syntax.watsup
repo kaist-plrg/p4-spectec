@@ -18,6 +18,16 @@ dec $flatten_prefixedNameIR(prefixedNameIR) : nameIR
 def $flatten_prefixedNameIR(`` nameIR) = nameIR
 def $flatten_prefixedNameIR(`. nameIR) = "." ++ nameIR
 
+dec $get_type_name(type): nameIR?
+def $get_type_name(prefixedTypeName) = nameIR
+  -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
+  -- if nameIR = $flatten_prefixedNameIR(prefixedNameIR)
+def $get_type_name(specializedType) = nameIR
+  -- if prefixedTypeName `< _ > = specializedType
+  -- if nameIR = $get_type_name(prefixedTypeName)
+def $get_type_name(type) = eps
+  -- otherwise
+
 syntax nameListIR = nameIR*
 
 ;;

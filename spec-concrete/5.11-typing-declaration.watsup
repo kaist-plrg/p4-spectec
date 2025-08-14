@@ -778,11 +778,33 @@ rule Decl_ok/typeDeclaration-typedefDeclaration-typedef-type:
   ---- ;; check type
   -- Type_ok: GLOBAL TC_0 |- type : typeIR `# eps
   -- Type_wf: $bound(GLOBAL, TC_0) |- typeIR
+  -- if ~$is_extern_object_typeIR($canon(typeIR)) 
+        /\ ~$is_package_object_typeIR($canon(typeIR))
   ---- ;; create typedef and add to context
   -- if nameIR = $name(name)
   -- if typeIR_typedef = TYPEDEF nameIR typeIR
   -- TypeDef_wf: $bound(GLOBAL, TC_0) |- typeIR_typedef
   -- if TC_1 = $add_type(GLOBAL, TC_0, nameIR, typeIR_typedef)
+  ---- ;; create IR
+  -- if typedefDeclarationIR
+      = annotationList TYPEDEF typeIR nameIR `;
+
+rule Decl_ok/typeDeclaration-typedefDeclaration-typedef-type-constructor:
+  GLOBAL TC_0 |- annotationList TYPEDEF type name `;
+               : TC_2 typedefDeclarationIR
+  ---- ;; check type
+  -- Type_ok: GLOBAL TC_0 |- type : typeIR `# eps
+  -- Type_wf: $bound(GLOBAL, TC_0) |- typeIR
+  -- if typeIR_base = $canon(typeIR)
+  -- if $is_extern_object_typeIR(typeIR_base) \/ $is_package_object_typeIR(typeIR_base)
+  ---- ;; create typedef and add to context
+  -- if nameIR = $name(name)
+  -- if typeIR_typedef = TYPEDEF nameIR typeIR
+  -- TypeDef_wf: $bound(GLOBAL, TC_0) |- typeIR_typedef
+  -- if TC_1 = $add_type(GLOBAL, TC_0, nameIR, typeIR_typedef)
+  ---- ;; create constructors from base type and add to context
+  -- if nameIR_base = $get_type_name(type)
+  -- if TC_2 = $add_typedef_constructors(TC_1, nameIR, nameIR_base, typeIR_base)
   ---- ;; create IR
   -- if typedefDeclarationIR
       = annotationList TYPEDEF typeIR nameIR `;
