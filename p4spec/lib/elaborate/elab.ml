@@ -1,5 +1,4 @@
 open Domain.Lib
-open Xl
 open El.Ast
 open Runtime_static
 open Attempt
@@ -28,7 +27,7 @@ let groupby (eq : 'a -> 'a -> bool) (xs : 'a list) : 'a list list =
 
 (* Identifiers *)
 
-let valid_tid (id : id) = id.it = (Var.strip_var_suffix id).it
+let valid_tid (id : id) = id.it = (Xl.Var.strip_var_suffix id).it
 
 (* Iteration elaboration *)
 
@@ -121,20 +120,20 @@ and elab_nottyp (ctx : Ctx.t) (typ : typ) : Il.Ast.nottyp =
           let mixop_t, typs_il_t =
             elab_nottyp ctx (NotationT (SeqT typs $ nottyp.at)) |> it
           in
-          let mixop = Mixop.merge mixop_h mixop_t in
+          let mixop = Xl.Mixop.merge mixop_h mixop_t in
           let typs_il = typs_il_h @ typs_il_t in
           (mixop, typs_il) $ nottyp.at
       | InfixT (typ_l, atom, typ_r) ->
           let mixop_l, typs_il_l = elab_nottyp ctx typ_l |> it in
           let mixop_r, typs_il_r = elab_nottyp ctx typ_r |> it in
-          let mixop_l = Mixop.merge mixop_l [ [ atom ] ] in
-          let mixop = Mixop.merge mixop_l mixop_r in
+          let mixop_l = Xl.Mixop.merge mixop_l [ [ atom ] ] in
+          let mixop = Xl.Mixop.merge mixop_l mixop_r in
           let typs_il = typs_il_l @ typs_il_r in
           (mixop, typs_il) $ nottyp.at
       | BrackT (atom_l, typ, atom_r) ->
           let mixop, typs_il = elab_nottyp ctx typ |> it in
-          let mixop_l = Mixop.merge [ [ atom_l ] ] mixop in
-          let mixop = Mixop.merge mixop_l [ [ atom_r ] ] in
+          let mixop_l = Xl.Mixop.merge [ [ atom_l ] ] mixop in
+          let mixop = Xl.Mixop.merge mixop_l [ [ atom_r ] ] in
           (mixop, typs_il) $ nottyp.at)
 
 (* Elaboration of definition types *)
@@ -199,7 +198,7 @@ and elab_deftyp_variant (ctx : Ctx.t) (at : region) (id : id)
   let typcases = List.concat_map (expand_typcase ctx plaintyp) typcases in
   let typcases_il = typcases |> List.map fst |> List.map (elab_typcase ctx) in
   let mixops = typcases_il |> List.map fst |> List.map it |> List.map fst in
-  let mixop_groups = groupby Mixop.eq mixops in
+  let mixop_groups = groupby Xl.Mixop.eq mixops in
   let mixop_duplicates =
     List.filter (fun mixop_group -> List.length mixop_group > 1) mixop_groups
   in
@@ -209,7 +208,7 @@ and elab_deftyp_variant (ctx : Ctx.t) (at : region) (id : id)
     ("variant cases are ambiguous: "
     ^ String.concat ", "
         (List.map
-           (fun mixop_group -> Mixop.string_of_mixop (List.hd mixop_group))
+           (fun mixop_group -> Xl.Mixop.string_of_mixop (List.hd mixop_group))
            mixop_duplicates));
   let deftyp_il = Il.Ast.VariantT typcases_il $ at in
   let td = Typdef.Defined (tparams, `Variant typcases) in
@@ -285,10 +284,10 @@ and infer_bool_exp (ctx : Ctx.t) (b : bool) :
 
 (* Inference of number expressions *)
 
-and infer_num_exp (ctx : Ctx.t) (num : Num.t) :
+and infer_num_exp (ctx : Ctx.t) (num : Xl.Num.t) :
     (Ctx.t * Il.Ast.exp' * plaintyp') attempt =
   let exp_il = Il.Ast.NumE num in
-  let plaintyp = NumT (Num.to_typ num) in
+  let plaintyp = NumT (Xl.Num.to_typ num) in
   Ok (ctx, exp_il, plaintyp)
 
 (* Inference of text expressions *)
@@ -303,7 +302,7 @@ and infer_text_exp (ctx : Ctx.t) (text : string) :
 
 and infer_var_exp (ctx : Ctx.t) (id : id) :
     (Ctx.t * Il.Ast.exp' * plaintyp') attempt =
-  let tid = Var.strip_var_suffix id in
+  let tid = Xl.Var.strip_var_suffix id in
   let meta_opt = Ctx.find_metavar_opt ctx tid in
   match meta_opt with
   | Some plaintyp ->
@@ -317,8 +316,8 @@ and infer_unop (ctx : Ctx.t) (at : region) (unop : unop) (plaintyp : plaintyp)
     (exp_il : Il.Ast.exp) : (Il.Ast.optyp * Il.Ast.exp * plaintyp') attempt =
   let unop_candidates =
     match unop with
-    | #Bool.unop -> [ (`BoolT, BoolT, BoolT) ]
-    | #Num.unop ->
+    | #Xl.Bool.unop -> [ (`BoolT, BoolT, BoolT) ]
+    | #Xl.Num.unop ->
         [ (`NatT, NumT `NatT, NumT `NatT); (`IntT, NumT `IntT, NumT `IntT) ]
   in
   let fail =
@@ -357,8 +356,8 @@ and infer_binop (ctx : Ctx.t) (at : region) (binop : binop)
     (Il.Ast.optyp * Il.Ast.exp * Il.Ast.exp * plaintyp') attempt =
   let binop_candidates =
     match binop with
-    | #Bool.binop -> [ (`BoolT, BoolT, BoolT, BoolT) ]
-    | #Num.binop ->
+    | #Xl.Bool.binop -> [ (`BoolT, BoolT, BoolT, BoolT) ]
+    | #Xl.Num.binop ->
         [
           (`NatT, NumT `NatT, NumT `NatT, NumT `NatT);
           (`IntT, NumT `IntT, NumT `IntT, NumT `IntT);
@@ -402,7 +401,7 @@ and infer_binop_exp (ctx : Ctx.t) (at : region) (binop : binop) (exp_l : exp)
 
 (* Inference of comparison expressions *)
 
-and infer_cmpop_exp_bool (ctx : Ctx.t) (cmpop : Bool.cmpop) (exp_l : exp)
+and infer_cmpop_exp_bool (ctx : Ctx.t) (cmpop : Xl.Bool.cmpop) (exp_l : exp)
     (exp_r : exp) : (Ctx.t * Il.Ast.exp' * plaintyp') attempt =
   choice
     [
@@ -422,7 +421,7 @@ and infer_cmpop_exp_bool (ctx : Ctx.t) (cmpop : Bool.cmpop) (exp_l : exp)
         Ok (ctx, exp_il, BoolT));
     ]
 
-and infer_cmpop_num (ctx : Ctx.t) (at : region) (cmpop : Num.cmpop)
+and infer_cmpop_num (ctx : Ctx.t) (at : region) (cmpop : Xl.Num.cmpop)
     (plaintyp_l : plaintyp) (exp_il_l : Il.Ast.exp) (plaintyp_r : plaintyp)
     (exp_il_r : Il.Ast.exp) : (Il.Ast.optyp * Il.Ast.exp * Il.Ast.exp) attempt =
   let cmpop_candidates =
@@ -452,7 +451,7 @@ and infer_cmpop_num (ctx : Ctx.t) (at : region) (cmpop : Num.cmpop)
           | _ -> fail))
     fail cmpop_candidates
 
-and infer_cmpop_exp_num (ctx : Ctx.t) (at : region) (cmpop : Num.cmpop)
+and infer_cmpop_exp_num (ctx : Ctx.t) (at : region) (cmpop : Xl.Num.cmpop)
     (exp_l : exp) (exp_r : exp) : (Ctx.t * Il.Ast.exp' * plaintyp') attempt =
   let* ctx, exp_il_l, plaintyp_l_infer = infer_exp ctx exp_l in
   let* ctx, exp_il_r, plaintyp_r_infer = infer_exp ctx exp_r in
@@ -468,8 +467,8 @@ and infer_cmpop_exp_num (ctx : Ctx.t) (at : region) (cmpop : Num.cmpop)
 and infer_cmpop_exp (ctx : Ctx.t) (at : region) (cmpop : cmpop) (exp_l : exp)
     (exp_r : exp) : (Ctx.t * Il.Ast.exp' * plaintyp') attempt =
   match cmpop with
-  | #Bool.cmpop as cmpop -> infer_cmpop_exp_bool ctx cmpop exp_l exp_r
-  | #Num.cmpop as cmpop -> infer_cmpop_exp_num ctx at cmpop exp_l exp_r
+  | #Xl.Bool.cmpop as cmpop -> infer_cmpop_exp_bool ctx cmpop exp_l exp_r
+  | #Xl.Num.cmpop as cmpop -> infer_cmpop_exp_num ctx at cmpop exp_l exp_r
 
 (* Inference of arithmetic expressions *)
 
@@ -486,7 +485,8 @@ and infer_list_exp (ctx : Ctx.t) (at : region) (exps : exp list) :
   | exp :: exps ->
       let* ctx, exp_il, plaintyp = infer_exp ctx exp in
       let* ctx, exps_il, plaintyps = infer_exps ctx exps in
-      if List.for_all (Equiv.equiv_plaintyp ctx.tdenv plaintyp) plaintyps then
+      if List.for_all (Types.Equiv.equiv_plaintyp ctx.tdenv plaintyp) plaintyps
+      then
         let exp_il = Il.Ast.ListE (exp_il :: exps_il) in
         let plaintyp = IterT (plaintyp, List) in
         Ok (ctx, exp_il, plaintyp)
@@ -728,9 +728,9 @@ and fail_cast (at : region) (plaintyp_a : plaintyp) (plaintyp_b : plaintyp) =
 
 and cast_exp (ctx : Ctx.t) (plaintyp_expect : plaintyp)
     (plaintyp_infer : plaintyp) (exp_il : Il.Ast.exp) : Il.Ast.exp attempt =
-  if Equiv.equiv_plaintyp ctx.tdenv plaintyp_expect plaintyp_infer then
+  if Types.Equiv.equiv_plaintyp ctx.tdenv plaintyp_expect plaintyp_infer then
     Ok exp_il
-  else if Sub.sub_plaintyp ctx.tdenv plaintyp_infer plaintyp_expect then
+  else if Types.Sub.sub_plaintyp ctx.tdenv plaintyp_infer plaintyp_expect then
     let typ_il_expect = elab_plaintyp ctx plaintyp_expect in
     let exp_il =
       Il.Ast.UpCastE (typ_il_expect, exp_il) $$ (exp_il.at, typ_il_expect.it)
@@ -768,18 +768,7 @@ and elab_exp_wildcard (ctx : Ctx.t) (at : region) (plaintyp_expect : plaintyp) :
       (Il.Ast.VarE ("_" $ at) $$ (at, typ_il.it))
   in
   let ctx = Ctx.add_free ctx id_fresh in
-  (* (TODO) Refactor here; this logic also exists in partialbind pass *)
-  let exp_il =
-    List.fold_left
-      (fun exp iter ->
-        let typ =
-          let typ = exp.note $ exp.at in
-          Il.Ast.IterT (typ, iter)
-        in
-        Il.Ast.IterE (exp, (iter, [])) $$ (exp.at, typ))
-      (Il.Ast.VarE id_fresh $$ (id_fresh.at, typ_fresh.it))
-      iters_fresh
-  in
+  let exp_il = Var.as_exp (id_fresh, typ_fresh, iters_fresh) in
   Ok (ctx, exp_il)
 
 (* Elaboration of plain expressions *)
@@ -945,7 +934,7 @@ and elab_exp_not (ctx : Ctx.t) (typ : typ) (exp : exp) :
               (NotationT (SeqT typs $ nottyp.at))
               (SeqE exps $ exp.at)
           in
-          let mixop = Mixop.merge mixop_h mixop_t in
+          let mixop = Xl.Mixop.merge mixop_h mixop_t in
           let exps_il = exps_il_h @ exps_il_t in
           let notexp_il = (mixop, exps_il) in
           Ok (ctx, notexp_il)
@@ -957,8 +946,8 @@ and elab_exp_not (ctx : Ctx.t) (typ : typ) (exp : exp) :
       | InfixT (typ_l, atom_t, typ_r), InfixE (exp_l, _, exp_r) ->
           let* ctx, (mixop_l, exps_il_l) = elab_exp_not ctx typ_l exp_l in
           let* ctx, (mixop_r, exps_il_r) = elab_exp_not ctx typ_r exp_r in
-          let mixop_l = Mixop.merge mixop_l [ [ atom_t ] ] in
-          let mixop = Mixop.merge mixop_l mixop_r in
+          let mixop_l = Xl.Mixop.merge mixop_l [ [ atom_t ] ] in
+          let mixop = Xl.Mixop.merge mixop_l mixop_r in
           let exps_il = exps_il_l @ exps_il_r in
           let notexp_il = (mixop, exps_il) in
           Ok (ctx, notexp_il)
@@ -967,8 +956,8 @@ and elab_exp_not (ctx : Ctx.t) (typ : typ) (exp : exp) :
           fail_elab_not exp.at "atoms do not match"
       | BrackT (atom_t_l, typ, atom_t_r), BrackE (_, exp, _) ->
           let* ctx, (mixop, exps_il) = elab_exp_not ctx typ exp in
-          let mixop_l = Mixop.merge [ [ atom_t_l ] ] mixop in
-          let mixop = Mixop.merge mixop_l [ [ atom_t_r ] ] in
+          let mixop_l = Xl.Mixop.merge [ [ atom_t_l ] ] mixop in
+          let mixop = Xl.Mixop.merge mixop_l [ [ atom_t_r ] ] in
           let notexp_il = (mixop, exps_il) in
           Ok (ctx, notexp_il)
       | _ -> fail_elab_not exp.at "expression does not match notation")
@@ -1150,8 +1139,8 @@ and elab_arg ?(as_def = false) (ctx : Ctx.t) (param : param) (arg : arg) :
   | DefP (id_p, tparams_p, params_p, plaintyp_p), DefA id_a ->
       let tparams_a, params_a, plaintyp_a = Ctx.find_dec ctx id_a in
       check
-        (Equiv.equiv_functyp ctx.tdenv arg.at tparams_p params_p plaintyp_p
-           tparams_a params_a plaintyp_a)
+        (Types.Equiv.equiv_functyp ctx.tdenv arg.at tparams_p params_p
+           plaintyp_p tparams_a params_a plaintyp_a)
         arg.at
         (Format.asprintf
            "function argument does not match the declared function parameter %s"

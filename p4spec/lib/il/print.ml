@@ -16,7 +16,8 @@ let string_of_text text = text
 let string_of_varid varid = varid.it
 let string_of_typid typid = typid.it
 let string_of_relid relid = relid.it
-let string_of_ruleid ruleid = ruleid.it
+let string_of_rulegroupid rulegroupid = rulegroupid.it
+let string_of_rulepathid rulepathid = rulepathid.it
 let string_of_defid defid = "$" ^ defid.it
 
 (* Atoms *)
@@ -309,7 +310,7 @@ and string_of_rulematch rulematch =
 and string_of_rulepath rulepath =
   let rulepathid, prems, exps_output = rulepath in
   indent 2 ^ "rulepath "
-  ^ string_of_ruleid rulepathid
+  ^ string_of_rulepathid rulepathid
   ^ "\n" ^ indent 2 ^ "(premises)"
   ^ string_of_prems ~level:2 prems
   ^ "\n" ^ indent 2 ^ "(output) "
@@ -323,7 +324,7 @@ and string_of_rulegroup rulegroup =
   indent 1 ^ ";; "
   ^ string_of_region rulegroup.at
   ^ "\n" ^ indent 1 ^ "rulegroup "
-  ^ string_of_ruleid rulegroupid
+  ^ string_of_rulegroupid rulegroupid
   ^ "\n " ^ indent 1 ^ "match\n"
   ^ string_of_rulematch rulematch
   ^ "\n " ^ indent 1 ^ "paths\n" ^ indent 1 ^ "{\n"

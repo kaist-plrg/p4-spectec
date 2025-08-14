@@ -15,7 +15,7 @@ let string_of_text text = Il.Print.string_of_text text
 let string_of_varid varid = Il.Print.string_of_varid varid
 let string_of_typid typid = Il.Print.string_of_typid typid
 let string_of_relid relid = Il.Print.string_of_relid relid
-let string_of_ruleid ruleid = Il.Print.string_of_ruleid ruleid
+let string_of_relpathid relpathid = Il.Print.string_of_rulegroupid relpathid
 let string_of_defid defid = Il.Print.string_of_defid defid
 
 (* Atoms *)
@@ -264,7 +264,8 @@ and string_of_instr ?(verbose = false) ?(level = 0) ?(index = 0) instr =
   | ResultI exps ->
       Format.asprintf "%sResult in %s" order (string_of_exps ", " exps)
   | ReturnI exp -> Format.asprintf "%sReturn %s" order (string_of_exp exp)
-  | TryI id -> Format.asprintf "%sTry %s" order (string_of_relid id)
+  | TryI id ->
+      Format.asprintf "%sTry matching path %s" order (string_of_relid id)
   | DebugI exp -> Format.asprintf "%sDebug: %s" order (string_of_exp exp)
 
 and string_of_instrs ?(verbose = false) ?(level = 0) instrs =
@@ -273,35 +274,41 @@ and string_of_instrs ?(verbose = false) ?(level = 0) instrs =
          string_of_instr ~verbose ~level ~index:(idx + 1) instr)
   |> String.concat "\n\n"
 
-(* Instruction groups *)
+(* Relations *)
 
-and string_of_instrmatch ?(verbose = false) instrmatch =
-  let exps_input_expl, exps_input_impl, instrs_input_impl = instrmatch in
-  indent 2 ^ "(expl-input) "
-  ^ string_of_exps " | " exps_input_expl
-  ^ "\n" ^ indent 2 ^ "(impl-input) "
-  ^ string_of_exps " | " exps_input_impl
-  ^ "\n" ^ indent 2 ^ "(impl-input-instrs)\n\n"
-  ^ string_of_instrs ~verbose ~level:2 instrs_input_impl
+let string_of_relmatch ?(verbose = false) relmatch =
+  let exps_match, instrs_match = relmatch in
+  indent 1 ^ "(match) "
+  ^ string_of_exps " | " exps_match
+  ^ "\n\n"
+  ^ string_of_instrs ~verbose ~level:2 instrs_match
 
-and string_of_instrpath ?(verbose = false) instrpath =
-  indent 2 ^ "(instrs)\n\n" ^ string_of_instrs ~verbose ~level:2 instrpath
+let string_of_relpath ?(verbose = false) relpath =
+  let relpathid, exps_match_expl, instrs = relpath in
+  indent 1 ^ "(path) "
+  ^ string_of_relpathid relpathid
+  ^ " "
+  ^ string_of_exps " | " exps_match_expl
+  ^ "\n\n"
+  ^ string_of_instrs ~verbose ~level:2 instrs
 
-and string_of_instrgroup ?(verbose = false) instrgroup =
-  let id_instrgroup, instrmatch, instrpath = instrgroup.it in
-  indent 1 ^ ";; "
-  ^ string_of_region instrgroup.at
-  ^ "\n" ^ indent 1 ^ "instrgroup "
-  ^ string_of_ruleid id_instrgroup
-  ^ "\n" ^ indent 1 ^ "match\n"
-  ^ string_of_instrmatch ~verbose instrmatch
-  ^ "\n" ^ indent 1 ^ "path\n"
-  ^ string_of_instrpath ~verbose instrpath
+let string_of_relpaths ?(verbose = false) relpaths =
+  relpaths |> List.map (string_of_relpath ~verbose) |> String.concat "\n\n"
 
-and string_of_instrgroups ?(verbose = false) instrgroups =
-  instrgroups
-  |> List.map (string_of_instrgroup ~verbose)
-  |> String.concat "\n\n"
+let string_of_rel ?(verbose = false) rel =
+  let relid, _, relmatch, relpaths = rel in
+  string_of_relid relid ^ "\n\n"
+  ^ string_of_relmatch ~verbose relmatch
+  ^ "\n\n"
+  ^ string_of_relpaths ~verbose relpaths
+
+(* Functions *)
+
+let string_of_func ?(verbose = false) func =
+  let defid, tparams, args_input, instrs = func in
+  string_of_defid defid ^ string_of_tparams tparams ^ string_of_args args_input
+  ^ "\n\n"
+  ^ string_of_instrs ~verbose instrs
 
 (* Definitions *)
 
@@ -312,13 +319,8 @@ let rec string_of_def ?(verbose = false) def =
   | TypD (typid, tparams, deftyp) ->
       "syntax " ^ string_of_typid typid ^ string_of_tparams tparams ^ " = "
       ^ string_of_deftyp deftyp
-  | RelD (relid, _, instrgroups) ->
-      "relation " ^ string_of_relid relid ^ ": \n\n"
-      ^ string_of_instrgroups ~verbose instrgroups
-  | DecD (defid, tparams, args_input, instrs) ->
-      "def " ^ string_of_defid defid ^ string_of_tparams tparams
-      ^ string_of_args args_input ^ "\n\n"
-      ^ string_of_instrs ~verbose instrs
+  | RelD rel -> "relation " ^ string_of_rel ~verbose rel
+  | DecD func -> "def " ^ string_of_func ~verbose func
 
 and string_of_defs ?(verbose = false) defs =
   String.concat "\n\n" (List.map (string_of_def ~verbose) defs)

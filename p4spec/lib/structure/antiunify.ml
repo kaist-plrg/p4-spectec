@@ -237,6 +237,16 @@ let antiunify_args_group (frees : IdSet.t) (args_group : arg list list) :
       in
       (uenv_acc, args_template)
 
+(* Anti-unification of rule matches *)
+
+let antiunify_rule_match_group (frees : IdSet.t)
+    (exps_match_group : exp list list) : exp list * prem list list =
+  let uenv, exps_match_template = antiunify_exps_group frees exps_match_group in
+  let prems_match_group =
+    List.map (populate_exps_templates uenv exps_match_template) exps_match_group
+  in
+  (exps_match_template, prems_match_group)
+
 (* Anti-unification of clauses *)
 
 let antiunify_clauses (clauses : clause list) :

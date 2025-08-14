@@ -27,20 +27,7 @@ and is_singleton_case' (dctx : Dctx.t) (plaintyp : El.Ast.plaintyp) : bool =
 
 (* Rename for an expression *)
 
-module To = struct
-  type t = id * typ * iter list
-
-  let as_exp ((id, typ, iters) : t) =
-    List.fold_left
-      (fun exp iter ->
-        let typ =
-          let typ = exp.note $ exp.at in
-          IterT (typ, iter)
-        in
-        IterE (exp, (iter, [])) $$ (exp.at, typ))
-      (VarE id $$ (id.at, typ.it))
-      iters
-end
+module To = Var
 
 module From = struct
   type t =

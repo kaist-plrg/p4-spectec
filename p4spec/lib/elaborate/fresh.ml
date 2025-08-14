@@ -21,18 +21,6 @@ let fresh_from_plaintyp ?(wildcard = false) (ids : IdSet.t)
   let id = if wildcard then "_" ^ id.it $ id.at else id in
   fresh_id ids id
 
-let as_exp (id : Id.t) (typ : Il.Ast.typ) (iters : Il.Ast.iter list) :
-    Il.Ast.exp =
-  List.fold_left
-    (fun exp iter ->
-      let typ =
-        let typ = exp.note $ exp.at in
-        Il.Ast.IterT (typ, iter)
-      in
-      Il.Ast.IterE (exp, (iter, [])) $$ (exp.at, typ))
-    (Il.Ast.VarE id $$ (id.at, typ.it))
-    iters
-
 let fresh_from_typ ?(wildcard = false) (ids : IdSet.t) (at : region)
     (typ : Il.Ast.typ) : Id.t * Il.Ast.typ * Il.Ast.iter list =
   let rec fresh_from_typ' (typ : Il.Ast.typ) :

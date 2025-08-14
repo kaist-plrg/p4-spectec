@@ -138,13 +138,19 @@ and instr' =
   | TryI of id
   | DebugI of exp
 
-(* Instruction groups *)
+(* Relations *)
 
-type instrmatch = exp list * exp list * instr list
-type instrpath = instr list
+type relmatch = exp list * instr list
 
-type instrgroup = instrgroup' phrase
-and instrgroup' = id * instrmatch * instrpath
+type relpath = id * exp list * instr list
+
+(* id `:` mixop `hint(input` `%`int* `)` relmatch relpath* *)
+type rel = id * (mixop * int list) * relmatch * relpath list
+
+(* Functions *)
+
+(* id `<` list(tparam, `,`) `>` list(param, `,`) `:` instr* *)
+type func = id * tparam list * arg list * instr list
 
 (* Hints *)
 
@@ -156,10 +162,10 @@ type def = def' phrase
 and def' =
   (* `syntax` id `<` list(tparam, `,`) `>` `=` deftyp *)
   | TypD of id * tparam list * deftyp
-  (* `relation` id `:` mixop `hint(input` `%`int* `)` list(exp, `,`) `:` instrgroup* *)
-  | RelD of id * (mixop * int list) * instrgroup list
-  (* `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ instr* *)
-  | DecD of id * tparam list * arg list * instr list
+  (* `relation` rel *)
+  | RelD of rel
+  (* `dec` func *)
+  | DecD of func
 
 (* Spec *)
 

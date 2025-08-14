@@ -49,7 +49,8 @@ let rec overlap_exp (tdenv : Envs.TDEnv.t) (frees : IdSet.t)
         let typ_template = exp_template.note $ exp_template.at in
         let plaintyp_template = typ_template |> Plaintyp.of_internal_typ in
         let plaintyp = exp.note $ exp.at |> Plaintyp.of_internal_typ in
-        if not (Equiv.equiv_plaintyp tdenv plaintyp_template plaintyp) then
+        if not (Types.Equiv.equiv_plaintyp tdenv plaintyp_template plaintyp)
+        then
           fail exp.at
             (Format.asprintf "cannot anti-unify expressions %s and %s"
                (Il.Print.string_of_exp exp_template)
@@ -60,7 +61,7 @@ let rec overlap_exp (tdenv : Envs.TDEnv.t) (frees : IdSet.t)
           in
           let frees = IdSet.add id_fresh frees in
           let unifiers = IdSet.add id_fresh unifiers in
-          let exp_template = Fresh.as_exp id_fresh typ_fresh iter_fresh in
+          let exp_template = Var.as_exp (id_fresh, typ_fresh, iter_fresh) in
           Ok (frees, unifiers, exp_template)
   in
   if Il.Eq.eq_exp exp_template exp then Ok (frees, unifiers, exp_template)

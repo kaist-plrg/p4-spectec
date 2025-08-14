@@ -66,22 +66,13 @@ module Cover = struct
   and init_instrs (cover : t) (id : id) (instrs : instr list) : t =
     List.fold_left (fun cover instr -> init_instr cover id instr) cover instrs
 
-  and init_instrgroup (cover : t) (id : id) (instrgroup : instrgroup) : t =
-    let _, _, instrs = instrgroup.it in
-    init_instrs cover id instrs
-
-  and init_instrgroups (cover : t) (id : id) (instrgroups : instrgroup list) : t
-      =
-    List.fold_left
-      (fun cover instrgroup -> init_instrgroup cover id instrgroup)
-      cover instrgroups
-
   let init_def (ignores : IdSet.t) (cover : t) (def : def) : t =
     match def.it with
     | TypD _ -> cover
-    | RelD (id, _, instrgroups) ->
-        if IdSet.mem id ignores then cover
-        else init_instrgroups cover id instrgroups
+    | RelD (id, _, (_, instrs_match), relpaths) ->
+        let instrs = List.concat_map (fun (_, _, instrs) -> instrs) relpaths in
+        let instrs = instrs_match @ instrs in
+        if IdSet.mem id ignores then cover else init_instrs cover id instrs
     | DecD (id, _, _, instrs) ->
         if IdSet.mem id ignores then cover else init_instrs cover id instrs
 
