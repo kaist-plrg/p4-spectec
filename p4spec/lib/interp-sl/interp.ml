@@ -942,6 +942,7 @@ and eval_instr (ctx : Ctx.t) (instr : instr) : Ctx.t * Sign.t =
   | RuleI (id, notexp, iterexps) -> eval_rule_instr ctx id notexp iterexps
   | ResultI exps -> eval_result_instr ctx exps
   | ReturnI exp -> eval_return_instr ctx exp
+  | TryI _ -> assert false
   | DebugI exp -> eval_debug_instr ctx exp
 
 and eval_instrs (ctx : Ctx.t) (sign : Sign.t) (instrs : instr list) :

@@ -186,6 +186,7 @@ and rename_instr (rename : t) (instr : instr) : instr =
   | ReturnI exp ->
       let exp = rename_exp rename exp in
       ReturnI exp $ at
+  | TryI _ -> instr
   | DebugI exp ->
       let exp = rename_exp rename exp in
       DebugI exp $ at

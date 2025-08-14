@@ -135,12 +135,16 @@ and instr' =
   | RuleI of id * notexp * iterexp list
   | ResultI of exp list
   | ReturnI of exp
+  | TryI of id
   | DebugI of exp
 
 (* Instruction groups *)
 
+type instrmatch = exp list * exp list * instr list
+type instrpath = instr list
+
 type instrgroup = instrgroup' phrase
-and instrgroup' = id * exp list * instr list
+and instrgroup' = id * instrmatch * instrpath
 
 (* Hints *)
 

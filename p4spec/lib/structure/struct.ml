@@ -47,15 +47,34 @@ and struct_prems' (prems_internalized : (prem * iterexp list) list)
 
 (* Structuring rules *)
 
-let struct_rulepath (prems_input : prem list) (rulepath : rulepath) :
-    Ol.Ast.instr list =
+let struct_rulematch (henv : HEnv.t) (tdenv : TDEnv.t) (id_rulegroup : id)
+    (rulematch : rulematch) : Sl.Ast.instrmatch =
+  let exps_input_expl, exps_input_impl, prems_input_impl = rulematch in
+  let instr_ret =
+    let at = exps_input_expl |> List.map at |> over_region in
+    Ol.Ast.TryI id_rulegroup $ at
+  in
+  let instrs_input_impl =
+    struct_prems prems_input_impl instr_ret
+    |> Optimize.optimize henv tdenv
+    |> Instrument.instrument tdenv
+  in
+  (exps_input_expl, exps_input_impl, instrs_input_impl)
+
+let struct_rulepath (rulepath : rulepath) : Ol.Ast.instr list =
   let _, prems, exps_output = rulepath in
-  let prems = prems_input @ prems in
   let instr_ret =
     let at = exps_output |> List.map at |> over_region in
     Ol.Ast.ResultI exps_output $ at
   in
   struct_prems prems instr_ret
+
+let struct_rulepaths (henv : HEnv.t) (tdenv : TDEnv.t)
+    (rulepaths : rulepath list) : Sl.Ast.instrpath =
+  rulepaths
+  |> List.concat_map struct_rulepath
+  |> Optimize.optimize henv tdenv
+  |> Instrument.instrument tdenv
 
 (* Structuring clauses *)
 
@@ -86,11 +105,9 @@ and struct_rel_def (henv : HEnv.t) (tdenv : TDEnv.t) (at : region) (id_rel : id)
     List.map
       (fun rulegroup ->
         let id_rulegroup, rulematch, rulepaths = rulegroup.it in
-        let _, exps_input, prems_input = rulematch in
-        let instrs = List.concat_map (struct_rulepath prems_input) rulepaths in
-        let instrs = Optimize.optimize henv tdenv instrs in
-        let instrs = Instrument.instrument tdenv instrs in
-        (id_rulegroup, exps_input, instrs) $ rulegroup.at)
+        let instrmatch = struct_rulematch henv tdenv id_rulegroup rulematch in
+        let instrpath = struct_rulepaths henv tdenv rulepaths in
+        (id_rulegroup, instrmatch, instrpath) $ rulegroup.at)
       rulegroups
   in
   Sl.Ast.RelD (id_rel, (mixop, inputs), instrgroups) $ at

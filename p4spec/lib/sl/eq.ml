@@ -146,6 +146,7 @@ and eq_instr (instr_a : instr) (instr_b : instr) : bool =
       && eq_iterexps iterexps_a iterexps_b
   | ResultI exps_a, ResultI exps_b -> eq_exps exps_a exps_b
   | ReturnI exp_a, ReturnI exp_b -> eq_exp exp_a exp_b
+  | TryI id_a, TryI id_b -> eq_id id_a id_b
   | DebugI exp_a, DebugI exp_b -> eq_exp exp_a exp_b
   | _ -> false
 
@@ -155,13 +156,28 @@ and eq_instrs (instrs_a : instr list) (instrs_b : instr list) : bool =
 
 (* Instruction groups *)
 
+let eq_instrmatch (instrmatch_a : instrmatch) (instrmatch_b : instrmatch) : bool
+    =
+  let exps_input_expl_a, exps_input_impl_a, instrs_input_impl_a =
+    instrmatch_a
+  in
+  let exps_input_expl_b, exps_input_impl_b, instrs_input_impl_b =
+    instrmatch_b
+  in
+  eq_exps exps_input_expl_a exps_input_expl_b
+  && eq_exps exps_input_impl_a exps_input_impl_b
+  && eq_instrs instrs_input_impl_a instrs_input_impl_b
+
+let eq_instrpath (instrpath_a : instrpath) (instrpath_b : instrpath) : bool =
+  eq_instrs instrpath_a instrpath_b
+
 let rec eq_instrgroup (instrgroup_a : instrgroup) (instrgroup_b : instrgroup) :
     bool =
-  let id_instrgroup_a, exps_input_a, instrs_a = instrgroup_a.it in
-  let id_instrgroup_b, exps_input_b, instrs_b = instrgroup_b.it in
+  let id_instrgroup_a, instrmatch_a, instrpath_a = instrgroup_a.it in
+  let id_instrgroup_b, instrmatch_b, instrpath_b = instrgroup_b.it in
   eq_id id_instrgroup_a id_instrgroup_b
-  && eq_exps exps_input_a exps_input_b
-  && eq_instrs instrs_a instrs_b
+  && eq_instrmatch instrmatch_a instrmatch_b
+  && eq_instrpath instrpath_a instrpath_b
 
 and eq_instrgroups (instrgroups_a : instrgroup list)
     (instrgroups_b : instrgroup list) : bool =

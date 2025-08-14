@@ -1,4 +1,5 @@
 open Ast
+open Util.Print
 open Util.Source
 
 (* Numbers *)
@@ -263,6 +264,7 @@ and string_of_instr ?(verbose = false) ?(level = 0) ?(index = 0) instr =
   | ResultI exps ->
       Format.asprintf "%sResult in %s" order (string_of_exps ", " exps)
   | ReturnI exp -> Format.asprintf "%sReturn %s" order (string_of_exp exp)
+  | TryI id -> Format.asprintf "%sTry %s" order (string_of_relid id)
   | DebugI exp -> Format.asprintf "%sDebug: %s" order (string_of_exp exp)
 
 and string_of_instrs ?(verbose = false) ?(level = 0) instrs =
@@ -273,37 +275,32 @@ and string_of_instrs ?(verbose = false) ?(level = 0) instrs =
 
 (* Instruction groups *)
 
-and string_of_instrgroup ?(verbose = false) mixop inputs instrgroup =
-  let indent = String.make 2 ' ' in
-  let id_instrgroup, exps_input, instrs = instrgroup.it in
-  let header_instrgroup =
-    let exps =
-      List.init (List.length mixop - 1) Fun.id
-      |> List.fold_left
-           (fun (idx_input, exps) idx ->
-             if List.mem idx inputs then
-               let exp = List.nth exps_input idx_input in
-               (idx_input + 1, exps @ [ exp ])
-             else
-               let exp =
-                 Il.Ast.VarE ("%" $ no_region)
-                 $$ (no_region, Il.Ast.VarT ("" $ no_region, []))
-               in
-               (idx_input, exps @ [ exp ]))
-           (0, [])
-      |> snd
-    in
-    Format.asprintf "%s: %s"
-      (string_of_ruleid id_instrgroup)
-      (Il.Print.string_of_notexp (mixop, exps))
-  in
-  Format.asprintf "%s%s {\n\n%s\n\n%s}" indent header_instrgroup
-    (string_of_instrs ~verbose ~level:2 instrs)
-    indent
+and string_of_instrmatch ?(verbose = false) instrmatch =
+  let exps_input_expl, exps_input_impl, instrs_input_impl = instrmatch in
+  indent 2 ^ "(expl-input) "
+  ^ string_of_exps " | " exps_input_expl
+  ^ "\n" ^ indent 2 ^ "(impl-input) "
+  ^ string_of_exps " | " exps_input_impl
+  ^ "\n" ^ indent 2 ^ "(impl-input-instrs)\n\n"
+  ^ string_of_instrs ~verbose ~level:2 instrs_input_impl
 
-and string_of_instrgroups ?(verbose = false) mixop inputs instrgroups =
+and string_of_instrpath ?(verbose = false) instrpath =
+  indent 2 ^ "(instrs)\n\n" ^ string_of_instrs ~verbose ~level:2 instrpath
+
+and string_of_instrgroup ?(verbose = false) instrgroup =
+  let id_instrgroup, instrmatch, instrpath = instrgroup.it in
+  indent 1 ^ ";; "
+  ^ string_of_region instrgroup.at
+  ^ "\n" ^ indent 1 ^ "instrgroup "
+  ^ string_of_ruleid id_instrgroup
+  ^ "\n" ^ indent 1 ^ "match\n"
+  ^ string_of_instrmatch ~verbose instrmatch
+  ^ "\n" ^ indent 1 ^ "path\n"
+  ^ string_of_instrpath ~verbose instrpath
+
+and string_of_instrgroups ?(verbose = false) instrgroups =
   instrgroups
-  |> List.map (string_of_instrgroup ~verbose mixop inputs)
+  |> List.map (string_of_instrgroup ~verbose)
   |> String.concat "\n\n"
 
 (* Definitions *)
@@ -315,9 +312,9 @@ let rec string_of_def ?(verbose = false) def =
   | TypD (typid, tparams, deftyp) ->
       "syntax " ^ string_of_typid typid ^ string_of_tparams tparams ^ " = "
       ^ string_of_deftyp deftyp
-  | RelD (relid, (mixop, inputs), instrgroups) ->
+  | RelD (relid, _, instrgroups) ->
       "relation " ^ string_of_relid relid ^ ": \n\n"
-      ^ string_of_instrgroups ~verbose mixop inputs instrgroups
+      ^ string_of_instrgroups ~verbose instrgroups
   | DecD (defid, tparams, args_input, instrs) ->
       "def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_args args_input ^ "\n\n"

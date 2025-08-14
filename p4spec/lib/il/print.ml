@@ -385,7 +385,8 @@ let rec string_of_def def =
       ^ string_of_deftyp deftyp
   | RelD (relid, nottyp, _, rulegroups) ->
       "relation " ^ string_of_relid relid ^ ": " ^ string_of_nottyp nottyp
-      ^ "\n" ^ string_of_rulegroups rulegroups
+      ^ "\n"
+      ^ string_of_rulegroups rulegroups
   | DecD (defid, tparams, params, typ, clauses) ->
       "def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : " ^ string_of_typ typ ^ " ="
