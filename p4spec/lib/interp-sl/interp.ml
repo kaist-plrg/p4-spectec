@@ -20,8 +20,8 @@ let ( let* ) = Option.bind
 
 (* Cache *)
 
-let func_cache = ref (Cache.Cache.create 1000)
-let rule_cache = ref (Cache.Cache.create 50)
+let func_cache = ref (Cache.Cache.create ~size:10000)
+let rule_cache = ref (Cache.Cache.create ~size:10000)
 
 (* Assignments *)
 
@@ -1382,7 +1382,7 @@ and invoke_rel (ctx : Ctx.t) (id : id) (values_input : value list) :
     | _ -> None
   in
   if (not ctx.derive) && Cache.is_cached_rule id.it then (
-    let cache_result = Cache.Cache.find_opt !rule_cache (id.it, values_input) in
+    let cache_result = Cache.Cache.find !rule_cache (id.it, values_input) in
     match cache_result with
     | Some values_output -> Some (ctx, values_output)
     | None ->
@@ -1450,7 +1450,7 @@ and invoke_func_def (ctx : Ctx.t) (id : id) (targs : targ list)
     | _ -> error id.at "function was not matched"
   in
   if (not ctx.derive) && Cache.is_cached_func id.it then (
-    let cache_result = Cache.Cache.find_opt !func_cache (id.it, values_input) in
+    let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
     match cache_result with
     | Some value_output -> (ctx, value_output)
     | None ->

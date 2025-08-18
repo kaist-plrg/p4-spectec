@@ -435,7 +435,7 @@ syntax objectInitializerIR = `= `{ objectDeclarationListIR }
 syntax objectInitializerOptIR = objectInitializerIR?
 
 syntax instantiationIR =
-  annotationList prefixedNameIR
+  annotationList typeIR prefixedNameIR
     `< typeArgumentListIR > `( argumentListIR ) nameIR
     objectInitializerOptIR `;
 
@@ -667,12 +667,14 @@ syntax tablePropertyIR =
   | ACTIONS `= `{ tableActionListIR }
   | annotationList constOptIR ENTRIES `= `{ tableEntryListIR }
   | annotationList constOptIR DEFAULT_ACTION `= tableActionReferenceIR `;
-  | annotationList constOptIR nameIR initializerIR `;
+  ;; (TODO) Consider extending syntax value in syntax expressionIR
+  | annotationList constOptIR CUSTOM nameIR initializerIR `;
+  | annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR `;
 
 syntax tablePropertyListIR = tablePropertyIR*
 
 syntax tableDeclarationIR =
-  annotationList TABLE nameIR `{ tablePropertyListIR }
+  annotationList TABLE typeIR nameIR `{ tablePropertyListIR }
 
 ;;
 ;;;;;; Control type declarations
