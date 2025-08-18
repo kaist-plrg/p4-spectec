@@ -353,7 +353,9 @@ let run_sl negative spec_sl includes_p4 filename_p4 =
   let time_start = start () in
   try
     (* Run test *)
-    (match Interp_sl.Typing.run_typing spec_sl includes_p4 filename_p4 [] with
+    (match
+       Interp_sl.Typing_concrete.run_typing spec_sl includes_p4 filename_p4 []
+     with
     | WellTyped _ -> if negative then raise (TestCheckNegErr time_start)
     | IllTyped (at, msg, _) -> raise (TestCheckErr (msg, at, time_start))
     | IllFormed (msg, _) -> raise (TestCheckErr (msg, no_region, time_start)));

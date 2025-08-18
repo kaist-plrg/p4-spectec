@@ -22,8 +22,11 @@ let rec rename_let_alias (rename : Renamer.t) (instrs : instr list) : instr list
   | [] -> []
   | instr_h :: instrs_t -> (
       match instr_h.it with
-      | LetI ({ it = VarE id_l; _ }, _, _) when Renamer.Rename.mem id_l rename
-        ->
+      | LetI (exp_l, _, _)
+        when IdSet.is_empty
+               (IdSet.inter
+                  (Renamer.Rename.dom rename)
+                  (Il.Free.free_exp exp_l)) ->
           instr_h :: instrs_t
       | _ ->
           let instr_h = Renamer.rename_instr rename instr_h in
@@ -880,13 +883,14 @@ and totalize_case_analysis' (tdenv : TDEnv.t) (instr : instr) : instr =
 (* Apply optimizations until it reaches a fixed point *)
 
 let optimize_pre (instrs : instr list) : instr list =
-  instrs |> remove_let_alias |> parallelize_if_disjunctions
+  instrs (* |> remove_let_alias *) |> parallelize_if_disjunctions
   |> matchify_if_eq_terminals
 
 let rec optimize_loop (henv : HEnv.t) (tdenv : TDEnv.t) (instrs : instr list) :
     instr list =
   let instrs_optimized =
-    instrs |> remove_redundant_bindings henv |> merge_if tdenv |> casify tdenv
+    instrs (* |> remove_redundant_bindings henv *) |> merge_if tdenv
+    |> casify tdenv
   in
   if Ol.Eq.eq_instrs instrs instrs_optimized then instrs
   else optimize_loop henv tdenv instrs_optimized

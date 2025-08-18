@@ -16,7 +16,7 @@ type map = Value.t VMap.t
 let map_of_value (value : value) : map =
   let tuple_of_value (value : value) : value * value =
     match value.it with
-    | CaseV ([ []; [ { it = Atom.Arrow; _ } ]; [] ], [ value_key; value_value ])
+    | CaseV ([ []; [ { it = Atom.Colon; _ } ]; [] ], [ value_key; value_value ])
       ->
         (value_key, value_value)
     | _ ->
@@ -42,7 +42,7 @@ let value_of_map (ctx : Ctx.t) (typ_key : typ) (typ_value : typ) (map : map) :
     let value =
       let vid = Value.fresh () in
       let typ = Il.Ast.VarT ("pair" $ no_region, [ typ_key; typ_value ]) in
-      CaseV ([ []; [ Atom.Arrow $ no_region ]; [] ], [ value_key; value_value ])
+      CaseV ([ []; [ Atom.Colon $ no_region ]; [] ], [ value_key; value_value ])
       $$$ { vid; typ }
     in
     Ctx.add_node ctx value;

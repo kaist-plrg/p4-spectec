@@ -17,14 +17,14 @@
    (ignore-outputs
     (diff run_il_pos_p4c.expected run_il_pos_p4c.actual))
    (ignore-outputs
-    (diff run_il_neg_p4c.expected run_il_neg_p4c.actual)))))
+    (diff run_il_neg_p4c.expected run_il_neg_p4c.actual))
+   (ignore-outputs
+    (diff run_sl_pos_p4c.expected run_sl_pos_p4c.actual))
+   (ignore-outputs
+    (diff run_sl_neg_p4c.expected run_sl_neg_p4c.actual)))))
 
-;    (ignore-outputs
-;     (diff run_sl_pos_p4c.expected run_sl_pos_p4c.actual))
-;    (ignore-outputs
-;     (diff run_sl_neg_p4c.expected run_sl_neg_p4c.actual))
-;    (ignore-outputs
-;     (diff cov_sl_p4c.expected cov_sl_p4c.actual)))))
+; (ignore-outputs
+;  (diff cov_sl_p4c.expected cov_sl_p4c.actual)))))
 
 (rule
  (target elab.actual)
@@ -83,44 +83,44 @@
      ../../../../p4c/testdata/p4_16_errors
      -neg)))))
 
-; (rule
-;  (target run_sl_pos_p4c.actual)
-;  (action
-;   (with-stdout-to
-;    run_sl_pos_p4c.actual
-;    (with-stderr-to
-;     run_sl_pos_p4c.err
-;     (run
-;      ./test.exe
-;      run-sl
-;      -s
-;      ../../../../spec
-;      -i
-;      ../../../../p4c/p4include
-;      -e
-;      ../../../../excludes
-;      -d
-;      ../../../../p4c/testdata/p4_16_samples)))))
+(rule
+ (target run_sl_pos_p4c.actual)
+ (action
+  (with-stdout-to
+   run_sl_pos_p4c.actual
+   (with-stderr-to
+    run_sl_pos_p4c.err
+    (run
+     ./test.exe
+     run-sl
+     -s
+     ../../../../spec-concrete
+     -i
+     ../../../../p4c/p4include
+     -e
+     ../../../../excludes
+     -d
+     ../../../../p4c/testdata/p4_16_samples)))))
 
-; (rule
-;  (target run_sl_neg_p4c.actual)
-;  (action
-;   (with-stdout-to
-;    run_sl_neg_p4c.actual
-;    (with-stderr-to
-;     run_sl_neg_p4c.err
-;     (run
-;      ./test.exe
-;      run-sl
-;      -s
-;      ../../../../spec
-;      -i
-;      ../../../../p4c/p4include
-;      -e
-;      ../../../../excludes
-;      -d
-;      ../../../../p4c/testdata/p4_16_errors
-;      -neg)))))
+(rule
+ (target run_sl_neg_p4c.actual)
+ (action
+  (with-stdout-to
+   run_sl_neg_p4c.actual
+   (with-stderr-to
+    run_sl_neg_p4c.err
+    (run
+     ./test.exe
+     run-sl
+     -s
+     ../../../../spec-concrete
+     -i
+     ../../../../p4c/p4include
+     -e
+     ../../../../excludes
+     -d
+     ../../../../p4c/testdata/p4_16_errors
+     -neg)))))
 
 ; (rule
 ;  (target cov_sl_p4c.actual)

@@ -172,6 +172,37 @@ let run_sl_command =
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 
+let run_sl_concrete_command =
+  Core.Command.basic
+    ~summary:
+      "run static semantics of a p4_16 spec based on SL with structured \
+       control flow"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map filenames_spec = anon (sequence ("filename" %: string))
+     and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
+     and filename_p4 = flag "-p" (required string) ~doc:"p4 file to typecheck"
+     and derive = flag "-derive" no_arg ~doc:"derive value dependency graph"
+     and filenames_ignore =
+       flag "-ignore" (listed string)
+         ~doc:"relations or functions to ignore when reporting coverage"
+     in
+     fun () ->
+       try
+         let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
+         let spec_il = Elaborate.Elab.elab_spec spec in
+         let spec_sl = Structure.Struct.struct_spec spec_il in
+         match
+           Interp_sl.Typing_concrete.run_typing ~derive spec_sl includes_p4
+             filename_p4 filenames_ignore
+         with
+         | WellTyped _ -> Format.printf "well-typed\n"
+         | IllTyped (_, msg, _) -> Format.printf "ill-typed: %s\n" msg
+         | IllFormed (msg, _) -> Format.printf "ill-formed: %s\n" msg
+       with
+       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
+       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+
 let cover_sl_command =
   Core.Command.basic ~summary:"measure phantom coverage of SL"
     (let open Core.Command.Let_syntax in
@@ -420,6 +451,7 @@ let command =
       ("inst-il", inst_il_command);
       ("run-il-concrete", run_il_concrete_command);
       ("run-sl", run_sl_command);
+      ("run-sl-concrete", run_sl_concrete_command);
       ("cover-sl", cover_sl_command);
       ("testgen", run_testgen_command);
       ("testgen-dbg", run_testgen_debug_command);

@@ -108,9 +108,7 @@ let rec assign_exp (ctx : Ctx.t) (exp : exp) (value : value) : Ctx.t =
       let ctxs =
         List.fold_left
           (fun ctxs value ->
-            let ctx =
-              { ctx with local = { ctx.local with venv = VEnv.empty } }
-            in
+            let ctx = Ctx.localize_clear ctx in
             let ctx = assign_exp ctx exp value in
             ctxs @ [ ctx ])
           [] values
@@ -247,7 +245,7 @@ and eval_bool_exp (note : typ') (ctx : Ctx.t) (b : bool) : Ctx.t * value =
   List.iter
     (fun value_input ->
       Ctx.add_edge ctx value_res value_input Dep.Edges.Control)
-    ctx.local.values_input;
+    (Ctx.find_values_input Ctx.Local ctx);
   (ctx, value_res)
 
 (* Numeric expression evaluation *)
@@ -262,7 +260,7 @@ and eval_num_exp (note : typ') (ctx : Ctx.t) (n : Num.t) : Ctx.t * value =
   List.iter
     (fun value_input ->
       Ctx.add_edge ctx value_res value_input Dep.Edges.Control)
-    ctx.local.values_input;
+    (Ctx.find_values_input Ctx.Local ctx);
   (ctx, value_res)
 
 (* Text expression evaluation *)
@@ -277,7 +275,7 @@ and eval_text_exp (note : typ') (ctx : Ctx.t) (s : string) : Ctx.t * value =
   List.iter
     (fun value_input ->
       Ctx.add_edge ctx value_res value_input Dep.Edges.Control)
-    ctx.local.values_input;
+    (Ctx.find_values_input Ctx.Local ctx);
   (ctx, value_res)
 
 (* Variable expression evaluation *)
@@ -572,7 +570,7 @@ and eval_tuple_exp (note : typ') (ctx : Ctx.t) (exps : exp list) : Ctx.t * value
     List.iter
       (fun value_input ->
         Ctx.add_edge ctx value_res value_input Dep.Edges.Control)
-      ctx.local.values_input;
+      (Ctx.find_values_input Ctx.Local ctx);
   (ctx, value_res)
 
 (* Case expression evaluation *)
@@ -591,7 +589,7 @@ and eval_case_exp (note : typ') (ctx : Ctx.t) (notexp : notexp) : Ctx.t * value
     List.iter
       (fun value_input ->
         Ctx.add_edge ctx value_res value_input Dep.Edges.Control)
-      ctx.local.values_input;
+      (Ctx.find_values_input Ctx.Local ctx);
   (ctx, value_res)
 
 (* Struct expression evaluation *)
@@ -611,7 +609,7 @@ and eval_str_exp (note : typ') (ctx : Ctx.t) (fields : (atom * exp) list) :
     List.iter
       (fun value_input ->
         Ctx.add_edge ctx value_res value_input Dep.Edges.Control)
-      ctx.local.values_input;
+      (Ctx.find_values_input Ctx.Local ctx);
   (ctx, value_res)
 
 (* Option expression evaluation *)
@@ -635,7 +633,7 @@ and eval_opt_exp (note : typ') (ctx : Ctx.t) (exp_opt : exp option) :
     List.iter
       (fun value_input ->
         Ctx.add_edge ctx value_res value_input Dep.Edges.Control)
-      ctx.local.values_input;
+      (Ctx.find_values_input Ctx.Local ctx);
   (ctx, value_res)
 
 (* List expression evaluation *)
@@ -653,7 +651,7 @@ and eval_list_exp (note : typ') (ctx : Ctx.t) (exps : exp list) : Ctx.t * value
     List.iter
       (fun value_input ->
         Ctx.add_edge ctx value_res value_input Dep.Edges.Control)
-      ctx.local.values_input;
+      (Ctx.find_values_input Ctx.Local ctx);
   (ctx, value_res)
 
 (* Cons expression evaluation *)
@@ -942,7 +940,7 @@ and eval_instr (ctx : Ctx.t) (instr : instr) : Ctx.t * Sign.t =
   | RuleI (id, notexp, iterexps) -> eval_rule_instr ctx id notexp iterexps
   | ResultI exps -> eval_result_instr ctx exps
   | ReturnI exp -> eval_return_instr ctx exp
-  | TryI _ -> assert false
+  | TryI id -> eval_try_instr ctx id
   | DebugI exp -> eval_debug_instr ctx exp
 
 and eval_instrs (ctx : Ctx.t) (sign : Sign.t) (instrs : instr list) :
@@ -1348,6 +1346,26 @@ and eval_return_instr (ctx : Ctx.t) (exp : exp) : Ctx.t * Sign.t =
   let ctx, value = eval_exp ctx exp in
   (ctx, Ret value)
 
+(* Try instruction evaluation *)
+
+and eval_try_instr (ctx : Ctx.t) (id : id) : Ctx.t * Sign.t =
+  let id_rel =
+    match ctx.local with
+    | Rel { rid; _ } -> rid
+    | _ -> error id.at "try must be evaluated inside a relation"
+  in
+  let _, _, relpaths = Ctx.find_rel Local ctx id_rel in
+  let instrs_path =
+    relpaths
+    |> List.map (fun (id_path, _, instrs_path) -> (id_path, instrs_path))
+    |> List.assoc id
+  in
+  let ctx_path, sign_path = eval_instrs ctx Cont instrs_path in
+  match sign_path with
+  | Cont -> (ctx, Cont)
+  | Res values_output -> (ctx_path, Res values_output)
+  | Ret _ -> error id.at "cannot return from try instruction"
+
 (* Debug instruction evaluation *)
 
 and eval_debug_instr (ctx : Ctx.t) (exp : exp) : Ctx.t * Sign.t =
@@ -1361,13 +1379,13 @@ and eval_debug_instr (ctx : Ctx.t) (exp : exp) : Ctx.t * Sign.t =
 
 and invoke_rel (ctx : Ctx.t) (id : id) (values_input : value list) :
     (Ctx.t * value list) option =
-  let _inputs, exps_input, instrs = Ctx.find_rel Local ctx id in
-  check (instrs <> []) id.at "relation has no instructions";
-  let attempt_rules () =
-    let ctx_local = Ctx.localize ctx in
-    let ctx_local = Ctx.localize_inputs ctx_local values_input in
+  let _inputs, relmatch, relpaths = Ctx.find_rel Local ctx id in
+  check (relpaths <> []) id.at "relation has no instructions";
+  let invoke_rel' () =
+    let ctx_local = Ctx.localize_rule ctx id values_input in
+    let exps_input, instrs_match = relmatch in
     let ctx_local = assign_exps ctx_local exps_input values_input in
-    let ctx_local, sign = eval_instrs ctx_local Cont instrs in
+    let ctx_local, sign = eval_instrs ctx_local Cont instrs_match in
     let ctx = Ctx.commit ctx ctx_local in
     match sign with
     | Res values_output ->
@@ -1387,10 +1405,10 @@ and invoke_rel (ctx : Ctx.t) (id : id) (values_input : value list) :
     match cache_result with
     | Some values_output -> Some (ctx, values_output)
     | None ->
-        let* ctx, values_output = attempt_rules () in
+        let* ctx, values_output = invoke_rel' () in
         Cache.Cache.add !rule_cache (id.it, values_input) values_output;
         Some (ctx, values_output))
-  else attempt_rules ()
+  else invoke_rel' ()
 
 (* Invoke a function *)
 
@@ -1413,30 +1431,33 @@ and invoke_func_def (ctx : Ctx.t) (id : id) (targs : targ list)
     (args : arg list) : Ctx.t * value =
   let tparams, args_input, instrs = Ctx.find_func Local ctx id in
   check (instrs <> []) id.at "function has no instructions";
-  let ctx_local = Ctx.localize ctx in
-  check
-    (List.length targs = List.length tparams)
-    id.at "arity mismatch in type arguments";
-  let targs =
-    let theta =
-      TDEnv.bindings ctx.global.tdenv @ TDEnv.bindings ctx.local.tdenv
-      |> List.filter_map (fun (tid, (_tparams, deftyp)) ->
-             match deftyp.it with
-             | Il.Ast.PlainT typ -> Some (tid, typ)
-             | _ -> None)
-      |> TIdMap.of_list
-    in
-    List.map (Typ.subst_typ theta) targs
-  in
-  let ctx_local =
-    List.fold_left2
-      (fun ctx_local tparam targ ->
-        Ctx.add_typdef Local ctx_local tparam ([], Il.Ast.PlainT targ $ targ.at))
-      ctx_local tparams targs
-  in
   let ctx, values_input = eval_args ctx args in
-  let attempt_clauses () =
-    let ctx_local = Ctx.localize_inputs ctx_local values_input in
+  let tdenv_local =
+    check
+      (List.length targs = List.length tparams)
+      id.at "arity mismatch in type arguments";
+    let targs =
+      let theta =
+        (TDEnv.bindings ctx.global.tdenv
+        @
+        match ctx.local with
+        | Empty | Rel _ -> []
+        | Func { tdenv; _ } -> TDEnv.bindings tdenv)
+        |> List.filter_map (fun (tid, (_tparams, deftyp)) ->
+               match deftyp.it with
+               | Il.Ast.PlainT typ -> Some (tid, typ)
+               | _ -> None)
+        |> TIdMap.of_list
+      in
+      List.map (Typ.subst_typ theta) targs
+    in
+    List.fold_left2
+      (fun tdenv_local tparam targ ->
+        TDEnv.add tparam ([], Il.Ast.PlainT targ $ targ.at) tdenv_local)
+      TDEnv.empty tparams targs
+  in
+  let ctx_local = Ctx.localize_func ctx id values_input tdenv_local in
+  let invoke_func_def' () =
     let ctx_local = assign_args ctx ctx_local args_input values_input in
     let ctx_local, sign = eval_instrs ctx_local Cont instrs in
     let ctx = Ctx.commit ctx ctx_local in
@@ -1455,10 +1476,10 @@ and invoke_func_def (ctx : Ctx.t) (id : id) (targs : targ list)
     match cache_result with
     | Some value_output -> (ctx, value_output)
     | None ->
-        let ctx, value_output = attempt_clauses () in
+        let ctx, value_output = invoke_func_def' () in
         Cache.Cache.add !func_cache (id.it, values_input) value_output;
         (ctx, value_output))
-  else attempt_clauses ()
+  else invoke_func_def' ()
 
 (* Load definitions into the context *)
 
@@ -1467,10 +1488,9 @@ let load_def (ctx : Ctx.t) (def : def) : Ctx.t =
   | TypD (id, tparams, deftyp) ->
       let typdef = (tparams, deftyp) in
       Ctx.add_typdef Global ctx id typdef
-  | RelD _ -> assert false
-  (* | RelD (id, (_, inputs), exps_input, instrs) -> *)
-  (*     let rel = (inputs, exps_input, instrs) in *)
-  (*     Ctx.add_rel Global ctx id rel *)
+  | RelD (id, (_, inputs), relmatch, relpaths) ->
+      let rel = (inputs, relmatch, relpaths) in
+      Ctx.add_rel Global ctx id rel
   | DecD (id, tparams, args_input, instrs) ->
       let func = (tparams, args_input, instrs) in
       Ctx.add_func Global ctx id func
