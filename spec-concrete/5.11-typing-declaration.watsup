@@ -54,7 +54,7 @@ rulegroup Decl_ok/instantiation-non-objectInitializer {
     -- if TC_1 = $add_var(p, TC_0, nameIR, `EMPTY typeIR_object CTK eps)
     ---- ;; create IR
     -- if instantiationIR
-        = annotationList prefixedNameIR
+        = annotationList typeIR_object prefixedNameIR
             `< typeArgumentIR_inferred* > `( argumentIR* ) nameIR eps `;
 
   rule Decl_ok/specializedType:
@@ -82,7 +82,7 @@ rulegroup Decl_ok/instantiation-non-objectInitializer {
     -- if TC_1 = $add_var(p, TC_0, nameIR, `EMPTY typeIR_object CTK eps)
     ---- ;; create IR
     -- if instantiationIR
-        = annotationList prefixedNameIR
+        = annotationList typeIR_object prefixedNameIR
             `< typeArgumentIR_inferred* > `( argumentIR* ) nameIR eps `;
 
 }
@@ -147,7 +147,7 @@ rule Decl_object_ok/instantiation:
   ---- ;; check instantiation
   -- Decl_ok: p TC_0 |- instantiation : TC_1 instantiationIR
   ---- ;; add instance
-  -- if _ _ `< _ > `( _ ) nameIR _ `; = instantiationIR
+  -- if _ _ _ `< _ > `( _ ) nameIR _ `; = instantiationIR
   -- if varTypeIR = $find_var(p, TC_1, `` nameIR)
   -- if frame_init
       = $update_map<id, varTypeIR>(frame, nameIR, varTypeIR)
@@ -234,7 +234,7 @@ rulegroup Decl_ok/instantiation-objectInitializer {
     -- if TC_2 = $add_var(p, TC_0, nameIR, `EMPTY typeIR_object_init CTK eps)
     ---- ;; create IR
     -- if instantiationIR
-        = annotationList prefixedNameIR
+        = annotationList typeIR_object_init prefixedNameIR
             `< typeArgumentIR_inferred* > `( argumentIR* ) nameIR (`= `{ objectDeclarationIR* }) `;
 
   rule Decl_ok/specializedType:
@@ -283,7 +283,7 @@ rulegroup Decl_ok/instantiation-objectInitializer {
     -- if TC_2 = $add_var(p, TC_0, nameIR, `EMPTY typeIR_object_init CTK eps)
     ---- ;; create IR
     -- if instantiationIR
-        = annotationList prefixedNameIR
+        = annotationList typeIR_object_init prefixedNameIR
             `< typeArgumentIR_inferred* > `( argumentIR* ) nameIR (`= `{ objectDeclarationIR* }) `;
 
 }
