@@ -602,14 +602,6 @@ syntax lvalue =
   | lvalue `[ expression `: expression ]
   | `( lvalue )
 
-dec $expression_lvalue(lvalue) : expression
-def $expression_lvalue(referenceExpression) = referenceExpression
-def $expression_lvalue(lvalue `. member) = $expression_lvalue(lvalue) `. member
-def $expression_lvalue(lvalue `[ expression ]) = $expression_lvalue(lvalue) `[ expression ]
-def $expression_lvalue(lvalue `[ expression_hi `: expression_lo ])
-    = $expression_lvalue(lvalue) `[ expression_hi `: expression_lo ]
-def $expression_lvalue(`( lvalue )) = `( $expression_lvalue(lvalue) )
-
 ;;
 ;; Statements
 ;;

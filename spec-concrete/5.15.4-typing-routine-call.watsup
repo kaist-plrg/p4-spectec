@@ -52,23 +52,9 @@ rule RoutineTarget_ok/parenthesizedExpression:
 ;; syntax lvalue
 ;;
 
-dec $lvalue(lvalue) : expression
-def $lvalue(referenceExpression) = referenceExpression
-def $lvalue(lvalue_base `. member)
-  = expression_base `. member
-  -- if expression_base = $lvalue(lvalue_base)
-def $lvalue(lvalue_base `[ expression_index ])
-  = expression_base `[ expression_index ]
-  -- if expression_base = $lvalue(lvalue_base)
-def $lvalue(lvalue_base `[ expression_hi `: expression_lo ])
-  = expression_base `[ expression_hi `: expression_lo ]
-  -- if expression_base = $lvalue(lvalue_base)
-def $lvalue(`( lvalue )) = `( expression )
-  -- if expression = $lvalue(lvalue)
-
 rule RoutineTarget_lvalue_ok:
   p TC |- lvalue : routineTargetIR
-  -- if expression = $lvalue(lvalue)
+  -- if expression = $lvalue_to_expression(lvalue)
   -- RoutineTarget_ok: p TC |- expression : routineTargetIR
 
 ;;
