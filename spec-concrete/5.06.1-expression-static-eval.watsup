@@ -270,13 +270,13 @@ rule Eval_static/errorAccessExpressionIR:
 
 rule Eval_static/memberAccessExpressionIR-prefixedNameIR-enum:
   p TC |- ((TYPE prefixedNameIR) `. nameIR) `# `( typeIR_base _ )
-      ~> tid `. nameIR
+       ~> tid `. nameIR
   -- if ENUM tid `{ id_member* } = $find_type(p, TC, prefixedNameIR)
   -- if nameIR <- id_member*
 
 rule Eval_static/memberAccessExpressionIR-prefixedNameIR-serenum:
   p TC |- ((TYPE prefixedNameIR) `. nameIR) `# `( typeIR_base _ )
-      ~> tid `. nameIR `# value
+       ~> tid `. nameIR `# value
   -- if ENUM tid `# typeIR `{ (id_member `= value_member `;)* }
       = $find_type(p, TC, prefixedNameIR)
   -- if value
@@ -287,14 +287,55 @@ rule Eval_static/memberAccessExpressionIR-prefixedNameIR-serenum:
 
 rule Eval_static/memberAccessExpressionIR-typedExpressionIR-stack-size:
   p TC |- (typedExpressionIR_base `. "size") `# `( typeIR_base _ )
-      ~> D n_size
+       ~> D n_size
   -- if _ `[ n_size ] = typeIR_base
+
+rule Eval_static/memberAccessExpressionIR-typedExpressionIR-struct:
+  p TC |- (typedExpressionIR_base `. nameIR) `# `( typeIR_base _ )
+       ~> value
+  -- Eval_static: p TC |- typedExpressionIR_base ~> value_base
+  -- if STRUCT _ `{ (value_field id_field `;)* } = value_base
+  -- if value = $assoc_<id, value>(nameIR, (id_field, value_field)*)
+
+rule Eval_static/memberAccessExpressionIR-typedExpressionIR-header:
+  p TC |- (typedExpressionIR_base `. nameIR) `# `( typeIR_base _ )
+       ~> value
+  -- Eval_static: p TC |- typedExpressionIR_base ~> value_base
+  -- if HEADER _ `{ _ (value_field id_field `;)* } = value_base
+  -- if value = $assoc_<id, value>(nameIR, (id_field, value_field)*)
+
+;; local compile-time known header unions do not seem to be constructable
+rule Eval_static/memberAccessExpressionIR-typedExpressionIR-headerunion:
+  p TC |- (typedExpressionIR_base `. nameIR) `# `( typeIR_base _ )
+       ~> value
+  -- Eval_static: p TC |- typedExpressionIR_base ~> value_base
+  -- if HEADER_UNION _ `{ (value_field id_field `;)* } = value_base
+  -- if value = $assoc_<id, value>(nameIR, (id_field, value_field)*)
 
 ;;;;; indexAccessExpressionIR
 ;;;;; syntax indexAccessExpressionIR
 
 ;;;;;; typedExpressionIR `[ typedExpressionIR ]
-;;;;;; tuple or stack accesses are not evaluated statically
+
+rule Eval_static/indexAccessExpressionIR-tuple:
+  p TC |- (typedExpressionIR_base `[ typedExpressionIR_index ]) `# `( _ _ )
+       ~> value
+  -- Eval_static: p TC |- typedExpressionIR_base ~> value_base
+  -- Eval_static: p TC |- typedExpressionIR_index ~> value_index
+  -- if `( value_e* ) = value_base
+  -- if n_index = $to_number(value_index)
+  -- if $(n_index < |value_e*|)
+  -- if value = value_e*[n_index]
+
+rule Eval_static/indexAccessExpressionIR-stack:
+  p TC |- (typedExpressionIR_base `[ typedExpressionIR_index ]) `# `( _ _ )
+       ~> value
+  -- Eval_static: p TC |- typedExpressionIR_base ~> value_base
+  -- Eval_static: p TC |- typedExpressionIR_index ~> value_index
+  -- if `[ value_e* `# `( _; _ ) ] = value_base
+  -- if n_index = $to_number(value_index)
+  -- if $(n_index < |value_e*|)
+  -- if value = value_e*[n_index]
 
 ;;;;;; typedExpressionIR `[ typedExpressionIR `: typedExpressionIR ]
 
