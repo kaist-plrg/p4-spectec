@@ -17,10 +17,10 @@ rule Call_convention_ok/no-action:
   -- if exprIL' = $coerce_assign(exprIL, typ_p)
 
 rule Call_convention_ok/no-not-action:
-  p C NOACT |- (id NO typ exprIL_deft?) ~~ (exprIL, typ') : exprIL
+  p C NOACT |- (id NO typ_p exprIL_deft?) ~~ (exprIL, typ_a) : exprIL'
   -- if `(_; ctk) = $annot(exprIL)
   -- if ctk = LCTK \/ ctk = CTK
-  -- Type_alpha: typ' ~~ typ
+  -- if exprIL' = $coerce_assign(exprIL, typ_p)
 
 
 rule Call_convention_arg_ok/expra:
@@ -54,6 +54,8 @@ rule FuncType_ok:
 rule MethodType_ok/builtin-size:
   p C |- expr_b member eps eps : (BuiltinMethodT eps IntT) exprIL_b eps eps
   -- Expr_ok: p C |- expr_b : exprIL_b
+  -- if `(typ_b; _) = $annot(exprIL_b)
+  -- if ~$is_externt($canon_typ(typ_b))
   ----
   -- if member <- [ "minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes" ]
 
@@ -720,6 +722,12 @@ rule Inst_site_ok/local-controlapplymethod:
   ----
   -- if $is_externt(typ_i') \/ $is_controlt(typ_i')
 
+rule Inst_site_ok/local-tableapplymethod:
+  LOCAL C |- (ConsT pt* typ_i) : INSTSITE_OK
+  -- if typ_i' = $canon_typ(typ_i)
+  -- if C.LOCAL.KIND = TABLEAPPLYMETHOD
+  ----
+  -- if $is_externt(typ_i')
 
 rule Inst_ok/global-packaget-no-targsinfer:
   GLOBAL C_0 eps |- ct targIL* arg* id_deft* : typ_i targIL* eps argIL''*

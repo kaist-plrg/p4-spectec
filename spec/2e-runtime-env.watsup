@@ -58,15 +58,23 @@ dec $check_arity_less((id?)*, id*) : bool
     ;;hint(show CHECK_ARITY_LESS(%1, %2))
 def $check_arity_less((id_a?)*, id_p*) = |(id_a?)*| < |id_p*|
 
-dec $get_params_missing_names(id*, id*) : id*
+dec $get_params_missing_names((id, bool)*, id*) : id*
     ;;hint(show GET_PARAMS_MISSING_NAMES(%1, %2))
 
 def $get_params_missing_names(eps, id_a*) = eps
 
-def $get_params_missing_names(id_p_h :: id_p_t*, id_a*) = id_p_h :: $get_params_missing_names(id_p_t*, id_a*)
+def $get_params_missing_names(
+    (id_p_h, true) :: (id_p_t, bool_p_t)*,
+    id_a*
+  )
+  = id_p_h :: $get_params_missing_names((id_p_t, bool_p_t)*, id_a*)
   -- if ~$in_set<id>(id_p_h, `{ id_a* })
 
-def $get_params_missing_names(id_p_h :: id_p_t*, id_a*) = $get_params_missing_names(id_p_t*, id_a*)
+def $get_params_missing_names(
+    (id_p_h, bool_p_h) :: (id_p_t, bool_p_t)*,
+    id_a*
+  )
+  = $get_params_missing_names((id_p_t, bool_p_t)*, id_a*)
   -- otherwise
 
 ;; Check match between parameters and named arguments
@@ -80,11 +88,11 @@ def $find_match_named<V>(fid, V, id_a*, (id_p, bool_p)*) = eps
   -- otherwise
 
 ;; Check match between parameters and named arguments, with default arguments
-dec $find_match_named_default<V>(fid, V, id*, (id,bool)*) : (fid, V, id*)?
+dec $find_match_named_default<V>(fid, V, id*, (id, bool)*) : (fid, V, id*)?
     hint(show FIND_MATCH_NAMED_DEFAULT_%1(%2, %3, %4, %5))
 
 def $find_match_named_default<V>(fid, V, id_a*, (id_p, bool_p)*) = (fid, V, id_deft*)
-  -- if id_deft* = $get_params_missing_names(id_p*, id_a*)
+  -- if id_deft* = $get_params_missing_names((id_p, bool_p)*, id_a*)
   -- if $find_match_named<V>(fid, V, id_a* ++ id_deft*, (id_p, bool_p)*) =/= eps
 
 def $find_match_named_default<V>(fid, V, id_a*, (id_p, bool_p)*) = eps

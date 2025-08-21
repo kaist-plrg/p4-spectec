@@ -4,7 +4,6 @@ SPEC = p4spectec
 
 .PHONY: build build-spec
 
-EXEMAIN = p4/_build/default/bin/main.exe
 EXESPEC = p4spec/_build/default/bin/main.exe
 
 build: build-spec
@@ -41,5 +40,5 @@ promote-spec:
 .PHONY: clean
 
 clean:
-	rm -f ./$(MAIN) ./$(SPEC)
+	rm -f ./$(SPEC)
 	cd p4spec && dune clean

@@ -830,22 +830,44 @@ rule Expr_ok/callfunce:
 ;; Method call expression
 ;;
 
-rule Expr_ok/callmethode:
-  p C |- CallMethodE expr_b member eps eps : CallMethodE exprIL_b member eps eps `(IntT; LCTK)
-  -- if member <- [ "minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes" ]
-  ----
-  -- MethodType_ok: p C |- expr_b member eps eps : ft exprIL_b tid_fresh_inserted* id_deft*
-  ----
-  -- Call_ok: p C eps |- ft eps eps eps : IntT eps eps
-
-rule Expr_ok/callmethode:
-  p C |- CallMethodE expr_b member targ* arg* : CallMethodE exprIL_b member targIL'* argIL'* `(typ; DYN)
-  -- if ~(member <- [ "minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes" ])
-  ----
+rule Expr_ok/callmethode-builtin-size:
+  p C |- CallMethodE expr_b member targ* arg* : CallMethodE exprIL_b member targIL'* argIL'* `(typ; LCTK)
   -- (Type_ok: p C |- targ : targIL tid_fresh_a*)*
   -- if tid_fresh* = $concat_<tid>(tid_fresh_a**)
   ----
   -- MethodType_ok: p C |- expr_b member targIL* arg* : ft exprIL_b tid_fresh_inserted* id_deft*
+  ----
+  -- if $is_builtinmethodt(ft)
+  -- if member <- [ "minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes" ]
+  ----
+  -- if tid_fresh'* = $concat_<tid>(tid_fresh* ++ tid_fresh_inserted*)
+  ----
+  -- Call_ok: p C tid_fresh'* |- ft targIL* arg* id_deft* : typ targIL'* argIL'*
+  -- if typ =/= VoidT
+
+rule Expr_ok/callmethode-builtin:
+  p C |- CallMethodE expr_b member targ* arg* : CallMethodE exprIL_b member targIL'* argIL'* `(typ; DYN)
+  -- (Type_ok: p C |- targ : targIL tid_fresh_a*)*
+  -- if tid_fresh* = $concat_<tid>(tid_fresh_a**)
+  ----
+  -- MethodType_ok: p C |- expr_b member targIL* arg* : ft exprIL_b tid_fresh_inserted* id_deft*
+  ----
+  -- if $is_builtinmethodt(ft)
+  -- if ~(member <- [ "minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes" ])
+  ----
+  -- if tid_fresh'* = $concat_<tid>(tid_fresh* ++ tid_fresh_inserted*)
+  ----
+  -- Call_ok: p C tid_fresh'* |- ft targIL* arg* id_deft* : typ targIL'* argIL'*
+  -- if typ =/= VoidT
+
+rule Expr_ok/callmethode-non-builtin:
+  p C |- CallMethodE expr_b member targ* arg* : CallMethodE exprIL_b member targIL'* argIL'* `(typ; DYN)
+  -- (Type_ok: p C |- targ : targIL tid_fresh_a*)*
+  -- if tid_fresh* = $concat_<tid>(tid_fresh_a**)
+  ----
+  -- MethodType_ok: p C |- expr_b member targIL* arg* : ft exprIL_b tid_fresh_inserted* id_deft*
+  ----
+  -- if ~$is_builtinmethodt(ft)
   ----
   -- if tid_fresh'* = $concat_<tid>(tid_fresh* ++ tid_fresh_inserted*)
   ----
