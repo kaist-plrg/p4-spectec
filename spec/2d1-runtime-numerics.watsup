@@ -296,9 +296,9 @@ def $bin_eq(StackV val_a* _ i_size_a, StackV val_b* _ i_size_b)
     = ($bin_eqs(val_a*, val_b*) /\ (i_size_a = i_size_b))
 def $bin_eq(StructV id_a (member_a, val_a)*, StructV id_b (member_b, val_b)*)
     = ((id_a = id_b) /\ $bin_eqs_((member_a, val_a)*, (member_b, val_b)*))
-def $bin_eq(HeaderV id_a (member_a, val_a)*, StructV id_b (member_b, val_b)*)
-    = ((id_a = id_b) /\ $bin_eqs_((member_a, val_a)*, (member_b, val_b)*))
-def $bin_eq(UnionV id_a (member_a, val_a)*, StructV id_b (member_b, val_b)*)
+def $bin_eq(HeaderV id_a b_a (member_a, val_a)*, HeaderV id_b b_b (member_b, val_b)*)
+    = ((id_a = id_b) /\ (b_a = b_b) /\ $bin_eqs_((member_a, val_a)*, (member_b, val_b)*))
+def $bin_eq(UnionV id_a (member_a, val_a)*, UnionV id_b (member_b, val_b)*)
     = ((id_a = id_b) /\ $bin_eqs_((member_a, val_a)*, (member_b, val_b)*))
 def $bin_eq(InvalidV, InvalidV) = true
 
@@ -510,16 +510,16 @@ def $cast_op(typ, StructV id (member, val)*) = $cast_struct(typ, id, (member, va
 
 ;; Cast from header
 
-dec $cast_header(typ, id, (member, val)*) : val
-dec $cast_header'(typ, id, (member, val)*) : val
+dec $cast_header(typ, id, bool, (member, val)*) : val
+dec $cast_header'(typ, id, bool, (member, val)*) : val
 
-def $cast_header(typ, id, (member, val)*)
-    = $cast_header'($canon_typ(typ), id, (member, val)*)
+def $cast_header(typ, id, b, (member, val)*)
+    = $cast_header'($canon_typ(typ), id, b, (member, val)*)
 
-def $cast_header'(HeaderT id _, id, (member, val)*) =
-    HeaderV id (member, val)*
+def $cast_header'(HeaderT id _, id, b, (member, val)*) =
+    HeaderV id b (member, val)*
 
-def $cast_op(typ, HeaderV id (member, val)*) = $cast_header(typ, id, (member, val)*)
+def $cast_op(typ, HeaderV id b (member, val)*) = $cast_header(typ, id, b, (member, val)*)
 
 ;; Cast from sequence
 
@@ -541,7 +541,7 @@ def $cast_seq'(StackT typ i_size, val*) = StackV val'* i_idx i_size
 def $cast_seq'(StructT id (member, typ)*, val*) = StructV id (member, val')*
   -- if (val' = $cast_op(typ, val))*
 
-def $cast_seq'(HeaderT id (member, typ)*, val*) = HeaderV id (member, val')*
+def $cast_seq'(HeaderT id (member, typ)*, val*) = HeaderV id true (member, val')*
   -- if (val' = $cast_op(typ, val))*
 
 def $cast_op(typ, SeqV val*) = $cast_seq(typ, val*)
@@ -562,7 +562,7 @@ def $cast_record'(StructT id (member_t, typ)*, (member, val)*)
   -- if (val'' = $cast_op(typ, val'))*
 
 def $cast_record'(HeaderT id (member_t, typ)*, (member, val)*)
-    = HeaderV id (member_t, val'')*
+    = HeaderV id true (member_t, val'')*
   -- if (val' = $find_map<member, val>(`{ (member -> val)* }, member_t))*
   -- if (val'' = $cast_op(typ, val'))*
 
@@ -575,6 +575,19 @@ def $cast_op(typ, RecordV (member, val)*) = $cast_record(typ, (member, val)*)
 def $cast_op(typ, DefaultV) = $default(typ)
 
 ;; Cast from invalid
+
+dec $cast_invalid(typ) : val
+dec $cast_invalid'(typ) : val
+
+def $cast_invalid(typ) = $cast_invalid'($canon_typ(typ))
+
+def $cast_invalid'(HeaderT id (member_t, typ)*)
+  = $default(HeaderT id (member_t, typ)*)
+
+def $cast_invalid'(UnionT id (member_t, typ)*)
+  = $default(UnionT id (member_t, typ)*)
+
+def $cast_op(typ, InvalidV) = $cast_invalid(typ)
 
 ;; Cast from set
 
@@ -639,7 +652,7 @@ def $default'(StackT typ n_s)
 def $default'(StructT id (member, typ)*)
   = StructV id (member, $default(typ))*
 def $default'(HeaderT id (member, typ)*)
-  = HeaderV id (member, $default(typ))*
+  = HeaderV id false (member, $default(typ))*
 def $default'(UnionT id (member, typ)*)
   = UnionV id (member, $default(typ))*
 

@@ -611,7 +611,7 @@ def $compatible'_arrayindex(typ) = false
   -- otherwise
 
 rule Expr_ok/arracce-tuplet:
-  p C |- ArrAccE expr_b expr_i : ArrAccE exprIL_b exprIL_i' `(typ; DYN)
+  p C |- ArrAccE expr_b expr_i : ArrAccE exprIL_b exprIL_i' `(typ; ctk)
   -- Expr_ok: p C |- expr_b : exprIL_b
   -- if `(typ_b; ctk_b) = $annot(exprIL_b)
   ----
@@ -624,11 +624,12 @@ rule Expr_ok/arracce-tuplet:
   -- Eval_static: p C |- exprIL_i' ~> val_i _
   -- if n = $get_num(val_i)
   -- if typ = typ_b'*[n]
+  -- if ctk = $join_ctk(ctk_b, LCTK)
 
 rule Expr_ok/arracce-stackt-lctk:
-  p C |- ArrAccE expr_b expr_i : ArrAccE exprIL_b exprIL_i' `(typ_b'; DYN)
+  p C |- ArrAccE expr_b expr_i : ArrAccE exprIL_b exprIL_i' `(typ_b'; ctk)
   -- Expr_ok: p C |- expr_b : exprIL_b
-  -- if `(typ_b; _) = $annot(exprIL_b)
+  -- if `(typ_b; ctk_b) = $annot(exprIL_b)
   ----
   -- Expr_ok: p C |- expr_i : exprIL_i
   -- if `(typ_i; LCTK) = $annot(exprIL_i)
@@ -639,9 +640,10 @@ rule Expr_ok/arracce-stackt-lctk:
   -- Eval_static: p C |- exprIL_i' ~> val_i _
   -- if i = $get_num(val_i)
   -- if $(0 <= i) /\ $(i <= i_s)
+  -- if ctk = $join_ctk(ctk_b, LCTK)
 
 rule Expr_ok/arracce-stackt-ctk-dyn:
-  p C |- ArrAccE expr_b expr_i : ArrAccE exprIL_b exprIL_i' `(typ_b'; DYN)
+  p C |- ArrAccE expr_b expr_i : ArrAccE exprIL_b exprIL_i' `(typ_b'; ctk)
   -- Expr_ok: p C |- expr_b : exprIL_b
   -- if `(typ_b; ctk_b) = $annot(exprIL_b)
   ----
@@ -652,6 +654,7 @@ rule Expr_ok/arracce-stackt-ctk-dyn:
   -- if exprIL_i' = $reduce_senum_unary(exprIL_i, def $compatible_arrayindex)
   ----
   -- if StackT typ_b' _ = $canon_typ(typ_b)
+  -- if ctk = $join_ctk(ctk_b, ctk_i)
 
 ;;
 ;; Bitstring access expression
@@ -779,7 +782,7 @@ rule Expr_ok/expracce-stackt-next:
   -- if StackT typ_s int_s = $canon_typ(typ_b)
 
 rule Expr_ok/expracce-structt:
-  p C |- ExprAccE expr_b member : ExprAccE exprIL_b member `(typ; DYN)
+  p C |- ExprAccE expr_b member : ExprAccE exprIL_b member `(typ; ctk_b)
   -- Expr_ok: p C |- expr_b : exprIL_b
   -- if `(typ_b; ctk_b) = $annot(exprIL_b)
   -- if StructT id_s (member_s, typ_s)* = $canon_typ(typ_b)
@@ -787,7 +790,7 @@ rule Expr_ok/expracce-structt:
   -- if typ = $assoc_<member, typ>(member, (member_s, typ_s)*)
 
 rule Expr_ok/expracce-headert:
-  p C |- ExprAccE expr_b member : ExprAccE exprIL_b member `(typ; DYN)
+  p C |- ExprAccE expr_b member : ExprAccE exprIL_b member `(typ; ctk_b)
   -- Expr_ok: p C |- expr_b : exprIL_b
   -- if `(typ_b; ctk_b) = $annot(exprIL_b)
   -- if HeaderT id_h (member_h, typ_h)* = $canon_typ(typ_b)
@@ -795,7 +798,7 @@ rule Expr_ok/expracce-headert:
   -- if typ = $assoc_<member, typ>(member, (member_h, typ_h)*)
 
 rule Expr_ok/expracce-uniont:
-  p C |- ExprAccE expr_b member : ExprAccE exprIL_b member `(typ; DYN)
+  p C |- ExprAccE expr_b member : ExprAccE exprIL_b member `(typ; ctk_b)
   -- Expr_ok: p C |- expr_b : exprIL_b
   -- if `(typ_b; ctk_b) = $annot(exprIL_b)
   -- if UnionT id_u (member_u, typ_u)* = $canon_typ(typ_b)

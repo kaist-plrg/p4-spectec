@@ -120,6 +120,26 @@ rule Eval_static/caste:
   -- Eval_static: p C |- exprIL ~> val _
 
 ;;
+;; Array access expression
+;;
+
+rule Eval_static/arracce-tuple:
+  p C |- ArrAccE exprIL_b exprIL_i annotIL ~> val (ArrAccE exprIL_b exprIL_i annotIL)
+  -- Eval_static: p C |- exprIL_b ~> (TupleV val_e*) _
+  -- Eval_static: p C |- exprIL_i ~> val_i _
+  -- if n_i = $get_num(val_i)
+  -- if $(n_i < |val_e*|)
+  -- if val = val_e*[n_i]
+
+rule Eval_static/arracce-stack:
+  p C |- ArrAccE exprIL_b exprIL_i annotIL ~> val (ArrAccE exprIL_b exprIL_i annotIL)
+  -- Eval_static: p C |- exprIL_b ~> (StackV val_e* _ _) _
+  -- Eval_static: p C |- exprIL_i ~> val_i _
+  -- if n_i = $get_num(val_i)
+  -- if $(n_i < |val_e*|)
+  -- if val = val_e*[n_i] 
+
+;;
 ;; Bitstring access expression
 ;;
 
@@ -161,6 +181,21 @@ rule Eval_static/typeacce-senumt:
 rule Eval_static/expracce-stack:
   p C |- ExprAccE exprIL_b "size" annotIL ~> (IntV i_size) (ExprAccE exprIL_b "size" annotIL)
   -- Eval_static: p C |- exprIL_b ~> (StackV val* i_size i_idx) _
+
+rule Eval_static/expracce-struct:
+  p C |- ExprAccE exprIL_b member annotIL ~> val (ExprAccE exprIL_b member annotIL)
+  -- Eval_static: p C |- exprIL_b ~> (StructV id (member_f, val_f)*) _
+  -- if val = $assoc_<member, val>(member, (member_f, val_f)*)
+
+rule Eval_static/expracce-header:
+  p C |- ExprAccE exprIL_b member annotIL ~> val (ExprAccE exprIL_b member annotIL)
+  -- Eval_static: p C |- exprIL_b ~> (HeaderV id _ (member_f, val_f)*) _
+  -- if val = $assoc_<member, val>(member, (member_f, val_f)*)
+
+rule Eval_static/expracce-union:
+  p C |- ExprAccE exprIL_b member annotIL ~> val (ExprAccE exprIL_b member annotIL)
+  -- Eval_static: p C |- exprIL_b ~> (UnionV id (member_f, val_f)*) _
+  -- if val = $assoc_<member, val>(member, (member_f, val_f)*)
 
 ;;
 ;; Method call expression
