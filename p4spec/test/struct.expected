@@ -4152,6 +4152,11 @@ relation FuncType_alpha: functyp, functyp'
     2. Else Phantom#161
 
 ;; ../../../../spec/2c5-runtime-type-alpha.watsup:13.1-15.20
+relation FuncType_alpha_relaxed: 
+
+
+
+;; ../../../../spec/2c5-runtime-type-alpha.watsup:17.1-19.20
 relation FuncDef_alpha: funcdef, funcdef'
 
 1. Case analysis on funcdef
@@ -4205,6 +4210,11 @@ relation FuncDef_alpha: funcdef, funcdef'
       2. Else Phantom#166
 
     2. Else Phantom#167
+
+;; ../../../../spec/2c5-runtime-type-alpha.watsup:21.1-23.20
+relation FuncDef_alpha_relaxed: 
+
+
 
 ;; ../../../../spec/2c6-runtime-type-wellformed.watsup:5.1-5.39
 relation Type_wf: tidset, typ''''''
@@ -8933,9 +8943,9 @@ def $find_func_by_name(id_f, ({ (fid -> fd)*{fd <- fd*, fid <- fid*} }))
 
 3. If (((fid, funcdef)*{(fid, funcdef) <- (fid, funcdef)*} matches pattern [ _/1 ])), then
 
-  1. (Let [(_fid, fd_f)] be (fid, funcdef)*{(fid, funcdef) <- (fid, funcdef)*})
+  1. (Let [(fid_f, fd_f)] be (fid, funcdef)*{(fid, funcdef) <- (fid, funcdef)*})
 
-  2. Return ?(fd_f)
+  2. Return ?((fid_f, fd_f))
 
 3. Else Phantom#496
 
@@ -9996,9 +10006,17 @@ def $find_funcdef_by_name(p', C, name)
 
   1. (Let (TOP id) be name)
 
-  2. Return $find_func_by_name(id, C.GLOBAL.FDENV)
+  2. (Let (fid, funcdef)?{(fid, funcdef) <- (fid, funcdef)?} be $find_func_by_name(id, C.GLOBAL.FDENV))
 
-1. Else Phantom#556
+  3. If (((fid, funcdef)?{(fid, funcdef) <- (fid, funcdef)?} matches pattern (_))), then
+
+    1. (Let ?((_fid, fd)) be (fid, funcdef)?{(fid, funcdef) <- (fid, funcdef)?})
+
+    2. Return fd
+
+  3. Else Phantom#556
+
+1. Else Phantom#557
 
 2. Case analysis on p'
 
@@ -10008,9 +10026,17 @@ def $find_funcdef_by_name(p', C, name)
 
       1. (Let (CURRENT id) be name)
 
-      2. Return $find_func_by_name(id, C.GLOBAL.FDENV)
+      2. (Let (fid, funcdef)?{(fid, funcdef) <- (fid, funcdef)?} be $find_func_by_name(id, C.GLOBAL.FDENV))
 
-    1. Else Phantom#557
+      3. If (((fid, funcdef)?{(fid, funcdef) <- (fid, funcdef)?} matches pattern (_))), then
+
+        1. (Let ?((_fid, fd)) be (fid, funcdef)?{(fid, funcdef) <- (fid, funcdef)?})
+
+        2. Return fd
+
+      3. Else Phantom#558
+
+    1. Else Phantom#559
 
   2. Case (% matches pattern `BLOCK`)
 
@@ -10018,23 +10044,23 @@ def $find_funcdef_by_name(p', C, name)
 
       1. (Let (CURRENT id) be name)
 
-      2. (Let funcdef?{funcdef <- funcdef?} be $find_func_by_name(id, C.BLOCK.FDENV))
+      2. (Let (fid, funcdef)?{(fid, funcdef) <- (fid, funcdef)?} be $find_func_by_name(id, C.BLOCK.FDENV))
 
-      3. If ((funcdef?{funcdef <- funcdef?} matches pattern (_))), then
+      3. If (((fid, funcdef)?{(fid, funcdef) <- (fid, funcdef)?} matches pattern (_))), then
 
-        1. (Let ?(fd) be funcdef?{funcdef <- funcdef?})
+        1. (Let ?((_fid, fd)) be (fid, funcdef)?{(fid, funcdef) <- (fid, funcdef)?})
 
-        2. Return ?(fd)
+        2. Return fd
 
-      3. Else Phantom#558
+      3. Else Phantom#560
 
       4. If ((?() = $find_func_by_name(id, C.BLOCK.FDENV))), then
 
         1. Return $find_funcdef_by_name((GLOBAL), C, (CURRENT id))
 
-      4. Else Phantom#559
+      4. Else Phantom#561
 
-    1. Else Phantom#560
+    1. Else Phantom#562
 
   3. Case (% matches pattern `LOCAL`)
 
@@ -10044,9 +10070,9 @@ def $find_funcdef_by_name(p', C, name)
 
       2. Return $find_funcdef_by_name((BLOCK), C, (CURRENT id))
 
-    1. Else Phantom#561
+    1. Else Phantom#563
 
-;; ../../../../spec/4a1-typing-context.watsup:361.1-362.58
+;; ../../../../spec/4a1-typing-context.watsup:363.1-364.58
 def $find_consdef(p', C, name, arg*{arg <- arg*})
 
 1. If ((name matches pattern `TOP%`)), then
@@ -10055,7 +10081,7 @@ def $find_consdef(p', C, name, arg*{arg <- arg*})
 
   2. Return $find_func<consdef>(id, $to_fkey(arg*{arg <- arg*}), C.GLOBAL.CDENV)
 
-1. Else Phantom#562
+1. Else Phantom#564
 
 2. Case analysis on p'
 
@@ -10067,7 +10093,7 @@ def $find_consdef(p', C, name, arg*{arg <- arg*})
 
       2. Return $find_func<consdef>(id, $to_fkey(arg*{arg <- arg*}), C.GLOBAL.CDENV)
 
-    1. Else Phantom#563
+    1. Else Phantom#565
 
   2. Case (% matches pattern `BLOCK`)
 
@@ -10077,7 +10103,7 @@ def $find_consdef(p', C, name, arg*{arg <- arg*})
 
       2. Return $find_consdef((GLOBAL), C, (CURRENT id), arg*{arg <- arg*})
 
-    1. Else Phantom#564
+    1. Else Phantom#566
 
   3. Case (% matches pattern `LOCAL`)
 
@@ -10087,9 +10113,9 @@ def $find_consdef(p', C, name, arg*{arg <- arg*})
 
       2. Return $find_consdef((BLOCK), C, (CURRENT id), arg*{arg <- arg*})
 
-    1. Else Phantom#565
+    1. Else Phantom#567
 
-;; ../../../../spec/4a1-typing-context.watsup:369.1-369.68
+;; ../../../../spec/4a1-typing-context.watsup:371.1-371.68
 def $find_consdefs_by_name(cursor, C, name)
 
 1. Case analysis on cursor
@@ -10124,7 +10150,7 @@ def $find_consdefs_by_name(cursor, C, name)
 
       3. Return $find_funcs_by_name<consdef>(id, cid*{cid <- cid*}, cd*{cd <- cd*})
 
-    1. Else Phantom#566
+    1. Else Phantom#568
 
   3. Case (% matches pattern `LOCAL`)
 
@@ -10136,7 +10162,7 @@ def $find_consdefs_by_name(cursor, C, name)
 
       3. Return $find_funcs_by_name<consdef>(id, cid*{cid <- cid*}, cd*{cd <- cd*})
 
-    1. Else Phantom#567
+    1. Else Phantom#569
 
 ;; ../../../../spec/4a2-typing-tblctx.watsup:6.1-9.11
 syntax mode = 
@@ -10211,7 +10237,7 @@ def $get_lpm_prefix'(val, n_prefix')
 
     1. Return n_prefix'
 
-  2. Else Phantom#568
+  2. Else Phantom#570
 
   3. If ((_bitstr has type nat)), then
 
@@ -10225,9 +10251,9 @@ def $get_lpm_prefix'(val, n_prefix')
 
         2. Return $get_lpm_prefix'(val', (n_prefix' + 1))
 
-      1. Else Phantom#569
+      1. Else Phantom#571
 
-    2. Else Phantom#570
+    2. Else Phantom#572
 
     3. If ((n_prefix' = 0)), then
 
@@ -10239,15 +10265,15 @@ def $get_lpm_prefix'(val, n_prefix')
 
           2. Return $get_lpm_prefix'(val', 0)
 
-        1. Else Phantom#571
+        1. Else Phantom#573
 
-      1. Else Phantom#572
+      1. Else Phantom#574
 
-    3. Else Phantom#573
+    3. Else Phantom#575
 
-  3. Else Phantom#574
+  3. Else Phantom#576
 
-1. Else Phantom#575
+1. Else Phantom#577
 
 ;; ../../../../spec/4a2-typing-tblctx.watsup:107.1-107.45
 def $update_mode(text', typ', tblctx)
@@ -10341,7 +10367,7 @@ def $update_state(tblstate, tblstate')
 
       1. Return (LPM nat)
 
-    2. Else Phantom#576
+    2. Else Phantom#578
 
 ;; ../../../../spec/4a2-typing-tblctx.watsup:139.1-139.54
 def $find_action(tblctx, name)
@@ -10376,7 +10402,7 @@ def $keys_of_table(tblprop''*{tblprop'' <- tblprop''*})
 
       2. Return tblkeyprop :: $keys_of_table(tblprop_t*{tblprop_t <- tblprop_t*})
 
-    2. Else Phantom#577
+    2. Else Phantom#579
 
     3. (Let tblprop_h :: tblprop_t*{tblprop_t <- tblprop_t*} be tblprop''*{tblprop'' <- tblprop''*})
 
@@ -10403,7 +10429,7 @@ def $actions_of_table(tblprop''*{tblprop'' <- tblprop''*})
 
       2. Return tblactionprop :: $actions_of_table(tblprop_t*{tblprop_t <- tblprop_t*})
 
-    2. Else Phantom#578
+    2. Else Phantom#580
 
     3. (Let tblprop_h :: tblprop_t*{tblprop_t <- tblprop_t*} be tblprop''*{tblprop'' <- tblprop''*})
 
@@ -10641,7 +10667,7 @@ relation Eval_static: p, C, exprIL''
 
       2. Result in (val (NameE name annotIL))
 
-    3. Else Phantom#579
+    3. Else Phantom#581
 
   6. Case (% matches pattern `SeqE%%`)
 
@@ -10717,7 +10743,7 @@ relation Eval_static: p, C, exprIL''
 
       2. Result in (val (TernE exprIL_c exprIL_t exprIL_f annotIL))
 
-    3. Else Phantom#580
+    3. Else Phantom#582
 
     4. If ((val' = (BoolV false))), then
 
@@ -10725,7 +10751,7 @@ relation Eval_static: p, C, exprIL''
 
       2. Result in (val (TernE exprIL_c exprIL_t exprIL_f annotIL))
 
-    4. Else Phantom#581
+    4. Else Phantom#583
 
   15. Case (% matches pattern `CastE%%%`)
 
@@ -10761,9 +10787,9 @@ relation Eval_static: p, C, exprIL''
 
             2. Result in (val (ArrAccE exprIL_b exprIL_i annotIL))
 
-          2. Else Phantom#582
+          2. Else Phantom#584
 
-        4. Else Phantom#583
+        4. Else Phantom#585
 
       2. Case (% matches pattern `StackV%%%`)
 
@@ -10783,11 +10809,11 @@ relation Eval_static: p, C, exprIL''
 
             2. Result in (val (ArrAccE exprIL_b exprIL_i annotIL))
 
-          2. Else Phantom#584
+          2. Else Phantom#586
 
-        4. Else Phantom#585
+        4. Else Phantom#587
 
-    3. Else Phantom#586
+    3. Else Phantom#588
 
   17. Case (% matches pattern `BitAccE%%%%`)
 
@@ -10811,7 +10837,7 @@ relation Eval_static: p, C, exprIL''
 
       1. Result in ((ErrV member) (ErrAccE member annotIL))
 
-    3. Else Phantom#587
+    3. Else Phantom#589
 
   19. Case (% matches pattern `TypeAccE%%%`)
 
@@ -10843,7 +10869,7 @@ relation Eval_static: p, C, exprIL''
 
                 1. Result in ((EnumFieldV id_t member) (TypeAccE name member annotIL))
 
-              2. Else Phantom#588
+              2. Else Phantom#590
 
             2. Case (% matches pattern `SEnumT%%%`)
 
@@ -10857,15 +10883,15 @@ relation Eval_static: p, C, exprIL''
 
                 2. Result in ((SEnumFieldV id_t member val) (TypeAccE name member annotIL))
 
-              3. Else Phantom#589
+              3. Else Phantom#591
 
-          2. Else Phantom#590
+          2. Else Phantom#592
 
-        3. Else Phantom#591
+        3. Else Phantom#593
 
-      2. Else Phantom#592
+      2. Else Phantom#594
 
-    3. Else Phantom#593
+    3. Else Phantom#595
 
   20. Case (% matches pattern `ExprAccE%%%`)
 
@@ -10881,9 +10907,9 @@ relation Eval_static: p, C, exprIL''
 
         2. Result in ((IntV i_size) (ExprAccE exprIL_b "size" annotIL))
 
-      2. Else Phantom#594
+      2. Else Phantom#596
 
-    2. Else Phantom#595
+    2. Else Phantom#597
 
     3. (Eval_static: p C |- exprIL_b ~> (val' _exprIL))
 
@@ -10901,7 +10927,7 @@ relation Eval_static: p, C, exprIL''
 
           2. Result in (val (ExprAccE exprIL_b text annotIL))
 
-        3. Else Phantom#596
+        3. Else Phantom#598
 
       2. Case (% matches pattern `HeaderV%%%`)
 
@@ -10915,7 +10941,7 @@ relation Eval_static: p, C, exprIL''
 
           2. Result in (val (ExprAccE exprIL_b text annotIL))
 
-        3. Else Phantom#597
+        3. Else Phantom#599
 
       3. Case (% matches pattern `UnionV%%`)
 
@@ -10929,9 +10955,9 @@ relation Eval_static: p, C, exprIL''
 
           2. Result in (val (ExprAccE exprIL_b text annotIL))
 
-        3. Else Phantom#598
+        3. Else Phantom#600
 
-    4. Else Phantom#599
+    4. Else Phantom#601
 
   21. Case (% matches pattern `CallMethodE%%%%%`)
 
@@ -10949,11 +10975,11 @@ relation Eval_static: p, C, exprIL''
 
           3. Result in (val (CallMethodE exprIL_b member [] [] annotIL))
 
-        1. Else Phantom#600
+        1. Else Phantom#602
 
-      1. Else Phantom#601
+      1. Else Phantom#603
 
-    2. Else Phantom#602
+    2. Else Phantom#604
 
   22. Case (% matches pattern `CallTypeE%%%%%`)
 
@@ -10977,17 +11003,17 @@ relation Eval_static: p, C, exprIL''
 
               2. Result in ($size(typ, member) (CallTypeE name member [] [] annotIL))
 
-            2. Else Phantom#603
+            2. Else Phantom#605
 
-          2. Else Phantom#604
+          2. Else Phantom#606
 
-        1. Else Phantom#605
+        1. Else Phantom#607
 
-      1. Else Phantom#606
+      1. Else Phantom#608
 
-    2. Else Phantom#607
+    2. Else Phantom#609
 
-1. Else Phantom#608
+1. Else Phantom#610
 
 ;; ../../../../spec/4b-typing-relation.watsup:49.1-51.23
 relation Type_ok: p, C, type''
@@ -11040,11 +11066,11 @@ relation Type_ok: p, C, type''
 
           1. Result in ((FIntT w) as typ), []
 
-        2. Else Phantom#609
+        2. Else Phantom#611
 
-      3. Else Phantom#610
+      3. Else Phantom#612
 
-    4. Else Phantom#611
+    4. Else Phantom#613
 
   8. Case (% matches pattern `FBitT%`)
 
@@ -11066,9 +11092,9 @@ relation Type_ok: p, C, type''
 
         2. Result in ((FBitT w) as typ), []
 
-      3. Else Phantom#612
+      3. Else Phantom#614
 
-    4. Else Phantom#613
+    4. Else Phantom#615
 
   9. Case (% matches pattern `VBitT%`)
 
@@ -11090,9 +11116,9 @@ relation Type_ok: p, C, type''
 
         2. Result in ((VBitT w) as typ), []
 
-      3. Else Phantom#614
+      3. Else Phantom#616
 
-    4. Else Phantom#615
+    4. Else Phantom#617
 
   10. Case (% matches pattern `StackT%%`)
 
@@ -11114,7 +11140,7 @@ relation Type_ok: p, C, type''
 
       4. Result in ((SpecT ptd [typ]) as typ), tid_fresh*{tid_fresh <- tid_fresh*}
 
-    5. Else Phantom#616
+    5. Else Phantom#618
 
   11. Case (% matches pattern `ListT%`)
 
@@ -11168,7 +11194,7 @@ relation Type_ok: p, C, type''
 
           3. Result in ((SpecT ptd []) as typ), []
 
-    3. Else Phantom#617
+    3. Else Phantom#619
 
   14. Case (% matches pattern `SpecT%%`)
 
@@ -11188,11 +11214,11 @@ relation Type_ok: p, C, type''
 
           2. Result in typ, []
 
-        2. Else Phantom#618
+        2. Else Phantom#620
 
-      2. Else Phantom#619
+      2. Else Phantom#621
 
-    2. Else Phantom#620
+    2. Else Phantom#622
 
     3. (Let typdef'?{typdef' <- typdef'?} be $find_typdef(p, C, name))
 
@@ -11212,9 +11238,9 @@ relation Type_ok: p, C, type''
 
         5. Result in ((SpecT ptd typ_a*{typ_a <- typ_a*}) as typ), tid_fresh*{tid_fresh <- tid_fresh*}
 
-      2. Else Phantom#621
+      2. Else Phantom#623
 
-    4. Else Phantom#622
+    4. Else Phantom#624
 
   15. Case (% matches pattern `AnyT`)
 
@@ -11229,7 +11255,7 @@ relation Sub_expl: typ_a, typ_b
 
   1. The relation holds
 
-1. Else Phantom#623
+1. Else Phantom#625
 
 ;; ../../../../spec/4b-typing-relation.watsup:57.1-59.20
 relation Sub_expl_canon: typ_a, typ_b
@@ -11246,7 +11272,7 @@ relation Sub_expl_canon: typ_a, typ_b
 
       1. The relation holds
 
-    1. Else Phantom#624
+    1. Else Phantom#626
 
 ;; ../../../../spec/4b-typing-relation.watsup:60.1-62.20
 relation Sub_expl_canon_neq: typ''''', typ''''''
@@ -11257,9 +11283,9 @@ relation Sub_expl_canon_neq: typ''''', typ''''''
 
     1. The relation holds
 
-  1. Else Phantom#625
+  1. Else Phantom#627
 
-1. Else Phantom#626
+1. Else Phantom#628
 
 2. If ((typ''''' = ((BoolT) as typ))), then
 
@@ -11267,9 +11293,9 @@ relation Sub_expl_canon_neq: typ''''', typ''''''
 
     1. The relation holds
 
-  1. Else Phantom#627
+  1. Else Phantom#629
 
-2. Else Phantom#628
+2. Else Phantom#630
 
 3. If ((typ''''' = ((IntT) as typ))), then
 
@@ -11277,7 +11303,7 @@ relation Sub_expl_canon_neq: typ''''', typ''''''
 
     1. The relation holds
 
-  1. Else Phantom#629
+  1. Else Phantom#631
 
   2. If ((typ'''''' has type numtyp)), then
 
@@ -11297,11 +11323,11 @@ relation Sub_expl_canon_neq: typ''''', typ''''''
 
         2. The relation holds
 
-    2. Else Phantom#630
+    2. Else Phantom#632
 
-  2. Else Phantom#631
+  2. Else Phantom#633
 
-3. Else Phantom#632
+3. Else Phantom#634
 
 4. Case analysis on typ'''''
 
@@ -11329,7 +11355,7 @@ relation Sub_expl_canon_neq: typ''''', typ''''''
 
                 1. The relation holds
 
-              2. Else Phantom#633
+              2. Else Phantom#635
 
             2. Case (% matches pattern `FIntT%`)
 
@@ -11337,15 +11363,15 @@ relation Sub_expl_canon_neq: typ''''', typ''''''
 
               2. The relation holds
 
-          2. Else Phantom#634
+          2. Else Phantom#636
 
-        2. Else Phantom#635
+        2. Else Phantom#637
 
         3. If ((typ'''''' = ((IntT) as typ))), then
 
           1. The relation holds
 
-        3. Else Phantom#636
+        3. Else Phantom#638
 
       2. Case (% matches pattern `FBitT%`)
 
@@ -11365,7 +11391,7 @@ relation Sub_expl_canon_neq: typ''''', typ''''''
 
                 1. The relation holds
 
-              2. Else Phantom#637
+              2. Else Phantom#639
 
             2. Case (% matches pattern `FBitT%`)
 
@@ -11373,17 +11399,17 @@ relation Sub_expl_canon_neq: typ''''', typ''''''
 
               2. The relation holds
 
-          2. Else Phantom#638
+          2. Else Phantom#640
 
-        2. Else Phantom#639
+        2. Else Phantom#641
 
         3. If ((typ'''''' = ((IntT) as typ))), then
 
           1. The relation holds
 
-        3. Else Phantom#640
+        3. Else Phantom#642
 
-    2. Else Phantom#641
+    2. Else Phantom#643
 
   2. Case (% has type datatyp)
 
@@ -11399,7 +11425,7 @@ relation Sub_expl_canon_neq: typ''''', typ''''''
 
           1. The relation holds
 
-        2. Else Phantom#642
+        2. Else Phantom#644
 
       2. Case (% matches pattern `SEnumT%%%`)
 
@@ -11409,9 +11435,9 @@ relation Sub_expl_canon_neq: typ''''', typ''''''
 
           1. The relation holds
 
-        2. Else Phantom#643
+        2. Else Phantom#645
 
-    2. Else Phantom#644
+    2. Else Phantom#646
 
   3. Case (% has type synthtyp)
 
@@ -11437,7 +11463,7 @@ relation Sub_expl_canon_neq: typ''''', typ''''''
 
                 1. The relation holds
 
-              2. Else Phantom#645
+              2. Else Phantom#647
 
             2. Case (% matches pattern `TupleT%`)
 
@@ -11447,7 +11473,7 @@ relation Sub_expl_canon_neq: typ''''', typ''''''
 
                 1. The relation holds
 
-              2. Else Phantom#646
+              2. Else Phantom#648
 
             3. Case (% matches pattern `StackT%%`)
 
@@ -11459,9 +11485,9 @@ relation Sub_expl_canon_neq: typ''''', typ''''''
 
                   1. The relation holds
 
-                1. Else Phantom#647
+                1. Else Phantom#649
 
-              2. Else Phantom#648
+              2. Else Phantom#650
 
             4. Case (% matches pattern `StructT%%`)
 
@@ -11471,7 +11497,7 @@ relation Sub_expl_canon_neq: typ''''', typ''''''
 
                 1. The relation holds
 
-              2. Else Phantom#649
+              2. Else Phantom#651
 
             5. Case (% matches pattern `HeaderT%%`)
 
@@ -11481,11 +11507,11 @@ relation Sub_expl_canon_neq: typ''''', typ''''''
 
                 1. The relation holds
 
-              2. Else Phantom#650
+              2. Else Phantom#652
 
-          2. Else Phantom#651
+          2. Else Phantom#653
 
-        2. Else Phantom#652
+        2. Else Phantom#654
 
       2. Case (% matches pattern `RecordT%`)
 
@@ -11519,13 +11545,13 @@ relation Sub_expl_canon_neq: typ''''', typ''''''
 
                       1. The relation holds
 
-                    2. Else Phantom#653
+                    2. Else Phantom#655
 
-                  3. Else Phantom#654
+                  3. Else Phantom#656
 
-                2. Else Phantom#655
+                2. Else Phantom#657
 
-              2. Else Phantom#656
+              2. Else Phantom#658
 
             2. Case (% matches pattern `HeaderT%%`)
 
@@ -11549,17 +11575,17 @@ relation Sub_expl_canon_neq: typ''''', typ''''''
 
                       1. The relation holds
 
-                    2. Else Phantom#657
+                    2. Else Phantom#659
 
-                  3. Else Phantom#658
+                  3. Else Phantom#660
 
-                2. Else Phantom#659
+                2. Else Phantom#661
 
-              2. Else Phantom#660
+              2. Else Phantom#662
 
-          2. Else Phantom#661
+          2. Else Phantom#663
 
-        2. Else Phantom#662
+        2. Else Phantom#664
 
       3. Case (% matches pattern `SeqDefaultT%`)
 
@@ -11585,11 +11611,11 @@ relation Sub_expl_canon_neq: typ''''', typ''''''
 
                     1. The relation holds
 
-                  1. Else Phantom#663
+                  1. Else Phantom#665
 
-                2. Else Phantom#664
+                2. Else Phantom#666
 
-              2. Else Phantom#665
+              2. Else Phantom#667
 
             2. Case (% matches pattern `StackT%%`)
 
@@ -11603,11 +11629,11 @@ relation Sub_expl_canon_neq: typ''''', typ''''''
 
                     1. The relation holds
 
-                  1. Else Phantom#666
+                  1. Else Phantom#668
 
-                1. Else Phantom#667
+                1. Else Phantom#669
 
-              2. Else Phantom#668
+              2. Else Phantom#670
 
             3. Case (% matches pattern `StructT%%`)
 
@@ -11623,11 +11649,11 @@ relation Sub_expl_canon_neq: typ''''', typ''''''
 
                     1. The relation holds
 
-                  1. Else Phantom#669
+                  1. Else Phantom#671
 
-                2. Else Phantom#670
+                2. Else Phantom#672
 
-              2. Else Phantom#671
+              2. Else Phantom#673
 
             4. Case (% matches pattern `HeaderT%%`)
 
@@ -11643,15 +11669,15 @@ relation Sub_expl_canon_neq: typ''''', typ''''''
 
                     1. The relation holds
 
-                  1. Else Phantom#672
+                  1. Else Phantom#674
 
-                2. Else Phantom#673
+                2. Else Phantom#675
 
-              2. Else Phantom#674
+              2. Else Phantom#676
 
-          2. Else Phantom#675
+          2. Else Phantom#677
 
-        2. Else Phantom#676
+        2. Else Phantom#678
 
       4. Case (% matches pattern `RecordDefaultT%`)
 
@@ -11693,17 +11719,17 @@ relation Sub_expl_canon_neq: typ''''', typ''''''
 
                           1. The relation holds
 
-                        2. Else Phantom#677
+                        2. Else Phantom#679
 
-                      1. Else Phantom#678
+                      1. Else Phantom#680
 
-                    2. Else Phantom#679
+                    2. Else Phantom#681
 
-                  3. Else Phantom#680
+                  3. Else Phantom#682
 
-                3. Else Phantom#681
+                3. Else Phantom#683
 
-              2. Else Phantom#682
+              2. Else Phantom#684
 
             2. Case (% matches pattern `HeaderT%%`)
 
@@ -11735,21 +11761,21 @@ relation Sub_expl_canon_neq: typ''''', typ''''''
 
                           1. The relation holds
 
-                        2. Else Phantom#683
+                        2. Else Phantom#685
 
-                      1. Else Phantom#684
+                      1. Else Phantom#686
 
-                    2. Else Phantom#685
+                    2. Else Phantom#687
 
-                  3. Else Phantom#686
+                  3. Else Phantom#688
 
-                3. Else Phantom#687
+                3. Else Phantom#689
 
-              2. Else Phantom#688
+              2. Else Phantom#690
 
-          2. Else Phantom#689
+          2. Else Phantom#691
 
-        2. Else Phantom#690
+        2. Else Phantom#692
 
       5. Case (% matches pattern `SetT%`)
 
@@ -11767,15 +11793,15 @@ relation Sub_expl_canon_neq: typ''''', typ''''''
 
               1. The relation holds
 
-            2. Else Phantom#691
+            2. Else Phantom#693
 
-          2. Else Phantom#692
+          2. Else Phantom#694
 
-        2. Else Phantom#693
+        2. Else Phantom#695
 
-    2. Else Phantom#694
+    2. Else Phantom#696
 
-4. Else Phantom#695
+4. Else Phantom#697
 
 5. Case analysis on typ''''''
 
@@ -11793,7 +11819,7 @@ relation Sub_expl_canon_neq: typ''''', typ''''''
 
           1. The relation holds
 
-        2. Else Phantom#696
+        2. Else Phantom#698
 
       2. Case (% matches pattern `SEnumT%%%`)
 
@@ -11803,9 +11829,9 @@ relation Sub_expl_canon_neq: typ''''', typ''''''
 
           1. The relation holds
 
-        2. Else Phantom#697
+        2. Else Phantom#699
 
-    2. Else Phantom#698
+    2. Else Phantom#700
 
   2. Case (% has type synthtyp)
 
@@ -11819,11 +11845,11 @@ relation Sub_expl_canon_neq: typ''''', typ''''''
 
         1. The relation holds
 
-      2. Else Phantom#699
+      2. Else Phantom#701
 
-    2. Else Phantom#700
+    2. Else Phantom#702
 
-5. Else Phantom#701
+5. Else Phantom#703
 
 6. If ((typ''''' = ((DefaultT) as typ))), then
 
@@ -11831,9 +11857,9 @@ relation Sub_expl_canon_neq: typ''''', typ''''''
 
     1. The relation holds
 
-  1. Else Phantom#702
+  1. Else Phantom#704
 
-6. Else Phantom#703
+6. Else Phantom#705
 
 7. If ((typ''''' = ((InvalidT) as typ))), then
 
@@ -11855,11 +11881,11 @@ relation Sub_expl_canon_neq: typ''''', typ''''''
 
         2. The relation holds
 
-    2. Else Phantom#704
+    2. Else Phantom#706
 
-  1. Else Phantom#705
+  1. Else Phantom#707
 
-7. Else Phantom#706
+7. Else Phantom#708
 
 ;; ../../../../spec/4b-typing-relation.watsup:63.1-65.20
 relation Sub_impl: typ_a, typ_b
@@ -11868,7 +11894,7 @@ relation Sub_impl: typ_a, typ_b
 
   1. The relation holds
 
-1. Else Phantom#707
+1. Else Phantom#709
 
 ;; ../../../../spec/4b-typing-relation.watsup:66.1-68.20
 relation Sub_impl_canon: typ_a, typ_b
@@ -11885,7 +11911,7 @@ relation Sub_impl_canon: typ_a, typ_b
 
       1. The relation holds
 
-    1. Else Phantom#708
+    1. Else Phantom#710
 
 ;; ../../../../spec/4b-typing-relation.watsup:69.1-71.20
 relation Sub_impl_canon_neq: typ''''', typ''''''
@@ -11910,11 +11936,11 @@ relation Sub_impl_canon_neq: typ''''', typ''''''
 
         2. The relation holds
 
-    2. Else Phantom#709
+    2. Else Phantom#711
 
-  1. Else Phantom#710
+  1. Else Phantom#712
 
-1. Else Phantom#711
+1. Else Phantom#713
 
 2. Case analysis on typ'''''
 
@@ -11930,9 +11956,9 @@ relation Sub_impl_canon_neq: typ''''', typ''''''
 
         1. The relation holds
 
-      2. Else Phantom#712
+      2. Else Phantom#714
 
-    2. Else Phantom#713
+    2. Else Phantom#715
 
   2. Case (% has type synthtyp)
 
@@ -11960,7 +11986,7 @@ relation Sub_impl_canon_neq: typ''''', typ''''''
 
                   1. The relation holds
 
-                2. Else Phantom#714
+                2. Else Phantom#716
 
               2. Case (% matches pattern `TupleT%`)
 
@@ -11970,7 +11996,7 @@ relation Sub_impl_canon_neq: typ''''', typ''''''
 
                   1. The relation holds
 
-                2. Else Phantom#715
+                2. Else Phantom#717
 
               3. Case (% matches pattern `StackT%%`)
 
@@ -11982,9 +12008,9 @@ relation Sub_impl_canon_neq: typ''''', typ''''''
 
                     1. The relation holds
 
-                  1. Else Phantom#716
+                  1. Else Phantom#718
 
-                2. Else Phantom#717
+                2. Else Phantom#719
 
               4. Case (% matches pattern `StructT%%`)
 
@@ -11994,7 +12020,7 @@ relation Sub_impl_canon_neq: typ''''', typ''''''
 
                   1. The relation holds
 
-                2. Else Phantom#718
+                2. Else Phantom#720
 
               5. Case (% matches pattern `HeaderT%%`)
 
@@ -12004,9 +12030,9 @@ relation Sub_impl_canon_neq: typ''''', typ''''''
 
                   1. The relation holds
 
-                2. Else Phantom#719
+                2. Else Phantom#721
 
-            2. Else Phantom#720
+            2. Else Phantom#722
 
           2. Case (% has type synthtyp)
 
@@ -12020,11 +12046,11 @@ relation Sub_impl_canon_neq: typ''''', typ''''''
 
                 1. The relation holds
 
-              2. Else Phantom#721
+              2. Else Phantom#723
 
-            2. Else Phantom#722
+            2. Else Phantom#724
 
-        2. Else Phantom#723
+        2. Else Phantom#725
 
       2. Case (% matches pattern `RecordT%`)
 
@@ -12058,13 +12084,13 @@ relation Sub_impl_canon_neq: typ''''', typ''''''
 
                       1. The relation holds
 
-                    2. Else Phantom#724
+                    2. Else Phantom#726
 
-                  3. Else Phantom#725
+                  3. Else Phantom#727
 
-                2. Else Phantom#726
+                2. Else Phantom#728
 
-              2. Else Phantom#727
+              2. Else Phantom#729
 
             2. Case (% matches pattern `HeaderT%%`)
 
@@ -12088,17 +12114,17 @@ relation Sub_impl_canon_neq: typ''''', typ''''''
 
                       1. The relation holds
 
-                    2. Else Phantom#728
+                    2. Else Phantom#730
 
-                  3. Else Phantom#729
+                  3. Else Phantom#731
 
-                2. Else Phantom#730
+                2. Else Phantom#732
 
-              2. Else Phantom#731
+              2. Else Phantom#733
 
-          2. Else Phantom#732
+          2. Else Phantom#734
 
-        2. Else Phantom#733
+        2. Else Phantom#735
 
       3. Case (% matches pattern `SeqDefaultT%`)
 
@@ -12124,11 +12150,11 @@ relation Sub_impl_canon_neq: typ''''', typ''''''
 
                     1. The relation holds
 
-                  1. Else Phantom#734
+                  1. Else Phantom#736
 
-                2. Else Phantom#735
+                2. Else Phantom#737
 
-              2. Else Phantom#736
+              2. Else Phantom#738
 
             2. Case (% matches pattern `StackT%%`)
 
@@ -12142,11 +12168,11 @@ relation Sub_impl_canon_neq: typ''''', typ''''''
 
                     1. The relation holds
 
-                  1. Else Phantom#737
+                  1. Else Phantom#739
 
-                1. Else Phantom#738
+                1. Else Phantom#740
 
-              2. Else Phantom#739
+              2. Else Phantom#741
 
             3. Case (% matches pattern `StructT%%`)
 
@@ -12162,11 +12188,11 @@ relation Sub_impl_canon_neq: typ''''', typ''''''
 
                     1. The relation holds
 
-                  1. Else Phantom#740
+                  1. Else Phantom#742
 
-                2. Else Phantom#741
+                2. Else Phantom#743
 
-              2. Else Phantom#742
+              2. Else Phantom#744
 
             4. Case (% matches pattern `HeaderT%%`)
 
@@ -12182,15 +12208,15 @@ relation Sub_impl_canon_neq: typ''''', typ''''''
 
                     1. The relation holds
 
-                  1. Else Phantom#743
+                  1. Else Phantom#745
 
-                2. Else Phantom#744
+                2. Else Phantom#746
 
-              2. Else Phantom#745
+              2. Else Phantom#747
 
-          2. Else Phantom#746
+          2. Else Phantom#748
 
-        2. Else Phantom#747
+        2. Else Phantom#749
 
       4. Case (% matches pattern `RecordDefaultT%`)
 
@@ -12234,17 +12260,17 @@ relation Sub_impl_canon_neq: typ''''', typ''''''
 
                           1. The relation holds
 
-                        2. Else Phantom#748
+                        2. Else Phantom#750
 
-                      2. Else Phantom#749
+                      2. Else Phantom#751
 
-                    2. Else Phantom#750
+                    2. Else Phantom#752
 
-                  3. Else Phantom#751
+                  3. Else Phantom#753
 
-                3. Else Phantom#752
+                3. Else Phantom#754
 
-              2. Else Phantom#753
+              2. Else Phantom#755
 
             2. Case (% matches pattern `HeaderT%%`)
 
@@ -12278,25 +12304,25 @@ relation Sub_impl_canon_neq: typ''''', typ''''''
 
                           1. The relation holds
 
-                        2. Else Phantom#754
+                        2. Else Phantom#756
 
-                      2. Else Phantom#755
+                      2. Else Phantom#757
 
-                    2. Else Phantom#756
+                    2. Else Phantom#758
 
-                  3. Else Phantom#757
+                  3. Else Phantom#759
 
-                3. Else Phantom#758
+                3. Else Phantom#760
 
-              2. Else Phantom#759
+              2. Else Phantom#761
 
-          2. Else Phantom#760
+          2. Else Phantom#762
 
-        2. Else Phantom#761
+        2. Else Phantom#763
 
-    2. Else Phantom#762
+    2. Else Phantom#764
 
-2. Else Phantom#763
+2. Else Phantom#765
 
 3. If ((typ''''' = ((DefaultT) as typ))), then
 
@@ -12304,9 +12330,9 @@ relation Sub_impl_canon_neq: typ''''', typ''''''
 
     1. The relation holds
 
-  1. Else Phantom#764
+  1. Else Phantom#766
 
-3. Else Phantom#765
+3. Else Phantom#767
 
 4. If ((typ''''' = ((InvalidT) as typ))), then
 
@@ -12328,11 +12354,11 @@ relation Sub_impl_canon_neq: typ''''', typ''''''
 
         2. The relation holds
 
-    2. Else Phantom#766
+    2. Else Phantom#768
 
-  1. Else Phantom#767
+  1. Else Phantom#769
 
-4. Else Phantom#768
+4. Else Phantom#770
 
 ;; ../../../../spec/4b-typing-relation.watsup:81.1-83.23
 relation Expr_ok: p', C, expr''
@@ -12391,7 +12417,7 @@ relation Expr_ok: p', C, expr''
 
       2. Result in (NameE name (( typ ; ctk )))
 
-    3. Else Phantom#769
+    3. Else Phantom#771
 
   5. Case (% matches pattern `SeqE%`)
 
@@ -12469,7 +12495,7 @@ relation Expr_ok: p', C, expr''
 
           3. Result in (UnE (BNOT) exprIL_e (( typ_e ; ctk_e )))
 
-        3. Else Phantom#770
+        3. Else Phantom#772
 
       2. Case (% matches pattern `LNOT`)
 
@@ -12485,7 +12511,7 @@ relation Expr_ok: p', C, expr''
 
           3. Result in (UnE (LNOT) exprIL_e (( typ_e ; ctk_e )))
 
-        3. Else Phantom#771
+        3. Else Phantom#773
 
       3. Case (% matches pattern `UPLUS`)
 
@@ -12501,7 +12527,7 @@ relation Expr_ok: p', C, expr''
 
           3. Result in (UnE (UPLUS) exprIL_e (( typ_e ; ctk_e )))
 
-        3. Else Phantom#772
+        3. Else Phantom#774
 
       4. Case (% matches pattern `UMINUS`)
 
@@ -12517,7 +12543,7 @@ relation Expr_ok: p', C, expr''
 
           3. Result in (UnE (UMINUS) exprIL_e (( typ_e ; ctk_e )))
 
-        3. Else Phantom#773
+        3. Else Phantom#775
 
   12. Case (% matches pattern `BinE%%%`)
 
@@ -12551,9 +12577,9 @@ relation Expr_ok: p', C, expr''
 
             5. Result in (BinE binop exprIL_l'' exprIL_r'' (( typ'' ; ctk )))
 
-          3. Else Phantom#774
+          3. Else Phantom#776
 
-        4. Else Phantom#775
+        4. Else Phantom#777
 
       2. Case (% is in [(SPLUS), (SMINUS)])
 
@@ -12581,9 +12607,9 @@ relation Expr_ok: p', C, expr''
 
             5. Result in (BinE binop exprIL_l'' exprIL_r'' (( typ'' ; ctk )))
 
-          3. Else Phantom#776
+          3. Else Phantom#778
 
-        4. Else Phantom#777
+        4. Else Phantom#779
 
       3. Case (% is in [(DIV), (MOD)])
 
@@ -12625,9 +12651,9 @@ relation Expr_ok: p', C, expr''
 
                     2. Result in (BinE binop exprIL_l'' exprIL_r'' (( typ'' ; ctk )))
 
-                  2. Else Phantom#778
+                  2. Else Phantom#780
 
-                3. Else Phantom#779
+                3. Else Phantom#781
 
               2. Case false
 
@@ -12635,9 +12661,9 @@ relation Expr_ok: p', C, expr''
 
                 2. Result in (BinE binop exprIL_l'' exprIL_r'' (( typ'' ; ctk )))
 
-          3. Else Phantom#780
+          3. Else Phantom#782
 
-        4. Else Phantom#781
+        4. Else Phantom#783
 
       4. Case (% is in [(SHL), (SHR)])
 
@@ -12661,7 +12687,7 @@ relation Expr_ok: p', C, expr''
 
             2. Result in (BinE binop exprIL_l' exprIL_r' (( typ_l' ; ctk )))
 
-          4. Else Phantom#782
+          4. Else Phantom#784
 
           5. If (($is_intt(typ_r') \/ $is_fintt(typ_r'))), then
 
@@ -12679,13 +12705,13 @@ relation Expr_ok: p', C, expr''
 
                 3. Result in (BinE binop exprIL_l' exprIL_r' (( typ_l' ; ctk )))
 
-              3. Else Phantom#783
+              3. Else Phantom#785
 
-            1. Else Phantom#784
+            1. Else Phantom#786
 
-          5. Else Phantom#785
+          5. Else Phantom#787
 
-        4. Else Phantom#786
+        4. Else Phantom#788
 
       5. Case (% is in [(EQ), (NE)])
 
@@ -12709,9 +12735,9 @@ relation Expr_ok: p', C, expr''
 
             2. Result in (BinE binop exprIL_l' exprIL_r' (( ((BoolT) as typ) ; ctk )))
 
-          4. Else Phantom#787
+          4. Else Phantom#789
 
-        4. Else Phantom#788
+        4. Else Phantom#790
 
       6. Case (% is in [(LE), (GE), (LT), (GT)])
 
@@ -12739,9 +12765,9 @@ relation Expr_ok: p', C, expr''
 
             5. Result in (BinE binop exprIL_l'' exprIL_r'' (( ((BoolT) as typ) ; ctk )))
 
-          3. Else Phantom#789
+          3. Else Phantom#791
 
-        4. Else Phantom#790
+        4. Else Phantom#792
 
       7. Case (% is in [(BAND), (BXOR), (BOR)])
 
@@ -12769,9 +12795,9 @@ relation Expr_ok: p', C, expr''
 
             5. Result in (BinE binop exprIL_l'' exprIL_r'' (( typ'' ; ctk )))
 
-          3. Else Phantom#791
+          3. Else Phantom#793
 
-        4. Else Phantom#792
+        4. Else Phantom#794
 
       8. Case (% is in [(LAND), (LOR)])
 
@@ -12799,11 +12825,11 @@ relation Expr_ok: p', C, expr''
 
             5. Result in (BinE binop exprIL_l exprIL_r (( ((BoolT) as typ) ; ctk )))
 
-          3. Else Phantom#793
+          3. Else Phantom#795
 
-        4. Else Phantom#794
+        4. Else Phantom#796
 
-    2. Else Phantom#795
+    2. Else Phantom#797
 
     3. If ((binop matches pattern `CONCAT`)), then
 
@@ -12831,7 +12857,7 @@ relation Expr_ok: p', C, expr''
 
           3. Result in (BinE (CONCAT) exprIL_l' exprIL_r' (( typ'' ; ctk )))
 
-        5. Else Phantom#796
+        5. Else Phantom#798
 
         6. If ($is_fbitt(typ_l')), then
 
@@ -12841,11 +12867,11 @@ relation Expr_ok: p', C, expr''
 
           3. Result in (BinE (CONCAT) exprIL_l' exprIL_r' (( typ'' ; ctk )))
 
-        6. Else Phantom#797
+        6. Else Phantom#799
 
-      4. Else Phantom#798
+      4. Else Phantom#800
 
-    3. Else Phantom#799
+    3. Else Phantom#801
 
   13. Case (% matches pattern `TernE%%%`)
 
@@ -12877,11 +12903,11 @@ relation Expr_ok: p', C, expr''
 
           2. Result in (TernE exprIL_c exprIL_t' exprIL_f' (( typ' ; ctk )))
 
-        4. Else Phantom#800
+        4. Else Phantom#802
 
-      4. Else Phantom#801
+      4. Else Phantom#803
 
-    4. Else Phantom#802
+    4. Else Phantom#804
 
   14. Case (% matches pattern `CastE%%`)
 
@@ -12901,11 +12927,11 @@ relation Expr_ok: p', C, expr''
 
           1. Result in (CastE typ exprIL_b (( typ ; ctk_b )))
 
-        3. Else Phantom#803
+        3. Else Phantom#805
 
-      1. Else Phantom#804
+      1. Else Phantom#806
 
-    3. Else Phantom#805
+    3. Else Phantom#807
 
   15. Case (% matches pattern `MaskE%%`)
 
@@ -12931,9 +12957,9 @@ relation Expr_ok: p', C, expr''
 
         3. Result in (MaskE exprIL_b'' exprIL_m'' (( ((SetT typ'') as typ) ; (DYN) )))
 
-      3. Else Phantom#806
+      3. Else Phantom#808
 
-    5. Else Phantom#807
+    5. Else Phantom#809
 
   16. Case (% matches pattern `RangeE%%`)
 
@@ -12959,9 +12985,9 @@ relation Expr_ok: p', C, expr''
 
         3. Result in (RangeE exprIL_lb'' exprIL_ub'' (( ((SetT typ'') as typ) ; (DYN) )))
 
-      3. Else Phantom#808
+      3. Else Phantom#810
 
-    5. Else Phantom#809
+    5. Else Phantom#811
 
   17. Case (% matches pattern `ArrAccE%%`)
 
@@ -13011,7 +13037,7 @@ relation Expr_ok: p', C, expr''
 
                   4. Result in (ArrAccE exprIL_b exprIL_i' (( typ ; ctk )))
 
-                4. Else Phantom#810
+                4. Else Phantom#812
 
               2. Case (% matches pattern `StackT%%`)
 
@@ -13027,13 +13053,13 @@ relation Expr_ok: p', C, expr''
 
                   2. Result in (ArrAccE exprIL_b exprIL_i' (( typ_b' ; ctk )))
 
-                4. Else Phantom#811
+                4. Else Phantom#813
 
-            2. Else Phantom#812
+            2. Else Phantom#814
 
-          3. Else Phantom#813
+          3. Else Phantom#815
 
-        2. Else Phantom#814
+        2. Else Phantom#816
 
       2. Case false
 
@@ -13057,11 +13083,11 @@ relation Expr_ok: p', C, expr''
 
               3. Result in (ArrAccE exprIL_b exprIL_i' (( typ_b' ; ctk )))
 
-            2. Else Phantom#815
+            2. Else Phantom#817
 
-          3. Else Phantom#816
+          3. Else Phantom#818
 
-        2. Else Phantom#817
+        2. Else Phantom#819
 
   18. Case (% matches pattern `BitAccE%%%`)
 
@@ -13127,21 +13153,21 @@ relation Expr_ok: p', C, expr''
 
                     2. Result in (BitAccE exprIL_b' exprIL_l'' exprIL_h'' (( typ ; ctk_b' )))
 
-                  3. Else Phantom#818
+                  3. Else Phantom#820
 
-                4. Else Phantom#819
+                4. Else Phantom#821
 
-              2. Else Phantom#820
+              2. Else Phantom#822
 
-            5. Else Phantom#821
+            5. Else Phantom#823
 
-          4. Else Phantom#822
+          4. Else Phantom#824
 
-        2. Else Phantom#823
+        2. Else Phantom#825
 
-      5. Else Phantom#824
+      5. Else Phantom#826
 
-    4. Else Phantom#825
+    4. Else Phantom#827
 
   19. Case (% matches pattern `ErrAccE%`)
 
@@ -13161,9 +13187,9 @@ relation Expr_ok: p', C, expr''
 
         2. Result in (ErrAccE member (( ((ErrT) as typ) ; (LCTK) )))
 
-      2. Else Phantom#826
+      2. Else Phantom#828
 
-    4. Else Phantom#827
+    4. Else Phantom#829
 
   20. Case (% matches pattern `TypeAccE%%`)
 
@@ -13195,7 +13221,7 @@ relation Expr_ok: p', C, expr''
 
                 1. Result in (TypeAccE name member (( typ ; (LCTK) )))
 
-              2. Else Phantom#828
+              2. Else Phantom#830
 
             2. Case (% matches pattern `SEnumT%%%`)
 
@@ -13209,15 +13235,15 @@ relation Expr_ok: p', C, expr''
 
                 2. Result in (TypeAccE name member (( typ ; (LCTK) )))
 
-              3. Else Phantom#829
+              3. Else Phantom#831
 
-          2. Else Phantom#830
+          2. Else Phantom#832
 
-        3. Else Phantom#831
+        3. Else Phantom#833
 
-      2. Else Phantom#832
+      2. Else Phantom#834
 
-    3. Else Phantom#833
+    3. Else Phantom#835
 
   21. Case (% matches pattern `ExprAccE%%`)
 
@@ -13243,9 +13269,9 @@ relation Expr_ok: p', C, expr''
 
             2. Result in (ExprAccE exprIL_b "size" (( ((FBitT 32) as typ) ; (LCTK) )))
 
-          2. Else Phantom#834
+          2. Else Phantom#836
 
-        4. Else Phantom#835
+        4. Else Phantom#837
 
       2. Case (% = "lastIndex")
 
@@ -13267,11 +13293,11 @@ relation Expr_ok: p', C, expr''
 
               2. Result in (ExprAccE exprIL_b "lastIndex" (( ((FBitT 32) as typ) ; (DYN) )))
 
-            2. Else Phantom#836
+            2. Else Phantom#838
 
-          4. Else Phantom#837
+          4. Else Phantom#839
 
-        1. Else Phantom#838
+        1. Else Phantom#840
 
       3. Case (% = "last")
 
@@ -13293,11 +13319,11 @@ relation Expr_ok: p', C, expr''
 
               2. Result in (ExprAccE exprIL_b "last" (( typ_s ; (DYN) )))
 
-            2. Else Phantom#839
+            2. Else Phantom#841
 
-          4. Else Phantom#840
+          4. Else Phantom#842
 
-        1. Else Phantom#841
+        1. Else Phantom#843
 
       4. Case (% = "next")
 
@@ -13317,11 +13343,11 @@ relation Expr_ok: p', C, expr''
 
             2. Result in (ExprAccE exprIL_b "next" (( typ_s ; (DYN) )))
 
-          2. Else Phantom#842
+          2. Else Phantom#844
 
-        4. Else Phantom#843
+        4. Else Phantom#845
 
-    2. Else Phantom#844
+    2. Else Phantom#846
 
     3. (Expr_ok: p' C |- expr_b : exprIL_b)
 
@@ -13349,7 +13375,7 @@ relation Expr_ok: p', C, expr''
 
               2. Result in (ExprAccE exprIL_b text (( typ ; ctk_b )))
 
-            3. Else Phantom#845
+            3. Else Phantom#847
 
           2. Case (% matches pattern `HeaderT%%`)
 
@@ -13363,7 +13389,7 @@ relation Expr_ok: p', C, expr''
 
               2. Result in (ExprAccE exprIL_b text (( typ ; ctk_b )))
 
-            3. Else Phantom#846
+            3. Else Phantom#848
 
           3. Case (% matches pattern `UnionT%%`)
 
@@ -13377,9 +13403,9 @@ relation Expr_ok: p', C, expr''
 
               2. Result in (ExprAccE exprIL_b text (( typ ; ctk_b )))
 
-            3. Else Phantom#847
+            3. Else Phantom#849
 
-        2. Else Phantom#848
+        2. Else Phantom#850
 
       2. Case (% has type synthtyp)
 
@@ -13397,11 +13423,11 @@ relation Expr_ok: p', C, expr''
 
             2. Result in (ExprAccE exprIL_b text (( typ ; (DYN) )))
 
-          3. Else Phantom#849
+          3. Else Phantom#851
 
-        2. Else Phantom#850
+        2. Else Phantom#852
 
-    6. Else Phantom#851
+    6. Else Phantom#853
 
   22. Case (% matches pattern `CallFuncE%%%`)
 
@@ -13421,7 +13447,7 @@ relation Expr_ok: p', C, expr''
 
       1. Result in (CallFuncE name targIL'*{targIL' <- targIL'*} argIL'*{argIL' <- argIL'*} (( typ ; (DYN) )))
 
-    7. Else Phantom#852
+    7. Else Phantom#854
 
   23. Case (% matches pattern `CallMethodE%%%%`)
 
@@ -13449,7 +13475,7 @@ relation Expr_ok: p', C, expr''
 
               1. Result in (CallMethodE exprIL_b member targIL'*{targIL' <- targIL'*} argIL'*{argIL' <- argIL'*} (( typ ; (LCTK) )))
 
-            3. Else Phantom#853
+            3. Else Phantom#855
 
           2. Case false
 
@@ -13461,7 +13487,7 @@ relation Expr_ok: p', C, expr''
 
               1. Result in (CallMethodE exprIL_b member targIL'*{targIL' <- targIL'*} argIL'*{argIL' <- argIL'*} (( typ ; (DYN) )))
 
-            3. Else Phantom#854
+            3. Else Phantom#856
 
       2. Case false
 
@@ -13473,7 +13499,7 @@ relation Expr_ok: p', C, expr''
 
           1. Result in (CallMethodE exprIL_b member targIL'*{targIL' <- targIL'*} argIL'*{argIL' <- argIL'*} (( typ ; (DYN) )))
 
-        3. Else Phantom#855
+        3. Else Phantom#857
 
   24. Case (% matches pattern `CallTypeE%%%%`)
 
@@ -13503,19 +13529,19 @@ relation Expr_ok: p', C, expr''
 
                   1. Result in (CallTypeE name member [] [] (( ((IntT) as typ) ; (LCTK) )))
 
-                1. Else Phantom#856
+                1. Else Phantom#858
 
-              1. Else Phantom#857
+              1. Else Phantom#859
 
-            3. Else Phantom#858
+            3. Else Phantom#860
 
-          2. Else Phantom#859
+          2. Else Phantom#861
 
-        2. Else Phantom#860
+        2. Else Phantom#862
 
-      1. Else Phantom#861
+      1. Else Phantom#863
 
-    2. Else Phantom#862
+    2. Else Phantom#864
 
   25. Case (% matches pattern `InstE%%%`)
 
@@ -13535,9 +13561,9 @@ relation Expr_ok: p', C, expr''
 
       1. Result in (InstE name targIL'*{targIL' <- targIL'*} targIL_hidden*{targIL_hidden <- targIL_hidden*} argIL'*{argIL' <- argIL'*} (( typ ; (CTK) )))
 
-    7. Else Phantom#863
+    7. Else Phantom#865
 
-1. Else Phantom#864
+1. Else Phantom#866
 
 2. If ((p' matches pattern `LOCAL`)), then
 
@@ -13557,13 +13583,13 @@ relation Expr_ok: p', C, expr''
 
         2. Result in (SelectE exprIL_k*{exprIL_k <- exprIL_k*} selectcaseIL*{selectcaseIL <- selectcaseIL*} (( ((StateT) as typ) ; (DYN) )))
 
-      3. Else Phantom#865
+      3. Else Phantom#867
 
-    2. Else Phantom#866
+    2. Else Phantom#868
 
-  1. Else Phantom#867
+  1. Else Phantom#869
 
-2. Else Phantom#868
+2. Else Phantom#870
 
 ;; ../../../../spec/4b-typing-relation.watsup:87.1-89.23
 relation Arg_ok: p, C, arg
@@ -13625,11 +13651,11 @@ relation Lval_ok: p, C, exprIL
 
           1. The relation holds
 
-        1. Else Phantom#869
+        1. Else Phantom#871
 
-      2. Else Phantom#870
+      2. Else Phantom#872
 
-    3. Else Phantom#871
+    3. Else Phantom#873
 
   2. Case (% matches pattern `ArrAccE%%%`)
 
@@ -13639,7 +13665,7 @@ relation Lval_ok: p, C, exprIL
 
       1. The relation holds
 
-    2. Else Phantom#872
+    2. Else Phantom#874
 
   3. Case (% matches pattern `BitAccE%%%%`)
 
@@ -13649,7 +13675,7 @@ relation Lval_ok: p, C, exprIL
 
       1. The relation holds
 
-    2. Else Phantom#873
+    2. Else Phantom#875
 
   4. Case (% matches pattern `ExprAccE%%%`)
 
@@ -13659,9 +13685,9 @@ relation Lval_ok: p, C, exprIL
 
       1. The relation holds
 
-    2. Else Phantom#874
+    2. Else Phantom#876
 
-1. Else Phantom#875
+1. Else Phantom#877
 
 ;; ../../../../spec/4b-typing-relation.watsup:99.18-99.31
 syntax blkctxt = 
@@ -13691,7 +13717,7 @@ relation Block_ok: cursor, C, f, blkctxt, (BlockB stmt*{stmt <- stmt*})
 
       4. Result in C''', f', (BlockB stmtIL*{stmtIL <- stmtIL*})
 
-1. Else Phantom#876
+1. Else Phantom#878
 
 ;; ../../../../spec/4b-typing-relation.watsup:103.1-105.26
 relation Stmt_ok: p', C, f, stmt
@@ -13726,11 +13752,11 @@ relation Stmt_ok: p', C, f, stmt
 
           2. Result in C, f, (AssignS exprIL_l exprIL_r')
 
-        4. Else Phantom#877
+        4. Else Phantom#879
 
-      1. Else Phantom#878
+      1. Else Phantom#880
 
-    4. Else Phantom#879
+    4. Else Phantom#881
 
   3. Case (% matches pattern `IfS%%%`)
 
@@ -13750,7 +13776,7 @@ relation Stmt_ok: p', C, f, stmt
 
       4. Result in C, f', (IfS exprIL_c stmtIL_t stmtIL_f)
 
-    4. Else Phantom#880
+    4. Else Phantom#882
 
   4. Case (% matches pattern `ExitS`)
 
@@ -13774,7 +13800,7 @@ relation Stmt_ok: p', C, f, stmt
 
       6. Result in C, f, (CallFuncS name targIL'*{targIL' <- targIL'*} argIL'*{argIL' <- argIL'*})
 
-    2. Else Phantom#881
+    2. Else Phantom#883
 
   6. Case (% matches pattern `CallMethodS%%%%`)
 
@@ -13838,25 +13864,25 @@ relation Stmt_ok: p', C, f, stmt
 
                         1. Result in C, f, (CallInstS typ name targIL'*{targIL' <- targIL'*} argIL'*{argIL' <- argIL'*})
 
-                      1. Else Phantom#882
+                      1. Else Phantom#884
 
-                    2. Else Phantom#883
+                    2. Else Phantom#885
 
-                  2. Else Phantom#884
+                  2. Else Phantom#886
 
-                5. Else Phantom#885
+                5. Else Phantom#887
 
-              2. Else Phantom#886
+              2. Else Phantom#888
 
-            1. Else Phantom#887
+            1. Else Phantom#889
 
-          1. Else Phantom#888
+          1. Else Phantom#890
 
-        2. Else Phantom#889
+        2. Else Phantom#891
 
-      1. Else Phantom#890
+      1. Else Phantom#892
 
-    3. Else Phantom#891
+    3. Else Phantom#893
 
   8. Case (% matches pattern `TransS%`)
 
@@ -13870,7 +13896,7 @@ relation Stmt_ok: p', C, f, stmt
 
       1. Result in C, f, (TransS exprIL)
 
-    4. Else Phantom#892
+    4. Else Phantom#894
 
   9. Case (% matches pattern `DeclS%`)
 
@@ -13880,7 +13906,7 @@ relation Stmt_ok: p', C, f, stmt
 
     3. Result in C', f, (DeclS declIL)
 
-1. Else Phantom#893
+1. Else Phantom#895
 
 2. If ((p' matches pattern `LOCAL`)), then
 
@@ -13912,11 +13938,11 @@ relation Stmt_ok: p', C, f, stmt
 
               1. Result in C, f', (SwitchS exprIL switchcaseIL*{switchcaseIL <- switchcaseIL*})
 
-            4. Else Phantom#894
+            4. Else Phantom#896
 
-          2. Else Phantom#895
+          2. Else Phantom#897
 
-        3. Else Phantom#896
+        3. Else Phantom#898
 
         4. (Let typ' be $canon_typ(typ))
 
@@ -13928,11 +13954,11 @@ relation Stmt_ok: p', C, f, stmt
 
             1. Result in C, f', (SwitchS exprIL switchcaseIL*{switchcaseIL <- switchcaseIL*})
 
-          2. Else Phantom#897
+          2. Else Phantom#899
 
-        5. Else Phantom#898
+        5. Else Phantom#900
 
-      2. Else Phantom#899
+      2. Else Phantom#901
 
     2. Case (% matches pattern `BlockS%`)
 
@@ -13962,11 +13988,11 @@ relation Stmt_ok: p', C, f, stmt
 
           2. Result in C, (RET), (RetS ?(exprIL'))
 
-        5. Else Phantom#900
+        5. Else Phantom#902
 
-      2. Else Phantom#901
+      2. Else Phantom#903
 
-  1. Else Phantom#902
+  1. Else Phantom#904
 
   2. If ((stmt = (RetS ?()))), then
 
@@ -13974,11 +14000,11 @@ relation Stmt_ok: p', C, f, stmt
 
       1. Result in C, (RET), (RetS ?())
 
-    1. Else Phantom#903
+    1. Else Phantom#905
 
-  2. Else Phantom#904
+  2. Else Phantom#906
 
-2. Else Phantom#905
+2. Else Phantom#907
 
 ;; ../../../../spec/4b-typing-relation.watsup:106.1-108.26
 relation Stmts_ok: p, C, f, stmt*{stmt <- stmt*}
@@ -14026,11 +14052,11 @@ relation Param_ok: p, C, (id dir type expr''?{expr'' <- expr''?})
 
           2. Result in (id dir typ_p ?(exprIL)), tid_fresh*{tid_fresh <- tid_fresh*}
 
-        1. Else Phantom#906
+        1. Else Phantom#908
 
-      3. Else Phantom#907
+      3. Else Phantom#909
 
-    4. Else Phantom#908
+    4. Else Phantom#910
 
   2. Case (% matches pattern ())
 
@@ -14042,7 +14068,7 @@ relation Param_ok: p, C, (id dir type expr''?{expr'' <- expr''?})
 
       1. Result in (id dir typ_p ?()), tid_fresh*{tid_fresh <- tid_fresh*}
 
-    3. Else Phantom#909
+    3. Else Phantom#911
 
 ;; ../../../../spec/4b-typing-relation.watsup:116.1-118.23
 relation CParam_ok: p, C, (id dir type expr''?{expr'' <- expr''?})
@@ -14071,11 +14097,11 @@ relation CParam_ok: p, C, (id dir type expr''?{expr'' <- expr''?})
 
           2. Result in (id dir typ_p ?(exprIL)), tid_fresh*{tid_fresh <- tid_fresh*}
 
-        1. Else Phantom#910
+        1. Else Phantom#912
 
-      3. Else Phantom#911
+      3. Else Phantom#913
 
-    4. Else Phantom#912
+    4. Else Phantom#914
 
   2. Case (% matches pattern ())
 
@@ -14087,7 +14113,7 @@ relation CParam_ok: p, C, (id dir type expr''?{expr'' <- expr''?})
 
       1. Result in (id dir typ_p ?()), tid_fresh*{tid_fresh <- tid_fresh*}
 
-    3. Else Phantom#913
+    3. Else Phantom#915
 
 ;; ../../../../spec/4b-typing-relation.watsup:122.1-124.23
 relation Decl_ok: p', C'''', decl''
@@ -14122,13 +14148,13 @@ relation Decl_ok: p', C'''', decl''
 
             4. Result in C', (ConstD id typ_c val)
 
-          2. Else Phantom#914
+          2. Else Phantom#916
 
-        3. Else Phantom#915
+        3. Else Phantom#917
 
-      1. Else Phantom#916
+      1. Else Phantom#918
 
-    3. Else Phantom#917
+    3. Else Phantom#919
 
   2. Case (% matches pattern `VarD%%%`)
 
@@ -14150,11 +14176,11 @@ relation Decl_ok: p', C'''', decl''
 
               2. Result in C', (VarD id typ ?())
 
-            1. Else Phantom#918
+            1. Else Phantom#920
 
-          1. Else Phantom#919
+          1. Else Phantom#921
 
-        2. Else Phantom#920
+        2. Else Phantom#922
 
       2. Case (% matches pattern (_))
 
@@ -14180,13 +14206,13 @@ relation Decl_ok: p', C'''', decl''
 
                 3. Result in C', (VarD id typ ?(exprIL'))
 
-              3. Else Phantom#921
+              3. Else Phantom#923
 
-            1. Else Phantom#922
+            1. Else Phantom#924
 
-          1. Else Phantom#923
+          1. Else Phantom#925
 
-        3. Else Phantom#924
+        3. Else Phantom#926
 
   3. Case (% matches pattern `InstD%%%%%`)
 
@@ -14248,19 +14274,19 @@ relation Decl_ok: p', C'''', decl''
 
                   3. Result in C'', (InstD id typ name_inst targIL'*{targIL' <- targIL'*} targIL_hidden*{targIL_hidden <- targIL_hidden*} argIL'*{argIL' <- argIL'*} declIL*{declIL <- declIL*})
 
-                2. Else Phantom#925
+                2. Else Phantom#927
 
-              10. Else Phantom#926
+              10. Else Phantom#928
 
-            2. Else Phantom#927
+            2. Else Phantom#929
 
-          2. Else Phantom#928
+          2. Else Phantom#930
 
-        2. Else Phantom#929
+        2. Else Phantom#931
 
-      6. Else Phantom#930
+      6. Else Phantom#932
 
-    2. Else Phantom#931
+    2. Else Phantom#933
 
     3. If ((decl''*{decl'' <- decl''*} matches pattern [])), then
 
@@ -14276,7 +14302,7 @@ relation Decl_ok: p', C'''', decl''
 
       6. Result in C', (InstD id typ name_inst targIL'*{targIL' <- targIL'*} targIL_hidden*{targIL_hidden <- targIL_hidden*} argIL'*{argIL' <- argIL'*} [])
 
-    3. Else Phantom#932
+    3. Else Phantom#934
 
   4. Case (% matches pattern `ActionD%%%`)
 
@@ -14304,11 +14330,11 @@ relation Decl_ok: p', C'''', decl''
 
           2. Result in C_4, (ActionD id paramIL*{paramIL <- paramIL*} blockIL)
 
-        4. Else Phantom#933
+        4. Else Phantom#935
 
-      4. Else Phantom#934
+      4. Else Phantom#936
 
-    2. Else Phantom#935
+    2. Else Phantom#937
 
   5. Case (% matches pattern `ValueSetD%%%`)
 
@@ -14332,15 +14358,15 @@ relation Decl_ok: p', C'''', decl''
 
             2. Result in C', (ValueSetD id typ exprIL)
 
-          3. Else Phantom#936
+          3. Else Phantom#938
 
-        1. Else Phantom#937
+        1. Else Phantom#939
 
-      2. Else Phantom#938
+      2. Else Phantom#940
 
-    2. Else Phantom#939
+    2. Else Phantom#941
 
-1. Else Phantom#940
+1. Else Phantom#942
 
 2. Case analysis on p'
 
@@ -14364,7 +14390,7 @@ relation Decl_ok: p', C'''', decl''
 
           5. Result in C', (ErrD member*{member <- member*})
 
-        2. Else Phantom#941
+        2. Else Phantom#943
 
       2. Case (% matches pattern `MatchKindD%`)
 
@@ -14382,7 +14408,7 @@ relation Decl_ok: p', C'''', decl''
 
           5. Result in C', (MatchKindD member*{member <- member*})
 
-        2. Else Phantom#942
+        2. Else Phantom#944
 
       3. Case (% matches pattern `StructD%%%`)
 
@@ -14404,7 +14430,7 @@ relation Decl_ok: p', C'''', decl''
 
           2. Result in C'', (StructD id tparam*{tparam <- tparam*} tparam_hidden*{tparam_hidden <- tparam_hidden*} (member_f, typ_f)*{member_f <- member_f*, typ_f <- typ_f*})
 
-        7. Else Phantom#943
+        7. Else Phantom#945
 
       4. Case (% matches pattern `HeaderD%%%`)
 
@@ -14426,7 +14452,7 @@ relation Decl_ok: p', C'''', decl''
 
           2. Result in C'', (HeaderD id tparam*{tparam <- tparam*} tparam_hidden*{tparam_hidden <- tparam_hidden*} (member_f, typ_f)*{member_f <- member_f*, typ_f <- typ_f*})
 
-        7. Else Phantom#944
+        7. Else Phantom#946
 
       5. Case (% matches pattern `UnionD%%%`)
 
@@ -14448,7 +14474,7 @@ relation Decl_ok: p', C'''', decl''
 
           2. Result in C'', (UnionD id tparam*{tparam <- tparam*} tparam_hidden*{tparam_hidden <- tparam_hidden*} (member_f, typ_f)*{member_f <- member_f*, typ_f <- typ_f*})
 
-        7. Else Phantom#945
+        7. Else Phantom#947
 
       6. Case (% matches pattern `EnumD%%`)
 
@@ -14476,9 +14502,9 @@ relation Decl_ok: p', C'''', decl''
 
             2. Result in C'', (EnumD id member*{member <- member*})
 
-          8. Else Phantom#946
+          8. Else Phantom#948
 
-        2. Else Phantom#947
+        2. Else Phantom#949
 
       7. Case (% matches pattern `SEnumD%%%`)
 
@@ -14512,15 +14538,15 @@ relation Decl_ok: p', C'''', decl''
 
                   2. Result in C_3, (SEnumD id typ (member, val_s)*{member <- member*, val_s <- val_s*})
 
-                6. Else Phantom#948
+                6. Else Phantom#950
 
-              2. Else Phantom#949
+              2. Else Phantom#951
 
-            1. Else Phantom#950
+            1. Else Phantom#952
 
-          2. Else Phantom#951
+          2. Else Phantom#953
 
-        2. Else Phantom#952
+        2. Else Phantom#954
 
       8. Case (% matches pattern `NewTypeD%%`)
 
@@ -14548,11 +14574,11 @@ relation Decl_ok: p', C'''', decl''
 
                   2. Result in C', (NewTypeD id (TypeD typ))
 
-                3. Else Phantom#953
+                3. Else Phantom#955
 
-              1. Else Phantom#954
+              1. Else Phantom#956
 
-            3. Else Phantom#955
+            3. Else Phantom#957
 
           2. Case (% matches pattern `DeclD%`)
 
@@ -14586,7 +14612,7 @@ relation Decl_ok: p', C'''', decl''
 
                       2. Result in C'', (NewTypeD id (DeclD declIL))
 
-                    3. Else Phantom#956
+                    3. Else Phantom#958
 
                   2. Case (% has type polytypdef)
 
@@ -14600,11 +14626,11 @@ relation Decl_ok: p', C'''', decl''
 
                       2. Result in C'', (NewTypeD id (DeclD declIL))
 
-                    3. Else Phantom#957
+                    3. Else Phantom#959
 
-              3. Else Phantom#958
+              3. Else Phantom#960
 
-            4. Else Phantom#959
+            4. Else Phantom#961
 
       9. Case (% matches pattern `TypeDefD%%`)
 
@@ -14636,9 +14662,9 @@ relation Decl_ok: p', C'''', decl''
 
                     2. Result in C', (TypeDefD id (TypeD typ))
 
-                  3. Else Phantom#960
+                  3. Else Phantom#962
 
-                2. Else Phantom#961
+                2. Else Phantom#963
 
                 3. (Let typ' be $canon_typ(typ))
 
@@ -14692,13 +14718,13 @@ relation Decl_ok: p', C'''', decl''
 
                               6. Result in C'', (TypeDefD id (TypeD typ))
 
-                            6. Else Phantom#962
+                            6. Else Phantom#964
 
-                          4. Else Phantom#963
+                          4. Else Phantom#965
 
-                        2. Else Phantom#964
+                        2. Else Phantom#966
 
-                      3. Else Phantom#965
+                      3. Else Phantom#967
 
                     2. Case (% matches pattern `PackageT%%`)
 
@@ -14746,23 +14772,23 @@ relation Decl_ok: p', C'''', decl''
 
                                 1. Result in C'', (TypeDefD id (TypeD typ))
 
-                              5. Else Phantom#966
+                              5. Else Phantom#968
 
-                            7. Else Phantom#967
+                            7. Else Phantom#969
 
-                          4. Else Phantom#968
+                          4. Else Phantom#970
 
-                        2. Else Phantom#969
+                        2. Else Phantom#971
 
-                      3. Else Phantom#970
+                      3. Else Phantom#972
 
-                  2. Else Phantom#971
+                  2. Else Phantom#973
 
-                4. Else Phantom#972
+                4. Else Phantom#974
 
-              1. Else Phantom#973
+              1. Else Phantom#975
 
-            3. Else Phantom#974
+            3. Else Phantom#976
 
           2. Case (% matches pattern `DeclD%`)
 
@@ -14796,7 +14822,7 @@ relation Decl_ok: p', C'''', decl''
 
                       2. Result in C'', (TypeDefD id (DeclD declIL))
 
-                    3. Else Phantom#975
+                    3. Else Phantom#977
 
                   2. Case (% has type polytypdef)
 
@@ -14810,11 +14836,11 @@ relation Decl_ok: p', C'''', decl''
 
                       2. Result in C'', (TypeDefD id (DeclD declIL))
 
-                    3. Else Phantom#976
+                    3. Else Phantom#978
 
-              3. Else Phantom#977
+              3. Else Phantom#979
 
-            4. Else Phantom#978
+            4. Else Phantom#980
 
       10. Case (% matches pattern `FuncD%%%%%`)
 
@@ -14848,11 +14874,11 @@ relation Decl_ok: p', C'''', decl''
 
               2. Result in C_5, (FuncD id typ_r tparam*{tparam <- tparam*} tparam_hidden*{tparam_hidden <- tparam_hidden*} paramIL*{paramIL <- paramIL*} blockIL)
 
-            2. Else Phantom#979
+            2. Else Phantom#981
 
-          6. Else Phantom#980
+          6. Else Phantom#982
 
-        5. Else Phantom#981
+        5. Else Phantom#983
 
       11. Case (% matches pattern `ExternFuncD%%%%`)
 
@@ -14882,9 +14908,9 @@ relation Decl_ok: p', C'''', decl''
 
             2. Result in C_4, (ExternFuncD id typ_r tparam*{tparam <- tparam*} tparam_hidden*{tparam_hidden <- tparam_hidden*} paramIL*{paramIL <- paramIL*})
 
-          6. Else Phantom#982
+          6. Else Phantom#984
 
-        5. Else Phantom#983
+        5. Else Phantom#985
 
       12. Case (% matches pattern `ExternObjectD%%%`)
 
@@ -14934,7 +14960,7 @@ relation Decl_ok: p', C'''', decl''
 
           2. Result in C_3, (ParserTypeD id tparam*{tparam <- tparam*} tparam_hidden*{tparam_hidden <- tparam_hidden*} paramIL*{paramIL <- paramIL*})
 
-        8. Else Phantom#984
+        8. Else Phantom#986
 
       14. Case (% matches pattern `ParserD%%%%%`)
 
@@ -14994,21 +15020,21 @@ relation Decl_ok: p', C'''', decl''
 
                         2. Result in C_8, (ParserD id paramIL*{paramIL <- paramIL*} cparamIL*{cparamIL <- cparamIL*} declIL*{declIL <- declIL*} parserstateIL*{parserstateIL <- parserstateIL*})
 
-                      9. Else Phantom#985
+                      9. Else Phantom#987
 
-                    1. Else Phantom#986
+                    1. Else Phantom#988
 
-                  1. Else Phantom#987
+                  1. Else Phantom#989
 
-                1. Else Phantom#988
+                1. Else Phantom#990
 
-              4. Else Phantom#989
+              4. Else Phantom#991
 
-            2. Else Phantom#990
+            2. Else Phantom#992
 
-          3. Else Phantom#991
+          3. Else Phantom#993
 
-        5. Else Phantom#992
+        5. Else Phantom#994
 
       15. Case (% matches pattern `ControlTypeD%%%`)
 
@@ -15032,7 +15058,7 @@ relation Decl_ok: p', C'''', decl''
 
           2. Result in C''', (ControlTypeD id tparam*{tparam <- tparam*} tparam_hidden*{tparam_hidden <- tparam_hidden*} paramIL*{paramIL <- paramIL*})
 
-        8. Else Phantom#993
+        8. Else Phantom#995
 
       16. Case (% matches pattern `ControlD%%%%%`)
 
@@ -15076,13 +15102,13 @@ relation Decl_ok: p', C'''', decl''
 
                 2. Result in C_7, (ControlD id paramIL*{paramIL <- paramIL*} cparamIL*{cparamIL <- cparamIL*} declIL*{declIL <- declIL*} blockIL)
 
-              8. Else Phantom#994
+              8. Else Phantom#996
 
-            2. Else Phantom#995
+            2. Else Phantom#997
 
-          3. Else Phantom#996
+          3. Else Phantom#998
 
-        5. Else Phantom#997
+        5. Else Phantom#999
 
       17. Case (% matches pattern `PackageTypeD%%%`)
 
@@ -15118,11 +15144,11 @@ relation Decl_ok: p', C'''', decl''
 
             3. Result in C_4, (PackageTypeD id tparam*{tparam <- tparam*} tparam_hidden*{tparam_hidden <- tparam_hidden*} cparamIL*{cparamIL <- cparamIL*})
 
-          4. Else Phantom#998
+          4. Else Phantom#1000
 
-        9. Else Phantom#999
+        9. Else Phantom#1001
 
-    1. Else Phantom#1000
+    1. Else Phantom#1002
 
   2. Case (% matches pattern `BLOCK`)
 
@@ -15150,17 +15176,17 @@ relation Decl_ok: p', C'''', decl''
 
               2. Result in C_3, (TableD id typ tblIL)
 
-            5. Else Phantom#1001
+            5. Else Phantom#1003
 
-          1. Else Phantom#1002
+          1. Else Phantom#1004
 
-        1. Else Phantom#1003
+        1. Else Phantom#1005
 
-      2. Else Phantom#1004
+      2. Else Phantom#1006
 
-    1. Else Phantom#1005
+    1. Else Phantom#1007
 
-2. Else Phantom#1006
+2. Else Phantom#1008
 
 ;; ../../../../spec/4b-typing-relation.watsup:125.1-127.23
 relation Decls_ok: p, C, decl*{decl <- decl*}
@@ -15210,21 +15236,9 @@ relation Call_convention_ok: p, C, actctxt, (id dir typ_p exprIL_deft?{exprIL_de
 
       2. Result in exprIL'
 
-    2. Else Phantom#1007
+    2. Else Phantom#1009
 
   2. Case (% matches pattern `OUT`)
-
-    1. If ((Type_alpha: typ_a ~~ typ_p holds)), then
-
-      1. If ((Lval_ok: p C |- exprIL holds)), then
-
-        1. Result in exprIL
-
-      1. Else Phantom#1008
-
-    1. Else Phantom#1009
-
-  3. Case (% matches pattern `INOUT`)
 
     1. If ((Type_alpha: typ_a ~~ typ_p holds)), then
 
@@ -15236,7 +15250,19 @@ relation Call_convention_ok: p, C, actctxt, (id dir typ_p exprIL_deft?{exprIL_de
 
     1. Else Phantom#1011
 
-1. Else Phantom#1012
+  3. Case (% matches pattern `INOUT`)
+
+    1. If ((Type_alpha: typ_a ~~ typ_p holds)), then
+
+      1. If ((Lval_ok: p C |- exprIL holds)), then
+
+        1. Result in exprIL
+
+      1. Else Phantom#1012
+
+    1. Else Phantom#1013
+
+1. Else Phantom#1014
 
 2. Case analysis on actctxt
 
@@ -15252,9 +15278,9 @@ relation Call_convention_ok: p, C, actctxt, (id dir typ_p exprIL_deft?{exprIL_de
 
         2. Result in exprIL'
 
-      2. Else Phantom#1013
+      2. Else Phantom#1015
 
-    1. Else Phantom#1014
+    1. Else Phantom#1016
 
   2. Case (% matches pattern `NOACT`)
 
@@ -15272,11 +15298,11 @@ relation Call_convention_ok: p, C, actctxt, (id dir typ_p exprIL_deft?{exprIL_de
 
           2. Result in exprIL'
 
-        2. Else Phantom#1015
+        2. Else Phantom#1017
 
-      2. Else Phantom#1016
+      2. Else Phantom#1018
 
-    1. Else Phantom#1017
+    1. Else Phantom#1019
 
 ;; ../../../../spec/4b-typing-relation.watsup:141.1-143.29
 relation Call_convention_arg_ok: p, C, actctxt, pt', (argIL, typ')
@@ -15303,9 +15329,9 @@ relation Call_convention_arg_ok: p, C, actctxt, pt', (argIL, typ')
 
       3. Result in (NameA id ?(exprIL'))
 
-    2. Else Phantom#1018
+    2. Else Phantom#1020
 
-1. Else Phantom#1019
+1. Else Phantom#1021
 
 2. (Let (_id dir _typ _exprIL?{_exprIL <- _exprIL?}) be pt')
 
@@ -15321,15 +15347,15 @@ relation Call_convention_arg_ok: p, C, actctxt, pt', (argIL, typ')
 
         1. Result in (NameA id ?())
 
-      2. Else Phantom#1020
+      2. Else Phantom#1022
 
     2. Case (% matches pattern `AnyA`)
 
       1. Result in (AnyA)
 
-  1. Else Phantom#1021
+  1. Else Phantom#1023
 
-3. Else Phantom#1022
+3. Else Phantom#1024
 
 ;; ../../../../spec/4b-typing-relation.watsup:149.1-151.23
 relation Call_site_ok: cursor, C, functyp
@@ -15348,7 +15374,7 @@ relation Call_site_ok: cursor, C, functyp
 
           1. The relation holds
 
-        2. Else Phantom#1023
+        2. Else Phantom#1025
 
       2. Case (% matches pattern `BuiltinMethodT%%`)
 
@@ -15358,7 +15384,7 @@ relation Call_site_ok: cursor, C, functyp
 
           1. The relation holds
 
-        2. Else Phantom#1024
+        2. Else Phantom#1026
 
       3. Case (% matches pattern `ExternMethodT%%`)
 
@@ -15368,7 +15394,7 @@ relation Call_site_ok: cursor, C, functyp
 
           1. The relation holds
 
-        2. Else Phantom#1025
+        2. Else Phantom#1027
 
       4. Case (% matches pattern `ExternAbstractMethodT%%`)
 
@@ -15378,9 +15404,9 @@ relation Call_site_ok: cursor, C, functyp
 
           1. The relation holds
 
-        2. Else Phantom#1026
+        2. Else Phantom#1028
 
-    1. Else Phantom#1027
+    1. Else Phantom#1029
 
   2. Case (% matches pattern `LOCAL`)
 
@@ -15394,7 +15420,7 @@ relation Call_site_ok: cursor, C, functyp
 
           1. The relation holds
 
-        2. Else Phantom#1028
+        2. Else Phantom#1030
 
       2. Case (% matches pattern `FuncT%%`)
 
@@ -15408,13 +15434,13 @@ relation Call_site_ok: cursor, C, functyp
 
           2. The relation holds
 
-        3. Else Phantom#1029
+        3. Else Phantom#1031
 
         4. If (((((C.LOCAL.KIND = (ACTION)) \/ (C.LOCAL.KIND = (PARSERSTATE))) \/ (C.LOCAL.KIND = (CONTROLAPPLYMETHOD))) \/ (C.LOCAL.KIND = (TABLEAPPLYMETHOD)))), then
 
           1. The relation holds
 
-        4. Else Phantom#1030
+        4. Else Phantom#1032
 
       3. Case (% matches pattern `ExternFuncT%%`)
 
@@ -15428,13 +15454,13 @@ relation Call_site_ok: cursor, C, functyp
 
           2. The relation holds
 
-        3. Else Phantom#1031
+        3. Else Phantom#1033
 
         4. If (((((C.LOCAL.KIND = (ACTION)) \/ (C.LOCAL.KIND = (PARSERSTATE))) \/ (C.LOCAL.KIND = (CONTROLAPPLYMETHOD))) \/ (C.LOCAL.KIND = (TABLEAPPLYMETHOD)))), then
 
           1. The relation holds
 
-        4. Else Phantom#1032
+        4. Else Phantom#1034
 
       4. Case (% matches pattern `BuiltinMethodT%%`)
 
@@ -15456,26 +15482,6 @@ relation Call_site_ok: cursor, C, functyp
 
             2. The relation holds
 
-        3. Else Phantom#1033
-
-        4. If (((((C.LOCAL.KIND = (ACTION)) \/ (C.LOCAL.KIND = (PARSERSTATE))) \/ (C.LOCAL.KIND = (CONTROLAPPLYMETHOD))) \/ (C.LOCAL.KIND = (TABLEAPPLYMETHOD)))), then
-
-          1. The relation holds
-
-        4. Else Phantom#1034
-
-      5. Case (% matches pattern `ExternMethodT%%`)
-
-        1. (Let (ExternMethodT _paramtyp*{_paramtyp <- _paramtyp*} _typ) be functyp)
-
-        2. (Let lkind be C.LOCAL.KIND)
-
-        3. If ((lkind matches pattern `EXTERNABSTRACTMETHOD%`)), then
-
-          1. (Let (EXTERNABSTRACTMETHOD typ) be lkind)
-
-          2. The relation holds
-
         3. Else Phantom#1035
 
         4. If (((((C.LOCAL.KIND = (ACTION)) \/ (C.LOCAL.KIND = (PARSERSTATE))) \/ (C.LOCAL.KIND = (CONTROLAPPLYMETHOD))) \/ (C.LOCAL.KIND = (TABLEAPPLYMETHOD)))), then
@@ -15484,9 +15490,9 @@ relation Call_site_ok: cursor, C, functyp
 
         4. Else Phantom#1036
 
-      6. Case (% matches pattern `ExternAbstractMethodT%%`)
+      5. Case (% matches pattern `ExternMethodT%%`)
 
-        1. (Let (ExternAbstractMethodT _paramtyp*{_paramtyp <- _paramtyp*} _typ) be functyp)
+        1. (Let (ExternMethodT _paramtyp*{_paramtyp <- _paramtyp*} _typ) be functyp)
 
         2. (Let lkind be C.LOCAL.KIND)
 
@@ -15504,6 +15510,26 @@ relation Call_site_ok: cursor, C, functyp
 
         4. Else Phantom#1038
 
+      6. Case (% matches pattern `ExternAbstractMethodT%%`)
+
+        1. (Let (ExternAbstractMethodT _paramtyp*{_paramtyp <- _paramtyp*} _typ) be functyp)
+
+        2. (Let lkind be C.LOCAL.KIND)
+
+        3. If ((lkind matches pattern `EXTERNABSTRACTMETHOD%`)), then
+
+          1. (Let (EXTERNABSTRACTMETHOD typ) be lkind)
+
+          2. The relation holds
+
+        3. Else Phantom#1039
+
+        4. If (((((C.LOCAL.KIND = (ACTION)) \/ (C.LOCAL.KIND = (PARSERSTATE))) \/ (C.LOCAL.KIND = (CONTROLAPPLYMETHOD))) \/ (C.LOCAL.KIND = (TABLEAPPLYMETHOD)))), then
+
+          1. The relation holds
+
+        4. Else Phantom#1040
+
       7. Case (% matches pattern `ParserApplyMethodT%`)
 
         1. (Let (ParserApplyMethodT _paramtyp*{_paramtyp <- _paramtyp*}) be functyp)
@@ -15512,7 +15538,7 @@ relation Call_site_ok: cursor, C, functyp
 
           1. The relation holds
 
-        2. Else Phantom#1039
+        2. Else Phantom#1041
 
       8. Case (% matches pattern `ControlApplyMethodT%`)
 
@@ -15522,7 +15548,7 @@ relation Call_site_ok: cursor, C, functyp
 
           1. The relation holds
 
-        2. Else Phantom#1040
+        2. Else Phantom#1042
 
       9. Case (% matches pattern `TableApplyMethodT%`)
 
@@ -15532,9 +15558,9 @@ relation Call_site_ok: cursor, C, functyp
 
           1. The relation holds
 
-        2. Else Phantom#1041
+        2. Else Phantom#1043
 
-1. Else Phantom#1042
+1. Else Phantom#1044
 
 ;; ../../../../spec/4b-typing-relation.watsup:152.1-154.35
 relation Call_ok: p, C, tid'*{tid' <- tid'*}, functyp, targIL*{targIL <- targIL*}, arg*{arg <- arg*}, id_deft'*{id_deft' <- id_deft'*}
@@ -15565,13 +15591,13 @@ relation Call_ok: p, C, tid'*{tid' <- tid'*}, functyp, targIL*{targIL <- targIL*
 
               2. Result in ((VoidT) as typ), [], argIL*{argIL <- argIL*}
 
-            1. Else Phantom#1043
+            1. Else Phantom#1045
 
-          1. Else Phantom#1044
+          1. Else Phantom#1046
 
-        2. Else Phantom#1045
+        2. Else Phantom#1047
 
-      4. Else Phantom#1046
+      4. Else Phantom#1048
 
     2. Case (% matches pattern `ExternFuncT%%`)
 
@@ -15593,11 +15619,11 @@ relation Call_ok: p, C, tid'*{tid' <- tid'*}, functyp, targIL*{targIL <- targIL*
 
             2. Result in typ_r, targIL*{targIL <- targIL*}, argIL''*{argIL'' <- argIL''*}
 
-          1. Else Phantom#1047
+          1. Else Phantom#1049
 
-        2. Else Phantom#1048
+        2. Else Phantom#1050
 
-      4. Else Phantom#1049
+      4. Else Phantom#1051
 
     3. Case (% matches pattern `FuncT%%`)
 
@@ -15619,11 +15645,11 @@ relation Call_ok: p, C, tid'*{tid' <- tid'*}, functyp, targIL*{targIL <- targIL*
 
             2. Result in typ_r, targIL*{targIL <- targIL*}, argIL''*{argIL'' <- argIL''*}
 
-          1. Else Phantom#1050
+          1. Else Phantom#1052
 
-        2. Else Phantom#1051
+        2. Else Phantom#1053
 
-      4. Else Phantom#1052
+      4. Else Phantom#1054
 
     4. Case (% matches pattern `BuiltinMethodT%%`)
 
@@ -15647,13 +15673,13 @@ relation Call_ok: p, C, tid'*{tid' <- tid'*}, functyp, targIL*{targIL <- targIL*
 
               2. Result in typ_r, [], argIL''*{argIL'' <- argIL''*}
 
-            1. Else Phantom#1053
+            1. Else Phantom#1055
 
-          2. Else Phantom#1054
+          2. Else Phantom#1056
 
-        3. Else Phantom#1055
+        3. Else Phantom#1057
 
-      2. Else Phantom#1056
+      2. Else Phantom#1058
 
     5. Case (% matches pattern `ExternMethodT%%`)
 
@@ -15675,11 +15701,11 @@ relation Call_ok: p, C, tid'*{tid' <- tid'*}, functyp, targIL*{targIL <- targIL*
 
             2. Result in typ_r, targIL*{targIL <- targIL*}, argIL''*{argIL'' <- argIL''*}
 
-          1. Else Phantom#1057
+          1. Else Phantom#1059
 
-        2. Else Phantom#1058
+        2. Else Phantom#1060
 
-      4. Else Phantom#1059
+      4. Else Phantom#1061
 
     6. Case (% matches pattern `ExternAbstractMethodT%%`)
 
@@ -15701,11 +15727,11 @@ relation Call_ok: p, C, tid'*{tid' <- tid'*}, functyp, targIL*{targIL <- targIL*
 
             2. Result in typ_r, targIL*{targIL <- targIL*}, argIL''*{argIL'' <- argIL''*}
 
-          1. Else Phantom#1060
+          1. Else Phantom#1062
 
-        2. Else Phantom#1061
+        2. Else Phantom#1063
 
-      4. Else Phantom#1062
+      4. Else Phantom#1064
 
     7. Case (% matches pattern `ParserApplyMethodT%`)
 
@@ -15729,13 +15755,13 @@ relation Call_ok: p, C, tid'*{tid' <- tid'*}, functyp, targIL*{targIL <- targIL*
 
               2. Result in ((VoidT) as typ), [], argIL''*{argIL'' <- argIL''*}
 
-            1. Else Phantom#1063
+            1. Else Phantom#1065
 
-          2. Else Phantom#1064
+          2. Else Phantom#1066
 
-        3. Else Phantom#1065
+        3. Else Phantom#1067
 
-      2. Else Phantom#1066
+      2. Else Phantom#1068
 
     8. Case (% matches pattern `ControlApplyMethodT%`)
 
@@ -15759,13 +15785,13 @@ relation Call_ok: p, C, tid'*{tid' <- tid'*}, functyp, targIL*{targIL <- targIL*
 
               2. Result in ((VoidT) as typ), [], argIL''*{argIL'' <- argIL''*}
 
-            1. Else Phantom#1067
+            1. Else Phantom#1069
 
-          2. Else Phantom#1068
+          2. Else Phantom#1070
 
-        3. Else Phantom#1069
+        3. Else Phantom#1071
 
-      2. Else Phantom#1070
+      2. Else Phantom#1072
 
     9. Case (% matches pattern `TableApplyMethodT%`)
 
@@ -15783,17 +15809,17 @@ relation Call_ok: p, C, tid'*{tid' <- tid'*}, functyp, targIL*{targIL <- targIL*
 
                 1. Result in typ_r, [], []
 
-              1. Else Phantom#1071
+              1. Else Phantom#1073
 
-            1. Else Phantom#1072
+            1. Else Phantom#1074
 
-          1. Else Phantom#1073
+          1. Else Phantom#1075
 
-        1. Else Phantom#1074
+        1. Else Phantom#1076
 
-      2. Else Phantom#1075
+      2. Else Phantom#1077
 
-1. Else Phantom#1076
+1. Else Phantom#1078
 
 2. Case analysis on functyp
 
@@ -15833,15 +15859,15 @@ relation Call_ok: p, C, tid'*{tid' <- tid'*}, functyp, targIL*{targIL <- targIL*
 
               2. Result in typ_r', targIL''*{targIL'' <- targIL''*}, argIL''*{argIL'' <- argIL''*}
 
-            1. Else Phantom#1077
+            1. Else Phantom#1079
 
-          2. Else Phantom#1078
+          2. Else Phantom#1080
 
-        4. Else Phantom#1079
+        4. Else Phantom#1081
 
-      4. Else Phantom#1080
+      4. Else Phantom#1082
 
-    4. Else Phantom#1081
+    4. Else Phantom#1083
 
   2. Case (% matches pattern `FuncT%%`)
 
@@ -15879,15 +15905,15 @@ relation Call_ok: p, C, tid'*{tid' <- tid'*}, functyp, targIL*{targIL <- targIL*
 
               2. Result in typ_r', targIL''*{targIL'' <- targIL''*}, argIL''*{argIL'' <- argIL''*}
 
-            1. Else Phantom#1082
+            1. Else Phantom#1084
 
-          2. Else Phantom#1083
+          2. Else Phantom#1085
 
-        4. Else Phantom#1084
+        4. Else Phantom#1086
 
-      4. Else Phantom#1085
+      4. Else Phantom#1087
 
-    4. Else Phantom#1086
+    4. Else Phantom#1088
 
   3. Case (% matches pattern `ExternMethodT%%`)
 
@@ -15925,15 +15951,15 @@ relation Call_ok: p, C, tid'*{tid' <- tid'*}, functyp, targIL*{targIL <- targIL*
 
               2. Result in typ_r', targIL''*{targIL'' <- targIL''*}, argIL''*{argIL'' <- argIL''*}
 
-            1. Else Phantom#1087
+            1. Else Phantom#1089
 
-          2. Else Phantom#1088
+          2. Else Phantom#1090
 
-        4. Else Phantom#1089
+        4. Else Phantom#1091
 
-      4. Else Phantom#1090
+      4. Else Phantom#1092
 
-    4. Else Phantom#1091
+    4. Else Phantom#1093
 
   4. Case (% matches pattern `ExternAbstractMethodT%%`)
 
@@ -15971,17 +15997,17 @@ relation Call_ok: p, C, tid'*{tid' <- tid'*}, functyp, targIL*{targIL <- targIL*
 
               2. Result in typ_r', targIL''*{targIL'' <- targIL''*}, argIL''*{argIL'' <- argIL''*}
 
-            1. Else Phantom#1092
+            1. Else Phantom#1094
 
-          2. Else Phantom#1093
+          2. Else Phantom#1095
 
-        4. Else Phantom#1094
+        4. Else Phantom#1096
 
-      4. Else Phantom#1095
+      4. Else Phantom#1097
 
-    4. Else Phantom#1096
+    4. Else Phantom#1098
 
-2. Else Phantom#1097
+2. Else Phantom#1099
 
 ;; ../../../../spec/4b-typing-relation.watsup:159.1-161.29
 relation FuncType_ok: p, C, name, targIL*{targIL <- targIL*}, arg*{arg <- arg*}
@@ -15996,7 +16022,7 @@ relation FuncType_ok: p, C, name, targIL*{targIL <- targIL*}, arg*{arg <- arg*}
 
   3. Result in ft, tid_fresh*{tid_fresh <- tid_fresh*}, id_deft*{id_deft <- id_deft*}
 
-2. Else Phantom#1098
+2. Else Phantom#1100
 
 ;; ../../../../spec/4b-typing-relation.watsup:162.1-164.32
 relation MethodType_ok: p, C, expr_b, member', targIL*{targIL <- targIL*}, arg*{arg <- arg*}
@@ -16015,11 +16041,11 @@ relation MethodType_ok: p, C, expr_b, member', targIL*{targIL <- targIL*}, arg*{
 
         1. Result in (BuiltinMethodT [] ((IntT) as typ)), exprIL_b, [], []
 
-      1. Else Phantom#1099
+      1. Else Phantom#1101
 
-    3. Else Phantom#1100
+    3. Else Phantom#1102
 
-  1. Else Phantom#1101
+  1. Else Phantom#1103
 
   2. Case analysis on member'
 
@@ -16043,9 +16069,9 @@ relation MethodType_ok: p, C, expr_b, member', targIL*{targIL <- targIL*}, arg*{
 
           3. Result in (BuiltinMethodT [pt] ((IntT) as typ)), exprIL_b, [], []
 
-        2. Else Phantom#1102
+        2. Else Phantom#1104
 
-      4. Else Phantom#1103
+      4. Else Phantom#1105
 
     2. Case (% is in ["setValid", "setInvalid"])
 
@@ -16065,13 +16091,13 @@ relation MethodType_ok: p, C, expr_b, member', targIL*{targIL <- targIL*}, arg*{
 
           2. Result in (BuiltinMethodT [] ((VoidT) as typ)), exprIL_b, [], []
 
-        2. Else Phantom#1104
+        2. Else Phantom#1106
 
-      4. Else Phantom#1105
+      4. Else Phantom#1107
 
-  2. Else Phantom#1106
+  2. Else Phantom#1108
 
-1. Else Phantom#1107
+1. Else Phantom#1109
 
 2. If ((member' = "isValid")), then
 
@@ -16101,13 +16127,13 @@ relation MethodType_ok: p, C, expr_b, member', targIL*{targIL <- targIL*}, arg*{
 
           2. Result in (BuiltinMethodT [] ((BoolT) as typ)), exprIL_b, [], []
 
-      2. Else Phantom#1108
+      2. Else Phantom#1110
 
-    4. Else Phantom#1109
+    4. Else Phantom#1111
 
-  1. Else Phantom#1110
+  1. Else Phantom#1112
 
-2. Else Phantom#1111
+2. Else Phantom#1113
 
 3. (Expr_ok: p C |- expr_b : exprIL_b)
 
@@ -16133,11 +16159,11 @@ relation MethodType_ok: p, C, expr_b, member', targIL*{targIL <- targIL*}, arg*{
 
       3. Result in ft, exprIL_b, tid_fresh*{tid_fresh <- tid_fresh*}, id_deft*{id_deft <- id_deft*}
 
-    3. Else Phantom#1112
+    3. Else Phantom#1114
 
-  2. Else Phantom#1113
+  2. Else Phantom#1115
 
-6. Else Phantom#1114
+6. Else Phantom#1116
 
 7. If ((member' = "apply")), then
 
@@ -16175,11 +16201,11 @@ relation MethodType_ok: p, C, expr_b, member', targIL*{targIL <- targIL*}, arg*{
 
                 1. Result in ft, exprIL_b, [], id_deft*{id_deft <- id_deft*}
 
-              1. Else Phantom#1115
+              1. Else Phantom#1117
 
-            2. Else Phantom#1116
+            2. Else Phantom#1118
 
-          8. Else Phantom#1117
+          8. Else Phantom#1119
 
         2. Case (% matches pattern `ControlT%%`)
 
@@ -16207,15 +16233,15 @@ relation MethodType_ok: p, C, expr_b, member', targIL*{targIL <- targIL*}, arg*{
 
                 1. Result in ft, exprIL_b, [], id_deft*{id_deft <- id_deft*}
 
-              1. Else Phantom#1118
+              1. Else Phantom#1120
 
-            2. Else Phantom#1119
+            2. Else Phantom#1121
 
-          8. Else Phantom#1120
+          8. Else Phantom#1122
 
-      2. Else Phantom#1121
+      2. Else Phantom#1123
 
-    1. Else Phantom#1122
+    1. Else Phantom#1124
 
     2. If ((arg*{arg <- arg*} matches pattern [])), then
 
@@ -16231,15 +16257,15 @@ relation MethodType_ok: p, C, expr_b, member', targIL*{targIL <- targIL*}, arg*{
 
           3. Result in functyp, exprIL_b, [], []
 
-        2. Else Phantom#1123
+        2. Else Phantom#1125
 
-      1. Else Phantom#1124
+      1. Else Phantom#1126
 
-    2. Else Phantom#1125
+    2. Else Phantom#1127
 
-  1. Else Phantom#1126
+  1. Else Phantom#1128
 
-7. Else Phantom#1127
+7. Else Phantom#1129
 
 ;; ../../../../spec/4b-typing-relation.watsup:169.1-171.29
 relation ConsType_ok: p, C, name, targIL*{targIL <- targIL*}, arg*{arg <- arg*}
@@ -16254,7 +16280,7 @@ relation ConsType_ok: p, C, name, targIL*{targIL <- targIL*}, arg*{arg <- arg*}
 
   3. Result in ct, tid_fresh*{tid_fresh <- tid_fresh*}, id_deft*{id_deft <- id_deft*}
 
-2. Else Phantom#1128
+2. Else Phantom#1130
 
 ;; ../../../../spec/4b-typing-relation.watsup:177.1-179.23
 relation Inst_site_ok: cursor, C, (ConsT pt*{pt <- pt*} typ_i)
@@ -16269,7 +16295,7 @@ relation Inst_site_ok: cursor, C, (ConsT pt*{pt <- pt*} typ_i)
 
       1. The relation holds
 
-    2. Else Phantom#1129
+    2. Else Phantom#1131
 
   2. Case (% matches pattern `BLOCK`)
 
@@ -16283,7 +16309,7 @@ relation Inst_site_ok: cursor, C, (ConsT pt*{pt <- pt*} typ_i)
 
           1. The relation holds
 
-        1. Else Phantom#1130
+        1. Else Phantom#1132
 
       2. Case (% matches pattern `PARSER`)
 
@@ -16291,7 +16317,7 @@ relation Inst_site_ok: cursor, C, (ConsT pt*{pt <- pt*} typ_i)
 
           1. The relation holds
 
-        1. Else Phantom#1131
+        1. Else Phantom#1133
 
       3. Case (% matches pattern `CONTROL`)
 
@@ -16299,9 +16325,9 @@ relation Inst_site_ok: cursor, C, (ConsT pt*{pt <- pt*} typ_i)
 
           1. The relation holds
 
-        1. Else Phantom#1132
+        1. Else Phantom#1134
 
-    2. Else Phantom#1133
+    2. Else Phantom#1135
 
   3. Case (% matches pattern `LOCAL`)
 
@@ -16315,7 +16341,7 @@ relation Inst_site_ok: cursor, C, (ConsT pt*{pt <- pt*} typ_i)
 
           1. The relation holds
 
-        1. Else Phantom#1134
+        1. Else Phantom#1136
 
       2. Case (% matches pattern `CONTROLAPPLYMETHOD`)
 
@@ -16323,7 +16349,7 @@ relation Inst_site_ok: cursor, C, (ConsT pt*{pt <- pt*} typ_i)
 
           1. The relation holds
 
-        1. Else Phantom#1135
+        1. Else Phantom#1137
 
       3. Case (% matches pattern `TABLEAPPLYMETHOD`)
 
@@ -16331,9 +16357,9 @@ relation Inst_site_ok: cursor, C, (ConsT pt*{pt <- pt*} typ_i)
 
           1. The relation holds
 
-        1. Else Phantom#1136
+        1. Else Phantom#1138
 
-    2. Else Phantom#1137
+    2. Else Phantom#1139
 
 ;; ../../../../spec/4b-typing-relation.watsup:180.1-182.35
 relation Inst_ok: cursor', C_0', tid'*{tid' <- tid'*}, ct, targIL*{targIL <- targIL*}, arg*{arg <- arg*}, id_deft*{id_deft <- id_deft*}
@@ -16364,15 +16390,15 @@ relation Inst_ok: cursor', C_0', tid'*{tid' <- tid'*}, ct, targIL*{targIL <- tar
 
             2. Result in typ_i, targIL*{targIL <- targIL*}, [], argIL''*{argIL'' <- argIL''*}
 
-          1. Else Phantom#1138
+          1. Else Phantom#1140
 
-        2. Else Phantom#1139
+        2. Else Phantom#1141
 
-      4. Else Phantom#1140
+      4. Else Phantom#1142
 
-    2. Else Phantom#1141
+    2. Else Phantom#1143
 
-  1. Else Phantom#1142
+  1. Else Phantom#1144
 
   2. (Let (ConsT pt*{pt <- pt*} typ_i) be ct)
 
@@ -16408,19 +16434,19 @@ relation Inst_ok: cursor', C_0', tid'*{tid' <- tid'*}, ct, targIL*{targIL <- tar
 
               2. Result in typ_i', targIL*{targIL <- targIL*}, targIL_hidden*{targIL_hidden <- targIL_hidden*}, argIL''*{argIL'' <- argIL''*}
 
-            1. Else Phantom#1143
+            1. Else Phantom#1145
 
-          3. Else Phantom#1144
+          3. Else Phantom#1146
 
-        4. Else Phantom#1145
+        4. Else Phantom#1147
 
-      4. Else Phantom#1146
+      4. Else Phantom#1148
 
-    1. Else Phantom#1147
+    1. Else Phantom#1149
 
-  3. Else Phantom#1148
+  3. Else Phantom#1150
 
-1. Else Phantom#1149
+1. Else Phantom#1151
 
 2. If ((tid'*{tid' <- tid'*} matches pattern [])), then
 
@@ -16444,15 +16470,15 @@ relation Inst_ok: cursor', C_0', tid'*{tid' <- tid'*}, ct, targIL*{targIL <- tar
 
           2. Result in typ_i, targIL*{targIL <- targIL*}, [], argIL''*{argIL'' <- argIL''*}
 
-        1. Else Phantom#1150
+        1. Else Phantom#1152
 
-      2. Else Phantom#1151
+      2. Else Phantom#1153
 
-    3. Else Phantom#1152
+    3. Else Phantom#1154
 
-  2. Else Phantom#1153
+  2. Else Phantom#1155
 
-2. Else Phantom#1154
+2. Else Phantom#1156
 
 3. (Let (ConsT pt*{pt <- pt*} typ_i) be ct)
 
@@ -16484,15 +16510,15 @@ relation Inst_ok: cursor', C_0', tid'*{tid' <- tid'*}, ct, targIL*{targIL <- tar
 
           2. Result in typ_i', targIL*{targIL <- targIL*}, targIL_hidden*{targIL_hidden <- targIL_hidden*}, argIL''*{argIL'' <- argIL''*}
 
-        1. Else Phantom#1155
+        1. Else Phantom#1157
 
-      3. Else Phantom#1156
+      3. Else Phantom#1158
 
-    4. Else Phantom#1157
+    4. Else Phantom#1159
 
-  3. Else Phantom#1158
+  3. Else Phantom#1160
 
-4. Else Phantom#1159
+4. Else Phantom#1161
 
 ;; ../../../../spec/4d2-typing-subtyping.watsup:312.1-313.34
 def $reduce_senum_unary(exprIL, $check_unary)
@@ -17313,11 +17339,11 @@ relation Select_case_keyset_ok: cursor, C, typ_k, keyset
 
                 2. Result in (ExprK exprIL')
 
-              1. Else Phantom#1160
+              1. Else Phantom#1162
 
-        2. Else Phantom#1161
+        2. Else Phantom#1163
 
-      4. Else Phantom#1162
+      4. Else Phantom#1164
 
       5. If ((Sub_impl: typ' << typ_k holds)), then
 
@@ -17325,7 +17351,7 @@ relation Select_case_keyset_ok: cursor, C, typ_k, keyset
 
         2. Result in (ExprK exprIL')
 
-      5. Else Phantom#1163
+      5. Else Phantom#1165
 
     2. Case (% matches pattern `DefaultK`)
 
@@ -17335,7 +17361,7 @@ relation Select_case_keyset_ok: cursor, C, typ_k, keyset
 
       1. Result in (AnyK)
 
-1. Else Phantom#1164
+1. Else Phantom#1166
 
 ;; ../../../../spec/4e-typing-expr.watsup:561.1-563.26
 relation Select_case_keysets_ok: p, C, typ'*{typ' <- typ'*}, keyset''*{keyset'' <- keyset''*}
@@ -17352,9 +17378,9 @@ relation Select_case_keysets_ok: p, C, typ'*{typ' <- typ'*}, keyset''*{keyset'' 
 
     3. Result in [keysetIL]
 
-  2. Else Phantom#1165
+  2. Else Phantom#1167
 
-1. Else Phantom#1166
+1. Else Phantom#1168
 
 2. If ((keyset''*{keyset'' <- keyset''*} matches pattern [ _/1 ])), then
 
@@ -17364,7 +17390,7 @@ relation Select_case_keysets_ok: p, C, typ'*{typ' <- typ'*}, keyset''*{keyset'' 
 
   3. Result in [keysetIL]
 
-2. Else Phantom#1167
+2. Else Phantom#1169
 
 3. If ((|typ'*{typ' <- typ'*}| = |keyset''*{keyset'' <- keyset''*}|)), then
 
@@ -17372,7 +17398,7 @@ relation Select_case_keysets_ok: p, C, typ'*{typ' <- typ'*}, keyset''*{keyset'' 
 
   2. Result in keysetIL*{keysetIL <- keysetIL*}
 
-3. Else Phantom#1168
+3. Else Phantom#1170
 
 ;; ../../../../spec/4e-typing-expr.watsup:579.1-581.26
 relation Select_case_ok: cursor, C, typ_k*{typ_k <- typ_k*}, (keyset*{keyset <- keyset*} statelabel)
@@ -17393,13 +17419,13 @@ relation Select_case_ok: cursor, C, typ_k*{typ_k <- typ_k*}, (keyset*{keyset <- 
 
         1. Result in (keysetIL*{keysetIL <- keysetIL*} statelabel)
 
-      1. Else Phantom#1169
+      1. Else Phantom#1171
 
-    2. Else Phantom#1170
+    2. Else Phantom#1172
 
-  3. Else Phantom#1171
+  3. Else Phantom#1173
 
-1. Else Phantom#1172
+1. Else Phantom#1174
 
 ;; ../../../../spec/4e-typing-expr.watsup:603.1-603.39
 def $compatible_arrayindex(typ)
@@ -17623,15 +17649,15 @@ relation Switch_tbl_label_ok: p, C, id_t, b_last', switchlabel
 
           2. Result in (ExprL (NameE (CURRENT id_a) (( typ_e ; ctk_e ))))
 
-        2. Else Phantom#1173
+        2. Else Phantom#1175
 
-      4. Else Phantom#1174
+      4. Else Phantom#1176
 
-    2. Else Phantom#1175
+    2. Else Phantom#1177
 
-  2. Else Phantom#1176
+  2. Else Phantom#1178
 
-1. Else Phantom#1177
+1. Else Phantom#1179
 
 2. If ((b_last' = true)), then
 
@@ -17639,9 +17665,9 @@ relation Switch_tbl_label_ok: p, C, id_t, b_last', switchlabel
 
     1. Result in (DefaultL)
 
-  1. Else Phantom#1178
+  1. Else Phantom#1180
 
-2. Else Phantom#1179
+2. Else Phantom#1181
 
 ;; ../../../../spec/4f-typing-stmt.watsup:60.1-62.32
 relation Switch_tbl_case_ok: p, C, f, id_t, b_last, switchcase
@@ -17708,11 +17734,11 @@ relation Switch_gen_label_ok: p, C, typ_s, b_last', switchlabel
 
       2. Result in (ExprL exprIL')
 
-    2. Else Phantom#1180
+    2. Else Phantom#1182
 
-  4. Else Phantom#1181
+  4. Else Phantom#1183
 
-1. Else Phantom#1182
+1. Else Phantom#1184
 
 2. If ((b_last' = true)), then
 
@@ -17720,9 +17746,9 @@ relation Switch_gen_label_ok: p, C, typ_s, b_last', switchlabel
 
     1. Result in (DefaultL)
 
-  1. Else Phantom#1183
+  1. Else Phantom#1185
 
-2. Else Phantom#1184
+2. Else Phantom#1186
 
 ;; ../../../../spec/4f-typing-stmt.watsup:112.1-114.32
 relation Switch_gen_case_ok: p, C, f, typ_s, b_last, switchcase
@@ -17789,7 +17815,7 @@ relation Inst_init_decl_ok: p, C'', frame, fdenv, decl''
 
       3. Result in frame', fdenv, declIL
 
-    4. Else Phantom#1185
+    4. Else Phantom#1187
 
   2. Case (% matches pattern `FuncD%%%%%`)
 
@@ -17829,13 +17855,13 @@ relation Inst_init_decl_ok: p, C'', frame, fdenv, decl''
 
           2. Result in frame, fdenv', (FuncD id typ_r tparam*{tparam <- tparam*} tparam_hidden*{tparam_hidden <- tparam_hidden*} paramIL*{paramIL <- paramIL*} blockIL)
 
-        2. Else Phantom#1186
+        2. Else Phantom#1188
 
-      7. Else Phantom#1187
+      7. Else Phantom#1189
 
-    7. Else Phantom#1188
+    7. Else Phantom#1190
 
-1. Else Phantom#1189
+1. Else Phantom#1191
 
 ;; ../../../../spec/4g-typing-decl.watsup:128.1-130.26
 relation Inst_init_decls_ok: C, frame, fdenv, decl*{decl <- decl*}
@@ -17857,9 +17883,9 @@ relation Inst_init_decls_ok: C, frame, fdenv, decl*{decl <- decl*}
     4. Result in frame'', fdenv'', declIL_h :: declIL_t*{declIL_t <- declIL_t*}
 
 ;; ../../../../spec/4g-typing-decl.watsup:141.1-142.109
-def $update_fdenv_extern(fdenv_ext, theta, fid*{fid <- fid*}, funcdef*{funcdef <- funcdef*})
+def $update_fdenv_extern(fdenv_ext, theta, fid''*{fid'' <- fid''*}, funcdef*{funcdef <- funcdef*})
 
-1. Case analysis on fid*{fid <- fid*}
+1. Case analysis on fid''*{fid'' <- fid''*}
 
   1. Case (% matches pattern [])
 
@@ -17867,23 +17893,27 @@ def $update_fdenv_extern(fdenv_ext, theta, fid*{fid <- fid*}, funcdef*{funcdef <
 
       1. Return fdenv_ext
 
-    1. Else Phantom#1190
+    1. Else Phantom#1192
 
   2. Case (% matches pattern _ :: _)
 
-    1. (Let fid_h :: fid_t*{fid_t <- fid_t*} be fid*{fid <- fid*})
+    1. (Let fid_h :: fid_t*{fid_t <- fid_t*} be fid''*{fid'' <- fid''*})
 
     2. If ((funcdef*{funcdef <- funcdef*} matches pattern _ :: _)), then
 
       1. (Let fd_h :: fd_t*{fd_t <- fd_t*} be funcdef*{funcdef <- funcdef*})
 
-      2. (Let funcdef''?{funcdef'' <- funcdef''?} be $find_map<fid, funcdef>(fdenv_ext, fid_h))
+      2. (Let (id_h _(id, bool)*{_(id, bool) <- _(id, bool)*}) be fid_h)
 
-      3. If ((funcdef''?{funcdef'' <- funcdef''?} matches pattern (_))), then
+      3. (Let (fid, funcdef)?{(fid, funcdef) <- (fid, funcdef)?} be $find_func_by_name(id_h, fdenv_ext))
 
-        1. (Let ?(funcdef') be funcdef''?{funcdef'' <- funcdef''?})
+      4. If (((fid, funcdef)?{(fid, funcdef) <- (fid, funcdef)?} matches pattern (_))), then
 
-        2. If ((funcdef' has type polyfuncdef)), then
+        1. (Let ?((fid'', fd)) be (fid, funcdef)?{(fid, funcdef) <- (fid, funcdef)?})
+
+        2. (Let funcdef' be fd)
+
+        3. If ((funcdef' has type polyfuncdef)), then
 
           1. (Let (PolyFD (tparam*{tparam <- tparam*}, tparam_hidden*{tparam_hidden <- tparam_hidden*}) -> functyp) be (funcdef' as polyfuncdef))
 
@@ -17897,21 +17927,21 @@ def $update_fdenv_extern(fdenv_ext, theta, fid*{fid <- fid*}, funcdef*{funcdef <
 
             4. If ((FuncDef_alpha: fd_ext' ~~ fd_h holds)), then
 
-              1. (Let fdenv_ext' be $update_map<fid, funcdef>(fdenv_ext, fid_h, fd_ext'))
+              1. (Let fdenv_ext' be $update_map<fid, funcdef>(fdenv_ext, fid'', fd_ext'))
 
               2. Return $update_fdenv_extern(fdenv_ext', theta, fid_t*{fid_t <- fid_t*}, fd_t*{fd_t <- fd_t*})
 
-            4. Else Phantom#1191
+            4. Else Phantom#1193
 
-          2. Else Phantom#1192
+          2. Else Phantom#1194
 
-        2. Else Phantom#1193
+        3. Else Phantom#1195
 
-      3. Else Phantom#1194
+      4. Else Phantom#1196
 
-    2. Else Phantom#1195
+    2. Else Phantom#1197
 
-;; ../../../../spec/4g-typing-decl.watsup:291.1-293.32
+;; ../../../../spec/4g-typing-decl.watsup:294.1-296.32
 relation SEnum_field_ok: C, id_s, typ_s, (member_s, val_s)*{member_s <- member_s*, val_s <- val_s*}, member, expr
 
 1. (Expr_ok: (BLOCK) C |- expr : exprIL)
@@ -17940,11 +17970,11 @@ relation SEnum_field_ok: C, id_s, typ_s, (member_s, val_s)*{member_s <- member_s
 
     8. Result in C', (member_s', val_s')*{member_s' <- member_s'*, val_s' <- val_s'*}
 
-  2. Else Phantom#1196
+  2. Else Phantom#1198
 
-3. Else Phantom#1197
+3. Else Phantom#1199
 
-;; ../../../../spec/4g-typing-decl.watsup:311.1-313.29
+;; ../../../../spec/4g-typing-decl.watsup:314.1-316.29
 relation SEnum_fields_ok: C, id, typ, (member, val)*{member <- member*, val <- val*}, (member, expr)*{(member, expr) <- (member, expr)*}
 
 1. Case analysis on (member, expr)*{(member, expr) <- (member, expr)*}
@@ -17963,7 +17993,7 @@ relation SEnum_fields_ok: C, id, typ, (member, val)*{member <- member*, val <- v
 
     4. Result in C'', (member'', val'')*{member'' <- member''*, val'' <- val''*}
 
-;; ../../../../spec/4g-typing-decl.watsup:555.1-555.49
+;; ../../../../spec/4g-typing-decl.watsup:558.1-558.49
 def $split_methods(method*{method <- method*})
 
 1. Case analysis on method*{method <- method*}
@@ -18004,9 +18034,9 @@ def $split_methods(method*{method <- method*})
 
         3. Return (method_c*{method_c <- method_c*}, method_h :: method_m*{method_m <- method_m*})
 
-    3. Else Phantom#1198
+    3. Else Phantom#1200
 
-;; ../../../../spec/4g-typing-decl.watsup:569.1-571.23
+;; ../../../../spec/4g-typing-decl.watsup:572.1-574.23
 relation Method_ok: C'', id_e, method
 
 1. Case analysis on method
@@ -18047,15 +18077,15 @@ relation Method_ok: C'', id_e, method
 
               2. Result in C', (ExternConsM id_e tparam_hidden*{tparam_hidden <- tparam_hidden*} cparamIL*{cparamIL <- cparamIL*})
 
-            3. Else Phantom#1199
+            3. Else Phantom#1201
 
-          2. Else Phantom#1200
+          2. Else Phantom#1202
 
-        2. Else Phantom#1201
+        2. Else Phantom#1203
 
-      6. Else Phantom#1202
+      6. Else Phantom#1204
 
-    2. Else Phantom#1203
+    2. Else Phantom#1205
 
   2. Case (% matches pattern `ExternAbstractM%%%%`)
 
@@ -18083,15 +18113,15 @@ relation Method_ok: C'', id_e, method
 
         6. If ((FuncDef_wf: $bound_tids((BLOCK), C'') |- fd holds)), then
 
-          1. (Let C_4 be $add_funcdef((BLOCK), C'', fid, fd))
+          1. (Let C_4 be $add_funcdef_non_overload((BLOCK), C'', fid, fd))
 
           2. Result in C_4, (ExternAbstractM id typ_r tparam*{tparam <- tparam*} tparam_hidden*{tparam_hidden <- tparam_hidden*} paramIL*{paramIL <- paramIL*})
 
-        6. Else Phantom#1204
+        6. Else Phantom#1206
 
-      4. Else Phantom#1205
+      4. Else Phantom#1207
 
-    2. Else Phantom#1206
+    2. Else Phantom#1208
 
   3. Case (% matches pattern `ExternM%%%%`)
 
@@ -18125,13 +18155,13 @@ relation Method_ok: C'', id_e, method
 
           2. Result in C_4, (ExternM id typ_r tparam*{tparam <- tparam*} tparam_hidden*{tparam_hidden <- tparam_hidden*} paramIL*{paramIL <- paramIL*})
 
-        7. Else Phantom#1207
+        7. Else Phantom#1209
 
-      4. Else Phantom#1208
+      4. Else Phantom#1210
 
-    2. Else Phantom#1209
+    2. Else Phantom#1211
 
-;; ../../../../spec/4g-typing-decl.watsup:635.1-637.23
+;; ../../../../spec/4g-typing-decl.watsup:638.1-640.23
 relation Methods_ok: C, id_e, method*{method <- method*}
 
 1. Case analysis on method*{method <- method*}
@@ -18150,7 +18180,7 @@ relation Methods_ok: C, id_e, method*{method <- method*}
 
     4. Result in C'', methodIL_h :: methodIL_t*{methodIL_t <- methodIL_t*}
 
-;; ../../../../spec/4g-typing-decl.watsup:707.1-709.20
+;; ../../../../spec/4g-typing-decl.watsup:710.1-712.20
 relation ParserState_ok: C, (statelabel block)
 
 1. (Block_ok: (LOCAL) C (CONT) (INIT) |- block : C' flow blockIL)
@@ -18159,9 +18189,9 @@ relation ParserState_ok: C, (statelabel block)
 
   1. Result in (statelabel blockIL)
 
-2. Else Phantom#1210
+2. Else Phantom#1212
 
-;; ../../../../spec/4g-typing-decl.watsup:768.1-770.26
+;; ../../../../spec/4g-typing-decl.watsup:771.1-773.26
 relation Table_key_ok: p, C, tblctx, (expr matchkind)
 
 1. (Expr_ok: p C |- expr : exprIL)
@@ -18180,13 +18210,13 @@ relation Table_key_ok: p, C, tblctx, (expr matchkind)
 
       3. Result in tblctx'', (exprIL matchkind)
 
-    1. Else Phantom#1211
+    1. Else Phantom#1213
 
-  1. Else Phantom#1212
+  1. Else Phantom#1214
 
-3. Else Phantom#1213
+3. Else Phantom#1215
 
-;; ../../../../spec/4g-typing-decl.watsup:772.1-772.44
+;; ../../../../spec/4g-typing-decl.watsup:775.1-775.44
 def $check_table_key(matchkind, typ)
 
 1. Case analysis on matchkind
@@ -18397,7 +18427,7 @@ def $check_table_key(matchkind, typ)
 
   1. Return false
 
-;; ../../../../spec/4g-typing-decl.watsup:822.1-824.26
+;; ../../../../spec/4g-typing-decl.watsup:825.1-827.26
 relation Table_keys_ok: p, C, tblctx, tblkey*{tblkey <- tblkey*}
 
 1. Case analysis on tblkey*{tblkey <- tblkey*}
@@ -18416,7 +18446,7 @@ relation Table_keys_ok: p, C, tblctx, tblkey*{tblkey <- tblkey*}
 
     4. Result in tblctx'', tblkeyIL_h :: tblkeyIL_t*{tblkeyIL_t <- tblkeyIL_t*}
 
-;; ../../../../spec/4g-typing-decl.watsup:838.1-840.26
+;; ../../../../spec/4g-typing-decl.watsup:841.1-843.26
 relation Call_action_partial_ok: p, C, pt*{pt <- pt*}, (argIL, typ_a)*{argIL <- argIL*, typ_a <- typ_a*}
 
 1. (Let (paramIL_d*{paramIL_d <- paramIL_d*}, paramIL_c*{paramIL_c <- paramIL_c*}) be $split_directionless_params((pt*{pt <- pt*} as paramIL*)))
@@ -18427,9 +18457,9 @@ relation Call_action_partial_ok: p, C, pt*{pt <- pt*}, (argIL, typ_a)*{argIL <- 
 
   2. Result in paramIL_d*{paramIL_d <- paramIL_d*}, paramIL_c*{paramIL_c <- paramIL_c*}, argIL'*{argIL' <- argIL'*}
 
-2. Else Phantom#1214
+2. Else Phantom#1216
 
-;; ../../../../spec/4g-typing-decl.watsup:842.1-843.46
+;; ../../../../spec/4g-typing-decl.watsup:845.1-846.46
 def $split_directionless_params(paramIL*{paramIL <- paramIL*})
 
 1. Case analysis on paramIL*{paramIL <- paramIL*}
@@ -18458,38 +18488,32 @@ def $split_directionless_params(paramIL*{paramIL <- paramIL*})
 
         2. Return (paramIL_h :: paramIL_d*{paramIL_d <- paramIL_d*}, paramIL_c*{paramIL_c <- paramIL_c*})
 
-;; ../../../../spec/4g-typing-decl.watsup:862.1-864.26
+;; ../../../../spec/4g-typing-decl.watsup:865.1-867.26
 relation Table_action_ok: p, C, tblctx, (name arg*{arg <- arg*})
 
 1. (Arg_ok: p C |- arg : argIL typ_a)*{arg <- arg*, argIL <- argIL*, typ_a <- typ_a*}
 
-2. (Let funcdef'?{funcdef' <- funcdef'?} be $find_funcdef_by_name(p, C, name))
+2. (Let funcdef be $find_funcdef_by_name(p, C, name))
 
-3. If ((funcdef'?{funcdef' <- funcdef'?} matches pattern (_))), then
+3. If ((funcdef has type monofuncdef)), then
 
-  1. (Let ?(funcdef) be funcdef'?{funcdef' <- funcdef'?})
+  1. (Let (MonoFD functyp) be (funcdef as monofuncdef))
 
-  2. If ((funcdef has type monofuncdef)), then
+  2. If ((functyp matches pattern `ActionT%`)), then
 
-    1. (Let (MonoFD functyp) be (funcdef as monofuncdef))
+    1. (Let (ActionT pt*{pt <- pt*}) be functyp)
 
-    2. If ((functyp matches pattern `ActionT%`)), then
+    2. (Call_action_partial_ok: p C |- pt*{pt <- pt*} (argIL, typ_a)*{argIL <- argIL*, typ_a <- typ_a*} : paramIL_d*{paramIL_d <- paramIL_d*} paramIL_c*{paramIL_c <- paramIL_c*} argIL'*{argIL' <- argIL'*})
 
-      1. (Let (ActionT pt*{pt <- pt*}) be functyp)
+    3. (Let tblctx' be $add_action((name, pt*{pt <- pt*}, argIL*{argIL <- argIL*}), tblctx))
 
-      2. (Call_action_partial_ok: p C |- pt*{pt <- pt*} (argIL, typ_a)*{argIL <- argIL*, typ_a <- typ_a*} : paramIL_d*{paramIL_d <- paramIL_d*} paramIL_c*{paramIL_c <- paramIL_c*} argIL'*{argIL' <- argIL'*})
+    4. Result in tblctx', (name argIL'*{argIL' <- argIL'*} paramIL_d*{paramIL_d <- paramIL_d*} paramIL_c*{paramIL_c <- paramIL_c*})
 
-      3. (Let tblctx' be $add_action((name, pt*{pt <- pt*}, argIL*{argIL <- argIL*}), tblctx))
+  2. Else Phantom#1217
 
-      4. Result in tblctx', (name argIL'*{argIL' <- argIL'*} paramIL_d*{paramIL_d <- paramIL_d*} paramIL_c*{paramIL_c <- paramIL_c*})
+3. Else Phantom#1218
 
-    2. Else Phantom#1215
-
-  2. Else Phantom#1216
-
-3. Else Phantom#1217
-
-;; ../../../../spec/4g-typing-decl.watsup:876.1-878.26
+;; ../../../../spec/4g-typing-decl.watsup:879.1-881.26
 relation Table_actions_ok: p, C, tblctx, tblaction*{tblaction <- tblaction*}
 
 1. Case analysis on tblaction*{tblaction <- tblaction*}
@@ -18514,9 +18538,9 @@ relation Table_actions_ok: p, C, tblctx, tblaction*{tblaction <- tblaction*}
 
       1. Result in tblctx'', tblactionIL_h :: tblactionIL_t*{tblactionIL_t <- tblactionIL_t*}
 
-    6. Else Phantom#1218
+    6. Else Phantom#1219
 
-;; ../../../../spec/4g-typing-decl.watsup:896.1-898.29
+;; ../../../../spec/4g-typing-decl.watsup:899.1-901.29
 relation Table_entry_keyset_ok: p, C, tblctx, (typ_k, text'), keyset
 
 1. Case analysis on text'
@@ -18567,17 +18591,17 @@ relation Table_entry_keyset_ok: p, C, tblctx, (typ_k, text'), keyset
 
                     1. Result in tblstate_e, (ExprK exprIL)
 
-                  5. Else Phantom#1219
+                  5. Else Phantom#1220
 
-                3. Else Phantom#1220
+                3. Else Phantom#1221
 
-              3. Else Phantom#1221
+              3. Else Phantom#1222
 
-            2. Else Phantom#1222
+            2. Else Phantom#1223
 
-          4. Else Phantom#1223
+          4. Else Phantom#1224
 
-        2. Else Phantom#1224
+        2. Else Phantom#1225
 
         3. If (~($is_maske(expr) \/ $is_rangee(expr))), then
 
@@ -18597,11 +18621,11 @@ relation Table_entry_keyset_ok: p, C, tblctx, (typ_k, text'), keyset
 
               2. Result in (LPM n_w), (ExprK exprIL')
 
-            2. Else Phantom#1225
+            2. Else Phantom#1226
 
-          4. Else Phantom#1226
+          4. Else Phantom#1227
 
-        3. Else Phantom#1227
+        3. Else Phantom#1228
 
       2. Case (% matches pattern `DefaultK`)
 
@@ -18613,7 +18637,7 @@ relation Table_entry_keyset_ok: p, C, tblctx, (typ_k, text'), keyset
 
           2. Result in (LPM n_w), (DefaultK)
 
-        2. Else Phantom#1228
+        2. Else Phantom#1229
 
       3. Case (% matches pattern `AnyK`)
 
@@ -18625,7 +18649,7 @@ relation Table_entry_keyset_ok: p, C, tblctx, (typ_k, text'), keyset
 
           2. Result in (LPM 0), (AnyK)
 
-        2. Else Phantom#1229
+        2. Else Phantom#1230
 
   2. Case (% = "ternary")
 
@@ -18653,13 +18677,13 @@ relation Table_entry_keyset_ok: p, C, tblctx, (typ_k, text'), keyset
 
               1. Result in (NOLPM), (ExprK exprIL)
 
-            2. Else Phantom#1230
+            2. Else Phantom#1231
 
-          2. Else Phantom#1231
+          2. Else Phantom#1232
 
-        4. Else Phantom#1232
+        4. Else Phantom#1233
 
-      2. Else Phantom#1233
+      2. Else Phantom#1234
 
       3. If (~($is_maske(expr) \/ $is_rangee(expr))), then
 
@@ -18673,11 +18697,11 @@ relation Table_entry_keyset_ok: p, C, tblctx, (typ_k, text'), keyset
 
           2. Result in (NOLPM), (ExprK exprIL')
 
-        3. Else Phantom#1234
+        3. Else Phantom#1235
 
-      3. Else Phantom#1235
+      3. Else Phantom#1236
 
-    1. Else Phantom#1236
+    1. Else Phantom#1237
 
   3. Case (% = "range")
 
@@ -18705,13 +18729,13 @@ relation Table_entry_keyset_ok: p, C, tblctx, (typ_k, text'), keyset
 
               1. Result in (NOLPM), (ExprK exprIL)
 
-            2. Else Phantom#1237
+            2. Else Phantom#1238
 
-          2. Else Phantom#1238
+          2. Else Phantom#1239
 
-        4. Else Phantom#1239
+        4. Else Phantom#1240
 
-      2. Else Phantom#1240
+      2. Else Phantom#1241
 
       3. If (~($is_maske(expr) \/ $is_rangee(expr))), then
 
@@ -18725,13 +18749,13 @@ relation Table_entry_keyset_ok: p, C, tblctx, (typ_k, text'), keyset
 
           2. Result in (NOLPM), (ExprK exprIL')
 
-        3. Else Phantom#1241
+        3. Else Phantom#1242
 
-      3. Else Phantom#1242
+      3. Else Phantom#1243
 
-    1. Else Phantom#1243
+    1. Else Phantom#1244
 
-1. Else Phantom#1244
+1. Else Phantom#1245
 
 2. Case analysis on keyset
 
@@ -18753,11 +18777,11 @@ relation Table_entry_keyset_ok: p, C, tblctx, (typ_k, text'), keyset
 
           2. Result in (NOLPM), (ExprK exprIL')
 
-        3. Else Phantom#1245
+        3. Else Phantom#1246
 
-      1. Else Phantom#1246
+      1. Else Phantom#1247
 
-    2. Else Phantom#1247
+    2. Else Phantom#1248
 
   2. Case (% matches pattern `DefaultK`)
 
@@ -18765,7 +18789,7 @@ relation Table_entry_keyset_ok: p, C, tblctx, (typ_k, text'), keyset
 
       1. Result in (NOLPM), (DefaultK)
 
-    1. Else Phantom#1248
+    1. Else Phantom#1249
 
   3. Case (% matches pattern `AnyK`)
 
@@ -18773,9 +18797,9 @@ relation Table_entry_keyset_ok: p, C, tblctx, (typ_k, text'), keyset
 
       1. Result in (NOLPM), (AnyK)
 
-    1. Else Phantom#1249
+    1. Else Phantom#1250
 
-;; ../../../../spec/4g-typing-decl.watsup:990.1-992.32
+;; ../../../../spec/4g-typing-decl.watsup:993.1-995.32
 relation Table_entry_keysets_state_ok: p, C, tblctx, tblstate', key*{key <- key*}, keyset*{keyset <- keyset*}
 
 1. Case analysis on key*{key <- key*}
@@ -18786,7 +18810,7 @@ relation Table_entry_keysets_state_ok: p, C, tblctx, tblstate', key*{key <- key*
 
       1. Result in tblstate', []
 
-    1. Else Phantom#1250
+    1. Else Phantom#1251
 
   2. Case (% matches pattern _ :: _)
 
@@ -18804,9 +18828,9 @@ relation Table_entry_keysets_state_ok: p, C, tblctx, tblstate', key*{key <- key*
 
       5. Result in tblstate_3, keysetIL_h :: keysetIL_t*{keysetIL_t <- keysetIL_t*}
 
-    2. Else Phantom#1251
+    2. Else Phantom#1252
 
-;; ../../../../spec/4g-typing-decl.watsup:1004.1-1006.26
+;; ../../../../spec/4g-typing-decl.watsup:1007.1-1009.26
 relation Table_entry_keysets_ok: p, C, tblctx, keyset*{keyset <- keyset*}
 
 1. Case analysis on keyset*{keyset <- keyset*}
@@ -18821,13 +18845,13 @@ relation Table_entry_keysets_ok: p, C, tblctx, keyset*{keyset <- keyset*}
 
       2. Result in (LPM nat), [(DefaultK)]
 
-    2. Else Phantom#1252
+    2. Else Phantom#1253
 
     3. If ((((tblctx.MODE = (NOPRI)) \/ (tblctx.MODE = (PRI))) \/ (tblctx.MODE = (PRILPM)))), then
 
       1. Result in (NOLPM), [(DefaultK)]
 
-    3. Else Phantom#1253
+    3. Else Phantom#1254
 
   2. Case (% = [(AnyK)])
 
@@ -18839,15 +18863,15 @@ relation Table_entry_keysets_ok: p, C, tblctx, keyset*{keyset <- keyset*}
 
       2. Result in (LPM 0), [(AnyK)]
 
-    2. Else Phantom#1254
+    2. Else Phantom#1255
 
     3. If ((((tblctx.MODE = (NOPRI)) \/ (tblctx.MODE = (PRI))) \/ (tblctx.MODE = (PRILPM)))), then
 
       1. Result in (NOLPM), [(AnyK)]
 
-    3. Else Phantom#1255
+    3. Else Phantom#1256
 
-1. Else Phantom#1256
+1. Else Phantom#1257
 
 2. If ((|tblctx.KEYS| = |keyset*{keyset <- keyset*}|)), then
 
@@ -18855,9 +18879,9 @@ relation Table_entry_keysets_ok: p, C, tblctx, keyset*{keyset <- keyset*}
 
   2. Result in tblstate, keysetIL*{keysetIL <- keysetIL*}
 
-2. Else Phantom#1257
+2. Else Phantom#1258
 
-;; ../../../../spec/4g-typing-decl.watsup:1030.1-1032.29
+;; ../../../../spec/4g-typing-decl.watsup:1033.1-1035.29
 relation Call_default_action_ok: p, C, pt*{pt <- pt*}, (argIL, typ)*{argIL <- argIL*, typ <- typ*}, argIL_a*{argIL_a <- argIL_a*}
 
 1. If ((|pt*{pt <- pt*}| = |argIL*{argIL <- argIL*}|)), then
@@ -18870,11 +18894,11 @@ relation Call_default_action_ok: p, C, pt*{pt <- pt*}, (argIL, typ)*{argIL <- ar
 
     2. Result in argIL'*{argIL' <- argIL'*}
 
-  2. Else Phantom#1258
+  2. Else Phantom#1259
 
-1. Else Phantom#1259
+1. Else Phantom#1260
 
-;; ../../../../spec/4g-typing-decl.watsup:1034.1-1034.59
+;; ../../../../spec/4g-typing-decl.watsup:1037.1-1037.59
 def $filter_directionless_args(paramtyp*{paramtyp <- paramtyp*}, argIL*{argIL <- argIL*})
 
 1. Case analysis on paramtyp*{paramtyp <- paramtyp*}
@@ -18885,7 +18909,7 @@ def $filter_directionless_args(paramtyp*{paramtyp <- paramtyp*}, argIL*{argIL <-
 
       1. Return []
 
-    1. Else Phantom#1260
+    1. Else Phantom#1261
 
   2. Case (% matches pattern _ :: _)
 
@@ -18901,15 +18925,15 @@ def $filter_directionless_args(paramtyp*{paramtyp <- paramtyp*}, argIL*{argIL <-
 
         1. Return $filter_directionless_args(pt_t*{pt_t <- pt_t*}, argIL_t*{argIL_t <- argIL_t*})
 
-      3. Else Phantom#1261
+      3. Else Phantom#1262
 
       4. Otherwise
 
         1. Return argIL_h :: $filter_directionless_args(pt_t*{pt_t <- pt_t*}, argIL_t*{argIL_t <- argIL_t*})
 
-    2. Else Phantom#1262
+    2. Else Phantom#1263
 
-;; ../../../../spec/4g-typing-decl.watsup:1052.1-1054.26
+;; ../../../../spec/4g-typing-decl.watsup:1055.1-1057.26
 relation Table_entry_action_ok: p, C, tblctx, (name arg*{arg <- arg*})
 
 1. (Let (paramtyp*, argIL*)?{(paramtyp*, argIL*) <- (paramtyp*, argIL*)?} be $find_action(tblctx, name))
@@ -18926,9 +18950,9 @@ relation Table_entry_action_ok: p, C, tblctx, (name arg*{arg <- arg*})
 
   5. Result in tblactionIL
 
-2. Else Phantom#1263
+2. Else Phantom#1264
 
-;; ../../../../spec/4g-typing-decl.watsup:1067.1-1069.29
+;; ../../../../spec/4g-typing-decl.watsup:1070.1-1072.29
 relation Table_entry_priority_ok: cursor, C, tblctx, tblstate, expr''?{expr'' <- expr''?}
 
 1. If ((cursor matches pattern `LOCAL`)), then
@@ -18941,7 +18965,7 @@ relation Table_entry_priority_ok: cursor, C, tblctx, tblstate, expr''?{expr'' <-
 
         1. Result in tblctx, ?()
 
-      1. Else Phantom#1264
+      1. Else Phantom#1265
 
       2. If (((tblctx.MODE = (PRI)) \/ (tblctx.MODE = (PRILPM)))), then
 
@@ -18965,7 +18989,7 @@ relation Table_entry_priority_ok: cursor, C, tblctx, tblstate, expr''?{expr'' <-
 
                   2. Result in tblctx', ?((IntV i))
 
-                4. Else Phantom#1265
+                4. Else Phantom#1266
 
               2. Case false
 
@@ -18991,7 +19015,7 @@ relation Table_entry_priority_ok: cursor, C, tblctx, tblstate, expr''?{expr'' <-
 
                   2. Result in tblctx', ?((IntV i'))
 
-                2. Else Phantom#1266
+                2. Else Phantom#1267
 
               2. Case false
 
@@ -19003,9 +19027,9 @@ relation Table_entry_priority_ok: cursor, C, tblctx, tblstate, expr''?{expr'' <-
 
                   2. Result in tblctx', ?((IntV i'))
 
-                2. Else Phantom#1267
+                2. Else Phantom#1268
 
-      2. Else Phantom#1268
+      2. Else Phantom#1269
 
     2. Case (% matches pattern (_))
 
@@ -19033,7 +19057,7 @@ relation Table_entry_priority_ok: cursor, C, tblctx, tblstate, expr''?{expr'' <-
 
                 3. Result in tblctx'', ?((IntV i))
 
-              4. Else Phantom#1269
+              4. Else Phantom#1270
 
             2. Case (% =/= [])
 
@@ -19051,13 +19075,13 @@ relation Table_entry_priority_ok: cursor, C, tblctx, tblstate, expr''?{expr'' <-
 
                   2. Result in tblctx', ?((IntV i))
 
-                4. Else Phantom#1270
+                4. Else Phantom#1271
 
-              1. Else Phantom#1271
+              1. Else Phantom#1272
 
-        1. Else Phantom#1272
+        1. Else Phantom#1273
 
-      2. Else Phantom#1273
+      2. Else Phantom#1274
 
   2. If ((tblstate matches pattern `LPM%`)), then
 
@@ -19073,15 +19097,15 @@ relation Table_entry_priority_ok: cursor, C, tblctx, tblstate, expr''?{expr'' <-
 
         2. Result in tblctx, ?()
 
-      2. Else Phantom#1274
+      2. Else Phantom#1275
 
-    2. Else Phantom#1275
+    2. Else Phantom#1276
 
-  2. Else Phantom#1276
+  2. Else Phantom#1277
 
-1. Else Phantom#1277
+1. Else Phantom#1278
 
-;; ../../../../spec/4g-typing-decl.watsup:1160.1-1162.26
+;; ../../../../spec/4g-typing-decl.watsup:1163.1-1165.26
 relation Table_entry_ok: p, C, tblctx, (bool keyset*{keyset <- keyset*} tblaction expr?{expr <- expr?})
 
 1. (Table_entry_keysets_ok: p C tblctx |- keyset*{keyset <- keyset*} : tblstate keysetIL*{keysetIL <- keysetIL*})
@@ -19092,7 +19116,7 @@ relation Table_entry_ok: p, C, tblctx, (bool keyset*{keyset <- keyset*} tblactio
 
 4. Result in tblctx', (bool keysetIL*{keysetIL <- keysetIL*} tblactionIL val?{val <- val?})
 
-;; ../../../../spec/4g-typing-decl.watsup:1173.1-1175.26
+;; ../../../../spec/4g-typing-decl.watsup:1176.1-1178.26
 relation Table_entries_fold_ok: p, C, tblctx, tblentry*{tblentry <- tblentry*}
 
 1. Case analysis on tblentry*{tblentry <- tblentry*}
@@ -19111,7 +19135,7 @@ relation Table_entries_fold_ok: p, C, tblctx, tblentry*{tblentry <- tblentry*}
 
     4. Result in tblctx'', tblentryIL_h :: tblentryIL_t*{tblentryIL_t <- tblentryIL_t*}
 
-;; ../../../../spec/4g-typing-decl.watsup:1186.1-1188.26
+;; ../../../../spec/4g-typing-decl.watsup:1189.1-1191.26
 relation Table_entries_ok: p, C, tblctx_0, (b tblentry*{tblentry <- tblentry*})
 
 1. If (((|tblctx_0.KEYS| = 0) => (|tblentry*{tblentry <- tblentry*}| = 0))), then
@@ -19124,9 +19148,9 @@ relation Table_entries_ok: p, C, tblctx_0, (b tblentry*{tblentry <- tblentry*})
 
   4. Result in tblctx_3, (b tblentryIL*{tblentryIL <- tblentryIL*})
 
-1. Else Phantom#1278
+1. Else Phantom#1279
 
-;; ../../../../spec/4g-typing-decl.watsup:1203.1-1205.26
+;; ../../../../spec/4g-typing-decl.watsup:1206.1-1208.26
 relation Table_default_ok: p, C, tblctx, (bool (name arg*{arg <- arg*}))
 
 1. (Let (paramtyp*, argIL*)?{(paramtyp*, argIL*) <- (paramtyp*, argIL*)?} be $find_action(tblctx, name))
@@ -19143,9 +19167,9 @@ relation Table_default_ok: p, C, tblctx, (bool (name arg*{arg <- arg*}))
 
   5. Result in (bool tblactionIL)
 
-2. Else Phantom#1279
+2. Else Phantom#1280
 
-;; ../../../../spec/4g-typing-decl.watsup:1221.1-1223.26
+;; ../../../../spec/4g-typing-decl.watsup:1224.1-1226.26
 relation Table_custom_ok: p, C, tblctx, (b text' expr)
 
 1. Case analysis on text'
@@ -19160,7 +19184,7 @@ relation Table_custom_ok: p, C, tblctx, (b text' expr)
 
       1. Result in tblctx, (b "size" exprIL)
 
-    3. Else Phantom#1280
+    3. Else Phantom#1281
 
   2. Case (% = "largest_priority_wins")
 
@@ -19180,9 +19204,9 @@ relation Table_custom_ok: p, C, tblctx, (b text' expr)
 
         3. Result in tblctx', (b "largest_priority_wins" exprIL)
 
-      2. Else Phantom#1281
+      2. Else Phantom#1282
 
-    3. Else Phantom#1282
+    3. Else Phantom#1283
 
   3. Case (% = "priority_delta")
 
@@ -19202,11 +19226,11 @@ relation Table_custom_ok: p, C, tblctx, (b text' expr)
 
         2. Result in tblctx', (b "priority_delta" exprIL)
 
-      3. Else Phantom#1283
+      3. Else Phantom#1284
 
-    3. Else Phantom#1284
+    3. Else Phantom#1285
 
-1. Else Phantom#1285
+1. Else Phantom#1286
 
 2. If ((((text' =/= "size") /\ (text' =/= "largest_priority_wins")) /\ (text' =/= "priority_delta"))), then
 
@@ -19214,9 +19238,9 @@ relation Table_custom_ok: p, C, tblctx, (b text' expr)
 
   2. Result in tblctx, (b text' exprIL)
 
-2. Else Phantom#1286
+2. Else Phantom#1287
 
-;; ../../../../spec/4g-typing-decl.watsup:1258.1-1260.26
+;; ../../../../spec/4g-typing-decl.watsup:1261.1-1263.26
 relation Table_prop_ok: p, C, tblctx, tblprop
 
 1. Case analysis on tblprop
@@ -19261,7 +19285,7 @@ relation Table_prop_ok: p, C, tblctx, tblprop
 
     3. Result in tblctx', (CustomP tblcustompropIL)
 
-;; ../../../../spec/4g-typing-decl.watsup:1283.1-1285.26
+;; ../../../../spec/4g-typing-decl.watsup:1286.1-1288.26
 relation Table_props_ok: p, C, tblctx, tblprop*{tblprop <- tblprop*}
 
 1. Case analysis on tblprop*{tblprop <- tblprop*}
@@ -19280,7 +19304,7 @@ relation Table_props_ok: p, C, tblctx, tblprop*{tblprop <- tblprop*}
 
     4. Result in tblctx'', tblpropIL_h :: tblpropIL_t*{tblpropIL_t <- tblpropIL_t*}
 
-;; ../../../../spec/4g-typing-decl.watsup:1299.1-1301.26
+;; ../../../../spec/4g-typing-decl.watsup:1302.1-1304.26
 relation Table_type_decl_ok: cursor, C, tblctx, id
 
 1. If ((cursor matches pattern `BLOCK`)), then
@@ -19305,7 +19329,7 @@ relation Table_type_decl_ok: cursor, C, tblctx, id
 
   10. Result in C', typ_s
 
-1. Else Phantom#1287
+1. Else Phantom#1288
 
 ;; ../../../../spec/4h-typing-call.watsup:151.1-152.77
 def $filter_default_args(paramtyp*{paramtyp <- paramtyp*}, id_deft*{id_deft <- id_deft*})
@@ -19326,7 +19350,7 @@ def $filter_default_args(paramtyp*{paramtyp <- paramtyp*}, id_deft*{id_deft <- i
 
       1. Return $filter_default_args(pt_t*{pt_t <- pt_t*}, id_deft*{id_deft <- id_deft*})
 
-    3. Else Phantom#1288
+    3. Else Phantom#1289
 
     4. Otherwise
 
@@ -19369,7 +19393,7 @@ def $align_params_with_args'(pmap, pt, (argIL, _typ))
 
       2. Return pt'
 
-    3. Else Phantom#1289
+    3. Else Phantom#1290
 
   3. Case (% matches pattern `AnyA`)
 
@@ -19653,7 +19677,7 @@ def $gen_cstrs(cstr, typ_p*{typ_p <- typ_p*}, typ_a*{typ_a <- typ_a*})
 
   2. Return $merge_cstrs(cstr, cstr'*{cstr' <- cstr'*})
 
-1. Else Phantom#1290
+1. Else Phantom#1291
 
 ;; ../../../../spec/4h-typing-call.watsup:200.1-200.74
 def $gen_cstr_fd(cstr, fd_p, fd_a)
@@ -19697,9 +19721,9 @@ def $gen_cstr_fd'(cstr, fid*{fid <- fid*}, fdenv_p, fdenv_a)
 
         3. Return $gen_cstr_fd'(cstr', fid_t*{fid_t <- fid_t*}, fdenv_p, fdenv_a)
 
-      3. Else Phantom#1291
+      3. Else Phantom#1292
 
-    3. Else Phantom#1292
+    3. Else Phantom#1293
 
 ;; ../../../../spec/4h-typing-call.watsup:204.1-204.74
 def $merge_cstr(cstr_o, cstr_n)
@@ -19710,7 +19734,7 @@ def $merge_cstr(cstr_o, cstr_n)
 
   1. Return $merge_cstr'(cstr_o, cstr_n, tid_o*{tid_o <- tid_o*}, ({ [] }))
 
-2. Else Phantom#1293
+2. Else Phantom#1294
 
 ;; ../../../../spec/4h-typing-call.watsup:206.1-206.100
 def $merge_cstr'(cstr_o, cstr_n, tid*{tid <- tid*}, cstr)
@@ -19733,7 +19757,7 @@ def $merge_cstr'(cstr_o, cstr_n, tid*{tid <- tid*}, cstr)
 
         2. Return $merge_cstr'(cstr_o, cstr_n, tid_t*{tid_t <- tid_t*}, cstr')
 
-      1. Else Phantom#1294
+      1. Else Phantom#1295
 
       2. (Let typcstr'?{typcstr' <- typcstr'?} be $find_map<tid, typcstr>(cstr_n, tid_h))
 
@@ -19749,11 +19773,11 @@ def $merge_cstr'(cstr_o, cstr_n, tid*{tid <- tid*}, cstr)
 
           3. Return $merge_cstr'(cstr_o, cstr_n, tid_t*{tid_t <- tid_t*}, cstr')
 
-        2. Else Phantom#1295
+        2. Else Phantom#1296
 
-      3. Else Phantom#1296
+      3. Else Phantom#1297
 
-    2. Else Phantom#1297
+    2. Else Phantom#1298
 
     3. (Let typcstr'?{typcstr' <- typcstr'?} be $find_map<tid, typcstr>(cstr_o, tid_h))
 
@@ -19771,7 +19795,7 @@ def $merge_cstr'(cstr_o, cstr_n, tid*{tid <- tid*}, cstr)
 
           2. Return $merge_cstr'(cstr_o, cstr_n, tid_t*{tid_t <- tid_t*}, cstr')
 
-        2. Else Phantom#1298
+        2. Else Phantom#1299
 
         3. (Let typcstr'''?{typcstr''' <- typcstr'''?} be $find_map<tid, typcstr>(cstr_n, tid_h))
 
@@ -19799,15 +19823,15 @@ def $merge_cstr'(cstr_o, cstr_n, tid*{tid <- tid*}, cstr)
 
                   2. Return $merge_cstr'(cstr_o, cstr_n, tid_t*{tid_t <- tid_t*}, cstr')
 
-                1. Else Phantom#1299
+                1. Else Phantom#1300
 
-          2. Else Phantom#1300
+          2. Else Phantom#1301
 
-        4. Else Phantom#1301
+        4. Else Phantom#1302
 
-      2. Else Phantom#1302
+      2. Else Phantom#1303
 
-    4. Else Phantom#1303
+    4. Else Phantom#1304
 
 ;; ../../../../spec/4h-typing-call.watsup:208.1-208.76
 def $merge_cstrs(cstr, map<tid, typcstr>*{map<tid, typcstr> <- map<tid, typcstr>*})
@@ -19835,7 +19859,7 @@ def $resolve_cstrs(set<pair<tid, typcstr>>')
 
   1. Return ({ [] })
 
-1. Else Phantom#1304
+1. Else Phantom#1305
 
 2. (Let ({ pair<tid, typcstr>*{pair<tid, typcstr> <- pair<tid, typcstr>*} }) be set<pair<tid, typcstr>>')
 
@@ -19867,9 +19891,9 @@ def $resolve_cstrs(set<pair<tid, typcstr>>')
 
         6. Return $add_map<tid, typ>(({ (tid_t' -> typ_t')*{tid_t' <- tid_t'*, typ_t' <- typ_t'*} }), tid_h, typ_h')
 
-      2. Else Phantom#1305
+      2. Else Phantom#1306
 
-    3. Else Phantom#1306
+    3. Else Phantom#1307
 
     4. If ((typ_h =/= ((AnyT) as typ))), then
 
@@ -19877,11 +19901,11 @@ def $resolve_cstrs(set<pair<tid, typcstr>>')
 
       2. Return $add_map<tid, typ>(({ (tid_t' -> typ_t')*{tid_t' <- tid_t'*, typ_t' <- typ_t'*} }), tid_h, typ_h)
 
-    4. Else Phantom#1307
+    4. Else Phantom#1308
 
-  2. Else Phantom#1308
+  2. Else Phantom#1309
 
-3. Else Phantom#1309
+3. Else Phantom#1310
 
 ;; ../../../../spec/4h-typing-call.watsup:325.1-325.32
 def $gen_tparam(typ)

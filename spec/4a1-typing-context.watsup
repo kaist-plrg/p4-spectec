@@ -345,13 +345,15 @@ def $find_funcdef(BLOCK, C, CURRENT id, arg*) = $find_funcdef(GLOBAL, C, CURRENT
   -- if eps = $find_func<funcdef>(id, $to_fkey(arg*), C.BLOCK.FDENV)
 def $find_funcdef(LOCAL, C, CURRENT id, arg*) = $find_funcdef(BLOCK, C, CURRENT id, arg*)
 
-dec $find_funcdef_by_name(cursor, context, name) : funcdef?
+dec $find_funcdef_by_name(cursor, context, name) : funcdef
     hint(show %2#%latex("@")#%1.FDENV`[%3])
 
-def $find_funcdef_by_name(p, C, TOP id) = $find_func_by_name(id, C.GLOBAL.FDENV)
-def $find_funcdef_by_name(GLOBAL, C, CURRENT id) = $find_func_by_name(id, C.GLOBAL.FDENV)
+def $find_funcdef_by_name(p, C, TOP id) = fd
+  -- if (_, fd) = $find_func_by_name(id, C.GLOBAL.FDENV)
+def $find_funcdef_by_name(GLOBAL, C, CURRENT id) = fd
+  -- if (_, fd) = $find_func_by_name(id, C.GLOBAL.FDENV)
 def $find_funcdef_by_name(BLOCK, C, CURRENT id) = fd
-  -- if fd = $find_func_by_name(id, C.BLOCK.FDENV)
+  -- if (_, fd) = $find_func_by_name(id, C.BLOCK.FDENV)
 def $find_funcdef_by_name(BLOCK, C, CURRENT id) = $find_funcdef_by_name(GLOBAL, C, CURRENT id)
   -- if eps = $find_func_by_name(id, C.BLOCK.FDENV)
 def $find_funcdef_by_name(LOCAL, C, CURRENT id) = $find_funcdef_by_name(BLOCK, C, CURRENT id)

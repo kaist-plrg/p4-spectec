@@ -197,10 +197,10 @@ def $find_funcs_by_name<V>(id_f, _ :: fid_t*, _ :: V_t*)
   -- otherwise
   
 ;; Find a matching function, given a function name only
-dec $find_func_by_name(id, map<fid, funcdef>) : funcdef?
+dec $find_func_by_name(id, map<fid, funcdef>) : (fid, funcdef)?
     hint(show %2`[%1])
 
 def $find_func_by_name(id_f, `{ (fid -> fd)* }) = eps
   -- if eps = $find_funcs_by_name<funcdef>(id_f, fid*, fd*)
-def $find_func_by_name(id_f, `{ (fid -> fd)* }) = fd_f
-  -- if (_, fd_f) = $find_funcs_by_name<funcdef>(id_f, fid*, fd*)
+def $find_func_by_name(id_f, `{ (fid -> fd)* }) = (fid_f, fd_f)
+  -- if (fid_f, fd_f) = $find_funcs_by_name<funcdef>(id_f, fid*, fd*)
