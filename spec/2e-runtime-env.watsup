@@ -185,15 +185,15 @@ def $find_func<V>(id_f, (id_a?)*, `{ (fid -> V)* }) = (fid', V', id_deft*)
   -- if (fid', V', id_deft*) = $find_matching_funcs<V>(id_f, (id_a?)*, eps, fid*, V*)
 
 ;; Find all functions that match the given name
-dec $find_funcs_by_name(id, fid*, funcdef*) : funcdef*
+dec $find_funcs_by_name<V>(id, fid*, V*) : (fid, V)*
     ;;hint(show FIND_FUNCS_BY_NAME(%1, %2, %3))
 
-def $find_funcs_by_name(id_f, eps, eps) = eps
-def $find_funcs_by_name(id_f, (id_h _) :: fid_t*, fd_h :: fd_t*)
-    = fd_h :: $find_funcs_by_name(id_f, fid_t*, fd_t*)
+def $find_funcs_by_name<V>(id_f, eps, eps) = eps
+def $find_funcs_by_name<V>(id_f, (id_h (id_p_h, bool_p_h)*) :: fid_t*, V_h :: V_t*)
+    = (id_h (id_p_h, bool_p_h)*, V_h) :: $find_funcs_by_name<V>(id_f, fid_t*, V_t*)
   -- if id_f = id_h
-def $find_funcs_by_name(id_f, _ :: fid_t*, _ :: fd_t*)
-    = $find_funcs_by_name(id_f, fid_t*, fd_t*)
+def $find_funcs_by_name<V>(id_f, _ :: fid_t*, _ :: V_t*)
+    = $find_funcs_by_name<V>(id_f, fid_t*, V_t*)
   -- otherwise
   
 ;; Find a matching function, given a function name only
@@ -201,6 +201,6 @@ dec $find_func_by_name(id, map<fid, funcdef>) : funcdef?
     hint(show %2`[%1])
 
 def $find_func_by_name(id_f, `{ (fid -> fd)* }) = eps
-  -- if eps = $find_funcs_by_name(id_f, fid*, fd*)
+  -- if eps = $find_funcs_by_name<funcdef>(id_f, fid*, fd*)
 def $find_func_by_name(id_f, `{ (fid -> fd)* }) = fd_f
-  -- if fd_f = $find_funcs_by_name(id_f, fid*, fd*)
+  -- if (_, fd_f) = $find_funcs_by_name<funcdef>(id_f, fid*, fd*)

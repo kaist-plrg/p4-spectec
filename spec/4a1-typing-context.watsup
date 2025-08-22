@@ -273,6 +273,13 @@ def $add_consdef(GLOBAL, C, cid, cd) = C[ .GLOBAL.CDENV = cdenv ]
   -- if ~$in_set<cid>(cid, $dom_map<cid, consdef>(C.GLOBAL.CDENV))
   -- if cdenv = $add_map<cid, consdef>(C.GLOBAL.CDENV, cid, cd)
 
+dec $add_consdefs(cursor, context, cid*, consdef*) : context
+
+def $add_consdefs(p, C, eps, eps) = C
+def $add_consdefs(p, C, cid_h :: cid_t*, cd_h :: cd_t*) = C''
+    -- if C' = $add_consdef(p, C, cid_h, cd_h)
+    -- if C'' = $add_consdefs(p, C', cid_t*, cd_t*)
+
 ;;
 ;; Finders
 ;;
@@ -358,3 +365,14 @@ def $find_consdef(p, C, TOP id, arg*) = $find_func<consdef>(id, $to_fkey(arg*), 
 def $find_consdef(GLOBAL, C, CURRENT id, arg*) = $find_func<consdef>(id, $to_fkey(arg*), C.GLOBAL.CDENV)
 def $find_consdef(BLOCK, C, CURRENT id, arg*) = $find_consdef(GLOBAL, C, CURRENT id, arg*)
 def $find_consdef(LOCAL, C, CURRENT id, arg*) = $find_consdef(BLOCK, C, CURRENT id, arg*)
+
+dec $find_consdefs_by_name(cursor, context, name) : (cid, consdef)*
+
+def $find_consdefs_by_name(GLOBAL, C, TOP id) = $find_funcs_by_name<consdef>(id, cid*, cd*)
+  -- if `{ (cid -> cd)* } = C.GLOBAL.CDENV
+def $find_consdefs_by_name(GLOBAL, C, CURRENT id) = $find_funcs_by_name<consdef>(id, cid*, cd*)
+  -- if `{ (cid -> cd)* } = C.GLOBAL.CDENV
+def $find_consdefs_by_name(BLOCK, C, CURRENT id) = $find_funcs_by_name<consdef>(id, cid*, cd*)
+  -- if `{ (cid -> cd)* } = C.GLOBAL.CDENV
+def $find_consdefs_by_name(LOCAL, C, CURRENT id) = $find_funcs_by_name<consdef>(id, cid*, cd*)
+  -- if `{ (cid -> cd)* } = C.GLOBAL.CDENV
