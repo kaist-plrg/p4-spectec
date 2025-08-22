@@ -2212,7 +2212,12 @@ def $free_typdef_poly((PolyD (tparam*{tparam <- tparam*}, tparam_hidden*{tparam_
 
 3. Return $diff_set<tid>(tidset_typ, tidset_tparams)
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:9.1-9.38
+;; ../../../../spec/2c3-runtime-type-subst.watsup:9.1-9.40
+def $free_paramtyp((_id _dir typ _exprIL?{_exprIL <- _exprIL?}))
+
+1. Return $free_typ(typ)
+
+;; ../../../../spec/2c3-runtime-type-subst.watsup:10.1-10.38
 def $free_functyp(functyp)
 
 1. Case analysis on functyp
@@ -2221,85 +2226,69 @@ def $free_functyp(functyp)
 
     1. (Let (ActionT pt*{pt <- pt*}) be functyp)
 
-    2. (Let (_id _dir typ _exprIL?{_exprIL <- _exprIL?}) be pt)*{_dir <- _dir*, _exprIL? <- _exprIL?*, _id <- _id*, pt <- pt*, typ <- typ*}
-
-    3. Return $unions_set<tid>($free_typ(typ)*{typ <- typ*})
+    2. Return $unions_set<tid>($free_paramtyp(pt)*{pt <- pt*})
 
   2. Case (% matches pattern `ExternFuncT%%`)
 
     1. (Let (ExternFuncT pt*{pt <- pt*} typ_r) be functyp)
 
-    2. (Let (_id _dir typ_p _exprIL?{_exprIL <- _exprIL?}) be pt)*{_dir <- _dir*, _exprIL? <- _exprIL?*, _id <- _id*, pt <- pt*, typ_p <- typ_p*}
+    2. (Let tidset_params be $unions_set<tid>($free_paramtyp(pt)*{pt <- pt*}))
 
-    3. (Let tidset_params be $unions_set<tid>($free_typ(typ_p)*{typ_p <- typ_p*}))
+    3. (Let tidset_return be $free_typ(typ_r))
 
-    4. (Let tidset_return be $free_typ(typ_r))
-
-    5. Return $union_set<tid>(tidset_params, tidset_return)
+    4. Return $union_set<tid>(tidset_params, tidset_return)
 
   3. Case (% matches pattern `FuncT%%`)
 
     1. (Let (FuncT pt*{pt <- pt*} typ_r) be functyp)
 
-    2. (Let (_id _dir typ_p _exprIL?{_exprIL <- _exprIL?}) be pt)*{_dir <- _dir*, _exprIL? <- _exprIL?*, _id <- _id*, pt <- pt*, typ_p <- typ_p*}
+    2. (Let tidset_params be $unions_set<tid>($free_paramtyp(pt)*{pt <- pt*}))
 
-    3. (Let tidset_params be $unions_set<tid>($free_typ(typ_p)*{typ_p <- typ_p*}))
+    3. (Let tidset_return be $free_typ(typ_r))
 
-    4. (Let tidset_return be $free_typ(typ_r))
-
-    5. Return $union_set<tid>(tidset_params, tidset_return)
+    4. Return $union_set<tid>(tidset_params, tidset_return)
 
   4. Case (% matches pattern `BuiltinMethodT%%`)
 
     1. (Let (BuiltinMethodT pt*{pt <- pt*} typ_r) be functyp)
 
-    2. (Let (_id _dir typ_p _exprIL?{_exprIL <- _exprIL?}) be pt)*{_dir <- _dir*, _exprIL? <- _exprIL?*, _id <- _id*, pt <- pt*, typ_p <- typ_p*}
+    2. (Let tidset_params be $unions_set<tid>($free_paramtyp(pt)*{pt <- pt*}))
 
-    3. (Let tidset_params be $unions_set<tid>($free_typ(typ_p)*{typ_p <- typ_p*}))
+    3. (Let tidset_return be $free_typ(typ_r))
 
-    4. (Let tidset_return be $free_typ(typ_r))
-
-    5. Return $union_set<tid>(tidset_params, tidset_return)
+    4. Return $union_set<tid>(tidset_params, tidset_return)
 
   5. Case (% matches pattern `ExternMethodT%%`)
 
     1. (Let (ExternMethodT pt*{pt <- pt*} typ_r) be functyp)
 
-    2. (Let (_id _dir typ_p _exprIL?{_exprIL <- _exprIL?}) be pt)*{_dir <- _dir*, _exprIL? <- _exprIL?*, _id <- _id*, pt <- pt*, typ_p <- typ_p*}
+    2. (Let tidset_params be $unions_set<tid>($free_paramtyp(pt)*{pt <- pt*}))
 
-    3. (Let tidset_params be $unions_set<tid>($free_typ(typ_p)*{typ_p <- typ_p*}))
+    3. (Let tidset_return be $free_typ(typ_r))
 
-    4. (Let tidset_return be $free_typ(typ_r))
-
-    5. Return $union_set<tid>(tidset_params, tidset_return)
+    4. Return $union_set<tid>(tidset_params, tidset_return)
 
   6. Case (% matches pattern `ExternAbstractMethodT%%`)
 
     1. (Let (ExternAbstractMethodT pt*{pt <- pt*} typ_r) be functyp)
 
-    2. (Let (_id _dir typ_p _exprIL?{_exprIL <- _exprIL?}) be pt)*{_dir <- _dir*, _exprIL? <- _exprIL?*, _id <- _id*, pt <- pt*, typ_p <- typ_p*}
+    2. (Let tidset_params be $unions_set<tid>($free_paramtyp(pt)*{pt <- pt*}))
 
-    3. (Let tidset_params be $unions_set<tid>($free_typ(typ_p)*{typ_p <- typ_p*}))
+    3. (Let tidset_return be $free_typ(typ_r))
 
-    4. (Let tidset_return be $free_typ(typ_r))
-
-    5. Return $union_set<tid>(tidset_params, tidset_return)
+    4. Return $union_set<tid>(tidset_params, tidset_return)
 
   7. Case (% matches pattern `ParserApplyMethodT%`)
 
     1. (Let (ParserApplyMethodT pt*{pt <- pt*}) be functyp)
 
-    2. (Let (_id _dir typ _exprIL?{_exprIL <- _exprIL?}) be pt)*{_dir <- _dir*, _exprIL? <- _exprIL?*, _id <- _id*, pt <- pt*, typ <- typ*}
-
-    3. Return $unions_set<tid>($free_typ(typ)*{typ <- typ*})
+    2. Return $unions_set<tid>($free_paramtyp(pt)*{pt <- pt*})
 
   8. Case (% matches pattern `ControlApplyMethodT%`)
 
     1. (Let (ControlApplyMethodT pt*{pt <- pt*}) be functyp)
 
-    2. (Let (_id _dir typ _exprIL?{_exprIL <- _exprIL?}) be pt)*{_dir <- _dir*, _exprIL? <- _exprIL?*, _id <- _id*, pt <- pt*, typ <- typ*}
-
-    3. Return $unions_set<tid>($free_typ(typ)*{typ <- typ*})
+    2. Return $unions_set<tid>($free_paramtyp(pt)*{pt <- pt*})
 
   9. Case (% matches pattern `TableApplyMethodT%`)
 
@@ -2307,7 +2296,7 @@ def $free_functyp(functyp)
 
     2. Return $free_typ(typ)
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:10.1-10.38
+;; ../../../../spec/2c3-runtime-type-subst.watsup:11.1-11.38
 def $free_funcdef(funcdef)
 
 1. Case analysis on funcdef
@@ -2328,8 +2317,19 @@ def $free_funcdef(funcdef)
 
     4. Return $diff_set<tid>(tidset_ft, tidset_tparams)
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:12.1-12.33
-def $subst_typ(theta, typ''')
+;; ../../../../spec/2c3-runtime-type-subst.watsup:13.1-13.33
+def $subst_typ(set<pair<id, typ>>', typ)
+
+1. If ((set<pair<id, typ>>' = ({ [] }))), then
+
+  1. Return typ
+
+2. Otherwise
+
+  1. Return $subst_typ'(set<pair<id, typ>>', typ)
+
+;; ../../../../spec/2c3-runtime-type-subst.watsup:14.1-14.34
+def $subst_typ'(theta, typ''')
 
 1. Case analysis on typ'''
 
@@ -2357,9 +2357,9 @@ def $subst_typ(theta, typ''')
 
         1. (Let (SpecT ptd typ*{typ <- typ*}) be abstyp)
 
-        2. (Let ptd' be $subst_typdef_poly(theta, ptd))
+        2. (Let ptd' be $subst_typdef_poly'(theta, ptd))
 
-        3. (Let typ'''*{typ''' <- typ'''*} be $subst_typ(theta, typ)*{typ <- typ*})
+        3. (Let typ''' be $subst_typ'(theta, typ))*{typ <- typ*, typ''' <- typ'''*}
 
         4. Return ((SpecT ptd' typ'''*{typ''' <- typ'''*}) as typ)
 
@@ -2367,7 +2367,7 @@ def $subst_typ(theta, typ''')
 
     1. (Let (DefT _id typ) be (typ''' as aliastyp))
 
-    2. Return $subst_typ(theta, typ)
+    2. Return $subst_typ'(theta, typ)
 
   3. Case (% has type datatyp)
 
@@ -2379,49 +2379,49 @@ def $subst_typ(theta, typ''')
 
         1. (Let (NewT id typ) be datatyp)
 
-        2. Return ((NewT id $subst_typ(theta, typ)) as typ)
+        2. Return ((NewT id $subst_typ'(theta, typ)) as typ)
 
       2. Case (% matches pattern `SEnumT%%%`)
 
         1. (Let (SEnumT id typ (member, val)*{member <- member*, val <- val*}) be datatyp)
 
-        2. Return ((SEnumT id $subst_typ(theta, typ) (member, val)*{member <- member*, val <- val*}) as typ)
+        2. Return ((SEnumT id $subst_typ'(theta, typ) (member, val)*{member <- member*, val <- val*}) as typ)
 
       3. Case (% matches pattern `ListT%`)
 
         1. (Let (ListT typ) be datatyp)
 
-        2. Return ((ListT $subst_typ(theta, typ)) as typ)
+        2. Return ((ListT $subst_typ'(theta, typ)) as typ)
 
       4. Case (% matches pattern `TupleT%`)
 
         1. (Let (TupleT typ*{typ <- typ*}) be datatyp)
 
-        2. Return ((TupleT $subst_typ(theta, typ)*{typ <- typ*}) as typ)
+        2. Return ((TupleT $subst_typ'(theta, typ)*{typ <- typ*}) as typ)
 
       5. Case (% matches pattern `StackT%%`)
 
         1. (Let (StackT typ int) be datatyp)
 
-        2. Return ((StackT $subst_typ(theta, typ) int) as typ)
+        2. Return ((StackT $subst_typ'(theta, typ) int) as typ)
 
       6. Case (% matches pattern `StructT%%`)
 
         1. (Let (StructT id (member, typ)*{member <- member*, typ <- typ*}) be datatyp)
 
-        2. Return ((StructT id (member, $subst_typ(theta, typ))*{member <- member*, typ <- typ*}) as typ)
+        2. Return ((StructT id (member, $subst_typ'(theta, typ))*{member <- member*, typ <- typ*}) as typ)
 
       7. Case (% matches pattern `HeaderT%%`)
 
         1. (Let (HeaderT id (member, typ)*{member <- member*, typ <- typ*}) be datatyp)
 
-        2. Return ((HeaderT id (member, $subst_typ(theta, typ))*{member <- member*, typ <- typ*}) as typ)
+        2. Return ((HeaderT id (member, $subst_typ'(theta, typ))*{member <- member*, typ <- typ*}) as typ)
 
       8. Case (% matches pattern `UnionT%%`)
 
         1. (Let (UnionT id (member, typ)*{member <- member*, typ <- typ*}) be datatyp)
 
-        2. Return ((UnionT id (member, $subst_typ(theta, typ))*{member <- member*, typ <- typ*}) as typ)
+        2. Return ((UnionT id (member, $subst_typ'(theta, typ))*{member <- member*, typ <- typ*}) as typ)
 
   4. Case (% has type objtyp)
 
@@ -2435,7 +2435,7 @@ def $subst_typ(theta, typ''')
 
         2. (Let ({ (fid -> funcdef)*{fid <- fid*, funcdef <- funcdef*} }) be fmap)
 
-        3. (Let fmap' be ({ (fid -> $subst_funcdef(theta, funcdef))*{fid <- fid*, funcdef <- funcdef*} }))
+        3. (Let fmap' be ({ (fid -> $subst_funcdef'(theta, funcdef))*{fid <- fid*, funcdef <- funcdef*} }))
 
         4. Return ((ExternT id fmap') as typ)
 
@@ -2443,33 +2443,25 @@ def $subst_typ(theta, typ''')
 
         1. (Let (ParserT id pt*{pt <- pt*}) be objtyp)
 
-        2. (Let (id' dir typ''' exprIL?{exprIL <- exprIL?}) be pt)*{dir <- dir*, exprIL? <- exprIL?*, id' <- id'*, pt <- pt*, typ''' <- typ'''*}
-
-        3. (Let pt' be (id' dir $subst_typ(theta, typ''') exprIL?{exprIL <- exprIL?}))*{dir <- dir*, exprIL? <- exprIL?*, id' <- id'*, pt' <- pt'*, typ''' <- typ'''*}
-
-        4. Return ((ParserT id pt'*{pt' <- pt'*}) as typ)
+        2. Return ((ParserT id $subst_paramtyp'(theta, pt)*{pt <- pt*}) as typ)
 
       3. Case (% matches pattern `ControlT%%`)
 
         1. (Let (ControlT id pt*{pt <- pt*}) be objtyp)
 
-        2. (Let (id' dir typ''' exprIL?{exprIL <- exprIL?}) be pt)*{dir <- dir*, exprIL? <- exprIL?*, id' <- id'*, pt <- pt*, typ''' <- typ'''*}
-
-        3. (Let pt' be (id' dir $subst_typ(theta, typ''') exprIL?{exprIL <- exprIL?}))*{dir <- dir*, exprIL? <- exprIL?*, id' <- id'*, pt' <- pt'*, typ''' <- typ'''*}
-
-        4. Return ((ControlT id pt'*{pt' <- pt'*}) as typ)
+        2. Return ((ControlT id $subst_paramtyp'(theta, pt)*{pt <- pt*}) as typ)
 
       4. Case (% matches pattern `PackageT%%`)
 
         1. (Let (PackageT id typ'''*{typ''' <- typ'''*}) be objtyp)
 
-        2. Return ((PackageT id $subst_typ(theta, typ''')*{typ''' <- typ'''*}) as typ)
+        2. Return ((PackageT id $subst_typ'(theta, typ''')*{typ''' <- typ'''*}) as typ)
 
       5. Case (% matches pattern `TableT%%`)
 
         1. (Let (TableT id typ''') be objtyp)
 
-        2. Return ((TableT id $subst_typ(theta, typ''')) as typ)
+        2. Return ((TableT id $subst_typ'(theta, typ''')) as typ)
 
   5. Case (% has type synthtyp)
 
@@ -2481,44 +2473,55 @@ def $subst_typ(theta, typ''')
 
         1. (Let (TableStructT id (member, typ''')*{member <- member*, typ''' <- typ'''*}) be synthtyp)
 
-        2. Return ((TableStructT id (member, $subst_typ(theta, typ'''))*{member <- member*, typ''' <- typ'''*}) as typ)
+        2. Return ((TableStructT id (member, $subst_typ'(theta, typ'''))*{member <- member*, typ''' <- typ'''*}) as typ)
 
       2. Case (% matches pattern `SeqT%`)
 
         1. (Let (SeqT typ'''*{typ''' <- typ'''*}) be synthtyp)
 
-        2. Return ((SeqT $subst_typ(theta, typ''')*{typ''' <- typ'''*}) as typ)
+        2. Return ((SeqT $subst_typ'(theta, typ''')*{typ''' <- typ'''*}) as typ)
 
       3. Case (% matches pattern `SeqDefaultT%`)
 
         1. (Let (SeqDefaultT typ'''*{typ''' <- typ'''*}) be synthtyp)
 
-        2. Return ((SeqDefaultT $subst_typ(theta, typ''')*{typ''' <- typ'''*}) as typ)
+        2. Return ((SeqDefaultT $subst_typ'(theta, typ''')*{typ''' <- typ'''*}) as typ)
 
       4. Case (% matches pattern `RecordT%`)
 
         1. (Let (RecordT (member, typ''')*{member <- member*, typ''' <- typ'''*}) be synthtyp)
 
-        2. Return ((RecordT (member, $subst_typ(theta, typ'''))*{member <- member*, typ''' <- typ'''*}) as typ)
+        2. Return ((RecordT (member, $subst_typ'(theta, typ'''))*{member <- member*, typ''' <- typ'''*}) as typ)
 
       5. Case (% matches pattern `RecordDefaultT%`)
 
         1. (Let (RecordDefaultT (member, typ''')*{member <- member*, typ''' <- typ'''*}) be synthtyp)
 
-        2. Return ((RecordDefaultT (member, $subst_typ(theta, typ'''))*{member <- member*, typ''' <- typ'''*}) as typ)
+        2. Return ((RecordDefaultT (member, $subst_typ'(theta, typ'''))*{member <- member*, typ''' <- typ'''*}) as typ)
 
       6. Case (% matches pattern `SetT%`)
 
         1. (Let (SetT typ''') be synthtyp)
 
-        2. Return ((SetT $subst_typ(theta, typ''')) as typ)
+        2. Return ((SetT $subst_typ'(theta, typ''')) as typ)
 
 2. Otherwise
 
   1. Return typ'''
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:13.1-13.55
-def $subst_typdef_poly(theta, (PolyD (tparam*{tparam <- tparam*}, tparam_hidden*{tparam_hidden <- tparam_hidden*}) -> typ))
+;; ../../../../spec/2c3-runtime-type-subst.watsup:15.1-15.55
+def $subst_typdef_poly(set<pair<id, typ>>', ptd)
+
+1. If ((set<pair<id, typ>>' = ({ [] }))), then
+
+  1. Return ptd
+
+2. Otherwise
+
+  1. Return $subst_typdef_poly'(set<pair<id, typ>>', ptd)
+
+;; ../../../../spec/2c3-runtime-type-subst.watsup:16.1-16.56
+def $subst_typdef_poly'(theta, (PolyD (tparam*{tparam <- tparam*}, tparam_hidden*{tparam_hidden <- tparam_hidden*}) -> typ))
 
 1. (Let ({ tid_free*{tid_free <- tid_free*} }) be $diff_set<tid>($free_typ(typ), ({ tparam*{tparam <- tparam*} ++ tparam_hidden*{tparam_hidden <- tparam_hidden*} })))
 
@@ -2542,7 +2545,7 @@ def $subst_typdef_poly(theta, (PolyD (tparam*{tparam <- tparam*}, tparam_hidden*
 
     4. (Let theta'' be $adds_map<tid, typ>(theta', tparam_hidden*{tparam_hidden <- tparam_hidden*}, ((VarT tparam''_hidden) as typ)*{tparam''_hidden <- tparam''_hidden*}))
 
-    5. (Let typ' be $subst_typ(theta'', typ))
+    5. (Let typ' be $subst_typ'(theta'', typ))
 
     6. Return (PolyD (tparam''*{tparam'' <- tparam''*}, tparam''_hidden*{tparam''_hidden <- tparam''_hidden*}) -> typ')
 
@@ -2550,8 +2553,35 @@ def $subst_typdef_poly(theta, (PolyD (tparam*{tparam <- tparam*}, tparam_hidden*
 
 3. Else Phantom#7
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:14.1-14.45
-def $subst_funcdef(theta, funcdef)
+;; ../../../../spec/2c3-runtime-type-subst.watsup:17.1-17.48
+def $subst_paramtyp(set<pair<id, typ>>', pt)
+
+1. If ((set<pair<id, typ>>' = ({ [] }))), then
+
+  1. Return pt
+
+2. Otherwise
+
+  1. Return $subst_paramtyp'(set<pair<id, typ>>', pt)
+
+;; ../../../../spec/2c3-runtime-type-subst.watsup:18.1-18.49
+def $subst_paramtyp'(theta, (id dir typ exprIL?{exprIL <- exprIL?}))
+
+1. Return (id dir $subst_typ'(theta, typ) exprIL?{exprIL <- exprIL?})
+
+;; ../../../../spec/2c3-runtime-type-subst.watsup:19.1-19.45
+def $subst_funcdef(set<pair<id, typ>>', funcdef)
+
+1. If ((set<pair<id, typ>>' = ({ [] }))), then
+
+  1. Return funcdef
+
+2. Otherwise
+
+  1. Return $subst_funcdef'(set<pair<id, typ>>', funcdef)
+
+;; ../../../../spec/2c3-runtime-type-subst.watsup:20.1-20.46
+def $subst_funcdef'(theta, funcdef)
 
 1. Case analysis on funcdef
 
@@ -2559,7 +2589,7 @@ def $subst_funcdef(theta, funcdef)
 
     1. (Let (MonoFD ft) be (funcdef as monofuncdef))
 
-    2. Return ((MonoFD $subst_functyp(theta, ft)) as funcdef)
+    2. Return ((MonoFD $subst_functyp'(theta, ft)) as funcdef)
 
   2. Case (% has type polyfuncdef)
 
@@ -2587,7 +2617,7 @@ def $subst_funcdef(theta, funcdef)
 
         4. (Let theta'' be $adds_map<tid, typ>(theta', tparam_hidden*{tparam_hidden <- tparam_hidden*}, ((VarT tparam''_hidden) as typ)*{tparam''_hidden <- tparam''_hidden*}))
 
-        5. (Let ft' be $subst_functyp(theta'', ft))
+        5. (Let ft' be $subst_functyp'(theta'', ft))
 
         6. Return ((PolyFD (tparam''*{tparam'' <- tparam''*}, tparam''_hidden*{tparam''_hidden <- tparam''_hidden*}) -> ft') as funcdef)
 
@@ -2595,8 +2625,19 @@ def $subst_funcdef(theta, funcdef)
 
     4. Else Phantom#9
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:15.1-15.45
-def $subst_functyp(theta, functyp)
+;; ../../../../spec/2c3-runtime-type-subst.watsup:21.1-21.45
+def $subst_functyp(set<pair<id, typ>>', functyp)
+
+1. If ((set<pair<id, typ>>' = ({ [] }))), then
+
+  1. Return functyp
+
+2. Otherwise
+
+  1. Return $subst_functyp'(set<pair<id, typ>>', functyp)
+
+;; ../../../../spec/2c3-runtime-type-subst.watsup:22.1-22.46
+def $subst_functyp'(theta, functyp)
 
 1. Case analysis on functyp
 
@@ -2604,98 +2645,73 @@ def $subst_functyp(theta, functyp)
 
     1. (Let (BuiltinMethodT pt*{pt <- pt*} typ) be functyp)
 
-    2. (Let (id dir typ_p exprIL?{exprIL <- exprIL?}) be pt)*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt <- pt*, typ_p <- typ_p*}
-
-    3. (Let pt' be (id dir $subst_typ(theta, typ_p) exprIL?{exprIL <- exprIL?}))*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt' <- pt'*, typ_p <- typ_p*}
-
-    4. Return (BuiltinMethodT pt'*{pt' <- pt'*} $subst_typ(theta, typ))
+    2. Return (BuiltinMethodT $subst_paramtyp'(theta, pt)*{pt <- pt*} $subst_typ'(theta, typ))
 
   2. Case (% matches pattern `ActionT%`)
 
     1. (Let (ActionT pt*{pt <- pt*}) be functyp)
 
-    2. (Let (id dir typ exprIL?{exprIL <- exprIL?}) be pt)*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt <- pt*, typ <- typ*}
-
-    3. (Let pt' be (id dir $subst_typ(theta, typ) exprIL?{exprIL <- exprIL?}))*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt' <- pt'*, typ <- typ*}
-
-    4. Return (ActionT pt'*{pt' <- pt'*})
+    2. Return (ActionT $subst_paramtyp'(theta, pt)*{pt <- pt*})
 
   3. Case (% matches pattern `ParserApplyMethodT%`)
 
     1. (Let (ParserApplyMethodT pt*{pt <- pt*}) be functyp)
 
-    2. (Let (id dir typ exprIL?{exprIL <- exprIL?}) be pt)*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt <- pt*, typ <- typ*}
-
-    3. (Let pt' be (id dir $subst_typ(theta, typ) exprIL?{exprIL <- exprIL?}))*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt' <- pt'*, typ <- typ*}
-
-    4. Return (ParserApplyMethodT pt'*{pt' <- pt'*})
+    2. Return (ParserApplyMethodT $subst_paramtyp'(theta, pt)*{pt <- pt*})
 
   4. Case (% matches pattern `ControlApplyMethodT%`)
 
     1. (Let (ControlApplyMethodT pt*{pt <- pt*}) be functyp)
 
-    2. (Let (id dir typ exprIL?{exprIL <- exprIL?}) be pt)*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt <- pt*, typ <- typ*}
-
-    3. (Let pt' be (id dir $subst_typ(theta, typ) exprIL?{exprIL <- exprIL?}))*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt' <- pt'*, typ <- typ*}
-
-    4. Return (ControlApplyMethodT pt'*{pt' <- pt'*})
+    2. Return (ControlApplyMethodT $subst_paramtyp'(theta, pt)*{pt <- pt*})
 
   5. Case (% matches pattern `TableApplyMethodT%`)
 
     1. (Let (TableApplyMethodT typ) be functyp)
 
-    2. Return (TableApplyMethodT $subst_typ(theta, typ))
+    2. Return (TableApplyMethodT $subst_typ'(theta, typ))
 
   6. Case (% matches pattern `ExternFuncT%%`)
 
     1. (Let (ExternFuncT pt*{pt <- pt*} typ) be functyp)
 
-    2. (Let (id dir typ_p exprIL?{exprIL <- exprIL?}) be pt)*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt <- pt*, typ_p <- typ_p*}
-
-    3. (Let pt' be (id dir $subst_typ(theta, typ_p) exprIL?{exprIL <- exprIL?}))*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt' <- pt'*, typ_p <- typ_p*}
-
-    4. Return (ExternFuncT pt'*{pt' <- pt'*} $subst_typ(theta, typ))
+    2. Return (ExternFuncT $subst_paramtyp'(theta, pt)*{pt <- pt*} $subst_typ'(theta, typ))
 
   7. Case (% matches pattern `FuncT%%`)
 
     1. (Let (FuncT pt*{pt <- pt*} typ) be functyp)
 
-    2. (Let (id dir typ_p exprIL?{exprIL <- exprIL?}) be pt)*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt <- pt*, typ_p <- typ_p*}
-
-    3. (Let pt' be (id dir $subst_typ(theta, typ_p) exprIL?{exprIL <- exprIL?}))*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt' <- pt'*, typ_p <- typ_p*}
-
-    4. Return (FuncT pt'*{pt' <- pt'*} $subst_typ(theta, typ))
+    2. Return (FuncT $subst_paramtyp'(theta, pt)*{pt <- pt*} $subst_typ'(theta, typ))
 
   8. Case (% matches pattern `ExternMethodT%%`)
 
     1. (Let (ExternMethodT pt*{pt <- pt*} typ) be functyp)
 
-    2. (Let (id dir typ_p exprIL?{exprIL <- exprIL?}) be pt)*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt <- pt*, typ_p <- typ_p*}
-
-    3. (Let pt' be (id dir $subst_typ(theta, typ_p) exprIL?{exprIL <- exprIL?}))*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt' <- pt'*, typ_p <- typ_p*}
-
-    4. Return (ExternMethodT pt'*{pt' <- pt'*} $subst_typ(theta, typ))
+    2. Return (ExternMethodT $subst_paramtyp'(theta, pt)*{pt <- pt*} $subst_typ'(theta, typ))
 
   9. Case (% matches pattern `ExternAbstractMethodT%%`)
 
     1. (Let (ExternAbstractMethodT pt*{pt <- pt*} typ) be functyp)
 
-    2. (Let (id dir typ_p exprIL?{exprIL <- exprIL?}) be pt)*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt <- pt*, typ_p <- typ_p*}
+    2. Return (ExternAbstractMethodT $subst_paramtyp'(theta, pt)*{pt <- pt*} $subst_typ'(theta, typ))
 
-    3. (Let pt' be (id dir $subst_typ(theta, typ_p) exprIL?{exprIL <- exprIL?}))*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt' <- pt'*, typ_p <- typ_p*}
+;; ../../../../spec/2c3-runtime-type-subst.watsup:23.1-23.45
+def $subst_constyp(set<pair<id, typ>>', constyp)
 
-    4. Return (ExternAbstractMethodT pt'*{pt' <- pt'*} $subst_typ(theta, typ))
+1. If ((set<pair<id, typ>>' = ({ [] }))), then
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:16.1-16.45
-def $subst_constyp(theta, (ConsT pt*{pt <- pt*} typ))
+  1. Return constyp
 
-1. (Let (id dir typ_p exprIL?{exprIL <- exprIL?}) be pt)*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt <- pt*, typ_p <- typ_p*}
+2. Otherwise
 
-2. (Let pt' be (id dir $subst_typ(theta, typ_p) exprIL?{exprIL <- exprIL?}))*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt' <- pt'*, typ_p <- typ_p*}
+  1. Return $subst_constyp'(set<pair<id, typ>>', constyp)
 
-3. Return (ConsT pt'*{pt' <- pt'*} $subst_typ(theta, typ))
+;; ../../../../spec/2c3-runtime-type-subst.watsup:24.1-24.46
+def $subst_constyp'(theta, (ConsT pt*{pt <- pt*} typ))
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:308.1-308.43
+1. Return (ConsT $subst_paramtyp'(theta, pt)*{pt <- pt*} $subst_typ'(theta, typ))
+
+;; ../../../../spec/2c3-runtime-type-subst.watsup:363.1-363.43
 def $specialize_typdef(typdef, typ''*{typ'' <- typ''*})
 
 1. Case analysis on typdef
@@ -2720,7 +2736,7 @@ def $specialize_typdef(typdef, typ''*{typ'' <- typ''*})
 
     4. Return $subst_typ(theta, typ)
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:319.1-319.57
+;; ../../../../spec/2c3-runtime-type-subst.watsup:375.1-375.57
 def $specialize_funcdef(funcdef, typ'*{typ' <- typ'*})
 
 1. Case analysis on funcdef
@@ -2765,7 +2781,7 @@ def $specialize_funcdef(funcdef, typ'*{typ' <- typ'*})
 
     5. Else Phantom#14
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:348.1-348.57
+;; ../../../../spec/2c3-runtime-type-subst.watsup:404.1-404.57
 def $specialize_consdef((ConsD (tparam*{tparam <- tparam*}, tparam_hidden*{tparam_hidden <- tparam_hidden*}) -> ct), typ_a*{typ_a <- typ_a*})
 
 1. (Let tparam'*{tparam' <- tparam'*} be tparam*{tparam <- tparam*} ++ tparam_hidden*{tparam_hidden <- tparam_hidden*})
@@ -2794,7 +2810,7 @@ def $specialize_consdef((ConsD (tparam*{tparam <- tparam*}, tparam_hidden*{tpara
 
 4. Else Phantom#17
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:375.1-375.26
+;; ../../../../spec/2c3-runtime-type-subst.watsup:431.1-431.26
 def $canon_typ(typ'')
 
 1. Case analysis on typ''

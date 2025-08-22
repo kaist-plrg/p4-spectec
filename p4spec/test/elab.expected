@@ -1783,19 +1783,19 @@ syntax theta = map<id, typ>
 ;; ../../../../spec/2c3-runtime-type-subst.watsup:7.1-7.30
 def $free_typ(typ) : set<tid> =
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:22.1-22.34
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:30.1-30.34
    clause 0(typ) = `{%}`_set<tid>([])
       -- if typ <: basetyp
       -- let basetyp = typ as basetyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:24.1-24.33
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:32.1-32.33
    clause 1(typ) = `{%}`_set<tid>([id])
       -- if typ <: abstyp
       -- let abstyp = typ as abstyp
       -- if abstyp matches `VarT%`
       -- let `VarT%`_abstyp(id) = abstyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:26.1-28.56
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:34.1-36.56
    clause 2(typ') = $union_set<tid>(tidset_ptd, tidset_typs)
       -- if typ' <: abstyp
       -- let abstyp = typ' as abstyp
@@ -1804,89 +1804,89 @@ def $free_typ(typ) : set<tid> =
       -- let tidset_ptd = $free_typdef_poly(ptd)
       -- let tidset_typs = $unions_set<tid>($free_typ(typ)*{typ <- typ*})
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:30.1-30.43
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:38.1-38.43
    clause 3(typ') = $free_typ(typ)
       -- if typ' <: aliastyp
       -- let `DefT%%`_aliastyp(_id, typ) = typ' as aliastyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:32.1-32.43
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:40.1-40.43
    clause 4(typ') = $free_typ(typ)
       -- if typ' <: datatyp
       -- let datatyp = typ' as datatyp
       -- if datatyp matches `NewT%%`
       -- let `NewT%%`_datatyp(_id, typ) = datatyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:34.1-34.36
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:42.1-42.36
    clause 5(typ) = `{%}`_set<tid>([])
       -- if typ <: datatyp
       -- let datatyp = typ as datatyp
       -- if datatyp matches `EnumT%%`
       -- let `EnumT%%`_datatyp(_id, _member*{_member <- _member*}) = datatyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:36.1-36.47
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:44.1-44.47
    clause 6(typ') = $free_typ(typ)
       -- if typ' <: datatyp
       -- let datatyp = typ' as datatyp
       -- if datatyp matches `SEnumT%%%`
       -- let `SEnumT%%%`_datatyp(_id, typ, _(member, val)*{_(member, val) <- _(member, val)*}) = datatyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:38.1-38.42
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:46.1-46.42
    clause 7(typ') = $free_typ(typ)
       -- if typ' <: datatyp
       -- let datatyp = typ' as datatyp
       -- if datatyp matches `ListT%`
       -- let `ListT%`_datatyp(typ) = datatyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:40.1-40.63
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:48.1-48.63
    clause 8(typ') = $unions_set<tid>($free_typ(typ)*{typ <- typ*})
       -- if typ' <: datatyp
       -- let datatyp = typ' as datatyp
       -- if datatyp matches `TupleT%`
       -- let `TupleT%`_datatyp(typ*{typ <- typ*}) = datatyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:42.1-42.45
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:50.1-50.45
    clause 9(typ') = $free_typ(typ)
       -- if typ' <: datatyp
       -- let datatyp = typ' as datatyp
       -- if datatyp matches `StackT%%`
       -- let `StackT%%`_datatyp(typ, _int) = datatyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:44.1-44.71
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:52.1-52.71
    clause 10(typ') = $unions_set<tid>($free_typ(typ)*{typ <- typ*})
       -- if typ' <: datatyp
       -- let datatyp = typ' as datatyp
       -- if datatyp matches `StructT%%`
       -- let `StructT%%`_datatyp(_id, (_member, typ)*{_member <- _member*, typ <- typ*}) = datatyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:46.1-46.71
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:54.1-54.71
    clause 11(typ') = $unions_set<tid>($free_typ(typ)*{typ <- typ*})
       -- if typ' <: datatyp
       -- let datatyp = typ' as datatyp
       -- if datatyp matches `HeaderT%%`
       -- let `HeaderT%%`_datatyp(_id, (_member, typ)*{_member <- _member*, typ <- typ*}) = datatyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:48.1-48.70
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:56.1-56.70
    clause 12(typ') = $unions_set<tid>($free_typ(typ)*{typ <- typ*})
       -- if typ' <: datatyp
       -- let datatyp = typ' as datatyp
       -- if datatyp matches `UnionT%%`
       -- let `UnionT%%`_datatyp(_id, (_member, typ)*{_member <- _member*, typ <- typ*}) = datatyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:50.1-50.82
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:58.1-58.82
    clause 13(typ) = $unions_set<tid>($free_funcdef(fd)*{fd <- fd*})
       -- if typ <: objtyp
       -- let objtyp = typ as objtyp
       -- if objtyp matches `ExternT%%`
       -- let `ExternT%%`_objtyp(_id, `{%}`_set<pair<fid, funcdef>>(`%->%`_pair<fid, funcdef>(_fid, fd)*{_fid <- _fid*, fd <- fd*})) = objtyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:52.1-52.82
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:60.1-60.82
    clause 14(typ) = $unions_set<tid>($free_funcdef(fd)*{fd <- fd*})
       -- if typ <: objtyp
       -- let objtyp = typ as objtyp
       -- if objtyp matches `ExternT%%`
       -- let `ExternT%%`_objtyp(_id, `{%}`_set<pair<fid, funcdef>>(`%->%`_pair<fid, funcdef>(_fid, fd)*{_fid <- _fid*, fd <- fd*})) = objtyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:54.1-55.26
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:62.1-63.26
    clause 15(typ') = $unions_set<tid>($free_typ(typ)*{typ <- typ*})
       -- if typ' <: objtyp
       -- let objtyp = typ' as objtyp
@@ -1894,7 +1894,7 @@ def $free_typ(typ) : set<tid> =
       -- let `ParserT%%`_objtyp(_id, pt*{pt <- pt*}) = objtyp
       -- (let `%%%%`_paramtyp(_id', _dir, typ, _exprIL?{_exprIL <- _exprIL?}) = pt)*{_dir <- _dir*, _exprIL? <- _exprIL?*, _id' <- _id'*, pt <- pt*, typ <- typ*}
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:57.1-58.26
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:65.1-66.26
    clause 16(typ') = $unions_set<tid>($free_typ(typ)*{typ <- typ*})
       -- if typ' <: objtyp
       -- let objtyp = typ' as objtyp
@@ -1902,178 +1902,187 @@ def $free_typ(typ) : set<tid> =
       -- let `ControlT%%`_objtyp(_id, pt*{pt <- pt*}) = objtyp
       -- (let `%%%%`_paramtyp(_id', _dir, typ, _exprIL?{_exprIL <- _exprIL?}) = pt)*{_dir <- _dir*, _exprIL? <- _exprIL?*, _id' <- _id'*, pt <- pt*, typ <- typ*}
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:60.1-60.67
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:68.1-68.67
    clause 17(typ') = $unions_set<tid>($free_typ(typ)*{typ <- typ*})
       -- if typ' <: objtyp
       -- let objtyp = typ' as objtyp
       -- if objtyp matches `PackageT%%`
       -- let `PackageT%%`_objtyp(_id, typ*{typ <- typ*}) = objtyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:62.1-62.45
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:70.1-70.45
    clause 18(typ') = $free_typ(typ)
       -- if typ' <: objtyp
       -- let objtyp = typ' as objtyp
       -- if objtyp matches `TableT%%`
       -- let `TableT%%`_objtyp(_id, typ) = objtyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:64.1-64.35
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:72.1-72.35
    clause 19(typ) = `{%}`_set<tid>([])
       -- if (typ = `DefaultT`_synthtyp() as typ)
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:66.1-66.61
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:74.1-74.61
    clause 20(typ') = $unions_set<tid>($free_typ(typ)*{typ <- typ*})
       -- if typ' <: synthtyp
       -- let synthtyp = typ' as synthtyp
       -- if synthtyp matches `SeqT%`
       -- let `SeqT%`_synthtyp(typ*{typ <- typ*}) = synthtyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:68.1-68.68
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:76.1-76.68
    clause 21(typ') = $unions_set<tid>($free_typ(typ)*{typ <- typ*})
       -- if typ' <: synthtyp
       -- let synthtyp = typ' as synthtyp
       -- if synthtyp matches `SeqDefaultT%`
       -- let `SeqDefaultT%`_synthtyp(typ*{typ <- typ*}) = synthtyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:70.1-70.69
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:78.1-78.69
    clause 22(typ') = $unions_set<tid>($free_typ(typ)*{typ <- typ*})
       -- if typ' <: synthtyp
       -- let synthtyp = typ' as synthtyp
       -- if synthtyp matches `RecordT%`
       -- let `RecordT%`_synthtyp((_member, typ)*{_member <- _member*, typ <- typ*}) = synthtyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:72.1-72.76
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:80.1-80.76
    clause 23(typ') = $unions_set<tid>($free_typ(typ)*{typ <- typ*})
       -- if typ' <: synthtyp
       -- let synthtyp = typ' as synthtyp
       -- if synthtyp matches `RecordDefaultT%`
       -- let `RecordDefaultT%`_synthtyp((_member, typ)*{_member <- _member*, typ <- typ*}) = synthtyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:74.1-74.35
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:82.1-82.35
    clause 24(typ) = `{%}`_set<tid>([])
       -- if (typ = `InvalidT`_synthtyp() as typ)
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:76.1-76.41
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:84.1-84.41
    clause 25(typ') = $free_typ(typ)
       -- if typ' <: synthtyp
       -- let synthtyp = typ' as synthtyp
       -- if synthtyp matches `SetT%`
       -- let `SetT%`_synthtyp(typ) = synthtyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:78.1-78.33
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:86.1-86.33
    clause 26(typ) = `{%}`_set<tid>([])
       -- if (typ = `StateT`_synthtyp() as typ)
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:80.1-80.41
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:88.1-88.41
    clause 27(typ) = `{%}`_set<tid>([])
       -- if typ <: synthtyp
       -- let synthtyp = typ as synthtyp
       -- if synthtyp matches `TableEnumT%%`
       -- let `TableEnumT%%`_synthtyp(_id, _member*{_member <- _member*}) = synthtyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:82.1-82.76
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:90.1-90.76
    clause 28(typ') = $unions_set<tid>($free_typ(typ)*{typ <- typ*})
       -- if typ' <: synthtyp
       -- let synthtyp = typ' as synthtyp
       -- if synthtyp matches `TableStructT%%`
       -- let `TableStructT%%`_synthtyp(_id, (_member, typ)*{_member <- _member*, typ <- typ*}) = synthtyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:84.1-84.31
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:92.1-92.31
    clause 29(typ) = `{%}`_set<tid>([])
       -- if (typ = `AnyT`_synthtyp() as typ)
 
 ;; ../../../../spec/2c3-runtime-type-subst.watsup:8.1-8.45
 def $free_typdef_poly(polytypdef) : set<tid> =
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:90.1-93.56
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:98.1-101.56
    clause 0(`PolyD%->%`_polytypdef((tparam*{tparam <- tparam*}, tparam_hidden*{tparam_hidden <- tparam_hidden*}), typ)) = $diff_set<tid>(tidset_typ, tidset_tparams)
       -- let tidset_typ = $free_typ(typ)
       -- let tidset_tparams = `{%}`_set<tid>(tparam*{tparam <- tparam*} ++ tparam_hidden*{tparam_hidden <- tparam_hidden*})
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:9.1-9.38
+;; ../../../../spec/2c3-runtime-type-subst.watsup:9.1-9.40
+def $free_paramtyp(paramtyp) : set<tid> =
+
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:107.1-107.47
+   clause 0(`%%%%`_paramtyp(_id, _dir, typ, _exprIL?{_exprIL <- _exprIL?})) = $free_typ(typ)
+
+;; ../../../../spec/2c3-runtime-type-subst.watsup:10.1-10.38
 def $free_functyp(functyp) : set<tid> =
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:99.1-100.26
-   clause 0(functyp) = $unions_set<tid>($free_typ(typ)*{typ <- typ*})
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:113.1-114.44
+   clause 0(functyp) = $unions_set<tid>($free_paramtyp(pt)*{pt <- pt*})
       -- if functyp matches `ActionT%`
       -- let `ActionT%`_functyp(pt*{pt <- pt*}) = functyp
-      -- (let `%%%%`_paramtyp(_id, _dir, typ, _exprIL?{_exprIL <- _exprIL?}) = pt)*{_dir <- _dir*, _exprIL? <- _exprIL?*, _id <- _id*, pt <- pt*, typ <- typ*}
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:102.1-106.41
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:116.1-119.41
    clause 1(functyp) = $union_set<tid>(tidset_params, tidset_return)
       -- if functyp matches `ExternFuncT%%`
       -- let `ExternFuncT%%`_functyp(pt*{pt <- pt*}, typ_r) = functyp
-      -- (let `%%%%`_paramtyp(_id, _dir, typ_p, _exprIL?{_exprIL <- _exprIL?}) = pt)*{_dir <- _dir*, _exprIL? <- _exprIL?*, _id <- _id*, pt <- pt*, typ_p <- typ_p*}
-      -- let tidset_params = $unions_set<tid>($free_typ(typ_p)*{typ_p <- typ_p*})
+      -- let tidset_params = $unions_set<tid>($free_paramtyp(pt)*{pt <- pt*})
       -- let tidset_return = $free_typ(typ_r)
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:108.1-112.41
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:121.1-124.41
    clause 2(functyp) = $union_set<tid>(tidset_params, tidset_return)
       -- if functyp matches `FuncT%%`
       -- let `FuncT%%`_functyp(pt*{pt <- pt*}, typ_r) = functyp
-      -- (let `%%%%`_paramtyp(_id, _dir, typ_p, _exprIL?{_exprIL <- _exprIL?}) = pt)*{_dir <- _dir*, _exprIL? <- _exprIL?*, _id <- _id*, pt <- pt*, typ_p <- typ_p*}
-      -- let tidset_params = $unions_set<tid>($free_typ(typ_p)*{typ_p <- typ_p*})
+      -- let tidset_params = $unions_set<tid>($free_paramtyp(pt)*{pt <- pt*})
       -- let tidset_return = $free_typ(typ_r)
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:114.1-118.41
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:126.1-129.41
    clause 3(functyp) = $union_set<tid>(tidset_params, tidset_return)
       -- if functyp matches `BuiltinMethodT%%`
       -- let `BuiltinMethodT%%`_functyp(pt*{pt <- pt*}, typ_r) = functyp
-      -- (let `%%%%`_paramtyp(_id, _dir, typ_p, _exprIL?{_exprIL <- _exprIL?}) = pt)*{_dir <- _dir*, _exprIL? <- _exprIL?*, _id <- _id*, pt <- pt*, typ_p <- typ_p*}
-      -- let tidset_params = $unions_set<tid>($free_typ(typ_p)*{typ_p <- typ_p*})
+      -- let tidset_params = $unions_set<tid>($free_paramtyp(pt)*{pt <- pt*})
       -- let tidset_return = $free_typ(typ_r)
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:120.1-124.41
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:131.1-134.41
    clause 4(functyp) = $union_set<tid>(tidset_params, tidset_return)
       -- if functyp matches `ExternMethodT%%`
       -- let `ExternMethodT%%`_functyp(pt*{pt <- pt*}, typ_r) = functyp
-      -- (let `%%%%`_paramtyp(_id, _dir, typ_p, _exprIL?{_exprIL <- _exprIL?}) = pt)*{_dir <- _dir*, _exprIL? <- _exprIL?*, _id <- _id*, pt <- pt*, typ_p <- typ_p*}
-      -- let tidset_params = $unions_set<tid>($free_typ(typ_p)*{typ_p <- typ_p*})
+      -- let tidset_params = $unions_set<tid>($free_paramtyp(pt)*{pt <- pt*})
       -- let tidset_return = $free_typ(typ_r)
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:126.1-130.41
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:136.1-139.41
    clause 5(functyp) = $union_set<tid>(tidset_params, tidset_return)
       -- if functyp matches `ExternAbstractMethodT%%`
       -- let `ExternAbstractMethodT%%`_functyp(pt*{pt <- pt*}, typ_r) = functyp
-      -- (let `%%%%`_paramtyp(_id, _dir, typ_p, _exprIL?{_exprIL <- _exprIL?}) = pt)*{_dir <- _dir*, _exprIL? <- _exprIL?*, _id <- _id*, pt <- pt*, typ_p <- typ_p*}
-      -- let tidset_params = $unions_set<tid>($free_typ(typ_p)*{typ_p <- typ_p*})
+      -- let tidset_params = $unions_set<tid>($free_paramtyp(pt)*{pt <- pt*})
       -- let tidset_return = $free_typ(typ_r)
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:132.1-133.26
-   clause 6(functyp) = $unions_set<tid>($free_typ(typ)*{typ <- typ*})
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:141.1-142.44
+   clause 6(functyp) = $unions_set<tid>($free_paramtyp(pt)*{pt <- pt*})
       -- if functyp matches `ParserApplyMethodT%`
       -- let `ParserApplyMethodT%`_functyp(pt*{pt <- pt*}) = functyp
-      -- (let `%%%%`_paramtyp(_id, _dir, typ, _exprIL?{_exprIL <- _exprIL?}) = pt)*{_dir <- _dir*, _exprIL? <- _exprIL?*, _id <- _id*, pt <- pt*, typ <- typ*}
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:135.1-136.26
-   clause 7(functyp) = $unions_set<tid>($free_typ(typ)*{typ <- typ*})
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:144.1-145.44
+   clause 7(functyp) = $unions_set<tid>($free_paramtyp(pt)*{pt <- pt*})
       -- if functyp matches `ControlApplyMethodT%`
       -- let `ControlApplyMethodT%`_functyp(pt*{pt <- pt*}) = functyp
-      -- (let `%%%%`_paramtyp(_id, _dir, typ, _exprIL?{_exprIL <- _exprIL?}) = pt)*{_dir <- _dir*, _exprIL? <- _exprIL?*, _id <- _id*, pt <- pt*, typ <- typ*}
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:138.1-138.58
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:147.1-147.58
    clause 8(functyp) = $free_typ(typ)
       -- if functyp matches `TableApplyMethodT%`
       -- let `TableApplyMethodT%`_functyp(typ) = functyp
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:10.1-10.38
+;; ../../../../spec/2c3-runtime-type-subst.watsup:11.1-11.38
 def $free_funcdef(funcdef) : set<tid> =
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:144.1-144.49
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:153.1-153.49
    clause 0(funcdef) = $free_functyp(ft)
       -- if funcdef <: monofuncdef
       -- let `MonoFD%`_monofuncdef(ft) = funcdef as monofuncdef
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:146.1-149.56
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:155.1-158.56
    clause 1(funcdef) = $diff_set<tid>(tidset_ft, tidset_tparams)
       -- if funcdef <: polyfuncdef
       -- let `PolyFD%->%`_polyfuncdef((tparam*{tparam <- tparam*}, tparam_hidden*{tparam_hidden <- tparam_hidden*}), ft) = funcdef as polyfuncdef
       -- let tidset_ft = $free_functyp(ft)
       -- let tidset_tparams = `{%}`_set<tid>(tparam*{tparam <- tparam*} ++ tparam_hidden*{tparam_hidden <- tparam_hidden*})
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:12.1-12.33
+;; ../../../../spec/2c3-runtime-type-subst.watsup:13.1-13.33
 def $subst_typ(theta, typ) : typ =
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:155.1-157.44
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:164.1-164.36
+   clause 0(set<pair<id, typ>>, typ) = typ
+      -- if (set<pair<id, typ>> = `{%}`_set<pair<id, typ>>([]))
+
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:165.1-166.15
+   clause 1(theta, typ) = $subst_typ'(theta, typ)
+      -- otherwise
+
+;; ../../../../spec/2c3-runtime-type-subst.watsup:14.1-14.34
+def $subst_typ'(theta, typ) : typ =
+
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:168.1-170.44
    clause 0(theta, typ') = typ
       -- if typ' <: abstyp
       -- let abstyp = typ' as abstyp
@@ -2084,167 +2093,174 @@ def $subst_typ(theta, typ) : typ =
       -- if typ''?{typ'' <- typ''?} matches (_)
       -- let ?(typ) = typ''?{typ'' <- typ''?}
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:159.1-161.42
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:172.1-175.42
    clause 1(theta, typ'') = `SpecT%%`_abstyp(ptd', typ'*{typ' <- typ'*}) as typ
       -- if typ'' <: abstyp
       -- let abstyp = typ'' as abstyp
       -- if abstyp matches `SpecT%%`
       -- let `SpecT%%`_abstyp(ptd, typ*{typ <- typ*}) = abstyp
-      -- let ptd' = $subst_typdef_poly(theta, ptd)
-      -- let typ'*{typ' <- typ'*} = $subst_typ(theta, typ)*{typ <- typ*}
+      -- let ptd' = $subst_typdef_poly'(theta, ptd)
+      -- (let typ' = $subst_typ'(theta, typ))*{typ <- typ*, typ' <- typ'*}
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:163.1-163.59
-   clause 2(theta, typ') = $subst_typ(theta, typ)
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:177.1-178.28
+   clause 2(theta, typ') = $subst_typ'(theta, typ)
       -- if typ' <: aliastyp
       -- let `DefT%%`_aliastyp(_id, typ) = typ' as aliastyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:165.1-165.70
-   clause 3(theta, typ') = `NewT%%`_datatyp(id, $subst_typ(theta, typ)) as typ
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:180.1-181.36
+   clause 3(theta, typ') = `NewT%%`_datatyp(id, $subst_typ'(theta, typ)) as typ
       -- if typ' <: datatyp
       -- let datatyp = typ' as datatyp
       -- if datatyp matches `NewT%%`
       -- let `NewT%%`_datatyp(id, typ) = datatyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:167.1-167.104
-   clause 4(theta, typ') = `SEnumT%%%`_datatyp(id, $subst_typ(theta, typ), (member, val)*{member <- member*, val <- val*}) as typ
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:183.1-184.53
+   clause 4(theta, typ') = `SEnumT%%%`_datatyp(id, $subst_typ'(theta, typ), (member, val)*{member <- member*, val <- val*}) as typ
       -- if typ' <: datatyp
       -- let datatyp = typ' as datatyp
       -- if datatyp matches `SEnumT%%%`
       -- let `SEnumT%%%`_datatyp(id, typ, (member, val)*{member <- member*, val <- val*}) = datatyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:169.1-169.64
-   clause 5(theta, typ') = `ListT%`_datatyp($subst_typ(theta, typ)) as typ
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:186.1-187.34
+   clause 5(theta, typ') = `ListT%`_datatyp($subst_typ'(theta, typ)) as typ
       -- if typ' <: datatyp
       -- let datatyp = typ' as datatyp
       -- if datatyp matches `ListT%`
       -- let `ListT%`_datatyp(typ) = datatyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:171.1-171.70
-   clause 6(theta, typ') = `TupleT%`_datatyp($subst_typ(theta, typ)*{typ <- typ*}) as typ
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:189.1-190.36
+   clause 6(theta, typ') = `TupleT%`_datatyp($subst_typ'(theta, typ)*{typ <- typ*}) as typ
       -- if typ' <: datatyp
       -- let datatyp = typ' as datatyp
       -- if datatyp matches `TupleT%`
       -- let `TupleT%`_datatyp(typ*{typ <- typ*}) = datatyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:173.1-173.76
-   clause 7(theta, typ') = `StackT%%`_datatyp($subst_typ(theta, typ), int) as typ
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:192.1-193.39
+   clause 7(theta, typ') = `StackT%%`_datatyp($subst_typ'(theta, typ), int) as typ
       -- if typ' <: datatyp
       -- let datatyp = typ' as datatyp
       -- if datatyp matches `StackT%%`
       -- let `StackT%%`_datatyp(typ, int) = datatyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:175.1-175.96
-   clause 8(theta, typ') = `StructT%%`_datatyp(id, (member, $subst_typ(theta, typ))*{member <- member*, typ <- typ*}) as typ
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:195.1-196.50
+   clause 8(theta, typ') = `StructT%%`_datatyp(id, (member, $subst_typ'(theta, typ))*{member <- member*, typ <- typ*}) as typ
       -- if typ' <: datatyp
       -- let datatyp = typ' as datatyp
       -- if datatyp matches `StructT%%`
       -- let `StructT%%`_datatyp(id, (member, typ)*{member <- member*, typ <- typ*}) = datatyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:177.1-177.96
-   clause 9(theta, typ') = `HeaderT%%`_datatyp(id, (member, $subst_typ(theta, typ))*{member <- member*, typ <- typ*}) as typ
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:198.1-199.50
+   clause 9(theta, typ') = `HeaderT%%`_datatyp(id, (member, $subst_typ'(theta, typ))*{member <- member*, typ <- typ*}) as typ
       -- if typ' <: datatyp
       -- let datatyp = typ' as datatyp
       -- if datatyp matches `HeaderT%%`
       -- let `HeaderT%%`_datatyp(id, (member, typ)*{member <- member*, typ <- typ*}) = datatyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:179.1-179.94
-   clause 10(theta, typ') = `UnionT%%`_datatyp(id, (member, $subst_typ(theta, typ))*{member <- member*, typ <- typ*}) as typ
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:201.1-202.49
+   clause 10(theta, typ') = `UnionT%%`_datatyp(id, (member, $subst_typ'(theta, typ))*{member <- member*, typ <- typ*}) as typ
       -- if typ' <: datatyp
       -- let datatyp = typ' as datatyp
       -- if datatyp matches `UnionT%%`
       -- let `UnionT%%`_datatyp(id, (member, typ)*{member <- member*, typ <- typ*}) = datatyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:181.1-183.62
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:204.1-207.63
    clause 11(theta, typ) = `ExternT%%`_objtyp(id, fmap') as typ
       -- if typ <: objtyp
       -- let objtyp = typ as objtyp
       -- if objtyp matches `ExternT%%`
       -- let `ExternT%%`_objtyp(id, fmap) = objtyp
       -- let `{%}`_set<pair<fid, funcdef>>(`%->%`_pair<fid, funcdef>(fid, funcdef)*{fid <- fid*, funcdef <- funcdef*}) = fmap
-      -- let fmap' = `{%}`_set<pair<fid, funcdef>>(`%->%`_pair<fid, funcdef>(fid, $subst_funcdef(theta, funcdef))*{fid <- fid*, funcdef <- funcdef*})
+      -- let fmap' = `{%}`_set<pair<fid, funcdef>>(`%->%`_pair<fid, funcdef>(fid, $subst_funcdef'(theta, funcdef))*{fid <- fid*, funcdef <- funcdef*})
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:185.1-187.58
-   clause 12(theta, typ') = `ParserT%%`_objtyp(id, pt'*{pt' <- pt'*}) as typ
-      -- if typ' <: objtyp
-      -- let objtyp = typ' as objtyp
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:209.1-210.44
+   clause 12(theta, typ) = `ParserT%%`_objtyp(id, $subst_paramtyp'(theta, pt)*{pt <- pt*}) as typ
+      -- if typ <: objtyp
+      -- let objtyp = typ as objtyp
       -- if objtyp matches `ParserT%%`
       -- let `ParserT%%`_objtyp(id, pt*{pt <- pt*}) = objtyp
-      -- (let `%%%%`_paramtyp(id', dir, typ, exprIL?{exprIL <- exprIL?}) = pt)*{dir <- dir*, exprIL? <- exprIL?*, id' <- id'*, pt <- pt*, typ <- typ*}
-      -- (let pt' = `%%%%`_paramtyp(id', dir, $subst_typ(theta, typ), exprIL?{exprIL <- exprIL?}))*{dir <- dir*, exprIL? <- exprIL?*, id' <- id'*, pt' <- pt'*, typ <- typ*}
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:189.1-191.58
-   clause 13(theta, typ') = `ControlT%%`_objtyp(id, pt'*{pt' <- pt'*}) as typ
-      -- if typ' <: objtyp
-      -- let objtyp = typ' as objtyp
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:212.1-213.43
+   clause 13(theta, typ) = `ControlT%%`_objtyp(id, $subst_paramtyp'(theta, pt)*{pt <- pt*}) as typ
+      -- if typ <: objtyp
+      -- let objtyp = typ as objtyp
       -- if objtyp matches `ControlT%%`
       -- let `ControlT%%`_objtyp(id, pt*{pt <- pt*}) = objtyp
-      -- (let `%%%%`_paramtyp(id', dir, typ, exprIL?{exprIL <- exprIL?}) = pt)*{dir <- dir*, exprIL? <- exprIL?*, id' <- id'*, pt <- pt*, typ <- typ*}
-      -- (let pt' = `%%%%`_paramtyp(id', dir, $subst_typ(theta, typ), exprIL?{exprIL <- exprIL?}))*{dir <- dir*, exprIL? <- exprIL?*, id' <- id'*, pt' <- pt'*, typ <- typ*}
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:193.1-193.80
-   clause 14(theta, typ') = `PackageT%%`_objtyp(id, $subst_typ(theta, typ)*{typ <- typ*}) as typ
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:215.1-216.41
+   clause 14(theta, typ') = `PackageT%%`_objtyp(id, $subst_typ'(theta, typ)*{typ <- typ*}) as typ
       -- if typ' <: objtyp
       -- let objtyp = typ' as objtyp
       -- if objtyp matches `PackageT%%`
       -- let `PackageT%%`_objtyp(id, typ*{typ <- typ*}) = objtyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:195.1-195.74
-   clause 15(theta, typ') = `TableT%%`_objtyp(id, $subst_typ(theta, typ)) as typ
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:218.1-219.38
+   clause 15(theta, typ') = `TableT%%`_objtyp(id, $subst_typ'(theta, typ)) as typ
       -- if typ' <: objtyp
       -- let objtyp = typ' as objtyp
       -- if objtyp matches `TableT%%`
       -- let `TableT%%`_objtyp(id, typ) = objtyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:197.1-197.106
-   clause 16(theta, typ') = `TableStructT%%`_synthtyp(id, (member, $subst_typ(theta, typ))*{member <- member*, typ <- typ*}) as typ
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:221.1-222.55
+   clause 16(theta, typ') = `TableStructT%%`_synthtyp(id, (member, $subst_typ'(theta, typ))*{member <- member*, typ <- typ*}) as typ
       -- if typ' <: synthtyp
       -- let synthtyp = typ' as synthtyp
       -- if synthtyp matches `TableStructT%%`
       -- let `TableStructT%%`_synthtyp(id, (member, typ)*{member <- member*, typ <- typ*}) = synthtyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:199.1-199.66
-   clause 17(theta, typ') = `SeqT%`_synthtyp($subst_typ(theta, typ)*{typ <- typ*}) as typ
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:224.1-225.34
+   clause 17(theta, typ') = `SeqT%`_synthtyp($subst_typ'(theta, typ)*{typ <- typ*}) as typ
       -- if typ' <: synthtyp
       -- let synthtyp = typ' as synthtyp
       -- if synthtyp matches `SeqT%`
       -- let `SeqT%`_synthtyp(typ*{typ <- typ*}) = synthtyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:201.1-201.80
-   clause 18(theta, typ') = `SeqDefaultT%`_synthtyp($subst_typ(theta, typ)*{typ <- typ*}) as typ
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:227.1-228.41
+   clause 18(theta, typ') = `SeqDefaultT%`_synthtyp($subst_typ'(theta, typ)*{typ <- typ*}) as typ
       -- if typ' <: synthtyp
       -- let synthtyp = typ' as synthtyp
       -- if synthtyp matches `SeqDefaultT%`
       -- let `SeqDefaultT%`_synthtyp(typ*{typ <- typ*}) = synthtyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:203.1-203.90
-   clause 19(theta, typ') = `RecordT%`_synthtyp((member, $subst_typ(theta, typ))*{member <- member*, typ <- typ*}) as typ
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:230.1-231.47
+   clause 19(theta, typ') = `RecordT%`_synthtyp((member, $subst_typ'(theta, typ))*{member <- member*, typ <- typ*}) as typ
       -- if typ' <: synthtyp
       -- let synthtyp = typ' as synthtyp
       -- if synthtyp matches `RecordT%`
       -- let `RecordT%`_synthtyp((member, typ)*{member <- member*, typ <- typ*}) = synthtyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:205.1-205.104
-   clause 20(theta, typ') = `RecordDefaultT%`_synthtyp((member, $subst_typ(theta, typ))*{member <- member*, typ <- typ*}) as typ
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:233.1-234.54
+   clause 20(theta, typ') = `RecordDefaultT%`_synthtyp((member, $subst_typ'(theta, typ))*{member <- member*, typ <- typ*}) as typ
       -- if typ' <: synthtyp
       -- let synthtyp = typ' as synthtyp
       -- if synthtyp matches `RecordDefaultT%`
       -- let `RecordDefaultT%`_synthtyp((member, typ)*{member <- member*, typ <- typ*}) = synthtyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:207.1-207.64
-   clause 21(theta, typ') = `SetT%`_synthtyp($subst_typ(theta, typ)) as typ
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:236.1-237.33
+   clause 21(theta, typ') = `SetT%`_synthtyp($subst_typ'(theta, typ)) as typ
       -- if typ' <: synthtyp
       -- let synthtyp = typ' as synthtyp
       -- if synthtyp matches `SetT%`
       -- let `SetT%`_synthtyp(typ) = synthtyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:209.1-210.15
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:239.1-240.15
    clause 22(theta, typ) = typ
       -- otherwise
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:13.1-13.55
+;; ../../../../spec/2c3-runtime-type-subst.watsup:15.1-15.55
 def $subst_typdef_poly(theta, polytypdef) : polytypdef =
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:216.1-230.40
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:246.1-246.44
+   clause 0(set<pair<id, typ>>, ptd) = ptd
+      -- if (set<pair<id, typ>> = `{%}`_set<pair<id, typ>>([]))
+
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:247.1-248.15
+   clause 1(theta, ptd) = $subst_typdef_poly'(theta, ptd)
+      -- otherwise
+
+;; ../../../../spec/2c3-runtime-type-subst.watsup:16.1-16.56
+def $subst_typdef_poly'(theta, polytypdef) : polytypdef =
+
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:250.1-267.41
    clause 0(theta, `PolyD%->%`_polytypdef((tparam*{tparam <- tparam*}, tparam_hidden*{tparam_hidden <- tparam_hidden*}), typ)) = `PolyD%->%`_polytypdef((tparam''*{tparam'' <- tparam''*}, tparam''_hidden*{tparam''_hidden <- tparam''_hidden*}), typ')
       -- let `{%}`_set<tid>(tid_free*{tid_free <- tid_free*}) = $diff_set<tid>($free_typ(typ), `{%}`_set<tid>(tparam*{tparam <- tparam*} ++ tparam_hidden*{tparam_hidden <- tparam_hidden*}))
       -- (let typ''?{typ'' <- typ''?} = $find_map<tid, typ>(theta, tid_free))*{tid_free <- tid_free*, typ''? <- typ''?*}
@@ -2257,17 +2273,45 @@ def $subst_typdef_poly(theta, polytypdef) : polytypdef =
       -- let tparam''_hidden*{tparam''_hidden <- tparam''_hidden*} = tparam'*{tparam' <- tparam'*}[|tparam*{tparam <- tparam*}| : |tparam_hidden*{tparam_hidden <- tparam_hidden*}|]
       -- let theta' = $adds_map<tid, typ>(theta, tparam*{tparam <- tparam*}, `VarT%`_abstyp(tparam'') as typ*{tparam'' <- tparam''*})
       -- let theta'' = $adds_map<tid, typ>(theta', tparam_hidden*{tparam_hidden <- tparam_hidden*}, `VarT%`_abstyp(tparam''_hidden) as typ*{tparam''_hidden <- tparam''_hidden*})
-      -- let typ' = $subst_typ(theta'', typ)
+      -- let typ' = $subst_typ'(theta'', typ)
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:14.1-14.45
+;; ../../../../spec/2c3-runtime-type-subst.watsup:17.1-17.48
+def $subst_paramtyp(theta, paramtyp) : paramtyp =
+
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:273.1-273.39
+   clause 0(set<pair<id, typ>>, pt) = pt
+      -- if (set<pair<id, typ>> = `{%}`_set<pair<id, typ>>([]))
+
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:274.1-275.15
+   clause 1(theta, pt) = $subst_paramtyp'(theta, pt)
+      -- otherwise
+
+;; ../../../../spec/2c3-runtime-type-subst.watsup:18.1-18.49
+def $subst_paramtyp'(theta, paramtyp) : paramtyp =
+
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:277.1-278.43
+   clause 0(theta, `%%%%`_paramtyp(id, dir, typ, exprIL?{exprIL <- exprIL?})) = `%%%%`_paramtyp(id, dir, $subst_typ'(theta, typ), exprIL?{exprIL <- exprIL?})
+
+;; ../../../../spec/2c3-runtime-type-subst.watsup:19.1-19.45
 def $subst_funcdef(theta, funcdef) : funcdef =
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:236.1-236.74
-   clause 0(theta, funcdef) = `MonoFD%`_monofuncdef($subst_functyp(theta, ft)) as funcdef
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:284.1-284.48
+   clause 0(set<pair<id, typ>>, funcdef) = funcdef
+      -- if (set<pair<id, typ>> = `{%}`_set<pair<id, typ>>([]))
+
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:285.1-286.15
+   clause 1(theta, funcdef) = $subst_funcdef'(theta, funcdef)
+      -- otherwise
+
+;; ../../../../spec/2c3-runtime-type-subst.watsup:20.1-20.46
+def $subst_funcdef'(theta, funcdef) : funcdef =
+
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:288.1-289.38
+   clause 0(theta, funcdef) = `MonoFD%`_monofuncdef($subst_functyp'(theta, ft)) as funcdef
       -- if funcdef <: monofuncdef
       -- let `MonoFD%`_monofuncdef(ft) = funcdef as monofuncdef
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:238.1-252.42
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:291.1-307.43
    clause 1(theta, funcdef) = `PolyFD%->%`_polyfuncdef((tparam''*{tparam'' <- tparam''*}, tparam''_hidden*{tparam''_hidden <- tparam''_hidden*}), ft') as funcdef
       -- if funcdef <: polyfuncdef
       -- let `PolyFD%->%`_polyfuncdef((tparam*{tparam <- tparam*}, tparam_hidden*{tparam_hidden <- tparam_hidden*}), ft) = funcdef as polyfuncdef
@@ -2282,113 +2326,117 @@ def $subst_funcdef(theta, funcdef) : funcdef =
       -- let tparam''_hidden*{tparam''_hidden <- tparam''_hidden*} = tparam'*{tparam' <- tparam'*}[|tparam*{tparam <- tparam*}| : |tparam_hidden*{tparam_hidden <- tparam_hidden*}|]
       -- let theta' = $adds_map<tid, typ>(theta, tparam*{tparam <- tparam*}, `VarT%`_abstyp(tparam') as typ*{tparam' <- tparam'*})
       -- let theta'' = $adds_map<tid, typ>(theta', tparam_hidden*{tparam_hidden <- tparam_hidden*}, `VarT%`_abstyp(tparam''_hidden) as typ*{tparam''_hidden <- tparam''_hidden*})
-      -- let ft' = $subst_functyp(theta'', ft)
+      -- let ft' = $subst_functyp'(theta'', ft)
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:15.1-15.45
+;; ../../../../spec/2c3-runtime-type-subst.watsup:21.1-21.45
 def $subst_functyp(theta, functyp) : functyp =
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:258.1-260.59
-   clause 0(theta, functyp) = `BuiltinMethodT%%`_functyp(pt'*{pt' <- pt'*}, $subst_typ(theta, typ))
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:313.1-313.48
+   clause 0(set<pair<id, typ>>, functyp) = functyp
+      -- if (set<pair<id, typ>> = `{%}`_set<pair<id, typ>>([]))
+
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:314.1-315.15
+   clause 1(theta, functyp) = $subst_functyp'(theta, functyp)
+      -- otherwise
+
+;; ../../../../spec/2c3-runtime-type-subst.watsup:22.1-22.46
+def $subst_functyp'(theta, functyp) : functyp =
+
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:317.1-318.72
+   clause 0(theta, functyp) = `BuiltinMethodT%%`_functyp($subst_paramtyp'(theta, pt)*{pt <- pt*}, $subst_typ'(theta, typ))
       -- if functyp matches `BuiltinMethodT%%`
       -- let `BuiltinMethodT%%`_functyp(pt*{pt <- pt*}, typ) = functyp
-      -- (let `%%%%`_paramtyp(id, dir, typ_p, exprIL?{exprIL <- exprIL?}) = pt)*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt <- pt*, typ_p <- typ_p*}
-      -- (let pt' = `%%%%`_paramtyp(id, dir, $subst_typ(theta, typ_p), exprIL?{exprIL <- exprIL?}))*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt' <- pt'*, typ_p <- typ_p*}
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:262.1-264.59
-   clause 1(theta, functyp) = `ActionT%`_functyp(pt'*{pt' <- pt'*})
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:320.1-321.41
+   clause 1(theta, functyp) = `ActionT%`_functyp($subst_paramtyp'(theta, pt)*{pt <- pt*})
       -- if functyp matches `ActionT%`
       -- let `ActionT%`_functyp(pt*{pt <- pt*}) = functyp
-      -- (let `%%%%`_paramtyp(id, dir, typ, exprIL?{exprIL <- exprIL?}) = pt)*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt <- pt*, typ <- typ*}
-      -- (let pt' = `%%%%`_paramtyp(id, dir, $subst_typ(theta, typ), exprIL?{exprIL <- exprIL?}))*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt' <- pt'*, typ <- typ*}
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:266.1-268.59
-   clause 2(theta, functyp) = `ParserApplyMethodT%`_functyp(pt'*{pt' <- pt'*})
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:323.1-324.52
+   clause 2(theta, functyp) = `ParserApplyMethodT%`_functyp($subst_paramtyp'(theta, pt)*{pt <- pt*})
       -- if functyp matches `ParserApplyMethodT%`
       -- let `ParserApplyMethodT%`_functyp(pt*{pt <- pt*}) = functyp
-      -- (let `%%%%`_paramtyp(id, dir, typ, exprIL?{exprIL <- exprIL?}) = pt)*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt <- pt*, typ <- typ*}
-      -- (let pt' = `%%%%`_paramtyp(id, dir, $subst_typ(theta, typ), exprIL?{exprIL <- exprIL?}))*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt' <- pt'*, typ <- typ*}
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:270.1-272.59
-   clause 3(theta, functyp) = `ControlApplyMethodT%`_functyp(pt'*{pt' <- pt'*})
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:326.1-327.53
+   clause 3(theta, functyp) = `ControlApplyMethodT%`_functyp($subst_paramtyp'(theta, pt)*{pt <- pt*})
       -- if functyp matches `ControlApplyMethodT%`
       -- let `ControlApplyMethodT%`_functyp(pt*{pt <- pt*}) = functyp
-      -- (let `%%%%`_paramtyp(id, dir, typ, exprIL?{exprIL <- exprIL?}) = pt)*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt <- pt*, typ <- typ*}
-      -- (let pt' = `%%%%`_paramtyp(id, dir, $subst_typ(theta, typ), exprIL?{exprIL <- exprIL?}))*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt' <- pt'*, typ <- typ*}
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:274.1-274.94
-   clause 4(theta, functyp) = `TableApplyMethodT%`_functyp($subst_typ(theta, typ))
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:329.1-330.46
+   clause 4(theta, functyp) = `TableApplyMethodT%`_functyp($subst_typ'(theta, typ))
       -- if functyp matches `TableApplyMethodT%`
       -- let `TableApplyMethodT%`_functyp(typ) = functyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:276.1-278.61
-   clause 5(theta, functyp) = `ExternFuncT%%`_functyp(pt'*{pt' <- pt'*}, $subst_typ(theta, typ))
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:332.1-333.69
+   clause 5(theta, functyp) = `ExternFuncT%%`_functyp($subst_paramtyp'(theta, pt)*{pt <- pt*}, $subst_typ'(theta, typ))
       -- if functyp matches `ExternFuncT%%`
       -- let `ExternFuncT%%`_functyp(pt*{pt <- pt*}, typ) = functyp
-      -- (let `%%%%`_paramtyp(id, dir, typ_p, exprIL?{exprIL <- exprIL?}) = pt)*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt <- pt*, typ_p <- typ_p*}
-      -- (let pt' = `%%%%`_paramtyp(id, dir, $subst_typ(theta, typ_p), exprIL?{exprIL <- exprIL?}))*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt' <- pt'*, typ_p <- typ_p*}
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:280.1-282.61
-   clause 6(theta, functyp) = `FuncT%%`_functyp(pt'*{pt' <- pt'*}, $subst_typ(theta, typ))
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:335.1-336.63
+   clause 6(theta, functyp) = `FuncT%%`_functyp($subst_paramtyp'(theta, pt)*{pt <- pt*}, $subst_typ'(theta, typ))
       -- if functyp matches `FuncT%%`
       -- let `FuncT%%`_functyp(pt*{pt <- pt*}, typ) = functyp
-      -- (let `%%%%`_paramtyp(id, dir, typ_p, exprIL?{exprIL <- exprIL?}) = pt)*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt <- pt*, typ_p <- typ_p*}
-      -- (let pt' = `%%%%`_paramtyp(id, dir, $subst_typ(theta, typ_p), exprIL?{exprIL <- exprIL?}))*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt' <- pt'*, typ_p <- typ_p*}
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:284.1-286.61
-   clause 7(theta, functyp) = `ExternMethodT%%`_functyp(pt'*{pt' <- pt'*}, $subst_typ(theta, typ))
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:338.1-339.71
+   clause 7(theta, functyp) = `ExternMethodT%%`_functyp($subst_paramtyp'(theta, pt)*{pt <- pt*}, $subst_typ'(theta, typ))
       -- if functyp matches `ExternMethodT%%`
       -- let `ExternMethodT%%`_functyp(pt*{pt <- pt*}, typ) = functyp
-      -- (let `%%%%`_paramtyp(id, dir, typ_p, exprIL?{exprIL <- exprIL?}) = pt)*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt <- pt*, typ_p <- typ_p*}
-      -- (let pt' = `%%%%`_paramtyp(id, dir, $subst_typ(theta, typ_p), exprIL?{exprIL <- exprIL?}))*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt' <- pt'*, typ_p <- typ_p*}
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:288.1-290.61
-   clause 8(theta, functyp) = `ExternAbstractMethodT%%`_functyp(pt'*{pt' <- pt'*}, $subst_typ(theta, typ))
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:341.1-342.79
+   clause 8(theta, functyp) = `ExternAbstractMethodT%%`_functyp($subst_paramtyp'(theta, pt)*{pt <- pt*}, $subst_typ'(theta, typ))
       -- if functyp matches `ExternAbstractMethodT%%`
       -- let `ExternAbstractMethodT%%`_functyp(pt*{pt <- pt*}, typ) = functyp
-      -- (let `%%%%`_paramtyp(id, dir, typ_p, exprIL?{exprIL <- exprIL?}) = pt)*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt <- pt*, typ_p <- typ_p*}
-      -- (let pt' = `%%%%`_paramtyp(id, dir, $subst_typ(theta, typ_p), exprIL?{exprIL <- exprIL?}))*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt' <- pt'*, typ_p <- typ_p*}
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:16.1-16.45
+;; ../../../../spec/2c3-runtime-type-subst.watsup:23.1-23.45
 def $subst_constyp(theta, constyp) : constyp =
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:296.1-298.61
-   clause 0(theta, `ConsT%%`_constyp(pt*{pt <- pt*}, typ)) = `ConsT%%`_constyp(pt'*{pt' <- pt'*}, $subst_typ(theta, typ))
-      -- (let `%%%%`_paramtyp(id, dir, typ_p, exprIL?{exprIL <- exprIL?}) = pt)*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt <- pt*, typ_p <- typ_p*}
-      -- (let pt' = `%%%%`_paramtyp(id, dir, $subst_typ(theta, typ_p), exprIL?{exprIL <- exprIL?}))*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt' <- pt'*, typ_p <- typ_p*}
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:348.1-348.48
+   clause 0(set<pair<id, typ>>, constyp) = constyp
+      -- if (set<pair<id, typ>> = `{%}`_set<pair<id, typ>>([]))
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:308.1-308.43
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:349.1-350.15
+   clause 1(theta, constyp) = $subst_constyp'(theta, constyp)
+      -- otherwise
+
+;; ../../../../spec/2c3-runtime-type-subst.watsup:24.1-24.46
+def $subst_constyp'(theta, constyp) : constyp =
+
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:352.1-353.63
+   clause 0(theta, `ConsT%%`_constyp(pt*{pt <- pt*}, typ)) = `ConsT%%`_constyp($subst_paramtyp'(theta, pt)*{pt <- pt*}, $subst_typ'(theta, typ))
+
+;; ../../../../spec/2c3-runtime-type-subst.watsup:363.1-363.43
 def $specialize_typdef(typdef, typ*) : typ =
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:310.1-310.45
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:365.1-365.45
    clause 0(typdef, typ'*{typ' <- typ'*}) = typ
       -- if typdef <: monotypdef
       -- let `MonoD%`_monotypdef(typ) = typdef as monotypdef
       -- if typ'*{typ' <- typ'*} matches []
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:311.1-313.41
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:366.1-369.41
    clause 1(typdef, typ_a*{typ_a <- typ_a*}) = $subst_typ(theta, typ)
       -- if typdef <: polytypdef
       -- let `PolyD%->%`_polytypdef((tparam*{tparam <- tparam*}, tparam_hidden*{tparam_hidden <- tparam_hidden*}), typ) = typdef as polytypdef
       -- let tparam'*{tparam' <- tparam'*} = tparam*{tparam <- tparam*} ++ tparam_hidden*{tparam_hidden <- tparam_hidden*}
       -- let theta = `{%}`_set<pair<id, typ>>(`%->%`_pair<id, typ>(tparam', typ_a)*{tparam' <- tparam'*, typ_a <- typ_a*})
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:319.1-319.57
+;; ../../../../spec/2c3-runtime-type-subst.watsup:375.1-375.57
 def $specialize_funcdef(funcdef, typ*) : (functyp, tid*) =
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:321.1-321.52
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:377.1-377.52
    clause 0(funcdef, typ*{typ <- typ*}) = (ft, [])
       -- if funcdef <: monofuncdef
       -- let `MonoFD%`_monofuncdef(ft) = funcdef as monofuncdef
       -- if typ*{typ <- typ*} matches []
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:323.1-326.30
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:379.1-382.30
    clause 1(funcdef, typ_a*{typ_a <- typ_a*}) = ($subst_functyp(`{%}`_set<pair<id, typ>>(`%->%`_pair<id, typ>(tparam', typ_a)*{tparam' <- tparam'*, typ_a <- typ_a*}), ft), [])
       -- if funcdef <: polyfuncdef
       -- let `PolyFD%->%`_polyfuncdef((tparam*{tparam <- tparam*}, tparam_hidden*{tparam_hidden <- tparam_hidden*}), ft) = funcdef as polyfuncdef
       -- let tparam'*{tparam' <- tparam'*} = tparam*{tparam <- tparam*} ++ tparam_hidden*{tparam_hidden <- tparam_hidden*}
       -- if (|tparam'*{tparam' <- tparam'*}| = |typ_a*{typ_a <- typ_a*}|)
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:328.1-333.45
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:384.1-389.45
    clause 2(funcdef, typ_a*{typ_a <- typ_a*}) = ($subst_functyp(`{%}`_set<pair<id, typ>>(`%->%`_pair<id, typ>(tparam', `VarT%`_abstyp(tid_fresh) as typ)*{tid_fresh <- tid_fresh*, tparam' <- tparam'*}), ft), tid_fresh*{tid_fresh <- tid_fresh*})
       -- if funcdef <: polyfuncdef
       -- let `PolyFD%->%`_polyfuncdef((tparam*{tparam <- tparam*}, tparam_hidden*{tparam_hidden <- tparam_hidden*}), ft) = funcdef as polyfuncdef
@@ -2396,7 +2444,7 @@ def $specialize_funcdef(funcdef, typ*) : (functyp, tid*) =
       -- if ((|typ_a*{typ_a <- typ_a*}| = 0) /\ (|tparam'*{tparam' <- tparam'*}| > 0))
       -- let tid_fresh*{tid_fresh <- tid_fresh*} = $fresh_tids(|tparam'*{tparam' <- tparam'*}|)
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:335.1-342.46
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:391.1-398.46
    clause 3(funcdef, typ_a*{typ_a <- typ_a*}) = ($subst_functyp(`{%}`_set<pair<id, typ>>(`%->%`_pair<id, typ>(tparam', typ_a')*{tparam' <- tparam'*, typ_a' <- typ_a'*}), ft), tid_fresh*{tid_fresh <- tid_fresh*})
       -- if funcdef <: polyfuncdef
       -- let `PolyFD%->%`_polyfuncdef((tparam*{tparam <- tparam*}, tparam_hidden*{tparam_hidden <- tparam_hidden*}), ft) = funcdef as polyfuncdef
@@ -2405,31 +2453,31 @@ def $specialize_funcdef(funcdef, typ*) : (functyp, tid*) =
       -- let tid_fresh*{tid_fresh <- tid_fresh*} = $fresh_tids(|tparam_hidden*{tparam_hidden <- tparam_hidden*}|)
       -- let typ_a'*{typ_a' <- typ_a'*} = typ_a*{typ_a <- typ_a*} ++ `VarT%`_abstyp(tid_fresh) as typ*{tid_fresh <- tid_fresh*}
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:348.1-348.57
+;; ../../../../spec/2c3-runtime-type-subst.watsup:404.1-404.57
 def $specialize_consdef(consdef, typ*) : (constyp, tid*) =
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:350.1-353.30
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:406.1-409.30
    clause 0(`ConsD%->%`_consdef((tparam*{tparam <- tparam*}, tparam_hidden*{tparam_hidden <- tparam_hidden*}), ct), typ_a*{typ_a <- typ_a*}) = ($subst_constyp(`{%}`_set<pair<id, typ>>(`%->%`_pair<id, typ>(tparam', typ_a)*{tparam' <- tparam'*, typ_a <- typ_a*}), ct), [])
       -- let tparam'*{tparam' <- tparam'*} = tparam*{tparam <- tparam*} ++ tparam_hidden*{tparam_hidden <- tparam_hidden*}
       -- if (|tparam'*{tparam' <- tparam'*}| = |typ_a*{typ_a <- typ_a*}|)
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:355.1-360.45
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:411.1-416.45
    clause 1(`ConsD%->%`_consdef((tparam*{tparam <- tparam*}, tparam_hidden*{tparam_hidden <- tparam_hidden*}), ct), typ_a*{typ_a <- typ_a*}) = ($subst_constyp(`{%}`_set<pair<id, typ>>(`%->%`_pair<id, typ>(tparam', `VarT%`_abstyp(tid_fresh) as typ)*{tid_fresh <- tid_fresh*, tparam' <- tparam'*}), ct), tid_fresh*{tid_fresh <- tid_fresh*})
       -- let tparam'*{tparam' <- tparam'*} = tparam*{tparam <- tparam*} ++ tparam_hidden*{tparam_hidden <- tparam_hidden*}
       -- if ((|typ_a*{typ_a <- typ_a*}| = 0) /\ (|tparam'*{tparam' <- tparam'*}| > 0))
       -- let tid_fresh*{tid_fresh <- tid_fresh*} = $fresh_tids(|tparam'*{tparam' <- tparam'*}|)
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:362.1-369.46
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:418.1-425.46
    clause 2(`ConsD%->%`_consdef((tparam*{tparam <- tparam*}, tparam_hidden*{tparam_hidden <- tparam_hidden*}), ct), typ_a*{typ_a <- typ_a*}) = ($subst_constyp(`{%}`_set<pair<id, typ>>(`%->%`_pair<id, typ>(tparam', typ_a')*{tparam' <- tparam'*, typ_a' <- typ_a'*}), ct), tid_fresh*{tid_fresh <- tid_fresh*})
       -- let tparam'*{tparam' <- tparam'*} = tparam*{tparam <- tparam*} ++ tparam_hidden*{tparam_hidden <- tparam_hidden*}
       -- if (((|typ_a*{typ_a <- typ_a*}| > 0) /\ (|tparam*{tparam <- tparam*}| = |typ_a*{typ_a <- typ_a*}|)) /\ (|tparam_hidden*{tparam_hidden <- tparam_hidden*}| > 0))
       -- let tid_fresh*{tid_fresh <- tid_fresh*} = $fresh_tids(|tparam_hidden*{tparam_hidden <- tparam_hidden*}|)
       -- let typ_a'*{typ_a' <- typ_a'*} = typ_a*{typ_a <- typ_a*} ++ `VarT%`_abstyp(tid_fresh) as typ*{tid_fresh <- tid_fresh*}
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:375.1-375.26
+;; ../../../../spec/2c3-runtime-type-subst.watsup:431.1-431.26
 def $canon_typ(typ) : typ =
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:377.1-378.46
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:433.1-434.46
    clause 0(typ') = $canon_typ(typ)
       -- if typ' <: abstyp
       -- let abstyp = typ' as abstyp
@@ -2437,12 +2485,12 @@ def $canon_typ(typ) : typ =
       -- let `SpecT%%`_abstyp(ptd, typ_a*{typ_a <- typ_a*}) = abstyp
       -- let typ = $specialize_typdef(ptd as typdef, typ_a*{typ_a <- typ_a*})
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:379.1-379.45
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:435.1-435.45
    clause 1(typ') = $canon_typ(typ)
       -- if typ' <: aliastyp
       -- let `DefT%%`_aliastyp(_id, typ) = typ' as aliastyp
 
-   ;; ../../../../spec/2c3-runtime-type-subst.watsup:380.1-381.15
+   ;; ../../../../spec/2c3-runtime-type-subst.watsup:436.1-437.15
    clause 2(typ) = typ
       -- otherwise
 
