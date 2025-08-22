@@ -834,10 +834,6 @@ syntax setval =
    | `MaskSet%%`(val, val)
    | `RangeSet%%`(val, val)
 
-;; ../../../../spec/2b2-runtime-value.watsup:46.16-46.26
-syntax valIL = 
-   | `%%`(val, exprIL)
-
 ;; ../../../../spec/2b3-runtime-value-aux.watsup:3.1-3.24
 def $get_num(val) : int =
 
@@ -7511,59 +7507,30 @@ def $find_funcdef_by_name(cursor, context, name) : funcdef =
       -- if name matches `CURRENT%`
       -- let `CURRENT%`_name(id) = name
 
-;; ../../../../spec/4a1-typing-context.watsup:345.1-345.70
-def $find_consdef(cursor, context, name, arg*) : (cid, consdef, id*)? =
+;; ../../../../spec/4a1-typing-context.watsup:345.1-345.62
+def $find_consdef(context, name, arg*) : (cid, consdef, id*)? =
 
-   ;; ../../../../spec/4a1-typing-context.watsup:347.1-347.96
-   clause 0(p, C, name, arg*{arg <- arg*}) = $find_func<consdef>(id, $to_fkey(arg*{arg <- arg*}), C.GLOBAL.CDENV)
+   ;; ../../../../spec/4a1-typing-context.watsup:347.1-347.93
+   clause 0(C, name, arg*{arg <- arg*}) = $find_func<consdef>(id, $to_fkey(arg*{arg <- arg*}), C.GLOBAL.CDENV)
       -- if name matches `TOP%`
       -- let `TOP%`_name(id) = name
 
-   ;; ../../../../spec/4a1-typing-context.watsup:348.1-348.105
-   clause 1(cursor, C, name, arg*{arg <- arg*}) = $find_func<consdef>(id, $to_fkey(arg*{arg <- arg*}), C.GLOBAL.CDENV)
-      -- if cursor matches `GLOBAL`
+   ;; ../../../../spec/4a1-typing-context.watsup:348.1-348.97
+   clause 1(C, name, arg*{arg <- arg*}) = $find_func<consdef>(id, $to_fkey(arg*{arg <- arg*}), C.GLOBAL.CDENV)
       -- if name matches `CURRENT%`
       -- let `CURRENT%`_name(id) = name
 
-   ;; ../../../../spec/4a1-typing-context.watsup:349.1-349.91
-   clause 2(cursor, C, name, arg*{arg <- arg*}) = $find_consdef(`GLOBAL`_cursor(), C, `CURRENT%`_name(id), arg*{arg <- arg*})
-      -- if cursor matches `BLOCK`
-      -- if name matches `CURRENT%`
-      -- let `CURRENT%`_name(id) = name
+;; ../../../../spec/4a1-typing-context.watsup:350.1-350.60
+def $find_consdefs_by_name(context, name) : (cid, consdef)* =
 
-   ;; ../../../../spec/4a1-typing-context.watsup:350.1-350.90
-   clause 3(cursor, C, name, arg*{arg <- arg*}) = $find_consdef(`BLOCK`_cursor(), C, `CURRENT%`_name(id), arg*{arg <- arg*})
-      -- if cursor matches `LOCAL`
-      -- if name matches `CURRENT%`
-      -- let `CURRENT%`_name(id) = name
-
-;; ../../../../spec/4a1-typing-context.watsup:352.1-352.68
-def $find_consdefs_by_name(cursor, context, name) : (cid, consdef)* =
+   ;; ../../../../spec/4a1-typing-context.watsup:352.1-353.43
+   clause 0(C, name) = $find_funcs_by_name<consdef>(id, cid*{cid <- cid*}, cd*{cd <- cd*})
+      -- if name matches `TOP%`
+      -- let `TOP%`_name(id) = name
+      -- let `{%}`_set<pair<fid, consdef>>(`%->%`_pair<fid, consdef>(cid, cd)*{cd <- cd*, cid <- cid*}) = C.GLOBAL.CDENV
 
    ;; ../../../../spec/4a1-typing-context.watsup:354.1-355.43
-   clause 0(cursor, C, name) = $find_funcs_by_name<consdef>(id, cid*{cid <- cid*}, cd*{cd <- cd*})
-      -- if cursor matches `GLOBAL`
-      -- if name matches `TOP%`
-      -- let `TOP%`_name(id) = name
-      -- let `{%}`_set<pair<fid, consdef>>(`%->%`_pair<fid, consdef>(cid, cd)*{cd <- cd*, cid <- cid*}) = C.GLOBAL.CDENV
-
-   ;; ../../../../spec/4a1-typing-context.watsup:356.1-357.43
-   clause 1(cursor, C, name) = $find_funcs_by_name<consdef>(id, cid*{cid <- cid*}, cd*{cd <- cd*})
-      -- if cursor matches `GLOBAL`
-      -- if name matches `CURRENT%`
-      -- let `CURRENT%`_name(id) = name
-      -- let `{%}`_set<pair<fid, consdef>>(`%->%`_pair<fid, consdef>(cid, cd)*{cd <- cd*, cid <- cid*}) = C.GLOBAL.CDENV
-
-   ;; ../../../../spec/4a1-typing-context.watsup:358.1-359.43
-   clause 2(cursor, C, name) = $find_funcs_by_name<consdef>(id, cid*{cid <- cid*}, cd*{cd <- cd*})
-      -- if cursor matches `BLOCK`
-      -- if name matches `CURRENT%`
-      -- let `CURRENT%`_name(id) = name
-      -- let `{%}`_set<pair<fid, consdef>>(`%->%`_pair<fid, consdef>(cid, cd)*{cd <- cd*, cid <- cid*}) = C.GLOBAL.CDENV
-
-   ;; ../../../../spec/4a1-typing-context.watsup:360.1-361.43
-   clause 3(cursor, C, name) = $find_funcs_by_name<consdef>(id, cid*{cid <- cid*}, cd*{cd <- cd*})
-      -- if cursor matches `LOCAL`
+   clause 1(C, name) = $find_funcs_by_name<consdef>(id, cid*{cid <- cid*}, cd*{cd <- cd*})
       -- if name matches `CURRENT%`
       -- let `CURRENT%`_name(id) = name
       -- let `{%}`_set<pair<fid, consdef>>(`%->%`_pair<fid, consdef>(cid, cd)*{cd <- cd*, cid <- cid*}) = C.GLOBAL.CDENV
@@ -7796,131 +7763,131 @@ def $actions_of_table(tbl) : tblactionprop* =
       -- otherwise
 
 ;; ../../../../spec/4b-typing-relation.watsup:6.1-8.23
-relation Eval_static: `%%|-%~>%`(cursor, context, exprIL, valIL)
+relation Eval_static: `%%|-%~>%`(cursor, context, exprIL, val)
 
-   ;; ../../../../spec/4c-typing-static-eval.watsup:9.1-10.56
-   rule valuee: `%%|-%~>%`(p, C, exprIL, `%%`_valIL(val, `ValueE%%`_exprIL(val, annotIL)))
+   ;; ../../../../spec/4c-typing-static-eval.watsup:9.1-10.29
+   rule valuee: `%%|-%~>%`(p, C, exprIL, val)
       -- if exprIL matches `ValueE%%`
-      -- let `ValueE%%`_exprIL(val, annotIL) = exprIL
+      -- let `ValueE%%`_exprIL(val, _annotIL) = exprIL
 
-   ;; ../../../../spec/4c-typing-static-eval.watsup:16.1-17.56
-   rule boole: `%%|-%~>%`(p, C, exprIL, `%%`_valIL(`BoolV%`_val(b), `BoolE%%`_exprIL(b, annotIL)))
+   ;; ../../../../spec/4c-typing-static-eval.watsup:16.1-17.30
+   rule boole: `%%|-%~>%`(p, C, exprIL, `BoolV%`_val(b))
       -- if exprIL matches `BoolE%%`
-      -- let `BoolE%%`_exprIL(b, annotIL) = exprIL
+      -- let `BoolE%%`_exprIL(b, _annotIL) = exprIL
 
-   ;; ../../../../spec/4c-typing-static-eval.watsup:23.1-24.53
-   rule stre: `%%|-%~>%`(p, C, exprIL, `%%`_valIL(`StrV%`_val(t), `StrE%%`_exprIL(t, annotIL)))
+   ;; ../../../../spec/4c-typing-static-eval.watsup:23.1-24.28
+   rule stre: `%%|-%~>%`(p, C, exprIL, `StrV%`_val(t))
       -- if exprIL matches `StrE%%`
-      -- let `StrE%%`_exprIL(t, annotIL) = exprIL
+      -- let `StrE%%`_exprIL(t, _annotIL) = exprIL
 
-   ;; ../../../../spec/4c-typing-static-eval.watsup:30.1-31.65
-   rule nume-intt: `%%|-%~>%`(p, C, exprIL, `%%`_valIL(`IntV%`_val(i), `NumE%%`_exprIL(`INT%`_num(i), annotIL)))
+   ;; ../../../../spec/4c-typing-static-eval.watsup:30.1-31.34
+   rule nume-intt: `%%|-%~>%`(p, C, exprIL, `IntV%`_val(i))
       -- if exprIL matches `NumE%%`
-      -- let `NumE%%`_exprIL(num, annotIL) = exprIL
+      -- let `NumE%%`_exprIL(num, _annotIL) = exprIL
       -- if num matches `INT%`
       -- let `INT%`_num(i) = num
 
    ;; ../../../../spec/4c-typing-static-eval.watsup:33.1-35.30
-   rule nume-fintt: `%%|-%~>%`(p, C, exprIL, `%%`_valIL(`FIntV%%`_val(w, bs), `NumE%%`_exprIL(`FINT%%`_num(w, i), annotIL)))
+   rule nume-fintt: `%%|-%~>%`(p, C, exprIL, `FIntV%%`_val(w, bs))
       -- if exprIL matches `NumE%%`
-      -- let `NumE%%`_exprIL(num, annotIL) = exprIL
+      -- let `NumE%%`_exprIL(num, _annotIL) = exprIL
       -- if num matches `FINT%%`
       -- let `FINT%%`_num(w, i) = num
       -- let bs = $to_bitstr(w as int, i)
 
    ;; ../../../../spec/4c-typing-static-eval.watsup:37.1-39.30
-   rule nume-fbitt: `%%|-%~>%`(p, C, exprIL, `%%`_valIL(`FBitV%%`_val(w, bs), `NumE%%`_exprIL(`FBIT%%`_num(w, i), annotIL)))
+   rule nume-fbitt: `%%|-%~>%`(p, C, exprIL, `FBitV%%`_val(w, bs))
       -- if exprIL matches `NumE%%`
-      -- let `NumE%%`_exprIL(num, annotIL) = exprIL
+      -- let `NumE%%`_exprIL(num, _annotIL) = exprIL
       -- if num matches `FBIT%%`
       -- let `FBIT%%`_num(w, i) = num
       -- let bs = $to_bitstr(w as int, i)
 
    ;; ../../../../spec/4c-typing-static-eval.watsup:45.1-47.36
-   rule namee: `%%|-%~>%`(p, C, exprIL, `%%`_valIL(val, `NameE%%`_exprIL(name, annotIL)))
+   rule namee: `%%|-%~>%`(p, C, exprIL, val)
       -- if exprIL matches `NameE%%`
-      -- let `NameE%%`_exprIL(name, annotIL) = exprIL
+      -- let `NameE%%`_exprIL(name, _annotIL) = exprIL
       -- let val'?{val' <- val'?} = $find_val(p, C, name)
       -- if val'?{val' <- val'?} matches (_)
       -- let ?(val) = val'?{val' <- val'?}
 
-   ;; ../../../../spec/4c-typing-static-eval.watsup:53.1-55.44
-   rule seqe: `%%|-%~>%`(p, C, exprIL', `%%`_valIL(`SeqV%`_val(val*{val <- val*}), `SeqE%%`_exprIL(exprIL*{exprIL <- exprIL*}, annotIL)))
+   ;; ../../../../spec/4c-typing-static-eval.watsup:53.1-55.42
+   rule seqe: `%%|-%~>%`(p, C, exprIL', `SeqV%`_val(val*{val <- val*}))
       -- if exprIL' matches `SeqE%%`
-      -- let `SeqE%%`_exprIL(exprIL*{exprIL <- exprIL*}, annotIL) = exprIL'
-      -- (Eval_static: `%%|-%~>%`(p, C, exprIL, `%%`_valIL(val, _exprIL)))*{_exprIL <- _exprIL*, exprIL <- exprIL*, val <- val*}
+      -- let `SeqE%%`_exprIL(exprIL*{exprIL <- exprIL*}, _annotIL) = exprIL'
+      -- (Eval_static: `%%|-%~>%`(p, C, exprIL, val))*{exprIL <- exprIL*, val <- val*}
 
-   ;; ../../../../spec/4c-typing-static-eval.watsup:57.1-59.44
-   rule seqdefaulte: `%%|-%~>%`(p, C, exprIL', `%%`_valIL(`SeqDefaultV%`_val(val*{val <- val*}), `SeqDefaultE%%`_exprIL(exprIL*{exprIL <- exprIL*}, annotIL)))
+   ;; ../../../../spec/4c-typing-static-eval.watsup:57.1-59.42
+   rule seqdefaulte: `%%|-%~>%`(p, C, exprIL', `SeqDefaultV%`_val(val*{val <- val*}))
       -- if exprIL' matches `SeqDefaultE%%`
-      -- let `SeqDefaultE%%`_exprIL(exprIL*{exprIL <- exprIL*}, annotIL) = exprIL'
-      -- (Eval_static: `%%|-%~>%`(p, C, exprIL, `%%`_valIL(val, _exprIL)))*{_exprIL <- _exprIL*, exprIL <- exprIL*, val <- val*}
+      -- let `SeqDefaultE%%`_exprIL(exprIL*{exprIL <- exprIL*}, _annotIL) = exprIL'
+      -- (Eval_static: `%%|-%~>%`(p, C, exprIL, val))*{exprIL <- exprIL*, val <- val*}
 
-   ;; ../../../../spec/4c-typing-static-eval.watsup:65.1-67.44
-   rule recorde: `%%|-%~>%`(p, C, exprIL', `%%`_valIL(`RecordV%`_val((member, val)*{member <- member*, val <- val*}), `RecordE%%`_exprIL((member, exprIL)*{exprIL <- exprIL*, member <- member*}, annotIL)))
+   ;; ../../../../spec/4c-typing-static-eval.watsup:65.1-67.42
+   rule recorde: `%%|-%~>%`(p, C, exprIL', `RecordV%`_val((member, val)*{member <- member*, val <- val*}))
       -- if exprIL' matches `RecordE%%`
-      -- let `RecordE%%`_exprIL((member, exprIL)*{exprIL <- exprIL*, member <- member*}, annotIL) = exprIL'
-      -- (Eval_static: `%%|-%~>%`(p, C, exprIL, `%%`_valIL(val, _exprIL)))*{_exprIL <- _exprIL*, exprIL <- exprIL*, val <- val*}
+      -- let `RecordE%%`_exprIL((member, exprIL)*{exprIL <- exprIL*, member <- member*}, _annotIL) = exprIL'
+      -- (Eval_static: `%%|-%~>%`(p, C, exprIL, val))*{exprIL <- exprIL*, val <- val*}
 
-   ;; ../../../../spec/4c-typing-static-eval.watsup:69.1-71.44
-   rule recorddefaulte: `%%|-%~>%`(p, C, exprIL', `%%`_valIL(`RecordDefaultV%`_val((member, val)*{member <- member*, val <- val*}), `RecordDefaultE%%`_exprIL((member, exprIL)*{exprIL <- exprIL*, member <- member*}, annotIL)))
+   ;; ../../../../spec/4c-typing-static-eval.watsup:69.1-71.42
+   rule recorddefaulte: `%%|-%~>%`(p, C, exprIL', `RecordDefaultV%`_val((member, val)*{member <- member*, val <- val*}))
       -- if exprIL' matches `RecordDefaultE%%`
-      -- let `RecordDefaultE%%`_exprIL((member, exprIL)*{exprIL <- exprIL*, member <- member*}, annotIL) = exprIL'
-      -- (Eval_static: `%%|-%~>%`(p, C, exprIL, `%%`_valIL(val, _exprIL)))*{_exprIL <- _exprIL*, exprIL <- exprIL*, val <- val*}
+      -- let `RecordDefaultE%%`_exprIL((member, exprIL)*{exprIL <- exprIL*, member <- member*}, _annotIL) = exprIL'
+      -- (Eval_static: `%%|-%~>%`(p, C, exprIL, val))*{exprIL <- exprIL*, val <- val*}
 
-   ;; ../../../../spec/4c-typing-static-eval.watsup:77.1-78.59
-   rule defaulte: `%%|-%~>%`(p, C, exprIL, `%%`_valIL(`DefaultV`_val(), `DefaultE%`_exprIL(annotIL)))
+   ;; ../../../../spec/4c-typing-static-eval.watsup:77.1-78.32
+   rule defaulte: `%%|-%~>%`(p, C, exprIL, `DefaultV`_val())
       -- if exprIL matches `DefaultE%`
-      -- let `DefaultE%`_exprIL(annotIL) = exprIL
+      -- let `DefaultE%`_exprIL(_annotIL) = exprIL
 
-   ;; ../../../../spec/4c-typing-static-eval.watsup:80.1-81.59
-   rule invalide: `%%|-%~>%`(p, C, exprIL, `%%`_valIL(`InvalidV`_val(), `InvalidE%`_exprIL(annotIL)))
+   ;; ../../../../spec/4c-typing-static-eval.watsup:80.1-81.32
+   rule invalide: `%%|-%~>%`(p, C, exprIL, `InvalidV`_val())
       -- if exprIL matches `InvalidE%`
-      -- let `InvalidE%`_exprIL(annotIL) = exprIL
+      -- let `InvalidE%`_exprIL(_annotIL) = exprIL
 
-   ;; ../../../../spec/4c-typing-static-eval.watsup:87.1-89.41
-   rule une: `%%|-%~>%`(p, C, exprIL', `%%`_valIL($un_op(unop, val), `UnE%%%`_exprIL(unop, exprIL, annotIL)))
+   ;; ../../../../spec/4c-typing-static-eval.watsup:87.1-89.39
+   rule une: `%%|-%~>%`(p, C, exprIL', $un_op(unop, val))
       -- if exprIL' matches `UnE%%%`
-      -- let `UnE%%%`_exprIL(unop, exprIL, annotIL) = exprIL'
-      -- Eval_static: `%%|-%~>%`(p, C, exprIL, `%%`_valIL(val, _exprIL))
+      -- let `UnE%%%`_exprIL(unop, exprIL, _annotIL) = exprIL'
+      -- Eval_static: `%%|-%~>%`(p, C, exprIL, val)
 
-   ;; ../../../../spec/4c-typing-static-eval.watsup:95.1-98.45
-   rule bine: `%%|-%~>%`(p, C, exprIL, `%%`_valIL($bin_op(binop, val_l, val_r), `BinE%%%%`_exprIL(binop, exprIL_l, exprIL_r, annotIL)))
+   ;; ../../../../spec/4c-typing-static-eval.watsup:95.1-98.43
+   rule bine: `%%|-%~>%`(p, C, exprIL, $bin_op(binop, val_l, val_r))
       -- if exprIL matches `BinE%%%%`
-      -- let `BinE%%%%`_exprIL(binop, exprIL_l, exprIL_r, annotIL) = exprIL
-      -- Eval_static: `%%|-%~>%`(p, C, exprIL_l, `%%`_valIL(val_l, _exprIL))
-      -- Eval_static: `%%|-%~>%`(p, C, exprIL_r, `%%`_valIL(val_r, _exprIL'))
+      -- let `BinE%%%%`_exprIL(binop, exprIL_l, exprIL_r, _annotIL) = exprIL
+      -- Eval_static: `%%|-%~>%`(p, C, exprIL_l, val_l)
+      -- Eval_static: `%%|-%~>%`(p, C, exprIL_r, val_r)
 
-   ;; ../../../../spec/4c-typing-static-eval.watsup:104.1-107.43
-   rule terne-true: `%%|-%~>%`(p, C, exprIL, `%%`_valIL(val, `TernE%%%%`_exprIL(exprIL_c, exprIL_t, exprIL_f, annotIL)))
+   ;; ../../../../spec/4c-typing-static-eval.watsup:104.1-107.41
+   rule terne-true: `%%|-%~>%`(p, C, exprIL, val)
       -- if exprIL matches `TernE%%%%`
-      -- let `TernE%%%%`_exprIL(exprIL_c, exprIL_t, exprIL_f, annotIL) = exprIL
-      -- Eval_static: `%%|-%~>%`(p, C, exprIL_c, `%%`_valIL(val', _exprIL))
+      -- let `TernE%%%%`_exprIL(exprIL_c, exprIL_t, exprIL_f, _annotIL) = exprIL
+      -- Eval_static: `%%|-%~>%`(p, C, exprIL_c, val')
       -- if (val' = `BoolV%`_val(true))
-      -- Eval_static: `%%|-%~>%`(p, C, exprIL_t, `%%`_valIL(val, _exprIL'))
+      -- Eval_static: `%%|-%~>%`(p, C, exprIL_t, val)
 
-   ;; ../../../../spec/4c-typing-static-eval.watsup:109.1-112.43
-   rule terne-false: `%%|-%~>%`(p, C, exprIL, `%%`_valIL(val, `TernE%%%%`_exprIL(exprIL_c, exprIL_t, exprIL_f, annotIL)))
+   ;; ../../../../spec/4c-typing-static-eval.watsup:109.1-112.41
+   rule terne-false: `%%|-%~>%`(p, C, exprIL, val)
       -- if exprIL matches `TernE%%%%`
-      -- let `TernE%%%%`_exprIL(exprIL_c, exprIL_t, exprIL_f, annotIL) = exprIL
-      -- Eval_static: `%%|-%~>%`(p, C, exprIL_c, `%%`_valIL(val', _exprIL))
+      -- let `TernE%%%%`_exprIL(exprIL_c, exprIL_t, exprIL_f, _annotIL) = exprIL
+      -- Eval_static: `%%|-%~>%`(p, C, exprIL_c, val')
       -- if (val' = `BoolV%`_val(false))
-      -- Eval_static: `%%|-%~>%`(p, C, exprIL_f, `%%`_valIL(val, _exprIL'))
+      -- Eval_static: `%%|-%~>%`(p, C, exprIL_f, val)
 
-   ;; ../../../../spec/4c-typing-static-eval.watsup:118.1-120.41
-   rule caste: `%%|-%~>%`(p, C, exprIL', `%%`_valIL($cast_op(typ, val), `CastE%%%`_exprIL(typ, exprIL, annotIL)))
+   ;; ../../../../spec/4c-typing-static-eval.watsup:118.1-120.39
+   rule caste: `%%|-%~>%`(p, C, exprIL', $cast_op(typ, val))
       -- if exprIL' matches `CastE%%%`
-      -- let `CastE%%%`_exprIL(typ, exprIL, annotIL) = exprIL'
-      -- Eval_static: `%%|-%~>%`(p, C, exprIL, `%%`_valIL(val, _exprIL))
+      -- let `CastE%%%`_exprIL(typ, exprIL, _annotIL) = exprIL'
+      -- Eval_static: `%%|-%~>%`(p, C, exprIL, val)
 
    ;; ../../../../spec/4c-typing-static-eval.watsup:126.1-132.26
-   rule arracce-tuple: `%%|-%~>%`(p, C, exprIL, `%%`_valIL(val, `ArrAccE%%%`_exprIL(exprIL_b, exprIL_i, annotIL)))
+   rule arracce-tuple: `%%|-%~>%`(p, C, exprIL, val)
       -- if exprIL matches `ArrAccE%%%`
-      -- let `ArrAccE%%%`_exprIL(exprIL_b, exprIL_i, annotIL) = exprIL
-      -- Eval_static: `%%|-%~>%`(p, C, exprIL_b, `%%`_valIL(val', _exprIL))
+      -- let `ArrAccE%%%`_exprIL(exprIL_b, exprIL_i, _annotIL) = exprIL
+      -- Eval_static: `%%|-%~>%`(p, C, exprIL_b, val')
       -- if val' matches `TupleV%`
       -- let `TupleV%`_val(val_e*{val_e <- val_e*}) = val'
-      -- Eval_static: `%%|-%~>%`(p, C, exprIL_i, `%%`_valIL(val_i, _exprIL'))
+      -- Eval_static: `%%|-%~>%`(p, C, exprIL_i, val_i)
       -- let int = $get_num(val_i)
       -- if int <: nat
       -- let n_i = int as nat
@@ -7928,38 +7895,38 @@ relation Eval_static: `%%|-%~>%`(cursor, context, exprIL, valIL)
       -- let val = val_e*{val_e <- val_e*}[n_i]
 
    ;; ../../../../spec/4c-typing-static-eval.watsup:134.1-140.26
-   rule arracce-stack: `%%|-%~>%`(p, C, exprIL, `%%`_valIL(val, `ArrAccE%%%`_exprIL(exprIL_b, exprIL_i, annotIL)))
+   rule arracce-stack: `%%|-%~>%`(p, C, exprIL, val)
       -- if exprIL matches `ArrAccE%%%`
-      -- let `ArrAccE%%%`_exprIL(exprIL_b, exprIL_i, annotIL) = exprIL
-      -- Eval_static: `%%|-%~>%`(p, C, exprIL_b, `%%`_valIL(val', _exprIL))
+      -- let `ArrAccE%%%`_exprIL(exprIL_b, exprIL_i, _annotIL) = exprIL
+      -- Eval_static: `%%|-%~>%`(p, C, exprIL_b, val')
       -- if val' matches `StackV%%%`
       -- let `StackV%%%`_val(val_e*{val_e <- val_e*}, _int, _int') = val'
-      -- Eval_static: `%%|-%~>%`(p, C, exprIL_i, `%%`_valIL(val_i, _exprIL'))
+      -- Eval_static: `%%|-%~>%`(p, C, exprIL_i, val_i)
       -- let int = $get_num(val_i)
       -- if int <: nat
       -- let n_i = int as nat
       -- if (n_i < |val_e*{val_e <- val_e*}|)
       -- let val = val_e*{val_e <- val_e*}[n_i]
 
-   ;; ../../../../spec/4c-typing-static-eval.watsup:146.1-150.45
-   rule bitacce: `%%|-%~>%`(p, C, exprIL, `%%`_valIL($bitacc_op(val_b, val_h, val_l), `BitAccE%%%%`_exprIL(exprIL_b, exprIL_l, exprIL_h, annotIL)))
+   ;; ../../../../spec/4c-typing-static-eval.watsup:146.1-150.43
+   rule bitacce: `%%|-%~>%`(p, C, exprIL, $bitacc_op(val_b, val_h, val_l))
       -- if exprIL matches `BitAccE%%%%`
-      -- let `BitAccE%%%%`_exprIL(exprIL_b, exprIL_l, exprIL_h, annotIL) = exprIL
-      -- Eval_static: `%%|-%~>%`(p, C, exprIL_b, `%%`_valIL(val_b, _exprIL))
-      -- Eval_static: `%%|-%~>%`(p, C, exprIL_l, `%%`_valIL(val_l, _exprIL'))
-      -- Eval_static: `%%|-%~>%`(p, C, exprIL_h, `%%`_valIL(val_h, _exprIL''))
+      -- let `BitAccE%%%%`_exprIL(exprIL_b, exprIL_l, exprIL_h, _annotIL) = exprIL
+      -- Eval_static: `%%|-%~>%`(p, C, exprIL_b, val_b)
+      -- Eval_static: `%%|-%~>%`(p, C, exprIL_l, val_l)
+      -- Eval_static: `%%|-%~>%`(p, C, exprIL_h, val_h)
 
    ;; ../../../../spec/4c-typing-static-eval.watsup:156.1-159.46
-   rule erracce: `%%|-%~>%`(p, C, exprIL, `%%`_valIL(`ErrV%`_val(member), `ErrAccE%%`_exprIL(member, annotIL)))
+   rule erracce: `%%|-%~>%`(p, C, exprIL, `ErrV%`_val(member))
       -- if exprIL matches `ErrAccE%%`
-      -- let `ErrAccE%%`_exprIL(member, annotIL) = exprIL
+      -- let `ErrAccE%%`_exprIL(member, _annotIL) = exprIL
       -- let id = $concat_text(["error.", member])
       -- if (?(`ErrV%`_val(member)) = $find_val(p, C, `TOP%`_name(id)))
 
    ;; ../../../../spec/4c-typing-static-eval.watsup:165.1-169.28
-   rule typeacce-enumt: `%%|-%~>%`(p, C, exprIL, `%%`_valIL(`EnumFieldV%%`_val(id_t, member), `TypeAccE%%%`_exprIL(name, member, annotIL)))
+   rule typeacce-enumt: `%%|-%~>%`(p, C, exprIL, `EnumFieldV%%`_val(id_t, member))
       -- if exprIL matches `TypeAccE%%%`
-      -- let `TypeAccE%%%`_exprIL(name, member, annotIL) = exprIL
+      -- let `TypeAccE%%%`_exprIL(name, member, _annotIL) = exprIL
       -- let typdef'?{typdef' <- typdef'?} = $find_typdef(p, C, name)
       -- if typdef'?{typdef' <- typdef'?} matches (_)
       -- let ?(typdef) = typdef'?{typdef' <- typdef'?}
@@ -7973,9 +7940,9 @@ relation Eval_static: `%%|-%~>%`(cursor, context, exprIL, valIL)
       -- if member <- member_t*{member_t <- member_t*}
 
    ;; ../../../../spec/4c-typing-static-eval.watsup:171.1-175.63
-   rule typeacce-senumt: `%%|-%~>%`(p, C, exprIL, `%%`_valIL(`SEnumFieldV%%%`_val(id_t, member, val), `TypeAccE%%%`_exprIL(name, member, annotIL)))
+   rule typeacce-senumt: `%%|-%~>%`(p, C, exprIL, `SEnumFieldV%%%`_val(id_t, member, val))
       -- if exprIL matches `TypeAccE%%%`
-      -- let `TypeAccE%%%`_exprIL(name, member, annotIL) = exprIL
+      -- let `TypeAccE%%%`_exprIL(name, member, _annotIL) = exprIL
       -- let typdef'?{typdef' <- typdef'?} = $find_typdef(p, C, name)
       -- if typdef'?{typdef' <- typdef'?} matches (_)
       -- let ?(typdef) = typdef'?{typdef' <- typdef'?}
@@ -7990,20 +7957,20 @@ relation Eval_static: `%%|-%~>%`(cursor, context, exprIL, valIL)
       -- if val'?{val' <- val'?} matches (_)
       -- let ?(val) = val'?{val' <- val'?}
 
-   ;; ../../../../spec/4c-typing-static-eval.watsup:181.1-183.66
-   rule expracce-stack: `%%|-%~>%`(p, C, exprIL, `%%`_valIL(`IntV%`_val(i_size), `ExprAccE%%%`_exprIL(exprIL_b, "size", annotIL)))
+   ;; ../../../../spec/4c-typing-static-eval.watsup:181.1-183.62
+   rule expracce-stack: `%%|-%~>%`(p, C, exprIL, `IntV%`_val(i_size))
       -- if exprIL matches `ExprAccE%%%`
-      -- let `ExprAccE%%%`_exprIL(exprIL_b, text, annotIL) = exprIL
+      -- let `ExprAccE%%%`_exprIL(exprIL_b, text, _annotIL) = exprIL
       -- if (text = "size")
-      -- Eval_static: `%%|-%~>%`(p, C, exprIL_b, `%%`_valIL(val', _exprIL))
+      -- Eval_static: `%%|-%~>%`(p, C, exprIL_b, val')
       -- if val' matches `StackV%%%`
       -- let `StackV%%%`_val(val*{val <- val*}, i_size, i_idx) = val'
 
    ;; ../../../../spec/4c-typing-static-eval.watsup:185.1-188.63
-   rule expracce-struct: `%%|-%~>%`(p, C, exprIL, `%%`_valIL(val, `ExprAccE%%%`_exprIL(exprIL_b, member, annotIL)))
+   rule expracce-struct: `%%|-%~>%`(p, C, exprIL, val)
       -- if exprIL matches `ExprAccE%%%`
-      -- let `ExprAccE%%%`_exprIL(exprIL_b, member, annotIL) = exprIL
-      -- Eval_static: `%%|-%~>%`(p, C, exprIL_b, `%%`_valIL(val', _exprIL))
+      -- let `ExprAccE%%%`_exprIL(exprIL_b, member, _annotIL) = exprIL
+      -- Eval_static: `%%|-%~>%`(p, C, exprIL_b, val')
       -- if val' matches `StructV%%`
       -- let `StructV%%`_val(id, (member_f, val_f)*{member_f <- member_f*, val_f <- val_f*}) = val'
       -- let val''?{val'' <- val''?} = $assoc_<member, val>(member, (member_f, val_f)*{member_f <- member_f*, val_f <- val_f*})
@@ -8011,10 +7978,10 @@ relation Eval_static: `%%|-%~>%`(cursor, context, exprIL, valIL)
       -- let ?(val) = val''?{val'' <- val''?}
 
    ;; ../../../../spec/4c-typing-static-eval.watsup:190.1-193.63
-   rule expracce-header: `%%|-%~>%`(p, C, exprIL, `%%`_valIL(val, `ExprAccE%%%`_exprIL(exprIL_b, member, annotIL)))
+   rule expracce-header: `%%|-%~>%`(p, C, exprIL, val)
       -- if exprIL matches `ExprAccE%%%`
-      -- let `ExprAccE%%%`_exprIL(exprIL_b, member, annotIL) = exprIL
-      -- Eval_static: `%%|-%~>%`(p, C, exprIL_b, `%%`_valIL(val', _exprIL))
+      -- let `ExprAccE%%%`_exprIL(exprIL_b, member, _annotIL) = exprIL
+      -- Eval_static: `%%|-%~>%`(p, C, exprIL_b, val')
       -- if val' matches `HeaderV%%%`
       -- let `HeaderV%%%`_val(id, _bool, (member_f, val_f)*{member_f <- member_f*, val_f <- val_f*}) = val'
       -- let val''?{val'' <- val''?} = $assoc_<member, val>(member, (member_f, val_f)*{member_f <- member_f*, val_f <- val_f*})
@@ -8022,10 +7989,10 @@ relation Eval_static: `%%|-%~>%`(cursor, context, exprIL, valIL)
       -- let ?(val) = val''?{val'' <- val''?}
 
    ;; ../../../../spec/4c-typing-static-eval.watsup:195.1-198.63
-   rule expracce-union: `%%|-%~>%`(p, C, exprIL, `%%`_valIL(val, `ExprAccE%%%`_exprIL(exprIL_b, member, annotIL)))
+   rule expracce-union: `%%|-%~>%`(p, C, exprIL, val)
       -- if exprIL matches `ExprAccE%%%`
-      -- let `ExprAccE%%%`_exprIL(exprIL_b, member, annotIL) = exprIL
-      -- Eval_static: `%%|-%~>%`(p, C, exprIL_b, `%%`_valIL(val', _exprIL))
+      -- let `ExprAccE%%%`_exprIL(exprIL_b, member, _annotIL) = exprIL
+      -- Eval_static: `%%|-%~>%`(p, C, exprIL_b, val')
       -- if val' matches `UnionV%%`
       -- let `UnionV%%`_val(id, (member_f, val_f)*{member_f <- member_f*, val_f <- val_f*}) = val'
       -- let val''?{val'' <- val''?} = $assoc_<member, val>(member, (member_f, val_f)*{member_f <- member_f*, val_f <- val_f*})
@@ -8033,19 +8000,19 @@ relation Eval_static: `%%|-%~>%`(cursor, context, exprIL, valIL)
       -- let ?(val) = val''?{val'' <- val''?}
 
    ;; ../../../../spec/4c-typing-static-eval.watsup:204.1-209.35
-   rule callmethode: `%%|-%~>%`(p, C, exprIL, `%%`_valIL(val, `CallMethodE%%%%%`_exprIL(exprIL_b, member, [], [], annotIL)))
+   rule callmethode: `%%|-%~>%`(p, C, exprIL, val)
       -- if exprIL matches `CallMethodE%%%%%`
-      -- let `CallMethodE%%%%%`_exprIL(exprIL_b, member, targIL*{targIL <- targIL*}, argIL*{argIL <- argIL*}, annotIL) = exprIL
+      -- let `CallMethodE%%%%%`_exprIL(exprIL_b, member, targIL*{targIL <- targIL*}, argIL*{argIL <- argIL*}, _annotIL) = exprIL
       -- if targIL*{targIL <- targIL*} matches []
       -- if argIL*{argIL <- argIL*} matches []
       -- if ((((member = "minSizeInBits") \/ (member = "minSizeInBytes")) \/ (member = "maxSizeInBits")) \/ (member = "maxSizeInBytes"))
       -- let `(%;%)`_annotIL(typ_b, _ctk) = $annot(exprIL_b)
       -- let val = $size(typ_b, member)
 
-   ;; ../../../../spec/4c-typing-static-eval.watsup:215.1-220.45
-   rule calltypee: `%%|-%~>%`(p, C, exprIL, `%%`_valIL($size(typ, member), `CallTypeE%%%%%`_exprIL(name, member, [], [], annotIL)))
+   ;; ../../../../spec/4c-typing-static-eval.watsup:215.1-219.45
+   rule calltypee: `%%|-%~>%`(p, C, exprIL, $size(typ, member))
       -- if exprIL matches `CallTypeE%%%%%`
-      -- let `CallTypeE%%%%%`_exprIL(name, member, targIL*{targIL <- targIL*}, argIL*{argIL <- argIL*}, annotIL) = exprIL
+      -- let `CallTypeE%%%%%`_exprIL(name, member, targIL*{targIL <- targIL*}, argIL*{argIL <- argIL*}, _annotIL) = exprIL
       -- if targIL*{targIL <- targIL*} matches []
       -- if argIL*{argIL <- argIL*} matches []
       -- if ((((member = "minSizeInBits") \/ (member = "minSizeInBytes")) \/ (member = "maxSizeInBits")) \/ (member = "maxSizeInBytes"))
@@ -8089,7 +8056,7 @@ relation Type_ok: `%%|-%:%%`(cursor, context, type, typ, tid*)
       -- Expr_ok: `%%|-%:%`(p, C, expr, exprIL)
       -- let `(%;%)`_annotIL(_typ, ctk) = $annot(exprIL)
       -- if ctk matches `LCTK`
-      -- Eval_static: `%%|-%~>%`(p, C, exprIL, `%%`_valIL(val, _exprIL))
+      -- Eval_static: `%%|-%~>%`(p, C, exprIL, val)
       -- let int = $get_num(val)
       -- if int <: nat
       -- let w = int as nat
@@ -8102,7 +8069,7 @@ relation Type_ok: `%%|-%:%%`(cursor, context, type, typ, tid*)
       -- Expr_ok: `%%|-%:%`(p, C, expr, exprIL)
       -- let `(%;%)`_annotIL(_typ, ctk) = $annot(exprIL)
       -- if ctk matches `LCTK`
-      -- Eval_static: `%%|-%~>%`(p, C, exprIL, `%%`_valIL(val, _exprIL))
+      -- Eval_static: `%%|-%~>%`(p, C, exprIL, val)
       -- let int = $get_num(val)
       -- if int <: nat
       -- let w = int as nat
@@ -8114,7 +8081,7 @@ relation Type_ok: `%%|-%:%%`(cursor, context, type, typ, tid*)
       -- Expr_ok: `%%|-%:%`(p, C, expr, exprIL)
       -- let `(%;%)`_annotIL(_typ, ctk) = $annot(exprIL)
       -- if ctk matches `LCTK`
-      -- Eval_static: `%%|-%~>%`(p, C, exprIL, `%%`_valIL(val, _exprIL))
+      -- Eval_static: `%%|-%~>%`(p, C, exprIL, val)
       -- let int = $get_num(val)
       -- if int <: nat
       -- let w = int as nat
@@ -8127,7 +8094,7 @@ relation Type_ok: `%%|-%:%%`(cursor, context, type, typ, tid*)
       -- Expr_ok: `%%|-%:%`(p, C, expr, exprIL)
       -- let `(%;%)`_annotIL(_typ, ctk) = $annot(exprIL)
       -- if ctk matches `LCTK`
-      -- Eval_static: `%%|-%~>%`(p, C, exprIL, `%%`_valIL(val, _exprIL))
+      -- Eval_static: `%%|-%~>%`(p, C, exprIL, val)
       -- let i_size = $get_num(val)
       -- let ptd = `PolyD%->%`_polytypdef((["T"], []), `StackT%%`_datatyp(`VarT%`_abstyp("T") as typ, i_size) as typ)
 
@@ -9055,7 +9022,7 @@ relation Expr_ok: `%%|-%:%`(cursor, context, expr, exprIL)
       -- let `(%;%)`_annotIL(typ'', ctk_l'') = $annot(exprIL_l'')
       -- let `(%;%)`_annotIL(_typ, ctk') = $annot(exprIL_r'')
       -- if ctk' matches `LCTK`
-      -- Eval_static: `%%|-%~>%`(p, C, exprIL_r'', `%%`_valIL(val_r, _exprIL))
+      -- Eval_static: `%%|-%~>%`(p, C, exprIL_r'', val_r)
       -- let int = $get_num(val_r)
       -- if int <: nat
       -- let n_r = int as nat
@@ -9109,7 +9076,7 @@ relation Expr_ok: `%%|-%:%`(cursor, context, expr, exprIL)
       -- let `(%;%)`_annotIL(typ_r', ctk_r') = $annot(exprIL_r')
       -- if ($is_intt(typ_r') \/ $is_fintt(typ_r'))
       -- if (ctk_r' = `LCTK`_ctk())
-      -- Eval_static: `%%|-%~>%`(p, C, exprIL_r', `%%`_valIL(val_r', _exprIL))
+      -- Eval_static: `%%|-%~>%`(p, C, exprIL_r', val_r')
       -- let int = $get_num(val_r')
       -- if int <: nat
       -- let n_r = int as nat
@@ -9299,7 +9266,7 @@ relation Expr_ok: `%%|-%:%`(cursor, context, expr, exprIL)
       -- let datatyp = typ' as datatyp
       -- if datatyp matches `TupleT%`
       -- let `TupleT%`_datatyp(typ_b'*{typ_b' <- typ_b'*}) = datatyp
-      -- Eval_static: `%%|-%~>%`(p, C, exprIL_i', `%%`_valIL(val_i, _exprIL))
+      -- Eval_static: `%%|-%~>%`(p, C, exprIL_i', val_i)
       -- let int = $get_num(val_i)
       -- if int <: nat
       -- let n = int as nat
@@ -9323,7 +9290,7 @@ relation Expr_ok: `%%|-%:%`(cursor, context, expr, exprIL)
       -- let datatyp = typ as datatyp
       -- if datatyp matches `StackT%%`
       -- let `StackT%%`_datatyp(typ_b', i_s) = datatyp
-      -- Eval_static: `%%|-%~>%`(p, C, exprIL_i', `%%`_valIL(val_i, _exprIL))
+      -- Eval_static: `%%|-%~>%`(p, C, exprIL_i', val_i)
       -- let i = $get_num(val_i)
       -- if ((0 as int <= i) /\ (i <= i_s))
       -- let ctk = $join_ctk(ctk_b, `LCTK`_ctk())
@@ -9362,7 +9329,7 @@ relation Expr_ok: `%%|-%:%`(cursor, context, expr, exprIL)
       -- let exprIL'?{exprIL' <- exprIL'?} = $reduce_senum_unary(exprIL_l, $compatible_bitstringindex)
       -- if exprIL'?{exprIL' <- exprIL'?} matches (_)
       -- let ?(exprIL_l') = exprIL'?{exprIL' <- exprIL'?}
-      -- Eval_static: `%%|-%~>%`(p, C, exprIL_l', `%%`_valIL(val_l, _exprIL))
+      -- Eval_static: `%%|-%~>%`(p, C, exprIL_l', val_l)
       -- let int = $get_num(val_l)
       -- if int <: nat
       -- let n_l = int as nat
@@ -9373,7 +9340,7 @@ relation Expr_ok: `%%|-%:%`(cursor, context, expr, exprIL)
       -- let exprIL''?{exprIL'' <- exprIL''?} = $reduce_senum_unary(exprIL_h, $compatible_bitstringindex)
       -- if exprIL''?{exprIL'' <- exprIL''?} matches (_)
       -- let ?(exprIL_h') = exprIL''?{exprIL'' <- exprIL''?}
-      -- Eval_static: `%%|-%~>%`(p, C, exprIL_h', `%%`_valIL(val_h, _exprIL'))
+      -- Eval_static: `%%|-%~>%`(p, C, exprIL_h', val_h)
       -- let int' = $get_num(val_h)
       -- if int' <: nat
       -- let n_h = int' as nat
@@ -9866,8 +9833,8 @@ relation Stmts_ok: `%%%|-%:%%%`(cursor, context, flow, stmt*, context, flow, stm
 ;; ../../../../spec/4b-typing-relation.watsup:79.1-81.23
 relation Param_ok: `%%|-%:%%`(cursor, context, param, paramIL, tid*)
 
-   ;; ../../../../spec/4g-typing-decl.watsup:5.1-16.48
-   rule param-default: `%%|-%:%%`(p, C, `%%%%`_param(id, dir, type, expr'?{expr' <- expr'?}), `%%%%`_paramIL(id, dir, typ_p, ?(exprIL)), tid_fresh*{tid_fresh <- tid_fresh*})
+   ;; ../../../../spec/4g-typing-decl.watsup:5.1-16.41
+   rule param-default: `%%|-%:%%`(p, C, `%%%%`_param(id, dir, type, expr'?{expr' <- expr'?}), `%%%%`_paramIL(id, dir, typ_p, ?(exprIL_e)), tid_fresh*{tid_fresh <- tid_fresh*})
       -- if expr'?{expr' <- expr'?} matches (_)
       -- let ?(expr) = expr'?{expr' <- expr'?}
       -- Type_ok: `%%|-%:%%`(p, C, type, typ_p, tid_fresh*{tid_fresh <- tid_fresh*})
@@ -9877,7 +9844,7 @@ relation Param_ok: `%%|-%:%%`(cursor, context, param, paramIL, tid*)
       -- let `(%;%)`_annotIL(typ_e, ctk) = $annot(exprIL_e)
       -- if ctk matches `LCTK`
       -- if Sub_impl: `%<<%`(typ_e, typ_p) holds
-      -- Eval_static: `%%|-%~>%`(p, C, exprIL_e, `%%`_valIL(val, exprIL))
+      -- Eval_static: `%%|-%~>%`(p, C, exprIL_e, val)
 
    ;; ../../../../spec/4g-typing-decl.watsup:18.1-22.30
    rule param-nodefault: `%%|-%:%%`(p, C, `%%%%`_param(id, dir, type, expr?{expr <- expr?}), `%%%%`_paramIL(id, dir, typ_p, ?()), tid_fresh*{tid_fresh <- tid_fresh*})
@@ -9889,8 +9856,8 @@ relation Param_ok: `%%|-%:%%`(cursor, context, param, paramIL, tid*)
 ;; ../../../../spec/4b-typing-relation.watsup:82.1-84.23
 relation CParam_ok: `%%|-%:%%`(cursor, context, cparam, cparamIL, tid*)
 
-   ;; ../../../../spec/4g-typing-decl.watsup:28.1-38.48
-   rule cparam-default: `%%|-%:%%`(p, C, `%%%%`_param(id, dir, type, expr'?{expr' <- expr'?}), `%%%%`_paramIL(id, dir, typ_p, ?(exprIL)), tid_fresh*{tid_fresh <- tid_fresh*})
+   ;; ../../../../spec/4g-typing-decl.watsup:28.1-38.41
+   rule cparam-default: `%%|-%:%%`(p, C, `%%%%`_param(id, dir, type, expr'?{expr' <- expr'?}), `%%%%`_paramIL(id, dir, typ_p, ?(exprIL_e)), tid_fresh*{tid_fresh <- tid_fresh*})
       -- if expr'?{expr' <- expr'?} matches (_)
       -- let ?(expr) = expr'?{expr' <- expr'?}
       -- Type_ok: `%%|-%:%%`(p, C, type, typ_p, tid_fresh*{tid_fresh <- tid_fresh*})
@@ -9900,7 +9867,7 @@ relation CParam_ok: `%%|-%:%%`(cursor, context, cparam, cparamIL, tid*)
       -- let `(%;%)`_annotIL(typ_e, ctk) = $annot(exprIL_e)
       -- if ctk matches `LCTK`
       -- if Sub_impl: `%<<%`(typ_e, typ_p) holds
-      -- Eval_static: `%%|-%~>%`(p, C, exprIL_e, `%%`_valIL(val, exprIL))
+      -- Eval_static: `%%|-%~>%`(p, C, exprIL_e, val)
 
    ;; ../../../../spec/4g-typing-decl.watsup:40.1-44.30
    rule cparam-nodefault: `%%|-%:%%`(p, C, `%%%%`_param(id, dir, type, expr?{expr <- expr?}), `%%%%`_paramIL(id, dir, typ_p, ?()), tid_fresh*{tid_fresh <- tid_fresh*})
@@ -9925,7 +9892,7 @@ relation Decl_ok: `%%|-%:%%`(cursor, context, decl, context, declIL)
       -- let exprIL''?{exprIL'' <- exprIL''?} = $coerce_assign(exprIL, typ_c)
       -- if exprIL''?{exprIL'' <- exprIL''?} matches (_)
       -- let ?(exprIL') = exprIL''?{exprIL'' <- exprIL''?}
-      -- Eval_static: `%%|-%~>%`(p, C, exprIL', `%%`_valIL(val, _exprIL))
+      -- Eval_static: `%%|-%~>%`(p, C, exprIL', val)
       -- let C' = $add_styp(p, C, id, `%%%%`_styp(typ_c, `NO`_dir(), `LCTK`_ctk(), ?(val)))
 
    ;; ../../../../spec/4g-typing-decl.watsup:67.1-72.52
@@ -10191,7 +10158,7 @@ relation Decl_ok: `%%|-%:%%`(cursor, context, decl, context, declIL)
       -- let tidset = $bound_tids(`GLOBAL`_cursor(), C)
       -- if TypeDef_wf: `%|-%`(tidset, td) holds
       -- let C' = $add_typdef(`GLOBAL`_cursor(), C, id, td)
-      -- let (cid, cd)*{cd <- cd*, cid <- cid*} = $find_consdefs_by_name(`GLOBAL`_cursor(), C, `CURRENT%`_name(id_alias))
+      -- let (cid, cd)*{cd <- cd*, cid <- cid*} = $find_consdefs_by_name(C, `CURRENT%`_name(id_alias))
       -- (let `%%`_fid(_id, (id_p, bool_p)*{bool_p <- bool_p*, id_p <- id_p*}) = cid)*{_id <- _id*, bool_p* <- bool_p**, cid <- cid*, id_p* <- id_p**}
       -- (let cid_alias = `%%`_fid(id, (id_p, bool_p)*{bool_p <- bool_p*, id_p <- id_p*}))*{bool_p* <- bool_p**, cid_alias <- cid_alias*, id_p* <- id_p**}
       -- (let `ConsD%->%`_consdef((tparam*{tparam <- tparam*}, tparam'*{tparam' <- tparam'*}), `ConsT%%`_constyp(pt*{pt <- pt*}, _typ)) = cd)*{_typ <- _typ*, cd <- cd*, pt* <- pt**, tparam* <- tparam**, tparam'* <- tparam'**}
@@ -10227,7 +10194,7 @@ relation Decl_ok: `%%|-%:%%`(cursor, context, decl, context, declIL)
       -- let tidset = $bound_tids(`GLOBAL`_cursor(), C)
       -- if TypeDef_wf: `%|-%`(tidset, td) holds
       -- let C' = $add_typdef(`GLOBAL`_cursor(), C, id, td)
-      -- let (cid, cd)*{cd <- cd*, cid <- cid*} = $find_consdefs_by_name(`GLOBAL`_cursor(), C, `CURRENT%`_name(id_alias))
+      -- let (cid, cd)*{cd <- cd*, cid <- cid*} = $find_consdefs_by_name(C, `CURRENT%`_name(id_alias))
       -- (let `%%`_fid(_id, (id_p, bool_p)*{bool_p <- bool_p*, id_p <- id_p*}) = cid)*{_id <- _id*, bool_p* <- bool_p**, cid <- cid*, id_p* <- id_p**}
       -- (let cid_alias = `%%`_fid(id_alias, (id_p, bool_p)*{bool_p <- bool_p*, id_p <- id_p*}))*{bool_p* <- bool_p**, cid_alias <- cid_alias*, id_p* <- id_p**}
       -- let C'' = $add_consdefs(`GLOBAL`_cursor(), C', cid_alias*{cid_alias <- cid_alias*}, cd*{cd <- cd*})
@@ -11066,7 +11033,7 @@ relation ConsType_ok: `%%|-%%%:%%%`(cursor, context, name, targIL*, arg*, consty
 
    ;; ../../../../spec/4h-typing-call.watsup:675.1-678.61
    rule : `%%|-%%%:%%%`(p, C, name, targIL*{targIL <- targIL*}, arg*{arg <- arg*}, ct, tid_fresh*{tid_fresh <- tid_fresh*}, id_deft*{id_deft <- id_deft*})
-      -- let (cid, consdef, id*)?{(cid, consdef, id*) <- (cid, consdef, id*)?} = $find_consdef(`GLOBAL`_cursor(), C, name, arg*{arg <- arg*})
+      -- let (cid, consdef, id*)?{(cid, consdef, id*) <- (cid, consdef, id*)?} = $find_consdef(C, name, arg*{arg <- arg*})
       -- if (cid, consdef, id*)?{(cid, consdef, id*) <- (cid, consdef, id*)?} matches (_)
       -- let ?((cid, cd, id_deft*{id_deft <- id_deft*})) = (cid, consdef, id*)?{(cid, consdef, id*) <- (cid, consdef, id*)?}
       -- let (ct, tid_fresh*{tid_fresh <- tid_fresh*}) = $specialize_consdef(cd, targIL*{targIL <- targIL*})
@@ -11125,27 +11092,11 @@ relation Inst_site_ok: `%%|-%:INSTSITE_OK`(cursor, context, constyp)
 ;; ../../../../spec/4b-typing-relation.watsup:146.1-148.35
 relation Inst_ok: `%%%|-%%%%:%%%%`(cursor, context, tid*, constyp, targIL*, arg*, id*, typ, targIL*, targIL*, argIL*)
 
-   ;; ../../../../spec/4h-typing-call.watsup:738.1-755.84
-   rule global-packaget-no-targsinfer: `%%%|-%%%%:%%%%`(cursor, C_0, tid*{tid <- tid*}, ct, targIL*{targIL <- targIL*}, arg*{arg <- arg*}, id_deft*{id_deft <- id_deft*}, typ_i, targIL*{targIL <- targIL*}, [], argIL''*{argIL'' <- argIL''*})
-      -- if cursor matches `GLOBAL`
-      -- if tid*{tid <- tid*} matches []
-      -- let `ConsT%%`_constyp(pt*{pt <- pt*}, typ_i) = ct
-      -- if $is_packaget($canon_typ(typ_i))
-      -- let C_1 = $set_blockkind(C_0, `PACKAGE`_bkind())
-      -- (Arg_ok: `%%|-%:%%`(`BLOCK`_cursor(), C_1, arg, argIL, typ_a))*{arg <- arg*, argIL <- argIL*, typ_a <- typ_a*}
-      -- let pt'*{pt' <- pt'*} = $filter_default_args(pt*{pt <- pt*}, id_deft*{id_deft <- id_deft*})
-      -- if (|pt'*{pt' <- pt'*}| = |argIL*{argIL <- argIL*}|)
-      -- let pt''*{pt'' <- pt''*} = $align_params_with_args(pt'*{pt' <- pt'*}, (argIL, typ_a)*{argIL <- argIL*, typ_a <- typ_a*})
-      -- if ConsType_wf: `%|-%`($bound_tids(`GLOBAL`_cursor(), C_0), `ConsT%%`_constyp(pt*{pt <- pt*}, typ_i)) holds
-      -- if Inst_site_ok: `%%|-%:INSTSITE_OK`(`GLOBAL`_cursor(), C_0, `ConsT%%`_constyp(pt*{pt <- pt*}, typ_i)) holds
-      -- (Call_convention_arg_ok: `%%%|-%~~%:%`(`BLOCK`_cursor(), C_1, `NOACT`_actctxt(), pt'', (argIL, typ_a), argIL''))*{argIL <- argIL*, argIL'' <- argIL''*, pt'' <- pt''*, typ_a <- typ_a*}
-
-   ;; ../../../../spec/4h-typing-call.watsup:757.1-782.85
-   rule global-packaget-targsinfer: `%%%|-%%%%:%%%%`(cursor, C_0, tid_fresh*{tid_fresh <- tid_fresh*}, ct, targIL*{targIL <- targIL*}, arg*{arg <- arg*}, id_deft*{id_deft <- id_deft*}, typ_i', targIL*{targIL <- targIL*}, targIL_hidden*{targIL_hidden <- targIL_hidden*}, argIL''*{argIL'' <- argIL''*})
+   ;; ../../../../spec/4h-typing-call.watsup:738.1-761.85
+   rule global-packaget: `%%%|-%%%%:%%%%`(cursor, C_0, tid_fresh*{tid_fresh <- tid_fresh*}, ct, targIL*{targIL <- targIL*}, arg*{arg <- arg*}, id_deft*{id_deft <- id_deft*}, typ_i', targIL*{targIL <- targIL*}, targIL_hidden*{targIL_hidden <- targIL_hidden*}, argIL''*{argIL'' <- argIL''*})
       -- if cursor matches `GLOBAL`
       -- let `ConsT%%`_constyp(pt*{pt <- pt*}, typ_i) = ct
       -- if $is_packaget($canon_typ(typ_i))
-      -- if (|tid_fresh*{tid_fresh <- tid_fresh*}| > 0)
       -- let C_1 = $set_blockkind(C_0, `PACKAGE`_bkind())
       -- (Arg_ok: `%%|-%:%%`(`BLOCK`_cursor(), C_1, arg, argIL, typ_a))*{arg <- arg*, argIL <- argIL*, typ_a <- typ_a*}
       -- let pt'*{pt' <- pt'*} = $filter_default_args(pt*{pt <- pt*}, id_deft*{id_deft <- id_deft*})
@@ -11160,20 +11111,7 @@ relation Inst_ok: `%%%|-%%%%:%%%%`(cursor, context, tid*, constyp, targIL*, arg*
       -- if Inst_site_ok: `%%|-%:INSTSITE_OK`(`GLOBAL`_cursor(), C_0, `ConsT%%`_constyp(pt'''*{pt''' <- pt'''*}, typ_i')) holds
       -- (Call_convention_arg_ok: `%%%|-%~~%:%`(`BLOCK`_cursor(), C_1, `NOACT`_actctxt(), pt''', (argIL, typ_a), argIL''))*{argIL <- argIL*, argIL'' <- argIL''*, pt''' <- pt'''*, typ_a <- typ_a*}
 
-   ;; ../../../../spec/4h-typing-call.watsup:784.1-800.78
-   rule else-no-targsinfer: `%%%|-%%%%:%%%%`(p, C, tid*{tid <- tid*}, ct, targIL*{targIL <- targIL*}, arg*{arg <- arg*}, id_deft*{id_deft <- id_deft*}, typ_i, targIL*{targIL <- targIL*}, [], argIL''*{argIL'' <- argIL''*})
-      -- if tid*{tid <- tid*} matches []
-      -- let `ConsT%%`_constyp(pt*{pt <- pt*}, typ_i) = ct
-      -- if ~((p = `GLOBAL`_cursor()) /\ $is_packaget($canon_typ(typ_i)))
-      -- (Arg_ok: `%%|-%:%%`(p, C, arg, argIL, typ_a))*{arg <- arg*, argIL <- argIL*, typ_a <- typ_a*}
-      -- let pt'*{pt' <- pt'*} = $filter_default_args(pt*{pt <- pt*}, id_deft*{id_deft <- id_deft*})
-      -- if (|pt'*{pt' <- pt'*}| = |argIL*{argIL <- argIL*}|)
-      -- let pt''*{pt'' <- pt''*} = $align_params_with_args(pt'*{pt' <- pt'*}, (argIL, typ_a)*{argIL <- argIL*, typ_a <- typ_a*})
-      -- if ConsType_wf: `%|-%`($bound_tids(p, C), `ConsT%%`_constyp(pt*{pt <- pt*}, typ_i)) holds
-      -- if Inst_site_ok: `%%|-%:INSTSITE_OK`(p, C, `ConsT%%`_constyp(pt*{pt <- pt*}, typ_i)) holds
-      -- (Call_convention_arg_ok: `%%%|-%~~%:%`(p, C, `NOACT`_actctxt(), pt'', (argIL, typ_a), argIL''))*{argIL <- argIL*, argIL'' <- argIL''*, pt'' <- pt''*, typ_a <- typ_a*}
-
-   ;; ../../../../spec/4h-typing-call.watsup:802.1-824.79
+   ;; ../../../../spec/4h-typing-call.watsup:763.1-785.79
    rule else-targsinfer: `%%%|-%%%%:%%%%`(p, C, tid_fresh*{tid_fresh <- tid_fresh*}, ct, targIL*{targIL <- targIL*}, arg*{arg <- arg*}, id_deft*{id_deft <- id_deft*}, typ_i', targIL*{targIL <- targIL*}, targIL_hidden*{targIL_hidden <- targIL_hidden*}, argIL''*{argIL'' <- argIL''*})
       -- let `ConsT%%`_constyp(pt*{pt <- pt*}, typ_i) = ct
       -- if ~((p = `GLOBAL`_cursor()) /\ $is_packaget($canon_typ(typ_i)))
@@ -12288,7 +12226,7 @@ relation SEnum_field_ok: `%%%%|-%%:%%`(context, id, typ, (member, val)*, member,
       -- let exprIL''?{exprIL'' <- exprIL''?} = $coerce_assign(exprIL, typ_s)
       -- if exprIL''?{exprIL'' <- exprIL''?} matches (_)
       -- let ?(exprIL') = exprIL''?{exprIL'' <- exprIL''?}
-      -- Eval_static: `%%|-%~>%`(`BLOCK`_cursor(), C, exprIL', `%%`_valIL(val_e, _exprIL))
+      -- Eval_static: `%%|-%~>%`(`BLOCK`_cursor(), C, exprIL', val_e)
       -- let val = `SEnumFieldV%%%`_val(id_s, member, val_e)
       -- let member_s'*{member_s' <- member_s'*} = member_s*{member_s <- member_s*} ++ [member]
       -- let val_s'*{val_s' <- val_s'*} = val_s*{val_s <- val_s*} ++ [val]
@@ -12590,7 +12528,7 @@ relation Table_entry_keyset_ok: `%%%|-%%:%%`(cursor, context, tblctx, key, keyse
       -- let mode = tblctx.MODE
       -- if mode matches `NOPRILPM%`
       -- let `NOPRILPM%`_mode(n_w) = mode
-      -- Eval_static: `%%|-%~>%`(p, C, exprIL_m, `%%`_valIL(val_m, _exprIL))
+      -- Eval_static: `%%|-%~>%`(p, C, exprIL_m, val_m)
       -- let i_m = $get_num(val_m)
       -- let tblstate_e = $get_lpm_prefix(`FBitV%%`_val(n_w, $to_bitstr(n_w as int, i_m)))
       -- if Sub_impl: `%<<%`(typ, typ_k) holds
@@ -12823,7 +12761,7 @@ relation Table_entry_priority_ok: `%%%%|-%:%%`(cursor, context, tblctx, tblstate
       -- if ~tblctx.ENTRIES.CONST
       -- if (tblctx.PRIORITIES.VALUES = [])
       -- Expr_ok: `%%|-%:%`(`LOCAL`_cursor(), C, expr, exprIL)
-      -- Eval_static: `%%|-%~>%`(`LOCAL`_cursor(), C, exprIL, `%%`_valIL(val, _exprIL))
+      -- Eval_static: `%%|-%~>%`(`LOCAL`_cursor(), C, exprIL, val)
       -- let i = $get_num(val)
       -- if (i >= 0 as int)
       -- let tblctx' = tblctx[PRIORITIES.INIT = true]
@@ -12861,7 +12799,7 @@ relation Table_entry_priority_ok: `%%%%|-%:%%`(cursor, context, tblctx, tblstate
       -- if (tblctx.PRIORITIES.VALUES =/= [])
       -- if tblctx.PRIORITIES.INIT
       -- Expr_ok: `%%|-%:%`(`LOCAL`_cursor(), C, expr, exprIL)
-      -- Eval_static: `%%|-%~>%`(`LOCAL`_cursor(), C, exprIL, `%%`_valIL(val, _exprIL))
+      -- Eval_static: `%%|-%~>%`(`LOCAL`_cursor(), C, exprIL, val)
       -- let i = $get_num(val)
       -- if (i >= 0 as int)
       -- let tblctx' = $add_priority(i, tblctx)
@@ -12953,7 +12891,7 @@ relation Table_custom_ok: `%%%|-%:%%`(cursor, context, tblctx, tblcustomprop, tb
       -- Expr_ok: `%%|-%:%`(p, C, expr, exprIL)
       -- let `(%;%)`_annotIL(typ, _ctk) = $annot(exprIL)
       -- if (typ = `BoolT`_primtyp() as typ)
-      -- Eval_static: `%%|-%~>%`(p, C, exprIL, `%%`_valIL(val, _exprIL))
+      -- Eval_static: `%%|-%~>%`(p, C, exprIL, val)
       -- if val matches `BoolV%`
       -- let `BoolV%`_val(b_lw) = val
       -- let tblctx' = tblctx[PRIORITIES.LARGEST_WINS = b_lw]
@@ -12964,7 +12902,7 @@ relation Table_custom_ok: `%%%|-%:%%`(cursor, context, tblctx, tblcustomprop, tb
       -- Expr_ok: `%%|-%:%`(p, C, expr, exprIL)
       -- let `(%;%)`_annotIL(typ, _ctk) = $annot(exprIL)
       -- if (($is_intt(typ) \/ $is_fintt(typ)) \/ $is_fbitt(typ))
-      -- Eval_static: `%%|-%~>%`(p, C, exprIL, `%%`_valIL(val, _exprIL))
+      -- Eval_static: `%%|-%~>%`(p, C, exprIL, val)
       -- let i_delta = $get_num(val)
       -- if (i_delta > 0 as int)
       -- let tblctx' = tblctx[PRIORITIES.DELTA = i_delta]

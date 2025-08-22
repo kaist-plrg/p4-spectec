@@ -674,7 +674,7 @@ rule Call_ok/table-apply-methodt:
 
 rule ConsType_ok:
    p C |- name targIL* arg* : ct tid_fresh* id_deft*
-   -- if (cid, cd, id_deft*) = $find_consdef(GLOBAL, C, name, arg*)
+   -- if (cid, cd, id_deft*) = $find_consdef(C, name, arg*)
    -- if (ct, tid_fresh*) = $specialize_consdef(cd, targIL*)
 
 ;;
@@ -735,32 +735,11 @@ rule Inst_site_ok/local-tableapplymethod:
   ----
   -- if $is_externt(typ_i')
 
-rule Inst_ok/global-packaget-no-targsinfer:
-  GLOBAL C_0 eps |- ct targIL* arg* id_deft* : typ_i targIL* eps argIL''*
-  ----
-  -- if ConsT pt* typ_i = ct
-  -- if $is_packaget($canon_typ(typ_i))
-  ----
-  -- if C_1 = $set_blockkind(C_0, PACKAGE)
-  -- (Arg_ok: BLOCK C_1 |- arg : argIL typ_a)*
-  ----
-  -- if pt'* = $filter_default_args(pt*, id_deft*)
-  ----
-  -- if |pt'*| = |argIL*|
-  -- if pt''* = $align_params_with_args(pt'*, (argIL, typ_a)*)
-  ----
-  -- ConsType_wf: $bound_tids(GLOBAL, C_0) |- ConsT pt* typ_i
-  ----
-  -- Inst_site_ok: GLOBAL C_0 |- (ConsT pt* typ_i) : INSTSITE_OK
-  -- (Call_convention_arg_ok: BLOCK C_1 NOACT |- pt'' ~~ (argIL, typ_a) : argIL'')*
-
-rule Inst_ok/global-packaget-targsinfer:
+rule Inst_ok/global-packaget:
   GLOBAL C_0 tid_fresh* |- ct targIL* arg* id_deft* : typ_i' targIL* targIL_hidden* argIL''*
   ----
   -- if ConsT pt* typ_i = ct
   -- if $is_packaget($canon_typ(typ_i))
-  ----
-  -- if |tid_fresh*| > 0
   ----
   -- if C_1 = $set_blockkind(C_0, PACKAGE)
   -- (Arg_ok: BLOCK C_1 |- arg : argIL typ_a)*
@@ -780,24 +759,6 @@ rule Inst_ok/global-packaget-targsinfer:
   ----
   -- Inst_site_ok: GLOBAL C_0 |- (ConsT pt'''* typ_i') : INSTSITE_OK
   -- (Call_convention_arg_ok: BLOCK C_1 NOACT |- pt''' ~~ (argIL, typ_a) : argIL'')*
-
-rule Inst_ok/else-no-targsinfer:
-  p C eps |- ct targIL* arg* id_deft* : typ_i targIL* eps argIL''*
-  ----
-  -- if ConsT pt* typ_i = ct
-  -- if ~((p = GLOBAL) /\ $is_packaget($canon_typ(typ_i)))
-  ----
-  -- (Arg_ok: p C |- arg : argIL typ_a)*
-  ----
-  -- if pt'* = $filter_default_args(pt*, id_deft*)
-  ----
-  -- if |pt'*| = |argIL*|
-  -- if pt''* = $align_params_with_args(pt'*, (argIL, typ_a)*)
-  ----
-  -- ConsType_wf: $bound_tids(p, C) |- ConsT pt* typ_i
-  ----
-  -- Inst_site_ok: p C |- (ConsT pt* typ_i) : INSTSITE_OK
-  -- (Call_convention_arg_ok: p C NOACT |- pt'' ~~ (argIL, typ_a) : argIL'')*
 
 rule Inst_ok/else-targsinfer:
   p C tid_fresh* |- ct targIL* arg* id_deft* : typ_i' targIL* targIL_hidden* argIL''*

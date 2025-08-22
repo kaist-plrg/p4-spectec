@@ -3,7 +3,7 @@
 ;;
 
 rule Param_ok/param-default:
-  p C |- id dir type expr : (id dir typ_p exprIL) tid_fresh*
+  p C |- id dir type expr : (id dir typ_p exprIL_e) tid_fresh*
   ----
   -- Type_ok: p C |- type : typ_p tid_fresh*
   -- if tidset = $union_set<tid>($bound_tids(p, C), `{ tid_fresh* })
@@ -13,7 +13,7 @@ rule Param_ok/param-default:
   -- if `(typ_e; LCTK) = $annot(exprIL_e)
   ----
   -- Sub_impl: typ_e << typ_p
-  -- Eval_static: p C |- exprIL_e ~> val exprIL
+  -- Eval_static: p C |- exprIL_e ~> val
 
 rule Param_ok/param-nodefault:
   p C |- id dir type eps : (id dir typ_p eps) tid_fresh*
@@ -26,7 +26,7 @@ rule Param_ok/param-nodefault:
 ;;
 
 rule CParam_ok/cparam-default:
-  p C |- id dir type expr : (id dir typ_p exprIL) tid_fresh*
+  p C |- id dir type expr : (id dir typ_p exprIL_e) tid_fresh*
   -- Type_ok: p C |- type : typ_p tid_fresh*
   -- if tidset = $union_set<tid>($bound_tids(p, C), `{ tid_fresh* })
   -- Type_wf: tidset |- typ_p
@@ -35,7 +35,7 @@ rule CParam_ok/cparam-default:
   -- if `(typ_e; LCTK) = $annot(exprIL_e)
   ----
   -- Sub_impl: typ_e << typ_p
-  -- Eval_static: p C |- exprIL_e ~> val exprIL
+  -- Eval_static: p C |- exprIL_e ~> val
 
 rule CParam_ok/cparam-nodefault:
   p C |- id dir type eps : (id dir typ_p eps) tid_fresh*
@@ -56,7 +56,7 @@ rule Decl_ok/constd:
   -- if `(_; LCTK) = $annot(exprIL)
   -- if exprIL' = $coerce_assign(exprIL, typ_c)
   ----
-  -- Eval_static: p C |- exprIL' ~> val _
+  -- Eval_static: p C |- exprIL' ~> val
   ----
   -- if C' = $add_styp(p, C, id, typ_c NO LCTK val)
 
@@ -327,7 +327,7 @@ rule SEnum_field_ok:
   -- Expr_ok: BLOCK C |- expr : exprIL
   -- if `(_; LCTK) = $annot(exprIL)
   -- if exprIL' = $coerce_assign(exprIL, typ_s)
-  -- Eval_static: BLOCK C |- exprIL' ~> val_e _
+  -- Eval_static: BLOCK C |- exprIL' ~> val_e
   ----
   -- if val = SEnumFieldV id_s member val_e
   ----
@@ -452,7 +452,7 @@ rule Decl_ok/typedefd-extern:
   -- TypeDef_wf: tidset |- td
   -- if C' = $add_typdef(GLOBAL, C, id, td)
   ----
-  -- if (cid, cd)* = $find_consdefs_by_name(GLOBAL, C, CURRENT id_alias)
+  -- if (cid, cd)* = $find_consdefs_by_name(C, CURRENT id_alias)
   -- if (_ (id_p, bool_p)* = cid)*
   -- if (cid_alias = id (id_p, bool_p)*)*
   ----
@@ -479,7 +479,7 @@ rule Decl_ok/typedefd-package:
   -- TypeDef_wf: tidset |- td
   -- if C' = $add_typdef(GLOBAL, C, id, td)
   ----
-  -- if (cid, cd)* = $find_consdefs_by_name(GLOBAL, C, CURRENT id_alias)
+  -- if (cid, cd)* = $find_consdefs_by_name(C, CURRENT id_alias)
   -- if (_ (id_p, bool_p)* = cid)*
   -- if (cid_alias = id_alias (id_p, bool_p)*)*
   -- if C'' = $add_consdefs(GLOBAL, C', cid_alias*, cd*)
@@ -963,7 +963,7 @@ rule Table_entry_keyset_ok/exprk-lpm-maske:
   ----
   -- if tblctx.MODE = NOPRILPM n_w
   ----
-  -- Eval_static: p C |- exprIL_m ~> val_m _
+  -- Eval_static: p C |- exprIL_m ~> val_m
   -- if i_m = $get_num(val_m)
   ----
   -- if tblstate_e = $get_lpm_prefix(FBitV n_w $to_bitstr(n_w, i_m))
@@ -1160,7 +1160,7 @@ rule Table_entry_priority_ok/priority-values-nil-somep:
   -- if tblctx.PRIORITIES.VALUES = eps
   ----
   -- Expr_ok: LOCAL C |- expr : exprIL
-  -- Eval_static: LOCAL C |- exprIL ~> val _
+  -- Eval_static: LOCAL C |- exprIL ~> val
   ----
   -- if i = $get_num(val)
   -- if $(i >= 0)
@@ -1201,7 +1201,7 @@ rule Table_entry_priority_ok/else-somep:
   -- if tblctx.PRIORITIES.INIT
   ----
   -- Expr_ok: LOCAL C |- expr : exprIL
-  -- Eval_static: LOCAL C |- exprIL ~> val _
+  -- Eval_static: LOCAL C |- exprIL ~> val
   ----
   -- if i = $get_num(val)
   -- if $(i >= 0)
@@ -1324,7 +1324,7 @@ rule Table_custom_ok/largest_priority_wins:
   -- Expr_ok: p C |- expr : exprIL
   -- if `(BoolT; _) = $annot(exprIL)
   ----
-  -- Eval_static: p C |- exprIL ~> (BoolV b_lw) _
+  -- Eval_static: p C |- exprIL ~> BoolV b_lw
   -- if tblctx' = tblctx[ .PRIORITIES.LARGEST_WINS = b_lw ]
 
 rule Table_custom_ok/priority_delta:
@@ -1335,7 +1335,7 @@ rule Table_custom_ok/priority_delta:
   -- if `(typ; _) = $annot(exprIL)
   -- if $is_intt(typ) \/ $is_fintt(typ) \/ $is_fbitt(typ)
   ----
-  -- Eval_static: p C |- exprIL ~> val _
+  -- Eval_static: p C |- exprIL ~> val
   ----
   -- if i_delta = $get_num(val)
   -- if $(i_delta > 0)
