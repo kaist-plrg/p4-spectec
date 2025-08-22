@@ -458,23 +458,7 @@ rule Call_ok/actiont:
   ----
   -- (Call_convention_arg_ok: p C ACT |- pt'' ~~ (argIL, typ_a) : argIL'')*
 
-rule Call_ok/extern-funct-no-targsinfer:
-  p C eps |- (ExternFuncT pt* typ_r) targIL* arg* id_deft* : typ_r targIL* argIL''*
-  ----
-  -- if pt'* = $filter_default_args(pt*, id_deft*)
-  ----
-  -- (Arg_ok: p C |- arg : argIL typ_a)*
-  ----
-  -- if |pt'*| = |argIL*|
-  -- if pt''* = $align_params_with_args(pt'*, (argIL, typ_a)*)
-  ----
-  -- FuncType_wf: $bound_tids(p, C) |- ExternFuncT pt* typ_r
-  ----
-  -- Call_site_ok: p C |- ExternFuncT pt* typ_r : CALLSITE_OK
-  ----
-  -- (Call_convention_arg_ok: p C NOACT |- pt'' ~~ (argIL, typ_a) : argIL'')*
-
-rule Call_ok/extern-funct-targsinfer:
+rule Call_ok/extern-funct:
   p C tid_fresh* |- (ExternFuncT pt* typ_r) targIL* arg* id_deft* : typ_r' targIL''* argIL''*
   ----
   -- if pt'* = $filter_default_args(pt*, id_deft*)
@@ -497,23 +481,7 @@ rule Call_ok/extern-funct-targsinfer:
   ----
   -- (Call_convention_arg_ok: p C NOACT |- pt''' ~~ (argIL, typ_a) : argIL'')*
 
-rule Call_ok/funct-no-targsinfer:
-  p C eps |- (FuncT pt* typ_r) targIL* arg* id_deft* : typ_r targIL* argIL''*
-  ----
-  -- if pt'* = $filter_default_args(pt*, id_deft*)
-  ----
-  -- (Arg_ok: p C |- arg : argIL typ_a)*
-  ----
-  -- if |pt'*| = |argIL*|
-  -- if pt''* = $align_params_with_args(pt'*, (argIL, typ_a)*)
-  ----
-  -- FuncType_wf: $bound_tids(p, C) |- (FuncT pt* typ_r)
-  ----
-  -- Call_site_ok: p C |- FuncT pt* typ_r : CALLSITE_OK
-  ----
-  -- (Call_convention_arg_ok: p C NOACT |- pt'' ~~ (argIL, typ_a) : argIL'')*
-
-rule Call_ok/funct-targsinfer:
+rule Call_ok/funct:
   p C tid_fresh* |- (FuncT pt* typ_r) targIL* arg* id_deft* : typ_r' targIL''* argIL''*
   ----
   -- if pt'* = $filter_default_args(pt*, id_deft*)
@@ -551,23 +519,7 @@ rule Call_ok/builtin-methodt:
   -- Call_site_ok: p C |- BuiltinMethodT pt* typ_r : CALLSITE_OK
   -- (Call_convention_arg_ok: p C NOACT |- pt'' ~~ (argIL, typ_a) : argIL'')*
 
-rule Call_ok/extern-methodt-no-targsinfer:
-  p C eps |- (ExternMethodT pt* typ_r) targIL* arg* id_deft* : typ_r targIL* argIL''*
-  ----
-  -- if pt'* = $filter_default_args(pt*, id_deft*)
-  ----
-  -- (Arg_ok: p C |- arg : argIL typ_a)*
-  ----
-  -- if |pt'*| = |argIL*|
-  -- if pt''* = $align_params_with_args(pt'*, (argIL, typ_a)*)
-  ----
-  -- FuncType_wf: $bound_tids(p, C) |- ExternMethodT pt* typ_r
-  ----
-  -- Call_site_ok: p C |- ExternMethodT pt* typ_r : CALLSITE_OK
-  ----
-  -- (Call_convention_arg_ok: p C NOACT |- pt'' ~~ (argIL, typ_a) : argIL'')*
-
-rule Call_ok/extern-methodt-targsinfer:
+rule Call_ok/extern-methodt:
   p C tid_fresh* |- (ExternMethodT pt* typ_r) targIL* arg* id_deft* : typ_r' targIL''* argIL''*
   ----
   -- if pt'* = $filter_default_args(pt*, id_deft*)
@@ -590,23 +542,7 @@ rule Call_ok/extern-methodt-targsinfer:
   ----
   -- (Call_convention_arg_ok: p C NOACT |- pt''' ~~ (argIL, typ_a) : argIL'')*
 
-rule Call_ok/extern-abstract-methodt-no-targsinfer:
-  p C eps |- (ExternAbstractMethodT pt* typ_r) targIL* arg* id_deft* : typ_r targIL* argIL''*
-  ----
-  -- if pt'* = $filter_default_args(pt*, id_deft*)
-  ----
-  -- (Arg_ok: p C |- arg : argIL typ_a)*
-  ----
-  -- if |pt'*| = |argIL*|
-  -- if pt''* = $align_params_with_args(pt'*, (argIL, typ_a)*)
-  ----
-  -- FuncType_wf: $bound_tids(p, C) |- ExternAbstractMethodT pt* typ_r
-  ----
-  -- Call_site_ok: p C |- ExternAbstractMethodT pt* typ_r : CALLSITE_OK
-  ----
-  -- (Call_convention_arg_ok: p C NOACT |- pt'' ~~ (argIL, typ_a) : argIL'')*
-
-rule Call_ok/extern-abstract-methodt-targsinfer:
+rule Call_ok/extern-abstract-methodt:
   p C tid_fresh* |- (ExternAbstractMethodT pt* typ_r) targIL* arg* id_deft* : typ_r' targIL''* argIL''*
   ----
   -- if pt'* = $filter_default_args(pt*, id_deft*)
@@ -736,7 +672,7 @@ rule Inst_site_ok/local-tableapplymethod:
   -- if $is_externt(typ_i')
 
 rule Inst_ok/global-packaget:
-  GLOBAL C_0 tid_fresh* |- ct targIL* arg* id_deft* : typ_i' targIL* targIL_hidden* argIL''*
+  GLOBAL C_0 tid_fresh* |- ct targIL* arg* id_deft* : typ_i' targIL''* argIL''*
   ----
   -- if ConsT pt* typ_i = ct
   -- if $is_packaget($canon_typ(typ_i))
@@ -751,7 +687,8 @@ rule Inst_ok/global-packaget:
   ----
   -- if theta = $infer_targs(tid_fresh*, pt''*, typ_a*)
   ----
-  -- if (targIL_hidden = $find_map<tid, typ>(theta, tid_fresh))*
+  -- if (targIL' = $find_map<tid, typ>(theta, tid_fresh))*
+  -- if targIL''* = targIL* ++ targIL'*
   ----
   -- if ConsT pt'''* typ_i' = $subst_constyp(theta, ConsT pt''* typ_i)
   ----
@@ -760,8 +697,8 @@ rule Inst_ok/global-packaget:
   -- Inst_site_ok: GLOBAL C_0 |- (ConsT pt'''* typ_i') : INSTSITE_OK
   -- (Call_convention_arg_ok: BLOCK C_1 NOACT |- pt''' ~~ (argIL, typ_a) : argIL'')*
 
-rule Inst_ok/else-targsinfer:
-  p C tid_fresh* |- ct targIL* arg* id_deft* : typ_i' targIL* targIL_hidden* argIL''*
+rule Inst_ok/else:
+  p C tid_fresh* |- ct targIL* arg* id_deft* : typ_i' targIL''* argIL''*
   ----
   -- if ConsT pt* typ_i = ct
   -- if ~((p = GLOBAL) /\ $is_packaget($canon_typ(typ_i)))
@@ -775,7 +712,8 @@ rule Inst_ok/else-targsinfer:
   ----
   -- if theta = $infer_targs(tid_fresh*, pt''*, typ_a*)
   ----
-  -- if (targIL_hidden = $find_map<tid, typ>(theta, tid_fresh))*
+  -- if (targIL' = $find_map<tid, typ>(theta, tid_fresh))*
+  -- if targIL''* = targIL* ++ targIL'*
   ----
   -- if ConsT pt'''* typ_i' = $subst_constyp(theta, ConsT pt''* typ_i)
   ----
