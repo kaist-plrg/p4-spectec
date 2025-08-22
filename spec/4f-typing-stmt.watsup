@@ -101,7 +101,7 @@ rule Switch_tbl_cases_ok/seq:
 rule Stmt_ok/switchs-tbl:
   LOCAL C f |- SwitchS expr switchcase*
              : C f' (SwitchS exprIL switchcaseIL*)
-  -- if C.LOCAL.KIND = CONTROLAPPLYMETHOD
+  -- if $is_control_apply_method_localkind(C.LOCAL.KIND)
   -- Expr_ok: LOCAL C |- expr : exprIL
   -- if `(TableEnumT id _; _) = $annot(exprIL)
   -- if id_t = $strip_prefix($strip_suffix(id, ")"), "action_list(")
@@ -167,7 +167,8 @@ rule Switch_gen_cases_ok/seq:
 rule Stmt_ok/switchs-gen:
   LOCAL C f |- SwitchS expr switchcase*
              : C f' (SwitchS exprIL switchcaseIL*)
-  -- if C.LOCAL.KIND = CONTROLAPPLYMETHOD
+  ----
+  -- if $is_control_apply_method_localkind(C.LOCAL.KIND)
   -- Expr_ok: LOCAL C |- expr : exprIL
   -- if `(typ; _) = $annot(exprIL)
   ----
@@ -239,20 +240,22 @@ rule Stmt_ok/rets-some:
 rule Stmt_ok/callfuncs:
   p C f |- CallFuncS name targ* arg*
          : C f (CallFuncS name targIL'* argIL'*)
+  ----
   -- if (name = CURRENT "verify")
-        => ((p = BLOCK /\ C.BLOCK.KIND = PARSER)
-            \/ (p = LOCAL /\ C.LOCAL.KIND = PARSERSTATE))
+        => ((p = BLOCK /\ $is_parser_blockkind(C.BLOCK.KIND))
+            \/ (p = LOCAL /\ $is_parser_state_localkind(C.LOCAL.KIND)))
   -- (Type_ok: p C |- targ : targIL tid_fresh_a*)*
   -- if tid_fresh* = $concat_<tid>(tid_fresh_a**)
   ----
+  -- (Arg_ok: p C |- arg : argIL typ_arg)*
+  ----
   -- FuncType_ok:
-      p C |- name targIL* arg* : ft tid_fresh_inserted* id_deft*
+      p C |- name targIL* argIL* : ft tid_fresh_inserted* id_deft*
   ----
   -- if tid_fresh'* = $concat_<tid>(tid_fresh* ++ tid_fresh_inserted*)
   ----
-  -- Call_ok:
-      p C tid_fresh'* |- ft targIL* arg* id_deft*
-                       : typ targIL'* argIL'*
+  -- Call_ok: p C |- ft targIL* tid_fresh'* (argIL, typ_arg)* id_deft*
+                   : typ targIL'* argIL'*
 
 ;;
 ;; Method call statement
@@ -261,20 +264,20 @@ rule Stmt_ok/callfuncs:
 rule Stmt_ok/callmethods:
   p C f |- CallMethodS expr_b member targ* arg*
          : C f (CallMethodS exprIL_b member targIL'* argIL'*)
-  -- (Arg_ok: p C |- arg : argIL typ_arg)*
   ----
   -- (Type_ok: p C |- targ : targIL tid_fresh_a*)*
   -- if tid_fresh* = $concat_<tid>(tid_fresh_a**)
   ----
+  -- (Arg_ok: p C |- arg : argIL typ_arg)*
+  ----
   -- MethodType_ok:
-      p C |- expr_b member targIL* arg*
+      p C |- expr_b member targIL* argIL*
            : ft exprIL_b tid_fresh_inserted* id_deft*
   ----
   -- if tid_fresh'* = $concat_<tid>(tid_fresh* ++ tid_fresh_inserted*)
   ----
-  -- Call_ok:
-      p C tid_fresh'* |- ft targIL* arg* id_deft*
-                       : typ targIL'* argIL'*
+  -- Call_ok: p C |- ft targIL* tid_fresh'* (argIL, typ_arg)* id_deft*
+                   : typ targIL'* argIL'*
 
 ;;
 ;; Instantiation statement
@@ -285,7 +288,7 @@ rule Stmt_ok/callinsts:
          : C f (CallInstS typ name targIL'* argIL'*)
   -- ConsType_ok: p C |- name eps eps : ct eps eps
   ----
-  -- Inst_ok: p C eps |- ct eps eps eps : typ eps eps
+  -- Inst_ok: p C NAMED |- ct eps eps eps eps : typ eps eps
   ----
   -- if typ' = $canon_typ(typ)
   -- if $is_parsert(typ') \/ $is_controlt(typ')

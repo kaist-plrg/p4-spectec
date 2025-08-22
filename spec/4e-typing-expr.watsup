@@ -647,7 +647,8 @@ rule Select_case_ok:
 rule Expr_ok/selecte:
   LOCAL C |- SelectE expr_k* selectcase*
            : SelectE exprIL_k* selectcaseIL* `(StateT; DYN)
-  -- if C.LOCAL.KIND = PARSERSTATE
+  ----
+  -- if $is_parser_state_localkind(C.LOCAL.KIND)
   -- (Expr_ok: LOCAL C |- expr_k : exprIL_k)*
   -- if (`(typ_k; ctk_k) = $annot(exprIL_k))*
   ----
@@ -823,7 +824,9 @@ rule Expr_ok/expracce-stackt-size:
 rule Expr_ok/expracce-stackt-lastindex:
   p C |- ExprAccE expr_b "lastIndex"
        : ExprAccE exprIL_b "lastIndex" `(FBitT 32; DYN)
-  -- if (p = BLOCK /\ C.BLOCK.KIND = PARSER) \/ (p = LOCAL /\ C.LOCAL.KIND = PARSERSTATE)
+  ----
+  -- if (p = BLOCK /\ $is_parser_blockkind(C.BLOCK.KIND))
+        \/ (p = LOCAL /\ $is_parser_state_localkind(C.LOCAL.KIND))
   ----
   -- Expr_ok: p C |- expr_b : exprIL_b
   -- if `(typ_b; ctk_b) = $annot(exprIL_b)
@@ -832,7 +835,9 @@ rule Expr_ok/expracce-stackt-lastindex:
 rule Expr_ok/expracce-stackt-last:
   p C |- ExprAccE expr_b "last"
        : ExprAccE exprIL_b "last" `(typ_s; DYN)
-  -- if (p = BLOCK /\ C.BLOCK.KIND = PARSER) \/ (p = LOCAL /\ C.LOCAL.KIND = PARSERSTATE)
+  ----
+  -- if (p = BLOCK /\ $is_parser_blockkind(C.BLOCK.KIND))
+        \/ (p = LOCAL /\ $is_parser_state_localkind(C.LOCAL.KIND))
   ----
   -- Expr_ok: p C |- expr_b : exprIL_b
   -- if `(typ_b; ctk_b) = $annot(exprIL_b)
@@ -888,14 +893,19 @@ rule Expr_ok/expracce-tablestructt:
 rule Expr_ok/callfunce:
   p C |- CallFuncE name targ* arg*
        : CallFuncE name targIL'* argIL'* `(typ; DYN)
+  ----
   -- (Type_ok: p C |- targ : targIL tid_fresh_a*)*
   -- if tid_fresh* = $concat_<tid>(tid_fresh_a**)
   ----
-  -- FuncType_ok: p C |- name targIL* arg* : ft tid_fresh_inserted* id_deft*
+  -- (Arg_ok: p C |- arg : argIL typ_arg)*
+  ----
+  -- FuncType_ok: p C |- name targIL* argIL*
+                       : ft tid_fresh_inserted* id_deft*
   ----
   -- if tid_fresh'* = $concat_<tid>(tid_fresh* :: tid_fresh_inserted*)
   ----
-  -- Call_ok: p C tid_fresh'* |- ft targIL* arg* id_deft* : typ targIL'* argIL'*
+  -- Call_ok: p C |- ft targIL* tid_fresh'* (argIL, typ_arg)* id_deft*
+                   : typ targIL'* argIL'*
   -- if typ =/= VoidT
 
 ;;
@@ -905,48 +915,65 @@ rule Expr_ok/callfunce:
 rule Expr_ok/callmethode-builtin-size:
   p C |- CallMethodE expr_b member targ* arg*
        : CallMethodE exprIL_b member targIL'* argIL'* `(typ; LCTK)
+  ----
   -- (Type_ok: p C |- targ : targIL tid_fresh_a*)*
   -- if tid_fresh* = $concat_<tid>(tid_fresh_a**)
   ----
-  -- MethodType_ok: p C |- expr_b member targIL* arg* : ft exprIL_b tid_fresh_inserted* id_deft*
+  -- (Arg_ok: p C |- arg : argIL typ_arg)*
+  ----
+  -- MethodType_ok: p C |- expr_b member targIL* argIL*
+                         : ft exprIL_b tid_fresh_inserted* id_deft*
   ----
   -- if $is_builtinmethodt(ft)
-  -- if member <- [ "minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes" ]
+  -- if member <- [ "minSizeInBits", "minSizeInBytes",
+                    "maxSizeInBits", "maxSizeInBytes" ]
   ----
   -- if tid_fresh'* = $concat_<tid>(tid_fresh* ++ tid_fresh_inserted*)
   ----
-  -- Call_ok: p C tid_fresh'* |- ft targIL* arg* id_deft* : typ targIL'* argIL'*
+  -- Call_ok: p C |- ft targIL* tid_fresh'* (argIL, typ_arg)* id_deft*
+                   : typ targIL'* argIL'*
   -- if typ =/= VoidT
 
 rule Expr_ok/callmethode-builtin:
   p C |- CallMethodE expr_b member targ* arg*
        : CallMethodE exprIL_b member targIL'* argIL'* `(typ; DYN)
+  ----
   -- (Type_ok: p C |- targ : targIL tid_fresh_a*)*
   -- if tid_fresh* = $concat_<tid>(tid_fresh_a**)
   ----
-  -- MethodType_ok: p C |- expr_b member targIL* arg* : ft exprIL_b tid_fresh_inserted* id_deft*
+  -- (Arg_ok: p C |- arg : argIL typ_arg)*
+  ----
+  -- MethodType_ok: p C |- expr_b member targIL* argIL*
+                         : ft exprIL_b tid_fresh_inserted* id_deft*
   ----
   -- if $is_builtinmethodt(ft)
-  -- if ~(member <- [ "minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes" ])
+  -- if ~(member <- [ "minSizeInBits", "minSizeInBytes",
+                      "maxSizeInBits", "maxSizeInBytes" ])
   ----
   -- if tid_fresh'* = $concat_<tid>(tid_fresh* ++ tid_fresh_inserted*)
   ----
-  -- Call_ok: p C tid_fresh'* |- ft targIL* arg* id_deft* : typ targIL'* argIL'*
+  -- Call_ok: p C |- ft targIL* tid_fresh'* (argIL, typ_arg)* id_deft*
+                   : typ targIL'* argIL'*
   -- if typ =/= VoidT
 
 rule Expr_ok/callmethode-non-builtin:
   p C |- CallMethodE expr_b member targ* arg*
        : CallMethodE exprIL_b member targIL'* argIL'* `(typ; DYN)
+  ----
   -- (Type_ok: p C |- targ : targIL tid_fresh_a*)*
   -- if tid_fresh* = $concat_<tid>(tid_fresh_a**)
   ----
-  -- MethodType_ok: p C |- expr_b member targIL* arg* : ft exprIL_b tid_fresh_inserted* id_deft*
+  -- (Arg_ok: p C |- arg : argIL typ_arg)*
+  ----
+  -- MethodType_ok: p C |- expr_b member targIL* argIL*
+                         : ft exprIL_b tid_fresh_inserted* id_deft*
   ----
   -- if ~$is_builtinmethodt(ft)
   ----
   -- if tid_fresh'* = $concat_<tid>(tid_fresh* ++ tid_fresh_inserted*)
   ----
-  -- Call_ok: p C tid_fresh'* |- ft targIL* arg* id_deft* : typ targIL'* argIL'*
+  -- Call_ok: p C |- ft targIL* tid_fresh'* (argIL, typ_arg)* id_deft*
+                   : typ targIL'* argIL'*
   -- if typ =/= VoidT
 
 ;;
@@ -956,13 +983,15 @@ rule Expr_ok/callmethode-non-builtin:
 rule Expr_ok/calltypee:
   p C |- CallTypeE name member eps eps
        : CallTypeE name member eps eps `(IntT; LCTK)
+  ----
   -- if typdef = $find_typdef(p, C, name)
   ----
-  -- if member <- [ "minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes" ]
+  -- if member <- [ "minSizeInBits", "minSizeInBytes",
+                    "maxSizeInBits", "maxSizeInBytes" ]
   ----
   -- if ft = BuiltinMethodT eps IntT
   ----
-  -- Call_ok: p C eps |- ft eps eps eps : IntT eps eps
+  -- Call_ok: p C |- ft eps eps eps eps : IntT eps eps
 
 ;;
 ;; Nameless instantiation expression
@@ -994,11 +1023,15 @@ rule Expr_ok/inste:
   -- (Type_ok: p C |- targ : targIL tid_fresh_a*)*
   -- if tid_fresh* = $concat_<tid>(tid_fresh_a**)
   ----
-  -- ConsType_ok: p C |- name targIL* arg* : ct tid_fresh_inserted* id_deft*
+  -- (Arg_ok: p C |- arg : argIL typ_arg)*
+  ----
+  -- ConsType_ok: p C |- name targIL* argIL*
+                       : ct tid_fresh_inserted* id_deft*
   ----
   -- if tid_fresh'* = $concat_<tid>(tid_fresh* ++ tid_fresh_inserted*)
   ----
-  -- Inst_ok: p C tid_fresh'* |- ct targIL* arg* id_deft* : typ targIL'* argIL'*
+  -- Inst_ok: p C ANON |- ct targIL* tid_fresh'* (argIL, typ_arg)* id_deft*
+                        : typ targIL'* argIL'*
   -- if $not_abstract_extern_object(typ)
 
 ;;

@@ -167,12 +167,14 @@ rule Decl_ok/instd-some:
   -- (Type_ok: p C |- targ : targIL tid_fresh_a*)*
   -- if tid_fresh* = $concat_<tid>(tid_fresh_a**)
   ----
+  -- (Arg_ok: p C |- arg : argIL typ_arg)*
+  ----
   -- ConsType_ok:
-      p C |- name_inst targIL* arg* : ct tid_fresh_inserted* id_deft*
+      p C |- name_inst targIL* argIL* : ct tid_fresh_inserted* id_deft*
   ----
   -- Inst_ok:
-      p C (tid_fresh* ++ tid_fresh_inserted*) |- ct targIL* arg* id_deft*
-                                               : typ targIL'* argIL'*
+      p C NAMED |- ct targIL* (tid_fresh* ++ tid_fresh_inserted*) (argIL, typ_arg)* id_deft*
+                 : typ targIL'* argIL'*
   ----
   -- if typ = SpecT (PolyD (tparam*, tparam_hidden*) -> (ExternT id_ext fdenv_ext)) typ_a*
   -- if C' = $add_styp(LOCAL, C, "this", typ NO CTK eps)
@@ -198,12 +200,14 @@ rule Decl_ok/instd-none:
   -- (Type_ok: p C |- targ : targIL tid_fresh_a*)*
   -- if tid_fresh* = $concat_<tid>(tid_fresh_a**)
   ----
+  -- (Arg_ok: p C |- arg : argIL typ_arg)*
+  ----
   -- ConsType_ok:
-      p C |- name_inst targIL* arg* : ct tid_fresh_inserted* id_deft*
+      p C |- name_inst targIL* argIL* : ct tid_fresh_inserted* id_deft*
   ----
   -- Inst_ok:
-      p C (tid_fresh* ++ tid_fresh_inserted*) |- ct targIL* arg* id_deft*
-                                               : typ targIL'* argIL'*
+      p C NAMED |- ct targIL* (tid_fresh* ++ tid_fresh_inserted*) (argIL, typ_arg)* id_deft*
+                 : typ targIL'* argIL'*
   ----
   -- if C' = $add_styp(p, C, id, typ NO CTK eps)
 
@@ -525,7 +529,7 @@ rule Decl_ok/typedefd-decl-poly:
 rule Decl_ok/actiond:
   p C_0 |- ActionD id param* block : C_4 (ActionD id paramIL* blockIL)
   ----
-  -- if p = GLOBAL \/ (p = BLOCK /\ C_0.BLOCK.KIND = CONTROL)
+  -- if p = GLOBAL \/ (p = BLOCK /\ $is_control_blockkind(C_0.BLOCK.KIND))
   ----
   -- if fid = $to_fid(id, param*)
   ----
@@ -720,7 +724,7 @@ rule Decl_ok/externobjectd:
 rule Decl_ok/valuesetd:
   p C |- ValueSetD id type expr : C' (ValueSetD id typ exprIL)
   ----
-  -- if p = GLOBAL \/ (p = BLOCK /\ C.BLOCK.KIND = PARSER)
+  -- if p = GLOBAL \/ (p = BLOCK /\ $is_parser_blockkind(C.BLOCK.KIND))
   ----
   -- Type_ok: p C |- type : typ_s eps
   -- Type_wf: $bound_tids(p, C) |- SetT typ_s
@@ -1424,7 +1428,7 @@ rule Table_type_decl_ok:
 rule Decl_ok/tabled:
   BLOCK C_0 |- TableD id tbl : C_3 (TableD id typ tblIL)
   ----
-  -- if C_0.BLOCK.KIND = CONTROL
+  -- if $is_control_blockkind(C_0.BLOCK.KIND)
   ----
   -- if |$keys_of_table(tbl)| <= 1
   -- if |$actions_of_table(tbl)| = 1

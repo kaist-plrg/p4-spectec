@@ -22,6 +22,21 @@ syntax glayer =
 
 syntax bkind = EMPTY | EXTERN | PARSER | CONTROL | PACKAGE
 
+dec $is_empty_blockkind(bkind) : bool
+def $is_empty_blockkind(bkind) = (bkind = EMPTY)
+
+dec $is_extern_blockkind(bkind) : bool
+def $is_extern_blockkind(bkind) = (bkind = EXTERN)
+
+dec $is_parser_blockkind(bkind) : bool
+def $is_parser_blockkind(bkind) = (bkind = PARSER)
+
+dec $is_control_blockkind(bkind) : bool
+def $is_control_blockkind(bkind) = (bkind = CONTROL)
+
+dec $is_package_blockkind(bkind) : bool
+def $is_package_blockkind(bkind) = (bkind = PACKAGE)
+
 syntax blayer =
   { ID id,
     KIND bkind,
@@ -41,6 +56,44 @@ syntax lkind =
   | PARSERSTATE
   | CONTROLAPPLYMETHOD
   | TABLEAPPLYMETHOD
+
+dec $is_empty_localkind(lkind) : bool
+def $is_empty_localkind(lkind)
+  = (lkind = EMPTY)
+
+dec $is_extern_func_localkind(lkind) : bool
+def $is_extern_func_localkind(lkind)
+  = (lkind = EXTERNFUNC)
+
+dec $is_func_localkind(lkind) : bool
+def $is_func_localkind(FUNC _) = true
+def $is_func_localkind(_) = false
+  -- otherwise
+
+dec $is_action_localkind(lkind) : bool
+def $is_action_localkind(lkind)
+  = (lkind = ACTION)
+
+dec $is_extern_method_localkind(lkind) : bool
+def $is_extern_method_localkind(lkind)
+  = (lkind = EXTERNMETHOD)
+
+dec $is_extern_abstract_method_localkind(lkind) : bool
+def $is_extern_abstract_method_localkind(EXTERNABSTRACTMETHOD _) = true
+def $is_extern_abstract_method_localkind(_) = false
+  -- otherwise
+
+dec $is_parser_state_localkind(lkind) : bool
+def $is_parser_state_localkind(lkind)
+  = (lkind = PARSERSTATE)
+
+dec $is_control_apply_method_localkind(lkind) : bool
+def $is_control_apply_method_localkind(lkind)
+  = (lkind = CONTROLAPPLYMETHOD)
+
+dec $is_table_apply_method_localkind(lkind) : bool
+def $is_table_apply_method_localkind(lkind)
+  = (lkind = TABLEAPPLYMETHOD)
 
 syntax llayer =
   { ID id,
@@ -130,7 +183,11 @@ dec $bound_tids(cursor, context) : tidset
 
 def $bound_tids(GLOBAL, C) = $empty_set<tid>
 def $bound_tids(BLOCK, C) = $dom_map<tid, typdef>(C.BLOCK.TDENV)
-def $bound_tids(LOCAL, C) = $union_set<tid>($dom_map<tid, typdef>(C.LOCAL.TDENV), $bound_tids(BLOCK, C))
+def $bound_tids(LOCAL, C)
+  = $union_set<tid>(
+      $dom_map<tid, typdef>(C.LOCAL.TDENV),
+      $bound_tids(BLOCK, C)
+    )
 
 ;;
 ;; Adders
@@ -276,14 +333,17 @@ def $add_consdefs(p, C, cid_h :: cid_t*, cd_h :: cd_t*) = C''
 dec $find_styp(cursor, context, name) : styp?
 
 def $find_styp(p, C, TOP id) = $find_map<id, styp>(C.GLOBAL.FRAME, id)
-def $find_styp(GLOBAL, C, CURRENT id) = $find_map<id, styp>(C.GLOBAL.FRAME, id)
+def $find_styp(GLOBAL, C, CURRENT id)
+  = $find_map<id, styp>(C.GLOBAL.FRAME, id)
 def $find_styp(BLOCK, C, CURRENT id) = styp
   -- if styp = $find_map<id, styp>(C.BLOCK.FRAME, id)
-def $find_styp(BLOCK, C, CURRENT id) = $find_styp(GLOBAL, C, CURRENT id)
+def $find_styp(BLOCK, C, CURRENT id)
+  = $find_styp(GLOBAL, C, CURRENT id)
   -- if eps = $find_map<id, styp>(C.BLOCK.FRAME, id)
 def $find_styp(LOCAL, C, CURRENT id) = styp
   -- if styp = $find_maps<id, styp>(C.LOCAL.FRAMES, id)
-def $find_styp(LOCAL, C, CURRENT id) = $find_styp(BLOCK, C, CURRENT id)
+def $find_styp(LOCAL, C, CURRENT id)
+  = $find_styp(BLOCK, C, CURRENT id)
   -- if eps = $find_maps<id, styp>(C.LOCAL.FRAMES, id)
 
 ;; Finder for values
@@ -297,36 +357,45 @@ def $find_val(p, C, name) = val
 
 dec $find_typdef(cursor, context, name) : typdef?
 
-def $find_typdef(p, C, TOP id) = $find_map<tid, typdef>(C.GLOBAL.TDENV, id)
-def $find_typdef(GLOBAL, C, CURRENT id) = $find_map<tid, typdef>(C.GLOBAL.TDENV, id)
+def $find_typdef(p, C, TOP id)
+  = $find_map<tid, typdef>(C.GLOBAL.TDENV, id)
+def $find_typdef(GLOBAL, C, CURRENT id)
+  = $find_map<tid, typdef>(C.GLOBAL.TDENV, id)
 def $find_typdef(BLOCK, C, CURRENT id) = td
   -- if td = $find_map<tid, typdef>(C.BLOCK.TDENV, id)
-def $find_typdef(BLOCK, C, CURRENT id) = $find_typdef(GLOBAL, C, CURRENT id)
+def $find_typdef(BLOCK, C, CURRENT id)
+  = $find_typdef(GLOBAL, C, CURRENT id)
   -- if eps = $find_map<tid, typdef>(C.BLOCK.TDENV, id)
 def $find_typdef(LOCAL, C, CURRENT id) = td
   -- if td = $find_map<tid, typdef>(C.LOCAL.TDENV, id)
-def $find_typdef(LOCAL, C, CURRENT id) = $find_typdef(BLOCK, C, CURRENT id)
+def $find_typdef(LOCAL, C, CURRENT id)
+  = $find_typdef(BLOCK, C, CURRENT id)
   -- if eps = $find_map<tid, typdef>(C.LOCAL.TDENV, id)
 
 ;; Finder for function definitions
 
-dec $to_fkey(arg*) : (id?)*
+dec $to_fkey(argIL*) : (id?)*
 
 def $to_fkey(eps) = eps
-def $to_fkey(arg_h :: arg_t*) = id :: $to_fkey(arg_t*)
-  -- if NameA id _ = arg_h
-def $to_fkey(arg_h :: arg_t*) = eps :: $to_fkey(arg_t*)
+def $to_fkey(argIL_h :: argIL_t*) = id :: $to_fkey(argIL_t*)
+  -- if NameA id _ = argIL_h
+def $to_fkey(argIL_h :: argIL_t*) = eps :: $to_fkey(argIL_t*)
   -- otherwise
 
-dec $find_funcdef(cursor, context, name, arg*) : (fid, funcdef, id*)?
+dec $find_funcdef(cursor, context, name, argIL*) : (fid, funcdef, id*)?
 
-def $find_funcdef(p, C, TOP id, arg*) = $find_func<funcdef>(id, $to_fkey(arg*), C.GLOBAL.FDENV)
-def $find_funcdef(GLOBAL, C, CURRENT id, arg*) = $find_func<funcdef>(id, $to_fkey(arg*), C.GLOBAL.FDENV)
-def $find_funcdef(BLOCK, C, CURRENT id, arg*) = (fid, fd, id_deft*)
-  -- if (fid, fd, id_deft*) = $find_func<funcdef>(id, $to_fkey(arg*), C.BLOCK.FDENV)
-def $find_funcdef(BLOCK, C, CURRENT id, arg*) = $find_funcdef(GLOBAL, C, CURRENT id, arg*)
-  -- if eps = $find_func<funcdef>(id, $to_fkey(arg*), C.BLOCK.FDENV)
-def $find_funcdef(LOCAL, C, CURRENT id, arg*) = $find_funcdef(BLOCK, C, CURRENT id, arg*)
+def $find_funcdef(p, C, TOP id, argIL*)
+  = $find_func<funcdef>(id, $to_fkey(argIL*), C.GLOBAL.FDENV)
+def $find_funcdef(GLOBAL, C, CURRENT id, argIL*)
+  = $find_func<funcdef>(id, $to_fkey(argIL*), C.GLOBAL.FDENV)
+def $find_funcdef(BLOCK, C, CURRENT id, argIL*) = (fid, fd, id_deft*)
+  -- if (fid, fd, id_deft*)
+      = $find_func<funcdef>(id, $to_fkey(argIL*), C.BLOCK.FDENV)
+def $find_funcdef(BLOCK, C, CURRENT id, argIL*)
+  = $find_funcdef(GLOBAL, C, CURRENT id, argIL*)
+  -- if eps = $find_func<funcdef>(id, $to_fkey(argIL*), C.BLOCK.FDENV)
+def $find_funcdef(LOCAL, C, CURRENT id, argIL*)
+  = $find_funcdef(BLOCK, C, CURRENT id, argIL*)
 
 dec $find_funcdef_by_name(cursor, context, name) : funcdef
 
@@ -336,20 +405,26 @@ def $find_funcdef_by_name(GLOBAL, C, CURRENT id) = fd
   -- if (_, fd) = $find_func_by_name(id, C.GLOBAL.FDENV)
 def $find_funcdef_by_name(BLOCK, C, CURRENT id) = fd
   -- if (_, fd) = $find_func_by_name(id, C.BLOCK.FDENV)
-def $find_funcdef_by_name(BLOCK, C, CURRENT id) = $find_funcdef_by_name(GLOBAL, C, CURRENT id)
+def $find_funcdef_by_name(BLOCK, C, CURRENT id)
+  = $find_funcdef_by_name(GLOBAL, C, CURRENT id)
   -- if eps = $find_func_by_name(id, C.BLOCK.FDENV)
-def $find_funcdef_by_name(LOCAL, C, CURRENT id) = $find_funcdef_by_name(BLOCK, C, CURRENT id)
+def $find_funcdef_by_name(LOCAL, C, CURRENT id)
+  = $find_funcdef_by_name(BLOCK, C, CURRENT id)
 
 ;; Finder for constructor definitions
 
-dec $find_consdef(context, name, arg*) : (cid, consdef, id*)?
+dec $find_consdef(context, name, argIL*) : (cid, consdef, id*)?
 
-def $find_consdef(C, TOP id, arg*) = $find_func<consdef>(id, $to_fkey(arg*), C.GLOBAL.CDENV)
-def $find_consdef(C, CURRENT id, arg*) = $find_func<consdef>(id, $to_fkey(arg*), C.GLOBAL.CDENV)
+def $find_consdef(C, TOP id, argIL*)
+  = $find_func<consdef>(id, $to_fkey(argIL*), C.GLOBAL.CDENV)
+def $find_consdef(C, CURRENT id, argIL*)
+  = $find_func<consdef>(id, $to_fkey(argIL*), C.GLOBAL.CDENV)
 
 dec $find_consdefs_by_name(context, name) : (cid, consdef)*
 
-def $find_consdefs_by_name(C, TOP id) = $find_funcs_by_name<consdef>(id, cid*, cd*)
+def $find_consdefs_by_name(C, TOP id)
+  = $find_funcs_by_name<consdef>(id, cid*, cd*)
   -- if `{ (cid -> cd)* } = C.GLOBAL.CDENV
-def $find_consdefs_by_name(C, CURRENT id) = $find_funcs_by_name<consdef>(id, cid*, cd*)
+def $find_consdefs_by_name(C, CURRENT id)
+  = $find_funcs_by_name<consdef>(id, cid*, cd*)
   -- if `{ (cid -> cd)* } = C.GLOBAL.CDENV
