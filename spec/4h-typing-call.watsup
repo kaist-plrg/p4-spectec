@@ -346,6 +346,10 @@ def $infer_targs'(tid*, (id dir typ_p exprIL_deft?)*, typ_a*) = $resolve_cstrs(c
 ;; Function and Method invocation
 ;;
 
+rule Call_site_ok/block-func:
+  BLOCK C |- FuncT _ _ : CALLSITE_OK
+  -- if C.BLOCK.KIND = PARSER \/ C.BLOCK.KIND = CONTROL
+
 rule Call_site_ok/block-externfunc:
   BLOCK C |- ExternFuncT _ _ : CALLSITE_OK
   -- if C.BLOCK.KIND = PARSER \/ C.BLOCK.KIND = CONTROL
@@ -379,9 +383,13 @@ rule Call_site_ok/local-func-else:
         \/ C.LOCAL.KIND = CONTROLAPPLYMETHOD
         \/ C.LOCAL.KIND = TABLEAPPLYMETHOD
 
+rule Call_site_ok/local-externfunc-func:
+  LOCAL C |- ExternFuncT _ _ : CALLSITE_OK
+  -- if C.LOCAL.KIND = FUNC _ 
+
 rule Call_site_ok/local-externfunc-externabstractmethod:
   LOCAL C |- ExternFuncT _ _ : CALLSITE_OK
-  -- if C.LOCAL.KIND = EXTERNABSTRACTMETHOD typ
+  -- if C.LOCAL.KIND = EXTERNABSTRACTMETHOD _
 
 rule Call_site_ok/local-externfunc-else:
   LOCAL C |- ExternFuncT _ _ : CALLSITE_OK
@@ -392,11 +400,11 @@ rule Call_site_ok/local-externfunc-else:
 
 rule Call_site_ok/local-builtinmethod-func:
   LOCAL C |- BuiltinMethodT _ _ : CALLSITE_OK
-  -- if C.LOCAL.KIND = FUNC typ
+  -- if C.LOCAL.KIND = FUNC _
 
 rule Call_site_ok/local-builtinmethod-externabstractmethod:
   LOCAL C |- BuiltinMethodT _ _ : CALLSITE_OK
-  -- if C.LOCAL.KIND = EXTERNABSTRACTMETHOD typ
+  -- if C.LOCAL.KIND = EXTERNABSTRACTMETHOD _
 
 rule Call_site_ok/local-builtinmethod-else:
   LOCAL C |- BuiltinMethodT _ _ : CALLSITE_OK
@@ -405,9 +413,13 @@ rule Call_site_ok/local-builtinmethod-else:
         \/ C.LOCAL.KIND = CONTROLAPPLYMETHOD
         \/ C.LOCAL.KIND = TABLEAPPLYMETHOD
 
+rule Call_site_ok/local-externmethod-func:
+  LOCAL C |- ExternMethodT _ _ : CALLSITE_OK
+  -- if C.LOCAL.KIND = FUNC _
+
 rule Call_site_ok/local-externmethod-externabstractmethod:
   LOCAL C |- ExternMethodT _ _ : CALLSITE_OK
-  -- if C.LOCAL.KIND = EXTERNABSTRACTMETHOD typ
+  -- if C.LOCAL.KIND = EXTERNABSTRACTMETHOD _
 
 rule Call_site_ok/local-externmethod-else:
   LOCAL C |- ExternMethodT _ _ : CALLSITE_OK
@@ -416,9 +428,13 @@ rule Call_site_ok/local-externmethod-else:
         \/ C.LOCAL.KIND = CONTROLAPPLYMETHOD
         \/ C.LOCAL.KIND = TABLEAPPLYMETHOD
 
+rule Call_site_ok/local-externabstractmethod-func:
+  LOCAL C |- ExternAbstractMethodT _ _ : CALLSITE_OK
+  -- if C.LOCAL.KIND = FUNC _
+
 rule Call_site_ok/local-externabstractmethod-externabstractmethod:
   LOCAL C |- ExternAbstractMethodT _ _ : CALLSITE_OK
-  -- if C.LOCAL.KIND = EXTERNABSTRACTMETHOD typ
+  -- if C.LOCAL.KIND = EXTERNABSTRACTMETHOD _
 
 rule Call_site_ok/local-externabstractmethod-else:
   LOCAL C |- ExternAbstractMethodT _ _ : CALLSITE_OK
