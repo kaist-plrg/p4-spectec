@@ -19699,7 +19699,18 @@ def $gen_tparam(typ)
 1. Return $fresh_tid
 
 ;; ../../../../spec/4h-typing-call.watsup:334.1-334.56
-def $infer_targs(tid*{tid <- tid*}, (id dir typ_p exprIL_deft?{exprIL_deft <- exprIL_deft?})*{dir <- dir*, exprIL_deft? <- exprIL_deft?*, id <- id*, typ_p <- typ_p*}, typ_a*{typ_a <- typ_a*})
+def $infer_targs(tid*{tid <- tid*}, pt*{pt <- pt*}, typ*{typ <- typ*})
+
+1. If ((tid*{tid <- tid*} matches pattern [])), then
+
+  1. Return ({ [] })
+
+2. Otherwise
+
+  1. Return $infer_targs'(tid*{tid <- tid*}, pt*{pt <- pt*}, typ*{typ <- typ*})
+
+;; ../../../../spec/4h-typing-call.watsup:335.1-335.57
+def $infer_targs'(tid*{tid <- tid*}, (id dir typ_p exprIL_deft?{exprIL_deft <- exprIL_deft?})*{dir <- dir*, exprIL_deft? <- exprIL_deft?*, id <- id*, typ_p <- typ_p*}, typ_a*{typ_a <- typ_a*})
 
 1. (Let cstr be $empty_cstr(tid*{tid <- tid*}))
 
@@ -19707,7 +19718,7 @@ def $infer_targs(tid*{tid <- tid*}, (id dir typ_p exprIL_deft?{exprIL_deft <- ex
 
 3. Return $resolve_cstrs(cstr')
 
-;; ../../../../spec/4h-typing-call.watsup:439.1-439.48
+;; ../../../../spec/4h-typing-call.watsup:444.1-444.48
 def $is_table_apply_in_action_arg(argIL)
 
 1. Return false
