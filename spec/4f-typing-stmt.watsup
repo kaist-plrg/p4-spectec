@@ -28,14 +28,15 @@ rule Lval_ok/expracce:
   -- Lval_ok: p C |- exprIL_b
 
 rule Stmt_ok/assigns:
-  p C f |- AssignS expr_l expr_r : C f (AssignS exprIL_l exprIL_r')
+  p C f |- AssignS expr_l expr_r
+         : C f (AssignS exprIL_l exprIL_r')
+  ----
   -- Expr_ok: p C |- expr_l : exprIL_l
   -- if `(typ_l; DYN) = $annot(exprIL_l)
   -- Lval_ok: p C |- exprIL_l
   ----
   -- Expr_ok: p C |- expr_r : exprIL_r
   -- if `(typ_r; _) = $annot(exprIL_r)
-  ----
   -- if exprIL_r' = $coerce_assign(exprIL_r, typ_l)
 
 ;;
@@ -47,7 +48,8 @@ relation Switch_tbl_label_ok:
   hint(input %0 %1 %2 %3 %4)
 
 rule Switch_tbl_label_ok/exprl:
-  p C id_t b_last |- ExprL (NameE (CURRENT id_a)) : ExprL (NameE (CURRENT id_a) `(typ_e; ctk_e))
+  p C id_t b_last |- ExprL (NameE (CURRENT id_a))
+                   : ExprL (NameE (CURRENT id_a) `(typ_e; ctk_e))
   -- if id_e = $concat_text([ "action_list(", id_t, ")" ])
   -- if id = $concat_text([ id_e, ".", id_a ])
   -- if TableEnumFieldV id_e id_a = $find_val(p, C, CURRENT id)
@@ -58,40 +60,53 @@ rule Switch_tbl_label_ok/defaultl:
 
 
 relation Switch_tbl_case_ok:
-  cursor context flow id bool |- switchcase : flow switchcaseIL switchlabel
+  cursor context flow id bool |- switchcase
+                               : flow switchcaseIL switchlabel
   hint(input %0 %1 %2 %3 %4 %5)
 
 rule Switch_tbl_case_ok/matchc:
-  p C f id_t b_last |- MatchC switchlabel block : f' (MatchC switchlabelIL blockIL) switchlabel
-  -- Switch_tbl_label_ok: p C id_t b_last |- switchlabel : switchlabelIL
-  -- Block_ok: p C f NOINIT |- block : C' f' blockIL
+  p C f id_t b_last |- MatchC switchlabel block
+                     : f' (MatchC switchlabelIL blockIL) switchlabel
+  -- Switch_tbl_label_ok:
+      p C id_t b_last |- switchlabel : switchlabelIL
+  -- Block_ok:
+      p C f NOINIT |- block : C' f' blockIL
 
 rule Switch_tbl_case_ok/fallc:
-  p C f id_t b_last |- FallC switchlabel : f (FallC switchlabelIL) switchlabel
-  -- Switch_tbl_label_ok: p C id_t b_last |- switchlabel : switchlabelIL
+  p C f id_t b_last |- FallC switchlabel
+                     : f (FallC switchlabelIL) switchlabel
+  -- Switch_tbl_label_ok:
+      p C id_t b_last |- switchlabel : switchlabelIL
 
 
 relation Switch_tbl_cases_ok:
-  cursor context flow id |- switchcase* : flow switchcaseIL* switchlabel*
+  cursor context flow id |- switchcase*
+                          : flow switchcaseIL* switchlabel*
   hint(input %0 %1 %2 %3 %4)
 
 rule Switch_tbl_cases_ok/empty:
   p C f id_t |- eps : f eps eps
 
 rule Switch_tbl_cases_ok/seq:
-  p C f id_t |- switchcase_h :: switchcase_t* : f'' (switchcaseIL_h :: switchcaseIL_t*) (switchlabel_h :: switchlabel_t*)
+  p C f id_t |- switchcase_h :: switchcase_t*
+              : f'' (switchcaseIL_h :: switchcaseIL_t*)
+                    (switchlabel_h :: switchlabel_t*)
   -- if b_last = (switchcase_t* = eps)
-  -- Switch_tbl_case_ok: p C f id_t b_last |- switchcase_h : f' switchcaseIL_h switchlabel_h
-  -- Switch_tbl_cases_ok: p C f' id_t |- switchcase_t* : f'' switchcaseIL_t* switchlabel_t*
+  -- Switch_tbl_case_ok:
+      p C f id_t b_last |- switchcase_h : f' switchcaseIL_h switchlabel_h
+  -- Switch_tbl_cases_ok:
+      p C f' id_t |- switchcase_t* : f'' switchcaseIL_t* switchlabel_t*
 
 
 rule Stmt_ok/switchs-tbl:
-  LOCAL C f |- SwitchS expr switchcase* : C f' (SwitchS exprIL switchcaseIL*)
+  LOCAL C f |- SwitchS expr switchcase*
+             : C f' (SwitchS exprIL switchcaseIL*)
   -- if C.LOCAL.KIND = CONTROLAPPLYMETHOD
   -- Expr_ok: LOCAL C |- expr : exprIL
   -- if `(TableEnumT id _; _) = $annot(exprIL)
   -- if id_t = $strip_prefix($strip_suffix(id, ")"), "action_list(")
-  -- Switch_tbl_cases_ok: LOCAL C f id_t |- switchcase* : f' switchcaseIL* switchlabel*
+  -- Switch_tbl_cases_ok:
+      LOCAL C f id_t |- switchcase* : f' switchcaseIL* switchlabel*
   -- if $distinct_<switchlabel>(switchlabel*)
 
 
@@ -110,43 +125,58 @@ rule Switch_gen_label_ok/defaultl:
 
 
 relation Switch_gen_case_ok:
-  cursor context flow typ bool |- switchcase : flow switchcaseIL switchlabel
+  cursor context flow typ bool |- switchcase
+                                : flow switchcaseIL switchlabel
   hint(input %0 %1 %2 %3 %4 %5)
 
 rule Switch_gen_case_ok/matchc:
-  p C f typ_s b_last |- MatchC switchlabel block : f' (MatchC switchlabelIL blockIL) switchlabel
-  -- Switch_gen_label_ok: p C typ_s b_last |- switchlabel : switchlabelIL
+  p C f typ_s b_last |- MatchC switchlabel block
+                      : f' (MatchC switchlabelIL blockIL) switchlabel
+  -- Switch_gen_label_ok:
+      p C typ_s b_last |- switchlabel : switchlabelIL
   -- Block_ok: p C f NOINIT |- block : C' f' blockIL
 
 rule Switch_gen_case_ok/fallc:
-  p C f typ_s b_last |- FallC switchlabel : f (FallC switchlabelIL) switchlabel
-  -- Switch_gen_label_ok: p C typ_s b_last |- switchlabel : switchlabelIL
+  p C f typ_s b_last |- FallC switchlabel
+                      : f (FallC switchlabelIL) switchlabel
+  -- Switch_gen_label_ok:
+      p C typ_s b_last |- switchlabel : switchlabelIL
 
 
 relation Switch_gen_cases_ok:
-  cursor context flow typ |- switchcase* : flow switchcaseIL* switchlabel*
+  cursor context flow typ |- switchcase*
+                           : flow switchcaseIL* switchlabel*
   hint(input %0 %1 %2 %3 %4)
 
 rule Switch_gen_cases_ok/empty:
   p C f typ_s |- eps : f eps eps
 
 rule Switch_gen_cases_ok/seq:
-  p C f typ_s |- switchcase_h :: switchcase_t* : f'' (switchcaseIL_h :: switchcaseIL_t*) (switchlabel_h :: switchlabel_t*)
+  p C f typ_s |- switchcase_h :: switchcase_t*
+               : f'' (switchcaseIL_h :: switchcaseIL_t*)
+                     (switchlabel_h :: switchlabel_t*)
   -- if b_last = (switchcase_t* = eps)
-  -- Switch_gen_case_ok: p C f typ_s b_last |- switchcase_h : f' switchcaseIL_h switchlabel_h
-  -- Switch_gen_cases_ok: p C f' typ_s |- switchcase_t* : f'' switchcaseIL_t* switchlabel_t*
+  -- Switch_gen_case_ok:
+      p C f typ_s b_last |- switchcase_h
+                          : f' switchcaseIL_h switchlabel_h
+  -- Switch_gen_cases_ok:
+      p C f' typ_s |- switchcase_t*
+                    : f'' switchcaseIL_t* switchlabel_t*
 
 
 rule Stmt_ok/switchs-gen:
-  LOCAL C f |- SwitchS expr switchcase* : C f' (SwitchS exprIL switchcaseIL*)
+  LOCAL C f |- SwitchS expr switchcase*
+             : C f' (SwitchS exprIL switchcaseIL*)
   -- if C.LOCAL.KIND = CONTROLAPPLYMETHOD
   -- Expr_ok: LOCAL C |- expr : exprIL
   -- if `(typ; _) = $annot(exprIL)
   ----
   -- if typ' = $canon_typ(typ)
-  -- if $is_errt(typ') \/ $is_fintt(typ') \/ $is_fbitt(typ') \/ $is_enumt(typ') \/ $is_senumt(typ')
+  -- if $is_errt(typ') \/ $is_fintt(typ') \/ $is_fbitt(typ')
+        \/ $is_enumt(typ') \/ $is_senumt(typ')
   ----
-  -- Switch_gen_cases_ok: LOCAL C f typ |- switchcase* : f' switchcaseIL* switchlabel*
+  -- Switch_gen_cases_ok:
+      LOCAL C f typ |- switchcase* : f' switchcaseIL* switchlabel*
   -- if $distinct_<switchlabel>(switchlabel*)
 
 ;;
@@ -154,7 +184,8 @@ rule Stmt_ok/switchs-gen:
 ;;
 
 rule Stmt_ok/ifs:
-  p C f |- IfS expr_c stmt_t stmt_f : C f' (IfS exprIL_c stmtIL_t stmtIL_f)
+  p C f |- IfS expr_c stmt_t stmt_f
+         : C f' (IfS exprIL_c stmtIL_t stmtIL_f)
   -- Expr_ok: p C |- expr_c : exprIL_c
   -- if `(BoolT; _) = $annot(exprIL_c)
   -- Stmt_ok: p C f |- stmt_t : C_t f_t stmtIL_t
@@ -206,41 +237,52 @@ rule Stmt_ok/rets-some:
 ;;
 
 rule Stmt_ok/callfuncs:
-  p C f |- CallFuncS name targ* arg* : C f (CallFuncS name targIL'* argIL'*)
+  p C f |- CallFuncS name targ* arg*
+         : C f (CallFuncS name targIL'* argIL'*)
   -- if (name = CURRENT "verify")
-        => ((p = BLOCK /\ C.BLOCK.KIND = PARSER) \/ (p = LOCAL /\ C.LOCAL.KIND = PARSERSTATE))
+        => ((p = BLOCK /\ C.BLOCK.KIND = PARSER)
+            \/ (p = LOCAL /\ C.LOCAL.KIND = PARSERSTATE))
   -- (Type_ok: p C |- targ : targIL tid_fresh_a*)*
   -- if tid_fresh* = $concat_<tid>(tid_fresh_a**)
   ----
-  -- FuncType_ok: p C |- name targIL* arg* : ft tid_fresh_inserted* id_deft*
+  -- FuncType_ok:
+      p C |- name targIL* arg* : ft tid_fresh_inserted* id_deft*
   ----
   -- if tid_fresh'* = $concat_<tid>(tid_fresh* ++ tid_fresh_inserted*)
   ----
-  -- Call_ok: p C tid_fresh'* |- ft targIL* arg* id_deft* : typ targIL'* argIL'*
+  -- Call_ok:
+      p C tid_fresh'* |- ft targIL* arg* id_deft*
+                       : typ targIL'* argIL'*
 
 ;;
 ;; Method call statement
 ;;
 
 rule Stmt_ok/callmethods:
-  p C f |- CallMethodS expr_b member targ* arg* : C f (CallMethodS exprIL_b member targIL'* argIL'*)
+  p C f |- CallMethodS expr_b member targ* arg*
+         : C f (CallMethodS exprIL_b member targIL'* argIL'*)
   -- (Arg_ok: p C |- arg : argIL typ_arg)*
   ----
   -- (Type_ok: p C |- targ : targIL tid_fresh_a*)*
   -- if tid_fresh* = $concat_<tid>(tid_fresh_a**)
   ----
-  -- MethodType_ok: p C |- expr_b member targIL* arg* : ft exprIL_b tid_fresh_inserted* id_deft*
+  -- MethodType_ok:
+      p C |- expr_b member targIL* arg*
+           : ft exprIL_b tid_fresh_inserted* id_deft*
   ----
   -- if tid_fresh'* = $concat_<tid>(tid_fresh* ++ tid_fresh_inserted*)
   ----
-  -- Call_ok: p C tid_fresh'* |- ft targIL* arg* id_deft* : typ targIL'* argIL'*
+  -- Call_ok:
+      p C tid_fresh'* |- ft targIL* arg* id_deft*
+                       : typ targIL'* argIL'*
 
 ;;
 ;; Instantiation statement
 ;;
 
 rule Stmt_ok/callinsts:
-  p C f |- CallInstS name targ* arg* : C f (CallInstS typ name targIL'* argIL'*)
+  p C f |- CallInstS name targ* arg*
+         : C f (CallInstS typ name targIL'* argIL'*)
   -- ConsType_ok: p C |- name eps eps : ct eps eps
   ----
   -- Inst_ok: p C eps |- ct eps eps eps : typ eps eps eps
@@ -251,7 +293,9 @@ rule Stmt_ok/callinsts:
   -- if id = $id_of_name(name)
   -- if C' = $add_styp(p, C, id, typ NO CTK eps)
   ----
-  -- Stmt_ok: p C' f |- CallMethodS (NameE (CURRENT id)) "apply" targ* arg* : C'' f' stmtIL
+  -- Stmt_ok:
+      p C' f |- CallMethodS (NameE (CURRENT id)) "apply" targ* arg*
+              : C'' f' stmtIL
   -- if stmtIL = CallMethodS (NameE (CURRENT id) _) "apply" targIL'* argIL'*
 
 ;;

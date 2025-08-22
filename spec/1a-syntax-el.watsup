@@ -6,9 +6,9 @@ syntax bits = int
 syntax width = nat
 
 syntax num =
-  | INT int         hint(show %)
-  | FINT width bits   hint(show %#S#%)
-  | FBIT width bits   hint(show %#W#%)
+  | INT int
+  | FINT width bits
+  | FBIT width bits
 
 ;;
 ;; Texts
@@ -25,8 +25,8 @@ syntax id = text
 ;;
 
 syntax name =
-  | TOP id      hint(show .%)
-  | CURRENT id  hint(show %)
+  | TOP id
+  | CURRENT id
 
 ;;
 ;; Members
@@ -51,43 +51,29 @@ syntax statelabel = id
 ;;
 
 syntax unop =
-  | BNOT    hint(show %latex("\\sim"))
-  | LNOT    hint(show %latex("!"))
-  | UPLUS   hint(show %latex("+"))
-  | UMINUS  hint(show %latex("-"))
+  | BNOT | LNOT
+  | UPLUS | UMINUS
 
 ;;
 ;; Binary operators
 ;;
 
 syntax binop =
-  | PLUS    hint(show %latex("+"))
-  | SPLUS   hint(show %latex("|")#%latex("+")#%latex("|"))
-  | MINUS   hint(show %latex("-"))
-  | SMINUS  hint(show %latex("|")#%latex("-")#%latex("|"))
-  | MUL     hint(show %latex("*"))
-  | DIV     hint(show %latex("/"))
-  | MOD     hint(show %latex("\\%"))
-  | SHL     hint(show %latex("<\\!<"))
-  | SHR     hint(show %latex(">\\!>"))
-  | LE      hint(show %latex("\\leq"))
-  | GE      hint(show %latex("\\geq"))
-  | LT      hint(show %latex("<"))
-  | GT      hint(show %latex(">"))
-  | EQ      hint(show %latex("=="))
-  | NE      hint(show %latex("!\\!="))
-  | BAND    hint(show %latex("\\&"))
-  | BXOR    hint(show %latex("\\wedge"))
-  | BOR     hint(show %latex("|"))
-  | CONCAT  hint(show %latex("++"))
-  | LAND    hint(show %latex("\\&\\&"))
-  | LOR     hint(show %latex("||"))
+  | PLUS | SPLUS
+  | MINUS | SMINUS
+  | MUL | DIV | MOD
+  | SHL | SHR
+  | LE | GE | LT | GT
+  | EQ | NE
+  | BAND | BXOR | BOR
+  | CONCAT
+  | LAND | LOR
 
 ;;
 ;; Directions
 ;;
 
-syntax dir = | NO | IN | OUT | INOUT
+syntax dir = NO | IN | OUT | INOUT
 
 ;;
 ;; Forward declarations of mutually recursive syntax
@@ -100,21 +86,21 @@ syntax expr, stmt, switchcase, decl, tblprop
 ;;
 
 syntax type =
-  | VoidT              hint(show VOID)
-  | ErrT               hint(show ERROR)
-  | MatchKindT         hint(show MATCH_KIND)
-  | StrT               hint(show STRING)
-  | BoolT              hint(show BOOL)
-  | IntT               hint(show INT)
-  | FIntT expr         hint(show INT#%latex("\\langle")#%#%latex("\\rangle"))
-  | FBitT expr         hint(show BIT#%latex("\\langle")#%#%latex("\\rangle"))
-  | VBitT expr         hint(show VARBIT#%latex("\\langle")#%#%latex("\\rangle"))
-  | StackT type expr   hint(show %#`[%])
-  | ListT type         hint(show LIST#%latex("\\langle")#%#%latex("\\rangle"))
-  | TupleT type*       hint(show TUPLE#%latex("\\langle")#%#%latex("\\rangle"))
-  | NameT name         hint(show %)
-  | SpecT name type*   hint(show %#%latex("\\langle")#%#%latex("\\rangle"))
-  | AnyT               hint(show _)
+  | VoidT
+  | ErrT
+  | MatchKindT
+  | StrT
+  | BoolT
+  | IntT
+  | FIntT expr
+  | FBitT expr
+  | VBitT expr
+  | StackT type expr
+  | ListT type
+  | TupleT type*
+  | NameT name      
+  | SpecT name type*
+  | AnyT            
 
 ;;
 ;; Type parameters
@@ -145,18 +131,18 @@ syntax targ = type
 ;;
 
 syntax arg =
-  | ExprA expr      hint(show %)
-  | NameA id expr?  hint(show % = %)
-  | AnyA            hint(show _)
+  | ExprA expr
+  | NameA id expr?
+  | AnyA
 
 ;;
 ;; Keyset expressions
 ;;
 
 syntax keyset =
-  | ExprK expr  hint(show %)
-  | DefaultK    hint(show DEFAULT)
-  | AnyK        hint(show _)
+  | ExprK expr
+  | DefaultK
+  | AnyK
 
 ;;
 ;; Select-cases for select
@@ -166,72 +152,71 @@ syntax selectcase = keyset* statelabel
 
 ;;
 ;; Expressions
-;; (TODO-Jaehyun) disambiguate CallFuncE and InstE with typename syntax
 ;;
 
 syntax expr =
-  | BoolE bool                            hint(show %)
-  | StrE text                             hint(show %)
-  | NumE num                              hint(show %)
-  | NameE name                            hint(show %)
-  | SeqE expr*                            hint(show %latex("\\{")#%#%latex("\\}"))
-  | SeqDefaultE expr*                     ;;hint(show %latex("\\{")#%, ... %latex("\\}"))
-  | RecordE (member, expr)*               hint(show %latex("\\{")#%#%latex("\\}"))
-  | RecordDefaultE (member, expr)*        ;;hint(show %latex("\\{")#%, ... %latex("\\}"))
-  | DefaultE                              hint(show ...%latex())
-  | InvalidE                              hint(show INVALID)
-  | UnE unop expr                         hint(show %#%)
-  | BinE binop expr expr                  hint(show %2 %1 %3)
-  | TernE expr expr expr                  hint(show (% %latex("?") % `: %))
-  | CastE type expr                       hint(show (%) %)
-  | MaskE expr expr                       hint(show % %latex("\\&\\&\\&") %)
-  | RangeE expr expr                      hint(show % ... %)
-  | SelectE expr* selectcase*             hint(show SELECT (%) %latex("\\{")#%#%latex("\\}"))
-  | ArrAccE expr expr                     hint(show %`[%])
-  | BitAccE expr expr expr                hint(show %`[% `: %])
-  | ErrAccE member                        hint(show ERROR.%)
-  | TypeAccE name member                  hint(show %.%)
-  | ExprAccE expr member                  hint(show %.%)
-  | CallFuncE name targ* arg*             hint(show %#%latex("\\langle")#%#%latex("\\rangle")#(%)#%latex())
-  | CallMethodE expr member targ* arg*    hint(show %1#%latex("\\langle")#%3#%latex("\\rangle").%2#(%4)#%latex())
-  | CallTypeE name member targ* arg*      hint(show %1#%latex("\\langle")#%3#%latex("\\rangle").%2#(%4)#%latex())
-  | InstE name targ* arg*                 hint(show %#%latex("\\langle")#%#%latex("\\rangle")#(%)#%latex())
+  | BoolE bool
+  | StrE text
+  | NumE num
+  | NameE name
+  | SeqE expr*
+  | SeqDefaultE expr*
+  | RecordE (member, expr)*
+  | RecordDefaultE (member, expr)*
+  | DefaultE
+  | InvalidE
+  | UnE unop expr
+  | BinE binop expr expr
+  | TernE expr expr expr
+  | CastE type expr
+  | MaskE expr expr
+  | RangeE expr expr
+  | SelectE expr* selectcase*
+  | ArrAccE expr expr
+  | BitAccE expr expr expr
+  | ErrAccE member
+  | TypeAccE name member
+  | ExprAccE expr member
+  | CallFuncE name targ* arg*
+  | CallMethodE expr member targ* arg*
+  | CallTypeE name member targ* arg*
+  | InstE name targ* arg*
 
 ;;
 ;; Blocks (sequence of statements)
 ;;
 
-syntax block = BlockB stmt*   hint(show %latex("\\{")#%#%latex("\\}"))
+syntax block = BlockB stmt*
 
 ;;
 ;; Statements
 ;;
 
 syntax stmt =
-  | EmptyS                                hint(show EMPTY)
-  | AssignS expr expr                     hint(show % = %)
-  | SwitchS expr switchcase*              hint(show SWITCH (%) %latex("\\{")#%#%latex("\\}"))
-  | IfS expr stmt stmt                    hint(show IF (%) THEN % ELSE %)
-  | BlockS block                          hint(show %)
-  | ExitS                                 hint(show EXIT)
-  | RetS expr?                            hint(show RETURN %)
-  | CallFuncS name targ* arg*             hint(show %#%latex("\\langle")#%#%latex("\\rangle")#%#%latex())
-  | CallMethodS expr member targ* arg*    hint(show %1#%latex("\\langle")#%3#%latex("\\rangle").%2#(%4)#%latex())
-  | CallInstS name targ* arg*             hint(show %#%latex("\\langle")#%#%latex("\\rangle").APPLY#(%)#%latex())
-  | TransS expr                           hint(show TRANSITION %)
-  | DeclS decl                            hint(show %)
+  | EmptyS
+  | AssignS expr expr
+  | SwitchS expr switchcase*
+  | IfS expr stmt stmt
+  | BlockS block
+  | ExitS
+  | RetS expr?
+  | CallFuncS name targ* arg*
+  | CallMethodS expr member targ* arg*
+  | CallInstS name targ* arg*
+  | TransS expr
+  | DeclS decl
 
 ;;
 ;; Match labels and cases for switch
 ;;
 
 syntax switchlabel =
-  | ExprL expr  hint(show %)
-  | DefaultL    hint(show DEFAULT)
+  | ExprL expr
+  | DefaultL
 
 syntax switchcase =
-  | MatchC switchlabel block  hint(show CASE % %)
-  | FallC switchlabel         hint(show CASE %)
+  | MatchC switchlabel block
+  | FallC switchlabel
 
 ;;
 ;; Parser state machine
@@ -283,20 +268,20 @@ syntax tblcustomprop = bool member expr
 ;;
 
 syntax tblprop =
-  | KeyP tblkeyprop           hint(show KEYS %latex("\\{")#%#%latex("\\}"))
-  | ActionP tblactionprop     hint(show ACTIONS %latex("\\{")#%#%latex("\\}"))
-  | EntryP tblentryprop       hint(show ENTRIES %latex("\\{")#%#%latex("\\}"))
-  | DefaultP tbldefaultprop   hint(show DEFAULT#_#ACTION %latex("\\{")#%#%latex("\\}"))
-  | CustomP tblcustomprop     hint(show CUSTOM %latex("\\{")#%#%latex("\\}"))
+  | KeyP tblkeyprop
+  | ActionP tblactionprop
+  | EntryP tblentryprop
+  | DefaultP tbldefaultprop
+  | CustomP tblcustomprop
 
 ;;
 ;; Methods
 ;;
 
 syntax method =
-  | ExternConsM id cparam*                      hint(show %(%))
-  | ExternAbstractM id type tparam* param*      hint(show ABSTRACT %2 %1#%latex("\\langle")#%3#%latex("\\rangle")#(%4)#%latex())
-  | ExternM id type tparam* param*              hint(show %2 %1#%latex("\\langle")#%3#%latex("\\rangle")#(%4)#%latex())
+  | ExternConsM id cparam*
+  | ExternAbstractM id type tparam* param*
+  | ExternM id type tparam* param*
 
 ;;
 ;; Declarations
@@ -305,29 +290,29 @@ syntax method =
 syntax typedef
 
 syntax decl =
-  | ConstD id type expr                                       hint(show CONST %2 %1 = %3)
-  | VarD id type expr?                                        hint(show %2 %1 = %3)
-  | ErrD member*                                              hint(show ERROR %latex("\\{")#%#%latex("\\}"))
-  | MatchKindD member*                                        hint(show MATCH#_#KIND %latex("\\{")#%#%latex("\\}"))
-  | InstD id name targ* arg* decl*                            hint(show %2#%latex("\\langle")#%3#%latex("\\rangle")#(%4) %1 = %latex("\\{")#%5#%latex("\\}"))
-  | StructD id tparam* (member, type)*                        hint(show STRUCT %#%latex("\\langle")#%#%latex("\\rangle") %latex("\\{")#%#%latex("\\}"))
-  | HeaderD id tparam* (member, type)*                        hint(show HEADER %#%latex("\\langle")#%#%latex("\\rangle") %latex("\\{")#%#%latex("\\}"))
-  | UnionD id tparam* (member, type)*                         hint(show UNION %#%latex("\\langle")#%#%latex("\\rangle") %latex("\\{")#%#%latex("\\}"))
-  | EnumD id member*                                          hint(show ENUM % %latex("\\{")#%#%latex("\\}"))
-  | SEnumD id type (member, expr)*                            hint(show ENUM % % %latex("\\{")#%#%latex("\\}"))
-  | NewTypeD id typedef                                       hint(show TYPE % %)
-  | TypeDefD id typedef                                       hint(show TYPEDEF % %)
-  | ValueSetD id type expr                                    hint(show VALUE#_#SET#%latex("\\langle")#%2#%latex("\\rangle")#(%3)#%latex() %1)
-  | ParserTypeD id tparam* param*                             hint(show PARSER %#%latex("\\langle")#%#%latex("\\rangle")#(%)#%latex())
-  | ParserD id param* cparam* decl* parserstate*              hint(show PARSER %#(%)#(%)#%latex() %latex("\\{")#%%#%latex("\\}"))
-  | TableD id tbl                                             hint(show TABLE % %latex("\\{")#%#%latex("\\}"))
-  | ControlTypeD id tparam* param*                            hint(show CONTROL %#%latex("\\langle")#%#%latex("\\rangle")#(%)#%latex())
-  | ControlD id param* cparam* decl* block                    hint(show CONTROL %#(%)#(%)#%latex() %latex("\\{")#% APPLY %#%latex("\\}"))
-  | ActionD id param* block                                   hint(show ACTION %(%) %)
-  | FuncD id type tparam* param* block                        hint(show %2 %1#%latex("\\langle")#%3#%latex("\\rangle")#(%4)#%latex() %5)
-  | ExternFuncD id type tparam* param*                        hint(show EXTERN %2 %1#%latex("\\langle")#%3#%latex("\\rangle")#(%4)#%latex())
-  | ExternObjectD id tparam* method*                          hint(show EXTERN %#%latex("\\langle")#%#%latex("\\rangle") %latex("\\{")#%#%latex("\\}"))
-  | PackageTypeD id tparam* cparam*                           hint(show PACKAGE %#%latex("\\langle")#%#%latex("\\rangle")#(%)#%latex())
+  | ConstD id type expr
+  | VarD id type expr?
+  | ErrD member*
+  | MatchKindD member*
+  | InstD id name targ* arg* decl*
+  | StructD id tparam* (member, type)*
+  | HeaderD id tparam* (member, type)*
+  | UnionD id tparam* (member, type)*
+  | EnumD id member*
+  | SEnumD id type (member, expr)*
+  | NewTypeD id typedef
+  | TypeDefD id typedef
+  | ValueSetD id type expr
+  | ParserTypeD id tparam* param*
+  | ParserD id param* cparam* decl* parserstate*
+  | TableD id tbl
+  | ControlTypeD id tparam* param*
+  | ControlD id param* cparam* decl* block
+  | ActionD id param* block
+  | FuncD id type tparam* param* block
+  | ExternFuncD id type tparam* param*
+  | ExternObjectD id tparam* method*
+  | PackageTypeD id tparam* cparam*
 
 syntax typedef =
   | TypeD type

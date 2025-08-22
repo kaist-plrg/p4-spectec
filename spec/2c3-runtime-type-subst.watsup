@@ -2,27 +2,18 @@
 ;; Substitution (capture-avoiding)
 ;;
 
-syntax theta hint(show %latex("\\theta")) = map<id, typ>
+syntax theta = map<id, typ>
 
 dec $free_typ(typ) : set<tid>
-    hint(show %latex("FV(")#%1#%latex(")"))
 dec $free_typdef_poly(polytypdef) : set<tid>
-    hint(show %latex("FV(")#%1#%latex(")"))
 dec $free_functyp(functyp) : set<tid>
-    hint(show %latex("FV(")#%1#%latex(")"))
 dec $free_funcdef(funcdef) : set<tid>
-    hint(show %latex("FV(")#%1#%latex(")"))
 
 dec $subst_typ(theta, typ) : typ
-    hint(show %2#%latex("/")#%1)
 dec $subst_typdef_poly(theta, polytypdef) : polytypdef
-    hint(show %2#%latex("/")#%1)
 dec $subst_funcdef(theta, funcdef) : funcdef
-    hint(show %2#%latex("/")#%1)
 dec $subst_functyp(theta, functyp) : functyp
-    hint(show %2#%latex("/")#%1)
 dec $subst_constyp(theta, constyp) : constyp
-    hint(show %2#%latex("/")#%1)
 
 ;;
 ;; Free type variables in types
@@ -315,7 +306,6 @@ def $subst_constyp(theta, ConsT pt* typ) = ConsT pt'* $subst_typ(theta, typ)
 ;;
 
 dec $specialize_typdef(typdef, typ*) : typ
-    hint(show %#%latex("\\langle")#%#%latex("\\rangle"))
 
 def $specialize_typdef(MonoD typ, eps) = typ
 def $specialize_typdef(PolyD (tparam*, tparam_hidden*) -> typ, typ_a*) = $subst_typ(theta, typ)
@@ -327,7 +317,6 @@ def $specialize_typdef(PolyD (tparam*, tparam_hidden*) -> typ, typ_a*) = $subst_
 ;;
 
 dec $specialize_funcdef(funcdef, typ*) : (functyp, tid*)
-    hint(show %#%latex("\\langle")#%#%latex("\\rangle"))
 
 def $specialize_funcdef(MonoFD ft, eps) = (ft, eps)
 
@@ -357,7 +346,6 @@ def $specialize_funcdef(PolyFD (tparam*, tparam_hidden*) -> ft, typ_a*)
 ;;
 
 dec $specialize_consdef(consdef, typ*) : (constyp, tid*)
-    hint(show %#%latex("\\langle")#%#%latex("\\rangle"))
 
 def $specialize_consdef(ConsD (tparam*, tparam_hidden*) -> ct, typ_a*)
   = ($subst_constyp(`{ (tparam' -> typ_a)* }, ct), eps)
@@ -385,7 +373,6 @@ def $specialize_consdef(ConsD (tparam*, tparam_hidden*) -> ct, typ_a*)
 ;;
 
 dec $canon_typ(typ) : typ
-    hint(show %#%latex("|_{\\mathtt{canon}}"))
 
 def $canon_typ(SpecT ptd typ_a*) = $canon_typ(typ)
   -- if typ = $specialize_typdef(ptd, typ_a*)

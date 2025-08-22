@@ -182,7 +182,7 @@ syntax bits = int
 ;; ../../../../spec/1a-syntax-el.watsup:6.16-6.19
 syntax width = nat
 
-;; ../../../../spec/1a-syntax-el.watsup:9.1-11.39
+;; ../../../../spec/1a-syntax-el.watsup:9.1-11.20
 syntax num = 
    | `INT%`(int)
    | `FINT%%`(width, bits)
@@ -191,7 +191,7 @@ syntax num =
 ;; ../../../../spec/1a-syntax-el.watsup:21.13-21.17
 syntax id = text
 
-;; ../../../../spec/1a-syntax-el.watsup:28.1-29.29
+;; ../../../../spec/1a-syntax-el.watsup:28.1-29.15
 syntax name = 
    | `TOP%`(id)
    | `CURRENT%`(id)
@@ -205,14 +205,14 @@ syntax matchkind = id
 ;; ../../../../spec/1a-syntax-el.watsup:47.21-47.23
 syntax statelabel = id
 
-;; ../../../../spec/1a-syntax-el.watsup:54.1-57.35
+;; ../../../../spec/1a-syntax-el.watsup:54.1-55.19
 syntax unop = 
    | `BNOT`()
    | `LNOT`()
    | `UPLUS`()
    | `UMINUS`()
 
-;; ../../../../spec/1a-syntax-el.watsup:64.1-84.36
+;; ../../../../spec/1a-syntax-el.watsup:62.1-70.15
 syntax binop = 
    | `PLUS`()
    | `SPLUS`()
@@ -236,14 +236,14 @@ syntax binop =
    | `LAND`()
    | `LOR`()
 
-;; ../../../../spec/1a-syntax-el.watsup:90.14-90.37
+;; ../../../../spec/1a-syntax-el.watsup:76.14-76.35
 syntax dir = 
    | `NO`()
    | `IN`()
    | `OUT`()
    | `INOUT`()
 
-;; ../../../../spec/1a-syntax-el.watsup:103.1-117.36
+;; ../../../../spec/1a-syntax-el.watsup:89.1-103.9
 syntax type = 
    | `VoidT`()
    | `ErrT`()
@@ -261,36 +261,36 @@ syntax type =
    | `SpecT%%`(name, type*)
    | `AnyT`()
 
-;; ../../../../spec/1a-syntax-el.watsup:123.17-123.19
+;; ../../../../spec/1a-syntax-el.watsup:109.17-109.19
 syntax tparam = id
 
-;; ../../../../spec/1a-syntax-el.watsup:129.16-129.33
+;; ../../../../spec/1a-syntax-el.watsup:115.16-115.33
 syntax param = 
    | `%%%%`(id, dir, type, expr?)
 
-;; ../../../../spec/1a-syntax-el.watsup:135.17-135.22
+;; ../../../../spec/1a-syntax-el.watsup:121.17-121.22
 syntax cparam = param
 
-;; ../../../../spec/1a-syntax-el.watsup:141.15-141.19
+;; ../../../../spec/1a-syntax-el.watsup:127.15-127.19
 syntax targ = type
 
-;; ../../../../spec/1a-syntax-el.watsup:148.1-150.33
+;; ../../../../spec/1a-syntax-el.watsup:134.1-136.9
 syntax arg = 
    | `ExprA%`(expr)
    | `NameA%%`(id, expr?)
    | `AnyA`()
 
-;; ../../../../spec/1a-syntax-el.watsup:157.1-159.29
+;; ../../../../spec/1a-syntax-el.watsup:143.1-145.9
 syntax keyset = 
    | `ExprK%`(expr)
    | `DefaultK`()
    | `AnyK`()
 
-;; ../../../../spec/1a-syntax-el.watsup:165.21-165.39
+;; ../../../../spec/1a-syntax-el.watsup:151.21-151.39
 syntax selectcase = 
    | `%%`(keyset*, statelabel)
 
-;; ../../../../spec/1a-syntax-el.watsup:173.1-198.108
+;; ../../../../spec/1a-syntax-el.watsup:158.1-183.26
 syntax expr = 
    | `BoolE%`(bool)
    | `StrE%`(text)
@@ -319,11 +319,11 @@ syntax expr =
    | `CallTypeE%%%%`(name, member, targ*, arg*)
    | `InstE%%%`(name, targ*, arg*)
 
-;; ../../../../spec/1a-syntax-el.watsup:204.16-204.71
+;; ../../../../spec/1a-syntax-el.watsup:189.16-189.28
 syntax block = 
    | `BlockB%`(stmt*)
 
-;; ../../../../spec/1a-syntax-el.watsup:211.1-222.55
+;; ../../../../spec/1a-syntax-el.watsup:196.1-207.15
 syntax stmt = 
    | `EmptyS`()
    | `AssignS%%`(expr, expr)
@@ -338,54 +338,54 @@ syntax stmt =
    | `TransS%`(expr)
    | `DeclS%`(decl)
 
-;; ../../../../spec/1a-syntax-el.watsup:229.1-230.35
+;; ../../../../spec/1a-syntax-el.watsup:214.1-215.13
 syntax switchlabel = 
    | `ExprL%`(expr)
    | `DefaultL`()
 
-;; ../../../../spec/1a-syntax-el.watsup:233.1-234.48
+;; ../../../../spec/1a-syntax-el.watsup:218.1-219.22
 syntax switchcase = 
    | `MatchC%%`(switchlabel, block)
    | `FallC%`(switchlabel)
 
-;; ../../../../spec/1a-syntax-el.watsup:240.22-240.38
+;; ../../../../spec/1a-syntax-el.watsup:225.22-225.38
 syntax parserstate = 
    | `%%`(statelabel, block)
 
-;; ../../../../spec/1a-syntax-el.watsup:246.14-246.22
+;; ../../../../spec/1a-syntax-el.watsup:231.14-231.22
 syntax tbl = tblprop*
 
-;; ../../../../spec/1a-syntax-el.watsup:252.17-252.31
+;; ../../../../spec/1a-syntax-el.watsup:237.17-237.31
 syntax tblkey = 
    | `%%`(expr, matchkind)
 
-;; ../../../../spec/1a-syntax-el.watsup:253.21-253.28
+;; ../../../../spec/1a-syntax-el.watsup:238.21-238.28
 syntax tblkeyprop = tblkey*
 
-;; ../../../../spec/1a-syntax-el.watsup:259.20-259.29
+;; ../../../../spec/1a-syntax-el.watsup:244.20-244.29
 syntax tblaction = 
    | `%%`(name, arg*)
 
-;; ../../../../spec/1a-syntax-el.watsup:260.24-260.34
+;; ../../../../spec/1a-syntax-el.watsup:245.24-245.34
 syntax tblactionprop = tblaction*
 
-;; ../../../../spec/1a-syntax-el.watsup:266.19-266.47
+;; ../../../../spec/1a-syntax-el.watsup:251.19-251.47
 syntax tblentry = 
    | `%%%%`(bool, keyset*, tblaction, expr?)
 
-;; ../../../../spec/1a-syntax-el.watsup:267.23-267.37
+;; ../../../../spec/1a-syntax-el.watsup:252.23-252.37
 syntax tblentryprop = 
    | `%%`(bool, tblentry*)
 
-;; ../../../../spec/1a-syntax-el.watsup:273.25-273.39
+;; ../../../../spec/1a-syntax-el.watsup:258.25-258.39
 syntax tbldefaultprop = 
    | `%%`(bool, tblaction)
 
-;; ../../../../spec/1a-syntax-el.watsup:279.24-279.40
+;; ../../../../spec/1a-syntax-el.watsup:264.24-264.40
 syntax tblcustomprop = 
    | `%%%`(bool, member, expr)
 
-;; ../../../../spec/1a-syntax-el.watsup:286.1-290.78
+;; ../../../../spec/1a-syntax-el.watsup:271.1-275.26
 syntax tblprop = 
    | `KeyP%`(tblkeyprop)
    | `ActionP%`(tblactionprop)
@@ -393,13 +393,13 @@ syntax tblprop =
    | `DefaultP%`(tbldefaultprop)
    | `CustomP%`(tblcustomprop)
 
-;; ../../../../spec/1a-syntax-el.watsup:297.1-299.120
+;; ../../../../spec/1a-syntax-el.watsup:282.1-284.35
 syntax method = 
    | `ExternConsM%%`(id, cparam*)
    | `ExternAbstractM%%%%`(id, type, tparam*, param*)
    | `ExternM%%%%`(id, type, tparam*, param*)
 
-;; ../../../../spec/1a-syntax-el.watsup:308.1-330.136
+;; ../../../../spec/1a-syntax-el.watsup:293.1-315.36
 syntax decl = 
    | `ConstD%%%`(id, type, expr)
    | `VarD%%%`(id, type, expr?)
@@ -425,15 +425,15 @@ syntax decl =
    | `ExternObjectD%%%`(id, tparam*, method*)
    | `PackageTypeD%%%`(id, tparam*, cparam*)
 
-;; ../../../../spec/1a-syntax-el.watsup:333.1-334.15
+;; ../../../../spec/1a-syntax-el.watsup:318.1-319.15
 syntax typedef = 
    | `TypeD%`(type)
    | `DeclD%`(decl)
 
-;; ../../../../spec/1a-syntax-el.watsup:340.18-340.23
+;; ../../../../spec/1a-syntax-el.watsup:325.18-325.23
 syntax program = decl*
 
-;; ../../../../spec/1b-syntax-el-aux.watsup:5.1-6.27
+;; ../../../../spec/1b-syntax-el-aux.watsup:5.1-5.27
 def $is_boole(expr')
 
 1. If ((expr' matches pattern `BoolE%`)), then
@@ -446,7 +446,7 @@ def $is_boole(expr')
 
   1. Return false
 
-;; ../../../../spec/1b-syntax-el-aux.watsup:11.1-12.26
+;; ../../../../spec/1b-syntax-el-aux.watsup:10.1-10.26
 def $is_stre(expr')
 
 1. If ((expr' matches pattern `StrE%`)), then
@@ -459,7 +459,7 @@ def $is_stre(expr')
 
   1. Return false
 
-;; ../../../../spec/1b-syntax-el-aux.watsup:17.1-18.26
+;; ../../../../spec/1b-syntax-el-aux.watsup:15.1-15.26
 def $is_nume(expr')
 
 1. If ((expr' matches pattern `NumE%`)), then
@@ -472,7 +472,7 @@ def $is_nume(expr')
 
   1. Return false
 
-;; ../../../../spec/1b-syntax-el-aux.watsup:23.1-24.27
+;; ../../../../spec/1b-syntax-el-aux.watsup:20.1-20.27
 def $is_namee(expr')
 
 1. If ((expr' matches pattern `NameE%`)), then
@@ -485,7 +485,7 @@ def $is_namee(expr')
 
   1. Return false
 
-;; ../../../../spec/1b-syntax-el-aux.watsup:29.1-30.26
+;; ../../../../spec/1b-syntax-el-aux.watsup:25.1-25.26
 def $is_seqe(expr')
 
 1. If ((expr' matches pattern `SeqE%`)), then
@@ -498,7 +498,7 @@ def $is_seqe(expr')
 
   1. Return false
 
-;; ../../../../spec/1b-syntax-el-aux.watsup:35.1-36.34
+;; ../../../../spec/1b-syntax-el-aux.watsup:30.1-30.34
 def $is_seq_defaulte(expr')
 
 1. If ((expr' matches pattern `SeqDefaultE%`)), then
@@ -511,7 +511,7 @@ def $is_seq_defaulte(expr')
 
   1. Return false
 
-;; ../../../../spec/1b-syntax-el-aux.watsup:41.1-42.29
+;; ../../../../spec/1b-syntax-el-aux.watsup:35.1-35.29
 def $is_recorde(expr')
 
 1. If ((expr' matches pattern `RecordE%`)), then
@@ -524,7 +524,7 @@ def $is_recorde(expr')
 
   1. Return false
 
-;; ../../../../spec/1b-syntax-el-aux.watsup:47.1-48.37
+;; ../../../../spec/1b-syntax-el-aux.watsup:40.1-40.37
 def $is_record_defaulte(expr')
 
 1. If ((expr' matches pattern `RecordDefaultE%`)), then
@@ -537,7 +537,7 @@ def $is_record_defaulte(expr')
 
   1. Return false
 
-;; ../../../../spec/1b-syntax-el-aux.watsup:53.1-54.30
+;; ../../../../spec/1b-syntax-el-aux.watsup:45.1-45.30
 def $is_defaulte(expr')
 
 1. If ((expr' matches pattern `DefaultE`)), then
@@ -548,7 +548,7 @@ def $is_defaulte(expr')
 
   1. Return false
 
-;; ../../../../spec/1b-syntax-el-aux.watsup:59.1-60.30
+;; ../../../../spec/1b-syntax-el-aux.watsup:50.1-50.30
 def $is_invalide(expr')
 
 1. If ((expr' matches pattern `InvalidE`)), then
@@ -559,7 +559,7 @@ def $is_invalide(expr')
 
   1. Return false
 
-;; ../../../../spec/1b-syntax-el-aux.watsup:65.1-66.25
+;; ../../../../spec/1b-syntax-el-aux.watsup:55.1-55.25
 def $is_une(expr')
 
 1. If ((expr' matches pattern `UnE%%`)), then
@@ -572,7 +572,7 @@ def $is_une(expr')
 
   1. Return false
 
-;; ../../../../spec/1b-syntax-el-aux.watsup:71.1-72.26
+;; ../../../../spec/1b-syntax-el-aux.watsup:60.1-60.26
 def $is_bine(expr')
 
 1. If ((expr' matches pattern `BinE%%%`)), then
@@ -585,7 +585,7 @@ def $is_bine(expr')
 
   1. Return false
 
-;; ../../../../spec/1b-syntax-el-aux.watsup:77.1-78.27
+;; ../../../../spec/1b-syntax-el-aux.watsup:65.1-65.27
 def $is_terne(expr')
 
 1. If ((expr' matches pattern `TernE%%%`)), then
@@ -598,7 +598,7 @@ def $is_terne(expr')
 
   1. Return false
 
-;; ../../../../spec/1b-syntax-el-aux.watsup:83.1-84.27
+;; ../../../../spec/1b-syntax-el-aux.watsup:70.1-70.27
 def $is_caste(expr')
 
 1. If ((expr' matches pattern `CastE%%`)), then
@@ -611,7 +611,7 @@ def $is_caste(expr')
 
   1. Return false
 
-;; ../../../../spec/1b-syntax-el-aux.watsup:89.1-90.27
+;; ../../../../spec/1b-syntax-el-aux.watsup:75.1-75.27
 def $is_maske(expr')
 
 1. If ((expr' matches pattern `MaskE%%`)), then
@@ -624,7 +624,7 @@ def $is_maske(expr')
 
   1. Return false
 
-;; ../../../../spec/1b-syntax-el-aux.watsup:95.1-96.28
+;; ../../../../spec/1b-syntax-el-aux.watsup:80.1-80.28
 def $is_rangee(expr')
 
 1. If ((expr' matches pattern `RangeE%%`)), then
@@ -637,7 +637,7 @@ def $is_rangee(expr')
 
   1. Return false
 
-;; ../../../../spec/1b-syntax-el-aux.watsup:101.1-102.29
+;; ../../../../spec/1b-syntax-el-aux.watsup:85.1-85.29
 def $is_selecte(expr')
 
 1. If ((expr' matches pattern `SelectE%%`)), then
@@ -650,7 +650,7 @@ def $is_selecte(expr')
 
   1. Return false
 
-;; ../../../../spec/1b-syntax-el-aux.watsup:107.1-108.29
+;; ../../../../spec/1b-syntax-el-aux.watsup:90.1-90.29
 def $is_arracce(expr')
 
 1. If ((expr' matches pattern `ArrAccE%%`)), then
@@ -663,7 +663,7 @@ def $is_arracce(expr')
 
   1. Return false
 
-;; ../../../../spec/1b-syntax-el-aux.watsup:113.1-114.29
+;; ../../../../spec/1b-syntax-el-aux.watsup:95.1-95.29
 def $is_bitacce(expr')
 
 1. If ((expr' matches pattern `BitAccE%%%`)), then
@@ -676,7 +676,7 @@ def $is_bitacce(expr')
 
   1. Return false
 
-;; ../../../../spec/1b-syntax-el-aux.watsup:119.1-120.29
+;; ../../../../spec/1b-syntax-el-aux.watsup:100.1-100.29
 def $is_erracce(expr')
 
 1. If ((expr' matches pattern `ErrAccE%`)), then
@@ -689,7 +689,7 @@ def $is_erracce(expr')
 
   1. Return false
 
-;; ../../../../spec/1b-syntax-el-aux.watsup:125.1-126.30
+;; ../../../../spec/1b-syntax-el-aux.watsup:105.1-105.29
 def $is_typacce(expr')
 
 1. If ((expr' matches pattern `TypeAccE%%`)), then
@@ -702,7 +702,7 @@ def $is_typacce(expr')
 
   1. Return false
 
-;; ../../../../spec/1b-syntax-el-aux.watsup:131.1-132.30
+;; ../../../../spec/1b-syntax-el-aux.watsup:110.1-110.30
 def $is_expracce(expr')
 
 1. If ((expr' matches pattern `ExprAccE%%`)), then
@@ -715,7 +715,7 @@ def $is_expracce(expr')
 
   1. Return false
 
-;; ../../../../spec/1b-syntax-el-aux.watsup:137.1-138.31
+;; ../../../../spec/1b-syntax-el-aux.watsup:115.1-115.31
 def $is_callfunce(expr')
 
 1. If ((expr' matches pattern `CallFuncE%%%`)), then
@@ -728,7 +728,7 @@ def $is_callfunce(expr')
 
   1. Return false
 
-;; ../../../../spec/1b-syntax-el-aux.watsup:143.1-144.33
+;; ../../../../spec/1b-syntax-el-aux.watsup:120.1-120.33
 def $is_callmethode(expr')
 
 1. If ((expr' matches pattern `CallMethodE%%%%`)), then
@@ -741,7 +741,7 @@ def $is_callmethode(expr')
 
   1. Return false
 
-;; ../../../../spec/1b-syntax-el-aux.watsup:149.1-150.31
+;; ../../../../spec/1b-syntax-el-aux.watsup:125.1-125.30
 def $is_calltype(expr')
 
 1. If ((expr' matches pattern `CallTypeE%%%%`)), then
@@ -754,7 +754,7 @@ def $is_calltype(expr')
 
   1. Return false
 
-;; ../../../../spec/1b-syntax-el-aux.watsup:155.1-156.27
+;; ../../../../spec/1b-syntax-el-aux.watsup:130.1-130.27
 def $is_inste(expr')
 
 1. If ((expr' matches pattern `InstE%%%`)), then
@@ -767,7 +767,7 @@ def $is_inste(expr')
 
   1. Return false
 
-;; ../../../../spec/1b-syntax-el-aux.watsup:165.1-166.17
+;; ../../../../spec/1b-syntax-el-aux.watsup:139.1-139.33
 def $string_of_name(name)
 
 1. Case analysis on name
@@ -784,7 +784,7 @@ def $string_of_name(name)
 
     2. Return id
 
-;; ../../../../spec/1b-syntax-el-aux.watsup:175.1-176.17
+;; ../../../../spec/1b-syntax-el-aux.watsup:148.1-148.27
 def $id_of_name(name)
 
 1. Case analysis on name
@@ -804,15 +804,15 @@ def $id_of_name(name)
 ;; ../../../../spec/2a-runtime-domain.watsup:10.14-10.16
 syntax tid = id
 
-;; ../../../../spec/2a-runtime-domain.watsup:11.51-11.59
+;; ../../../../spec/2a-runtime-domain.watsup:11.17-11.25
 syntax tidset = set<tid>
 
-;; ../../../../spec/2a-runtime-domain.watsup:13.1-14.27
+;; ../../../../spec/2a-runtime-domain.watsup:13.1-13.23
 def $fresh_tid
 
 
 
-;; ../../../../spec/2a-runtime-domain.watsup:16.1-17.28
+;; ../../../../spec/2a-runtime-domain.watsup:15.1-15.28
 def $fresh_tids(nat')
 
 1. If ((nat' = 0)), then
@@ -823,19 +823,19 @@ def $fresh_tids(nat')
 
   1. Return $fresh_tid :: $fresh_tids((nat' - 1))
 
-;; ../../../../spec/2a-runtime-domain.watsup:29.14-29.28
+;; ../../../../spec/2a-runtime-domain.watsup:27.14-27.28
 syntax fid = 
    | `%%`(id, (id, bool)*)
 
-;; ../../../../spec/2a-runtime-domain.watsup:30.14-30.17
+;; ../../../../spec/2a-runtime-domain.watsup:28.14-28.17
 syntax cid = fid
 
-;; ../../../../spec/2a-runtime-domain.watsup:34.1-34.30
+;; ../../../../spec/2a-runtime-domain.watsup:32.1-32.30
 def $to_fid(id, param*{param <- param*})
 
 1. Return (id $to_fid'(param*{param <- param*}))
 
-;; ../../../../spec/2a-runtime-domain.watsup:35.1-35.35
+;; ../../../../spec/2a-runtime-domain.watsup:33.1-33.35
 def $to_fid'(param*{param <- param*})
 
 1. Case analysis on param*{param <- param*}
@@ -862,12 +862,12 @@ def $to_fid'(param*{param <- param*})
 
         1. Return (id, false) :: $to_fid'(param_t*{param_t <- param_t*})
 
-;; ../../../../spec/2a-runtime-domain.watsup:46.1-46.30
+;; ../../../../spec/2a-runtime-domain.watsup:44.1-44.30
 def $to_cid(id, param*{param <- param*})
 
 1. Return $to_fid(id, param*{param <- param*})
 
-;; ../../../../spec/2a-runtime-domain.watsup:54.14-54.17
+;; ../../../../spec/2a-runtime-domain.watsup:52.14-52.17
 syntax oid = id*
 
 ;; ../../../../spec/2b1-runtime-bitstr.watsup:5.17-5.20
@@ -883,7 +883,7 @@ def $to_bitstr
 
 
 
-;; ../../../../spec/2b2-runtime-value.watsup:9.1-37.57
+;; ../../../../spec/2b2-runtime-value.watsup:9.1-37.16
 syntax val = 
    | `ErrV%`(member)
    | `MatchKindV%`(member)
@@ -912,7 +912,7 @@ syntax val =
    | `InvalidV`()
    | `SetV%`(setval)
 
-;; ../../../../spec/2b2-runtime-value.watsup:40.1-42.83
+;; ../../../../spec/2b2-runtime-value.watsup:40.1-42.21
 syntax setval = 
    | `SingletonSet%`(val)
    | `MaskSet%%`(val, val)
@@ -953,11 +953,11 @@ def $get_num(val)
 
 1. Else Phantom#0
 
-;; ../../../../spec/2c1-runtime-type.watsup:16.3-16.21
+;; ../../../../spec/2c1-runtime-type.watsup:15.19-15.37
 syntax paramtyp = 
    | `%%%%`(id, dir, typ, exprIL?)
 
-;; ../../../../spec/2c1-runtime-type.watsup:29.1-33.38
+;; ../../../../spec/2c1-runtime-type.watsup:28.1-32.10
 syntax primtyp = 
    | `VoidT`()
    | `ErrT`()
@@ -965,14 +965,14 @@ syntax primtyp =
    | `StrT`()
    | `BoolT`()
 
-;; ../../../../spec/2c1-runtime-type.watsup:36.1-39.78
+;; ../../../../spec/2c1-runtime-type.watsup:35.1-38.16
 syntax numtyp = 
    | `IntT`()
    | `FIntT%`(width)
    | `FBitT%`(width)
    | `VBitT%`(width)
 
-;; ../../../../spec/2c1-runtime-type.watsup:42.1-42.21
+;; ../../../../spec/2c1-runtime-type.watsup:40.18-40.34
 syntax basetyp = 
    | `VoidT`()
    | `ErrT`()
@@ -984,16 +984,16 @@ syntax basetyp =
    | `FBitT%`(width)
    | `VBitT%`(width)
 
-;; ../../../../spec/2c1-runtime-type.watsup:49.1-50.98
+;; ../../../../spec/2c1-runtime-type.watsup:47.1-48.26
 syntax abstyp = 
    | `VarT%`(id)
    | `SpecT%%`(polytypdef, typ*)
 
-;; ../../../../spec/2c1-runtime-type.watsup:57.1-57.60
+;; ../../../../spec/2c1-runtime-type.watsup:55.1-55.16
 syntax aliastyp = 
    | `DefT%%`(id, typ)
 
-;; ../../../../spec/2c1-runtime-type.watsup:60.1-68.89
+;; ../../../../spec/2c1-runtime-type.watsup:58.1-66.29
 syntax datatyp = 
    | `NewT%%`(id, typ)
    | `EnumT%%`(id, member*)
@@ -1005,7 +1005,7 @@ syntax datatyp =
    | `HeaderT%%`(id, (member, typ)*)
    | `UnionT%%`(id, (member, typ)*)
 
-;; ../../../../spec/2c1-runtime-type.watsup:71.1-75.59
+;; ../../../../spec/2c1-runtime-type.watsup:69.1-73.18
 syntax objtyp = 
    | `ExternT%%`(id, map<fid, funcdef>)
    | `ParserT%%`(id, paramtyp*)
@@ -1013,7 +1013,7 @@ syntax objtyp =
    | `PackageT%%`(id, typ*)
    | `TableT%%`(id, typ)
 
-;; ../../../../spec/2c1-runtime-type.watsup:78.1-78.32
+;; ../../../../spec/2c1-runtime-type.watsup:76.1-76.32
 syntax deftyp = 
    | `DefT%%`(id, typ)
    | `NewT%%`(id, typ)
@@ -1031,7 +1031,7 @@ syntax deftyp =
    | `PackageT%%`(id, typ*)
    | `TableT%%`(id, typ)
 
-;; ../../../../spec/2c1-runtime-type.watsup:85.1-95.55
+;; ../../../../spec/2c1-runtime-type.watsup:83.1-93.9
 syntax synthtyp = 
    | `DefaultT`()
    | `SeqT%`(typ*)
@@ -1045,7 +1045,7 @@ syntax synthtyp =
    | `TableStructT%%`(id, (member, typ)*)
    | `AnyT`()
 
-;; ../../../../spec/2c1-runtime-type.watsup:98.1-98.41
+;; ../../../../spec/2c1-runtime-type.watsup:95.14-95.50
 syntax typ = 
    | `VoidT`()
    | `ErrT`()
@@ -1085,20 +1085,20 @@ syntax typ =
    | `TableStructT%%`(id, (member, typ)*)
    | `AnyT`()
 
-;; ../../../../spec/2c1-runtime-type.watsup:105.3-105.12
+;; ../../../../spec/2c1-runtime-type.watsup:101.21-101.30
 syntax monotypdef = 
    | `MonoD%`(typ)
 
-;; ../../../../spec/2c1-runtime-type.watsup:107.3-107.34
+;; ../../../../spec/2c1-runtime-type.watsup:102.21-102.52
 syntax polytypdef = 
    | `PolyD%->%`((tparam*, tparam*), typ)
 
-;; ../../../../spec/2c1-runtime-type.watsup:110.1-111.15
+;; ../../../../spec/2c1-runtime-type.watsup:104.17-104.40
 syntax typdef = 
    | `MonoD%`(typ)
    | `PolyD%->%`((tparam*, tparam*), typ)
 
-;; ../../../../spec/2c1-runtime-type.watsup:122.1-130.82
+;; ../../../../spec/2c1-runtime-type.watsup:115.1-123.26
 syntax functyp = 
    | `ActionT%`(paramtyp*)
    | `ExternFuncT%%`(paramtyp*, typ)
@@ -1110,28 +1110,28 @@ syntax functyp =
    | `ControlApplyMethodT%`(paramtyp*)
    | `TableApplyMethodT%`(typ)
 
-;; ../../../../spec/2c1-runtime-type.watsup:139.3-139.65
+;; ../../../../spec/2c1-runtime-type.watsup:131.22-131.36
 syntax monofuncdef = 
    | `MonoFD%`(functyp)
 
-;; ../../../../spec/2c1-runtime-type.watsup:142.3-142.69
+;; ../../../../spec/2c1-runtime-type.watsup:133.22-133.58
 syntax polyfuncdef = 
    | `PolyFD%->%`((tparam*, tparam*), functyp)
 
-;; ../../../../spec/2c1-runtime-type.watsup:145.1-146.16
+;; ../../../../spec/2c1-runtime-type.watsup:135.18-135.43
 syntax funcdef = 
    | `MonoFD%`(functyp)
    | `PolyFD%->%`((tparam*, tparam*), functyp)
 
-;; ../../../../spec/2c1-runtime-type.watsup:159.3-159.52
+;; ../../../../spec/2c1-runtime-type.watsup:147.18-147.37
 syntax constyp = 
    | `ConsT%%`(paramtyp*, typ)
 
-;; ../../../../spec/2c1-runtime-type.watsup:168.3-168.38
+;; ../../../../spec/2c1-runtime-type.watsup:155.18-155.53
 syntax consdef = 
    | `ConsD%->%`((tparam*, tparam*), constyp)
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:7.1-8.30
+;; ../../../../spec/2c2-runtime-type-aux.watsup:7.1-7.25
 def $is_base(typ)
 
 1. If ((typ has type basetyp)), then
@@ -1144,7 +1144,7 @@ def $is_base(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:13.1-14.35
+;; ../../../../spec/2c2-runtime-type-aux.watsup:12.1-12.25
 def $is_prim(typ)
 
 1. If ((typ has type primtyp)), then
@@ -1157,7 +1157,7 @@ def $is_prim(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:19.1-20.27
+;; ../../../../spec/2c2-runtime-type-aux.watsup:17.1-17.26
 def $is_voidt(typ)
 
 1. If ((typ = ((VoidT) as typ))), then
@@ -1168,7 +1168,7 @@ def $is_voidt(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:25.1-26.26
+;; ../../../../spec/2c2-runtime-type-aux.watsup:22.1-22.25
 def $is_errt(typ)
 
 1. If ((typ = ((ErrT) as typ))), then
@@ -1179,7 +1179,7 @@ def $is_errt(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:31.1-32.33
+;; ../../../../spec/2c2-runtime-type-aux.watsup:27.1-27.31
 def $is_matchkindt(typ)
 
 1. If ((typ = ((MatchKindT) as typ))), then
@@ -1190,7 +1190,7 @@ def $is_matchkindt(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:37.1-38.26
+;; ../../../../spec/2c2-runtime-type-aux.watsup:32.1-32.25
 def $is_strt(typ)
 
 1. If ((typ = ((StrT) as typ))), then
@@ -1201,7 +1201,7 @@ def $is_strt(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:43.1-44.27
+;; ../../../../spec/2c2-runtime-type-aux.watsup:37.1-37.26
 def $is_boolt(typ)
 
 1. If ((typ = ((BoolT) as typ))), then
@@ -1212,7 +1212,7 @@ def $is_boolt(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:49.1-50.33
+;; ../../../../spec/2c2-runtime-type-aux.watsup:42.1-42.24
 def $is_num(typ)
 
 1. If ((typ has type numtyp)), then
@@ -1225,7 +1225,7 @@ def $is_num(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:55.1-56.24
+;; ../../../../spec/2c2-runtime-type-aux.watsup:47.1-47.25
 def $is_intt(typ)
 
 1. If ((typ = ((IntT) as typ))), then
@@ -1236,7 +1236,7 @@ def $is_intt(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:61.1-62.25
+;; ../../../../spec/2c2-runtime-type-aux.watsup:52.1-52.26
 def $is_fintt(typ)
 
 1. If ((typ has type numtyp)), then
@@ -1253,7 +1253,7 @@ def $is_fintt(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:67.1-68.27
+;; ../../../../spec/2c2-runtime-type-aux.watsup:57.1-57.26
 def $is_fbitt(typ)
 
 1. If ((typ has type numtyp)), then
@@ -1270,7 +1270,7 @@ def $is_fbitt(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:73.1-74.27
+;; ../../../../spec/2c2-runtime-type-aux.watsup:62.1-62.26
 def $is_vbitt(typ)
 
 1. If ((typ has type numtyp)), then
@@ -1287,7 +1287,7 @@ def $is_vbitt(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:79.1-80.34
+;; ../../../../spec/2c2-runtime-type-aux.watsup:67.1-67.29
 def $is_abstract(typ)
 
 1. If ((typ has type abstyp)), then
@@ -1300,7 +1300,7 @@ def $is_abstract(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:85.1-86.26
+;; ../../../../spec/2c2-runtime-type-aux.watsup:72.1-72.25
 def $is_vart(typ)
 
 1. If ((typ has type abstyp)), then
@@ -1317,7 +1317,7 @@ def $is_vart(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:91.1-92.27
+;; ../../../../spec/2c2-runtime-type-aux.watsup:77.1-77.26
 def $is_spect(typ)
 
 1. If ((typ has type abstyp)), then
@@ -1334,7 +1334,7 @@ def $is_spect(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:97.1-98.33
+;; ../../../../spec/2c2-runtime-type-aux.watsup:82.1-82.24
 def $is_def(typ)
 
 1. If ((typ has type deftyp)), then
@@ -1347,7 +1347,7 @@ def $is_def(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:103.1-104.31
+;; ../../../../spec/2c2-runtime-type-aux.watsup:87.1-87.26
 def $is_alias(typ)
 
 1. If ((typ has type aliastyp)), then
@@ -1360,7 +1360,7 @@ def $is_alias(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:109.1-110.26
+;; ../../../../spec/2c2-runtime-type-aux.watsup:92.1-92.25
 def $is_deft(typ)
 
 1. If ((typ has type aliastyp)), then
@@ -1373,7 +1373,7 @@ def $is_deft(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:115.1-116.30
+;; ../../../../spec/2c2-runtime-type-aux.watsup:97.1-97.25
 def $is_data(typ)
 
 1. If ((typ has type datatyp)), then
@@ -1386,7 +1386,7 @@ def $is_data(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:121.1-122.26
+;; ../../../../spec/2c2-runtime-type-aux.watsup:102.1-102.25
 def $is_newt(typ)
 
 1. If ((typ has type datatyp)), then
@@ -1403,7 +1403,7 @@ def $is_newt(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:127.1-128.27
+;; ../../../../spec/2c2-runtime-type-aux.watsup:107.1-107.26
 def $is_enumt(typ)
 
 1. If ((typ has type datatyp)), then
@@ -1420,7 +1420,7 @@ def $is_enumt(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:133.1-134.28
+;; ../../../../spec/2c2-runtime-type-aux.watsup:112.1-112.27
 def $is_senumt(typ)
 
 1. If ((typ has type datatyp)), then
@@ -1437,7 +1437,7 @@ def $is_senumt(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:139.1-140.27
+;; ../../../../spec/2c2-runtime-type-aux.watsup:117.1-117.26
 def $is_listt(typ)
 
 1. If ((typ has type datatyp)), then
@@ -1454,7 +1454,7 @@ def $is_listt(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:145.1-146.28
+;; ../../../../spec/2c2-runtime-type-aux.watsup:122.1-122.27
 def $is_tuplet(typ)
 
 1. If ((typ has type datatyp)), then
@@ -1471,7 +1471,7 @@ def $is_tuplet(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:151.1-152.28
+;; ../../../../spec/2c2-runtime-type-aux.watsup:127.1-127.27
 def $is_stackt(typ)
 
 1. If ((typ has type datatyp)), then
@@ -1488,7 +1488,7 @@ def $is_stackt(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:157.1-158.29
+;; ../../../../spec/2c2-runtime-type-aux.watsup:132.1-132.28
 def $is_structt(typ)
 
 1. If ((typ has type datatyp)), then
@@ -1505,7 +1505,7 @@ def $is_structt(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:163.1-164.29
+;; ../../../../spec/2c2-runtime-type-aux.watsup:137.1-137.28
 def $is_headert(typ)
 
 1. If ((typ has type datatyp)), then
@@ -1522,7 +1522,7 @@ def $is_headert(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:169.1-170.28
+;; ../../../../spec/2c2-runtime-type-aux.watsup:142.1-142.27
 def $is_uniont(typ)
 
 1. If ((typ has type datatyp)), then
@@ -1539,7 +1539,7 @@ def $is_uniont(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:175.1-176.32
+;; ../../../../spec/2c2-runtime-type-aux.watsup:147.1-147.24
 def $is_obj(typ)
 
 1. If ((typ has type objtyp)), then
@@ -1552,7 +1552,7 @@ def $is_obj(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:181.1-182.29
+;; ../../../../spec/2c2-runtime-type-aux.watsup:152.1-152.28
 def $is_externt(typ)
 
 1. If ((typ has type objtyp)), then
@@ -1569,7 +1569,7 @@ def $is_externt(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:187.1-188.29
+;; ../../../../spec/2c2-runtime-type-aux.watsup:157.1-157.28
 def $is_parsert(typ)
 
 1. If ((typ has type objtyp)), then
@@ -1586,7 +1586,7 @@ def $is_parsert(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:193.1-194.30
+;; ../../../../spec/2c2-runtime-type-aux.watsup:162.1-162.29
 def $is_controlt(typ)
 
 1. If ((typ has type objtyp)), then
@@ -1603,7 +1603,7 @@ def $is_controlt(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:199.1-200.30
+;; ../../../../spec/2c2-runtime-type-aux.watsup:167.1-167.29
 def $is_packaget(typ)
 
 1. If ((typ has type objtyp)), then
@@ -1620,7 +1620,7 @@ def $is_packaget(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:205.1-206.28
+;; ../../../../spec/2c2-runtime-type-aux.watsup:172.1-172.27
 def $is_tablet(typ)
 
 1. If ((typ has type objtyp)), then
@@ -1637,7 +1637,7 @@ def $is_tablet(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:211.1-212.37
+;; ../../../../spec/2c2-runtime-type-aux.watsup:177.1-177.26
 def $is_synth(typ)
 
 1. If ((typ has type synthtyp)), then
@@ -1650,7 +1650,7 @@ def $is_synth(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:217.1-218.26
+;; ../../../../spec/2c2-runtime-type-aux.watsup:182.1-182.25
 def $is_seqt(typ)
 
 1. If ((typ has type synthtyp)), then
@@ -1667,7 +1667,7 @@ def $is_seqt(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:223.1-224.29
+;; ../../../../spec/2c2-runtime-type-aux.watsup:187.1-187.28
 def $is_recordt(typ)
 
 1. If ((typ has type synthtyp)), then
@@ -1684,7 +1684,7 @@ def $is_recordt(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:229.1-230.26
+;; ../../../../spec/2c2-runtime-type-aux.watsup:192.1-192.25
 def $is_sett(typ)
 
 1. If ((typ has type synthtyp)), then
@@ -1701,7 +1701,7 @@ def $is_sett(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:235.1-236.35
+;; ../../../../spec/2c2-runtime-type-aux.watsup:197.1-197.34
 def $is_table_structt(typ)
 
 1. If ((typ has type synthtyp)), then
@@ -1718,7 +1718,7 @@ def $is_table_structt(typ)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:247.1-248.29
+;; ../../../../spec/2c2-runtime-type-aux.watsup:208.1-208.32
 def $is_actiont(functyp)
 
 1. If ((functyp matches pattern `ActionT%`)), then
@@ -1731,7 +1731,7 @@ def $is_actiont(functyp)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:253.1-254.34
+;; ../../../../spec/2c2-runtime-type-aux.watsup:213.1-213.36
 def $is_externfunct(functyp)
 
 1. If ((functyp matches pattern `ExternFuncT%%`)), then
@@ -1744,7 +1744,7 @@ def $is_externfunct(functyp)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:259.1-260.27
+;; ../../../../spec/2c2-runtime-type-aux.watsup:218.1-218.30
 def $is_funct(functyp)
 
 1. If ((functyp matches pattern `FuncT%%`)), then
@@ -1757,7 +1757,7 @@ def $is_funct(functyp)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:265.1-266.37
+;; ../../../../spec/2c2-runtime-type-aux.watsup:223.1-223.39
 def $is_builtinmethodt(functyp)
 
 1. If ((functyp matches pattern `BuiltinMethodT%%`)), then
@@ -1770,7 +1770,7 @@ def $is_builtinmethodt(functyp)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:271.1-272.36
+;; ../../../../spec/2c2-runtime-type-aux.watsup:228.1-228.38
 def $is_externmethodt(functyp)
 
 1. If ((functyp matches pattern `ExternMethodT%%`)), then
@@ -1783,7 +1783,7 @@ def $is_externmethodt(functyp)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:277.1-278.45
+;; ../../../../spec/2c2-runtime-type-aux.watsup:233.1-233.46
 def $is_externabstractmethodt(functyp)
 
 1. If ((functyp matches pattern `ExternAbstractMethodT%%`)), then
@@ -1796,7 +1796,7 @@ def $is_externabstractmethodt(functyp)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:283.1-284.42
+;; ../../../../spec/2c2-runtime-type-aux.watsup:238.1-238.43
 def $is_parserapplymethodt(functyp)
 
 1. If ((functyp matches pattern `ParserApplyMethodT%`)), then
@@ -1809,7 +1809,7 @@ def $is_parserapplymethodt(functyp)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:289.1-290.43
+;; ../../../../spec/2c2-runtime-type-aux.watsup:243.1-243.44
 def $is_controlapplymethodt(functyp)
 
 1. If ((functyp matches pattern `ControlApplyMethodT%`)), then
@@ -1822,7 +1822,7 @@ def $is_controlapplymethodt(functyp)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:295.1-296.41
+;; ../../../../spec/2c2-runtime-type-aux.watsup:248.1-248.42
 def $is_tableapplymethodt(functyp)
 
 1. If ((functyp matches pattern `TableApplyMethodT%`)), then
@@ -1835,7 +1835,7 @@ def $is_tableapplymethodt(functyp)
 
   1. Return false
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:303.1-304.38
+;; ../../../../spec/2c2-runtime-type-aux.watsup:255.1-255.45
 def $get_params_functyp(functyp)
 
 1. Case analysis on functyp
@@ -1894,7 +1894,7 @@ def $get_params_functyp(functyp)
 
     2. Return []
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:315.1-316.39
+;; ../../../../spec/2c2-runtime-type-aux.watsup:266.1-266.40
 def $get_typ_ret_functyp(functyp)
 
 1. Case analysis on functyp
@@ -1953,7 +1953,7 @@ def $get_typ_ret_functyp(functyp)
 
     2. Return typ_r
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:333.1-334.38
+;; ../../../../spec/2c2-runtime-type-aux.watsup:283.1-283.44
 def $get_params_funcdef(funcdef)
 
 1. Case analysis on funcdef
@@ -1970,7 +1970,7 @@ def $get_params_funcdef(funcdef)
 
     2. Return $get_params_functyp(ft)
 
-;; ../../../../spec/2c2-runtime-type-aux.watsup:338.1-339.39
+;; ../../../../spec/2c2-runtime-type-aux.watsup:287.1-288.39
 def $get_typ_ret_funcdef(funcdef)
 
 1. Case analysis on funcdef
@@ -1987,10 +1987,10 @@ def $get_typ_ret_funcdef(funcdef)
 
     2. Return $get_typ_ret_functyp(ft)
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:5.45-5.57
+;; ../../../../spec/2c3-runtime-type-subst.watsup:5.16-5.28
 syntax theta = map<id, typ>
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:7.1-8.44
+;; ../../../../spec/2c3-runtime-type-subst.watsup:7.1-7.30
 def $free_typ(typ'')
 
 1. Case analysis on typ''
@@ -2203,7 +2203,7 @@ def $free_typ(typ'')
 
 5. Else Phantom#5
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:9.1-10.44
+;; ../../../../spec/2c3-runtime-type-subst.watsup:8.1-8.45
 def $free_typdef_poly((PolyD (tparam*{tparam <- tparam*}, tparam_hidden*{tparam_hidden <- tparam_hidden*}) -> typ))
 
 1. (Let tidset_typ be $free_typ(typ))
@@ -2212,7 +2212,7 @@ def $free_typdef_poly((PolyD (tparam*{tparam <- tparam*}, tparam_hidden*{tparam_
 
 3. Return $diff_set<tid>(tidset_typ, tidset_tparams)
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:11.1-12.44
+;; ../../../../spec/2c3-runtime-type-subst.watsup:9.1-9.38
 def $free_functyp(functyp)
 
 1. Case analysis on functyp
@@ -2307,7 +2307,7 @@ def $free_functyp(functyp)
 
     2. Return $free_typ(typ)
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:13.1-14.44
+;; ../../../../spec/2c3-runtime-type-subst.watsup:10.1-10.38
 def $free_funcdef(funcdef)
 
 1. Case analysis on funcdef
@@ -2328,7 +2328,7 @@ def $free_funcdef(funcdef)
 
     4. Return $diff_set<tid>(tidset_ft, tidset_tparams)
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:16.1-17.33
+;; ../../../../spec/2c3-runtime-type-subst.watsup:12.1-12.33
 def $subst_typ(theta, typ''')
 
 1. Case analysis on typ'''
@@ -2517,7 +2517,7 @@ def $subst_typ(theta, typ''')
 
   1. Return typ'''
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:18.1-19.33
+;; ../../../../spec/2c3-runtime-type-subst.watsup:13.1-13.55
 def $subst_typdef_poly(theta, (PolyD (tparam*{tparam <- tparam*}, tparam_hidden*{tparam_hidden <- tparam_hidden*}) -> typ))
 
 1. (Let ({ tid_free*{tid_free <- tid_free*} }) be $diff_set<tid>($free_typ(typ), ({ tparam*{tparam <- tparam*} ++ tparam_hidden*{tparam_hidden <- tparam_hidden*} })))
@@ -2550,7 +2550,7 @@ def $subst_typdef_poly(theta, (PolyD (tparam*{tparam <- tparam*}, tparam_hidden*
 
 3. Else Phantom#7
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:20.1-21.33
+;; ../../../../spec/2c3-runtime-type-subst.watsup:14.1-14.45
 def $subst_funcdef(theta, funcdef)
 
 1. Case analysis on funcdef
@@ -2595,7 +2595,7 @@ def $subst_funcdef(theta, funcdef)
 
     4. Else Phantom#9
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:22.1-23.33
+;; ../../../../spec/2c3-runtime-type-subst.watsup:15.1-15.45
 def $subst_functyp(theta, functyp)
 
 1. Case analysis on functyp
@@ -2686,7 +2686,7 @@ def $subst_functyp(theta, functyp)
 
     4. Return (ExternAbstractMethodT pt'*{pt' <- pt'*} $subst_typ(theta, typ))
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:24.1-25.33
+;; ../../../../spec/2c3-runtime-type-subst.watsup:16.1-16.45
 def $subst_constyp(theta, (ConsT pt*{pt <- pt*} typ))
 
 1. (Let (id dir typ_p exprIL?{exprIL <- exprIL?}) be pt)*{dir <- dir*, exprIL? <- exprIL?*, id <- id*, pt <- pt*, typ_p <- typ_p*}
@@ -2695,7 +2695,7 @@ def $subst_constyp(theta, (ConsT pt*{pt <- pt*} typ))
 
 3. Return (ConsT pt'*{pt' <- pt'*} $subst_typ(theta, typ))
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:317.1-318.57
+;; ../../../../spec/2c3-runtime-type-subst.watsup:308.1-308.43
 def $specialize_typdef(typdef, typ''*{typ'' <- typ''*})
 
 1. Case analysis on typdef
@@ -2720,7 +2720,7 @@ def $specialize_typdef(typdef, typ''*{typ'' <- typ''*})
 
     4. Return $subst_typ(theta, typ)
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:329.1-330.57
+;; ../../../../spec/2c3-runtime-type-subst.watsup:319.1-319.57
 def $specialize_funcdef(funcdef, typ'*{typ' <- typ'*})
 
 1. Case analysis on funcdef
@@ -2765,7 +2765,7 @@ def $specialize_funcdef(funcdef, typ'*{typ' <- typ'*})
 
     5. Else Phantom#14
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:359.1-360.57
+;; ../../../../spec/2c3-runtime-type-subst.watsup:348.1-348.57
 def $specialize_consdef((ConsD (tparam*{tparam <- tparam*}, tparam_hidden*{tparam_hidden <- tparam_hidden*}) -> ct), typ_a*{typ_a <- typ_a*})
 
 1. (Let tparam'*{tparam' <- tparam'*} be tparam*{tparam <- tparam*} ++ tparam_hidden*{tparam_hidden <- tparam_hidden*})
@@ -2794,7 +2794,7 @@ def $specialize_consdef((ConsD (tparam*{tparam <- tparam*}, tparam_hidden*{tpara
 
 4. Else Phantom#17
 
-;; ../../../../spec/2c3-runtime-type-subst.watsup:387.1-388.47
+;; ../../../../spec/2c3-runtime-type-subst.watsup:375.1-375.26
 def $canon_typ(typ'')
 
 1. Case analysis on typ''
@@ -2821,12 +2821,12 @@ def $canon_typ(typ'')
 
   1. Return typ''
 
-;; ../../../../spec/2c4-runtime-type-util.watsup:7.1-8.28
+;; ../../../../spec/2c4-runtime-type-util.watsup:7.1-7.28
 def $is_nominal(typ)
 
 1. Return $is_nominal'($canon_typ(typ))
 
-;; ../../../../spec/2c4-runtime-type-util.watsup:9.1-9.29
+;; ../../../../spec/2c4-runtime-type-util.watsup:8.1-8.29
 def $is_nominal'(typ)
 
 1. Case analysis on typ
@@ -2895,12 +2895,12 @@ def $is_nominal'(typ)
 
   1. Return false
 
-;; ../../../../spec/2c4-runtime-type-util.watsup:25.1-26.32
+;; ../../../../spec/2c4-runtime-type-util.watsup:24.1-24.29
 def $is_deftable(typ)
 
 1. Return $is_deftable'($canon_typ(typ))
 
-;; ../../../../spec/2c4-runtime-type-util.watsup:27.1-27.30
+;; ../../../../spec/2c4-runtime-type-util.watsup:25.1-25.30
 def $is_deftable'(typ'')
 
 1. If ((typ'' = ((ErrT) as typ))), then
@@ -3011,12 +3011,12 @@ def $is_deftable'(typ'')
 
   1. Return false
 
-;; ../../../../spec/2c4-runtime-type-util.watsup:54.1-55.30
+;; ../../../../spec/2c4-runtime-type-util.watsup:52.1-52.30
 def $is_equalable(typ)
 
 1. Return $is_equalable'($canon_typ(typ))
 
-;; ../../../../spec/2c4-runtime-type-util.watsup:56.1-56.31
+;; ../../../../spec/2c4-runtime-type-util.watsup:53.1-53.31
 def $is_equalable'(typ)
 
 1. If ((typ = ((VoidT) as typ))), then
@@ -3081,12 +3081,12 @@ def $is_equalable'(typ)
 
   1. Return true
 
-;; ../../../../spec/2c4-runtime-type-util.watsup:72.1-73.31
+;; ../../../../spec/2c4-runtime-type-util.watsup:69.1-69.31
 def $is_assignable(typ)
 
 1. Return $is_assignable'($canon_typ(typ))
 
-;; ../../../../spec/2c4-runtime-type-util.watsup:74.1-74.32
+;; ../../../../spec/2c4-runtime-type-util.watsup:70.1-70.32
 def $is_assignable'(typ)
 
 1. If ((typ = ((VoidT) as typ))), then
@@ -3119,12 +3119,12 @@ def $is_assignable'(typ)
 
   1. Return true
 
-;; ../../../../spec/2c4-runtime-type-util.watsup:89.1-89.26
+;; ../../../../spec/2c4-runtime-type-util.watsup:85.1-85.26
 def $get_width(typ)
 
 1. Return $get_width'($canon_typ(typ))
 
-;; ../../../../spec/2c4-runtime-type-util.watsup:90.1-90.27
+;; ../../../../spec/2c4-runtime-type-util.watsup:86.1-86.27
 def $get_width'(typ'')
 
 1. Case analysis on typ''
@@ -4936,7 +4936,7 @@ relation FuncDef_wf: tidset, funcdef
 
     2. Else Phantom#259
 
-;; ../../../../spec/2c6-runtime-type-wellformed.watsup:14.52-14.60
+;; ../../../../spec/2c6-runtime-type-wellformed.watsup:14.19-14.27
 syntax consctxt = 
    | `CONSCTXT`()
 
@@ -6056,12 +6056,12 @@ def $nestable_polyd(typ)
 
   1. Return false
 
-;; ../../../../spec/2c6-runtime-type-wellformed.watsup:407.1-408.38
+;; ../../../../spec/2c6-runtime-type-wellformed.watsup:407.1-407.37
 def $is_trailing_action(dir*{dir <- dir*})
 
 1. Return $is_trailing_action'(true, $rev_<dir>(dir*{dir <- dir*}))
 
-;; ../../../../spec/2c6-runtime-type-wellformed.watsup:409.1-409.44
+;; ../../../../spec/2c6-runtime-type-wellformed.watsup:408.1-408.44
 def $is_trailing_action'(_bool', dir''*{dir'' <- dir''*})
 
 1. Case analysis on dir''*{dir'' <- dir''*}
@@ -6157,7 +6157,7 @@ def $bitacc
 
 
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:22.1-23.32
+;; ../../../../spec/2d1-runtime-numerics.watsup:22.1-22.28
 def $un_op(unop, val)
 
 1. Case analysis on unop
@@ -6178,7 +6178,7 @@ def $un_op(unop, val)
 
     1. Return $un_minus(val)
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:27.1-27.24
+;; ../../../../spec/2d1-runtime-numerics.watsup:26.1-26.24
 def $un_bnot(val)
 
 1. If ((val matches pattern `FBitV%%`)), then
@@ -6191,7 +6191,7 @@ def $un_bnot(val)
 
 1. Else Phantom#290
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:36.1-36.24
+;; ../../../../spec/2d1-runtime-numerics.watsup:35.1-35.24
 def $un_lnot(val)
 
 1. If ((val matches pattern `BoolV%`)), then
@@ -6202,7 +6202,7 @@ def $un_lnot(val)
 
 1. Else Phantom#291
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:44.1-44.24
+;; ../../../../spec/2d1-runtime-numerics.watsup:43.1-43.24
 def $un_plus(val)
 
 1. Case analysis on val
@@ -6227,7 +6227,7 @@ def $un_plus(val)
 
 1. Else Phantom#292
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:54.1-54.25
+;; ../../../../spec/2d1-runtime-numerics.watsup:53.1-53.25
 def $un_minus(val)
 
 1. Case analysis on val
@@ -6256,7 +6256,7 @@ def $un_minus(val)
 
 1. Else Phantom#293
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:70.1-71.24
+;; ../../../../spec/2d1-runtime-numerics.watsup:69.1-69.35
 def $bin_op(binop, val_l, val_r)
 
 1. Case analysis on binop
@@ -6339,7 +6339,7 @@ def $bin_op(binop, val_l, val_r)
 
 1. Else Phantom#294
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:75.1-75.30
+;; ../../../../spec/2d1-runtime-numerics.watsup:73.1-73.30
 def $bin_plus(val, val')
 
 1. Case analysis on val
@@ -6402,7 +6402,7 @@ def $bin_plus(val, val')
 
 1. Else Phantom#300
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:93.1-93.31
+;; ../../../../spec/2d1-runtime-numerics.watsup:91.1-91.31
 def $bin_minus(val, val')
 
 1. Case analysis on val
@@ -6465,7 +6465,7 @@ def $bin_minus(val, val')
 
 1. Else Phantom#306
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:111.1-111.29
+;; ../../../../spec/2d1-runtime-numerics.watsup:109.1-109.29
 def $bin_mul(val, val')
 
 1. Case analysis on val
@@ -6528,7 +6528,7 @@ def $bin_mul(val, val')
 
 1. Else Phantom#312
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:127.1-127.29
+;; ../../../../spec/2d1-runtime-numerics.watsup:125.1-125.29
 def $bin_div(val, val')
 
 1. If ((val matches pattern `IntV%`)), then
@@ -6545,7 +6545,7 @@ def $bin_div(val, val')
 
 1. Else Phantom#314
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:135.1-135.29
+;; ../../../../spec/2d1-runtime-numerics.watsup:133.1-133.29
 def $bin_mod(val, val')
 
 1. If ((val matches pattern `IntV%`)), then
@@ -6562,7 +6562,7 @@ def $bin_mod(val, val')
 
 1. Else Phantom#316
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:143.1-143.29
+;; ../../../../spec/2d1-runtime-numerics.watsup:141.1-141.29
 def $bin_shl(val, val')
 
 1. Case analysis on val
@@ -6669,7 +6669,7 @@ def $bin_shl(val, val')
 
 1. Else Phantom#320
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:176.1-176.29
+;; ../../../../spec/2d1-runtime-numerics.watsup:174.1-174.29
 def $bin_shr(val, val')
 
 1. Case analysis on val
@@ -6814,7 +6814,7 @@ def $bin_shr(val, val')
 
 1. Else Phantom#330
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:229.1-229.29
+;; ../../../../spec/2d1-runtime-numerics.watsup:227.1-227.29
 def $bin_le(val, val')
 
 1. Case analysis on val
@@ -6869,7 +6869,7 @@ def $bin_le(val, val')
 
 1. Else Phantom#336
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:241.1-241.29
+;; ../../../../spec/2d1-runtime-numerics.watsup:239.1-239.29
 def $bin_ge(val, val')
 
 1. Case analysis on val
@@ -6924,7 +6924,7 @@ def $bin_ge(val, val')
 
 1. Else Phantom#342
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:253.1-253.29
+;; ../../../../spec/2d1-runtime-numerics.watsup:251.1-251.29
 def $bin_lt(val, val')
 
 1. Case analysis on val
@@ -6979,7 +6979,7 @@ def $bin_lt(val, val')
 
 1. Else Phantom#348
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:265.1-265.29
+;; ../../../../spec/2d1-runtime-numerics.watsup:263.1-263.29
 def $bin_gt(val, val')
 
 1. Case analysis on val
@@ -7034,7 +7034,7 @@ def $bin_gt(val, val')
 
 1. Else Phantom#354
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:277.1-277.29
+;; ../../../../spec/2d1-runtime-numerics.watsup:275.1-275.29
 def $bin_eq(val, val')
 
 1. Case analysis on val
@@ -7253,7 +7253,7 @@ def $bin_eq(val, val')
 
 1. Else Phantom#375
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:278.1-278.32
+;; ../../../../spec/2d1-runtime-numerics.watsup:276.1-276.32
 def $bin_eqs(val*{val <- val*}, val'*{val' <- val'*})
 
 1. Case analysis on val*{val <- val*}
@@ -7292,7 +7292,7 @@ def $bin_eqs(val*{val <- val*}, val'*{val' <- val'*})
 
     4. Else Phantom#377
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:279.1-279.53
+;; ../../../../spec/2d1-runtime-numerics.watsup:277.1-277.53
 def $bin_eqs_((member, val)*{(member, val) <- (member, val)*}, (member, val)'*{(member, val)' <- (member, val)'*})
 
 1. Case analysis on (member, val)*{(member, val) <- (member, val)*}
@@ -7335,7 +7335,7 @@ def $bin_eqs_((member, val)*{(member, val) <- (member, val)*}, (member, val)'*{(
 
     4. Else Phantom#380
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:325.1-325.30
+;; ../../../../spec/2d1-runtime-numerics.watsup:323.1-323.30
 def $bin_band(val, val')
 
 1. Case analysis on val
@@ -7382,7 +7382,7 @@ def $bin_band(val, val')
 
 1. Else Phantom#385
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:341.1-341.30
+;; ../../../../spec/2d1-runtime-numerics.watsup:339.1-339.30
 def $bin_bxor(val, val')
 
 1. Case analysis on val
@@ -7429,7 +7429,7 @@ def $bin_bxor(val, val')
 
 1. Else Phantom#390
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:357.1-357.29
+;; ../../../../spec/2d1-runtime-numerics.watsup:355.1-355.29
 def $bin_bor(val, val')
 
 1. Case analysis on val
@@ -7476,7 +7476,7 @@ def $bin_bor(val, val')
 
 1. Else Phantom#395
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:373.1-373.32
+;; ../../../../spec/2d1-runtime-numerics.watsup:371.1-371.32
 def $bin_concat(val, val')
 
 1. Case analysis on val
@@ -7551,7 +7551,7 @@ def $bin_concat(val, val')
 
 1. Else Phantom#398
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:402.1-402.30
+;; ../../../../spec/2d1-runtime-numerics.watsup:400.1-400.30
 def $bin_land(val, val')
 
 1. If ((val matches pattern `BoolV%`)), then
@@ -7568,7 +7568,7 @@ def $bin_land(val, val')
 
 1. Else Phantom#400
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:410.1-410.29
+;; ../../../../spec/2d1-runtime-numerics.watsup:408.1-408.29
 def $bin_lor(val, val')
 
 1. If ((val matches pattern `BoolV%`)), then
@@ -7585,7 +7585,7 @@ def $bin_lor(val, val')
 
 1. Else Phantom#402
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:420.1-421.21
+;; ../../../../spec/2d1-runtime-numerics.watsup:418.1-418.29
 def $cast_op(typ, val'')
 
 1. Case analysis on val''
@@ -7678,12 +7678,12 @@ def $cast_op(typ, val'')
 
 1. Else Phantom#403
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:423.1-423.24
+;; ../../../../spec/2d1-runtime-numerics.watsup:420.1-420.24
 def $default(typ)
 
 1. Return $default'($canon_typ(typ))
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:424.1-424.25
+;; ../../../../spec/2d1-runtime-numerics.watsup:421.1-421.25
 def $default'(typ'')
 
 1. If ((typ'' = ((ErrT) as typ))), then
@@ -7820,12 +7820,12 @@ def $default'(typ'')
 
 5. Else Phantom#414
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:428.1-428.32
+;; ../../../../spec/2d1-runtime-numerics.watsup:425.1-425.32
 def $cast_bool(typ, b)
 
 1. Return $cast_bool'($canon_typ(typ), b)
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:429.1-429.33
+;; ../../../../spec/2d1-runtime-numerics.watsup:426.1-426.33
 def $cast_bool'(typ'', b')
 
 1. If ((typ'' = ((BoolT) as typ))), then
@@ -7872,12 +7872,12 @@ def $cast_bool'(typ'', b')
 
 2. Else Phantom#419
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:442.1-442.30
+;; ../../../../spec/2d1-runtime-numerics.watsup:439.1-439.30
 def $cast_int(typ, i)
 
 1. Return $cast_int'($canon_typ(typ), i)
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:443.1-443.31
+;; ../../../../spec/2d1-runtime-numerics.watsup:440.1-440.31
 def $cast_int'(typ'', i)
 
 1. If ((typ'' = ((BoolT) as typ))), then
@@ -7942,12 +7942,12 @@ def $cast_int'(typ'', i)
 
 3. Else Phantom#425
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:459.1-459.41
+;; ../../../../spec/2d1-runtime-numerics.watsup:456.1-456.41
 def $cast_fint(typ, w, bs)
 
 1. Return $cast_fint'($canon_typ(typ), w, bs)
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:460.1-460.42
+;; ../../../../spec/2d1-runtime-numerics.watsup:457.1-457.42
 def $cast_fint'(typ'', w', bs)
 
 1. If ((typ'' = ((IntT) as typ))), then
@@ -8010,12 +8010,12 @@ def $cast_fint'(typ'', w', bs)
 
 2. Else Phantom#430
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:477.1-477.41
+;; ../../../../spec/2d1-runtime-numerics.watsup:474.1-474.41
 def $cast_fbit(typ, w, bs)
 
 1. Return $cast_fbit'($canon_typ(typ), w, bs)
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:478.1-478.42
+;; ../../../../spec/2d1-runtime-numerics.watsup:475.1-475.42
 def $cast_fbit'(typ'', w', bs)
 
 1. If ((typ'' = ((BoolT) as typ))), then
@@ -8084,12 +8084,12 @@ def $cast_fbit'(typ'', w', bs)
 
 3. Else Phantom#436
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:500.1-500.48
+;; ../../../../spec/2d1-runtime-numerics.watsup:497.1-497.48
 def $cast_struct(typ, id, (member, val)*{member <- member*, val <- val*})
 
 1. Return $cast_struct'($canon_typ(typ), id, (member, val)*{member <- member*, val <- val*})
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:501.1-501.49
+;; ../../../../spec/2d1-runtime-numerics.watsup:498.1-498.49
 def $cast_struct'(typ, id', (member, val)*{member <- member*, val <- val*})
 
 1. If ((typ has type datatyp)), then
@@ -8110,12 +8110,12 @@ def $cast_struct'(typ, id', (member, val)*{member <- member*, val <- val*})
 
 1. Else Phantom#439
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:513.1-513.54
+;; ../../../../spec/2d1-runtime-numerics.watsup:510.1-510.54
 def $cast_header(typ, id, b, (member, val)*{member <- member*, val <- val*})
 
 1. Return $cast_header'($canon_typ(typ), id, b, (member, val)*{member <- member*, val <- val*})
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:514.1-514.55
+;; ../../../../spec/2d1-runtime-numerics.watsup:511.1-511.55
 def $cast_header'(typ, id', b, (member, val)*{member <- member*, val <- val*})
 
 1. If ((typ has type datatyp)), then
@@ -8136,12 +8136,12 @@ def $cast_header'(typ, id', b, (member, val)*{member <- member*, val <- val*})
 
 1. Else Phantom#442
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:526.1-526.31
+;; ../../../../spec/2d1-runtime-numerics.watsup:523.1-523.31
 def $cast_seq(typ, val*{val <- val*})
 
 1. Return $cast_seq'($canon_typ(typ), val*{val <- val*})
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:527.1-527.32
+;; ../../../../spec/2d1-runtime-numerics.watsup:524.1-524.32
 def $cast_seq'(typ', val*{val <- val*})
 
 1. If ((typ' has type datatyp)), then
@@ -8196,12 +8196,12 @@ def $cast_seq'(typ', val*{val <- val*})
 
 1. Else Phantom#444
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:553.1-553.44
+;; ../../../../spec/2d1-runtime-numerics.watsup:550.1-550.44
 def $cast_record(typ, (member, val)*{member <- member*, val <- val*})
 
 1. Return $cast_record'($canon_typ(typ), (member, val)*{member <- member*, val <- val*})
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:554.1-554.45
+;; ../../../../spec/2d1-runtime-numerics.watsup:551.1-551.45
 def $cast_record'(typ', (member, val)*{member <- member*, val <- val*})
 
 1. If ((typ' has type datatyp)), then
@@ -8246,12 +8246,12 @@ def $cast_record'(typ', (member, val)*{member <- member*, val <- val*})
 
 1. Else Phantom#448
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:579.1-579.29
+;; ../../../../spec/2d1-runtime-numerics.watsup:576.1-576.29
 def $cast_invalid(typ)
 
 1. Return $cast_invalid'($canon_typ(typ))
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:580.1-580.30
+;; ../../../../spec/2d1-runtime-numerics.watsup:577.1-577.30
 def $cast_invalid'(typ')
 
 1. If ((typ' has type datatyp)), then
@@ -8276,12 +8276,12 @@ def $cast_invalid'(typ')
 
 1. Else Phantom#450
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:594.1-594.40
+;; ../../../../spec/2d1-runtime-numerics.watsup:591.1-591.40
 def $cast_set_singleton(typ, val)
 
 1. Return $cast_set_singleton'($canon_typ(typ), val)
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:595.1-595.41
+;; ../../../../spec/2d1-runtime-numerics.watsup:592.1-592.41
 def $cast_set_singleton'(typ', val)
 
 1. If ((typ' has type synthtyp)), then
@@ -8300,12 +8300,12 @@ def $cast_set_singleton'(typ', val)
 
 1. Else Phantom#452
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:602.1-602.40
+;; ../../../../spec/2d1-runtime-numerics.watsup:599.1-599.40
 def $cast_set_mask(typ, val_b, val_m)
 
 1. Return $cast_set_mask'($canon_typ(typ), val_b, val_m)
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:603.1-603.41
+;; ../../../../spec/2d1-runtime-numerics.watsup:600.1-600.41
 def $cast_set_mask'(typ', val_b, val_m)
 
 1. If ((typ' has type synthtyp)), then
@@ -8326,12 +8326,12 @@ def $cast_set_mask'(typ', val_b, val_m)
 
 1. Else Phantom#454
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:611.1-611.41
+;; ../../../../spec/2d1-runtime-numerics.watsup:608.1-608.41
 def $cast_set_range(typ, val_l, val_u)
 
 1. Return $cast_set_range'($canon_typ(typ), val_l, val_u)
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:612.1-612.42
+;; ../../../../spec/2d1-runtime-numerics.watsup:609.1-609.42
 def $cast_set_range'(typ', val_l, val_u)
 
 1. If ((typ' has type synthtyp)), then
@@ -8352,7 +8352,7 @@ def $cast_set_range'(typ', val_l, val_u)
 
 1. Else Phantom#456
 
-;; ../../../../spec/2d1-runtime-numerics.watsup:663.1-663.58
+;; ../../../../spec/2d1-runtime-numerics.watsup:660.1-660.36
 def $bitacc_op(val_b, val_h, val_l)
 
 1. (Let i_b be $get_num(val_b))
@@ -8373,7 +8373,7 @@ def $bitacc_op(val_b, val_h, val_l)
 
 5. Else Phantom#457
 
-;; ../../../../spec/2d2-runtime-builtins.watsup:5.1-6.34
+;; ../../../../spec/2d2-runtime-builtins.watsup:5.1-5.29
 def $size(typ, text)
 
 1. Case analysis on text
@@ -8396,17 +8396,17 @@ def $size(typ, text)
 
 1. Else Phantom#458
 
-;; ../../../../spec/2d2-runtime-builtins.watsup:8.1-8.35
+;; ../../../../spec/2d2-runtime-builtins.watsup:7.1-7.35
 def $size_minSizeInBits(typ)
 
 1. Return (IntV ($size_minSizeInBits'(typ) as int))
 
-;; ../../../../spec/2d2-runtime-builtins.watsup:9.1-9.36
+;; ../../../../spec/2d2-runtime-builtins.watsup:8.1-8.36
 def $size_minSizeInBits'(typ)
 
 1. Return $size_minSizeInBits''($canon_typ(typ))
 
-;; ../../../../spec/2d2-runtime-builtins.watsup:10.1-10.37
+;; ../../../../spec/2d2-runtime-builtins.watsup:9.1-9.37
 def $size_minSizeInBits''(typ'')
 
 1. If ((typ'' = ((BoolT) as typ))), then
@@ -8501,24 +8501,24 @@ def $size_minSizeInBits''(typ'')
 
 2. Else Phantom#463
 
-;; ../../../../spec/2d2-runtime-builtins.watsup:12.1-12.36
+;; ../../../../spec/2d2-runtime-builtins.watsup:11.1-11.36
 def $size_minSizeInBytes(typ)
 
 1. (Let n be $size_minSizeInBits'(typ))
 
 2. Return (IntV ((n / 8) as int))
 
-;; ../../../../spec/2d2-runtime-builtins.watsup:14.1-14.35
+;; ../../../../spec/2d2-runtime-builtins.watsup:13.1-13.35
 def $size_maxSizeInBits(typ)
 
 1. Return (IntV ($size_maxSizeInBits'(typ) as int))
 
-;; ../../../../spec/2d2-runtime-builtins.watsup:15.1-15.36
+;; ../../../../spec/2d2-runtime-builtins.watsup:14.1-14.36
 def $size_maxSizeInBits'(typ)
 
 1. Return $size_maxSizeInBits''($canon_typ(typ))
 
-;; ../../../../spec/2d2-runtime-builtins.watsup:16.1-16.37
+;; ../../../../spec/2d2-runtime-builtins.watsup:15.1-15.37
 def $size_maxSizeInBits''(typ'')
 
 1. If ((typ'' = ((BoolT) as typ))), then
@@ -8613,7 +8613,7 @@ def $size_maxSizeInBits''(typ'')
 
 2. Else Phantom#468
 
-;; ../../../../spec/2d2-runtime-builtins.watsup:18.1-18.36
+;; ../../../../spec/2d2-runtime-builtins.watsup:17.1-17.36
 def $size_maxSizeInBytes(typ)
 
 1. (Let n be $size_maxSizeInBits'(typ))
@@ -8624,7 +8624,7 @@ def $size_maxSizeInBytes(typ)
 syntax styp = 
    | `%%%%`(typ, dir, ctk, val?)
 
-;; ../../../../spec/2e-runtime-env.watsup:18.45-18.58
+;; ../../../../spec/2e-runtime-env.watsup:18.16-18.29
 syntax frame = map<id, styp>
 
 ;; ../../../../spec/2e-runtime-env.watsup:20.1-20.27
@@ -8632,7 +8632,7 @@ def $empty_frame
 
 1. Return $empty_map<id, styp>
 
-;; ../../../../spec/2e-runtime-env.watsup:24.57-24.73
+;; ../../../../spec/2e-runtime-env.watsup:24.16-24.32
 syntax tdenv = map<tid, typdef>
 
 ;; ../../../../spec/2e-runtime-env.watsup:26.1-26.27
@@ -8640,7 +8640,7 @@ def $empty_tdenv
 
 1. Return $empty_map<tid, typdef>
 
-;; ../../../../spec/2e-runtime-env.watsup:30.57-30.74
+;; ../../../../spec/2e-runtime-env.watsup:30.16-30.33
 syntax fdenv = map<fid, funcdef>
 
 ;; ../../../../spec/2e-runtime-env.watsup:32.1-32.27
@@ -8648,7 +8648,7 @@ def $empty_fdenv
 
 1. Return $empty_map<fid, funcdef>
 
-;; ../../../../spec/2e-runtime-env.watsup:36.57-36.74
+;; ../../../../spec/2e-runtime-env.watsup:36.16-36.33
 syntax cdenv = map<fid, consdef>
 
 ;; ../../../../spec/2e-runtime-env.watsup:38.1-38.27
@@ -8661,22 +8661,22 @@ def $check_func_name(id_l, id_r)
 
 1. Return (id_l = id_r)
 
-;; ../../../../spec/2e-runtime-env.watsup:49.1-49.42
+;; ../../../../spec/2e-runtime-env.watsup:48.1-48.42
 def $check_arity_more(id_a?{id_a <- id_a?}*{id_a? <- id_a?*}, id_p*{id_p <- id_p*})
 
 1. Return (|id_a?{id_a <- id_a?}*{id_a? <- id_a?*}| > |id_p*{id_p <- id_p*}|)
 
-;; ../../../../spec/2e-runtime-env.watsup:53.1-53.37
+;; ../../../../spec/2e-runtime-env.watsup:51.1-51.37
 def $check_arity(id_a?{id_a <- id_a?}*{id_a? <- id_a?*}, id_p*{id_p <- id_p*})
 
 1. Return (|id_a?{id_a <- id_a?}*{id_a? <- id_a?*}| = |id_p*{id_p <- id_p*}|)
 
-;; ../../../../spec/2e-runtime-env.watsup:57.1-57.42
+;; ../../../../spec/2e-runtime-env.watsup:54.1-54.42
 def $check_arity_less(id_a?{id_a <- id_a?}*{id_a? <- id_a?*}, id_p*{id_p <- id_p*})
 
 1. Return (|id_a?{id_a <- id_a?}*{id_a? <- id_a?*}| < |id_p*{id_p <- id_p*}|)
 
-;; ../../../../spec/2e-runtime-env.watsup:61.1-61.54
+;; ../../../../spec/2e-runtime-env.watsup:57.1-57.54
 def $get_params_missing_names((id, bool)*{(id, bool) <- (id, bool)*}, id_a*{id_a <- id_a*})
 
 1. Case analysis on (id, bool)*{(id, bool) <- (id, bool)*}
@@ -8705,7 +8705,7 @@ def $get_params_missing_names((id, bool)*{(id, bool) <- (id, bool)*}, id_a*{id_a
 
       1. Return $get_params_missing_names((id_p_t, bool_p_t)*{bool_p_t <- bool_p_t*, id_p_t <- id_p_t*}, id_a*{id_a <- id_a*})
 
-;; ../../../../spec/2e-runtime-env.watsup:81.1-81.68
+;; ../../../../spec/2e-runtime-env.watsup:76.1-76.68
 def $find_match_named<V>(fid, V, id_a*{id_a <- id_a*}, (id_p, bool_p)*{bool_p <- bool_p*, id_p <- id_p*})
 
 1. If ($eq_set<id>(({ id_a*{id_a <- id_a*} }), ({ id_p*{id_p <- id_p*} }))), then
@@ -8716,7 +8716,7 @@ def $find_match_named<V>(fid, V, id_a*{id_a <- id_a*}, (id_p, bool_p)*{bool_p <-
 
   1. Return ?()
 
-;; ../../../../spec/2e-runtime-env.watsup:91.1-92.59
+;; ../../../../spec/2e-runtime-env.watsup:85.1-85.76
 def $find_match_named_default<V>(fid, V, id_a*{id_a <- id_a*}, (id_p, bool_p)*{bool_p <- bool_p*, id_p <- id_p*})
 
 1. (Let id_deft*{id_deft <- id_deft*} be $get_params_missing_names((id_p, bool_p)*{bool_p <- bool_p*, id_p <- id_p*}, id_a*{id_a <- id_a*}))
@@ -8729,7 +8729,7 @@ def $find_match_named_default<V>(fid, V, id_a*{id_a <- id_a*}, (id_p, bool_p)*{b
 
   1. Return ?()
 
-;; ../../../../spec/2e-runtime-env.watsup:102.1-103.61
+;; ../../../../spec/2e-runtime-env.watsup:95.1-95.81
 def $find_match_unnamed_default<V>(fid, V, id_a?{id_a <- id_a?}*{id_a? <- id_a?*}, (id_p, bool_p)*{bool_p <- bool_p*, id_p <- id_p*})
 
 1. (Let ((id, bool)*{bool <- bool*, id <- id*}, (id_deft, bool')*{bool' <- bool'*, id_deft <- id_deft*}) be $partition_<(id, bool)>((id_p, bool_p)*{bool_p <- bool_p*, id_p <- id_p*}, |id_a?{id_a <- id_a?}*{id_a? <- id_a?*}|))
@@ -8742,7 +8742,7 @@ def $find_match_unnamed_default<V>(fid, V, id_a?{id_a <- id_a?}*{id_a? <- id_a?*
 
   1. Return ?()
 
-;; ../../../../spec/2e-runtime-env.watsup:112.1-113.57
+;; ../../../../spec/2e-runtime-env.watsup:104.1-104.69
 def $find_matching_func<V>(id_f, id_a?{id_a <- id_a?}*{id_a? <- id_a?*}, id_a''*{id_a'' <- id_a''*}, (id_f' (id_p, bool_p)*{bool_p <- bool_p*, id_p <- id_p*}), V)
 
 1. Case analysis on $check_func_name(id_f, id_f')
@@ -8799,7 +8799,7 @@ def $find_matching_func<V>(id_f, id_a?{id_a <- id_a?}*{id_a? <- id_a?*}, id_a''*
 
 3. Else Phantom#479
 
-;; ../../../../spec/2e-runtime-env.watsup:150.1-151.58
+;; ../../../../spec/2e-runtime-env.watsup:141.1-141.72
 def $find_matching_funcs<V>(id_f, id_a?{id_a <- id_a?}*{id_a? <- id_a?*}, id_a'*{id_a' <- id_a'*}, fid''*{fid'' <- fid''*}, V''*{V'' <- V''*})
 
 1. Case analysis on fid''*{fid'' <- fid''*}
@@ -8838,7 +8838,7 @@ def $find_matching_funcs<V>(id_f, id_a?{id_a <- id_a?}*{id_a? <- id_a?*}, id_a'*
 
     2. Else Phantom#483
 
-;; ../../../../spec/2e-runtime-env.watsup:164.1-165.41
+;; ../../../../spec/2e-runtime-env.watsup:154.1-154.60
 def $find_func<V>(id_f, id_a?{id_a <- id_a?}*{id_a? <- id_a?*}, ({ (fid -> V)*{V <- V*, fid <- fid*} }))
 
 1. If ((|id_a?{id_a <- id_a?}*{id_a? <- id_a?*}| > 0)), then
@@ -8889,7 +8889,7 @@ def $find_func<V>(id_f, id_a?{id_a <- id_a?}*{id_a? <- id_a?*}, ({ (fid -> V)*{V
 
 2. Else Phantom#490
 
-;; ../../../../spec/2e-runtime-env.watsup:188.1-188.53
+;; ../../../../spec/2e-runtime-env.watsup:177.1-177.53
 def $find_funcs_by_name<V>(id_f, fid*{fid <- fid*}, V*{V <- V*})
 
 1. Case analysis on fid*{fid <- fid*}
@@ -8930,7 +8930,7 @@ def $find_funcs_by_name<V>(id_f, fid*{fid <- fid*}, V*{V <- V*})
 
     4. Else Phantom#494
 
-;; ../../../../spec/2e-runtime-env.watsup:200.1-201.23
+;; ../../../../spec/2e-runtime-env.watsup:188.1-188.64
 def $find_func_by_name(id_f, ({ (fid -> fd)*{fd <- fd*, fid <- fid*} }))
 
 1. If (([] = $find_funcs_by_name<funcdef>(id_f, fid*{fid <- fid*}, fd*{fd <- fd*}))), then
@@ -8955,7 +8955,7 @@ syntax ctk =
    | `CTK`()
    | `DYN`()
 
-;; ../../../../spec/2f-runtime-ctk.watsup:7.1-7.81
+;; ../../../../spec/2f-runtime-ctk.watsup:7.1-7.30
 def $join_ctk(ctk'', ctk''')
 
 1. Case analysis on ctk''
@@ -8988,7 +8988,7 @@ def $join_ctk(ctk'', ctk''')
 
   1. Return (DYN)
 
-;; ../../../../spec/2f-runtime-ctk.watsup:16.1-16.75
+;; ../../../../spec/2f-runtime-ctk.watsup:16.1-16.27
 def $joins_ctk(ctk''*{ctk'' <- ctk''*})
 
 1. Case analysis on ctk''*{ctk'' <- ctk''*}
@@ -9032,7 +9032,7 @@ syntax flow =
    | `CONT`()
    | `RET`()
 
-;; ../../../../spec/2g-runtime-flow.watsup:9.1-9.85
+;; ../../../../spec/2g-runtime-flow.watsup:9.1-9.34
 def $join_flow(flow'', flow''')
 
 1. If ((flow'' matches pattern `RET`)), then
@@ -9047,70 +9047,70 @@ def $join_flow(flow'', flow''')
 
 2. Return (CONT)
 
-;; ../../../../spec/3-syntax-il.watsup:5.16-5.19
+;; ../../../../spec/3a-syntax-il.watsup:5.16-5.19
 syntax numIL = num
 
-;; ../../../../spec/3-syntax-il.watsup:15.15-15.17
+;; ../../../../spec/3a-syntax-il.watsup:15.15-15.17
 syntax idIL = id
 
-;; ../../../../spec/3-syntax-il.watsup:21.17-21.21
+;; ../../../../spec/3a-syntax-il.watsup:21.17-21.21
 syntax nameIL = name
 
-;; ../../../../spec/3-syntax-il.watsup:27.19-27.23
+;; ../../../../spec/3a-syntax-il.watsup:27.19-27.23
 syntax memberIL = idIL
 
-;; ../../../../spec/3-syntax-il.watsup:33.22-33.26
+;; ../../../../spec/3a-syntax-il.watsup:33.22-33.26
 syntax matchkindIL = idIL
 
-;; ../../../../spec/3-syntax-il.watsup:39.23-39.27
+;; ../../../../spec/3a-syntax-il.watsup:39.23-39.27
 syntax statelabelIL = idIL
 
-;; ../../../../spec/3-syntax-il.watsup:45.17-45.21
+;; ../../../../spec/3a-syntax-il.watsup:45.17-45.21
 syntax unopIL = unop
 
-;; ../../../../spec/3-syntax-il.watsup:51.18-51.23
+;; ../../../../spec/3a-syntax-il.watsup:51.18-51.23
 syntax binopIL = binop
 
-;; ../../../../spec/3-syntax-il.watsup:57.16-57.19
+;; ../../../../spec/3a-syntax-il.watsup:57.16-57.19
 syntax dirIL = dir
 
-;; ../../../../spec/3-syntax-il.watsup:69.17-69.20
+;; ../../../../spec/3a-syntax-il.watsup:69.17-69.20
 syntax typeIL = typ
 
-;; ../../../../spec/3-syntax-il.watsup:75.19-75.21
+;; ../../../../spec/3a-syntax-il.watsup:75.19-75.21
 syntax tparamIL = id
 
-;; ../../../../spec/3-syntax-il.watsup:81.18-81.43
+;; ../../../../spec/3a-syntax-il.watsup:81.18-81.43
 syntax paramIL = 
    | `%%%%`(idIL, dirIL, typeIL, exprIL?)
 
-;; ../../../../spec/3-syntax-il.watsup:87.19-87.26
+;; ../../../../spec/3a-syntax-il.watsup:87.19-87.26
 syntax cparamIL = paramIL
 
-;; ../../../../spec/3-syntax-il.watsup:93.17-93.23
+;; ../../../../spec/3a-syntax-il.watsup:93.17-93.23
 syntax targIL = typeIL
 
-;; ../../../../spec/3-syntax-il.watsup:100.1-102.39
+;; ../../../../spec/3a-syntax-il.watsup:100.1-102.9
 syntax argIL = 
    | `ExprA%`(exprIL)
    | `NameA%%`(idIL, exprIL?)
    | `AnyA`()
 
-;; ../../../../spec/3-syntax-il.watsup:109.1-111.33
+;; ../../../../spec/3a-syntax-il.watsup:109.1-111.9
 syntax keysetIL = 
    | `ExprK%`(exprIL)
    | `DefaultK`()
    | `AnyK`()
 
-;; ../../../../spec/3-syntax-il.watsup:117.23-117.45
+;; ../../../../spec/3a-syntax-il.watsup:117.23-117.45
 syntax selectcaseIL = 
    | `%%`(keysetIL*, statelabelIL)
 
-;; ../../../../spec/3-syntax-il.watsup:123.18-123.29
+;; ../../../../spec/3a-syntax-il.watsup:123.18-123.29
 syntax annotIL = 
    | `(%;%)`(typ, ctk)
 
-;; ../../../../spec/3-syntax-il.watsup:125.1-151.131
+;; ../../../../spec/3a-syntax-il.watsup:125.1-151.48
 syntax exprIL = 
    | `ValueE%%`(val, annotIL)
    | `BoolE%%`(bool, annotIL)
@@ -9140,11 +9140,11 @@ syntax exprIL =
    | `CallTypeE%%%%%`(nameIL, memberIL, targIL*, argIL*, annotIL)
    | `InstE%%%%%`(nameIL, targIL*, targIL*, argIL*, annotIL)
 
-;; ../../../../spec/3-syntax-il.watsup:157.18-157.75
+;; ../../../../spec/3a-syntax-il.watsup:157.18-157.32
 syntax blockIL = 
    | `BlockB%`(stmtIL*)
 
-;; ../../../../spec/3-syntax-il.watsup:164.1-175.67
+;; ../../../../spec/3a-syntax-il.watsup:164.1-175.17
 syntax stmtIL = 
    | `EmptyS`()
    | `AssignS%%`(exprIL, exprIL)
@@ -9159,54 +9159,54 @@ syntax stmtIL =
    | `TransS%`(exprIL)
    | `DeclS%`(declIL)
 
-;; ../../../../spec/3-syntax-il.watsup:182.1-183.39
+;; ../../../../spec/3a-syntax-il.watsup:182.1-183.13
 syntax switchlabelIL = 
    | `ExprL%`(exprIL)
    | `DefaultL`()
 
-;; ../../../../spec/3-syntax-il.watsup:186.1-187.56
+;; ../../../../spec/3a-syntax-il.watsup:186.1-187.24
 syntax switchcaseIL = 
    | `MatchC%%`(switchlabelIL, blockIL)
    | `FallC%`(switchlabelIL)
 
-;; ../../../../spec/3-syntax-il.watsup:193.24-193.44
+;; ../../../../spec/3a-syntax-il.watsup:193.24-193.44
 syntax parserstateIL = 
    | `%%`(statelabelIL, blockIL)
 
-;; ../../../../spec/3-syntax-il.watsup:199.16-199.26
+;; ../../../../spec/3a-syntax-il.watsup:199.16-199.26
 syntax tblIL = tblpropIL*
 
-;; ../../../../spec/3-syntax-il.watsup:205.19-205.37
+;; ../../../../spec/3a-syntax-il.watsup:205.19-205.37
 syntax tblkeyIL = 
    | `%%`(exprIL, matchkindIL)
 
-;; ../../../../spec/3-syntax-il.watsup:206.23-206.32
+;; ../../../../spec/3a-syntax-il.watsup:206.23-206.32
 syntax tblkeypropIL = tblkeyIL*
 
-;; ../../../../spec/3-syntax-il.watsup:212.22-212.53
+;; ../../../../spec/3a-syntax-il.watsup:212.22-212.53
 syntax tblactionIL = 
    | `%%%%`(nameIL, argIL*, paramIL*, paramIL*)
 
-;; ../../../../spec/3-syntax-il.watsup:213.26-213.38
+;; ../../../../spec/3a-syntax-il.watsup:213.26-213.38
 syntax tblactionpropIL = tblactionIL*
 
-;; ../../../../spec/3-syntax-il.watsup:219.21-219.52
+;; ../../../../spec/3a-syntax-il.watsup:219.21-219.52
 syntax tblentryIL = 
    | `%%%%`(bool, keysetIL*, tblactionIL, val?)
 
-;; ../../../../spec/3-syntax-il.watsup:220.25-220.41
+;; ../../../../spec/3a-syntax-il.watsup:220.25-220.41
 syntax tblentrypropIL = 
    | `%%`(bool, tblentryIL*)
 
-;; ../../../../spec/3-syntax-il.watsup:226.27-226.43
+;; ../../../../spec/3a-syntax-il.watsup:226.27-226.43
 syntax tbldefaultpropIL = 
    | `%%`(bool, tblactionIL)
 
-;; ../../../../spec/3-syntax-il.watsup:232.26-232.46
+;; ../../../../spec/3a-syntax-il.watsup:232.26-232.46
 syntax tblcustompropIL = 
    | `%%%`(bool, memberIL, exprIL)
 
-;; ../../../../spec/3-syntax-il.watsup:239.1-243.80
+;; ../../../../spec/3a-syntax-il.watsup:239.1-243.28
 syntax tblpropIL = 
    | `KeyP%`(tblkeypropIL)
    | `ActionP%`(tblactionpropIL)
@@ -9214,13 +9214,13 @@ syntax tblpropIL =
    | `DefaultP%`(tbldefaultpropIL)
    | `CustomP%`(tblcustompropIL)
 
-;; ../../../../spec/3-syntax-il.watsup:250.1-252.53
+;; ../../../../spec/3a-syntax-il.watsup:250.1-252.53
 syntax methodIL = 
    | `ExternConsM%%%`(idIL, tparamIL*, cparamIL*)
    | `ExternAbstractM%%%%%`(idIL, typeIL, tparamIL*, tparamIL*, paramIL*)
    | `ExternM%%%%%`(idIL, typeIL, tparamIL*, tparamIL*, paramIL*)
 
-;; ../../../../spec/3-syntax-il.watsup:261.1-283.52
+;; ../../../../spec/3a-syntax-il.watsup:261.1-283.52
 syntax declIL = 
    | `ConstD%%%`(idIL, typeIL, val)
    | `VarD%%%`(idIL, typeIL, exprIL?)
@@ -9246,13 +9246,180 @@ syntax declIL =
    | `ExternObjectD%%%`(idIL, tparamIL*, methodIL*)
    | `PackageTypeD%%%%`(idIL, tparamIL*, tparamIL*, cparamIL*)
 
-;; ../../../../spec/3-syntax-il.watsup:286.1-287.17
+;; ../../../../spec/3a-syntax-il.watsup:286.1-287.17
 syntax typedefIL = 
    | `TypeD%`(typeIL)
    | `DeclD%`(declIL)
 
-;; ../../../../spec/3-syntax-il.watsup:293.20-293.27
+;; ../../../../spec/3a-syntax-il.watsup:293.20-293.27
 syntax programIL = declIL*
+
+;; ../../../../spec/3b-syntax-il-aux.watsup:5.1-5.29
+def $annot(exprIL)
+
+1. Case analysis on exprIL
+
+  1. Case (% matches pattern `ValueE%%`)
+
+    1. (Let (ValueE _val annotIL) be exprIL)
+
+    2. Return annotIL
+
+  2. Case (% matches pattern `BoolE%%`)
+
+    1. (Let (BoolE _bool annotIL) be exprIL)
+
+    2. Return annotIL
+
+  3. Case (% matches pattern `StrE%%`)
+
+    1. (Let (StrE _text annotIL) be exprIL)
+
+    2. Return annotIL
+
+  4. Case (% matches pattern `NumE%%`)
+
+    1. (Let (NumE _num annotIL) be exprIL)
+
+    2. Return annotIL
+
+  5. Case (% matches pattern `NameE%%`)
+
+    1. (Let (NameE _nameIL annotIL) be exprIL)
+
+    2. Return annotIL
+
+  6. Case (% matches pattern `SeqE%%`)
+
+    1. (Let (SeqE _exprIL*{_exprIL <- _exprIL*} annotIL) be exprIL)
+
+    2. Return annotIL
+
+  7. Case (% matches pattern `SeqDefaultE%%`)
+
+    1. (Let (SeqDefaultE _exprIL*{_exprIL <- _exprIL*} annotIL) be exprIL)
+
+    2. Return annotIL
+
+  8. Case (% matches pattern `RecordE%%`)
+
+    1. (Let (RecordE _(memberIL, exprIL)*{_(memberIL, exprIL) <- _(memberIL, exprIL)*} annotIL) be exprIL)
+
+    2. Return annotIL
+
+  9. Case (% matches pattern `RecordDefaultE%%`)
+
+    1. (Let (RecordDefaultE _(memberIL, exprIL)*{_(memberIL, exprIL) <- _(memberIL, exprIL)*} annotIL) be exprIL)
+
+    2. Return annotIL
+
+  10. Case (% matches pattern `DefaultE%`)
+
+    1. (Let (DefaultE annotIL) be exprIL)
+
+    2. Return annotIL
+
+  11. Case (% matches pattern `InvalidE%`)
+
+    1. (Let (InvalidE annotIL) be exprIL)
+
+    2. Return annotIL
+
+  12. Case (% matches pattern `UnE%%%`)
+
+    1. (Let (UnE _unopIL _exprIL annotIL) be exprIL)
+
+    2. Return annotIL
+
+  13. Case (% matches pattern `BinE%%%%`)
+
+    1. (Let (BinE _binopIL _exprIL _exprIL' annotIL) be exprIL)
+
+    2. Return annotIL
+
+  14. Case (% matches pattern `TernE%%%%`)
+
+    1. (Let (TernE _exprIL _exprIL' _exprIL'' annotIL) be exprIL)
+
+    2. Return annotIL
+
+  15. Case (% matches pattern `CastE%%%`)
+
+    1. (Let (CastE _typeIL _exprIL annotIL) be exprIL)
+
+    2. Return annotIL
+
+  16. Case (% matches pattern `MaskE%%%`)
+
+    1. (Let (MaskE _exprIL _exprIL' annotIL) be exprIL)
+
+    2. Return annotIL
+
+  17. Case (% matches pattern `RangeE%%%`)
+
+    1. (Let (RangeE _exprIL _exprIL' annotIL) be exprIL)
+
+    2. Return annotIL
+
+  18. Case (% matches pattern `SelectE%%%`)
+
+    1. (Let (SelectE _exprIL*{_exprIL <- _exprIL*} _selectcaseIL*{_selectcaseIL <- _selectcaseIL*} annotIL) be exprIL)
+
+    2. Return annotIL
+
+  19. Case (% matches pattern `ArrAccE%%%`)
+
+    1. (Let (ArrAccE _exprIL _exprIL' annotIL) be exprIL)
+
+    2. Return annotIL
+
+  20. Case (% matches pattern `BitAccE%%%%`)
+
+    1. (Let (BitAccE _exprIL _exprIL' _exprIL'' annotIL) be exprIL)
+
+    2. Return annotIL
+
+  21. Case (% matches pattern `ErrAccE%%`)
+
+    1. (Let (ErrAccE _memberIL annotIL) be exprIL)
+
+    2. Return annotIL
+
+  22. Case (% matches pattern `TypeAccE%%%`)
+
+    1. (Let (TypeAccE _nameIL _memberIL annotIL) be exprIL)
+
+    2. Return annotIL
+
+  23. Case (% matches pattern `ExprAccE%%%`)
+
+    1. (Let (ExprAccE _exprIL _memberIL annotIL) be exprIL)
+
+    2. Return annotIL
+
+  24. Case (% matches pattern `CallFuncE%%%%`)
+
+    1. (Let (CallFuncE _nameIL _targIL*{_targIL <- _targIL*} _argIL*{_argIL <- _argIL*} annotIL) be exprIL)
+
+    2. Return annotIL
+
+  25. Case (% matches pattern `CallMethodE%%%%%`)
+
+    1. (Let (CallMethodE _exprIL _memberIL _targIL*{_targIL <- _targIL*} _argIL*{_argIL <- _argIL*} annotIL) be exprIL)
+
+    2. Return annotIL
+
+  26. Case (% matches pattern `CallTypeE%%%%%`)
+
+    1. (Let (CallTypeE _nameIL _memberIL _targIL*{_targIL <- _targIL*} _argIL*{_argIL <- _argIL*} annotIL) be exprIL)
+
+    2. Return annotIL
+
+  27. Case (% matches pattern `InstE%%%%%`)
+
+    1. (Let (InstE _nameIL _targIL*{_targIL <- _targIL*} _targIL'*{_targIL' <- _targIL'*} _argIL*{_argIL <- _argIL*} annotIL) be exprIL)
+
+    2. Return annotIL
 
 ;; ../../../../spec/4a1-typing-context.watsup:5.17-5.39
 syntax cursor = 
@@ -9305,12 +9472,12 @@ def $empty_context
 
 5. Return C
 
-;; ../../../../spec/4a1-typing-context.watsup:91.1-92.23
+;; ../../../../spec/4a1-typing-context.watsup:91.1-91.30
 def $enter(C)
 
 1. Return C[LOCAL.FRAMES = $empty_map<id, styp> :: C.LOCAL.FRAMES]
 
-;; ../../../../spec/4a1-typing-context.watsup:96.1-97.22
+;; ../../../../spec/4a1-typing-context.watsup:95.1-95.29
 def $exit(C)
 
 1. (Let frame*{frame <- frame*} be C.LOCAL.FRAMES)
@@ -9323,22 +9490,22 @@ def $exit(C)
 
 2. Else Phantom#501
 
-;; ../../../../spec/4a1-typing-context.watsup:106.1-107.34
+;; ../../../../spec/4a1-typing-context.watsup:104.1-104.45
 def $set_blockkind(C, bkind)
 
 1. Return C[BLOCK.KIND = bkind]
 
-;; ../../../../spec/4a1-typing-context.watsup:111.1-112.35
+;; ../../../../spec/4a1-typing-context.watsup:108.1-108.45
 def $set_localkind(C, lkind)
 
 1. Return C[LOCAL.KIND = lkind]
 
-;; ../../../../spec/4a1-typing-context.watsup:116.1-117.63
+;; ../../../../spec/4a1-typing-context.watsup:112.1-112.46
 def $set_blockframe
 
 
 
-;; ../../../../spec/4a1-typing-context.watsup:123.1-124.32
+;; ../../../../spec/4a1-typing-context.watsup:118.1-118.36
 def $get_typ_ret_lkind(lkind)
 
 1. Case analysis on lkind
@@ -9365,7 +9532,7 @@ def $get_typ_ret_lkind(lkind)
 
 1. Else Phantom#502
 
-;; ../../../../spec/4a1-typing-context.watsup:135.1-135.42
+;; ../../../../spec/4a1-typing-context.watsup:129.1-129.42
 def $bound_tids(cursor, C)
 
 1. Case analysis on cursor
@@ -9382,7 +9549,7 @@ def $bound_tids(cursor, C)
 
     1. Return $union_set<tid>($dom_map<tid, typdef>(C.LOCAL.TDENV), $bound_tids((BLOCK), C))
 
-;; ../../../../spec/4a1-typing-context.watsup:147.1-148.84
+;; ../../../../spec/4a1-typing-context.watsup:141.1-141.51
 def $add_styp(cursor, C, id, styp)
 
 1. Case analysis on cursor
@@ -9455,7 +9622,7 @@ def $add_styp(cursor, C, id, styp)
 
     1. Else Phantom#510
 
-;; ../../../../spec/4a1-typing-context.watsup:171.1-172.88
+;; ../../../../spec/4a1-typing-context.watsup:164.1-164.54
 def $add_styps(cursor, C, id*{id <- id*}, styp*{styp <- styp*})
 
 1. Case analysis on id*{id <- id*}
@@ -9484,7 +9651,7 @@ def $add_styps(cursor, C, id*{id <- id*}, styp*{styp <- styp*})
 
     2. Else Phantom#512
 
-;; ../../../../spec/4a1-typing-context.watsup:181.1-181.52
+;; ../../../../spec/4a1-typing-context.watsup:173.1-173.52
 def $add_param(p, C, pt)
 
 1. (Let (id dir typ exprIL?{exprIL <- exprIL?}) be pt)
@@ -9515,7 +9682,7 @@ def $add_param(p, C, pt)
 
     2. Return C'
 
-;; ../../../../spec/4a1-typing-context.watsup:191.1-191.54
+;; ../../../../spec/4a1-typing-context.watsup:183.1-183.54
 def $add_params(p, C, paramtyp*{paramtyp <- paramtyp*})
 
 1. Case analysis on paramtyp*{paramtyp <- paramtyp*}
@@ -9534,7 +9701,7 @@ def $add_params(p, C, paramtyp*{paramtyp <- paramtyp*})
 
     4. Return C''
 
-;; ../../../../spec/4a1-typing-context.watsup:200.1-201.80
+;; ../../../../spec/4a1-typing-context.watsup:192.1-192.56
 def $add_typdef(cursor, C, tid, td)
 
 1. Case analysis on cursor
@@ -9569,7 +9736,7 @@ def $add_typdef(cursor, C, tid, td)
 
     1. Else Phantom#515
 
-;; ../../../../spec/4a1-typing-context.watsup:213.1-214.84
+;; ../../../../spec/4a1-typing-context.watsup:204.1-204.59
 def $add_typdefs(p, C, tid*{tid <- tid*}, typdef*{typdef <- typdef*})
 
 1. Case analysis on tid*{tid <- tid*}
@@ -9598,7 +9765,7 @@ def $add_typdefs(p, C, tid*{tid <- tid*}, typdef*{typdef <- typdef*})
 
     2. Else Phantom#517
 
-;; ../../../../spec/4a1-typing-context.watsup:223.1-223.51
+;; ../../../../spec/4a1-typing-context.watsup:213.1-213.51
 def $add_tparam(cursor, C, tparam)
 
 1. Case analysis on cursor
@@ -9629,7 +9796,7 @@ def $add_tparam(cursor, C, tparam)
 
 1. Else Phantom#520
 
-;; ../../../../spec/4a1-typing-context.watsup:234.1-234.53
+;; ../../../../spec/4a1-typing-context.watsup:224.1-224.53
 def $add_tparams(p, C, tparam*{tparam <- tparam*})
 
 1. Case analysis on tparam*{tparam <- tparam*}
@@ -9648,7 +9815,7 @@ def $add_tparams(p, C, tparam*{tparam <- tparam*})
 
     4. Return C''
 
-;; ../../../../spec/4a1-typing-context.watsup:243.1-244.80
+;; ../../../../spec/4a1-typing-context.watsup:233.1-233.58
 def $add_funcdef(cursor, C, fid, fd)
 
 1. Case analysis on cursor
@@ -9675,7 +9842,7 @@ def $add_funcdef(cursor, C, fid, fd)
 
 1. Else Phantom#523
 
-;; ../../../../spec/4a1-typing-context.watsup:253.1-254.80
+;; ../../../../spec/4a1-typing-context.watsup:242.1-242.71
 def $add_funcdef_non_overload(cursor, C, fid, fd)
 
 1. Case analysis on cursor
@@ -9710,7 +9877,7 @@ def $add_funcdef_non_overload(cursor, C, fid, fd)
 
 1. Else Phantom#526
 
-;; ../../../../spec/4a1-typing-context.watsup:269.1-270.80
+;; ../../../../spec/4a1-typing-context.watsup:257.1-257.58
 def $add_consdef(cursor, C, cid, cd)
 
 1. If ((cursor matches pattern `GLOBAL`)), then
@@ -9725,7 +9892,7 @@ def $add_consdef(cursor, C, cid, cd)
 
 1. Else Phantom#528
 
-;; ../../../../spec/4a1-typing-context.watsup:276.1-276.61
+;; ../../../../spec/4a1-typing-context.watsup:263.1-263.61
 def $add_consdefs(p, C, cid*{cid <- cid*}, consdef*{consdef <- consdef*})
 
 1. Case analysis on cid*{cid <- cid*}
@@ -9754,7 +9921,7 @@ def $add_consdefs(p, C, cid*{cid <- cid*}, consdef*{consdef <- consdef*})
 
     2. Else Phantom#530
 
-;; ../../../../spec/4a1-typing-context.watsup:289.1-290.57
+;; ../../../../spec/4a1-typing-context.watsup:276.1-276.46
 def $find_styp(p', C, name)
 
 1. If ((name matches pattern `TOP%`)), then
@@ -9825,7 +9992,7 @@ def $find_styp(p', C, name)
 
     1. Else Phantom#538
 
-;; ../../../../spec/4a1-typing-context.watsup:305.1-306.44
+;; ../../../../spec/4a1-typing-context.watsup:291.1-291.44
 def $find_val(p, C, name)
 
 1. (Let styp?{styp <- styp?} be $find_styp(p, C, name))
@@ -9844,7 +10011,7 @@ def $find_val(p, C, name)
 
 2. Else Phantom#540
 
-;; ../../../../spec/4a1-typing-context.watsup:313.1-314.44
+;; ../../../../spec/4a1-typing-context.watsup:298.1-298.50
 def $find_typdef(p', C, name)
 
 1. If ((name matches pattern `TOP%`)), then
@@ -9915,7 +10082,7 @@ def $find_typdef(p', C, name)
 
     1. Else Phantom#548
 
-;; ../../../../spec/4a1-typing-context.watsup:329.1-329.28
+;; ../../../../spec/4a1-typing-context.watsup:313.1-313.28
 def $to_fkey(arg*{arg <- arg*})
 
 1. Case analysis on arg*{arg <- arg*}
@@ -9942,7 +10109,7 @@ def $to_fkey(arg*{arg <- arg*})
 
       1. Return ?() :: $to_fkey(arg_t*{arg_t <- arg_t*})
 
-;; ../../../../spec/4a1-typing-context.watsup:337.1-338.58
+;; ../../../../spec/4a1-typing-context.watsup:321.1-321.70
 def $find_funcdef(p', C, name, arg*{arg <- arg*})
 
 1. If ((name matches pattern `TOP%`)), then
@@ -9999,7 +10166,7 @@ def $find_funcdef(p', C, name, arg*{arg <- arg*})
 
     1. Else Phantom#555
 
-;; ../../../../spec/4a1-typing-context.watsup:348.1-349.44
+;; ../../../../spec/4a1-typing-context.watsup:331.1-331.59
 def $find_funcdef_by_name(p', C, name)
 
 1. If ((name matches pattern `TOP%`)), then
@@ -10072,7 +10239,7 @@ def $find_funcdef_by_name(p', C, name)
 
     1. Else Phantom#563
 
-;; ../../../../spec/4a1-typing-context.watsup:363.1-364.58
+;; ../../../../spec/4a1-typing-context.watsup:345.1-345.70
 def $find_consdef(p', C, name, arg*{arg <- arg*})
 
 1. If ((name matches pattern `TOP%`)), then
@@ -10115,7 +10282,7 @@ def $find_consdef(p', C, name, arg*{arg <- arg*})
 
     1. Else Phantom#567
 
-;; ../../../../spec/4a1-typing-context.watsup:371.1-371.68
+;; ../../../../spec/4a1-typing-context.watsup:352.1-352.68
 def $find_consdefs_by_name(cursor, C, name)
 
 1. Case analysis on cursor
@@ -10437,174 +10604,7 @@ def $actions_of_table(tblprop''*{tblprop'' <- tblprop''*})
 
       1. Return $actions_of_table(tblprop_t*{tblprop_t <- tblprop_t*})
 
-;; ../../../../spec/4b-typing-relation.watsup:5.1-5.29
-def $annot(exprIL)
-
-1. Case analysis on exprIL
-
-  1. Case (% matches pattern `ValueE%%`)
-
-    1. (Let (ValueE _val annotIL) be exprIL)
-
-    2. Return annotIL
-
-  2. Case (% matches pattern `BoolE%%`)
-
-    1. (Let (BoolE _bool annotIL) be exprIL)
-
-    2. Return annotIL
-
-  3. Case (% matches pattern `StrE%%`)
-
-    1. (Let (StrE _text annotIL) be exprIL)
-
-    2. Return annotIL
-
-  4. Case (% matches pattern `NumE%%`)
-
-    1. (Let (NumE _num annotIL) be exprIL)
-
-    2. Return annotIL
-
-  5. Case (% matches pattern `NameE%%`)
-
-    1. (Let (NameE _nameIL annotIL) be exprIL)
-
-    2. Return annotIL
-
-  6. Case (% matches pattern `SeqE%%`)
-
-    1. (Let (SeqE _exprIL*{_exprIL <- _exprIL*} annotIL) be exprIL)
-
-    2. Return annotIL
-
-  7. Case (% matches pattern `SeqDefaultE%%`)
-
-    1. (Let (SeqDefaultE _exprIL*{_exprIL <- _exprIL*} annotIL) be exprIL)
-
-    2. Return annotIL
-
-  8. Case (% matches pattern `RecordE%%`)
-
-    1. (Let (RecordE _(memberIL, exprIL)*{_(memberIL, exprIL) <- _(memberIL, exprIL)*} annotIL) be exprIL)
-
-    2. Return annotIL
-
-  9. Case (% matches pattern `RecordDefaultE%%`)
-
-    1. (Let (RecordDefaultE _(memberIL, exprIL)*{_(memberIL, exprIL) <- _(memberIL, exprIL)*} annotIL) be exprIL)
-
-    2. Return annotIL
-
-  10. Case (% matches pattern `DefaultE%`)
-
-    1. (Let (DefaultE annotIL) be exprIL)
-
-    2. Return annotIL
-
-  11. Case (% matches pattern `InvalidE%`)
-
-    1. (Let (InvalidE annotIL) be exprIL)
-
-    2. Return annotIL
-
-  12. Case (% matches pattern `UnE%%%`)
-
-    1. (Let (UnE _unopIL _exprIL annotIL) be exprIL)
-
-    2. Return annotIL
-
-  13. Case (% matches pattern `BinE%%%%`)
-
-    1. (Let (BinE _binopIL _exprIL _exprIL' annotIL) be exprIL)
-
-    2. Return annotIL
-
-  14. Case (% matches pattern `TernE%%%%`)
-
-    1. (Let (TernE _exprIL _exprIL' _exprIL'' annotIL) be exprIL)
-
-    2. Return annotIL
-
-  15. Case (% matches pattern `CastE%%%`)
-
-    1. (Let (CastE _typeIL _exprIL annotIL) be exprIL)
-
-    2. Return annotIL
-
-  16. Case (% matches pattern `MaskE%%%`)
-
-    1. (Let (MaskE _exprIL _exprIL' annotIL) be exprIL)
-
-    2. Return annotIL
-
-  17. Case (% matches pattern `RangeE%%%`)
-
-    1. (Let (RangeE _exprIL _exprIL' annotIL) be exprIL)
-
-    2. Return annotIL
-
-  18. Case (% matches pattern `SelectE%%%`)
-
-    1. (Let (SelectE _exprIL*{_exprIL <- _exprIL*} _selectcaseIL*{_selectcaseIL <- _selectcaseIL*} annotIL) be exprIL)
-
-    2. Return annotIL
-
-  19. Case (% matches pattern `ArrAccE%%%`)
-
-    1. (Let (ArrAccE _exprIL _exprIL' annotIL) be exprIL)
-
-    2. Return annotIL
-
-  20. Case (% matches pattern `BitAccE%%%%`)
-
-    1. (Let (BitAccE _exprIL _exprIL' _exprIL'' annotIL) be exprIL)
-
-    2. Return annotIL
-
-  21. Case (% matches pattern `ErrAccE%%`)
-
-    1. (Let (ErrAccE _memberIL annotIL) be exprIL)
-
-    2. Return annotIL
-
-  22. Case (% matches pattern `TypeAccE%%%`)
-
-    1. (Let (TypeAccE _nameIL _memberIL annotIL) be exprIL)
-
-    2. Return annotIL
-
-  23. Case (% matches pattern `ExprAccE%%%`)
-
-    1. (Let (ExprAccE _exprIL _memberIL annotIL) be exprIL)
-
-    2. Return annotIL
-
-  24. Case (% matches pattern `CallFuncE%%%%`)
-
-    1. (Let (CallFuncE _nameIL _targIL*{_targIL <- _targIL*} _argIL*{_argIL <- _argIL*} annotIL) be exprIL)
-
-    2. Return annotIL
-
-  25. Case (% matches pattern `CallMethodE%%%%%`)
-
-    1. (Let (CallMethodE _exprIL _memberIL _targIL*{_targIL <- _targIL*} _argIL*{_argIL <- _argIL*} annotIL) be exprIL)
-
-    2. Return annotIL
-
-  26. Case (% matches pattern `CallTypeE%%%%%`)
-
-    1. (Let (CallTypeE _nameIL _memberIL _targIL*{_targIL <- _targIL*} _argIL*{_argIL <- _argIL*} annotIL) be exprIL)
-
-    2. Return annotIL
-
-  27. Case (% matches pattern `InstE%%%%%`)
-
-    1. (Let (InstE _nameIL _targIL*{_targIL <- _targIL*} _targIL'*{_targIL' <- _targIL'*} _argIL*{_argIL <- _argIL*} annotIL) be exprIL)
-
-    2. Return annotIL
-
-;; ../../../../spec/4b-typing-relation.watsup:40.1-42.23
+;; ../../../../spec/4b-typing-relation.watsup:6.1-8.23
 relation Eval_static: p, C, exprIL''
 
 1. Case analysis on exprIL''
@@ -11015,7 +11015,7 @@ relation Eval_static: p, C, exprIL''
 
 1. Else Phantom#610
 
-;; ../../../../spec/4b-typing-relation.watsup:49.1-51.23
+;; ../../../../spec/4b-typing-relation.watsup:15.1-17.23
 relation Type_ok: p, C, type''
 
 1. Case analysis on type''
@@ -11248,7 +11248,7 @@ relation Type_ok: p, C, type''
 
     2. Result in ((VarT tid) as typ), [tid]
 
-;; ../../../../spec/4b-typing-relation.watsup:54.1-56.20
+;; ../../../../spec/4b-typing-relation.watsup:20.1-22.20
 relation Sub_expl: typ_a, typ_b
 
 1. If ((Sub_expl_canon: $canon_typ(typ_a) <: $canon_typ(typ_b) holds)), then
@@ -11257,7 +11257,7 @@ relation Sub_expl: typ_a, typ_b
 
 1. Else Phantom#625
 
-;; ../../../../spec/4b-typing-relation.watsup:57.1-59.20
+;; ../../../../spec/4b-typing-relation.watsup:23.1-25.20
 relation Sub_expl_canon: typ_a, typ_b
 
 1. Case analysis on (Type_alpha: typ_a ~~ typ_b holds)
@@ -11274,7 +11274,7 @@ relation Sub_expl_canon: typ_a, typ_b
 
     1. Else Phantom#626
 
-;; ../../../../spec/4b-typing-relation.watsup:60.1-62.20
+;; ../../../../spec/4b-typing-relation.watsup:26.1-28.20
 relation Sub_expl_canon_neq: typ''''', typ''''''
 
 1. If ((typ''''' = ((FBitT 1) as typ))), then
@@ -11887,7 +11887,7 @@ relation Sub_expl_canon_neq: typ''''', typ''''''
 
 7. Else Phantom#708
 
-;; ../../../../spec/4b-typing-relation.watsup:63.1-65.20
+;; ../../../../spec/4b-typing-relation.watsup:29.1-31.20
 relation Sub_impl: typ_a, typ_b
 
 1. If ((Sub_impl_canon: $canon_typ(typ_a) << $canon_typ(typ_b) holds)), then
@@ -11896,7 +11896,7 @@ relation Sub_impl: typ_a, typ_b
 
 1. Else Phantom#709
 
-;; ../../../../spec/4b-typing-relation.watsup:66.1-68.20
+;; ../../../../spec/4b-typing-relation.watsup:32.1-34.20
 relation Sub_impl_canon: typ_a, typ_b
 
 1. Case analysis on (Type_alpha: typ_a ~~ typ_b holds)
@@ -11913,7 +11913,7 @@ relation Sub_impl_canon: typ_a, typ_b
 
     1. Else Phantom#710
 
-;; ../../../../spec/4b-typing-relation.watsup:69.1-71.20
+;; ../../../../spec/4b-typing-relation.watsup:35.1-37.20
 relation Sub_impl_canon_neq: typ''''', typ''''''
 
 1. If ((typ''''' = ((IntT) as typ))), then
@@ -12360,7 +12360,7 @@ relation Sub_impl_canon_neq: typ''''', typ''''''
 
 4. Else Phantom#770
 
-;; ../../../../spec/4b-typing-relation.watsup:81.1-83.23
+;; ../../../../spec/4b-typing-relation.watsup:47.1-49.23
 relation Expr_ok: p', C, expr''
 
 1. Case analysis on expr''
@@ -13591,7 +13591,7 @@ relation Expr_ok: p', C, expr''
 
 2. Else Phantom#870
 
-;; ../../../../spec/4b-typing-relation.watsup:87.1-89.23
+;; ../../../../spec/4b-typing-relation.watsup:53.1-55.23
 relation Arg_ok: p, C, arg
 
 1. Case analysis on arg
@@ -13630,7 +13630,7 @@ relation Arg_ok: p, C, arg
 
     1. Result in (AnyA), ((AnyT) as typ)
 
-;; ../../../../spec/4b-typing-relation.watsup:92.1-94.23
+;; ../../../../spec/4b-typing-relation.watsup:58.1-60.23
 relation Lval_ok: p, C, exprIL
 
 1. Case analysis on exprIL
@@ -13689,12 +13689,12 @@ relation Lval_ok: p, C, exprIL
 
 1. Else Phantom#877
 
-;; ../../../../spec/4b-typing-relation.watsup:99.18-99.31
+;; ../../../../spec/4b-typing-relation.watsup:65.18-65.31
 syntax blkctxt = 
    | `INIT`()
    | `NOINIT`()
 
-;; ../../../../spec/4b-typing-relation.watsup:100.1-102.29
+;; ../../../../spec/4b-typing-relation.watsup:66.1-68.29
 relation Block_ok: cursor, C, f, blkctxt, (BlockB stmt*{stmt <- stmt*})
 
 1. If ((cursor matches pattern `LOCAL`)), then
@@ -13719,7 +13719,7 @@ relation Block_ok: cursor, C, f, blkctxt, (BlockB stmt*{stmt <- stmt*})
 
 1. Else Phantom#878
 
-;; ../../../../spec/4b-typing-relation.watsup:103.1-105.26
+;; ../../../../spec/4b-typing-relation.watsup:69.1-71.26
 relation Stmt_ok: p', C, f, stmt
 
 1. Case analysis on stmt
@@ -14006,7 +14006,7 @@ relation Stmt_ok: p', C, f, stmt
 
 2. Else Phantom#907
 
-;; ../../../../spec/4b-typing-relation.watsup:106.1-108.26
+;; ../../../../spec/4b-typing-relation.watsup:72.1-74.26
 relation Stmts_ok: p, C, f, stmt*{stmt <- stmt*}
 
 1. Case analysis on stmt*{stmt <- stmt*}
@@ -14025,7 +14025,7 @@ relation Stmts_ok: p, C, f, stmt*{stmt <- stmt*}
 
     4. Result in C'', f'', stmtIL_h :: stmtIL_t*{stmtIL_t <- stmtIL_t*}
 
-;; ../../../../spec/4b-typing-relation.watsup:113.1-115.23
+;; ../../../../spec/4b-typing-relation.watsup:79.1-81.23
 relation Param_ok: p, C, (id dir type expr''?{expr'' <- expr''?})
 
 1. Case analysis on expr''?{expr'' <- expr''?}
@@ -14070,7 +14070,7 @@ relation Param_ok: p, C, (id dir type expr''?{expr'' <- expr''?})
 
     3. Else Phantom#911
 
-;; ../../../../spec/4b-typing-relation.watsup:116.1-118.23
+;; ../../../../spec/4b-typing-relation.watsup:82.1-84.23
 relation CParam_ok: p, C, (id dir type expr''?{expr'' <- expr''?})
 
 1. Case analysis on expr''?{expr'' <- expr''?}
@@ -14115,7 +14115,7 @@ relation CParam_ok: p, C, (id dir type expr''?{expr'' <- expr''?})
 
     3. Else Phantom#915
 
-;; ../../../../spec/4b-typing-relation.watsup:122.1-124.23
+;; ../../../../spec/4b-typing-relation.watsup:88.1-90.23
 relation Decl_ok: p', C'''', decl''
 
 1. Case analysis on decl''
@@ -15188,7 +15188,7 @@ relation Decl_ok: p', C'''', decl''
 
 2. Else Phantom#1008
 
-;; ../../../../spec/4b-typing-relation.watsup:125.1-127.23
+;; ../../../../spec/4b-typing-relation.watsup:91.1-93.23
 relation Decls_ok: p, C, decl*{decl <- decl*}
 
 1. Case analysis on decl*{decl <- decl*}
@@ -15207,7 +15207,7 @@ relation Decls_ok: p, C, decl*{decl <- decl*}
 
     4. Result in C'', declIL_h :: declIL_t*{declIL_t <- declIL_t*}
 
-;; ../../../../spec/4b-typing-relation.watsup:131.1-133.17
+;; ../../../../spec/4b-typing-relation.watsup:97.1-99.17
 relation Prog_ok: decl*{decl <- decl*}
 
 1. (Let C be $empty_context)
@@ -15216,12 +15216,12 @@ relation Prog_ok: decl*{decl <- decl*}
 
 3. Result in C', declIL*{declIL <- declIL*}
 
-;; ../../../../spec/4b-typing-relation.watsup:137.18-137.29
+;; ../../../../spec/4b-typing-relation.watsup:103.18-103.29
 syntax actctxt = 
    | `ACT`()
    | `NOACT`()
 
-;; ../../../../spec/4b-typing-relation.watsup:138.1-140.29
+;; ../../../../spec/4b-typing-relation.watsup:104.1-106.29
 relation Call_convention_ok: p, C, actctxt, (id dir typ_p exprIL_deft?{exprIL_deft <- exprIL_deft?}), (exprIL, typ_a)
 
 1. Case analysis on dir
@@ -15304,7 +15304,7 @@ relation Call_convention_ok: p, C, actctxt, (id dir typ_p exprIL_deft?{exprIL_de
 
     1. Else Phantom#1019
 
-;; ../../../../spec/4b-typing-relation.watsup:141.1-143.29
+;; ../../../../spec/4b-typing-relation.watsup:107.1-109.29
 relation Call_convention_arg_ok: p, C, actctxt, pt', (argIL, typ')
 
 1. Case analysis on argIL
@@ -15357,7 +15357,7 @@ relation Call_convention_arg_ok: p, C, actctxt, pt', (argIL, typ')
 
 3. Else Phantom#1024
 
-;; ../../../../spec/4b-typing-relation.watsup:149.1-151.23
+;; ../../../../spec/4b-typing-relation.watsup:115.1-117.23
 relation Call_site_ok: cursor, C, functyp
 
 1. Case analysis on cursor
@@ -15562,7 +15562,7 @@ relation Call_site_ok: cursor, C, functyp
 
 1. Else Phantom#1044
 
-;; ../../../../spec/4b-typing-relation.watsup:152.1-154.35
+;; ../../../../spec/4b-typing-relation.watsup:118.1-120.35
 relation Call_ok: p, C, tid'*{tid' <- tid'*}, functyp, targIL*{targIL <- targIL*}, arg*{arg <- arg*}, id_deft'*{id_deft' <- id_deft'*}
 
 1. If ((tid'*{tid' <- tid'*} matches pattern [])), then
@@ -16009,7 +16009,7 @@ relation Call_ok: p, C, tid'*{tid' <- tid'*}, functyp, targIL*{targIL <- targIL*
 
 2. Else Phantom#1099
 
-;; ../../../../spec/4b-typing-relation.watsup:159.1-161.29
+;; ../../../../spec/4b-typing-relation.watsup:125.1-127.29
 relation FuncType_ok: p, C, name, targIL*{targIL <- targIL*}, arg*{arg <- arg*}
 
 1. (Let (fid, funcdef, id*)?{(fid, funcdef, id*) <- (fid, funcdef, id*)?} be $find_funcdef(p, C, name, arg*{arg <- arg*}))
@@ -16024,7 +16024,7 @@ relation FuncType_ok: p, C, name, targIL*{targIL <- targIL*}, arg*{arg <- arg*}
 
 2. Else Phantom#1100
 
-;; ../../../../spec/4b-typing-relation.watsup:162.1-164.32
+;; ../../../../spec/4b-typing-relation.watsup:128.1-130.32
 relation MethodType_ok: p, C, expr_b, member', targIL*{targIL <- targIL*}, arg*{arg <- arg*}
 
 1. If ((targIL*{targIL <- targIL*} matches pattern [])), then
@@ -16267,7 +16267,7 @@ relation MethodType_ok: p, C, expr_b, member', targIL*{targIL <- targIL*}, arg*{
 
 7. Else Phantom#1129
 
-;; ../../../../spec/4b-typing-relation.watsup:169.1-171.29
+;; ../../../../spec/4b-typing-relation.watsup:135.1-137.29
 relation ConsType_ok: p, C, name, targIL*{targIL <- targIL*}, arg*{arg <- arg*}
 
 1. (Let (cid, consdef, id*)?{(cid, consdef, id*) <- (cid, consdef, id*)?} be $find_consdef((GLOBAL), C, name, arg*{arg <- arg*}))
@@ -16282,7 +16282,7 @@ relation ConsType_ok: p, C, name, targIL*{targIL <- targIL*}, arg*{arg <- arg*}
 
 2. Else Phantom#1130
 
-;; ../../../../spec/4b-typing-relation.watsup:177.1-179.23
+;; ../../../../spec/4b-typing-relation.watsup:143.1-145.23
 relation Inst_site_ok: cursor, C, (ConsT pt*{pt <- pt*} typ_i)
 
 1. Case analysis on cursor
@@ -16361,7 +16361,7 @@ relation Inst_site_ok: cursor, C, (ConsT pt*{pt <- pt*} typ_i)
 
     2. Else Phantom#1139
 
-;; ../../../../spec/4b-typing-relation.watsup:180.1-182.35
+;; ../../../../spec/4b-typing-relation.watsup:146.1-148.35
 relation Inst_ok: cursor', C_0', tid'*{tid' <- tid'*}, ct, targIL*{targIL <- targIL*}, arg*{arg <- arg*}, id_deft*{id_deft <- id_deft*}
 
 1. If ((cursor' matches pattern `GLOBAL`)), then
@@ -16520,7 +16520,7 @@ relation Inst_ok: cursor', C_0', tid'*{tid' <- tid'*}, ct, targIL*{targIL <- tar
 
 4. Else Phantom#1161
 
-;; ../../../../spec/4d2-typing-subtyping.watsup:312.1-313.34
+;; ../../../../spec/4d2-typing-subtyping.watsup:312.1-312.72
 def $reduce_senum_unary(exprIL, $check_unary)
 
 1. (Let (( typ ; _ctk )) be $annot(exprIL))
@@ -16557,7 +16557,7 @@ def $reduce_senum_unary(exprIL, $check_unary)
 
   1. Return ?()
 
-;; ../../../../spec/4d2-typing-subtyping.watsup:330.1-331.41
+;; ../../../../spec/4d2-typing-subtyping.watsup:329.1-329.98
 def $reduce_senums_binary(exprIL_a, exprIL_b, $check_binary)
 
 1. (Let (( typ_a ; _ctk )) be $annot(exprIL_a))
@@ -16616,7 +16616,7 @@ def $reduce_senums_binary(exprIL_a, exprIL_b, $check_binary)
 
   1. Return ?()
 
-;; ../../../../spec/4d2-typing-subtyping.watsup:358.1-359.32
+;; ../../../../spec/4d2-typing-subtyping.watsup:356.1-356.55
 def $coerce_binary(exprIL_a, exprIL_b)
 
 1. (Let (( typ_a ; _ctk )) be $annot(exprIL_a))
@@ -16651,7 +16651,7 @@ def $coerce_binary(exprIL_a, exprIL_b)
 
   1. Return ?()
 
-;; ../../../../spec/4d2-typing-subtyping.watsup:385.1-386.31
+;; ../../../../spec/4d2-typing-subtyping.watsup:382.1-382.42
 def $coerce_assign(exprIL, typ_t)
 
 1. (Let (( typ_f ; _ctk )) be $annot(exprIL))
@@ -16672,12 +16672,12 @@ def $coerce_assign(exprIL, typ_t)
 
   1. Return ?()
 
-;; ../../../../spec/4e-typing-expr.watsup:88.1-88.33
+;; ../../../../spec/4e-typing-expr.watsup:92.1-92.33
 def $compatible_bnot(typ)
 
 1. Return $compatible'_bnot($canon_typ(typ))
 
-;; ../../../../spec/4e-typing-expr.watsup:89.1-89.34
+;; ../../../../spec/4e-typing-expr.watsup:93.1-93.34
 def $compatible'_bnot(typ)
 
 1. If ((typ has type numtyp)), then
@@ -16702,12 +16702,12 @@ def $compatible'_bnot(typ)
 
   1. Return false
 
-;; ../../../../spec/4e-typing-expr.watsup:103.1-103.33
+;; ../../../../spec/4e-typing-expr.watsup:107.1-107.33
 def $compatible_lnot(typ)
 
 1. Return $compatible'_lnot($canon_typ(typ))
 
-;; ../../../../spec/4e-typing-expr.watsup:104.1-104.34
+;; ../../../../spec/4e-typing-expr.watsup:108.1-108.34
 def $compatible'_lnot(typ)
 
 1. If ((typ = ((BoolT) as typ))), then
@@ -16718,12 +16718,12 @@ def $compatible'_lnot(typ)
 
   1. Return false
 
-;; ../../../../spec/4e-typing-expr.watsup:117.1-117.34
+;; ../../../../spec/4e-typing-expr.watsup:121.1-121.34
 def $compatible_uplus(typ)
 
 1. Return $compatible'_uplus($canon_typ(typ))
 
-;; ../../../../spec/4e-typing-expr.watsup:118.1-118.35
+;; ../../../../spec/4e-typing-expr.watsup:122.1-122.35
 def $compatible'_uplus(typ)
 
 1. If ((typ = ((IntT) as typ))), then
@@ -16752,12 +16752,12 @@ def $compatible'_uplus(typ)
 
   1. Return false
 
-;; ../../../../spec/4e-typing-expr.watsup:133.1-133.35
+;; ../../../../spec/4e-typing-expr.watsup:137.1-137.35
 def $compatible_uminus(typ)
 
 1. Return $compatible'_uminus($canon_typ(typ))
 
-;; ../../../../spec/4e-typing-expr.watsup:134.1-134.36
+;; ../../../../spec/4e-typing-expr.watsup:138.1-138.36
 def $compatible'_uminus(typ)
 
 1. If ((typ = ((IntT) as typ))), then
@@ -16786,12 +16786,12 @@ def $compatible'_uminus(typ)
 
   1. Return false
 
-;; ../../../../spec/4e-typing-expr.watsup:153.1-153.47
+;; ../../../../spec/4e-typing-expr.watsup:157.1-157.47
 def $compatible_plusminusmult(typ_l, typ_r)
 
 1. Return $compatible'_plusminusmult($canon_typ(typ_l), $canon_typ(typ_r))
 
-;; ../../../../spec/4e-typing-expr.watsup:154.1-154.48
+;; ../../../../spec/4e-typing-expr.watsup:158.1-158.48
 def $compatible'_plusminusmult(typ'', typ''')
 
 1. If ((typ'' = ((IntT) as typ))), then
@@ -16842,12 +16842,12 @@ def $compatible'_plusminusmult(typ'', typ''')
 
   1. Return false
 
-;; ../../../../spec/4e-typing-expr.watsup:179.1-179.46
+;; ../../../../spec/4e-typing-expr.watsup:187.1-187.46
 def $compatible_satplusminus(typ_l, typ_r)
 
 1. Return $compatible'_satplusminus($canon_typ(typ_l), $canon_typ(typ_r))
 
-;; ../../../../spec/4e-typing-expr.watsup:180.1-180.47
+;; ../../../../spec/4e-typing-expr.watsup:188.1-188.47
 def $compatible'_satplusminus(typ'', typ''')
 
 1. If ((typ'' has type numtyp)), then
@@ -16892,12 +16892,12 @@ def $compatible'_satplusminus(typ'', typ''')
 
   1. Return false
 
-;; ../../../../spec/4e-typing-expr.watsup:204.1-204.40
+;; ../../../../spec/4e-typing-expr.watsup:216.1-216.40
 def $compatible_divmod(typ_l, typ_r)
 
 1. Return $compatible'_divmod($canon_typ(typ_l), $canon_typ(typ_r))
 
-;; ../../../../spec/4e-typing-expr.watsup:205.1-205.41
+;; ../../../../spec/4e-typing-expr.watsup:217.1-217.41
 def $compatible'_divmod(typ'', typ''')
 
 1. If ((typ'' = ((IntT) as typ))), then
@@ -16910,12 +16910,12 @@ def $compatible'_divmod(typ'', typ''')
 
   1. Return false
 
-;; ../../../../spec/4e-typing-expr.watsup:249.1-249.39
+;; ../../../../spec/4e-typing-expr.watsup:269.1-269.39
 def $compatible_shift(typ_l, typ_r)
 
 1. Return $compatible'_shift($canon_typ(typ_l), $canon_typ(typ_r))
 
-;; ../../../../spec/4e-typing-expr.watsup:250.1-250.40
+;; ../../../../spec/4e-typing-expr.watsup:270.1-270.40
 def $compatible'_shift(typ'', typ''')
 
 1. If ((typ'' = ((IntT) as typ))), then
@@ -17004,12 +17004,12 @@ def $compatible'_shift(typ'', typ''')
 
   1. Return false
 
-;; ../../../../spec/4e-typing-expr.watsup:314.1-314.41
+;; ../../../../spec/4e-typing-expr.watsup:343.1-343.41
 def $compatible_compare(typ_l, typ_r)
 
 1. Return $compatible'_compare($canon_typ(typ_l), $canon_typ(typ_r))
 
-;; ../../../../spec/4e-typing-expr.watsup:315.1-315.42
+;; ../../../../spec/4e-typing-expr.watsup:344.1-344.42
 def $compatible'_compare(typ'', typ''')
 
 1. If ((typ'' = ((IntT) as typ))), then
@@ -17060,12 +17060,12 @@ def $compatible'_compare(typ'', typ''')
 
   1. Return false
 
-;; ../../../../spec/4e-typing-expr.watsup:340.1-340.41
+;; ../../../../spec/4e-typing-expr.watsup:373.1-373.41
 def $compatible_bitwise(typ_l, typ_r)
 
 1. Return $compatible'_bitwise($canon_typ(typ_l), $canon_typ(typ_r))
 
-;; ../../../../spec/4e-typing-expr.watsup:341.1-341.42
+;; ../../../../spec/4e-typing-expr.watsup:374.1-374.42
 def $compatible'_bitwise(typ'', typ''')
 
 1. If ((typ'' has type numtyp)), then
@@ -17110,12 +17110,12 @@ def $compatible'_bitwise(typ'', typ''')
 
   1. Return false
 
-;; ../../../../spec/4e-typing-expr.watsup:365.1-365.40
+;; ../../../../spec/4e-typing-expr.watsup:402.1-402.40
 def $compatible_concat(typ_l, typ_r)
 
 1. Return $compatible'_concat($canon_typ(typ_l), $canon_typ(typ_r))
 
-;; ../../../../spec/4e-typing-expr.watsup:366.1-366.41
+;; ../../../../spec/4e-typing-expr.watsup:403.1-403.41
 def $compatible'_concat(typ'', typ''')
 
 1. If ((typ'' has type numtyp)), then
@@ -17172,12 +17172,12 @@ def $compatible'_concat(typ'', typ''')
 
   1. Return false
 
-;; ../../../../spec/4e-typing-expr.watsup:409.1-409.41
+;; ../../../../spec/4e-typing-expr.watsup:454.1-454.41
 def $compatible_logical(typ_l, typ_r)
 
 1. Return $compatible'_logical($canon_typ(typ_l), $canon_typ(typ_r))
 
-;; ../../../../spec/4e-typing-expr.watsup:410.1-410.42
+;; ../../../../spec/4e-typing-expr.watsup:455.1-455.42
 def $compatible'_logical(typ'', typ''')
 
 1. If ((typ'' = ((BoolT) as typ))), then
@@ -17190,12 +17190,12 @@ def $compatible'_logical(typ'', typ''')
 
   1. Return false
 
-;; ../../../../spec/4e-typing-expr.watsup:471.1-471.38
+;; ../../../../spec/4e-typing-expr.watsup:521.1-521.38
 def $compatible_mask(typ_l, typ_r)
 
 1. Return $compatible'_mask($canon_typ(typ_l), $canon_typ(typ_r))
 
-;; ../../../../spec/4e-typing-expr.watsup:472.1-472.39
+;; ../../../../spec/4e-typing-expr.watsup:522.1-522.39
 def $compatible'_mask(typ'', typ''')
 
 1. If ((typ'' = ((IntT) as typ))), then
@@ -17246,12 +17246,12 @@ def $compatible'_mask(typ'', typ''')
 
   1. Return false
 
-;; ../../../../spec/4e-typing-expr.watsup:499.1-499.39
+;; ../../../../spec/4e-typing-expr.watsup:553.1-553.39
 def $compatible_range(typ_l, typ_r)
 
 1. Return $compatible'_range($canon_typ(typ_l), $canon_typ(typ_r))
 
-;; ../../../../spec/4e-typing-expr.watsup:500.1-500.40
+;; ../../../../spec/4e-typing-expr.watsup:554.1-554.40
 def $compatible'_range(typ'', typ''')
 
 1. If ((typ'' = ((IntT) as typ))), then
@@ -17302,7 +17302,7 @@ def $compatible'_range(typ'', typ''')
 
   1. Return false
 
-;; ../../../../spec/4e-typing-expr.watsup:526.1-528.26
+;; ../../../../spec/4e-typing-expr.watsup:584.1-586.26
 relation Select_case_keyset_ok: cursor, C, typ_k, keyset
 
 1. If ((cursor matches pattern `LOCAL`)), then
@@ -17363,7 +17363,7 @@ relation Select_case_keyset_ok: cursor, C, typ_k, keyset
 
 1. Else Phantom#1166
 
-;; ../../../../spec/4e-typing-expr.watsup:561.1-563.26
+;; ../../../../spec/4e-typing-expr.watsup:619.1-621.26
 relation Select_case_keysets_ok: p, C, typ'*{typ' <- typ'*}, keyset''*{keyset'' <- keyset''*}
 
 1. If ((typ'*{typ' <- typ'*} matches pattern [ _/1 ])), then
@@ -17400,7 +17400,7 @@ relation Select_case_keysets_ok: p, C, typ'*{typ' <- typ'*}, keyset''*{keyset'' 
 
 3. Else Phantom#1170
 
-;; ../../../../spec/4e-typing-expr.watsup:579.1-581.26
+;; ../../../../spec/4e-typing-expr.watsup:637.1-639.26
 relation Select_case_ok: cursor, C, typ_k*{typ_k <- typ_k*}, (keyset*{keyset <- keyset*} statelabel)
 
 1. If ((cursor matches pattern `LOCAL`)), then
@@ -17427,12 +17427,12 @@ relation Select_case_ok: cursor, C, typ_k*{typ_k <- typ_k*}, (keyset*{keyset <- 
 
 1. Else Phantom#1174
 
-;; ../../../../spec/4e-typing-expr.watsup:603.1-603.39
+;; ../../../../spec/4e-typing-expr.watsup:662.1-662.39
 def $compatible_arrayindex(typ)
 
 1. Return $compatible'_arrayindex($canon_typ(typ))
 
-;; ../../../../spec/4e-typing-expr.watsup:604.1-604.40
+;; ../../../../spec/4e-typing-expr.watsup:663.1-663.40
 def $compatible'_arrayindex(typ)
 
 1. If ((typ = ((IntT) as typ))), then
@@ -17461,12 +17461,12 @@ def $compatible'_arrayindex(typ)
 
   1. Return false
 
-;; ../../../../spec/4e-typing-expr.watsup:663.1-663.42
+;; ../../../../spec/4e-typing-expr.watsup:722.1-722.42
 def $compatible_bitstringbase(typ)
 
 1. Return $compatible'_bitstringbase($canon_typ(typ))
 
-;; ../../../../spec/4e-typing-expr.watsup:664.1-664.43
+;; ../../../../spec/4e-typing-expr.watsup:723.1-723.43
 def $compatible'_bitstringbase(typ)
 
 1. If ((typ = ((IntT) as typ))), then
@@ -17495,12 +17495,12 @@ def $compatible'_bitstringbase(typ)
 
   1. Return false
 
-;; ../../../../spec/4e-typing-expr.watsup:673.1-673.43
+;; ../../../../spec/4e-typing-expr.watsup:732.1-732.43
 def $compatible_bitstringindex(typ)
 
 1. Return $compatible'_bitstringindex($canon_typ(typ))
 
-;; ../../../../spec/4e-typing-expr.watsup:674.1-674.44
+;; ../../../../spec/4e-typing-expr.watsup:733.1-733.44
 def $compatible'_bitstringindex(typ)
 
 1. If ((typ = ((IntT) as typ))), then
@@ -17529,12 +17529,12 @@ def $compatible'_bitstringindex(typ)
 
   1. Return false
 
-;; ../../../../spec/4e-typing-expr.watsup:683.1-683.52
+;; ../../../../spec/4e-typing-expr.watsup:742.1-742.52
 def $is_valid_bitstring_slice(typ, n_l, n_h)
 
 1. Return ((n_l <= n_h) /\ $is_valid_bitstring_slice'($canon_typ(typ), n_l, n_h))
 
-;; ../../../../spec/4e-typing-expr.watsup:684.1-684.53
+;; ../../../../spec/4e-typing-expr.watsup:743.1-743.53
 def $is_valid_bitstring_slice'(typ', _nat'', _nat''')
 
 1. If ((typ' = ((IntT) as typ))), then
@@ -17567,12 +17567,12 @@ def $is_valid_bitstring_slice'(typ', _nat'', _nat''')
 
   1. Return false
 
-;; ../../../../spec/4e-typing-expr.watsup:898.1-898.44
+;; ../../../../spec/4e-typing-expr.watsup:971.1-971.44
 def $not_abstract_extern_object(typ)
 
 1. Return $not_abstract_extern_object'($canon_typ(typ))
 
-;; ../../../../spec/4e-typing-expr.watsup:899.1-899.45
+;; ../../../../spec/4e-typing-expr.watsup:972.1-972.45
 def $not_abstract_extern_object'(typ)
 
 1. If (~$is_externt(typ)), then
@@ -17603,7 +17603,7 @@ def $not_abstract_extern_object'(typ)
 
   1. Return false
 
-;; ../../../../spec/4e-typing-expr.watsup:900.1-900.50
+;; ../../../../spec/4e-typing-expr.watsup:973.1-973.50
 def $not_abstract_extern_object''(funcdef')
 
 1. If ((funcdef' has type polyfuncdef)), then
@@ -17620,7 +17620,7 @@ def $not_abstract_extern_object''(funcdef')
 
   1. Return true
 
-;; ../../../../spec/4f-typing-stmt.watsup:45.1-47.29
+;; ../../../../spec/4f-typing-stmt.watsup:46.1-48.29
 relation Switch_tbl_label_ok: p, C, id_t, b_last', switchlabel
 
 1. If ((switchlabel matches pattern `ExprL%`)), then
@@ -17669,7 +17669,7 @@ relation Switch_tbl_label_ok: p, C, id_t, b_last', switchlabel
 
 2. Else Phantom#1181
 
-;; ../../../../spec/4f-typing-stmt.watsup:60.1-62.32
+;; ../../../../spec/4f-typing-stmt.watsup:62.1-65.32
 relation Switch_tbl_case_ok: p, C, f, id_t, b_last, switchcase
 
 1. Case analysis on switchcase
@@ -17692,7 +17692,7 @@ relation Switch_tbl_case_ok: p, C, f, id_t, b_last, switchcase
 
     3. Result in f, (FallC switchlabelIL), switchlabel
 
-;; ../../../../spec/4f-typing-stmt.watsup:74.1-76.29
+;; ../../../../spec/4f-typing-stmt.watsup:82.1-85.29
 relation Switch_tbl_cases_ok: p, C, f, id_t, switchcase*{switchcase <- switchcase*}
 
 1. Case analysis on switchcase*{switchcase <- switchcase*}
@@ -17713,7 +17713,7 @@ relation Switch_tbl_cases_ok: p, C, f, id_t, switchcase*{switchcase <- switchcas
 
     5. Result in f'', switchcaseIL_h :: switchcaseIL_t*{switchcaseIL_t <- switchcaseIL_t*}, switchlabel_h :: switchlabel_t*{switchlabel_t <- switchlabel_t*}
 
-;; ../../../../spec/4f-typing-stmt.watsup:98.1-100.29
+;; ../../../../spec/4f-typing-stmt.watsup:113.1-115.29
 relation Switch_gen_label_ok: p, C, typ_s, b_last', switchlabel
 
 1. If ((switchlabel matches pattern `ExprL%`)), then
@@ -17750,7 +17750,7 @@ relation Switch_gen_label_ok: p, C, typ_s, b_last', switchlabel
 
 2. Else Phantom#1186
 
-;; ../../../../spec/4f-typing-stmt.watsup:112.1-114.32
+;; ../../../../spec/4f-typing-stmt.watsup:127.1-130.32
 relation Switch_gen_case_ok: p, C, f, typ_s, b_last, switchcase
 
 1. Case analysis on switchcase
@@ -17773,7 +17773,7 @@ relation Switch_gen_case_ok: p, C, f, typ_s, b_last, switchcase
 
     3. Result in f, (FallC switchlabelIL), switchlabel
 
-;; ../../../../spec/4f-typing-stmt.watsup:126.1-128.29
+;; ../../../../spec/4f-typing-stmt.watsup:146.1-149.29
 relation Switch_gen_cases_ok: p, C, f, typ_s, switchcase*{switchcase <- switchcase*}
 
 1. Case analysis on switchcase*{switchcase <- switchcase*}
@@ -17794,7 +17794,7 @@ relation Switch_gen_cases_ok: p, C, f, typ_s, switchcase*{switchcase <- switchca
 
     5. Result in f'', switchcaseIL_h :: switchcaseIL_t*{switchcaseIL_t <- switchcaseIL_t*}, switchlabel_h :: switchlabel_t*{switchlabel_t <- switchlabel_t*}
 
-;; ../../../../spec/4g-typing-decl.watsup:88.1-90.29
+;; ../../../../spec/4g-typing-decl.watsup:89.1-91.29
 relation Inst_init_decl_ok: p, C'', frame, fdenv, decl''
 
 1. Case analysis on decl''
@@ -17863,7 +17863,7 @@ relation Inst_init_decl_ok: p, C'', frame, fdenv, decl''
 
 1. Else Phantom#1191
 
-;; ../../../../spec/4g-typing-decl.watsup:128.1-130.26
+;; ../../../../spec/4g-typing-decl.watsup:132.1-134.26
 relation Inst_init_decls_ok: C, frame, fdenv, decl*{decl <- decl*}
 
 1. Case analysis on decl*{decl <- decl*}
@@ -17882,7 +17882,7 @@ relation Inst_init_decls_ok: C, frame, fdenv, decl*{decl <- decl*}
 
     4. Result in frame'', fdenv'', declIL_h :: declIL_t*{declIL_t <- declIL_t*}
 
-;; ../../../../spec/4g-typing-decl.watsup:141.1-142.109
+;; ../../../../spec/4g-typing-decl.watsup:148.1-148.75
 def $update_fdenv_extern(fdenv_ext, theta, fid''*{fid'' <- fid''*}, funcdef*{funcdef <- funcdef*})
 
 1. Case analysis on fid''*{fid'' <- fid''*}
@@ -17941,7 +17941,7 @@ def $update_fdenv_extern(fdenv_ext, theta, fid''*{fid'' <- fid''*}, funcdef*{fun
 
     2. Else Phantom#1197
 
-;; ../../../../spec/4g-typing-decl.watsup:294.1-296.32
+;; ../../../../spec/4g-typing-decl.watsup:319.1-322.32
 relation SEnum_field_ok: C, id_s, typ_s, (member_s, val_s)*{member_s <- member_s*, val_s <- val_s*}, member, expr
 
 1. (Expr_ok: (BLOCK) C |- expr : exprIL)
@@ -17974,7 +17974,7 @@ relation SEnum_field_ok: C, id_s, typ_s, (member_s, val_s)*{member_s <- member_s
 
 3. Else Phantom#1199
 
-;; ../../../../spec/4g-typing-decl.watsup:314.1-316.29
+;; ../../../../spec/4g-typing-decl.watsup:341.1-344.29
 relation SEnum_fields_ok: C, id, typ, (member, val)*{member <- member*, val <- val*}, (member, expr)*{(member, expr) <- (member, expr)*}
 
 1. Case analysis on (member, expr)*{(member, expr) <- (member, expr)*}
@@ -17993,7 +17993,7 @@ relation SEnum_fields_ok: C, id, typ, (member, val)*{member <- member*, val <- v
 
     4. Result in C'', (member'', val'')*{member'' <- member''*, val'' <- val''*}
 
-;; ../../../../spec/4g-typing-decl.watsup:558.1-558.49
+;; ../../../../spec/4g-typing-decl.watsup:596.1-596.49
 def $split_methods(method*{method <- method*})
 
 1. Case analysis on method*{method <- method*}
@@ -18036,7 +18036,7 @@ def $split_methods(method*{method <- method*})
 
     3. Else Phantom#1200
 
-;; ../../../../spec/4g-typing-decl.watsup:572.1-574.23
+;; ../../../../spec/4g-typing-decl.watsup:610.1-612.23
 relation Method_ok: C'', id_e, method
 
 1. Case analysis on method
@@ -18161,7 +18161,7 @@ relation Method_ok: C'', id_e, method
 
     2. Else Phantom#1211
 
-;; ../../../../spec/4g-typing-decl.watsup:638.1-640.23
+;; ../../../../spec/4g-typing-decl.watsup:682.1-684.23
 relation Methods_ok: C, id_e, method*{method <- method*}
 
 1. Case analysis on method*{method <- method*}
@@ -18180,7 +18180,7 @@ relation Methods_ok: C, id_e, method*{method <- method*}
 
     4. Result in C'', methodIL_h :: methodIL_t*{methodIL_t <- methodIL_t*}
 
-;; ../../../../spec/4g-typing-decl.watsup:710.1-712.20
+;; ../../../../spec/4g-typing-decl.watsup:758.1-760.20
 relation ParserState_ok: C, (statelabel block)
 
 1. (Block_ok: (LOCAL) C (CONT) (INIT) |- block : C' flow blockIL)
@@ -18191,7 +18191,7 @@ relation ParserState_ok: C, (statelabel block)
 
 2. Else Phantom#1212
 
-;; ../../../../spec/4g-typing-decl.watsup:771.1-773.26
+;; ../../../../spec/4g-typing-decl.watsup:817.1-819.26
 relation Table_key_ok: p, C, tblctx, (expr matchkind)
 
 1. (Expr_ok: p C |- expr : exprIL)
@@ -18216,7 +18216,7 @@ relation Table_key_ok: p, C, tblctx, (expr matchkind)
 
 3. Else Phantom#1215
 
-;; ../../../../spec/4g-typing-decl.watsup:775.1-775.44
+;; ../../../../spec/4g-typing-decl.watsup:821.1-821.44
 def $check_table_key(matchkind, typ)
 
 1. Case analysis on matchkind
@@ -18427,7 +18427,7 @@ def $check_table_key(matchkind, typ)
 
   1. Return false
 
-;; ../../../../spec/4g-typing-decl.watsup:825.1-827.26
+;; ../../../../spec/4g-typing-decl.watsup:871.1-873.26
 relation Table_keys_ok: p, C, tblctx, tblkey*{tblkey <- tblkey*}
 
 1. Case analysis on tblkey*{tblkey <- tblkey*}
@@ -18446,7 +18446,7 @@ relation Table_keys_ok: p, C, tblctx, tblkey*{tblkey <- tblkey*}
 
     4. Result in tblctx'', tblkeyIL_h :: tblkeyIL_t*{tblkeyIL_t <- tblkeyIL_t*}
 
-;; ../../../../spec/4g-typing-decl.watsup:841.1-843.26
+;; ../../../../spec/4g-typing-decl.watsup:887.1-889.26
 relation Call_action_partial_ok: p, C, pt*{pt <- pt*}, (argIL, typ_a)*{argIL <- argIL*, typ_a <- typ_a*}
 
 1. (Let (paramIL_d*{paramIL_d <- paramIL_d*}, paramIL_c*{paramIL_c <- paramIL_c*}) be $split_directionless_params((pt*{pt <- pt*} as paramIL*)))
@@ -18459,7 +18459,7 @@ relation Call_action_partial_ok: p, C, pt*{pt <- pt*}, (argIL, typ_a)*{argIL <- 
 
 2. Else Phantom#1216
 
-;; ../../../../spec/4g-typing-decl.watsup:845.1-846.46
+;; ../../../../spec/4g-typing-decl.watsup:891.1-891.65
 def $split_directionless_params(paramIL*{paramIL <- paramIL*})
 
 1. Case analysis on paramIL*{paramIL <- paramIL*}
@@ -18488,7 +18488,7 @@ def $split_directionless_params(paramIL*{paramIL <- paramIL*})
 
         2. Return (paramIL_h :: paramIL_d*{paramIL_d <- paramIL_d*}, paramIL_c*{paramIL_c <- paramIL_c*})
 
-;; ../../../../spec/4g-typing-decl.watsup:865.1-867.26
+;; ../../../../spec/4g-typing-decl.watsup:913.1-915.26
 relation Table_action_ok: p, C, tblctx, (name arg*{arg <- arg*})
 
 1. (Arg_ok: p C |- arg : argIL typ_a)*{arg <- arg*, argIL <- argIL*, typ_a <- typ_a*}
@@ -18513,7 +18513,7 @@ relation Table_action_ok: p, C, tblctx, (name arg*{arg <- arg*})
 
 3. Else Phantom#1218
 
-;; ../../../../spec/4g-typing-decl.watsup:879.1-881.26
+;; ../../../../spec/4g-typing-decl.watsup:928.1-931.26
 relation Table_actions_ok: p, C, tblctx, tblaction*{tblaction <- tblaction*}
 
 1. Case analysis on tblaction*{tblaction <- tblaction*}
@@ -18540,7 +18540,7 @@ relation Table_actions_ok: p, C, tblctx, tblaction*{tblaction <- tblaction*}
 
     6. Else Phantom#1219
 
-;; ../../../../spec/4g-typing-decl.watsup:899.1-901.29
+;; ../../../../spec/4g-typing-decl.watsup:951.1-954.29
 relation Table_entry_keyset_ok: p, C, tblctx, (typ_k, text'), keyset
 
 1. Case analysis on text'
@@ -18799,7 +18799,7 @@ relation Table_entry_keyset_ok: p, C, tblctx, (typ_k, text'), keyset
 
     1. Else Phantom#1250
 
-;; ../../../../spec/4g-typing-decl.watsup:993.1-995.32
+;; ../../../../spec/4g-typing-decl.watsup:1058.1-1060.32
 relation Table_entry_keysets_state_ok: p, C, tblctx, tblstate', key*{key <- key*}, keyset*{keyset <- keyset*}
 
 1. Case analysis on key*{key <- key*}
@@ -18830,7 +18830,7 @@ relation Table_entry_keysets_state_ok: p, C, tblctx, tblstate', key*{key <- key*
 
     2. Else Phantom#1252
 
-;; ../../../../spec/4g-typing-decl.watsup:1007.1-1009.26
+;; ../../../../spec/4g-typing-decl.watsup:1075.1-1077.26
 relation Table_entry_keysets_ok: p, C, tblctx, keyset*{keyset <- keyset*}
 
 1. Case analysis on keyset*{keyset <- keyset*}
@@ -18881,7 +18881,7 @@ relation Table_entry_keysets_ok: p, C, tblctx, keyset*{keyset <- keyset*}
 
 2. Else Phantom#1258
 
-;; ../../../../spec/4g-typing-decl.watsup:1033.1-1035.29
+;; ../../../../spec/4g-typing-decl.watsup:1102.1-1104.29
 relation Call_default_action_ok: p, C, pt*{pt <- pt*}, (argIL, typ)*{argIL <- argIL*, typ <- typ*}, argIL_a*{argIL_a <- argIL_a*}
 
 1. If ((|pt*{pt <- pt*}| = |argIL*{argIL <- argIL*}|)), then
@@ -18898,7 +18898,7 @@ relation Call_default_action_ok: p, C, pt*{pt <- pt*}, (argIL, typ)*{argIL <- ar
 
 1. Else Phantom#1260
 
-;; ../../../../spec/4g-typing-decl.watsup:1037.1-1037.59
+;; ../../../../spec/4g-typing-decl.watsup:1106.1-1106.59
 def $filter_directionless_args(paramtyp*{paramtyp <- paramtyp*}, argIL*{argIL <- argIL*})
 
 1. Case analysis on paramtyp*{paramtyp <- paramtyp*}
@@ -18933,7 +18933,7 @@ def $filter_directionless_args(paramtyp*{paramtyp <- paramtyp*}, argIL*{argIL <-
 
     2. Else Phantom#1263
 
-;; ../../../../spec/4g-typing-decl.watsup:1055.1-1057.26
+;; ../../../../spec/4g-typing-decl.watsup:1126.1-1128.26
 relation Table_entry_action_ok: p, C, tblctx, (name arg*{arg <- arg*})
 
 1. (Let (paramtyp*, argIL*)?{(paramtyp*, argIL*) <- (paramtyp*, argIL*)?} be $find_action(tblctx, name))
@@ -18952,7 +18952,7 @@ relation Table_entry_action_ok: p, C, tblctx, (name arg*{arg <- arg*})
 
 2. Else Phantom#1264
 
-;; ../../../../spec/4g-typing-decl.watsup:1070.1-1072.29
+;; ../../../../spec/4g-typing-decl.watsup:1143.1-1145.29
 relation Table_entry_priority_ok: cursor, C, tblctx, tblstate, expr''?{expr'' <- expr''?}
 
 1. If ((cursor matches pattern `LOCAL`)), then
@@ -19105,7 +19105,7 @@ relation Table_entry_priority_ok: cursor, C, tblctx, tblstate, expr''?{expr'' <-
 
 1. Else Phantom#1278
 
-;; ../../../../spec/4g-typing-decl.watsup:1163.1-1165.26
+;; ../../../../spec/4g-typing-decl.watsup:1242.1-1244.26
 relation Table_entry_ok: p, C, tblctx, (bool keyset*{keyset <- keyset*} tblaction expr?{expr <- expr?})
 
 1. (Table_entry_keysets_ok: p C tblctx |- keyset*{keyset <- keyset*} : tblstate keysetIL*{keysetIL <- keysetIL*})
@@ -19116,7 +19116,7 @@ relation Table_entry_ok: p, C, tblctx, (bool keyset*{keyset <- keyset*} tblactio
 
 4. Result in tblctx', (bool keysetIL*{keysetIL <- keysetIL*} tblactionIL val?{val <- val?})
 
-;; ../../../../spec/4g-typing-decl.watsup:1176.1-1178.26
+;; ../../../../spec/4g-typing-decl.watsup:1257.1-1259.26
 relation Table_entries_fold_ok: p, C, tblctx, tblentry*{tblentry <- tblentry*}
 
 1. Case analysis on tblentry*{tblentry <- tblentry*}
@@ -19135,7 +19135,7 @@ relation Table_entries_fold_ok: p, C, tblctx, tblentry*{tblentry <- tblentry*}
 
     4. Result in tblctx'', tblentryIL_h :: tblentryIL_t*{tblentryIL_t <- tblentryIL_t*}
 
-;; ../../../../spec/4g-typing-decl.watsup:1189.1-1191.26
+;; ../../../../spec/4g-typing-decl.watsup:1272.1-1274.26
 relation Table_entries_ok: p, C, tblctx_0, (b tblentry*{tblentry <- tblentry*})
 
 1. If (((|tblctx_0.KEYS| = 0) => (|tblentry*{tblentry <- tblentry*}| = 0))), then
@@ -19150,7 +19150,7 @@ relation Table_entries_ok: p, C, tblctx_0, (b tblentry*{tblentry <- tblentry*})
 
 1. Else Phantom#1279
 
-;; ../../../../spec/4g-typing-decl.watsup:1206.1-1208.26
+;; ../../../../spec/4g-typing-decl.watsup:1290.1-1292.26
 relation Table_default_ok: p, C, tblctx, (bool (name arg*{arg <- arg*}))
 
 1. (Let (paramtyp*, argIL*)?{(paramtyp*, argIL*) <- (paramtyp*, argIL*)?} be $find_action(tblctx, name))
@@ -19169,7 +19169,7 @@ relation Table_default_ok: p, C, tblctx, (bool (name arg*{arg <- arg*}))
 
 2. Else Phantom#1280
 
-;; ../../../../spec/4g-typing-decl.watsup:1224.1-1226.26
+;; ../../../../spec/4g-typing-decl.watsup:1310.1-1312.26
 relation Table_custom_ok: p, C, tblctx, (b text' expr)
 
 1. Case analysis on text'
@@ -19240,7 +19240,7 @@ relation Table_custom_ok: p, C, tblctx, (b text' expr)
 
 2. Else Phantom#1287
 
-;; ../../../../spec/4g-typing-decl.watsup:1261.1-1263.26
+;; ../../../../spec/4g-typing-decl.watsup:1351.1-1353.26
 relation Table_prop_ok: p, C, tblctx, tblprop
 
 1. Case analysis on tblprop
@@ -19285,7 +19285,7 @@ relation Table_prop_ok: p, C, tblctx, tblprop
 
     3. Result in tblctx', (CustomP tblcustompropIL)
 
-;; ../../../../spec/4g-typing-decl.watsup:1286.1-1288.26
+;; ../../../../spec/4g-typing-decl.watsup:1381.1-1383.26
 relation Table_props_ok: p, C, tblctx, tblprop*{tblprop <- tblprop*}
 
 1. Case analysis on tblprop*{tblprop <- tblprop*}
@@ -19304,7 +19304,7 @@ relation Table_props_ok: p, C, tblctx, tblprop*{tblprop <- tblprop*}
 
     4. Result in tblctx'', tblpropIL_h :: tblpropIL_t*{tblpropIL_t <- tblpropIL_t*}
 
-;; ../../../../spec/4g-typing-decl.watsup:1302.1-1304.26
+;; ../../../../spec/4g-typing-decl.watsup:1400.1-1402.26
 relation Table_type_decl_ok: cursor, C, tblctx, id
 
 1. If ((cursor matches pattern `BLOCK`)), then
@@ -19331,7 +19331,7 @@ relation Table_type_decl_ok: cursor, C, tblctx, id
 
 1. Else Phantom#1288
 
-;; ../../../../spec/4h-typing-call.watsup:151.1-152.77
+;; ../../../../spec/4h-typing-call.watsup:152.1-152.53
 def $filter_default_args(paramtyp*{paramtyp <- paramtyp*}, id_deft*{id_deft <- id_deft*})
 
 1. Case analysis on paramtyp*{paramtyp <- paramtyp*}
@@ -19359,7 +19359,7 @@ def $filter_default_args(paramtyp*{paramtyp <- paramtyp*}, id_deft*{id_deft <- i
 ;; ../../../../spec/4h-typing-call.watsup:163.15-163.32
 syntax pmap = map<id, paramtyp>
 
-;; ../../../../spec/4h-typing-call.watsup:165.1-166.80
+;; ../../../../spec/4h-typing-call.watsup:165.1-165.65
 def $align_params_with_args(pt*{pt <- pt*}, (argIL, typ)*{argIL <- argIL*, typ <- typ*})
 
 1. (Let (id _dir _typ _exprIL?{_exprIL <- _exprIL?}) be pt)*{_dir <- _dir*, _exprIL? <- _exprIL?*, _typ <- _typ*, id <- id*, pt <- pt*}
@@ -19370,7 +19370,7 @@ def $align_params_with_args(pt*{pt <- pt*}, (argIL, typ)*{argIL <- argIL*, typ <
 
 4. Return pt'*{pt' <- pt'*}
 
-;; ../../../../spec/4h-typing-call.watsup:167.1-168.97
+;; ../../../../spec/4h-typing-call.watsup:166.1-166.69
 def $align_params_with_args'(pmap, pt, (argIL, _typ))
 
 1. Case analysis on argIL
@@ -19399,17 +19399,17 @@ def $align_params_with_args'(pmap, pt, (argIL, _typ))
 
     1. Return pt
 
-;; ../../../../spec/4h-typing-call.watsup:185.1-186.12
+;; ../../../../spec/4h-typing-call.watsup:183.1-184.12
 syntax typcstr = 
    | `KNOWN%`(typ)
    | `UNKNOWN`()
 
-;; ../../../../spec/4h-typing-call.watsup:190.1-190.42
+;; ../../../../spec/4h-typing-call.watsup:188.1-188.42
 def $empty_cstr(tid*{tid <- tid*})
 
 1. Return ({ (tid -> (UNKNOWN))*{tid <- tid*} })
 
-;; ../../../../spec/4h-typing-call.watsup:196.1-196.63
+;; ../../../../spec/4h-typing-call.watsup:193.1-193.63
 def $gen_cstr(cstr, typ'', typ_a''')
 
 1. Case analysis on typ''
@@ -19668,7 +19668,7 @@ def $gen_cstr(cstr, typ'', typ_a''')
 
   1. Return cstr
 
-;; ../../../../spec/4h-typing-call.watsup:198.1-198.66
+;; ../../../../spec/4h-typing-call.watsup:194.1-194.66
 def $gen_cstrs(cstr, typ_p*{typ_p <- typ_p*}, typ_a*{typ_a <- typ_a*})
 
 1. If ((|typ_p*{typ_p <- typ_p*}| = |typ_a*{typ_a <- typ_a*}|)), then
@@ -19679,7 +19679,7 @@ def $gen_cstrs(cstr, typ_p*{typ_p <- typ_p*}, typ_a*{typ_a <- typ_a*})
 
 1. Else Phantom#1291
 
-;; ../../../../spec/4h-typing-call.watsup:200.1-200.74
+;; ../../../../spec/4h-typing-call.watsup:195.1-195.74
 def $gen_cstr_fd(cstr, fd_p, fd_a)
 
 1. (Let (_id _dir typ_p _exprIL?{_exprIL <- _exprIL?})*{_dir <- _dir*, _exprIL? <- _exprIL?*, _id <- _id*, typ_p <- typ_p*} be $get_params_funcdef(fd_p))
@@ -19692,7 +19692,7 @@ def $gen_cstr_fd(cstr, fd_p, fd_a)
 
 5. Return cstr''
 
-;; ../../../../spec/4h-typing-call.watsup:202.1-202.77
+;; ../../../../spec/4h-typing-call.watsup:196.1-196.77
 def $gen_cstr_fd'(cstr, fid*{fid <- fid*}, fdenv_p, fdenv_a)
 
 1. Case analysis on fid*{fid <- fid*}
@@ -19725,7 +19725,7 @@ def $gen_cstr_fd'(cstr, fid*{fid <- fid*}, fdenv_p, fdenv_a)
 
     3. Else Phantom#1293
 
-;; ../../../../spec/4h-typing-call.watsup:204.1-204.74
+;; ../../../../spec/4h-typing-call.watsup:197.1-197.74
 def $merge_cstr(cstr_o, cstr_n)
 
 1. (Let ({ tid_o*{tid_o <- tid_o*} }) be $dom_map<tid, typcstr>(cstr_o))
@@ -19736,7 +19736,7 @@ def $merge_cstr(cstr_o, cstr_n)
 
 2. Else Phantom#1294
 
-;; ../../../../spec/4h-typing-call.watsup:206.1-206.100
+;; ../../../../spec/4h-typing-call.watsup:198.1-198.100
 def $merge_cstr'(cstr_o, cstr_n, tid*{tid <- tid*}, cstr)
 
 1. Case analysis on tid*{tid <- tid*}
@@ -19833,7 +19833,7 @@ def $merge_cstr'(cstr_o, cstr_n, tid*{tid <- tid*}, cstr)
 
     4. Else Phantom#1304
 
-;; ../../../../spec/4h-typing-call.watsup:208.1-208.76
+;; ../../../../spec/4h-typing-call.watsup:199.1-199.76
 def $merge_cstrs(cstr, map<tid, typcstr>*{map<tid, typcstr> <- map<tid, typcstr>*})
 
 1. Case analysis on map<tid, typcstr>*{map<tid, typcstr> <- map<tid, typcstr>*}
@@ -19852,7 +19852,7 @@ def $merge_cstrs(cstr, map<tid, typcstr>*{map<tid, typcstr> <- map<tid, typcstr>
 
     4. Return cstr''
 
-;; ../../../../spec/4h-typing-call.watsup:210.1-210.54
+;; ../../../../spec/4h-typing-call.watsup:200.1-200.54
 def $resolve_cstrs(set<pair<tid, typcstr>>')
 
 1. If ((set<pair<tid, typcstr>>' = ({ [] }))), then
@@ -19907,12 +19907,12 @@ def $resolve_cstrs(set<pair<tid, typcstr>>')
 
 3. Else Phantom#1310
 
-;; ../../../../spec/4h-typing-call.watsup:325.1-325.32
+;; ../../../../spec/4h-typing-call.watsup:314.1-314.32
 def $gen_tparam(typ)
 
 1. Return $fresh_tid
 
-;; ../../../../spec/4h-typing-call.watsup:345.1-345.56
+;; ../../../../spec/4h-typing-call.watsup:334.1-334.56
 def $infer_targs(tid*{tid <- tid*}, (id dir typ_p exprIL_deft?{exprIL_deft <- exprIL_deft?})*{dir <- dir*, exprIL_deft? <- exprIL_deft?*, id <- id*, typ_p <- typ_p*}, typ_a*{typ_a <- typ_a*})
 
 1. (Let cstr be $empty_cstr(tid*{tid <- tid*}))
@@ -19921,7 +19921,7 @@ def $infer_targs(tid*{tid <- tid*}, (id dir typ_p exprIL_deft?{exprIL_deft <- ex
 
 3. Return $resolve_cstrs(cstr')
 
-;; ../../../../spec/4h-typing-call.watsup:451.1-452.43
+;; ../../../../spec/4h-typing-call.watsup:439.1-439.48
 def $is_table_apply_in_action_arg(argIL)
 
 1. Return false
