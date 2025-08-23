@@ -14890,15 +14890,13 @@ relation Decl_ok: p', C'''', decl''
 
                               1. (Let theta be ({ (tparam -> typ_a)*{tparam <- tparam*, typ_a <- typ_a*} }))*{theta <- theta*, tparam* <- tparam**}
 
-                              2. (Let (id_c_p dir_c_p typ_c_p exprIL?{exprIL <- exprIL?}) be pt)*{dir_c_p <- dir_c_p*, exprIL? <- exprIL?*, id_c_p <- id_c_p*, pt <- pt*, typ_c_p <- typ_c_p*}*{dir_c_p* <- dir_c_p**, exprIL?* <- exprIL?**, id_c_p* <- id_c_p**, pt* <- pt**, typ_c_p* <- typ_c_p**}
+                              2. (Let pt_subst be $subst_paramtyp(theta, pt))*{pt <- pt*, pt_subst <- pt_subst*, theta <- theta*}*{pt* <- pt**, pt_subst* <- pt_subst**}
 
-                              3. (Let pt_subst be (id_c_p dir_c_p $subst_typ(theta, typ_c_p) exprIL?{exprIL <- exprIL?}))*{dir_c_p <- dir_c_p*, exprIL? <- exprIL?*, id_c_p <- id_c_p*, pt_subst <- pt_subst*, theta <- theta*, typ_c_p <- typ_c_p*}*{dir_c_p* <- dir_c_p**, exprIL?* <- exprIL?**, id_c_p* <- id_c_p**, pt_subst* <- pt_subst**, typ_c_p* <- typ_c_p**}
+                              3. (Let cd_alias be (ConsD ([], []) -> (ConsT pt_subst*{pt_subst <- pt_subst*} typ)))*{cd_alias <- cd_alias*, pt_subst* <- pt_subst**}
 
-                              4. (Let cd_alias be (ConsD ([], []) -> (ConsT pt_subst*{pt_subst <- pt_subst*} typ)))*{cd_alias <- cd_alias*, pt_subst* <- pt_subst**}
+                              4. (Let C'' be $add_consdefs((GLOBAL), C', cid_alias*{cid_alias <- cid_alias*}, cd_alias*{cd_alias <- cd_alias*}))
 
-                              5. (Let C'' be $add_consdefs((GLOBAL), C', cid_alias*{cid_alias <- cid_alias*}, cd_alias*{cd_alias <- cd_alias*}))
-
-                              6. Result in C'', (TypeDefD id (TypeD typ))
+                              5. Result in C'', (TypeDefD id (TypeD typ))
 
                             6. Else Phantom#939
 
@@ -17970,7 +17968,7 @@ relation SEnum_fields_ok: C, id, typ, (member, val)*{member <- member*, val <- v
 
     4. Result in C'', (member'', val'')*{member'' <- member''*, val'' <- val''*}
 
-;; ../../../../spec/4g-typing-decl.watsup:600.1-600.49
+;; ../../../../spec/4g-typing-decl.watsup:599.1-599.49
 def $split_methods(method*{method <- method*})
 
 1. Case analysis on method*{method <- method*}
@@ -18013,7 +18011,7 @@ def $split_methods(method*{method <- method*})
 
     3. Else Phantom#1151
 
-;; ../../../../spec/4g-typing-decl.watsup:614.1-616.23
+;; ../../../../spec/4g-typing-decl.watsup:613.1-615.23
 relation Method_ok: C'', id_e, method
 
 1. Case analysis on method
@@ -18138,7 +18136,7 @@ relation Method_ok: C'', id_e, method
 
     2. Else Phantom#1162
 
-;; ../../../../spec/4g-typing-decl.watsup:686.1-688.23
+;; ../../../../spec/4g-typing-decl.watsup:685.1-687.23
 relation Methods_ok: C, id_e, method*{method <- method*}
 
 1. Case analysis on method*{method <- method*}
@@ -18157,7 +18155,7 @@ relation Methods_ok: C, id_e, method*{method <- method*}
 
     4. Result in C'', methodIL_h :: methodIL_t*{methodIL_t <- methodIL_t*}
 
-;; ../../../../spec/4g-typing-decl.watsup:762.1-764.20
+;; ../../../../spec/4g-typing-decl.watsup:761.1-763.20
 relation ParserState_ok: C, (statelabel block)
 
 1. (Block_ok: (LOCAL) C (CONT) (INIT) |- block : C' flow blockIL)
@@ -18168,7 +18166,7 @@ relation ParserState_ok: C, (statelabel block)
 
 2. Else Phantom#1163
 
-;; ../../../../spec/4g-typing-decl.watsup:821.1-823.26
+;; ../../../../spec/4g-typing-decl.watsup:820.1-822.26
 relation Table_key_ok: p, C, tblctx, (expr matchkind)
 
 1. (Expr_ok: p C |- expr : exprIL)
@@ -18193,7 +18191,7 @@ relation Table_key_ok: p, C, tblctx, (expr matchkind)
 
 3. Else Phantom#1166
 
-;; ../../../../spec/4g-typing-decl.watsup:825.1-825.44
+;; ../../../../spec/4g-typing-decl.watsup:824.1-824.44
 def $check_table_key(matchkind, typ)
 
 1. Case analysis on matchkind
@@ -18404,7 +18402,7 @@ def $check_table_key(matchkind, typ)
 
   1. Return false
 
-;; ../../../../spec/4g-typing-decl.watsup:875.1-877.26
+;; ../../../../spec/4g-typing-decl.watsup:874.1-876.26
 relation Table_keys_ok: p, C, tblctx, tblkey*{tblkey <- tblkey*}
 
 1. Case analysis on tblkey*{tblkey <- tblkey*}
@@ -18423,7 +18421,7 @@ relation Table_keys_ok: p, C, tblctx, tblkey*{tblkey <- tblkey*}
 
     4. Result in tblctx'', tblkeyIL_h :: tblkeyIL_t*{tblkeyIL_t <- tblkeyIL_t*}
 
-;; ../../../../spec/4g-typing-decl.watsup:891.1-893.26
+;; ../../../../spec/4g-typing-decl.watsup:890.1-892.26
 relation Call_action_partial_ok: p, C, pt*{pt <- pt*}, (argIL, typ_a)*{argIL <- argIL*, typ_a <- typ_a*}
 
 1. (Let (paramIL_d*{paramIL_d <- paramIL_d*}, paramIL_c*{paramIL_c <- paramIL_c*}) be $split_directionless_params((pt*{pt <- pt*} as paramIL*)))
@@ -18436,7 +18434,7 @@ relation Call_action_partial_ok: p, C, pt*{pt <- pt*}, (argIL, typ_a)*{argIL <- 
 
 2. Else Phantom#1167
 
-;; ../../../../spec/4g-typing-decl.watsup:895.1-895.65
+;; ../../../../spec/4g-typing-decl.watsup:894.1-894.65
 def $split_directionless_params(paramIL*{paramIL <- paramIL*})
 
 1. Case analysis on paramIL*{paramIL <- paramIL*}
@@ -18465,7 +18463,7 @@ def $split_directionless_params(paramIL*{paramIL <- paramIL*})
 
         2. Return (paramIL_h :: paramIL_d*{paramIL_d <- paramIL_d*}, paramIL_c*{paramIL_c <- paramIL_c*})
 
-;; ../../../../spec/4g-typing-decl.watsup:917.1-919.26
+;; ../../../../spec/4g-typing-decl.watsup:916.1-918.26
 relation Table_action_ok: p, C, tblctx, (name arg*{arg <- arg*})
 
 1. (Arg_ok: p C |- arg : argIL typ_a)*{arg <- arg*, argIL <- argIL*, typ_a <- typ_a*}
@@ -18490,7 +18488,7 @@ relation Table_action_ok: p, C, tblctx, (name arg*{arg <- arg*})
 
 3. Else Phantom#1169
 
-;; ../../../../spec/4g-typing-decl.watsup:932.1-935.26
+;; ../../../../spec/4g-typing-decl.watsup:931.1-934.26
 relation Table_actions_ok: p, C, tblctx, tblaction*{tblaction <- tblaction*}
 
 1. Case analysis on tblaction*{tblaction <- tblaction*}
@@ -18517,7 +18515,7 @@ relation Table_actions_ok: p, C, tblctx, tblaction*{tblaction <- tblaction*}
 
     6. Else Phantom#1170
 
-;; ../../../../spec/4g-typing-decl.watsup:955.1-958.29
+;; ../../../../spec/4g-typing-decl.watsup:954.1-957.29
 relation Table_entry_keyset_ok: p, C, tblctx, (typ_k, text'), keyset
 
 1. Case analysis on text'
@@ -18776,7 +18774,7 @@ relation Table_entry_keyset_ok: p, C, tblctx, (typ_k, text'), keyset
 
     1. Else Phantom#1201
 
-;; ../../../../spec/4g-typing-decl.watsup:1062.1-1064.32
+;; ../../../../spec/4g-typing-decl.watsup:1061.1-1063.32
 relation Table_entry_keysets_state_ok: p, C, tblctx, tblstate', key*{key <- key*}, keyset*{keyset <- keyset*}
 
 1. Case analysis on key*{key <- key*}
@@ -18807,7 +18805,7 @@ relation Table_entry_keysets_state_ok: p, C, tblctx, tblstate', key*{key <- key*
 
     2. Else Phantom#1203
 
-;; ../../../../spec/4g-typing-decl.watsup:1079.1-1081.26
+;; ../../../../spec/4g-typing-decl.watsup:1078.1-1080.26
 relation Table_entry_keysets_ok: p, C, tblctx, keyset*{keyset <- keyset*}
 
 1. Case analysis on keyset*{keyset <- keyset*}
@@ -18858,7 +18856,7 @@ relation Table_entry_keysets_ok: p, C, tblctx, keyset*{keyset <- keyset*}
 
 2. Else Phantom#1209
 
-;; ../../../../spec/4g-typing-decl.watsup:1106.1-1108.29
+;; ../../../../spec/4g-typing-decl.watsup:1105.1-1107.29
 relation Call_default_action_ok: p, C, pt*{pt <- pt*}, (argIL, typ)*{argIL <- argIL*, typ <- typ*}, argIL_a*{argIL_a <- argIL_a*}
 
 1. If ((|pt*{pt <- pt*}| = |argIL*{argIL <- argIL*}|)), then
@@ -18875,7 +18873,7 @@ relation Call_default_action_ok: p, C, pt*{pt <- pt*}, (argIL, typ)*{argIL <- ar
 
 1. Else Phantom#1211
 
-;; ../../../../spec/4g-typing-decl.watsup:1110.1-1110.59
+;; ../../../../spec/4g-typing-decl.watsup:1109.1-1109.59
 def $filter_directionless_args(paramtyp*{paramtyp <- paramtyp*}, argIL*{argIL <- argIL*})
 
 1. Case analysis on paramtyp*{paramtyp <- paramtyp*}
@@ -18910,7 +18908,7 @@ def $filter_directionless_args(paramtyp*{paramtyp <- paramtyp*}, argIL*{argIL <-
 
     2. Else Phantom#1214
 
-;; ../../../../spec/4g-typing-decl.watsup:1130.1-1132.26
+;; ../../../../spec/4g-typing-decl.watsup:1129.1-1131.26
 relation Table_entry_action_ok: p, C, tblctx, (name arg*{arg <- arg*})
 
 1. (Let (paramtyp*, argIL*)?{(paramtyp*, argIL*) <- (paramtyp*, argIL*)?} be $find_action(tblctx, name))
@@ -18929,7 +18927,7 @@ relation Table_entry_action_ok: p, C, tblctx, (name arg*{arg <- arg*})
 
 2. Else Phantom#1215
 
-;; ../../../../spec/4g-typing-decl.watsup:1147.1-1149.29
+;; ../../../../spec/4g-typing-decl.watsup:1146.1-1148.29
 relation Table_entry_priority_ok: cursor, C, tblctx, tblstate, expr''?{expr'' <- expr''?}
 
 1. If ((cursor matches pattern `LOCAL`)), then
@@ -19082,7 +19080,7 @@ relation Table_entry_priority_ok: cursor, C, tblctx, tblstate, expr''?{expr'' <-
 
 1. Else Phantom#1229
 
-;; ../../../../spec/4g-typing-decl.watsup:1246.1-1248.26
+;; ../../../../spec/4g-typing-decl.watsup:1245.1-1247.26
 relation Table_entry_ok: p, C, tblctx, (bool keyset*{keyset <- keyset*} tblaction expr?{expr <- expr?})
 
 1. (Table_entry_keysets_ok: p C tblctx |- keyset*{keyset <- keyset*} : tblstate keysetIL*{keysetIL <- keysetIL*})
@@ -19093,7 +19091,7 @@ relation Table_entry_ok: p, C, tblctx, (bool keyset*{keyset <- keyset*} tblactio
 
 4. Result in tblctx', (bool keysetIL*{keysetIL <- keysetIL*} tblactionIL val?{val <- val?})
 
-;; ../../../../spec/4g-typing-decl.watsup:1261.1-1263.26
+;; ../../../../spec/4g-typing-decl.watsup:1260.1-1262.26
 relation Table_entries_fold_ok: p, C, tblctx, tblentry*{tblentry <- tblentry*}
 
 1. Case analysis on tblentry*{tblentry <- tblentry*}
@@ -19112,7 +19110,7 @@ relation Table_entries_fold_ok: p, C, tblctx, tblentry*{tblentry <- tblentry*}
 
     4. Result in tblctx'', tblentryIL_h :: tblentryIL_t*{tblentryIL_t <- tblentryIL_t*}
 
-;; ../../../../spec/4g-typing-decl.watsup:1276.1-1278.26
+;; ../../../../spec/4g-typing-decl.watsup:1275.1-1277.26
 relation Table_entries_ok: p, C, tblctx_0, (b tblentry*{tblentry <- tblentry*})
 
 1. If (((|tblctx_0.KEYS| = 0) => (|tblentry*{tblentry <- tblentry*}| = 0))), then
@@ -19127,7 +19125,7 @@ relation Table_entries_ok: p, C, tblctx_0, (b tblentry*{tblentry <- tblentry*})
 
 1. Else Phantom#1230
 
-;; ../../../../spec/4g-typing-decl.watsup:1294.1-1296.26
+;; ../../../../spec/4g-typing-decl.watsup:1293.1-1295.26
 relation Table_default_ok: p, C, tblctx, (bool (name arg*{arg <- arg*}))
 
 1. (Let (paramtyp*, argIL*)?{(paramtyp*, argIL*) <- (paramtyp*, argIL*)?} be $find_action(tblctx, name))
@@ -19146,7 +19144,7 @@ relation Table_default_ok: p, C, tblctx, (bool (name arg*{arg <- arg*}))
 
 2. Else Phantom#1231
 
-;; ../../../../spec/4g-typing-decl.watsup:1314.1-1316.26
+;; ../../../../spec/4g-typing-decl.watsup:1313.1-1315.26
 relation Table_custom_ok: p, C, tblctx, (b text' expr)
 
 1. Case analysis on text'
@@ -19223,7 +19221,7 @@ relation Table_custom_ok: p, C, tblctx, (b text' expr)
 
 2. Else Phantom#1239
 
-;; ../../../../spec/4g-typing-decl.watsup:1355.1-1357.26
+;; ../../../../spec/4g-typing-decl.watsup:1354.1-1356.26
 relation Table_prop_ok: p, C, tblctx, tblprop
 
 1. Case analysis on tblprop
@@ -19268,7 +19266,7 @@ relation Table_prop_ok: p, C, tblctx, tblprop
 
     3. Result in tblctx', (CustomP tblcustompropIL)
 
-;; ../../../../spec/4g-typing-decl.watsup:1385.1-1387.26
+;; ../../../../spec/4g-typing-decl.watsup:1384.1-1386.26
 relation Table_props_ok: p, C, tblctx, tblprop*{tblprop <- tblprop*}
 
 1. Case analysis on tblprop*{tblprop <- tblprop*}
@@ -19287,7 +19285,7 @@ relation Table_props_ok: p, C, tblctx, tblprop*{tblprop <- tblprop*}
 
     4. Result in tblctx'', tblpropIL_h :: tblpropIL_t*{tblpropIL_t <- tblpropIL_t*}
 
-;; ../../../../spec/4g-typing-decl.watsup:1404.1-1406.26
+;; ../../../../spec/4g-typing-decl.watsup:1403.1-1405.26
 relation Table_type_decl_ok: cursor, C, tblctx, id
 
 1. If ((cursor matches pattern `BLOCK`)), then
