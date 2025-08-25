@@ -33,6 +33,24 @@ rule Stmt_ok/assignmentStatement-eq:
 ;;;;; `+= | `-= | `|+|= | `|-|= | `*=
 ;;;;; | `/= | `%= | `<<= | `>>= | `&= | `^= | `|=
 
+rule Stmt_ok/assignmentStatement-compound:
+  p TC f |- lvalue assignop expression `;
+          : TC f (typedLvalueIR assignop typedExpressionIR `;)
+  -- if binop = $assignop_to_binop(assignop)
+  ---- ;; check lvalue
+  -- Lvalue_ok: p TC |- lvalue : typedLvalueIR
+  ---- ;; use lvalue as expression
+  -- if expression_lvalue = $lvalue_to_expression(lvalue)
+  ---- ;; check binary expression
+  -- if expression_binary = expression_lvalue binop expression
+  -- Expr_ok: p TC |- expression_binary : typedExpressionIR_binary
+  ---- ;; fetch annotations
+  -- if _ `# `( typeIR_lvalue ) = typedLvalueIR
+  ---- ;; check type compatibility
+  -- if _ = $coerce_unary(typedExpressionIR_binary, typeIR_lvalue)
+  ---- ;; fetch typed expression
+  -- if (_ _ typedExpressionIR) `# _ = typedExpressionIR_binary
+
 ;;; callStatement
 ;;; syntax callStatement
 
