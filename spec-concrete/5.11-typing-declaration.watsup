@@ -789,6 +789,11 @@ rule Decl_ok/typeDeclaration-typedefDeclaration-typedef-type:
   -- if typedefDeclarationIR
       = annotationList TYPEDEF typeIR nameIR `;
 
+dec $get_type_args(typeIR) : typeIR*
+def $get_type_args(polyTypeDefIR `< typeIR* >) = typeIR*
+def $get_type_args(typeIR) = eps
+  -- otherwise
+
 rule Decl_ok/typeDeclaration-typedefDeclaration-typedef-type-constructor:
   GLOBAL TC_0 |- annotationList TYPEDEF type name `;
                : TC_2 typedefDeclarationIR
@@ -804,7 +809,8 @@ rule Decl_ok/typeDeclaration-typedefDeclaration-typedef-type-constructor:
   -- if TC_1 = $add_type(GLOBAL, TC_0, nameIR, typeIR_typedef)
   ---- ;; create constructors from base type and add to context
   -- if nameIR_base = $get_type_name(type)
-  -- if TC_2 = $add_typedef_constructors(TC_1, nameIR, nameIR_base, typeIR_base)
+  -- if typeIR_arg* = $get_type_args(typeIR)
+  -- if TC_2 = $add_typedef_constructors(TC_1, nameIR, nameIR_base, typeIR_arg*)
   ---- ;; create IR
   -- if typedefDeclarationIR
       = annotationList TYPEDEF typeIR nameIR `;

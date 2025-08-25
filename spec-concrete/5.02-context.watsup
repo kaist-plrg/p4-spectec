@@ -337,24 +337,24 @@ def $add_constructors(
   -- if TC'' = $add_constructors(TC', cid_t*, constructorTypeDefIR_t*)
 
 ;;; Adder for constructors from typedef declarations
-dec $add_typedef_constructors(typingContext, nameIR, nameIR, typeIR) : typingContext
-dec $get_typedef_constructors(cid*, constructorTypeDefIR*, nameIR, nameIR, typeIR)
+dec $add_typedef_constructors(typingContext, nameIR, nameIR, typeIR*) : typingContext
+dec $get_typedef_constructors(cid*, constructorTypeDefIR*, nameIR, nameIR, typeIR*)
     : (cid*, constructorTypeDefIR*)
 
-def $add_typedef_constructors(TC, nameIR, nameIR_base, typeIR) = TC'
+def $add_typedef_constructors(TC, nameIR, nameIR_base, typeIR_arg*) = TC'
   -- if `{ (cid `: constructorTypeDefIR)* } = TC.GLOBAL.CDENV
   -- if (cid_typedef*, constructorTypeDefIR_typedef*)
-      = $get_typedef_constructors(cid*, constructorTypeDefIR*, nameIR, nameIR_base, typeIR)
+      = $get_typedef_constructors(cid*, constructorTypeDefIR*, nameIR, nameIR_base, typeIR_arg*)
   -- if TC' = $add_constructors(TC, cid_typedef*, constructorTypeDefIR_typedef*)
 
-def $get_typedef_constructors(eps, eps, nameIR, nameIR_base, typeIR) = (eps, eps)
+def $get_typedef_constructors(eps, eps, nameIR, nameIR_base, typeIR_arg*) = (eps, eps)
 
 def $get_typedef_constructors(
     cid_h :: cid_t*,
     constructorTypeDefIR_h :: constructorTypeDefIR_t*,
     nameIR,
     nameIR_base,
-    typeIR
+    typeIR_arg*
   )
   = (
       cid_typedef_h :: cid_typedef_t*,
@@ -363,22 +363,20 @@ def $get_typedef_constructors(
   -- if id_base `( pid_base* ) = cid_h
   -- if id_base = nameIR_base
   -- if cid_typedef_h = nameIR `( pid_base* )
-  -- if constructorTypeIR_h `< _ `, _ > = constructorTypeDefIR_h
-  -- if CONSTRUCTOR `( constructorParameterTypeIR_h* ) `-> _ = constructorTypeIR_h
-  -- if constructorTypeIR_typedef_h
-      = CONSTRUCTOR `( constructorParameterTypeIR_h* ) `-> typeIR
-  -- if constructorTypeDefIR_typedef_h = constructorTypeIR_typedef_h `< eps `, eps >
+  -- if (constructorTypeIR_typedef_h, tid_impl*)
+      = $specialize_constructorTypeDef(constructorTypeDefIR_h, typeIR_arg*)
+  -- if constructorTypeDefIR_typedef_h = constructorTypeIR_typedef_h `< eps `, tid_impl* >
   -- if (cid_typedef_t*, constructorTypeDefIR_typedef_t*)
-      = $get_typedef_constructors(cid_t*, constructorTypeDefIR_t*, nameIR, nameIR_base, typeIR)
+      = $get_typedef_constructors(cid_t*, constructorTypeDefIR_t*, nameIR, nameIR_base, typeIR_arg*)
 
 def $get_typedef_constructors(
     cid_h :: cid_t*,
     constructorTypeDefIR_h :: constructorTypeDefIR_t*,
     nameIR,
     nameIR_base,
-    typeIR
+    typeIR_arg*
   )
-  = $get_typedef_constructors(cid_t*, constructorTypeDefIR_t*, nameIR, nameIR_base, typeIR)
+  = $get_typedef_constructors(cid_t*, constructorTypeDefIR_t*, nameIR, nameIR_base, typeIR_arg*)
   -- if id_base `( _ ) = cid_h
   -- if id_base =/= nameIR_base
 
