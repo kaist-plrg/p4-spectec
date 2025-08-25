@@ -166,6 +166,71 @@ rule Decls_object_ok/cons:
       p TC frame_1 rdenv_1 |- objectDeclaration_t*
                             : frame_2 rdenv_2 objectDeclarationIR_t*
 
+dec $check_rid_name(rid, rid) : bool
+
+def $check_rid_name(rid_l, rid_r) = true
+  -- if id_l `( _ ) = rid_l
+  -- if id_r `( _ ) = rid_r
+  -- if id_l = id_r
+
+def $check_rid_name(rid_l, rid_r) = false
+  -- otherwise
+
+dec $find_rdenv_by_name(rdenv, rid) : routineTypeDefIR*
+
+def $find_rdenv_by_name(`{ eps }, rid) = eps
+
+def $find_rdenv_by_name(
+    `{ (rid_h `: routineTypeDefIR_h) :: (rid_t `: routineTypeDefIR_t)* },
+    rid
+  )
+  = routineTypeDefIR_h :: $find_rdenv_by_name(`{ (rid_t `: routineTypeDefIR_t)* }, rid)
+  -- if $check_rid_name(rid_h, rid)
+
+def $find_rdenv_by_name(
+    `{ (rid_h `: routineTypeDefIR_h) :: (rid_t `: routineTypeDefIR_t)* },
+    rid
+  )
+  = $find_rdenv_by_name(`{ (rid_t `: routineTypeDefIR_t)* }, rid)
+  -- if ~$check_rid_name(rid_h, rid)
+
+dec $update_rdenv_by_name(rdenv, rid, routineTypeDefIR) : rdenv
+
+def $update_rdenv_by_name(`{ eps }, rid, routineTypeDefIR) = `{ eps }
+
+def $update_rdenv_by_name(
+    `{ (rid_h `: routineTypeDefIR_h) :: (rid_t `: routineTypeDefIR_t)* },
+    rid,
+    routineTypeDefIR
+  )
+  = `{ (rid `: routineTypeDefIR) :: (rid_update_t `: routineTypeDefIR_update_t)* }
+  -- if $check_rid_name(rid_h, rid)
+  -- if `{ (rid_update_t `: routineTypeDefIR_update_t)* }
+      = $update_rdenv_by_name(`{ (rid_t `: routineTypeDefIR_t)* }, rid, routineTypeDefIR)
+
+def $update_rdenv_by_name(
+    `{ (rid_h `: routineTypeDefIR_h) :: (rid_t `: routineTypeDefIR_t)* },
+    rid,
+    routineTypeDefIR
+  )
+  = `{ (rid_h `: routineTypeDefIR_h) :: (rid_update `: routineTypeDefIR_update)* }
+  -- if ~$check_rid_name(rid_h, rid)
+  -- if `{ (rid_update `: routineTypeDefIR_update)* }
+      = $update_rdenv_by_name(`{ (rid_t `: routineTypeDefIR_t)* }, rid, routineTypeDefIR)
+
+dec $check_abstract_method_impl(routineTypeDefIR, routineTypeDefIR) : bool
+
+def $check_abstract_method_impl(routineTypeDefIR_l, routineTypeDefIR_r) = true
+  -- RoutineTypeDef_alpha: routineTypeDefIR_l ~~ routineTypeDefIR_r
+  -- if (EXTERN_METHOD `( parameterTypeIR_l* ) `-> _) `< _ `, _ > = routineTypeDefIR_l
+  -- if (EXTERN_METHOD `( parameterTypeIR_r* ) `-> _) `< _ `, _ > = routineTypeDefIR_r
+  -- if (direction_l _ _ _)* = parameterTypeIR_l*
+  -- if (direction_r _ _ _)* = parameterTypeIR_r*
+  -- (if direction_l = direction_r)*
+
+def $check_abstract_method_impl(routineTypeDefIR_l, routineTypeDefIR_r) = false
+  -- otherwise
+
 dec $subst_rdenv(theta, rdenv, rdenv) : rdenv
 
 def $subst_rdenv(theta, rdenv_extern, `{ eps }) = rdenv_extern
@@ -176,16 +241,16 @@ def $subst_rdenv(
   = $subst_rdenv(theta, rdenv_extern_subst, `{ (rid_init_t `: routineTypeDefIR_init_t)* })
   ---- ;; find abstract extern method
   -- if (EXTERN_METHOD ABSTRACT `( parameterTypeIR* ) `-> typeIR_ret) `< tid_expl* `, tid_impl* >
-      = $find_map<rid, routineTypeDefIR>(rdenv_extern, rid_init_h)
+      = $find_rdenv_by_name(rdenv_extern, rid_init_h)
   ---- ;; make abstract extern method concrete
   -- if routineTypeDefIR
       = (EXTERN_METHOD `( parameterTypeIR* ) `-> typeIR_ret) `< tid_expl* `, tid_impl* >
   -- if routineTypeDefIR_subst = $subst_routineTypeDef(theta, routineTypeDefIR)
   ---- ;; concretized extern method should be the same as the one initialized
-  -- RoutineTypeDef_alpha: routineTypeDefIR_subst ~~ routineTypeDefIR_init_h
+  -- if $check_abstract_method_impl(routineTypeDefIR_subst, routineTypeDefIR_init_h)
   ---- ;; update the map
   -- if rdenv_extern_subst
-      = $update_map<rid, routineTypeDefIR>(rdenv_extern, rid_init_h, routineTypeDefIR_subst)
+      = $update_rdenv_by_name(rdenv_extern, rid_init_h, routineTypeDefIR_init_h)
 
 rule Decl_ok/instantiation-prefixedTypeName-objectInitializer:
   p TC_0 |- annotationList
