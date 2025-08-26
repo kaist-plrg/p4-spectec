@@ -347,7 +347,8 @@ let parse_file time_start includes filename =
 let run_parser includes filename =
   let time_start = start () in
   try
-    parse_file time_start includes filename |> ignore;
+    let value_program = parse_file time_start includes filename in
+    Format.asprintf "%a\n" Interface.Unparse.pp_program value_program |> ignore;
     time_start
   with
   | TestParseFileErr _ as err -> raise err

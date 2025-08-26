@@ -344,8 +344,8 @@ let parse_command =
      in
      fun () ->
        try
-         let _parsed_il = Interface.Parse.parse_file includes_p4 filename_p4 in
-         Format.printf "Parse successful\n"
+         let parsed_il = Interface.Parse.parse_file includes_p4 filename_p4 in
+         Format.printf "%a\n" Interface.Unparse.pp_program parsed_il
        with
        | Sys_error msg -> Format.printf "File error: %s\n" msg
        | ElabError (at, msg) ->

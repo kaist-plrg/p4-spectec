@@ -79,25 +79,3 @@ let wrap_list_v (s : string) (vs : value list) : value =
 
 let ( #@ ) (vs : symbol list) (s : string) : value =
   vs |> wrap_case_v |> with_typ (wrap_var_t s)
-
-let type_of_case_v (v : value) : string =
-  match (v.it, v.note.typ) with
-  | CaseV _, VarT (id, _) -> id.it
-  | _ -> failwith "not a case value"
-
-let flatten_case_v' (value : value) : string * string list list * value' list =
-  match value.it with
-  | CaseV (mixop, values) ->
-      let mixop = List.map (List.map (fun p -> string_of_atom p.it)) mixop in
-      let values = List.map (fun v -> v.it) values in
-      let id = type_of_case_v value in
-      (id, mixop, values)
-  | _ -> failwith "Expected a CaseV value"
-
-let flatten_case_v (value : value) : string * string list list * value list =
-  match value.it with
-  | CaseV (mixop, values) ->
-      let mixop = List.map (List.map (fun p -> string_of_atom p.it)) mixop in
-      let id = type_of_case_v value in
-      (id, mixop, values)
-  | _ -> failwith "Expected a CaseV value"

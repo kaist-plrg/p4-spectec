@@ -1,20 +1,12 @@
 ;;
 ;; Parser transition statement typing
 ;;
-;; syntax transitionStatement = TransS stateExpression?
+;; syntax transitionStatement = TransS stateExpression
 ;;
-
-;;; eps
-
-rule ParserTransition_ok/none:
-  TC_0 name_state* |- TransS eps
-                      : TransS (NameE "reject")
-  ---- ;; if transition is omitted, it is implicitly a
-  ---- ;; transition to the reject state
 
 ;;; NameE name
 
-rule ParserTransition_ok/namE:
+rule ParserTransition_ok/nameE:
   TC_0 name_state* |- TransS (NameE name)
                       : transitionStatementIR
   ---- ;; check that name is a valid state name

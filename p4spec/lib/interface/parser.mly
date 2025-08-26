@@ -330,7 +330,8 @@ typeOrVoid:
 	| VOID { [ Term "VoidT" ] #@ "typeOrVoid" }
   (* From Petr4: HACK for generic return type *)
 	| id = identifier
-    { [ Term "NameT"; NT id ] #@ "nameType" }
+    { let n = [ Term "CURRENT"; NT id ] #@ "prefixedName" in
+      [ Term "NameT"; NT n ] #@ "nameType" }
 ;
 
 (* Type parameters *)
@@ -793,8 +794,11 @@ argumentList_:
 
 (* L-values *)
 lvalue:
-	| e = referenceExpression
-    { [ Term "NameL"; NT e ] #@ "lvalue" }
+  | n = prefixedNonTypeName
+    { [ Term "NameL"; NT n ] #@ "lvalue" }
+	| n = THIS
+    { let n = [ Term "CURRENT"; NT n ] #@ "prefixedName" in
+      [ Term "NameL"; NT n ] #@ "lvalue" }
 	| lv = lvalue DOT m = member %prec DOT
     { [ Term "LvalueAccL"; NT lv; NT m ] #@ "lvalue" }
 	| lv = lvalue L_BRACKET i = expression R_BRACKET
@@ -1120,7 +1124,7 @@ methodPrototype:
       [ Term "MethodM"; NT t; NT n; NT tpl; NT pl ] #@ "methodPrototype" }
 	| _al = annotationList ABSTRACT fp = functionPrototype pop_scope SEMICOLON
     { let (t, n, tpl, pl) = fp in
-      [ Term "AbstractethodM"; NT t; NT n; NT tpl; NT pl ] #@ "methodPrototype" }
+      [ Term "AbstractMethodM"; NT t; NT n; NT tpl; NT pl ] #@ "methodPrototype" }
 ;
 
 methodPrototypeList_:
@@ -1183,13 +1187,12 @@ stateExpression:
     { e }
 ;
 
-transitionStatement:
+transitionStatementOpt:
   | (* empty *)
-    { let sopt = None |> wrap_opt_v "stateExpression" in
-      [ Term "TransS"; NT sopt ] #@ "transitionStatement" }
+    { None |> wrap_opt_v "transitionStatement" }
   | TRANSITION e = stateExpression
-    { let sopt = Some e |> wrap_opt_v "stateExpression" in
-      [ Term "TransS"; NT sopt ] #@ "transitionStatement" }
+    { Some ([ Term "TransS"; NT e ]) #@ "transitionStatement"
+      |> wrap_opt_v "transitionStatement" }
 ;
 
 (* >>>> Value set declarations *)
@@ -1245,8 +1248,8 @@ parserStatementList_:
 
 parserState:
   | _al = annotationList STATE n = push_name L_BRACE sl = parserStatementList
-    t = transitionStatement R_BRACE
-    { [ NT n; NT sl; NT t ] #@ "parserState" }
+    topt = transitionStatementOpt R_BRACE
+    { [ NT n; NT sl; NT topt ] #@ "parserState" }
 ;
 
 parserStateList_:
@@ -1295,7 +1298,7 @@ constOpt:
   | (* empty *)
     { None |> wrap_opt_v "const" }
   | CONST
-    { Some ([ Term "Const" ] #@ "const") |> wrap_opt_v "const" }
+    { Some ([ Term "CONST" ] #@ "const") |> wrap_opt_v "const" }
 ;
 
 (* >>>>>> Table key property *)

@@ -2,10 +2,25 @@
 ;; Parser state typing
 ;;
 ;; syntax parserState =
-;;   name parserStatement* transitionStatement
+;;   name parserStatement* transitionStatement?
 ;;
 
-rule ParserState_ok:
+rule ParserState_ok/none:
+  TC_0 name_state* |- name parserStatement* eps
+                      : parserStateIR
+  ---- ;; enter block scope
+  -- if TC_1 = $enter(TC_0)
+  ---- ;; check parser statements
+  -- ParserStmts_ok: TC_1 |- parserStatement* : TC_2 parserStatementIR*
+  ---- ;; check transition statement
+  -- if transitionStatementIR = TransS "reject"
+  ---- ;; exit block scope
+  -- if TC_3 = $exit(TC_2)
+  ---- ;; create IR
+  -- if parserStateIR
+      = name parserStatementIR* transitionStatementIR
+
+rule ParserState_ok/some:
   TC_0 name_state* |- name parserStatement* transitionStatement
                       : parserStateIR
   ---- ;; enter block scope
