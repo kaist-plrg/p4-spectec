@@ -6,24 +6,25 @@ open Util.Source
 (* Numbers *)
 
 type num = Num.t
+[@@deriving yojson]
 
 (* Texts *)
 
-type text = string
+type text = string [@@deriving yojson]
 
 (* Identifiers *)
 
-type id = id' phrase
-and id' = string
+type id = id' phrase [@@deriving yojson]
+and id' = string [@@deriving yojson]
 
 (* Atoms *)
 
-type atom = atom' phrase
-and atom' = Atom.t
+type atom = atom' phrase [@@deriving yojson]
+and atom' = Atom.t [@@deriving yojson]
 
 (* Mixfix operators *)
 
-type mixop = Mixop.t
+type mixop = Mixop.t [@@deriving yojson]
 
 (* Iterators *)
 
@@ -47,9 +48,12 @@ and typ' =
   | TupleT of typ list      (* `(` list(typ, `,`) `)` *)
   | IterT of typ * iter     (* typ iter *)
   | FuncT                   (* `func` *)
+[@@deriving yojson]
 
 and nottyp = nottyp' phrase
+[@@deriving yojson]
 and nottyp' = mixop * typ list
+[@@deriving yojson]
 
 and deftyp = deftyp' phrase
 and deftyp' =
@@ -82,7 +86,7 @@ and valuecase = mixop * value list
 
 (* Operators *)
 
-and numop = [ `DecOp | `HexOp ]
+and numop = [ `DecOp | `HexOp ] [@@deriving yojson]
 and unop = [ Bool.unop | Num.unop ]
 and binop = [ Bool.binop | Num.binop ]
 and cmpop = [ Bool.cmpop | Num.cmpop ]
@@ -162,8 +166,8 @@ and arg' =
 
 (* Type arguments *)
 
-and targ = targ' phrase
-and targ' = typ'
+and targ = targ' phrase [@@deriving yojson]
+and targ' = typ' [@@deriving yojson]
 
 (* Rules *)
 

@@ -1,7 +1,7 @@
 (* Positions and regions *)
 
-type pos = { file : string; line : int; column : int }
-type region = { left : pos; right : pos }
+type pos = { file : string; line : int; column : int } [@@deriving yojson]
+type region = { left : pos; right : pos } [@@deriving yojson]
 
 let no_pos = { file = ""; line = 0; column = 0 }
 let no_region = { left = no_pos; right = no_pos }
@@ -34,10 +34,10 @@ let string_of_region region =
 
 (* Phrases *)
 
-type ('a, 'b, 'c) info = { it : 'a; note : 'b; at : 'c }
-type ('a, 'b) note_phrase = ('a, 'b, region) info
-type ('a, 'b) note = ('a, 'b, unit) info
-type 'a phrase = ('a, unit, region) info
+type ('a, 'b, 'c) info = { it : 'a; note : 'b; at : 'c } [@@deriving yojson]
+type ('a, 'b) note_phrase = ('a, 'b, region) info [@@deriving yojson]
+type ('a, 'b) note = ('a, 'b, unit) info [@@deriving yojson]
+type 'a phrase = ('a, unit, region) info [@@deriving yojson]
 
 let ( $ ) it at = { it; at; note = () }
 let ( $$ ) it (at, note) = { it; at; note }
