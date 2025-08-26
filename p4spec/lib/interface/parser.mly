@@ -134,9 +134,8 @@ int:
 (* Misc *)
 trailingCommaOpt:
 	| (* empty *)
-    { [ Term "`EMPTY" ] #@ "trailingCommaOpt" }
 	| COMMA
-    { [ Term "," ] #@ "trailingCommaOpt" }
+    { [ Term "" ] #@ "trailingCommaOpt" }
 ;
 
 (* Numbers *)
@@ -226,7 +225,7 @@ nameList_:
     { nl @ [ n ] }
 ;
 
-nameList:
+%inline nameList:
   | nl = nameList_
     { nl |> wrap_list_v "name" }
 ;
@@ -345,7 +344,7 @@ typeParameterList_:
     { tpl @ [ tp ] }
 ;
 
-typeParameterList:
+%inline typeParameterList:
   | tpl = typeParameterList_
     { tpl |> wrap_list_v "typeParameter" }
 ;
@@ -377,7 +376,7 @@ nonEmptyParameterList:
     { pl |> wrap_list_v "parameter" }
 ;
 
-parameterList:
+%inline parameterList:
 	| (* empty *)
     { [] |> wrap_list_v "parameter" }
 	| pl = nonEmptyParameterList
@@ -405,7 +404,7 @@ namedExpressionList_:
     { es @ [ e ] }
 ;
 
-namedExpressionList:
+%inline namedExpressionList:
   | nel = namedExpressionList_
     { nel |> wrap_list_v "namedExpression" }
 ;
@@ -620,7 +619,7 @@ expressionList_:
 		{ es @ [ e ] }
 ;
 
-expressionList:
+%inline expressionList:
   | es = expressionList_ { es |> wrap_list_v "expression" }
 ;
 
@@ -730,7 +729,7 @@ realTypeArgumentList_:
     { targs @ [ targ ] }
 ;
 
-realTypeArgumentList:
+%inline realTypeArgumentList:
   | targs = realTypeArgumentList_
     { targs |> wrap_list_v "typeArgument" }
 ;
@@ -756,7 +755,7 @@ typeArgumentList_:
     { targs @ [ targ ] }
 ;
 
-typeArgumentList:
+%inline typeArgumentList:
   | targs = typeArgumentList_
     { targs |> wrap_list_v "typeArgument" }
 ;
@@ -787,7 +786,7 @@ argumentList_:
     { args }
 ;
 
-argumentList:
+%inline argumentList:
   | args = argumentList_
     { args |> wrap_list_v "argument" }
 ;
@@ -891,7 +890,7 @@ switchCaseList_:
     { cs @ [ c ] }
 ;
 
-switchCaseList:
+%inline switchCaseList:
   | cs = switchCaseList_
     { cs |> wrap_list_v "switchCase" }
 ;
@@ -959,7 +958,7 @@ blockElementStatementList_:
     { sl @ [ s ] }
 ;
 
-blockElementStatementList:
+%inline blockElementStatementList:
   | sl = blockElementStatementList_
     { sl |> wrap_list_v "blockElementStatement" }
 ;
@@ -1013,7 +1012,7 @@ objectDeclarationList_:
     { odl @ [ od ] }
 ;
 
-objectDeclarationList:
+%inline objectDeclarationList:
   | odl = objectDeclarationList_
     { odl |> wrap_list_v "objectDeclaration" }
 ;
@@ -1027,7 +1026,7 @@ errorDeclaration:
 
 (* >> Match kind declarations *)
 matchKindDeclaration:
-	| MATCH_KIND L_BRACE nl = nameList _tcopt = trailingCommaOpt R_BRACE
+	| MATCH_KIND L_BRACE nl = nameList trailingCommaOpt R_BRACE
     { declare_vars_of_il nl;
       [ Term "MatchKindD"; NT nl ] #@ "matchKindDeclaration" }
 ;
@@ -1036,10 +1035,10 @@ matchKindDeclaration:
 (* >>>> Enum type declarations *)
 enumTypeDeclaration:
   | _al = annotationList ENUM n = name L_BRACE
-    nl = nameList _tcopt = trailingCommaOpt R_BRACE
+    nl = nameList trailingCommaOpt R_BRACE
     { [ Term "EnumD"; NT n; NT nl ] #@ "enumTypeDeclaration" }
   | _al = annotationList ENUM t = typeRef n = name L_BRACE
-    nel = namedExpressionList _tcopt = trailingCommaOpt R_BRACE
+    nel = namedExpressionList trailingCommaOpt R_BRACE
     { [ Term "SEnumD"; NT t; NT n; NT nel ] #@ "enumTypeDeclaration" }
 ;
 
@@ -1056,7 +1055,7 @@ typeFieldList_:
     { tfl @ [ tf ] }
 ;
 
-typeFieldList:
+%inline typeFieldList:
   | tfl = typeFieldList_
     { tfl |> wrap_list_v "typeField" }
 ;
@@ -1131,7 +1130,7 @@ methodPrototypeList_:
     { ms @ [ m ] }
 ;
 
-methodPrototypeList:
+%inline methodPrototypeList:
   | ms = methodPrototypeList_
     { ms |> wrap_list_v "methodPrototype" }
 ;
@@ -1166,7 +1165,7 @@ selectCaseList_:
     { cs @ [ c ] }
 ;
 
-selectCaseList:
+%inline selectCaseList:
   | cs = selectCaseList_
     { cs |> wrap_list_v "selectCase" }
 ;
@@ -1239,7 +1238,7 @@ parserStatementList_:
     { sl @ [ s ] }
 ;
 
-parserStatementList:
+%inline parserStatementList:
   | sl = parserStatementList_
     { sl |> wrap_list_v "parserStatement" }
 ;
@@ -1257,7 +1256,7 @@ parserStateList_:
     { sl @ [ s ] }
 ;
 
-parserStateList:
+%inline parserStateList:
   | sl = parserStateList_
     { sl |> wrap_list_v "parserState" }
 ;
@@ -1277,7 +1276,7 @@ parserLocalDeclarationList_:
     { dl @ [ d ] }
 ;
 
-parserLocalDeclarationList:
+%inline parserLocalDeclarationList:
   | dl = parserLocalDeclarationList_
     { dl |> wrap_list_v "parserLocalDeclaration" }
 ;
@@ -1312,7 +1311,7 @@ tableKeyList_:
     { kl @ [ k ] }
 ;
 
-tableKeyList:
+%inline tableKeyList:
   | kl = tableKeyList_
     { kl |> wrap_list_v "tableKey" }
 ;
@@ -1338,7 +1337,7 @@ tableActionList_:
     { acl @ [ ac ] }
 ;
 
-tableActionList:
+%inline tableActionList:
   | acl = tableActionList_
     { acl |> wrap_list_v "tableAction" }
 ;
@@ -1393,7 +1392,7 @@ tablePropertyList_:
     { pl @ [ p ] }
 ;
 
-tablePropertyList:
+%inline tablePropertyList:
   | pl = tablePropertyList_
     { pl |> wrap_list_v "tableProperty" }
 ;
@@ -1432,7 +1431,7 @@ controlLocalDeclarationList_:
     { dl @ [ d ] }
 ;
 
-controlLocalDeclarationList:
+%inline controlLocalDeclarationList:
   | dl = controlLocalDeclarationList_
     { dl |> wrap_list_v "controlLocalDeclaration" }
 ;
@@ -1518,8 +1517,8 @@ annotationBody:
 ;
 
 structuredAnnotationBody:
-	| e = dataElementExpression c = trailingCommaOpt
-    { [ NT e; NT c ] #@ "structuredAnnotationBody" }
+	| _e = dataElementExpression _tcopt = trailingCommaOpt
+    { [ Term "" ] #@ "structuredAnnotationBody" }
 ;
 
 annotation:
@@ -1558,7 +1557,7 @@ declarationList_:
     { dl }
 ;
 
-declarationList:
+%inline declarationList:
   | dl = declarationList_ { dl |> wrap_list_v "declaration" }
 
 p4program:

@@ -335,8 +335,7 @@ let interesting_command =
        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 
 let parse_command =
-  Core.Command.basic
-    ~summary:"parse a P4 program"
+  Core.Command.basic ~summary:"parse a P4 program"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
@@ -346,7 +345,7 @@ let parse_command =
      fun () ->
        try
          let _parsed_il = Interface.Parse.parse_file includes_p4 filename_p4 in
-         Format.printf "Parse successful\n";
+         Format.printf "Parse successful\n"
        with
        | Sys_error msg -> Format.printf "File error: %s\n" msg
        | ElabError (at, msg) ->
