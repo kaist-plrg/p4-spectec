@@ -339,13 +339,27 @@ let parse_command =
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
-     and filename_p4 =
-       flag "-p" (required string) ~doc:"p4 file to typecheck"
+     and filename_p4 = flag "-p" (required string) ~doc:"p4 file to typecheck"
+     and roundtrip =
+       flag "-r" no_arg ~doc:"perform a round-trip parse/unparse"
      in
      fun () ->
        try
-         let parsed_il = Interface.Parse.parse_file includes_p4 filename_p4 in
-         Format.printf "%a\n" Interface.Unparse.pp_program parsed_il
+         let parsed_il_file =
+           Interface.Parse.parse_file includes_p4 filename_p4
+         in
+         let string_p4 =
+           Format.asprintf "%a\n" Interface.Unparse.pp_program parsed_il_file
+         in
+         if roundtrip then
+           let parsed_il_str =
+             Interface.Parse.parse_string filename_p4 string_p4
+           in
+           Il.Eq.eq_value ~dbg:true parsed_il_file parsed_il_str
+           |> (fun b ->
+                if b then "Roundtrip successful" else "Roundtrip failed")
+           |> print_endline
+         else string_p4 |> print_endline
        with
        | Sys_error msg -> Format.printf "File error: %s\n" msg
        | ElabError (at, msg) ->

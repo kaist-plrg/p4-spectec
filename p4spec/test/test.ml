@@ -34,6 +34,8 @@ let log_stat name stat total : unit =
 exception TestCheckErr of string * region * float
 exception TestCheckNegErr of float
 exception TestParseFileErr of string * region * float
+exception TestParseStringErr of string * region * float
+exception TestParseRoundtripErr of float
 exception TestUnknownErr of float
 
 (* Timer *)
@@ -344,14 +346,27 @@ let parse_file time_start includes filename =
   try Interface.Parse.parse_file includes filename
   with ParseError (at, msg) -> raise (TestParseFileErr (msg, at, time_start))
 
+let parse_string time_start filename program_dump =
+  try Interface.Parse.parse_string filename program_dump
+  with ParseError (at, msg) ->
+    raise (TestParseStringErr (msg, at, time_start))
+
+let parse_roundtrip time_start includes filename =
+  let program = parse_file time_start includes filename in
+  let program_dump =
+    Format.asprintf "%a\n" Interface.Unparse.pp_program program
+  in
+  let program_roundtrip = parse_string time_start filename program_dump in
+  if not (Il.Eq.eq_value ~dbg:true program program_roundtrip) then
+    raise (TestParseRoundtripErr time_start)
+  else time_start
+
 let run_parser includes filename =
   let time_start = start () in
-  try
-    let value_program = parse_file time_start includes filename in
-    Format.asprintf "%a\n" Interface.Unparse.pp_program value_program |> ignore;
-    time_start
-  with
+  try parse_roundtrip time_start includes filename with
   | TestParseFileErr _ as err -> raise err
+  | TestParseStringErr _ as err -> raise err
+  | TestParseRoundtripErr _ as err -> raise err
   | _ -> raise (TestUnknownErr time_start)
 
 let run_parser_test stat includes excludes filename =
@@ -367,7 +382,7 @@ let run_parser_test stat includes excludes filename =
     try
       let time_start = run_parser includes filename in
       let duration = stop time_start in
-      let log = Format.asprintf "Parsing success: %s" filename in
+      let log = Format.asprintf "Roundtrip success: %s" filename in
       log |> print_endline;
       Format.eprintf "%s\n" log;
       Format.eprintf ">>> took %.6f seconds\n" duration;
@@ -379,6 +394,31 @@ let run_parser_test stat includes excludes filename =
           Format.asprintf "Error parsing file: %s\n%s" filename
             (string_of_error at msg)
         in
+        log |> print_endline;
+        Format.eprintf "%s\n" log;
+        Format.eprintf ">>> took %.6f seconds\n" duration;
+        {
+          stat with
+          durations = duration :: stat.durations;
+          fail_run = stat.fail_run + 1;
+        }
+    | TestParseStringErr (msg, at, time_start) ->
+        let duration = stop time_start in
+        let log =
+          Format.asprintf "Error parsing string: %s\n%s" filename
+            (string_of_error at msg)
+        in
+        log |> print_endline;
+        Format.eprintf "%s\n" log;
+        Format.eprintf ">>> took %.6f seconds\n" duration;
+        {
+          stat with
+          durations = duration :: stat.durations;
+          fail_run = stat.fail_run + 1;
+        }
+    | TestParseRoundtripErr time_start ->
+        let duration = stop time_start in
+        let log = Format.asprintf "Error roundtripping parser: %s" filename in
         log |> print_endline;
         Format.eprintf "%s\n" log;
         Format.eprintf ">>> took %.6f seconds\n" duration;

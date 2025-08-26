@@ -444,8 +444,8 @@ namedExpressionList_:
 %inline unop: 
 	| NOT { [ Term "LNOT" ] #@ "unop" }
 	| COMPLEMENT { [ Term "BNOT" ] #@ "unop" }
-	| MINUS { [ Term "UPLUS" ] #@ "unop" }
-	| PLUS { [ Term "UMINUS" ] #@ "unop" }
+	| MINUS { [ Term "UMINUS" ] #@ "unop" }
+	| PLUS { [ Term "UPLUS" ] #@ "unop" }
 ;
 
 %inline unaryExpression:
@@ -517,9 +517,9 @@ namedExpressionList_:
 ;
 
 %inline memberAccessExpression:
-  | n = prefixedTypeName DOT m = member %prec DOT
+  | n = prefixedTypeName DOT m = member
     { [ Term "TypeAccE"; NT n; NT m ] #@ "memberAccessExpression" }
-	| e = expression DOT m = member %prec DOT
+	| e = expression DOT m = member
     { [ Term "ExprAccE"; NT e; NT m ] #@ "memberAccessExpression" }
 ;
 
@@ -538,9 +538,9 @@ namedExpressionList_:
 ;
 
 %inline memberAccessExpressionNonBrace:
-  | n = prefixedTypeName DOT m = member %prec DOT
+  | n = prefixedTypeName DOT m = member
     { [ Term "TypeAccE"; NT n; NT m ] #@ "memberAccessExpression" }
-	| e = expressionNonBrace DOT m = member %prec DOT
+	| e = expressionNonBrace DOT m = member
     { [ Term "ExprAccE"; NT e; NT m ] #@ "memberAccessExpression" }
 ;
 
@@ -799,7 +799,7 @@ lvalue:
 	| n = THIS
     { let n = [ Term "CURRENT"; NT n ] #@ "prefixedName" in
       [ Term "NameL"; NT n ] #@ "lvalue" }
-	| lv = lvalue DOT m = member %prec DOT
+	| lv = lvalue DOT m = member
     { [ Term "LvalueAccL"; NT lv; NT m ] #@ "lvalue" }
 	| lv = lvalue L_BRACKET i = expression R_BRACKET
     { [ Term "ArrAccL"; NT lv; NT i ] #@ "lvalue" }

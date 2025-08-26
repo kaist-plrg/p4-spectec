@@ -5,13 +5,14 @@ module F = Format
 
 (* Separator *)
 
-type sep = Nl | Comma
+type sep = Nl | Comma | Space
 
 let is_nl = function Nl -> true | _ -> false
 
 let pp_sep fmt = function
   | Nl -> F.fprintf fmt "\n"
   | Comma -> F.fprintf fmt ", "
+  | Space -> F.fprintf fmt " "
 
 (* Printers *)
 
@@ -44,9 +45,9 @@ let pp_number fmt number =
   | [ [ "FBIT" ]; []; [] ], [ w; i ] -> (
       match (w.it, i.it) with
       | NumV (`Nat w), NumV (`Nat n) ->
-          F.fprintf fmt "%as%a" Bigint.pp w Bigint.pp n
+          F.fprintf fmt "%aw%a" Bigint.pp w Bigint.pp n
       | NumV (`Nat w), NumV (`Int i) ->
-          F.fprintf fmt "%as%a" Bigint.pp w Bigint.pp i
+          F.fprintf fmt "%aw%a" Bigint.pp w Bigint.pp i
       | _ -> failwith "@pp_number: expected NumV")
   | _ -> failwith "@pp_number: unknown number"
 
@@ -90,11 +91,11 @@ let rec pp_baseType fmt baseType =
   | [ [ "StrT" ] ], [] -> F.fprintf fmt "string"
   | [ [ "IntT" ] ], [] -> F.fprintf fmt "int"
   | [ [ "FIntT" ]; [] ], [ expression ] ->
-      F.fprintf fmt "int<%a>" pp_expression expression
+      F.fprintf fmt "int<(%a)>" pp_expression expression
   | [ [ "FBitT" ]; [] ], [ expression ] ->
-      F.fprintf fmt "bit<%a>" pp_expression expression
+      F.fprintf fmt "bit<(%a)>" pp_expression expression
   | [ [ "VBitT" ]; [] ], [ expression ] ->
-      F.fprintf fmt "varbit<%a>" pp_expression expression
+      F.fprintf fmt "varbit<(%a)>" pp_expression expression
   | _ -> failwith "@pp_baseType: unknown baseType"
 
 (* Named types *)
@@ -138,7 +139,7 @@ and pp_listType fmt listType =
 and pp_tupleType fmt tupleType =
   match flatten_case_v tupleType with
   | [ [ "TupleT" ]; [] ], [ typeArgumentList ] ->
-      F.fprintf fmt "tuple%a" pp_typeArgumentList typeArgumentList
+      F.fprintf fmt "tuple%a" pp_typeArgumentList_strict typeArgumentList
   | _ -> failwith "@pp_tupleType: unknown tupleType"
 
 (* Types *)
@@ -303,15 +304,15 @@ and pp_binop fmt binop =
 and pp_binaryExpression fmt binaryExpression =
   match flatten_case_v binaryExpression with
   | [ [ "BinE" ]; []; []; [] ], [ expression_l; binop; expression_r ] ->
-      F.fprintf fmt "%a %a %a" pp_expression expression_l pp_binop binop
+      F.fprintf fmt "((%a) %a (%a))" pp_expression expression_l pp_binop binop
         pp_expression expression_r
   | _ -> failwith "@pp_binaryExpression: unknown binaryExpression"
 
 and pp_ternaryExpression fmt ternaryExpression =
   match flatten_case_v ternaryExpression with
   | [ [ "TernE" ]; []; []; [] ], [ expression_c; expression_t; expression_f ] ->
-      F.fprintf fmt "%a ? %a : %a" pp_expression expression_c pp_expression
-        expression_t pp_expression expression_f
+      F.fprintf fmt "((%a) ? (%a) : (%a))" pp_expression expression_c
+        pp_expression expression_t pp_expression expression_f
   | _ -> failwith "@pp_ternaryExpression: unknown ternaryExpression"
 
 (* Cast expressions *)
@@ -319,7 +320,7 @@ and pp_ternaryExpression fmt ternaryExpression =
 and pp_castExpression fmt castExpression =
   match flatten_case_v castExpression with
   | [ [ "CastE" ]; []; [] ], [ typ; expression ] ->
-      F.fprintf fmt "(%a) %a" pp_type typ pp_expression expression
+      F.fprintf fmt "((%a) (%a))" pp_type typ pp_expression expression
   | _ -> failwith "@pp_castExpression: unknown castExpression"
 
 (* Data (aggregate) expressions *)
@@ -412,7 +413,7 @@ and pp_expression fmt expression =
 and pp_expressionList fmt expressionList =
   match expressionList.it with
   | ListV expressions ->
-      F.fprintf fmt "(%a)" (pp_list pp_expression ~sep:Comma) expressions
+      F.fprintf fmt "%a" (pp_list pp_expression ~sep:Comma) expressions
   | _ -> failwith "@pp_expressionList: expected ListV"
 
 and pp_routineTarget fmt routineTarget = pp_expression fmt routineTarget
@@ -465,6 +466,13 @@ and pp_typeArgument fmt typeArgument =
 and pp_typeArgumentList fmt typeArgumentList =
   match typeArgumentList.it with
   | ListV [] -> ()
+  | ListV typeArguments ->
+      F.fprintf fmt "<%a>" (pp_list pp_typeArgument ~sep:Comma) typeArguments
+  | _ -> failwith "@pp_typeArgumentList: expected ListV"
+
+and pp_typeArgumentList_strict fmt typeArgumentList =
+  match typeArgumentList.it with
+  | ListV [] -> F.fprintf fmt "<>"
   | ListV typeArguments ->
       F.fprintf fmt "<%a>" (pp_list pp_typeArgument ~sep:Comma) typeArguments
   | _ -> failwith "@pp_typeArgumentList: expected ListV"
@@ -708,8 +716,8 @@ and pp_instantiation ?(level = 0) fmt instantiation =
   match flatten_case_v instantiation with
   | ( [ [ "InstD" ]; []; []; []; [] ],
       [ typ; argumentList; name; objectInitializerOpt ] ) ->
-      F.fprintf fmt "%a %a%a%a;" pp_type typ pp_name name pp_argumentList
-        argumentList
+      F.fprintf fmt "%a%a %a%a;" pp_type typ pp_argumentList argumentList
+        pp_name name
         (pp_objectInitializerOpt ~level:(level + 1))
         objectInitializerOpt
   | _ -> failwith "@pp_instantiation: unknown instantiation"
@@ -875,8 +883,8 @@ and pp_externObjectDeclaration ?(level = 0) fmt externObjectDeclaration =
   match flatten_case_v externObjectDeclaration with
   | ( [ [ "ExternObjectD" ]; []; []; [] ],
       [ name; typeParameterList; methodPrototypeList ] ) ->
-      F.fprintf fmt "extern object %a%a {\n%a\n}" pp_name name
-        pp_typeParameterList typeParameterList
+      F.fprintf fmt "extern %a%a {\n%a\n}" pp_name name pp_typeParameterList
+        typeParameterList
         (pp_methodPrototypeList ~level:(level + 1))
         methodPrototypeList
   | _ -> failwith "@pp_externObjectDeclaration: unknown externObjectDeclaration"
@@ -907,17 +915,17 @@ and pp_selectCaseList ?(level = 0) fmt selectCaseList =
 
 and pp_stateExpression ?(level = 0) fmt stateExpression =
   match flatten_case_v stateExpression with
-  | [ [ "NameE" ]; [] ], [ name ] -> pp_name fmt name
+  | [ [ "NameE" ]; [] ], [ name ] -> F.fprintf fmt "%a;" pp_name name
   | [ [ "SelectE" ]; []; [] ], [ expressionList; selectCaseList ] ->
-      F.fprintf fmt "select (%a) {\n%a\n}" pp_expressionList expressionList
+      F.fprintf fmt "select (%a) {\n%a%s\n}" pp_expressionList expressionList
         (pp_selectCaseList ~level:(level + 1))
-        selectCaseList
+        selectCaseList (indent level)
   | _ -> failwith "@pp_stateExpression: unknown stateExpression"
 
 and pp_transitionStatement ?(level = 0) fmt transitionStatement =
   match flatten_case_v transitionStatement with
   | [ [ "TransS" ]; [] ], [ stateExpression ] ->
-      F.fprintf fmt "transition %a;" (pp_stateExpression ~level) stateExpression
+      F.fprintf fmt "transition %a" (pp_stateExpression ~level) stateExpression
   | _ -> failwith "@pp_transitionStatement: unknown transitionStatement"
 
 and pp_transitionStatementOpt ?(level = 0) fmt transitionStatementOpt =
@@ -1067,12 +1075,12 @@ and pp_constOpt fmt constOpt =
 and pp_tableKey fmt tableKey =
   match flatten_case_v tableKey with
   | [ []; []; [] ], [ expression; name ] ->
-      F.fprintf fmt "%a : %a" pp_expression expression pp_name name
+      F.fprintf fmt "%a : %a;" pp_expression expression pp_name name
   | _ -> failwith "@pp_tableKey: unknown tableKey"
 
 and pp_tableKeyList fmt tableKeyList =
   match tableKeyList.it with
-  | ListV tableKeys -> pp_list pp_tableKey ~sep:Comma fmt tableKeys
+  | ListV tableKeys -> pp_list pp_tableKey ~sep:Space fmt tableKeys
   | _ -> failwith "@pp_tableKeyList: expected ListV"
 
 (* Table actions property *)
@@ -1080,7 +1088,7 @@ and pp_tableKeyList fmt tableKeyList =
 and pp_tableActionReference fmt tableActionReference =
   match flatten_case_v tableActionReference with
   | [ []; []; [] ], [ prefixedName; argumentList ] ->
-      F.fprintf fmt "%a%a" pp_prefixedName prefixedName pp_argumentList
+      F.fprintf fmt "%a%a;" pp_prefixedName prefixedName pp_argumentList
         argumentList
   | _ -> failwith "@pp_tableActionReference: unknown tableActionReference"
 
@@ -1088,7 +1096,7 @@ and pp_tableAction fmt tableAction = pp_tableActionReference fmt tableAction
 
 and pp_tableActionList fmt tableActionList =
   match tableActionList.it with
-  | ListV tableActions -> pp_list pp_tableAction ~sep:Comma fmt tableActions
+  | ListV tableActions -> pp_list pp_tableAction ~sep:Space fmt tableActions
   | _ -> failwith "@pp_tableActionList: expected ListV"
 
 (* Table entry property *)
