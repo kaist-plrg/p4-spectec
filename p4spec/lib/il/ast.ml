@@ -30,6 +30,7 @@ type mixop = Mixop.t
 type iter =
   | Opt       (* `?` *)
   | List      (* `*` *)
+[@@deriving yojson]
 
 (* Variables *)
 
