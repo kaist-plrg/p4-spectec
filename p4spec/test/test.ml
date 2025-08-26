@@ -33,6 +33,7 @@ let log_stat name stat total : unit =
 
 exception TestCheckErr of string * region * float
 exception TestCheckNegErr of float
+exception TestParseFileErr of string * region * float
 exception TestUnknownErr of float
 
 (* Timer *)
@@ -337,6 +338,91 @@ let cover_sl_command =
      and testdirs_p4 = flag "-d" (listed string) ~doc:"p4 test directory" in
      fun () -> cover_sl_test specdir includes_p4 excludes_p4 testdirs_p4)
 
+(* P4 Parser test *)
+
+let parse_file time_start includes filename =
+  try Interface.Parse.parse_file includes filename
+  with ParseError (at, msg) -> raise (TestParseFileErr (msg, at, time_start))
+
+let run_parser includes filename =
+  let time_start = start () in
+  try
+    parse_file time_start includes filename |> ignore;
+    time_start
+  with
+  | TestParseFileErr _ as err -> raise err
+  | _ -> raise (TestUnknownErr time_start)
+
+let run_parser_test stat includes excludes filename =
+  if List.exists (String.equal filename) excludes then (
+    let log = Format.asprintf "Excluding file: %s" filename in
+    log |> print_endline;
+    {
+      stat with
+      durations = 0.0 :: stat.durations;
+      exclude_run = stat.exclude_run + 1;
+    })
+  else
+    try
+      let time_start = run_parser includes filename in
+      let duration = stop time_start in
+      let log = Format.asprintf "Parsing success: %s" filename in
+      log |> print_endline;
+      Format.eprintf "%s\n" log;
+      Format.eprintf ">>> took %.6f seconds\n" duration;
+      { stat with durations = duration :: stat.durations }
+    with
+    | TestParseFileErr (msg, at, time_start) ->
+        let duration = stop time_start in
+        let log =
+          Format.asprintf "Error parsing file: %s\n%s" filename
+            (string_of_error at msg)
+        in
+        log |> print_endline;
+        Format.eprintf "%s\n" log;
+        Format.eprintf ">>> took %.6f seconds\n" duration;
+        {
+          stat with
+          durations = duration :: stat.durations;
+          fail_run = stat.fail_run + 1;
+        }
+    | TestUnknownErr time_start ->
+        let duration = stop time_start in
+        let log = Format.asprintf "Unknown error on parser: %s" filename in
+        log |> print_endline;
+        Format.eprintf "%s\n" log;
+        Format.eprintf ">>> took %.6f seconds\n" duration;
+        {
+          stat with
+          durations = duration :: stat.durations;
+          fail_run = stat.fail_run + 1;
+        }
+
+let run_parser_test_driver includes excludes testdir =
+  let excludes = collect_excludes excludes in
+  let filenames = collect_files ~suffix:".p4" testdir in
+  let total = List.length filenames in
+  let stat = empty_stat in
+  Format.asprintf "Running parser tests on %d files\n" total |> print_endline;
+  let stat =
+    List.fold_left
+      (fun stat filename ->
+        Format.asprintf "\n>>> Running parser test on %s" filename
+        |> print_endline;
+        run_parser_test stat includes excludes filename)
+      stat filenames
+  in
+  log_stat "\nRunning parser" stat total
+
+let run_parser_command =
+  Core.Command.basic ~summary:"run parser test on P4 files"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map includes = flag "-i" (listed string) ~doc:"p4 include paths"
+     and excludes = flag "-e" (listed string) ~doc:"p4 test exclude paths"
+     and testdir = flag "-d" (required string) ~doc:"p4 test directory" in
+     fun () -> run_parser_test_driver includes excludes testdir)
+
 let command =
   Core.Command.group ~summary:"p4spec-test"
     [
@@ -345,6 +431,7 @@ let command =
       ("struct", structure_command);
       ("run-sl", run_sl_command);
       ("cover-sl", cover_sl_command);
+      ("parser", run_parser_command);
     ]
 
 let () = Command_unix.run ~version command

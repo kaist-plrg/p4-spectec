@@ -197,7 +197,6 @@ syntax castExpression = CastE type expression
 syntax dataExpression =
   | InvalidE
   | SeqE expression*
-  | SeqDefaultE expression*
   | RecordE namedExpression*
   | RecordDefaultE namedExpression*
 
@@ -514,7 +513,7 @@ syntax externDeclaration =
 ;;;;;; Select cases
 ;;
 
-syntax selectCase = keysetExpression name
+syntax selectCase = keysetExpression* name
 
 ;;
 ;;;;;; Transition statements
@@ -610,7 +609,7 @@ syntax tableEntryPriority = expression
 
 syntax tableEntry =
   const? tableEntryPriority?
-         keysetExpression tableActionReference
+         keysetExpression* tableActionReference
 
 ;;
 ;;;;;;;; Table properties

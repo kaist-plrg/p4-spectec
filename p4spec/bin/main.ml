@@ -334,6 +334,28 @@ let interesting_command =
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 
+let parse_command =
+  Core.Command.basic
+    ~summary:"parse a P4 program"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
+     and filename_p4 =
+       flag "-p" (required string) ~doc:"p4 file to typecheck"
+     in
+     fun () ->
+       try
+         let _parsed_il = Interface.Parse.parse_file includes_p4 filename_p4 in
+         Format.printf "Parse successful\n";
+       with
+       | Sys_error msg -> Format.printf "File error: %s\n" msg
+       | ElabError (at, msg) ->
+           Format.printf "Elaboration error: %s\n" (string_of_error at msg)
+       | ParseError (at, msg) ->
+           Format.printf "Parse error: %s\n" (string_of_error at msg)
+       | Interface.Lexer.Error msg -> Format.printf "Lexer error: %s\n" msg
+       | e -> Format.printf "Unknown error: %s\n" (Printexc.to_string e))
+
 let command =
   Core.Command.group
     ~summary:"p4spec: a language design framework for the p4_16 language"
@@ -346,6 +368,7 @@ let command =
       ("testgen", run_testgen_command);
       ("testgen-dbg", run_testgen_debug_command);
       ("interesting", interesting_command);
+      ("parse", parse_command);
     ]
 
 let () = Command_unix.run ~version command

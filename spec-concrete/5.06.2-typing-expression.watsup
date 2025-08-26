@@ -582,10 +582,10 @@ rule Expr_ok/dataExpression-invalidE:
 
 ;;;; SeqE expression*
 
-rule Expr_ok/dataExpression-seqE:
+rule Expr_ok/dataExpression-seqE-no-default:
   p TC |- SeqE expression_e*
         : (SeqE typedExpressionIR_e*) expressionNoteIR
-  ---- ;; ... should not be used
+  ---- ;; when ... is not be used
   -- if ~(DefaultE <- expression_e*)
   ---- ;; check each expression
   -- (Expr_ok: p TC |- expression_e : typedExpressionIR_e)*
@@ -596,20 +596,21 @@ rule Expr_ok/dataExpression-seqE:
   -- if ctk = $joins_ctk(ctk_e*)
   -- if expressionNoteIR = `( typeIR ctk )
 
-;;;; SeqDefaultE expression*
-
-rule Expr_ok/dataExpression-seqdefaultE:
-  p TC |- SeqDefaultE expression_e*
-        : (SeqDefaultE typedExpressionIR_e*) expressionNoteIR
-  ---- ;; ... should not be used
-  -- if ~(DefaultE <- expression_e*)
+rule Expr_ok/dataExpression-seqE-default:
+   p TC |- SeqE expression_e*
+        : (SeqDefaultE typedExpressionIR_e_h*) expressionNoteIR
+  ---- ;; when ... is used, it must be the last element
+  -- if (DefaultE <- expression_e*) 
+  -- if DefaultE :: expression_e_h_rev* = $rev_<expression>(expression_e*)
+  -- if expression_e_h* = $rev_<expression>(expression_e_h_rev*)
+  -- if ~(DefaultE <- expression_e_h*)
   ---- ;; check each expression
-  -- (Expr_ok: p TC |- expression_e : typedExpressionIR_e)*
+  -- (Expr_ok: p TC |- expression_e_h : typedExpressionIR_e_h)*
   ---- ;; fetch annotations
-  -- if (_ `( typeIR_e ctk_e ) = typedExpressionIR_e)*
+  -- if (_ `( typeIR_e_h ctk_e_h ) = typedExpressionIR_e_h)*
   ---- ;; create typed expression
-  -- if typeIR = SeqDefaultT typeIR_e*
-  -- if ctk = $joins_ctk(ctk_e*)
+  -- if typeIR = SeqDefaultT typeIR_e_h*
+  -- if ctk = $joins_ctk(ctk_e_h*)
   -- if expressionNoteIR = `( typeIR ctk )
 
 ;;;; RecordE namedExpression*
