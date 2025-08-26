@@ -84,7 +84,7 @@ def $free_type(ControlT parameterTypeIR*)
   -- if bound_params
       = $unions_set<tid>($free_parameterType(parameterTypeIR)*)
 
-def $free_type(PackageT typeIR*)
+def $free_type(PackageT tid typeIR*)
   = $unions_set<tid>($free_type(typeIR)*)
 
 def $free_type(TableT _ typeIR) = $free_type(typeIR)
@@ -315,8 +315,8 @@ def $subst_type'(theta, ControlT parameterTypeIR*)
   -- if (parameterTypeIR_subst
         = $subst_parameterType'(theta, parameterTypeIR))*
 
-def $subst_type'(theta, PackageT typeIR*)
-  = PackageT typeIR_subst*
+def $subst_type'(theta, PackageT tid typeIR*)
+  = PackageT tid typeIR_subst*
   -- if (typeIR_subst = $subst_type'(theta, typeIR))*
 
 def $subst_type'(theta, TableT tid typeIR)

@@ -15,8 +15,8 @@ module Pp = Il.Print
 
 (* Cache *)
 
-let func_cache = ref (Cache.Cache.create 1000)
-let rule_cache = ref (Cache.Cache.create 50)
+let func_cache = ref (Cache.Cache.create ~size:1000)
+let rule_cache = ref (Cache.Cache.create ~size:50)
 
 (* Assignments *)
 
@@ -992,7 +992,7 @@ and invoke_rel' (ctx : Ctx.t) (id : id) (values_input : value list) :
     choice attempt_rules'
   in
   if Cache.is_cached_rule id.it then (
-    let cache_result = Cache.Cache.find_opt !rule_cache (id.it, values_input) in
+    let cache_result = Cache.Cache.find !rule_cache (id.it, values_input) in
     match cache_result with
     | Some (subtraces, values_output) ->
         let ctx = Ctx.trace_replace ctx subtraces in
@@ -1105,7 +1105,7 @@ and invoke_func_def (ctx : Ctx.t) (id : id) (targs : targ list)
     choice attempt_clauses'
   in
   if Cache.is_cached_func id.it then (
-    let cache_result = Cache.Cache.find_opt !func_cache (id.it, values_input) in
+    let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
     match cache_result with
     | Some (subtraces, value_output) ->
         let ctx = Ctx.trace_replace ctx subtraces in

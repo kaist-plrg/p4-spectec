@@ -403,7 +403,7 @@ syntax externDeclarationIR =
 ;;;;;; Select cases
 ;;
 
-syntax selectCaseIR = keysetExpressionIR name
+syntax selectCaseIR = keysetExpressionIR* name
 
 ;;
 ;;;;;; Transition statements
@@ -450,7 +450,7 @@ syntax parserStatementIR =
   | conditionalStatementIR
 
 syntax parserStateIR =
-  name parserStatementIR* transitionStatementIR?
+  name parserStatementIR* transitionStatementIR
 
 syntax parserLocalDeclarationIR =
   | constantDeclarationIR
@@ -493,7 +493,7 @@ syntax tableEntryPriorityIR = typedExpressionIR
 
 syntax tableEntryIR =
   const? tableEntryPriorityIR?
-         keysetExpressionIR tableActionReferenceIR
+         keysetExpressionIR* tableActionReferenceIR
 
 ;;
 ;;;;;;;; Table properties

@@ -88,7 +88,7 @@ let run_il_command =
          with
          | WellTyped -> Format.printf "well-typed\n"
          | IllTyped (_, msg) -> Format.printf "ill-typed: %s\n" msg
-         | IllFormed msg -> Format.printf "ill-formed: %s\n" msg
+         | IllFormed (_, msg) -> Format.printf "ill-formed: %s\n" msg
        with
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))

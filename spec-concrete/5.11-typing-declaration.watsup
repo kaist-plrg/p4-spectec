@@ -152,9 +152,10 @@ def $subst_rdenv(
     `{ (rid_init_h -> routineTypeDefIR_init_h) :: (rid_init_t -> routineTypeDefIR_init_t)* }
   )
   = $subst_rdenv(theta, rdenv_extern_subst, `{ (rid_init_t -> routineTypeDefIR_init_t)* })
-  ---- ;; find abstract extern method
-  -- if PolyTD (ExternAbstractMethodT parameterTypeIR* typeIR_ret) tid_expl* tid_impl*
-      = $find_map<rid, routineTypeDefIR>(rdenv_extern, rid_init_h)
+  ---- ;; find abstract extern method by name
+  -- if id_init_h _ = rid_init_h
+  -- if (rid, PolyTD (ExternAbstractMethodT parameterTypeIR* typeIR_ret) tid_expl* tid_impl*)
+      = $find_non_overloaded<routineTypeDefIR>(rdenv_extern, id_init_h)
   ---- ;; make abstract extern method concrete
   -- if routineTypeDefIR
       = PolyTD (ExternMethodT parameterTypeIR* typeIR_ret) tid_expl* tid_impl*
@@ -163,7 +164,7 @@ def $subst_rdenv(
   -- RoutineTypeDef_alpha: routineTypeDefIR_subst ~~ routineTypeDefIR_init_h
   ---- ;; update the map
   -- if rdenv_extern_subst
-      = $update_map<rid, routineTypeDefIR>(rdenv_extern, rid_init_h, routineTypeDefIR_subst)
+      = $update_map<rid, routineTypeDefIR>(rdenv_extern, rid, routineTypeDefIR_subst)
 
 rule Decl_ok/instantiation-nameT-objectInitializer:
   p TC_0 |- InstD (NameT prefixedName) argument* name objectDeclaration*
@@ -685,16 +686,77 @@ rule Decl_ok/typeDeclaration-derivedTypeDeclaration-headerUnionTypeDeclaration:
 
 ;;;;;; PlainT type
 
-rule Decl_ok/typeDeclaration-typedefDeclaration-typdefD-plainT:
+rule Decl_ok/typeDeclaration-typedefDeclaration-typdefD-plainT-non-extern-package:
   GLOBAL TC_0 |- TypeDefD (PlainT type) name
                : TC_1 typedefDeclarationIR
   ---- ;; check type
   -- Type_ok: GLOBAL TC_0 |- type : typeIR eps
   -- Type_wf: $bound(GLOBAL, TC_0) |- typeIR
+  ---- ;; if not extern or package type
+  -- if ~($is_extern_object_typeIR($canon(typeIR))
+          \/ $is_package_object_typeIR($canon(typeIR)))
   ---- ;; create typedef and add to context
   -- if typeIR_typedef = DefT name typeIR
   -- TypeDef_wf: $bound(GLOBAL, TC_0) |- MonoTD typeIR_typedef
   -- if TC_1 = $add_type(GLOBAL, TC_0, name, MonoTD typeIR_typedef)
+  ---- ;; create IR
+  -- if typedefDeclarationIR = TypeDefD (PlainT typeIR) name
+
+rule Decl_ok/typeDeclaration-typedefDeclaration-typdefD-plainT-extern:
+  GLOBAL TC_0 |- TypeDefD (PlainT type) name
+               : TC_2 typedefDeclarationIR
+  ---- ;; check type
+  -- Type_ok: GLOBAL TC_0 |- type : typeIR eps
+  -- Type_wf: $bound(GLOBAL, TC_0) |- typeIR
+  ---- ;; if extern type
+  -- if ExternT tid_alias _ = $canon(typeIR)
+  -- if SpecT _ typeIR_arg* = typeIR
+  ---- ;; create typedef and add to context
+  -- if typeIR_typedef = DefT name typeIR
+  -- TypeDef_wf: $bound(GLOBAL, TC_0) |- MonoTD typeIR_typedef
+  -- if TC_1 = $add_type(GLOBAL, TC_0, name, MonoTD typeIR_typedef)
+  ---- ;; add aliased constructors to the context
+  -- if (cid, constructorTypeDefIR)*
+      = $find_constructors_non_overloaded(TC_0, CURRENT tid_alias)
+  -- if (_ pid* = cid)*
+  -- if (cid_alias = name pid*)*
+  -- if (PolyTD (ConstructorT parameterTypeIR* _) tid_expl* eps
+        = constructorTypeDefIR)*
+  -- if (theta = `{ (tid_expl -> typeIR_arg)* })*
+  -- if (parameterTypeIR_subst
+        = $subst_parameterType(theta, parameterTypeIR))**
+  -- if (constructorTypeDefIR_alias
+        = PolyTD (ConstructorT parameterTypeIR_subst* typeIR) eps eps)*
+  -- if TC_2 = $add_constructors(TC_1, cid_alias*, constructorTypeDefIR_alias*)
+  ---- ;; create IR
+  -- if typedefDeclarationIR = TypeDefD (PlainT typeIR) name
+
+rule Decl_ok/typeDeclaration-typedefDeclaration-typdefD-plainT-package:
+  GLOBAL TC_0 |- TypeDefD (PlainT type) name
+               : TC_2 typedefDeclarationIR
+  ---- ;; check type
+  -- Type_ok: GLOBAL TC_0 |- type : typeIR eps
+  -- Type_wf: $bound(GLOBAL, TC_0) |- typeIR
+  ---- ;; if package type
+  -- if PackageT tid_alias _ = $canon(typeIR)
+  -- if SpecT _ typeIR_arg* = typeIR
+  ---- ;; create typedef and add to context
+  -- if typeIR_typedef = DefT name typeIR
+  -- TypeDef_wf: $bound(GLOBAL, TC_0) |- MonoTD typeIR_typedef
+  -- if TC_1 = $add_type(GLOBAL, TC_0, name, MonoTD typeIR_typedef)
+  ---- ;; add aliased constructors to the context
+  -- if (cid, constructorTypeDefIR)*
+      = $find_constructors_non_overloaded(TC_0, CURRENT tid_alias)
+  -- if (_ pid* = cid)*
+  -- if (cid_alias = name pid*)*
+  -- if (PolyTD (ConstructorT parameterTypeIR* _) tid_expl* eps
+        = constructorTypeDefIR)*
+  -- if (theta = `{ (tid_expl -> typeIR_arg)* })*
+  -- if (parameterTypeIR_subst
+        = $subst_parameterType(theta, parameterTypeIR))**
+  -- if (constructorTypeDefIR_alias
+        = PolyTD (ConstructorT parameterTypeIR_subst* typeIR) eps eps)*
+  -- if TC_2 = $add_constructors(TC_1, cid_alias*, constructorTypeDefIR_alias*)
   ---- ;; create IR
   -- if typedefDeclarationIR = TypeDefD (PlainT typeIR) name
 
@@ -817,7 +879,7 @@ rule Decl_ok/typeDeclaration-packageTypeDeclaration:
         = $constructorParameterIR(constructorParameterIR))*
   ---- ;; update the context with package type
   -- if (_ typeIR_package_inner _ _ = constructorParameterTypeIR)*
-  -- if typeIR_package = PackageT typeIR_package_inner*
+  -- if typeIR_package = PackageT name typeIR_package_inner*
   -- if polyTypeDefIR_package = PolyTD typeIR_package tid_expl* tid_impl*
   -- TypeDef_wf: $bound(GLOBAL, TC_0) |- polyTypeDefIR_package
   -- if TC_3 = $add_type(GLOBAL, TC_0, name, polyTypeDefIR_package)

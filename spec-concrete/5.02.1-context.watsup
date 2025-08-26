@@ -306,6 +306,7 @@ def $add_routine_non_overload(BLOCK, TC, rid, routineTypeDefIR) = TC'
 ;;; Adder for constructors
 
 dec $add_constructor(typingContext, cid, constructorTypeDefIR) : typingContext
+dec $add_constructors(typingContext, cid*, constructorTypeDefIR*) : typingContext
 
 def $add_constructor(TC, cid, constructorTypeDefIR) = TC'
   -- if cdenv = TC.GLOBAL.CDENV
@@ -313,6 +314,16 @@ def $add_constructor(TC, cid, constructorTypeDefIR) = TC'
   -- if cdenv_update
         = $add_map<cid, constructorTypeDefIR>(cdenv, cid, constructorTypeDefIR)
   -- if TC' = TC [ .GLOBAL.CDENV = cdenv_update ]
+
+def $add_constructors(TC, eps, eps) = TC
+def $add_constructors(
+    TC,
+    cid_h :: cid_t*,
+    constructorTypeDefIR_h :: constructorTypeDefIR_t*
+  )
+  = TC''
+  -- if TC' = $add_constructor(TC, cid_h, constructorTypeDefIR_h)
+  -- if TC'' = $add_constructors(TC', cid_t*, constructorTypeDefIR_t*)
 
 ;;
 ;; Finders
@@ -423,14 +434,14 @@ def $find_routine_overloaded(LOCAL, TC, CURRENT id, argumentIR*)
   = $find_routine_overloaded(BLOCK, TC, CURRENT id, argumentIR*) 
 
 dec $find_routine_non_overloaded(cursor, typingContext, prefixedName)
-  : routineTypeDefIR?
+  : (rid, routineTypeDefIR)?
 
 def $find_routine_non_overloaded(p, TC, TOP id)
   = $find_non_overloaded<routineTypeDefIR>(TC.GLOBAL.RDENV, id)
 def $find_routine_non_overloaded(GLOBAL, TC, CURRENT id)
   = $find_non_overloaded<routineTypeDefIR>(TC.GLOBAL.RDENV, id)
-def $find_routine_non_overloaded(BLOCK, TC, CURRENT id) = routineTypeDefIR
-  -- if routineTypeDefIR
+def $find_routine_non_overloaded(BLOCK, TC, CURRENT id) = (rid, routineTypeDefIR)
+  -- if (rid, routineTypeDefIR)
       = $find_non_overloaded<routineTypeDefIR>(TC.BLOCK.RDENV, id)
 def $find_routine_non_overloaded(BLOCK, TC, CURRENT id)
   = $find_routine_non_overloaded(GLOBAL, TC, CURRENT id)
@@ -452,6 +463,16 @@ def $find_constructor_overloaded(TC, CURRENT id, argumentIR*)
   = $find_overloaded<constructorTypeDefIR>(cdenv, id, (id_arg?)*)
   -- if cdenv = TC.GLOBAL.CDENV
   -- if (id_arg?)* = $ids_arguments(argumentIR*)
+
+dec $find_constructors_non_overloaded(typingContext, prefixedName)
+  : (rid, constructorTypeDefIR)*
+
+def $find_constructors_non_overloaded(TC, TOP id)
+  = $find_non_overloadeds<constructorTypeDefIR>(cdenv, id)
+  -- if cdenv = TC.GLOBAL.CDENV
+def $find_constructors_non_overloaded(TC, CURRENT id)
+  = $find_non_overloadeds<constructorTypeDefIR>(cdenv, id)
+  -- if cdenv = TC.GLOBAL.CDENV
 
 ;;; Finder for return types
 

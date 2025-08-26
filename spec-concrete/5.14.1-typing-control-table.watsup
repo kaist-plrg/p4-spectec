@@ -119,7 +119,7 @@ rule TableAction_ok/tableActionReference:
   TC TBLC_0 |- prefixedName argument*
              : TBLC_1 tableActionIR
   ---- ;; check that the action exists
-  -- if MonoTD (ActionT parameterTypeIR*)
+  -- if (_, MonoTD (ActionT parameterTypeIR*))
       = $find_routine_non_overloaded(LOCAL, TC, prefixedName)
   ---- ;; check arguments
   -- (Argument_ok: LOCAL TC |- argument : argumentIR)*
@@ -457,6 +457,63 @@ rule TableEntry_priority_ok/none-noprilpm:
   -- if TBLC.MODE = NOPRILPM n
   -- if TBLS = LPM n_prefix
 
+rule TableEntry_priority_ok/none-pri-prilpm-init-largest-wins:
+  TC TBLC_0 TBLS |- eps : TBLC_1 typedExpressionIR
+  ---- ;; check match mode
+  -- if TBLC_0.MODE = PRI \/ TBLC_0.MODE = PRILPM
+  ---- ;; if no priority has been specified yet
+  -- if TBLC_0.PRIORITIES.VALUES = eps
+  ---- ;; if largest wins
+  -- if TBLC_0.PRIORITIES.LARGEST_WINS
+  ---- ;; infer and initialize the priority
+  -- if n_size = TBLC_0.ENTRIES.SIZE
+  -- if n_delta = TBLC_0.PRIORITIES.DELTA
+  -- if n = $((n_size - 1) * n_delta + 1)
+  -- if TBLC_1 = $add_table_priority(TBLC_0, n)
+  -- if typedExpressionIR = (NumE (INT n)) `( IntT LCTK )
+
+rule TableEntry_priority_ok/none-pri-prilpm-init-non-largest-wins:
+  TC TBLC_0 TBLS |- eps : TBLC_1 typedExpressionIR
+  ---- ;; check match mode
+  -- if TBLC_0.MODE = PRI \/ TBLC_0.MODE = PRILPM
+  ---- ;; if no priority has been specified yet
+  -- if TBLC_0.PRIORITIES.VALUES = eps
+  ---- ;; if not largest wins
+  -- if ~TBLC_0.PRIORITIES.LARGEST_WINS
+  ---- ;; infer and initialize the priority
+  -- if TBLC_1 = $add_table_priority(TBLC_0, 1)
+  -- if typedExpressionIR = (NumE (INT 1)) `( IntT LCTK )
+
+rule TableEntry_priority_ok/none-pri-prilpm-non-init-largest-wins:
+  TC TBLC_0 TBLS |- eps : TBLC_1 typedExpressionIR
+  ---- ;; check match mode
+  -- if TBLC_0.MODE = PRI \/ TBLC_0.MODE = PRILPM
+  ---- ;; if priority has been specified
+  -- if TBLC_0.PRIORITIES.VALUES =/= eps
+  ---- ;; if largest wins
+  -- if TBLC_0.PRIORITIES.LARGEST_WINS
+  ---- ;; infer the priority
+  -- if n_last = $find_table_priority_last(TBLC_0)
+  -- if n_delta = TBLC_0.PRIORITIES.DELTA
+  -- if n = $(n_last - n_delta)
+  -- if TBLC_1 = $add_table_priority(TBLC_0, n)
+  -- if typedExpressionIR = (NumE (INT n)) `( IntT LCTK )
+
+rule TableEntry_priority_ok/none-pri-prilpm-non-init-non-largest-wins:
+  TC TBLC_0 TBLS |- eps : TBLC_1 typedExpressionIR
+  ---- ;; check match mode
+  -- if TBLC_0.MODE = PRI \/ TBLC_0.MODE = PRILPM
+  ---- ;; if priority has been specified
+  -- if TBLC_0.PRIORITIES.VALUES =/= eps
+  ---- ;; if not largest wins
+  -- if ~TBLC_0.PRIORITIES.LARGEST_WINS
+  ---- ;; infer the priority
+  -- if n_last = $find_table_priority_last(TBLC_0)
+  -- if n_delta = TBLC_0.PRIORITIES.DELTA
+  -- if n = $(n_last + n_delta)
+  -- if TBLC_1 = $add_table_priority(TBLC_0, n)
+  -- if typedExpressionIR = (NumE (INT n)) `( IntT LCTK )
+
 rule TableEntry_priority_ok/some-pri-prilpm-init:
   TC TBLC_0 TBLS |- expression
                   : TBLC_2 typedExpressionIR
@@ -494,10 +551,10 @@ rule TableEntry_priority_ok/some-pri-prilpm-non-init:
 
 rule TableEntry_ok:
   TC TBLC_0 |- const? tableEntryPriority?
-                      keysetExpression tableActionReference
+                      keysetExpression* tableActionReference
              : TBLC_1 tableEntryIR
   ---- ;; check entry key
-  -- TableEntry_keysets_ok: TC TBLC_0 |- keysetExpression : TBLS keysetExpressionIR
+  -- TableEntry_keysets_ok: TC TBLC_0 |- keysetExpression* : TBLS keysetExpressionIR*
   ---- ;; check entry action
   -- TableEntry_action_ok: TC TBLC_0 |- tableActionReference : tableActionReferenceIR
   ---- ;; check entry priority
@@ -506,7 +563,7 @@ rule TableEntry_ok:
   ---- ;; create IR
   -- if tableEntryIR
       = const? tableEntryPriorityIR?
-               keysetExpressionIR tableActionReferenceIR
+               keysetExpressionIR* tableActionReferenceIR
 
 ;;
 ;; Table entry property list typing

@@ -106,6 +106,7 @@ def $nestable'_typedef(numberTypeIR) = true
 def $nestable'_typedef(NameT _) = true
 def $nestable'_typedef(NewT _ _) = true
 def $nestable'_typedef(dataTypeIR) = true
+def $nestable'_typedef(objectTypeIR) = ~$is_table_object_typeIR(objectTypeIR)
 def $nestable'_typedef(_) = false
   -- otherwise
 
@@ -324,7 +325,7 @@ rule Type_wf/controltype:
   -- ParameterTypes_wf: bound |- parameterTypeIR*
 
 rule Type_wf/packagetype:
-  bound |- PackageT typeIR*
+  bound |- PackageT tid typeIR*
   -- (Type_wf: bound |- typeIR)*
 
 rule Type_wf/tabletype:
@@ -452,7 +453,7 @@ def $definable_type_poly(StructT _ _) = true
 def $definable_type_poly(ExternT _ _) = true
 def $definable_type_poly(ParserT _) = true
 def $definable_type_poly(ControlT _) = true
-def $definable_type_poly(PackageT _) = true
+def $definable_type_poly(PackageT _ _) = true
 def $definable_type_poly(_) = false
   -- otherwise
 
@@ -539,7 +540,7 @@ def $nestable_externfunction'(direction, IntT) = false
   -- if direction =/= NO
 def $nestable_externfunction'(direction, ParserT _) = false
 def $nestable_externfunction'(direction, ControlT _) = false
-def $nestable_externfunction'(direction, PackageT _) = false
+def $nestable_externfunction'(direction, PackageT _ _) = false
 def $nestable_externfunction'(direction, TableT _ _) = false
 def $nestable_externfunction'(_, _) = true
   -- otherwise
@@ -569,7 +570,7 @@ def $nestable_externmethod'(direction, IntT) = false
   -- if direction =/= NO
 def $nestable_externmethod'(direction, ParserT _) = false
 def $nestable_externmethod'(direction, ControlT _) = false
-def $nestable_externmethod'(direction, PackageT _) = false
+def $nestable_externmethod'(direction, PackageT _ _) = false
 def $nestable_externmethod'(direction, TableT _ _) = false
 def $nestable_externmethod'(_, _) = true
   -- otherwise
@@ -592,7 +593,7 @@ def $nestable_externabstractmethod'(direction, IntT) = false
   -- if direction =/= NO
 def $nestable_externabstractmethod'(direction, ParserT _) = false
 def $nestable_externabstractmethod'(direction, ControlT _) = false
-def $nestable_externabstractmethod'(direction, PackageT _) = false
+def $nestable_externabstractmethod'(direction, PackageT _ _) = false
 def $nestable_externabstractmethod'(direction, TableT _ _) = false
 def $nestable_externabstractmethod'(_, _) = true
   -- otherwise
@@ -615,7 +616,7 @@ def $nestable_parserapplymethod'(direction, IntT) = false
   -- if direction =/= NO
 def $nestable_parserapplymethod'(direction, ParserT _) = false
 def $nestable_parserapplymethod'(direction, ControlT _) = false
-def $nestable_parserapplymethod'(direction, PackageT _) = false
+def $nestable_parserapplymethod'(direction, PackageT _ _) = false
 def $nestable_parserapplymethod'(direction, TableT _ _) = false
 def $nestable_parserapplymethod'(_, _) = true
   -- otherwise
@@ -636,7 +637,7 @@ def $nestable_controlapplymethod'(direction, StrT) = false
 def $nestable_controlapplymethod'(direction, IntT) = false
   -- if direction =/= NO
 def $nestable_controlapplymethod'(direction, ParserT _) = false
-def $nestable_controlapplymethod'(direction, PackageT _) = false
+def $nestable_controlapplymethod'(direction, PackageT _ _) = false
 def $nestable_controlapplymethod'(direction, TableT _ _) = false
 def $nestable_controlapplymethod'(_, _) = true
   -- otherwise
@@ -712,7 +713,7 @@ def $nestable_constructor_extern(typeIR)
   = $nestable'_constructor_extern($canon(typeIR))
 def $nestable_constructor_extern(ParserT _) = false
 def $nestable'_constructor_extern(ControlT _) = false
-def $nestable'_constructor_extern(PackageT _) = false
+def $nestable'_constructor_extern(PackageT _ _) = false
 def $nestable'_constructor_extern(TableT _ _) = false
 def $nestable'_constructor_extern(_) = true
   -- otherwise
@@ -731,7 +732,7 @@ dec $nestable'_constructor_parser(typeIR) : bool
 def $nestable_constructor_parser(typeIR)
   = $nestable'_constructor_parser($canon(typeIR))
 def $nestable'_constructor_parser(ControlT _) = false
-def $nestable'_constructor_parser(PackageT _) = false
+def $nestable'_constructor_parser(PackageT _ _) = false
 def $nestable'_constructor_parser(TableT _ _) = false
 def $nestable'_constructor_parser(_) = true
   -- otherwise
@@ -750,7 +751,7 @@ dec $nestable'_constructor_control(typeIR) : bool
 def $nestable_constructor_control(typeIR)
   = $nestable'_constructor_control($canon(typeIR))
 def $nestable'_constructor_control(ParserT _) = false
-def $nestable'_constructor_control(PackageT _) = false
+def $nestable'_constructor_control(PackageT _ _) = false
 def $nestable'_constructor_control(TableT _ _) = false
 def $nestable'_constructor_control(_) = true
   -- otherwise
@@ -776,7 +777,7 @@ rule ConstructorType_wf/packagetype:
   bound |- ConstructorT parameterTypeIR* typeIR_object
   -- ConstructorParameterTypes_wf: bound |- parameterTypeIR*
   -- Type_wf: bound |- typeIR_object
-  -- if PackageT _ = $canon(typeIR_object)
+  -- if PackageT _ _ = $canon(typeIR_object)
   -- if (_ typeIR _ _ = parameterTypeIR)*
   -- if $nestable_constructor_package(typeIR)*
 
@@ -792,7 +793,7 @@ def $definable_constructor(typeIR)
 def $definable'_constructor(ExternT _ _) = true
 def $definable'_constructor(ParserT _) = true
 def $definable'_constructor(ControlT _) = true
-def $definable'_constructor(PackageT _) = true
+def $definable'_constructor(PackageT _ _) = true
 def $definable'_constructor(_) = false
   -- otherwise
 

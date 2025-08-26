@@ -48,20 +48,20 @@ def $check_arity_more((id_arg?)*, id_param*) = $(|(id_arg?)*| > |id_param*|)
 dec $check_arity_less((id?)*, id*) : bool
 def $check_arity_less((id_arg?)*, id_param*) = $(|(id_arg?)*| < |id_param*|)
 
-dec $get_missing_parameters(id*, id*) : id*
+dec $get_missing_default_parameters(pid*, id*) : id*
 
-def $get_missing_parameters(eps, id_arg*) = eps
-def $get_missing_parameters(
-    id_param_h :: id_param_t*,
+def $get_missing_default_parameters(eps, id_arg*) = eps
+def $get_missing_default_parameters(
+    (id_param_h true) :: pid_t*,
     id_arg*
   )
-  = id_param_h :: $get_missing_parameters(id_param_t*, id_arg*)
+  = id_param_h :: $get_missing_default_parameters(pid_t*, id_arg*)
   -- if ~$in_set<id>(id_param_h, `{ id_arg* })
-def $get_missing_parameters(
-    id_param_h :: id_param_t*,
+def $get_missing_default_parameters(
+    pid_h :: pid_t*,
     id_arg*
   )
-  = $get_missing_parameters(id_param_t*, id_arg*)
+  = $get_missing_default_parameters(pid_t*, id_arg*)
   -- otherwise
 
 ;; Check match between parameters and named arguments
@@ -76,13 +76,13 @@ def $find_match_named<V>(rid, V, id_arg*, pid*) = eps
 ;; Check match between parameters and named arguments, with default arguments
 dec $find_match_named_default<V>(rid, V, id*, pid*) : (rid, V, id*)?
 
-def $find_match_named_default<V>(rid, V, id_arg*, (id_param bool_param)*)
+def $find_match_named_default<V>(rid, V, id_arg*, pid*)
   = (rid, V, id_default*)
-  -- if id_default* = $get_missing_parameters(id_param*, id_arg*)
+  -- if id_default*
+      = $get_missing_default_parameters(pid*, id_arg*)
   -- if $find_match_named<V>(
           rid, V,
-          id_arg* ++ id_default*,
-          (id_param bool_param)*
+          id_arg* ++ id_default*, pid*
         ) =/= eps
 def $find_match_named_default<V>(rid, V, id_arg*, pid*) = eps
   -- otherwise
@@ -215,27 +215,27 @@ def $find_overloaded<V>(
 ;; Callable non-overload resolution
 ;;
 
-dec $find_non_overloaded<V>(map<rid, V>, id) : V?
-dec $find_non_overloaded'<V>(map<rid, V>, id) : V*
+dec $find_non_overloaded<V>(map<rid, V>, id) : (rid, V)?
+dec $find_non_overloadeds<V>(map<rid, V>, id) : (rid, V)*
 
-def $find_non_overloaded<V>(`{ (rid -> V)* }, id) = V'
-  -- if V' = $find_non_overloaded'<V>(`{ (rid -> V)* }, id)
+def $find_non_overloaded<V>(`{ (rid -> V)* }, id) = (rid', V')
+  -- if (rid', V') = $find_non_overloadeds<V>(`{ (rid -> V)* }, id)
 def $find_non_overloaded<V>(`{ (rid -> V)* }, id) = eps
   -- otherwise
 
-def $find_non_overloaded'<V>(`{ eps }, id) = eps
-def $find_non_overloaded'<V>(
+def $find_non_overloadeds<V>(`{ eps }, id) = eps
+def $find_non_overloadeds<V>(
     `{ (rid_h -> V_h) :: (rid_t -> V_t)* }, id
   )
-  = V_h :: V_t_found*
+  = (rid_h, V_h) :: (rid_t_found, V_t_found)*
   -- if id _ = rid_h
-  -- if V_t_found*
-      = $find_non_overloaded'<V>(`{ (rid_t -> V_t)* }, id)
-def $find_non_overloaded'<V>(
+  -- if (rid_t_found, V_t_found)*
+      = $find_non_overloadeds<V>(`{ (rid_t -> V_t)* }, id)
+def $find_non_overloadeds<V>(
     `{ (rid_h -> V_h) :: (rid_t -> V_t)* }, id
   )
-  = V_t_found*
+  = (rid_t_found, V_t_found)*
   -- if id_h _ = rid_h
   -- if id =/= id_h
-  -- if V_t_found*
-      = $find_non_overloaded'<V>(`{ (rid_t -> V_t)* }, id)
+  -- if (rid_t_found, V_t_found)*
+      = $find_non_overloadeds<V>(`{ (rid_t -> V_t)* }, id)

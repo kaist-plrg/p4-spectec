@@ -260,10 +260,11 @@ def $bin_eq(
   = (tid_a = tid_b)
     /\ $bin_eqs_fields((value_f_a, id_f_a)*, (value_f_b, id_f_b)*)
 def $bin_eq(
-    HeaderV tid_a (value_f_a id_f_a)*,
-    HeaderV tid_b (value_f_b id_f_b)*
+    HeaderV tid_a b_a (value_f_a id_f_a)*,
+    HeaderV tid_b b_b (value_f_b id_f_b)*
   )
   = (tid_a = tid_b)
+    /\ (b_a = b_b)
     /\ $bin_eqs_fields((value_f_a, id_f_a)*, (value_f_b, id_f_b)*)
 def $bin_eq(
     HeaderUnionV tid_a (value_f_a id_f_a)*,
@@ -406,9 +407,9 @@ def $cast_arbint(typeIR, i) = $cast_arbint'($canon(typeIR), i)
 
 def $cast_arbint'(BoolT, i) = BoolV (i = 0)
 def $cast_arbint'(IntT, i) = IntV i
-def $cast_arbint'(FBitT w, i) = FBitV w ($to_bitstr(w, i))
 def $cast_arbint'(FIntT w, i) = FIntV w ($to_bitstr(w, i))
-def $cast_arbint'(DefT _ typeIR, i) = $cast_arbint(typeIR, i)
+def $cast_arbint'(FBitT w, i) = FBitV w ($to_bitstr(w, i))
+def $cast_arbint'(NewT _ typeIR, i) = $cast_arbint(typeIR, i)
 def $cast_arbint'(SetT typeIR, i) = SingletonSetV $cast_arbint(typeIR, i)
 
 def $cast_op(typeIR, IntV i) = $cast_arbint(typeIR, i)
@@ -464,17 +465,17 @@ def $cast_op(typeIR, StructV tid (value_f id_f)*)
 
 ;;; Cast from header
 
-dec $cast_header(typeIR, tid, (value, id)*) : value
-dec $cast_header'(typeIR, tid, (value, id)*) : value
+dec $cast_header(typeIR, tid, bool, (value, id)*) : value
+dec $cast_header'(typeIR, tid, bool, (value, id)*) : value
 
-def $cast_header(typeIR, tid, (value_f, id_f)*)
-  = $cast_header'($canon(typeIR), tid, (value_f, id_f)*)
+def $cast_header(typeIR, tid, b, (value_f, id_f)*)
+  = $cast_header'($canon(typeIR), tid, b, (value_f, id_f)*)
 
-def $cast_header'(HeaderT tid _, tid, (value_f, id_f)*)
-  = HeaderV tid (value_f id_f)*
+def $cast_header'(HeaderT tid _, tid, b, (value_f, id_f)*)
+  = HeaderV tid b (value_f id_f)*
 
-def $cast_op(typeIR, HeaderV tid (value_f id_f)*)
-  = $cast_header(typeIR, tid, (value_f, id_f)*)
+def $cast_op(typeIR, HeaderV tid b (value_f id_f)*)
+  = $cast_header(typeIR, tid, b, (value_f, id_f)*)
 
 ;;; Cast from serializable enum field
 
@@ -504,7 +505,7 @@ def $cast_sequence'(StructT tid (typeIR_f id_f)*, value*)
   -- if (value_cast = $cast_op(typeIR_f, value))*
 
 def $cast_sequence'(HeaderT tid (typeIR_f id_f)*, value*)
-  = HeaderV tid (value_cast id_f)*
+  = HeaderV tid true (value_cast id_f)*
   -- if (value_cast = $cast_op(typeIR_f, value))*
 
 def $cast_op(typeIR, SeqV value*) = $cast_sequence(typeIR, value*)
@@ -531,7 +532,7 @@ def $cast_record'(
     HeaderT tid (typeIR_t_f id_t_f)*,
     (value_f, id_f)*
   )
-  = HeaderV tid (value_f_cast id_f)*
+  = HeaderV tid true (value_f_cast id_f)*
   -- if (value_f' = $find_map<id, value>(`{ (id_f -> value_f)* }, id_t_f))*
   -- if (value_f_cast = $cast_op(typeIR_t_f, value_f'))*
 
@@ -545,6 +546,19 @@ def $cast_op(typeIR, RecordV (value id)*)
 def $cast_op(typeIR, DefaultV) = $default(typeIR)
 
 ;; Cast from invalid
+
+dec $cast_invalid(typeIR) : value
+dec $cast_invalid'(typeIR) : value
+
+def $cast_invalid(typeIR) = $cast_invalid'($canon(typeIR))
+
+def $cast_invalid'(typeIR) = $default(typeIR)
+  -- if typeIR = HeaderT _ _
+
+def $cast_invalid'(typeIR) = $default(typeIR)
+  -- if typeIR = HeaderUnionT _ _
+
+def $cast_op(typeIR, InvalidHeaderV) = $cast_invalid(typeIR)
 
 ;; Cast from set
 
@@ -611,7 +625,7 @@ def $default'(StructT tid (typeIR_f id_f)*)
   = StructV tid ($default(typeIR_f) id_f)*
 
 def $default'(HeaderT tid (typeIR_f id_f)*)
-  = HeaderV tid ($default(typeIR_f) id_f)*
+  = HeaderV tid false ($default(typeIR_f) id_f)*
 
 def $default'(HeaderUnionT tid (typeIR_f id_f)*)
   = HeaderUnionV tid ($default(typeIR_f) id_f)*

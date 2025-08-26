@@ -279,18 +279,57 @@ rule Eval_static/memberAccessExpressionIR-typeaccE-senum:
       = $assoc_<id, value>(name, (id_member, value_member)*)
 
 ;;;;;; ExprAccE typedExpressionIR name
-;;;;;; general member accesses are not evaluated statically
 
-rule Eval_static/memberAccessExpressionIR-experaccE:
+rule Eval_static/memberAccessExpressionIR-expraccE-headerstack:
   p TC |- (ExprAccE typedExpressionIR_base "size") `( typeIR_base _ )
        ~> IntV n_size
   -- if HeaderStackT _ n_size = typeIR_base
+
+rule Eval_static/memberAccessExpressionIR-expraccE-struct:
+  p TC |- (ExprAccE typedExpressionIR_base name) `( typeIR_base _ )
+       ~> value
+  -- Eval_static: p TC |- typedExpressionIR_base ~> value_base
+  -- if StructV _ (value_field id_field)* = value_base
+  -- if value = $assoc_<id, value>(name, (id_field, value_field)*)
+
+rule Eval_static/memberAccessExpressionIR-expraccE-header:
+  p TC |- (ExprAccE typedExpressionIR_base name) `( typeIR_base _ )
+       ~> value
+  -- Eval_static: p TC |- typedExpressionIR_base ~> value_base
+  -- if HeaderV _ _ (value_field id_field)* = value_base
+  -- if value = $assoc_<id, value>(name, (id_field, value_field)*)
+
+rule Eval_static/memberAccessExpressionIR-expraccE-headerunion:
+  p TC |- (ExprAccE typedExpressionIR_base name) `( typeIR_base _ )
+       ~> value
+  -- Eval_static: p TC |- typedExpressionIR_base ~> value_base
+  -- if HeaderUnionV _ (value_field id_field)* = value_base
+  -- if value = $assoc_<id, value>(name, (id_field, value_field)*)
 
 ;;;;; indexAccessExpressionIR
 ;;;;; syntax indexAccessExpressionIR
 
 ;;;;;; ArrAccE typedExpressionIR typedExpressionIR
-;;;;;; tuple or stack accesses are not evaluated statically
+
+rule Eval_static/indexAccessExpressionIR-arraccE-tuple:
+  p TC |- (ArrAccE typedExpressionIR_base typedExpressionIR_index) `( _ _ )
+       ~> value
+  -- Eval_static: p TC |- typedExpressionIR_base ~> value_base
+  -- Eval_static: p TC |- typedExpressionIR_index ~> value_index
+  -- if TupleV value_e* = value_base
+  -- if n_index = $to_number(value_index)
+  -- if $(n_index < |value_e*|)
+  -- if value = value_e*[n_index]
+
+rule Eval_static/indexAccessExpressionIR-arraccE-stack:
+  p TC |- (ArrAccE typedExpressionIR_base typedExpressionIR_index) `( _ _ )
+       ~> value
+  -- Eval_static: p TC |- typedExpressionIR_base ~> value_base
+  -- Eval_static: p TC |- typedExpressionIR_index ~> value_index
+  -- if HeaderStackV value_e* _ _ = value_base
+  -- if n_index = $to_number(value_index)
+  -- if $(n_index < |value_e*|)
+  -- if value = value_e*[n_index]
 
 ;;;;;; BitAccE typedExpressionIR typedExpressionIR typedExpressionIR
 
