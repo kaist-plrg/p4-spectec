@@ -92,7 +92,7 @@ def reduce_program(
         preprocess_command = [
             "cc",
             "-I",
-            "p4/testdata/arch",
+            "p4c/p4include",
             "-undef",
             "-nostdinc",
             "-E",
