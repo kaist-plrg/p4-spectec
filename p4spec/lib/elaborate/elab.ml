@@ -454,6 +454,11 @@ and infer_binop (ctx : Ctx.t) (at : region) (binop : binop)
   let binop_candidates =
     match binop with
     | #Bool.binop -> [ (`BoolT, BoolT, BoolT, BoolT) ]
+    | `SubOp ->
+        [
+          (`IntT, NumT `NatT, NumT `NatT, NumT `IntT);
+          (`IntT, NumT `IntT, NumT `IntT, NumT `IntT);
+        ]
     | #Num.binop ->
         [
           (`NatT, NumT `NatT, NumT `NatT, NumT `NatT);

@@ -71,15 +71,13 @@ let bin (op : binop) num_l num_r : t =
   match (op, num_l, num_r) with
   | `AddOp, `Nat n_l, `Nat n_r -> `Nat Bigint.(n_l + n_r)
   | `AddOp, `Int i_l, `Int i_r -> `Int Bigint.(i_l + i_r)
-  | `SubOp, `Nat n_l, `Nat n_r when n_l >= n_r -> `Nat Bigint.(n_l - n_r)
+  | `SubOp, `Nat n_l, `Nat n_r -> `Int Bigint.(n_l - n_r)
   | `SubOp, `Int i_l, `Int i_r -> `Int Bigint.(i_l - i_r)
   | `MulOp, `Nat n_l, `Nat n_r -> `Nat Bigint.(n_l * n_r)
   | `MulOp, `Int i_l, `Int i_r -> `Int Bigint.(i_l * i_r)
-  | `DivOp, `Nat n_l, `Nat n_r when Bigint.(n_r <> zero && rem n_l n_r = zero)
-    ->
+  | `DivOp, `Nat n_l, `Nat n_r when Bigint.(n_r <> zero) ->
       `Nat Bigint.(n_l / n_r)
-  | `DivOp, `Int i_l, `Int i_r when Bigint.(i_r <> zero && rem i_l i_r = zero)
-    ->
+  | `DivOp, `Int i_l, `Int i_r when Bigint.(i_r <> zero) ->
       `Int Bigint.(i_l / i_r)
   | `ModOp, `Nat n_l, `Nat n_r when Bigint.(n_r <> zero) ->
       `Nat Bigint.(rem n_l n_r)

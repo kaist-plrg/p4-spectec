@@ -13,7 +13,7 @@ open Util.Source
 let do_typing (ctx : Ctx.t) (spec : spec) (value_program : value) :
     Ctx.t * value list =
   let ctx = Interp.load_spec ctx spec in
-  match Interp.invoke_rel ctx ("Prog_ok" $ no_region) [ value_program ] with
+  match Interp.invoke_rel ctx ("Program_ok" $ no_region) [ value_program ] with
   | Some (ctx, values) -> (ctx, values)
   | None -> error no_region "relation was not matched"
 
@@ -22,7 +22,7 @@ let do_typing (ctx : Ctx.t) (spec : spec) (value_program : value) :
 type res =
   | WellTyped of Dep.Graph.t * vid * SCov.Cover.t
   | IllTyped of region * string * SCov.Cover.t
-  | IllFormed of string * SCov.Cover.t
+  | IllFormed of region * string * SCov.Cover.t
 
 let run_typing_internal (spec : spec) (filename_p4 : string)
     (value_program : value) (ignores : IdSet.t) : res =
@@ -30,9 +30,9 @@ let run_typing_internal (spec : spec) (filename_p4 : string)
   Value.refresh ();
   Cache.clear !Interp.func_cache;
   Cache.clear !Interp.rule_cache;
-  let graph = Dep.Graph.empty () in
   let cover = ref (SCov.init ignores spec) in
   try
+    let graph = Dep.Graph.empty () in
     let ctx =
       Ctx.empty ~derive:false filename_p4 graph value_program.note.vid cover
     in
@@ -47,17 +47,17 @@ let run_typing' ?(derive : bool = false) (spec : spec)
   Value.refresh ();
   Cache.clear !Interp.func_cache;
   Cache.clear !Interp.rule_cache;
-  let graph = Dep.Graph.init () in
   let cover = ref (SCov.init ignores spec) in
   try
-    let value_program = Convert.In.in_program graph includes_p4 filename_p4 in
+    let value_program = Interface.Parse.parse_file includes_p4 filename_p4 in
+    let graph = Dep.Graph.assemble_graph value_program in
     let ctx =
       Ctx.empty ~derive filename_p4 graph value_program.note.vid cover
     in
-    let ctx, _values = do_typing ctx spec value_program in
+    let ctx, _ = do_typing ctx spec value_program in
     WellTyped (ctx.graph, ctx.vid_program, !(ctx.cover))
   with
-  | Util.Error.ConvertInError msg -> IllFormed (msg, !cover)
+  | Util.Error.ParseError (at, msg) -> IllFormed (at, msg, !cover)
   | Util.Error.InterpError (at, msg) -> IllTyped (at, msg, !cover)
 
 let run_typing ?(derive : bool = false) (spec : spec)
@@ -79,7 +79,7 @@ let cover_typings (spec : spec) (includes_p4 : string list)
         match run_typing' spec includes_p4 filename_p4 ignores with
         | WellTyped (_, _, cover_single) -> (true, true, cover_single)
         | IllTyped (_, _, cover_single) -> (true, false, cover_single)
-        | IllFormed (_, cover_single) -> (false, false, cover_single)
+        | IllFormed (_, _, cover_single) -> (false, false, cover_single)
       in
       MCov.extend cover_multi filename_p4 wellformed welltyped cover_single)
     cover_multi filenames_p4

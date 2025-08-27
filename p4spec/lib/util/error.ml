@@ -2,8 +2,6 @@ open Source
 
 exception ParseError of region * string
 exception ElabError of region * string
-exception ConvertInError of string
-exception ConvertOutError of string
 exception InterpError of region * string
 
 let debug_errors = false
@@ -22,11 +20,6 @@ let error_parse (at : region) (msg : string) = raise (ParseError (at, msg))
 
 let error_elab (at : region) (msg : string) = raise (ElabError (at, msg))
 let warn_elab (at : region) (msg : string) = warn at "elab" msg
-
-(* Conversion errors *)
-
-let error_convert_in (msg : string) = raise (ConvertInError msg)
-let error_convert_out (msg : string) = raise (ConvertOutError msg)
 
 (* Interpreter errors *)
 

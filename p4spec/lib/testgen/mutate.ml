@@ -396,7 +396,7 @@ let mutate (tdenv : TDEnv.t) (mixopenv : MixopEnv.t) (texts : value' list)
     match expansion () with Some vid -> vid | None -> vid_source
   in
   (* Reassemble the node *)
-  let value_source = Dep.Graph.reassemble_node graph VIdMap.empty vid_source in
+  let value_source = Dep.Graph.reassemble_graph graph VIdMap.empty vid_source in
   (* Mutate the node *)
   let* kind, value_mutated = mutate_walk tdenv mixopenv texts value_source in
   (kind, value_source, value_mutated) |> Option.some

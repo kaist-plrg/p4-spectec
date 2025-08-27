@@ -139,7 +139,8 @@ let debug_phantom (spec : spec) (includes_p4 : string list)
                 derivations_source
                 |> List.map (fun (vid_source, depth) ->
                        let value_source =
-                         Dep.Graph.reassemble_node graph VIdMap.empty vid_source
+                         Dep.Graph.reassemble_graph graph VIdMap.empty
+                           vid_source
                        in
                        (vid_source, value_source, depth))
               in

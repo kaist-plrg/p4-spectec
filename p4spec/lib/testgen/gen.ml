@@ -154,7 +154,7 @@ let update_interesting (fuel : int) (pid : pid) (idx_seed : int)
     with
     | WellTyped (_, _, cover) -> (true, cover)
     | IllTyped (_, _, cover) -> (false, cover)
-    | IllFormed (_, cover) -> (false, cover)
+    | IllFormed (_, _, cover) -> (false, cover)
   in
   let time_end = Unix.gettimeofday () in
   F.asprintf
@@ -188,7 +188,7 @@ let classify_mutation' (fuel : int) (pid : pid) (idx_seed : int)
     (trials : int ref) (config : Config.t) (log : Logger.t)
     (dirname_gen_tmp : string) (filename_p4 : string) (comment_gen_p4 : string)
     (kind : Mutate.kind) (value_source : value) (value_mutated : value)
-    (value_program : value) (program : P4el.Ast.program) : unit =
+    (value_program : value) : unit =
   let filename_gen_p4 =
     F.asprintf "%s/%s_F%dP%dS%d%s%dM%dT%d.p4" dirname_gen_tmp
       (Filesys.base ~suffix:".p4" filename_p4)
@@ -205,7 +205,8 @@ let classify_mutation' (fuel : int) (pid : pid) (idx_seed : int)
   in
   (* Write the mutated program to a file *)
   let oc = open_out filename_gen_p4 in
-  F.asprintf "%s\n%a\n" comment_gen_p4 P4el.Pp.pp_program program
+  F.asprintf "%s\n%a\n" comment_gen_p4 Interface.Unparse.pp_program
+    value_program
   |> output_string oc;
   close_out oc;
   (* Check if the mutated program is interesting, and if so, update *)
@@ -220,15 +221,15 @@ let classify_mutation (fuel : int) (pid : pid) (idx_seed : int)
     (value_source : value) (value_mutated : value) : unit =
   (* Reassemble the program with the mutated AST *)
   let renamer = VIdMap.singleton value_source.note.vid value_mutated in
-  let value_program = Dep.Graph.reassemble_node graph renamer vid_program in
+  let value_program = Dep.Graph.reassemble_graph graph renamer vid_program in
   (* Mutation may yield a syntactically ill-formed AST, so have a try block *)
   try
-    let program = Interp_sl.Convert.Out.out_program value_program in
     classify_mutation' fuel pid idx_seed strategy idx_method idx_mutation trials
       config log dirname_gen_tmp filename_p4 comment_gen_p4 kind value_source
-      value_mutated value_program program
-  with Util.Error.ConvertOutError msg ->
-    Logger.warn config.modes.logmode log msg
+      value_mutated value_program
+  with _ ->
+    Logger.warn config.modes.logmode log
+      "error while printing the mutated program"
 
 let fuzz_mutation (fuel : int) (pid : pid) (idx_seed : int) (strategy : string)
     (idx_method : int) (trials : int ref) (config : Config.t) (log : Logger.t)
@@ -236,7 +237,7 @@ let fuzz_mutation (fuel : int) (pid : pid) (idx_seed : int) (strategy : string)
     (comment_gen_p4 : string) (graph : Dep.Graph.t) (vid_program : vid)
     (vid_source : vid) : unit =
   (* Reassemble the AST *)
-  let value_source = Dep.Graph.reassemble_node graph VIdMap.empty vid_source in
+  let value_source = Dep.Graph.reassemble_graph graph VIdMap.empty vid_source in
   F.asprintf "[F %d] [P %d] [S %d] [%s %d]\n[File] %s\n[Source] %s\n" fuel pid
     idx_seed strategy idx_method filename_p4
     (Sl.Print.string_of_value value_source)

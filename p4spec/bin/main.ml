@@ -117,13 +117,13 @@ let run_sl_command =
          with
          | WellTyped _ -> Format.printf "well-typed\n"
          | IllTyped (_, msg, _) -> Format.printf "ill-typed: %s\n" msg
-         | IllFormed (msg, _) -> Format.printf "ill-formed: %s\n" msg
+         | IllFormed (_, msg, _) -> Format.printf "ill-formed: %s\n" msg
        with
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 
-let cover_sl_command =
-  Core.Command.basic ~summary:"measure phantom coverage of SL"
+let cover_dangling_command =
+  Core.Command.basic ~summary:"measure dangling coverage of the P4 type system"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map filenames_spec = anon (sequence ("filename" %: string))
@@ -377,7 +377,7 @@ let command =
       ("struct", struct_command);
       ("run-il", run_il_command);
       ("run-sl", run_sl_command);
-      ("cover-sl", cover_sl_command);
+      ("cover-dangling", cover_dangling_command);
       ("testgen", run_testgen_command);
       ("testgen-dbg", run_testgen_debug_command);
       ("interesting", interesting_command);

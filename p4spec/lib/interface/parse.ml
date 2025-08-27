@@ -16,6 +16,10 @@ let lex (filename : string) (file : string) =
 
 let parse (lexbuf : Lexing.lexbuf) =
   try Parser.p4program Lexer.lexer lexbuf with
+  | Lexer.Error s ->
+      let info = Lexer.info lexbuf in
+      let msg = Format.asprintf "lexer error: %s" s in
+      error (Source.to_region info) msg
   | Parser.Error ->
       let info = Lexer.info lexbuf in
       let msg = Format.asprintf "syntax error" in

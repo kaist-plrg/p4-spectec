@@ -100,7 +100,25 @@ let elab_command =
        with ParseError (at, msg) | ElabError (at, msg) ->
          Format.printf "Error on elaboration: %s\n" (string_of_error at msg))
 
-(* IL test *)
+(* Structuring test *)
+
+let structure specdir = specdir |> elab |> Structure.Struct.struct_spec
+
+let structure_test specdir =
+  let spec_sl = structure specdir in
+  Sl.Print.string_of_spec spec_sl |> print_endline
+
+let structure_command =
+  Core.Command.basic ~summary:"run structuring test"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map specdir = flag "-s" (required string) ~doc:"p4 spec directory" in
+     fun () ->
+       try structure_test specdir
+       with ParseError (at, msg) | ElabError (at, msg) ->
+         Format.printf "%s\n" (string_of_error at msg))
+
+(* IL interpreter test *)
 
 let run_il negative spec_il includes_p4 filename_p4 =
   let time_start = start () in
@@ -196,25 +214,7 @@ let run_il_command =
      fun () ->
        run_il_test_driver negative specdir includes_p4 excludes_p4 testdir_p4)
 
-(* Structuring test *)
-
-let structure specdir = specdir |> elab |> Structure.Struct.struct_spec
-
-let structure_test specdir =
-  let spec_sl = structure specdir in
-  Sl.Print.string_of_spec spec_sl |> print_endline
-
-let structure_command =
-  Core.Command.basic ~summary:"run structuring test"
-    (let open Core.Command.Let_syntax in
-     let open Core.Command.Param in
-     let%map specdir = flag "-s" (required string) ~doc:"p4 spec directory" in
-     fun () ->
-       try structure_test specdir
-       with ParseError (at, msg) | ElabError (at, msg) ->
-         Format.printf "%s\n" (string_of_error at msg))
-
-(* SL test *)
+(* SL interpreter test *)
 
 let run_sl negative spec_sl includes_p4 filename_p4 =
   let time_start = start () in
@@ -223,7 +223,7 @@ let run_sl negative spec_sl includes_p4 filename_p4 =
     (match Interp_sl.Typing.run_typing spec_sl includes_p4 filename_p4 [] with
     | WellTyped _ -> if negative then raise (TestCheckNegErr time_start)
     | IllTyped (at, msg, _) -> raise (TestCheckErr (msg, at, time_start))
-    | IllFormed (msg, _) -> raise (TestCheckErr (msg, no_region, time_start)));
+    | IllFormed (at, msg, _) -> raise (TestCheckErr (msg, at, time_start)));
     time_start
   with
   | TestCheckErr _ as err -> raise err
@@ -311,9 +311,9 @@ let run_sl_command =
      fun () ->
        run_sl_test_driver negative specdir includes_p4 excludes_p4 testdir_p4)
 
-(* SL coverage test *)
+(* Dangling coverage test *)
 
-let cover_sl_test specdir includes_p4 excludes_p4 testdirs_p4 =
+let cover_dangling_test specdir includes_p4 excludes_p4 testdirs_p4 =
   let spec_sl = structure specdir in
   let excludes_p4 = collect_excludes excludes_p4 in
   let filenames_p4 =
@@ -329,15 +329,15 @@ let cover_sl_test specdir includes_p4 excludes_p4 testdirs_p4 =
   in
   Runtime_testgen.Cov.Multiple.log ~filename_cov_opt:None cover
 
-let cover_sl_command =
-  Core.Command.basic ~summary:"measure phantom coverage of SL"
+let cover_dangling_command =
+  Core.Command.basic ~summary:"measure dangling coverage of the P4 type system"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map specdir = flag "-s" (required string) ~doc:"p4 spec directory"
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and excludes_p4 = flag "-e" (listed string) ~doc:"p4 test exclude paths"
      and testdirs_p4 = flag "-d" (listed string) ~doc:"p4 test directory" in
-     fun () -> cover_sl_test specdir includes_p4 excludes_p4 testdirs_p4)
+     fun () -> cover_dangling_test specdir includes_p4 excludes_p4 testdirs_p4)
 
 (* P4 Parser test *)
 
@@ -467,10 +467,10 @@ let command =
   Core.Command.group ~summary:"p4spec-test"
     [
       ("elab", elab_command);
-      ("run-il", run_il_command);
       ("struct", structure_command);
+      ("run-il", run_il_command);
       ("run-sl", run_sl_command);
-      ("cover-sl", cover_sl_command);
+      ("cover-dangling", cover_dangling_command);
       ("parser", run_parser_command);
     ]
 
