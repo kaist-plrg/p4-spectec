@@ -360,7 +360,6 @@ let json_ast_command =
              let spec_il = Elaborate.Elab.elab_spec spec in
              let spec_sl = Structure.Struct.struct_spec spec_il in
              let sl_ast_json = Sl.Ast.spec_to_yojson spec_sl in
-             (* Yojson.Safe.pp Format.std_formatter sl_ast_json; *)
              Yojson.Safe.pretty_print Format.std_formatter sl_ast_json;
              ()
            with
