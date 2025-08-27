@@ -69,7 +69,7 @@ def run_coverage(
 
     coverage_command = [
         "./p4spectec",
-        "cover-sl",
+        "cover-dangling",
         *SPEC_FILES,
         "-i",
         include,
@@ -176,12 +176,12 @@ if __name__ == "__main__":
     IGNORE_FILES: List[Filepath] = args.ignores
     WORK_DIR: Directory = Directory(args.dir)
 
-    # P4CHERRY_PATH must be set
-    if os.getenv("P4CHERRY_PATH") is None:
-        print("Error: P4CHERRY_PATH environment variable is not set.")
+    # P4SPECTEC_PATH must be set
+    if os.getenv("P4SPECTEC_PATH") is None:
+        print("Error: P4SPECTEC_PATH environment variable is not set.")
         exit(1)
-    P4SPECTEC_DIR: Directory = Directory(str(os.getenv("P4CHERRY_PATH")))
-    print(f"[CONFIG] P4CHERRY_PATH: {P4SPECTEC_DIR}")
+    P4SPECTEC_DIR: Directory = Directory(str(os.getenv("P4SPECTEC_PATH")))
+    print(f"[CONFIG] P4SPECTEC_PATH: {P4SPECTEC_DIR}")
     print(f"\n[INFO] === Starting cleanup ===")
     OUTPUT_PATH: Filepath = Filepath(os.path.join(WORK_DIR, "total.coverage"))
 

@@ -47,14 +47,14 @@ WORKDIR /home
 # --------------------------------------
 FROM base AS p4base
 
-COPY . /home/p4spectec
+COPY . /home/p4-spectec
 # RUN rm -rf /home/p4spectec/p4c && \
 #     mv /home/p4c /home/p4spectec
 
-WORKDIR /home/p4spectec
+WORKDIR /home/p4-spectec
 
 # ---------------------------------------
-# Stage 3: Installations - p4cherry/p4spec
+# Stage 3: Installations - p4-spectec
 # ---------------------------------------
 FROM p4base AS opambase
 
@@ -64,12 +64,12 @@ RUN apt-get update && \
 
 # Initialize opam
 RUN opam init --disable-sandboxing --auto-setup && \
-    opam switch create 4.14.0 && \
+    opam switch create 5.1.0 && \
     eval $(opam env) && \
-    opam install dune menhir bignum core.v0.15.1 core_unix.v0.15.2 bisect_ppx -y
+    opam install dune menhir bignum core core_unix bisect_ppx -y
 
 # Set opam environment permanently
-ENV OPAM_SWITCH_PREFIX=/root/.opam/4.14.0
+ENV OPAM_SWITCH_PREFIX=/root/.opam/5.1.0
 ENV PATH=$OPAM_SWITCH_PREFIX/bin:$PATH
 ENV CAML_LD_LIBRARY_PATH=$OPAM_SWITCH_PREFIX/lib/stublibs:$OPAM_SWITCH_PREFIX/lib/ocaml/stublibs:$OPAM_SWITCH_PREFIX/lib/ocaml
 
@@ -94,4 +94,4 @@ RUN python3 -m pip install psutil
 COPY patches/creduce /usr/bin/creduce
 RUN chmod +x /usr/bin/creduce
 
-ENV P4CHERRY_PATH=/home/p4spectec
+ENV P4SPECTEC_PATH=/home/p4-spectec

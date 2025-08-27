@@ -124,7 +124,7 @@ let parse_width_int s n _info =
       raise (Error "Illegal integer constant")
 
 let parse_text text  =
-  TextV text $$$ { vid = Value.fresh (); typ = TextT }
+  TextV text $$$ { vid = Runtime_dynamic.Value.fresh (); typ = TextT }
 }
 
 let name = [ 'A'-'Z' 'a'-'z' '_' ] [ 'A'-'Z' 'a'-'z' '0'-'9' '_' ]*
@@ -150,7 +150,7 @@ rule tokenize = parse
       { let str, end_info = (string lexbuf) in
         end_info |> ignore;
         let value = 
-          TextV str $$$ { vid = Value.fresh (); typ = TextT }
+          TextV str $$$ { vid = Runtime_dynamic.Value.fresh (); typ = TextT }
         in
         STRING_LITERAL value
       }
@@ -279,7 +279,7 @@ rule tokenize = parse
   | name
       { let text = Lexing.lexeme lexbuf in
         let value =
-          let vid = Value.fresh () in
+          let vid = Runtime_dynamic.Value.fresh () in
           let typ = Il.Ast.TextT in
           TextV text $$$ { vid; typ }
         in
@@ -367,7 +367,7 @@ rule tokenize = parse
   | _
       { let text = lexeme lexbuf in
         let value =
-          let vid = Value.fresh () in
+          let vid = Runtime_dynamic.Value.fresh () in
           let typ = Il.Ast.TextT in
           TextV text $$$ { vid; typ }
         in

@@ -44,7 +44,7 @@ def parse_args() -> FuzzConfig:
 
     parser.add_argument("dir", type=str, help="Path to the working directory")
     parser.add_argument("--loops", type=int, default=2, help="Fuzz loop count")
-    parser.add_argument("--spec", type=str, default="spec")
+    parser.add_argument("--spec", type=str, default="spec-concrete")
     parser.add_argument("--include", type=str, default="p4c/p4include")
     parser.add_argument("--exclude", type=str, default="excludes")
     parser.add_argument(
@@ -63,12 +63,12 @@ def parse_args() -> FuzzConfig:
 
     args = parser.parse_args()
 
-    # P4CHERRY_PATH must be set
-    if os.getenv("P4CHERRY_PATH") is None:
-        print("Error: P4CHERRY_PATH environment variable is not set.")
+    # P4SPECTEC_PATH must be set
+    if os.getenv("P4SPECTEC_PATH") is None:
+        print("Error: P4SPECTEC_PATH environment variable is not set.")
         exit(1)
-    P4SPECTEC_DIR: Directory = Directory(str(os.getenv("P4CHERRY_PATH")))
-    print(f"[CONFIG] P4CHERRY_PATH: {P4SPECTEC_DIR}")
+    P4SPECTEC_DIR: Directory = Directory(str(os.getenv("P4SPECTEC_PATH")))
+    print(f"[CONFIG] P4SPECTEC_PATH: {P4SPECTEC_DIR}")
 
     return FuzzConfig(
         work_dir=args.dir,

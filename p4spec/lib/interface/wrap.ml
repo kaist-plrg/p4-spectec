@@ -43,7 +43,7 @@ let wrap_var_t (s : string) : typ' = VarT (s $ no_region, [])
 let wrap_iter_t (i : iter) (t : typ') : typ' = IterT (t $ no_region, i)
 
 let with_fresh_val (typ : typ') : vnote =
-  let vid = Value.fresh () in
+  let vid = Runtime_dynamic.Value.fresh () in
   { vid; typ }
 
 let with_typ (typ : typ') (v : value') : value = v $$$ with_fresh_val typ
