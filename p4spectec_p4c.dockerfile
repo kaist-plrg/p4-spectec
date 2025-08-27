@@ -38,7 +38,7 @@ RUN cmake --build . -- -j$(nproc) VERBOSE=1 && \
 
 RUN pip3 install gcovr
 
-COPY run_coverage.sh /home/run_coverage.sh
+COPY scripts/run_coverage.sh /home/run_coverage.sh
 RUN chmod a+x /home/run_coverage.sh
 WORKDIR /home
 
