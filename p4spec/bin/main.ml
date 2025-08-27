@@ -345,11 +345,23 @@ let emit_ast_command =
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
          let sl_ast_json = Sl.Ast.spec_to_yojson spec_sl in
+         (* Yojson.Safe.pp Format.std_formatter sl_ast_json; *)
          Yojson.Safe.pretty_print Format.std_formatter sl_ast_json;
          ()
        with
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+
+let parse_ast_command =
+  Core.Command.basic ~summary:"Parse JSON AST to Structured Language"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map filename = anon ("filename" %: string) in
+     fun () ->
+       let parsed = Yojson.Safe.from_file filename |> Sl.Ast.spec_of_yojson in
+       match parsed with
+       | Ok spec -> Format.printf "%s\n" (Sl.Print.string_of_spec spec)
+       | _ -> failwith "foo")
 
 let command =
   Core.Command.group
@@ -364,6 +376,7 @@ let command =
       ("testgen-dbg", run_testgen_debug_command);
       ("interesting", interesting_command);
       ("emit-ast", emit_ast_command);
+      ("parse-ast", parse_ast_command);
     ]
 
 let () = Command_unix.run ~version command

@@ -5,8 +5,7 @@ open Util.Source
 
 (* Numbers *)
 
-type num = Num.t
-[@@deriving yojson]
+type num = Num.t [@@deriving yojson]
 
 (* Texts *)
 

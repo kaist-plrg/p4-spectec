@@ -1,3 +1,5 @@
+(* json conversion helpers for bignum librarie's bigint *)
+
 let to_yojson (num : Bigint.t) : Yojson.Safe.t = `String (Bigint.to_string num)
 
 let of_yojson : Yojson.Safe.t -> (Bigint.t, string) result = function

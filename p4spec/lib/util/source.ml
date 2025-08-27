@@ -35,11 +35,6 @@ let string_of_region region =
 (* Phrases *)
 
 type ('a, 'b, 'c) info = { it : 'a; note : 'b; at : 'c } [@@deriving yojson]
-
-let info_to_yojson (fa : 'a -> Yojson.Safe.t) (_fb : 'b -> Yojson.Safe.t)
-    (_fc : 'c -> Yojson.Safe.t) (value : ('a, 'b, 'c) info) =
-  fa value.it
-
 type ('a, 'b) note_phrase = ('a, 'b, region) info [@@deriving yojson]
 type ('a, 'b) note = ('a, 'b, unit) info [@@deriving yojson]
 type 'a phrase = ('a, unit, region) info [@@deriving yojson]
