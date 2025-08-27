@@ -334,6 +334,50 @@ let interesting_command =
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 
+let json_ast_command =
+  Core.Command.basic ~summary:"Emit/Parse JSON AST for Structured Language"
+    ~readme:(fun () ->
+      "./p4spectec json-ast -emit spec/*.watsup\n\
+       ./p4spectec json-ast -parse <ast-file.json>")
+    (let%map_open.Command mode =
+       Command.Param.choose_one
+         [
+           flag "emit" no_arg ~doc:"Emit JSON AST from supplied spec files"
+           |> map ~f:(fun b -> Core.Option.some_if b `Emit);
+           flag "parse" no_arg
+             ~doc:
+               "Parse JSON AST from supplied JSON file and produce Structured \
+                Language"
+           |> map ~f:(fun b -> Core.Option.some_if b `Parse);
+         ]
+         ~if_nothing_chosen:(Default_to `Emit)
+     and filenames = anon (non_empty_sequence_as_list ("filename" %: string)) in
+     fun () ->
+       match mode with
+       | `Emit -> (
+           try
+             let spec = List.concat_map Frontend.Parse.parse_file filenames in
+             let spec_il = Elaborate.Elab.elab_spec spec in
+             let spec_sl = Structure.Struct.struct_spec spec_il in
+             let sl_ast_json = Sl.Ast.spec_to_yojson spec_sl in
+             Yojson.Safe.pretty_print Format.std_formatter sl_ast_json;
+             ()
+           with
+           | ParseError (at, msg) ->
+               Format.printf "%s\n" (string_of_error at msg)
+           | ElabError (at, msg) ->
+               Format.printf "%s\n" (string_of_error at msg))
+       | `Parse -> (
+           (* only take the first argument *)
+           let filename = List.hd filenames in
+           let parsed =
+             Yojson.Safe.from_file filename |> Sl.Ast.spec_of_yojson
+           in
+           match parsed with
+           | Ok spec -> Format.printf "%s\n" (Sl.Print.string_of_spec spec)
+           | Error err ->
+               Format.printf "Error while parsing %s: %s" filename err))
+
 let command =
   Core.Command.group
     ~summary:"p4spec: a language design framework for the p4_16 language"
@@ -346,6 +390,7 @@ let command =
       ("testgen", run_testgen_command);
       ("testgen-dbg", run_testgen_debug_command);
       ("interesting", interesting_command);
+      ("json-ast", json_ast_command);
     ]
 
 let () = Command_unix.run ~version command

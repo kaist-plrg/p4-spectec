@@ -1,16 +1,29 @@
 (* Numbers: natural numbers and integers *)
 
-type t = [ `Nat of Bigint.t | `Int of Bigint.t ]
-type typ = [ `NatT | `IntT ]
+type t =
+  [ `Nat of
+    (Bigint.t
+    [@to_yojson Util.Bigint_json.to_yojson]
+    [@of_yojson Util.Bigint_json.of_yojson])
+  | `Int of
+    (Bigint.t
+    [@to_yojson Util.Bigint_json.to_yojson]
+    [@of_yojson Util.Bigint_json.of_yojson]) ]
+[@@deriving yojson]
+
+type typ = [ `NatT | `IntT ] [@@deriving yojson]
 
 let to_typ = function `Nat _ -> `NatT | `Int _ -> `IntT
 let to_int = function `Nat i | `Int i -> i
 
 (* Operations *)
 
-type unop = [ `PlusOp | `MinusOp ]
+type unop = [ `PlusOp | `MinusOp ] [@@deriving yojson]
+
 type binop = [ `AddOp | `SubOp | `MulOp | `DivOp | `ModOp | `PowOp ]
-type cmpop = [ `LtOp | `GtOp | `LeOp | `GeOp ]
+[@@deriving yojson]
+
+type cmpop = [ `LtOp | `GtOp | `LeOp | `GeOp ] [@@deriving yojson]
 
 (* Comparison *)
 

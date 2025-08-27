@@ -50,6 +50,7 @@ type t =
   | RBrack          (* ``[` `]` *)
   | LBrace
   | RBrace          (* ``{` `}` *)
+[@@deriving yojson]
 [@@@ocamlformat "enable"]
 
 let compare atom_a atom_b = compare atom_a atom_b
