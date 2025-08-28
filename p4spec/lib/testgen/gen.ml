@@ -227,9 +227,9 @@ let classify_mutation (fuel : int) (pid : pid) (idx_seed : int)
     classify_mutation' fuel pid idx_seed strategy idx_method idx_mutation trials
       config log dirname_gen_tmp filename_p4 comment_gen_p4 kind value_source
       value_mutated value_program
-  with _ ->
+  with Util.Error.UnparseError msg ->
     Logger.warn config.modes.logmode log
-      "error while printing the mutated program"
+      (Format.asprintf "error while printing the mutated program: %s" msg)
 
 let fuzz_mutation (fuel : int) (pid : pid) (idx_seed : int) (strategy : string)
     (idx_method : int) (trials : int ref) (config : Config.t) (log : Logger.t)

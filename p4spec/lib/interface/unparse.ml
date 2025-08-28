@@ -1,7 +1,15 @@
 open Il.Ast
 open Flatten
+open Util.Error
 open Util.Source
 module F = Format
+
+let error_unexpected s n v =
+  error_unparse
+    (F.asprintf "@%s: expected %s but got %s" s n (Il.Print.string_of_value v))
+
+let error_unknown s v =
+  error_unparse (F.asprintf "@%s: unknown %s" s (Il.Print.string_of_value v))
 
 (* Separator *)
 
@@ -29,156 +37,158 @@ let pp_list ?(level = 0) pp_elem ~(sep : sep) fmt l =
 (* Numbers *)
 
 let pp_number fmt number =
-  match flatten_case_v number with
-  | [ [ "INT" ]; [] ], [ i ] -> (
+  match flatten_case_v_opt number with
+  | Some ([ [ "INT" ]; [] ], [ i ]) -> (
       match i.it with
       | NumV (`Nat n) -> Bigint.pp fmt n
       | NumV (`Int i) -> Bigint.pp fmt i
-      | _ -> failwith "@pp_number: expected NumV")
-  | [ [ "FINT" ]; []; [] ], [ w; i ] -> (
+      | _ -> error_unknown "pp_number" number)
+  | Some ([ [ "FINT" ]; []; [] ], [ w; i ]) -> (
       match (w.it, i.it) with
       | NumV (`Nat w), NumV (`Nat n) ->
           F.fprintf fmt "%as%a" Bigint.pp w Bigint.pp n
       | NumV (`Nat w), NumV (`Int i) ->
           F.fprintf fmt "%as%a" Bigint.pp w Bigint.pp i
-      | _ -> failwith "@pp_number: expected NumV")
-  | [ [ "FBIT" ]; []; [] ], [ w; i ] -> (
+      | _ -> error_unknown "pp_number" number)
+  | Some ([ [ "FBIT" ]; []; [] ], [ w; i ]) -> (
       match (w.it, i.it) with
       | NumV (`Nat w), NumV (`Nat n) ->
           F.fprintf fmt "%aw%a" Bigint.pp w Bigint.pp n
       | NumV (`Nat w), NumV (`Int i) ->
           F.fprintf fmt "%aw%a" Bigint.pp w Bigint.pp i
-      | _ -> failwith "@pp_number: expected NumV")
-  | _ -> failwith "@pp_number: unknown number"
+      | _ -> error_unknown "pp_number" number)
+  | _ -> error_unknown "pp_number" number
 
 (* Identifiers *)
 
 let pp_name fmt name =
   match name.it with
   | TextV s -> F.fprintf fmt "%s" s
-  | _ -> failwith "@pp_name: expected TextV"
+  | _ -> error_unexpected "pp_name" "TextV" name
 
 let pp_nameList fmt nameList =
   match nameList.it with
   | ListV names -> F.fprintf fmt "%a" (pp_list pp_name ~sep:Comma) names
-  | _ -> failwith "@pp_nameList: expected ListV"
+  | _ -> error_unexpected "pp_nameList" "ListV" nameList
 
 (* Variables (scoped identifiers) *)
 
 let pp_prefixedName fmt prefixedName =
-  match flatten_case_v prefixedName with
-  | [ [ "TOP" ]; [] ], [ name ] -> F.fprintf fmt ".%a" pp_name name
-  | [ [ "CURRENT" ]; [] ], [ name ] -> F.fprintf fmt "%a" pp_name name
-  | _ -> failwith "@pp_prefixedName: unknown prefixedName"
+  match flatten_case_v_opt prefixedName with
+  | Some ([ [ "TOP" ]; [] ], [ name ]) -> F.fprintf fmt ".%a" pp_name name
+  | Some ([ [ "CURRENT" ]; [] ], [ name ]) -> F.fprintf fmt "%a" pp_name name
+  | _ -> error_unknown "pp_prefixedName" prefixedName
 
 (* Directions *)
 
 let pp_direction fmt direction =
-  match flatten_case_v direction with
-  | [ [ "NO" ] ], [] -> ()
-  | [ [ "IN" ] ], [] -> F.fprintf fmt "in"
-  | [ [ "OUT" ] ], [] -> F.fprintf fmt "out"
-  | [ [ "INOUT" ] ], [] -> F.fprintf fmt "inout"
-  | _ -> failwith "@pp_direction: unknown direction"
+  match flatten_case_v_opt direction with
+  | Some ([ [ "NO" ] ], []) -> ()
+  | Some ([ [ "IN" ] ], []) -> F.fprintf fmt "in"
+  | Some ([ [ "OUT" ] ], []) -> F.fprintf fmt "out"
+  | Some ([ [ "INOUT" ] ], []) -> F.fprintf fmt "inout"
+  | _ -> error_unknown "pp_direction" direction
 
 (* Base types *)
 
 let rec pp_baseType fmt baseType =
-  match flatten_case_v baseType with
-  | [ [ "BoolT" ] ], [] -> F.fprintf fmt "bool"
-  | [ [ "ErrT" ] ], [] -> F.fprintf fmt "error"
-  | [ [ "MatchKindT" ] ], [] -> F.fprintf fmt "match_kind"
-  | [ [ "StrT" ] ], [] -> F.fprintf fmt "string"
-  | [ [ "IntT" ] ], [] -> F.fprintf fmt "int"
-  | [ [ "FIntT" ]; [] ], [ expression ] ->
+  match flatten_case_v_opt baseType with
+  | Some ([ [ "BoolT" ] ], []) -> F.fprintf fmt "bool"
+  | Some ([ [ "ErrT" ] ], []) -> F.fprintf fmt "error"
+  | Some ([ [ "MatchKindT" ] ], []) -> F.fprintf fmt "match_kind"
+  | Some ([ [ "StrT" ] ], []) -> F.fprintf fmt "string"
+  | Some ([ [ "IntT" ] ], []) -> F.fprintf fmt "int"
+  | Some ([ [ "FIntT" ]; [] ], [ expression ]) ->
       F.fprintf fmt "int<(%a)>" pp_expression expression
-  | [ [ "FBitT" ]; [] ], [ expression ] ->
+  | Some ([ [ "FBitT" ]; [] ], [ expression ]) ->
       F.fprintf fmt "bit<(%a)>" pp_expression expression
-  | [ [ "VBitT" ]; [] ], [ expression ] ->
+  | Some ([ [ "VBitT" ]; [] ], [ expression ]) ->
       F.fprintf fmt "varbit<(%a)>" pp_expression expression
-  | _ -> failwith "@pp_baseType: unknown baseType"
+  | _ -> error_unknown "pp_baseType" baseType
 
 (* Named types *)
 
 and pp_nameType fmt nameType =
-  match flatten_case_v nameType with
-  | [ [ "NameT" ]; [] ], [ prefixedName ] -> pp_prefixedName fmt prefixedName
-  | _ -> failwith "@pp_nameType: unknown nameType"
+  match flatten_case_v_opt nameType with
+  | Some ([ [ "NameT" ]; [] ], [ prefixedName ]) ->
+      pp_prefixedName fmt prefixedName
+  | _ -> error_unknown "pp_nameType" nameType
 
 and pp_specializedType fmt specializedType =
-  match flatten_case_v specializedType with
-  | [ [ "SpecT" ]; []; [] ], [ prefixedName; typeArgumentList ] ->
+  match flatten_case_v_opt specializedType with
+  | Some ([ [ "SpecT" ]; []; [] ], [ prefixedName; typeArgumentList ]) ->
       F.fprintf fmt "%a%a" pp_prefixedName prefixedName pp_typeArgumentList
         typeArgumentList
-  | _ -> failwith "@pp_specializedType: unknown specializedType"
+  | _ -> error_unknown "pp_specializedType" specializedType
 
 and pp_namedType fmt namedType =
-  match flatten_case_v namedType with
-  | [ [ "NameT" ]; [] ], _ -> pp_nameType fmt namedType
-  | [ [ "SpecT" ]; []; [] ], _ -> pp_specializedType fmt namedType
-  | _ -> failwith "@pp_namedType: unknown namedType"
+  match flatten_case_v_opt namedType with
+  | Some ([ [ "NameT" ]; [] ], _) -> pp_nameType fmt namedType
+  | Some ([ [ "SpecT" ]; []; [] ], _) -> pp_specializedType fmt namedType
+  | _ -> error_unknown "pp_namedType" namedType
 
 (* Header stack types *)
 
 and pp_headerStackType fmt headerStackType =
-  match flatten_case_v headerStackType with
-  | [ [ "HeaderStackT" ]; []; [] ], [ namedType; expression ] ->
+  match flatten_case_v_opt headerStackType with
+  | Some ([ [ "HeaderStackT" ]; []; [] ], [ namedType; expression ]) ->
       F.fprintf fmt "%a[%a]" pp_namedType namedType pp_expression expression
-  | _ -> failwith "@pp_headerStackType: unknown headerStackType"
+  | _ -> error_unknown "pp_headerStackType" headerStackType
 
 (* List types *)
 
 and pp_listType fmt listType =
-  match flatten_case_v listType with
-  | [ [ "ListT" ]; [] ], [ typeArgument ] ->
+  match flatten_case_v_opt listType with
+  | Some ([ [ "ListT" ]; [] ], [ typeArgument ]) ->
       F.fprintf fmt "list<%a>" pp_typeArgument typeArgument
-  | _ -> failwith "@pp_listType: unknown listType"
+  | _ -> error_unknown "pp_listType" listType
 
 (* Tuple types *)
 
 and pp_tupleType fmt tupleType =
-  match flatten_case_v tupleType with
-  | [ [ "TupleT" ]; [] ], [ typeArgumentList ] ->
+  match flatten_case_v_opt tupleType with
+  | Some ([ [ "TupleT" ]; [] ], [ typeArgumentList ]) ->
       F.fprintf fmt "tuple%a" pp_typeArgumentList_strict typeArgumentList
-  | _ -> failwith "@pp_tupleType: unknown tupleType"
+  | _ -> error_unknown "pp_tupleType" tupleType
 
 (* Types *)
 
 and pp_type fmt typ =
-  match flatten_case_v typ with
-  | [ [ "BoolT" ] ], _
-  | [ [ "ErrT" ] ], _
-  | [ [ "MatchKindT" ] ], _
-  | [ [ "StrT" ] ], _
-  | [ [ "IntT" ] ], _
-  | [ [ "FIntT" ]; [] ], _
-  | [ [ "FBitT" ]; [] ], _
-  | [ [ "VBitT" ]; [] ], _ ->
+  match flatten_case_v_opt typ with
+  | Some ([ [ "BoolT" ] ], _)
+  | Some ([ [ "ErrT" ] ], _)
+  | Some ([ [ "MatchKindT" ] ], _)
+  | Some ([ [ "StrT" ] ], _)
+  | Some ([ [ "IntT" ] ], _)
+  | Some ([ [ "FIntT" ]; [] ], _)
+  | Some ([ [ "FBitT" ]; [] ], _)
+  | Some ([ [ "VBitT" ]; [] ], _) ->
       pp_baseType fmt typ
-  | [ [ "NameT" ]; [] ], _ | [ [ "SpecT" ]; []; [] ], _ -> pp_namedType fmt typ
-  | [ [ "HeaderStackT" ]; []; [] ], _ -> pp_headerStackType fmt typ
-  | [ [ "ListT" ]; [] ], _ -> pp_listType fmt typ
-  | [ [ "TupleT" ]; [] ], _ -> pp_tupleType fmt typ
-  | _ -> failwith "@pp_type: unknown type"
+  | Some ([ [ "NameT" ]; [] ], _) | Some ([ [ "SpecT" ]; []; [] ], _) ->
+      pp_namedType fmt typ
+  | Some ([ [ "HeaderStackT" ]; []; [] ], _) -> pp_headerStackType fmt typ
+  | Some ([ [ "ListT" ]; [] ], _) -> pp_listType fmt typ
+  | Some ([ [ "TupleT" ]; [] ], _) -> pp_tupleType fmt typ
+  | _ -> error_unknown "pp_type" typ
 
 and pp_typeOrVoid fmt typeOrVoid =
-  match flatten_case_v typeOrVoid with
-  | [ [ "BoolT" ] ], _
-  | [ [ "ErrT" ] ], _
-  | [ [ "MatchKindT" ] ], _
-  | [ [ "StrT" ] ], _
-  | [ [ "IntT" ] ], _
-  | [ [ "FIntT" ]; [] ], _
-  | [ [ "FBitT" ]; [] ], _
-  | [ [ "VBitT" ]; [] ], _
-  | [ [ "NameT" ]; [] ], _
-  | [ [ "SpecT" ]; []; [] ], _
-  | [ [ "HeaderStackT" ]; []; [] ], _
-  | [ [ "ListT" ]; [] ], _
-  | [ [ "TupleT" ]; [] ], _ ->
+  match flatten_case_v_opt typeOrVoid with
+  | Some ([ [ "BoolT" ] ], _)
+  | Some ([ [ "ErrT" ] ], _)
+  | Some ([ [ "MatchKindT" ] ], _)
+  | Some ([ [ "StrT" ] ], _)
+  | Some ([ [ "IntT" ] ], _)
+  | Some ([ [ "FIntT" ]; [] ], _)
+  | Some ([ [ "FBitT" ]; [] ], _)
+  | Some ([ [ "VBitT" ]; [] ], _)
+  | Some ([ [ "NameT" ]; [] ], _)
+  | Some ([ [ "SpecT" ]; []; [] ], _)
+  | Some ([ [ "HeaderStackT" ]; []; [] ], _)
+  | Some ([ [ "ListT" ]; [] ], _)
+  | Some ([ [ "TupleT" ]; [] ], _) ->
       pp_type fmt typeOrVoid
-  | [ [ "VoidT" ] ], [] -> F.fprintf fmt "void"
-  | _ -> failwith "@pp_typeOrVoid: unknown type"
+  | Some ([ [ "VoidT" ] ], []) -> F.fprintf fmt "void"
+  | _ -> error_unknown "pp_typeOrVoid" typeOrVoid
 
 (* Type parameters *)
 
@@ -189,22 +199,22 @@ and pp_typeParameterList fmt typeParameterList =
   | ListV [] -> ()
   | ListV typeParameters ->
       F.fprintf fmt "<%a>" (pp_list pp_typeParameter ~sep:Comma) typeParameters
-  | _ -> failwith "@pp_typeParameterList: expected ListV"
+  | _ -> error_unexpected "pp_typeParameterList" "ListV" typeParameterList
 
 (* Parameters *)
 
 and pp_parameter fmt parameter =
-  match flatten_case_v parameter with
-  | [ []; []; []; []; [] ], [ direction; typ; name; initialValueOpt ] ->
+  match flatten_case_v_opt parameter with
+  | Some ([ []; []; []; []; [] ], [ direction; typ; name; initialValueOpt ]) ->
       F.fprintf fmt "%a %a %a%a" pp_direction direction pp_type typ pp_name name
         pp_initialValueOpt initialValueOpt
-  | _ -> failwith "@pp_parameter: unknown parameter"
+  | _ -> error_unknown "pp_parameter" parameter
 
 and pp_parameterList fmt parameterList =
   match parameterList.it with
   | ListV parameters ->
       F.fprintf fmt "(%a)" (pp_list pp_parameter ~sep:Comma) parameters
-  | _ -> failwith "@pp_parameterList: expected ListV"
+  | _ -> error_unexpected "pp_parameterList" "ListV" parameterList
 
 (* Constructor parameters *)
 
@@ -217,10 +227,10 @@ and pp_constructorParameterList fmt constructorParameterList =
 (* Expression key-value pairs *)
 
 and pp_namedExpression fmt namedExpression =
-  match flatten_case_v namedExpression with
-  | [ []; []; [] ], [ name; expression ] ->
+  match flatten_case_v_opt namedExpression with
+  | Some ([ []; []; [] ], [ name; expression ]) ->
       F.fprintf fmt "%a = %a" pp_name name pp_expression expression
-  | _ -> failwith "@pp_namedExpression: unknown namedExpression"
+  | _ -> error_unknown "pp_namedExpression" namedExpression
 
 and pp_namedExpressionList fmt namedExpressionList =
   match namedExpressionList.it with
@@ -228,210 +238,221 @@ and pp_namedExpressionList fmt namedExpressionList =
       F.fprintf fmt "%a"
         (pp_list pp_namedExpression ~sep:Comma)
         namedExpressions
-  | _ -> failwith "@pp_namedExpressionList: expected ListV"
+  | _ -> error_unexpected "pp_namedExpressionList" "ListV" namedExpressionList
 
 (* Literal expressions *)
 
 and pp_literalExpression fmt literalExpression =
-  match flatten_case_v literalExpression with
-  | [ [ "BoolE" ]; [] ], [ b ] -> (
+  match flatten_case_v_opt literalExpression with
+  | Some ([ [ "BoolE" ]; [] ], [ b ]) -> (
       match b.it with
       | BoolV true -> F.fprintf fmt "true"
       | BoolV false -> F.fprintf fmt "false"
-      | _ -> failwith "@pp_literalExpression: expected BoolV")
-  | [ [ "NumE" ]; [] ], [ number ] -> pp_number fmt number
-  | [ [ "StrE" ]; [] ], [ s ] -> (
+      | _ -> error_unknown "pp_literalExpression" literalExpression)
+  | Some ([ [ "NumE" ]; [] ], [ number ]) -> pp_number fmt number
+  | Some ([ [ "StrE" ]; [] ], [ s ]) -> (
       match s.it with
       | TextV s -> F.fprintf fmt "\"%s\"" s
-      | _ -> failwith "@pp_literalExpression: expected TextV")
-  | _ -> failwith "@pp_literalExpression: unknown literalExpression"
+      | _ -> error_unknown "pp_literalExpression" literalExpression)
+  | _ -> error_unknown "pp_literalExpression" literalExpression
 
 (* Reference expressions *)
 
 and pp_referenceExpression fmt referenceExpression =
-  match flatten_case_v referenceExpression with
-  | [ [ "NameE" ]; [] ], [ prefixedName ] -> pp_prefixedName fmt prefixedName
-  | _ -> failwith "@pp_referenceExpression: unknown referenceExpression"
+  match flatten_case_v_opt referenceExpression with
+  | Some ([ [ "NameE" ]; [] ], [ prefixedName ]) ->
+      pp_prefixedName fmt prefixedName
+  | _ -> error_unknown "pp_referenceExpression" referenceExpression
 
 (* Default expressions *)
 
 and pp_defaultExpression fmt defaultExpression =
-  match flatten_case_v defaultExpression with
-  | [ [ "DefaultE" ] ], [] -> F.fprintf fmt "..."
-  | _ -> failwith "@pp_defaultExpression: unknown defaultExpression"
+  match flatten_case_v_opt defaultExpression with
+  | Some ([ [ "DefaultE" ] ], []) -> F.fprintf fmt "..."
+  | _ -> error_unknown "pp_defaultExpression" defaultExpression
 
 (* Unary, binary, and ternary expressions *)
 
 and pp_unop fmt unop =
-  match flatten_case_v unop with
-  | [ [ "BNOT" ] ], [] -> F.fprintf fmt "~"
-  | [ [ "LNOT" ] ], [] -> F.fprintf fmt "!"
-  | [ [ "UPLUS" ] ], [] -> F.fprintf fmt "+"
-  | [ [ "UMINUS" ] ], [] -> F.fprintf fmt "-"
-  | _ -> failwith "@pp_unop: unknown unop"
+  match flatten_case_v_opt unop with
+  | Some ([ [ "BNOT" ] ], []) -> F.fprintf fmt "~"
+  | Some ([ [ "LNOT" ] ], []) -> F.fprintf fmt "!"
+  | Some ([ [ "UPLUS" ] ], []) -> F.fprintf fmt "+"
+  | Some ([ [ "UMINUS" ] ], []) -> F.fprintf fmt "-"
+  | _ -> error_unknown "pp_unop" unop
 
 and pp_unaryExpression fmt unaryExpression =
-  match flatten_case_v unaryExpression with
-  | [ [ "UnE" ]; []; [] ], [ unop; expression ] ->
+  match flatten_case_v_opt unaryExpression with
+  | Some ([ [ "UnE" ]; []; [] ], [ unop; expression ]) ->
       F.fprintf fmt "%a%a" pp_unop unop pp_expression expression
-  | _ -> failwith "@pp_unaryExpression: unknown unaryExpression"
+  | _ -> error_unknown "pp_unaryExpression" unaryExpression
 
 and pp_binop fmt binop =
-  match flatten_case_v binop with
-  | [ [ "PLUS" ] ], [] -> F.fprintf fmt "+"
-  | [ [ "SPLUS" ] ], [] -> F.fprintf fmt "|+|"
-  | [ [ "MINUS" ] ], [] -> F.fprintf fmt "-"
-  | [ [ "SMINUS" ] ], [] -> F.fprintf fmt "|-|"
-  | [ [ "MUL" ] ], [] -> F.fprintf fmt "*"
-  | [ [ "DIV" ] ], [] -> F.fprintf fmt "/"
-  | [ [ "MOD" ] ], [] -> F.fprintf fmt "%s" "%"
-  | [ [ "SHL" ] ], [] -> F.fprintf fmt "<<"
-  | [ [ "SHR" ] ], [] -> F.fprintf fmt ">>"
-  | [ [ "LE" ] ], [] -> F.fprintf fmt "<="
-  | [ [ "GE" ] ], [] -> F.fprintf fmt ">="
-  | [ [ "LT" ] ], [] -> F.fprintf fmt "<"
-  | [ [ "GT" ] ], [] -> F.fprintf fmt ">"
-  | [ [ "EQ" ] ], [] -> F.fprintf fmt "=="
-  | [ [ "NE" ] ], [] -> F.fprintf fmt "!="
-  | [ [ "BAND" ] ], [] -> F.fprintf fmt "&"
-  | [ [ "BXOR" ] ], [] -> F.fprintf fmt "^"
-  | [ [ "BOR" ] ], [] -> F.fprintf fmt "|"
-  | [ [ "CONCAT" ] ], [] -> F.fprintf fmt "++"
-  | [ [ "LAND" ] ], [] -> F.fprintf fmt "&&"
-  | [ [ "LOR" ] ], [] -> F.fprintf fmt "||"
-  | _ -> failwith "@pp_binop: unknown binop"
+  match flatten_case_v_opt binop with
+  | Some ([ [ "PLUS" ] ], []) -> F.fprintf fmt "+"
+  | Some ([ [ "SPLUS" ] ], []) -> F.fprintf fmt "|+|"
+  | Some ([ [ "MINUS" ] ], []) -> F.fprintf fmt "-"
+  | Some ([ [ "SMINUS" ] ], []) -> F.fprintf fmt "|-|"
+  | Some ([ [ "MUL" ] ], []) -> F.fprintf fmt "*"
+  | Some ([ [ "DIV" ] ], []) -> F.fprintf fmt "/"
+  | Some ([ [ "MOD" ] ], []) -> F.fprintf fmt "%s" "%"
+  | Some ([ [ "SHL" ] ], []) -> F.fprintf fmt "<<"
+  | Some ([ [ "SHR" ] ], []) -> F.fprintf fmt ">>"
+  | Some ([ [ "LE" ] ], []) -> F.fprintf fmt "<="
+  | Some ([ [ "GE" ] ], []) -> F.fprintf fmt ">="
+  | Some ([ [ "LT" ] ], []) -> F.fprintf fmt "<"
+  | Some ([ [ "GT" ] ], []) -> F.fprintf fmt ">"
+  | Some ([ [ "EQ" ] ], []) -> F.fprintf fmt "=="
+  | Some ([ [ "NE" ] ], []) -> F.fprintf fmt "!="
+  | Some ([ [ "BAND" ] ], []) -> F.fprintf fmt "&"
+  | Some ([ [ "BXOR" ] ], []) -> F.fprintf fmt "^"
+  | Some ([ [ "BOR" ] ], []) -> F.fprintf fmt "|"
+  | Some ([ [ "CONCAT" ] ], []) -> F.fprintf fmt "++"
+  | Some ([ [ "LAND" ] ], []) -> F.fprintf fmt "&&"
+  | Some ([ [ "LOR" ] ], []) -> F.fprintf fmt "||"
+  | _ -> error_unknown "pp_binop" binop
 
 and pp_binaryExpression fmt binaryExpression =
-  match flatten_case_v binaryExpression with
-  | [ [ "BinE" ]; []; []; [] ], [ expression_l; binop; expression_r ] ->
+  match flatten_case_v_opt binaryExpression with
+  | Some ([ [ "BinE" ]; []; []; [] ], [ expression_l; binop; expression_r ]) ->
       F.fprintf fmt "((%a) %a (%a))" pp_expression expression_l pp_binop binop
         pp_expression expression_r
-  | _ -> failwith "@pp_binaryExpression: unknown binaryExpression"
+  | _ -> error_unknown "pp_binaryExpression" binaryExpression
 
 and pp_ternaryExpression fmt ternaryExpression =
-  match flatten_case_v ternaryExpression with
-  | [ [ "TernE" ]; []; []; [] ], [ expression_c; expression_t; expression_f ] ->
+  match flatten_case_v_opt ternaryExpression with
+  | Some
+      ([ [ "TernE" ]; []; []; [] ], [ expression_c; expression_t; expression_f ])
+    ->
       F.fprintf fmt "((%a) ? (%a) : (%a))" pp_expression expression_c
         pp_expression expression_t pp_expression expression_f
-  | _ -> failwith "@pp_ternaryExpression: unknown ternaryExpression"
+  | _ -> error_unknown "pp_ternaryExpression" ternaryExpression
 
 (* Cast expressions *)
 
 and pp_castExpression fmt castExpression =
-  match flatten_case_v castExpression with
-  | [ [ "CastE" ]; []; [] ], [ typ; expression ] ->
+  match flatten_case_v_opt castExpression with
+  | Some ([ [ "CastE" ]; []; [] ], [ typ; expression ]) ->
       F.fprintf fmt "((%a) (%a))" pp_type typ pp_expression expression
-  | _ -> failwith "@pp_castExpression: unknown castExpression"
+  | _ -> error_unknown "pp_castExpression" castExpression
 
 (* Data (aggregate) expressions *)
 
 and pp_dataExpression fmt dataExpression =
-  match flatten_case_v dataExpression with
-  | [ [ "InvalidE" ] ], [] -> F.fprintf fmt "{#}"
-  | [ [ "SeqE" ]; [] ], [ expressionList ] ->
+  match flatten_case_v_opt dataExpression with
+  | Some ([ [ "InvalidE" ] ], []) -> F.fprintf fmt "{#}"
+  | Some ([ [ "SeqE" ]; [] ], [ expressionList ]) ->
       F.fprintf fmt "{ %a }" pp_expressionList expressionList
-  | [ [ "RecordE" ]; [] ], [ namedExpressionList ] ->
+  | Some ([ [ "RecordE" ]; [] ], [ namedExpressionList ]) ->
       F.fprintf fmt "{ %a }" pp_namedExpressionList namedExpressionList
-  | [ [ "RecordDefaultE" ]; [] ], [ namedExpressionList ] ->
+  | Some ([ [ "RecordDefaultE" ]; [] ], [ namedExpressionList ]) ->
       F.fprintf fmt "{ %a, ... }" pp_namedExpressionList namedExpressionList
-  | _ -> failwith "@pp_dataExpression: unknown dataExpression"
+  | _ -> error_unknown "pp_dataExpression" dataExpression
 
 (* Member and index access expressions *)
 
 and pp_errorAccessExpression fmt errorAccessExpression =
-  match flatten_case_v errorAccessExpression with
-  | [ [ "ErrAccE" ]; [] ], [ name ] -> F.fprintf fmt "error.%a" pp_name name
-  | _ -> failwith "@pp_errorAccessExpression: unknown errorAccessExpression"
+  match flatten_case_v_opt errorAccessExpression with
+  | Some ([ [ "ErrAccE" ]; [] ], [ name ]) ->
+      F.fprintf fmt "error.%a" pp_name name
+  | _ -> error_unknown "pp_errorAccessExpression" errorAccessExpression
 
 and pp_memberAccessExpression fmt memberAccessExpression =
-  match flatten_case_v memberAccessExpression with
-  | [ [ "TypeAccE" ]; []; [] ], [ prefixedName; name ] ->
+  match flatten_case_v_opt memberAccessExpression with
+  | Some ([ [ "TypeAccE" ]; []; [] ], [ prefixedName; name ]) ->
       F.fprintf fmt "%a.%a" pp_prefixedName prefixedName pp_name name
-  | [ [ "ExprAccE" ]; []; [] ], [ expression; name ] ->
+  | Some ([ [ "ExprAccE" ]; []; [] ], [ expression; name ]) ->
       F.fprintf fmt "%a.%a" pp_expression expression pp_name name
-  | _ -> failwith "@pp_memberAccessExpression: unknown memberAccessExpression"
+  | _ -> error_unknown "pp_memberAccessExpression" memberAccessExpression
 
 and pp_indexAccessExpression fmt indexAccessExpression =
-  match flatten_case_v indexAccessExpression with
-  | [ [ "ArrAccE" ]; []; [] ], [ expression_b; expression_i ] ->
+  match flatten_case_v_opt indexAccessExpression with
+  | Some ([ [ "ArrAccE" ]; []; [] ], [ expression_b; expression_i ]) ->
       F.fprintf fmt "%a[%a]" pp_expression expression_b pp_expression
         expression_i
-  | [ [ "BitAccE" ]; []; []; [] ], [ expression_b; expression_h; expression_l ]
-    ->
+  | Some
+      ( [ [ "BitAccE" ]; []; []; [] ],
+        [ expression_b; expression_h; expression_l ] ) ->
       F.fprintf fmt "%a[%a:%a]" pp_expression expression_b pp_expression
         expression_h pp_expression expression_l
-  | _ -> failwith "@pp_indexAccessExpression: unknown indexAccessExpression"
+  | _ -> error_unknown "pp_indexAccessExpression" indexAccessExpression
 
 and pp_accessExpression fmt accessExpression =
-  match flatten_case_v accessExpression with
-  | [ [ "ErrAccE" ]; [] ], _ -> pp_errorAccessExpression fmt accessExpression
-  | [ [ "TypeAccE" ]; []; [] ], _ | [ [ "ExprAccE" ]; []; [] ], _ ->
+  match flatten_case_v_opt accessExpression with
+  | Some ([ [ "ErrAccE" ]; [] ], _) ->
+      pp_errorAccessExpression fmt accessExpression
+  | Some ([ [ "TypeAccE" ]; []; [] ], _) | Some ([ [ "ExprAccE" ]; []; [] ], _)
+    ->
       pp_memberAccessExpression fmt accessExpression
-  | [ [ "ArrAccE" ]; []; [] ], _ | [ [ "BitAccE" ]; []; []; [] ], _ ->
+  | Some ([ [ "ArrAccE" ]; []; [] ], _) | Some ([ [ "BitAccE" ]; []; []; [] ], _)
+    ->
       pp_indexAccessExpression fmt accessExpression
-  | _ -> failwith "@pp_accessExpression: unknown accessExpression"
+  | _ -> error_unknown "pp_accessExpression" accessExpression
 
 (* Call expressions *)
 
 and pp_callExpression fmt callExpression =
-  match flatten_case_v callExpression with
-  | ( [ [ "CallE" ]; []; []; [] ],
-      [ routineTarget; typeArgumentList; argumentList ] ) ->
+  match flatten_case_v_opt callExpression with
+  | Some
+      ( [ [ "CallE" ]; []; []; [] ],
+        [ routineTarget; typeArgumentList; argumentList ] ) ->
       F.fprintf fmt "%a%a%a" pp_expression routineTarget pp_typeArgumentList
         typeArgumentList pp_argumentList argumentList
-  | [ [ "InstE" ]; []; [] ], [ namedType; argumentList ] ->
+  | Some ([ [ "InstE" ]; []; [] ], [ namedType; argumentList ]) ->
       F.fprintf fmt "%a%a" pp_namedType namedType pp_argumentList argumentList
-  | _ -> failwith "@pp_callExpression: unknown callExpression"
+  | _ -> error_unknown "pp_callExpression" callExpression
 
 (* Expressions *)
 
 and pp_expression fmt expression =
-  match flatten_case_v expression with
-  | [ [ "BoolE" ]; [] ], _ | [ [ "NumE" ]; [] ], _ | [ [ "StrE" ]; [] ], _ ->
+  match flatten_case_v_opt expression with
+  | Some ([ [ "BoolE" ]; [] ], _)
+  | Some ([ [ "NumE" ]; [] ], _)
+  | Some ([ [ "StrE" ]; [] ], _) ->
       pp_literalExpression fmt expression
-  | [ [ "NameE" ]; [] ], _ -> pp_referenceExpression fmt expression
-  | [ [ "DefaultE" ] ], _ -> pp_defaultExpression fmt expression
-  | [ [ "UnE" ]; []; [] ], _ -> pp_unaryExpression fmt expression
-  | [ [ "BinE" ]; []; []; [] ], _ -> pp_binaryExpression fmt expression
-  | [ [ "TernE" ]; []; []; [] ], _ -> pp_ternaryExpression fmt expression
-  | [ [ "CastE" ]; []; [] ], _ -> pp_castExpression fmt expression
-  | [ [ "InvalidE" ] ], _
-  | [ [ "SeqE" ]; [] ], _
-  | [ [ "RecordE" ]; [] ], _
-  | [ [ "RecordDefaultE" ]; [] ], _ ->
+  | Some ([ [ "NameE" ]; [] ], _) -> pp_referenceExpression fmt expression
+  | Some ([ [ "DefaultE" ] ], _) -> pp_defaultExpression fmt expression
+  | Some ([ [ "UnE" ]; []; [] ], _) -> pp_unaryExpression fmt expression
+  | Some ([ [ "BinE" ]; []; []; [] ], _) -> pp_binaryExpression fmt expression
+  | Some ([ [ "TernE" ]; []; []; [] ], _) -> pp_ternaryExpression fmt expression
+  | Some ([ [ "CastE" ]; []; [] ], _) -> pp_castExpression fmt expression
+  | Some ([ [ "InvalidE" ] ], _)
+  | Some ([ [ "SeqE" ]; [] ], _)
+  | Some ([ [ "RecordE" ]; [] ], _)
+  | Some ([ [ "RecordDefaultE" ]; [] ], _) ->
       pp_dataExpression fmt expression
-  | [ [ "ErrAccE" ]; [] ], _
-  | [ [ "TypeAccE" ]; []; [] ], _
-  | [ [ "ExprAccE" ]; []; [] ], _
-  | [ [ "ArrAccE" ]; []; [] ], _
-  | [ [ "BitAccE" ]; []; []; [] ], _ ->
+  | Some ([ [ "ErrAccE" ]; [] ], _)
+  | Some ([ [ "TypeAccE" ]; []; [] ], _)
+  | Some ([ [ "ExprAccE" ]; []; [] ], _)
+  | Some ([ [ "ArrAccE" ]; []; [] ], _)
+  | Some ([ [ "BitAccE" ]; []; []; [] ], _) ->
       pp_accessExpression fmt expression
-  | [ [ "CallE" ]; []; []; [] ], _ | [ [ "InstE" ]; []; [] ], _ ->
+  | Some ([ [ "CallE" ]; []; []; [] ], _) | Some ([ [ "InstE" ]; []; [] ], _) ->
       pp_callExpression fmt expression
-  | _ -> failwith "@pp_expression: unknown expression"
+  | _ -> error_unknown "pp_expression" expression
 
 and pp_expressionList fmt expressionList =
   match expressionList.it with
   | ListV expressions ->
       F.fprintf fmt "%a" (pp_list pp_expression ~sep:Comma) expressions
-  | _ -> failwith "@pp_expressionList: expected ListV"
+  | _ -> error_unexpected "pp_expressionList" "ListV" expressionList
 
 and pp_routineTarget fmt routineTarget = pp_expression fmt routineTarget
 
 (* Keyset expressions *)
 
 and pp_keysetExpression fmt keysetExpression =
-  match flatten_case_v keysetExpression with
-  | [ [ "ExprK" ]; [] ], [ expression ] -> pp_expression fmt expression
-  | [ [ "MaskK" ]; []; [] ], [ expression_b; expression_m ] ->
+  match flatten_case_v_opt keysetExpression with
+  | Some ([ [ "ExprK" ]; [] ], [ expression ]) -> pp_expression fmt expression
+  | Some ([ [ "MaskK" ]; []; [] ], [ expression_b; expression_m ]) ->
       F.fprintf fmt "%a &&& %a" pp_expression expression_b pp_expression
         expression_m
-  | [ [ "RangeK" ]; []; [] ], [ expression_l; expression_h ] ->
+  | Some ([ [ "RangeK" ]; []; [] ], [ expression_l; expression_h ]) ->
       F.fprintf fmt "%a .. %a" pp_expression expression_l pp_expression
         expression_h
-  | [ [ "DefaultK" ] ], [] -> F.fprintf fmt "default"
-  | [ [ "AnyK" ] ], [] -> F.fprintf fmt "_"
-  | _ -> failwith "@pp_keysetExpression: unknown keysetExpression"
+  | Some ([ [ "DefaultK" ] ], []) -> F.fprintf fmt "default"
+  | Some ([ [ "AnyK" ] ], []) -> F.fprintf fmt "_"
+  | _ -> error_unknown "pp_keysetExpression" keysetExpression
 
 and pp_keysetExpressionList fmt keysetExpressionList =
   match keysetExpressionList.it with
@@ -439,144 +460,149 @@ and pp_keysetExpressionList fmt keysetExpressionList =
       F.fprintf fmt "(%a)"
         (pp_list pp_keysetExpression ~sep:Comma)
         keysetExpressions
-  | _ -> failwith "@pp_keysetExpressionList: expected ListV"
+  | _ -> error_unexpected "pp_keysetExpressionList" "ListV" keysetExpressionList
 
 (* Type arguments *)
 
 and pp_typeArgument fmt typeArgument =
-  match flatten_case_v typeArgument with
-  | [ [ "BoolT" ] ], _
-  | [ [ "ErrT" ] ], _
-  | [ [ "MatchKindT" ] ], _
-  | [ [ "StrT" ] ], _
-  | [ [ "IntT" ] ], _
-  | [ [ "FIntT" ]; [] ], _
-  | [ [ "FBitT" ]; [] ], _
-  | [ [ "VBitT" ]; [] ], _
-  | [ [ "NameT" ]; [] ], _
-  | [ [ "SpecT" ]; []; [] ], _
-  | [ [ "HeaderStackT" ]; []; [] ], _
-  | [ [ "ListT" ]; [] ], _
-  | [ [ "TupleT" ]; [] ], _ ->
+  match flatten_case_v_opt typeArgument with
+  | Some ([ [ "BoolT" ] ], _)
+  | Some ([ [ "ErrT" ] ], _)
+  | Some ([ [ "MatchKindT" ] ], _)
+  | Some ([ [ "StrT" ] ], _)
+  | Some ([ [ "IntT" ] ], _)
+  | Some ([ [ "FIntT" ]; [] ], _)
+  | Some ([ [ "FBitT" ]; [] ], _)
+  | Some ([ [ "VBitT" ]; [] ], _)
+  | Some ([ [ "NameT" ]; [] ], _)
+  | Some ([ [ "SpecT" ]; []; [] ], _)
+  | Some ([ [ "HeaderStackT" ]; []; [] ], _)
+  | Some ([ [ "ListT" ]; [] ], _)
+  | Some ([ [ "TupleT" ]; [] ], _) ->
       pp_type fmt typeArgument
-  | [ [ "VoidT" ] ], [] -> F.fprintf fmt "void"
-  | [ [ "AnyT" ] ], [] -> F.fprintf fmt "_"
-  | _ -> failwith "@pp_typeArgument: unknown typeArgument"
+  | Some ([ [ "VoidT" ] ], []) -> F.fprintf fmt "void"
+  | Some ([ [ "AnyT" ] ], []) -> F.fprintf fmt "_"
+  | _ -> error_unknown "pp_typeArgument" typeArgument
 
 and pp_typeArgumentList fmt typeArgumentList =
   match typeArgumentList.it with
   | ListV [] -> ()
   | ListV typeArguments ->
       F.fprintf fmt "<%a>" (pp_list pp_typeArgument ~sep:Comma) typeArguments
-  | _ -> failwith "@pp_typeArgumentList: expected ListV"
+  | _ -> error_unexpected "pp_typeArgumentList" "ListV" typeArgumentList
 
 and pp_typeArgumentList_strict fmt typeArgumentList =
   match typeArgumentList.it with
   | ListV [] -> F.fprintf fmt "<>"
   | ListV typeArguments ->
       F.fprintf fmt "<%a>" (pp_list pp_typeArgument ~sep:Comma) typeArguments
-  | _ -> failwith "@pp_typeArgumentList: expected ListV"
+  | _ -> error_unexpected "pp_typeArgumentList_strict" "ListV" typeArgumentList
 
 (* Arguments *)
 
 and pp_argument fmt argument =
-  match flatten_case_v argument with
-  | [ [ "ExprA" ]; [] ], [ expression ] -> pp_expression fmt expression
-  | [ [ "NameA" ]; []; [] ], [ name; expression ] ->
+  match flatten_case_v_opt argument with
+  | Some ([ [ "ExprA" ]; [] ], [ expression ]) -> pp_expression fmt expression
+  | Some ([ [ "NameA" ]; []; [] ], [ name; expression ]) ->
       F.fprintf fmt "%a = %a" pp_name name pp_expression expression
-  | [ [ "NameAnyA" ]; [] ], [ name ] -> F.fprintf fmt "%a = _" pp_name name
-  | [ [ "AnyA" ] ], [] -> F.fprintf fmt "_"
-  | _ -> failwith "@pp_argument: unknown argument"
+  | Some ([ [ "NameAnyA" ]; [] ], [ name ]) ->
+      F.fprintf fmt "%a = _" pp_name name
+  | Some ([ [ "AnyA" ] ], []) -> F.fprintf fmt "_"
+  | _ -> error_unknown "pp_argument" argument
 
 and pp_argumentList fmt argumentList =
   match argumentList.it with
   | ListV arguments ->
       F.fprintf fmt "(%a)" (pp_list pp_argument ~sep:Comma) arguments
-  | _ -> failwith "@pp_argumentList: expected ListV"
+  | _ -> error_unexpected "pp_argumentList" "ListV" argumentList
 
 (* L-values *)
 
 and pp_lvalue fmt lvalue =
-  match flatten_case_v lvalue with
-  | [ [ "NameL" ]; [] ], [ prefixedName ] -> pp_prefixedName fmt prefixedName
-  | [ [ "LvalueAccL" ]; []; [] ], [ lvalue; name ] ->
+  match flatten_case_v_opt lvalue with
+  | Some ([ [ "NameL" ]; [] ], [ prefixedName ]) ->
+      pp_prefixedName fmt prefixedName
+  | Some ([ [ "LvalueAccL" ]; []; [] ], [ lvalue; name ]) ->
       F.fprintf fmt "%a.%a" pp_lvalue lvalue pp_name name
-  | [ [ "ArrAccL" ]; []; [] ], [ lvalue; expression ] ->
+  | Some ([ [ "ArrAccL" ]; []; [] ], [ lvalue; expression ]) ->
       F.fprintf fmt "%a[%a]" pp_lvalue lvalue pp_expression expression
-  | [ [ "BitAccL" ]; []; []; [] ], [ lvalue; expression_h; expression_l ] ->
+  | Some ([ [ "BitAccL" ]; []; []; [] ], [ lvalue; expression_h; expression_l ])
+    ->
       F.fprintf fmt "%a[%a:%a]" pp_lvalue lvalue pp_expression expression_h
         pp_expression expression_l
-  | _ -> failwith "@pp_lvalue: unknown lvalue"
+  | _ -> error_unknown "pp_lvalue" lvalue
 
 (* Empty statements *)
 
 and pp_emptyStatement fmt emptyStatement =
-  match flatten_case_v emptyStatement with
-  | [ [ "EmptyS" ] ], [] -> F.fprintf fmt ";"
-  | _ -> failwith "@pp_emptyStatement: unknown emptyStatement"
+  match flatten_case_v_opt emptyStatement with
+  | Some ([ [ "EmptyS" ] ], []) -> F.fprintf fmt ";"
+  | _ -> error_unknown "pp_emptyStatement" emptyStatement
 
 (* Assignment statements *)
 
 and pp_assignmentStatement fmt assignmentStatement =
-  match flatten_case_v assignmentStatement with
-  | [ [ "AssignS" ]; []; [] ], [ lvalue; expression ] ->
+  match flatten_case_v_opt assignmentStatement with
+  | Some ([ [ "AssignS" ]; []; [] ], [ lvalue; expression ]) ->
       F.fprintf fmt "%a = %a;" pp_lvalue lvalue pp_expression expression
-  | _ -> failwith "@pp_assignmentStatement: unknown assignmentStatement"
+  | _ -> error_unknown "pp_assignmentStatement" assignmentStatement
 
 (* Call statements *)
 
 and pp_callStatement fmt callStatement =
-  match flatten_case_v callStatement with
-  | [ [ "CallS" ]; []; []; [] ], [ lvalue; typeArgumentList; argumentList ] ->
+  match flatten_case_v_opt callStatement with
+  | Some
+      ([ [ "CallS" ]; []; []; [] ], [ lvalue; typeArgumentList; argumentList ])
+    ->
       F.fprintf fmt "%a%a%a;" pp_lvalue lvalue pp_typeArgumentList
         typeArgumentList pp_argumentList argumentList
-  | _ -> failwith "@pp_callStatement: unknown callStatement"
+  | _ -> error_unknown "pp_callStatement" callStatement
 
 (* Direct application statements *)
 
 and pp_directApplicationStatement fmt directApplicationStatement =
-  match flatten_case_v directApplicationStatement with
-  | [ [ "InstS" ]; []; [] ], [ namedType; argumentList ] ->
+  match flatten_case_v_opt directApplicationStatement with
+  | Some ([ [ "InstS" ]; []; [] ], [ namedType; argumentList ]) ->
       F.fprintf fmt "%a.apply%a;" pp_namedType namedType pp_argumentList
         argumentList
   | _ ->
-      failwith
-        "@pp_directApplicationStatement: unknown directApplicationStatement"
+      error_unknown "pp_directApplicationStatement" directApplicationStatement
 
 (* Return statements *)
 
 and pp_returnStatement fmt returnStatement =
-  match flatten_case_v returnStatement with
-  | [ [ "ReturnS" ]; [] ], [ expressionOpt ] -> (
+  match flatten_case_v_opt returnStatement with
+  | Some ([ [ "ReturnS" ]; [] ], [ expressionOpt ]) -> (
       match expressionOpt.it with
       | OptV (Some expression) ->
           F.fprintf fmt "return %a;" pp_expression expression
       | OptV None -> F.fprintf fmt "return;"
-      | _ -> failwith "@pp_returnStatement: expected OptV")
-  | _ -> failwith "@pp_returnStatement: unknown returnStatement"
+      | _ -> error_unknown "pp_returnStatement" returnStatement)
+  | _ -> error_unknown "pp_returnStatement" returnStatement
 
 (* Exit statements *)
 
 and pp_exitStatement fmt exitStatement =
-  match flatten_case_v exitStatement with
-  | [ [ "ExitS" ] ], [] -> F.fprintf fmt "exit;"
-  | _ -> failwith "@pp_exitStatement: unknown exitStatement"
+  match flatten_case_v_opt exitStatement with
+  | Some ([ [ "ExitS" ] ], []) -> F.fprintf fmt "exit;"
+  | _ -> error_unknown "pp_exitStatement" exitStatement
 
 (* Block statements *)
 
 and pp_blockStatement ?(level = 0) fmt blockStatement =
-  match flatten_case_v blockStatement with
-  | [ [ "BlockS" ]; [] ], [ blockElementStatementList ] ->
+  match flatten_case_v_opt blockStatement with
+  | Some ([ [ "BlockS" ]; [] ], [ blockElementStatementList ]) ->
       F.fprintf fmt "{\n%a\n%s}"
         (pp_blockElementStatementList ~level:(level + 1))
         blockElementStatementList (indent level)
-  | _ -> failwith "@pp_blockStatement: unknown blockStatement"
+  | _ -> error_unknown "pp_blockStatement" blockStatement
 
 (* Conditional statements *)
 
 and pp_conditionalStatement ?(level = 0) fmt conditionalStatement =
-  match flatten_case_v conditionalStatement with
-  | [ [ "IfS" ]; []; []; [] ], [ expression_c; statement_t; statement_f_opt ]
+  match flatten_case_v_opt conditionalStatement with
+  | Some
+      ([ [ "IfS" ]; []; []; [] ], [ expression_c; statement_t; statement_f_opt ])
     -> (
       match statement_f_opt.it with
       | OptV (Some statement_f) ->
@@ -586,56 +612,59 @@ and pp_conditionalStatement ?(level = 0) fmt conditionalStatement =
       | OptV None ->
           F.fprintf fmt "if (%a) %a" pp_expression expression_c
             (pp_statement ~level) statement_t
-      | _ -> failwith "@pp_conditionalStatement: expected OptV")
-  | _ -> failwith "@pp_conditionalStatement: unknown conditionalStatement"
+      | _ -> error_unknown "pp_conditionalStatement" conditionalStatement)
+  | _ -> error_unknown "pp_conditionalStatement" conditionalStatement
 
 (* Switch statements *)
 
 and pp_switchLabel fmt switchLabel =
-  match flatten_case_v switchLabel with
-  | [ [ "DefaultL" ] ], [] -> F.fprintf fmt "default"
-  | [ [ "ExprL" ]; [] ], [ expression ] ->
+  match flatten_case_v_opt switchLabel with
+  | Some ([ [ "DefaultL" ] ], []) -> F.fprintf fmt "default"
+  | Some ([ [ "ExprL" ]; [] ], [ expression ]) ->
       F.fprintf fmt "%a" pp_expression expression
-  | _ -> failwith "@pp_switchLabel: unknown switchLabel"
+  | _ -> error_unknown "pp_switchLabel" switchLabel
 
 and pp_switchCase ?(level = 0) fmt switchCase =
-  match flatten_case_v switchCase with
-  | [ [ "FallC" ]; [] ], [ switchLabel ] ->
+  match flatten_case_v_opt switchCase with
+  | Some ([ [ "FallC" ]; [] ], [ switchLabel ]) ->
       F.fprintf fmt "%a:" pp_switchLabel switchLabel
-  | [ [ "MatchC" ]; []; [] ], [ switchLabel; blockStatement ] ->
+  | Some ([ [ "MatchC" ]; []; [] ], [ switchLabel; blockStatement ]) ->
       F.fprintf fmt "%a: %a" pp_switchLabel switchLabel
         (pp_blockStatement ~level:(level + 1))
         blockStatement
-  | _ -> failwith "@pp_switchCase: unknown switchCase"
+  | _ -> error_unknown "pp_switchCase" switchCase
 
 and pp_switchCaseList ?(level = 0) fmt switchCaseList =
   match switchCaseList.it with
   | ListV switchCases ->
       pp_list ~level (pp_switchCase ~level) ~sep:Nl fmt switchCases
-  | _ -> failwith "@pp_switchCaseList: expected ListV"
+  | _ -> error_unexpected "pp_switchCaseList" "ListV" switchCaseList
 
 and pp_switchStatement ?(level = 0) fmt switchStatement =
-  match flatten_case_v switchStatement with
-  | [ [ "SwitchS" ]; []; [] ], [ expression; switchCaseList ] ->
+  match flatten_case_v_opt switchStatement with
+  | Some ([ [ "SwitchS" ]; []; [] ], [ expression; switchCaseList ]) ->
       F.fprintf fmt "switch (%a) {\n%a\n%s}" pp_expression expression
         (pp_switchCaseList ~level:(level + 1))
         switchCaseList (indent level)
-  | _ -> failwith "@pp_switchStatement: unknown switchStatement"
+  | _ -> error_unknown "pp_switchStatement" switchStatement
 
 (* Statement *)
 
 and pp_statement ?(level = 0) fmt statement =
-  match flatten_case_v statement with
-  | [ [ "EmptyS" ] ], _ -> pp_emptyStatement fmt statement
-  | [ [ "AssignS" ]; []; [] ], _ -> pp_assignmentStatement fmt statement
-  | [ [ "CallS" ]; []; []; [] ], _ -> pp_callStatement fmt statement
-  | [ [ "InstS" ]; []; [] ], _ -> pp_directApplicationStatement fmt statement
-  | [ [ "ReturnS" ]; [] ], _ -> pp_returnStatement fmt statement
-  | [ [ "ExitS" ] ], _ -> pp_exitStatement fmt statement
-  | [ [ "BlockS" ]; [] ], _ -> pp_blockStatement ~level fmt statement
-  | [ [ "IfS" ]; []; []; [] ], _ -> pp_conditionalStatement ~level fmt statement
-  | [ [ "SwitchS" ]; []; [] ], _ -> pp_switchStatement ~level fmt statement
-  | _ -> failwith "@pp_statement: unknown statement"
+  match flatten_case_v_opt statement with
+  | Some ([ [ "EmptyS" ] ], _) -> pp_emptyStatement fmt statement
+  | Some ([ [ "AssignS" ]; []; [] ], _) -> pp_assignmentStatement fmt statement
+  | Some ([ [ "CallS" ]; []; []; [] ], _) -> pp_callStatement fmt statement
+  | Some ([ [ "InstS" ]; []; [] ], _) ->
+      pp_directApplicationStatement fmt statement
+  | Some ([ [ "ReturnS" ]; [] ], _) -> pp_returnStatement fmt statement
+  | Some ([ [ "ExitS" ] ], _) -> pp_exitStatement fmt statement
+  | Some ([ [ "BlockS" ]; [] ], _) -> pp_blockStatement ~level fmt statement
+  | Some ([ [ "IfS" ]; []; []; [] ], _) ->
+      pp_conditionalStatement ~level fmt statement
+  | Some ([ [ "SwitchS" ]; []; [] ], _) ->
+      pp_switchStatement ~level fmt statement
+  | _ -> error_unknown "pp_statement" statement
 
 (* Constant and variable declarations *)
 
@@ -646,39 +675,39 @@ and pp_initialValueOpt fmt initialValueOpt =
   | OptV (Some initialValue) ->
       F.fprintf fmt " = %a" pp_initialValue initialValue
   | OptV None -> ()
-  | _ -> failwith "@pp_initialValueOpt: expected OptV"
+  | _ -> error_unexpected "pp_initialValueOpt" "OptV" initialValueOpt
 
 and pp_constantDeclaration fmt constantDeclaration =
-  match flatten_case_v constantDeclaration with
-  | [ [ "ConstD" ]; []; []; [] ], [ typ; name; initialValue ] ->
+  match flatten_case_v_opt constantDeclaration with
+  | Some ([ [ "ConstD" ]; []; []; [] ], [ typ; name; initialValue ]) ->
       F.fprintf fmt "const %a %a = %a;" pp_type typ pp_name name pp_initialValue
         initialValue
-  | _ -> failwith "@pp_constantDeclaration: unknown constantDeclaration"
+  | _ -> error_unknown "pp_constantDeclaration" constantDeclaration
 
 and pp_variableDeclaration fmt variableDeclaration =
-  match flatten_case_v variableDeclaration with
-  | [ [ "VarD" ]; []; []; [] ], [ typ; name; initialValueOpt ] ->
+  match flatten_case_v_opt variableDeclaration with
+  | Some ([ [ "VarD" ]; []; []; [] ], [ typ; name; initialValueOpt ]) ->
       F.fprintf fmt "%a %a%a;" pp_type typ pp_name name pp_initialValueOpt
         initialValueOpt
-  | _ -> failwith "@pp_variableDeclaration: unknown variableDeclaration"
+  | _ -> error_unknown "pp_variableDeclaration" variableDeclaration
 
 and pp_blockElementStatement ?(level = 0) fmt blockElementStatement =
-  match flatten_case_v blockElementStatement with
-  | [ [ "ConstD" ]; []; []; [] ], _ ->
+  match flatten_case_v_opt blockElementStatement with
+  | Some ([ [ "ConstD" ]; []; []; [] ], _) ->
       pp_constantDeclaration fmt blockElementStatement
-  | [ [ "VarD" ]; []; []; [] ], _ ->
+  | Some ([ [ "VarD" ]; []; []; [] ], _) ->
       pp_variableDeclaration fmt blockElementStatement
-  | [ [ "EmptyS" ] ], _
-  | [ [ "AssignS" ]; []; [] ], _
-  | [ [ "CallS" ]; []; []; [] ], _
-  | [ [ "InstS" ]; []; [] ], _
-  | [ [ "ReturnS" ]; [] ], _
-  | [ [ "ExitS" ] ], _
-  | [ [ "BlockS" ]; [] ], _
-  | [ [ "IfS" ]; []; []; [] ], _
-  | [ [ "SwitchS" ]; []; [] ], _ ->
+  | Some ([ [ "EmptyS" ] ], _)
+  | Some ([ [ "AssignS" ]; []; [] ], _)
+  | Some ([ [ "CallS" ]; []; []; [] ], _)
+  | Some ([ [ "InstS" ]; []; [] ], _)
+  | Some ([ [ "ReturnS" ]; [] ], _)
+  | Some ([ [ "ExitS" ] ], _)
+  | Some ([ [ "BlockS" ]; [] ], _)
+  | Some ([ [ "IfS" ]; []; []; [] ], _)
+  | Some ([ [ "SwitchS" ]; []; [] ], _) ->
       pp_statement ~level fmt blockElementStatement
-  | _ -> failwith "@pp_blockElementStatement: unknown blockElementStatement"
+  | _ -> error_unknown "pp_blockElementStatement" blockElementStatement
 
 and pp_blockElementStatementList ?(level = 0) fmt blockElementStatementList =
   match blockElementStatementList.it with
@@ -686,49 +715,54 @@ and pp_blockElementStatementList ?(level = 0) fmt blockElementStatementList =
       pp_list ~level
         (pp_blockElementStatement ~level)
         ~sep:Nl fmt blockElementStatements
-  | _ -> failwith "@pp_blockElementStatementList: expected ListV"
+  | _ ->
+      error_unexpected "pp_blockElementStatementList" "ListV"
+        blockElementStatementList
 
 (* Function declarations *)
 
 and pp_functionDeclaration ?(level = 0) fmt functionDeclaration =
-  match flatten_case_v functionDeclaration with
-  | ( [ [ "FuncD" ]; []; []; []; []; [] ],
-      [ typeOrVoid; name; typeParameterList; parameterList; blockStatement ] )
-    ->
+  match flatten_case_v_opt functionDeclaration with
+  | Some
+      ( [ [ "FuncD" ]; []; []; []; []; [] ],
+        [ typeOrVoid; name; typeParameterList; parameterList; blockStatement ]
+      ) ->
       F.fprintf fmt "%a %a%a%a %a" pp_typeOrVoid typeOrVoid pp_name name
         pp_typeParameterList typeParameterList pp_parameterList parameterList
         (pp_blockStatement ~level:(level + 1))
         blockStatement
-  | _ -> failwith "@pp_functionDeclaration: unknown functionDeclaration"
+  | _ -> error_unknown "pp_functionDeclaration" functionDeclaration
 
 (* Action declarations *)
 
 and pp_actionDeclaration ?(level = 0) fmt actionDeclaration =
-  match flatten_case_v actionDeclaration with
-  | [ [ "ActionD" ]; []; []; [] ], [ name; parameterList; blockStatement ] ->
+  match flatten_case_v_opt actionDeclaration with
+  | Some ([ [ "ActionD" ]; []; []; [] ], [ name; parameterList; blockStatement ])
+    ->
       F.fprintf fmt "action %a%a %a" pp_name name pp_parameterList parameterList
         (pp_blockStatement ~level) blockStatement
-  | _ -> failwith "@pp_actionDeclaration: unknown actionDeclaration"
+  | _ -> error_unknown "pp_actionDeclaration" actionDeclaration
 
 (* Instantiations *)
 
 and pp_instantiation ?(level = 0) fmt instantiation =
-  match flatten_case_v instantiation with
-  | ( [ [ "InstD" ]; []; []; []; [] ],
-      [ typ; argumentList; name; objectInitializerOpt ] ) ->
+  match flatten_case_v_opt instantiation with
+  | Some
+      ( [ [ "InstD" ]; []; []; []; [] ],
+        [ typ; argumentList; name; objectInitializerOpt ] ) ->
       F.fprintf fmt "%a%a %a%a;" pp_type typ pp_argumentList argumentList
         pp_name name
         (pp_objectInitializerOpt ~level:(level + 1))
         objectInitializerOpt
-  | _ -> failwith "@pp_instantiation: unknown instantiation"
+  | _ -> error_unknown "pp_instantiation" instantiation
 
 and pp_objectDeclaration ?(level = 0) fmt objectDeclaration =
-  match flatten_case_v objectDeclaration with
-  | [ [ "FuncD" ]; []; []; []; []; [] ], _ ->
+  match flatten_case_v_opt objectDeclaration with
+  | Some ([ [ "FuncD" ]; []; []; []; []; [] ], _) ->
       pp_functionDeclaration ~level fmt objectDeclaration
-  | [ [ "InstD" ]; []; []; []; [] ], _ ->
+  | Some ([ [ "InstD" ]; []; []; []; [] ], _) ->
       pp_instantiation ~level fmt objectDeclaration
-  | _ -> failwith "@pp_objectDeclaration: unknown objectDeclaration"
+  | _ -> error_unknown "pp_objectDeclaration" objectDeclaration
 
 and pp_objectInitializer ?(level = 0) fmt objectInitializer =
   match objectInitializer.it with
@@ -736,318 +770,336 @@ and pp_objectInitializer ?(level = 0) fmt objectInitializer =
       F.fprintf fmt "{\n%a\n}"
         (pp_list ~level (pp_objectDeclaration ~level) ~sep:Nl)
         objectDeclarations
-  | _ -> failwith "@pp_objectInitializer: expected ListV"
+  | _ -> error_unexpected "pp_objectInitializer" "ListV" objectInitializer
 
 and pp_objectInitializerOpt ?(level = 0) fmt objectInitializerOpt =
   match objectInitializerOpt.it with
   | OptV (Some objectInitializer) ->
       F.fprintf fmt " = %a" (pp_objectInitializer ~level) objectInitializer
   | OptV None -> ()
-  | _ -> failwith "@pp_objectInitializerOpt: expected OptV"
+  | _ -> error_unexpected "pp_objectInitializerOpt" "OptV" objectInitializerOpt
 
 (* Error declarations *)
 
 and pp_errorDeclaration fmt errorDeclaration =
-  match flatten_case_v errorDeclaration with
-  | [ [ "ErrD" ]; [] ], [ nameList ] ->
+  match flatten_case_v_opt errorDeclaration with
+  | Some ([ [ "ErrD" ]; [] ], [ nameList ]) ->
       F.fprintf fmt "error { %a };" pp_nameList nameList
-  | _ -> failwith "@pp_errorDeclaration: unknown errorDeclaration"
+  | _ -> error_unknown "pp_errorDeclaration" errorDeclaration
 
 (* Match kind declarations *)
 
 and pp_matchKindDeclaration fmt matchKindDeclaration =
-  match flatten_case_v matchKindDeclaration with
-  | [ [ "MatchKindD" ]; [] ], [ nameList ] ->
+  match flatten_case_v_opt matchKindDeclaration with
+  | Some ([ [ "MatchKindD" ]; [] ], [ nameList ]) ->
       F.fprintf fmt "match_kind { %a };" pp_nameList nameList
-  | _ -> failwith "@pp_matchKindDeclaration: unknown matchKindDeclaration"
+  | _ -> error_unknown "pp_matchKindDeclaration" matchKindDeclaration
 
 (* Enum type declarations *)
 
 and pp_enumTypeDeclaration fmt enumTypeDeclaration =
-  match flatten_case_v enumTypeDeclaration with
-  | [ [ "EnumD" ]; []; [] ], [ name; nameList ] ->
+  match flatten_case_v_opt enumTypeDeclaration with
+  | Some ([ [ "EnumD" ]; []; [] ], [ name; nameList ]) ->
       F.fprintf fmt "enum %a { %a }" pp_name name pp_nameList nameList
-  | [ [ "SEnumD" ]; []; []; [] ], [ typ; name; namedExpressionList ] ->
+  | Some ([ [ "SEnumD" ]; []; []; [] ], [ typ; name; namedExpressionList ]) ->
       F.fprintf fmt "enum %a %a { %a }" pp_type typ pp_name name
         pp_namedExpressionList namedExpressionList
-  | _ -> failwith "@pp_enumTypeDeclaration: unknown enumTypeDeclaration"
+  | _ -> error_unknown "pp_enumTypeDeclaration" enumTypeDeclaration
 
 (* Struct, header, and union type declarations *)
 
 and pp_typeField fmt typeField =
-  match flatten_case_v typeField with
-  | [ []; []; [] ], [ typ; name ] ->
+  match flatten_case_v_opt typeField with
+  | Some ([ []; []; [] ], [ typ; name ]) ->
       F.fprintf fmt "%a %a;" pp_type typ pp_name name
-  | _ -> failwith "@pp_typeField: unknown typeField"
+  | _ -> error_unknown "pp_typeField" typeField
 
 and pp_typeFieldList ?(level = 0) fmt typeFieldList =
   match typeFieldList.it with
   | ListV typeFields -> pp_list ~level pp_typeField ~sep:Nl fmt typeFields
-  | _ -> failwith "@pp_typeFieldList: expected ListV"
+  | _ -> error_unexpected "pp_typeFieldList" "ListV" typeFieldList
 
 and pp_structTypeDeclaration ?(level = 0) fmt structTypeDeclaration =
-  match flatten_case_v structTypeDeclaration with
-  | [ [ "StructD" ]; []; []; [] ], [ name; typeParameterList; typeFieldList ] ->
+  match flatten_case_v_opt structTypeDeclaration with
+  | Some
+      ([ [ "StructD" ]; []; []; [] ], [ name; typeParameterList; typeFieldList ])
+    ->
       F.fprintf fmt "struct %a%a {\n%a\n}" pp_name name pp_typeParameterList
         typeParameterList
         (pp_typeFieldList ~level:(level + 1))
         typeFieldList
-  | _ -> failwith "@pp_structTypeDeclaration: unknown structTypeDeclaration"
+  | _ -> error_unknown "pp_structTypeDeclaration" structTypeDeclaration
 
 and pp_headerTypeDeclaration ?(level = 0) fmt headerTypeDeclaration =
-  match flatten_case_v headerTypeDeclaration with
-  | [ [ "HeaderD" ]; []; []; [] ], [ name; typeParameterList; typeFieldList ] ->
+  match flatten_case_v_opt headerTypeDeclaration with
+  | Some
+      ([ [ "HeaderD" ]; []; []; [] ], [ name; typeParameterList; typeFieldList ])
+    ->
       F.fprintf fmt "header %a%a {\n%a\n}" pp_name name pp_typeParameterList
         typeParameterList
         (pp_typeFieldList ~level:(level + 1))
         typeFieldList
-  | _ -> failwith "@pp_headerTypeDeclaration: unknown headerTypeDeclaration"
+  | _ -> error_unknown "pp_headerTypeDeclaration" headerTypeDeclaration
 
 and pp_headerUnionTypeDeclaration ?(level = 0) fmt headerUnionTypeDeclaration =
-  match flatten_case_v headerUnionTypeDeclaration with
-  | ( [ [ "HeaderUnionD" ]; []; []; [] ],
-      [ name; typeParameterList; typeFieldList ] ) ->
+  match flatten_case_v_opt headerUnionTypeDeclaration with
+  | Some
+      ( [ [ "HeaderUnionD" ]; []; []; [] ],
+        [ name; typeParameterList; typeFieldList ] ) ->
       F.fprintf fmt "header_union %a%a {\n%a\n}" pp_name name
         pp_typeParameterList typeParameterList
         (pp_typeFieldList ~level:(level + 1))
         typeFieldList
   | _ ->
-      failwith
-        "@pp_headerUnionTypeDeclaration: unknown headerUnionTypeDeclaration"
+      error_unknown "pp_headerUnionTypeDeclaration" headerUnionTypeDeclaration
 
 and pp_derivedTypeDeclaration ?(level = 0) fmt derivedTypeDeclaration =
-  match flatten_case_v derivedTypeDeclaration with
-  | [ [ "EnumD" ]; []; [] ], _ | [ [ "SEnumD" ]; []; []; [] ], _ ->
+  match flatten_case_v_opt derivedTypeDeclaration with
+  | Some ([ [ "EnumD" ]; []; [] ], _) | Some ([ [ "SEnumD" ]; []; []; [] ], _)
+    ->
       pp_enumTypeDeclaration fmt derivedTypeDeclaration
-  | [ [ "StructD" ]; []; []; [] ], _ ->
+  | Some ([ [ "StructD" ]; []; []; [] ], _) ->
       pp_structTypeDeclaration ~level fmt derivedTypeDeclaration
-  | [ [ "HeaderD" ]; []; []; [] ], _ ->
+  | Some ([ [ "HeaderD" ]; []; []; [] ], _) ->
       pp_headerTypeDeclaration ~level fmt derivedTypeDeclaration
-  | [ [ "HeaderUnionD" ]; []; []; [] ], _ ->
+  | Some ([ [ "HeaderUnionD" ]; []; []; [] ], _) ->
       pp_headerUnionTypeDeclaration ~level fmt derivedTypeDeclaration
-  | _ -> failwith "@pp_derivedTypeDeclaration: unknown derivedTypeDeclaration"
+  | _ -> error_unknown "pp_derivedTypeDeclaration" derivedTypeDeclaration
 
 (* Typedef and newtype declarations *)
 
 and pp_typedefType ?(level = 0) fmt typedefType =
-  match flatten_case_v typedefType with
-  | [ [ "PlainT" ]; [] ], [ typ ] -> pp_type fmt typ
-  | [ [ "DerivedT" ]; [] ], [ derivedTypeDeclaration ] ->
+  match flatten_case_v_opt typedefType with
+  | Some ([ [ "PlainT" ]; [] ], [ typ ]) -> pp_type fmt typ
+  | Some ([ [ "DerivedT" ]; [] ], [ derivedTypeDeclaration ]) ->
       pp_derivedTypeDeclaration ~level fmt derivedTypeDeclaration
-  | _ -> failwith "@pp_typedefType: unknown typedefType"
+  | _ -> error_unknown "pp_typedefType" typedefType
 
 and pp_typedefDeclaration ?(level = 0) fmt typedefDeclaration =
-  match flatten_case_v typedefDeclaration with
-  | [ [ "TypeDefD" ]; []; [] ], [ typedefType; name ] ->
+  match flatten_case_v_opt typedefDeclaration with
+  | Some ([ [ "TypeDefD" ]; []; [] ], [ typedefType; name ]) ->
       F.fprintf fmt "typedef %a %a;"
         (pp_typedefType ~level:(level + 1))
         typedefType pp_name name
-  | [ [ "NewTypeD" ]; []; [] ], [ typ; name ] ->
+  | Some ([ [ "NewTypeD" ]; []; [] ], [ typ; name ]) ->
       F.fprintf fmt "type %a %a;" pp_type typ pp_name name
-  | _ -> failwith "@pp_typedefDeclaration: unknown typedefDeclaration"
+  | _ -> error_unknown "pp_typedefDeclaration" typedefDeclaration
 
 (* Extern declarations *)
 
 and pp_externFunctionDeclaration fmt externFunctionDeclaration =
-  match flatten_case_v externFunctionDeclaration with
-  | ( [ [ "ExternFuncD" ]; []; []; []; [] ],
-      [ typeOrVoid; name; typeParameterList; parameterList ] ) ->
+  match flatten_case_v_opt externFunctionDeclaration with
+  | Some
+      ( [ [ "ExternFuncD" ]; []; []; []; [] ],
+        [ typeOrVoid; name; typeParameterList; parameterList ] ) ->
       F.fprintf fmt "extern %a %a%a%a;" pp_typeOrVoid typeOrVoid pp_name name
         pp_typeParameterList typeParameterList pp_parameterList parameterList
-  | _ ->
-      failwith
-        "@pp_externFunctionDeclaration: unknown externFunctionDeclaration"
+  | _ -> error_unknown "pp_externFunctionDeclaration" externFunctionDeclaration
 
 and pp_methodPrototype fmt methodPrototype =
-  match flatten_case_v methodPrototype with
-  | [ [ "ConsM" ]; []; [] ], [ name; constructorParameterList ] ->
+  match flatten_case_v_opt methodPrototype with
+  | Some ([ [ "ConsM" ]; []; [] ], [ name; constructorParameterList ]) ->
       F.fprintf fmt "%a%a;" pp_name name pp_constructorParameterList
         constructorParameterList
-  | ( [ [ "MethodM" ]; []; []; []; [] ],
-      [ typeOrVoid; name; typeParameterList; parameterList ] ) ->
+  | Some
+      ( [ [ "MethodM" ]; []; []; []; [] ],
+        [ typeOrVoid; name; typeParameterList; parameterList ] ) ->
       F.fprintf fmt "%a %a%a%a;" pp_typeOrVoid typeOrVoid pp_name name
         pp_typeParameterList typeParameterList pp_parameterList parameterList
-  | ( [ [ "AbstractMethodM" ]; []; []; []; [] ],
-      [ typeOrVoid; name; typeParameterList; parameterList ] ) ->
+  | Some
+      ( [ [ "AbstractMethodM" ]; []; []; []; [] ],
+        [ typeOrVoid; name; typeParameterList; parameterList ] ) ->
       F.fprintf fmt "abstract %a %a%a%a;" pp_typeOrVoid typeOrVoid pp_name name
         pp_typeParameterList typeParameterList pp_parameterList parameterList
-  | _ -> failwith "@pp_methodPrototype: unknown methodPrototype"
+  | _ -> error_unknown "pp_methodPrototype" methodPrototype
 
 and pp_methodPrototypeList ?(level = 0) fmt methodPrototypeList =
   match methodPrototypeList.it with
   | ListV methodPrototypes ->
       pp_list ~level pp_methodPrototype ~sep:Nl fmt methodPrototypes
-  | _ -> failwith "@pp_methodPrototypeList: expected ListV"
+  | _ -> error_unexpected "pp_methodPrototypeList" "ListV" methodPrototypeList
 
 and pp_externObjectDeclaration ?(level = 0) fmt externObjectDeclaration =
-  match flatten_case_v externObjectDeclaration with
-  | ( [ [ "ExternObjectD" ]; []; []; [] ],
-      [ name; typeParameterList; methodPrototypeList ] ) ->
+  match flatten_case_v_opt externObjectDeclaration with
+  | Some
+      ( [ [ "ExternObjectD" ]; []; []; [] ],
+        [ name; typeParameterList; methodPrototypeList ] ) ->
       F.fprintf fmt "extern %a%a {\n%a\n}" pp_name name pp_typeParameterList
         typeParameterList
         (pp_methodPrototypeList ~level:(level + 1))
         methodPrototypeList
-  | _ -> failwith "@pp_externObjectDeclaration: unknown externObjectDeclaration"
+  | _ -> error_unknown "pp_externObjectDeclaration" externObjectDeclaration
 
 and pp_externDeclaration ?(level = 0) fmt externDeclaration =
-  match flatten_case_v externDeclaration with
-  | [ [ "ExternFuncD" ]; []; []; []; [] ], _ ->
+  match flatten_case_v_opt externDeclaration with
+  | Some ([ [ "ExternFuncD" ]; []; []; []; [] ], _) ->
       pp_externFunctionDeclaration fmt externDeclaration
-  | [ [ "ExternObjectD" ]; []; []; [] ], _ ->
+  | Some ([ [ "ExternObjectD" ]; []; []; [] ], _) ->
       pp_externObjectDeclaration ~level fmt externDeclaration
-  | _ -> failwith "@pp_externDeclaration: unknown externDeclaration"
+  | _ -> error_unknown "pp_externDeclaration" externDeclaration
 
 (* Select cases *)
 
 and pp_selectCase fmt selectCase =
-  match flatten_case_v selectCase with
-  | [ []; []; [] ], [ keysetExpressionList; name ] ->
+  match flatten_case_v_opt selectCase with
+  | Some ([ []; []; [] ], [ keysetExpressionList; name ]) ->
       F.fprintf fmt "%a: %a;" pp_keysetExpressionList keysetExpressionList
         pp_name name
-  | _ -> failwith "@pp_selectCase: unknown selectCase"
+  | _ -> error_unknown "pp_selectCase" selectCase
 
 and pp_selectCaseList ?(level = 0) fmt selectCaseList =
   match selectCaseList.it with
   | ListV selectCases -> pp_list ~level pp_selectCase ~sep:Nl fmt selectCases
-  | _ -> failwith "@pp_selectCaseList: expected ListV"
+  | _ -> error_unexpected "pp_selectCaseList" "ListV" selectCaseList
 
 (* Transition statements *)
 
 and pp_stateExpression ?(level = 0) fmt stateExpression =
-  match flatten_case_v stateExpression with
-  | [ [ "NameE" ]; [] ], [ name ] -> F.fprintf fmt "%a;" pp_name name
-  | [ [ "SelectE" ]; []; [] ], [ expressionList; selectCaseList ] ->
+  match flatten_case_v_opt stateExpression with
+  | Some ([ [ "NameE" ]; [] ], [ name ]) -> F.fprintf fmt "%a;" pp_name name
+  | Some ([ [ "SelectE" ]; []; [] ], [ expressionList; selectCaseList ]) ->
       F.fprintf fmt "select (%a) {\n%a%s\n}" pp_expressionList expressionList
         (pp_selectCaseList ~level:(level + 1))
         selectCaseList (indent level)
-  | _ -> failwith "@pp_stateExpression: unknown stateExpression"
+  | _ -> error_unknown "pp_stateExpression" stateExpression
 
 and pp_transitionStatement ?(level = 0) fmt transitionStatement =
-  match flatten_case_v transitionStatement with
-  | [ [ "TransS" ]; [] ], [ stateExpression ] ->
+  match flatten_case_v_opt transitionStatement with
+  | Some ([ [ "TransS" ]; [] ], [ stateExpression ]) ->
       F.fprintf fmt "transition %a" (pp_stateExpression ~level) stateExpression
-  | _ -> failwith "@pp_transitionStatement: unknown transitionStatement"
+  | _ -> error_unknown "pp_transitionStatement" transitionStatement
 
 and pp_transitionStatementOpt ?(level = 0) fmt transitionStatementOpt =
   match transitionStatementOpt.it with
   | OptV (Some transitionStatement) ->
       pp_transitionStatement ~level fmt transitionStatement
   | OptV None -> ()
-  | _ -> failwith "@pp_transitionStatementOpt: expected OptV"
+  | _ ->
+      error_unexpected "pp_transitionStatementOpt" "OptV" transitionStatementOpt
 
 (* Value set declarations *)
 
 and pp_valueSetType fmt valueSetType =
-  match flatten_case_v valueSetType with
-  | [ [ "BoolT" ] ], _
-  | [ [ "ErrT" ] ], _
-  | [ [ "MatchKindT" ] ], _
-  | [ [ "StrT" ] ], _
-  | [ [ "IntT" ] ], _
-  | [ [ "FIntT" ]; [] ], _
-  | [ [ "FBitT" ]; [] ], _
-  | [ [ "VBitT" ]; [] ], _ ->
+  match flatten_case_v_opt valueSetType with
+  | Some ([ [ "BoolT" ] ], _)
+  | Some ([ [ "ErrT" ] ], _)
+  | Some ([ [ "MatchKindT" ] ], _)
+  | Some ([ [ "StrT" ] ], _)
+  | Some ([ [ "IntT" ] ], _)
+  | Some ([ [ "FIntT" ]; [] ], _)
+  | Some ([ [ "FBitT" ]; [] ], _)
+  | Some ([ [ "VBitT" ]; [] ], _) ->
       pp_baseType fmt valueSetType
-  | [ [ "TupleT" ]; [] ], _ -> pp_tupleType fmt valueSetType
-  | [ [ "NameT" ]; [] ], _ -> pp_nameType fmt valueSetType
-  | _ -> failwith "@pp_valueSetType: unknown valueSetType"
+  | Some ([ [ "TupleT" ]; [] ], _) -> pp_tupleType fmt valueSetType
+  | Some ([ [ "NameT" ]; [] ], _) -> pp_nameType fmt valueSetType
+  | _ -> error_unknown "pp_valueSetType" valueSetType
 
 and pp_valueSetDeclaration fmt valueSetDeclaration =
-  match flatten_case_v valueSetDeclaration with
-  | [ [ "ValueSetD" ]; []; []; [] ], [ valueSetType; expression; name ] ->
+  match flatten_case_v_opt valueSetDeclaration with
+  | Some ([ [ "ValueSetD" ]; []; []; [] ], [ valueSetType; expression; name ])
+    ->
       F.fprintf fmt "value_set<%a>(%a) %a;" pp_valueSetType valueSetType
         pp_expression expression pp_name name
-  | _ -> failwith "@pp_valueSetDeclaration: unknown valueSetDeclaration"
+  | _ -> error_unknown "pp_valueSetDeclaration" valueSetDeclaration
 
 (* Parser type declarations *)
 
 and pp_parserTypeDeclaration fmt parserTypeDeclaration =
-  match flatten_case_v parserTypeDeclaration with
-  | ( [ [ "ParserTypeD" ]; []; []; [] ],
-      [ name; typeParameterList; parameterList ] ) ->
+  match flatten_case_v_opt parserTypeDeclaration with
+  | Some
+      ( [ [ "ParserTypeD" ]; []; []; [] ],
+        [ name; typeParameterList; parameterList ] ) ->
       F.fprintf fmt "parser %a%a%a;" pp_name name pp_typeParameterList
         typeParameterList pp_parameterList parameterList
-  | _ -> failwith "@pp_parserTypeDeclaration: unknown parserTypeDeclaration"
+  | _ -> error_unknown "pp_parserTypeDeclaration" parserTypeDeclaration
 
 (* Parser declarations *)
 
 and pp_parserBlockStatement ?(level = 0) fmt parserBlockStatement =
-  match flatten_case_v parserBlockStatement with
-  | [ [ "ParserBlockS" ]; [] ], [ parserStatementList ] ->
+  match flatten_case_v_opt parserBlockStatement with
+  | Some ([ [ "ParserBlockS" ]; [] ], [ parserStatementList ]) ->
       F.fprintf fmt "{\n%a\n%s}"
         (pp_parserStatementList ~level:(level + 1))
         parserStatementList (indent level)
-  | _ -> failwith "@pp_parserBlockStatement: unknown parserBlockStatement"
+  | _ -> error_unknown "pp_parserBlockStatement" parserBlockStatement
 
 and pp_parserStatement ?(level = 0) fmt parserStatement =
-  match flatten_case_v parserStatement with
-  | [ [ "ConstD" ]; []; []; [] ], _ ->
+  match flatten_case_v_opt parserStatement with
+  | Some ([ [ "ConstD" ]; []; []; [] ], _) ->
       pp_constantDeclaration fmt parserStatement
-  | [ [ "VarD" ]; []; []; [] ], _ -> pp_variableDeclaration fmt parserStatement
-  | [ [ "EmptyS" ] ], _ -> pp_emptyStatement fmt parserStatement
-  | [ [ "AssignS" ]; []; [] ], _ -> pp_assignmentStatement fmt parserStatement
-  | [ [ "CallS" ]; []; []; [] ], _ -> pp_callStatement fmt parserStatement
-  | [ [ "InstS" ]; []; [] ], _ ->
+  | Some ([ [ "VarD" ]; []; []; [] ], _) ->
+      pp_variableDeclaration fmt parserStatement
+  | Some ([ [ "EmptyS" ] ], _) -> pp_emptyStatement fmt parserStatement
+  | Some ([ [ "AssignS" ]; []; [] ], _) ->
+      pp_assignmentStatement fmt parserStatement
+  | Some ([ [ "CallS" ]; []; []; [] ], _) ->
+      pp_callStatement fmt parserStatement
+  | Some ([ [ "InstS" ]; []; [] ], _) ->
       pp_directApplicationStatement fmt parserStatement
-  | [ [ "ParserBlockS" ]; [] ], _ ->
+  | Some ([ [ "ParserBlockS" ]; [] ], _) ->
       pp_parserBlockStatement ~level fmt parserStatement
-  | [ [ "IfS" ]; []; []; [] ], _ ->
+  | Some ([ [ "IfS" ]; []; []; [] ], _) ->
       pp_conditionalStatement ~level fmt parserStatement
-  | _ -> failwith "@pp_parserStatement: unknown parserStatement"
+  | _ -> error_unknown "pp_parserStatement" parserStatement
 
 and pp_parserStatementList ?(level = 0) fmt parserStatementList =
   match parserStatementList.it with
   | ListV parserStatements ->
       pp_list ~level (pp_parserStatement ~level) ~sep:Nl fmt parserStatements
-  | _ -> failwith "@pp_parserStatementList: expected ListV"
+  | _ -> error_unexpected "pp_parserStatementList" "ListV" parserStatementList
 
 and pp_parserState ?(level = 0) fmt parserState =
-  match flatten_case_v parserState with
-  | [ []; []; []; [] ], [ name; parserStatementList; transitionStatementOpt ] ->
+  match flatten_case_v_opt parserState with
+  | Some
+      ([ []; []; []; [] ], [ name; parserStatementList; transitionStatementOpt ])
+    ->
       F.fprintf fmt "state %a {\n%a\n%s%a\n}" pp_name name
         (pp_parserStatementList ~level:(level + 1))
         parserStatementList
         (indent (level + 1))
         (pp_transitionStatementOpt ~level:(level + 1))
         transitionStatementOpt
-  | _ -> failwith "@pp_parserState: unknown parserState"
+  | _ -> error_unknown "pp_parserState" parserState
 
 and pp_parserStateList ?(level = 0) fmt parserStateList =
   match parserStateList.it with
   | ListV parserStates ->
       pp_list ~level (pp_parserState ~level) ~sep:Nl fmt parserStates
-  | _ -> failwith "@pp_parserStateList: expected ListV"
+  | _ -> error_unexpected "pp_parserStateList" "ListV" parserStateList
 
 and pp_parserLocalDeclaration fmt parserLocalDeclaration =
-  match flatten_case_v parserLocalDeclaration with
-  | [ [ "ConstD" ]; []; []; [] ], _ ->
+  match flatten_case_v_opt parserLocalDeclaration with
+  | Some ([ [ "ConstD" ]; []; []; [] ], _) ->
       pp_constantDeclaration fmt parserLocalDeclaration
-  | [ [ "InstD" ]; []; []; []; [] ], _ ->
+  | Some ([ [ "InstD" ]; []; []; []; [] ], _) ->
       pp_instantiation fmt parserLocalDeclaration
-  | [ [ "VarD" ]; []; []; [] ], _ ->
+  | Some ([ [ "VarD" ]; []; []; [] ], _) ->
       pp_variableDeclaration fmt parserLocalDeclaration
-  | [ [ "ValueSetD" ]; []; []; [] ], _ ->
+  | Some ([ [ "ValueSetD" ]; []; []; [] ], _) ->
       pp_valueSetDeclaration fmt parserLocalDeclaration
-  | _ -> failwith "@pp_parserLocalDeclaration: unknown parserLocalDeclaration"
+  | _ -> error_unknown "pp_parserLocalDeclaration" parserLocalDeclaration
 
 and pp_parserLocalDeclarationList ?(level = 0) fmt parserLocalDeclarationList =
   match parserLocalDeclarationList.it with
   | ListV parserLocalDeclarations ->
       pp_list ~level pp_parserLocalDeclaration ~sep:Nl fmt
         parserLocalDeclarations
-  | _ -> failwith "@pp_parserLocalDeclarationList: expected ListV"
+  | _ ->
+      error_unexpected "pp_parserLocalDeclarationList" "ListV"
+        parserLocalDeclarationList
 
 and pp_parserDeclaration ?(level = 0) fmt parserDeclaration =
-  match flatten_case_v parserDeclaration with
-  | ( [ [ "ParserD" ]; []; []; []; []; []; [] ],
-      [
-        name;
-        typeParameterList;
-        parameterList;
-        constructorParameterList;
-        parserLocalDeclarationList;
-        parserStateList;
-      ] ) ->
+  match flatten_case_v_opt parserDeclaration with
+  | Some
+      ( [ [ "ParserD" ]; []; []; []; []; []; [] ],
+        [
+          name;
+          typeParameterList;
+          parameterList;
+          constructorParameterList;
+          parserLocalDeclarationList;
+          parserStateList;
+        ] ) ->
       F.fprintf fmt "parser %a%a%a%a {\n%a\n%a\n}" pp_name name
         pp_typeParameterList typeParameterList pp_parameterList parameterList
         pp_constructorParameterList constructorParameterList
@@ -1055,49 +1107,49 @@ and pp_parserDeclaration ?(level = 0) fmt parserDeclaration =
         parserLocalDeclarationList
         (pp_parserStateList ~level:(level + 1))
         parserStateList
-  | _ -> failwith "@pp_parserDeclaration: unknown parserDeclaration"
+  | _ -> error_unknown "pp_parserDeclaration" parserDeclaration
 
 (* Table declarations *)
 
 and pp_const fmt const =
-  match flatten_case_v const with
-  | [ [ "CONST" ] ], [] -> F.fprintf fmt "const"
-  | _ -> failwith "@pp_const: unknown const"
+  match flatten_case_v_opt const with
+  | Some ([ [ "CONST" ] ], []) -> F.fprintf fmt "const"
+  | _ -> error_unknown "pp_const" const
 
 and pp_constOpt fmt constOpt =
   match constOpt.it with
   | OptV (Some const) -> F.fprintf fmt "%a " pp_const const
   | OptV None -> ()
-  | _ -> failwith "@pp_constOpt: expected OptV"
+  | _ -> error_unexpected "pp_constOpt" "OptV" constOpt
 
 (* Table key property *)
 
 and pp_tableKey fmt tableKey =
-  match flatten_case_v tableKey with
-  | [ []; []; [] ], [ expression; name ] ->
+  match flatten_case_v_opt tableKey with
+  | Some ([ []; []; [] ], [ expression; name ]) ->
       F.fprintf fmt "%a : %a;" pp_expression expression pp_name name
-  | _ -> failwith "@pp_tableKey: unknown tableKey"
+  | _ -> error_unknown "pp_tableKey" tableKey
 
 and pp_tableKeyList fmt tableKeyList =
   match tableKeyList.it with
   | ListV tableKeys -> pp_list pp_tableKey ~sep:Space fmt tableKeys
-  | _ -> failwith "@pp_tableKeyList: expected ListV"
+  | _ -> error_unexpected "pp_tableKeyList" "ListV" tableKeyList
 
 (* Table actions property *)
 
 and pp_tableActionReference fmt tableActionReference =
-  match flatten_case_v tableActionReference with
-  | [ []; []; [] ], [ prefixedName; argumentList ] ->
+  match flatten_case_v_opt tableActionReference with
+  | Some ([ []; []; [] ], [ prefixedName; argumentList ]) ->
       F.fprintf fmt "%a%a;" pp_prefixedName prefixedName pp_argumentList
         argumentList
-  | _ -> failwith "@pp_tableActionReference: unknown tableActionReference"
+  | _ -> error_unknown "pp_tableActionReference" tableActionReference
 
 and pp_tableAction fmt tableAction = pp_tableActionReference fmt tableAction
 
 and pp_tableActionList fmt tableActionList =
   match tableActionList.it with
   | ListV tableActions -> pp_list pp_tableAction ~sep:Space fmt tableActions
-  | _ -> failwith "@pp_tableActionList: expected ListV"
+  | _ -> error_unexpected "pp_tableActionList" "ListV" tableActionList
 
 (* Table entry property *)
 
@@ -1109,67 +1161,70 @@ and pp_tableEntryPriorityOpt fmt tableEntryPriorityOpt =
   | OptV (Some tableEntryPriority) ->
       F.fprintf fmt "priority = %a : " pp_tableEntryPriority tableEntryPriority
   | OptV None -> ()
-  | _ -> failwith "@pp_tableEntryPriorityOpt: expected OptV"
+  | _ ->
+      error_unexpected "pp_tableEntryPriorityOpt" "OptV" tableEntryPriorityOpt
 
 and pp_tableEntry fmt tableEntry =
-  match flatten_case_v tableEntry with
-  | ( [ []; []; []; []; [] ],
-      [
-        constOpt;
-        tableEntryPriorityOpt;
-        keysetExpressionList;
-        tableActionReference;
-      ] ) ->
+  match flatten_case_v_opt tableEntry with
+  | Some
+      ( [ []; []; []; []; [] ],
+        [
+          constOpt;
+          tableEntryPriorityOpt;
+          keysetExpressionList;
+          tableActionReference;
+        ] ) ->
       F.fprintf fmt "%a%a%a : %a" pp_constOpt constOpt pp_tableEntryPriorityOpt
         tableEntryPriorityOpt pp_keysetExpressionList keysetExpressionList
         pp_tableActionReference tableActionReference
-  | _ -> failwith "@pp_tableEntry: unknown tableEntry"
+  | _ -> error_unknown "pp_tableEntry" tableEntry
 
 and pp_tableEntryList ?(level = 0) fmt tableEntryList =
   match tableEntryList.it with
   | ListV tableEntries -> pp_list ~level pp_tableEntry ~sep:Nl fmt tableEntries
-  | _ -> failwith "@pp_tableEntryList: expected ListV"
+  | _ -> error_unexpected "pp_tableEntryList" "ListV" tableEntryList
 
 (* Table properties *)
 
 and pp_tableProperty ?(level = 0) fmt tableProperty =
-  match flatten_case_v tableProperty with
-  | [ [ "KeyP" ]; [] ], [ tableKeyList ] ->
+  match flatten_case_v_opt tableProperty with
+  | Some ([ [ "KeyP" ]; [] ], [ tableKeyList ]) ->
       F.fprintf fmt "key = { %a }" pp_tableKeyList tableKeyList
-  | [ [ "ActionP" ]; [] ], [ tableActionList ] ->
+  | Some ([ [ "ActionP" ]; [] ], [ tableActionList ]) ->
       F.fprintf fmt "actions = { %a }" pp_tableActionList tableActionList
-  | [ [ "EntryP" ]; []; [] ], [ constOpt; tableEntryList ] ->
+  | Some ([ [ "EntryP" ]; []; [] ], [ constOpt; tableEntryList ]) ->
       F.fprintf fmt "%aentries = {\n%a\n}" pp_constOpt constOpt
         (pp_tableEntryList ~level:(level + 1))
         tableEntryList
-  | [ [ "CustomP" ]; []; []; [] ], [ constOpt; name; initialValue ] ->
+  | Some ([ [ "CustomP" ]; []; []; [] ], [ constOpt; name; initialValue ]) ->
       F.fprintf fmt "%a%a = %a;" pp_constOpt constOpt pp_name name
         pp_initialValue initialValue
-  | _ -> failwith "@pp_tableProperty: unknown tableProperty"
+  | _ -> error_unknown "pp_tableProperty" tableProperty
 
 and pp_tablePropertyList ?(level = 0) fmt tablePropertyList =
   match tablePropertyList.it with
   | ListV tableProperties ->
       pp_list ~level pp_tableProperty ~sep:Nl fmt tableProperties
-  | _ -> failwith "@pp_tablePropertyList: expected ListV"
+  | _ -> error_unexpected "pp_tablePropertyList" "ListV" tablePropertyList
 
 and pp_tableDeclaration ?(level = 0) fmt tableDeclaration =
-  match flatten_case_v tableDeclaration with
-  | [ [ "TableD" ]; []; [] ], [ name; tablePropertyList ] ->
+  match flatten_case_v_opt tableDeclaration with
+  | Some ([ [ "TableD" ]; []; [] ], [ name; tablePropertyList ]) ->
       F.fprintf fmt "table %a {\n%a\n%s}" pp_name name
         (pp_tablePropertyList ~level:(level + 1))
         tablePropertyList (indent level)
-  | _ -> failwith "@pp_tableDeclaration: unknown tableDeclaration"
+  | _ -> error_unknown "pp_tableDeclaration" tableDeclaration
 
 (* Control type declarations *)
 
 and pp_controlTypeDeclaration fmt controlTypeDeclaration =
-  match flatten_case_v controlTypeDeclaration with
-  | ( [ [ "ControlTypeD" ]; []; []; [] ],
-      [ name; typeParameterList; parameterList ] ) ->
+  match flatten_case_v_opt controlTypeDeclaration with
+  | Some
+      ( [ [ "ControlTypeD" ]; []; []; [] ],
+        [ name; typeParameterList; parameterList ] ) ->
       F.fprintf fmt "control %a%a%a;" pp_name name pp_typeParameterList
         typeParameterList pp_parameterList parameterList
-  | _ -> failwith "@pp_controlTypeDeclaration: unknown controlTypeDeclaration"
+  | _ -> error_unknown "pp_controlTypeDeclaration" controlTypeDeclaration
 
 (* Control declarations *)
 
@@ -1177,18 +1232,18 @@ and pp_controlBody ?(level = 0) fmt controlBody =
   pp_blockStatement ~level fmt controlBody
 
 and pp_controlLocalDeclaration ?(level = 0) fmt controlLocalDeclaration =
-  match flatten_case_v controlLocalDeclaration with
-  | [ [ "ConstD" ]; []; []; [] ], _ ->
+  match flatten_case_v_opt controlLocalDeclaration with
+  | Some ([ [ "ConstD" ]; []; []; [] ], _) ->
       pp_constantDeclaration fmt controlLocalDeclaration
-  | [ [ "InstD" ]; []; []; []; [] ], _ ->
+  | Some ([ [ "InstD" ]; []; []; []; [] ], _) ->
       pp_instantiation ~level fmt controlLocalDeclaration
-  | [ [ "VarD" ]; []; []; [] ], _ ->
+  | Some ([ [ "VarD" ]; []; []; [] ], _) ->
       pp_variableDeclaration fmt controlLocalDeclaration
-  | [ [ "ActionD" ]; []; []; [] ], _ ->
+  | Some ([ [ "ActionD" ]; []; []; [] ], _) ->
       pp_actionDeclaration ~level fmt controlLocalDeclaration
-  | [ [ "TableD" ]; []; [] ], _ ->
+  | Some ([ [ "TableD" ]; []; [] ], _) ->
       pp_tableDeclaration ~level fmt controlLocalDeclaration
-  | _ -> failwith "@pp_controlLocalDeclaration: unknown controlLocalDeclaration"
+  | _ -> error_unknown "pp_controlLocalDeclaration" controlLocalDeclaration
 
 and pp_controlLocalDeclarationList ?(level = 0) fmt controlLocalDeclarationList
     =
@@ -1197,19 +1252,22 @@ and pp_controlLocalDeclarationList ?(level = 0) fmt controlLocalDeclarationList
       pp_list ~level
         (pp_controlLocalDeclaration ~level)
         ~sep:Nl fmt controlLocalDeclarations
-  | _ -> failwith "@pp_controlLocalDeclarationList: expected ListV"
+  | _ ->
+      error_unexpected "pp_controlLocalDeclarationList" "ListV"
+        controlLocalDeclarationList
 
 and pp_controlDeclaration ?(level = 0) fmt controlDeclaration =
-  match flatten_case_v controlDeclaration with
-  | ( [ [ "ControlD" ]; []; []; []; []; []; [] ],
-      [
-        name;
-        typeParameterList;
-        parameterList;
-        constructorParameterList;
-        controlLocalDeclarationList;
-        controlBody;
-      ] ) ->
+  match flatten_case_v_opt controlDeclaration with
+  | Some
+      ( [ [ "ControlD" ]; []; []; []; []; []; [] ],
+        [
+          name;
+          typeParameterList;
+          parameterList;
+          constructorParameterList;
+          controlLocalDeclarationList;
+          controlBody;
+        ] ) ->
       F.fprintf fmt "control %a%a%a%a {\n%a\n%sapply %a\n}" pp_name name
         pp_typeParameterList typeParameterList pp_parameterList parameterList
         pp_constructorParameterList constructorParameterList
@@ -1218,76 +1276,80 @@ and pp_controlDeclaration ?(level = 0) fmt controlDeclaration =
         (indent (level + 1))
         (pp_controlBody ~level:(level + 1))
         controlBody
-  | _ -> failwith "@pp_controlDeclaration: unknown controlDeclaration"
+  | _ -> error_unknown "pp_controlDeclaration" controlDeclaration
 
 (* Package type declarations *)
 
 and pp_packageTypeDeclaration fmt packageTypeDeclaration =
-  match flatten_case_v packageTypeDeclaration with
-  | ( [ [ "PackageTypeD" ]; []; []; [] ],
-      [ name; typeParameterList; constructorParameterList ] ) ->
+  match flatten_case_v_opt packageTypeDeclaration with
+  | Some
+      ( [ [ "PackageTypeD" ]; []; []; [] ],
+        [ name; typeParameterList; constructorParameterList ] ) ->
       F.fprintf fmt "package %a%a%a;" pp_name name pp_typeParameterList
         typeParameterList pp_constructorParameterList constructorParameterList
-  | _ -> failwith "@pp_packageTypeDeclaration: unknown packageTypeDeclaration"
+  | _ -> error_unknown "pp_packageTypeDeclaration" packageTypeDeclaration
 
 (* Type declarations *)
 
 and pp_typeDeclaration ?(level = 0) fmt typeDeclaration =
-  match flatten_case_v typeDeclaration with
-  | [ [ "EnumD" ]; []; [] ], _
-  | [ [ "SEnumD" ]; []; []; [] ], _
-  | [ [ "StructD" ]; []; []; [] ], _
-  | [ [ "HeaderD" ]; []; []; [] ], _
-  | [ [ "HeaderUnionD" ]; []; []; [] ], _ ->
+  match flatten_case_v_opt typeDeclaration with
+  | Some ([ [ "EnumD" ]; []; [] ], _)
+  | Some ([ [ "SEnumD" ]; []; []; [] ], _)
+  | Some ([ [ "StructD" ]; []; []; [] ], _)
+  | Some ([ [ "HeaderD" ]; []; []; [] ], _)
+  | Some ([ [ "HeaderUnionD" ]; []; []; [] ], _) ->
       pp_derivedTypeDeclaration fmt typeDeclaration
-  | [ [ "TypeDefD" ]; []; [] ], _ | [ [ "NewTypeD" ]; []; [] ], _ ->
+  | Some ([ [ "TypeDefD" ]; []; [] ], _) | Some ([ [ "NewTypeD" ]; []; [] ], _)
+    ->
       pp_typedefDeclaration ~level fmt typeDeclaration
-  | [ [ "ParserTypeD" ]; []; []; [] ], _ ->
+  | Some ([ [ "ParserTypeD" ]; []; []; [] ], _) ->
       pp_parserTypeDeclaration fmt typeDeclaration
-  | [ [ "ControlTypeD" ]; []; []; [] ], _ ->
+  | Some ([ [ "ControlTypeD" ]; []; []; [] ], _) ->
       pp_controlTypeDeclaration fmt typeDeclaration
-  | [ [ "PackageTypeD" ]; []; []; [] ], _ ->
+  | Some ([ [ "PackageTypeD" ]; []; []; [] ], _) ->
       pp_packageTypeDeclaration fmt typeDeclaration
-  | _ -> failwith "@pp_typeDeclaration: unknown typeDeclaration"
+  | _ -> error_unknown "pp_typeDeclaration" typeDeclaration
 
 (* Declarations *)
 
 and pp_declaration ?(level = 0) fmt declaration =
-  match flatten_case_v declaration with
-  | [ [ "ConstD" ]; []; []; [] ], _ -> pp_constantDeclaration fmt declaration
-  | [ [ "InstD" ]; []; []; []; [] ], _ ->
+  match flatten_case_v_opt declaration with
+  | Some ([ [ "ConstD" ]; []; []; [] ], _) ->
+      pp_constantDeclaration fmt declaration
+  | Some ([ [ "InstD" ]; []; []; []; [] ], _) ->
       pp_instantiation ~level fmt declaration
-  | [ [ "FuncD" ]; []; []; []; []; [] ], _ ->
+  | Some ([ [ "FuncD" ]; []; []; []; []; [] ], _) ->
       pp_functionDeclaration ~level fmt declaration
-  | [ [ "ActionD" ]; []; []; [] ], _ ->
+  | Some ([ [ "ActionD" ]; []; []; [] ], _) ->
       pp_actionDeclaration ~level fmt declaration
-  | [ [ "ErrD" ]; [] ], _ -> pp_errorDeclaration fmt declaration
-  | [ [ "MatchKindD" ]; [] ], _ -> pp_matchKindDeclaration fmt declaration
-  | [ [ "ExternFuncD" ]; []; []; []; [] ], _
-  | [ [ "ExternObjectD" ]; []; []; [] ], _ ->
+  | Some ([ [ "ErrD" ]; [] ], _) -> pp_errorDeclaration fmt declaration
+  | Some ([ [ "MatchKindD" ]; [] ], _) ->
+      pp_matchKindDeclaration fmt declaration
+  | Some ([ [ "ExternFuncD" ]; []; []; []; [] ], _)
+  | Some ([ [ "ExternObjectD" ]; []; []; [] ], _) ->
       pp_externDeclaration ~level fmt declaration
-  | [ [ "ParserD" ]; []; []; []; []; []; [] ], _ ->
+  | Some ([ [ "ParserD" ]; []; []; []; []; []; [] ], _) ->
       pp_parserDeclaration ~level fmt declaration
-  | [ [ "ControlD" ]; []; []; []; []; []; [] ], _ ->
+  | Some ([ [ "ControlD" ]; []; []; []; []; []; [] ], _) ->
       pp_controlDeclaration ~level fmt declaration
-  | [ [ "EnumD" ]; []; [] ], _
-  | [ [ "SEnumD" ]; []; []; [] ], _
-  | [ [ "StructD" ]; []; []; [] ], _
-  | [ [ "HeaderD" ]; []; []; [] ], _
-  | [ [ "HeaderUnionD" ]; []; []; [] ], _
-  | [ [ "TypeDefD" ]; []; [] ], _
-  | [ [ "NewTypeD" ]; []; [] ], _
-  | [ [ "ParserTypeD" ]; []; []; [] ], _
-  | [ [ "ControlTypeD" ]; []; []; [] ], _
-  | [ [ "PackageTypeD" ]; []; []; [] ], _ ->
+  | Some ([ [ "EnumD" ]; []; [] ], _)
+  | Some ([ [ "SEnumD" ]; []; []; [] ], _)
+  | Some ([ [ "StructD" ]; []; []; [] ], _)
+  | Some ([ [ "HeaderD" ]; []; []; [] ], _)
+  | Some ([ [ "HeaderUnionD" ]; []; []; [] ], _)
+  | Some ([ [ "TypeDefD" ]; []; [] ], _)
+  | Some ([ [ "NewTypeD" ]; []; [] ], _)
+  | Some ([ [ "ParserTypeD" ]; []; []; [] ], _)
+  | Some ([ [ "ControlTypeD" ]; []; []; [] ], _)
+  | Some ([ [ "PackageTypeD" ]; []; []; [] ], _) ->
       pp_typeDeclaration ~level fmt declaration
-  | _ -> failwith "@pp_declaration: unknown declaration"
+  | _ -> error_unknown "pp_declaration" declaration
 
 and pp_declarationList ?(level = 0) fmt declarationList =
   match declarationList.it with
   | ListV declarations ->
       pp_list ~level (pp_declaration ~level) ~sep:Nl fmt declarations
-  | _ -> failwith "@pp_declarationList: expected ListV"
+  | _ -> error_unexpected "pp_declarationList" "ListV" declarationList
 
 (* Program *)
 

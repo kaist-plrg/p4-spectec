@@ -9208,7 +9208,7 @@ relation Type_ok: `%%|-%:%%`(cursor, typingContext, typeOrVoid, typeIR, tid*)
       -- let baseType = typeOrVoid as baseType
       -- if baseType matches `IntT`
 
-   ;; ../../../../spec-concrete/5.05.1-typing-type.watsup:36.1-41.30
+   ;; ../../../../spec-concrete/5.05.1-typing-type.watsup:36.1-42.17
    rule fixint-expr: `%%|-%:%%`(p, TC, typeOrVoid, `FIntT%`_numberTypeIR(n) as typeIR, [])
       -- if typeOrVoid <: baseType
       -- let baseType = typeOrVoid as baseType
@@ -9221,8 +9221,9 @@ relation Type_ok: `%%|-%:%%`(cursor, typingContext, typeOrVoid, typeIR, tid*)
       -- let int = $to_number(value)
       -- if int <: nat
       -- let n = int as nat
+      -- if (n > 0)
 
-   ;; ../../../../spec-concrete/5.05.1-typing-type.watsup:45.1-50.30
+   ;; ../../../../spec-concrete/5.05.1-typing-type.watsup:46.1-51.30
    rule fixbit-expr: `%%|-%:%%`(p, TC, typeOrVoid, `FBitT%`_numberTypeIR(n) as typeIR, [])
       -- if typeOrVoid <: baseType
       -- let baseType = typeOrVoid as baseType
@@ -9236,7 +9237,7 @@ relation Type_ok: `%%|-%:%%`(cursor, typingContext, typeOrVoid, typeIR, tid*)
       -- if int <: nat
       -- let n = int as nat
 
-   ;; ../../../../spec-concrete/5.05.1-typing-type.watsup:54.1-59.30
+   ;; ../../../../spec-concrete/5.05.1-typing-type.watsup:55.1-60.30
    rule varbit-expr: `%%|-%:%%`(p, TC, typeOrVoid, `VBitT%`_numberTypeIR(n) as typeIR, [])
       -- if typeOrVoid <: baseType
       -- let baseType = typeOrVoid as baseType
@@ -9250,7 +9251,7 @@ relation Type_ok: `%%|-%:%%`(cursor, typingContext, typeOrVoid, typeIR, tid*)
       -- if int <: nat
       -- let n = int as nat
 
-   ;; ../../../../spec-concrete/5.05.1-typing-type.watsup:67.1-69.56
+   ;; ../../../../spec-concrete/5.05.1-typing-type.watsup:68.1-70.56
    rule nameType-mono: `%%|-%:%%`(p, TC, typeOrVoid, typeIR, [])
       -- if typeOrVoid <: nameType
       -- let `NameT%`_nameType(prefixedName) = typeOrVoid as nameType
@@ -9260,7 +9261,7 @@ relation Type_ok: `%%|-%:%%`(cursor, typingContext, typeOrVoid, typeIR, tid*)
       -- if typeDefIR <: monoTypeDefIR
       -- let `MonoTD%`_monoTypeDefIR(typeIR) = typeDefIR as monoTypeDefIR
 
-   ;; ../../../../spec-concrete/5.05.1-typing-type.watsup:71.1-73.56
+   ;; ../../../../spec-concrete/5.05.1-typing-type.watsup:72.1-74.56
    rule nameType-poly: `%%|-%:%%`(p, TC, typeOrVoid, `SpecT%%`_namedTypeIR(polyTypeDefIR, []) as typeIR, [])
       -- if typeOrVoid <: nameType
       -- let `NameT%`_nameType(prefixedName) = typeOrVoid as nameType
@@ -9270,7 +9271,7 @@ relation Type_ok: `%%|-%:%%`(cursor, typingContext, typeOrVoid, typeIR, tid*)
       -- if typeDefIR <: polyTypeDefIR
       -- let polyTypeDefIR = typeDefIR as polyTypeDefIR
 
-   ;; ../../../../spec-concrete/5.05.1-typing-type.watsup:78.1-80.56
+   ;; ../../../../spec-concrete/5.05.1-typing-type.watsup:79.1-81.56
    rule specializedType-mono: `%%|-%:%%`(p, TC, typeOrVoid, typeIR, [])
       -- if typeOrVoid <: specializedType
       -- let `SpecT%%`_specializedType(prefixedName, typeArgument*{typeArgument <- typeArgument*}) = typeOrVoid as specializedType
@@ -9281,7 +9282,7 @@ relation Type_ok: `%%|-%:%%`(cursor, typingContext, typeOrVoid, typeIR, tid*)
       -- if typeDefIR <: monoTypeDefIR
       -- let `MonoTD%`_monoTypeDefIR(typeIR) = typeDefIR as monoTypeDefIR
 
-   ;; ../../../../spec-concrete/5.05.1-typing-type.watsup:82.1-87.70
+   ;; ../../../../spec-concrete/5.05.1-typing-type.watsup:83.1-88.70
    rule specializedType-poly: `%%|-%:%%`(p, TC, typeOrVoid, `SpecT%%`_namedTypeIR(polyTypeDefIR, typeIR_arg*{typeIR_arg <- typeIR_arg*}) as typeIR, tid_fresh*{tid_fresh <- tid_fresh*})
       -- if typeOrVoid <: specializedType
       -- let `SpecT%%`_specializedType(prefixedName, typeArgument*{typeArgument <- typeArgument*}) = typeOrVoid as specializedType
@@ -9293,7 +9294,7 @@ relation Type_ok: `%%|-%:%%`(cursor, typingContext, typeOrVoid, typeIR, tid*)
       -- let `PolyTD%%%`_polyTypeDefIR(typeIR, tid_expl*{tid_expl <- tid_expl*}, tid_impl*{tid_impl <- tid_impl*}) = polyTypeDefIR
       -- TypeArguments_ok: `%%|-%:%%`(p, TC, typeArgument*{typeArgument <- typeArgument*}, typeIR_arg*{typeIR_arg <- typeIR_arg*}, tid_fresh*{tid_fresh <- tid_fresh*})
 
-   ;; ../../../../spec-concrete/5.05.1-typing-type.watsup:92.1-104.58
+   ;; ../../../../spec-concrete/5.05.1-typing-type.watsup:93.1-105.58
    rule headerStackType-nameType-expression: `%%|-%:%%`(p, TC, typeOrVoid, `SpecT%%`_namedTypeIR(polyTypeDefIR_stack, [typeIR_base]) as typeIR, [])
       -- if typeOrVoid <: headerStackType
       -- let `HeaderStackT%%`_headerStackType(namedType, expression_size) = typeOrVoid as headerStackType
@@ -9311,7 +9312,7 @@ relation Type_ok: `%%|-%:%%`(cursor, typingContext, typeOrVoid, typeIR, tid*)
       -- let typeIR_stack = `HeaderStackT%%`_headerStackTypeIR(`NameT%`_namedTypeIR("T") as typeIR, n_size) as typeIR
       -- let polyTypeDefIR_stack = `PolyTD%%%`_polyTypeDefIR(typeIR_stack, ["T"], [])
 
-   ;; ../../../../spec-concrete/5.05.1-typing-type.watsup:106.1-118.58
+   ;; ../../../../spec-concrete/5.05.1-typing-type.watsup:107.1-119.58
    rule headerStackType-specializedType-expression: `%%|-%:%%`(p, TC, typeOrVoid, `SpecT%%`_namedTypeIR(polyTypeDefIR_stack, [typeIR_base]) as typeIR, tid_fresh*{tid_fresh <- tid_fresh*})
       -- if typeOrVoid <: headerStackType
       -- let `HeaderStackT%%`_headerStackType(namedType, expression_size) = typeOrVoid as headerStackType
@@ -9328,7 +9329,7 @@ relation Type_ok: `%%|-%:%%`(cursor, typingContext, typeOrVoid, typeIR, tid*)
       -- let typeIR_stack = `HeaderStackT%%`_headerStackTypeIR(`NameT%`_namedTypeIR("T") as typeIR, n_size) as typeIR
       -- let polyTypeDefIR_stack = `PolyTD%%%`_polyTypeDefIR(typeIR_stack, ["T"], [])
 
-   ;; ../../../../spec-concrete/5.05.1-typing-type.watsup:123.1-130.56
+   ;; ../../../../spec-concrete/5.05.1-typing-type.watsup:124.1-131.56
    rule listType: `%%|-%:%%`(p, TC, typeOrVoid, `SpecT%%`_namedTypeIR(polyTypeDefIR_list, [typeIR_arg]) as typeIR, tid_fresh*{tid_fresh <- tid_fresh*})
       -- if typeOrVoid <: listType
       -- let `ListT%`_listType(typeArgument) = typeOrVoid as listType
@@ -9336,7 +9337,7 @@ relation Type_ok: `%%|-%:%%`(cursor, typingContext, typeOrVoid, typeIR, tid*)
       -- let typeIR_list = `ListT%`_listTypeIR(`NameT%`_namedTypeIR("T") as typeIR) as typeIR
       -- let polyTypeDefIR_list = `PolyTD%%%`_polyTypeDefIR(typeIR_list, ["T"], [])
 
-   ;; ../../../../spec-concrete/5.05.1-typing-type.watsup:135.1-144.66
+   ;; ../../../../spec-concrete/5.05.1-typing-type.watsup:136.1-145.66
    rule tupleType: `%%|-%:%%`(p, TC, typeOrVoid, `SpecT%%`_namedTypeIR(polyTypeDefIR_tuple, typeIR_arg*{typeIR_arg <- typeIR_arg*}) as typeIR, tid_fresh*{tid_fresh <- tid_fresh*})
       -- if typeOrVoid <: tupleType
       -- let `TupleT%`_tupleType(typeArgument*{typeArgument <- typeArgument*}) = typeOrVoid as tupleType
@@ -9346,7 +9347,7 @@ relation Type_ok: `%%|-%:%%`(cursor, typingContext, typeOrVoid, typeIR, tid*)
       -- let typeIR_tuple = `TupleT%`_tupleTypeIR(`NameT%`_namedTypeIR(tid_tparam) as typeIR*{tid_tparam <- tid_tparam*}) as typeIR
       -- let polyTypeDefIR_tuple = `PolyTD%%%`_polyTypeDefIR(typeIR_tuple, tid_tparam*{tid_tparam <- tid_tparam*}, [])
 
-   ;; ../../../../spec-concrete/5.05.1-typing-type.watsup:148.1-149.28
+   ;; ../../../../spec-concrete/5.05.1-typing-type.watsup:149.1-150.28
    rule void: `%%|-%:%%`(p, TC, typeOrVoid, `VoidT`_primitiveTypeIR() as typeIR, [])
       -- if typeOrVoid matches `VoidT`
 

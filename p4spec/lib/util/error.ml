@@ -1,6 +1,7 @@
 open Source
 
 exception ParseError of region * string
+exception UnparseError of string
 exception ElabError of region * string
 exception InterpError of region * string
 
@@ -15,6 +16,10 @@ let warn (at : region) (category : string) (msg : string) =
 (* Parser errors *)
 
 let error_parse (at : region) (msg : string) = raise (ParseError (at, msg))
+
+(* Unparser errors *)
+
+let error_unparse (msg : string) = raise (UnparseError msg)
 
 (* Elaboration errors *)
 
