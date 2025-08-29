@@ -57,22 +57,23 @@ def $instantiable_table(BLOCK, TC, instctxt)
 def $instantiable_table(LOCAL, TC, instctxt) = false
 
 dec $instantiable(cursor, typingContext, instctxt, typeIR) : bool
+dec $instantiable'(cursor, typingContext, instctxt, typeIR) : bool
 
 def $instantiable(p, TC, instctxt, typeIR)
+  = $instantiable'(p, TC, instctxt, $canon(typeIR))
+
+def $instantiable'(p, TC, instctxt, ExternT _ _)
   = $instantiable_extern(p, TC, instctxt)
-  -- if $is_extern_object_typeIR($canon(typeIR))
-def $instantiable(p, TC, instctxt, typeIR)
+def $instantiable'(p, TC, instctxt, ParserT _)
   = $instantiable_parser(p, TC, instctxt)
-  -- if $is_parser_object_typeIR($canon(typeIR))
-def $instantiable(p, TC, instctxt, typeIR)
+def $instantiable'(p, TC, instctxt, ControlT _)
   = $instantiable_control(p, TC, instctxt)
-  -- if $is_control_object_typeIR($canon(typeIR))
-def $instantiable(p, TC, instctxt, typeIR)
+def $instantiable'(p, TC, instctxt, PackageT _ _)
   = $instantiable_package(p, TC, instctxt)
-  -- if $is_package_object_typeIR($canon(typeIR))
-def $instantiable(p, TC, instctxt, typeIR)
+def $instantiable'(p, TC, instctxt, TableT _ _)
   = $instantiable_table(p, TC, instctxt)
-  -- if $is_table_object_typeIR($canon(typeIR))
+def $instantiable'(p, TC, instctxt, typeIR) = false
+  -- otherwise
 
 ;;; Instantiation of a package
 

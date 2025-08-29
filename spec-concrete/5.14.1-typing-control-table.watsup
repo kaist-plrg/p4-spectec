@@ -17,6 +17,8 @@ def $compat'_table_exact_optional_key(NewT _ typeIR)
 def $compat'_table_exact_optional_key(EnumT _ _) = true
 def $compat'_table_exact_optional_key(SEnumT _ typeIR _)
   = $compat_table_exact_optional_key(typeIR)
+def $compat'_table_exact_optional_key(_) = false
+  -- otherwise
 
 dec $compat_table_lpm_ternary_range_key(typeIR) : bool
 dec $compat'_table_lpm_ternary_range_key(typeIR) : bool
@@ -30,6 +32,8 @@ def $compat'_table_lpm_ternary_range_key(NewT _ typeIR)
   = $compat_table_lpm_ternary_range_key(typeIR)
 def $compat'_table_lpm_ternary_range_key(SEnumT _ typeIR _)
   = $compat_table_lpm_ternary_range_key(typeIR)
+def $compat'_table_lpm_ternary_range_key(_) = false
+  -- otherwise
 
 dec $compat_table_key(name, typeIR) : bool
 
@@ -709,10 +713,17 @@ def $count_table_keys(
   )
   = $(1 + $count_table_keys(tableProperty_t*))
 def $count_table_keys(
-    tableProperty_h :: tableProperty_t*
+    (ActionP _) :: tableProperty_t*
   )
   = $count_table_keys(tableProperty_t*)
-  -- otherwise
+def $count_table_keys(
+    (EntryP _ _) :: tableProperty_t*
+  )
+  = $count_table_keys(tableProperty_t*)
+def $count_table_keys(
+    (CustomP _ _ _) :: tableProperty_t*
+  )
+  = $count_table_keys(tableProperty_t*)
 
 dec $count_table_actions(tableProperty*) : nat
 
@@ -722,7 +733,17 @@ def $count_table_actions(
   )
   = $(1 + $count_table_actions(tableProperty_t*))
 def $count_table_actions(
-    tableProperty_h :: tableProperty_t*
+    (KeyP _) :: tableProperty_t*
+  )
+  = $count_table_actions(tableProperty_t*)
+  -- otherwise
+def $count_table_actions(
+    (EntryP _ _) :: tableProperty_t*
+  )
+  = $count_table_actions(tableProperty_t*)
+  -- otherwise
+def $count_table_actions(
+    (CustomP _ _ _) :: tableProperty_t*
   )
   = $count_table_actions(tableProperty_t*)
   -- otherwise

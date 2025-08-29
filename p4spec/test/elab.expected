@@ -37,7 +37,7 @@ def $init_(nat) : nat* =
 
    ;; ../../../../spec-concrete/0-aux.watsup:44.1-46.22
    clause 1(n) = n' :: $init_(n')
-      -- if (n > 0)
+      -- if (n =/= 0)
       -- let int = (n - 1)
       -- if int <: nat
       -- let n' = int as nat
@@ -51,7 +51,7 @@ def $repeat_<X>(X, nat) : X* =
 
    ;; ../../../../spec-concrete/0-aux.watsup:51.1-53.22
    clause 1(X, n) = [X] ++ $repeat_<X>(X, n')
-      -- if (n > 0)
+      -- if (n =/= 0)
       -- let int = (n - 1)
       -- if int <: nat
       -- let n' = int as nat
@@ -769,7 +769,7 @@ def $fresh_tids(nat) : tid* =
 
    ;; ../../../../spec-concrete/2.0-domain.watsup:17.1-19.22
    clause 1(n) = $fresh_tid :: $fresh_tids(n')
-      -- if (n > 0)
+      -- if (n =/= 0)
       -- let int = (n - 1)
       -- if int <: nat
       -- let n' = int as nat
@@ -957,36 +957,40 @@ def $to_int(int, int) : int =
 ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:12.1-12.31
 def $to_bitstr(int, int) : int =
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:18.1-18.28
-def $to_number(value) : int =
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:18.1-18.29
+def $to_number(value) : int? =
 
    ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:20.1-20.27
-   clause 0(value) = i
+   clause 0(value) = ?(i)
       -- if value <: numberValue
       -- let numberValue = value as numberValue
       -- if numberValue matches `IntV%`
       -- let `IntV%`_numberValue(i) = numberValue
 
    ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:21.1-21.42
-   clause 1(value) = $to_int(w as int, i)
+   clause 1(value) = ?($to_int(w as int, i))
       -- if value <: numberValue
       -- let numberValue = value as numberValue
       -- if numberValue matches `FIntV%%`
       -- let `FIntV%%`_numberValue(w, i) = numberValue
 
    ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:22.1-22.30
-   clause 2(value) = i
+   clause 2(value) = ?(i)
       -- if value <: numberValue
       -- let numberValue = value as numberValue
       -- if numberValue matches `FBitV%%`
       -- let `FBitV%%`_numberValue(_width, i) = numberValue
 
    ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:23.1-23.32
-   clause 3(value) = i
+   clause 3(value) = ?(i)
       -- if value <: numberValue
       -- let numberValue = value as numberValue
       -- if numberValue matches `VBitV%%%`
       -- let `VBitV%%%`_numberValue(_width, _width', i) = numberValue
+
+   ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:24.1-25.15
+   clause 4(_value) = ?()
+      -- otherwise
 
 ;; ../../../../spec-concrete/2.2.1-type.watsup:14.1-18.9
 syntax primitiveTypeIR = 
@@ -3113,25 +3117,10 @@ def $joins_ctk(ctk*) : ctk =
    clause 0(ctk*{ctk <- ctk*}) = `LCTK`_ctk()
       -- if ctk*{ctk <- ctk*} matches []
 
-   ;; ../../../../spec-concrete/2.3-compile-time-known.watsup:19.1-19.26
-   clause 1(ctk'*{ctk' <- ctk'*}) = ctk
-      -- if ctk'*{ctk' <- ctk'*} matches [ _/1 ]
-      -- let [ctk] = ctk'*{ctk' <- ctk'*}
-
-   ;; ../../../../spec-concrete/2.3-compile-time-known.watsup:20.1-20.57
-   clause 2(ctk'*{ctk' <- ctk'*}) = $join_ctk(ctk_a, ctk_b)
-      -- if ctk'*{ctk' <- ctk'*} matches _ :: _
-      -- let ctk_a :: ctk*{ctk <- ctk*} = ctk'*{ctk' <- ctk'*}
-      -- if ctk*{ctk <- ctk*} matches [ _/1 ]
-      -- let [ctk_b] = ctk*{ctk <- ctk*}
-
-   ;; ../../../../spec-concrete/2.3-compile-time-known.watsup:21.1-22.40
-   clause 3(ctk'*{ctk' <- ctk'*}) = $joins_ctk(ctk_d :: ctk_c*{ctk_c <- ctk_c*})
-      -- if ctk'*{ctk' <- ctk'*} matches _ :: _
-      -- let ctk_a :: ctk*{ctk <- ctk*} = ctk'*{ctk' <- ctk'*}
+   ;; ../../../../spec-concrete/2.3-compile-time-known.watsup:19.1-20.41
+   clause 1(ctk*{ctk <- ctk*}) = $join_ctk(ctk_h, $joins_ctk(ctk_t*{ctk_t <- ctk_t*}))
       -- if ctk*{ctk <- ctk*} matches _ :: _
-      -- let ctk_b :: ctk_c*{ctk_c <- ctk_c*} = ctk*{ctk <- ctk*}
-      -- let ctk_d = $join_ctk(ctk_a, ctk_b)
+      -- let ctk_h :: ctk_t*{ctk_t <- ctk_t*} = ctk*{ctk <- ctk*}
 
 ;; ../../../../spec-concrete/3-numerics.watsup:5.1-5.21
 def $pow2(nat) : int =
@@ -4767,12 +4756,18 @@ def $bitacc_op(value, value, value) : value =
 
    ;; ../../../../spec-concrete/3-numerics.watsup:652.1-657.35
    clause 0(value_b, value_h, value_l) = `FBitV%%`_numberValue(w, i) as value
-      -- let i_b = $to_number(value_b)
-      -- let i_h = $to_number(value_h)
-      -- let i_l = $to_number(value_l)
-      -- let int = ((i_h + 1 as int) - i_l)
-      -- if int <: nat
-      -- let w = int as nat
+      -- let int?{int <- int?} = $to_number(value_b)
+      -- if int?{int <- int?} matches (_)
+      -- let ?(i_b) = int?{int <- int?}
+      -- let int'?{int' <- int'?} = $to_number(value_h)
+      -- if int'?{int' <- int'?} matches (_)
+      -- let ?(i_h) = int'?{int' <- int'?}
+      -- let int''?{int'' <- int''?} = $to_number(value_l)
+      -- if int''?{int'' <- int''?} matches (_)
+      -- let ?(i_l) = int''?{int'' <- int''?}
+      -- let int''' = ((i_h + 1 as int) - i_l)
+      -- if int''' <: nat
+      -- let w = int''' as nat
       -- let i = $bitacc(i_b, i_h, i_l)
 
 ;; ../../../../spec-concrete/3-numerics.watsup:663.1-663.32
@@ -9093,7 +9088,9 @@ relation Eval_static: `%%|-%~>%`(cursor, typingContext, typedExpressionIR, value
       -- let value' = value_base
       -- if value' <: tupleValue
       -- let `TupleV%`_tupleValue(value_e*{value_e <- value_e*}) = value' as tupleValue
-      -- let int = $to_number(value_index)
+      -- let int'?{int' <- int'?} = $to_number(value_index)
+      -- if int'?{int' <- int'?} matches (_)
+      -- let ?(int) = int'?{int' <- int'?}
       -- if int <: nat
       -- let n_index = int as nat
       -- if (n_index < |value_e*{value_e <- value_e*}|)
@@ -9110,7 +9107,9 @@ relation Eval_static: `%%|-%~>%`(cursor, typingContext, typedExpressionIR, value
       -- let value' = value_base
       -- if value' <: headerStackValue
       -- let `HeaderStackV%%%`_headerStackValue(value_e*{value_e <- value_e*}, _nat, _nat') = value' as headerStackValue
-      -- let int = $to_number(value_index)
+      -- let int'?{int' <- int'?} = $to_number(value_index)
+      -- if int'?{int' <- int'?} matches (_)
+      -- let ?(int) = int'?{int' <- int'?}
       -- if int <: nat
       -- let n_index = int as nat
       -- if (n_index < |value_e*{value_e <- value_e*}|)
@@ -9218,7 +9217,9 @@ relation Type_ok: `%%|-%:%%`(cursor, typingContext, typeOrVoid, typeIR, tid*)
       -- let `%%`_typedExpressionIR(_expressionIR, `(%%)`_expressionNoteIR(_typeIR, ctk)) = typedExpressionIR
       -- if ctk matches `LCTK`
       -- Eval_static: `%%|-%~>%`(p, TC, typedExpressionIR, value)
-      -- let int = $to_number(value)
+      -- let int'?{int' <- int'?} = $to_number(value)
+      -- if int'?{int' <- int'?} matches (_)
+      -- let ?(int) = int'?{int' <- int'?}
       -- if int <: nat
       -- let n = int as nat
       -- if (n > 0)
@@ -9233,7 +9234,9 @@ relation Type_ok: `%%|-%:%%`(cursor, typingContext, typeOrVoid, typeIR, tid*)
       -- let `%%`_typedExpressionIR(_expressionIR, `(%%)`_expressionNoteIR(_typeIR, ctk)) = typedExpressionIR
       -- if ctk matches `LCTK`
       -- Eval_static: `%%|-%~>%`(p, TC, typedExpressionIR, value)
-      -- let int = $to_number(value)
+      -- let int'?{int' <- int'?} = $to_number(value)
+      -- if int'?{int' <- int'?} matches (_)
+      -- let ?(int) = int'?{int' <- int'?}
       -- if int <: nat
       -- let n = int as nat
 
@@ -9247,7 +9250,9 @@ relation Type_ok: `%%|-%:%%`(cursor, typingContext, typeOrVoid, typeIR, tid*)
       -- let `%%`_typedExpressionIR(_expressionIR, `(%%)`_expressionNoteIR(_typeIR, ctk)) = typedExpressionIR
       -- if ctk matches `LCTK`
       -- Eval_static: `%%|-%~>%`(p, TC, typedExpressionIR, value)
-      -- let int = $to_number(value)
+      -- let int'?{int' <- int'?} = $to_number(value)
+      -- if int'?{int' <- int'?} matches (_)
+      -- let ?(int) = int'?{int' <- int'?}
       -- if int <: nat
       -- let n = int as nat
 
@@ -9306,7 +9311,9 @@ relation Type_ok: `%%|-%:%%`(cursor, typingContext, typeOrVoid, typeIR, tid*)
       -- let `%%`_typedExpressionIR(_expressionIR, `(%%)`_expressionNoteIR(_typeIR, ctk)) = typedExpressionIR_size
       -- if ctk matches `LCTK`
       -- Eval_static: `%%|-%~>%`(p, TC, typedExpressionIR_size, value_size)
-      -- let int = $to_number(value_size)
+      -- let int'?{int' <- int'?} = $to_number(value_size)
+      -- if int'?{int' <- int'?} matches (_)
+      -- let ?(int) = int'?{int' <- int'?}
       -- if int <: nat
       -- let n_size = int as nat
       -- let typeIR_stack = `HeaderStackT%%`_headerStackTypeIR(`NameT%`_namedTypeIR("T") as typeIR, n_size) as typeIR
@@ -9323,7 +9330,9 @@ relation Type_ok: `%%|-%:%%`(cursor, typingContext, typeOrVoid, typeIR, tid*)
       -- let `%%`_typedExpressionIR(_expressionIR, `(%%)`_expressionNoteIR(_typeIR, ctk)) = typedExpressionIR_size
       -- if ctk matches `LCTK`
       -- Eval_static: `%%|-%~>%`(p, TC, typedExpressionIR_size, value_size)
-      -- let int = $to_number(value_size)
+      -- let int'?{int' <- int'?} = $to_number(value_size)
+      -- if int'?{int' <- int'?} matches (_)
+      -- let ?(int) = int'?{int' <- int'?}
       -- if int <: nat
       -- let n_size = int as nat
       -- let typeIR_stack = `HeaderStackT%%`_headerStackTypeIR(`NameT%`_namedTypeIR("T") as typeIR, n_size) as typeIR
@@ -10191,7 +10200,9 @@ relation Expr_ok: `%%|-%:%`(cursor, typingContext, expression, typedExpressionIR
       -- let `%%`_typedExpressionIR(_expressionIR', `(%%)`_expressionNoteIR(_typeIR, ctk_r_reduced)) = typedExpressionIR_r_reduced
       -- if (ctk_r_reduced = `LCTK`_ctk())
       -- Eval_static: `%%|-%~>%`(p, TC, typedExpressionIR_r_reduced, value_r)
-      -- let int = $to_number(value_r)
+      -- let int'?{int' <- int'?} = $to_number(value_r)
+      -- if int'?{int' <- int'?} matches (_)
+      -- let ?(int) = int'?{int' <- int'?}
       -- if int <: nat
       -- let n_r = int as nat
       -- if (n_r > 0)
@@ -10624,7 +10635,9 @@ relation Expr_ok: `%%|-%:%`(cursor, typingContext, expression, typedExpressionIR
       -- let `TupleT%`_tupleTypeIR(typeIR_e*{typeIR_e <- typeIR_e*}) = typeIR as tupleTypeIR
       -- if (ctk_index = `LCTK`_ctk())
       -- Eval_static: `%%|-%~>%`(p, TC, typedExpressionIR_index_reduced, value_index)
-      -- let int = $to_number(value_index)
+      -- let int'?{int' <- int'?} = $to_number(value_index)
+      -- if int'?{int' <- int'?} matches (_)
+      -- let ?(int) = int'?{int' <- int'?}
       -- if int <: nat
       -- let n_index = int as nat
       -- if (n_index < |typeIR_e*{typeIR_e <- typeIR_e*}|)
@@ -10648,7 +10661,9 @@ relation Expr_ok: `%%|-%:%`(cursor, typingContext, expression, typedExpressionIR
       -- let `HeaderStackT%%`_headerStackTypeIR(typeIR, n_size) = typeIR' as headerStackTypeIR
       -- if (ctk_index = `LCTK`_ctk())
       -- Eval_static: `%%|-%~>%`(p, TC, typedExpressionIR_index_reduced, value_index)
-      -- let int = $to_number(value_index)
+      -- let int'?{int' <- int'?} = $to_number(value_index)
+      -- if int'?{int' <- int'?} matches (_)
+      -- let ?(int) = int'?{int' <- int'?}
       -- if int <: nat
       -- let n_index = int as nat
       -- if (n_index < n_size)
@@ -10697,18 +10712,22 @@ relation Expr_ok: `%%|-%:%`(cursor, typingContext, expression, typedExpressionIR
       -- let `%%`_typedExpressionIR(_expressionIR'', `(%%)`_expressionNoteIR(typeIR_lo_reduced, ctk_lo_reduced)) = typedExpressionIR_lo_reduced
       -- if (ctk_hi_reduced = `LCTK`_ctk())
       -- Eval_static: `%%|-%~>%`(p, TC, typedExpressionIR_hi_reduced, value_hi)
-      -- let int = $to_number(value_hi)
+      -- let int'?{int' <- int'?} = $to_number(value_hi)
+      -- if int'?{int' <- int'?} matches (_)
+      -- let ?(int) = int'?{int' <- int'?}
       -- if int <: nat
       -- let n_hi = int as nat
       -- if (ctk_lo_reduced = `LCTK`_ctk())
       -- Eval_static: `%%|-%~>%`(p, TC, typedExpressionIR_lo_reduced, value_lo)
-      -- let int' = $to_number(value_lo)
-      -- if int' <: nat
-      -- let n_lo = int' as nat
-      -- if $is_valid_bitslice(typeIR_base_reduced, n_lo, n_hi)
-      -- let int'' = ((n_hi - n_lo) + 1 as int)
+      -- let int'''?{int''' <- int'''?} = $to_number(value_lo)
+      -- if int'''?{int''' <- int'''?} matches (_)
+      -- let ?(int'') = int'''?{int''' <- int'''?}
       -- if int'' <: nat
-      -- let n' = int'' as nat
+      -- let n_lo = int'' as nat
+      -- if $is_valid_bitslice(typeIR_base_reduced, n_lo, n_hi)
+      -- let int'''' = ((n_hi - n_lo) + 1 as int)
+      -- if int'''' <: nat
+      -- let n' = int'''' as nat
       -- let typeIR = `FBitT%`_numberTypeIR(n') as typeIR
       -- let expressionNoteIR = `(%%)`_expressionNoteIR(typeIR, ctk_base_reduced)
 
@@ -10870,7 +10889,9 @@ relation Lvalue_ok: `%%|-%:%`(cursor, typingContext, lvalue, typedLvalueIR)
       -- let ?(typedExpressionIR_index_reduced) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
       -- if (ctk_index = `LCTK`_ctk())
       -- Eval_static: `%%|-%~>%`(p, TC, typedExpressionIR_index_reduced, value_index)
-      -- let int = $to_number(value_index)
+      -- let int'?{int' <- int'?} = $to_number(value_index)
+      -- if int'?{int' <- int'?} matches (_)
+      -- let ?(int) = int'?{int' <- int'?}
       -- if int <: nat
       -- let n_index = int as nat
       -- if (n_index < n_size)
@@ -10912,18 +10933,22 @@ relation Lvalue_ok: `%%|-%:%`(cursor, typingContext, lvalue, typedLvalueIR)
       -- let `%%`_typedExpressionIR(_expressionIR', `(%%)`_expressionNoteIR(typeIR_lo_reduced, ctk_lo_reduced)) = typedExpressionIR_lo_reduced
       -- if (ctk_hi_reduced = `LCTK`_ctk())
       -- Eval_static: `%%|-%~>%`(p, TC, typedExpressionIR_hi_reduced, value_hi)
-      -- let int = $to_number(value_hi)
+      -- let int'?{int' <- int'?} = $to_number(value_hi)
+      -- if int'?{int' <- int'?} matches (_)
+      -- let ?(int) = int'?{int' <- int'?}
       -- if int <: nat
       -- let n_hi = int as nat
       -- if (ctk_lo_reduced = `LCTK`_ctk())
       -- Eval_static: `%%|-%~>%`(p, TC, typedExpressionIR_lo_reduced, value_lo)
-      -- let int' = $to_number(value_lo)
-      -- if int' <: nat
-      -- let n_lo = int' as nat
-      -- if $is_valid_bitslice(typeIR_base, n_lo, n_hi)
-      -- let int'' = ((n_hi - n_lo) + 1 as int)
+      -- let int'''?{int''' <- int'''?} = $to_number(value_lo)
+      -- if int'''?{int''' <- int'''?} matches (_)
+      -- let ?(int'') = int'''?{int''' <- int'''?}
       -- if int'' <: nat
-      -- let n' = int'' as nat
+      -- let n_lo = int'' as nat
+      -- if $is_valid_bitslice(typeIR_base, n_lo, n_hi)
+      -- let int'''' = ((n_hi - n_lo) + 1 as int)
+      -- if int'''' <: nat
+      -- let n' = int'''' as nat
       -- let typeIR = `FBitT%`_numberTypeIR(n') as typeIR
       -- let typedLvalueIR = `%%`_typedLvalueIR(`BitAccL%%%`_lvalueIR(typedLvalueIR_base, typedExpressionIR_hi_reduced, typedExpressionIR_lo_reduced), `(%)`_lvalueNoteIR(typeIR))
 
@@ -11373,45 +11398,40 @@ relation ParserStmt_ok: `%|-%:%%`(typingContext, parserStatement, typingContext,
       -- let TC_1 = $add_var(`LOCAL`_cursor(), TC_0, name, `%%%%`_varTypeIR(`INOUT`_direction(), typeIR, `DYN`_ctk(), ?()))
       -- let variableDeclarationIR = `VarD%%%`_variableDeclarationIR(typeIR, name, ?(typedExpressionIR_init_cast))
 
-   ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:263.1-267.57
+   ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:263.1-267.53
    rule emptyStatement: `%|-%:%%`(TC, parserStatement, TC, emptyStatementIR as parserStatementIR)
       -- if parserStatement <: emptyStatement
       -- let emptyStatement = parserStatement as emptyStatement
-      -- Stmt_ok: `%%%|-%:%%%`(`LOCAL`_cursor(), TC, `CONT`_flow(), emptyStatement as statement, typingContext, flow, statementIR)
-      -- if (typingContext = TC)
-      -- if flow matches `CONT`
+      -- Stmt_ok: `%%%|-%:%%%`(`LOCAL`_cursor(), TC, `CONT`_flow(), emptyStatement as statement, _typingContext, _flow, statementIR)
       -- if statementIR <: emptyStatementIR
       -- let emptyStatementIR = statementIR as emptyStatementIR
 
-   ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:271.1-275.65
+   ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:271.1-275.62
    rule assignmentStatement: `%|-%:%%`(TC_0, parserStatement, TC_1, assignmentStatementIR as parserStatementIR)
       -- if parserStatement <: assignmentStatement
       -- let assignmentStatement = parserStatement as assignmentStatement
-      -- Stmt_ok: `%%%|-%:%%%`(`LOCAL`_cursor(), TC_0, `CONT`_flow(), assignmentStatement as statement, TC_1, flow, statementIR)
-      -- if flow matches `CONT`
+      -- Stmt_ok: `%%%|-%:%%%`(`LOCAL`_cursor(), TC_0, `CONT`_flow(), assignmentStatement as statement, TC_1, _flow, statementIR)
       -- if statementIR <: assignmentStatementIR
       -- let assignmentStatementIR = statementIR as assignmentStatementIR
 
-   ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:279.1-283.59
+   ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:279.1-283.56
    rule callStatement: `%|-%:%%`(TC_0, parserStatement, TC_1, callStatementIR as parserStatementIR)
       -- if parserStatement <: callStatement
       -- let callStatement = parserStatement as callStatement
-      -- Stmt_ok: `%%%|-%:%%%`(`LOCAL`_cursor(), TC_0, `CONT`_flow(), callStatement as statement, TC_1, flow, statementIR)
-      -- if flow matches `CONT`
+      -- Stmt_ok: `%%%|-%:%%%`(`LOCAL`_cursor(), TC_0, `CONT`_flow(), callStatement as statement, TC_1, _flow, statementIR)
       -- if statementIR <: callStatementIR
       -- let callStatementIR = statementIR as callStatementIR
 
-   ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:287.1-291.72
+   ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:287.1-291.69
    rule directApplicationStatement: `%|-%:%%`(TC_0, parserStatement, TC_1, directApplicationStatementIR as parserStatementIR)
       -- if parserStatement <: directApplicationStatement
       -- let directApplicationStatement = parserStatement as directApplicationStatement
-      -- Stmt_ok: `%%%|-%:%%%`(`LOCAL`_cursor(), TC_0, `CONT`_flow(), directApplicationStatement as statement, TC_1, flow, statementIR)
-      -- if flow matches `CONT`
+      -- Stmt_ok: `%%%|-%:%%%`(`LOCAL`_cursor(), TC_0, `CONT`_flow(), directApplicationStatement as statement, TC_1, _flow, statementIR)
       -- if statementIR <: directApplicationStatementIR
       -- let directApplicationStatementIR = statementIR as directApplicationStatementIR
 
    ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:296.1-304.65
-   rule parserBlockStatement: `%|-%:%%`(TC_0, parserStatement', TC_1, parserBlockStatementIR as parserStatementIR)
+   rule parserBlockStatement: `%|-%:%%`(TC_0, parserStatement', TC_3, parserBlockStatementIR as parserStatementIR)
       -- if parserStatement' <: parserBlockStatement
       -- let `ParserBlockS%`_parserBlockStatement(parserStatement*{parserStatement <- parserStatement*}) = parserStatement' as parserBlockStatement
       -- let TC_1 = $enter(TC_0)
@@ -11419,12 +11439,11 @@ relation ParserStmt_ok: `%|-%:%%`(typingContext, parserStatement, typingContext,
       -- let TC_3 = $exit(TC_2)
       -- let parserBlockStatementIR = `ParserBlockS%`_parserBlockStatementIR(parserStatementIR*{parserStatementIR <- parserStatementIR*})
 
-   ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:308.1-312.66
+   ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:308.1-312.63
    rule conditionalStatement: `%|-%:%%`(TC_0, parserStatement, TC_1, conditionalStatementIR as parserStatementIR)
       -- if parserStatement <: conditionalStatement
       -- let conditionalStatement = parserStatement as conditionalStatement
-      -- Stmt_ok: `%%%|-%:%%%`(`LOCAL`_cursor(), TC_0, `CONT`_flow(), conditionalStatement as statement, TC_1, flow, statementIR)
-      -- if flow matches `CONT`
+      -- Stmt_ok: `%%%|-%:%%%`(`LOCAL`_cursor(), TC_0, `CONT`_flow(), conditionalStatement as statement, TC_1, _flow, statementIR)
       -- if statementIR <: conditionalStatementIR
       -- let conditionalStatementIR = statementIR as conditionalStatementIR
 
@@ -11554,7 +11573,7 @@ relation ParserLocalDecls_ok: `%|-%:%%`(typingContext, parserLocalDeclaration*, 
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:181.1-183.23
 relation TableKey_ok: `%%|-%:%%`(typingContext, tableContext, tableKey, tableContext, tableKeyIR)
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:47.1-63.54
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:51.1-67.54
    rule : `%%|-%:%%`(TC, TBLC_0, `%%`_tableKey(expression, name_matchkind), TBLC_2, tableKeyIR)
       -- Expr_ok: `%%|-%:%`(`LOCAL`_cursor(), TC, expression, typedExpressionIR)
       -- let `%%`_typedExpressionIR(_expressionIR, `(%%)`_expressionNoteIR(typeIR, _ctk)) = typedExpressionIR
@@ -11568,11 +11587,11 @@ relation TableKey_ok: `%%|-%:%%`(typingContext, tableContext, tableKey, tableCon
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:185.1-187.23
 relation TableKeys_ok: `%%|-%:%%`(typingContext, tableContext, tableKey*, tableContext, tableKeyIR*)
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:71.1-72.28
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:75.1-76.28
    rule nil: `%%|-%:%%`(TC, TBLC, tableKey*{tableKey <- tableKey*}, TBLC, [])
       -- if tableKey*{tableKey <- tableKey*} matches []
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:74.1-78.67
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:78.1-82.67
    rule cons: `%%|-%:%%`(TC, TBLC_0, tableKey*{tableKey <- tableKey*}, TBLC_2, tableKeyIR_h :: tableKeyIR_t*{tableKeyIR_t <- tableKeyIR_t*})
       -- if tableKey*{tableKey <- tableKey*} matches _ :: _
       -- let tableKey_h :: tableKey_t*{tableKey_t <- tableKey_t*} = tableKey*{tableKey <- tableKey*}
@@ -11582,7 +11601,7 @@ relation TableKeys_ok: `%%|-%:%%`(typingContext, tableContext, tableKey*, tableC
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:189.1-192.23
 relation Call_action_partial_ok: `%|-%%:%%%`(typingContext, parameterTypeIR*, argumentIR*, parameterTypeIR*, parameterTypeIR*, argumentIR*)
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:102.1-113.42
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:106.1-117.42
    rule : `%|-%%:%%%`(TC, parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}, argumentIR*{argumentIR <- argumentIR*}, parameterTypeIR_data*{parameterTypeIR_data <- parameterTypeIR_data*}, parameterTypeIR_control*{parameterTypeIR_control <- parameterTypeIR_control*}, argumentIR_cast*{argumentIR_cast <- argumentIR_cast*})
       -- let (parameterTypeIR_data*{parameterTypeIR_data <- parameterTypeIR_data*}, parameterTypeIR_control*{parameterTypeIR_control <- parameterTypeIR_control*}) = $split_dataplane_parameters(parameterTypeIR*{parameterTypeIR <- parameterTypeIR*})
       -- if (|parameterTypeIR_data*{parameterTypeIR_data <- parameterTypeIR_data*}| = |argumentIR*{argumentIR <- argumentIR*}|)
@@ -11591,7 +11610,7 @@ relation Call_action_partial_ok: `%|-%%:%%%`(typingContext, parameterTypeIR*, ar
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:194.1-196.23
 relation TableAction_ok: `%%|-%:%%`(typingContext, tableContext, tableAction, tableContext, tableActionIR)
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:118.1-133.54
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:122.1-137.54
    rule tableActionReference: `%%|-%:%%`(TC, TBLC_0, `%%`_tableActionReference(prefixedName, argument*{argument <- argument*}), TBLC_1, tableActionIR)
       -- let (rid, routineTypeDefIR)?{(rid, routineTypeDefIR) <- (rid, routineTypeDefIR)?} = $find_routine_non_overloaded(`LOCAL`_cursor(), TC, prefixedName)
       -- if (rid, routineTypeDefIR)?{(rid, routineTypeDefIR) <- (rid, routineTypeDefIR)?} matches (_)
@@ -11610,11 +11629,11 @@ relation TableAction_ok: `%%|-%:%%`(typingContext, tableContext, tableAction, ta
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:198.1-200.23
 relation TableActions_ok: `%%|-%:%%`(typingContext, tableContext, tableAction*, tableContext, tableActionIR*)
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:141.1-142.28
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:145.1-146.28
    rule nil: `%%|-%:%%`(TC, TBLC, tableAction*{tableAction <- tableAction*}, TBLC, [])
       -- if tableAction*{tableAction <- tableAction*} matches []
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:144.1-148.76
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:148.1-152.76
    rule cons: `%%|-%:%%`(TC, TBLC_0, tableAction*{tableAction <- tableAction*}, TBLC_2, tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*})
       -- if tableAction*{tableAction <- tableAction*} matches _ :: _
       -- let tableAction_h :: tableAction_t*{tableAction_t <- tableAction_t*} = tableAction*{tableAction <- tableAction*}
@@ -11624,7 +11643,7 @@ relation TableActions_ok: `%%|-%:%%`(typingContext, tableContext, tableAction*, 
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:202.1-205.23
 relation Call_action_default_ok: `%|-%%:%%%`(typingContext, parameterTypeIR*, argumentIR*, parameterTypeIR*, parameterTypeIR*, argumentIR*)
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:156.1-165.42
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:160.1-169.42
    rule : `%|-%%:%%%`(TC, parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}, argumentIR*{argumentIR <- argumentIR*}, parameterTypeIR_data*{parameterTypeIR_data <- parameterTypeIR_data*}, parameterTypeIR_control*{parameterTypeIR_control <- parameterTypeIR_control*}, argumentIR_cast*{argumentIR_cast <- argumentIR_cast*})
       -- let (parameterTypeIR_data*{parameterTypeIR_data <- parameterTypeIR_data*}, parameterTypeIR_control*{parameterTypeIR_control <- parameterTypeIR_control*}) = $split_dataplane_parameters(parameterTypeIR*{parameterTypeIR <- parameterTypeIR*})
       -- Call_convention_ok: `%%%|-%%:%`(`LOCAL`_cursor(), TC, `ACTION`_actctxt(), parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}, argumentIR*{argumentIR <- argumentIR*}, argumentIR_cast*{argumentIR_cast <- argumentIR_cast*})
@@ -11632,13 +11651,13 @@ relation Call_action_default_ok: `%|-%%:%%%`(typingContext, parameterTypeIR*, ar
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:207.1-209.23
 relation TableDefaultAction_ok: `%%|-%:%`(typingContext, tableContext, initializer, tableActionReferenceIR)
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:169.1-173.54
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:173.1-177.54
    rule nameE: `%%|-%:%`(TC, TBLC, initializer, `%%`_tableActionReferenceIR(prefixedName, []))
       -- if initializer <: referenceExpression
       -- let `NameE%`_referenceExpression(prefixedName) = initializer as referenceExpression
       -- if (?(([], [])) = $find_action(TBLC, prefixedName))
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:177.1-196.57
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:181.1-200.57
    rule callE: `%%|-%:%`(TC, TBLC, initializer, `%%`_tableActionReferenceIR(prefixedName, argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}))
       -- if initializer <: callExpression
       -- let callExpression = initializer as callExpression
@@ -11659,7 +11678,7 @@ relation TableDefaultAction_ok: `%%|-%:%`(typingContext, tableContext, initializ
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:211.1-213.23
 relation TableEntry_keysets_ok: `%%|-%:%%`(typingContext, tableContext, keysetExpression*, tableEntryState, keysetExpressionIR*)
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:380.1-383.21
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:384.1-387.21
    rule defaultK-noprilpm: `%%|-%:%%`(TC, TBLC, keysetExpression*{keysetExpression <- keysetExpression*}, TBLS, [`DefaultK`_keysetExpressionIR()])
       -- if (keysetExpression*{keysetExpression <- keysetExpression*} = [`DefaultK`_keysetExpression()])
       -- let matchMode = TBLC.MODE
@@ -11667,13 +11686,13 @@ relation TableEntry_keysets_ok: `%%|-%:%%`(typingContext, tableContext, keysetEx
       -- let `NOPRILPM%`_matchMode(n) = matchMode
       -- let TBLS = `LPM%`_tableEntryState(n)
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:385.1-388.21
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:389.1-392.21
    rule defaultK-else: `%%|-%:%%`(TC, TBLC, keysetExpression*{keysetExpression <- keysetExpression*}, TBLS, [`DefaultK`_keysetExpressionIR()])
       -- if (keysetExpression*{keysetExpression <- keysetExpression*} = [`DefaultK`_keysetExpression()])
       -- if (((TBLC.MODE = `NOPRI`_matchMode()) \/ (TBLC.MODE = `PRI`_matchMode())) \/ (TBLC.MODE = `PRILPM`_matchMode()))
       -- let TBLS = `NOLPM`_tableEntryState()
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:392.1-395.21
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:396.1-399.21
    rule anyK-noprilpm: `%%|-%:%%`(TC, TBLC, keysetExpression*{keysetExpression <- keysetExpression*}, TBLS, [`AnyK`_keysetExpressionIR()])
       -- if (keysetExpression*{keysetExpression <- keysetExpression*} = [`AnyK`_keysetExpression()])
       -- let matchMode = TBLC.MODE
@@ -11681,13 +11700,13 @@ relation TableEntry_keysets_ok: `%%|-%:%%`(typingContext, tableContext, keysetEx
       -- let `NOPRILPM%`_matchMode(n) = matchMode
       -- let TBLS = `LPM%`_tableEntryState(0)
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:397.1-400.21
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:401.1-404.21
    rule anyK-else: `%%|-%:%%`(TC, TBLC, keysetExpression*{keysetExpression <- keysetExpression*}, TBLS, [`AnyK`_keysetExpressionIR()])
       -- if (keysetExpression*{keysetExpression <- keysetExpression*} = [`AnyK`_keysetExpression()])
       -- if (((TBLC.MODE = `NOPRI`_matchMode()) \/ (TBLC.MODE = `PRI`_matchMode())) \/ (TBLC.MODE = `PRILPM`_matchMode()))
       -- let TBLS = `NOLPM`_tableEntryState()
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:404.1-414.48
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:408.1-418.48
    rule list: `%%|-%:%%`(TC, TBLC, keysetExpression*{keysetExpression <- keysetExpression*}, TBLS, keysetExpressionIR*{keysetExpressionIR <- keysetExpressionIR*})
       -- if ((keysetExpression*{keysetExpression <- keysetExpression*} =/= [`AnyK`_keysetExpression()]) /\ (keysetExpression*{keysetExpression <- keysetExpression*} =/= [`DefaultK`_keysetExpression()]))
       -- if (|TBLC.KEYS| = |keysetExpression*{keysetExpression <- keysetExpression*}|)
@@ -11696,7 +11715,7 @@ relation TableEntry_keysets_ok: `%%|-%:%%`(typingContext, tableContext, keysetEx
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:215.1-217.23
 relation TableEntry_action_ok: `%%|-%:%`(typingContext, tableContext, tableActionReference, tableActionReferenceIR)
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:422.1-441.57
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:426.1-445.57
    rule : `%%|-%:%`(TC, TBLC, `%%`_tableActionReference(prefixedName, argument*{argument <- argument*}), `%%`_tableActionReferenceIR(prefixedName, argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}))
       -- let (parameterTypeIR*, argumentIR*)?{(parameterTypeIR*, argumentIR*) <- (parameterTypeIR*, argumentIR*)?} = $find_action(TBLC, prefixedName)
       -- if (parameterTypeIR*, argumentIR*)?{(parameterTypeIR*, argumentIR*) <- (parameterTypeIR*, argumentIR*)?} matches (_)
@@ -11710,12 +11729,12 @@ relation TableEntry_action_ok: `%%|-%:%`(typingContext, tableContext, tableActio
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:219.1-222.26
 relation TableEntry_priority_ok: `%%%|-%:%%`(typingContext, tableContext, tableEntryState, tableEntryPriority?, tableContext, tableEntryPriorityIR?)
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:451.1-453.26
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:455.1-457.26
    rule none-nopri: `%%%|-%:%%`(TC, TBLC, TBLS, tableEntryPriority?{tableEntryPriority <- tableEntryPriority?}, TBLC, ?())
       -- if tableEntryPriority?{tableEntryPriority <- tableEntryPriority?} matches ()
       -- if (TBLC.MODE = `NOPRI`_matchMode())
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:455.1-458.28
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:459.1-462.28
    rule none-noprilpm: `%%%|-%:%%`(TC, TBLC, TBLS, tableEntryPriority?{tableEntryPriority <- tableEntryPriority?}, TBLC, ?())
       -- if tableEntryPriority?{tableEntryPriority <- tableEntryPriority?} matches ()
       -- let matchMode = TBLC.MODE
@@ -11725,7 +11744,7 @@ relation TableEntry_priority_ok: `%%%|-%:%%`(typingContext, tableContext, tableE
       -- if tableEntryState matches `LPM%`
       -- let `LPM%`_tableEntryState(n_prefix) = tableEntryState
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:460.1-473.58
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:464.1-477.58
    rule none-pri-prilpm-init-largest-wins: `%%%|-%:%%`(TC, TBLC_0, TBLS, tableEntryPriority?{tableEntryPriority <- tableEntryPriority?}, TBLC_1, ?(typedExpressionIR))
       -- if tableEntryPriority?{tableEntryPriority <- tableEntryPriority?} matches ()
       -- if ((TBLC_0.MODE = `PRI`_matchMode()) \/ (TBLC_0.MODE = `PRILPM`_matchMode()))
@@ -11739,7 +11758,7 @@ relation TableEntry_priority_ok: `%%%|-%:%%`(typingContext, tableContext, tableE
       -- let TBLC_1 = $add_table_priority(TBLC_0, n)
       -- let typedExpressionIR = `%%`_typedExpressionIR(`NumE%`_literalExpression(`INT%`_number(n as int)) as expressionIR, `(%%)`_expressionNoteIR(`IntT`_numberTypeIR() as typeIR, `LCTK`_ctk()))
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:475.1-485.58
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:479.1-489.58
    rule none-pri-prilpm-init-non-largest-wins: `%%%|-%:%%`(TC, TBLC_0, TBLS, tableEntryPriority?{tableEntryPriority <- tableEntryPriority?}, TBLC_1, ?(typedExpressionIR))
       -- if tableEntryPriority?{tableEntryPriority <- tableEntryPriority?} matches ()
       -- if ((TBLC_0.MODE = `PRI`_matchMode()) \/ (TBLC_0.MODE = `PRILPM`_matchMode()))
@@ -11748,7 +11767,7 @@ relation TableEntry_priority_ok: `%%%|-%:%%`(typingContext, tableContext, tableE
       -- let TBLC_1 = $add_table_priority(TBLC_0, 1)
       -- let typedExpressionIR = `%%`_typedExpressionIR(`NumE%`_literalExpression(`INT%`_number(1 as int)) as expressionIR, `(%%)`_expressionNoteIR(`IntT`_numberTypeIR() as typeIR, `LCTK`_ctk()))
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:487.1-500.58
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:491.1-504.58
    rule none-pri-prilpm-non-init-largest-wins: `%%%|-%:%%`(TC, TBLC_0, TBLS, tableEntryPriority?{tableEntryPriority <- tableEntryPriority?}, TBLC_1, ?(typedExpressionIR))
       -- if tableEntryPriority?{tableEntryPriority <- tableEntryPriority?} matches ()
       -- if ((TBLC_0.MODE = `PRI`_matchMode()) \/ (TBLC_0.MODE = `PRILPM`_matchMode()))
@@ -11762,7 +11781,7 @@ relation TableEntry_priority_ok: `%%%|-%:%%`(typingContext, tableContext, tableE
       -- let TBLC_1 = $add_table_priority(TBLC_0, n)
       -- let typedExpressionIR = `%%`_typedExpressionIR(`NumE%`_literalExpression(`INT%`_number(n as int)) as expressionIR, `(%%)`_expressionNoteIR(`IntT`_numberTypeIR() as typeIR, `LCTK`_ctk()))
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:502.1-515.58
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:506.1-519.58
    rule none-pri-prilpm-non-init-non-largest-wins: `%%%|-%:%%`(TC, TBLC_0, TBLS, tableEntryPriority?{tableEntryPriority <- tableEntryPriority?}, TBLC_1, ?(typedExpressionIR))
       -- if tableEntryPriority?{tableEntryPriority <- tableEntryPriority?} matches ()
       -- if ((TBLC_0.MODE = `PRI`_matchMode()) \/ (TBLC_0.MODE = `PRILPM`_matchMode()))
@@ -11774,7 +11793,7 @@ relation TableEntry_priority_ok: `%%%|-%:%%`(typingContext, tableContext, tableE
       -- let TBLC_1 = $add_table_priority(TBLC_0, n)
       -- let typedExpressionIR = `%%`_typedExpressionIR(`NumE%`_literalExpression(`INT%`_number(n as int)) as expressionIR, `(%%)`_expressionNoteIR(`IntT`_numberTypeIR() as typeIR, `LCTK`_ctk()))
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:517.1-531.48
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:521.1-535.48
    rule some-pri-prilpm-init: `%%%|-%:%%`(TC, TBLC_0, TBLS, tableEntryPriority?{tableEntryPriority <- tableEntryPriority?}, TBLC_2, ?(typedExpressionIR))
       -- if tableEntryPriority?{tableEntryPriority <- tableEntryPriority?} matches (_)
       -- let ?(expression) = tableEntryPriority?{tableEntryPriority <- tableEntryPriority?}
@@ -11785,13 +11804,15 @@ relation TableEntry_priority_ok: `%%%|-%:%%`(typingContext, tableContext, tableE
       -- let `%%`_typedExpressionIR(_expressionIR, `(%%)`_expressionNoteIR(_typeIR, ctk)) = typedExpressionIR
       -- if ctk matches `LCTK`
       -- Eval_static: `%%|-%~>%`(`LOCAL`_cursor(), TC, typedExpressionIR, value)
-      -- let int = $to_number(value)
+      -- let int'?{int' <- int'?} = $to_number(value)
+      -- if int'?{int' <- int'?} matches (_)
+      -- let ?(int) = int'?{int' <- int'?}
       -- if int <: nat
       -- let n = int as nat
       -- let TBLC_1 = TBLC_0[PRIORITIES.INIT = true]
       -- let TBLC_2 = $add_table_priority(TBLC_1, n)
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:533.1-547.48
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:537.1-551.48
    rule some-pri-prilpm-non-init: `%%%|-%:%%`(TC, TBLC_0, TBLS, tableEntryPriority?{tableEntryPriority <- tableEntryPriority?}, TBLC_1, ?(typedExpressionIR))
       -- if tableEntryPriority?{tableEntryPriority <- tableEntryPriority?} matches (_)
       -- let ?(expression) = tableEntryPriority?{tableEntryPriority <- tableEntryPriority?}
@@ -11803,7 +11824,9 @@ relation TableEntry_priority_ok: `%%%|-%:%%`(typingContext, tableContext, tableE
       -- let `%%`_typedExpressionIR(_expressionIR, `(%%)`_expressionNoteIR(_typeIR, ctk)) = typedExpressionIR
       -- if ctk matches `LCTK`
       -- Eval_static: `%%|-%~>%`(`LOCAL`_cursor(), TC, typedExpressionIR, value)
-      -- let int = $to_number(value)
+      -- let int'?{int' <- int'?} = $to_number(value)
+      -- if int'?{int' <- int'?} matches (_)
+      -- let ?(int) = int'?{int' <- int'?}
       -- if int <: nat
       -- let n = int as nat
       -- let TBLC_1 = $add_table_priority(TBLC_0, n)
@@ -11811,7 +11834,7 @@ relation TableEntry_priority_ok: `%%%|-%:%%`(typingContext, tableContext, tableE
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:224.1-226.23
 relation TableEntry_ok: `%%|-%:%%`(typingContext, tableContext, tableEntry, tableContext, tableEntryIR)
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:552.1-566.58
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:556.1-570.58
    rule : `%%|-%:%%`(TC, TBLC_0, `%%%%`_tableEntry(const?{const <- const?}, tableEntryPriority?{tableEntryPriority <- tableEntryPriority?}, keysetExpression*{keysetExpression <- keysetExpression*}, tableActionReference), TBLC_1, tableEntryIR)
       -- TableEntry_keysets_ok: `%%|-%:%%`(TC, TBLC_0, keysetExpression*{keysetExpression <- keysetExpression*}, TBLS, keysetExpressionIR*{keysetExpressionIR <- keysetExpressionIR*})
       -- TableEntry_action_ok: `%%|-%:%`(TC, TBLC_0, tableActionReference, tableActionReferenceIR)
@@ -11821,11 +11844,11 @@ relation TableEntry_ok: `%%|-%:%%`(typingContext, tableContext, tableEntry, tabl
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:228.1-230.23
 relation TableEntries_ok: `%%|-%:%%`(typingContext, tableContext, tableEntry*, tableContext, tableEntryIR*)
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:574.1-575.28
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:578.1-579.28
    rule nil: `%%|-%:%%`(TC, TBLC, tableEntry*{tableEntry <- tableEntry*}, TBLC, [])
       -- if tableEntry*{tableEntry <- tableEntry*} matches []
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:577.1-581.74
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:581.1-585.74
    rule cons: `%%|-%:%%`(TC, TBLC_0, tableEntry*{tableEntry <- tableEntry*}, TBLC_2, tableEntryIR_h :: tableEntryIR_t*{tableEntryIR_t <- tableEntryIR_t*})
       -- if tableEntry*{tableEntry <- tableEntry*} matches _ :: _
       -- let tableEntry_h :: tableEntry_t*{tableEntry_t <- tableEntry_t*} = tableEntry*{tableEntry <- tableEntry*}
@@ -11835,19 +11858,19 @@ relation TableEntries_ok: `%%|-%:%%`(typingContext, tableContext, tableEntry*, t
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:232.1-234.23
 relation TableProperty_ok: `%%|-%:%%`(typingContext, tableContext, tableProperty, tableContext, tablePropertyIR)
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:591.1-594.63
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:595.1-598.63
    rule keyP: `%%|-%:%%`(TC, TBLC_0, tableProperty, TBLC_1, `KeyP%`_tablePropertyIR(tableKeyIR*{tableKeyIR <- tableKeyIR*}))
       -- if tableProperty matches `KeyP%`
       -- let `KeyP%`_tableProperty(tableKey*{tableKey <- tableKey*}) = tableProperty
       -- TableKeys_ok: `%%|-%:%%`(TC, TBLC_0, tableKey*{tableKey <- tableKey*}, TBLC_1, tableKeyIR*{tableKeyIR <- tableKeyIR*})
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:598.1-601.72
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:602.1-605.72
    rule actionP: `%%|-%:%%`(TC, TBLC_0, tableProperty, TBLC_1, `ActionP%`_tablePropertyIR(tableActionIR*{tableActionIR <- tableActionIR*}))
       -- if tableProperty matches `ActionP%`
       -- let `ActionP%`_tableProperty(tableAction*{tableAction <- tableAction*}) = tableProperty
       -- TableActions_ok: `%%|-%:%%`(TC, TBLC_0, tableAction*{tableAction <- tableAction*}, TBLC_1, tableActionIR*{tableActionIR <- tableActionIR*})
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:605.1-615.70
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:609.1-619.70
    rule entryP: `%%|-%:%%`(TC, TBLC_0, tableProperty, TBLC_3, `EntryP%%`_tablePropertyIR(const?{const <- const?}, tableEntryIR*{tableEntryIR <- tableEntryIR*}))
       -- if tableProperty matches `EntryP%%`
       -- let `EntryP%%`_tableProperty(const?{const <- const?}, tableEntry*{tableEntry <- tableEntry*}) = tableProperty
@@ -11856,7 +11879,7 @@ relation TableProperty_ok: `%%|-%:%%`(typingContext, tableContext, tableProperty
       -- let TBLC_2 = TBLC_1[ENTRIES.CONST = (const?{const <- const?} = ?(`CONST`_const()))]
       -- TableEntries_ok: `%%|-%:%%`(TC, TBLC_2, tableEntry*{tableEntry <- tableEntry*}, TBLC_3, tableEntryIR*{tableEntryIR <- tableEntryIR*})
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:619.1-625.71
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:623.1-629.71
    rule customP-default-action: `%%|-%:%%`(TC, TBLC, tableProperty, TBLC, tablePropertyIR)
       -- if tableProperty matches `CustomP%%%`
       -- let `CustomP%%%`_tableProperty(const?{const <- const?}, text, initializer) = tableProperty
@@ -11864,7 +11887,7 @@ relation TableProperty_ok: `%%|-%:%%`(typingContext, tableContext, tableProperty
       -- TableDefaultAction_ok: `%%|-%:%`(TC, TBLC, initializer, tableActionReferenceIR)
       -- let tablePropertyIR = `DefaultActionP%%`_tablePropertyIR(const?{const <- const?}, tableActionReferenceIR)
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:627.1-637.66
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:631.1-641.66
    rule customP-size: `%%|-%:%%`(TC, TBLC, tableProperty, TBLC, tablePropertyIR)
       -- if tableProperty matches `CustomP%%%`
       -- let `CustomP%%%`_tableProperty(const?{const <- const?}, text, expression) = tableProperty
@@ -11874,7 +11897,7 @@ relation TableProperty_ok: `%%|-%:%%`(typingContext, tableContext, tableProperty
       -- if (($is_arbitrary_int_typeIR(typeIR) \/ $is_fixed_int_typeIR(typeIR)) \/ $is_fixed_bit_typeIR(typeIR))
       -- let tablePropertyIR = `CustomP%%%`_tablePropertyIR(const?{const <- const?}, "size", typedExpressionIR)
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:639.1-651.66
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:643.1-655.66
    rule customP-largest-priority-wins: `%%|-%:%%`(TC, TBLC_0, tableProperty, TBLC_1, tablePropertyIR)
       -- if tableProperty matches `CustomP%%%`
       -- let `CustomP%%%`_tableProperty(const?{const <- const?}, text, expression) = tableProperty
@@ -11890,7 +11913,7 @@ relation TableProperty_ok: `%%|-%:%%`(typingContext, tableContext, tableProperty
       -- let TBLC_1 = TBLC_0[PRIORITIES.LARGEST_WINS = b_largest_priority_wins]
       -- let tablePropertyIR = `CustomConstP%%%`_tablePropertyIR(const?{const <- const?}, "largest_priority_wins", `BoolV%`_primitiveValue(b_largest_priority_wins) as constantInitializerIR)
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:653.1-669.60
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:657.1-673.60
    rule customP-priority-delta: `%%|-%:%%`(TC, TBLC_0, tableProperty, TBLC_1, tablePropertyIR)
       -- if tableProperty matches `CustomP%%%`
       -- let `CustomP%%%`_tableProperty(const?{const <- const?}, text, expression) = tableProperty
@@ -11900,14 +11923,16 @@ relation TableProperty_ok: `%%|-%:%%`(typingContext, tableContext, tableProperty
       -- if ctk matches `LCTK`
       -- if (($is_arbitrary_int_typeIR(typeIR) \/ $is_fixed_int_typeIR(typeIR)) \/ $is_fixed_bit_typeIR(typeIR))
       -- Eval_static: `%%|-%~>%`(`LOCAL`_cursor(), TC, typedExpressionIR, value)
-      -- let int = $to_number(value)
+      -- let int'?{int' <- int'?} = $to_number(value)
+      -- if int'?{int' <- int'?} matches (_)
+      -- let ?(int) = int'?{int' <- int'?}
       -- if int <: nat
       -- let n_delta = int as nat
       -- if (n_delta > 0)
       -- let TBLC_1 = TBLC_0[PRIORITIES.DELTA = n_delta]
       -- let tablePropertyIR = `CustomConstP%%%`_tablePropertyIR(const?{const <- const?}, "priority_delta", `IntV%`_numberValue(n_delta as int) as constantInitializerIR)
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:671.1-681.64
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:675.1-685.64
    rule customP: `%%|-%:%%`(TC, TBLC, tableProperty, TBLC, tablePropertyIR)
       -- if tableProperty matches `CustomP%%%`
       -- let `CustomP%%%`_tableProperty(const?{const <- const?}, name, expression) = tableProperty
@@ -11918,11 +11943,11 @@ relation TableProperty_ok: `%%|-%:%%`(typingContext, tableContext, tableProperty
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:236.1-238.23
 relation TableProperties_ok: `%%|-%:%%`(typingContext, tableContext, tableProperty*, tableContext, tablePropertyIR*)
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:689.1-690.28
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:693.1-694.28
    rule nil: `%%|-%:%%`(TC, TBLC, tableProperty*{tableProperty <- tableProperty*}, TBLC, [])
       -- if tableProperty*{tableProperty <- tableProperty*} matches []
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:692.1-696.83
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:696.1-700.83
    rule cons: `%%|-%:%%`(TC, TBLC_0, tableProperty*{tableProperty <- tableProperty*}, TBLC_2, tablePropertyIR_h :: tablePropertyIR_t*{tablePropertyIR_t <- tablePropertyIR_t*})
       -- if tableProperty*{tableProperty <- tableProperty*} matches _ :: _
       -- let tableProperty_h :: tableProperty_t*{tableProperty_t <- tableProperty_t*} = tableProperty*{tableProperty <- tableProperty*}
@@ -11932,7 +11957,7 @@ relation TableProperties_ok: `%%|-%:%%`(typingContext, tableContext, tableProper
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:240.1-242.20
 relation Table_ok: `%|-%:%%`(typingContext, tableProperty*, tableContext, tablePropertyIR*)
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:730.1-738.79
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:751.1-759.79
    rule : `%|-%:%%`(TC, tableProperty*{tableProperty <- tableProperty*}, TBLC_1, tablePropertyIR*{tablePropertyIR <- tablePropertyIR*})
       -- if ($count_table_keys(tableProperty*{tableProperty <- tableProperty*}) <= 1)
       -- if ($count_table_actions(tableProperty*{tableProperty <- tableProperty*}) = 1)
@@ -11942,7 +11967,7 @@ relation Table_ok: `%|-%:%%`(typingContext, tableProperty*, tableContext, tableP
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:244.1-246.23
 relation TableType_ok: `%%|-%:%%`(typingContext, tableContext, name, typingContext, typeIR)
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:740.1-765.55
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:761.1-786.55
    rule : `%%|-%:%%`(TC_0, TBLC, name, TC_1, typeIR_table)
       -- let tid_enum = "action_list(" ++ name ++ ")"
       -- let (prefixedName_action, _parameterTypeIR*{_parameterTypeIR <- _parameterTypeIR*}, _argumentIR*{_argumentIR <- _argumentIR*})*{_argumentIR* <- _argumentIR**, _parameterTypeIR* <- _parameterTypeIR**, prefixedName_action <- prefixedName_action*} = TBLC.ACTIONS
@@ -11958,7 +11983,7 @@ relation TableType_ok: `%%|-%:%%`(typingContext, tableContext, name, typingConte
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:248.1-251.20
 relation ControlLocalDecl_ok: `%|-%:%%`(typingContext, controlLocalDeclaration, typingContext, controlLocalDeclarationIR)
 
-   ;; ../../../../spec-concrete/5.14.2-typing-control-declaration.watsup:9.1-11.77
+   ;; ../../../../spec-concrete/5.14.2-typing-control-declaration.watsup:9.1-13.55
    rule constantDeclaration: `%|-%:%%`(TC_0, controlLocalDeclaration, TC_1, constantDeclarationIR as controlLocalDeclarationIR)
       -- if controlLocalDeclaration <: constantDeclaration
       -- let constantDeclaration = controlLocalDeclaration as constantDeclaration
@@ -11966,7 +11991,7 @@ relation ControlLocalDecl_ok: `%|-%:%%`(typingContext, controlLocalDeclaration, 
       -- if declarationIR <: constantDeclarationIR
       -- let constantDeclarationIR = declarationIR as constantDeclarationIR
 
-   ;; ../../../../spec-concrete/5.14.2-typing-control-declaration.watsup:15.1-17.65
+   ;; ../../../../spec-concrete/5.14.2-typing-control-declaration.watsup:17.1-21.49
    rule instantiation: `%|-%:%%`(TC_0, controlLocalDeclaration, TC_1, instantiationIR as controlLocalDeclarationIR)
       -- if controlLocalDeclaration <: instantiation
       -- let instantiation = controlLocalDeclaration as instantiation
@@ -11974,7 +11999,7 @@ relation ControlLocalDecl_ok: `%|-%:%%`(typingContext, controlLocalDeclaration, 
       -- if declarationIR <: instantiationIR
       -- let instantiationIR = declarationIR as instantiationIR
 
-   ;; ../../../../spec-concrete/5.14.2-typing-control-declaration.watsup:22.1-33.53
+   ;; ../../../../spec-concrete/5.14.2-typing-control-declaration.watsup:26.1-37.53
    rule variableDeclaration-none: `%|-%:%%`(TC_0, controlLocalDeclaration, TC_1, variableDeclarationIR as controlLocalDeclarationIR)
       -- if controlLocalDeclaration <: variableDeclaration
       -- let `VarD%%%`_variableDeclaration(type, name, initializer?{initializer <- initializer?}) = controlLocalDeclaration as variableDeclaration
@@ -11986,7 +12011,7 @@ relation ControlLocalDecl_ok: `%|-%:%%`(typingContext, controlLocalDeclaration, 
       -- let TC_1 = $add_var(`BLOCK`_cursor(), TC_0, name, `%%%%`_varTypeIR(`INOUT`_direction(), typeIR, `DYN`_ctk(), ?()))
       -- let variableDeclarationIR = `VarD%%%`_variableDeclarationIR(typeIR, name, ?())
 
-   ;; ../../../../spec-concrete/5.14.2-typing-control-declaration.watsup:35.1-53.53
+   ;; ../../../../spec-concrete/5.14.2-typing-control-declaration.watsup:39.1-57.53
    rule variableDeclaration-some: `%|-%:%%`(TC_0, controlLocalDeclaration, TC_1, variableDeclarationIR as controlLocalDeclarationIR)
       -- if controlLocalDeclaration <: variableDeclaration
       -- let `VarD%%%`_variableDeclaration(type, name, initializer?{initializer <- initializer?}) = controlLocalDeclaration as variableDeclaration
@@ -12003,7 +12028,7 @@ relation ControlLocalDecl_ok: `%|-%:%%`(typingContext, controlLocalDeclaration, 
       -- let TC_1 = $add_var(`BLOCK`_cursor(), TC_0, name, `%%%%`_varTypeIR(`INOUT`_direction(), typeIR, `DYN`_ctk(), ?()))
       -- let variableDeclarationIR = `VarD%%%`_variableDeclarationIR(typeIR, name, ?(typedExpressionIR_init_cast))
 
-   ;; ../../../../spec-concrete/5.14.2-typing-control-declaration.watsup:57.1-59.73
+   ;; ../../../../spec-concrete/5.14.2-typing-control-declaration.watsup:61.1-65.53
    rule actionDeclaration: `%|-%:%%`(TC_0, controlLocalDeclaration, TC_1, actionDeclarationIR as controlLocalDeclarationIR)
       -- if controlLocalDeclaration <: actionDeclaration
       -- let actionDeclaration = controlLocalDeclaration as actionDeclaration
@@ -12011,7 +12036,7 @@ relation ControlLocalDecl_ok: `%|-%:%%`(typingContext, controlLocalDeclaration, 
       -- if declarationIR <: actionDeclarationIR
       -- let actionDeclarationIR = declarationIR as actionDeclarationIR
 
-   ;; ../../../../spec-concrete/5.14.2-typing-control-declaration.watsup:64.1-76.50
+   ;; ../../../../spec-concrete/5.14.2-typing-control-declaration.watsup:70.1-82.50
    rule tableDeclaration: `%|-%:%%`(TC_0, controlLocalDeclaration, TC_3, tableDeclarationIR as controlLocalDeclarationIR)
       -- if controlLocalDeclaration <: tableDeclaration
       -- let `TableD%%`_tableDeclaration(name, tableProperty*{tableProperty <- tableProperty*}) = controlLocalDeclaration as tableDeclaration
@@ -12024,11 +12049,11 @@ relation ControlLocalDecl_ok: `%|-%:%%`(typingContext, controlLocalDeclaration, 
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:253.1-256.20
 relation ControlLocalDecls_ok: `%|-%:%%`(typingContext, controlLocalDeclaration*, typingContext, controlLocalDeclarationIR*)
 
-   ;; ../../../../spec-concrete/5.14.2-typing-control-declaration.watsup:84.1-85.21
+   ;; ../../../../spec-concrete/5.14.2-typing-control-declaration.watsup:90.1-91.21
    rule nil: `%|-%:%%`(TC, controlLocalDeclaration*{controlLocalDeclaration <- controlLocalDeclaration*}, TC, [])
       -- if controlLocalDeclaration*{controlLocalDeclaration <- controlLocalDeclaration*} matches []
 
-   ;; ../../../../spec-concrete/5.14.2-typing-control-declaration.watsup:87.1-93.69
+   ;; ../../../../spec-concrete/5.14.2-typing-control-declaration.watsup:93.1-99.69
    rule cons: `%|-%:%%`(TC_0, controlLocalDeclaration*{controlLocalDeclaration <- controlLocalDeclaration*}, TC_2, controlLocalDeclarationIR_h :: controlLocalDeclarationIR_t*{controlLocalDeclarationIR_t <- controlLocalDeclarationIR_t*})
       -- if controlLocalDeclaration*{controlLocalDeclaration <- controlLocalDeclaration*} matches _ :: _
       -- let controlLocalDeclaration_h :: controlLocalDeclaration_t*{controlLocalDeclaration_t <- controlLocalDeclaration_t*} = controlLocalDeclaration*{controlLocalDeclaration <- controlLocalDeclaration*}
@@ -12911,7 +12936,9 @@ relation Call_ok: `%%|-%%%%%:%%%`(cursor, typingContext, routineTypeIR, typeArgu
       -- let parameterTypeIR_non_default*{parameterTypeIR_non_default <- parameterTypeIR_non_default*} = $filter_default_parameters(parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}, id_default*{id_default <- id_default*})
       -- if (|parameterTypeIR_non_default*{parameterTypeIR_non_default <- parameterTypeIR_non_default*}| = |argumentIR*{argumentIR <- argumentIR*}|)
       -- let parameterTypeIR_aligned*{parameterTypeIR_aligned <- parameterTypeIR_aligned*} = $align_parameters(parameterTypeIR_non_default*{parameterTypeIR_non_default <- parameterTypeIR_non_default*}, argumentIR*{argumentIR <- argumentIR*})
-      -- let inference = $infer(tid_infer*{tid_infer <- tid_infer*}, parameterTypeIR_aligned*{parameterTypeIR_aligned <- parameterTypeIR_aligned*}, argumentIR*{argumentIR <- argumentIR*})
+      -- let inference'?{inference' <- inference'?} = $infer(tid_infer*{tid_infer <- tid_infer*}, parameterTypeIR_aligned*{parameterTypeIR_aligned <- parameterTypeIR_aligned*}, argumentIR*{argumentIR <- argumentIR*})
+      -- if inference'?{inference' <- inference'?} matches (_)
+      -- let ?(inference) = inference'?{inference' <- inference'?}
       -- (let typeIR?{typeIR <- typeIR?} = $find_map<tid, typeIR>(inference, tid_infer))*{tid_infer <- tid_infer*, typeIR? <- typeIR?*}
       -- (if typeIR?{typeIR <- typeIR?} matches (_))*{typeIR? <- typeIR?*}
       -- (let ?(typeIR_inferred) = typeIR?{typeIR <- typeIR?})*{typeIR? <- typeIR?*, typeIR_inferred <- typeIR_inferred*}
@@ -12932,7 +12959,9 @@ relation Call_ok: `%%|-%%%%%:%%%`(cursor, typingContext, routineTypeIR, typeArgu
       -- let parameterTypeIR_non_default*{parameterTypeIR_non_default <- parameterTypeIR_non_default*} = $filter_default_parameters(parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}, id_default*{id_default <- id_default*})
       -- if (|parameterTypeIR_non_default*{parameterTypeIR_non_default <- parameterTypeIR_non_default*}| = |argumentIR*{argumentIR <- argumentIR*}|)
       -- let parameterTypeIR_aligned*{parameterTypeIR_aligned <- parameterTypeIR_aligned*} = $align_parameters(parameterTypeIR_non_default*{parameterTypeIR_non_default <- parameterTypeIR_non_default*}, argumentIR*{argumentIR <- argumentIR*})
-      -- let inference = $infer(tid_infer*{tid_infer <- tid_infer*}, parameterTypeIR_aligned*{parameterTypeIR_aligned <- parameterTypeIR_aligned*}, argumentIR*{argumentIR <- argumentIR*})
+      -- let inference'?{inference' <- inference'?} = $infer(tid_infer*{tid_infer <- tid_infer*}, parameterTypeIR_aligned*{parameterTypeIR_aligned <- parameterTypeIR_aligned*}, argumentIR*{argumentIR <- argumentIR*})
+      -- if inference'?{inference' <- inference'?} matches (_)
+      -- let ?(inference) = inference'?{inference' <- inference'?}
       -- (let typeIR?{typeIR <- typeIR?} = $find_map<tid, typeIR>(inference, tid_infer))*{tid_infer <- tid_infer*, typeIR? <- typeIR?*}
       -- (if typeIR?{typeIR <- typeIR?} matches (_))*{typeIR? <- typeIR?*}
       -- (let ?(typeIR_inferred) = typeIR?{typeIR <- typeIR?})*{typeIR? <- typeIR?*, typeIR_inferred <- typeIR_inferred*}
@@ -12980,7 +13009,9 @@ relation Call_ok: `%%|-%%%%%:%%%`(cursor, typingContext, routineTypeIR, typeArgu
       -- let parameterTypeIR_non_default*{parameterTypeIR_non_default <- parameterTypeIR_non_default*} = $filter_default_parameters(parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}, id_default*{id_default <- id_default*})
       -- if (|parameterTypeIR_non_default*{parameterTypeIR_non_default <- parameterTypeIR_non_default*}| = |argumentIR*{argumentIR <- argumentIR*}|)
       -- let parameterTypeIR_aligned*{parameterTypeIR_aligned <- parameterTypeIR_aligned*} = $align_parameters(parameterTypeIR_non_default*{parameterTypeIR_non_default <- parameterTypeIR_non_default*}, argumentIR*{argumentIR <- argumentIR*})
-      -- let inference = $infer(tid_infer*{tid_infer <- tid_infer*}, parameterTypeIR_aligned*{parameterTypeIR_aligned <- parameterTypeIR_aligned*}, argumentIR*{argumentIR <- argumentIR*})
+      -- let inference'?{inference' <- inference'?} = $infer(tid_infer*{tid_infer <- tid_infer*}, parameterTypeIR_aligned*{parameterTypeIR_aligned <- parameterTypeIR_aligned*}, argumentIR*{argumentIR <- argumentIR*})
+      -- if inference'?{inference' <- inference'?} matches (_)
+      -- let ?(inference) = inference'?{inference' <- inference'?}
       -- (let typeIR?{typeIR <- typeIR?} = $find_map<tid, typeIR>(inference, tid_infer))*{tid_infer <- tid_infer*, typeIR? <- typeIR?*}
       -- (if typeIR?{typeIR <- typeIR?} matches (_))*{typeIR? <- typeIR?*}
       -- (let ?(typeIR_inferred) = typeIR?{typeIR <- typeIR?})*{typeIR? <- typeIR?*, typeIR_inferred <- typeIR_inferred*}
@@ -13001,7 +13032,9 @@ relation Call_ok: `%%|-%%%%%:%%%`(cursor, typingContext, routineTypeIR, typeArgu
       -- let parameterTypeIR_non_default*{parameterTypeIR_non_default <- parameterTypeIR_non_default*} = $filter_default_parameters(parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}, id_default*{id_default <- id_default*})
       -- if (|parameterTypeIR_non_default*{parameterTypeIR_non_default <- parameterTypeIR_non_default*}| = |argumentIR*{argumentIR <- argumentIR*}|)
       -- let parameterTypeIR_aligned*{parameterTypeIR_aligned <- parameterTypeIR_aligned*} = $align_parameters(parameterTypeIR_non_default*{parameterTypeIR_non_default <- parameterTypeIR_non_default*}, argumentIR*{argumentIR <- argumentIR*})
-      -- let inference = $infer(tid_infer*{tid_infer <- tid_infer*}, parameterTypeIR_aligned*{parameterTypeIR_aligned <- parameterTypeIR_aligned*}, argumentIR*{argumentIR <- argumentIR*})
+      -- let inference'?{inference' <- inference'?} = $infer(tid_infer*{tid_infer <- tid_infer*}, parameterTypeIR_aligned*{parameterTypeIR_aligned <- parameterTypeIR_aligned*}, argumentIR*{argumentIR <- argumentIR*})
+      -- if inference'?{inference' <- inference'?} matches (_)
+      -- let ?(inference) = inference'?{inference' <- inference'?}
       -- (let typeIR?{typeIR <- typeIR?} = $find_map<tid, typeIR>(inference, tid_infer))*{tid_infer <- tid_infer*, typeIR? <- typeIR?*}
       -- (if typeIR?{typeIR <- typeIR?} matches (_))*{typeIR? <- typeIR?*}
       -- (let ?(typeIR_inferred) = typeIR?{typeIR <- typeIR?})*{typeIR? <- typeIR?*, typeIR_inferred <- typeIR_inferred*}
@@ -13073,7 +13106,7 @@ syntax instctxt =
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:351.1-354.38
 relation Inst_ok: `%%%|-%%%%%:%%%`(cursor, typingContext, instctxt, constructorTypeIR, typeArgumentIR*, tid*, argumentIR*, id*, typeIR, typeArgumentIR*, argumentIR*)
 
-   ;; ../../../../spec-concrete/5.15.3-typing-constructor-call.watsup:79.1-113.44
+   ;; ../../../../spec-concrete/5.15.3-typing-constructor-call.watsup:80.1-114.44
    rule package: `%%%|-%%%%%:%%%`(cursor, TC, instctxt, constructorTypeIR, typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}, tid_infer*{tid_infer <- tid_infer*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, typeIR_object_inferred, typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*}, argumentIR_cast*{argumentIR_cast <- argumentIR_cast*})
       -- if cursor matches `GLOBAL`
       -- let `ConstructorT%%`_constructorTypeIR(parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}, typeIR_object) = constructorTypeIR
@@ -13081,7 +13114,9 @@ relation Inst_ok: `%%%|-%%%%%:%%%`(cursor, typingContext, instctxt, constructorT
       -- let parameterTypeIR_non_default*{parameterTypeIR_non_default <- parameterTypeIR_non_default*} = $filter_default_parameters(parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}, id_default*{id_default <- id_default*})
       -- if (|parameterTypeIR_non_default*{parameterTypeIR_non_default <- parameterTypeIR_non_default*}| = |argumentIR*{argumentIR <- argumentIR*}|)
       -- let parameterTypeIR_aligned*{parameterTypeIR_aligned <- parameterTypeIR_aligned*} = $align_parameters(parameterTypeIR_non_default*{parameterTypeIR_non_default <- parameterTypeIR_non_default*}, argumentIR*{argumentIR <- argumentIR*})
-      -- let inference = $infer(tid_infer*{tid_infer <- tid_infer*}, parameterTypeIR_aligned*{parameterTypeIR_aligned <- parameterTypeIR_aligned*}, argumentIR*{argumentIR <- argumentIR*})
+      -- let inference'?{inference' <- inference'?} = $infer(tid_infer*{tid_infer <- tid_infer*}, parameterTypeIR_aligned*{parameterTypeIR_aligned <- parameterTypeIR_aligned*}, argumentIR*{argumentIR <- argumentIR*})
+      -- if inference'?{inference' <- inference'?} matches (_)
+      -- let ?(inference) = inference'?{inference' <- inference'?}
       -- (let typeIR?{typeIR <- typeIR?} = $find_map<tid, typeIR>(inference, tid_infer))*{tid_infer <- tid_infer*, typeIR? <- typeIR?*}
       -- (if typeIR?{typeIR <- typeIR?} matches (_))*{typeIR? <- typeIR?*}
       -- (let ?(typeIR_inferred) = typeIR?{typeIR <- typeIR?})*{typeIR? <- typeIR?*, typeIR_inferred <- typeIR_inferred*}
@@ -13093,14 +13128,16 @@ relation Inst_ok: `%%%|-%%%%%:%%%`(cursor, typingContext, instctxt, constructorT
       -- if $instantiable(`GLOBAL`_cursor(), TC, instctxt, typeIR_object_inferred)
       -- Call_convention_ok: `%%%|-%%:%`(`BLOCK`_cursor(), TC, `NOACTION`_actctxt(), parameterTypeIR_aligned_inferred*{parameterTypeIR_aligned_inferred <- parameterTypeIR_aligned_inferred*}, argumentIR*{argumentIR <- argumentIR*}, argumentIR_cast*{argumentIR_cast <- argumentIR_cast*})
 
-   ;; ../../../../spec-concrete/5.15.3-typing-constructor-call.watsup:117.1-151.40
+   ;; ../../../../spec-concrete/5.15.3-typing-constructor-call.watsup:118.1-152.40
    rule non-package: `%%%|-%%%%%:%%%`(p, TC, instctxt, constructorTypeIR, typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}, tid_infer*{tid_infer <- tid_infer*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, typeIR_object_inferred, typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*}, argumentIR_cast*{argumentIR_cast <- argumentIR_cast*})
       -- let `ConstructorT%%`_constructorTypeIR(parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}, typeIR_object) = constructorTypeIR
       -- if ~$is_package_object_typeIR($canon(typeIR_object))
       -- let parameterTypeIR_non_default*{parameterTypeIR_non_default <- parameterTypeIR_non_default*} = $filter_default_parameters(parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}, id_default*{id_default <- id_default*})
       -- if (|parameterTypeIR_non_default*{parameterTypeIR_non_default <- parameterTypeIR_non_default*}| = |argumentIR*{argumentIR <- argumentIR*}|)
       -- let parameterTypeIR_aligned*{parameterTypeIR_aligned <- parameterTypeIR_aligned*} = $align_parameters(parameterTypeIR_non_default*{parameterTypeIR_non_default <- parameterTypeIR_non_default*}, argumentIR*{argumentIR <- argumentIR*})
-      -- let inference = $infer(tid_infer*{tid_infer <- tid_infer*}, parameterTypeIR_aligned*{parameterTypeIR_aligned <- parameterTypeIR_aligned*}, argumentIR*{argumentIR <- argumentIR*})
+      -- let inference'?{inference' <- inference'?} = $infer(tid_infer*{tid_infer <- tid_infer*}, parameterTypeIR_aligned*{parameterTypeIR_aligned <- parameterTypeIR_aligned*}, argumentIR*{argumentIR <- argumentIR*})
+      -- if inference'?{inference' <- inference'?} matches (_)
+      -- let ?(inference) = inference'?{inference' <- inference'?}
       -- (let typeIR?{typeIR <- typeIR?} = $find_map<tid, typeIR>(inference, tid_infer))*{tid_infer <- tid_infer*, typeIR? <- typeIR?*}
       -- (if typeIR?{typeIR <- typeIR?} matches (_))*{typeIR? <- typeIR?*}
       -- (let ?(typeIR_inferred) = typeIR?{typeIR <- typeIR?})*{typeIR? <- typeIR?*, typeIR_inferred <- typeIR_inferred*}
@@ -14523,74 +14560,82 @@ def $compat'_table_exact_optional_key(typeIR) : bool =
       -- if enumTypeIR matches `SEnumT%%%`
       -- let `SEnumT%%%`_enumTypeIR(_tid, typeIR, _valueFieldIR*{_valueFieldIR <- _valueFieldIR*}) = enumTypeIR
 
-;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:21.1-21.55
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:20.1-21.15
+   clause 6(_typeIR) = false
+      -- otherwise
+
+;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:23.1-23.55
 def $compat_table_lpm_ternary_range_key(typeIR) : bool =
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:24.1-25.57
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:26.1-27.57
    clause 0(typeIR) = $compat'_table_lpm_ternary_range_key($canon(typeIR))
 
-;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:22.1-22.56
+;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:24.1-24.56
 def $compat'_table_lpm_ternary_range_key(typeIR) : bool =
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:26.1-26.54
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:28.1-28.54
    clause 0(typeIR) = true
       -- if typeIR <: numberTypeIR
       -- let numberTypeIR = typeIR as numberTypeIR
       -- if numberTypeIR matches `IntT`
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:27.1-27.57
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:29.1-29.57
    clause 1(typeIR) = true
       -- if typeIR <: numberTypeIR
       -- let numberTypeIR = typeIR as numberTypeIR
       -- if numberTypeIR matches `FIntT%`
       -- let `FIntT%`_numberTypeIR(_nat) = numberTypeIR
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:28.1-28.57
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:30.1-30.57
    clause 2(typeIR) = true
       -- if typeIR <: numberTypeIR
       -- let numberTypeIR = typeIR as numberTypeIR
       -- if numberTypeIR matches `FBitT%`
       -- let `FBitT%`_numberTypeIR(_nat) = numberTypeIR
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:29.1-30.48
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:31.1-32.48
    clause 3(typeIR') = $compat_table_lpm_ternary_range_key(typeIR)
       -- if typeIR' <: aliasTypeIR
       -- let aliasTypeIR = typeIR' as aliasTypeIR
       -- if aliasTypeIR matches `NewT%%`
       -- let `NewT%%`_aliasTypeIR(_tid, typeIR) = aliasTypeIR
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:31.1-32.48
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:33.1-34.48
    clause 4(typeIR') = $compat_table_lpm_ternary_range_key(typeIR)
       -- if typeIR' <: enumTypeIR
       -- let enumTypeIR = typeIR' as enumTypeIR
       -- if enumTypeIR matches `SEnumT%%%`
       -- let `SEnumT%%%`_enumTypeIR(_tid, typeIR, _valueFieldIR*{_valueFieldIR <- _valueFieldIR*}) = enumTypeIR
 
-;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:34.1-34.43
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:35.1-36.15
+   clause 5(_typeIR) = false
+      -- otherwise
+
+;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:38.1-38.43
 def $compat_table_key(name, typeIR) : bool =
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:36.1-38.49
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:40.1-42.49
    clause 0(name, typeIR) = true
       -- if ((name = "exact") \/ (name = "optional"))
       -- if $compat_table_exact_optional_key(typeIR)
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:40.1-42.52
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:44.1-46.52
    clause 1(name, typeIR) = true
       -- if (((name = "lpm") \/ (name = "ternary")) \/ (name = "range"))
       -- if $compat_table_lpm_ternary_range_key(typeIR)
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:44.1-45.15
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:48.1-49.15
    clause 2(name, typeIR) = false
       -- otherwise
 
-;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:86.1-87.41
+;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:90.1-91.41
 def $split_dataplane_parameters(parameterTypeIR*) : (parameterTypeIR*, parameterTypeIR*) =
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:89.1-89.50
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:93.1-93.50
    clause 0(parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}) = ([], [])
       -- if parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} matches []
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:90.1-94.56
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:94.1-98.56
    clause 1(parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}) = (parameterTypeIR_data*{parameterTypeIR_data <- parameterTypeIR_data*}, parameterTypeIR_h :: parameterTypeIR_control*{parameterTypeIR_control <- parameterTypeIR_control*})
       -- if parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} matches _ :: _
       -- let parameterTypeIR_h :: parameterTypeIR_t*{parameterTypeIR_t <- parameterTypeIR_t*} = parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}
@@ -14598,7 +14643,7 @@ def $split_dataplane_parameters(parameterTypeIR*) : (parameterTypeIR*, parameter
       -- if direction matches `NO`
       -- let (parameterTypeIR_data*{parameterTypeIR_data <- parameterTypeIR_data*}, parameterTypeIR_control*{parameterTypeIR_control <- parameterTypeIR_control*}) = $split_dataplane_parameters(parameterTypeIR_t*{parameterTypeIR_t <- parameterTypeIR_t*})
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:95.1-100.56
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:99.1-104.56
    clause 2(parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}) = (parameterTypeIR_h :: parameterTypeIR_data*{parameterTypeIR_data <- parameterTypeIR_data*}, parameterTypeIR_control*{parameterTypeIR_control <- parameterTypeIR_control*})
       -- if parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} matches _ :: _
       -- let parameterTypeIR_h :: parameterTypeIR_t*{parameterTypeIR_t <- parameterTypeIR_t*} = parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}
@@ -14606,10 +14651,10 @@ def $split_dataplane_parameters(parameterTypeIR*) : (parameterTypeIR*, parameter
       -- if (direction =/= `NO`_direction())
       -- let (parameterTypeIR_data*{parameterTypeIR_data <- parameterTypeIR_data*}, parameterTypeIR_control*{parameterTypeIR_control <- parameterTypeIR_control*}) = $split_dataplane_parameters(parameterTypeIR_t*{parameterTypeIR_t <- parameterTypeIR_t*})
 
-;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:210.1-213.26
+;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:214.1-217.26
 relation TableEntry_keyset_ok: `%%|-%%:%%`(typingContext, tableContext, matchKey, keysetExpression, tableEntryState, keysetExpressionIR)
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:217.1-230.65
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:221.1-234.65
    rule exprK-lpm: `%%|-%%:%%`(TC, TBLC, (typeIR_key, text), keysetExpression, `LPM%`_tableEntryState(n), `ExprK%`_keysetExpressionIR(typedExpressionIR_set))
       -- if (text = "lpm")
       -- if keysetExpression matches `ExprK%`
@@ -14623,7 +14668,7 @@ relation TableEntry_keyset_ok: `%%|-%%:%%`(typingContext, tableContext, matchKey
       -- let typeIR_set = `SetT%`_setTypeIR([typeIR_key]) as typeIR
       -- let typedExpressionIR_set = `%%`_typedExpressionIR(`CastE%%`_castExpressionIR(typeIR_set, typedExpressionIR) as expressionIR, `(%%)`_expressionNoteIR(typeIR_set, ctk))
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:232.1-245.65
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:236.1-249.65
    rule exprK-non-lpm: `%%|-%%:%%`(TC, TBLC, (typeIR_key, name_matchkind), keysetExpression, `NOLPM`_tableEntryState(), `ExprK%`_keysetExpressionIR(typedExpressionIR_set))
       -- if keysetExpression matches `ExprK%`
       -- let `ExprK%`_keysetExpression(expression) = keysetExpression
@@ -14634,7 +14679,7 @@ relation TableEntry_keyset_ok: `%%|-%%:%%`(typingContext, tableContext, matchKey
       -- let typeIR_set = `SetT%`_setTypeIR([typeIR_key]) as typeIR
       -- let typedExpressionIR_set = `%%`_typedExpressionIR(`CastE%%`_castExpressionIR(typeIR_set, typedExpressionIR) as expressionIR, `(%%)`_expressionNoteIR(typeIR_set, ctk))
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:249.1-276.70
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:253.1-280.70
    rule maskK-lpm: `%%|-%%:%%`(TC, TBLC, (typeIR_key, text), keysetExpression, `LPM%`_tableEntryState(n_prefix), `MaskK%%`_keysetExpressionIR(typedExpressionIR_l_reduced, typedExpressionIR_r_reduced))
       -- if (text = "lpm")
       -- if keysetExpression matches `MaskK%%`
@@ -14654,10 +14699,12 @@ relation TableEntry_keyset_ok: `%%|-%%:%%`(typingContext, tableContext, matchKey
       -- if Sub_impl: `%<:%`(typeIR_reduced, typeIR_key) holds
       -- if (ctk_r_reduced = `LCTK`_ctk())
       -- Eval_static: `%%|-%~>%`(`LOCAL`_cursor(), TC, typedExpressionIR_r_reduced, value_r)
-      -- let i_r = $to_number(value_r)
+      -- let int?{int <- int?} = $to_number(value_r)
+      -- if int?{int <- int?} matches (_)
+      -- let ?(i_r) = int?{int <- int?}
       -- let n_prefix = $tableEntry_lpm_prefix(`FBitV%%`_numberValue(n, $to_bitstr(n as int, i_r)) as value)
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:278.1-297.44
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:282.1-301.44
    rule maskK-ternary: `%%|-%%:%%`(TC, TBLC, (typeIR_key, text), keysetExpression, `NOLPM`_tableEntryState(), `MaskK%%`_keysetExpressionIR(typedExpressionIR_l_reduced, typedExpressionIR_r_reduced))
       -- if (text = "ternary")
       -- if keysetExpression matches `MaskK%%`
@@ -14673,7 +14720,7 @@ relation TableEntry_keyset_ok: `%%|-%%:%%`(typingContext, tableContext, matchKey
       -- let `%%`_typedExpressionIR(_expressionIR, `(%%)`_expressionNoteIR(typeIR_reduced, ctk_r_reduced)) = typedExpressionIR_r_reduced
       -- if Sub_impl: `%<:%`(typeIR_reduced, typeIR_key) holds
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:301.1-320.44
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:305.1-324.44
    rule rangeK-range: `%%|-%%:%%`(TC, TBLC, (typeIR_key, text), keysetExpression, `NOLPM`_tableEntryState(), `RangeK%%`_keysetExpressionIR(typedExpressionIR_l_reduced, typedExpressionIR_r_reduced))
       -- if (text = "range")
       -- if keysetExpression matches `RangeK%%`
@@ -14689,7 +14736,7 @@ relation TableEntry_keyset_ok: `%%|-%%:%%`(typingContext, tableContext, matchKey
       -- let `%%`_typedExpressionIR(_expressionIR, `(%%)`_expressionNoteIR(typeIR_reduced, ctk_r_reduced)) = typedExpressionIR_r_reduced
       -- if Sub_impl: `%<:%`(typeIR_reduced, typeIR_key) holds
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:324.1-327.31
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:328.1-331.31
    rule defaultK-lpm: `%%|-%%:%%`(TC, TBLC, (typeIR_key, text), keysetExpression, `LPM%`_tableEntryState(n), `DefaultK`_keysetExpressionIR())
       -- if (text = "lpm")
       -- if keysetExpression matches `DefaultK`
@@ -14697,12 +14744,12 @@ relation TableEntry_keyset_ok: `%%|-%%:%%`(typingContext, tableContext, matchKey
       -- if matchMode matches `NOPRILPM%`
       -- let `NOPRILPM%`_matchMode(n) = matchMode
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:329.1-332.35
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:333.1-336.35
    rule defaultK-else: `%%|-%%:%%`(TC, TBLC, (typeIR_key, name_matchkind), keysetExpression, `NOLPM`_tableEntryState(), `DefaultK`_keysetExpressionIR())
       -- if keysetExpression matches `DefaultK`
       -- if (name_matchkind =/= "exact")
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:336.1-339.31
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:340.1-343.31
    rule anyK-lpm: `%%|-%%:%%`(TC, TBLC, (typeIR_key, text), keysetExpression, `LPM%`_tableEntryState(0), `AnyK`_keysetExpressionIR())
       -- if (text = "lpm")
       -- if keysetExpression matches `AnyK`
@@ -14710,20 +14757,20 @@ relation TableEntry_keyset_ok: `%%|-%%:%%`(typingContext, tableContext, matchKey
       -- if matchMode matches `NOPRILPM%`
       -- let `NOPRILPM%`_matchMode(_nat) = matchMode
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:341.1-344.35
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:345.1-348.35
    rule anyK-else: `%%|-%%:%%`(TC, TBLC, (typeIR_key, name_matchkind), keysetExpression, `NOLPM`_tableEntryState(), `AnyK`_keysetExpressionIR())
       -- if keysetExpression matches `AnyK`
       -- if (name_matchkind =/= "exact")
 
-;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:352.1-355.29
+;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:356.1-359.29
 relation TableEntry_keysets_ok': `%%%|-%%:%%`(typingContext, tableContext, tableEntryState, matchKey*, keysetExpression*, tableEntryState, keysetExpressionIR*)
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:357.1-358.37
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:361.1-362.37
    rule nil: `%%%|-%%:%%`(TC, TBLC, TBLS, matchKey*{matchKey <- matchKey*}, keysetExpression*{keysetExpression <- keysetExpression*}, TBLS, [])
       -- if matchKey*{matchKey <- matchKey*} matches []
       -- if keysetExpression*{keysetExpression <- keysetExpression*} matches []
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:360.1-370.53
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:364.1-374.53
    rule cons: `%%%|-%%:%%`(TC, TBLC, TBLS_0, matchKey*{matchKey <- matchKey*}, keysetExpression*{keysetExpression <- keysetExpression*}, TBLS_3, keysetExpressionIR_h :: keysetExpressionIR_t*{keysetExpressionIR_t <- keysetExpressionIR_t*})
       -- if matchKey*{matchKey <- matchKey*} matches _ :: _
       -- let matchKey_h :: matchKey_t*{matchKey_t <- matchKey_t*} = matchKey*{matchKey <- matchKey*}
@@ -14733,44 +14780,77 @@ relation TableEntry_keysets_ok': `%%%|-%%:%%`(typingContext, tableContext, table
       -- let TBLS_2 = $join_tableEntryState(TBLS_0, TBLS_1)
       -- TableEntry_keysets_ok': `%%%|-%%:%%`(TC, TBLC, TBLS_2, matchKey_t*{matchKey_t <- matchKey_t*}, keysetExpression_t*{keysetExpression_t <- keysetExpression_t*}, TBLS_3, keysetExpressionIR_t*{keysetExpressionIR_t <- keysetExpressionIR_t*})
 
-;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:704.1-704.44
+;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:708.1-708.44
 def $count_table_keys(tableProperty*) : nat =
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:706.1-706.31
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:710.1-710.31
    clause 0(tableProperty*{tableProperty <- tableProperty*}) = 0
       -- if tableProperty*{tableProperty <- tableProperty*} matches []
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:707.1-710.47
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:711.1-714.47
    clause 1(tableProperty'*{tableProperty' <- tableProperty'*}) = (1 + $count_table_keys(tableProperty_t*{tableProperty_t <- tableProperty_t*}))
       -- if tableProperty'*{tableProperty' <- tableProperty'*} matches _ :: _
       -- let tableProperty :: tableProperty_t*{tableProperty_t <- tableProperty_t*} = tableProperty'*{tableProperty' <- tableProperty'*}
       -- if tableProperty matches `KeyP%`
       -- let `KeyP%`_tableProperty(_tableKey*{_tableKey <- _tableKey*}) = tableProperty
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:711.1-715.15
-   clause 2(tableProperty*{tableProperty <- tableProperty*}) = $count_table_keys(tableProperty_t*{tableProperty_t <- tableProperty_t*})
-      -- if tableProperty*{tableProperty <- tableProperty*} matches _ :: _
-      -- let tableProperty_h :: tableProperty_t*{tableProperty_t <- tableProperty_t*} = tableProperty*{tableProperty <- tableProperty*}
-      -- otherwise
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:715.1-718.40
+   clause 2(tableProperty'*{tableProperty' <- tableProperty'*}) = $count_table_keys(tableProperty_t*{tableProperty_t <- tableProperty_t*})
+      -- if tableProperty'*{tableProperty' <- tableProperty'*} matches _ :: _
+      -- let tableProperty :: tableProperty_t*{tableProperty_t <- tableProperty_t*} = tableProperty'*{tableProperty' <- tableProperty'*}
+      -- if tableProperty matches `ActionP%`
+      -- let `ActionP%`_tableProperty(_tableAction*{_tableAction <- _tableAction*}) = tableProperty
 
-;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:717.1-717.47
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:719.1-722.40
+   clause 3(tableProperty'*{tableProperty' <- tableProperty'*}) = $count_table_keys(tableProperty_t*{tableProperty_t <- tableProperty_t*})
+      -- if tableProperty'*{tableProperty' <- tableProperty'*} matches _ :: _
+      -- let tableProperty :: tableProperty_t*{tableProperty_t <- tableProperty_t*} = tableProperty'*{tableProperty' <- tableProperty'*}
+      -- if tableProperty matches `EntryP%%`
+      -- let `EntryP%%`_tableProperty(_const?{_const <- _const?}, _tableEntry*{_tableEntry <- _tableEntry*}) = tableProperty
+
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:723.1-726.40
+   clause 4(tableProperty'*{tableProperty' <- tableProperty'*}) = $count_table_keys(tableProperty_t*{tableProperty_t <- tableProperty_t*})
+      -- if tableProperty'*{tableProperty' <- tableProperty'*} matches _ :: _
+      -- let tableProperty :: tableProperty_t*{tableProperty_t <- tableProperty_t*} = tableProperty'*{tableProperty' <- tableProperty'*}
+      -- if tableProperty matches `CustomP%%%`
+      -- let `CustomP%%%`_tableProperty(_const?{_const <- _const?}, _name, _initializer) = tableProperty
+
+;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:728.1-728.47
 def $count_table_actions(tableProperty*) : nat =
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:719.1-719.34
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:730.1-730.34
    clause 0(tableProperty*{tableProperty <- tableProperty*}) = 0
       -- if tableProperty*{tableProperty <- tableProperty*} matches []
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:720.1-723.50
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:731.1-734.50
    clause 1(tableProperty'*{tableProperty' <- tableProperty'*}) = (1 + $count_table_actions(tableProperty_t*{tableProperty_t <- tableProperty_t*}))
       -- if tableProperty'*{tableProperty' <- tableProperty'*} matches _ :: _
       -- let tableProperty :: tableProperty_t*{tableProperty_t <- tableProperty_t*} = tableProperty'*{tableProperty' <- tableProperty'*}
       -- if tableProperty matches `ActionP%`
       -- let `ActionP%`_tableProperty(_tableAction*{_tableAction <- _tableAction*}) = tableProperty
 
-   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:724.1-728.15
-   clause 2(tableProperty*{tableProperty <- tableProperty*}) = $count_table_actions(tableProperty_t*{tableProperty_t <- tableProperty_t*})
-      -- if tableProperty*{tableProperty <- tableProperty*} matches _ :: _
-      -- let tableProperty_h :: tableProperty_t*{tableProperty_t <- tableProperty_t*} = tableProperty*{tableProperty <- tableProperty*}
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:735.1-739.15
+   clause 2(tableProperty'*{tableProperty' <- tableProperty'*}) = $count_table_actions(tableProperty_t*{tableProperty_t <- tableProperty_t*})
+      -- if tableProperty'*{tableProperty' <- tableProperty'*} matches _ :: _
+      -- let tableProperty :: tableProperty_t*{tableProperty_t <- tableProperty_t*} = tableProperty'*{tableProperty' <- tableProperty'*}
+      -- if tableProperty matches `KeyP%`
+      -- let `KeyP%`_tableProperty(_tableKey*{_tableKey <- _tableKey*}) = tableProperty
+      -- otherwise
+
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:740.1-744.15
+   clause 3(tableProperty'*{tableProperty' <- tableProperty'*}) = $count_table_actions(tableProperty_t*{tableProperty_t <- tableProperty_t*})
+      -- if tableProperty'*{tableProperty' <- tableProperty'*} matches _ :: _
+      -- let tableProperty :: tableProperty_t*{tableProperty_t <- tableProperty_t*} = tableProperty'*{tableProperty' <- tableProperty'*}
+      -- if tableProperty matches `EntryP%%`
+      -- let `EntryP%%`_tableProperty(_const?{_const <- _const?}, _tableEntry*{_tableEntry <- _tableEntry*}) = tableProperty
+      -- otherwise
+
+   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:745.1-749.15
+   clause 4(tableProperty'*{tableProperty' <- tableProperty'*}) = $count_table_actions(tableProperty_t*{tableProperty_t <- tableProperty_t*})
+      -- if tableProperty'*{tableProperty' <- tableProperty'*} matches _ :: _
+      -- let tableProperty :: tableProperty_t*{tableProperty_t <- tableProperty_t*} = tableProperty'*{tableProperty' <- tableProperty'*}
+      -- if tableProperty matches `CustomP%%%`
+      -- let `CustomP%%%`_tableProperty(_const?{_const <- _const?}, _name, _initializer) = tableProperty
       -- otherwise
 
 ;; ../../../../spec-concrete/5.15.1-typing-call-convention.watsup:7.1-7.73
@@ -14895,55 +14975,75 @@ def $empty_constraint(tid*) : constraint =
 ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:14.20-14.36
 syntax inference = map<tid, typeIR>
 
-;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:20.1-20.60
-def $infer(tid*, parameterTypeIR*, argumentIR*) : inference =
+;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:20.1-20.61
+def $infer(tid*, parameterTypeIR*, argumentIR*) : inference? =
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:44.1-52.61
-   clause 0(tid_infer*{tid_infer <- tid_infer*}, parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}, argumentIR*{argumentIR <- argumentIR*}) = inference
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:44.1-53.62
+   clause 0(tid_infer*{tid_infer <- tid_infer*}, parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}, argumentIR*{argumentIR <- argumentIR*}) = $resolve_constraint(constraint_inferred)
       -- let constraint_init = $empty_constraint(tid_infer*{tid_infer <- tid_infer*})
-      -- (let constraint_pair = $infer'(constraint_init, parameterTypeIR, argumentIR))*{argumentIR <- argumentIR*, constraint_pair <- constraint_pair*, parameterTypeIR <- parameterTypeIR*}
-      -- let constraint_inferred = $merge_constraints(constraint_init, constraint_pair*{constraint_pair <- constraint_pair*})
-      -- let inference = $resolve_constraint(constraint_inferred)
+      -- if (|parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}| = |argumentIR*{argumentIR <- argumentIR*}|)
+      -- (let constraint?{constraint <- constraint?} = $infer'(constraint_init, parameterTypeIR, argumentIR))*{argumentIR <- argumentIR*, constraint? <- constraint?*, parameterTypeIR <- parameterTypeIR*}
+      -- (if constraint?{constraint <- constraint?} matches (_))*{constraint? <- constraint?*}
+      -- (let ?(constraint_pair) = constraint?{constraint <- constraint?})*{constraint? <- constraint?*, constraint_pair <- constraint_pair*}
+      -- let constraint'?{constraint' <- constraint'?} = $merge_constraints(constraint_init, constraint_pair*{constraint_pair <- constraint_pair*})
+      -- if constraint'?{constraint' <- constraint'?} matches (_)
+      -- let ?(constraint_inferred) = constraint'?{constraint' <- constraint'?}
 
-;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:21.1-21.66
-def $infer'(constraint, parameterTypeIR, argumentIR) : constraint =
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:55.1-57.15
+   clause 1(tid_infer*{tid_infer <- tid_infer*}, parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}, argumentIR*{argumentIR <- argumentIR*}) = ?()
+      -- otherwise
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:54.1-57.48
+;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:21.1-21.67
+def $infer'(constraint, parameterTypeIR, argumentIR) : constraint? =
+
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:59.1-62.48
    clause 0(constraint, parameterTypeIR, argumentIR) = $gen_constraint_type(constraint, typeIR_param, typeIR_arg)
       -- if argumentIR matches `ExprA%`
       -- let `ExprA%`_argumentIR(typedExpressionIR) = argumentIR
       -- let `%%%%`_parameterTypeIR(_direction, typeIR_param, _id, _value?{_value <- _value?}) = parameterTypeIR
       -- let `%%`_typedExpressionIR(_expressionIR, `(%%)`_expressionNoteIR(typeIR_arg, _ctk)) = typedExpressionIR
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:59.1-62.48
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:64.1-67.48
    clause 1(constraint, parameterTypeIR, argumentIR) = $gen_constraint_type(constraint, typeIR_param, typeIR_arg)
       -- if argumentIR matches `NameA%%`
       -- let `NameA%%`_argumentIR(name, typedExpressionIR) = argumentIR
       -- let `%%%%`_parameterTypeIR(_direction, typeIR_param, _id, _value?{_value <- _value?}) = parameterTypeIR
       -- let `%%`_typedExpressionIR(_expressionIR, `(%%)`_expressionNoteIR(typeIR_arg, _ctk)) = typedExpressionIR
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:64.1-64.69
-   clause 2(constraint, parameterTypeIR, argumentIR) = constraint
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:69.1-69.69
+   clause 2(constraint, parameterTypeIR, argumentIR) = ?(constraint)
       -- if argumentIR matches `NameAnyA%`
       -- let `NameAnyA%`_argumentIR(name) = argumentIR
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:66.1-66.60
-   clause 3(constraint, parameterTypeIR, argumentIR) = constraint
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:71.1-71.60
+   clause 3(constraint, parameterTypeIR, argumentIR) = ?(constraint)
       -- if argumentIR matches `AnyA`
 
-;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:23.1-23.66
-def $gen_constraint_type(constraint, typeIR, typeIR) : constraint =
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:73.1-75.15
+   clause 4(constraint, parameterTypeIR, argumentIR) = ?()
+      -- otherwise
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:74.1-76.66
-   clause 0(constraint, typeIR, typeIR_arg) = $update_map<tid, infer>(constraint, tid_param, `KNOWN%`_infer(typeIR_arg))
+;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:23.1-23.67
+def $gen_constraint_type(constraint, typeIR, typeIR) : constraint? =
+
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:83.1-84.15
+   clause 0(constraint, typeIR, typeIR') = ?(constraint)
+      -- if typeIR <: baseTypeIR
+      -- let baseTypeIR = typeIR as baseTypeIR
+      -- if typeIR' <: baseTypeIR
+      -- let baseTypeIR' = typeIR' as baseTypeIR
+      -- if (baseTypeIR = baseTypeIR')
+
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:88.1-90.66
+   clause 1(constraint, typeIR, typeIR_arg) = ?($update_map<tid, infer>(constraint, tid_param, `KNOWN%`_infer(typeIR_arg)))
       -- if typeIR <: namedTypeIR
       -- let namedTypeIR = typeIR as namedTypeIR
       -- if namedTypeIR matches `NameT%`
       -- let `NameT%`_namedTypeIR(tid_param) = namedTypeIR
       -- if $in_set<tid>(tid_param, $dom_map<tid, infer>(constraint))
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:78.1-99.26
-   clause 1(constraint_0, typeIR, typeIR') = constraint_2
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:92.1-113.26
+   clause 2(constraint_0, typeIR, typeIR') = ?(constraint_2)
       -- if typeIR <: namedTypeIR
       -- let namedTypeIR = typeIR as namedTypeIR
       -- if namedTypeIR matches `SpecT%%`
@@ -14955,11 +15055,15 @@ def $gen_constraint_type(constraint, typeIR, typeIR) : constraint =
       -- let typeIR_specialized_param = $specialize_typeDef(polyTypeDefIR_param as typeDefIR, typeIR_param*{typeIR_param <- typeIR_param*})
       -- let typeIR_specialized_arg = $specialize_typeDef(polyTypeDefIR_arg as typeDefIR, typeIR_arg*{typeIR_arg <- typeIR_arg*})
       -- if ($is_nominal_typeIR(typeIR_specialized_param) /\ $is_nominal_typeIR(typeIR_specialized_arg))
-      -- let constraint_1 = $gen_constraint_type(constraint_0, typeIR_specialized_param, typeIR_specialized_arg)
-      -- let constraint_2 = $gen_constraint_types(constraint_1, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
+      -- let constraint?{constraint <- constraint?} = $gen_constraint_type(constraint_0, typeIR_specialized_param, typeIR_specialized_arg)
+      -- if constraint?{constraint <- constraint?} matches (_)
+      -- let ?(constraint_1) = constraint?{constraint <- constraint?}
+      -- let constraint'?{constraint' <- constraint'?} = $gen_constraint_types(constraint_1, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
+      -- if constraint'?{constraint' <- constraint'?} matches (_)
+      -- let ?(constraint_2) = constraint'?{constraint' <- constraint'?}
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:101.1-117.26
-   clause 2(constraint_0, typeIR, typeIR') = constraint_1
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:115.1-131.26
+   clause 3(constraint_0, typeIR, typeIR') = ?(constraint_1)
       -- if typeIR <: namedTypeIR
       -- let namedTypeIR = typeIR as namedTypeIR
       -- if namedTypeIR matches `SpecT%%`
@@ -14971,24 +15075,26 @@ def $gen_constraint_type(constraint, typeIR, typeIR) : constraint =
       -- let typeIR_specialized_param = $specialize_typeDef(polyTypeDefIR_param as typeDefIR, typeIR_param*{typeIR_param <- typeIR_param*})
       -- let typeIR_specialized_arg = $specialize_typeDef(polyTypeDefIR_arg as typeDefIR, typeIR_arg*{typeIR_arg <- typeIR_arg*})
       -- if (~$is_nominal_typeIR(typeIR_specialized_param) /\ ~$is_nominal_typeIR(typeIR_specialized_arg))
-      -- let constraint_1 = $gen_constraint_type(constraint_0, typeIR_specialized_param, typeIR_specialized_arg)
+      -- let constraint?{constraint <- constraint?} = $gen_constraint_type(constraint_0, typeIR_specialized_param, typeIR_specialized_arg)
+      -- if constraint?{constraint <- constraint?} matches (_)
+      -- let ?(constraint_1) = constraint?{constraint <- constraint?}
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:121.1-122.63
-   clause 3(constraint, typeIR, typeIR_arg) = $gen_constraint_type(constraint, typeIR_param, typeIR_arg)
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:135.1-136.63
+   clause 4(constraint, typeIR, typeIR_arg) = $gen_constraint_type(constraint, typeIR_param, typeIR_arg)
       -- if typeIR <: aliasTypeIR
       -- let aliasTypeIR = typeIR as aliasTypeIR
       -- if aliasTypeIR matches `DefT%%`
       -- let `DefT%%`_aliasTypeIR(_tid, typeIR_param) = aliasTypeIR
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:124.1-125.63
-   clause 4(constraint, typeIR_param, typeIR) = $gen_constraint_type(constraint, typeIR_param, typeIR_arg)
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:138.1-139.63
+   clause 5(constraint, typeIR_param, typeIR) = $gen_constraint_type(constraint, typeIR_param, typeIR_arg)
       -- if typeIR <: aliasTypeIR
       -- let aliasTypeIR = typeIR as aliasTypeIR
       -- if aliasTypeIR matches `DefT%%`
       -- let `DefT%%`_aliasTypeIR(_tid, typeIR_arg) = aliasTypeIR
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:127.1-128.63
-   clause 5(constraint, typeIR, typeIR') = $gen_constraint_type(constraint, typeIR_param, typeIR_arg)
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:141.1-142.63
+   clause 6(constraint, typeIR, typeIR') = $gen_constraint_type(constraint, typeIR_param, typeIR_arg)
       -- if typeIR <: aliasTypeIR
       -- let aliasTypeIR = typeIR as aliasTypeIR
       -- if aliasTypeIR matches `NewT%%`
@@ -14999,30 +15105,30 @@ def $gen_constraint_type(constraint, typeIR, typeIR) : constraint =
       -- let `NewT%%`_aliasTypeIR(tid', typeIR_arg) = aliasTypeIR'
       -- if (tid = tid')
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:132.1-137.63
-   clause 6(constraint, typeIR, typeIR') = $gen_constraint_type(constraint, typeIR_param, typeIR_arg)
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:146.1-151.63
+   clause 7(constraint, typeIR, typeIR') = $gen_constraint_type(constraint, typeIR_param, typeIR_arg)
       -- if typeIR <: listTypeIR
       -- let `ListT%`_listTypeIR(typeIR_param) = typeIR as listTypeIR
       -- if typeIR' <: listTypeIR
       -- let `ListT%`_listTypeIR(typeIR_arg) = typeIR' as listTypeIR
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:139.1-144.66
-   clause 7(constraint, typeIR, typeIR') = $gen_constraint_types(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:153.1-158.66
+   clause 8(constraint, typeIR, typeIR') = $gen_constraint_types(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
       -- if typeIR <: tupleTypeIR
       -- let `TupleT%`_tupleTypeIR(typeIR_param*{typeIR_param <- typeIR_param*}) = typeIR as tupleTypeIR
       -- if typeIR' <: tupleTypeIR
       -- let `TupleT%`_tupleTypeIR(typeIR_arg*{typeIR_arg <- typeIR_arg*}) = typeIR' as tupleTypeIR
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:146.1-151.63
-   clause 8(constraint, typeIR, typeIR') = $gen_constraint_type(constraint, typeIR_param, typeIR_arg)
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:160.1-165.63
+   clause 9(constraint, typeIR, typeIR') = $gen_constraint_type(constraint, typeIR_param, typeIR_arg)
       -- if typeIR <: headerStackTypeIR
       -- let `HeaderStackT%%`_headerStackTypeIR(typeIR_param, n_size) = typeIR as headerStackTypeIR
       -- if typeIR' <: headerStackTypeIR
       -- let `HeaderStackT%%`_headerStackTypeIR(typeIR_arg, n_size') = typeIR' as headerStackTypeIR
       -- if (n_size = n_size')
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:153.1-158.66
-   clause 9(constraint, typeIR, typeIR') = $gen_constraint_types(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:167.1-172.66
+   clause 10(constraint, typeIR, typeIR') = $gen_constraint_types(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
       -- if typeIR <: structTypeIR
       -- let `StructT%%`_structTypeIR(tid, `%%`_fieldTypeIR(typeIR_param, id_field)*{id_field <- id_field*, typeIR_param <- typeIR_param*}) = typeIR as structTypeIR
       -- if typeIR' <: structTypeIR
@@ -15030,8 +15136,8 @@ def $gen_constraint_type(constraint, typeIR, typeIR) : constraint =
       -- (if (id_field = id_field'))*{id_field <- id_field*, id_field' <- id_field'*}
       -- if (tid = tid')
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:160.1-165.66
-   clause 10(constraint, typeIR, typeIR') = $gen_constraint_types(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:174.1-179.66
+   clause 11(constraint, typeIR, typeIR') = $gen_constraint_types(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
       -- if typeIR <: headerTypeIR
       -- let `HeaderT%%`_headerTypeIR(tid, `%%`_fieldTypeIR(typeIR_param, id_field)*{id_field <- id_field*, typeIR_param <- typeIR_param*}) = typeIR as headerTypeIR
       -- if typeIR' <: headerTypeIR
@@ -15039,8 +15145,8 @@ def $gen_constraint_type(constraint, typeIR, typeIR) : constraint =
       -- (if (id_field = id_field'))*{id_field <- id_field*, id_field' <- id_field'*}
       -- if (tid = tid')
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:167.1-172.66
-   clause 11(constraint, typeIR, typeIR') = $gen_constraint_types(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:181.1-186.66
+   clause 12(constraint, typeIR, typeIR') = $gen_constraint_types(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
       -- if typeIR <: headerUnionTypeIR
       -- let `HeaderUnionT%%`_headerUnionTypeIR(tid, `%%`_fieldTypeIR(typeIR_param, id_field)*{id_field <- id_field*, typeIR_param <- typeIR_param*}) = typeIR as headerUnionTypeIR
       -- if typeIR' <: headerUnionTypeIR
@@ -15048,8 +15154,16 @@ def $gen_constraint_type(constraint, typeIR, typeIR) : constraint =
       -- (if (id_field = id_field'))*{id_field <- id_field*, id_field' <- id_field'*}
       -- if (tid = tid')
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:176.1-185.6
-   clause 12(constraint, typeIR, typeIR') = $gen_constraint_routines(constraint, routineTypeDefIR_param*{routineTypeDefIR_param <- routineTypeDefIR_param*}, routineTypeDefIR_arg*{routineTypeDefIR_arg <- routineTypeDefIR_arg*})
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:188.1-191.15
+   clause 13(constraint, typeIR, typeIR') = ?(constraint)
+      -- if typeIR <: enumTypeIR
+      -- let enumTypeIR = typeIR as enumTypeIR
+      -- if typeIR' <: enumTypeIR
+      -- let enumTypeIR' = typeIR' as enumTypeIR
+      -- if (enumTypeIR = enumTypeIR')
+
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:195.1-204.6
+   clause 14(constraint, typeIR, typeIR') = $gen_constraint_routines(constraint, routineTypeDefIR_param*{routineTypeDefIR_param <- routineTypeDefIR_param*}, routineTypeDefIR_arg*{routineTypeDefIR_arg <- routineTypeDefIR_arg*})
       -- if typeIR <: externObjectTypeIR
       -- let `ExternT%%`_externObjectTypeIR(tid, `{%}`_set<pair<rid, routineTypeDefIR>>(`%->%`_pair<rid, routineTypeDefIR>(rid, routineTypeDefIR_param)*{rid <- rid*, routineTypeDefIR_param <- routineTypeDefIR_param*})) = typeIR as externObjectTypeIR
       -- if typeIR' <: externObjectTypeIR
@@ -15057,8 +15171,8 @@ def $gen_constraint_type(constraint, typeIR, typeIR) : constraint =
       -- (if (rid = rid'))*{rid <- rid*, rid' <- rid'*}
       -- if (tid = tid')
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:187.1-194.58
-   clause 13(constraint, typeIR, typeIR') = $gen_constraint_types(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:206.1-213.58
+   clause 15(constraint, typeIR, typeIR') = $gen_constraint_types(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
       -- if typeIR <: parserObjectTypeIR
       -- let `ParserT%`_parserObjectTypeIR(parameterTypeIR_param*{parameterTypeIR_param <- parameterTypeIR_param*}) = typeIR as parserObjectTypeIR
       -- if typeIR' <: parserObjectTypeIR
@@ -15067,8 +15181,8 @@ def $gen_constraint_type(constraint, typeIR, typeIR) : constraint =
       -- (let `%%%%`_parameterTypeIR(direction', typeIR_arg, _id', _value'?{_value' <- _value'?}) = parameterTypeIR_arg)*{_id' <- _id'*, _value'? <- _value'?*, direction' <- direction'*, parameterTypeIR_arg <- parameterTypeIR_arg*, typeIR_arg <- typeIR_arg*}
       -- (if (direction' = direction))*{direction <- direction*, direction' <- direction'*}
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:196.1-203.58
-   clause 14(constraint, typeIR, typeIR') = $gen_constraint_types(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:215.1-222.58
+   clause 16(constraint, typeIR, typeIR') = $gen_constraint_types(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
       -- if typeIR <: controlObjectTypeIR
       -- let `ControlT%`_controlObjectTypeIR(parameterTypeIR_param*{parameterTypeIR_param <- parameterTypeIR_param*}) = typeIR as controlObjectTypeIR
       -- if typeIR' <: controlObjectTypeIR
@@ -15077,30 +15191,45 @@ def $gen_constraint_type(constraint, typeIR, typeIR) : constraint =
       -- (let `%%%%`_parameterTypeIR(direction', typeIR_arg, _id', _value'?{_value' <- _value'?}) = parameterTypeIR_arg)*{_id' <- _id'*, _value'? <- _value'?*, direction' <- direction'*, parameterTypeIR_arg <- parameterTypeIR_arg*, typeIR_arg <- typeIR_arg*}
       -- (if (direction' = direction))*{direction <- direction*, direction' <- direction'*}
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:205.1-210.66
-   clause 15(constraint, typeIR, typeIR') = $gen_constraint_types(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:224.1-229.66
+   clause 17(constraint, typeIR, typeIR') = $gen_constraint_types(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
       -- if typeIR <: packageObjectTypeIR
       -- let `PackageT%%`_packageObjectTypeIR(tid, typeIR_param*{typeIR_param <- typeIR_param*}) = typeIR as packageObjectTypeIR
       -- if typeIR' <: packageObjectTypeIR
       -- let `PackageT%%`_packageObjectTypeIR(tid', typeIR_arg*{typeIR_arg <- typeIR_arg*}) = typeIR' as packageObjectTypeIR
       -- if (tid = tid')
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:214.1-216.15
-   clause 16(constraint, typeIR_param, typeIR_arg) = constraint
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:231.1-236.15
+   clause 18(constraint, typeIR, typeIR') = ?(constraint)
+      -- if typeIR <: tableObjectTypeIR
+      -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
+      -- if typeIR' <: tableObjectTypeIR
+      -- let tableObjectTypeIR' = typeIR' as tableObjectTypeIR
+      -- if (tableObjectTypeIR = tableObjectTypeIR')
+
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:240.1-242.15
+   clause 19(constraint, typeIR_param, typeIR_arg) = ?(constraint)
       -- otherwise
 
-;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:24.1-24.69
-def $gen_constraint_types(constraint, typeIR*, typeIR*) : constraint =
+;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:24.1-24.70
+def $gen_constraint_types(constraint, typeIR*, typeIR*) : constraint? =
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:220.1-223.69
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:246.1-250.69
    clause 0(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*}) = $merge_constraints(constraint, constraint_pair*{constraint_pair <- constraint_pair*})
-      -- (let constraint_pair = $gen_constraint_type(constraint, typeIR_param, typeIR_arg))*{constraint_pair <- constraint_pair*, typeIR_arg <- typeIR_arg*, typeIR_param <- typeIR_param*}
+      -- if (|typeIR_param*{typeIR_param <- typeIR_param*}| = |typeIR_arg*{typeIR_arg <- typeIR_arg*}|)
+      -- (let constraint'?{constraint' <- constraint'?} = $gen_constraint_type(constraint, typeIR_param, typeIR_arg))*{constraint'? <- constraint'?*, typeIR_arg <- typeIR_arg*, typeIR_param <- typeIR_param*}
+      -- (if constraint'?{constraint' <- constraint'?} matches (_))*{constraint'? <- constraint'?*}
+      -- (let ?(constraint_pair) = constraint'?{constraint' <- constraint'?})*{constraint'? <- constraint'?*, constraint_pair <- constraint_pair*}
 
-;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:25.1-28.15
-def $gen_constraint_routine(constraint, routineTypeDefIR, routineTypeDefIR) : constraint =
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:252.1-254.15
+   clause 1(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*}) = ?()
+      -- otherwise
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:227.1-238.77
-   clause 0(constraint_0, routineTypeDefIR, routineTypeDefIR') = constraint_2
+;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:25.1-28.16
+def $gen_constraint_routine(constraint, routineTypeDefIR, routineTypeDefIR) : constraint? =
+
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:258.1-269.77
+   clause 0(constraint_0, routineTypeDefIR, routineTypeDefIR') = ?(constraint_2)
       -- if routineTypeDefIR <: polyRoutineTypeDefIR
       -- let `PolyTD%%%`_polyRoutineTypeDefIR(routineTypeIR, _tid*{_tid <- _tid*}, _tid'*{_tid' <- _tid'*}) = routineTypeDefIR as polyRoutineTypeDefIR
       -- if routineTypeIR <: methodTypeIR
@@ -15116,11 +15245,15 @@ def $gen_constraint_routine(constraint, routineTypeDefIR, routineTypeDefIR) : co
       -- (let `%%%%`_parameterTypeIR(direction, typeIR_param, _id, _value?{_value <- _value?}) = parameterTypeIR_param)*{_id <- _id*, _value? <- _value?*, direction <- direction*, parameterTypeIR_param <- parameterTypeIR_param*, typeIR_param <- typeIR_param*}
       -- (let `%%%%`_parameterTypeIR(direction', typeIR_arg, _id', _value'?{_value' <- _value'?}) = parameterTypeIR_arg)*{_id' <- _id'*, _value'? <- _value'?*, direction' <- direction'*, parameterTypeIR_arg <- parameterTypeIR_arg*, typeIR_arg <- typeIR_arg*}
       -- (if (direction' = direction))*{direction <- direction*, direction' <- direction'*}
-      -- let constraint_1 = $gen_constraint_types(constraint_0, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
-      -- let constraint_2 = $gen_constraint_type(constraint_1, typeIR_ret_param, typeIR_ret_arg)
+      -- let constraint?{constraint <- constraint?} = $gen_constraint_types(constraint_0, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
+      -- if constraint?{constraint <- constraint?} matches (_)
+      -- let ?(constraint_1) = constraint?{constraint <- constraint?}
+      -- let constraint'?{constraint' <- constraint'?} = $gen_constraint_type(constraint_1, typeIR_ret_param, typeIR_ret_arg)
+      -- if constraint'?{constraint' <- constraint'?} matches (_)
+      -- let ?(constraint_2) = constraint'?{constraint' <- constraint'?}
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:240.1-251.77
-   clause 1(constraint_0, routineTypeDefIR, routineTypeDefIR') = constraint_2
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:271.1-282.77
+   clause 1(constraint_0, routineTypeDefIR, routineTypeDefIR') = ?(constraint_2)
       -- if routineTypeDefIR <: polyRoutineTypeDefIR
       -- let `PolyTD%%%`_polyRoutineTypeDefIR(routineTypeIR, _tid*{_tid <- _tid*}, _tid'*{_tid' <- _tid'*}) = routineTypeDefIR as polyRoutineTypeDefIR
       -- if routineTypeIR <: methodTypeIR
@@ -15136,33 +15269,52 @@ def $gen_constraint_routine(constraint, routineTypeDefIR, routineTypeDefIR) : co
       -- (let `%%%%`_parameterTypeIR(direction, typeIR_param, _id, _value?{_value <- _value?}) = parameterTypeIR_param)*{_id <- _id*, _value? <- _value?*, direction <- direction*, parameterTypeIR_param <- parameterTypeIR_param*, typeIR_param <- typeIR_param*}
       -- (let `%%%%`_parameterTypeIR(direction', typeIR_arg, _id', _value'?{_value' <- _value'?}) = parameterTypeIR_arg)*{_id' <- _id'*, _value'? <- _value'?*, direction' <- direction'*, parameterTypeIR_arg <- parameterTypeIR_arg*, typeIR_arg <- typeIR_arg*}
       -- (if (direction' = direction))*{direction <- direction*, direction' <- direction'*}
-      -- let constraint_1 = $gen_constraint_types(constraint_0, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
-      -- let constraint_2 = $gen_constraint_type(constraint_1, typeIR_ret_param, typeIR_ret_arg)
+      -- let constraint?{constraint <- constraint?} = $gen_constraint_types(constraint_0, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
+      -- if constraint?{constraint <- constraint?} matches (_)
+      -- let ?(constraint_1) = constraint?{constraint <- constraint?}
+      -- let constraint'?{constraint' <- constraint'?} = $gen_constraint_type(constraint_1, typeIR_ret_param, typeIR_ret_arg)
+      -- if constraint'?{constraint' <- constraint'?} matches (_)
+      -- let ?(constraint_2) = constraint'?{constraint' <- constraint'?}
 
-;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:29.1-32.15
-def $gen_constraint_routines(constraint, routineTypeDefIR*, routineTypeDefIR*) : constraint =
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:284.1-288.15
+   clause 2(constraint, routineTypeDefIR_param, routineTypeDefIR_arg) = ?()
+      -- otherwise
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:255.1-266.12
+;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:29.1-32.16
+def $gen_constraint_routines(constraint, routineTypeDefIR*, routineTypeDefIR*) : constraint? =
+
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:292.1-304.12
    clause 0(constraint, routineTypeDefIR_param*{routineTypeDefIR_param <- routineTypeDefIR_param*}, routineTypeDefIR_arg*{routineTypeDefIR_arg <- routineTypeDefIR_arg*}) = $merge_constraints(constraint, constraint_pair*{constraint_pair <- constraint_pair*})
-      -- (let constraint_pair = $gen_constraint_routine(constraint, routineTypeDefIR_param, routineTypeDefIR_arg))*{constraint_pair <- constraint_pair*, routineTypeDefIR_arg <- routineTypeDefIR_arg*, routineTypeDefIR_param <- routineTypeDefIR_param*}
+      -- if (|routineTypeDefIR_param*{routineTypeDefIR_param <- routineTypeDefIR_param*}| = |routineTypeDefIR_arg*{routineTypeDefIR_arg <- routineTypeDefIR_arg*}|)
+      -- (let constraint'?{constraint' <- constraint'?} = $gen_constraint_routine(constraint, routineTypeDefIR_param, routineTypeDefIR_arg))*{constraint'? <- constraint'?*, routineTypeDefIR_arg <- routineTypeDefIR_arg*, routineTypeDefIR_param <- routineTypeDefIR_param*}
+      -- (if constraint'?{constraint' <- constraint'?} matches (_))*{constraint'? <- constraint'?*}
+      -- (let ?(constraint_pair) = constraint'?{constraint' <- constraint'?})*{constraint'? <- constraint'?*, constraint_pair <- constraint_pair*}
 
-;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:34.1-34.59
-def $merge_constraint(constraint, constraint) : constraint =
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:306.1-312.15
+   clause 1(constraint, routineTypeDefIR_param*{routineTypeDefIR_param <- routineTypeDefIR_param*}, routineTypeDefIR_arg*{routineTypeDefIR_arg <- routineTypeDefIR_arg*}) = ?()
+      -- otherwise
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:272.1-276.52
+;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:34.1-34.60
+def $merge_constraint(constraint, constraint) : constraint? =
+
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:318.1-322.52
    clause 0(constraint_pre, constraint_post) = $merge_constraint'(constraint_pre, constraint_post, tid_pre*{tid_pre <- tid_pre*}, `{%}`_set<pair<tid, infer>>([]))
       -- let `{%}`_set<tid>(tid_pre*{tid_pre <- tid_pre*}) = $dom_map<tid, infer>(constraint_pre)
       -- let `{%}`_set<tid>(tid_post*{tid_post <- tid_post*}) = $dom_map<tid, infer>(constraint_post)
       -- if $eq_set<tid>(`{%}`_set<tid>(tid_pre*{tid_pre <- tid_pre*}), `{%}`_set<tid>(tid_post*{tid_post <- tid_post*}))
 
-;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:35.1-35.78
-def $merge_constraint'(constraint, constraint, tid*, constraint) : constraint =
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:324.1-325.15
+   clause 1(constraint_pre, constraint_post) = ?()
+      -- otherwise
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:278.1-281.15
-   clause 0(constraint_pre, constraint_post, tid*{tid <- tid*}, constraint) = constraint
+;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:35.1-35.79
+def $merge_constraint'(constraint, constraint, tid*, constraint) : constraint? =
+
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:327.1-330.15
+   clause 0(constraint_pre, constraint_post, tid*{tid <- tid*}, constraint) = ?(constraint)
       -- if tid*{tid <- tid*} matches []
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:283.1-292.60
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:332.1-341.60
    clause 1(constraint_pre, constraint_post, tid*{tid <- tid*}, constraint) = $merge_constraint'(constraint_pre, constraint_post, tid_t*{tid_t <- tid_t*}, constraint_updated)
       -- if tid*{tid <- tid*} matches _ :: _
       -- let tid_h :: tid_t*{tid_t <- tid_t*} = tid*{tid <- tid*}
@@ -15170,7 +15322,7 @@ def $merge_constraint'(constraint, constraint, tid*, constraint) : constraint =
       -- if (?(`UNKNOWN`_infer()) = $find_map<tid, infer>(constraint_post, tid_h))
       -- let constraint_updated = $update_map<tid, infer>(constraint, tid_h, `UNKNOWN`_infer())
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:294.1-303.70
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:343.1-352.70
    clause 2(constraint_pre, constraint_post, tid*{tid <- tid*}, constraint) = $merge_constraint'(constraint_pre, constraint_post, tid_t*{tid_t <- tid_t*}, constraint_updated)
       -- if tid*{tid <- tid*} matches _ :: _
       -- let tid_h :: tid_t*{tid_t <- tid_t*} = tid*{tid <- tid*}
@@ -15182,7 +15334,7 @@ def $merge_constraint'(constraint, constraint, tid*, constraint) : constraint =
       -- let `KNOWN%`_infer(typeIR_post) = infer
       -- let constraint_updated = $update_map<tid, infer>(constraint, tid_h, `KNOWN%`_infer(typeIR_post))
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:305.1-314.69
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:354.1-363.69
    clause 3(constraint_pre, constraint_post, tid*{tid <- tid*}, constraint) = $merge_constraint'(constraint_pre, constraint_post, tid_t*{tid_t <- tid_t*}, constraint_updated)
       -- if tid*{tid <- tid*} matches _ :: _
       -- let tid_h :: tid_t*{tid_t <- tid_t*} = tid*{tid <- tid*}
@@ -15194,7 +15346,7 @@ def $merge_constraint'(constraint, constraint, tid*, constraint) : constraint =
       -- if (?(`UNKNOWN`_infer()) = $find_map<tid, infer>(constraint_post, tid_h))
       -- let constraint_updated = $update_map<tid, infer>(constraint, tid_h, `KNOWN%`_infer(typeIR_pre))
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:316.1-326.70
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:365.1-375.70
    clause 4(constraint_pre, constraint_post, tid*{tid <- tid*}, constraint) = $merge_constraint'(constraint_pre, constraint_post, tid_t*{tid_t <- tid_t*}, constraint_updated)
       -- if tid*{tid <- tid*} matches _ :: _
       -- let tid_h :: tid_t*{tid_t <- tid_t*} = tid*{tid <- tid*}
@@ -15211,7 +15363,7 @@ def $merge_constraint'(constraint, constraint, tid*, constraint) : constraint =
       -- if Sub_impl: `%<:%`(typeIR_pre, typeIR_post) holds
       -- let constraint_updated = $update_map<tid, infer>(constraint, tid_h, `KNOWN%`_infer(typeIR_post))
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:328.1-339.69
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:377.1-388.69
    clause 5(constraint_pre, constraint_post, tid*{tid <- tid*}, constraint) = $merge_constraint'(constraint_pre, constraint_post, tid_t*{tid_t <- tid_t*}, constraint_updated)
       -- if tid*{tid <- tid*} matches _ :: _
       -- let tid_h :: tid_t*{tid_t <- tid_t*} = tid*{tid <- tid*}
@@ -15229,28 +15381,44 @@ def $merge_constraint'(constraint, constraint, tid*, constraint) : constraint =
       -- if Sub_impl: `%<:%`(typeIR_post, typeIR_pre) holds
       -- let constraint_updated = $update_map<tid, infer>(constraint, tid_h, `KNOWN%`_infer(typeIR_pre))
 
-;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:36.1-36.61
-def $merge_constraints(constraint, constraint*) : constraint =
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:390.1-391.15
+   clause 6(constraint_pre, constraint_post, tid*{tid <- tid*}, constraint) = ?()
+      -- otherwise
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:341.1-341.61
-   clause 0(constraint_pre, constraint*{constraint <- constraint*}) = constraint_pre
+;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:36.1-36.62
+def $merge_constraints(constraint, constraint*) : constraint? =
+
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:393.1-393.61
+   clause 0(constraint_pre, constraint*{constraint <- constraint*}) = ?(constraint_pre)
       -- if constraint*{constraint <- constraint*} matches []
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:343.1-351.65
-   clause 1(constraint_pre_0, constraint*{constraint <- constraint*}) = constraint_pre_2
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:395.1-403.65
+   clause 1(constraint_pre_0, constraint*{constraint <- constraint*}) = ?(constraint_pre_2)
       -- if constraint*{constraint <- constraint*} matches _ :: _
       -- let constraint_post_h :: constraint_post_t*{constraint_post_t <- constraint_post_t*} = constraint*{constraint <- constraint*}
-      -- let constraint_pre_1 = $merge_constraint(constraint_pre_0, constraint_post_h)
-      -- let constraint_pre_2 = $merge_constraints(constraint_pre_1, constraint_post_t*{constraint_post_t <- constraint_post_t*})
+      -- let constraint'?{constraint' <- constraint'?} = $merge_constraint(constraint_pre_0, constraint_post_h)
+      -- if constraint'?{constraint' <- constraint'?} matches (_)
+      -- let ?(constraint_pre_1) = constraint'?{constraint' <- constraint'?}
+      -- let constraint''?{constraint'' <- constraint''?} = $merge_constraints(constraint_pre_1, constraint_post_t*{constraint_post_t <- constraint_post_t*})
+      -- if constraint''?{constraint'' <- constraint''?} matches (_)
+      -- let ?(constraint_pre_2) = constraint''?{constraint'' <- constraint''?}
 
-;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:38.1-38.48
-def $resolve_constraint(constraint) : inference =
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:405.1-406.15
+   clause 2(constraint_pre, constraint_post*{constraint_post <- constraint_post*}) = ?()
+      -- otherwise
 
-   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:357.1-359.32
-   clause 0(`{%}`_set<pair<tid, infer>>(`%->%`_pair<tid, infer>(tid, infer)*{infer <- infer*, tid <- tid*})) = `{%}`_set<pair<tid, typeIR>>(`%->%`_pair<tid, typeIR>(tid, typeIR)*{tid <- tid*, typeIR <- typeIR*})
+;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:38.1-38.49
+def $resolve_constraint(constraint) : inference? =
+
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:412.1-414.32
+   clause 0(`{%}`_set<pair<tid, infer>>(`%->%`_pair<tid, infer>(tid, infer)*{infer <- infer*, tid <- tid*})) = ?(`{%}`_set<pair<tid, typeIR>>(`%->%`_pair<tid, typeIR>(tid, typeIR)*{tid <- tid*, typeIR <- typeIR*}))
       -- (let infer' = infer)*{infer <- infer*, infer' <- infer'*}
       -- (if infer' matches `KNOWN%`)*{infer' <- infer'*}
       -- (let `KNOWN%`_infer(typeIR) = infer')*{infer' <- infer'*, typeIR <- typeIR*}
+
+   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:416.1-418.15
+   clause 1(`{%}`_set<pair<tid, infer>>(`%->%`_pair<tid, infer>(tid, infer)*{infer <- infer*, tid <- tid*})) = ?()
+      -- otherwise
 
 ;; ../../../../spec-concrete/5.15.3-typing-constructor-call.watsup:21.1-21.65
 def $instantiable_extern(cursor, typingContext, instctxt) : bool =
@@ -15330,25 +15498,40 @@ def $instantiable_table(cursor, typingContext, instctxt) : bool =
 ;; ../../../../spec-concrete/5.15.3-typing-constructor-call.watsup:59.1-59.66
 def $instantiable(cursor, typingContext, instctxt, typeIR) : bool =
 
-   ;; ../../../../spec-concrete/5.15.3-typing-constructor-call.watsup:61.1-63.49
+   ;; ../../../../spec-concrete/5.15.3-typing-constructor-call.watsup:62.1-63.52
+   clause 0(p, TC, instctxt, typeIR) = $instantiable'(p, TC, instctxt, $canon(typeIR))
+
+;; ../../../../spec-concrete/5.15.3-typing-constructor-call.watsup:60.1-60.67
+def $instantiable'(cursor, typingContext, instctxt, typeIR) : bool =
+
+   ;; ../../../../spec-concrete/5.15.3-typing-constructor-call.watsup:65.1-66.42
    clause 0(p, TC, instctxt, typeIR) = $instantiable_extern(p, TC, instctxt)
-      -- if $is_extern_object_typeIR($canon(typeIR))
+      -- if typeIR <: externObjectTypeIR
+      -- let `ExternT%%`_externObjectTypeIR(_tid, _map<rid, routineTypeDefIR>) = typeIR as externObjectTypeIR
 
-   ;; ../../../../spec-concrete/5.15.3-typing-constructor-call.watsup:64.1-66.49
+   ;; ../../../../spec-concrete/5.15.3-typing-constructor-call.watsup:67.1-68.42
    clause 1(p, TC, instctxt, typeIR) = $instantiable_parser(p, TC, instctxt)
-      -- if $is_parser_object_typeIR($canon(typeIR))
+      -- if typeIR <: parserObjectTypeIR
+      -- let `ParserT%`_parserObjectTypeIR(_parameterTypeIR*{_parameterTypeIR <- _parameterTypeIR*}) = typeIR as parserObjectTypeIR
 
-   ;; ../../../../spec-concrete/5.15.3-typing-constructor-call.watsup:67.1-69.50
+   ;; ../../../../spec-concrete/5.15.3-typing-constructor-call.watsup:69.1-70.43
    clause 2(p, TC, instctxt, typeIR) = $instantiable_control(p, TC, instctxt)
-      -- if $is_control_object_typeIR($canon(typeIR))
+      -- if typeIR <: controlObjectTypeIR
+      -- let `ControlT%`_controlObjectTypeIR(_parameterTypeIR*{_parameterTypeIR <- _parameterTypeIR*}) = typeIR as controlObjectTypeIR
 
-   ;; ../../../../spec-concrete/5.15.3-typing-constructor-call.watsup:70.1-72.50
+   ;; ../../../../spec-concrete/5.15.3-typing-constructor-call.watsup:71.1-72.43
    clause 3(p, TC, instctxt, typeIR) = $instantiable_package(p, TC, instctxt)
-      -- if $is_package_object_typeIR($canon(typeIR))
+      -- if typeIR <: packageObjectTypeIR
+      -- let `PackageT%%`_packageObjectTypeIR(_tid, _typeIR*{_typeIR <- _typeIR*}) = typeIR as packageObjectTypeIR
 
-   ;; ../../../../spec-concrete/5.15.3-typing-constructor-call.watsup:73.1-75.48
+   ;; ../../../../spec-concrete/5.15.3-typing-constructor-call.watsup:73.1-74.41
    clause 4(p, TC, instctxt, typeIR) = $instantiable_table(p, TC, instctxt)
-      -- if $is_table_object_typeIR($canon(typeIR))
+      -- if typeIR <: tableObjectTypeIR
+      -- let `TableT%%`_tableObjectTypeIR(_tid, _typeIR) = typeIR as tableObjectTypeIR
+
+   ;; ../../../../spec-concrete/5.15.3-typing-constructor-call.watsup:75.1-76.15
+   clause 5(p, TC, instctxt, typeIR) = false
+      -- otherwise
 
 ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:37.1-37.47
 def $lvalue_as_expression(lvalue) : expression =

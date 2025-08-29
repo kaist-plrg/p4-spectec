@@ -264,7 +264,7 @@ rule ParserStmt_ok/emptyStatement:
   TC |- emptyStatement
       : TC emptyStatementIR
   -- Stmt_ok: LOCAL TC CONT |- emptyStatement 
-                              : TC CONT emptyStatementIR
+                              : _ _ emptyStatementIR
 
 ;;; assignmentStatement
 
@@ -272,7 +272,7 @@ rule ParserStmt_ok/assignmentStatement:
   TC_0 |- assignmentStatement
         : TC_1 assignmentStatementIR
   -- Stmt_ok: LOCAL TC_0 CONT |- assignmentStatement
-                               : TC_1 CONT assignmentStatementIR
+                               : TC_1 _ assignmentStatementIR
 
 ;;; callStatement
 
@@ -280,7 +280,7 @@ rule ParserStmt_ok/callStatement:
   TC_0 |- callStatement
         : TC_1 callStatementIR
   -- Stmt_ok: LOCAL TC_0 CONT |- callStatement 
-                               : TC_1 CONT callStatementIR
+                               : TC_1 _ callStatementIR
 
 ;;; directApplicationStatement
 
@@ -288,14 +288,14 @@ rule ParserStmt_ok/directApplicationStatement:
   TC_0 |- directApplicationStatement
         : TC_1 directApplicationStatementIR
   -- Stmt_ok: LOCAL TC_0 CONT |- directApplicationStatement
-                               : TC_1 CONT directApplicationStatementIR
+                               : TC_1 _ directApplicationStatementIR
 
 ;;; parserBlockStatement
 ;;; syntax parserBlockStatement = ParserBlockS parserStatement*
 
 rule ParserStmt_ok/parserBlockStatement:
   TC_0 |- ParserBlockS parserStatement*
-        : TC_1 parserBlockStatementIR
+        : TC_3 parserBlockStatementIR
   ---- ;; check statements in nested context
   -- if TC_1 = $enter(TC_0)
   -- ParserStmts_ok: TC_1 |- parserStatement* : TC_2 parserStatementIR*
@@ -309,7 +309,7 @@ rule ParserStmt_ok/conditionalStatement:
   TC_0 |- conditionalStatement
         : TC_1 conditionalStatementIR
   -- Stmt_ok: LOCAL TC_0 CONT |- conditionalStatement 
-                               : TC_1 CONT conditionalStatementIR
+                               : TC_1 _ conditionalStatementIR
 
 ;;
 ;; Parser statement list typing

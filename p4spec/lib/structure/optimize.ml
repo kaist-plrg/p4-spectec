@@ -3,6 +3,7 @@ open Xl
 open Ol.Ast
 module Hint = Runtime_static.Rel.Hint
 module HEnv = Runtime_static.Envs.HEnv
+module Typ = Runtime_dynamic.Typ
 module TDEnv = Runtime_dynamic_sl.Envs.TDEnv
 open Util.Source
 
@@ -92,7 +93,14 @@ let rec parallelize_if_disjunction (instr : instr) : instr list =
           List.map
             (fun exp_cond -> IfI (exp_cond, iterexps, instrs_then) $ at)
             exps_cond
-      | None -> [ instr ])
+      | None -> [ IfI (exp_cond, iterexps, instrs_then) $ at ])
+  | CaseI (exp, cases, total) ->
+      let cases =
+        let guards, blocks = List.split cases in
+        let blocks = List.map parallelize_if_disjunctions blocks in
+        List.combine guards blocks
+      in
+      [ CaseI (exp, cases, total) $ at ]
   | _ -> [ instr ]
 
 and parallelize_if_disjunctions (instrs : instr list) : instr list =
@@ -897,6 +905,57 @@ and totalize_case_analysis' (tdenv : TDEnv.t) (instr : instr) : instr =
       | None -> CaseI (exp, cases, false) $ at)
   | _ -> instr
 
+(* [6] Remove redundant match on singleton case
+
+   with type foo = AAA,
+
+   if foo matches pattern AAA then ...
+
+   will be removed *)
+
+let rec is_singleton_case (tdenv : TDEnv.t) (typ : typ) : bool =
+  match typ.it with
+  | VarT (tid, targs) -> (
+      let tparams, deftyp = TDEnv.find tid tdenv in
+      let theta = List.combine tparams targs |> TIdMap.of_list in
+      match deftyp.it with
+      | PlainT typ ->
+          let typ = Typ.subst_typ theta typ in
+          is_singleton_case tdenv typ
+      | VariantT typcases -> List.length typcases = 1
+      | _ -> false)
+  | _ -> false
+
+let is_singleton_match (tdenv : TDEnv.t) (exp : exp) : bool =
+  match exp.it with
+  | MatchE (exp, _) -> is_singleton_case tdenv (exp.note $ exp.at)
+  | _ -> false
+
+let rec remove_singleton_match (tdenv : TDEnv.t) (instrs : instr list) :
+    instr list =
+  match instrs with
+  | [] -> []
+  | instr_h :: instrs_t -> (
+      match instr_h.it with
+      | IfI (exp_cond, iterexps, instrs) when is_singleton_match tdenv exp_cond
+        ->
+          instrs @ instrs_t |> remove_singleton_match tdenv
+      | IfI (exp_cond, iterexps, instrs) ->
+          let instrs = remove_singleton_match tdenv instrs in
+          let instr_h = IfI (exp_cond, iterexps, instrs) $ instr_h.at in
+          let instrs_t = remove_singleton_match tdenv instrs_t in
+          instr_h :: instrs_t
+      | CaseI (exp, cases, total) ->
+          let cases =
+            let guards, instrss = List.split cases in
+            let instrss = List.map (remove_singleton_match tdenv) instrss in
+            List.combine guards instrss
+          in
+          let instr_h = CaseI (exp, cases, total) $ instr_h.at in
+          let instrs_t = remove_singleton_match tdenv instrs_t in
+          instr_h :: instrs_t
+      | _ -> instr_h :: remove_singleton_match tdenv instrs_t)
+
 (* Apply optimizations until it reaches a fixed point *)
 
 let optimize_pre (instrs : instr list) : instr list =
@@ -912,7 +971,7 @@ let rec optimize_loop (henv : HEnv.t) (tdenv : TDEnv.t) (instrs : instr list) :
   else optimize_loop henv tdenv instrs_optimized
 
 let optimize_post (tdenv : TDEnv.t) (instrs : instr list) : instr list =
-  instrs |> totalize_case_analysis tdenv
+  instrs |> remove_singleton_match tdenv |> totalize_case_analysis tdenv
 
 let optimize (henv : HEnv.t) (tdenv : TDEnv.t) (instrs : instr list) :
     instr list =
