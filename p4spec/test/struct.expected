@@ -874,7 +874,7 @@ def $pid((_direction _type name initializer''?{initializer'' <- initializer''?})
 
   2. Case (% matches pattern (_))
 
-    1. (Let ?(initializer'') be initializer''?{initializer'' <- initializer''?})
+    1. (Let ?(initializer) be initializer''?{initializer'' <- initializer''?})
 
     2. Return (name true)
 
@@ -1675,11 +1675,11 @@ def $free_type(typeIR'')
 
       2. Case (% matches pattern `SpecT%%`)
 
-        1. (Let (SpecT polyTypeDefIR typeIR''*{typeIR'' <- typeIR''*}) be namedTypeIR)
+        1. (Let (SpecT polyTypeDefIR typeIR*{typeIR <- typeIR*}) be namedTypeIR)
 
         2. (Let bound_base be $free_typeDef((polyTypeDefIR as typeDefIR)))
 
-        3. (Let bound_args be $unions_set<tid>($free_type(typeIR'')*{typeIR'' <- typeIR''*}))
+        3. (Let bound_args be $unions_set<tid>($free_type(typeIR)*{typeIR <- typeIR*}))
 
         4. Return $union_set<tid>(bound_base, bound_args)
 
@@ -1691,51 +1691,51 @@ def $free_type(typeIR'')
 
       1. Case (% matches pattern `DefT%%`)
 
-        1. (Let (DefT _tid typeIR'') be aliasTypeIR)
+        1. (Let (DefT _tid typeIR) be aliasTypeIR)
 
-        2. Return $free_type(typeIR'')
+        2. Return $free_type(typeIR)
 
       2. Case (% matches pattern `NewT%%`)
 
-        1. (Let (NewT _tid typeIR'') be aliasTypeIR)
+        1. (Let (NewT _tid typeIR) be aliasTypeIR)
 
-        2. Return $free_type(typeIR'')
+        2. Return $free_type(typeIR)
 
   4. Case (% has type listTypeIR)
 
-    1. (Let (ListT typeIR'') be (typeIR'' as listTypeIR))
+    1. (Let (ListT typeIR) be (typeIR'' as listTypeIR))
 
-    2. Return $free_type(typeIR'')
+    2. Return $free_type(typeIR)
 
   5. Case (% has type tupleTypeIR)
 
-    1. (Let (TupleT typeIR''*{typeIR'' <- typeIR''*}) be (typeIR'' as tupleTypeIR))
+    1. (Let (TupleT typeIR*{typeIR <- typeIR*}) be (typeIR'' as tupleTypeIR))
 
-    2. Return $unions_set<tid>($free_type(typeIR'')*{typeIR'' <- typeIR''*})
+    2. Return $unions_set<tid>($free_type(typeIR)*{typeIR <- typeIR*})
 
   6. Case (% has type headerStackTypeIR)
 
-    1. (Let (HeaderStackT typeIR'' _nat) be (typeIR'' as headerStackTypeIR))
+    1. (Let (HeaderStackT typeIR _nat) be (typeIR'' as headerStackTypeIR))
 
-    2. Return $free_type(typeIR'')
+    2. Return $free_type(typeIR)
 
   7. Case (% has type structTypeIR)
 
-    1. (Let (StructT _tid (typeIR'' _id)*{_id <- _id*, typeIR'' <- typeIR''*}) be (typeIR'' as structTypeIR))
+    1. (Let (StructT _tid (typeIR _id)*{_id <- _id*, typeIR <- typeIR*}) be (typeIR'' as structTypeIR))
 
-    2. Return $unions_set<tid>($free_type(typeIR'')*{typeIR'' <- typeIR''*})
+    2. Return $unions_set<tid>($free_type(typeIR)*{typeIR <- typeIR*})
 
   8. Case (% has type headerTypeIR)
 
-    1. (Let (HeaderT _tid (typeIR'' _id)*{_id <- _id*, typeIR'' <- typeIR''*}) be (typeIR'' as headerTypeIR))
+    1. (Let (HeaderT _tid (typeIR _id)*{_id <- _id*, typeIR <- typeIR*}) be (typeIR'' as headerTypeIR))
 
-    2. Return $unions_set<tid>($free_type(typeIR'')*{typeIR'' <- typeIR''*})
+    2. Return $unions_set<tid>($free_type(typeIR)*{typeIR <- typeIR*})
 
   9. Case (% has type headerUnionTypeIR)
 
-    1. (Let (HeaderUnionT _tid (typeIR'' _id)*{_id <- _id*, typeIR'' <- typeIR''*}) be (typeIR'' as headerUnionTypeIR))
+    1. (Let (HeaderUnionT _tid (typeIR _id)*{_id <- _id*, typeIR <- typeIR*}) be (typeIR'' as headerUnionTypeIR))
 
-    2. Return $unions_set<tid>($free_type(typeIR'')*{typeIR'' <- typeIR''*})
+    2. Return $unions_set<tid>($free_type(typeIR)*{typeIR <- typeIR*})
 
   10. Case (% has type enumTypeIR)
 
@@ -1751,9 +1751,9 @@ def $free_type(typeIR'')
 
       2. Case (% matches pattern `SEnumT%%%`)
 
-        1. (Let (SEnumT _tid typeIR'' _valueFieldIR*{_valueFieldIR <- _valueFieldIR*}) be enumTypeIR)
+        1. (Let (SEnumT _tid typeIR _valueFieldIR*{_valueFieldIR <- _valueFieldIR*}) be enumTypeIR)
 
-        2. Return $free_type(typeIR'')
+        2. Return $free_type(typeIR)
 
   11. Case (% has type externObjectTypeIR)
 
@@ -1779,15 +1779,15 @@ def $free_type(typeIR'')
 
   14. Case (% has type packageObjectTypeIR)
 
-    1. (Let (PackageT tid typeIR''*{typeIR'' <- typeIR''*}) be (typeIR'' as packageObjectTypeIR))
+    1. (Let (PackageT tid typeIR*{typeIR <- typeIR*}) be (typeIR'' as packageObjectTypeIR))
 
-    2. Return $unions_set<tid>($free_type(typeIR'')*{typeIR'' <- typeIR''*})
+    2. Return $unions_set<tid>($free_type(typeIR)*{typeIR <- typeIR*})
 
   15. Case (% has type tableObjectTypeIR)
 
-    1. (Let (TableT _tid typeIR'') be (typeIR'' as tableObjectTypeIR))
+    1. (Let (TableT _tid typeIR) be (typeIR'' as tableObjectTypeIR))
 
-    2. Return $free_type(typeIR'')
+    2. Return $free_type(typeIR)
 
   16. Case (% has type defaultTypeIR)
 
@@ -1817,15 +1817,15 @@ def $free_type(typeIR'')
 
       1. Case (% matches pattern `SeqT%`)
 
-        1. (Let (SeqT typeIR''*{typeIR'' <- typeIR''*}) be sequenceTypeIR)
+        1. (Let (SeqT typeIR*{typeIR <- typeIR*}) be sequenceTypeIR)
 
-        2. Return $unions_set<tid>($free_type(typeIR'')*{typeIR'' <- typeIR''*})
+        2. Return $unions_set<tid>($free_type(typeIR)*{typeIR <- typeIR*})
 
       2. Case (% matches pattern `SeqDefaultT%`)
 
-        1. (Let (SeqDefaultT typeIR''*{typeIR'' <- typeIR''*}) be sequenceTypeIR)
+        1. (Let (SeqDefaultT typeIR*{typeIR <- typeIR*}) be sequenceTypeIR)
 
-        2. Return $unions_set<tid>($free_type(typeIR'')*{typeIR'' <- typeIR''*})
+        2. Return $unions_set<tid>($free_type(typeIR)*{typeIR <- typeIR*})
 
   19. Case (% has type recordTypeIR)
 
@@ -1835,21 +1835,21 @@ def $free_type(typeIR'')
 
       1. Case (% matches pattern `RecordT%`)
 
-        1. (Let (RecordT (typeIR'' _id)*{_id <- _id*, typeIR'' <- typeIR''*}) be recordTypeIR)
+        1. (Let (RecordT (typeIR _id)*{_id <- _id*, typeIR <- typeIR*}) be recordTypeIR)
 
-        2. Return $unions_set<tid>($free_type(typeIR'')*{typeIR'' <- typeIR''*})
+        2. Return $unions_set<tid>($free_type(typeIR)*{typeIR <- typeIR*})
 
       2. Case (% matches pattern `RecordDefaultT%`)
 
-        1. (Let (RecordDefaultT (typeIR'' _id)*{_id <- _id*, typeIR'' <- typeIR''*}) be recordTypeIR)
+        1. (Let (RecordDefaultT (typeIR _id)*{_id <- _id*, typeIR <- typeIR*}) be recordTypeIR)
 
-        2. Return $unions_set<tid>($free_type(typeIR'')*{typeIR'' <- typeIR''*})
+        2. Return $unions_set<tid>($free_type(typeIR)*{typeIR <- typeIR*})
 
   20. Case (% has type setTypeIR)
 
-    1. (Let (SetT typeIR''*{typeIR'' <- typeIR''*}) be (typeIR'' as setTypeIR))
+    1. (Let (SetT typeIR*{typeIR <- typeIR*}) be (typeIR'' as setTypeIR))
 
-    2. Return $unions_set<tid>($free_type(typeIR'')*{typeIR'' <- typeIR''*})
+    2. Return $unions_set<tid>($free_type(typeIR)*{typeIR <- typeIR*})
 
   21. Case (% has type tableTypeIR)
 
@@ -2149,9 +2149,9 @@ def $subst_type'(theta, typeIR''')
 
     2. If ((enumTypeIR matches pattern `SEnumT%%%`)), then
 
-      1. (Let (SEnumT tid typeIR''' valueFieldIR*{valueFieldIR <- valueFieldIR*}) be enumTypeIR)
+      1. (Let (SEnumT tid typeIR valueFieldIR*{valueFieldIR <- valueFieldIR*}) be enumTypeIR)
 
-      2. (Let typeIR_subst be $subst_type'(theta, typeIR'''))
+      2. (Let typeIR_subst be $subst_type'(theta, typeIR))
 
       3. Return ((SEnumT tid typeIR_subst valueFieldIR*{valueFieldIR <- valueFieldIR*}) as typeIR)
 
@@ -2181,17 +2181,17 @@ def $subst_type'(theta, typeIR''')
 
   13. Case (% has type packageObjectTypeIR)
 
-    1. (Let (PackageT tid typeIR'''*{typeIR''' <- typeIR'''*}) be (typeIR''' as packageObjectTypeIR))
+    1. (Let (PackageT tid typeIR*{typeIR <- typeIR*}) be (typeIR''' as packageObjectTypeIR))
 
-    2. (Let typeIR_subst be $subst_type'(theta, typeIR'''))*{typeIR''' <- typeIR'''*, typeIR_subst <- typeIR_subst*}
+    2. (Let typeIR_subst be $subst_type'(theta, typeIR))*{typeIR <- typeIR*, typeIR_subst <- typeIR_subst*}
 
     3. Return ((PackageT tid typeIR_subst*{typeIR_subst <- typeIR_subst*}) as typeIR)
 
   14. Case (% has type tableObjectTypeIR)
 
-    1. (Let (TableT tid typeIR''') be (typeIR''' as tableObjectTypeIR))
+    1. (Let (TableT tid typeIR) be (typeIR''' as tableObjectTypeIR))
 
-    2. (Let typeIR_subst be $subst_type'(theta, typeIR'''))
+    2. (Let typeIR_subst be $subst_type'(theta, typeIR))
 
     3. Return ((TableT tid typeIR_subst) as typeIR)
 
@@ -2203,17 +2203,17 @@ def $subst_type'(theta, typeIR''')
 
       1. Case (% matches pattern `SeqT%`)
 
-        1. (Let (SeqT typeIR'''*{typeIR''' <- typeIR'''*}) be sequenceTypeIR)
+        1. (Let (SeqT typeIR*{typeIR <- typeIR*}) be sequenceTypeIR)
 
-        2. (Let typeIR_subst be $subst_type'(theta, typeIR'''))*{typeIR''' <- typeIR'''*, typeIR_subst <- typeIR_subst*}
+        2. (Let typeIR_subst be $subst_type'(theta, typeIR))*{typeIR <- typeIR*, typeIR_subst <- typeIR_subst*}
 
         3. Return ((SeqT typeIR_subst*{typeIR_subst <- typeIR_subst*}) as typeIR)
 
       2. Case (% matches pattern `SeqDefaultT%`)
 
-        1. (Let (SeqDefaultT typeIR'''*{typeIR''' <- typeIR'''*}) be sequenceTypeIR)
+        1. (Let (SeqDefaultT typeIR*{typeIR <- typeIR*}) be sequenceTypeIR)
 
-        2. (Let typeIR_subst be $subst_type'(theta, typeIR'''))*{typeIR''' <- typeIR'''*, typeIR_subst <- typeIR_subst*}
+        2. (Let typeIR_subst be $subst_type'(theta, typeIR))*{typeIR <- typeIR*, typeIR_subst <- typeIR_subst*}
 
         3. Return ((SeqDefaultT typeIR_subst*{typeIR_subst <- typeIR_subst*}) as typeIR)
 
@@ -2241,9 +2241,9 @@ def $subst_type'(theta, typeIR''')
 
   17. Case (% has type setTypeIR)
 
-    1. (Let (SetT typeIR'''*{typeIR''' <- typeIR'''*}) be (typeIR''' as setTypeIR))
+    1. (Let (SetT typeIR*{typeIR <- typeIR*}) be (typeIR''' as setTypeIR))
 
-    2. (Let typeIR_subst be $subst_type'(theta, typeIR'''))*{typeIR''' <- typeIR'''*, typeIR_subst <- typeIR_subst*}
+    2. (Let typeIR_subst be $subst_type'(theta, typeIR))*{typeIR <- typeIR*, typeIR_subst <- typeIR_subst*}
 
     3. Return ((SetT typeIR_subst*{typeIR_subst <- typeIR_subst*}) as typeIR)
 
@@ -2781,45 +2781,45 @@ def $is_defaultable_typeIR'(typeIR'')
 
     2. If ((aliasTypeIR matches pattern `DefT%%`)), then
 
-      1. (Let (DefT _tid typeIR'') be aliasTypeIR)
+      1. (Let (DefT _tid typeIR) be aliasTypeIR)
 
-      2. Return $is_defaultable_typeIR(typeIR'')
+      2. Return $is_defaultable_typeIR(typeIR)
 
   4. Case (% has type tupleTypeIR)
 
-    1. (Let (TupleT typeIR''*{typeIR'' <- typeIR''*}) be (typeIR'' as tupleTypeIR))
+    1. (Let (TupleT typeIR*{typeIR <- typeIR*}) be (typeIR'' as tupleTypeIR))
 
-    2. If ($is_defaultable_typeIR(typeIR''))*{typeIR'' <- typeIR''*}, then
+    2. If ($is_defaultable_typeIR(typeIR))*{typeIR <- typeIR*}, then
 
       1. Return true
 
   5. Case (% has type headerStackTypeIR)
 
-    1. (Let (HeaderStackT typeIR'' _nat) be (typeIR'' as headerStackTypeIR))
+    1. (Let (HeaderStackT typeIR _nat) be (typeIR'' as headerStackTypeIR))
 
-    2. Return $is_defaultable_typeIR(typeIR'')
+    2. Return $is_defaultable_typeIR(typeIR)
 
   6. Case (% has type structTypeIR)
 
-    1. (Let (StructT _tid (typeIR'' _id)*{_id <- _id*, typeIR'' <- typeIR''*}) be (typeIR'' as structTypeIR))
+    1. (Let (StructT _tid (typeIR _id)*{_id <- _id*, typeIR <- typeIR*}) be (typeIR'' as structTypeIR))
 
-    2. If ($is_defaultable_typeIR(typeIR''))*{typeIR'' <- typeIR''*}, then
+    2. If ($is_defaultable_typeIR(typeIR))*{typeIR <- typeIR*}, then
 
       1. Return true
 
   7. Case (% has type headerTypeIR)
 
-    1. (Let (HeaderT _tid (typeIR'' _id)*{_id <- _id*, typeIR'' <- typeIR''*}) be (typeIR'' as headerTypeIR))
+    1. (Let (HeaderT _tid (typeIR _id)*{_id <- _id*, typeIR <- typeIR*}) be (typeIR'' as headerTypeIR))
 
-    2. If ($is_defaultable_typeIR(typeIR''))*{typeIR'' <- typeIR''*}, then
+    2. If ($is_defaultable_typeIR(typeIR))*{typeIR <- typeIR*}, then
 
       1. Return true
 
   8. Case (% has type headerUnionTypeIR)
 
-    1. (Let (HeaderUnionT _tid (typeIR'' _id)*{_id <- _id*, typeIR'' <- typeIR''*}) be (typeIR'' as headerUnionTypeIR))
+    1. (Let (HeaderUnionT _tid (typeIR _id)*{_id <- _id*, typeIR <- typeIR*}) be (typeIR'' as headerUnionTypeIR))
 
-    2. If ($is_defaultable_typeIR(typeIR''))*{typeIR'' <- typeIR''*}, then
+    2. If ($is_defaultable_typeIR(typeIR))*{typeIR <- typeIR*}, then
 
       1. Return true
 
@@ -2837,9 +2837,9 @@ def $is_defaultable_typeIR'(typeIR'')
 
       2. Case (% matches pattern `SEnumT%%%`)
 
-        1. (Let (SEnumT _tid typeIR'' _valueFieldIR*{_valueFieldIR <- _valueFieldIR*}) be enumTypeIR)
+        1. (Let (SEnumT _tid typeIR _valueFieldIR*{_valueFieldIR <- _valueFieldIR*}) be enumTypeIR)
 
-        2. Return $is_defaultable_typeIR(typeIR'')
+        2. Return $is_defaultable_typeIR(typeIR)
 
 2. Otherwise
 
@@ -3122,7 +3122,7 @@ relation Type_alpha: typeIR'''', typeIR'''''
 
       2. Case (% matches pattern `NewT%%`)
 
-        1. (Let (NewT tid typeIR'''') be aliasTypeIR)
+        1. (Let (NewT tid typeIR_a) be aliasTypeIR)
 
         2. If ((typeIR''''' has type aliasTypeIR)), then
 
@@ -3130,11 +3130,11 @@ relation Type_alpha: typeIR'''', typeIR'''''
 
           2. If ((aliasTypeIR' matches pattern `NewT%%`)), then
 
-            1. (Let (NewT tid' typeIR''''') be aliasTypeIR')
+            1. (Let (NewT tid' typeIR_b) be aliasTypeIR')
 
             2. If ((tid = tid')), then
 
-              1. If ((Type_alpha: typeIR'''' ~~ typeIR''''' holds)), then
+              1. If ((Type_alpha: typeIR_a ~~ typeIR_b holds)), then
 
                 1. The relation holds
 
@@ -3148,13 +3148,13 @@ relation Type_alpha: typeIR'''', typeIR'''''
 
   4. Case (% has type listTypeIR)
 
-    1. (Let (ListT typeIR'''') be (typeIR'''' as listTypeIR))
+    1. (Let (ListT typeIR_a) be (typeIR'''' as listTypeIR))
 
     2. If ((typeIR''''' has type listTypeIR)), then
 
-      1. (Let (ListT typeIR''''') be (typeIR''''' as listTypeIR))
+      1. (Let (ListT typeIR_b) be (typeIR''''' as listTypeIR))
 
-      2. If ((Type_alpha: typeIR'''' ~~ typeIR''''' holds)), then
+      2. If ((Type_alpha: typeIR_a ~~ typeIR_b holds)), then
 
         1. The relation holds
 
@@ -3164,13 +3164,13 @@ relation Type_alpha: typeIR'''', typeIR'''''
 
   5. Case (% has type tupleTypeIR)
 
-    1. (Let (TupleT typeIR''''*{typeIR'''' <- typeIR''''*}) be (typeIR'''' as tupleTypeIR))
+    1. (Let (TupleT typeIR_a*{typeIR_a <- typeIR_a*}) be (typeIR'''' as tupleTypeIR))
 
     2. If ((typeIR''''' has type tupleTypeIR)), then
 
-      1. (Let (TupleT typeIR'''''*{typeIR''''' <- typeIR'''''*}) be (typeIR''''' as tupleTypeIR))
+      1. (Let (TupleT typeIR_b*{typeIR_b <- typeIR_b*}) be (typeIR''''' as tupleTypeIR))
 
-      2. If ((Type_alpha: typeIR'''' ~~ typeIR''''' holds))*{typeIR'''' <- typeIR''''*, typeIR''''' <- typeIR'''''*}, then
+      2. If ((Type_alpha: typeIR_a ~~ typeIR_b holds))*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*}, then
 
         1. The relation holds
 
@@ -3180,15 +3180,15 @@ relation Type_alpha: typeIR'''', typeIR'''''
 
   6. Case (% has type headerStackTypeIR)
 
-    1. (Let (HeaderStackT typeIR'''' n_s) be (typeIR'''' as headerStackTypeIR))
+    1. (Let (HeaderStackT typeIR_a n_s) be (typeIR'''' as headerStackTypeIR))
 
     2. If ((typeIR''''' has type headerStackTypeIR)), then
 
-      1. (Let (HeaderStackT typeIR''''' n_s') be (typeIR''''' as headerStackTypeIR))
+      1. (Let (HeaderStackT typeIR_b n_s') be (typeIR''''' as headerStackTypeIR))
 
       2. If ((n_s = n_s')), then
 
-        1. If ((Type_alpha: typeIR'''' ~~ typeIR''''' holds)), then
+        1. If ((Type_alpha: typeIR_a ~~ typeIR_b holds)), then
 
           1. The relation holds
 
@@ -3304,7 +3304,7 @@ relation Type_alpha: typeIR'''', typeIR'''''
 
       2. Case (% matches pattern `SEnumT%%%`)
 
-        1. (Let (SEnumT tid typeIR'''' (id_f value_f)*{id_f <- id_f*, value_f <- value_f*}) be enumTypeIR)
+        1. (Let (SEnumT tid typeIR_a (id_f value_f)*{id_f <- id_f*, value_f <- value_f*}) be enumTypeIR)
 
         2. If ((typeIR''''' has type enumTypeIR)), then
 
@@ -3312,7 +3312,7 @@ relation Type_alpha: typeIR'''', typeIR'''''
 
           2. If ((enumTypeIR' matches pattern `SEnumT%%%`)), then
 
-            1. (Let (SEnumT tid' typeIR''''' (id_f' value_f')*{id_f' <- id_f'*, value_f' <- value_f'*}) be enumTypeIR')
+            1. (Let (SEnumT tid' typeIR_b (id_f' value_f')*{id_f' <- id_f'*, value_f' <- value_f'*}) be enumTypeIR')
 
             2. If ((id_f = id_f'))*{id_f <- id_f*, id_f' <- id_f'*}, then
 
@@ -3320,7 +3320,7 @@ relation Type_alpha: typeIR'''', typeIR'''''
 
                 1. If ((value_f = value_f'))*{value_f <- value_f*, value_f' <- value_f'*}, then
 
-                  1. If ((Type_alpha: typeIR'''' ~~ typeIR''''' holds)), then
+                  1. If ((Type_alpha: typeIR_a ~~ typeIR_b holds)), then
 
                     1. The relation holds
 
@@ -3410,15 +3410,15 @@ relation Type_alpha: typeIR'''', typeIR'''''
 
   14. Case (% has type packageObjectTypeIR)
 
-    1. (Let (PackageT tid typeIR''''*{typeIR'''' <- typeIR''''*}) be (typeIR'''' as packageObjectTypeIR))
+    1. (Let (PackageT tid typeIR_a*{typeIR_a <- typeIR_a*}) be (typeIR'''' as packageObjectTypeIR))
 
     2. If ((typeIR''''' has type packageObjectTypeIR)), then
 
-      1. (Let (PackageT tid' typeIR'''''*{typeIR''''' <- typeIR'''''*}) be (typeIR''''' as packageObjectTypeIR))
+      1. (Let (PackageT tid' typeIR_b*{typeIR_b <- typeIR_b*}) be (typeIR''''' as packageObjectTypeIR))
 
       2. If ((tid = tid')), then
 
-        1. If ((Type_alpha: typeIR'''' ~~ typeIR''''' holds))*{typeIR'''' <- typeIR''''*, typeIR''''' <- typeIR'''''*}, then
+        1. If ((Type_alpha: typeIR_a ~~ typeIR_b holds))*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*}, then
 
           1. The relation holds
 
@@ -3430,15 +3430,15 @@ relation Type_alpha: typeIR'''', typeIR'''''
 
   15. Case (% has type tableObjectTypeIR)
 
-    1. (Let (TableT tid typeIR'''') be (typeIR'''' as tableObjectTypeIR))
+    1. (Let (TableT tid typeIR_a) be (typeIR'''' as tableObjectTypeIR))
 
     2. If ((typeIR''''' has type tableObjectTypeIR)), then
 
-      1. (Let (TableT tid' typeIR''''') be (typeIR''''' as tableObjectTypeIR))
+      1. (Let (TableT tid' typeIR_b) be (typeIR''''' as tableObjectTypeIR))
 
       2. If ((tid = tid')), then
 
-        1. If ((Type_alpha: typeIR'''' ~~ typeIR''''' holds)), then
+        1. If ((Type_alpha: typeIR_a ~~ typeIR_b holds)), then
 
           1. The relation holds
 
@@ -3476,7 +3476,7 @@ relation Type_alpha: typeIR'''', typeIR'''''
 
       1. Case (% matches pattern `SeqT%`)
 
-        1. (Let (SeqT typeIR''''*{typeIR'''' <- typeIR''''*}) be sequenceTypeIR)
+        1. (Let (SeqT typeIR_a*{typeIR_a <- typeIR_a*}) be sequenceTypeIR)
 
         2. If ((typeIR''''' has type sequenceTypeIR)), then
 
@@ -3484,9 +3484,9 @@ relation Type_alpha: typeIR'''', typeIR'''''
 
           2. If ((sequenceTypeIR' matches pattern `SeqT%`)), then
 
-            1. (Let (SeqT typeIR'''''*{typeIR''''' <- typeIR'''''*}) be sequenceTypeIR')
+            1. (Let (SeqT typeIR_b*{typeIR_b <- typeIR_b*}) be sequenceTypeIR')
 
-            2. If ((Type_alpha: typeIR'''' ~~ typeIR''''' holds))*{typeIR'''' <- typeIR''''*, typeIR''''' <- typeIR'''''*}, then
+            2. If ((Type_alpha: typeIR_a ~~ typeIR_b holds))*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*}, then
 
               1. The relation holds
 
@@ -3498,7 +3498,7 @@ relation Type_alpha: typeIR'''', typeIR'''''
 
       2. Case (% matches pattern `SeqDefaultT%`)
 
-        1. (Let (SeqDefaultT typeIR''''*{typeIR'''' <- typeIR''''*}) be sequenceTypeIR)
+        1. (Let (SeqDefaultT typeIR_a*{typeIR_a <- typeIR_a*}) be sequenceTypeIR)
 
         2. If ((typeIR''''' has type sequenceTypeIR)), then
 
@@ -3506,9 +3506,9 @@ relation Type_alpha: typeIR'''', typeIR'''''
 
           2. If ((sequenceTypeIR' matches pattern `SeqDefaultT%`)), then
 
-            1. (Let (SeqDefaultT typeIR'''''*{typeIR''''' <- typeIR'''''*}) be sequenceTypeIR')
+            1. (Let (SeqDefaultT typeIR_b*{typeIR_b <- typeIR_b*}) be sequenceTypeIR')
 
-            2. If ((Type_alpha: typeIR'''' ~~ typeIR''''' holds))*{typeIR'''' <- typeIR''''*, typeIR''''' <- typeIR'''''*}, then
+            2. If ((Type_alpha: typeIR_a ~~ typeIR_b holds))*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*}, then
 
               1. The relation holds
 
@@ -3526,7 +3526,7 @@ relation Type_alpha: typeIR'''', typeIR'''''
 
       1. Case (% matches pattern `RecordT%`)
 
-        1. (Let (RecordT (typeIR'''' id)*{id <- id*, typeIR'''' <- typeIR''''*}) be recordTypeIR)
+        1. (Let (RecordT (typeIR_a id)*{id <- id*, typeIR_a <- typeIR_a*}) be recordTypeIR)
 
         2. If ((typeIR''''' has type recordTypeIR)), then
 
@@ -3534,11 +3534,11 @@ relation Type_alpha: typeIR'''', typeIR'''''
 
           2. If ((recordTypeIR' matches pattern `RecordT%`)), then
 
-            1. (Let (RecordT (typeIR''''' id')*{id' <- id'*, typeIR''''' <- typeIR'''''*}) be recordTypeIR')
+            1. (Let (RecordT (typeIR_b id')*{id' <- id'*, typeIR_b <- typeIR_b*}) be recordTypeIR')
 
             2. If ((id = id'))*{id <- id*, id' <- id'*}, then
 
-              1. If ((Type_alpha: typeIR'''' ~~ typeIR''''' holds))*{typeIR'''' <- typeIR''''*, typeIR''''' <- typeIR'''''*}, then
+              1. If ((Type_alpha: typeIR_a ~~ typeIR_b holds))*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*}, then
 
                 1. The relation holds
 
@@ -3552,7 +3552,7 @@ relation Type_alpha: typeIR'''', typeIR'''''
 
       2. Case (% matches pattern `RecordDefaultT%`)
 
-        1. (Let (RecordDefaultT (typeIR'''' id)*{id <- id*, typeIR'''' <- typeIR''''*}) be recordTypeIR)
+        1. (Let (RecordDefaultT (typeIR_a id)*{id <- id*, typeIR_a <- typeIR_a*}) be recordTypeIR)
 
         2. If ((typeIR''''' has type recordTypeIR)), then
 
@@ -3560,11 +3560,11 @@ relation Type_alpha: typeIR'''', typeIR'''''
 
           2. If ((recordTypeIR' matches pattern `RecordDefaultT%`)), then
 
-            1. (Let (RecordDefaultT (typeIR''''' id')*{id' <- id'*, typeIR''''' <- typeIR'''''*}) be recordTypeIR')
+            1. (Let (RecordDefaultT (typeIR_b id')*{id' <- id'*, typeIR_b <- typeIR_b*}) be recordTypeIR')
 
             2. If ((id = id'))*{id <- id*, id' <- id'*}, then
 
-              1. If ((Type_alpha: typeIR'''' ~~ typeIR''''' holds))*{typeIR'''' <- typeIR''''*, typeIR''''' <- typeIR'''''*}, then
+              1. If ((Type_alpha: typeIR_a ~~ typeIR_b holds))*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*}, then
 
                 1. The relation holds
 
@@ -3598,11 +3598,11 @@ relation Type_alpha: typeIR'''', typeIR'''''
 
   20. Case (% has type setTypeIR)
 
-    1. (Let (SetT typeIR''''*{typeIR'''' <- typeIR''''*}) be (typeIR'''' as setTypeIR))
+    1. (Let (SetT typeIR*{typeIR <- typeIR*}) be (typeIR'''' as setTypeIR))
 
-    2. If ((typeIR''''*{typeIR'''' <- typeIR''''*} matches pattern [ _/1 ])), then
+    2. If ((typeIR*{typeIR <- typeIR*} matches pattern [ _/1 ])), then
 
-      1. (Let [typeIR''''] be typeIR''''*{typeIR'''' <- typeIR''''*})
+      1. (Let [typeIR_a] be typeIR*{typeIR <- typeIR*})
 
       2. If ((typeIR''''' has type setTypeIR)), then
 
@@ -3610,9 +3610,9 @@ relation Type_alpha: typeIR'''', typeIR'''''
 
         2. If ((typeIR''*{typeIR'' <- typeIR''*} matches pattern [ _/1 ])), then
 
-          1. (Let [typeIR'''''] be typeIR''*{typeIR'' <- typeIR''*})
+          1. (Let [typeIR_b] be typeIR''*{typeIR'' <- typeIR''*})
 
-          2. If ((Type_alpha: typeIR'''' ~~ typeIR''''' holds)), then
+          2. If ((Type_alpha: typeIR_a ~~ typeIR_b holds)), then
 
             1. The relation holds
 
@@ -3692,9 +3692,9 @@ relation Type_alpha: typeIR'''', typeIR'''''
 
   2. If ((aliasTypeIR matches pattern `DefT%%`)), then
 
-    1. (Let (DefT _tid typeIR''''') be aliasTypeIR)
+    1. (Let (DefT _tid typeIR_b) be aliasTypeIR)
 
-    2. If ((Type_alpha: typeIR'''' ~~ typeIR''''' holds)), then
+    2. If ((Type_alpha: typeIR'''' ~~ typeIR_b holds)), then
 
       1. The relation holds
 
@@ -4083,25 +4083,25 @@ def $joins_ctk(ctk''*{ctk'' <- ctk''*})
 
   2. Case (% matches pattern [ _/1 ])
 
-    1. (Let [ctk''] be ctk''*{ctk'' <- ctk''*})
+    1. (Let [ctk] be ctk''*{ctk'' <- ctk''*})
 
-    2. Return ctk''
+    2. Return ctk
 
   3. Case (% matches pattern _ :: _)
 
-    1. (Let ctk_a :: ctk''*{ctk'' <- ctk''*} be ctk''*{ctk'' <- ctk''*})
+    1. (Let ctk_a :: ctk*{ctk <- ctk*} be ctk''*{ctk'' <- ctk''*})
 
-    2. Case analysis on ctk''*{ctk'' <- ctk''*}
+    2. Case analysis on ctk*{ctk <- ctk*}
 
       1. Case (% matches pattern [ _/1 ])
 
-        1. (Let [ctk_b] be ctk''*{ctk'' <- ctk''*})
+        1. (Let [ctk_b] be ctk*{ctk <- ctk*})
 
         2. Return $join_ctk(ctk_a, ctk_b)
 
       2. Case (% matches pattern _ :: _)
 
-        1. (Let ctk_b :: ctk_c*{ctk_c <- ctk_c*} be ctk''*{ctk'' <- ctk''*})
+        1. (Let ctk_b :: ctk_c*{ctk_c <- ctk_c*} be ctk*{ctk <- ctk*})
 
         2. (Let ctk_d be $join_ctk(ctk_a, ctk_b))
 
@@ -5864,9 +5864,9 @@ def $cast_op(typeIR, value'')
 
     2. If ((enumValue matches pattern `SEnumV%%%`)), then
 
-      1. (Let (SEnumV _tid _id value'') be enumValue)
+      1. (Let (SEnumV _tid _id value) be enumValue)
 
-      2. Return $cast_op(typeIR, value'')
+      2. Return $cast_op(typeIR, value)
 
     2. Else Phantom#332
 
@@ -5876,9 +5876,9 @@ def $cast_op(typeIR, value'')
 
     2. If ((sequenceValue matches pattern `SeqV%`)), then
 
-      1. (Let (SeqV value''*{value'' <- value''*}) be sequenceValue)
+      1. (Let (SeqV value*{value <- value*}) be sequenceValue)
 
-      2. Return $cast_sequence(typeIR, value''*{value'' <- value''*})
+      2. Return $cast_sequence(typeIR, value*{value <- value*})
 
     2. Else Phantom#333
 
@@ -5888,9 +5888,9 @@ def $cast_op(typeIR, value'')
 
     2. If ((recordValue matches pattern `RecordV%`)), then
 
-      1. (Let (RecordV (value'' id)*{id <- id*, value'' <- value''*}) be recordValue)
+      1. (Let (RecordV (value id)*{id <- id*, value <- value*}) be recordValue)
 
-      2. Return $cast_record(typeIR, (value'', id)*{id <- id*, value'' <- value''*})
+      2. Return $cast_record(typeIR, (value, id)*{id <- id*, value <- value*})
 
     2. Else Phantom#334
 
@@ -5922,9 +5922,9 @@ def $cast_op(typeIR, value'')
 
       1. Case (% matches pattern `SingletonSetV%`)
 
-        1. (Let (SingletonSetV value'') be setValue)
+        1. (Let (SingletonSetV value) be setValue)
 
-        2. Return $cast_set_singleton(typeIR, value'')
+        2. Return $cast_set_singleton(typeIR, value)
 
       2. Case (% matches pattern `MaskSetV%%`)
 
@@ -6000,15 +6000,15 @@ def $default'(typeIR'')
 
   3. Case (% has type tupleTypeIR)
 
-    1. (Let (TupleT typeIR''*{typeIR'' <- typeIR''*}) be (typeIR'' as tupleTypeIR))
+    1. (Let (TupleT typeIR*{typeIR <- typeIR*}) be (typeIR'' as tupleTypeIR))
 
-    2. Return ((TupleV $default(typeIR'')*{typeIR'' <- typeIR''*}) as value)
+    2. Return ((TupleV $default(typeIR)*{typeIR <- typeIR*}) as value)
 
   4. Case (% has type headerStackTypeIR)
 
-    1. (Let (HeaderStackT typeIR'' n_s) be (typeIR'' as headerStackTypeIR))
+    1. (Let (HeaderStackT typeIR n_s) be (typeIR'' as headerStackTypeIR))
 
-    2. (Let value*{value <- value*} be $repeat_<value>($default(typeIR''), n_s))
+    2. (Let value*{value <- value*} be $repeat_<value>($default(typeIR), n_s))
 
     3. Return ((HeaderStackV value*{value <- value*} 0 n_s) as value)
 
@@ -6050,9 +6050,9 @@ def $default'(typeIR'')
 
       2. Case (% matches pattern `SEnumT%%%`)
 
-        1. (Let (SEnumT tid typeIR'' (id_f value_f)*{id_f <- id_f*, value_f <- value_f*}) be enumTypeIR)
+        1. (Let (SEnumT tid typeIR (id_f value_f)*{id_f <- id_f*, value_f <- value_f*}) be enumTypeIR)
 
-        2. (Let value_zero be $cast_arbint(typeIR'', (0 as int)))
+        2. (Let value_zero be $cast_arbint(typeIR, (0 as int)))
 
         3. (Let id?{id <- id?} be $assoc_<value, id>(value_zero, (value_f, id_f)*{id_f <- id_f*, value_f <- value_f*}))
 
@@ -6122,9 +6122,9 @@ def $cast_bool'(typeIR'', b')
 
     2. If ((aliasTypeIR matches pattern `NewT%%`)), then
 
-      1. (Let (NewT _tid typeIR'') be aliasTypeIR)
+      1. (Let (NewT _tid typeIR) be aliasTypeIR)
 
-      2. Return $cast_bool(typeIR'', b')
+      2. Return $cast_bool(typeIR, b')
 
     2. Else Phantom#346
 
@@ -6180,21 +6180,21 @@ def $cast_arbint'(typeIR''', i)
 
     2. If ((aliasTypeIR matches pattern `NewT%%`)), then
 
-      1. (Let (NewT _tid typeIR''') be aliasTypeIR)
+      1. (Let (NewT _tid typeIR) be aliasTypeIR)
 
-      2. Return $cast_arbint(typeIR''', i)
+      2. Return $cast_arbint(typeIR, i)
 
     2. Else Phantom#350
 
   4. Case (% has type setTypeIR)
 
-    1. (Let (SetT typeIR'''*{typeIR''' <- typeIR'''*}) be (typeIR''' as setTypeIR))
+    1. (Let (SetT typeIR'*{typeIR' <- typeIR'*}) be (typeIR''' as setTypeIR))
 
-    2. If ((typeIR'''*{typeIR''' <- typeIR'''*} matches pattern [ _/1 ])), then
+    2. If ((typeIR'*{typeIR' <- typeIR'*} matches pattern [ _/1 ])), then
 
-      1. (Let [typeIR'''] be typeIR'''*{typeIR''' <- typeIR'''*})
+      1. (Let [typeIR] be typeIR'*{typeIR' <- typeIR'*})
 
-      2. Return ((SingletonSetV $cast_arbint(typeIR''', i)) as value)
+      2. Return ((SingletonSetV $cast_arbint(typeIR, i)) as value)
 
     2. Else Phantom#351
 
@@ -6254,21 +6254,21 @@ def $cast_fixbit'(typeIR''', w', i)
 
     2. If ((aliasTypeIR matches pattern `NewT%%`)), then
 
-      1. (Let (NewT _tid typeIR''') be aliasTypeIR)
+      1. (Let (NewT _tid typeIR) be aliasTypeIR)
 
-      2. Return $cast_fixbit(typeIR''', w', i)
+      2. Return $cast_fixbit(typeIR, w', i)
 
     2. Else Phantom#355
 
   4. Case (% has type setTypeIR)
 
-    1. (Let (SetT typeIR'''*{typeIR''' <- typeIR'''*}) be (typeIR''' as setTypeIR))
+    1. (Let (SetT typeIR'*{typeIR' <- typeIR'*}) be (typeIR''' as setTypeIR))
 
-    2. If ((typeIR'''*{typeIR''' <- typeIR'''*} matches pattern [ _/1 ])), then
+    2. If ((typeIR'*{typeIR' <- typeIR'*} matches pattern [ _/1 ])), then
 
-      1. (Let [typeIR'''] be typeIR'''*{typeIR''' <- typeIR'''*})
+      1. (Let [typeIR] be typeIR'*{typeIR' <- typeIR'*})
 
-      2. Return ((SingletonSetV $cast_fixbit(typeIR''', w', i)) as value)
+      2. Return ((SingletonSetV $cast_fixbit(typeIR, w', i)) as value)
 
     2. Else Phantom#356
 
@@ -6318,21 +6318,21 @@ def $cast_fixint'(typeIR''', w', i)
 
     2. If ((aliasTypeIR matches pattern `NewT%%`)), then
 
-      1. (Let (NewT _tid typeIR''') be aliasTypeIR)
+      1. (Let (NewT _tid typeIR) be aliasTypeIR)
 
-      2. Return $cast_fixint(typeIR''', w', i)
+      2. Return $cast_fixint(typeIR, w', i)
 
     2. Else Phantom#359
 
   3. Case (% has type setTypeIR)
 
-    1. (Let (SetT typeIR'''*{typeIR''' <- typeIR'''*}) be (typeIR''' as setTypeIR))
+    1. (Let (SetT typeIR'*{typeIR' <- typeIR'*}) be (typeIR''' as setTypeIR))
 
-    2. If ((typeIR'''*{typeIR''' <- typeIR'''*} matches pattern [ _/1 ])), then
+    2. If ((typeIR'*{typeIR' <- typeIR'*} matches pattern [ _/1 ])), then
 
-      1. (Let [typeIR'''] be typeIR'''*{typeIR''' <- typeIR'''*})
+      1. (Let [typeIR] be typeIR'*{typeIR' <- typeIR'*})
 
-      2. Return ((SingletonSetV $cast_fixint(typeIR''', w', i)) as value)
+      2. Return ((SingletonSetV $cast_fixint(typeIR, w', i)) as value)
 
     2. Else Phantom#360
 
@@ -6671,9 +6671,9 @@ def $sizeof_minSizeInBits''(typeIR'')
 
     2. If ((aliasTypeIR matches pattern `NewT%%`)), then
 
-      1. (Let (NewT _tid typeIR'') be aliasTypeIR)
+      1. (Let (NewT _tid typeIR) be aliasTypeIR)
 
-      2. Return $sizeof_minSizeInBits'(typeIR'')
+      2. Return $sizeof_minSizeInBits'(typeIR)
 
     2. Else Phantom#381
 
@@ -6683,41 +6683,41 @@ def $sizeof_minSizeInBits''(typeIR'')
 
     2. If ((enumTypeIR matches pattern `SEnumT%%%`)), then
 
-      1. (Let (SEnumT _tid typeIR'' _valueFieldIR*{_valueFieldIR <- _valueFieldIR*}) be enumTypeIR)
+      1. (Let (SEnumT _tid typeIR _valueFieldIR*{_valueFieldIR <- _valueFieldIR*}) be enumTypeIR)
 
-      2. Return $sizeof_minSizeInBits'(typeIR'')
+      2. Return $sizeof_minSizeInBits'(typeIR)
 
     2. Else Phantom#382
 
   5. Case (% has type tupleTypeIR)
 
-    1. (Let (TupleT typeIR''*{typeIR'' <- typeIR''*}) be (typeIR'' as tupleTypeIR))
+    1. (Let (TupleT typeIR*{typeIR <- typeIR*}) be (typeIR'' as tupleTypeIR))
 
-    2. Return $sum($sizeof_minSizeInBits'(typeIR'')*{typeIR'' <- typeIR''*})
+    2. Return $sum($sizeof_minSizeInBits'(typeIR)*{typeIR <- typeIR*})
 
   6. Case (% has type headerStackTypeIR)
 
-    1. (Let (HeaderStackT typeIR'' n_size) be (typeIR'' as headerStackTypeIR))
+    1. (Let (HeaderStackT typeIR n_size) be (typeIR'' as headerStackTypeIR))
 
-    2. Return ($sizeof_minSizeInBits'(typeIR'') * n_size)
+    2. Return ($sizeof_minSizeInBits'(typeIR) * n_size)
 
   7. Case (% has type structTypeIR)
 
-    1. (Let (StructT _tid (typeIR'' _id)*{_id <- _id*, typeIR'' <- typeIR''*}) be (typeIR'' as structTypeIR))
+    1. (Let (StructT _tid (typeIR _id)*{_id <- _id*, typeIR <- typeIR*}) be (typeIR'' as structTypeIR))
 
-    2. Return $sum($sizeof_minSizeInBits'(typeIR'')*{typeIR'' <- typeIR''*})
+    2. Return $sum($sizeof_minSizeInBits'(typeIR)*{typeIR <- typeIR*})
 
   8. Case (% has type headerTypeIR)
 
-    1. (Let (HeaderT _tid (typeIR'' _id)*{_id <- _id*, typeIR'' <- typeIR''*}) be (typeIR'' as headerTypeIR))
+    1. (Let (HeaderT _tid (typeIR _id)*{_id <- _id*, typeIR <- typeIR*}) be (typeIR'' as headerTypeIR))
 
-    2. Return $sum($sizeof_minSizeInBits'(typeIR'')*{typeIR'' <- typeIR''*})
+    2. Return $sum($sizeof_minSizeInBits'(typeIR)*{typeIR <- typeIR*})
 
   9. Case (% has type headerUnionTypeIR)
 
-    1. (Let (HeaderUnionT _tid (typeIR'' _id)*{_id <- _id*, typeIR'' <- typeIR''*}) be (typeIR'' as headerUnionTypeIR))
+    1. (Let (HeaderUnionT _tid (typeIR _id)*{_id <- _id*, typeIR <- typeIR*}) be (typeIR'' as headerUnionTypeIR))
 
-    2. Return $min($sizeof_minSizeInBits'(typeIR'')*{typeIR'' <- typeIR''*})
+    2. Return $min($sizeof_minSizeInBits'(typeIR)*{typeIR <- typeIR*})
 
 1. Else Phantom#383
 
@@ -6785,9 +6785,9 @@ def $sizeof_maxSizeInBits''(typeIR'')
 
     2. If ((aliasTypeIR matches pattern `NewT%%`)), then
 
-      1. (Let (NewT _tid typeIR'') be aliasTypeIR)
+      1. (Let (NewT _tid typeIR) be aliasTypeIR)
 
-      2. Return $sizeof_maxSizeInBits'(typeIR'')
+      2. Return $sizeof_maxSizeInBits'(typeIR)
 
     2. Else Phantom#386
 
@@ -6797,41 +6797,41 @@ def $sizeof_maxSizeInBits''(typeIR'')
 
     2. If ((enumTypeIR matches pattern `SEnumT%%%`)), then
 
-      1. (Let (SEnumT _tid typeIR'' _valueFieldIR*{_valueFieldIR <- _valueFieldIR*}) be enumTypeIR)
+      1. (Let (SEnumT _tid typeIR _valueFieldIR*{_valueFieldIR <- _valueFieldIR*}) be enumTypeIR)
 
-      2. Return $sizeof_maxSizeInBits'(typeIR'')
+      2. Return $sizeof_maxSizeInBits'(typeIR)
 
     2. Else Phantom#387
 
   5. Case (% has type tupleTypeIR)
 
-    1. (Let (TupleT typeIR''*{typeIR'' <- typeIR''*}) be (typeIR'' as tupleTypeIR))
+    1. (Let (TupleT typeIR*{typeIR <- typeIR*}) be (typeIR'' as tupleTypeIR))
 
-    2. Return $sum($sizeof_maxSizeInBits'(typeIR'')*{typeIR'' <- typeIR''*})
+    2. Return $sum($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
 
   6. Case (% has type headerStackTypeIR)
 
-    1. (Let (HeaderStackT typeIR'' n_size) be (typeIR'' as headerStackTypeIR))
+    1. (Let (HeaderStackT typeIR n_size) be (typeIR'' as headerStackTypeIR))
 
-    2. Return ($sizeof_maxSizeInBits'(typeIR'') * n_size)
+    2. Return ($sizeof_maxSizeInBits'(typeIR) * n_size)
 
   7. Case (% has type structTypeIR)
 
-    1. (Let (StructT _tid (typeIR'' _id)*{_id <- _id*, typeIR'' <- typeIR''*}) be (typeIR'' as structTypeIR))
+    1. (Let (StructT _tid (typeIR _id)*{_id <- _id*, typeIR <- typeIR*}) be (typeIR'' as structTypeIR))
 
-    2. Return $sum($sizeof_maxSizeInBits'(typeIR'')*{typeIR'' <- typeIR''*})
+    2. Return $sum($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
 
   8. Case (% has type headerTypeIR)
 
-    1. (Let (HeaderT _tid (typeIR'' _id)*{_id <- _id*, typeIR'' <- typeIR''*}) be (typeIR'' as headerTypeIR))
+    1. (Let (HeaderT _tid (typeIR _id)*{_id <- _id*, typeIR <- typeIR*}) be (typeIR'' as headerTypeIR))
 
-    2. Return $sum($sizeof_maxSizeInBits'(typeIR'')*{typeIR'' <- typeIR''*})
+    2. Return $sum($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
 
   9. Case (% has type headerUnionTypeIR)
 
-    1. (Let (HeaderUnionT _tid (typeIR'' _id)*{_id <- _id*, typeIR'' <- typeIR''*}) be (typeIR'' as headerUnionTypeIR))
+    1. (Let (HeaderUnionT _tid (typeIR _id)*{_id <- _id*, typeIR <- typeIR*}) be (typeIR'' as headerUnionTypeIR))
 
-    2. Return $max($sizeof_maxSizeInBits'(typeIR'')*{typeIR'' <- typeIR''*})
+    2. Return $max($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
 
 1. Else Phantom#388
 
@@ -7530,9 +7530,9 @@ def $find_matchings<V>(id_r, id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*}, i
 
       4. If (((rid, V, id*)?{(rid, V, id*) <- (rid, V, id*)?} matches pattern (_))), then
 
-        1. (Let ?((rid'', V'', id_default*{id_default <- id_default*})) be (rid, V, id*)?{(rid, V, id*) <- (rid, V, id*)?})
+        1. (Let ?((rid, V, id_default*{id_default <- id_default*})) be (rid, V, id*)?{(rid, V, id*) <- (rid, V, id*)?})
 
-        2. Return (rid'', V'', id_default*{id_default <- id_default*}) :: $find_matchings<V>(id_r, id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*}, id_arg'*{id_arg' <- id_arg'*}, rid_t*{rid_t <- rid_t*}, V_t*{V_t <- V_t*})
+        2. Return (rid, V, id_default*{id_default <- id_default*}) :: $find_matchings<V>(id_r, id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*}, id_arg'*{id_arg' <- id_arg'*}, rid_t*{rid_t <- rid_t*}, V_t*{V_t <- V_t*})
 
       4. Else Phantom#404
 
@@ -8012,9 +8012,9 @@ def $add_constructorParameter(TC, (direction typeIR id value''?{value'' <- value
 
   2. Case (% matches pattern (_))
 
-    1. (Let ?(value'') be value''?{value'' <- value''?})
+    1. (Let ?(value) be value''?{value'' <- value''?})
 
-    2. (Let varTypeIR be (direction typeIR (CTK) ?(value'')))
+    2. (Let varTypeIR be (direction typeIR (CTK) ?(value)))
 
     3. (Let TC' be $add_var((BLOCK), TC, id, varTypeIR))
 
@@ -8864,9 +8864,9 @@ def $update_mode'(TBLC, text', typeIR'')
 
         2. If ((aliasTypeIR matches pattern `NewT%%`)), then
 
-          1. (Let (NewT _tid typeIR'') be aliasTypeIR)
+          1. (Let (NewT _tid typeIR) be aliasTypeIR)
 
-          2. Return $update_mode(TBLC, "lpm", typeIR'')
+          2. Return $update_mode(TBLC, "lpm", typeIR)
 
     2. If ((TBLC.MODE matches pattern `PRI`)), then
 
@@ -9111,9 +9111,9 @@ relation Type_wf: bound, typeIR'''
 
         1. (Let (SpecT polyTypeDefIR typeIR_arg*{typeIR_arg <- typeIR_arg*}) be namedTypeIR)
 
-        2. (Let typeIR''' be $specialize_typeDef((polyTypeDefIR as typeDefIR), typeIR_arg*{typeIR_arg <- typeIR_arg*}))
+        2. (Let typeIR be $specialize_typeDef((polyTypeDefIR as typeDefIR), typeIR_arg*{typeIR_arg <- typeIR_arg*}))
 
-        3. If ((Type_wf: bound |- typeIR''' holds)), then
+        3. If ((Type_wf: bound |- typeIR holds)), then
 
           1. The relation holds
 
@@ -9127,11 +9127,11 @@ relation Type_wf: bound, typeIR'''
 
       1. Case (% matches pattern `DefT%%`)
 
-        1. (Let (DefT _tid typeIR''') be aliasTypeIR)
+        1. (Let (DefT _tid typeIR) be aliasTypeIR)
 
-        2. If ($nestable_typedef(typeIR''')), then
+        2. If ($nestable_typedef(typeIR)), then
 
-          1. If ((Type_wf: bound |- typeIR''' holds)), then
+          1. If ((Type_wf: bound |- typeIR holds)), then
 
             1. The relation holds
 
@@ -9141,11 +9141,11 @@ relation Type_wf: bound, typeIR'''
 
       2. Case (% matches pattern `NewT%%`)
 
-        1. (Let (NewT _tid typeIR''') be aliasTypeIR)
+        1. (Let (NewT _tid typeIR) be aliasTypeIR)
 
-        2. If ($nestable_new(typeIR''')), then
+        2. If ($nestable_new(typeIR)), then
 
-          1. If ((Type_wf: bound |- typeIR''' holds)), then
+          1. If ((Type_wf: bound |- typeIR holds)), then
 
             1. The relation holds
 
@@ -9155,11 +9155,11 @@ relation Type_wf: bound, typeIR'''
 
   4. Case (% has type listTypeIR)
 
-    1. (Let (ListT typeIR''') be (typeIR''' as listTypeIR))
+    1. (Let (ListT typeIR) be (typeIR''' as listTypeIR))
 
-    2. If ($nestable_list(typeIR''')), then
+    2. If ($nestable_list(typeIR)), then
 
-      1. If ((Type_wf: bound |- typeIR''' holds)), then
+      1. If ((Type_wf: bound |- typeIR holds)), then
 
         1. The relation holds
 
@@ -9169,11 +9169,11 @@ relation Type_wf: bound, typeIR'''
 
   5. Case (% has type tupleTypeIR)
 
-    1. (Let (TupleT typeIR'''*{typeIR''' <- typeIR'''*}) be (typeIR''' as tupleTypeIR))
+    1. (Let (TupleT typeIR*{typeIR <- typeIR*}) be (typeIR''' as tupleTypeIR))
 
-    2. If ($nestable_tuple(typeIR'''))*{typeIR''' <- typeIR'''*}, then
+    2. If ($nestable_tuple(typeIR))*{typeIR <- typeIR*}, then
 
-      1. If ((Type_wf: bound |- typeIR''' holds))*{typeIR''' <- typeIR'''*}, then
+      1. If ((Type_wf: bound |- typeIR holds))*{typeIR <- typeIR*}, then
 
         1. The relation holds
 
@@ -9183,11 +9183,11 @@ relation Type_wf: bound, typeIR'''
 
   6. Case (% has type headerStackTypeIR)
 
-    1. (Let (HeaderStackT typeIR''' _nat) be (typeIR''' as headerStackTypeIR))
+    1. (Let (HeaderStackT typeIR _nat) be (typeIR''' as headerStackTypeIR))
 
-    2. If ($nestable_headerstack(typeIR''')), then
+    2. If ($nestable_headerstack(typeIR)), then
 
-      1. If ((Type_wf: bound |- typeIR''' holds)), then
+      1. If ((Type_wf: bound |- typeIR holds)), then
 
         1. The relation holds
 
@@ -9197,13 +9197,13 @@ relation Type_wf: bound, typeIR'''
 
   7. Case (% has type structTypeIR)
 
-    1. (Let (StructT _tid (typeIR''' id)*{id <- id*, typeIR''' <- typeIR'''*}) be (typeIR''' as structTypeIR))
+    1. (Let (StructT _tid (typeIR id)*{id <- id*, typeIR <- typeIR*}) be (typeIR''' as structTypeIR))
 
     2. If ($distinct_<id>(id*{id <- id*})), then
 
-      1. If ($nestable_struct(typeIR'''))*{typeIR''' <- typeIR'''*}, then
+      1. If ($nestable_struct(typeIR))*{typeIR <- typeIR*}, then
 
-        1. If ((Type_wf: bound |- typeIR''' holds))*{typeIR''' <- typeIR'''*}, then
+        1. If ((Type_wf: bound |- typeIR holds))*{typeIR <- typeIR*}, then
 
           1. The relation holds
 
@@ -9215,13 +9215,13 @@ relation Type_wf: bound, typeIR'''
 
   8. Case (% has type headerTypeIR)
 
-    1. (Let (HeaderT _tid (typeIR''' id)*{id <- id*, typeIR''' <- typeIR'''*}) be (typeIR''' as headerTypeIR))
+    1. (Let (HeaderT _tid (typeIR id)*{id <- id*, typeIR <- typeIR*}) be (typeIR''' as headerTypeIR))
 
     2. If ($distinct_<id>(id*{id <- id*})), then
 
-      1. If ($nestable_header(typeIR'''))*{typeIR''' <- typeIR'''*}, then
+      1. If ($nestable_header(typeIR))*{typeIR <- typeIR*}, then
 
-        1. If ((Type_wf: bound |- typeIR''' holds))*{typeIR''' <- typeIR'''*}, then
+        1. If ((Type_wf: bound |- typeIR holds))*{typeIR <- typeIR*}, then
 
           1. The relation holds
 
@@ -9233,13 +9233,13 @@ relation Type_wf: bound, typeIR'''
 
   9. Case (% has type headerUnionTypeIR)
 
-    1. (Let (HeaderUnionT _tid (typeIR''' id)*{id <- id*, typeIR''' <- typeIR'''*}) be (typeIR''' as headerUnionTypeIR))
+    1. (Let (HeaderUnionT _tid (typeIR id)*{id <- id*, typeIR <- typeIR*}) be (typeIR''' as headerUnionTypeIR))
 
     2. If ($distinct_<id>(id*{id <- id*})), then
 
-      1. If ($nestable_headerunion(typeIR'''))*{typeIR''' <- typeIR'''*}, then
+      1. If ($nestable_headerunion(typeIR))*{typeIR <- typeIR*}, then
 
-        1. If ((Type_wf: bound |- typeIR''' holds))*{typeIR''' <- typeIR'''*}, then
+        1. If ((Type_wf: bound |- typeIR holds))*{typeIR <- typeIR*}, then
 
           1. The relation holds
 
@@ -9267,13 +9267,13 @@ relation Type_wf: bound, typeIR'''
 
       2. Case (% matches pattern `SEnumT%%%`)
 
-        1. (Let (SEnumT _tid typeIR''' (id _value)*{_value <- _value*, id <- id*}) be enumTypeIR)
+        1. (Let (SEnumT _tid typeIR (id _value)*{_value <- _value*, id <- id*}) be enumTypeIR)
 
         2. If ($distinct_<id>(id*{id <- id*})), then
 
-          1. If ($nestable_serenum(typeIR''')), then
+          1. If ($nestable_serenum(typeIR)), then
 
-            1. If ((Type_wf: bound |- typeIR''' holds)), then
+            1. If ((Type_wf: bound |- typeIR holds)), then
 
               1. The relation holds
 
@@ -9315,9 +9315,9 @@ relation Type_wf: bound, typeIR'''
 
   14. Case (% has type packageObjectTypeIR)
 
-    1. (Let (PackageT tid typeIR'''*{typeIR''' <- typeIR'''*}) be (typeIR''' as packageObjectTypeIR))
+    1. (Let (PackageT tid typeIR*{typeIR <- typeIR*}) be (typeIR''' as packageObjectTypeIR))
 
-    2. If ((Type_wf: bound |- typeIR''' holds))*{typeIR''' <- typeIR'''*}, then
+    2. If ((Type_wf: bound |- typeIR holds))*{typeIR <- typeIR*}, then
 
       1. The relation holds
 
@@ -9325,9 +9325,9 @@ relation Type_wf: bound, typeIR'''
 
   15. Case (% has type tableObjectTypeIR)
 
-    1. (Let (TableT _tid typeIR''') be (typeIR''' as tableObjectTypeIR))
+    1. (Let (TableT _tid typeIR) be (typeIR''' as tableObjectTypeIR))
 
-    2. (Let typeIR'' be $canon(typeIR'''))
+    2. (Let typeIR'' be $canon(typeIR))
 
     3. If ((typeIR'' has type tableTypeIR)), then
 
@@ -9337,7 +9337,7 @@ relation Type_wf: bound, typeIR'''
 
         1. (Let (TableStructT _tid' _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*}) be tableTypeIR)
 
-        2. If ((Type_wf: bound |- typeIR''' holds)), then
+        2. If ((Type_wf: bound |- typeIR holds)), then
 
           1. The relation holds
 
@@ -9365,9 +9365,9 @@ relation Type_wf: bound, typeIR'''
 
       1. Case (% matches pattern `SeqT%`)
 
-        1. (Let (SeqT typeIR'''*{typeIR''' <- typeIR'''*}) be sequenceTypeIR)
+        1. (Let (SeqT typeIR*{typeIR <- typeIR*}) be sequenceTypeIR)
 
-        2. If ((Type_wf: bound |- typeIR''' holds))*{typeIR''' <- typeIR'''*}, then
+        2. If ((Type_wf: bound |- typeIR holds))*{typeIR <- typeIR*}, then
 
           1. The relation holds
 
@@ -9375,9 +9375,9 @@ relation Type_wf: bound, typeIR'''
 
       2. Case (% matches pattern `SeqDefaultT%`)
 
-        1. (Let (SeqDefaultT typeIR'''*{typeIR''' <- typeIR'''*}) be sequenceTypeIR)
+        1. (Let (SeqDefaultT typeIR*{typeIR <- typeIR*}) be sequenceTypeIR)
 
-        2. If ((Type_wf: bound |- typeIR''' holds))*{typeIR''' <- typeIR'''*}, then
+        2. If ((Type_wf: bound |- typeIR holds))*{typeIR <- typeIR*}, then
 
           1. The relation holds
 
@@ -9391,11 +9391,11 @@ relation Type_wf: bound, typeIR'''
 
       1. Case (% matches pattern `RecordT%`)
 
-        1. (Let (RecordT (typeIR''' id)*{id <- id*, typeIR''' <- typeIR'''*}) be recordTypeIR)
+        1. (Let (RecordT (typeIR id)*{id <- id*, typeIR <- typeIR*}) be recordTypeIR)
 
         2. If ($distinct_<id>(id*{id <- id*})), then
 
-          1. If ((Type_wf: bound |- typeIR''' holds))*{typeIR''' <- typeIR'''*}, then
+          1. If ((Type_wf: bound |- typeIR holds))*{typeIR <- typeIR*}, then
 
             1. The relation holds
 
@@ -9405,11 +9405,11 @@ relation Type_wf: bound, typeIR'''
 
       2. Case (% matches pattern `RecordDefaultT%`)
 
-        1. (Let (RecordDefaultT (typeIR''' id)*{id <- id*, typeIR''' <- typeIR'''*}) be recordTypeIR)
+        1. (Let (RecordDefaultT (typeIR id)*{id <- id*, typeIR <- typeIR*}) be recordTypeIR)
 
         2. If ($distinct_<id>(id*{id <- id*})), then
 
-          1. If ((Type_wf: bound |- typeIR''' holds))*{typeIR''' <- typeIR'''*}, then
+          1. If ((Type_wf: bound |- typeIR holds))*{typeIR <- typeIR*}, then
 
             1. The relation holds
 
@@ -9429,15 +9429,15 @@ relation Type_wf: bound, typeIR'''
 
   20. Case (% has type setTypeIR)
 
-    1. (Let (SetT typeIR'''*{typeIR''' <- typeIR'''*}) be (typeIR''' as setTypeIR))
+    1. (Let (SetT typeIR'*{typeIR' <- typeIR'*}) be (typeIR''' as setTypeIR))
 
-    2. If ((typeIR'''*{typeIR''' <- typeIR'''*} matches pattern [ _/1 ])), then
+    2. If ((typeIR'*{typeIR' <- typeIR'*} matches pattern [ _/1 ])), then
 
-      1. (Let [typeIR'''] be typeIR'''*{typeIR''' <- typeIR'''*})
+      1. (Let [typeIR] be typeIR'*{typeIR' <- typeIR'*})
 
-      2. If ($nestable_set(typeIR''')), then
+      2. If ($nestable_set(typeIR)), then
 
-        1. If ((Type_wf: bound |- typeIR''' holds)), then
+        1. If ((Type_wf: bound |- typeIR holds)), then
 
           1. The relation holds
 
@@ -9529,7 +9529,7 @@ relation ParameterType_wf: bound, (direction typeIR _id value''?{value'' <- valu
 
     2. Case (% matches pattern (_))
 
-      1. (Let ?(value'') be value''?{value'' <- value''?})
+      1. (Let ?(value) be value''?{value'' <- value''?})
 
       2. If ((Type_wf: bound |- typeIR holds)), then
 
@@ -9559,7 +9559,7 @@ relation ParameterType_wf: bound, (direction typeIR _id value''?{value'' <- valu
 
   2. Case (% matches pattern (_))
 
-    1. (Let ?(value'') be value''?{value'' <- value''?})
+    1. (Let ?(value) be value''?{value'' <- value''?})
 
     2. If ((Type_wf: bound |- typeIR holds)), then
 
@@ -10212,7 +10212,7 @@ def $nestable'_tuple(typeIR'')
 
   6. Case (% has type headerStackTypeIR)
 
-    1. (Let (HeaderStackT typeIR'' _nat) be (typeIR'' as headerStackTypeIR))
+    1. (Let (HeaderStackT typeIR _nat) be (typeIR'' as headerStackTypeIR))
 
     2. Return true
 
@@ -10368,7 +10368,7 @@ def $nestable'_struct(typeIR'')
 
   6. Case (% has type headerStackTypeIR)
 
-    1. (Let (HeaderStackT typeIR'' _nat) be (typeIR'' as headerStackTypeIR))
+    1. (Let (HeaderStackT typeIR _nat) be (typeIR'' as headerStackTypeIR))
 
     2. Return true
 
@@ -10486,9 +10486,9 @@ def $nestable'_header(typeIR'')
 
   6. Case (% has type structTypeIR)
 
-    1. (Let (StructT _tid (typeIR'' _id)*{_id <- _id*, typeIR'' <- typeIR''*}) be (typeIR'' as structTypeIR))
+    1. (Let (StructT _tid (typeIR _id)*{_id <- _id*, typeIR <- typeIR*}) be (typeIR'' as structTypeIR))
 
-    2. If ($nestable_struct_in_header(typeIR''))*{typeIR'' <- typeIR''*}, then
+    2. If ($nestable_struct_in_header(typeIR))*{typeIR <- typeIR*}, then
 
       1. Return true
 
@@ -10564,9 +10564,9 @@ def $nestable'_struct_in_header(typeIR'')
 
   6. Case (% has type structTypeIR)
 
-    1. (Let (StructT _tid (typeIR'' _id)*{_id <- _id*, typeIR'' <- typeIR''*}) be (typeIR'' as structTypeIR))
+    1. (Let (StructT _tid (typeIR _id)*{_id <- _id*, typeIR <- typeIR*}) be (typeIR'' as structTypeIR))
 
-    2. If ($nestable_struct_in_header(typeIR''))*{typeIR'' <- typeIR''*}, then
+    2. If ($nestable_struct_in_header(typeIR))*{typeIR <- typeIR*}, then
 
       1. Return true
 
@@ -10658,9 +10658,9 @@ def $nestable'_serenum(typeIR'')
 
     2. If ((aliasTypeIR matches pattern `NewT%%`)), then
 
-      1. (Let (NewT _tid typeIR'') be aliasTypeIR)
+      1. (Let (NewT _tid typeIR) be aliasTypeIR)
 
-      2. Return $nestable_new_in_serenum(typeIR'')
+      2. Return $nestable_new_in_serenum(typeIR)
 
 2. Otherwise
 
@@ -10782,9 +10782,9 @@ def $nestable'_set(typeIR'')
 
   5. Case (% has type tupleTypeIR)
 
-    1. (Let (TupleT typeIR''*{typeIR'' <- typeIR''*}) be (typeIR'' as tupleTypeIR))
+    1. (Let (TupleT typeIR*{typeIR <- typeIR*}) be (typeIR'' as tupleTypeIR))
 
-    2. If ($nestable_tuple_in_set(typeIR''))*{typeIR'' <- typeIR''*}, then
+    2. If ($nestable_tuple_in_set(typeIR))*{typeIR <- typeIR*}, then
 
       1. Return true
 
@@ -10812,9 +10812,9 @@ def $nestable'_set(typeIR'')
 
     2. If ((sequenceTypeIR matches pattern `SeqT%`)), then
 
-      1. (Let (SeqT typeIR''*{typeIR'' <- typeIR''*}) be sequenceTypeIR)
+      1. (Let (SeqT typeIR*{typeIR <- typeIR*}) be sequenceTypeIR)
 
-      2. If ($nestable_sequence_in_set(typeIR''))*{typeIR'' <- typeIR''*}, then
+      2. If ($nestable_sequence_in_set(typeIR))*{typeIR <- typeIR*}, then
 
         1. Return true
 
@@ -10880,9 +10880,9 @@ def $nestable'_tuple_in_set(typeIR'')
 
   5. Case (% has type tupleTypeIR)
 
-    1. (Let (TupleT typeIR''*{typeIR'' <- typeIR''*}) be (typeIR'' as tupleTypeIR))
+    1. (Let (TupleT typeIR*{typeIR <- typeIR*}) be (typeIR'' as tupleTypeIR))
 
-    2. If ($nestable_tuple_in_set(typeIR''))*{typeIR'' <- typeIR''*}, then
+    2. If ($nestable_tuple_in_set(typeIR))*{typeIR <- typeIR*}, then
 
       1. Return true
 
@@ -10966,9 +10966,9 @@ def $nestable'_sequence_in_set(typeIR'')
 
   5. Case (% has type tupleTypeIR)
 
-    1. (Let (TupleT typeIR''*{typeIR'' <- typeIR''*}) be (typeIR'' as tupleTypeIR))
+    1. (Let (TupleT typeIR*{typeIR <- typeIR*}) be (typeIR'' as tupleTypeIR))
 
-    2. If ($nestable_sequence_in_set(typeIR''))*{typeIR'' <- typeIR''*}, then
+    2. If ($nestable_sequence_in_set(typeIR))*{typeIR <- typeIR*}, then
 
       1. Return true
 
@@ -10996,9 +10996,9 @@ def $nestable'_sequence_in_set(typeIR'')
 
     2. If ((sequenceTypeIR matches pattern `SeqT%`)), then
 
-      1. (Let (SeqT typeIR''*{typeIR'' <- typeIR''*}) be sequenceTypeIR)
+      1. (Let (SeqT typeIR*{typeIR <- typeIR*}) be sequenceTypeIR)
 
-      2. If ($nestable_sequence_in_set(typeIR''))*{typeIR'' <- typeIR''*}, then
+      2. If ($nestable_sequence_in_set(typeIR))*{typeIR <- typeIR*}, then
 
         1. Return true
 
@@ -11188,9 +11188,9 @@ def $directionless_trailing'(_bool', direction''*{direction'' <- direction''*})
 
     1. If ((direction''*{direction'' <- direction''*} matches pattern _ :: _)), then
 
-      1. (Let direction'' :: direction_t*{direction_t <- direction_t*} be direction''*{direction'' <- direction''*})
+      1. (Let direction :: direction_t*{direction_t <- direction_t*} be direction''*{direction'' <- direction''*})
 
-      2. If ((direction'' matches pattern `NO`)), then
+      2. If ((direction matches pattern `NO`)), then
 
         1. Return $directionless_trailing'(true, direction_t*{direction_t <- direction_t*})
 
@@ -11202,9 +11202,9 @@ def $directionless_trailing'(_bool', direction''*{direction'' <- direction''*})
 
     1. If ((direction''*{direction'' <- direction''*} matches pattern _ :: _)), then
 
-      1. (Let direction'' :: direction_t*{direction_t <- direction_t*} be direction''*{direction'' <- direction''*})
+      1. (Let direction :: direction_t*{direction_t <- direction_t*} be direction''*{direction'' <- direction''*})
 
-      2. If ((direction'' matches pattern `NO`)), then
+      2. If ((direction matches pattern `NO`)), then
 
         1. Return false
 
@@ -12211,7 +12211,7 @@ relation Eval_static: p, TC, (expressionIR (( _typeIR' _ctk )))
 
           2. If ((typeIR has type headerStackTypeIR)), then
 
-            1. (Let (HeaderStackT _typeIR' n_size) be (typeIR as headerStackTypeIR))
+            1. (Let (HeaderStackT _typeIR n_size) be (typeIR as headerStackTypeIR))
 
             2. Result in ((IntV (n_size as int)) as value)
 
@@ -12359,11 +12359,11 @@ relation Eval_static: p, TC, (expressionIR (( _typeIR' _ctk )))
 
             1. If ((argumentIR*{argumentIR <- argumentIR*} matches pattern [])), then
 
-              1. (Let (_expressionIR (( _typeIR' _ctk' ))) be typedExpressionIR_base)
+              1. (Let (_expressionIR (( typeIR_base _ctk' ))) be typedExpressionIR_base)
 
               2. If (name is in ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]), then
 
-                1. Result in $sizeof(_typeIR', name)
+                1. Result in $sizeof(typeIR_base, name)
 
               2. Else Phantom#626
 
@@ -12389,17 +12389,17 @@ relation Eval_static: p, TC, (expressionIR (( _typeIR' _ctk )))
 
                   1. Case (% has type monoTypeDefIR)
 
-                    1. (Let (MonoTD _typeIR') be (typeDefIR as monoTypeDefIR))
+                    1. (Let (MonoTD typeIR_base) be (typeDefIR as monoTypeDefIR))
 
                     2. If (name is in ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]), then
 
-                      1. Result in $sizeof(_typeIR', name)
+                      1. Result in $sizeof(typeIR_base, name)
 
                     2. Else Phantom#629
 
                   2. Case (% has type polyTypeDefIR)
 
-                    1. (Let (PolyTD _typeIR' tid*{tid <- tid*} tid'*{tid' <- tid'*}) be (typeDefIR as polyTypeDefIR))
+                    1. (Let (PolyTD typeIR_base tid*{tid <- tid*} tid'*{tid' <- tid'*}) be (typeDefIR as polyTypeDefIR))
 
                     2. If ((tid*{tid <- tid*} matches pattern [])), then
 
@@ -12407,7 +12407,7 @@ relation Eval_static: p, TC, (expressionIR (( _typeIR' _ctk )))
 
                         1. If (name is in ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]), then
 
-                          1. Result in $sizeof(_typeIR', name)
+                          1. Result in $sizeof(typeIR_base, name)
 
                         1. Else Phantom#630
 
@@ -12955,9 +12955,9 @@ relation Sub_expl_canon_neq: typeIR''''', typeIR''''''
 
     2. If ((enumTypeIR matches pattern `SEnumT%%%`)), then
 
-      1. (Let (SEnumT _tid typeIR''''' _valueFieldIR*{_valueFieldIR <- _valueFieldIR*}) be enumTypeIR)
+      1. (Let (SEnumT _tid typeIR_a _valueFieldIR*{_valueFieldIR <- _valueFieldIR*}) be enumTypeIR)
 
-      2. If ((Sub_impl: typeIR''''' <: typeIR'''''' holds)), then
+      2. If ((Sub_impl: typeIR_a <: typeIR'''''' holds)), then
 
         1. The relation holds
 
@@ -13011,15 +13011,15 @@ relation Sub_expl_canon_neq: typeIR''''', typeIR''''''
 
       1. Case (% matches pattern `SeqT%`)
 
-        1. (Let (SeqT typeIR'''''*{typeIR''''' <- typeIR'''''*}) be sequenceTypeIR)
+        1. (Let (SeqT typeIR_a*{typeIR_a <- typeIR_a*}) be sequenceTypeIR)
 
         2. Case analysis on typeIR''''''
 
           1. Case (% has type listTypeIR)
 
-            1. (Let (ListT typeIR'''''') be (typeIR'''''' as listTypeIR))
+            1. (Let (ListT typeIR_b) be (typeIR'''''' as listTypeIR))
 
-            2. If ((Sub_expl: typeIR''''' <: typeIR'''''' holds))*{typeIR''''' <- typeIR'''''*}, then
+            2. If ((Sub_expl: typeIR_a <: typeIR_b holds))*{typeIR_a <- typeIR_a*}, then
 
               1. The relation holds
 
@@ -13027,9 +13027,9 @@ relation Sub_expl_canon_neq: typeIR''''', typeIR''''''
 
           2. Case (% has type tupleTypeIR)
 
-            1. (Let (TupleT typeIR''''''*{typeIR'''''' <- typeIR''''''*}) be (typeIR'''''' as tupleTypeIR))
+            1. (Let (TupleT typeIR_b*{typeIR_b <- typeIR_b*}) be (typeIR'''''' as tupleTypeIR))
 
-            2. If ((Sub_expl: typeIR''''' <: typeIR'''''' holds))*{typeIR''''' <- typeIR'''''*, typeIR'''''' <- typeIR''''''*}, then
+            2. If ((Sub_expl: typeIR_a <: typeIR_b holds))*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*}, then
 
               1. The relation holds
 
@@ -13037,11 +13037,11 @@ relation Sub_expl_canon_neq: typeIR''''', typeIR''''''
 
           3. Case (% has type headerStackTypeIR)
 
-            1. (Let (HeaderStackT typeIR'''''' n_size) be (typeIR'''''' as headerStackTypeIR))
+            1. (Let (HeaderStackT typeIR_b n_size) be (typeIR'''''' as headerStackTypeIR))
 
-            2. If ((|typeIR'''''*{typeIR''''' <- typeIR'''''*}| <= n_size)), then
+            2. If ((|typeIR_a*{typeIR_a <- typeIR_a*}| <= n_size)), then
 
-              1. If ((Sub_expl: typeIR''''' <: typeIR'''''' holds))*{typeIR''''' <- typeIR'''''*}, then
+              1. If ((Sub_expl: typeIR_a <: typeIR_b holds))*{typeIR_a <- typeIR_a*}, then
 
                 1. The relation holds
 
@@ -13051,9 +13051,9 @@ relation Sub_expl_canon_neq: typeIR''''', typeIR''''''
 
           4. Case (% has type structTypeIR)
 
-            1. (Let (StructT _tid (typeIR'''''' _id)*{_id <- _id*, typeIR'''''' <- typeIR''''''*}) be (typeIR'''''' as structTypeIR))
+            1. (Let (StructT _tid (typeIR_b _id)*{_id <- _id*, typeIR_b <- typeIR_b*}) be (typeIR'''''' as structTypeIR))
 
-            2. If ((Sub_expl: typeIR''''' <: typeIR'''''' holds))*{typeIR''''' <- typeIR'''''*, typeIR'''''' <- typeIR''''''*}, then
+            2. If ((Sub_expl: typeIR_a <: typeIR_b holds))*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*}, then
 
               1. The relation holds
 
@@ -13061,9 +13061,9 @@ relation Sub_expl_canon_neq: typeIR''''', typeIR''''''
 
           5. Case (% has type headerTypeIR)
 
-            1. (Let (HeaderT _tid (typeIR'''''' _id)*{_id <- _id*, typeIR'''''' <- typeIR''''''*}) be (typeIR'''''' as headerTypeIR))
+            1. (Let (HeaderT _tid (typeIR_b _id)*{_id <- _id*, typeIR_b <- typeIR_b*}) be (typeIR'''''' as headerTypeIR))
 
-            2. If ((Sub_expl: typeIR''''' <: typeIR'''''' holds))*{typeIR''''' <- typeIR'''''*, typeIR'''''' <- typeIR''''''*}, then
+            2. If ((Sub_expl: typeIR_a <: typeIR_b holds))*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*}, then
 
               1. The relation holds
 
@@ -13073,19 +13073,19 @@ relation Sub_expl_canon_neq: typeIR''''', typeIR''''''
 
       2. Case (% matches pattern `SeqDefaultT%`)
 
-        1. (Let (SeqDefaultT typeIR'''''*{typeIR''''' <- typeIR'''''*}) be sequenceTypeIR)
+        1. (Let (SeqDefaultT typeIR_a*{typeIR_a <- typeIR_a*}) be sequenceTypeIR)
 
         2. Case analysis on typeIR''''''
 
           1. Case (% has type tupleTypeIR)
 
-            1. (Let (TupleT typeIR''''''*{typeIR'''''' <- typeIR''''''*}) be (typeIR'''''' as tupleTypeIR))
+            1. (Let (TupleT typeIR_b*{typeIR_b <- typeIR_b*}) be (typeIR'''''' as tupleTypeIR))
 
-            2. If ((|typeIR'''''*{typeIR''''' <- typeIR'''''*}| < |typeIR''''''*{typeIR'''''' <- typeIR''''''*}|)), then
+            2. If ((|typeIR_a*{typeIR_a <- typeIR_a*}| < |typeIR_b*{typeIR_b <- typeIR_b*}|)), then
 
-              1. (Let (typeIR_b_non_default*{typeIR_b_non_default <- typeIR_b_non_default*}, typeIR_b_default*{typeIR_b_default <- typeIR_b_default*}) be $partition_<typeIR>(typeIR''''''*{typeIR'''''' <- typeIR''''''*}, |typeIR'''''*{typeIR''''' <- typeIR'''''*}|))
+              1. (Let (typeIR_b_non_default*{typeIR_b_non_default <- typeIR_b_non_default*}, typeIR_b_default*{typeIR_b_default <- typeIR_b_default*}) be $partition_<typeIR>(typeIR_b*{typeIR_b <- typeIR_b*}, |typeIR_a*{typeIR_a <- typeIR_a*}|))
 
-              2. If ((Sub_expl: typeIR''''' <: typeIR_b_non_default holds))*{typeIR''''' <- typeIR'''''*, typeIR_b_non_default <- typeIR_b_non_default*}, then
+              2. If ((Sub_expl: typeIR_a <: typeIR_b_non_default holds))*{typeIR_a <- typeIR_a*, typeIR_b_non_default <- typeIR_b_non_default*}, then
 
                 1. If ($is_defaultable_typeIR(typeIR_b_default))*{typeIR_b_default <- typeIR_b_default*}, then
 
@@ -13099,13 +13099,13 @@ relation Sub_expl_canon_neq: typeIR''''', typeIR''''''
 
           2. Case (% has type headerStackTypeIR)
 
-            1. (Let (HeaderStackT typeIR'''''' n_size) be (typeIR'''''' as headerStackTypeIR))
+            1. (Let (HeaderStackT typeIR_b n_size) be (typeIR'''''' as headerStackTypeIR))
 
-            2. If ((|typeIR'''''*{typeIR''''' <- typeIR'''''*}| < n_size)), then
+            2. If ((|typeIR_a*{typeIR_a <- typeIR_a*}| < n_size)), then
 
-              1. If ((Sub_expl: typeIR''''' <: typeIR'''''' holds))*{typeIR''''' <- typeIR'''''*}, then
+              1. If ((Sub_expl: typeIR_a <: typeIR_b holds))*{typeIR_a <- typeIR_a*}, then
 
-                1. If ($is_defaultable_typeIR(typeIR'''''')), then
+                1. If ($is_defaultable_typeIR(typeIR_b)), then
 
                   1. The relation holds
 
@@ -13117,13 +13117,13 @@ relation Sub_expl_canon_neq: typeIR''''', typeIR''''''
 
           3. Case (% has type structTypeIR)
 
-            1. (Let (StructT _tid (typeIR'''''' _id)*{_id <- _id*, typeIR'''''' <- typeIR''''''*}) be (typeIR'''''' as structTypeIR))
+            1. (Let (StructT _tid (typeIR_b _id)*{_id <- _id*, typeIR_b <- typeIR_b*}) be (typeIR'''''' as structTypeIR))
 
-            2. If ((|typeIR'''''*{typeIR''''' <- typeIR'''''*}| < |typeIR''''''*{typeIR'''''' <- typeIR''''''*}|)), then
+            2. If ((|typeIR_a*{typeIR_a <- typeIR_a*}| < |typeIR_b*{typeIR_b <- typeIR_b*}|)), then
 
-              1. (Let (typeIR_b_non_default*{typeIR_b_non_default <- typeIR_b_non_default*}, typeIR_b_default*{typeIR_b_default <- typeIR_b_default*}) be $partition_<typeIR>(typeIR''''''*{typeIR'''''' <- typeIR''''''*}, |typeIR'''''*{typeIR''''' <- typeIR'''''*}|))
+              1. (Let (typeIR_b_non_default*{typeIR_b_non_default <- typeIR_b_non_default*}, typeIR_b_default*{typeIR_b_default <- typeIR_b_default*}) be $partition_<typeIR>(typeIR_b*{typeIR_b <- typeIR_b*}, |typeIR_a*{typeIR_a <- typeIR_a*}|))
 
-              2. If ((Sub_expl: typeIR''''' <: typeIR_b_non_default holds))*{typeIR''''' <- typeIR'''''*, typeIR_b_non_default <- typeIR_b_non_default*}, then
+              2. If ((Sub_expl: typeIR_a <: typeIR_b_non_default holds))*{typeIR_a <- typeIR_a*, typeIR_b_non_default <- typeIR_b_non_default*}, then
 
                 1. If ($is_defaultable_typeIR(typeIR_b_default))*{typeIR_b_default <- typeIR_b_default*}, then
 
@@ -13137,13 +13137,13 @@ relation Sub_expl_canon_neq: typeIR''''', typeIR''''''
 
           4. Case (% has type headerTypeIR)
 
-            1. (Let (HeaderT _tid (typeIR'''''' _id)*{_id <- _id*, typeIR'''''' <- typeIR''''''*}) be (typeIR'''''' as headerTypeIR))
+            1. (Let (HeaderT _tid (typeIR_b _id)*{_id <- _id*, typeIR_b <- typeIR_b*}) be (typeIR'''''' as headerTypeIR))
 
-            2. If ((|typeIR'''''*{typeIR''''' <- typeIR'''''*}| < |typeIR''''''*{typeIR'''''' <- typeIR''''''*}|)), then
+            2. If ((|typeIR_a*{typeIR_a <- typeIR_a*}| < |typeIR_b*{typeIR_b <- typeIR_b*}|)), then
 
-              1. (Let (typeIR_b_non_default*{typeIR_b_non_default <- typeIR_b_non_default*}, typeIR_b_default*{typeIR_b_default <- typeIR_b_default*}) be $partition_<typeIR>(typeIR''''''*{typeIR'''''' <- typeIR''''''*}, |typeIR'''''*{typeIR''''' <- typeIR'''''*}|))
+              1. (Let (typeIR_b_non_default*{typeIR_b_non_default <- typeIR_b_non_default*}, typeIR_b_default*{typeIR_b_default <- typeIR_b_default*}) be $partition_<typeIR>(typeIR_b*{typeIR_b <- typeIR_b*}, |typeIR_a*{typeIR_a <- typeIR_a*}|))
 
-              2. If ((Sub_expl: typeIR''''' <: typeIR_b_non_default holds))*{typeIR''''' <- typeIR'''''*, typeIR_b_non_default <- typeIR_b_non_default*}, then
+              2. If ((Sub_expl: typeIR_a <: typeIR_b_non_default holds))*{typeIR_a <- typeIR_a*, typeIR_b_non_default <- typeIR_b_non_default*}, then
 
                 1. If ($is_defaultable_typeIR(typeIR_b_default))*{typeIR_b_default <- typeIR_b_default*}, then
 
@@ -13165,23 +13165,23 @@ relation Sub_expl_canon_neq: typeIR''''', typeIR''''''
 
       1. Case (% matches pattern `RecordT%`)
 
-        1. (Let (RecordT (typeIR''''' id_a)*{id_a <- id_a*, typeIR''''' <- typeIR'''''*}) be recordTypeIR)
+        1. (Let (RecordT (typeIR_a id_a)*{id_a <- id_a*, typeIR_a <- typeIR_a*}) be recordTypeIR)
 
         2. Case analysis on typeIR''''''
 
           1. Case (% has type structTypeIR)
 
-            1. (Let (StructT _tid (typeIR'''''' id_b)*{id_b <- id_b*, typeIR'''''' <- typeIR''''''*}) be (typeIR'''''' as structTypeIR))
+            1. (Let (StructT _tid (typeIR_b id_b)*{id_b <- id_b*, typeIR_b <- typeIR_b*}) be (typeIR'''''' as structTypeIR))
 
             2. If ($eq_set<id>(({ id_a*{id_a <- id_a*} }), ({ id_b*{id_b <- id_b*} }))), then
 
-              1. (Let typeIR''?{typeIR'' <- typeIR''?} be $find_map<id, typeIR>(({ (id_a -> typeIR''''')*{id_a <- id_a*, typeIR''''' <- typeIR'''''*} }), id_a))*{id_a <- id_a*, typeIR''? <- typeIR''?*}
+              1. (Let typeIR''?{typeIR'' <- typeIR''?} be $find_map<id, typeIR>(({ (id_a -> typeIR_a)*{id_a <- id_a*, typeIR_a <- typeIR_a*} }), id_a))*{id_a <- id_a*, typeIR''? <- typeIR''?*}
 
               2. If ((typeIR''?{typeIR'' <- typeIR''?} matches pattern (_)))*{typeIR''? <- typeIR''?*}, then
 
                 1. (Let ?(typeIR_a_aligned) be typeIR''?{typeIR'' <- typeIR''?})*{typeIR''? <- typeIR''?*, typeIR_a_aligned <- typeIR_a_aligned*}
 
-                2. (Let typeIR'''?{typeIR''' <- typeIR'''?} be $find_map<id, typeIR>(({ (id_b -> typeIR'''''')*{id_b <- id_b*, typeIR'''''' <- typeIR''''''*} }), id_a))*{id_a <- id_a*, typeIR'''? <- typeIR'''?*}
+                2. (Let typeIR'''?{typeIR''' <- typeIR'''?} be $find_map<id, typeIR>(({ (id_b -> typeIR_b)*{id_b <- id_b*, typeIR_b <- typeIR_b*} }), id_a))*{id_a <- id_a*, typeIR'''? <- typeIR'''?*}
 
                 3. If ((typeIR'''?{typeIR''' <- typeIR'''?} matches pattern (_)))*{typeIR'''? <- typeIR'''?*}, then
 
@@ -13201,17 +13201,17 @@ relation Sub_expl_canon_neq: typeIR''''', typeIR''''''
 
           2. Case (% has type headerTypeIR)
 
-            1. (Let (HeaderT _tid (typeIR'''''' id_b)*{id_b <- id_b*, typeIR'''''' <- typeIR''''''*}) be (typeIR'''''' as headerTypeIR))
+            1. (Let (HeaderT _tid (typeIR_b id_b)*{id_b <- id_b*, typeIR_b <- typeIR_b*}) be (typeIR'''''' as headerTypeIR))
 
             2. If ($eq_set<id>(({ id_a*{id_a <- id_a*} }), ({ id_b*{id_b <- id_b*} }))), then
 
-              1. (Let typeIR''?{typeIR'' <- typeIR''?} be $find_map<id, typeIR>(({ (id_a -> typeIR''''')*{id_a <- id_a*, typeIR''''' <- typeIR'''''*} }), id_a))*{id_a <- id_a*, typeIR''? <- typeIR''?*}
+              1. (Let typeIR''?{typeIR'' <- typeIR''?} be $find_map<id, typeIR>(({ (id_a -> typeIR_a)*{id_a <- id_a*, typeIR_a <- typeIR_a*} }), id_a))*{id_a <- id_a*, typeIR''? <- typeIR''?*}
 
               2. If ((typeIR''?{typeIR'' <- typeIR''?} matches pattern (_)))*{typeIR''? <- typeIR''?*}, then
 
                 1. (Let ?(typeIR_a_aligned) be typeIR''?{typeIR'' <- typeIR''?})*{typeIR''? <- typeIR''?*, typeIR_a_aligned <- typeIR_a_aligned*}
 
-                2. (Let typeIR'''?{typeIR''' <- typeIR'''?} be $find_map<id, typeIR>(({ (id_b -> typeIR'''''')*{id_b <- id_b*, typeIR'''''' <- typeIR''''''*} }), id_a))*{id_a <- id_a*, typeIR'''? <- typeIR'''?*}
+                2. (Let typeIR'''?{typeIR''' <- typeIR'''?} be $find_map<id, typeIR>(({ (id_b -> typeIR_b)*{id_b <- id_b*, typeIR_b <- typeIR_b*} }), id_a))*{id_a <- id_a*, typeIR'''? <- typeIR'''?*}
 
                 3. If ((typeIR'''?{typeIR''' <- typeIR'''?} matches pattern (_)))*{typeIR'''? <- typeIR'''?*}, then
 
@@ -13233,23 +13233,23 @@ relation Sub_expl_canon_neq: typeIR''''', typeIR''''''
 
       2. Case (% matches pattern `RecordDefaultT%`)
 
-        1. (Let (RecordDefaultT (typeIR''''' id_a)*{id_a <- id_a*, typeIR''''' <- typeIR'''''*}) be recordTypeIR)
+        1. (Let (RecordDefaultT (typeIR_a id_a)*{id_a <- id_a*, typeIR_a <- typeIR_a*}) be recordTypeIR)
 
         2. Case analysis on typeIR''''''
 
           1. Case (% has type structTypeIR)
 
-            1. (Let (StructT _tid (typeIR'''''' id_b)*{id_b <- id_b*, typeIR'''''' <- typeIR''''''*}) be (typeIR'''''' as structTypeIR))
+            1. (Let (StructT _tid (typeIR_b id_b)*{id_b <- id_b*, typeIR_b <- typeIR_b*}) be (typeIR'''''' as structTypeIR))
 
             2. If ($sub_set<id>(({ id_a*{id_a <- id_a*} }), ({ id_b*{id_b <- id_b*} }))), then
 
-              1. (Let typeIR''?{typeIR'' <- typeIR''?} be $find_map<id, typeIR>(({ (id_a -> typeIR''''')*{id_a <- id_a*, typeIR''''' <- typeIR'''''*} }), id_a))*{id_a <- id_a*, typeIR''? <- typeIR''?*}
+              1. (Let typeIR''?{typeIR'' <- typeIR''?} be $find_map<id, typeIR>(({ (id_a -> typeIR_a)*{id_a <- id_a*, typeIR_a <- typeIR_a*} }), id_a))*{id_a <- id_a*, typeIR''? <- typeIR''?*}
 
               2. If ((typeIR''?{typeIR'' <- typeIR''?} matches pattern (_)))*{typeIR''? <- typeIR''?*}, then
 
                 1. (Let ?(typeIR_a_aligned) be typeIR''?{typeIR'' <- typeIR''?})*{typeIR''? <- typeIR''?*, typeIR_a_aligned <- typeIR_a_aligned*}
 
-                2. (Let typeIR'''?{typeIR''' <- typeIR'''?} be $find_map<id, typeIR>(({ (id_b -> typeIR'''''')*{id_b <- id_b*, typeIR'''''' <- typeIR''''''*} }), id_a))*{id_a <- id_a*, typeIR'''? <- typeIR'''?*}
+                2. (Let typeIR'''?{typeIR''' <- typeIR'''?} be $find_map<id, typeIR>(({ (id_b -> typeIR_b)*{id_b <- id_b*, typeIR_b <- typeIR_b*} }), id_a))*{id_a <- id_a*, typeIR'''? <- typeIR'''?*}
 
                 3. If ((typeIR'''?{typeIR''' <- typeIR'''?} matches pattern (_)))*{typeIR'''? <- typeIR'''?*}, then
 
@@ -13259,7 +13259,7 @@ relation Sub_expl_canon_neq: typeIR''''', typeIR''''''
 
                     1. (Let ({ id_default*{id_default <- id_default*} }) be $diff_set<id>(({ id_b*{id_b <- id_b*} }), ({ id_a*{id_a <- id_a*} })))
 
-                    2. (Let typeIR''''?{typeIR'''' <- typeIR''''?} be $find_map<id, typeIR>(({ (id_b -> typeIR'''''')*{id_b <- id_b*, typeIR'''''' <- typeIR''''''*} }), id_default))*{id_default <- id_default*, typeIR''''? <- typeIR''''?*}
+                    2. (Let typeIR''''?{typeIR'''' <- typeIR''''?} be $find_map<id, typeIR>(({ (id_b -> typeIR_b)*{id_b <- id_b*, typeIR_b <- typeIR_b*} }), id_default))*{id_default <- id_default*, typeIR''''? <- typeIR''''?*}
 
                     3. If ((typeIR''''?{typeIR'''' <- typeIR''''?} matches pattern (_)))*{typeIR''''? <- typeIR''''?*}, then
 
@@ -13283,17 +13283,17 @@ relation Sub_expl_canon_neq: typeIR''''', typeIR''''''
 
           2. Case (% has type headerTypeIR)
 
-            1. (Let (HeaderT _tid (typeIR'''''' id_b)*{id_b <- id_b*, typeIR'''''' <- typeIR''''''*}) be (typeIR'''''' as headerTypeIR))
+            1. (Let (HeaderT _tid (typeIR_b id_b)*{id_b <- id_b*, typeIR_b <- typeIR_b*}) be (typeIR'''''' as headerTypeIR))
 
             2. If ($sub_set<id>(({ id_a*{id_a <- id_a*} }), ({ id_b*{id_b <- id_b*} }))), then
 
-              1. (Let typeIR''?{typeIR'' <- typeIR''?} be $find_map<id, typeIR>(({ (id_a -> typeIR''''')*{id_a <- id_a*, typeIR''''' <- typeIR'''''*} }), id_a))*{id_a <- id_a*, typeIR''? <- typeIR''?*}
+              1. (Let typeIR''?{typeIR'' <- typeIR''?} be $find_map<id, typeIR>(({ (id_a -> typeIR_a)*{id_a <- id_a*, typeIR_a <- typeIR_a*} }), id_a))*{id_a <- id_a*, typeIR''? <- typeIR''?*}
 
               2. If ((typeIR''?{typeIR'' <- typeIR''?} matches pattern (_)))*{typeIR''? <- typeIR''?*}, then
 
                 1. (Let ?(typeIR_a_aligned) be typeIR''?{typeIR'' <- typeIR''?})*{typeIR''? <- typeIR''?*, typeIR_a_aligned <- typeIR_a_aligned*}
 
-                2. (Let typeIR'''?{typeIR''' <- typeIR'''?} be $find_map<id, typeIR>(({ (id_b -> typeIR'''''')*{id_b <- id_b*, typeIR'''''' <- typeIR''''''*} }), id_a))*{id_a <- id_a*, typeIR'''? <- typeIR'''?*}
+                2. (Let typeIR'''?{typeIR''' <- typeIR'''?} be $find_map<id, typeIR>(({ (id_b -> typeIR_b)*{id_b <- id_b*, typeIR_b <- typeIR_b*} }), id_a))*{id_a <- id_a*, typeIR'''? <- typeIR'''?*}
 
                 3. If ((typeIR'''?{typeIR''' <- typeIR'''?} matches pattern (_)))*{typeIR'''? <- typeIR'''?*}, then
 
@@ -13303,7 +13303,7 @@ relation Sub_expl_canon_neq: typeIR''''', typeIR''''''
 
                     1. (Let ({ id_default*{id_default <- id_default*} }) be $diff_set<id>(({ id_b*{id_b <- id_b*} }), ({ id_a*{id_a <- id_a*} })))
 
-                    2. (Let typeIR''''?{typeIR'''' <- typeIR''''?} be $find_map<id, typeIR>(({ (id_b -> typeIR'''''')*{id_b <- id_b*, typeIR'''''' <- typeIR''''''*} }), id_default))*{id_default <- id_default*, typeIR''''? <- typeIR''''?*}
+                    2. (Let typeIR''''?{typeIR'''' <- typeIR''''?} be $find_map<id, typeIR>(({ (id_b -> typeIR_b)*{id_b <- id_b*, typeIR_b <- typeIR_b*} }), id_default))*{id_default <- id_default*, typeIR''''? <- typeIR''''?*}
 
                     3. If ((typeIR''''?{typeIR'''' <- typeIR''''?} matches pattern (_)))*{typeIR''''? <- typeIR''''?*}, then
 
@@ -13329,11 +13329,11 @@ relation Sub_expl_canon_neq: typeIR''''', typeIR''''''
 
   9. Case (% has type setTypeIR)
 
-    1. (Let (SetT typeIR'''''*{typeIR''''' <- typeIR'''''*}) be (typeIR''''' as setTypeIR))
+    1. (Let (SetT typeIR*{typeIR <- typeIR*}) be (typeIR''''' as setTypeIR))
 
-    2. If ((typeIR'''''*{typeIR''''' <- typeIR'''''*} matches pattern [ _/1 ])), then
+    2. If ((typeIR*{typeIR <- typeIR*} matches pattern [ _/1 ])), then
 
-      1. (Let [typeIR'''''] be typeIR'''''*{typeIR''''' <- typeIR'''''*})
+      1. (Let [typeIR_a] be typeIR*{typeIR <- typeIR*})
 
       2. If ((typeIR'''''' has type setTypeIR)), then
 
@@ -13341,9 +13341,9 @@ relation Sub_expl_canon_neq: typeIR''''', typeIR''''''
 
         2. If ((typeIR''*{typeIR'' <- typeIR''*} matches pattern [ _/1 ])), then
 
-          1. (Let [typeIR''''''] be typeIR''*{typeIR'' <- typeIR''*})
+          1. (Let [typeIR_b] be typeIR''*{typeIR'' <- typeIR''*})
 
-          2. If ((Sub_expl: typeIR''''' <: typeIR'''''' holds)), then
+          2. If ((Sub_expl: typeIR_a <: typeIR_b holds)), then
 
             1. The relation holds
 
@@ -13365,9 +13365,9 @@ relation Sub_expl_canon_neq: typeIR''''', typeIR''''''
 
     2. If ((aliasTypeIR matches pattern `NewT%%`)), then
 
-      1. (Let (NewT _tid typeIR'''''') be aliasTypeIR)
+      1. (Let (NewT _tid typeIR_b) be aliasTypeIR)
 
-      2. If ((Sub_impl: typeIR''''' <: typeIR'''''' holds)), then
+      2. If ((Sub_impl: typeIR''''' <: typeIR_b holds)), then
 
         1. The relation holds
 
@@ -13381,9 +13381,9 @@ relation Sub_expl_canon_neq: typeIR''''', typeIR''''''
 
     2. If ((enumTypeIR matches pattern `SEnumT%%%`)), then
 
-      1. (Let (SEnumT _tid typeIR'''''' _valueFieldIR*{_valueFieldIR <- _valueFieldIR*}) be enumTypeIR)
+      1. (Let (SEnumT _tid typeIR_b _valueFieldIR*{_valueFieldIR <- _valueFieldIR*}) be enumTypeIR)
 
-      2. If ((Sub_impl: typeIR''''' <: typeIR'''''' holds)), then
+      2. If ((Sub_impl: typeIR''''' <: typeIR_b holds)), then
 
         1. The relation holds
 
@@ -13393,15 +13393,15 @@ relation Sub_expl_canon_neq: typeIR''''', typeIR''''''
 
   3. Case (% has type setTypeIR)
 
-    1. (Let (SetT typeIR'''''*{typeIR''''' <- typeIR'''''*}) be (typeIR'''''' as setTypeIR))
+    1. (Let (SetT typeIR*{typeIR <- typeIR*}) be (typeIR'''''' as setTypeIR))
 
-    2. If ((typeIR'''''*{typeIR''''' <- typeIR'''''*} matches pattern [ _/1 ])), then
+    2. If ((typeIR*{typeIR <- typeIR*} matches pattern [ _/1 ])), then
 
-      1. (Let [typeIR''''''] be typeIR'''''*{typeIR''''' <- typeIR'''''*})
+      1. (Let [typeIR_b] be typeIR*{typeIR <- typeIR*})
 
       2. If (~$is_set_typeIR(typeIR''''')), then
 
-        1. If ((Sub_expl: typeIR''''' <: typeIR'''''' holds)), then
+        1. If ((Sub_expl: typeIR''''' <: typeIR_b holds)), then
 
           1. The relation holds
 
@@ -13546,9 +13546,9 @@ relation Sub_impl_canon_neq: typeIR, typeIR'''''
 
           1. Case (% has type listTypeIR)
 
-            1. (Let (ListT typeIR''''') be (typeIR''''' as listTypeIR))
+            1. (Let (ListT typeIR_b) be (typeIR''''' as listTypeIR))
 
-            2. If ((Sub_impl: typeIR_a <: typeIR''''' holds))*{typeIR_a <- typeIR_a*}, then
+            2. If ((Sub_impl: typeIR_a <: typeIR_b holds))*{typeIR_a <- typeIR_a*}, then
 
               1. The relation holds
 
@@ -13556,9 +13556,9 @@ relation Sub_impl_canon_neq: typeIR, typeIR'''''
 
           2. Case (% has type tupleTypeIR)
 
-            1. (Let (TupleT typeIR'''''*{typeIR''''' <- typeIR'''''*}) be (typeIR''''' as tupleTypeIR))
+            1. (Let (TupleT typeIR_b*{typeIR_b <- typeIR_b*}) be (typeIR''''' as tupleTypeIR))
 
-            2. If ((Sub_impl: typeIR_a <: typeIR''''' holds))*{typeIR_a <- typeIR_a*, typeIR''''' <- typeIR'''''*}, then
+            2. If ((Sub_impl: typeIR_a <: typeIR_b holds))*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*}, then
 
               1. The relation holds
 
@@ -13566,11 +13566,11 @@ relation Sub_impl_canon_neq: typeIR, typeIR'''''
 
           3. Case (% has type headerStackTypeIR)
 
-            1. (Let (HeaderStackT typeIR''''' n_size) be (typeIR''''' as headerStackTypeIR))
+            1. (Let (HeaderStackT typeIR_b n_size) be (typeIR''''' as headerStackTypeIR))
 
             2. If ((|typeIR_a*{typeIR_a <- typeIR_a*}| <= n_size)), then
 
-              1. If ((Sub_impl: typeIR_a <: typeIR''''' holds))*{typeIR_a <- typeIR_a*}, then
+              1. If ((Sub_impl: typeIR_a <: typeIR_b holds))*{typeIR_a <- typeIR_a*}, then
 
                 1. The relation holds
 
@@ -13580,9 +13580,9 @@ relation Sub_impl_canon_neq: typeIR, typeIR'''''
 
           4. Case (% has type structTypeIR)
 
-            1. (Let (StructT _tid (typeIR''''' _id)*{_id <- _id*, typeIR''''' <- typeIR'''''*}) be (typeIR''''' as structTypeIR))
+            1. (Let (StructT _tid (typeIR_b _id)*{_id <- _id*, typeIR_b <- typeIR_b*}) be (typeIR''''' as structTypeIR))
 
-            2. If ((Sub_impl: typeIR_a <: typeIR''''' holds))*{typeIR_a <- typeIR_a*, typeIR''''' <- typeIR'''''*}, then
+            2. If ((Sub_impl: typeIR_a <: typeIR_b holds))*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*}, then
 
               1. The relation holds
 
@@ -13590,9 +13590,9 @@ relation Sub_impl_canon_neq: typeIR, typeIR'''''
 
           5. Case (% has type headerTypeIR)
 
-            1. (Let (HeaderT _tid (typeIR''''' _id)*{_id <- _id*, typeIR''''' <- typeIR'''''*}) be (typeIR''''' as headerTypeIR))
+            1. (Let (HeaderT _tid (typeIR_b _id)*{_id <- _id*, typeIR_b <- typeIR_b*}) be (typeIR''''' as headerTypeIR))
 
-            2. If ((Sub_impl: typeIR_a <: typeIR''''' holds))*{typeIR_a <- typeIR_a*, typeIR''''' <- typeIR'''''*}, then
+            2. If ((Sub_impl: typeIR_a <: typeIR_b holds))*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*}, then
 
               1. The relation holds
 
@@ -13604,9 +13604,9 @@ relation Sub_impl_canon_neq: typeIR, typeIR'''''
 
             2. If ((sequenceTypeIR' matches pattern `SeqT%`)), then
 
-              1. (Let (SeqT typeIR'''''*{typeIR''''' <- typeIR'''''*}) be sequenceTypeIR')
+              1. (Let (SeqT typeIR_b*{typeIR_b <- typeIR_b*}) be sequenceTypeIR')
 
-              2. If ((Sub_impl: typeIR_a <: typeIR''''' holds))*{typeIR_a <- typeIR_a*, typeIR''''' <- typeIR'''''*}, then
+              2. If ((Sub_impl: typeIR_a <: typeIR_b holds))*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*}, then
 
                 1. The relation holds
 
@@ -13624,11 +13624,11 @@ relation Sub_impl_canon_neq: typeIR, typeIR'''''
 
           1. Case (% has type tupleTypeIR)
 
-            1. (Let (TupleT typeIR'''''*{typeIR''''' <- typeIR'''''*}) be (typeIR''''' as tupleTypeIR))
+            1. (Let (TupleT typeIR_b*{typeIR_b <- typeIR_b*}) be (typeIR''''' as tupleTypeIR))
 
-            2. If ((|typeIR_a*{typeIR_a <- typeIR_a*}| < |typeIR'''''*{typeIR''''' <- typeIR'''''*}|)), then
+            2. If ((|typeIR_a*{typeIR_a <- typeIR_a*}| < |typeIR_b*{typeIR_b <- typeIR_b*}|)), then
 
-              1. (Let (typeIR_b_non_default*{typeIR_b_non_default <- typeIR_b_non_default*}, typeIR_b_default*{typeIR_b_default <- typeIR_b_default*}) be $partition_<typeIR>(typeIR'''''*{typeIR''''' <- typeIR'''''*}, |typeIR_a*{typeIR_a <- typeIR_a*}|))
+              1. (Let (typeIR_b_non_default*{typeIR_b_non_default <- typeIR_b_non_default*}, typeIR_b_default*{typeIR_b_default <- typeIR_b_default*}) be $partition_<typeIR>(typeIR_b*{typeIR_b <- typeIR_b*}, |typeIR_a*{typeIR_a <- typeIR_a*}|))
 
               2. If ((Sub_impl: typeIR_a <: typeIR_b_non_default holds))*{typeIR_a <- typeIR_a*, typeIR_b_non_default <- typeIR_b_non_default*}, then
 
@@ -13644,13 +13644,13 @@ relation Sub_impl_canon_neq: typeIR, typeIR'''''
 
           2. Case (% has type headerStackTypeIR)
 
-            1. (Let (HeaderStackT typeIR''''' n_size) be (typeIR''''' as headerStackTypeIR))
+            1. (Let (HeaderStackT typeIR_b n_size) be (typeIR''''' as headerStackTypeIR))
 
             2. If ((|typeIR_a*{typeIR_a <- typeIR_a*}| < n_size)), then
 
-              1. If ((Sub_impl: typeIR_a <: typeIR''''' holds))*{typeIR_a <- typeIR_a*}, then
+              1. If ((Sub_impl: typeIR_a <: typeIR_b holds))*{typeIR_a <- typeIR_a*}, then
 
-                1. If ($is_defaultable_typeIR(typeIR''''')), then
+                1. If ($is_defaultable_typeIR(typeIR_b)), then
 
                   1. The relation holds
 
@@ -13662,11 +13662,11 @@ relation Sub_impl_canon_neq: typeIR, typeIR'''''
 
           3. Case (% has type structTypeIR)
 
-            1. (Let (StructT _tid (typeIR''''' _id)*{_id <- _id*, typeIR''''' <- typeIR'''''*}) be (typeIR''''' as structTypeIR))
+            1. (Let (StructT _tid (typeIR_b _id)*{_id <- _id*, typeIR_b <- typeIR_b*}) be (typeIR''''' as structTypeIR))
 
-            2. If ((|typeIR_a*{typeIR_a <- typeIR_a*}| < |typeIR'''''*{typeIR''''' <- typeIR'''''*}|)), then
+            2. If ((|typeIR_a*{typeIR_a <- typeIR_a*}| < |typeIR_b*{typeIR_b <- typeIR_b*}|)), then
 
-              1. (Let (typeIR_b_non_default*{typeIR_b_non_default <- typeIR_b_non_default*}, typeIR_b_default*{typeIR_b_default <- typeIR_b_default*}) be $partition_<typeIR>(typeIR'''''*{typeIR''''' <- typeIR'''''*}, |typeIR_a*{typeIR_a <- typeIR_a*}|))
+              1. (Let (typeIR_b_non_default*{typeIR_b_non_default <- typeIR_b_non_default*}, typeIR_b_default*{typeIR_b_default <- typeIR_b_default*}) be $partition_<typeIR>(typeIR_b*{typeIR_b <- typeIR_b*}, |typeIR_a*{typeIR_a <- typeIR_a*}|))
 
               2. If ((Sub_impl: typeIR_a <: typeIR_b_non_default holds))*{typeIR_a <- typeIR_a*, typeIR_b_non_default <- typeIR_b_non_default*}, then
 
@@ -13682,11 +13682,11 @@ relation Sub_impl_canon_neq: typeIR, typeIR'''''
 
           4. Case (% has type headerTypeIR)
 
-            1. (Let (HeaderT _tid (typeIR''''' _id)*{_id <- _id*, typeIR''''' <- typeIR'''''*}) be (typeIR''''' as headerTypeIR))
+            1. (Let (HeaderT _tid (typeIR_b _id)*{_id <- _id*, typeIR_b <- typeIR_b*}) be (typeIR''''' as headerTypeIR))
 
-            2. If ((|typeIR_a*{typeIR_a <- typeIR_a*}| < |typeIR'''''*{typeIR''''' <- typeIR'''''*}|)), then
+            2. If ((|typeIR_a*{typeIR_a <- typeIR_a*}| < |typeIR_b*{typeIR_b <- typeIR_b*}|)), then
 
-              1. (Let (typeIR_b_non_default*{typeIR_b_non_default <- typeIR_b_non_default*}, typeIR_b_default*{typeIR_b_default <- typeIR_b_default*}) be $partition_<typeIR>(typeIR'''''*{typeIR''''' <- typeIR'''''*}, |typeIR_a*{typeIR_a <- typeIR_a*}|))
+              1. (Let (typeIR_b_non_default*{typeIR_b_non_default <- typeIR_b_non_default*}, typeIR_b_default*{typeIR_b_default <- typeIR_b_default*}) be $partition_<typeIR>(typeIR_b*{typeIR_b <- typeIR_b*}, |typeIR_a*{typeIR_a <- typeIR_a*}|))
 
               2. If ((Sub_impl: typeIR_a <: typeIR_b_non_default holds))*{typeIR_a <- typeIR_a*, typeIR_b_non_default <- typeIR_b_non_default*}, then
 
@@ -13716,7 +13716,7 @@ relation Sub_impl_canon_neq: typeIR, typeIR'''''
 
           1. Case (% has type structTypeIR)
 
-            1. (Let (StructT _tid (typeIR''''' id_b)*{id_b <- id_b*, typeIR''''' <- typeIR'''''*}) be (typeIR''''' as structTypeIR))
+            1. (Let (StructT _tid (typeIR_b id_b)*{id_b <- id_b*, typeIR_b <- typeIR_b*}) be (typeIR''''' as structTypeIR))
 
             2. If ($eq_set<id>(({ id_a*{id_a <- id_a*} }), ({ id_b*{id_b <- id_b*} }))), then
 
@@ -13726,7 +13726,7 @@ relation Sub_impl_canon_neq: typeIR, typeIR'''''
 
                 1. (Let ?(typeIR_a_aligned) be typeIR''?{typeIR'' <- typeIR''?})*{typeIR''? <- typeIR''?*, typeIR_a_aligned <- typeIR_a_aligned*}
 
-                2. (Let typeIR'''?{typeIR''' <- typeIR'''?} be $find_map<id, typeIR>(({ (id_b -> typeIR''''')*{id_b <- id_b*, typeIR''''' <- typeIR'''''*} }), id_a))*{id_a <- id_a*, typeIR'''? <- typeIR'''?*}
+                2. (Let typeIR'''?{typeIR''' <- typeIR'''?} be $find_map<id, typeIR>(({ (id_b -> typeIR_b)*{id_b <- id_b*, typeIR_b <- typeIR_b*} }), id_a))*{id_a <- id_a*, typeIR'''? <- typeIR'''?*}
 
                 3. If ((typeIR'''?{typeIR''' <- typeIR'''?} matches pattern (_)))*{typeIR'''? <- typeIR'''?*}, then
 
@@ -13746,7 +13746,7 @@ relation Sub_impl_canon_neq: typeIR, typeIR'''''
 
           2. Case (% has type headerTypeIR)
 
-            1. (Let (HeaderT _tid (typeIR''''' id_b)*{id_b <- id_b*, typeIR''''' <- typeIR'''''*}) be (typeIR''''' as headerTypeIR))
+            1. (Let (HeaderT _tid (typeIR_b id_b)*{id_b <- id_b*, typeIR_b <- typeIR_b*}) be (typeIR''''' as headerTypeIR))
 
             2. If ($eq_set<id>(({ id_a*{id_a <- id_a*} }), ({ id_b*{id_b <- id_b*} }))), then
 
@@ -13756,7 +13756,7 @@ relation Sub_impl_canon_neq: typeIR, typeIR'''''
 
                 1. (Let ?(typeIR_a_aligned) be typeIR''?{typeIR'' <- typeIR''?})*{typeIR''? <- typeIR''?*, typeIR_a_aligned <- typeIR_a_aligned*}
 
-                2. (Let typeIR'''?{typeIR''' <- typeIR'''?} be $find_map<id, typeIR>(({ (id_b -> typeIR''''')*{id_b <- id_b*, typeIR''''' <- typeIR'''''*} }), id_a))*{id_a <- id_a*, typeIR'''? <- typeIR'''?*}
+                2. (Let typeIR'''?{typeIR''' <- typeIR'''?} be $find_map<id, typeIR>(({ (id_b -> typeIR_b)*{id_b <- id_b*, typeIR_b <- typeIR_b*} }), id_a))*{id_a <- id_a*, typeIR'''? <- typeIR'''?*}
 
                 3. If ((typeIR'''?{typeIR''' <- typeIR'''?} matches pattern (_)))*{typeIR'''? <- typeIR'''?*}, then
 
@@ -13784,7 +13784,7 @@ relation Sub_impl_canon_neq: typeIR, typeIR'''''
 
           1. Case (% has type structTypeIR)
 
-            1. (Let (StructT _tid (typeIR''''' id_b)*{id_b <- id_b*, typeIR''''' <- typeIR'''''*}) be (typeIR''''' as structTypeIR))
+            1. (Let (StructT _tid (typeIR_b id_b)*{id_b <- id_b*, typeIR_b <- typeIR_b*}) be (typeIR''''' as structTypeIR))
 
             2. If ($sub_set<id>(({ id_a*{id_a <- id_a*} }), ({ id_b*{id_b <- id_b*} }))), then
 
@@ -13794,7 +13794,7 @@ relation Sub_impl_canon_neq: typeIR, typeIR'''''
 
                 1. (Let ?(typeIR_a_aligned) be typeIR''?{typeIR'' <- typeIR''?})*{typeIR''? <- typeIR''?*, typeIR_a_aligned <- typeIR_a_aligned*}
 
-                2. (Let typeIR'''?{typeIR''' <- typeIR'''?} be $find_map<id, typeIR>(({ (id_b -> typeIR''''')*{id_b <- id_b*, typeIR''''' <- typeIR'''''*} }), id_a))*{id_a <- id_a*, typeIR'''? <- typeIR'''?*}
+                2. (Let typeIR'''?{typeIR''' <- typeIR'''?} be $find_map<id, typeIR>(({ (id_b -> typeIR_b)*{id_b <- id_b*, typeIR_b <- typeIR_b*} }), id_a))*{id_a <- id_a*, typeIR'''? <- typeIR'''?*}
 
                 3. If ((typeIR'''?{typeIR''' <- typeIR'''?} matches pattern (_)))*{typeIR'''? <- typeIR'''?*}, then
 
@@ -13804,7 +13804,7 @@ relation Sub_impl_canon_neq: typeIR, typeIR'''''
 
                     1. (Let ({ id_default*{id_default <- id_default*} }) be $diff_set<id>(({ id_b*{id_b <- id_b*} }), ({ id_a*{id_a <- id_a*} })))
 
-                    2. (Let typeIR''''?{typeIR'''' <- typeIR''''?} be $find_map<id, typeIR>(({ (id_b -> typeIR''''')*{id_b <- id_b*, typeIR''''' <- typeIR'''''*} }), id_default))*{id_default <- id_default*, typeIR''''? <- typeIR''''?*}
+                    2. (Let typeIR''''?{typeIR'''' <- typeIR''''?} be $find_map<id, typeIR>(({ (id_b -> typeIR_b)*{id_b <- id_b*, typeIR_b <- typeIR_b*} }), id_default))*{id_default <- id_default*, typeIR''''? <- typeIR''''?*}
 
                     3. If ((typeIR''''?{typeIR'''' <- typeIR''''?} matches pattern (_)))*{typeIR''''? <- typeIR''''?*}, then
 
@@ -13828,7 +13828,7 @@ relation Sub_impl_canon_neq: typeIR, typeIR'''''
 
           2. Case (% has type headerTypeIR)
 
-            1. (Let (HeaderT _tid (typeIR''''' id_b)*{id_b <- id_b*, typeIR''''' <- typeIR'''''*}) be (typeIR''''' as headerTypeIR))
+            1. (Let (HeaderT _tid (typeIR_b id_b)*{id_b <- id_b*, typeIR_b <- typeIR_b*}) be (typeIR''''' as headerTypeIR))
 
             2. If ($sub_set<id>(({ id_a*{id_a <- id_a*} }), ({ id_b*{id_b <- id_b*} }))), then
 
@@ -13838,7 +13838,7 @@ relation Sub_impl_canon_neq: typeIR, typeIR'''''
 
                 1. (Let ?(typeIR_a_aligned) be typeIR''?{typeIR'' <- typeIR''?})*{typeIR''? <- typeIR''?*, typeIR_a_aligned <- typeIR_a_aligned*}
 
-                2. (Let typeIR'''?{typeIR''' <- typeIR'''?} be $find_map<id, typeIR>(({ (id_b -> typeIR''''')*{id_b <- id_b*, typeIR''''' <- typeIR'''''*} }), id_a))*{id_a <- id_a*, typeIR'''? <- typeIR'''?*}
+                2. (Let typeIR'''?{typeIR''' <- typeIR'''?} be $find_map<id, typeIR>(({ (id_b -> typeIR_b)*{id_b <- id_b*, typeIR_b <- typeIR_b*} }), id_a))*{id_a <- id_a*, typeIR'''? <- typeIR'''?*}
 
                 3. If ((typeIR'''?{typeIR''' <- typeIR'''?} matches pattern (_)))*{typeIR'''? <- typeIR'''?*}, then
 
@@ -13848,7 +13848,7 @@ relation Sub_impl_canon_neq: typeIR, typeIR'''''
 
                     1. (Let ({ id_default*{id_default <- id_default*} }) be $diff_set<id>(({ id_b*{id_b <- id_b*} }), ({ id_a*{id_a <- id_a*} })))
 
-                    2. (Let typeIR''''?{typeIR'''' <- typeIR''''?} be $find_map<id, typeIR>(({ (id_b -> typeIR''''')*{id_b <- id_b*, typeIR''''' <- typeIR'''''*} }), id_default))*{id_default <- id_default*, typeIR''''? <- typeIR''''?*}
+                    2. (Let typeIR''''?{typeIR'''' <- typeIR''''?} be $find_map<id, typeIR>(({ (id_b -> typeIR_b)*{id_b <- id_b*, typeIR_b <- typeIR_b*} }), id_default))*{id_default <- id_default*, typeIR''''? <- typeIR''''?*}
 
                     3. If ((typeIR''''?{typeIR'''' <- typeIR''''?} matches pattern (_)))*{typeIR''''? <- typeIR''''?*}, then
 
@@ -13961,13 +13961,13 @@ relation Expr_ok: p, TC, expression'''
 
   4. Case (% has type unaryExpression)
 
-    1. (Let (UnE unop expression''') be (expression''' as unaryExpression))
+    1. (Let (UnE unop expression) be (expression''' as unaryExpression))
 
     2. Case analysis on unop
 
       1. Case (% matches pattern `LNOT`)
 
-        1. (Expr_ok: p TC |- expression''' : typedExpressionIR)
+        1. (Expr_ok: p TC |- expression : typedExpressionIR)
 
         2. (Let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} be $reduce_serenum_unary(typedExpressionIR, $compat_lnot))
 
@@ -13983,7 +13983,7 @@ relation Expr_ok: p, TC, expression'''
 
       2. Case (% matches pattern `BNOT`)
 
-        1. (Expr_ok: p TC |- expression''' : typedExpressionIR)
+        1. (Expr_ok: p TC |- expression : typedExpressionIR)
 
         2. (Let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} be $reduce_serenum_unary(typedExpressionIR, $compat_bnot))
 
@@ -14001,7 +14001,7 @@ relation Expr_ok: p, TC, expression'''
 
     3. If (((unop = (UPLUS)) \/ (unop = (UMINUS)))), then
 
-      1. (Expr_ok: p TC |- expression''' : typedExpressionIR)
+      1. (Expr_ok: p TC |- expression : typedExpressionIR)
 
       2. (Let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} be $reduce_serenum_unary(typedExpressionIR, $compat_uplusminus))
 
@@ -14393,7 +14393,7 @@ relation Expr_ok: p, TC, expression'''
 
   7. Case (% has type castExpression)
 
-    1. (Let (CastE type_t expression''') be (expression''' as castExpression))
+    1. (Let (CastE type_t expression) be (expression''' as castExpression))
 
     2. (Type_ok: p TC |- (type_t as typeOrVoid) : typeIR_t tid*{tid <- tid*})
 
@@ -14401,7 +14401,7 @@ relation Expr_ok: p, TC, expression'''
 
       1. If ((Type_wf: $bound(p, TC) |- typeIR_t holds)), then
 
-        1. (Expr_ok: p TC |- expression''' : typedExpressionIR)
+        1. (Expr_ok: p TC |- expression : typedExpressionIR)
 
         2. (Let (_expressionIR (( typeIR ctk ))) be typedExpressionIR)
 
@@ -14455,11 +14455,11 @@ relation Expr_ok: p, TC, expression'''
 
             2. If ((expression''*{expression'' <- expression''*} matches pattern _ :: _)), then
 
-              1. (Let expression''' :: expression_e_h_rev*{expression_e_h_rev <- expression_e_h_rev*} be expression''*{expression'' <- expression''*})
+              1. (Let expression' :: expression_e_h_rev*{expression_e_h_rev <- expression_e_h_rev*} be expression''*{expression'' <- expression''*})
 
-              2. If ((expression''' has type defaultExpression)), then
+              2. If ((expression' has type defaultExpression)), then
 
-                1. (Let defaultExpression be (expression''' as defaultExpression))
+                1. (Let defaultExpression be (expression' as defaultExpression))
 
                 2. If ((defaultExpression matches pattern `DefaultE`)), then
 
@@ -15430,9 +15430,9 @@ relation Stmt_ok: p', TC', f', statement''
 
   6. Case (% has type conditionalStatement)
 
-    1. (Let (IfS expression_cond statement_then statement''?{statement'' <- statement''?}) be (statement'' as conditionalStatement))
+    1. (Let (IfS expression_cond statement_then statement?{statement <- statement?}) be (statement'' as conditionalStatement))
 
-    2. Case analysis on statement''?{statement'' <- statement''?}
+    2. Case analysis on statement?{statement <- statement?}
 
       1. Case (% matches pattern ())
 
@@ -15456,7 +15456,7 @@ relation Stmt_ok: p', TC', f', statement''
 
       2. Case (% matches pattern (_))
 
-        1. (Let ?(statement_else) be statement''?{statement'' <- statement''?})
+        1. (Let ?(statement_else) be statement?{statement <- statement?})
 
         2. (Expr_ok: p' TC' |- expression_cond : typedExpressionIR_cond)
 
@@ -16192,11 +16192,11 @@ relation ParserStmt_ok: TC_0', parserStatement''
 
   7. Case (% has type parserBlockStatement)
 
-    1. (Let (ParserBlockS parserStatement''*{parserStatement'' <- parserStatement''*}) be (parserStatement'' as parserBlockStatement))
+    1. (Let (ParserBlockS parserStatement*{parserStatement <- parserStatement*}) be (parserStatement'' as parserBlockStatement))
 
     2. (Let TC_1 be $enter(TC_0'))
 
-    3. (ParserStmts_ok: TC_1 |- parserStatement''*{parserStatement'' <- parserStatement''*} : TC_2 parserStatementIR*{parserStatementIR <- parserStatementIR*})
+    3. (ParserStmts_ok: TC_1 |- parserStatement*{parserStatement <- parserStatement*} : TC_2 parserStatementIR*{parserStatementIR <- parserStatementIR*})
 
     4. (Let TC_3 be $exit(TC_2))
 
@@ -16262,13 +16262,13 @@ relation ParserState_ok: TC_0, name_state*{name_state <- name_state*}, (name par
 
   2. Case (% matches pattern (_))
 
-    1. (Let ?(transitionStatement'') be transitionStatement''?{transitionStatement'' <- transitionStatement''?})
+    1. (Let ?(transitionStatement) be transitionStatement''?{transitionStatement'' <- transitionStatement''?})
 
     2. (Let TC_1 be $enter(TC_0))
 
     3. (ParserStmts_ok: TC_1 |- parserStatement*{parserStatement <- parserStatement*} : TC_2 parserStatementIR*{parserStatementIR <- parserStatementIR*})
 
-    4. (ParserTransition_ok: TC_2 name_state*{name_state <- name_state*} |- transitionStatement'' : transitionStatementIR)
+    4. (ParserTransition_ok: TC_2 name_state*{name_state <- name_state*} |- transitionStatement : transitionStatementIR)
 
     5. (Let TC_3 be $exit(TC_2))
 
@@ -18621,7 +18621,7 @@ relation RoutineType_ok: p, TC, routineTargetIR, typeArgumentIR*{typeArgumentIR 
 
         2. Case (% matches pattern [ _/1 ])
 
-          1. (Let [argumentIR''] be argumentIR''*{argumentIR'' <- argumentIR''*})
+          1. (Let [argumentIR] be argumentIR''*{argumentIR'' <- argumentIR''*})
 
           2. If (name is in ["push_front", "pop_front"]), then
 
@@ -20348,7 +20348,7 @@ relation SwitchLabel_general_ok: TC, _typeIR', bool', switchLabel
 
     1. (Let ?(typedExpressionIR_label_cast) be typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
-    2. (Let (_expressionIR (( _typeIR' ctk ))) be typedExpressionIR_label_cast)
+    2. (Let (_expressionIR (( _typeIR ctk ))) be typedExpressionIR_label_cast)
 
     3. If ((ctk matches pattern `LCTK`)), then
 
@@ -21089,9 +21089,9 @@ def $compat'_table_exact_optional_key(typeIR'')
 
     2. If ((aliasTypeIR matches pattern `NewT%%`)), then
 
-      1. (Let (NewT _tid typeIR'') be aliasTypeIR)
+      1. (Let (NewT _tid typeIR) be aliasTypeIR)
 
-      2. Return $compat_table_exact_optional_key(typeIR'')
+      2. Return $compat_table_exact_optional_key(typeIR)
 
     2. Else Phantom#1269
 
@@ -21109,9 +21109,9 @@ def $compat'_table_exact_optional_key(typeIR'')
 
       2. Case (% matches pattern `SEnumT%%%`)
 
-        1. (Let (SEnumT _tid typeIR'' _valueFieldIR*{_valueFieldIR <- _valueFieldIR*}) be enumTypeIR)
+        1. (Let (SEnumT _tid typeIR _valueFieldIR*{_valueFieldIR <- _valueFieldIR*}) be enumTypeIR)
 
-        2. Return $compat_table_exact_optional_key(typeIR'')
+        2. Return $compat_table_exact_optional_key(typeIR)
 
 1. Else Phantom#1270
 
@@ -21155,9 +21155,9 @@ def $compat'_table_lpm_ternary_range_key(typeIR'')
 
     2. If ((aliasTypeIR matches pattern `NewT%%`)), then
 
-      1. (Let (NewT _tid typeIR'') be aliasTypeIR)
+      1. (Let (NewT _tid typeIR) be aliasTypeIR)
 
-      2. Return $compat_table_lpm_ternary_range_key(typeIR'')
+      2. Return $compat_table_lpm_ternary_range_key(typeIR)
 
     2. Else Phantom#1272
 
@@ -21167,9 +21167,9 @@ def $compat'_table_lpm_ternary_range_key(typeIR'')
 
     2. If ((enumTypeIR matches pattern `SEnumT%%%`)), then
 
-      1. (Let (SEnumT _tid typeIR'' _valueFieldIR*{_valueFieldIR <- _valueFieldIR*}) be enumTypeIR)
+      1. (Let (SEnumT _tid typeIR _valueFieldIR*{_valueFieldIR <- _valueFieldIR*}) be enumTypeIR)
 
-      2. Return $compat_table_lpm_ternary_range_key(typeIR'')
+      2. Return $compat_table_lpm_ternary_range_key(typeIR)
 
     2. Else Phantom#1273
 
@@ -21512,11 +21512,11 @@ def $count_table_keys(tableProperty''*{tableProperty'' <- tableProperty''*})
 
   2. Case (% matches pattern _ :: _)
 
-    1. (Let tableProperty'' :: tableProperty_t*{tableProperty_t <- tableProperty_t*} be tableProperty''*{tableProperty'' <- tableProperty''*})
+    1. (Let tableProperty :: tableProperty_t*{tableProperty_t <- tableProperty_t*} be tableProperty''*{tableProperty'' <- tableProperty''*})
 
-    2. If ((tableProperty'' matches pattern `KeyP%`)), then
+    2. If ((tableProperty matches pattern `KeyP%`)), then
 
-      1. (Let (KeyP _tableKey*{_tableKey <- _tableKey*}) be tableProperty'')
+      1. (Let (KeyP _tableKey*{_tableKey <- _tableKey*}) be tableProperty)
 
       2. Return (1 + $count_table_keys(tableProperty_t*{tableProperty_t <- tableProperty_t*}))
 
@@ -21539,11 +21539,11 @@ def $count_table_actions(tableProperty''*{tableProperty'' <- tableProperty''*})
 
   2. Case (% matches pattern _ :: _)
 
-    1. (Let tableProperty'' :: tableProperty_t*{tableProperty_t <- tableProperty_t*} be tableProperty''*{tableProperty'' <- tableProperty''*})
+    1. (Let tableProperty :: tableProperty_t*{tableProperty_t <- tableProperty_t*} be tableProperty''*{tableProperty'' <- tableProperty''*})
 
-    2. If ((tableProperty'' matches pattern `ActionP%`)), then
+    2. If ((tableProperty matches pattern `ActionP%`)), then
 
-      1. (Let (ActionP _tableAction*{_tableAction <- _tableAction*}) be tableProperty'')
+      1. (Let (ActionP _tableAction*{_tableAction <- _tableAction*}) be tableProperty)
 
       2. Return (1 + $count_table_actions(tableProperty_t*{tableProperty_t <- tableProperty_t*}))
 
@@ -21606,7 +21606,7 @@ def $align_parameters'(_map<id, parameterTypeIR>', parameterTypeIR', argumentIR)
 
 1. Else Phantom#1305
 
-2. (Let ({ (id_param -> parameterTypeIR')*{id_param <- id_param*, parameterTypeIR' <- parameterTypeIR'*} }) be _map<id, parameterTypeIR>')
+2. (Let ({ (id_param -> parameterTypeIR)*{id_param <- id_param*, parameterTypeIR <- parameterTypeIR*} }) be _map<id, parameterTypeIR>')
 
 3. Case analysis on argumentIR
 
@@ -21614,13 +21614,13 @@ def $align_parameters'(_map<id, parameterTypeIR>', parameterTypeIR', argumentIR)
 
     1. (Let (NameA name _typedExpressionIR) be argumentIR)
 
-    2. Return $find_map<id, parameterTypeIR>(({ (id_param -> parameterTypeIR')*{id_param <- id_param*, parameterTypeIR' <- parameterTypeIR'*} }), name)
+    2. Return $find_map<id, parameterTypeIR>(({ (id_param -> parameterTypeIR)*{id_param <- id_param*, parameterTypeIR <- parameterTypeIR*} }), name)
 
   2. Case (% matches pattern `NameAnyA%`)
 
     1. (Let (NameAnyA name) be argumentIR)
 
-    2. Return $find_map<id, parameterTypeIR>(({ (id_param -> parameterTypeIR')*{id_param <- id_param*, parameterTypeIR' <- parameterTypeIR'*} }), name)
+    2. Return $find_map<id, parameterTypeIR>(({ (id_param -> parameterTypeIR)*{id_param <- id_param*, parameterTypeIR <- parameterTypeIR*} }), name)
 
   3. Case (% matches pattern `AnyA`)
 
@@ -21816,17 +21816,17 @@ def $gen_constraint_type(constraint', typeIR'', typeIR_arg')
 
           2. If ((namedTypeIR' matches pattern `SpecT%%`)), then
 
-            1. (Let (SpecT polyTypeDefIR_arg typeIR_arg'*{typeIR_arg' <- typeIR_arg'*}) be namedTypeIR')
+            1. (Let (SpecT polyTypeDefIR_arg typeIR_arg*{typeIR_arg <- typeIR_arg*}) be namedTypeIR')
 
             2. (Let typeIR_specialized_param be $specialize_typeDef((polyTypeDefIR_param as typeDefIR), typeIR_param*{typeIR_param <- typeIR_param*}))
 
-            3. (Let typeIR_specialized_arg be $specialize_typeDef((polyTypeDefIR_arg as typeDefIR), typeIR_arg'*{typeIR_arg' <- typeIR_arg'*}))
+            3. (Let typeIR_specialized_arg be $specialize_typeDef((polyTypeDefIR_arg as typeDefIR), typeIR_arg*{typeIR_arg <- typeIR_arg*}))
 
             4. If (($is_nominal_typeIR(typeIR_specialized_param) /\ $is_nominal_typeIR(typeIR_specialized_arg))), then
 
               1. (Let constraint_1 be $gen_constraint_type(constraint', typeIR_specialized_param, typeIR_specialized_arg))
 
-              2. (Let constraint_2 be $gen_constraint_types(constraint_1, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg'*{typeIR_arg' <- typeIR_arg'*}))
+              2. (Let constraint_2 be $gen_constraint_types(constraint_1, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*}))
 
               3. Return constraint_2
 
@@ -21850,7 +21850,7 @@ def $gen_constraint_type(constraint', typeIR'', typeIR_arg')
 
       2. Case (% matches pattern `NewT%%`)
 
-        1. (Let (NewT tid typeIR'') be aliasTypeIR)
+        1. (Let (NewT tid typeIR_param) be aliasTypeIR)
 
         2. If ((typeIR_arg' has type aliasTypeIR)), then
 
@@ -21858,85 +21858,85 @@ def $gen_constraint_type(constraint', typeIR'', typeIR_arg')
 
           2. If ((aliasTypeIR' matches pattern `NewT%%`)), then
 
-            1. (Let (NewT tid' typeIR_arg') be aliasTypeIR')
+            1. (Let (NewT tid' typeIR_arg) be aliasTypeIR')
 
             2. If ((tid = tid')), then
 
-              1. Return $gen_constraint_type(constraint', typeIR'', typeIR_arg')
+              1. Return $gen_constraint_type(constraint', typeIR_param, typeIR_arg)
 
   3. Case (% has type listTypeIR)
 
-    1. (Let (ListT typeIR'') be (typeIR'' as listTypeIR))
+    1. (Let (ListT typeIR_param) be (typeIR'' as listTypeIR))
 
     2. If ((typeIR_arg' has type listTypeIR)), then
 
-      1. (Let (ListT typeIR_arg') be (typeIR_arg' as listTypeIR))
+      1. (Let (ListT typeIR_arg) be (typeIR_arg' as listTypeIR))
 
-      2. Return $gen_constraint_type(constraint', typeIR'', typeIR_arg')
+      2. Return $gen_constraint_type(constraint', typeIR_param, typeIR_arg)
 
   4. Case (% has type tupleTypeIR)
 
-    1. (Let (TupleT typeIR''*{typeIR'' <- typeIR''*}) be (typeIR'' as tupleTypeIR))
+    1. (Let (TupleT typeIR_param*{typeIR_param <- typeIR_param*}) be (typeIR'' as tupleTypeIR))
 
     2. If ((typeIR_arg' has type tupleTypeIR)), then
 
-      1. (Let (TupleT typeIR_arg'*{typeIR_arg' <- typeIR_arg'*}) be (typeIR_arg' as tupleTypeIR))
+      1. (Let (TupleT typeIR_arg*{typeIR_arg <- typeIR_arg*}) be (typeIR_arg' as tupleTypeIR))
 
-      2. Return $gen_constraint_types(constraint', typeIR''*{typeIR'' <- typeIR''*}, typeIR_arg'*{typeIR_arg' <- typeIR_arg'*})
+      2. Return $gen_constraint_types(constraint', typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
 
   5. Case (% has type headerStackTypeIR)
 
-    1. (Let (HeaderStackT typeIR'' n_size) be (typeIR'' as headerStackTypeIR))
+    1. (Let (HeaderStackT typeIR_param n_size) be (typeIR'' as headerStackTypeIR))
 
     2. If ((typeIR_arg' has type headerStackTypeIR)), then
 
-      1. (Let (HeaderStackT typeIR_arg' n_size') be (typeIR_arg' as headerStackTypeIR))
+      1. (Let (HeaderStackT typeIR_arg n_size') be (typeIR_arg' as headerStackTypeIR))
 
       2. If ((n_size = n_size')), then
 
-        1. Return $gen_constraint_type(constraint', typeIR'', typeIR_arg')
+        1. Return $gen_constraint_type(constraint', typeIR_param, typeIR_arg)
 
   6. Case (% has type structTypeIR)
 
-    1. (Let (StructT tid (typeIR'' id_field)*{id_field <- id_field*, typeIR'' <- typeIR''*}) be (typeIR'' as structTypeIR))
+    1. (Let (StructT tid (typeIR_param id_field)*{id_field <- id_field*, typeIR_param <- typeIR_param*}) be (typeIR'' as structTypeIR))
 
     2. If ((typeIR_arg' has type structTypeIR)), then
 
-      1. (Let (StructT tid' (typeIR_arg' id_field')*{id_field' <- id_field'*, typeIR_arg' <- typeIR_arg'*}) be (typeIR_arg' as structTypeIR))
+      1. (Let (StructT tid' (typeIR_arg id_field')*{id_field' <- id_field'*, typeIR_arg <- typeIR_arg*}) be (typeIR_arg' as structTypeIR))
 
       2. If ((id_field = id_field'))*{id_field <- id_field*, id_field' <- id_field'*}, then
 
         1. If ((tid = tid')), then
 
-          1. Return $gen_constraint_types(constraint', typeIR''*{typeIR'' <- typeIR''*}, typeIR_arg'*{typeIR_arg' <- typeIR_arg'*})
+          1. Return $gen_constraint_types(constraint', typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
 
   7. Case (% has type headerTypeIR)
 
-    1. (Let (HeaderT tid (typeIR'' id_field)*{id_field <- id_field*, typeIR'' <- typeIR''*}) be (typeIR'' as headerTypeIR))
+    1. (Let (HeaderT tid (typeIR_param id_field)*{id_field <- id_field*, typeIR_param <- typeIR_param*}) be (typeIR'' as headerTypeIR))
 
     2. If ((typeIR_arg' has type headerTypeIR)), then
 
-      1. (Let (HeaderT tid' (typeIR_arg' id_field')*{id_field' <- id_field'*, typeIR_arg' <- typeIR_arg'*}) be (typeIR_arg' as headerTypeIR))
+      1. (Let (HeaderT tid' (typeIR_arg id_field')*{id_field' <- id_field'*, typeIR_arg <- typeIR_arg*}) be (typeIR_arg' as headerTypeIR))
 
       2. If ((id_field = id_field'))*{id_field <- id_field*, id_field' <- id_field'*}, then
 
         1. If ((tid = tid')), then
 
-          1. Return $gen_constraint_types(constraint', typeIR''*{typeIR'' <- typeIR''*}, typeIR_arg'*{typeIR_arg' <- typeIR_arg'*})
+          1. Return $gen_constraint_types(constraint', typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
 
   8. Case (% has type headerUnionTypeIR)
 
-    1. (Let (HeaderUnionT tid (typeIR'' id_field)*{id_field <- id_field*, typeIR'' <- typeIR''*}) be (typeIR'' as headerUnionTypeIR))
+    1. (Let (HeaderUnionT tid (typeIR_param id_field)*{id_field <- id_field*, typeIR_param <- typeIR_param*}) be (typeIR'' as headerUnionTypeIR))
 
     2. If ((typeIR_arg' has type headerUnionTypeIR)), then
 
-      1. (Let (HeaderUnionT tid' (typeIR_arg' id_field')*{id_field' <- id_field'*, typeIR_arg' <- typeIR_arg'*}) be (typeIR_arg' as headerUnionTypeIR))
+      1. (Let (HeaderUnionT tid' (typeIR_arg id_field')*{id_field' <- id_field'*, typeIR_arg <- typeIR_arg*}) be (typeIR_arg' as headerUnionTypeIR))
 
       2. If ((id_field = id_field'))*{id_field <- id_field*, id_field' <- id_field'*}, then
 
         1. If ((tid = tid')), then
 
-          1. Return $gen_constraint_types(constraint', typeIR''*{typeIR'' <- typeIR''*}, typeIR_arg'*{typeIR_arg' <- typeIR_arg'*})
+          1. Return $gen_constraint_types(constraint', typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
 
   9. Case (% has type externObjectTypeIR)
 
@@ -21960,13 +21960,13 @@ def $gen_constraint_type(constraint', typeIR'', typeIR_arg')
 
       1. (Let (ParserT parameterTypeIR_arg*{parameterTypeIR_arg <- parameterTypeIR_arg*}) be (typeIR_arg' as parserObjectTypeIR))
 
-      2. (Let (direction typeIR'' _id _value?{_value <- _value?}) be parameterTypeIR_param)*{_id <- _id*, _value? <- _value?*, direction <- direction*, parameterTypeIR_param <- parameterTypeIR_param*, typeIR'' <- typeIR''*}
+      2. (Let (direction typeIR_param _id _value?{_value <- _value?}) be parameterTypeIR_param)*{_id <- _id*, _value? <- _value?*, direction <- direction*, parameterTypeIR_param <- parameterTypeIR_param*, typeIR_param <- typeIR_param*}
 
-      3. (Let (direction' typeIR_arg' _id' _value'?{_value' <- _value'?}) be parameterTypeIR_arg)*{_id' <- _id'*, _value'? <- _value'?*, direction' <- direction'*, parameterTypeIR_arg <- parameterTypeIR_arg*, typeIR_arg' <- typeIR_arg'*}
+      3. (Let (direction' typeIR_arg _id' _value'?{_value' <- _value'?}) be parameterTypeIR_arg)*{_id' <- _id'*, _value'? <- _value'?*, direction' <- direction'*, parameterTypeIR_arg <- parameterTypeIR_arg*, typeIR_arg <- typeIR_arg*}
 
       4. If ((direction' = direction))*{direction <- direction*, direction' <- direction'*}, then
 
-        1. Return $gen_constraint_types(constraint', typeIR''*{typeIR'' <- typeIR''*}, typeIR_arg'*{typeIR_arg' <- typeIR_arg'*})
+        1. Return $gen_constraint_types(constraint', typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
 
   11. Case (% has type controlObjectTypeIR)
 
@@ -21976,25 +21976,25 @@ def $gen_constraint_type(constraint', typeIR'', typeIR_arg')
 
       1. (Let (ControlT parameterTypeIR_arg*{parameterTypeIR_arg <- parameterTypeIR_arg*}) be (typeIR_arg' as controlObjectTypeIR))
 
-      2. (Let (direction typeIR'' _id _value?{_value <- _value?}) be parameterTypeIR_param)*{_id <- _id*, _value? <- _value?*, direction <- direction*, parameterTypeIR_param <- parameterTypeIR_param*, typeIR'' <- typeIR''*}
+      2. (Let (direction typeIR_param _id _value?{_value <- _value?}) be parameterTypeIR_param)*{_id <- _id*, _value? <- _value?*, direction <- direction*, parameterTypeIR_param <- parameterTypeIR_param*, typeIR_param <- typeIR_param*}
 
-      3. (Let (direction' typeIR_arg' _id' _value'?{_value' <- _value'?}) be parameterTypeIR_arg)*{_id' <- _id'*, _value'? <- _value'?*, direction' <- direction'*, parameterTypeIR_arg <- parameterTypeIR_arg*, typeIR_arg' <- typeIR_arg'*}
+      3. (Let (direction' typeIR_arg _id' _value'?{_value' <- _value'?}) be parameterTypeIR_arg)*{_id' <- _id'*, _value'? <- _value'?*, direction' <- direction'*, parameterTypeIR_arg <- parameterTypeIR_arg*, typeIR_arg <- typeIR_arg*}
 
       4. If ((direction' = direction))*{direction <- direction*, direction' <- direction'*}, then
 
-        1. Return $gen_constraint_types(constraint', typeIR''*{typeIR'' <- typeIR''*}, typeIR_arg'*{typeIR_arg' <- typeIR_arg'*})
+        1. Return $gen_constraint_types(constraint', typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
 
   12. Case (% has type packageObjectTypeIR)
 
-    1. (Let (PackageT tid typeIR''*{typeIR'' <- typeIR''*}) be (typeIR'' as packageObjectTypeIR))
+    1. (Let (PackageT tid typeIR_param*{typeIR_param <- typeIR_param*}) be (typeIR'' as packageObjectTypeIR))
 
     2. If ((typeIR_arg' has type packageObjectTypeIR)), then
 
-      1. (Let (PackageT tid' typeIR_arg'*{typeIR_arg' <- typeIR_arg'*}) be (typeIR_arg' as packageObjectTypeIR))
+      1. (Let (PackageT tid' typeIR_arg*{typeIR_arg <- typeIR_arg*}) be (typeIR_arg' as packageObjectTypeIR))
 
       2. If ((tid = tid')), then
 
-        1. Return $gen_constraint_types(constraint', typeIR''*{typeIR'' <- typeIR''*}, typeIR_arg'*{typeIR_arg' <- typeIR_arg'*})
+        1. Return $gen_constraint_types(constraint', typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
 
 2. If ((typeIR_arg' has type aliasTypeIR)), then
 
@@ -22002,9 +22002,9 @@ def $gen_constraint_type(constraint', typeIR'', typeIR_arg')
 
   2. If ((aliasTypeIR matches pattern `DefT%%`)), then
 
-    1. (Let (DefT _tid typeIR_arg') be aliasTypeIR)
+    1. (Let (DefT _tid typeIR_arg) be aliasTypeIR)
 
-    2. Return $gen_constraint_type(constraint', typeIR'', typeIR_arg')
+    2. Return $gen_constraint_type(constraint', typeIR'', typeIR_arg)
 
 3. Otherwise
 

@@ -22,8 +22,30 @@ let rec rename_let_alias (rename : Renamer.t) (instrs : instr list) : instr list
   | [] -> []
   | instr_h :: instrs_t -> (
       match instr_h.it with
-      | LetI ({ it = VarE id_l; _ }, _, _) when Renamer.Rename.mem id_l rename
-        ->
+      | LetI (exp_l, _, _)
+        when not
+               (IdSet.is_empty
+                  (IdSet.inter
+                     (Renamer.Rename.dom rename)
+                     (Il.Free.free_exp exp_l))) ->
+          instr_h :: instrs_t
+      | IfI (exp_cond, iterexps, instrs_then) ->
+          let exp_cond = Renamer.rename_exp rename exp_cond in
+          let iterexps = Renamer.rename_iterexps rename iterexps in
+          let instrs_then = rename_let_alias rename instrs_then in
+          let instr_h = IfI (exp_cond, iterexps, instrs_then) $ instr_h.at in
+          let instrs_t = rename_let_alias rename instrs_t in
+          instr_h :: instrs_t
+      | CaseI (exp, cases, total) ->
+          let exp = Renamer.rename_exp rename exp in
+          let cases =
+            let guards, instrs = List.split cases in
+            let guards = List.map (Renamer.rename_guard rename) guards in
+            let instrs = List.map (rename_let_alias rename) instrs in
+            List.combine guards instrs
+          in
+          let instr_h = CaseI (exp, cases, total) $ instr_h.at in
+          let instrs_t = rename_let_alias rename instrs_t in
           instr_h :: instrs_t
       | _ ->
           let instr_h = Renamer.rename_instr rename instr_h in
