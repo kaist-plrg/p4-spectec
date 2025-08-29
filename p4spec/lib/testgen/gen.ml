@@ -236,11 +236,8 @@ let fuzz_mutation (fuel : int) (pid : pid) (idx_seed : int) (strategy : string)
     (query : Query.t) (dirname_gen_tmp : string) (filename_p4 : string)
     (comment_gen_p4 : string) (graph : Dep.Graph.t) (vid_program : vid)
     (vid_source : vid) : unit =
-  (* Reassemble the AST *)
-  let value_source = Dep.Graph.reassemble_graph graph VIdMap.empty vid_source in
-  F.asprintf "[F %d] [P %d] [S %d] [%s %d]\n[File] %s\n[Source] %s\n" fuel pid
-    idx_seed strategy idx_method filename_p4
-    (Sl.Print.string_of_value value_source)
+  F.asprintf "[F %d] [P %d] [S %d] [%s %d]\n[File] %s\n" fuel pid idx_seed
+    strategy idx_method filename_p4
   |> Query.query query;
   (* Mutate the AST *)
   let mutations =
@@ -252,7 +249,11 @@ let fuzz_mutation (fuel : int) (pid : pid) (idx_seed : int) (strategy : string)
     (fun idx_mutation (kind, value_source, value_mutated) ->
       if !trials < Config.trials_seed && MCov.is_miss config.seed.cover pid then (
         trials := !trials + 1;
-        F.asprintf "[Mutated] %s\n" (Sl.Print.string_of_value value_mutated)
+        F.asprintf "[Source] %s\n" (Sl.Print.string_of_value value_source)
+        |> Query.query query;
+        F.asprintf "[Mutated] [%s] %s\n"
+          (Mutate.string_of_kind kind)
+          (Sl.Print.string_of_value value_mutated)
         |> Query.answer query;
         let comment_gen_p4 =
           F.asprintf "%s\n// Mutation %s\n" comment_gen_p4
