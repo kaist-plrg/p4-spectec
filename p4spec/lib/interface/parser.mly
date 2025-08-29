@@ -294,7 +294,7 @@ specializedType:
 namedType:
   | t = nameType
   | t = specializedType
-    { t }
+    { t #@@ "namedType" }
 ;
 
 (* >> Header stack types *)
@@ -322,16 +322,16 @@ typeRef:
 	| t = headerStackType
 	| t = listType
 	| t = tupleType
-    { t }
+    { t #@@ "type" }
 ;
 
 typeOrVoid:
-	| t = typeRef { t }
+	| t = typeRef { t #@@ "typeOrVoid" }
 	| VOID { [ Term "VoidT" ] #@ "typeOrVoid" }
   (* From Petr4: HACK for generic return type *)
 	| id = identifier
     { let n = [ Term "CURRENT"; NT id ] #@ "prefixedName" in
-      [ Term "NameT"; NT n ] #@ "nameType" }
+      [ Term "NameT"; NT n ] #@ "nameType" #@@ "typeOrVoid" }
 ;
 
 (* Type parameters *)
@@ -534,7 +534,7 @@ namedExpressionList_:
 	| e = errorAccessExpression
 	| e = memberAccessExpression
 	| e = indexAccessExpression
-		{ e }
+		{ e #@@ "accessExpression" }
 ;
 
 %inline memberAccessExpressionNonBrace:
@@ -555,7 +555,7 @@ namedExpressionList_:
 	| e = errorAccessExpression
 	| e = memberAccessExpressionNonBrace
 	| e = indexAccessExpressionNonBrace
-		{ e }
+		{ e #@@ "accessExpression" }
 ;
 
 (* >> Call expressions *)
@@ -608,7 +608,7 @@ expression:
 	| e = accessExpression
 	| e = callExpression
 	| e = parenthesizedExpression
-		{ e }
+		{ e #@@ "expression" }
 ;
 
 expressionList_:
@@ -652,7 +652,7 @@ expressionList_:
 %inline dataElementExpression:
 	| e = sequenceElementExpression
 	| e = recordElementExpression 
-    { e }
+    { e #@@ "dataElementExpression" }
 ;
 
 (* >> Non-brace Expressions *)
@@ -666,7 +666,7 @@ expressionNonBrace:
 	| e = accessExpressionNonBrace
 	| e = callExpressionNonBrace
 	| e = parenthesizedExpression
-		{ e }
+		{ e #@@ "expression" }
 ;
 
 (* Keyset Expressions *)
@@ -716,7 +716,7 @@ keysetExpressionList:
 
 (* Type arguments *)
 realTypeArgument:
-	| t = typeRef { t }
+	| t = typeRef { t #@@ "typeArgument" }
 	| VOID
     { [ Term "VoidT" ] #@ "typeArgument" }
 	| DONTCARE
@@ -737,7 +737,7 @@ realTypeArgumentList_:
 
 typeArgument:
 	| t = typeRef
-    { t }
+    { t #@@ "typeArgument" }
 	| t = nonTypeName
     { let n = [ Term "CURRENT"; NT t ] #@ "prefixedName" in
       [ Term "NameT"; NT n ] #@ "typeArgument" }
@@ -914,7 +914,7 @@ statement:
   | s = blockStatement
   | s = conditionalStatement
   | s = switchStatement
-    { s }
+    { s #@@ "statement" }
 ;
 
 (* Declarations *)
@@ -952,7 +952,7 @@ blockElementStatement:
   | d = constantDeclaration
   | d = variableDeclaration
   | d = statement
-    { d }
+    { d #@@ "blockElementStatement" }
 ;
 
 blockElementStatementList_:
@@ -1006,7 +1006,7 @@ instantiation:
 objectDeclaration:
 	| d = functionDeclaration
 	| d = instantiation
-    { d }
+    { d #@@ "objectDeclaration" }
 ;
 
 objectDeclarationList_:
@@ -1087,7 +1087,7 @@ derivedTypeDeclaration:
   | d = structTypeDeclaration
   | d = headerTypeDeclaration
   | d = headerUnionTypeDeclaration
-    { d }
+    { d #@@ "derivedTypeDeclaration" }
 ;
 
 (* >> Typedef and newtype declarations *)
@@ -1152,7 +1152,7 @@ externObjectDeclaration:
 externDeclaration:
   | d = externFunctionDeclaration
   | d = externObjectDeclaration
-    { d }
+    { d #@@ "externDeclaration" }
 ;
 
 (* >> Parser statements and declarations *)
@@ -1200,7 +1200,7 @@ valueSetType:
 	| t = baseType
 	| t = tupleType
 	| t = nameType
-    { t }
+    { t #@@ "valueSetType" }
 ;
 
 valueSetDeclaration:
@@ -1231,7 +1231,7 @@ parserStatement:
   | s = directApplicationStatement
   | s = parserBlockStatement
   | s = conditionalStatement
-    { s }
+    { s #@@ "parserStatement" }
 ;
 
 parserStatementList_:
@@ -1269,7 +1269,7 @@ parserLocalDeclaration:
   | d = instantiation
   | d = variableDeclaration
   | d = valueSetDeclaration
-    { d }
+    { d #@@ "parserLocalDeclaration" }
 ;
 
 parserLocalDeclarationList_:
@@ -1330,7 +1330,7 @@ tableActionReference:
 
 tableAction:
   | _al = annotationList ac = tableActionReference SEMICOLON
-    { ac }
+    { ac #@@ "tableAction" }
 ;
 
 tableActionList_:
@@ -1413,18 +1413,18 @@ controlTypeDeclaration:
 
 (* >>>> Control declarations *)
 controlBody:
-  | b = blockStatement { b }
+  | b = blockStatement { b #@@ "controlBody" }
 ;
 
 controlLocalDeclaration:
   | d = constantDeclaration 
   | d = instantiation 
   | d = variableDeclaration
-    { d }
+    { d #@@ "controlLocalDeclaration" }
   | d = actionDeclaration
   | d = tableDeclaration
     { declare_var (id_of_declaration d) false;
-      d }
+      d #@@ "controlLocalDeclaration" }
 ;
 
 controlLocalDeclarationList_:
@@ -1461,32 +1461,32 @@ typeDeclaration:
   | d = parserTypeDeclaration
   | d = controlTypeDeclaration
   | d = packageTypeDeclaration
-    { d }
+    { d #@@ "typeDeclaration" }
 ;
 
 (* >> Declarations *)
 declaration:
   | const = constantDeclaration
     { declare_var (id_of_declaration const) (has_type_params_declaration const);
-      const }
+      const #@@ "declaration" }
   | inst = instantiation
     { declare_var (id_of_declaration inst) false;
-      inst }
+      inst #@@ "declaration" }
   | func = functionDeclaration
     { declare_var (id_of_declaration func) (has_type_params_declaration func);
-      func }
+      func #@@ "declaration" }
   | action = actionDeclaration
     { declare_var (id_of_declaration action) false;
-      action }
+      action #@@ "declaration" }
   | d = errorDeclaration
   | d = matchKindDeclaration
   | d = externDeclaration
-    { d }
+    { d #@@ "declaration" }
   | d = parserDeclaration
   | d = controlDeclaration
   | d = typeDeclaration
     { declare_type (id_of_declaration d) (has_type_params_declaration d);
-      d }
+      d #@@ "declaration" }
 ;
 
 (* Annotations *)
@@ -1564,4 +1564,4 @@ declarationList_:
   | dl = declarationList_ { dl |> wrap_list_v "declaration" }
 
 p4program:
-	| dl = declarationList END { dl }
+	| dl = declarationList END { dl #@@ "program" }

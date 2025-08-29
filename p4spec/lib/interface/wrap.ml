@@ -79,3 +79,6 @@ let wrap_list_v (s : string) (vs : value list) : value =
 
 let ( #@ ) (vs : symbol list) (s : string) : value =
   vs |> wrap_case_v |> with_typ (wrap_var_t s)
+
+let ( #@@ ) (v : value) (s : string) : value =
+  { v with note = { v.note with typ = wrap_var_t s } }
