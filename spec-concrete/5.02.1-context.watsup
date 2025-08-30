@@ -352,14 +352,20 @@ def $find_var(LOCAL, TC, CURRENT id) = $find_var(BLOCK, TC, CURRENT id)
 
 ;;; Finder for values
 
-dec $find_value(cursor, typingContext, prefixedName) : value
+dec $find_value(cursor, typingContext, prefixedName) : value?
 
 def $find_value(p, TC, TOP id) = value
   -- if frame = TC.GLOBAL.FRAME
   -- if _ _ _ value = $find_map<id, varTypeIR>(frame, id)
+def $find_value(p, TC, TOP id) = eps
+  -- if frame = TC.GLOBAL.FRAME
+  -- if eps = $find_map<id, varTypeIR>(frame, id)
 def $find_value(GLOBAL, TC, CURRENT id) = value
   -- if frame = TC.GLOBAL.FRAME
   -- if _ _ _ value = $find_map<id, varTypeIR>(frame, id)
+def $find_value(GLOBAL, TC, CURRENT id) = eps
+  -- if frame = TC.GLOBAL.FRAME
+  -- if eps = $find_map<id, varTypeIR>(frame, id)
 def $find_value(BLOCK, TC, CURRENT id) = value
   -- if frame = TC.BLOCK.FRAME
   -- if _ _ _ value = $find_map<id, varTypeIR>(frame, id)

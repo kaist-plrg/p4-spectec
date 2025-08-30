@@ -885,7 +885,7 @@ and totalize_case_analysis' (tdenv : TDEnv.t) (instr : instr) : instr =
   | IfI (exp_cond, iterexps, instrs_then) ->
       let instrs_then = totalize_case_analysis tdenv instrs_then in
       IfI (exp_cond, iterexps, instrs_then) $ at
-  | CaseI (exp, cases, false) -> (
+  | CaseI (exp, cases, total) -> (
       let cases =
         let guards, blocks = List.split cases in
         let blocks = List.map (totalize_case_analysis tdenv) blocks in
@@ -902,7 +902,7 @@ and totalize_case_analysis' (tdenv : TDEnv.t) (instr : instr) : instr =
           let mixops_case = Set.of_list mixops_case in
           let total = Set.equal mixops_case mixops_total in
           CaseI (exp, cases, total) $ at
-      | None -> CaseI (exp, cases, false) $ at)
+      | None -> CaseI (exp, cases, total) $ at)
   | _ -> instr
 
 (* [6] Remove redundant match on singleton case

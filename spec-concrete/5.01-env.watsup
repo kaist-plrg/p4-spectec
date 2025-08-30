@@ -58,11 +58,16 @@ def $get_missing_default_parameters(
   = id_param_h :: $get_missing_default_parameters(pid_t*, id_arg*)
   -- if ~$in_set<id>(id_param_h, `{ id_arg* })
 def $get_missing_default_parameters(
-    pid_h :: pid_t*,
+    (id_param_h true) :: pid_t*,
     id_arg*
   )
   = $get_missing_default_parameters(pid_t*, id_arg*)
-  -- otherwise
+  -- if $in_set<id>(id_param_h, `{ id_arg* })
+def $get_missing_default_parameters(
+    (id_param_h false) :: pid_t*,
+    id_arg*
+  )
+  = $get_missing_default_parameters(pid_t*, id_arg*)
 
 ;; Check match between parameters and named arguments
 dec $find_match_named<V>(rid, V, id*, pid*) : (rid, V, id*)?

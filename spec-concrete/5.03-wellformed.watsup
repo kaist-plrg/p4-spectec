@@ -497,17 +497,17 @@ rule RoutineType_wf/functiontype:
   -- Type_wf: bound |- typeIR_ret
 
 dec $directionless_trailing(direction*) : bool
-dec $directionless_trailing'(bool, direction*) : bool
+dec $directionless_trailing'(direction*, bool) : bool
 
 def $directionless_trailing(direction*)
-  = $directionless_trailing'(true, $rev_<direction>(direction*))
+  = $directionless_trailing'($rev_<direction>(direction*), true)
 
-def $directionless_trailing'(_, eps) = true
-def $directionless_trailing'(true, NO :: direction_t*)
-  = $directionless_trailing'(true, direction_t*)
-def $directionless_trailing'(false, NO :: direction_t*) = false
-def $directionless_trailing'(_, direction_h :: direction_t*)
-  = $directionless_trailing'(false, direction_t*)
+def $directionless_trailing'(eps, _) = true
+def $directionless_trailing'(NO :: direction_t*, true)
+  = $directionless_trailing'(direction_t*, true)
+def $directionless_trailing'(NO :: direction_t*, false) = false
+def $directionless_trailing'(direction_h :: direction_t*, _)
+  = $directionless_trailing'(direction_t*, false)
   -- if direction_h =/= NO
 
 dec $nestable_action(direction, typeIR) : bool

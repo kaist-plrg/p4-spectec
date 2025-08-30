@@ -104,8 +104,8 @@ rule Decl_object_ok/functionDeclaration:
   -- if f = RET \/ typeIR_ret = VoidT
   ---- ;; add function
   -- if rid = $rid(name, parameter*)
-  -- if methodTypeIR = ExternMethodT parameterTypeIR* typeIR_ret
-  -- if routineTypeDefIR = PolyTD methodTypeIR tid_expl* tid_impl*
+  -- if routineTypeIR = ExternMethodT parameterTypeIR* typeIR_ret
+  -- if routineTypeDefIR = PolyTD routineTypeIR tid_expl* tid_impl*
   -- RoutineTypeDef_wf: $bound(p, TC_0) |- routineTypeDefIR
   -- if rdenv_init = $update_map<rid, routineTypeDefIR>(rdenv, rid, routineTypeDefIR)
   ---- ;; create IR
@@ -275,8 +275,8 @@ rule Decl_ok/functionDeclaration:
   -- if f = RET \/ typeIR_ret = VoidT
   ---- ;; add function to the context
   -- if rid = $rid(name, parameter*)
-  -- if functionTypeIR = FuncT parameterTypeIR* typeIR_ret
-  -- if routineTypeDefIR = PolyTD functionTypeIR tid_expl* tid_impl*
+  -- if routineTypeIR = FuncT parameterTypeIR* typeIR_ret
+  -- if routineTypeDefIR = PolyTD routineTypeIR tid_expl* tid_impl*
   -- RoutineTypeDef_wf: $bound(p, TC_0) |- routineTypeDefIR
   -- if TC_4 = $add_routine_overload(p, TC_0, rid, routineTypeDefIR)
   ---- ;; create IR
@@ -301,9 +301,9 @@ rule Decl_ok/actionDeclaration:
   -- Block_ok: TC_2 CONT |- blockStatement : _ _ blockStatementIR
   ---- ;; add action to the context
   -- if rid = $rid(name, parameter*)
-  -- if functionTypeIR = ActionT parameterTypeIR*
-  -- RoutineTypeDef_wf: $bound(p, TC_0) |- MonoTD functionTypeIR
-  -- if TC_3 = $add_routine_non_overload(p, TC_0, rid, MonoTD functionTypeIR)
+  -- if routineTypeIR = ActionT parameterTypeIR*
+  -- RoutineTypeDef_wf: $bound(p, TC_0) |- MonoTD routineTypeIR
+  -- if TC_3 = $add_routine_non_overload(p, TC_0, rid, MonoTD routineTypeIR)
   ---- ;; create IR
   -- if actionDeclarationIR
       = ActionD name parameterIR* blockStatementIR
@@ -354,8 +354,8 @@ rule Decl_ok/externDeclaration-externFunctionDeclaration:
   -- if TC_3 = $add_parameters(LOCAL, TC_2, parameterTypeIR*)
   ---- ;; check extern function type and add to context
   -- if rid = $rid(name, parameter*)
-  -- if functionTypeIR = ExternFuncT parameterTypeIR* typeIR_ret
-  -- if routineTypeDefIR = PolyTD functionTypeIR tid_expl* tid_impl*
+  -- if routineTypeIR = ExternFuncT parameterTypeIR* typeIR_ret
+  -- if routineTypeDefIR = PolyTD routineTypeIR tid_expl* tid_impl*
   -- RoutineTypeDef_wf: $bound(GLOBAL, TC_0) |- routineTypeDefIR
   -- if TC_4 = $add_routine_overload(GLOBAL, TC_0, rid, routineTypeDefIR)
   ---- ;; create IR
@@ -450,8 +450,8 @@ rule Decl_ok/parserDeclaration:
   ---- ;; check parser states
   -- ParserStates_ok: TC_5 |- parserState* : parserStateIR*
   ---- ;; check apply method
-  -- if methodTypeIR = ParserApplyMethodT parameterTypeIR*
-  -- RoutineTypeDef_wf: $bound(GLOBAL, TC_0) |- MonoTD methodTypeIR
+  -- if routineTypeIR = ParserApplyMethodT parameterTypeIR*
+  -- RoutineTypeDef_wf: $bound(GLOBAL, TC_0) |- MonoTD routineTypeIR
   ---- ;; create parser object constructor and add to context
   -- if cid = $cid(name, constructorParameter*)
   -- if typeIR_parser = ParserT parameterTypeIR*
@@ -499,8 +499,8 @@ rule Decl_ok/controlDeclaration:
   ---- ;; check control body
   -- Block_ok: TC_5 CONT |- controlBody : _ _ controlBodyIR
   ---- ;; check apply method
-  -- if methodTypeIR = ControlApplyMethodT parameterTypeIR*
-  -- RoutineTypeDef_wf: $bound(GLOBAL, TC_0) |- MonoTD methodTypeIR
+  -- if routineTypeIR = ControlApplyMethodT parameterTypeIR*
+  -- RoutineTypeDef_wf: $bound(GLOBAL, TC_0) |- MonoTD routineTypeIR
   ---- ;; create control object constructor and add to context
   -- if cid = $cid(name, constructorParameter*)
   -- if typeIR_control = ControlT parameterTypeIR*
