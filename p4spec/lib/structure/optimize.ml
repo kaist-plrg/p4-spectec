@@ -432,17 +432,22 @@ type overlap =
   | Partition of exp * guard * guard
   | Fuzzy
 
-let rec distinct_exp_literal (exp_a : exp) (exp_b : exp) : bool =
+let partition_exp_literal (exp_a : exp) (exp_b : exp) : bool =
+  match (exp_a.it, exp_b.it) with
+  | BoolE b_a, BoolE b_b -> b_a <> b_b
+  | _ -> false
+
+let rec disjoint_exp_literal (exp_a : exp) (exp_b : exp) : bool =
   match (exp_a.it, exp_b.it) with
   | BoolE b_a, BoolE b_b -> b_a <> b_b
   | NumE n_a, NumE n_b -> not (Num.eq n_a n_b)
   | TextE t_a, TextE t_b -> t_a <> t_b
   | TupleE exps_a, TupleE exps_b ->
       assert (List.length exps_a = List.length exps_b);
-      List.exists2 distinct_exp_literal exps_a exps_b
+      List.exists2 disjoint_exp_literal exps_a exps_b
   | CaseE (mixop_a, []), CaseE (mixop_b, []) -> not (Mixop.eq mixop_a mixop_b)
   | ListE exps_a, ListE exps_b when List.length exps_a = List.length exps_b ->
-      List.exists2 distinct_exp_literal exps_a exps_b
+      List.exists2 disjoint_exp_literal exps_a exps_b
   | ListE _, ListE _ -> true
   | _ -> false
 
@@ -474,7 +479,25 @@ let rec overlap_exp (tdenv : TDEnv.t) (exp_a : exp) (exp_b : exp) : overlap =
         CmpE (`EqOp, optyp_b, exp_b_l, exp_b_r) )
       when optyp_a = optyp_b
            && Sl.Eq.eq_exp exp_a_l exp_b_l
-           && distinct_exp_literal exp_a_r exp_b_r ->
+           && partition_exp_literal exp_a_r exp_b_r ->
+        Partition
+          ( exp_a_l,
+            CmpG (`EqOp, optyp_a, exp_a_r),
+            CmpG (`EqOp, optyp_b, exp_b_r) )
+    | ( CmpE (`EqOp, optyp_a, exp_a_l, exp_a_r),
+        CmpE (`EqOp, optyp_b, exp_b_l, exp_b_r) )
+      when optyp_a = optyp_b
+           && Sl.Eq.eq_exp exp_a_l exp_b_r
+           && partition_exp_literal exp_a_r exp_b_l ->
+        Partition
+          ( exp_a_l,
+            CmpG (`EqOp, optyp_a, exp_a_r),
+            CmpG (`EqOp, optyp_b, exp_b_l) )
+    | ( CmpE (`EqOp, optyp_a, exp_a_l, exp_a_r),
+        CmpE (`EqOp, optyp_b, exp_b_l, exp_b_r) )
+      when optyp_a = optyp_b
+           && Sl.Eq.eq_exp exp_a_l exp_b_l
+           && disjoint_exp_literal exp_a_r exp_b_r ->
         Disjoint
           ( exp_a_l,
             CmpG (`EqOp, optyp_a, exp_a_r),
@@ -483,7 +506,7 @@ let rec overlap_exp (tdenv : TDEnv.t) (exp_a : exp) (exp_b : exp) : overlap =
         CmpE (`EqOp, optyp_b, exp_b_l, exp_b_r) )
       when optyp_a = optyp_b
            && Sl.Eq.eq_exp exp_a_l exp_b_r
-           && distinct_exp_literal exp_a_r exp_b_l ->
+           && disjoint_exp_literal exp_a_r exp_b_l ->
         Disjoint
           ( exp_a_l,
             CmpG (`EqOp, optyp_a, exp_a_r),
@@ -520,7 +543,7 @@ let rec overlap_exp (tdenv : TDEnv.t) (exp_a : exp) (exp_b : exp) : overlap =
       when Sl.Eq.eq_exp exp_e_a exp_e_b
            && List.for_all
                 (fun exp_s_a ->
-                  List.for_all (distinct_exp_literal exp_s_a) exps_s_b)
+                  List.for_all (disjoint_exp_literal exp_s_a) exps_s_b)
                 exps_s_a ->
         Disjoint (exp_e_a, MemG exp_s_a, MemG exp_s_b)
     | _ -> Fuzzy

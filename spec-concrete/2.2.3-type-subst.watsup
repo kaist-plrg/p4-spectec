@@ -107,8 +107,8 @@ def $free_type(RecordT (typeIR _)*)
 def $free_type(RecordDefaultT (typeIR _)*)
   = $unions_set<tid>($free_type(typeIR)*)
 
-def $free_type(SetT typeIR*)
-  = $unions_set<tid>($free_type(typeIR)*)
+def $free_type(SetT typeIR)
+  = $free_type(typeIR)
 
 def $free_type(TableEnumT _ _) = `{ eps }
 
@@ -347,9 +347,9 @@ def $subst_type'(
   = RecordDefaultT (typeIR_f_subst id_f)*
   -- if (typeIR_f_subst = $subst_type'(theta, typeIR_f))*
 
-def $subst_type'(theta, SetT typeIR*)
-  = SetT typeIR_subst*
-  -- if (typeIR_subst = $subst_type'(theta, typeIR))*
+def $subst_type'(theta, SetT typeIR)
+  = SetT typeIR_subst
+  -- if typeIR_subst = $subst_type'(theta, typeIR)
 
 ;;; Otherwise
 

@@ -159,6 +159,13 @@ def $find_matching<V>(
     )
   -- if $check_routine_name(id_r, id_r')
   -- if $check_arity_less((id_arg?)*, id_param'*)
+;; Otherwise
+def $find_matching<V>(
+    id_r, (id_arg?)*, id_arg'*,
+    rid, V
+  )
+  = eps
+  -- otherwise
 
 ;; Find all callables that match the given name and arguments
 dec $find_matchings<V>(id, (id?)*, id*, rid*, V*) : (rid, V, id*)*
@@ -181,6 +188,12 @@ def $find_matchings<V>(
   = (rid, V, id_default*) :: $find_matchings<V>(id_r, (id_arg?)*, id_arg'*, rid_t*, V_t*)
   -- if (rid, V, id_default*)
       = $find_matching<V>(id_r, (id_arg?)*, id_arg'*, rid_h, V_h)
+def $find_matchings<V>(
+    id_r, (id_arg?)*, id_arg'*,
+    rid*, V*
+  )
+  = eps
+  -- otherwise
 
 ;; Find a matching callable, given a callable name and arguments
 dec $find_overloaded<V>(map<rid, V>, id, (id?)*) : (rid, V, id*)?
@@ -215,6 +228,12 @@ def $find_overloaded<V>(
   -- if (id_arg? = eps)*
   -- if (rid', V', id_default*)
       = $find_matchings<V>(id_r, (id_arg?)*, eps, rid*, V*)
+;; Otherwise
+def $find_overloaded<V>(
+    `{ (rid -> V)* }, id_r, (id_arg?)*
+  )
+  = eps
+  -- otherwise
 
 ;;
 ;; Callable non-overload resolution

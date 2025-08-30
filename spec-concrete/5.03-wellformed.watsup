@@ -46,26 +46,18 @@ relation ConstructorTypeDef_wf:
 ;;;; Well-formedness of parameter types
 ;;
 
-rule ParameterType_wf/default-empty-extern:
-  bound |- NO typeIR _ eps
-  -- Type_wf: bound |- typeIR
-  -- if $is_extern_object_typeIR($canon(typeIR))
-
-rule ParameterType_wf/default-none-not-extern:
+rule ParameterType_wf/default-none:
   bound |- direction typeIR _ eps
   -- Type_wf: bound |- typeIR
-  -- if ~$is_extern_object_typeIR($canon(typeIR))
-
-rule ParameterType_wf/default-some-extern:
-  bound |- NO typeIR _ value
-  -- Type_wf: bound |- typeIR
   -- if $is_extern_object_typeIR($canon(typeIR))
+        => direction = NO
 
-rule ParameterType_wf/default-some-not-extern:
+rule ParameterType_wf/default-some:
   bound |- direction typeIR _ value
   -- Type_wf: bound |- typeIR
-  -- if ~$is_extern_object_typeIR($canon(typeIR))
   -- if direction = IN \/ direction = NO
+  -- if $is_extern_object_typeIR($canon(typeIR))
+        => direction = NO
 
 rule ParameterTypes_wf:
   bound |- parameterTypeIR*
@@ -428,38 +420,12 @@ rule Type_wf/tablestructtype:
 ;;;; Well-formedness of type definitions
 ;;
 
-dec $definable_type_mono(typeIR) : bool
-
-def $definable_type_mono(NameT _) = true
-def $definable_type_mono(aliasTypeIR) = true
-def $definable_type_mono(EnumT _ _) = true
-def $definable_type_mono(SEnumT _ _ _) = true
-def $definable_type_mono(TableT _ _) = true
-def $definable_type_mono(_) = false
-  -- otherwise
-
 rule TypeDef_wf/mono:
   bound |- MonoTD typeIR
-  -- if $definable_type_mono(typeIR)
   -- Type_wf: bound |- typeIR
-
-dec $definable_type_poly(typeIR) : bool
-
-def $definable_type_poly(TupleT _) = true
-def $definable_type_poly(HeaderStackT _ _) = true
-def $definable_type_poly(HeaderT _ _) = true
-def $definable_type_poly(HeaderUnionT _ _) = true
-def $definable_type_poly(StructT _ _) = true
-def $definable_type_poly(ExternT _ _) = true
-def $definable_type_poly(ParserT _) = true
-def $definable_type_poly(ControlT _) = true
-def $definable_type_poly(PackageT _ _) = true
-def $definable_type_poly(_) = false
-  -- otherwise
 
 rule TypeDef_wf/poly:
   bound |- PolyTD typeIR tid_expl* tid_impl*
-  -- if $definable_type_poly(typeIR)
   -- if $distinct_<tid>(tid_expl* ++ tid_impl*)
   -- if bound_inner
       = $union_set<tid>(bound, `{ tid_expl* ++ tid_impl* })
@@ -655,34 +621,12 @@ rule RoutineType_wf/tableapplymethod:
 ;;;; Well-formedness of routine type definitions
 ;;
 
-dec $definable_routine_mono(routineTypeIR) : bool
-
-def $definable_routine_mono(BuiltinFuncT _ _) = true
-def $definable_routine_mono(ActionT _) = true
-def $definable_routine_mono(BuiltinMethodT _ _) = true
-def $definable_routine_mono(ParserApplyMethodT _ ) = true
-def $definable_routine_mono(ControlApplyMethodT _ ) = true
-def $definable_routine_mono(TableApplyMethodT _) = true
-def $definable_routine_mono(_) = false
-  -- otherwise
-
 rule RoutineTypeDef_wf/mono:
   bound |- MonoTD routineTypeIR
-  -- if $definable_routine_mono(routineTypeIR)
   -- RoutineType_wf: bound |- routineTypeIR
-
-dec $definable_routine_poly(routineTypeIR) : bool
-
-def $definable_routine_poly(FuncT _ _) = true
-def $definable_routine_poly(ExternFuncT _ _) = true
-def $definable_routine_poly(ExternMethodT _ _) = true
-def $definable_routine_poly(ExternAbstractMethodT _ _) = true
-def $definable_routine_poly(_) = false
-  -- otherwise
 
 rule RoutineTypeDef_wf/poly:
   bound |- PolyTD routineTypeIR tid_expl* tid_impl*
-  -- if $definable_routine_poly(routineTypeIR)
   -- if $distinct_<tid>(tid_expl* ++ tid_impl*)
   -- if bound_inner
       = $union_set<tid>(bound, `{ tid_expl* ++ tid_impl* })
@@ -711,7 +655,7 @@ dec $nestable'_constructor_extern(typeIR) : bool
 
 def $nestable_constructor_extern(typeIR)
   = $nestable'_constructor_extern($canon(typeIR))
-def $nestable_constructor_extern(ParserT _) = false
+def $nestable'_constructor_extern(ParserT _) = false
 def $nestable'_constructor_extern(ControlT _) = false
 def $nestable'_constructor_extern(PackageT _ _) = false
 def $nestable'_constructor_extern(TableT _ _) = false
@@ -785,22 +729,9 @@ rule ConstructorType_wf/packagetype:
 ;;;; Well-formedness of constructor definitions
 ;;
 
-dec $definable_constructor(typeIR) : bool
-dec $definable'_constructor(typeIR) : bool
-
-def $definable_constructor(typeIR)
-  = $definable'_constructor($canon(typeIR))
-def $definable'_constructor(ExternT _ _) = true
-def $definable'_constructor(ParserT _) = true
-def $definable'_constructor(ControlT _) = true
-def $definable'_constructor(PackageT _ _) = true
-def $definable'_constructor(_) = false
-  -- otherwise
-
 rule ConstructorTypeDef_wf:
   bound |- PolyTD constructorTypeIR tid_expl* tid_impl*
   -- if ConstructorT _ typeIR_object = constructorTypeIR
-  -- if $definable_constructor(typeIR_object)
   -- if $distinct_<tid>(tid_expl* ++ tid_impl*)
   -- if bound_inner
       = $union_set<tid>(bound, `{ tid_expl* ++ tid_impl* })

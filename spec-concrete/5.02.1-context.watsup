@@ -354,27 +354,27 @@ def $find_var(LOCAL, TC, CURRENT id) = $find_var(BLOCK, TC, CURRENT id)
 
 dec $find_value(cursor, typingContext, prefixedName) : value?
 
-def $find_value(p, TC, TOP id) = value
+def $find_value(p, TC, TOP id) = value?
   -- if frame = TC.GLOBAL.FRAME
-  -- if _ _ _ value = $find_map<id, varTypeIR>(frame, id)
+  -- if _ _ _ value? = $find_map<id, varTypeIR>(frame, id)
 def $find_value(p, TC, TOP id) = eps
   -- if frame = TC.GLOBAL.FRAME
   -- if eps = $find_map<id, varTypeIR>(frame, id)
-def $find_value(GLOBAL, TC, CURRENT id) = value
+def $find_value(GLOBAL, TC, CURRENT id) = value?
   -- if frame = TC.GLOBAL.FRAME
-  -- if _ _ _ value = $find_map<id, varTypeIR>(frame, id)
+  -- if _ _ _ value? = $find_map<id, varTypeIR>(frame, id)
 def $find_value(GLOBAL, TC, CURRENT id) = eps
   -- if frame = TC.GLOBAL.FRAME
   -- if eps = $find_map<id, varTypeIR>(frame, id)
-def $find_value(BLOCK, TC, CURRENT id) = value
+def $find_value(BLOCK, TC, CURRENT id) = value?
   -- if frame = TC.BLOCK.FRAME
-  -- if _ _ _ value = $find_map<id, varTypeIR>(frame, id)
+  -- if _ _ _ value? = $find_map<id, varTypeIR>(frame, id)
 def $find_value(BLOCK, TC, CURRENT id) = $find_value(GLOBAL, TC, CURRENT id)
   -- if frame = TC.BLOCK.FRAME
   -- if eps = $find_map<id, varTypeIR>(frame, id)
-def $find_value(LOCAL, TC, CURRENT id) = value
+def $find_value(LOCAL, TC, CURRENT id) = value?
   -- if frame* = TC.LOCAL.FRAMES
-  -- if _ _ _ value = $find_maps<id, varTypeIR>(frame*, id)
+  -- if _ _ _ value? = $find_maps<id, varTypeIR>(frame*, id)
 def $find_value(LOCAL, TC, CURRENT id) = $find_value(BLOCK, TC, CURRENT id)
   -- if frame* = TC.LOCAL.FRAMES
   -- if eps = $find_maps<id, varTypeIR>(frame*, id)
@@ -416,7 +416,7 @@ def $id_argument(AnyA) = eps
 dec $find_routine_overloaded(cursor, typingContext, prefixedName, argumentIR*)
   : (rid, routineTypeDefIR, id*)?
 
-def $find_routine_overloaded(GLOBAL, TC, TOP id, argumentIR*)
+def $find_routine_overloaded(p, TC, TOP id, argumentIR*)
   = $find_overloaded<routineTypeDefIR>(rdenv, id, (id_arg?)*)
   -- if rdenv = TC.GLOBAL.RDENV
   -- if (id_arg?)* = $ids_arguments(argumentIR*)
