@@ -1061,10 +1061,10 @@ and elab_exp_not (ctx : Ctx.t) (typ : typ) (exp : exp) :
       | BrackT (atom_t_l, _, atom_t_r), BrackE (atom_e_l, _, atom_e_r)
         when atom_t_l.it <> atom_e_l.it || atom_t_r.it <> atom_e_r.it ->
           fail_elab_not exp.at "atoms do not match"
-      | BrackT (atom_t_l, typ, atom_t_r), BrackE (_, exp, _) ->
+      | BrackT (_, typ, _), BrackE (atom_e_l, exp, atom_e_r) ->
           let* ctx, (mixop, exps_il) = elab_exp_not ctx typ exp in
-          let mixop_l = Mixop.merge [ [ atom_t_l ] ] mixop in
-          let mixop = Mixop.merge mixop_l [ [ atom_t_r ] ] in
+          let mixop_l = Mixop.merge [ [ atom_e_l ] ] mixop in
+          let mixop = Mixop.merge mixop_l [ [ atom_e_r ] ] in
           let notexp_il = (mixop, exps_il) in
           Ok (ctx, notexp_il)
       | _ -> fail_elab_not exp.at "expression does not match notation")
