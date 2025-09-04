@@ -189,6 +189,180 @@ rule Stmt_ok/conditionalStatement-else:
   -- if f_post = $join_flow(f_then, f_else)
 
 ;;; forStatement
+;;; syntax forStatement =
+
+;;;; annotationList FOR
+;;;;  `( forInitStatementList `; expression `; forUpdateStatementList ) statement
+
+;;;;; syntax forUpdateStatement
+
+relation ForUpdateStatement_ok:
+  typingContext |- forUpdateStatement : forUpdateStatementIR
+  hint(input %0 %1)
+
+;;;;;; lvalue `( argumentList )
+
+rule ForUpdateStatement_ok/forUpdateStatement-call-no-typeArgumentList:
+  TC |- lvalue_routine `( argumentList ) : forUpdateStatementIR
+  ---- ;; check base lvalue
+  -- RoutineTarget_lvalue_ok: LOCAL TC |- lvalue_routine : routineTargetIR
+  ---- ;; check arguments
+  -- if argument* = $flatten_argumentList(argumentList)
+  -- (Argument_ok: LOCAL TC |- argument : argumentIR)*
+  ---- ;; check lvalue as routine
+  -- RoutineType_ok:
+      LOCAL TC |- routineTargetIR `< eps > `( argumentIR* )
+                : routineTypeIR `< `# tid_impl* > `( `# id_default* )
+  ---- ;; check calling convention
+  -- Call_ok: LOCAL TC |- routineTypeIR `< eps `# tid_impl* > `( argumentIR* `# id_default* )
+                        : typeIR_ret `< typeArgumentIR_inferred* > `( argumentIR_cast* )
+  ---- ;; create IR
+  -- if forUpdateStatementIR
+      = routineTargetIR `< typeArgumentIR_inferred* > `( argumentIR_cast* )
+
+;;;;;; lvalue `< typeArgumentList > `( argumentList )
+
+rule ForUpdateStatement_ok/forUpdateStatement-call-typeArgumentList:
+  TC |- lvalue_routine `< typeArgumentList > `( argumentList ) : forUpdateStatementIR
+  ---- ;; check base lvalue
+  -- RoutineTarget_lvalue_ok: LOCAL TC |- lvalue_routine : routineTargetIR
+  ---- ;; check type arguments
+  -- if typeArgument* = $flatten_typeArgumentList(typeArgumentList)
+  -- TypeArguments_ok: LOCAL TC |- typeArgument* : typeArgumentIR* `# tid_impl*
+  ---- ;; check arguments
+  -- if argument* = $flatten_argumentList(argumentList)
+  -- (Argument_ok: LOCAL TC |- argument : argumentIR)*
+  ---- ;; check lvalue as routine
+  -- RoutineType_ok:
+      LOCAL TC |- routineTargetIR `< typeArgumentIR* > `( argumentIR* )
+                : routineTypeIR `< `# tid_inserted* > `( `# id_default* )
+  ---- ;; check calling convention
+  -- if tid_infer* = tid_impl* ++ tid_inserted*
+  -- Call_ok: LOCAL TC |- routineTypeIR `< eps `# tid_infer* > `( argumentIR* `# id_default* )
+                        : typeIR_ret `< typeArgumentIR_inferred* > `( argumentIR_cast* )
+  ---- ;; create IR
+  -- if forUpdateStatementIR
+      = routineTargetIR `< typeArgumentIR_inferred* > `( argumentIR_cast* )
+
+;;;;;; lvalue assignop expression
+
+rule ForUpdateStatement_ok/forUpdateStatement-assign-eq:
+  TC |- lvalue `= expression : typedLvalueIR `= typedExpressionIR
+  ---- ;; check lvalue
+  -- Lvalue_ok: LOCAL TC |- lvalue : typedLvalueIR
+  ---- ;; check expression
+  -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
+  ---- ;; fetch annotations
+  -- if _ `# `( typeIR_l ) = typedLvalueIR
+  -- if _ `# `( typeIR_r _ ) = typedExpressionIR
+  ---- ;; check type compatibility
+  ---- ;; while inserting implicit casts if necessary
+  -- if typedExpressionIR_cast = $coerce_unary(typedExpressionIR, typeIR_l)
+
+;;;;;; (TODO) Handle compound assignments
+
+;;;;; syntax forUpdateStatementList
+
+relation ForUpdateStatements_ok:
+  typingContext |- forUpdateStatement* : forUpdateStatementIR*
+  hint(input %0 %1)
+
+rule ForUpdateStatements_ok/nil:
+  TC |- eps : eps
+
+rule ForUpdateStatements_ok/cons:
+  TC |- forUpdateStatement_h :: forUpdateStatement_t*
+      :  forUpdateStatementIR_h :: forUpdateStatementIR_t*
+  -- ForUpdateStatement_ok: TC |- forUpdateStatement_h
+                                : forUpdateStatementIR_h
+  -- ForUpdateStatements_ok: TC |- forUpdateStatement_t*
+                                : forUpdateStatementIR_t*
+
+;;;;; syntax forInitStatement
+
+relation ForInitStatement_ok:
+  typingContext |- forInitStatement : typingContext forInitStatementIR
+  hint(input %0 %1)
+
+;;;;;; annotationList type name initializerOpt
+
+rule ForInitStatement_ok/forInitStatement-variableDeclaration-empty:
+  TC_0 |- annotationList type name `EMPTY
+        : TC_1 (annotationList typeIR nameIR eps)
+  ---- ;; check type
+  -- Type_ok: LOCAL TC_0 |- type : typeIR `# eps
+  -- Type_wf: $bound(LOCAL, TC_0) |- typeIR
+  ---- ;; check that the type is assignable
+  -- if $is_assignable_typeIR(typeIR)
+  ---- ;; update the context
+  -- if nameIR = $name(name)
+  -- if TC_1 = $add_var(LOCAL, TC_0, nameIR, INOUT typeIR DYN eps)
+
+rule ForInitStatement_ok/forInitStatement-variableDeclaration-initializer:
+  TC_0 |- annotationList type name (`= expression_init)
+        : TC_1 (annotationList typeIR nameIR (`= typedExpressionIR_init_cast))
+  ---- ;; check type
+  -- Type_ok: LOCAL TC_0 |- type : typeIR `# eps
+  -- Type_wf: $bound(LOCAL, TC_0) |- typeIR
+  ---- ;; check that the type is assignable
+  -- if $is_assignable_typeIR(typeIR)
+  ---- ;; check expression
+  -- Expr_ok: LOCAL TC_0 |- expression_init : typedExpressionIR_init
+  ---- ;; check that the expression matches the type
+  ---- ;; while inserting implicit casts if necessary
+  -- if typedExpressionIR_init_cast
+      = $coerce_unary(typedExpressionIR_init, typeIR)
+  ---- ;; update the context
+  -- if nameIR = $name(name)
+  -- if TC_1 = $add_var(LOCAL, TC_0, nameIR, INOUT typeIR DYN eps)
+
+;;;;;; forUpdateStatement
+
+rule ForInitStatement_ok/forInitStatement-forUpdateStatement:
+  TC |- forUpdateStatement : TC forUpdateStatementIR
+  -- ForUpdateStatement_ok: TC |- forUpdateStatement : forUpdateStatementIR
+
+;;;;; syntax forInitStatementList
+
+relation ForInitStatements_ok:
+  typingContext |- forInitStatement* : typingContext forInitStatementIR*
+  hint(input %0 %1)
+
+rule ForInitStatements_ok/nil:
+  TC |- eps : TC eps
+
+rule ForInitStatements_ok/cons:
+  TC_0 |- forInitStatement_h :: forInitStatement_t*
+        : TC_2 (forInitStatementIR_h :: forInitStatementIR_t*)
+  -- ForInitStatement_ok: TC_0 |- forInitStatement_h
+                                : TC_1 forInitStatementIR_h
+  -- ForInitStatements_ok: TC_1 |- forInitStatement_t*
+                                : TC_2 forInitStatementIR_t*
+
+rule Stmt_ok/forStatement-condition:
+  LOCAL TC_0 f |- annotationList FOR `( forInitStatementList `; 
+                    expression `; forUpdateStatementList ) statement
+                : TC_4 f_post (annotationList FOR `( forInitStatementIR* `;
+                    typedExpressionIR `; forUpdateStatementIR* ) statementIR)
+  -- if TC_1 = $enter(TC_0)
+  ---- ;; check init statements
+  -- if forInitStatement* = $flatten_forInitStatementList(forInitStatementList)
+  -- ForInitStatements_ok: TC_1 |- forInitStatement* : TC_2 forInitStatementIR*
+  ---- ;; check condition expression
+  -- Expr_ok: LOCAL TC_2 |- expression : typedExpressionIR
+  ---- ;; check update statements
+  -- if forUpdateStatement* = $flatten_forUpdateStatementList(forUpdateStatementList)
+  -- ForUpdateStatements_ok: TC_2 |- forUpdateStatement* : forUpdateStatementIR*
+  ---- ;; check loop body
+  -- Stmt_ok: LOCAL TC_2 f |- statement : TC_3 f_post statementIR
+  -- if TC_4 = $exit(TC_3)
+
+;;;; annotationList FOR
+;;;;  `( type name IN forCollectionExpression ) statement
+
+;;;; annotationList FOR
+;;;; `( annotationList typeIR nameIR IN forCollectionExpressionIR )
+;;;; statementIR
 
 ;;; breakStatement
 
