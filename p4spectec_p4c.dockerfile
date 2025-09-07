@@ -1,7 +1,7 @@
 # --------------------------------------
 # Stage 1: System dependencies
 # --------------------------------------
-FROM ubuntu:20.04 AS base
+FROM ubuntu:22.04 AS base
 
 ARG DEBIAN_FRONTEND=noninteractive
 

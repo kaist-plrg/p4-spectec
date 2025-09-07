@@ -136,7 +136,7 @@ gcovr --root "$OUTPUT_DIR" \
   --txt-metric=branch \
   --gcov-ignore-errors=no_working_dir_found \
   --gcov-ignore-parse-errors=suspicious_hits.warn_once_per_file \
-  -o "$OUTPUT_DIR/coverage_report.gcovr"
+  -o "$OUTPUT_DIR/coverage_report.gcovr" 2> /dev/null
 
 echo "Coverage report generated at $OUTPUT_DIR/coverage_report.gcovr"
 
