@@ -115,8 +115,8 @@ rule Call_convention_expr_ok/empty-action:
   
 rule Call_convention_expr_ok/empty-not-action:
   p TC NOACTION |- (`EMPTY typeIR_param _ _) `@ typedExpressionIR_arg
-                 : typedExpressionIR_arg
-  ---- ;; may not insert implicit casts for direction out or inout
+                 : typedExpressionIR_arg_cast
+  ---- ;; may insert implicit casts for directionless argument
   -- if typedExpressionIR_arg_cast
       = $coerce_unary(typedExpressionIR_arg, typeIR_param)
   -- if _ `# `( _ ctk_arg ) = typedExpressionIR_arg
