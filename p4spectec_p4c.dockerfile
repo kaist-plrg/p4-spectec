@@ -24,7 +24,7 @@ RUN git clone https://github.com/kaist-plrg/p4-spectec.git && \
 WORKDIR /home/p4-spectec
 
 # ---------------------------------------
-# Stage 3: Installations - p4-spectec
+# Stage 3: P4-SpecTec dependencies
 # ---------------------------------------
 FROM source AS opambase
 
@@ -47,7 +47,7 @@ ENV PATH=$OPAM_SWITCH_PREFIX/bin:$PATH
 ENV CAML_LD_LIBRARY_PATH=$OPAM_SWITCH_PREFIX/lib/stublibs:$OPAM_SWITCH_PREFIX/lib/ocaml/stublibs:$OPAM_SWITCH_PREFIX/lib/ocaml
 
 # ---------------------------------------
-# Stage 4: Build p4spec
+# Stage 4: Build P4-SpecTec
 # ---------------------------------------
 FROM opambase AS p4specbase
 
@@ -70,7 +70,7 @@ RUN chmod +x /usr/bin/creduce
 ENV P4SPECTEC_PATH=/home/p4-spectec
 
 # --------------------------------------
-# Stage 4: P4C dependencies
+# Stage 6: P4C dependencies
 # --------------------------------------
 FROM reducebase AS p4cbase
 ENV DEBIAN_FRONTEND=noninteractive
@@ -84,10 +84,9 @@ RUN apt-get update && \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # ---------------------------------------
-# Stage 5: Build P4C
+# Stage 7: Build P4C
 # ---------------------------------------
 WORKDIR /home/p4-spectec/p4c/build
-# RUN ccache --set-config=max_size=1G
 RUN cmake -G "Unix Makefiles" .. \
     -DCMAKE_BUILD_TYPE=Debug \
     -DENABLE_BMV2=OFF \
