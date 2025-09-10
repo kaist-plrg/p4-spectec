@@ -342,8 +342,7 @@ rule ForInitStatements_ok/cons:
 rule Stmt_ok/forStatement-condition:
   LOCAL TC_0 f |- annotationList FOR `( forInitStatementList `; 
                     expression `; forUpdateStatementList ) statement
-                : TC_4 f_post (annotationList FOR `( forInitStatementIR* `;
-                    typedExpressionIR `; forUpdateStatementIR* ) statementIR)
+                : TC_4 f_post forStatementIR
   -- if TC_1 = $enter(TC_0)
   ---- ;; check init statements
   -- if forInitStatement* = $flatten_forInitStatementList(forInitStatementList)
@@ -356,13 +355,109 @@ rule Stmt_ok/forStatement-condition:
   ---- ;; check loop body
   -- Stmt_ok: LOCAL TC_2 f |- statement : TC_3 f_post statementIR
   -- if TC_4 = $exit(TC_3)
+  ---- ;; create IR
+  -- if forStatementIR
+      = annotationList FOR `( forInitStatementIR* `; typedExpressionIR `;
+          forUpdateStatementIR* ) statementIR
 
 ;;;; annotationList FOR
 ;;;;  `( type name IN forCollectionExpression ) statement
 
+;;;;; syntax forCollectionExpression
+
+relation ForCollectionExpression_ok:
+  typingContext typeIR |- forCollectionExpression : forCollectionExpressionIR
+  hint(input %0 %1 %2)
+
+rule ForCollectionExpression_ok/list:
+  TC typeIR_var |- expression : typedExpressionIR
+  ---- ;; check expression
+  -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
+  ---- ;; check list type
+  -- if _ `# `( typeIR_list _ ) = typedExpressionIR
+  -- if LIST `< typeIR_e > = $canon(typeIR_list)
+  -- Sub_impl: typeIR_e <: typeIR_var
+
+rule ForCollectionExpression_ok/header-stack:
+  TC typeIR_var |- expression : typedExpressionIR
+  ---- ;; check expression
+  -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
+  ---- ;; check header stack type
+  -- if _ `# `( typeIR_stack _ ) = typedExpressionIR
+  -- if typeIR_e `[ _ ] = $canon(typeIR_stack)
+  -- Type_alpha: typeIR_e ~~ typeIR_var
+
+dec $compat_range(typeIR, typeIR) : bool
+dec $compat'_range(typeIR, typeIR) : bool
+
+def $compat_range(typeIR_l, typeIR_r)
+  = $compat'_range($canon(typeIR_l), $canon(typeIR_r))
+def $compat'_range(INT, INT) = true
+def $compat'_range(INT `< w >, INT `< w >) = true
+def $compat'_range(BIT `< w >, BIT `< w >) = true
+def $compat'_range(typeIR_l, typeIR_r) = false
+  -- otherwise
+
+rule ForCollectionExpression_ok/range:
+  TC typeIR_var |- expression_l `.. expression_r
+                : typedExpressionIR_l_coerced `.. typedExpressionIR_r_coerced
+  ---- ;; check both sides
+  -- Expr_ok: LOCAL TC |- expression_l : typedExpressionIR_l
+  -- Expr_ok: LOCAL TC |- expression_r : typedExpressionIR_r
+  ---- ;; check that the types are compatible
+  ---- ;; while inserting implicit casts if necessary
+  -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast)
+        = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+  -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
+        = $reduce_serenum_binary(
+            typedExpressionIR_l_cast,
+            typedExpressionIR_r_cast,
+            def $compat_range
+          )
+  ---- ;; fetch the types of both sides
+  -- if _ `# `( typeIR_reduced _ ) = typedExpressionIR_l_reduced
+  -- if _ `# `( typeIR_reduced _ ) = typedExpressionIR_r_reduced
+  ---- ;; cast the expressions to the variable type
+  -- if typedExpressionIR_l_coerced
+      = $coerce_unary(typedExpressionIR_l_reduced, typeIR_var)
+  -- if typedExpressionIR_r_coerced
+      = $coerce_unary(typedExpressionIR_r_reduced, typeIR_var)
+
+rule Stmt_ok/forStatement-in-no-annotations:
+  LOCAL TC_0 f |- annotationList FOR `( type name IN forCollectionExpression)
+                    statement
+                : TC_4 f_post forStatementIR
+  ---- ;; check type
+  -- Type_ok: LOCAL TC_0 |- type : typeIR `# eps
+  -- Type_wf: $bound(LOCAL, TC_0) |- typeIR
+  ---- ;; check that the type is assignable
+  -- if $is_assignable_typeIR(typeIR)
+  ---- ;; check collection expression
+  -- ForCollectionExpression_ok: TC_0 typeIR |- forCollectionExpression
+                                              : forCollectionExpressionIR
+  ---- ;; update the context
+  -- if TC_1 = $enter(TC_0)
+  -- if nameIR = $name(name)
+  -- if TC_2 = $add_var(LOCAL, TC_1, nameIR, INOUT typeIR DYN eps)
+  ---- ;; check loop body
+  -- Stmt_ok: LOCAL TC_2 f |- statement : TC_3 f_post statementIR
+  -- if TC_4 = $exit(TC_3)
+  ---- ;; create IR
+  -- if forStatementIR
+      = annotationList FOR `( typeIR nameIR IN forCollectionExpressionIR )
+          statementIR
+
 ;;;; annotationList FOR
-;;;; `( annotationList typeIR nameIR IN forCollectionExpressionIR )
-;;;; statementIR
+;;;; `( annotationListNonEmpty type name IN forCollectionExpression )
+;;;; statement
+
+rule Stmt_ok/forStatement-in-annotations:
+  LOCAL TC_0 f |- annotationList FOR `( annotationListNonEmpty type name IN
+                    forCollectionExpression) statement
+                : TC_1 f_post forStatementIR
+  -- Stmt_ok: LOCAL TC_0 f |- annotationList FOR `( type name IN
+                                forCollectionExpression) statement
+                            : TC_1 f_post forStatementIR
 
 ;;; breakStatement
 
