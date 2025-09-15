@@ -1,7 +1,7 @@
 open Domain.Lib
 open Xl
 open Sl.Ast
-module Hint = Runtime_static.Rel.Hint
+module InputHint = Runtime_static.Rel.InputHint
 module Typ = Runtime_dynamic.Typ
 module Value = Runtime_dynamic.Value
 module Cache = Runtime_dynamic.Cache
@@ -1237,7 +1237,7 @@ and eval_rule (ctx : Ctx.t) (id : id) (notexp : notexp) : Ctx.t =
   let exps_input, exps_output =
     let inputs, _, _ = rel in
     let _, exps = notexp in
-    Hint.split_exps_without_idx inputs exps
+    InputHint.split_exps_without_idx inputs exps
   in
   let ctx, values_input = eval_exps ctx exps_input in
   let ctx, values_output =

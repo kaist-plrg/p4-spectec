@@ -1,7 +1,7 @@
 open Domain.Lib
 open Xl
 open Il.Ast
-module Hint = Runtime_static.Rel.Hint
+module InputHint = Runtime_static.Rel.InputHint
 module Typ = Runtime_dynamic.Typ
 module Value = Runtime_dynamic.Value
 module Cache = Runtime_dynamic.Cache
@@ -836,7 +836,7 @@ and eval_rule_prem (ctx : Ctx.t) (id : id) (notexp : notexp) : Ctx.t attempt =
   let exps_input, exps_output =
     let inputs, _ = rel in
     let _, exps = notexp in
-    Hint.split_exps_without_idx inputs exps
+    InputHint.split_exps_without_idx inputs exps
   in
   let ctx, values_input = eval_exps ctx exps_input in
   let* ctx, values_output = invoke_rel ctx id values_input in
@@ -945,12 +945,12 @@ and eval_debug_prem (ctx : Ctx.t) (exp : exp) : Ctx.t attempt =
 
 (* Invoke a relation *)
 
-and match_rule (ctx : Ctx.t) (inputs : Hint.t) (rule : rule)
+and match_rule (ctx : Ctx.t) (inputs : InputHint.t) (rule : rule)
     (values_input : value list) : Ctx.t * prem list * exp list =
   let _, notexp, prems = rule.it in
   let exps_input, exps_output =
     let _, exps = notexp in
-    Hint.split_exps_without_idx inputs exps
+    InputHint.split_exps_without_idx inputs exps
   in
   check
     (List.length exps_input = List.length values_input)

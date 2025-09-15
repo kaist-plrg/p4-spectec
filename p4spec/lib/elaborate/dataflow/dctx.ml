@@ -5,7 +5,7 @@ open Runtime_static.Envs
 
 type t = {
   (* Input hints for rules *)
-  hints : HEnv.t;
+  hints : IEnv.t;
   (* Free identifiers over the entire definition *)
   frees : IdSet.t;
   (* Bound variables so far *)
@@ -38,5 +38,5 @@ let add_free (dctx : t) (id : Id.t) =
 
 (* Finders *)
 
-let find_hint (dctx : t) (id : Id.t) = HEnv.find id dctx.hints
+let find_hint (dctx : t) (id : Id.t) = IEnv.find id dctx.hints
 let find_typdef (dctx : t) (tid : TId.t) = TDEnv.find tid dctx.tdenv
