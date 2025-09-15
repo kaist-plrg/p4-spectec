@@ -1,5 +1,6 @@
-open Ast
+open Sl.Ast
 open Util.Source
+module F = Format
 
 (* Numbers *)
 
@@ -68,7 +69,7 @@ let rec string_of_exp exp =
   | Il.Ast.BoolE b -> string_of_bool b
   | Il.Ast.NumE n -> string_of_num n
   | Il.Ast.TextE text -> "\"" ^ String.escaped text ^ "\""
-  | Il.Ast.VarE varid -> string_of_varid varid
+  | Il.Ast.VarE varid -> "`" ^ string_of_varid varid ^ "`"
   | Il.Ast.UnE (unop, _, exp) -> string_of_unop unop ^ string_of_exp exp
   | Il.Ast.BinE (binop, _, exp_l, exp_r) ->
       "(" ^ string_of_exp exp_l ^ " " ^ string_of_binop binop ^ " "
@@ -116,8 +117,7 @@ let rec string_of_exp exp =
   | Il.Ast.CallE (defid, targs, args) ->
       string_of_defid defid ^ string_of_targs targs ^ string_of_args args
   | Il.Ast.HoldE (relid, notexp) ->
-      "(" ^ string_of_relid relid ^ ": " ^ string_of_notexp notexp ^ " holds"
-      ^ ")"
+      "(" ^ string_of_relid relid ^ ": " ^ string_of_notexp notexp ^ ")  holds"
   | Il.Ast.IterE (exp, iterexp) -> string_of_exp exp ^ string_of_iterexp iterexp
 
 and string_of_exps sep exps = String.concat sep (List.map string_of_exp exps)
@@ -182,7 +182,7 @@ and string_of_targs targs = Il.Print.string_of_targs targs
 
 (* Path conditions *)
 
-and string_of_pid pid = Format.asprintf "Phantom#%d" pid
+and string_of_pid pid = F.asprintf "Phantom#%d" pid
 
 and string_of_phantom phantom =
   let pid, _ = phantom in
@@ -191,10 +191,10 @@ and string_of_phantom phantom =
 and string_of_pathcond pathcond =
   match pathcond with
   | ForallC (exp, iterexps) ->
-      Format.asprintf "(forall %s)%s" (string_of_exp exp)
+      F.asprintf "(forall %s)%s" (string_of_exp exp)
         (string_of_iterexps iterexps)
   | ExistsC (exp, iterexps) ->
-      Format.asprintf "(exists %s)%s" (string_of_exp exp)
+      F.asprintf "(exists %s)%s" (string_of_exp exp)
         (string_of_iterexps iterexps)
   | PlainC exp -> "(" ^ string_of_exp exp ^ ")"
 
@@ -203,74 +203,86 @@ and string_of_pathconds pathconds =
 
 (* Case analysis *)
 
-and string_of_case ?(level = 0) ?(index = 0) case =
+and string_of_case ?(level = 0) ?(index = 0) exp case =
   let indent = String.make (level * 2) ' ' in
-  let order = Format.asprintf "%s%d. " indent index in
+  let order = F.asprintf "%s%d. " indent index in
   let guard, instrs = case in
-  Format.asprintf "%sCase %s\n\n%s" order (string_of_guard guard)
+  F.asprintf "%sCase %s\n%s" order (string_of_guard exp guard)
     (string_of_instrs ~level:(level + 1) instrs)
 
-and string_of_cases ?(level = 0) cases =
+and string_of_cases ?(level = 0) exp cases =
   cases
-  |> List.mapi (fun idx case -> string_of_case ~level ~index:(idx + 1) case)
+  |> List.mapi (fun idx case -> string_of_case ~level ~index:(idx + 1) exp case)
   |> String.concat "\n\n"
 
-and string_of_guard guard =
+and string_of_guard exp_case guard =
   match guard with
   | BoolG b -> string_of_bool b
   | CmpG (cmpop, _, exp) ->
-      "(% " ^ string_of_cmpop cmpop ^ " " ^ string_of_exp exp ^ ")"
-  | SubG typ -> "(% has type " ^ string_of_typ typ ^ ")"
-  | MatchG patten -> "(% matches pattern " ^ string_of_pattern patten ^ ")"
-  | MemG exp -> "(% is in " ^ string_of_exp exp ^ ")"
+      F.asprintf "( %s %s %s )"
+        (string_of_exp exp_case)
+        (string_of_cmpop cmpop)
+        (string_of_exp exp)
+  | SubG typ ->
+      F.asprintf "( %s has type %s )"
+        (string_of_exp exp_case)
+        (string_of_typ typ)
+  | MatchG pattern ->
+      F.asprintf "( %s matches pattern %s )"
+        (string_of_exp exp_case)
+        (string_of_pattern pattern)
+  | MemG exp -> 
+      F.asprintf "( %s is in %s )"
+        (string_of_exp exp_case)
+        (string_of_exp exp)
 
 (* Instructions *)
 
 and string_of_instr ?(level = 0) ?(index = 0) instr =
   let indent = String.make (level * 2) ' ' in
-  let order = Format.asprintf "%s%d. " indent index in
+  let order = F.asprintf "%s%d. " indent index in
   match instr.it with
   | IfI (exp_cond, iterexps, instrs_then, None) ->
-      Format.asprintf "%sIf (%s)%s, then\n\n%s" order (string_of_exp exp_cond)
+      F.asprintf "%sIf (%s)%s, then\n%s" order (string_of_exp exp_cond)
         (string_of_iterexps iterexps)
         (string_of_instrs ~level:(level + 1) instrs_then)
   | IfI (exp_cond, iterexps, instrs_then, Some phantom) ->
-      Format.asprintf "%sIf (%s)%s, then\n\n%s\n\n%sElse %s" order
+      F.asprintf "%sIf (%s)%s, then\n%s\n%sElse %s" order
         (string_of_exp exp_cond)
         (string_of_iterexps iterexps)
         (string_of_instrs ~level:(level + 1) instrs_then)
         order
         (string_of_phantom phantom)
   | CaseI (exp, cases, None) ->
-      Format.asprintf "%sCase analysis on %s\n\n%s" order (string_of_exp exp)
-        (string_of_cases ~level:(level + 1) cases)
+      F.asprintf "%sCase analysis on %s\n%s" order (string_of_exp exp)
+        (string_of_cases ~level:(level + 1) exp cases)
   | CaseI (exp, cases, Some phantom) ->
-      Format.asprintf "%sCase analysis on %s\n\n%s\n\n%sElse %s" order
+      F.asprintf "%sCase analysis on %s\n%s\n%sElse %s" order
         (string_of_exp exp)
-        (string_of_cases ~level:(level + 1) cases)
+        (string_of_cases ~level:(level + 1) exp cases)
         order
         (string_of_phantom phantom)
   | OtherwiseI instr ->
-      Format.asprintf "%sOtherwise\n\n%s" order
+      F.asprintf "%sOtherwise\n%s" order
         (string_of_instr ~level:(level + 1) ~index:1 instr)
   | LetI (exp_l, exp_r, iterexps) ->
-      Format.asprintf "%s(Let %s be %s)%s" order (string_of_exp exp_l)
+      F.asprintf "%s(Let %s be %s)%s" order (string_of_exp exp_l)
         (string_of_exp exp_r)
         (string_of_iterexps iterexps)
   | RuleI (id_rel, notexp, iterexps) ->
-      Format.asprintf "%s(%s: %s)%s" order (string_of_relid id_rel)
+      F.asprintf "%s(%s: %s)%s" order (string_of_relid id_rel)
         (string_of_notexp notexp)
         (string_of_iterexps iterexps)
-  | ResultI [] -> Format.asprintf "%sThe relation holds" order
+  | ResultI [] -> F.asprintf "%sThe relation holds" order
   | ResultI exps ->
-      Format.asprintf "%sResult in %s" order (string_of_exps ", " exps)
-  | ReturnI exp -> Format.asprintf "%sReturn %s" order (string_of_exp exp)
-  | DebugI exp -> Format.asprintf "%sDebug: %s" order (string_of_exp exp)
+      F.asprintf "%sResult in %s" order (string_of_exps ", " exps)
+  | ReturnI exp -> F.asprintf "%sReturn %s" order (string_of_exp exp)
+  | DebugI exp -> F.asprintf "%sDebug: %s" order (string_of_exp exp)
 
 and string_of_instrs ?(level = 0) instrs =
   instrs
   |> List.mapi (fun idx instr -> string_of_instr ~level ~index:(idx + 1) instr)
-  |> String.concat "\n\n"
+  |> String.concat "\n"
 
 (* Definitions *)
 
