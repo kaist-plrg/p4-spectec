@@ -410,12 +410,29 @@ let parse_command =
        | Parsing.Lexer.Error msg -> Format.printf "✗ Lexer Error: %s\n" msg
        | e -> Format.printf "unknown error: %s\n" (Printexc.to_string e))
 
+let prose_command =
+  Core.Command.basic ~summary:"insert structured control flow to a p4_16 spec"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map filenames = anon (sequence ("filename" %: string)) in
+     fun () ->
+       try
+         let spec = List.concat_map Frontend.Parse.parse_file filenames in
+         let spec_il = Elaborate.Elab.elab_spec spec in
+         let spec_sl = Structure.Struct.struct_spec spec_il in
+         Format.printf "%s\n" (Prose.Print.string_of_spec spec_sl);
+         ()
+       with
+       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
+       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+
 let command =
   Core.Command.group
     ~summary:"p4spec: a language design framework for the p4_16 language"
     [
       ("elab", elab_command);
       ("struct", struct_command);
+      ("prose", prose_command);
       ("run-il", run_il_command);
       ("inst-il", inst_il_command);
       ("run-il-concrete", run_il_concrete_command);
