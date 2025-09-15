@@ -104,6 +104,8 @@ let rec analyze_prem (dctx : Dctx.t) (prem : prem) :
   match prem.it with
   | RulePr (id, notexp) -> analyze_rule_prem dctx prem.at id notexp
   | IfPr exp -> analyze_if_prem dctx prem.at exp
+  | IfHoldPr (id, notexp) -> analyze_if_hold_prem dctx prem.at id notexp
+  | IfNotHoldPr (id, notexp) -> analyze_if_not_hold_prem dctx prem.at id notexp
   | ElsePr -> (dctx, VEnv.empty, prem, [])
   | LetPr _ ->
       error prem.at "let premise should appear only after bind analysis"
@@ -164,6 +166,20 @@ and analyze_if_prem (dctx : Dctx.t) (at : region) (exp : exp) :
       analyze_exp_as_bound dctx exp;
       let prem = IfPr exp $ at in
       (dctx, VEnv.empty, prem, [])
+
+and analyze_if_hold_prem (dctx : Dctx.t) (at : region) (id : id)
+    (notexp : notexp) : Dctx.t * VEnv.t * prem * prem list =
+  let _, exps = notexp in
+  analyze_exps_as_bound dctx exps;
+  let prem = IfHoldPr (id, notexp) $ at in
+  (dctx, VEnv.empty, prem, [])
+
+and analyze_if_not_hold_prem (dctx : Dctx.t) (at : region) (id : id)
+    (notexp : notexp) : Dctx.t * VEnv.t * prem * prem list =
+  let _, exps = notexp in
+  analyze_exps_as_bound dctx exps;
+  let prem = IfNotHoldPr (id, notexp) $ at in
+  (dctx, VEnv.empty, prem, [])
 
 and analyze_let_prem (dctx : Dctx.t) (exp_l : exp) (binds_l : BEnv.t)
     (exp_r : exp) : Dctx.t * VEnv.t * prem' * prem list =

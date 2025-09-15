@@ -155,8 +155,9 @@ def $find_action'(matchAction_h :: matchAction_t*, prefixedNameIR)
 
 dec $find_table_priority_last(tableContext) : nat
 
-def $find_table_priority_last(TBLC) = n*[|n*| - 1]
+def $find_table_priority_last(TBLC) = n*[n_last]
   -- if n* = TBLC.PRIORITIES.VALUES
+  -- if n_last = $(|n*| - 1)
 
 ;;
 ;; State management
@@ -176,10 +177,13 @@ def $tableEntry_lpm_prefix'(0 W _, n_prefix) = n_prefix
 def $tableEntry_lpm_prefix'(w W n, n_prefix)
   = $tableEntry_lpm_prefix'(value', $(n_prefix + 1))
   -- if $(w > 0)
+  -- if w' = $(w - 1)
   -- if $(n \ 2 =/= 0)
-  -- if value' = $(w - 1) W $((n - 1) / 2)
+  -- if n' = $((n - 1) / 2)
+  -- if value' = w' W n'
 def $tableEntry_lpm_prefix'(w W n, 0)
   = $tableEntry_lpm_prefix'(value', 0)
   -- if $(w > 0)
+  -- if w' = $(w - 1)
   -- if $(n \ 2 = 0)
-  -- if value' = $(w - 1) W $(n / 2)
+  -- if value' = w' W $(n / 2)

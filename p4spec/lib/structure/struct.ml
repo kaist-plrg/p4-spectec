@@ -35,6 +35,18 @@ and struct_prems' (prems_internalized : (prem * iterexp list) list)
           let instrs_t = struct_prems' prems_internalized_t instr_ret in
           let instr_h = Ol.Ast.IfI (exp, iterexps_h, instrs_t) $ at in
           [ instr_h ]
+      | IfHoldPr (id, notexp) ->
+          let instrs_t = struct_prems' prems_internalized_t instr_ret in
+          let instr_h =
+            Ol.Ast.HoldI (id, notexp, iterexps_h, instrs_t, []) $ at
+          in
+          [ instr_h ]
+      | IfNotHoldPr (id, notexp) ->
+          let instrs_t = struct_prems' prems_internalized_t instr_ret in
+          let instr_h =
+            Ol.Ast.HoldI (id, notexp, iterexps_h, [], instrs_t) $ at
+          in
+          [ instr_h ]
       | LetPr (exp_l, exp_r) ->
           let instr_h = Ol.Ast.LetI (exp_l, exp_r, iterexps_h) $ at in
           let instrs_t = struct_prems' prems_internalized_t instr_ret in

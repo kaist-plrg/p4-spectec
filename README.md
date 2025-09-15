@@ -16,7 +16,7 @@ This reuses parts of the [Petr4](https://github.com/verified-network-toolchain/p
   ```shell
   $ opam switch create 5.1.0
   $ eval $(opam env)
-  $ opam install dune bignum menhir core core_unix bisect_ppx
+  $ opam install dune bignum menhir core core_unix bisect_ppx yojson ppx_deriving_yojson
   ```
 
 ### Building the Project

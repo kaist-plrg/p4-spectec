@@ -1,0 +1,690 @@
+;;
+;; Numbers
+;;
+
+syntax bits = int
+syntax width = nat
+
+syntax number =
+  | INT int
+  | FINT width bits
+  | FBIT width bits
+
+;;
+;; Strings
+;;
+
+;;
+;; Identifiers
+;;
+
+syntax name = text
+
+;;
+;; Variables (scoped identifiers)
+;;
+
+syntax prefixedName =
+  | TOP name
+  | CURRENT name
+
+dec $flatten_prefixedName(prefixedName) : name
+def $flatten_prefixedName(TOP name) = "." ++ name
+def $flatten_prefixedName(CURRENT name) = name
+
+;;
+;; Directions
+;;
+
+syntax direction = NO | IN | OUT | INOUT
+
+;;
+;; Types
+;;
+
+;;
+;;;; Base types
+;;
+
+syntax expression
+
+syntax baseType =
+  | BoolT
+  | ErrT
+  | MatchKindT
+  | StrT
+  | IntT
+  | FIntT expression
+  | FBitT expression
+  | VBitT expression
+
+;;
+;;;; Named types
+;;
+
+syntax typeArgument
+
+syntax nameType =
+  NameT prefixedName
+
+syntax specializedType =
+  SpecT prefixedName typeArgument*
+
+syntax namedType =
+  | nameType
+  | specializedType
+
+;;
+;;;; Header stack types
+;;
+
+syntax headerStackType =
+  HeaderStackT namedType expression
+
+;;
+;;;; List types
+;;
+
+syntax listType = ListT typeArgument
+
+;;
+;;;; Tuple types
+;;
+
+syntax tupleType = TupleT typeArgument*
+
+;;
+;;;; Types
+;;
+
+syntax type =
+  | baseType
+  | namedType
+  | headerStackType
+  | listType
+  | tupleType
+
+syntax typeOrVoid =
+  | type
+  | VoidT
+
+;;
+;; Type parameters
+;;
+
+syntax typeParameter = name
+
+;;
+;; Parameters
+;;
+
+syntax initializer
+
+syntax parameter =
+  direction type name initializer?
+
+;;
+;; Constructor parameters
+;;
+
+syntax constructorParameter = parameter
+
+;;
+;; Expression key-value pairs
+;;
+
+syntax namedExpression = name expression
+
+;;
+;; Expressions
+;;
+
+;;
+;;;; Literal expressions
+;;
+
+syntax literalExpression =
+  | BoolE bool
+  | NumE number
+  | StrE text
+
+;;
+;;;; Reference expressions
+;;
+
+syntax referenceExpression = NameE prefixedName
+
+;;
+;;;; Default expressions
+;;
+
+syntax defaultExpression = DefaultE
+
+;;
+;;;; Unary, binary, and ternary expressions
+;;
+
+syntax unop = BNOT | LNOT | UPLUS | UMINUS
+
+syntax unaryExpression = UnE unop expression
+
+syntax binop =
+  | PLUS | SPLUS
+  | MINUS | SMINUS
+  | MUL | DIV | MOD
+  | SHL | SHR
+  | LE | GE | LT | GT
+  | EQ | NE
+  | BAND | BXOR | BOR
+  | CONCAT
+  | LAND | LOR
+
+syntax binaryExpression = BinE expression binop expression
+
+syntax ternaryExpression =
+  TernE expression expression expression
+
+;;
+;;;; Cast expressions
+;;
+
+syntax castExpression = CastE type expression
+
+;;
+;;;; Data (aggregate) expressions
+;;
+
+syntax dataExpression =
+  | InvalidE
+  | SeqE expression*
+  | RecordE namedExpression*
+  | RecordDefaultE namedExpression*
+
+;;
+;;;; Member and index access expressions
+;;
+
+syntax errorAccessExpression = ErrAccE name
+
+syntax memberAccessExpression =
+  | TypeAccE prefixedName name
+  | ExprAccE expression name
+
+syntax indexAccessExpression =
+  | ArrAccE expression expression
+  | BitAccE expression expression expression
+
+syntax accessExpression =
+  | errorAccessExpression
+  | memberAccessExpression
+  | indexAccessExpression
+
+;;
+;;;; Call expressions
+;;
+
+syntax argument
+
+syntax routineTarget
+
+syntax callExpression =
+  | CallE routineTarget typeArgument* argument*
+  | InstE namedType argument*
+
+;;
+;;;; Expressions
+;;
+
+syntax expression =
+  | literalExpression
+  | referenceExpression
+  | defaultExpression
+  | unaryExpression
+  | binaryExpression
+  | ternaryExpression
+  | castExpression
+  | dataExpression
+  | accessExpression
+  | callExpression
+
+syntax routineTarget = expression
+
+;;
+;; Keyset expressions
+;;
+
+syntax keysetExpression =
+  | ExprK expression
+  | MaskK expression expression
+  | RangeK expression expression
+  | DefaultK
+  | AnyK
+
+;;
+;; Type arguments
+;;
+
+syntax typeArgument =
+  | type
+  | VoidT
+  | AnyT 
+
+;;
+;; Arguments
+;;
+
+syntax argument =
+  | ExprA expression
+  | NameA name expression
+  | NameAnyA name
+  | AnyA 
+
+;;
+;; L-values
+;;
+
+syntax lvalue =
+  | NameL prefixedName
+  | LvalueAccL lvalue name
+  | ArrAccL lvalue expression
+  | BitAccL lvalue expression expression
+
+;;
+;; Statements
+;;
+
+;;
+;;;; Empty statements
+;;
+
+syntax emptyStatement = EmptyS
+
+;;
+;;;; Assignment statements
+;;
+
+syntax assignmentStatement = AssignS lvalue expression
+
+;;
+;;;; Call statements
+;;
+
+syntax callStatement =
+  CallS lvalue typeArgument* argument*
+
+;;
+;;;; Direct application statements
+;;
+
+syntax directApplicationStatement = InstS namedType argument*
+
+;;
+;;;; Return statements
+;;
+
+syntax returnStatement = ReturnS expression?
+
+;;
+;;;; Exit statements
+;;
+
+syntax exitStatement = ExitS
+
+;;
+;;;; Block statements
+;;
+
+syntax blockElementStatement
+
+syntax blockStatement =
+  BlockS blockElementStatement*
+
+;;
+;;;; Conditional statements
+;;
+
+syntax statement
+
+syntax conditionalStatement =
+  IfS expression statement statement?
+
+;;
+;;;; Switch statements
+;;
+
+syntax switchLabel =
+  | DefaultL
+  | ExprL expression
+
+syntax switchCase =
+  | FallC switchLabel
+  | MatchC switchLabel blockStatement
+
+syntax switchStatement = SwitchS expression switchCase*
+
+;;
+;;;; Statements
+;;
+
+syntax statement =
+  | emptyStatement
+  | assignmentStatement
+  | callStatement
+  | directApplicationStatement
+  | returnStatement
+  | exitStatement
+  | blockStatement
+  | conditionalStatement
+  | switchStatement
+
+;;
+;; Declarations
+;;
+
+;;
+;;;; Constant and variable declarations
+;;
+
+syntax initializer = expression
+
+syntax constantDeclaration =
+  ConstD type name initializer
+
+syntax variableDeclaration =
+  VarD type name initializer?
+
+syntax blockElementStatement =
+  | constantDeclaration
+  | variableDeclaration
+  | statement
+
+;;
+;;;; Function declarations
+;;
+
+syntax functionDeclaration =
+  FuncD typeOrVoid name
+        typeParameter* parameter* blockStatement
+
+;;
+;;;; Action declarations
+;;
+
+syntax actionDeclaration =
+  ActionD name parameter* blockStatement
+
+;;
+;;;; Instantiations
+;;
+
+syntax objectInitializer
+
+syntax instantiation =
+  InstD type argument* name objectInitializer?
+
+syntax objectDeclaration =
+  | functionDeclaration
+  | instantiation
+
+syntax objectInitializer = objectDeclaration*
+
+;;
+;;;; Error declarations
+;;
+
+syntax errorDeclaration = ErrD name*
+
+;;
+;;;; Match kind declarations
+;;
+
+syntax matchKindDeclaration = MatchKindD name*
+
+;;
+;;;; Derived type declarations
+;;
+
+;;
+;;;;;; Enum type declarations
+;;
+
+syntax enumTypeDeclaration =
+  | EnumD name name*
+  | SEnumD type name namedExpression*
+
+;;
+;;;;;; Struct, header, and union type declarations
+;;
+
+syntax typeField = type name
+
+syntax structTypeDeclaration =
+  StructD name typeParameter* typeField*
+
+syntax headerTypeDeclaration =
+  HeaderD name typeParameter* typeField*
+
+syntax headerUnionTypeDeclaration =
+  HeaderUnionD name typeParameter* typeField*
+
+syntax derivedTypeDeclaration =
+  | enumTypeDeclaration
+  | structTypeDeclaration
+  | headerTypeDeclaration
+  | headerUnionTypeDeclaration
+
+;;
+;;;; Typedef and newtype declarations
+;;
+
+syntax typedefType =
+  | PlainT type
+  | DerivedT derivedTypeDeclaration
+
+syntax typedefDeclaration =
+  | TypeDefD typedefType name
+  | NewTypeD type name
+
+;;
+;;;; Extern declarations
+;;
+
+syntax externFunctionDeclaration =
+  ExternFuncD typeOrVoid name
+              typeParameter* parameter*
+
+syntax methodPrototype =
+  | ConsM name constructorParameter*
+  | MethodM typeOrVoid name typeParameter* parameter*
+  | AbstractMethodM typeOrVoid name typeParameter* parameter*
+
+syntax externObjectDeclaration =
+  ExternObjectD name typeParameter* methodPrototype*
+
+syntax externDeclaration =
+  | externFunctionDeclaration
+  | externObjectDeclaration
+
+;;
+;;;; Parser statements and declarations
+;;
+
+;;
+;;;;;; Select cases
+;;
+
+syntax selectCase = keysetExpression* name
+
+;;
+;;;;;; Transition statements
+;;
+
+syntax stateExpression =
+  | NameE name
+  | SelectE expression* selectCase*
+
+syntax transitionStatement = TransS stateExpression
+
+;;
+;;;;;; Value set declarations
+;;
+
+syntax valueSetType =
+  | baseType
+  | tupleType
+  | nameType
+
+syntax valueSetDeclaration =
+  ValueSetD valueSetType expression name
+
+;;
+;;;;;; Parser type declarations
+;;
+
+syntax parserTypeDeclaration =
+  ParserTypeD name typeParameter* parameter*
+
+;;
+;;;;;; Parser declarations
+;;
+
+syntax parserStatement
+
+syntax parserBlockStatement =
+  ParserBlockS parserStatement*
+
+syntax parserStatement =
+  | constantDeclaration
+  | variableDeclaration
+  | emptyStatement
+  | assignmentStatement
+  | callStatement
+  | directApplicationStatement
+  | parserBlockStatement
+  | conditionalStatement
+
+syntax parserState =
+  name parserStatement* transitionStatement?
+
+syntax parserLocalDeclaration =
+  | constantDeclaration
+  | instantiation
+  | variableDeclaration
+  | valueSetDeclaration
+
+syntax parserDeclaration =
+  ParserD name typeParameter* parameter*
+          constructorParameter*
+          parserLocalDeclaration* parserState*
+
+;;
+;;;; Control statements and declarations
+;;
+
+;;
+;;;;;; Table declarations
+;;
+
+syntax const = CONST
+
+;;
+;;;;;;;; Table key property 
+;;
+
+syntax tableKey = expression name
+
+;;
+;;;;;;;; Table actions property
+;;
+
+syntax tableActionReference = prefixedName argument*
+
+syntax tableAction = tableActionReference
+
+;;
+;;;;;;;; Table entry property
+;;
+
+syntax tableEntryPriority = expression
+
+syntax tableEntry =
+  const? tableEntryPriority?
+         keysetExpression* tableActionReference
+
+;;
+;;;;;;;; Table properties
+;;
+
+syntax tableProperty =
+  | KeyP tableKey*
+  | ActionP tableAction*
+  | EntryP const? tableEntry*
+  | CustomP const? name initializer
+
+syntax tableDeclaration =
+  TableD name tableProperty*
+
+;;
+;;;;;; Control type declarations
+;;
+
+syntax controlTypeDeclaration =
+  ControlTypeD name typeParameter* parameter*
+
+;;
+;;;;;; Control declarations
+;;
+
+syntax controlBody = blockStatement
+
+syntax controlLocalDeclaration =
+  | constantDeclaration
+  | instantiation
+  | variableDeclaration
+  | actionDeclaration
+  | tableDeclaration
+
+syntax controlDeclaration =
+  ControlD name typeParameter* parameter*
+           constructorParameter*
+           controlLocalDeclaration* controlBody
+
+;;
+;;;; Package type declarations
+;;
+
+syntax packageTypeDeclaration =
+  PackageTypeD name typeParameter* constructorParameter*
+
+;;
+;;;; Type declarations
+;;
+
+syntax typeDeclaration =
+  | derivedTypeDeclaration
+  | typedefDeclaration
+  | parserTypeDeclaration
+  | controlTypeDeclaration
+  | packageTypeDeclaration
+
+;;
+;;;; Declaration
+;;
+
+syntax declaration =
+  | constantDeclaration
+  | instantiation
+  | functionDeclaration
+  | actionDeclaration
+  | errorDeclaration
+  | matchKindDeclaration
+  | externDeclaration
+  | parserDeclaration
+  | controlDeclaration 
+  | typeDeclaration
+
+;;
+;; P4 program
+;;
+
+syntax p4program = declaration*

@@ -43,14 +43,14 @@ RUN wget https://apt.llvm.org/llvm.sh && \
 RUN git clone https://github.com/libbpf/libbpf/ -b v1.5.0 ${P4C_DIR}/backends/tc/runtime/libbpf
   ${P4C_DIR}/backends/tc/runtime/build-libbpf
 
-COPY . /home/p4spectec
-WORKDIR /home/p4spectec/p4c
+COPY . /home/p4-spectec
+WORKDIR /home/p4-spectec/p4c
 RUN pip3 install --upgrade pip && \
     pip3 install nnpy && \
     pip3 install -r requirements.txt
 
 # Build
-WORKDIR /home/p4spectec/p4c/build
+WORKDIR /home/p4-spectec/p4c/build
 # RUN ccache --set-config=max_size=1G
 ENV CMAKE_FLAGS="-DCMAKE_UNITY_BUILD=OFF \
     -DENABLE_GTESTS=${ENABLE_GTESTS} \
@@ -64,5 +64,5 @@ RUN cmake --build . -- -j$(nproc) VERBOSE=1 && \
     cmake --install . 
 
 RUN pip3 install gcovr
-WORKDIR /home/p4spectec
+WORKDIR /home/p4-spectec
 

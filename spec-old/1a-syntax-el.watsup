@@ -1,0 +1,325 @@
+;;
+;; Numbers
+;;
+
+syntax bits = int
+syntax width = nat
+
+syntax num =
+  | INT int
+  | FINT width bits
+  | FBIT width bits
+
+;;
+;; Texts
+;;
+
+;;
+;; Identifiers
+;;
+
+syntax id = text
+
+;;
+;; Variables (scoped identifiers)
+;;
+
+syntax name =
+  | TOP id
+  | CURRENT id
+
+;;
+;; Members
+;;
+
+syntax member = id
+
+;;
+;; Match kinds
+;;
+
+syntax matchkind = id
+
+;;
+;; State labels
+;;
+
+syntax statelabel = id
+
+;;
+;; Unary operators
+;;
+
+syntax unop =
+  | BNOT | LNOT
+  | UPLUS | UMINUS
+
+;;
+;; Binary operators
+;;
+
+syntax binop =
+  | PLUS | SPLUS
+  | MINUS | SMINUS
+  | MUL | DIV | MOD
+  | SHL | SHR
+  | LE | GE | LT | GT
+  | EQ | NE
+  | BAND | BXOR | BOR
+  | CONCAT
+  | LAND | LOR
+
+;;
+;; Directions
+;;
+
+syntax dir = NO | IN | OUT | INOUT
+
+;;
+;; Forward declarations of mutually recursive syntax
+;;
+
+syntax expr, stmt, switchcase, decl, tblprop
+
+;;
+;; Types
+;;
+
+syntax type =
+  | VoidT
+  | ErrT
+  | MatchKindT
+  | StrT
+  | BoolT
+  | IntT
+  | FIntT expr
+  | FBitT expr
+  | VBitT expr
+  | StackT type expr
+  | ListT type
+  | TupleT type*
+  | NameT name      
+  | SpecT name type*
+  | AnyT            
+
+;;
+;; Type parameters
+;;
+
+syntax tparam = id
+
+;;
+;; Parameters
+;;
+
+syntax param = id dir type expr?
+
+;;
+;; Constructor parameters
+;;
+
+syntax cparam = param
+
+;;
+;; Type arguments
+;;
+
+syntax targ = type
+
+;;
+;; Arguments
+;;
+
+syntax arg =
+  | ExprA expr
+  | NameA id expr?
+  | AnyA
+
+;;
+;; Keyset expressions
+;;
+
+syntax keyset =
+  | ExprK expr
+  | DefaultK
+  | AnyK
+
+;;
+;; Select-cases for select
+;;
+
+syntax selectcase = keyset* statelabel
+
+;;
+;; Expressions
+;;
+
+syntax expr =
+  | BoolE bool
+  | StrE text
+  | NumE num
+  | NameE name
+  | SeqE expr*
+  | SeqDefaultE expr*
+  | RecordE (member, expr)*
+  | RecordDefaultE (member, expr)*
+  | DefaultE
+  | InvalidE
+  | UnE unop expr
+  | BinE binop expr expr
+  | TernE expr expr expr
+  | CastE type expr
+  | MaskE expr expr
+  | RangeE expr expr
+  | SelectE expr* selectcase*
+  | ArrAccE expr expr
+  | BitAccE expr expr expr
+  | ErrAccE member
+  | TypeAccE name member
+  | ExprAccE expr member
+  | CallFuncE name targ* arg*
+  | CallMethodE expr member targ* arg*
+  | CallTypeE name member targ* arg*
+  | InstE name targ* arg*
+
+;;
+;; Blocks (sequence of statements)
+;;
+
+syntax block = BlockB stmt*
+
+;;
+;; Statements
+;;
+
+syntax stmt =
+  | EmptyS
+  | AssignS expr expr
+  | SwitchS expr switchcase*
+  | IfS expr stmt stmt
+  | BlockS block
+  | ExitS
+  | RetS expr?
+  | CallFuncS name targ* arg*
+  | CallMethodS expr member targ* arg*
+  | CallInstS name targ* arg*
+  | TransS expr
+  | DeclS decl
+
+;;
+;; Match labels and cases for switch
+;;
+
+syntax switchlabel =
+  | ExprL expr
+  | DefaultL
+
+syntax switchcase =
+  | MatchC switchlabel block
+  | FallC switchlabel
+
+;;
+;; Parser state machine
+;;
+
+syntax parserstate = statelabel block
+
+;;
+;; Tables
+;;
+
+syntax tbl = tblprop*
+
+;;
+;; Table keys
+;;
+
+syntax tblkey = expr matchkind
+syntax tblkeyprop = tblkey*
+
+;;
+;; Table actions
+;;
+
+syntax tblaction = name arg*
+syntax tblactionprop = tblaction*
+
+;;
+;; Table entries
+;;
+
+syntax tblentry = bool keyset* tblaction expr?
+syntax tblentryprop = bool tblentry*
+
+;;
+;; Table default properties
+;;
+
+syntax tbldefaultprop = bool tblaction
+
+;;
+;; Table custom properties
+;;
+
+syntax tblcustomprop = bool member expr
+
+;;
+;; Table properties
+;;
+
+syntax tblprop =
+  | KeyP tblkeyprop
+  | ActionP tblactionprop
+  | EntryP tblentryprop
+  | DefaultP tbldefaultprop
+  | CustomP tblcustomprop
+
+;;
+;; Methods
+;;
+
+syntax method =
+  | ExternConsM id cparam*
+  | ExternAbstractM id type tparam* param*
+  | ExternM id type tparam* param*
+
+;;
+;; Declarations
+;;
+
+syntax typedef
+
+syntax decl =
+  | ConstD id type expr
+  | VarD id type expr?
+  | ErrD member*
+  | MatchKindD member*
+  | InstD id name targ* arg* decl*
+  | StructD id tparam* (member, type)*
+  | HeaderD id tparam* (member, type)*
+  | UnionD id tparam* (member, type)*
+  | EnumD id member*
+  | SEnumD id type (member, expr)*
+  | NewTypeD id typedef
+  | TypeDefD id typedef
+  | ValueSetD id type expr
+  | ParserTypeD id tparam* param*
+  | ParserD id param* cparam* decl* parserstate*
+  | TableD id tbl
+  | ControlTypeD id tparam* param*
+  | ControlD id param* cparam* decl* block
+  | ActionD id param* block
+  | FuncD id type tparam* param* block
+  | ExternFuncD id type tparam* param*
+  | ExternObjectD id tparam* method*
+  | PackageTypeD id tparam* cparam*
+
+syntax typedef =
+  | TypeD type
+  | DeclD decl
+
+;;
+;; Program
+;;
+
+syntax program = decl*

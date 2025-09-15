@@ -2,7 +2,7 @@ open Util.Source
 
 (* Mixop is a generalized case constructor *)
 
-type t = Atom.t phrase list list
+type t = Atom.t phrase list list [@@deriving yojson]
 
 let compare mixop_a mixop_b =
   let mixop_a = List.map (List.map it) mixop_a in

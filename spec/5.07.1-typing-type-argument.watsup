@@ -1,0 +1,40 @@
+;;
+;; Type argument typing
+;;
+;; syntax typeArgument
+;;
+
+;;; type
+
+rule TypeArgument_ok/type:
+  p TC |- type : typeIR tid_impl*
+  -- Type_ok: p TC |- type : typeIR tid_impl*
+
+;;; VoidT
+
+rule TypeArgument_ok/voidT:
+  p TC |- VoidT : VoidT eps
+
+;;; AnyT
+
+rule TypeArgument_ok/anyT:
+  p TC |- AnyT : (NameT tid_impl) tid_impl 
+  -- if tid_impl = $fresh_tid()
+
+;;
+;; Type argument list typing
+;;
+;; syntax typeArgument*
+;;
+
+rule TypeArguments_ok:
+  p TC |- eps : eps eps
+
+rule TypeArguments_ok:
+  p TC |- typeArgument_h :: typeArgument_t*
+        : (typeArgumentIR_h :: typeArgumentIR_t*) tid_impl*
+  -- TypeArgument_ok: p TC |- typeArgument_h
+                            : typeArgumentIR_h tid_impl_h*
+  -- TypeArguments_ok: p TC |- typeArgument_t*
+                             : typeArgumentIR_t* tid_impl_t*
+  -- if tid_impl* = tid_impl_h* ++ tid_impl_t*

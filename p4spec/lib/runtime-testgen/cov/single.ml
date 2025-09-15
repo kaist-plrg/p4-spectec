@@ -19,6 +19,11 @@ module Branch = struct
 
   let init (id : id) : t = { origin = id; status = Miss [] }
 
+  (* Equivalence *)
+
+  let eq (branch_a : t) (branch_b : t) : bool =
+    branch_a.origin.it = branch_b.origin.it && branch_a.status = branch_b.status
+
   (* Printer *)
 
   let to_string (branch : t) : string =
@@ -46,6 +51,25 @@ module Cover = struct
             let branch = Branch.init id in
             add pid branch cover
         | None -> cover)
+    | HoldI (_, _, _, holdcase) -> (
+        match holdcase with
+        | BothH (instrs_hold, instrs_nothold) ->
+            let cover = init_instrs cover id instrs_hold in
+            init_instrs cover id instrs_nothold
+        | HoldH (instrs_hold, phantom_opt) -> (
+            let cover = init_instrs cover id instrs_hold in
+            match phantom_opt with
+            | Some (pid, _) ->
+                let branch = Branch.init id in
+                add pid branch cover
+            | None -> cover)
+        | NotHoldH (instrs_nothold, phantom_opt) -> (
+            let cover = init_instrs cover id instrs_nothold in
+            match phantom_opt with
+            | Some (pid, _) ->
+                let branch = Branch.init id in
+                add pid branch cover
+            | None -> cover))
     | CaseI (_, cases, phantom_opt) -> (
         let blocks = cases |> List.split |> snd in
         let cover =

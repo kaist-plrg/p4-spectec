@@ -36,7 +36,7 @@ let id_of_function_prototype (v : value) : string =
   | _ ->
       failwith
         (Printf.sprintf "Invalid functionPrototype: %s"
-           (Il.Print_debug.string_of_value v))
+           (Il.Print.string_of_value v))
 
 let id_of_declaration (decl : value) : string =
   match flatten_case_v decl with
@@ -140,7 +140,7 @@ let has_type_params_function_prototype (v : value) : bool =
   | _ ->
       failwith
         (Printf.sprintf "Invalid functionPrototype: %s"
-           (Il.Print_debug.string_of_value v))
+           (Il.Print.string_of_value v))
 
 let has_type_params_declaration (decl : value) : bool =
   match flatten_case_v decl with

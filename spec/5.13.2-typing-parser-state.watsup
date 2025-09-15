@@ -1,0 +1,56 @@
+;;
+;; Parser state typing
+;;
+;; syntax parserState =
+;;   name parserStatement* transitionStatement?
+;;
+
+rule ParserState_ok/none:
+  TC_0 name_state* |- name parserStatement* eps
+                    : parserStateIR
+  ---- ;; enter block scope
+  -- if TC_1 = $enter(TC_0)
+  ---- ;; check parser statements
+  -- ParserStmts_ok: TC_1 |- parserStatement* : TC_2 parserStatementIR*
+  ---- ;; check transition statement
+  -- if transitionStatementIR = TransS (NameE "reject")
+  ---- ;; exit block scope
+  -- if TC_3 = $exit(TC_2)
+  ---- ;; create IR
+  -- if parserStateIR
+      = name parserStatementIR* transitionStatementIR
+
+rule ParserState_ok/some:
+  TC_0 name_state* |- name parserStatement* transitionStatement
+                      : parserStateIR
+  ---- ;; enter block scope
+  -- if TC_1 = $enter(TC_0)
+  ---- ;; check parser statements
+  -- ParserStmts_ok: TC_1 |- parserStatement* : TC_2 parserStatementIR*
+  ---- ;; check transition statement
+  -- ParserTransition_ok: TC_2 name_state* |- transitionStatement
+                                            : transitionStatementIR
+  ---- ;; exit block scope
+  -- if TC_3 = $exit(TC_2)
+  ---- ;; create IR
+  -- if parserStateIR
+      = name parserStatementIR* transitionStatementIR
+
+;;
+;; Parser state list typing
+;;
+;; syntax parserStateList
+;;
+
+rule ParserStates_ok:
+  TC |- parserState* : parserStateIR*
+  ---- ;; check that state names are distinct
+  -- if (name_state _ _ = parserState)*
+  -- if $distinct_<name>(name_state*)
+  ---- ;; check that a "start" state exists
+  ---- ;; and "accept"/"reject" are reserved
+  -- if "start" <- name_state*
+  -- if ~("accept" <- name_state*) /\ ~("reject" <- name_state*)
+  -- if name_state_impl* = "accept" :: "reject" :: name_state*
+  ---- ;; check each parser state
+  -- (ParserState_ok: TC name_state_impl* |- parserState : parserStateIR)*

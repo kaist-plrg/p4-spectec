@@ -15,7 +15,7 @@ let do_typing (ctx : Ctx.t) (spec : spec) (value_program : value) :
 
 (* Entry point : Run typing rule *)
 
-type res = WellTyped | IllTyped of region * string | IllFormed of string
+type res = WellTyped | IllTyped of region * string | IllFormed of region * string
 
 let run_typing' ?(debug : bool = false) ?(profile : bool = false) (spec : spec)
     (includes_p4 : string list) (filename_p4 : string) : res =
@@ -30,7 +30,7 @@ let run_typing' ?(debug : bool = false) ?(profile : bool = false) (spec : spec)
     Ctx.profile ctx;
     WellTyped
   with
-  | Util.Error.ParseError (_, msg) -> IllFormed msg
+  | Util.Error.ParseError (at, msg) -> IllFormed (at, msg)
   | Util.Error.InterpError (at, msg) -> IllTyped (at, msg)
 
 let run_typing ?(debug : bool = false) ?(profile : bool = false) (spec : spec)

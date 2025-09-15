@@ -1,0 +1,89 @@
+;;
+;; Checkers for type properties
+;;
+
+;;; Nominal
+
+dec $is_nominal_typeIR(typeIR) : bool
+dec $is_nominal_typeIR'(typeIR) : bool
+
+def $is_nominal_typeIR(typeIR)
+  = $is_nominal_typeIR'($canon(typeIR))
+def $is_nominal_typeIR'(DefT _ _) = true
+def $is_nominal_typeIR'(StructT _ _) = true
+def $is_nominal_typeIR'(HeaderT _ _) = true
+def $is_nominal_typeIR'(HeaderUnionT _ _) = true
+def $is_nominal_typeIR'(EnumT _ _) = true
+def $is_nominal_typeIR'(SEnumT _ _ _) = true
+def $is_nominal_typeIR'(ExternT _ _) = true
+def $is_nominal_typeIR'(TableT _ _) = true
+def $is_nominal_typeIR'(typeIR) = false
+  -- otherwise
+
+;; Default
+
+dec $is_defaultable_typeIR(typeIR) : bool
+dec $is_defaultable_typeIR'(typeIR) : bool
+
+def $is_defaultable_typeIR(typeIR)
+  = $is_defaultable_typeIR'($canon(typeIR))
+def $is_defaultable_typeIR'(BoolT) = true
+def $is_defaultable_typeIR'(ErrT) = true
+def $is_defaultable_typeIR'(StrT) = true
+def $is_defaultable_typeIR'(numberTypeIR) = true
+def $is_defaultable_typeIR'(DefT _ typeIR)
+  = $is_defaultable_typeIR(typeIR)
+def $is_defaultable_typeIR'(TupleT typeIR*) = true
+  -- if $is_defaultable_typeIR(typeIR)*
+def $is_defaultable_typeIR'(HeaderStackT typeIR _)
+  = $is_defaultable_typeIR(typeIR)
+def $is_defaultable_typeIR'(StructT _ (typeIR _)*) = true
+  -- if $is_defaultable_typeIR(typeIR)*
+def $is_defaultable_typeIR'(HeaderT _ (typeIR _)*) = true
+  -- if $is_defaultable_typeIR(typeIR)*
+def $is_defaultable_typeIR'(HeaderUnionT _ (typeIR _)*) = true
+  -- if $is_defaultable_typeIR(typeIR)*
+def $is_defaultable_typeIR'(EnumT _ _) = true
+def $is_defaultable_typeIR'(SEnumT _ typeIR _)
+  = $is_defaultable_typeIR(typeIR)
+def $is_defaultable_typeIR'(typeIR) = false
+  -- otherwise
+
+;; Equals
+
+dec $is_equalable_typeIR(typeIR) : bool
+dec $is_equalable_typeIR'(typeIR) : bool
+
+def $is_equalable_typeIR(typeIR)
+  = $is_equalable_typeIR'($canon(typeIR))
+def $is_equalable_typeIR'(VoidT) = false
+def $is_equalable_typeIR'(NameT _) = false
+def $is_equalable_typeIR'(ExternT _ _) = false
+def $is_equalable_typeIR'(ParserT _) = false
+def $is_equalable_typeIR'(ControlT _) = false
+def $is_equalable_typeIR'(PackageT _ _) = false
+def $is_equalable_typeIR'(TableT _ _) = false
+def $is_equalable_typeIR'(DefaultT) = false
+def $is_equalable_typeIR'(SeqDefaultT _) = false
+def $is_equalable_typeIR'(RecordDefaultT _) = false
+def $is_equalable_typeIR'(InvalidHeaderT) = false
+def $is_equalable_typeIR'(SetT _) = false
+def $is_equalable_typeIR'(TableEnumT _ _) = false
+def $is_equalable_typeIR'(TableStructT _ _) = false
+def $is_equalable_typeIR'(typeIR) = true
+  -- otherwise
+
+;; Assignable
+
+dec $is_assignable_typeIR(typeIR) : bool
+dec $is_assignable_typeIR'(typeIR) : bool
+
+def $is_assignable_typeIR(typeIR)
+  = $is_assignable_typeIR'($canon(typeIR))
+def $is_assignable_typeIR'(VoidT) = false
+def $is_assignable_typeIR'(StrT) = false
+def $is_assignable_typeIR'(IntT) = false
+def $is_assignable_typeIR'(objectTypeIR) = false
+def $is_assignable_typeIR'(synthesizedTypeIR) = false
+def $is_assignable_typeIR'(typeIR) = true
+  -- otherwise
