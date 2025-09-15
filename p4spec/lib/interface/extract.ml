@@ -15,69 +15,219 @@ let error = error_parse
 
 (* Identifier extraction *)
 
-let id_of_name (v : value) : string =
-  match v.it with
-  | TextV s -> s
+let id_of_name (value : value) : string =
+  match flatten_case_v_opt value with
+  | Some ("identifier", [ [ "`ID" ]; [] ], [ { it = TextV s; _ } ]) -> s
+  | Some ("nonTypeName", [ [ "APPLY" ] ], []) -> "apply"
+  | Some ("nonTypeName", [ [ "KEY" ] ], []) -> "key"
+  | Some ("nonTypeName", [ [ "ACTIONS" ] ], []) -> "actions"
+  | Some ("nonTypeName", [ [ "STATE" ] ], []) -> "state"
+  | Some ("nonTypeName", [ [ "ENTRIES" ] ], []) -> "entries"
+  | Some ("nonTypeName", [ [ "TYPE" ] ], []) -> "type"
+  | Some ("nonTypeName", [ [ "PRIORITY" ] ], []) -> "priority"
+  | Some ("name", [ [ "LIST" ] ], []) -> "list"
+  | Some ("typeIdentifier", [ [ "`TID" ]; [] ], [ { it = TextV s; _ } ]) -> s
   | _ ->
       error no_region
         (F.asprintf "@id_of_name: expected TextV, got %s"
-           (Il.Print.string_of_value v))
+           (Il.Print.string_of_value value))
 
-let id_of_declaration (decl : value) : string =
-  match flatten_case_v_opt decl with
-  | Some ([ [ "ConstD" ]; []; []; [] ], [ _; name; _ ])
-  | Some ([ [ "InstD" ]; []; []; []; [] ], [ _; _; name; _ ])
-  | Some ([ [ "FuncD" ]; []; []; []; []; [] ], [ _; name; _; _; _ ])
-  | Some ([ [ "ActionD" ]; []; []; [] ], [ name; _; _ ])
-  | Some ([ [ "ExternFuncD" ]; []; []; []; [] ], [ _; name; _; _ ])
-  | Some ([ [ "ExternObjectD" ]; []; []; [] ], [ name; _; _ ])
-  | Some ([ [ "ParserD" ]; []; []; []; []; []; [] ], [ name; _; _; _; _; _ ])
-  | Some ([ [ "ControlD" ]; []; []; []; []; []; [] ], [ name; _; _; _; _; _ ])
-  | Some ([ [ "EnumD" ]; []; [] ], [ name; _ ])
-  | Some ([ [ "SEnumD" ]; []; []; [] ], [ _; name; _ ])
-  | Some ([ [ "StructD" ]; []; []; [] ], [ name; _; _ ])
-  | Some ([ [ "HeaderD" ]; []; []; [] ], [ name; _; _ ])
-  | Some ([ [ "HeaderUnionD" ]; []; []; [] ], [ name; _; _ ])
-  | Some ([ [ "TypeDefD" ]; []; [] ], [ _; name ])
-  | Some ([ [ "NewTypeD" ]; []; [] ], [ _; name ])
-  | Some ([ [ "ParserTypeD" ]; []; []; [] ], [ name; _; _ ])
-  | Some ([ [ "ControlTypeD" ]; []; []; [] ], [ name; _; _ ])
-  | Some ([ [ "PackageTypeD" ]; []; []; [] ], [ name; _; _ ]) ->
+let id_of_function_prototype (value : value) : string =
+  match flatten_case_v_opt value with
+  | Some
+      ("functionPrototype", [ []; []; []; [ "(" ]; [ ")" ] ], [ _; name; _; _ ])
+    ->
+      id_of_name name
+  | _ ->
+      error no_region
+        (F.asprintf
+           "@id_of_function_prototype: expected functionPrototype, got %s"
+           (Il.Print.string_of_value value))
+
+let id_of_declaration (value : value) : string =
+  match flatten_case_v_opt value with
+  | Some
+      ( "constantDeclaration",
+        [ []; [ "CONST" ]; []; []; [ ";" ] ],
+        [ _; _; name; _ ] ) ->
+      id_of_name name
+  | Some
+      ("instantiation", [ []; []; [ "(" ]; [ ")" ]; [ ";" ] ], [ _; _; _; name ])
+    ->
+      id_of_name name
+  | Some
+      ( "instantiation",
+        [ []; []; [ "(" ]; [ ")" ]; []; [ ";" ] ],
+        [ _; _; _; name; _ ] ) ->
+      id_of_name name
+  | Some ("functionDeclaration", [ []; []; []; [] ], [ _; functionPrototype; _ ])
+    ->
+      id_of_function_prototype functionPrototype
+  | Some
+      ( "actionDeclaration",
+        [ []; [ "ACTION" ]; [ "(" ]; [ ")" ]; [] ],
+        [ _; name; _; _ ] ) ->
+      id_of_name name
+  | Some ("errorDeclaration", _, _) ->
+      error no_region "errorDeclaration: no name"
+  | Some ("matchKindDeclaration", _, _) ->
+      error no_region "matchKindDeclaration: no name"
+  | Some
+      ( "externFunctionDeclaration",
+        [ []; [ "EXTERN" ]; [ ";" ] ],
+        [ _; functionPrototype ] ) ->
+      id_of_function_prototype functionPrototype
+  | Some
+      ( "externObjectDeclaration",
+        [ []; [ "EXTERN" ]; []; [ "{" ]; [ "}" ] ],
+        [ _; nonTypeName; _; _ ] ) ->
+      id_of_name nonTypeName
+  | Some
+      ( "parserDeclaration",
+        [ []; [ "PARSER" ]; []; [ "(" ]; [ ")" ]; [ "{" ]; []; [ "}" ] ],
+        [ _; name; _; _; _; _; _ ] )
+  | Some
+      ( "controlDeclaration",
+        [
+          []; [ "CONTROL" ]; []; [ "(" ]; [ ")" ]; [ "{" ]; [ "APPLY" ]; [ "}" ];
+        ],
+        [ _; name; _; _; _; _; _ ] )
+  | Some
+      ( "enumTypeDeclaration",
+        [ []; [ "ENUM" ]; [ "{" ]; []; [ "}" ] ],
+        [ _; name; _; _ ] )
+  | Some
+      ( "enumTypeDeclaration",
+        [ []; [ "ENUM" ]; []; [ "{" ]; []; [ "}" ] ],
+        [ _; _; name; _; _ ] )
+  | Some
+      ( "structTypeDeclaration",
+        [ []; [ "STRUCT" ]; []; [ "{" ]; [ "}" ] ],
+        [ _; name; _; _ ] )
+  | Some
+      ( "headerTypeDeclaration",
+        [ []; [ "HEADER" ]; []; [ "{" ]; [ "}" ] ],
+        [ _; name; _; _ ] )
+  | Some
+      ( "headerUnionTypeDeclaration",
+        [ []; [ "HEADER_UNION" ]; []; [ "{" ]; [ "}" ] ],
+        [ _; name; _; _ ] )
+  | Some
+      ("typedefDeclaration", [ []; [ "TYPEDEF" ]; []; [ ";" ] ], [ _; _; name ])
+  | Some ("typedefDeclaration", [ []; [ "TYPE" ]; []; [ ";" ] ], [ _; _; name ])
+  | Some
+      ( "parserTypeDeclaration",
+        [ []; [ "PARSER" ]; []; [ "(" ]; [ ")"; ";" ] ],
+        [ _; name; _; _ ] )
+  | Some
+      ( "controlTypeDeclaration",
+        [ []; [ "CONTROL" ]; []; [ "(" ]; [ ")"; ";" ] ],
+        [ _; name; _; _ ] )
+  | Some
+      ( "packageTypeDeclaration",
+        [ []; [ "PACKAGE" ]; []; [ "(" ]; [ ")"; ";" ] ],
+        [ _; name; _; _ ] ) ->
       id_of_name name
   (* not a variant of declaration *)
-  | Some ([ [ "TableD" ]; []; [] ], [ name; _ ]) -> id_of_name name
+  | Some
+      ("tableDeclaration", [ []; [ "TABLE" ]; [ "{" ]; [ "}" ] ], [ _; name; _ ])
+    ->
+      id_of_name name
   | _ ->
       error no_region
-        (F.asprintf "@id_of_declaration: %s" (Il.Print.string_of_value decl))
+        (F.asprintf "@id_of_declaration: expected declaration, got %s"
+           (Il.Print.string_of_value value))
 
-let id_of_parameter (v : value) : string =
-  match flatten_case_v_opt v with
-  | Some ([ []; []; []; []; [] ], [ _; _; name; _ ]) -> id_of_name name
+let id_of_parameter (value : value) : string =
+  match flatten_case_v_opt value with
+  | Some ("parameter", [ []; []; []; []; [] ], [ _; _; _; name ]) ->
+      id_of_name name
+  | Some ("parameter", [ []; []; []; []; []; [] ], [ _; _; _; name; _ ]) ->
+      id_of_name name
   | _ ->
       error no_region
-        (F.asprintf "@id_of_parameter: %s" (Il.Print.string_of_value v))
+        (F.asprintf "@id_of_parameter: expected parameter, got %s"
+           (Il.Print.string_of_value value))
 
 (* Type parameter extraction *)
 
-let has_type_params (v : value) : bool =
-  match v.it with
-  | ListV [] -> false
-  | ListV (_ :: _) -> true
+let has_type_params (value : value) : bool =
+  match flatten_case_v_opt value with
+  | Some ("typeParameterListOpt", [ [ "`EMPTY" ] ], []) -> false
+  | Some ("typeParameterListOpt", [ [ "<" ]; [ ">" ] ], [ _ ]) -> true
   | _ ->
       error no_region
-        (F.asprintf "@has_type_params: expected ListV, got %s"
-           (Il.Print.string_of_value v))
+        (Printf.sprintf
+           "@has_type_params: expected typeParameterListOpt, got %s"
+           (Il.Print.string_of_value value))
 
-let has_type_params_declaration (decl : value) : bool =
-  match flatten_case_v_opt decl with
-  | Some ([ [ "FuncD" ]; []; []; []; []; [] ], [ _; _; tpl; _; _ ])
-  | Some ([ [ "ExternFuncD" ]; []; []; []; [] ], [ _; _; tpl; _ ])
-  | Some ([ [ "ExternObjectD" ]; []; []; [] ], [ _; tpl; _ ])
-  | Some ([ [ "StructD" ]; []; []; [] ], [ _; tpl; _ ])
-  | Some ([ [ "HeaderD" ]; []; []; [] ], [ _; tpl; _ ])
-  | Some ([ [ "HeaderUnionD" ]; []; []; [] ], [ _; tpl; _ ])
-  | Some ([ [ "ParserTypeD" ]; []; []; [] ], [ _; tpl; _ ])
-  | Some ([ [ "ControlTypeD" ]; []; []; [] ], [ _; tpl; _ ])
-  | Some ([ [ "PackageTypeD" ]; []; []; [] ], [ _; tpl; _ ]) ->
-      has_type_params tpl
-  | _ -> false
+let has_type_params_function_prototype (value : value) : bool =
+  match flatten_case_v_opt value with
+  | Some
+      ( "functionPrototype",
+        [ []; []; []; [ "(" ]; [ ")" ] ],
+        [ _; _; typeParameterListOpt; _ ] ) ->
+      has_type_params typeParameterListOpt
+  | _ ->
+      error no_region
+        (Printf.sprintf
+           "@has_type_params_function_prototype: expected functionPrototype, \
+            got %s"
+           (Il.Print.string_of_value value))
+
+let has_type_params_declaration (value : value) : bool =
+  match flatten_case_v_opt value with
+  | Some ("constantDeclaration", _, _) | Some ("instantiation", _, _) -> false
+  | Some ("functionDeclaration", [ []; []; []; [] ], [ _; functionPrototype; _ ])
+    ->
+      has_type_params_function_prototype functionPrototype
+  | Some ("actionDeclaration", _, _)
+  | Some ("errorDeclaration", _, _)
+  | Some ("matchKindDeclaration", _, _) ->
+      false
+  | Some
+      ( "externFunctionDeclaration",
+        [ []; [ "EXTERN" ]; [ ";" ] ],
+        [ _; functionPrototype ] ) ->
+      has_type_params_function_prototype functionPrototype
+  | Some
+      ( "externObjectDeclaration",
+        [ []; [ "EXTERN" ]; []; [ "{" ]; [ "}" ] ],
+        [ _; _; typeParameterListOpt; _ ] ) ->
+      has_type_params typeParameterListOpt
+  | Some ("parserDeclaration", _, _)
+  | Some ("controlDeclaration", _, _)
+  | Some ("enumTypeDeclaration", _, _) ->
+      false
+  | Some
+      ( "structTypeDeclaration",
+        [ []; [ "STRUCT" ]; []; [ "{" ]; [ "}" ] ],
+        [ _; _; typeParameterListOpt; _ ] )
+  | Some
+      ( "headerTypeDeclaration",
+        [ []; [ "HEADER" ]; []; [ "{" ]; [ "}" ] ],
+        [ _; _; typeParameterListOpt; _ ] )
+  | Some
+      ( "headerUnionTypeDeclaration",
+        [ []; [ "HEADER_UNION" ]; []; [ "{" ]; [ "}" ] ],
+        [ _; _; typeParameterListOpt; _ ] ) ->
+      has_type_params typeParameterListOpt
+  | Some ("typedefDeclaration", _, _) -> false
+  | Some
+      ( "parserTypeDeclaration",
+        [ []; [ "PARSER" ]; []; [ "(" ]; [ ")"; ";" ] ],
+        [ _; _; typeParameterListOpt; _ ] )
+  | Some
+      ( "controlTypeDeclaration",
+        [ []; [ "CONTROL" ]; []; [ "(" ]; [ ")"; ";" ] ],
+        [ _; _; typeParameterListOpt; _ ] )
+  | Some
+      ( "packageTypeDeclaration",
+        [ []; [ "PACKAGE" ]; []; [ "(" ]; [ ")"; ";" ] ],
+        [ _; _; typeParameterListOpt; _ ] ) ->
+      has_type_params typeParameterListOpt
+  | _ ->
+      error no_region
+        (Printf.sprintf
+           "@has_type_params_declaration: expected declaration, got %s"
+           (Il.Print.string_of_value value))

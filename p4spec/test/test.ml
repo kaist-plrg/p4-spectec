@@ -100,136 +100,6 @@ let elab_command =
        with ParseError (at, msg) | ElabError (at, msg) ->
          Format.printf "Error on elaboration: %s\n" (string_of_error at msg))
 
-(* P4 Parser test *)
-
-let parse_file time_start includes filename =
-  try Parsing.Parse.parse_file includes filename
-  with ParseError (at, msg) -> raise (TestParseFileErr (msg, at, time_start))
-
-let parse_string time_start filename program_dump =
-  try Parsing.Parse.parse_string filename program_dump
-  with ParseError (at, msg) ->
-    raise (TestParseStringErr (msg, at, time_start))
-
-let parse_roundtrip time_start includes filename spec =
-  let program = parse_file time_start includes filename in
-  let program_dump =
-    Format.asprintf "%a\n" (Parsing.Pp.pp_program spec) program
-  in
-  let program_roundtrip = parse_string time_start filename program_dump in
-  if not (Il.Eq.eq_value ~dbg:true program program_roundtrip) then
-    raise (TestParseRoundtripErr time_start)
-  else time_start
-
-let run_parser includes filename spec =
-  let time_start = start () in
-  try parse_roundtrip time_start includes filename spec with
-  | TestParseFileErr _ as err -> raise err
-  | TestParseStringErr _ as err -> raise err
-  | TestParseRoundtripErr _ as err -> raise err
-  | _ -> raise (TestUnknownErr time_start)
-
-let run_parser_test stat includes excludes filename spec =
-  if List.exists (String.equal filename) excludes then (
-    let log = Format.asprintf "Excluding file: %s" filename in
-    log |> print_endline;
-    {
-      stat with
-      durations = 0.0 :: stat.durations;
-      exclude_run = stat.exclude_run + 1;
-    })
-  else
-    try
-      let time_start = run_parser includes filename spec in
-      let duration = stop time_start in
-      let log = Format.asprintf "Parser roundtrip success: %s" filename in
-      log |> print_endline;
-      Format.eprintf "%s\n" log;
-      Format.eprintf ">>> took %.6f seconds\n" duration;
-      { stat with durations = duration :: stat.durations }
-    with
-    | TestParseFileErr (msg, at, time_start) ->
-        let duration = stop time_start in
-        let log =
-          Format.asprintf "Error parsing file: %s\n%s" filename
-            (string_of_error at msg)
-        in
-        log |> print_endline;
-        Format.eprintf "%s\n" log;
-        Format.eprintf ">>> took %.6f seconds\n" duration;
-        {
-          stat with
-          durations = duration :: stat.durations;
-          fail_run = stat.fail_run + 1;
-        }
-    | TestParseStringErr (msg, at, time_start) ->
-        let duration = stop time_start in
-        let log =
-          Format.asprintf "Error parsing string: %s\n%s" filename
-            (string_of_error at msg)
-        in
-        log |> print_endline;
-        Format.eprintf "%s\n" log;
-        Format.eprintf ">>> took %.6f seconds\n" duration;
-        {
-          stat with
-          durations = duration :: stat.durations;
-          fail_run = stat.fail_run + 1;
-        }
-    | TestParseRoundtripErr time_start ->
-        let duration = stop time_start in
-        let log = Format.asprintf "Error roundtripping parser: %s" filename in
-        log |> print_endline;
-        Format.eprintf "%s\n" log;
-        Format.eprintf ">>> took %.6f seconds\n" duration;
-        {
-          stat with
-          durations = duration :: stat.durations;
-          fail_run = stat.fail_run + 1;
-        }
-    | TestUnknownErr time_start ->
-        let duration = stop time_start in
-        let log = Format.asprintf "Unknown error on parser: %s" filename in
-        log |> print_endline;
-        Format.eprintf "%s\n" log;
-        Format.eprintf ">>> took %.6f seconds\n" duration;
-        {
-          stat with
-          durations = duration :: stat.durations;
-          fail_run = stat.fail_run + 1;
-        }
-
-let run_parser_test_driver includes excludes testdir specdir =
-  (* Force all debug levels to Quiet for testing *)
-  Unix.putenv "P4SPEC_LEXER_DEBUG" "quiet";
-  Unix.putenv "P4SPEC_PARSER_DEBUG" "quiet";
-  Unix.putenv "P4SPEC_CONTEXT_DEBUG" "quiet";
-  let excludes = collect_excludes excludes in
-  let filenames = collect_files ~suffix:".p4" testdir in
-  let spec = elab specdir in
-  let total = List.length filenames in
-  let stat = empty_stat in
-  Format.asprintf "Running parser tests on %d files\n" total |> print_endline;
-  let stat =
-    List.fold_left
-      (fun stat filename ->
-        Format.asprintf "\n>>> Running parser test on %s" filename
-        |> print_endline;
-        run_parser_test stat includes excludes filename spec)
-      stat filenames
-  in
-  log_stat "\nRunning parser" stat total
-
-let run_parser_command =
-  Core.Command.basic ~summary:"run parser test on P4 files"
-    (let open Core.Command.Let_syntax in
-     let open Core.Command.Param in
-     let%map includes = flag "-i" (listed string) ~doc:"p4 include paths"
-     and excludes = flag "-e" (listed string) ~doc:"p4 test exclude paths"
-     and testdir = flag "-d" (required string) ~doc:"p4 test directory"
-     and specdir = flag "-s" (required string) ~doc:"p4 spec directory" in
-     fun () -> run_parser_test_driver includes excludes testdir specdir)
-
 (* Structuring test *)
 
 let structure specdir = specdir |> elab |> Structure.Struct.struct_spec
@@ -254,9 +124,7 @@ let run_il negative spec_il includes_p4 filename_p4 =
   let time_start = start () in
   try
     (* Run test *)
-    (match
-       Interp_il.Typing_concrete.run_typing spec_il includes_p4 filename_p4
-     with
+    (match Interp_il.Typing.run_typing spec_il includes_p4 filename_p4 with
     | WellTyped -> if negative then raise (TestCheckNegErr time_start)
     | IllTyped (at, msg) -> raise (TestCheckErr (msg, at, time_start))
     | IllFormed (at, msg) -> raise (TestCheckErr (msg, at, time_start)));
@@ -475,18 +343,18 @@ let cover_dangling_command =
 (* P4 Parser test *)
 
 let parse_file time_start includes filename =
-  try Parsing.Parse.parse_file includes filename
+  try Interface.Parse.parse_file includes filename
   with ParseError (at, msg) -> raise (TestParseFileErr (msg, at, time_start))
 
 let parse_string time_start filename program_dump =
-  try Parsing.Parse.parse_string filename program_dump
+  try Interface.Parse.parse_string filename program_dump
   with ParseError (at, msg) ->
     raise (TestParseStringErr (msg, at, time_start))
 
 let parse_roundtrip time_start includes filename spec =
   let program = parse_file time_start includes filename in
   let program_dump =
-    Format.asprintf "%a\n" (Parsing.Pp.pp_program spec) program
+    Format.asprintf "%a\n" (Interface.Unparse.pp_program spec) program
   in
   let program_roundtrip = parse_string time_start filename program_dump in
   if not (Il.Eq.eq_value ~dbg:true program program_roundtrip) then

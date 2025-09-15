@@ -205,7 +205,8 @@ let classify_mutation' (fuel : int) (pid : pid) (idx_seed : int)
   in
   (* Write the mutated program to a file *)
   let oc = open_out filename_gen_p4 in
-  F.asprintf "%s\n%a\n" comment_gen_p4 Interface.Unparse.pp_program
+  F.asprintf "%s\n%a\n" comment_gen_p4
+    (Interface.Unparse.pp_program config.specenv.spec_il)
     value_program
   |> output_string oc;
   close_out oc;
@@ -550,12 +551,12 @@ let rec fuzz_loop (fuel : int) (config : Config.t) : Config.t =
 
 (* Entry point to main fuzzing loop *)
 
-let fuzz_typing_init (spec : spec) (includes_p4 : string list)
-    (filenames_ignore : string list) (dirname_gen : string)
-    (name_campaign : string option) (randseed : int option)
-    (logmode : Modes.logmode) (bootmode : Modes.bootmode)
-    (mutationmode : Modes.mutationmode) (covermode : Modes.covermode) : Config.t
-    =
+let fuzz_typing_init (spec_il : Il.Ast.spec) (spec : spec)
+    (includes_p4 : string list) (filenames_ignore : string list)
+    (dirname_gen : string) (name_campaign : string option)
+    (randseed : int option) (logmode : Modes.logmode)
+    (bootmode : Modes.bootmode) (mutationmode : Modes.mutationmode)
+    (covermode : Modes.covermode) : Config.t =
   (* Name the campaign *)
   let name_campaign =
     match name_campaign with
@@ -592,7 +593,7 @@ let fuzz_typing_init (spec : spec) (includes_p4 : string list)
   (* Create a spec environment *)
   "Loading type definitions from the spec file"
   |> Logger.log modes.logmode log_init;
-  let specenv = Config.init_specenv spec includes_p4 filenames_ignore in
+  let specenv = Config.init_specenv spec_il spec includes_p4 filenames_ignore in
   (* Create a seed *)
   "Booting initial coverage" |> Logger.log modes.logmode log_init;
   let cover_seed =
@@ -627,15 +628,16 @@ let fuzz_typing_init (spec : spec) (includes_p4 : string list)
   let config = Config.init randseed modes specenv storage seed in
   config
 
-let fuzz_typing (fuel : int) (spec : spec) (includes_p4 : string list)
-    (filenames_ignore : string list) (dirname_gen : string)
-    (name_campaign : string option) (randseed : int option)
-    (logmode : Modes.logmode) (bootmode : Modes.bootmode)
-    (mutationmode : Modes.mutationmode) (covermode : Modes.covermode) : unit =
+let fuzz_typing (fuel : int) (spec_il : Il.Ast.spec) (spec : spec)
+    (includes_p4 : string list) (filenames_ignore : string list)
+    (dirname_gen : string) (name_campaign : string option)
+    (randseed : int option) (logmode : Modes.logmode)
+    (bootmode : Modes.bootmode) (mutationmode : Modes.mutationmode)
+    (covermode : Modes.covermode) : unit =
   (* Initialize the fuzzing configuration *)
   let config =
-    fuzz_typing_init spec includes_p4 filenames_ignore dirname_gen name_campaign
-      randseed logmode bootmode mutationmode covermode
+    fuzz_typing_init spec_il spec includes_p4 filenames_ignore dirname_gen
+      name_campaign randseed logmode bootmode mutationmode covermode
   in
   (* Call the main fuzzing loop *)
   let config = fuzz_loop fuel config in

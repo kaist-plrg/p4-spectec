@@ -57,6 +57,7 @@ let run_typing' ?(derive : bool = false) (spec : spec)
     let ctx, _ = do_typing ctx spec value_program in
     WellTyped (ctx.graph, ctx.vid_program, !(ctx.cover))
   with
+
   | Util.Error.ParseError (at, msg) -> IllFormed (at, msg, !cover)
   | Util.Error.InterpError (at, msg) -> IllTyped (at, msg, !cover)
 

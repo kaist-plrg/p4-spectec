@@ -29,7 +29,8 @@ let run_typing' ?(debug : bool = false) ?(profile : bool = false) (spec : spec)
   try
     let value_program = Interface.Parse.parse_file includes_p4 filename_p4 in
     let ctx = Ctx.empty ~debug ~profile filename_p4 in
-    let _ = do_typing ctx spec value_program in
+    let ctx, _ = do_typing ctx spec value_program in
+    Ctx.profile ctx;
     WellTyped
   with
   | Util.Error.ParseError (at, msg) -> IllFormed (at, msg)
