@@ -1421,8 +1421,8 @@ let rec elab_def (ctx : Ctx.t) (def : def) : Ctx.t * Il.Ast.def option =
   | RelD (id, nottyp, hints) -> elab_rel_def ctx at id nottyp hints |> wrap_some
   | RuleD (id_rel, id_rule, exp, prems) ->
       elab_rule_def ctx at id_rel id_rule exp prems |> wrap_none
-  | DecD (id, tparams, params, plaintyp, _hints) ->
-      elab_dec_def ctx at id tparams params plaintyp |> wrap_some
+  | DecD (id, tparams, params, plaintyp, hints) ->
+      elab_dec_def ctx at id tparams params plaintyp hints |> wrap_some
   | DefD (id, tparams, args, exp, prems) ->
       elab_def_def ctx at id tparams args exp prems |> wrap_none
   | SepD -> ctx |> wrap_none
@@ -1545,7 +1545,8 @@ and elab_rel_def (ctx : Ctx.t) (at : region) (id : id) (nottyp : nottyp)
   let nottyp_il = elab_nottyp ctx (NotationT nottyp) in
   let inputs = fetch_rel_input_hint at nottyp_il hints in
   let ctx = Ctx.add_rel ctx id nottyp inputs in
-  let def_il = Il.Ast.RelD (id, nottyp_il, inputs, []) $ at in
+  let hints = elab_hints ctx hints in
+  let def_il = Il.Ast.RelD (id, nottyp_il, inputs, [], hints) $ at in
   (ctx, def_il)
 
 (* Elaboration of rules *)
@@ -1600,7 +1601,7 @@ and elab_rule_def (ctx : Ctx.t) (at : region) (id_rel : id) (id_rule : id)
 (* Elaboration of function declarations *)
 
 and elab_dec_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
-    (params : param list) (plaintyp : plaintyp) : Ctx.t * Il.Ast.def =
+    (params : param list) (plaintyp : plaintyp) (hints : hint list) : Ctx.t * Il.Ast.def =
   check
     (List.map it tparams |> distinct ( = ))
     id.at "type parameters are not distinct";
@@ -1608,7 +1609,8 @@ and elab_dec_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
   let ctx_local = Ctx.add_tparams ctx_local tparams in
   let params_il = List.map (elab_param ctx_local) params in
   let typ_il = elab_plaintyp ctx_local plaintyp in
-  let def_il = Il.Ast.DecD (id, tparams, params_il, typ_il, []) $ at in
+  let hints = elab_hints ctx hints in
+  let def_il = Il.Ast.DecD (id, tparams, params_il, typ_il, [], hints) $ at in
   let ctx = Ctx.add_dec ctx id tparams params plaintyp in
   (ctx, def_il)
 
@@ -1658,9 +1660,9 @@ and elab_def_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
 
 let populate_rule (ctx : Ctx.t) (def_il : Il.Ast.def) : Il.Ast.def =
   match def_il.it with
-  | Il.Ast.RelD (id, nottyp_il, inputs, []) ->
+  | Il.Ast.RelD (id, nottyp_il, inputs, [], hints) ->
       let rules_il = Ctx.find_rules ctx id in
-      Il.Ast.RelD (id, nottyp_il, inputs, rules_il) $ def_il.at
+      Il.Ast.RelD (id, nottyp_il, inputs, rules_il, hints) $ def_il.at
   | Il.Ast.RelD _ -> error def_il.at "relation was already populated"
   | _ -> def_il
 
@@ -1671,9 +1673,9 @@ let populate_rules (ctx : Ctx.t) (spec_il : Il.Ast.spec) : Il.Ast.spec =
 
 let populate_clause (ctx : Ctx.t) (def_il : Il.Ast.def) : Il.Ast.def =
   match def_il.it with
-  | Il.Ast.DecD (id, tparams_il, params_il, typ_il, []) ->
+  | Il.Ast.DecD (id, tparams_il, params_il, typ_il, [], hints) ->
       let clauses_il = Ctx.find_clauses ctx id in
-      Il.Ast.DecD (id, tparams_il, params_il, typ_il, clauses_il) $ def_il.at
+      Il.Ast.DecD (id, tparams_il, params_il, typ_il, clauses_il, hints) $ def_il.at
   | Il.Ast.DecD _ -> error def_il.at "declaration was already populated"
   | _ -> def_il
 

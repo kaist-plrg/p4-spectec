@@ -67,31 +67,39 @@ let rec struct_def (henv : HEnv.t) (tdenv : TDEnv.t) (def : def) : Sl.Ast.def =
   let at = def.at in
   match def.it with
   | TypD (id, tparams, deftyp) -> Sl.Ast.TypD (id, tparams, deftyp) $ at
-  | RelD (id, nottyp, inputs, rules) ->
-      struct_rel_def henv tdenv at id nottyp inputs rules
-  | DecD (id, tparams, _params, _typ, clauses) ->
-      struct_dec_def henv tdenv at id tparams clauses
+  | RelD (id, nottyp, inputs, rules, hints) ->
+      struct_rel_def henv tdenv at id nottyp inputs rules hints
+  | DecD (id, tparams, _params, _typ, clauses, hints) ->
+      struct_dec_def henv tdenv at id tparams clauses hints
+
+and struct_hint (hint : hint) : Sl.Ast.hint =
+  { hintid = hint.hintid; hintexp = hint.hintexp }
+
+and struct_hints (hints : hint list) : Sl.Ast.hint list =
+  List.map struct_hint hints
 
 (* Structuring relation definitions *)
 
 and struct_rel_def (henv : HEnv.t) (tdenv : TDEnv.t) (at : region) (id_rel : id)
-    (nottyp : nottyp) (inputs : int list) (rules : rule list) : Sl.Ast.def =
+    (nottyp : nottyp) (inputs : int list) (rules : rule list) (hints : hint list) : Sl.Ast.def =
   let mixop, _ = nottyp.it in
   let exps_input, paths = Antiunify.antiunify_rules inputs rules in
   let instrs = List.concat_map struct_rule_path paths in
   let instrs = Optimize.optimize henv tdenv instrs in
   let instrs = Instrument.instrument tdenv instrs in
-  Sl.Ast.RelD (id_rel, (mixop, inputs), exps_input, instrs) $ at
+  let hints = struct_hints hints in
+  Sl.Ast.RelD (id_rel, (mixop, inputs), exps_input, instrs, hints) $ at
 
 (* Structuring declaration definitions *)
 
 and struct_dec_def (henv : HEnv.t) (tdenv : TDEnv.t) (at : region) (id_dec : id)
-    (tparams : tparam list) (clauses : clause list) : Sl.Ast.def =
+    (tparams : tparam list) (clauses : clause list) (hints : hint list) : Sl.Ast.def =
   let args_input, paths = Antiunify.antiunify_clauses clauses in
   let instrs = List.concat_map struct_clause_path paths in
   let instrs = Optimize.optimize henv tdenv instrs in
   let instrs = Instrument.instrument tdenv instrs in
-  Sl.Ast.DecD (id_dec, tparams, args_input, instrs) $ at
+  let hints = struct_hints hints in
+  Sl.Ast.DecD (id_dec, tparams, args_input, instrs, hints) $ at
 
 (* Load type definitions *)
 
@@ -101,7 +109,7 @@ let load_def (henv : HEnv.t) (tdenv : TDEnv.t) (def : def) : HEnv.t * TDEnv.t =
       let typdef = (tparams, deftyp) in
       let tdenv = TDEnv.add id typdef tdenv in
       (henv, tdenv)
-  | RelD (id, _, inputs, _) ->
+  | RelD (id, _, inputs, _, _hints) ->
       let henv = HEnv.add id inputs henv in
       (henv, tdenv)
   | _ -> (henv, tdenv)

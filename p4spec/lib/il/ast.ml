@@ -196,9 +196,9 @@ and def' =
   (* `syntax` id `<` list(tparam, `,`) `>` `=` deftyp *)
   | TypD of id * tparam list * deftyp
   (* `relation` id `:` nottyp `hint(input` `%`int* `)` rule* *)
-  | RelD of id * nottyp * int list * rule list
+  | RelD of id * nottyp * int list * rule list * hint list
   (* `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ clause* *)
-  | DecD of id * tparam list * param list * typ * clause list
+  | DecD of id * tparam list * param list * typ * clause list * hint list
 
 (* Spec *)
 

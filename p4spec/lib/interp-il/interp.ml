@@ -1157,10 +1157,10 @@ let load_def (ctx : Ctx.t) (def : def) : Ctx.t =
   | TypD (id, tparams, deftyp) ->
       let typdef = (tparams, deftyp) in
       Ctx.add_typdef Global ctx id typdef
-  | RelD (id, _, inputs, rules) ->
+  | RelD (id, _, inputs, rules, _) ->
       let rel = (inputs, rules) in
       Ctx.add_rel Global ctx id rel
-  | DecD (id, tparams, _, _, clauses) ->
+  | DecD (id, tparams, _, _, clauses, _) ->
       let func = (tparams, clauses) in
       Ctx.add_func Global ctx id func
 
