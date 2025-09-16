@@ -1,0 +1,102 @@
+;;
+;; Value
+;;
+
+;;
+;;;; Base values
+;;
+
+;;
+;;;; Primitive values
+;;
+
+syntax primitiveValue =
+  | BoolV bool
+  | ErrV id
+  | MatchKindV id
+  | StrV text
+
+;;
+;;;; Numeric values
+;;
+
+syntax numberValue =
+  | IntV int
+  | FIntV width bits
+  | FBitV width bits
+  | VBitV width width bits
+
+syntax baseValue =
+  | primitiveValue
+  | numberValue
+
+;;
+;;;; Composite values
+;;
+
+syntax value
+
+syntax listValue = ListV value*
+syntax tupleValue = TupleV  value*
+syntax headerStackValue = HeaderStackV value* nat nat
+
+syntax fieldValue = value id
+
+syntax structValue = StructV tid fieldValue*
+syntax headerValue = HeaderV tid bool fieldValue*
+syntax headerUnionValue = HeaderUnionV tid fieldValue*
+
+syntax enumValue =
+  | EnumV tid id
+  | SEnumV tid id value
+
+syntax dataValue =
+  | listValue
+  | tupleValue
+  | headerStackValue
+  | structValue
+  | headerValue
+  | headerUnionValue
+  | enumValue
+
+;;
+;;;; Synthesized values
+;;
+
+syntax defaultValue = DefaultV
+
+syntax invalidHeaderValue = InvalidHeaderV
+
+syntax sequenceValue =
+  | SeqV value*
+  | SeqDefaultV value*
+
+syntax recordValue =
+  | RecordV fieldValue*
+  | RecordDefaultV fieldValue*
+
+syntax setValue =
+  | SingletonSetV value
+  | MaskSetV value value
+  | RangeSetV value value
+
+syntax tableValue =
+  | TableEnumV tid id
+  | TableStructV tid fieldValue*
+
+syntax synthesizedValue =
+  | defaultValue
+  | invalidHeaderValue
+  | sequenceValue
+  | recordValue
+  | setValue
+  | tableValue
+
+;;
+;;;; Values
+;;
+
+syntax value =
+  | baseValue
+  | dataValue
+  | synthesizedValue

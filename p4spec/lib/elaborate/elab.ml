@@ -357,6 +357,11 @@ and infer_binop (ctx : Ctx.t) (at : region) (binop : binop)
   let binop_candidates =
     match binop with
     | #Xl.Bool.binop -> [ (`BoolT, BoolT, BoolT, BoolT) ]
+    | `SubOp ->
+        [
+          (`IntT, NumT `NatT, NumT `NatT, NumT `IntT);
+          (`IntT, NumT `IntT, NumT `IntT, NumT `IntT);
+        ]
     | #Xl.Num.binop ->
         [
           (`NatT, NumT `NatT, NumT `NatT, NumT `NatT);
@@ -954,10 +959,10 @@ and elab_exp_not (ctx : Ctx.t) (typ : typ) (exp : exp) :
       | BrackT (atom_t_l, _, atom_t_r), BrackE (atom_e_l, _, atom_e_r)
         when atom_t_l.it <> atom_e_l.it || atom_t_r.it <> atom_e_r.it ->
           fail_elab_not exp.at "atoms do not match"
-      | BrackT (atom_t_l, typ, atom_t_r), BrackE (_, exp, _) ->
+      | BrackT (_, typ, _), BrackE (atom_e_l, exp, atom_e_r) ->
           let* ctx, (mixop, exps_il) = elab_exp_not ctx typ exp in
-          let mixop_l = Xl.Mixop.merge [ [ atom_t_l ] ] mixop in
-          let mixop = Xl.Mixop.merge mixop_l [ [ atom_t_r ] ] in
+          let mixop_l = Xl.Mixop.merge [ [ atom_e_l ] ] mixop in
+          let mixop = Xl.Mixop.merge mixop_l [ [ atom_e_r ] ] in
           let notexp_il = (mixop, exps_il) in
           Ok (ctx, notexp_il)
       | _ -> fail_elab_not exp.at "expression does not match notation")
@@ -1019,10 +1024,15 @@ and elab_exp_variant (ctx : Ctx.t) (plaintyp_expect : plaintyp)
     List.fold_left
       (fun (ctx, exps_il) ((nottyp, _), plaintyp) ->
         elab_exp_not ctx (NotationT nottyp) exp |> function
-        | Ok (ctx, notexp_il) ->
+        | Ok (ctx, ((mixops, notexp_exps) as notexp_il)) ->
             let exp_il =
               let typ_il = elab_plaintyp ctx plaintyp in
-              Il.Ast.CaseE notexp_il $$ (no_region, typ_il.it)
+              let at =
+                (* if mixops is empty, compute the region with the terminals that make up the variant *)
+                if List.flatten mixops = [] then exp_list_region notexp_exps
+                else List.concat_map (List.map at) mixops |> over_region
+              in
+              Il.Ast.CaseE notexp_il $$ (at, typ_il.it)
             in
             let+ exp_il = cast_exp ctx plaintyp_expect plaintyp exp_il in
             (ctx, exps_il @ [ exp_il ])
@@ -1233,8 +1243,7 @@ and elab_rule_prem (ctx : Ctx.t) (id : id) (exp : exp) : Ctx.t * Il.Ast.prem' =
   let+ ctx, notexp_il = elab_exp_not ctx (NotationT nottyp) exp in
   let _, exps_il = notexp_il in
   if Rel.Hint.is_conditional inputs exps_il then
-    let exp_il = Il.Ast.HoldE (id, notexp_il) $$ (exp.at, Il.Ast.BoolT) in
-    let prem_il = Il.Ast.IfPr exp_il in
+    let prem_il = Il.Ast.IfHoldPr (id, notexp_il) in
     (ctx, prem_il)
   else
     let prem_il = Il.Ast.RulePr (id, notexp_il) in
@@ -1250,9 +1259,7 @@ and elab_rule_not_prem (ctx : Ctx.t) (id : id) (exp : exp) :
   check
     (Rel.Hint.is_conditional inputs exps_il)
     exp.at "negated rule premises do not take inputs";
-  let exp_il = Il.Ast.HoldE (id, notexp_il) $$ (exp.at, Il.Ast.BoolT) in
-  let exp_il = Il.Ast.UnE (`NotOp, `BoolT, exp_il) $$ (exp.at, Il.Ast.BoolT) in
-  let prem_il = Il.Ast.IfPr exp_il in
+  let prem_il = Il.Ast.IfNotHoldPr (id, notexp_il) in
   (ctx, prem_il)
 
 (* Elaboration of if premises *)

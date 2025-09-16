@@ -10,7 +10,7 @@ let rec internalize_iter ?(iterexps : iterexp list = []) (prem : prem) :
     prem * iterexp list =
   match prem.it with
   | IterPr (prem, iterexp) ->
-      internalize_iter ~iterexps:(iterexps @ [ iterexp ]) prem
+      internalize_iter ~iterexps:(iterexp :: iterexps) prem
   | _ -> (prem, iterexps)
 
 let rec struct_prems (prems : prem list) (instr_ret : Ol.Ast.instr) :
@@ -35,6 +35,18 @@ and struct_prems' (prems_internalized : (prem * iterexp list) list)
       | IfPr exp ->
           let instrs_t = struct_prems' prems_internalized_t instr_ret in
           let instr_h = Ol.Ast.IfI (exp, iterexps_h, instrs_t) $ at in
+          [ instr_h ]
+      | IfHoldPr (id, notexp) ->
+          let instrs_t = struct_prems' prems_internalized_t instr_ret in
+          let instr_h =
+            Ol.Ast.HoldI (id, notexp, iterexps_h, instrs_t, []) $ at
+          in
+          [ instr_h ]
+      | IfNotHoldPr (id, notexp) ->
+          let instrs_t = struct_prems' prems_internalized_t instr_ret in
+          let instr_h =
+            Ol.Ast.HoldI (id, notexp, iterexps_h, [], instrs_t) $ at
+          in
           [ instr_h ]
       | LetPr (exp_l, exp_r) ->
           let instr_h = Ol.Ast.LetI (exp_l, exp_r, iterexps_h) $ at in

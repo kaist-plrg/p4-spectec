@@ -30,6 +30,17 @@ and eq_instr (instr_a : instr) (instr_b : instr) : bool =
       Sl.Eq.eq_exp exp_cond_a exp_cond_b
       && Sl.Eq.eq_iterexps iterexps_a iterexps_b
       && eq_instrs instrs_then_a instrs_then_b
+  | ( HoldI
+        (id_a, (mixop_a, exps_a), iterexps_a, instrs_hold_a, instrs_nothold_a),
+      HoldI
+        (id_b, (mixop_b, exps_b), iterexps_b, instrs_hold_b, instrs_nothold_b) )
+    ->
+      Sl.Eq.eq_id id_a id_b
+      && Sl.Eq.eq_mixop mixop_a mixop_b
+      && Sl.Eq.eq_exps exps_a exps_b
+      && Sl.Eq.eq_iterexps iterexps_a iterexps_b
+      && eq_instrs instrs_hold_a instrs_hold_b
+      && eq_instrs instrs_nothold_a instrs_nothold_b
   | CaseI (exp_a, cases_a, total_a), CaseI (exp_b, cases_b, total_b) ->
       Sl.Eq.eq_exp exp_a exp_b && eq_cases cases_a cases_b && total_a = total_b
   | OtherwiseI instr_a, OtherwiseI instr_b -> eq_instr instr_a instr_b

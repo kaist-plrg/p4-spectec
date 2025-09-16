@@ -1,13 +1,13 @@
 (* Boolens *)
 
-type t = [ `BoolT ]
-type typ = [ `BoolT ]
+type t = [ `BoolT ] [@@deriving yojson]
+type typ = [ `BoolT ] [@@deriving yojson]
 
 (* Operations *)
 
-type unop = [ `NotOp ]
-type binop = [ `AndOp | `OrOp | `ImplOp | `EquivOp ]
-type cmpop = [ `EqOp | `NeOp ]
+type unop = [ `NotOp ] [@@deriving yojson]
+type binop = [ `AndOp | `OrOp | `ImplOp | `EquivOp ] [@@deriving yojson]
+type cmpop = [ `EqOp | `NeOp ] [@@deriving yojson]
 
 (* Stringifiers *)
 

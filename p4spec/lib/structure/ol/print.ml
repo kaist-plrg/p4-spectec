@@ -2,7 +2,7 @@ open Il.Print
 open Ast
 open Util.Source
 
-(* Cases *)
+(* Case analysis *)
 
 let rec string_of_case ?(level = 0) ?(index = 0) case =
   let indent = String.make (level * 2) ' ' in
@@ -35,6 +35,13 @@ and string_of_instr ?(level = 0) ?(index = 0) instr =
       Format.asprintf "%sIf (%s)%s, then\n\n%s" order (string_of_exp exp_cond)
         (string_of_iterexps iterexps)
         (string_of_instrs ~level:(level + 1) instrs_then)
+  | HoldI (id, notexp, iterexps, instrs_hold, instrs_nothold) ->
+      Format.asprintf "%sIf (%s: %s)%s\n\nHold:\n\n%s\n\n%sDoes not hold:\n\n%s"
+        order (string_of_relid id) (string_of_notexp notexp)
+        (string_of_iterexps iterexps)
+        (string_of_instrs ~level:(level + 1) instrs_hold)
+        indent
+        (string_of_instrs ~level:(level + 1) instrs_nothold)
   | CaseI (exp, cases, _) ->
       Format.asprintf "%sCase analysis on %s\n\n%s" order (string_of_exp exp)
         (string_of_cases ~level:(level + 1) cases)

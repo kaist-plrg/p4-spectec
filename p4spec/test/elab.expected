@@ -35,102 +35,108 @@ def $init_(nat) : nat* =
   clause 0(nat) = []
   -- if (nat = 0)
 
-  ;; ../../../../spec-concrete/0-aux.watsup:43.1-44.15
-  clause 1(n) = (n - 1) :: $init_((n - 1))
-  -- otherwise
+  ;; ../../../../spec-concrete/0-aux.watsup:43.1-45.22
+  clause 1(n) = n' :: $init_(n')
+  -- if (n =/= 0)
+  -- let int = (n - 1)
+  -- if int <: nat
+  -- let n' = int as nat
 
-;; ../../../../spec-concrete/0-aux.watsup:46.1-46.29
+;; ../../../../spec-concrete/0-aux.watsup:47.1-47.29
 def $repeat_<X>(X, nat) : X* =
 
-  ;; ../../../../spec-concrete/0-aux.watsup:47.1-47.28
+  ;; ../../../../spec-concrete/0-aux.watsup:48.1-48.28
   clause 0(X, nat) = []
   -- if (nat = 0)
 
-  ;; ../../../../spec-concrete/0-aux.watsup:48.1-49.15
-  clause 1(X, n) = [X] ++ $repeat_<X>(X, (n - 1))
-  -- otherwise
+  ;; ../../../../spec-concrete/0-aux.watsup:49.1-51.22
+  clause 1(X, n) = [X] ++ $repeat_<X>(X, n')
+  -- if (n =/= 0)
+  -- let int = (n - 1)
+  -- if int <: nat
+  -- let n' = int as nat
 
-;; ../../../../spec-concrete/0-aux.watsup:51.1-51.22
+;; ../../../../spec-concrete/0-aux.watsup:53.1-53.22
 def $rev_<X>(X*) : X* =
 
-;; ../../../../spec-concrete/0-aux.watsup:53.1-53.28
+;; ../../../../spec-concrete/0-aux.watsup:55.1-55.28
 def $concat_<X>(X**) : X* =
 
-;; ../../../../spec-concrete/0-aux.watsup:55.1-55.39
+;; ../../../../spec-concrete/0-aux.watsup:57.1-57.39
 def $partition_<X>(X*, nat) : (X*, X*) =
 
-;; ../../../../spec-concrete/0-aux.watsup:57.1-57.35
+;; ../../../../spec-concrete/0-aux.watsup:59.1-59.35
 def $assoc_<X, Y>(X, (X, Y)*) : Y? =
 
-;; ../../../../spec-concrete/0-aux.watsup:59.1-59.29
+;; ../../../../spec-concrete/0-aux.watsup:61.1-61.29
 def $distinct_<K>(K*) : bool =
 
-;; ../../../../spec-concrete/0-aux.watsup:65.17-65.24
+;; ../../../../spec-concrete/0-aux.watsup:67.17-67.24
 syntax set<K> = 
    | { K* }
 
-;; ../../../../spec-concrete/0-aux.watsup:67.1-67.27
+;; ../../../../spec-concrete/0-aux.watsup:69.1-69.27
 def $empty_set<K> : set<K> =
 
-  ;; ../../../../spec-concrete/0-aux.watsup:68.1-68.29
+  ;; ../../../../spec-concrete/0-aux.watsup:70.1-70.29
   clause 0 = { [] }
 
-;; ../../../../spec-concrete/0-aux.watsup:70.1-70.33
+;; ../../../../spec-concrete/0-aux.watsup:72.1-72.33
 def $in_set<K>(K, set<K>) : bool =
 
-  ;; ../../../../spec-concrete/0-aux.watsup:71.1-71.41
+  ;; ../../../../spec-concrete/0-aux.watsup:73.1-73.41
   clause 0(K, { K_e*{K_e <- K_e*} }) = K <- K_e*{K_e <- K_e*}
 
-;; ../../../../spec-concrete/0-aux.watsup:73.1-73.47
+;; ../../../../spec-concrete/0-aux.watsup:75.1-75.47
 def $intersect_set<K>(set<K>, set<K>) : set<K> =
 
-;; ../../../../spec-concrete/0-aux.watsup:75.1-75.43
+;; ../../../../spec-concrete/0-aux.watsup:77.1-77.43
 def $union_set<K>(set<K>, set<K>) : set<K> =
 
-;; ../../../../spec-concrete/0-aux.watsup:77.1-77.37
+;; ../../../../spec-concrete/0-aux.watsup:79.1-79.37
 def $unions_set<K>(set<K>*) : set<K> =
 
-;; ../../../../spec-concrete/0-aux.watsup:79.1-79.42
+;; ../../../../spec-concrete/0-aux.watsup:81.1-81.42
 def $diff_set<K>(set<K>, set<K>) : set<K> =
 
-;; ../../../../spec-concrete/0-aux.watsup:81.1-81.39
+;; ../../../../spec-concrete/0-aux.watsup:83.1-83.39
 def $sub_set<K>(set<K>, set<K>) : bool =
 
-;; ../../../../spec-concrete/0-aux.watsup:83.1-83.38
+;; ../../../../spec-concrete/0-aux.watsup:85.1-85.38
 def $eq_set<K>(set<K>, set<K>) : bool =
 
-;; ../../../../spec-concrete/0-aux.watsup:89.21-89.27
+;; ../../../../spec-concrete/0-aux.watsup:91.21-91.27
 syntax pair<K, V> = 
    | K : V
 
-;; ../../../../spec-concrete/0-aux.watsup:91.20-91.35
+;; ../../../../spec-concrete/0-aux.watsup:93.20-93.35
 syntax map<K, V> = set<pair<K, V>>
 
-;; ../../../../spec-concrete/0-aux.watsup:93.1-93.33
+;; ../../../../spec-concrete/0-aux.watsup:95.1-95.33
 def $empty_map<K, V> : map<K, V> =
 
-  ;; ../../../../spec-concrete/0-aux.watsup:94.1-94.32
+  ;; ../../../../spec-concrete/0-aux.watsup:96.1-96.32
   clause 0 = { [] }
 
-;; ../../../../spec-concrete/0-aux.watsup:96.1-96.39
+;; ../../../../spec-concrete/0-aux.watsup:98.1-98.39
 def $dom_map<K, V>(map<K, V>) : set<K> =
 
-  ;; ../../../../spec-concrete/0-aux.watsup:97.1-97.45
+  ;; ../../../../spec-concrete/0-aux.watsup:99.1-99.45
   clause 0({ K : V*{K <- K*, V <- V*} }) = { K*{K <- K*} }
 
-;; ../../../../spec-concrete/0-aux.watsup:99.1-99.39
+;; ../../../../spec-concrete/0-aux.watsup:101.1-101.39
 def $find_map<K, V>(map<K, V>, K) : V? =
 
-;; ../../../../spec-concrete/0-aux.watsup:101.1-101.41
+;; ../../../../spec-concrete/0-aux.watsup:103.1-103.41
 def $find_maps<K, V>(map<K, V>*, K) : V? =
 
-;; ../../../../spec-concrete/0-aux.watsup:103.1-103.48
+;; ../../../../spec-concrete/0-aux.watsup:105.1-105.48
 def $add_map<K, V>(map<K, V>, K, V) : map<K, V> =
 
-;; ../../../../spec-concrete/0-aux.watsup:105.1-105.51
+;; ../../../../spec-concrete/0-aux.watsup:107.1-107.51
 def $adds_map<K, V>(map<K, V>, K*, V*) : map<K, V> =
 
-;; ../../../../spec-concrete/0-aux.watsup:107.1-107.51
+;; ../../../../spec-concrete/0-aux.watsup:109.1-109.51
 def $update_map<K, V>(map<K, V>, K, V) : map<K, V> =
 
 ;; ../../../../spec-concrete/1-syntax.watsup:6.1-7.7
@@ -2394,31 +2400,45 @@ def $name(name) : nameIR =
 
   ;; ../../../../spec-concrete/2.0-domain.watsup:11.1-11.27
   clause 2(name) = "apply"
-  -- if (name = apply as name)
+  -- if name <: nonTypeName
+  -- let nonTypeName = name as nonTypeName
+  -- if nonTypeName matches `APPLY`
 
   ;; ../../../../spec-concrete/2.0-domain.watsup:12.1-12.23
   clause 3(name) = "key"
-  -- if (name = key as name)
+  -- if name <: nonTypeName
+  -- let nonTypeName = name as nonTypeName
+  -- if nonTypeName matches `KEY`
 
   ;; ../../../../spec-concrete/2.0-domain.watsup:13.1-13.31
   clause 4(name) = "actions"
-  -- if (name = actions as name)
+  -- if name <: nonTypeName
+  -- let nonTypeName = name as nonTypeName
+  -- if nonTypeName matches `ACTIONS`
 
   ;; ../../../../spec-concrete/2.0-domain.watsup:14.1-14.27
   clause 5(name) = "state"
-  -- if (name = state as name)
+  -- if name <: nonTypeName
+  -- let nonTypeName = name as nonTypeName
+  -- if nonTypeName matches `STATE`
 
   ;; ../../../../spec-concrete/2.0-domain.watsup:15.1-15.31
   clause 6(name) = "entries"
-  -- if (name = entries as name)
+  -- if name <: nonTypeName
+  -- let nonTypeName = name as nonTypeName
+  -- if nonTypeName matches `ENTRIES`
 
   ;; ../../../../spec-concrete/2.0-domain.watsup:16.1-16.25
   clause 7(name) = "type"
-  -- if (name = type as name)
+  -- if name <: nonTypeName
+  -- let nonTypeName = name as nonTypeName
+  -- if nonTypeName matches `TYPE`
 
   ;; ../../../../spec-concrete/2.0-domain.watsup:17.1-17.33
   clause 8(name) = "priority"
-  -- if (name = priority as name)
+  -- if name <: nonTypeName
+  -- let nonTypeName = name as nonTypeName
+  -- if nonTypeName matches `PRIORITY`
 
   ;; ../../../../spec-concrete/2.0-domain.watsup:18.1-18.25
   clause 9(name) = "list"
@@ -2469,79 +2489,82 @@ def $fresh_tids(nat) : tid* =
   clause 0(nat) = []
   -- if (nat = 0)
 
-  ;; ../../../../spec-concrete/2.0-domain.watsup:45.1-46.15
-  clause 1(n) = $fresh_tid :: $fresh_tids((n - 1))
-  -- otherwise
+  ;; ../../../../spec-concrete/2.0-domain.watsup:45.1-47.22
+  clause 1(n) = $fresh_tid :: $fresh_tids(n')
+  -- if (n =/= 0)
+  -- let int = (n - 1)
+  -- if int <: nat
+  -- let n' = int as nat
 
-;; ../../../../spec-concrete/2.0-domain.watsup:56.14-56.24
+;; ../../../../spec-concrete/2.0-domain.watsup:57.14-57.24
 syntax pid = 
    | id # bool
 
-;; ../../../../spec-concrete/2.0-domain.watsup:57.14-57.26
+;; ../../../../spec-concrete/2.0-domain.watsup:58.14-58.26
 syntax rid = 
    | id ( pid* )
 
-;; ../../../../spec-concrete/2.0-domain.watsup:59.1-59.36
+;; ../../../../spec-concrete/2.0-domain.watsup:60.1-60.36
 def $rid(name, parameterList) : rid =
 
-  ;; ../../../../spec-concrete/2.0-domain.watsup:63.1-64.42
+  ;; ../../../../spec-concrete/2.0-domain.watsup:64.1-65.42
   clause 0(name, parameterList) = $name(name) ( $pids(parameterList) )
 
-;; ../../../../spec-concrete/2.0-domain.watsup:60.1-60.32
+;; ../../../../spec-concrete/2.0-domain.watsup:61.1-61.32
 def $pids(parameterList) : pid* =
 
-  ;; ../../../../spec-concrete/2.0-domain.watsup:66.1-66.24
+  ;; ../../../../spec-concrete/2.0-domain.watsup:67.1-67.24
   clause 0(parameterList) = []
   -- if parameterList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/2.0-domain.watsup:67.1-67.39
+  ;; ../../../../spec-concrete/2.0-domain.watsup:68.1-68.39
   clause 1(parameterList) = [$pid(parameter)]
   -- if parameterList <: parameter
   -- let parameter = parameterList as parameter
 
-  ;; ../../../../spec-concrete/2.0-domain.watsup:68.1-69.56
+  ;; ../../../../spec-concrete/2.0-domain.watsup:69.1-70.56
   clause 2(parameterList) = $pids(nonEmptyParameterList as parameterList) ++ [$pid(parameter)]
   -- if parameterList <: nonEmptyParameterList
   -- let nonEmptyParameterList' = parameterList as nonEmptyParameterList
   -- if nonEmptyParameterList' matches `%,%`
   -- let nonEmptyParameterList , parameter = nonEmptyParameterList'
 
-;; ../../../../spec-concrete/2.0-domain.watsup:61.1-61.26
+;; ../../../../spec-concrete/2.0-domain.watsup:62.1-62.26
 def $pid(parameter) : pid =
 
-  ;; ../../../../spec-concrete/2.0-domain.watsup:71.1-71.51
+  ;; ../../../../spec-concrete/2.0-domain.watsup:72.1-72.51
   clause 0(_annotationList _direction _type name initializerOpt) = $name(name) # false
   -- if initializerOpt matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/2.0-domain.watsup:72.1-72.55
+  ;; ../../../../spec-concrete/2.0-domain.watsup:73.1-73.55
   clause 1(_annotationList _direction _type name initializerOpt) = $name(name) # true
   -- if initializerOpt <: initializer
   -- let initializer = initializerOpt as initializer
 
-;; ../../../../spec-concrete/2.0-domain.watsup:78.14-78.17
+;; ../../../../spec-concrete/2.0-domain.watsup:79.14-79.17
 syntax cid = rid
 
-;; ../../../../spec-concrete/2.0-domain.watsup:80.1-80.50
+;; ../../../../spec-concrete/2.0-domain.watsup:81.1-81.50
 def $cid(name, constructorParameterListOpt) : cid =
 
-  ;; ../../../../spec-concrete/2.0-domain.watsup:82.1-82.46
+  ;; ../../../../spec-concrete/2.0-domain.watsup:83.1-83.46
   clause 0(name, constructorParameterListOpt) = $name(name) ( [] )
   -- if constructorParameterListOpt matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/2.0-domain.watsup:83.1-84.42
+  ;; ../../../../spec-concrete/2.0-domain.watsup:84.1-85.42
   clause 1(name, constructorParameterListOpt) = $name(name) ( $pids(parameterList) )
   -- if constructorParameterListOpt matches `(%)`
   -- let ( parameterList ) = constructorParameterListOpt
 
-;; ../../../../spec-concrete/2.0-domain.watsup:88.1-88.48
+;; ../../../../spec-concrete/2.0-domain.watsup:89.1-89.48
 def $expression_as_lvalue(expression) : lvalue? =
 
-  ;; ../../../../spec-concrete/2.0-domain.watsup:90.1-90.69
+  ;; ../../../../spec-concrete/2.0-domain.watsup:91.1-91.69
   clause 0(expression) = ?(referenceExpression as lvalue)
   -- if expression <: referenceExpression
   -- let referenceExpression = expression as referenceExpression
 
-  ;; ../../../../spec-concrete/2.0-domain.watsup:91.1-92.51
+  ;; ../../../../spec-concrete/2.0-domain.watsup:92.1-93.51
   clause 1(expression') = ?(lvalue . member)
   -- if expression' <: memberAccessExpression
   -- let memberAccessBase . member = expression' as memberAccessExpression
@@ -2551,7 +2574,7 @@ def $expression_as_lvalue(expression) : lvalue? =
   -- if lvalue'?{lvalue' <- lvalue'?} matches (_)
   -- let ?(lvalue) = lvalue'?{lvalue' <- lvalue'?}
 
-  ;; ../../../../spec-concrete/2.0-domain.watsup:93.1-94.51
+  ;; ../../../../spec-concrete/2.0-domain.watsup:94.1-95.51
   clause 2(expression') = ?(( lvalue ))
   -- if expression' <: parenthesizedExpression
   -- let ( expression ) = expression' as parenthesizedExpression
@@ -2559,7 +2582,7 @@ def $expression_as_lvalue(expression) : lvalue? =
   -- if lvalue'?{lvalue' <- lvalue'?} matches (_)
   -- let ?(lvalue) = lvalue'?{lvalue' <- lvalue'?}
 
-;; ../../../../spec-concrete/2.0-domain.watsup:99.14-99.17
+;; ../../../../spec-concrete/2.0-domain.watsup:100.14-100.17
 syntax oid = id*
 
 ;; ../../../../spec-concrete/2.1.1-value.watsup:14.1-17.18
@@ -3094,7 +3117,9 @@ def $is_void_typeIR(typeIR) : bool =
 
   ;; ../../../../spec-concrete/2.2.2-type-aux.watsup:22.1-22.33
   clause 0(typeIR) = true
-  -- if (typeIR = void as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `VOID`
 
   ;; ../../../../spec-concrete/2.2.2-type-aux.watsup:23.1-24.15
   clause 1(typeIR) = false
@@ -3105,7 +3130,9 @@ def $is_bool_typeIR(typeIR) : bool =
 
   ;; ../../../../spec-concrete/2.2.2-type-aux.watsup:27.1-27.33
   clause 0(typeIR) = true
-  -- if (typeIR = bool as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `BOOL`
 
   ;; ../../../../spec-concrete/2.2.2-type-aux.watsup:28.1-29.15
   clause 1(typeIR) = false
@@ -3116,7 +3143,9 @@ def $is_error_typeIR(typeIR) : bool =
 
   ;; ../../../../spec-concrete/2.2.2-type-aux.watsup:32.1-32.35
   clause 0(typeIR) = true
-  -- if (typeIR = error as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `ERROR`
 
   ;; ../../../../spec-concrete/2.2.2-type-aux.watsup:33.1-34.15
   clause 1(typeIR) = false
@@ -3127,7 +3156,9 @@ def $is_matchkind_typeIR(typeIR) : bool =
 
   ;; ../../../../spec-concrete/2.2.2-type-aux.watsup:37.1-37.44
   clause 0(typeIR) = true
-  -- if (typeIR = match_kind as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `MATCH_KIND`
 
   ;; ../../../../spec-concrete/2.2.2-type-aux.watsup:38.1-39.15
   clause 1(typeIR) = false
@@ -3138,7 +3169,9 @@ def $is_string_typeIR(typeIR) : bool =
 
   ;; ../../../../spec-concrete/2.2.2-type-aux.watsup:42.1-42.37
   clause 0(typeIR) = true
-  -- if (typeIR = string as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `STRING`
 
   ;; ../../../../spec-concrete/2.2.2-type-aux.watsup:43.1-44.15
   clause 1(typeIR) = false
@@ -3161,7 +3194,9 @@ def $is_arbitrary_int_typeIR(typeIR) : bool =
 
   ;; ../../../../spec-concrete/2.2.2-type-aux.watsup:54.1-54.41
   clause 0(typeIR) = true
-  -- if (typeIR = int as typeIR)
+  -- if typeIR <: numberTypeIR
+  -- let numberTypeIR = typeIR as numberTypeIR
+  -- if numberTypeIR matches `INT`
 
   ;; ../../../../spec-concrete/2.2.2-type-aux.watsup:55.1-56.15
   clause 1(typeIR) = false
@@ -3432,11 +3467,15 @@ def $free_type(typeIR) : bound =
 
   ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:94.1-94.35
   clause 18(typeIR) = { [] }
-  -- if (typeIR = default as typeIR)
+  -- if typeIR <: defaultTypeIR
+  -- let defaultTypeIR = typeIR as defaultTypeIR
+  -- if (defaultTypeIR = default)
 
   ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:96.1-96.42
   clause 19(typeIR) = { [] }
-  -- if (typeIR = header_invalid as typeIR)
+  -- if typeIR <: invalidHeaderTypeIR
+  -- let invalidHeaderTypeIR = typeIR as invalidHeaderTypeIR
+  -- if (invalidHeaderTypeIR = header_invalid)
 
   ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:98.1-99.42
   clause 20(typeIR') = $unions_set<tid>($free_type(typeIR)*{typeIR <- typeIR*})
@@ -4157,15 +4196,21 @@ def $is_defaultable_typeIR'(typeIR) : bool =
 
   ;; ../../../../spec-concrete/2.2.4-type-util.watsup:30.1-30.41
   clause 0(typeIR) = true
-  -- if (typeIR = bool as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `BOOL`
 
   ;; ../../../../spec-concrete/2.2.4-type-util.watsup:31.1-31.42
   clause 1(typeIR) = true
-  -- if (typeIR = error as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `ERROR`
 
   ;; ../../../../spec-concrete/2.2.4-type-util.watsup:32.1-32.43
   clause 2(typeIR) = true
-  -- if (typeIR = string as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `STRING`
 
   ;; ../../../../spec-concrete/2.2.4-type-util.watsup:33.1-33.49
   clause 3(typeIR) = true
@@ -4237,7 +4282,9 @@ def $is_equalable_typeIR'(typeIR) : bool =
 
   ;; ../../../../spec-concrete/2.2.4-type-util.watsup:59.1-59.40
   clause 0(typeIR) = false
-  -- if (typeIR = void as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `VOID`
 
   ;; ../../../../spec-concrete/2.2.4-type-util.watsup:60.1-60.43
   clause 1(typeIR) = false
@@ -4273,7 +4320,9 @@ def $is_equalable_typeIR'(typeIR) : bool =
 
   ;; ../../../../spec-concrete/2.2.4-type-util.watsup:66.1-66.43
   clause 7(typeIR) = false
-  -- if (typeIR = default as typeIR)
+  -- if typeIR <: defaultTypeIR
+  -- let defaultTypeIR = typeIR as defaultTypeIR
+  -- if (defaultTypeIR = default)
 
   ;; ../../../../spec-concrete/2.2.4-type-util.watsup:67.1-67.54
   clause 8(typeIR) = false
@@ -4291,7 +4340,9 @@ def $is_equalable_typeIR'(typeIR) : bool =
 
   ;; ../../../../spec-concrete/2.2.4-type-util.watsup:69.1-69.50
   clause 10(typeIR) = false
-  -- if (typeIR = header_invalid as typeIR)
+  -- if typeIR <: invalidHeaderTypeIR
+  -- let invalidHeaderTypeIR = typeIR as invalidHeaderTypeIR
+  -- if (invalidHeaderTypeIR = header_invalid)
 
   ;; ../../../../spec-concrete/2.2.4-type-util.watsup:70.1-70.46
   clause 11(typeIR) = false
@@ -4327,15 +4378,21 @@ def $is_assignable_typeIR'(typeIR) : bool =
 
   ;; ../../../../spec-concrete/2.2.4-type-util.watsup:83.1-83.41
   clause 0(typeIR) = false
-  -- if (typeIR = void as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `VOID`
 
   ;; ../../../../spec-concrete/2.2.4-type-util.watsup:84.1-84.43
   clause 1(typeIR) = false
-  -- if (typeIR = string as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `STRING`
 
   ;; ../../../../spec-concrete/2.2.4-type-util.watsup:85.1-85.40
   clause 2(typeIR) = false
-  -- if (typeIR = int as typeIR)
+  -- if typeIR <: numberTypeIR
+  -- let numberTypeIR = typeIR as numberTypeIR
+  -- if numberTypeIR matches `INT`
 
   ;; ../../../../spec-concrete/2.2.4-type-util.watsup:86.1-86.49
   clause 3(typeIR) = false
@@ -4749,8 +4806,12 @@ relation Type_alpha: typeIR ~~ typeIR
     (expl-input) default as typeIR | default as typeIR
     (impl-input) typeIR | typeIR'
     (impl-input-premises)
-    -- if (typeIR = default as typeIR)
-    -- if (typeIR' = default as typeIR)
+    -- if typeIR <: defaultTypeIR
+    -- let defaultTypeIR = typeIR as defaultTypeIR
+    -- if (defaultTypeIR = default)
+    -- if typeIR' <: defaultTypeIR
+    -- let defaultTypeIR' = typeIR' as defaultTypeIR
+    -- if (defaultTypeIR' = default)
    paths
   {
     rulepath defaulttype
@@ -4854,8 +4915,12 @@ relation Type_alpha: typeIR ~~ typeIR
     (expl-input) header_invalid as typeIR | header_invalid as typeIR
     (impl-input) typeIR | typeIR'
     (impl-input-premises)
-    -- if (typeIR = header_invalid as typeIR)
-    -- if (typeIR' = header_invalid as typeIR)
+    -- if typeIR <: invalidHeaderTypeIR
+    -- let invalidHeaderTypeIR = typeIR as invalidHeaderTypeIR
+    -- if (invalidHeaderTypeIR = header_invalid)
+    -- if typeIR' <: invalidHeaderTypeIR
+    -- let invalidHeaderTypeIR' = typeIR' as invalidHeaderTypeIR
+    -- if (invalidHeaderTypeIR' = header_invalid)
    paths
   {
     rulepath invalidtype
@@ -6103,8 +6168,12 @@ def $bin_eq(value, value) : bool =
 
   ;; ../../../../spec-concrete/3-numerics.watsup:278.1-278.31
   clause 13(value, value') = true
-  -- if (value = {#} as value)
-  -- if (value' = {#} as value)
+  -- if value <: invalidHeaderValue
+  -- let invalidHeaderValue = value as invalidHeaderValue
+  -- if (invalidHeaderValue = {#})
+  -- if value' <: invalidHeaderValue
+  -- let invalidHeaderValue' = value' as invalidHeaderValue
+  -- if (invalidHeaderValue' = {#})
 
 ;; ../../../../spec-concrete/3-numerics.watsup:239.1-239.36
 def $bin_eqs(value*, value*) : bool =
@@ -6416,7 +6485,9 @@ def $cast_op(typeIR, value) : value =
 
   ;; ../../../../spec-concrete/3-numerics.watsup:545.1-545.49
   clause 9(typeIR, value) = $default(typeIR)
-  -- if (value = default as value)
+  -- if value <: defaultValue
+  -- let defaultValue = value as defaultValue
+  -- if (defaultValue = default)
 
   ;; ../../../../spec-concrete/3-numerics.watsup:582.1-583.39
   clause 10(typeIR, value') = $cast_set_singleton(typeIR, value)
@@ -6450,20 +6521,28 @@ def $default'(typeIR) : value =
 
   ;; ../../../../spec-concrete/3-numerics.watsup:596.1-596.30
   clause 0(typeIR) = b false as value
-  -- if (typeIR = bool as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `BOOL`
 
   ;; ../../../../spec-concrete/3-numerics.watsup:597.1-597.42
   clause 1(typeIR) = error. "NoError" as value
-  -- if (typeIR = error as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `ERROR`
 
   ;; ../../../../spec-concrete/3-numerics.watsup:598.1-599.24
   clause 2(typeIR) = " text_empty " as value
-  -- if (typeIR = string as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `STRING`
   -- let text_empty = ""
 
   ;; ../../../../spec-concrete/3-numerics.watsup:601.1-601.25
   clause 3(typeIR) = d 0 as int as value
-  -- if (typeIR = int as typeIR)
+  -- if typeIR <: numberTypeIR
+  -- let numberTypeIR = typeIR as numberTypeIR
+  -- if numberTypeIR matches `INT`
 
   ;; ../../../../spec-concrete/3-numerics.watsup:602.1-602.34
   clause 4(typeIR) = w w 0 as int as value
@@ -6553,7 +6632,9 @@ def $cast_bool'(typeIR, bool) : value =
 
   ;; ../../../../spec-concrete/3-numerics.watsup:393.1-393.31
   clause 0(typeIR, b) = b b as value
-  -- if (typeIR = bool as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `BOOL`
 
   ;; ../../../../spec-concrete/3-numerics.watsup:394.1-394.42
   clause 1(typeIR, bool) = w w 1 as int as value
@@ -6589,11 +6670,15 @@ def $cast_arbint'(typeIR, int) : value =
 
   ;; ../../../../spec-concrete/3-numerics.watsup:407.1-407.39
   clause 0(typeIR, i) = b (i = 0 as int) as value
-  -- if (typeIR = bool as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `BOOL`
 
   ;; ../../../../spec-concrete/3-numerics.watsup:408.1-408.32
   clause 1(typeIR, i) = d i as value
-  -- if (typeIR = int as typeIR)
+  -- if typeIR <: numberTypeIR
+  -- let numberTypeIR = typeIR as numberTypeIR
+  -- if numberTypeIR matches `INT`
 
   ;; ../../../../spec-concrete/3-numerics.watsup:409.1-409.58
   clause 2(typeIR, i) = w w $to_bitstr(w as int, i) as value
@@ -6634,11 +6719,15 @@ def $cast_fixbit'(typeIR, nat, int) : value =
 
   ;; ../../../../spec-concrete/3-numerics.watsup:423.1-423.42
   clause 0(typeIR, w, i) = b (i = 1 as int) as value
-  -- if (typeIR = bool as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `BOOL`
 
   ;; ../../../../spec-concrete/3-numerics.watsup:424.1-424.35
   clause 1(typeIR, _nat, i) = d i as value
-  -- if (typeIR = int as typeIR)
+  -- if typeIR <: numberTypeIR
+  -- let numberTypeIR = typeIR as numberTypeIR
+  -- if numberTypeIR matches `INT`
 
   ;; ../../../../spec-concrete/3-numerics.watsup:425.1-426.33
   clause 2(typeIR, _nat, i) = w_to w i' as value
@@ -6681,7 +6770,9 @@ def $cast_fixint'(typeIR, nat, int) : value =
 
   ;; ../../../../spec-concrete/3-numerics.watsup:441.1-441.47
   clause 0(typeIR, w, i) = d $to_int(w as int, i) as value
-  -- if (typeIR = int as typeIR)
+  -- if typeIR <: numberTypeIR
+  -- let numberTypeIR = typeIR as numberTypeIR
+  -- if numberTypeIR matches `INT`
 
   ;; ../../../../spec-concrete/3-numerics.watsup:442.1-443.50
   clause 1(typeIR, w_from, i) = w_to w i' as value
@@ -6909,7 +7000,9 @@ def $sizeof_minSizeInBits''(typeIR) : nat =
 
   ;; ../../../../spec-concrete/3-numerics.watsup:669.1-669.38
   clause 0(typeIR) = 1
-  -- if (typeIR = bool as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `BOOL`
 
   ;; ../../../../spec-concrete/3-numerics.watsup:670.1-670.44
   clause 1(typeIR) = w
@@ -6995,7 +7088,9 @@ def $sizeof_maxSizeInBits''(typeIR) : nat =
 
   ;; ../../../../spec-concrete/3-numerics.watsup:695.1-695.38
   clause 0(typeIR) = 1
-  -- if (typeIR = bool as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `BOOL`
 
   ;; ../../../../spec-concrete/3-numerics.watsup:696.1-696.44
   clause 1(typeIR) = w
@@ -8962,40 +9057,43 @@ def $find_action'(matchAction*, prefixedNameIR) : (parameterTypeIR*, argumentLis
 ;; ../../../../spec-concrete/5.03-table-context.watsup:156.1-156.50
 def $find_table_priority_last(tableContext) : nat =
 
-  ;; ../../../../spec-concrete/5.03-table-context.watsup:158.1-159.36
-  clause 0(TBLC) = n*{n <- n*}[(|n*{n <- n*}| - 1)]
+  ;; ../../../../spec-concrete/5.03-table-context.watsup:158.1-160.29
+  clause 0(TBLC) = n*{n <- n*}[n_last]
   -- let n*{n <- n*} = TBLC.priorities.values
+  -- let int = (|n*{n <- n*}| - 1)
+  -- if int <: nat
+  -- let n_last = int as nat
 
-;; ../../../../spec-concrete/5.03-table-context.watsup:165.1-165.78
+;; ../../../../spec-concrete/5.03-table-context.watsup:166.1-166.78
 def $join_tableEntryState(tableEntryState, tableEntryState) : tableEntryState =
 
-  ;; ../../../../spec-concrete/5.03-table-context.watsup:167.1-167.48
+  ;; ../../../../spec-concrete/5.03-table-context.watsup:168.1-168.48
   clause 0(tableEntryState, tableEntryState') = lpm n
   -- if tableEntryState matches `NOLPM`
   -- if tableEntryState' matches `LPM%`
   -- let lpm n = tableEntryState'
 
-  ;; ../../../../spec-concrete/5.03-table-context.watsup:168.1-168.48
+  ;; ../../../../spec-concrete/5.03-table-context.watsup:169.1-169.48
   clause 1(tableEntryState, tableEntryState') = lpm n
   -- if tableEntryState matches `LPM%`
   -- let lpm n = tableEntryState
   -- if tableEntryState' matches `NOLPM`
 
-  ;; ../../../../spec-concrete/5.03-table-context.watsup:169.1-169.48
+  ;; ../../../../spec-concrete/5.03-table-context.watsup:170.1-170.48
   clause 2(tableEntryState, tableEntryState') = nolpm
   -- if tableEntryState matches `NOLPM`
   -- if tableEntryState' matches `NOLPM`
 
-;; ../../../../spec-concrete/5.03-table-context.watsup:171.1-171.40
+;; ../../../../spec-concrete/5.03-table-context.watsup:172.1-172.40
 def $tableEntry_lpm_prefix(value) : nat =
 
-  ;; ../../../../spec-concrete/5.03-table-context.watsup:174.1-174.70
+  ;; ../../../../spec-concrete/5.03-table-context.watsup:175.1-175.70
   clause 0(value) = $tableEntry_lpm_prefix'(value, 0)
 
-;; ../../../../spec-concrete/5.03-table-context.watsup:172.1-172.46
+;; ../../../../spec-concrete/5.03-table-context.watsup:173.1-173.46
 def $tableEntry_lpm_prefix'(value, nat) : nat =
 
-  ;; ../../../../spec-concrete/5.03-table-context.watsup:175.1-175.56
+  ;; ../../../../spec-concrete/5.03-table-context.watsup:176.1-176.56
   clause 0(value, n_prefix) = n_prefix
   -- if value <: numberLiteral
   -- let numberLiteral = value as numberLiteral
@@ -9003,7 +9101,7 @@ def $tableEntry_lpm_prefix'(value, nat) : nat =
   -- let nat w _int = numberLiteral
   -- if (nat = 0)
 
-  ;; ../../../../spec-concrete/5.03-table-context.watsup:176.1-180.43
+  ;; ../../../../spec-concrete/5.03-table-context.watsup:177.1-183.25
   clause 1(value, n_prefix) = $tableEntry_lpm_prefix'(value', (n_prefix + 1))
   -- if value <: numberLiteral
   -- let numberLiteral = value as numberLiteral
@@ -9012,10 +9110,16 @@ def $tableEntry_lpm_prefix'(value, nat) : nat =
   -- if int <: nat
   -- let n = int as nat
   -- if (w > 0)
+  -- let int' = (w - 1)
+  -- if int' <: nat
+  -- let w' = int' as nat
   -- if ((n \ 2) =/= 0)
-  -- let value' = (w - 1) w ((n - 1) / 2) as int as value
+  -- let int'' = ((n - 1) / 2 as int)
+  -- if int'' <: nat
+  -- let n' = int'' as nat
+  -- let value' = w' w n' as int as value
 
-  ;; ../../../../spec-concrete/5.03-table-context.watsup:181.1-185.37
+  ;; ../../../../spec-concrete/5.03-table-context.watsup:184.1-189.31
   clause 2(value, nat) = $tableEntry_lpm_prefix'(value', 0)
   -- if value <: numberLiteral
   -- let numberLiteral = value as numberLiteral
@@ -9025,8 +9129,11 @@ def $tableEntry_lpm_prefix'(value, nat) : nat =
   -- let n = int as nat
   -- if (nat = 0)
   -- if (w > 0)
+  -- let int' = (w - 1)
+  -- if int' <: nat
+  -- let w' = int' as nat
   -- if ((n \ 2) = 0)
-  -- let value' = (w - 1) w (n / 2) as int as value
+  -- let value' = w' w (n / 2) as int as value
 
 ;; ../../../../spec-concrete/5.03-wellformed.watsup:5.1-7.20
 relation Type_wf: bound |- typeIR
@@ -9354,7 +9461,9 @@ relation Type_wf: bound |- typeIR
     (expl-input) bound | default as typeIR
     (impl-input) bound | typeIR
     (impl-input-premises)
-    -- if (typeIR = default as typeIR)
+    -- if typeIR <: defaultTypeIR
+    -- let defaultTypeIR = typeIR as defaultTypeIR
+    -- if (defaultTypeIR = default)
    paths
   {
     rulepath defaulttype
@@ -9442,7 +9551,9 @@ relation Type_wf: bound |- typeIR
     (expl-input) bound | header_invalid as typeIR
     (impl-input) bound | typeIR
     (impl-input-premises)
-    -- if (typeIR = header_invalid as typeIR)
+    -- if typeIR <: invalidHeaderTypeIR
+    -- let invalidHeaderTypeIR = typeIR as invalidHeaderTypeIR
+    -- if (invalidHeaderTypeIR = header_invalid)
    paths
   {
     rulepath invalidtype
@@ -10023,15 +10134,21 @@ def $nestable'_typedef(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:102.1-102.36
   clause 0(typeIR) = true
-  -- if (typeIR = bool as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `BOOL`
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:103.1-103.37
   clause 1(typeIR) = true
-  -- if (typeIR = error as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `ERROR`
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:104.1-104.38
   clause 2(typeIR) = true
-  -- if (typeIR = string as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `STRING`
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:105.1-105.44
   clause 3(typeIR) = true
@@ -10072,7 +10189,9 @@ def $nestable'_new(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:121.1-121.32
   clause 0(typeIR) = true
-  -- if (typeIR = bool as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `BOOL`
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:122.1-122.38
   clause 1(typeIR) = true
@@ -10117,19 +10236,27 @@ def $nestable'_list(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:140.1-140.33
   clause 0(typeIR) = true
-  -- if (typeIR = bool as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `BOOL`
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:141.1-141.34
   clause 1(typeIR) = true
-  -- if (typeIR = error as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `ERROR`
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:142.1-142.39
   clause 2(typeIR) = true
-  -- if (typeIR = match_kind as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `MATCH_KIND`
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:143.1-143.35
   clause 3(typeIR) = true
-  -- if (typeIR = string as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `STRING`
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:144.1-144.41
   clause 4(typeIR) = true
@@ -10170,11 +10297,15 @@ def $nestable'_tuple(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:160.1-160.34
   clause 0(typeIR) = true
-  -- if (typeIR = bool as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `BOOL`
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:161.1-161.35
   clause 1(typeIR) = true
-  -- if (typeIR = error as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `ERROR`
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:162.1-162.40
   clause 2(typeIR) = true
@@ -10295,11 +10426,15 @@ def $nestable'_struct(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:201.1-201.35
   clause 0(typeIR) = true
-  -- if (typeIR = bool as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `BOOL`
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:202.1-202.36
   clause 1(typeIR) = true
-  -- if (typeIR = error as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `ERROR`
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:203.1-203.41
   clause 2(typeIR) = true
@@ -10390,7 +10525,9 @@ def $nestable'_header(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:230.1-230.35
   clause 0(typeIR) = true
-  -- if (typeIR = bool as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `BOOL`
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:231.1-231.41
   clause 1(typeIR) = true
@@ -10455,7 +10592,9 @@ def $nestable'_struct_in_header(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:244.1-244.45
   clause 0(typeIR) = true
-  -- if (typeIR = bool as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `BOOL`
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:245.1-245.51
   clause 1(typeIR) = true
@@ -10627,11 +10766,15 @@ def $nestable'_set(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:369.1-369.32
   clause 0(typeIR) = true
-  -- if (typeIR = bool as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `BOOL`
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:370.1-370.33
   clause 1(typeIR) = true
-  -- if (typeIR = error as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `ERROR`
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:371.1-371.38
   clause 2(typeIR) = true
@@ -10704,7 +10847,9 @@ def $nestable'_tuple_in_set(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:386.1-386.41
   clause 0(typeIR) = true
-  -- if (typeIR = bool as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `BOOL`
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:387.1-387.47
   clause 1(typeIR) = true
@@ -10769,7 +10914,9 @@ def $nestable'_sequence_in_set(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:400.1-400.44
   clause 0(typeIR) = true
-  -- if (typeIR = bool as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `BOOL`
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:401.1-401.50
   clause 1(typeIR) = true
@@ -10932,12 +11079,16 @@ def $nestable_function'(direction, typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:483.1-484.29
   clause 0(direction, typeIR) = false
-  -- if (typeIR = string as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `STRING`
   -- if (direction =/= )
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:485.1-486.29
   clause 1(direction, typeIR) = false
-  -- if (typeIR = int as typeIR)
+  -- if typeIR <: numberTypeIR
+  -- let numberTypeIR = typeIR as numberTypeIR
+  -- if numberTypeIR matches `INT`
   -- if (direction =/= )
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:487.1-487.57
@@ -10993,12 +11144,16 @@ def $nestable_action'(direction, typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:517.1-518.29
   clause 0(direction, typeIR) = false
-  -- if (typeIR = string as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `STRING`
   -- if (direction =/= )
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:519.1-519.38
   clause 1(_direction, typeIR) = false
-  -- if (typeIR = int as typeIR)
+  -- if typeIR <: numberTypeIR
+  -- let numberTypeIR = typeIR as numberTypeIR
+  -- if numberTypeIR matches `INT`
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:520.1-520.47
   clause 2(_direction, typeIR) = false
@@ -11020,12 +11175,16 @@ def $nestable_externfunction'(direction, typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:536.1-537.29
   clause 0(direction, typeIR) = false
-  -- if (typeIR = string as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `STRING`
   -- if (direction =/= )
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:538.1-539.29
   clause 1(direction, typeIR) = false
-  -- if (typeIR = int as typeIR)
+  -- if typeIR <: numberTypeIR
+  -- let numberTypeIR = typeIR as numberTypeIR
+  -- if numberTypeIR matches `INT`
   -- if (direction =/= )
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:540.1-540.64
@@ -11063,12 +11222,16 @@ def $nestable_externmethod'(direction, typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:566.1-567.29
   clause 0(direction, typeIR) = false
-  -- if (typeIR = string as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `STRING`
   -- if (direction =/= )
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:568.1-569.29
   clause 1(direction, typeIR) = false
-  -- if (typeIR = int as typeIR)
+  -- if typeIR <: numberTypeIR
+  -- let numberTypeIR = typeIR as numberTypeIR
+  -- if numberTypeIR matches `INT`
   -- if (direction =/= )
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:570.1-570.62
@@ -11106,12 +11269,16 @@ def $nestable_externabstractmethod'(direction, typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:589.1-590.29
   clause 0(direction, typeIR) = false
-  -- if (typeIR = string as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `STRING`
   -- if (direction =/= )
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:591.1-592.29
   clause 1(direction, typeIR) = false
-  -- if (typeIR = int as typeIR)
+  -- if typeIR <: numberTypeIR
+  -- let numberTypeIR = typeIR as numberTypeIR
+  -- if numberTypeIR matches `INT`
   -- if (direction =/= )
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:593.1-593.70
@@ -11149,12 +11316,16 @@ def $nestable_parserapplymethod'(direction, typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:612.1-613.29
   clause 0(direction, typeIR) = false
-  -- if (typeIR = string as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `STRING`
   -- if (direction =/= )
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:614.1-615.29
   clause 1(direction, typeIR) = false
-  -- if (typeIR = int as typeIR)
+  -- if typeIR <: numberTypeIR
+  -- let numberTypeIR = typeIR as numberTypeIR
+  -- if numberTypeIR matches `INT`
   -- if (direction =/= )
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:616.1-616.67
@@ -11192,12 +11363,16 @@ def $nestable_controlapplymethod'(direction, typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:634.1-635.29
   clause 0(direction, typeIR) = false
-  -- if (typeIR = string as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `STRING`
   -- if (direction =/= )
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:636.1-637.29
   clause 1(direction, typeIR) = false
-  -- if (typeIR = int as typeIR)
+  -- if typeIR <: numberTypeIR
+  -- let numberTypeIR = typeIR as numberTypeIR
+  -- if numberTypeIR matches `INT`
   -- if (direction =/= )
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:638.1-638.68
@@ -11535,7 +11710,9 @@ relation Eval_static: cursor typingContext |- typedExpressionIR ~> value
     (expl-input) p | TC | ... as expressionIR # ( _typeIR _ctk )
     (impl-input) p | TC | expressionIR # ( _typeIR _ctk )
     (impl-input-premises)
-    -- if (expressionIR = ... as expressionIR)
+    -- if expressionIR <: defaultExpression
+    -- let defaultExpression = expressionIR as defaultExpression
+    -- if (defaultExpression = ...)
    paths
   {
     rulepath defaultExpressionIR
@@ -11777,7 +11954,9 @@ relation Eval_static: cursor typingContext |- typedExpressionIR ~> value
     (expl-input) p | TC | {#} as expressionIR # ( _typeIR _ctk )
     (impl-input) p | TC | expressionIR # ( _typeIR _ctk )
     (impl-input-premises)
-    -- if (expressionIR = {#} as expressionIR)
+    -- if expressionIR <: dataExpressionIR
+    -- let dataExpressionIR = expressionIR as dataExpressionIR
+    -- if dataExpressionIR matches `{#}`
    paths
   {
     rulepath dataExpressionIR-invalid
@@ -12042,7 +12221,9 @@ relation Type_ok: cursor typingContext |- typeOrVoid : typeIR # tid*
     (expl-input) p | TC | bool as typeOrVoid
     (impl-input) p | TC | typeOrVoid
     (impl-input-premises)
-    -- if (typeOrVoid = bool as typeOrVoid)
+    -- if typeOrVoid <: baseType
+    -- let baseType = typeOrVoid as baseType
+    -- if baseType matches `BOOL`
    paths
   {
     rulepath boolean
@@ -12056,7 +12237,9 @@ relation Type_ok: cursor typingContext |- typeOrVoid : typeIR # tid*
     (expl-input) p | TC | error as typeOrVoid
     (impl-input) p | TC | typeOrVoid
     (impl-input-premises)
-    -- if (typeOrVoid = error as typeOrVoid)
+    -- if typeOrVoid <: baseType
+    -- let baseType = typeOrVoid as baseType
+    -- if baseType matches `ERROR`
    paths
   {
     rulepath error
@@ -12070,7 +12253,9 @@ relation Type_ok: cursor typingContext |- typeOrVoid : typeIR # tid*
     (expl-input) p | TC | match_kind as typeOrVoid
     (impl-input) p | TC | typeOrVoid
     (impl-input-premises)
-    -- if (typeOrVoid = match_kind as typeOrVoid)
+    -- if typeOrVoid <: baseType
+    -- let baseType = typeOrVoid as baseType
+    -- if baseType matches `MATCH_KIND`
    paths
   {
     rulepath matchkind
@@ -12084,7 +12269,9 @@ relation Type_ok: cursor typingContext |- typeOrVoid : typeIR # tid*
     (expl-input) p | TC | string as typeOrVoid
     (impl-input) p | TC | typeOrVoid
     (impl-input-premises)
-    -- if (typeOrVoid = string as typeOrVoid)
+    -- if typeOrVoid <: baseType
+    -- let baseType = typeOrVoid as baseType
+    -- if baseType matches `STRING`
    paths
   {
     rulepath string
@@ -12098,7 +12285,9 @@ relation Type_ok: cursor typingContext |- typeOrVoid : typeIR # tid*
     (expl-input) p | TC | int as typeOrVoid
     (impl-input) p | TC | typeOrVoid
     (impl-input-premises)
-    -- if (typeOrVoid = int as typeOrVoid)
+    -- if typeOrVoid <: baseType
+    -- let baseType = typeOrVoid as baseType
+    -- if baseType matches `INT`
    paths
   {
     rulepath arbint
@@ -12393,7 +12582,9 @@ relation TypeArgument_ok: cursor typingContext |- typeArgument : typeArgumentIR 
     (expl-input) p | TC | void as typeArgument
     (impl-input) p | TC | typeArgument
     (impl-input-premises)
-    -- if (typeArgument = void as typeArgument)
+    -- if typeArgument <: realTypeArgument
+    -- let realTypeArgument = typeArgument as realTypeArgument
+    -- if realTypeArgument matches `VOID`
    paths
   {
     rulepath void
@@ -12407,7 +12598,9 @@ relation TypeArgument_ok: cursor typingContext |- typeArgument : typeArgumentIR 
     (expl-input) p | TC | _ as typeArgument
     (impl-input) p | TC | typeArgument
     (impl-input-premises)
-    -- if (typeArgument = _ as typeArgument)
+    -- if typeArgument <: realTypeArgument
+    -- let realTypeArgument = typeArgument as realTypeArgument
+    -- if realTypeArgument matches `_`
    paths
   {
     rulepath dontcare
@@ -12510,7 +12703,7 @@ relation Sub_expl_canon: typeIR <: typeIR
   {
     rulepath not-equals
     (premises)
-    -- if ~Type_alpha: typeIR_a ~~ typeIR_b holds
+    -- if Type_alpha: typeIR_a ~~ typeIR_b does not hold
     -- if Sub_expl_canon_neq: typeIR_a <: typeIR_b holds
     (output) 
   }
@@ -12523,7 +12716,9 @@ relation Sub_expl_canon_neq: typeIR <: typeIR
     (expl-input) bool as typeIR | bit< 1 > as typeIR
     (impl-input) typeIR | typeIR'
     (impl-input-premises)
-    -- if (typeIR = bool as typeIR)
+    -- if typeIR <: primitiveTypeIR
+    -- let primitiveTypeIR = typeIR as primitiveTypeIR
+    -- if primitiveTypeIR matches `BOOL`
     -- if (typeIR' = bit< 1 > as typeIR)
    paths
   {
@@ -12538,7 +12733,9 @@ relation Sub_expl_canon_neq: typeIR <: typeIR
     (expl-input) int as typeIR | typeIR
     (impl-input) typeIR' | typeIR
     (impl-input-premises)
-    -- if (typeIR' = int as typeIR)
+    -- if typeIR' <: numberTypeIR
+    -- let numberTypeIR = typeIR' as numberTypeIR
+    -- if numberTypeIR matches `INT`
    paths
   {
     rulepath boolean
@@ -12550,18 +12747,18 @@ relation Sub_expl_canon_neq: typeIR <: typeIR
     (premises)
     -- let typeIR'' = typeIR
     -- if typeIR'' <: numberTypeIR
-    -- let numberTypeIR = typeIR'' as numberTypeIR
-    -- if numberTypeIR matches `INT<%>`
-    -- let int< _nat > = numberTypeIR
+    -- let numberTypeIR' = typeIR'' as numberTypeIR
+    -- if numberTypeIR' matches `INT<%>`
+    -- let int< _nat > = numberTypeIR'
     (output) 
 
     rulepath fixbit
     (premises)
     -- let typeIR'' = typeIR
     -- if typeIR'' <: numberTypeIR
-    -- let numberTypeIR = typeIR'' as numberTypeIR
-    -- if numberTypeIR matches `BIT<%>`
-    -- let bit< _nat > = numberTypeIR
+    -- let numberTypeIR' = typeIR'' as numberTypeIR
+    -- if numberTypeIR' matches `BIT<%>`
+    -- let bit< _nat > = numberTypeIR'
     (output) 
   }
 
@@ -12709,7 +12906,9 @@ relation Sub_expl_canon_neq: typeIR <: typeIR
     (expl-input) default as typeIR | typeIR_b
     (impl-input) typeIR | typeIR_b
     (impl-input-premises)
-    -- if (typeIR = default as typeIR)
+    -- if typeIR <: defaultTypeIR
+    -- let defaultTypeIR = typeIR as defaultTypeIR
+    -- if (defaultTypeIR = default)
    paths
   {
     rulepath default
@@ -12724,7 +12923,9 @@ relation Sub_expl_canon_neq: typeIR <: typeIR
     (expl-input) header_invalid as typeIR | typeIR
     (impl-input) typeIR' | typeIR
     (impl-input-premises)
-    -- if (typeIR' = header_invalid as typeIR)
+    -- if typeIR' <: invalidHeaderTypeIR
+    -- let invalidHeaderTypeIR = typeIR' as invalidHeaderTypeIR
+    -- if (invalidHeaderTypeIR = header_invalid)
    paths
   {
     rulepath header
@@ -13022,7 +13223,7 @@ relation Sub_impl_canon: typeIR <: typeIR
   {
     rulepath not-equals
     (premises)
-    -- if ~Type_alpha: typeIR_a ~~ typeIR_b holds
+    -- if Type_alpha: typeIR_a ~~ typeIR_b does not hold
     -- if Sub_impl_canon_neq: typeIR_a <: typeIR_b holds
     (output) 
   }
@@ -13035,23 +13236,25 @@ relation Sub_impl_canon_neq: typeIR <: typeIR
     (expl-input) int as typeIR | numberTypeIR as typeIR
     (impl-input) typeIR | typeIR'
     (impl-input-premises)
-    -- if (typeIR = int as typeIR)
+    -- if typeIR <: numberTypeIR
+    -- let numberTypeIR' = typeIR as numberTypeIR
+    -- if numberTypeIR' matches `INT`
     -- if typeIR' <: numberTypeIR
     -- let numberTypeIR = typeIR' as numberTypeIR
    paths
   {
     rulepath fixint
     (premises)
-    -- let numberTypeIR' = numberTypeIR
-    -- if numberTypeIR' matches `INT<%>`
-    -- let int< _nat > = numberTypeIR'
+    -- let numberTypeIR'' = numberTypeIR
+    -- if numberTypeIR'' matches `INT<%>`
+    -- let int< _nat > = numberTypeIR''
     (output) 
 
     rulepath fixbit
     (premises)
-    -- let numberTypeIR' = numberTypeIR
-    -- if numberTypeIR' matches `BIT<%>`
-    -- let bit< _nat > = numberTypeIR'
+    -- let numberTypeIR'' = numberTypeIR
+    -- if numberTypeIR'' matches `BIT<%>`
+    -- let bit< _nat > = numberTypeIR''
     (output) 
   }
 
@@ -13079,7 +13282,9 @@ relation Sub_impl_canon_neq: typeIR <: typeIR
     (expl-input) default as typeIR | typeIR_b
     (impl-input) typeIR | typeIR_b
     (impl-input-premises)
-    -- if (typeIR = default as typeIR)
+    -- if typeIR <: defaultTypeIR
+    -- let defaultTypeIR = typeIR as defaultTypeIR
+    -- if (defaultTypeIR = default)
    paths
   {
     rulepath default
@@ -13094,7 +13299,9 @@ relation Sub_impl_canon_neq: typeIR <: typeIR
     (expl-input) header_invalid as typeIR | typeIR
     (impl-input) typeIR' | typeIR
     (impl-input-premises)
-    -- if (typeIR' = header_invalid as typeIR)
+    -- if typeIR' <: invalidHeaderTypeIR
+    -- let invalidHeaderTypeIR = typeIR' as invalidHeaderTypeIR
+    -- if (invalidHeaderTypeIR = header_invalid)
    paths
   {
     rulepath header
@@ -13441,7 +13648,9 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     (expl-input) p | TC | ... as expression
     (impl-input) p | TC | expression
     (impl-input-premises)
-    -- if (expression = ... as expression)
+    -- if expression <: defaultExpression
+    -- let defaultExpression = expression as defaultExpression
+    -- if (defaultExpression = ...)
    paths
   {
     rulepath defaultExpression
@@ -13815,7 +14024,9 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     (premises)
     -- Expr_ok: p TC |- expression_cond : typedExpressionIR_cond
     -- let _expressionIR # ( typeIR ctk_cond ) = typedExpressionIR_cond
-    -- if (typeIR = bool as typeIR)
+    -- if typeIR <: primitiveTypeIR
+    -- let primitiveTypeIR = typeIR as primitiveTypeIR
+    -- if primitiveTypeIR matches `BOOL`
     -- Expr_ok: p TC |- expression_true : typedExpressionIR_true
     -- Expr_ok: p TC |- expression_false : typedExpressionIR_false
     -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $coerce_binary(typedExpressionIR_true, typedExpressionIR_false)
@@ -13857,7 +14068,9 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     (expl-input) p | TC | {#} as expression
     (impl-input) p | TC | expression
     (impl-input-premises)
-    -- if (expression = {#} as expression)
+    -- if expression <: dataExpression
+    -- let dataExpression = expression as dataExpression
+    -- if dataExpression matches `{#}`
    paths
   {
     rulepath dataExpression-invalid
@@ -13899,7 +14112,9 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- let expression''*{expression'' <- expression''*} = $rev_<expression>(expression_e*{expression_e <- expression_e*})
     -- if expression''*{expression'' <- expression''*} matches _ :: _
     -- let expression' :: expression_e_h_rev*{expression_e_h_rev <- expression_e_h_rev*} = expression''*{expression'' <- expression''*}
-    -- if (expression' = ... as expression)
+    -- if expression' <: defaultExpression
+    -- let defaultExpression = expression' as defaultExpression
+    -- if (defaultExpression = ...)
     -- let expression_e_h*{expression_e_h <- expression_e_h*} = $rev_<expression>(expression_e_h_rev*{expression_e_h_rev <- expression_e_h_rev*})
     -- if ~... as expression <- expression_e_h*{expression_e_h <- expression_e_h*}
     -- (Expr_ok: p TC |- expression_e_h : typedExpressionIR_e_h)*{expression_e_h <- expression_e_h*, typedExpressionIR_e_h <- typedExpressionIR_e_h*}
@@ -14238,7 +14453,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     (output) typedExpressionIR_base [ typedExpressionIR_index_reduced ] as expressionIR # expressionNoteIR
   }
 
-  ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1037.1-1084.56
+  ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1037.1-1085.56
   rulegroup indexAccessExpression-bitslice
    match
     (expl-input) p | TC | expression_base [ expression_hi : expression_lo ] as expression
@@ -14278,12 +14493,15 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if int' <: nat
     -- let n_lo = int' as nat
     -- if $is_valid_bitslice(typeIR_base_reduced, n_lo, n_hi)
-    -- let typeIR = bit< ((n_hi - n_lo) + 1) > as typeIR
+    -- let int'' = ((n_hi - n_lo) + 1 as int)
+    -- if int'' <: nat
+    -- let n_slice = int'' as nat
+    -- let typeIR = bit< n_slice > as typeIR
     -- let expressionNoteIR = ( typeIR ctk_base_reduced )
     (output) typedExpressionIR_base [ typedExpressionIR_hi_reduced : typedExpressionIR_lo_reduced ] as expressionIR # expressionNoteIR
   }
 
-  ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1092.1-1148.2
+  ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1093.1-1149.2
   rulegroup callExpression-routineTarget
    match
     (expl-input) p | TC | callExpression as expression
@@ -14332,7 +14550,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     (output) callExpressionIR as expressionIR # expressionNoteIR
   }
 
-  ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1181.1-1230.2
+  ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1182.1-1231.2
   rulegroup callExpression-constructorTarget
    match
     (expl-input) p | TC | callTarget ( argumentList ) as expression
@@ -14378,7 +14596,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     (output) callExpressionIR as expressionIR # expressionNoteIR
   }
 
-  ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1235.1-1238.50
+  ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1236.1-1239.50
   rulegroup parenthesizedExpression
    match
     (expl-input) p | TC | ( expression ) as expression
@@ -14598,7 +14816,7 @@ relation Lvalue_ok: cursor typingContext |- lvalue : typedLvalueIR
     (output) typedLvalueIR
   }
 
-  ;; ../../../../spec-concrete/5.08-typing-lvalue.watsup:145.1-186.25
+  ;; ../../../../spec-concrete/5.08-typing-lvalue.watsup:145.1-187.25
   rulegroup lvalue-expression-expression
    match
     (expl-input) p | TC | lvalue_base [ expression_hi : expression_lo ]
@@ -14634,12 +14852,15 @@ relation Lvalue_ok: cursor typingContext |- lvalue : typedLvalueIR
     -- if int' <: nat
     -- let n_lo = int' as nat
     -- if $is_valid_bitslice(typeIR_base, n_lo, n_hi)
-    -- let typeIR = bit< ((n_hi - n_lo) + 1) > as typeIR
+    -- let int'' = ((n_hi - n_lo) + 1 as int)
+    -- if int'' <: nat
+    -- let n_slice = int'' as nat
+    -- let typeIR = bit< n_slice > as typeIR
     -- let typedLvalueIR = typedLvalueIR_base [ typedExpressionIR_hi_reduced : typedExpressionIR_lo_reduced ] #( typeIR )
     (output) typedLvalueIR
   }
 
-  ;; ../../../../spec-concrete/5.08-typing-lvalue.watsup:190.1-197.54
+  ;; ../../../../spec-concrete/5.08-typing-lvalue.watsup:191.1-198.54
   rulegroup parenthesized
    match
     (expl-input) p | TC | ( lvalue_base )
@@ -14665,7 +14886,9 @@ relation Stmt_ok: cursor typingContext flow |- statement : typingContext flow st
     (expl-input) p | TC | f | ; as statement
     (impl-input) p | TC | f | statement
     (impl-input-premises)
-    -- if (statement = ; as statement)
+    -- if statement <: emptyStatement
+    -- let emptyStatement = statement as emptyStatement
+    -- if (emptyStatement = ;)
    paths
   {
     rulepath emptyStatement
@@ -14693,7 +14916,7 @@ relation Stmt_ok: cursor typingContext flow |- statement : typingContext flow st
     -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $coerce_unary(typedExpressionIR, typeIR_l)
     -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
     -- let ?(typedExpressionIR_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
-    (output) TC | f | typedLvalueIR = typedExpressionIR ; as statementIR
+    (output) TC | f | typedLvalueIR = typedExpressionIR_cast ; as statementIR
   }
 
   ;; ../../../../spec-concrete/5.10-typing-statement.watsup:42.1-86.2
@@ -14808,7 +15031,9 @@ relation Stmt_ok: cursor typingContext flow |- statement : typingContext flow st
     (expl-input) p | TC | f | exit; as statement
     (impl-input) p | TC | f | statement
     (impl-input-premises)
-    -- if (statement = exit; as statement)
+    -- if statement <: exitStatement
+    -- let exitStatement = statement as exitStatement
+    -- if (exitStatement = exit;)
    paths
   {
     rulepath exitStatement
@@ -14850,7 +15075,9 @@ relation Stmt_ok: cursor typingContext flow |- statement : typingContext flow st
     -- let if( expression_cond ) statement_then = conditionalStatement'
     -- Expr_ok: p TC |- expression_cond : typedExpressionIR_cond
     -- let _expressionIR # ( typeIR _ctk ) = typedExpressionIR_cond
-    -- if (typeIR = bool as typeIR)
+    -- if typeIR <: primitiveTypeIR
+    -- let primitiveTypeIR = typeIR as primitiveTypeIR
+    -- if primitiveTypeIR matches `BOOL`
     -- Stmt_ok: p TC f |- statement_then : TC_then f_then statementIR_then
     (output) TC | f | if( typedExpressionIR_cond ) statementIR_then as statementIR
 
@@ -14861,7 +15088,9 @@ relation Stmt_ok: cursor typingContext flow |- statement : typingContext flow st
     -- let if( expression_cond ) statement_then else statement_else = conditionalStatement'
     -- Expr_ok: p TC |- expression_cond : typedExpressionIR_cond
     -- let _expressionIR # ( typeIR _ctk ) = typedExpressionIR_cond
-    -- if (typeIR = bool as typeIR)
+    -- if typeIR <: primitiveTypeIR
+    -- let primitiveTypeIR = typeIR as primitiveTypeIR
+    -- if primitiveTypeIR matches `BOOL`
     -- Stmt_ok: p TC f |- statement_then : TC_then f_then statementIR_then
     -- Stmt_ok: p TC f |- statement_else : TC_else f_else statementIR_else
     -- let f_post = $join_flow(f_then, f_else)
@@ -16100,7 +16329,9 @@ relation TableEntry_keyset_ok: typingContext tableContext |- keysetExpression : 
     (expl-input) TC | TBLC | default as keysetExpression
     (impl-input) TC | TBLC | keysetExpression
     (impl-input-premises)
-    -- if (keysetExpression = default as keysetExpression)
+    -- if keysetExpression <: simpleKeysetExpression
+    -- let simpleKeysetExpression = keysetExpression as simpleKeysetExpression
+    -- if simpleKeysetExpression matches `DEFAULT`
    paths
   {
     rulepath noprilpm
@@ -16124,7 +16355,9 @@ relation TableEntry_keyset_ok: typingContext tableContext |- keysetExpression : 
     (expl-input) TC | TBLC | _ as keysetExpression
     (impl-input) TC | TBLC | keysetExpression
     (impl-input-premises)
-    -- if (keysetExpression = _ as keysetExpression)
+    -- if keysetExpression <: simpleKeysetExpression
+    -- let simpleKeysetExpression = keysetExpression as simpleKeysetExpression
+    -- if simpleKeysetExpression matches `_`
    paths
   {
     rulepath noprilpm
@@ -16190,7 +16423,9 @@ relation TableEntry_keyset_ok: typingContext tableContext |- keysetExpression : 
     (expl-input) TC | TBLC | (default) as keysetExpression
     (impl-input) TC | TBLC | keysetExpression
     (impl-input-premises)
-    -- if (keysetExpression = (default) as keysetExpression)
+    -- if keysetExpression <: tupleKeysetExpression
+    -- let tupleKeysetExpression = keysetExpression as tupleKeysetExpression
+    -- if tupleKeysetExpression matches `(DEFAULT)`
    paths
   {
     rulepath noprilpm
@@ -16214,7 +16449,9 @@ relation TableEntry_keyset_ok: typingContext tableContext |- keysetExpression : 
     (expl-input) TC | TBLC | (_) as keysetExpression
     (impl-input) TC | TBLC | keysetExpression
     (impl-input-premises)
-    -- if (keysetExpression = (_) as keysetExpression)
+    -- if keysetExpression <: tupleKeysetExpression
+    -- let tupleKeysetExpression = keysetExpression as tupleKeysetExpression
+    -- if tupleKeysetExpression matches `(_)`
    paths
   {
     rulepath noprilpm
@@ -16333,7 +16570,9 @@ relation TableEntry_priority_ok: typingContext tableContext tableEntryState |- t
     -- if TBLC_0.priorities.largest_wins
     -- let n_size = TBLC_0.entries.size
     -- let n_delta = TBLC_0.priorities.delta
-    -- let n = (((n_size - 1) * n_delta) + 1)
+    -- let int = (((n_size - 1) * n_delta as int) + 1 as int)
+    -- if int <: nat
+    -- let n = int as nat
     -- let TBLC_1 = $add_table_priority(TBLC_0, n)
     (output) TBLC_1 | ?(priority= d n as int :)
 
@@ -16354,7 +16593,9 @@ relation TableEntry_priority_ok: typingContext tableContext tableEntryState |- t
     -- if TBLC_0.priorities.largest_wins
     -- let n_last = $find_table_priority_last(TBLC_0)
     -- let n_delta = TBLC_0.priorities.delta
-    -- let n = (n_last - n_delta)
+    -- let int = (n_last - n_delta)
+    -- if int <: nat
+    -- let n = int as nat
     -- let TBLC_1 = $add_table_priority(TBLC_0, n)
     (output) TBLC_1 | ?(priority= d n as int :)
 
@@ -16631,7 +16872,9 @@ relation TableProperty_ok: typingContext tableContext |- tableProperty : tableCo
     -- if ("largest_priority_wins" = $tableCustomName(tableCustomName))
     -- Expr_ok: local TC |- expression : typedExpressionIR
     -- let _expressionIR # ( typeIR' _ctk ) = typedExpressionIR
-    -- if (typeIR' = bool as typeIR)
+    -- if typeIR' <: primitiveTypeIR
+    -- let primitiveTypeIR = typeIR' as primitiveTypeIR
+    -- if primitiveTypeIR matches `BOOL`
     -- Eval_static: local TC |- typedExpressionIR ~> value'
     -- if value' <: primitiveValue
     -- let primitiveValue = value' as primitiveValue
@@ -17921,7 +18164,9 @@ relation RoutineTarget_ok: cursor typingContext |- routineTarget : routineTarget
     (expl-input) p | TC | this as routineTarget
     (impl-input) p | TC | routineTarget
     (impl-input-premises)
-    -- if (routineTarget = this as routineTarget)
+    -- if routineTarget <: referenceExpression
+    -- let referenceExpression = routineTarget as referenceExpression
+    -- if referenceExpression matches `THIS`
    paths
   {
     rulepath this
@@ -18697,7 +18942,7 @@ def $coerce_unary(typedExpressionIR, typeIR) : typedExpressionIR? =
   ;; ../../../../spec-concrete/5.05.2-subtype.watsup:488.1-493.63
   clause 1(typedExpressionIR, typeIR_to) = ?(typedExpressionIR_cast)
   -- let _expressionIR # ( typeIR ctk ) = typedExpressionIR
-  -- if ~Type_alpha: typeIR ~~ typeIR_to holds
+  -- if Type_alpha: typeIR ~~ typeIR_to does not hold
   -- if Sub_impl: typeIR <: typeIR_to holds
   -- let typedExpressionIR_cast = ( typeIR_to ) typedExpressionIR as expressionIR # ( typeIR_to ctk )
 
@@ -18714,7 +18959,7 @@ def $coerce_binary(typedExpressionIR, typedExpressionIR) : (typedExpressionIR, t
   clause 1(typedExpressionIR_l, typedExpressionIR_r) = ?((typedExpressionIR_l_cast, typedExpressionIR_r))
   -- let _expressionIR # ( typeIR_l ctk_l ) = typedExpressionIR_l
   -- let _expressionIR' # ( typeIR_r _ctk ) = typedExpressionIR_r
-  -- if ~Type_alpha: typeIR_l ~~ typeIR_r holds
+  -- if Type_alpha: typeIR_l ~~ typeIR_r does not hold
   -- if Sub_impl: typeIR_l <: typeIR_r holds
   -- let typedExpressionIR_l_cast = ( typeIR_r ) typedExpressionIR_l as expressionIR # ( typeIR_r ctk_l )
 
@@ -18722,8 +18967,8 @@ def $coerce_binary(typedExpressionIR, typedExpressionIR) : (typedExpressionIR, t
   clause 2(typedExpressionIR_l, typedExpressionIR_r) = ?((typedExpressionIR_l, typedExpressionIR_r_cast))
   -- let _expressionIR # ( typeIR_l _ctk ) = typedExpressionIR_l
   -- let _expressionIR' # ( typeIR_r ctk_r ) = typedExpressionIR_r
-  -- if ~Type_alpha: typeIR_l ~~ typeIR_r holds
-  -- if ~Sub_impl: typeIR_l <: typeIR_r holds
+  -- if Type_alpha: typeIR_l ~~ typeIR_r does not hold
+  -- if Sub_impl: typeIR_l <: typeIR_r does not hold
   -- if Sub_impl: typeIR_r <: typeIR_l holds
   -- let typedExpressionIR_r_cast = ( typeIR_l ) typedExpressionIR_r as expressionIR # ( typeIR_l ctk_r )
 
@@ -18742,7 +18987,9 @@ def $compat'_lnot(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:84.1-84.31
   clause 0(typeIR) = true
-  -- if (typeIR = bool as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `BOOL`
 
   ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:85.1-86.14
   clause 1(typeIR) = false
@@ -18786,7 +19033,9 @@ def $compat'_uplusminus(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:127.1-127.36
   clause 0(typeIR) = true
-  -- if (typeIR = int as typeIR)
+  -- if typeIR <: numberTypeIR
+  -- let numberTypeIR = typeIR as numberTypeIR
+  -- if numberTypeIR matches `INT`
 
   ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:128.1-128.43
   clause 1(typeIR) = true
@@ -18817,8 +19066,12 @@ def $compat'_plusminusmult(typeIR, typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:154.1-154.44
   clause 0(typeIR, typeIR') = true
-  -- if (typeIR = int as typeIR)
-  -- if (typeIR' = int as typeIR)
+  -- if typeIR <: numberTypeIR
+  -- let numberTypeIR = typeIR as numberTypeIR
+  -- if numberTypeIR matches `INT`
+  -- if typeIR' <: numberTypeIR
+  -- let numberTypeIR' = typeIR' as numberTypeIR
+  -- if numberTypeIR' matches `INT`
 
   ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:155.1-155.58
   clause 1(typeIR, typeIR') = true
@@ -18896,8 +19149,12 @@ def $compat'_divmod(typeIR, typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:227.1-227.37
   clause 0(typeIR, typeIR') = true
-  -- if (typeIR = int as typeIR)
-  -- if (typeIR' = int as typeIR)
+  -- if typeIR <: numberTypeIR
+  -- let numberTypeIR = typeIR as numberTypeIR
+  -- if numberTypeIR matches `INT`
+  -- if typeIR' <: numberTypeIR
+  -- let numberTypeIR' = typeIR' as numberTypeIR
+  -- if numberTypeIR' matches `INT`
 
   ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:228.1-229.15
   clause 1(typeIR_l, typeIR_r) = false
@@ -18914,24 +19171,32 @@ def $compat'_shift(typeIR, typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:298.1-298.36
   clause 0(typeIR, typeIR') = true
-  -- if (typeIR = int as typeIR)
-  -- if (typeIR' = int as typeIR)
+  -- if typeIR <: numberTypeIR
+  -- let numberTypeIR = typeIR as numberTypeIR
+  -- if numberTypeIR matches `INT`
+  -- if typeIR' <: numberTypeIR
+  -- let numberTypeIR' = typeIR' as numberTypeIR
+  -- if numberTypeIR' matches `INT`
 
   ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:299.1-299.43
   clause 1(typeIR, typeIR') = true
-  -- if (typeIR = int as typeIR)
+  -- if typeIR <: numberTypeIR
+  -- let numberTypeIR = typeIR as numberTypeIR
+  -- if numberTypeIR matches `INT`
   -- if typeIR' <: numberTypeIR
-  -- let numberTypeIR = typeIR' as numberTypeIR
-  -- if numberTypeIR matches `INT<%>`
-  -- let int< _nat > = numberTypeIR
+  -- let numberTypeIR' = typeIR' as numberTypeIR
+  -- if numberTypeIR' matches `INT<%>`
+  -- let int< _nat > = numberTypeIR'
 
   ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:300.1-300.43
   clause 2(typeIR, typeIR') = true
-  -- if (typeIR = int as typeIR)
+  -- if typeIR <: numberTypeIR
+  -- let numberTypeIR = typeIR as numberTypeIR
+  -- if numberTypeIR matches `INT`
   -- if typeIR' <: numberTypeIR
-  -- let numberTypeIR = typeIR' as numberTypeIR
-  -- if numberTypeIR matches `BIT<%>`
-  -- let bit< _nat > = numberTypeIR
+  -- let numberTypeIR' = typeIR' as numberTypeIR
+  -- if numberTypeIR' matches `BIT<%>`
+  -- let bit< _nat > = numberTypeIR'
 
   ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:301.1-301.43
   clause 3(typeIR, typeIR') = true
@@ -18939,7 +19204,9 @@ def $compat'_shift(typeIR, typeIR) : bool =
   -- let numberTypeIR = typeIR as numberTypeIR
   -- if numberTypeIR matches `INT<%>`
   -- let int< _nat > = numberTypeIR
-  -- if (typeIR' = int as typeIR)
+  -- if typeIR' <: numberTypeIR
+  -- let numberTypeIR' = typeIR' as numberTypeIR
+  -- if numberTypeIR' matches `INT`
 
   ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:302.1-302.50
   clause 4(typeIR, typeIR') = true
@@ -18969,7 +19236,9 @@ def $compat'_shift(typeIR, typeIR) : bool =
   -- let numberTypeIR = typeIR as numberTypeIR
   -- if numberTypeIR matches `BIT<%>`
   -- let bit< _nat > = numberTypeIR
-  -- if (typeIR' = int as typeIR)
+  -- if typeIR' <: numberTypeIR
+  -- let numberTypeIR' = typeIR' as numberTypeIR
+  -- if numberTypeIR' matches `INT`
 
   ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:305.1-305.50
   clause 7(typeIR, typeIR') = true
@@ -19008,8 +19277,12 @@ def $compat'_compare(typeIR, typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:393.1-393.38
   clause 0(typeIR, typeIR') = true
-  -- if (typeIR = int as typeIR)
-  -- if (typeIR' = int as typeIR)
+  -- if typeIR <: numberTypeIR
+  -- let numberTypeIR = typeIR as numberTypeIR
+  -- if numberTypeIR matches `INT`
+  -- if typeIR' <: numberTypeIR
+  -- let numberTypeIR' = typeIR' as numberTypeIR
+  -- if numberTypeIR' matches `INT`
 
   ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:394.1-394.52
   clause 1(typeIR, typeIR') = true
@@ -19201,8 +19474,12 @@ def $compat'_logical(typeIR, typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:516.1-516.40
   clause 0(typeIR, typeIR') = true
-  -- if (typeIR = bool as typeIR)
-  -- if (typeIR' = bool as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `BOOL`
+  -- if typeIR' <: primitiveTypeIR
+  -- let primitiveTypeIR' = typeIR' as primitiveTypeIR
+  -- if primitiveTypeIR' matches `BOOL`
 
   ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:517.1-518.15
   clause 1(typeIR_l, typeIR_r) = false
@@ -19219,7 +19496,9 @@ def $compat'_arrayindex(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:910.1-910.36
   clause 0(typeIR) = true
-  -- if (typeIR = int as typeIR)
+  -- if typeIR <: numberTypeIR
+  -- let numberTypeIR = typeIR as numberTypeIR
+  -- if numberTypeIR matches `INT`
 
   ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:911.1-911.43
   clause 1(typeIR) = true
@@ -19250,7 +19529,9 @@ def $compat'_bitslice_base(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1005.1-1005.39
   clause 0(typeIR) = true
-  -- if (typeIR = int as typeIR)
+  -- if typeIR <: numberTypeIR
+  -- let numberTypeIR = typeIR as numberTypeIR
+  -- if numberTypeIR matches `INT`
 
   ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1006.1-1006.50
   clause 1(typeIR) = (w > 0)
@@ -19281,7 +19562,9 @@ def $compat'_bitslice_index(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1016.1-1016.40
   clause 0(typeIR) = true
-  -- if (typeIR = int as typeIR)
+  -- if typeIR <: numberTypeIR
+  -- let numberTypeIR = typeIR as numberTypeIR
+  -- if numberTypeIR matches `INT`
 
   ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1017.1-1017.47
   clause 1(typeIR) = true
@@ -19312,7 +19595,9 @@ def $is_valid_bitslice'(typeIR, nat, nat) : bool =
 
   ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1027.1-1027.42
   clause 0(typeIR, _nat, _nat') = true
-  -- if (typeIR = int as typeIR)
+  -- if typeIR <: numberTypeIR
+  -- let numberTypeIR = typeIR as numberTypeIR
+  -- if numberTypeIR matches `INT`
 
   ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1028.1-1030.37
   clause 1(typeIR, n_lo, n_hi) = ((n_hi <= w) /\ (w_slice <= w))
@@ -19320,7 +19605,9 @@ def $is_valid_bitslice'(typeIR, nat, nat) : bool =
   -- let numberTypeIR = typeIR as numberTypeIR
   -- if numberTypeIR matches `INT<%>`
   -- let int< w > = numberTypeIR
-  -- let w_slice = ((n_hi - n_lo) + 1)
+  -- let int = ((n_hi - n_lo) + 1 as int)
+  -- if int <: nat
+  -- let w_slice = int as nat
 
   ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1031.1-1033.37
   clause 2(typeIR, n_lo, n_hi) = ((n_hi <= w) /\ (w_slice <= w))
@@ -19328,59 +19615,61 @@ def $is_valid_bitslice'(typeIR, nat, nat) : bool =
   -- let numberTypeIR = typeIR as numberTypeIR
   -- if numberTypeIR matches `BIT<%>`
   -- let bit< w > = numberTypeIR
-  -- let w_slice = ((n_hi - n_lo) + 1)
+  -- let int = ((n_hi - n_lo) + 1 as int)
+  -- if int <: nat
+  -- let w_slice = int as nat
 
   ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1034.1-1035.15
   clause 3(_typeIR, _nat, _nat') = false
   -- otherwise
 
-;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1154.1-1154.46
+;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1155.1-1155.46
 def $is_concrete_extern_object(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1159.1-1160.50
+  ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1160.1-1161.50
   clause 0(typeIR) = $is_concrete_extern_object'($canon(typeIR))
 
-;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1155.1-1155.47
+;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1156.1-1156.47
 def $is_concrete_extern_object'(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1162.1-1163.42
+  ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1163.1-1164.42
   clause 0(typeIR) = true
   -- if ~$is_extern_object_typeIR(typeIR)
 
-  ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1164.1-1165.58
+  ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1165.1-1166.58
   clause 1(typeIR) = true
   -- if typeIR <: externObjectTypeIR
   -- let extern _tid { _rid : routineTypeDefIR*{_rid <- _rid*, routineTypeDefIR <- routineTypeDefIR*} } = typeIR as externObjectTypeIR
   -- (if $is_concrete_extern_object''(routineTypeDefIR))*{routineTypeDefIR <- routineTypeDefIR*}
 
-  ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1166.1-1167.15
+  ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1167.1-1168.15
   clause 2(typeIR) = false
   -- otherwise
 
-;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1156.1-1156.58
+;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1157.1-1157.58
 def $is_concrete_extern_object''(routineTypeDefIR) : bool =
 
-  ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1169.1-1170.49
+  ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1170.1-1171.49
   clause 0(routineTypeDefIR) = $is_concrete_extern_object'''(routineTypeIR)
   -- if routineTypeDefIR <: routineTypeIR
   -- let routineTypeIR = routineTypeDefIR as routineTypeIR
 
-  ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1171.1-1172.50
+  ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1172.1-1173.50
   clause 1(routineTypeDefIR) = (true = $is_concrete_extern_object'''(routineTypeIR))
   -- if routineTypeDefIR <: polyRoutineTypeDefIR
   -- let routineTypeIR < _tid*{_tid <- _tid*} , _tid'*{_tid' <- _tid'*} > = routineTypeDefIR as polyRoutineTypeDefIR
 
-;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1157.1-1157.56
+;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1158.1-1158.56
 def $is_concrete_extern_object'''(routineTypeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1174.1-1174.79
+  ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1175.1-1175.79
   clause 0(routineTypeIR) = false
   -- if routineTypeIR <: methodTypeIR
   -- let methodTypeIR = routineTypeIR as methodTypeIR
   -- if methodTypeIR matches `EXTERN_METHODABSTRACT(%)->%`
   -- let extern_methodabstract( _parameterTypeIR*{_parameterTypeIR <- _parameterTypeIR*} )-> _typeIR = methodTypeIR
 
-  ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1175.1-1176.15
+  ;; ../../../../spec-concrete/5.06.2-typing-expression.watsup:1176.1-1177.15
   clause 1(_routineTypeIR) = true
   -- otherwise
 
@@ -19643,7 +19932,9 @@ def $compat'_switch(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.10-typing-statement.watsup:382.1-382.34
   clause 0(typeIR) = true
-  -- if (typeIR = error as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `ERROR`
 
   ;; ../../../../spec-concrete/5.10-typing-statement.watsup:383.1-383.39
   clause 1(typeIR) = true
@@ -19933,7 +20224,7 @@ relation SelectCase_keyset_simple_ok: typingContext typeIR |- simpleKeysetExpres
     -- let set< typeIR'*{typeIR' <- typeIR'*} > = typeIR'' as setTypeIR
     -- if typeIR'*{typeIR' <- typeIR'*} matches [ _/1 ]
     -- let [typeIR] = typeIR'*{typeIR' <- typeIR'*}
-    -- if ~Type_alpha: typeIR ~~ typeIR_key holds
+    -- if Type_alpha: typeIR ~~ typeIR_key does not hold
     -- if Sub_impl: typeIR <: typeIR_key holds
     -- let typeIR_cast = set< [typeIR_key] > as typeIR
     -- let typedExpressionIR_cast = ( typeIR_cast ) typedExpressionIR as expressionIR # ( typeIR_cast dyn )
@@ -20062,8 +20353,12 @@ def $compat'_mask(typeIR, typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:81.1-81.35
   clause 0(typeIR, typeIR') = true
-  -- if (typeIR = int as typeIR)
-  -- if (typeIR' = int as typeIR)
+  -- if typeIR <: numberTypeIR
+  -- let numberTypeIR = typeIR as numberTypeIR
+  -- if numberTypeIR matches `INT`
+  -- if typeIR' <: numberTypeIR
+  -- let numberTypeIR' = typeIR' as numberTypeIR
+  -- if numberTypeIR' matches `INT`
 
   ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:82.1-82.49
   clause 1(typeIR, typeIR') = true
@@ -20104,8 +20399,12 @@ def $compat'_range(typeIR, typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:118.1-118.36
   clause 0(typeIR, typeIR') = true
-  -- if (typeIR = int as typeIR)
-  -- if (typeIR' = int as typeIR)
+  -- if typeIR <: numberTypeIR
+  -- let numberTypeIR = typeIR as numberTypeIR
+  -- if numberTypeIR matches `INT`
+  -- if typeIR' <: numberTypeIR
+  -- let numberTypeIR' = typeIR' as numberTypeIR
+  -- if numberTypeIR' matches `INT`
 
   ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:119.1-119.50
   clause 1(typeIR, typeIR') = true
@@ -20201,7 +20500,9 @@ relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keyse
     (expl-input) TC | typeIR'*{} | default as keysetExpression
     (impl-input) TC | typeIR'*{typeIR' <- typeIR'*} | keysetExpression
     (impl-input-premises)
-    -- if (keysetExpression = default as keysetExpression)
+    -- if keysetExpression <: simpleKeysetExpression
+    -- let simpleKeysetExpression = keysetExpression as simpleKeysetExpression
+    -- if simpleKeysetExpression matches `DEFAULT`
    paths
   {
     rulepath zero-to-one
@@ -20231,7 +20532,9 @@ relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keyse
     (expl-input) TC | typeIR*{} | _ as keysetExpression
     (impl-input) TC | typeIR*{typeIR <- typeIR*} | keysetExpression
     (impl-input-premises)
-    -- if (keysetExpression = _ as keysetExpression)
+    -- if keysetExpression <: simpleKeysetExpression
+    -- let simpleKeysetExpression = keysetExpression as simpleKeysetExpression
+    -- if simpleKeysetExpression matches `_`
    paths
   {
     rulepath one-to-one
@@ -20296,7 +20599,9 @@ relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keyse
     (expl-input) TC | typeIR*{} | (default) as keysetExpression
     (impl-input) TC | typeIR*{typeIR <- typeIR*} | keysetExpression
     (impl-input-premises)
-    -- if (keysetExpression = (default) as keysetExpression)
+    -- if keysetExpression <: tupleKeysetExpression
+    -- let tupleKeysetExpression = keysetExpression as tupleKeysetExpression
+    -- if tupleKeysetExpression matches `(DEFAULT)`
    paths
   {
     rulepath one-to-one
@@ -20321,7 +20626,9 @@ relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keyse
     (expl-input) TC | typeIR*{} | (_) as keysetExpression
     (impl-input) TC | typeIR*{typeIR <- typeIR*} | keysetExpression
     (impl-input-premises)
-    -- if (keysetExpression = (_) as keysetExpression)
+    -- if keysetExpression <: tupleKeysetExpression
+    -- let tupleKeysetExpression = keysetExpression as tupleKeysetExpression
+    -- if tupleKeysetExpression matches `(_)`
    paths
   {
     rulepath one-to-one
@@ -20390,11 +20697,15 @@ def $compat'_table_exact_optional_key(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:12.1-12.51
   clause 0(typeIR) = true
-  -- if (typeIR = bool as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `BOOL`
 
   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:13.1-13.52
   clause 1(typeIR) = true
-  -- if (typeIR = error as typeIR)
+  -- if typeIR <: primitiveTypeIR
+  -- let primitiveTypeIR = typeIR as primitiveTypeIR
+  -- if primitiveTypeIR matches `ERROR`
 
   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:14.1-14.59
   clause 2(typeIR) = true
@@ -20433,7 +20744,9 @@ def $compat'_table_lpm_ternary_range_key(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:26.1-26.53
   clause 0(typeIR) = true
-  -- if (typeIR = int as typeIR)
+  -- if typeIR <: numberTypeIR
+  -- let numberTypeIR = typeIR as numberTypeIR
+  -- if numberTypeIR matches `INT`
 
   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:27.1-27.60
   clause 1(typeIR) = true
@@ -21228,7 +21541,7 @@ def $merge_constraint'(constraint, constraint, tid*, constraint) : constraint =
   -- let ?(infer'') = infer'''?{infer''' <- infer'''?}
   -- if infer'' matches `KNOWNAS%`
   -- let knownas typeIR_post = infer''
-  -- if ~Sub_impl: typeIR_pre <: typeIR_post holds
+  -- if Sub_impl: typeIR_pre <: typeIR_post does not hold
   -- if Sub_impl: typeIR_post <: typeIR_pre holds
   -- let constraint_updated = $update_map<tid, infer>(constraint, tid_h, knownas typeIR_pre)
 
@@ -22154,7 +22467,9 @@ relation Expr_inst: cursor contextInst sto |- typedExpressionIR ==> sto value
     (expl-input) p | Ci | sto | true as expressionIR # _expressionNoteIR
     (impl-input) p | Ci | sto | expressionIR # _expressionNoteIR
     (impl-input-premises)
-    -- if (expressionIR = true as expressionIR)
+    -- if expressionIR <: booleanLiteral
+    -- let booleanLiteral = expressionIR as booleanLiteral
+    -- if booleanLiteral matches `TRUE`
    paths
   {
     rulepath literalExpressionIR-true
@@ -22168,7 +22483,9 @@ relation Expr_inst: cursor contextInst sto |- typedExpressionIR ==> sto value
     (expl-input) p | Ci | sto | false as expressionIR # _expressionNoteIR
     (impl-input) p | Ci | sto | expressionIR # _expressionNoteIR
     (impl-input-premises)
-    -- if (expressionIR = false as expressionIR)
+    -- if expressionIR <: booleanLiteral
+    -- let booleanLiteral = expressionIR as booleanLiteral
+    -- if booleanLiteral matches `FALSE`
    paths
   {
     rulepath literalExpressionIR-false
@@ -22264,7 +22581,9 @@ relation Expr_inst: cursor contextInst sto |- typedExpressionIR ==> sto value
     (expl-input) p | Ci | sto | ... as expressionIR # _expressionNoteIR
     (impl-input) p | Ci | sto | expressionIR # _expressionNoteIR
     (impl-input-premises)
-    -- if (expressionIR = ... as expressionIR)
+    -- if expressionIR <: defaultExpression
+    -- let defaultExpression = expressionIR as defaultExpression
+    -- if (defaultExpression = ...)
    paths
   {
     rulepath defaultExpressionIR
@@ -22777,7 +23096,9 @@ relation Expr_inst: cursor contextInst sto |- typedExpressionIR ==> sto value
     (expl-input) p | Ci | sto | {#} as expressionIR # _expressionNoteIR
     (impl-input) p | Ci | sto | expressionIR # _expressionNoteIR
     (impl-input-premises)
-    -- if (expressionIR = {#} as expressionIR)
+    -- if expressionIR <: dataExpressionIR
+    -- let dataExpressionIR = expressionIR as dataExpressionIR
+    -- if dataExpressionIR matches `{#}`
    paths
   {
     rulepath dataExpressionIR-invalid

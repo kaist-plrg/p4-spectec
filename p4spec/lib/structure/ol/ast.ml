@@ -8,6 +8,7 @@ type instr = instr' phrase
 
 and instr' =
   | IfI of exp * iterexp list * instr list
+  | HoldI of id * notexp * iterexp list * instr list * instr list
   | CaseI of exp * case list * bool
   | OtherwiseI of instr
   | LetI of exp * exp * iterexp list
