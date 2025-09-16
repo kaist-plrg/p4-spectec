@@ -187,7 +187,7 @@ and prem' =
 
 (* Hints *)
 
-and hint = { hintid : id; hintexp : El.Ast.exp }
+and hint = El.Ast.hint
 
 (* Definitions *)
 

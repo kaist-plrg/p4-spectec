@@ -303,7 +303,7 @@ and expand_typcase (ctx : Ctx.t) (plaintyp : plaintyp) (typcase : typcase) :
 
 and elab_typcase (ctx : Ctx.t) (typcase : nottyp * hint list) : Il.Ast.typcase =
   let nottyp, hints = typcase in
-  (elab_nottyp ctx (NotationT nottyp), elab_hints ctx hints)
+  (elab_nottyp ctx (NotationT nottyp), hints)
 
 and elab_deftyp_variant (ctx : Ctx.t) (at : region) (id : id)
     (tparams : tparam list) (typcases : typcase list) : Typdef.t * Il.Ast.deftyp
@@ -492,7 +492,8 @@ and infer_binop (ctx : Ctx.t) (at : region) (binop : binop)
   in
   List.fold_left
     (fun binop_infer
-         (optyp_il, plaintyp_l_expect, plaintyp_r_expect, plaintyp_res_expect) ->
+         (optyp_il, plaintyp_l_expect, plaintyp_r_expect, plaintyp_res_expect)
+       ->
       match binop_infer with
       | Ok _ -> binop_infer
       | _ -> (
@@ -1398,15 +1399,6 @@ and elab_debug_prem (ctx : Ctx.t) (exp : exp) : Ctx.t * Il.Ast.prem' =
   let prem_il = Il.Ast.DebugPr exp_il in
   (ctx, prem_il)
 
-(* Elaboration of hints *)
-
-and elab_hint (ctx : Ctx.t) (hint : hint) : Il.Ast.hint =
-  ignore ctx;
-  { hintid = hint.hintid; hintexp = hint.hintexp }
-
-and elab_hints (ctx : Ctx.t) (hints : hint list) : Il.Ast.hint list =
-  List.map (elab_hint ctx) hints
-
 (* Elaboration of definitions *)
 
 let rec elab_def (ctx : Ctx.t) (def : def) : Ctx.t * Il.Ast.def option =
@@ -1545,7 +1537,6 @@ and elab_rel_def (ctx : Ctx.t) (at : region) (id : id) (nottyp : nottyp)
   let nottyp_il = elab_nottyp ctx (NotationT nottyp) in
   let inputs = fetch_rel_input_hint at nottyp_il hints in
   let ctx = Ctx.add_rel ctx id nottyp inputs in
-  let hints = elab_hints ctx hints in
   let def_il = Il.Ast.RelD (id, nottyp_il, inputs, [], hints) $ at in
   (ctx, def_il)
 
@@ -1601,7 +1592,8 @@ and elab_rule_def (ctx : Ctx.t) (at : region) (id_rel : id) (id_rule : id)
 (* Elaboration of function declarations *)
 
 and elab_dec_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
-    (params : param list) (plaintyp : plaintyp) (hints : hint list) : Ctx.t * Il.Ast.def =
+    (params : param list) (plaintyp : plaintyp) (hints : hint list) :
+    Ctx.t * Il.Ast.def =
   check
     (List.map it tparams |> distinct ( = ))
     id.at "type parameters are not distinct";
@@ -1609,7 +1601,6 @@ and elab_dec_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
   let ctx_local = Ctx.add_tparams ctx_local tparams in
   let params_il = List.map (elab_param ctx_local) params in
   let typ_il = elab_plaintyp ctx_local plaintyp in
-  let hints = elab_hints ctx hints in
   let def_il = Il.Ast.DecD (id, tparams, params_il, typ_il, [], hints) $ at in
   let ctx = Ctx.add_dec ctx id tparams params plaintyp in
   (ctx, def_il)
@@ -1675,7 +1666,8 @@ let populate_clause (ctx : Ctx.t) (def_il : Il.Ast.def) : Il.Ast.def =
   match def_il.it with
   | Il.Ast.DecD (id, tparams_il, params_il, typ_il, [], hints) ->
       let clauses_il = Ctx.find_clauses ctx id in
-      Il.Ast.DecD (id, tparams_il, params_il, typ_il, clauses_il, hints) $ def_il.at
+      Il.Ast.DecD (id, tparams_il, params_il, typ_il, clauses_il, hints)
+      $ def_il.at
   | Il.Ast.DecD _ -> error def_il.at "declaration was already populated"
   | _ -> def_il
 
