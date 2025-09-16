@@ -414,6 +414,20 @@ let json_ast_command =
            | Error err ->
                Format.printf "Error while parsing %s: %s" filename err))
 
+let p4_program_value_json_command =
+  Core.Command.basic ~summary:"convert a P4 program to a value and output as JSON"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
+     and filename_p4 = flag "-p" (required string) ~doc:"p4 file to convert" in
+     fun () ->
+       try
+         let value_program = Interp_sl.Typing.convert_program_to_value includes_p4 filename_p4 in
+         let json = Sl.Ast.value_to_yojson value_program in
+         Yojson.Safe.to_string json |> print_string
+       with
+       | Util.Error.ConvertInError msg -> Format.printf "ill-formed: %s\n" msg)
+
 let command =
   Core.Command.group
     ~summary:"p4spec: a language design framework for the p4_16 language"
@@ -428,6 +442,7 @@ let command =
       ("interesting", interesting_command);
       ("parse", parse_command);
       ("json-ast", json_ast_command);
+      ("p4-program-value-json", p4_program_value_json_command);
     ]
 
 let () = Command_unix.run ~version command

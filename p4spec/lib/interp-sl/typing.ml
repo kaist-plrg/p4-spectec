@@ -83,3 +83,11 @@ let cover_typings (spec : spec) (includes_p4 : string list)
       in
       MCov.extend cover_multi filename_p4 wellformed welltyped cover_single)
     cover_multi filenames_p4
+
+(* Entry point : Convert P4 program to value *)
+
+let convert_program_to_value (includes_p4 : string list) (filename_p4 : string) : value =
+  Builtin.init ();
+  Value.refresh ();
+  let graph = Dep.Graph.init () in
+  Convert.In.in_program graph includes_p4 filename_p4
