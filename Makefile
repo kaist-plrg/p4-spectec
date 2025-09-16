@@ -4,7 +4,6 @@ SPEC = p4spectec
 
 .PHONY: build build-spec
 
-EXEMAIN = p4/_build/default/bin/main.exe
 EXESPEC = p4spec/_build/default/bin/main.exe
 
 build: build-spec
@@ -13,7 +12,7 @@ build-spec:
 	rm -f ./$(SPEC)
 	rm -f ./p4spec/lib/parsing/parser.ml ./p4spec/lib/parsing/parser.mli
 	opam switch 5.1.0
-	cd p4spec && opam exec -- dune build bin/main.exe && echo
+	cd p4spec && opam exec -- dune build --profile=release bin/main.exe && echo
 	ln -f $(EXESPEC) ./$(SPEC)
 
 # Format

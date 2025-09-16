@@ -194,7 +194,6 @@ let rec eval_exp (ctx : Ctx.t) (exp : exp) : Ctx.t * value =
   | SliceE (exp_b, exp_l, exp_h) -> eval_slice_exp note ctx exp_b exp_l exp_h
   | UpdE (exp_b, path, exp_f) -> eval_upd_exp note ctx exp_b path exp_f
   | CallE (id, targs, args) -> eval_call_exp note ctx id targs args
-  | HoldE (id, notexp) -> eval_hold_exp note ctx id notexp
   | IterE (exp, iterexp) -> eval_iter_exp note ctx exp iterexp
 
 and eval_exps (ctx : Ctx.t) (exps : exp list) : Ctx.t * value list =
@@ -715,24 +714,6 @@ and eval_call_exp (_note : typ') (ctx : Ctx.t) (id : id) (targs : targ list)
   let+ ctx, value_res = invoke_func ctx id targs args in
   (ctx, value_res)
 
-(* Conditional relation holds expression evaluation *)
-
-and eval_hold_exp (note : typ') (ctx : Ctx.t) (id : id) (notexp : notexp) :
-    Ctx.t * value =
-  let _, exps_input = notexp in
-  let ctx, values_input = eval_exps ctx exps_input in
-  let ctx, hold =
-    match invoke_rel ctx id values_input with
-    | Ok _ -> (ctx, true)
-    | Fail _ -> (ctx, false)
-  in
-  let value_res =
-    let vid = Value.fresh () in
-    let typ = note in
-    BoolV hold $$$ { vid; typ }
-  in
-  (ctx, value_res)
-
 (* Iterated expression evaluation *)
 
 and eval_iter_exp_opt (note : typ') (ctx : Ctx.t) (exp : exp) (vars : var list)
@@ -817,6 +798,8 @@ and eval_prem' (ctx : Ctx.t) (prem : prem) : Ctx.t attempt =
   match prem.it with
   | RulePr (id, notexp) -> eval_rule_prem ctx id notexp
   | IfPr exp_cond -> eval_if_prem ctx exp_cond
+  | IfHoldPr (id, notexp) -> eval_if_hold_prem ctx id notexp
+  | IfNotHoldPr (id, notexp) -> eval_if_not_hold_prem ctx id notexp
   | ElsePr -> Ok ctx
   | LetPr (exp_l, exp_r) -> eval_let_prem ctx exp_l exp_r
   | IterPr (prem, iterexp) -> eval_iter_prem ctx prem iterexp
@@ -852,6 +835,26 @@ and eval_if_prem (ctx : Ctx.t) (exp_cond : exp) : Ctx.t attempt =
   else
     fail exp_cond.at
       (F.asprintf "condition %s was not met" (Il.Print.string_of_exp exp_cond))
+
+(* If-hold premise evaluation *)
+
+and eval_if_hold_prem (ctx : Ctx.t) (id : id) (notexp : notexp) : Ctx.t attempt
+    =
+  let _, exps_input = notexp in
+  let ctx, values_input = eval_exps ctx exps_input in
+  match invoke_rel ctx id values_input with
+  | Ok _ -> Ok ctx
+  | Fail _ -> fail id.at (F.asprintf "condition hold %s was not met" id.it)
+
+(* If-not-hold premise evaluation *)
+
+and eval_if_not_hold_prem (ctx : Ctx.t) (id : id) (notexp : notexp) :
+    Ctx.t attempt =
+  let _, exps_input = notexp in
+  let ctx, values_input = eval_exps ctx exps_input in
+  match invoke_rel ctx id values_input with
+  | Ok _ -> fail id.at (F.asprintf "condition not-hold %s was not met" id.it)
+  | Fail _ -> Ok ctx
 
 (* Let premise evaluation *)
 

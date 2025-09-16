@@ -116,8 +116,6 @@ let rec string_of_exp exp =
       ^ string_of_exp exp_f ^ "]"
   | Il.Ast.CallE (defid, targs, args) ->
       string_of_defid defid ^ string_of_targs targs ^ string_of_args args
-  | Il.Ast.HoldE (relid, notexp) ->
-      "(" ^ string_of_relid relid ^ ": " ^ string_of_notexp notexp ^ ")  holds"
   | Il.Ast.IterE (exp, iterexp) -> string_of_exp exp ^ string_of_iterexp iterexp
 
 and string_of_exps sep exps = String.concat sep (List.map string_of_exp exps)
@@ -190,16 +188,51 @@ and string_of_phantom phantom =
 
 and string_of_pathcond pathcond =
   match pathcond with
-  | ForallC (exp, iterexps) ->
-      F.asprintf "(forall %s)%s" (string_of_exp exp)
+  | ForallC (pathcond, iterexps) ->
+      Format.asprintf "(forall %s)%s"
+        (string_of_pathcond pathcond)
         (string_of_iterexps iterexps)
-  | ExistsC (exp, iterexps) ->
-      F.asprintf "(exists %s)%s" (string_of_exp exp)
+  | ExistsC (pathcond, iterexps) ->
+      Format.asprintf "(exists %s)%s"
+        (string_of_pathcond pathcond)
         (string_of_iterexps iterexps)
   | PlainC exp -> "(" ^ string_of_exp exp ^ ")"
+  | HoldC (relid, notexp) ->
+      Format.asprintf "(%s: %s holds)" (string_of_relid relid)
+        (string_of_notexp notexp)
+  | NotHoldC (relid, notexp) ->
+      Format.asprintf "(%s: %s does not hold)" (string_of_relid relid)
+        (string_of_notexp notexp)
 
 and string_of_pathconds pathconds =
   List.map string_of_pathcond pathconds |> String.concat " /\\ "
+
+(* Holding conditions *)
+
+and string_of_holdcase ?(level = 0) holdcase =
+  let indent = String.make (level * 2) ' ' in
+  match holdcase with
+  | BothH (instrs_hold, instrs_nothold) ->
+      Format.asprintf "%sHolds:\n\n%s\n\n%sDoes not hold:\n\n%s" indent
+        (string_of_instrs ~level:(level + 1) instrs_hold)
+        indent
+        (string_of_instrs ~level:(level + 1) instrs_nothold)
+  | HoldH (instrs_hold, None) ->
+      Format.asprintf "%sHolds:\n\n%s" indent
+        (string_of_instrs ~level:(level + 1) instrs_hold)
+  | HoldH (instrs_hold, Some phantom) ->
+      Format.asprintf "%sHolds:\n\n%s\n\n%sElse %s" indent
+        (string_of_instrs ~level:(level + 1) instrs_hold)
+        indent
+        (string_of_phantom phantom)
+  | NotHoldH (instrs_nothold, None) ->
+      Format.asprintf "%sDoes not hold:\n\n%s" indent
+        (string_of_instrs ~level:(level + 1) instrs_nothold)
+  | NotHoldH (instrs_nothold, Some phantom) ->
+      Format.asprintf "%sDoes not hold:\n\n%s\n\n%sElse %s" indent
+        (string_of_instrs ~level:(level + 1) instrs_nothold)
+        indent
+        (string_of_phantom phantom)
 
 (* Case analysis *)
 
@@ -253,6 +286,11 @@ and string_of_instr ?(level = 0) ?(index = 0) instr =
         (string_of_instrs ~level:(level + 1) instrs_then)
         order
         (string_of_phantom phantom)
+  | HoldI (id, notexp, iterexps, holdcase) ->
+      Format.asprintf "%sIf (%s: %s)%s:\n\n%s" order (string_of_relid id)
+        (string_of_notexp notexp)
+        (string_of_iterexps iterexps)
+        (string_of_holdcase ~level:(level + 1) holdcase)
   | CaseI (exp, cases, None) ->
       F.asprintf "%sCase analysis on %s\n%s" order (string_of_exp exp)
         (string_of_cases ~level:(level + 1) exp cases)

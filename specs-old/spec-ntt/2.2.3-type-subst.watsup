@@ -1,0 +1,670 @@
+;;
+;; Substitution (capture-avoiding)
+;;
+
+syntax bound = set<tid>
+syntax theta = map<tid, typeIR>
+
+dec $free_type(typeIR) : bound
+dec $free_typeDef(typeDefIR) : bound
+dec $free_parameterType(parameterTypeIR) : bound
+dec $free_routineType(routineTypeIR) : bound
+dec $free_routineTypeDef(routineTypeDefIR) : bound
+
+dec $subst_type(theta, typeIR) : typeIR
+dec $subst_type'(theta, typeIR) : typeIR
+dec $subst_typeDef(theta, typeDefIR) : typeDefIR
+dec $subst_typeDef'(theta, typeDefIR) : typeDefIR
+dec $subst_parameterType(theta, parameterTypeIR) : parameterTypeIR
+dec $subst_parameterType'(theta, parameterTypeIR) : parameterTypeIR
+dec $subst_routineType(theta, routineTypeIR) : routineTypeIR
+dec $subst_routineType'(theta, routineTypeIR) : routineTypeIR
+dec $subst_routineTypeDef(theta, routineTypeDefIR) : routineTypeDefIR
+dec $subst_routineTypeDef'(theta, routineTypeDefIR) : routineTypeDefIR
+dec $subst_constructorType(theta, constructorTypeIR) : constructorTypeIR
+dec $subst_constructorType'(theta, constructorTypeIR) : constructorTypeIR
+
+;;
+;; Free type variables in types
+;;
+
+;;; Base types
+
+def $free_type(baseTypeIR) = `{ eps }
+
+;;; Named types
+
+def $free_type(NameT tid) = `{ tid }
+
+def $free_type(SpecT polyTypeDefIR typeIR*)
+  = $union_set<tid>(bound_base, bound_args)
+  -- if bound_base = $free_typeDef(polyTypeDefIR)
+  -- if bound_args = $unions_set<tid>($free_type(typeIR)*)
+
+;;; Typedef types
+
+def $free_type(DefT _ typeIR) = $free_type(typeIR)
+
+def $free_type(NewT _ typeIR) = $free_type(typeIR)
+
+;;; Data types
+
+def $free_type(ListT typeIR) = $free_type(typeIR)
+
+def $free_type(TupleT typeIR*)
+  = $unions_set<tid>($free_type(typeIR)*)
+
+def $free_type(HeaderStackT typeIR _) = $free_type(typeIR)
+
+def $free_type(StructT _ (typeIR _)*)
+  = $unions_set<tid>($free_type(typeIR)*)
+
+def $free_type(HeaderT _ (typeIR _)*)
+  = $unions_set<tid>($free_type(typeIR)*)
+
+def $free_type(HeaderUnionT _ (typeIR _)*)
+  = $unions_set<tid>($free_type(typeIR)*)
+
+def $free_type(EnumT _ _) = `{ eps }
+
+def $free_type(SEnumT _ typeIR _) = $free_type(typeIR)
+
+;;; Object types
+
+def $free_type(ExternT _ (`{ (_ -> routineTypeDefIR)* }))
+  = $unions_set<tid>($free_routineTypeDef(routineTypeDefIR)*)
+
+def $free_type(ParserT parameterTypeIR*)
+  = bound_params
+  -- if bound_params
+      = $unions_set<tid>($free_parameterType(parameterTypeIR)*)
+
+def $free_type(ControlT parameterTypeIR*)
+  = bound_params
+  -- if bound_params
+      = $unions_set<tid>($free_parameterType(parameterTypeIR)*)
+
+def $free_type(PackageT tid typeIR*)
+  = $unions_set<tid>($free_type(typeIR)*)
+
+def $free_type(TableT _ typeIR) = $free_type(typeIR)
+
+;;; Synthesized types
+
+def $free_type(DefaultT) = `{ eps }
+
+def $free_type(InvalidHeaderT) = `{ eps }
+
+def $free_type(SeqT typeIR*)
+  = $unions_set<tid>($free_type(typeIR)*)
+
+def $free_type(SeqDefaultT typeIR*)
+  = $unions_set<tid>($free_type(typeIR)*)
+
+def $free_type(RecordT (typeIR _)*)
+  = $unions_set<tid>($free_type(typeIR)*)
+
+def $free_type(RecordDefaultT (typeIR _)*)
+  = $unions_set<tid>($free_type(typeIR)*)
+
+def $free_type(SetT typeIR)
+  = $free_type(typeIR)
+
+def $free_type(TableEnumT _ _) = `{ eps }
+
+def $free_type(TableStructT _ _) = `{ eps }
+
+;;
+;;;; Free type variables in type definitions
+;;
+
+def $free_typeDef(MonoTD typeIR) = $free_type(typeIR)
+
+def $free_typeDef(PolyTD typeIR_base tid* tid_hidden*)
+  = $diff_set<tid>(bound_base, bound_tparams)
+  -- if bound_base = $free_type(typeIR_base)
+  -- if bound_tparams = `{ tid* ++ tid_hidden* }
+
+;;
+;;;; Free type varaibles in parameter types
+;;
+
+def $free_parameterType(_ typeIR _ _) = $free_type(typeIR)
+
+;;
+;;;; Free type variables in routine types
+;;
+
+def $free_routineType(
+    BuiltinFuncT parameterTypeIR* typeIR_ret
+  )
+  = $union_set<tid>(bound_params, bound_ret)
+  -- if bound_params
+      = $unions_set<tid>($free_parameterType(parameterTypeIR)*)
+  -- if bound_ret = $free_type(typeIR_ret)
+
+def $free_routineType(
+    FuncT parameterTypeIR* typeIR_ret
+  )
+  = $union_set<tid>(bound_params, bound_ret)
+  -- if bound_params
+      = $unions_set<tid>($free_parameterType(parameterTypeIR)*)
+  -- if bound_ret = $free_type(typeIR_ret)
+
+def $free_routineType(
+    ExternFuncT parameterTypeIR* typeIR_ret
+  )
+  = $union_set<tid>(bound_params, bound_ret)
+  -- if bound_params
+      = $unions_set<tid>($free_parameterType(parameterTypeIR)*)
+  -- if bound_ret = $free_type(typeIR_ret)
+
+def $free_routineType(
+    ActionT parameterTypeIR*
+  )
+  = bound_params
+  -- if bound_params
+      = $unions_set<tid>($free_parameterType(parameterTypeIR)*)
+
+def $free_routineType(
+    BuiltinMethodT parameterTypeIR* typeIR_ret
+  )
+  = $union_set<tid>(bound_params, bound_ret)
+  -- if bound_params
+      = $unions_set<tid>($free_parameterType(parameterTypeIR)*)
+  -- if bound_ret = $free_type(typeIR_ret)
+
+def $free_routineType(
+    ExternMethodT parameterTypeIR* typeIR_ret
+  )
+  = $union_set<tid>(bound_params, bound_ret)
+  -- if bound_params
+      = $unions_set<tid>($free_parameterType(parameterTypeIR)*)
+  -- if bound_ret = $free_type(typeIR_ret)
+
+def $free_routineType(
+    ExternAbstractMethodT parameterTypeIR* typeIR_ret
+  )
+  = $union_set<tid>(bound_params, bound_ret)
+  -- if bound_params
+      = $unions_set<tid>($free_parameterType(parameterTypeIR)*)
+  -- if bound_ret = $free_type(typeIR_ret)
+
+def $free_routineType(
+    ParserApplyMethodT parameterTypeIR*
+  )
+  = bound_params
+  -- if bound_params
+      = $unions_set<tid>($free_parameterType(parameterTypeIR)*)
+
+def $free_routineType(
+    ControlApplyMethodT parameterTypeIR*
+  )
+  = bound_params
+  -- if bound_params
+      = $unions_set<tid>($free_parameterType(parameterTypeIR)*)
+
+def $free_routineType(
+    TableApplyMethodT typeIR_ret
+  )
+  = bound_ret
+  -- if bound_ret = $free_type(typeIR_ret)
+
+;;
+;;;; Free type variables in routine type definitions
+;;
+
+def $free_routineTypeDef(MonoTD routineTypeIR)
+  = $free_routineType(routineTypeIR)
+
+def $free_routineTypeDef(
+    PolyTD routineTypeIR tid* tid_hidden*
+  )
+  = $diff_set<tid>(bound_base, bound_tparams)
+  -- if bound_base = $free_routineType(routineTypeIR)
+  -- if bound_tparams = `{ tid* ++ tid_hidden* }
+
+;;
+;;;; Type substitutions
+;;
+
+def $subst_type(`{ eps }, typeIR) = typeIR
+def $subst_type(theta, typeIR) = $subst_type'(theta, typeIR)
+  -- otherwise
+
+;;; Named types
+
+def $subst_type'(theta, NameT tid) = typeIR
+  -- if typeIR = $find_map<tid, typeIR>(theta, tid)
+
+def $subst_type'(theta, SpecT polyTypeDefIR typeIR*)
+  = SpecT polyTypeDefIR_subst typeIR_subst*
+  -- if polyTypeDefIR_subst
+      = $subst_typeDef'(theta, polyTypeDefIR)
+  -- if (typeIR_subst = $subst_type'(theta, typeIR))*
+
+;;; Typedef types
+
+def $subst_type'(theta, DefT tid typeIR)
+  = DefT tid typeIR_subst
+  -- if typeIR_subst = $subst_type'(theta, typeIR)
+
+def $subst_type'(theta, NewT tid typeIR)
+  = NewT tid typeIR_subst
+  -- if typeIR_subst = $subst_type'(theta, typeIR)
+
+;;; Data types
+
+def $subst_type'(theta, ListT typeIR)
+  = ListT typeIR_subst
+  -- if typeIR_subst = $subst_type'(theta, typeIR)
+
+def $subst_type'(theta, TupleT typeIR*)
+  = TupleT typeIR_subst*
+  -- if (typeIR_subst = $subst_type'(theta, typeIR))*
+
+def $subst_type'(theta, HeaderStackT typeIR n)
+  = HeaderStackT typeIR_subst n
+  -- if typeIR_subst = $subst_type'(theta, typeIR)
+
+def $subst_type'(
+    theta,
+    StructT tid (typeIR_f id_f)*
+  )
+  = StructT tid (typeIR_f_subst id_f)*
+  -- if (typeIR_f_subst = $subst_type'(theta, typeIR_f))*
+
+def $subst_type'(
+    theta,
+    HeaderT tid (typeIR_f id_f)*
+  )
+  = HeaderT tid (typeIR_f_subst id_f)*
+  -- if (typeIR_f_subst = $subst_type'(theta, typeIR_f))*
+
+def $subst_type'(
+    theta,
+    HeaderUnionT tid (typeIR_f id_f)*
+  )
+  = HeaderUnionT tid (typeIR_f_subst id_f)*
+  -- if (typeIR_f_subst = $subst_type'(theta, typeIR_f))*
+
+def $subst_type'(
+    theta,
+    SEnumT tid typeIR valueFieldIR*
+  )
+  = SEnumT tid typeIR_subst valueFieldIR*
+  -- if typeIR_subst = $subst_type'(theta, typeIR)
+
+;;; Object types
+
+def $subst_type'(
+    theta,
+    ExternT tid (`{ (rid -> routineTypeDefIR)* })
+  )
+  = ExternT tid (`{ (rid -> routineTypeDefIR_subst)* })
+  -- if (routineTypeDefIR_subst
+        = $subst_routineTypeDef'(theta, routineTypeDefIR))*
+
+def $subst_type'(theta, ParserT parameterTypeIR*)
+  = ParserT parameterTypeIR_subst*
+  -- if (parameterTypeIR_subst
+        = $subst_parameterType'(theta, parameterTypeIR))*
+
+def $subst_type'(theta, ControlT parameterTypeIR*)
+  = ControlT parameterTypeIR_subst*
+  -- if (parameterTypeIR_subst
+        = $subst_parameterType'(theta, parameterTypeIR))*
+
+def $subst_type'(theta, PackageT tid typeIR*)
+  = PackageT tid typeIR_subst*
+  -- if (typeIR_subst = $subst_type'(theta, typeIR))*
+
+def $subst_type'(theta, TableT tid typeIR)
+  = TableT tid typeIR_subst
+  -- if typeIR_subst = $subst_type'(theta, typeIR)
+
+;;; Synthesized types
+
+def $subst_type'(theta, SeqT typeIR*)
+  = SeqT typeIR_subst*
+  -- if (typeIR_subst = $subst_type'(theta, typeIR))*
+
+def $subst_type'(theta, SeqDefaultT typeIR*)
+  = SeqDefaultT typeIR_subst*
+  -- if (typeIR_subst = $subst_type'(theta, typeIR))*
+
+def $subst_type'(
+    theta,
+    RecordT (typeIR_f id_f)*
+  )
+  = RecordT (typeIR_f_subst id_f)*
+  -- if (typeIR_f_subst = $subst_type'(theta, typeIR_f))*
+
+def $subst_type'(
+    theta,
+    RecordDefaultT (typeIR_f id_f)*
+  )
+  = RecordDefaultT (typeIR_f_subst id_f)*
+  -- if (typeIR_f_subst = $subst_type'(theta, typeIR_f))*
+
+def $subst_type'(theta, SetT typeIR)
+  = SetT typeIR_subst
+  -- if typeIR_subst = $subst_type'(theta, typeIR)
+
+;;; Otherwise
+
+def $subst_type'(theta, typeIR) = typeIR
+  -- otherwise
+
+;;
+;;;; Type definition substitutions
+;;
+
+def $subst_typeDef(`{ eps }, typeDefIR) = typeDefIR
+def $subst_typeDef(theta, typeDefIR)
+  = $subst_typeDef'(theta, typeDefIR)
+  -- otherwise
+
+def $subst_typeDef'(theta, MonoTD typeIR) = MonoTD $subst_type'(theta, typeIR)
+
+def $subst_typeDef'(theta, PolyTD typeIR_base tid* tid_hidden*)
+  = PolyTD typeIR_base_subst tid_fresh_spec* tid_fresh_hidden*
+  ---- ;; collect free type variables in type definition
+  -- if `{ tid_free* } = $diff_set<tid>(
+                            $free_type(typeIR_base),
+                            `{ tid* ++ tid_hidden* })
+  ---- ;; compute captured type variables
+  -- if (typeIR_free = $find_map<tid, typeIR>(theta, tid_free))*
+  -- if bound_capture = $unions_set<tid>($free_type(typeIR_free)*)
+  ---- ;; create fresh type variables such that they are not captured
+  -- if tid_fresh* = $fresh_tids(|tid* ++ tid_hidden*|)
+  -- if (~$in_set<tid>(tid_fresh, bound_capture))*
+  -- if tid_fresh_spec* = tid_fresh*[0 : |tid*|]
+  -- if tid_fresh_hidden* = tid_fresh*[|tid*| : |tid_hidden*|]
+  ---- ;; update the substitution map and substitute
+  -- if theta' = $adds_map<tid, typeIR>(
+                    theta, tid*, (NameT tid_fresh_spec)*)
+  -- if theta'' = $adds_map<tid, typeIR>(
+                    theta', tid_hidden*, (NameT tid_fresh_hidden)*)
+  -- if typeIR_base_subst = $subst_type(theta'', typeIR_base)
+
+;;
+;;;; Parameter type substitutions
+;;
+
+def $subst_parameterType(`{ eps }, parameterTypeIR)
+  = parameterTypeIR
+def $subst_parameterType(theta, parameterTypeIR)
+  = $subst_parameterType'(theta, parameterTypeIR)
+  -- otherwise
+
+def $subst_parameterType'(theta, direction typeIR id value?)
+  = direction typeIR_subst id value?
+  -- if typeIR_subst = $subst_type'(theta, typeIR)
+
+;;
+;;;; Routine type substitutions
+;;
+
+def $subst_routineType(`{ eps }, routineTypeIR)
+  = routineTypeIR
+def $subst_routineType(theta, routineTypeIR)
+  = $subst_routineType'(theta, routineTypeIR)
+  -- otherwise
+
+def $subst_routineType'(
+    theta,
+    BuiltinFuncT parameterTypeIR* typeIR_ret
+  )
+  = BuiltinFuncT parameterTypeIR_subst* typeIR_ret_subst
+  -- if (parameterTypeIR_subst
+        = $subst_parameterType'(theta, parameterTypeIR))*
+  -- if typeIR_ret_subst = $subst_type'(theta, typeIR_ret)
+
+def $subst_routineType'(
+    theta,
+    FuncT parameterTypeIR* typeIR_ret
+  )
+  = FuncT parameterTypeIR_subst* typeIR_ret_subst
+  -- if (parameterTypeIR_subst
+        = $subst_parameterType'(theta, parameterTypeIR))*
+  -- if typeIR_ret_subst = $subst_type'(theta, typeIR_ret)
+
+def $subst_routineType'(
+    theta,
+    ExternFuncT parameterTypeIR* typeIR_ret
+  )
+  = ExternFuncT parameterTypeIR_subst* typeIR_ret_subst
+  -- if (parameterTypeIR_subst
+        = $subst_parameterType'(theta, parameterTypeIR))*
+  -- if typeIR_ret_subst = $subst_type'(theta, typeIR_ret)
+
+def $subst_routineType'(
+    theta,
+    ActionT parameterTypeIR*
+  )
+  = ActionT parameterTypeIR_subst*
+  -- if (parameterTypeIR_subst
+        = $subst_parameterType'(theta, parameterTypeIR))*
+
+def $subst_routineType'(
+    theta,
+    BuiltinMethodT parameterTypeIR* typeIR_ret
+  )
+  = BuiltinMethodT parameterTypeIR_subst* typeIR_ret_subst
+  -- if (parameterTypeIR_subst
+        = $subst_parameterType'(theta, parameterTypeIR))*
+  -- if typeIR_ret_subst = $subst_type'(theta, typeIR_ret)
+
+def $subst_routineType'(
+    theta,
+    ExternMethodT parameterTypeIR* typeIR_ret
+  )
+  = ExternMethodT parameterTypeIR_subst* typeIR_ret_subst
+  -- if (parameterTypeIR_subst
+        = $subst_parameterType'(theta, parameterTypeIR))*
+  -- if typeIR_ret_subst = $subst_type'(theta, typeIR_ret)
+
+def $subst_routineType'(
+    theta,
+    ExternAbstractMethodT parameterTypeIR* typeIR_ret
+  )
+  = ExternAbstractMethodT parameterTypeIR_subst* typeIR_ret_subst
+  -- if (parameterTypeIR_subst
+        = $subst_parameterType'(theta, parameterTypeIR))*
+  -- if typeIR_ret_subst = $subst_type'(theta, typeIR_ret)
+
+def $subst_routineType'(
+    theta,
+    ParserApplyMethodT parameterTypeIR*
+  )
+  = ParserApplyMethodT parameterTypeIR_subst*
+  -- if (parameterTypeIR_subst
+        = $subst_parameterType'(theta, parameterTypeIR))*
+
+def $subst_routineType'(
+    theta,
+    ControlApplyMethodT parameterTypeIR*
+  )
+  = ControlApplyMethodT parameterTypeIR_subst*
+  -- if (parameterTypeIR_subst
+        = $subst_parameterType'(theta, parameterTypeIR))*
+
+def $subst_routineType'(
+    theta,
+    TableApplyMethodT typeIR_ret
+  )
+  = TableApplyMethodT typeIR_ret_subst
+  -- if typeIR_ret_subst = $subst_type'(theta, typeIR_ret)
+
+;;
+;;;; Function type definition substitutions
+;;
+
+def $subst_routineTypeDef(`{ eps }, routineTypeDefIR)
+  = routineTypeDefIR
+def $subst_routineTypeDef(theta, routineTypeDefIR)
+  = $subst_routineTypeDef'(theta, routineTypeDefIR)
+  -- otherwise
+
+def $subst_routineTypeDef'(theta, MonoTD routineTypeIR)
+  = MonoTD $subst_routineType'(theta, routineTypeIR)
+
+def $subst_routineTypeDef'(theta, PolyTD routineTypeIR tid* tid_hidden*)
+  = PolyTD routineTypeIR_subst tid_fresh_spec* tid_fresh_hidden*
+  ---- ;; collect free type variables in routine type definition
+  -- if `{ tid_free* } = $diff_set<tid>(
+                            $free_routineType(routineTypeIR),
+                            `{ tid* ++ tid_hidden* })
+  ---- ;; compute captured type variables
+  -- if (typeIR_free = $find_map<tid, typeIR>(theta, tid_free))*
+  -- if bound_capture = $unions_set<tid>($free_type(typeIR_free)*)
+  ---- ;; create fresh type variables such that they are not captured
+  -- if tid_fresh* = $fresh_tids(|tid* ++ tid_hidden*|)
+  -- if (~$in_set<tid>(tid_fresh, bound_capture))*
+  -- if tid_fresh_spec* = tid_fresh*[0 : |tid*|]
+  -- if tid_fresh_hidden* = tid_fresh*[|tid*| : |tid_hidden*|]
+  ---- ;; update the substitution map and substitute
+  -- if theta' = $adds_map<tid, typeIR>(
+                    theta, tid*, (NameT tid_fresh_spec)*)
+  -- if theta'' = $adds_map<tid, typeIR>(
+                    theta', tid_hidden*, (NameT tid_fresh_hidden)*)
+  -- if routineTypeIR_subst = $subst_routineType(theta'', routineTypeIR)
+
+;;
+;;;; Constructor type substitutions
+;;
+
+def $subst_constructorType(`{ eps }, constructorTypeIR)
+  = constructorTypeIR
+def $subst_constructorType(theta, constructorTypeIR)
+  = $subst_constructorType'(theta, constructorTypeIR)
+  -- otherwise
+
+def $subst_constructorType'(
+    theta,
+    ConstructorT parameterTypeIR* typeIR_obj
+  )
+  = ConstructorT parameterTypeIR_subst* typeIR_obj_subst
+  -- if (parameterTypeIR_subst
+        = $subst_parameterType'(theta, parameterTypeIR))*
+  -- if typeIR_obj_subst = $subst_type'(theta, typeIR_obj)
+
+;;
+;; Specializations
+;;
+
+;;
+;;;; Typedef specializations
+;;
+
+dec $specialize_typeDef(typeDefIR, typeIR*) : typeIR
+
+def $specialize_typeDef(MonoTD typeIR, eps) = typeIR
+
+def $specialize_typeDef(PolyTD typeIR_base tid* tid_hidden*, typeIR_arg*)
+  = $subst_type(theta, typeIR_base)
+  -- if tid_tparam* = tid* ++ tid_hidden*
+  -- if theta = `{ (tid_tparam -> typeIR_arg)* }
+
+;;
+;;;; Routine type definition specializations
+;;
+
+dec $specialize_routineTypeDef(routineTypeDefIR, typeIR*)
+  : (routineTypeIR, tid*)
+
+def $specialize_routineTypeDef(MonoTD routineTypeIR, eps)
+  = (routineTypeIR, eps)
+
+def $specialize_routineTypeDef(
+    PolyTD routineTypeIR tid* tid_hidden*,
+    typeIR_arg*
+  )
+  = ($subst_routineType(theta, routineTypeIR), eps)
+  -- if tid_tparam* = tid* ++ tid_hidden*
+  -- if |tid_tparam*| = |typeIR_arg*|
+  -- if theta = `{ (tid_tparam -> typeIR_arg)* }
+
+def $specialize_routineTypeDef(
+    PolyTD routineTypeIR tid* tid_hidden*,
+    typeIR_arg*
+  )
+  = ($subst_routineType(theta, routineTypeIR), tid_fresh*)
+  -- if tid_tparam* = tid* ++ tid_hidden*
+  -- if $(|tid_tparam*| > 0) /\ $(|typeIR_arg*| = 0)
+  -- if tid_fresh* = $fresh_tids(|tid_tparam*|)
+  -- if theta = `{ (tid_tparam -> (NameT tid_fresh))* }
+
+def $specialize_routineTypeDef(
+    PolyTD routineTypeIR tid* tid_hidden*,
+    typeIR_arg*
+  )
+  = ($subst_routineType(theta, routineTypeIR), tid_fresh*)
+  -- if tid_tparam* = tid* ++ tid_hidden*
+  -- if $(|tid_hidden*| > 0)
+        /\ $(|tid*| = |typeIR_arg*|)
+        /\ $(|typeIR_arg*| > 0)
+  -- if tid_fresh* = $fresh_tids(|tid_hidden*|)
+  -- if typeIR_arg_new* = typeIR_arg* ++ (NameT tid_fresh)*
+  -- if theta = `{ (tid_tparam -> typeIR_arg_new)* }
+
+;;
+;;;; Constructor type definition specializations
+;;
+
+dec $specialize_constructorTypeDef(constructorTypeDefIR, typeIR*)
+  : (constructorTypeIR, tid*)
+
+def $specialize_constructorTypeDef(
+    PolyTD constructorTypeIR tid* tid_hidden*,
+    typeIR_arg*
+  )
+  = (constructorTypeIR_subst, eps)
+  -- if tid_tparam* = tid* ++ tid_hidden*
+  -- if |tid_tparam*| = |typeIR_arg*|
+  -- if theta = `{ (tid_tparam -> typeIR_arg)* }
+  -- if constructorTypeIR_subst 
+      = $subst_constructorType(theta, constructorTypeIR)
+
+def $specialize_constructorTypeDef(
+    PolyTD constructorTypeIR tid* tid_hidden*,
+    typeIR_arg*
+  )
+  = (constructorTypeIR_subst, tid_fresh*)
+  -- if tid_tparam* = tid* ++ tid_hidden*
+  -- if $(|tid_tparam*| > 0) /\ $(|typeIR_arg*| = 0)
+  -- if tid_fresh* = $fresh_tids(|tid_tparam*|)
+  -- if theta = `{ (tid_tparam -> (NameT tid_fresh))* }
+  -- if constructorTypeIR_subst 
+      = $subst_constructorType(theta, constructorTypeIR)
+
+def $specialize_constructorTypeDef(
+    PolyTD constructorTypeIR tid* tid_hidden*,
+    typeIR_arg*
+  )
+  = (constructorTypeIR_subst, tid_fresh*)
+  -- if tid_tparam* = tid* ++ tid_hidden*
+  -- if $(|tid_hidden*| > 0)
+        /\ $(|tid*| = |typeIR_arg*|)
+        /\ $(|typeIR_arg*| > 0)
+  -- if tid_fresh* = $fresh_tids(|tid_hidden*|)
+  -- if typeIR_arg_new* = typeIR_arg* ++ (NameT tid_fresh)*
+  -- if theta = `{ (tid_tparam -> typeIR_arg_new)* }
+  -- if constructorTypeIR_subst 
+      = $subst_constructorType(theta, constructorTypeIR)
+
+;;
+;; Canonicalization
+;; recursive specialization and typedef unrolling
+;;
+
+dec $canon(typeIR) : typeIR
+
+def $canon(SpecT polyTypeDefIR typeIR_arg*) = $canon(typeIR)
+  -- if typeIR = $specialize_typeDef(polyTypeDefIR, typeIR_arg*)
+
+def $canon(DefT _ typeIR) = $canon(typeIR)
+
+def $canon(typeIR) = typeIR
+  -- otherwise

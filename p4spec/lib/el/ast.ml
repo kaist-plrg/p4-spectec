@@ -6,19 +6,24 @@ open Util.Source
 (* Numbers *)
 
 type num = Num.t
+[@@deriving yojson]
 
 (* Texts *)
 
 type text = string
+[@@deriving yojson]
 
 (* Identifiers *)
 
 type id = id' phrase
+[@@deriving yojson]
 and id' = string
+[@@deriving yojson]
 
 (* Atoms *)
 
 type atom = Atom.t phrase
+[@@deriving yojson]
 
 (* Iterators *)
 
@@ -103,6 +108,7 @@ and exp' =
   | FuseE of exp * exp                                (* exp `#` exp *)
   | UnparenE of exp                                   (* `##` exp *)
   | LatexE of string                                  (* `latex` `(` `"..."`* `)` *)
+[@@deriving yojson]
 
 (* Paths *)
 
