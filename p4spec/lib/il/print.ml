@@ -198,8 +198,6 @@ and string_of_exp exp =
       ^ string_of_exp exp_f ^ "]"
   | CallE (defid, targs, args) ->
       string_of_defid defid ^ string_of_targs targs ^ string_of_args args
-  | HoldE (relid, notexp) ->
-      string_of_relid relid ^ ": " ^ string_of_notexp notexp ^ " holds"
   | IterE (exp, iterexp) -> string_of_exp exp ^ string_of_iterexp iterexp
 
 and string_of_exps sep exps = String.concat sep (List.map string_of_exp exps)
@@ -325,6 +323,11 @@ and string_of_prem prem =
   match prem.it with
   | RulePr (id, notexp) -> string_of_relid id ^ ": " ^ string_of_notexp notexp
   | IfPr exp -> "if " ^ string_of_exp exp
+  | IfHoldPr (id, notexp) ->
+      "if " ^ string_of_relid id ^ ": " ^ string_of_notexp notexp ^ " holds"
+  | IfNotHoldPr (id, notexp) ->
+      "if " ^ string_of_relid id ^ ": " ^ string_of_notexp notexp
+      ^ " does not hold"
   | ElsePr -> "otherwise"
   | LetPr (exp_l, exp_r) ->
       "let " ^ string_of_exp exp_l ^ " = " ^ string_of_exp exp_r

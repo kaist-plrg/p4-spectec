@@ -1,0 +1,50 @@
+;;
+;; Variable names
+;;
+
+syntax id = text
+
+;;
+;; Type variable names
+;;
+
+syntax tid = id
+
+dec $fresh_tid() : tid
+dec $fresh_tids(nat) : tid*
+
+def $fresh_tids(0) = eps
+def $fresh_tids(n) = $fresh_tid() :: $fresh_tids(n')
+  -- if n =/= 0
+  -- if n' = $(n - 1)
+
+;;
+;; Routine names
+;;
+;; A pair of function name and a list of parameter names,
+;; with a boolean flag indicating whether the parameter has
+;; a default value
+;;
+
+syntax pid = id bool
+syntax rid = id pid*
+
+dec $rid(name, parameter*) : rid
+dec $pid(parameter) : pid
+
+def $rid(name, parameter*)
+  = name $pid(parameter)*
+
+def $pid(_ _ name eps) = name false
+def $pid(_ _ name initializer) = name true
+
+;;
+;; Constructor names
+;;
+
+syntax cid = rid
+
+dec $cid(name, constructorParameter*) : cid
+
+def $cid(name, constructorParameter*)
+  = $rid(name, constructorParameter*)

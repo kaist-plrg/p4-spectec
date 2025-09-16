@@ -367,16 +367,17 @@ let mutate_walk (tdenv : TDEnv.t) (mixopenv : MixopEnv.t) (texts : value' list)
 (* Find parent node, if any, in the dependency graph *)
 
 let find_parent (graph : Dep.Graph.t) (vid_source : vid) : vid option =
-  let find_expand (graph : Dep.Graph.t) (v : vid) : vid list =
-    match Dep.Graph.G.find_opt graph.edges v with
+  let parents =
+    (* for all edges from v *)
+    match Dep.Graph.G.find_opt graph.edges vid_source with
     | None -> []
     | Some edges ->
+        (* follow Expand edges to source nodes *)
         Dep.Edges.E.fold
-          (fun (label, target_vid) () acc ->
-            match label with Dep.Edges.Expand -> target_vid :: acc | _ -> acc)
+          (fun (label, vid_target) () acc ->
+            if label = Dep.Edges.Expand then vid_target :: acc else acc)
           edges []
   in
-  let parents = find_expand graph vid_source in
   assert (List.length parents <= 1);
   parents |> Rand.random_select
 
@@ -392,14 +393,16 @@ let mutate (tdenv : TDEnv.t) (mixopenv : MixopEnv.t) (texts : value' list)
     ]
   in
   let expansion = Rand.random_select expansions |> Option.get in
-  let vid_source =
-    match expansion () with Some vid -> vid | None -> vid_source
+  let vid_to_mutate =
+    match expansion () with Some vid_parent -> vid_parent | None -> vid_source
   in
-  (* Reassemble the node *)
-  let value_source = Dep.Graph.reassemble_node graph VIdMap.empty vid_source in
+  (* reassemble value from vid *)
+  let value_to_mutate =
+    Dep.Graph.reassemble_graph graph VIdMap.empty vid_to_mutate
+  in
   (* Mutate the node *)
-  let* kind, value_mutated = mutate_walk tdenv mixopenv texts value_source in
-  (kind, value_source, value_mutated) |> Option.some
+  let* kind, value_mutated = mutate_walk tdenv mixopenv texts value_to_mutate in
+  (kind, value_to_mutate, value_mutated) |> Option.some
 
 let mutates (fuel_mutate : int) (tdenv : TDEnv.t) (mixopenv : MixopEnv.t)
     (graph : Dep.Graph.t) (vid_program : vid) (vid_source : vid) :

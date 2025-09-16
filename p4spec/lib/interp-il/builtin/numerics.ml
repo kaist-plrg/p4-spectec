@@ -66,7 +66,7 @@ let shr_arith (at : region) (targs : targ list) (values_input : value list) :
   let modulus = bigint_of_value value_modulus in
   shr_arith' base offset modulus |> value_of_bigint
 
-(* dec $pow2(nat) : int *)
+(* dec $pow2(int) : int *)
 
 let pow2' (w : Bigint.t) : Bigint.t = shl' Bigint.one w
 

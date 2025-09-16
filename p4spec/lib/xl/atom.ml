@@ -73,6 +73,7 @@ type t =
   | SPlusEq              (* ``|+|=` *)
   | SMinus               (* ``|-|` *)
   | SMinusEq             (* ``|-|=` *)
+[@@deriving yojson]
 [@@@ocamlformat "enable"]
 
 let compare atom_a atom_b = compare atom_a atom_b
