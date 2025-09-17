@@ -1,5 +1,6 @@
 open Sl.Ast
 open Util.Source
+module HEnv = Hintenv
 module F = Format
 
 (* Numbers *)
@@ -209,44 +210,44 @@ and string_of_pathconds pathconds =
 
 (* Holding conditions *)
 
-and string_of_holdcase ?(level = 0) holdcase =
+and string_of_holdcase ?(level = 0) penv holdcase =
   let indent = String.make (level * 2) ' ' in
   match holdcase with
   | BothH (instrs_hold, instrs_nothold) ->
       Format.asprintf "%sHolds:\n\n%s\n\n%sDoes not hold:\n\n%s" indent
-        (string_of_instrs ~level:(level + 1) instrs_hold)
+        (string_of_instrs ~level:(level + 1) penv instrs_hold)
         indent
-        (string_of_instrs ~level:(level + 1) instrs_nothold)
+        (string_of_instrs ~level:(level + 1) penv instrs_nothold)
   | HoldH (instrs_hold, None) ->
       Format.asprintf "%sHolds:\n\n%s" indent
-        (string_of_instrs ~level:(level + 1) instrs_hold)
+        (string_of_instrs ~level:(level + 1) penv instrs_hold)
   | HoldH (instrs_hold, Some phantom) ->
       Format.asprintf "%sHolds:\n\n%s\n\n%sElse %s" indent
-        (string_of_instrs ~level:(level + 1) instrs_hold)
+        (string_of_instrs ~level:(level + 1) penv instrs_hold)
         indent
         (string_of_phantom phantom)
   | NotHoldH (instrs_nothold, None) ->
       Format.asprintf "%sDoes not hold:\n\n%s" indent
-        (string_of_instrs ~level:(level + 1) instrs_nothold)
+        (string_of_instrs ~level:(level + 1) penv instrs_nothold)
   | NotHoldH (instrs_nothold, Some phantom) ->
       Format.asprintf "%sDoes not hold:\n\n%s\n\n%sElse %s" indent
-        (string_of_instrs ~level:(level + 1) instrs_nothold)
+        (string_of_instrs ~level:(level + 1) penv instrs_nothold)
         indent
         (string_of_phantom phantom)
 
 (* Case analysis *)
 
-and string_of_case ?(level = 0) ?(index = 0) exp case =
+and string_of_case ?(level = 0) ?(index = 0) penv exp case =
   let indent = String.make (level * 2) ' ' in
   let order = F.asprintf "%s%d. " indent index in
   let guard, instrs = case in
   F.asprintf "%sCase %s\n%s" order
     (string_of_guard exp guard)
-    (string_of_instrs ~level:(level + 1) instrs)
+    (string_of_instrs ~level:(level + 1) penv instrs)
 
-and string_of_cases ?(level = 0) exp cases =
+and string_of_cases ?(level = 0) penv exp cases =
   cases
-  |> List.mapi (fun idx case -> string_of_case ~level ~index:(idx + 1) exp case)
+  |> List.mapi (fun idx case -> string_of_case ~level ~index:(idx + 1) penv exp case)
   |> String.concat "\n\n"
 
 and string_of_guard exp_case guard =
@@ -265,46 +266,85 @@ and string_of_guard exp_case guard =
 
 (* Instructions *)
 
-and string_of_instr ?(level = 0) ?(index = 0) instr =
+and string_of_instr ?(level = 0) ?(index = 0) penv instr =
   let indent = String.make (level * 2) ' ' in
   let order = F.asprintf "%s%d. " indent index in
   match instr.it with
   | IfI (exp_cond, iterexps, instrs_then, _) ->
       F.asprintf "%sIf (%s)%s, then\n%s" order (string_of_exp exp_cond)
         (string_of_iterexps iterexps)
-        (string_of_instrs ~level:(level + 1) instrs_then)
+        (string_of_instrs ~level:(level + 1) penv instrs_then)
   | HoldI (id, notexp, iterexps, holdcase) ->
       Format.asprintf "%sIf (%s: %s)%s:\n\n%s" order (string_of_relid id)
         (string_of_notexp notexp)
         (string_of_iterexps iterexps)
-        (string_of_holdcase ~level:(level + 1) holdcase)
+        (string_of_holdcase ~level:(level + 1) penv holdcase)
   | CaseI (exp, cases, _) ->
       F.asprintf "%sCase analysis on %s\n%s" order (string_of_exp exp)
-        (string_of_cases ~level:(level + 1) exp cases)
+        (string_of_cases ~level:(level + 1) penv exp cases)
   | OtherwiseI instr ->
       F.asprintf "%sOtherwise\n%s" order
-        (string_of_instr ~level:(level + 1) ~index:1 instr)
+        (string_of_instr ~level:(level + 1) ~index:1 penv instr)
   | LetI (exp_l, exp_r, iterexps) ->
       F.asprintf "%s(Let %s be %s)%s" order (string_of_exp exp_l)
         (string_of_exp exp_r)
         (string_of_iterexps iterexps)
   | RuleI (id_rel, notexp, iterexps) ->
+      let prose_hint_opt = Hintenv.get_rel id_rel penv.Collect.prose in (
+      match prose_hint_opt with 
+      | Some prose_hint ->
+          let mixop, exps = notexp in
+          F.asprintf "%s%s: (%s)%s" order (string_of_relid id_rel)
+            (string_of_prose_hint exps prose_hint)
+            (string_of_iterexps iterexps)
+      | None ->
       F.asprintf "%s(%s: %s)%s" order (string_of_relid id_rel)
         (string_of_notexp notexp)
-        (string_of_iterexps iterexps)
+        (string_of_iterexps iterexps))
   | ResultI [] -> F.asprintf "%sThe relation holds" order
   | ResultI exps -> F.asprintf "%sResult in %s" order (string_of_exps ", " exps)
   | ReturnI exp -> F.asprintf "%sReturn %s" order (string_of_exp exp)
   | DebugI exp -> F.asprintf "%sDebug: %s" order (string_of_exp exp)
 
-and string_of_instrs ?(level = 0) instrs =
+and string_of_instrs ?(level = 0) penv instrs =
   instrs
-  |> List.mapi (fun idx instr -> string_of_instr ~level ~index:(idx + 1) instr)
+  |> List.mapi (fun idx instr -> string_of_instr ~level ~index:(idx + 1) penv instr)
   |> String.concat "\n"
+
+(* Rules *)
+
+and string_of_prose_hint (exps : exp list) (hintexp : El.Ast.exp) : string =
+  let _, str = string_of_prose_hint' exps hintexp 0 in
+  str
+
+and string_of_prose_hint' (exps : exp list) (hintexp : El.Ast.exp) (cursor : int) : int * string =
+  match hintexp.it with
+  | El.Ast.TextE text -> (cursor, text)
+  | El.Ast.SeqE exps_hint ->
+    let cursor, strs = List.fold_left (fun (cur, acc) exp -> 
+      let cur, str = string_of_prose_hint' exps exp cur in
+      (cur, acc @ [str])
+    ) (cursor, []) exps_hint in
+    (cursor, String.concat " " strs)
+  | El.Ast.HoleE `Next ->
+    (* holds cursor for HoleE.Next *)
+      let exp = List.nth exps cursor in
+      (cursor + 1, 
+      string_of_exp exp)
+  | El.Ast.HoleE (`Num i) ->
+    (* accesses HoleE.Num with index *)
+      let exp = List.nth exps i in
+      (i + 1,
+      string_of_exp exp)
+  | El.Ast.FuseE (exp_l, exp_r) ->
+      let cursor_l, str_l = string_of_prose_hint' exps exp_l cursor in
+      let cursor_r, str_r = string_of_prose_hint' exps exp_r cursor_l in
+      (cursor_r, str_l ^ str_r)
+  | _ -> failwith "unsupported prose hint"
 
 (* Definitions *)
 
-let rec string_of_def def =
+let rec string_of_def penv def =
   ";; " ^ string_of_region def.at ^ "\n"
   ^
   match def.it with
@@ -314,13 +354,13 @@ let rec string_of_def def =
   | RelD (relid, (_mixop, _inputs), exps_input, instrs, _hints) ->
       "relation " ^ string_of_relid relid ^ ": "
       ^ string_of_exps ", " exps_input
-      ^ "\n\n" ^ string_of_instrs instrs
+      ^ "\n\n" ^ string_of_instrs penv instrs
   | DecD (defid, tparams, args_input, instrs, _hints) ->
       "def " ^ string_of_defid defid ^ string_of_tparams tparams
-      ^ string_of_args args_input ^ "\n\n" ^ string_of_instrs instrs
+      ^ string_of_args args_input ^ "\n\n" ^ string_of_instrs penv instrs
 
-and string_of_defs defs = String.concat "\n\n" (List.map string_of_def defs)
+and string_of_defs penv defs = String.concat "\n\n" (List.map (string_of_def penv) defs)
 
 (* Spec *)
 
-let string_of_spec spec = string_of_defs spec
+let string_of_spec penv spec = string_of_defs penv spec
