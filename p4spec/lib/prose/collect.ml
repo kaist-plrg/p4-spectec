@@ -17,7 +17,7 @@ let collect_rel_def (rid : RId.t) (penv : penv) hints : penv =
   let open El.Ast in
   List.fold_left (fun penv {hintid; hintexp} ->
     match hintid.it with
-    | "prose" -> { prose = Hintenv.update_rel rid hintexp penv.prose }
+    | "prose" -> { prose = Hintenv.add_rel rid hintexp penv.prose }
     | _ -> penv
   ) penv hints
 
@@ -25,7 +25,7 @@ let collect_dec_def (fid : FId.t) (penv : penv) hints : penv =
   let open El.Ast in
   List.fold_left (fun penv {hintid; hintexp} ->
     match hintid.it with
-    | "prose" -> { prose = Hintenv.update_rel fid hintexp penv.prose }
+    | "prose" -> { prose = Hintenv.add_func fid hintexp penv.prose }
     | _ -> penv
   ) penv hints
 

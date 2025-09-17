@@ -28,9 +28,3 @@ let get_rel (rid : RId.t) (h : t) : El.Ast.exp option =
   RelHintMap.find_opt rid h.rels
 
 let empty = { funcs = FuncHintMap.empty; rels = RelHintMap.empty }
-
-let update_func (fid : FId.t) (exp : El.Ast.exp) (h : t) : t =
-  { h with funcs = FuncHintMap.add fid exp h.funcs }
-
-let update_rel (rid : RId.t) (exp : El.Ast.exp) (h : t) : t =
-  { h with rels = RelHintMap.add rid exp h.rels }
