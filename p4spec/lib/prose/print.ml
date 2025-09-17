@@ -70,7 +70,7 @@ let rec string_of_exp exp =
   | Il.Ast.BoolE b -> string_of_bool b
   | Il.Ast.NumE n -> string_of_num n
   | Il.Ast.TextE text -> "\"" ^ String.escaped text ^ "\""
-  | Il.Ast.VarE varid -> "`" ^ string_of_varid varid ^ "`"
+  | Il.Ast.VarE varid -> string_of_varid varid
   | Il.Ast.UnE (unop, _, exp) -> string_of_unop unop ^ string_of_exp exp
   | Il.Ast.BinE (binop, _, exp_l, exp_r) ->
       "(" ^ string_of_exp exp_l ^ " " ^ string_of_binop binop ^ " "
@@ -214,26 +214,16 @@ and string_of_holdcase ?(level = 0) penv holdcase =
   let indent = String.make (level * 2) ' ' in
   match holdcase with
   | BothH (instrs_hold, instrs_nothold) ->
-      Format.asprintf "%sHolds:\n\n%s\n\n%sDoes not hold:\n\n%s" indent
+      Format.asprintf ", then:\n%s\n%selse:\n\n%s"
         (string_of_instrs ~level:(level + 1) penv instrs_hold)
         indent
         (string_of_instrs ~level:(level + 1) penv instrs_nothold)
-  | HoldH (instrs_hold, None) ->
-      Format.asprintf "%sHolds:\n\n%s" indent
+  | HoldH (instrs_hold, _) ->
+      Format.asprintf ", then:\n%s"
         (string_of_instrs ~level:(level + 1) penv instrs_hold)
-  | HoldH (instrs_hold, Some phantom) ->
-      Format.asprintf "%sHolds:\n\n%s\n\n%sElse %s" indent
-        (string_of_instrs ~level:(level + 1) penv instrs_hold)
-        indent
-        (string_of_phantom phantom)
-  | NotHoldH (instrs_nothold, None) ->
+  | NotHoldH (instrs_nothold, _) ->
       Format.asprintf "%sDoes not hold:\n\n%s" indent
         (string_of_instrs ~level:(level + 1) penv instrs_nothold)
-  | NotHoldH (instrs_nothold, Some phantom) ->
-      Format.asprintf "%sDoes not hold:\n\n%s\n\n%sElse %s" indent
-        (string_of_instrs ~level:(level + 1) penv instrs_nothold)
-        indent
-        (string_of_phantom phantom)
 
 (* Case analysis *)
 
@@ -275,10 +265,19 @@ and string_of_instr ?(level = 0) ?(index = 0) penv instr =
         (string_of_iterexps iterexps)
         (string_of_instrs ~level:(level + 1) penv instrs_then)
   | HoldI (id, notexp, iterexps, holdcase) ->
-      Format.asprintf "%sIf (%s: %s)%s:\n\n%s" order (string_of_relid id)
+      let prose_hint_opt = Hintenv.get_rel id penv.Collect.prose in (
+      match prose_hint_opt with
+      | Some prose_hint ->
+          let mixop, exps = notexp in
+        F.asprintf "%s[%s] If %s%s%s" order (string_of_relid id)
+            (string_of_prose_hint exps prose_hint)
+            (string_of_iterexps iterexps)
+            (string_of_holdcase ~level:(level + 1) penv holdcase)
+      | None ->
+      Format.asprintf "%sIf (%s: %s)%s:\n%s" order (string_of_relid id)
         (string_of_notexp notexp)
         (string_of_iterexps iterexps)
-        (string_of_holdcase ~level:(level + 1) penv holdcase)
+        (string_of_holdcase ~level:(level + 1) penv holdcase))
   | CaseI (exp, cases, _) ->
       F.asprintf "%sCase analysis on %s\n%s" order (string_of_exp exp)
         (string_of_cases ~level:(level + 1) penv exp cases)
@@ -294,7 +293,7 @@ and string_of_instr ?(level = 0) ?(index = 0) penv instr =
       match prose_hint_opt with 
       | Some prose_hint ->
           let mixop, exps = notexp in
-          F.asprintf "%s%s: (%s)%s" order (string_of_relid id_rel)
+        F.asprintf "%s[%s] Let %s%s" order (string_of_relid id_rel)
             (string_of_prose_hint exps prose_hint)
             (string_of_iterexps iterexps)
       | None ->
@@ -329,13 +328,11 @@ and string_of_prose_hint' (exps : exp list) (hintexp : El.Ast.exp) (cursor : int
   | El.Ast.HoleE `Next ->
     (* holds cursor for HoleE.Next *)
       let exp = List.nth exps cursor in
-      (cursor + 1, 
-      string_of_exp exp)
+      (cursor + 1, "`" ^ string_of_exp exp ^ "`")
   | El.Ast.HoleE (`Num i) ->
     (* accesses HoleE.Num with index *)
       let exp = List.nth exps i in
-      (i + 1,
-      string_of_exp exp)
+      (cursor, "`" ^ string_of_exp exp ^ "`")
   | El.Ast.FuseE (exp_l, exp_r) ->
       let cursor_l, str_l = string_of_prose_hint' exps exp_l cursor in
       let cursor_r, str_r = string_of_prose_hint' exps exp_r cursor_l in
