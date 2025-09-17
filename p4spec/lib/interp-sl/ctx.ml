@@ -23,6 +23,17 @@ type cursor = Global | Local
 
 (* Context *)
 
+(* Testing layer *)
+
+type testing = {
+  (* Value dependency graph *)
+  derive : bool;
+  graph : Dep.Graph.t;
+  vid_program : vid;
+  (* Branch coverage of phantoms *)
+  cover : SCov.Cover.t ref;
+}
+
 (* Global layer *)
 
 type global = {
@@ -62,12 +73,8 @@ type local =
 type t = {
   (* Filename of the source file *)
   filename : string;
-  (* Value dependency graph *)
-  derive : bool;
-  graph : Dep.Graph.t;
-  vid_program : vid;
-  (* Branch coverage of phantoms *)
-  cover : SCov.Cover.t ref;
+  (* Testing layer *)
+  testing : testing;
   (* Global layer *)
   global : global;
   (* Local layer *)
@@ -77,17 +84,18 @@ type t = {
 (* Value dependencies *)
 
 let add_node ?(taint = false) (ctx : t) (value : value) : unit =
-  if ctx.derive then Dep.Graph.add_node ~taint ctx.graph value
+  if ctx.testing.derive then Dep.Graph.add_node ~taint ctx.testing.graph value
 
 let add_edge (ctx : t) (value_from : value) (value_to : value)
     (label : Dep.Edges.label) : unit =
-  if ctx.derive then Dep.Graph.add_edge ctx.graph value_from value_to label
+  if ctx.testing.derive then
+    Dep.Graph.add_edge ctx.testing.graph value_from value_to label
 
 (* Cover *)
 
 let cover (ctx : t) (hit : bool) (pid : pid) (vid : vid) : t =
-  if hit then ctx.cover := SCov.hit !(ctx.cover) pid
-  else ctx.cover := SCov.miss !(ctx.cover) pid vid;
+  if hit then ctx.testing.cover := SCov.hit !(ctx.testing.cover) pid
+  else ctx.testing.cover := SCov.miss !(ctx.testing.cover) pid vid;
   ctx
 
 (* Finders *)
@@ -268,9 +276,10 @@ let empty_local () : local = Empty
 
 let empty ~(derive : bool) (filename : string) (graph : Dep.Graph.t)
     (vid_program : vid) (cover : SCov.Cover.t ref) : t =
+  let testing = { derive; graph; vid_program; cover } in
   let global = empty_global () in
   let local = empty_local () in
-  { filename; derive; graph; vid_program; cover; global; local }
+  { filename; testing; global; local }
 
 (* Constructing a local context *)
 
@@ -364,4 +373,5 @@ let sub_list (ctx : t) (vars : var list) : t list =
 
 (* Committing a sub-context *)
 
-let commit (ctx : t) (ctx_sub : t) : t = { ctx with cover = ctx_sub.cover }
+let commit (ctx : t) (ctx_sub : t) : t =
+  { ctx with testing = { ctx.testing with cover = ctx_sub.testing.cover } }

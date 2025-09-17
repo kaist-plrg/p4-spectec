@@ -170,13 +170,13 @@ and insert_phantom' (tdenv : TDEnv.t) (pathconds : pathcond list)
   | OtherwiseI instr ->
       let instr = insert_phantom' tdenv pathconds instr in
       Sl.Ast.OtherwiseI instr $ at
+  | GroupI (id_group, exps_group, instrs_group) ->
+      let instrs_group = insert_phantom tdenv pathconds instrs_group in
+      Sl.Ast.GroupI (id_group, exps_group, instrs_group) $ at
   | LetI (exp_l, exp_r, iterexps) -> Sl.Ast.LetI (exp_l, exp_r, iterexps) $ at
   | RuleI (id, notexp, iterexps) -> Sl.Ast.RuleI (id, notexp, iterexps) $ at
   | ResultI exps -> Sl.Ast.ResultI exps $ at
   | ReturnI exp -> Sl.Ast.ReturnI exp $ at
-  | TryI (id, exps_match_expl, instrs) ->
-      let instrs = insert_phantom tdenv pathconds instrs in
-      Sl.Ast.TryI (id, exps_match_expl, instrs) $ at
   | DebugI exp -> Sl.Ast.DebugI exp $ at
 
 (* Nop pass *)
@@ -222,13 +222,13 @@ and insert_nothing' (instr : instr) : Sl.Ast.instr =
   | OtherwiseI instr ->
       let instr = insert_nothing' instr in
       Sl.Ast.OtherwiseI instr $ at
+  | GroupI (id_group, exps_group, instrs_group) ->
+      let instrs_group = insert_nothing instrs_group in
+      Sl.Ast.GroupI (id_group, exps_group, instrs_group) $ at
   | LetI (exp_l, exp_r, iterexps) -> Sl.Ast.LetI (exp_l, exp_r, iterexps) $ at
   | RuleI (id, notexp, iterexps) -> Sl.Ast.RuleI (id, notexp, iterexps) $ at
   | ResultI exps -> Sl.Ast.ResultI exps $ at
   | ReturnI exp -> Sl.Ast.ReturnI exp $ at
-  | TryI (id, exps_match_expl, instrs) ->
-      let instrs = insert_nothing instrs in
-      Sl.Ast.TryI (id, exps_match_expl, instrs) $ at
   | DebugI exp -> Sl.Ast.DebugI exp $ at
 
 (* Instrumentation *)

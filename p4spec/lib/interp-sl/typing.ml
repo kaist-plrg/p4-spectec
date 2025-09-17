@@ -37,7 +37,7 @@ let run_typing_internal (spec : spec) (filename_p4 : string)
       Ctx.empty ~derive:false filename_p4 graph value_program.note.vid cover
     in
     let ctx, _values = do_typing ctx spec value_program in
-    WellTyped (ctx.graph, ctx.vid_program, !(ctx.cover))
+    WellTyped (ctx.testing.graph, ctx.testing.vid_program, !(ctx.testing.cover))
   with Util.Error.InterpError (at, msg) -> IllTyped (at, msg, !cover)
 
 let run_typing' ?(derive : bool = false) (spec : spec)
@@ -55,7 +55,7 @@ let run_typing' ?(derive : bool = false) (spec : spec)
       Ctx.empty ~derive filename_p4 graph value_program.note.vid cover
     in
     let ctx, _ = do_typing ctx spec value_program in
-    WellTyped (ctx.graph, ctx.vid_program, !(ctx.cover))
+    WellTyped (ctx.testing.graph, ctx.testing.vid_program, !(ctx.testing.cover))
   with
   | Util.Error.ParseError (at, msg) -> IllFormed (at, msg, !cover)
   | Util.Error.InterpError (at, msg) -> IllTyped (at, msg, !cover)

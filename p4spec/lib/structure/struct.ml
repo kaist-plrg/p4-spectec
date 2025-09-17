@@ -141,11 +141,11 @@ and struct_rel_def (henv : HEnv.t) (tdenv : TDEnv.t) (at : region) (id_rel : id)
                rulepaths
              |> List.concat
            in
-           let instr_try =
-             Ol.Ast.TryI (id_rulegroup, exps_match_expl, instrs_path)
+           let instr_group =
+             Ol.Ast.GroupI (id_rulegroup, exps_match_expl, instrs_path)
              $ id_rulegroup.at
            in
-           struct_prems prems_match instr_try)
+           struct_prems prems_match instr_group)
     |> List.concat
   in
   let instrs =

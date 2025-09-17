@@ -36,11 +36,11 @@ and string_of_instr ?(level = 0) ?(index = 0) instr =
         (string_of_iterexps iterexps)
         (string_of_instrs ~level:(level + 1) instrs_then)
   | HoldI (id, notexp, iterexps, instrs_hold, instrs_nothold) ->
-      Format.asprintf "%sIf (%s: %s)%s\n\nHold:\n\n%s\n\n%sDoes not hold:\n\n%s"
-        order (string_of_relid id) (string_of_notexp notexp)
+      Format.asprintf "%sIf (%s: %s)%s holds, then\n\n%s\n\n%sElse,\n\n%s" order
+        (string_of_relid id) (string_of_notexp notexp)
         (string_of_iterexps iterexps)
         (string_of_instrs ~level:(level + 1) instrs_hold)
-        indent
+        order
         (string_of_instrs ~level:(level + 1) instrs_nothold)
   | CaseI (exp, cases, _) ->
       Format.asprintf "%sCase analysis on %s\n\n%s" order (string_of_exp exp)
@@ -48,6 +48,10 @@ and string_of_instr ?(level = 0) ?(index = 0) instr =
   | OtherwiseI instr ->
       Format.asprintf "%sOtherwise\n\n%s" order
         (string_of_instr ~level:(level + 1) ~index:1 instr)
+  | GroupI (id_group, exps_group, instrs_group) ->
+      Format.asprintf "%sGroup %s: %s\n\n%s" order (string_of_relid id_group)
+        (string_of_exps ", " exps_group)
+        (string_of_instrs ~level:(level + 1) instrs_group)
   | LetI (exp_l, exp_r, iterexps) ->
       Format.asprintf "%s(Let %s be %s)%s" order (string_of_exp exp_l)
         (string_of_exp exp_r)
@@ -60,11 +64,6 @@ and string_of_instr ?(level = 0) ?(index = 0) instr =
   | ResultI exps ->
       Format.asprintf "%sResult in %s" order (string_of_exps ", " exps)
   | ReturnI exp -> Format.asprintf "%sReturn %s" order (string_of_exp exp)
-  | TryI (id, exps_match_expl, instrs) ->
-      Format.asprintf "%sTry matching path %s (%s)\n\n%s" order
-        (string_of_relid id)
-        (string_of_exps " | " exps_match_expl)
-        (string_of_instrs ~level:(level + 1) instrs)
   | DebugI exp -> Format.asprintf "%sDebug: %s" order (string_of_exp exp)
 
 and string_of_instrs ?(level = 0) instrs =

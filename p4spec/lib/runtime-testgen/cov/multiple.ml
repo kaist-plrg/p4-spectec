@@ -85,7 +85,7 @@ module Cover = struct
             add pid branch cover
         | None -> cover)
     | OtherwiseI instr -> init_instr cover id instr
-    | TryI (_, _, instrs_try) -> init_instrs cover id instrs_try
+    | GroupI (_, _, instrs_group) -> init_instrs cover id instrs_group
     | _ -> cover
 
   and init_instrs (cover : t) (id : id) (instrs : instr list) : t =

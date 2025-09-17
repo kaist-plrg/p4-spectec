@@ -164,6 +164,11 @@ and eq_instr (instr_a : instr) (instr_b : instr) : bool =
       eq_exp exp_a exp_b && eq_cases cases_a cases_b
       && eq_phantom_opt phantom_opt_a phantom_opt_b
   | OtherwiseI instr_a, OtherwiseI instr_b -> eq_instr instr_a instr_b
+  | ( GroupI (id_group_a, exps_group_a, instrs_group_a),
+      GroupI (id_group_b, exps_group_b, instrs_group_b) ) ->
+      eq_id id_group_a id_group_b
+      && eq_exps exps_group_a exps_group_b
+      && eq_instrs instrs_group_a instrs_group_b
   | LetI (exp_l_a, exp_r_a, iterexps_a), LetI (exp_l_b, exp_r_b, iterexps_b) ->
       eq_exp exp_l_a exp_l_b && eq_exp exp_r_a exp_r_b
       && eq_iterexps iterexps_a iterexps_b
@@ -173,11 +178,6 @@ and eq_instr (instr_a : instr) (instr_b : instr) : bool =
       && eq_iterexps iterexps_a iterexps_b
   | ResultI exps_a, ResultI exps_b -> eq_exps exps_a exps_b
   | ReturnI exp_a, ReturnI exp_b -> eq_exp exp_a exp_b
-  | ( TryI (id_a, exps_match_expl_a, instrs_try_a),
-      TryI (id_b, exps_match_expl_b, instrs_try_b) ) ->
-      eq_id id_a id_b
-      && eq_exps exps_match_expl_a exps_match_expl_b
-      && eq_instrs instrs_try_a instrs_try_b
   | DebugI exp_a, DebugI exp_b -> eq_exp exp_a exp_b
   | _ -> false
 

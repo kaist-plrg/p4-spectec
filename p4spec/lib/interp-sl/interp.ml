@@ -918,12 +918,12 @@ and eval_instr (ctx : Ctx.t) (instr : instr) : Ctx.t * Sign.t =
       eval_hold_instr ctx id notexp iterexps holdcase
   | CaseI (exp, cases, phantom_opt) -> eval_case_instr ctx exp cases phantom_opt
   | OtherwiseI instr -> eval_instr ctx instr
+  | GroupI (id_group, exps_group, instrs_group) ->
+      eval_group_instr ctx id_group exps_group instrs_group
   | LetI (exp_l, exp_r, iterexps) -> eval_let_instr ctx exp_l exp_r iterexps
   | RuleI (id, notexp, iterexps) -> eval_rule_instr ctx id notexp iterexps
   | ResultI exps -> eval_result_instr ctx exps
   | ReturnI exp -> eval_return_instr ctx exp
-  | TryI (id, exps_match_expl, instrs) ->
-      eval_try_instr ctx id exps_match_expl instrs
   | DebugI exp -> eval_debug_instr ctx exp
 
 and eval_instrs (ctx : Ctx.t) (sign : Sign.t) (instrs : instr list) :
@@ -1071,7 +1071,7 @@ and eval_hold_cond_iter (ctx : Ctx.t) (id : id) (notexp : notexp)
 and eval_hold_instr (ctx : Ctx.t) (id : id) (notexp : notexp)
     (iterexps : iterexp list) (holdcase : holdcase) : Ctx.t * Sign.t =
   (* Copy the current coverage information *)
-  let cover_backup = !(ctx.cover) in
+  let cover_backup = !(ctx.testing.cover) in
   (* Evaluate the hold condition *)
   let ctx, cond, value_cond = eval_hold_cond_iter ctx id notexp iterexps in
   (* Evaluate the hold case, and restore the coverage information
@@ -1081,7 +1081,7 @@ and eval_hold_instr (ctx : Ctx.t) (id : id) (notexp : notexp)
   | BothH (instrs_hold, instrs_not_hold) ->
       if cond then eval_instrs ctx Cont instrs_hold
       else (
-        ctx.cover := cover_backup;
+        ctx.testing.cover := cover_backup;
         eval_instrs ctx Cont instrs_not_hold)
   | HoldH (instrs_hold, phantom_opt) ->
       let ctx =
@@ -1091,7 +1091,7 @@ and eval_hold_instr (ctx : Ctx.t) (id : id) (notexp : notexp)
       in
       if cond then eval_instrs ctx Cont instrs_hold else (ctx, Cont)
   | NotHoldH (instrs_not_hold, phantom_opt) ->
-      ctx.cover := cover_backup;
+      ctx.testing.cover := cover_backup;
       let ctx =
         match phantom_opt with
         | Some (pid, _) -> Ctx.cover ctx cond pid vid
@@ -1147,6 +1147,16 @@ and eval_case_instr (ctx : Ctx.t) (exp : exp) (cases : case list)
   match instrs_opt with
   | Some instrs -> eval_instrs ctx Cont instrs
   | None -> (ctx, Cont)
+
+(* Group instruction evaluation *)
+
+and eval_group_instr (ctx : Ctx.t) (id_group : id) (_exps_group : exp list)
+    (instrs_group : instr list) : Ctx.t * Sign.t =
+  let ctx_group, sign_group = eval_instrs ctx Cont instrs_group in
+  match sign_group with
+  | Cont -> (ctx, Cont)
+  | Res values_output -> (ctx_group, Res values_output)
+  | Ret _ -> error id_group.at "cannot return from try instruction"
 
 (* Let instruction evaluation *)
 
@@ -1430,16 +1440,6 @@ and eval_return_instr (ctx : Ctx.t) (exp : exp) : Ctx.t * Sign.t =
   let ctx, value = eval_exp ctx exp in
   (ctx, Ret value)
 
-(* Try instruction evaluation *)
-
-and eval_try_instr (ctx : Ctx.t) (id : id) (_exps_match_expl : exp list)
-    (instrs_try : instr list) : Ctx.t * Sign.t =
-  let ctx_path, sign_path = eval_instrs ctx Cont instrs_try in
-  match sign_path with
-  | Cont -> (ctx, Cont)
-  | Res values_output -> (ctx_path, Res values_output)
-  | Ret _ -> error id.at "cannot return from try instruction"
-
 (* Debug instruction evaluation *)
 
 and eval_debug_instr (ctx : Ctx.t) (exp : exp) : Ctx.t * Sign.t =
@@ -1473,7 +1473,7 @@ and invoke_rel (ctx : Ctx.t) (id : id) (values_input : value list) :
         Some (ctx, values_output)
     | _ -> None
   in
-  if (not ctx.derive) && Cache.is_cached_rule id.it then (
+  if (not ctx.testing.derive) && Cache.is_cached_rule id.it then (
     let cache_result = Cache.Cache.find !rule_cache (id.it, values_input) in
     match cache_result with
     | Some values_output -> Some (ctx, values_output)
@@ -1544,7 +1544,7 @@ and invoke_func_def (ctx : Ctx.t) (id : id) (targs : targ list)
         (ctx, value_output)
     | _ -> error id.at "function was not matched"
   in
-  if (not ctx.derive) && Cache.is_cached_func id.it then (
+  if (not ctx.testing.derive) && Cache.is_cached_func id.it then (
     let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
     match cache_result with
     | Some value_output -> (ctx, value_output)
