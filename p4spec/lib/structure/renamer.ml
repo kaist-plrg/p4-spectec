@@ -189,7 +189,10 @@ and rename_instr (rename : t) (instr : instr) : instr =
   | ReturnI exp ->
       let exp = rename_exp rename exp in
       ReturnI exp $ at
-  | TryI _ -> instr
+  | TryI (id, exps_match_expl, instrs_try) ->
+      let exps_match_expl = List.map (rename_exp rename) exps_match_expl in
+      let instrs_try = List.map (rename_instr rename) instrs_try in
+      TryI (id, exps_match_expl, instrs_try) $ at
   | DebugI exp ->
       let exp = rename_exp rename exp in
       DebugI exp $ at

@@ -907,6 +907,10 @@ and eval_args (ctx : Ctx.t) (args : arg list) : Ctx.t * value list =
 (* Instruction evaluation *)
 
 and eval_instr (ctx : Ctx.t) (instr : instr) : Ctx.t * Sign.t =
+  (* Sl.Print.string_of_instr instr |> print_endline; *)
+  (* (match ctx.local with *)
+  (* | Ctx.Rel { venv; _ } -> VEnv.to_string venv |> print_endline *)
+  (* | _ -> ()); *)
   match instr.it with
   | IfI (exp_cond, iterexps, instrs_then, phantom_opt) ->
       eval_if_instr ctx exp_cond iterexps instrs_then phantom_opt
@@ -918,7 +922,8 @@ and eval_instr (ctx : Ctx.t) (instr : instr) : Ctx.t * Sign.t =
   | RuleI (id, notexp, iterexps) -> eval_rule_instr ctx id notexp iterexps
   | ResultI exps -> eval_result_instr ctx exps
   | ReturnI exp -> eval_return_instr ctx exp
-  | TryI id -> eval_try_instr ctx id
+  | TryI (id, exps_match_expl, instrs) ->
+      eval_try_instr ctx id exps_match_expl instrs
   | DebugI exp -> eval_debug_instr ctx exp
 
 and eval_instrs (ctx : Ctx.t) (sign : Sign.t) (instrs : instr list) :
@@ -1427,19 +1432,9 @@ and eval_return_instr (ctx : Ctx.t) (exp : exp) : Ctx.t * Sign.t =
 
 (* Try instruction evaluation *)
 
-and eval_try_instr (ctx : Ctx.t) (id : id) : Ctx.t * Sign.t =
-  let id_rel =
-    match ctx.local with
-    | Rel { rid; _ } -> rid
-    | _ -> error id.at "try must be evaluated inside a relation"
-  in
-  let _, _, relpaths = Ctx.find_rel Local ctx id_rel in
-  let instrs_path =
-    relpaths
-    |> List.map (fun (id_path, _, instrs_path) -> (id_path, instrs_path))
-    |> List.assoc id
-  in
-  let ctx_path, sign_path = eval_instrs ctx Cont instrs_path in
+and eval_try_instr (ctx : Ctx.t) (id : id) (_exps_match_expl : exp list)
+    (instrs_try : instr list) : Ctx.t * Sign.t =
+  let ctx_path, sign_path = eval_instrs ctx Cont instrs_try in
   match sign_path with
   | Cont -> (ctx, Cont)
   | Res values_output -> (ctx_path, Res values_output)
@@ -1458,13 +1453,12 @@ and eval_debug_instr (ctx : Ctx.t) (exp : exp) : Ctx.t * Sign.t =
 
 and invoke_rel (ctx : Ctx.t) (id : id) (values_input : value list) :
     (Ctx.t * value list) option =
-  let _inputs, relmatch, relpaths = Ctx.find_rel Local ctx id in
-  check (relpaths <> []) id.at "relation has no instructions";
+  let _inputs, exps_input, instrs = Ctx.find_rel Local ctx id in
+  check (instrs <> []) id.at "relation has no instructions";
   let invoke_rel' () =
     let ctx_local = Ctx.localize_rule ctx id values_input in
-    let exps_input, instrs_match = relmatch in
     let ctx_local = assign_exps ctx_local exps_input values_input in
-    let ctx_local, sign = eval_instrs ctx_local Cont instrs_match in
+    let ctx_local, sign = eval_instrs ctx_local Cont instrs in
     let ctx = Ctx.commit ctx ctx_local in
     match sign with
     | Res values_output ->

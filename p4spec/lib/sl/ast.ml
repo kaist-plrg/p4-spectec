@@ -151,20 +151,14 @@ and instr' =
   | RuleI of id * notexp * iterexp list
   | ResultI of exp list
   | ReturnI of exp
-  | TryI of id
+  | TryI of id * exp list * instr list
   | DebugI of exp
 [@@deriving yojson]
 
 (* Relations *)
 
-type relmatch = exp list * instr list
-[@@deriving yojson]
-
-type relpath = id * exp list * instr list
-[@@deriving yojson]
-
-(* id `:` mixop `hint(input` `%`int* `)` relmatch relpath* *)
-type rel = id * (mixop * int list) * relmatch * relpath list
+(* id `:` mixop `hint(input` `%`int* `)` exp* instr* *)
+type rel = id * (mixop * int list) * exp list * instr list
 [@@deriving yojson]
 
 (* Functions *)

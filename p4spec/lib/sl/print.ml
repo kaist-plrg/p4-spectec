@@ -299,8 +299,11 @@ and string_of_instr ?(verbose = false) ?(level = 0) ?(index = 0) instr =
   | ResultI exps ->
       Format.asprintf "%sResult in %s" order (string_of_exps ", " exps)
   | ReturnI exp -> Format.asprintf "%sReturn %s" order (string_of_exp exp)
-  | TryI id ->
-      Format.asprintf "%sTry matching path %s" order (string_of_relid id)
+  | TryI (id, exps_match_expl, instrs) ->
+      Format.asprintf "%sTry matching path %s (%s)\n\n%s" order
+        (string_of_relid id)
+        (string_of_exps ", " exps_match_expl)
+        (string_of_instrs ~level:(level + 1) instrs)
   | DebugI exp -> Format.asprintf "%sDebug: %s" order (string_of_exp exp)
 
 and string_of_instrs ?(verbose = false) ?(level = 0) instrs =
@@ -311,31 +314,12 @@ and string_of_instrs ?(verbose = false) ?(level = 0) instrs =
 
 (* Relations *)
 
-let string_of_relmatch ?(verbose = false) relmatch =
-  let exps_match, instrs_match = relmatch in
-  indent 1 ^ "(match) "
-  ^ string_of_exps " | " exps_match
-  ^ "\n\n"
-  ^ string_of_instrs ~verbose ~level:2 instrs_match
-
-let string_of_relpath ?(verbose = false) relpath =
-  let relpathid, exps_match_expl, instrs = relpath in
-  indent 1 ^ "(path) "
-  ^ string_of_relpathid relpathid
-  ^ " "
-  ^ string_of_exps " | " exps_match_expl
+let string_of_rel ?(verbose = false) rel =
+  let relid, _, exps_match, instrs = rel in
+  string_of_relid relid ^ ": "
+  ^ string_of_exps ", " exps_match
   ^ "\n\n"
   ^ string_of_instrs ~verbose ~level:2 instrs
-
-let string_of_relpaths ?(verbose = false) relpaths =
-  relpaths |> List.map (string_of_relpath ~verbose) |> String.concat "\n\n"
-
-let string_of_rel ?(verbose = false) rel =
-  let relid, _, relmatch, relpaths = rel in
-  string_of_relid relid ^ "\n\n"
-  ^ string_of_relmatch ~verbose relmatch
-  ^ "\n\n"
-  ^ string_of_relpaths ~verbose relpaths
 
 (* Functions *)
 

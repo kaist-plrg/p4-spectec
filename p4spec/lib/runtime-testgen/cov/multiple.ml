@@ -85,6 +85,7 @@ module Cover = struct
             add pid branch cover
         | None -> cover)
     | OtherwiseI instr -> init_instr cover id instr
+    | TryI (_, _, instrs_try) -> init_instrs cover id instrs_try
     | _ -> cover
 
   and init_instrs (cover : t) (id : id) (instrs : instr list) : t =
@@ -93,9 +94,7 @@ module Cover = struct
   let init_def (ignores : IdSet.t) (cover : t) (def : def) : t =
     match def.it with
     | TypD _ -> cover
-    | RelD (id, _, (_, instrs_match), relpaths) ->
-        let instrs = List.concat_map (fun (_, _, instrs) -> instrs) relpaths in
-        let instrs = instrs_match @ instrs in
+    | RelD (id, _, _, instrs) ->
         if IdSet.mem id ignores then cover else init_instrs cover id instrs
     | DecD (id, _, _, instrs) ->
         if IdSet.mem id ignores then cover else init_instrs cover id instrs

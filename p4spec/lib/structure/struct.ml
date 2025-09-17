@@ -58,75 +58,6 @@ and struct_prems' (prems_internalized : (prem * iterexp list) list)
           instr_h :: instrs_t
       | _ -> assert false)
 
-(* Structuring rules *)
-
-let struct_rule_match_group (henv : HEnv.t) (tdenv : TDEnv.t) (frees : IdSet.t)
-    (rule_match_group : (id * exp list * prem list) list) : Sl.Ast.relmatch =
-  let id_rulegroup_group, exps_match_group, prems_match_group =
-    List.fold_left
-      (fun (id_rulegroup_group, exps_match_group, prems_match_group)
-           (id_rulegroup, exps_match, prems_match) ->
-        ( id_rulegroup_group @ [ id_rulegroup ],
-          exps_match_group @ [ exps_match ],
-          prems_match_group @ [ prems_match ] ))
-      ([], [], []) rule_match_group
-  in
-  let exps_match_unified, prems_match_unified_group =
-    Antiunify.antiunify_rule_match_group frees exps_match_group
-  in
-  let prems_match_group =
-    List.map2
-      (fun prems_match_unified prems_match -> prems_match_unified @ prems_match)
-      prems_match_unified_group prems_match_group
-  in
-  let instrs_match =
-    List.map2
-      (fun id_rulegroup prems_match ->
-        let instr_try = Ol.Ast.TryI id_rulegroup $ id_rulegroup.at in
-        struct_prems prems_match instr_try)
-      id_rulegroup_group prems_match_group
-    |> List.concat
-  in
-  let instrs_match =
-    instrs_match |> Optimize.optimize henv tdenv |> Instrument.instrument tdenv
-  in
-  (exps_match_unified, instrs_match)
-
-let struct_rule_path (rule_path : id * prem list * exp list) : Ol.Ast.instr list
-    =
-  let _, prems, exps_output = rule_path in
-  let instr_ret =
-    let at = exps_output |> List.map at |> over_region in
-    Ol.Ast.ResultI exps_output $ at
-  in
-  struct_prems prems instr_ret
-
-let struct_rule_paths (henv : HEnv.t) (tdenv : TDEnv.t)
-    (rule_paths : (id * prem list * exp list) list) : Sl.Ast.instr list =
-  let instrs_path = List.concat_map struct_rule_path rule_paths in
-  instrs_path |> Optimize.optimize henv tdenv |> Instrument.instrument tdenv
-
-let struct_rule_paths_group (henv : HEnv.t) (tdenv : TDEnv.t)
-    (rule_paths_group : (id * exp list * rulepath list) list) :
-    Sl.Ast.relpath list =
-  let id_rulegroup_group, exps_input_group, rulepaths_group =
-    List.fold_left
-      (fun (id_rulegroup_group, exps_input_group, rulepaths_group)
-           (id_rulegroup, exps_input, rulepaths) ->
-        ( id_rulegroup_group @ [ id_rulegroup ],
-          exps_input_group @ [ exps_input ],
-          rulepaths_group @ [ rulepaths ] ))
-      ([], [], []) rule_paths_group
-  in
-  let instrs_path_group =
-    List.map (struct_rule_paths henv tdenv) rulepaths_group
-  in
-  List.combine id_rulegroup_group exps_input_group
-  |> List.map2
-       (fun instrs_path (id_rulegroup, exps_input) ->
-         (id_rulegroup, exps_input, instrs_path))
-       instrs_path_group
-
 (* Structuring clauses *)
 
 let struct_clause_path ((prems, exp_output) : prem list * exp) :
@@ -152,40 +83,75 @@ and struct_rel_def (henv : HEnv.t) (tdenv : TDEnv.t) (at : region) (id_rel : id)
     (nottyp : nottyp) (inputs : int list) (rulegroups : rulegroup list) :
     Sl.Ast.def =
   let mixop, _ = nottyp.it in
-  let rule_match_group, rule_paths_group =
+  let ( id_rulegroup_group,
+        exps_match_expl_group,
+        exps_match_impl_group,
+        prems_match_group,
+        rulepaths_group ) =
     List.fold_left
-      (fun (rule_match_group, rule_paths_group) rulegroup ->
+      (fun ( id_rulegroup_group,
+             exps_match_expl_group,
+             exps_match_impl_group,
+             prems_match_group,
+             rulepaths_group ) rulegroup ->
         let id_rulegroup, rulematch, rulepaths = rulegroup.it in
-        let exps_input_expl, exps_input_impl, prems_input_impl = rulematch in
-        ( rule_match_group
-          @ [ (id_rulegroup, exps_input_impl, prems_input_impl) ],
-          rule_paths_group @ [ (id_rulegroup, exps_input_expl, rulepaths) ] ))
-      ([], []) rulegroups
+        let exps_match_expl, exps_match_impl, prems_match = rulematch in
+        let id_rulegroup_group = id_rulegroup_group @ [ id_rulegroup ] in
+        let exps_match_expl_group =
+          exps_match_expl_group @ [ exps_match_expl ]
+        in
+        let exps_match_impl_group =
+          exps_match_impl_group @ [ exps_match_impl ]
+        in
+        let prems_match_group = prems_match_group @ [ prems_match ] in
+        let rulepaths_group = rulepaths_group @ [ rulepaths ] in
+        ( id_rulegroup_group,
+          exps_match_expl_group,
+          exps_match_impl_group,
+          prems_match_group,
+          rulepaths_group ))
+      ([], [], [], [], []) rulegroups
   in
-  let frees =
-    let frees_match =
-      rule_match_group
-      |> List.map (fun (_, exps_input_impl, prems_input_impl) ->
-             IdSet.union
-               (Il.Free.free_exps exps_input_impl)
-               (Il.Free.free_prems prems_input_impl))
-      |> List.fold_left IdSet.union IdSet.empty
-    in
-    let frees_path =
-      rule_paths_group
-      |> List.map (fun (_, exps_input_expl, rulepaths) ->
-             rulepaths
-             |> List.map (fun (_, prems, exps_output) ->
-                    IdSet.union (Il.Free.free_prems prems)
-                      (Il.Free.free_exps exps_output))
-             |> List.fold_left IdSet.union (Il.Free.free_exps exps_input_expl))
-      |> List.fold_left IdSet.union IdSet.empty
-    in
-    IdSet.union frees_match frees_path
+  let frees = Il.Free.free_rulegroups rulegroups in
+  let exps_match_unified, prems_match_unified_group =
+    Antiunify.antiunify_rule_match_group frees exps_match_impl_group
   in
-  let relmatch = struct_rule_match_group henv tdenv frees rule_match_group in
-  let relpaths = struct_rule_paths_group henv tdenv rule_paths_group in
-  Sl.Ast.RelD (id_rel, (mixop, inputs), relmatch, relpaths) $ at
+  let prems_match_group =
+    List.map2 ( @ ) prems_match_unified_group prems_match_group
+  in
+  let instrs =
+    List.combine id_rulegroup_group exps_match_expl_group
+    |> List.map2
+         (fun prems_match (id_rulegroup, exps_match_expl) ->
+           (id_rulegroup, exps_match_expl, prems_match))
+         prems_match_group
+    |> List.map2
+         (fun rulepaths (id_rulegroup, exps_match_expl, prems_match) ->
+           (id_rulegroup, exps_match_expl, prems_match, rulepaths))
+         rulepaths_group
+    |> List.map (fun (id_rulegroup, exps_match_expl, prems_match, rulepaths) ->
+           let instrs_path =
+             List.map
+               (fun (_, prems_path, exps_output) ->
+                 let at =
+                   exps_output |> List.map Util.Source.at |> over_region
+                 in
+                 let instr_res = Ol.Ast.ResultI exps_output $ at in
+                 struct_prems prems_path instr_res)
+               rulepaths
+             |> List.concat
+           in
+           let instr_try =
+             Ol.Ast.TryI (id_rulegroup, exps_match_expl, instrs_path)
+             $ id_rulegroup.at
+           in
+           struct_prems prems_match instr_try)
+    |> List.concat
+  in
+  let instrs =
+    instrs |> Optimize.optimize henv tdenv |> Instrument.instrument tdenv
+  in
+  Sl.Ast.RelD (id_rel, (mixop, inputs), exps_match_unified, instrs) $ at
 
 (* Structuring declaration definitions *)
 
