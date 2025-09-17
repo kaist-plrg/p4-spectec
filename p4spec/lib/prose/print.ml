@@ -240,7 +240,8 @@ and string_of_case ?(level = 0) ?(index = 0) exp case =
   let indent = String.make (level * 2) ' ' in
   let order = F.asprintf "%s%d. " indent index in
   let guard, instrs = case in
-  F.asprintf "%sCase %s\n%s" order (string_of_guard exp guard)
+  F.asprintf "%sCase %s\n%s" order
+    (string_of_guard exp guard)
     (string_of_instrs ~level:(level + 1) instrs)
 
 and string_of_cases ?(level = 0) exp cases =
@@ -252,22 +253,15 @@ and string_of_guard exp_case guard =
   match guard with
   | BoolG b -> string_of_bool b
   | CmpG (cmpop, _, exp) ->
-      F.asprintf "( %s %s %s )"
-        (string_of_exp exp_case)
-        (string_of_cmpop cmpop)
+      F.asprintf "%s %s %s" (string_of_exp exp_case) (string_of_cmpop cmpop)
         (string_of_exp exp)
   | SubG typ ->
-      F.asprintf "( %s has type %s )"
-        (string_of_exp exp_case)
-        (string_of_typ typ)
+      F.asprintf "%s has type %s" (string_of_exp exp_case) (string_of_typ typ)
   | MatchG pattern ->
-      F.asprintf "( %s matches pattern %s )"
-        (string_of_exp exp_case)
+      F.asprintf "%s matches pattern %s" (string_of_exp exp_case)
         (string_of_pattern pattern)
-  | MemG exp -> 
-      F.asprintf "( %s is in %s )"
-        (string_of_exp exp_case)
-        (string_of_exp exp)
+  | MemG exp ->
+      F.asprintf "%s is in %s" (string_of_exp exp_case) (string_of_exp exp)
 
 (* Instructions *)
 
@@ -275,37 +269,23 @@ and string_of_instr ?(level = 0) ?(index = 0) instr =
   let indent = String.make (level * 2) ' ' in
   let order = F.asprintf "%s%d. " indent index in
   match instr.it with
-  | IfI (exp_cond, iterexps, instrs_then, None) ->
+  | IfI (exp_cond, iterexps, instrs_then, _) ->
       F.asprintf "%sIf (%s)%s, then\n%s" order (string_of_exp exp_cond)
         (string_of_iterexps iterexps)
         (string_of_instrs ~level:(level + 1) instrs_then)
-  | IfI (exp_cond, iterexps, instrs_then, Some phantom) ->
-      F.asprintf "%sIf (%s)%s, then\n%s\n%sElse %s" order
-        (string_of_exp exp_cond)
-        (string_of_iterexps iterexps)
-        (string_of_instrs ~level:(level + 1) instrs_then)
-        order
-        (string_of_phantom phantom)
   | HoldI (id, notexp, iterexps, holdcase) ->
       Format.asprintf "%sIf (%s: %s)%s:\n\n%s" order (string_of_relid id)
         (string_of_notexp notexp)
         (string_of_iterexps iterexps)
         (string_of_holdcase ~level:(level + 1) holdcase)
-  | CaseI (exp, cases, None) ->
+  | CaseI (exp, cases, _) ->
       F.asprintf "%sCase analysis on %s\n%s" order (string_of_exp exp)
         (string_of_cases ~level:(level + 1) exp cases)
-  | CaseI (exp, cases, Some phantom) ->
-      F.asprintf "%sCase analysis on %s\n%s\n%sElse %s" order
-        (string_of_exp exp)
-        (string_of_cases ~level:(level + 1) exp cases)
-        order
-        (string_of_phantom phantom)
   | OtherwiseI instr ->
       F.asprintf "%sOtherwise\n%s" order
         (string_of_instr ~level:(level + 1) ~index:1 instr)
   | LetI (exp_l, exp_r, iterexps) ->
-      F.asprintf "%s(Let %s be %s)%s" order
-        (string_of_exp exp_l)
+      F.asprintf "%s(Let %s be %s)%s" order (string_of_exp exp_l)
         (string_of_exp exp_r)
         (string_of_iterexps iterexps)
   | RuleI (id_rel, notexp, iterexps) ->
@@ -313,8 +293,7 @@ and string_of_instr ?(level = 0) ?(index = 0) instr =
         (string_of_notexp notexp)
         (string_of_iterexps iterexps)
   | ResultI [] -> F.asprintf "%sThe relation holds" order
-  | ResultI exps ->
-      F.asprintf "%sResult in %s" order (string_of_exps ", " exps)
+  | ResultI exps -> F.asprintf "%sResult in %s" order (string_of_exps ", " exps)
   | ReturnI exp -> F.asprintf "%sReturn %s" order (string_of_exp exp)
   | DebugI exp -> F.asprintf "%sDebug: %s" order (string_of_exp exp)
 
