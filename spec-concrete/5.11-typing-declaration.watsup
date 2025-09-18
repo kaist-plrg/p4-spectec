@@ -119,7 +119,7 @@ rule Decl_object_ok/functionDeclaration:
   -- if TC_4 = $add_parameters(LOCAL, TC_3, parameterTypeIR*)
   ---- ;; check body
   -- if TC_5 = TC_4[ .LOCAL.KIND = (EXTERN_METHOD `-> typeIR_ret) ]
-  -- Block_ok: TC_5 CONT |- blockStatement : _ f blockStatementIR
+  -- Block_ok: TC_5 CONT NOLOOP |- blockStatement : _ f blockStatementIR
   ---- ;; check that the function returns on all paths, if it is not void
   -- if f = RET \/ typeIR_ret = VOID
   ---- ;; add function
@@ -303,7 +303,7 @@ rule Decl_ok/functionDeclaration:
   -- if TC_2 = $add_parameters(LOCAL, TC_1, parameterTypeIR*)
   ---- ;; check body
   -- if TC_3 = TC_2[ .LOCAL.KIND = FUNCTION `-> typeIR_ret ]
-  -- Block_ok: TC_3 CONT |- blockStatement : _ f blockStatementIR
+  -- Block_ok: TC_3 CONT NOLOOP |- blockStatement : _ f blockStatementIR
   ---- ;; check that the function returns on all paths, if it is not void
   -- if f = RET \/ typeIR_ret = VOID
   ---- ;; add function to the context
@@ -335,7 +335,7 @@ rule Decl_ok/actionDeclaration:
   ---- ;; add parameters to the context
   -- if TC_2 = $add_parameters(LOCAL, TC_1, parameterTypeIR*)
   ---- ;; check body
-  -- Block_ok: TC_2 CONT |- blockStatement : _ _ blockStatementIR
+  -- Block_ok: TC_2 CONT NOLOOP |- blockStatement : _ _ blockStatementIR
   ---- ;; add action to the context
   -- if rid = $rid(name, parameterList)
   -- if functionTypeIR = ACTION `( parameterTypeIR* )
@@ -561,7 +561,7 @@ rule Decl_ok/controlDeclaration:
   ---- ;; set local context
   -- if TC_5 = TC_4 [ .LOCAL.KIND = CONTROL_APPLY_METHOD ]
   ---- ;; check control body
-  -- Block_ok: TC_5 CONT |- controlBody : _ _ controlBodyIR
+  -- Block_ok: TC_5 CONT NOLOOP |- controlBody : _ _ controlBodyIR
   ---- ;; check apply method
   -- if methodTypeIR = CONTROL_APPLY `( parameterTypeIR* )
   -- RoutineTypeDef_wf: $bound(GLOBAL, TC_0) |- methodTypeIR

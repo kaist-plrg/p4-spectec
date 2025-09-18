@@ -64,28 +64,32 @@ relation Lvalue_ok:
 ;;;; Statement typing
 ;;
 
+syntax loopctxt = LOOP | NOLOOP
+
 relation Stmt_ok:
-  cursor typingContext flow |- statement : typingContext flow statementIR
-  hint(input %0 %1 %2 %3)
+  cursor typingContext flow loopctxt |- statement
+                      : typingContext flow statementIR
+  hint(input %0 %1 %2 %3 %4)
 
 relation Stmts_ok:
-  cursor typingContext flow |- statement* : typingContext flow statementIR*
-  hint(input %0 %1 %2 %3)
+  cursor typingContext flow loopctxt |- statement*
+                      : typingContext flow statementIR*
+  hint(input %0 %1 %2 %3 %4)
 
 relation BlockElementStmt_ok:
-  typingContext flow |- blockElementStatement
+  typingContext flow loopctxt |- blockElementStatement
                 : typingContext flow blockElementStatementIR
-  hint(input %0 %1 %2)
+  hint(input %0 %1 %2 %3)
 
 relation BlockElementStmts_ok:
-  typingContext flow |- blockElementStatement*
+  typingContext flow loopctxt |- blockElementStatement*
                 : typingContext flow blockElementStatementIR*
-  hint(input %0 %1 %2)
+  hint(input %0 %1 %2 %3)
 
 relation Block_ok:
-  typingContext flow |- blockStatement
+  typingContext flow loopctxt |- blockStatement
                 : typingContext flow blockStatementIR
-  hint(input %0 %1 %2)
+  hint(input %0 %1 %2 %3)
 
 ;;
 ;;;; Parameter typing
