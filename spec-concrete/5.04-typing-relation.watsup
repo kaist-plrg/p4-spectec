@@ -17,7 +17,7 @@ relation Type_ok:
   cursor typingContext |- typeOrVoid : typeIR `# tid*
   hint(input %0 %1 %2)
   hint(prose %3 "be the result of typing" %2#", under cursor" %0 "and typing context" %1
-             #", and " %4 "be the set of inserted type variables")
+             #",\nand " %4 "be the set of inserted type variables")
 
 relation TypeArgument_ok:
   cursor typingContext |- typeArgument : typeArgumentIR `# tid*
@@ -282,6 +282,8 @@ relation ControlLocalDecls_ok:
 relation Decl_ok:
   cursor typingContext |- declaration : typingContext declarationIR
   hint(input %0 %1 %2)
+  hint(prose %4 "be the result of typing" %2#", under cursor" %0 "and typing context" %1
+             #",\nand" %3 "be the modified typing context")
 
 relation Decls_ok:
   cursor typingContext |- declaration* : typingContext declarationIR*
@@ -338,10 +340,12 @@ def $is_static_routineTarget(_) = DYN
 relation RoutineTarget_ok:
   cursor typingContext |- routineTarget : routineTargetIR
   hint(input %0 %1 %2)
+  hint(prose %3 "be the result of typing" %2#", under cursor" %0 "and typing context" %1)
 
 relation RoutineTarget_lvalue_ok:
   cursor typingContext |- lvalue : routineTargetIR
   hint(input %0 %1 %2)
+  hint(prose %3 "be the result of typing" %2#", under cursor" %0 "and typing context" %1)
 
 relation RoutineType_ok:
   cursor typingContext |- routineTargetIR `< typeArgumentListIR > `( argumentIR* )

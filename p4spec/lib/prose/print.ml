@@ -3,6 +3,10 @@ open Util.Source
 module HEnv = Hintenv
 module F = Format
 
+let reindent_lines ~(indent : string) (s : string) : string =
+  let lines = String.split_on_char '\n' s in
+  String.concat ("\n " ^ indent) lines
+
 (* Numbers *)
 
 let string_of_num num = Il.Print.string_of_num num
@@ -34,11 +38,11 @@ let string_of_iter iter = Il.Print.string_of_iter iter
 
 (* Variables *)
 
-let string_of_var var = Il.Print.string_of_var var
+let string_of_var var = Il.Print.string_of_var var |> F.asprintf "%s"
 
 (* Types *)
 
-let string_of_typ typ = Il.Print.string_of_typ typ
+let string_of_typ typ = Il.Print.string_of_typ typ |> F.asprintf "`%s`"
 let string_of_typs sep typs = Il.Print.string_of_typs sep typs
 let string_of_nottyp nottyp = Il.Print.string_of_nottyp nottyp
 let string_of_deftyp deftyp = Il.Print.string_of_deftyp deftyp
@@ -73,20 +77,19 @@ let rec string_of_exp penv exp =
   | Il.Ast.VarE varid -> string_of_varid varid
   | Il.Ast.UnE (unop, _, exp) -> string_of_unop unop ^ string_of_exp penv exp
   | Il.Ast.BinE (binop, _, exp_l, exp_r) ->
-      "(" ^ string_of_exp penv exp_l ^ " " ^ string_of_binop binop ^ " "
-      ^ string_of_exp penv exp_r ^ ")"
+      string_of_exp penv exp_l ^ " " ^ string_of_binop binop ^ " "
+      ^ string_of_exp penv exp_r
   | Il.Ast.CmpE (cmpop, _, exp_l, exp_r) ->
       "(" ^ string_of_exp penv exp_l ^ " " ^ string_of_cmpop cmpop ^ " "
       ^ string_of_exp penv exp_r ^ ")"
   | Il.Ast.UpCastE (typ, exp) ->
-      "(" ^ string_of_exp penv exp ^ " as " ^ string_of_typ typ ^ ")"
+      "`" ^ string_of_exp penv exp ^ "` as " ^ string_of_typ typ
   | Il.Ast.DownCastE (typ, exp) ->
-      "(" ^ string_of_exp penv exp ^ " as " ^ string_of_typ typ ^ ")"
+      "`" ^ string_of_exp penv exp ^ "` as " ^ string_of_typ typ
   | Il.Ast.SubE (exp, typ) ->
-      "(" ^ string_of_exp penv exp ^ " has type " ^ string_of_typ typ ^ ")"
+      "`" ^ string_of_exp penv exp ^ "` has type " ^ string_of_typ typ
   | Il.Ast.MatchE (exp, pattern) ->
-      "(" ^ string_of_exp penv exp ^ " matches pattern " ^ string_of_pattern pattern
-      ^ ")"
+      string_of_exp penv exp ^ " matches pattern " ^ string_of_pattern pattern
   | Il.Ast.TupleE es -> "(" ^ string_of_exps penv ", " es ^ ")"
   | Il.Ast.CaseE notexp -> "(" ^ string_of_notexp penv notexp ^ ")"
   | Il.Ast.StrE expfields ->
@@ -130,7 +133,7 @@ let rec string_of_exp penv exp =
             (string_of_prose_hint penv exps prose_hint)
             (string_of_defid defid)
       | None ->
-      string_of_defid defid ^ string_of_targs targs ^ string_of_args penv args)
+      "`" ^ string_of_defid defid ^ string_of_targs targs ^ string_of_args penv args ^ "`") 
   | Il.Ast.IterE (exp, iterexp) -> string_of_exp penv exp ^ string_of_iterexp iterexp
 
 and string_of_exps penv sep exps = String.concat sep (List.map (string_of_exp penv) exps)
@@ -144,10 +147,24 @@ and string_of_notexp penv notexp =
   |> List.filter_map (fun str -> if str = "" then None else Some str)
   |> String.concat " "
 
-and string_of_iterexp (iter, _) = Il.Print.string_of_iter iter
 
+and string_of_iterexp (iter, _) = string_of_iter iter
 and string_of_iterexps iterexps =
   iterexps |> List.map string_of_iterexp |> String.concat ""
+
+and string_of_iteration ((iter, vars) : iterexp) = 
+  match iter with
+  | Opt -> "?"
+  | List -> 
+    let iterated_var var =
+      F.asprintf "`%s` in `%s*`"
+        (string_of_var var) (string_of_var var)
+    in
+    let iterated_vars vars = List.map iterated_var vars |> String.concat " and " in
+    F.asprintf ", for each %s" (iterated_vars vars)
+
+and string_of_iterations iterexps =
+  iterexps |> List.map string_of_iteration |> String.concat ""
 
 (* Patterns *)
 
@@ -261,12 +278,12 @@ and string_of_guard penv exp_case guard =
       F.asprintf "%s %s %s" (string_of_exp penv exp_case) (string_of_cmpop cmpop)
         (string_of_exp penv exp)
   | SubG typ ->
-      F.asprintf "%s has type %s" (string_of_exp penv exp_case) (string_of_typ typ)
+      F.asprintf "`%s` has type %s" (string_of_exp penv exp_case) (string_of_typ typ)
   | MatchG pattern ->
-      F.asprintf "%s matches pattern %s" (string_of_exp penv exp_case)
+      F.asprintf "`%s` matches pattern %s" (string_of_exp penv exp_case)
         (string_of_pattern pattern)
   | MemG exp ->
-      F.asprintf "%s is in %s" (string_of_exp penv exp_case) (string_of_exp penv exp)
+      F.asprintf "`%s` is in `%s`" (string_of_exp penv exp_case) (string_of_exp penv exp)
 
 (* Instructions *)
 
@@ -276,7 +293,7 @@ and string_of_instr ?(level = 0) ?(index = 0) penv instr =
   match instr.it with
   | IfI (exp_cond, iterexps, instrs_then, _) ->
       F.asprintf "%sAssert that %s%s.\n%s" order (string_of_exp penv exp_cond)
-        (string_of_iterexps iterexps)
+        (string_of_iterations iterexps)
         (string_of_instrs ~level:(level + 1) penv instrs_then)
   | HoldI (id, notexp, iterexps, holdcase) ->
       let prose_hint_opt = Hintenv.get_rel id penv.Collect.prose in (
@@ -284,38 +301,38 @@ and string_of_instr ?(level = 0) ?(index = 0) penv instr =
       | Some prose_hint ->
           let mixop, exps = notexp in
         F.asprintf "%s If [%s](%s)%s%s" order
-            (string_of_prose_hint penv exps prose_hint) (string_of_relid id)
-            (string_of_iterexps iterexps)
+            (string_of_prose_hint ~level:(level + 1) penv exps prose_hint) (string_of_relid id)
+            (string_of_iterations iterexps)
             (string_of_holdcase ~level:(level + 1) penv holdcase)
       | None ->
       Format.asprintf "%sIf (%s: %s)%s%s" order (string_of_relid id)
         (string_of_notexp penv notexp)
-        (string_of_iterexps iterexps)
+        (string_of_iterations iterexps)
         (string_of_holdcase ~level:(level + 1) penv holdcase))
   | CaseI (exp, cases, _) ->
-      F.asprintf "%sCase analysis on %s\n%s" order (string_of_exp penv exp)
+      F.asprintf "%sCase analysis on `%s`\n%s" order (string_of_exp penv exp)
         (string_of_cases ~level:(level + 1) penv exp cases)
   | OtherwiseI instr ->
       F.asprintf "%sOtherwise\n%s" order
         (string_of_instr ~level:(level + 1) ~index:1 penv instr)
   | LetI (exp_l, exp_r, iterexps) ->
-      F.asprintf "%s(Let %s be %s)%s" order (string_of_exp penv exp_l)
+      F.asprintf "%sLet `%s` be %s%s" order (string_of_exp penv exp_l)
         (string_of_exp penv exp_r)
-        (string_of_iterexps iterexps)
+        (string_of_iterations iterexps)
   | RuleI (id_rel, notexp, iterexps) ->
       let prose_hint_opt = Hintenv.get_rel id_rel penv.Collect.prose in (
       match prose_hint_opt with 
       | Some prose_hint ->
           let mixop, exps = notexp in
         F.asprintf "%sLet [%s](%s)%s" order
-            (string_of_prose_hint penv exps prose_hint) (string_of_relid id_rel)
-            (string_of_iterexps iterexps)
+            (string_of_prose_hint ~level:(level + 1) penv exps prose_hint) (string_of_relid id_rel)
+            (string_of_iterations iterexps)
       | None ->
       F.asprintf "%s(%s: %s)%s" order (string_of_relid id_rel)
         (string_of_notexp penv notexp)
-        (string_of_iterexps iterexps))
+        (string_of_iterations iterexps))
   | ResultI [] -> F.asprintf "%sThe relation holds" order
-  | ResultI exps -> F.asprintf "%sResult in %s" order (string_of_exps penv ", " exps)
+  | ResultI exps -> F.asprintf "%sResult in %s" order ("`" ^ string_of_exps penv "`, `" exps ^"`")
   | ReturnI exp -> F.asprintf "%sReturn %s" order (string_of_exp penv exp)
   | DebugI exp -> F.asprintf "%sDebug: %s" order (string_of_exp penv exp)
 
@@ -326,16 +343,17 @@ and string_of_instrs ?(level = 0) penv instrs =
 
 (* Rules *)
 
-and string_of_prose_hint penv (exps : exp list) (hintexp : El.Ast.exp) : string =
-  let _, str = string_of_prose_hint' penv exps hintexp 0 in
+and string_of_prose_hint ?(level = 0) penv (exps : exp list) (hintexp : El.Ast.exp) : string =
+  let _, str = string_of_prose_hint' ~level penv exps hintexp 0 in
   str
 
-and string_of_prose_hint' penv (exps : exp list) (hintexp : El.Ast.exp) (cursor : int) : int * string =
+and string_of_prose_hint' ?(level = 0) penv (exps : exp list) (hintexp : El.Ast.exp) (cursor : int) : int * string =
+  let indent = String.make (level * 2) ' ' in
   match hintexp.it with
-  | El.Ast.TextE text -> (cursor, text)
+  | El.Ast.TextE text -> (cursor, reindent_lines ~indent text)
   | El.Ast.SeqE exps_hint ->
     let cursor, strs = List.fold_left (fun (cur, acc) exp -> 
-      let cur, str = string_of_prose_hint' penv exps exp cur in
+      let cur, str = string_of_prose_hint' ~level penv exps exp cur in
       (cur, acc @ [str])
     ) (cursor, []) exps_hint in
     (cursor, String.concat " " strs)
@@ -348,8 +366,8 @@ and string_of_prose_hint' penv (exps : exp list) (hintexp : El.Ast.exp) (cursor 
       let exp = List.nth exps i in
       (cursor, "`" ^ string_of_exp penv exp ^ "`")
   | El.Ast.FuseE (exp_l, exp_r) ->
-      let cursor_l, str_l = string_of_prose_hint' penv exps exp_l cursor in
-      let cursor_r, str_r = string_of_prose_hint' penv exps exp_r cursor_l in
+      let cursor_l, str_l = string_of_prose_hint' ~level penv exps exp_l cursor in
+      let cursor_r, str_r = string_of_prose_hint' ~level penv exps exp_r cursor_l in
       (cursor_r, str_l ^ str_r)
   | _ -> failwith "unsupported prose hint"
 
