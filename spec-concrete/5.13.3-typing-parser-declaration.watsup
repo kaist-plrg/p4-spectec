@@ -24,41 +24,45 @@ rule ParserLocalDecl_ok/instantiation:
 ;;; syntax variableDeclaration =
 ;;;   annotationList type name initializerOpt `;
 
-rule ParserLocalDecl_ok/variableDeclaration-empty:
-  TC_0 |- annotationList type name `EMPTY `;
-        : TC_1 variableDeclarationIR
-  ---- ;; check type
-  -- Type_ok: BLOCK TC_0 |- type : typeIR `# eps
-  -- Type_wf: $bound(BLOCK, TC_0) |- typeIR
-  ---- ;; check that the type is assignable
-  -- if $is_assignable_typeIR(typeIR)
-  ---- ;; update the context
-  -- if nameIR = $name(name)
-  -- if TC_1 = $add_var(BLOCK, TC_0, nameIR, INOUT typeIR DYN eps)
-  ---- ;; create IR
-  -- if variableDeclarationIR
-      = annotationList typeIR nameIR eps `;
+rulegroup ParserLocalDecl_ok/variableDeclaration {
 
-rule ParserLocalDecl_ok/variableDeclaration-initializer:
-  TC_0 |- annotationList type name (`= expression_init) `;
-        : TC_1 variableDeclarationIR
-  ---- ;; check type
-  -- Type_ok: BLOCK TC_0 |- type : typeIR `# eps
-  -- Type_wf: $bound(BLOCK, TC_0) |- typeIR
-  ---- ;; check that the type is assignable
-  -- if $is_assignable_typeIR(typeIR)
-  ---- ;; check expression
-  -- Expr_ok: BLOCK TC_0 |- expression_init : typedExpressionIR_init
-  ---- ;; check that the expression matches the type
-  ---- ;; while inserting implicit casts if necessary
-  -- if typedExpressionIR_init_cast
-      = $coerce_unary(typedExpressionIR_init, typeIR)
-  ---- ;; update the context
-  -- if nameIR = $name(name)
-  -- if TC_1 = $add_var(BLOCK, TC_0, nameIR, INOUT typeIR DYN eps)
-  ---- ;; create IR
-  -- if variableDeclarationIR
-      = annotationList typeIR nameIR (`= typedExpressionIR_init_cast) `;
+  rule ParserLocalDecl_ok/empty:
+    TC_0 |- annotationList type name `EMPTY `;
+          : TC_1 variableDeclarationIR
+    ---- ;; check type
+    -- Type_ok: BLOCK TC_0 |- type : typeIR `# eps
+    -- Type_wf: $bound(BLOCK, TC_0) |- typeIR
+    ---- ;; check that the type is assignable
+    -- if $is_assignable_typeIR(typeIR)
+    ---- ;; update the context
+    -- if nameIR = $name(name)
+    -- if TC_1 = $add_var(BLOCK, TC_0, nameIR, INOUT typeIR DYN eps)
+    ---- ;; create IR
+    -- if variableDeclarationIR
+        = annotationList typeIR nameIR eps `;
+
+  rule ParserLocalDecl_ok/initializer:
+    TC_0 |- annotationList type name (`= expression_init) `;
+          : TC_1 variableDeclarationIR
+    ---- ;; check type
+    -- Type_ok: BLOCK TC_0 |- type : typeIR `# eps
+    -- Type_wf: $bound(BLOCK, TC_0) |- typeIR
+    ---- ;; check that the type is assignable
+    -- if $is_assignable_typeIR(typeIR)
+    ---- ;; check expression
+    -- Expr_ok: BLOCK TC_0 |- expression_init : typedExpressionIR_init
+    ---- ;; check that the expression matches the type
+    ---- ;; while inserting implicit casts if necessary
+    -- if typedExpressionIR_init_cast
+        = $coerce_unary(typedExpressionIR_init, typeIR)
+    ---- ;; update the context
+    -- if nameIR = $name(name)
+    -- if TC_1 = $add_var(BLOCK, TC_0, nameIR, INOUT typeIR DYN eps)
+    ---- ;; create IR
+    -- if variableDeclarationIR
+        = annotationList typeIR nameIR (`= typedExpressionIR_init_cast) `;
+
+}
 
 ;;; valueSetDeclaration
 ;;; syntax valueSetDeclaration =

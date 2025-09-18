@@ -170,16 +170,6 @@ and arg' =
 and targ = targ' phrase [@@deriving yojson]
 and targ' = typ' [@@deriving yojson]
 
-(* Rules *)
-
-and rule = rule' phrase
-and rule' = id * notexp * prem list
-
-(* Clauses *)
-
-and clause = clause' phrase
-and clause' = arg list * exp * prem list
-
 (* Premises *)
 
 and prem = prem' phrase
@@ -193,6 +183,19 @@ and prem' =
   | IterPr of prem * iterexp       (* prem iterexp *)
   | DebugPr of exp                 (* `debug` exp *)
 
+(* Rules *)
+
+and rulematch = exp list * exp list * prem list
+and rulepath = id * prem list * exp list
+
+and rulegroup = rulegroup' phrase
+and rulegroup' = id * rulematch * rulepath list
+
+(* Clauses *)
+
+and clause = clause' phrase
+and clause' = arg list * exp * prem list
+
 (* Hints *)
 
 and hint = { hintid : id; hintexp : El.Ast.exp }
@@ -203,8 +206,8 @@ type def = def' phrase
 and def' =
   (* `syntax` id `<` list(tparam, `,`) `>` `=` deftyp *)
   | TypD of id * tparam list * deftyp
-  (* `relation` id `:` nottyp `hint(input` `%`int* `)` rule* *)
-  | RelD of id * nottyp * int list * rule list
+  (* `relation` id `:` nottyp `hint(input` `%`int* `)` rulegroup* *)
+  | RelD of id * nottyp * int list * rulegroup list
   (* `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ clause* *)
   | DecD of id * tparam list * param list * typ * clause list
 

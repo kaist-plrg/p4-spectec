@@ -142,11 +142,12 @@ rule BlockElementStmt_inst/constantDeclarationIR:
 
 ;;; variableDeclarationIR
 
-rule BlockElementStmt_inst/variableDeclarationIR:
+rule BlockElementStmt_inst/variableDeclarationIR-global:
   GLOBAL Ci sto |- variableDeclarationIR ==> Ci sto eps
 
-rule BlockElementStmt_inst/variableDeclarationIR:
+rule BlockElementStmt_inst/variableDeclarationIR-non-global:
   p Ci sto |- variableDeclarationIR ==> Ci sto variableDeclarationIR
+  -- if p =/= GLOBAL
 
 ;;; statementIR
 

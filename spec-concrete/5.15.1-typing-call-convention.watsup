@@ -66,24 +66,28 @@ rule Expr_lvalue_ok/referenceExpressionIR:
   -- if direction _ DYN _ = $find_var(p, TC, prefixedNameIR)
   -- if direction = OUT \/ direction = INOUT
 
-rule Expr_lvalue_ok/accessExpressionIR-memberAccessExpressionIR-stack:
-  p TC |- (typedExpressionIR_base `. nameIR) `# `( _ _ )
-  -- Expr_lvalue_ok: p TC |- typedExpressionIR_base
-  ---- ;; if the base expressionis a haeder stack
-  -- if _ `# `( typeIR_base _ ) = typedExpressionIR_base
-  -- if typeIR `[ _ ] = $canon(typeIR_base)
-  ---- ;; if accessing "next" or "last"
-  -- if nameIR = "next" \/ nameIR = "last"
-  ---- ;; "next" and "last" can be only used within a parser
-  -- if (p = BLOCK /\ $is_parser_blockKind(TC.BLOCK.KIND))
-        \/ (p = LOCAL /\ $is_parser_state_localKind(TC.LOCAL.KIND))
+rulegroup Expr_lvalue_ok/accessExpressionIR-memberAccessExpressionIR {
 
-rule Expr_lvalue_ok/accessExpressionIR-memberAccessExpressionIR-non-stack:
-  p TC |- (typedExpressionIR_base `. nameIR) `# `( _ _ )
-  -- Expr_lvalue_ok: p TC |- typedExpressionIR_base
-  -- if _ `# `( typeIR_base _ ) = typedExpressionIR_base
-  ---- ;; if the base expression is not a header stack
-  -- if ~$is_headerStackTypeIR($canon(typeIR_base))
+  rule Expr_lvalue_ok/headerstack-next-last:
+    p TC |- (typedExpressionIR_base `. nameIR) `# `( _ _ )
+    -- Expr_lvalue_ok: p TC |- typedExpressionIR_base
+    ---- ;; if the base expressionis a haeder stack
+    -- if _ `# `( typeIR_base _ ) = typedExpressionIR_base
+    -- if typeIR `[ _ ] = $canon(typeIR_base)
+    ---- ;; if accessing "next" or "last"
+    -- if nameIR = "next" \/ nameIR = "last"
+    ---- ;; "next" and "last" can be only used within a parser
+    -- if (p = BLOCK /\ $is_parser_blockKind(TC.BLOCK.KIND))
+          \/ (p = LOCAL /\ $is_parser_state_localKind(TC.LOCAL.KIND))
+
+  rule Expr_lvalue_ok/non-headerstack:
+    p TC |- (typedExpressionIR_base `. nameIR) `# `( _ _ )
+    -- Expr_lvalue_ok: p TC |- typedExpressionIR_base
+    -- if _ `# `( typeIR_base _ ) = typedExpressionIR_base
+    ---- ;; if the base expression is not a header stack
+    -- if ~$is_headerStackTypeIR($canon(typeIR_base))
+
+}
 
 rule Expr_lvalue_ok/accessExpressionIR-indexAccessExpressionIR:
   p TC |- (typedExpressionIR_base `[ typedExpressionIR_index ]) `# `( _ _ )
@@ -106,21 +110,25 @@ rule Call_convention_expr_ok/out-inout:
 
 ;;; `EMPTY
 
-rule Call_convention_expr_ok/empty-action:
-  p TC ACTION |- (`EMPTY typeIR_param _ _) `@ typedExpressionIR_arg
-               : typedExpressionIR_arg_cast
-   ---- ;; may insert implicit casts for directionless action argument
-  -- if typedExpressionIR_arg_cast
-      = $coerce_unary(typedExpressionIR_arg, typeIR_param) 
-  
-rule Call_convention_expr_ok/empty-not-action:
-  p TC NOACTION |- (`EMPTY typeIR_param _ _) `@ typedExpressionIR_arg
-                 : typedExpressionIR_arg
-  ---- ;; may not insert implicit casts for direction out or inout
-  -- if _ `# `( typeIR_arg ctk_arg ) = typedExpressionIR_arg
-  -- Type_alpha: typeIR_param ~~ typeIR_arg
-  ---- ;; the argument must be compile-time known
-  -- if ctk_arg =/= DYN
+rulegroup Call_convention_expr_ok/empty {
+
+  rule Call_convention_expr_ok/action:
+    p TC ACTION |- (`EMPTY typeIR_param _ _) `@ typedExpressionIR_arg
+                 : typedExpressionIR_arg_cast
+     ---- ;; may insert implicit casts for directionless action argument
+    -- if typedExpressionIR_arg_cast
+        = $coerce_unary(typedExpressionIR_arg, typeIR_param) 
+    
+  rule Call_convention_expr_ok/non-action:
+    p TC NOACTION |- (`EMPTY typeIR_param _ _) `@ typedExpressionIR_arg
+                   : typedExpressionIR_arg
+    ---- ;; may not insert implicit casts for direction out or inout
+    -- if _ `# `( typeIR_arg ctk_arg ) = typedExpressionIR_arg
+    -- Type_alpha: typeIR_param ~~ typeIR_arg
+    ---- ;; the argument must be compile-time known
+    -- if ctk_arg =/= DYN
+
+}
 
 ;; syntax argumentIR
 

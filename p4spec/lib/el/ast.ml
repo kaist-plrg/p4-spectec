@@ -161,6 +161,12 @@ and prem' =
 
 and hint = { hintid : id; hintexp : exp }
 
+(* Rules *)
+
+(* `rule` id`/`id `:` exp list(`--` prem, nl) *)
+and rule = rule' phrase 
+and rule' = id * id * exp * prem list
+
 (* Definitions *)
 
 type def = def' phrase
@@ -173,8 +179,8 @@ and def' =
   | VarD of id * plaintyp * hint list
   (* `relation` id `:` nottyp hint* *)
   | RelD of id * nottyp * hint list
-  (* `rule` id`/`id `:` exp list(`--` prem, nl) *)
-  | RuleD of id * id * exp * prem list
+  (* `rulegroup` id`/`id `:` `{` rule* `}` *)
+  | RuleGroupD of id * id * rule list
   (* `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` plaintyp hint* *)
   | DecD of id * tparam list * param list * plaintyp * hint list
   (* `def` id `<` list(tparam, `,`) `>` list(arg, `,`) `=` exp list(`--` prem, nl) *)

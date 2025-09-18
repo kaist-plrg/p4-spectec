@@ -26,7 +26,8 @@ class GauntletRunner:
         self.project_root = Path(project_root)
         self.p4c_build_dir = self.project_root / "p4c" / "build"
         self.gauntlet_dir = self.project_root / "gauntlet"
-        self.spec_dir = self.project_root / "spec"
+        self.spec_dir = self.project_root / "spec-concrete"
+        self.relname = "Program_ok"
         self.p4include_dir = self.project_root / "p4c" / "p4include"
         self.p4spectec_binary = self.project_root / "p4spectec"
         self.loop_size = max(1, int(loop_size))
@@ -177,6 +178,7 @@ class GauntletRunner:
                 str(self.p4spectec_binary),
                 "run-sl",
             ] + [str(f) for f in watsup_files] + [
+                "-rel", str(self.relname),
                 "-i", str(self.p4include_dir),
                 "-p", str(p4_file)
             ]
@@ -364,6 +366,7 @@ class GauntletRunner:
             str(self.p4spectec_binary),
             "cover-dangling",
         ] + [str(f) for f in watsup_files] + [
+            "-rel", str(self.relname),
             "-i", str(self.project_root / "p4c" / "p4include"),
             "-d", str(loop_dir),
             "-cov", str(cov_file),
@@ -426,7 +429,5 @@ def main():
     runner = GauntletRunner(project_root, loop_size=args.loop_size)
     runner.run_gauntlet(duration=args.duration, count=args.count)
 
-
 if __name__ == "__main__":
     main()
-
