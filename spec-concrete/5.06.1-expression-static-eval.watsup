@@ -121,6 +121,12 @@ rulegroup Eval_static/binaryExpressionIR {
     -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
     -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
 
+  rule Eval_static/mod:
+    p TC |- (typedExpressionIR_l `% typedExpressionIR_r) `# `( _ _ )
+         ~> $bin_mod(value_l, value_r)
+    -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
+    -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
+
   rule Eval_static/shl:
     p TC |- (typedExpressionIR_l `<< typedExpressionIR_r) `# `( _ _ )
          ~> $bin_shl(value_l, value_r)
@@ -283,7 +289,7 @@ rulegroup Eval_static/dataExpressionIR-record {
 ;;;;; errorAccessExpressionIR
 ;;;;; syntax errorAccessExpressionIR = ERROR `. nameIR
 
-rule Eval_static/errorAccessExpressionIR:
+rule Eval_static/accessExpressionIR-errorAccessExpressionIR:
   p TC |- (ERROR `. nameIR) `# `( _ _ ) ~> value_error
   -- if nameIR_error = "error." ++ nameIR
   -- if value_error = $find_value(p, TC, `` nameIR_error)
@@ -294,7 +300,7 @@ rule Eval_static/errorAccessExpressionIR:
 
 ;;;;;;; TYPE prefixedNameIR
 
-rulegroup Eval_static/memberAccessExpressionIR-type {
+rulegroup Eval_static/accessExpressionIR-memberAccessExpressionIR-type {
 
   rule Eval_static/enum:
     p TC |- ((TYPE prefixedNameIR) `. nameIR) `# `( typeIR_base _ )
@@ -315,10 +321,11 @@ rulegroup Eval_static/memberAccessExpressionIR-type {
 ;;;;;;; typedExpressionIR
 ;;;;;;; general member accesses are not evaluated statically
 
-rule Eval_static/memberAccessExpressionIR-typedExpressionIR-stack-size:
-  p TC |- (typedExpressionIR_base `. "size") `# `( typeIR_base _ )
+rule Eval_static/accessExpressionIR-memberAccessExpressionIR-typedExpressionIR-stack-size:
+  p TC |- (typedExpressionIR_base `. "size") `# `( _ _ )
        ~> D n_size
-  -- if _ `[ n_size ] = typeIR_base
+  -- if _ `# `( typeIR_base _ ) = typedExpressionIR_base
+  -- if _ `[ n_size ] = $canon(typeIR_base)
 
 ;;;;; indexAccessExpressionIR
 ;;;;; syntax indexAccessExpressionIR
@@ -348,9 +355,9 @@ rule Eval_static/indexAccessExpressionIR-bitslice:
 ;;;;;;; referenceExpressionIR
 ;;;;;;; function/action calls are not evaluated statically
 
-;;;;;;; typedLvalueIR `. nameIR
+;;;;;;; typedExpressionIR `. nameIR
 
-rule Eval_static/callExpressionIR-typedLvalueIR-size:
+rule Eval_static/callExpressionIR-typedExpressionIR-size:
   p TC |- ((typedExpressionIR_base `. nameIR) `< eps > `( eps )) `# `( _ _ )
       ~> $sizeof(typeIR_base, nameIR)
   -- if _ `# `( typeIR_base _ ) = typedExpressionIR_base

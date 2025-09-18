@@ -1,0 +1,141 @@
+;;
+;; Extern method instantiation
+;;
+;; syntax methodPrototypeIR
+;;
+
+;;; annotationList functionPrototypeIR `;
+
+rule ExternMethod_inst/non-abstract:
+  IC_0 |- annotationList
+            (typeIR nameIR `< typeParameterListIR `, typeParameterListIR_inferred >
+            `( parameterListIR )) `;
+      ==> IC_1
+    ---- ;; bind extern method to routine environment
+    -- if rid = $rid_IR(nameIR, parameterListIR)
+    -- if method
+        = EXTERN_METHOD
+          `< typeParameterListIR ++ typeParameterListIR_inferred >
+          `( parameterListIR )
+          (`EMPTY `{ eps })
+    -- if IC_1 = $add_routine_overload_inst(BLOCK, IC_0, rid, method)
+
+;;; annotationList ABSTRACT functionPrototypeIR `;
+
+rule ExternMethod_inst/abstract:
+  IC_0 |- annotationList ABSTRACT
+            (typeIR nameIR `< typeParameterListIR `, typeParameterListIR_inferred >
+            `( parameterListIR )) `;
+      ==> IC_1
+  ---- ;; bind extern abstract method to routine environment
+  -- if rid = $rid_IR(nameIR, parameterListIR)
+  -- if method
+      = EXTERN_METHOD ABSTRACT 
+          `< typeParameterListIR ++ typeParameterListIR_inferred >
+          `( parameterListIR )
+  -- if IC_1 = $add_routine_overload_inst(BLOCK, IC_0, rid, method)
+
+;;
+;; Extern method list instantiation
+;;
+;; syntax methodPrototypeListIR
+;;
+
+rule ExternMethods_inst/nil:
+  IC |- eps ==> IC
+
+rule ExternMethods_inst/cons:
+  IC_0 |- methodPrototypeIR_h :: methodPrototypeIR_t* ==> IC_2
+  -- ExternMethod_inst: IC_0 |- methodPrototypeIR_h ==> IC_1
+  -- ExternMethods_inst: IC_1 |- methodPrototypeIR_t* ==> IC_2
+
+;;
+;; Extern method binding
+;;
+;; syntax methodPrototypeIR
+;;
+
+;;; annotationList functionPrototypeIR `;
+
+rule Bind_method/non-abstract:
+ rdenv_0 |- annotationList
+              (typeIR_ret nameIR 
+              `< typeParameterListIR `, typeParameterListIR_inferred >
+              `( parameterIR* )) `;
+        ==> rdenv_1
+  ---- ;; add extern method to routine type environment
+  -- if rid = $rid_IR(nameIR, parameterIR*)
+  -- if (parameterTypeIR = $parameterIR(parameterIR))*
+  -- if methodTypeIR
+      = EXTERN_METHOD `( parameterTypeIR* ) `-> typeIR_ret
+  -- if routineTypeDefIR
+      = methodTypeIR `< typeParameterListIR `, typeParameterListIR_inferred >
+  -- if rdenv_1
+      = $add_map<rid, routineTypeDefIR>(rdenv_0, rid, routineTypeDefIR)
+
+;;; annotationList ABSTRACT functionPrototypeIR `;
+
+rule Bind_method/abstract:
+ rdenv_0 |- annotationList ABSTRACT
+              (typeIR_ret nameIR
+              `< typeParameterListIR `, typeParameterListIR_inferred >
+              `( parameterIR* )) `;
+        ==> rdenv_1
+   ---- ;; add extern abstract method to routine type environment
+   -- if rid = $rid_IR(nameIR, parameterIR*)
+   -- if (parameterTypeIR = $parameterIR(parameterIR))*
+   -- if methodTypeIR
+       = EXTERN_METHOD ABSTRACT `( parameterTypeIR* ) `-> typeIR_ret
+   -- if routineTypeDefIR
+       = methodTypeIR `< typeParameterListIR `, typeParameterListIR_inferred >
+   -- if rdenv_1
+       = $add_map<rid, routineTypeDefIR>(rdenv_0, rid, routineTypeDefIR)
+ 
+;;
+;; Extern method list binding
+;;
+;; syntax methodPrototypeListIR
+;;
+
+rule Bind_methods/nil:
+ rdenv |- eps ==> rdenv
+
+rule Bind_methods/cons:
+ rdenv_0 |- methodPrototypeIR_h :: methodPrototypeIR_t* ==> rdenv_2
+ -- Bind_method: rdenv_0 |- methodPrototypeIR_h ==> rdenv_1
+ -- Bind_methods: rdenv_1 |- methodPrototypeIR_t* ==> rdenv_2
+
+;;
+;; Extern constructor binding
+;;
+;; syntax methodPrototypeIR
+;;
+
+;;; annotationList nameIR `< `, typeParameterListIR > `( parameterListIR ) `;
+
+rule Bind_constructor/constructor:
+ p IC_0 typeParameterListIR methodPrototypeListIR |- annotationList nameIR
+                                                      `< `, typeParameterListIR_inferred >
+                                                      `( parameterListIR ) `;
+                                                 ==> IC_1
+ ---- ;; add extern constructor to constructor environment
+ -- if cid = $cid_IR(nameIR, parameterListIR)
+ -- if constructor 
+    = EXTERN nameIR `< typeParameterListIR ++ typeParameterListIR_inferred >
+       `( parameterListIR ) `{ methodPrototypeListIR }
+ -- if IC_1 = $add_constructor_inst(p, IC_0, cid, constructor)
+
+;;
+;; Extern constructor list binding
+;;
+;; syntax methodPrototypeIR
+;;
+
+rule Bind_constructors/nil:
+ p IC typeParameterListIR methodPrototypeListIR |- eps ==> IC
+
+rule Bind_constructors/cons:
+ p IC_0 typeParameterListIR methodPrototypeListIR |- methodPrototypeIR_h :: methodPrototypeIR_t*
+                                                 ==> IC_2
+ -- Bind_constructor: p IC_0 typeParameterListIR methodPrototypeListIR |- methodPrototypeIR_h ==> IC_1
+ -- Bind_constructors: p IC_1 typeParameterListIR methodPrototypeListIR |- methodPrototypeIR_t* ==> IC_2

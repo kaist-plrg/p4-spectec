@@ -1,0 +1,54 @@
+;;
+;; Parser local declaration instantiation
+;;
+;; syntax parserLocalDeclarationIR
+;;
+
+;;; constantDeclarationIR
+
+rule ParserLocalDecl_inst/constantDeclarationIR:
+  IC_0 STO_0 |- constantDeclarationIR
+            ==> IC_1 STO_1 constantDeclarationIR_inst
+  -- Decl_inst:
+      BLOCK IC_0 STO_0 |- constantDeclarationIR
+                      ==> IC_1 STO_1 constantDeclarationIR_inst
+
+;;; instantiationIR
+
+rule ParserLocalDecl_inst/instantiationIR:
+  IC_0 STO_0 |- instantiationIR
+            ==> IC_1 STO_1 instantiationIR_inst
+  -- Decl_inst:
+      BLOCK IC_0 STO_0 |- instantiationIR
+                      ==> IC_1 STO_1 instantiationIR_inst
+
+;;; variableDeclarationIR
+
+rule ParserLocalDecl_inst/variableDeclarationIR:
+  IC STO |- variableDeclarationIR
+        ==> IC STO variableDeclarationIR
+
+;;; valueSetDeclarationIR
+
+rule ParserLocalDecl_inst/valueSetDeclarationIR:
+  IC STO |- valueSetDeclarationIR
+        ==> IC STO valueSetDeclarationIR
+
+;;
+;; Parser local declaration list instantiation
+;;
+;; syntax parserLocalDeclarationListIR
+;;
+
+rule ParserLocalDecls_inst/nil:
+  IC STO |- eps ==> IC STO eps
+
+rule ParserLocalDecls_inst/cons:
+  IC_0 STO_0 |- parserLocalDeclarationIR_h :: parserLocalDeclarationIR_t*
+            ==> IC_2 STO_2 (parserLocalDeclarationIR_h_inst :: parserLocalDeclarationIR_t_inst*)
+  -- ParserLocalDecl_inst:
+      IC_0 STO_0 |- parserLocalDeclarationIR_h
+                ==> IC_1 STO_1 parserLocalDeclarationIR_h_inst
+  -- ParserLocalDecls_inst:
+      IC_1 STO_1 |- parserLocalDeclarationIR_t*
+                ==> IC_2 STO_2 parserLocalDeclarationIR_t_inst*

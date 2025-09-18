@@ -1,0 +1,61 @@
+;;
+;; Table property instantiation
+;;
+;; syntax tablePropertyIR
+;;
+
+;;; KEY `= `{ tableKeyListIR }
+
+rule TableProperty_inst/key:
+  IC STO |- KEY `= `{ tableKeyListIR }
+        ==> STO (KEY `= `{ tableKeyListIR })
+
+;;; ACTIONS `= `{ tableActionListIR }
+
+rule TableProperty_inst/actions:
+  IC STO |- ACTIONS `= `{ tableActionListIR }
+        ==> STO (ACTIONS `= `{ tableActionListIR })
+
+;;; annotationList constOptIR ENTRIES `= `{ tableEntryListIR }
+
+rule TableProperty_inst/entries:
+  IC STO |- annotationList constOptIR ENTRIES `= `{ tableEntryListIR }
+        ==> STO (annotationList constOptIR ENTRIES `= `{ tableEntryListIR })
+
+;;; annotationList constOptIR DEFAULT_ACTION `= tableActionReferenceIR `;
+
+rule TableProperty_inst/custom-default-action:
+  IC STO |- annotationList constOptIR DEFAULT_ACTION `= tableActionReferenceIR `;
+        ==> STO (annotationList constOptIR DEFAULT_ACTION `= tableActionReferenceIR `;)
+
+;;; annotationList constOptIR CUSTOM nameIR initializerIR `;
+
+rule TableProperty_inst/custom:
+  IC STO_0 |- annotationList constOptIR CUSTOM nameIR (`= typedExpressionIR) `;
+          ==> STO_1 (annotationList constOptIR CUSTOM_CONST nameIR (`= value) `;)
+  ---- ;; instantiate expression and replace custom property with evaluated result
+  -- if IC_inner = $enter_path(IC, nameIR)
+  -- Expr_inst: LOCAL IC_inner STO_0 |- typedExpressionIR ==> STO_1 value
+
+;;; annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR `;
+
+rule TableProperty_inst/custom-const:
+  IC STO |- annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR `;
+        ==> STO (annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR `;)
+
+;;
+;; Table property list instantiation
+;;
+;; syntax tablePropertyListIR
+;;
+
+rule TableProperties_inst/nil:
+  IC STO |- eps ==> STO eps
+
+rule TableProperties_inst/cons:
+  IC STO_0 |- tablePropertyIR_h :: tablePropertyIR_t*
+          ==> STO_2 (tablePropertyIR_h_inst :: tablePropertyIR_t_inst*)
+  -- TableProperty_inst:
+      IC STO_0 |- tablePropertyIR_h ==> STO_1 tablePropertyIR_h_inst
+  -- TableProperties_inst:
+      IC STO_1 |- tablePropertyIR_t* ==> STO_2 tablePropertyIR_t_inst*
