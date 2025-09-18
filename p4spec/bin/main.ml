@@ -73,12 +73,13 @@ let struct_command =
 
 let run_il_command =
   Core.Command.basic
-    ~summary:"run static semantics of a p4_16 spec based on backtracking IL"
+    ~summary:"run semantics of a p4_16 spec based on backtracking IL"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map filenames_spec = anon (sequence ("filename" %: string))
+     and relname = flag "-rel" (required string) ~doc:"relation to run"
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
-     and filename_p4 = flag "-p" (required string) ~doc:"p4 file to typecheck"
+     and filename_p4 = flag "-p" (required string) ~doc:"p4 file of interest"
      and debug = flag "-dbg" no_arg ~doc:"print debug traces"
      and profile = flag "-profile" no_arg ~doc:"profiling" in
      fun () ->
@@ -86,36 +87,11 @@ let run_il_command =
          let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
          let spec_il = Elaborate.Elab.elab_spec spec in
          match
-           Interp_il.Typing.run_typing ~debug ~profile spec_il includes_p4
+           Interp_il.Run.run ~debug ~profile spec_il relname includes_p4
              filename_p4
          with
-         | WellTyped -> Format.printf "well-typed\n"
-         | IllTyped (_, msg) -> Format.printf "ill-typed: %s\n" msg
-         | IllFormed (_, msg) -> Format.printf "ill-formed: %s\n" msg
-       with
-       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
-       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
-
-let inst_il_command =
-  Core.Command.basic
-    ~summary:"run instantiation of a p4_16 spec based on backtracking IL"
-    (let open Core.Command.Let_syntax in
-     let open Core.Command.Param in
-     let%map filenames_spec = anon (sequence ("filename" %: string))
-     and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
-     and filename_p4 = flag "-p" (required string) ~doc:"p4 file to typecheck"
-     and debug = flag "-dbg" no_arg ~doc:"print debug traces" in
-     fun () ->
-       try
-         let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
-         let spec_il = Elaborate.Elab.elab_spec spec in
-         match
-           Interp_il.Instantiation.run_instantiation ~debug spec_il includes_p4
-             filename_p4
-         with
-         | Success -> Format.printf "success\n"
-         | InstError (_, msg) -> Format.printf "instantiation failed: %s\n" msg
-         | IllTyped (_, msg) -> Format.printf "ill-typed: %s\n" msg
+         | Pass _ -> Format.printf "passed\n"
+         | Fail (_, msg) -> Format.printf "failed: %s\n" msg
          | IllFormed (_, msg) -> Format.printf "ill-formed: %s\n" msg
        with
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
@@ -123,12 +99,13 @@ let inst_il_command =
 
 let run_sl_command =
   Core.Command.basic
-    ~summary:"run static semantics of a p4_16 spec based on non-backtracking SL"
+    ~summary:"run semantics of a p4_16 spec based on non-backtracking SL"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map filenames_spec = anon (sequence ("filename" %: string))
+     and relname = flag "-rel" (required string) ~doc:"relation to run"
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
-     and filename_p4 = flag "-p" (required string) ~doc:"p4 file to typecheck"
+     and filename_p4 = flag "-p" (required string) ~doc:"p4 file of interest"
      and derive = flag "-derive" no_arg ~doc:"derive value dependency graph"
      and filenames_ignore =
        flag "-ignore" (listed string)
@@ -140,11 +117,11 @@ let run_sl_command =
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
          match
-           Interp_sl.Typing.run_typing ~derive spec_sl includes_p4 filename_p4
+           Interp_sl.Run.run ~derive spec_sl relname includes_p4 filename_p4
              filenames_ignore
          with
-         | WellTyped _ -> Format.printf "well-typed\n"
-         | IllTyped (_, msg, _) -> Format.printf "ill-typed: %s\n" msg
+         | Pass _ -> Format.printf "passed\n"
+         | Fail (_, msg, _) -> Format.printf "failed: %s\n" msg
          | IllFormed (_, msg, _) -> Format.printf "ill-formed: %s\n" msg
        with
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
@@ -155,10 +132,11 @@ let cover_dangling_command =
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map filenames_spec = anon (sequence ("filename" %: string))
+     and relname = flag "-rel" (required string) ~doc:"relation to run"
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and excludes_p4 = flag "-e" (listed string) ~doc:"p4 test exclude paths"
      and dirnames_p4 =
-       flag "-d" (listed string) ~doc:"p4 directories to typecheck"
+       flag "-d" (listed string) ~doc:"p4 directories of interest"
      and filenames_ignore =
        flag "-ignore" (listed string)
          ~doc:"relations or functions to ignore when reporting coverage"
@@ -181,7 +159,7 @@ let cover_dangling_command =
              filenames_p4
          in
          let cover =
-           Interp_sl.Typing.cover_typings spec_sl includes_p4 filenames_p4
+           Interp_sl.Run.cover spec_sl relname includes_p4 filenames_p4
              filenames_ignore
          in
          Runtime_testgen.Cov.Multiple.log ~filename_cov_opt:(Some filename_cov)
@@ -196,6 +174,7 @@ let run_testgen_command =
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map filenames_spec = anon (sequence ("filename" %: string))
+     and relname = flag "-rel" (required string) ~doc:"relation to run"
      and fuel = flag "-fuel" (required int) ~doc:"fuel for test generation"
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and excludes_p4 = flag "-e" (listed string) ~doc:"p4 test exclude paths"
@@ -251,7 +230,7 @@ let run_testgen_command =
          let covermode =
            if strict then Testgen.Modes.Strict else Testgen.Modes.Relaxed
          in
-         Testgen.Gen.fuzz_typing fuel spec_il spec_sl includes_p4
+         Testgen.Gen.fuzzer fuel spec_il spec_sl relname includes_p4
            filenames_ignore dirname_gen name_campaign randseed logmode bootmode
            mutationmode covermode
        with
@@ -264,6 +243,7 @@ let run_testgen_debug_command =
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map filenames_spec = anon (sequence ("filename" %: string))
+     and relname = flag "-rel" (required string) ~doc:"relation to run"
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and filename_p4 = flag "-p" (required string) ~doc:"p4 file to typecheck"
      and filenames_ignore =
@@ -277,7 +257,7 @@ let run_testgen_debug_command =
          let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
-         Testgen.Derive.debug_phantom spec_sl includes_p4 filename_p4
+         Testgen.Derive.debug_phantom spec_sl relname includes_p4 filename_p4
            filenames_ignore dirname_debug pid
        with
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
@@ -288,6 +268,7 @@ let interesting_command =
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map filenames_spec = anon (sequence ("filename" %: string))
+     and relname = flag "-rel" (required string) ~doc:"relation to run"
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and check_well_typed =
        flag "-well" no_arg
@@ -305,12 +286,12 @@ let interesting_command =
          let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
-         let typing_result =
-           Interp_sl.Typing.run_typing spec_sl includes_p4 filename_p4
+         let result =
+           Interp_sl.Run.run spec_sl relname includes_p4 filename_p4
              filenames_ignore
          in
-         match typing_result with
-         | WellTyped (_, _, cover_single) ->
+         match result with
+         | Pass (_, _, _, cover_single) ->
              if check_well_typed then (
                let branch = Interp_sl.Interp.SCov.Cover.find pid cover_single in
                match branch.status with
@@ -326,7 +307,7 @@ let interesting_command =
              else (
                Printf.printf "WellTyped\n";
                exit 11)
-         | IllTyped (_, _, cover_single) -> (
+         | Fail (_, _, cover_single) -> (
              if check_well_typed then (
                Printf.printf "IllTyped\n";
                exit 10)
@@ -458,7 +439,6 @@ let command =
       ("struct", struct_command);
       ("prose", prose_command);
       ("run-il", run_il_command);
-      ("inst-il", inst_il_command);
       ("run-sl", run_sl_command);
       ("cover-dangling", cover_dangling_command);
       ("testgen", run_testgen_command);

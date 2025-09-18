@@ -10,21 +10,19 @@ open Error
 module F = Format
 open Util.Source
 
-let do_typing (ctx : Ctx.t) (spec : spec) (value_program : value) :
-    Ctx.t * value list =
+type res =
+  | Pass of value list * Dep.Graph.t * vid * SCov.Cover.t
+  | Fail of region * string * SCov.Cover.t
+  | IllFormed of region * string * SCov.Cover.t
+
+let do_run (ctx : Ctx.t) (spec : spec) (relname : string)
+    (value_program : value) : Ctx.t * value list =
   let ctx = Interp.load_spec ctx spec in
-  match Interp.invoke_rel ctx ("Program_ok" $ no_region) [ value_program ] with
+  match Interp.invoke_rel ctx (relname $ no_region) [ value_program ] with
   | Some (ctx, values) -> (ctx, values)
   | None -> error no_region "relation was not matched"
 
-(* Entry point : Run typing rule *)
-
-type res =
-  | WellTyped of Dep.Graph.t * vid * SCov.Cover.t
-  | IllTyped of region * string * SCov.Cover.t
-  | IllFormed of region * string * SCov.Cover.t
-
-let run_typing_internal (spec : spec) (filename_p4 : string)
+let run_internal (spec : spec) (relname : string) (filename_p4 : string)
     (value_program : value) (ignores : IdSet.t) : res =
   Builtin.init ();
   Value.refresh ();
@@ -36,11 +34,12 @@ let run_typing_internal (spec : spec) (filename_p4 : string)
     let ctx =
       Ctx.empty ~derive:false filename_p4 graph value_program.note.vid cover
     in
-    let ctx, _values = do_typing ctx spec value_program in
-    WellTyped (ctx.graph, ctx.vid_program, !(ctx.cover))
-  with Util.Error.InterpError (at, msg) -> IllTyped (at, msg, !cover)
+    let ctx, values = do_run ctx spec relname value_program in
+    Pass
+      (values, ctx.testing.graph, ctx.testing.vid_program, !(ctx.testing.cover))
+  with Util.Error.InterpError (at, msg) -> Fail (at, msg, !cover)
 
-let run_typing' ?(derive : bool = false) (spec : spec)
+let run' ?(derive : bool = false) (spec : spec) (relname : string)
     (includes_p4 : string list) (filename_p4 : string) (ignores : IdSet.t) : res
     =
   Builtin.init ();
@@ -54,22 +53,24 @@ let run_typing' ?(derive : bool = false) (spec : spec)
     let ctx =
       Ctx.empty ~derive filename_p4 graph value_program.note.vid cover
     in
-    let ctx, _ = do_typing ctx spec value_program in
-    WellTyped (ctx.graph, ctx.vid_program, !(ctx.cover))
+    let ctx, values = do_run ctx spec relname value_program in
+    Pass
+      (values, ctx.testing.graph, ctx.testing.vid_program, !(ctx.testing.cover))
   with
-
   | Util.Error.ParseError (at, msg) -> IllFormed (at, msg, !cover)
-  | Util.Error.InterpError (at, msg) -> IllTyped (at, msg, !cover)
+  | Util.Error.InterpError (at, msg) -> Fail (at, msg, !cover)
 
-let run_typing ?(derive : bool = false) (spec : spec)
+(* Entry point: Run the specification on a given P4 file *)
+
+let run ?(derive : bool = false) (spec : spec) (relname : string)
     (includes_p4 : string list) (filename_p4 : string)
     (filenames_ignore : string list) : res =
   let ignores = Ignore.init filenames_ignore in
-  run_typing' ~derive spec includes_p4 filename_p4 ignores
+  run' ~derive spec relname includes_p4 filename_p4 ignores
 
 (* Entry point : Measure spec coverage of phantom nodes *)
 
-let cover_typings (spec : spec) (includes_p4 : string list)
+let cover (spec : spec) (relname : string) (includes_p4 : string list)
     (filenames_p4 : string list) (filenames_ignore : string list) : MCov.Cover.t
     =
   let ignores = Ignore.init filenames_ignore in
@@ -77,9 +78,9 @@ let cover_typings (spec : spec) (includes_p4 : string list)
   List.fold_left
     (fun cover_multi filename_p4 ->
       let wellformed, welltyped, cover_single =
-        match run_typing' spec includes_p4 filename_p4 ignores with
-        | WellTyped (_, _, cover_single) -> (true, true, cover_single)
-        | IllTyped (_, _, cover_single) -> (true, false, cover_single)
+        match run' spec relname includes_p4 filename_p4 ignores with
+        | Pass (_, _, _, cover_single) -> (true, true, cover_single)
+        | Fail (_, _, cover_single) -> (true, false, cover_single)
         | IllFormed (_, _, cover_single) -> (false, false, cover_single)
       in
       MCov.extend cover_multi filename_p4 wellformed welltyped cover_single)

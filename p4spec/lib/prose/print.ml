@@ -20,7 +20,7 @@ let string_of_text text = Il.Print.string_of_text text
 let string_of_varid varid = Il.Print.string_of_varid varid
 let string_of_typid typid = Il.Print.string_of_typid typid
 let string_of_relid relid = Il.Print.string_of_relid relid
-let string_of_ruleid ruleid = Il.Print.string_of_ruleid ruleid
+let string_of_relpathid relpathid = Il.Print.string_of_rulegroupid relpathid
 let string_of_defid defid = Il.Print.string_of_defid defid
 
 (* Atoms *)
@@ -287,7 +287,7 @@ and string_of_guard penv exp_case guard =
 
 (* Instructions *)
 
-and string_of_instr ?(level = 0) ?(index = 0) penv instr =
+and string_of_instr ?(signature = None) ?(level = 0) ?(index = 0) penv instr =
   let indent = String.make (level * 2) ' ' in
   let order = F.asprintf "%s%d. " indent index in
   match instr.it with
@@ -315,6 +315,12 @@ and string_of_instr ?(level = 0) ?(index = 0) penv instr =
   | OtherwiseI instr ->
       F.asprintf "%sOtherwise\n%s" order
         (string_of_instr ~level:(level + 1) ~index:1 penv instr)
+  | GroupI (id_group, exps_group, instrs_group) ->
+      Format.asprintf "%sGroup %s: %s\n\n%s" order (string_of_relid id_group)
+        (match signature with
+        | Some (mixop, inputs) -> string_of_relinput penv mixop inputs exps_group
+        | None -> string_of_exps penv ", " exps_group)
+        (string_of_instrs ~signature ~level:(level + 1) penv instrs_group)
   | LetI (exp_l, exp_r, iterexps) ->
       F.asprintf "%sLet `%s` be %s%s" order (string_of_exp penv exp_l)
         (string_of_exp penv exp_r)
@@ -336,9 +342,9 @@ and string_of_instr ?(level = 0) ?(index = 0) penv instr =
   | ReturnI exp -> F.asprintf "%sReturn %s" order (string_of_exp penv exp)
   | DebugI exp -> F.asprintf "%sDebug: %s" order (string_of_exp penv exp)
 
-and string_of_instrs ?(level = 0) penv instrs =
+and string_of_instrs ?(signature = None) ?(level = 0) penv instrs =
   instrs
-  |> List.mapi (fun idx instr -> string_of_instr ~level ~index:(idx + 1) penv instr)
+  |> List.mapi (fun idx instr -> string_of_instr ~signature ~level ~index:(idx + 1) penv instr)
   |> String.concat "\n"
 
 (* Rules *)
@@ -370,6 +376,47 @@ and string_of_prose_hint' ?(level = 0) penv (exps : exp list) (hintexp : El.Ast.
       let cursor_r, str_r = string_of_prose_hint' ~level penv exps exp_r cursor_l in
       (cursor_r, str_l ^ str_r)
   | _ -> failwith "unsupported prose hint"
+
+(* Relations *)
+
+and string_of_relinput penv mixop inputs exps_input =
+  let exps_input = List.combine inputs exps_input in
+  let exps =
+    List.init
+      (List.length mixop - 1)
+      (fun idx ->
+        match List.assoc_opt idx exps_input with
+        | Some exp_input -> exp_input
+        | None -> Il.Ast.VarE ("%" $ no_region) $$ (no_region, Il.Ast.TextT))
+  in
+  let notexp = (mixop, exps) in
+  string_of_notexp penv notexp
+
+and string_of_reloutput penv mixop inputs exps_output =
+  let outputs =
+    List.init
+      (List.length mixop - 1)
+      (fun idx -> if List.mem idx inputs then None else Some idx)
+    |> List.filter_map Fun.id
+  in
+  let exps_output = List.combine outputs exps_output in
+  let exps =
+    List.init
+      (List.length mixop - 1)
+      (fun idx ->
+        match List.assoc_opt idx exps_output with
+        | Some exp_output -> exp_output
+        | None -> Il.Ast.VarE ("%" $ no_region) $$ (no_region, Il.Ast.TextT))
+  in
+  let notexp = (mixop, exps) in
+  string_of_notexp penv notexp
+
+and string_of_rel penv rel =
+  let relid, (mixop, inputs), exps_match, instrs, _hints = rel in
+  string_of_relid relid ^ ": "
+  ^ string_of_relinput penv mixop inputs exps_match
+  ^ "\n\n"
+  ^ string_of_instrs ~signature:(Some (mixop, inputs)) penv instrs
 
 (* Definitions *)
 

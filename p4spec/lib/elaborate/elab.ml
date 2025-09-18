@@ -1,5 +1,4 @@
 open Domain.Lib
-open Xl
 open El.Ast
 open Runtime_static
 open Attempt
@@ -28,7 +27,7 @@ let groupby (eq : 'a -> 'a -> bool) (xs : 'a list) : 'a list list =
 
 (* Identifiers *)
 
-let valid_tid (id : id) = id.it = (Var.strip_var_suffix id).it
+let valid_tid (id : id) = id.it = (Xl.Var.strip_var_suffix id).it
 
 (* Iteration elaboration *)
 
@@ -69,124 +68,6 @@ let as_struct_plaintyp (ctx : Ctx.t) (plaintyp : plaintyp) :
       | Some (Defined (_, `Struct typfields)) -> Ok typfields
       | _ -> fail plaintyp.at "cannot destruct type as a struct")
   | _ -> fail plaintyp.at "cannot destruct type as a struct"
-
-(* Type equivalence and subtyping *)
-
-let rec equiv_typ (ctx : Ctx.t) (typ_a : typ) (typ_b : typ) : bool =
-  match (typ_a, typ_b) with
-  | PlainT plaintyp_a, PlainT plaintyp_b ->
-      equiv_plaintyp ctx plaintyp_a plaintyp_b
-  | NotationT nottyp_a, NotationT nottyp_b -> equiv_nottyp ctx nottyp_a nottyp_b
-  | _ -> false
-
-and equiv_plaintyp (ctx : Ctx.t) (plaintyp_a : plaintyp) (plaintyp_b : plaintyp)
-    : bool =
-  let plaintyp_a = Plaintyp.expand_plaintyp ctx.tdenv plaintyp_a in
-  let plaintyp_b = Plaintyp.expand_plaintyp ctx.tdenv plaintyp_b in
-  match (plaintyp_a.it, plaintyp_b.it) with
-  | BoolT, BoolT -> true
-  | NumT numtyp_a, NumT numtyp_b -> Num.equiv numtyp_a numtyp_b
-  | TextT, TextT -> true
-  | VarT (tid_a, targs_a), VarT (tid_b, targs_b) ->
-      tid_a.it = tid_b.it
-      && List.length targs_a = List.length targs_b
-      && List.for_all2 (equiv_plaintyp ctx) targs_a targs_b
-  | ParenT plaintyp_a, _ -> equiv_plaintyp ctx plaintyp_a plaintyp_b
-  | _, ParenT plaintyp_b -> equiv_plaintyp ctx plaintyp_a plaintyp_b
-  | TupleT plaintyps_a, TupleT plaintyps_b ->
-      List.length plaintyps_a = List.length plaintyps_b
-      && List.for_all2 (equiv_plaintyp ctx) plaintyps_a plaintyps_b
-  | IterT (plaintyp_a, iter_a), IterT (plaintyp_b, iter_b) ->
-      equiv_plaintyp ctx plaintyp_a plaintyp_b && iter_a = iter_b
-  | _ -> false
-
-and equiv_nottyp (ctx : Ctx.t) (nottyp_a : nottyp) (nottyp_b : nottyp) : bool =
-  match (nottyp_a.it, nottyp_b.it) with
-  | AtomT atom_a, AtomT atom_b -> atom_a.it = atom_b.it
-  | SeqT typs_a, SeqT typs_b ->
-      List.length typs_a = List.length typs_b
-      && List.for_all2 (equiv_typ ctx) typs_a typs_b
-  | InfixT (typ_l_a, atom_a, typ_r_a), InfixT (typ_l_b, atom_b, typ_r_b) ->
-      equiv_typ ctx typ_l_a typ_l_b
-      && atom_a.it = atom_b.it
-      && equiv_typ ctx typ_r_a typ_r_b
-  | BrackT (atom_l_a, typ_a, atom_r_a), BrackT (atom_l_b, typ_b, atom_r_b) ->
-      atom_l_a.it = atom_l_b.it && equiv_typ ctx typ_a typ_b
-      && atom_r_a.it = atom_r_b.it
-  | _ -> false
-
-let rec sub_plaintyp (ctx : Ctx.t) (plaintyp_a : plaintyp)
-    (plaintyp_b : plaintyp) : bool =
-  equiv_plaintyp ctx plaintyp_a plaintyp_b
-  || sub_plaintyp' ctx plaintyp_a plaintyp_b
-
-and sub_plaintyp' (ctx : Ctx.t) (plaintyp_a : plaintyp) (plaintyp_b : plaintyp)
-    : bool =
-  let plaintyp_a = Plaintyp.expand_plaintyp ctx.tdenv plaintyp_a in
-  let plaintyp_b = Plaintyp.expand_plaintyp ctx.tdenv plaintyp_b in
-  match (plaintyp_a.it, plaintyp_b.it) with
-  | NumT numtyp_a, NumT numtyp_b -> Num.sub numtyp_a numtyp_b
-  | VarT _, VarT _ -> (
-      let kind_a = Plaintyp.kind_plaintyp ctx.tdenv plaintyp_a in
-      let kind_b = Plaintyp.kind_plaintyp ctx.tdenv plaintyp_b in
-      match (kind_a, kind_b) with
-      | Variant typcases_a, Variant typcases_b ->
-          let nottyps_a = List.map fst typcases_a |> List.map fst in
-          let nottyps_b = List.map fst typcases_b |> List.map fst in
-          List.for_all
-            (fun nottyp_a -> List.exists (equiv_nottyp ctx nottyp_a) nottyps_b)
-            nottyps_a
-      | _ -> false)
-  | ParenT plaintyp_a, _ -> sub_plaintyp ctx plaintyp_a plaintyp_b
-  | _, ParenT plaintyp_b -> sub_plaintyp ctx plaintyp_a plaintyp_b
-  | TupleT plaintyps_a, TupleT plaintyps_b ->
-      List.length plaintyps_a = List.length plaintyps_b
-      && List.for_all2 (sub_plaintyp ctx) plaintyps_a plaintyps_b
-  | IterT (plaintyp_a, iter_a), IterT (plaintyp_b, iter_b) when iter_a = iter_b
-    ->
-      sub_plaintyp ctx plaintyp_a plaintyp_b
-  | IterT (plaintyp_a, Opt), IterT (plaintyp_b, List) ->
-      sub_plaintyp ctx plaintyp_a plaintyp_b
-  | _, IterT (plaintyp_b, Opt) -> sub_plaintyp ctx plaintyp_a plaintyp_b
-  | _, IterT (plaintyp_b, List) -> sub_plaintyp ctx plaintyp_a plaintyp_b
-  | _ -> false
-
-and equiv_param (ctx : Ctx.t) (param_a : param) (param_b : param) : bool =
-  match (param_a.it, param_b.it) with
-  | ExpP plaintyp_a, ExpP plaintyp_b -> equiv_plaintyp ctx plaintyp_a plaintyp_b
-  | ( DefP (_, tparams_a, params_a, plaintyp_a),
-      DefP (_, tparams_b, params_b, plaintyp_b) ) ->
-      equiv_functyp ctx param_a.at tparams_a params_a plaintyp_a tparams_b
-        params_b plaintyp_b
-  | _ -> false
-
-and equiv_functyp (ctx : Ctx.t) (at : region) (tparams_a : tparam list)
-    (params_a : param list) (plaintyp_a : plaintyp) (tparams_b : tparam list)
-    (params_b : param list) (plaintyp_b : plaintyp) : bool =
-  check
-    (List.length tparams_a = List.length tparams_b)
-    no_region "type parameters do not match";
-  let ctx, theta_a, theta_b =
-    List.fold_left2
-      (fun (ctx, theta_a, theta_b) tparam_a tparam_b ->
-        let tid_fresh = "__FRESH" ^ string_of_int (Ctx.fresh ()) $ no_region in
-        let plaintyp_fresh = VarT (tid_fresh, []) $ no_region in
-        let ctx = Ctx.add_tparam ctx tid_fresh in
-        let theta_a = TIdMap.add tparam_a plaintyp_fresh theta_a in
-        let theta_b = TIdMap.add tparam_b plaintyp_fresh theta_b in
-        (ctx, theta_a, theta_b))
-      (ctx, TIdMap.empty, TIdMap.empty)
-      tparams_a tparams_b
-  in
-  check
-    (List.length params_a = List.length params_b)
-    at "parameters do not match";
-  let params_a = Plaintyp.subst_params theta_a params_a in
-  let params_b = Plaintyp.subst_params theta_b params_b in
-  let plaintyp_a = Plaintyp.subst_plaintyp theta_a plaintyp_a in
-  let plaintyp_b = Plaintyp.subst_plaintyp theta_b plaintyp_b in
-  List.for_all2 (equiv_param ctx) params_a params_b
-  && equiv_plaintyp ctx plaintyp_a plaintyp_b
 
 (* Elaboration of plain types *)
 
@@ -239,20 +120,20 @@ and elab_nottyp (ctx : Ctx.t) (typ : typ) : Il.Ast.nottyp =
           let mixop_t, typs_il_t =
             elab_nottyp ctx (NotationT (SeqT typs $ nottyp.at)) |> it
           in
-          let mixop = Mixop.merge mixop_h mixop_t in
+          let mixop = Xl.Mixop.merge mixop_h mixop_t in
           let typs_il = typs_il_h @ typs_il_t in
           (mixop, typs_il) $ nottyp.at
       | InfixT (typ_l, atom, typ_r) ->
           let mixop_l, typs_il_l = elab_nottyp ctx typ_l |> it in
           let mixop_r, typs_il_r = elab_nottyp ctx typ_r |> it in
-          let mixop_l = Mixop.merge mixop_l [ [ atom ] ] in
-          let mixop = Mixop.merge mixop_l mixop_r in
+          let mixop_l = Xl.Mixop.merge mixop_l [ [ atom ] ] in
+          let mixop = Xl.Mixop.merge mixop_l mixop_r in
           let typs_il = typs_il_l @ typs_il_r in
           (mixop, typs_il) $ nottyp.at
       | BrackT (atom_l, typ, atom_r) ->
           let mixop, typs_il = elab_nottyp ctx typ |> it in
-          let mixop_l = Mixop.merge [ [ atom_l ] ] mixop in
-          let mixop = Mixop.merge mixop_l [ [ atom_r ] ] in
+          let mixop_l = Xl.Mixop.merge [ [ atom_l ] ] mixop in
+          let mixop = Xl.Mixop.merge mixop_l [ [ atom_r ] ] in
           (mixop, typs_il) $ nottyp.at)
 
 (* Elaboration of definition types *)
@@ -317,7 +198,7 @@ and elab_deftyp_variant (ctx : Ctx.t) (at : region) (id : id)
   let typcases = List.concat_map (expand_typcase ctx plaintyp) typcases in
   let typcases_il = typcases |> List.map fst |> List.map (elab_typcase ctx) in
   let mixops = typcases_il |> List.map fst |> List.map it |> List.map fst in
-  let mixop_groups = groupby Mixop.eq mixops in
+  let mixop_groups = groupby Xl.Mixop.eq mixops in
   let mixop_duplicates =
     List.filter (fun mixop_group -> List.length mixop_group > 1) mixop_groups
   in
@@ -327,7 +208,7 @@ and elab_deftyp_variant (ctx : Ctx.t) (at : region) (id : id)
     ("variant cases are ambiguous: "
     ^ String.concat ", "
         (List.map
-           (fun mixop_group -> Mixop.string_of_mixop (List.hd mixop_group))
+           (fun mixop_group -> Xl.Mixop.string_of_mixop (List.hd mixop_group))
            mixop_duplicates));
   let deftyp_il = Il.Ast.VariantT typcases_il $ at in
   let td = Typdef.Defined (tparams, `Variant typcases) in
@@ -403,10 +284,10 @@ and infer_bool_exp (ctx : Ctx.t) (b : bool) :
 
 (* Inference of number expressions *)
 
-and infer_num_exp (ctx : Ctx.t) (num : Num.t) :
+and infer_num_exp (ctx : Ctx.t) (num : Xl.Num.t) :
     (Ctx.t * Il.Ast.exp' * plaintyp') attempt =
   let exp_il = Il.Ast.NumE num in
-  let plaintyp = NumT (Num.to_typ num) in
+  let plaintyp = NumT (Xl.Num.to_typ num) in
   Ok (ctx, exp_il, plaintyp)
 
 (* Inference of text expressions *)
@@ -421,7 +302,7 @@ and infer_text_exp (ctx : Ctx.t) (text : string) :
 
 and infer_var_exp (ctx : Ctx.t) (id : id) :
     (Ctx.t * Il.Ast.exp' * plaintyp') attempt =
-  let tid = Var.strip_var_suffix id in
+  let tid = Xl.Var.strip_var_suffix id in
   let meta_opt = Ctx.find_metavar_opt ctx tid in
   match meta_opt with
   | Some plaintyp ->
@@ -435,8 +316,8 @@ and infer_unop (ctx : Ctx.t) (at : region) (unop : unop) (plaintyp : plaintyp)
     (exp_il : Il.Ast.exp) : (Il.Ast.optyp * Il.Ast.exp * plaintyp') attempt =
   let unop_candidates =
     match unop with
-    | #Bool.unop -> [ (`BoolT, BoolT, BoolT) ]
-    | #Num.unop ->
+    | #Xl.Bool.unop -> [ (`BoolT, BoolT, BoolT) ]
+    | #Xl.Num.unop ->
         [ (`NatT, NumT `NatT, NumT `NatT); (`IntT, NumT `IntT, NumT `IntT) ]
   in
   let fail =
@@ -475,13 +356,13 @@ and infer_binop (ctx : Ctx.t) (at : region) (binop : binop)
     (Il.Ast.optyp * Il.Ast.exp * Il.Ast.exp * plaintyp') attempt =
   let binop_candidates =
     match binop with
-    | #Bool.binop -> [ (`BoolT, BoolT, BoolT, BoolT) ]
+    | #Xl.Bool.binop -> [ (`BoolT, BoolT, BoolT, BoolT) ]
     | `SubOp ->
         [
           (`IntT, NumT `NatT, NumT `NatT, NumT `IntT);
           (`IntT, NumT `IntT, NumT `IntT, NumT `IntT);
         ]
-    | #Num.binop ->
+    | #Xl.Num.binop ->
         [
           (`NatT, NumT `NatT, NumT `NatT, NumT `NatT);
           (`IntT, NumT `IntT, NumT `IntT, NumT `IntT);
@@ -526,7 +407,7 @@ and infer_binop_exp (ctx : Ctx.t) (at : region) (binop : binop) (exp_l : exp)
 
 (* Inference of comparison expressions *)
 
-and infer_cmpop_exp_bool (ctx : Ctx.t) (cmpop : Bool.cmpop) (exp_l : exp)
+and infer_cmpop_exp_bool (ctx : Ctx.t) (cmpop : Xl.Bool.cmpop) (exp_l : exp)
     (exp_r : exp) : (Ctx.t * Il.Ast.exp' * plaintyp') attempt =
   choice
     [
@@ -546,7 +427,7 @@ and infer_cmpop_exp_bool (ctx : Ctx.t) (cmpop : Bool.cmpop) (exp_l : exp)
         Ok (ctx, exp_il, BoolT));
     ]
 
-and infer_cmpop_num (ctx : Ctx.t) (at : region) (cmpop : Num.cmpop)
+and infer_cmpop_num (ctx : Ctx.t) (at : region) (cmpop : Xl.Num.cmpop)
     (plaintyp_l : plaintyp) (exp_il_l : Il.Ast.exp) (plaintyp_r : plaintyp)
     (exp_il_r : Il.Ast.exp) : (Il.Ast.optyp * Il.Ast.exp * Il.Ast.exp) attempt =
   let cmpop_candidates =
@@ -576,7 +457,7 @@ and infer_cmpop_num (ctx : Ctx.t) (at : region) (cmpop : Num.cmpop)
           | _ -> fail))
     fail cmpop_candidates
 
-and infer_cmpop_exp_num (ctx : Ctx.t) (at : region) (cmpop : Num.cmpop)
+and infer_cmpop_exp_num (ctx : Ctx.t) (at : region) (cmpop : Xl.Num.cmpop)
     (exp_l : exp) (exp_r : exp) : (Ctx.t * Il.Ast.exp' * plaintyp') attempt =
   let* ctx, exp_il_l, plaintyp_l_infer = infer_exp ctx exp_l in
   let* ctx, exp_il_r, plaintyp_r_infer = infer_exp ctx exp_r in
@@ -592,8 +473,8 @@ and infer_cmpop_exp_num (ctx : Ctx.t) (at : region) (cmpop : Num.cmpop)
 and infer_cmpop_exp (ctx : Ctx.t) (at : region) (cmpop : cmpop) (exp_l : exp)
     (exp_r : exp) : (Ctx.t * Il.Ast.exp' * plaintyp') attempt =
   match cmpop with
-  | #Bool.cmpop as cmpop -> infer_cmpop_exp_bool ctx cmpop exp_l exp_r
-  | #Num.cmpop as cmpop -> infer_cmpop_exp_num ctx at cmpop exp_l exp_r
+  | #Xl.Bool.cmpop as cmpop -> infer_cmpop_exp_bool ctx cmpop exp_l exp_r
+  | #Xl.Num.cmpop as cmpop -> infer_cmpop_exp_num ctx at cmpop exp_l exp_r
 
 (* Inference of arithmetic expressions *)
 
@@ -610,7 +491,8 @@ and infer_list_exp (ctx : Ctx.t) (at : region) (exps : exp list) :
   | exp :: exps ->
       let* ctx, exp_il, plaintyp = infer_exp ctx exp in
       let* ctx, exps_il, plaintyps = infer_exps ctx exps in
-      if List.for_all (equiv_plaintyp ctx plaintyp) plaintyps then
+      if List.for_all (Types.Equiv.equiv_plaintyp ctx.tdenv plaintyp) plaintyps
+      then
         let exp_il = Il.Ast.ListE (exp_il :: exps_il) in
         let plaintyp = IterT (plaintyp, List) in
         Ok (ctx, exp_il, plaintyp)
@@ -852,8 +734,9 @@ and fail_cast (at : region) (plaintyp_a : plaintyp) (plaintyp_b : plaintyp) =
 
 and cast_exp (ctx : Ctx.t) (plaintyp_expect : plaintyp)
     (plaintyp_infer : plaintyp) (exp_il : Il.Ast.exp) : Il.Ast.exp attempt =
-  if equiv_plaintyp ctx plaintyp_expect plaintyp_infer then Ok exp_il
-  else if sub_plaintyp ctx plaintyp_infer plaintyp_expect then
+  if Types.Equiv.equiv_plaintyp ctx.tdenv plaintyp_expect plaintyp_infer then
+    Ok exp_il
+  else if Types.Sub.sub_plaintyp ctx.tdenv plaintyp_infer plaintyp_expect then
     let typ_il_expect = elab_plaintyp ctx plaintyp_expect in
     let exp_il =
       Il.Ast.UpCastE (typ_il_expect, exp_il) $$ (exp_il.at, typ_il_expect.it)
@@ -891,18 +774,7 @@ and elab_exp_wildcard (ctx : Ctx.t) (at : region) (plaintyp_expect : plaintyp) :
       (Il.Ast.VarE ("_" $ at) $$ (at, typ_il.it))
   in
   let ctx = Ctx.add_free ctx id_fresh in
-  (* (TODO) Refactor here; this logic also exists in partialbind pass *)
-  let exp_il =
-    List.fold_left
-      (fun exp iter ->
-        let typ =
-          let typ = exp.note $ exp.at in
-          Il.Ast.IterT (typ, iter)
-        in
-        Il.Ast.IterE (exp, (iter, [])) $$ (exp.at, typ))
-      (Il.Ast.VarE id_fresh $$ (id_fresh.at, typ_fresh.it))
-      iters_fresh
-  in
+  let exp_il = Var.as_exp (id_fresh, typ_fresh, iters_fresh) in
   Ok (ctx, exp_il)
 
 (* Elaboration of plain expressions *)
@@ -1068,7 +940,7 @@ and elab_exp_not (ctx : Ctx.t) (typ : typ) (exp : exp) :
               (NotationT (SeqT typs $ nottyp.at))
               (SeqE exps $ exp.at)
           in
-          let mixop = Mixop.merge mixop_h mixop_t in
+          let mixop = Xl.Mixop.merge mixop_h mixop_t in
           let exps_il = exps_il_h @ exps_il_t in
           let notexp_il = (mixop, exps_il) in
           Ok (ctx, notexp_il)
@@ -1080,8 +952,8 @@ and elab_exp_not (ctx : Ctx.t) (typ : typ) (exp : exp) :
       | InfixT (typ_l, atom_t, typ_r), InfixE (exp_l, _, exp_r) ->
           let* ctx, (mixop_l, exps_il_l) = elab_exp_not ctx typ_l exp_l in
           let* ctx, (mixop_r, exps_il_r) = elab_exp_not ctx typ_r exp_r in
-          let mixop_l = Mixop.merge mixop_l [ [ atom_t ] ] in
-          let mixop = Mixop.merge mixop_l mixop_r in
+          let mixop_l = Xl.Mixop.merge mixop_l [ [ atom_t ] ] in
+          let mixop = Xl.Mixop.merge mixop_l mixop_r in
           let exps_il = exps_il_l @ exps_il_r in
           let notexp_il = (mixop, exps_il) in
           Ok (ctx, notexp_il)
@@ -1090,8 +962,8 @@ and elab_exp_not (ctx : Ctx.t) (typ : typ) (exp : exp) :
           fail_elab_not exp.at "atoms do not match"
       | BrackT (_, typ, _), BrackE (atom_e_l, exp, atom_e_r) ->
           let* ctx, (mixop, exps_il) = elab_exp_not ctx typ exp in
-          let mixop_l = Mixop.merge [ [ atom_e_l ] ] mixop in
-          let mixop = Mixop.merge mixop_l [ [ atom_e_r ] ] in
+          let mixop_l = Xl.Mixop.merge [ [ atom_e_l ] ] mixop in
+          let mixop = Xl.Mixop.merge mixop_l [ [ atom_e_r ] ] in
           let notexp_il = (mixop, exps_il) in
           Ok (ctx, notexp_il)
       | _ -> fail_elab_not exp.at "expression does not match notation")
@@ -1278,8 +1150,8 @@ and elab_arg ?(as_def = false) (ctx : Ctx.t) (param : param) (arg : arg) :
   | DefP (id_p, tparams_p, params_p, plaintyp_p), DefA id_a ->
       let tparams_a, params_a, plaintyp_a = Ctx.find_dec ctx id_a in
       check
-        (equiv_functyp ctx arg.at tparams_p params_p plaintyp_p tparams_a
-           params_a plaintyp_a)
+        (Types.Equiv.equiv_functyp ctx.tdenv arg.at tparams_p params_p
+           plaintyp_p tparams_a params_a plaintyp_a)
         arg.at
         (Format.asprintf
            "function argument does not match the declared function parameter %s"
@@ -1341,6 +1213,22 @@ and elab_prems_with_bind (ctx : Ctx.t) (prems : prem list) :
       (ctx, prems_il_acc @ prems_il))
     (ctx, []) prems
 
+and elab_prem_il_with_bind (ctx : Ctx.t) (prem_il : Il.Ast.prem) :
+    Ctx.t * Il.Ast.prem list =
+  let ctx, prem_il, sideconditions_il =
+    Dataflow.Analysis.analyze_prem ctx prem_il
+  in
+  let prems_il = prem_il :: sideconditions_il in
+  (ctx, prems_il)
+
+and elab_prems_il_with_bind (ctx : Ctx.t) (prems_il : Il.Ast.prem list) :
+    Ctx.t * Il.Ast.prem list =
+  List.fold_left
+    (fun (ctx, prems_il_analyzed) prem_il ->
+      let ctx, prems_il = elab_prem_il_with_bind ctx prem_il in
+      (ctx, prems_il_analyzed @ prems_il))
+    (ctx, []) prems_il
+
 (* Elaboration of variable premises *)
 
 and elab_var_prem (ctx : Ctx.t) (id : id) (plaintyp : plaintyp) : Ctx.t =
@@ -1352,7 +1240,7 @@ and elab_var_prem (ctx : Ctx.t) (id : id) (plaintyp : plaintyp) : Ctx.t =
 (* Elaboration of rule premises *)
 
 and elab_rule_prem (ctx : Ctx.t) (id : id) (exp : exp) : Ctx.t * Il.Ast.prem' =
-  let nottyp, inputs = Ctx.find_rel ctx id in
+  let nottyp, _, inputs = Ctx.find_rel ctx id in
   let+ ctx, notexp_il = elab_exp_not ctx (NotationT nottyp) exp in
   let _, exps_il = notexp_il in
   if Rel.InputHint.is_conditional inputs exps_il then
@@ -1366,7 +1254,7 @@ and elab_rule_prem (ctx : Ctx.t) (id : id) (exp : exp) : Ctx.t * Il.Ast.prem' =
 
 and elab_rule_not_prem (ctx : Ctx.t) (id : id) (exp : exp) :
     Ctx.t * Il.Ast.prem' =
-  let nottyp, inputs = Ctx.find_rel ctx id in
+  let nottyp, _, inputs = Ctx.find_rel ctx id in
   let+ ctx, notexp_il = elab_exp_not ctx (NotationT nottyp) exp in
   let _, exps_il = notexp_il in
   check
@@ -1406,6 +1294,149 @@ and elab_debug_prem (ctx : Ctx.t) (exp : exp) : Ctx.t * Il.Ast.prem' =
   let prem_il = Il.Ast.DebugPr exp_il in
   (ctx, prem_il)
 
+(* Elaboration of hints *)
+
+and elab_hint (ctx : Ctx.t) (hint : hint) : Il.Ast.hint =
+  ignore ctx;
+  { hintid = hint.hintid; hintexp = hint.hintexp }
+
+and elab_hints (ctx : Ctx.t) (hints : hint list) : Il.Ast.hint list =
+  List.map (elab_hint ctx) hints
+
+(* Elaboration of rules *)
+
+let rec elab_rule_input_with_bind (ctx : Ctx.t) (exps_il : Il.Ast.exp list) :
+    Ctx.t * Il.Ast.exp list * Il.Ast.prem list =
+  Dataflow.Analysis.analyze_exps_as_bind ctx exps_il
+
+and elab_rule_output_with_bind (ctx : Ctx.t) (exps_il : Il.Ast.exp list) :
+    Il.Ast.exp list =
+  Dataflow.Analysis.analyze_exps_as_bound ctx exps_il
+
+and elab_rulematch (ctx : Ctx.t) (ctxs_local : Ctx.t list)
+    (exps_il_input_group : Il.Ast.exp list list) :
+    Ctx.t list * Il.Ast.rulematch * Il.Ast.prem list list =
+  let ctx_local_unified =
+    let ctx_local_unified = { ctx with frees = IdSet.empty } in
+    let frees =
+      ctxs_local
+      |> List.map (fun (ctx_local : Ctx.t) -> ctx_local.frees)
+      |> List.fold_left IdSet.union IdSet.empty
+    in
+    Ctx.add_frees ctx_local_unified frees
+  in
+  let ctx_local_unified, exps_il_input_unified, prems_il_unified_group =
+    Antiunify.antiunify ctx_local_unified exps_il_input_group
+  in
+  let ctx_local_unified, exps_il_input_unified_match, prems_il_match =
+    elab_rule_input_with_bind ctx_local_unified exps_il_input_unified
+  in
+  let ctxs_local =
+    List.map
+      (fun (ctx_local : Ctx.t) ->
+        {
+          ctx_local with
+          frees = ctx_local_unified.frees;
+          venv = ctx_local_unified.venv;
+        })
+      ctxs_local
+  in
+  let ctxs_local, prems_il_unified_group =
+    List.map2
+      (fun ctx_local prems_il_unified ->
+        let ctx_local, prems_il_unified =
+          elab_prems_il_with_bind ctx_local prems_il_unified
+        in
+        (ctx_local, prems_il_unified))
+      ctxs_local prems_il_unified_group
+    |> List.split
+  in
+  let rulematch_il =
+    (exps_il_input_unified, exps_il_input_unified_match, prems_il_match)
+  in
+  (ctxs_local, rulematch_il, prems_il_unified_group)
+
+and elab_rulepaths (ctxs_local : Ctx.t list) (id_rule_group : id list)
+    (prems_il_unified_group : Il.Ast.prem list list)
+    (prems_group : prem list list) (exps_il_output_group : Il.Ast.exp list list)
+    : Il.Ast.rulepath list =
+  let ctxs_local, prems_il_group =
+    List.map2
+      (fun ctx_local prems ->
+        let ctx_local, prems_il = elab_prems_with_bind ctx_local prems in
+        (ctx_local, prems_il))
+      ctxs_local prems_group
+    |> List.split
+  in
+  let prems_il_group =
+    List.map2
+      (fun prems_il_unified prems_il -> prems_il_unified @ prems_il)
+      prems_il_unified_group prems_il_group
+  in
+  let exps_il_output_group =
+    List.map2
+      (fun ctx_local exps_il_output ->
+        elab_rule_output_with_bind ctx_local exps_il_output)
+      ctxs_local exps_il_output_group
+  in
+  let rulepaths_il =
+    List.combine prems_il_group exps_il_output_group
+    |> List.map2
+         (fun id_rule (prems_il, exps_il_output) ->
+           (id_rule, prems_il, exps_il_output))
+         id_rule_group
+  in
+  rulepaths_il
+
+and elab_rulegroup (ctx : Ctx.t) (at : region) (id_rel : id) (id_rulegroup : id)
+    (rules : rule list) : Il.Ast.rulegroup =
+  let nottyp, _, inputs = Ctx.find_rel ctx id_rel in
+  let ctxs_local =
+    List.map
+      (fun rule ->
+        let ctx_local = { ctx with frees = IdSet.empty } in
+        El.Free.free_rule rule |> Ctx.add_frees ctx_local)
+      rules
+  in
+  let id_rule_group, exp_group, prems_group =
+    List.fold_left
+      (fun (id_rule_group, exp_group, prems_group) rule ->
+        let id_rel_, id_rule, exp, prems = rule.it in
+        check (Id.eq id_rel id_rel_) id_rule.at
+          "rule group identifier does not match relation identifier";
+        let id_rule_group = id_rule_group @ [ id_rule ] in
+        let exp_group = exp_group @ [ exp ] in
+        let prems_group = prems_group @ [ prems ] in
+        (id_rule_group, exp_group, prems_group))
+      ([], [], []) rules
+  in
+  let ctxs_local, notexps_il =
+    List.map2
+      (fun ctx_local exp ->
+        let+ ctx_local, notexp_il =
+          elab_exp_not ctx_local (NotationT nottyp) exp
+        in
+        (ctx_local, notexp_il))
+      ctxs_local exp_group
+    |> List.split
+  in
+  let exps_il_input_group, exps_il_output_group =
+    List.map
+      (fun notexp_il ->
+        let _, exps_il = notexp_il in
+        Rel.InputHint.split_exps_without_idx inputs exps_il)
+      notexps_il
+    |> List.split
+  in
+  let ctxs_local, rulematch_il, prems_il_unified_group =
+    elab_rulematch ctx ctxs_local exps_il_input_group
+  in
+  let rulepaths_il =
+    elab_rulepaths ctxs_local id_rule_group prems_il_unified_group prems_group
+      exps_il_output_group
+  in
+  (id_rulegroup, rulematch_il, rulepaths_il) $ at
+
 (* Elaboration of definitions *)
 
 let rec elab_def (ctx : Ctx.t) (def : def) : Ctx.t * Il.Ast.def option =
@@ -1418,8 +1449,8 @@ let rec elab_def (ctx : Ctx.t) (def : def) : Ctx.t * Il.Ast.def option =
       elab_typ_def ctx id tparams deftyp |> wrap_some
   | VarD (id, plaintyp, _hints) -> elab_var_def ctx id plaintyp |> wrap_none
   | RelD (id, nottyp, hints) -> elab_rel_def ctx at id nottyp hints |> wrap_some
-  | RuleD (id_rel, id_rule, exp, prems) ->
-      elab_rule_def ctx at id_rel id_rule exp prems |> wrap_none
+  | RuleGroupD (id_rel, id_rulegroup, rules) ->
+      elab_rulegroup_def ctx at id_rel id_rulegroup rules |> wrap_none
   | DecD (id, tparams, params, plaintyp, hints) ->
       elab_dec_def ctx at id tparams params plaintyp hints |> wrap_some
   | DefD (id, tparams, args, exp, prems) ->
@@ -1543,58 +1574,16 @@ and elab_rel_def (ctx : Ctx.t) (at : region) (id : id) (nottyp : nottyp)
     (hints : hint list) : Ctx.t * Il.Ast.def =
   let nottyp_il = elab_nottyp ctx (NotationT nottyp) in
   let inputs = fetch_rel_input_hint at nottyp_il hints in
-  let ctx = Ctx.add_rel ctx id nottyp inputs in
+  let ctx = Ctx.add_rel ctx id nottyp nottyp_il inputs in
   let def_il = Il.Ast.RelD (id, nottyp_il, inputs, [], hints) $ at in
   (ctx, def_il)
 
-(* Elaboration of rules *)
+(* Elaboration of rule groups *)
 
-and elab_rule_input_with_bind (ctx : Ctx.t) (exps_il : (int * Il.Ast.exp) list)
-    : Ctx.t * (int * Il.Ast.exp) list * Il.Ast.prem list =
-  let idxs, exps_il = List.split exps_il in
-  let ctx, exps_il, sideconditions_il =
-    Dataflow.Analysis.analyze_exps_as_bind ctx exps_il
-  in
-  let exps_il = List.combine idxs exps_il in
-  (ctx, exps_il, sideconditions_il)
-
-and elab_rule_output_with_bind (ctx : Ctx.t) (exps_il : (int * Il.Ast.exp) list)
-    : (int * Il.Ast.exp) list =
-  let idxs, exps_il = List.split exps_il in
-  let exps_il = Dataflow.Analysis.analyze_exps_as_bound ctx exps_il in
-  List.combine idxs exps_il
-
-and elab_rule_def (ctx : Ctx.t) (at : region) (id_rel : id) (id_rule : id)
-    (exp : exp) (prems : prem list) : Ctx.t =
-  let nottyp, inputs = Ctx.find_rel ctx id_rel in
-  let ctx_local = { ctx with frees = IdSet.empty } in
-  let ctx_local =
-    let def = RuleD (id_rel, id_rule, exp, prems) $ at in
-    El.Free.free_id_def def |> Ctx.add_frees ctx_local
-  in
-  let+ ctx_local, notexp_il = elab_exp_not ctx_local (NotationT nottyp) exp in
-  let mixop, exps_il = notexp_il in
-  let exps_il_input, exps_il_output =
-    exps_il
-    |> List.mapi (fun idx exp -> (idx, exp))
-    |> List.partition (fun (idx, _) -> List.mem idx inputs)
-  in
-  let ctx_local, exps_il_input, sideconditions_il =
-    elab_rule_input_with_bind ctx_local exps_il_input
-  in
-  let ctx_local, prems_il = elab_prems_with_bind ctx_local prems in
-  let prems_il = sideconditions_il @ prems_il in
-  let exps_il_output = elab_rule_output_with_bind ctx_local exps_il_output in
-  let notexp_il =
-    let exps_il =
-      exps_il_input @ exps_il_output
-      |> List.sort (fun (idx_a, _) (idx_b, _) -> compare idx_a idx_b)
-      |> List.map snd
-    in
-    (mixop, exps_il)
-  in
-  let rule = (id_rule, notexp_il, prems_il) $ at in
-  Ctx.add_rule ctx id_rel rule
+and elab_rulegroup_def (ctx : Ctx.t) (at : region) (id_rel : id)
+    (id_rulegroup : id) (rules : rule list) : Ctx.t =
+  let rulegroup_il = elab_rulegroup ctx at id_rel id_rulegroup rules in
+  Ctx.add_rulegroup ctx id_rel rulegroup_il
 
 (* Elaboration of function declarations *)
 
@@ -1659,8 +1648,8 @@ and elab_def_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
 let populate_rule (ctx : Ctx.t) (def_il : Il.Ast.def) : Il.Ast.def =
   match def_il.it with
   | Il.Ast.RelD (id, nottyp_il, inputs, [], hints) ->
-      let rules_il = Ctx.find_rules ctx id in
-      Il.Ast.RelD (id, nottyp_il, inputs, rules_il, hints) $ def_il.at
+      let rulegroups_il = Ctx.find_rulegroups ctx id in
+      Il.Ast.RelD (id, nottyp_il, inputs, rulegroups_il, hints) $ def_il.at
   | Il.Ast.RelD _ -> error def_il.at "relation was already populated"
   | _ -> def_il
 

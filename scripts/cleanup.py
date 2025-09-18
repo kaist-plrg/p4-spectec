@@ -46,6 +46,7 @@ def collect_p4_files(dirs: List[Directory]) -> List[Filepath]:
 def run_coverage(
     work_dir: Directory,
     spec_dir: Directory,
+    relname : str,
     include: Directory,
     exclude: Directory,
     ignore_files: List[Filepath],
@@ -71,6 +72,8 @@ def run_coverage(
         "./p4spectec",
         "cover-dangling",
         *SPEC_FILES,
+        "-rel",
+        relname,
         "-i",
         include,
         "-e",
@@ -124,6 +127,9 @@ if __name__ == "__main__":
         "--spec", type=Directory, default="spec", help="Spec directory for SpecTec"
     )
     parser.add_argument(
+        "--relname", type=str, default="Program_ok", help="Relation name to check"
+    )
+    parser.add_argument(
         "--include",
         type=Directory,
         default="p4c/p4include",
@@ -154,6 +160,9 @@ if __name__ == "__main__":
     if not os.path.isdir(SPEC_DIR):
         print(f"Error: Spec directory {SPEC_DIR} does not exist.")
         exit(1)
+
+    RELNAME: str = args.relname
+    print(f"[CONFIG] Relation name: {RELNAME}")
 
     INCLUDE_DIR: Directory = Directory(args.include)
     if not os.path.isdir(INCLUDE_DIR):
@@ -188,6 +197,7 @@ if __name__ == "__main__":
     # Default configurations for CReduce
     C_REDUCE_CONFIGS = CReduceConfigs(
         p4spectec_dir=P4SPECTEC_DIR,
+        relname=RELNAME,
         cores=None,
         timeout_interesting=10,
         timeout_creduce=25,
@@ -195,6 +205,7 @@ if __name__ == "__main__":
     run_coverage(
         WORK_DIR,
         SPEC_DIR,
+        RELNAME,
         INCLUDE_DIR,
         EXCLUDE_DIR,
         IGNORE_FILES,

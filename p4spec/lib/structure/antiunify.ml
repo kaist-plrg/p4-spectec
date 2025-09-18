@@ -237,37 +237,15 @@ let antiunify_args_group (frees : IdSet.t) (args_group : arg list list) :
       in
       (uenv_acc, args_template)
 
-(* Anti-unification of rules *)
+(* Anti-unification of rule matches *)
 
-let antiunify_rules (inputs : int list) (rules : rule list) :
-    exp list * (prem list * exp list) list =
-  let exps_input_group, exps_output_group, prems_group, frees =
-    List.fold_left
-      (fun (exps_input_group, exps_output_group, prems_group, frees) rule ->
-        let _, notexp, prems = rule.it in
-        let _, exps = notexp in
-        let exps_input, exps_output =
-          Runtime_static.Rel.InputHint.split_exps_without_idx inputs exps
-        in
-        let exps_input_group = exps_input_group @ [ exps_input ] in
-        let exps_output_group = exps_output_group @ [ exps_output ] in
-        let prems_group = prems_group @ [ prems ] in
-        let frees = rule |> Il.Free.free_rule |> IdSet.union frees in
-        (exps_input_group, exps_output_group, prems_group, frees))
-      ([], [], [], IdSet.empty) rules
+let antiunify_rule_match_group (frees : IdSet.t)
+    (exps_match_group : exp list list) : exp list * prem list list =
+  let uenv, exps_match_template = antiunify_exps_group frees exps_match_group in
+  let prems_match_group =
+    List.map (populate_exps_templates uenv exps_match_template) exps_match_group
   in
-  let uenv, exps_input_template = antiunify_exps_group frees exps_input_group in
-  let prems_group =
-    List.map2
-      (fun exps_input prems ->
-        let prems_template =
-          populate_exps_templates uenv exps_input_template exps_input
-        in
-        prems_template @ prems)
-      exps_input_group prems_group
-  in
-  let paths = List.combine prems_group exps_output_group in
-  (exps_input_template, paths)
+  (exps_match_template, prems_match_group)
 
 (* Anti-unification of clauses *)
 

@@ -113,12 +113,20 @@ let rec free_id_prem (prem : prem) : IdSet.t =
 and free_id_prems (prems : prem list) : IdSet.t =
   prems |> List.map free_id_prem |> List.fold_left IdSet.union IdSet.empty
 
+(* Rules *)
+
+let free_rule (rule : rule) : IdSet.t =
+  let _, _, exp, prems = rule.it in
+  free_id_exp exp |> IdSet.union (free_id_prems prems)
+
+let free_rules (rules : rule list) : IdSet.t =
+  rules |> List.map free_rule |> List.fold_left IdSet.union IdSet.empty
+
 (* Definitions *)
 
 let free_id_def (def : def) : IdSet.t =
   match def.it with
-  | RuleD (_, _, exp, prems) ->
-      free_id_exp exp |> IdSet.union (free_id_prems prems)
+  | RuleGroupD (_, _, rules) -> free_rules rules
   | DefD (_, _, args, exp, prems) ->
       free_id_args args
       |> IdSet.union (free_id_exp exp)

@@ -7,10 +7,18 @@ syntax trailingCommaOpt =
   | `,
 
 ;;
+;; Booleans
+;;
+
+syntax booleanLiteral =
+  | TRUE
+  | FALSE
+
+;;
 ;; Numbers
 ;;
 
-syntax number =
+syntax numberLiteral =
   | D int        hint(print %)
   | nat W int    hint(print %#W#%)
   | nat S int    hint(print %#S#%)
@@ -255,8 +263,8 @@ def $flatten_namedExpressionList(namedExpressionList `, namedExpression) =
 ;;
 
 syntax literalExpression =
-  | TRUE | FALSE
-  | number
+  | booleanLiteral
+  | numberLiteral
   | stringLiteral
 
 ;;
@@ -1112,7 +1120,7 @@ def $flatten_tableActionList(tableActionList tableAction) =
 ;;
 
 syntax tableEntryPriority =
-  | PRIORITY `= number `: 
+  | PRIORITY `= numberLiteral `: 
   | PRIORITY `= `( expression ) `:
 
 syntax tableEntry =
@@ -1238,7 +1246,7 @@ syntax annotationToken =
   | STATE | STRING | STRUCT | SWITCH | TABLE
   | THIS | TRANSITION | TRUE | TUPLE | TYPEDEF
   | VARBIT | VALUE_SET | LIST | VOID | `_
-  | identifier | typeIdentifier | stringLiteral | number
+  | identifier | typeIdentifier | stringLiteral | numberLiteral
   | `&&& | `.. | `<< | `&& | `|| 
   | `== | `!= | `>= | `<=  | `++
   | `+ | `|+| | `- | `|-| | `*

@@ -170,6 +170,9 @@ and insert_phantom' (tdenv : TDEnv.t) (pathconds : pathcond list)
   | OtherwiseI instr ->
       let instr = insert_phantom' tdenv pathconds instr in
       Sl.Ast.OtherwiseI instr $ at
+  | GroupI (id_group, exps_group, instrs_group) ->
+      let instrs_group = insert_phantom tdenv pathconds instrs_group in
+      Sl.Ast.GroupI (id_group, exps_group, instrs_group) $ at
   | LetI (exp_l, exp_r, iterexps) -> Sl.Ast.LetI (exp_l, exp_r, iterexps) $ at
   | RuleI (id, notexp, iterexps) -> Sl.Ast.RuleI (id, notexp, iterexps) $ at
   | ResultI exps -> Sl.Ast.ResultI exps $ at
@@ -219,6 +222,9 @@ and insert_nothing' (instr : instr) : Sl.Ast.instr =
   | OtherwiseI instr ->
       let instr = insert_nothing' instr in
       Sl.Ast.OtherwiseI instr $ at
+  | GroupI (id_group, exps_group, instrs_group) ->
+      let instrs_group = insert_nothing instrs_group in
+      Sl.Ast.GroupI (id_group, exps_group, instrs_group) $ at
   | LetI (exp_l, exp_r, iterexps) -> Sl.Ast.LetI (exp_l, exp_r, iterexps) $ at
   | RuleI (id, notexp, iterexps) -> Sl.Ast.RuleI (id, notexp, iterexps) $ at
   | ResultI exps -> Sl.Ast.ResultI exps $ at

@@ -147,6 +147,7 @@ and instr' =
   | HoldI of id * notexp * iterexp list * holdcase
   | CaseI of exp * case list * phantom option 
   | OtherwiseI of instr
+  | GroupI of id * exp list * instr list
   | LetI of exp * exp * iterexp list
   | RuleI of id * notexp * iterexp list
   | ResultI of exp list
@@ -159,16 +160,28 @@ and instr' =
 type hint = El.Ast.hint
 [@@deriving yojson]
 
+(* Relations *)
+
+(* id `:` mixop `hint(input` `%`int* `)` exp* instr* hint* *)
+type rel = id * (mixop * int list) * exp list * instr list * hint list
+[@@deriving yojson]
+
+(* Functions *)
+
+(* id `<` list(tparam, `,`) `>` list(param, `,`) `:` instr* hint* *)
+type func = id * tparam list * arg list * instr list * hint list
+[@@deriving yojson]
+
 (* Definitions *)
 
 type def = def' phrase
 and def' =
   (* `syntax` id `<` list(tparam, `,`) `>` `=` deftyp *)
   | TypD of id * tparam list * deftyp
-  (* `relation` id `:` mixop `hint(input` `%`int* `)` list(exp, `,`) `:` instr* *)
-  | RelD of id * (mixop * int list) * exp list * instr list * hint list
-  (* `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ instr* *)
-  | DecD of id * tparam list * arg list * instr list * hint list
+  (* `relation` rel *)
+  | RelD of rel
+  (* `dec` func *)
+  | DecD of func
 [@@deriving yojson]
 
 (* Spec *)

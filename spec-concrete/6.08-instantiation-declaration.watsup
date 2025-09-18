@@ -506,9 +506,10 @@ rule Decls_inst/cons-some:
 ;;
 
 rule Program_inst:
-  |- declarationIR* `; ==> Ci_1.GLOBAL.CENV Ci_1.GLOBAL.TDENV Ci_1.GLOBAL.RENV Ci_1.GLOBAL.VENV sto_1
-  ---- ;; initialize empty context and stor
+  |- p4program ==> Ci_1.GLOBAL.CENV Ci_1.GLOBAL.TDENV Ci_1.GLOBAL.RENV Ci_1.GLOBAL.VENV sto_1
+  ---- ;; type check the program
+  -- Program_ok: |- p4program : _ (declarationIR* `;)
+  ---- ;; instantiate the declarations
   -- if $empty_context_inst() = Ci_0
   -- if $empty_sto() = sto_0
-  ---- ;; instantiate declarations
   -- Decls_inst: GLOBAL Ci_0 sto_0 |- declarationIR* ==> Ci_1 sto_1 eps
