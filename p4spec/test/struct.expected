@@ -26701,17 +26701,19 @@ relation Decl_inst: p', Ci_0, sto', declarationIR
         5. Result in Ci_1, sto', ?()
 
 ;; ../../../../spec-concrete/6.03-instantiation-relation.watsup:168.1-170.17
-relation Program_inst: (declarationIR*{declarationIR <- declarationIR*} ;)
+relation Program_inst: p4program
 
-1. Group : (declarationIR*{} ;)
+1. Group : p4program
 
-  1. (Let Ci_0 be $empty_context_inst)
+  1. (Program_ok: |- p4program : _typingContext (declarationIR*{declarationIR <- declarationIR*} ;))
 
-  2. (Let sto_0 be $empty_sto)
+  2. (Let Ci_0 be $empty_context_inst)
 
-  3. (Decls_inst: (global) Ci_0 sto_0 |- declarationIR*{declarationIR <- declarationIR*} ==> Ci_1 sto_1 declarationIR'*{declarationIR' <- declarationIR'*})
+  3. (Let sto_0 be $empty_sto)
 
-  4. If ((declarationIR'*{declarationIR' <- declarationIR'*} matches pattern [])), then
+  4. (Decls_inst: (global) Ci_0 sto_0 |- declarationIR*{declarationIR <- declarationIR*} ==> Ci_1 sto_1 declarationIR'*{declarationIR' <- declarationIR'*})
+
+  5. If ((declarationIR'*{declarationIR' <- declarationIR'*} matches pattern [])), then
 
     1. Result in Ci_1.global.cenv, Ci_1.global.tdenv, Ci_1.global.renv, Ci_1.global.venv, sto_1
 

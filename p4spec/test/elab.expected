@@ -25286,17 +25286,18 @@ relation Decl_inst: cursor contextInst sto |- declarationIR ==> contextInst sto 
   }
 
 ;; ../../../../spec-concrete/6.03-instantiation-relation.watsup:168.1-170.17
-relation Program_inst: |- p4programIR ==> cenv tdenv renv venv sto
-  ;; ../../../../spec-concrete/6.08-instantiation-declaration.watsup:508.1-514.72
+relation Program_inst: |- p4program ==> cenv tdenv renv venv sto
+  ;; ../../../../spec-concrete/6.08-instantiation-declaration.watsup:508.1-515.72
   rulegroup 
    match
-    (expl-input) declarationIR*{} ;
-    (impl-input) declarationIR*{declarationIR <- declarationIR*} ;
+    (expl-input) p4program
+    (impl-input) p4program
     (impl-input-premises)
    paths
   {
     rulepath 
     (premises)
+    -- Program_ok: |- p4program : _typingContext declarationIR*{declarationIR <- declarationIR*} ;
     -- let Ci_0 = $empty_context_inst
     -- let sto_0 = $empty_sto
     -- Decls_inst: global Ci_0 sto_0 |- declarationIR*{declarationIR <- declarationIR*} ==> Ci_1 sto_1 declarationIR'*{declarationIR' <- declarationIR'*}

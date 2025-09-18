@@ -57,16 +57,16 @@ let derive_phantom (pid : pid) (graph : Dep.Graph.t) (cover : SCov.Cover.t) :
 
 (* Entry point for debugging close-ASTs *)
 
-let debug_phantom (spec : spec) (includes_p4 : string list)
+let debug_phantom (spec : spec) (relname : string) (includes_p4 : string list)
     (filename_p4 : string) (filenames_ignore : string list)
     (dirname_debug : string) (pid : pid) : unit =
   match
-    Interp_sl.Typing.run_typing ~derive:true spec includes_p4 filename_p4
+    Interp_sl.Run.run ~derive:true spec relname includes_p4 filename_p4
       filenames_ignore
   with
-  | IllTyped _ -> print_endline "ill-typed"
+  | Fail _ -> print_endline "failed"
   | IllFormed _ -> print_endline "ill-formed"
-  | WellTyped (graph, _, cover) ->
+  | Pass (_, graph, _, cover) ->
       (* Find related values that contributed to the close-miss *)
       let vids_related =
         let branch = SCov.Cover.find pid cover in
