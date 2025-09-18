@@ -329,8 +329,6 @@ and string_of_instrs ?(verbose = false) ?(signature = None) ?(level = 0) instrs
 (* Relations *)
 
 and string_of_relinput mixop inputs exps_input =
-  List.map string_of_int inputs |> String.concat ", " |> print_endline;
-  string_of_exps ", " exps_input |> print_endline;
   let exps_input = List.combine inputs exps_input in
   let exps =
     List.init
@@ -364,7 +362,6 @@ and string_of_reloutput mixop inputs exps_output =
 
 and string_of_rel ?(verbose = false) rel =
   let relid, (mixop, inputs), exps_match, instrs = rel in
-  string_of_relid relid |> print_endline;
   string_of_relid relid ^ ": "
   ^ string_of_relinput mixop inputs exps_match
   ^ "\n\n"
