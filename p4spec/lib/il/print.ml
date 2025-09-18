@@ -296,48 +296,81 @@ and string_of_targs targs =
 
 (* Rules *)
 
-and string_of_rulematch rulematch =
+and string_of_ruleinput nottyp inputs exps_input =
+  let mixop, typs = nottyp.it in
+  let exps_input = List.combine inputs exps_input in
+  let exps =
+    List.init (List.length typs) (fun idx ->
+        match List.assoc_opt idx exps_input with
+        | Some exp_input -> exp_input
+        | None -> VarE ("%" $ no_region) $$ (no_region, TextT))
+  in
+  let notexp = (mixop, exps) in
+  string_of_notexp notexp
+
+and string_of_ruleoutput nottyp inputs exps_output =
+  let mixop, typs = nottyp.it in
+  let outputs =
+    List.init (List.length typs) (fun idx ->
+        if List.mem idx inputs then None else Some idx)
+    |> List.filter_map Fun.id
+  in
+  let exps_output = List.combine outputs exps_output in
+  match exps_output with
+  | [] -> "-- the relation holds"
+  | _ ->
+      let exps =
+        List.init (List.length typs) (fun idx ->
+            match List.assoc_opt idx exps_output with
+            | Some exp_output -> exp_output
+            | None -> VarE ("%" $ no_region) $$ (no_region, TextT))
+      in
+      let notexp = (mixop, exps) in
+      "-- output: " ^ string_of_notexp notexp
+
+and string_of_rulematch nottyp inputs rulematch =
   let exps_input_expl, exps_input_impl, prems_input_impl = rulematch in
-  indent 2 ^ "(expl-input) "
-  ^ string_of_exps " | " exps_input_expl
-  ^ "\n" ^ indent 2 ^ "(impl-input) "
-  ^ string_of_exps " | " exps_input_impl
-  ^ "\n" ^ indent 2 ^ "(impl-input-premises)"
+  indent 2 ^ "(explicit) "
+  ^ string_of_ruleinput nottyp inputs exps_input_expl
+  ^ "\n" ^ indent 2 ^ "(implicit) "
+  ^ string_of_ruleinput nottyp inputs exps_input_impl
   ^ string_of_prems ~level:2 prems_input_impl
 
-and string_of_rulepath rulepath =
+and string_of_rulepath nottyp inputs rulepath =
   let rulepathid, prems, exps_output = rulepath in
   indent 2 ^ "rulepath "
   ^ string_of_rulepathid rulepathid
-  ^ "\n" ^ indent 2 ^ "(premises)"
   ^ string_of_prems ~level:2 prems
-  ^ "\n" ^ indent 2 ^ "(output) "
-  ^ string_of_exps " | " exps_output
+  ^ "\n" ^ indent 2
+  ^ string_of_ruleoutput nottyp inputs exps_output
 
-and string_of_rulepaths rulepaths =
-  rulepaths |> List.map string_of_rulepath |> String.concat "\n\n"
+and string_of_rulepaths nottyp inputs rulepaths =
+  rulepaths
+  |> List.map (string_of_rulepath nottyp inputs)
+  |> String.concat "\n\n"
 
-and string_of_rulegroup rulegroup =
+and string_of_rulegroup nottyp inputs rulegroup =
   let rulegroupid, rulematch, rulepaths = rulegroup.it in
   indent 1 ^ ";; "
   ^ string_of_region rulegroup.at
   ^ "\n" ^ indent 1 ^ "rulegroup "
   ^ string_of_rulegroupid rulegroupid
-  ^ "\n " ^ indent 1 ^ "match\n"
-  ^ string_of_rulematch rulematch
-  ^ "\n " ^ indent 1 ^ "paths\n" ^ indent 1 ^ "{\n"
-  ^ string_of_rulepaths rulepaths
-  ^ "\n" ^ indent 1 ^ "}"
+  ^ "\n\n " ^ indent 1 ^ "match\n\n"
+  ^ string_of_rulematch nottyp inputs rulematch
+  ^ "\n\n " ^ indent 1 ^ "paths\n\n"
+  ^ string_of_rulepaths nottyp inputs rulepaths
 
-and string_of_rulegroups rulegroups =
-  rulegroups |> List.map string_of_rulegroup |> String.concat "\n\n"
+and string_of_rulegroups nottyp inputs rulegroups =
+  rulegroups
+  |> List.map (string_of_rulegroup nottyp inputs)
+  |> String.concat "\n\n"
 
 (* Clause *)
 
 and string_of_clause idx clause =
   let args, exp, prems = clause.it in
   ";; " ^ string_of_region clause.at ^ "\n" ^ indent 1 ^ "clause "
-  ^ string_of_int idx ^ string_of_args args ^ " = " ^ string_of_exp exp
+  ^ string_of_int idx ^ " : " ^ string_of_args args ^ " = " ^ string_of_exp exp
   ^ string_of_prems ~level:1 prems
 
 and string_of_clauses clauses =
@@ -387,10 +420,10 @@ let rec string_of_def def =
   | TypD (typid, tparams, deftyp) ->
       "syntax " ^ string_of_typid typid ^ string_of_tparams tparams ^ " = "
       ^ string_of_deftyp deftyp
-  | RelD (relid, nottyp, _, rulegroups) ->
+  | RelD (relid, nottyp, inputs, rulegroups) ->
       "relation " ^ string_of_relid relid ^ ": " ^ string_of_nottyp nottyp
-      ^ "\n"
-      ^ string_of_rulegroups rulegroups
+      ^ "\n\n"
+      ^ string_of_rulegroups nottyp inputs rulegroups
   | DecD (defid, tparams, params, typ, clauses) ->
       "def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : " ^ string_of_typ typ ^ " ="

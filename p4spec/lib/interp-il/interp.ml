@@ -817,7 +817,7 @@ and eval_prems (ctx : Ctx.t) (prems : prem list) : Ctx.t attempt =
 and eval_rule_prem (ctx : Ctx.t) (id : id) (notexp : notexp) : Ctx.t attempt =
   let rel = Ctx.find_rel Local ctx id in
   let exps_input, exps_output =
-    let inputs, _ = rel in
+    let _, inputs, _ = rel in
     let _, exps = notexp in
     Hint.split_exps_without_idx inputs exps
   in
@@ -965,7 +965,7 @@ and invoke_rel (ctx : Ctx.t) (id : id) (values_input : value list) :
 and invoke_rel' (ctx : Ctx.t) (id : id) (values_input : value list) :
     (Ctx.t * value list) attempt =
   (* Find the relation *)
-  let _inputs, rulegroups = Ctx.find_rel Local ctx id in
+  let _, _, rulegroups = Ctx.find_rel Local ctx id in
   guard (rulegroups <> []) id.at "relation has no rules";
   (* Apply the first matching rule *)
   let attempt_rules () =
@@ -1164,8 +1164,8 @@ let load_def (ctx : Ctx.t) (def : def) : Ctx.t =
   | TypD (id, tparams, deftyp) ->
       let typdef = (tparams, deftyp) in
       Ctx.add_typdef Global ctx id typdef
-  | RelD (id, _, inputs, rulegroups) ->
-      let rel = (inputs, rulegroups) in
+  | RelD (id, nottyp, inputs, rulegroups) ->
+      let rel = (nottyp, inputs, rulegroups) in
       Ctx.add_rel Global ctx id rel
   | DecD (id, tparams, _, _, clauses) ->
       let func = (tparams, clauses) in

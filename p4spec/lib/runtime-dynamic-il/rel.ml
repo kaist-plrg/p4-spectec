@@ -3,10 +3,7 @@ open Il.Print
 
 (* Relation *)
 
-type t = Runtime_static.Rel.Hint.t * rulegroup list
+type t = nottyp * Runtime_static.Rel.Hint.t * rulegroup list
 
-let to_string (inputs, rulegroups) =
-  "rel "
-  ^ Runtime_static.Rel.Hint.to_string inputs
-  ^ "\n"
-  ^ String.concat "\n   " (List.map string_of_rulegroup rulegroups)
+let to_string (nottyp, inputs, rulegroups) =
+  "relation:\n\n" ^ string_of_rulegroups nottyp inputs rulegroups

@@ -1239,7 +1239,7 @@ and elab_var_prem (ctx : Ctx.t) (id : id) (plaintyp : plaintyp) : Ctx.t =
 (* Elaboration of rule premises *)
 
 and elab_rule_prem (ctx : Ctx.t) (id : id) (exp : exp) : Ctx.t * Il.Ast.prem' =
-  let nottyp, inputs = Ctx.find_rel ctx id in
+  let nottyp, _, inputs = Ctx.find_rel ctx id in
   let+ ctx, notexp_il = elab_exp_not ctx (NotationT nottyp) exp in
   let _, exps_il = notexp_il in
   if Rel.Hint.is_conditional inputs exps_il then
@@ -1253,7 +1253,7 @@ and elab_rule_prem (ctx : Ctx.t) (id : id) (exp : exp) : Ctx.t * Il.Ast.prem' =
 
 and elab_rule_not_prem (ctx : Ctx.t) (id : id) (exp : exp) :
     Ctx.t * Il.Ast.prem' =
-  let nottyp, inputs = Ctx.find_rel ctx id in
+  let nottyp, _, inputs = Ctx.find_rel ctx id in
   let+ ctx, notexp_il = elab_exp_not ctx (NotationT nottyp) exp in
   let _, exps_il = notexp_il in
   check
@@ -1389,7 +1389,7 @@ and elab_rulepaths (ctxs_local : Ctx.t list) (id_rule_group : id list)
 
 and elab_rulegroup (ctx : Ctx.t) (at : region) (id_rel : id) (id_rulegroup : id)
     (rules : rule list) : Il.Ast.rulegroup =
-  let nottyp, inputs = Ctx.find_rel ctx id_rel in
+  let nottyp, _, inputs = Ctx.find_rel ctx id_rel in
   let ctxs_local =
     List.map
       (fun rule ->
@@ -1573,7 +1573,7 @@ and elab_rel_def (ctx : Ctx.t) (at : region) (id : id) (nottyp : nottyp)
     (hints : hint list) : Ctx.t * Il.Ast.def =
   let nottyp_il = elab_nottyp ctx (NotationT nottyp) in
   let inputs = fetch_rel_input_hint at nottyp_il hints in
-  let ctx = Ctx.add_rel ctx id nottyp inputs in
+  let ctx = Ctx.add_rel ctx id nottyp nottyp_il inputs in
   let def_il = Il.Ast.RelD (id, nottyp_il, inputs, []) $ at in
   (ctx, def_il)
 

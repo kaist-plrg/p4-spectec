@@ -17,7 +17,7 @@ type t = {
 (* Constructors *)
 
 let init (ctx : Ctx.t) : t =
-  let hints = REnv.map (fun (_, hint, _) -> hint) ctx.renv in
+  let hints = REnv.map (fun (_, _, hint, _) -> hint) ctx.renv in
   let frees = ctx.frees in
   let bounds = ctx.venv in
   let tdenv = ctx.tdenv in

@@ -1328,7 +1328,7 @@ and eval_let_instr (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
 and eval_rule (ctx : Ctx.t) (id : id) (notexp : notexp) : Ctx.t =
   let rel = Ctx.find_rel Local ctx id in
   let exps_input, exps_output =
-    let inputs, _, _ = rel in
+    let _, inputs, _, _ = rel in
     let _, exps = notexp in
     Hint.split_exps_without_idx inputs exps
   in
@@ -1453,7 +1453,7 @@ and eval_debug_instr (ctx : Ctx.t) (exp : exp) : Ctx.t * Sign.t =
 
 and invoke_rel (ctx : Ctx.t) (id : id) (values_input : value list) :
     (Ctx.t * value list) option =
-  let _inputs, exps_input, instrs = Ctx.find_rel Local ctx id in
+  let _, _, exps_input, instrs = Ctx.find_rel Local ctx id in
   check (instrs <> []) id.at "relation has no instructions";
   let invoke_rel' () =
     let ctx_local = Ctx.localize_rule ctx id values_input in
@@ -1561,8 +1561,8 @@ let load_def (ctx : Ctx.t) (def : def) : Ctx.t =
   | TypD (id, tparams, deftyp) ->
       let typdef = (tparams, deftyp) in
       Ctx.add_typdef Global ctx id typdef
-  | RelD (id, (_, inputs), relmatch, relpaths) ->
-      let rel = (inputs, relmatch, relpaths) in
+  | RelD (id, (mixop, inputs), relmatch, relpaths) ->
+      let rel = (mixop, inputs, relmatch, relpaths) in
       Ctx.add_rel Global ctx id rel
   | DecD (id, tparams, args_input, instrs) ->
       let func = (tparams, args_input, instrs) in
