@@ -10,7 +10,7 @@ rule ParserStmt_inst/constantDeclarationIR:
   IC_0 STO_0 |- constantDeclarationIR
             ==> IC_1 STO_1 constantDeclarationIR_inst
   -- Decl_inst:
-      BLOCK IC_0 STO_0 |- constantDeclarationIR
+      LOCAL IC_0 STO_0 |- constantDeclarationIR
                       ==> IC_1 STO_1 constantDeclarationIR_inst
 
 ;;; variableDeclarationIR
@@ -28,7 +28,7 @@ rule ParserStmt_inst/emptyStatementIR:
   IC_0 STO_0 |- emptyStatementIR
             ==> IC_1 STO_1 emptyStatementIR_inst
   -- Stmt_inst:
-      BLOCK IC_0 STO_0 |- emptyStatementIR
+      LOCAL IC_0 STO_0 |- emptyStatementIR
                       ==> IC_1 STO_1 emptyStatementIR_inst
 
 ;;; assignmentStatementIR
@@ -37,7 +37,7 @@ rule ParserStmt_inst/assignmentStatementIR:
   IC_0 STO_0 |- assignmentStatementIR
             ==> IC_1 STO_1 assignmentStatementIR_inst
   -- Stmt_inst:
-      BLOCK IC_0 STO_0 |- assignmentStatementIR
+      LOCAL IC_0 STO_0 |- assignmentStatementIR
                       ==> IC_1 STO_1 assignmentStatementIR_inst
 
 ;;; callStatementIR
@@ -46,7 +46,7 @@ rule ParserStmt_inst/callStatementIR:
   IC_0 STO_0 |- callStatementIR
             ==> IC_1 STO_1 callStatementIR_inst
   -- Stmt_inst:
-      BLOCK IC_0 STO_0 |- callStatementIR
+      LOCAL IC_0 STO_0 |- callStatementIR
                       ==> IC_1 STO_1 callStatementIR_inst
 
 ;;; directApplicationStatementIR
@@ -60,7 +60,7 @@ rule ParserStmt_inst/directApplicationStatementIR:
   -- if (_, constructor, _)
       = $find_constructor_inst(IC, prefixedNameIR, eps)
   -- Constructor_inst:
-      BLOCK IC STO_0 |- constructor `< eps > `( eps `# eps )
+      LOCAL IC STO_0 |- constructor `< eps > `( eps `# eps )
                     ==> STO_1 object
   ---- ;; assign new tid with random string appended
   -- if tid = $flatten_prefixedNameIR(prefixedNameIR)
@@ -99,7 +99,8 @@ rule ParserStmt_inst/conditionalStatementIR:
   IC_0 STO_0 |- conditionalStatementIR
             ==> IC_1 STO_1 conditionalStatementIR_inst
   -- Stmt_inst:
-      BLOCK IC_0 STO_0 |- conditionalStatementIR ==> IC_1 STO_1 conditionalStatementIR_inst
+      LOCAL IC_0 STO_0 |- conditionalStatementIR
+                      ==> IC_1 STO_1 conditionalStatementIR_inst
 
 ;;
 ;; Parser statement list instantiation

@@ -311,14 +311,13 @@ rulegroup Decl_inst/externDeclaration-externObjectDeclaration {
 ;;;   `{ parserLocalDeclarationListIR parserStateListIR }`
 
 rule Decl_inst/parserDeclarationIR:
-  GLOBAL IC_0 STO |- annotationList PARSER nameIR `< typeParameterListIR >
-                     `( parameterListIR ) `( constructorParameterListIR )
-                     `{ parserLocalDeclarationListIR parserStateListIR }
+  GLOBAL IC_0 STO |- annotationList PARSER nameIR `< eps >
+                      `( parameterListIR ) `( constructorParameterListIR )
+                      `{ parserLocalDeclarationListIR parserStateListIR }
                  ==> IC_1 STO eps
   -- if cid = $cid_IR(nameIR, constructorParameterListIR)
   -- if constructor 
-      = PARSER `< typeParameterListIR >
-          `( parameterListIR ) `( constructorParameterListIR )
+      = PARSER `( parameterListIR ) `( constructorParameterListIR )
           `{ parserLocalDeclarationListIR parserStateListIR }
   -- if IC_1 = $add_constructor_inst(GLOBAL, IC_0, cid, constructor)
 
@@ -330,15 +329,14 @@ rule Decl_inst/parserDeclarationIR:
 ;;;  `{ controlLocalDeclarationListIR APPLY controlBodyIR }
 
 rule Decl_inst/controlDeclarationIR:
-  GLOBAL IC_0 STO |- annotationList CONTROL nameIR `< typeParameterListIR >
-                    `( parameterListIR ) `( constructorParameterListIR )
-                    `{ controlLocalDeclarationListIR APPLY controlBodyIR }
+  GLOBAL IC_0 STO |- annotationList CONTROL nameIR `< eps >
+                      `( parameterListIR ) `( constructorParameterListIR )
+                      `{ controlLocalDeclarationListIR APPLY controlBodyIR }
                 ==> IC_1 STO eps
   ---- ;; bind control to constructor environment
   -- if cid = $cid_IR(nameIR, constructorParameterListIR)
   -- if constructor
-      = CONTROL `< typeParameterListIR >
-          `( parameterListIR ) `( constructorParameterListIR )
+      = CONTROL `( parameterListIR ) `( constructorParameterListIR )
           `{ controlLocalDeclarationListIR APPLY controlBodyIR }
   -- if IC_1 = $add_constructor_inst(GLOBAL, IC_0, cid, constructor)
 
@@ -394,7 +392,7 @@ rule Decl_inst/typeDeclarationIR-derivedTypeDeclarationIR-structTypeDeclarationI
                       `{ typeFieldIR* }
                  ==> IC_1 STO eps
   ---- ;; bind struct type to typedef environment
-  -- if (annotationList typeIR_field nameIR_field `; = typeFieldIR)*
+  -- if (annotationList_field typeIR_field nameIR_field `; = typeFieldIR)*
   -- if typeDefIR
       = (STRUCT nameIR `{ (typeIR_field nameIR_field `;)* })
           `< typeParameterListIR `, typeParameterListIR_inferred >
@@ -412,7 +410,7 @@ rule Decl_inst/typeDeclarationIR-derivedTypeDeclarationIR-headerTypeDeclarationI
                        `{ typeFieldIR* }
                  ==> IC_1 STO eps
   ---- ;; bind header type to typedef environment
-  -- if (annotationList typeIR_field nameIR_field `; = typeFieldIR)*
+  -- if (annotationList_field typeIR_field nameIR_field `; = typeFieldIR)*
   -- if typeDefIR
       = (HEADER nameIR `{ (typeIR_field nameIR_field `;)* })
           `< typeParameterListIR `, typeParameterListIR_inferred >
@@ -430,7 +428,7 @@ rule Decl_inst/typeDeclarationIR-derivedTypeDeclarationIR-headerUnionTypeDeclara
                        `{ typeFieldIR* }
                  ==> IC_1 STO eps
   ---- ;; bind header union type to typedef environment
-  -- if (annotationList typeIR_field nameIR_field `; = typeFieldIR)*
+  -- if (annotationList_field typeIR_field nameIR_field `; = typeFieldIR)*
   -- if typeDefIR
       = (HEADER_UNION nameIR `{ (typeIR_field nameIR_field `;)* }) 
           `< typeParameterListIR `, typeParameterListIR_inferred >
