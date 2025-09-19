@@ -13,7 +13,7 @@ syntax globalInstantiationLayer =
 ;; Block Layer
 
 syntax blockInstantiationLayer =
-  { THETA theta,
+  { TENV tenv,
     RENV renv,
     SENV senv,
     VENV venv }
@@ -21,7 +21,7 @@ syntax blockInstantiationLayer =
 ;; Local layer
 
 syntax localInstantiationLayer =
-  { THETA theta,
+  { TENV tenv,
     VENVS venv* }
 
 ;;
@@ -49,12 +49,12 @@ def $empty_instantiationContext = IC
           RENV $empty_renv,
           VENV $empty_venv }
   -- if blockInstantiationLayer
-      = { THETA $empty_theta,
+      = { TENV $empty_tenv,
           RENV $empty_renv,
           SENV $empty_senv,
           VENV $empty_venv }
   -- if localInstantiationLayer
-      = { THETA $empty_theta,
+      = { TENV $empty_tenv,
           VENVS ([ $empty_venv ]) }
   -- if IC
       = { PATH ([]), 
@@ -93,17 +93,17 @@ dec $inherit_instantiationContext(cursor, instantiationContext)
 def $inherit_instantiationContext(GLOBAL, IC)
   = IC[ .BLOCK = blockInstantiationLayer ][ .LOCAL = localInstantiationLayer ]
   -- if blockInstantiationLayer
-      = { THETA $empty_theta,
+      = { TENV $empty_tenv,
           RENV $empty_renv,
           SENV $empty_senv,
           VENV $empty_venv }
   -- if localInstantiationLayer
-      = { THETA $empty_theta,
+      = { TENV $empty_tenv,
           VENVS ([ $empty_venv ]) }
 def $inherit_instantiationContext(BLOCK, IC)
   = IC[ .LOCAL = localInstantiationLayer ]
   -- if localInstantiationLayer
-      = { THETA $empty_theta,
+      = { TENV $empty_tenv,
           VENVS ([ $empty_venv ]) }
 def $inherit_instantiationContext(LOCAL, IC) = IC
 
@@ -157,10 +157,10 @@ def $add_types_inst(p, IC, tid_h :: tid_t*, typeIR_h :: typeIR_t*) =
     $add_types_inst(p, IC', tid_t*, typeIR_t*)
   -- if IC' = $add_type_inst(p, IC, tid_h, typeIR_h)
 
-def $add_type_inst(BLOCK, IC, tid, typeIR) = IC[ .BLOCK.THETA = theta ]
-  -- if theta = $add_map<tid, typeIR>(IC.BLOCK.THETA, tid, typeIR)
-def $add_type_inst(LOCAL, IC, tid, typeIR) = IC[ .LOCAL.THETA = theta ]
-  -- if theta = $add_map<tid, typeIR>(IC.LOCAL.THETA, tid, typeIR)
+def $add_type_inst(BLOCK, IC, tid, typeIR) = IC[ .BLOCK.TENV = tenv ]
+  -- if tenv = $add_map<tid, typeIR>(IC.BLOCK.TENV, tid, typeIR)
+def $add_type_inst(LOCAL, IC, tid, typeIR) = IC[ .LOCAL.TENV = tenv ]
+  -- if tenv = $add_map<tid, typeIR>(IC.LOCAL.TENV, tid, typeIR)
 
 ;;; Adder for routines
 

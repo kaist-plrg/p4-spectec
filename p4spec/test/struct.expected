@@ -24068,47 +24068,50 @@ def $is_extern_object(object')
 
   1. Return false
 
-;; ../../../../spec-concrete/7.01-env.watsup:6.1-6.25
-def $empty_theta
+;; ../../../../spec-concrete/7.01-env.watsup:6.15-6.31
+syntax tenv = map<tid, typeIR>
+
+;; ../../../../spec-concrete/7.01-env.watsup:8.1-8.23
+def $empty_tenv
 
 1. Return $empty_map<tid, typeIR>
 
-;; ../../../../spec-concrete/7.01-env.watsup:10.15-10.29
+;; ../../../../spec-concrete/7.01-env.watsup:12.15-12.29
 syntax venv = map<id, value>
 
-;; ../../../../spec-concrete/7.01-env.watsup:12.1-12.23
+;; ../../../../spec-concrete/7.01-env.watsup:14.1-14.23
 def $empty_venv
 
 1. Return $empty_map<id, value>
 
-;; ../../../../spec-concrete/7.01-env.watsup:16.15-16.33
+;; ../../../../spec-concrete/7.01-env.watsup:18.15-18.33
 syntax senv = map<nameIR, state>
 
-;; ../../../../spec-concrete/7.01-env.watsup:18.1-18.25
+;; ../../../../spec-concrete/7.01-env.watsup:20.1-20.25
 def $empty_senv
 
 1. Return $empty_map<nameIR, state>
 
-;; ../../../../spec-concrete/7.01-env.watsup:22.15-22.32
+;; ../../../../spec-concrete/7.01-env.watsup:24.15-24.32
 syntax renv = map<rid, routine>
 
-;; ../../../../spec-concrete/7.01-env.watsup:24.1-24.25
+;; ../../../../spec-concrete/7.01-env.watsup:26.1-26.25
 def $empty_renv
 
 1. Return $empty_map<rid, routine>
 
-;; ../../../../spec-concrete/7.01-env.watsup:28.15-28.36
+;; ../../../../spec-concrete/7.01-env.watsup:30.15-30.36
 syntax cenv = map<cid, constructor>
 
-;; ../../../../spec-concrete/7.01-env.watsup:30.1-30.25
+;; ../../../../spec-concrete/7.01-env.watsup:32.1-32.25
 def $empty_cenv
 
 1. Return $empty_map<cid, constructor>
 
-;; ../../../../spec-concrete/7.01-env.watsup:34.16-34.32
+;; ../../../../spec-concrete/7.01-env.watsup:36.16-36.32
 syntax store = map<oid, object>
 
-;; ../../../../spec-concrete/7.01-env.watsup:38.1-38.25
+;; ../../../../spec-concrete/7.01-env.watsup:40.1-40.25
 def $empty_store
 
 1. Return $empty_map<oid, object>
@@ -24117,10 +24120,10 @@ def $empty_store
 syntax globalInstantiationLayer = {cenv cenv, tdenv tdenv, renv renv, venv venv}
 
 ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:16.3-19.16
-syntax blockInstantiationLayer = {theta theta, renv renv, senv senv, venv venv}
+syntax blockInstantiationLayer = {tenv tenv, renv renv, senv senv, venv venv}
 
 ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:24.3-25.18
-syntax localInstantiationLayer = {theta theta, venvs venv*}
+syntax localInstantiationLayer = {tenv tenv, venvs venv*}
 
 ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:32.3-35.36
 syntax instantiationContext = {path oid, global globalInstantiationLayer, block blockInstantiationLayer, local localInstantiationLayer}
@@ -24130,9 +24133,9 @@ def $empty_instantiationContext
 
 1. (Let globalInstantiationLayer be {cenv $empty_cenv, tdenv $empty_tdenv, renv $empty_renv, venv $empty_venv})
 
-2. (Let blockInstantiationLayer be {theta $empty_theta, renv $empty_renv, senv $empty_senv, venv $empty_venv})
+2. (Let blockInstantiationLayer be {tenv $empty_tenv, renv $empty_renv, senv $empty_senv, venv $empty_venv})
 
-3. (Let localInstantiationLayer be {theta $empty_theta, venvs [$empty_venv]})
+3. (Let localInstantiationLayer be {tenv $empty_tenv, venvs [$empty_venv]})
 
 4. (Let IC be {path [], global globalInstantiationLayer, block blockInstantiationLayer, local localInstantiationLayer})
 
@@ -24166,15 +24169,15 @@ def $inherit_instantiationContext(cursor, IC)
 
   1. Case (% matches pattern `GLOBAL`)
 
-    1. (Let blockInstantiationLayer be {theta $empty_theta, renv $empty_renv, senv $empty_senv, venv $empty_venv})
+    1. (Let blockInstantiationLayer be {tenv $empty_tenv, renv $empty_renv, senv $empty_senv, venv $empty_venv})
 
-    2. (Let localInstantiationLayer be {theta $empty_theta, venvs [$empty_venv]})
+    2. (Let localInstantiationLayer be {tenv $empty_tenv, venvs [$empty_venv]})
 
     3. Return IC[block = blockInstantiationLayer][local = localInstantiationLayer]
 
   2. Case (% matches pattern `BLOCK`)
 
-    1. (Let localInstantiationLayer be {theta $empty_theta, venvs [$empty_venv]})
+    1. (Let localInstantiationLayer be {tenv $empty_tenv, venvs [$empty_venv]})
 
     2. Return IC[local = localInstantiationLayer]
 
@@ -24292,15 +24295,15 @@ def $add_type_inst(cursor, IC, tid, typeIR)
 
   1. Case (% matches pattern `BLOCK`)
 
-    1. (Let theta be $add_map<tid, typeIR>(IC.block.theta, tid, typeIR))
+    1. (Let tenv be $add_map<tid, typeIR>(IC.block.tenv, tid, typeIR))
 
-    2. Return IC[block.theta = theta]
+    2. Return IC[block.tenv = tenv]
 
   2. Case (% matches pattern `LOCAL`)
 
-    1. (Let theta be $add_map<tid, typeIR>(IC.local.theta, tid, typeIR))
+    1. (Let tenv be $add_map<tid, typeIR>(IC.local.tenv, tid, typeIR))
 
-    2. Return IC[local.theta = theta]
+    2. Return IC[local.tenv = tenv]
 
 ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:167.1-168.25
 def $add_routine_overload_inst(cursor, IC, rid, routine)
@@ -25984,7 +25987,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
             4. If ((object has type externObject)), then
 
-              1. (Let (extern tid { theta venv renv }) be (object as externObject))
+              1. (Let (extern tid { tenv venv renv }) be (object as externObject))
 
               2. (Let IC_decl be $empty_instantiationContext[path = IC_0.path][global = IC_0.global])
 
@@ -25996,7 +25999,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
               6. (Let renv_merged be $merge_renv_with_extern(renv, IC_decl_post.block.renv))
 
-              7. (Let object_merged be ((extern tid { theta venv_merged renv_merged }) as object))
+              7. (Let object_merged be ((extern tid { tenv venv_merged renv_merged }) as object))
 
               8. (Let oid be IC_0.path ++ [nameIR])
 
@@ -26030,7 +26033,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
             4. If ((object has type externObject)), then
 
-              1. (Let (extern tid { theta venv renv }) be (object as externObject))
+              1. (Let (extern tid { tenv venv renv }) be (object as externObject))
 
               2. (Let IC_decl be $empty_instantiationContext[path = IC_0.path][global = IC_0.global])
 
@@ -26042,7 +26045,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
               6. (Let renv_merged be $merge_renv_with_extern(renv, IC_decl_post.block.renv))
 
-              7. (Let object_merged be ((extern tid { theta venv_merged renv_merged }) as object))
+              7. (Let object_merged be ((extern tid { tenv venv_merged renv_merged }) as object))
 
               8. (Let oid be IC_0.path ++ [nameIR])
 
@@ -26553,7 +26556,7 @@ relation Constructor_inst: p IC STO_0 |- constructor < typeArgumentIR*{typeArgum
 
       9. (ExternMethods_inst: IC_callee_3 |- methodPrototypeIR*{methodPrototypeIR <- methodPrototypeIR*} ==> IC_callee_4)
 
-      10. (Let object_extern be ((extern nameIR { IC_callee_4.block.theta IC_callee_4.block.venv IC_callee_4.block.renv }) as object))
+      10. (Let object_extern be ((extern nameIR { IC_callee_4.block.tenv IC_callee_4.block.venv IC_callee_4.block.renv }) as object))
 
       11. Result in : % % % |- % < % >( % # % )==> STO_1 object_extern
 
@@ -26643,7 +26646,7 @@ relation Constructor_inst: p IC STO_0 |- constructor < typeArgumentIR*{typeArgum
 
       8. (Let IC_callee_3 be $add_values_inst(p_callee, IC_callee_2, id_cparam_default*{id_cparam_default <- id_cparam_default*}, value_default*{value_default <- value_default*}))
 
-      9. (Let object_package be ((package{ IC_callee_3.block.theta IC_callee_3.block.venv }) as object))
+      9. (Let object_package be ((package{ IC_callee_3.block.tenv IC_callee_3.block.venv }) as object))
 
       10. Result in : % % % |- % < % >( % # % )==> STO_1 object_package
 
