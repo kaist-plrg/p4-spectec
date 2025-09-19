@@ -1,0 +1,330 @@
+;;
+;; Helpers
+;;
+
+;; Partitioning constructor parameters into default and non-default parameters
+
+dec $partition_default_parameters(parameterIR*, id*)
+  : (parameterIR*, parameterIR*)
+
+def $partition_default_parameters(eps, id_default*) = (eps, eps)
+def $partition_default_parameters(
+    parameterIR_h :: parameterIR_t*,
+    id_default*
+  )
+  = (parameterIR_nondefault*, parameterIR_h :: parameterIR_default*)
+  -- if parameterIR_h = _ _ _ id_h _
+  -- if $partition_default_parameters(parameterIR_t*, id_default*)
+      = (parameterIR_nondefault*, parameterIR_default*)
+  -- if id_h <- id_default*
+
+def $partition_default_parameters(
+    parameterIR_h :: parameterIR_t*,
+    id_default*
+  )
+  = (parameterIR_h :: parameterIR_nondefault*, parameterIR_default*)
+  -- if parameterIR_h = _ _ _ id_h _
+  -- if $partition_default_parameters(parameterIR_t*, id_default*)
+      = (parameterIR_nondefault*, parameterIR_default*)
+  -- if ~(id_h <- id_default*)
+
+;; Aligning constructor parameters with arguments
+
+dec $align_cparams_with_args(constructorParameterIR*, argumentIR*, id*)
+  : (constructorParameterIR*, argumentIR*, constructorParameterIR*, value*)
+dec $align_cparams_with_args'(map<id, constructorParameterIR>, constructorParameterIR*, argumentIR*)
+  : (constructorParameterIR*, argumentIR*)
+
+def $align_cparams_with_args(constructorParameterIR*, argumentIR*, id_default*)
+  = (constructorParameterIR_aligned*, argumentIR_aligned*,
+     constructorParameterIR_default*, value_default*)
+  -- if (constructorParameterIR_non_default*, constructorParameterIR_default*)
+      = $partition_default_parameters(constructorParameterIR*, id_default*)
+  -- if (_ _ _ id _ = constructorParameterIR_non_default)*
+  -- if (constructorParameterIR_aligned*, argumentIR_aligned*)
+      = $align_cparams_with_args'(
+          `{ (id `: constructorParameterIR_non_default)* },
+          constructorParameterIR_non_default*,
+          argumentIR*
+        )
+  -- if (_ _ _ _ (`= value_default) = constructorParameterIR_default)*
+
+def $align_cparams_with_args'(
+    `{ (id `: constructorParameterIR)* },
+    eps, eps
+  )
+  = (eps, eps)
+def $align_cparams_with_args'(
+    `{ (id `: constructorParameterIR)* },
+    constructorParameterIR_h :: constructorParameterIR_t*,
+    argumentIR_h ::argumentIR_t*,
+  )
+  = (constructorParameterIR_h :: constructorParameterIR_aligned*,
+     argumentIR_h :: argumentIR_aligned*)
+  -- if argumentIR_h = typedExpressionIR 
+  -- if (constructorParameterIR_aligned*, argumentIR_aligned*)
+      = $align_cparams_with_args'(
+          `{ (id `: constructorParameterIR)* },
+          constructorParameterIR_t*,
+          argumentIR_t*
+        )
+def $align_cparams_with_args'(
+    `{ (id `: constructorParameterIR)* },
+    constructorParameterIR_h :: constructorParameterIR_t*,
+    argumentIR_h ::argumentIR_t*,
+  )
+  = (constructorParameterIR_h :: constructorParameterIR_aligned*,
+     argumentIR_h :: argumentIR_aligned*)
+  -- if argumentIR_h = `_
+  -- if (constructorParameterIR_aligned*, argumentIR_aligned*)
+      = $align_cparams_with_args'(
+          `{ (id `:  constructorParameterIR)* },
+          constructorParameterIR_t*,
+          argumentIR_t*
+        )
+def $align_cparams_with_args'(
+    `{ (id `: constructorParameterIR)* },
+    constructorParameterIR_h :: constructorParameterIR_t*,
+    argumentIR_h ::argumentIR_t*,
+  )
+  = (constructorParameterIR_match :: constructorParameterIR_aligned*,
+     argumentIR_h :: argumentIR_aligned*)
+  -- if argumentIR_h = nameIR `= _
+  -- if constructorParameterIR_match
+      = $find_map<id, constructorParameterIR>(`{ (id `: constructorParameterIR)* }, nameIR)
+  -- if (constructorParameterIR_aligned*, argumentIR_aligned*)
+      = $align_cparams_with_args'(
+          `{ (id `:  constructorParameterIR)* },
+          constructorParameterIR_t*,
+          argumentIR_t*
+        )
+def $align_cparams_with_args'(
+    `{ (id `: constructorParameterIR)* },
+    constructorParameterIR_h :: constructorParameterIR_t*,
+    argumentIR_h ::argumentIR_t*,
+  )
+  = (constructorParameterIR_match :: constructorParameterIR_aligned*,
+     argumentIR_h :: argumentIR_aligned*)
+  -- if argumentIR_h = nameIR `= `_
+  -- if constructorParameterIR_match
+      = $find_map<id, constructorParameterIR>(`{ (id `: constructorParameterIR)* }, nameIR)
+  -- if (constructorParameterIR_aligned*, argumentIR_aligned*)
+      = $align_cparams_with_args'(
+          `{ (id `:  constructorParameterIR)* },
+          constructorParameterIR_t*,
+          argumentIR_t*
+        )
+
+;;
+;; Argument binding
+;;
+
+rule Bind_arg:
+  p_caller IC_caller `|
+  p_callee IC_callee_0 STO_0 |- id argumentIR
+                            ==> IC_callee_1 STO_1
+  -- if IC_caller_inner = $enter_path(IC_caller, id)
+  -- Argument_inst:
+      p_caller IC_caller_inner STO_0 |- argumentIR
+                                    ==> STO_1 value
+  -- if IC_callee_1 = $add_value_inst(p_callee, IC_callee_0, id, value)
+
+rule Bind_args/nil:
+  p_caller IC_caller `|
+  p_callee IC_callee STO |- eps eps
+                        ==> IC_callee STO
+
+rule Bind_args/cons:
+  p_caller IC_caller `|
+  p_callee IC_callee_0 STO_0 |- (id_h :: id_t*) (argumentIR_h :: argumentIR_t*)
+                            ==> IC_callee_2 STO_2
+  -- Bind_arg:
+      p_caller IC_caller `|
+      p_callee IC_callee_0 STO_0 |- id_h argumentIR_h
+                                ==> IC_callee_1 STO_1
+  -- Bind_args:
+      p_caller IC_caller `|
+      p_callee IC_callee_1 STO_1 |- id_t* argumentIR_t*
+                                ==> IC_callee_2 STO_2
+
+;;
+;; Constructor instantiation
+;;
+;; syntax constructor
+;;
+
+;;; EXTERN nameIR `< typeParameterListIR >
+;;;   `( constructorParameterListIR ) `{ methodPrototypeListIR }
+
+rule Constructor_inst/extern:
+  p IC STO_0 |- (EXTERN nameIR `< typeParameterIR* >
+                  `( constructorParameterIR* ) `{ methodPrototypeIR* })
+                  `< typeArgumentIR* > `( argumentIR* `# id_default* )
+            ==> STO_1 object_extern
+  ---- ;; initialize the callee context
+  -- if p_callee = BLOCK
+  -- if IC_callee_0 = $inherit_instantiationContext(GLOBAL, IC)
+  ---- ;; bind type arguments to the callee context
+  -- if IC_callee_1
+      = $add_types_inst(p_callee, IC_callee_0, typeParameterIR*, typeArgumentIR*)
+  ---- ;; align constructor parameters with arguments
+  -- if (constructorParameterIR_aligned*, argumentIR_aligned*,
+         constructorParameterIR_default*, value_default*)
+      = $align_cparams_with_args(constructorParameterIR*, argumentIR*, id_default*)
+  ---- ;; bind non-default arguments to the callee context
+  -- if (_ _ _ id_aligned _ = constructorParameterIR_aligned)*
+  -- Bind_args:
+      p IC `| p_callee IC_callee_1 STO_0 |- id_aligned* argumentIR_aligned*
+                                        ==> IC_callee_2 STO_1
+  ---- ;; bind default values to the callee context
+  -- if (_ _ _ id_cparam_default _ = constructorParameterIR_default)*
+  -- if IC_callee_3
+      = $add_values_inst(p_callee, IC_callee_2, id_cparam_default*, value_default*)
+  ---- ;; instantiate method prototypes
+  -- ExternMethods_inst:
+      IC_callee_3 |- methodPrototypeIR* ==> IC_callee_4
+  ---- ;; create an extern object with the final callee context
+  -- if object_extern
+      = EXTERN nameIR `{ IC_callee_4.BLOCK.THETA
+                         IC_callee_4.BLOCK.VENV
+                         IC_callee_4.BLOCK.RENV }
+
+;;; PARSER `( parameterListIR ) `( constructorParameterListIR )
+;;;    `{ parserLocalDeclarationListIR
+;;;       parserStateListIR }
+
+rule Constructor_inst/parser:
+  p IC STO_0 |- (PARSER `( parameterIR* )`( constructorParameterIR* )
+                  `{ parserLocalDeclarationIR* parserStateIR* })
+                  `< eps > `( argumentIR* `# id_default* )
+            ==> STO_3 object_parser
+  ---- ;; initialize callee context
+  -- if p_callee = BLOCK
+  -- if IC_callee_0 = $inherit_instantiationContext(GLOBAL, IC)
+  ---- ;; align constructor parameters with arguments
+  -- if (constructorParameterIR_aligned*, argumentIR_aligned*,
+         constructorParameterIR_default*, value_default*)
+      = $align_cparams_with_args(constructorParameterIR*, argumentIR*, id_default*)
+  ---- ;; bind non-default arguments to callee context
+  -- if (_ _ _ id_aligned _ = constructorParameterIR_aligned)*
+  -- Bind_args:
+      p IC `| p_callee IC_callee_0 STO_0 |- id_aligned* argumentIR_aligned*
+                                        ==> IC_callee_1 STO_1
+  ---- ;; bind default values to the callee context
+  -- if (_ _ _ id_cparam_default _ = constructorParameterIR_default)*
+  -- if IC_callee_2
+      = $add_values_inst(p_callee, IC_callee_1, id_cparam_default*, value_default*)
+  ---- ;; instantiate local declarations
+  -- ParserLocalDecls_inst:
+      IC_callee_2 STO_1 |- parserLocalDeclarationIR*
+                       ==> IC_local_0 STO_2 parserLocalDeclarationIR_inst*
+  ---- ;; add accept and reject states
+  -- if IC_local_1
+      = $add_state_inst(BLOCK, IC_local_0, "accept", `EMPTY)
+  -- if IC_local_2
+      = $add_state_inst(BLOCK, IC_local_1, "reject", `EMPTY)
+  ---- ;; instantiate parser states
+  -- ParserStates_inst:
+      IC_local_2 STO_2 |- parserStateIR* ==> IC_state STO_3
+  ---- ;; create parser object with the callee value environment
+  ---- ;; and instantiated state environment
+  -- if object_parser
+      = PARSER `( parameterIR* ) `{ IC_callee_2.BLOCK.VENV
+                                    parserLocalDeclarationIR_inst*
+                                    IC_state.BLOCK.SENV }
+
+;;; CONTROL `( parameterListIR ) `( constructorParameterListIR )
+;;;   `{ controlLocalDeclarationListIR
+;;;      APPLY controlBodyIR }
+
+rule Constructor_inst/control:
+  p IC STO_0 |- (CONTROL `( parameterIR* ) `( constructorParameterIR* )
+                  `{ controlLocalDeclarationIR* APPLY controlBodyIR })
+                  `< eps > `( argumentIR* `# id_default* )
+            ==> STO_3 object_control
+  ---- ;; initialize the callee context
+  -- if p_callee = BLOCK
+  -- if IC_callee_0 = $inherit_instantiationContext(GLOBAL, IC)
+  ---- ;; align constructor parameters with arguments
+  -- if (constructorParameterIR_aligned*, argumentIR_aligned*,
+         constructorParameterIR_default*, value_default*)
+      = $align_cparams_with_args(constructorParameterIR*, argumentIR*, id_default*)
+  ---- ;; bind non-default arguments to the callee context
+  -- if (_ _ _ id_aligned _ = constructorParameterIR_aligned)*
+  -- Bind_args:
+      p IC `| p_callee IC_callee_0 STO_0 |- id_aligned* argumentIR_aligned*
+                                        ==> IC_callee_1 STO_1
+  ---- ;; bind default values to the callee context
+  -- if (_ _ _ id_cparam_default _ = constructorParameterIR_default)*
+  -- if IC_callee_2
+      = $add_values_inst(p_callee, IC_callee_1, id_cparam_default*, value_default*)
+  ---- ;; instantiate local declarations
+  -- ControlLocalDecls_inst:
+      IC_callee_2 STO_1 |- controlLocalDeclarationIR*
+                       ==> IC_local_0 STO_2 controlLocalDeclarationIR'*
+  ---- ;; instantiate control body
+  -- Block_inst:
+      IC_local_0 STO_2 |- controlBodyIR
+                      ==> IC_local_1 STO_3 controlBodyIR'
+  ---- ;; create control object with callee value environment and local routine environment
+  -- if object_control
+      = CONTROL `( parameterIR* ) `{ IC_callee_2.BLOCK.VENV
+                                     controlLocalDeclarationIR'*
+                                     IC_local_1.BLOCK.RENV
+                                     controlBodyIR' }
+
+;;; PACKAGE `< typeParameterListIR > `( constructorParameterListIR )
+
+rule Constructor_inst/package:
+  p IC STO_0 |- (PACKAGE `< typeParameterIR* > `( constructorParameterIR*))
+                  `< typeArgumentIR* > `( argumentIR* `# id_default* )
+            ==> STO_1 object_package
+  ---- ;; initialize callee context
+  -- if p_callee = BLOCK
+  -- if IC_callee_0 = $inherit_instantiationContext(GLOBAL, IC)
+  ---- ;; bind type arguments to the callee context
+  -- if IC_callee_1
+      = $add_types_inst(p_callee, IC_callee_0, typeParameterIR*, typeArgumentIR*)
+  ---- ;; align constructor parameters with arguments
+  -- if (constructorParameterIR_aligned*, argumentIR_aligned*,
+         constructorParameterIR_default*, value_default*)
+      = $align_cparams_with_args(constructorParameterIR*, argumentIR*, id_default*)
+  ---- ;; bind non-default arguments to callee context
+  -- if (_ _ _ id_aligned _ = constructorParameterIR_aligned)*
+  -- Bind_args:
+      p IC `| p_callee IC_callee_1 STO_0 |- id_aligned* argumentIR_aligned*
+                                        ==> IC_callee_2 STO_1
+  ---- ;; bind default values to callee context
+  -- if (_ _ _ id_cparam_default _ = constructorParameterIR_default)*
+  -- if IC_callee_3
+      = $add_values_inst(p_callee, IC_callee_2, id_cparam_default*, value_default*)
+  ---- ;; create package object with final callee context
+  -- if object_package
+      = PACKAGE `{ IC_callee_3.BLOCK.THETA IC_callee_3.BLOCK.VENV }
+
+;;; TABLE nameIR `{ tablePropertyListIR }
+
+;; (TODO) Create runtime representation of table
+
+dec $init_table(tablePropertyListIR) : tablePropertyListIR
+def $init_table(tablePropertyListIR) = tablePropertyListIR
+
+rule Constructor_inst/table:
+  p IC STO_0 |- (TABLE nameIR `{ tablePropertyListIR })
+                  `< eps > `( eps `# eps )
+            ==> STO_1 object_table
+  ---- ;; initialize callee context
+  -- if p_callee = LOCAL
+  -- if IC_callee_0 = $inherit_instantiationContext(BLOCK, IC)
+  ---- ;; create table frame
+  -- if IC_frame = $enter_inst(IC_callee_0)
+  ---- ;; insantiate table properties
+  -- TableProperties_inst:
+      IC_frame STO_0 |- tablePropertyListIR
+                    ==> STO_1 tablePropertyListIR_inst
+  -- if tablePropertyListIR_dynamic
+      = $init_table(tablePropertyListIR_inst)
+  ---- ;; create table object with table frame
+  -- if venv :: _ = IC_frame.LOCAL.VENVS
+  -- if object_table
+      = TABLE nameIR `{ venv tablePropertyListIR_dynamic }

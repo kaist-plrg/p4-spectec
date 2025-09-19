@@ -1,5 +1,4 @@
 open Ast
-open Util.Print
 open Util.Source
 
 (* Numbers *)
