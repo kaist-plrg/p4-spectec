@@ -134,14 +134,14 @@ relation ControlLocalDecls_inst:
 ;;;; Declaration instantiation
 ;;
 
-relation Decls_inst:
-  cursor instantiationContext store |- declarationIR*
-                                   ==> instantiationContext store declarationIR*
-  hint(input %0 %1 %2 %3)
-
 relation Decl_inst:
   cursor instantiationContext store |- declarationIR
                                    ==> instantiationContext store declarationIR?
+  hint(input %0 %1 %2 %3)
+
+relation Decls_inst:
+  cursor instantiationContext store |- declarationIR*
+                                   ==> instantiationContext store declarationIR*
   hint(input %0 %1 %2 %3)
 
 relation Program_inst:
@@ -155,13 +155,15 @@ relation Program_inst:
 ;;
 
 relation Bind_arg:
-  cursor instantiationContext `| cursor instantiationContext store |- id argumentIR
-                                                                  ==> instantiationContext store
+  cursor instantiationContext `|
+  cursor instantiationContext store |- id argumentIR
+                                   ==> instantiationContext store
   hint(input %0 %1 %2 %3 %4 %5 %6)
 
 relation Bind_args:
-  cursor instantiationContext `| cursor instantiationContext store |- id* argumentIR*
-                                                                  ==> instantiationContext store
+  cursor instantiationContext `|
+  cursor instantiationContext store |- id* argumentIR*
+                                   ==> instantiationContext store
   hint(input %0 %1 %2 %3 %4 %5 %6)
 
 ;;
@@ -170,6 +172,8 @@ relation Bind_args:
 ;;
 
 relation Constructor_inst:
-  cursor instantiationContext store |- constructor `< typeArgumentListIR > `( argumentListIR `# id* )
+  cursor instantiationContext store |- constructor
+                                        `< typeArgumentListIR >
+                                        `( argumentListIR `# id* )
                                    ==> store object
   hint(input %0 %1 %2 %3 %4 %5 %6)

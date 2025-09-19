@@ -24000,8 +24000,10 @@ syntax routine =
    | control_apply( parameterListIR ){ controlLocalDeclarationListIR ; renv ; blockElementStatementListIR }
    | table_apply{ tablePropertyListIR }
 
-;; ../../../../spec-concrete/6.2.2-state.watsup:3.16-3.38
-syntax state = parserBlockStatementIR
+;; ../../../../spec-concrete/6.2.2-state.watsup:5.1-7.68
+syntax state = 
+   | 
+   | annotationList { parserStatementListIR transitionStatementIR }
 
 ;; ../../../../spec-concrete/6.3-constructor.watsup:6.1-15.42
 syntax constructor = 
@@ -24011,7 +24013,27 @@ syntax constructor =
    | package< typeParameterListIR >( constructorParameterListIR )
    | table nameIR { tablePropertyListIR }
 
-;; ../../../../spec-concrete/6.4.1-object.watsup:8.1-19.44
+;; ../../../../spec-concrete/6.4.1-object.watsup:13.23-13.54
+syntax externObject = 
+   | extern tid { theta venv renv }
+
+;; ../../../../spec-concrete/6.4.1-object.watsup:22.3-25.14
+syntax parserObject = 
+   | parser( parameterListIR ){ venv parserLocalDeclarationListIR senv }
+
+;; ../../../../spec-concrete/6.4.1-object.watsup:35.3-39.23
+syntax controlObject = 
+   | control( parameterListIR ){ venv controlLocalDeclarationListIR renv controlBodyIR }
+
+;; ../../../../spec-concrete/6.4.1-object.watsup:47.24-47.47
+syntax packageObject = 
+   | package{ theta venv }
+
+;; ../../../../spec-concrete/6.4.1-object.watsup:54.22-54.61
+syntax tableObject = 
+   | table tid { venv tablePropertyListIR }
+
+;; ../../../../spec-concrete/6.4.1-object.watsup:57.1-61.16
 syntax object = 
    | extern tid { theta venv renv }
    | parser( parameterListIR ){ venv parserLocalDeclarationListIR senv }
@@ -24022,9 +24044,9 @@ syntax object =
 ;; ../../../../spec-concrete/6.4.2-object-aux.watsup:7.1-7.37
 def $is_extern_object(object')
 
-1. If ((object' matches pattern `EXTERN%{%%%}`)), then
+1. If ((object' has type externObject)), then
 
-  1. (Let (extern _tid { _theta _venv _renv }) be object')
+  1. (Let externObject be (object' as externObject))
 
   2. Return true
 
@@ -25586,7 +25608,7 @@ relation ParserState_inst: IC_0 STO_0 |- (annotationList state nameIR { parserSt
 
   1. (ParserStmts_inst: IC_0 STO_0 |- parserStatementListIR ==> IC_1 STO_1 parserStatementListIR_inst)
 
-  2. (Let state be (annotationList { parserStatementListIR_inst }))
+  2. (Let state be (annotationList { parserStatementListIR_inst transitionStatementIR }))
 
   3. (Let IC_2 be $add_state_inst((block), IC_1, nameIR, state))
 
@@ -25894,43 +25916,6 @@ relation ControlLocalDecls_inst: IC' STO' |- controlLocalDeclarationIR*{controlL
         3. Result in : % % |- % ==> IC_2 STO_2 controlLocalDeclarationIR_h_inst :: controlLocalDeclarationIR_t_inst*{controlLocalDeclarationIR_t_inst <- controlLocalDeclarationIR_t_inst*}
 
 ;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:137.1-140.26
-relation Decls_inst: p IC' STO' |- declarationIR*{declarationIR <- declarationIR*} ==> % % %
-
-1. Case analysis on declarationIR*{declarationIR <- declarationIR*}
-
-  1. Case (% matches pattern [])
-
-    1. Group nil: p IC STO |- [] ==> % % %
-
-      1. Result in : % % % |- % ==> IC' STO' []
-
-  2. Case (% matches pattern _ :: _)
-
-    1. (Let declarationIR_h :: declarationIR_t*{declarationIR_t <- declarationIR_t*} be declarationIR*{declarationIR <- declarationIR*})
-
-    2. Group cons-none: p IC_0 STO_0 |- declarationIR_h :: declarationIR_t*{} ==> % % %
-
-      1. (Decl_inst: p IC' STO' |- declarationIR_h ==> IC_1 STO_1 declarationIR'?{declarationIR' <- declarationIR'?})
-
-      2. If ((declarationIR'?{declarationIR' <- declarationIR'?} matches pattern ())), then
-
-        1. (Decls_inst: p IC_1 STO_1 |- declarationIR_t*{declarationIR_t <- declarationIR_t*} ==> IC_2 STO_2 declarationIR_t_inst*{declarationIR_t_inst <- declarationIR_t_inst*})
-
-        2. Result in : % % % |- % ==> IC_2 STO_2 declarationIR_t_inst*{declarationIR_t_inst <- declarationIR_t_inst*}
-
-    3. Group cons-some: p IC_0 STO_0 |- declarationIR_h :: declarationIR_t*{} ==> % % %
-
-      1. (Decl_inst: p IC' STO' |- declarationIR_h ==> IC_1 STO_1 declarationIR'?{declarationIR' <- declarationIR'?})
-
-      2. If ((declarationIR'?{declarationIR' <- declarationIR'?} matches pattern (_))), then
-
-        1. (Let ?(declarationIR_h_inst) be declarationIR'?{declarationIR' <- declarationIR'?})
-
-        2. (Decls_inst: p IC_1 STO_1 |- declarationIR_t*{declarationIR_t <- declarationIR_t*} ==> IC_2 STO_2 declarationIR_t_inst*{declarationIR_t_inst <- declarationIR_t_inst*})
-
-        3. Result in : % % % |- % ==> IC_2 STO_2 declarationIR_h_inst :: declarationIR_t_inst*{declarationIR_t_inst <- declarationIR_t_inst*}
-
-;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:142.1-145.26
 relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
 1. Case analysis on declarationIR
@@ -25977,9 +25962,9 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
             3. (Constructor_inst: (global) IC_inner STO' |- constructor < typeArgumentListIR >( argumentListIR # id_default*{id_default <- id_default*} )==> STO_1 object)
 
-            4. If ((object matches pattern `EXTERN%{%%%}`)), then
+            4. If ((object has type externObject)), then
 
-              1. (Let (extern tid { theta venv renv }) be object)
+              1. (Let (extern tid { theta venv renv }) be (object as externObject))
 
               2. (Let IC_decl be $empty_instantiationContext[path = IC_0.path][global = IC_0.global])
 
@@ -25991,7 +25976,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
               6. (Let renv_merged be $merge_renv_with_extern(renv, IC_decl_post.block.renv))
 
-              7. (Let object_merged be (extern tid { theta venv_merged renv_merged }))
+              7. (Let object_merged be ((extern tid { theta venv_merged renv_merged }) as object))
 
               8. (Let oid be IC_0.path ++ [nameIR])
 
@@ -26023,9 +26008,9 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
             3. (Constructor_inst: cursor' IC_inner STO' |- constructor < typeArgumentListIR >( argumentListIR # id_default*{id_default <- id_default*} )==> STO_1 object)
 
-            4. If ((object matches pattern `EXTERN%{%%%}`)), then
+            4. If ((object has type externObject)), then
 
-              1. (Let (extern tid { theta venv renv }) be object)
+              1. (Let (extern tid { theta venv renv }) be (object as externObject))
 
               2. (Let IC_decl be $empty_instantiationContext[path = IC_0.path][global = IC_0.global])
 
@@ -26037,7 +26022,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
               6. (Let renv_merged be $merge_renv_with_extern(renv, IC_decl_post.block.renv))
 
-              7. (Let object_merged be (extern tid { theta venv_merged renv_merged }))
+              7. (Let object_merged be ((extern tid { theta venv_merged renv_merged }) as object))
 
               8. (Let oid be IC_0.path ++ [nameIR])
 
@@ -26423,6 +26408,43 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
         8. Result in : % % % |- % ==> IC_2 STO' ?()
 
+;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:142.1-145.26
+relation Decls_inst: p IC' STO' |- declarationIR*{declarationIR <- declarationIR*} ==> % % %
+
+1. Case analysis on declarationIR*{declarationIR <- declarationIR*}
+
+  1. Case (% matches pattern [])
+
+    1. Group nil: p IC STO |- [] ==> % % %
+
+      1. Result in : % % % |- % ==> IC' STO' []
+
+  2. Case (% matches pattern _ :: _)
+
+    1. (Let declarationIR_h :: declarationIR_t*{declarationIR_t <- declarationIR_t*} be declarationIR*{declarationIR <- declarationIR*})
+
+    2. Group cons-none: p IC_0 STO_0 |- declarationIR_h :: declarationIR_t*{} ==> % % %
+
+      1. (Decl_inst: p IC' STO' |- declarationIR_h ==> IC_1 STO_1 declarationIR'?{declarationIR' <- declarationIR'?})
+
+      2. If ((declarationIR'?{declarationIR' <- declarationIR'?} matches pattern ())), then
+
+        1. (Decls_inst: p IC_1 STO_1 |- declarationIR_t*{declarationIR_t <- declarationIR_t*} ==> IC_2 STO_2 declarationIR_t_inst*{declarationIR_t_inst <- declarationIR_t_inst*})
+
+        2. Result in : % % % |- % ==> IC_2 STO_2 declarationIR_t_inst*{declarationIR_t_inst <- declarationIR_t_inst*}
+
+    3. Group cons-some: p IC_0 STO_0 |- declarationIR_h :: declarationIR_t*{} ==> % % %
+
+      1. (Decl_inst: p IC' STO' |- declarationIR_h ==> IC_1 STO_1 declarationIR'?{declarationIR' <- declarationIR'?})
+
+      2. If ((declarationIR'?{declarationIR' <- declarationIR'?} matches pattern (_))), then
+
+        1. (Let ?(declarationIR_h_inst) be declarationIR'?{declarationIR' <- declarationIR'?})
+
+        2. (Decls_inst: p IC_1 STO_1 |- declarationIR_t*{declarationIR_t <- declarationIR_t*} ==> IC_2 STO_2 declarationIR_t_inst*{declarationIR_t_inst <- declarationIR_t_inst*})
+
+        3. Result in : % % % |- % ==> IC_2 STO_2 declarationIR_h_inst :: declarationIR_t_inst*{declarationIR_t_inst <- declarationIR_t_inst*}
+
 ;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:147.1-149.17
 relation Program_inst: |- p4program ==> % % % % %
 
@@ -26438,9 +26460,11 @@ relation Program_inst: |- p4program ==> % % % % %
 
   5. If ((declarationIR'*{declarationIR' <- declarationIR'*} matches pattern [])), then
 
-    1. Result in : |- % ==> IC_1.global.cenv IC_1.global.tdenv IC_1.global.renv IC_1.global.venv STO_1
+    1. Debug: STO_1
 
-;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:157.1-160.35
+    2. Result in : |- % ==> IC_1.global.cenv IC_1.global.tdenv IC_1.global.renv IC_1.global.venv STO_1
+
+;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:157.1-161.35
 relation Bind_arg: p_caller IC_caller | p_callee IC_callee_0 STO_0 |- id argumentIR ==> % %
 
 1. Group : p_caller IC_caller | p_callee IC_callee_0 STO_0 |- id argumentIR ==> % %
@@ -26453,7 +26477,7 @@ relation Bind_arg: p_caller IC_caller | p_callee IC_callee_0 STO_0 |- id argumen
 
   4. Result in : % % | % % % |- % % ==> IC_callee_1 STO_1
 
-;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:162.1-165.35
+;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:163.1-167.35
 relation Bind_args: p_caller IC_caller | p_callee IC_callee' STO' |- id*{id <- id*} argumentIR*{argumentIR <- argumentIR*} ==> % %
 
 1. Case analysis on id*{id <- id*}
@@ -26482,7 +26506,7 @@ relation Bind_args: p_caller IC_caller | p_callee IC_callee' STO' |- id*{id <- i
 
         3. Result in : % % | % % % |- % % ==> IC_callee_2 STO_2
 
-;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:172.1-175.35
+;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:174.1-179.35
 relation Constructor_inst: p IC STO_0 |- constructor < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} # id_default'*{id_default' <- id_default'*} )==> % %
 
 1. Case analysis on constructor
@@ -26511,7 +26535,7 @@ relation Constructor_inst: p IC STO_0 |- constructor < typeArgumentIR*{typeArgum
 
       9. (ExternMethods_inst: IC_callee_3 |- methodPrototypeIR*{methodPrototypeIR <- methodPrototypeIR*} ==> IC_callee_4)
 
-      10. (Let object_extern be (extern nameIR { IC_callee_4.block.theta IC_callee_4.block.venv IC_callee_4.block.renv }))
+      10. (Let object_extern be ((extern nameIR { IC_callee_4.block.theta IC_callee_4.block.venv IC_callee_4.block.renv }) as object))
 
       11. Result in : % % % |- % < % >( % # % )==> STO_1 object_extern
 
@@ -26539,17 +26563,15 @@ relation Constructor_inst: p IC STO_0 |- constructor < typeArgumentIR*{typeArgum
 
         8. (ParserLocalDecls_inst: IC_callee_2 STO_1 |- parserLocalDeclarationIR*{parserLocalDeclarationIR <- parserLocalDeclarationIR*} ==> IC_local_0 STO_2 parserLocalDeclarationIR_inst*{parserLocalDeclarationIR_inst <- parserLocalDeclarationIR_inst*})
 
-        9. (Let state_empty be (() { [] }))
+        9. (Let IC_local_1 be $add_state_inst((block), IC_local_0, "accept", ()))
 
-        10. (Let IC_local_1 be $add_state_inst((block), IC_local_0, "accept", state_empty))
+        10. (Let IC_local_2 be $add_state_inst((block), IC_local_1, "reject", ()))
 
-        11. (Let IC_local_2 be $add_state_inst((block), IC_local_1, "reject", state_empty))
+        11. (ParserStates_inst: IC_local_2 STO_2 |- parserStateIR*{parserStateIR <- parserStateIR*} ==> IC_state STO_3)
 
-        12. (ParserStates_inst: IC_local_2 STO_2 |- parserStateIR*{parserStateIR <- parserStateIR*} ==> IC_state STO_3)
+        12. (Let object_parser be ((parser( parameterIR*{parameterIR <- parameterIR*} ){ IC_callee_2.block.venv parserLocalDeclarationIR_inst*{parserLocalDeclarationIR_inst <- parserLocalDeclarationIR_inst*} IC_state.block.senv }) as object))
 
-        13. (Let object_parser be (parser( parameterIR*{parameterIR <- parameterIR*} ){ IC_callee_2.block.venv parserLocalDeclarationIR_inst*{parserLocalDeclarationIR_inst <- parserLocalDeclarationIR_inst*} IC_state.block.senv }))
-
-        14. Result in : % % % |- % < % >( % # % )==> STO_3 object_parser
+        13. Result in : % % % |- % < % >( % # % )==> STO_3 object_parser
 
   3. Case (% matches pattern `CONTROL(%)(%){%APPLY%}`)
 
@@ -26577,7 +26599,7 @@ relation Constructor_inst: p IC STO_0 |- constructor < typeArgumentIR*{typeArgum
 
         9. (Block_inst: IC_local_0 STO_2 |- controlBodyIR ==> IC_local_1 STO_3 controlBodyIR')
 
-        10. (Let object_control be (control( parameterIR*{parameterIR <- parameterIR*} ){ IC_callee_2.block.venv controlLocalDeclarationIR'*{controlLocalDeclarationIR' <- controlLocalDeclarationIR'*} IC_local_1.block.renv controlBodyIR' }))
+        10. (Let object_control be ((control( parameterIR*{parameterIR <- parameterIR*} ){ IC_callee_2.block.venv controlLocalDeclarationIR'*{controlLocalDeclarationIR' <- controlLocalDeclarationIR'*} IC_local_1.block.renv controlBodyIR' }) as object))
 
         11. Result in : % % % |- % < % >( % # % )==> STO_3 object_control
 
@@ -26603,7 +26625,7 @@ relation Constructor_inst: p IC STO_0 |- constructor < typeArgumentIR*{typeArgum
 
       8. (Let IC_callee_3 be $add_values_inst(p_callee, IC_callee_2, id_cparam_default*{id_cparam_default <- id_cparam_default*}, value_default*{value_default <- value_default*}))
 
-      9. (Let object_package be (package{ IC_callee_3.block.theta IC_callee_3.block.venv }))
+      9. (Let object_package be ((package{ IC_callee_3.block.theta IC_callee_3.block.venv }) as object))
 
       10. Result in : % % % |- % < % >( % # % )==> STO_1 object_package
 
@@ -26635,7 +26657,7 @@ relation Constructor_inst: p IC STO_0 |- constructor < typeArgumentIR*{typeArgum
 
               1. (Let venv :: _venv*{_venv <- _venv*} be venv'*{venv' <- venv'*})
 
-              2. (Let object_table be (table nameIR { venv tablePropertyListIR_dynamic }))
+              2. (Let object_table be ((table nameIR { venv tablePropertyListIR_dynamic }) as object))
 
               3. Result in : % % % |- % < % >( % # % )==> STO_1 object_table
 
@@ -26867,7 +26889,7 @@ def $align_cparams_with_args'(({ (id : constructorParameterIR)*{constructorParam
 
             3. Return (constructorParameterIR_match :: constructorParameterIR_aligned*{constructorParameterIR_aligned <- constructorParameterIR_aligned*}, argumentIR_h :: argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*})
 
-;; ../../../../spec-concrete/7.11-instantiation-constructor-call.watsup:304.1-304.59
+;; ../../../../spec-concrete/7.11-instantiation-constructor-call.watsup:309.1-309.59
 def $init_table(tablePropertyListIR)
 
 1. Return tablePropertyListIR

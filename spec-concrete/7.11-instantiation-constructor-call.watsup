@@ -120,8 +120,9 @@ def $align_cparams_with_args'(
 ;;
 
 rule Bind_arg:
-  p_caller IC_caller `| p_callee IC_callee_0 STO_0 |- id argumentIR
-                                                  ==> IC_callee_1 STO_1
+  p_caller IC_caller `|
+  p_callee IC_callee_0 STO_0 |- id argumentIR
+                            ==> IC_callee_1 STO_1
   -- if IC_caller_inner = $enter_path(IC_caller, id)
   -- Argument_inst:
       p_caller IC_caller_inner STO_0 |- argumentIR
@@ -129,18 +130,22 @@ rule Bind_arg:
   -- if IC_callee_1 = $add_value_inst(p_callee, IC_callee_0, id, value)
 
 rule Bind_args/nil:
-  p_caller IC_caller `| p_callee IC_callee STO |- eps eps ==> IC_callee STO
+  p_caller IC_caller `|
+  p_callee IC_callee STO |- eps eps
+                        ==> IC_callee STO
 
 rule Bind_args/cons:
-  p_caller IC_caller `| p_callee IC_callee_0 STO_0 |- (id_h :: id_t*)
-                                                      (argumentIR_h :: argumentIR_t*)
-                                                 ==> IC_callee_2 STO_2
+  p_caller IC_caller `|
+  p_callee IC_callee_0 STO_0 |- (id_h :: id_t*) (argumentIR_h :: argumentIR_t*)
+                            ==> IC_callee_2 STO_2
   -- Bind_arg:
-      p_caller IC_caller `| p_callee IC_callee_0 STO_0 |- id_h argumentIR_h
-                                                      ==> IC_callee_1 STO_1
+      p_caller IC_caller `|
+      p_callee IC_callee_0 STO_0 |- id_h argumentIR_h
+                                ==> IC_callee_1 STO_1
   -- Bind_args:
-      p_caller IC_caller `| p_callee IC_callee_1 STO_1 |- id_t* argumentIR_t*
-                                                      ==> IC_callee_2 STO_2
+      p_caller IC_caller `|
+      p_callee IC_callee_1 STO_1 |- id_t* argumentIR_t*
+                                ==> IC_callee_2 STO_2
 
 ;;
 ;; Constructor instantiation
@@ -152,7 +157,8 @@ rule Bind_args/cons:
 ;;;   `( constructorParameterListIR ) `{ methodPrototypeListIR }
 
 rule Constructor_inst/extern:
-  p IC STO_0 |- (EXTERN nameIR `< typeParameterIR* > `( constructorParameterIR* ) `{ methodPrototypeIR* })
+  p IC STO_0 |- (EXTERN nameIR `< typeParameterIR* >
+                  `( constructorParameterIR* ) `{ methodPrototypeIR* })
                   `< typeArgumentIR* > `( argumentIR* `# id_default* )
             ==> STO_1 object_extern
   ---- ;; initialize the callee context
@@ -213,11 +219,10 @@ rule Constructor_inst/parser:
       IC_callee_2 STO_1 |- parserLocalDeclarationIR*
                        ==> IC_local_0 STO_2 parserLocalDeclarationIR_inst*
   ---- ;; add accept and reject states
-  -- if state_empty = `EMPTY `{ eps }
   -- if IC_local_1
-      = $add_state_inst(BLOCK, IC_local_0, "accept", state_empty)
+      = $add_state_inst(BLOCK, IC_local_0, "accept", `EMPTY)
   -- if IC_local_2
-      = $add_state_inst(BLOCK, IC_local_1, "reject", state_empty)
+      = $add_state_inst(BLOCK, IC_local_1, "reject", `EMPTY)
   ---- ;; instantiate parser states
   -- ParserStates_inst:
       IC_local_2 STO_2 |- parserStateIR* ==> IC_state STO_3
