@@ -10009,15 +10009,17 @@ def $find_return_type(TC)
 
     2. Return ?(typeIR_ret)
 
-3. If (((action) = TC.local.kind)), then
+3. Case analysis on TC.local.kind
 
-  1. Return ?(((void) as typeIR))
+  1. Case (% matches pattern `ACTION`)
 
-4. If (((control_apply_method) = TC.local.kind)), then
+    1. Return ?(((void) as typeIR))
 
-  1. Return ?(((void) as typeIR))
+  2. Case (% matches pattern `CONTROL_APPLY_METHOD`)
 
-5. Otherwise
+    1. Return ?(((void) as typeIR))
+
+4. Otherwise
 
   1. Return ?()
 
@@ -10747,11 +10749,11 @@ relation ParameterType_wf: bound |- (direction typeIR _id value''?{value'' <- va
 
           1. Case analysis on direction
 
-            1. Case (% = (in))
+            1. Case (% matches pattern `IN`)
 
               1. The relation holds
 
-            2. Case (% = ())
+            2. Case (% matches pattern ``EMPTY`)
 
               1. The relation holds
 
@@ -12933,13 +12935,15 @@ relation Eval_static: p TC |- (expressionIR # (( _typeIR' _ctk'' ))) ~> %
 
     2. Group literalExpressionIR-boolean: p TC |- ((booleanLiteral as expressionIR) # (( _typeIR _ctk ))) ~> %
 
-      1. If (((true) = booleanLiteral)), then
+      1. Case analysis on booleanLiteral
 
-        1. Result in : % % |- % ~> ((b true) as value)
+        1. Case (% matches pattern `TRUE`)
 
-      2. If (((false) = booleanLiteral)), then
+          1. Result in : % % |- % ~> ((b true) as value)
 
-        1. Result in : % % |- % ~> ((b false) as value)
+        2. Case (% matches pattern `FALSE`)
+
+          1. Result in : % % |- % ~> ((b false) as value)
 
   2. Case (% has type numberLiteral)
 
@@ -12999,29 +13003,31 @@ relation Eval_static: p TC |- (expressionIR # (( _typeIR' _ctk'' ))) ~> %
 
     2. Group unaryExpressionIR: p TC |- (((unop typedExpressionIR) as expressionIR) # (( _typeIR _ctk ))) ~> %
 
-      1. If (((~) = unop)), then
+      1. Case analysis on unop
 
-        1. (Eval_static: p TC |- typedExpressionIR ~> value)
+        1. Case (% matches pattern `~`)
 
-        2. Result in : % % |- % ~> $un_bnot(value)
+          1. (Eval_static: p TC |- typedExpressionIR ~> value)
 
-      2. If (((!) = unop)), then
+          2. Result in : % % |- % ~> $un_bnot(value)
 
-        1. (Eval_static: p TC |- typedExpressionIR ~> value)
+        2. Case (% matches pattern `!`)
 
-        2. Result in : % % |- % ~> $un_lnot(value)
+          1. (Eval_static: p TC |- typedExpressionIR ~> value)
 
-      3. If (((+) = unop)), then
+          2. Result in : % % |- % ~> $un_lnot(value)
 
-        1. (Eval_static: p TC |- typedExpressionIR ~> value)
+        3. Case (% matches pattern `+`)
 
-        2. Result in : % % |- % ~> $un_plus(value)
+          1. (Eval_static: p TC |- typedExpressionIR ~> value)
 
-      4. If (((-) = unop)), then
+          2. Result in : % % |- % ~> $un_plus(value)
 
-        1. (Eval_static: p TC |- typedExpressionIR ~> value)
+        4. Case (% matches pattern `-`)
 
-        2. Result in : % % |- % ~> $un_minus(value)
+          1. (Eval_static: p TC |- typedExpressionIR ~> value)
+
+          2. Result in : % % |- % ~> $un_minus(value)
 
   7. Case (% has type binaryExpressionIR)
 
@@ -13029,165 +13035,167 @@ relation Eval_static: p TC |- (expressionIR # (( _typeIR' _ctk'' ))) ~> %
 
     2. Group binaryExpressionIR: p TC |- (((typedExpressionIR_l binop typedExpressionIR_r) as expressionIR) # (( _typeIR _ctk ))) ~> %
 
-      1. If (((+) = binop)), then
+      1. Case analysis on binop
 
-        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        1. Case (% matches pattern `+`)
 
-        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-        3. Result in : % % |- % ~> $bin_plus(value_l, value_r)
+          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-      2. If (((|+|) = binop)), then
+          3. Result in : % % |- % ~> $bin_plus(value_l, value_r)
 
-        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        2. Case (% matches pattern `|+|`)
 
-        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-        3. Result in : % % |- % ~> $bin_satplus(value_l, value_r)
+          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-      3. If (((-) = binop)), then
+          3. Result in : % % |- % ~> $bin_satplus(value_l, value_r)
 
-        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        3. Case (% matches pattern `-`)
 
-        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-        3. Result in : % % |- % ~> $bin_minus(value_l, value_r)
+          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-      4. If (((|-|) = binop)), then
+          3. Result in : % % |- % ~> $bin_minus(value_l, value_r)
 
-        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        4. Case (% matches pattern `|-|`)
 
-        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-        3. Result in : % % |- % ~> $bin_satminus(value_l, value_r)
+          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-      5. If (((*) = binop)), then
+          3. Result in : % % |- % ~> $bin_satminus(value_l, value_r)
 
-        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        5. Case (% matches pattern `*`)
 
-        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-        3. Result in : % % |- % ~> $bin_mul(value_l, value_r)
+          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-      6. If (((/) = binop)), then
+          3. Result in : % % |- % ~> $bin_mul(value_l, value_r)
 
-        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        6. Case (% matches pattern `/`)
 
-        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-        3. Result in : % % |- % ~> $bin_div(value_l, value_r)
+          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-      7. If (((<<) = binop)), then
+          3. Result in : % % |- % ~> $bin_div(value_l, value_r)
 
-        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        7. Case (% matches pattern `<<`)
 
-        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-        3. Result in : % % |- % ~> $bin_shl(value_l, value_r)
+          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-      8. If (((>>) = binop)), then
+          3. Result in : % % |- % ~> $bin_shl(value_l, value_r)
 
-        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        8. Case (% matches pattern `>>`)
 
-        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-        3. Result in : % % |- % ~> $bin_shr(value_l, value_r)
+          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-      9. If (((<=) = binop)), then
+          3. Result in : % % |- % ~> $bin_shr(value_l, value_r)
 
-        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        9. Case (% matches pattern `<=`)
 
-        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-        3. Result in : % % |- % ~> ((b $bin_le(value_l, value_r)) as value)
+          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-      10. If (((>=) = binop)), then
+          3. Result in : % % |- % ~> ((b $bin_le(value_l, value_r)) as value)
 
-        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        10. Case (% matches pattern `>=`)
 
-        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-        3. Result in : % % |- % ~> ((b $bin_ge(value_l, value_r)) as value)
+          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-      11. If (((<) = binop)), then
+          3. Result in : % % |- % ~> ((b $bin_ge(value_l, value_r)) as value)
 
-        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        11. Case (% matches pattern `<`)
 
-        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-        3. Result in : % % |- % ~> ((b $bin_lt(value_l, value_r)) as value)
+          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-      12. If (((>) = binop)), then
+          3. Result in : % % |- % ~> ((b $bin_lt(value_l, value_r)) as value)
 
-        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        12. Case (% matches pattern `>`)
 
-        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-        3. Result in : % % |- % ~> ((b $bin_gt(value_l, value_r)) as value)
+          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-      13. If (((==) = binop)), then
+          3. Result in : % % |- % ~> ((b $bin_gt(value_l, value_r)) as value)
 
-        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        13. Case (% matches pattern `==`)
 
-        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-        3. Result in : % % |- % ~> ((b $bin_eq(value_l, value_r)) as value)
+          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-      14. If (((!=) = binop)), then
+          3. Result in : % % |- % ~> ((b $bin_eq(value_l, value_r)) as value)
 
-        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        14. Case (% matches pattern `!=`)
 
-        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-        3. Result in : % % |- % ~> ((b $bin_ne(value_l, value_r)) as value)
+          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-      15. If (((&) = binop)), then
+          3. Result in : % % |- % ~> ((b $bin_ne(value_l, value_r)) as value)
 
-        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        15. Case (% matches pattern `&`)
 
-        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-        3. Result in : % % |- % ~> $bin_band(value_l, value_r)
+          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-      16. If (((^) = binop)), then
+          3. Result in : % % |- % ~> $bin_band(value_l, value_r)
 
-        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        16. Case (% matches pattern `^`)
 
-        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-        3. Result in : % % |- % ~> $bin_bxor(value_l, value_r)
+          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-      17. If (((|) = binop)), then
+          3. Result in : % % |- % ~> $bin_bxor(value_l, value_r)
 
-        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        17. Case (% matches pattern `|`)
 
-        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-        3. Result in : % % |- % ~> $bin_bor(value_l, value_r)
+          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-      18. If (((++) = binop)), then
+          3. Result in : % % |- % ~> $bin_bor(value_l, value_r)
 
-        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        18. Case (% matches pattern `++`)
 
-        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-        3. Result in : % % |- % ~> $bin_concat(value_l, value_r)
+          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-      19. If (((&&) = binop)), then
+          3. Result in : % % |- % ~> $bin_concat(value_l, value_r)
 
-        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        19. Case (% matches pattern `&&`)
 
-        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-        3. Result in : % % |- % ~> $bin_land(value_l, value_r)
+          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-      20. If (((||) = binop)), then
+          3. Result in : % % |- % ~> $bin_land(value_l, value_r)
 
-        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        20. Case (% matches pattern `||`)
 
-        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-        3. Result in : % % |- % ~> $bin_lor(value_l, value_r)
+          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+
+          3. Result in : % % |- % ~> $bin_lor(value_l, value_r)
 
   8. Case (% has type ternaryExpressionIR)
 
@@ -13514,13 +13522,13 @@ relation Type_ok: p TC |- typeOrVoid : % # %
 
     4. Group fixbit: p TC |- (baseType as typeOrVoid) : % # %
 
-      1. If (((bit) = baseType)), then
+      1. Case analysis on baseType
 
-        1. Result in : % % |- % : ((bit< 1 >) as typeIR) # []
+        1. Case (% matches pattern `BIT`)
 
-      2. Case analysis on baseType
+          1. Result in : % % |- % : ((bit< 1 >) as typeIR) # []
 
-        1. Case (% matches pattern `BIT<%>`)
+        2. Case (% matches pattern `BIT<%>`)
 
           1. (Let (bit< int >) be baseType)
 
@@ -13530,7 +13538,7 @@ relation Type_ok: p TC |- typeOrVoid : % # %
 
             2. Result in : % % |- % : ((bit< n >) as typeIR) # []
 
-        2. Case (% matches pattern `BIT<(%)>`)
+        3. Case (% matches pattern `BIT<(%)>`)
 
           1. (Let (bit<( expression )>) be baseType)
 
@@ -13610,7 +13618,7 @@ relation Type_ok: p TC |- typeOrVoid : % # %
 
     2. Group specializedType: p TC |- ((prefixedTypeName < typeArgumentList' >) as typeOrVoid) : % # %
 
-      1. If ((() = typeArgumentList')), then
+      1. If ((typeArgumentList' matches pattern ``EMPTY`)), then
 
         1. (Let prefixedNameIR be $prefixedTypeName(prefixedTypeName))
 
@@ -13899,15 +13907,17 @@ relation Sub_expl_canon_neq: typeIR'''''' <: typeIR'''''''
 
           2. Group fixint: ((int< nat >) as typeIR) <: (numberTypeIR as typeIR)
 
-            1. If (((int) = numberTypeIR)), then
+            1. Case analysis on numberTypeIR
 
-              1. The relation holds
+              1. Case (% matches pattern `INT`)
 
-            2. If ((numberTypeIR matches pattern `INT<%>`)), then
+                1. The relation holds
 
-              1. The relation holds
+              2. Case (% matches pattern `INT<%>`)
 
-            3. If (((bit< nat >) = numberTypeIR)), then
+                1. The relation holds
+
+            2. If (((bit< nat >) = numberTypeIR)), then
 
               1. The relation holds
 
@@ -14675,17 +14685,19 @@ relation Expr_ok: p TC |- expression''' : %
 
     2. Group literalExpression-boolean: p TC |- (booleanLiteral as expression) : %
 
-      1. If (((true) = booleanLiteral)), then
+      1. Case analysis on booleanLiteral
 
-        1. (Let expressionNoteIR be (( ((bool) as typeIR) (lctk) )))
+        1. Case (% matches pattern `TRUE`)
 
-        2. Result in : % % |- % : (((true) as expressionIR) # expressionNoteIR)
+          1. (Let expressionNoteIR be (( ((bool) as typeIR) (lctk) )))
 
-      2. If (((false) = booleanLiteral)), then
+          2. Result in : % % |- % : (((true) as expressionIR) # expressionNoteIR)
 
-        1. (Let expressionNoteIR be (( ((bool) as typeIR) (lctk) )))
+        2. Case (% matches pattern `FALSE`)
 
-        2. Result in : % % |- % : (((false) as expressionIR) # expressionNoteIR)
+          1. (Let expressionNoteIR be (( ((bool) as typeIR) (lctk) )))
+
+          2. Result in : % % |- % : (((false) as expressionIR) # expressionNoteIR)
 
   2. Case (% has type numberLiteral)
 
@@ -14815,7 +14827,7 @@ relation Expr_ok: p TC |- expression''' : %
 
       1. Case analysis on unop
 
-        1. Case (% = (+))
+        1. Case (% matches pattern `+`)
 
           1. (Expr_ok: p TC |- expression : typedExpressionIR)
 
@@ -14829,7 +14841,7 @@ relation Expr_ok: p TC |- expression''' : %
 
             3. Result in : % % |- % : (((unop typedExpressionIR_reduced) as expressionIR) # expressionNoteIR)
 
-        2. Case (% = (-))
+        2. Case (% matches pattern `-`)
 
           1. (Expr_ok: p TC |- expression : typedExpressionIR)
 
@@ -14931,9 +14943,9 @@ relation Expr_ok: p TC |- expression''' : %
 
             3. (Let (_expressionIR' # (( _typeIR ctk_r_reduced ))) be typedExpressionIR_r_reduced)
 
-            4. Case analysis on ctk_r_reduced
+            4. Case analysis on (ctk_r_reduced matches pattern `LCTK`)
 
-              1. Case (% = (lctk))
+              1. Case true
 
                 1. (Eval_static: p TC |- typedExpressionIR_r_reduced ~> value_r)
 
@@ -14951,7 +14963,7 @@ relation Expr_ok: p TC |- expression''' : %
 
                     3. Result in : % % |- % : (((typedExpressionIR_l_reduced binop typedExpressionIR_r_reduced) as expressionIR) # expressionNoteIR)
 
-              2. Case (% =/= (lctk))
+              2. Case false
 
                 1. (Let ctk_reduced be $join_ctk(ctk_l_reduced, ctk_r_reduced))
 
@@ -14985,7 +14997,7 @@ relation Expr_ok: p TC |- expression''' : %
 
             3. Result in : % % |- % : (((typedExpressionIR_l_reduced binop typedExpressionIR_r_reduced) as expressionIR) # expressionNoteIR)
 
-          5. If ((ctk_r_reduced = (lctk))), then
+          5. If ((ctk_r_reduced matches pattern `LCTK`)), then
 
             1. If ($is_arbitrary_int_typeIR(typeIR_r_reduced)), then
 
@@ -15267,23 +15279,21 @@ relation Expr_ok: p TC |- expression''' : %
 
                       1. (Let defaultExpression be (expression' as defaultExpression))
 
-                      2. If ((defaultExpression = (...))), then
+                      2. (Let expression_e_h*{expression_e_h <- expression_e_h*} be $rev_<expression>(expression_e_h_rev*{expression_e_h_rev <- expression_e_h_rev*}))
 
-                        1. (Let expression_e_h*{expression_e_h <- expression_e_h*} be $rev_<expression>(expression_e_h_rev*{expression_e_h_rev <- expression_e_h_rev*}))
+                      3. If (~((...) as expression) is in expression_e_h*{expression_e_h <- expression_e_h*}), then
 
-                        2. If (~((...) as expression) is in expression_e_h*{expression_e_h <- expression_e_h*}), then
+                        1. (Expr_ok: p TC |- expression_e_h : typedExpressionIR_e_h)*{expression_e_h <- expression_e_h*, typedExpressionIR_e_h <- typedExpressionIR_e_h*}
 
-                          1. (Expr_ok: p TC |- expression_e_h : typedExpressionIR_e_h)*{expression_e_h <- expression_e_h*, typedExpressionIR_e_h <- typedExpressionIR_e_h*}
+                        2. (Let (_expressionIR # (( typeIR_e_h ctk_e_h ))) be typedExpressionIR_e_h)*{_expressionIR <- _expressionIR*, ctk_e_h <- ctk_e_h*, typeIR_e_h <- typeIR_e_h*, typedExpressionIR_e_h <- typedExpressionIR_e_h*}
 
-                          2. (Let (_expressionIR # (( typeIR_e_h ctk_e_h ))) be typedExpressionIR_e_h)*{_expressionIR <- _expressionIR*, ctk_e_h <- ctk_e_h*, typeIR_e_h <- typeIR_e_h*, typedExpressionIR_e_h <- typedExpressionIR_e_h*}
+                        3. (Let typeIR be ((seq< typeIR_e_h*{typeIR_e_h <- typeIR_e_h*} ,...>) as typeIR))
 
-                          3. (Let typeIR be ((seq< typeIR_e_h*{typeIR_e_h <- typeIR_e_h*} ,...>) as typeIR))
+                        4. (Let ctk be $joins_ctk(ctk_e_h*{ctk_e_h <- ctk_e_h*}))
 
-                          4. (Let ctk be $joins_ctk(ctk_e_h*{ctk_e_h <- ctk_e_h*}))
+                        5. (Let expressionNoteIR be (( typeIR ctk )))
 
-                          5. (Let expressionNoteIR be (( typeIR ctk )))
-
-                          6. Result in : % % |- % : (((seq{ typedExpressionIR_e_h*{typedExpressionIR_e_h <- typedExpressionIR_e_h*} ,...}) as expressionIR) # expressionNoteIR)
+                        6. Result in : % % |- % : (((seq{ typedExpressionIR_e_h*{typedExpressionIR_e_h <- typedExpressionIR_e_h*} ,...}) as expressionIR) # expressionNoteIR)
 
           2. Case (% has type recordElementExpression)
 
@@ -15679,7 +15689,7 @@ relation Expr_ok: p TC |- expression''' : %
 
                 1. (Let (tuple< typeIR_e*{typeIR_e <- typeIR_e*} >) be (typeIR' as tupleTypeIR))
 
-                2. If ((ctk_index = (lctk))), then
+                2. If ((ctk_index matches pattern `LCTK`)), then
 
                   1. (Eval_static: p TC |- typedExpressionIR_index_reduced ~> value_index)
 
@@ -15699,9 +15709,9 @@ relation Expr_ok: p TC |- expression''' : %
 
                 1. (Let (typeIR [ n_size ]) be (typeIR' as headerStackTypeIR))
 
-                2. Case analysis on ctk_index
+                2. Case analysis on (ctk_index matches pattern `LCTK`)
 
-                  1. Case (% = (lctk))
+                  1. Case true
 
                     1. (Eval_static: p TC |- typedExpressionIR_index_reduced ~> value_index)
 
@@ -15717,7 +15727,7 @@ relation Expr_ok: p TC |- expression''' : %
 
                         2. Result in : % % |- % : (((typedExpressionIR_base [ typedExpressionIR_index_reduced ]) as expressionIR) # expressionNoteIR)
 
-                  2. Case (% =/= (lctk))
+                  2. Case false
 
                     1. (Let expressionNoteIR be (( typeIR (dyn) )))
 
@@ -15759,7 +15769,7 @@ relation Expr_ok: p TC |- expression''' : %
 
                 3. (Let (_expressionIR'' # (( typeIR_lo_reduced ctk_lo_reduced ))) be typedExpressionIR_lo_reduced)
 
-                4. If ((ctk_hi_reduced = (lctk))), then
+                4. If ((ctk_hi_reduced matches pattern `LCTK`)), then
 
                   1. (Eval_static: p TC |- typedExpressionIR_hi_reduced ~> value_hi)
 
@@ -15769,7 +15779,7 @@ relation Expr_ok: p TC |- expression''' : %
 
                     1. (Let n_hi be (int as nat))
 
-                    2. If ((ctk_lo_reduced = (lctk))), then
+                    2. If ((ctk_lo_reduced matches pattern `LCTK`)), then
 
                       1. (Eval_static: p TC |- typedExpressionIR_lo_reduced ~> value_lo)
 
@@ -15997,11 +16007,11 @@ relation Lvalue_ok: p TC |- lvalue : %
 
           1. Case analysis on direction
 
-            1. Case (% = (out))
+            1. Case (% matches pattern `OUT`)
 
               1. Result in : % % |- % : ((prefixedNameIR as lvalueIR) #( typeIR ))
 
-            2. Case (% = (inout))
+            2. Case (% matches pattern `INOUT`)
 
               1. Result in : % % |- % : ((prefixedNameIR as lvalueIR) #( typeIR ))
 
@@ -16131,9 +16141,9 @@ relation Lvalue_ok: p TC |- lvalue : %
 
           1. (Let ?(typedExpressionIR_index_reduced) be typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
-          2. Case analysis on ctk_index
+          2. Case analysis on (ctk_index matches pattern `LCTK`)
 
-            1. Case (% = (lctk))
+            1. Case true
 
               1. (Eval_static: p TC |- typedExpressionIR_index_reduced ~> value_index)
 
@@ -16149,7 +16159,7 @@ relation Lvalue_ok: p TC |- lvalue : %
 
                   2. Result in : % % |- % : typedLvalueIR
 
-            2. Case (% =/= (lctk))
+            2. Case false
 
               1. (Let typedLvalueIR be ((typedLvalueIR_base [ typedExpressionIR_index_reduced ]) #( typeIR )))
 
@@ -16187,7 +16197,7 @@ relation Lvalue_ok: p TC |- lvalue : %
 
             3. (Let (_expressionIR' # (( typeIR_lo_reduced ctk_lo_reduced ))) be typedExpressionIR_lo_reduced)
 
-            4. If ((ctk_hi_reduced = (lctk))), then
+            4. If ((ctk_hi_reduced matches pattern `LCTK`)), then
 
               1. (Eval_static: p TC |- typedExpressionIR_hi_reduced ~> value_hi)
 
@@ -16197,7 +16207,7 @@ relation Lvalue_ok: p TC |- lvalue : %
 
                 1. (Let n_hi be (int as nat))
 
-                2. If ((ctk_lo_reduced = (lctk))), then
+                2. If ((ctk_lo_reduced matches pattern `LCTK`)), then
 
                   1. (Eval_static: p TC |- typedExpressionIR_lo_reduced ~> value_lo)
 
@@ -16432,33 +16442,35 @@ relation Stmt_ok: p' TC' f' |- statement : % % %
 
       2. Group returnStatement: (local) TC f |- (returnStatement as statement) : % % %
 
-        1. If (((return;) = returnStatement)), then
+        1. Case analysis on returnStatement
 
-          1. If ((?(((void) as typeIR)) = $find_return_type(TC'))), then
+          1. Case (% matches pattern `RETURN;`)
 
-            1. Result in : % % % |- % : TC' (ret) ((return;) as statementIR)
+            1. If ((?(((void) as typeIR)) = $find_return_type(TC'))), then
 
-        2. If ((returnStatement matches pattern `RETURN%;`)), then
+              1. Result in : % % % |- % : TC' (ret) ((return;) as statementIR)
 
-          1. (Let (return expression ;) be returnStatement)
+          2. Case (% matches pattern `RETURN%;`)
 
-          2. (Expr_ok: (local) TC' |- expression : typedExpressionIR)
+            1. (Let (return expression ;) be returnStatement)
 
-          3. (Let (_expressionIR # (( typeIR _ctk ))) be typedExpressionIR)
+            2. (Expr_ok: (local) TC' |- expression : typedExpressionIR)
 
-          4. (Let typeIR'?{typeIR' <- typeIR'?} be $find_return_type(TC'))
+            3. (Let (_expressionIR # (( typeIR _ctk ))) be typedExpressionIR)
 
-          5. If ((typeIR'?{typeIR' <- typeIR'?} matches pattern (_))), then
+            4. (Let typeIR'?{typeIR' <- typeIR'?} be $find_return_type(TC'))
 
-            1. (Let ?(typeIR_ret) be typeIR'?{typeIR' <- typeIR'?})
+            5. If ((typeIR'?{typeIR' <- typeIR'?} matches pattern (_))), then
 
-            2. (Let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} be $coerce_unary(typedExpressionIR, typeIR_ret))
+              1. (Let ?(typeIR_ret) be typeIR'?{typeIR' <- typeIR'?})
 
-            3. If ((typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches pattern (_))), then
+              2. (Let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} be $coerce_unary(typedExpressionIR, typeIR_ret))
 
-              1. (Let ?(typedExpressionIR_cast) be typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
+              3. If ((typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches pattern (_))), then
 
-              2. Result in : % % % |- % : TC' (ret) ((return typedExpressionIR_cast ;) as statementIR)
+                1. (Let ?(typedExpressionIR_cast) be typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
+
+                2. Result in : % % % |- % : TC' (ret) ((return typedExpressionIR_cast ;) as statementIR)
 
     2. Case (% has type blockStatement)
 
@@ -16545,7 +16557,7 @@ relation BlockElementStmt_ok: TC_0 f |- blockElementStatement : % % %
 
     2. Group variableDeclaration: TC_0 f |- ((annotationList type name initializerOpt ;) as blockElementStatement) : % % %
 
-      1. If ((() = initializerOpt)), then
+      1. If ((initializerOpt matches pattern ``EMPTY`)), then
 
         1. (Type_ok: (local) TC_0 |- (type as typeOrVoid) : typeIR # tid*{tid <- tid*})
 
@@ -17011,7 +17023,7 @@ relation ParserStmt_ok: TC_0' |- parserStatement'' : % %
 
     2. Group variableDeclaration: TC_0 |- ((annotationList type name initializerOpt ;) as parserStatement) : % %
 
-      1. If ((() = initializerOpt)), then
+      1. If ((initializerOpt matches pattern ``EMPTY`)), then
 
         1. (Type_ok: (local) TC_0' |- (type as typeOrVoid) : typeIR # tid*{tid <- tid*})
 
@@ -17261,7 +17273,7 @@ relation ParserLocalDecl_ok: TC_0 |- parserLocalDeclaration : % %
 
     2. Group variableDeclaration: TC_0 |- ((annotationList type name initializerOpt ;) as parserLocalDeclaration) : % %
 
-      1. If ((() = initializerOpt)), then
+      1. If ((initializerOpt matches pattern ``EMPTY`)), then
 
         1. (Type_ok: (block) TC_0 |- (type as typeOrVoid) : typeIR # tid*{tid <- tid*})
 
@@ -17323,7 +17335,7 @@ relation ParserLocalDecl_ok: TC_0 |- parserLocalDeclaration : % %
 
           2. (Let (_expressionIR # (( _typeIR ctk ))) be typedExpressionIR)
 
-          3. If ((ctk =/= (dyn))), then
+          3. If (~(ctk matches pattern `DYN`)), then
 
             1. (Let nameIR be $name(name))
 
@@ -17648,19 +17660,19 @@ relation TableEntry_keyset_ok: TC TBLC |- keysetExpression : % %
 
           3. Case analysis on TBLC.mode
 
-            1. Case (% = (nopri))
+            1. Case (% matches pattern `NOPRI`)
 
               1. (Let TBLS be (nolpm))
 
               2. Result in : % % |- % : TBLS ((( [(default)] )) as keysetExpressionIR)
 
-            2. Case (% = (pri))
+            2. Case (% matches pattern `PRI`)
 
               1. (Let TBLS be (nolpm))
 
               2. Result in : % % |- % : TBLS ((( [(default)] )) as keysetExpressionIR)
 
-            3. Case (% = (prilpm))
+            3. Case (% matches pattern `PRILPM`)
 
               1. (Let TBLS be (nolpm))
 
@@ -17682,19 +17694,19 @@ relation TableEntry_keyset_ok: TC TBLC |- keysetExpression : % %
 
           3. Case analysis on TBLC.mode
 
-            1. Case (% = (nopri))
+            1. Case (% matches pattern `NOPRI`)
 
               1. (Let TBLS be (nolpm))
 
               2. Result in : % % |- % : TBLS ((( [(_)] )) as keysetExpressionIR)
 
-            2. Case (% = (pri))
+            2. Case (% matches pattern `PRI`)
 
               1. (Let TBLS be (nolpm))
 
               2. Result in : % % |- % : TBLS ((( [(_)] )) as keysetExpressionIR)
 
-            3. Case (% = (prilpm))
+            3. Case (% matches pattern `PRILPM`)
 
               1. (Let TBLS be (nolpm))
 
@@ -17770,19 +17782,19 @@ relation TableEntry_keyset_ok: TC TBLC |- keysetExpression : % %
 
         3. Case analysis on TBLC.mode
 
-          1. Case (% = (nopri))
+          1. Case (% matches pattern `NOPRI`)
 
             1. (Let TBLS be (nolpm))
 
             2. Result in : % % |- % : TBLS ((default) as keysetExpressionIR)
 
-          2. Case (% = (pri))
+          2. Case (% matches pattern `PRI`)
 
             1. (Let TBLS be (nolpm))
 
             2. Result in : % % |- % : TBLS ((default) as keysetExpressionIR)
 
-          3. Case (% = (prilpm))
+          3. Case (% matches pattern `PRILPM`)
 
             1. (Let TBLS be (nolpm))
 
@@ -17804,19 +17816,19 @@ relation TableEntry_keyset_ok: TC TBLC |- keysetExpression : % %
 
         3. Case analysis on TBLC.mode
 
-          1. Case (% = (nopri))
+          1. Case (% matches pattern `NOPRI`)
 
             1. (Let TBLS be (nolpm))
 
             2. Result in : % % |- % : TBLS ((_) as keysetExpressionIR)
 
-          2. Case (% = (pri))
+          2. Case (% matches pattern `PRI`)
 
             1. (Let TBLS be (nolpm))
 
             2. Result in : % % |- % : TBLS ((_) as keysetExpressionIR)
 
-          3. Case (% = (prilpm))
+          3. Case (% matches pattern `PRILPM`)
 
             1. (Let TBLS be (nolpm))
 
@@ -17874,7 +17886,7 @@ relation TableEntry_priority_ok: TC tableContext' TBLS |- tableEntryPriority''?{
 
     1. Group non-specified: TC tableContext TBLS |- ?() : % %
 
-      1. If ((tableContext'.mode = (nopri))), then
+      1. If ((tableContext'.mode matches pattern `NOPRI`)), then
 
         1. Result in : % % % |- % : tableContext' ?()
 
@@ -17892,7 +17904,7 @@ relation TableEntry_priority_ok: TC tableContext' TBLS |- tableEntryPriority''?{
 
       4. Case analysis on tableContext'.mode
 
-        1. Case (% = (pri))
+        1. Case (% matches pattern `PRI`)
 
           1. Case analysis on tableContext'.priorities.values
 
@@ -17954,7 +17966,7 @@ relation TableEntry_priority_ok: TC tableContext' TBLS |- tableEntryPriority''?{
 
                   5. Result in : % % % |- % : TBLC_1 ?((priority= (d (n as int)) :))
 
-        2. Case (% = (prilpm))
+        2. Case (% matches pattern `PRILPM`)
 
           1. Case analysis on tableContext'.priorities.values
 
@@ -18030,7 +18042,7 @@ relation TableEntry_priority_ok: TC tableContext' TBLS |- tableEntryPriority''?{
 
           1. Case analysis on tableContext'.mode
 
-            1. Case (% = (pri))
+            1. Case (% matches pattern `PRI`)
 
               1. If (~tableContext'.entries.const), then
 
@@ -18064,7 +18076,7 @@ relation TableEntry_priority_ok: TC tableContext' TBLS |- tableEntryPriority''?{
 
                         3. Result in : % % % |- % : TBLC_1 ?((priority= numberLiteral :))
 
-            2. Case (% = (prilpm))
+            2. Case (% matches pattern `PRILPM`)
 
               1. If (~tableContext'.entries.const), then
 
@@ -18106,7 +18118,7 @@ relation TableEntry_priority_ok: TC tableContext' TBLS |- tableEntryPriority''?{
 
           1. Case analysis on tableContext'.mode
 
-            1. Case (% = (pri))
+            1. Case (% matches pattern `PRI`)
 
               1. If (~tableContext'.entries.const), then
 
@@ -18156,7 +18168,7 @@ relation TableEntry_priority_ok: TC tableContext' TBLS |- tableEntryPriority''?{
 
                           3. Result in : % % % |- % : TBLC_1 ?((priority=( typedExpressionIR ):))
 
-            2. Case (% = (prilpm))
+            2. Case (% matches pattern `PRILPM`)
 
               1. If (~tableContext'.entries.const), then
 
@@ -18583,7 +18595,7 @@ relation ControlLocalDecl_ok: TC_0 |- controlLocalDeclaration : % %
 
     2. Group variableDeclaration: TC_0 |- ((annotationList type name initializerOpt ;) as controlLocalDeclaration) : % %
 
-      1. If ((() = initializerOpt)), then
+      1. If ((initializerOpt matches pattern ``EMPTY`)), then
 
         1. (Type_ok: (block) TC_0 |- (type as typeOrVoid) : typeIR # tid*{tid <- tid*})
 
@@ -18941,7 +18953,7 @@ relation Decl_ok: p' TC_0 |- declaration : % %
 
         6. (Block_ok: TC_3 (cont) |- blockStatement : _typingContext f blockStatementIR)
 
-        7. If ((f = (ret))), then
+        7. If ((f matches pattern `RET`)), then
 
           1. (Let rid be $rid(name, parameterList))
 
@@ -19727,7 +19739,7 @@ relation Call_convention_expr_ok: p TC actctxt |- (direction typeIR_param _id _v
 
   1. Case analysis on direction
 
-    1. Case (% = (out))
+    1. Case (% matches pattern `OUT`)
 
       1. (Let (_expressionIR # (( typeIR_arg _ctk ))) be typedExpressionIR_arg)
 
@@ -19737,7 +19749,7 @@ relation Call_convention_expr_ok: p TC actctxt |- (direction typeIR_param _id _v
 
           1. Result in : % % % |- % @ % : typedExpressionIR_arg
 
-    2. Case (% = (inout))
+    2. Case (% matches pattern `INOUT`)
 
       1. (Let (_expressionIR # (( typeIR_arg _ctk ))) be typedExpressionIR_arg)
 
@@ -19751,25 +19763,27 @@ relation Call_convention_expr_ok: p TC actctxt |- (direction typeIR_param _id _v
 
   1. Group empty: p TC actctxt |- (() typeIR_param _id _value?{}) @ typedExpressionIR_arg : %
 
-    1. If (((action) = actctxt)), then
+    1. Case analysis on actctxt
 
-      1. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $coerce_unary(typedExpressionIR_arg, typeIR_param))
+      1. Case (% matches pattern `ACTION`)
 
-      2. If ((typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches pattern (_))), then
+        1. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $coerce_unary(typedExpressionIR_arg, typeIR_param))
 
-        1. (Let ?(typedExpressionIR_arg_cast) be typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
+        2. If ((typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches pattern (_))), then
 
-        2. Result in : % % % |- % @ % : typedExpressionIR_arg_cast
+          1. (Let ?(typedExpressionIR_arg_cast) be typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
-    2. If (((noaction) = actctxt)), then
+          2. Result in : % % % |- % @ % : typedExpressionIR_arg_cast
 
-      1. (Let (_expressionIR # (( typeIR_arg ctk_arg ))) be typedExpressionIR_arg)
+      2. Case (% matches pattern `NOACTION`)
 
-      2. If (Type_alpha: typeIR_param ~~ typeIR_arg) holds, then
+        1. (Let (_expressionIR # (( typeIR_arg ctk_arg ))) be typedExpressionIR_arg)
 
-        1. If ((ctk_arg =/= (dyn))), then
+        2. If (Type_alpha: typeIR_param ~~ typeIR_arg) holds, then
 
-          1. Result in : % % % |- % @ % : typedExpressionIR_arg
+          1. If (~(ctk_arg matches pattern `DYN`)), then
+
+            1. Result in : % % % |- % @ % : typedExpressionIR_arg
 
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:285.1-288.29
 relation Call_convention_argument_ok: p TC actctxt |- parameterTypeIR @ argumentIR : %
@@ -21798,7 +21812,7 @@ relation Decl_object_ok: p TC_0 frame rdenv |- objectDeclaration : % % %
 
         6. (Block_ok: TC_5 (cont) |- blockStatement : _typingContext f blockStatementIR)
 
-        7. If ((f = (ret))), then
+        7. If ((f matches pattern `RET`)), then
 
           1. (Let rid be $rid(name, parameterList))
 
@@ -22753,7 +22767,7 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key, text) @ simpleKeys
 
               3. If (Sub_impl: typeIR_reduced <: typeIR_key) holds, then
 
-                1. If ((ctk_r_reduced = (lctk))), then
+                1. If ((ctk_r_reduced matches pattern `LCTK`)), then
 
                   1. (Eval_static: (local) TC |- typedExpressionIR_r_reduced ~> value_r)
 
@@ -23028,11 +23042,11 @@ relation Expr_lvalue_ok: p TC |- (expressionIR # (( _typeIR _ctk )))
 
           1. Case analysis on direction
 
-            1. Case (% = (out))
+            1. Case (% matches pattern `OUT`)
 
               1. The relation holds
 
-            2. Case (% = (inout))
+            2. Case (% matches pattern `INOUT`)
 
               1. The relation holds
 
@@ -25496,7 +25510,7 @@ relation BlockElementStmt_inst: p' Ci sto |- blockElementStatementIR ==> % % %
 
     2. Group variableDeclarationIR-non-global: p Ci sto |- (variableDeclarationIR as blockElementStatementIR) ==> % % %
 
-      1. If ((p' =/= (global))), then
+      1. If (~(p' matches pattern `GLOBAL`)), then
 
         1. Result in : % % % |- % ==> Ci sto ?((variableDeclarationIR as blockElementStatementIR))
 
