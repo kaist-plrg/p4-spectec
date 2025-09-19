@@ -24011,7 +24011,7 @@ syntax constructor =
    | package< typeParameterListIR >( constructorParameterListIR )
    | table nameIR { tablePropertyListIR }
 
-;; ../../../../spec-concrete/6.4.1-object.watsup:8.1-12.44
+;; ../../../../spec-concrete/6.4.1-object.watsup:8.1-19.44
 syntax object = 
    | extern tid { theta venv renv }
    | parser( parameterListIR ){ venv parserLocalDeclarationListIR senv }
@@ -24096,7 +24096,7 @@ def $empty_instantiationContext
 
 2. (Let blockInstantiationLayer be {theta $empty_theta, renv $empty_renv, senv $empty_senv, venv $empty_venv})
 
-3. (Let localInstantiationLayer be {theta $empty_theta, venvs []})
+3. (Let localInstantiationLayer be {theta $empty_theta, venvs [$empty_venv]})
 
 4. (Let IC be {path [], global globalInstantiationLayer, block blockInstantiationLayer, local localInstantiationLayer})
 
@@ -24123,8 +24123,8 @@ def $enter_path(IC, id)
 
 1. Return IC[path = IC.path ++ [id]]
 
-;; ../../../../spec-concrete/7.02-instantiation-context.watsup:90.1-90.76
-def $copy_context_inst(cursor, IC)
+;; ../../../../spec-concrete/7.02-instantiation-context.watsup:90.1-91.25
+def $inherit_instantiationContext(cursor, IC)
 
 1. Case analysis on cursor
 
@@ -24132,13 +24132,13 @@ def $copy_context_inst(cursor, IC)
 
     1. (Let blockInstantiationLayer be {theta $empty_theta, renv $empty_renv, senv $empty_senv, venv $empty_venv})
 
-    2. (Let localInstantiationLayer be {theta $empty_theta, venvs []})
+    2. (Let localInstantiationLayer be {theta $empty_theta, venvs [$empty_venv]})
 
     3. Return IC[block = blockInstantiationLayer][local = localInstantiationLayer]
 
   2. Case (% matches pattern `BLOCK`)
 
-    1. (Let localInstantiationLayer be {theta $empty_theta, venvs []})
+    1. (Let localInstantiationLayer be {theta $empty_theta, venvs [$empty_venv]})
 
     2. Return IC[local = localInstantiationLayer]
 
@@ -24146,7 +24146,7 @@ def $copy_context_inst(cursor, IC)
 
     1. Return IC
 
-;; ../../../../spec-concrete/7.02-instantiation-context.watsup:115.1-115.83
+;; ../../../../spec-concrete/7.02-instantiation-context.watsup:116.1-116.83
 def $add_value_inst(cursor, IC, id, value)
 
 1. Case analysis on cursor
@@ -24181,7 +24181,7 @@ def $add_value_inst(cursor, IC, id, value)
 
         2. Return IC[local.venvs = venv_h' :: venv_t*{venv_t <- venv_t*}]
 
-;; ../../../../spec-concrete/7.02-instantiation-context.watsup:116.1-116.86
+;; ../../../../spec-concrete/7.02-instantiation-context.watsup:117.1-117.86
 def $add_values_inst(p, IC, id*{id <- id*}, value*{value <- value*})
 
 1. Case analysis on id*{id <- id*}
@@ -24206,7 +24206,7 @@ def $add_values_inst(p, IC, id*{id <- id*}, value*{value <- value*})
 
       4. Return IC''
 
-;; ../../../../spec-concrete/7.02-instantiation-context.watsup:136.1-136.91
+;; ../../../../spec-concrete/7.02-instantiation-context.watsup:137.1-137.91
 def $add_typedef_inst(cursor, IC, tid, typeDefIR)
 
 1. If ((cursor matches pattern `GLOBAL`)), then
@@ -24215,7 +24215,7 @@ def $add_typedef_inst(cursor, IC, tid, typeDefIR)
 
   2. Return IC[global.tdenv = tdenv]
 
-;; ../../../../spec-concrete/7.02-instantiation-context.watsup:143.1-143.88
+;; ../../../../spec-concrete/7.02-instantiation-context.watsup:144.1-144.88
 def $add_state_inst(cursor, IC, nameIR, state)
 
 1. If ((cursor matches pattern `BLOCK`)), then
@@ -24226,7 +24226,7 @@ def $add_state_inst(cursor, IC, nameIR, state)
 
     2. Return IC[block.senv = senv]
 
-;; ../../../../spec-concrete/7.02-instantiation-context.watsup:151.1-151.88
+;; ../../../../spec-concrete/7.02-instantiation-context.watsup:152.1-152.88
 def $add_types_inst(p, IC, tid*{tid <- tid*}, typeIR*{typeIR <- typeIR*})
 
 1. Case analysis on tid*{tid <- tid*}
@@ -24249,7 +24249,7 @@ def $add_types_inst(p, IC, tid*{tid <- tid*}, typeIR*{typeIR <- typeIR*})
 
       3. Return $add_types_inst(p, IC', tid_t*{tid_t <- tid_t*}, typeIR_t*{typeIR_t <- typeIR_t*})
 
-;; ../../../../spec-concrete/7.02-instantiation-context.watsup:152.1-152.85
+;; ../../../../spec-concrete/7.02-instantiation-context.watsup:153.1-153.85
 def $add_type_inst(cursor, IC, tid, typeIR)
 
 1. Case analysis on cursor
@@ -24266,7 +24266,7 @@ def $add_type_inst(cursor, IC, tid, typeIR)
 
     2. Return IC[local.theta = theta]
 
-;; ../../../../spec-concrete/7.02-instantiation-context.watsup:166.1-167.25
+;; ../../../../spec-concrete/7.02-instantiation-context.watsup:167.1-168.25
 def $add_routine_overload_inst(cursor, IC, rid, routine)
 
 1. Case analysis on cursor
@@ -24287,7 +24287,7 @@ def $add_routine_overload_inst(cursor, IC, rid, routine)
 
       2. Return IC[block.renv = renv]
 
-;; ../../../../spec-concrete/7.02-instantiation-context.watsup:176.1-177.25
+;; ../../../../spec-concrete/7.02-instantiation-context.watsup:177.1-178.25
 def $add_routine_non_overload_inst(cursor, IC, rid, routine)
 
 1. Case analysis on cursor
@@ -24316,7 +24316,7 @@ def $add_routine_non_overload_inst(cursor, IC, rid, routine)
 
       2. Return IC[block.renv = renv]
 
-;; ../../../../spec-concrete/7.02-instantiation-context.watsup:192.1-193.25
+;; ../../../../spec-concrete/7.02-instantiation-context.watsup:193.1-194.25
 def $add_constructor_inst(cursor, IC, cid, constructor)
 
 1. If ((cursor matches pattern `GLOBAL`)), then
@@ -24325,7 +24325,7 @@ def $add_constructor_inst(cursor, IC, cid, constructor)
 
   2. Return IC[global.cenv = cenv]
 
-;; ../../../../spec-concrete/7.02-instantiation-context.watsup:204.1-204.75
+;; ../../../../spec-concrete/7.02-instantiation-context.watsup:207.1-207.75
 def $find_value_inst(p', IC, prefixedNameIR)
 
 1. If ((prefixedNameIR matches pattern `.%`)), then
@@ -24370,7 +24370,7 @@ def $find_value_inst(p', IC, prefixedNameIR)
 
         2. Return value
 
-      4. If (($find_map<id, value>(IC.block.venv, id) = ?())), then
+      4. If ((?() = $find_map<id, value>(IC.block.venv, id))), then
 
         1. Return $find_value_inst((global), IC, (` id))
 
@@ -24380,17 +24380,15 @@ def $find_value_inst(p', IC, prefixedNameIR)
 
       1. (Let (` id) be prefixedNameIR)
 
-      2. (Let venv*{venv <- venv*} be IC.local.venvs)
+      2. (Let value'?{value' <- value'?} be $find_maps<id, value>(IC.local.venvs, id))
 
-      3. (Let value'?{value' <- value'?} be $find_maps<id, value>(venv*{venv <- venv*}, id))
-
-      4. If ((value'?{value' <- value'?} matches pattern (_))), then
+      3. If ((value'?{value' <- value'?} matches pattern (_))), then
 
         1. (Let ?(value) be value'?{value' <- value'?})
 
         2. Return value
 
-      5. If (($find_maps<id, value>(IC.local.venvs, id) = ?())), then
+      4. If ((?() = $find_maps<id, value>(IC.local.venvs, id))), then
 
         1. Return $find_value_inst((block), IC, (` id))
 
@@ -26497,7 +26495,7 @@ relation Constructor_inst: p IC STO_0 |- constructor < typeArgumentIR*{typeArgum
 
       1. (Let p_callee be (block))
 
-      2. (Let IC_callee_0 be $copy_context_inst((global), IC))
+      2. (Let IC_callee_0 be $inherit_instantiationContext((global), IC))
 
       3. (Let IC_callee_1 be $add_types_inst(p_callee, IC_callee_0, typeParameterIR*{typeParameterIR <- typeParameterIR*}, typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}))
 
@@ -26527,7 +26525,7 @@ relation Constructor_inst: p IC STO_0 |- constructor < typeArgumentIR*{typeArgum
 
         1. (Let p_callee be (block))
 
-        2. (Let IC_callee_0 be $copy_context_inst((global), IC))
+        2. (Let IC_callee_0 be $inherit_instantiationContext((global), IC))
 
         3. (Let (constructorParameterIR_aligned*{constructorParameterIR_aligned <- constructorParameterIR_aligned*}, argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*}, constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*}, value_default*{value_default <- value_default*}) be $align_cparams_with_args(constructorParameterIR*{constructorParameterIR <- constructorParameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default'*{id_default' <- id_default'*}))
 
@@ -26563,7 +26561,7 @@ relation Constructor_inst: p IC STO_0 |- constructor < typeArgumentIR*{typeArgum
 
         1. (Let p_callee be (block))
 
-        2. (Let IC_callee_0 be $copy_context_inst((global), IC))
+        2. (Let IC_callee_0 be $inherit_instantiationContext((global), IC))
 
         3. (Let (constructorParameterIR_aligned*{constructorParameterIR_aligned <- constructorParameterIR_aligned*}, argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*}, constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*}, value_default*{value_default <- value_default*}) be $align_cparams_with_args(constructorParameterIR*{constructorParameterIR <- constructorParameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default'*{id_default' <- id_default'*}))
 
@@ -26591,7 +26589,7 @@ relation Constructor_inst: p IC STO_0 |- constructor < typeArgumentIR*{typeArgum
 
       1. (Let p_callee be (block))
 
-      2. (Let IC_callee_0 be $copy_context_inst((global), IC))
+      2. (Let IC_callee_0 be $inherit_instantiationContext((global), IC))
 
       3. (Let IC_callee_1 be $add_types_inst(p_callee, IC_callee_0, typeParameterIR*{typeParameterIR <- typeParameterIR*}, typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}))
 
@@ -26623,7 +26621,7 @@ relation Constructor_inst: p IC STO_0 |- constructor < typeArgumentIR*{typeArgum
 
             1. (Let p_callee be (local))
 
-            2. (Let IC_callee_0 be $copy_context_inst((block), IC))
+            2. (Let IC_callee_0 be $inherit_instantiationContext((block), IC))
 
             3. (Let IC_frame be $enter_inst(IC_callee_0))
 

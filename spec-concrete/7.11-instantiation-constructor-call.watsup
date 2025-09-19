@@ -157,7 +157,7 @@ rule Constructor_inst/extern:
             ==> STO_1 object_extern
   ---- ;; initialize the callee context
   -- if p_callee = BLOCK
-  -- if IC_callee_0 = $copy_context_inst(GLOBAL, IC)
+  -- if IC_callee_0 = $inherit_instantiationContext(GLOBAL, IC)
   ---- ;; bind type arguments to the callee context
   -- if IC_callee_1
       = $add_types_inst(p_callee, IC_callee_0, typeParameterIR*, typeArgumentIR*)
@@ -194,7 +194,7 @@ rule Constructor_inst/parser:
             ==> STO_3 object_parser
   ---- ;; initialize callee context
   -- if p_callee = BLOCK
-  -- if IC_callee_0 = $copy_context_inst(GLOBAL, IC)
+  -- if IC_callee_0 = $inherit_instantiationContext(GLOBAL, IC)
   ---- ;; align constructor parameters with arguments
   -- if (constructorParameterIR_aligned*, argumentIR_aligned*,
          constructorParameterIR_default*, value_default*)
@@ -239,7 +239,7 @@ rule Constructor_inst/control:
             ==> STO_3 object_control
   ---- ;; initialize the callee context
   -- if p_callee = BLOCK
-  -- if IC_callee_0 = $copy_context_inst(GLOBAL, IC)
+  -- if IC_callee_0 = $inherit_instantiationContext(GLOBAL, IC)
   ---- ;; align constructor parameters with arguments
   -- if (constructorParameterIR_aligned*, argumentIR_aligned*,
          constructorParameterIR_default*, value_default*)
@@ -276,7 +276,7 @@ rule Constructor_inst/package:
             ==> STO_1 object_package
   ---- ;; initialize callee context
   -- if p_callee = BLOCK
-  -- if IC_callee_0 = $copy_context_inst(GLOBAL, IC)
+  -- if IC_callee_0 = $inherit_instantiationContext(GLOBAL, IC)
   ---- ;; bind type arguments to the callee context
   -- if IC_callee_1
       = $add_types_inst(p_callee, IC_callee_0, typeParameterIR*, typeArgumentIR*)
@@ -310,7 +310,7 @@ rule Constructor_inst/table:
             ==> STO_1 object_table
   ---- ;; initialize callee context
   -- if p_callee = LOCAL
-  -- if IC_callee_0 = $copy_context_inst(BLOCK, IC)
+  -- if IC_callee_0 = $inherit_instantiationContext(BLOCK, IC)
   ---- ;; create table frame
   -- if IC_frame = $enter_inst(IC_callee_0)
   ---- ;; insantiate table properties

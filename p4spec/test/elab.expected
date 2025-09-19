@@ -21894,7 +21894,7 @@ syntax constructor =
    | package< typeParameterListIR >( constructorParameterListIR )
    | table nameIR { tablePropertyListIR }
 
-;; ../../../../spec-concrete/6.4.1-object.watsup:8.1-12.44
+;; ../../../../spec-concrete/6.4.1-object.watsup:8.1-19.44
 syntax object = 
    | extern tid { theta venv renv }
    | parser( parameterListIR ){ venv parserLocalDeclarationListIR senv }
@@ -21984,7 +21984,7 @@ def $empty_instantiationContext : instantiationContext =
   clause 0 :  = IC
   -- let globalInstantiationLayer = {cenv $empty_cenv, tdenv $empty_tdenv, renv $empty_renv, venv $empty_venv}
   -- let blockInstantiationLayer = {theta $empty_theta, renv $empty_renv, senv $empty_senv, venv $empty_venv}
-  -- let localInstantiationLayer = {theta $empty_theta, venvs []}
+  -- let localInstantiationLayer = {theta $empty_theta, venvs [$empty_venv]}
   -- let IC = {path [], global globalInstantiationLayer, block blockInstantiationLayer, local localInstantiationLayer}
 
 ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:69.1-69.61
@@ -22008,40 +22008,40 @@ def $enter_path(instantiationContext, id) : instantiationContext =
   ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:84.1-84.54
   clause 0 : (IC, id) = IC[path = IC.path ++ [id]]
 
-;; ../../../../spec-concrete/7.02-instantiation-context.watsup:90.1-90.76
-def $copy_context_inst(cursor, instantiationContext) : instantiationContext =
+;; ../../../../spec-concrete/7.02-instantiation-context.watsup:90.1-91.25
+def $inherit_instantiationContext(cursor, instantiationContext) : instantiationContext =
 
-  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:92.1-101.23
+  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:93.1-102.36
   clause 0 : (cursor, IC) = IC[block = blockInstantiationLayer][local = localInstantiationLayer]
   -- if cursor matches `GLOBAL`
   -- let blockInstantiationLayer = {theta $empty_theta, renv $empty_renv, senv $empty_senv, venv $empty_venv}
-  -- let localInstantiationLayer = {theta $empty_theta, venvs []}
+  -- let localInstantiationLayer = {theta $empty_theta, venvs [$empty_venv]}
 
-  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:102.1-106.23
+  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:103.1-107.36
   clause 1 : (cursor, IC) = IC[local = localInstantiationLayer]
   -- if cursor matches `BLOCK`
-  -- let localInstantiationLayer = {theta $empty_theta, venvs []}
+  -- let localInstantiationLayer = {theta $empty_theta, venvs [$empty_venv]}
 
-  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:107.1-107.39
+  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:108.1-108.50
   clause 2 : (cursor, IC) = IC
   -- if cursor matches `LOCAL`
 
-;; ../../../../spec-concrete/7.02-instantiation-context.watsup:115.1-115.83
+;; ../../../../spec-concrete/7.02-instantiation-context.watsup:116.1-116.83
 def $add_value_inst(cursor, instantiationContext, id, value) : instantiationContext =
 
-  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:118.1-120.62
+  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:119.1-121.62
   clause 0 : (cursor, IC, id, value) = IC[global.venv = venv]
   -- if cursor matches `GLOBAL`
   -- if ~$in_set<id>(id, $dom_map<id, value>(IC.global.venv))
   -- let venv = $add_map<id, value>(IC.global.venv, id, value)
 
-  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:121.1-123.61
+  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:122.1-124.61
   clause 1 : (cursor, IC, id, value) = IC[block.venv = venv]
   -- if cursor matches `BLOCK`
   -- if ~$in_set<id>(id, $dom_map<id, value>(IC.block.venv))
   -- let venv = $add_map<id, value>(IC.block.venv, id, value)
 
-  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:124.1-127.57
+  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:125.1-128.57
   clause 2 : (cursor, IC, id, value) = IC[local.venvs = venv_h' :: venv_t*{venv_t <- venv_t*}]
   -- if cursor matches `LOCAL`
   -- let venv*{venv <- venv*} = IC.local.venvs
@@ -22050,15 +22050,15 @@ def $add_value_inst(cursor, instantiationContext, id, value) : instantiationCont
   -- if ~$in_set<id>(id, $dom_map<id, value>(venv_h))
   -- let venv_h' = $add_map<id, value>(venv_h, id, value)
 
-;; ../../../../spec-concrete/7.02-instantiation-context.watsup:116.1-116.86
+;; ../../../../spec-concrete/7.02-instantiation-context.watsup:117.1-117.86
 def $add_values_inst(cursor, instantiationContext, id*, value*) : instantiationContext =
 
-  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:129.1-129.43
+  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:130.1-130.43
   clause 0 : (p, IC, id*{id <- id*}, value*{value <- value*}) = IC
   -- if id*{id <- id*} matches []
   -- if value*{value <- value*} matches []
 
-  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:130.1-132.57
+  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:131.1-133.57
   clause 1 : (p, IC, id*{id <- id*}, value*{value <- value*}) = IC''
   -- if id*{id <- id*} matches _ :: _
   -- let id_h :: id_t*{id_t <- id_t*} = id*{id <- id*}
@@ -22067,32 +22067,32 @@ def $add_values_inst(cursor, instantiationContext, id*, value*) : instantiationC
   -- let IC' = $add_value_inst(p, IC, id_h, value_h)
   -- let IC'' = $add_values_inst(p, IC', id_t*{id_t <- id_t*}, value_t*{value_t <- value_t*})
 
-;; ../../../../spec-concrete/7.02-instantiation-context.watsup:136.1-136.91
+;; ../../../../spec-concrete/7.02-instantiation-context.watsup:137.1-137.91
 def $add_typedef_inst(cursor, instantiationContext, tid, typeDefIR) : instantiationContext =
 
-  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:138.1-139.74
+  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:139.1-140.74
   clause 0 : (cursor, IC, tid, typeDefIR) = IC[global.tdenv = tdenv]
   -- if cursor matches `GLOBAL`
   -- let tdenv = $add_map<tid, typeDefIR>(IC.global.tdenv, tid, typeDefIR)
 
-;; ../../../../spec-concrete/7.02-instantiation-context.watsup:143.1-143.88
+;; ../../../../spec-concrete/7.02-instantiation-context.watsup:144.1-144.88
 def $add_state_inst(cursor, instantiationContext, nameIR, state) : instantiationContext =
 
-  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:145.1-147.69
+  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:146.1-148.69
   clause 0 : (cursor, IC, nameIR, state) = IC[block.senv = senv]
   -- if cursor matches `BLOCK`
   -- if ~$in_set<nameIR>(nameIR, $dom_map<nameIR, state>(IC.block.senv))
   -- let senv = $add_map<nameIR, state>(IC.block.senv, nameIR, state)
 
-;; ../../../../spec-concrete/7.02-instantiation-context.watsup:151.1-151.88
+;; ../../../../spec-concrete/7.02-instantiation-context.watsup:152.1-152.88
 def $add_types_inst(cursor, instantiationContext, tid*, typeIR*) : instantiationContext =
 
-  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:154.1-154.42
+  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:155.1-155.42
   clause 0 : (p, IC, tid*{tid <- tid*}, typeIR*{typeIR <- typeIR*}) = IC
   -- if tid*{tid <- tid*} matches []
   -- if typeIR*{typeIR <- typeIR*} matches []
 
-  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:155.1-157.53
+  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:156.1-158.53
   clause 1 : (p, IC, tid*{tid <- tid*}, typeIR*{typeIR <- typeIR*}) = $add_types_inst(p, IC', tid_t*{tid_t <- tid_t*}, typeIR_t*{typeIR_t <- typeIR_t*})
   -- if tid*{tid <- tid*} matches _ :: _
   -- let tid_h :: tid_t*{tid_t <- tid_t*} = tid*{tid <- tid*}
@@ -22100,38 +22100,38 @@ def $add_types_inst(cursor, instantiationContext, tid*, typeIR*) : instantiation
   -- let typeIR_h :: typeIR_t*{typeIR_t <- typeIR_t*} = typeIR*{typeIR <- typeIR*}
   -- let IC' = $add_type_inst(p, IC, tid_h, typeIR_h)
 
-;; ../../../../spec-concrete/7.02-instantiation-context.watsup:152.1-152.85
+;; ../../../../spec-concrete/7.02-instantiation-context.watsup:153.1-153.85
 def $add_type_inst(cursor, instantiationContext, tid, typeIR) : instantiationContext =
 
-  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:159.1-160.67
+  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:160.1-161.67
   clause 0 : (cursor, IC, tid, typeIR) = IC[block.theta = theta]
   -- if cursor matches `BLOCK`
   -- let theta = $add_map<tid, typeIR>(IC.block.theta, tid, typeIR)
 
-  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:161.1-162.67
+  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:162.1-163.67
   clause 1 : (cursor, IC, tid, typeIR) = IC[local.theta = theta]
   -- if cursor matches `LOCAL`
   -- let theta = $add_map<tid, typeIR>(IC.local.theta, tid, typeIR)
 
-;; ../../../../spec-concrete/7.02-instantiation-context.watsup:166.1-167.25
+;; ../../../../spec-concrete/7.02-instantiation-context.watsup:167.1-168.25
 def $add_routine_overload_inst(cursor, instantiationContext, rid, routine) : instantiationContext =
 
-  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:169.1-171.68
+  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:170.1-172.68
   clause 0 : (cursor, IC, rid, routine) = IC[global.renv = renv]
   -- if cursor matches `GLOBAL`
   -- if ~$in_set<rid>(rid, $dom_map<rid, routine>(IC.global.renv))
   -- let renv = $add_map<rid, routine>(IC.global.renv, rid, routine)
 
-  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:172.1-174.67
+  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:173.1-175.67
   clause 1 : (cursor, IC, rid, routine) = IC[block.renv = renv]
   -- if cursor matches `BLOCK`
   -- if ~$in_set<rid>(rid, $dom_map<rid, routine>(IC.block.renv))
   -- let renv = $add_map<rid, routine>(IC.block.renv, rid, routine)
 
-;; ../../../../spec-concrete/7.02-instantiation-context.watsup:176.1-177.25
+;; ../../../../spec-concrete/7.02-instantiation-context.watsup:177.1-178.25
 def $add_routine_non_overload_inst(cursor, instantiationContext, rid, routine) : instantiationContext =
 
-  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:179.1-183.68
+  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:180.1-184.68
   clause 0 : (cursor, IC, rid, routine) = IC[global.renv = renv]
   -- if cursor matches `GLOBAL`
   -- let id ( _pid*{_pid <- _pid*} ) = rid
@@ -22139,7 +22139,7 @@ def $add_routine_non_overload_inst(cursor, instantiationContext, rid, routine) :
   -- if ~$in_set<id>(id, { id_k*{id_k <- id_k*} })
   -- let renv = $add_map<rid, routine>(IC.global.renv, rid, routine)
 
-  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:184.1-188.67
+  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:185.1-189.67
   clause 1 : (cursor, IC, rid, routine) = IC[block.renv = renv]
   -- if cursor matches `BLOCK`
   -- let id ( _pid*{_pid <- _pid*} ) = rid
@@ -22147,18 +22147,18 @@ def $add_routine_non_overload_inst(cursor, instantiationContext, rid, routine) :
   -- if ~$in_set<id>(id, { id_k*{id_k <- id_k*} })
   -- let renv = $add_map<rid, routine>(IC.block.renv, rid, routine)
 
-;; ../../../../spec-concrete/7.02-instantiation-context.watsup:192.1-193.25
+;; ../../../../spec-concrete/7.02-instantiation-context.watsup:193.1-194.25
 def $add_constructor_inst(cursor, instantiationContext, cid, constructor) : instantiationContext =
 
-  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:195.1-196.76
+  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:196.1-199.69
   clause 0 : (cursor, IC, cid, constructor) = IC[global.cenv = cenv]
   -- if cursor matches `GLOBAL`
   -- let cenv = $add_map<cid, constructor>(IC.global.cenv, cid, constructor)
 
-;; ../../../../spec-concrete/7.02-instantiation-context.watsup:204.1-204.75
+;; ../../../../spec-concrete/7.02-instantiation-context.watsup:207.1-207.75
 def $find_value_inst(cursor, instantiationContext, prefixedNameIR) : value =
 
-  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:206.1-207.57
+  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:209.1-210.57
   clause 0 : (p, IC, prefixedNameIR) = value
   -- if prefixedNameIR matches `.%`
   -- let . id = prefixedNameIR
@@ -22166,7 +22166,7 @@ def $find_value_inst(cursor, instantiationContext, prefixedNameIR) : value =
   -- if value'?{value' <- value'?} matches (_)
   -- let ?(value) = value'?{value' <- value'?}
 
-  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:208.1-209.57
+  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:211.1-212.57
   clause 1 : (cursor, IC, prefixedNameIR) = value
   -- if cursor matches `GLOBAL`
   -- if prefixedNameIR matches ``%`
@@ -22175,7 +22175,7 @@ def $find_value_inst(cursor, instantiationContext, prefixedNameIR) : value =
   -- if value'?{value' <- value'?} matches (_)
   -- let ?(value) = value'?{value' <- value'?}
 
-  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:210.1-211.56
+  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:213.1-214.56
   clause 2 : (cursor, IC, prefixedNameIR) = value
   -- if cursor matches `BLOCK`
   -- if prefixedNameIR matches ``%`
@@ -22184,29 +22184,28 @@ def $find_value_inst(cursor, instantiationContext, prefixedNameIR) : value =
   -- if value'?{value' <- value'?} matches (_)
   -- let ?(value) = value'?{value' <- value'?}
 
-  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:212.1-215.54
+  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:215.1-217.54
   clause 3 : (cursor, IC, prefixedNameIR) = $find_value_inst(global, IC, ` id)
   -- if cursor matches `BLOCK`
   -- if prefixedNameIR matches ``%`
   -- let ` id = prefixedNameIR
-  -- if ($find_map<id, value>(IC.block.venv, id) = ?())
+  -- if (?() = $find_map<id, value>(IC.block.venv, id))
 
-  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:216.1-218.49
+  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:218.1-219.58
   clause 4 : (cursor, IC, prefixedNameIR) = value
   -- if cursor matches `LOCAL`
   -- if prefixedNameIR matches ``%`
   -- let ` id = prefixedNameIR
-  -- let venv*{venv <- venv*} = IC.local.venvs
-  -- let value'?{value' <- value'?} = $find_maps<id, value>(venv*{venv <- venv*}, id)
+  -- let value'?{value' <- value'?} = $find_maps<id, value>(IC.local.venvs, id)
   -- if value'?{value' <- value'?} matches (_)
   -- let ?(value) = value'?{value' <- value'?}
 
-  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:219.1-222.56
+  ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:220.1-222.56
   clause 5 : (cursor, IC, prefixedNameIR) = $find_value_inst(block, IC, ` id)
   -- if cursor matches `LOCAL`
   -- if prefixedNameIR matches ``%`
   -- let ` id = prefixedNameIR
-  -- if ($find_maps<id, value>(IC.local.venvs, id) = ?())
+  -- if (?() = $find_maps<id, value>(IC.local.venvs, id))
 
 ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:226.1-226.82
 def $find_typedef_inst(cursor, instantiationContext, prefixedNameIR) : typeDefIR? =
@@ -24688,7 +24687,7 @@ relation Constructor_inst: cursor instantiationContext store |- constructor < ty
 
     rulepath extern
     -- let p_callee = block
-    -- let IC_callee_0 = $copy_context_inst(global, IC)
+    -- let IC_callee_0 = $inherit_instantiationContext(global, IC)
     -- let IC_callee_1 = $add_types_inst(p_callee, IC_callee_0, typeParameterIR*{typeParameterIR <- typeParameterIR*}, typeArgumentIR*{typeArgumentIR <- typeArgumentIR*})
     -- let (constructorParameterIR_aligned*{constructorParameterIR_aligned <- constructorParameterIR_aligned*}, argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*}, constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*}, value_default*{value_default <- value_default*}) = $align_cparams_with_args(constructorParameterIR*{constructorParameterIR <- constructorParameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*})
     -- (let _annotationList _direction _typeIR id_aligned _constantInitializerOptIR = constructorParameterIR_aligned)*{_annotationList <- _annotationList*, _constantInitializerOptIR <- _constantInitializerOptIR*, _direction <- _direction*, _typeIR <- _typeIR*, constructorParameterIR_aligned <- constructorParameterIR_aligned*, id_aligned <- id_aligned*}
@@ -24714,7 +24713,7 @@ relation Constructor_inst: cursor instantiationContext store |- constructor < ty
 
     rulepath parser
     -- let p_callee = block
-    -- let IC_callee_0 = $copy_context_inst(global, IC)
+    -- let IC_callee_0 = $inherit_instantiationContext(global, IC)
     -- let (constructorParameterIR_aligned*{constructorParameterIR_aligned <- constructorParameterIR_aligned*}, argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*}, constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*}, value_default*{value_default <- value_default*}) = $align_cparams_with_args(constructorParameterIR*{constructorParameterIR <- constructorParameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*})
     -- (let _annotationList _direction _typeIR id_aligned _constantInitializerOptIR = constructorParameterIR_aligned)*{_annotationList <- _annotationList*, _constantInitializerOptIR <- _constantInitializerOptIR*, _direction <- _direction*, _typeIR <- _typeIR*, constructorParameterIR_aligned <- constructorParameterIR_aligned*, id_aligned <- id_aligned*}
     -- Bind_args: p IC | p_callee IC_callee_0 STO_0 |- id_aligned*{id_aligned <- id_aligned*} argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*} ==> IC_callee_1 STO_1
@@ -24743,7 +24742,7 @@ relation Constructor_inst: cursor instantiationContext store |- constructor < ty
 
     rulepath control
     -- let p_callee = block
-    -- let IC_callee_0 = $copy_context_inst(global, IC)
+    -- let IC_callee_0 = $inherit_instantiationContext(global, IC)
     -- let (constructorParameterIR_aligned*{constructorParameterIR_aligned <- constructorParameterIR_aligned*}, argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*}, constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*}, value_default*{value_default <- value_default*}) = $align_cparams_with_args(constructorParameterIR*{constructorParameterIR <- constructorParameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*})
     -- (let _annotationList _direction _typeIR id_aligned _constantInitializerOptIR = constructorParameterIR_aligned)*{_annotationList <- _annotationList*, _constantInitializerOptIR <- _constantInitializerOptIR*, _direction <- _direction*, _typeIR <- _typeIR*, constructorParameterIR_aligned <- constructorParameterIR_aligned*, id_aligned <- id_aligned*}
     -- Bind_args: p IC | p_callee IC_callee_0 STO_0 |- id_aligned*{id_aligned <- id_aligned*} argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*} ==> IC_callee_1 STO_1
@@ -24768,7 +24767,7 @@ relation Constructor_inst: cursor instantiationContext store |- constructor < ty
 
     rulepath package
     -- let p_callee = block
-    -- let IC_callee_0 = $copy_context_inst(global, IC)
+    -- let IC_callee_0 = $inherit_instantiationContext(global, IC)
     -- let IC_callee_1 = $add_types_inst(p_callee, IC_callee_0, typeParameterIR*{typeParameterIR <- typeParameterIR*}, typeArgumentIR*{typeArgumentIR <- typeArgumentIR*})
     -- let (constructorParameterIR_aligned*{constructorParameterIR_aligned <- constructorParameterIR_aligned*}, argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*}, constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*}, value_default*{value_default <- value_default*}) = $align_cparams_with_args(constructorParameterIR*{constructorParameterIR <- constructorParameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*})
     -- (let _annotationList _direction _typeIR id_aligned _constantInitializerOptIR = constructorParameterIR_aligned)*{_annotationList <- _annotationList*, _constantInitializerOptIR <- _constantInitializerOptIR*, _direction <- _direction*, _typeIR <- _typeIR*, constructorParameterIR_aligned <- constructorParameterIR_aligned*, id_aligned <- id_aligned*}
@@ -24795,7 +24794,7 @@ relation Constructor_inst: cursor instantiationContext store |- constructor < ty
 
     rulepath table
     -- let p_callee = local
-    -- let IC_callee_0 = $copy_context_inst(block, IC)
+    -- let IC_callee_0 = $inherit_instantiationContext(block, IC)
     -- let IC_frame = $enter_inst(IC_callee_0)
     -- TableProperties_inst: IC_frame STO_0 |- tablePropertyListIR ==> STO_1 tablePropertyListIR_inst
     -- let tablePropertyListIR_dynamic = $init_table(tablePropertyListIR_inst)
