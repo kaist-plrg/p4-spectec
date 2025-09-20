@@ -833,8 +833,10 @@ and eval_if_prem (ctx : Ctx.t) (exp_cond : exp) : Ctx.t attempt =
   let cond = Value.get_bool value_cond in
   if cond then Ok ctx
   else
-    fail exp_cond.at
+    let reason = Trace.guess_reason ctx.trace in
+    fail_with_reason exp_cond.at
       (F.asprintf "condition %s was not met" (Il.Print.string_of_exp exp_cond))
+      reason
 
 (* If-hold premise evaluation *)
 
@@ -844,7 +846,10 @@ and eval_if_hold_prem (ctx : Ctx.t) (id : id) (notexp : notexp) : Ctx.t attempt
   let ctx, values_input = eval_exps ctx exps_input in
   match invoke_rel ctx id values_input with
   | Ok _ -> Ok ctx
-  | Fail _ -> fail id.at (F.asprintf "condition hold %s was not met" id.it)
+  | Fail _ ->
+      fail_with_reason id.at
+        (F.asprintf "condition hold %s was not met" id.it)
+        Root
 
 (* If-not-hold premise evaluation *)
 
@@ -853,7 +858,10 @@ and eval_if_not_hold_prem (ctx : Ctx.t) (id : id) (notexp : notexp) :
   let _, exps_input = notexp in
   let ctx, values_input = eval_exps ctx exps_input in
   match invoke_rel ctx id values_input with
-  | Ok _ -> fail id.at (F.asprintf "condition not-hold %s was not met" id.it)
+  | Ok _ ->
+      fail_with_reason id.at
+        (F.asprintf "condition not-hold %s was not met" id.it)
+        Root
   | Fail _ -> Ok ctx
 
 (* Let premise evaluation *)

@@ -286,3 +286,23 @@ let profile (trace : t) : unit =
   Format.printf "%s\n" (log_counter rules);
   Format.printf "Functions:\n";
   Format.printf "%s\n" (log_counter funcs)
+
+let try_extract_exp = function
+  | Prem p -> ( match p.it with IfPr ifpr -> Some ifpr.it | _ -> None)
+  | _ -> None
+
+let sequence_exps = function
+  | Rel { subtraces; _ } -> subtraces |> List.filter_map try_extract_exp
+  | _ -> []
+
+(* let merge_subtraces_reason *)
+
+let guess_reason (trace : t) : Util.Attempt.reason =
+  let x = sequence_exps trace in
+  match x with
+  | [ SubE _ ] -> Mismatch
+  | [ MatchE _ ] -> Mismatch
+  | [ MatchE _; SubE _ ] -> Mismatch
+  | [ SubE _; MatchE _ ] -> Mismatch
+  | [ MatchE _; MatchE _ ] -> Mismatch
+  | _ -> Root
