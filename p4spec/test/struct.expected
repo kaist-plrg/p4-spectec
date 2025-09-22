@@ -2543,10 +2543,16 @@ def $flatten_p4program(p4program'')
 
     2. Return $flatten_p4program(p4program)
 
-;; ../../../../spec-concrete/2.0-domain.watsup:5.17-5.21
+;; ../../../../spec-concrete/2.0-domain.watsup:5.17-5.39
+syntax cursor = 
+   | global
+   | block
+   | local
+
+;; ../../../../spec-concrete/2.0-domain.watsup:13.17-13.21
 syntax nameIR = text
 
-;; ../../../../spec-concrete/2.0-domain.watsup:7.1-7.25
+;; ../../../../spec-concrete/2.0-domain.watsup:15.1-15.25
 def $name(name)
 
 1. Case analysis on name
@@ -2601,7 +2607,7 @@ def $name(name)
 
   1. Return "list"
 
-;; ../../../../spec-concrete/2.0-domain.watsup:20.1-20.47
+;; ../../../../spec-concrete/2.0-domain.watsup:28.1-28.47
 def $tableCustomName(tableCustomName)
 
 1. Case analysis on tableCustomName
@@ -2636,18 +2642,18 @@ def $tableCustomName(tableCustomName)
 
     1. Return "priority"
 
-;; ../../../../spec-concrete/2.0-domain.watsup:33.13-33.17
+;; ../../../../spec-concrete/2.0-domain.watsup:41.13-41.17
 syntax id = text
 
-;; ../../../../spec-concrete/2.0-domain.watsup:39.14-39.16
+;; ../../../../spec-concrete/2.0-domain.watsup:47.14-47.16
 syntax tid = id
 
-;; ../../../../spec-concrete/2.0-domain.watsup:41.1-41.23
+;; ../../../../spec-concrete/2.0-domain.watsup:49.1-49.23
 def $fresh_tid
 
 
 
-;; ../../../../spec-concrete/2.0-domain.watsup:42.1-42.28
+;; ../../../../spec-concrete/2.0-domain.watsup:50.1-50.28
 def $fresh_tids(nat')
 
 1. Case analysis on nat'
@@ -2666,20 +2672,20 @@ def $fresh_tids(nat')
 
       2. Return $fresh_tid :: $fresh_tids(n')
 
-;; ../../../../spec-concrete/2.0-domain.watsup:57.14-57.24
+;; ../../../../spec-concrete/2.0-domain.watsup:65.14-65.24
 syntax pid = 
    | id # bool
 
-;; ../../../../spec-concrete/2.0-domain.watsup:58.14-58.26
+;; ../../../../spec-concrete/2.0-domain.watsup:66.14-66.26
 syntax rid = 
    | id ( pid* )
 
-;; ../../../../spec-concrete/2.0-domain.watsup:60.1-60.36
+;; ../../../../spec-concrete/2.0-domain.watsup:68.1-68.36
 def $rid(name, parameterList)
 
 1. Return ($name(name) ( $pids(parameterList) ))
 
-;; ../../../../spec-concrete/2.0-domain.watsup:61.1-61.32
+;; ../../../../spec-concrete/2.0-domain.watsup:69.1-69.32
 def $pids(parameterList)
 
 1. If ((parameterList matches pattern ``EMPTY`)), then
@@ -2702,7 +2708,7 @@ def $pids(parameterList)
 
     2. Return $pids((nonEmptyParameterList as parameterList)) ++ [$pid(parameter)]
 
-;; ../../../../spec-concrete/2.0-domain.watsup:62.1-62.26
+;; ../../../../spec-concrete/2.0-domain.watsup:70.1-70.26
 def $pid((_annotationList _direction _type name initializerOpt))
 
 1. If ((initializerOpt matches pattern ``EMPTY`)), then
@@ -2715,10 +2721,10 @@ def $pid((_annotationList _direction _type name initializerOpt))
 
   2. Return ($name(name) # true)
 
-;; ../../../../spec-concrete/2.0-domain.watsup:79.14-79.17
+;; ../../../../spec-concrete/2.0-domain.watsup:87.14-87.17
 syntax cid = rid
 
-;; ../../../../spec-concrete/2.0-domain.watsup:81.1-81.50
+;; ../../../../spec-concrete/2.0-domain.watsup:89.1-89.50
 def $cid(name, constructorParameterListOpt)
 
 1. Case analysis on constructorParameterListOpt
@@ -2733,7 +2739,7 @@ def $cid(name, constructorParameterListOpt)
 
     2. Return ($name(name) ( $pids(parameterList) ))
 
-;; ../../../../spec-concrete/2.0-domain.watsup:88.1-88.48
+;; ../../../../spec-concrete/2.0-domain.watsup:96.1-96.48
 def $expression_as_lvalue(expression'')
 
 1. Case analysis on expression''
@@ -2772,7 +2778,7 @@ def $expression_as_lvalue(expression'')
 
       2. Return ?((( lvalue )))
 
-;; ../../../../spec-concrete/2.0-domain.watsup:100.14-100.17
+;; ../../../../spec-concrete/2.0-domain.watsup:108.14-108.17
 syntax oid = id*
 
 ;; ../../../../spec-concrete/2.1.1-value.watsup:14.1-17.18
@@ -9088,16 +9094,10 @@ def $find_non_overloaded'<V>(set<pair<rid, V>>', id)
 
       2. Return V_t_found*{V_t_found <- V_t_found*}
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:5.17-5.39
-syntax cursor = 
-   | global
-   | block
-   | local
-
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:16.3-19.18
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:8.3-11.18
 syntax globalTypingLayer = {cdenv cdenv, tdenv tdenv, rdenv rdenv, frame frame}
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:24.1-28.12
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:16.1-20.12
 syntax blockKind = 
    | 
    | extern
@@ -9105,30 +9105,30 @@ syntax blockKind =
    | control
    | package
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:30.1-30.43
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:22.1-22.43
 def $is_extern_blockKind(blockKind)
 
 1. Return (blockKind = (extern))
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:33.1-33.43
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:25.1-25.43
 def $is_parser_blockKind(blockKind)
 
 1. Return (blockKind = (parser))
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:36.1-36.44
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:28.1-28.44
 def $is_control_blockKind(blockKind)
 
 1. Return (blockKind = (control))
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:39.1-39.44
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:31.1-31.44
 def $is_package_blockKind(blockKind)
 
 1. Return (blockKind = (package))
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:43.3-47.18
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:35.3-39.18
 syntax blockTypingLayer = {id id, kind blockKind, tdenv tdenv, rdenv rdenv, frame frame}
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:52.1-60.23
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:44.1-52.23
 syntax localKind = 
    | 
    | function-> typeIR
@@ -9140,7 +9140,7 @@ syntax localKind =
    | control_apply_method
    | table_apply_method
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:62.1-62.45
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:54.1-54.45
 def $is_function_localKind(localKind')
 
 1. If ((localKind' matches pattern `FUNCTION->%`)), then
@@ -9153,7 +9153,7 @@ def $is_function_localKind(localKind')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:67.1-67.52
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:59.1-59.52
 def $is_extern_function_localKind(localKind')
 
 1. If ((localKind' matches pattern `EXTERN_FUNCTION->%`)), then
@@ -9166,7 +9166,7 @@ def $is_extern_function_localKind(localKind')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:74.1-74.43
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:66.1-66.43
 def $is_action_localKind(localKind')
 
 1. If ((localKind' matches pattern `ACTION`)), then
@@ -9177,7 +9177,7 @@ def $is_action_localKind(localKind')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:79.1-79.50
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:71.1-71.50
 def $is_extern_method_localKind(localKind')
 
 1. If ((localKind' matches pattern `EXTERN_METHOD->%`)), then
@@ -9190,7 +9190,7 @@ def $is_extern_method_localKind(localKind')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:86.1-86.59
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:78.1-78.59
 def $is_extern_abstract_method_localKind(localKind')
 
 1. If ((localKind' matches pattern `EXTERN_METHODABSTRACT->%`)), then
@@ -9203,7 +9203,7 @@ def $is_extern_abstract_method_localKind(localKind')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:93.1-93.49
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:85.1-85.49
 def $is_parser_state_localKind(localKind')
 
 1. If ((localKind' matches pattern `PARSER_STATE`)), then
@@ -9214,7 +9214,7 @@ def $is_parser_state_localKind(localKind')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:98.1-98.57
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:90.1-90.57
 def $is_control_apply_method_localKind(localKind')
 
 1. If ((localKind' matches pattern `CONTROL_APPLY_METHOD`)), then
@@ -9225,7 +9225,7 @@ def $is_control_apply_method_localKind(localKind')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:105.1-105.55
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:97.1-97.55
 def $is_table_apply_method_localKind(localKind')
 
 1. If ((localKind' matches pattern `TABLE_APPLY_METHOD`)), then
@@ -9236,13 +9236,13 @@ def $is_table_apply_method_localKind(localKind')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:113.3-116.20
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:105.3-108.20
 syntax localTypingLayer = {id id, kind localKind, tdenv tdenv, frames frame*}
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:123.3-125.29
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:115.3-117.29
 syntax typingContext = {global globalTypingLayer, block blockTypingLayer, local localTypingLayer}
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:133.1-133.41
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:125.1-125.41
 def $empty_typingContext
 
 1. (Let globalTypingLayer be {cdenv $empty_cdenv, tdenv $empty_tdenv, rdenv $empty_rdenv, frame $empty_frame})
@@ -9255,7 +9255,7 @@ def $empty_typingContext
 
 5. Return TC
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:161.1-161.42
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:153.1-153.42
 def $bound(cursor, TC)
 
 1. Case analysis on cursor
@@ -9276,12 +9276,12 @@ def $bound(cursor, TC)
 
     3. Return $union_set<tid>(bound_block, bound_local)
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:173.1-173.42
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:165.1-165.42
 def $enter(TC)
 
 1. Return TC[local.frames = $empty_frame :: TC.local.frames]
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:177.1-177.41
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:169.1-169.41
 def $exit(TC)
 
 1. (Let frame*{frame <- frame*} be TC.local.frames)
@@ -9292,7 +9292,7 @@ def $exit(TC)
 
   2. Return TC[local.frames = frame_t*{frame_t <- frame_t*}]
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:188.1-188.67
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:180.1-180.67
 def $add_var(cursor, TC, id, varTypeIR)
 
 1. Case analysis on cursor
@@ -9347,7 +9347,7 @@ def $add_var(cursor, TC, id, varTypeIR)
 
           4. Return TC'
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:189.1-189.70
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:181.1-181.70
 def $add_vars(p, TC, id*{id <- id*}, varTypeIR*{varTypeIR <- varTypeIR*})
 
 1. Case analysis on id*{id <- id*}
@@ -9372,7 +9372,7 @@ def $add_vars(p, TC, id*{id <- id*}, varTypeIR*{varTypeIR <- varTypeIR*})
 
       4. Return TC''
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:219.1-219.75
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:211.1-211.75
 def $add_parameter(cursor, TC, (direction typeIR id value?{value <- value?}))
 
 1. Case analysis on direction
@@ -9409,7 +9409,7 @@ def $add_parameter(cursor, TC, (direction typeIR id value?{value <- value?}))
 
     3. Return TC'
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:220.1-220.77
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:212.1-212.77
 def $add_parameters(cursor, TC, parameterTypeIR*{parameterTypeIR <- parameterTypeIR*})
 
 1. Case analysis on parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}
@@ -9428,7 +9428,7 @@ def $add_parameters(cursor, TC, parameterTypeIR*{parameterTypeIR <- parameterTyp
 
     4. Return TC''
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:237.1-237.78
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:229.1-229.78
 def $add_constructorParameter(TC, (direction typeIR id value''?{value'' <- value''?}))
 
 1. Case analysis on value''?{value'' <- value''?}
@@ -9451,7 +9451,7 @@ def $add_constructorParameter(TC, (direction typeIR id value''?{value'' <- value
 
     4. Return TC'
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:238.1-238.80
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:230.1-230.80
 def $add_constructorParameters(TC, parameterTypeIR*{parameterTypeIR <- parameterTypeIR*})
 
 1. Case analysis on parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}
@@ -9470,7 +9470,7 @@ def $add_constructorParameters(TC, parameterTypeIR*{parameterTypeIR <- parameter
 
     4. Return TC''
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:254.1-254.69
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:246.1-246.69
 def $add_type(cursor, TC, tid, typeDefIR)
 
 1. Case analysis on cursor
@@ -9511,7 +9511,7 @@ def $add_type(cursor, TC, tid, typeDefIR)
 
       3. Return TC'
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:274.1-274.72
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:266.1-266.72
 def $add_types(p, TC, tid*{tid <- tid*}, typeDefIR*{typeDefIR <- typeDefIR*})
 
 1. Case analysis on tid*{tid <- tid*}
@@ -9536,7 +9536,7 @@ def $add_types(p, TC, tid*{tid <- tid*}, typeDefIR*{typeDefIR <- typeDefIR*})
 
       4. Return TC''
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:282.1-282.88
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:274.1-274.88
 def $add_routine_overload(cursor, TC, rid, routineTypeDefIR)
 
 1. Case analysis on cursor
@@ -9565,7 +9565,7 @@ def $add_routine_overload(cursor, TC, rid, routineTypeDefIR)
 
       3. Return TC'
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:297.1-297.92
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:289.1-289.92
 def $add_routine_non_overload(cursor, TC, rid, routineTypeDefIR)
 
 1. Case analysis on cursor
@@ -9602,7 +9602,7 @@ def $add_routine_non_overload(cursor, TC, rid, routineTypeDefIR)
 
       3. Return TC'
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:318.1-318.79
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:310.1-310.79
 def $add_constructor(TC, cid, constructorTypeDefIR)
 
 1. (Let cdenv be TC.global.cdenv)
@@ -9615,7 +9615,7 @@ def $add_constructor(TC, cid, constructorTypeDefIR)
 
   3. Return TC'
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:333.1-333.66
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:325.1-325.66
 def $find_var(p', TC, prefixedNameIR)
 
 1. If ((prefixedNameIR matches pattern `.%`)), then
@@ -9678,7 +9678,7 @@ def $find_var(p', TC, prefixedNameIR)
 
         1. Return $find_var((block), TC, (` id))
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:354.1-354.63
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:346.1-346.63
 def $find_value(p', TC, prefixedNameIR)
 
 1. If ((prefixedNameIR matches pattern `.%`)), then
@@ -9769,7 +9769,7 @@ def $find_value(p', TC, prefixedNameIR)
 
         1. Return $find_value((block), TC, (` id))
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:377.1-377.67
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:369.1-369.67
 def $find_type(p', TC, prefixedNameIR)
 
 1. If ((prefixedNameIR matches pattern `.%`)), then
@@ -9832,12 +9832,12 @@ def $find_type(p', TC, prefixedNameIR)
 
         1. Return $find_type((block), TC, (` tid))
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:400.1-400.41
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:392.1-392.41
 def $ids_arguments(argumentIR*{argumentIR <- argumentIR*})
 
 1. Return $id_argument(argumentIR)*{argumentIR <- argumentIR*}
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:401.1-401.35
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:393.1-393.35
 def $id_argument(argumentIR)
 
 1. If ((argumentIR has type typedExpressionIR)), then
@@ -9864,7 +9864,7 @@ def $id_argument(argumentIR)
 
     1. Return ?()
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:409.1-410.34
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:401.1-402.34
 def $find_routine_overloaded(cursor, TC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*})
 
 1. Case analysis on cursor
@@ -9923,7 +9923,7 @@ def $find_routine_overloaded(cursor, TC, prefixedNameIR, argumentIR*{argumentIR 
 
       2. Return $find_routine_overloaded((block), TC, (` id), argumentIR*{argumentIR <- argumentIR*})
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:435.1-436.22
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:427.1-428.22
 def $find_routine_non_overloaded(p', TC, prefixedNameIR)
 
 1. If ((prefixedNameIR matches pattern `.%`)), then
@@ -9968,7 +9968,7 @@ def $find_routine_non_overloaded(p', TC, prefixedNameIR)
 
       2. Return $find_routine_non_overloaded((block), TC, (` id))
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:454.1-455.38
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:446.1-447.38
 def $find_constructor_overloaded(TC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*})
 
 1. Case analysis on prefixedNameIR
@@ -9993,7 +9993,7 @@ def $find_constructor_overloaded(TC, prefixedNameIR, argumentIR*{argumentIR <- a
 
     4. Return $find_overloaded<constructorTypeDefIR>(cdenv, id, id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*})
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:468.1-468.47
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:460.1-460.47
 def $find_return_type(TC)
 
 1. (Let localKind be TC.local.kind)
@@ -23977,13 +23977,13 @@ def $cid_IR(nameIR, constructorParameterListIR)
 
 1. Return $rid_IR(nameIR, constructorParameterListIR)
 
-;; ../../../../spec-concrete/6.1-lvalue.watsup:6.1-9.34
-syntax lvalueDyn = 
+;; ../../../../spec-concrete/6.1-storage-reference.watsup:6.1-9.41
+syntax storageReference = 
    | ` nameIR
    | . nameIR
-   | lvalueDyn . nameIR
-   | lvalueDyn [ value ]
-   | lvalueDyn [ value : value ]
+   | storageReference . nameIR
+   | storageReference [ value ]
+   | storageReference [ value : value ]
 
 ;; ../../../../spec-concrete/6.2.1-routine.watsup:8.1-11.66
 syntax function = 
@@ -23994,7 +23994,7 @@ syntax function =
 
 ;; ../../../../spec-concrete/6.2.1-routine.watsup:14.1-21.41
 syntax method = 
-   | builtin_method( parameterListIR )# lvalueDyn
+   | builtin_method( parameterListIR )# storageReference
    | extern_method< typeParameterListIR >( parameterListIR ) blockStatementIR?
    | extern_methodabstract< typeParameterListIR >( parameterListIR )
    | parser_apply( parameterListIR ){ parserLocalDeclarationListIR ; senv }
@@ -24007,7 +24007,7 @@ syntax routine =
    | function< typeParameterListIR >( parameterListIR ) blockStatementIR
    | action( parameterListIR ) blockStatementIR
    | extern_function< typeParameterListIR >( parameterListIR )
-   | builtin_method( parameterListIR )# lvalueDyn
+   | builtin_method( parameterListIR )# storageReference
    | extern_method< typeParameterListIR >( parameterListIR ) blockStatementIR?
    | extern_methodabstract< typeParameterListIR >( parameterListIR )
    | parser_apply( parameterListIR ){ parserLocalDeclarationListIR ; senv }
