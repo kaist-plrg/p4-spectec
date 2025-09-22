@@ -122,8 +122,9 @@ let structure_command =
 
 let prose_test specdir =
   let spec_sl = structure specdir in
-  let penv = Prose.Collect.collect_spec spec_sl in
-  Prose.Print.string_of_spec penv spec_sl |> print_endline
+  let penv, ienv = Prose.Collect.collect_spec spec_sl in
+  let ctx = Prose.Ctx.create ~penv ~ienv () in
+  Prose.Print.string_of_spec ctx spec_sl |> print_endline
 
 let prose_command =
   Core.Command.basic ~summary:"run prose test"

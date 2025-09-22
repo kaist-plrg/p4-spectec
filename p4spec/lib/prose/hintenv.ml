@@ -10,10 +10,7 @@ module RelHintMap = MakeRIdEnv (HintExp)
 module FuncHintMap = MakeFIdEnv (HintExp)
 
 (* Collection of hints for single hintid *)
-type t = {
-  funcs: FuncHintMap.t;
-  rels: RelHintMap.t;
-}
+type t = { funcs : FuncHintMap.t; rels : RelHintMap.t }
 
 let add_func (fid : FId.t) (exp : El.Ast.exp) (h : t) : t =
   { h with funcs = FuncHintMap.add fid exp h.funcs }
