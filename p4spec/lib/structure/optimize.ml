@@ -168,8 +168,13 @@ let matchify_exp_eq_terminal (exp : exp) : exp =
   match exp.it with
   | CmpE (`EqOp, _, exp_l, { it = CaseE (mixop, []); _ }) ->
       Il.Ast.MatchE (exp_l, CaseP mixop) $$ (at, note)
+  | CmpE (`EqOp, _, { it = CaseE (mixop, []); _ }, exp_r) ->
+      Il.Ast.MatchE (exp_r, CaseP mixop) $$ (at, note)
   | CmpE (`NeOp, _, exp_l, { it = CaseE (mixop, []); _ }) ->
       let exp = Il.Ast.MatchE (exp_l, CaseP mixop) $$ (at, note) in
+      Il.Ast.UnE (`NotOp, `BoolT, exp) $$ (at, note)
+  | CmpE (`NeOp, _, { it = CaseE (mixop, []); _ }, exp_r) ->
+      let exp = Il.Ast.MatchE (exp_r, CaseP mixop) $$ (at, note) in
       Il.Ast.UnE (`NotOp, `BoolT, exp) $$ (at, note)
   | _ -> exp
 
@@ -180,6 +185,20 @@ let rec matchify_if_eq_terminal (instr : instr) : instr =
       let exp_cond = matchify_exp_eq_terminal exp_cond in
       let instrs_then = matchify_if_eq_terminals instrs_then in
       IfI (exp_cond, iterexps, instrs_then) $ at
+  | HoldI (id, notexp, iterexps, instrs_hold, instrs_nothold) ->
+      let instrs_hold = matchify_if_eq_terminals instrs_hold in
+      let instrs_nothold = matchify_if_eq_terminals instrs_nothold in
+      HoldI (id, notexp, iterexps, instrs_hold, instrs_nothold) $ at
+  | CaseI (exp, cases, total) ->
+      let cases =
+        let guards, blocks = List.split cases in
+        let blocks = List.map matchify_if_eq_terminals blocks in
+        List.combine guards blocks
+      in
+      CaseI (exp, cases, total) $ at
+  | GroupI (id_group, exps_group, instrs_group) ->
+      let instrs_group = matchify_if_eq_terminals instrs_group in
+      GroupI (id_group, exps_group, instrs_group) $ at
   | _ -> instr
 
 and matchify_if_eq_terminals (instrs : instr list) : instr list =
@@ -1152,7 +1171,7 @@ let rec remove_singleton_match (tdenv : TDEnv.t) (instrs : instr list) :
   | [] -> []
   | instr_h :: instrs_t -> (
       match instr_h.it with
-      | IfI (exp_cond, iterexps, instrs) when is_singleton_match tdenv exp_cond
+      | IfI (exp_cond, _, instrs) when is_singleton_match tdenv exp_cond
         ->
           instrs @ instrs_t |> remove_singleton_match tdenv
       | IfI (exp_cond, iterexps, instrs) ->

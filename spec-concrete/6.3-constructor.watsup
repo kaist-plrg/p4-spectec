@@ -1,0 +1,15 @@
+;;
+;; Constructors
+;;
+
+syntax constructor =
+  | EXTERN nameIR `< typeParameterListIR >
+    `( constructorParameterListIR ) `{ methodPrototypeListIR }
+  | PARSER `( parameterListIR ) `( constructorParameterListIR )
+      `{ parserLocalDeclarationListIR
+         parserStateListIR }
+  | CONTROL `( parameterListIR ) `( constructorParameterListIR )
+      `{ controlLocalDeclarationListIR
+         APPLY controlBodyIR }
+  | PACKAGE `< typeParameterListIR > `( constructorParameterListIR )
+  | TABLE nameIR `{ tablePropertyListIR }

@@ -19,7 +19,6 @@ open Lexing
 open Context
 open Parser
 open Wrap
-open Flatten
 open Util.Source
 module F = Format
 
