@@ -1,36 +1,42 @@
-OLDSPEC=P4-16-spec
-NEWSPEC=P4-16-spec-new
 ROUGE_STYLE=github
 ROUGE_CSS=style
+
+SPECTEC=p4spectec
+SPECFILES=../spec-concrete/*.watsup
+SPEC=P4-16-spec-new
 
 grammar.trimmed.adoc: grammar.adoc trim-asciidoc-tag-comments.py
 	./trim-asciidoc-tag-comments.py $< > $@
 
-${OLDSPEC}.pdf: ${OLDSPEC}.adoc grammar.adoc grammar.trimmed.adoc
+spectec:
+	cd .. && make build-spec && cd document
+
+splice: spectec
+	rm -r sections || true
+	cp -r sections-skeleton sections
+	SPLICEFILES=$$(find sections -type f -name '*.adoc' | xargs -I {} echo "-splice {}" | tr '\n' ' '); \
+	../${SPECTEC} splice ${SPECFILES} -inplace $${SPLICEFILES}
+
+${SPEC}.pdf: ${SPEC}.adoc grammar.adoc grammar.trimmed.adoc
+	rm -r sections
+	cp -r sections-skeleton sections
+	../${SPECTEC} splice ${SPECDIR}/*.watsup -inplace \
+		-splice $(find sections -type f -name '*.adoc')
 	time asciidoctor-pdf -v \
 		-r asciidoctor-mathematical \
 		-a pdf-fontsdir=resources/fonts \
 		-a rouge-style=$(ROUGE_STYLE) $<
 
-${OLDSPEC}.html: ${OLDSPEC}.adoc grammar.adoc grammar.trimmed.adoc
+${SPEC}.html: ${SPEC}.adoc grammar.adoc grammar.trimmed.adoc
+	rm -r sections
+	cp -r sections-skeleton sections
+	../${SPECTEC} splice ${SPECDIR}/*.watsup -inplace \
+		-splice $(find sections -type f -name '*.adoc')
 	time asciidoctor -v \
 		-r asciidoctor-mathematical \
 		-a rouge-css=$(ROUGE_CSS) $<
 
-old: ${OLDSPEC}.pdf ${OLDSPEC}.html
-
-${NEWSPEC}.pdf: ${NEWSPEC}.adoc grammar.adoc grammar.trimmed.adoc
-	time asciidoctor-pdf -v \
-		-r asciidoctor-mathematical \
-		-a pdf-fontsdir=resources/fonts \
-		-a rouge-style=$(ROUGE_STYLE) $<
-
-${NEWSPEC}.html: ${NEWSPEC}.adoc grammar.adoc grammar.trimmed.adoc
-	time asciidoctor -v \
-		-r asciidoctor-mathematical \
-		-a rouge-css=$(ROUGE_CSS) $<
-
-new: ${NEWSPEC}.pdf ${NEWSPEC}.html
+build: ${SPEC}.pdf ${SPEC}.html
 
 clean:
 	/bin/rm -f ${SPEC}.pdf ${SPEC}.html ${NEWSPEC}.pdf grammar.trimmed.adoc resources/figs/stem-*.png
