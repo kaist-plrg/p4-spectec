@@ -1,0 +1,194 @@
+[#sec-lexical]
+=== Lexical constructs
+
+All P4 keywords use only ASCII characters. All P4 identifiers must use
+only ASCII characters. P4 compilers should handle correctly strings
+containing 8-bit characters in comments and string literals.
+P4 is case-sensitive.
+Whitespace characters, including newlines are treated as token
+separators. Indentation is free-form; however, P4 has C-like block
+constructs, and all our examples use C-style indentation. Tab
+characters are treated as spaces.
+
+The lexer recognizes the following kinds of terminals:
+
+* `IDENTIFIER`: start with a letter or underscore, and contain
+  letters, digits and underscores
+* `TYPE_IDENTIFIER`: identifier that denotes a type name
+* `INTEGER`: integer literals
+* `DONTCARE`: a single underscore
+* Keywords such as `RETURN`. By convention, each keyword terminal corresponds to a
+  language keyword with the same spelling but using lowercase. For
+  example, the `RETURN` terminal corresponds to the `return`
+  keyword.
+
+[#sec-lexical-identifiers]
+==== Identifiers
+
+P4 identifiers may contain only letters, numbers, and the underscore
+character `+_+`, and must start with a letter or
+underscore. The special identifier consisting of a single underscore `+_+`
+is reserved to indicate a "don't care" value; its
+type may vary depending on the context. Certain keywords (e.g., `apply`)
+can be used as identifiers if the context makes it unambiguous.
+
+[source,bison]
+----
+include::../../grammar.adoc[tag=nonTypeName]
+
+name
+    : nonTypeName
+    | TYPE_IDENTIFIER
+    ;
+----
+
+[#sec-lexical-comments]
+==== Comments
+
+P4 supports several kinds of comments:
+
+* Single-line comments, introduced by `//` and spanning to the end of line,
+* Multi-line comments, enclosed between `+/*+` and `+*/+`
+* Nested multi-line comments are not supported.
+* Javadoc-style comments, starting with `+/**+` and ending with `+*/+`
+
+Use of Javadoc-style comments is strongly encouraged for the tables and actions
+that are used to synthesize the interface with the control-plane.
+
+P4 treats comments as token separators and no comments are allowed within a
+token---e.g. `+bi/**/t+` is parsed as two tokens, `bi` and `t`, and
+not as a single token `bit`.
+
+[#sec-lexical-literals]
+==== Literal constants
+
+[#sec-lexical-Boolean-literals]
+===== Boolean literals
+
+There are two Boolean literal constants: `true` and `false`.
+
+[#sec-synatx-lexical-integer-literals]
+===== Integer literals
+
+Integer literals are non-negative arbitrary-precision integers.
+By default, literals are represented in base 10. The following prefixes
+must be employed to specify the base explicitly:
+
+* `0x` or `0X` indicates base 16 (hexadecimal)
+* `0o` or `0O` indicates base 8 (octal)
+* `0d` or `0D` indicates base 10 (decimal)
+* `0b` or `0B` indicates base 2
+
+The width of a numeric literal in bits can be specified by an unsigned
+number prefix consisting of a number of bits and a signedness
+indicator:
+
+* `w` indicates unsigned numbers
+* `s` indicates signed numbers
+
+Note that a leading zero by itself does not indicate an
+octal (base 8) constant.  The underscore character is considered a
+digit within number literals but is ignored when computing the
+value of the parsed number. This allows long constant numbers to be
+more easily read by grouping digits together. The underscore cannot be
+used in the width specification or as the first character of an
+integer literal. No comments or whitespaces are allowed within a
+literal. Here are some examples of numeric literals:
+
+[source,p4]
+----
+32w255         // a 32-bit unsigned number with value 255
+32w0d255       // same value as above
+32w0xFF        // same value as above
+32s0xFF        // a 32-bit signed number with value 255
+8w0b10101010   // an 8-bit unsigned number with value 0xAA
+8w0b_1010_1010 // same value as above
+8w170          // same value as above
+8s0b1010_1010  // an 8-bit signed number with value -86
+16w0377        // 16-bit unsigned number with value 377 (not 255!)
+16w0o377       // 16-bit unsigned number with value 255 (base 8)
+----
+
+[#sec-lexical-string-literals]
+===== String literals
+
+String literals are specified as an arbitrary sequence of 8-bit
+characters, enclosed within double quote characters `"` (ASCII code
+34). Strings start with a double quote character and extend to the
+first double quote sign which is not immediately preceded by an odd
+number of backslash characters (ASCII code 92). P4 does not make any
+validity checks on strings (i.e., it does not check that strings
+represent legal UTF-8 encodings).
+
+Since P4 does not allow strings to exist at runtime, string literals
+are generally passed unchanged through the P4 compiler to
+other third-party tools or compiler-backends. The compiler can, however,
+perform compile-time concatenation (constant-folding) of concatenation
+expressions into single literal. When such concatenation is performed,
+the binary representation of the string literals (excluding the quotes)
+is concatenated in the order they appears in the source code. There are
+no escape sequences that would be treated specially when strings are
+concatenated.
+
+The backends and other tools can define their own handling of escape
+sequences (e.g., how to specify Unicode characters, or handle
+unprintable ASCII characters).
+
+Here are 3 examples of string literals:
+
+[source,p4]
+----
+"simple string"
+"string \" with \" embedded \" quotes"
+"string with embedded
+line terminator"
+----
+
+Here is an example of concatenation expression and an equivalent string
+literal:
+
+[source,p4]
+----
+"one string \" with a quote inside;" ++ (" " ++ "another string")
+// can be constant folded to
+"one string \" with a quote inside; another string"
+----
+
+[#sec-lexical-trailing-commas]
+==== Optional trailing commas
+
+The P4 grammar allows several kinds of comma-separated lists to end in
+an optional comma.
+
+[source,bison]
+----
+include::../../grammar.adoc[tag=optTrailingComma]
+----
+
+For example, the following declarations are both legal, and
+have the same meaning:
+
+[source,p4]
+----
+enum E {
+     a, b, c
+}
+
+enum E {
+     a, b, c,
+}
+----
+
+This is particularly useful in combination with preprocessor
+directives:
+
+[source,p4]
+----
+enum E {
+#if SUPPORT_A
+    a,
+#endif
+    b,
+    c,
+}
+----
