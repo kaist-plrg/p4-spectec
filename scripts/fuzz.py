@@ -29,6 +29,7 @@ class FuzzConfig:
     work_dir: Directory
     loops: int
     spec: Directory
+    relname: str
     include: Directory
     exclude: Directory
     ignores: List[Filepath]
@@ -45,6 +46,7 @@ def parse_args() -> FuzzConfig:
     parser.add_argument("dir", type=str, help="Path to the working directory")
     parser.add_argument("--loops", type=int, default=2, help="Fuzz loop count")
     parser.add_argument("--spec", type=str, default="spec")
+    parser.add_argument("--relname", type=str, default="Program_ok")
     parser.add_argument("--include", type=str, default="p4c/p4include")
     parser.add_argument("--exclude", type=str, default="excludes")
     parser.add_argument(
@@ -74,6 +76,7 @@ def parse_args() -> FuzzConfig:
         work_dir=args.dir,
         loops=args.loops,
         spec=args.spec,
+        relname=args.relname,
         include=args.include,
         exclude=args.exclude,
         ignores=args.ignores,
@@ -83,6 +86,7 @@ def parse_args() -> FuzzConfig:
         timeout=args.timeout,
         creduce_configs=CReduceConfigs(
             p4spectec_dir=P4SPECTEC_DIR,
+            relname=args.relname,
             cores=args.cores,
             timeout_interesting=args.timeout_interesting,
             timeout_creduce=args.timeout_creduce,
@@ -159,6 +163,8 @@ def fuzzing_campaign(config: FuzzConfig) -> None:
         "./p4spectec",
         "testgen",
         *SPEC_FILES,
+        "-rel",
+        config.relname,
         "-silent",
         "-i",
         INCLUDE_DIR,
@@ -364,6 +370,7 @@ if __name__ == "__main__":
     run_coverage(
         config.work_dir,
         config.spec,
+        config.relname,
         config.include,
         config.exclude,
         config.ignores,

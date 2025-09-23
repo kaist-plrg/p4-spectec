@@ -17,7 +17,7 @@ type t = {
 (* Constructors *)
 
 let init (ctx : Ctx.t) : t =
-  let hints = REnv.map (fun (_, hint, _) -> hint) ctx.renv in
+  let hints = REnv.map (fun (_, _, hint, _) -> hint) ctx.renv in
   let frees = ctx.frees in
   let bounds = ctx.venv in
   let tdenv = ctx.tdenv in
@@ -27,7 +27,13 @@ let init (ctx : Ctx.t) : t =
 
 let promote (ctx : Ctx.t) (dctx : t) (venv : VEnv.t) : Ctx.t =
   let frees = dctx.frees in
-  let venv = VEnv.union (fun _ -> assert false) ctx.venv venv in
+  let venv =
+    VEnv.union
+      (fun _ typ_a typ_b ->
+        if not (Runtime_static.Typ.equiv typ_a typ_b) then assert false;
+        Some typ_a)
+      ctx.venv venv
+  in
   { ctx with frees; venv }
 
 (* Adders *)

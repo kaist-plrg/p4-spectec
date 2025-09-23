@@ -23,6 +23,17 @@ type cursor = Global | Local
 
 (* Context *)
 
+(* Testing layer *)
+
+type testing = {
+  (* Value dependency graph *)
+  derive : bool;
+  graph : Dep.Graph.t;
+  vid_program : vid;
+  (* Branch coverage of phantoms *)
+  cover : SCov.Cover.t ref;
+}
+
 (* Global layer *)
 
 type global = {
@@ -36,26 +47,34 @@ type global = {
 
 (* Local layer *)
 
-type local = {
-  (* Input values *)
-  values_input : value list;
-  (* Map from syntax ids to type definitions *)
-  tdenv : TDEnv.t;
-  (* Map from function ids to functions *)
-  fenv : FEnv.t;
-  (* Map from variables to values *)
-  venv : VEnv.t;
-}
+type local =
+  | Empty
+  | Rel of {
+      (* Relation name *)
+      rid : RId.t;
+      (* Input values *)
+      values_input : value list;
+      (* Map from variables to values *)
+      venv : VEnv.t;
+    }
+  | Func of {
+      (* Function name *)
+      fid : FId.t;
+      (* Input values *)
+      values_input : value list;
+      (* Map from syntax ids to type definitions *)
+      tdenv : TDEnv.t;
+      (* Map from function ids to functions *)
+      fenv : FEnv.t;
+      (* Map from variables to values *)
+      venv : VEnv.t;
+    }
 
 type t = {
   (* Filename of the source file *)
   filename : string;
-  (* Value dependency graph *)
-  derive : bool;
-  graph : Dep.Graph.t;
-  vid_program : vid;
-  (* Branch coverage of phantoms *)
-  cover : SCov.Cover.t ref;
+  (* Testing layer *)
+  testing : testing;
   (* Global layer *)
   global : global;
   (* Local layer *)
@@ -65,25 +84,50 @@ type t = {
 (* Value dependencies *)
 
 let add_node ?(taint = false) (ctx : t) (value : value) : unit =
-  if ctx.derive then Dep.Graph.add_node ~taint ctx.graph value
+  if ctx.testing.derive then Dep.Graph.add_node ~taint ctx.testing.graph value
 
 let add_edge (ctx : t) (value_from : value) (value_to : value)
     (label : Dep.Edges.label) : unit =
-  if ctx.derive then Dep.Graph.add_edge ctx.graph value_from value_to label
+  if ctx.testing.derive then
+    Dep.Graph.add_edge ctx.testing.graph value_from value_to label
 
 (* Cover *)
 
 let cover (ctx : t) (hit : bool) (pid : pid) (vid : vid) : t =
-  if hit then ctx.cover := SCov.hit !(ctx.cover) pid
-  else ctx.cover := SCov.miss !(ctx.cover) pid vid;
+  if hit then ctx.testing.cover := SCov.hit !(ctx.testing.cover) pid
+  else ctx.testing.cover := SCov.miss !(ctx.testing.cover) pid vid;
   ctx
 
 (* Finders *)
 
+(* Finders for input values *)
+
+let find_values_input_opt (cursor : cursor) (ctx : t) : Value.t list option =
+  match cursor with
+  | Global -> None
+  | Local -> (
+      match ctx.local with
+      | Empty -> None
+      | Rel { values_input; _ } -> Some values_input
+      | Func { values_input; _ } -> Some values_input)
+
+let find_values_input (cursor : cursor) (ctx : t) : Value.t list =
+  match find_values_input_opt cursor ctx with
+  | Some values_input -> values_input
+  | None ->
+      error no_region
+        "cannot find input values in global context or empty local context"
+
 (* Finders for values *)
 
 let find_value_opt (cursor : cursor) (ctx : t) (var : Var.t) : Value.t option =
-  match cursor with Global -> None | Local -> VEnv.find_opt var ctx.local.venv
+  match cursor with
+  | Global -> None
+  | Local -> (
+      match ctx.local with
+      | Empty -> None
+      | Rel { venv; _ } -> VEnv.find_opt var venv
+      | Func { venv; _ } -> VEnv.find_opt var venv)
 
 let find_value (cursor : cursor) (ctx : t) (var : Var.t) : Value.t =
   match find_value_opt cursor ctx var with
@@ -102,7 +146,12 @@ let rec find_typdef_opt (cursor : cursor) (ctx : t) (tid : TId.t) :
   match cursor with
   | Global -> TDEnv.find_opt tid ctx.global.tdenv
   | Local -> (
-      match TDEnv.find_opt tid ctx.local.tdenv with
+      let tdenv =
+        match ctx.local with
+        | Empty | Rel _ -> TDEnv.empty
+        | Func { tdenv; _ } -> tdenv
+      in
+      match TDEnv.find_opt tid tdenv with
       | Some td -> Some td
       | None -> find_typdef_opt Global ctx tid)
 
@@ -134,7 +183,12 @@ let rec find_func_opt (cursor : cursor) (ctx : t) (fid : FId.t) : Func.t option
   match cursor with
   | Global -> FEnv.find_opt fid ctx.global.fenv
   | Local -> (
-      match FEnv.find_opt fid ctx.local.fenv with
+      let fenv =
+        match ctx.local with
+        | Empty | Rel _ -> FEnv.empty
+        | Func { fenv; _ } -> fenv
+      in
+      match FEnv.find_opt fid fenv with
       | Some func -> Some func
       | None -> find_func_opt Global ctx fid)
 
@@ -154,8 +208,19 @@ let add_value (cursor : cursor) (ctx : t) (var : Var.t) (value : Value.t) : t =
   (if cursor = Global then
      let id, _ = var in
      error id.at "cannot add value to global context");
-  let venv = VEnv.add var value ctx.local.venv in
-  { ctx with local = { ctx.local with venv } }
+  (* (if bound_value cursor ctx var then *)
+  (*    let id, _ = var in *)
+  (*    error_dup id.at "value" (Var.to_string var)); *)
+  match ctx.local with
+  | Empty ->
+      let id, _ = var in
+      error id.at "cannot add value to empty local context"
+  | Rel { rid; values_input; venv } ->
+      let venv = VEnv.add var value venv in
+      { ctx with local = Rel { rid; values_input; venv } }
+  | Func { fid; values_input; tdenv; fenv; venv } ->
+      let venv = VEnv.add var value venv in
+      { ctx with local = Func { fid; values_input; tdenv; fenv; venv } }
 
 (* Adders for type definitions *)
 
@@ -165,9 +230,13 @@ let add_typdef (cursor : cursor) (ctx : t) (tid : TId.t) (td : Typdef.t) : t =
   | Global ->
       let tdenv = TDEnv.add tid td ctx.global.tdenv in
       { ctx with global = { ctx.global with tdenv } }
-  | Local ->
-      let tdenv = TDEnv.add tid td ctx.local.tdenv in
-      { ctx with local = { ctx.local with tdenv } }
+  | Local -> (
+      match ctx.local with
+      | Empty -> error tid.at "cannot add type to empty local context"
+      | Rel _ -> error tid.at "cannot add type to rule context"
+      | Func { fid; values_input; tdenv; fenv; venv } ->
+          let tdenv = TDEnv.add tid td tdenv in
+          { ctx with local = Func { fid; values_input; tdenv; fenv; venv } })
 
 (* Adders for relations *)
 
@@ -185,9 +254,16 @@ let add_func (cursor : cursor) (ctx : t) (fid : FId.t) (func : Func.t) : t =
   | Global ->
       let fenv = FEnv.add fid func ctx.global.fenv in
       { ctx with global = { ctx.global with fenv } }
-  | Local ->
-      let fenv = FEnv.add fid func ctx.local.fenv in
-      { ctx with local = { ctx.local with fenv } }
+  | Local -> (
+      match ctx.local with
+      | Empty -> error fid.at "cannot add function to empty local context"
+      | Rel _ -> error fid.at "cannot add function to relation context"
+      | Func { fid = fid_local; values_input; tdenv; fenv; venv } ->
+          let fenv = FEnv.add fid func fenv in
+          {
+            ctx with
+            local = Func { fid = fid_local; values_input; tdenv; fenv; venv };
+          })
 
 (* Constructors *)
 
@@ -196,19 +272,14 @@ let add_func (cursor : cursor) (ctx : t) (fid : FId.t) (func : Func.t) : t =
 let empty_global () : global =
   { tdenv = TDEnv.empty; renv = REnv.empty; fenv = FEnv.empty }
 
-let empty_local () : local =
-  {
-    values_input = [];
-    tdenv = TDEnv.empty;
-    fenv = FEnv.empty;
-    venv = VEnv.empty;
-  }
+let empty_local () : local = Empty
 
 let empty ~(derive : bool) (filename : string) (graph : Dep.Graph.t)
     (vid_program : vid) (cover : SCov.Cover.t ref) : t =
+  let testing = { derive; graph; vid_program; cover } in
   let global = empty_global () in
   let local = empty_local () in
-  { filename; derive; graph; vid_program; cover; global; local }
+  { filename; testing; global; local }
 
 (* Constructing a local context *)
 
@@ -216,8 +287,27 @@ let localize (ctx : t) : t =
   let local = empty_local () in
   { ctx with local }
 
-let localize_inputs (ctx : t) (values_input : value list) : t =
-  { ctx with local = { ctx.local with values_input } }
+let localize_rule (ctx : t) (rid : RId.t) (values_input : value list) : t =
+  let local = Rel { rid; values_input; venv = VEnv.empty } in
+  { ctx with local }
+
+let localize_func (ctx : t) (fid : FId.t) (values_input : value list)
+    (tdenv : TDEnv.t) : t =
+  let local =
+    Func { fid; values_input; tdenv; fenv = FEnv.empty; venv = VEnv.empty }
+  in
+  { ctx with local }
+
+let localize_clear (ctx : t) : t =
+  match ctx.local with
+  | Empty -> error no_region "cannot clear empty local context"
+  | Rel { rid; values_input; _ } ->
+      { ctx with local = Rel { rid; values_input; venv = VEnv.empty } }
+  | Func { fid; values_input; tdenv; fenv; _ } ->
+      {
+        ctx with
+        local = Func { fid; values_input; tdenv; fenv; venv = VEnv.empty };
+      }
 
 (* Constructing sub-contexts *)
 
@@ -283,4 +373,5 @@ let sub_list (ctx : t) (vars : var list) : t list =
 
 (* Committing a sub-context *)
 
-let commit (ctx : t) (ctx_sub : t) : t = { ctx with cover = ctx_sub.cover }
+let commit (ctx : t) (ctx_sub : t) : t =
+  { ctx with testing = { ctx.testing with cover = ctx_sub.testing.cover } }

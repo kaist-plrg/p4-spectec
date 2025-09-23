@@ -16,7 +16,8 @@ let string_of_text text = text
 let string_of_varid varid = varid.it
 let string_of_typid typid = typid.it
 let string_of_relid relid = relid.it
-let string_of_ruleid ruleid = ruleid.it
+let string_of_rulegroupid rulegroupid = rulegroupid.it
+let string_of_rulepathid rulepathid = rulepathid.it
 let string_of_defid defid = "$" ^ defid.it
 
 (* Atoms *)
@@ -295,26 +296,87 @@ and string_of_targs targs =
 
 (* Rules *)
 
-and string_of_rule rule =
-  let ruleid, notexp, prems = rule.it in
-  ";; " ^ string_of_region rule.at ^ "\n   rule " ^ string_of_ruleid ruleid
-  ^ ": " ^ string_of_notexp notexp ^ string_of_prems prems
+and string_of_ruleinput nottyp inputs exps_input =
+  let mixop, typs = nottyp.it in
+  let exps_input = List.combine inputs exps_input in
+  let exps =
+    List.init (List.length typs) (fun idx ->
+        match List.assoc_opt idx exps_input with
+        | Some exp_input -> exp_input
+        | None -> VarE ("%" $ no_region) $$ (no_region, TextT))
+  in
+  let notexp = (mixop, exps) in
+  string_of_notexp notexp
 
-and string_of_rules rules =
-  String.concat ""
-    (List.map (fun rule -> "\n\n   " ^ string_of_rule rule) rules)
+and string_of_ruleoutput nottyp inputs exps_output =
+  let mixop, typs = nottyp.it in
+  let outputs =
+    List.init (List.length typs) (fun idx ->
+        if List.mem idx inputs then None else Some idx)
+    |> List.filter_map Fun.id
+  in
+  let exps_output = List.combine outputs exps_output in
+  match exps_output with
+  | [] -> "-- the relation holds"
+  | _ ->
+      let exps =
+        List.init (List.length typs) (fun idx ->
+            match List.assoc_opt idx exps_output with
+            | Some exp_output -> exp_output
+            | None -> VarE ("%" $ no_region) $$ (no_region, TextT))
+      in
+      let notexp = (mixop, exps) in
+      "-- output: " ^ string_of_notexp notexp
+
+and string_of_rulematch nottyp inputs rulematch =
+  let exps_input_expl, exps_input_impl, prems_input_impl = rulematch in
+  indent 2 ^ "(explicit) "
+  ^ string_of_ruleinput nottyp inputs exps_input_expl
+  ^ "\n" ^ indent 2 ^ "(implicit) "
+  ^ string_of_ruleinput nottyp inputs exps_input_impl
+  ^ string_of_prems ~level:2 prems_input_impl
+
+and string_of_rulepath nottyp inputs rulepath =
+  let rulepathid, prems, exps_output = rulepath in
+  indent 2 ^ "rulepath "
+  ^ string_of_rulepathid rulepathid
+  ^ string_of_prems ~level:2 prems
+  ^ "\n" ^ indent 2
+  ^ string_of_ruleoutput nottyp inputs exps_output
+
+and string_of_rulepaths nottyp inputs rulepaths =
+  rulepaths
+  |> List.map (string_of_rulepath nottyp inputs)
+  |> String.concat "\n\n"
+
+and string_of_rulegroup nottyp inputs rulegroup =
+  let rulegroupid, rulematch, rulepaths = rulegroup.it in
+  indent 1 ^ ";; "
+  ^ string_of_region rulegroup.at
+  ^ "\n" ^ indent 1 ^ "rulegroup "
+  ^ string_of_rulegroupid rulegroupid
+  ^ "\n\n " ^ indent 1 ^ "match\n\n"
+  ^ string_of_rulematch nottyp inputs rulematch
+  ^ "\n\n " ^ indent 1 ^ "paths\n\n"
+  ^ string_of_rulepaths nottyp inputs rulepaths
+
+and string_of_rulegroups nottyp inputs rulegroups =
+  rulegroups
+  |> List.map (string_of_rulegroup nottyp inputs)
+  |> String.concat "\n\n"
 
 (* Clause *)
 
 and string_of_clause idx clause =
   let args, exp, prems = clause.it in
-  ";; " ^ string_of_region clause.at ^ "\n   clause " ^ string_of_int idx
-  ^ string_of_args args ^ " = " ^ string_of_exp exp ^ string_of_prems prems
+  ";; " ^ string_of_region clause.at ^ "\n" ^ indent 1 ^ "clause "
+  ^ string_of_int idx ^ " : " ^ string_of_args args ^ " = " ^ string_of_exp exp
+  ^ string_of_prems ~level:1 prems
 
 and string_of_clauses clauses =
   String.concat ""
     (List.mapi
-       (fun idx clause -> "\n\n   " ^ string_of_clause idx clause)
+       (fun idx clause -> "\n\n" ^ indent 1 ^ string_of_clause idx clause)
        clauses)
 
 (* Premises *)
@@ -337,9 +399,10 @@ and string_of_prem prem =
       "(" ^ string_of_prem prem ^ ")" ^ string_of_iterexp iterexp
   | DebugPr exp -> "debug " ^ string_of_exp exp
 
-and string_of_prems prems =
+and string_of_prems ?(level = 0) prems =
+  let indent = indent level in
   String.concat ""
-    (List.map (fun prem -> "\n      -- " ^ string_of_prem prem) prems)
+    (List.map (fun prem -> "\n" ^ indent ^ "-- " ^ string_of_prem prem) prems)
 
 (* Hints *)
 
@@ -357,9 +420,10 @@ let rec string_of_def def =
   | TypD (typid, tparams, deftyp) ->
       "syntax " ^ string_of_typid typid ^ string_of_tparams tparams ^ " = "
       ^ string_of_deftyp deftyp
-  | RelD (relid, nottyp, _, rules) ->
+  | RelD (relid, nottyp, inputs, rulegroups) ->
       "relation " ^ string_of_relid relid ^ ": " ^ string_of_nottyp nottyp
-      ^ string_of_rules rules
+      ^ "\n\n"
+      ^ string_of_rulegroups nottyp inputs rulegroups
   | DecD (defid, tparams, params, typ, clauses) ->
       "def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : " ^ string_of_typ typ ^ " ="

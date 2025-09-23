@@ -19,7 +19,6 @@ open Lexing
 open Context
 open Parser
 open Wrap
-open Flatten
 open Util.Source
 module F = Format
 
@@ -124,7 +123,7 @@ let parse_width_int s n _info =
           NumV (`Int i) |> with_typ (NumT `IntT)
         in
         [ NT value_width; Term "S"; NT value_int ]
-        |> wrap_case_v |> with_typ (wrap_var_t "number")
+        |> wrap_case_v |> with_typ (wrap_var_t "numberLiteral")
     | "w" ->
       let value_width =
         NumV (`Nat w) |> with_typ (NumT `NatT)
@@ -133,7 +132,7 @@ let parse_width_int s n _info =
         NumV (`Int i) |> with_typ (NumT `IntT)
       in
       [ NT value_width; Term "W"; NT value_int ]
-      |> wrap_case_v |> with_typ (wrap_var_t "number")
+      |> wrap_case_v |> with_typ (wrap_var_t "numberLiteral")
     | _ ->
       raise (Error "Illegal integer constant")
 }

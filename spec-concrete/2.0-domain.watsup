@@ -1,4 +1,12 @@
 ;;
+;; Cursor for scoping
+;;
+
+syntax cursor = GLOBAL | BLOCK | LOCAL
+
+var p : cursor
+
+;;
 ;; Names
 ;;
 
@@ -85,7 +93,6 @@ def $cid(name, `( parameterList ))
   = $name(name) `( $pids(parameterList) )
 
 
-
 dec $expression_as_lvalue(expression) : lvalue?
 
 def $expression_as_lvalue(referenceExpression) = referenceExpression
@@ -93,8 +100,9 @@ def $expression_as_lvalue(expression `. member) = lvalue `. member
   -- if lvalue = $expression_as_lvalue(expression)
 def $expression_as_lvalue(`( expression )) = `( lvalue )
   -- if lvalue = $expression_as_lvalue(expression)
+
 ;;
-;; Object names
+;; Object names (fully qualified paths)
 ;;
 
 syntax oid = id*

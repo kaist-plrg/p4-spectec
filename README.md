@@ -43,15 +43,16 @@ $ ./p4spectec elab spec-concrete/*.watsup
 
 Currently, the P4-SpecTec specification defines the static semantics of P4.
 Given a P4 program, below command runs the typing rules of the P4 language.
+`RELNAME` may be `Program_ok` or `Program_inst`.
 
 ```shell
-$ ./p4spectec run-sl spec-concrete/*.watsup -i p4c/p4include -p [FILENAME].p4
+$ ./p4spectec run-sl spec-concrete/*.watsup -rel [RELNAME] -i p4c/p4include -p [FILENAME].p4
 ```
 
 ### To Initiate a Fuzz Loop for Generating P4 Programs
 
 ```shell
-$ ./p4spectec testgen spec-concrete/*.watsup -i p4c/p4include -seed [SEED DIR] -gen [GEN DIR] -fuel [NUM]
+$ ./p4spectec testgen spec-concrete/*.watsup -rel Program_ok -i p4c/p4include -seed [SEED DIR] -gen [GEN DIR] -fuel [NUM]
 ```
 
 This will generate P4 programs in the directory `[GEN DIR]` using the seed files in the directory `[SEED DIR]`.
@@ -63,7 +64,7 @@ query files for mutations `query.log` and an initial coverage file `boot.cov`.
 In later runs with the same seed directory, you can use warm boot to skip the pre-loop phase.
 
 ```shell
-$ ./p4spectec testgen spec-concrete/*.watsup -i p4c/p4include -seed [SEED DIR] -gen [GEN DIR] -fuel [NUM] -warm [COV FILE]
+$ ./p4spectec testgen spec-concrete/*.watsup -rel Program_ok -i p4c/p4include -seed [SEED DIR] -gen [GEN DIR] -fuel [NUM] -warm [COV FILE]
 ```
 
 At a high level, the fuzz loop will:
@@ -73,7 +74,7 @@ At a high level, the fuzz loop will:
 To see what values are derived from a given P4 program and a phantom id, run:
 
 ```
-$ ./p4spectec testgen-dbg spec-concrete/*.watsup -i p4c/p4include -p [FILENAME].p4 -pid [PID] -debug [DEBUG DIR]
+$ ./p4spectec testgen-dbg spec-concrete/*.watsup -rel Program_ok -i p4c/p4include -p [FILENAME].p4 -pid [PID] -debug [DEBUG DIR]
 ```
 
 ### Contributing

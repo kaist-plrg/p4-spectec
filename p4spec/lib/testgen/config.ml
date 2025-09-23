@@ -31,6 +31,7 @@ let timeout_seed = 30
 type specenv = {
   spec_il : Il.Ast.spec;
   spec : spec;
+  relname : string;
   tdenv : TDEnv.t;
   mixopenv : MixopEnv.t;
   includes_p4 : string list;
@@ -130,11 +131,11 @@ let load_spec (tdenv : TDEnv.t) (mixopenv : MixopEnv.t) (spec : spec) :
 
 (* Constructor *)
 
-let init_specenv (spec_il : Il.Ast.spec) (spec : spec)
+let init_specenv (spec_il : Il.Ast.spec) (spec : spec) (relname : string)
     (includes_p4 : string list) (filenames_ignore : string list) : specenv =
   let tdenv, mixopenv = load_spec TDEnv.empty MixopEnv.empty spec in
   let ignores = Ignore.init filenames_ignore in
-  { spec_il; spec; tdenv; mixopenv; includes_p4; ignores }
+  { spec_il; spec; relname; tdenv; mixopenv; includes_p4; ignores }
 
 let init_storage (dirname_gen : string) : storage =
   Filesys.mkdir dirname_gen;

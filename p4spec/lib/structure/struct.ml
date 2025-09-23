@@ -1,3 +1,4 @@
+open Domain.Lib
 open Il.Ast
 module HEnv = Runtime_static.Envs.HEnv
 module TDEnv = Runtime_dynamic_sl.Envs.TDEnv
@@ -59,11 +60,37 @@ and struct_prems' (prems_internalized : (prem * iterexp list) list)
 
 (* Structuring rules *)
 
-let struct_rule_path ((prems, exps_output) : prem list * exp list) :
+let struct_rule_matches (frees : IdSet.t)
+    (exps_match_impl_group : exp list list) (prems_match_group : prem list list)
+    : exp list * prem list list =
+  let exps_match_unified, prems_match_unified_group =
+    Antiunify.antiunify_rule_match_group frees exps_match_impl_group
+  in
+  let prems_match_group =
+    List.map2 ( @ ) prems_match_unified_group prems_match_group
+  in
+  (exps_match_unified, prems_match_group)
+
+let struct_rule_paths (prems_path : prem list) (exps_output : exp list) :
     Ol.Ast.instr list =
-  let at = exps_output |> List.map at |> over_region in
-  let instr_ret = Ol.Ast.ResultI exps_output $ at in
-  struct_prems prems instr_ret
+  let at = exps_output |> List.map Util.Source.at |> over_region in
+  let instr_res = Ol.Ast.ResultI exps_output $ at in
+  struct_prems prems_path instr_res
+
+let struct_rule_group (prems_match : prem list) (id_rulegroup : id)
+    (exps_match_expl : exp list) (rulepaths : rulepath list) : Ol.Ast.instr list
+    =
+  let instrs_path =
+    List.map
+      (fun (_, prems_path, exps_output) ->
+        struct_rule_paths prems_path exps_output)
+      rulepaths
+    |> List.concat
+  in
+  let instr_group =
+    Ol.Ast.GroupI (id_rulegroup, exps_match_expl, instrs_path) $ id_rulegroup.at
+  in
+  struct_prems prems_match instr_group
 
 (* Structuring clauses *)
 
@@ -79,21 +106,47 @@ let rec struct_def (henv : HEnv.t) (tdenv : TDEnv.t) (def : def) : Sl.Ast.def =
   let at = def.at in
   match def.it with
   | TypD (id, tparams, deftyp) -> Sl.Ast.TypD (id, tparams, deftyp) $ at
-  | RelD (id, nottyp, inputs, rules) ->
-      struct_rel_def henv tdenv at id nottyp inputs rules
+  | RelD (id, nottyp, inputs, rulegroups) ->
+      struct_rel_def henv tdenv at id nottyp inputs rulegroups
   | DecD (id, tparams, _params, _typ, clauses) ->
       struct_dec_def henv tdenv at id tparams clauses
 
 (* Structuring relation definitions *)
 
 and struct_rel_def (henv : HEnv.t) (tdenv : TDEnv.t) (at : region) (id_rel : id)
-    (nottyp : nottyp) (inputs : int list) (rules : rule list) : Sl.Ast.def =
+    (nottyp : nottyp) (inputs : int list) (rulegroups : rulegroup list) :
+    Sl.Ast.def =
   let mixop, _ = nottyp.it in
-  let exps_input, paths = Antiunify.antiunify_rules inputs rules in
-  let instrs = List.concat_map struct_rule_path paths in
-  let instrs = Optimize.optimize henv tdenv instrs in
-  let instrs = Instrument.instrument tdenv instrs in
-  Sl.Ast.RelD (id_rel, (mixop, inputs), exps_input, instrs) $ at
+  let frees = Il.Free.free_rulegroups rulegroups in
+  let rulegroups, exps_match_impl_group, prems_match_group =
+    List.fold_left
+      (fun (rulegroups, exps_match_impl_group, prems_match_group) rulegroup ->
+        let id_rulegroup, rulematch, rulepaths = rulegroup.it in
+        let exps_match_expl, exps_match_impl, prems_match = rulematch in
+        let rulegroups =
+          rulegroups @ [ (id_rulegroup, exps_match_expl, rulepaths) ]
+        in
+        let exps_match_impl_group =
+          exps_match_impl_group @ [ exps_match_impl ]
+        in
+        let prems_match_group = prems_match_group @ [ prems_match ] in
+        (rulegroups, exps_match_impl_group, prems_match_group))
+      ([], [], []) rulegroups
+  in
+  let exps_match_unified, prems_match_group =
+    struct_rule_matches frees exps_match_impl_group prems_match_group
+  in
+  let instrs =
+    List.map2
+      (fun prems_match (id_rulegroup, exps_match_expl, rulepaths) ->
+        struct_rule_group prems_match id_rulegroup exps_match_expl rulepaths)
+      prems_match_group rulegroups
+    |> List.concat
+  in
+  let instrs =
+    instrs |> Optimize.optimize henv tdenv |> Instrument.instrument tdenv
+  in
+  Sl.Ast.RelD (id_rel, (mixop, inputs), exps_match_unified, instrs) $ at
 
 (* Structuring declaration definitions *)
 

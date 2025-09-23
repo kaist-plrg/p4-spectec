@@ -1,0 +1,179 @@
+;;
+;;;; Expression instantiation
+;;
+
+relation Expr_inst:
+  cursor instantiationContext store |- typedExpressionIR ==> store value
+  hint(input %0 %1 %2 %3)
+
+relation Exprs_inst:
+  cursor instantiationContext store |- typedExpressionIR* ==> store value*
+  hint(input %0 %1 %2 %3)
+
+;;
+;;;; Argument instantiation
+;;
+
+relation Argument_inst:
+  cursor instantiationContext store |- argumentIR ==> store value
+  hint(input %0 %1 %2 %3)
+
+;;
+;;;; Statement instantiation
+;;
+
+relation Stmt_inst:
+  cursor instantiationContext store |- statementIR
+                                   ==> instantiationContext store statementIR
+  hint(input %0 %1 %2 %3)
+
+relation BlockElementStmt_inst:
+  instantiationContext store |- blockElementStatementIR
+                            ==> instantiationContext store blockElementStatementIR?
+  hint(input %0 %1 %2)
+
+relation BlockElementStmts_inst:
+  instantiationContext store |- blockElementStatementIR*
+                            ==> instantiationContext store blockElementStatementIR*
+  hint(input %0 %1 %2)
+
+relation Block_inst:
+  instantiationContext store |- blockStatementIR
+                            ==> instantiationContext store blockStatementIR
+  hint(input %0 %1 %2)
+
+;;
+;;;; Extern method/constructor instantiation
+;;
+
+relation Bind_method:
+  rdenv |- methodPrototypeIR ==> rdenv
+  hint(input %0 %1)
+
+relation Bind_methods:
+  rdenv |- methodPrototypeIR* ==> rdenv
+  hint(input %0 %1)
+
+relation Bind_constructor:
+  cursor instantiationContext typeParameterListIR methodPrototypeListIR |- methodPrototypeIR
+                                                                       ==> instantiationContext
+  hint(input %0 %1 %2 %3 %4)
+
+relation Bind_constructors:
+  cursor instantiationContext typeParameterListIR methodPrototypeListIR |- methodPrototypeIR*
+                                                                       ==> instantiationContext
+  hint(input %0 %1 %2 %3 %4)
+
+relation ExternMethod_inst:
+  instantiationContext |- methodPrototypeIR ==> instantiationContext
+  hint(input %0 %1)
+
+relation ExternMethods_inst:
+  instantiationContext |- methodPrototypeIR* ==> instantiationContext
+  hint(input %0 %1)
+
+;;
+;;;; Parser instantiation
+;;
+
+relation ParserStmt_inst:
+  instantiationContext store |- parserStatementIR
+                            ==> instantiationContext store parserStatementIR
+  hint(input %0 %1 %2)
+
+relation ParserStmts_inst:
+  instantiationContext store |- parserStatementIR*
+                            ==> instantiationContext store parserStatementIR*
+  hint(input %0 %1 %2)
+
+relation ParserState_inst:
+  instantiationContext store |- parserStateIR
+                            ==> instantiationContext store
+  hint(input %0 %1 %2)
+
+relation ParserStates_inst:
+  instantiationContext store |- parserStateIR*
+                            ==> instantiationContext store
+  hint(input %0 %1 %2)
+
+relation ParserLocalDecl_inst:
+  instantiationContext store |- parserLocalDeclarationIR
+                            ==> instantiationContext store parserLocalDeclarationIR
+  hint(input %0 %1 %2)
+
+relation ParserLocalDecls_inst:
+  instantiationContext store |- parserLocalDeclarationIR*
+                            ==> instantiationContext store parserLocalDeclarationIR*
+  hint(input %0 %1 %2)
+
+;;
+;;;; Control instantiation
+;;
+
+relation TableProperty_inst:
+  instantiationContext store |- tablePropertyIR
+                            ==> store tablePropertyIR
+  hint(input %0 %1 %2)
+
+relation TableProperties_inst:
+  instantiationContext store |- tablePropertyIR*
+                            ==> store tablePropertyIR*
+  hint(input %0 %1 %2)
+
+relation ControlLocalDecl_inst:
+  instantiationContext store |- controlLocalDeclarationIR
+                            ==> instantiationContext store controlLocalDeclarationIR?
+  hint(input %0 %1 %2)
+
+relation ControlLocalDecls_inst:
+  instantiationContext store |- controlLocalDeclarationIR*
+                            ==> instantiationContext store controlLocalDeclarationIR*
+  hint(input %0 %1 %2)
+
+;;
+;;;; Declaration instantiation
+;;
+
+relation Decl_inst:
+  cursor instantiationContext store |- declarationIR
+                                   ==> instantiationContext store declarationIR?
+  hint(input %0 %1 %2 %3)
+
+relation Decls_inst:
+  cursor instantiationContext store |- declarationIR*
+                                   ==> instantiationContext store declarationIR*
+  hint(input %0 %1 %2 %3)
+
+relation Program_inst:
+  |- p4program ==> cenv tdenv renv venv store
+  hint(input %0)
+
+;;
+;;;; Argument Binding
+;;;; Instantiate constructor arguments using caller context,
+;;;; and bind them to callee context
+;;
+
+relation Bind_arg:
+  cursor instantiationContext `|
+  cursor instantiationContext store |- id argumentIR
+                                   ==> instantiationContext store
+  hint(input %0 %1 %2 %3 %4 %5 %6)
+
+relation Bind_args:
+  cursor instantiationContext `|
+  cursor instantiationContext store |- id* argumentIR*
+                                   ==> instantiationContext store
+  hint(input %0 %1 %2 %3 %4 %5 %6)
+
+;;
+;;;; Constructor instantiation
+;;;; takes a constructor and returns an object
+;;
+
+relation Constructor_inst:
+  cursor instantiationContext store |- constructor
+                                        `< typeArgumentListIR >
+                                        `( argumentListIR `# id* )
+                                   ==> store object
+  hint(input %0 %1 %2 %3 %4 %5 %6)

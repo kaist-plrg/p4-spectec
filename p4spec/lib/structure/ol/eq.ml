@@ -44,6 +44,11 @@ and eq_instr (instr_a : instr) (instr_b : instr) : bool =
   | CaseI (exp_a, cases_a, total_a), CaseI (exp_b, cases_b, total_b) ->
       Sl.Eq.eq_exp exp_a exp_b && eq_cases cases_a cases_b && total_a = total_b
   | OtherwiseI instr_a, OtherwiseI instr_b -> eq_instr instr_a instr_b
+  | ( GroupI (id_group_a, exps_group_a, instrs_group_a),
+      GroupI (id_group_b, exps_group_b, instrs_group_b) ) ->
+      Sl.Eq.eq_id id_group_a id_group_b
+      && Sl.Eq.eq_exps exps_group_a exps_group_b
+      && eq_instrs instrs_group_a instrs_group_b
   | LetI (exp_l_a, exp_r_a, iterexps_a), LetI (exp_l_b, exp_r_b, iterexps_b) ->
       Sl.Eq.eq_exp exp_l_a exp_l_b
       && Sl.Eq.eq_exp exp_r_a exp_r_b

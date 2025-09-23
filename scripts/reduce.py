@@ -55,6 +55,7 @@ def reduce_program(
     pid: Union[int, str],
     filename: Filepath,
     p4spectec_dir: Directory,
+    relname: str,
     cores: Optional[int],
     timeout: int = 10,
     timeout_creduce: int = 25,
@@ -110,7 +111,7 @@ def reduce_program(
             # all other reductions reduce "well-typed" "close-misses"
             with open(interesting_test_path, "w") as script_file:
                 script_file.write(
-                    f"""#!/bin/bash\nDIR=\"{p4spectec_dir}\"\n$DIR/p4spectec interesting {"" if fuzz_end else "-well -close"} $DIR/spec/*.watsup -pid {pid} -p ./{copy_name}"""
+                    f"""#!/bin/bash\nDIR=\"{p4spectec_dir}\"\n$DIR/p4spectec interesting {"" if fuzz_end else "-well -close"} $DIR/spec/*.watsup -rel {relname} -pid {pid} -p ./{copy_name}"""
                 )
             os.chmod(interesting_test_path, 0o755)
 
@@ -236,6 +237,7 @@ def reduce_from_coverage(
                     pid,
                     smallest_file,
                     creduce_configs.p4spectec_dir,
+                    creduce_configs.relname,
                     creduce_configs.cores,
                     creduce_configs.timeout_interesting,
                     creduce_configs.timeout_creduce,
@@ -298,6 +300,7 @@ def reduce_likely_hits(
                     pid,
                     smallest_file,
                     creduce_configs.p4spectec_dir,
+                    creduce_configs.relname,
                     creduce_configs.cores,
                     creduce_configs.timeout_interesting,
                     creduce_configs.timeout_creduce,

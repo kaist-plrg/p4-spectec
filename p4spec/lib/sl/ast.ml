@@ -147,11 +147,24 @@ and instr' =
   | HoldI of id * notexp * iterexp list * holdcase
   | CaseI of exp * case list * phantom option 
   | OtherwiseI of instr
+  | GroupI of id * exp list * instr list
   | LetI of exp * exp * iterexp list
   | RuleI of id * notexp * iterexp list
   | ResultI of exp list
   | ReturnI of exp
   | DebugI of exp
+[@@deriving yojson]
+
+(* Relations *)
+
+(* id `:` mixop `hint(input` `%`int* `)` exp* instr* *)
+type rel = id * (mixop * int list) * exp list * instr list
+[@@deriving yojson]
+
+(* Functions *)
+
+(* id `<` list(tparam, `,`) `>` list(param, `,`) `:` instr* *)
+type func = id * tparam list * arg list * instr list
 [@@deriving yojson]
 
 (* Hints *)
@@ -165,10 +178,10 @@ type def = def' phrase
 and def' =
   (* `syntax` id `<` list(tparam, `,`) `>` `=` deftyp *)
   | TypD of id * tparam list * deftyp
-  (* `relation` id `:` mixop `hint(input` `%`int* `)` list(exp, `,`) `:` instr* *)
-  | RelD of id * (mixop * int list) * exp list * instr list
-  (* `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ instr* *)
-  | DecD of id * tparam list * arg list * instr list
+  (* `relation` rel *)
+  | RelD of rel
+  (* `dec` func *)
+  | DecD of func
 [@@deriving yojson]
 
 (* Spec *)
