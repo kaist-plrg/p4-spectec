@@ -19,13 +19,11 @@ splice: spectec
 
 ${SPEC}.pdf: ${SPEC}.adoc splice grammar.adoc grammar.trimmed.adoc
 	time asciidoctor-pdf -v \
-		-r asciidoctor-mathematical \
 		-a pdf-fontsdir=resources/fonts \
 		-a rouge-style=$(ROUGE_STYLE) $<
 
 ${SPEC}.html: ${SPEC}.adoc splice grammar.adoc grammar.trimmed.adoc
 	time asciidoctor -v \
-		-r asciidoctor-mathematical \
 		-a rouge-css=$(ROUGE_CSS) $<
 
 build: ${SPEC}.pdf ${SPEC}.html

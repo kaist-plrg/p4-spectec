@@ -413,7 +413,7 @@ let parse_command =
            in
            Il.Eq.eq_value ~dbg:true parsed_p4_file parsed_p4_string
            |> (fun b ->
-           if b then "Roundtrip successful" else "Roundtrip failed")
+                if b then "Roundtrip successful" else "Roundtrip failed")
            |> print_endline
          else unparsed_p4_string |> print_endline
        with
