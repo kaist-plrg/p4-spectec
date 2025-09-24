@@ -41,7 +41,8 @@ let parse_anchor_start (source : Source.t) (anchor : Anchor.t) : bool =
     match anchor with
     | Syntax { start; name; _ }
     | Relation { start; name; _ }
-    | RuleGroup { start; name; _ } ->
+    | RuleGroup { start; name; _ }
+    | RuleProse { start; name } ->
         (start, name)
   in
   try_string source (start ^ "{" ^ name ^ ":")
@@ -88,6 +89,13 @@ let rec parse_rulegroup_ids (source : Source.t) : Ctx.RuleGroupId.t list =
     let id_rulegroup = parse_rulegroup_id source in
     id_rulegroup :: parse_rulegroup_ids source
 
+let parse_ruleprose_id (source : Source.t) : Ctx.RuleGroupId.t =
+  parse_space source;
+  let id_rulegroup = parse_rulegroup_id source in
+  parse_space source;
+  let _ = try_string source "}" in
+  id_rulegroup
+
 (* Splicing an anchor *)
 
 let splice_syntax_anchor (ctx : Ctx.t) (source : Source.t) (prefix : string)
@@ -117,6 +125,11 @@ let splice_rulegroup_anchor (ctx : Ctx.t) (source : Source.t) (prefix : string)
   in
   prefix ^ content ^ suffix
 
+let splice_ruleprose_anchor (ctx : Ctx.t) (source : Source.t) : string =
+  let id = parse_rulegroup_id source in
+  let mixop, inputs, exps_input, instrs = Ctx.find_ruleprose ctx id in
+  Sl.Render.render_ruleprose mixop inputs exps_input instrs
+
 let rec try_splice_anchor (ctx : Ctx.t) (source : Source.t) (buffer : Buffer.t)
     (anchor : Anchor.t) : bool =
   let i = source.i in
@@ -135,6 +148,7 @@ and try_splice_anchor' (ctx : Ctx.t) (source : Source.t) (buffer : Buffer.t)
         splice_relation_anchor ctx source prefix suffix
     | RuleGroup { prefix; suffix; _ } ->
         splice_rulegroup_anchor ctx source prefix suffix
+    | RuleProse _ -> splice_ruleprose_anchor ctx source
   in
   Buffer.add_string buffer s
 
@@ -160,15 +174,15 @@ let splice_string (ctx : Ctx.t) (source : Source.t) (content : string) : string
   splice ctx source buffer;
   Buffer.contents buffer
 
-let splice_file (spec_el : El.Ast.spec) (filename_input : string)
-    (filename_output : string) : unit =
+let splice_file (spec_el : El.Ast.spec) (spec_sl : Sl.Ast.spec)
+    (filename_input : string) (filename_output : string) : unit =
   let ic = open_in filename_input in
   let content =
     Fun.protect
       (fun () -> In_channel.input_all ic)
       ~finally:(fun () -> In_channel.close ic)
   in
-  let ctx = Ctx.init spec_el in
+  let ctx = Ctx.init spec_el spec_sl in
   let source = Source.{ file = filename_input; s = content; i = 0 } in
   let content_spliced = splice_string ctx source content in
   gen_directory filename_output;
@@ -177,9 +191,9 @@ let splice_file (spec_el : El.Ast.spec) (filename_input : string)
     (fun () -> Out_channel.output_string oc content_spliced)
     ~finally:(fun () -> Out_channel.close oc)
 
-let splice_files (spec_el : El.Ast.spec) (filenames : (string * string) list) :
-    unit =
+let splice_files (spec_el : El.Ast.spec) (spec_sl : Sl.Ast.spec)
+    (filenames : (string * string) list) : unit =
   List.iter
     (fun (filename_input, filename_output) ->
-      splice_file spec_el filename_input filename_output)
+      splice_file spec_el spec_sl filename_input filename_output)
     filenames

@@ -19,6 +19,7 @@ type t =
       prefix : string;
       suffix : string;
     }
+  | RuleProse of { start : string; name : string }
 
 (* Predefined anchors *)
 
@@ -48,3 +49,5 @@ let rulegroup =
       prefix = "[source]\n----\n";
       suffix = "\n----\n";
     }
+
+let ruleprose = RuleProse { start = "$"; name = "ruleprose" }
