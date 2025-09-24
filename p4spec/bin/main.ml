@@ -380,7 +380,7 @@ let splice_command =
            if inplace then List.combine filenames_input filenames_input
            else List.combine filenames_input filenames_output
          in
-         Splice.Splicer.splice_files spec spec_sl filenames
+         Splice.Driver.splice_files spec spec_sl filenames
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)

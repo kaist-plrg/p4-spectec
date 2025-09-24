@@ -1,199 +1,119 @@
-open Error
+open Util.Source
 
-(* File system helpers *)
+(* Signature for splicing modules *)
 
-let gen_directory (filename : string) : unit =
-  let rec gen_directory' (dirname : string) =
-    if not (Sys.file_exists dirname) then (
-      let dirname_parent = Filename.dirname dirname in
-      if dirname_parent <> dirname then gen_directory' dirname_parent;
-      Unix.mkdir dirname 0o755)
-  in
-  let dirname = Filename.dirname filename in
-  if dirname <> "" && not (Sys.file_exists dirname) then gen_directory' dirname
+module type Splice = sig
+  type key
+  type value
 
-(* Parsing the skeleton document *)
+  val name : string
+  val prefix : string option
+  val suffix : string option
+  val parse_keys : Source.t -> key list
+  val find_values : Ctx.t -> key list -> value list
+  val render : key list -> value list -> string
+end
 
-let rec try_string' (s : string) (i : int) (s_expect : string) (j : int) : bool
-    =
-  j = String.length s_expect
-  || (s.[i] = s_expect.[j] && try_string' s (i + 1) s_expect (j + 1))
+(* Syntax splicer *)
 
-let try_string (source : Source.t) (s : string) : bool =
-  Source.left source >= String.length s
-  && try_string' source.s source.i s 0
-  &&
-  (Source.advn source (String.length s);
-   true)
+module Syntax : Splice = struct
+  type key = Kinds.SyntaxId.t
+  type value = Kinds.syntax
 
-let rec parse_space (source : Source.t) : unit =
-  if
-    (not (Source.eos source))
-    && (Source.get source = ' '
-       || Source.get source = '\t'
-       || Source.get source = '\n')
-  then (
-    Source.adv source;
-    parse_space source)
+  let name = "syntax"
+  let prefix = Some "[source,bison]\n----\n"
+  let suffix = Some "\n----"
+  let parse_keys (source : Source.t) : key list = Parser.parse_syntax_ids source
 
-let parse_anchor_start (source : Source.t) (anchor : Anchor.t) : bool =
-  let start, name =
-    match anchor with
-    | Syntax { start; name; _ }
-    | Relation { start; name; _ }
-    | RuleGroup { start; name; _ }
-    | RuleProse { start; name } ->
-        (start, name)
-  in
-  try_string source (start ^ "{" ^ name ^ ":")
+  let find_values (ctx : Ctx.t) (keys : key list) : value list =
+    List.map (Ctx.find_syntax ctx) keys
 
-let rec parse_id' (source : Source.t) : unit =
-  if not (Source.eos source) then
-    match Source.get source with
-    | 'A' .. 'Z' | 'a' .. 'z' | '0' .. '9' | '_' | '\'' | '`' | '-' | '*' | '.'
-      ->
-        Source.adv source;
-        parse_id' source
-    | _ -> ()
+  let render (keys : key list) (values : value list) : string =
+    List.map2
+      (fun (id_typ : key) ((tparams, deftyp, hints) : value) ->
+        El.Render.render_type_def (id_typ $ no_region) tparams deftyp hints)
+      keys values
+    |> String.concat "\n\n"
+end
 
-let parse_id (source : Source.t) : string =
-  let i_prev = source.i in
-  parse_id' source;
-  if i_prev = source.i then
-    error Util.Source.no_region "cannot parse identifier";
-  Source.str source i_prev
+(* Relation splicer *)
 
-let parse_rulegroup_id (source : Source.t) : Ctx.RuleGroupId.t =
-  let id = parse_id source in
-  let id_sub = if try_string source "/" then parse_id source else "" in
-  (id, id_sub)
+module Relation : Splice = struct
+  type key = Kinds.RelationId.t
+  type value = Kinds.relation
 
-let rec parse_syntax_ids (source : Source.t) : Ctx.SyntaxId.t list =
-  parse_space source;
-  if try_string source "}" then []
-  else
-    let id = parse_id source in
-    id :: parse_syntax_ids source
+  let name = "relation"
+  let prefix = Some "\n----\n"
+  let suffix = Some "\n----"
 
-let rec parse_relation_ids (source : Source.t) : Ctx.RelationId.t list =
-  parse_space source;
-  if try_string source "}" then []
-  else
-    let id = parse_id source in
-    id :: parse_relation_ids source
+  let parse_keys (source : Source.t) : key list =
+    Parser.parse_relation_ids source
 
-let rec parse_rulegroup_ids (source : Source.t) : Ctx.RuleGroupId.t list =
-  parse_space source;
-  if try_string source "}" then []
-  else
-    let id_rulegroup = parse_rulegroup_id source in
-    id_rulegroup :: parse_rulegroup_ids source
+  let find_values (ctx : Ctx.t) (keys : key list) : value list =
+    List.map (Ctx.find_relation ctx) keys
 
-let parse_ruleprose_id (source : Source.t) : Ctx.RuleGroupId.t =
-  parse_space source;
-  let id_rulegroup = parse_rulegroup_id source in
-  parse_space source;
-  let _ = try_string source "}" in
-  id_rulegroup
+  let render (keys : key list) (value : value list) : string =
+    List.map2
+      (fun (id_rel : key) ((nottyp, hints) : value) ->
+        El.Render.render_relation_def (id_rel $ no_region) nottyp hints)
+      keys value
+    |> String.concat "\n\n"
+end
 
-(* Splicing an anchor *)
+(* Rule group splicer *)
 
-let splice_syntax_anchor (ctx : Ctx.t) (source : Source.t) (prefix : string)
-    (suffix : string) : string =
-  let ids = parse_syntax_ids source in
-  let defs_el = Ctx.find_syntax_defs ctx ids in
-  let content =
-    defs_el |> List.map El.Render.render_def |> String.concat "\n\n"
-  in
-  prefix ^ content ^ suffix
+module RuleGroup : Splice = struct
+  type key = Kinds.RuleGroupId.t
+  type value = Kinds.rulegroup
 
-let splice_relation_anchor (ctx : Ctx.t) (source : Source.t) (prefix : string)
-    (suffix : string) : string =
-  let ids = parse_relation_ids source in
-  let defs_el = Ctx.find_relation_defs ctx ids in
-  let content =
-    defs_el |> List.map El.Render.render_def |> String.concat "\n\n"
-  in
-  prefix ^ content ^ suffix
+  let name = "rulegroup"
+  let prefix = Some "\n----\n"
+  let suffix = Some "\n----"
 
-let splice_rulegroup_anchor (ctx : Ctx.t) (source : Source.t) (prefix : string)
-    (suffix : string) : string =
-  let ids = parse_rulegroup_ids source in
-  let defs_el = Ctx.find_rulegroup_defs ctx ids in
-  let content =
-    defs_el |> List.map El.Render.render_def |> String.concat "\n\n"
-  in
-  prefix ^ content ^ suffix
+  let parse_keys (source : Source.t) : key list =
+    [ Parser.parse_rulegroup_id source ]
 
-let splice_ruleprose_anchor (ctx : Ctx.t) (source : Source.t) : string =
-  let id = parse_rulegroup_id source in
-  let mixop, inputs, exps_input, instrs = Ctx.find_ruleprose ctx id in
-  Sl.Render.render_ruleprose mixop inputs exps_input instrs
+  let find_values (ctx : Ctx.t) (keys : key list) : value list =
+    List.map (Ctx.find_rulegroup ctx) keys
 
-let rec try_splice_anchor (ctx : Ctx.t) (source : Source.t) (buffer : Buffer.t)
-    (anchor : Anchor.t) : bool =
-  let i = source.i in
-  let b_start = parse_anchor_start source anchor in
-  if b_start then try_splice_anchor' ctx source buffer i anchor;
-  b_start
+  let render (keys : key list) (values : value list) : string =
+    List.map2
+      (fun ((id_rel, id_rulegroup) : key) (rules : value) ->
+        El.Render.render_rulegroup_def (id_rel $ no_region)
+          (id_rulegroup $ no_region) rules)
+      keys values
+    |> String.concat "\n\n"
+end
 
-and try_splice_anchor' (ctx : Ctx.t) (source : Source.t) (buffer : Buffer.t)
-    (i_start : int) (anchor : Anchor.t) : unit =
-  parse_space source;
-  let s =
-    match anchor with
-    | Syntax { prefix; suffix; _ } ->
-        splice_syntax_anchor ctx source prefix suffix
-    | Relation { prefix; suffix; _ } ->
-        splice_relation_anchor ctx source prefix suffix
-    | RuleGroup { prefix; suffix; _ } ->
-        splice_rulegroup_anchor ctx source prefix suffix
-    | RuleProse _ -> splice_ruleprose_anchor ctx source
-  in
-  Buffer.add_string buffer s
+(* Rule prose splicer *)
 
-and try_splice_anchors (ctx : Ctx.t) (source : Source.t) (buffer : Buffer.t) =
-  function
-  | [] -> false
-  | anchor :: anchors ->
-      if try_splice_anchor ctx source buffer anchor then true
-      else try_splice_anchors ctx source buffer anchors
+module RuleProse : Splice = struct
+  type key = Kinds.RuleProseId.t
+  type value = Kinds.ruleprose
 
-(* Entry points *)
+  let name = "ruleprose"
+  let prefix = None
+  let suffix = None
 
-let rec splice (ctx : Ctx.t) (source : Source.t) (buffer : Buffer.t) : unit =
-  if not (Source.eos source) then (
-    if not (try_splice_anchors ctx source buffer ctx.anchors) then (
-      Buffer.add_char buffer (Source.get source);
-      Source.adv source);
-    splice ctx source buffer)
+  let parse_keys (source : Source.t) : key list =
+    [ Parser.parse_ruleprose_id source ]
 
-let splice_string (ctx : Ctx.t) (source : Source.t) (content : string) : string
-    =
-  let buffer = Buffer.create (String.length content) in
-  splice ctx source buffer;
-  Buffer.contents buffer
+  let find_values (ctx : Ctx.t) (keys : key list) : value list =
+    List.map (Ctx.find_ruleprose ctx) keys
 
-let splice_file (spec_el : El.Ast.spec) (spec_sl : Sl.Ast.spec)
-    (filename_input : string) (filename_output : string) : unit =
-  let ic = open_in filename_input in
-  let content =
-    Fun.protect
-      (fun () -> In_channel.input_all ic)
-      ~finally:(fun () -> In_channel.close ic)
-  in
-  let ctx = Ctx.init spec_el spec_sl in
-  let source = Source.{ file = filename_input; s = content; i = 0 } in
-  let content_spliced = splice_string ctx source content in
-  gen_directory filename_output;
-  let oc = open_out filename_output in
-  Fun.protect
-    (fun () -> Out_channel.output_string oc content_spliced)
-    ~finally:(fun () -> Out_channel.close oc)
+  let render (keys : key list) (values : value list) : string =
+    List.map2
+      (fun (_ : key) ((mixop, inputs, exps, instrs) : value) ->
+        Sl.Render.render_ruleprose mixop inputs exps instrs)
+      keys values
+    |> String.concat "\n\n"
+end
 
-let splice_files (spec_el : El.Ast.spec) (spec_sl : Sl.Ast.spec)
-    (filenames : (string * string) list) : unit =
-  List.iter
-    (fun (filename_input, filename_output) ->
-      splice_file spec_el spec_sl filename_input filename_output)
-    filenames
+(* Splicers *)
+
+let splicers : (module Splice) list =
+  [
+    (module Syntax : Splice);
+    (module Relation : Splice);
+    (module RuleGroup : Splice);
+  ]

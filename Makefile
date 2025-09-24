@@ -2,7 +2,7 @@ SPEC = p4spectec
 
 # Compile
 
-.PHONY: build build-spec
+.PHONY: build
 
 EXESPEC = p4spec/_build/default/bin/main.exe
 

@@ -1,35 +1,15 @@
 open Error
 open Util.Source
-
-(* Context for splicer *)
-
-module SyntaxId = String
-module SyntaxMap = Map.Make (SyntaxId)
-module RelationId = String
-module RelationMap = Map.Make (RelationId)
-
-module RuleGroupId = struct
-  type t = string * string
-
-  let compare (id_rel_a, id_rulegroup_a) (id_rel_b, id_rulegroup_b) =
-    let c = String.compare id_rel_a id_rel_b in
-    if c <> 0 then c else String.compare id_rulegroup_a id_rulegroup_b
-end
-
-module RuleGroupMap = Map.Make (RuleGroupId)
-module RuleProseMap = Map.Make (RuleGroupId)
-
-type syntax = El.Ast.tparam list * El.Ast.deftyp * El.Ast.hint list * region
-type relation = El.Ast.nottyp * El.Ast.hint list * region
-type rulegroup = El.Ast.rule list * region
-type ruleprose = Sl.Ast.mixop * int list * Sl.Ast.exp list * Sl.Ast.instr list
+module SyntaxMap = Map.Make (Kinds.SyntaxId)
+module RelationMap = Map.Make (Kinds.RelationId)
+module RuleGroupMap = Map.Make (Kinds.RuleGroupId)
+module RuleProseMap = Map.Make (Kinds.RuleGroupId)
 
 type t = {
-  mutable syntax : syntax SyntaxMap.t;
-  mutable relation : relation RelationMap.t;
-  mutable rulegroup : rulegroup RuleGroupMap.t;
-  mutable ruleprose : ruleprose RuleProseMap.t;
-  anchors : Anchor.t list;
+  mutable syntax : Kinds.syntax SyntaxMap.t;
+  mutable relation : Kinds.relation RelationMap.t;
+  mutable rulegroup : Kinds.rulegroup RuleGroupMap.t;
+  mutable ruleprose : Kinds.ruleprose RuleProseMap.t;
 }
 
 (* Initialization *)
@@ -37,13 +17,13 @@ type t = {
 let init_el_def (ctx : t) (def_el : El.Ast.def) : unit =
   match def_el.it with
   | TypD (id_syntax, tparams, deftyp, hints) ->
-      let syntax = (tparams, deftyp, hints, def_el.at) in
+      let syntax = (tparams, deftyp, hints) in
       ctx.syntax <- SyntaxMap.add id_syntax.it syntax ctx.syntax
   | RelD (id_rel, nottyp, hints) ->
-      let relation = (nottyp, hints, def_el.at) in
+      let relation = (nottyp, hints) in
       ctx.relation <- RelationMap.add id_rel.it relation ctx.relation
   | RuleGroupD (id_rel, id_rulegroup, rules) ->
-      let rulegroup = (rules, def_el.at) in
+      let rulegroup = rules in
       ctx.rulegroup <-
         RuleGroupMap.add (id_rel.it, id_rulegroup.it) rulegroup ctx.rulegroup
   | _ -> ()
@@ -88,16 +68,12 @@ let init_sl (ctx : t) (spec_sl : Sl.Ast.spec) : unit =
   List.iter (init_sl_def ctx) spec_sl
 
 let init (spec_el : El.Ast.spec) (spec_sl : Sl.Ast.spec) : t =
-  let anchors =
-    [ Anchor.syntax; Anchor.relation; Anchor.rulegroup; Anchor.ruleprose ]
-  in
   let ctx =
     {
       syntax = SyntaxMap.empty;
       relation = RelationMap.empty;
       rulegroup = RuleGroupMap.empty;
       ruleprose = RuleProseMap.empty;
-      anchors;
     }
   in
   init_el ctx spec_el;
@@ -106,38 +82,25 @@ let init (spec_el : El.Ast.spec) (spec_sl : Sl.Ast.spec) : t =
 
 (* Finders *)
 
-let find_syntax_defs (ctx : t) (ids : SyntaxId.t list) : El.Ast.def list =
-  let find_syntax_def (id : SyntaxId.t) : El.Ast.def =
-    match SyntaxMap.find_opt id ctx.syntax with
-    | Some (tparams, deftyp, hints, at) ->
-        El.Ast.TypD (id $ no_region, tparams, deftyp, hints) $ at
-    | None -> error no_region ("syntax " ^ id ^ " was not found")
-  in
-  List.map find_syntax_def ids
+let find_syntax (ctx : t) (id : Kinds.SyntaxId.t) : Kinds.syntax =
+  match SyntaxMap.find_opt id ctx.syntax with
+  | Some syntax -> syntax
+  | None -> error no_region ("syntax " ^ id ^ " was not found")
 
-let find_relation_defs (ctx : t) (ids : RelationId.t list) : El.Ast.def list =
-  let find_relation_def (id : RelationId.t) : El.Ast.def =
-    match RelationMap.find_opt id ctx.relation with
-    | Some (nottyp, hints, at) ->
-        El.Ast.RelD (id $ no_region, nottyp, hints) $ at
-    | None -> error no_region ("relation " ^ id ^ " was not found")
-  in
-  List.map find_relation_def ids
+let find_relation (ctx : t) (id : Kinds.RelationId.t) : Kinds.relation =
+  match RelationMap.find_opt id ctx.relation with
+  | Some relation -> relation
+  | None -> error no_region ("relation " ^ id ^ " was not found")
 
-let find_rulegroup_defs (ctx : t) (ids : RuleGroupId.t list) : El.Ast.def list =
-  let find_rulegroup_def (id : RuleGroupId.t) : El.Ast.def =
-    let id_rel, id_rulegroup = id in
-    match RuleGroupMap.find_opt id ctx.rulegroup with
-    | Some (rules, at) ->
-        El.Ast.RuleGroupD (id_rel $ no_region, id_rulegroup $ no_region, rules)
-        $ at
-    | None ->
-        error no_region
-          ("rulegroup " ^ id_rel ^ "/" ^ id_rulegroup ^ " was not found")
-  in
-  List.map find_rulegroup_def ids
+let find_rulegroup (ctx : t) (id : Kinds.RuleGroupId.t) : Kinds.rulegroup =
+  match RuleGroupMap.find_opt id ctx.rulegroup with
+  | Some rulegroup -> rulegroup
+  | None ->
+      let id_rel, id_rulegroup = id in
+      error no_region
+        ("rulegroup " ^ id_rel ^ "/" ^ id_rulegroup ^ " was not found")
 
-let find_ruleprose (ctx : t) (id : RuleGroupId.t) : ruleprose =
+let find_ruleprose (ctx : t) (id : Kinds.RuleGroupId.t) : Kinds.ruleprose =
   match RuleProseMap.find_opt id ctx.ruleprose with
   | Some ruleprose -> ruleprose
   | None ->

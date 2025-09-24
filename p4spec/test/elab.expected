@@ -1813,7 +1813,7 @@ syntax derivedTypeDeclaration =
    | annotationList header_union name typeParameterListOpt { typeFieldList }
 
 ;; ../../../../spec-concrete/1-syntax.watsup:914.1-915.27
-syntax typedefType = 
+syntax typedef = 
    | bool
    | error
    | match_kind
@@ -1840,7 +1840,7 @@ syntax typedefType =
 
 ;; ../../../../spec-concrete/1-syntax.watsup:918.1-919.37
 syntax typedefDeclaration = 
-   | annotationList typedef typedefType name ;
+   | annotationList typedef typedef name ;
    | annotationList type type name ;
 
 ;; ../../../../spec-concrete/1-syntax.watsup:926.3-926.45
@@ -2204,7 +2204,7 @@ syntax typeDeclaration =
    | annotationList struct name typeParameterListOpt { typeFieldList }
    | annotationList header name typeParameterListOpt { typeFieldList }
    | annotationList header_union name typeParameterListOpt { typeFieldList }
-   | annotationList typedef typedefType name ;
+   | annotationList typedef typedef name ;
    | annotationList type type name ;
    | annotationList parser name typeParameterListOpt ( parameterList );
    | annotationList control name typeParameterListOpt ( parameterList );
@@ -2228,7 +2228,7 @@ syntax declaration =
    | annotationList struct name typeParameterListOpt { typeFieldList }
    | annotationList header name typeParameterListOpt { typeFieldList }
    | annotationList header_union name typeParameterListOpt { typeFieldList }
-   | annotationList typedef typedefType name ;
+   | annotationList typedef typedef name ;
    | annotationList type type name ;
    | annotationList parser name typeParameterListOpt ( parameterList );
    | annotationList control name typeParameterListOpt ( parameterList );
@@ -2802,54 +2802,70 @@ syntax baseTypeIR =
    | bit< nat >
    | varbit< nat >
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:40.1-41.31
+;; ../../../../spec-concrete/2.2.1-type.watsup:39.21-39.28
+syntax nameTypeIR = 
+   | tid tid
+
+;; ../../../../spec-concrete/2.2.1-type.watsup:41.28-41.54
+syntax specializedTypeIR = 
+   | polyTypeDefIR < typeIR* >
+
+;; ../../../../spec-concrete/2.2.1-type.watsup:44.1-45.22
 syntax namedTypeIR = 
    | tid tid
    | polyTypeDefIR < typeIR* >
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:52.1-53.20
+;; ../../../../spec-concrete/2.2.1-type.watsup:55.24-55.42
+syntax typedefTypeIR = 
+   | typedef tid typeIR
+
+;; ../../../../spec-concrete/2.2.1-type.watsup:57.20-57.35
+syntax newTypeIR = 
+   | type tid typeIR
+
+;; ../../../../spec-concrete/2.2.1-type.watsup:60.1-61.14
 syntax aliasTypeIR = 
    | typedef tid typeIR
    | type tid typeIR
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:59.21-59.37
+;; ../../../../spec-concrete/2.2.1-type.watsup:67.21-67.37
 syntax listTypeIR = 
    | list< typeIR >
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:60.22-60.40
+;; ../../../../spec-concrete/2.2.1-type.watsup:68.22-68.40
 syntax tupleTypeIR = 
    | tuple< typeIR* >
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:61.28-61.43
+;; ../../../../spec-concrete/2.2.1-type.watsup:69.28-69.43
 syntax headerStackTypeIR = 
    | typeIR [ nat ]
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:63.22-63.34
+;; ../../../../spec-concrete/2.2.1-type.watsup:71.22-71.34
 syntax fieldTypeIR = 
    | typeIR id ;
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:65.23-65.51
+;; ../../../../spec-concrete/2.2.1-type.watsup:73.23-73.51
 syntax structTypeIR = 
    | struct tid { fieldTypeIR* }
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:66.23-66.51
+;; ../../../../spec-concrete/2.2.1-type.watsup:74.23-74.51
 syntax headerTypeIR = 
    | header tid { fieldTypeIR* }
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:67.28-67.62
+;; ../../../../spec-concrete/2.2.1-type.watsup:75.28-75.62
 syntax headerUnionTypeIR = 
    | header_union tid { fieldTypeIR* }
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:69.23-69.37
+;; ../../../../spec-concrete/2.2.1-type.watsup:77.23-77.37
 syntax valueFieldIR = 
    | id = value ;
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:72.1-73.42
+;; ../../../../spec-concrete/2.2.1-type.watsup:80.1-81.42
 syntax enumTypeIR = 
    | enum tid { id* }
    | enum tid # typeIR { valueFieldIR* }
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:76.1-82.15
+;; ../../../../spec-concrete/2.2.1-type.watsup:84.1-90.15
 syntax dataTypeIR = 
    | list< typeIR >
    | tuple< typeIR* >
@@ -2860,27 +2876,27 @@ syntax dataTypeIR =
    | enum tid { id* }
    | enum tid # typeIR { valueFieldIR* }
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:92.3-92.40
+;; ../../../../spec-concrete/2.2.1-type.watsup:100.3-100.40
 syntax externObjectTypeIR = 
    | extern tid map<rid, routineTypeDefIR>
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:93.29-93.57
+;; ../../../../spec-concrete/2.2.1-type.watsup:101.29-101.57
 syntax parserObjectTypeIR = 
    | parser( parameterTypeIR* )
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:94.30-94.59
+;; ../../../../spec-concrete/2.2.1-type.watsup:102.30-102.59
 syntax controlObjectTypeIR = 
    | control( parameterTypeIR* )
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:95.30-95.50
+;; ../../../../spec-concrete/2.2.1-type.watsup:103.30-103.50
 syntax packageObjectTypeIR = 
    | package< typeIR* >
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:96.28-96.47
+;; ../../../../spec-concrete/2.2.1-type.watsup:104.28-104.47
 syntax tableObjectTypeIR = 
    | table tid # typeIR
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:99.1-103.22
+;; ../../../../spec-concrete/2.2.1-type.watsup:107.1-111.22
 syntax objectTypeIR = 
    | extern tid map<rid, routineTypeDefIR>
    | parser( parameterTypeIR* )
@@ -2888,7 +2904,7 @@ syntax objectTypeIR =
    | package< typeIR* >
    | table tid # typeIR
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:106.1-108.17
+;; ../../../../spec-concrete/2.2.1-type.watsup:114.1-116.17
 syntax definedTypeIR = 
    | typedef tid typeIR
    | type tid typeIR
@@ -2906,34 +2922,34 @@ syntax definedTypeIR =
    | package< typeIR* >
    | table tid # typeIR
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:114.24-114.31
+;; ../../../../spec-concrete/2.2.1-type.watsup:122.24-122.31
 syntax defaultTypeIR = 
    | default
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:116.30-116.44
+;; ../../../../spec-concrete/2.2.1-type.watsup:124.30-124.44
 syntax invalidHeaderTypeIR = 
    | header_invalid
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:119.1-120.29
+;; ../../../../spec-concrete/2.2.1-type.watsup:127.1-128.29
 syntax sequenceTypeIR = 
    | seq< typeIR* >
    | seq< typeIR* ,...>
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:123.1-124.37
+;; ../../../../spec-concrete/2.2.1-type.watsup:131.1-132.37
 syntax recordTypeIR = 
    | record{ fieldTypeIR* }
    | record{ fieldTypeIR* ,...}
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:126.20-126.36
+;; ../../../../spec-concrete/2.2.1-type.watsup:134.20-134.36
 syntax setTypeIR = 
    | set< typeIR* >
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:129.1-130.39
+;; ../../../../spec-concrete/2.2.1-type.watsup:137.1-138.39
 syntax tableTypeIR = 
    | table_enum tid { id* }
    | table_struct tid { fieldTypeIR* }
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:133.1-138.16
+;; ../../../../spec-concrete/2.2.1-type.watsup:141.1-146.16
 syntax synthesizedTypeIR = 
    | default
    | header_invalid
@@ -2945,7 +2961,7 @@ syntax synthesizedTypeIR =
    | table_enum tid { id* }
    | table_struct tid { fieldTypeIR* }
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:145.1-148.22
+;; ../../../../spec-concrete/2.2.1-type.watsup:153.1-156.22
 syntax typeIR = 
    | void
    | bool
@@ -2983,14 +2999,14 @@ syntax typeIR =
    | table_enum tid { id* }
    | table_struct tid { fieldTypeIR* }
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:154.24-154.30
+;; ../../../../spec-concrete/2.2.1-type.watsup:162.24-162.30
 syntax monoTypeDefIR = typeIR
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:156.24-156.48
+;; ../../../../spec-concrete/2.2.1-type.watsup:164.24-164.48
 syntax polyTypeDefIR = 
    | typeIR < tid* , tid* >
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:158.20-158.49
+;; ../../../../spec-concrete/2.2.1-type.watsup:166.20-166.49
 syntax typeDefIR = 
    | void
    | bool
@@ -3029,18 +3045,18 @@ syntax typeDefIR =
    | table_struct tid { fieldTypeIR* }
    | typeIR < tid* , tid* >
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:164.26-164.52
+;; ../../../../spec-concrete/2.2.1-type.watsup:172.26-172.52
 syntax parameterTypeIR = 
    | direction typeIR id value?
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:171.1-174.33
+;; ../../../../spec-concrete/2.2.1-type.watsup:179.1-182.33
 syntax functionTypeIR = 
    | builtin_function( parameterTypeIR* )-> typeIR
    | function( parameterTypeIR* )-> typeIR
    | extern_function( parameterTypeIR* )-> typeIR
    | action( parameterTypeIR* )
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:177.1-182.27
+;; ../../../../spec-concrete/2.2.1-type.watsup:185.1-190.27
 syntax methodTypeIR = 
    | builtin_method( parameterTypeIR* )-> typeIR
    | extern_method( parameterTypeIR* )-> typeIR
@@ -3049,7 +3065,7 @@ syntax methodTypeIR =
    | control_apply( parameterTypeIR* )
    | table_apply-> typeIR
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:185.1-186.17
+;; ../../../../spec-concrete/2.2.1-type.watsup:193.1-194.17
 syntax routineTypeIR = 
    | builtin_function( parameterTypeIR* )-> typeIR
    | function( parameterTypeIR* )-> typeIR
@@ -3062,14 +3078,14 @@ syntax routineTypeIR =
    | control_apply( parameterTypeIR* )
    | table_apply-> typeIR
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:192.31-192.44
+;; ../../../../spec-concrete/2.2.1-type.watsup:200.31-200.44
 syntax monoRoutineTypeDefIR = routineTypeIR
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:194.31-194.62
+;; ../../../../spec-concrete/2.2.1-type.watsup:202.31-202.62
 syntax polyRoutineTypeDefIR = 
    | routineTypeIR < tid* , tid* >
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:197.1-198.25
+;; ../../../../spec-concrete/2.2.1-type.watsup:205.1-206.25
 syntax routineTypeDefIR = 
    | builtin_function( parameterTypeIR* )-> typeIR
    | function( parameterTypeIR* )-> typeIR
@@ -3083,14 +3099,14 @@ syntax routineTypeDefIR =
    | table_apply-> typeIR
    | routineTypeIR < tid* , tid* >
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:204.37-204.52
+;; ../../../../spec-concrete/2.2.1-type.watsup:212.37-212.52
 syntax constructorParameterTypeIR = parameterTypeIR
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:211.3-211.58
+;; ../../../../spec-concrete/2.2.1-type.watsup:219.3-219.58
 syntax constructorTypeIR = 
    | constructor( constructorParameterTypeIR* )-> typeIR
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:217.31-217.66
+;; ../../../../spec-concrete/2.2.1-type.watsup:225.31-225.66
 syntax constructorTypeDefIR = 
    | constructorTypeIR < tid* , tid* >
 
@@ -3372,33 +3388,25 @@ def $free_type(typeIR) : bound =
 
   ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:37.1-37.35
   clause 1 : (typeIR) = { [tid] }
-  -- if typeIR <: namedTypeIR
-  -- let namedTypeIR = typeIR as namedTypeIR
-  -- if namedTypeIR matches `TID%`
-  -- let tid tid = namedTypeIR
+  -- if typeIR <: nameTypeIR
+  -- let tid tid = typeIR as nameTypeIR
 
   ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:39.1-42.59
   clause 2 : (typeIR') = $union_set<tid>(bound_base, bound_args)
-  -- if typeIR' <: namedTypeIR
-  -- let namedTypeIR = typeIR' as namedTypeIR
-  -- if namedTypeIR matches `%<%>`
-  -- let polyTypeDefIR < typeIR*{typeIR <- typeIR*} > = namedTypeIR
+  -- if typeIR' <: specializedTypeIR
+  -- let polyTypeDefIR < typeIR*{typeIR <- typeIR*} > = typeIR' as specializedTypeIR
   -- let bound_base = $free_typeDef(polyTypeDefIR as typeDefIR)
   -- let bound_args = $unions_set<tid>($free_type(typeIR)*{typeIR <- typeIR*})
 
   ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:46.1-46.54
   clause 3 : (typeIR') = $free_type(typeIR)
-  -- if typeIR' <: aliasTypeIR
-  -- let aliasTypeIR = typeIR' as aliasTypeIR
-  -- if aliasTypeIR matches `TYPEDEF%%`
-  -- let typedef _tid typeIR = aliasTypeIR
+  -- if typeIR' <: typedefTypeIR
+  -- let typedef _tid typeIR = typeIR' as typedefTypeIR
 
   ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:48.1-48.51
   clause 4 : (typeIR') = $free_type(typeIR)
-  -- if typeIR' <: aliasTypeIR
-  -- let aliasTypeIR = typeIR' as aliasTypeIR
-  -- if aliasTypeIR matches `TYPE%%`
-  -- let type _tid typeIR = aliasTypeIR
+  -- if typeIR' <: newTypeIR
+  -- let type _tid typeIR = typeIR' as newTypeIR
 
   ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:52.1-52.54
   clause 5 : (typeIR') = $free_type(typeIR)
@@ -3671,20 +3679,16 @@ def $subst_type'(theta, typeIR) : typeIR =
 
   ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:237.1-238.52
   clause 0 : (theta, typeIR') = typeIR
-  -- if typeIR' <: namedTypeIR
-  -- let namedTypeIR = typeIR' as namedTypeIR
-  -- if namedTypeIR matches `TID%`
-  -- let tid tid = namedTypeIR
+  -- if typeIR' <: nameTypeIR
+  -- let tid tid = typeIR' as nameTypeIR
   -- let typeIR''?{typeIR'' <- typeIR''?} = $find_map<tid, typeIR>(theta, tid)
   -- if typeIR''?{typeIR'' <- typeIR''?} matches (_)
   -- let ?(typeIR) = typeIR''?{typeIR'' <- typeIR''?}
 
   ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:240.1-244.54
   clause 1 : (theta, typeIR') = polyTypeDefIR_subst < typeIR_subst*{typeIR_subst <- typeIR_subst*} > as typeIR
-  -- if typeIR' <: namedTypeIR
-  -- let namedTypeIR = typeIR' as namedTypeIR
-  -- if namedTypeIR matches `%<%>`
-  -- let polyTypeDefIR < typeIR*{typeIR <- typeIR*} > = namedTypeIR
+  -- if typeIR' <: specializedTypeIR
+  -- let polyTypeDefIR < typeIR*{typeIR <- typeIR*} > = typeIR' as specializedTypeIR
   -- let typeDefIR = $subst_typeDef'(theta, polyTypeDefIR as typeDefIR)
   -- if typeDefIR <: polyTypeDefIR
   -- let polyTypeDefIR_subst = typeDefIR as polyTypeDefIR
@@ -3692,18 +3696,14 @@ def $subst_type'(theta, typeIR) : typeIR =
 
   ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:248.1-250.51
   clause 2 : (theta, typeIR') = typedef tid typeIR_subst as typeIR
-  -- if typeIR' <: aliasTypeIR
-  -- let aliasTypeIR = typeIR' as aliasTypeIR
-  -- if aliasTypeIR matches `TYPEDEF%%`
-  -- let typedef tid typeIR = aliasTypeIR
+  -- if typeIR' <: typedefTypeIR
+  -- let typedef tid typeIR = typeIR' as typedefTypeIR
   -- let typeIR_subst = $subst_type'(theta, typeIR)
 
   ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:252.1-254.51
   clause 3 : (theta, typeIR') = type tid typeIR_subst as typeIR
-  -- if typeIR' <: aliasTypeIR
-  -- let aliasTypeIR = typeIR' as aliasTypeIR
-  -- if aliasTypeIR matches `TYPE%%`
-  -- let type tid typeIR = aliasTypeIR
+  -- if typeIR' <: newTypeIR
+  -- let type tid typeIR = typeIR' as newTypeIR
   -- let typeIR_subst = $subst_type'(theta, typeIR)
 
   ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:258.1-260.51
@@ -4115,18 +4115,14 @@ def $canon(typeIR) : typeIR =
 
   ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:664.1-665.65
   clause 0 : (typeIR') = $canon(typeIR)
-  -- if typeIR' <: namedTypeIR
-  -- let namedTypeIR = typeIR' as namedTypeIR
-  -- if namedTypeIR matches `%<%>`
-  -- let polyTypeDefIR < typeIR_arg*{typeIR_arg <- typeIR_arg*} > = namedTypeIR
+  -- if typeIR' <: specializedTypeIR
+  -- let polyTypeDefIR < typeIR_arg*{typeIR_arg <- typeIR_arg*} > = typeIR' as specializedTypeIR
   -- let typeIR = $specialize_typeDef(polyTypeDefIR as typeDefIR, typeIR_arg*{typeIR_arg <- typeIR_arg*})
 
   ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:667.1-667.46
   clause 1 : (typeIR') = $canon(typeIR)
-  -- if typeIR' <: aliasTypeIR
-  -- let aliasTypeIR = typeIR' as aliasTypeIR
-  -- if aliasTypeIR matches `TYPEDEF%%`
-  -- let typedef _tid typeIR = aliasTypeIR
+  -- if typeIR' <: typedefTypeIR
+  -- let typedef _tid typeIR = typeIR' as typedefTypeIR
 
   ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:669.1-670.15
   clause 2 : (typeIR) = typeIR
@@ -4143,10 +4139,8 @@ def $is_nominal_typeIR'(typeIR) : bool =
 
   ;; ../../../../spec-concrete/2.2.4-type-util.watsup:12.1-12.41
   clause 0 : (typeIR) = true
-  -- if typeIR <: aliasTypeIR
-  -- let aliasTypeIR = typeIR as aliasTypeIR
-  -- if aliasTypeIR matches `TYPE%%`
-  -- let type _tid _typeIR = aliasTypeIR
+  -- if typeIR <: newTypeIR
+  -- let type _tid _typeIR = typeIR as newTypeIR
 
   ;; ../../../../spec-concrete/2.2.4-type-util.watsup:13.1-13.48
   clause 1 : (typeIR) = true
@@ -4225,10 +4219,8 @@ def $is_defaultable_typeIR'(typeIR) : bool =
 
   ;; ../../../../spec-concrete/2.2.4-type-util.watsup:34.1-35.35
   clause 4 : (typeIR') = $is_defaultable_typeIR(typeIR)
-  -- if typeIR' <: aliasTypeIR
-  -- let aliasTypeIR = typeIR' as aliasTypeIR
-  -- if aliasTypeIR matches `TYPE%%`
-  -- let type _tid typeIR = aliasTypeIR
+  -- if typeIR' <: newTypeIR
+  -- let type _tid typeIR = typeIR' as newTypeIR
 
   ;; ../../../../spec-concrete/2.2.4-type-util.watsup:36.1-37.40
   clause 5 : (typeIR') = true
@@ -4294,10 +4286,8 @@ def $is_equalable_typeIR'(typeIR) : bool =
 
   ;; ../../../../spec-concrete/2.2.4-type-util.watsup:60.1-60.43
   clause 1 : (typeIR) = false
-  -- if typeIR <: namedTypeIR
-  -- let namedTypeIR = typeIR as namedTypeIR
-  -- if namedTypeIR matches `TID%`
-  -- let tid tid = namedTypeIR
+  -- if typeIR <: nameTypeIR
+  -- let tid tid = typeIR as nameTypeIR
 
   ;; ../../../../spec-concrete/2.2.4-type-util.watsup:61.1-61.46
   clause 2 : (typeIR) = false
@@ -4442,14 +4432,10 @@ relation Type_alpha: typeIR ~~ typeIR
 
     (explicit) tid tid as typeIR ~~ tid tid as typeIR
     (implicit) typeIR ~~ typeIR'
-    -- if typeIR <: namedTypeIR
-    -- let namedTypeIR = typeIR as namedTypeIR
-    -- if namedTypeIR matches `TID%`
-    -- let tid tid = namedTypeIR
-    -- if typeIR' <: namedTypeIR
-    -- let namedTypeIR' = typeIR' as namedTypeIR
-    -- if namedTypeIR' matches `TID%`
-    -- let tid tid' = namedTypeIR'
+    -- if typeIR <: nameTypeIR
+    -- let tid tid = typeIR as nameTypeIR
+    -- if typeIR' <: nameTypeIR
+    -- let tid tid' = typeIR' as nameTypeIR
     -- if (tid = tid')
 
    paths
@@ -4464,14 +4450,10 @@ relation Type_alpha: typeIR ~~ typeIR
 
     (explicit) polyTypeDefIR_a < typeIR_a*{} > as typeIR ~~ polyTypeDefIR_b < typeIR_b*{} > as typeIR
     (implicit) typeIR ~~ typeIR'
-    -- if typeIR <: namedTypeIR
-    -- let namedTypeIR = typeIR as namedTypeIR
-    -- if namedTypeIR matches `%<%>`
-    -- let polyTypeDefIR_a < typeIR_a*{typeIR_a <- typeIR_a*} > = namedTypeIR
-    -- if typeIR' <: namedTypeIR
-    -- let namedTypeIR' = typeIR' as namedTypeIR
-    -- if namedTypeIR' matches `%<%>`
-    -- let polyTypeDefIR_b < typeIR_b*{typeIR_b <- typeIR_b*} > = namedTypeIR'
+    -- if typeIR <: specializedTypeIR
+    -- let polyTypeDefIR_a < typeIR_a*{typeIR_a <- typeIR_a*} > = typeIR as specializedTypeIR
+    -- if typeIR' <: specializedTypeIR
+    -- let polyTypeDefIR_b < typeIR_b*{typeIR_b <- typeIR_b*} > = typeIR' as specializedTypeIR
 
    paths
 
@@ -4502,10 +4484,8 @@ relation Type_alpha: typeIR ~~ typeIR
 
     rulepath left
     -- let typeIR'' = typeIR
-    -- if typeIR'' <: aliasTypeIR
-    -- let aliasTypeIR = typeIR'' as aliasTypeIR
-    -- if aliasTypeIR matches `TYPEDEF%%`
-    -- let typedef _tid typeIR_a = aliasTypeIR
+    -- if typeIR'' <: typedefTypeIR
+    -- let typedef _tid typeIR_a = typeIR'' as typedefTypeIR
     -- let typeIR_b = typeIR'
     -- if Type_alpha: typeIR_a ~~ typeIR_b holds
     -- the relation holds
@@ -4513,10 +4493,8 @@ relation Type_alpha: typeIR ~~ typeIR
     rulepath right
     -- let typeIR_a = typeIR
     -- let typeIR'' = typeIR'
-    -- if typeIR'' <: aliasTypeIR
-    -- let aliasTypeIR = typeIR'' as aliasTypeIR
-    -- if aliasTypeIR matches `TYPEDEF%%`
-    -- let typedef _tid typeIR_b = aliasTypeIR
+    -- if typeIR'' <: typedefTypeIR
+    -- let typedef _tid typeIR_b = typeIR'' as typedefTypeIR
     -- if Type_alpha: typeIR_a ~~ typeIR_b holds
     -- the relation holds
 
@@ -4527,14 +4505,10 @@ relation Type_alpha: typeIR ~~ typeIR
 
     (explicit) type tid typeIR_a as typeIR ~~ type tid typeIR_b as typeIR
     (implicit) typeIR ~~ typeIR'
-    -- if typeIR <: aliasTypeIR
-    -- let aliasTypeIR = typeIR as aliasTypeIR
-    -- if aliasTypeIR matches `TYPE%%`
-    -- let type tid typeIR_a = aliasTypeIR
-    -- if typeIR' <: aliasTypeIR
-    -- let aliasTypeIR' = typeIR' as aliasTypeIR
-    -- if aliasTypeIR' matches `TYPE%%`
-    -- let type tid' typeIR_b = aliasTypeIR'
+    -- if typeIR <: newTypeIR
+    -- let type tid typeIR_a = typeIR as newTypeIR
+    -- if typeIR' <: newTypeIR
+    -- let type tid' typeIR_b = typeIR' as newTypeIR
     -- if (tid = tid')
 
    paths
@@ -6662,10 +6636,8 @@ def $cast_bool'(typeIR, bool) : value =
 
   ;; ../../../../spec-concrete/3-numerics.watsup:396.1-396.58
   clause 3 : (typeIR', b) = $cast_bool(typeIR, b)
-  -- if typeIR' <: aliasTypeIR
-  -- let aliasTypeIR = typeIR' as aliasTypeIR
-  -- if aliasTypeIR matches `TYPE%%`
-  -- let type _tid typeIR = aliasTypeIR
+  -- if typeIR' <: newTypeIR
+  -- let type _tid typeIR = typeIR' as newTypeIR
 
 ;; ../../../../spec-concrete/3-numerics.watsup:402.1-402.38
 def $cast_arbint(typeIR, int) : value =
@@ -6704,10 +6676,8 @@ def $cast_arbint'(typeIR, int) : value =
 
   ;; ../../../../spec-concrete/3-numerics.watsup:411.1-411.62
   clause 4 : (typeIR', i) = $cast_arbint(typeIR, i)
-  -- if typeIR' <: aliasTypeIR
-  -- let aliasTypeIR = typeIR' as aliasTypeIR
-  -- if aliasTypeIR matches `TYPE%%`
-  -- let type _tid typeIR = aliasTypeIR
+  -- if typeIR' <: newTypeIR
+  -- let type _tid typeIR = typeIR' as newTypeIR
 
   ;; ../../../../spec-concrete/3-numerics.watsup:412.1-412.73
   clause 5 : (typeIR'', i) = set{ $cast_arbint(typeIR, i) } as value
@@ -6755,10 +6725,8 @@ def $cast_fixbit'(typeIR, nat, int) : value =
 
   ;; ../../../../spec-concrete/3-numerics.watsup:429.1-429.68
   clause 4 : (typeIR', w, i) = $cast_fixbit(typeIR, w, i)
-  -- if typeIR' <: aliasTypeIR
-  -- let aliasTypeIR = typeIR' as aliasTypeIR
-  -- if aliasTypeIR matches `TYPE%%`
-  -- let type _tid typeIR = aliasTypeIR
+  -- if typeIR' <: newTypeIR
+  -- let type _tid typeIR = typeIR' as newTypeIR
 
   ;; ../../../../spec-concrete/3-numerics.watsup:430.1-430.79
   clause 5 : (typeIR'', w, i) = set{ $cast_fixbit(typeIR, w, i) } as value
@@ -6800,10 +6768,8 @@ def $cast_fixint'(typeIR, nat, int) : value =
 
   ;; ../../../../spec-concrete/3-numerics.watsup:446.1-446.68
   clause 3 : (typeIR', w, i) = $cast_fixint(typeIR, w, i)
-  -- if typeIR' <: aliasTypeIR
-  -- let aliasTypeIR = typeIR' as aliasTypeIR
-  -- if aliasTypeIR matches `TYPE%%`
-  -- let type _tid typeIR = aliasTypeIR
+  -- if typeIR' <: newTypeIR
+  -- let type _tid typeIR = typeIR' as newTypeIR
 
   ;; ../../../../spec-concrete/3-numerics.watsup:447.1-447.79
   clause 4 : (typeIR'', w, i) = set{ $cast_fixint(typeIR, w, i) } as value
@@ -7035,10 +7001,8 @@ def $sizeof_minSizeInBits''(typeIR) : nat =
 
   ;; ../../../../spec-concrete/3-numerics.watsup:673.1-673.76
   clause 4 : (typeIR') = $sizeof_minSizeInBits'(typeIR)
-  -- if typeIR' <: aliasTypeIR
-  -- let aliasTypeIR = typeIR' as aliasTypeIR
-  -- if aliasTypeIR matches `TYPE%%`
-  -- let type _tid typeIR = aliasTypeIR
+  -- if typeIR' <: newTypeIR
+  -- let type _tid typeIR = typeIR' as newTypeIR
 
   ;; ../../../../spec-concrete/3-numerics.watsup:674.1-674.86
   clause 5 : (typeIR') = $sizeof_minSizeInBits'(typeIR)
@@ -7123,10 +7087,8 @@ def $sizeof_maxSizeInBits''(typeIR) : nat =
 
   ;; ../../../../spec-concrete/3-numerics.watsup:699.1-699.76
   clause 4 : (typeIR') = $sizeof_maxSizeInBits'(typeIR)
-  -- if typeIR' <: aliasTypeIR
-  -- let aliasTypeIR = typeIR' as aliasTypeIR
-  -- if aliasTypeIR matches `TYPE%%`
-  -- let type _tid typeIR = aliasTypeIR
+  -- if typeIR' <: newTypeIR
+  -- let type _tid typeIR = typeIR' as newTypeIR
 
   ;; ../../../../spec-concrete/3-numerics.watsup:700.1-700.86
   clause 5 : (typeIR') = $sizeof_maxSizeInBits'(typeIR)
@@ -7642,7 +7604,7 @@ syntax derivedTypeDeclarationIR =
    | annotationList header_union nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
 
 ;; ../../../../spec-concrete/4-ir-syntax.watsup:510.1-511.29
-syntax typedefTypeIR = 
+syntax typedefIR = 
    | void
    | bool
    | error
@@ -7686,7 +7648,7 @@ syntax typedefTypeIR =
 
 ;; ../../../../spec-concrete/4-ir-syntax.watsup:514.1-515.41
 syntax typedefDeclarationIR = 
-   | annotationList typedef typedefTypeIR nameIR ;
+   | annotationList typedef typedefIR nameIR ;
    | annotationList type typeIR nameIR ;
 
 ;; ../../../../spec-concrete/4-ir-syntax.watsup:522.3-522.47
@@ -7867,7 +7829,7 @@ syntax typeDeclarationIR =
    | annotationList struct nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
    | annotationList header nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
    | annotationList header_union nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
-   | annotationList typedef typedefTypeIR nameIR ;
+   | annotationList typedef typedefIR nameIR ;
    | annotationList type typeIR nameIR ;
    | annotationList parser nameIR < typeParameterListIR , typeParameterListIR >( parameterListIR );
    | annotationList control nameIR < typeParameterListIR , typeParameterListIR >( parameterListIR );
@@ -7890,7 +7852,7 @@ syntax declarationIR =
    | annotationList struct nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
    | annotationList header nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
    | annotationList header_union nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
-   | annotationList typedef typedefTypeIR nameIR ;
+   | annotationList typedef typedefIR nameIR ;
    | annotationList type typeIR nameIR ;
    | annotationList parser nameIR < typeParameterListIR , typeParameterListIR >( parameterListIR );
    | annotationList control nameIR < typeParameterListIR , typeParameterListIR >( parameterListIR );
@@ -8991,10 +8953,8 @@ def $update_mode'(tableContext, id, typeIR) : tableContext =
   ;; ../../../../spec-concrete/5.02.2-table-context.watsup:113.1-114.38
   clause 3 : (TBLC, text, typeIR') = $update_mode(TBLC, "lpm", typeIR)
   -- if (text = "lpm")
-  -- if typeIR' <: aliasTypeIR
-  -- let aliasTypeIR = typeIR' as aliasTypeIR
-  -- if aliasTypeIR matches `TYPE%%`
-  -- let type _tid typeIR = aliasTypeIR
+  -- if typeIR' <: newTypeIR
+  -- let type _tid typeIR = typeIR' as newTypeIR
 
   ;; ../../../../spec-concrete/5.02.2-table-context.watsup:115.1-116.24
   clause 4 : (TBLC, text, _typeIR) = TBLC[mode = prilpm]
@@ -9174,10 +9134,8 @@ relation Type_wf: bound |- typeIR
 
     (explicit) bound |- tid tid as typeIR
     (implicit) bound |- typeIR
-    -- if typeIR <: namedTypeIR
-    -- let namedTypeIR = typeIR as namedTypeIR
-    -- if namedTypeIR matches `TID%`
-    -- let tid tid = namedTypeIR
+    -- if typeIR <: nameTypeIR
+    -- let tid tid = typeIR as nameTypeIR
 
    paths
 
@@ -9192,10 +9150,8 @@ relation Type_wf: bound |- typeIR
 
     (explicit) bound |- polyTypeDefIR < typeIR_arg*{} > as typeIR
     (implicit) bound |- typeIR'
-    -- if typeIR' <: namedTypeIR
-    -- let namedTypeIR = typeIR' as namedTypeIR
-    -- if namedTypeIR matches `%<%>`
-    -- let polyTypeDefIR < typeIR_arg*{typeIR_arg <- typeIR_arg*} > = namedTypeIR
+    -- if typeIR' <: specializedTypeIR
+    -- let polyTypeDefIR < typeIR_arg*{typeIR_arg <- typeIR_arg*} > = typeIR' as specializedTypeIR
 
    paths
 
@@ -9211,10 +9167,8 @@ relation Type_wf: bound |- typeIR
 
     (explicit) bound |- typedef _tid typeIR as typeIR
     (implicit) bound |- typeIR'
-    -- if typeIR' <: aliasTypeIR
-    -- let aliasTypeIR = typeIR' as aliasTypeIR
-    -- if aliasTypeIR matches `TYPEDEF%%`
-    -- let typedef _tid typeIR = aliasTypeIR
+    -- if typeIR' <: typedefTypeIR
+    -- let typedef _tid typeIR = typeIR' as typedefTypeIR
 
    paths
 
@@ -9230,10 +9184,8 @@ relation Type_wf: bound |- typeIR
 
     (explicit) bound |- type _tid typeIR as typeIR
     (implicit) bound |- typeIR'
-    -- if typeIR' <: aliasTypeIR
-    -- let aliasTypeIR = typeIR' as aliasTypeIR
-    -- if aliasTypeIR matches `TYPE%%`
-    -- let type _tid typeIR = aliasTypeIR
+    -- if typeIR' <: newTypeIR
+    -- let type _tid typeIR = typeIR' as newTypeIR
 
    paths
 
@@ -10181,17 +10133,13 @@ def $nestable'_typedef(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:106.1-106.37
   clause 4 : (typeIR) = true
-  -- if typeIR <: namedTypeIR
-  -- let namedTypeIR = typeIR as namedTypeIR
-  -- if namedTypeIR matches `TID%`
-  -- let tid _tid = namedTypeIR
+  -- if typeIR <: nameTypeIR
+  -- let tid _tid = typeIR as nameTypeIR
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:107.1-107.40
   clause 5 : (typeIR) = true
-  -- if typeIR <: aliasTypeIR
-  -- let aliasTypeIR = typeIR as aliasTypeIR
-  -- if aliasTypeIR matches `TYPE%%`
-  -- let type _tid _typeIR = aliasTypeIR
+  -- if typeIR <: newTypeIR
+  -- let type _tid _typeIR = typeIR as newTypeIR
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:108.1-108.42
   clause 6 : (typeIR) = true
@@ -10233,17 +10181,13 @@ def $nestable'_new(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:124.1-124.33
   clause 3 : (typeIR) = true
-  -- if typeIR <: namedTypeIR
-  -- let namedTypeIR = typeIR as namedTypeIR
-  -- if namedTypeIR matches `TID%`
-  -- let tid _tid = namedTypeIR
+  -- if typeIR <: nameTypeIR
+  -- let tid _tid = typeIR as nameTypeIR
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:125.1-125.36
   clause 4 : (typeIR) = true
-  -- if typeIR <: aliasTypeIR
-  -- let aliasTypeIR = typeIR as aliasTypeIR
-  -- if aliasTypeIR matches `TYPE%%`
-  -- let type _tid _typeIR = aliasTypeIR
+  -- if typeIR <: newTypeIR
+  -- let type _tid _typeIR = typeIR as newTypeIR
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:126.1-127.15
   clause 5 : (_typeIR) = false
@@ -10289,17 +10233,13 @@ def $nestable'_list(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:145.1-145.34
   clause 5 : (typeIR) = true
-  -- if typeIR <: namedTypeIR
-  -- let namedTypeIR = typeIR as namedTypeIR
-  -- if namedTypeIR matches `TID%`
-  -- let tid _tid = namedTypeIR
+  -- if typeIR <: nameTypeIR
+  -- let tid _tid = typeIR as nameTypeIR
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:146.1-146.37
   clause 6 : (typeIR) = true
-  -- if typeIR <: aliasTypeIR
-  -- let aliasTypeIR = typeIR as aliasTypeIR
-  -- if aliasTypeIR matches `TYPE%%`
-  -- let type _tid _typeIR = aliasTypeIR
+  -- if typeIR <: newTypeIR
+  -- let type _tid _typeIR = typeIR as newTypeIR
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:147.1-147.39
   clause 7 : (typeIR) = true
@@ -10354,17 +10294,13 @@ def $nestable'_tuple(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:165.1-165.35
   clause 5 : (typeIR) = true
-  -- if typeIR <: namedTypeIR
-  -- let namedTypeIR = typeIR as namedTypeIR
-  -- if namedTypeIR matches `TID%`
-  -- let tid _tid = namedTypeIR
+  -- if typeIR <: nameTypeIR
+  -- let tid _tid = typeIR as nameTypeIR
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:166.1-166.38
   clause 6 : (typeIR) = true
-  -- if typeIR <: aliasTypeIR
-  -- let aliasTypeIR = typeIR as aliasTypeIR
-  -- if aliasTypeIR matches `TYPE%%`
-  -- let type _tid _typeIR = aliasTypeIR
+  -- if typeIR <: newTypeIR
+  -- let type _tid _typeIR = typeIR as newTypeIR
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:167.1-167.42
   clause 7 : (typeIR) = true
@@ -10420,10 +10356,8 @@ def $nestable'_stack(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:186.1-186.35
   clause 0 : (typeIR) = true
-  -- if typeIR <: namedTypeIR
-  -- let namedTypeIR = typeIR as namedTypeIR
-  -- if namedTypeIR matches `TID%`
-  -- let tid _tid = namedTypeIR
+  -- if typeIR <: nameTypeIR
+  -- let tid _tid = typeIR as nameTypeIR
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:187.1-187.45
   clause 1 : (typeIR) = true
@@ -10483,17 +10417,13 @@ def $nestable'_struct(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:206.1-206.36
   clause 5 : (typeIR) = true
-  -- if typeIR <: namedTypeIR
-  -- let namedTypeIR = typeIR as namedTypeIR
-  -- if namedTypeIR matches `TID%`
-  -- let tid _tid = namedTypeIR
+  -- if typeIR <: nameTypeIR
+  -- let tid _tid = typeIR as nameTypeIR
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:207.1-207.39
   clause 6 : (typeIR) = true
-  -- if typeIR <: aliasTypeIR
-  -- let aliasTypeIR = typeIR as aliasTypeIR
-  -- if aliasTypeIR matches `TYPE%%`
-  -- let type _tid _typeIR = aliasTypeIR
+  -- if typeIR <: newTypeIR
+  -- let type _tid _typeIR = typeIR as newTypeIR
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:208.1-208.43
   clause 7 : (typeIR) = true
@@ -10576,17 +10506,13 @@ def $nestable'_header(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:234.1-234.36
   clause 4 : (typeIR) = true
-  -- if typeIR <: namedTypeIR
-  -- let namedTypeIR = typeIR as namedTypeIR
-  -- if namedTypeIR matches `TID%`
-  -- let tid _tid = namedTypeIR
+  -- if typeIR <: nameTypeIR
+  -- let tid _tid = typeIR as nameTypeIR
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:235.1-235.39
   clause 5 : (typeIR) = true
-  -- if typeIR <: aliasTypeIR
-  -- let aliasTypeIR = typeIR as aliasTypeIR
-  -- if aliasTypeIR matches `TYPE%%`
-  -- let type _tid _typeIR = aliasTypeIR
+  -- if typeIR <: newTypeIR
+  -- let type _tid _typeIR = typeIR as newTypeIR
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:236.1-236.49
   clause 6 : (typeIR) = true
@@ -10636,17 +10562,13 @@ def $nestable'_struct_in_header(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:247.1-247.46
   clause 3 : (typeIR) = true
-  -- if typeIR <: namedTypeIR
-  -- let namedTypeIR = typeIR as namedTypeIR
-  -- if namedTypeIR matches `TID%`
-  -- let tid _tid = namedTypeIR
+  -- if typeIR <: nameTypeIR
+  -- let tid _tid = typeIR as nameTypeIR
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:248.1-248.49
   clause 4 : (typeIR) = true
-  -- if typeIR <: aliasTypeIR
-  -- let aliasTypeIR = typeIR as aliasTypeIR
-  -- if aliasTypeIR matches `TYPE%%`
-  -- let type _tid _typeIR = aliasTypeIR
+  -- if typeIR <: newTypeIR
+  -- let type _tid _typeIR = typeIR as newTypeIR
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:249.1-249.59
   clause 5 : (typeIR) = true
@@ -10676,17 +10598,13 @@ def $nestable'_headerunion(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:266.1-266.41
   clause 0 : (typeIR) = true
-  -- if typeIR <: namedTypeIR
-  -- let namedTypeIR = typeIR as namedTypeIR
-  -- if namedTypeIR matches `TID%`
-  -- let tid _tid = namedTypeIR
+  -- if typeIR <: nameTypeIR
+  -- let tid _tid = typeIR as nameTypeIR
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:267.1-267.44
   clause 1 : (typeIR) = true
-  -- if typeIR <: aliasTypeIR
-  -- let aliasTypeIR = typeIR as aliasTypeIR
-  -- if aliasTypeIR matches `TYPE%%`
-  -- let type _tid _typeIR = aliasTypeIR
+  -- if typeIR <: newTypeIR
+  -- let type _tid _typeIR = typeIR as newTypeIR
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:268.1-268.51
   clause 2 : (typeIR) = true
@@ -10722,17 +10640,13 @@ def $nestable'_serenum(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:291.1-291.37
   clause 2 : (typeIR) = true
-  -- if typeIR <: namedTypeIR
-  -- let namedTypeIR = typeIR as namedTypeIR
-  -- if namedTypeIR matches `TID%`
-  -- let tid _tid = namedTypeIR
+  -- if typeIR <: nameTypeIR
+  -- let tid _tid = typeIR as nameTypeIR
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:292.1-293.37
   clause 3 : (typeIR') = $nestable_new_in_serenum(typeIR)
-  -- if typeIR' <: aliasTypeIR
-  -- let aliasTypeIR = typeIR' as aliasTypeIR
-  -- if aliasTypeIR matches `TYPE%%`
-  -- let type _tid typeIR = aliasTypeIR
+  -- if typeIR' <: newTypeIR
+  -- let type _tid typeIR = typeIR' as newTypeIR
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:294.1-295.15
   clause 4 : (_typeIR) = false
@@ -10763,17 +10677,13 @@ def $nestable_new_in_serenum'(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:301.1-301.44
   clause 2 : (typeIR) = true
-  -- if typeIR <: namedTypeIR
-  -- let namedTypeIR = typeIR as namedTypeIR
-  -- if namedTypeIR matches `TID%`
-  -- let tid _tid = namedTypeIR
+  -- if typeIR <: nameTypeIR
+  -- let tid _tid = typeIR as nameTypeIR
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:302.1-302.47
   clause 3 : (typeIR) = true
-  -- if typeIR <: aliasTypeIR
-  -- let aliasTypeIR = typeIR as aliasTypeIR
-  -- if aliasTypeIR matches `TYPE%%`
-  -- let type _tid _typeIR = aliasTypeIR
+  -- if typeIR <: newTypeIR
+  -- let type _tid _typeIR = typeIR as newTypeIR
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:303.1-304.15
   clause 4 : (_typeIR) = false
@@ -10816,17 +10726,13 @@ def $nestable'_set(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:373.1-373.33
   clause 4 : (typeIR) = true
-  -- if typeIR <: namedTypeIR
-  -- let namedTypeIR = typeIR as namedTypeIR
-  -- if namedTypeIR matches `TID%`
-  -- let tid _tid = namedTypeIR
+  -- if typeIR <: nameTypeIR
+  -- let tid _tid = typeIR as nameTypeIR
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:374.1-374.36
   clause 5 : (typeIR) = true
-  -- if typeIR <: aliasTypeIR
-  -- let aliasTypeIR = typeIR as aliasTypeIR
-  -- if aliasTypeIR matches `TYPE%%`
-  -- let type _tid _typeIR = aliasTypeIR
+  -- if typeIR <: newTypeIR
+  -- let type _tid _typeIR = typeIR as newTypeIR
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:375.1-376.40
   clause 6 : (typeIR') = true
@@ -10891,17 +10797,13 @@ def $nestable'_tuple_in_set(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:389.1-389.42
   clause 3 : (typeIR) = true
-  -- if typeIR <: namedTypeIR
-  -- let namedTypeIR = typeIR as namedTypeIR
-  -- if namedTypeIR matches `TID%`
-  -- let tid _tid = namedTypeIR
+  -- if typeIR <: nameTypeIR
+  -- let tid _tid = typeIR as nameTypeIR
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:390.1-390.45
   clause 4 : (typeIR) = true
-  -- if typeIR <: aliasTypeIR
-  -- let aliasTypeIR = typeIR as aliasTypeIR
-  -- if aliasTypeIR matches `TYPE%%`
-  -- let type _tid _typeIR = aliasTypeIR
+  -- if typeIR <: newTypeIR
+  -- let type _tid _typeIR = typeIR as newTypeIR
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:391.1-392.40
   clause 5 : (typeIR') = true
@@ -10958,17 +10860,13 @@ def $nestable'_sequence_in_set(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:403.1-403.45
   clause 3 : (typeIR) = true
-  -- if typeIR <: namedTypeIR
-  -- let namedTypeIR = typeIR as namedTypeIR
-  -- if namedTypeIR matches `TID%`
-  -- let tid _tid = namedTypeIR
+  -- if typeIR <: nameTypeIR
+  -- let tid _tid = typeIR as nameTypeIR
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:404.1-404.48
   clause 4 : (typeIR) = true
-  -- if typeIR <: aliasTypeIR
-  -- let aliasTypeIR = typeIR as aliasTypeIR
-  -- if aliasTypeIR matches `TYPE%%`
-  -- let type _tid _typeIR = aliasTypeIR
+  -- if typeIR <: newTypeIR
+  -- let type _tid _typeIR = typeIR as newTypeIR
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:405.1-406.43
   clause 5 : (typeIR') = true
@@ -11007,10 +10905,8 @@ def $definable_type_mono(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:432.1-432.39
   clause 0 : (typeIR) = true
-  -- if typeIR <: namedTypeIR
-  -- let namedTypeIR = typeIR as namedTypeIR
-  -- if namedTypeIR matches `TID%`
-  -- let tid _tid = namedTypeIR
+  -- if typeIR <: nameTypeIR
+  -- let tid _tid = typeIR as nameTypeIR
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:433.1-433.45
   clause 1 : (typeIR) = true
@@ -12844,10 +12740,8 @@ relation Sub_expl_canon_neq: typeIR <: typeIR
 
     rulepath left
     -- let typeIR'' = typeIR
-    -- if typeIR'' <: aliasTypeIR
-    -- let aliasTypeIR = typeIR'' as aliasTypeIR
-    -- if aliasTypeIR matches `TYPE%%`
-    -- let type _tid typeIR_a = aliasTypeIR
+    -- if typeIR'' <: newTypeIR
+    -- let type _tid typeIR_a = typeIR'' as newTypeIR
     -- let typeIR_b = typeIR'
     -- if Sub_impl: typeIR_a <: typeIR_b holds
     -- the relation holds
@@ -12855,10 +12749,8 @@ relation Sub_expl_canon_neq: typeIR <: typeIR
     rulepath right
     -- let typeIR_a = typeIR
     -- let typeIR'' = typeIR'
-    -- if typeIR'' <: aliasTypeIR
-    -- let aliasTypeIR = typeIR'' as aliasTypeIR
-    -- if aliasTypeIR matches `TYPE%%`
-    -- let type _tid typeIR_b = aliasTypeIR
+    -- if typeIR'' <: newTypeIR
+    -- let type _tid typeIR_b = typeIR'' as newTypeIR
     -- if Sub_impl: typeIR_a <: typeIR_b holds
     -- the relation holds
 
@@ -17205,10 +17097,8 @@ relation Decl_ok: cursor typingContext |- declaration : typingContext declaratio
     -- Inst_ok: p TC_0 named |- constructorTypeIR < [] # tid_impl*{tid_impl <- tid_impl*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): typeIR_object < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
     -- if $is_extern_object_typeIR($canon(typeIR_object))
     -- let typeIR' = typeIR_object
-    -- if typeIR' <: namedTypeIR
-    -- let namedTypeIR = typeIR' as namedTypeIR
-    -- if namedTypeIR matches `%<%>`
-    -- let typeIR < tid_expl*{tid_expl <- tid_expl*} , tid'*{tid' <- tid'*} > < typeIR_arg*{typeIR_arg <- typeIR_arg*} > = namedTypeIR
+    -- if typeIR' <: specializedTypeIR
+    -- let typeIR < tid_expl*{tid_expl <- tid_expl*} , tid'*{tid' <- tid'*} > < typeIR_arg*{typeIR_arg <- typeIR_arg*} > = typeIR' as specializedTypeIR
     -- if typeIR <: externObjectTypeIR
     -- let extern tid_extern rdenv_extern = typeIR as externObjectTypeIR
     -- if (tid'*{tid' <- tid'*} = tid_impl*{tid_impl <- tid_impl*})
@@ -17239,10 +17129,8 @@ relation Decl_ok: cursor typingContext |- declaration : typingContext declaratio
     -- Inst_ok: p TC_0 named |- constructorTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # tid_infer*{tid_infer <- tid_infer*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): typeIR_object < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
     -- if $is_extern_object_typeIR($canon(typeIR_object))
     -- let typeIR' = typeIR_object
-    -- if typeIR' <: namedTypeIR
-    -- let namedTypeIR = typeIR' as namedTypeIR
-    -- if namedTypeIR matches `%<%>`
-    -- let typeIR < tid_expl*{tid_expl <- tid_expl*} , tid'*{tid' <- tid'*} > < typeIR_arg*{typeIR_arg <- typeIR_arg*} > = namedTypeIR
+    -- if typeIR' <: specializedTypeIR
+    -- let typeIR < tid_expl*{tid_expl <- tid_expl*} , tid'*{tid' <- tid'*} > < typeIR_arg*{typeIR_arg <- typeIR_arg*} > = typeIR' as specializedTypeIR
     -- if typeIR <: externObjectTypeIR
     -- let extern tid_extern rdenv_extern = typeIR as externObjectTypeIR
     -- if (tid'*{tid' <- tid'*} = tid_impl*{tid_impl <- tid_impl*})
@@ -17667,20 +17555,20 @@ relation Decl_ok: cursor typingContext |- declaration : typingContext declaratio
 
    match
 
-    (explicit) global TC_0 |- annotationList typedef typedefType name ; as declaration : % %
+    (explicit) global TC_0 |- annotationList typedef typedef name ; as declaration : % %
     (implicit) cursor TC_0 |- declaration : % %
     -- if cursor matches `GLOBAL`
     -- if declaration <: typedefDeclaration
     -- let typedefDeclaration = declaration as typedefDeclaration
     -- if typedefDeclaration matches `%TYPEDEF%%;`
-    -- let annotationList typedef typedefType name ; = typedefDeclaration
+    -- let annotationList typedef typedef name ; = typedefDeclaration
 
    paths
 
     rulepath type
-    -- let typedefType' = typedefType
-    -- if typedefType' <: type
-    -- let type = typedefType' as type
+    -- let typedef' = typedef
+    -- if typedef' <: type
+    -- let type = typedef' as type
     -- Type_ok: global TC_0 |- type as typeOrVoid : typeIR # tid'*{tid' <- tid'*}
     -- if tid'*{tid' <- tid'*} matches []
     -- if Type_wf: $bound(global, TC_0) |- typeIR holds
@@ -17688,13 +17576,13 @@ relation Decl_ok: cursor typingContext |- declaration : typingContext declaratio
     -- let typeIR_typedef = typedef nameIR typeIR as typeIR
     -- if TypeDef_wf: $bound(global, TC_0) |- typeIR_typedef as typeDefIR holds
     -- let TC_1 = $add_type(global, TC_0, nameIR, typeIR_typedef as typeDefIR)
-    -- let typedefDeclarationIR = annotationList typedef typeIR as typedefTypeIR nameIR ;
+    -- let typedefDeclarationIR = annotationList typedef typeIR as typedefIR nameIR ;
     -- output: % % |- % : TC_1 typedefDeclarationIR as declarationIR
 
     rulepath derivedTypeDeclaration-mono
-    -- let typedefType' = typedefType
-    -- if typedefType' <: derivedTypeDeclaration
-    -- let derivedTypeDeclaration = typedefType' as derivedTypeDeclaration
+    -- let typedef' = typedef
+    -- if typedef' <: derivedTypeDeclaration
+    -- let derivedTypeDeclaration = typedef' as derivedTypeDeclaration
     -- Decl_ok: global TC_0 |- derivedTypeDeclaration as declaration : TC_1 declarationIR
     -- if declarationIR <: derivedTypeDeclarationIR
     -- let derivedTypeDeclarationIR = declarationIR as derivedTypeDeclarationIR
@@ -17710,13 +17598,13 @@ relation Decl_ok: cursor typingContext |- declaration : typingContext declaratio
     -- let typeIR_typedef = typedef nameIR typeIR as typeIR
     -- if TypeDef_wf: $bound(global, TC_0) |- typeIR_typedef as typeDefIR holds
     -- let TC_2 = $add_type(global, TC_0, nameIR, typeIR_typedef as typeDefIR)
-    -- let typedefDeclarationIR = annotationList typedef derivedTypeDeclarationIR as typedefTypeIR nameIR ;
+    -- let typedefDeclarationIR = annotationList typedef derivedTypeDeclarationIR as typedefIR nameIR ;
     -- output: % % |- % : TC_1 typedefDeclarationIR as declarationIR
 
     rulepath derivedTypeDeclaration-poly
-    -- let typedefType' = typedefType
-    -- if typedefType' <: derivedTypeDeclaration
-    -- let derivedTypeDeclaration = typedefType' as derivedTypeDeclaration
+    -- let typedef' = typedef
+    -- if typedef' <: derivedTypeDeclaration
+    -- let derivedTypeDeclaration = typedef' as derivedTypeDeclaration
     -- Decl_ok: global TC_0 |- derivedTypeDeclaration as declaration : TC_1 declarationIR
     -- if declarationIR <: derivedTypeDeclarationIR
     -- let derivedTypeDeclarationIR = declarationIR as derivedTypeDeclarationIR
@@ -17734,7 +17622,7 @@ relation Decl_ok: cursor typingContext |- declaration : typingContext declaratio
     -- let typeIR_typedef = typedef nameIR typeIR < [] , [] > < [] > as typeIR as typeIR
     -- if TypeDef_wf: $bound(global, TC_0) |- typeIR_typedef as typeDefIR holds
     -- let TC_2 = $add_type(global, TC_0, nameIR, typeIR_typedef as typeDefIR)
-    -- let typedefDeclarationIR = annotationList typedef derivedTypeDeclarationIR as typedefTypeIR nameIR ;
+    -- let typedefDeclarationIR = annotationList typedef derivedTypeDeclarationIR as typedefIR nameIR ;
     -- output: % % |- % : TC_1 typedefDeclarationIR as declarationIR
 
   ;; ../../../../spec-concrete/5.11-typing-declaration.watsup:845.1-858.45
@@ -20690,10 +20578,8 @@ def $compat'_table_exact_optional_key(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:15.1-16.45
   clause 3 : (typeIR') = $compat_table_exact_optional_key(typeIR)
-  -- if typeIR' <: aliasTypeIR
-  -- let aliasTypeIR = typeIR' as aliasTypeIR
-  -- if aliasTypeIR matches `TYPE%%`
-  -- let type _tid typeIR = aliasTypeIR
+  -- if typeIR' <: newTypeIR
+  -- let type _tid typeIR = typeIR' as newTypeIR
 
   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:17.1-17.60
   clause 4 : (typeIR) = true
@@ -20740,10 +20626,8 @@ def $compat'_table_lpm_ternary_range_key(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:29.1-30.48
   clause 3 : (typeIR') = $compat_table_lpm_ternary_range_key(typeIR)
-  -- if typeIR' <: aliasTypeIR
-  -- let aliasTypeIR = typeIR' as aliasTypeIR
-  -- if aliasTypeIR matches `TYPE%%`
-  -- let type _tid typeIR = aliasTypeIR
+  -- if typeIR' <: newTypeIR
+  -- let type _tid typeIR = typeIR' as newTypeIR
 
   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:31.1-32.48
   clause 4 : (typeIR') = $compat_table_lpm_ternary_range_key(typeIR)
@@ -21227,22 +21111,16 @@ def $gen_constraint_type(constraint, typeIR, typeIR) : constraint =
 
   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:74.1-76.66
   clause 0 : (constraint, typeIR, typeIR_arg) = $update_map<tid, infer>(constraint, tid_param, knownas typeIR_arg)
-  -- if typeIR <: namedTypeIR
-  -- let namedTypeIR = typeIR as namedTypeIR
-  -- if namedTypeIR matches `TID%`
-  -- let tid tid_param = namedTypeIR
+  -- if typeIR <: nameTypeIR
+  -- let tid tid_param = typeIR as nameTypeIR
   -- if $in_set<tid>(tid_param, $dom_map<tid, infer>(constraint))
 
   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:78.1-99.26
   clause 1 : (constraint_0, typeIR, typeIR') = constraint_2
-  -- if typeIR <: namedTypeIR
-  -- let namedTypeIR = typeIR as namedTypeIR
-  -- if namedTypeIR matches `%<%>`
-  -- let polyTypeDefIR_param < typeIR_param*{typeIR_param <- typeIR_param*} > = namedTypeIR
-  -- if typeIR' <: namedTypeIR
-  -- let namedTypeIR' = typeIR' as namedTypeIR
-  -- if namedTypeIR' matches `%<%>`
-  -- let polyTypeDefIR_arg < typeIR_arg*{typeIR_arg <- typeIR_arg*} > = namedTypeIR'
+  -- if typeIR <: specializedTypeIR
+  -- let polyTypeDefIR_param < typeIR_param*{typeIR_param <- typeIR_param*} > = typeIR as specializedTypeIR
+  -- if typeIR' <: specializedTypeIR
+  -- let polyTypeDefIR_arg < typeIR_arg*{typeIR_arg <- typeIR_arg*} > = typeIR' as specializedTypeIR
   -- let typeIR_specialized_param = $specialize_typeDef(polyTypeDefIR_param as typeDefIR, typeIR_param*{typeIR_param <- typeIR_param*})
   -- let typeIR_specialized_arg = $specialize_typeDef(polyTypeDefIR_arg as typeDefIR, typeIR_arg*{typeIR_arg <- typeIR_arg*})
   -- if ($is_nominal_typeIR(typeIR_specialized_param) /\ $is_nominal_typeIR(typeIR_specialized_arg))
@@ -21251,14 +21129,10 @@ def $gen_constraint_type(constraint, typeIR, typeIR) : constraint =
 
   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:101.1-117.26
   clause 2 : (constraint_0, typeIR, typeIR') = constraint_1
-  -- if typeIR <: namedTypeIR
-  -- let namedTypeIR = typeIR as namedTypeIR
-  -- if namedTypeIR matches `%<%>`
-  -- let polyTypeDefIR_param < typeIR_param*{typeIR_param <- typeIR_param*} > = namedTypeIR
-  -- if typeIR' <: namedTypeIR
-  -- let namedTypeIR' = typeIR' as namedTypeIR
-  -- if namedTypeIR' matches `%<%>`
-  -- let polyTypeDefIR_arg < typeIR_arg*{typeIR_arg <- typeIR_arg*} > = namedTypeIR'
+  -- if typeIR <: specializedTypeIR
+  -- let polyTypeDefIR_param < typeIR_param*{typeIR_param <- typeIR_param*} > = typeIR as specializedTypeIR
+  -- if typeIR' <: specializedTypeIR
+  -- let polyTypeDefIR_arg < typeIR_arg*{typeIR_arg <- typeIR_arg*} > = typeIR' as specializedTypeIR
   -- let typeIR_specialized_param = $specialize_typeDef(polyTypeDefIR_param as typeDefIR, typeIR_param*{typeIR_param <- typeIR_param*})
   -- let typeIR_specialized_arg = $specialize_typeDef(polyTypeDefIR_arg as typeDefIR, typeIR_arg*{typeIR_arg <- typeIR_arg*})
   -- if (~$is_nominal_typeIR(typeIR_specialized_param) /\ ~$is_nominal_typeIR(typeIR_specialized_arg))
@@ -21266,28 +21140,20 @@ def $gen_constraint_type(constraint, typeIR, typeIR) : constraint =
 
   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:121.1-122.63
   clause 3 : (constraint, typeIR, typeIR_arg) = $gen_constraint_type(constraint, typeIR_param, typeIR_arg)
-  -- if typeIR <: aliasTypeIR
-  -- let aliasTypeIR = typeIR as aliasTypeIR
-  -- if aliasTypeIR matches `TYPEDEF%%`
-  -- let typedef _tid typeIR_param = aliasTypeIR
+  -- if typeIR <: typedefTypeIR
+  -- let typedef _tid typeIR_param = typeIR as typedefTypeIR
 
   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:124.1-125.63
   clause 4 : (constraint, typeIR_param, typeIR) = $gen_constraint_type(constraint, typeIR_param, typeIR_arg)
-  -- if typeIR <: aliasTypeIR
-  -- let aliasTypeIR = typeIR as aliasTypeIR
-  -- if aliasTypeIR matches `TYPEDEF%%`
-  -- let typedef _tid typeIR_arg = aliasTypeIR
+  -- if typeIR <: typedefTypeIR
+  -- let typedef _tid typeIR_arg = typeIR as typedefTypeIR
 
   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:127.1-128.63
   clause 5 : (constraint, typeIR, typeIR') = $gen_constraint_type(constraint, typeIR_param, typeIR_arg)
-  -- if typeIR <: aliasTypeIR
-  -- let aliasTypeIR = typeIR as aliasTypeIR
-  -- if aliasTypeIR matches `TYPE%%`
-  -- let type tid typeIR_param = aliasTypeIR
-  -- if typeIR' <: aliasTypeIR
-  -- let aliasTypeIR' = typeIR' as aliasTypeIR
-  -- if aliasTypeIR' matches `TYPE%%`
-  -- let type tid' typeIR_arg = aliasTypeIR'
+  -- if typeIR <: newTypeIR
+  -- let type tid typeIR_param = typeIR as newTypeIR
+  -- if typeIR' <: newTypeIR
+  -- let type tid' typeIR_arg = typeIR' as newTypeIR
   -- if (tid = tid')
 
   ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:132.1-137.63
@@ -24427,28 +24293,28 @@ relation Decl_inst: cursor instantiationContext store |- declarationIR ==> insta
 
    match
 
-    (explicit) global IC_0 STO |- annotationList typedef typedefTypeIR nameIR ; as declarationIR ==> % % %
+    (explicit) global IC_0 STO |- annotationList typedef typedefIR nameIR ; as declarationIR ==> % % %
     (implicit) cursor IC_0 STO |- declarationIR ==> % % %
     -- if cursor matches `GLOBAL`
     -- if declarationIR <: typedefDeclarationIR
     -- let typedefDeclarationIR = declarationIR as typedefDeclarationIR
     -- if typedefDeclarationIR matches `%TYPEDEF%%;`
-    -- let annotationList typedef typedefTypeIR nameIR ; = typedefDeclarationIR
+    -- let annotationList typedef typedefIR nameIR ; = typedefDeclarationIR
 
    paths
 
     rulepath typeIR
-    -- let typedefTypeIR' = typedefTypeIR
-    -- if typedefTypeIR' <: typeIR
-    -- let typeIR = typedefTypeIR' as typeIR
+    -- let typedefIR' = typedefIR
+    -- if typedefIR' <: typeIR
+    -- let typeIR = typedefIR' as typeIR
     -- let typeIR_typedef = typedef nameIR typeIR as typeIR
     -- let IC_1 = $add_typedef_inst(global, IC_0, nameIR, typeIR_typedef as typeDefIR)
     -- output: % % % |- % ==> IC_1 STO ?()
 
     rulepath derivedTypeDeclarationIR-mono
-    -- let typedefTypeIR' = typedefTypeIR
-    -- if typedefTypeIR' <: derivedTypeDeclarationIR
-    -- let derivedTypeDeclarationIR = typedefTypeIR' as derivedTypeDeclarationIR
+    -- let typedefIR' = typedefIR
+    -- if typedefIR' <: derivedTypeDeclarationIR
+    -- let derivedTypeDeclarationIR = typedefIR' as derivedTypeDeclarationIR
     -- Decl_inst: global IC_0 $empty_store |- derivedTypeDeclarationIR as declarationIR ==> IC_local _store _declarationIR?{_declarationIR <- _declarationIR?}
     -- let { tid*{tid <- tid*} } = $diff_set<tid>($dom_map<tid, typeDefIR>(IC_local.global.tdenv), $dom_map<tid, typeDefIR>(IC_0.global.tdenv))
     -- if tid*{tid <- tid*} matches [ _/1 ]
@@ -24463,9 +24329,9 @@ relation Decl_inst: cursor instantiationContext store |- declarationIR ==> insta
     -- output: % % % |- % ==> IC_1 STO ?()
 
     rulepath derivedTypeDeclaration-poly
-    -- let typedefTypeIR' = typedefTypeIR
-    -- if typedefTypeIR' <: derivedTypeDeclarationIR
-    -- let derivedTypeDeclarationIR = typedefTypeIR' as derivedTypeDeclarationIR
+    -- let typedefIR' = typedefIR
+    -- if typedefIR' <: derivedTypeDeclarationIR
+    -- let derivedTypeDeclarationIR = typedefIR' as derivedTypeDeclarationIR
     -- Decl_inst: global IC_0 $empty_store |- derivedTypeDeclarationIR as declarationIR ==> IC_local _store _declarationIR?{_declarationIR <- _declarationIR?}
     -- let { tid*{tid <- tid*} } = $diff_set<tid>($dom_map<tid, typeDefIR>(IC_local.global.tdenv), $dom_map<tid, typeDefIR>(IC_0.global.tdenv))
     -- if tid*{tid <- tid*} matches [ _/1 ]

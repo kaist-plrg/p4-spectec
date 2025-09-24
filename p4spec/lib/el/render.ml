@@ -68,7 +68,7 @@ and render_nottyps sep nottyps =
 and render_deftyp deftyp =
   match deftyp.it with
   | PlainTD plaintyp -> " = " ^ render_plaintyp plaintyp
-  | StructTD typfields -> "= {" ^ render_typfields ", " typfields ^ "}"
+  | StructTD typfields -> " = {" ^ render_typfields ", " typfields ^ "}"
   | VariantTD [ typcase ] -> " = " ^ render_typcase typcase
   | VariantTD typcases ->
       "\n   : " ^ render_typcases "\n   | " typcases ^ "\n   ;"
