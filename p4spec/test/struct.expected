@@ -16584,7 +16584,7 @@ relation Stmt_ok: p' TC' f' loopctxt |- statement'' : % % %
 
             5. (Let forUpdateStatement*{forUpdateStatement <- forUpdateStatement*} be $flatten_forUpdateStatementList(forUpdateStatementList))
 
-            6. (ForUpdateStatements_ok: TC_2 |- forUpdateStatement*{forUpdateStatement <- forUpdateStatement*} : forUpdateStatementIR*{forUpdateStatementIR <- forUpdateStatementIR*})
+            6. (ForUpdateStatement_ok: TC_2 |- forUpdateStatement : forUpdateStatementIR)*{forUpdateStatement <- forUpdateStatement*, forUpdateStatementIR <- forUpdateStatementIR*}
 
             7. (Stmt_ok: (local) TC_2 f' (loop) |- statement : TC_3 f_post statementIR)
 
@@ -21781,29 +21781,6 @@ relation ForUpdateStatement_ok: TC |- forUpdateStatement : %
           2. Result in : % |- % : (typedLvalueIR (=) typedExpressionIR)
 
 ;; ../../../../spec-concrete/5.10-typing-statement.watsup:275.1-277.20
-relation ForUpdateStatements_ok: TC |- forUpdateStatement*{forUpdateStatement <- forUpdateStatement*} : %
-
-1. Case analysis on forUpdateStatement*{forUpdateStatement <- forUpdateStatement*}
-
-  1. Case (% matches pattern [])
-
-    1. Group nil: TC |- [] : %
-
-      1. Result in : % |- % : []
-
-  2. Case (% matches pattern _ :: _)
-
-    1. (Let forUpdateStatement_h :: forUpdateStatement_t*{forUpdateStatement_t <- forUpdateStatement_t*} be forUpdateStatement*{forUpdateStatement <- forUpdateStatement*})
-
-    2. Group cons: TC |- forUpdateStatement_h :: forUpdateStatement_t*{} : %
-
-      1. (ForUpdateStatement_ok: TC |- forUpdateStatement_h : forUpdateStatementIR_h)
-
-      2. (ForUpdateStatements_ok: TC |- forUpdateStatement_t*{forUpdateStatement_t <- forUpdateStatement_t*} : forUpdateStatementIR_t*{forUpdateStatementIR_t <- forUpdateStatementIR_t*})
-
-      3. Result in : % |- % : forUpdateStatementIR_h :: forUpdateStatementIR_t*{forUpdateStatementIR_t <- forUpdateStatementIR_t*}
-
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:292.1-294.20
 relation ForInitStatement_ok: TC_0' |- forInitStatement : % %
 
 1. If ((forInitStatement matches pattern `%%%%`)), then
@@ -21866,7 +21843,7 @@ relation ForInitStatement_ok: TC_0' |- forInitStatement : % %
 
     2. Result in : % |- % : TC_0' (forUpdateStatementIR as forInitStatementIR)
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:336.1-338.20
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:319.1-321.20
 relation ForInitStatements_ok: TC' |- forInitStatement*{forInitStatement <- forInitStatement*} : % %
 
 1. Case analysis on forInitStatement*{forInitStatement <- forInitStatement*}
@@ -21889,7 +21866,7 @@ relation ForInitStatements_ok: TC' |- forInitStatement*{forInitStatement <- forI
 
       3. Result in : % |- % : TC_2 forInitStatementIR_h :: forInitStatementIR_t*{forInitStatementIR_t <- forInitStatementIR_t*}
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:377.1-379.23
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:360.1-362.23
 relation ForCollectionExpression_ok: TC typeIR_var |- forCollectionExpression : %
 
 1. If ((forCollectionExpression has type expression)), then
@@ -21970,12 +21947,12 @@ relation ForCollectionExpression_ok: TC typeIR_var |- forCollectionExpression : 
 
               2. Result in : % % |- % : (typedExpressionIR_l_coerced .. typedExpressionIR_r_coerced)
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:399.1-399.41
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:382.1-382.41
 def $compat_range(typeIR_l, typeIR_r)
 
 1. Return $compat'_range($canon(typeIR_l), $canon(typeIR_r))
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:400.1-400.42
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:383.1-383.42
 def $compat'_range(typeIR'', typeIR''')
 
 1. If ((typeIR'' has type numberTypeIR)), then
@@ -22030,7 +22007,7 @@ def $compat'_range(typeIR'', typeIR''')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:490.1-492.26
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:473.1-475.26
 relation SwitchLabel_table_ok: TC tid_table bool' |- switchLabel : %
 
 1. If ((bool' = true)), then
@@ -22073,7 +22050,7 @@ relation SwitchLabel_table_ok: TC tid_table bool' |- switchLabel : %
 
             2. Result in : % % % |- % : (typedExpressionIR_label as switchLabelIR)
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:519.1-521.32
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:502.1-504.32
 relation SwitchCase_table_ok: TC f loopctxt tid_table b_last |- switchCase : % % # %
 
 1. Case analysis on switchCase
@@ -22104,7 +22081,7 @@ relation SwitchCase_table_ok: TC f loopctxt tid_table b_last |- switchCase : % %
 
       3. Result in : % % % % % |- % : f switchCaseIR # switchLabel
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:547.1-549.29
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:530.1-532.29
 relation SwitchCases_table_ok: TC f loopctxt tid_table |- switchCase*{switchCase <- switchCase*} : % % # %
 
 1. Case analysis on switchCase*{switchCase <- switchCase*}
@@ -22129,7 +22106,7 @@ relation SwitchCases_table_ok: TC f loopctxt tid_table |- switchCase*{switchCase
 
       4. Result in : % % % % |- % : f_t switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} # switchLabel_h :: switchLabel_t*{switchLabel_t <- switchLabel_t*}
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:586.1-588.26
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:569.1-571.26
 relation SwitchLabel_general_ok: TC _typeIR' bool' |- switchLabel : %
 
 1. If ((bool' = true)), then
@@ -22162,7 +22139,7 @@ relation SwitchLabel_general_ok: TC _typeIR' bool' |- switchLabel : %
 
         1. Result in : % % % |- % : (typedExpressionIR_label_cast as switchLabelIR)
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:609.1-611.32
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:592.1-594.32
 relation SwitchCase_general_ok: TC f loopctxt typeIR_switch b_last |- switchCase : % % # %
 
 1. Case analysis on switchCase
@@ -22193,7 +22170,7 @@ relation SwitchCase_general_ok: TC f loopctxt typeIR_switch b_last |- switchCase
 
       3. Result in : % % % % % |- % : f switchCaseIR # switchLabel
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:637.1-639.29
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:620.1-622.29
 relation SwitchCases_general_ok: TC f loopctxt typeIR_switch |- switchCase*{switchCase <- switchCase*} : % % # %
 
 1. Case analysis on switchCase*{switchCase <- switchCase*}
@@ -22218,12 +22195,12 @@ relation SwitchCases_general_ok: TC f loopctxt typeIR_switch |- switchCase*{swit
 
       4. Result in : % % % % |- % : f_t switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} # switchLabel_h :: switchLabel_t*{switchLabel_t <- switchLabel_t*}
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:654.1-654.34
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:637.1-637.34
 def $compat_switch(typeIR)
 
 1. Return $compat'_switch($canon(typeIR))
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:655.1-655.35
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:638.1-638.35
 def $compat'_switch(typeIR)
 
 1. Case analysis on typeIR

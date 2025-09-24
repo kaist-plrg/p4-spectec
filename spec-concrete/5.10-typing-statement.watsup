@@ -270,23 +270,6 @@ rule ForUpdateStatement_ok/forUpdateStatement-assign-eq:
 
 ;;;;;; (TODO) Handle compound assignments
 
-;;;;; syntax forUpdateStatementList
-
-relation ForUpdateStatements_ok:
-  typingContext |- forUpdateStatement* : forUpdateStatementIR*
-  hint(input %0 %1)
-
-rule ForUpdateStatements_ok/nil:
-  TC |- eps : eps
-
-rule ForUpdateStatements_ok/cons:
-  TC |- forUpdateStatement_h :: forUpdateStatement_t*
-      :  forUpdateStatementIR_h :: forUpdateStatementIR_t*
-  -- ForUpdateStatement_ok: TC |- forUpdateStatement_h
-                                : forUpdateStatementIR_h
-  -- ForUpdateStatements_ok: TC |- forUpdateStatement_t*
-                                : forUpdateStatementIR_t*
-
 ;;;;; syntax forInitStatement
 
 relation ForInitStatement_ok:
@@ -360,7 +343,7 @@ rule Stmt_ok/forStatement-condition:
   -- Expr_ok: LOCAL TC_2 |- expression : typedExpressionIR
   ---- ;; check update statements
   -- if forUpdateStatement* = $flatten_forUpdateStatementList(forUpdateStatementList)
-  -- ForUpdateStatements_ok: TC_2 |- forUpdateStatement* : forUpdateStatementIR*
+  -- (ForUpdateStatement_ok: TC_2 |- forUpdateStatement : forUpdateStatementIR)*
   ---- ;; check loop body
   -- Stmt_ok: LOCAL TC_2 f LOOP |- statement : TC_3 f_post statementIR
   -- if TC_4 = $exit(TC_3)
