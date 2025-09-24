@@ -51,7 +51,7 @@ and string_of_plaintyps sep plaintyps =
 and string_of_nottyp nottyp =
   match nottyp.it with
   | AtomT atom -> string_of_atom atom
-  | SeqT typs -> "{" ^ string_of_typs " " typs ^ "}"
+  | SeqT typs -> string_of_typs " " typs
   | InfixT (typ_l, atom, typ_r) ->
       string_of_typ typ_l ^ " " ^ string_of_atom atom ^ " "
       ^ string_of_typ typ_r

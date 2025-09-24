@@ -32,15 +32,7 @@ is reserved to indicate a "don't care" value; its
 type may vary depending on the context. Certain keywords (e.g., `apply`)
 can be used as identifiers if the context makes it unambiguous.
 
-[source,bison]
-----
-include::../../grammar.adoc[tag=nonTypeName]
-
-name
-    : nonTypeName
-    | TYPE_IDENTIFIER
-    ;
-----
+${syntax: identifier nonTypeName typeIdentifier typeName name}
 
 [#sec-lexical-comments]
 ==== Comments
@@ -65,10 +57,14 @@ not as a single token `bit`.
 [#sec-lexical-Boolean-literals]
 ===== Boolean literals
 
+${syntax: booleanLiteral}
+
 There are two Boolean literal constants: `true` and `false`.
 
 [#sec-synatx-lexical-integer-literals]
 ===== Integer literals
+
+${syntax: numberLiteral}
 
 Integer literals are non-negative arbitrary-precision integers.
 By default, literals are represented in base 10. The following prefixes
@@ -111,6 +107,8 @@ literal. Here are some examples of numeric literals:
 
 [#sec-lexical-string-literals]
 ===== String literals
+
+${syntax: stringLiteral}
 
 String literals are specified as an arbitrary sequence of 8-bit
 characters, enclosed within double quote characters `"` (ASCII code
@@ -160,10 +158,7 @@ literal:
 The P4 grammar allows several kinds of comma-separated lists to end in
 an optional comma.
 
-[source,bison]
-----
-include::../../grammar.adoc[tag=optTrailingComma]
-----
+${syntax: trailingCommaOpt}
 
 For example, the following declarations are both legal, and
 have the same meaning:

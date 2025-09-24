@@ -79,7 +79,7 @@ let try_splice_syntax_anchor (ctx : Ctx.t) (source : Source.t) (prefix : string)
       let targets = parse_targets source in
       let defs_el = Ctx.find_syntax_defs ctx targets in
       let content =
-        defs_el |> List.map El.Print.string_of_def |> String.concat "\n"
+        defs_el |> List.map El.Print.string_of_def |> String.concat "\n\n"
       in
       let content = prefix ^ content ^ suffix in
       Some content

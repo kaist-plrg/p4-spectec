@@ -1,3 +1,4 @@
+open Error
 open Util.Source
 
 (* Context for splicer *)
@@ -26,5 +27,9 @@ let init (spec_el : El.Ast.spec) : t =
 
 let find_syntax_defs (ctx : t) (targets : (string * string) list) :
     El.Ast.def list =
-  let find_def (id : string) : El.Ast.def = Map.find id ctx.syntax in
+  let find_def (id : string) : El.Ast.def =
+    match Map.find_opt id ctx.syntax with
+    | Some def_el -> def_el
+    | None -> error no_region (id ^ " was not found")
+  in
   List.map (fun (id, _) -> find_def id) targets

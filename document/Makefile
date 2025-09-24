@@ -9,7 +9,7 @@ grammar.trimmed.adoc: grammar.adoc trim-asciidoc-tag-comments.py
 	./trim-asciidoc-tag-comments.py $< > $@
 
 spectec:
-	cd .. && make build-spec && cd document
+	cd .. && make build && cd document
 
 splice: spectec
 	rm -r sections || true
@@ -17,21 +17,13 @@ splice: spectec
 	SPLICEFILES=$$(find sections -type f -name '*.adoc' | xargs -I {} echo "-splice {}" | tr '\n' ' '); \
 	../${SPECTEC} splice ${SPECFILES} -inplace $${SPLICEFILES}
 
-${SPEC}.pdf: ${SPEC}.adoc grammar.adoc grammar.trimmed.adoc
-	rm -r sections
-	cp -r sections-skeleton sections
-	../${SPECTEC} splice ${SPECDIR}/*.watsup -inplace \
-		-splice $(find sections -type f -name '*.adoc')
+${SPEC}.pdf: ${SPEC}.adoc splice grammar.adoc grammar.trimmed.adoc
 	time asciidoctor-pdf -v \
 		-r asciidoctor-mathematical \
 		-a pdf-fontsdir=resources/fonts \
 		-a rouge-style=$(ROUGE_STYLE) $<
 
-${SPEC}.html: ${SPEC}.adoc grammar.adoc grammar.trimmed.adoc
-	rm -r sections
-	cp -r sections-skeleton sections
-	../${SPECTEC} splice ${SPECDIR}/*.watsup -inplace \
-		-splice $(find sections -type f -name '*.adoc')
+${SPEC}.html: ${SPEC}.adoc splice grammar.adoc grammar.trimmed.adoc
 	time asciidoctor -v \
 		-r asciidoctor-mathematical \
 		-a rouge-css=$(ROUGE_CSS) $<

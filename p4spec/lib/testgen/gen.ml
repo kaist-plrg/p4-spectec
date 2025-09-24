@@ -34,7 +34,8 @@ exception Timeout
 let find_interesting (config : Config.t) (cover : SCov.Cover.t) :
     PIdSet.t * PIdSet.t =
   MCov.Cover.fold
-    (fun pid (branch_fuzz : MCov.Branch.t) (pids_hit_new, pids_close_miss_new) ->
+    (fun pid (branch_fuzz : MCov.Branch.t) (pids_hit_new, pids_close_miss_new)
+       ->
       let branch_single = SCov.Cover.find pid cover in
       match (branch_single.status, branch_fuzz.status) with
       (* Hits a new phantom *)
