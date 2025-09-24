@@ -21,6 +21,7 @@ let render_rulegroupid id_rulegroup =
 
 let render_ruleid id_rule = if id_rule.it = "" then "" else "/" ^ id_rule.it
 let render_defid id_def = "$" ^ id_def.it
+let render_hintid id_hint = id_hint.it
 
 (* Atoms *)
 
@@ -217,6 +218,13 @@ and render_prem prem =
 and render_prems prems =
   String.concat "" (List.map (fun prem -> "\n    -- " ^ render_prem prem) prems)
 
+(* Hints *)
+
+and render_hint hint =
+  "hint(" ^ render_hintid hint.hintid ^ " " ^ render_exp hint.hintexp ^ ")"
+
+and render_hints hints = String.concat "\n   " (List.map render_hint hints)
+
 (* Rules *)
 
 let render_rule id_rulegroup rule =
@@ -233,6 +241,10 @@ let render_rules id_rulegroup rules =
 let render_type_def id_typ tparams deftyp _hints =
   render_typid id_typ ^ render_tparams tparams ^ render_deftyp deftyp
 
+let render_relation_def id_rel nottyp hints =
+  "relation " ^ render_relid id_rel ^ ":\n   " ^ render_nottyp nottyp
+  ^ if hints = [] then "" else "\n   " ^ render_hints hints
+
 let render_rulegroup_def _id_rel id_rulegroup rules =
   render_rules id_rulegroup rules
 
@@ -242,7 +254,7 @@ let render_def def =
   | TypD (id_typ, tparams, deftyp, hints) ->
       render_type_def id_typ tparams deftyp hints
   | VarD _ -> ""
-  | RelD _ -> ""
+  | RelD (id_rel, nottyp, hints) -> render_relation_def id_rel nottyp hints
   | RuleGroupD (id_rel, id_rulegroup, rules) ->
       render_rulegroup_def id_rel id_rulegroup rules
   | DecD _ -> ""

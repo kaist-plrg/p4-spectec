@@ -5,6 +5,8 @@ open Util.Source
 
 module SyntaxId = String
 module SyntaxMap = Map.Make (SyntaxId)
+module RelationId = String
+module RelationMap = Map.Make (RelationId)
 
 module RuleGroupId = struct
   type t = string * string
@@ -17,10 +19,12 @@ end
 module RuleGroupMap = Map.Make (RuleGroupId)
 
 type syntax = El.Ast.tparam list * El.Ast.deftyp * El.Ast.hint list * region
+type relation = El.Ast.nottyp * El.Ast.hint list * region
 type rulegroup = El.Ast.rule list * region
 
 type t = {
   mutable syntax : syntax SyntaxMap.t;
+  mutable relation : relation RelationMap.t;
   mutable rulegroup : rulegroup RuleGroupMap.t;
   anchors : Anchor.t list;
 }
@@ -30,9 +34,12 @@ type t = {
 let init_el (ctx : t) (spec_el : El.Ast.spec) : unit =
   let init_el' (def_el : El.Ast.def) : unit =
     match def_el.it with
-    | TypD (id, tparams, deftyp, hints) ->
+    | TypD (id_syntax, tparams, deftyp, hints) ->
         let syntax = (tparams, deftyp, hints, def_el.at) in
-        ctx.syntax <- SyntaxMap.add id.it syntax ctx.syntax
+        ctx.syntax <- SyntaxMap.add id_syntax.it syntax ctx.syntax
+    | RelD (id_rel, nottyp, hints) ->
+        let relation = (nottyp, hints, def_el.at) in
+        ctx.relation <- RelationMap.add id_rel.it relation ctx.relation
     | RuleGroupD (id_rel, id_rulegroup, rules) ->
         let rulegroup = (rules, def_el.at) in
         ctx.rulegroup <-
@@ -42,9 +49,14 @@ let init_el (ctx : t) (spec_el : El.Ast.spec) : unit =
   List.iter init_el' spec_el
 
 let init (spec_el : El.Ast.spec) : t =
-  let anchors = [ Anchor.syntax; Anchor.rule ] in
+  let anchors = [ Anchor.syntax; Anchor.relation; Anchor.rulegroup ] in
   let ctx =
-    { syntax = SyntaxMap.empty; rulegroup = RuleGroupMap.empty; anchors }
+    {
+      syntax = SyntaxMap.empty;
+      relation = RelationMap.empty;
+      rulegroup = RuleGroupMap.empty;
+      anchors;
+    }
   in
   init_el ctx spec_el;
   ctx
@@ -59,6 +71,15 @@ let find_syntax_defs (ctx : t) (ids : SyntaxId.t list) : El.Ast.def list =
     | None -> error no_region ("syntax " ^ id ^ " was not found")
   in
   List.map find_syntax_def ids
+
+let find_relation_defs (ctx : t) (ids : RelationId.t list) : El.Ast.def list =
+  let find_relation_def (id : RelationId.t) : El.Ast.def =
+    match RelationMap.find_opt id ctx.relation with
+    | Some (nottyp, hints, at) ->
+        El.Ast.RelD (id $ no_region, nottyp, hints) $ at
+    | None -> error no_region ("relation " ^ id ^ " was not found")
+  in
+  List.map find_relation_def ids
 
 let find_rulegroup_defs (ctx : t) (ids : RuleGroupId.t list) : El.Ast.def list =
   let find_rulegroup_def (id : RuleGroupId.t) : El.Ast.def =

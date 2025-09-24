@@ -39,7 +39,10 @@ let rec parse_space (source : Source.t) : unit =
 let parse_anchor_start (source : Source.t) (anchor : Anchor.t) : bool =
   let start, name =
     match anchor with
-    | Syntax { start; name; _ } | RuleGroup { start; name; _ } -> (start, name)
+    | Syntax { start; name; _ }
+    | Relation { start; name; _ }
+    | RuleGroup { start; name; _ } ->
+        (start, name)
   in
   try_string source (start ^ "{" ^ name ^ ":")
 
@@ -64,13 +67,6 @@ let parse_rulegroup_id (source : Source.t) : Ctx.RuleGroupId.t =
   let id_sub = if try_string source "/" then parse_id source else "" in
   (id, id_sub)
 
-let rec parse_rulegroup_ids (source : Source.t) : Ctx.RuleGroupId.t list =
-  parse_space source;
-  if try_string source "}" then []
-  else
-    let id_rulegroup = parse_rulegroup_id source in
-    id_rulegroup :: parse_rulegroup_ids source
-
 let rec parse_syntax_ids (source : Source.t) : Ctx.SyntaxId.t list =
   parse_space source;
   if try_string source "}" then []
@@ -78,12 +74,35 @@ let rec parse_syntax_ids (source : Source.t) : Ctx.SyntaxId.t list =
     let id = parse_id source in
     id :: parse_syntax_ids source
 
+let rec parse_relation_ids (source : Source.t) : Ctx.RelationId.t list =
+  parse_space source;
+  if try_string source "}" then []
+  else
+    let id = parse_id source in
+    id :: parse_relation_ids source
+
+let rec parse_rulegroup_ids (source : Source.t) : Ctx.RuleGroupId.t list =
+  parse_space source;
+  if try_string source "}" then []
+  else
+    let id_rulegroup = parse_rulegroup_id source in
+    id_rulegroup :: parse_rulegroup_ids source
+
 (* Splicing an anchor *)
 
 let splice_syntax_anchor (ctx : Ctx.t) (source : Source.t) (prefix : string)
     (suffix : string) : string =
   let ids = parse_syntax_ids source in
   let defs_el = Ctx.find_syntax_defs ctx ids in
+  let content =
+    defs_el |> List.map El.Render.render_def |> String.concat "\n\n"
+  in
+  prefix ^ content ^ suffix
+
+let splice_relation_anchor (ctx : Ctx.t) (source : Source.t) (prefix : string)
+    (suffix : string) : string =
+  let ids = parse_relation_ids source in
+  let defs_el = Ctx.find_relation_defs ctx ids in
   let content =
     defs_el |> List.map El.Render.render_def |> String.concat "\n\n"
   in
@@ -112,6 +131,8 @@ and try_splice_anchor' (ctx : Ctx.t) (source : Source.t) (buffer : Buffer.t)
     match anchor with
     | Syntax { prefix; suffix; _ } ->
         splice_syntax_anchor ctx source prefix suffix
+    | Relation { prefix; suffix; _ } ->
+        splice_relation_anchor ctx source prefix suffix
     | RuleGroup { prefix; suffix; _ } ->
         splice_rulegroup_anchor ctx source prefix suffix
   in

@@ -7,6 +7,12 @@ type t =
       prefix : string;
       suffix : string;
     }
+  | Relation of {
+      start : string;
+      name : string;
+      prefix : string;
+      suffix : string;
+    }
   | RuleGroup of {
       start : string;
       name : string;
@@ -14,7 +20,7 @@ type t =
       suffix : string;
     }
 
-(* Syntax anchor *)
+(* Predefined anchors *)
 
 let syntax =
   Syntax
@@ -25,7 +31,16 @@ let syntax =
       suffix = "\n----\n";
     }
 
-let rule =
+let relation =
+  Relation
+    {
+      start = "$";
+      name = "relation";
+      prefix = "[source]\n----\n";
+      suffix = "\n----\n";
+    }
+
+let rulegroup =
   RuleGroup
     {
       start = "$";
