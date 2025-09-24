@@ -393,16 +393,16 @@ def $compat'_range(typeIR_l, typeIR_r) = false
 
 rule ForCollectionExpression_ok/range:
   TC typeIR_var |- expression_l `.. expression_r
-                : typedExpressionIR_l_cast `.. typedExpressionIR_r_cast
+                : typedExpressionIR_l_coerced `.. typedExpressionIR_r_coerced
   ---- ;; check both sides
   -- Expr_ok: LOCAL TC |- expression_l : typedExpressionIR_l
   -- Expr_ok: LOCAL TC |- expression_r : typedExpressionIR_r
   ---- ;; cast the expressions to the variable type
-  -- if typedExpressionIR_l_cast = $coerce_unary(typedExpressionIR_l, typeIR_var)
-  -- if typedExpressionIR_r_cast = $coerce_unary(typedExpressionIR_r, typeIR_var)
+  -- if typedExpressionIR_l_coerced = $coerce_unary(typedExpressionIR_l, typeIR_var)
+  -- if typedExpressionIR_r_coerced = $coerce_unary(typedExpressionIR_r, typeIR_var)
   ---- ;; fetch the types of both sides
-  -- if _ `# `( typeIR_l _ ) = typedExpressionIR_l_cast
-  -- if _ `# `( typeIR_r _ ) = typedExpressionIR_r_cast
+  -- if _ `# `( typeIR_l _ ) = typedExpressionIR_l_coerced
+  -- if _ `# `( typeIR_r _ ) = typedExpressionIR_r_coerced
   -- if $compat_range(typeIR_l, typeIR_r)
 
 rule Stmt_ok/forStatement-in-no-annotations:
