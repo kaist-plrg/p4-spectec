@@ -341,6 +341,7 @@ rule Stmt_ok/forStatement-condition:
   -- ForInitStatements_ok: TC_1 |- forInitStatement* : TC_2 forInitStatementIR*
   ---- ;; check condition expression
   -- Expr_ok: LOCAL TC_2 |- expression : typedExpressionIR
+  -- if _ `# `( BOOL _ ) = typedExpressionIR
   ---- ;; check update statements
   -- if forUpdateStatement* = $flatten_forUpdateStatementList(forUpdateStatementList)
   -- (ForUpdateStatement_ok: TC_2 |- forUpdateStatement : forUpdateStatementIR)*
@@ -392,28 +393,17 @@ def $compat'_range(typeIR_l, typeIR_r) = false
 
 rule ForCollectionExpression_ok/range:
   TC typeIR_var |- expression_l `.. expression_r
-                : typedExpressionIR_l_coerced `.. typedExpressionIR_r_coerced
+                : typedExpressionIR_l_cast `.. typedExpressionIR_r_cast
   ---- ;; check both sides
   -- Expr_ok: LOCAL TC |- expression_l : typedExpressionIR_l
   -- Expr_ok: LOCAL TC |- expression_r : typedExpressionIR_r
-  ---- ;; check that the types are compatible
-  ---- ;; while inserting implicit casts if necessary
-  -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast)
-        = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
-  -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
-        = $reduce_serenum_binary(
-            typedExpressionIR_l_cast,
-            typedExpressionIR_r_cast,
-            def $compat_range
-          )
-  ---- ;; fetch the types of both sides
-  -- if _ `# `( typeIR_reduced _ ) = typedExpressionIR_l_reduced
-  -- if _ `# `( typeIR_reduced _ ) = typedExpressionIR_r_reduced
   ---- ;; cast the expressions to the variable type
-  -- if typedExpressionIR_l_coerced
-      = $coerce_unary(typedExpressionIR_l_reduced, typeIR_var)
-  -- if typedExpressionIR_r_coerced
-      = $coerce_unary(typedExpressionIR_r_reduced, typeIR_var)
+  -- if typedExpressionIR_l_cast = $coerce_unary(typedExpressionIR_l, typeIR_var)
+  -- if typedExpressionIR_r_cast = $coerce_unary(typedExpressionIR_r, typeIR_var)
+  ---- ;; fetch the types of both sides
+  -- if _ `# `( typeIR_l _ ) = typedExpressionIR_l_cast
+  -- if _ `# `( typeIR_r _ ) = typedExpressionIR_r_cast
+  -- if $compat_range(typeIR_l, typeIR_r)
 
 rule Stmt_ok/forStatement-in-no-annotations:
   LOCAL TC_0 f loopctxt |- annotationList FOR `( type name IN forCollectionExpression)
