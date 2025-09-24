@@ -12,11 +12,15 @@ let render_text text = text
 
 (* Identifiers *)
 
-let render_varid varid = varid.it
-let render_typid typid = typid.it
-let render_relid relid = relid.it
-let render_ruleid ruleid = if ruleid.it = "" then "" else "/" ^ ruleid.it
-let render_defid defid = "$" ^ defid.it
+let render_varid id_var = id_var.it
+let render_typid id_typ = id_typ.it
+let render_relid id_rel = id_rel.it
+
+let render_rulegroupid id_rulegroup =
+  if id_rulegroup.it = "" then "" else "/" ^ id_rulegroup.it
+
+let render_ruleid id_rule = if id_rule.it = "" then "" else "/" ^ id_rule.it
+let render_defid id_def = "$" ^ id_def.it
 
 (* Atoms *)
 
@@ -84,9 +88,85 @@ and render_typcases sep typcases =
 
 (* Operators *)
 
+and render_unop = function
+  | #Bool.unop as op -> Bool.string_of_unop op
+  | #Num.unop as op -> Num.string_of_unop op
+
+and render_binop = function
+  | #Bool.binop as op -> Bool.string_of_binop op
+  | #Num.binop as op -> Num.string_of_binop op
+
+and render_cmpop = function
+  | #Bool.cmpop as op -> Bool.string_of_cmpop op
+  | #Num.cmpop as op -> Num.string_of_cmpop op
+
 (* Expressions *)
 
+and render_exp exp =
+  match exp.it with
+  | BoolE b -> string_of_bool b
+  | NumE (`DecOp, `Nat n) -> Bigint.to_string n
+  | NumE (`HexOp, `Nat n) -> Format.asprintf "0x%X" (Bigint.to_int_exn n)
+  | NumE (_, n) -> render_num n
+  | TextE text -> "\"" ^ String.escaped text ^ "\""
+  | VarE id -> render_varid id
+  | UnE (unop, exp) -> render_unop unop ^ render_exp exp
+  | BinE (exp_l, binop, exp_r) ->
+      render_exp exp_l ^ " " ^ render_binop binop ^ " " ^ render_exp exp_r
+  | CmpE (exp_l, cmpop, exp_r) ->
+      render_exp exp_l ^ " " ^ render_cmpop cmpop ^ " " ^ render_exp exp_r
+  | ArithE exp -> "$(" ^ render_exp exp ^ ")"
+  | EpsE -> "eps"
+  | ListE exps -> "[" ^ render_exps ", " exps ^ "]"
+  | ConsE (exp_l, exp_r) -> render_exp exp_l ^ " :: " ^ render_exp exp_r
+  | CatE (exp_l, exp_r) -> render_exp exp_l ^ " ++ " ^ render_exp exp_r
+  | IdxE (exp_b, exp_i) -> render_exp exp_b ^ "[" ^ render_exp exp_i ^ "]"
+  | SliceE (exp_b, exp_l, exp_h) ->
+      render_exp exp_b ^ "[" ^ render_exp exp_l ^ " : " ^ render_exp exp_h ^ "]"
+  | LenE exp -> "|" ^ render_exp exp ^ "|"
+  | MemE (exp_e, exp_s) -> render_exp exp_e ^ " <- " ^ render_exp exp_s
+  | StrE fields ->
+      "{"
+      ^ String.concat ", "
+          (List.map
+             (fun (atom, exp) -> render_atom atom ^ " " ^ render_exp exp)
+             fields)
+      ^ "}"
+  | DotE (exp, atom) -> render_exp exp ^ "." ^ render_atom atom
+  | UpdE (exp_b, path, exp_f) ->
+      render_exp exp_b ^ "[" ^ render_path path ^ " = " ^ render_exp exp_f ^ "]"
+  | ParenE exp -> "(" ^ render_exp exp ^ ")"
+  | TupleE exps -> "(" ^ render_exps ", " exps ^ ")"
+  | CallE (id, targs, args) ->
+      render_defid id ^ render_targs targs ^ render_args args
+  | IterE (exp, iter) -> render_exp exp ^ render_iter iter
+  | TypE (exp, plaintyp) -> render_exp exp ^ " : " ^ render_plaintyp plaintyp
+  | AtomE atom -> render_atom atom
+  | SeqE exps -> render_exps " " exps
+  | InfixE (exp_l, atom, exp_r) ->
+      render_exp exp_l ^ " " ^ render_atom atom ^ " " ^ render_exp exp_r
+  | BrackE (atom_l, exp, atom_r) ->
+      "`" ^ render_atom atom_l ^ render_exp exp ^ render_atom atom_r
+  | HoleE (`Num i) -> "%" ^ string_of_int i
+  | HoleE `Next -> "%"
+  | HoleE `Rest -> "%%"
+  | HoleE `None -> "!%"
+  | FuseE (exp_l, exp_r) -> render_exp exp_l ^ "#" ^ render_exp exp_r
+  | UnparenE exp -> "##" ^ render_exp exp
+  | LatexE s -> "latex(" ^ String.escaped s ^ ")"
+
+and render_exps sep exps = String.concat sep (List.map render_exp exps)
+
 (* Paths *)
+
+and render_path path =
+  match path.it with
+  | RootP -> ""
+  | IdxP (path, exp) -> render_path path ^ "[" ^ render_exp exp ^ "]"
+  | SliceP (path, exp_l, exp_h) ->
+      render_path path ^ "[" ^ render_exp exp_l ^ " : " ^ render_exp exp_h ^ "]"
+  | DotP ({ it = RootP; _ }, atom) -> render_atom atom
+  | DotP (path, atom) -> render_path path ^ "." ^ render_atom atom
 
 (* Parameters *)
 
@@ -101,6 +181,18 @@ and render_tparams tparams =
 
 (* Arguments *)
 
+and render_arg arg =
+  match arg.it with
+  | ExpA exp -> render_exp exp
+  | DefA id_def -> render_defid id_def
+
+and render_args args =
+  match args with
+  | [] -> ""
+  | args -> "(" ^ String.concat ", " (List.map render_arg args) ^ ")"
+
+(* Type arguments *)
+
 and render_targ targ = render_plaintyp targ
 
 and render_targs targs =
@@ -108,25 +200,51 @@ and render_targs targs =
   | [] -> ""
   | targs -> "<" ^ String.concat ", " (List.map render_targ targs) ^ ">"
 
-(* Type arguments *)
-
 (* Premises *)
+
+and render_prem prem =
+  match prem.it with
+  | VarPr (id, plaintyp) -> render_varid id ^ " : " ^ render_plaintyp plaintyp
+  | RulePr (id, exp) -> render_relid id ^ ": " ^ render_exp exp
+  | RuleNotPr (id, exp) -> render_relid id ^ ":/ " ^ render_exp exp
+  | IfPr exp -> "if " ^ render_exp exp
+  | ElsePr -> "otherwise"
+  | IterPr (({ it = IterPr _; _ } as prem), iter) ->
+      render_prem prem ^ render_iter iter
+  | IterPr (prem, iter) -> "(" ^ render_prem prem ^ ")" ^ render_iter iter
+  | DebugPr exp -> "debug " ^ render_exp exp
+
+and render_prems prems =
+  String.concat "" (List.map (fun prem -> "\n    -- " ^ render_prem prem) prems)
 
 (* Rules *)
 
+let render_rule id_rulegroup rule =
+  let id_rel, id_rule, exp, prems = rule.it in
+  "rule " ^ render_relid id_rel
+  ^ render_rulegroupid id_rulegroup
+  ^ render_ruleid id_rule ^ ":\n   " ^ render_exp exp ^ render_prems prems
+
+let render_rules id_rulegroup rules =
+  String.concat "\n\n" (List.map (render_rule id_rulegroup) rules)
+
 (* Definitions *)
 
-let render_type_def typid tparams deftyp _hints =
-  render_typid typid ^ render_tparams tparams ^ render_deftyp deftyp
+let render_type_def id_typ tparams deftyp _hints =
+  render_typid id_typ ^ render_tparams tparams ^ render_deftyp deftyp
+
+let render_rulegroup_def _id_rel id_rulegroup rules =
+  render_rules id_rulegroup rules
 
 let render_def def =
   match def.it with
   | SynD _ -> ""
-  | TypD (typid, tparams, deftyp, hints) ->
-      render_type_def typid tparams deftyp hints
+  | TypD (id_typ, tparams, deftyp, hints) ->
+      render_type_def id_typ tparams deftyp hints
   | VarD _ -> ""
   | RelD _ -> ""
-  | RuleGroupD _ -> ""
+  | RuleGroupD (id_rel, id_rulegroup, rules) ->
+      render_rulegroup_def id_rel id_rulegroup rules
   | DecD _ -> ""
   | DefD _ -> ""
   | SepD -> "\n\n"

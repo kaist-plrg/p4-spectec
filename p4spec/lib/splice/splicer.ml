@@ -37,10 +37,11 @@ let rec parse_space (source : Source.t) : unit =
     parse_space source)
 
 let parse_anchor_start (source : Source.t) (anchor : Anchor.t) : bool =
-  let start =
-    match anchor with Syntax { start; _ } -> start | _ -> failwith "TODO"
+  let start, name =
+    match anchor with
+    | Syntax { start; name; _ } | RuleGroup { start; name; _ } -> (start, name)
   in
-  try_string source (start ^ "{")
+  try_string source (start ^ "{" ^ name ^ ":")
 
 let rec parse_id' (source : Source.t) : unit =
   if not (Source.eos source) then
@@ -58,65 +59,79 @@ let parse_id (source : Source.t) : string =
     error Util.Source.no_region "cannot parse identifier";
   Source.str source i_prev
 
-let parse_target (source : Source.t) : string * string =
+let parse_rulegroup_id (source : Source.t) : Ctx.RuleGroupId.t =
   let id = parse_id source in
   let id_sub = if try_string source "/" then parse_id source else "" in
   (id, id_sub)
 
-let rec parse_targets (source : Source.t) : (string * string) list =
+let rec parse_rulegroup_ids (source : Source.t) : Ctx.RuleGroupId.t list =
   parse_space source;
   if try_string source "}" then []
   else
-    let target = parse_target source in
-    target :: parse_targets source
+    let id_rulegroup = parse_rulegroup_id source in
+    id_rulegroup :: parse_rulegroup_ids source
+
+let rec parse_syntax_ids (source : Source.t) : Ctx.SyntaxId.t list =
+  parse_space source;
+  if try_string source "}" then []
+  else
+    let id = parse_id source in
+    id :: parse_syntax_ids source
 
 (* Splicing an anchor *)
 
-let try_splice_syntax_anchor (ctx : Ctx.t) (source : Source.t) (prefix : string)
-    (suffix : string) : string option =
-  match try_string source "syntax:" with
-  | true ->
-      let targets = parse_targets source in
-      let defs_el = Ctx.find_syntax_defs ctx targets in
-      let content =
-        defs_el |> List.map El.Render.render_def |> String.concat "\n\n"
-      in
-      let content = prefix ^ content ^ suffix in
-      Some content
-  | false -> None
+let splice_syntax_anchor (ctx : Ctx.t) (source : Source.t) (prefix : string)
+    (suffix : string) : string =
+  let ids = parse_syntax_ids source in
+  let defs_el = Ctx.find_syntax_defs ctx ids in
+  let content =
+    defs_el |> List.map El.Render.render_def |> String.concat "\n\n"
+  in
+  prefix ^ content ^ suffix
 
-let splice_anchor (ctx : Ctx.t) (source : Source.t) (buffer : Buffer.t)
+let splice_rulegroup_anchor (ctx : Ctx.t) (source : Source.t) (prefix : string)
+    (suffix : string) : string =
+  let ids = parse_rulegroup_ids source in
+  let defs_el = Ctx.find_rulegroup_defs ctx ids in
+  let content =
+    defs_el |> List.map El.Render.render_def |> String.concat "\n\n"
+  in
+  prefix ^ content ^ suffix
+
+let rec try_splice_anchor (ctx : Ctx.t) (source : Source.t) (buffer : Buffer.t)
+    (anchor : Anchor.t) : bool =
+  let i = source.i in
+  let b_start = parse_anchor_start source anchor in
+  if b_start then try_splice_anchor' ctx source buffer i anchor;
+  b_start
+
+and try_splice_anchor' (ctx : Ctx.t) (source : Source.t) (buffer : Buffer.t)
     (i_start : int) (anchor : Anchor.t) : unit =
   parse_space source;
-  let result =
+  let s =
     match anchor with
     | Syntax { prefix; suffix; _ } ->
-        try_splice_syntax_anchor ctx source prefix suffix
-    | _ -> failwith "TODO"
+        splice_syntax_anchor ctx source prefix suffix
+    | RuleGroup { prefix; suffix; _ } ->
+        splice_rulegroup_anchor ctx source prefix suffix
   in
-  match result with Some s -> Buffer.add_string buffer s | None -> ()
+  Buffer.add_string buffer s
 
-(* Driver for the splicing process *)
-
-let rec try_anchors (ctx : Ctx.t) (source : Source.t) (buffer : Buffer.t) =
+and try_splice_anchors (ctx : Ctx.t) (source : Source.t) (buffer : Buffer.t) =
   function
   | [] -> false
-  | anchor :: anchors -> (
-      let i = source.i in
-      match parse_anchor_start source anchor with
-      | true ->
-          splice_anchor ctx source buffer i anchor;
-          true
-      | false -> try_anchors ctx source buffer anchors)
+  | anchor :: anchors ->
+      if try_splice_anchor ctx source buffer anchor then true
+      else try_splice_anchors ctx source buffer anchors
+
+(* Entry points *)
 
 let rec splice (ctx : Ctx.t) (source : Source.t) (buffer : Buffer.t) : unit =
   if not (Source.eos source) then (
-    if not (try_anchors ctx source buffer ctx.anchors) then (
+    if not (try_splice_anchors ctx source buffer ctx.anchors) then (
       Buffer.add_char buffer (Source.get source);
       Source.adv source);
     splice ctx source buffer)
-
-(* Entry points *)
 
 let splice_string (ctx : Ctx.t) (source : Source.t) (content : string) : string
     =
