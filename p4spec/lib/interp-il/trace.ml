@@ -287,22 +287,54 @@ let profile (trace : t) : unit =
   Format.printf "Functions:\n";
   Format.printf "%s\n" (log_counter funcs)
 
+type subexp' = Let of exp' * exp' | If of exp'
+
 let try_extract_exp = function
-  | Prem p -> ( match p.it with IfPr ifpr -> Some ifpr.it | _ -> None)
+  | Prem p -> (
+      match p.it with
+      | IfPr ifpr -> Some ifpr.it
+      | LetPr (_, ({ it = DownCastE _; _ } as rvalue)) -> Some rvalue.it
+      | LetPr (({ it = CaseE _; _ } as lvalue), _) -> Some lvalue.it
+      | _ -> None)
   | _ -> None
 
-let sequence_exps = function
-  | Rel { subtraces; _ } -> subtraces |> List.filter_map try_extract_exp
+let try_extract_exp' = function
+  | Prem p -> (
+      match p.it with
+      | IfPr ifpr -> Some (If ifpr.it)
+      | LetPr (lvalue, rvalue) -> Some (Let (lvalue.it, rvalue.it))
+      | _ -> None)
+  | _ -> None
+
+let extract_subexps = function
+  | Rel { subtraces; _ } -> subtraces |> List.filter_map try_extract_exp'
   | _ -> []
 
-(* let merge_subtraces_reason *)
+let guess_is_cursor_match (exp : subexp') : bool =
+  match exp with
+  | If (MatchE ({ it = VarE { it = "cursor"; _ }; _ }, _)) -> true
+  | _ -> false
 
 let guess_reason (trace : t) : Util.Attempt.reason =
-  let x = sequence_exps trace in
-  match x with
-  | [ SubE _ ] -> Mismatch
-  | [ MatchE _ ] -> Mismatch
-  | [ MatchE _; SubE _ ] -> Mismatch
-  | [ SubE _; MatchE _ ] -> Mismatch
-  | [ MatchE _; MatchE _ ] -> Mismatch
+  let premise_idx =
+    match trace with
+    | Rel { subtraces; _ } | Dec { subtraces; _ } | Iter { subtraces; _ } ->
+        List.length subtraces
+    | _ -> failwith "trace must be a relation, declaration or iteration"
+  in
+  let subexps = extract_subexps trace in
+  match subexps with
+  | [ If (SubE _) ] | [ If (MatchE _) ] -> Mismatch premise_idx
+  | [ If (SubE _); If (MatchE _) ] -> Mismatch premise_idx
+  | [ If (SubE _); Let (_, DownCastE _); If (MemE _) ] ->
+      Mismatch premise_idx (* ex> binop *)
+  | [ If (SubE _); Let (_, DownCastE _); If (MatchE _) ] ->
+      Mismatch premise_idx (* ex> Type_ok/bool *)
+  | [ If (MatchE _); Let (CaseE _, _); If (MatchE _) ] ->
+      Mismatch premise_idx (* ex> ParserTransition_ok/name *)
+  | [ match_exp; If (MatchE _) ]
+  | [ match_exp; If (SubE _) ]
+  | [ match_exp; If (SubE _); Let (_, DownCastE _); If (MatchE _) ]
+    when guess_is_cursor_match match_exp ->
+      Mismatch premise_idx
   | _ -> Root

@@ -3,13 +3,22 @@ open Print
 
 (* Backtracking *)
 
-type reason = Clause of int | Root | Mismatch | Unknown
+type reason =
+  | RootClause of int
+  | MismatchClause of int * int (* clause idx, max (premise_idx) *)
+  | Root
+  | Mismatch of int (* premise idx *)
+  | Unknown
+
 type failtrace = Failtrace of region * string * reason * failtrace list
 type 'a attempt = Ok of 'a | Fail of failtrace list
 
 let string_of_reason = function
-  | Clause i -> "Clause " ^ string_of_int i
-  | Mismatch -> "Mismatch"
+  | RootClause i -> "Clause " ^ string_of_int i
+  | MismatchClause (clause_idx, depth) ->
+      "MismatchClause at clause " ^ string_of_int clause_idx ^ ", depth "
+      ^ string_of_int depth
+  | Mismatch i -> "Mismatch at premise " ^ string_of_int i
   | Root -> "Root"
   | Unknown -> "Unknown"
 
@@ -43,10 +52,17 @@ let merge_failtrace_reason (failtraces : failtrace list) : reason =
   |> List.fold_left
        (fun acc (i, Failtrace (_, _, reason, _)) ->
          match (acc, reason) with
-         | Root, _ -> Clause i
-         | Clause _, _ -> acc
-         | _, Root | _, Clause _ -> Clause i
-         | _, Mismatch -> Mismatch
+         | Root, _ -> RootClause i
+         | RootClause _, _ -> acc
+         | _, Root | _, RootClause _ -> RootClause i
+         | MismatchClause (_, premise_idx_1), MismatchClause (_, premise_idx_2)
+           ->
+             if premise_idx_1 < premise_idx_2 then
+               MismatchClause (i, premise_idx_2)
+             else acc
+         | _, MismatchClause (_, max_premise_idx) | _, Mismatch max_premise_idx
+           ->
+             MismatchClause (i, max_premise_idx)
          | _, Unknown -> acc)
        Unknown
 
@@ -102,10 +118,26 @@ let rec deepest_failtraces_aux (failtraces : failtrace list) :
                if acc_length > cur_length then (acc_length, acc_failtraces)
                else if acc_length < cur_length then
                  (cur_length, [ cur_failtrace ])
-               else (cur_length, cur_failtrace :: acc_failtraces))
-             (0, [ Failtrace (no_region, "", Unknown, []) ])
+               else
+                 let acc_reason =
+                   match acc_failtraces with
+                   | Failtrace (_, _, acc_reason, _) :: _ -> acc_reason
+                   | [] ->
+                       failwith "acc_failtraces is guaranteed to be non-empty!"
+                 in
+                 let (Failtrace (_, _, cur_reason, _)) = cur_failtrace in
+                 match (acc_reason, cur_reason) with
+                 | ( MismatchClause (_, acc_premise_idx),
+                     MismatchClause (_, cur_premise_idx) ) ->
+                     if acc_premise_idx > cur_premise_idx then
+                       (acc_length, acc_failtraces)
+                     else if acc_premise_idx < cur_premise_idx then
+                       (cur_length, [ cur_failtrace ])
+                     else (cur_length, cur_failtrace :: acc_failtraces)
+                 | _, _ -> (cur_length, cur_failtrace :: acc_failtraces))
+             (0, [])
       in
       (length, List.rev dfts)
 
-let rec deepest_failtraces (failtraces : failtrace list) : failtrace list =
+let deepest_failtraces (failtraces : failtrace list) : failtrace list =
   deepest_failtraces_aux failtraces |> snd
