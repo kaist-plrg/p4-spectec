@@ -41,7 +41,7 @@ rulegroup Expr_ok/literalExpression-number {
 
 ;;;; stringLiteral 
 
-rule Expr_ok/literalExpression-stringliteral:
+rule Expr_ok/literalExpression-stringLiteral:
   p TC |- (`" text `") : (`" text `") `# expressionNoteIR
   -- if expressionNoteIR = `( STRING LCTK )
 
@@ -363,7 +363,7 @@ rulegroup Expr_ok/binaryExpression-shift {
 
 ;;;; `== | `!=
 
-rule Expr_ok/binaryExpression-eq:
+rule Expr_ok/binaryExpression-equality:
   p TC |- expression_l binop expression_r
         : (typedExpressionIR_l_cast binop typedExpressionIR_r_cast) `# expressionNoteIR
   -- if binop <- [ `== , `!= ]
@@ -396,7 +396,7 @@ def $compat'_compare(BIT `< w >, BIT `< w >) = true
 def $compat'_compare(typeIR_l, typeIR_r) = false
   -- otherwise
 
-rule Expr_ok/binaryExpression-compare:
+rule Expr_ok/binaryExpression-comparison:
   p TC |- expression_l binop expression_r
         : (typedExpressionIR_l_reduced binop typedExpressionIR_r_reduced) `# expressionNoteIR
   -- if binop <- [ `<= , `>= , ``< , ``> ]
@@ -601,7 +601,7 @@ rule Expr_ok/dataExpression-invalid:
 ;;;;; sequenceElementExpression
 ;;;;; syntax sequenceElementExpression = expressionList
 
-rulegroup Expr_ok/dataExpression-sequenceElementExpression {
+rulegroup Expr_ok/dataExpression-sequence {
 
   rule Expr_ok/non-default:
     p TC |- `{ expressionList _ }
@@ -647,7 +647,7 @@ rulegroup Expr_ok/dataExpression-sequenceElementExpression {
 ;;;;;; name `= expression `, namedExpressionList
 ;;;;;; name `= expression `, namedExpressionList `, `...
 
-rulegroup Expr_ok/dataExpression-recordElementExpression {
+rulegroup Expr_ok/dataExpression-record {
 
   rule Expr_ok/single-non-default:
     p TC |- `{ (name_f `= expression_f) _ }
@@ -719,7 +719,7 @@ rulegroup Expr_ok/dataExpression-recordElementExpression {
 ;;;; errorAccessExpression
 ;;;; syntax errorAccessExpression = ERROR `. member
 
-rule Expr_ok/accessExpression-errorAccessExpression:
+rule Expr_ok/accessExpression-error:
   p TC |- ERROR `. member : (ERROR `. nameIR) `# expressionNoteIR
   ---- ;; check that error member is defined
   -- if nameIR = $name(member)
@@ -734,7 +734,7 @@ rule Expr_ok/accessExpression-errorAccessExpression:
 
 ;;;;;; prefixedTypeName
 
-rulegroup Expr_ok/accessExpression-memberAccessExpression-prefixedTypeName {
+rulegroup Expr_ok/accessExpression-member-type {
 
   rule Expr_ok/enum:
     p TC |- prefixedTypeName_base `. member
@@ -768,7 +768,7 @@ rulegroup Expr_ok/accessExpression-memberAccessExpression-prefixedTypeName {
 
 ;;;;;; expression
 
-rulegroup Expr_ok/accessExpression-memberAccessExpression-expression {
+rulegroup Expr_ok/accessExpression-member-expression {
 
   rule Expr_ok/headerstack-size:
     p TC |- expression_base `. member
@@ -1090,7 +1090,7 @@ rule Expr_ok/indexAccessExpression-bitslice:
 ;;;; callTarget `( argumentList )
 ;;;; routineTarget `< realTypeArgumentList > `( argumentList )
 
-rulegroup Expr_ok/callExpression-routineTarget {
+rulegroup Expr_ok/callExpression-routine {
 
   rule Expr_ok/non-typeArgumentList:
     p TC |- routineTarget `( argumentList )
@@ -1179,7 +1179,7 @@ def $is_concrete_extern_object'''(_) = true
 ;;;;;;; prefixedTypeName
 ;;;;;;; specializedType
 
-rulegroup Expr_ok/callExpression-constructorTarget {
+rulegroup Expr_ok/callExpression-constructor {
 
   rule Expr_ok/prefixedTypeName:
     p TC |- prefixedTypeName `( argumentList )
