@@ -1,35 +1,36 @@
 open Error
+module RenderCtx = Prose.Ctx
 
 (* Splicing an anchor *)
 
-let do_splice_anchor (module Splice : Splicer.Splice) (ctx : Ctx.t)
+let do_splice_anchor (module Splice : Splicer.Splice) (rctx : RenderCtx.t) (ctx : Ctx.t)
     (source : Source.t) : string =
   let keys = Splice.parse_keys source in
   let values = Splice.find_values ctx keys in
-  let content = Splice.render keys values in
+  let content = Splice.render rctx keys values in
   Option.value Splice.prefix ~default:""
   ^ content
   ^ Option.value Splice.suffix ~default:""
 
-let rec try_splice_anchor (module Splice : Splicer.Splice) (ctx : Ctx.t)
+let rec try_splice_anchor (module Splice : Splicer.Splice) (rctx : RenderCtx.t) (ctx : Ctx.t)
     (source : Source.t) (result : string ref) : bool =
   let parsed_start = Parser.parse_splice_start source Splice.name in
   if parsed_start then
-    try_splice_anchor' (module Splice : Splicer.Splice) ctx source result;
+    try_splice_anchor' (module Splice : Splicer.Splice) rctx ctx source result;
   parsed_start
 
-and try_splice_anchor' (module Splice : Splicer.Splice) (ctx : Ctx.t)
+and try_splice_anchor' (module Splice : Splicer.Splice) (rctx : RenderCtx.t) (ctx : Ctx.t)
     (source : Source.t) (result : string ref) : unit =
   Parser.parse_space source;
-  result := do_splice_anchor (module Splice : Splicer.Splice) ctx source
+  result := do_splice_anchor (module Splice : Splicer.Splice) rctx ctx source
 
-and try_splice_anchors (ctx : Ctx.t) (source : Source.t) (buffer : Buffer.t) =
+and try_splice_anchors (rctx : RenderCtx.t) (ctx : Ctx.t) (source : Source.t) (buffer : Buffer.t) =
   let result = ref "" in
   ignore
-    (try_splice_anchor (module Splicer.Syntax) ctx source result
-    || try_splice_anchor (module Splicer.Relation) ctx source result
-    || try_splice_anchor (module Splicer.RuleGroup) ctx source result
-    || try_splice_anchor (module Splicer.RuleProse) ctx source result);
+    (try_splice_anchor (module Splicer.Syntax) rctx ctx source result
+    || try_splice_anchor (module Splicer.Relation) rctx ctx source result
+    || try_splice_anchor (module Splicer.RuleGroup) rctx ctx source result
+    || try_splice_anchor (module Splicer.RuleProse) rctx ctx source result);
   if !result <> "" then (
     Buffer.add_string buffer !result;
     true)
@@ -49,17 +50,17 @@ let gen_directory (filename : string) : unit =
 
 (* Entry points *)
 
-let rec splice (ctx : Ctx.t) (source : Source.t) (buffer : Buffer.t) : unit =
+let rec splice (rctx : RenderCtx.t) (ctx : Ctx.t) (source : Source.t) (buffer : Buffer.t) : unit =
   if not (Source.eos source) then (
-    if not (try_splice_anchors ctx source buffer) then (
+    if not (try_splice_anchors rctx ctx source buffer) then (
       Buffer.add_char buffer (Source.get source);
       Source.adv source);
-    splice ctx source buffer)
+    splice rctx ctx source buffer)
 
-let splice_string (ctx : Ctx.t) (source : Source.t) (content : string) : string
+let splice_string (rctx : RenderCtx.t) (ctx : Ctx.t) (source : Source.t) (content : string) : string
     =
   let buffer = Buffer.create (String.length content) in
-  splice ctx source buffer;
+  splice rctx ctx source buffer;
   Buffer.contents buffer
 
 let splice_file (spec_el : El.Ast.spec) (spec_sl : Sl.Ast.spec)
@@ -71,8 +72,9 @@ let splice_file (spec_el : El.Ast.spec) (spec_sl : Sl.Ast.spec)
       ~finally:(fun () -> In_channel.close ic)
   in
   let ctx = Ctx.init spec_el spec_sl in
+  let rctx = RenderCtx.init spec_sl in
   let source = Source.{ file = filename_input; s = content; i = 0 } in
-  let content_spliced = splice_string ctx source content in
+  let content_spliced = splice_string rctx ctx source content in
   gen_directory filename_output;
   let oc = open_out filename_output in
   Fun.protect

@@ -1,16 +1,13 @@
 open Xl
 open Domain.Lib
 open Runtime_static.Envs
-
-type penv = { prose : Hintenv.t }
-
-let empty_penv = { prose = Hintenv.empty }
+module PEnv = Penv
 
 type mode = Prose | Code
 
 type t = {
   (* prose hints *)
-  penv : penv;
+  penv : PEnv.t;
   (* input hints *)
   ienv : IEnv.t;
   (* Negation *)
@@ -31,7 +28,7 @@ type t = {
 
 (* Helper functions for context manipulation *)
 
-let create ?(penv = empty_penv) ?(ienv = IEnv.empty) () : t =
+let create ?(penv = PEnv.empty) ?(ienv = IEnv.empty) () : t =
   {
     penv;
     ienv;
@@ -44,9 +41,12 @@ let create ?(penv = empty_penv) ?(ienv = IEnv.empty) () : t =
     short = false;
   }
 
+let init spec_sl : t =
+  Collect.collect_spec spec_sl |> fun (penv, ienv) -> create ~penv ~ienv ()
+
 let with_level ctx level = { ctx with level }
 let with_index ctx index = { ctx with index }
-let with_start ctx start_index = { ctx with start_index = (Some start_index) }
+let with_start ctx start_index = { ctx with start_index = Some start_index }
 let with_signature ctx signature = { ctx with signature }
 let with_short ctx short = { ctx with short }
 let reset_start ctx = { ctx with start_index = None }

@@ -161,15 +161,17 @@ and string_of_iterexps iterexps =
 and prose_of_list items =
   List.fold_left
     (fun acc item ->
-      if acc = "" then item else if String.contains acc ',' then acc ^ ", and " ^ item
+      if acc = "" then item
+      else if String.contains acc ',' then acc ^ ", and " ^ item
       else acc ^ " and " ^ item)
     "" items
 
-and prose_of_iteration_out ((iter, vars) : iterexp)=
+and prose_of_iteration_out ((iter, vars) : iterexp) =
   match iter with
   | List ->
       let iterated_var var =
-        F.asprintf "`%s*` be the list of `%s`" (string_of_var var) (string_of_var var)
+        F.asprintf "`%s*` be the list of `%s`" (string_of_var var)
+          (string_of_var var)
       in
       List.map iterated_var vars |> prose_of_list
   | Opt -> assert false
@@ -187,8 +189,7 @@ and string_of_iterations iterexps =
   iterexps |> List.map prose_of_iteration |> String.concat ""
 
 and prose_of_iterations out_iterexps in_iterexps inner =
-  if List.is_empty in_iterexps && List.is_empty out_iterexps
-  then inner
+  if List.is_empty in_iterexps && List.is_empty out_iterexps then inner
   else
     F.asprintf "Let %s, obtained by repeating:\n %s\nfor each %s"
       (out_iterexps |> List.map prose_of_iteration |> String.concat "\nITER:")
@@ -364,22 +365,21 @@ and string_of_instr ctx instr =
   | LetI (exp_l, exp_r, iterexps) ->
       let free_l = Il.Free.free_exp exp_l in
       let out_iters, in_iters =
-        let partition = List.map
-          (fun (iter, vars) ->
-            let out_vars, in_vars =
-              List.partition 
-                (fun (id, _, _) -> Domain.Lib.IdSet.mem id free_l)
-                vars
-            in
-            (iter, out_vars), (iter, in_vars)
-          ) iterexps
+        let partition =
+          List.map
+            (fun (iter, vars) ->
+              let out_vars, in_vars =
+                List.partition
+                  (fun (id, _, _) -> Domain.Lib.IdSet.mem id free_l)
+                  vars
+              in
+              ((iter, out_vars), (iter, in_vars)))
+            iterexps
         in
         List.split partition
       in
-      (F.asprintf "%sLet `%s` be %s"
-        order
-        (string_of_exp ctx exp_l)
-        (string_of_exp ctx exp_r))
+      F.asprintf "%sLet `%s` be %s" order (string_of_exp ctx exp_l)
+        (string_of_exp ctx exp_r)
       |> prose_of_iterations out_iters in_iters
   | RuleI (id_rel, notexp, iterexps) -> (
       let prose_hint_opt = Hintenv.get_rel id_rel ctx.penv.prose in
@@ -406,11 +406,11 @@ and string_of_instr ctx instr =
 
 and string_of_instrs ctx instrs =
   instrs
-  |> List.mapi (fun idx instr -> (
-        match ctx.start_index with
-        | None -> string_of_instr (with_index ctx (idx + 1)) instr
-        | Some start_index ->
-         string_of_instr (with_index ctx (idx + start_index)) instr))
+  |> List.mapi (fun idx instr ->
+         match ctx.start_index with
+         | None -> string_of_instr (with_index ctx (idx + 1)) instr
+         | Some start_index ->
+             string_of_instr (with_index ctx (idx + start_index)) instr)
   |> String.concat "\n"
 
 (* Rules *)
