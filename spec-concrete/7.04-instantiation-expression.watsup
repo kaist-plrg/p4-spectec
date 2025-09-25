@@ -287,7 +287,7 @@ rulegroup Expr_inst/dataExpressionIR-record {
 ;;;;; errorAccessExpressionIR
 ;;;;; syntax errorAccessExpressionIR = ERROR `. nameIR
 
-rule Expr_inst/accessExpressionIR-error:
+rule Expr_inst/errorAccessExpressionIR:
   p IC STO |- (ERROR `. nameIR) `# _ ==> STO value_error
   -- if nameIR_error = "error." ++ nameIR
   -- if value_error = $find_value_inst(p, IC, `` nameIR_error)
@@ -298,7 +298,7 @@ rule Expr_inst/accessExpressionIR-error:
 
 ;;;;;;; TYPE prefixedNameIR
 
-rulegroup Expr_inst/accessExpressionIR-member-type {
+rulegroup Expr_inst/memberAccessExpressionIR-type {
 
   rule Expr_inst/enum:
     p IC STO |- ((TYPE prefixedNameIR) `. nameIR) `# _
@@ -316,21 +316,22 @@ rulegroup Expr_inst/accessExpressionIR-member-type {
 
 ;;;;;;; typedExpressionIR
 
-rule Expr_inst/accessExpressionIR-member-expression-stack-size:
+rule Expr_inst/memberAccessExpressionIR-expression-stack-size:
   p IC STO |- (typedExpressionIR_base `. "size") `# `( typeIR_base _ )
             ==> STO (D n_size)
   -- if _ `# `( typeIR_base _ ) = typedExpressionIR_base
   -- if _ `[ n_size ] = $canon(typeIR_base)
 
 ;;;;; indexAccessExpressionIR
-;;;;; syntax indexAccessExpressionIR
+;;;;; syntax indexAccessExpressionIR =
+;;;;; typedExpressionIR `[ typedExpressionIR ]
+;;;;; tuple or stack accesses are not evaluated statically
 
-;;;;;; typedExpressionIR `[ typedExpressionIR ]
-;;;;;; tuple or stack accesses are not evaluated statically
+;;;;; sliceAccessExpressionIR
+;;;;; syntax sliceAccessExpressionIR =
+;;;;; typedExpressionIR `[ typedExpressionIR `: typedExpressionIR ]
 
-;;;;;; typedExpressionIR `[ typedExpressionIR `: typedExpressionIR ]
-
-rule Expr_inst/indexAccessExpressionIR-bitslice:
+rule Expr_inst/sliceAccessExpressionIR:
   p IC STO_0 |- (typedExpressionIR_base `[ typedExpressionIR_hi `: typedExpressionIR_lo ]) `# _
             ==> STO_3 $bitacc_op(value_base, value_hi, value_lo)
   -- Expr_inst: p IC STO_0 |- typedExpressionIR_base ==> STO_1 value_base

@@ -1,2 +1,30 @@
 [#sec-abstract-machine-p4-ir]
 === P4 Intermediate Representation
+
+P4~IR~ is an intermediate representation for P4 programs. P4~IR~ extends the
+surface syntax of P4~16~ with additional information obtained during type
+checking. They include:
+
+* All expressions are annotated with their types.
+* Implicit casts are made explicit.
+* Omitted type arguments are inferred and made explicit.
+
+P4~IR~ is designed to stay as close as possible to the surface syntax of P4~16~.
+This makes it easy to relate P4~IR~ programs to their source P4~16~ programs.
+
+Take expressions as an example.
+
+${syntax: expression
+          expressionIR
+          expressionNoteIR
+          typedExpressionIR}
+
+`typedExpressionIR` is an intermediate representation of `expression` that
+is annotated with type information, `expressionNoteIR`.
+Nevertheless, the structure of the grammar mostly stays the same.
+
+${syntax: binaryExpression
+          binaryExpressionIR}
+
+`binaryExpressionIR` is an intermediate representation of `binaryExpression`.
+The only difference is that the operands are now of type `typedExpressionIR`.
