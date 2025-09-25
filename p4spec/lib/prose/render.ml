@@ -16,6 +16,7 @@ let _reindent_lines ~(indent : string) (s : string) : string =
   String.concat ("\n " ^ indent) lines
 
 (* Split iterators into input and output *)
+
 let split_iterexps exps_out iterexps =
   let out_vars = Il.Free.free_exps exps_out in
   let partition =
@@ -228,6 +229,10 @@ and prose_in_iterexp ((iter, vars) : iterexp) =
 and prose_iterations ctx out_iterexps in_iterexps inner =
   if List.is_empty in_iterexps && List.is_empty out_iterexps then
     F.asprintf "%s%s" (bullet ctx) inner
+  else if List.is_empty out_iterexps then
+    F.asprintf "%sIf %s, for each %s" (bullet ctx)
+      inner
+      (in_iterexps |> List.map prose_in_iterexp |> String.concat "\nITER:")
   else
     F.asprintf "%sLet %s, obtained by repeating:\n%s%s\n%sfor each %s"
       (bullet ctx)
@@ -246,26 +251,34 @@ and render_instr ctx instr =
         (string_of_iterexps iterexps)
         (render_instrs (ctx |> increment_level) instrs_then)
   | HoldI (id, notexp, iterexps, holdcase) -> (
+      let prosed_relation = 
+        let prose_hint_opt = Hintenv.get_rel id ctx.penv.prose in
+        match prose_hint_opt with
+        | Some prose_hint ->
+            let mixop, exps = notexp in
+            (F.asprintf "[%s](%s)"
+              (prose_hintexp (ctx |> increment_level) exps prose_hint)
+              (string_of_relid id))
+            |> prose_iterations ctx [] iterexps
+        | None ->
+            (Format.asprintf "(%s: %s)"(string_of_relid id)
+              (string_of_notexp ctx notexp))
+            |> prose_iterations ctx [] iterexps
+      in
       match holdcase with
       | BothH (instrs_hold, instrs_nothold) ->
-          F.asprintf "%sIf (%s: %s)%s holds, then\n\n%s\n\n%sElse,\n\n%s" bullet
-            (string_of_relid id)
-            (string_of_notexp ctx notexp)
-            (string_of_iterexps iterexps)
+          F.asprintf "%s, then\n%s\n%sElse,\n\n%s" 
+            prosed_relation
             (render_instrs (ctx |> increment_level) instrs_hold)
             bullet
             (render_instrs (ctx |> increment_level) instrs_nothold)
       | HoldH (instrs_hold, _) ->
-          F.asprintf "%sIf (%s: %s)%s holds, then\n\n%s" bullet
-            (string_of_relid id)
-            (string_of_notexp ctx notexp)
-            (string_of_iterexps iterexps)
+          F.asprintf "%s, then\n%s"
+            prosed_relation
             (render_instrs (ctx |> increment_level) instrs_hold)
       | NotHoldH (instrs_nothold, _) ->
-          F.asprintf "%sIf (%s: %s)%s does not hold, then\n\n%s" bullet
-            (string_of_relid id)
-            (string_of_notexp ctx notexp)
-            (string_of_iterexps iterexps)
+          F.asprintf "%s does not hold, then\n%s"
+            prosed_relation
             (render_instrs (ctx |> increment_level) instrs_nothold))
   | CaseI (exp, cases, _) ->
       F.asprintf "%sCase analysis on %s\n%s" bullet (prose_exp ctx exp)
