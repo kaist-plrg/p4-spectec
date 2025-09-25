@@ -3,6 +3,8 @@ open Util.Source
 open Ctx
 module HEnv = Hintenv
 module F = Format
+module IEnv = Runtime_static.Envs.IEnv
+module InputHint = Runtime_static.Rel.InputHint
 
 let reindent_lines ~(indent : string) (s : string) : string =
   let lines = String.split_on_char '\n' s in
@@ -156,20 +158,42 @@ and string_of_iterexp (iter, _) = string_of_iter iter
 and string_of_iterexps iterexps =
   iterexps |> List.map string_of_iterexp |> String.concat ""
 
-and string_of_iteration ((iter, vars) : iterexp) =
+and prose_of_list items =
+  List.fold_left
+    (fun acc item ->
+      if acc = "" then item else if String.contains acc ',' then acc ^ ", and " ^ item
+      else acc ^ " and " ^ item)
+    "" items
+
+and prose_of_iteration_out ((iter, vars) : iterexp)=
   match iter with
-  | Opt -> "?"
+  | List ->
+      let iterated_var var =
+        F.asprintf "`%s*` be the list of `%s`" (string_of_var var) (string_of_var var)
+      in
+      List.map iterated_var vars |> prose_of_list
+  | Opt -> assert false
+
+and prose_of_iteration ((iter, vars) : iterexp) =
+  match iter with
+  | Opt -> "?__"
   | List ->
       let iterated_var var =
         F.asprintf "`%s` in `%s*`" (string_of_var var) (string_of_var var)
       in
-      let iterated_vars vars =
-        List.map iterated_var vars |> String.concat " and "
-      in
-      F.asprintf ", for each %s" (iterated_vars vars)
+      List.map iterated_var vars |> prose_of_list
 
 and string_of_iterations iterexps =
-  iterexps |> List.map string_of_iteration |> String.concat ""
+  iterexps |> List.map prose_of_iteration |> String.concat ""
+
+and prose_of_iterations out_iterexps in_iterexps inner =
+  if List.is_empty in_iterexps && List.is_empty out_iterexps
+  then inner
+  else
+    F.asprintf "Let %s, obtained by repeating:\n %s\nfor each %s"
+      (out_iterexps |> List.map prose_of_iteration |> String.concat "\nITER:")
+      inner
+      (in_iterexps |> List.map prose_of_iteration |> String.concat "\nITER:")
 
 (* Patterns *)
 
@@ -252,15 +276,15 @@ and string_of_holdcase ctx holdcase =
   match holdcase with
   | BothH (instrs_hold, instrs_nothold) ->
       Format.asprintf ", then:\n%s\n%selse:\n\n%s"
-        (string_of_instrs (increment_level ctx) instrs_hold)
+        (string_of_instrs (ctx |> increment_level) instrs_hold)
         indent
-        (string_of_instrs (increment_level ctx) instrs_nothold)
+        (string_of_instrs (ctx |> increment_level) instrs_nothold)
   | HoldH (instrs_hold, _) ->
       Format.asprintf ", then:\n%s"
-        (string_of_instrs (increment_level ctx) instrs_hold)
+        (string_of_instrs (ctx |> increment_level) instrs_hold)
   | NotHoldH (instrs_nothold, _) ->
       Format.asprintf "%sDoes not hold:\n\n%s" indent
-        (string_of_instrs (increment_level ctx) instrs_nothold)
+        (string_of_instrs (ctx |> increment_level) instrs_nothold)
 
 (* Case analysis *)
 
@@ -270,7 +294,7 @@ and string_of_case ctx exp case =
   let guard, instrs = case in
   F.asprintf "%sCase %s\n%s" order
     (string_of_guard ctx exp guard)
-    (string_of_instrs (increment_level ctx) instrs)
+    (string_of_instrs (ctx |> increment_level) instrs)
 
 and string_of_cases ctx exp cases =
   cases
@@ -308,46 +332,65 @@ and string_of_instr ctx instr =
       F.asprintf "%sAssert that %s%s.\n%s" order
         (string_of_exp ctx exp_cond)
         (string_of_iterations iterexps)
-        (string_of_instrs (increment_level ctx) instrs_then)
+        (string_of_instrs (with_start ctx (ctx.index + 1)) instrs_then)
   | HoldI (id, notexp, iterexps, holdcase) -> (
       let prose_hint_opt = Hintenv.get_rel id ctx.penv.prose in
       match prose_hint_opt with
       | Some prose_hint ->
           let mixop, exps = notexp in
           F.asprintf "%s If [%s](%s)%s%s" order
-            (string_of_prose_hint (increment_level ctx) exps prose_hint)
+            (string_of_prose_hint (ctx |> increment_level) exps prose_hint)
             (string_of_relid id)
             (string_of_iterations iterexps)
-            (string_of_holdcase (increment_level ctx) holdcase)
+            (string_of_holdcase (ctx |> increment_level) holdcase)
       | None ->
           Format.asprintf "%sIf (%s: %s)%s%s" order (string_of_relid id)
             (string_of_notexp ctx notexp)
             (string_of_iterations iterexps)
-            (string_of_holdcase (increment_level ctx) holdcase))
+            (string_of_holdcase (ctx |> increment_level) holdcase))
   | CaseI (exp, cases, _) ->
       F.asprintf "%sCase analysis on `%s`\n%s" order (string_of_exp ctx exp)
-        (string_of_cases (increment_level ctx) exp cases)
+        (string_of_cases (ctx |> increment_level) exp cases)
   | OtherwiseI instr ->
       F.asprintf "%sOtherwise\n%s" order
-        (string_of_instr (with_index (increment_level ctx) 1) instr)
+        (string_of_instr (with_index (ctx |> increment_level) 1) instr)
   | GroupI (id_group, exps_group, instrs_group) ->
       Format.asprintf "%sGroup %s: %s\n\n%s" order
         (string_of_relpathid id_group)
         (match ctx.signature with
         | Some (mixop, inputs) -> string_of_relinput ctx mixop inputs exps_group
         | None -> string_of_exps ctx ", " exps_group)
-        (string_of_instrs (increment_level ctx) instrs_group)
+        (string_of_instrs (ctx |> increment_level) instrs_group)
   | LetI (exp_l, exp_r, iterexps) ->
-      F.asprintf "%sLet `%s` be %s%s" order (string_of_exp ctx exp_l)
-        (string_of_exp ctx exp_r)
-        (string_of_iterations iterexps)
+      let free_l = Il.Free.free_exp exp_l in
+      let out_iters, in_iters =
+        let partition = List.map
+          (fun (iter, vars) ->
+            let out_vars, in_vars =
+              List.partition 
+                (fun (id, _, _) -> Domain.Lib.IdSet.mem id free_l)
+                vars
+            in
+            (iter, out_vars), (iter, in_vars)
+          ) iterexps
+        in
+        List.split partition
+      in
+      (F.asprintf "%sLet `%s` be %s"
+        order
+        (string_of_exp ctx exp_l)
+        (string_of_exp ctx exp_r))
+      |> prose_of_iterations out_iters in_iters
   | RuleI (id_rel, notexp, iterexps) -> (
       let prose_hint_opt = Hintenv.get_rel id_rel ctx.penv.prose in
+      (* let input_hint = IEnv.find id_rel ctx.ienv in *)
+      (* let _, outputs = InputHint.split_exps_without_idx input_hint (snd notexp) in *)
       match prose_hint_opt with
       | Some prose_hint ->
           let mixop, exps = notexp in
           F.asprintf "%sLet [%s](%s)%s" order
-            (string_of_prose_hint (increment_level ctx) exps prose_hint)
+            (string_of_prose_hint (ctx |> increment_level) exps prose_hint)
+            (* (string_of_exps ctx ", " outputs) *)
             (string_of_relid id_rel)
             (string_of_iterations iterexps)
       | None ->
@@ -363,8 +406,11 @@ and string_of_instr ctx instr =
 
 and string_of_instrs ctx instrs =
   instrs
-  |> List.mapi (fun idx instr ->
-         string_of_instr (with_index ctx (idx + 1)) instr)
+  |> List.mapi (fun idx instr -> (
+        match ctx.start_index with
+        | None -> string_of_instr (with_index ctx (idx + 1)) instr
+        | Some start_index ->
+         string_of_instr (with_index ctx (idx + start_index)) instr))
   |> String.concat "\n"
 
 (* Rules *)
@@ -388,8 +434,9 @@ and string_of_prose_hint' ctx (exps : exp list) (hintexp : El.Ast.exp)
       in
       (cursor, String.concat " " strs)
   | El.Ast.HoleE `Next ->
-      (* holds cursor for HoleE.Next *)
+      (* cursor holds position for HoleE.Next *)
       let exp = List.nth exps cursor in
+      (* increment cursor *)
       (cursor + 1, "`" ^ string_of_exp ctx exp ^ "`")
   | El.Ast.HoleE (`Num i) ->
       (* accesses HoleE.Num with index *)
