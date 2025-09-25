@@ -85,3 +85,27 @@ and string_of_failtraces ?(level = 0) ~(depth : int)
             failtrace)
         failtraces
       |> String.concat ""
+
+let rec deepest_failtraces_aux (failtraces : failtrace list) :
+    int * failtrace list =
+  match failtraces with
+  | [] -> failwith "Attempt to compute deepest failtrace on empty failtrace"
+  | [ (Failtrace (_, _, _, []) as ft) ] -> (1, [ ft ])
+  | _ ->
+      let length, dfts =
+        failtraces
+        |> List.map (fun (Failtrace (region, message, reason, sub_fts)) ->
+               let length, dfts = deepest_failtraces_aux sub_fts in
+               (length + 1, Failtrace (region, message, reason, dfts)))
+        |> List.fold_left
+             (fun (acc_length, acc_failtraces) (cur_length, cur_failtrace) ->
+               if acc_length > cur_length then (acc_length, acc_failtraces)
+               else if acc_length < cur_length then
+                 (cur_length, [ cur_failtrace ])
+               else (cur_length, cur_failtrace :: acc_failtraces))
+             (0, [ Failtrace (no_region, "", Unknown, []) ])
+      in
+      (length, List.rev dfts)
+
+let rec deepest_failtraces (failtraces : failtrace list) : failtrace list =
+  deepest_failtraces_aux failtraces |> snd
