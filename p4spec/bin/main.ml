@@ -3,6 +3,8 @@ open Util.Source
 
 let version = "0.1"
 
+exception CommandError of string
+
 (* File collector *)
 
 let rec collect_files ~(suffix : string) dir =
@@ -47,11 +49,14 @@ let elab_command =
      let%map filenames = anon (sequence ("filename" %: string)) in
      fun () ->
        try
+         if List.length filenames = 0 then
+           raise (CommandError "no input files provided");
          let spec = List.concat_map Frontend.Parse.parse_file filenames in
          let spec_il = Elaborate.Elab.elab_spec spec in
          Format.printf "%s\n" (Il.Print.string_of_spec spec_il);
          ()
        with
+       | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 
@@ -62,12 +67,15 @@ let struct_command =
      let%map filenames = anon (sequence ("filename" %: string)) in
      fun () ->
        try
+         if List.length filenames = 0 then
+           raise (CommandError "no input files provided");
          let spec = List.concat_map Frontend.Parse.parse_file filenames in
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
          Format.printf "%s\n" (Sl.Print.string_of_spec spec_sl);
          ()
        with
+       | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 
@@ -84,6 +92,8 @@ let run_il_command =
      and profile = flag "-profile" no_arg ~doc:"profiling" in
      fun () ->
        try
+         if List.length filenames_spec = 0 then
+           raise (CommandError "no input files provided");
          let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
          let spec_il = Elaborate.Elab.elab_spec spec in
          match
@@ -94,6 +104,7 @@ let run_il_command =
          | Fail (_, msg) -> Format.printf "failed: %s\n" msg
          | IllFormed (_, msg) -> Format.printf "ill-formed: %s\n" msg
        with
+       | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 
@@ -113,6 +124,8 @@ let run_sl_command =
      in
      fun () ->
        try
+         if List.length filenames_spec = 0 then
+           raise (CommandError "no input files provided");
          let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
@@ -124,6 +137,7 @@ let run_sl_command =
          | Fail (_, msg, _) -> Format.printf "failed: %s\n" msg
          | IllFormed (_, msg, _) -> Format.printf "ill-formed: %s\n" msg
        with
+       | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 
@@ -145,6 +159,8 @@ let cover_dangling_command =
      in
      fun () ->
        try
+         if List.length filenames_spec = 0 then
+           raise (CommandError "no input files provided");
          let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
@@ -165,6 +181,7 @@ let cover_dangling_command =
          Runtime_testgen.Cov.Multiple.log ~filename_cov_opt:(Some filename_cov)
            cover
        with
+       | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 
@@ -203,6 +220,8 @@ let run_testgen_command =
      in
      fun () ->
        try
+         if List.length filenames_spec = 0 then
+           raise (CommandError "no input files provided");
          let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
@@ -234,6 +253,7 @@ let run_testgen_command =
            filenames_ignore dirname_gen name_campaign randseed logmode bootmode
            mutationmode covermode
        with
+       | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 
@@ -254,12 +274,15 @@ let run_testgen_debug_command =
      and pid = flag "-pid" (required int) ~doc:"phantom id to close-miss" in
      fun () ->
        try
+         if List.length filenames_spec = 0 then
+           raise (CommandError "no input files provided");
          let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
          Testgen.Derive.debug_phantom spec_sl relname includes_p4 filename_p4
            filenames_ignore dirname_debug pid
        with
+       | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 
@@ -283,6 +306,8 @@ let interesting_command =
      in
      fun () ->
        try
+         if List.length filenames_spec = 0 then
+           raise (CommandError "no input files provided");
          let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
@@ -327,8 +352,40 @@ let interesting_command =
              Printf.printf "IllFormed";
              exit 12
        with
+       | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+
+let splice_command =
+  Core.Command.basic ~summary:"splice a skeleton p4_16 specification document"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map filenames_spec = anon (sequence ("filename" %: string))
+     and filenames_input =
+       flag "-splice" (listed string) ~doc:"skeleton documents"
+     and filenames_output = flag "-out" (listed string) ~doc:"output files"
+     and inplace = flag "-inplace" no_arg ~doc:"splice in place" in
+     fun () ->
+       try
+         if List.length filenames_spec = 0 then
+           raise (CommandError "no input files provided");
+         if
+           (not inplace)
+           && List.length filenames_input <> List.length filenames_output
+         then raise (CommandError "number of input and output files must match");
+         let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
+         let spec_il = Elaborate.Elab.elab_spec spec in
+         let spec_sl = Structure.Struct.struct_spec spec_il in
+         let filenames =
+           if inplace then List.combine filenames_input filenames_input
+           else List.combine filenames_input filenames_output
+         in
+         Splice.Driver.splice_files spec spec_sl filenames
+       with
+       | CommandError msg -> Format.printf "%s\n" msg
+       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
+       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
+       | SpliceError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 
 let parse_command =
   Core.Command.basic ~summary:"parse a P4 program"
@@ -445,6 +502,7 @@ let command =
       ("testgen", run_testgen_command);
       ("testgen-dbg", run_testgen_debug_command);
       ("interesting", interesting_command);
+      ("splice", splice_command);
       ("parse", parse_command);
       ("json", json_command);
     ]

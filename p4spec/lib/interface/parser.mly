@@ -135,7 +135,7 @@
   (* >> Match kind declarations *) matchKindDeclaration
   (* >> Derived type declarations *)
   enumTypeDeclaration typeField typeFieldList structTypeDeclaration headerTypeDeclaration headerUnionTypeDeclaration derivedTypeDeclaration
-  (* >> Typedef and newtype declarations *) typedefType typedefDeclaration
+  (* >> Typedef and newtype declarations *) typedef typedefDeclaration
   (* >> Extern declarations *)
   externFunctionDeclaration methodPrototype methodPrototypeList externObjectDeclaration externDeclaration
   (* >> Parser statements and declarations *)
@@ -1164,14 +1164,14 @@ derivedTypeDeclaration:
 ;
 
 (* >> Typedef and newtype declarations *)
-typedefType:
+typedef:
 	| t = typeRef
 	| t = derivedTypeDeclaration
 		{ t }
 ;
 
 typedefDeclaration:
-	| al = annotationList TYPEDEF t = typedefType n = name SEMICOLON
+	| al = annotationList TYPEDEF t = typedef n = name SEMICOLON
     { [ NT al; Term "TYPEDEF"; NT t; NT n; Term ";" ] #@ "typedefDeclaration" }
 	| al = annotationList TYPE t = typeRef n = name SEMICOLON
     { [ NT al; Term "TYPE"; NT t; NT n; Term ";" ] #@ "typedefDeclaration" }

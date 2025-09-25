@@ -36,9 +36,13 @@ syntax baseTypeIR = primitiveTypeIR | numberTypeIR
 syntax typeIR
 syntax polyTypeDefIR
 
+syntax nameTypeIR = TID tid
+
+syntax specializedTypeIR = polyTypeDefIR `< typeIR* >
+
 syntax namedTypeIR =
-  | TID tid
-  | polyTypeDefIR `< typeIR* >
+  | nameTypeIR
+  | specializedTypeIR
 
 ;;
 ;;;; Defined types
@@ -48,9 +52,13 @@ syntax namedTypeIR =
 ;;;;;; Alias types
 ;;
 
+syntax typedefTypeIR = TYPEDEF tid typeIR
+
+syntax newTypeIR = TYPE tid typeIR
+
 syntax aliasTypeIR =
-  | TYPEDEF tid typeIR
-  | TYPE tid typeIR
+  | typedefTypeIR
+  | newTypeIR
 
 ;;
 ;;;;;; Data types

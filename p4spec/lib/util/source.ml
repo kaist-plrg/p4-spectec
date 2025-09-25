@@ -51,7 +51,6 @@ let exp_list_region = function
   | [] -> no_region
   | [ exp ] -> exp.at
   | exp :: exps ->
-      (* take the leftmost and rightmost exps and construct a region that spans the whole list *)
       let left = exp.at.left in
       let right = (exps |> List.rev |> List.hd |> at).right in
       { left; right }

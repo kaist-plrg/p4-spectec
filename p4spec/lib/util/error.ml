@@ -4,6 +4,7 @@ exception ParseError of region * string
 exception UnparseError of string
 exception ElabError of region * string
 exception InterpError of region * string
+exception SpliceError of region * string
 
 let debug_errors = false
 
@@ -31,3 +32,8 @@ let warn_elab (at : region) (msg : string) = warn at "elab" msg
 
 let error_interp (at : region) (msg : string) = raise (InterpError (at, msg))
 let warn_interp (at : region) (msg : string) = warn at "interp" msg
+
+(* Splicer errors *)
+
+let error_splice (at : region) (msg : string) = raise (SpliceError (at, msg))
+let warn_splice (at : region) (msg : string) = warn at "splice" msg
