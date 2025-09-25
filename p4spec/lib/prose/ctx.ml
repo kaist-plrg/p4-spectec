@@ -52,3 +52,8 @@ let with_short ctx short = { ctx with short }
 let reset_start ctx = { ctx with start_index = None }
 let increment_level ctx = { ctx with level = ctx.level + 1 }
 let increment_index ctx = { ctx with index = ctx.index + 1 }
+
+let bullet ctx : string (* = String.make (ctx.level + 1) '.' ^ " " *) =
+  Format.asprintf "%s%s "
+    (String.make ctx.level ' ')
+    (String.make (ctx.level + 1) '.')

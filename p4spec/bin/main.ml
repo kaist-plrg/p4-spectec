@@ -481,9 +481,8 @@ let prose_command =
          let spec = List.concat_map Frontend.Parse.parse_file filenames in
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
-         let penv, ienv = Prose.Collect.collect_spec spec_sl in
-         let ctx = Prose.Ctx.create ~penv ~ienv () in
-         Format.printf "%s\n" (Prose.Print.string_of_spec ctx spec_sl);
+         let ctx = Prose.Ctx.init spec_sl in
+         Format.printf "%s\n" (Prose.Render.prose_spec ctx spec_sl);
          ()
        with
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
