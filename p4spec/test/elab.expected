@@ -4878,19 +4878,19 @@ def $bitacc_op(value, value, value) : value =
 ;; ../../../../spec/3-numerics.watsup:752.1-752.32
 def $sizeof(typeIR, id) : value =
 
-   ;; ../../../../spec/3-numerics.watsup:792.1-793.34
+   ;; ../../../../spec/3-numerics.watsup:796.1-797.34
    clause 0(typeIR, text) = $sizeof_minSizeInBits(typeIR)
       -- if (text = "minSizeInBits")
 
-   ;; ../../../../spec/3-numerics.watsup:800.1-801.35
+   ;; ../../../../spec/3-numerics.watsup:804.1-805.35
    clause 1(typeIR, text) = $sizeof_minSizeInBytes(typeIR)
       -- if (text = "minSizeInBytes")
 
-   ;; ../../../../spec/3-numerics.watsup:829.1-830.34
+   ;; ../../../../spec/3-numerics.watsup:837.1-838.34
    clause 2(typeIR, text) = $sizeof_maxSizeInBits(typeIR)
       -- if (text = "maxSizeInBits")
 
-   ;; ../../../../spec/3-numerics.watsup:837.1-838.35
+   ;; ../../../../spec/3-numerics.watsup:845.1-846.35
    clause 3(typeIR, text) = $sizeof_maxSizeInBytes(typeIR)
       -- if (text = "maxSizeInBytes")
 
@@ -4970,103 +4970,117 @@ def $sizeof_minSizeInBits''(typeIR) : nat =
       -- if typeIR' <: headerTypeIR
       -- let `HeaderT%%`_headerTypeIR(_tid, `%%`_fieldTypeIR(typeIR, _id)*{_id <- _id*, typeIR <- typeIR*}) = typeIR' as headerTypeIR
 
-   ;; ../../../../spec/3-numerics.watsup:789.1-790.42
-   clause 10(typeIR') = $min($sizeof_minSizeInBits'(typeIR)*{typeIR <- typeIR*})
+   ;; ../../../../spec/3-numerics.watsup:789.1-791.22
+   clause 10(typeIR') = 0
       -- if typeIR' <: headerUnionTypeIR
       -- let `HeaderUnionT%%`_headerUnionTypeIR(_tid, `%%`_fieldTypeIR(typeIR, _id)*{_id <- _id*, typeIR <- typeIR*}) = typeIR' as headerUnionTypeIR
+      -- if (|typeIR*{typeIR <- typeIR*}| = 0)
+
+   ;; ../../../../spec/3-numerics.watsup:792.1-794.24
+   clause 11(typeIR') = $min($sizeof_minSizeInBits'(typeIR)*{typeIR <- typeIR*})
+      -- if typeIR' <: headerUnionTypeIR
+      -- let `HeaderUnionT%%`_headerUnionTypeIR(_tid, `%%`_fieldTypeIR(typeIR, _id)*{_id <- _id*, typeIR <- typeIR*}) = typeIR' as headerUnionTypeIR
+      -- if (|typeIR*{typeIR <- typeIR*}| =/= 0)
 
 ;; ../../../../spec/3-numerics.watsup:758.1-758.43
 def $sizeof_minSizeInBytes(typeIR) : value =
 
-   ;; ../../../../spec/3-numerics.watsup:797.1-798.48
+   ;; ../../../../spec/3-numerics.watsup:801.1-802.48
    clause 0(typeIR) = `IntV%`_numberValue((n_size / 8) as int) as value
       -- let n_size = $sizeof_minSizeInBits'(typeIR)
 
 ;; ../../../../spec/3-numerics.watsup:760.1-760.42
 def $sizeof_maxSizeInBits(typeIR) : value =
 
-   ;; ../../../../spec/3-numerics.watsup:805.1-806.40
+   ;; ../../../../spec/3-numerics.watsup:809.1-810.40
    clause 0(typeIR) = `IntV%`_numberValue($sizeof_maxSizeInBits'(typeIR) as int) as value
 
 ;; ../../../../spec/3-numerics.watsup:761.1-761.41
 def $sizeof_maxSizeInBits'(typeIR) : nat =
 
-   ;; ../../../../spec/3-numerics.watsup:807.1-808.44
+   ;; ../../../../spec/3-numerics.watsup:811.1-812.44
    clause 0(typeIR) = $sizeof_maxSizeInBits''($canon(typeIR))
 
 ;; ../../../../spec/3-numerics.watsup:762.1-762.42
 def $sizeof_maxSizeInBits''(typeIR) : nat =
 
-   ;; ../../../../spec/3-numerics.watsup:810.1-810.39
+   ;; ../../../../spec/3-numerics.watsup:814.1-814.39
    clause 0(typeIR) = 1
       -- if typeIR <: primitiveTypeIR
       -- let primitiveTypeIR = typeIR as primitiveTypeIR
       -- if primitiveTypeIR matches `BoolT`
 
-   ;; ../../../../spec/3-numerics.watsup:811.1-811.41
+   ;; ../../../../spec/3-numerics.watsup:815.1-815.41
    clause 1(typeIR) = w
       -- if typeIR <: numberTypeIR
       -- let numberTypeIR = typeIR as numberTypeIR
       -- if numberTypeIR matches `FBitT%`
       -- let `FBitT%`_numberTypeIR(w) = numberTypeIR
 
-   ;; ../../../../spec/3-numerics.watsup:812.1-812.41
+   ;; ../../../../spec/3-numerics.watsup:816.1-816.41
    clause 2(typeIR) = w
       -- if typeIR <: numberTypeIR
       -- let numberTypeIR = typeIR as numberTypeIR
       -- if numberTypeIR matches `FIntT%`
       -- let `FIntT%`_numberTypeIR(w) = numberTypeIR
 
-   ;; ../../../../spec/3-numerics.watsup:813.1-813.41
+   ;; ../../../../spec/3-numerics.watsup:817.1-817.41
    clause 3(typeIR) = w
       -- if typeIR <: numberTypeIR
       -- let numberTypeIR = typeIR as numberTypeIR
       -- if numberTypeIR matches `VBitT%`
       -- let `VBitT%`_numberTypeIR(w) = numberTypeIR
 
-   ;; ../../../../spec/3-numerics.watsup:814.1-815.35
+   ;; ../../../../spec/3-numerics.watsup:818.1-819.35
    clause 4(typeIR') = $sizeof_maxSizeInBits'(typeIR)
       -- if typeIR' <: aliasTypeIR
       -- let aliasTypeIR = typeIR' as aliasTypeIR
       -- if aliasTypeIR matches `NewT%%`
       -- let `NewT%%`_aliasTypeIR(_tid, typeIR) = aliasTypeIR
 
-   ;; ../../../../spec/3-numerics.watsup:816.1-817.35
+   ;; ../../../../spec/3-numerics.watsup:820.1-821.35
    clause 5(typeIR') = $sizeof_maxSizeInBits'(typeIR)
       -- if typeIR' <: enumTypeIR
       -- let enumTypeIR = typeIR' as enumTypeIR
       -- if enumTypeIR matches `SEnumT%%%`
       -- let `SEnumT%%%`_enumTypeIR(_tid, typeIR, _valueFieldIR*{_valueFieldIR <- _valueFieldIR*}) = enumTypeIR
 
-   ;; ../../../../spec/3-numerics.watsup:818.1-819.42
+   ;; ../../../../spec/3-numerics.watsup:822.1-823.42
    clause 6(typeIR') = $sum($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
       -- if typeIR' <: tupleTypeIR
       -- let `TupleT%`_tupleTypeIR(typeIR*{typeIR <- typeIR*}) = typeIR' as tupleTypeIR
 
-   ;; ../../../../spec/3-numerics.watsup:820.1-821.47
+   ;; ../../../../spec/3-numerics.watsup:824.1-825.47
    clause 7(typeIR') = ($sizeof_maxSizeInBits'(typeIR) * n_size)
       -- if typeIR' <: headerStackTypeIR
       -- let `HeaderStackT%%`_headerStackTypeIR(typeIR, n_size) = typeIR' as headerStackTypeIR
 
-   ;; ../../../../spec/3-numerics.watsup:822.1-823.42
+   ;; ../../../../spec/3-numerics.watsup:826.1-827.42
    clause 8(typeIR') = $sum($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
       -- if typeIR' <: structTypeIR
       -- let `StructT%%`_structTypeIR(_tid, `%%`_fieldTypeIR(typeIR, _id)*{_id <- _id*, typeIR <- typeIR*}) = typeIR' as structTypeIR
 
-   ;; ../../../../spec/3-numerics.watsup:824.1-825.42
+   ;; ../../../../spec/3-numerics.watsup:828.1-829.42
    clause 9(typeIR') = $sum($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
       -- if typeIR' <: headerTypeIR
       -- let `HeaderT%%`_headerTypeIR(_tid, `%%`_fieldTypeIR(typeIR, _id)*{_id <- _id*, typeIR <- typeIR*}) = typeIR' as headerTypeIR
 
-   ;; ../../../../spec/3-numerics.watsup:826.1-827.42
-   clause 10(typeIR') = $max($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
+   ;; ../../../../spec/3-numerics.watsup:830.1-832.22
+   clause 10(typeIR') = 0
       -- if typeIR' <: headerUnionTypeIR
       -- let `HeaderUnionT%%`_headerUnionTypeIR(_tid, `%%`_fieldTypeIR(typeIR, _id)*{_id <- _id*, typeIR <- typeIR*}) = typeIR' as headerUnionTypeIR
+      -- if (|typeIR*{typeIR <- typeIR*}| = 0)
+
+   ;; ../../../../spec/3-numerics.watsup:833.1-835.24
+   clause 11(typeIR') = $max($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
+      -- if typeIR' <: headerUnionTypeIR
+      -- let `HeaderUnionT%%`_headerUnionTypeIR(_tid, `%%`_fieldTypeIR(typeIR, _id)*{_id <- _id*, typeIR <- typeIR*}) = typeIR' as headerUnionTypeIR
+      -- if (|typeIR*{typeIR <- typeIR*}| =/= 0)
 
 ;; ../../../../spec/3-numerics.watsup:764.1-764.43
 def $sizeof_maxSizeInBytes(typeIR) : value =
 
-   ;; ../../../../spec/3-numerics.watsup:834.1-835.48
+   ;; ../../../../spec/3-numerics.watsup:842.1-843.48
    clause 0(typeIR) = `IntV%`_numberValue((n_size / 8) as int) as value
       -- let n_size = $sizeof_maxSizeInBits'(typeIR)
 
