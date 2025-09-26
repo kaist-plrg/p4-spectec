@@ -184,6 +184,12 @@ syntax typedExpressionIR =
 
 syntax typedExpressionListIR = typedExpressionIR*
 
+dec $typeof_expression(typedExpressionIR) : typeIR
+def $typeof_expression(_ `# `( typeIR _ )) = typeIR
+
+dec $ctkof_expression(typedExpressionIR) : ctk
+def $ctkof_expression(_ `# `( _ ctk )) = ctk
+
 syntax memberAccessBaseIR =
   | TYPE prefixedNameIR
   | typedExpressionIR
@@ -239,6 +245,9 @@ syntax lvalueIR =
   | `( typedLvalueIR )
 
 syntax typedLvalueIR = lvalueIR `# `( typeIR )
+
+dec $typeof_lvalue(typedLvalueIR) : typeIR
+def $typeof_lvalue(_ `# `( typeIR )) = typeIR
 
 ;;
 ;; Statements
