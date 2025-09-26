@@ -263,6 +263,27 @@ let localize (ctx : t) : t =
 
 (* Constructing sub-contexts *)
 
+(* Transpose a matrix of values, as a list of value batches
+   that are to be each fed into an iterated expression *)
+
+let transpose (value_matrix : value list list) : value list list attempt =
+  match value_matrix with
+  | [] -> Ok []
+  | rows ->
+      let width = List.length (List.hd rows) in
+      let* _ =
+        check_fail
+          (List.for_all (fun row -> List.length row = width) rows)
+          no_region "cannot transpose a matrix of value batches"
+      in
+      let value_matrix =
+        List.fold_right
+          (List.map2 (fun element row -> element :: row))
+          rows
+          (List.init width (fun _ -> []))
+      in
+      Ok value_matrix
+
 let sub_opt (ctx : t) (vars : var list) : t option attempt =
   (* First collect the values that are to be iterated over *)
   let values =
@@ -283,28 +304,6 @@ let sub_opt (ctx : t) (vars : var list) : t option attempt =
     Ok (Some ctx_sub)
   else if List.for_all Option.is_none values then Ok None
   else fail no_region "mismatch in optionality of iterated variables"
-
-(* Transpose a matrix of values, as a list of value batches
-   that are to be each fed into an iterated expression *)
-
-let transpose (value_matrix : value list list) : value list list attempt =
-  match value_matrix with
-  | [] -> Ok []
-  | _ ->
-      let width = List.length (List.hd value_matrix) in
-      let* _ =
-        check_fail
-          (List.for_all
-             (fun value_row -> List.length value_row = width)
-             value_matrix)
-          no_region "cannot transpose a matrix of value batches"
-      in
-      let value_matrix =
-        List.init width (fun j ->
-            List.init (List.length value_matrix) (fun i ->
-                List.nth (List.nth value_matrix i) j))
-      in
-      Ok value_matrix
 
 let sub_list (ctx : t) (vars : var list) : t list attempt =
   (* First break the values that are to be iterated over,

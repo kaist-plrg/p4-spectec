@@ -1510,19 +1510,22 @@ and invoke_func_def (ctx : Ctx.t) (id : id) (targs : targ list)
       (List.length targs = List.length tparams)
       id.at "arity mismatch in type arguments";
     let targs =
-      let theta =
-        (TDEnv.bindings ctx.global.tdenv
-        @
-        match ctx.local with
-        | Empty | Rel _ -> []
-        | Func { tdenv; _ } -> TDEnv.bindings tdenv)
-        |> List.filter_map (fun (tid, (_tparams, deftyp)) ->
-               match deftyp.it with
-               | Il.Ast.PlainT typ -> Some (tid, typ)
-               | _ -> None)
-        |> TIdMap.of_list
-      in
-      List.map (Typ.subst_typ theta) targs
+      match targs with
+      | [] -> []
+      | targs ->
+          let theta =
+            (TDEnv.bindings ctx.global.tdenv
+            @
+            match ctx.local with
+            | Empty | Rel _ -> []
+            | Func { tdenv; _ } -> TDEnv.bindings tdenv)
+            |> List.filter_map (fun (tid, (_tparams, deftyp)) ->
+                   match deftyp.it with
+                   | Il.Ast.PlainT typ -> Some (tid, typ)
+                   | _ -> None)
+            |> TIdMap.of_list
+          in
+          List.map (Typ.subst_typ theta) targs
     in
     List.fold_left2
       (fun tdenv_local tparam targ ->
