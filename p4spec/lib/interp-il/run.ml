@@ -10,13 +10,14 @@ type res =
   | Fail of region * string
   | IllFormed of region * string
 
-let run ?(debug : bool = false) ?(profile : bool = false) (spec : spec)
-    (relname : string) (includes_p4 : string list) (filename_p4 : string) : res
-    =
+let run ?(debug : bool = false) ?(profile : bool = false)
+    ?(trace : bool = false) (spec : spec) (relname : string)
+    (includes_p4 : string list) (filename_p4 : string) : res =
   Builtin.init ();
   Value.refresh ();
   Cache.Cache.clear !Interp.func_cache;
   Cache.Cache.clear !Interp.rule_cache;
+  Trace_mode.set (if trace then `Full else `Concise);
   try
     let value_program = Interface.Parse.parse_file includes_p4 filename_p4 in
     let ctx = Ctx.empty ~debug ~profile filename_p4 in
