@@ -1,0 +1,95 @@
+[#sec-abstract-machine-type-checking]
+=== Type checking
+
+P4~16~ is a statically-typed language. Programs that do not pass the type
+checker are considered invalid and rejected by the compiler. P4 provides a
+number of base types as well as type operators that construct derived types.
+Some values can be converted to a different type using casts. However, to make
+user intents clear, implicit casts are only allowed in a few circumstances and
+the range of casts available is intentionally restricted.
+
+[#sec-abstract-machine-p4-ir]
+==== P4 Intermediate Representation
+
+Type checking a P4~16~ program produces an intermediate representation called
+P4~IR~.
+
+${relation: Program_ok}
+
+P4~IR~ extends the surface syntax of P4~16~ with additional information
+obtained during type checking. They include:
+
+* All expressions are annotated with their types.
+* Implicit casts are made explicit.
+* Omitted type arguments are inferred and made explicit.
+
+P4~IR~ is designed to stay as close as possible to the surface syntax of P4~16~.
+This makes it easy to relate P4~IR~ programs to their source P4~16~ programs.
+
+Take expressions as an example.
+
+${syntax: expression
+          expressionIR
+          expressionNoteIR
+          typedExpressionIR}
+
+`typedExpressionIR` is an intermediate representation of `expression` that
+is annotated with type information, `expressionNoteIR`.
+Nevertheless, the structure of the grammar mostly stays the same.
+
+${syntax: binaryExpression
+          binaryExpressionIR}
+
+`binaryExpressionIR` is an intermediate representation of `binaryExpression`.
+The only difference is that the operands are now of type `typedExpressionIR`.
+
+[#sec-abstract-machine-typing-context]
+==== Typing context
+
+${syntax: globalTypingLayer
+          blockTypingLayer
+          localTypingLayer
+          typingContext}
+
+A typing context is used to keep track of the types of all named declarations
+in scope at a given program point. It consists of three layers:
+
+* A global typing layer, which contains all declarations at the top level of a
+  P4~16~ program.
+* A block typing layer, which contains all declarations in the current block
+  scope.
+* A local typing layer, which contains all declarations in the current
+  control-flow scope.
+
+Each layer contains multiple mappings from names to types.
+
+${syntax: varTypeIR
+          frame}
+
+`frame` is a map from variable names to their types, `varTypeIR`. In addition
+to the type of the variable, `varTypeIR` also contains the direction of the
+variable, whether it is a compile-time constant, and whether it has an initial
+value.
+
+Notice that `localTypingLayer` contains multiple `frame`s. This is because a
+local scope can be nested with block statements.
+
+${syntax: typeDefIR
+          tdenv}
+
+`tdenv` is a map from type names to their definitions, `typeDefIR`. `typeDefIR`
+is a type constructor, derived from user-defined type declarations.
+
+${syntax: routineTypeDefIR
+          rdenv}
+
+Functions, methods, and actions can be defined in P4~16~. These are
+collectively called routines. `rdenv` is a map from routine names to their
+definitions, `routineTypeDefIR`.
+
+${syntax: constructorTypeDefIR
+          cdenv}
+
+Stateful objects can be defined in P4~16~, which are instantiated using
+constructors. `cdenv` is a map from constructor names to their definitions,
+`constructorTypeDefIR`.
