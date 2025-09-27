@@ -16,10 +16,10 @@ type res =
   | IllFormed of region * string * SCov.Cover.t
 
 let do_run (ctx : Ctx.t) (spec : spec) (relname : string)
-    (value_program : value) : Ctx.t * value list =
+    (value_program : value) : value list =
   let ctx = Interp.load_spec ctx spec in
   match Interp.invoke_rel ctx (relname $ no_region) [ value_program ] with
-  | Some (ctx, values) -> (ctx, values)
+  | Some values -> values
   | None -> error no_region "relation was not matched"
 
 let run_internal (spec : spec) (relname : string) (filename_p4 : string)
@@ -34,7 +34,7 @@ let run_internal (spec : spec) (relname : string) (filename_p4 : string)
     let ctx =
       Ctx.empty ~derive:false filename_p4 graph value_program.note.vid cover
     in
-    let ctx, values = do_run ctx spec relname value_program in
+    let values = do_run ctx spec relname value_program in
     Pass
       (values, ctx.testing.graph, ctx.testing.vid_program, !(ctx.testing.cover))
   with Util.Error.InterpError (at, msg) -> Fail (at, msg, !cover)
@@ -53,7 +53,7 @@ let run' ?(derive : bool = false) (spec : spec) (relname : string)
     let ctx =
       Ctx.empty ~derive filename_p4 graph value_program.note.vid cover
     in
-    let ctx, values = do_run ctx spec relname value_program in
+    let values = do_run ctx spec relname value_program in
     Pass
       (values, ctx.testing.graph, ctx.testing.vid_program, !(ctx.testing.cover))
   with

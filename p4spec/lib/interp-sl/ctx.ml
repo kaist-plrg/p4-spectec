@@ -23,7 +23,12 @@ type cursor = Global | Local
 
 (* Context *)
 
-(* Testing layer *)
+(* Testing layer
+
+   The interpreter relies on the fact that both graph and cover
+   are mutable, so that they can be updated in place.
+   Their references are copied when constructing sub-contexts,
+   thus sharing the same graph and cover across contexts. *)
 
 type testing = {
   (* Value dependency graph *)
@@ -93,10 +98,9 @@ let add_edge (ctx : t) (value_from : value) (value_to : value)
 
 (* Cover *)
 
-let cover (ctx : t) (hit : bool) (pid : pid) (vid : vid) : t =
+let cover (ctx : t) (hit : bool) (pid : pid) (vid : vid) : unit =
   if hit then ctx.testing.cover := SCov.hit !(ctx.testing.cover) pid
-  else ctx.testing.cover := SCov.miss !(ctx.testing.cover) pid vid;
-  ctx
+  else ctx.testing.cover := SCov.miss !(ctx.testing.cover) pid vid
 
 (* Finders *)
 
@@ -369,8 +373,3 @@ let sub_list (ctx : t) (vars : var list) : t list =
       in
       ctxs_sub @ [ ctx_sub ])
     [] values_batch
-
-(* Committing a sub-context *)
-
-let commit (ctx : t) (ctx_sub : t) : t =
-  { ctx with testing = { ctx.testing with cover = ctx_sub.testing.cover } }
