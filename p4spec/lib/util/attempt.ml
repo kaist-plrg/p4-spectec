@@ -14,8 +14,8 @@ type failtrace = Failtrace of region * string * reason * failtrace list
 type 'a attempt = Ok of 'a | Fail of failtrace list
 
 let string_of_reason = function
-  | RootClause (clause_idx, depth) -> "Clause " ^ string_of_int clause_idx
-  | MismatchClause (clause_idx, depth) ->
+  | RootClause (clause_idx, _) -> "Clause " ^ string_of_int clause_idx
+  | MismatchClause (clause_idx, _) ->
       "MismatchClause at clause " ^ string_of_int clause_idx
   | Mismatch i -> "Mismatch at premise " ^ string_of_int i
   | Root i -> "Root cause at premise " ^ string_of_int i
@@ -141,3 +141,43 @@ let rec deepest_failtraces_aux (failtraces : failtrace list) :
 
 let deepest_failtraces (failtraces : failtrace list) : failtrace list =
   deepest_failtraces_aux failtraces |> snd
+
+let rec prune_failtraces (failtraces : failtrace list) : failtrace list =
+  let reason = merge_failtrace_reason failtraces in
+  match reason with
+  | RootClause (i, _) ->
+      let (Failtrace (region, msg, reason, fts)) =
+        List.nth failtraces (i - 1)
+      in
+      [ Failtrace (region, msg, reason, prune_failtraces fts) ]
+  | Root _ ->
+      failwith "Invalid state. List of failtraces cannot have Root fail cause"
+  | MismatchClause _ | Mismatch _ -> deepest_failtraces failtraces
+  | Unknown -> failtraces
+
+let prettify_failtraces ?(depth_limit = false) (failtraces : failtrace list) :
+    string =
+  match failtraces with
+  | [] -> ""
+  | [ failtrace ] ->
+      let depth =
+        if depth_limit then
+          let depth = depth failtrace in
+          max 0 (depth - 3)
+        else 0
+      in
+      string_of_failtrace ~depth ~bullet:"-" failtrace
+  | failtraces ->
+      List.mapi
+        (fun idx failtrace ->
+          let depth =
+            if depth_limit then
+              let depth = depth failtrace in
+              max 0 (depth - 3)
+            else 0
+          in
+          string_of_failtrace ~depth
+            ~bullet:(string_of_int (idx + 1) ^ ".")
+            failtrace)
+        failtraces
+      |> String.concat ""
