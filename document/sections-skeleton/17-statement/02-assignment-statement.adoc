@@ -1,11 +1,82 @@
-[#sec-assignment-statement]
+[#sec-assignmentStatement]
 === Assignment statements
 
 ${syntax: assignop
           assignmentStatement
           assignmentStatementIR}
 
-[#sec-lvalue]
+An assignment, written with the `=` sign, first evaluates its left
+sub-expression to an l-value, then evaluates its right sub-expression
+to a value, and finally copies the value into the l-value. Derived
+types (e.g. ``struct``s) are copied recursively, and all components
+of ``header``s are copied, including "validity" bits. Assignment is
+not defined for `extern` values.
+
+An assignment may also be written with a binary arithmetic or bit manipulation
+operator immediately before the `=` sign.  This performs the binary operator on
+the old value of the left sub-expression and the right sub-expression and assigns
+the result to the l-value.  Thus an assignment like `A += B` is equivalent
+to `A = A + B`, except that `A` is only evaluated once.  This means that
+any side-effects within this operand (eg, a function call inside an array index
+or slice expression) only occur once.  This is not valid
+for comparison operators, logical operators, concat, range, or mask operators.
+
+[discrete]
+[[sem-type-check-assignmentStatement]]
+===== Type checking
+
+${rulegroup: Stmt_ok/assignmentStatement-eq}
+${ruleprose: Stmt_ok/assignmentStatement-eq}
+
+[discrete]
+[[sem-compile-time-eval-assignmentStatement]]
+===== Compile-time evaluation
+
+${rulegroup: Stmt_inst/assignmentStatementIR}
+${ruleprose: Stmt_inst/assignmentStatementIR}
+
+[#sec-assignmentStatement-lvalue]
 ==== L-values
 
 ${syntax: lvalue}
+
+[discrete]
+[[sem-type-check-assignmentStatement-lvalue]]
+===== Type checking
+
+${relation: Lvalue_ok}
+
+[discrete]
+[[sem-type-check-assignmentStatement-lvalue-referenceExpression]]
+====== References
+
+${rulegroup: Lvalue_ok/referenceExpression-prefixedNonTypeName}
+${ruleprose: Lvalue_ok/referenceExpression-prefixedNonTypeName}
+
+[discrete]
+[[sem-type-check-assignmentStatement-lvalue-memberAccess]]
+====== Member accesses
+
+${rulegroup: Lvalue_ok/memberAccess}
+${ruleprose: Lvalue_ok/memberAccess}
+
+[discrete]
+[[sem-type-check-assignmentStatement-lvalue-indexAccess]]
+====== Index accesses
+
+${rulegroup: Lvalue_ok/indexAccess}
+${ruleprose: Lvalue_ok/indexAccess}
+
+[discrete]
+[[sem-type-check-assignmentStatement-lvalue-sliceAccess]]
+====== Slice accesses
+
+${rulegroup: Lvalue_ok/sliceAccess}
+${ruleprose: Lvalue_ok/sliceAccess}
+
+[discrete]
+[[sem-type-check-assignmentStatement-lvalue-parenthesized]]
+====== Parenthesized l-values
+
+${rulegroup: Lvalue_ok/parenthesized}
+${ruleprose: Lvalue_ok/parenthesized}

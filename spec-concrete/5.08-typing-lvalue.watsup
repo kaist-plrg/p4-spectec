@@ -20,7 +20,7 @@ rule Lvalue_ok/referenceExpression-prefixedNonTypeName:
 
 ;;; lvalue `. member
 
-rulegroup Lvalue_ok/lvalue-member {
+rulegroup Lvalue_ok/memberAccess {
 
   rule Lvalue_ok/headerstack-next-last:
     p TC |- lvalue_base `. member : typedLvalueIR
@@ -85,9 +85,9 @@ rulegroup Lvalue_ok/lvalue-member {
 
 ;;; lvalue `[ expression ]
 
-rulegroup Lvalue_ok/lvalue-expression {
+rulegroup Lvalue_ok/indexAccess {
 
-  rule Lvalue_ok/index-lctk:
+  rule Lvalue_ok/lctk:
     p TC |- lvalue_base `[ expression_index ] : typedLvalueIR
     ---- ;; check base lvalue
     -- Lvalue_ok: p TC |- lvalue_base : typedLvalueIR_base
@@ -114,7 +114,7 @@ rulegroup Lvalue_ok/lvalue-expression {
         = (typedLvalueIR_base `[ typedExpressionIR_index_reduced ])
             `# `( typeIR )
 
-  rule Lvalue_ok/index-non-lctk:
+  rule Lvalue_ok/non-lctk:
     p TC |- lvalue_base `[ expression_index ] : typedLvalueIR
     ---- ;; check base lvalue
     -- Lvalue_ok: p TC |- lvalue_base : typedLvalueIR_base
@@ -142,7 +142,7 @@ rulegroup Lvalue_ok/lvalue-expression {
 
 ;;; lvalue `[ expression `: expression ]
 
-rule Lvalue_ok/lvalue-expression-expression:
+rule Lvalue_ok/sliceAccess:
   p TC |- lvalue_base `[ expression_hi `: expression_lo ] : typedLvalueIR
   ---- ;; check base lvalue
   -- Lvalue_ok: p TC |- lvalue_base : typedLvalueIR_base

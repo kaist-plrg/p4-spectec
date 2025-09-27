@@ -106,17 +106,20 @@ relation SwitchCase_inst:
   hint(input %0 %1 %2 %3)
 
 ;;;;; switchLabelIR `: blockStatementIR
-
-rule SwitchCase_inst/match:
-  p IC_0 STO_0 |- switchLabelIR `: blockStatementIR
-              ==> IC_1 STO_1 (switchLabelIR `: blockStatementIR_inst)
-  -- Stmt_inst: p IC_0 STO_0 |- blockStatementIR ==> IC_1 STO_1 blockStatementIR_inst
-
 ;;;;; switchLabelIR `:
 
-rule SwitchCase_inst/fallthrough:
-  p IC STO |- switchLabelIR `:
-          ==> IC STO (switchLabelIR `:)
+rulegroup SwitchCase_inst {
+
+  rule SwitchCase_inst/blockStatementIR:
+    p IC_0 STO_0 |- switchLabelIR `: blockStatementIR
+                ==> IC_1 STO_1 (switchLabelIR `: blockStatementIR_inst)
+    -- Stmt_inst: p IC_0 STO_0 |- blockStatementIR ==> IC_1 STO_1 blockStatementIR_inst
+
+  rule SwitchCase_inst/non-blockStatementIR:
+    p IC STO |- switchLabelIR `:
+            ==> IC STO (switchLabelIR `:)
+
+}
 
 ;;;; syntax switchCaseListIR
 
