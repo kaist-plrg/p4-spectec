@@ -4,9 +4,9 @@ open Print
 (* Backtracking *)
 
 type reason =
-  | RootClause of int
+  | RootClause of int * int
   | MismatchClause of int * int (* clause idx, max (premise_idx) *)
-  | Root
+  | Root of int
   | Mismatch of int (* premise idx *)
   | Unknown
 
@@ -14,12 +14,11 @@ type failtrace = Failtrace of region * string * reason * failtrace list
 type 'a attempt = Ok of 'a | Fail of failtrace list
 
 let string_of_reason = function
-  | RootClause i -> "Clause " ^ string_of_int i
+  | RootClause (clause_idx, depth) -> "Clause " ^ string_of_int clause_idx
   | MismatchClause (clause_idx, depth) ->
-      "MismatchClause at clause " ^ string_of_int clause_idx ^ ", depth "
-      ^ string_of_int depth
+      "MismatchClause at clause " ^ string_of_int clause_idx
   | Mismatch i -> "Mismatch at premise " ^ string_of_int i
-  | Root -> "Root"
+  | Root i -> "Root cause at premise " ^ string_of_int i
   | Unknown -> "Unknown"
 
 let rec depth (failtrace : failtrace) : int =
@@ -52,17 +51,18 @@ let merge_failtrace_reason (failtraces : failtrace list) : reason =
   |> List.fold_left
        (fun acc (i, Failtrace (_, _, reason, _)) ->
          match (acc, reason) with
-         | Root, _ -> RootClause i
+         | Root premise, _ -> RootClause (i, premise)
+         | RootClause (_, premise_1), Root premise_2
+         | RootClause (_, premise_1), RootClause (_, premise_2) ->
+             if premise_1 < premise_2 then RootClause (i, premise_2) else acc
          | RootClause _, _ -> acc
-         | _, Root | _, RootClause _ -> RootClause i
-         | MismatchClause (_, premise_idx_1), MismatchClause (_, premise_idx_2)
-           ->
-             if premise_idx_1 < premise_idx_2 then
-               MismatchClause (i, premise_idx_2)
+         | _, Root premise | _, RootClause (_, premise) ->
+             RootClause (i, premise)
+         | MismatchClause (_, premise_1), MismatchClause (_, premise_2) ->
+             if premise_1 < premise_2 then MismatchClause (i, premise_2)
              else acc
-         | _, MismatchClause (_, max_premise_idx) | _, Mismatch max_premise_idx
-           ->
-             MismatchClause (i, max_premise_idx)
+         | _, MismatchClause (_, max_premise) | _, Mismatch max_premise ->
+             MismatchClause (i, max_premise)
          | _, Unknown -> acc)
        Unknown
 

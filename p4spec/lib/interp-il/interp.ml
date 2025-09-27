@@ -846,10 +846,16 @@ and eval_if_hold_prem (ctx : Ctx.t) (id : id) (notexp : notexp) : Ctx.t attempt
   let ctx, values_input = eval_exps ctx exps_input in
   match invoke_rel ctx id values_input with
   | Ok _ -> Ok ctx
-  | Fail _ ->
-      fail_with_reason id.at
-        (F.asprintf "condition hold %s was not met" id.it)
-        Root
+  | Fail failtraces ->
+      let reason = merge_failtrace_reason failtraces in
+      Fail
+        [
+          Failtrace
+            ( id.at,
+              F.asprintf "condition hold %s was not met" id.it,
+              reason,
+              failtraces );
+        ]
 
 (* If-not-hold premise evaluation *)
 
@@ -861,7 +867,7 @@ and eval_if_not_hold_prem (ctx : Ctx.t) (id : id) (notexp : notexp) :
   | Ok _ ->
       fail_with_reason id.at
         (F.asprintf "condition not-hold %s was not met" id.it)
-        Root
+        (Root 1)
   | Fail _ -> Ok ctx
 
 (* Let premise evaluation *)

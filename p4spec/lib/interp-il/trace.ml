@@ -324,17 +324,24 @@ let guess_reason (trace : t) : Util.Attempt.reason =
   in
   let subexps = extract_subexps trace in
   match subexps with
-  | [ If (SubE _) ] | [ If (MatchE _) ] -> Mismatch premise_idx
-  | [ If (SubE _); If (MatchE _) ] -> Mismatch premise_idx
-  | [ If (SubE _); Let (_, DownCastE _); If (MemE _) ] ->
+  | [ If (SubE _) ]
+  | [ If (MatchE _) ]
+  | [ If (SubE _); If (MatchE _) ]
+  | [ If (SubE _); Let (_, DownCastE _); If (MemE _) ]
+  | [ If (SubE _); Let (_, DownCastE _); If (MatchE _) ]
+  | [ If (MatchE _); Let (CaseE _, _); If (MatchE _) ]
+  (* Decl_ok/instantiation-prefixedTypeName-non-objectInitializer *)
+  | [
+      If (SubE _);
+      Let (_, DownCastE _);
+      If (MatchE _);
+      Let (CaseE _, _);
+      If (SubE _);
+    ] ->
       Mismatch premise_idx (* ex> binop *)
-  | [ If (SubE _); Let (_, DownCastE _); If (MatchE _) ] ->
-      Mismatch premise_idx (* ex> Type_ok/bool *)
-  | [ If (MatchE _); Let (CaseE _, _); If (MatchE _) ] ->
-      Mismatch premise_idx (* ex> ParserTransition_ok/name *)
   | [ match_exp; If (MatchE _) ]
   | [ match_exp; If (SubE _) ]
   | [ match_exp; If (SubE _); Let (_, DownCastE _); If (MatchE _) ]
     when guess_is_cursor_match match_exp ->
       Mismatch premise_idx
-  | _ -> Root
+  | _ -> Root premise_idx

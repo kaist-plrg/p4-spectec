@@ -15,12 +15,12 @@ let ( let* ) (attempt : 'a attempt) (f : 'a -> 'b) : 'b =
 let rec prune_failtraces (failtraces : failtrace list) : failtrace list =
   let reason = merge_failtrace_reason failtraces in
   match reason with
-  | RootClause i ->
+  | RootClause (i, _) ->
       let (Failtrace (region, msg, reason, fts)) =
         List.nth failtraces (i - 1)
       in
       [ Failtrace (region, msg, reason, prune_failtraces fts) ]
-  | Root ->
+  | Root _ ->
       error no_region
         "Invalid state. List of failtraces cannot have Root fail cause"
   | MismatchClause _ | Mismatch _ -> deepest_failtraces failtraces
@@ -34,11 +34,16 @@ let error_with_failtraces (failtraces : failtrace list) =
   let sfailtrace =
     match failtraces' with
     | [] -> ""
-    | [ failtrace ] -> string_of_failtrace ~depth:0 ~bullet:"-" failtrace
+    | [ failtrace ] ->
+        let depth = depth failtrace in
+        let depth = max 0 (depth - 3) in
+        string_of_failtrace ~depth ~bullet:"-" failtrace
     | failtraces ->
         List.mapi
           (fun idx failtrace ->
-            string_of_failtrace ~depth:0
+            let depth = depth failtrace in
+            let depth = max 0 (depth - 3) in
+            string_of_failtrace ~depth
               ~bullet:(string_of_int (idx + 1) ^ ".")
               failtrace)
           failtraces
