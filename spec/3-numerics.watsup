@@ -787,7 +787,11 @@ def $sizeof_minSizeInBits''(StructT _ (typeIR _)*)
 def $sizeof_minSizeInBits''(HeaderT _ (typeIR _)*)
   = $sum($sizeof_minSizeInBits'(typeIR)*)
 def $sizeof_minSizeInBits''(HeaderUnionT _ (typeIR _)*)
+  = 0
+  -- if |typeIR*| = 0
+def $sizeof_minSizeInBits''(HeaderUnionT _ (typeIR _)*)
   = $min($sizeof_minSizeInBits'(typeIR)*)
+  -- if |typeIR*| =/= 0
 
 def $sizeof(typeIR, "minSizeInBits")
   = $sizeof_minSizeInBits(typeIR)
@@ -824,7 +828,11 @@ def $sizeof_maxSizeInBits''(StructT _ (typeIR _)*)
 def $sizeof_maxSizeInBits''(HeaderT _ (typeIR _)*)
   = $sum($sizeof_maxSizeInBits'(typeIR)*)
 def $sizeof_maxSizeInBits''(HeaderUnionT _ (typeIR _)*)
+  = 0
+  -- if |typeIR*| = 0
+def $sizeof_maxSizeInBits''(HeaderUnionT _ (typeIR _)*)
   = $max($sizeof_maxSizeInBits'(typeIR)*)
+  -- if |typeIR*| =/= 0
 
 def $sizeof(typeIR, "maxSizeInBits")
   = $sizeof_maxSizeInBits(typeIR)

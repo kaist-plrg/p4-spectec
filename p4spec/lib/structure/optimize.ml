@@ -1080,7 +1080,7 @@ let rec remove_singleton_match (tdenv : TDEnv.t) (instrs : instr list) :
   | [] -> []
   | instr_h :: instrs_t -> (
       match instr_h.it with
-      | IfI (exp_cond, iterexps, instrs) when is_singleton_match tdenv exp_cond
+      | IfI (exp_cond, _iterexps, instrs) when is_singleton_match tdenv exp_cond
         ->
           instrs @ instrs_t |> remove_singleton_match tdenv
       | IfI (exp_cond, iterexps, instrs) ->
