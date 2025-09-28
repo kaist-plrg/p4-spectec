@@ -15,6 +15,13 @@ let _reindent_lines ~(indent : string) (s : string) : string =
   let lines = String.split_on_char '\n' s in
   String.concat ("\n " ^ indent) lines
 
+(* Surround string with backticks *)
+
+let mono ctx s =
+  match ctx.mode with
+  | Code -> s
+  | Prose -> "`+" ^ s ^ "+`"
+
 (* Split iterators into input and output *)
 
 let split_iterexps exps_out iterexps =
@@ -42,6 +49,30 @@ let prose_list items =
       else acc ^ " and " ^ item)
     "" items
 
+let string_of_iterexp (iter, _) = string_of_iter iter
+
+let string_of_iterexps iterexps =
+  iterexps |> List.map string_of_iterexp |> String.concat ""
+
+let string_of_mixop mixop =
+  let mixop = List.map (List.map it) mixop in
+    String.concat "%"
+      (List.map
+         (fun atoms -> String.concat "" (List.map Xl.Atom.string_of_atom atoms))
+         mixop)
+
+let string_of_pattern pattern =
+  match pattern with
+  | Il.Ast.CaseP mixop -> string_of_mixop mixop
+  | Il.Ast.ListP `Cons -> "_ :: _"
+  | Il.Ast.ListP (`Fixed len) -> Format.asprintf "[ _/%d ]" len
+  | Il.Ast.ListP `Nil -> "[]"
+  | Il.Ast.OptP `Some -> "(_)"
+  | Il.Ast.OptP `None -> "()"
+
+let code_of_typ ctx typ =
+  string_of_typ typ |> mono ctx
+
 (* Expressions *)
 
 let rec prose_exp ctx exp =
@@ -57,14 +88,18 @@ let rec prose_exp ctx exp =
   | Il.Ast.CmpE (cmpop, _, exp_l, exp_r) ->
       "(" ^ prose_exp ctx exp_l ^ " " ^ string_of_cmpop cmpop ^ " "
       ^ prose_exp ctx exp_r ^ ")"
-  | Il.Ast.UpCastE (typ, exp) ->
-      "`" ^ prose_exp ctx exp ^ "` as " ^ string_of_typ typ
-  | Il.Ast.DownCastE (typ, exp) ->
-      "`" ^ prose_exp ctx exp ^ "` as " ^ string_of_typ typ
+  | Il.Ast.UpCastE (typ, exp) | Il.Ast.DownCastE (typ, exp) ->
+    F.asprintf "%s as %s"
+      (code_of_exp ctx exp)
+      (code_of_typ ctx typ)
   | Il.Ast.SubE (exp, typ) ->
-      "`" ^ prose_exp ctx exp ^ "` has type " ^ string_of_typ typ
+    F.asprintf "%s has type %s"
+      (code_of_exp ctx exp)
+      (code_of_typ ctx typ)
   | Il.Ast.MatchE (exp, pattern) ->
-      prose_exp ctx exp ^ " matches pattern " ^ string_of_pattern pattern
+    F.asprintf "%s matches pattern %s"
+      (code_of_exp ctx exp)
+      (string_of_pattern pattern |> mono ctx)
   | Il.Ast.TupleE es -> "(" ^ prose_exps ctx ", " es ^ ")"
   | Il.Ast.CaseE notexp -> "(" ^ string_of_notexp ctx notexp ^ ")"
   | Il.Ast.StrE expfields ->
@@ -108,11 +143,17 @@ let rec prose_exp ctx exp =
             (prose_hintexp ctx exps prose_hint)
             (string_of_defid defid)
       | None ->
-          "`" ^ string_of_defid defid ^ string_of_targs targs
-          ^ prose_args ctx args ^ "`")
+          (F.asprintf "%s%s%s"
+            (string_of_defid defid)
+            (string_of_targs targs)
+            (prose_args ctx args))
+          |> mono ctx)
   | Il.Ast.IterE (exp, iterexp) -> prose_exp ctx exp ^ string_of_iterexp iterexp
 
 and prose_exps ctx sep exps = String.concat sep (List.map (prose_exp ctx) exps)
+
+and code_of_exp ctx exp =
+  prose_exp (ctx |> in_code) exp |> mono ctx
 
 and string_of_notexp ctx notexp =
   let mixop, exps = notexp in
@@ -144,11 +185,11 @@ and prose_hintexp' ctx (exps : exp list) (hintexp : El.Ast.exp) (cursor : int) :
       (* cursor holds position for HoleE.Next *)
       let exp = List.nth exps cursor in
       (* increment cursor *)
-      (cursor + 1, "`" ^ prose_exp ctx exp ^ "`")
+      (cursor + 1, code_of_exp ctx exp)
   | El.Ast.HoleE (`Num i) ->
       (* accesses HoleE.Num with index *)
       let exp = List.nth exps i in
-      (cursor, "`" ^ prose_exp ctx exp ^ "`")
+      (cursor, code_of_exp ctx exp)
   | El.Ast.FuseE (exp_l, exp_r) ->
       let cursor_l, str_l = prose_hintexp' ctx exps exp_l cursor in
       let cursor_r, str_r = prose_hintexp' ctx exps exp_r cursor_l in
@@ -198,12 +239,12 @@ and prose_guard ctx exp_case guard =
       F.asprintf "%s %s %s" (prose_exp ctx exp_case) (string_of_cmpop cmpop)
         (prose_exp ctx exp)
   | SubG typ ->
-      F.asprintf "`%s` has type %s" (prose_exp ctx exp_case) (string_of_typ typ)
+      F.asprintf "%s has type %s" (code_of_exp ctx exp_case) (code_of_typ ctx typ)
   | MatchG pattern ->
-      F.asprintf "`%s` matches pattern %s" (prose_exp ctx exp_case)
+      F.asprintf "%s matches pattern %s" (code_of_exp ctx exp_case)
         (string_of_pattern pattern)
   | MemG exp ->
-      F.asprintf "`%s` is in `%s`" (prose_exp ctx exp_case) (prose_exp ctx exp)
+      F.asprintf "%s is in %s" (code_of_exp ctx exp_case) (code_of_exp ctx exp)
 
 (* Prose iterations *)
 
@@ -226,77 +267,88 @@ and prose_in_iterexp ((iter, vars) : iterexp) =
       in
       List.map iterated_var vars |> prose_list
 
-and prose_iterations ctx out_iterexps in_iterexps inner =
-  if List.is_empty in_iterexps && List.is_empty out_iterexps then
-    F.asprintf "%s%s" (bullet ctx) inner
-  else if List.is_empty out_iterexps then
-    F.asprintf "%sIf %s, for each %s" (bullet ctx)
-      inner
-      (in_iterexps |> List.map prose_in_iterexp |> String.concat "\nITER:")
+and prose_out_iterexps iterexps =
+  if List.is_empty iterexps then ""
+  else if List.length iterexps > 1 then
+    failwith "prosing nested iterations not supported"
   else
-    F.asprintf "%sLet %s, obtained by repeating:\n%s%s\n%sfor each %s"
-      (bullet ctx)
-      (out_iterexps |> List.map prose_out_iterexp |> String.concat "\nITER:")
-      (bullet (ctx |> increment_level))
-      inner (bullet ctx)
-      (in_iterexps |> List.map prose_in_iterexp |> String.concat "\nITER:")
+    F.asprintf "Let %s, obtained by repeating:"
+      (iterexps |> List.hd |> prose_out_iterexp)
+
+and prose_in_iterexps sep iterexps =
+  if List.is_empty iterexps then ""
+  else if List.length iterexps > 1 then
+    failwith "prosing nested iterations not supported"
+  else
+    F.asprintf "%sfor each %s" sep (iterexps |> List.hd |> prose_in_iterexp)
 
 (* Instruction *)
 
 and render_instr ctx instr =
-  let bullet = bullet ctx in
   match instr.it with
   | IfI (exp_cond, iterexps, instrs_then, _) ->
-      F.asprintf "%sIf (%s)%s, then\n\n%s" bullet (prose_exp ctx exp_cond)
-        (string_of_iterexps iterexps)
-        (render_instrs (ctx |> increment_level) instrs_then)
+      F.asprintf "%sAssert that %s%s\n%s"
+        (bullet ctx)
+        (prose_exp ctx exp_cond)
+        (prose_in_iterexps ", " iterexps)
+        (render_instrs ctx instrs_then)
   | HoldI (id, notexp, iterexps, holdcase) -> (
       let prosed_relation = 
         let prose_hint_opt = Hintenv.get_rel id ctx.penv.prose in
         match prose_hint_opt with
         | Some prose_hint ->
             let mixop, exps = notexp in
-            (F.asprintf "[%s](%s)"
+            F.asprintf "[%s](%s)%s"
               (prose_hintexp (ctx |> increment_level) exps prose_hint)
-              (string_of_relid id))
-            |> prose_iterations ctx [] iterexps
+              (string_of_relid id)
+              (prose_in_iterexps ", " iterexps)
         | None ->
-            (Format.asprintf "(%s: %s)"(string_of_relid id)
-              (string_of_notexp ctx notexp))
-            |> prose_iterations ctx [] iterexps
+            F.asprintf "(%s: %s)%s" (string_of_relid id)
+              (string_of_notexp ctx notexp) (prose_in_iterexps ", " iterexps)
       in
       match holdcase with
       | BothH (instrs_hold, instrs_nothold) ->
-          F.asprintf "%s, then\n%s\n%sElse,\n\n%s" 
-            prosed_relation
+          F.asprintf "%sIf %s, then\n%s\n%sElse,\n\n%s" 
+            (bullet ctx) prosed_relation
             (render_instrs (ctx |> increment_level) instrs_hold)
-            bullet
+            (bullet ctx)
             (render_instrs (ctx |> increment_level) instrs_nothold)
       | HoldH (instrs_hold, _) ->
-          F.asprintf "%s, then\n%s"
-            prosed_relation
+          F.asprintf "%sIf %s, then\n%s"
+            (bullet ctx) prosed_relation
             (render_instrs (ctx |> increment_level) instrs_hold)
       | NotHoldH (instrs_nothold, _) ->
-          F.asprintf "%s does not hold, then\n%s"
-            prosed_relation
+          F.asprintf "%sIf %s does not hold, then\n%s"
+            (bullet ctx) prosed_relation
             (render_instrs (ctx |> increment_level) instrs_nothold))
   | CaseI (exp, cases, _) ->
-      F.asprintf "%sCase analysis on %s\n%s" bullet (prose_exp ctx exp)
+      F.asprintf "%sCase analysis on %s\n%s" (bullet ctx) (code_of_exp ctx exp)
         (prose_cases (ctx |> increment_level) exp cases)
   | OtherwiseI instr ->
-      F.asprintf "%sOtherwise\n%s" bullet
+      F.asprintf "%sOtherwise\n%s" (bullet ctx)
         (render_instr (ctx |> increment_level) instr)
   | GroupI (id_group, exps_group, instrs_group) ->
-      Format.asprintf "%sGroup %s: %s\n\n%s" bullet
+      Format.asprintf "%sGroup %s: %s\n\n%s" (bullet ctx)
         (string_of_relpathid id_group)
         (match ctx.signature with
         | Some (mixop, inputs) -> string_of_relinput ctx mixop inputs exps_group
         | None -> prose_exps ctx ", " exps_group)
         (render_instrs (ctx |> increment_level) instrs_group)
-  | LetI (exp_l, exp_r, iterexps) ->
-      let out_iters, in_iters = split_iterexps [ exp_l ] iterexps in
-      F.asprintf "Let `%s` be %s" (prose_exp ctx exp_l) (prose_exp ctx exp_r)
-      |> prose_iterations ctx out_iters in_iters
+  | LetI (exp_l, exp_r, iterexps) -> (
+      let out_iters, in_iters = split_iterexps [ exp_l ] iterexps in 
+      (* With no output iterators, print as a single line *)
+      if List.is_empty out_iters then
+        F.asprintf "%sLet %s be %s%s" (bullet ctx) (code_of_exp ctx exp_l)
+          (prose_exp ctx exp_r)
+          (prose_in_iterexps ", " in_iters)
+      (* With output iterators, print as a block with the loop contents indented *)
+      else
+        F.asprintf "%s%s\n%sLet %s be %s%s" (bullet ctx)
+          (prose_out_iterexps out_iters)
+          (ctx |> increment_level |> bullet)
+          (code_of_exp ctx exp_l)
+          (prose_exp ctx exp_r)
+          (prose_in_iterexps ("\n" ^ bullet ctx) in_iters))
   | RuleI (id_rel, notexp, iterexps) -> (
       let prose_hint_opt = Hintenv.get_rel id_rel ctx.penv.prose in
       let input_hint = IEnv.find id_rel ctx.ienv in
@@ -307,20 +359,28 @@ and render_instr ctx instr =
       match prose_hint_opt with
       | Some prose_hint ->
           let mixop, exps = notexp in
-          F.asprintf "Let `%s` be [%s](%s)"
-            (prose_exps ctx ", " outputs)
-            (prose_hintexp (ctx |> increment_level) exps prose_hint)
-            (string_of_relid id_rel)
-          |> prose_iterations ctx out_iters in_iters
+          if List.is_empty out_iters then
+            F.asprintf "%sLet `%s` be [%s](%s)%s" (bullet ctx)
+              (string_of_relid id_rel)
+              (prose_hintexp (ctx |> increment_level) exps prose_hint)
+              (string_of_relid id_rel)
+              (prose_in_iterexps ", " in_iters)
+          else
+            F.asprintf "%s%s\n%sLet `%s` be [%s](%s)%s" (bullet ctx)
+              (prose_out_iterexps out_iters)
+              (ctx |> increment_level |> bullet)
+              (string_of_relid id_rel)
+              (prose_hintexp (ctx |> increment_level) exps prose_hint)
+              (string_of_relid id_rel)
+              (prose_in_iterexps "\n" in_iters)
       | None ->
-          F.asprintf "(%s: %s)" (string_of_relid id_rel)
-            (string_of_notexp ctx notexp)
-          |> prose_iterations ctx [] iterexps)
-  | ResultI [] -> F.asprintf "%sThe relation holds" bullet
+          F.asprintf "(%s: %s)%s" (string_of_relid id_rel)
+            (string_of_notexp ctx notexp) (prose_in_iterexps ", " iterexps))
+  | ResultI [] -> F.asprintf "%sThe relation holds" (bullet ctx)
   | ResultI exps ->
-      F.asprintf "%sResult in %s" bullet (prose_exps ctx ", " exps)
-  | ReturnI exp -> F.asprintf "%sReturn %s" bullet (prose_exp ctx exp)
-  | DebugI exp -> F.asprintf "%sDebug: %s" bullet (prose_exp ctx exp)
+      F.asprintf "%sResult in %s" (bullet ctx) (prose_exps ctx ", " exps)
+  | ReturnI exp -> F.asprintf "%sReturn %s" (bullet ctx) (prose_exp ctx exp)
+  | DebugI exp -> F.asprintf "%sDebug: %s" (bullet ctx) (prose_exp ctx exp)
 
 and render_instrs ctx instrs =
   instrs |> List.map (render_instr ctx) |> String.concat "\n"

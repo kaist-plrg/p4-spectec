@@ -22,8 +22,6 @@ type t = {
   start_index : int option;
   (* relation signature for groups *)
   signature : (Mixop.t * int list) option;
-  (* ?? *)
-  short : bool;
 }
 
 (* Helper functions for context manipulation *)
@@ -38,7 +36,6 @@ let create ?(penv = PEnv.empty) ?(ienv = IEnv.empty) () : t =
     index = 0;
     start_index = None;
     signature = None;
-    short = false;
   }
 
 let init spec_sl : t =
@@ -48,7 +45,8 @@ let with_level ctx level = { ctx with level }
 let with_index ctx index = { ctx with index }
 let with_start ctx start_index = { ctx with start_index = Some start_index }
 let with_signature ctx signature = { ctx with signature }
-let with_short ctx short = { ctx with short }
+let in_code ctx = { ctx with mode = Code }
+let in_prose ctx = { ctx with mode = Prose }
 let reset_start ctx = { ctx with start_index = None }
 let increment_level ctx = { ctx with level = ctx.level + 1 }
 let increment_index ctx = { ctx with index = ctx.index + 1 }
