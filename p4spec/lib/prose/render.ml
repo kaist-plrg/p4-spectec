@@ -290,13 +290,19 @@ and prose_of_in_iterexps ctx sep iterexps =
 
 (* Instruction *)
 
-and render_instr ctx instr =
+and render_instr (ctx : Ctx.t) instr =
   match instr.it with
   | IfI (exp_cond, iterexps, instrs_then, _) ->
+    if ctx.as_assert then
       F.asprintf "%sAssert that %s%s\n%s" (bullet ctx)
         (prose_of_exp ctx exp_cond)
         (prose_of_in_iterexps ctx ", " iterexps)
-        (render_instrs ctx instrs_then)
+        (render_instrs (ctx |> clear_assert) instrs_then)
+    else 
+      F.asprintf "%sIf %s%s\n%s" (bullet ctx)
+        (prose_of_exp ctx exp_cond)
+        (prose_of_in_iterexps ctx ", " iterexps)
+        (render_instrs (ctx |> increment_level) instrs_then)
   | HoldI (id, notexp, iterexps, holdcase) -> (
       let prosed_relation =
         let prose_of_hint_opt = Hintenv.get_rel id ctx.penv.prose in
@@ -346,7 +352,7 @@ and render_instr ctx instr =
         F.asprintf "%sLet %s be %s%s" (bullet ctx) (code_of_exp ctx exp_l)
           (prose_of_exp ctx exp_r)
           (prose_of_in_iterexps ctx ", " in_iters)
-        (* With output iterators, print as a block with the loop contents indented *)
+      (* With output iterators, print as a block with the loop contents indented *)
       else
         F.asprintf "%s%s\n%sLet %s be %s%s" (bullet ctx)
           (prose_of_out_iterexps ctx out_iters)
@@ -388,7 +394,12 @@ and render_instr ctx instr =
   | DebugI exp -> F.asprintf "%sDebug: %s" (bullet ctx) (prose_of_exp ctx exp)
 
 and render_instrs ctx instrs =
-  instrs |> List.map (render_instr ctx) |> String.concat "\n"
+  let if_instrs = List.filter (fun instr -> match instr.it with | IfI _ | OtherwiseI _ -> true | _ -> false) instrs |> List.length in
+  (* When if is unique without else, render as assertion *)
+  if if_instrs = 1 then
+    instrs |> List.map (render_instr (ctx |> as_assert)) |> String.concat "\n"
+  else
+    instrs |> List.map (render_instr ctx) |> String.concat "\n"
 
 (* Relations *)
 

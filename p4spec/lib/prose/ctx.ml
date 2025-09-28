@@ -12,10 +12,12 @@ type t = {
   ienv : IEnv.t;
   (* Negation *)
   neg : bool;
-  (* Rende mode *)
+  (* Render mode *)
   mode : mode;
   (* indent level *)
   level : int;
+  (* only one if statement *)
+  as_assert : bool;
   (* relation signature for groups *)
   signature : (Mixop.t * int list) option;
 }
@@ -29,14 +31,17 @@ let create ?(penv = PEnv.empty) ?(ienv = IEnv.empty) () : t =
     neg = false;
     mode = Prose;
     level = 0;
+    as_assert = false;
     signature = None;
   }
 
 let init spec_sl : t =
   Collect.collect_spec spec_sl |> fun (penv, ienv) -> create ~penv ~ienv ()
 
-let with_level ctx level = { ctx with level }
+let with_level ctx level = { ctx with level; as_assert = false }
 let with_signature ctx signature = { ctx with signature }
+let as_assert ctx = { ctx with as_assert = true }
+let clear_assert ctx = { ctx with as_assert = false }
 let in_code ctx = { ctx with mode = Code }
 let in_prose ctx = { ctx with mode = Prose }
 let increment_level ctx = { ctx with level = ctx.level + 1 }

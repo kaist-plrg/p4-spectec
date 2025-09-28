@@ -30,21 +30,21 @@ relation Type_alpha: typeIR'''' and typeIR'''''
    .... Let `+typeIR_a_spec+` be `+$specialize_typeDef(`+polyTypeDefIR_a+` as `+typeDefIR+`, typeIR_a*)+`
    .... Let `+typeIR_b_spec+` be `+$specialize_typeDef(`+polyTypeDefIR_b+` as `+typeDefIR+`, typeIR_b*)+`
    .... If [`+typeIR_a_spec+` and `+typeIR_b_spec+` are the same type](Type_alpha), then
-    ..... Assert that `+$is_nominal_typeIR(typeIR_a_spec)+` /\ `+$is_nominal_typeIR(typeIR_b_spec)+`
-    ..... If [`+typeIR_a+` and `+typeIR_b+` are the same type](Type_alpha), for each `+typeIR_a+` in `+typeIR_a+`* and `+typeIR_b+` in `+typeIR_b+`*, then
+    ..... If `+$is_nominal_typeIR(typeIR_a_spec)+` /\ `+$is_nominal_typeIR(typeIR_b_spec)+`
+     ...... If [`+typeIR_a+` and `+typeIR_b+` are the same type](Type_alpha), for each `+typeIR_a+` in `+typeIR_a+`* and `+typeIR_b+` in `+typeIR_b+`*, then
+      ....... The relation holds
+    ..... If ~`+$is_nominal_typeIR(typeIR_a_spec)+` /\ ~`+$is_nominal_typeIR(typeIR_b_spec)+`
      ...... The relation holds
-    ..... Assert that ~`+$is_nominal_typeIR(typeIR_a_spec)+` /\ ~`+$is_nominal_typeIR(typeIR_b_spec)+`
-    ..... The relation holds
 . Group typedeftype: typeIR and typeIR'
 
- .. Assert that `+typeIR''''+` has type `+typedefTypeIR+`
- .. Let `+(typedef _tid typeIR_a)+` be `+typeIR''''+` as `+typedefTypeIR+`
- .. If [`+typeIR_a+` and `+typeIR'''''+` are the same type](Type_alpha), then
-  ... The relation holds
- .. Assert that `+typeIR'''''+` has type `+typedefTypeIR+`
- .. Let `+(typedef _tid typeIR_b)+` be `+typeIR'''''+` as `+typedefTypeIR+`
- .. If [`+typeIR''''+` and `+typeIR_b+` are the same type](Type_alpha), then
-  ... The relation holds
+ .. If `+typeIR''''+` has type `+typedefTypeIR+`
+  ... Let `+(typedef _tid typeIR_a)+` be `+typeIR''''+` as `+typedefTypeIR+`
+  ... If [`+typeIR_a+` and `+typeIR'''''+` are the same type](Type_alpha), then
+   .... The relation holds
+ .. If `+typeIR'''''+` has type `+typedefTypeIR+`
+  ... Let `+(typedef _tid typeIR_b)+` be `+typeIR'''''+` as `+typedefTypeIR+`
+  ... If [`+typeIR''''+` and `+typeIR_b+` are the same type](Type_alpha), then
+   .... The relation holds
 . Case analysis on `+typeIR''''+`
  .. Case `+typeIR''''+` has type `+newTypeIR+`
   ... Let `+(type tid typeIR_a)+` be `+typeIR''''+` as `+newTypeIR+`
@@ -1179,12 +1179,12 @@ relation Eval_static: p and TC and (expressionIR # (( _typeIR'' _ctk'' )))
   ... Group ternaryExpressionIR: p and TC and (`+(typedExpressionIR_cond ? typedExpressionIR_true : typedExpressionIR_false)+` as `+expressionIR+` # (( _typeIR _ctk )))
 
    .... Let `+value+` be [the static evaluation of `+typedExpressionIR_cond+`, under cursor `+p+` and typing context `+TC+`](Eval_static)
-   .... Assert that (value = `+(b true)+` as `+value+`)
-   .... Let `+value_true+` be [the static evaluation of `+typedExpressionIR_true+`, under cursor `+p+` and typing context `+TC+`](Eval_static)
-   .... Result in value_true
-   .... Assert that (value = `+(b false)+` as `+value+`)
-   .... Let `+value_false+` be [the static evaluation of `+typedExpressionIR_false+`, under cursor `+p+` and typing context `+TC+`](Eval_static)
-   .... Result in value_false
+   .... If (value = `+(b true)+` as `+value+`)
+    ..... Let `+value_true+` be [the static evaluation of `+typedExpressionIR_true+`, under cursor `+p+` and typing context `+TC+`](Eval_static)
+    ..... Result in value_true
+   .... If (value = `+(b false)+` as `+value+`)
+    ..... Let `+value_false+` be [the static evaluation of `+typedExpressionIR_false+`, under cursor `+p+` and typing context `+TC+`](Eval_static)
+    ..... Result in value_false
 
  .. Case `+expressionIR+` has type `+castExpressionIR+`
   ... Let `+(( typeIR ) typedExpressionIR)+` be `+expressionIR+` as `+castExpressionIR+`
@@ -1243,37 +1243,37 @@ for each `+typedExpressionIR+` in `+typedExpressionIR+`*
 
  .. Case `+expressionIR+` has type `+memberAccessExpressionIR+`
   ... Let `+(memberAccessBaseIR . nameIR)+` be `+expressionIR+` as `+memberAccessExpressionIR+`
-  ... Assert that `+memberAccessBaseIR+` matches pattern `+`TYPE%`+`
-  ... Let `+(type prefixedNameIR)+` be memberAccessBaseIR
-  ... Group memberAccessExpressionIR-type: p and TC and (`+((type prefixedNameIR) . nameIR)+` as `+expressionIR+` # (( typeIR_base _ctk )))
+  ... If `+memberAccessBaseIR+` matches pattern `+`TYPE%`+`
+   .... Let `+(type prefixedNameIR)+` be memberAccessBaseIR
+   .... Group memberAccessExpressionIR-type: p and TC and (`+((type prefixedNameIR) . nameIR)+` as `+expressionIR+` # (( typeIR_base _ctk )))
 
-   .... Let `+typeDefIR'?+` be `+$find_type(p, TC, prefixedNameIR)+`
-   .... Assert that `+typeDefIR'?+` matches pattern `+(_)+`
-   .... Let `+?(typeDefIR)+` be typeDefIR'?
-   .... Assert that `+typeDefIR+` has type `+enumTypeIR+`
-   .... Let `+enumTypeIR+` be `+typeDefIR+` as `+enumTypeIR+`
-   .... Case analysis on `+enumTypeIR+`
-    ..... Case `+enumTypeIR+` matches pattern `ENUM%{%}`
-     ...... Let `+(enum tid { id_member* })+` be enumTypeIR
-     ...... Assert that nameIR is in id_member*
-     ...... Result in `+(tid . nameIR)+` as `+value+`
+    ..... Let `+typeDefIR'?+` be `+$find_type(p, TC, prefixedNameIR)+`
+    ..... Assert that `+typeDefIR'?+` matches pattern `+(_)+`
+    ..... Let `+?(typeDefIR)+` be typeDefIR'?
+    ..... Assert that `+typeDefIR+` has type `+enumTypeIR+`
+    ..... Let `+enumTypeIR+` be `+typeDefIR+` as `+enumTypeIR+`
+    ..... Case analysis on `+enumTypeIR+`
+     ...... Case `+enumTypeIR+` matches pattern `ENUM%{%}`
+      ....... Let `+(enum tid { id_member* })+` be enumTypeIR
+      ....... Assert that nameIR is in id_member*
+      ....... Result in `+(tid . nameIR)+` as `+value+`
 
-    ..... Case `+enumTypeIR+` matches pattern `ENUM%#%{%}`
-     ...... Let `+(enum tid # typeIR { (id_member = value_member ;)* })+` be enumTypeIR
-     ...... Let `+value'?+` be `+$assoc_<id, value>(nameIR, (id_member and value_member)*)+`
-     ...... Assert that `+value'?+` matches pattern `+(_)+`
-     ...... Let `+?(value)+` be value'?
-     ...... Result in `+(tid . nameIR # value)+` as `+value+`
-  ... Assert that `+memberAccessBaseIR+` has type `+typedExpressionIR+`
-  ... Let `+typedExpressionIR_base+` be `+memberAccessBaseIR+` as `+typedExpressionIR+`
-  ... Assert that (nameIR = "size")
-  ... Group memberAccessExpressionIR-expression-stack-size: p and TC and (`+(typedExpressionIR_base as memberAccessBaseIR . "size")+` as `+expressionIR+` # (( _typeIR _ctk )))
+     ...... Case `+enumTypeIR+` matches pattern `ENUM%#%{%}`
+      ....... Let `+(enum tid # typeIR { (id_member = value_member ;)* })+` be enumTypeIR
+      ....... Let `+value'?+` be `+$assoc_<id, value>(nameIR, (id_member and value_member)*)+`
+      ....... Assert that `+value'?+` matches pattern `+(_)+`
+      ....... Let `+?(value)+` be value'?
+      ....... Result in `+(tid . nameIR # value)+` as `+value+`
+  ... If `+memberAccessBaseIR+` has type `+typedExpressionIR+`
+   .... Let `+typedExpressionIR_base+` be `+memberAccessBaseIR+` as `+typedExpressionIR+`
+   .... Assert that (nameIR = "size")
+   .... Group memberAccessExpressionIR-expression-stack-size: p and TC and (`+(typedExpressionIR_base as memberAccessBaseIR . "size")+` as `+expressionIR+` # (( _typeIR _ctk )))
 
-   .... Let `+(_expressionIR # (( typeIR_base _ctk' )))+` be typedExpressionIR_base
-   .... Let `+typeIR+` be `+$canon(typeIR_base)+`
-   .... Assert that `+typeIR+` has type `+headerStackTypeIR+`
-   .... Let `+(_typeIR' [ n_size ])+` be `+typeIR+` as `+headerStackTypeIR+`
-   .... Result in `+(d n_size as int)+` as `+value+`
+    ..... Let `+(_expressionIR # (( typeIR_base _ctk' )))+` be typedExpressionIR_base
+    ..... Let `+typeIR+` be `+$canon(typeIR_base)+`
+    ..... Assert that `+typeIR+` has type `+headerStackTypeIR+`
+    ..... Let `+(_typeIR' [ n_size ])+` be `+typeIR+` as `+headerStackTypeIR+`
+    ..... Result in `+(d n_size as int)+` as `+value+`
 
  .. Case `+expressionIR+` has type `+sliceAccessExpressionIR+`
   ... Let `+(typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ])+` be `+expressionIR+` as `+sliceAccessExpressionIR+`
@@ -1288,40 +1288,40 @@ for each `+typedExpressionIR+` in `+typedExpressionIR+`*
   ... Let `+callExpressionIR+` be `+expressionIR+` as `+callExpressionIR+`
   ... Assert that `+callExpressionIR+` matches pattern `+`%<%>(%)`+`
   ... Let `+(routineTargetIR < typeArgumentIR* >( argumentIR* ))+` be callExpressionIR
-  ... Assert that `+typeArgumentIR*+` matches pattern `+[]+`
-  ... Assert that `+argumentIR*+` matches pattern `+[]+`
-  ... Group callExpressionIR-builtin-size: p and TC and (`+(routineTargetIR < [] >( [] ))+` as `+expressionIR+` # (( _typeIR _ctk )))
+  ... If `+typeArgumentIR*+` matches pattern `+[]+`
+   .... Assert that `+argumentIR*+` matches pattern `+[]+`
+   .... Group callExpressionIR-builtin-size: p and TC and (`+(routineTargetIR < [] >( [] ))+` as `+expressionIR+` # (( _typeIR _ctk )))
 
-   .... Case analysis on `+routineTargetIR+`
-    ..... Case `+routineTargetIR+` matches pattern `%.%`
-     ...... Let `+(typedExpressionIR_base . nameIR)+` be routineTargetIR
-     ...... Let `+(_expressionIR # (( typeIR_base _ctk' )))+` be typedExpressionIR_base
-     ...... Assert that nameIR is in ["minSizeInBits" and "minSizeInBytes" and "maxSizeInBits" and "maxSizeInBytes"]
-     ...... Result in `+$sizeof(typeIR_base, nameIR)+`
+    ..... Case analysis on `+routineTargetIR+`
+     ...... Case `+routineTargetIR+` matches pattern `%.%`
+      ....... Let `+(typedExpressionIR_base . nameIR)+` be routineTargetIR
+      ....... Let `+(_expressionIR # (( typeIR_base _ctk' )))+` be typedExpressionIR_base
+      ....... Assert that nameIR is in ["minSizeInBits" and "minSizeInBytes" and "maxSizeInBits" and "maxSizeInBytes"]
+      ....... Result in `+$sizeof(typeIR_base, nameIR)+`
 
-    ..... Case `+routineTargetIR+` matches pattern `TYPE%.%`
-     ...... Let `+(type prefixedNameIR . nameIR)+` be routineTargetIR
-     ...... Let `+typeDefIR'?+` be `+$find_type(p, TC, prefixedNameIR)+`
-     ...... Assert that `+typeDefIR'?+` matches pattern `+(_)+`
-     ...... Let `+?(typeDefIR)+` be typeDefIR'?
-     ...... Case analysis on `+typeDefIR+`
-      ....... Case `+typeDefIR+` has type `+typeIR+`
-       ........ Let `+typeIR_base+` be `+typeDefIR+` as `+typeIR+`
-       ........ Assert that nameIR is in ["minSizeInBits" and "minSizeInBytes" and "maxSizeInBits" and "maxSizeInBytes"]
-       ........ Result in `+$sizeof(typeIR_base, nameIR)+`
+     ...... Case `+routineTargetIR+` matches pattern `TYPE%.%`
+      ....... Let `+(type prefixedNameIR . nameIR)+` be routineTargetIR
+      ....... Let `+typeDefIR'?+` be `+$find_type(p, TC, prefixedNameIR)+`
+      ....... Assert that `+typeDefIR'?+` matches pattern `+(_)+`
+      ....... Let `+?(typeDefIR)+` be typeDefIR'?
+      ....... Case analysis on `+typeDefIR+`
+       ........ Case `+typeDefIR+` has type `+typeIR+`
+        ......... Let `+typeIR_base+` be `+typeDefIR+` as `+typeIR+`
+        ......... Assert that nameIR is in ["minSizeInBits" and "minSizeInBytes" and "maxSizeInBits" and "maxSizeInBytes"]
+        ......... Result in `+$sizeof(typeIR_base, nameIR)+`
 
-      ....... Case `+typeDefIR+` has type `+polyTypeDefIR+`
-       ........ Let `+(typeIR_base < tid* , tid'* >)+` be `+typeDefIR+` as `+polyTypeDefIR+`
-       ........ Assert that `+tid*+` matches pattern `+[]+`
-       ........ Assert that `+tid'*+` matches pattern `+[]+`
-       ........ Assert that nameIR is in ["minSizeInBits" and "minSizeInBytes" and "maxSizeInBits" and "maxSizeInBytes"]
-       ........ Result in `+$sizeof(typeIR_base, nameIR)+`
-  ... Assert that `+routineTargetIR+` matches pattern `+`(%)`+`
-  ... Let `+(( routineTargetIR ))+` be routineTargetIR
-  ... Group callExpressionIR-parenthesized: p and TC and (`+((( routineTargetIR )) < typeArgumentIR* >( argumentIR* ))+` as `+expressionIR+` # (( typeIR ctk )))
+       ........ Case `+typeDefIR+` has type `+polyTypeDefIR+`
+        ......... Let `+(typeIR_base < tid* , tid'* >)+` be `+typeDefIR+` as `+polyTypeDefIR+`
+        ......... Assert that `+tid*+` matches pattern `+[]+`
+        ......... Assert that `+tid'*+` matches pattern `+[]+`
+        ......... Assert that nameIR is in ["minSizeInBits" and "minSizeInBytes" and "maxSizeInBits" and "maxSizeInBytes"]
+        ......... Result in `+$sizeof(typeIR_base, nameIR)+`
+  ... If `+routineTargetIR+` matches pattern `+`(%)`+`
+   .... Let `+(( routineTargetIR ))+` be routineTargetIR
+   .... Group callExpressionIR-parenthesized: p and TC and (`+((( routineTargetIR )) < typeArgumentIR* >( argumentIR* ))+` as `+expressionIR+` # (( typeIR ctk )))
 
-   .... Let `+value+` be [the static evaluation of `+((routineTargetIR < typeArgumentIR* >( argumentIR* )) as expressionIR # (( _typeIR'' _ctk'' )))+`, under cursor `+p+` and typing context `+TC+`](Eval_static)
-   .... Result in value
+    ..... Let `+value+` be [the static evaluation of `+((routineTargetIR < typeArgumentIR* >( argumentIR* )) as expressionIR # (( _typeIR'' _ctk'' )))+`, under cursor `+p+` and typing context `+TC+`](Eval_static)
+    ..... Result in value
 
  .. Case `+expressionIR+` has type `+parenthesizedExpressionIR+`
   ... Let `+(( typedExpressionIR ))+` be `+expressionIR+` as `+parenthesizedExpressionIR+`
@@ -1874,15 +1874,15 @@ relation Sub_expl_canon_neq: typeIR'''''' and typeIR'''''''
 . Let `+[typeIR_b]+` be typeIR'*
 . Group set: typeIR and `+(set< [typeIR_b] >)+` as `+typeIR+`
 
- .. Assert that `+typeIR''''''+` has type `+setTypeIR+`
- .. Let `+(set< typeIR'''* >)+` be `+typeIR''''''+` as `+setTypeIR+`
- .. Assert that `+typeIR'''*+` matches pattern `+[ _/1 ]+`
- .. Let `+[typeIR_a]+` be typeIR'''*
- .. If [`+typeIR_a+` can be explicitly cast to `+typeIR_b+`](Sub_expl), then
-  ... The relation holds
- .. Assert that ~`+$is_set_typeIR(typeIR'''''')+`
- .. If [`+typeIR''''''+` can be explicitly cast to `+typeIR_b+`](Sub_expl), then
-  ... The relation holds
+ .. If `+typeIR''''''+` has type `+setTypeIR+`
+  ... Let `+(set< typeIR'''* >)+` be `+typeIR''''''+` as `+setTypeIR+`
+  ... Assert that `+typeIR'''*+` matches pattern `+[ _/1 ]+`
+  ... Let `+[typeIR_a]+` be typeIR'''*
+  ... If [`+typeIR_a+` can be explicitly cast to `+typeIR_b+`](Sub_expl), then
+   .... The relation holds
+ .. If ~`+$is_set_typeIR(typeIR'''''')+`
+  ... If [`+typeIR''''''+` can be explicitly cast to `+typeIR_b+`](Sub_expl), then
+   .... The relation holds
 
 relation Sub_impl: typeIR_a and typeIR_b
 
@@ -2185,21 +2185,21 @@ relation Expr_ok: p and TC and expression'''
    .... Result in (`+(" text ")+` as `+expressionIR+` # expressionNoteIR)
 . Group referenceExpression: p and TC and expression
 
- .. Assert that `+expression'''+` has type `+prefixedNonTypeName+`
- .. Let `+prefixedNonTypeName+` be `+expression'''+` as `+prefixedNonTypeName+`
- .. Let `+prefixedNameIR+` be `+$prefixedNonTypeName(prefixedNonTypeName)+`
- .. Let `+varTypeIR?+` be `+$find_var(p, TC, prefixedNameIR)+`
- .. Assert that `+varTypeIR?+` matches pattern `+(_)+`
- .. Let `+?((_direction typeIR ctk _value?))+` be varTypeIR?
- .. Let `+expressionNoteIR+` be (( typeIR ctk ))
- .. Result in (`+prefixedNameIR+` as `+expressionIR+` # expressionNoteIR)
- .. Assert that (`+(this)+` as `+expression+` = expression''')
- .. Let `+prefixedNameIR+` be (` "this")
- .. Let `+varTypeIR?+` be `+$find_var(p, TC, prefixedNameIR)+`
- .. Assert that `+varTypeIR?+` matches pattern `+(_)+`
- .. Let `+?((_direction typeIR ctk _value?))+` be varTypeIR?
- .. Let `+expressionNoteIR+` be (( typeIR ctk ))
- .. Result in (`+prefixedNameIR+` as `+expressionIR+` # expressionNoteIR)
+ .. If `+expression'''+` has type `+prefixedNonTypeName+`
+  ... Let `+prefixedNonTypeName+` be `+expression'''+` as `+prefixedNonTypeName+`
+  ... Let `+prefixedNameIR+` be `+$prefixedNonTypeName(prefixedNonTypeName)+`
+  ... Let `+varTypeIR?+` be `+$find_var(p, TC, prefixedNameIR)+`
+  ... Assert that `+varTypeIR?+` matches pattern `+(_)+`
+  ... Let `+?((_direction typeIR ctk _value?))+` be varTypeIR?
+  ... Let `+expressionNoteIR+` be (( typeIR ctk ))
+  ... Result in (`+prefixedNameIR+` as `+expressionIR+` # expressionNoteIR)
+ .. If (`+(this)+` as `+expression+` = expression''')
+  ... Let `+prefixedNameIR+` be (` "this")
+  ... Let `+varTypeIR?+` be `+$find_var(p, TC, prefixedNameIR)+`
+  ... Assert that `+varTypeIR?+` matches pattern `+(_)+`
+  ... Let `+?((_direction typeIR ctk _value?))+` be varTypeIR?
+  ... Let `+expressionNoteIR+` be (( typeIR ctk ))
+  ... Result in (`+prefixedNameIR+` as `+expressionIR+` # expressionNoteIR)
 . Case analysis on `+expression'''+`
  .. Case `+expression'''+` has type `+defaultExpression+`
   ... Let `+defaultExpression+` be `+expression'''+` as `+defaultExpression+`
@@ -2334,19 +2334,19 @@ relation Expr_ok: p and TC and expression'''
    .... Let `+ctk_l_reduced+` be `+$ctkof_expression(typedExpressionIR_l_reduced)+`
    .... Let `+typeIR_r_reduced+` be `+$typeof_expression(typedExpressionIR_r_reduced)+`
    .... Let `+ctk_r_reduced+` be `+$ctkof_expression(typedExpressionIR_r_reduced)+`
-   .... Assert that `+$is_fixed_bit_typeIR(typeIR_r_reduced)+`
-   .... Let `+ctk_reduced+` be `+$join_ctk(ctk_l_reduced, ctk_r_reduced)+`
-   .... Let `+expressionNoteIR+` be (( typeIR_l_reduced ctk_reduced ))
-   .... Result in (`+(typedExpressionIR_l_reduced binop typedExpressionIR_r_reduced)+` as `+expressionIR+` # expressionNoteIR)
-   .... Assert that `+ctk_r_reduced+` matches pattern `+`LCTK`+`
-   .... Assert that `+$is_arbitrary_int_typeIR(typeIR_r_reduced)+`
-   .... Let `+ctk_reduced+` be `+$join_ctk(ctk_l_reduced, ctk_r_reduced)+`
-   .... Let `+expressionNoteIR+` be (( typeIR_l_reduced ctk_reduced ))
-   .... Result in (`+(typedExpressionIR_l_reduced binop typedExpressionIR_r_reduced)+` as `+expressionIR+` # expressionNoteIR)
-   .... Assert that `+$is_fixed_int_typeIR(typeIR_r_reduced)+`
-   .... Let `+ctk_reduced+` be `+$join_ctk(ctk_l_reduced, ctk_r_reduced)+`
-   .... Let `+expressionNoteIR+` be (( typeIR_l_reduced ctk_reduced ))
-   .... Result in (`+(typedExpressionIR_l_reduced binop typedExpressionIR_r_reduced)+` as `+expressionIR+` # expressionNoteIR)
+   .... If `+$is_fixed_bit_typeIR(typeIR_r_reduced)+`
+    ..... Let `+ctk_reduced+` be `+$join_ctk(ctk_l_reduced, ctk_r_reduced)+`
+    ..... Let `+expressionNoteIR+` be (( typeIR_l_reduced ctk_reduced ))
+    ..... Result in (`+(typedExpressionIR_l_reduced binop typedExpressionIR_r_reduced)+` as `+expressionIR+` # expressionNoteIR)
+   .... If `+ctk_r_reduced+` matches pattern `+`LCTK`+`
+    ..... If `+$is_arbitrary_int_typeIR(typeIR_r_reduced)+`
+     ...... Let `+ctk_reduced+` be `+$join_ctk(ctk_l_reduced, ctk_r_reduced)+`
+     ...... Let `+expressionNoteIR+` be (( typeIR_l_reduced ctk_reduced ))
+     ...... Result in (`+(typedExpressionIR_l_reduced binop typedExpressionIR_r_reduced)+` as `+expressionIR+` # expressionNoteIR)
+    ..... If `+$is_fixed_int_typeIR(typeIR_r_reduced)+`
+     ...... Let `+ctk_reduced+` be `+$join_ctk(ctk_l_reduced, ctk_r_reduced)+`
+     ...... Let `+expressionNoteIR+` be (( typeIR_l_reduced ctk_reduced ))
+     ...... Result in (`+(typedExpressionIR_l_reduced binop typedExpressionIR_r_reduced)+` as `+expressionIR+` # expressionNoteIR)
   ... Group binaryExpression-equality: p and TC and `+(expression_l binop expression_r)+` as `+expression+`
 
    .... Assert that binop is in [(==) and (!=)]
@@ -2639,65 +2639,65 @@ for each `+expression_f+` in `+expression_f+`*
     ..... Let `+expression_base+` be `+memberAccessBase+` as `+expression+`
     ..... Group memberAccessExpression-expression: p and TC and `+(expression_base as memberAccessBase . member)+` as `+expression+`
 
-     ...... Assert that ("size" = `+$name(member)+`)
-     ...... Let `+typedExpressionIR_base+` be [the result of typing `+expression_base+`, under cursor `+p+` and typing context `+TC+`](Expr_ok)
-     ...... Let `+typeIR_base+` be `+$typeof_expression(typedExpressionIR_base)+`
-     ...... Let `+typeIR'+` be `+$canon(typeIR_base)+`
-     ...... Assert that `+typeIR'+` has type `+headerStackTypeIR+`
-     ...... Let `+(typeIR [ n_size ])+` be `+typeIR'+` as `+headerStackTypeIR+`
-     ...... Let `+expressionNoteIR+` be (( `+(bit< 32 >)+` as `+typeIR+` (lctk) ))
-     ...... Result in (`+(typedExpressionIR_base as memberAccessBaseIR . "size")+` as `+expressionIR+` # expressionNoteIR)
-     ...... Assert that ("lastIndex" = `+$name(member)+`)
-     ...... Assert that (p = (block)) /\ `+$is_parser_blockKind(TC.block.kind)+`
-     ...... Let `+typedExpressionIR_base+` be [the result of typing `+expression_base+`, under cursor `+p+` and typing context `+TC+`](Expr_ok)
-     ...... Let `+typeIR_base+` be `+$typeof_expression(typedExpressionIR_base)+`
-     ...... Let `+typeIR'+` be `+$canon(typeIR_base)+`
-     ...... Assert that `+typeIR'+` has type `+headerStackTypeIR+`
-     ...... Let `+(typeIR [ n_size ])+` be `+typeIR'+` as `+headerStackTypeIR+`
-     ...... Let `+expressionNoteIR+` be (( `+(bit< 32 >)+` as `+typeIR+` (dyn) ))
-     ...... Result in (`+(typedExpressionIR_base as memberAccessBaseIR . "lastIndex")+` as `+expressionIR+` # expressionNoteIR)
-     ...... Assert that (p = (local)) /\ `+$is_parser_state_localKind(TC.local.kind)+`
-     ...... Let `+typedExpressionIR_base+` be [the result of typing `+expression_base+`, under cursor `+p+` and typing context `+TC+`](Expr_ok)
-     ...... Let `+typeIR_base+` be `+$typeof_expression(typedExpressionIR_base)+`
-     ...... Let `+typeIR'+` be `+$canon(typeIR_base)+`
-     ...... Assert that `+typeIR'+` has type `+headerStackTypeIR+`
-     ...... Let `+(typeIR [ n_size ])+` be `+typeIR'+` as `+headerStackTypeIR+`
-     ...... Let `+expressionNoteIR+` be (( `+(bit< 32 >)+` as `+typeIR+` (dyn) ))
-     ...... Result in (`+(typedExpressionIR_base as memberAccessBaseIR . "lastIndex")+` as `+expressionIR+` # expressionNoteIR)
-     ...... Assert that ("last" = `+$name(member)+`)
-     ...... Assert that (p = (block)) /\ `+$is_parser_blockKind(TC.block.kind)+`
-     ...... Let `+typedExpressionIR_base+` be [the result of typing `+expression_base+`, under cursor `+p+` and typing context `+TC+`](Expr_ok)
-     ...... Let `+typeIR_base+` be `+$typeof_expression(typedExpressionIR_base)+`
-     ...... Let `+typeIR'+` be `+$canon(typeIR_base)+`
-     ...... Assert that `+typeIR'+` has type `+headerStackTypeIR+`
-     ...... Let `+(typeIR [ n_size ])+` be `+typeIR'+` as `+headerStackTypeIR+`
-     ...... Let `+expressionNoteIR+` be (( typeIR (dyn) ))
-     ...... Result in (`+(typedExpressionIR_base as memberAccessBaseIR . "last")+` as `+expressionIR+` # expressionNoteIR)
-     ...... Assert that (p = (local)) /\ `+$is_parser_state_localKind(TC.local.kind)+`
-     ...... Let `+typedExpressionIR_base+` be [the result of typing `+expression_base+`, under cursor `+p+` and typing context `+TC+`](Expr_ok)
-     ...... Let `+typeIR_base+` be `+$typeof_expression(typedExpressionIR_base)+`
-     ...... Let `+typeIR'+` be `+$canon(typeIR_base)+`
-     ...... Assert that `+typeIR'+` has type `+headerStackTypeIR+`
-     ...... Let `+(typeIR [ n_size ])+` be `+typeIR'+` as `+headerStackTypeIR+`
-     ...... Let `+expressionNoteIR+` be (( typeIR (dyn) ))
-     ...... Result in (`+(typedExpressionIR_base as memberAccessBaseIR . "last")+` as `+expressionIR+` # expressionNoteIR)
-     ...... Assert that ("next" = `+$name(member)+`)
-     ...... Assert that (p = (block)) /\ `+$is_parser_blockKind(TC.block.kind)+`
-     ...... Let `+typedExpressionIR_base+` be [the result of typing `+expression_base+`, under cursor `+p+` and typing context `+TC+`](Expr_ok)
-     ...... Let `+typeIR_base+` be `+$typeof_expression(typedExpressionIR_base)+`
-     ...... Let `+typeIR'+` be `+$canon(typeIR_base)+`
-     ...... Assert that `+typeIR'+` has type `+headerStackTypeIR+`
-     ...... Let `+(typeIR [ n_size ])+` be `+typeIR'+` as `+headerStackTypeIR+`
-     ...... Let `+expressionNoteIR+` be (( typeIR (dyn) ))
-     ...... Result in (`+(typedExpressionIR_base as memberAccessBaseIR . "next")+` as `+expressionIR+` # expressionNoteIR)
-     ...... Assert that (p = (local)) /\ `+$is_parser_state_localKind(TC.local.kind)+`
-     ...... Let `+typedExpressionIR_base+` be [the result of typing `+expression_base+`, under cursor `+p+` and typing context `+TC+`](Expr_ok)
-     ...... Let `+typeIR_base+` be `+$typeof_expression(typedExpressionIR_base)+`
-     ...... Let `+typeIR'+` be `+$canon(typeIR_base)+`
-     ...... Assert that `+typeIR'+` has type `+headerStackTypeIR+`
-     ...... Let `+(typeIR [ n_size ])+` be `+typeIR'+` as `+headerStackTypeIR+`
-     ...... Let `+expressionNoteIR+` be (( typeIR (dyn) ))
-     ...... Result in (`+(typedExpressionIR_base as memberAccessBaseIR . "next")+` as `+expressionIR+` # expressionNoteIR)
+     ...... If ("size" = `+$name(member)+`)
+      ....... Let `+typedExpressionIR_base+` be [the result of typing `+expression_base+`, under cursor `+p+` and typing context `+TC+`](Expr_ok)
+      ....... Let `+typeIR_base+` be `+$typeof_expression(typedExpressionIR_base)+`
+      ....... Let `+typeIR'+` be `+$canon(typeIR_base)+`
+      ....... Assert that `+typeIR'+` has type `+headerStackTypeIR+`
+      ....... Let `+(typeIR [ n_size ])+` be `+typeIR'+` as `+headerStackTypeIR+`
+      ....... Let `+expressionNoteIR+` be (( `+(bit< 32 >)+` as `+typeIR+` (lctk) ))
+      ....... Result in (`+(typedExpressionIR_base as memberAccessBaseIR . "size")+` as `+expressionIR+` # expressionNoteIR)
+     ...... If ("lastIndex" = `+$name(member)+`)
+      ....... If (p = (block)) /\ `+$is_parser_blockKind(TC.block.kind)+`
+       ........ Let `+typedExpressionIR_base+` be [the result of typing `+expression_base+`, under cursor `+p+` and typing context `+TC+`](Expr_ok)
+       ........ Let `+typeIR_base+` be `+$typeof_expression(typedExpressionIR_base)+`
+       ........ Let `+typeIR'+` be `+$canon(typeIR_base)+`
+       ........ Assert that `+typeIR'+` has type `+headerStackTypeIR+`
+       ........ Let `+(typeIR [ n_size ])+` be `+typeIR'+` as `+headerStackTypeIR+`
+       ........ Let `+expressionNoteIR+` be (( `+(bit< 32 >)+` as `+typeIR+` (dyn) ))
+       ........ Result in (`+(typedExpressionIR_base as memberAccessBaseIR . "lastIndex")+` as `+expressionIR+` # expressionNoteIR)
+      ....... If (p = (local)) /\ `+$is_parser_state_localKind(TC.local.kind)+`
+       ........ Let `+typedExpressionIR_base+` be [the result of typing `+expression_base+`, under cursor `+p+` and typing context `+TC+`](Expr_ok)
+       ........ Let `+typeIR_base+` be `+$typeof_expression(typedExpressionIR_base)+`
+       ........ Let `+typeIR'+` be `+$canon(typeIR_base)+`
+       ........ Assert that `+typeIR'+` has type `+headerStackTypeIR+`
+       ........ Let `+(typeIR [ n_size ])+` be `+typeIR'+` as `+headerStackTypeIR+`
+       ........ Let `+expressionNoteIR+` be (( `+(bit< 32 >)+` as `+typeIR+` (dyn) ))
+       ........ Result in (`+(typedExpressionIR_base as memberAccessBaseIR . "lastIndex")+` as `+expressionIR+` # expressionNoteIR)
+     ...... If ("last" = `+$name(member)+`)
+      ....... If (p = (block)) /\ `+$is_parser_blockKind(TC.block.kind)+`
+       ........ Let `+typedExpressionIR_base+` be [the result of typing `+expression_base+`, under cursor `+p+` and typing context `+TC+`](Expr_ok)
+       ........ Let `+typeIR_base+` be `+$typeof_expression(typedExpressionIR_base)+`
+       ........ Let `+typeIR'+` be `+$canon(typeIR_base)+`
+       ........ Assert that `+typeIR'+` has type `+headerStackTypeIR+`
+       ........ Let `+(typeIR [ n_size ])+` be `+typeIR'+` as `+headerStackTypeIR+`
+       ........ Let `+expressionNoteIR+` be (( typeIR (dyn) ))
+       ........ Result in (`+(typedExpressionIR_base as memberAccessBaseIR . "last")+` as `+expressionIR+` # expressionNoteIR)
+      ....... If (p = (local)) /\ `+$is_parser_state_localKind(TC.local.kind)+`
+       ........ Let `+typedExpressionIR_base+` be [the result of typing `+expression_base+`, under cursor `+p+` and typing context `+TC+`](Expr_ok)
+       ........ Let `+typeIR_base+` be `+$typeof_expression(typedExpressionIR_base)+`
+       ........ Let `+typeIR'+` be `+$canon(typeIR_base)+`
+       ........ Assert that `+typeIR'+` has type `+headerStackTypeIR+`
+       ........ Let `+(typeIR [ n_size ])+` be `+typeIR'+` as `+headerStackTypeIR+`
+       ........ Let `+expressionNoteIR+` be (( typeIR (dyn) ))
+       ........ Result in (`+(typedExpressionIR_base as memberAccessBaseIR . "last")+` as `+expressionIR+` # expressionNoteIR)
+     ...... If ("next" = `+$name(member)+`)
+      ....... If (p = (block)) /\ `+$is_parser_blockKind(TC.block.kind)+`
+       ........ Let `+typedExpressionIR_base+` be [the result of typing `+expression_base+`, under cursor `+p+` and typing context `+TC+`](Expr_ok)
+       ........ Let `+typeIR_base+` be `+$typeof_expression(typedExpressionIR_base)+`
+       ........ Let `+typeIR'+` be `+$canon(typeIR_base)+`
+       ........ Assert that `+typeIR'+` has type `+headerStackTypeIR+`
+       ........ Let `+(typeIR [ n_size ])+` be `+typeIR'+` as `+headerStackTypeIR+`
+       ........ Let `+expressionNoteIR+` be (( typeIR (dyn) ))
+       ........ Result in (`+(typedExpressionIR_base as memberAccessBaseIR . "next")+` as `+expressionIR+` # expressionNoteIR)
+      ....... If (p = (local)) /\ `+$is_parser_state_localKind(TC.local.kind)+`
+       ........ Let `+typedExpressionIR_base+` be [the result of typing `+expression_base+`, under cursor `+p+` and typing context `+TC+`](Expr_ok)
+       ........ Let `+typeIR_base+` be `+$typeof_expression(typedExpressionIR_base)+`
+       ........ Let `+typeIR'+` be `+$canon(typeIR_base)+`
+       ........ Assert that `+typeIR'+` has type `+headerStackTypeIR+`
+       ........ Let `+(typeIR [ n_size ])+` be `+typeIR'+` as `+headerStackTypeIR+`
+       ........ Let `+expressionNoteIR+` be (( typeIR (dyn) ))
+       ........ Result in (`+(typedExpressionIR_base as memberAccessBaseIR . "next")+` as `+expressionIR+` # expressionNoteIR)
      ...... Let `+typedExpressionIR_base+` be [the result of typing `+expression_base+`, under cursor `+p+` and typing context `+TC+`](Expr_ok)
      ...... Let `+typeIR_base+` be `+$typeof_expression(typedExpressionIR_base)+`
      ...... Let `+typeIR'+` be `+$canon(typeIR_base)+`
@@ -3265,31 +3265,31 @@ and the modified typing context](Decl_ok)
   ... Let `+(annotationList type name initializerOpt ;)+` be `+blockElementStatement+` as `+variableDeclaration+`
   ... Group variableDeclaration: TC_0 and f and `+(annotationList type name initializerOpt ;)+` as `+blockElementStatement+`
 
-   .... Assert that `+initializerOpt+` matches pattern `+``EMPTY`+`
-   .... Let `+typeIR and tid*+` be [the result of typing `+type as typeOrVoid+`, under cursor `+(local)+` and typing context `+TC_0+`,
+   .... If `+initializerOpt+` matches pattern `+``EMPTY`+`
+    ..... Let `+typeIR and tid*+` be [the result of typing `+type as typeOrVoid+`, under cursor `+(local)+` and typing context `+TC_0+`,
 and the set of inserted type variables](Type_ok)
-   .... Assert that `+tid*+` matches pattern `+[]+`
-   .... If [`+typeIR+` is a well-formed type, assuming bound type ids `+$bound((local), TC_0)+`](Type_wf), then
-    ..... Assert that `+$is_assignable_typeIR(typeIR)+`
-    ..... Let `+nameIR+` be `+$name(name)+`
-    ..... Let `+TC_1+` be `+$add_var((local), TC_0, nameIR, ((inout) typeIR (dyn) ?()))+`
-    ..... Let `+variableDeclarationIR+` be (annotationList typeIR nameIR ?() ;)
-    ..... Result in TC_1 and f and `+variableDeclarationIR+` as `+blockElementStatementIR+`
-   .... Assert that `+initializerOpt+` has type `+initializer+`
-   .... Let `+(= expression_init)+` be `+initializerOpt+` as `+initializer+`
-   .... Let `+typeIR and tid*+` be [the result of typing `+type as typeOrVoid+`, under cursor `+(local)+` and typing context `+TC_0+`,
+    ..... Assert that `+tid*+` matches pattern `+[]+`
+    ..... If [`+typeIR+` is a well-formed type, assuming bound type ids `+$bound((local), TC_0)+`](Type_wf), then
+     ...... Assert that `+$is_assignable_typeIR(typeIR)+`
+     ...... Let `+nameIR+` be `+$name(name)+`
+     ...... Let `+TC_1+` be `+$add_var((local), TC_0, nameIR, ((inout) typeIR (dyn) ?()))+`
+     ...... Let `+variableDeclarationIR+` be (annotationList typeIR nameIR ?() ;)
+     ...... Result in TC_1 and f and `+variableDeclarationIR+` as `+blockElementStatementIR+`
+   .... If `+initializerOpt+` has type `+initializer+`
+    ..... Let `+(= expression_init)+` be `+initializerOpt+` as `+initializer+`
+    ..... Let `+typeIR and tid*+` be [the result of typing `+type as typeOrVoid+`, under cursor `+(local)+` and typing context `+TC_0+`,
 and the set of inserted type variables](Type_ok)
-   .... Assert that `+tid*+` matches pattern `+[]+`
-   .... If [`+typeIR+` is a well-formed type, assuming bound type ids `+$bound((local), TC_0)+`](Type_wf), then
-    ..... Assert that `+$is_assignable_typeIR(typeIR)+`
-    ..... Let `+typedExpressionIR_init+` be [the result of typing `+expression_init+`, under cursor `+(local)+` and typing context `+TC_0+`](Expr_ok)
-    ..... Let `+typedExpressionIR?+` be `+$coerce_unary(typedExpressionIR_init, typeIR)+`
-    ..... Assert that `+typedExpressionIR?+` matches pattern `+(_)+`
-    ..... Let `+?(typedExpressionIR_init_cast)+` be typedExpressionIR?
-    ..... Let `+nameIR+` be `+$name(name)+`
-    ..... Let `+TC_1+` be `+$add_var((local), TC_0, nameIR, ((inout) typeIR (dyn) ?()))+`
-    ..... Let `+variableDeclarationIR+` be (annotationList typeIR nameIR ?((= typedExpressionIR_init_cast)) ;)
-    ..... Result in TC_1 and f and `+variableDeclarationIR+` as `+blockElementStatementIR+`
+    ..... Assert that `+tid*+` matches pattern `+[]+`
+    ..... If [`+typeIR+` is a well-formed type, assuming bound type ids `+$bound((local), TC_0)+`](Type_wf), then
+     ...... Assert that `+$is_assignable_typeIR(typeIR)+`
+     ...... Let `+typedExpressionIR_init+` be [the result of typing `+expression_init+`, under cursor `+(local)+` and typing context `+TC_0+`](Expr_ok)
+     ...... Let `+typedExpressionIR?+` be `+$coerce_unary(typedExpressionIR_init, typeIR)+`
+     ...... Assert that `+typedExpressionIR?+` matches pattern `+(_)+`
+     ...... Let `+?(typedExpressionIR_init_cast)+` be typedExpressionIR?
+     ...... Let `+nameIR+` be `+$name(name)+`
+     ...... Let `+TC_1+` be `+$add_var((local), TC_0, nameIR, ((inout) typeIR (dyn) ?()))+`
+     ...... Let `+variableDeclarationIR+` be (annotationList typeIR nameIR ?((= typedExpressionIR_init_cast)) ;)
+     ...... Result in TC_1 and f and `+variableDeclarationIR+` as `+blockElementStatementIR+`
 
  .. Case `+blockElementStatement+` has type `+statement+`
   ... Let `+statement+` be `+blockElementStatement+` as `+statement+`
@@ -3327,32 +3327,32 @@ relation Block_ok: TC_0 and f and (annotationList { blockElementStatementList })
 
 relation Parameter_ok: p and TC and (annotationList direction type name initializerOpt)
 
-. Assert that `+initializerOpt+` matches pattern `+``EMPTY`+`
-. Group empty: p and TC and (annotationList direction type name ())
+. If `+initializerOpt+` matches pattern `+``EMPTY`+`
+ .. Group empty: p and TC and (annotationList direction type name ())
 
- .. Let `+typeIR and tid_fresh*+` be [the result of typing `+type as typeOrVoid+`, under cursor `+p+` and typing context `+TC+`,
+  ... Let `+typeIR and tid_fresh*+` be [the result of typing `+type as typeOrVoid+`, under cursor `+p+` and typing context `+TC+`,
 and the set of inserted type variables](Type_ok)
- .. Let `+bound+` be `+$union_set<tid>(`+$bound(p, TC)+`, ({ tid_fresh* }))+`
- .. If [`+typeIR+` is a well-formed type, assuming bound type ids `+bound+`](Type_wf), then
-  ... Let `+nameIR+` be `+$name(name)+`
-  ... Result in (annotationList direction typeIR nameIR ?()) and tid_fresh*
-. Assert that `+initializerOpt+` has type `+initializer+`
-. Let `+(= expression_init)+` be `+initializerOpt+` as `+initializer+`
-. Group initializer: p and TC and (annotationList direction type name `+(= expression_init)+` as `+initializerOpt+`)
+  ... Let `+bound+` be `+$union_set<tid>(`+$bound(p, TC)+`, ({ tid_fresh* }))+`
+  ... If [`+typeIR+` is a well-formed type, assuming bound type ids `+bound+`](Type_wf), then
+   .... Let `+nameIR+` be `+$name(name)+`
+   .... Result in (annotationList direction typeIR nameIR ?()) and tid_fresh*
+. If `+initializerOpt+` has type `+initializer+`
+ .. Let `+(= expression_init)+` be `+initializerOpt+` as `+initializer+`
+ .. Group initializer: p and TC and (annotationList direction type name `+(= expression_init)+` as `+initializerOpt+`)
 
- .. Let `+typeIR and tid_fresh*+` be [the result of typing `+type as typeOrVoid+`, under cursor `+p+` and typing context `+TC+`,
+  ... Let `+typeIR and tid_fresh*+` be [the result of typing `+type as typeOrVoid+`, under cursor `+p+` and typing context `+TC+`,
 and the set of inserted type variables](Type_ok)
- .. Let `+bound+` be `+$union_set<tid>(`+$bound(p, TC)+`, ({ tid_fresh* }))+`
- .. If [`+typeIR+` is a well-formed type, assuming bound type ids `+bound+`](Type_wf), then
-  ... Let `+typedExpressionIR_init+` be [the result of typing `+expression_init+`, under cursor `+p+` and typing context `+TC+`](Expr_ok)
-  ... Let `+typeIR_init+` be `+$typeof_expression(typedExpressionIR_init)+`
-  ... Assert that `+$ctkof_expression(typedExpressionIR_init)+` matches pattern `+`LCTK`+`
-  ... Let `+typedExpressionIR?+` be `+$coerce_unary(typedExpressionIR_init, typeIR)+`
-  ... Assert that `+typedExpressionIR?+` matches pattern `+(_)+`
-  ... Let `+?(typedExpressionIR_init_cast)+` be typedExpressionIR?
-  ... Let `+nameIR+` be `+$name(name)+`
-  ... Let `+value_init+` be [the static evaluation of `+typedExpressionIR_init_cast+`, under cursor `+p+` and typing context `+TC+`](Eval_static)
-  ... Result in (annotationList direction typeIR nameIR ?((= value_init))) and tid_fresh*
+  ... Let `+bound+` be `+$union_set<tid>(`+$bound(p, TC)+`, ({ tid_fresh* }))+`
+  ... If [`+typeIR+` is a well-formed type, assuming bound type ids `+bound+`](Type_wf), then
+   .... Let `+typedExpressionIR_init+` be [the result of typing `+expression_init+`, under cursor `+p+` and typing context `+TC+`](Expr_ok)
+   .... Let `+typeIR_init+` be `+$typeof_expression(typedExpressionIR_init)+`
+   .... Assert that `+$ctkof_expression(typedExpressionIR_init)+` matches pattern `+`LCTK`+`
+   .... Let `+typedExpressionIR?+` be `+$coerce_unary(typedExpressionIR_init, typeIR)+`
+   .... Assert that `+typedExpressionIR?+` matches pattern `+(_)+`
+   .... Let `+?(typedExpressionIR_init_cast)+` be typedExpressionIR?
+   .... Let `+nameIR+` be `+$name(name)+`
+   .... Let `+value_init+` be [the static evaluation of `+typedExpressionIR_init_cast+`, under cursor `+p+` and typing context `+TC+`](Eval_static)
+   .... Result in (annotationList direction typeIR nameIR ?((= value_init))) and tid_fresh*
 
 relation Parameters_ok: p and TC and parameter*
 
@@ -3515,30 +3515,30 @@ relation ParserTransition_ok: TC_0 and nameIR_state* and transitionStatement
 
  .. Case `+transitionStatement+` matches pattern `TRANSITION%`
   ... Let `+(transition stateExpression)+` be transitionStatement
-  ... Assert that `+stateExpression+` matches pattern `+`%;`+`
-  ... Let `+(name ;)+` be stateExpression
-  ... Group name: TC_0 and nameIR_state* and (transition (name ;))
+  ... If `+stateExpression+` matches pattern `+`%;`+`
+   .... Let `+(name ;)+` be stateExpression
+   .... Group name: TC_0 and nameIR_state* and (transition (name ;))
 
-   .... Let `+nameIR+` be `+$name(name)+`
-   .... Assert that nameIR is in nameIR_state*
-   .... Let `+transitionStatementIR+` be (transition (nameIR ;))
-   .... Result in transitionStatementIR
-  ... Assert that `+stateExpression+` has type `+selectExpression+`
-  ... Let `+(select( expressionList_key ){ selectCaseList })+` be `+stateExpression+` as `+selectExpression+`
-  ... Group switch: TC_0 and nameIR_state* and (transition `+(select( expressionList_key ){ selectCaseList })+` as `+stateExpression+`)
-
-   .... Let `+expression_key*+` be `+$flatten_expressionList(expressionList_key)+`
-   .... Let `+typedExpressionIR_key+`* be the list of `+typedExpressionIR_key+`, obtained by repeating:
-    ..... Let `+typedExpressionIR_key+` be [the result of typing `+expression_key+`, under cursor `+(local)+` and typing context `+TC_0+`](Expr_ok)
-for each `+expression_key+` in `+expression_key+`*
-   .... Let `+typeIR_key+`* be the list of `+typeIR_key+`, obtained by repeating:
-    ..... Let `+typeIR_key+` be `+$typeof_expression(typedExpressionIR_key)+`
-   .... for each `+typedExpressionIR_key+` in `+typedExpressionIR_key+`*
-   .... If [`+(set< [typeIR_key] >) as typeIR+` is a well-formed type, assuming bound type ids `+$bound((local), TC_0)+`](Type_wf), for each `+typeIR_key+` in `+typeIR_key+`*, then
-    ..... Let `+selectCase*+` be `+$flatten_selectCaseList(selectCaseList)+`
-(SelectCase_ok: TC_0 nameIR_state* typeIR_key* |- selectCase : selectCaseIR), for each `+selectCase+` in `+selectCase+`* and `+selectCaseIR+` in `+selectCaseIR+`*
-    ..... Let `+transitionStatementIR+` be (transition `+(select( typedExpressionIR_key* ){ selectCaseIR* })+` as `+stateExpressionIR+`)
+    ..... Let `+nameIR+` be `+$name(name)+`
+    ..... Assert that nameIR is in nameIR_state*
+    ..... Let `+transitionStatementIR+` be (transition (nameIR ;))
     ..... Result in transitionStatementIR
+  ... If `+stateExpression+` has type `+selectExpression+`
+   .... Let `+(select( expressionList_key ){ selectCaseList })+` be `+stateExpression+` as `+selectExpression+`
+   .... Group switch: TC_0 and nameIR_state* and (transition `+(select( expressionList_key ){ selectCaseList })+` as `+stateExpression+`)
+
+    ..... Let `+expression_key*+` be `+$flatten_expressionList(expressionList_key)+`
+    ..... Let `+typedExpressionIR_key+`* be the list of `+typedExpressionIR_key+`, obtained by repeating:
+     ...... Let `+typedExpressionIR_key+` be [the result of typing `+expression_key+`, under cursor `+(local)+` and typing context `+TC_0+`](Expr_ok)
+for each `+expression_key+` in `+expression_key+`*
+    ..... Let `+typeIR_key+`* be the list of `+typeIR_key+`, obtained by repeating:
+     ...... Let `+typeIR_key+` be `+$typeof_expression(typedExpressionIR_key)+`
+    ..... for each `+typedExpressionIR_key+` in `+typedExpressionIR_key+`*
+    ..... If [`+(set< [typeIR_key] >) as typeIR+` is a well-formed type, assuming bound type ids `+$bound((local), TC_0)+`](Type_wf), for each `+typeIR_key+` in `+typeIR_key+`*, then
+     ...... Let `+selectCase*+` be `+$flatten_selectCaseList(selectCaseList)+`
+(SelectCase_ok: TC_0 nameIR_state* typeIR_key* |- selectCase : selectCaseIR), for each `+selectCase+` in `+selectCase+`* and `+selectCaseIR+` in `+selectCaseIR+`*
+     ...... Let `+transitionStatementIR+` be (transition `+(select( typedExpressionIR_key* ){ selectCaseIR* })+` as `+stateExpressionIR+`)
+     ...... Result in transitionStatementIR
 
 relation ParserStmt_ok: TC_0' and parserStatement''
 
@@ -3557,31 +3557,31 @@ and the modified typing context](Decl_ok)
   ... Let `+(annotationList type name initializerOpt ;)+` be `+parserStatement''+` as `+variableDeclaration+`
   ... Group variableDeclaration: TC_0 and `+(annotationList type name initializerOpt ;)+` as `+parserStatement+`
 
-   .... Assert that `+initializerOpt+` matches pattern `+``EMPTY`+`
-   .... Let `+typeIR and tid*+` be [the result of typing `+type as typeOrVoid+`, under cursor `+(local)+` and typing context `+TC_0'+`,
+   .... If `+initializerOpt+` matches pattern `+``EMPTY`+`
+    ..... Let `+typeIR and tid*+` be [the result of typing `+type as typeOrVoid+`, under cursor `+(local)+` and typing context `+TC_0'+`,
 and the set of inserted type variables](Type_ok)
-   .... Assert that `+tid*+` matches pattern `+[]+`
-   .... If [`+typeIR+` is a well-formed type, assuming bound type ids `+$bound((local), TC_0')+`](Type_wf), then
-    ..... Assert that `+$is_assignable_typeIR(typeIR)+`
-    ..... Let `+nameIR+` be `+$name(name)+`
-    ..... Let `+TC_1+` be `+$add_var((local), TC_0', nameIR, ((inout) typeIR (dyn) ?()))+`
-    ..... Let `+variableDeclarationIR+` be (annotationList typeIR nameIR ?() ;)
-    ..... Result in TC_1 and `+variableDeclarationIR+` as `+parserStatementIR+`
-   .... Assert that `+initializerOpt+` has type `+initializer+`
-   .... Let `+(= expression_init)+` be `+initializerOpt+` as `+initializer+`
-   .... Let `+typeIR and tid*+` be [the result of typing `+type as typeOrVoid+`, under cursor `+(local)+` and typing context `+TC_0'+`,
+    ..... Assert that `+tid*+` matches pattern `+[]+`
+    ..... If [`+typeIR+` is a well-formed type, assuming bound type ids `+$bound((local), TC_0')+`](Type_wf), then
+     ...... Assert that `+$is_assignable_typeIR(typeIR)+`
+     ...... Let `+nameIR+` be `+$name(name)+`
+     ...... Let `+TC_1+` be `+$add_var((local), TC_0', nameIR, ((inout) typeIR (dyn) ?()))+`
+     ...... Let `+variableDeclarationIR+` be (annotationList typeIR nameIR ?() ;)
+     ...... Result in TC_1 and `+variableDeclarationIR+` as `+parserStatementIR+`
+   .... If `+initializerOpt+` has type `+initializer+`
+    ..... Let `+(= expression_init)+` be `+initializerOpt+` as `+initializer+`
+    ..... Let `+typeIR and tid*+` be [the result of typing `+type as typeOrVoid+`, under cursor `+(local)+` and typing context `+TC_0'+`,
 and the set of inserted type variables](Type_ok)
-   .... Assert that `+tid*+` matches pattern `+[]+`
-   .... If [`+typeIR+` is a well-formed type, assuming bound type ids `+$bound((local), TC_0')+`](Type_wf), then
-    ..... Assert that `+$is_assignable_typeIR(typeIR)+`
-    ..... Let `+typedExpressionIR_init+` be [the result of typing `+expression_init+`, under cursor `+(local)+` and typing context `+TC_0'+`](Expr_ok)
-    ..... Let `+typedExpressionIR?+` be `+$coerce_unary(typedExpressionIR_init, typeIR)+`
-    ..... Assert that `+typedExpressionIR?+` matches pattern `+(_)+`
-    ..... Let `+?(typedExpressionIR_init_cast)+` be typedExpressionIR?
-    ..... Let `+nameIR+` be `+$name(name)+`
-    ..... Let `+TC_1+` be `+$add_var((local), TC_0', nameIR, ((inout) typeIR (dyn) ?()))+`
-    ..... Let `+variableDeclarationIR+` be (annotationList typeIR nameIR ?((= typedExpressionIR_init_cast)) ;)
-    ..... Result in TC_1 and `+variableDeclarationIR+` as `+parserStatementIR+`
+    ..... Assert that `+tid*+` matches pattern `+[]+`
+    ..... If [`+typeIR+` is a well-formed type, assuming bound type ids `+$bound((local), TC_0')+`](Type_wf), then
+     ...... Assert that `+$is_assignable_typeIR(typeIR)+`
+     ...... Let `+typedExpressionIR_init+` be [the result of typing `+expression_init+`, under cursor `+(local)+` and typing context `+TC_0'+`](Expr_ok)
+     ...... Let `+typedExpressionIR?+` be `+$coerce_unary(typedExpressionIR_init, typeIR)+`
+     ...... Assert that `+typedExpressionIR?+` matches pattern `+(_)+`
+     ...... Let `+?(typedExpressionIR_init_cast)+` be typedExpressionIR?
+     ...... Let `+nameIR+` be `+$name(name)+`
+     ...... Let `+TC_1+` be `+$add_var((local), TC_0', nameIR, ((inout) typeIR (dyn) ?()))+`
+     ...... Let `+variableDeclarationIR+` be (annotationList typeIR nameIR ?((= typedExpressionIR_init_cast)) ;)
+     ...... Result in TC_1 and `+variableDeclarationIR+` as `+parserStatementIR+`
 
  .. Case `+parserStatement''+` has type `+emptyStatement+`
   ... Let `+emptyStatement+` be `+parserStatement''+` as `+emptyStatement+`
@@ -3718,31 +3718,31 @@ and the modified typing context](Decl_ok)
   ... Let `+(annotationList type name initializerOpt ;)+` be `+parserLocalDeclaration+` as `+variableDeclaration+`
   ... Group variableDeclaration: TC_0 and `+(annotationList type name initializerOpt ;)+` as `+parserLocalDeclaration+`
 
-   .... Assert that `+initializerOpt+` matches pattern `+``EMPTY`+`
-   .... Let `+typeIR and tid*+` be [the result of typing `+type as typeOrVoid+`, under cursor `+(block)+` and typing context `+TC_0+`,
+   .... If `+initializerOpt+` matches pattern `+``EMPTY`+`
+    ..... Let `+typeIR and tid*+` be [the result of typing `+type as typeOrVoid+`, under cursor `+(block)+` and typing context `+TC_0+`,
 and the set of inserted type variables](Type_ok)
-   .... Assert that `+tid*+` matches pattern `+[]+`
-   .... If [`+typeIR+` is a well-formed type, assuming bound type ids `+$bound((block), TC_0)+`](Type_wf), then
-    ..... Assert that `+$is_assignable_typeIR(typeIR)+`
-    ..... Let `+nameIR+` be `+$name(name)+`
-    ..... Let `+TC_1+` be `+$add_var((block), TC_0, nameIR, ((inout) typeIR (dyn) ?()))+`
-    ..... Let `+variableDeclarationIR+` be (annotationList typeIR nameIR ?() ;)
-    ..... Result in TC_1 and `+variableDeclarationIR+` as `+parserLocalDeclarationIR+`
-   .... Assert that `+initializerOpt+` has type `+initializer+`
-   .... Let `+(= expression_init)+` be `+initializerOpt+` as `+initializer+`
-   .... Let `+typeIR and tid*+` be [the result of typing `+type as typeOrVoid+`, under cursor `+(block)+` and typing context `+TC_0+`,
+    ..... Assert that `+tid*+` matches pattern `+[]+`
+    ..... If [`+typeIR+` is a well-formed type, assuming bound type ids `+$bound((block), TC_0)+`](Type_wf), then
+     ...... Assert that `+$is_assignable_typeIR(typeIR)+`
+     ...... Let `+nameIR+` be `+$name(name)+`
+     ...... Let `+TC_1+` be `+$add_var((block), TC_0, nameIR, ((inout) typeIR (dyn) ?()))+`
+     ...... Let `+variableDeclarationIR+` be (annotationList typeIR nameIR ?() ;)
+     ...... Result in TC_1 and `+variableDeclarationIR+` as `+parserLocalDeclarationIR+`
+   .... If `+initializerOpt+` has type `+initializer+`
+    ..... Let `+(= expression_init)+` be `+initializerOpt+` as `+initializer+`
+    ..... Let `+typeIR and tid*+` be [the result of typing `+type as typeOrVoid+`, under cursor `+(block)+` and typing context `+TC_0+`,
 and the set of inserted type variables](Type_ok)
-   .... Assert that `+tid*+` matches pattern `+[]+`
-   .... If [`+typeIR+` is a well-formed type, assuming bound type ids `+$bound((block), TC_0)+`](Type_wf), then
-    ..... Assert that `+$is_assignable_typeIR(typeIR)+`
-    ..... Let `+typedExpressionIR_init+` be [the result of typing `+expression_init+`, under cursor `+(block)+` and typing context `+TC_0+`](Expr_ok)
-    ..... Let `+typedExpressionIR?+` be `+$coerce_unary(typedExpressionIR_init, typeIR)+`
-    ..... Assert that `+typedExpressionIR?+` matches pattern `+(_)+`
-    ..... Let `+?(typedExpressionIR_init_cast)+` be typedExpressionIR?
-    ..... Let `+nameIR+` be `+$name(name)+`
-    ..... Let `+TC_1+` be `+$add_var((block), TC_0, nameIR, ((inout) typeIR (dyn) ?()))+`
-    ..... Let `+variableDeclarationIR+` be (annotationList typeIR nameIR ?((= typedExpressionIR_init_cast)) ;)
-    ..... Result in TC_1 and `+variableDeclarationIR+` as `+parserLocalDeclarationIR+`
+    ..... Assert that `+tid*+` matches pattern `+[]+`
+    ..... If [`+typeIR+` is a well-formed type, assuming bound type ids `+$bound((block), TC_0)+`](Type_wf), then
+     ...... Assert that `+$is_assignable_typeIR(typeIR)+`
+     ...... Let `+typedExpressionIR_init+` be [the result of typing `+expression_init+`, under cursor `+(block)+` and typing context `+TC_0+`](Expr_ok)
+     ...... Let `+typedExpressionIR?+` be `+$coerce_unary(typedExpressionIR_init, typeIR)+`
+     ...... Assert that `+typedExpressionIR?+` matches pattern `+(_)+`
+     ...... Let `+?(typedExpressionIR_init_cast)+` be typedExpressionIR?
+     ...... Let `+nameIR+` be `+$name(name)+`
+     ...... Let `+TC_1+` be `+$add_var((block), TC_0, nameIR, ((inout) typeIR (dyn) ?()))+`
+     ...... Let `+variableDeclarationIR+` be (annotationList typeIR nameIR ?((= typedExpressionIR_init_cast)) ;)
+     ...... Result in TC_1 and `+variableDeclarationIR+` as `+parserLocalDeclarationIR+`
 
  .. Case `+parserLocalDeclaration+` has type `+valueSetDeclaration+`
   ... Let `+(annotationList value_set< valueSetType >( expression ) name ;)+` be `+parserLocalDeclaration+` as `+valueSetDeclaration+`
@@ -3817,43 +3817,43 @@ relation Call_action_partial_ok: TC and parameterTypeIR* and argumentIR*
 
 relation TableAction_ok: TC and TBLC_0 and (annotationList tableActionReference ;)
 
-. Assert that `+tableActionReference+` has type `+prefixedNonTypeName+`
-. Let `+prefixedNonTypeName+` be `+tableActionReference+` as `+prefixedNonTypeName+`
-. Group prefixedNonTypeName: TC and TBLC_0 and (annotationList `+prefixedNonTypeName+` as `+tableActionReference+` ;)
+. If `+tableActionReference+` has type `+prefixedNonTypeName+`
+ .. Let `+prefixedNonTypeName+` be `+tableActionReference+` as `+prefixedNonTypeName+`
+ .. Group prefixedNonTypeName: TC and TBLC_0 and (annotationList `+prefixedNonTypeName+` as `+tableActionReference+` ;)
 
- .. Let `+prefixedNameIR+` be `+$prefixedNonTypeName(prefixedNonTypeName)+`
- .. Let `+routineTypeDefIR'?+` be `+$find_routine_non_overloaded((local), TC, prefixedNameIR)+`
- .. Assert that `+routineTypeDefIR'?+` matches pattern `+(_)+`
- .. Let `+?(routineTypeDefIR)+` be routineTypeDefIR'?
- .. Assert that `+routineTypeDefIR+` has type `+functionTypeIR+`
- .. Let `+functionTypeIR+` be `+routineTypeDefIR+` as `+functionTypeIR+`
- .. Assert that `+functionTypeIR+` matches pattern `+`ACTION(%)`+`
- .. Let `+(action( parameterTypeIR* ))+` be functionTypeIR
+  ... Let `+prefixedNameIR+` be `+$prefixedNonTypeName(prefixedNonTypeName)+`
+  ... Let `+routineTypeDefIR'?+` be `+$find_routine_non_overloaded((local), TC, prefixedNameIR)+`
+  ... Assert that `+routineTypeDefIR'?+` matches pattern `+(_)+`
+  ... Let `+?(routineTypeDefIR)+` be routineTypeDefIR'?
+  ... Assert that `+routineTypeDefIR+` has type `+functionTypeIR+`
+  ... Let `+functionTypeIR+` be `+routineTypeDefIR+` as `+functionTypeIR+`
+  ... Assert that `+functionTypeIR+` matches pattern `+`ACTION(%)`+`
+  ... Let `+(action( parameterTypeIR* ))+` be functionTypeIR
 (Call_action_partial_ok: TC |- parameterTypeIR* @ [] : parameterTypeIR_data* , parameterTypeIR_control* @ argumentIR*)
- .. Assert that `+argumentIR*+` matches pattern `+[]+`
- .. Let `+TBLC_1+` be `+$add_action(TBLC_0, prefixedNameIR, parameterTypeIR*, [])+`
- .. Let `+tableActionIR+` be (annotationList (prefixedNameIR ( [] )) ;)
- .. Result in TBLC_1 and tableActionIR
-. Assert that `+tableActionReference+` matches pattern `+`%(%)`+`
-. Let `+(prefixedNonTypeName ( argumentList ))+` be tableActionReference
-. Group prefixedNonTypeName-argumentList: TC and TBLC_0 and (annotationList (prefixedNonTypeName ( argumentList )) ;)
+  ... Assert that `+argumentIR*+` matches pattern `+[]+`
+  ... Let `+TBLC_1+` be `+$add_action(TBLC_0, prefixedNameIR, parameterTypeIR*, [])+`
+  ... Let `+tableActionIR+` be (annotationList (prefixedNameIR ( [] )) ;)
+  ... Result in TBLC_1 and tableActionIR
+. If `+tableActionReference+` matches pattern `+`%(%)`+`
+ .. Let `+(prefixedNonTypeName ( argumentList ))+` be tableActionReference
+ .. Group prefixedNonTypeName-argumentList: TC and TBLC_0 and (annotationList (prefixedNonTypeName ( argumentList )) ;)
 
- .. Let `+prefixedNameIR+` be `+$prefixedNonTypeName(prefixedNonTypeName)+`
- .. Let `+routineTypeDefIR'?+` be `+$find_routine_non_overloaded((local), TC, prefixedNameIR)+`
- .. Assert that `+routineTypeDefIR'?+` matches pattern `+(_)+`
- .. Let `+?(routineTypeDefIR)+` be routineTypeDefIR'?
- .. Assert that `+routineTypeDefIR+` has type `+functionTypeIR+`
- .. Let `+functionTypeIR+` be `+routineTypeDefIR+` as `+functionTypeIR+`
- .. Assert that `+functionTypeIR+` matches pattern `+`ACTION(%)`+`
- .. Let `+(action( parameterTypeIR* ))+` be functionTypeIR
- .. Let `+argument*+` be `+$flatten_argumentList(argumentList)+`
- .. Let `+argumentIR+`* be the list of `+argumentIR+`, obtained by repeating:
-  ... Let `+argumentIR+` be [the result of typing `+argument+`, under cursor `+(local)+` and typing context `+TC+`](Argument_ok)
+  ... Let `+prefixedNameIR+` be `+$prefixedNonTypeName(prefixedNonTypeName)+`
+  ... Let `+routineTypeDefIR'?+` be `+$find_routine_non_overloaded((local), TC, prefixedNameIR)+`
+  ... Assert that `+routineTypeDefIR'?+` matches pattern `+(_)+`
+  ... Let `+?(routineTypeDefIR)+` be routineTypeDefIR'?
+  ... Assert that `+routineTypeDefIR+` has type `+functionTypeIR+`
+  ... Let `+functionTypeIR+` be `+routineTypeDefIR+` as `+functionTypeIR+`
+  ... Assert that `+functionTypeIR+` matches pattern `+`ACTION(%)`+`
+  ... Let `+(action( parameterTypeIR* ))+` be functionTypeIR
+  ... Let `+argument*+` be `+$flatten_argumentList(argumentList)+`
+  ... Let `+argumentIR+`* be the list of `+argumentIR+`, obtained by repeating:
+   .... Let `+argumentIR+` be [the result of typing `+argument+`, under cursor `+(local)+` and typing context `+TC+`](Argument_ok)
 for each `+argument+` in `+argument+`*
 (Call_action_partial_ok: TC |- parameterTypeIR* @ argumentIR* : parameterTypeIR_data* , parameterTypeIR_control* @ argumentIR_cast*)
- .. Let `+TBLC_1+` be `+$add_action(TBLC_0, prefixedNameIR, parameterTypeIR*, argumentIR_cast*)+`
- .. Let `+tableActionIR+` be (annotationList (prefixedNameIR ( argumentIR_cast* )) ;)
- .. Result in TBLC_1 and tableActionIR
+  ... Let `+TBLC_1+` be `+$add_action(TBLC_0, prefixedNameIR, parameterTypeIR*, argumentIR_cast*)+`
+  ... Let `+tableActionIR+` be (annotationList (prefixedNameIR ( argumentIR_cast* )) ;)
+  ... Result in TBLC_1 and tableActionIR
 
 relation TableActions_ok: TC and TBLC' and tableAction*
 
@@ -4066,30 +4066,30 @@ relation TableEntry_keyset_ok: TC and TBLC and keysetExpression
 
 relation TableEntry_action_ok: TC and TBLC and tableActionReference
 
-. Assert that `+tableActionReference+` has type `+prefixedNonTypeName+`
-. Let `+prefixedNonTypeName+` be `+tableActionReference+` as `+prefixedNonTypeName+`
-. Group prefixedNonTypeName: TC and TBLC and `+prefixedNonTypeName+` as `+tableActionReference+`
+. If `+tableActionReference+` has type `+prefixedNonTypeName+`
+ .. Let `+prefixedNonTypeName+` be `+tableActionReference+` as `+prefixedNonTypeName+`
+ .. Group prefixedNonTypeName: TC and TBLC and `+prefixedNonTypeName+` as `+tableActionReference+`
 
- .. Let `+prefixedNameIR+` be `+$prefixedNonTypeName(prefixedNonTypeName)+`
- .. Assert that (?(([] and [])) = `+$find_action(TBLC, prefixedNameIR)+`)
- .. Result in (prefixedNameIR ( [] ))
-. Assert that `+tableActionReference+` matches pattern `+`%(%)`+`
-. Let `+(prefixedNonTypeName ( argumentList ))+` be tableActionReference
-. Group prefixedNonTypeName-argumentList: TC and TBLC and (prefixedNonTypeName ( argumentList ))
+  ... Let `+prefixedNameIR+` be `+$prefixedNonTypeName(prefixedNonTypeName)+`
+  ... Assert that (?(([] and [])) = `+$find_action(TBLC, prefixedNameIR)+`)
+  ... Result in (prefixedNameIR ( [] ))
+. If `+tableActionReference+` matches pattern `+`%(%)`+`
+ .. Let `+(prefixedNonTypeName ( argumentList ))+` be tableActionReference
+ .. Group prefixedNonTypeName-argumentList: TC and TBLC and (prefixedNonTypeName ( argumentList ))
 
- .. Let `+prefixedNameIR+` be `+$prefixedNonTypeName(prefixedNonTypeName)+`
- .. Let `+(parameterTypeIR*, argumentListIR)?+` be `+$find_action(TBLC, prefixedNameIR)+`
- .. Assert that `+(parameterTypeIR*, argumentListIR)?+` matches pattern `+(_)+`
- .. Let `+?((parameterTypeIR_action* and argumentIR_action*))+` be (parameterTypeIR*, argumentListIR)?
- .. Let `+argument*+` be `+$flatten_argumentList(argumentList)+`
- .. Let `+argumentIR+`* be the list of `+argumentIR+`, obtained by repeating:
-  ... Let `+argumentIR+` be [the result of typing `+argument+`, under cursor `+(local)+` and typing context `+TC+`](Argument_ok)
+  ... Let `+prefixedNameIR+` be `+$prefixedNonTypeName(prefixedNonTypeName)+`
+  ... Let `+(parameterTypeIR*, argumentListIR)?+` be `+$find_action(TBLC, prefixedNameIR)+`
+  ... Assert that `+(parameterTypeIR*, argumentListIR)?+` matches pattern `+(_)+`
+  ... Let `+?((parameterTypeIR_action* and argumentIR_action*))+` be (parameterTypeIR*, argumentListIR)?
+  ... Let `+argument*+` be `+$flatten_argumentList(argumentList)+`
+  ... Let `+argumentIR+`* be the list of `+argumentIR+`, obtained by repeating:
+   .... Let `+argumentIR+` be [the result of typing `+argument+`, under cursor `+(local)+` and typing context `+TC+`](Argument_ok)
 for each `+argument+` in `+argument+`*
 (Call_action_default_ok: TC |- parameterTypeIR_action* @ argumentIR* : parameterTypeIR_action_data* , parameterTypeIR_action_control* @ argumentIR_cast*)
- .. Let `+argumentIR_action_data*+` be argumentIR_action*[0 : |parameterTypeIR_action_data*|]
- .. Let `+argumentIR_cast_data*+` be argumentIR_cast*[0 : |parameterTypeIR_action_data*|]
- .. Assert that (argumentIR_action_data = argumentIR_cast_data), for each `+argumentIR_action_data+` in `+argumentIR_action_data+`* and `+argumentIR_cast_data+` in `+argumentIR_cast_data+`*
- .. Result in (prefixedNameIR ( argumentIR_cast* ))
+  ... Let `+argumentIR_action_data*+` be argumentIR_action*[0 : |parameterTypeIR_action_data*|]
+  ... Let `+argumentIR_cast_data*+` be argumentIR_cast*[0 : |parameterTypeIR_action_data*|]
+  ... Assert that (argumentIR_action_data = argumentIR_cast_data), for each `+argumentIR_action_data+` in `+argumentIR_action_data+`* and `+argumentIR_cast_data+` in `+argumentIR_cast_data+`*
+  ... Result in (prefixedNameIR ( argumentIR_cast* ))
 
 relation TableEntry_priority_ok: TC and tableContext' and TBLS and tableEntryPriority''?
 
@@ -4097,14 +4097,14 @@ relation TableEntry_priority_ok: TC and tableContext' and TBLS and tableEntryPri
  .. Case `+tableEntryPriority''?+` matches pattern ()
   ... Group non-specified: TC and tableContext and TBLS and ?()
 
-   .... Assert that `+tableContext'.mode+` matches pattern `+`NOPRI`+`
-   .... Result in tableContext' and ?()
+   .... If `+tableContext'.mode+` matches pattern `+`NOPRI`+`
+    ..... Result in tableContext' and ?()
    .... Let `+matchMode+` be tableContext'.mode
-   .... Assert that `+matchMode+` matches pattern `+`NOPRILPM%`+`
-   .... Let `+(noprilpm n)+` be matchMode
-   .... Assert that `+TBLS+` matches pattern `+`LPM%`+`
-   .... Let `+(lpm n_prefix)+` be TBLS
-   .... Result in tableContext' and ?()
+   .... If `+matchMode+` matches pattern `+`NOPRILPM%`+`
+    ..... Let `+(noprilpm n)+` be matchMode
+    ..... Assert that `+TBLS+` matches pattern `+`LPM%`+`
+    ..... Let `+(lpm n_prefix)+` be TBLS
+    ..... Result in tableContext' and ?()
    .... Case analysis on `+tableContext'.mode+`
     ..... Case `+tableContext'.mode+` matches pattern `PRI`
      ...... Case analysis on `+tableContext'.priorities.values+`
@@ -4361,73 +4361,73 @@ relation TableProperty_ok: TC and TBLC_0' and tableProperty
   ... Let `+(annotationList constOpt tableCustomName (= expression) ;)+` be tableProperty
   ... Group custom: TC and tableContext and (annotationList constOpt tableCustomName (= expression) ;)
 
-   .... Assert that ("size" = `+$tableCustomName(tableCustomName)+`)
-   .... Let `+typedExpressionIR+` be [the result of typing `+expression+`, under cursor `+(local)+` and typing context `+TC+`](Expr_ok)
-   .... Let `+typeIR+` be `+$typeof_expression(typedExpressionIR)+`
-   .... Assert that `+$is_arbitrary_int_typeIR(typeIR)+`
-   .... Let `+constOptIR+` be `+$flatten_constOpt(constOpt)+`
-   .... Let `+tablePropertyIR+` be (annotationList constOptIR custom "size" (= typedExpressionIR) ;)
-   .... Result in TBLC_0' and tablePropertyIR
-   .... Assert that `+$is_fixed_int_typeIR(typeIR)+`
-   .... Let `+constOptIR+` be `+$flatten_constOpt(constOpt)+`
-   .... Let `+tablePropertyIR+` be (annotationList constOptIR custom "size" (= typedExpressionIR) ;)
-   .... Result in TBLC_0' and tablePropertyIR
-   .... Assert that `+$is_fixed_bit_typeIR(typeIR)+`
-   .... Let `+constOptIR+` be `+$flatten_constOpt(constOpt)+`
-   .... Let `+tablePropertyIR+` be (annotationList constOptIR custom "size" (= typedExpressionIR) ;)
-   .... Result in TBLC_0' and tablePropertyIR
-   .... Assert that ("largest_priority_wins" = `+$tableCustomName(tableCustomName)+`)
-   .... Let `+typedExpressionIR+` be [the result of typing `+expression+`, under cursor `+(local)+` and typing context `+TC+`](Expr_ok)
-   .... Let `+typeIR+` be `+$typeof_expression(typedExpressionIR)+`
-   .... Assert that (`+(bool)+` as `+typeIR+` = `+$canon(typeIR)+`)
-   .... Let `+value'+` be [the static evaluation of `+typedExpressionIR+`, under cursor `+(local)+` and typing context `+TC+`](Eval_static)
-   .... Assert that `+value'+` has type `+primitiveValue+`
-   .... Let `+primitiveValue+` be `+value'+` as `+primitiveValue+`
-   .... Assert that `+primitiveValue+` matches pattern `+`B%`+`
-   .... Let `+(b b_largest_priority_wins)+` be primitiveValue
-   .... Let `+TBLC_1+` be TBLC_0'[priorities.largest_wins = b_largest_priority_wins]
-   .... Let `+constOptIR+` be `+$flatten_constOpt(constOpt)+`
-   .... Let `+tablePropertyIR+` be (annotationList constOptIR custom_const "largest_priority_wins" (= `+(b b_largest_priority_wins)+` as `+value+`) ;)
-   .... Result in TBLC_1 and tablePropertyIR
-   .... Assert that ("priority_delta" = `+$tableCustomName(tableCustomName)+`)
-   .... Let `+typedExpressionIR+` be [the result of typing `+expression+`, under cursor `+(local)+` and typing context `+TC+`](Expr_ok)
-   .... Let `+typeIR+` be `+$typeof_expression(typedExpressionIR)+`
-   .... Assert that `+$is_arbitrary_int_typeIR(typeIR)+`
-   .... Let `+value+` be [the static evaluation of `+typedExpressionIR+`, under cursor `+(local)+` and typing context `+TC+`](Eval_static)
-   .... Let `+int+` be `+$to_number(value)+`
-   .... Assert that `+int+` has type `+nat+`
-   .... Let `+n_delta+` be `+int+` as `+nat+`
-   .... Assert that (n_delta > 0)
-   .... Let `+TBLC_1+` be TBLC_0'[priorities.delta = n_delta]
-   .... Let `+constOptIR+` be `+$flatten_constOpt(constOpt)+`
-   .... Let `+tablePropertyIR+` be (annotationList constOptIR custom_const "priority_delta" (= `+(d n_delta as int)+` as `+value+`) ;)
-   .... Result in TBLC_1 and tablePropertyIR
-   .... Assert that `+$is_fixed_int_typeIR(typeIR)+`
-   .... Let `+value+` be [the static evaluation of `+typedExpressionIR+`, under cursor `+(local)+` and typing context `+TC+`](Eval_static)
-   .... Let `+int+` be `+$to_number(value)+`
-   .... Assert that `+int+` has type `+nat+`
-   .... Let `+n_delta+` be `+int+` as `+nat+`
-   .... Assert that (n_delta > 0)
-   .... Let `+TBLC_1+` be TBLC_0'[priorities.delta = n_delta]
-   .... Let `+constOptIR+` be `+$flatten_constOpt(constOpt)+`
-   .... Let `+tablePropertyIR+` be (annotationList constOptIR custom_const "priority_delta" (= `+(d n_delta as int)+` as `+value+`) ;)
-   .... Result in TBLC_1 and tablePropertyIR
-   .... Assert that `+$is_fixed_bit_typeIR(typeIR)+`
-   .... Let `+value+` be [the static evaluation of `+typedExpressionIR+`, under cursor `+(local)+` and typing context `+TC+`](Eval_static)
-   .... Let `+int+` be `+$to_number(value)+`
-   .... Assert that `+int+` has type `+nat+`
-   .... Let `+n_delta+` be `+int+` as `+nat+`
-   .... Assert that (n_delta > 0)
-   .... Let `+TBLC_1+` be TBLC_0'[priorities.delta = n_delta]
-   .... Let `+constOptIR+` be `+$flatten_constOpt(constOpt)+`
-   .... Let `+tablePropertyIR+` be (annotationList constOptIR custom_const "priority_delta" (= `+(d n_delta as int)+` as `+value+`) ;)
-   .... Result in TBLC_1 and tablePropertyIR
+   .... If ("size" = `+$tableCustomName(tableCustomName)+`)
+    ..... Let `+typedExpressionIR+` be [the result of typing `+expression+`, under cursor `+(local)+` and typing context `+TC+`](Expr_ok)
+    ..... Let `+typeIR+` be `+$typeof_expression(typedExpressionIR)+`
+    ..... If `+$is_arbitrary_int_typeIR(typeIR)+`
+     ...... Let `+constOptIR+` be `+$flatten_constOpt(constOpt)+`
+     ...... Let `+tablePropertyIR+` be (annotationList constOptIR custom "size" (= typedExpressionIR) ;)
+     ...... Result in TBLC_0' and tablePropertyIR
+    ..... If `+$is_fixed_int_typeIR(typeIR)+`
+     ...... Let `+constOptIR+` be `+$flatten_constOpt(constOpt)+`
+     ...... Let `+tablePropertyIR+` be (annotationList constOptIR custom "size" (= typedExpressionIR) ;)
+     ...... Result in TBLC_0' and tablePropertyIR
+    ..... If `+$is_fixed_bit_typeIR(typeIR)+`
+     ...... Let `+constOptIR+` be `+$flatten_constOpt(constOpt)+`
+     ...... Let `+tablePropertyIR+` be (annotationList constOptIR custom "size" (= typedExpressionIR) ;)
+     ...... Result in TBLC_0' and tablePropertyIR
+   .... If ("largest_priority_wins" = `+$tableCustomName(tableCustomName)+`)
+    ..... Let `+typedExpressionIR+` be [the result of typing `+expression+`, under cursor `+(local)+` and typing context `+TC+`](Expr_ok)
+    ..... Let `+typeIR+` be `+$typeof_expression(typedExpressionIR)+`
+    ..... Assert that (`+(bool)+` as `+typeIR+` = `+$canon(typeIR)+`)
+    ..... Let `+value'+` be [the static evaluation of `+typedExpressionIR+`, under cursor `+(local)+` and typing context `+TC+`](Eval_static)
+    ..... Assert that `+value'+` has type `+primitiveValue+`
+    ..... Let `+primitiveValue+` be `+value'+` as `+primitiveValue+`
+    ..... Assert that `+primitiveValue+` matches pattern `+`B%`+`
+    ..... Let `+(b b_largest_priority_wins)+` be primitiveValue
+    ..... Let `+TBLC_1+` be TBLC_0'[priorities.largest_wins = b_largest_priority_wins]
+    ..... Let `+constOptIR+` be `+$flatten_constOpt(constOpt)+`
+    ..... Let `+tablePropertyIR+` be (annotationList constOptIR custom_const "largest_priority_wins" (= `+(b b_largest_priority_wins)+` as `+value+`) ;)
+    ..... Result in TBLC_1 and tablePropertyIR
+   .... If ("priority_delta" = `+$tableCustomName(tableCustomName)+`)
+    ..... Let `+typedExpressionIR+` be [the result of typing `+expression+`, under cursor `+(local)+` and typing context `+TC+`](Expr_ok)
+    ..... Let `+typeIR+` be `+$typeof_expression(typedExpressionIR)+`
+    ..... If `+$is_arbitrary_int_typeIR(typeIR)+`
+     ...... Let `+value+` be [the static evaluation of `+typedExpressionIR+`, under cursor `+(local)+` and typing context `+TC+`](Eval_static)
+     ...... Let `+int+` be `+$to_number(value)+`
+     ...... Assert that `+int+` has type `+nat+`
+     ...... Let `+n_delta+` be `+int+` as `+nat+`
+     ...... Assert that (n_delta > 0)
+     ...... Let `+TBLC_1+` be TBLC_0'[priorities.delta = n_delta]
+     ...... Let `+constOptIR+` be `+$flatten_constOpt(constOpt)+`
+     ...... Let `+tablePropertyIR+` be (annotationList constOptIR custom_const "priority_delta" (= `+(d n_delta as int)+` as `+value+`) ;)
+     ...... Result in TBLC_1 and tablePropertyIR
+    ..... If `+$is_fixed_int_typeIR(typeIR)+`
+     ...... Let `+value+` be [the static evaluation of `+typedExpressionIR+`, under cursor `+(local)+` and typing context `+TC+`](Eval_static)
+     ...... Let `+int+` be `+$to_number(value)+`
+     ...... Assert that `+int+` has type `+nat+`
+     ...... Let `+n_delta+` be `+int+` as `+nat+`
+     ...... Assert that (n_delta > 0)
+     ...... Let `+TBLC_1+` be TBLC_0'[priorities.delta = n_delta]
+     ...... Let `+constOptIR+` be `+$flatten_constOpt(constOpt)+`
+     ...... Let `+tablePropertyIR+` be (annotationList constOptIR custom_const "priority_delta" (= `+(d n_delta as int)+` as `+value+`) ;)
+     ...... Result in TBLC_1 and tablePropertyIR
+    ..... If `+$is_fixed_bit_typeIR(typeIR)+`
+     ...... Let `+value+` be [the static evaluation of `+typedExpressionIR+`, under cursor `+(local)+` and typing context `+TC+`](Eval_static)
+     ...... Let `+int+` be `+$to_number(value)+`
+     ...... Assert that `+int+` has type `+nat+`
+     ...... Let `+n_delta+` be `+int+` as `+nat+`
+     ...... Assert that (n_delta > 0)
+     ...... Let `+TBLC_1+` be TBLC_0'[priorities.delta = n_delta]
+     ...... Let `+constOptIR+` be `+$flatten_constOpt(constOpt)+`
+     ...... Let `+tablePropertyIR+` be (annotationList constOptIR custom_const "priority_delta" (= `+(d n_delta as int)+` as `+value+`) ;)
+     ...... Result in TBLC_1 and tablePropertyIR
    .... Let `+nameIR+` be `+$tableCustomName(tableCustomName)+`
-   .... Assert that (nameIR =/= "size") /\ (nameIR =/= "largest_priority_wins") /\ (nameIR =/= "priority_delta")
-   .... Let `+typedExpressionIR+` be [the result of typing `+expression+`, under cursor `+(local)+` and typing context `+TC+`](Expr_ok)
-   .... Let `+constOptIR+` be `+$flatten_constOpt(constOpt)+`
-   .... Let `+tablePropertyIR+` be (annotationList constOptIR custom nameIR (= typedExpressionIR) ;)
-   .... Result in TBLC_0' and tablePropertyIR
+   .... If (nameIR =/= "size") /\ (nameIR =/= "largest_priority_wins") /\ (nameIR =/= "priority_delta")
+    ..... Let `+typedExpressionIR+` be [the result of typing `+expression+`, under cursor `+(local)+` and typing context `+TC+`](Expr_ok)
+    ..... Let `+constOptIR+` be `+$flatten_constOpt(constOpt)+`
+    ..... Let `+tablePropertyIR+` be (annotationList constOptIR custom nameIR (= typedExpressionIR) ;)
+    ..... Result in TBLC_0' and tablePropertyIR
 
 relation TableProperties_ok: TC and TBLC' and tableProperty*
 
@@ -4505,31 +4505,31 @@ and the modified typing context](Decl_ok)
   ... Let `+(annotationList type name initializerOpt ;)+` be `+controlLocalDeclaration+` as `+variableDeclaration+`
   ... Group variableDeclaration: TC_0 and `+(annotationList type name initializerOpt ;)+` as `+controlLocalDeclaration+`
 
-   .... Assert that `+initializerOpt+` matches pattern `+``EMPTY`+`
-   .... Let `+typeIR and tid*+` be [the result of typing `+type as typeOrVoid+`, under cursor `+(block)+` and typing context `+TC_0+`,
+   .... If `+initializerOpt+` matches pattern `+``EMPTY`+`
+    ..... Let `+typeIR and tid*+` be [the result of typing `+type as typeOrVoid+`, under cursor `+(block)+` and typing context `+TC_0+`,
 and the set of inserted type variables](Type_ok)
-   .... Assert that `+tid*+` matches pattern `+[]+`
-   .... If [`+typeIR+` is a well-formed type, assuming bound type ids `+$bound((block), TC_0)+`](Type_wf), then
-    ..... Assert that `+$is_assignable_typeIR(typeIR)+`
-    ..... Let `+nameIR+` be `+$name(name)+`
-    ..... Let `+TC_1+` be `+$add_var((block), TC_0, nameIR, ((inout) typeIR (dyn) ?()))+`
-    ..... Let `+variableDeclarationIR+` be (annotationList typeIR nameIR ?() ;)
-    ..... Result in TC_1 and `+variableDeclarationIR+` as `+controlLocalDeclarationIR+`
-   .... Assert that `+initializerOpt+` has type `+initializer+`
-   .... Let `+(= expression_init)+` be `+initializerOpt+` as `+initializer+`
-   .... Let `+typeIR and tid*+` be [the result of typing `+type as typeOrVoid+`, under cursor `+(block)+` and typing context `+TC_0+`,
+    ..... Assert that `+tid*+` matches pattern `+[]+`
+    ..... If [`+typeIR+` is a well-formed type, assuming bound type ids `+$bound((block), TC_0)+`](Type_wf), then
+     ...... Assert that `+$is_assignable_typeIR(typeIR)+`
+     ...... Let `+nameIR+` be `+$name(name)+`
+     ...... Let `+TC_1+` be `+$add_var((block), TC_0, nameIR, ((inout) typeIR (dyn) ?()))+`
+     ...... Let `+variableDeclarationIR+` be (annotationList typeIR nameIR ?() ;)
+     ...... Result in TC_1 and `+variableDeclarationIR+` as `+controlLocalDeclarationIR+`
+   .... If `+initializerOpt+` has type `+initializer+`
+    ..... Let `+(= expression_init)+` be `+initializerOpt+` as `+initializer+`
+    ..... Let `+typeIR and tid*+` be [the result of typing `+type as typeOrVoid+`, under cursor `+(block)+` and typing context `+TC_0+`,
 and the set of inserted type variables](Type_ok)
-   .... Assert that `+tid*+` matches pattern `+[]+`
-   .... If [`+typeIR+` is a well-formed type, assuming bound type ids `+$bound((block), TC_0)+`](Type_wf), then
-    ..... Assert that `+$is_assignable_typeIR(typeIR)+`
-    ..... Let `+typedExpressionIR_init+` be [the result of typing `+expression_init+`, under cursor `+(block)+` and typing context `+TC_0+`](Expr_ok)
-    ..... Let `+typedExpressionIR?+` be `+$coerce_unary(typedExpressionIR_init, typeIR)+`
-    ..... Assert that `+typedExpressionIR?+` matches pattern `+(_)+`
-    ..... Let `+?(typedExpressionIR_init_cast)+` be typedExpressionIR?
-    ..... Let `+nameIR+` be `+$name(name)+`
-    ..... Let `+TC_1+` be `+$add_var((block), TC_0, nameIR, ((inout) typeIR (dyn) ?()))+`
-    ..... Let `+variableDeclarationIR+` be (annotationList typeIR nameIR ?((= typedExpressionIR_init_cast)) ;)
-    ..... Result in TC_1 and `+variableDeclarationIR+` as `+controlLocalDeclarationIR+`
+    ..... Assert that `+tid*+` matches pattern `+[]+`
+    ..... If [`+typeIR+` is a well-formed type, assuming bound type ids `+$bound((block), TC_0)+`](Type_wf), then
+     ...... Assert that `+$is_assignable_typeIR(typeIR)+`
+     ...... Let `+typedExpressionIR_init+` be [the result of typing `+expression_init+`, under cursor `+(block)+` and typing context `+TC_0+`](Expr_ok)
+     ...... Let `+typedExpressionIR?+` be `+$coerce_unary(typedExpressionIR_init, typeIR)+`
+     ...... Assert that `+typedExpressionIR?+` matches pattern `+(_)+`
+     ...... Let `+?(typedExpressionIR_init_cast)+` be typedExpressionIR?
+     ...... Let `+nameIR+` be `+$name(name)+`
+     ...... Let `+TC_1+` be `+$add_var((block), TC_0, nameIR, ((inout) typeIR (dyn) ?()))+`
+     ...... Let `+variableDeclarationIR+` be (annotationList typeIR nameIR ?((= typedExpressionIR_init_cast)) ;)
+     ...... Result in TC_1 and `+variableDeclarationIR+` as `+controlLocalDeclarationIR+`
 
  .. Case `+controlLocalDeclaration+` has type `+actionDeclaration+`
   ... Let `+actionDeclaration+` be `+controlLocalDeclaration+` as `+actionDeclaration+`
@@ -4715,24 +4715,24 @@ and the set of inserted type variables](Type_ok)
    .... Let `+TC_2+` be `+$add_parameters((local), TC_1, parameterTypeIR*)+`
    .... Let `+TC_3+` be TC_2[local.kind = (function-> typeIR_ret)]
 (Block_ok: TC_3 (cont) |- blockStatement : _typingContext f blockStatementIR)
-   .... Assert that `+f+` matches pattern `+`RET`+`
-   .... Let `+rid+` be `+$rid(name, parameterList)+`
-   .... Let `+functionTypeIR+` be (function( parameterTypeIR* )-> typeIR_ret)
-   .... Let `+routineTypeDefIR+` be `+(functionTypeIR as routineTypeIR < tid_expl* , tid_impl* >)+` as `+routineTypeDefIR+`
-   .... If [`+routineTypeDefIR+` is a well-formed type, assuming bound type ids `+$bound(p', TC_0)+`](RoutineTypeDef_wf), then
-    ..... Let `+TC_4+` be `+$add_routine_overload(p', TC_0, rid, routineTypeDefIR)+`
-    ..... Let `+nameIR+` be `+$name(name)+`
-    ..... Let `+functionDeclarationIR+` be (annotationList (typeIR_ret nameIR < tid_expl* , tid_impl* >( parameterIR* )) blockStatementIR)
-    ..... Result in TC_4 and `+functionDeclarationIR+` as `+declarationIR+`
-   .... Assert that (typeIR_ret = `+(void)+` as `+typeIR+`)
-   .... Let `+rid+` be `+$rid(name, parameterList)+`
-   .... Let `+functionTypeIR+` be (function( parameterTypeIR* )-> typeIR_ret)
-   .... Let `+routineTypeDefIR+` be `+(functionTypeIR as routineTypeIR < tid_expl* , tid_impl* >)+` as `+routineTypeDefIR+`
-   .... If [`+routineTypeDefIR+` is a well-formed type, assuming bound type ids `+$bound(p', TC_0)+`](RoutineTypeDef_wf), then
-    ..... Let `+TC_4+` be `+$add_routine_overload(p', TC_0, rid, routineTypeDefIR)+`
-    ..... Let `+nameIR+` be `+$name(name)+`
-    ..... Let `+functionDeclarationIR+` be (annotationList (typeIR_ret nameIR < tid_expl* , tid_impl* >( parameterIR* )) blockStatementIR)
-    ..... Result in TC_4 and `+functionDeclarationIR+` as `+declarationIR+`
+   .... If `+f+` matches pattern `+`RET`+`
+    ..... Let `+rid+` be `+$rid(name, parameterList)+`
+    ..... Let `+functionTypeIR+` be (function( parameterTypeIR* )-> typeIR_ret)
+    ..... Let `+routineTypeDefIR+` be `+(functionTypeIR as routineTypeIR < tid_expl* , tid_impl* >)+` as `+routineTypeDefIR+`
+    ..... If [`+routineTypeDefIR+` is a well-formed type, assuming bound type ids `+$bound(p', TC_0)+`](RoutineTypeDef_wf), then
+     ...... Let `+TC_4+` be `+$add_routine_overload(p', TC_0, rid, routineTypeDefIR)+`
+     ...... Let `+nameIR+` be `+$name(name)+`
+     ...... Let `+functionDeclarationIR+` be (annotationList (typeIR_ret nameIR < tid_expl* , tid_impl* >( parameterIR* )) blockStatementIR)
+     ...... Result in TC_4 and `+functionDeclarationIR+` as `+declarationIR+`
+   .... If (typeIR_ret = `+(void)+` as `+typeIR+`)
+    ..... Let `+rid+` be `+$rid(name, parameterList)+`
+    ..... Let `+functionTypeIR+` be (function( parameterTypeIR* )-> typeIR_ret)
+    ..... Let `+routineTypeDefIR+` be `+(functionTypeIR as routineTypeIR < tid_expl* , tid_impl* >)+` as `+routineTypeDefIR+`
+    ..... If [`+routineTypeDefIR+` is a well-formed type, assuming bound type ids `+$bound(p', TC_0)+`](RoutineTypeDef_wf), then
+     ...... Let `+TC_4+` be `+$add_routine_overload(p', TC_0, rid, routineTypeDefIR)+`
+     ...... Let `+nameIR+` be `+$name(name)+`
+     ...... Let `+functionDeclarationIR+` be (annotationList (typeIR_ret nameIR < tid_expl* , tid_impl* >( parameterIR* )) blockStatementIR)
+     ...... Result in TC_4 and `+functionDeclarationIR+` as `+declarationIR+`
 
  .. Case `+declaration+` has type `+actionDeclaration+`
   ... Let `+(annotationList action name ( parameterList ) blockStatement)+` be `+declaration+` as `+actionDeclaration+`
@@ -5218,13 +5218,13 @@ relation Program_ok: p4program
 
 relation Call_convention_expr_ok: p and TC and actctxt and (direction typeIR_param _id _value?) and typedExpressionIR_arg
 
-. Assert that `+direction+` matches pattern `+`IN`+`
-. Group in: p and TC and actctxt and ((in) typeIR_param _id _value?) and typedExpressionIR_arg
+. If `+direction+` matches pattern `+`IN`+`
+ .. Group in: p and TC and actctxt and ((in) typeIR_param _id _value?) and typedExpressionIR_arg
 
- .. Let `+typedExpressionIR?+` be `+$coerce_unary(typedExpressionIR_arg, typeIR_param)+`
- .. Assert that `+typedExpressionIR?+` matches pattern `+(_)+`
- .. Let `+?(typedExpressionIR_arg_cast)+` be typedExpressionIR?
- .. Result in typedExpressionIR_arg_cast
+  ... Let `+typedExpressionIR?+` be `+$coerce_unary(typedExpressionIR_arg, typeIR_param)+`
+  ... Assert that `+typedExpressionIR?+` matches pattern `+(_)+`
+  ... Let `+?(typedExpressionIR_arg_cast)+` be typedExpressionIR?
+  ... Result in typedExpressionIR_arg_cast
 . Group out-inout: p and TC and actctxt and (direction typeIR_param _id _value?) and typedExpressionIR_arg
 
  .. Case analysis on `+direction+`
@@ -5239,22 +5239,22 @@ relation Call_convention_expr_ok: p and TC and actctxt and (direction typeIR_par
    .... If [`+typeIR_param+` and `+typeIR_arg+` are the same type](Type_alpha), then
     ..... If [`+typedExpressionIR_arg+` is a valid l-value, under cursor `+p+` and typing context `+TC+`](Expr_lvalue_ok), then
      ...... Result in typedExpressionIR_arg
-. Assert that `+direction+` matches pattern `+``EMPTY`+`
-. Group empty: p and TC and actctxt and (() typeIR_param _id _value?) and typedExpressionIR_arg
+. If `+direction+` matches pattern `+``EMPTY`+`
+ .. Group empty: p and TC and actctxt and (() typeIR_param _id _value?) and typedExpressionIR_arg
 
- .. Case analysis on `+actctxt+`
-  ... Case `+actctxt+` matches pattern `ACTION`
-   .... Let `+typedExpressionIR?+` be `+$coerce_unary(typedExpressionIR_arg, typeIR_param)+`
-   .... Assert that `+typedExpressionIR?+` matches pattern `+(_)+`
-   .... Let `+?(typedExpressionIR_arg_cast)+` be typedExpressionIR?
-   .... Result in typedExpressionIR_arg_cast
+  ... Case analysis on `+actctxt+`
+   .... Case `+actctxt+` matches pattern `ACTION`
+    ..... Let `+typedExpressionIR?+` be `+$coerce_unary(typedExpressionIR_arg, typeIR_param)+`
+    ..... Assert that `+typedExpressionIR?+` matches pattern `+(_)+`
+    ..... Let `+?(typedExpressionIR_arg_cast)+` be typedExpressionIR?
+    ..... Result in typedExpressionIR_arg_cast
 
-  ... Case `+actctxt+` matches pattern `NOACTION`
-   .... Let `+typeIR_arg+` be `+$typeof_expression(typedExpressionIR_arg)+`
-   .... Let `+ctk_arg+` be `+$ctkof_expression(typedExpressionIR_arg)+`
-   .... If [`+typeIR_param+` and `+typeIR_arg+` are the same type](Type_alpha), then
-    ..... Assert that ~`+ctk_arg+` matches pattern `+`DYN`+`
-    ..... Result in typedExpressionIR_arg
+   .... Case `+actctxt+` matches pattern `NOACTION`
+    ..... Let `+typeIR_arg+` be `+$typeof_expression(typedExpressionIR_arg)+`
+    ..... Let `+ctk_arg+` be `+$ctkof_expression(typedExpressionIR_arg)+`
+    ..... If [`+typeIR_param+` and `+typeIR_arg+` are the same type](Type_alpha), then
+     ...... Assert that ~`+ctk_arg+` matches pattern `+`DYN`+`
+     ...... Result in typedExpressionIR_arg
 
 relation Call_convention_argument_ok: p and TC and actctxt and parameterTypeIR and argumentIR
 
@@ -5761,28 +5761,28 @@ relation Inst_ok: cursor' and TC and instctxt and constructorTypeIR and typeArgu
 
 relation SwitchLabel_table_ok: TC and tid_table and bool' and switchLabel
 
-. Assert that (bool' = true)
-. Assert that `+switchLabel+` matches pattern `+`DEFAULT`+`
-. Group default: TC and tid_table and true and (default)
+. If (bool' = true)
+ .. Assert that `+switchLabel+` matches pattern `+`DEFAULT`+`
+ .. Group default: TC and tid_table and true and (default)
 
- .. Result in (default)
-. Assert that `+switchLabel+` has type `+prefixedNonTypeName+`
-. Let `+prefixedNonTypeName+` be `+switchLabel+` as `+prefixedNonTypeName+`
-. Group expressionNonBrace-prefixedNonTypeName: TC and tid_table and _bool and `+prefixedNonTypeName+` as `+switchLabel+`
+  ... Result in (default)
+. If `+switchLabel+` has type `+prefixedNonTypeName+`
+ .. Let `+prefixedNonTypeName+` be `+switchLabel+` as `+prefixedNonTypeName+`
+ .. Group expressionNonBrace-prefixedNonTypeName: TC and tid_table and _bool and `+prefixedNonTypeName+` as `+switchLabel+`
 
- .. Let `+prefixedNameIR+` be `+$prefixedNonTypeName(prefixedNonTypeName)+`
- .. Assert that `+prefixedNameIR+` matches pattern `+``%`+`
- .. Let `+(` nameIR_label)+` be prefixedNameIR
- .. Let `+tid_table_enum+` be "action_list(" ++ tid_table ++ ")"
- .. Let `+id_label+` be tid_table_enum ++ "." ++ nameIR_label
- .. Let `+varTypeIR?+` be `+$find_var((local), TC, (` id_label))+`
- .. Assert that `+varTypeIR?+` matches pattern `+(_)+`
- .. Let `+?((_direction typeIR_label ctk_label value?))+` be varTypeIR?
- .. Assert that `+value?+` matches pattern `+(_)+`
- .. Let `+?(value_label)+` be value?
- .. Assert that (value_label = `+(table_enum tid_table_enum . nameIR_label)+` as `+value+`)
- .. Let `+typedExpressionIR_label+` be (`+(` nameIR_label)+` as `+expressionIR+` # (( typeIR_label ctk_label )))
- .. Result in `+typedExpressionIR_label+` as `+switchLabelIR+`
+  ... Let `+prefixedNameIR+` be `+$prefixedNonTypeName(prefixedNonTypeName)+`
+  ... Assert that `+prefixedNameIR+` matches pattern `+``%`+`
+  ... Let `+(` nameIR_label)+` be prefixedNameIR
+  ... Let `+tid_table_enum+` be "action_list(" ++ tid_table ++ ")"
+  ... Let `+id_label+` be tid_table_enum ++ "." ++ nameIR_label
+  ... Let `+varTypeIR?+` be `+$find_var((local), TC, (` id_label))+`
+  ... Assert that `+varTypeIR?+` matches pattern `+(_)+`
+  ... Let `+?((_direction typeIR_label ctk_label value?))+` be varTypeIR?
+  ... Assert that `+value?+` matches pattern `+(_)+`
+  ... Let `+?(value_label)+` be value?
+  ... Assert that (value_label = `+(table_enum tid_table_enum . nameIR_label)+` as `+value+`)
+  ... Let `+typedExpressionIR_label+` be (`+(` nameIR_label)+` as `+expressionIR+` # (( typeIR_label ctk_label )))
+  ... Result in `+typedExpressionIR_label+` as `+switchLabelIR+`
 
 relation SwitchCase_table_ok: TC and f and tid_table and b_last and switchCase
 
@@ -5823,23 +5823,23 @@ relation SwitchCases_table_ok: TC and f and tid_table and switchCase*
 
 relation SwitchLabel_general_ok: TC and _typeIR' and bool' and switchLabel
 
-. Assert that (bool' = true)
-. Assert that `+switchLabel+` matches pattern `+`DEFAULT`+`
-. Group default: TC and _typeIR and true and (default)
+. If (bool' = true)
+ .. Assert that `+switchLabel+` matches pattern `+`DEFAULT`+`
+ .. Group default: TC and _typeIR and true and (default)
 
- .. Result in (default)
-. Assert that `+switchLabel+` has type `+expressionNonBrace+`
-. Let `+expressionNonBrace_label+` be `+switchLabel+` as `+expressionNonBrace+`
-. Group expressionNonBrace: TC and typeIR_switch and _bool and `+expressionNonBrace_label+` as `+switchLabel+`
+  ... Result in (default)
+. If `+switchLabel+` has type `+expressionNonBrace+`
+ .. Let `+expressionNonBrace_label+` be `+switchLabel+` as `+expressionNonBrace+`
+ .. Group expressionNonBrace: TC and typeIR_switch and _bool and `+expressionNonBrace_label+` as `+switchLabel+`
 
- .. Let `+expression_label+` be `+$expressionNonBrace(expressionNonBrace_label)+`
- .. Let `+typedExpressionIR_label+` be [the result of typing `+expression_label+`, under cursor `+(local)+` and typing context `+TC+`](Expr_ok)
- .. Let `+typedExpressionIR?+` be `+$coerce_unary(typedExpressionIR_label, _typeIR')+`
- .. Assert that `+typedExpressionIR?+` matches pattern `+(_)+`
- .. Let `+?(typedExpressionIR_label_cast)+` be typedExpressionIR?
- .. Let `+(_expressionIR # (( _typeIR ctk )))+` be typedExpressionIR_label_cast
- .. Assert that `+ctk+` matches pattern `+`LCTK`+`
- .. Result in `+typedExpressionIR_label_cast+` as `+switchLabelIR+`
+  ... Let `+expression_label+` be `+$expressionNonBrace(expressionNonBrace_label)+`
+  ... Let `+typedExpressionIR_label+` be [the result of typing `+expression_label+`, under cursor `+(local)+` and typing context `+TC+`](Expr_ok)
+  ... Let `+typedExpressionIR?+` be `+$coerce_unary(typedExpressionIR_label, _typeIR')+`
+  ... Assert that `+typedExpressionIR?+` matches pattern `+(_)+`
+  ... Let `+?(typedExpressionIR_label_cast)+` be typedExpressionIR?
+  ... Let `+(_expressionIR # (( _typeIR ctk )))+` be typedExpressionIR_label_cast
+  ... Assert that `+ctk+` matches pattern `+`LCTK`+`
+  ... Result in `+typedExpressionIR_label_cast+` as `+switchLabelIR+`
 
 relation SwitchCase_general_ok: TC and f and typeIR_switch and b_last and switchCase
 
@@ -5903,24 +5903,24 @@ and the set of inserted type variables](Type_ok)
    .... Let `+TC_4+` be `+$add_parameters((local), TC_3, parameterTypeIR*)+`
    .... Let `+TC_5+` be TC_4[local.kind = (extern_method-> typeIR_ret)]
 (Block_ok: TC_5 (cont) |- blockStatement : _typingContext f blockStatementIR)
-   .... Assert that `+f+` matches pattern `+`RET`+`
-   .... Let `+rid+` be `+$rid(name, parameterList)+`
-   .... Let `+methodTypeIR+` be (extern_method( parameterTypeIR* )-> typeIR_ret)
-   .... Let `+routineTypeDefIR+` be `+(methodTypeIR as routineTypeIR < tid_expl* , tid_impl* >)+` as `+routineTypeDefIR+`
-   .... If [`+routineTypeDefIR+` is a well-formed type, assuming bound type ids `+$bound(p, TC_0)+`](RoutineTypeDef_wf), then
-    ..... Let `+rdenv_init+` be `+$update_map<rid, routineTypeDefIR>(rdenv, rid, routineTypeDefIR)+`
-    ..... Let `+nameIR+` be `+$name(name)+`
-    ..... Let `+functionDeclarationIR+` be (annotationList (typeIR_ret nameIR < tid_expl* , tid_impl* >( parameterIR* )) blockStatementIR)
-    ..... Result in frame and rdenv_init and `+functionDeclarationIR+` as `+objectDeclarationIR+`
-   .... Assert that (typeIR_ret = `+(void)+` as `+typeIR+`)
-   .... Let `+rid+` be `+$rid(name, parameterList)+`
-   .... Let `+methodTypeIR+` be (extern_method( parameterTypeIR* )-> typeIR_ret)
-   .... Let `+routineTypeDefIR+` be `+(methodTypeIR as routineTypeIR < tid_expl* , tid_impl* >)+` as `+routineTypeDefIR+`
-   .... If [`+routineTypeDefIR+` is a well-formed type, assuming bound type ids `+$bound(p, TC_0)+`](RoutineTypeDef_wf), then
-    ..... Let `+rdenv_init+` be `+$update_map<rid, routineTypeDefIR>(rdenv, rid, routineTypeDefIR)+`
-    ..... Let `+nameIR+` be `+$name(name)+`
-    ..... Let `+functionDeclarationIR+` be (annotationList (typeIR_ret nameIR < tid_expl* , tid_impl* >( parameterIR* )) blockStatementIR)
-    ..... Result in frame and rdenv_init and `+functionDeclarationIR+` as `+objectDeclarationIR+`
+   .... If `+f+` matches pattern `+`RET`+`
+    ..... Let `+rid+` be `+$rid(name, parameterList)+`
+    ..... Let `+methodTypeIR+` be (extern_method( parameterTypeIR* )-> typeIR_ret)
+    ..... Let `+routineTypeDefIR+` be `+(methodTypeIR as routineTypeIR < tid_expl* , tid_impl* >)+` as `+routineTypeDefIR+`
+    ..... If [`+routineTypeDefIR+` is a well-formed type, assuming bound type ids `+$bound(p, TC_0)+`](RoutineTypeDef_wf), then
+     ...... Let `+rdenv_init+` be `+$update_map<rid, routineTypeDefIR>(rdenv, rid, routineTypeDefIR)+`
+     ...... Let `+nameIR+` be `+$name(name)+`
+     ...... Let `+functionDeclarationIR+` be (annotationList (typeIR_ret nameIR < tid_expl* , tid_impl* >( parameterIR* )) blockStatementIR)
+     ...... Result in frame and rdenv_init and `+functionDeclarationIR+` as `+objectDeclarationIR+`
+   .... If (typeIR_ret = `+(void)+` as `+typeIR+`)
+    ..... Let `+rid+` be `+$rid(name, parameterList)+`
+    ..... Let `+methodTypeIR+` be (extern_method( parameterTypeIR* )-> typeIR_ret)
+    ..... Let `+routineTypeDefIR+` be `+(methodTypeIR as routineTypeIR < tid_expl* , tid_impl* >)+` as `+routineTypeDefIR+`
+    ..... If [`+routineTypeDefIR+` is a well-formed type, assuming bound type ids `+$bound(p, TC_0)+`](RoutineTypeDef_wf), then
+     ...... Let `+rdenv_init+` be `+$update_map<rid, routineTypeDefIR>(rdenv, rid, routineTypeDefIR)+`
+     ...... Let `+nameIR+` be `+$name(name)+`
+     ...... Let `+functionDeclarationIR+` be (annotationList (typeIR_ret nameIR < tid_expl* , tid_impl* >( parameterIR* )) blockStatementIR)
+     ...... Result in frame and rdenv_init and `+functionDeclarationIR+` as `+objectDeclarationIR+`
 
  .. Case `+objectDeclaration+` has type `+instantiation+`
   ... Let `+instantiation+` be `+objectDeclaration+` as `+instantiation+`
@@ -6199,69 +6199,69 @@ relation SelectCase_ok: TC and nameIR_state* and typeIR_key* and (keysetExpressi
 
 relation TableEntry_keyset_simple_ok: TC and TBLC and (typeIR_key and text) and simpleKeysetExpression
 
-. Assert that `+simpleKeysetExpression+` has type `+expression+`
-. Let `+expression+` be `+simpleKeysetExpression+` as `+expression+`
-. Group expression: TC and TBLC and (typeIR_key and text) and `+expression+` as `+simpleKeysetExpression+`
+. If `+simpleKeysetExpression+` has type `+expression+`
+ .. Let `+expression+` be `+simpleKeysetExpression+` as `+expression+`
+ .. Group expression: TC and TBLC and (typeIR_key and text) and `+expression+` as `+simpleKeysetExpression+`
 
- .. Case analysis on `+"lpm"+`
-  ... Case "lpm" = text
-   .... Let `+matchMode+` be TBLC.mode
-   .... Assert that `+matchMode+` matches pattern `+`NOPRILPM%`+`
-   .... Let `+(noprilpm n)+` be matchMode
-   .... Let `+typedExpressionIR+` be [the result of typing `+expression+`, under cursor `+(local)+` and typing context `+TC+`](Expr_ok)
-   .... Let `+typeIR+` be `+$typeof_expression(typedExpressionIR)+`
-   .... Let `+ctk+` be `+$ctkof_expression(typedExpressionIR)+`
-   .... If [`+typeIR+` can be implicitly cast to `+typeIR_key+`](Sub_impl), then
-    ..... Let `+typeIR_set+` be `+(set< [typeIR_key] >)+` as `+typeIR+`
-    ..... Let `+typedExpressionIR_set+` be (`+(( typeIR_set ) typedExpressionIR)+` as `+expressionIR+` # (( typeIR_set ctk )))
-    ..... Result in (lpm n) and `+typedExpressionIR_set+` as `+simpleKeysetExpressionIR+`
+  ... Case analysis on `+"lpm"+`
+   .... Case "lpm" = text
+    ..... Let `+matchMode+` be TBLC.mode
+    ..... Assert that `+matchMode+` matches pattern `+`NOPRILPM%`+`
+    ..... Let `+(noprilpm n)+` be matchMode
+    ..... Let `+typedExpressionIR+` be [the result of typing `+expression+`, under cursor `+(local)+` and typing context `+TC+`](Expr_ok)
+    ..... Let `+typeIR+` be `+$typeof_expression(typedExpressionIR)+`
+    ..... Let `+ctk+` be `+$ctkof_expression(typedExpressionIR)+`
+    ..... If [`+typeIR+` can be implicitly cast to `+typeIR_key+`](Sub_impl), then
+     ...... Let `+typeIR_set+` be `+(set< [typeIR_key] >)+` as `+typeIR+`
+     ...... Let `+typedExpressionIR_set+` be (`+(( typeIR_set ) typedExpressionIR)+` as `+expressionIR+` # (( typeIR_set ctk )))
+     ...... Result in (lpm n) and `+typedExpressionIR_set+` as `+simpleKeysetExpressionIR+`
 
-  ... Case "lpm" =/= text
-   .... Let `+typedExpressionIR+` be [the result of typing `+expression+`, under cursor `+(local)+` and typing context `+TC+`](Expr_ok)
-   .... Let `+typeIR+` be `+$typeof_expression(typedExpressionIR)+`
-   .... Let `+ctk+` be `+$ctkof_expression(typedExpressionIR)+`
-   .... If [`+typeIR+` can be implicitly cast to `+typeIR_key+`](Sub_impl), then
-    ..... Let `+typeIR_set+` be `+(set< [typeIR_key] >)+` as `+typeIR+`
-    ..... Let `+typedExpressionIR_set+` be (`+(( typeIR_set ) typedExpressionIR)+` as `+expressionIR+` # (( typeIR_set ctk )))
-    ..... Result in (nolpm) and `+typedExpressionIR_set+` as `+simpleKeysetExpressionIR+`
+   .... Case "lpm" =/= text
+    ..... Let `+typedExpressionIR+` be [the result of typing `+expression+`, under cursor `+(local)+` and typing context `+TC+`](Expr_ok)
+    ..... Let `+typeIR+` be `+$typeof_expression(typedExpressionIR)+`
+    ..... Let `+ctk+` be `+$ctkof_expression(typedExpressionIR)+`
+    ..... If [`+typeIR+` can be implicitly cast to `+typeIR_key+`](Sub_impl), then
+     ...... Let `+typeIR_set+` be `+(set< [typeIR_key] >)+` as `+typeIR+`
+     ...... Let `+typedExpressionIR_set+` be (`+(( typeIR_set ) typedExpressionIR)+` as `+expressionIR+` # (( typeIR_set ctk )))
+     ...... Result in (nolpm) and `+typedExpressionIR_set+` as `+simpleKeysetExpressionIR+`
 . Case analysis on `+simpleKeysetExpression+`
  .. Case `+simpleKeysetExpression+` matches pattern `%&&&%`
   ... Let `+(expression_l &&& expression_r)+` be simpleKeysetExpression
   ... Group mask: TC and TBLC and (typeIR_key and text) and (expression_l &&& expression_r)
 
-   .... Assert that ("lpm" = text)
-   .... Let `+matchMode+` be TBLC.mode
-   .... Assert that `+matchMode+` matches pattern `+`NOPRILPM%`+`
-   .... Let `+(noprilpm n)+` be matchMode
-   .... Let `+typedExpressionIR_l+` be [the result of typing `+expression_l+`, under cursor `+(local)+` and typing context `+TC+`](Expr_ok)
-   .... Let `+typedExpressionIR_r+` be [the result of typing `+expression_r+`, under cursor `+(local)+` and typing context `+TC+`](Expr_ok)
-   .... Let `+(typedExpressionIR, typedExpressionIR)?+` be `+$coerce_binary(typedExpressionIR_l, typedExpressionIR_r)+`
-   .... Assert that `+(typedExpressionIR, typedExpressionIR)?+` matches pattern `+(_)+`
-   .... Let `+?((typedExpressionIR_l_cast and typedExpressionIR_r_cast))+` be (typedExpressionIR, typedExpressionIR)?
-   .... Let `+(typedExpressionIR, typedExpressionIR)'?+` be `+$reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_mask)+`
-   .... Assert that `+(typedExpressionIR, typedExpressionIR)'?+` matches pattern `+(_)+`
-   .... Let `+?((typedExpressionIR_l_reduced and typedExpressionIR_r_reduced))+` be (typedExpressionIR, typedExpressionIR)'?
-   .... Let `+typeIR_reduced+` be `+$typeof_expression(typedExpressionIR_r_reduced)+`
-   .... Let `+ctk_r_reduced+` be `+$ctkof_expression(typedExpressionIR_r_reduced)+`
-   .... If [`+typeIR_reduced+` can be implicitly cast to `+typeIR_key+`](Sub_impl), then
-    ..... Assert that `+ctk_r_reduced+` matches pattern `+`LCTK`+`
-    ..... Let `+value_r+` be [the static evaluation of `+typedExpressionIR_r_reduced+`, under cursor `+(local)+` and typing context `+TC+`](Eval_static)
-    ..... Let `+i_r+` be `+$to_number(value_r)+`
-    ..... Let `+n_prefix+` be `+$tableEntry_lpm_prefix(`+(n w $to_bitstr(n as int, i_r))+` as `+value+`)+`
-    ..... Result in (lpm n_prefix) and (typedExpressionIR_l_reduced &&& typedExpressionIR_r_reduced)
-   .... Assert that ("ternary" = text)
-   .... Let `+typedExpressionIR_l+` be [the result of typing `+expression_l+`, under cursor `+(local)+` and typing context `+TC+`](Expr_ok)
-   .... Let `+typedExpressionIR_r+` be [the result of typing `+expression_r+`, under cursor `+(local)+` and typing context `+TC+`](Expr_ok)
-   .... Let `+(typedExpressionIR, typedExpressionIR)?+` be `+$coerce_binary(typedExpressionIR_l, typedExpressionIR_r)+`
-   .... Assert that `+(typedExpressionIR, typedExpressionIR)?+` matches pattern `+(_)+`
-   .... Let `+?((typedExpressionIR_l_cast and typedExpressionIR_r_cast))+` be (typedExpressionIR, typedExpressionIR)?
-   .... Let `+(typedExpressionIR, typedExpressionIR)'?+` be `+$reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_mask)+`
-   .... Assert that `+(typedExpressionIR, typedExpressionIR)'?+` matches pattern `+(_)+`
-   .... Let `+?((typedExpressionIR_l_reduced and typedExpressionIR_r_reduced))+` be (typedExpressionIR, typedExpressionIR)'?
-   .... Let `+typeIR_reduced+` be `+$typeof_expression(typedExpressionIR_r_reduced)+`
-   .... Let `+ctk_r_reduced+` be `+$ctkof_expression(typedExpressionIR_r_reduced)+`
-   .... If [`+typeIR_reduced+` can be implicitly cast to `+typeIR_key+`](Sub_impl), then
-    ..... Result in (nolpm) and (typedExpressionIR_l_reduced &&& typedExpressionIR_r_reduced)
+   .... If ("lpm" = text)
+    ..... Let `+matchMode+` be TBLC.mode
+    ..... Assert that `+matchMode+` matches pattern `+`NOPRILPM%`+`
+    ..... Let `+(noprilpm n)+` be matchMode
+    ..... Let `+typedExpressionIR_l+` be [the result of typing `+expression_l+`, under cursor `+(local)+` and typing context `+TC+`](Expr_ok)
+    ..... Let `+typedExpressionIR_r+` be [the result of typing `+expression_r+`, under cursor `+(local)+` and typing context `+TC+`](Expr_ok)
+    ..... Let `+(typedExpressionIR, typedExpressionIR)?+` be `+$coerce_binary(typedExpressionIR_l, typedExpressionIR_r)+`
+    ..... Assert that `+(typedExpressionIR, typedExpressionIR)?+` matches pattern `+(_)+`
+    ..... Let `+?((typedExpressionIR_l_cast and typedExpressionIR_r_cast))+` be (typedExpressionIR, typedExpressionIR)?
+    ..... Let `+(typedExpressionIR, typedExpressionIR)'?+` be `+$reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_mask)+`
+    ..... Assert that `+(typedExpressionIR, typedExpressionIR)'?+` matches pattern `+(_)+`
+    ..... Let `+?((typedExpressionIR_l_reduced and typedExpressionIR_r_reduced))+` be (typedExpressionIR, typedExpressionIR)'?
+    ..... Let `+typeIR_reduced+` be `+$typeof_expression(typedExpressionIR_r_reduced)+`
+    ..... Let `+ctk_r_reduced+` be `+$ctkof_expression(typedExpressionIR_r_reduced)+`
+    ..... If [`+typeIR_reduced+` can be implicitly cast to `+typeIR_key+`](Sub_impl), then
+     ...... Assert that `+ctk_r_reduced+` matches pattern `+`LCTK`+`
+     ...... Let `+value_r+` be [the static evaluation of `+typedExpressionIR_r_reduced+`, under cursor `+(local)+` and typing context `+TC+`](Eval_static)
+     ...... Let `+i_r+` be `+$to_number(value_r)+`
+     ...... Let `+n_prefix+` be `+$tableEntry_lpm_prefix(`+(n w $to_bitstr(n as int, i_r))+` as `+value+`)+`
+     ...... Result in (lpm n_prefix) and (typedExpressionIR_l_reduced &&& typedExpressionIR_r_reduced)
+   .... If ("ternary" = text)
+    ..... Let `+typedExpressionIR_l+` be [the result of typing `+expression_l+`, under cursor `+(local)+` and typing context `+TC+`](Expr_ok)
+    ..... Let `+typedExpressionIR_r+` be [the result of typing `+expression_r+`, under cursor `+(local)+` and typing context `+TC+`](Expr_ok)
+    ..... Let `+(typedExpressionIR, typedExpressionIR)?+` be `+$coerce_binary(typedExpressionIR_l, typedExpressionIR_r)+`
+    ..... Assert that `+(typedExpressionIR, typedExpressionIR)?+` matches pattern `+(_)+`
+    ..... Let `+?((typedExpressionIR_l_cast and typedExpressionIR_r_cast))+` be (typedExpressionIR, typedExpressionIR)?
+    ..... Let `+(typedExpressionIR, typedExpressionIR)'?+` be `+$reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_mask)+`
+    ..... Assert that `+(typedExpressionIR, typedExpressionIR)'?+` matches pattern `+(_)+`
+    ..... Let `+?((typedExpressionIR_l_reduced and typedExpressionIR_r_reduced))+` be (typedExpressionIR, typedExpressionIR)'?
+    ..... Let `+typeIR_reduced+` be `+$typeof_expression(typedExpressionIR_r_reduced)+`
+    ..... Let `+ctk_r_reduced+` be `+$ctkof_expression(typedExpressionIR_r_reduced)+`
+    ..... If [`+typeIR_reduced+` can be implicitly cast to `+typeIR_key+`](Sub_impl), then
+     ...... Result in (nolpm) and (typedExpressionIR_l_reduced &&& typedExpressionIR_r_reduced)
 
  .. Case `+simpleKeysetExpression+` matches pattern `DEFAULT`
   ... Group default: TC and TBLC and (typeIR_key and text) and (default)
@@ -6290,23 +6290,23 @@ relation TableEntry_keyset_simple_ok: TC and TBLC and (typeIR_key and text) and 
     ..... Case "lpm" =/= text
      ...... Assert that (text =/= "exact")
      ...... Result in (nolpm) and (_)
-. Assert that (text = "range")
-. Assert that `+simpleKeysetExpression+` matches pattern `+`%..%`+`
-. Let `+(expression_l .. expression_r)+` be simpleKeysetExpression
-. Group range-range: TC and TBLC and (typeIR_key and "range") and (expression_l .. expression_r)
+. If (text = "range")
+ .. Assert that `+simpleKeysetExpression+` matches pattern `+`%..%`+`
+ .. Let `+(expression_l .. expression_r)+` be simpleKeysetExpression
+ .. Group range-range: TC and TBLC and (typeIR_key and "range") and (expression_l .. expression_r)
 
- .. Let `+typedExpressionIR_l+` be [the result of typing `+expression_l+`, under cursor `+(local)+` and typing context `+TC+`](Expr_ok)
- .. Let `+typedExpressionIR_r+` be [the result of typing `+expression_r+`, under cursor `+(local)+` and typing context `+TC+`](Expr_ok)
- .. Let `+(typedExpressionIR, typedExpressionIR)?+` be `+$coerce_binary(typedExpressionIR_l, typedExpressionIR_r)+`
- .. Assert that `+(typedExpressionIR, typedExpressionIR)?+` matches pattern `+(_)+`
- .. Let `+?((typedExpressionIR_l_cast and typedExpressionIR_r_cast))+` be (typedExpressionIR, typedExpressionIR)?
- .. Let `+(typedExpressionIR, typedExpressionIR)'?+` be `+$reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_range)+`
- .. Assert that `+(typedExpressionIR, typedExpressionIR)'?+` matches pattern `+(_)+`
- .. Let `+?((typedExpressionIR_l_reduced and typedExpressionIR_r_reduced))+` be (typedExpressionIR, typedExpressionIR)'?
- .. Let `+typeIR_reduced+` be `+$typeof_expression(typedExpressionIR_r_reduced)+`
- .. Let `+ctk_r_reduced+` be `+$ctkof_expression(typedExpressionIR_r_reduced)+`
- .. If [`+typeIR_reduced+` can be implicitly cast to `+typeIR_key+`](Sub_impl), then
-  ... Result in (nolpm) and (typedExpressionIR_l_reduced .. typedExpressionIR_r_reduced)
+  ... Let `+typedExpressionIR_l+` be [the result of typing `+expression_l+`, under cursor `+(local)+` and typing context `+TC+`](Expr_ok)
+  ... Let `+typedExpressionIR_r+` be [the result of typing `+expression_r+`, under cursor `+(local)+` and typing context `+TC+`](Expr_ok)
+  ... Let `+(typedExpressionIR, typedExpressionIR)?+` be `+$coerce_binary(typedExpressionIR_l, typedExpressionIR_r)+`
+  ... Assert that `+(typedExpressionIR, typedExpressionIR)?+` matches pattern `+(_)+`
+  ... Let `+?((typedExpressionIR_l_cast and typedExpressionIR_r_cast))+` be (typedExpressionIR, typedExpressionIR)?
+  ... Let `+(typedExpressionIR, typedExpressionIR)'?+` be `+$reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_range)+`
+  ... Assert that `+(typedExpressionIR, typedExpressionIR)'?+` matches pattern `+(_)+`
+  ... Let `+?((typedExpressionIR_l_reduced and typedExpressionIR_r_reduced))+` be (typedExpressionIR, typedExpressionIR)'?
+  ... Let `+typeIR_reduced+` be `+$typeof_expression(typedExpressionIR_r_reduced)+`
+  ... Let `+ctk_r_reduced+` be `+$ctkof_expression(typedExpressionIR_r_reduced)+`
+  ... If [`+typeIR_reduced+` can be implicitly cast to `+typeIR_key+`](Sub_impl), then
+   .... Result in (nolpm) and (typedExpressionIR_l_reduced .. typedExpressionIR_r_reduced)
 
 relation TableEntry_keysets_simple_ok: TC and TBLC and TBLS' and matchKey* and simpleKeysetExpression*
 
@@ -6355,22 +6355,22 @@ relation Expr_lvalue_ok: p and TC and (expressionIR # (( _typeIR _ctk )))
    .... If [`+typedExpressionIR_base+` is a valid l-value, under cursor `+p+` and typing context `+TC+`](Expr_lvalue_ok), then
     ..... Let `+typeIR_base+` be `+$typeof_expression(typedExpressionIR_base)+`
     ..... Let `+typeIR'+` be `+$canon(typeIR_base)+`
-    ..... Assert that `+typeIR'+` has type `+headerStackTypeIR+`
-    ..... Let `+(typeIR [ _nat ])+` be `+typeIR'+` as `+headerStackTypeIR+`
-    ..... Case analysis on `+nameIR+`
-     ...... Case nameIR = "next"
-      ....... Assert that (p = (block)) /\ `+$is_parser_blockKind(TC.block.kind)+`
-      ....... The relation holds
-      ....... Assert that (p = (local)) /\ `+$is_parser_state_localKind(TC.local.kind)+`
-      ....... The relation holds
+    ..... If `+typeIR'+` has type `+headerStackTypeIR+`
+     ...... Let `+(typeIR [ _nat ])+` be `+typeIR'+` as `+headerStackTypeIR+`
+     ...... Case analysis on `+nameIR+`
+      ....... Case nameIR = "next"
+       ........ If (p = (block)) /\ `+$is_parser_blockKind(TC.block.kind)+`
+        ......... The relation holds
+       ........ If (p = (local)) /\ `+$is_parser_state_localKind(TC.local.kind)+`
+        ......... The relation holds
 
-     ...... Case nameIR = "last"
-      ....... Assert that (p = (block)) /\ `+$is_parser_blockKind(TC.block.kind)+`
-      ....... The relation holds
-      ....... Assert that (p = (local)) /\ `+$is_parser_state_localKind(TC.local.kind)+`
-      ....... The relation holds
-    ..... Assert that ~`+$is_headerStackTypeIR(`+$canon(typeIR_base)+`)+`
-    ..... The relation holds
+      ....... Case nameIR = "last"
+       ........ If (p = (block)) /\ `+$is_parser_blockKind(TC.block.kind)+`
+        ......... The relation holds
+       ........ If (p = (local)) /\ `+$is_parser_state_localKind(TC.local.kind)+`
+        ......... The relation holds
+    ..... If ~`+$is_headerStackTypeIR(`+$canon(typeIR_base)+`)+`
+     ...... The relation holds
 
  .. Case `+expressionIR+` has type `+indexAccessExpressionIR+`
   ... Let `+(typedExpressionIR_base [ typedExpressionIR_index ])+` be `+expressionIR+` as `+indexAccessExpressionIR+`
@@ -6572,12 +6572,12 @@ relation Expr_inst: p and IC and STO' and (expressionIR # _expressionNoteIR')
   ... Group ternaryExpressionIR: p and IC and STO_0 and (`+(typedExpressionIR_cond ? typedExpressionIR_true : typedExpressionIR_false)+` as `+expressionIR+` # _expressionNoteIR)
 
 (Expr_inst: p IC STO' |- typedExpressionIR_cond ==> STO_1 value)
-   .... Assert that (value = `+(b true)+` as `+value+`)
+   .... If (value = `+(b true)+` as `+value+`)
 (Expr_inst: p IC STO_1 |- typedExpressionIR_true ==> STO_2 value_true)
-   .... Result in STO_2 and value_true
-   .... Assert that (value = `+(b false)+` as `+value+`)
+    ..... Result in STO_2 and value_true
+   .... If (value = `+(b false)+` as `+value+`)
 (Expr_inst: p IC STO_1 |- typedExpressionIR_false ==> STO_2 value_false)
-   .... Result in STO_2 and value_false
+    ..... Result in STO_2 and value_false
 
  .. Case `+expressionIR+` has type `+castExpressionIR+`
   ... Let `+(( typeIR ) typedExpressionIR)+` be `+expressionIR+` as `+castExpressionIR+`
@@ -6690,41 +6690,41 @@ relation Expr_inst: p and IC and STO' and (expressionIR # _expressionNoteIR')
 
    .... Case `+callExpressionIR+` matches pattern `%<%>(%)`
     ..... Let `+(routineTargetIR < typeArgumentIR* >( argumentIR* ))+` be callExpressionIR
-    ..... Assert that `+typeArgumentIR*+` matches pattern `+[]+`
-    ..... Assert that `+argumentIR*+` matches pattern `+[]+`
-    ..... Group callExpressionIR-builtin-size: p and IC and STO and (`+(routineTargetIR < [] >( [] ))+` as `+expressionIR+` # _expressionNoteIR)
+    ..... If `+typeArgumentIR*+` matches pattern `+[]+`
+     ...... Assert that `+argumentIR*+` matches pattern `+[]+`
+     ...... Group callExpressionIR-builtin-size: p and IC and STO and (`+(routineTargetIR < [] >( [] ))+` as `+expressionIR+` # _expressionNoteIR)
 
-     ...... Case analysis on `+routineTargetIR+`
-      ....... Case `+routineTargetIR+` matches pattern `%.%`
-       ........ Let `+(typedExpressionIR_base . nameIR)+` be routineTargetIR
-       ........ Let `+(_expressionIR # (( typeIR_base _ctk )))+` be typedExpressionIR_base
-       ........ Assert that nameIR is in ["minSizeInBits" and "minSizeInBytes" and "maxSizeInBits" and "maxSizeInBytes"]
-       ........ Result in STO' and `+$sizeof(typeIR_base, nameIR)+`
+      ....... Case analysis on `+routineTargetIR+`
+       ........ Case `+routineTargetIR+` matches pattern `%.%`
+        ......... Let `+(typedExpressionIR_base . nameIR)+` be routineTargetIR
+        ......... Let `+(_expressionIR # (( typeIR_base _ctk )))+` be typedExpressionIR_base
+        ......... Assert that nameIR is in ["minSizeInBits" and "minSizeInBytes" and "maxSizeInBits" and "maxSizeInBytes"]
+        ......... Result in STO' and `+$sizeof(typeIR_base, nameIR)+`
 
-      ....... Case `+routineTargetIR+` matches pattern `TYPE%.%`
-       ........ Let `+(type prefixedNameIR . nameIR)+` be routineTargetIR
-       ........ Let `+typeDefIR'?+` be `+$find_typedef_inst(p, IC, prefixedNameIR)+`
-       ........ Assert that `+typeDefIR'?+` matches pattern `+(_)+`
-       ........ Let `+?(typeDefIR)+` be typeDefIR'?
-       ........ Case analysis on `+typeDefIR+`
-        ......... Case `+typeDefIR+` has type `+typeIR+`
-         .......... Let `+typeIR_base+` be `+typeDefIR+` as `+typeIR+`
-         .......... Assert that nameIR is in ["minSizeInBits" and "minSizeInBytes" and "maxSizeInBits" and "maxSizeInBytes"]
-         .......... Result in STO' and `+$sizeof(typeIR_base, nameIR)+`
+       ........ Case `+routineTargetIR+` matches pattern `TYPE%.%`
+        ......... Let `+(type prefixedNameIR . nameIR)+` be routineTargetIR
+        ......... Let `+typeDefIR'?+` be `+$find_typedef_inst(p, IC, prefixedNameIR)+`
+        ......... Assert that `+typeDefIR'?+` matches pattern `+(_)+`
+        ......... Let `+?(typeDefIR)+` be typeDefIR'?
+        ......... Case analysis on `+typeDefIR+`
+         .......... Case `+typeDefIR+` has type `+typeIR+`
+          ........... Let `+typeIR_base+` be `+typeDefIR+` as `+typeIR+`
+          ........... Assert that nameIR is in ["minSizeInBits" and "minSizeInBytes" and "maxSizeInBits" and "maxSizeInBytes"]
+          ........... Result in STO' and `+$sizeof(typeIR_base, nameIR)+`
 
-        ......... Case `+typeDefIR+` has type `+polyTypeDefIR+`
-         .......... Let `+(typeIR_base < tid* , tid'* >)+` be `+typeDefIR+` as `+polyTypeDefIR+`
-         .......... Assert that `+tid*+` matches pattern `+[]+`
-         .......... Assert that `+tid'*+` matches pattern `+[]+`
-         .......... Assert that nameIR is in ["minSizeInBits" and "minSizeInBytes" and "maxSizeInBits" and "maxSizeInBytes"]
-         .......... Result in STO' and `+$sizeof(typeIR_base, nameIR)+`
+         .......... Case `+typeDefIR+` has type `+polyTypeDefIR+`
+          ........... Let `+(typeIR_base < tid* , tid'* >)+` be `+typeDefIR+` as `+polyTypeDefIR+`
+          ........... Assert that `+tid*+` matches pattern `+[]+`
+          ........... Assert that `+tid'*+` matches pattern `+[]+`
+          ........... Assert that nameIR is in ["minSizeInBits" and "minSizeInBytes" and "maxSizeInBits" and "maxSizeInBytes"]
+          ........... Result in STO' and `+$sizeof(typeIR_base, nameIR)+`
     ..... Let `+(routineTargetIR' < typeArgumentListIR >( argumentListIR ))+` be callExpressionIR
-    ..... Assert that `+routineTargetIR'+` matches pattern `+`(%)`+`
-    ..... Let `+(( routineTargetIR ))+` be routineTargetIR'
-    ..... Group callExpressionIR-parenthesized: p and IC and STO_0 and (`+((( routineTargetIR )) < typeArgumentListIR >( argumentListIR ))+` as `+expressionIR+` # expressionNoteIR)
+    ..... If `+routineTargetIR'+` matches pattern `+`(%)`+`
+     ...... Let `+(( routineTargetIR ))+` be routineTargetIR'
+     ...... Group callExpressionIR-parenthesized: p and IC and STO_0 and (`+((( routineTargetIR )) < typeArgumentListIR >( argumentListIR ))+` as `+expressionIR+` # expressionNoteIR)
 
 (Expr_inst: p IC STO' |- (`+(routineTargetIR < typeArgumentListIR >( argumentListIR ))+` as `+expressionIR+` # _expressionNoteIR') ==> STO_1 value)
-     ...... Result in STO_1 and value
+      ....... Result in STO_1 and value
 
  .. Case `+expressionIR+` has type `+parenthesizedExpressionIR+`
   ... Let `+(( typedExpressionIR ))+` be `+expressionIR+` as `+parenthesizedExpressionIR+`
@@ -6751,18 +6751,18 @@ relation Exprs_inst: p and IC and STO' and typedExpressionIR*
 
 relation Argument_inst: p and IC and STO_0 and argumentIR
 
-. Assert that `+argumentIR+` has type `+typedExpressionIR+`
-. Let `+typedExpressionIR+` be `+argumentIR+` as `+typedExpressionIR+`
-. Group typedExpressionIR: p and IC and STO_0 and `+typedExpressionIR+` as `+argumentIR+`
+. If `+argumentIR+` has type `+typedExpressionIR+`
+ .. Let `+typedExpressionIR+` be `+argumentIR+` as `+typedExpressionIR+`
+ .. Group typedExpressionIR: p and IC and STO_0 and `+typedExpressionIR+` as `+argumentIR+`
 
 (Expr_inst: p IC STO_0 |- typedExpressionIR ==> STO_1 value)
- .. Result in STO_1 and value
-. Assert that `+argumentIR+` matches pattern `+`%=%`+`
-. Let `+(nameIR = typedExpressionIR)+` be argumentIR
-. Group nameIR-typedExpressionIR: p and IC and STO_0 and (nameIR = typedExpressionIR)
+  ... Result in STO_1 and value
+. If `+argumentIR+` matches pattern `+`%=%`+`
+ .. Let `+(nameIR = typedExpressionIR)+` be argumentIR
+ .. Group nameIR-typedExpressionIR: p and IC and STO_0 and (nameIR = typedExpressionIR)
 
 (Expr_inst: p IC STO_0 |- typedExpressionIR ==> STO_1 value)
- .. Result in STO_1 and value
+  ... Result in STO_1 and value
 
 relation Stmt_inst: p' and IC' and STO' and statementIR
 
@@ -7354,23 +7354,23 @@ relation Decl_inst: cursor' and IC_0 and STO' and declarationIR
      ...... Let `+?((_cid and constructor and id_default*))+` be (cid, constructor, id*)?
      ...... Let `+IC_inner+` be `+$enter_path(IC_0, nameIR)+`
 (Constructor_inst: (global) IC_inner STO' |- constructor < typeArgumentListIR >( argumentListIR # id_default* )==> STO_1 object)
-     ...... Assert that `+object+` has type `+externObject+`
-     ...... Let `+(extern tid { tenv venv renv })+` be `+object+` as `+externObject+`
-     ...... Let `+IC_decl+` be `+$empty_instantiationContext+`[path = IC_0.path][global = IC_0.global]
-     ...... Let `+objectDeclarationListIR+` be `+$flatten_objectInitializerOptIR(objectInitializerOptIR)+`
+     ...... If `+object+` has type `+externObject+`
+      ....... Let `+(extern tid { tenv venv renv })+` be `+object+` as `+externObject+`
+      ....... Let `+IC_decl+` be `+$empty_instantiationContext+`[path = IC_0.path][global = IC_0.global]
+      ....... Let `+objectDeclarationListIR+` be `+$flatten_objectInitializerOptIR(objectInitializerOptIR)+`
 (Decls_inst: (block) IC_decl STO_1 |- `+objectDeclarationListIR+` as `+declarationIR*+` ==> IC_decl_post STO_2 _declarationIR*)
-     ...... Let `+venv_merged+` be `+$merge_venvs(venv, IC_decl_post.block.venv)+`
-     ...... Let `+renv_merged+` be `+$merge_renv_with_extern(renv, IC_decl_post.block.renv)+`
-     ...... Let `+object_merged+` be `+(extern tid { tenv venv_merged renv_merged })+` as `+object+`
-     ...... Let `+oid+` be IC_0.path ++ [nameIR]
-     ...... Let `+STO_3+` be `+$add_map<oid, object>(STO_2, oid, object_merged)+`
-     ...... Let `+IC_1+` be `+$add_value_inst((global), IC_0, nameIR, `+(! oid)+` as `+value+`)+`
-     ...... Result in IC_1 and STO_2 and ?()
-     ...... Assert that ~`+$is_extern_object(object)+`
-     ...... Let `+oid+` be IC_0.path ++ [nameIR]
-     ...... Let `+STO_2+` be `+$add_map<oid, object>(STO_1, oid, object)+`
-     ...... Let `+IC_1+` be `+$add_value_inst((global), IC_0, nameIR, `+(! oid)+` as `+value+`)+`
-     ...... Result in IC_1 and STO_1 and ?()
+      ....... Let `+venv_merged+` be `+$merge_venvs(venv, IC_decl_post.block.venv)+`
+      ....... Let `+renv_merged+` be `+$merge_renv_with_extern(renv, IC_decl_post.block.renv)+`
+      ....... Let `+object_merged+` be `+(extern tid { tenv venv_merged renv_merged })+` as `+object+`
+      ....... Let `+oid+` be IC_0.path ++ [nameIR]
+      ....... Let `+STO_3+` be `+$add_map<oid, object>(STO_2, oid, object_merged)+`
+      ....... Let `+IC_1+` be `+$add_value_inst((global), IC_0, nameIR, `+(! oid)+` as `+value+`)+`
+      ....... Result in IC_1 and STO_2 and ?()
+     ...... If ~`+$is_extern_object(object)+`
+      ....... Let `+oid+` be IC_0.path ++ [nameIR]
+      ....... Let `+STO_2+` be `+$add_map<oid, object>(STO_1, oid, object)+`
+      ....... Let `+IC_1+` be `+$add_value_inst((global), IC_0, nameIR, `+(! oid)+` as `+value+`)+`
+      ....... Result in IC_1 and STO_1 and ?()
 
     ..... Case false
      ...... Let `+(cid, constructor, id*)?+` be `+$find_constructor_inst(IC_0, prefixedNameIR, argumentListIR)+`
@@ -7378,25 +7378,25 @@ relation Decl_inst: cursor' and IC_0 and STO' and declarationIR
      ...... Let `+?((_cid and constructor and id_default*))+` be (cid, constructor, id*)?
      ...... Let `+IC_inner+` be `+$enter_path(IC_0, nameIR)+`
 (Constructor_inst: cursor' IC_inner STO' |- constructor < typeArgumentListIR >( argumentListIR # id_default* )==> STO_1 object)
-     ...... Assert that `+object+` has type `+externObject+`
-     ...... Let `+(extern tid { tenv venv renv })+` be `+object+` as `+externObject+`
-     ...... Let `+IC_decl+` be `+$empty_instantiationContext+`[path = IC_0.path][global = IC_0.global]
-     ...... Let `+objectDeclarationListIR+` be `+$flatten_objectInitializerOptIR(objectInitializerOptIR)+`
+     ...... If `+object+` has type `+externObject+`
+      ....... Let `+(extern tid { tenv venv renv })+` be `+object+` as `+externObject+`
+      ....... Let `+IC_decl+` be `+$empty_instantiationContext+`[path = IC_0.path][global = IC_0.global]
+      ....... Let `+objectDeclarationListIR+` be `+$flatten_objectInitializerOptIR(objectInitializerOptIR)+`
 (Decls_inst: (block) IC_decl STO_1 |- `+objectDeclarationListIR+` as `+declarationIR*+` ==> IC_decl_post STO_2 _declarationIR*)
-     ...... Let `+venv_merged+` be `+$merge_venvs(venv, IC_decl_post.block.venv)+`
-     ...... Let `+renv_merged+` be `+$merge_renv_with_extern(renv, IC_decl_post.block.renv)+`
-     ...... Let `+object_merged+` be `+(extern tid { tenv venv_merged renv_merged })+` as `+object+`
-     ...... Let `+oid+` be IC_0.path ++ [nameIR]
-     ...... Let `+STO_3+` be `+$add_map<oid, object>(STO_2, oid, object_merged)+`
-     ...... Let `+IC_1+` be `+$add_value_inst((global), IC_0, nameIR, `+(! oid)+` as `+value+`)+`
-     ...... Let `+constantDeclarationIR+` be (() const typeIR nameIR (= `+(! oid)+` as `+value+`) ;)
-     ...... Result in IC_1 and STO_2 and ?(`+constantDeclarationIR+` as `+declarationIR+`)
-     ...... Assert that ~`+$is_extern_object(object)+`
-     ...... Let `+oid+` be IC_0.path ++ [nameIR]
-     ...... Let `+STO_2+` be `+$add_map<oid, object>(STO_1, oid, object)+`
-     ...... Let `+IC_1+` be `+$add_value_inst(cursor', IC_0, nameIR, `+(! oid)+` as `+value+`)+`
-     ...... Let `+constantDeclarationIR+` be (() const typeIR nameIR (= `+(! oid)+` as `+value+`) ;)
-     ...... Result in IC_1 and STO_1 and ?(`+constantDeclarationIR+` as `+declarationIR+`)
+      ....... Let `+venv_merged+` be `+$merge_venvs(venv, IC_decl_post.block.venv)+`
+      ....... Let `+renv_merged+` be `+$merge_renv_with_extern(renv, IC_decl_post.block.renv)+`
+      ....... Let `+object_merged+` be `+(extern tid { tenv venv_merged renv_merged })+` as `+object+`
+      ....... Let `+oid+` be IC_0.path ++ [nameIR]
+      ....... Let `+STO_3+` be `+$add_map<oid, object>(STO_2, oid, object_merged)+`
+      ....... Let `+IC_1+` be `+$add_value_inst((global), IC_0, nameIR, `+(! oid)+` as `+value+`)+`
+      ....... Let `+constantDeclarationIR+` be (() const typeIR nameIR (= `+(! oid)+` as `+value+`) ;)
+      ....... Result in IC_1 and STO_2 and ?(`+constantDeclarationIR+` as `+declarationIR+`)
+     ...... If ~`+$is_extern_object(object)+`
+      ....... Let `+oid+` be IC_0.path ++ [nameIR]
+      ....... Let `+STO_2+` be `+$add_map<oid, object>(STO_1, oid, object)+`
+      ....... Let `+IC_1+` be `+$add_value_inst(cursor', IC_0, nameIR, `+(! oid)+` as `+value+`)+`
+      ....... Let `+constantDeclarationIR+` be (() const typeIR nameIR (= `+(! oid)+` as `+value+`) ;)
+      ....... Result in IC_1 and STO_1 and ?(`+constantDeclarationIR+` as `+declarationIR+`)
 
  .. Case `+declarationIR+` has type `+functionDeclarationIR+`
   ... Let `+(annotationList (typeIR nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterListIR )) blockStatementIR)+` be `+declarationIR+` as `+functionDeclarationIR+`
