@@ -382,7 +382,7 @@ and prose_of_instr (ctx : Ctx.t) instr =
               (code_of_exps ctx outputs)
               (prose_of_hintexp (ctx |> increment_level) exps prose_of_hint)
               (string_of_relid id_rel)
-              (prose_of_in_iterexps ctx "\n" in_iters)
+              (prose_of_in_iterexps ctx ("\n" ^ bullet ctx) in_iters)
       | None ->
           F.asprintf "(%s: %s)%s" (string_of_relid id_rel)
             (code_of_notexp ctx notexp)
