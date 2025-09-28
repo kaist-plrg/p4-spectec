@@ -112,7 +112,7 @@ module RuleProse : Splice = struct
       string =
     List.map2
       (fun (_ : key) ((mixop, inputs, exps, instrs) : value) ->
-        Prose.Render.render_ruleprose rctx mixop inputs exps instrs)
+        Prose.Render.code_of_ruleprose rctx mixop inputs exps instrs)
       keys values
     |> String.concat "\n\n"
 end

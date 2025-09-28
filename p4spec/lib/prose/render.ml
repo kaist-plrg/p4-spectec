@@ -226,7 +226,7 @@ and prose_of_case ctx exp case =
   let guard, instrs = case in
   F.asprintf "%sCase %s\n%s" (bullet ctx)
     (prose_of_guard ctx exp guard)
-    (render_instrs (ctx |> increment_level) instrs)
+    (prose_of_instrs (ctx |> increment_level) instrs)
 
 and prose_of_cases ctx exp cases =
   cases |> List.map (prose_of_case ctx exp) |> String.concat "\n\n"
@@ -290,19 +290,19 @@ and prose_of_in_iterexps ctx sep iterexps =
 
 (* Instruction *)
 
-and render_instr (ctx : Ctx.t) instr =
+and prose_of_instr (ctx : Ctx.t) instr =
   match instr.it with
   | IfI (exp_cond, iterexps, instrs_then, _) ->
     if ctx.as_assert then
       F.asprintf "%sAssert that %s%s\n%s" (bullet ctx)
         (prose_of_exp ctx exp_cond)
         (prose_of_in_iterexps ctx ", " iterexps)
-        (render_instrs (ctx |> clear_assert) instrs_then)
+        (prose_of_instrs (ctx |> clear_assert) instrs_then)
     else 
       F.asprintf "%sIf %s%s\n%s" (bullet ctx)
         (prose_of_exp ctx exp_cond)
         (prose_of_in_iterexps ctx ", " iterexps)
-        (render_instrs (ctx |> increment_level) instrs_then)
+        (prose_of_instrs (ctx |> increment_level) instrs_then)
   | HoldI (id, notexp, iterexps, holdcase) -> (
       let prosed_relation =
         let prose_of_hint_opt = Hintenv.get_rel id ctx.penv.prose in
@@ -322,29 +322,29 @@ and render_instr (ctx : Ctx.t) instr =
       | BothH (instrs_hold, instrs_nothold) ->
           F.asprintf "%sIf %s, then\n%s\n%sElse,\n\n%s" (bullet ctx)
             prosed_relation
-            (render_instrs (ctx |> increment_level) instrs_hold)
+            (prose_of_instrs (ctx |> increment_level) instrs_hold)
             (bullet ctx)
-            (render_instrs (ctx |> increment_level) instrs_nothold)
+            (prose_of_instrs (ctx |> increment_level) instrs_nothold)
       | HoldH (instrs_hold, _) ->
           F.asprintf "%sIf %s, then\n%s" (bullet ctx) prosed_relation
-            (render_instrs (ctx |> increment_level) instrs_hold)
+            (prose_of_instrs (ctx |> increment_level) instrs_hold)
       | NotHoldH (instrs_nothold, _) ->
           F.asprintf "%sIf %s does not hold, then\n%s" (bullet ctx)
             prosed_relation
-            (render_instrs (ctx |> increment_level) instrs_nothold))
+            (prose_of_instrs (ctx |> increment_level) instrs_nothold))
   | CaseI (exp, cases, _) ->
       F.asprintf "%sCase analysis on %s\n%s" (bullet ctx) (code_of_exp ctx exp)
         (prose_of_cases (ctx |> increment_level) exp cases)
   | OtherwiseI instr ->
       F.asprintf "%sOtherwise\n%s" (bullet ctx)
-        (render_instr (ctx |> increment_level) instr)
+        (prose_of_instr (ctx |> increment_level) instr)
   | GroupI (id_group, exps_group, instrs_group) ->
       Format.asprintf "%sGroup %s: %s\n\n%s" (bullet ctx)
         (string_of_relpathid id_group)
         (match ctx.signature with
         | Some (mixop, inputs) -> code_of_relinput ctx mixop inputs exps_group
         | None -> prose_of_exps ctx exps_group)
-        (render_instrs (ctx |> increment_level) instrs_group)
+        (prose_of_instrs (ctx |> increment_level) instrs_group)
   | LetI (exp_l, exp_r, iterexps) ->
       let out_iters, in_iters = split_iterexps [ exp_l ] iterexps in
       (* With no output iterators, print as a single line *)
@@ -393,13 +393,13 @@ and render_instr (ctx : Ctx.t) instr =
   | ReturnI exp -> F.asprintf "%sReturn %s" (bullet ctx) (prose_of_exp ctx exp)
   | DebugI exp -> F.asprintf "%sDebug: %s" (bullet ctx) (prose_of_exp ctx exp)
 
-and render_instrs ctx instrs =
+and prose_of_instrs ctx instrs =
   let if_instrs = List.filter (fun instr -> match instr.it with | IfI _ | OtherwiseI _ -> true | _ -> false) instrs |> List.length in
   (* When if is unique without else, render as assertion *)
   if if_instrs = 1 then
-    instrs |> List.map (render_instr (ctx |> as_assert)) |> String.concat "\n"
+    instrs |> List.map (prose_of_instr (ctx |> as_assert)) |> String.concat "\n"
   else
-    instrs |> List.map (render_instr ctx) |> String.concat "\n"
+    instrs |> List.map (prose_of_instr ctx) |> String.concat "\n"
 
 (* Relations *)
 
@@ -416,13 +416,13 @@ and code_of_relinput ctx mixop inputs exps_input =
   let notexp = (mixop, exps) in
   code_of_notexp ctx notexp
 
-(* Rule prose *)
+(* Rule prose; entrypoint for splicer *)
 
-let render_ruleprose (ctx : Ctx.t) (mixop : mixop) (inputs : int list)
+let code_of_ruleprose (ctx : Ctx.t) (mixop : mixop) (inputs : int list)
     (exps_input : exp list) (instrs : instr list) : string =
   "`"
   ^ code_of_relinput ctx mixop inputs exps_input
-  ^ "`\n\n" ^ render_instrs ctx instrs
+  ^ "`\n\n" ^ prose_of_instrs ctx instrs
 
 (* Definitions *)
 
@@ -432,7 +432,7 @@ let prose_of_def ctx def =
   | RelD (relid, (_mixop, _inputs), exps_input, instrs, _hints) ->
       "\n\nrelation " ^ string_of_relid relid ^ ": "
       ^ prose_of_exps ctx exps_input
-      ^ "\n\n" ^ render_instrs ctx instrs
+      ^ "\n\n" ^ prose_of_instrs ctx instrs
   | DecD (defid, tparams, args_input, instrs, _hints) -> ""
 
 let prose_of_defs ctx defs = String.concat "" (List.map (prose_of_def ctx) defs)
