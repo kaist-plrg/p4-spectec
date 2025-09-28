@@ -3,8 +3,8 @@ module RenderCtx = Prose.Ctx
 
 (* Splicing an anchor *)
 
-let do_splice_anchor (module Splice : Splicer.Splice) (rctx : RenderCtx.t) (ctx : Ctx.t)
-    (source : Source.t) : string =
+let do_splice_anchor (module Splice : Splicer.Splice) (rctx : RenderCtx.t)
+    (ctx : Ctx.t) (source : Source.t) : string =
   let keys = Splice.parse_keys source in
   let values = Splice.find_values ctx keys in
   let content = Splice.render rctx keys values in
@@ -12,19 +12,20 @@ let do_splice_anchor (module Splice : Splicer.Splice) (rctx : RenderCtx.t) (ctx 
   ^ content
   ^ Option.value Splice.suffix ~default:""
 
-let rec try_splice_anchor (module Splice : Splicer.Splice) (rctx : RenderCtx.t) (ctx : Ctx.t)
-    (source : Source.t) (result : string ref) : bool =
+let rec try_splice_anchor (module Splice : Splicer.Splice) (rctx : RenderCtx.t)
+    (ctx : Ctx.t) (source : Source.t) (result : string ref) : bool =
   let parsed_start = Parser.parse_splice_start source Splice.name in
   if parsed_start then
     try_splice_anchor' (module Splice : Splicer.Splice) rctx ctx source result;
   parsed_start
 
-and try_splice_anchor' (module Splice : Splicer.Splice) (rctx : RenderCtx.t) (ctx : Ctx.t)
-    (source : Source.t) (result : string ref) : unit =
+and try_splice_anchor' (module Splice : Splicer.Splice) (rctx : RenderCtx.t)
+    (ctx : Ctx.t) (source : Source.t) (result : string ref) : unit =
   Parser.parse_space source;
   result := do_splice_anchor (module Splice : Splicer.Splice) rctx ctx source
 
-and try_splice_anchors (rctx : RenderCtx.t) (ctx : Ctx.t) (source : Source.t) (buffer : Buffer.t) =
+and try_splice_anchors (rctx : RenderCtx.t) (ctx : Ctx.t) (source : Source.t)
+    (buffer : Buffer.t) =
   let result = ref "" in
   ignore
     (try_splice_anchor (module Splicer.Syntax) rctx ctx source result
@@ -50,15 +51,16 @@ let gen_directory (filename : string) : unit =
 
 (* Entry points *)
 
-let rec splice (rctx : RenderCtx.t) (ctx : Ctx.t) (source : Source.t) (buffer : Buffer.t) : unit =
+let rec splice (rctx : RenderCtx.t) (ctx : Ctx.t) (source : Source.t)
+    (buffer : Buffer.t) : unit =
   if not (Source.eos source) then (
     if not (try_splice_anchors rctx ctx source buffer) then (
       Buffer.add_char buffer (Source.get source);
       Source.adv source);
     splice rctx ctx source buffer)
 
-let splice_string (rctx : RenderCtx.t) (ctx : Ctx.t) (source : Source.t) (content : string) : string
-    =
+let splice_string (rctx : RenderCtx.t) (ctx : Ctx.t) (source : Source.t)
+    (content : string) : string =
   let buffer = Buffer.create (String.length content) in
   splice rctx ctx source buffer;
   Buffer.contents buffer

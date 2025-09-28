@@ -29,7 +29,8 @@ module Syntax : Splice = struct
   let find_values (ctx : Ctx.t) (keys : key list) : value list =
     List.map (Ctx.find_syntax ctx) keys
 
-  let render (ctx : RenderCtx.t) (keys : key list) (values : value list) : string =
+  let render (ctx : RenderCtx.t) (keys : key list) (values : value list) :
+      string =
     ctx |> ignore;
     List.map2
       (fun (id_typ : key) ((tparams, deftyp, hints) : value) ->
@@ -54,7 +55,8 @@ module Relation : Splice = struct
   let find_values (ctx : Ctx.t) (keys : key list) : value list =
     List.map (Ctx.find_relation ctx) keys
 
-  let render (ctx: RenderCtx.t) (keys : key list) (value : value list) : string =
+  let render (ctx : RenderCtx.t) (keys : key list) (value : value list) : string
+      =
     ctx |> ignore;
     List.map2
       (fun (id_rel : key) ((nottyp, hints) : value) ->
@@ -79,7 +81,8 @@ module RuleGroup : Splice = struct
   let find_values (ctx : Ctx.t) (keys : key list) : value list =
     List.map (Ctx.find_rulegroup ctx) keys
 
-  let render (ctx : RenderCtx.t) (keys : key list) (values : value list) : string =
+  let render (ctx : RenderCtx.t) (keys : key list) (values : value list) :
+      string =
     ctx |> ignore;
     List.map2
       (fun ((id_rel, id_rulegroup) : key) (rules : value) ->
@@ -105,7 +108,8 @@ module RuleProse : Splice = struct
   let find_values (ctx : Ctx.t) (keys : key list) : value list =
     List.map (Ctx.find_ruleprose ctx) keys
 
-  let render (rctx : RenderCtx.t) (keys : key list) (values : value list) : string =
+  let render (rctx : RenderCtx.t) (keys : key list) (values : value list) :
+      string =
     List.map2
       (fun (_ : key) ((mixop, inputs, exps, instrs) : value) ->
         Prose.Render.render_ruleprose rctx mixop inputs exps instrs)

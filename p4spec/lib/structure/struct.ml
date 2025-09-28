@@ -114,8 +114,8 @@ let rec struct_def (ienv : IEnv.t) (tdenv : TDEnv.t) (def : def) : Sl.Ast.def =
 (* Structuring relation definitions *)
 
 and struct_rel_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region) (id_rel : id)
-    (nottyp : nottyp) (inputs : int list) (rulegroups : rulegroup list) (hints : hint list) :
-    Sl.Ast.def =
+    (nottyp : nottyp) (inputs : int list) (rulegroups : rulegroup list)
+    (hints : hint list) : Sl.Ast.def =
   let mixop, _ = nottyp.it in
   let frees = Il.Free.free_rulegroups rulegroups in
   let rulegroups, exps_match_impl_group, prems_match_group =
@@ -151,7 +151,8 @@ and struct_rel_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region) (id_rel : id)
 (* Structuring declaration definitions *)
 
 and struct_dec_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region) (id_dec : id)
-    (tparams : tparam list) (clauses : clause list) (hints : hint list) : Sl.Ast.def =
+    (tparams : tparam list) (clauses : clause list) (hints : hint list) :
+    Sl.Ast.def =
   let args_input, paths = Antiunify.antiunify_clauses clauses in
   let instrs = List.concat_map struct_clause_path paths in
   let instrs = Optimize.optimize ienv tdenv instrs in
