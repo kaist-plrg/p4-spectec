@@ -46,8 +46,7 @@ let rec parse_id' (source : Source.t) : unit =
 let parse_id (source : Source.t) : string =
   let i_prev = source.i in
   parse_id' source;
-  if i_prev = source.i then
-    error no_region "cannot parse identifier";
+  if i_prev = source.i then error no_region "cannot parse identifier";
   Source.str source i_prev
 
 let parse_id_with_sub (source : Source.t) : Kinds.RuleGroupId.t =

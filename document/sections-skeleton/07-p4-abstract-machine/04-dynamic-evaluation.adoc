@@ -1,0 +1,60 @@
+[#sec-abstract-machine-dynamic-evaluation]
+=== Dynamic evaluation
+
+A P4 target is composed of a set of programmable blocks and fixed-function
+blocks. A P4 program provides implementations for the programmable blocks in
+the target. The target architecture defines how an input packet flows through
+the blocks in the target.
+
+Thus, dynamic evaluation of a P4 program corresponds to running each
+programmable block within the target architecture. These programmable blocks
+are represented as objects in the global store, which is statically allocated
+during instantiation.
+
+The following sections describe the abstract machines that define the dynamic
+semantics of the programmable blocks in a P4 target.
+
+[#sec-abstract-machine-dynamic-evaluation-parser]
+==== The Parser abstract machine
+
+The semantics of a P4 parser can be formulated in terms of an abstract machine
+that manipulates a `ParserModel` data structure. This section describes this
+abstract machine in pseudo-code.
+
+A parser starts execution in the `start` state and ends execution when one of
+the `reject` or `accept` states has been reached.
+
+[source,p4pseudo]
+----
+ParserModel {
+    error       parseError;
+    onPacketArrival(packet p) {
+        ParserModel.parseError = error.NoError;
+        goto start;
+    }
+}
+----
+
+An architecture must specify the behavior when the `accept` and `reject` states
+are reached. For example, an architecture may specify that all packets reaching
+the `reject` state are dropped without further processing. Alternatively, it
+may specify that such packets are passed to the next block after the parser,
+with intrinsic metadata indicating that the parser reached the `reject` state,
+along with the error recorded.
+
+[#sec-abstract-machine-dynamic-evaluation-match-action]
+==== The Match-Action Pipeline Abstract Machine
+
+We can describe the computational model of a match-action pipeline, embodied by
+a control block: the body of the control block is executed, similarly to the
+execution of a traditional imperative program:
+
+- At runtime, statements within a block are executed in the order they appear
+  in the control block.
+- Execution of the `return` statement causes immediate termination of the
+  execution of the current `control` block, and a return to the caller.
+- Execution of the `exit` statement causes the immediate termination of the
+  execution of the current `control` block and of all the enclosing caller
+  `control` blocks.
+- Applying a `table` executes the corresponding match-action unit, as described
+  above.

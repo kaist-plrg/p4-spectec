@@ -23,7 +23,12 @@ type cursor = Global | Local
 
 (* Context *)
 
-(* Testing layer *)
+(* Testing layer
+
+   The interpreter relies on the fact that both graph and cover
+   are mutable, so that they can be updated in place.
+   Their references are copied when constructing sub-contexts,
+   thus sharing the same graph and cover across contexts. *)
 
 type testing = {
   (* Value dependency graph *)
@@ -93,10 +98,9 @@ let add_edge (ctx : t) (value_from : value) (value_to : value)
 
 (* Cover *)
 
-let cover (ctx : t) (hit : bool) (pid : pid) (vid : vid) : t =
+let cover (ctx : t) (hit : bool) (pid : pid) (vid : vid) : unit =
   if hit then ctx.testing.cover := SCov.hit !(ctx.testing.cover) pid
-  else ctx.testing.cover := SCov.miss !(ctx.testing.cover) pid vid;
-  ctx
+  else ctx.testing.cover := SCov.miss !(ctx.testing.cover) pid vid
 
 (* Finders *)
 
@@ -311,6 +315,22 @@ let localize_clear (ctx : t) : t =
 
 (* Constructing sub-contexts *)
 
+(* Transpose a matrix of values, as a list of value batches
+   that are to be each fed into an iterated expression *)
+
+let transpose (value_matrix : value list list) : value list list =
+  match value_matrix with
+  | [] -> []
+  | rows ->
+      let width = List.length (List.hd rows) in
+      check
+        (List.for_all (fun row -> List.length row = width) rows)
+        no_region "cannot transpose a matrix of value batches";
+      List.fold_right
+        (List.map2 (fun element row -> element :: row))
+        rows
+        (List.init width (fun _ -> []))
+
 let sub_opt (ctx : t) (vars : var list) : t option =
   (* First collect the values that are to be iterated over *)
   let values =
@@ -331,23 +351,6 @@ let sub_opt (ctx : t) (vars : var list) : t option =
     Some ctx_sub
   else if List.for_all Option.is_none values then None
   else error no_region "mismatch in optionality of iterated variables"
-
-(* Transpose a matrix of values, as a list of value batches
-   that are to be each fed into an iterated expression *)
-
-let transpose (value_matrix : value list list) : value list list =
-  match value_matrix with
-  | [] -> []
-  | _ ->
-      let width = List.length (List.hd value_matrix) in
-      check
-        (List.for_all
-           (fun value_row -> List.length value_row = width)
-           value_matrix)
-        no_region "cannot transpose a matrix of value batches";
-      List.init width (fun j ->
-          List.init (List.length value_matrix) (fun i ->
-              List.nth (List.nth value_matrix i) j))
 
 let sub_list (ctx : t) (vars : var list) : t list =
   (* First break the values that are to be iterated over,
@@ -370,8 +373,3 @@ let sub_list (ctx : t) (vars : var list) : t list =
       in
       ctxs_sub @ [ ctx_sub ])
     [] values_batch
-
-(* Committing a sub-context *)
-
-let commit (ctx : t) (ctx_sub : t) : t =
-  { ctx with testing = { ctx.testing with cover = ctx_sub.testing.cover } }

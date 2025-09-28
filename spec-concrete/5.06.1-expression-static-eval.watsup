@@ -40,13 +40,13 @@ rulegroup Eval_static/literalExpressionIR-number {
 
 ;;;;; stringLiteral 
 
-rule Eval_static/literalExpressionIR-stringliteral:
+rule Eval_static/literalExpressionIR-stringLiteral:
   p TC |- (`" text `") `# `( _ _ ) ~> `" text `"
 
 ;;;; referenceExpressionIR
 ;;;; syntax referenceExpressionIR = prefixedNameIR
 
-rule Eval_static/referenceExpression:
+rule Eval_static/referenceExpressionIR:
   p TC |- prefixedNameIR `# `( _ _ ) ~> value
   -- if value = $find_value(p, TC, prefixedNameIR)
 
@@ -199,12 +199,14 @@ rulegroup Eval_static/binaryExpressionIR {
     -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
     -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
 
+  ;; (TODO) Shoule be short-circuiting
   rule Eval_static/land:
     p TC |- (typedExpressionIR_l `&& typedExpressionIR_r) `# `( _ _ )
          ~> $bin_land(value_l, value_r)
     -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
     -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
 
+  ;; (TODO) Shoule be short-circuiting
   rule Eval_static/lor:
     p TC |- (typedExpressionIR_l `|| typedExpressionIR_r) `# `( _ _ )
          ~> $bin_lor(value_l, value_r)
@@ -238,7 +240,7 @@ rulegroup Eval_static/ternaryExpressionIR {
 ;;;; castExpressionIR
 ;;;; syntax castExpressionIR = `( typeIR ) typedExpressionIR
 
-rule Eval_static/castExpression:
+rule Eval_static/castExpressionIR:
   p TC |- (`( typeIR ) typedExpressionIR) `# `( _ _ ) ~> value_cast
   -- Eval_static: p TC |- typedExpressionIR ~> value
   -- if value_cast = $cast_op(typeIR, value)
@@ -289,7 +291,7 @@ rulegroup Eval_static/dataExpressionIR-record {
 ;;;;; errorAccessExpressionIR
 ;;;;; syntax errorAccessExpressionIR = ERROR `. nameIR
 
-rule Eval_static/accessExpressionIR-errorAccessExpressionIR:
+rule Eval_static/errorAccessExpressionIR:
   p TC |- (ERROR `. nameIR) `# `( _ _ ) ~> value_error
   -- if nameIR_error = "error." ++ nameIR
   -- if value_error = $find_value(p, TC, `` nameIR_error)
@@ -300,7 +302,7 @@ rule Eval_static/accessExpressionIR-errorAccessExpressionIR:
 
 ;;;;;;; TYPE prefixedNameIR
 
-rulegroup Eval_static/accessExpressionIR-memberAccessExpressionIR-type {
+rulegroup Eval_static/memberAccessExpressionIR-type {
 
   rule Eval_static/enum:
     p TC |- ((TYPE prefixedNameIR) `. nameIR) `# `( typeIR_base _ )
@@ -321,21 +323,22 @@ rulegroup Eval_static/accessExpressionIR-memberAccessExpressionIR-type {
 ;;;;;;; typedExpressionIR
 ;;;;;;; general member accesses are not evaluated statically
 
-rule Eval_static/accessExpressionIR-memberAccessExpressionIR-typedExpressionIR-stack-size:
+rule Eval_static/memberAccessExpressionIR-expression-stack-size:
   p TC |- (typedExpressionIR_base `. "size") `# `( _ _ )
        ~> D n_size
   -- if _ `# `( typeIR_base _ ) = typedExpressionIR_base
   -- if _ `[ n_size ] = $canon(typeIR_base)
 
 ;;;;; indexAccessExpressionIR
-;;;;; syntax indexAccessExpressionIR
+;;;;; syntax indexAccessExpressionIR =
+;;;;;   typedExpressionIR `[ typedExpressionIR ]
+;;;;; tuple or stack accesses are not evaluated statically
 
-;;;;;; typedExpressionIR `[ typedExpressionIR ]
-;;;;;; tuple or stack accesses are not evaluated statically
+;;;;; sliceAccessExpressionIR
+;;;;; syntax sliceAccessExpressionIR =
+;;;;;   typedExpressionIR `[ typedExpressionIR `: typedExpressionIR ]
 
-;;;;;; typedExpressionIR `[ typedExpressionIR `: typedExpressionIR ]
-
-rule Eval_static/indexAccessExpressionIR-bitslice:
+rule Eval_static/sliceAccessExpressionIR:
   p TC |- (typedExpressionIR_base `[ typedExpressionIR_hi `: typedExpressionIR_lo ])
           `# `( _ _ )
        ~> $bitacc_op(value_base, value_hi, value_lo)
@@ -356,24 +359,23 @@ rule Eval_static/indexAccessExpressionIR-bitslice:
 ;;;;;;; function/action calls are not evaluated statically
 
 ;;;;;;; typedExpressionIR `. nameIR
-
-rule Eval_static/callExpressionIR-typedExpressionIR-size:
-  p TC |- ((typedExpressionIR_base `. nameIR) `< eps > `( eps )) `# `( _ _ )
-      ~> $sizeof(typeIR_base, nameIR)
-  -- if _ `# `( typeIR_base _ ) = typedExpressionIR_base
-  -- if nameIR <- [ "minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes" ]
-
 ;;;;;;; TYPE prefixedNameIR `. nameIR
 
-rulegroup Eval_static/callExpressionIR-type {
+rulegroup Eval_static/callExpressionIR-builtin-size {
 
-  rule Eval_static/size-mono:
+  rule Eval_static/expression:
+    p TC |- ((typedExpressionIR_base `. nameIR) `< eps > `( eps )) `# `( _ _ )
+        ~> $sizeof(typeIR_base, nameIR)
+    -- if _ `# `( typeIR_base _ ) = typedExpressionIR_base
+    -- if nameIR <- [ "minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes" ]
+
+  rule Eval_static/type-mono:
     p TC |- ((TYPE prefixedNameIR `. nameIR) `< eps > `( eps )) `# `( _ _ )
         ~> $sizeof(typeIR_base, nameIR)
     -- if typeIR_base = $find_type(p, TC, prefixedNameIR)
     -- if nameIR <- [ "minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes" ]
 
-  rule Eval_static/size-poly:
+  rule Eval_static/type-poly:
     p TC |- ((TYPE prefixedNameIR `. nameIR) `< eps > `( eps )) `# `( _ _ )
         ~> $sizeof(typeIR_base, nameIR)
     -- if typeIR_base `< eps `, eps > = $find_type(p, TC, prefixedNameIR)

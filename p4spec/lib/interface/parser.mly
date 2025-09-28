@@ -560,14 +560,18 @@ namedExpressionList:
 %inline indexAccessExpression:
 	| a = expression L_BRACKET i = expression R_BRACKET
 		{ [ NT a; Term "["; NT i; Term "]" ] #@ "indexAccessExpression" }
-	| a = expression L_BRACKET h = expression COLON l = expression R_BRACKET
-		{ [ NT a; Term "["; NT h; Term ":"; NT l; Term "]" ] #@ "indexAccessExpression" }
+;
+
+%inline sliceAccessExpression:
+  | a = expression L_BRACKET h = expression COLON l = expression R_BRACKET
+    { [ NT a; Term "["; NT h; Term ":"; NT l; Term "]" ] #@ "sliceAccessExpression" }
 ;
 
 %inline accessExpression:
 	| e = errorAccessExpression
 	| e = memberAccessExpression
 	| e = indexAccessExpression
+  | e = sliceAccessExpression
 		{ e }
 ;
 
@@ -579,14 +583,18 @@ namedExpressionList:
 %inline indexAccessExpressionNonBrace:
 	| a = expressionNonBrace L_BRACKET i = expression R_BRACKET
 		{ [ NT a; Term "["; NT i; Term "]" ] #@ "indexAccessExpressionNonBrace" }
-	| a = expressionNonBrace L_BRACKET h = expression COLON l = expression R_BRACKET
-		{ [ NT a; Term "["; NT h; Term ":"; NT l; Term "]" ] #@ "indexAccessExpressionNonBrace" }
+;
+
+%inline sliceAccessExpressionNonBrace:
+  | a = expressionNonBrace L_BRACKET h = expression COLON l = expression R_BRACKET
+    { [ NT a; Term "["; NT h; Term ":"; NT l; Term "]" ] #@ "sliceAccessExpressionNonBrace" }
 ;
 
 %inline accessExpressionNonBrace:
 	| e = errorAccessExpression
 	| e = memberAccessExpressionNonBrace
 	| e = indexAccessExpressionNonBrace
+  | e = sliceAccessExpressionNonBrace
 		{ e }
 ;
 

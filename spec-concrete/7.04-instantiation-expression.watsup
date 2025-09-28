@@ -24,7 +24,7 @@ rulegroup Expr_inst/literalExpressionIR-boolean {
 
 ;;;;; number
 
-rulegroup Expr_inst/literalExpression-number {
+rulegroup Expr_inst/literalExpressionIR-number {
 
   rule Expr_inst/arbint:
     p IC STO |- (D i) `# _ ==> STO (D i)
@@ -287,7 +287,7 @@ rulegroup Expr_inst/dataExpressionIR-record {
 ;;;;; errorAccessExpressionIR
 ;;;;; syntax errorAccessExpressionIR = ERROR `. nameIR
 
-rule Expr_inst/accessExpressionIR-errorAccessExpressionIR:
+rule Expr_inst/errorAccessExpressionIR:
   p IC STO |- (ERROR `. nameIR) `# _ ==> STO value_error
   -- if nameIR_error = "error." ++ nameIR
   -- if value_error = $find_value_inst(p, IC, `` nameIR_error)
@@ -298,7 +298,7 @@ rule Expr_inst/accessExpressionIR-errorAccessExpressionIR:
 
 ;;;;;;; TYPE prefixedNameIR
 
-rulegroup Expr_inst/accessExpressionIR-memberAccessExpressionIR-type {
+rulegroup Expr_inst/memberAccessExpressionIR-type {
 
   rule Expr_inst/enum:
     p IC STO |- ((TYPE prefixedNameIR) `. nameIR) `# _
@@ -316,21 +316,22 @@ rulegroup Expr_inst/accessExpressionIR-memberAccessExpressionIR-type {
 
 ;;;;;;; typedExpressionIR
 
-rule Expr_inst/accessExpressionIR-memberAccessExpressionIR-typedExpressionIR-stack-size:
+rule Expr_inst/memberAccessExpressionIR-expression-stack-size:
   p IC STO |- (typedExpressionIR_base `. "size") `# `( typeIR_base _ )
             ==> STO (D n_size)
   -- if _ `# `( typeIR_base _ ) = typedExpressionIR_base
   -- if _ `[ n_size ] = $canon(typeIR_base)
 
 ;;;;; indexAccessExpressionIR
-;;;;; syntax indexAccessExpressionIR
+;;;;; syntax indexAccessExpressionIR =
+;;;;; typedExpressionIR `[ typedExpressionIR ]
+;;;;; tuple or stack accesses are not evaluated statically
 
-;;;;;; typedExpressionIR `[ typedExpressionIR ]
-;;;;;; tuple or stack accesses are not evaluated statically
+;;;;; sliceAccessExpressionIR
+;;;;; syntax sliceAccessExpressionIR =
+;;;;; typedExpressionIR `[ typedExpressionIR `: typedExpressionIR ]
 
-;;;;;; typedExpressionIR `[ typedExpressionIR `: typedExpressionIR ]
-
-rule Expr_inst/indexAccessExpressionIR-bitslice:
+rule Expr_inst/sliceAccessExpressionIR:
   p IC STO_0 |- (typedExpressionIR_base `[ typedExpressionIR_hi `: typedExpressionIR_lo ]) `# _
             ==> STO_3 $bitacc_op(value_base, value_hi, value_lo)
   -- Expr_inst: p IC STO_0 |- typedExpressionIR_base ==> STO_1 value_base
@@ -342,7 +343,7 @@ rule Expr_inst/indexAccessExpressionIR-bitslice:
 
 ;;;;; constructorTargetIR `( argumentListIR )
 
-rule Expr_inst/callExpressionIR-instantiation:
+rule Expr_inst/callExpressionIR-constructor:
   p IC STO_0 |- ((prefixedNameIR `< typeArgumentListIR >) `( argumentListIR )) `# _
             ==> STO_2 value_ref
   ---- ;; find and instantiate constructor
@@ -364,24 +365,23 @@ rule Expr_inst/callExpressionIR-instantiation:
 ;;;;;;; function/action calls are not evaluated statically
 
 ;;;;;;; typedExpressionIR `. nameIR
-
-rule Expr_inst/callExpressionIR-typedeExpressionIR-size:
-  p IC STO |- ((typedExpressionIR_base `. nameIR) `< eps > `( eps )) `# _
-          ==> STO $sizeof(typeIR_base, nameIR)
-  -- if _ `# `( typeIR_base _ ) = typedExpressionIR_base
-  -- if nameIR <- [ "minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes" ]
-
 ;;;;;;; TYPE prefixedNameIR `. nameIR
 
-rulegroup Expr_inst/callExpressionIR-type {
+rulegroup Expr_inst/callExpressionIR-builtin-size {
 
-  rule Expr_inst/size-mono:
+  rule Expr_inst/expression:
+    p IC STO |- ((typedExpressionIR_base `. nameIR) `< eps > `( eps )) `# _
+            ==> STO $sizeof(typeIR_base, nameIR)
+    -- if _ `# `( typeIR_base _ ) = typedExpressionIR_base
+    -- if nameIR <- [ "minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes" ]
+
+  rule Expr_inst/type-mono:
     p IC STO |- ((TYPE prefixedNameIR `. nameIR) `< eps > `( eps )) `# _
             ==> STO $sizeof(typeIR_base, nameIR)
     -- if typeIR_base = $find_typedef_inst(p, IC, prefixedNameIR)
     -- if nameIR <- [ "minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes" ]
 
-  rule Expr_inst/size-poly:
+  rule Expr_inst/type-poly:
     p IC STO |- ((TYPE prefixedNameIR `. nameIR) `< eps > `( eps )) `# _
             ==> STO $sizeof(typeIR_base, nameIR)
     -- if typeIR_base `< eps `, eps > = $find_typedef_inst(p, IC, prefixedNameIR)

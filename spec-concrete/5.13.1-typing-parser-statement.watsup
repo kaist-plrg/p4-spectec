@@ -40,7 +40,7 @@ rule SelectCase_keyset_simple_ok/expression-set-alpha:
   TC typeIR_key |- expression : typedExpressionIR
   ---- ;; check keyset expression
   -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
-  -- if _ `# `( (SET `< typeIR >) _ ) = typedExpressionIR
+  -- if SET `< typeIR > = $typeof_expression(typedExpressionIR)
   ---- ;; if the keyset type equals the key type
   -- Type_alpha: typeIR ~~ typeIR_key
 
@@ -48,7 +48,7 @@ rule SelectCase_keyset_simple_ok/expression-set-subtype:
   TC typeIR_key |- expression : typedExpressionIR_cast
   ---- ;; check keyset expression
   -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
-  -- if _ `# `( (SET `< typeIR >) _ ) = typedExpressionIR
+  -- if SET `< typeIR > = $typeof_expression(typedExpressionIR)
   ---- ;; if the keyset type is a subtype of the key type
   -- Type_alpha:/ typeIR ~~ typeIR_key
   -- Sub_impl: typeIR <: typeIR_key
@@ -61,7 +61,7 @@ rule SelectCase_keyset_simple_ok/expression-non-set:
   TC typeIR_key |- expression : typedExpressionIR_cast
   ---- ;; check keyset expression
   -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
-  -- if _ `# `( typeIR _ ) = typedExpressionIR
+  -- if typeIR = $typeof_expression(typedExpressionIR)
   ---- ;; if the keyset type is not a set type
   -- if ~$is_set_typeIR(typeIR)
   ---- ;; if the keyset type is a subtype of the key type
@@ -101,7 +101,7 @@ rule SelectCase_keyset_simple_ok/mask:
             def $compat_mask
           )
   ---- ;; fetch the type
-  -- if _ `# `( typeIR_reduced _ ) = typedExpressionIR_l_reduced
+  -- if typeIR_reduced = $typeof_expression(typedExpressionIR_l_reduced)
   ---- ;; cast the expressions to the key type
   -- if typedExpressionIR_l_coerced
       = $coerce_unary(typedExpressionIR_l_reduced, typeIR_key)
@@ -138,8 +138,8 @@ rule SelectCase_keyset_simple_ok/range:
             def $compat_range
           )
   ---- ;; fetch the types of both sides
-  -- if _ `# `( typeIR_reduced _ ) = typedExpressionIR_l_reduced
-  -- if _ `# `( typeIR_reduced _ ) = typedExpressionIR_r_reduced
+  -- if typeIR_reduced = $typeof_expression(typedExpressionIR_l_reduced)
+  -- if typeIR_reduced = $typeof_expression(typedExpressionIR_r_reduced)
   ---- ;; cast the expressions to the key type
   -- if typedExpressionIR_l_coerced
       = $coerce_unary(typedExpressionIR_l_reduced, typeIR_key)
@@ -311,7 +311,7 @@ rule ParserTransition_ok/switch:
   ---- ;; check select key expressions
   -- if expression_key* = $flatten_expressionList(expressionList_key)
   -- (Expr_ok: LOCAL TC_0 |- expression_key : typedExpressionIR_key)*
-  -- if (_ `# `( typeIR_key _ ) = typedExpressionIR_key)*
+  -- if (typeIR_key = $typeof_expression(typedExpressionIR_key))*
   ---- ;; check that the keys form a valid set type
   -- (Type_wf: $bound(LOCAL, TC_0) |- SET `< typeIR_key >)*
   ---- ;; check select cases

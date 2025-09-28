@@ -1086,13 +1086,18 @@ and invoke_func_def (ctx : Ctx.t) (id : id) (targs : targ list)
   guard (clauses <> []) id.at "function has no clauses";
   (* Evaluate type arguments *)
   let targs =
-    let theta =
-      TDEnv.bindings ctx.global.tdenv @ TDEnv.bindings ctx.local.tdenv
-      |> List.filter_map (fun (tid, (_tparams, deftyp)) ->
-             match deftyp.it with PlainT typ -> Some (tid, typ) | _ -> None)
-      |> TIdMap.of_list
-    in
-    List.map (Typ.subst_typ theta) targs
+    match targs with
+    | [] -> []
+    | targs ->
+        let theta =
+          TDEnv.bindings ctx.global.tdenv @ TDEnv.bindings ctx.local.tdenv
+          |> List.filter_map (fun (tid, (_tparams, deftyp)) ->
+                 match deftyp.it with
+                 | PlainT typ -> Some (tid, typ)
+                 | _ -> None)
+          |> TIdMap.of_list
+        in
+        List.map (Typ.subst_typ theta) targs
   in
   (* Evaluate arguments *)
   let ctx, values_input = eval_args ctx args in

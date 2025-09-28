@@ -229,9 +229,14 @@ and render_hints hints = String.concat "\n   " (List.map render_hint hints)
 
 let render_rule id_rulegroup rule =
   let id_rel, id_rule, exp, prems = rule.it in
-  "rule " ^ render_relid id_rel
-  ^ render_rulegroupid id_rulegroup
-  ^ render_ruleid id_rule ^ ":\n   " ^ render_exp exp ^ render_prems prems
+  if id_rulegroup.it = id_rule.it then
+    "rule " ^ render_relid id_rel
+    ^ render_rulegroupid id_rulegroup
+    ^ ":\n   " ^ render_exp exp ^ render_prems prems
+  else
+    "rule " ^ render_relid id_rel
+    ^ render_rulegroupid id_rulegroup
+    ^ render_ruleid id_rule ^ ":\n   " ^ render_exp exp ^ render_prems prems
 
 let render_rules id_rulegroup rules =
   String.concat "\n\n" (List.map (render_rule id_rulegroup) rules)

@@ -193,7 +193,7 @@ and assign_arg_def (ctx_caller : Ctx.t) (ctx_callee : Ctx.t) (id : id)
 
    Note that structs are invariant in SpecTec, so we do not need to check for subtyping *)
 
-let rec eval_exp (ctx : Ctx.t) (exp : exp) : Ctx.t * value =
+let rec eval_exp (ctx : Ctx.t) (exp : exp) : value =
   let at, note = (exp.at, exp.note) in
   match exp.it with
   | BoolE b -> eval_bool_exp note ctx b
@@ -225,16 +225,12 @@ let rec eval_exp (ctx : Ctx.t) (exp : exp) : Ctx.t * value =
   | CallE (id, targs, args) -> eval_call_exp note ctx id targs args
   | IterE (exp, iterexp) -> eval_iter_exp note ctx exp iterexp
 
-and eval_exps (ctx : Ctx.t) (exps : exp list) : Ctx.t * value list =
-  List.fold_left
-    (fun (ctx, values) exp ->
-      let ctx, value = eval_exp ctx exp in
-      (ctx, values @ [ value ]))
-    (ctx, []) exps
+and eval_exps (ctx : Ctx.t) (exps : exp list) : value list =
+  List.map (eval_exp ctx) exps
 
 (* Boolean expression evaluation *)
 
-and eval_bool_exp (note : typ') (ctx : Ctx.t) (b : bool) : Ctx.t * value =
+and eval_bool_exp (note : typ') (ctx : Ctx.t) (b : bool) : value =
   let value_res =
     let vid = Value.fresh () in
     let typ = note in
@@ -245,11 +241,11 @@ and eval_bool_exp (note : typ') (ctx : Ctx.t) (b : bool) : Ctx.t * value =
     (fun value_input ->
       Ctx.add_edge ctx value_res value_input Dep.Edges.Control)
     (Ctx.find_values_input Ctx.Local ctx);
-  (ctx, value_res)
+  value_res
 
 (* Numeric expression evaluation *)
 
-and eval_num_exp (note : typ') (ctx : Ctx.t) (n : Num.t) : Ctx.t * value =
+and eval_num_exp (note : typ') (ctx : Ctx.t) (n : Num.t) : value =
   let value_res =
     let vid = Value.fresh () in
     let typ = note in
@@ -260,11 +256,11 @@ and eval_num_exp (note : typ') (ctx : Ctx.t) (n : Num.t) : Ctx.t * value =
     (fun value_input ->
       Ctx.add_edge ctx value_res value_input Dep.Edges.Control)
     (Ctx.find_values_input Ctx.Local ctx);
-  (ctx, value_res)
+  value_res
 
 (* Text expression evaluation *)
 
-and eval_text_exp (note : typ') (ctx : Ctx.t) (s : string) : Ctx.t * value =
+and eval_text_exp (note : typ') (ctx : Ctx.t) (s : string) : value =
   let value_res =
     let vid = Value.fresh () in
     let typ = note in
@@ -275,13 +271,12 @@ and eval_text_exp (note : typ') (ctx : Ctx.t) (s : string) : Ctx.t * value =
     (fun value_input ->
       Ctx.add_edge ctx value_res value_input Dep.Edges.Control)
     (Ctx.find_values_input Ctx.Local ctx);
-  (ctx, value_res)
+  value_res
 
 (* Variable expression evaluation *)
 
-and eval_var_exp (_note : typ') (ctx : Ctx.t) (id : id) : Ctx.t * value =
-  let value = Ctx.find_value Local ctx (id, []) in
-  (ctx, value)
+and eval_var_exp (_note : typ') (ctx : Ctx.t) (id : id) : value =
+  Ctx.find_value Local ctx (id, [])
 
 (* Unary expression evaluation *)
 
@@ -294,8 +289,8 @@ and eval_un_num (unop : Num.unop) (value : value) : value' =
   Il.Ast.NumV num
 
 and eval_un_exp (note : typ') (ctx : Ctx.t) (unop : unop) (_optyp : optyp)
-    (exp : exp) : Ctx.t * value =
-  let ctx, value = eval_exp ctx exp in
+    (exp : exp) : value =
+  let value = eval_exp ctx exp in
   let value_res =
     match unop with
     | #Bool.unop as unop -> eval_un_bool unop value
@@ -308,7 +303,7 @@ and eval_un_exp (note : typ') (ctx : Ctx.t) (unop : unop) (_optyp : optyp)
   in
   Ctx.add_node ctx value_res;
   Ctx.add_edge ctx value_res value (Dep.Edges.Op (UnOp unop));
-  (ctx, value_res)
+  value_res
 
 (* Binary expression evaluation *)
 
@@ -329,9 +324,9 @@ and eval_bin_num (binop : Num.binop) (value_l : value) (value_r : value) :
   Il.Ast.NumV (Num.bin binop num_l num_r)
 
 and eval_bin_exp (note : typ') (ctx : Ctx.t) (binop : binop) (_optyp : optyp)
-    (exp_l : exp) (exp_r : exp) : Ctx.t * value =
-  let ctx, value_l = eval_exp ctx exp_l in
-  let ctx, value_r = eval_exp ctx exp_r in
+    (exp_l : exp) (exp_r : exp) : value =
+  let value_l = eval_exp ctx exp_l in
+  let value_r = eval_exp ctx exp_r in
   let value_res =
     match binop with
     | #Bool.binop as binop -> eval_bin_bool binop value_l value_r
@@ -345,7 +340,7 @@ and eval_bin_exp (note : typ') (ctx : Ctx.t) (binop : binop) (_optyp : optyp)
   Ctx.add_node ctx value_res;
   Ctx.add_edge ctx value_res value_l (Dep.Edges.Op (BinOp binop));
   Ctx.add_edge ctx value_res value_r (Dep.Edges.Op (BinOp binop));
-  (ctx, value_res)
+  value_res
 
 (* Comparison expression evaluation *)
 
@@ -361,9 +356,9 @@ and eval_cmp_num (cmpop : Num.cmpop) (value_l : value) (value_r : value) :
   Il.Ast.BoolV (Num.cmp cmpop num_l num_r)
 
 and eval_cmp_exp (note : typ') (ctx : Ctx.t) (cmpop : cmpop) (_optyp : optyp)
-    (exp_l : exp) (exp_r : exp) : Ctx.t * value =
-  let ctx, value_l = eval_exp ctx exp_l in
-  let ctx, value_r = eval_exp ctx exp_r in
+    (exp_l : exp) (exp_r : exp) : value =
+  let value_l = eval_exp ctx exp_l in
+  let value_r = eval_exp ctx exp_r in
   let value_res =
     match cmpop with
     | #Bool.cmpop as cmpop -> eval_cmp_bool cmpop value_l value_r
@@ -377,11 +372,11 @@ and eval_cmp_exp (note : typ') (ctx : Ctx.t) (cmpop : cmpop) (_optyp : optyp)
   Ctx.add_node ctx value_res;
   Ctx.add_edge ctx value_res value_l (Dep.Edges.Op (CmpOp cmpop));
   Ctx.add_edge ctx value_res value_r (Dep.Edges.Op (CmpOp cmpop));
-  (ctx, value_res)
+  value_res
 
 (* Upcast expression evaluation *)
 
-and upcast (ctx : Ctx.t) (typ : typ) (value : value) : Ctx.t * value =
+and upcast (ctx : Ctx.t) (typ : typ) (value : value) : value =
   match typ.it with
   | NumT `IntT -> (
       match value.it with
@@ -393,27 +388,21 @@ and upcast (ctx : Ctx.t) (typ : typ) (value : value) : Ctx.t * value =
           in
           Ctx.add_node ctx value_res;
           Ctx.add_edge ctx value_res value (Dep.Edges.Op (CastOp typ));
-          (ctx, value_res)
-      | NumV (`Int _) -> (ctx, value)
+          value_res
+      | NumV (`Int _) -> value
       | _ -> assert false)
   | VarT (tid, targs) -> (
       let tparams, deftyp = Ctx.find_typdef Local ctx tid in
-      let theta = List.combine tparams targs |> TIdMap.of_list in
       match deftyp.it with
       | PlainT typ ->
+          let theta = List.combine tparams targs |> TIdMap.of_list in
           let typ = Typ.subst_typ theta typ in
           upcast ctx typ value
-      | _ -> (ctx, value))
+      | _ -> value)
   | TupleT typs -> (
       match value.it with
       | TupleV values ->
-          let ctx, values =
-            List.fold_left2
-              (fun (ctx, values) typ value ->
-                let ctx, value = upcast ctx typ value in
-                (ctx, values @ [ value ]))
-              (ctx, []) typs values
-          in
+          let values = List.map2 (upcast ctx) typs values in
           let value_res =
             let vid = Value.fresh () in
             let typ = typ.it in
@@ -421,23 +410,22 @@ and upcast (ctx : Ctx.t) (typ : typ) (value : value) : Ctx.t * value =
           in
           Ctx.add_node ctx value_res;
           Ctx.add_edge ctx value_res value (Dep.Edges.Op (CastOp typ));
-          (ctx, value_res)
+          value_res
       | _ -> assert false)
-  | _ -> (ctx, value)
+  | _ -> value
 
-and eval_upcast_exp (_note : typ') (ctx : Ctx.t) (typ : typ) (exp : exp) :
-    Ctx.t * value =
-  let ctx, value = eval_exp ctx exp in
-  let ctx, value_res = upcast ctx typ value in
-  (ctx, value_res)
+and eval_upcast_exp (_note : typ') (ctx : Ctx.t) (typ : typ) (exp : exp) : value
+    =
+  let value = eval_exp ctx exp in
+  upcast ctx typ value
 
 (* Downcast expression evaluation *)
 
-and downcast (ctx : Ctx.t) (typ : typ) (value : value) : Ctx.t * value =
+and downcast (ctx : Ctx.t) (typ : typ) (value : value) : value =
   match typ.it with
   | NumT `NatT -> (
       match value.it with
-      | NumV (`Nat _) -> (ctx, value)
+      | NumV (`Nat _) -> value
       | NumV (`Int i) when Bigint.(i >= zero) ->
           let value_res =
             let vid = Value.fresh () in
@@ -446,26 +434,20 @@ and downcast (ctx : Ctx.t) (typ : typ) (value : value) : Ctx.t * value =
           in
           Ctx.add_node ctx value_res;
           Ctx.add_edge ctx value_res value (Dep.Edges.Op (CastOp typ));
-          (ctx, value_res)
+          value_res
       | _ -> assert false)
   | VarT (tid, targs) -> (
       let tparams, deftyp = Ctx.find_typdef Local ctx tid in
-      let theta = List.combine tparams targs |> TIdMap.of_list in
       match deftyp.it with
       | PlainT typ ->
+          let theta = List.combine tparams targs |> TIdMap.of_list in
           let typ = Typ.subst_typ theta typ in
           downcast ctx typ value
-      | _ -> (ctx, value))
+      | _ -> value)
   | TupleT typs -> (
       match value.it with
       | TupleV values ->
-          let ctx, values =
-            List.fold_left2
-              (fun (ctx, values) typ value ->
-                let ctx, value = downcast ctx typ value in
-                (ctx, values @ [ value ]))
-              (ctx, []) typs values
-          in
+          let values = List.map2 (downcast ctx) typs values in
           let value_res =
             let vid = Value.fresh () in
             let typ = typ.it in
@@ -473,15 +455,14 @@ and downcast (ctx : Ctx.t) (typ : typ) (value : value) : Ctx.t * value =
           in
           Ctx.add_node ctx value_res;
           Ctx.add_edge ctx value_res value (Dep.Edges.Op (CastOp typ));
-          (ctx, value_res)
+          value_res
       | _ -> assert false)
-  | _ -> (ctx, value)
+  | _ -> value
 
 and eval_downcast_exp (_note : typ') (ctx : Ctx.t) (typ : typ) (exp : exp) :
-    Ctx.t * value =
-  let ctx, value = eval_exp ctx exp in
-  let ctx, value_res = downcast ctx typ value in
-  (ctx, value_res)
+    value =
+  let value = eval_exp ctx exp in
+  downcast ctx typ value
 
 (* Subtype check expression evaluation *)
 
@@ -514,9 +495,8 @@ and subtyp (ctx : Ctx.t) (typ : typ) (value : value) : bool =
       | _ -> false)
   | _ -> true
 
-and eval_sub_exp (note : typ') (ctx : Ctx.t) (exp : exp) (typ : typ) :
-    Ctx.t * value =
-  let ctx, value = eval_exp ctx exp in
+and eval_sub_exp (note : typ') (ctx : Ctx.t) (exp : exp) (typ : typ) : value =
+  let value = eval_exp ctx exp in
   let sub = subtyp ctx typ value in
   let value_res =
     let vid = Value.fresh () in
@@ -525,13 +505,13 @@ and eval_sub_exp (note : typ') (ctx : Ctx.t) (exp : exp) (typ : typ) :
   in
   Ctx.add_node ctx value_res;
   Ctx.add_edge ctx value_res value (Dep.Edges.Op (SubOp typ));
-  (ctx, value_res)
+  value_res
 
 (* Pattern match check expression evaluation *)
 
 and eval_match_exp (note : typ') (ctx : Ctx.t) (exp : exp) (pattern : pattern) :
-    Ctx.t * value =
-  let ctx, value = eval_exp ctx exp in
+    value =
+  let value = eval_exp ctx exp in
   let matches =
     match (pattern, value.it) with
     | CaseP mixop_p, CaseV (mixop_v, _) -> Mixop.eq mixop_p mixop_v
@@ -552,13 +532,12 @@ and eval_match_exp (note : typ') (ctx : Ctx.t) (exp : exp) (pattern : pattern) :
   in
   Ctx.add_node ctx value_res;
   Ctx.add_edge ctx value_res value (Dep.Edges.Op (MatchOp pattern));
-  (ctx, value_res)
+  value_res
 
 (* Tuple expression evaluation *)
 
-and eval_tuple_exp (note : typ') (ctx : Ctx.t) (exps : exp list) : Ctx.t * value
-    =
-  let ctx, values = eval_exps ctx exps in
+and eval_tuple_exp (note : typ') (ctx : Ctx.t) (exps : exp list) : value =
+  let values = eval_exps ctx exps in
   let value_res =
     let vid = Value.fresh () in
     let typ = note in
@@ -570,14 +549,13 @@ and eval_tuple_exp (note : typ') (ctx : Ctx.t) (exps : exp list) : Ctx.t * value
       (fun value_input ->
         Ctx.add_edge ctx value_res value_input Dep.Edges.Control)
       (Ctx.find_values_input Ctx.Local ctx);
-  (ctx, value_res)
+  value_res
 
 (* Case expression evaluation *)
 
-and eval_case_exp (note : typ') (ctx : Ctx.t) (notexp : notexp) : Ctx.t * value
-    =
+and eval_case_exp (note : typ') (ctx : Ctx.t) (notexp : notexp) : value =
   let mixop, exps = notexp in
-  let ctx, values = eval_exps ctx exps in
+  let values = eval_exps ctx exps in
   let value_res =
     let vid = Value.fresh () in
     let typ = note in
@@ -589,14 +567,14 @@ and eval_case_exp (note : typ') (ctx : Ctx.t) (notexp : notexp) : Ctx.t * value
       (fun value_input ->
         Ctx.add_edge ctx value_res value_input Dep.Edges.Control)
       (Ctx.find_values_input Ctx.Local ctx);
-  (ctx, value_res)
+  value_res
 
 (* Struct expression evaluation *)
 
 and eval_str_exp (note : typ') (ctx : Ctx.t) (fields : (atom * exp) list) :
-    Ctx.t * value =
+    value =
   let atoms, exps = List.split fields in
-  let ctx, values = eval_exps ctx exps in
+  let values = eval_exps ctx exps in
   let fields = List.combine atoms values in
   let value_res =
     let vid = Value.fresh () in
@@ -609,19 +587,12 @@ and eval_str_exp (note : typ') (ctx : Ctx.t) (fields : (atom * exp) list) :
       (fun value_input ->
         Ctx.add_edge ctx value_res value_input Dep.Edges.Control)
       (Ctx.find_values_input Ctx.Local ctx);
-  (ctx, value_res)
+  value_res
 
 (* Option expression evaluation *)
 
-and eval_opt_exp (note : typ') (ctx : Ctx.t) (exp_opt : exp option) :
-    Ctx.t * value =
-  let ctx, value_opt =
-    match exp_opt with
-    | Some exp ->
-        let ctx, value = eval_exp ctx exp in
-        (ctx, Some value)
-    | None -> (ctx, None)
-  in
+and eval_opt_exp (note : typ') (ctx : Ctx.t) (exp_opt : exp option) : value =
+  let value_opt = Option.map (eval_exp ctx) exp_opt in
   let value_res =
     let vid = Value.fresh () in
     let typ = note in
@@ -633,13 +604,12 @@ and eval_opt_exp (note : typ') (ctx : Ctx.t) (exp_opt : exp option) :
       (fun value_input ->
         Ctx.add_edge ctx value_res value_input Dep.Edges.Control)
       (Ctx.find_values_input Ctx.Local ctx);
-  (ctx, value_res)
+  value_res
 
 (* List expression evaluation *)
 
-and eval_list_exp (note : typ') (ctx : Ctx.t) (exps : exp list) : Ctx.t * value
-    =
-  let ctx, values = eval_exps ctx exps in
+and eval_list_exp (note : typ') (ctx : Ctx.t) (exps : exp list) : value =
+  let values = eval_exps ctx exps in
   let value_res =
     let vid = Value.fresh () in
     let typ = note in
@@ -651,14 +621,14 @@ and eval_list_exp (note : typ') (ctx : Ctx.t) (exps : exp list) : Ctx.t * value
       (fun value_input ->
         Ctx.add_edge ctx value_res value_input Dep.Edges.Control)
       (Ctx.find_values_input Ctx.Local ctx);
-  (ctx, value_res)
+  value_res
 
 (* Cons expression evaluation *)
 
 and eval_cons_exp (note : typ') (ctx : Ctx.t) (exp_h : exp) (exp_t : exp) :
-    Ctx.t * value =
-  let ctx, value_h = eval_exp ctx exp_h in
-  let ctx, value_t = eval_exp ctx exp_t in
+    value =
+  let value_h = eval_exp ctx exp_h in
+  let value_t = eval_exp ctx exp_t in
   let values_t = Value.get_list value_t in
   let value_res =
     let vid = Value.fresh () in
@@ -666,14 +636,14 @@ and eval_cons_exp (note : typ') (ctx : Ctx.t) (exp_h : exp) (exp_t : exp) :
     Il.Ast.(ListV (value_h :: values_t) $$$ { vid; typ })
   in
   Ctx.add_node ctx value_res;
-  (ctx, value_res)
+  value_res
 
 (* Concatenation expression evaluation *)
 
 and eval_cat_exp (note : typ') (ctx : Ctx.t) (at : region) (exp_l : exp)
-    (exp_r : exp) : Ctx.t * value =
-  let ctx, value_l = eval_exp ctx exp_l in
-  let ctx, value_r = eval_exp ctx exp_r in
+    (exp_r : exp) : value =
+  let value_l = eval_exp ctx exp_l in
+  let value_r = eval_exp ctx exp_r in
   let value_res =
     match (value_l.it, value_r.it) with
     | TextV s_l, TextV s_r -> Il.Ast.TextV (s_l ^ s_r)
@@ -688,14 +658,14 @@ and eval_cat_exp (note : typ') (ctx : Ctx.t) (at : region) (exp_l : exp)
   Ctx.add_node ctx value_res;
   Ctx.add_edge ctx value_res value_l (Dep.Edges.Op CatOp);
   Ctx.add_edge ctx value_res value_r (Dep.Edges.Op CatOp);
-  (ctx, value_res)
+  value_res
 
 (* Membership expression evaluation *)
 
-and eval_mem_exp (note : typ') (ctx : Ctx.t) (exp_e : exp) (exp_s : exp) :
-    Ctx.t * value =
-  let ctx, value_e = eval_exp ctx exp_e in
-  let ctx, value_s = eval_exp ctx exp_s in
+and eval_mem_exp (note : typ') (ctx : Ctx.t) (exp_e : exp) (exp_s : exp) : value
+    =
+  let value_e = eval_exp ctx exp_e in
+  let value_s = eval_exp ctx exp_s in
   let values_s = Value.get_list value_s in
   let value_res =
     let vid = Value.fresh () in
@@ -705,12 +675,12 @@ and eval_mem_exp (note : typ') (ctx : Ctx.t) (exp_e : exp) (exp_s : exp) :
   Ctx.add_node ctx value_res;
   Ctx.add_edge ctx value_res value_e (Dep.Edges.Op MemOp);
   Ctx.add_edge ctx value_res value_s (Dep.Edges.Op MemOp);
-  (ctx, value_res)
+  value_res
 
 (* Length expression evaluation *)
 
-and eval_len_exp (note : typ') (ctx : Ctx.t) (exp : exp) : Ctx.t * value =
-  let ctx, value = eval_exp ctx exp in
+and eval_len_exp (note : typ') (ctx : Ctx.t) (exp : exp) : value =
+  let value = eval_exp ctx exp in
   let len = value |> Value.get_list |> List.length |> Bigint.of_int in
   let value_res =
     let vid = Value.fresh () in
@@ -719,41 +689,41 @@ and eval_len_exp (note : typ') (ctx : Ctx.t) (exp : exp) : Ctx.t * value =
   in
   Ctx.add_node ctx value_res;
   Ctx.add_edge ctx value_res value (Dep.Edges.Op LenOp);
-  (ctx, value_res)
+  value_res
 
 (* Dot expression evaluation *)
 
 and eval_dot_exp (_note : typ') (ctx : Ctx.t) (exp_b : exp) (atom : atom) :
-    Ctx.t * value =
-  let ctx, value_b = eval_exp ctx exp_b in
+    value =
+  let value_b = eval_exp ctx exp_b in
   let fields = Value.get_struct value_b in
   let value_res =
     fields
     |> List.map (fun (atom, value) -> (atom.it, value))
     |> List.assoc atom.it
   in
-  (ctx, value_res)
+  value_res
 
 (* Index expression evaluation *)
 
 and eval_idx_exp (_note : typ') (ctx : Ctx.t) (exp_b : exp) (exp_i : exp) :
-    Ctx.t * value =
-  let ctx, value_b = eval_exp ctx exp_b in
-  let ctx, value_i = eval_exp ctx exp_i in
+    value =
+  let value_b = eval_exp ctx exp_b in
+  let value_i = eval_exp ctx exp_i in
   let values = Value.get_list value_b in
   let idx = value_i |> Value.get_num |> Num.to_int |> Bigint.to_int_exn in
   let value_res = List.nth values idx in
-  (ctx, value_res)
+  value_res
 
 (* Slice expression evaluation *)
 
 and eval_slice_exp (note : typ') (ctx : Ctx.t) (exp_b : exp) (exp_i : exp)
-    (exp_n : exp) : Ctx.t * value =
-  let ctx, value_b = eval_exp ctx exp_b in
+    (exp_n : exp) : value =
+  let value_b = eval_exp ctx exp_b in
   let values = Value.get_list value_b in
-  let ctx, value_i = eval_exp ctx exp_i in
+  let value_i = eval_exp ctx exp_i in
   let idx_l = value_i |> Value.get_num |> Num.to_int |> Bigint.to_int_exn in
-  let ctx, value_n = eval_exp ctx exp_n in
+  let value_n = eval_exp ctx exp_n in
   let idx_n = value_n |> Value.get_num |> Num.to_int |> Bigint.to_int_exn in
   let idx_h = idx_l + idx_n in
   let values_slice =
@@ -769,7 +739,7 @@ and eval_slice_exp (note : typ') (ctx : Ctx.t) (exp_b : exp) (exp_i : exp)
     Il.Ast.(ListV values_slice $$$ { vid; typ })
   in
   Ctx.add_node ctx value_res;
-  (ctx, value_res)
+  value_res
 
 (* Update expression evaluation *)
 
@@ -807,42 +777,33 @@ and eval_update_path (ctx : Ctx.t) (value_b : value) (path : path)
   | _ -> failwith "(TODO eval_update_path)"
 
 and eval_upd_exp (_note : typ') (ctx : Ctx.t) (exp_b : exp) (path : path)
-    (exp_f : exp) : Ctx.t * value =
-  let ctx, value_b = eval_exp ctx exp_b in
-  let ctx, value_f = eval_exp ctx exp_f in
-  let value_res = eval_update_path ctx value_b path value_f in
-  (ctx, value_res)
+    (exp_f : exp) : value =
+  let value_b = eval_exp ctx exp_b in
+  let value_f = eval_exp ctx exp_f in
+  eval_update_path ctx value_b path value_f
 
 (* Function call expression evaluation *)
 
 and eval_call_exp (_note : typ') (ctx : Ctx.t) (id : id) (targs : targ list)
-    (args : arg list) : Ctx.t * value =
-  let ctx, value_res = invoke_func ctx id targs args in
-  (ctx, value_res)
+    (args : arg list) : value =
+  invoke_func ctx id targs args
 
 (* Iterated expression evaluation *)
 
 and eval_iter_exp_opt (note : typ') (ctx : Ctx.t) (exp : exp) (vars : var list)
-    : Ctx.t * value =
+    : value =
   let ctx_sub_opt = Ctx.sub_opt ctx vars in
-  let ctx, value_res =
+  let value_res =
     match ctx_sub_opt with
     | Some ctx_sub ->
-        let ctx_sub, value = eval_exp ctx_sub exp in
-        let ctx = Ctx.commit ctx ctx_sub in
-        let value_res =
-          let vid = Value.fresh () in
-          let typ = note in
-          Il.Ast.(OptV (Some value) $$$ { vid; typ })
-        in
-        (ctx, value_res)
+        let value = eval_exp ctx_sub exp in
+        let vid = Value.fresh () in
+        let typ = note in
+        Il.Ast.(OptV (Some value) $$$ { vid; typ })
     | None ->
-        let value_res =
-          let vid = Value.fresh () in
-          let typ = note in
-          Il.Ast.(OptV None $$$ { vid; typ })
-        in
-        (ctx, value_res)
+        let vid = Value.fresh () in
+        let typ = note in
+        Il.Ast.(OptV None $$$ { vid; typ })
   in
   Ctx.add_node ctx value_res;
   List.iter
@@ -850,19 +811,12 @@ and eval_iter_exp_opt (note : typ') (ctx : Ctx.t) (exp : exp) (vars : var list)
       let value_sub = Ctx.find_value Local ctx (id, iters @ [ Il.Ast.Opt ]) in
       Ctx.add_edge ctx value_res value_sub Dep.Edges.Iter)
     vars;
-  (ctx, value_res)
+  value_res
 
 and eval_iter_exp_list (note : typ') (ctx : Ctx.t) (exp : exp) (vars : var list)
-    : Ctx.t * value =
+    : value =
   let ctxs_sub = Ctx.sub_list ctx vars in
-  let ctx, values =
-    List.fold_left
-      (fun (ctx, values) ctx_sub ->
-        let ctx_sub, value = eval_exp ctx_sub exp in
-        let ctx = Ctx.commit ctx ctx_sub in
-        (ctx, values @ [ value ]))
-      (ctx, []) ctxs_sub
-  in
+  let values = List.map (fun ctx_sub -> eval_exp ctx_sub exp) ctxs_sub in
   let value_res =
     let vid = Value.fresh () in
     let typ = note in
@@ -874,10 +828,10 @@ and eval_iter_exp_list (note : typ') (ctx : Ctx.t) (exp : exp) (vars : var list)
       let value_sub = Ctx.find_value Local ctx (id, iters @ [ Il.Ast.List ]) in
       Ctx.add_edge ctx value_res value_sub Dep.Edges.Iter)
     vars;
-  (ctx, value_res)
+  value_res
 
 and eval_iter_exp (note : typ') (ctx : Ctx.t) (exp : exp) (iterexp : iterexp) :
-    Ctx.t * value =
+    value =
   let iter, vars = iterexp in
   match iter with
   | Opt -> eval_iter_exp_opt note ctx exp vars
@@ -885,7 +839,7 @@ and eval_iter_exp (note : typ') (ctx : Ctx.t) (exp : exp) (iterexp : iterexp) :
 
 (* Argument evaluation *)
 
-and eval_arg (ctx : Ctx.t) (arg : arg) : Ctx.t * value =
+and eval_arg (ctx : Ctx.t) (arg : arg) : value =
   match arg.it with
   | ExpA exp -> eval_exp ctx exp
   | DefA id ->
@@ -895,22 +849,14 @@ and eval_arg (ctx : Ctx.t) (arg : arg) : Ctx.t * value =
         Il.Ast.(FuncV id $$$ { vid; typ })
       in
       Ctx.add_node ctx value_res;
-      (ctx, value_res)
+      value_res
 
-and eval_args (ctx : Ctx.t) (args : arg list) : Ctx.t * value list =
-  List.fold_left
-    (fun (ctx, values) arg ->
-      let ctx, value = eval_arg ctx arg in
-      (ctx, values @ [ value ]))
-    (ctx, []) args
+and eval_args (ctx : Ctx.t) (args : arg list) : value list =
+  List.map (eval_arg ctx) args
 
 (* Instruction evaluation *)
 
 and eval_instr (ctx : Ctx.t) (instr : instr) : Ctx.t * Sign.t =
-  (* Sl.Print.string_of_instr instr |> print_endline; *)
-  (* (match ctx.local with *)
-  (* | Ctx.Rel { venv; _ } -> VEnv.to_string venv |> print_endline *)
-  (* | _ -> ()); *)
   match instr.it with
   | IfI (exp_cond, iterexps, instrs_then, phantom_opt) ->
       eval_if_instr ctx exp_cond iterexps instrs_then phantom_opt
@@ -935,28 +881,25 @@ and eval_instrs (ctx : Ctx.t) (sign : Sign.t) (instrs : instr list) :
 
 (* If instruction evaluation *)
 
-and eval_if_cond (ctx : Ctx.t) (exp_cond : exp) : Ctx.t * bool * value =
-  let ctx, value_cond = eval_exp ctx exp_cond in
+and eval_if_cond (ctx : Ctx.t) (exp_cond : exp) : bool * value =
+  let value_cond = eval_exp ctx exp_cond in
   let cond = Value.get_bool value_cond in
-  (ctx, cond, value_cond)
+  (cond, value_cond)
 
 and eval_if_cond_list (ctx : Ctx.t) (exp_cond : exp) (vars : var list)
-    (iterexps : iterexp list) : Ctx.t * bool * value list =
+    (iterexps : iterexp list) : bool * value list =
   let ctxs_sub = Ctx.sub_list ctx vars in
   List.fold_left
-    (fun (ctx, cond, values_cond) ctx_sub ->
-      if not cond then (ctx, cond, values_cond)
+    (fun (cond, values_cond) ctx_sub ->
+      if not cond then (cond, values_cond)
       else
-        let ctx_sub, cond, value_cond =
-          eval_if_cond_iter' ctx_sub exp_cond iterexps
-        in
-        let ctx = Ctx.commit ctx ctx_sub in
+        let cond, value_cond = eval_if_cond_iter' ctx_sub exp_cond iterexps in
         let values_cond = values_cond @ [ value_cond ] in
-        (ctx, cond, values_cond))
-    (ctx, true, []) ctxs_sub
+        (cond, values_cond))
+    (true, []) ctxs_sub
 
 and eval_if_cond_iter' (ctx : Ctx.t) (exp_cond : exp) (iterexps : iterexp list)
-    : Ctx.t * bool * value =
+    : bool * value =
   match iterexps with
   | [] -> eval_if_cond ctx exp_cond
   | iterexp_h :: iterexps_t -> (
@@ -964,7 +907,7 @@ and eval_if_cond_iter' (ctx : Ctx.t) (exp_cond : exp) (iterexps : iterexp list)
       match iter_h with
       | Opt -> error no_region "(TODO)"
       | List ->
-          let ctx, cond, values_cond =
+          let cond, values_cond =
             eval_if_cond_list ctx exp_cond vars_h iterexps_t
           in
           let value_cond =
@@ -980,35 +923,28 @@ and eval_if_cond_iter' (ctx : Ctx.t) (exp_cond : exp) (iterexps : iterexp list)
               in
               Ctx.add_edge ctx value_cond value_sub Dep.Edges.Iter)
             vars_h;
-          (ctx, cond, value_cond))
+          (cond, value_cond))
 
 and eval_if_cond_iter (ctx : Ctx.t) (exp_cond : exp) (iterexps : iterexp list) :
-    Ctx.t * bool * value =
+    bool * value =
   let iterexps = List.rev iterexps in
   eval_if_cond_iter' ctx exp_cond iterexps
 
 and eval_if_instr (ctx : Ctx.t) (exp_cond : exp) (iterexps : iterexp list)
     (instrs_then : instr list) (phantom_opt : phantom option) : Ctx.t * Sign.t =
-  let ctx, cond, value_cond = eval_if_cond_iter ctx exp_cond iterexps in
+  let cond, value_cond = eval_if_cond_iter ctx exp_cond iterexps in
   let vid = value_cond.note.vid in
-  let ctx =
-    match phantom_opt with
-    | Some (pid, _) -> Ctx.cover ctx (not cond) pid vid
-    | None -> ctx
-  in
+  (match phantom_opt with
+  | Some (pid, _) -> Ctx.cover ctx (not cond) pid vid
+  | None -> ());
   if cond then eval_instrs ctx Cont instrs_then else (ctx, Cont)
 
 (* Hold instruction evaluation *)
 
-and eval_hold_cond (ctx : Ctx.t) (id : id) (notexp : notexp) :
-    Ctx.t * bool * value =
+and eval_hold_cond (ctx : Ctx.t) (id : id) (notexp : notexp) : bool * value =
   let _, exps_input = notexp in
-  let ctx, values_input = eval_exps ctx exps_input in
-  let ctx, hold =
-    match invoke_rel ctx id values_input with
-    | Some (ctx, _) -> (ctx, true)
-    | None -> (ctx, false)
-  in
+  let values_input = eval_exps ctx exps_input in
+  let hold = invoke_rel ctx id values_input |> Option.is_some in
   let value_res =
     let vid = Value.fresh () in
     let typ = Il.Ast.BoolT in
@@ -1019,25 +955,24 @@ and eval_hold_cond (ctx : Ctx.t) (id : id) (notexp : notexp) :
     (fun idx value_input ->
       Ctx.add_edge ctx value_res value_input (Dep.Edges.Rel (id, idx)))
     values_input;
-  (ctx, hold, value_res)
+  (hold, value_res)
 
 and eval_hold_cond_list (ctx : Ctx.t) (id : id) (notexp : notexp)
-    (vars : var list) (iterexps : iterexp list) : Ctx.t * bool * value list =
+    (vars : var list) (iterexps : iterexp list) : bool * value list =
   let ctxs_sub = Ctx.sub_list ctx vars in
   List.fold_left
-    (fun (ctx, cond, values_cond) ctx_sub ->
-      if not cond then (ctx, cond, values_cond)
+    (fun (cond, values_cond) ctx_sub ->
+      if not cond then (cond, values_cond)
       else
-        let ctx_sub, cond, value_cond =
+        let cond, value_cond =
           eval_hold_cond_iter' ctx_sub id notexp iterexps
         in
-        let ctx = Ctx.commit ctx ctx_sub in
         let values_cond = values_cond @ [ value_cond ] in
-        (ctx, cond, values_cond))
-    (ctx, true, []) ctxs_sub
+        (cond, values_cond))
+    (true, []) ctxs_sub
 
 and eval_hold_cond_iter' (ctx : Ctx.t) (id : id) (notexp : notexp)
-    (iterexps : iterexp list) : Ctx.t * bool * value =
+    (iterexps : iterexp list) : bool * value =
   match iterexps with
   | [] -> eval_hold_cond ctx id notexp
   | iterexp_h :: iterexps_t -> (
@@ -1045,7 +980,7 @@ and eval_hold_cond_iter' (ctx : Ctx.t) (id : id) (notexp : notexp)
       match iter_h with
       | Opt -> error no_region "(TODO)"
       | List ->
-          let ctx, cond, values_cond =
+          let cond, values_cond =
             eval_hold_cond_list ctx id notexp vars_h iterexps_t
           in
           let value_cond =
@@ -1061,10 +996,10 @@ and eval_hold_cond_iter' (ctx : Ctx.t) (id : id) (notexp : notexp)
               in
               Ctx.add_edge ctx value_cond value_sub Dep.Edges.Iter)
             vars_h;
-          (ctx, cond, value_cond))
+          (cond, value_cond))
 
 and eval_hold_cond_iter (ctx : Ctx.t) (id : id) (notexp : notexp)
-    (iterexps : iterexp list) : Ctx.t * bool * value =
+    (iterexps : iterexp list) : bool * value =
   let iterexps = List.rev iterexps in
   eval_hold_cond_iter' ctx id notexp iterexps
 
@@ -1073,7 +1008,7 @@ and eval_hold_instr (ctx : Ctx.t) (id : id) (notexp : notexp)
   (* Copy the current coverage information *)
   let cover_backup = !(ctx.testing.cover) in
   (* Evaluate the hold condition *)
-  let ctx, cond, value_cond = eval_hold_cond_iter ctx id notexp iterexps in
+  let cond, value_cond = eval_hold_cond_iter ctx id notexp iterexps in
   (* Evaluate the hold case, and restore the coverage information
      if the expected behavior is the relation not holding *)
   let vid = value_cond.note.vid in
@@ -1084,30 +1019,26 @@ and eval_hold_instr (ctx : Ctx.t) (id : id) (notexp : notexp)
         ctx.testing.cover := cover_backup;
         eval_instrs ctx Cont instrs_not_hold)
   | HoldH (instrs_hold, phantom_opt) ->
-      let ctx =
-        match phantom_opt with
-        | Some (pid, _) -> Ctx.cover ctx (not cond) pid vid
-        | None -> ctx
-      in
+      (match phantom_opt with
+      | Some (pid, _) -> Ctx.cover ctx (not cond) pid vid
+      | None -> ());
       if cond then eval_instrs ctx Cont instrs_hold else (ctx, Cont)
   | NotHoldH (instrs_not_hold, phantom_opt) ->
       ctx.testing.cover := cover_backup;
-      let ctx =
-        match phantom_opt with
-        | Some (pid, _) -> Ctx.cover ctx cond pid vid
-        | None -> ctx
-      in
+      (match phantom_opt with
+      | Some (pid, _) -> Ctx.cover ctx cond pid vid
+      | None -> ());
       if not cond then eval_instrs ctx Cont instrs_not_hold else (ctx, Cont)
 
 (* Case analysis instruction evaluation *)
 
 and eval_cases (ctx : Ctx.t) (exp : exp) (cases : case list) :
-    Ctx.t * instr list option * value =
+    instr list option * value =
   cases
   |> List.fold_left
-       (fun (ctx, block_match, values_cond) (guard, block) ->
+       (fun (block_match, values_cond) (guard, block) ->
          match block_match with
-         | Some _ -> (ctx, block_match, values_cond)
+         | Some _ -> (block_match, values_cond)
          | None ->
              let exp_cond =
                match guard with
@@ -1120,30 +1051,27 @@ and eval_cases (ctx : Ctx.t) (exp : exp) (cases : case list) :
                | MemG exp_s -> Il.Ast.MemE (exp, exp_s)
              in
              let exp_cond = exp_cond $$ (exp.at, Il.Ast.BoolT) in
-             let ctx, value_cond = eval_exp ctx exp_cond in
+             let value_cond = eval_exp ctx exp_cond in
              let values_cond = values_cond @ [ value_cond ] in
              let cond = Value.get_bool value_cond in
-             if cond then (ctx, Some block, values_cond)
-             else (ctx, None, values_cond))
-       (ctx, None, [])
-  |> fun (ctx, block_match, values_cond) ->
+             if cond then (Some block, values_cond) else (None, values_cond))
+       (None, [])
+  |> fun (block_match, values_cond) ->
   let value_cond =
     let vid = Value.fresh () in
     let typ = Il.Ast.IterT (Il.Ast.BoolT $ no_region, Il.Ast.List) in
     Il.Ast.(ListV values_cond $$$ { vid; typ })
   in
   Ctx.add_node ctx value_cond;
-  (ctx, block_match, value_cond)
+  (block_match, value_cond)
 
 and eval_case_instr (ctx : Ctx.t) (exp : exp) (cases : case list)
     (phantom_opt : phantom option) : Ctx.t * Sign.t =
-  let ctx, instrs_opt, value_cond = eval_cases ctx exp cases in
+  let instrs_opt, value_cond = eval_cases ctx exp cases in
   let vid = value_cond.note.vid in
-  let ctx =
-    match phantom_opt with
-    | Some (pid, _) -> Ctx.cover ctx (Option.is_none instrs_opt) pid vid
-    | None -> ctx
-  in
+  (match phantom_opt with
+  | Some (pid, _) -> Ctx.cover ctx (Option.is_none instrs_opt) pid vid
+  | None -> ());
   match instrs_opt with
   | Some instrs -> eval_instrs ctx Cont instrs
   | None -> (ctx, Cont)
@@ -1161,7 +1089,7 @@ and eval_group_instr (ctx : Ctx.t) (id_group : id) (_exps_group : exp list)
 (* Let instruction evaluation *)
 
 and eval_let (ctx : Ctx.t) (exp_l : exp) (exp_r : exp) : Ctx.t =
-  let ctx, value = eval_exp ctx exp_r in
+  let value = eval_exp ctx exp_r in
   assign_exp ctx exp_l value
 
 and eval_let_opt (ctx : Ctx.t) (exp_l : exp) (exp_r : exp) (vars : var list)
@@ -1204,7 +1132,6 @@ and eval_let_opt (ctx : Ctx.t) (exp_l : exp) (exp_r : exp) (vars : var list)
     (* Otherwise, evaluate the premise for the subcontext *)
     | Some ctx_sub ->
         let ctx_sub = eval_let_iter' ctx_sub exp_l exp_r iterexps in
-        let ctx = Ctx.commit ctx ctx_sub in
         let values_binding =
           List.map
             (fun (id_binding, typ_binding, iters_binding) ->
@@ -1266,7 +1193,6 @@ and eval_let_list (ctx : Ctx.t) (exp_l : exp) (exp_r : exp) (vars : var list)
           List.fold_left
             (fun (ctx, values_binding_batch) ctx_sub ->
               let ctx_sub = eval_let_iter' ctx_sub exp_l exp_r iterexps in
-              let ctx = Ctx.commit ctx ctx_sub in
               let value_binding_batch =
                 List.map
                   (fun (id_binding, _typ_binding, iters_binding) ->
@@ -1332,10 +1258,10 @@ and eval_rule (ctx : Ctx.t) (id : id) (notexp : notexp) : Ctx.t =
     let _, exps = notexp in
     InputHint.split_exps_without_idx inputs exps
   in
-  let ctx, values_input = eval_exps ctx exps_input in
-  let ctx, values_output =
+  let values_input = eval_exps ctx exps_input in
+  let values_output =
     match invoke_rel ctx id values_input with
-    | Some (ctx, values_output) -> (ctx, values_output)
+    | Some values_output -> values_output
     | None -> error id.at "relation was not matched"
   in
   assign_exps ctx exps_output values_output
@@ -1371,7 +1297,6 @@ and eval_rule_list (ctx : Ctx.t) (id : id) (notexp : notexp) (vars : var list)
           List.fold_left
             (fun (ctx, values_binding_batch) ctx_sub ->
               let ctx_sub = eval_rule_iter' ctx_sub id notexp iterexps in
-              let ctx = Ctx.commit ctx ctx_sub in
               let value_binding_batch =
                 List.map
                   (fun (id_binding, _typ_binding, iters_binding) ->
@@ -1431,19 +1356,19 @@ and eval_rule_instr (ctx : Ctx.t) (id : id) (notexp : notexp)
 (* Result instruction evaluation *)
 
 and eval_result_instr (ctx : Ctx.t) (exps : exp list) : Ctx.t * Sign.t =
-  let ctx, values = eval_exps ctx exps in
+  let values = eval_exps ctx exps in
   (ctx, Res values)
 
 (* Return instruction evaluation *)
 
 and eval_return_instr (ctx : Ctx.t) (exp : exp) : Ctx.t * Sign.t =
-  let ctx, value = eval_exp ctx exp in
+  let value = eval_exp ctx exp in
   (ctx, Ret value)
 
 (* Debug instruction evaluation *)
 
 and eval_debug_instr (ctx : Ctx.t) (exp : exp) : Ctx.t * Sign.t =
-  let ctx, value = eval_exp ctx exp in
+  let value = eval_exp ctx exp in
   print_endline
   @@ F.sprintf "%s: %s" (string_of_region exp.at) (Il.Print.string_of_exp exp);
   print_endline @@ Il.Print.string_of_value value;
@@ -1452,14 +1377,13 @@ and eval_debug_instr (ctx : Ctx.t) (exp : exp) : Ctx.t * Sign.t =
 (* Invoke a relation *)
 
 and invoke_rel (ctx : Ctx.t) (id : id) (values_input : value list) :
-    (Ctx.t * value list) option =
+    value list option =
   let _, _, exps_input, instrs = Ctx.find_rel Local ctx id in
   check (instrs <> []) id.at "relation has no instructions";
   let invoke_rel' () =
     let ctx_local = Ctx.localize_rule ctx id values_input in
     let ctx_local = assign_exps ctx_local exps_input values_input in
     let ctx_local, sign = eval_instrs ctx_local Cont instrs in
-    let ctx = Ctx.commit ctx ctx_local in
     match sign with
     | Res values_output ->
         List.iteri
@@ -1470,59 +1394,62 @@ and invoke_rel (ctx : Ctx.t) (id : id) (values_input : value list) :
                   (Dep.Edges.Rel (id, idx_arg)))
               values_output)
           values_input;
-        Some (ctx, values_output)
+        Some values_output
     | _ -> None
   in
   if (not ctx.testing.derive) && Cache.is_cached_rule id.it then (
     let cache_result = Cache.Cache.find !rule_cache (id.it, values_input) in
     match cache_result with
-    | Some values_output -> Some (ctx, values_output)
+    | Some values_output -> Some values_output
     | None ->
-        let* ctx, values_output = invoke_rel' () in
+        let* values_output = invoke_rel' () in
         Cache.Cache.add !rule_cache (id.it, values_input) values_output;
-        Some (ctx, values_output))
+        Some values_output)
   else invoke_rel' ()
 
 (* Invoke a function *)
 
 and invoke_func (ctx : Ctx.t) (id : id) (targs : targ list) (args : arg list) :
-    Ctx.t * value =
+    value =
   if Builtin.is_builtin id then invoke_func_builtin ctx id targs args
   else invoke_func_def ctx id targs args
 
 and invoke_func_builtin (ctx : Ctx.t) (id : id) (targs : targ list)
-    (args : arg list) : Ctx.t * value =
-  let ctx, values_input = eval_args ctx args in
+    (args : arg list) : value =
+  let values_input = eval_args ctx args in
   let value_output = Builtin.invoke ctx id targs values_input in
   List.iteri
     (fun idx_arg value_input ->
       Ctx.add_edge ctx value_output value_input (Dep.Edges.Func (id, idx_arg)))
     values_input;
-  (ctx, value_output)
+  value_output
 
 and invoke_func_def (ctx : Ctx.t) (id : id) (targs : targ list)
-    (args : arg list) : Ctx.t * value =
+    (args : arg list) : value =
   let tparams, args_input, instrs = Ctx.find_func Local ctx id in
   check (instrs <> []) id.at "function has no instructions";
-  let ctx, values_input = eval_args ctx args in
+  let values_input = eval_args ctx args in
   let tdenv_local =
     check
       (List.length targs = List.length tparams)
       id.at "arity mismatch in type arguments";
     let targs =
-      let theta =
-        (TDEnv.bindings ctx.global.tdenv
-        @
-        match ctx.local with
-        | Empty | Rel _ -> []
-        | Func { tdenv; _ } -> TDEnv.bindings tdenv)
-        |> List.filter_map (fun (tid, (_tparams, deftyp)) ->
-               match deftyp.it with
-               | Il.Ast.PlainT typ -> Some (tid, typ)
-               | _ -> None)
-        |> TIdMap.of_list
-      in
-      List.map (Typ.subst_typ theta) targs
+      match targs with
+      | [] -> []
+      | targs ->
+          let theta =
+            (TDEnv.bindings ctx.global.tdenv
+            @
+            match ctx.local with
+            | Empty | Rel _ -> []
+            | Func { tdenv; _ } -> TDEnv.bindings tdenv)
+            |> List.filter_map (fun (tid, (_tparams, deftyp)) ->
+                   match deftyp.it with
+                   | Il.Ast.PlainT typ -> Some (tid, typ)
+                   | _ -> None)
+            |> TIdMap.of_list
+          in
+          List.map (Typ.subst_typ theta) targs
     in
     List.fold_left2
       (fun tdenv_local tparam targ ->
@@ -1532,8 +1459,7 @@ and invoke_func_def (ctx : Ctx.t) (id : id) (targs : targ list)
   let ctx_local = Ctx.localize_func ctx id values_input tdenv_local in
   let invoke_func_def' () =
     let ctx_local = assign_args ctx ctx_local args_input values_input in
-    let ctx_local, sign = eval_instrs ctx_local Cont instrs in
-    let ctx = Ctx.commit ctx ctx_local in
+    let _ctx_local, sign = eval_instrs ctx_local Cont instrs in
     match sign with
     | Ret value_output ->
         List.iteri
@@ -1541,17 +1467,17 @@ and invoke_func_def (ctx : Ctx.t) (id : id) (targs : targ list)
             Ctx.add_edge ctx value_output value_input
               (Dep.Edges.Func (id, idx_arg)))
           values_input;
-        (ctx, value_output)
+        value_output
     | _ -> error id.at "function was not matched"
   in
   if (not ctx.testing.derive) && Cache.is_cached_func id.it then (
     let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
     match cache_result with
-    | Some value_output -> (ctx, value_output)
+    | Some value_output -> value_output
     | None ->
-        let ctx, value_output = invoke_func_def' () in
+        let value_output = invoke_func_def' () in
         Cache.Cache.add !func_cache (id.it, values_input) value_output;
-        (ctx, value_output))
+        value_output)
   else invoke_func_def' ()
 
 (* Load definitions into the context *)

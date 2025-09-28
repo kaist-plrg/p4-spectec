@@ -14,7 +14,7 @@ rule Decl_ok/constantDeclaration:
   -- Type_wf: $bound(p, TC_0) |- typeIR
   ---- ;; check expression
   -- Expr_ok: p TC_0 |- expression_value : typedExpressionIR_value
-  -- if _ `# `( _ LCTK ) = typedExpressionIR_value
+  -- if LCTK = $ctkof_expression(typedExpressionIR_value)
   ---- ;; check that the expression matches the type
   ---- ;; while inserting implicit casts if necessary
   -- if typedExpressionIR_value_cast
@@ -634,7 +634,7 @@ rule Enum_serializable_field_ok:
   ---- ;; coerce expression to type
   -- if typedExpressionIR_cast = $coerce_unary(typedExpressionIR, typeIR)
   ---- ;; perform compile-time evaluation
-  -- if _ `# `( _ LCTK ) = typedExpressionIR_cast
+  -- if LCTK = $ctkof_expression(typedExpressionIR_cast)
   -- Eval_static: BLOCK TC_0 |- typedExpressionIR_cast ~> value
   ---- ;; temporarily add value to block context
   -- if nameIR = $name(name)

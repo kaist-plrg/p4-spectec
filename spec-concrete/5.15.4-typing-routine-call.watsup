@@ -108,7 +108,7 @@ rule RoutineType_ok/typedExpressionIR-nameIR-builtin-method-stack-push-pop-front
   ---- ;; if the method is push/pop_front builtin
   -- if nameIR <- [ "push_front", "pop_front" ]
   ---- ;; check that the base type is a stack
-  -- if _ `# `( typeIR_base _ ) = typedExpressionIR_base
+  -- if typeIR_base = $typeof_expression(typedExpressionIR_base)
   -- if typeIR `[ _ ] = $canon(typeIR_base)
   ---- ;; (TODO) check if the argument is named
   ---- ;; create routine type
@@ -121,7 +121,7 @@ rule RoutineType_ok/typedExpressionIR-nameIR-builtin-method-header-isValid:
   ---- ;; if the method is isValid builtin
   -- if nameIR <- [ "isValid" ]
   ---- ;; check that the base type is a header
-  -- if _ `# `( typeIR_base _ ) = typedExpressionIR_base
+  -- if typeIR_base = $typeof_expression(typedExpressionIR_base)
   -- if HEADER _ `{ _ } = $canon(typeIR_base)
   ---- ;; create routine type
   -- if methodTypeIR = BUILTIN_METHOD `( eps ) `-> BOOL
@@ -132,7 +132,7 @@ rule RoutineType_ok/typedExpressionIR-nameIR-builtin-method-union-isValid:
   ---- ;; if the method is isValid builtin
   -- if nameIR <- [ "isValid" ]
   ---- ;; check that the base type is a header
-  -- if _ `# `( typeIR_base _ ) = typedExpressionIR_base
+  -- if typeIR_base = $typeof_expression(typedExpressionIR_base)
   -- if HEADER_UNION _ `{ _ } = $canon(typeIR_base)
   ---- ;; create routine type
   -- if methodTypeIR = BUILTIN_METHOD `( eps ) `-> BOOL
@@ -143,7 +143,7 @@ rule RoutineType_ok/typedExpressionIR-nameIR-builtin-method-header-set-ValidInva
   ---- ;; if the method is setValid/Invalid builtin
   -- if nameIR <- [ "setValid", "setInvalid" ]
   ---- ;; check that the base type is a header
-  -- if _ `# `( typeIR_base _ ) = typedExpressionIR_base
+  -- if typeIR_base = $typeof_expression(typedExpressionIR_base)
   -- if HEADER _ `{ _ } = $canon(typeIR_base)
   ---- ;; create routine type
   -- if methodTypeIR = BUILTIN_METHOD `( eps ) `-> VOID
@@ -152,7 +152,7 @@ rule RoutineType_ok/typedExpressionIR-nameIR-extern-method:
   p TC |- (typedExpressionIR_base `. nameIR) `< typeArgumentIR* > `( argumentIR* )
         : routineTypeIR `< `# tid_impl* > `( `# id_default* )
   ---- ;; if the base type is an extern
-  -- if _ `# `( typeIR_base _ ) = typedExpressionIR_base
+  -- if typeIR_base = $typeof_expression(typedExpressionIR_base)
   -- if EXTERN _ `{ (rid_f `: routineTypeDefIR_f)* } = $canon(typeIR_base)
   ---- ;; find method type
   -- if (id_arg?)* = $ids_arguments(argumentIR*)
@@ -172,7 +172,7 @@ rule RoutineType_ok/typedExpressionIR-nameIR-parser-apply-method:
   p TC |- (typedExpressionIR_base `. "apply") `< eps > `( argumentIR* )
         : methodTypeIR `< `# eps > `( `# id_default* )
   ---- ;; if the base type is a parser 
-  -- if _ `# `( typeIR_base _ ) = typedExpressionIR_base
+  -- if typeIR_base = $typeof_expression(typedExpressionIR_base)
   -- if PARSER `( parameterTypeIR* ) = $canon(typeIR_base)
   ---- ;; create method type
   -- if methodTypeIR = PARSER_APPLY `( parameterTypeIR* )
@@ -192,7 +192,7 @@ rule RoutineType_ok/typedExpressionIR-nameIR-control-apply-method:
   p TC |- (typedExpressionIR_base `. "apply") `< eps > `( argumentIR* )
         : methodTypeIR `< `# eps > `( `# id_default* )
   ---- ;; if the base type is a control 
-  -- if _ `# `( typeIR_base _ ) = typedExpressionIR_base
+  -- if typeIR_base = $typeof_expression(typedExpressionIR_base)
   -- if CONTROL `( parameterTypeIR* ) = $canon(typeIR_base)
   ---- ;; create method type
   -- if methodTypeIR = CONTROL_APPLY `( parameterTypeIR* )
@@ -212,7 +212,7 @@ rule RoutineType_ok/typedExpressionIR-nameIR-table-apply-method:
   p TC |- (typedExpressionIR_base `. "apply") `< eps > `( eps )
         : methodTypeIR `< `# eps > `( `# eps )
   ---- ;; if the base type is a table
-  -- if _ `# `( typeIR_base _ ) = typedExpressionIR_base
+  -- if typeIR_base = $typeof_expression(typedExpressionIR_base)
   -- if TABLE _ `# typeIR_table = $canon(typeIR_base)
   ---- ;; create method type
   -- if methodTypeIR = TABLE_APPLY `-> typeIR_table

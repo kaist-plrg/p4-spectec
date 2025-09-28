@@ -123,13 +123,16 @@ syntax memberAccessExpressionIR =
   memberAccessBaseIR `. nameIR
 
 syntax indexAccessExpressionIR =
-  | typedExpressionIR `[ typedExpressionIR ]
-  | typedExpressionIR `[ typedExpressionIR `: typedExpressionIR ]
+  typedExpressionIR `[ typedExpressionIR ]
+
+syntax sliceAccessExpressionIR =
+  typedExpressionIR `[ typedExpressionIR `: typedExpressionIR ]
 
 syntax accessExpressionIR =
   | errorAccessExpressionIR
   | memberAccessExpressionIR
   | indexAccessExpressionIR
+  | sliceAccessExpressionIR
 
 ;;
 ;;;; Call expressions
@@ -180,6 +183,12 @@ syntax typedExpressionIR =
   expressionIR `# expressionNoteIR
 
 syntax typedExpressionListIR = typedExpressionIR*
+
+dec $typeof_expression(typedExpressionIR) : typeIR
+def $typeof_expression(_ `# `( typeIR _ )) = typeIR
+
+dec $ctkof_expression(typedExpressionIR) : ctk
+def $ctkof_expression(_ `# `( _ ctk )) = ctk
 
 syntax memberAccessBaseIR =
   | TYPE prefixedNameIR
@@ -236,6 +245,9 @@ syntax lvalueIR =
   | `( typedLvalueIR )
 
 syntax typedLvalueIR = lvalueIR `# `( typeIR )
+
+dec $typeof_lvalue(typedLvalueIR) : typeIR
+def $typeof_lvalue(_ `# `( typeIR )) = typeIR
 
 ;;
 ;; Statements

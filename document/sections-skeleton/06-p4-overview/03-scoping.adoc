@@ -3,15 +3,20 @@
 
 ${syntax: cursor}
 
-[#sec-scoping-name-resolution]
-==== Name resolution
+Scopes are used to organize P4 programs into nested namespaces. There are three
+kinds of scopes in P4, from outermost to innermost: the top-level scope (global
+namespace), the scope within a `parser` or `control` declaration (block
+namespace), and the scope within a block statement (local namespace).
 
-P4 objects that introduce namespaces are organized in a hierarchical
-fashion. There is a top-level unnamed namespace containing all
-top-level declarations.
+Cursors are used to represent scopes while defining the semantic rules of P4.
 
-Identifiers prefixed with a dot are always resolved in the top-level
-namespace.
+[#sec-scoping-dot-prefixed-name]
+==== Dot prefixed names
+
+${syntax: prefixedNonTypeName
+          prefixedTypeName}
+
+Identifiers prefixed with a dot are always resolved in the top-level namespace.
 
 [source,p4]
 ----
