@@ -12,14 +12,10 @@ type t = {
   ienv : IEnv.t;
   (* Negation *)
   neg : bool;
-  (* Top-down signal to emit code instead of prose *)
+  (* Rende mode *)
   mode : mode;
   (* indent level *)
   level : int;
-  (* item index for numbering *)
-  index : int;
-  (* start index for continued indexing *)
-  start_index : int option;
   (* relation signature for groups *)
   signature : (Mixop.t * int list) option;
 }
@@ -33,8 +29,6 @@ let create ?(penv = PEnv.empty) ?(ienv = IEnv.empty) () : t =
     neg = false;
     mode = Prose;
     level = 0;
-    index = 0;
-    start_index = None;
     signature = None;
   }
 
@@ -42,14 +36,10 @@ let init spec_sl : t =
   Collect.collect_spec spec_sl |> fun (penv, ienv) -> create ~penv ~ienv ()
 
 let with_level ctx level = { ctx with level }
-let with_index ctx index = { ctx with index }
-let with_start ctx start_index = { ctx with start_index = Some start_index }
 let with_signature ctx signature = { ctx with signature }
 let in_code ctx = { ctx with mode = Code }
 let in_prose ctx = { ctx with mode = Prose }
-let reset_start ctx = { ctx with start_index = None }
 let increment_level ctx = { ctx with level = ctx.level + 1 }
-let increment_index ctx = { ctx with index = ctx.index + 1 }
 
 let bullet ctx : string (* = String.make (ctx.level + 1) '.' ^ " " *) =
   Format.asprintf "%s%s "
