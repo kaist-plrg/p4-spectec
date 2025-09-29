@@ -6,6 +6,7 @@
 relation Eval_static:
   cursor typingContext |- typedExpressionIR ~> value
   hint(input %0 %1 %2)
+  hint(prose "the static evaluation of" %2#", under cursor" %0 "and typing context" %1)
 
 ;;
 ;;;; Type evaluation
@@ -15,6 +16,8 @@ relation Eval_static:
 relation Type_ok:
   cursor typingContext |- typeOrVoid : typeIR `# tid*
   hint(input %0 %1 %2)
+  hint(prose "the result of typing" %2#", under cursor" %0 "and typing context" %1
+             #",\nand the set of inserted type variables")
 
 relation TypeArgument_ok:
   cursor typingContext |- typeArgument : typeArgumentIR `# tid*
@@ -28,13 +31,25 @@ relation TypeArguments_ok:
 ;;;; Subtyping, explicit and implicit
 ;;
 
-relation Sub_expl: typeIR <: typeIR hint(input %0 %1)
-relation Sub_expl_canon: typeIR <: typeIR hint(input %0 %1)
-relation Sub_expl_canon_neq: typeIR <: typeIR hint(input %0 %1)
+relation Sub_expl: typeIR <: typeIR
+  hint(input %0 %1)
+  hint(prose %0 "can be explicitly cast to" %1)
+relation Sub_expl_canon: typeIR <: typeIR
+  hint(input %0 %1)
+  hint(prose %0 "can be explicitly cast to" %1 "after canonicalization")
+relation Sub_expl_canon_neq: typeIR <: typeIR
+  hint(input %0 %1)
+  hint(prose %0 "can be explicitly cast to" %1 "when they are not the same type after canonicalization")
 
-relation Sub_impl: typeIR <: typeIR hint(input %0 %1)
-relation Sub_impl_canon: typeIR <: typeIR hint(input %0 %1)
-relation Sub_impl_canon_neq: typeIR <: typeIR hint(input %0 %1)
+relation Sub_impl: typeIR <: typeIR
+  hint(input %0 %1)
+  hint(prose %0 "can be implicitly cast to" %1)
+relation Sub_impl_canon: typeIR <: typeIR
+  hint(input %0 %1)
+  hint(prose %0 "can be implicitly cast to" %1 "after canonicalization")
+relation Sub_impl_canon_neq: typeIR <: typeIR
+  hint(input %0 %1)
+  hint(prose %0 "can be implicitly cast to" %1 "when they are not the same type after canonicalization")
 
 ;;
 ;;;; Expression typing
@@ -43,6 +58,7 @@ relation Sub_impl_canon_neq: typeIR <: typeIR hint(input %0 %1)
 relation Expr_ok:
   cursor typingContext |- expression : typedExpressionIR
   hint(input %0 %1 %2)
+  hint(prose "the result of typing" %2#", under cursor" %0 "and typing context" %1)
 
 ;;
 ;;;; Argument typing
@@ -51,6 +67,7 @@ relation Expr_ok:
 relation Argument_ok:
   cursor typingContext |- argument : argumentIR
   hint(input %0 %1 %2)
+  hint(prose "the result of typing" %2#", under cursor" %0 "and typing context" %1)
 
 ;;
 ;;;; L-value typing
@@ -59,6 +76,7 @@ relation Argument_ok:
 relation Lvalue_ok:
   cursor typingContext |- lvalue : typedLvalueIR
   hint(input %0 %1 %2)
+  hint(prose "the result of typing" %2#", under cursor" %0 "and typing context" %1)
 
 ;;
 ;;;; Statement typing
@@ -91,10 +109,12 @@ relation Block_ok:
 relation Parameter_ok:
   cursor typingContext |- parameter : parameterIR `# tid*
   hint(input %0 %1 %2)
+  hint(prose "the result of typing" %2#", under cursor" %0 "and typing context" %1)
 
 relation Parameters_ok:
   cursor typingContext |- parameter* : parameterListIR `# tid*
   hint(input %0 %1 %2)
+  hint(prose "the result of typing" %2#", under cursor" %0 "and typing context" %1)
 
 dec $parameterIR(parameterIR) : parameterTypeIR
 def $parameterIR(_ direction typeIR nameIR eps)
@@ -258,6 +278,8 @@ relation ControlLocalDecls_ok:
 relation Decl_ok:
   cursor typingContext |- declaration : typingContext declarationIR
   hint(input %0 %1 %2)
+  hint(prose "the result of typing" %2#", under cursor" %0 "and typing context" %1
+             #",\nand the modified typing context")
 
 relation Decls_ok:
   cursor typingContext |- declaration* : typingContext declarationIR*
@@ -314,10 +336,12 @@ def $is_static_routineTarget(_) = DYN
 relation RoutineTarget_ok:
   cursor typingContext |- routineTarget : routineTargetIR
   hint(input %0 %1 %2)
+  hint(prose "the result of typing" %2#", under cursor" %0 "and typing context" %1)
 
 relation RoutineTarget_lvalue_ok:
   cursor typingContext |- lvalue : routineTargetIR
   hint(input %0 %1 %2)
+  hint(prose "the result of typing" %2#", under cursor" %0 "and typing context" %1)
 
 relation RoutineType_ok:
   cursor typingContext |- routineTargetIR `< typeArgumentListIR > `( argumentIR* )

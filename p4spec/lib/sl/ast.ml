@@ -155,21 +155,21 @@ and instr' =
   | DebugI of exp
 [@@deriving yojson]
 
+(* Hints *)
+
+type hint = El.Ast.hint
+[@@deriving yojson]
+
 (* Relations *)
 
-(* id `:` mixop `hint(input` `%`int* `)` exp* instr* *)
-type rel = id * (mixop * int list) * exp list * instr list
+(* id `:` mixop `hint(input` `%`int* `)` exp* instr* hint* *)
+type rel = id * (mixop * int list) * exp list * instr list * hint list
 [@@deriving yojson]
 
 (* Functions *)
 
-(* id `<` list(tparam, `,`) `>` list(param, `,`) `:` instr* *)
-type func = id * tparam list * arg list * instr list
-[@@deriving yojson]
-
-(* Hints *)
-
-type hint = { hintid : id; hintexp : El.Ast.exp }
+(* id `<` list(tparam, `,`) `>` list(param, `,`) `:` instr* hint* *)
+type func = id * tparam list * arg list * instr list * hint list
 [@@deriving yojson]
 
 (* Definitions *)

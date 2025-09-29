@@ -198,7 +198,7 @@ and clause' = arg list * exp * prem list
 
 (* Hints *)
 
-and hint = { hintid : id; hintexp : El.Ast.exp }
+and hint = El.Ast.hint
 
 (* Definitions *)
 
@@ -206,10 +206,10 @@ type def = def' phrase
 and def' =
   (* `syntax` id `<` list(tparam, `,`) `>` `=` deftyp *)
   | TypD of id * tparam list * deftyp
-  (* `relation` id `:` nottyp `hint(input` `%`int* `)` rulegroup* *)
-  | RelD of id * nottyp * int list * rulegroup list
-  (* `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ clause* *)
-  | DecD of id * tparam list * param list * typ * clause list
+  (* `relation` id `:` nottyp `hint(input` `%`int* `)` rulegroup* hint* *)
+  | RelD of id * nottyp * int list * rulegroup list * hint list
+  (* `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ clause* hint* *)
+  | DecD of id * tparam list * param list * typ * clause list * hint list
 
 (* Spec *)
 

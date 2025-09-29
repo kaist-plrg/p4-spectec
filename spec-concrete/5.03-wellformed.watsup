@@ -5,42 +5,52 @@
 relation Type_wf:
   bound |- typeIR
   hint(input %0 %1)
+  hint(prose %1 "is a well-formed type, assuming bound type ids" %0)
 
 relation TypeDef_wf:
   bound |- typeDefIR
   hint(input %0 %1)
+  hint(prose %1 "is a well-formed type, assuming bound type ids" %0)
 
 relation ParameterType_wf:
   bound |- parameterTypeIR
   hint(input %0 %1)
+  hint(prose %1 "is a well-formed type, assuming bound type ids" %0)
 
 relation ParameterTypes_wf:
   bound |- parameterTypeIR*
   hint(input %0 %1)
+  hint(prose %1 "is a well-formed type, assuming bound type ids" %0)
 
 relation RoutineType_wf:
   bound |- routineTypeIR
   hint(input %0 %1)
+  hint(prose %1 "is a well-formed type, assuming bound type ids" %0)
 
 relation RoutineTypeDef_wf:
   bound |- routineTypeDefIR
   hint(input %0 %1)
+  hint(prose %1 "is a well-formed type, assuming bound type ids" %0)
 
 relation ConstructorParameterType_wf:
   bound |- parameterTypeIR
   hint(input %0 %1)
+  hint(prose %1 "is a well-formed type, assuming bound type ids" %0)
 
 relation ConstructorParameterTypes_wf:
   bound |- parameterTypeIR*
   hint(input %0 %1)
+  hint(prose %1 "is a well-formed type, assuming bound type ids" %0)
 
 relation ConstructorType_wf:
   bound |- constructorTypeIR
   hint(input %0 %1)
+  hint(prose %1 "is a well-formed type, assuming bound type ids" %0)
 
 relation ConstructorTypeDef_wf:
   bound |- constructorTypeDefIR
   hint(input %0 %1)
+  hint(prose %1 "is a well-formed type, assuming bound type ids" %0)
 
 ;;
 ;;;; Well-formedness of parameter types
@@ -96,6 +106,7 @@ rule Type_wf/spectype:
 ;;; Alias types
 
 dec $nestable_typedef(typeIR) : bool
+  hint(prose %0 "can be used in a typedef")
 dec $nestable'_typedef(typeIR) : bool
 
 def $nestable_typedef(typeIR) = $nestable'_typedef($canon(typeIR))

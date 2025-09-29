@@ -1,7 +1,7 @@
 open Domain.Lib
 open Xl
 open Sl.Ast
-module Hint = Runtime_static.Rel.Hint
+module InputHint = Runtime_static.Rel.InputHint
 module Typ = Runtime_dynamic.Typ
 module Value = Runtime_dynamic.Value
 module Cache = Runtime_dynamic.Cache
@@ -1256,7 +1256,7 @@ and eval_rule (ctx : Ctx.t) (id : id) (notexp : notexp) : Ctx.t =
   let exps_input, exps_output =
     let _, inputs, _, _ = rel in
     let _, exps = notexp in
-    Hint.split_exps_without_idx inputs exps
+    InputHint.split_exps_without_idx inputs exps
   in
   let values_input = eval_exps ctx exps_input in
   let values_output =
@@ -1487,10 +1487,10 @@ let load_def (ctx : Ctx.t) (def : def) : Ctx.t =
   | TypD (id, tparams, deftyp) ->
       let typdef = (tparams, deftyp) in
       Ctx.add_typdef Global ctx id typdef
-  | RelD (id, (mixop, inputs), relmatch, relpaths) ->
+  | RelD (id, (mixop, inputs), relmatch, relpaths, _) ->
       let rel = (mixop, inputs, relmatch, relpaths) in
       Ctx.add_rel Global ctx id rel
-  | DecD (id, tparams, args_input, instrs) ->
+  | DecD (id, tparams, args_input, instrs, _) ->
       let func = (tparams, args_input, instrs) in
       Ctx.add_func Global ctx id func
 

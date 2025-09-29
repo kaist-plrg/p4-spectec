@@ -407,7 +407,9 @@ and string_of_prems ?(level = 0) prems =
 (* Hints *)
 
 and string_of_hint hint =
-  " hint(" ^ hint.hintid.it ^ " " ^ El.Print.string_of_exp hint.hintexp ^ ")"
+  " hint(" ^ hint.El.Ast.hintid.it ^ " "
+  ^ El.Print.string_of_exp hint.hintexp
+  ^ ")"
 
 and string_of_hints hints = String.concat "" (List.map string_of_hint hints)
 
@@ -420,11 +422,11 @@ let rec string_of_def def =
   | TypD (typid, tparams, deftyp) ->
       "syntax " ^ string_of_typid typid ^ string_of_tparams tparams ^ " = "
       ^ string_of_deftyp deftyp
-  | RelD (relid, nottyp, inputs, rulegroups) ->
+  | RelD (relid, nottyp, inputs, rulegroups, _) ->
       "relation " ^ string_of_relid relid ^ ": " ^ string_of_nottyp nottyp
       ^ "\n\n"
       ^ string_of_rulegroups nottyp inputs rulegroups
-  | DecD (defid, tparams, params, typ, clauses) ->
+  | DecD (defid, tparams, params, typ, clauses, _) ->
       "def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : " ^ string_of_typ typ ^ " ="
       ^ string_of_clauses clauses

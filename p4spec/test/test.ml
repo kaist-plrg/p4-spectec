@@ -118,6 +118,24 @@ let structure_command =
        with ParseError (at, msg) | ElabError (at, msg) ->
          Format.printf "%s\n" (string_of_error at msg))
 
+(* Prose test *)
+
+let prose_test specdir =
+  let spec_sl = structure specdir in
+  let penv, ienv = Prose.Collect.collect_spec spec_sl in
+  let ctx = Prose.Ctx.create ~penv ~ienv () in
+  Prose.Render.prose_of_spec ctx spec_sl |> print_endline
+
+let prose_command =
+  Core.Command.basic ~summary:"run prose test"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map specdir = flag "-s" (required string) ~doc:"p4 spec directory" in
+     fun () ->
+       try prose_test specdir
+       with ParseError (at, msg) | ElabError (at, msg) ->
+         Format.printf "%s\n" (string_of_error at msg))
+
 (* IL interpreter test *)
 
 let run_il negative spec_il relname includes_p4 filename_p4 =
@@ -492,6 +510,7 @@ let command =
     [
       ("elab", elab_command);
       ("struct", structure_command);
+      ("prose", prose_command);
       ("run-il", run_il_command);
       ("run-sl", run_sl_command);
       ("cover-dangling", cover_dangling_command);

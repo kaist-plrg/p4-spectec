@@ -1,7 +1,7 @@
 open Domain.Lib
 open Xl
 open Il.Ast
-module Hint = Runtime_static.Rel.Hint
+module InputHint = Runtime_static.Rel.InputHint
 module Typ = Runtime_dynamic.Typ
 module Value = Runtime_dynamic.Value
 module Cache = Runtime_dynamic.Cache
@@ -819,7 +819,7 @@ and eval_rule_prem (ctx : Ctx.t) (id : id) (notexp : notexp) : Ctx.t attempt =
   let exps_input, exps_output =
     let _, inputs, _ = rel in
     let _, exps = notexp in
-    Hint.split_exps_without_idx inputs exps
+    InputHint.split_exps_without_idx inputs exps
   in
   let ctx, values_input = eval_exps ctx exps_input in
   let* ctx, values_output = invoke_rel ctx id values_input in
@@ -1169,10 +1169,10 @@ let load_def (ctx : Ctx.t) (def : def) : Ctx.t =
   | TypD (id, tparams, deftyp) ->
       let typdef = (tparams, deftyp) in
       Ctx.add_typdef Global ctx id typdef
-  | RelD (id, nottyp, inputs, rulegroups) ->
+  | RelD (id, nottyp, inputs, rulegroups, _) ->
       let rel = (nottyp, inputs, rulegroups) in
       Ctx.add_rel Global ctx id rel
-  | DecD (id, tparams, _, _, clauses) ->
+  | DecD (id, tparams, _, _, clauses, _) ->
       let func = (tparams, clauses) in
       Ctx.add_func Global ctx id func
 

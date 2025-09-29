@@ -13,6 +13,8 @@
    (ignore-outputs
     (diff struct.expected struct.actual))
    (ignore-outputs
+    (diff prose.expected prose.actual))
+   (ignore-outputs
     (diff run_il_type_pos_p4c.expected run_il_type_pos_p4c.actual))
    (ignore-outputs
     (diff run_il_type_neg_p4c.expected run_il_type_neg_p4c.actual))
@@ -40,7 +42,9 @@
    (ignore-outputs
     (diff elab.expected elab.actual))
    (ignore-outputs
-    (diff struct.expected struct.actual)))))
+    (diff struct.expected struct.actual))
+   (ignore-outputs
+    (diff prose.expected prose.actual)))))
 
 ;; P4 typing tests
 
@@ -107,6 +111,15 @@
    (with-stderr-to
     struct.err
     (run ./test.exe struct -s ../../../../spec-concrete)))))
+
+(rule
+ (target prose.actual)
+ (action
+  (with-stdout-to
+   prose.actual
+   (with-stderr-to
+    prose.err
+    (run ./test.exe prose -s ../../../../spec-concrete)))))
 
 (rule
  (target run_il_type_pos_p4c.actual)

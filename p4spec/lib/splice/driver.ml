@@ -6,7 +6,7 @@ let do_splice_anchor (module Splice : Splicer.Splice) (ctx : Ctx.t)
     (source : Source.t) : string =
   let keys = Splice.parse_keys source in
   let values = Splice.find_values ctx keys in
-  let content = Splice.render keys values in
+  let content = Splice.render ctx keys values in
   Option.value Splice.prefix ~default:""
   ^ content
   ^ Option.value Splice.suffix ~default:""

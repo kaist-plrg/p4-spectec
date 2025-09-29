@@ -3,7 +3,7 @@ open Sl.Print
 
 (* Relation *)
 
-type t = mixop * Runtime_static.Rel.Hint.t * exp list * instr list
+type t = mixop * Runtime_static.Rel.InputHint.t * exp list * instr list
 
 let to_string (mixop, inputs, _exps_match, instrs) =
   "relation:\n\n"

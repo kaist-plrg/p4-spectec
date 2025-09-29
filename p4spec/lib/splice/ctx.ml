@@ -6,6 +6,7 @@ module RuleGroupMap = Map.Make (Kinds.RuleGroupId)
 module RuleProseMap = Map.Make (Kinds.RuleGroupId)
 
 type t = {
+  prose_ctx : Prose.Ctx.t;
   mutable syntax : Kinds.syntax SyntaxMap.t;
   mutable relation : Kinds.relation RelationMap.t;
   mutable rulegroup : Kinds.rulegroup RuleGroupMap.t;
@@ -60,7 +61,7 @@ and init_sl_rule_instrs (ctx : t) (id_rel : Sl.Ast.id) (mixop : Sl.Ast.mixop)
 
 let init_sl_def (ctx : t) (def_sl : Sl.Ast.def) : unit =
   match def_sl.it with
-  | RelD (id_rel, (mixop, inputs), _, instrs) ->
+  | RelD (id_rel, (mixop, inputs), _, instrs, _) ->
       init_sl_rule_instrs ctx id_rel mixop inputs instrs
   | _ -> ()
 
@@ -68,8 +69,10 @@ let init_sl (ctx : t) (spec_sl : Sl.Ast.spec) : unit =
   List.iter (init_sl_def ctx) spec_sl
 
 let init (spec_el : El.Ast.spec) (spec_sl : Sl.Ast.spec) : t =
+  let prose_ctx = Prose.Ctx.init spec_sl in
   let ctx =
     {
+      prose_ctx;
       syntax = SyntaxMap.empty;
       relation = RelationMap.empty;
       rulegroup = RuleGroupMap.empty;

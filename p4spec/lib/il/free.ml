@@ -115,6 +115,6 @@ let free_clauses (clauses : clause list) : t =
 
 let free_def (def : def) : t =
   match def.it with
-  | RelD (_, _, _, rulegroups) -> free_rulegroups rulegroups
-  | DecD (_, _, _, _, clauses) -> free_clauses clauses
+  | RelD (_, _, _, rulegroups, _) -> free_rulegroups rulegroups
+  | DecD (_, _, _, _, clauses, _) -> free_clauses clauses
   | _ -> empty
