@@ -15900,7 +15900,7 @@ relation Lvalue_ok: p TC |- lvalue : %
 
     1. (Let (lvalue_base . member) be lvalue)
 
-    2. Group lvalue-member: p TC |- (lvalue_base . member) : %
+    2. Group memberAccess: p TC |- (lvalue_base . member) : %
 
       1. (Lvalue_ok: p TC |- lvalue_base : typedLvalueIR_base)
 
@@ -15998,7 +15998,7 @@ relation Lvalue_ok: p TC |- lvalue : %
 
     1. (Let (lvalue_base [ expression_index ]) be lvalue)
 
-    2. Group lvalue-expression: p TC |- (lvalue_base [ expression_index ]) : %
+    2. Group indexAccess: p TC |- (lvalue_base [ expression_index ]) : %
 
       1. (Lvalue_ok: p TC |- lvalue_base : typedLvalueIR_base)
 
@@ -16048,7 +16048,7 @@ relation Lvalue_ok: p TC |- lvalue : %
 
     1. (Let (lvalue_base [ expression_hi : expression_lo ]) be lvalue)
 
-    2. Group lvalue-expression-expression: p TC |- (lvalue_base [ expression_hi : expression_lo ]) : %
+    2. Group sliceAccess: p TC |- (lvalue_base [ expression_hi : expression_lo ]) : %
 
       1. (Lvalue_ok: p TC |- lvalue_base : typedLvalueIR_base)
 
@@ -16215,7 +16215,7 @@ relation Stmt_ok: p' TC' f' |- statement : % % %
 
     1. (Let (namedType .apply( argumentList );) be (statement as directApplicationStatement))
 
-    2. Group directApplicationStatement-prefixedTypeName: p TC_0 f |- ((namedType .apply( argumentList );) as statement) : % % %
+    2. Group directApplicationStatement: p TC_0 f |- ((namedType .apply( argumentList );) as statement) : % % %
 
       1. (Expr_ok: p' TC' |- (((namedType as callTarget) ( () )) as expression) : (expressionIR # (( typeIR_object _ctk ))))
 
@@ -16357,7 +16357,7 @@ relation Stmt_ok: p' TC' f' |- statement : % % %
 
       1. (Let (switch( expression_switch ){ switchCaseList }) be (statement as switchStatement))
 
-      2. Group switch-table-apply: (local) TC f |- ((switch( expression_switch ){ switchCaseList }) as statement) : % % %
+      2. Group switchStatement-table: (local) TC f |- ((switch( expression_switch ){ switchCaseList }) as statement) : % % %
 
         1. (Expr_ok: (local) TC' |- expression_switch : typedExpressionIR_switch)
 
@@ -16385,7 +16385,7 @@ relation Stmt_ok: p' TC' f' |- statement : % % %
 
               2. Result in : % % % |- % : TC' f_post (switchStatementIR as statementIR)
 
-      3. Group switch-general: (local) TC f |- ((switch( expression_switch ){ switchCaseList }) as statement) : % % %
+      3. Group switchStatement-general: (local) TC f |- ((switch( expression_switch ){ switchCaseList }) as statement) : % % %
 
         1. (Expr_ok: (local) TC' |- expression_switch : typedExpressionIR_switch)
 
@@ -19738,51 +19738,53 @@ def $is_static_routineTarget(routineTargetIR')
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:336.1-339.84
 relation RoutineTarget_ok: p TC |- routineTarget : %
 
-1. Case analysis on routineTarget
+1. Group referenceExpression: p TC |- routineTarget : %
 
-  1. Case (% has type prefixedNonTypeName)
+  1. If ((routineTarget has type prefixedNonTypeName)), then
 
     1. (Let prefixedNonTypeName be (routineTarget as prefixedNonTypeName))
 
-    2. Group prefixedNonTypeName: p TC |- (prefixedNonTypeName as routineTarget) : %
+    2. (Let prefixedNameIR be $prefixedNonTypeName(prefixedNonTypeName))
 
-      1. (Let prefixedNameIR be $prefixedNonTypeName(prefixedNonTypeName))
+    3. If ((((prefixedNameIR = (` "verify")) \/ (prefixedNameIR = (. "verify"))) => (((p = (block)) /\ $is_parser_blockKind(TC.block.kind)) \/ ((p = (local)) /\ $is_parser_state_localKind(TC.local.kind))))), then
 
-      2. If ((((prefixedNameIR = (` "verify")) \/ (prefixedNameIR = (. "verify"))) => (((p = (block)) /\ $is_parser_blockKind(TC.block.kind)) \/ ((p = (local)) /\ $is_parser_state_localKind(TC.local.kind))))), then
+      1. Result in : % % |- % : (prefixedNameIR as routineTargetIR)
 
-        1. Result in : % % |- % : (prefixedNameIR as routineTargetIR)
+  2. If ((((this) as routineTarget) = routineTarget)), then
 
-  2. Case (% has type memberAccessExpression)
+    1. Result in : % % |- % : ((` "this") as routineTargetIR)
+
+2. Case analysis on routineTarget
+
+  1. Case (% has type memberAccessExpression)
 
     1. (Let (memberAccessBase . member) be (routineTarget as memberAccessExpression))
 
-    2. Case analysis on memberAccessBase
+    2. Group memberAccessExpression: p TC |- ((memberAccessBase . member) as routineTarget) : %
 
-      1. Case (% has type prefixedTypeName)
+      1. Case analysis on memberAccessBase
 
-        1. (Let prefixedTypeName be (memberAccessBase as prefixedTypeName))
+        1. Case (% has type prefixedTypeName)
 
-        2. Group memberAccessExpression-prefixedTypeName: p TC |- (((prefixedTypeName as memberAccessBase) . member) as routineTarget) : %
+          1. (Let prefixedTypeName be (memberAccessBase as prefixedTypeName))
 
-          1. (Let prefixedNameIR be $prefixedTypeName(prefixedTypeName))
+          2. (Let prefixedNameIR be $prefixedTypeName(prefixedTypeName))
+
+          3. (Let nameIR be $name(member))
+
+          4. Result in : % % |- % : (type prefixedNameIR . nameIR)
+
+        2. Case (% has type expression)
+
+          1. (Let expression_base be (memberAccessBase as expression))
 
           2. (Let nameIR be $name(member))
 
-          3. Result in : % % |- % : (type prefixedNameIR . nameIR)
+          3. (Expr_ok: p TC |- expression_base : typedExpressionIR_base)
 
-      2. Case (% has type expression)
+          4. Result in : % % |- % : (typedExpressionIR_base . nameIR)
 
-        1. (Let expression_base be (memberAccessBase as expression))
-
-        2. Group memberAccessExpression-expression: p TC |- (((expression_base as memberAccessBase) . member) as routineTarget) : %
-
-          1. (Let nameIR be $name(member))
-
-          2. (Expr_ok: p TC |- expression_base : typedExpressionIR_base)
-
-          3. Result in : % % |- % : (typedExpressionIR_base . nameIR)
-
-  3. Case (% has type parenthesizedExpression)
+  2. Case (% has type parenthesizedExpression)
 
     1. (Let (( expression )) be (routineTarget as parenthesizedExpression))
 
@@ -19791,16 +19793,6 @@ relation RoutineTarget_ok: p TC |- routineTarget : %
       1. (RoutineTarget_ok: p TC |- expression : routineTargetIR)
 
       2. Result in : % % |- % : (( routineTargetIR ))
-
-2. If ((routineTarget has type referenceExpression)), then
-
-  1. (Let referenceExpression be (routineTarget as referenceExpression))
-
-  2. If ((referenceExpression matches pattern `THIS`)), then
-
-    1. Group this: p TC |- ((this) as routineTarget) : %
-
-      1. Result in : % % |- % : ((` "this") as routineTargetIR)
 
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:341.1-344.84
 relation RoutineTarget_lvalue_ok: p TC |- lvalue : %
@@ -21379,25 +21371,23 @@ def $compat'_direct_application(typeIR)
   1. Return false
 
 ;; ../../../../spec-concrete/5.10-typing-statement.watsup:215.1-217.26
-relation SwitchLabel_table_ok: TC tid_table bool' |- switchLabel : %
+relation SwitchLabel_table_ok: TC tid_table bool |- switchLabel : %
 
-1. If ((bool' = true)), then
+1. Group : TC tid_table bool |- switchLabel : %
 
-  1. If ((switchLabel matches pattern `DEFAULT`)), then
+  1. If ((true = bool)), then
 
-    1. Group default: TC tid_table true |- (default) : %
+    1. If ((switchLabel matches pattern `DEFAULT`)), then
 
       1. Result in : % % % |- % : (default)
 
-2. If ((switchLabel has type prefixedNonTypeName)), then
+  2. If ((switchLabel has type prefixedNonTypeName)), then
 
-  1. (Let prefixedNonTypeName be (switchLabel as prefixedNonTypeName))
+    1. (Let prefixedNonTypeName be (switchLabel as prefixedNonTypeName))
 
-  2. Group expressionNonBrace-prefixedNonTypeName: TC tid_table _bool |- (prefixedNonTypeName as switchLabel) : %
+    2. (Let prefixedNameIR be $prefixedNonTypeName(prefixedNonTypeName))
 
-    1. (Let prefixedNameIR be $prefixedNonTypeName(prefixedNonTypeName))
-
-    2. If ((prefixedNameIR matches pattern ``%`)), then
+    3. If ((prefixedNameIR matches pattern ``%`)), then
 
       1. (Let (` nameIR_label) be prefixedNameIR)
 
@@ -21421,38 +21411,36 @@ relation SwitchLabel_table_ok: TC tid_table bool' |- switchLabel : %
 
             2. Result in : % % % |- % : (typedExpressionIR_label as switchLabelIR)
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:244.1-246.29
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:246.1-248.29
 relation SwitchCase_table_ok: TC f tid_table b_last |- switchCase : % % # %
 
-1. Case analysis on switchCase
+1. Group : TC f tid_table b_last |- switchCase : % % # %
 
-  1. Case (% matches pattern `%:%`)
+  1. Case analysis on switchCase
 
-    1. (Let (switchLabel : blockStatement) be switchCase)
+    1. Case (% matches pattern `%:%`)
 
-    2. Group switchLabel-blockStatement: TC f tid_table b_last |- (switchLabel : blockStatement) : % % # %
+      1. (Let (switchLabel : blockStatement) be switchCase)
 
-      1. (SwitchLabel_table_ok: TC tid_table b_last |- switchLabel : switchLabelIR)
+      2. (SwitchLabel_table_ok: TC tid_table b_last |- switchLabel : switchLabelIR)
 
-      2. (Block_ok: TC f |- blockStatement : TC_post f_post blockStatementIR)
+      3. (Block_ok: TC f |- blockStatement : TC_post f_post blockStatementIR)
 
-      3. (Let switchCaseIR be (switchLabelIR : blockStatementIR))
+      4. (Let switchCaseIR be (switchLabelIR : blockStatementIR))
 
-      4. Result in : % % % % |- % : f_post switchCaseIR # switchLabel
+      5. Result in : % % % % |- % : f_post switchCaseIR # switchLabel
 
-  2. Case (% matches pattern `%:`)
+    2. Case (% matches pattern `%:`)
 
-    1. (Let (switchLabel :) be switchCase)
+      1. (Let (switchLabel :) be switchCase)
 
-    2. Group switchLabel: TC f tid_table b_last |- (switchLabel :) : % % # %
+      2. (SwitchLabel_table_ok: TC tid_table b_last |- switchLabel : switchLabelIR)
 
-      1. (SwitchLabel_table_ok: TC tid_table b_last |- switchLabel : switchLabelIR)
+      3. (Let switchCaseIR be (switchLabelIR :))
 
-      2. (Let switchCaseIR be (switchLabelIR :))
+      4. Result in : % % % % |- % : f switchCaseIR # switchLabel
 
-      3. Result in : % % % % |- % : f switchCaseIR # switchLabel
-
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:272.1-274.26
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:277.1-279.26
 relation SwitchCases_table_ok: TC f tid_table |- switchCase*{switchCase <- switchCase*} : % % # %
 
 1. Case analysis on switchCase*{switchCase <- switchCase*}
@@ -21477,71 +21465,67 @@ relation SwitchCases_table_ok: TC f tid_table |- switchCase*{switchCase <- switc
 
       4. Result in : % % % |- % : f_t switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} # switchLabel_h :: switchLabel_t*{switchLabel_t <- switchLabel_t*}
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:311.1-313.26
-relation SwitchLabel_general_ok: TC _typeIR' bool' |- switchLabel : %
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:316.1-318.26
+relation SwitchLabel_general_ok: TC typeIR bool |- switchLabel : %
 
-1. If ((bool' = true)), then
+1. Group : TC typeIR bool |- switchLabel : %
 
-  1. If ((switchLabel matches pattern `DEFAULT`)), then
+  1. If ((true = bool)), then
 
-    1. Group default: TC _typeIR true |- (default) : %
+    1. If ((switchLabel matches pattern `DEFAULT`)), then
 
       1. Result in : % % % |- % : (default)
 
-2. If ((switchLabel has type expressionNonBrace)), then
+  2. If ((switchLabel has type expressionNonBrace)), then
 
-  1. (Let expressionNonBrace_label be (switchLabel as expressionNonBrace))
+    1. (Let expressionNonBrace_label be (switchLabel as expressionNonBrace))
 
-  2. Group expressionNonBrace: TC typeIR_switch _bool |- (expressionNonBrace_label as switchLabel) : %
+    2. (Let expression_label be $expressionNonBrace(expressionNonBrace_label))
 
-    1. (Let expression_label be $expressionNonBrace(expressionNonBrace_label))
+    3. (Expr_ok: (local) TC |- expression_label : typedExpressionIR_label)
 
-    2. (Expr_ok: (local) TC |- expression_label : typedExpressionIR_label)
+    4. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $coerce_unary(typedExpressionIR_label, typeIR))
 
-    3. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $coerce_unary(typedExpressionIR_label, _typeIR'))
-
-    4. If ((typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches pattern (_))), then
+    5. If ((typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches pattern (_))), then
 
       1. (Let ?(typedExpressionIR_label_cast) be typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
-      2. (Let (_expressionIR # (( _typeIR ctk ))) be typedExpressionIR_label_cast)
+      2. (Let (_expressionIR # (( _typeIR' ctk ))) be typedExpressionIR_label_cast)
 
       3. If ((ctk matches pattern `LCTK`)), then
 
         1. Result in : % % % |- % : (typedExpressionIR_label_cast as switchLabelIR)
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:334.1-336.29
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:342.1-344.29
 relation SwitchCase_general_ok: TC f typeIR_switch b_last |- switchCase : % % # %
 
-1. Case analysis on switchCase
+1. Group : TC f typeIR_switch b_last |- switchCase : % % # %
 
-  1. Case (% matches pattern `%:%`)
+  1. Case analysis on switchCase
 
-    1. (Let (switchLabel : blockStatement) be switchCase)
+    1. Case (% matches pattern `%:%`)
 
-    2. Group switchLabel-blockStatement: TC f typeIR_switch b_last |- (switchLabel : blockStatement) : % % # %
+      1. (Let (switchLabel : blockStatement) be switchCase)
 
-      1. (SwitchLabel_general_ok: TC typeIR_switch b_last |- switchLabel : switchLabelIR)
+      2. (SwitchLabel_general_ok: TC typeIR_switch b_last |- switchLabel : switchLabelIR)
 
-      2. (Block_ok: TC f |- blockStatement : TC_post f_post blockStatementIR)
+      3. (Block_ok: TC f |- blockStatement : TC_post f_post blockStatementIR)
 
-      3. (Let switchCaseIR be (switchLabelIR : blockStatementIR))
+      4. (Let switchCaseIR be (switchLabelIR : blockStatementIR))
 
-      4. Result in : % % % % |- % : f_post switchCaseIR # switchLabel
+      5. Result in : % % % % |- % : f_post switchCaseIR # switchLabel
 
-  2. Case (% matches pattern `%:`)
+    2. Case (% matches pattern `%:`)
 
-    1. (Let (switchLabel :) be switchCase)
+      1. (Let (switchLabel :) be switchCase)
 
-    2. Group switchLabel: TC f typeIR_switch b_last |- (switchLabel :) : % % # %
+      2. (SwitchLabel_general_ok: TC typeIR_switch b_last |- switchLabel : switchLabelIR)
 
-      1. (SwitchLabel_general_ok: TC typeIR_switch b_last |- switchLabel : switchLabelIR)
+      3. (Let switchCaseIR be (switchLabelIR :))
 
-      2. (Let switchCaseIR be (switchLabelIR :))
+      4. Result in : % % % % |- % : f switchCaseIR # switchLabel
 
-      3. Result in : % % % % |- % : f switchCaseIR # switchLabel
-
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:362.1-364.26
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:373.1-375.26
 relation SwitchCases_general_ok: TC f typeIR_switch |- switchCase*{switchCase <- switchCase*} : % % # %
 
 1. Case analysis on switchCase*{switchCase <- switchCase*}
@@ -21566,12 +21550,12 @@ relation SwitchCases_general_ok: TC f typeIR_switch |- switchCase*{switchCase <-
 
       4. Result in : % % % |- % : f_t switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} # switchLabel_h :: switchLabel_t*{switchLabel_t <- switchLabel_t*}
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:379.1-379.34
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:390.1-390.34
 def $compat_switch(typeIR)
 
 1. Return $compat'_switch($canon(typeIR))
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:380.1-380.35
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:391.1-391.35
 def $compat'_switch(typeIR)
 
 1. Case analysis on typeIR
@@ -23529,7 +23513,7 @@ def $instantiable(p, TC, instctxt, typeIR)
 
   1. Return $instantiable_table(p, TC, instctxt)
 
-;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:55.1-55.33
+;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:61.1-61.33
 def $lvalue(lvalue'')
 
 1. If ((lvalue'' has type referenceExpression)), then
@@ -23572,7 +23556,7 @@ def $lvalue(lvalue'')
 
     3. Return ((( expression )) as expression)
 
-;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:239.1-239.61
+;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:245.1-245.61
 def $callable_builtin_function(cursor, TC)
 
 1. Case analysis on cursor
@@ -23589,7 +23573,7 @@ def $callable_builtin_function(cursor, TC)
 
     1. Return true
 
-;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:266.1-266.53
+;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:272.1-272.53
 def $callable_function(cursor, TC)
 
 1. Case analysis on cursor
@@ -23606,7 +23590,7 @@ def $callable_function(cursor, TC)
 
     1. Return (~$is_extern_method_localKind(TC.local.kind) /\ ~$is_extern_abstract_method_localKind(TC.local.kind))
 
-;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:310.1-310.60
+;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:316.1-316.60
 def $callable_extern_function(cursor, TC)
 
 1. Case analysis on cursor
@@ -23623,7 +23607,7 @@ def $callable_extern_function(cursor, TC)
 
     1. Return true
 
-;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:352.1-352.51
+;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:358.1-358.51
 def $callable_action(cursor, TC)
 
 1. Case analysis on cursor
@@ -23640,7 +23624,7 @@ def $callable_action(cursor, TC)
 
     1. Return ($is_action_localKind(TC.local.kind) \/ $is_control_apply_method_localKind(TC.local.kind))
 
-;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:383.1-383.59
+;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:389.1-389.59
 def $callable_builtin_method(cursor, TC)
 
 1. Case analysis on cursor
@@ -23657,7 +23641,7 @@ def $callable_builtin_method(cursor, TC)
 
     1. Return true
 
-;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:410.1-410.58
+;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:416.1-416.58
 def $callable_extern_method(cursor, TC)
 
 1. Case analysis on cursor
@@ -23674,7 +23658,7 @@ def $callable_extern_method(cursor, TC)
 
     1. Return true
 
-;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:452.1-452.67
+;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:458.1-458.67
 def $callable_extern_abstract_method(cursor, TC)
 
 1. Case analysis on cursor
@@ -23691,7 +23675,7 @@ def $callable_extern_abstract_method(cursor, TC)
 
     1. Return true
 
-;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:494.1-494.64
+;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:500.1-500.64
 def $callable_parser_apply_method(cursor, TC)
 
 1. Case analysis on cursor
@@ -23708,7 +23692,7 @@ def $callable_parser_apply_method(cursor, TC)
 
     1. Return $is_parser_state_localKind(TC.local.kind)
 
-;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:522.1-522.65
+;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:528.1-528.65
 def $callable_control_apply_method(cursor, TC)
 
 1. Case analysis on cursor
@@ -23725,7 +23709,7 @@ def $callable_control_apply_method(cursor, TC)
 
     1. Return $is_control_apply_method_localKind(TC.local.kind)
 
-;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:550.1-550.63
+;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:556.1-556.63
 def $callable_table_apply_method(cursor, TC)
 
 1. Case analysis on cursor
@@ -26463,33 +26447,31 @@ relation Constructor_inst: p IC STO_0 |- constructor < typeArgumentIR*{typeArgum
               3. Result in : % % % |- % < % >( % # % )==> STO_1 object_table
 
 ;; ../../../../spec-concrete/7.06-instantiation-statement.watsup:103.1-106.26
-relation SwitchCase_inst: p IC_0' STO_0' |- switchCaseIR ==> % % %
+relation SwitchCase_inst: p instantiationContext store |- switchCaseIR ==> % % %
 
-1. Case analysis on switchCaseIR
+1. Group : p instantiationContext store |- switchCaseIR ==> % % %
 
-  1. Case (% matches pattern `%:%`)
+  1. Case analysis on switchCaseIR
 
-    1. (Let (switchLabelIR : blockStatementIR) be switchCaseIR)
+    1. Case (% matches pattern `%:%`)
 
-    2. Group match: p IC_0 STO_0 |- (switchLabelIR : blockStatementIR) ==> % % %
+      1. (Let (switchLabelIR : blockStatementIR) be switchCaseIR)
 
-      1. (Stmt_inst: p IC_0' STO_0' |- (blockStatementIR as statementIR) ==> IC_1 STO_1 statementIR)
+      2. (Stmt_inst: p instantiationContext store |- (blockStatementIR as statementIR) ==> IC_1 STO_1 statementIR)
 
-      2. If ((statementIR has type blockStatementIR)), then
+      3. If ((statementIR has type blockStatementIR)), then
 
         1. (Let blockStatementIR_inst be (statementIR as blockStatementIR))
 
         2. Result in : % % % |- % ==> IC_1 STO_1 (switchLabelIR : blockStatementIR_inst)
 
-  2. Case (% matches pattern `%:`)
+    2. Case (% matches pattern `%:`)
 
-    1. (Let (switchLabelIR :) be switchCaseIR)
+      1. (Let (switchLabelIR :) be switchCaseIR)
 
-    2. Group fallthrough: p IC STO |- (switchLabelIR :) ==> % % %
+      2. Result in : % % % |- % ==> instantiationContext store (switchLabelIR :)
 
-      1. Result in : % % % |- % ==> IC_0' STO_0' (switchLabelIR :)
-
-;; ../../../../spec-concrete/7.06-instantiation-statement.watsup:123.1-126.26
+;; ../../../../spec-concrete/7.06-instantiation-statement.watsup:126.1-129.26
 relation SwitchCases_inst: p IC' STO' |- switchCaseIR*{switchCaseIR <- switchCaseIR*} ==> % % %
 
 1. Case analysis on switchCaseIR*{switchCaseIR <- switchCaseIR*}
