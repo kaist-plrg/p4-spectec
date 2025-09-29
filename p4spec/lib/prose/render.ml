@@ -38,6 +38,7 @@ let split_iterexps exps_out iterexps =
   List.split partition
 
 (** Printing as code **)
+let as_code printer ctx a = printer (ctx |> in_code) a |> render_mono ctx
 
 let code_of_iterexp (iter, _) = string_of_iter iter
 
@@ -67,13 +68,16 @@ let code_of_typ ctx typ = string_of_typ typ |> render_mono ctx
 (* Prose list: a and b / a, b, ..., y and z *)
 
 let prose_of_list items =
-  List.fold_left
-    (fun acc item ->
-      if acc = "" then item
-      else if String.contains acc ',' then acc ^ ", and " ^ item
-      else acc ^ " and " ^ item)
-    "" items
-
+  if List.length items = 1 then List.hd items
+  else if List.length items = 2 then
+    String.concat " and " (List.map (fun item -> item) items)
+  else
+  List.mapi
+    (fun idx item ->
+      if idx = List.length items - 1 then "and " ^ item
+      else item ^ ",")
+    items
+  |> String.concat " "
 (* Expressions *)
 
 let rec prose_of_exp ctx exp =
@@ -81,11 +85,11 @@ let rec prose_of_exp ctx exp =
   | Il.Ast.BoolE b -> string_of_bool b
   | Il.Ast.NumE n -> string_of_num n
   | Il.Ast.TextE text -> "\"" ^ String.escaped text ^ "\""
-  | Il.Ast.VarE varid -> string_of_varid varid
+  | Il.Ast.VarE varid -> string_of_varid varid |> render_mono ctx
   | Il.Ast.UnE (unop, _, exp) -> string_of_unop unop ^ prose_of_exp ctx exp
   | Il.Ast.BinE (binop, _, exp_l, exp_r) ->
-      prose_of_exp ctx exp_l ^ " " ^ string_of_binop binop ^ " "
-      ^ prose_of_exp ctx exp_r
+      prose_of_exp (ctx |> in_code) exp_l ^ " " ^ string_of_binop binop ^ " "
+      ^ prose_of_exp (ctx |> in_code) exp_r |> render_mono ctx
   | Il.Ast.CmpE (cmpop, _, exp_l, exp_r) ->
       "(" ^ prose_of_exp ctx exp_l ^ " " ^ string_of_cmpop cmpop ^ " "
       ^ prose_of_exp ctx exp_r ^ ")"
@@ -108,16 +112,19 @@ let rec prose_of_exp ctx exp =
       ^ "}"
   | Il.Ast.OptE (Some exp) -> "?(" ^ prose_of_exp ctx exp ^ ")"
   | Il.Ast.OptE None -> "?()"
-  | Il.Ast.ListE exps -> "[" ^ prose_of_exps ctx exps ^ "]"
+  | Il.Ast.ListE exps -> 
+    "[" ^ prose_of_exps (ctx |> in_code) exps ^ "]" |> render_mono ctx
   | Il.Ast.ConsE (exp_h, exp_t) ->
-      prose_of_exp ctx exp_h ^ " :: " ^ prose_of_exp ctx exp_t
+      prose_of_exp (ctx |> in_code) exp_h ^ " :: " ^ prose_of_exp (ctx |> in_code) exp_t
+      |> render_mono ctx
   | Il.Ast.CatE (exp_l, exp_r) ->
-      prose_of_exp ctx exp_l ^ " ++ " ^ prose_of_exp ctx exp_r
+      prose_of_exp (ctx |> in_code) exp_l ^ " ++ " ^ prose_of_exp (ctx |> in_code) exp_r
+      |> render_mono ctx
   | Il.Ast.MemE (exp_e, exp_s) ->
       prose_of_exp ctx exp_e ^ " is in " ^ prose_of_exp ctx exp_s
-  | Il.Ast.LenE exp -> "|" ^ prose_of_exp ctx exp ^ "|"
+  | Il.Ast.LenE exp -> "the length of " ^ prose_of_exp ctx exp
   | Il.Ast.DotE (exp_b, atom) ->
-      prose_of_exp ctx exp_b ^ "." ^ string_of_atom atom
+      prose_of_exp (ctx |> in_code) exp_b ^ "." ^ string_of_atom atom |> render_mono ctx
   | Il.Ast.IdxE (exp_b, exp_i) ->
       prose_of_exp ctx exp_b ^ "[" ^ prose_of_exp ctx exp_i ^ "]"
   | Il.Ast.SliceE (exp_b, exp_l, exp_h) ->
@@ -142,7 +149,7 @@ let rec prose_of_exp ctx exp =
             (string_of_defid defid)
       | None ->
           F.asprintf "%s%s%s" (string_of_defid defid) (string_of_targs targs)
-            (prose_of_args ctx args)
+            (prose_of_args (ctx |> in_code) args)
           |> render_mono ctx)
   | Il.Ast.IterE (exp, iterexp) ->
       prose_of_exp ctx exp ^ code_of_iterexp iterexp
@@ -150,17 +157,17 @@ let rec prose_of_exp ctx exp =
 and prose_of_exps ctx exps = prose_of_list (List.map (prose_of_exp ctx) exps)
 and code_of_exp ctx exp = prose_of_exp (ctx |> in_code) exp |> render_mono ctx
 
-and code_of_exps ctx exps =
-  prose_of_exps (ctx |> in_code) exps |> render_mono ctx
+and code_of_exps ctx exps = prose_of_list (List.map (code_of_exp ctx) exps)
 
 and code_of_notexp ctx notexp =
   let mixop, exps = notexp in
   let len = List.length mixop + List.length exps in
   List.init len (fun idx ->
       if idx mod 2 = 0 then idx / 2 |> List.nth mixop |> string_of_atoms
-      else idx / 2 |> List.nth exps |> prose_of_exp ctx)
+      else idx / 2 |> List.nth exps |> prose_of_exp (ctx |> in_code))
   |> List.filter_map (fun str -> if str = "" then None else Some str)
   |> String.concat " "
+  |> render_mono ctx
 
 and prose_of_hintexp ctx (exps : exp list) (hintexp : El.Ast.exp) : string =
   let _, str = prose_of_hintexp' ctx exps hintexp 0 in
@@ -294,7 +301,7 @@ and prose_of_instr (ctx : Ctx.t) instr =
   match instr.it with
   | IfI (exp_cond, iterexps, instrs_then, _) ->
       if ctx.as_assert then
-        F.asprintf "%sAssert that %s%s\n%s" (bullet ctx)
+        F.asprintf "%sCheck that %s%s\n%s" (bullet ctx)
           (prose_of_exp ctx exp_cond)
           (prose_of_in_iterexps ctx ", " iterexps)
           (prose_of_instrs (ctx |> clear_assert) instrs_then)
@@ -384,12 +391,13 @@ and prose_of_instr (ctx : Ctx.t) instr =
               (string_of_relid id_rel)
               (prose_of_in_iterexps ctx ("\n" ^ bullet ctx) in_iters)
       | None ->
-          F.asprintf "(%s: %s)%s" (string_of_relid id_rel)
+          F.asprintf "%s(%s: %s)%s" (bullet ctx)
+            (string_of_relid id_rel)
             (code_of_notexp ctx notexp)
             (prose_of_in_iterexps ctx ", " iterexps))
   | ResultI [] -> F.asprintf "%sThe relation holds" (bullet ctx)
   | ResultI exps ->
-      F.asprintf "%sResult in %s" (bullet ctx) (prose_of_exps ctx exps)
+      F.asprintf "%sResult in %s" (bullet ctx) (code_of_exps ctx exps)
   | ReturnI exp -> F.asprintf "%sReturn %s" (bullet ctx) (prose_of_exp ctx exp)
   | DebugI exp -> F.asprintf "%sDebug: %s" (bullet ctx) (prose_of_exp ctx exp)
 
@@ -419,15 +427,15 @@ and code_of_relinput ctx mixop inputs exps_input =
         | None -> Il.Ast.VarE ("%" $ no_region) $$ (no_region, Il.Ast.TextT))
   in
   let notexp = (mixop, exps) in
-  code_of_notexp ctx notexp
+  code_of_notexp (ctx |> in_code) notexp |> render_mono ctx
 
 (* Rule prose : entrypoint for splicer *)
 
 let code_of_ruleprose (ctx : Ctx.t) (mixop : mixop) (inputs : int list)
     (exps_input : exp list) (instrs : instr list) : string =
-  "`"
-  ^ code_of_relinput ctx mixop inputs exps_input
-  ^ "`\n\n" ^ prose_of_instrs ctx instrs
+  F.asprintf "%s\n\n%s"
+    (code_of_relinput ctx mixop inputs exps_input)
+    (prose_of_instrs ctx instrs)
 
 (* Definitions *)
 
