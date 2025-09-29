@@ -118,7 +118,7 @@ let structure_command =
        with ParseError (at, msg) | ElabError (at, msg) ->
          Format.printf "%s\n" (string_of_error at msg))
 
-(* Prose teest *)
+(* Prose test *)
 
 let prose_test specdir =
   let spec_sl = structure specdir in

@@ -10,7 +10,7 @@ let hintid = "print"
 
 let hints_of_typcase hmap (id : id) (typcase : typcase) : hmap =
   let nottyp, hints = typcase in
-  match List.find_opt (fun hint -> hint.El.Ast.hintid.it = hintid) hints with
+  match List.find_opt (fun hint -> El.Ast.(hint.hintid.it = hintid)) hints with
   | Some hint ->
       let hint = (nottyp, hint.hintexp) in
       let add = function

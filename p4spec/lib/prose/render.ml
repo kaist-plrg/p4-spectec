@@ -293,16 +293,16 @@ and prose_of_in_iterexps ctx sep iterexps =
 and prose_of_instr (ctx : Ctx.t) instr =
   match instr.it with
   | IfI (exp_cond, iterexps, instrs_then, _) ->
-    if ctx.as_assert then
-      F.asprintf "%sAssert that %s%s\n%s" (bullet ctx)
-        (prose_of_exp ctx exp_cond)
-        (prose_of_in_iterexps ctx ", " iterexps)
-        (prose_of_instrs (ctx |> clear_assert) instrs_then)
-    else 
-      F.asprintf "%sIf %s%s\n%s" (bullet ctx)
-        (prose_of_exp ctx exp_cond)
-        (prose_of_in_iterexps ctx ", " iterexps)
-        (prose_of_instrs (ctx |> increment_level) instrs_then)
+      if ctx.as_assert then
+        F.asprintf "%sAssert that %s%s\n%s" (bullet ctx)
+          (prose_of_exp ctx exp_cond)
+          (prose_of_in_iterexps ctx ", " iterexps)
+          (prose_of_instrs (ctx |> clear_assert) instrs_then)
+      else
+        F.asprintf "%sIf %s%s\n%s" (bullet ctx)
+          (prose_of_exp ctx exp_cond)
+          (prose_of_in_iterexps ctx ", " iterexps)
+          (prose_of_instrs (ctx |> increment_level) instrs_then)
   | HoldI (id, notexp, iterexps, holdcase) -> (
       let prosed_relation =
         let prose_of_hint_opt = Hintenv.get_rel id ctx.penv.prose in
@@ -352,7 +352,7 @@ and prose_of_instr (ctx : Ctx.t) instr =
         F.asprintf "%sLet %s be %s%s" (bullet ctx) (code_of_exp ctx exp_l)
           (prose_of_exp ctx exp_r)
           (prose_of_in_iterexps ctx ", " in_iters)
-      (* With output iterators, print as a block with the loop contents indented *)
+        (* With output iterators, print as a block with the loop contents indented *)
       else
         F.asprintf "%s%s\n%sLet %s be %s%s" (bullet ctx)
           (prose_of_out_iterexps ctx out_iters)
@@ -394,12 +394,17 @@ and prose_of_instr (ctx : Ctx.t) instr =
   | DebugI exp -> F.asprintf "%sDebug: %s" (bullet ctx) (prose_of_exp ctx exp)
 
 and prose_of_instrs ctx instrs =
-  let if_instrs = List.filter (fun instr -> match instr.it with | IfI _ | OtherwiseI _ -> true | _ -> false) instrs |> List.length in
+  let if_instrs =
+    List.filter
+      (fun instr ->
+        match instr.it with IfI _ | OtherwiseI _ -> true | _ -> false)
+      instrs
+    |> List.length
+  in
   (* When if is unique without else, render as assertion *)
   if if_instrs = 1 then
     instrs |> List.map (prose_of_instr (ctx |> as_assert)) |> String.concat "\n"
-  else
-    instrs |> List.map (prose_of_instr ctx) |> String.concat "\n"
+  else instrs |> List.map (prose_of_instr ctx) |> String.concat "\n"
 
 (* Relations *)
 
@@ -416,7 +421,7 @@ and code_of_relinput ctx mixop inputs exps_input =
   let notexp = (mixop, exps) in
   code_of_notexp ctx notexp
 
-(* Rule prose; entrypoint for splicer *)
+(* Rule prose : entrypoint for splicer *)
 
 let code_of_ruleprose (ctx : Ctx.t) (mixop : mixop) (inputs : int list)
     (exps_input : exp list) (instrs : instr list) : string =

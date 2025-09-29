@@ -12,7 +12,7 @@ module type Splice = sig
   val suffix : string option
   val parse_keys : Source.t -> key list
   val find_values : Ctx.t -> key list -> value list
-  val render : RenderCtx.t -> key list -> value list -> string
+  val render : Ctx.t -> key list -> value list -> string
 end
 
 (* Syntax splicer *)
@@ -29,9 +29,7 @@ module Syntax : Splice = struct
   let find_values (ctx : Ctx.t) (keys : key list) : value list =
     List.map (Ctx.find_syntax ctx) keys
 
-  let render (ctx : RenderCtx.t) (keys : key list) (values : value list) :
-      string =
-    ctx |> ignore;
+  let render (_ctx : Ctx.t) (keys : key list) (values : value list) : string =
     List.map2
       (fun (id_typ : key) ((tparams, deftyp, hints) : value) ->
         El.Render.render_type_def (id_typ $ no_region) tparams deftyp hints)
@@ -55,9 +53,7 @@ module Relation : Splice = struct
   let find_values (ctx : Ctx.t) (keys : key list) : value list =
     List.map (Ctx.find_relation ctx) keys
 
-  let render (ctx : RenderCtx.t) (keys : key list) (value : value list) : string
-      =
-    ctx |> ignore;
+  let render (_ctx : Ctx.t) (keys : key list) (value : value list) : string =
     List.map2
       (fun (id_rel : key) ((nottyp, hints) : value) ->
         El.Render.render_relation_def (id_rel $ no_region) nottyp hints)
@@ -81,9 +77,7 @@ module RuleGroup : Splice = struct
   let find_values (ctx : Ctx.t) (keys : key list) : value list =
     List.map (Ctx.find_rulegroup ctx) keys
 
-  let render (ctx : RenderCtx.t) (keys : key list) (values : value list) :
-      string =
-    ctx |> ignore;
+  let render (_ctx : Ctx.t) (keys : key list) (values : value list) : string =
     List.map2
       (fun ((id_rel, id_rulegroup) : key) (rules : value) ->
         El.Render.render_rulegroup_def (id_rel $ no_region)
@@ -108,11 +102,10 @@ module RuleProse : Splice = struct
   let find_values (ctx : Ctx.t) (keys : key list) : value list =
     List.map (Ctx.find_ruleprose ctx) keys
 
-  let render (rctx : RenderCtx.t) (keys : key list) (values : value list) :
-      string =
+  let render (ctx : Ctx.t) (keys : key list) (values : value list) : string =
     List.map2
       (fun (_ : key) ((mixop, inputs, exps, instrs) : value) ->
-        Prose.Render.code_of_ruleprose rctx mixop inputs exps instrs)
+        Prose.Render.code_of_ruleprose ctx.prose_ctx mixop inputs exps instrs)
       keys values
     |> String.concat "\n\n"
 end

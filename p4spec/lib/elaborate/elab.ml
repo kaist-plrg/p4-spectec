@@ -1293,15 +1293,6 @@ and elab_debug_prem (ctx : Ctx.t) (exp : exp) : Ctx.t * Il.Ast.prem' =
   let prem_il = Il.Ast.DebugPr exp_il in
   (ctx, prem_il)
 
-(* Elaboration of hints *)
-
-and elab_hint (ctx : Ctx.t) (hint : hint) : Il.Ast.hint =
-  ignore ctx;
-  { hintid = hint.hintid; hintexp = hint.hintexp }
-
-and elab_hints (ctx : Ctx.t) (hints : hint list) : Il.Ast.hint list =
-  List.map (elab_hint ctx) hints
-
 (* Elaboration of rules *)
 
 let rec elab_rule_input_with_bind (ctx : Ctx.t) (exps_il : Il.Ast.exp list) :
