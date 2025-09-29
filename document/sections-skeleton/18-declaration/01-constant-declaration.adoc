@@ -1,7 +1,36 @@
-[#sec-constant-declaration]
+[#sec-constantDeclaration]
 === Constant declarations
+
+Constant values are defined with the syntax:
 
 ${syntax: initializer
           constantDeclaration
           constantInitializerIR
           constantDeclarationIR}
+
+Such a declaration introduces a constant whose value has the specified type. The
+following are all legal constant declarations:
+
+[source,p4]
+----
+const bit<32> COUNTER = 32w0x0;
+struct Version {
+    bit<32> major;
+    bit<32> minor;
+}
+const Version version = { 32w0, 32w0 };
+----
+
+The `initializer` expression must be a local compile-time known value.
+
+[[sem-type-check-constantDeclaration]]
+==== Type checking
+
+${rulegroup: Decl_ok/constantDeclaration}
+${ruleprose: Decl_ok/constantDeclaration}
+
+[[sem-compile-time-eval-constantDeclaration]]
+==== Compile-time evaluation
+
+${rulegroup: Decl_inst/constantDeclarationIR}
+${ruleprose: Decl_inst/constantDeclarationIR}

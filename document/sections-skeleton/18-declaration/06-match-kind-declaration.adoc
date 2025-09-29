@@ -1,5 +1,41 @@
-[#sec-match-kind-declaration]
+[#sec-matchKindDeclaration]
 === Match kind declaration
+
+The `match_kind` type is very similar to the `error` type and is used to
+declare a set of distinct names that may be used in a table's key property
+(described in <<sec-table-props>>). All identifiers are inserted into the
+top-level namespace. It is an error to declare the same `match_kind` identifier
+multiple times.
 
 ${syntax: matchKindDeclaration
           matchKindDeclarationIR}
+
+The P4 core library contains the following match_kind declaration:
+
+[source,p4]
+----
+match_kind {
+   exact,
+   ternary,
+   lpm
+}
+----
+
+Architectures may support additional ``match_kind``s. The declaration of new
+``match_kind``s can only occur within model description files; P4 programmers
+cannot declare new match kinds.
+
+Operations on values of type `match_kind` are described in
+<<sec-match-kind-exprs>>.
+
+[[sem-type-check-matchKindDeclaration]]
+==== Type checking
+
+${rulegroup: Decl_ok/matchKindDeclaration}
+${ruleprose: Decl_ok/matchKindDeclaration}
+
+[[sem-compile-time-eval-matchKindDeclaration]]
+==== Compile-time evaluation
+
+${rulegroup: Decl_inst/matchKindDeclarationIR}
+${ruleprose: Decl_inst/matchKindDeclarationIR}

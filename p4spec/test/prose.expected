@@ -4791,7 +4791,7 @@ and the set of inserted type variables](Type_ok)
 
  .. Case `+declaration+` has type `+externFunctionDeclaration+`
   ... Let `+(annotationList extern (typeOrVoid name typeParameterListOpt ( parameterList )) ;)+` be `+declaration+` as `+externFunctionDeclaration+`
-  ... Group externDeclaration-externFunctionDeclaration: (global) and TC_0 and `+(annotationList extern (typeOrVoid name typeParameterListOpt ( parameterList )) ;)+` as `+declaration+`
+  ... Group externFunctionDeclaration: (global) and TC_0 and `+(annotationList extern (typeOrVoid name typeParameterListOpt ( parameterList )) ;)+` as `+declaration+`
 
    .... Let `+typeParameter*+` be `+$flatten_typeParameterListOpt(typeParameterListOpt)+`
    .... Let `+tid_expl+`* be the list of `+tid_expl+`, obtained by repeating:
@@ -4819,7 +4819,7 @@ and the set of inserted type variables](Type_ok)
 
  .. Case `+declaration+` has type `+externObjectDeclaration+`
   ... Let `+(annotationList extern nonTypeName typeParameterListOpt { methodPrototypeList })+` be `+declaration+` as `+externObjectDeclaration+`
-  ... Group externDeclaration-externObjectDeclaration: (global) and TC_0 and `+(annotationList extern nonTypeName typeParameterListOpt { methodPrototypeList })+` as `+declaration+`
+  ... Group externObjectDeclaration: (global) and TC_0 and `+(annotationList extern nonTypeName typeParameterListOpt { methodPrototypeList })+` as `+declaration+`
 
    .... Let `+methodPrototype*+` be `+$flatten_methodPrototypeList(methodPrototypeList)+`
    .... Let `+(methodPrototype_constructor* and methodPrototype_method*)+` be `+$split_constructors(methodPrototype*)+`
@@ -4921,7 +4921,7 @@ and the set of inserted type variables](Type_ok)
   ... Case analysis on `+enumTypeDeclaration+`
    .... Case `+enumTypeDeclaration+` matches pattern `%ENUM%{%%}`
     ..... Let `+(annotationList enum name { nameList_field _trailingCommaOpt })+` be enumTypeDeclaration
-    ..... Group typeDeclaration-derivedTypeDeclaration-enumTypeDeclaration: (global) and TC_0 and `+(annotationList enum name { nameList_field _trailingCommaOpt })+` as `+declaration+`
+    ..... Group enumTypeDeclaration-non-serializable: (global) and TC_0 and `+(annotationList enum name { nameList_field _trailingCommaOpt })+` as `+declaration+`
 
      ...... Let `+nameIR+` be `+$name(name)+`
      ...... Let `+name_field*+` be `+$flatten_nameList(nameList_field)+`
@@ -4943,7 +4943,7 @@ and the set of inserted type variables](Type_ok)
 
    .... Case `+enumTypeDeclaration+` matches pattern `%ENUM%%{%%}`
     ..... Let `+(annotationList enum type name { namedExpressionList_field _trailingCommaOpt })+` be enumTypeDeclaration
-    ..... Group typeDeclaration-derivedTypeDeclaration-enumTypeDeclaration-serializable: (global) and TC_0 and `+(annotationList enum type name { namedExpressionList_field _trailingCommaOpt })+` as `+declaration+`
+    ..... Group enumTypeDeclaration-serializable: (global) and TC_0 and `+(annotationList enum type name { namedExpressionList_field _trailingCommaOpt })+` as `+declaration+`
 
      ...... Let `+typeIR and tid*+` be [the result of typing `+type as typeOrVoid+`, under cursor `+(global)+` and typing context `+TC_0+`,
 and the set of inserted type variables](Type_ok)
@@ -4967,7 +4967,7 @@ and the set of inserted type variables](Type_ok)
 
  .. Case `+declaration+` has type `+structTypeDeclaration+`
   ... Let `+(annotationList struct name typeParameterListOpt { typeFieldList })+` be `+declaration+` as `+structTypeDeclaration+`
-  ... Group typeDeclaration-derivedTypeDeclaration-structTypeDeclaration: (global) and TC_0 and `+(annotationList struct name typeParameterListOpt { typeFieldList })+` as `+declaration+`
+  ... Group structTypeDeclaration: (global) and TC_0 and `+(annotationList struct name typeParameterListOpt { typeFieldList })+` as `+declaration+`
 
    .... Let `+typeParameter*+` be `+$flatten_typeParameterListOpt(typeParameterListOpt)+`
    .... Let `+tid_expl+`* be the list of `+tid_expl+`, obtained by repeating:
@@ -4993,7 +4993,7 @@ and the set of inserted type variables](Type_ok)
 
  .. Case `+declaration+` has type `+headerTypeDeclaration+`
   ... Let `+(annotationList header name typeParameterListOpt { typeFieldList })+` be `+declaration+` as `+headerTypeDeclaration+`
-  ... Group typeDeclaration-derivedTypeDeclaration-headerTypeDeclaration: (global) and TC_0 and `+(annotationList header name typeParameterListOpt { typeFieldList })+` as `+declaration+`
+  ... Group headerTypeDeclaration: (global) and TC_0 and `+(annotationList header name typeParameterListOpt { typeFieldList })+` as `+declaration+`
 
    .... Let `+typeParameter*+` be `+$flatten_typeParameterListOpt(typeParameterListOpt)+`
    .... Let `+tid_expl+`* be the list of `+tid_expl+`, obtained by repeating:
@@ -5019,7 +5019,7 @@ and the set of inserted type variables](Type_ok)
 
  .. Case `+declaration+` has type `+headerUnionTypeDeclaration+`
   ... Let `+(annotationList header_union name typeParameterListOpt { typeFieldList })+` be `+declaration+` as `+headerUnionTypeDeclaration+`
-  ... Group typeDeclaration-derivedTypeDeclaration-headerUnionTypeDeclaration: (global) and TC_0 and `+(annotationList header_union name typeParameterListOpt { typeFieldList })+` as `+declaration+`
+  ... Group headerUnionTypeDeclaration: (global) and TC_0 and `+(annotationList header_union name typeParameterListOpt { typeFieldList })+` as `+declaration+`
 
    .... Let `+typeParameter*+` be `+$flatten_typeParameterListOpt(typeParameterListOpt)+`
    .... Let `+tid_expl+`* be the list of `+tid_expl+`, obtained by repeating:
@@ -5048,7 +5048,7 @@ and the set of inserted type variables](Type_ok)
   ... Case analysis on `+typedefDeclaration+`
    .... Case `+typedefDeclaration+` matches pattern `%TYPEDEF%%;`
     ..... Let `+(annotationList typedef typedef name ;)+` be typedefDeclaration
-    ..... Group typeDeclaration-typedefDeclaration-typedef: (global) and TC_0 and `+(annotationList typedef typedef name ;)+` as `+declaration+`
+    ..... Group typedefDeclaration-typedef: (global) and TC_0 and `+(annotationList typedef typedef name ;)+` as `+declaration+`
 
      ...... Case analysis on `+typedef+`
       ....... Case `+typedef+` has type `+type+`
@@ -5099,7 +5099,7 @@ and the modified typing context](Decl_ok)
 
    .... Case `+typedefDeclaration+` matches pattern `%TYPE%%;`
     ..... Let `+(annotationList type type name ;)+` be typedefDeclaration
-    ..... Group typeDeclaration-typedefDeclaration-newtype: (global) and TC_0 and `+(annotationList type type name ;)+` as `+declaration+`
+    ..... Group typedefDeclaration-newtype: (global) and TC_0 and `+(annotationList type type name ;)+` as `+declaration+`
 
      ...... Let `+typeIR and tid*+` be [the result of typing `+type as typeOrVoid+`, under cursor `+(global)+` and typing context `+TC_0+`,
 and the set of inserted type variables](Type_ok)
@@ -5114,7 +5114,7 @@ and the set of inserted type variables](Type_ok)
 
  .. Case `+declaration+` has type `+parserTypeDeclaration+`
   ... Let `+(annotationList parser name typeParameterListOpt ( parameterList );)+` be `+declaration+` as `+parserTypeDeclaration+`
-  ... Group typeDeclaration-parserTypeDeclaration: (global) and TC_0 and `+(annotationList parser name typeParameterListOpt ( parameterList );)+` as `+declaration+`
+  ... Group parserTypeDeclaration: (global) and TC_0 and `+(annotationList parser name typeParameterListOpt ( parameterList );)+` as `+declaration+`
 
    .... Let `+TC_1+` be TC_0[block.kind = (parser)]
    .... Let `+typeParameter*+` be `+$flatten_typeParameterListOpt(typeParameterListOpt)+`
@@ -5137,7 +5137,7 @@ and the set of inserted type variables](Type_ok)
 
  .. Case `+declaration+` has type `+controlTypeDeclaration+`
   ... Let `+(annotationList control name typeParameterListOpt ( parameterList );)+` be `+declaration+` as `+controlTypeDeclaration+`
-  ... Group typeDeclaration-controlTypeDeclaration: (global) and TC_0 and `+(annotationList control name typeParameterListOpt ( parameterList );)+` as `+declaration+`
+  ... Group controlTypeDeclaration: (global) and TC_0 and `+(annotationList control name typeParameterListOpt ( parameterList );)+` as `+declaration+`
 
    .... Let `+TC_1+` be TC_0[block.kind = (control)]
    .... Let `+typeParameter*+` be `+$flatten_typeParameterListOpt(typeParameterListOpt)+`
@@ -5160,7 +5160,7 @@ and the set of inserted type variables](Type_ok)
 
  .. Case `+declaration+` has type `+packageTypeDeclaration+`
   ... Let `+(annotationList package name typeParameterListOpt ( parameterList );)+` be `+declaration+` as `+packageTypeDeclaration+`
-  ... Group typeDeclaration-packageTypeDeclaration: (global) and TC_0 and `+(annotationList package name typeParameterListOpt ( parameterList );)+` as `+declaration+`
+  ... Group packageTypeDeclaration: (global) and TC_0 and `+(annotationList package name typeParameterListOpt ( parameterList );)+` as `+declaration+`
 
    .... Let `+TC_1+` be TC_0[block.kind = (package)]
    .... Let `+typeParameter*+` be `+$flatten_typeParameterListOpt(typeParameterListOpt)+`
@@ -7436,7 +7436,7 @@ relation Decl_inst: cursor' and IC_0 and STO' and declarationIR
 
  .. Case `+declarationIR+` has type `+externObjectDeclarationIR+`
   ... Let `+(annotationList extern nameIR < typeParameterListIR , typeParameterListIR_inferred >{ methodPrototypeIR* })+` be `+declarationIR+` as `+externObjectDeclarationIR+`
-  ... Group externDeclaration-externObjectDeclaration: (global) and IC_0 and STO and `+(annotationList extern nameIR < typeParameterListIR , typeParameterListIR_inferred >{ methodPrototypeIR* })+` as `+declarationIR+`
+  ... Group externObjectDeclarationIR: (global) and IC_0 and STO and `+(annotationList extern nameIR < typeParameterListIR , typeParameterListIR_inferred >{ methodPrototypeIR* })+` as `+declarationIR+`
 
    .... Let `+(methodPrototypeIR'* and methodPrototypeIR_method*)+` be `+$split_constructors_IR(methodPrototypeIR*)+`
    .... Assert that `+methodPrototypeIR'*+` matches pattern `+[]+`
@@ -7480,7 +7480,7 @@ relation Decl_inst: cursor' and IC_0 and STO' and declarationIR
   ... Case analysis on `+enumTypeDeclarationIR+`
    .... Case `+enumTypeDeclarationIR+` matches pattern `%ENUM%{%}`
     ..... Let `+(annotationList enum nameIR { nameIR_field* })+` be enumTypeDeclarationIR
-    ..... Group typeDeclarationIR-derivedTypeDeclarationIR-enumTypeDeclarationIR-enum: (global) and IC_0 and STO and `+(annotationList enum nameIR { nameIR_field* })+` as `+declarationIR+`
+    ..... Group enumTypeDeclarationIR-non-serializable: (global) and IC_0 and STO and `+(annotationList enum nameIR { nameIR_field* })+` as `+declarationIR+`
 
      ...... Let `+nameIR_enum_field+`* be the list of `+nameIR_enum_field+`, obtained by repeating:
       ....... Let `+nameIR_enum_field+` be nameIR ++ "." ++ nameIR_field
@@ -7495,7 +7495,7 @@ relation Decl_inst: cursor' and IC_0 and STO' and declarationIR
 
    .... Case `+enumTypeDeclarationIR+` matches pattern `%ENUM%%{%}`
     ..... Let `+(annotationList enum typeIR nameIR { (nameIR_field = typedExpressionIR_field)* })+` be enumTypeDeclarationIR
-    ..... Group typeDeclarationIR-derivedTypeDeclarationIR-enumTypeDeclarationIR-serializableEnum: (global) and IC_0 and STO_0 and `+(annotationList enum typeIR nameIR { (nameIR_field = typedExpressionIR_field)* })+` as `+declarationIR+`
+    ..... Group enumTypeDeclarationIR-serializable: (global) and IC_0 and STO_0 and `+(annotationList enum typeIR nameIR { (nameIR_field = typedExpressionIR_field)* })+` as `+declarationIR+`
 
 (Exprs_inst: (global) IC_0 STO' |- typedExpressionIR_field* ==> STO_1 value_field*)
      ...... Let `+nameIR_serenum_field+`* be the list of `+nameIR_serenum_field+`, obtained by repeating:
@@ -7511,7 +7511,7 @@ relation Decl_inst: cursor' and IC_0 and STO' and declarationIR
 
  .. Case `+declarationIR+` has type `+structTypeDeclarationIR+`
   ... Let `+(annotationList struct nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR* })+` be `+declarationIR+` as `+structTypeDeclarationIR+`
-  ... Group typeDeclarationIR-derivedTypeDeclarationIR-structTypeDeclarationIR: (global) and IC_0 and STO and `+(annotationList struct nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR* })+` as `+declarationIR+`
+  ... Group structTypeDeclarationIR: (global) and IC_0 and STO and `+(annotationList struct nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR* })+` as `+declarationIR+`
 
    .... Let `+annotationList_field+`* be the list of `+annotationList_field+` and `+nameIR_field+`* be the list of `+nameIR_field+` and `+typeIR_field+`* be the list of `+typeIR_field+`, obtained by repeating:
     ..... Let `+(annotationList_field typeIR_field nameIR_field ;)+` be typeFieldIR
@@ -7522,7 +7522,7 @@ relation Decl_inst: cursor' and IC_0 and STO' and declarationIR
 
  .. Case `+declarationIR+` has type `+headerTypeDeclarationIR+`
   ... Let `+(annotationList header nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR* })+` be `+declarationIR+` as `+headerTypeDeclarationIR+`
-  ... Group typeDeclarationIR-derivedTypeDeclarationIR-headerTypeDeclarationIR: (global) and IC_0 and STO and `+(annotationList header nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR* })+` as `+declarationIR+`
+  ... Group headerTypeDeclarationIR: (global) and IC_0 and STO and `+(annotationList header nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR* })+` as `+declarationIR+`
 
    .... Let `+annotationList_field+`* be the list of `+annotationList_field+` and `+nameIR_field+`* be the list of `+nameIR_field+` and `+typeIR_field+`* be the list of `+typeIR_field+`, obtained by repeating:
     ..... Let `+(annotationList_field typeIR_field nameIR_field ;)+` be typeFieldIR
@@ -7533,7 +7533,7 @@ relation Decl_inst: cursor' and IC_0 and STO' and declarationIR
 
  .. Case `+declarationIR+` has type `+headerUnionTypeDeclarationIR+`
   ... Let `+(annotationList header_union nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR* })+` be `+declarationIR+` as `+headerUnionTypeDeclarationIR+`
-  ... Group typeDeclarationIR-derivedTypeDeclarationIR-headerUnionTypeDeclarationIR: (global) and IC_0 and STO and `+(annotationList header_union nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR* })+` as `+declarationIR+`
+  ... Group headerUnionTypeDeclarationIR: (global) and IC_0 and STO and `+(annotationList header_union nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR* })+` as `+declarationIR+`
 
    .... Let `+annotationList_field+`* be the list of `+annotationList_field+` and `+nameIR_field+`* be the list of `+nameIR_field+` and `+typeIR_field+`* be the list of `+typeIR_field+`, obtained by repeating:
     ..... Let `+(annotationList_field typeIR_field nameIR_field ;)+` be typeFieldIR
@@ -7547,7 +7547,7 @@ relation Decl_inst: cursor' and IC_0 and STO' and declarationIR
   ... Case analysis on `+typedefDeclarationIR+`
    .... Case `+typedefDeclarationIR+` matches pattern `%TYPEDEF%%;`
     ..... Let `+(annotationList typedef typedefIR nameIR ;)+` be typedefDeclarationIR
-    ..... Group typeDeclarationIR-typedefDeclarationIR-typedef: (global) and IC_0 and STO and `+(annotationList typedef typedefIR nameIR ;)+` as `+declarationIR+`
+    ..... Group typedefDeclarationIR-typedef: (global) and IC_0 and STO and `+(annotationList typedef typedefIR nameIR ;)+` as `+declarationIR+`
 
      ...... Case analysis on `+typedefIR+`
       ....... Case `+typedefIR+` has type `+typeIR+`
@@ -7582,7 +7582,7 @@ relation Decl_inst: cursor' and IC_0 and STO' and declarationIR
 
    .... Case `+typedefDeclarationIR+` matches pattern `%TYPE%%;`
     ..... Let `+(annotationList type typeIR nameIR ;)+` be typedefDeclarationIR
-    ..... Group typeDeclarationIR-typedefDeclarationIR-newtype: (global) and IC_0 and STO and `+(annotationList type typeIR nameIR ;)+` as `+declarationIR+`
+    ..... Group typedefDeclarationIR-newtype: (global) and IC_0 and STO and `+(annotationList type typeIR nameIR ;)+` as `+declarationIR+`
 
      ...... Let `+typeIR_newtype+` be `+(type nameIR typeIR)+` as `+typeIR+`
      ...... Let `+IC_1+` be `+$add_typedef_inst((global), IC_0, nameIR, `+typeIR_newtype+` as `+typeDefIR+`)+`
@@ -7590,7 +7590,7 @@ relation Decl_inst: cursor' and IC_0 and STO' and declarationIR
 
  .. Case `+declarationIR+` has type `+parserTypeDeclarationIR+`
   ... Let `+(annotationList parser nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR* );)+` be `+declarationIR+` as `+parserTypeDeclarationIR+`
-  ... Group typeDeclarationIR-parserTypeDeclarationIR: (global) and IC_0 and STO and `+(annotationList parser nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR* );)+` as `+declarationIR+`
+  ... Group parserTypeDeclarationIR: (global) and IC_0 and STO and `+(annotationList parser nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR* );)+` as `+declarationIR+`
 
    .... Let `+parameterTypeIR+`* be the list of `+parameterTypeIR+`, obtained by repeating:
     ..... Let `+parameterTypeIR+` be `+$parameterIR(parameterIR)+`
@@ -7602,7 +7602,7 @@ relation Decl_inst: cursor' and IC_0 and STO' and declarationIR
 
  .. Case `+declarationIR+` has type `+controlTypeDeclarationIR+`
   ... Let `+(annotationList control nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR* );)+` be `+declarationIR+` as `+controlTypeDeclarationIR+`
-  ... Group typeDeclarationIR-controlTypeDeclarationIR: (global) and IC_0 and STO and `+(annotationList control nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR* );)+` as `+declarationIR+`
+  ... Group controlTypeDeclarationIR: (global) and IC_0 and STO and `+(annotationList control nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR* );)+` as `+declarationIR+`
 
    .... Let `+parameterTypeIR+`* be the list of `+parameterTypeIR+`, obtained by repeating:
     ..... Let `+parameterTypeIR+` be `+$parameterIR(parameterIR)+`
@@ -7614,7 +7614,7 @@ relation Decl_inst: cursor' and IC_0 and STO' and declarationIR
 
  .. Case `+declarationIR+` has type `+packageTypeDeclarationIR+`
   ... Let `+(annotationList package nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR* );)+` be `+declarationIR+` as `+packageTypeDeclarationIR+`
-  ... Group typeDeclarationIR-packageTypeDeclarationIR: (global) and IC_0 and STO and `+(annotationList package nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR* );)+` as `+declarationIR+`
+  ... Group packageTypeDeclarationIR: (global) and IC_0 and STO and `+(annotationList package nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR* );)+` as `+declarationIR+`
 
    .... Let `+_annotationList+`* be the list of `+_annotationList+` and `+_constantInitializerOptIR+`* be the list of `+_constantInitializerOptIR+` and `+_direction+`* be the list of `+_direction+` and `+_nameIR+`* be the list of `+_nameIR+` and `+typeIR+`* be the list of `+typeIR+`, obtained by repeating:
     ..... Let `+(_annotationList _direction typeIR _nameIR _constantInitializerOptIR)+` be parameterIR

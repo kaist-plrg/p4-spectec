@@ -18916,7 +18916,7 @@ relation Decl_ok: p' TC_0 |- declaration : % %
 
       1. (Let (annotationList extern (typeOrVoid name typeParameterListOpt ( parameterList )) ;) be (declaration as externFunctionDeclaration))
 
-      2. Group externDeclaration-externFunctionDeclaration: (global) TC_0 |- ((annotationList extern (typeOrVoid name typeParameterListOpt ( parameterList )) ;) as declaration) : % %
+      2. Group externFunctionDeclaration: (global) TC_0 |- ((annotationList extern (typeOrVoid name typeParameterListOpt ( parameterList )) ;) as declaration) : % %
 
         1. (Let typeParameter*{typeParameter <- typeParameter*} be $flatten_typeParameterListOpt(typeParameterListOpt))
 
@@ -18958,7 +18958,7 @@ relation Decl_ok: p' TC_0 |- declaration : % %
 
       1. (Let (annotationList extern nonTypeName typeParameterListOpt { methodPrototypeList }) be (declaration as externObjectDeclaration))
 
-      2. Group externDeclaration-externObjectDeclaration: (global) TC_0 |- ((annotationList extern nonTypeName typeParameterListOpt { methodPrototypeList }) as declaration) : % %
+      2. Group externObjectDeclaration: (global) TC_0 |- ((annotationList extern nonTypeName typeParameterListOpt { methodPrototypeList }) as declaration) : % %
 
         1. (Let methodPrototype*{methodPrototype <- methodPrototype*} be $flatten_methodPrototypeList(methodPrototypeList))
 
@@ -19130,7 +19130,7 @@ relation Decl_ok: p' TC_0 |- declaration : % %
 
           1. (Let (annotationList enum name { nameList_field _trailingCommaOpt }) be enumTypeDeclaration)
 
-          2. Group typeDeclaration-derivedTypeDeclaration-enumTypeDeclaration: (global) TC_0 |- ((annotationList enum name { nameList_field _trailingCommaOpt }) as declaration) : % %
+          2. Group enumTypeDeclaration-non-serializable: (global) TC_0 |- ((annotationList enum name { nameList_field _trailingCommaOpt }) as declaration) : % %
 
             1. (Let nameIR be $name(name))
 
@@ -19158,7 +19158,7 @@ relation Decl_ok: p' TC_0 |- declaration : % %
 
           1. (Let (annotationList enum type name { namedExpressionList_field _trailingCommaOpt }) be enumTypeDeclaration)
 
-          2. Group typeDeclaration-derivedTypeDeclaration-enumTypeDeclaration-serializable: (global) TC_0 |- ((annotationList enum type name { namedExpressionList_field _trailingCommaOpt }) as declaration) : % %
+          2. Group enumTypeDeclaration-serializable: (global) TC_0 |- ((annotationList enum type name { namedExpressionList_field _trailingCommaOpt }) as declaration) : % %
 
             1. (Type_ok: (global) TC_0 |- (type as typeOrVoid) : typeIR # tid*{tid <- tid*})
 
@@ -19192,7 +19192,7 @@ relation Decl_ok: p' TC_0 |- declaration : % %
 
       1. (Let (annotationList struct name typeParameterListOpt { typeFieldList }) be (declaration as structTypeDeclaration))
 
-      2. Group typeDeclaration-derivedTypeDeclaration-structTypeDeclaration: (global) TC_0 |- ((annotationList struct name typeParameterListOpt { typeFieldList }) as declaration) : % %
+      2. Group structTypeDeclaration: (global) TC_0 |- ((annotationList struct name typeParameterListOpt { typeFieldList }) as declaration) : % %
 
         1. (Let typeParameter*{typeParameter <- typeParameter*} be $flatten_typeParameterListOpt(typeParameterListOpt))
 
@@ -19226,7 +19226,7 @@ relation Decl_ok: p' TC_0 |- declaration : % %
 
       1. (Let (annotationList header name typeParameterListOpt { typeFieldList }) be (declaration as headerTypeDeclaration))
 
-      2. Group typeDeclaration-derivedTypeDeclaration-headerTypeDeclaration: (global) TC_0 |- ((annotationList header name typeParameterListOpt { typeFieldList }) as declaration) : % %
+      2. Group headerTypeDeclaration: (global) TC_0 |- ((annotationList header name typeParameterListOpt { typeFieldList }) as declaration) : % %
 
         1. (Let typeParameter*{typeParameter <- typeParameter*} be $flatten_typeParameterListOpt(typeParameterListOpt))
 
@@ -19260,7 +19260,7 @@ relation Decl_ok: p' TC_0 |- declaration : % %
 
       1. (Let (annotationList header_union name typeParameterListOpt { typeFieldList }) be (declaration as headerUnionTypeDeclaration))
 
-      2. Group typeDeclaration-derivedTypeDeclaration-headerUnionTypeDeclaration: (global) TC_0 |- ((annotationList header_union name typeParameterListOpt { typeFieldList }) as declaration) : % %
+      2. Group headerUnionTypeDeclaration: (global) TC_0 |- ((annotationList header_union name typeParameterListOpt { typeFieldList }) as declaration) : % %
 
         1. (Let typeParameter*{typeParameter <- typeParameter*} be $flatten_typeParameterListOpt(typeParameterListOpt))
 
@@ -19300,7 +19300,7 @@ relation Decl_ok: p' TC_0 |- declaration : % %
 
           1. (Let (annotationList typedef typedef name ;) be typedefDeclaration)
 
-          2. Group typeDeclaration-typedefDeclaration-typedef: (global) TC_0 |- ((annotationList typedef typedef name ;) as declaration) : % %
+          2. Group typedefDeclaration-typedef: (global) TC_0 |- ((annotationList typedef typedef name ;) as declaration) : % %
 
             1. Case analysis on typedef
 
@@ -19390,7 +19390,7 @@ relation Decl_ok: p' TC_0 |- declaration : % %
 
           1. (Let (annotationList type type name ;) be typedefDeclaration)
 
-          2. Group typeDeclaration-typedefDeclaration-newtype: (global) TC_0 |- ((annotationList type type name ;) as declaration) : % %
+          2. Group typedefDeclaration-newtype: (global) TC_0 |- ((annotationList type type name ;) as declaration) : % %
 
             1. (Type_ok: (global) TC_0 |- (type as typeOrVoid) : typeIR # tid*{tid <- tid*})
 
@@ -19414,7 +19414,7 @@ relation Decl_ok: p' TC_0 |- declaration : % %
 
       1. (Let (annotationList parser name typeParameterListOpt ( parameterList );) be (declaration as parserTypeDeclaration))
 
-      2. Group typeDeclaration-parserTypeDeclaration: (global) TC_0 |- ((annotationList parser name typeParameterListOpt ( parameterList );) as declaration) : % %
+      2. Group parserTypeDeclaration: (global) TC_0 |- ((annotationList parser name typeParameterListOpt ( parameterList );) as declaration) : % %
 
         1. (Let TC_1 be TC_0[block.kind = (parser)])
 
@@ -19448,7 +19448,7 @@ relation Decl_ok: p' TC_0 |- declaration : % %
 
       1. (Let (annotationList control name typeParameterListOpt ( parameterList );) be (declaration as controlTypeDeclaration))
 
-      2. Group typeDeclaration-controlTypeDeclaration: (global) TC_0 |- ((annotationList control name typeParameterListOpt ( parameterList );) as declaration) : % %
+      2. Group controlTypeDeclaration: (global) TC_0 |- ((annotationList control name typeParameterListOpt ( parameterList );) as declaration) : % %
 
         1. (Let TC_1 be TC_0[block.kind = (control)])
 
@@ -19482,7 +19482,7 @@ relation Decl_ok: p' TC_0 |- declaration : % %
 
       1. (Let (annotationList package name typeParameterListOpt ( parameterList );) be (declaration as packageTypeDeclaration))
 
-      2. Group typeDeclaration-packageTypeDeclaration: (global) TC_0 |- ((annotationList package name typeParameterListOpt ( parameterList );) as declaration) : % %
+      2. Group packageTypeDeclaration: (global) TC_0 |- ((annotationList package name typeParameterListOpt ( parameterList );) as declaration) : % %
 
         1. (Let TC_1 be TC_0[block.kind = (package)])
 
@@ -25909,7 +25909,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
       1. (Let (annotationList extern nameIR < typeParameterListIR , typeParameterListIR_inferred >{ methodPrototypeIR*{methodPrototypeIR <- methodPrototypeIR*} }) be (declarationIR as externObjectDeclarationIR))
 
-      2. Group externDeclaration-externObjectDeclaration: (global) IC_0 STO |- ((annotationList extern nameIR < typeParameterListIR , typeParameterListIR_inferred >{ methodPrototypeIR*{} }) as declarationIR) ==> % % %
+      2. Group externObjectDeclarationIR: (global) IC_0 STO |- ((annotationList extern nameIR < typeParameterListIR , typeParameterListIR_inferred >{ methodPrototypeIR*{} }) as declarationIR) ==> % % %
 
         1. (Let (methodPrototypeIR'*{methodPrototypeIR' <- methodPrototypeIR'*}, methodPrototypeIR_method*{methodPrototypeIR_method <- methodPrototypeIR_method*}) be $split_constructors_IR(methodPrototypeIR*{methodPrototypeIR <- methodPrototypeIR*}))
 
@@ -25985,7 +25985,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
           1. (Let (annotationList enum nameIR { nameIR_field*{nameIR_field <- nameIR_field*} }) be enumTypeDeclarationIR)
 
-          2. Group typeDeclarationIR-derivedTypeDeclarationIR-enumTypeDeclarationIR-enum: (global) IC_0 STO |- ((annotationList enum nameIR { nameIR_field*{} }) as declarationIR) ==> % % %
+          2. Group enumTypeDeclarationIR-non-serializable: (global) IC_0 STO |- ((annotationList enum nameIR { nameIR_field*{} }) as declarationIR) ==> % % %
 
             1. (Let nameIR_enum_field be nameIR ++ "." ++ nameIR_field)*{nameIR_enum_field <- nameIR_enum_field*, nameIR_field <- nameIR_field*}
 
@@ -26003,7 +26003,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
           1. (Let (annotationList enum typeIR nameIR { (nameIR_field = typedExpressionIR_field)*{nameIR_field <- nameIR_field*, typedExpressionIR_field <- typedExpressionIR_field*} }) be enumTypeDeclarationIR)
 
-          2. Group typeDeclarationIR-derivedTypeDeclarationIR-enumTypeDeclarationIR-serializableEnum: (global) IC_0 STO_0 |- ((annotationList enum typeIR nameIR { (nameIR_field = typedExpressionIR_field)*{} }) as declarationIR) ==> % % %
+          2. Group enumTypeDeclarationIR-serializable: (global) IC_0 STO_0 |- ((annotationList enum typeIR nameIR { (nameIR_field = typedExpressionIR_field)*{} }) as declarationIR) ==> % % %
 
             1. (Exprs_inst: (global) IC_0 STO' |- typedExpressionIR_field*{typedExpressionIR_field <- typedExpressionIR_field*} ==> STO_1 value_field*{value_field <- value_field*})
 
@@ -26023,7 +26023,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
       1. (Let (annotationList struct nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR*{typeFieldIR <- typeFieldIR*} }) be (declarationIR as structTypeDeclarationIR))
 
-      2. Group typeDeclarationIR-derivedTypeDeclarationIR-structTypeDeclarationIR: (global) IC_0 STO |- ((annotationList struct nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR*{} }) as declarationIR) ==> % % %
+      2. Group structTypeDeclarationIR: (global) IC_0 STO |- ((annotationList struct nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR*{} }) as declarationIR) ==> % % %
 
         1. (Let (annotationList_field typeIR_field nameIR_field ;) be typeFieldIR)*{annotationList_field <- annotationList_field*, nameIR_field <- nameIR_field*, typeFieldIR <- typeFieldIR*, typeIR_field <- typeIR_field*}
 
@@ -26037,7 +26037,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
       1. (Let (annotationList header nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR*{typeFieldIR <- typeFieldIR*} }) be (declarationIR as headerTypeDeclarationIR))
 
-      2. Group typeDeclarationIR-derivedTypeDeclarationIR-headerTypeDeclarationIR: (global) IC_0 STO |- ((annotationList header nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR*{} }) as declarationIR) ==> % % %
+      2. Group headerTypeDeclarationIR: (global) IC_0 STO |- ((annotationList header nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR*{} }) as declarationIR) ==> % % %
 
         1. (Let (annotationList_field typeIR_field nameIR_field ;) be typeFieldIR)*{annotationList_field <- annotationList_field*, nameIR_field <- nameIR_field*, typeFieldIR <- typeFieldIR*, typeIR_field <- typeIR_field*}
 
@@ -26051,7 +26051,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
       1. (Let (annotationList header_union nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR*{typeFieldIR <- typeFieldIR*} }) be (declarationIR as headerUnionTypeDeclarationIR))
 
-      2. Group typeDeclarationIR-derivedTypeDeclarationIR-headerUnionTypeDeclarationIR: (global) IC_0 STO |- ((annotationList header_union nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR*{} }) as declarationIR) ==> % % %
+      2. Group headerUnionTypeDeclarationIR: (global) IC_0 STO |- ((annotationList header_union nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR*{} }) as declarationIR) ==> % % %
 
         1. (Let (annotationList_field typeIR_field nameIR_field ;) be typeFieldIR)*{annotationList_field <- annotationList_field*, nameIR_field <- nameIR_field*, typeFieldIR <- typeFieldIR*, typeIR_field <- typeIR_field*}
 
@@ -26071,7 +26071,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
           1. (Let (annotationList typedef typedefIR nameIR ;) be typedefDeclarationIR)
 
-          2. Group typeDeclarationIR-typedefDeclarationIR-typedef: (global) IC_0 STO |- ((annotationList typedef typedefIR nameIR ;) as declarationIR) ==> % % %
+          2. Group typedefDeclarationIR-typedef: (global) IC_0 STO |- ((annotationList typedef typedefIR nameIR ;) as declarationIR) ==> % % %
 
             1. Case analysis on typedefIR
 
@@ -26133,7 +26133,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
           1. (Let (annotationList type typeIR nameIR ;) be typedefDeclarationIR)
 
-          2. Group typeDeclarationIR-typedefDeclarationIR-newtype: (global) IC_0 STO |- ((annotationList type typeIR nameIR ;) as declarationIR) ==> % % %
+          2. Group typedefDeclarationIR-newtype: (global) IC_0 STO |- ((annotationList type typeIR nameIR ;) as declarationIR) ==> % % %
 
             1. (Let typeIR_newtype be ((type nameIR typeIR) as typeIR))
 
@@ -26145,7 +26145,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
       1. (Let (annotationList parser nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{parameterIR <- parameterIR*} );) be (declarationIR as parserTypeDeclarationIR))
 
-      2. Group typeDeclarationIR-parserTypeDeclarationIR: (global) IC_0 STO |- ((annotationList parser nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{} );) as declarationIR) ==> % % %
+      2. Group parserTypeDeclarationIR: (global) IC_0 STO |- ((annotationList parser nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{} );) as declarationIR) ==> % % %
 
         1. (Let parameterTypeIR be $parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
 
@@ -26161,7 +26161,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
       1. (Let (annotationList control nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{parameterIR <- parameterIR*} );) be (declarationIR as controlTypeDeclarationIR))
 
-      2. Group typeDeclarationIR-controlTypeDeclarationIR: (global) IC_0 STO |- ((annotationList control nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{} );) as declarationIR) ==> % % %
+      2. Group controlTypeDeclarationIR: (global) IC_0 STO |- ((annotationList control nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{} );) as declarationIR) ==> % % %
 
         1. (Let parameterTypeIR be $parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
 
@@ -26177,7 +26177,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
       1. (Let (annotationList package nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{parameterIR <- parameterIR*} );) be (declarationIR as packageTypeDeclarationIR))
 
-      2. Group typeDeclarationIR-packageTypeDeclarationIR: (global) IC_0 STO |- ((annotationList package nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{} );) as declarationIR) ==> % % %
+      2. Group packageTypeDeclarationIR: (global) IC_0 STO |- ((annotationList package nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{} );) as declarationIR) ==> % % %
 
         1. (Let (_annotationList _direction typeIR _nameIR _constantInitializerOptIR) be parameterIR)*{_annotationList <- _annotationList*, _constantInitializerOptIR <- _constantInitializerOptIR*, _direction <- _direction*, _nameIR <- _nameIR*, parameterIR <- parameterIR*, typeIR <- typeIR*}
 

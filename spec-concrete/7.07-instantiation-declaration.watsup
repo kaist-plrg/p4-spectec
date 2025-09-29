@@ -261,9 +261,9 @@ def $split_constructors_IR(methodPrototypeIR_h :: methodPrototypeIR_t*)
   -- if (methodPrototypeIR_t_constructor*, methodPrototypeIR_t_method*)
       = $split_constructors_IR(methodPrototypeIR_t*)
 
-rulegroup Decl_inst/externDeclaration-externObjectDeclaration {
+rulegroup Decl_inst/externObjectDeclarationIR {
 
-  rule Decl_inst/no-constructor:
+  rule Decl_inst/non-constructor:
     GLOBAL IC_0 STO |- annotationList EXTERN nameIR
                       `< typeParameterListIR `, typeParameterListIR_inferred >
                       `{ methodPrototypeIR* }
@@ -283,7 +283,7 @@ rulegroup Decl_inst/externDeclaration-externObjectDeclaration {
         = EXTERN nameIR `< typeParameterListIR > `( eps ) `{ methodPrototypeIR_method* }
     -- if IC_2 = $add_constructor_inst(GLOBAL, IC_1, cid, constructor)
 
-  rule Decl_inst/extern-object-with-constructors:
+  rule Decl_inst/constructor:
     GLOBAL IC_0 STO |- annotationList EXTERN nameIR
                        `< typeParameterListIR `, typeParameterListIR_inferred >
                        `{ methodPrototypeIR* }
@@ -351,7 +351,7 @@ rule Decl_inst/controlDeclarationIR:
 
 ;;;;;; annotationList ENUM nameIR `{ nameListIR }
 
-rule Decl_inst/typeDeclarationIR-derivedTypeDeclarationIR-enumTypeDeclarationIR-enum:
+rule Decl_inst/enumTypeDeclarationIR-non-serializable:
   GLOBAL IC_0 STO |- annotationList ENUM nameIR `{ nameIR_field* }
                  ==> IC_2 STO eps
   ---- ;; bind fields to value environment
@@ -364,7 +364,7 @@ rule Decl_inst/typeDeclarationIR-derivedTypeDeclarationIR-enumTypeDeclarationIR-
 
 ;;;;;; annotationList ENUM typeIR nameIR `{ namedExpressionListIR }
 
-rule Decl_inst/typeDeclarationIR-derivedTypeDeclarationIR-enumTypeDeclarationIR-serializableEnum:
+rule Decl_inst/enumTypeDeclarationIR-serializable:
   GLOBAL IC_0 STO_0 |- annotationList ENUM typeIR nameIR `{ (nameIR_field `= typedExpressionIR_field)* }
                    ==> IC_2 STO_1 eps
   ---- ;; instantiate fields
@@ -386,7 +386,7 @@ rule Decl_inst/typeDeclarationIR-derivedTypeDeclarationIR-enumTypeDeclarationIR-
 ;;;;;     `< typeParameterListIR `, typeParameterListIR >
 ;;;;;     `{ typeFieldListIR }
 
-rule Decl_inst/typeDeclarationIR-derivedTypeDeclarationIR-structTypeDeclarationIR:
+rule Decl_inst/structTypeDeclarationIR:
   GLOBAL IC_0 STO |- annotationList STRUCT nameIR
                       `< typeParameterListIR `, typeParameterListIR_inferred >
                       `{ typeFieldIR* }
@@ -404,7 +404,7 @@ rule Decl_inst/typeDeclarationIR-derivedTypeDeclarationIR-structTypeDeclarationI
 ;;;;;     `< typeParameterListIR `, typeParameterListIR >
 ;;;;;     `{ typeFieldListIR }
 
-rule Decl_inst/typeDeclarationIR-derivedTypeDeclarationIR-headerTypeDeclarationIR:
+rule Decl_inst/headerTypeDeclarationIR:
   GLOBAL IC_0 STO |- annotationList HEADER nameIR
                        `< typeParameterListIR `, typeParameterListIR_inferred >
                        `{ typeFieldIR* }
@@ -422,7 +422,7 @@ rule Decl_inst/typeDeclarationIR-derivedTypeDeclarationIR-headerTypeDeclarationI
 ;;;;;     `< typeParameterListIR `, typeParameterListIR >
 ;;;;;     `{ typeFieldListIR }
 
-rule Decl_inst/typeDeclarationIR-derivedTypeDeclarationIR-headerUnionTypeDeclarationIR:
+rule Decl_inst/headerUnionTypeDeclarationIR:
   GLOBAL IC_0 STO |- annotationList HEADER_UNION nameIR
                        `< typeParameterListIR `, typeParameterListIR_inferred >
                        `{ typeFieldIR* }
@@ -443,7 +443,7 @@ rule Decl_inst/typeDeclarationIR-derivedTypeDeclarationIR-headerUnionTypeDeclara
 ;;;;;; typeIR
 ;;;;;; derivedTypeDeclarationIR
 
-rulegroup Decl_inst/typeDeclarationIR-typedefDeclarationIR-typedef {
+rulegroup Decl_inst/typedefDeclarationIR-typedef {
 
   rule Decl_inst/typeIR:
     GLOBAL IC_0 STO |- annotationList TYPEDEF typeIR nameIR `;
@@ -487,7 +487,7 @@ rulegroup Decl_inst/typeDeclarationIR-typedefDeclarationIR-typedef {
 
 ;;;;; annotationList TYPE typeIR nameIR `;
 
-rule Decl_inst/typeDeclarationIR-typedefDeclarationIR-newtype:
+rule Decl_inst/typedefDeclarationIR-newtype:
   GLOBAL IC_0 STO |- annotationList TYPE typeIR nameIR `;
                  ==> IC_1 STO eps
   ---- ;; bind newtype to typedef environment
@@ -500,7 +500,7 @@ rule Decl_inst/typeDeclarationIR-typedefDeclarationIR-newtype:
 ;;;;     `< typeParameterListIR `, typeParameterListIR >
 ;;;;     `( parameterListIR ) `;
 
-rule Decl_inst/typeDeclarationIR-parserTypeDeclarationIR:
+rule Decl_inst/parserTypeDeclarationIR:
   GLOBAL IC_0 STO |- annotationList PARSER nameIR
                        `< typeParameterListIR `, typeParameterListIR_inferred >
                        `( parameterIR* ) `;
@@ -518,7 +518,7 @@ rule Decl_inst/typeDeclarationIR-parserTypeDeclarationIR:
 ;;;;     `< typeParameterListIR `, typeParameterListIR >
 ;;;;     `( parameterListIR ) `;
 
-rule Decl_inst/typeDeclarationIR-controlTypeDeclarationIR:
+rule Decl_inst/controlTypeDeclarationIR:
   GLOBAL IC_0 STO |- annotationList CONTROL nameIR
                        `< typeParameterListIR `, typeParameterListIR_inferred >
                        `( parameterIR* ) `;
@@ -536,7 +536,7 @@ rule Decl_inst/typeDeclarationIR-controlTypeDeclarationIR:
 ;;;;     `< typeParameterListIR `, typeParameterListIR >
 ;;;;     `( parameterListIR ) `;
 
-rule Decl_inst/typeDeclarationIR-packageTypeDeclarationIR:
+rule Decl_inst/packageTypeDeclarationIR:
   GLOBAL IC_0 STO |- annotationList PACKAGE nameIR
                       `< typeParameterListIR `, typeParameterListIR_inferred >
                       `( parameterIR* ) `;

@@ -1,4 +1,4 @@
-[#sec-type-declaration]
+[#sec-typeDeclaration]
 === Type declaration
 
 ${syntax: derivedTypeDeclaration
@@ -8,65 +8,514 @@ ${syntax: derivedTypeDeclaration
           typedefDeclarationIR
           typeDeclarationIR}
 
-[#sec-enum-type-declaration]
+[#sec-enumTypeDeclaration]
 ==== Enum type declaration
+
+An enumeration type is defined using the following syntax:
 
 ${syntax: enumTypeDeclaration
           enumTypeDeclarationIR}
 
-[#sec-simple-enum-type-declaration]
-===== Enum type declaration
+[#sec-enumTypeDeclaration-non-serializable]
+===== Enum type declaration without an underlying type
 
-[#sec-serializable-enum-type-declaration]
-===== Serializable enum type declaration
+For example, the declaration
+
+[source,p4]
+----
+enum Suits { Clubs, Diamonds, Hearths, Spades }
+----
+
+introduces a new enumeration type, which contains four elements---e.g.,
+`Suits.Clubs`. An `enum` declaration introduces a new identifier in the current
+scope for naming the created type along with its distinct elements. The
+underlying representation of the `Suits` enum is not specified, so their "size"
+in bits is not specified (it is target-specific).
+
+[[sem-type-check-enumTypeDeclaration-non-serializable]]
+====== Type checking
+
+${rulegroup: Decl_ok/enumTypeDeclaration-non-serializable}
+${ruleprose: Decl_ok/enumTypeDeclaration-non-serializable}
+
+[[sem-compile-time-enumTypeDeclaration-non-serializable]]
+====== Compile-time evaluation
+
+${rulegroup: Decl_inst/enumTypeDeclarationIR-non-serializable}
+${ruleprose: Decl_inst/enumTypeDeclarationIR-non-serializable}
+
+[#sec-enumTypeDeclaration-serializable]
+===== Enum type declaration with an underlying type
+
+It is also possible to specify an `enum` with an underlying representation.
+These are sometimes called serializable ``enum``s, because headers are allowed
+to have fields with such `enum` types. This requires the programmer provide
+both the fixed-width unsigned (or signed) integer type and an associated
+integer value for each symbolic entry in the enumeration. The symbol `typeRef`
+in the grammar above must be one of the following types:
+
+* an unsigned integer, i.e. `bit<W>` for some local compile-time known value `W`.
+* a signed integer, i.e. `int<W>` for some local compile-time known value `W`.
+* a type name declared via `typedef`, where the base type of that type is either
+one of the types listed above, or another `typedef` name that meets these conditions.
+For example, the declaration
+
+[source,p4]
+----
+enum bit<16> EtherType {
+  VLAN      = 0x8100,
+  QINQ      = 0x9100,
+  MPLS      = 0x8847,
+  IPV4      = 0x0800,
+  IPV6      = 0x86dd
+}
+----
+
+introduces a new enumeration type, which contains five elements---e.g.,
+`EtherType.IPV4`.  This `enum` declaration specifies the fixed-width unsigned
+integer representation for each entry in the `enum` and provides an underlying
+type: `bit<16>`. This kind of `enum` declaration can be thought of as declaring
+a new `bit<16>` type, where variables or fields of this type are expected to be
+unsigned 16-bit integer values, and the mapping of symbolic to numeric values
+defined by the `enum` are also defined as a part of this declaration.  In this
+way, an `enum` with an underlying type can be thought of as being a type
+derived from the underlying type carrying equality, assignment, and casts
+to/from the underlying type.
+
+Compiler implementations are expected to raise an error if the fixed-width
+integer representation for an enumeration entry falls outside the
+representation range of the underlying type.
+
+For example, the declaration
+
+[source,p4]
+----
+enum bit<8> FailingExample {
+  first           = 1,
+  second          = 2,
+  third           = 3,
+  unrepresentable = 300
+}
+----
+
+would raise an error because `300`, the value associated with
+`FailingExample.unrepresentable` cannot be represented as a `bit<8>` value.
+
+The `initializer` expression must be a compile-time known value.
+
+Annotations, represented by the non-terminal `optAnnotations`, are described in
+<<sec-annotations>>.
+
+Operations on `enum` values are described in <<sec-enum-exprs>>.
+
+[[sem-type-check-enumTypeDeclaration-serializable]]
+====== Type checking
+
+${rulegroup: Enum_serializable_field_ok}
+${ruleprose: Enum_serializable_field_ok}
+
+${rulegroup: Decl_ok/enumTypeDeclaration-serializable}
+${ruleprose: Decl_ok/enumTypeDeclaration-serializable}
+
+[[sem-compile-time-enumTypeDeclaration-serializable]]
+====== Compile-time evaluation
+
+${rulegroup: Decl_inst/enumTypeDeclarationIR-serializable}
+${ruleprose: Decl_inst/enumTypeDeclarationIR-serializable}
 
 [#sec-struct-type-declaration]
 ==== Struct type declaration
+
+P4 `struct` types are defined with the following syntax:
 
 ${syntax: typeField
           structTypeDeclaration
           typeFieldIR
           structTypeDeclarationIR}
 
-[#sec-header-type-declaration]
+This declaration introduces a new type with the specified name in the current
+scope. Field names have to be distinct. An empty struct (with no fields) is
+legal. For example, the structure `Parsed_headers` below contains the headers
+recognized by a simple parser:
+
+[source,p4]
+----
+header Tcp_h { /* fields omitted */ }
+header Udp_h { /* fields omitted */ }
+struct Parsed_headers {
+    Ethernet_h ethernet;
+    Ip_h       ip;
+    Tcp_h      tcp;
+    Udp_h      udp;
+}
+----
+
+[[sem-type-check-structTypeDeclaration]]
+===== Type checking
+
+${rulegroup: Decl_ok/structTypeDeclaration}
+${ruleprose: Decl_ok/structTypeDeclaration}
+
+[[sem-compile-time-eval-structTypeDeclaration]]
+===== Compile-time evaluation
+
+${rulegroup: Decl_inst/structTypeDeclarationIR}
+${ruleprose: Decl_inst/structTypeDeclarationIR}
+
+[#sec-headerTypeDeclaration]
 ==== Header type declaration
+
+The declaration of a `header` type is given by the following syntax:
 
 ${syntax: typeField
           headerTypeDeclaration
           typeFieldIR
           headerTypeDeclarationIR}
 
-[#sec-header-union-type-declaration]
+where each `typeRef` is restricted to a bit-string type (fixed or variable), a
+fixed-width signed integer type, a boolean type, or a struct that itself
+contains other struct fields, nested arbitrarily, as long as all of the "leaf"
+types are `bit<W>`, `int<W>`, a serializable `enum`, or a `bool`. If a `bool`
+is used inside a P4 header, all implementations encode the `bool` as a one bit
+long field, with the value `1` representing `true` and `0` representing
+`false`. Field names have to be distinct.
+
+A header declaration introduces a new identifier in the current scope; the type
+can be referred to using this identifier. A header is similar to a `struct` in
+C, containing all the specified fields. However, in addition, a header also
+contains a hidden Boolean "validity" field. When the "validity" bit is `true`
+we say that the "header is valid". When a local variable with a header type is
+declared, its "validity" bit is automatically set to `false`. The "validity"
+bit can be manipulated by using the header methods `isValid()`, `setValid()`,
+and `setInvalid()`, as described in <<sec-ops-on-hdrs>>.
+
+Note, nesting of headers is not supported. One reason is that it leads to
+complications in defining the behavior of arbitrary sequences of `setValid`,
+`setInvalid`, and `emit` operations. Consider an example where header `h1`
+contains header `h2` as a member, both currently valid. A program executes
+`h2.setInvalid()` followed by `packet.emit(h1)`. Should all fields of `h1` be
+emitted, but skipping `h2`? Similarly, should `h1.setInvalid()` invalidate all
+headers contained within `h1`, regardless of how deeply they are nested?
+
+Header types may be empty:
+
+[source,p4]
+----
+header Empty_h { }
+----
+
+Note that an empty header still contains a validity bit.
+
+When a struct is inside of a header, the order of the fields for the purposes
+of `extract` and `emit` calls is the order of the fields as defined in the
+source code. An example of a header including a struct is included below.
+
+[source,p4]
+----
+struct ipv6_addr {
+    bit<32> Addr0;
+    bit<32> Addr1;
+    bit<32> Addr2;
+    bit<32> Addr3;
+}
+
+header ipv6_t {
+    bit<4>    version;
+    bit<8>    trafficClass;
+    bit<20>   flowLabel;
+    bit<16>   payloadLen;
+    bit<8>    nextHdr;
+    bit<8>    hopLimit;
+    ipv6_addr src;
+    ipv6_addr dst;
+}
+----
+
+Headers that do not contain any `varbit` field are "fixed size." Headers
+containing `varbit` fields have "variable size." The size (in bits) of a
+fixed-size header is simply the sum of the sizes of all component fields
+(without counting the validity bit). There is no padding or alignment of the
+header fields. Targets may impose additional constraints on header
+types---e.g., restricting headers to sizes that are an integer number of bytes.
+
+For example, the following declaration describes a typical Ethernet header:
+
+[source,p4]
+----
+header Ethernet_h {
+   bit<48> dstAddr;
+   bit<48> srcAddr;
+   bit<16> etherType;
+}
+----
+
+The following variable declaration uses the newly introduced type `Ethernet_h`:
+
+[source,p4]
+----
+Ethernet_h ethernetHeader;
+----
+
+P4's parser language provides an `extract` method that can be used to "fill in"
+the fields of a header from a network packet, as described in
+<<sec-packet-data-extraction>>. The successful execution of an `extract`
+operation also sets the validity bit of the extracted header to `true`.
+
+Here is an example of an IPv4 header with variable-sized options:
+
+[source,p4]
+----
+header IPv4_h {
+   bit<4>       version;
+   bit<4>       ihl;
+   bit<8>       diffserv;
+   bit<16>      totalLen;
+   bit<16>      identification;
+   bit<3>       flags;
+   bit<13>      fragOffset;
+   bit<8>       ttl;
+   bit<8>       protocol;
+   bit<16>      hdrChecksum;
+   bit<32>      srcAddr;
+   bit<32>      dstAddr;
+   varbit<320>  options;
+}
+----
+
+As demonstrated by a code example in <<sec-packet-extract-two>>, another way to
+support headers that contain variable-length fields is to define two headers --
+one fixed length, one containing a `varbit` field -- and extract each part in
+separate parsing steps.
+
+Notice that the names `isValid`, `setValid`, `minSizeInBits`, etc. are all
+valid header field names.
+
+[[sem-type-check-headerTypeDeclaration]]
+===== Type checking
+
+${rulegroup: Decl_ok/headerTypeDeclaration}
+${ruleprose: Decl_ok/headerTypeDeclaration}
+
+[[sem-compile-time-eval-headerTypeDeclaration]]
+===== Compile-time evaluation
+
+${rulegroup: Decl_inst/headerTypeDeclarationIR}
+${ruleprose: Decl_inst/headerTypeDeclarationIR}
+
+[#sec-headerUnionTypeDeclaration]
 ==== Header union type declaration
+
+A header union represents an alternative containing at most one of several
+different headers. Header unions can be used to represent "options" in
+protocols like TCP and IP. They also provide hints to P4 compilers that only
+one alternative will be present, allowing them to conserve storage resources.
+
+A header union is defined as:
 
 ${syntax: typeField
           headerUnionTypeDeclaration
           typeFieldIR
           headerUnionTypeDeclarationIR}
 
-[#sec-typdef-type-declaration]
+This declaration introduces a new type with the specified name in the current
+scope. Each element of the list of fields used to declare a header union must
+be of header type. An empty list of fields is legal. Field names have to be
+distinct.
+
+As an example, the type `Ip_h` below represents the union of an IPv4 and IPv6
+headers:
+
+A header union is not considered a type with fixed length.
+
+Operation on header unions are described in <<sec-expr-hu>>.
+
+[[sem-type-check-headerUnionTypeDeclaration]]
+===== Type checking
+
+${rulegroup: Decl_ok/headerUnionTypeDeclaration}
+${ruleprose: Decl_ok/headerUnionTypeDeclaration}
+
+[[sem-compile-time-eval-headerUnionTypeDeclaration]]
+===== Compile-time evaluation
+
+${rulegroup: Decl_inst/headerUnionTypeDeclarationIR}
+${ruleprose: Decl_inst/headerUnionTypeDeclarationIR}
+
+[#sec-typdefTypeDeclaration]
 ==== Typedef declaration
 
 ${syntax: typedef
-          typedefIR}
+          typedefDeclaration
+          typedefIR
+          typedefDeclarationIR}
 
-[#sec-newtype-type-declaration]
-==== New type declaration
+===== `typedef` declaration
+
+A `typedef` declaration can be used to give an alternative name to a type.
+
+[source,p4]
+----
+typedef bit<32> u32;
+typedef struct Point { int<32> x; int<32> y; } Pt;
+typedef Empty_h[32] HeaderStack;
+----
+
+The two types are treated as synonyms, and all operations that can be executed
+using the original type can be also executed using the newly created type.
+
+If `typedef` is used with a generic type the type must be specialized with the
+suitable number of type arguments:
+
+[source,p4]
+----
+struct S<T> {
+   T field;
+}
+
+// typedef S X;  -- illegal: S does not have type arguments
+typedef S<bit<32>> X;  // -- legal
+----
+
+[[sem-type-check-typedefDeclaration-typedef]]
+====== Type checking
+
+${rulegroup: Decl_ok/typedefDeclaration-typedef}
+${ruleprose: Decl_ok/typedefDeclaration-typedef}
+
+[[sem-compile-time-eval-typedefDeclaration-typedef]]
+====== Compile-time evaluation
+
+${rulegroup: Decl_inst/typedefDeclarationIR-typedef}
+${ruleprose: Decl_inst/typedefDeclarationIR-typedef}
+
+===== New type declaration
+
+Similarly to `typedef`, the keyword `type` can be used to introduce a new type.
+
+[source,p4]
+----
+type bit<32> U32;
+U32 x = (U32)0;
+----
+
+While similar to `typedef`, the `type` keyword introduces a new type which is
+not a synonym with the original type: values of the original type and the newly
+introduced type cannot be mixed in expressions.
+
+Currently the types that can be created by the `type` keyword are restricted to
+one of: `bit<>`, `int<>`, `bool`, or types defined using `type` from such
+types.
+
+One important use of such types is in describing P4 values that need to be
+exchanged with the control plane through communication channels (e.g., through
+the control-plane API or through network packets sent to the control plane).
+For example, a P4 architecture may define a type for the switch ports:
+
+[source,p4]
+----
+type bit<9> PortId_t;
+----
+
+This declaration will prevent `PortId_t` values from being used in arithmetic
+expressions without casts.  Moreover, this declaration may enable special
+manipulation or such values by software that lies outside of the datapath
+(e.g., a target-specific toolchain could include software that automatically
+converts values of type `PortId_t` to a different representation when exchanged
+with the control-plane software).
+
+[[sem-type-check-typedefDeclaration-newtype]]
+====== Type checking
+
+${rulegroup: Decl_ok/typedefDeclaration-newtype}
+${ruleprose: Decl_ok/typedefDeclaration-newtype}
+
+[[sem-compile-time-eval-typedefDeclaration-newtype]]
+====== Compile-time evaluation
+
+${rulegroup: Decl_inst/typedefDeclarationIR-newtype}
+${ruleprose: Decl_inst/typedefDeclarationIR-newtype}
 
 [#sec-parser-type-declaration]
 ==== Parser type declaration
 
+A parser type declaration describes the signature of a parser. A parser
+should have at least one argument of type `packet_in`, representing the
+received packet that is processed.
+
 ${syntax: parserTypeDeclaration
           parserTypeDeclarationIR}
 
-[#sec-control-type-declaration]
+For example, the following is a type declaration of a parser type named `P`
+that is parameterized on a type variable `H`. That parser receives as input a
+`packet_in` value `b` and produces two values:
+
+* A value with a user-defined type `H`
+* A value with a predefined type `Counters`
+
+[source,p4]
+----
+struct Counters { /* Fields omitted */ }
+parser P<H>(packet_in b,
+             out H packetHeaders,
+             out Counters counters);
+----
+
+[[sem-type-check-parserTypeDeclaration]]
+===== Type checking
+
+${rulegroup: Decl_ok/parserTypeDeclaration}
+${ruleprose: Decl_ok/parserTypeDeclaration}
+
+[[sem-compile-time-eval-parserTypeDeclaration]]
+===== Compile-time evaluation
+
+${rulegroup: Decl_inst/parserTypeDeclarationIR}
+${ruleprose: Decl_inst/parserTypeDeclarationIR}
+
+[#sec-controlTypeDeclaration]
 ==== Control type declaration
+
+A control type declaration describes the signature of a control block.
 
 ${syntax: controlTypeDeclaration
           controlTypeDeclarationIR}
 
-[#sec-package-type-declaration]
+Control type declarations are similar to parser type declarations.
+
+[[sem-type-check-controlTypeDeclaration]]
+===== Type checking
+
+${rulegroup: Decl_ok/controlTypeDeclaration}
+${ruleprose: Decl_ok/controlTypeDeclaration}
+
+[[sem-compile-time-eval-controlTypeDeclaration]]
+===== Compile-time evaluation
+
+${rulegroup: Decl_inst/controlTypeDeclarationIR}
+${ruleprose: Decl_inst/controlTypeDeclarationIR}
+
+[#sec-packageTypeDeclaration]
 ==== Package type declaration
+
+A package type describes the signature of a package.
 
 ${syntax: packageTypeDeclaration
           packageTypeDeclarationIR}
+
+All parameters of a package are evaluated at compilation time, and in
+consequence they must all be directionless (they cannot be `in`, `out`, or
+`inout`). Otherwise package types are very similar to parser type
+declarations. Packages can only be instantiated; there are no runtime
+behaviors associated with them.
+
+[[sem-type-check-packageTypeDeclaration]]
+===== Type checking
+
+${rulegroup: Decl_ok/packageTypeDeclaration}
+${ruleprose: Decl_ok/packageTypeDeclaration}
+
+[[sem-compile-time-eval-packageTypeDeclaration]]
+===== Compile-time evaluation
+
+${rulegroup: Decl_inst/packageTypeDeclarationIR}
+${ruleprose: Decl_inst/packageTypeDeclarationIR}
