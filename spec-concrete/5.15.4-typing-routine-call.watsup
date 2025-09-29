@@ -8,37 +8,43 @@
 ;;; syntax referenceExpression
 
 ;;;; prefixedNonTypeName
-
-rule RoutineTarget_ok/prefixedNonTypeName:
-  p TC |- prefixedNonTypeName : prefixedNameIR
-  -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
-  ---- ;; call to "verify" is only allowed in parsers
-  -- if ((prefixedNameIR = `` "verify") \/ (prefixedNameIR = `. "verify"))
-        => ((p = BLOCK /\ $is_parser_blockKind(TC.BLOCK.KIND))
-             \/ (p = LOCAL /\ $is_parser_state_localKind(TC.LOCAL.KIND)))
-
 ;;;; THIS
 
-rule RoutineTarget_ok/this:
-  p TC |- THIS : (`` "this")
+rulegroup RoutineTarget_ok/referenceExpression {
+
+  rule RoutineTarget_ok/prefixedNonTypeName:
+    p TC |- prefixedNonTypeName : prefixedNameIR
+    -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
+    ---- ;; call to "verify" is only allowed in parsers
+    -- if ((prefixedNameIR = `` "verify") \/ (prefixedNameIR = `. "verify"))
+          => ((p = BLOCK /\ $is_parser_blockKind(TC.BLOCK.KIND))
+               \/ (p = LOCAL /\ $is_parser_state_localKind(TC.LOCAL.KIND))) 
+
+  rule RoutineTarget_ok/this:
+    p TC |- THIS : (`` "this")
+
+}
 
 ;;; memberAccessExpression
 ;;; syntax memberAccessExpression = memberAccessBase `. member
 ;;;; syntax memberAccessBase
 
 ;;;;; prefixedTypeName
-
-rule RoutineTarget_ok/memberAccessExpression-prefixedTypeName:
-  p TC |- prefixedTypeName `. member : TYPE prefixedNameIR `. nameIR
-  -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
-  -- if nameIR = $name(member)
-
 ;;;;; expression
 
-rule RoutineTarget_ok/memberAccessExpression-expression:
-  p TC |- expression_base `. member : typedExpressionIR_base `. nameIR
-  -- if nameIR = $name(member)
-  -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
+rulegroup RoutineTarget_ok/memberAccessExpression {
+
+  rule RoutineTarget_ok/memberAccessExpression-prefixedTypeName:
+    p TC |- prefixedTypeName `. member : TYPE prefixedNameIR `. nameIR
+    -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
+    -- if nameIR = $name(member)
+
+  rule RoutineTarget_ok/memberAccessExpression-expression:
+    p TC |- expression_base `. member : typedExpressionIR_base `. nameIR
+    -- if nameIR = $name(member)
+    -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
+
+}
 
 ;;;;; syntax parenthesizedExpression = `( expression )
 

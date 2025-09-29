@@ -1,4 +1,4 @@
-[#sec-block-statement]
+[#sec-blockStatement]
 === Block statements
 
 ${syntax: blockElementStatement
@@ -6,17 +6,41 @@ ${syntax: blockElementStatement
           blockElementStatementIR
           blockStatementIR}
 
-[#sec-constant-declaration-block-element]
-==== Constant declaration statements
+A block statement is denoted by curly braces. It contains a sequence
+of statements and declarations, which are executed sequentially. The
+declarations (e.g., variables and constants) within a block statement
+are only visible within the block.
 
-${syntax: constantDeclaration
-          constantDeclarationIR}
+[[sem-type-check-blockElementStmt]]
+==== Type checking
 
-[#sec-variable-declaration-block-element]
-==== Variable declaration statements
+${rulegroup: Stmt_ok/blockStatement}
+${ruleprose: Stmt_ok/blockStatement}
 
-${syntax: variableDeclaration
-          variableDeclarationIR}
+${relation: BlockElementStmt_ok}
 
-[#sec-statement-block-element]
-==== Block element statements
+${rulegroup: BlockElementStmt_ok/constantDeclaration}
+${ruleprose: BlockElementStmt_ok/constantDeclaration}
+
+${rulegroup: BlockElementStmt_ok/variableDeclaration}
+${ruleprose: BlockElementStmt_ok/variableDeclaration}
+
+${rulegroup: BlockElementStmt_ok/statement}
+${ruleprose: BlockElementStmt_ok/statement}
+
+[[sem-compile-time-eval-blockElementStmt]]
+==== Compile-time evaluation
+
+${rulegroup: Stmt_inst/blockStatementIR}
+${ruleprose: Stmt_inst/blockStatementIR}
+
+${relation: BlockElementStmt_inst}
+
+${rulegroup: BlockElementStmt_inst/constantDeclarationIR}
+${ruleprose: BlockElementStmt_inst/constantDeclarationIR}
+
+${rulegroup: BlockElementStmt_inst/variableDeclarationIR}
+${ruleprose: BlockElementStmt_inst/variableDeclarationIR}
+
+${rulegroup: BlockElementStmt_inst/statementIR}
+${ruleprose: BlockElementStmt_inst/statementIR}

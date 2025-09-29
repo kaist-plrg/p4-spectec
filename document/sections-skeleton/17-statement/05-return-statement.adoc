@@ -1,5 +1,27 @@
-[#sec-return-statement]
+[#sec-returnStatement]
 === Return statements
 
 ${syntax: returnStatement
           returnStatementIR}
+
+The `return` statement immediately terminates the execution of the
+`action`, `function` or `control` containing it. `return` statements
+are not allowed within parsers.  `return` statements followed by an
+expression are only allowed within functions that return values; in
+this case the type of the expression must match the return type of the
+function.  Any copy-out behavior due to direction `out` or `inout`
+parameters of the enclosing `action`, `function`, or `control` are
+still performed after the execution of the `return` statement.  See
+<<sec-calling-convention>> for details on copy-out behavior.
+
+[[sem-type-check-returnStatement]]
+==== Type checking
+
+${rulegroup: Stmt_ok/returnStatement}
+${ruleprose: Stmt_ok/returnStatement}
+
+[[sem-compile-time-eval-returnStatement]]
+==== Compile-time evaluation
+
+${rulegroup: Stmt_inst/returnStatementIR}
+${ruleprose: Stmt_inst/returnStatementIR}
