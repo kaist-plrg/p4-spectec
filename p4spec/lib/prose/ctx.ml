@@ -4,6 +4,7 @@ open Runtime_static.Envs
 module PEnv = Penv
 
 type mode = Prose | Code
+type cond_style = If | ElseIf | Check
 
 type t = {
   (* prose hints *)
@@ -17,7 +18,7 @@ type t = {
   (* indent level *)
   level : int;
   (* only one if statement *)
-  as_assert : bool;
+  cond_style : cond_style option;
   (* relation signature for groups *)
   signature : (Mixop.t * int list) option;
 }
@@ -31,20 +32,19 @@ let create ?(penv = PEnv.empty) ?(ienv = IEnv.empty) () : t =
     neg = false;
     mode = Prose;
     level = 0;
-    as_assert = false;
+    cond_style = None;
     signature = None;
   }
 
 let init spec_sl : t =
   Collect.collect_spec spec_sl |> fun (penv, ienv) -> create ~penv ~ienv ()
 
-let with_level ctx level = { ctx with level; as_assert = false }
 let with_signature ctx signature = { ctx with signature }
-let as_assert ctx = { ctx with as_assert = true }
-let clear_assert ctx = { ctx with as_assert = false }
+let as_cond cond_style ctx = { ctx with cond_style = Some cond_style }
+let clear_cond ctx = { ctx with cond_style = None }
 let in_code ctx = { ctx with mode = Code }
 let in_prose ctx = { ctx with mode = Prose }
-let increment_level ctx = { ctx with level = ctx.level + 1 }
+let increment_level ctx = { ctx with level = ctx.level + 1; cond_style = None }
 
 let bullet ctx : string (* = String.make (ctx.level + 1) '.' ^ " " *) =
   Format.asprintf "%s%s "

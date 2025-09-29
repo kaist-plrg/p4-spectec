@@ -41,6 +41,13 @@ let split_iterexps exps_out iterexps =
 (** Printing as code **)
 let as_code printer ctx a = printer (ctx |> in_code) a |> render_mono ctx
 
+let prose_of_cond ctx =
+  match ctx.cond_style with
+  | Some If -> "If"
+  | Some ElseIf -> "Else if"
+  | Some Check -> "Check that"
+  | None -> ""
+
 let code_of_iterexp (iter, _) = string_of_iter iter
 
 let code_of_iterexps iterexps =
@@ -135,7 +142,7 @@ let rec prose_of_exp ctx exp =
       ^ "}"
   | Il.Ast.OptE (Some exp) -> "?(" ^ prose_of_exp ctx exp ^ ")"
   | Il.Ast.OptE None -> "?()"
-  | Il.Ast.ListE exps -> 
+  | Il.Ast.ListE exps ->
     "[" ^ prose_of_exps (ctx |> in_code) exps ^ "]" |> render_mono ctx
   | Il.Ast.ConsE (exp_h, exp_t) ->
       prose_of_exp (ctx |> in_code) exp_h ^ " :: " ^ prose_of_exp (ctx |> in_code) exp_t
@@ -254,12 +261,28 @@ and prose_of_args ctx args =
 
 and prose_of_case ctx exp case =
   let guard, instrs = case in
-  F.asprintf "%sCase %s\n%s" (bullet ctx)
-    (prose_of_guard ctx exp guard)
-    (prose_of_instrs (ctx |> increment_level) instrs)
+  match ctx.cond_style with
+  | Some Check ->
+      F.asprintf "%sCheck that %s\n%s" (bullet ctx)
+        (prose_of_guard ctx exp guard)
+        (prose_of_instrs (ctx |> clear_cond) instrs)
+  | Some _ ->
+    F.asprintf "%s%s %s\n%s" (bullet ctx)
+      (prose_of_cond ctx)
+      (prose_of_guard ctx exp guard)
+      (prose_of_instrs (ctx |> increment_level) instrs)
+  | _ -> failwith "no condition style for case"
 
 and prose_of_cases ctx exp cases =
-  cases |> List.map (prose_of_case ctx exp) |> String.concat "\n\n"
+  let l = List.length cases in
+  if l = 1 then prose_of_case (ctx |> as_cond Check) exp (List.hd cases)
+  else
+    cases |> List.mapi (fun i case ->
+      if i = 0 then
+        prose_of_case (ctx |> as_cond If) exp case
+      else
+        prose_of_case (ctx |> as_cond ElseIf) exp case)
+    |> String.concat "\n\n"
 
 and prose_of_guard ctx exp_case guard =
   match guard with
@@ -323,11 +346,11 @@ and prose_of_in_iterexps ctx sep iterexps =
 and prose_of_instr (ctx : Ctx.t) instr =
   match instr.it with
   | IfI (exp_cond, iterexps, instrs_then, _) ->
-      if ctx.as_assert then
+      if ctx.cond_style = Some Check then
         F.asprintf "%sCheck that %s%s\n%s" (bullet ctx)
           (prose_of_exp ctx exp_cond)
           (prose_of_in_iterexps ctx ", " iterexps)
-          (prose_of_instrs (ctx |> clear_assert) instrs_then)
+          (prose_of_instrs (ctx |> clear_cond) instrs_then)
       else
         F.asprintf "%sIf %s%s\n%s" (bullet ctx)
           (prose_of_exp ctx exp_cond)
@@ -350,7 +373,7 @@ and prose_of_instr (ctx : Ctx.t) instr =
       in
       match holdcase with
       | BothH (instrs_hold, instrs_nothold) ->
-          F.asprintf "%sIf %s, then\n%s\n%sElse,\n\n%s" (bullet ctx)
+          F.asprintf "%sIf %s, then\n%s\n%sOtherwise\n\n%s" (bullet ctx)
             prosed_relation
             (prose_of_instrs (ctx |> increment_level) instrs_hold)
             (bullet ctx)
@@ -362,9 +385,7 @@ and prose_of_instr (ctx : Ctx.t) instr =
           F.asprintf "%sIf %s does not hold, then\n%s" (bullet ctx)
             prosed_relation
             (prose_of_instrs (ctx |> increment_level) instrs_nothold))
-  | CaseI (exp, cases, _) ->
-      F.asprintf "%sCase analysis on %s\n%s" (bullet ctx) (code_of_exp ctx exp)
-        (prose_of_cases (ctx |> increment_level) exp cases)
+  | CaseI (exp, cases, _) -> prose_of_cases ctx exp cases
   | OtherwiseI instr ->
       F.asprintf "%sOtherwise\n%s" (bullet ctx)
         (prose_of_instr (ctx |> increment_level) instr)
@@ -434,8 +455,14 @@ and prose_of_instrs ctx instrs =
   in
   (* When if is unique without else, render as assertion *)
   if if_instrs = 1 then
-    instrs |> List.map (prose_of_instr (ctx |> as_assert)) |> String.concat "\n"
-  else instrs |> List.map (prose_of_instr ctx) |> String.concat "\n"
+    instrs |> List.map (prose_of_instr (ctx |> as_cond Check)) |> String.concat "\n"
+  else
+    instrs |> List.mapi (fun i instr ->
+      if i = 0 then
+        prose_of_instr (ctx |> as_cond If) instr
+      else
+        prose_of_instr (ctx |> as_cond ElseIf) instr)
+    |> String.concat "\n"
 
 (* Relations *)
 
