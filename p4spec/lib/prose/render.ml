@@ -1,4 +1,5 @@
 open Sl.Ast
+open Xl
 open Sl.Print
 open Util.Source
 open Ctx
@@ -45,12 +46,24 @@ let code_of_iterexp (iter, _) = string_of_iter iter
 let code_of_iterexps iterexps =
   iterexps |> List.map code_of_iterexp |> String.concat ""
 
+let code_of_atom atom = string_of_atom ~lower:false atom
+let code_of_atoms atoms = atoms |> List.map code_of_atom |> String.concat " "
+
+let prose_of_cmpop cmpop =
+  match cmpop with
+    | `EqOp -> "is equal to"
+    | `NeOp -> "is not equal to"
+    | `LtOp -> "is less than"
+    | `GtOp -> "is greater than"
+    | `LeOp -> "is less than or equal to"
+    | `GeOp -> "is greater than or equal to"
+
 let code_of_mixop mixop =
   let mixop = List.map (List.map it) mixop in
-  String.concat "%"
+  String.concat " % "
     (List.map
-       (fun atoms -> String.concat "" (List.map Xl.Atom.string_of_atom atoms))
-       mixop)
+       (fun atoms -> String.concat " " (List.map Xl.Atom.string_of_atom atoms))
+       mixop) |> String.trim
 
 let code_of_pattern pattern =
   match pattern with
@@ -62,6 +75,11 @@ let code_of_pattern pattern =
   | Il.Ast.OptP `None -> "()"
 
 let code_of_typ ctx typ = string_of_typ typ |> render_mono ctx
+let code_of_varid ctx varid = 
+  if (String.get varid.it 0) = '_' then
+    "_" |> render_mono ctx
+  else
+  string_of_varid varid |> render_mono ctx
 
 (** Printing as prose **)
 
@@ -85,29 +103,34 @@ let rec prose_of_exp ctx exp =
   | Il.Ast.BoolE b -> string_of_bool b
   | Il.Ast.NumE n -> string_of_num n
   | Il.Ast.TextE text -> "\"" ^ String.escaped text ^ "\""
-  | Il.Ast.VarE varid -> string_of_varid varid |> render_mono ctx
+  | Il.Ast.VarE varid -> code_of_varid ctx varid
   | Il.Ast.UnE (unop, _, exp) -> string_of_unop unop ^ prose_of_exp ctx exp
   | Il.Ast.BinE (binop, _, exp_l, exp_r) ->
+    (* always print as code *)
       prose_of_exp (ctx |> in_code) exp_l ^ " " ^ string_of_binop binop ^ " "
       ^ prose_of_exp (ctx |> in_code) exp_r |> render_mono ctx
   | Il.Ast.CmpE (cmpop, _, exp_l, exp_r) ->
-      "(" ^ prose_of_exp ctx exp_l ^ " " ^ string_of_cmpop cmpop ^ " "
-      ^ prose_of_exp ctx exp_r ^ ")"
-  | Il.Ast.UpCastE (typ, exp) | Il.Ast.DownCastE (typ, exp) ->
-      F.asprintf "%s as %s" (code_of_exp ctx exp) (code_of_typ ctx typ)
+    if ctx.mode = Prose then
+      prose_of_exp ctx exp_l ^ " " ^ prose_of_cmpop cmpop ^ " "
+      ^ prose_of_exp ctx exp_r
+    else
+      prose_of_exp (ctx |> in_code) exp_l ^ " " ^ string_of_cmpop cmpop ^ " "
+      ^ prose_of_exp (ctx |> in_code) exp_r |> render_mono ctx
+  | Il.Ast.UpCastE (_typ, exp) | Il.Ast.DownCastE (_typ, exp) ->
+      F.asprintf "%s" (code_of_exp ctx exp)
   | Il.Ast.SubE (exp, typ) ->
       F.asprintf "%s has type %s" (code_of_exp ctx exp) (code_of_typ ctx typ)
   | Il.Ast.MatchE (exp, pattern) ->
       F.asprintf "%s matches pattern %s" (code_of_exp ctx exp)
-        (string_of_pattern pattern |> render_mono ctx)
+        (code_of_pattern pattern |> render_mono ctx)
   | Il.Ast.TupleE es -> "(" ^ prose_of_exps ctx es ^ ")"
-  | Il.Ast.CaseE notexp -> "(" ^ code_of_notexp ctx notexp ^ ")"
+  | Il.Ast.CaseE notexp -> code_of_notexp ctx notexp
   | Il.Ast.StrE expfields ->
       "{"
       ^ String.concat ", "
           (List.map
              (fun (atom, exp) ->
-               string_of_atom atom ^ " " ^ prose_of_exp ctx exp)
+               code_of_atom atom ^ " " ^ prose_of_exp ctx exp)
              expfields)
       ^ "}"
   | Il.Ast.OptE (Some exp) -> "?(" ^ prose_of_exp ctx exp ^ ")"
@@ -124,7 +147,7 @@ let rec prose_of_exp ctx exp =
       prose_of_exp ctx exp_e ^ " is in " ^ prose_of_exp ctx exp_s
   | Il.Ast.LenE exp -> "the length of " ^ prose_of_exp ctx exp
   | Il.Ast.DotE (exp_b, atom) ->
-      prose_of_exp (ctx |> in_code) exp_b ^ "." ^ string_of_atom atom |> render_mono ctx
+      prose_of_exp (ctx |> in_code) exp_b ^ "." ^ code_of_atom atom |> render_mono ctx
   | Il.Ast.IdxE (exp_b, exp_i) ->
       prose_of_exp ctx exp_b ^ "[" ^ prose_of_exp ctx exp_i ^ "]"
   | Il.Ast.SliceE (exp_b, exp_l, exp_h) ->
@@ -163,7 +186,7 @@ and code_of_notexp ctx notexp =
   let mixop, exps = notexp in
   let len = List.length mixop + List.length exps in
   List.init len (fun idx ->
-      if idx mod 2 = 0 then idx / 2 |> List.nth mixop |> string_of_atoms
+      if idx mod 2 = 0 then idx / 2 |> List.nth mixop |> code_of_atoms
       else idx / 2 |> List.nth exps |> prose_of_exp (ctx |> in_code))
   |> List.filter_map (fun str -> if str = "" then None else Some str)
   |> String.concat " "
@@ -211,9 +234,9 @@ and prose_of_path ctx path =
   | Il.Ast.SliceP (path, exp_l, exp_h) ->
       prose_of_path ctx path ^ "[" ^ prose_of_exp ctx exp_l ^ " : "
       ^ prose_of_exp ctx exp_h ^ "]"
-  | Il.Ast.DotP ({ it = Il.Ast.RootP; _ }, atom) -> string_of_atom atom
+  | Il.Ast.DotP ({ it = Il.Ast.RootP; _ }, atom) -> code_of_atom atom
   | Il.Ast.DotP (path, atom) ->
-      prose_of_path ctx path ^ "." ^ string_of_atom atom
+      prose_of_path ctx path ^ "." ^ code_of_atom atom
 
 (* Arguments *)
 
@@ -250,7 +273,7 @@ and prose_of_guard ctx exp_case guard =
         (code_of_typ ctx typ)
   | MatchG pattern ->
       F.asprintf "%s matches pattern %s" (code_of_exp ctx exp_case)
-        (string_of_pattern pattern)
+        (code_of_pattern pattern |> render_mono ctx)
   | MemG exp ->
       F.asprintf "%s is in %s" (code_of_exp ctx exp_case) (code_of_exp ctx exp)
 
@@ -260,8 +283,8 @@ and prose_of_out_iterexp ctx ((iter, vars) : iterexp) =
   match iter with
   | List ->
       let iterated_var var =
-        F.asprintf "%s* be the list of %s"
-          (string_of_var var |> render_mono ctx)
+        F.asprintf "%s be the list of %s"
+          (string_of_var var ^ "*" |> render_mono ctx)
           (string_of_var var |> render_mono ctx)
       in
       List.map iterated_var vars |> prose_of_list
@@ -273,9 +296,9 @@ and prose_of_in_iterexp ctx ((iter, vars) : iterexp) =
   | Opt -> "?__"
   | List ->
       let iterated_var var =
-        F.asprintf "%s in %s*"
+        F.asprintf "%s in %s"
           (string_of_var var |> render_mono ctx)
-          (string_of_var var |> render_mono ctx)
+          (string_of_var var ^ "*" |> render_mono ctx)
       in
       List.map iterated_var vars |> prose_of_list
 

@@ -19,7 +19,7 @@ let string_of_defid defid = Il.Print.string_of_defid defid
 
 (* Atoms *)
 
-let string_of_atom atom = Il.Print.string_of_atom atom
+let string_of_atom ?(lower = true) atom = Il.Print.string_of_atom ~lower atom
 let string_of_atoms atoms = atoms |> List.map string_of_atom |> String.concat ""
 
 (* Mixfix operators *)
