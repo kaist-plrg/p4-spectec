@@ -23,6 +23,20 @@ let render_mono ctx s =
 
 let render_subscript s = "~" ^ s ^ "~"
 let render_superscript s = "^" ^ s ^ "^"
+let render_bold s = "**" ^ s ^ "**"
+
+(* Take only the outputs and construct a full list of expressions, for correct HolE `Next rendering *)
+let output_to_signature (out_exps: exp list) (inputs: InputHint.t) : exp option list =
+  let cursor = ref 0 in
+  List.init (List.length inputs + List.length out_exps)
+    (fun i -> 
+      let exp : exp option = 
+        if (List.find_opt (fun a -> a = i) inputs |> Option.is_some) then None
+        else Some (List.nth out_exps !cursor)
+      in
+      cursor := if exp = None then !cursor else !cursor + 1;
+      exp
+    )
 
 
 (* Split iterators into input and output *)
@@ -187,9 +201,9 @@ let rec prose_of_exp ctx exp =
       prose_of_exp ctx exp_b ^ "[" ^ prose_of_path ctx path ^ " = "
       ^ prose_of_exp ctx exp_f ^ "]"
   | Il.Ast.CallE (defid, targs, args) -> (
-      let prose_of_hint_opt = HEnv.get_func defid ctx.penv.prose in
-      match prose_of_hint_opt with
-      | Some prose_of_hint ->
+      let hintexp_opt = HEnv.get_func defid ctx.penv.prose_in in
+      match hintexp_opt with
+      | Some hintexp ->
           let exps =
             args
             |> List.filter_map (fun arg ->
@@ -198,7 +212,7 @@ let rec prose_of_exp ctx exp =
                    | Il.Ast.DefA _ -> None)
           in
           F.asprintf "<<%s, %s>>" defid.it
-            (prose_of_hintexp ctx exps prose_of_hint)
+            (prose_of_hintexp ctx (exps |> List.map (fun a -> Some a)) hintexp)
       | None ->
           F.asprintf "%s%s%s" (string_of_defid defid) (string_of_targs targs)
             (prose_of_args (ctx |> in_code) args)
@@ -219,11 +233,11 @@ and code_of_notexp ctx notexp =
   |> List.filter_map (fun str -> if str = "" then None else Some str)
   |> String.concat " " |> render_mono ctx
 
-and prose_of_hintexp ctx (exps : exp list) (hintexp : El.Ast.exp) : string =
+and prose_of_hintexp ctx (exps : exp option list) (hintexp : El.Ast.exp) : string =
   let _, str = prose_of_hintexp' ctx exps hintexp 0 in
   str
 
-and prose_of_hintexp' ctx (exps : exp list) (hintexp : El.Ast.exp)
+and prose_of_hintexp' ctx (exps : exp option list) (hintexp : El.Ast.exp)
     (cursor : int) : int * string =
   match hintexp.it with
   | El.Ast.TextE text -> (cursor, text)
@@ -236,15 +250,21 @@ and prose_of_hintexp' ctx (exps : exp list) (hintexp : El.Ast.exp)
           (cursor, []) exps_hint
       in
       (cursor, String.concat " " strs)
-  | El.Ast.HoleE `Next ->
+  | El.Ast.HoleE `Next -> (
       (* cursor holds position for HoleE.Next *)
-      let exp = List.nth exps cursor in
-      (* increment cursor *)
-      (cursor + 1, code_of_exp ctx exp)
-  | El.Ast.HoleE (`Num i) ->
+      match List.nth exps cursor with
+      | Some exp ->
+        (* access HoleE.Next with current cursor *)
+        (cursor + 1, code_of_exp ctx exp)
+      (* skip None *)
+      | None ->
+        prose_of_hintexp' ctx exps hintexp (cursor + 1))
+  | El.Ast.HoleE (`Num i) -> (
       (* accesses HoleE.Num with index *)
-      let exp = List.nth exps i in
-      (cursor, code_of_exp ctx exp)
+      match List.nth exps i with
+      | Some exp -> (cursor, code_of_exp ctx exp)
+      (* print _ when `Num is out of bounds *)
+      | None -> (cursor, "_" |> render_mono ctx))
   | El.Ast.FuseE (exp_l, exp_r) ->
       let cursor_l, str_l = prose_of_hintexp' ctx exps exp_l cursor in
       let cursor_r, str_r = prose_of_hintexp' ctx exps exp_r cursor_l in
@@ -375,10 +395,11 @@ and prose_of_instr (ctx : Ctx.t) instr =
           (prose_of_instrs (ctx |> increment_level) instrs_then)
   | HoldI (id, notexp, iterexps, holdcase) -> (
       let prosed_relation =
-        let prose_of_hint_opt = Hintenv.get_rel id ctx.penv.prose in
+        let prose_of_hint_opt = Hintenv.get_rel id ctx.penv.prose_true in
         match prose_of_hint_opt with
         | Some prose_of_hint ->
             let mixop, exps = notexp in
+            let exps = List.map (fun e -> Some e) exps in
             F.asprintf "[%s](%s)%s"
               (prose_of_hintexp (ctx |> increment_level) exps prose_of_hint)
               (string_of_relid id)
@@ -409,9 +430,7 @@ and prose_of_instr (ctx : Ctx.t) instr =
   | GroupI (id_group, exps_group, instrs_group) ->
       Format.asprintf "%sGroup %s: %s\n\n%s" (bullet ctx)
         (string_of_relpathid id_group)
-        (match ctx.signature with
-        | Some (mixop, inputs) -> code_of_relinput ctx mixop inputs exps_group
-        | None -> prose_of_exps ctx exps_group)
+        (prose_of_exps ctx exps_group)
         (prose_of_instrs (ctx |> increment_level) instrs_group)
   | LetI (exp_l, exp_r, iterexps) ->
       let out_iters, in_iters = split_iterexps [ exp_l ] iterexps in
@@ -428,34 +447,48 @@ and prose_of_instr (ctx : Ctx.t) instr =
           (code_of_exp ctx exp_l) (prose_of_exp ctx exp_r)
           (prose_of_in_iterexps ctx ("\n" ^ bullet ctx) in_iters)
   | RuleI (id_rel, notexp, iterexps) -> (
-      let prose_of_hint_opt = Hintenv.get_rel id_rel ctx.penv.prose in
+      let prose_hint_opt = Hintenv.get_rel id_rel ctx.penv.prose_in in
       let input_hint = IEnv.find id_rel ctx.ienv in
       let _, outputs =
         InputHint.split_exps_without_idx input_hint (snd notexp)
       in
       let out_iters, in_iters = split_iterexps outputs iterexps in
-      match prose_of_hint_opt with
-      | Some prose_of_hint ->
+      match prose_hint_opt with
+      | Some prose_hint ->
           let mixop, exps = notexp in
+          let exps_opt = List.map (fun e -> Some e) exps in
           if List.is_empty out_iters then
-            F.asprintf "%sLet %s be <<%s, %s>>%s" (bullet ctx)
+            F.asprintf "%sLet %s be the result of <<%s, %s>>%s" (bullet ctx)
               (code_of_exps ctx outputs) (string_of_relid id_rel)
-              (prose_of_hintexp (ctx |> increment_level) exps prose_of_hint)
+              (prose_of_hintexp (ctx |> increment_level) exps_opt prose_hint)
               (prose_of_in_iterexps ctx ", " in_iters)
           else
-            F.asprintf "%s%s\n%sLet %s be <<%s, %s>>%s" (bullet ctx)
+            F.asprintf "%s%s\n%sLet %s be the result of <<%s, %s>>%s" (bullet ctx)
               (prose_of_out_iterexps ctx out_iters)
               (ctx |> increment_level |> bullet)
               (code_of_exps ctx outputs) (string_of_relid id_rel)
-              (prose_of_hintexp (ctx |> increment_level) exps prose_of_hint)
+              (prose_of_hintexp (ctx |> increment_level) exps_opt prose_hint)
               (prose_of_in_iterexps ctx ("\n" ^ bullet ctx) in_iters)
       | None ->
           F.asprintf "%s(%s: %s)%s" (bullet ctx) (string_of_relid id_rel)
             (code_of_notexp ctx notexp)
             (prose_of_in_iterexps ctx ", " iterexps))
   | ResultI [] -> F.asprintf "%sThe relation holds" (bullet ctx)
-  | ResultI exps ->
-      F.asprintf "%sResult in %s" (bullet ctx) (code_of_exps ctx exps)
+  | ResultI exps -> (
+      let result_opt =
+        match ctx.def with
+        | Relation rid ->
+          Hintenv.get_rel rid ctx.penv.prose_out |> Option.map (fun h -> (h, rid))
+        | None -> assert false
+      in
+      match result_opt with
+      | Some (hintexp, rid) -> 
+          let exps_opt = output_to_signature exps (IEnv.find_opt rid ctx.ienv |> Option.value ~default:[]) in
+          F.asprintf "%sResult in %s" (bullet ctx)
+            (prose_of_hintexp (ctx |> increment_level) exps_opt hintexp)
+      | None ->
+        F.asprintf "%sResult in %s" (bullet ctx)
+          (code_of_exps ctx exps))
   | ReturnI exp -> F.asprintf "%sReturn %s" (bullet ctx) (prose_of_exp ctx exp)
   | DebugI exp -> F.asprintf "%sDebug: %s" (bullet ctx) (prose_of_exp ctx exp)
 
@@ -494,13 +527,22 @@ and code_of_relinput ctx mixop inputs exps_input =
   let notexp = (mixop, exps) in
   code_of_notexp (ctx |> in_code) notexp |> render_mono ctx
 
+and prose_of_relinput ctx rid mixop inputs exps_input =
+  let prose_hint_opt = Hintenv.get_rel rid ctx.penv.prose_in in
+  match prose_hint_opt with
+  | Some prose_hint ->
+      let exps_opt = List.map Option.some exps_input in
+      F.asprintf "%s:"
+        (prose_of_hintexp (ctx |> increment_level) exps_opt prose_hint) |> String.capitalize_ascii
+  | None -> code_of_relinput ctx mixop inputs exps_input
+
 (* Rule prose : entrypoint for splicer *)
 
-let code_of_ruleprose (ctx : Ctx.t) (mixop : mixop) (inputs : int list)
+let code_of_ruleprose (ctx : Ctx.t) rid (mixop : mixop) (inputs : int list)
     (exps_input : exp list) (instrs : instr list) : string =
   F.asprintf "%s\n\n%s"
-    (code_of_relinput ctx mixop inputs exps_input)
-    (prose_of_instrs ctx instrs)
+    (prose_of_relinput ctx rid mixop inputs exps_input)
+    (prose_of_instrs (ctx |> in_rel rid) instrs)
 
 (* Definitions *)
 
@@ -510,7 +552,7 @@ let prose_of_def ctx def =
   | RelD (relid, (_mixop, _inputs), exps_input, instrs, _hints) ->
       "\n\nrelation " ^ string_of_relid relid ^ ": "
       ^ prose_of_exps ctx exps_input
-      ^ "\n\n" ^ prose_of_instrs ctx instrs
+      ^ "\n\n" ^ prose_of_instrs (ctx |> in_rel relid) instrs
   | DecD (defid, tparams, args_input, instrs, _hints) -> ""
 
 let prose_of_defs ctx defs = String.concat "" (List.map (prose_of_def ctx) defs)

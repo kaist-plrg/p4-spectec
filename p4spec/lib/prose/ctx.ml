@@ -5,22 +5,23 @@ module PEnv = Penv
 
 type mode = Prose | Code
 type cond_style = If | ElseIf | Check
+type def = None | Relation of RId.t
 
 type t = {
   (* prose hints *)
   penv : PEnv.t;
   (* input hints *)
   ienv : IEnv.t;
-  (* Negation *)
+  (* negation status, for HoldI, RuleI and CallE *)
   neg : bool;
-  (* Render mode *)
+  (* render mode *)
   mode : mode;
-  (* indent level *)
+  (* indent level for instructions *)
   level : int;
-  (* only one if statement *)
+  (* condition style, for IfI and Cases *)
   cond_style : cond_style option;
-  (* relation signature for groups *)
-  signature : (Mixop.t * int list) option;
+  (* current relation ID, for ResultI *)
+  def : def;
 }
 
 (* Helper functions for context manipulation *)
@@ -33,18 +34,18 @@ let create ?(penv = PEnv.empty) ?(ienv = IEnv.empty) () : t =
     mode = Prose;
     level = 0;
     cond_style = None;
-    signature = None;
+    def = None;
   }
 
 let init spec_sl : t =
   Collect.collect_spec spec_sl |> fun (penv, ienv) -> create ~penv ~ienv ()
 
-let with_signature ctx signature = { ctx with signature }
 let as_cond cond_style ctx = { ctx with cond_style = Some cond_style }
 let clear_cond ctx = { ctx with cond_style = None }
 let in_code ctx = { ctx with mode = Code }
 let in_prose ctx = { ctx with mode = Prose }
 let increment_level ctx = { ctx with level = ctx.level + 1; cond_style = None }
+let in_rel r ctx = { ctx with def = Relation r }
 
 let bullet ctx : string (* = String.make (ctx.level + 1) '.' ^ " " *) =
   Format.asprintf "%s%s "

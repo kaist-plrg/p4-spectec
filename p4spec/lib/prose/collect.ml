@@ -11,7 +11,10 @@ let collect_rel_def (rid : RId.t) (penv : PEnv.t) hints : PEnv.t =
   List.fold_left
     (fun penv { hintid; hintexp } ->
       match hintid.it with
-      | "prose" -> PEnv.{ prose = Hintenv.add_rel rid hintexp penv.prose }
+      | "prose_in" -> PEnv.{ penv with prose_in = Hintenv.add_rel rid hintexp penv.prose_in }
+      | "prose_out" -> PEnv.{ penv with prose_out = Hintenv.add_rel rid hintexp penv.prose_out }
+      | "prose_true" -> PEnv.{ penv with prose_true = Hintenv.add_rel rid hintexp penv.prose_true }
+      | "prose_false" -> PEnv.{ penv with prose_false = Hintenv.add_rel rid hintexp penv.prose_false }
       | _ -> penv)
     penv hints
 
@@ -20,7 +23,10 @@ let collect_dec_def (fid : FId.t) (penv : PEnv.t) hints : PEnv.t =
   List.fold_left
     (fun penv { hintid; hintexp } ->
       match hintid.it with
-      | "prose" -> PEnv.{ prose = Hintenv.add_func fid hintexp penv.prose }
+      | "prose_in" -> PEnv.{ penv with prose_in = Hintenv.add_func fid hintexp penv.prose_in }
+      | "prose_out" -> PEnv.{ penv with prose_out = Hintenv.add_func fid hintexp penv.prose_out }
+      | "prose_true" -> PEnv.{ penv with prose_true = Hintenv.add_func fid hintexp penv.prose_true }
+      | "prose_false" -> PEnv.{ penv with prose_false = Hintenv.add_func fid hintexp penv.prose_false }
       | _ -> penv)
     penv hints
 
