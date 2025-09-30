@@ -24,22 +24,54 @@ ${syntax: listType
           listTypeIR
           listValue}
 
+[#sec-sem-Type_ok-listType]
+===== Type checking
+
+${rulegroup: Type_ok/listType}
+${ruleprose: Type_ok/listType}
+
+[#sec-sem-Type_wf-listTypeIR]
+===== Well-formedness
+
+${funcprose: nestable_list}
+
+${funcprose: nestable'_list}
+
+${rulegroup: Type_wf/listTypeIR}
+${ruleprose: Type_wf/listTypeIR}
+
 [#sec-def-tupleType]
 [#sec-def-tupleTypeIR]
 [#sec-def-tupleValue]
 ==== Tuple types and values
 
 A tuple is similar to a `struct`, in that it holds multiple values.
-The type of tuples with n component types `T1`,...,`Tn` is written as
+The type of tuples with `n` component types `T1`, ..., `Tn` is written as
 
 [source,p4]
 ----
-tuple<T1,/* more fields omitted */,Tn>
+tuple<T1, /* more fields omitted */, Tn>
 ----
 
 ${syntax: tupleType
           tupleTypeIR
           tupleValue}
+
+[#sec-sem-Type_ok-tupleType]
+===== Type checking
+
+${rulegroup: Type_ok/tupleType}
+${ruleprose: Type_ok/tupleType}
+
+[#sec-sem-Type_wf-tupleTypeIR]
+===== Well-formedness
+
+${funcprose: nestable_tuple}
+
+${funcprose: nestable'_tuple}
+
+${rulegroup: Type_wf/tupleTypeIR}
+${ruleprose: Type_wf/tupleTypeIR}
 
 [#sec-def-headerStackType]
 [#sec-def-headerStackTypeIR]
@@ -78,6 +110,22 @@ Mpls_h[10] mpls;
 introduce a header stack called `mpls` containing ten entries, each of type
 `Mpls_h`.
 
+[#sec-sem-Type_ok-headerStackType]
+===== Type checking
+
+${rulegroup: Type_ok/headerStackType}
+${ruleprose: Type_ok/headerStackType}
+
+[#sec-sem-Type_wf-headerStackTypeIR]
+===== Well-formedness
+
+${funcprose: nestable_headerStack}
+
+${funcprose: nestable'_headerStack}
+
+${rulegroup: Type_wf/headerStackTypeIR}
+${ruleprose: Type_wf/headerStackTypeIR}
+
 [#sec-def-structTypeDeclaration]
 [#sec-def-structTypeIR]
 [#sec-def-structValue]
@@ -113,6 +161,24 @@ ${syntax: fieldTypeIR
           structTypeIR
           fieldValue
           structValue}
+
+===== Type checking
+
+Struct types are introduced by `struct` declarations. Its typing rule is
+explained in <<sec-sem-Decl_ok-structTypeDeclaration>>.
+
+Struct types are then used by referencing their names. Thus struct types can
+be obtained from named types, as illustrated in <<sec-def-namedType>>.
+
+[#sec-sem-Type_wf-structTypeIR]
+===== Well-formedness
+
+${funcprose: nestable_struct}
+
+${funcprose: nestable'_struct}
+
+${rulegroup: Type_wf/structTypeIR}
+${ruleprose: Type_wf/structTypeIR}
 
 [#sec-def-headerTypeDeclaration]
 [#sec-def-headerTypeIR]
@@ -249,6 +315,28 @@ ${syntax: fieldTypeIR
           fieldValue
           headerValue}
 
+===== Type checking
+
+Header types are introduced by `header` declarations. Its typing rule is
+explained in <<sec-sem-Decl_ok-headerTypeDeclaration>>.
+
+Header types are then used by referencing their names. Thus header types can
+be obtained from named types, as illustrated in <<sec-def-namedType>>.
+
+[#sec-sem-Type_wf-headerTypeIR]
+===== Well-formedness
+
+${funcprose: nestable_header}
+
+${funcprose: nestable'_header}
+
+${funcprose: nestable_struct_in_header}
+
+${funcprose: nestable'_struct_in_header}
+
+${rulegroup: Type_wf/headerTypeIR}
+${ruleprose: Type_wf/headerTypeIR}
+
 [#sec-def-headerUnionTypeDeclaration]
 [#sec-def-headerUnionTypeIR]
 [#sec-def-headerUnionValue]
@@ -280,6 +368,25 @@ ${syntax: fieldTypeIR
           headerUnionTypeIR
           fieldValue
           headerUnionValue}
+
+===== Type checking
+
+Header union types are introduced by `header_union` declarations. Its typing
+rule is explained in <<sec-sem-Decl_ok-headerUnionTypeDeclaration>>.
+
+Header union types are then used by referencing their names. Thus header union
+types can be obtained from named types, as illustrated in
+<<sec-def-namedType>>.
+
+[#sec-sem-Type_wf-headerUnionTypeIR]
+===== Well-formedness
+
+${funcprose: nestable_headerUnion}
+
+${funcprose: nestable'_headerUnion}
+
+${rulegroup: Type_wf/headerUnionTypeIR}
+${ruleprose: Type_wf/headerUnionTypeIR}
 
 [#sec-def-enumTypeDeclaration]
 [#sec-def-enumTypeIR]
@@ -314,6 +421,20 @@ introduces a new enumeration type, which contains four elements---e.g.,
 scope for naming the created type along with its distinct elements. The
 underlying representation of the `Suits` enum is not specified, so their "size"
 in bits is not specified (it is target-specific).
+
+====== Type checking
+
+Enum types are introduced by `enum` declarations. Its typing rule is explained
+in <<sec-sem-Decl_ok-enumTypeDeclaration-non-serializable>>.
+
+Enum types are then used by referencing their names. Thus enum types can be
+obtained from named types, as illustrated in <<sec-def-namedType>>.
+
+[#sec-sem-Type_wf-enumTypeIR-non-serializable]
+====== Well-formedness
+
+${rulegroup: Type_wf/enumTypeIR-non-serializable}
+${ruleprose: Type_wf/enumTypeIR-non-serializable}
 
 [#sec-enumTypeDeclaration-serializable]
 ===== Enum type declaration with an underlying type
@@ -376,3 +497,25 @@ The `initializer` expression must be a compile-time known value.
 
 Annotations, represented by the non-terminal `optAnnotations`, are described in
 <<sec-annotations>>.
+
+====== Type checking
+
+Enum types are introduced by `enum` declarations. Its typing rule is explained
+in <<sec-sem-Decl_ok-enumTypeDeclaration-serializable>>.
+
+Enum types are then used by referencing their names. Thus enum types can be
+obtained from named types, as illustrated in <<sec-def-namedType>>.
+
+[#sec-sem-Type_wf-enumTypeIR-serializable]
+====== Well-formedness
+
+${funcprose: nestable_enum_serializable}
+
+${funcprose: nestable'_enum_serializable}
+
+${funcprose: nestable_new_in_enum_serializable}
+
+${funcprose: nestable'_new_in_enum_serializable}
+
+${rulegroup: Type_wf/enumTypeIR-serializable}
+${ruleprose: Type_wf/enumTypeIR-serializable}

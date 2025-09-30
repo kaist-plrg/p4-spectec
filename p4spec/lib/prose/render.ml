@@ -146,6 +146,7 @@ let rec prose_of_exp ctx exp =
       ^ "}"
   | Il.Ast.OptE (Some exp) -> "?(" ^ prose_of_exp ctx exp ^ ")"
   | Il.Ast.OptE None -> "?()"
+  | Il.Ast.ListE [] -> "[ ]" |> render_mono ctx
   | Il.Ast.ListE exps ->
       "[" ^ prose_of_exps (ctx |> in_code) exps ^ "]" |> render_mono ctx
   | Il.Ast.ConsE (exp_h, exp_t) ->

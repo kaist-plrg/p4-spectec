@@ -34,6 +34,12 @@ ${syntax: primitiveTypeIR
 * The `string` type, which can be used with compile-time known
   values of type string.
 
+[#sec-sem-Type_ok-primitiveType]
+===== Type checking
+
+${rulegroup: Type_ok/primitiveType}
+${ruleprose: Type_ok/primitiveType}
+
 [#sec-def-numberTypeIR]
 [#sec-def-numberValue]
 ==== Number types and values
@@ -122,7 +128,13 @@ functions, must be directionless, indicating that all calls must provide a
 compile-time known value as an argument for such a parameter.  See
 <<sec-calling-convention>> for more details on directionless parameters.
 
-===== Fixed-width signed Integers
+[#sec-sem-Type_ok-arbint]
+====== Type checking
+
+${rulegroup: Type_ok/arbint}
+${ruleprose: Type_ok/arbint}
+
+===== Fixed-width signed integers
 
 Signed integers are represented using two's complement. An integer with `W`
 bits is declared as: `int<W>`. `W` must be an expression that evaluates to a
@@ -142,10 +154,13 @@ P4 architectures may impose additional constraints on signed types: for
 example, they may limit the maximum size, or they may only support some
 arithmetic operations on certain sizes (e.g., 16-, 32-, and 64- bit values).
 
-All operations that can be performed on signed integers are described in
-<<sec-bit-ops>>.
-
 A signed integer with width 1 can only have two legal values: 0 and -1.
+
+[#sec-sem-Type_ok-fixint]
+====== Type checking
+
+${rulegroup: Type_ok/fixint}
+${ruleprose: Type_ok/fixint}
 
 ===== Fixed-width unsigned integers (bit-strings)
 
@@ -178,5 +193,41 @@ P4 architectures may impose additional constraints on bit types: for example,
 they may limit the maximum size, or they may only support some arithmetic
 operations on certain sizes (e.g., 16-, 32-, and 64- bit values).
 
-All operations that can be performed on unsigned integers are described in
-<<sec-bit-ops>>.
+[#sec-sem-Type_ok-fixbit]
+====== Type checking
+
+${rulegroup: Type_ok/fixbit}
+${ruleprose: Type_ok/fixbit}
+
+===== Dynamically-sized bit-strings
+
+Some network protocols use fields whose size is only known at runtime
+(e.g., IPv4 options). To support restricted manipulations of such
+values, P4 provides a special bit-string type whose size is set at
+runtime, called a `varbit`.
+
+The type `varbit<W>` denotes a bit-string with a width of at most `W`
+bits, where `W` is a local compile-time known value (see Section
+<<#sec-compile-time-known>>) that is a non-negative integer.  For
+example, the type `varbit<120>` denotes the type of bit-string values
+that may have between 0 and 120 bits. Most operations that are
+applicable to fixed-size bit-strings (unsigned numbers) *cannot* be
+performed on dynamically sized bit-strings.  Note that `varbit<W>`
+type refers to both cases of `varbit<W>` and `varbit<(expression)>`
+where the width is a compile-time known value.
+
+P4 architectures may impose additional constraints on varbit types:
+for example, they may limit the maximum size, or they may require `varbit`
+values to always contain an integer number of bytes at runtime.
+
+[#sec-sem-Type_ok-varbit]
+====== Type checking
+
+${rulegroup: Type_ok/varbit}
+${ruleprose: Type_ok/varbit}
+
+[#sec-sem-Type_wf/baseTypeIR]
+==== Well-formedness
+
+${rulegroup: Type_wf/baseTypeIR}
+${ruleprose: Type_wf/baseTypeIR}

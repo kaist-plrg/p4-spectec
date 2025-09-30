@@ -52,12 +52,36 @@ arguments.
 
 The internal representation of type definitions is as follows:
 
-${syntax: monoTypeDefIR
-          polyTypeDefIR
-          typeDefIR}
+${syntax: typeDefIR}
+
+===== Monomorphic type definitions
+
+${syntax: monoTypeDefIR}
 
 A monomorphic type definition is a type definition that does not take any type
-parameters, while a polymorphic type definition takes one or more type parameters.
+parameters.
+
+[#sec-sem-TypeDef_wf-monoTypeDefIR]
+====== Well-formedness
+
+${funcprose: definable_type_mono}
+
+${rulegroup: TypeDef_wf/monoTypeDefIR}
+${ruleprose: TypeDef_wf/monoTypeDefIR}
+
+===== Polymorphic type definitions
+
+${syntax: polyTypeDefIR}
+
+A polymorphic type definition takes one or more type parameters.
+
+[#sec-sem-TypeDef_wf-polyTypeDefIR]
+====== Well-formedness
+
+${funcprose: definable_type_poly}
+
+${rulegroup: TypeDef_wf/polyTypeDefIR}
+${ruleprose: TypeDef_wf/polyTypeDefIR}
 
 [#sec-def-nameTypeIR]
 ==== Prefixed type names
@@ -68,6 +92,18 @@ ${syntax: prefixedTypeName
 Type names can be used to reference a monomorphic type definition or a
 polymorphic type definition that does not require type arguments. The names
 can be prefixed by a dot (`.`) to refer to the top-level namespace.
+
+[#sec-sem-Type_ok-prefixedTypeName]
+===== Type checking
+
+${rulegroup: Type_ok/prefixedTypeName}
+${ruleprose: Type_ok/prefixedTypeName}
+
+[#sec-sem-Type_wf-nameTypeIR]
+===== Well-formedness
+
+${rulegroup: Type_wf/nameTypeIR}
+${ruleprose: Type_wf/nameTypeIR}
 
 [#sec-def-specializedType]
 [#sec-def-specializedTypeIR]
@@ -153,3 +189,15 @@ ${syntax: specializedTypeIR}
 Notice that `prefixedTypeName` in the `specializedType` syntax above is
 resolved to the polymorphic type definition it refers to (`polyTypeDefIR` in
 the `specializedTypeIR`).
+
+[#sec-sem-Type_ok-specializedType]
+===== Type checking
+
+${rulegroup: Type_ok/specializedType}
+${ruleprose: Type_ok/specializedType}
+
+[#sec-sem-Type_wf-specializedTypeIR]
+===== Well-formedness
+
+${rulegroup: Type_wf/specializedTypeIR}
+${ruleprose: Type_wf/specializedTypeIR}
