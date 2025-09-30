@@ -30,35 +30,6 @@ ${ruleprose: Decl_inst/externFunctionDeclarationIR}
 [#sec-externObjectDeclaration]
 ==== Extern object declaration
 
-An extern object declaration declares an object and all methods that can be
-invoked to perform computations and to alter the state of the object. Extern
-object declarations can also optionally declare constructor methods; these must
-have the same name as the enclosing `extern` type, no type parameters, and no
-return type.  Extern declarations may only appear as allowed by the
-architecture model and may be specific to a target.
-
-${syntax: methodPrototype
-          externObjectDeclaration
-          methodPrototypeIR
-          externObjectDeclarationIR}
-
-For example, the P4 core library introduces two extern objects `packet_in` and
-`packet_out` used for manipulating packets (see <<sec-packet-data-extraction>>
-and <<sec-deparse>>). Here is an example showing how the methods of these
-objects can be invoked on a packet:
-
-[source,p4]
-----
-extern packet_out {
-    void emit<T>(in T hdr);
-}
-control d(packet_out b, in Hdr h) {
-    apply {
-        b.emit(h.ipv4);       // write ipv4 header into output packet
-    }                         // by calling emit method
-}
-----
-
 [[sem-type-check-externObjectDeclaration]]
 ===== Type checking
 

@@ -45,11 +45,7 @@ syntax namedTypeIR =
   | specializedTypeIR
 
 ;;
-;;;; Defined types
-;;
-
-;;
-;;;;;; Alias types
+;;;; Alias types
 ;;
 
 syntax typedefTypeIR = TYPEDEF tid typeIR
@@ -61,7 +57,7 @@ syntax aliasTypeIR =
   | newTypeIR
 
 ;;
-;;;;;; Data types
+;;;; Data types
 ;;
 
 syntax listTypeIR = LIST `< typeIR >
@@ -90,7 +86,7 @@ syntax dataTypeIR =
   | enumTypeIR
 
 ;;
-;;;;;; Object types
+;;;; Object types
 ;;
 
 syntax parameterTypeIR
@@ -110,11 +106,6 @@ syntax objectTypeIR =
   | packageObjectTypeIR
   | tableObjectTypeIR
 
-syntax definedTypeIR =
-  | aliasTypeIR
-  | dataTypeIR
-  | objectTypeIR
-
 ;;
 ;;;; Synthesized types
 ;;
@@ -133,7 +124,7 @@ syntax recordTypeIR =
 
 syntax setTypeIR = SET `< typeIR* >
 
-syntax tableTypeIR =
+syntax tableMetadataTypeIR =
   | TABLE_ENUM tid `{ id* }
   | TABLE_STRUCT tid `{ fieldTypeIR* }
 
@@ -143,7 +134,7 @@ syntax synthesizedTypeIR =
   | sequenceTypeIR
   | recordTypeIR
   | setTypeIR
-  | tableTypeIR
+  | tableMetadataTypeIR
 
 ;;
 ;;;; Types
@@ -152,7 +143,9 @@ syntax synthesizedTypeIR =
 syntax typeIR =
   | baseTypeIR
   | namedTypeIR
-  | definedTypeIR
+  | aliasTypeIR
+  | dataTypeIR
+  | objectTypeIR
   | synthesizedTypeIR
 
 ;;

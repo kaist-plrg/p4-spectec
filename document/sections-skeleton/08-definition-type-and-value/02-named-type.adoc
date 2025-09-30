@@ -1,14 +1,155 @@
-[#sec-def-named-type]
+[#sec-def-namedType]
 === Named types
+
+Named types are types that reference another type by name. User-defined types
+can be introduced with their names. For example, the following declares a new
+struct type `S0`:
+
+[source,p4]
+----
+struct S0 {
+    bit<32> x;
+    bit<32> y;
+}
+----
+
+This type can then be referenced by its name, as can be seen in the parameter
+type of the following example:
+
+[source,p4]
+----
+void f(S s) {}
+----
+
+Users may also declare generic types, which are parameterized by one or more
+type parameters.
+
+[source,p4]
+----
+struct S1<T, U> {
+    T x;
+    U y;
+}
+
+void f(S1<bit<32>, bit<32>> s) {}
+----
+
+For generic types, the type arguments must be provided alongside the type
+name (as in `S1<bit<32>, bit<32>>` above).
+
+The syntax for named types is as follows:
 
 ${syntax: namedType}
 
-[#sec-def-name-type]
-==== Name types
+[#sec-def-typeDefIR]
+==== Type definitions (type constructors)
 
-${syntax: prefixedTypeName}
+${syntax: typeDeclaration}
 
-[#sec-def-specialized-type]
+`typeDeclaration` introduces a new type definition. These are essentially
+declarations of type constructors, that create new types when applied to type
+arguments.
+
+The internal representation of type definitions is as follows:
+
+${syntax: monoTypeDefIR
+          polyTypeDefIR
+          typeDefIR}
+
+A monomorphic type definition is a type definition that does not take any type
+parameters, while a polymorphic type definition takes one or more type parameters.
+
+[#sec-def-nameTypeIR]
+==== Prefixed type names
+
+${syntax: prefixedTypeName
+          nameTypeIR}
+
+Type names can be used to reference a monomorphic type definition or a
+polymorphic type definition that does not require type arguments. The names
+can be prefixed by a dot (`.`) to refer to the top-level namespace.
+
+[#sec-def-specializedType]
+[#sec-def-specializedTypeIR]
 ==== Specialized types
 
+A generic type may be specialized by specifying arguments for its type
+variables. In cases where the compiler can infer type arguments type
+specialization is not necessary. When a type is specialized all its type
+variables must be bound.
+
 ${syntax: specializedType}
+
+For example, the following extern declaration describes a generic block of
+registers, where the type of the elements stored in each register is an
+arbitrary `T`.
+
+[source,p4]
+----
+extern Register<T> {
+    Register(bit<32> size);
+    T read(bit<32> index);
+    void write(bit<32> index, T value);
+}
+----
+
+The type `T` has to be specified when instantiating a set of registers, by
+specializing the Register type:
+
+[source,p4]
+----
+Register<bit<32>>(128) registerBank;
+----
+
+The instantiation of `registerBank` is made using the `Register` type
+specialized with the `bit<32>` bound to the `T` type argument.
+
+Types such as `struct`, `header`, `header_union` and header stack types can be
+generic as well. In order to use such a generic type it must be specialized
+with appropriate type arguments. For example
+
+[source,p4]
+----
+// generic structure type
+struct S<T> {
+    T field;
+    bool valid;
+}
+
+struct G<T> {
+    S<T> s;
+}
+
+// specialize S by replacing 'T' with 'bit<32>'
+const S<bit<32>> s = { field = 32w0, valid = false };
+// Specialize G by replacing 'T' with 'bit<32>'
+const G<bit<32>> g = { s = { field = 0, valid = false } };
+
+// generic header type
+header H<T> {
+    T field;
+}
+
+// Specialize H by replacing 'T' with 'bit<8>'
+const H<bit<8>> h = { field = 1 };
+// Header stack produced from a specialization of a generic header type
+H<bit<8>>[10] stack;
+
+// Generic header union
+header_union HU<T> {
+    H<bit<32>> h32;
+    H<bit<8>>  h8;
+    H<T>       ht;
+}
+
+// Header union with a type obtained by specializing a generic header union type
+HU<bit> hu;
+----
+
+Internally, specialized types are represented as follows:
+
+${syntax: specializedTypeIR}
+
+Notice that `prefixedTypeName` in the `specializedType` syntax above is
+resolved to the polymorphic type definition it refers to (`polyTypeDefIR` in
+the `specializedTypeIR`).

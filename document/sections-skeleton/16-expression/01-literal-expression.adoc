@@ -12,25 +12,53 @@ ${syntax: booleanLiteral}
 [[sem-type-check-literalExpression-boolean]]
 ===== Type checking
 
-${rulegroup: Expr_ok/literalExpression-boolean}
+//${rulegroup: Expr_ok/literalExpression-boolean}
 ${ruleprose: Expr_ok/literalExpression-boolean}
 
 [[sem-local-compile-time-eval-literalExpression-boolean]]
 ===== Local compile-time evaluation
 
-${rulegroup: Eval_static/literalExpressionIR-boolean}
+//${rulegroup: Eval_static/literalExpressionIR-boolean}
 ${ruleprose: Eval_static/literalExpressionIR-boolean}
 
 [[sem-compile-time-eval-literalExpression-boolean]]
 ===== Compile-time evaluation
 
-${rulegroup: Expr_inst/literalExpressionIR-boolean}
+//${rulegroup: Expr_inst/literalExpressionIR-boolean}
 ${ruleprose: Expr_inst/literalExpressionIR-boolean}
 
 [#sec-numeric-literal-expressions]
 ==== Numeric literal expressions
 
 ${syntax: numberLiteral}
+
+The types of integer literals are as follows:
+
+* An integer with no type prefix has type `int`.
+* A non-negative integer prefixed with an integer width `W` and the
+  character `w` has type `bit<W>`.
+* An integer prefixed with an integer width `W` and the character `s`
+  has type `int<W>`.
+
+The table below shows several examples of integer literals and their
+types. For additional examples of literals see <<sec-literals>>.
+
+[.center,cols=">1,4",width=70%]
+|===
+| Literal | Interpretation
+
+| `10`    | Type is `int`, value is 10
+
+| `8w10`  | Type is `bit<8>`, value is 10
+
+| `8s10`  | Type is `int<8>`, value is 10
+
+| `2s3`   | Type is `int<2>`, value is -1 (last 2 bits), overflow warning
+
+| `1w10`  | Type is `bit<1>`, value is 0 (last bit), overflow warning
+
+| `1s1`   | Type is `int<1>`, value is -1, overflow warning
+|===
 
 [[sem-type-check-literalExpression-number]]
 ===== Type checking

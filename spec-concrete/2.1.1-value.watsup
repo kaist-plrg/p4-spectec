@@ -24,10 +24,10 @@ syntax numberValue =
   | numberLiteral
   | nat V int `# nat
 
-syntax baseValue = | primitiveValue | numberValue
+syntax baseValue = primitiveValue | numberValue
 
 ;;
-;;;; Composite values
+;;;; Data values
 ;;
 
 syntax value
@@ -56,6 +56,12 @@ syntax dataValue =
   | enumValue
 
 ;;
+;;;; Object reference values
+;;
+
+syntax objectReferenceValue = `! oid
+
+;;
 ;;;; Synthesized values
 ;;
 
@@ -76,7 +82,7 @@ syntax setValue =
   | SET `{ value `&&& value }
   | SET `{ value `.. value }
 
-syntax tableValue =
+syntax tableMetadataValue =
   | TABLE_ENUM tid `. id
   | TABLE_STRUCT tid `{ fieldValue* }
 
@@ -86,13 +92,7 @@ syntax synthesizedValue =
   | sequenceValue
   | recordValue
   | setValue
-  | tableValue
-
-;;
-;;;; Reference values
-;;
-
-syntax objectReferenceValue = `! oid
+  | tableMetadataValue
 
 ;;
 ;;;; Values
@@ -101,5 +101,5 @@ syntax objectReferenceValue = `! oid
 syntax value =
   | baseValue
   | dataValue
-  | synthesizedValue
   | objectReferenceValue
+  | synthesizedValue

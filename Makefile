@@ -17,6 +17,8 @@ build:
 
 spec:
 	cd document && make build && cd ..
+spec-html:
+	cd document && make build-html && cd ..
 
 # Format
 

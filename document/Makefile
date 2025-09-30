@@ -18,15 +18,16 @@ splice: spectec
 	../${SPECTEC} splice ${SPECFILES} -inplace $${SPLICEFILES}
 
 ${SPEC}.pdf: ${SPEC}.adoc splice grammar.adoc grammar.trimmed.adoc
-	time asciidoctor-pdf -v \
+	time asciidoctor-pdf -q \
 		-a pdf-fontsdir=resources/fonts \
 		-a rouge-style=$(ROUGE_STYLE) $<
 
 ${SPEC}.html: ${SPEC}.adoc splice grammar.adoc grammar.trimmed.adoc
-	time asciidoctor -v \
+	time asciidoctor -q \
 		-a rouge-css=$(ROUGE_CSS) $<
 
 build: ${SPEC}.pdf ${SPEC}.html
+build-html: ${SPEC}.html
 
 clean:
 	/bin/rm -f ${SPEC}.pdf ${SPEC}.html ${NEWSPEC}.pdf grammar.trimmed.adoc resources/figs/stem-*.png

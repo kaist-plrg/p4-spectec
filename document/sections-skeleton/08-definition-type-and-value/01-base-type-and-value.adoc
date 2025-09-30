@@ -1,0 +1,182 @@
+[#sec-def-baseType]
+[#sec-def-baseTypeIR]
+[#sec-def-baseValue]
+=== Base types and values
+
+P4 supports the following built-in base types:
+
+${syntax: baseType}
+
+In addition, P4 supports void types:
+
+${syntax: typeOrVoid}
+
+In P4~IR~, base types are subdivided into primitive types and number types.
+Values are subdivided into primitive and number values, accordingly.
+
+${syntax: baseTypeIR
+          baseValue}
+
+[#sec-def-primitiveTypeIR]
+[#sec-def-primitiveValue]
+==== Primitive types and values
+
+${syntax: primitiveTypeIR
+          primitiveValue}
+
+* The `void` type, which has no values and can be used only in a few
+  restricted circumstances. There is no value of type `void`.
+* `bool`, which represents Boolean values.
+* The `error` type, which is used to convey errors in a
+  target-independent, compiler-managed way.
+* The `match_kind` type, which is used for describing the implementation of
+  table lookups.
+* The `string` type, which can be used with compile-time known
+  values of type string.
+
+[#sec-def-numberTypeIR]
+[#sec-def-numberValue]
+==== Number types and values
+
+${syntax: numberTypeIR
+          numberLiteral
+          numberValue}
+
+* `int`, which represents arbitrary-sized integer values.
+* Fixed-width signed integers represented using two's complement `int<>`.
+* Bit-strings of fixed width, denoted by `bit<>`.
+* Bit-strings of dynamically-computed width with a fixed maximum width `varbit<>`.
+
+===== Design goals
+
+The typing rules for the integer types are chosen according to the following
+principles:
+
+* *Inspired by C*: Typing of integers is modeled after the
+  well-defined parts of C, expanded to cope with arbitrary fixed-width
+  integers. In particular, the type of the result of an expression
+  only depends on the expression operands, and not on how the result
+  of the expression is consumed.
+* *No undefined behaviors*: P4 attempts to avoid many of C's
+  behaviors, which include the size of an integer (int), the results produced
+  on overflow, and the results produced for some input combinations
+  (e.g., shifts with negative amounts, overflows on signed numbers,
+  etc.). P4 computations on integer types have no undefined behaviors.
+* *Least surprise*: The P4 typing rules are chosen to behave as
+  closely as possible to traditional well-behaved C programs.
+* *Forbid rather than surprise*: Rather than provide surprising or
+  undefined results (e.g., in C comparisons between signed and
+  unsigned integers), we have chosen to forbid expressions with
+  ambiguous interpretations. For example, P4 does not allow binary
+  operations that combine signed and unsigned integers.
+
+The priority of arithmetic operations is identical to C---e.g.,
+multiplication binds tighter than addition.
+
+===== Portability
+
+No P4 target can support all possible types and operations. For
+example, the type `bit<23132312>` is legal in P4, but
+it is highly unlikely to be supported on any target in practice. Hence,
+each target can impose restrictions on the types it can support. Such
+restrictions may include:
+
+* The maximum width supported
+* Alignment and padding constraints (e.g., arithmetic may only be
+  supported on widths which are an integral number of bytes).
+* Constraints on some operands (e.g., some architectures may only
+  support multiplications by small values, or shifts with small
+  values).
+
+The documentation supplied with a target should clearly specify restrictions, and
+target-specific compilers should provide clear error messages when
+such restrictions are encountered. An architecture may reject a
+well-typed P4 program and still be conformant to the P4 spec. However,
+if an architecture accepts a P4 program as valid, the runtime program
+behavior should match this specification.
+
+===== Arbitrary-precision integers
+
+The arbitrary-precision data type describes integers with an unlimited
+precision. This type is written as `int`.
+
+This type is reserved for integer literals and expressions that involve only
+literals. No P4 runtime value can have an `int` type; at compile time the
+compiler will convert all int values that have a runtime component to
+fixed-width types, according to the rules described below.
+
+All operations that can be performed on arbitrary-precision integers are
+described in <<sec-varint-ops>>.  The following example shows three constant
+definitions whose values are arbitrary-precision integers.
+
+[source,p4]
+----
+const int a = 5;
+const int b = 2 * a;
+const int c = b - a + 3;
+----
+
+Parameters with type `int` are not supported for actions. Parameters with type
+`int` for other callable entities of a program, e.g. controls, parsers, or
+functions, must be directionless, indicating that all calls must provide a
+compile-time known value as an argument for such a parameter.  See
+<<sec-calling-convention>> for more details on directionless parameters.
+
+===== Fixed-width signed Integers
+
+Signed integers are represented using two's complement. An integer with `W`
+bits is declared as: `int<W>`. `W` must be an expression that evaluates to a
+local compile-time known (see Section <<sec-compile-time-known>>) value that is
+a non-negative integer.  Note that `int<W>` type refers to both cases of
+`int<W>` and `int<(expression)>` where the width is a local compile-time known
+value.
+
+Bits within an integer are numbered from `0` to `W-1`. Bit `0` is the least
+significant, and bit `W-1` is the sign bit.
+
+For example, the type `int<64>` describes the type of integers represented
+using exactly 64 bits with bits numbered from 0 to 63, where bit 63 is the most
+significant (sign) bit.
+
+P4 architectures may impose additional constraints on signed types: for
+example, they may limit the maximum size, or they may only support some
+arithmetic operations on certain sizes (e.g., 16-, 32-, and 64- bit values).
+
+All operations that can be performed on signed integers are described in
+<<sec-bit-ops>>.
+
+A signed integer with width 1 can only have two legal values: 0 and -1.
+
+===== Fixed-width unsigned integers (bit-strings)
+
+An unsigned integer (which we also call a "bit-string") has an arbitrary width,
+expressed in bits. A bit-string of width `W` is declared as: `bit<W>`. `W` must
+be an expression that evaluates to a local compile-time known value (see
+<<sec-compile-time-known>>) that is a non-negative integer.  When using an
+expression for the size, the expression must be parenthesized. Bitstrings with
+width 0 are allowed; they have no actual bits, and can only have the value 0.
+See <<sec-uninitialized-values-and-writing-invalid-headers>> for additional
+details. Note that `bit<W>` type refers to both cases of `bit<W>` and
+`bit<(expression)>` where the width is a compile-time known value.
+
+[source,p4]
+----
+const bit<32> x = 10;   // 32-bit constant with value 10.
+const bit<(x + 2)> y = 15;  // 12-bit constant with value 15.
+                            // expression for width must use ()
+----
+
+Bits within a bit-string are numbered from `0` to `W-1`. Bit `0` is the least
+significant, and bit `W-1` is the most significant.
+
+For example, the type `bit<128>` denotes the type of bit-string values with 128
+bits numbered from 0 to 127, where bit 127 is the most significant.
+
+The type `bit` is a shorthand for `bit<1>`.
+
+P4 architectures may impose additional constraints on bit types: for example,
+they may limit the maximum size, or they may only support some arithmetic
+operations on certain sizes (e.g., 16-, 32-, and 64- bit values).
+
+All operations that can be performed on unsigned integers are described in
+<<sec-bit-ops>>.

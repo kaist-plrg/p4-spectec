@@ -1,0 +1,128 @@
+[#sec-def-objectTypeIR]
+=== Object types and values
+
+${syntax: objectTypeIR}
+
+[#sec-def-externObjectDeclaration]
+[#sec-def-externObjectTypeIR]
+==== Extern object types
+
+An extern object declaration declares an object and all methods that can be
+invoked to perform computations and to alter the state of the object. Extern
+object declarations can also optionally declare constructor methods; these must
+have the same name as the enclosing `extern` type, no type parameters, and no
+return type.  Extern declarations may only appear as allowed by the
+architecture model and may be specific to a target.
+
+${syntax: methodPrototype
+          externObjectDeclaration}
+
+For example, the P4 core library introduces two extern objects `packet_in` and
+`packet_out` used for manipulating packets (see <<sec-packet-data-extraction>>
+and <<sec-deparse>>). Here is an example showing how the methods of these
+objects can be invoked on a packet:
+
+[source,p4]
+----
+extern packet_out {
+    void emit<T>(in T hdr);
+}
+control d(packet_out b, in Hdr h) {
+    apply {
+        b.emit(h.ipv4);       // write ipv4 header into output packet
+    }                         // by calling emit method
+}
+----
+
+Extern object types can be referred to using their name. Internally, extern
+object types are represented as:
+
+${syntax: externObjectTypeIR}
+
+[#sec-def-parserTypeDeclaration]
+[#sec-def-parserObjectTypeIR]
+==== Parser object types
+
+A parser type declaration describes the signature of a parser. A parser should
+have at least one argument of type `packet_in`, representing the received
+packet that is processed.
+
+${syntax: parserTypeDeclaration}
+
+For example, the following is a type declaration of a parser type named `P`
+that is parameterized on a type variable `H`. That parser receives as input a
+`packet_in` value `b` and produces two values:
+
+* A value with a user-defined type `H`
+* A value with a predefined type `Counters`
+
+[source,p4]
+----
+struct Counters { /* Fields omitted */ }
+parser P<H>(packet_in b,
+             out H packetHeaders,
+             out Counters counters);
+----
+
+Parser types can be referred to using their name and type arguments.
+Internally, parser types are represented as:
+
+${syntax: parserObjectTypeIR}
+
+[#sec-def-controlTypeDeclaration]
+[#sec-def-controlObjectTypeIR]
+==== Control object types
+
+A control type declaration describes the signature of a control block.
+
+${syntax: controlTypeDeclaration}
+
+Control type declarations are similar to parser type declarations.
+
+Control types can be referred to using their name and type arguments.
+Internally, control types are represented as:
+
+${syntax: controlObjectTypeIR}
+
+[#sec-def-packageTypeDeclaration]
+[#sec-def-packageObjectTypeIR]
+==== Package object types
+
+A package type describes the signature of a package.
+
+${syntax: packageTypeDeclaration}
+
+All parameters of a package are evaluated at compilation time, and in
+consequence they must all be directionless (they cannot be `in`, `out`, or
+`inout`). Otherwise package types are very similar to parser type declarations.
+Packages can only be instantiated; there are no runtime behaviors associated
+with them.
+
+Package types can be referred to using their name and type arguments.
+Internally, package types are represented as:
+
+${syntax: packageObjectTypeIR}
+
+[#sec-def-tableDeclaration]
+[#sec-def-tableObjectTypeIR]
+==== Table object types
+
+A `table` declaration introduces a table instance.
+
+${syntax: tableDeclaration}
+
+Table types can be referred to using their name. Internally, table types are
+represented as:
+
+${syntax: tableObjectTypeIR}
+
+[#sec-def-objectReferenceValue]
+==== Object reference values
+
+P4 objects are stateful, thus their values are references to the actual objects
+allocated in the global store.
+
+${syntax: oid
+          objectReferenceValue}
+
+Objects are referred to by their fully-qualified names from the top-level scope.
