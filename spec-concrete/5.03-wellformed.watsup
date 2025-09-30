@@ -257,7 +257,8 @@ dec $nestable_struct_in_header(typeIR) : bool
 dec $nestable'_struct_in_header(typeIR) : bool
   hint(prose %0 "can be used in a struct nested in a header type")
 
-def $nestable_header(typeIR) = $nestable'_header(typeIR_canon)
+def $nestable_header(typeIR)
+  = $nestable'_header(typeIR_canon)
   -- if typeIR_canon = $canon(typeIR)
 def $nestable'_header(BOOL) = true
 def $nestable'_header(INT `< _ >) = true
@@ -272,7 +273,7 @@ def $nestable'_header(_) = false
   -- otherwise
 
 def $nestable_struct_in_header(typeIR)
-  = $nestable'_struct_in_header(typeIR)
+  = $nestable'_struct_in_header(typeIR_canon)
   -- if typeIR_canon = $canon(typeIR)
 def $nestable'_struct_in_header(BOOL) = true
 def $nestable'_struct_in_header(INT `< _ >) = true

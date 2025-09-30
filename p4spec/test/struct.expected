@@ -2795,7 +2795,7 @@ syntax numberValue =
    | nat s int hint(print %#S#%)
    | nat v int # nat
 
-;; ../../../../spec-concrete/2.1.1-value.watsup:27.20-27.50
+;; ../../../../spec-concrete/2.1.1-value.watsup:27.20-27.48
 syntax baseValue = 
    | b bool
    | error. id
@@ -2850,36 +2850,40 @@ syntax dataValue =
    | tid . id
    | tid . id # value
 
-;; ../../../../spec-concrete/2.1.1-value.watsup:62.23-62.30
+;; ../../../../spec-concrete/2.1.1-value.watsup:62.31-62.37
+syntax objectReferenceValue = 
+   | ! oid
+
+;; ../../../../spec-concrete/2.1.1-value.watsup:68.23-68.30
 syntax defaultValue = 
    | default
 
-;; ../../../../spec-concrete/2.1.1-value.watsup:64.29-64.33
+;; ../../../../spec-concrete/2.1.1-value.watsup:70.29-70.33
 syntax invalidHeaderValue = 
    | {#}
 
-;; ../../../../spec-concrete/2.1.1-value.watsup:67.1-68.28
+;; ../../../../spec-concrete/2.1.1-value.watsup:73.1-74.28
 syntax sequenceValue = 
    | seq( value* )
    | seq( value* ,...)
 
-;; ../../../../spec-concrete/2.1.1-value.watsup:71.1-72.36
+;; ../../../../spec-concrete/2.1.1-value.watsup:77.1-78.36
 syntax recordValue = 
    | record{ fieldValue* }
    | record{ fieldValue* ,...}
 
-;; ../../../../spec-concrete/2.1.1-value.watsup:75.1-77.29
+;; ../../../../spec-concrete/2.1.1-value.watsup:81.1-83.29
 syntax setValue = 
    | set{ value }
    | set{ value &&& value }
    | set{ value .. value }
 
-;; ../../../../spec-concrete/2.1.1-value.watsup:80.1-81.38
-syntax tableValue = 
+;; ../../../../spec-concrete/2.1.1-value.watsup:86.1-87.38
+syntax tableMetadataValue = 
    | table_enum tid . id
    | table_struct tid { fieldValue* }
 
-;; ../../../../spec-concrete/2.1.1-value.watsup:84.1-89.15
+;; ../../../../spec-concrete/2.1.1-value.watsup:90.1-95.23
 syntax synthesizedValue = 
    | default
    | {#}
@@ -2893,11 +2897,7 @@ syntax synthesizedValue =
    | table_enum tid . id
    | table_struct tid { fieldValue* }
 
-;; ../../../../spec-concrete/2.1.1-value.watsup:95.31-95.37
-syntax objectReferenceValue = 
-   | ! oid
-
-;; ../../../../spec-concrete/2.1.1-value.watsup:102.1-105.25
+;; ../../../../spec-concrete/2.1.1-value.watsup:102.1-105.21
 syntax value = 
    | b bool
    | error. id
@@ -2915,6 +2915,7 @@ syntax value =
    | header_union tid { fieldValue* }
    | tid . id
    | tid . id # value
+   | ! oid
    | default
    | {#}
    | seq( value* )
@@ -2926,7 +2927,6 @@ syntax value =
    | set{ value .. value }
    | table_enum tid . id
    | table_struct tid { fieldValue* }
-   | ! oid
 
 ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:5.1-5.28
 def $to_int
@@ -3015,57 +3015,57 @@ syntax namedTypeIR =
    | tid tid
    | polyTypeDefIR < typeIR* >
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:55.24-55.42
+;; ../../../../spec-concrete/2.2.1-type.watsup:51.24-51.42
 syntax typedefTypeIR = 
    | typedef tid typeIR
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:57.20-57.35
+;; ../../../../spec-concrete/2.2.1-type.watsup:53.20-53.35
 syntax newTypeIR = 
    | type tid typeIR
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:60.1-61.14
+;; ../../../../spec-concrete/2.2.1-type.watsup:56.1-57.14
 syntax aliasTypeIR = 
    | typedef tid typeIR
    | type tid typeIR
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:67.21-67.37
+;; ../../../../spec-concrete/2.2.1-type.watsup:63.21-63.37
 syntax listTypeIR = 
    | list< typeIR >
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:68.22-68.40
+;; ../../../../spec-concrete/2.2.1-type.watsup:64.22-64.40
 syntax tupleTypeIR = 
    | tuple< typeIR* >
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:69.28-69.43
+;; ../../../../spec-concrete/2.2.1-type.watsup:65.28-65.43
 syntax headerStackTypeIR = 
    | typeIR [ nat ]
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:71.22-71.34
+;; ../../../../spec-concrete/2.2.1-type.watsup:67.22-67.34
 syntax fieldTypeIR = 
    | typeIR id ;
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:73.23-73.51
+;; ../../../../spec-concrete/2.2.1-type.watsup:69.23-69.51
 syntax structTypeIR = 
    | struct tid { fieldTypeIR* }
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:74.23-74.51
+;; ../../../../spec-concrete/2.2.1-type.watsup:70.23-70.51
 syntax headerTypeIR = 
    | header tid { fieldTypeIR* }
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:75.28-75.62
+;; ../../../../spec-concrete/2.2.1-type.watsup:71.28-71.62
 syntax headerUnionTypeIR = 
    | header_union tid { fieldTypeIR* }
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:77.23-77.37
+;; ../../../../spec-concrete/2.2.1-type.watsup:73.23-73.37
 syntax valueFieldIR = 
    | id = value ;
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:80.1-81.42
+;; ../../../../spec-concrete/2.2.1-type.watsup:76.1-77.42
 syntax enumTypeIR = 
    | enum tid { id* }
    | enum tid # typeIR { valueFieldIR* }
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:84.1-90.15
+;; ../../../../spec-concrete/2.2.1-type.watsup:80.1-86.15
 syntax dataTypeIR = 
    | list< typeIR >
    | tuple< typeIR* >
@@ -3076,27 +3076,27 @@ syntax dataTypeIR =
    | enum tid { id* }
    | enum tid # typeIR { valueFieldIR* }
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:100.3-100.40
+;; ../../../../spec-concrete/2.2.1-type.watsup:96.3-96.40
 syntax externObjectTypeIR = 
    | extern tid map<rid, routineTypeDefIR>
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:101.29-101.57
+;; ../../../../spec-concrete/2.2.1-type.watsup:97.29-97.57
 syntax parserObjectTypeIR = 
    | parser( parameterTypeIR* )
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:102.30-102.59
+;; ../../../../spec-concrete/2.2.1-type.watsup:98.30-98.59
 syntax controlObjectTypeIR = 
    | control( parameterTypeIR* )
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:103.30-103.50
+;; ../../../../spec-concrete/2.2.1-type.watsup:99.30-99.50
 syntax packageObjectTypeIR = 
    | package< typeIR* >
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:104.28-104.47
+;; ../../../../spec-concrete/2.2.1-type.watsup:100.28-100.47
 syntax tableObjectTypeIR = 
    | table tid # typeIR
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:107.1-111.22
+;; ../../../../spec-concrete/2.2.1-type.watsup:103.1-107.22
 syntax objectTypeIR = 
    | extern tid map<rid, routineTypeDefIR>
    | parser( parameterTypeIR* )
@@ -3104,52 +3104,34 @@ syntax objectTypeIR =
    | package< typeIR* >
    | table tid # typeIR
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:114.1-116.17
-syntax definedTypeIR = 
-   | typedef tid typeIR
-   | type tid typeIR
-   | list< typeIR >
-   | tuple< typeIR* >
-   | typeIR [ nat ]
-   | struct tid { fieldTypeIR* }
-   | header tid { fieldTypeIR* }
-   | header_union tid { fieldTypeIR* }
-   | enum tid { id* }
-   | enum tid # typeIR { valueFieldIR* }
-   | extern tid map<rid, routineTypeDefIR>
-   | parser( parameterTypeIR* )
-   | control( parameterTypeIR* )
-   | package< typeIR* >
-   | table tid # typeIR
-
-;; ../../../../spec-concrete/2.2.1-type.watsup:122.24-122.31
+;; ../../../../spec-concrete/2.2.1-type.watsup:113.24-113.31
 syntax defaultTypeIR = 
    | default
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:124.30-124.44
+;; ../../../../spec-concrete/2.2.1-type.watsup:115.30-115.44
 syntax invalidHeaderTypeIR = 
    | header_invalid
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:127.1-128.29
+;; ../../../../spec-concrete/2.2.1-type.watsup:118.1-119.29
 syntax sequenceTypeIR = 
    | seq< typeIR* >
    | seq< typeIR* ,...>
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:131.1-132.37
+;; ../../../../spec-concrete/2.2.1-type.watsup:122.1-123.37
 syntax recordTypeIR = 
    | record{ fieldTypeIR* }
    | record{ fieldTypeIR* ,...}
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:134.20-134.36
+;; ../../../../spec-concrete/2.2.1-type.watsup:125.20-125.36
 syntax setTypeIR = 
    | set< typeIR* >
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:137.1-138.39
-syntax tableTypeIR = 
+;; ../../../../spec-concrete/2.2.1-type.watsup:128.1-129.39
+syntax tableMetadataTypeIR = 
    | table_enum tid { id* }
    | table_struct tid { fieldTypeIR* }
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:141.1-146.16
+;; ../../../../spec-concrete/2.2.1-type.watsup:132.1-137.24
 syntax synthesizedTypeIR = 
    | default
    | header_invalid
@@ -3161,7 +3143,7 @@ syntax synthesizedTypeIR =
    | table_enum tid { id* }
    | table_struct tid { fieldTypeIR* }
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:153.1-156.22
+;; ../../../../spec-concrete/2.2.1-type.watsup:144.1-149.22
 syntax typeIR = 
    | void
    | bool
@@ -3199,14 +3181,14 @@ syntax typeIR =
    | table_enum tid { id* }
    | table_struct tid { fieldTypeIR* }
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:162.24-162.30
+;; ../../../../spec-concrete/2.2.1-type.watsup:155.24-155.30
 syntax monoTypeDefIR = typeIR
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:164.24-164.48
+;; ../../../../spec-concrete/2.2.1-type.watsup:157.24-157.48
 syntax polyTypeDefIR = 
    | typeIR < tid* , tid* >
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:166.20-166.49
+;; ../../../../spec-concrete/2.2.1-type.watsup:159.20-159.49
 syntax typeDefIR = 
    | void
    | bool
@@ -3245,18 +3227,18 @@ syntax typeDefIR =
    | table_struct tid { fieldTypeIR* }
    | typeIR < tid* , tid* >
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:172.26-172.52
+;; ../../../../spec-concrete/2.2.1-type.watsup:165.26-165.52
 syntax parameterTypeIR = 
    | direction typeIR id value?
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:179.1-182.33
+;; ../../../../spec-concrete/2.2.1-type.watsup:172.1-175.33
 syntax functionTypeIR = 
    | builtin_function( parameterTypeIR* )-> typeIR
    | function( parameterTypeIR* )-> typeIR
    | extern_function( parameterTypeIR* )-> typeIR
    | action( parameterTypeIR* )
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:185.1-190.27
+;; ../../../../spec-concrete/2.2.1-type.watsup:178.1-183.27
 syntax methodTypeIR = 
    | builtin_method( parameterTypeIR* )-> typeIR
    | extern_method( parameterTypeIR* )-> typeIR
@@ -3265,7 +3247,7 @@ syntax methodTypeIR =
    | control_apply( parameterTypeIR* )
    | table_apply-> typeIR
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:193.1-194.17
+;; ../../../../spec-concrete/2.2.1-type.watsup:186.1-187.17
 syntax routineTypeIR = 
    | builtin_function( parameterTypeIR* )-> typeIR
    | function( parameterTypeIR* )-> typeIR
@@ -3278,14 +3260,14 @@ syntax routineTypeIR =
    | control_apply( parameterTypeIR* )
    | table_apply-> typeIR
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:200.31-200.44
+;; ../../../../spec-concrete/2.2.1-type.watsup:193.31-193.44
 syntax monoRoutineTypeDefIR = routineTypeIR
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:202.31-202.62
+;; ../../../../spec-concrete/2.2.1-type.watsup:195.31-195.62
 syntax polyRoutineTypeDefIR = 
    | routineTypeIR < tid* , tid* >
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:205.1-206.25
+;; ../../../../spec-concrete/2.2.1-type.watsup:198.1-199.25
 syntax routineTypeDefIR = 
    | builtin_function( parameterTypeIR* )-> typeIR
    | function( parameterTypeIR* )-> typeIR
@@ -3299,14 +3281,14 @@ syntax routineTypeDefIR =
    | table_apply-> typeIR
    | routineTypeIR < tid* , tid* >
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:212.37-212.52
+;; ../../../../spec-concrete/2.2.1-type.watsup:205.37-205.52
 syntax constructorParameterTypeIR = parameterTypeIR
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:219.3-219.58
+;; ../../../../spec-concrete/2.2.1-type.watsup:212.3-212.58
 syntax constructorTypeIR = 
    | constructor( constructorParameterTypeIR* )-> typeIR
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:225.31-225.66
+;; ../../../../spec-concrete/2.2.1-type.watsup:218.31-218.66
 syntax constructorTypeDefIR = 
    | constructorTypeIR < tid* , tid* >
 
@@ -3473,7 +3455,7 @@ def $is_fixed_bit_typeIR(typeIR)
 
   1. Return false
 
-;; ../../../../spec-concrete/2.2.2-type-aux.watsup:76.1-76.34
+;; ../../../../spec-concrete/2.2.2-type-aux.watsup:74.1-74.34
 def $is_dataTypeIR(typeIR)
 
 1. If ((typeIR has type dataTypeIR)), then
@@ -3486,7 +3468,7 @@ def $is_dataTypeIR(typeIR)
 
   1. Return false
 
-;; ../../../../spec-concrete/2.2.2-type-aux.watsup:81.1-81.41
+;; ../../../../spec-concrete/2.2.2-type-aux.watsup:79.1-79.41
 def $is_headerStackTypeIR(typeIR)
 
 1. If ((typeIR has type headerStackTypeIR)), then
@@ -3499,7 +3481,7 @@ def $is_headerStackTypeIR(typeIR)
 
   1. Return false
 
-;; ../../../../spec-concrete/2.2.2-type-aux.watsup:88.1-88.36
+;; ../../../../spec-concrete/2.2.2-type-aux.watsup:86.1-86.36
 def $is_objectTypeIR(typeIR)
 
 1. If ((typeIR has type objectTypeIR)), then
@@ -3512,7 +3494,7 @@ def $is_objectTypeIR(typeIR)
 
   1. Return false
 
-;; ../../../../spec-concrete/2.2.2-type-aux.watsup:93.1-93.44
+;; ../../../../spec-concrete/2.2.2-type-aux.watsup:91.1-91.44
 def $is_extern_object_typeIR(typeIR)
 
 1. If ((typeIR has type externObjectTypeIR)), then
@@ -3525,7 +3507,7 @@ def $is_extern_object_typeIR(typeIR)
 
   1. Return false
 
-;; ../../../../spec-concrete/2.2.2-type-aux.watsup:98.1-98.44
+;; ../../../../spec-concrete/2.2.2-type-aux.watsup:96.1-96.44
 def $is_parser_object_typeIR(typeIR)
 
 1. If ((typeIR has type parserObjectTypeIR)), then
@@ -3538,7 +3520,7 @@ def $is_parser_object_typeIR(typeIR)
 
   1. Return false
 
-;; ../../../../spec-concrete/2.2.2-type-aux.watsup:103.1-103.45
+;; ../../../../spec-concrete/2.2.2-type-aux.watsup:101.1-101.45
 def $is_control_object_typeIR(typeIR)
 
 1. If ((typeIR has type controlObjectTypeIR)), then
@@ -3551,7 +3533,7 @@ def $is_control_object_typeIR(typeIR)
 
   1. Return false
 
-;; ../../../../spec-concrete/2.2.2-type-aux.watsup:108.1-108.45
+;; ../../../../spec-concrete/2.2.2-type-aux.watsup:106.1-106.45
 def $is_package_object_typeIR(typeIR)
 
 1. If ((typeIR has type packageObjectTypeIR)), then
@@ -3564,7 +3546,7 @@ def $is_package_object_typeIR(typeIR)
 
   1. Return false
 
-;; ../../../../spec-concrete/2.2.2-type-aux.watsup:113.1-113.43
+;; ../../../../spec-concrete/2.2.2-type-aux.watsup:111.1-111.43
 def $is_table_object_typeIR(typeIR)
 
 1. If ((typeIR has type controlObjectTypeIR)), then
@@ -3577,7 +3559,7 @@ def $is_table_object_typeIR(typeIR)
 
   1. Return false
 
-;; ../../../../spec-concrete/2.2.2-type-aux.watsup:120.1-120.41
+;; ../../../../spec-concrete/2.2.2-type-aux.watsup:118.1-118.41
 def $is_synthesizedTypeIR(typeIR)
 
 1. If ((typeIR has type tableObjectTypeIR)), then
@@ -3590,7 +3572,7 @@ def $is_synthesizedTypeIR(typeIR)
 
   1. Return false
 
-;; ../../../../spec-concrete/2.2.2-type-aux.watsup:125.1-125.34
+;; ../../../../spec-concrete/2.2.2-type-aux.watsup:123.1-123.34
 def $is_set_typeIR(typeIR)
 
 1. If ((typeIR has type setTypeIR)), then
@@ -3790,21 +3772,21 @@ def $free_type(typeIR'')
 
     2. Return $unions_set<tid>($free_type(typeIR)*{typeIR <- typeIR*})
 
-  23. Case (% has type tableTypeIR)
+  23. Case (% has type tableMetadataTypeIR)
 
-    1. (Let tableTypeIR be (typeIR'' as tableTypeIR))
+    1. (Let tableMetadataTypeIR be (typeIR'' as tableMetadataTypeIR))
 
-    2. Case analysis on tableTypeIR
+    2. Case analysis on tableMetadataTypeIR
 
       1. Case (% matches pattern `TABLE_ENUM%{%}`)
 
-        1. (Let (table_enum _tid { _id*{_id <- _id*} }) be tableTypeIR)
+        1. (Let (table_enum _tid { _id*{_id <- _id*} }) be tableMetadataTypeIR)
 
         2. Return ({ [] })
 
       2. Case (% matches pattern `TABLE_STRUCT%{%}`)
 
-        1. (Let (table_struct _tid { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} }) be tableTypeIR)
+        1. (Let (table_struct _tid { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} }) be tableMetadataTypeIR)
 
         2. Return ({ [] })
 
@@ -4541,7 +4523,7 @@ def $specialize_constructorTypeDef((constructorTypeIR < tid*{tid <- tid*} , tid_
 
   5. Return (constructorTypeIR_subst, tid_fresh*{tid_fresh <- tid_fresh*})
 
-;; ../../../../spec-concrete/2.2.3-type-subst.watsup:662.1-663.43
+;; ../../../../spec-concrete/2.2.3-type-subst.watsup:662.1-663.46
 def $canon(typeIR'')
 
 1. Case analysis on typeIR''
@@ -4824,21 +4806,21 @@ def $is_equalable_typeIR'(typeIR)
 
     2. Return false
 
-  13. Case (% has type tableTypeIR)
+  13. Case (% has type tableMetadataTypeIR)
 
-    1. (Let tableTypeIR be (typeIR as tableTypeIR))
+    1. (Let tableMetadataTypeIR be (typeIR as tableMetadataTypeIR))
 
-    2. Case analysis on tableTypeIR
+    2. Case analysis on tableMetadataTypeIR
 
       1. Case (% matches pattern `TABLE_ENUM%{%}`)
 
-        1. (Let (table_enum _tid { _id*{_id <- _id*} }) be tableTypeIR)
+        1. (Let (table_enum _tid { _id*{_id <- _id*} }) be tableMetadataTypeIR)
 
         2. Return false
 
       2. Case (% matches pattern `TABLE_STRUCT%{%}`)
 
-        1. (Let (table_struct _tid { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} }) be tableTypeIR)
+        1. (Let (table_struct _tid { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} }) be tableMetadataTypeIR)
 
         2. Return false
 
@@ -4894,7 +4876,7 @@ def $is_assignable_typeIR'(typeIR)
 
   1. Return true
 
-;; ../../../../spec-concrete/2.2.5-type-alpha.watsup:5.1-8.46
+;; ../../../../spec-concrete/2.2.5-type-alpha.watsup:5.1-9.56
 relation Type_alpha: typeIR'''' ~~ typeIR'''''
 
 1. Case analysis on typeIR''''
@@ -5359,23 +5341,23 @@ relation Type_alpha: typeIR'''' ~~ typeIR'''''
 
               1. The relation holds
 
-  19. Case (% has type tableTypeIR)
+  19. Case (% has type tableMetadataTypeIR)
 
-    1. (Let tableTypeIR be (typeIR'''' as tableTypeIR))
+    1. (Let tableMetadataTypeIR be (typeIR'''' as tableMetadataTypeIR))
 
-    2. Case analysis on tableTypeIR
+    2. Case analysis on tableMetadataTypeIR
 
       1. Case (% matches pattern `TABLE_ENUM%{%}`)
 
-        1. (Let (table_enum tid { id_f*{id_f <- id_f*} }) be tableTypeIR)
+        1. (Let (table_enum tid { id_f*{id_f <- id_f*} }) be tableMetadataTypeIR)
 
-        2. If ((typeIR''''' has type tableTypeIR)), then
+        2. If ((typeIR''''' has type tableMetadataTypeIR)), then
 
-          1. (Let tableTypeIR' be (typeIR''''' as tableTypeIR))
+          1. (Let tableMetadataTypeIR' be (typeIR''''' as tableMetadataTypeIR))
 
-          2. If ((tableTypeIR' matches pattern `TABLE_ENUM%{%}`)), then
+          2. If ((tableMetadataTypeIR' matches pattern `TABLE_ENUM%{%}`)), then
 
-            1. (Let (table_enum tid' { id_f'*{id_f' <- id_f'*} }) be tableTypeIR')
+            1. (Let (table_enum tid' { id_f'*{id_f' <- id_f'*} }) be tableMetadataTypeIR')
 
             2. If ((id_f = id_f'))*{id_f <- id_f*, id_f' <- id_f'*}, then
 
@@ -5387,15 +5369,15 @@ relation Type_alpha: typeIR'''' ~~ typeIR'''''
 
       2. Case (% matches pattern `TABLE_STRUCT%{%}`)
 
-        1. (Let (table_struct tid { (typeIR_f_a id_f ;)*{id_f <- id_f*, typeIR_f_a <- typeIR_f_a*} }) be tableTypeIR)
+        1. (Let (table_struct tid { (typeIR_f_a id_f ;)*{id_f <- id_f*, typeIR_f_a <- typeIR_f_a*} }) be tableMetadataTypeIR)
 
-        2. If ((typeIR''''' has type tableTypeIR)), then
+        2. If ((typeIR''''' has type tableMetadataTypeIR)), then
 
-          1. (Let tableTypeIR' be (typeIR''''' as tableTypeIR))
+          1. (Let tableMetadataTypeIR' be (typeIR''''' as tableMetadataTypeIR))
 
-          2. If ((tableTypeIR' matches pattern `TABLE_STRUCT%{%}`)), then
+          2. If ((tableMetadataTypeIR' matches pattern `TABLE_STRUCT%{%}`)), then
 
-            1. (Let (table_struct tid' { (typeIR_f_b id_f' ;)*{id_f' <- id_f'*, typeIR_f_b <- typeIR_f_b*} }) be tableTypeIR')
+            1. (Let (table_struct tid' { (typeIR_f_b id_f' ;)*{id_f' <- id_f'*, typeIR_f_b <- typeIR_f_b*} }) be tableMetadataTypeIR')
 
             2. If ((id_f = id_f'))*{id_f <- id_f*, id_f' <- id_f'*}, then
 
@@ -5407,7 +5389,7 @@ relation Type_alpha: typeIR'''' ~~ typeIR'''''
 
                     1. The relation holds
 
-;; ../../../../spec-concrete/2.2.5-type-alpha.watsup:10.1-13.46
+;; ../../../../spec-concrete/2.2.5-type-alpha.watsup:11.1-15.56
 relation ParameterType_alpha: (_direction typeIR_a _id _value?{_value <- _value?}) ~~ (_direction' typeIR_b _id' _value'?{_value' <- _value'?})
 
 1. Group : (_direction typeIR_a _id _value?{}) ~~ (_direction' typeIR_b _id' _value'?{})
@@ -5416,7 +5398,7 @@ relation ParameterType_alpha: (_direction typeIR_a _id _value?{_value <- _value?
 
     1. The relation holds
 
-;; ../../../../spec-concrete/2.2.5-type-alpha.watsup:15.1-18.46
+;; ../../../../spec-concrete/2.2.5-type-alpha.watsup:17.1-21.56
 relation RoutineType_alpha: routineTypeIR ~~ routineTypeIR'
 
 1. Case analysis on routineTypeIR
@@ -5625,7 +5607,7 @@ relation RoutineType_alpha: routineTypeIR ~~ routineTypeIR'
 
                 1. The relation holds
 
-;; ../../../../spec-concrete/2.2.5-type-alpha.watsup:20.1-23.46
+;; ../../../../spec-concrete/2.2.5-type-alpha.watsup:23.1-27.56
 relation RoutineTypeDef_alpha: routineTypeDefIR ~~ routineTypeDefIR'
 
 1. Case analysis on routineTypeDefIR
@@ -8178,12 +8160,12 @@ syntax typedExpressionIR =
 ;; ../../../../spec-concrete/4-ir-syntax.watsup:185.32-185.50
 syntax typedExpressionListIR = typedExpressionIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:187.1-188.32
+;; ../../../../spec-concrete/4-ir-syntax.watsup:187.1-188.35
 def $typeof_expression((_expressionIR # (( typeIR _ctk ))))
 
 1. Return typeIR
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:191.1-192.51
+;; ../../../../spec-concrete/4-ir-syntax.watsup:191.1-192.54
 def $ctkof_expression((_expressionIR # (( _typeIR ctk ))))
 
 1. Return ctk
@@ -8748,7 +8730,7 @@ syntax flow =
    | cont
    | ret
 
-;; ../../../../spec-concrete/5.0-flow.watsup:9.1-10.53
+;; ../../../../spec-concrete/5.0-flow.watsup:9.1-10.56
 def $join_flow(flow'', flow''')
 
 1. If ((flow'' matches pattern `RET`)), then
@@ -10268,7 +10250,7 @@ relation Type_wf: bound |- typeIR'''
 
     1. (Let baseTypeIR be (typeIR''' as baseTypeIR))
 
-    2. Group basetype: bound |- (baseTypeIR as typeIR)
+    2. Group baseTypeIR: bound |- (baseTypeIR as typeIR)
 
       1. The relation holds
 
@@ -10276,7 +10258,7 @@ relation Type_wf: bound |- typeIR'''
 
     1. (Let (tid tid) be (typeIR''' as nameTypeIR))
 
-    2. Group tid: bound |- ((tid tid) as typeIR)
+    2. Group nameTypeIR: bound |- ((tid tid) as typeIR)
 
       1. If ($in_set<tid>(tid, bound)), then
 
@@ -10286,7 +10268,7 @@ relation Type_wf: bound |- typeIR'''
 
     1. (Let (polyTypeDefIR < typeIR_arg*{typeIR_arg <- typeIR_arg*} >) be (typeIR''' as specializedTypeIR))
 
-    2. Group spectype: bound |- ((polyTypeDefIR < typeIR_arg*{} >) as typeIR)
+    2. Group specializedTypeIR: bound |- ((polyTypeDefIR < typeIR_arg*{} >) as typeIR)
 
       1. (Let typeIR be $specialize_typeDef((polyTypeDefIR as typeDefIR), typeIR_arg*{typeIR_arg <- typeIR_arg*}))
 
@@ -10298,7 +10280,7 @@ relation Type_wf: bound |- typeIR'''
 
     1. (Let (typedef _tid typeIR) be (typeIR''' as typedefTypeIR))
 
-    2. Group typedeftype: bound |- ((typedef _tid typeIR) as typeIR)
+    2. Group typedefTypeIR: bound |- ((typedef _tid typeIR) as typeIR)
 
       1. If ($nestable_typedef(typeIR)), then
 
@@ -10310,7 +10292,7 @@ relation Type_wf: bound |- typeIR'''
 
     1. (Let (type _tid typeIR) be (typeIR''' as newTypeIR))
 
-    2. Group newtype: bound |- ((type _tid typeIR) as typeIR)
+    2. Group newTypeIR: bound |- ((type _tid typeIR) as typeIR)
 
       1. If ($nestable_new(typeIR)), then
 
@@ -10322,7 +10304,7 @@ relation Type_wf: bound |- typeIR'''
 
     1. (Let (list< typeIR >) be (typeIR''' as listTypeIR))
 
-    2. Group listttype: bound |- ((list< typeIR >) as typeIR)
+    2. Group listTypeIR: bound |- ((list< typeIR >) as typeIR)
 
       1. If ($nestable_list(typeIR)), then
 
@@ -10334,7 +10316,7 @@ relation Type_wf: bound |- typeIR'''
 
     1. (Let (tuple< typeIR*{typeIR <- typeIR*} >) be (typeIR''' as tupleTypeIR))
 
-    2. Group tupletype: bound |- ((tuple< typeIR*{} >) as typeIR)
+    2. Group tupleTypeIR: bound |- ((tuple< typeIR*{} >) as typeIR)
 
       1. If ($nestable_tuple(typeIR))*{typeIR <- typeIR*}, then
 
@@ -10346,9 +10328,9 @@ relation Type_wf: bound |- typeIR'''
 
     1. (Let (typeIR [ _nat ]) be (typeIR''' as headerStackTypeIR))
 
-    2. Group stacktype: bound |- ((typeIR [ _nat ]) as typeIR)
+    2. Group headerStackTypeIR: bound |- ((typeIR [ _nat ]) as typeIR)
 
-      1. If ($nestable_stack(typeIR)), then
+      1. If ($nestable_headerStack(typeIR)), then
 
         1. If (Type_wf: bound |- typeIR) holds, then
 
@@ -10358,7 +10340,7 @@ relation Type_wf: bound |- typeIR'''
 
     1. (Let (struct _tid { (typeIR id ;)*{id <- id*, typeIR <- typeIR*} }) be (typeIR''' as structTypeIR))
 
-    2. Group structtype: bound |- ((struct _tid { (typeIR id ;)*{} }) as typeIR)
+    2. Group structTypeIR: bound |- ((struct _tid { (typeIR id ;)*{} }) as typeIR)
 
       1. If ($distinct_<id>(id*{id <- id*})), then
 
@@ -10372,7 +10354,7 @@ relation Type_wf: bound |- typeIR'''
 
     1. (Let (header _tid { (typeIR id ;)*{id <- id*, typeIR <- typeIR*} }) be (typeIR''' as headerTypeIR))
 
-    2. Group headertype: bound |- ((header _tid { (typeIR id ;)*{} }) as typeIR)
+    2. Group headerTypeIR: bound |- ((header _tid { (typeIR id ;)*{} }) as typeIR)
 
       1. If ($distinct_<id>(id*{id <- id*})), then
 
@@ -10386,11 +10368,11 @@ relation Type_wf: bound |- typeIR'''
 
     1. (Let (header_union _tid { (typeIR id ;)*{id <- id*, typeIR <- typeIR*} }) be (typeIR''' as headerUnionTypeIR))
 
-    2. Group headeruniontype: bound |- ((header_union _tid { (typeIR id ;)*{} }) as typeIR)
+    2. Group headerUnionTypeIR: bound |- ((header_union _tid { (typeIR id ;)*{} }) as typeIR)
 
       1. If ($distinct_<id>(id*{id <- id*})), then
 
-        1. If ($nestable_headerunion(typeIR))*{typeIR <- typeIR*}, then
+        1. If ($nestable_headerUnion(typeIR))*{typeIR <- typeIR*}, then
 
           1. If (Type_wf: bound |- typeIR)*{typeIR <- typeIR*} holds, then
 
@@ -10406,7 +10388,7 @@ relation Type_wf: bound |- typeIR'''
 
         1. (Let (enum _tid { id*{id <- id*} }) be enumTypeIR)
 
-        2. Group enumtype: bound |- ((enum _tid { id*{} }) as typeIR)
+        2. Group enumTypeIR-non-serializable: bound |- ((enum _tid { id*{} }) as typeIR)
 
           1. If ($distinct_<id>(id*{id <- id*})), then
 
@@ -10416,11 +10398,11 @@ relation Type_wf: bound |- typeIR'''
 
         1. (Let (enum _tid # typeIR { (id = _value ;)*{_value <- _value*, id <- id*} }) be enumTypeIR)
 
-        2. Group serenumtype: bound |- ((enum _tid # typeIR { (id = _value ;)*{} }) as typeIR)
+        2. Group enumTypeIR-serializable: bound |- ((enum _tid # typeIR { (id = _value ;)*{} }) as typeIR)
 
           1. If ($distinct_<id>(id*{id <- id*})), then
 
-            1. If ($nestable_serenum(typeIR)), then
+            1. If ($nestable_enum_serializable(typeIR)), then
 
               1. If (Type_wf: bound |- typeIR) holds, then
 
@@ -10430,7 +10412,7 @@ relation Type_wf: bound |- typeIR'''
 
     1. (Let (extern _tid ({ (_rid : routineTypeDefIR)*{_rid <- _rid*, routineTypeDefIR <- routineTypeDefIR*} })) be (typeIR''' as externObjectTypeIR))
 
-    2. Group externtype: bound |- ((extern _tid ({ (_rid : routineTypeDefIR)*{} })) as typeIR)
+    2. Group externObjectTypeIR: bound |- ((extern _tid ({ (_rid : routineTypeDefIR)*{} })) as typeIR)
 
       1. If (RoutineTypeDef_wf: bound |- routineTypeDefIR)*{routineTypeDefIR <- routineTypeDefIR*} holds, then
 
@@ -10440,7 +10422,7 @@ relation Type_wf: bound |- typeIR'''
 
     1. (Let (parser( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )) be (typeIR''' as parserObjectTypeIR))
 
-    2. Group parsertype: bound |- ((parser( parameterTypeIR*{} )) as typeIR)
+    2. Group parserObjectTypeIR: bound |- ((parser( parameterTypeIR*{} )) as typeIR)
 
       1. If (ParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}) holds, then
 
@@ -10450,7 +10432,7 @@ relation Type_wf: bound |- typeIR'''
 
     1. (Let (control( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )) be (typeIR''' as controlObjectTypeIR))
 
-    2. Group controltype: bound |- ((control( parameterTypeIR*{} )) as typeIR)
+    2. Group controlObjectTypeIR: bound |- ((control( parameterTypeIR*{} )) as typeIR)
 
       1. If (ParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}) holds, then
 
@@ -10460,7 +10442,7 @@ relation Type_wf: bound |- typeIR'''
 
     1. (Let (package< typeIR*{typeIR <- typeIR*} >) be (typeIR''' as packageObjectTypeIR))
 
-    2. Group packagetype: bound |- ((package< typeIR*{} >) as typeIR)
+    2. Group packageObjectTypeIR: bound |- ((package< typeIR*{} >) as typeIR)
 
       1. If (Type_wf: bound |- typeIR)*{typeIR <- typeIR*} holds, then
 
@@ -10470,17 +10452,17 @@ relation Type_wf: bound |- typeIR'''
 
     1. (Let (table _tid # typeIR) be (typeIR''' as tableObjectTypeIR))
 
-    2. Group tabletype: bound |- ((table _tid # typeIR) as typeIR)
+    2. Group tableObjectTypeIR: bound |- ((table _tid # typeIR) as typeIR)
 
       1. (Let typeIR'' be $canon(typeIR))
 
-      2. If ((typeIR'' has type tableTypeIR)), then
+      2. If ((typeIR'' has type tableMetadataTypeIR)), then
 
-        1. (Let tableTypeIR be (typeIR'' as tableTypeIR))
+        1. (Let tableMetadataTypeIR be (typeIR'' as tableMetadataTypeIR))
 
-        2. If ((tableTypeIR matches pattern `TABLE_STRUCT%{%}`)), then
+        2. If ((tableMetadataTypeIR matches pattern `TABLE_STRUCT%{%}`)), then
 
-          1. (Let (table_struct _tid' { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} }) be tableTypeIR)
+          1. (Let (table_struct _tid' { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} }) be tableMetadataTypeIR)
 
           2. If (Type_wf: bound |- typeIR) holds, then
 
@@ -10490,73 +10472,69 @@ relation Type_wf: bound |- typeIR'''
 
     1. (Let defaultTypeIR be (typeIR''' as defaultTypeIR))
 
-    2. Group defaulttype: bound |- ((default) as typeIR)
+    2. Group defaultTypeIR: bound |- ((default) as typeIR)
 
       1. The relation holds
 
-  19. Case (% has type sequenceTypeIR)
-
-    1. (Let sequenceTypeIR be (typeIR''' as sequenceTypeIR))
-
-    2. Case analysis on sequenceTypeIR
-
-      1. Case (% matches pattern `SEQ<%>`)
-
-        1. (Let (seq< typeIR*{typeIR <- typeIR*} >) be sequenceTypeIR)
-
-        2. Group sequencetype: bound |- ((seq< typeIR*{} >) as typeIR)
-
-          1. If (Type_wf: bound |- typeIR)*{typeIR <- typeIR*} holds, then
-
-            1. The relation holds
-
-      2. Case (% matches pattern `SEQ<%,...>`)
-
-        1. (Let (seq< typeIR*{typeIR <- typeIR*} ,...>) be sequenceTypeIR)
-
-        2. Group sequencedefaulttype: bound |- ((seq< typeIR*{} ,...>) as typeIR)
-
-          1. If (Type_wf: bound |- typeIR)*{typeIR <- typeIR*} holds, then
-
-            1. The relation holds
-
-  20. Case (% has type recordTypeIR)
-
-    1. (Let recordTypeIR be (typeIR''' as recordTypeIR))
-
-    2. Case analysis on recordTypeIR
-
-      1. Case (% matches pattern `RECORD{%}`)
-
-        1. (Let (record{ (typeIR id ;)*{id <- id*, typeIR <- typeIR*} }) be recordTypeIR)
-
-        2. Group recordtype: bound |- ((record{ (typeIR id ;)*{} }) as typeIR)
-
-          1. If ($distinct_<id>(id*{id <- id*})), then
-
-            1. If (Type_wf: bound |- typeIR)*{typeIR <- typeIR*} holds, then
-
-              1. The relation holds
-
-      2. Case (% matches pattern `RECORD{%,...}`)
-
-        1. (Let (record{ (typeIR id ;)*{id <- id*, typeIR <- typeIR*} ,...}) be recordTypeIR)
-
-        2. Group recorddefaulttype: bound |- ((record{ (typeIR id ;)*{} ,...}) as typeIR)
-
-          1. If ($distinct_<id>(id*{id <- id*})), then
-
-            1. If (Type_wf: bound |- typeIR)*{typeIR <- typeIR*} holds, then
-
-              1. The relation holds
-
-  21. Case (% has type invalidHeaderTypeIR)
+  19. Case (% has type invalidHeaderTypeIR)
 
     1. (Let invalidHeaderTypeIR be (typeIR''' as invalidHeaderTypeIR))
 
-    2. Group invalidtype: bound |- ((header_invalid) as typeIR)
+    2. Group invalidHeaderTypeIR: bound |- ((header_invalid) as typeIR)
 
       1. The relation holds
+
+  20. Case (% has type sequenceTypeIR)
+
+    1. (Let sequenceTypeIR be (typeIR''' as sequenceTypeIR))
+
+    2. Group sequenceTypeIR: bound |- (sequenceTypeIR as typeIR)
+
+      1. Case analysis on sequenceTypeIR
+
+        1. Case (% matches pattern `SEQ<%>`)
+
+          1. (Let (seq< typeIR*{typeIR <- typeIR*} >) be sequenceTypeIR)
+
+          2. If (Type_wf: bound |- typeIR)*{typeIR <- typeIR*} holds, then
+
+            1. The relation holds
+
+        2. Case (% matches pattern `SEQ<%,...>`)
+
+          1. (Let (seq< typeIR*{typeIR <- typeIR*} ,...>) be sequenceTypeIR)
+
+          2. If (Type_wf: bound |- typeIR)*{typeIR <- typeIR*} holds, then
+
+            1. The relation holds
+
+  21. Case (% has type recordTypeIR)
+
+    1. (Let recordTypeIR be (typeIR''' as recordTypeIR))
+
+    2. Group recordTypeIR: bound |- (recordTypeIR as typeIR)
+
+      1. Case analysis on recordTypeIR
+
+        1. Case (% matches pattern `RECORD{%}`)
+
+          1. (Let (record{ (typeIR id ;)*{id <- id*, typeIR <- typeIR*} }) be recordTypeIR)
+
+          2. If ($distinct_<id>(id*{id <- id*})), then
+
+            1. If (Type_wf: bound |- typeIR)*{typeIR <- typeIR*} holds, then
+
+              1. The relation holds
+
+        2. Case (% matches pattern `RECORD{%,...}`)
+
+          1. (Let (record{ (typeIR id ;)*{id <- id*, typeIR <- typeIR*} ,...}) be recordTypeIR)
+
+          2. If ($distinct_<id>(id*{id <- id*})), then
+
+            1. If (Type_wf: bound |- typeIR)*{typeIR <- typeIR*} holds, then
+
+              1. The relation holds
 
   22. Case (% has type setTypeIR)
 
@@ -10566,7 +10544,7 @@ relation Type_wf: bound |- typeIR'''
 
       1. (Let [typeIR] be typeIR'*{typeIR' <- typeIR'*})
 
-      2. Group settype: bound |- ((set< [typeIR] >) as typeIR)
+      2. Group setTypeIR: bound |- ((set< [typeIR] >) as typeIR)
 
         1. If ($nestable_set(typeIR)), then
 
@@ -10574,29 +10552,27 @@ relation Type_wf: bound |- typeIR'''
 
             1. The relation holds
 
-  23. Case (% has type tableTypeIR)
+  23. Case (% has type tableMetadataTypeIR)
 
-    1. (Let tableTypeIR be (typeIR''' as tableTypeIR))
+    1. (Let tableMetadataTypeIR be (typeIR''' as tableMetadataTypeIR))
 
-    2. Case analysis on tableTypeIR
+    2. Group tableMetadataTypeIR: bound |- (tableMetadataTypeIR as typeIR)
 
-      1. Case (% matches pattern `TABLE_ENUM%{%}`)
+      1. Case analysis on tableMetadataTypeIR
 
-        1. (Let (table_enum _tid { id*{id <- id*} }) be tableTypeIR)
+        1. Case (% matches pattern `TABLE_ENUM%{%}`)
 
-        2. Group tableenumtype: bound |- ((table_enum _tid { id*{} }) as typeIR)
+          1. (Let (table_enum _tid { id*{id <- id*} }) be tableMetadataTypeIR)
 
-          1. If ($distinct_<id>(id*{id <- id*})), then
+          2. If ($distinct_<id>(id*{id <- id*})), then
 
             1. The relation holds
 
-      2. Case (% matches pattern `TABLE_STRUCT%{%}`)
+        2. Case (% matches pattern `TABLE_STRUCT%{%}`)
 
-        1. (Let (table_struct _tid { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} }) be tableTypeIR)
+          1. (Let (table_struct _tid { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} }) be tableMetadataTypeIR)
 
-        2. Group tablestructtype: bound |- ((table_struct _tid { _fieldTypeIR*{} }) as typeIR)
-
-          1. The relation holds
+          2. The relation holds
 
 ;; ../../../../spec-concrete/5.03-wellformed.watsup:10.1-13.69
 relation TypeDef_wf: bound |- typeDefIR
@@ -10607,7 +10583,7 @@ relation TypeDef_wf: bound |- typeDefIR
 
     1. (Let typeIR be (typeDefIR as typeIR))
 
-    2. Group mono: bound |- (typeIR as typeDefIR)
+    2. Group monoTypeDefIR: bound |- (typeIR as typeDefIR)
 
       1. If ($definable_type_mono(typeIR)), then
 
@@ -10619,7 +10595,7 @@ relation TypeDef_wf: bound |- typeDefIR
 
     1. (Let (typeIR < tid_expl*{tid_expl <- tid_expl*} , tid_impl*{tid_impl <- tid_impl*} >) be (typeDefIR as polyTypeDefIR))
 
-    2. Group poly: bound |- ((typeIR < tid_expl*{} , tid_impl*{} >) as typeDefIR)
+    2. Group polyTypeDefIR: bound |- ((typeIR < tid_expl*{} , tid_impl*{} >) as typeDefIR)
 
       1. If ($definable_type_poly(typeIR)), then
 
@@ -10858,13 +10834,13 @@ relation RoutineType_wf: bound |- routineTypeIR
 
         1. (Let (table_apply-> typeIR) be methodTypeIR)
 
-        2. If ((typeIR has type tableTypeIR)), then
+        2. If ((typeIR has type tableMetadataTypeIR)), then
 
-          1. (Let tableTypeIR be (typeIR as tableTypeIR))
+          1. (Let tableMetadataTypeIR be (typeIR as tableMetadataTypeIR))
 
-          2. If ((tableTypeIR matches pattern `TABLE_STRUCT%{%}`)), then
+          2. If ((tableMetadataTypeIR matches pattern `TABLE_STRUCT%{%}`)), then
 
-            1. (Let (table_struct _tid { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} }) be tableTypeIR)
+            1. (Let (table_struct _tid { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} }) be tableMetadataTypeIR)
 
             2. Group tableapplymethod: bound |- ((table_apply-> ((table_struct _tid { _fieldTypeIR*{} }) as typeIR)) as routineTypeIR)
 
@@ -11022,9 +10998,11 @@ relation ConstructorTypeDef_wf: bound |- (constructorTypeIR < tid_expl*{tid_expl
 ;; ../../../../spec-concrete/5.03-wellformed.watsup:108.1-109.44
 def $nestable_typedef(typeIR)
 
-1. Return $nestable'_typedef($canon(typeIR))
+1. (Let typeIR_canon be $canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:110.1-110.38
+2. Return $nestable'_typedef(typeIR_canon)
+
+;; ../../../../spec-concrete/5.03-wellformed.watsup:110.1-111.44
 def $nestable'_typedef(typeIR')
 
 1. Case analysis on typeIR'
@@ -11055,13 +11033,13 @@ def $nestable'_typedef(typeIR')
 
   3. Case (% has type nameTypeIR)
 
-    1. (Let (tid _tid) be (typeIR' as nameTypeIR))
+    1. (Let nameTypeIR be (typeIR' as nameTypeIR))
 
     2. Return true
 
   4. Case (% has type newTypeIR)
 
-    1. (Let (type _tid _typeIR) be (typeIR' as newTypeIR))
+    1. (Let newTypeIR be (typeIR' as newTypeIR))
 
     2. Return true
 
@@ -11075,12 +11053,14 @@ def $nestable'_typedef(typeIR')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:128.1-128.33
+;; ../../../../spec-concrete/5.03-wellformed.watsup:130.1-131.45
 def $nestable_new(typeIR)
 
-1. Return $nestable'_new($canon(typeIR))
+1. (Let typeIR_canon be $canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:129.1-129.34
+2. Return $nestable'_new(typeIR_canon)
+
+;; ../../../../spec-concrete/5.03-wellformed.watsup:132.1-133.45
 def $nestable'_new(typeIR')
 
 1. Case analysis on typeIR'
@@ -11113,13 +11093,13 @@ def $nestable'_new(typeIR')
 
   3. Case (% has type nameTypeIR)
 
-    1. (Let (tid _tid) be (typeIR' as nameTypeIR))
+    1. (Let nameTypeIR be (typeIR' as nameTypeIR))
 
     2. Return true
 
   4. Case (% has type newTypeIR)
 
-    1. (Let (type _tid _typeIR) be (typeIR' as newTypeIR))
+    1. (Let newTypeIR be (typeIR' as newTypeIR))
 
     2. Return true
 
@@ -11127,12 +11107,14 @@ def $nestable'_new(typeIR')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:147.1-147.34
+;; ../../../../spec-concrete/5.03-wellformed.watsup:152.1-153.48
 def $nestable_list(typeIR)
 
-1. Return $nestable'_list($canon(typeIR))
+1. (Let typeIR_canon be $canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:148.1-148.35
+2. Return $nestable'_list(typeIR_canon)
+
+;; ../../../../spec-concrete/5.03-wellformed.watsup:154.1-155.48
 def $nestable'_list(typeIR')
 
 1. Case analysis on typeIR'
@@ -11167,13 +11149,13 @@ def $nestable'_list(typeIR')
 
   3. Case (% has type nameTypeIR)
 
-    1. (Let (tid _tid) be (typeIR' as nameTypeIR))
+    1. (Let nameTypeIR be (typeIR' as nameTypeIR))
 
     2. Return true
 
   4. Case (% has type newTypeIR)
 
-    1. (Let (type _tid _typeIR) be (typeIR' as newTypeIR))
+    1. (Let newTypeIR be (typeIR' as newTypeIR))
 
     2. Return true
 
@@ -11187,19 +11169,21 @@ def $nestable'_list(typeIR')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:167.1-167.35
+;; ../../../../spec-concrete/5.03-wellformed.watsup:175.1-176.49
 def $nestable_tuple(typeIR)
 
-1. Return $nestable'_tuple($canon(typeIR))
+1. (Let typeIR_canon be $canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:168.1-168.36
-def $nestable'_tuple(typeIR'')
+2. Return $nestable'_tuple(typeIR_canon)
 
-1. Case analysis on typeIR''
+;; ../../../../spec-concrete/5.03-wellformed.watsup:177.1-178.49
+def $nestable'_tuple(typeIR')
+
+1. Case analysis on typeIR'
 
   1. Case (% has type primitiveTypeIR)
 
-    1. (Let primitiveTypeIR be (typeIR'' as primitiveTypeIR))
+    1. (Let primitiveTypeIR be (typeIR' as primitiveTypeIR))
 
     2. Case analysis on primitiveTypeIR
 
@@ -11213,7 +11197,7 @@ def $nestable'_tuple(typeIR'')
 
   2. Case (% has type numberTypeIR)
 
-    1. (Let numberTypeIR be (typeIR'' as numberTypeIR))
+    1. (Let numberTypeIR be (typeIR' as numberTypeIR))
 
     2. Case analysis on numberTypeIR
 
@@ -11237,93 +11221,83 @@ def $nestable'_tuple(typeIR'')
 
   3. Case (% has type nameTypeIR)
 
-    1. (Let (tid _tid) be (typeIR'' as nameTypeIR))
+    1. (Let nameTypeIR be (typeIR' as nameTypeIR))
 
     2. Return true
 
   4. Case (% has type newTypeIR)
 
-    1. (Let (type _tid _typeIR) be (typeIR'' as newTypeIR))
+    1. (Let newTypeIR be (typeIR' as newTypeIR))
 
     2. Return true
 
   5. Case (% has type tupleTypeIR)
 
-    1. (Let (tuple< _typeIR*{_typeIR <- _typeIR*} >) be (typeIR'' as tupleTypeIR))
+    1. (Let tupleTypeIR be (typeIR' as tupleTypeIR))
 
     2. Return true
 
   6. Case (% has type headerStackTypeIR)
 
-    1. (Let (typeIR [ _nat ]) be (typeIR'' as headerStackTypeIR))
+    1. (Let headerStackTypeIR be (typeIR' as headerStackTypeIR))
 
     2. Return true
 
-  7. Case (% has type headerTypeIR)
+  7. Case (% has type structTypeIR)
 
-    1. (Let (header _tid { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} }) be (typeIR'' as headerTypeIR))
-
-    2. Return true
-
-  8. Case (% has type headerUnionTypeIR)
-
-    1. (Let (header_union _tid { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} }) be (typeIR'' as headerUnionTypeIR))
+    1. (Let structTypeIR be (typeIR' as structTypeIR))
 
     2. Return true
 
-  9. Case (% has type structTypeIR)
+  8. Case (% has type headerTypeIR)
 
-    1. (Let (struct _tid { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} }) be (typeIR'' as structTypeIR))
+    1. (Let headerTypeIR be (typeIR' as headerTypeIR))
+
+    2. Return true
+
+  9. Case (% has type headerUnionTypeIR)
+
+    1. (Let headerUnionTypeIR be (typeIR' as headerUnionTypeIR))
 
     2. Return true
 
   10. Case (% has type enumTypeIR)
 
-    1. (Let enumTypeIR be (typeIR'' as enumTypeIR))
+    1. (Let enumTypeIR be (typeIR' as enumTypeIR))
 
-    2. Case analysis on enumTypeIR
-
-      1. Case (% matches pattern `ENUM%{%}`)
-
-        1. (Let (enum _tid { _id*{_id <- _id*} }) be enumTypeIR)
-
-        2. Return true
-
-      2. Case (% matches pattern `ENUM%#%{%}`)
-
-        1. (Let (enum _tid # _typeIR { _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} }) be enumTypeIR)
-
-        2. Return true
+    2. Return true
 
 2. Otherwise
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:193.1-193.35
-def $nestable_stack(typeIR)
+;; ../../../../spec-concrete/5.03-wellformed.watsup:203.1-204.56
+def $nestable_headerStack(typeIR)
 
-1. Return $nestable'_stack($canon(typeIR))
+1. (Let typeIR_canon be $canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:194.1-194.36
-def $nestable'_stack(typeIR')
+2. Return $nestable'_headerStack(typeIR_canon)
+
+;; ../../../../spec-concrete/5.03-wellformed.watsup:205.1-206.56
+def $nestable'_headerStack(typeIR')
 
 1. Case analysis on typeIR'
 
   1. Case (% has type nameTypeIR)
 
-    1. (Let (tid _tid) be (typeIR' as nameTypeIR))
+    1. (Let nameTypeIR be (typeIR' as nameTypeIR))
 
     2. Return true
 
   2. Case (% has type headerTypeIR)
 
-    1. (Let (header _tid { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} }) be (typeIR' as headerTypeIR))
+    1. (Let headerTypeIR be (typeIR' as headerTypeIR))
 
     2. Return true
 
   3. Case (% has type headerUnionTypeIR)
 
-    1. (Let (header_union _tid { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} }) be (typeIR' as headerUnionTypeIR))
+    1. (Let headerUnionTypeIR be (typeIR' as headerUnionTypeIR))
 
     2. Return true
 
@@ -11331,19 +11305,21 @@ def $nestable'_stack(typeIR')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:208.1-208.36
+;; ../../../../spec-concrete/5.03-wellformed.watsup:222.1-223.50
 def $nestable_struct(typeIR)
 
-1. Return $nestable'_struct($canon(typeIR))
+1. (Let typeIR_canon be $canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:209.1-209.37
-def $nestable'_struct(typeIR'')
+2. Return $nestable'_struct(typeIR_canon)
 
-1. Case analysis on typeIR''
+;; ../../../../spec-concrete/5.03-wellformed.watsup:224.1-225.50
+def $nestable'_struct(typeIR')
+
+1. Case analysis on typeIR'
 
   1. Case (% has type primitiveTypeIR)
 
-    1. (Let primitiveTypeIR be (typeIR'' as primitiveTypeIR))
+    1. (Let primitiveTypeIR be (typeIR' as primitiveTypeIR))
 
     2. Case analysis on primitiveTypeIR
 
@@ -11357,7 +11333,7 @@ def $nestable'_struct(typeIR'')
 
   2. Case (% has type numberTypeIR)
 
-    1. (Let numberTypeIR be (typeIR'' as numberTypeIR))
+    1. (Let numberTypeIR be (typeIR' as numberTypeIR))
 
     2. Case analysis on numberTypeIR
 
@@ -11381,74 +11357,64 @@ def $nestable'_struct(typeIR'')
 
   3. Case (% has type nameTypeIR)
 
-    1. (Let (tid _tid) be (typeIR'' as nameTypeIR))
+    1. (Let nameTypeIR be (typeIR' as nameTypeIR))
 
     2. Return true
 
   4. Case (% has type newTypeIR)
 
-    1. (Let (type _tid _typeIR) be (typeIR'' as newTypeIR))
+    1. (Let newTypeIR be (typeIR' as newTypeIR))
 
     2. Return true
 
   5. Case (% has type tupleTypeIR)
 
-    1. (Let (tuple< _typeIR*{_typeIR <- _typeIR*} >) be (typeIR'' as tupleTypeIR))
+    1. (Let tupleTypeIR be (typeIR' as tupleTypeIR))
 
     2. Return true
 
   6. Case (% has type headerStackTypeIR)
 
-    1. (Let (typeIR [ _nat ]) be (typeIR'' as headerStackTypeIR))
+    1. (Let headerStackTypeIR be (typeIR' as headerStackTypeIR))
 
     2. Return true
 
   7. Case (% has type structTypeIR)
 
-    1. (Let (struct _tid { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} }) be (typeIR'' as structTypeIR))
+    1. (Let structTypeIR be (typeIR' as structTypeIR))
 
     2. Return true
 
   8. Case (% has type headerTypeIR)
 
-    1. (Let (header _tid { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} }) be (typeIR'' as headerTypeIR))
+    1. (Let headerTypeIR be (typeIR' as headerTypeIR))
 
     2. Return true
 
   9. Case (% has type headerUnionTypeIR)
 
-    1. (Let (header_union _tid { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} }) be (typeIR'' as headerUnionTypeIR))
+    1. (Let headerUnionTypeIR be (typeIR' as headerUnionTypeIR))
 
     2. Return true
 
   10. Case (% has type enumTypeIR)
 
-    1. (Let enumTypeIR be (typeIR'' as enumTypeIR))
+    1. (Let enumTypeIR be (typeIR' as enumTypeIR))
 
-    2. Case analysis on enumTypeIR
-
-      1. Case (% matches pattern `ENUM%{%}`)
-
-        1. (Let (enum _tid { _id*{_id <- _id*} }) be enumTypeIR)
-
-        2. Return true
-
-      2. Case (% matches pattern `ENUM%#%{%}`)
-
-        1. (Let (enum _tid # _typeIR { _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} }) be enumTypeIR)
-
-        2. Return true
+    2. Return true
 
 2. Otherwise
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:235.1-235.36
+;; ../../../../spec-concrete/5.03-wellformed.watsup:251.1-252.48
 def $nestable_header(typeIR)
 
-1. Return $nestable'_header($canon(typeIR))
+1. (Let typeIR_canon be $canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:236.1-236.37
+2. Return $nestable'_header(typeIR_canon)
+
+;; ../../../../spec-concrete/5.03-wellformed.watsup:253.1-254.48
 def $nestable'_header(typeIR'')
 
 1. Case analysis on typeIR''
@@ -11487,13 +11453,13 @@ def $nestable'_header(typeIR'')
 
   3. Case (% has type nameTypeIR)
 
-    1. (Let (tid _tid) be (typeIR'' as nameTypeIR))
+    1. (Let nameTypeIR be (typeIR'' as nameTypeIR))
 
     2. Return true
 
   4. Case (% has type newTypeIR)
 
-    1. (Let (type _tid _typeIR) be (typeIR'' as newTypeIR))
+    1. (Let newTypeIR be (typeIR'' as newTypeIR))
 
     2. Return true
 
@@ -11519,12 +11485,14 @@ def $nestable'_header(typeIR'')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:237.1-237.46
+;; ../../../../spec-concrete/5.03-wellformed.watsup:255.1-256.67
 def $nestable_struct_in_header(typeIR)
 
-1. Return $nestable'_struct_in_header($canon(typeIR))
+1. (Let typeIR_canon be $canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:238.1-238.47
+2. Return $nestable'_struct_in_header(typeIR_canon)
+
+;; ../../../../spec-concrete/5.03-wellformed.watsup:257.1-258.67
 def $nestable'_struct_in_header(typeIR'')
 
 1. Case analysis on typeIR''
@@ -11557,13 +11525,13 @@ def $nestable'_struct_in_header(typeIR'')
 
   3. Case (% has type nameTypeIR)
 
-    1. (Let (tid _tid) be (typeIR'' as nameTypeIR))
+    1. (Let nameTypeIR be (typeIR'' as nameTypeIR))
 
     2. Return true
 
   4. Case (% has type newTypeIR)
 
-    1. (Let (type _tid _typeIR) be (typeIR'' as newTypeIR))
+    1. (Let newTypeIR be (typeIR'' as newTypeIR))
 
     2. Return true
 
@@ -11589,31 +11557,33 @@ def $nestable'_struct_in_header(typeIR'')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:272.1-272.41
-def $nestable_headerunion(typeIR)
+;; ../../../../spec-concrete/5.03-wellformed.watsup:295.1-296.54
+def $nestable_headerUnion(typeIR)
 
-1. Return $nestable'_headerunion($canon(typeIR))
+1. (Let typeIR_canon be $canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:273.1-273.42
-def $nestable'_headerunion(typeIR')
+2. Return $nestable'_headerUnion(typeIR_canon)
+
+;; ../../../../spec-concrete/5.03-wellformed.watsup:297.1-298.54
+def $nestable'_headerUnion(typeIR')
 
 1. Case analysis on typeIR'
 
   1. Case (% has type nameTypeIR)
 
-    1. (Let (tid _tid) be (typeIR' as nameTypeIR))
+    1. (Let nameTypeIR be (typeIR' as nameTypeIR))
 
     2. Return true
 
   2. Case (% has type newTypeIR)
 
-    1. (Let (type _tid _typeIR) be (typeIR' as newTypeIR))
+    1. (Let newTypeIR be (typeIR' as newTypeIR))
 
     2. Return true
 
   3. Case (% has type headerTypeIR)
 
-    1. (Let (header _tid { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} }) be (typeIR' as headerTypeIR))
+    1. (Let headerTypeIR be (typeIR' as headerTypeIR))
 
     2. Return true
 
@@ -11621,13 +11591,15 @@ def $nestable'_headerunion(typeIR')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:293.1-293.37
-def $nestable_serenum(typeIR)
+;; ../../../../spec-concrete/5.03-wellformed.watsup:319.1-320.59
+def $nestable_enum_serializable(typeIR)
 
-1. Return $nestable'_serenum($canon(typeIR))
+1. (Let typeIR_canon be $canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:294.1-294.38
-def $nestable'_serenum(typeIR'')
+2. Return $nestable'_enum_serializable(typeIR_canon)
+
+;; ../../../../spec-concrete/5.03-wellformed.watsup:321.1-322.59
+def $nestable'_enum_serializable(typeIR'')
 
 1. Case analysis on typeIR''
 
@@ -11651,7 +11623,7 @@ def $nestable'_serenum(typeIR'')
 
   2. Case (% has type nameTypeIR)
 
-    1. (Let (tid _tid) be (typeIR'' as nameTypeIR))
+    1. (Let nameTypeIR be (typeIR'' as nameTypeIR))
 
     2. Return true
 
@@ -11659,19 +11631,21 @@ def $nestable'_serenum(typeIR'')
 
     1. (Let (type _tid typeIR) be (typeIR'' as newTypeIR))
 
-    2. Return $nestable_new_in_serenum(typeIR)
+    2. Return $nestable_new_in_enum_serializable(typeIR)
 
 2. Otherwise
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:295.1-295.44
-def $nestable_new_in_serenum(typeIR)
+;; ../../../../spec-concrete/5.03-wellformed.watsup:323.1-324.80
+def $nestable_new_in_enum_serializable(typeIR)
 
-1. Return $nestable_new_in_serenum'($canon(typeIR))
+1. (Let typeIR_canon be $canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:296.1-296.45
-def $nestable_new_in_serenum'(typeIR')
+2. Return $nestable'_new_in_enum_serializable(typeIR_canon)
+
+;; ../../../../spec-concrete/5.03-wellformed.watsup:325.1-326.80
+def $nestable'_new_in_enum_serializable(typeIR')
 
 1. Case analysis on typeIR'
 
@@ -11695,13 +11669,13 @@ def $nestable_new_in_serenum'(typeIR')
 
   2. Case (% has type nameTypeIR)
 
-    1. (Let (tid _tid) be (typeIR' as nameTypeIR))
+    1. (Let nameTypeIR be (typeIR' as nameTypeIR))
 
     2. Return true
 
   3. Case (% has type newTypeIR)
 
-    1. (Let (type _tid _typeIR) be (typeIR' as newTypeIR))
+    1. (Let newTypeIR be (typeIR' as newTypeIR))
 
     2. Return true
 
@@ -11709,12 +11683,14 @@ def $nestable_new_in_serenum'(typeIR')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:372.1-372.33
+;; ../../../../spec-concrete/5.03-wellformed.watsup:412.1-413.45
 def $nestable_set(typeIR)
 
-1. Return $nestable'_set($canon(typeIR))
+1. (Let typeIR_canon be $canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:373.1-373.34
+2. Return $nestable'_set(typeIR_canon)
+
+;; ../../../../spec-concrete/5.03-wellformed.watsup:414.1-415.45
 def $nestable'_set(typeIR'')
 
 1. Case analysis on typeIR''
@@ -11753,13 +11729,13 @@ def $nestable'_set(typeIR'')
 
   3. Case (% has type nameTypeIR)
 
-    1. (Let (tid _tid) be (typeIR'' as nameTypeIR))
+    1. (Let nameTypeIR be (typeIR'' as nameTypeIR))
 
     2. Return true
 
   4. Case (% has type newTypeIR)
 
-    1. (Let (type _tid _typeIR) be (typeIR'' as newTypeIR))
+    1. (Let newTypeIR be (typeIR'' as newTypeIR))
 
     2. Return true
 
@@ -11775,19 +11751,7 @@ def $nestable'_set(typeIR'')
 
     1. (Let enumTypeIR be (typeIR'' as enumTypeIR))
 
-    2. Case analysis on enumTypeIR
-
-      1. Case (% matches pattern `ENUM%{%}`)
-
-        1. (Let (enum _tid { _id*{_id <- _id*} }) be enumTypeIR)
-
-        2. Return true
-
-      2. Case (% matches pattern `ENUM%#%{%}`)
-
-        1. (Let (enum _tid # _typeIR { _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} }) be enumTypeIR)
-
-        2. Return true
+    2. Return true
 
   7. Case (% has type sequenceTypeIR)
 
@@ -11805,12 +11769,14 @@ def $nestable'_set(typeIR'')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:374.1-374.42
+;; ../../../../spec-concrete/5.03-wellformed.watsup:416.1-417.63
 def $nestable_tuple_in_set(typeIR)
 
-1. Return $nestable'_tuple_in_set($canon(typeIR))
+1. (Let typeIR_canon be $canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:375.1-375.43
+2. Return $nestable'_tuple_in_set(typeIR_canon)
+
+;; ../../../../spec-concrete/5.03-wellformed.watsup:418.1-419.63
 def $nestable'_tuple_in_set(typeIR'')
 
 1. Case analysis on typeIR''
@@ -11843,13 +11809,13 @@ def $nestable'_tuple_in_set(typeIR'')
 
   3. Case (% has type nameTypeIR)
 
-    1. (Let (tid _tid) be (typeIR'' as nameTypeIR))
+    1. (Let nameTypeIR be (typeIR'' as nameTypeIR))
 
     2. Return true
 
   4. Case (% has type newTypeIR)
 
-    1. (Let (type _tid _typeIR) be (typeIR'' as newTypeIR))
+    1. (Let newTypeIR be (typeIR'' as newTypeIR))
 
     2. Return true
 
@@ -11865,30 +11831,20 @@ def $nestable'_tuple_in_set(typeIR'')
 
     1. (Let enumTypeIR be (typeIR'' as enumTypeIR))
 
-    2. Case analysis on enumTypeIR
-
-      1. Case (% matches pattern `ENUM%{%}`)
-
-        1. (Let (enum _tid { _id*{_id <- _id*} }) be enumTypeIR)
-
-        2. Return true
-
-      2. Case (% matches pattern `ENUM%#%{%}`)
-
-        1. (Let (enum _tid # _typeIR { _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} }) be enumTypeIR)
-
-        2. Return true
+    2. Return true
 
 2. Otherwise
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:376.1-376.45
+;; ../../../../spec-concrete/5.03-wellformed.watsup:420.1-421.66
 def $nestable_sequence_in_set(typeIR)
 
-1. Return $nestable'_sequence_in_set($canon(typeIR))
+1. (Let typeIR_canon be $canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:377.1-377.46
+2. Return $nestable'_sequence_in_set(typeIR_canon)
+
+;; ../../../../spec-concrete/5.03-wellformed.watsup:422.1-423.66
 def $nestable'_sequence_in_set(typeIR'')
 
 1. Case analysis on typeIR''
@@ -11921,13 +11877,13 @@ def $nestable'_sequence_in_set(typeIR'')
 
   3. Case (% has type nameTypeIR)
 
-    1. (Let (tid _tid) be (typeIR'' as nameTypeIR))
+    1. (Let nameTypeIR be (typeIR'' as nameTypeIR))
 
     2. Return true
 
   4. Case (% has type newTypeIR)
 
-    1. (Let (type _tid _typeIR) be (typeIR'' as newTypeIR))
+    1. (Let newTypeIR be (typeIR'' as newTypeIR))
 
     2. Return true
 
@@ -11943,19 +11899,7 @@ def $nestable'_sequence_in_set(typeIR'')
 
     1. (Let enumTypeIR be (typeIR'' as enumTypeIR))
 
-    2. Case analysis on enumTypeIR
-
-      1. Case (% matches pattern `ENUM%{%}`)
-
-        1. (Let (enum _tid { _id*{_id <- _id*} }) be enumTypeIR)
-
-        2. Return true
-
-      2. Case (% matches pattern `ENUM%#%{%}`)
-
-        1. (Let (enum _tid # _typeIR { _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} }) be enumTypeIR)
-
-        2. Return true
+    2. Return true
 
   7. Case (% has type sequenceTypeIR)
 
@@ -11973,14 +11917,14 @@ def $nestable'_sequence_in_set(typeIR'')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:441.1-441.40
+;; ../../../../spec-concrete/5.03-wellformed.watsup:491.1-492.59
 def $definable_type_mono(typeIR')
 
 1. Case analysis on typeIR'
 
   1. Case (% has type nameTypeIR)
 
-    1. (Let (tid _tid) be (typeIR' as nameTypeIR))
+    1. (Let nameTypeIR be (typeIR' as nameTypeIR))
 
     2. Return true
 
@@ -11994,23 +11938,11 @@ def $definable_type_mono(typeIR')
 
     1. (Let enumTypeIR be (typeIR' as enumTypeIR))
 
-    2. Case analysis on enumTypeIR
-
-      1. Case (% matches pattern `ENUM%{%}`)
-
-        1. (Let (enum _tid { _id*{_id <- _id*} }) be enumTypeIR)
-
-        2. Return true
-
-      2. Case (% matches pattern `ENUM%#%{%}`)
-
-        1. (Let (enum _tid # _typeIR { _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} }) be enumTypeIR)
-
-        2. Return true
+    2. Return true
 
   4. Case (% has type tableObjectTypeIR)
 
-    1. (Let (table _tid # _typeIR) be (typeIR' as tableObjectTypeIR))
+    1. (Let tableObjectTypeIR be (typeIR' as tableObjectTypeIR))
 
     2. Return true
 
@@ -12018,62 +11950,62 @@ def $definable_type_mono(typeIR')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:456.1-456.40
+;; ../../../../spec-concrete/5.03-wellformed.watsup:506.1-507.59
 def $definable_type_poly(typeIR')
 
 1. Case analysis on typeIR'
 
   1. Case (% has type tupleTypeIR)
 
-    1. (Let (tuple< _typeIR*{_typeIR <- _typeIR*} >) be (typeIR' as tupleTypeIR))
+    1. (Let tupleTypeIR be (typeIR' as tupleTypeIR))
 
     2. Return true
 
   2. Case (% has type headerStackTypeIR)
 
-    1. (Let (_typeIR [ _nat ]) be (typeIR' as headerStackTypeIR))
+    1. (Let headerStackTypeIR be (typeIR' as headerStackTypeIR))
 
     2. Return true
 
-  3. Case (% has type headerTypeIR)
+  3. Case (% has type structTypeIR)
 
-    1. (Let (header _tid { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} }) be (typeIR' as headerTypeIR))
-
-    2. Return true
-
-  4. Case (% has type headerUnionTypeIR)
-
-    1. (Let (header_union _tid { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} }) be (typeIR' as headerUnionTypeIR))
+    1. (Let structTypeIR be (typeIR' as structTypeIR))
 
     2. Return true
 
-  5. Case (% has type structTypeIR)
+  4. Case (% has type headerTypeIR)
 
-    1. (Let (struct _tid { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} }) be (typeIR' as structTypeIR))
+    1. (Let headerTypeIR be (typeIR' as headerTypeIR))
+
+    2. Return true
+
+  5. Case (% has type headerUnionTypeIR)
+
+    1. (Let headerUnionTypeIR be (typeIR' as headerUnionTypeIR))
 
     2. Return true
 
   6. Case (% has type externObjectTypeIR)
 
-    1. (Let (extern _tid _map<rid, routineTypeDefIR>) be (typeIR' as externObjectTypeIR))
+    1. (Let externObjectTypeIR be (typeIR' as externObjectTypeIR))
 
     2. Return true
 
   7. Case (% has type parserObjectTypeIR)
 
-    1. (Let (parser( _parameterTypeIR*{_parameterTypeIR <- _parameterTypeIR*} )) be (typeIR' as parserObjectTypeIR))
+    1. (Let parserObjectTypeIR be (typeIR' as parserObjectTypeIR))
 
     2. Return true
 
   8. Case (% has type controlObjectTypeIR)
 
-    1. (Let (control( _parameterTypeIR*{_parameterTypeIR <- _parameterTypeIR*} )) be (typeIR' as controlObjectTypeIR))
+    1. (Let controlObjectTypeIR be (typeIR' as controlObjectTypeIR))
 
     2. Return true
 
   9. Case (% has type packageObjectTypeIR)
 
-    1. (Let (package< _typeIR*{_typeIR <- _typeIR*} >) be (typeIR' as packageObjectTypeIR))
+    1. (Let packageObjectTypeIR be (typeIR' as packageObjectTypeIR))
 
     2. Return true
 
@@ -12081,12 +12013,12 @@ def $definable_type_poly(typeIR')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:489.1-489.49
+;; ../../../../spec-concrete/5.03-wellformed.watsup:540.1-540.49
 def $nestable_function(direction, typeIR)
 
 1. Return $nestable_function'(direction, $canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:490.1-490.50
+;; ../../../../spec-concrete/5.03-wellformed.watsup:541.1-541.50
 def $nestable_function'(direction', typeIR')
 
 1. Case analysis on typeIR'
@@ -12121,12 +12053,12 @@ def $nestable_function'(direction', typeIR')
 
   1. Return true
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:509.1-509.47
+;; ../../../../spec-concrete/5.03-wellformed.watsup:560.1-560.47
 def $directionless_trailing(direction*{direction <- direction*})
 
 1. Return $directionless_trailing'(true, $rev_<direction>(direction*{direction <- direction*}))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:510.1-510.54
+;; ../../../../spec-concrete/5.03-wellformed.watsup:561.1-561.54
 def $directionless_trailing'(_bool', direction''*{direction'' <- direction''*})
 
 1. Case analysis on direction''*{direction'' <- direction''*}
@@ -12165,12 +12097,12 @@ def $directionless_trailing'(_bool', direction''*{direction'' <- direction''*})
 
         1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:523.1-523.47
+;; ../../../../spec-concrete/5.03-wellformed.watsup:574.1-574.47
 def $nestable_action(direction, typeIR)
 
 1. Return $nestable_action'(direction, $canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:524.1-524.48
+;; ../../../../spec-concrete/5.03-wellformed.watsup:575.1-575.48
 def $nestable_action'(direction', typeIR')
 
 1. Case analysis on typeIR'
@@ -12203,12 +12135,12 @@ def $nestable_action'(direction', typeIR')
 
   1. Return true
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:542.1-542.55
+;; ../../../../spec-concrete/5.03-wellformed.watsup:593.1-593.55
 def $nestable_externfunction(direction, typeIR)
 
 1. Return $nestable_externfunction'(direction, $canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:543.1-543.56
+;; ../../../../spec-concrete/5.03-wellformed.watsup:594.1-594.56
 def $nestable_externfunction'(direction', typeIR')
 
 1. Case analysis on typeIR'
@@ -12235,25 +12167,25 @@ def $nestable_externfunction'(direction', typeIR')
 
   3. Case (% has type parserObjectTypeIR)
 
-    1. (Let (parser( _parameterTypeIR*{_parameterTypeIR <- _parameterTypeIR*} )) be (typeIR' as parserObjectTypeIR))
+    1. (Let parserObjectTypeIR be (typeIR' as parserObjectTypeIR))
 
     2. Return false
 
   4. Case (% has type controlObjectTypeIR)
 
-    1. (Let (control( _parameterTypeIR*{_parameterTypeIR <- _parameterTypeIR*} )) be (typeIR' as controlObjectTypeIR))
+    1. (Let controlObjectTypeIR be (typeIR' as controlObjectTypeIR))
 
     2. Return false
 
   5. Case (% has type packageObjectTypeIR)
 
-    1. (Let (package< _typeIR*{_typeIR <- _typeIR*} >) be (typeIR' as packageObjectTypeIR))
+    1. (Let packageObjectTypeIR be (typeIR' as packageObjectTypeIR))
 
     2. Return false
 
   6. Case (% has type tableObjectTypeIR)
 
-    1. (Let (table _tid # _typeIR) be (typeIR' as tableObjectTypeIR))
+    1. (Let tableObjectTypeIR be (typeIR' as tableObjectTypeIR))
 
     2. Return false
 
@@ -12261,12 +12193,12 @@ def $nestable_externfunction'(direction', typeIR')
 
   1. Return true
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:572.1-572.53
+;; ../../../../spec-concrete/5.03-wellformed.watsup:623.1-623.53
 def $nestable_externmethod(direction, typeIR)
 
 1. Return $nestable_externmethod'(direction, $canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:573.1-573.54
+;; ../../../../spec-concrete/5.03-wellformed.watsup:624.1-624.54
 def $nestable_externmethod'(direction', typeIR')
 
 1. Case analysis on typeIR'
@@ -12293,25 +12225,25 @@ def $nestable_externmethod'(direction', typeIR')
 
   3. Case (% has type parserObjectTypeIR)
 
-    1. (Let (parser( _parameterTypeIR*{_parameterTypeIR <- _parameterTypeIR*} )) be (typeIR' as parserObjectTypeIR))
+    1. (Let parserObjectTypeIR be (typeIR' as parserObjectTypeIR))
 
     2. Return false
 
   4. Case (% has type controlObjectTypeIR)
 
-    1. (Let (control( _parameterTypeIR*{_parameterTypeIR <- _parameterTypeIR*} )) be (typeIR' as controlObjectTypeIR))
+    1. (Let controlObjectTypeIR be (typeIR' as controlObjectTypeIR))
 
     2. Return false
 
   5. Case (% has type packageObjectTypeIR)
 
-    1. (Let (package< _typeIR*{_typeIR <- _typeIR*} >) be (typeIR' as packageObjectTypeIR))
+    1. (Let packageObjectTypeIR be (typeIR' as packageObjectTypeIR))
 
     2. Return false
 
   6. Case (% has type tableObjectTypeIR)
 
-    1. (Let (table _tid # _typeIR) be (typeIR' as tableObjectTypeIR))
+    1. (Let tableObjectTypeIR be (typeIR' as tableObjectTypeIR))
 
     2. Return false
 
@@ -12319,12 +12251,12 @@ def $nestable_externmethod'(direction', typeIR')
 
   1. Return true
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:595.1-595.61
+;; ../../../../spec-concrete/5.03-wellformed.watsup:646.1-646.61
 def $nestable_externabstractmethod(direction, typeIR)
 
 1. Return $nestable_externabstractmethod'(direction, $canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:596.1-596.62
+;; ../../../../spec-concrete/5.03-wellformed.watsup:647.1-647.62
 def $nestable_externabstractmethod'(direction', typeIR')
 
 1. Case analysis on typeIR'
@@ -12351,25 +12283,25 @@ def $nestable_externabstractmethod'(direction', typeIR')
 
   3. Case (% has type parserObjectTypeIR)
 
-    1. (Let (parser( _parameterTypeIR*{_parameterTypeIR <- _parameterTypeIR*} )) be (typeIR' as parserObjectTypeIR))
+    1. (Let parserObjectTypeIR be (typeIR' as parserObjectTypeIR))
 
     2. Return false
 
   4. Case (% has type controlObjectTypeIR)
 
-    1. (Let (control( _parameterTypeIR*{_parameterTypeIR <- _parameterTypeIR*} )) be (typeIR' as controlObjectTypeIR))
+    1. (Let controlObjectTypeIR be (typeIR' as controlObjectTypeIR))
 
     2. Return false
 
   5. Case (% has type packageObjectTypeIR)
 
-    1. (Let (package< _typeIR*{_typeIR <- _typeIR*} >) be (typeIR' as packageObjectTypeIR))
+    1. (Let packageObjectTypeIR be (typeIR' as packageObjectTypeIR))
 
     2. Return false
 
   6. Case (% has type tableObjectTypeIR)
 
-    1. (Let (table _tid # _typeIR) be (typeIR' as tableObjectTypeIR))
+    1. (Let tableObjectTypeIR be (typeIR' as tableObjectTypeIR))
 
     2. Return false
 
@@ -12377,12 +12309,12 @@ def $nestable_externabstractmethod'(direction', typeIR')
 
   1. Return true
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:618.1-618.58
+;; ../../../../spec-concrete/5.03-wellformed.watsup:669.1-669.58
 def $nestable_parserapplymethod(direction, typeIR)
 
 1. Return $nestable_parserapplymethod'(direction, $canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:619.1-619.59
+;; ../../../../spec-concrete/5.03-wellformed.watsup:670.1-670.59
 def $nestable_parserapplymethod'(direction', typeIR')
 
 1. Case analysis on typeIR'
@@ -12409,25 +12341,25 @@ def $nestable_parserapplymethod'(direction', typeIR')
 
   3. Case (% has type parserObjectTypeIR)
 
-    1. (Let (parser( _parameterTypeIR*{_parameterTypeIR <- _parameterTypeIR*} )) be (typeIR' as parserObjectTypeIR))
+    1. (Let parserObjectTypeIR be (typeIR' as parserObjectTypeIR))
 
     2. Return false
 
   4. Case (% has type controlObjectTypeIR)
 
-    1. (Let (control( _parameterTypeIR*{_parameterTypeIR <- _parameterTypeIR*} )) be (typeIR' as controlObjectTypeIR))
+    1. (Let controlObjectTypeIR be (typeIR' as controlObjectTypeIR))
 
     2. Return false
 
   5. Case (% has type packageObjectTypeIR)
 
-    1. (Let (package< _typeIR*{_typeIR <- _typeIR*} >) be (typeIR' as packageObjectTypeIR))
+    1. (Let packageObjectTypeIR be (typeIR' as packageObjectTypeIR))
 
     2. Return false
 
   6. Case (% has type tableObjectTypeIR)
 
-    1. (Let (table _tid # _typeIR) be (typeIR' as tableObjectTypeIR))
+    1. (Let tableObjectTypeIR be (typeIR' as tableObjectTypeIR))
 
     2. Return false
 
@@ -12435,12 +12367,12 @@ def $nestable_parserapplymethod'(direction', typeIR')
 
   1. Return true
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:640.1-640.59
+;; ../../../../spec-concrete/5.03-wellformed.watsup:691.1-691.59
 def $nestable_controlapplymethod(direction, typeIR)
 
 1. Return $nestable_controlapplymethod'(direction, $canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:641.1-641.60
+;; ../../../../spec-concrete/5.03-wellformed.watsup:692.1-692.60
 def $nestable_controlapplymethod'(direction', typeIR')
 
 1. Case analysis on typeIR'
@@ -12467,19 +12399,19 @@ def $nestable_controlapplymethod'(direction', typeIR')
 
   3. Case (% has type parserObjectTypeIR)
 
-    1. (Let (parser( _parameterTypeIR*{_parameterTypeIR <- _parameterTypeIR*} )) be (typeIR' as parserObjectTypeIR))
+    1. (Let parserObjectTypeIR be (typeIR' as parserObjectTypeIR))
 
     2. Return false
 
   4. Case (% has type packageObjectTypeIR)
 
-    1. (Let (package< _typeIR*{_typeIR <- _typeIR*} >) be (typeIR' as packageObjectTypeIR))
+    1. (Let packageObjectTypeIR be (typeIR' as packageObjectTypeIR))
 
     2. Return false
 
   5. Case (% has type tableObjectTypeIR)
 
-    1. (Let (table _tid # _typeIR) be (typeIR' as tableObjectTypeIR))
+    1. (Let tableObjectTypeIR be (typeIR' as tableObjectTypeIR))
 
     2. Return false
 
@@ -12487,7 +12419,7 @@ def $nestable_controlapplymethod'(direction', typeIR')
 
   1. Return true
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:668.1-668.50
+;; ../../../../spec-concrete/5.03-wellformed.watsup:719.1-719.50
 def $definable_routine_mono(routineTypeIR')
 
 1. Case analysis on routineTypeIR'
@@ -12544,7 +12476,7 @@ def $definable_routine_mono(routineTypeIR')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:684.1-684.50
+;; ../../../../spec-concrete/5.03-wellformed.watsup:735.1-735.50
 def $definable_routine_poly(routineTypeIR')
 
 1. Case analysis on routineTypeIR'
@@ -12589,37 +12521,37 @@ def $definable_routine_poly(routineTypeIR')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:719.1-719.48
+;; ../../../../spec-concrete/5.03-wellformed.watsup:770.1-770.48
 def $nestable_constructor_extern(typeIR)
 
 1. Return $nestable'_constructor_extern($canon(typeIR))
 
 2. If ((typeIR has type parserObjectTypeIR)), then
 
-  1. (Let (parser( _parameterTypeIR*{_parameterTypeIR <- _parameterTypeIR*} )) be (typeIR as parserObjectTypeIR))
+  1. (Let parserObjectTypeIR be (typeIR as parserObjectTypeIR))
 
   2. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:720.1-720.49
+;; ../../../../spec-concrete/5.03-wellformed.watsup:771.1-771.49
 def $nestable'_constructor_extern(typeIR')
 
 1. Case analysis on typeIR'
 
   1. Case (% has type controlObjectTypeIR)
 
-    1. (Let (control( _parameterTypeIR*{_parameterTypeIR <- _parameterTypeIR*} )) be (typeIR' as controlObjectTypeIR))
+    1. (Let controlObjectTypeIR be (typeIR' as controlObjectTypeIR))
 
     2. Return false
 
   2. Case (% has type packageObjectTypeIR)
 
-    1. (Let (package< _typeIR*{_typeIR <- _typeIR*} >) be (typeIR' as packageObjectTypeIR))
+    1. (Let packageObjectTypeIR be (typeIR' as packageObjectTypeIR))
 
     2. Return false
 
   3. Case (% has type tableObjectTypeIR)
 
-    1. (Let (table _tid # _typeIR) be (typeIR' as tableObjectTypeIR))
+    1. (Let tableObjectTypeIR be (typeIR' as tableObjectTypeIR))
 
     2. Return false
 
@@ -12627,31 +12559,31 @@ def $nestable'_constructor_extern(typeIR')
 
   1. Return true
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:739.1-739.48
+;; ../../../../spec-concrete/5.03-wellformed.watsup:790.1-790.48
 def $nestable_constructor_parser(typeIR)
 
 1. Return $nestable'_constructor_parser($canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:740.1-740.49
+;; ../../../../spec-concrete/5.03-wellformed.watsup:791.1-791.49
 def $nestable'_constructor_parser(typeIR')
 
 1. Case analysis on typeIR'
 
   1. Case (% has type controlObjectTypeIR)
 
-    1. (Let (control( _parameterTypeIR*{_parameterTypeIR <- _parameterTypeIR*} )) be (typeIR' as controlObjectTypeIR))
+    1. (Let controlObjectTypeIR be (typeIR' as controlObjectTypeIR))
 
     2. Return false
 
   2. Case (% has type packageObjectTypeIR)
 
-    1. (Let (package< _typeIR*{_typeIR <- _typeIR*} >) be (typeIR' as packageObjectTypeIR))
+    1. (Let packageObjectTypeIR be (typeIR' as packageObjectTypeIR))
 
     2. Return false
 
   3. Case (% has type tableObjectTypeIR)
 
-    1. (Let (table _tid # _typeIR) be (typeIR' as tableObjectTypeIR))
+    1. (Let tableObjectTypeIR be (typeIR' as tableObjectTypeIR))
 
     2. Return false
 
@@ -12659,31 +12591,31 @@ def $nestable'_constructor_parser(typeIR')
 
   1. Return true
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:758.1-758.49
+;; ../../../../spec-concrete/5.03-wellformed.watsup:809.1-809.49
 def $nestable_constructor_control(typeIR)
 
 1. Return $nestable'_constructor_control($canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:759.1-759.50
+;; ../../../../spec-concrete/5.03-wellformed.watsup:810.1-810.50
 def $nestable'_constructor_control(typeIR')
 
 1. Case analysis on typeIR'
 
   1. Case (% has type parserObjectTypeIR)
 
-    1. (Let (parser( _parameterTypeIR*{_parameterTypeIR <- _parameterTypeIR*} )) be (typeIR' as parserObjectTypeIR))
+    1. (Let parserObjectTypeIR be (typeIR' as parserObjectTypeIR))
 
     2. Return false
 
   2. Case (% has type packageObjectTypeIR)
 
-    1. (Let (package< _typeIR*{_typeIR <- _typeIR*} >) be (typeIR' as packageObjectTypeIR))
+    1. (Let packageObjectTypeIR be (typeIR' as packageObjectTypeIR))
 
     2. Return false
 
   3. Case (% has type tableObjectTypeIR)
 
-    1. (Let (table _tid # _typeIR) be (typeIR' as tableObjectTypeIR))
+    1. (Let tableObjectTypeIR be (typeIR' as tableObjectTypeIR))
 
     2. Return false
 
@@ -12691,17 +12623,17 @@ def $nestable'_constructor_control(typeIR')
 
   1. Return true
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:777.1-777.49
+;; ../../../../spec-concrete/5.03-wellformed.watsup:828.1-828.49
 def $nestable_constructor_package(typeIR)
 
 1. Return $nestable'_constructor_package($canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:778.1-778.50
+;; ../../../../spec-concrete/5.03-wellformed.watsup:829.1-829.50
 def $nestable'_constructor_package(typeIR')
 
 1. If ((typeIR' has type tableObjectTypeIR)), then
 
-  1. (Let (table _tid # _typeIR) be (typeIR' as tableObjectTypeIR))
+  1. (Let tableObjectTypeIR be (typeIR' as tableObjectTypeIR))
 
   2. Return false
 
@@ -12709,37 +12641,37 @@ def $nestable'_constructor_package(typeIR')
 
   1. Return true
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:798.1-798.42
+;; ../../../../spec-concrete/5.03-wellformed.watsup:849.1-849.42
 def $definable_constructor(typeIR)
 
 1. Return $definable'_constructor($canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:799.1-799.43
+;; ../../../../spec-concrete/5.03-wellformed.watsup:850.1-850.43
 def $definable'_constructor(typeIR')
 
 1. Case analysis on typeIR'
 
   1. Case (% has type externObjectTypeIR)
 
-    1. (Let (extern _tid _map<rid, routineTypeDefIR>) be (typeIR' as externObjectTypeIR))
+    1. (Let externObjectTypeIR be (typeIR' as externObjectTypeIR))
 
     2. Return true
 
   2. Case (% has type parserObjectTypeIR)
 
-    1. (Let (parser( _parameterTypeIR*{_parameterTypeIR <- _parameterTypeIR*} )) be (typeIR' as parserObjectTypeIR))
+    1. (Let parserObjectTypeIR be (typeIR' as parserObjectTypeIR))
 
     2. Return true
 
   3. Case (% has type controlObjectTypeIR)
 
-    1. (Let (control( _parameterTypeIR*{_parameterTypeIR <- _parameterTypeIR*} )) be (typeIR' as controlObjectTypeIR))
+    1. (Let controlObjectTypeIR be (typeIR' as controlObjectTypeIR))
 
     2. Return true
 
   4. Case (% has type packageObjectTypeIR)
 
-    1. (Let (package< _typeIR*{_typeIR <- _typeIR*} >) be (typeIR' as packageObjectTypeIR))
+    1. (Let packageObjectTypeIR be (typeIR' as packageObjectTypeIR))
 
     2. Return true
 
@@ -12747,7 +12679,7 @@ def $definable'_constructor(typeIR')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:6.1-9.88
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:6.1-9.103
 relation Eval_static: p TC |- (expressionIR # (( _typeIR'' _ctk'' ))) ~> %
 
 1. Case analysis on expressionIR
@@ -13274,46 +13206,42 @@ relation Eval_static: p TC |- (expressionIR # (( _typeIR'' _ctk'' ))) ~> %
 
       2. Result in : % % |- % ~> value
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:16.1-20.59
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:16.1-20.69
 relation Type_ok: p TC |- typeOrVoid : % # %
 
-1. Case analysis on typeOrVoid
+1. Group primitiveType: p TC |- typeOrVoid : % # %
+
+  1. If ((typeOrVoid matches pattern `VOID`)), then
+
+    1. Result in : % % |- % : ((void) as typeIR) # []
+
+  2. If ((((bool) as typeOrVoid) = typeOrVoid)), then
+
+    1. Result in : % % |- % : ((bool) as typeIR) # []
+
+  3. If ((((error) as typeOrVoid) = typeOrVoid)), then
+
+    1. Result in : % % |- % : ((error) as typeIR) # []
+
+  4. If ((((match_kind) as typeOrVoid) = typeOrVoid)), then
+
+    1. Result in : % % |- % : ((match_kind) as typeIR) # []
+
+  5. If ((((string) as typeOrVoid) = typeOrVoid)), then
+
+    1. Result in : % % |- % : ((string) as typeIR) # []
+
+2. Case analysis on typeOrVoid
 
   1. Case (% has type baseType)
 
     1. (Let baseType be (typeOrVoid as baseType))
 
-    2. Case analysis on baseType
+    2. If ((baseType matches pattern `INT`)), then
 
-      1. Case (% matches pattern `BOOL`)
+      1. Group arbint: p TC |- ((int) as typeOrVoid) : % # %
 
-        1. Group boolean: p TC |- ((bool) as typeOrVoid) : % # %
-
-          1. Result in : % % |- % : ((bool) as typeIR) # []
-
-      2. Case (% matches pattern `ERROR`)
-
-        1. Group error: p TC |- ((error) as typeOrVoid) : % # %
-
-          1. Result in : % % |- % : ((error) as typeIR) # []
-
-      3. Case (% matches pattern `MATCH_KIND`)
-
-        1. Group matchkind: p TC |- ((match_kind) as typeOrVoid) : % # %
-
-          1. Result in : % % |- % : ((match_kind) as typeIR) # []
-
-      4. Case (% matches pattern `STRING`)
-
-        1. Group string: p TC |- ((string) as typeOrVoid) : % # %
-
-          1. Result in : % % |- % : ((string) as typeIR) # []
-
-      5. Case (% matches pattern `INT`)
-
-        1. Group arbint: p TC |- ((int) as typeOrVoid) : % # %
-
-          1. Result in : % % |- % : ((int) as typeIR) # []
+        1. Result in : % % |- % : ((int) as typeIR) # []
 
     3. Group fixint: p TC |- (baseType as typeOrVoid) : % # %
 
@@ -13567,12 +13495,6 @@ relation Type_ok: p TC |- typeOrVoid : % # %
 
       7. Result in : % % |- % : ((polyTypeDefIR_tuple < typeIR_arg*{typeIR_arg <- typeIR_arg*} >) as typeIR) # tid_fresh*{tid_fresh <- tid_fresh*}
 
-2. If ((typeOrVoid matches pattern `VOID`)), then
-
-  1. Group void: p TC |- (void) : % # %
-
-    1. Result in : % % |- % : ((void) as typeIR) # []
-
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:22.1-24.23
 relation TypeArgument_ok: p TC |- typeArgument : % # %
 
@@ -13643,7 +13565,7 @@ relation TypeArguments_ok: p TC |- typeArgument*{typeArgument <- typeArgument*} 
 
       4. Result in : % % |- % : typeArgumentIR_h :: typeArgumentIR_t*{typeArgumentIR_t <- typeArgumentIR_t*} # tid_impl*{tid_impl <- tid_impl*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:34.1-36.48
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:34.1-36.53
 relation Sub_expl: typeIR_a <: typeIR_b
 
 1. Group : typeIR_a <: typeIR_b
@@ -13656,7 +13578,7 @@ relation Sub_expl: typeIR_a <: typeIR_b
 
     1. The relation holds
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:37.1-39.73
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:37.1-39.78
 relation Sub_expl_canon: typeIR_a <: typeIR_b
 
 1. Group equals: typeIR_a <: typeIR_b
@@ -13673,7 +13595,7 @@ relation Sub_expl_canon: typeIR_a <: typeIR_b
 
       1. The relation holds
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:40.1-42.105
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:40.1-42.110
 relation Sub_expl_canon_neq: typeIR'''''' <: typeIR'''''''
 
 1. Case analysis on typeIR''''''
@@ -14126,7 +14048,7 @@ relation Sub_expl_canon_neq: typeIR'''''' <: typeIR'''''''
 
           1. The relation holds
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:44.1-46.48
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:44.1-47.57
 relation Sub_impl: typeIR_a <: typeIR_b
 
 1. Group : typeIR_a <: typeIR_b
@@ -14139,7 +14061,7 @@ relation Sub_impl: typeIR_a <: typeIR_b
 
     1. The relation holds
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:47.1-49.73
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:48.1-50.78
 relation Sub_impl_canon: typeIR_a <: typeIR_b
 
 1. Group equals: typeIR_a <: typeIR_b
@@ -14156,7 +14078,7 @@ relation Sub_impl_canon: typeIR_a <: typeIR_b
 
       1. The relation holds
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:50.1-52.105
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:51.1-53.110
 relation Sub_impl_canon_neq: typeIR'''''' <: typeIR'''''''
 
 1. Case analysis on typeIR''''''
@@ -14491,7 +14413,7 @@ relation Sub_impl_canon_neq: typeIR'''''' <: typeIR'''''''
 
                           1. The relation holds
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:58.1-61.84
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:59.1-62.73
 relation Expr_ok: p TC |- expression''' : %
 
 1. Case analysis on expression'''
@@ -15506,13 +15428,13 @@ relation Expr_ok: p TC |- expression''' : %
 
                 3. Result in : % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # expressionNoteIR)
 
-            4. Case (% has type tableTypeIR)
+            4. Case (% has type tableMetadataTypeIR)
 
-              1. (Let tableTypeIR be (typeIR' as tableTypeIR))
+              1. (Let tableMetadataTypeIR be (typeIR' as tableMetadataTypeIR))
 
-              2. If ((tableTypeIR matches pattern `TABLE_STRUCT%{%}`)), then
+              2. If ((tableMetadataTypeIR matches pattern `TABLE_STRUCT%{%}`)), then
 
-                1. (Let (table_struct _tid { (typeIR_f nameIR_f ;)*{nameIR_f <- nameIR_f*, typeIR_f <- typeIR_f*} }) be tableTypeIR)
+                1. (Let (table_struct _tid { (typeIR_f nameIR_f ;)*{nameIR_f <- nameIR_f*, typeIR_f <- typeIR_f*} }) be tableMetadataTypeIR)
 
                 2. (Let nameIR be $name(member))
 
@@ -15820,7 +15742,7 @@ relation Expr_ok: p TC |- expression''' : %
 
       5. Result in : % % |- % : (((( typedExpressionIR )) as expressionIR) # expressionNoteIR)
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:67.1-70.84
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:68.1-71.73
 relation Argument_ok: p TC |- argument : %
 
 1. If ((argument has type expression)), then
@@ -15863,7 +15785,7 @@ relation Argument_ok: p TC |- argument : %
 
       1. Result in : % % |- % : (_)
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:76.1-79.84
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:77.1-80.73
 relation Lvalue_ok: p TC |- lvalue : %
 
 1. If ((lvalue has type prefixedNonTypeName)), then
@@ -16124,7 +16046,7 @@ relation Lvalue_ok: p TC |- lvalue : %
 
       4. Result in : % % |- % : typedLvalueIR
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:85.1-89.61
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:86.1-90.98
 relation Stmt_ok: p' TC' f' |- statement : % % %
 
 1. Case analysis on statement
@@ -16365,13 +16287,13 @@ relation Stmt_ok: p' TC' f' |- statement : % % %
 
         3. (Let typeIR be $canon(typeIR_switch))
 
-        4. If ((typeIR has type tableTypeIR)), then
+        4. If ((typeIR has type tableMetadataTypeIR)), then
 
-          1. (Let tableTypeIR be (typeIR as tableTypeIR))
+          1. (Let tableMetadataTypeIR be (typeIR as tableMetadataTypeIR))
 
-          2. If ((tableTypeIR matches pattern `TABLE_ENUM%{%}`)), then
+          2. If ((tableMetadataTypeIR matches pattern `TABLE_ENUM%{%}`)), then
 
-            1. (Let (table_enum tid_table_enum { _id*{_id <- _id*} }) be tableTypeIR)
+            1. (Let (table_enum tid_table_enum { _id*{_id <- _id*} }) be tableMetadataTypeIR)
 
             2. (Let tid_table be $strip_prefix($strip_suffix(tid_table_enum, ")"), "action_list("))
 
@@ -16403,7 +16325,7 @@ relation Stmt_ok: p' TC' f' |- statement : % % %
 
             2. Result in : % % % |- % : TC' f_post (switchStatementIR as statementIR)
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:91.1-94.23
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:92.1-95.23
 relation BlockElementStmt_ok: TC_0 f |- blockElementStatement : % % %
 
 1. Case analysis on blockElementStatement
@@ -16484,7 +16406,7 @@ relation BlockElementStmt_ok: TC_0 f |- blockElementStatement : % % %
 
       2. Result in : % % |- % : TC_1 f_post (statementIR as blockElementStatementIR)
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:96.1-99.23
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:97.1-100.23
 relation BlockElementStmts_ok: TC' f' |- blockElementStatement*{blockElementStatement <- blockElementStatement*} : % % %
 
 1. Case analysis on blockElementStatement*{blockElementStatement <- blockElementStatement*}
@@ -16507,7 +16429,7 @@ relation BlockElementStmts_ok: TC' f' |- blockElementStatement*{blockElementStat
 
       3. Result in : % % |- % : TC_2 f_2 blockElementStatementIR_h :: blockElementStatementIR_t*{blockElementStatementIR_t <- blockElementStatementIR_t*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:101.1-104.23
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:102.1-105.23
 relation Block_ok: TC_0 f |- (annotationList { blockElementStatementList }) : % % %
 
 1. Group : TC_0 f |- (annotationList { blockElementStatementList }) : % % %
@@ -16524,7 +16446,7 @@ relation Block_ok: TC_0 f |- (annotationList { blockElementStatementList }) : % 
 
   6. Result in : % % |- % : TC_3 f_post blockStatementIR
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:111.1-114.84
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:112.1-115.73
 relation Parameter_ok: p TC |- (annotationList direction type name initializerOpt) : % # %
 
 1. If ((initializerOpt matches pattern ``EMPTY`)), then
@@ -16571,7 +16493,7 @@ relation Parameter_ok: p TC |- (annotationList direction type name initializerOp
 
           4. Result in : % % |- % : (annotationList direction typeIR nameIR ?((= value_init))) # tid_fresh*{tid_fresh <- tid_fresh*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:116.1-119.84
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:117.1-120.73
 relation Parameters_ok: p TC |- parameter*{parameter <- parameter*} : % # %
 
 1. Case analysis on parameter*{parameter <- parameter*}
@@ -16594,7 +16516,7 @@ relation Parameters_ok: p TC |- parameter*{parameter <- parameter*} : % # %
 
       3. Result in : % % |- % : parameterIR_h :: parameterIR_t*{parameterIR_t <- parameterIR_t*} # tid_fresh_h*{tid_fresh_h <- tid_fresh_h*} ++ tid_fresh_t*{tid_fresh_t <- tid_fresh_t*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:121.1-121.48
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:122.1-122.48
 def $parameterIR((_annotationList direction typeIR nameIR constantInitializerOptIR'))
 
 1. (Let constantInitializerIR?{constantInitializerIR <- constantInitializerIR?} be constantInitializerOptIR')
@@ -16609,7 +16531,7 @@ def $parameterIR((_annotationList direction typeIR nameIR constantInitializerOpt
 
   2. Return (direction typeIR nameIR ?(value))
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:127.1-130.23
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:128.1-131.23
 relation ConstructorParameter_ok: p TC |- constructorParameter : % # %
 
 1. Group : p TC |- constructorParameter : % # %
@@ -16618,7 +16540,7 @@ relation ConstructorParameter_ok: p TC |- constructorParameter : % # %
 
   2. Result in : % % |- % : constructorParameterIR # tid_fresh*{tid_fresh <- tid_fresh*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:132.1-135.23
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:133.1-136.23
 relation ConstructorParameters_ok: p TC |- constructorParameter*{constructorParameter <- constructorParameter*} : % # %
 
 1. Group : p TC |- constructorParameter*{} : % # %
@@ -16627,12 +16549,12 @@ relation ConstructorParameters_ok: p TC |- constructorParameter*{constructorPara
 
   2. Result in : % % |- % : constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} # tid_fresh*{tid_fresh <- tid_fresh*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:137.1-137.81
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:138.1-138.81
 def $constructorParameterIR(constructorParameterIR)
 
 1. Return $parameterIR(constructorParameterIR)
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:145.1-147.23
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:146.1-148.23
 relation ExternMethod_ok: TC_0 tid_extern |- methodPrototype : % %
 
 1. Case analysis on methodPrototype
@@ -16725,7 +16647,7 @@ relation ExternMethod_ok: TC_0 tid_extern |- methodPrototype : % %
 
             3. Result in : % % |- % : TC_4 methodPrototypeIR
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:149.1-151.23
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:150.1-152.23
 relation ExternMethods_ok: TC' tid_extern |- methodPrototype*{methodPrototype <- methodPrototype*} : % %
 
 1. Case analysis on methodPrototype*{methodPrototype <- methodPrototype*}
@@ -16748,7 +16670,7 @@ relation ExternMethods_ok: TC' tid_extern |- methodPrototype*{methodPrototype <-
 
       3. Result in : % % |- % : TC_2 methodPrototypeIR_h :: methodPrototypeIR_t*{methodPrototypeIR_t <- methodPrototypeIR_t*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:153.1-155.23
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:154.1-156.23
 relation ExternConstructor_ok: TC_0 tid_extern |- methodPrototype : % %
 
 1. If ((methodPrototype matches pattern `%%(%);`)), then
@@ -16795,7 +16717,7 @@ relation ExternConstructor_ok: TC_0 tid_extern |- methodPrototype : % %
 
               3. Result in : % % |- % : TC_1 methodPrototypeIR
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:157.1-159.23
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:158.1-160.23
 relation ExternConstructors_ok: TC' tid_extern |- methodPrototype*{methodPrototype <- methodPrototype*} : % %
 
 1. Case analysis on methodPrototype*{methodPrototype <- methodPrototype*}
@@ -16818,7 +16740,7 @@ relation ExternConstructors_ok: TC' tid_extern |- methodPrototype*{methodPrototy
 
       3. Result in : % % |- % : TC_2 methodPrototypeIR_h :: methodPrototypeIR_t*{methodPrototypeIR_t <- methodPrototypeIR_t*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:165.1-167.23
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:166.1-168.23
 relation ParserTransition_ok: TC_0 nameIR_state*{nameIR_state <- nameIR_state*} |- transitionStatement : %
 
 1. Case analysis on transitionStatement
@@ -16869,7 +16791,7 @@ relation ParserTransition_ok: TC_0 nameIR_state*{nameIR_state <- nameIR_state*} 
 
           4. Result in : % % |- % : transitionStatementIR
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:169.1-171.20
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:170.1-172.20
 relation ParserStmt_ok: TC_0' |- parserStatement'' : % %
 
 1. Case analysis on parserStatement''
@@ -17040,7 +16962,7 @@ relation ParserStmt_ok: TC_0' |- parserStatement'' : % %
 
           2. Result in : % |- % : TC_1 (conditionalStatementIR as parserStatementIR)
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:173.1-175.20
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:174.1-176.20
 relation ParserStmts_ok: TC' |- parserStatement*{parserStatement <- parserStatement*} : % %
 
 1. Case analysis on parserStatement*{parserStatement <- parserStatement*}
@@ -17063,7 +16985,7 @@ relation ParserStmts_ok: TC' |- parserStatement*{parserStatement <- parserStatem
 
       3. Result in : % |- % : TC_2 parserStatementIR_h :: parserStatementIR_t*{parserStatementIR_t <- parserStatementIR_t*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:177.1-179.23
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:178.1-180.23
 relation ParserState_ok: TC_0 nameIR_state*{nameIR_state <- nameIR_state*} |- (annotationList state name { parserStatementList transitionStatement }) : %
 
 1. Group : TC_0 nameIR_state*{} |- (annotationList state name { parserStatementList transitionStatement }) : %
@@ -17084,7 +17006,7 @@ relation ParserState_ok: TC_0 nameIR_state*{nameIR_state <- nameIR_state*} |- (a
 
   8. Result in : % % |- % : parserStateIR
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:181.1-183.20
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:182.1-184.20
 relation ParserStates_ok: TC |- parserState*{parserState <- parserState*} : %
 
 1. Group : TC |- parserState*{} : %
@@ -17105,7 +17027,7 @@ relation ParserStates_ok: TC |- parserState*{parserState <- parserState*} : %
 
         3. Result in : % |- % : parserStateIR*{parserStateIR <- parserStateIR*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:185.1-188.20
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:186.1-189.20
 relation ParserLocalDecl_ok: TC_0 |- parserLocalDeclaration : % %
 
 1. Case analysis on parserLocalDeclaration
@@ -17214,7 +17136,7 @@ relation ParserLocalDecl_ok: TC_0 |- parserLocalDeclaration : % %
 
             4. Result in : % |- % : TC_1 (valueSetDeclarationIR as parserLocalDeclarationIR)
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:190.1-193.20
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:191.1-194.20
 relation ParserLocalDecls_ok: TC' |- parserLocalDeclaration*{parserLocalDeclaration <- parserLocalDeclaration*} : % %
 
 1. Case analysis on parserLocalDeclaration*{parserLocalDeclaration <- parserLocalDeclaration*}
@@ -17237,7 +17159,7 @@ relation ParserLocalDecls_ok: TC' |- parserLocalDeclaration*{parserLocalDeclarat
 
       3. Result in : % |- % : TC_2 parserLocalDeclarationIR_h :: parserLocalDeclarationIR_t*{parserLocalDeclarationIR_t <- parserLocalDeclarationIR_t*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:199.1-201.23
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:200.1-202.23
 relation TableKey_ok: TC TBLC_0 |- (expression : name_matchkind annotationList ;) : % %
 
 1. Group : TC TBLC_0 |- (expression : name_matchkind annotationList ;) : % %
@@ -17262,7 +17184,7 @@ relation TableKey_ok: TC TBLC_0 |- (expression : name_matchkind annotationList ;
 
         4. Result in : % % |- % : TBLC_2 tableKeyIR
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:203.1-205.23
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:204.1-206.23
 relation TableKeys_ok: TC TBLC' |- tableKey*{tableKey <- tableKey*} : % %
 
 1. Case analysis on tableKey*{tableKey <- tableKey*}
@@ -17285,7 +17207,7 @@ relation TableKeys_ok: TC TBLC' |- tableKey*{tableKey <- tableKey*} : % %
 
       3. Result in : % % |- % : TBLC_2 tableKeyIR_h :: tableKeyIR_t*{tableKeyIR_t <- tableKeyIR_t*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:207.1-210.23
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:208.1-211.23
 relation Call_action_partial_ok: TC |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} @ argumentIR*{argumentIR <- argumentIR*} : % , % @ %
 
 1. Group : TC |- parameterTypeIR*{} @ argumentIR*{} : % , % @ %
@@ -17298,7 +17220,7 @@ relation Call_action_partial_ok: TC |- parameterTypeIR*{parameterTypeIR <- param
 
     2. Result in : % |- % @ % : parameterTypeIR_data*{parameterTypeIR_data <- parameterTypeIR_data*} , parameterTypeIR_control*{parameterTypeIR_control <- parameterTypeIR_control*} @ argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:212.1-214.23
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:213.1-215.23
 relation TableAction_ok: TC TBLC_0 |- (annotationList tableActionReference ;) : % %
 
 1. If ((tableActionReference has type prefixedNonTypeName)), then
@@ -17367,7 +17289,7 @@ relation TableAction_ok: TC TBLC_0 |- (annotationList tableActionReference ;) : 
 
           7. Result in : % % |- % : TBLC_1 tableActionIR
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:216.1-218.23
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:217.1-219.23
 relation TableActions_ok: TC TBLC' |- tableAction*{tableAction <- tableAction*} : % %
 
 1. Case analysis on tableAction*{tableAction <- tableAction*}
@@ -17390,7 +17312,7 @@ relation TableActions_ok: TC TBLC' |- tableAction*{tableAction <- tableAction*} 
 
       3. Result in : % % |- % : TBLC_2 tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:220.1-223.23
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:221.1-224.23
 relation Call_action_default_ok: TC |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} @ argumentIR*{argumentIR <- argumentIR*} : % , % @ %
 
 1. Group : TC |- parameterTypeIR*{} @ argumentIR*{} : % , % @ %
@@ -17401,7 +17323,7 @@ relation Call_action_default_ok: TC |- parameterTypeIR*{parameterTypeIR <- param
 
   3. Result in : % |- % @ % : parameterTypeIR_data*{parameterTypeIR_data <- parameterTypeIR_data*} , parameterTypeIR_control*{parameterTypeIR_control <- parameterTypeIR_control*} @ argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:225.1-227.23
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:226.1-228.23
 relation TableDefaultAction_ok: TC TBLC |- (= expression) : %
 
 1. Case analysis on expression
@@ -17454,7 +17376,7 @@ relation TableDefaultAction_ok: TC TBLC |- (= expression) : %
 
               1. Result in : % % |- % : (prefixedNameIR ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} ))
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:229.1-231.23
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:230.1-232.23
 relation TableEntry_keyset_ok: TC TBLC |- keysetExpression : % %
 
 1. Case analysis on keysetExpression
@@ -17703,7 +17625,7 @@ relation TableEntry_keyset_ok: TC TBLC |- keysetExpression : % %
 
             2. Result in : % % |- % : TBLS ((_) as keysetExpressionIR)
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:233.1-235.23
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:234.1-236.23
 relation TableEntry_action_ok: TC TBLC |- tableActionReference : %
 
 1. If ((tableActionReference has type prefixedNonTypeName)), then
@@ -17746,7 +17668,7 @@ relation TableEntry_action_ok: TC TBLC |- tableActionReference : %
 
         1. Result in : % % |- % : (prefixedNameIR ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} ))
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:237.1-240.26
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:238.1-241.26
 relation TableEntry_priority_ok: TC tableContext' TBLS |- tableEntryPriority''?{tableEntryPriority'' <- tableEntryPriority''?} : % %
 
 1. Case analysis on tableEntryPriority''?{tableEntryPriority'' <- tableEntryPriority''?}
@@ -18079,7 +18001,7 @@ relation TableEntry_priority_ok: TC tableContext' TBLS |- tableEntryPriority''?{
 
                           3. Result in : % % % |- % : TBLC_1 ?((priority=( typedExpressionIR ):))
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:242.1-244.23
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:243.1-245.23
 relation TableEntry_ok: TC TBLC_0 |- tableEntry : % %
 
 1. Case analysis on tableEntry
@@ -18120,7 +18042,7 @@ relation TableEntry_ok: TC TBLC_0 |- tableEntry : % %
 
       6. Result in : % % |- % : TBLC_1 tableEntryIR
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:246.1-248.23
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:247.1-249.23
 relation TableEntries_ok: TC TBLC' |- tableEntry*{tableEntry <- tableEntry*} : % %
 
 1. Case analysis on tableEntry*{tableEntry <- tableEntry*}
@@ -18143,7 +18065,7 @@ relation TableEntries_ok: TC TBLC' |- tableEntry*{tableEntry <- tableEntry*} : %
 
       3. Result in : % % |- % : TBLC_2 tableEntryIR_h :: tableEntryIR_t*{tableEntryIR_t <- tableEntryIR_t*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:250.1-252.23
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:251.1-253.23
 relation TableProperty_ok: TC TBLC_0' |- tableProperty : % %
 
 1. Case analysis on tableProperty
@@ -18346,7 +18268,7 @@ relation TableProperty_ok: TC TBLC_0' |- tableProperty : % %
 
         4. Result in : % % |- % : TBLC_0' tablePropertyIR
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:254.1-256.23
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:255.1-257.23
 relation TableProperties_ok: TC TBLC' |- tableProperty*{tableProperty <- tableProperty*} : % %
 
 1. Case analysis on tableProperty*{tableProperty <- tableProperty*}
@@ -18369,7 +18291,7 @@ relation TableProperties_ok: TC TBLC' |- tableProperty*{tableProperty <- tablePr
 
       3. Result in : % % |- % : TBLC_2 tablePropertyIR_h :: tablePropertyIR_t*{tablePropertyIR_t <- tablePropertyIR_t*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:258.1-260.20
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:259.1-261.20
 relation Table_ok: TC |- tableProperty*{tableProperty <- tableProperty*} : % %
 
 1. Group : TC |- tableProperty*{} : % %
@@ -18384,7 +18306,7 @@ relation Table_ok: TC |- tableProperty*{tableProperty <- tableProperty*} : % %
 
       3. Result in : % |- % : TBLC_1 tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:262.1-264.23
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:263.1-265.23
 relation TableType_ok: TC_0 TBLC |- name : % %
 
 1. Group : TC_0 TBLC |- name : % %
@@ -18413,7 +18335,7 @@ relation TableType_ok: TC_0 TBLC |- name : % %
 
   12. Result in : % % |- % : TC_1 typeIR_table
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:266.1-269.20
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:267.1-270.20
 relation ControlLocalDecl_ok: TC_0 |- controlLocalDeclaration : % %
 
 1. Case analysis on controlLocalDeclaration
@@ -18534,7 +18456,7 @@ relation ControlLocalDecl_ok: TC_0 |- controlLocalDeclaration : % %
 
       8. Result in : % |- % : TC_3 (tableDeclarationIR as controlLocalDeclarationIR)
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:271.1-274.20
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:272.1-275.20
 relation ControlLocalDecls_ok: TC' |- controlLocalDeclaration*{controlLocalDeclaration <- controlLocalDeclaration*} : % %
 
 1. Case analysis on controlLocalDeclaration*{controlLocalDeclaration <- controlLocalDeclaration*}
@@ -18557,7 +18479,7 @@ relation ControlLocalDecls_ok: TC' |- controlLocalDeclaration*{controlLocalDecla
 
       3. Result in : % |- % : TC_2 controlLocalDeclarationIR_h :: controlLocalDeclarationIR_t*{controlLocalDeclarationIR_t <- controlLocalDeclarationIR_t*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:280.1-284.52
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:281.1-285.52
 relation Decl_ok: p' TC_0 |- declaration : % %
 
 1. Case analysis on declaration
@@ -19526,7 +19448,7 @@ relation Decl_ok: p' TC_0 |- declaration : % %
 
             3. Result in : % % |- % : TC_4 (packageTypeDeclarationIR as declarationIR)
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:286.1-288.23
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:287.1-289.23
 relation Decls_ok: p TC' |- declaration*{declaration <- declaration*} : % %
 
 1. Case analysis on declaration*{declaration <- declaration*}
@@ -19549,7 +19471,7 @@ relation Decls_ok: p TC' |- declaration*{declaration <- declaration*} : % %
 
       3. Result in : % % |- % : TC_2 declarationIR_h :: declarationIR_t*{declarationIR_t <- declarationIR_t*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:290.1-292.17
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:291.1-293.17
 relation Program_ok: |- p4program : % %
 
 1. Group : |- p4program : % %
@@ -19562,12 +19484,12 @@ relation Program_ok: |- p4program : % %
 
   4. Result in : |- % : TC_1 (declarationIR*{declarationIR <- declarationIR*} ;)
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:302.18-302.35
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:303.18-303.35
 syntax actctxt = 
    | action
    | noaction
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:304.1-307.29
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:305.1-308.29
 relation Call_convention_expr_ok: p TC actctxt |- (direction typeIR_param _id _value?{_value <- _value?}) @ typedExpressionIR_arg : %
 
 1. If ((direction matches pattern `IN`)), then
@@ -19634,7 +19556,7 @@ relation Call_convention_expr_ok: p TC actctxt |- (direction typeIR_param _id _v
 
             1. Result in : % % % |- % @ % : typedExpressionIR_arg
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:309.1-312.29
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:310.1-313.29
 relation Call_convention_argument_ok: p TC actctxt |- parameterTypeIR @ argumentIR : %
 
 1. If ((argumentIR has type typedExpressionIR)), then
@@ -19681,7 +19603,7 @@ relation Call_convention_argument_ok: p TC actctxt |- parameterTypeIR @ argument
 
         1. Result in : % % % |- % @ % : (_)
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:314.1-317.29
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:315.1-318.29
 relation Call_convention_ok: p TC actctxt |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} @ argumentIR*{argumentIR <- argumentIR*} : %
 
 1. Case analysis on parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}
@@ -19710,7 +19632,7 @@ relation Call_convention_ok: p TC actctxt |- parameterTypeIR*{parameterTypeIR <-
 
         3. Result in : % % % |- % @ % : argumentIR_h_cast :: argumentIR_t_cast*{argumentIR_t_cast <- argumentIR_t_cast*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:327.1-327.52
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:328.1-328.52
 def $is_static_routineTarget(routineTargetIR')
 
 1. Case analysis on routineTargetIR'
@@ -19735,7 +19657,7 @@ def $is_static_routineTarget(routineTargetIR')
 
   1. Return (dyn)
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:338.1-341.84
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:339.1-342.73
 relation RoutineTarget_ok: p TC |- routineTarget : %
 
 1. Group referenceExpression: p TC |- routineTarget : %
@@ -19794,7 +19716,7 @@ relation RoutineTarget_ok: p TC |- routineTarget : %
 
       2. Result in : % % |- % : (( routineTargetIR ))
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:343.1-346.84
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:344.1-347.73
 relation RoutineTarget_lvalue_ok: p TC |- lvalue : %
 
 1. Group : p TC |- lvalue : %
@@ -19805,7 +19727,7 @@ relation RoutineTarget_lvalue_ok: p TC |- lvalue : %
 
   3. Result in : % % |- % : routineTargetIR
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:348.1-351.29
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:349.1-352.29
 relation RoutineType_ok: p TC |- routineTargetIR'' < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR''*{argumentIR'' <- argumentIR''*} ): % <# % >(# % )
 
 1. If ((routineTargetIR'' has type prefixedNameIR)), then
@@ -20054,7 +19976,7 @@ relation RoutineType_ok: p TC |- routineTargetIR'' < typeArgumentIR*{typeArgumen
 
       2. Result in : % % |- % < % >( % ): routineTypeIR <# tid_inserted*{tid_inserted <- tid_inserted*} >(# id_default*{id_default <- id_default*} )
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:358.1-362.35
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:359.1-363.35
 relation Call_ok: p TC |- routineTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # tid'*{tid' <- tid'*} >( argumentIR*{argumentIR <- argumentIR*} # id_default'*{id_default' <- id_default'*} ): % < % >( % )
 
 1. Case analysis on routineTypeIR
@@ -20339,7 +20261,7 @@ relation Call_ok: p TC |- routineTypeIR < typeArgumentIR*{typeArgumentIR <- type
 
                     1. Result in : % % |- % < % # % >( % # % ): typeIR_table < [] >( [] )
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:372.1-375.29
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:373.1-376.29
 relation ConstructorType_ok: p TC |- prefixedNameIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} ): % <# % >(# % )
 
 1. Group : p TC |- prefixedNameIR < typeArgumentIR*{} >( argumentIR*{} ): % <# % >(# % )
@@ -20358,12 +20280,12 @@ relation ConstructorType_ok: p TC |- prefixedNameIR < typeArgumentIR*{typeArgume
 
       1. Result in : % % |- % < % >( % ): constructorTypeIR <# tid_impl*{tid_impl <- tid_impl*} >(# id_default*{id_default <- id_default*} )
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:382.19-382.31
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:383.19-383.31
 syntax instctxt = 
    | named
    | anon
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:384.1-389.38
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:385.1-390.38
 relation Inst_ok: cursor' TC instctxt |- constructorTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # tid_infer*{tid_infer <- tid_infer*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): % < % >( % )
 
 1. If ((cursor' matches pattern `GLOBAL`)), then

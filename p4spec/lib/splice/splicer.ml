@@ -104,8 +104,9 @@ module RuleProse : Splice = struct
 
   let render (ctx : Ctx.t) (keys : key list) (values : value list) : string =
     List.map2
-      (fun (_ : key) ((mixop, inputs, exps, instrs) : value) ->
-        Prose.Render.code_of_ruleprose ctx.prose_ctx mixop inputs exps instrs)
+      (fun ((id_rel, _) : key) ((mixop, inputs, exps, instrs) : value) ->
+        Prose.Render.code_of_ruleprose ctx.prose_ctx (id_rel $ no_region) mixop
+          inputs exps instrs)
       keys values
     |> String.concat "\n\n"
 end

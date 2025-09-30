@@ -9,7 +9,7 @@ grammar.trimmed.adoc: grammar.adoc trim-asciidoc-tag-comments.py
 	./trim-asciidoc-tag-comments.py $< > $@
 
 spectec:
-	cd .. && make build && cd document
+	cd .. && make build && cd docs
 
 splice: spectec
 	rm -r sections || true
