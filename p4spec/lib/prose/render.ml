@@ -67,12 +67,16 @@ let code_of_typ ctx typ = string_of_typ typ |> render_mono ctx
 (* Prose list: a and b / a, b, ..., y and z *)
 
 let prose_of_list items =
-  List.fold_left
-    (fun acc item ->
-      if acc = "" then item
-      else if String.contains acc ',' then acc ^ ", and " ^ item
-      else acc ^ " and " ^ item)
-    "" items
+  match items with
+  | [] -> ""
+  | [ item ] -> item
+  | [ item1; item2 ] -> item1 ^ " and " ^ item2
+  | _ ->
+      let items_rev = List.rev items in
+      let items, items_last =
+        (items_rev |> List.tl |> List.rev, items_rev |> List.hd)
+      in
+      String.concat ", " items ^ ", and " ^ items_last
 
 (* Expressions *)
 
@@ -137,9 +141,8 @@ let rec prose_of_exp ctx exp =
                    | Il.Ast.ExpA exp -> Some exp
                    | Il.Ast.DefA _ -> None)
           in
-          F.asprintf "[%s](%s)"
+          F.asprintf "<<%s, %s>>" defid.it
             (prose_of_hintexp ctx exps prose_of_hint)
-            (string_of_defid defid)
       | None ->
           F.asprintf "%s%s%s" (string_of_defid defid) (string_of_targs targs)
             (prose_of_args ctx args)
@@ -370,21 +373,19 @@ and prose_of_instr (ctx : Ctx.t) instr =
       | Some prose_of_hint ->
           let mixop, exps = notexp in
           if List.is_empty out_iters then
-            F.asprintf "%sLet %s be [%s](%s)%s" (bullet ctx)
-              (code_of_exps ctx outputs)
+            F.asprintf "%sLet %s be <<%s, %s>>%s" (bullet ctx)
+              (code_of_exps ctx outputs) (string_of_relid id_rel)
               (prose_of_hintexp (ctx |> increment_level) exps prose_of_hint)
-              (string_of_relid id_rel)
               (prose_of_in_iterexps ctx ", " in_iters)
           else
-            F.asprintf "%s%s\n%sLet %s be [%s](%s)%s" (bullet ctx)
+            F.asprintf "%s%s\n%sLet %s be <<%s, %s>>%s" (bullet ctx)
               (prose_of_out_iterexps ctx out_iters)
               (ctx |> increment_level |> bullet)
-              (code_of_exps ctx outputs)
+              (code_of_exps ctx outputs) (string_of_relid id_rel)
               (prose_of_hintexp (ctx |> increment_level) exps prose_of_hint)
-              (string_of_relid id_rel)
               (prose_of_in_iterexps ctx ("\n" ^ bullet ctx) in_iters)
       | None ->
-          F.asprintf "(%s: %s)%s" (string_of_relid id_rel)
+          F.asprintf "%s(%s: %s)%s" (bullet ctx) (string_of_relid id_rel)
             (code_of_notexp ctx notexp)
             (prose_of_in_iterexps ctx ", " iterexps))
   | ResultI [] -> F.asprintf "%sThe relation holds" (bullet ctx)
