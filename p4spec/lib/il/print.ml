@@ -25,9 +25,9 @@ let string_of_defid defid = "$" ^ defid.it
 let string_of_atom ?(lower = true) atom =
   match atom.it with
   | Atom.SilentAtom _ -> ""
-  | _ -> 
-    if lower then Atom.string_of_atom atom.it |> String.lowercase_ascii
-    else Atom.string_of_atom atom.it
+  | _ ->
+      if lower then Atom.string_of_atom atom.it |> String.lowercase_ascii
+      else Atom.string_of_atom atom.it
 
 let string_of_atoms atoms =
   match atoms with

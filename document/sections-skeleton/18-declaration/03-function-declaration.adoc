@@ -1,7 +1,37 @@
-[#sec-function-declaration]
+[#sec-functionDeclaration]
 === Function declaration
+
+Functions can only be declared at the top level and all parameters must have a direction.
+P4 functions are modeled after functions as found in most other programming languages,
+but the language does not permit recursive functions.
 
 ${syntax: functionPrototype
           functionDeclaration
           functionPrototypeIR
           functionDeclarationIR}
+
+Here is an example of a function that returns the maximum of two 32-bit values:
+
+[source,p4]
+----
+bit<32> max(in bit<32> left, in bit<32> right) {
+   return (left > right) ? left : right;
+}
+----
+
+A function returns a value using the `return` statement.  A function with a
+return type of `void` can simply use the `return` statement with no arguments.
+A function with a non-void return type must return a value of the suitable type
+on all possible execution paths.
+
+[[sem-type-check-functionDeclaration]]
+==== Type checking
+
+${rulegroup: Decl_ok/functionDeclaration}
+${ruleprose: Decl_ok/functionDeclaration}
+
+[[sem-compile-time-eval-functionDeclaration]]
+==== Compile-time evaluation
+
+${rulegroup: Decl_inst/functionDeclarationIR}
+${ruleprose: Decl_inst/functionDeclarationIR}

@@ -58,19 +58,20 @@ let code_of_atoms atoms = atoms |> List.map code_of_atom |> String.concat " "
 
 let prose_of_cmpop cmpop =
   match cmpop with
-    | `EqOp -> "is equal to"
-    | `NeOp -> "is not equal to"
-    | `LtOp -> "is less than"
-    | `GtOp -> "is greater than"
-    | `LeOp -> "is less than or equal to"
-    | `GeOp -> "is greater than or equal to"
+  | `EqOp -> "is equal to"
+  | `NeOp -> "is not equal to"
+  | `LtOp -> "is less than"
+  | `GtOp -> "is greater than"
+  | `LeOp -> "is less than or equal to"
+  | `GeOp -> "is greater than or equal to"
 
 let code_of_mixop mixop =
   let mixop = List.map (List.map it) mixop in
   String.concat " % "
     (List.map
        (fun atoms -> String.concat " " (List.map Xl.Atom.string_of_atom atoms))
-       mixop) |> String.trim
+       mixop)
+  |> String.trim
 
 let code_of_pattern pattern =
   match pattern with
@@ -82,27 +83,27 @@ let code_of_pattern pattern =
   | Il.Ast.OptP `None -> "()"
 
 let code_of_typ ctx typ = string_of_typ typ |> render_mono ctx
-let code_of_varid ctx varid = 
-  if (String.get varid.it 0) = '_' then
-    "_" |> render_mono ctx
-  else
-  string_of_varid varid |> render_mono ctx
+
+let code_of_varid ctx varid =
+  if String.get varid.it 0 = '_' then "_" |> render_mono ctx
+  else string_of_varid varid |> render_mono ctx
 
 (** Printing as prose **)
 
 (* Prose list: a and b / a, b, ..., y and z *)
 
 let prose_of_list items =
-  if List.length items = 1 then List.hd items
-  else if List.length items = 2 then
-    String.concat " and " (List.map (fun item -> item) items)
-  else
-  List.mapi
-    (fun idx item ->
-      if idx = List.length items - 1 then "and " ^ item
-      else item ^ ",")
-    items
-  |> String.concat " "
+  match items with
+  | [] -> ""
+  | [ item ] -> item
+  | [ item1; item2 ] -> item1 ^ " and " ^ item2
+  | _ ->
+      let items_rev = List.rev items in
+      let items, items_last =
+        (items_rev |> List.tl |> List.rev, items_rev |> List.hd)
+      in
+      String.concat ", " items ^ ", and " ^ items_last
+
 (* Expressions *)
 
 let rec prose_of_exp ctx exp =
@@ -113,16 +114,20 @@ let rec prose_of_exp ctx exp =
   | Il.Ast.VarE varid -> code_of_varid ctx varid
   | Il.Ast.UnE (unop, _, exp) -> string_of_unop unop ^ prose_of_exp ctx exp
   | Il.Ast.BinE (binop, _, exp_l, exp_r) ->
-    (* always print as code *)
-      prose_of_exp (ctx |> in_code) exp_l ^ " " ^ string_of_binop binop ^ " "
-      ^ prose_of_exp (ctx |> in_code) exp_r |> render_mono ctx
+      (* always print as code *)
+      prose_of_exp (ctx |> in_code) exp_l
+      ^ " " ^ string_of_binop binop ^ " "
+      ^ prose_of_exp (ctx |> in_code) exp_r
+      |> render_mono ctx
   | Il.Ast.CmpE (cmpop, _, exp_l, exp_r) ->
-    if ctx.mode = Prose then
-      prose_of_exp ctx exp_l ^ " " ^ prose_of_cmpop cmpop ^ " "
-      ^ prose_of_exp ctx exp_r
-    else
-      prose_of_exp (ctx |> in_code) exp_l ^ " " ^ string_of_cmpop cmpop ^ " "
-      ^ prose_of_exp (ctx |> in_code) exp_r |> render_mono ctx
+      if ctx.mode = Prose then
+        prose_of_exp ctx exp_l ^ " " ^ prose_of_cmpop cmpop ^ " "
+        ^ prose_of_exp ctx exp_r
+      else
+        prose_of_exp (ctx |> in_code) exp_l
+        ^ " " ^ string_of_cmpop cmpop ^ " "
+        ^ prose_of_exp (ctx |> in_code) exp_r
+        |> render_mono ctx
   | Il.Ast.UpCastE (_typ, exp) | Il.Ast.DownCastE (_typ, exp) ->
       F.asprintf "%s" (code_of_exp ctx exp)
   | Il.Ast.SubE (exp, typ) ->
@@ -136,25 +141,29 @@ let rec prose_of_exp ctx exp =
       "{"
       ^ String.concat ", "
           (List.map
-             (fun (atom, exp) ->
-               code_of_atom atom ^ " " ^ prose_of_exp ctx exp)
+             (fun (atom, exp) -> code_of_atom atom ^ " " ^ prose_of_exp ctx exp)
              expfields)
       ^ "}"
   | Il.Ast.OptE (Some exp) -> "?(" ^ prose_of_exp ctx exp ^ ")"
   | Il.Ast.OptE None -> "?()"
   | Il.Ast.ListE exps ->
-    "[" ^ prose_of_exps (ctx |> in_code) exps ^ "]" |> render_mono ctx
+      "[" ^ prose_of_exps (ctx |> in_code) exps ^ "]" |> render_mono ctx
   | Il.Ast.ConsE (exp_h, exp_t) ->
-      prose_of_exp (ctx |> in_code) exp_h ^ " :: " ^ prose_of_exp (ctx |> in_code) exp_t
+      prose_of_exp (ctx |> in_code) exp_h
+      ^ " :: "
+      ^ prose_of_exp (ctx |> in_code) exp_t
       |> render_mono ctx
   | Il.Ast.CatE (exp_l, exp_r) ->
-      prose_of_exp (ctx |> in_code) exp_l ^ " ++ " ^ prose_of_exp (ctx |> in_code) exp_r
+      prose_of_exp (ctx |> in_code) exp_l
+      ^ " ++ "
+      ^ prose_of_exp (ctx |> in_code) exp_r
       |> render_mono ctx
   | Il.Ast.MemE (exp_e, exp_s) ->
       prose_of_exp ctx exp_e ^ " is in " ^ prose_of_exp ctx exp_s
   | Il.Ast.LenE exp -> "the length of " ^ prose_of_exp ctx exp
   | Il.Ast.DotE (exp_b, atom) ->
-      prose_of_exp (ctx |> in_code) exp_b ^ "." ^ code_of_atom atom |> render_mono ctx
+      prose_of_exp (ctx |> in_code) exp_b ^ "." ^ code_of_atom atom
+      |> render_mono ctx
   | Il.Ast.IdxE (exp_b, exp_i) ->
       prose_of_exp ctx exp_b ^ "[" ^ prose_of_exp ctx exp_i ^ "]"
   | Il.Ast.SliceE (exp_b, exp_l, exp_h) ->
@@ -174,9 +183,8 @@ let rec prose_of_exp ctx exp =
                    | Il.Ast.ExpA exp -> Some exp
                    | Il.Ast.DefA _ -> None)
           in
-          F.asprintf "[%s](%s)"
+          F.asprintf "<<%s, %s>>" defid.it
             (prose_of_hintexp ctx exps prose_of_hint)
-            (string_of_defid defid)
       | None ->
           F.asprintf "%s%s%s" (string_of_defid defid) (string_of_targs targs)
             (prose_of_args (ctx |> in_code) args)
@@ -186,7 +194,6 @@ let rec prose_of_exp ctx exp =
 
 and prose_of_exps ctx exps = prose_of_list (List.map (prose_of_exp ctx) exps)
 and code_of_exp ctx exp = prose_of_exp (ctx |> in_code) exp |> render_mono ctx
-
 and code_of_exps ctx exps = prose_of_list (List.map (code_of_exp ctx) exps)
 
 and code_of_notexp ctx notexp =
@@ -196,8 +203,7 @@ and code_of_notexp ctx notexp =
       if idx mod 2 = 0 then idx / 2 |> List.nth mixop |> code_of_atoms
       else idx / 2 |> List.nth exps |> prose_of_exp (ctx |> in_code))
   |> List.filter_map (fun str -> if str = "" then None else Some str)
-  |> String.concat " "
-  |> render_mono ctx
+  |> String.concat " " |> render_mono ctx
 
 and prose_of_hintexp ctx (exps : exp list) (hintexp : El.Ast.exp) : string =
   let _, str = prose_of_hintexp' ctx exps hintexp 0 in
@@ -242,8 +248,7 @@ and prose_of_path ctx path =
       prose_of_path ctx path ^ "[" ^ prose_of_exp ctx exp_l ^ " : "
       ^ prose_of_exp ctx exp_h ^ "]"
   | Il.Ast.DotP ({ it = Il.Ast.RootP; _ }, atom) -> code_of_atom atom
-  | Il.Ast.DotP (path, atom) ->
-      prose_of_path ctx path ^ "." ^ code_of_atom atom
+  | Il.Ast.DotP (path, atom) -> prose_of_path ctx path ^ "." ^ code_of_atom atom
 
 (* Arguments *)
 
@@ -267,21 +272,19 @@ and prose_of_case ctx exp case =
         (prose_of_guard ctx exp guard)
         (prose_of_instrs (ctx |> clear_cond) instrs)
   | Some _ ->
-    F.asprintf "%s%s %s\n%s" (bullet ctx)
-      (prose_of_cond ctx)
-      (prose_of_guard ctx exp guard)
-      (prose_of_instrs (ctx |> increment_level) instrs)
+      F.asprintf "%s%s %s\n%s" (bullet ctx) (prose_of_cond ctx)
+        (prose_of_guard ctx exp guard)
+        (prose_of_instrs (ctx |> increment_level) instrs)
   | _ -> failwith "no condition style for case"
 
 and prose_of_cases ctx exp cases =
   let l = List.length cases in
   if l = 1 then prose_of_case (ctx |> as_cond Check) exp (List.hd cases)
   else
-    cases |> List.mapi (fun i case ->
-      if i = 0 then
-        prose_of_case (ctx |> as_cond If) exp case
-      else
-        prose_of_case (ctx |> as_cond ElseIf) exp case)
+    cases
+    |> List.mapi (fun i case ->
+           if i = 0 then prose_of_case (ctx |> as_cond If) exp case
+           else prose_of_case (ctx |> as_cond ElseIf) exp case)
     |> String.concat "\n\n"
 
 and prose_of_guard ctx exp_case guard =
@@ -421,22 +424,19 @@ and prose_of_instr (ctx : Ctx.t) instr =
       | Some prose_of_hint ->
           let mixop, exps = notexp in
           if List.is_empty out_iters then
-            F.asprintf "%sLet %s be [%s](%s)%s" (bullet ctx)
-              (code_of_exps ctx outputs)
+            F.asprintf "%sLet %s be <<%s, %s>>%s" (bullet ctx)
+              (code_of_exps ctx outputs) (string_of_relid id_rel)
               (prose_of_hintexp (ctx |> increment_level) exps prose_of_hint)
-              (string_of_relid id_rel)
               (prose_of_in_iterexps ctx ", " in_iters)
           else
-            F.asprintf "%s%s\n%sLet %s be [%s](%s)%s" (bullet ctx)
+            F.asprintf "%s%s\n%sLet %s be <<%s, %s>>%s" (bullet ctx)
               (prose_of_out_iterexps ctx out_iters)
               (ctx |> increment_level |> bullet)
-              (code_of_exps ctx outputs)
+              (code_of_exps ctx outputs) (string_of_relid id_rel)
               (prose_of_hintexp (ctx |> increment_level) exps prose_of_hint)
-              (string_of_relid id_rel)
               (prose_of_in_iterexps ctx ("\n" ^ bullet ctx) in_iters)
       | None ->
-          F.asprintf "%s(%s: %s)%s" (bullet ctx)
-            (string_of_relid id_rel)
+          F.asprintf "%s(%s: %s)%s" (bullet ctx) (string_of_relid id_rel)
             (code_of_notexp ctx notexp)
             (prose_of_in_iterexps ctx ", " iterexps))
   | ResultI [] -> F.asprintf "%sThe relation holds" (bullet ctx)
@@ -455,13 +455,14 @@ and prose_of_instrs ctx instrs =
   in
   (* When if is unique without else, render as assertion *)
   if if_instrs = 1 then
-    instrs |> List.map (prose_of_instr (ctx |> as_cond Check)) |> String.concat "\n"
+    instrs
+    |> List.map (prose_of_instr (ctx |> as_cond Check))
+    |> String.concat "\n"
   else
-    instrs |> List.mapi (fun i instr ->
-      if i = 0 then
-        prose_of_instr (ctx |> as_cond If) instr
-      else
-        prose_of_instr (ctx |> as_cond ElseIf) instr)
+    instrs
+    |> List.mapi (fun i instr ->
+           if i = 0 then prose_of_instr (ctx |> as_cond If) instr
+           else prose_of_instr (ctx |> as_cond ElseIf) instr)
     |> String.concat "\n"
 
 (* Relations *)
