@@ -19,7 +19,11 @@ let _reindent_lines ~(indent : string) (s : string) : string =
 (* Asciidoc monospace rendering *)
 
 let render_mono ctx s =
-  match ctx.mode with Code -> s | Prose -> "`+" ^ s ^ "+`"
+  match ctx.mode with Code -> s | Prose -> "``" ^ s ^ "``"
+
+let render_subscript s = "~" ^ s ^ "~"
+let render_superscript s = "^" ^ s ^ "^"
+
 
 (* Split iterators into input and output *)
 
@@ -47,6 +51,8 @@ let prose_of_cond ctx =
   | Some ElseIf -> "Else if"
   | Some Check -> "Check that"
   | None -> ""
+
+let code_of_iter iter = match iter with Il.Ast.List -> "*" |> render_superscript | Il.Ast.Opt -> "?" |> render_superscript
 
 let code_of_iterexp (iter, _) = string_of_iter iter
 
@@ -84,9 +90,17 @@ let code_of_pattern pattern =
 
 let code_of_typ ctx typ = string_of_typ typ |> render_mono ctx
 
-let code_of_varid ctx varid =
-  if String.get varid.it 0 = '_' then "_" |> render_mono ctx
-  else string_of_varid varid |> render_mono ctx
+let code_of_varid ctx varid = 
+  let varid = varid.it in
+  if String.starts_with ~prefix:"_" varid then
+    "_" |> render_mono ctx
+  else
+    let var_slices = String.split_on_char '_' varid in
+    match var_slices with
+    | var_type :: [] -> var_type |> render_mono ctx
+    | var_type :: var_subscripts ->
+      var_type ^ (var_subscripts |> String.concat "_" |> render_subscript) |> render_mono ctx
+    | _ -> assert false
 
 (** Printing as prose **)
 
