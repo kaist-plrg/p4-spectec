@@ -305,10 +305,25 @@ and prose_of_case ctx exp case =
       F.asprintf "%sCheck that %s\n%s" (bullet ctx)
         (prose_of_guard ctx exp guard)
         (prose_of_instrs (ctx |> clear_cond) instrs)
-  | Some _ ->
+  | Some _ -> (
+    match guard, instrs with
+    | MatchG _ , instr_let :: instrs -> (
+        match instr_let.it with
+        | LetI (exp_l, exp_r, iterexps) ->
+        F.asprintf "%s%s let %s be %s\n%s" (bullet ctx)
+          (prose_of_cond ctx)
+          (code_of_exp ctx exp_l) (prose_of_exp ctx exp_r)
+          (prose_of_instrs (ctx |> increment_level) instrs)
+        | _ -> 
+        F.asprintf "%s%s %s\n%s" (bullet ctx) (prose_of_cond ctx)
+          (prose_of_guard ctx exp guard)
+          (prose_of_instrs (ctx |> increment_level) instrs)
+    )
+    | _ ->
       F.asprintf "%s%s %s\n%s" (bullet ctx) (prose_of_cond ctx)
         (prose_of_guard ctx exp guard)
         (prose_of_instrs (ctx |> increment_level) instrs)
+  )
   | _ -> failwith "no condition style for case"
 
 and prose_of_cases ctx exp cases =
