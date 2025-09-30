@@ -27,3 +27,9 @@ type rulegroup = El.Ast.rule list
 module RuleProseId = RuleGroupId
 
 type ruleprose = Sl.Ast.mixop * int list * Sl.Ast.exp list * Sl.Ast.instr list
+
+(* Function prose *)
+
+module FuncProseId = String
+
+type funcprose = Sl.Ast.tparam list * Sl.Ast.arg list * Sl.Ast.instr list

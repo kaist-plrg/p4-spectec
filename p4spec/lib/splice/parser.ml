@@ -75,5 +75,12 @@ let parse_rulegroup_id (source : Source.t) : Kinds.RuleGroupId.t =
   let _ = parse_string source "}" in
   id_rulegroup
 
-let parse_ruleprose_id (source : Source.t) : Kinds.RuleGroupId.t =
+let parse_ruleprose_id (source : Source.t) : Kinds.RuleProseId.t =
   parse_rulegroup_id source
+
+let parse_funcprose_id (source : Source.t) : Kinds.FuncProseId.t =
+  parse_space source;
+  let id_funcprose = parse_id source in
+  parse_space source;
+  let _ = parse_string source "}" in
+  id_funcprose

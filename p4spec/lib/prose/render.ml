@@ -480,14 +480,6 @@ and code_of_relinput ctx mixop inputs exps_input =
   let notexp = (mixop, exps) in
   code_of_notexp (ctx |> in_code) notexp |> render_mono ctx
 
-(* Rule prose : entrypoint for splicer *)
-
-let code_of_ruleprose (ctx : Ctx.t) (mixop : mixop) (inputs : int list)
-    (exps_input : exp list) (instrs : instr list) : string =
-  F.asprintf "%s\n\n%s"
-    (code_of_relinput ctx mixop inputs exps_input)
-    (prose_of_instrs ctx instrs)
-
 (* Definitions *)
 
 let prose_of_def ctx def =
@@ -504,3 +496,33 @@ let prose_of_defs ctx defs = String.concat "" (List.map (prose_of_def ctx) defs)
 (* Spec *)
 
 let prose_of_spec ctx spec = prose_of_defs ctx spec
+
+(* Entry points for splicer *)
+
+let code_of_ruleprose (ctx : Ctx.t) (mixop : mixop) (inputs : int list)
+    (exps_input : exp list) (instrs : instr list) : string =
+  F.asprintf "%s\n\n%s"
+    (code_of_relinput ctx mixop inputs exps_input)
+    (prose_of_instrs ctx instrs)
+
+let code_of_funcprose (ctx : Ctx.t) (id_def : id) (tparams : tparam list)
+    (args_input : arg list) (instrs : instr list) : string =
+  let prose_of_hint_opt = HEnv.get_func id_def ctx.penv.prose in
+  let prose_of_funcinput =
+    match prose_of_hint_opt with
+    | Some prose_of_hint ->
+        let exps =
+          args_input
+          |> List.filter_map (fun arg ->
+                 match arg.it with
+                 | Il.Ast.ExpA exp -> Some exp
+                 | Il.Ast.DefA _ -> None)
+        in
+        prose_of_hintexp ctx exps prose_of_hint
+    | None ->
+        F.asprintf "%s%s%s" (string_of_defid id_def)
+          (string_of_tparams tparams)
+          (prose_of_args (ctx |> in_code) args_input)
+        |> render_mono ctx
+  in
+  F.asprintf "%s\n\n%s" prose_of_funcinput (prose_of_instrs ctx instrs)

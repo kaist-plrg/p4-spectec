@@ -1,9 +1,13 @@
 open Error
 open Util.Source
+
+(* Context *)
+
 module SyntaxMap = Map.Make (Kinds.SyntaxId)
 module RelationMap = Map.Make (Kinds.RelationId)
 module RuleGroupMap = Map.Make (Kinds.RuleGroupId)
-module RuleProseMap = Map.Make (Kinds.RuleGroupId)
+module RuleProseMap = Map.Make (Kinds.RuleProseId)
+module FuncProseMap = Map.Make (Kinds.FuncProseId)
 
 type t = {
   prose_ctx : Prose.Ctx.t;
@@ -11,6 +15,7 @@ type t = {
   mutable relation : Kinds.relation RelationMap.t;
   mutable rulegroup : Kinds.rulegroup RuleGroupMap.t;
   mutable ruleprose : Kinds.ruleprose RuleProseMap.t;
+  mutable funcprose : Kinds.funcprose FuncProseMap.t;
 }
 
 (* Initialization *)
@@ -63,6 +68,9 @@ let init_sl_def (ctx : t) (def_sl : Sl.Ast.def) : unit =
   match def_sl.it with
   | RelD (id_rel, (mixop, inputs), _, instrs, _) ->
       init_sl_rule_instrs ctx id_rel mixop inputs instrs
+  | DecD (id_func, tparams, args_input, instrs, _) ->
+      let funcprose = (tparams, args_input, instrs) in
+      ctx.funcprose <- FuncProseMap.add id_func.it funcprose ctx.funcprose
   | _ -> ()
 
 let init_sl (ctx : t) (spec_sl : Sl.Ast.spec) : unit =
@@ -77,6 +85,7 @@ let init (spec_el : El.Ast.spec) (spec_sl : Sl.Ast.spec) : t =
       relation = RelationMap.empty;
       rulegroup = RuleGroupMap.empty;
       ruleprose = RuleProseMap.empty;
+      funcprose = FuncProseMap.empty;
     }
   in
   init_el ctx spec_el;
@@ -103,10 +112,15 @@ let find_rulegroup (ctx : t) (id : Kinds.RuleGroupId.t) : Kinds.rulegroup =
       error no_region
         ("rulegroup " ^ id_rel ^ "/" ^ id_rulegroup ^ " was not found")
 
-let find_ruleprose (ctx : t) (id : Kinds.RuleGroupId.t) : Kinds.ruleprose =
+let find_ruleprose (ctx : t) (id : Kinds.RuleProseId.t) : Kinds.ruleprose =
   match RuleProseMap.find_opt id ctx.ruleprose with
   | Some ruleprose -> ruleprose
   | None ->
       let id_rel, id_rulegroup = id in
       error no_region
         ("ruleprose " ^ id_rel ^ "/" ^ id_rulegroup ^ " was not found")
+
+let find_funcprose (ctx : t) (id : Kinds.FuncProseId.t) : Kinds.funcprose =
+  match FuncProseMap.find_opt id ctx.funcprose with
+  | Some funcprose -> funcprose
+  | None -> error no_region ("funcprose " ^ id ^ " was not found")

@@ -110,11 +110,27 @@ module RuleProse : Splice = struct
     |> String.concat "\n\n"
 end
 
-(* Splicers *)
+(* Function prose splicer *)
 
-let splicers : (module Splice) list =
-  [
-    (module Syntax : Splice);
-    (module Relation : Splice);
-    (module RuleGroup : Splice);
-  ]
+module FuncProse : Splice = struct
+  type key = Kinds.FuncProseId.t
+  type value = Kinds.funcprose
+
+  let name = "funcprose"
+  let prefix = None
+  let suffix = None
+
+  let parse_keys (source : Source.t) : key list =
+    [ Parser.parse_funcprose_id source ]
+
+  let find_values (ctx : Ctx.t) (keys : key list) : value list =
+    List.map (Ctx.find_funcprose ctx) keys
+
+  let render (ctx : Ctx.t) (keys : key list) (values : value list) : string =
+    List.map2
+      (fun (id_def : key) ((tparams, args, instrs) : value) ->
+        Prose.Render.code_of_funcprose ctx.prose_ctx (id_def $ no_region)
+          tparams args instrs)
+      keys values
+    |> String.concat "\n\n"
+end
