@@ -118,7 +118,7 @@ module FuncProse : Splice = struct
 
   let name = "funcprose"
   let prefix = None
-  let suffix = None
+  let suffix = Some "\n"
 
   let parse_keys (source : Source.t) : key list =
     [ Parser.parse_funcprose_id source ]

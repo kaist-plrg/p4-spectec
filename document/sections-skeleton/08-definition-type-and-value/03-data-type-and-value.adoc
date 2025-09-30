@@ -30,12 +30,13 @@ ${syntax: listType
 ${rulegroup: Type_ok/listType}
 ${ruleprose: Type_ok/listType}
 
-[#sec-sem-Type_wf-listTypeIR]
-===== Well-formedness
+===== Type nesting
 
 ${funcprose: nestable_list}
-
 ${funcprose: nestable'_list}
+
+[#sec-sem-Type_wf-listTypeIR]
+===== Well-formedness
 
 ${rulegroup: Type_wf/listTypeIR}
 ${ruleprose: Type_wf/listTypeIR}
@@ -63,12 +64,13 @@ ${syntax: tupleType
 ${rulegroup: Type_ok/tupleType}
 ${ruleprose: Type_ok/tupleType}
 
-[#sec-sem-Type_wf-tupleTypeIR]
-===== Well-formedness
+===== Type nesting
 
 ${funcprose: nestable_tuple}
-
 ${funcprose: nestable'_tuple}
+
+[#sec-sem-Type_wf-tupleTypeIR]
+===== Well-formedness
 
 ${rulegroup: Type_wf/tupleTypeIR}
 ${ruleprose: Type_wf/tupleTypeIR}
@@ -116,12 +118,13 @@ introduce a header stack called `mpls` containing ten entries, each of type
 ${rulegroup: Type_ok/headerStackType}
 ${ruleprose: Type_ok/headerStackType}
 
-[#sec-sem-Type_wf-headerStackTypeIR]
-===== Well-formedness
+===== Type nesting
 
 ${funcprose: nestable_headerStack}
-
 ${funcprose: nestable'_headerStack}
+
+[#sec-sem-Type_wf-headerStackTypeIR]
+===== Well-formedness
 
 ${rulegroup: Type_wf/headerStackTypeIR}
 ${ruleprose: Type_wf/headerStackTypeIR}
@@ -170,12 +173,13 @@ explained in <<sec-sem-Decl_ok-structTypeDeclaration>>.
 Struct types are then used by referencing their names. Thus struct types can
 be obtained from named types, as illustrated in <<sec-def-namedType>>.
 
-[#sec-sem-Type_wf-structTypeIR]
-===== Well-formedness
+===== Type nesting
 
 ${funcprose: nestable_struct}
-
 ${funcprose: nestable'_struct}
+
+[#sec-sem-Type_wf-structTypeIR]
+===== Well-formedness
 
 ${rulegroup: Type_wf/structTypeIR}
 ${ruleprose: Type_wf/structTypeIR}
@@ -206,14 +210,6 @@ we say that the "header is valid". When a local variable with a header type is
 declared, its "validity" bit is automatically set to `false`. The "validity"
 bit can be manipulated by using the header methods `isValid()`, `setValid()`,
 and `setInvalid()`.
-
-Note, nesting of headers is not supported. One reason is that it leads to
-complications in defining the behavior of arbitrary sequences of `setValid`,
-`setInvalid`, and `emit` operations. Consider an example where header `h1`
-contains header `h2` as a member, both currently valid. A program executes
-`h2.setInvalid()` followed by `packet.emit(h1)`. Should all fields of `h1` be
-emitted, but skipping `h2`? Similarly, should `h1.setInvalid()` invalidate all
-headers contained within `h1`, regardless of how deeply they are nested?
 
 Header types may be empty:
 
@@ -323,16 +319,27 @@ explained in <<sec-sem-Decl_ok-headerTypeDeclaration>>.
 Header types are then used by referencing their names. Thus header types can
 be obtained from named types, as illustrated in <<sec-def-namedType>>.
 
-[#sec-sem-Type_wf-headerTypeIR]
-===== Well-formedness
+===== Type nesting
+
+Note, nesting of headers is not supported. One reason is that it leads to
+complications in defining the behavior of arbitrary sequences of `setValid`,
+`setInvalid`, and `emit` operations. Consider an example where header `h1`
+contains header `h2` as a member, both currently valid. A program executes
+`h2.setInvalid()` followed by `packet.emit(h1)`. Should all fields of `h1` be
+emitted, but skipping `h2`? Similarly, should `h1.setInvalid()` invalidate all
+headers contained within `h1`, regardless of how deeply they are nested?
 
 ${funcprose: nestable_header}
-
 ${funcprose: nestable'_header}
 
-${funcprose: nestable_struct_in_header}
+A nested `struct` used as a field in a `header` must contain only `bit<W>`,
+`int<W>`, a serializable `enum`, or a `bool`.
 
+${funcprose: nestable_struct_in_header}
 ${funcprose: nestable'_struct_in_header}
+
+[#sec-sem-Type_wf-headerTypeIR]
+===== Well-formedness
 
 ${rulegroup: Type_wf/headerTypeIR}
 ${ruleprose: Type_wf/headerTypeIR}
@@ -378,12 +385,13 @@ Header union types are then used by referencing their names. Thus header union
 types can be obtained from named types, as illustrated in
 <<sec-def-namedType>>.
 
-[#sec-sem-Type_wf-headerUnionTypeIR]
-===== Well-formedness
+===== Type nesting
 
 ${funcprose: nestable_headerUnion}
-
 ${funcprose: nestable'_headerUnion}
+
+[#sec-sem-Type_wf-headerUnionTypeIR]
+===== Well-formedness
 
 ${rulegroup: Type_wf/headerUnionTypeIR}
 ${ruleprose: Type_wf/headerUnionTypeIR}
@@ -443,13 +451,8 @@ It is also possible to specify an `enum` with an underlying representation.
 These are sometimes called serializable ``enum``s, because headers are allowed
 to have fields with such `enum` types. This requires the programmer provide
 both the fixed-width unsigned (or signed) integer type and an associated
-integer value for each symbolic entry in the enumeration. The symbol `typeRef`
-in the grammar above must be one of the following types:
+integer value for each symbolic entry in the enumeration.
 
-* an unsigned integer, i.e. `bit<W>` for some local compile-time known value `W`.
-* a signed integer, i.e. `int<W>` for some local compile-time known value `W`.
-* a type name declared via `typedef`, where the base type of that type is either
-one of the types listed above, or another `typedef` name that meets these conditions.
 For example, the declaration
 
 [source,p4]
@@ -493,7 +496,7 @@ enum bit<8> FailingExample {
 would raise an error because `300`, the value associated with
 `FailingExample.unrepresentable` cannot be represented as a `bit<8>` value.
 
-The `initializer` expression must be a compile-time known value.
+The `initializer` expression must be a local compile-time known value.
 
 Annotations, represented by the non-terminal `optAnnotations`, are described in
 <<sec-annotations>>.
@@ -506,16 +509,20 @@ in <<sec-sem-Decl_ok-enumTypeDeclaration-serializable>>.
 Enum types are then used by referencing their names. Thus enum types can be
 obtained from named types, as illustrated in <<sec-def-namedType>>.
 
-[#sec-sem-Type_wf-enumTypeIR-serializable]
-====== Well-formedness
+====== Type nesting
+
+The symbol `type` in the grammar must be one of the following types:
+
+* an unsigned integer, i.e. `bit<W>` for some local compile-time known value `W`.
+* a signed integer, i.e. `int<W>` for some local compile-time known value `W`.
+* a type name declared via `typedef`, where the base type of that type is either
+one of the types listed above, or another `typedef` name that meets these conditions.
 
 ${funcprose: nestable_enum_serializable}
-
 ${funcprose: nestable'_enum_serializable}
 
-${funcprose: nestable_new_in_enum_serializable}
-
-${funcprose: nestable'_new_in_enum_serializable}
+[#sec-sem-Type_wf-enumTypeIR-serializable]
+====== Well-formedness
 
 ${rulegroup: Type_wf/enumTypeIR-serializable}
 ${ruleprose: Type_wf/enumTypeIR-serializable}

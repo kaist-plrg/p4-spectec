@@ -48,12 +48,13 @@ explained in <<sec-sem-Decl_ok-typedefDeclaration-typedef>>.
 ``typedef``s are then used by referencing their names. Thus `typedef` types can
 be obtained from named types, as illustrated in <<sec-def-namedType>>.
 
-[#sec-sem-Type_wf-typedefTypeIR]
-===== Well-formedness
+===== Type nesting
 
 ${funcprose: nestable_typedef}
-
 ${funcprose: nestable'_typedef}
+
+[#sec-sem-Type_wf-typedefTypeIR]
+===== Well-formedness
 
 ${rulegroup: Type_wf/typedefTypeIR}
 ${ruleprose: Type_wf/typedefTypeIR}
@@ -107,12 +108,16 @@ explained in <<sec-sem-Decl_ok-typedefDeclaration-newtype>>.
 ``type``s are then used by referencing their names. Thus `type` types can
 be obtained from named types, as illustrated in <<sec-def-namedType>>.
 
-[#sec-sem-Type_wf-newTypeIR]
-===== Well-formedness
+===== Type nesting
+
+`type B <name>` is allowed for a type name `B` defined via `typedef X B` if
+`type X <name>` is allowed.
 
 ${funcprose: nestable_new}
-
 ${funcprose: nestable'_new}
+
+[#sec-sem-Type_wf-newTypeIR]
+===== Well-formedness
 
 ${rulegroup: Type_wf/newTypeIR}
 ${ruleprose: Type_wf/newTypeIR}
