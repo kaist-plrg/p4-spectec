@@ -51,3 +51,8 @@ let bullet ctx : string (* = String.make (ctx.level + 1) '.' ^ " " *) =
   Format.asprintf "%s%s "
     (String.make ctx.level ' ')
     (String.make (ctx.level + 1) '.')
+
+let unordered_bullet ctx : string =
+  Format.asprintf "%s%s "
+    (String.make (ctx.level * 2) ' ')
+    ("*")

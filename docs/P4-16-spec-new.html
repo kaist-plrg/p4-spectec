@@ -15460,7 +15460,8 @@ statementIR
 <pre>relation Stmt_inst:
    cursor instantiationContext store |- statementIR ==&gt; instantiationContext store statementIR
    hint(input %0 %1 %2 %3)
-   hint(prose_in "the compile-time evaluation of" %3#", under cursor" %0#", instantiation context" %1#", and store" %2)</pre>
+   hint(prose_in "the compile-time evaluation of" %3#", under cursor" %0#", instantiation context" %1#", and store" %2)
+   hint(prose_out "\nthe instantiation context" %4#",\nthe updated store" %5#",\nand the instantiated statement" %6)</pre>
 </div>
 </div>
 <div class="sect2">
@@ -15510,7 +15511,20 @@ emptyStatementIR = emptyStatement</code></pre>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Result in <code>IC'</code>, <code>STO'</code>, and <code>emptyStatementIR</code></p>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the instantiation context <code>IC'</code>,</p>
+</li>
+<li>
+<p>the updated store <code>STO'</code>,</p>
+</li>
+<li>
+<p>and the instantiated statement <code>emptyStatementIR</code></p>
+</li>
+</ul>
+</div>
 </li>
 </ol>
 </div>
@@ -16159,7 +16173,20 @@ rule Lvalue_ok/indexAccess/non-lctk:
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Result in <code>IC'</code>, <code>STO'</code>, and <code>assignmentStatementIR</code></p>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the instantiation context <code>IC'</code>,</p>
+</li>
+<li>
+<p>the updated store <code>STO'</code>,</p>
+</li>
+<li>
+<p>and the instantiated statement <code>assignmentStatementIR</code></p>
+</li>
+</ul>
+</div>
 </li>
 </ol>
 </div>
@@ -16491,7 +16518,20 @@ rule RoutineTarget_ok/memberAccessExpression/memberAccessExpression-expression:
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Result in <code>IC'</code>, <code>STO'</code>, and <code>callStatementIR</code></p>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the instantiation context <code>IC'</code>,</p>
+</li>
+<li>
+<p>the updated store <code>STO'</code>,</p>
+</li>
+<li>
+<p>and the instantiated statement <code>callStatementIR</code></p>
+</li>
+</ul>
+</div>
 </li>
 </ol>
 </div>
@@ -16739,7 +16779,20 @@ invoked.</p>
 <p>Let <code>blockStatementIR</code> be <code>{ [constantDeclarationIR and callStatementIR] }</code></p>
 </li>
 <li>
-<p>Result in <code>IC'</code>, <code>STO<sub>2</sub></code>, and <code>blockStatementIR</code></p>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the instantiation context <code>IC'</code>,</p>
+</li>
+<li>
+<p>the updated store <code>STO<sub>2</sub></code>,</p>
+</li>
+<li>
+<p>and the instantiated statement <code>blockStatementIR</code></p>
+</li>
+</ul>
+</div>
 </li>
 </ol>
 </div>
@@ -16846,7 +16899,20 @@ rule Stmt_ok/returnStatement/expression:
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Result in <code>IC'</code>, <code>STO'</code>, and <code>returnStatementIR</code></p>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the instantiation context <code>IC'</code>,</p>
+</li>
+<li>
+<p>the updated store <code>STO'</code>,</p>
+</li>
+<li>
+<p>and the instantiated statement <code>returnStatementIR</code></p>
+</li>
+</ul>
+</div>
 </li>
 </ol>
 </div>
@@ -16994,7 +17060,20 @@ call, then the function/method call does not occur.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Result in <code>IC'</code>, <code>STO'</code>, and <code>exitStatementIR</code></p>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the instantiation context <code>IC'</code>,</p>
+</li>
+<li>
+<p>the updated store <code>STO'</code>,</p>
+</li>
+<li>
+<p>and the instantiated statement <code>exitStatementIR</code></p>
+</li>
+</ul>
+</div>
 </li>
 </ol>
 </div>
@@ -17073,8 +17152,14 @@ are only visible within the block.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>TC<sub>1</sub></code> and <code>declarationIR</code> be the result of <a href="#Decl_ok">typing <code>constantDeclaration</code>, under cursor <code>LOCAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context</a></p>
+<p>Let <code>TC<sub>1</sub></code> and <code>declarationIR</code> be the result of &lt;&lt;Decl_ok, typing <code>constantDeclaration</code>, under cursor <code>LOCAL</code> and typing context <code>TC<sub>0</sub></code>,</p>
+<div class="ulist">
+<ul>
+<li>
+<p>and the modified typing context&gt;&gt;</p>
+</li>
+</ul>
+</div>
 </li>
 <li>
 <p>Check that <code>declarationIR</code> has type <code>constantDeclarationIR</code></p>
@@ -17241,7 +17326,20 @@ rule BlockElementStmt_ok/variableDeclaration/initializer:
 <p>(Block_inst: <code>IC' STO' |- annotationList { blockElementStatementListIR } =&#8658; IC<sub>1</sub> STO<sub>1</sub> _ { blockElementStatementListIR<sub>inst</sub> }</code>)</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>1</sub></code>, <code>STO<sub>1</sub></code>, and <code>annotationList { blockElementStatementListIR<sub>inst</sub> }</code></p>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the instantiation context <code>IC<sub>1</sub></code>,</p>
+</li>
+<li>
+<p>the updated store <code>STO<sub>1</sub></code>,</p>
+</li>
+<li>
+<p>and the instantiated statement <code>annotationList { blockElementStatementListIR<sub>inst</sub> }</code></p>
+</li>
+</ul>
+</div>
 </li>
 </ol>
 </div>
@@ -17454,7 +17552,20 @@ rule Stmt_inst/conditionalStatementIR/else:
 <p>Let <code>IC<sub>1</sub></code>, <code>STO<sub>1</sub></code>, and <code>statementIR<sub>then_inst</sub></code> be the result of <a href="#Stmt_inst">the compile-time evaluation of <code>statementIR<sub>then</sub></code>, under cursor <code>p'</code>, instantiation context <code>IC'</code>, and store <code>STO'</code></a></p>
 </li>
 <li>
-<p>Result in <code>IC<sub>1</sub></code>, <code>STO<sub>1</sub></code>, and <code>IF ( typedExpressionIR<sub>cond</sub> ) statementIR<sub>then_inst</sub></code></p>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the instantiation context <code>IC<sub>1</sub></code>,</p>
+</li>
+<li>
+<p>the updated store <code>STO<sub>1</sub></code>,</p>
+</li>
+<li>
+<p>and the instantiated statement <code>IF ( typedExpressionIR<sub>cond</sub> ) statementIR<sub>then_inst</sub></code></p>
+</li>
+</ul>
+</div>
 </li>
 </ol>
 </div>
@@ -17470,7 +17581,20 @@ rule Stmt_inst/conditionalStatementIR/else:
 <p>Let <code>IC<sub>2</sub></code>, <code>STO<sub>2</sub></code>, and <code>statementIR<sub>else_inst</sub></code> be the result of <a href="#Stmt_inst">the compile-time evaluation of <code>statementIR<sub>else</sub></code>, under cursor <code>p'</code>, instantiation context <code>IC<sub>1</sub></code>, and store <code>STO<sub>1</sub></code></a></p>
 </li>
 <li>
-<p>Result in <code>IC<sub>2</sub></code>, <code>STO<sub>2</sub></code>, and <code>IF ( typedExpressionIR<sub>cond</sub> ) statementIR<sub>then_inst</sub> ELSE statementIR<sub>else_inst</sub></code></p>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the instantiation context <code>IC<sub>2</sub></code>,</p>
+</li>
+<li>
+<p>the updated store <code>STO<sub>2</sub></code>,</p>
+</li>
+<li>
+<p>and the instantiated statement <code>IF ( typedExpressionIR<sub>cond</sub> ) statementIR<sub>then_inst</sub> ELSE statementIR<sub>else_inst</sub></code></p>
+</li>
+</ul>
+</div>
 </li>
 </ol>
 </div>
@@ -18181,7 +18305,20 @@ rule SwitchCase_inst/non-blockStatementIR:
 <p>(SwitchCases_inst: <code>p' IC' STO' |- switchCaseListIR =&#8658; IC<sub>1</sub> STO<sub>1</sub> switchCaseListIR<sub>inst</sub></code>)</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>1</sub></code>, <code>STO<sub>1</sub></code>, and <code>SWITCH ( typedExpressionIR ) { switchCaseListIR<sub>inst</sub> }</code></p>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the instantiation context <code>IC<sub>1</sub></code>,</p>
+</li>
+<li>
+<p>the updated store <code>STO<sub>1</sub></code>,</p>
+</li>
+<li>
+<p>and the instantiated statement <code>SWITCH ( typedExpressionIR ) { switchCaseListIR<sub>inst</sub> }</code></p>
+</li>
+</ul>
+</div>
 </li>
 </ol>
 </div>
@@ -18281,7 +18418,7 @@ following are all legal constant declarations:</p>
 </div>
 <div class="paragraph">
 <p>Typing <code>annotationList CONST type name = expression<sub>value</sub> ;</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -18484,7 +18621,7 @@ rule Decl_ok/instantiation-non-objectInitializer/specializedType:
 </div>
 <div class="paragraph">
 <p>Typing <code>annotationList type ( argumentList ) name ;</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -18824,8 +18961,14 @@ methods.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>TC<sub>1</sub></code> and <code>declarationIR</code> be the result of <a href="#Decl_ok">typing <code>instantiation</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context</a></p>
+<p>Let <code>TC<sub>1</sub></code> and <code>declarationIR</code> be the result of &lt;&lt;Decl_ok, typing <code>instantiation</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code>,</p>
+<div class="ulist">
+<ul>
+<li>
+<p>and the modified typing context&gt;&gt;</p>
+</li>
+</ul>
+</div>
 </li>
 <li>
 <p>Check that <code>declarationIR</code> has type <code>instantiationIR</code></p>
@@ -18903,7 +19046,7 @@ rule Decl_ok/instantiation-objectInitializer/specializedType:
 </div>
 <div class="paragraph">
 <p>Typing <code>annotationList type ( argumentList ) name = { objectDeclarationList } ;</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -19406,7 +19549,7 @@ on all possible execution paths.</p>
 </div>
 <div class="paragraph">
 <p>Typing <code>annotationList typeOrVoid name typeParameterListOpt ( parameterList ) blockStatement</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -19663,7 +19806,7 @@ directionless parameters behave like <code>in</code> parameters.</p>
 </div>
 <div class="paragraph">
 <p>Typing <code>annotationList ACTION name ( parameterList ) blockStatement</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -19812,7 +19955,7 @@ described in <a href="#sec-error-exprs">[sec-error-exprs]</a>.</p>
 </div>
 <div class="paragraph">
 <p>Typing <code>ERROR { nameList }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -19978,7 +20121,7 @@ cannot declare new match kinds.</p>
 </div>
 <div class="paragraph">
 <p>Typing <code>MATCH_KIND { nameList _ }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -20122,7 +20265,7 @@ externFunctionDeclarationIR
 </div>
 <div class="paragraph">
 <p>Typing <code>annotationList EXTERN typeOrVoid name typeParameterListOpt ( parameterList ) ;</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -20267,7 +20410,7 @@ and the modified typing context:</p>
 </div>
 <div class="paragraph">
 <p>Typing <code>annotationList EXTERN nonTypeName typeParameterListOpt { methodPrototypeList }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -20513,7 +20656,7 @@ example will produce an error:</p>
 </div>
 <div class="paragraph">
 <p>Typing <code>annotationList PARSER name ( parameterList ) constructorParameterListOpt { parserLocalDeclarationList parserStateList }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -20762,7 +20905,7 @@ programmer.</p>
 </div>
 <div class="paragraph">
 <p>Typing <code>annotationList CONTROL name ( parameterList ) constructorParameterListOpt { controlLocalDeclarationList APPLY controlBody }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -20995,7 +21138,7 @@ enumTypeDeclarationIR
 </div>
 <div class="paragraph">
 <p>Typing <code>annotationList ENUM name { nameList<sub>field</sub> _ }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -21207,7 +21350,7 @@ and the modified typing context:</p>
 </div>
 <div class="paragraph">
 <p>Typing <code>annotationList ENUM type name { namedExpressionList<sub>field</sub> _ }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -21374,7 +21517,7 @@ and the modified typing context:</p>
 </div>
 <div class="paragraph">
 <p>Typing <code>annotationList STRUCT name typeParameterListOpt { typeFieldList }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -21524,7 +21667,7 @@ and the modified typing context:</p>
 </div>
 <div class="paragraph">
 <p>Typing <code>annotationList HEADER name typeParameterListOpt { typeFieldList }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -21674,7 +21817,7 @@ and the modified typing context:</p>
 </div>
 <div class="paragraph">
 <p>Typing <code>annotationList HEADER_UNION name typeParameterListOpt { typeFieldList }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -21865,7 +22008,7 @@ rule Decl_ok/typedefDeclaration-typedef/derivedTypeDeclaration-poly:
 </div>
 <div class="paragraph">
 <p>Typing <code>annotationList TYPEDEF typedef name ;</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -21922,8 +22065,14 @@ and the modified typing context:</p>
 <p>Let <code>derivedTypeDeclaration</code> be <code>typedef</code></p>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> and <code>declarationIR</code> be the result of <a href="#Decl_ok">typing <code>derivedTypeDeclaration</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context</a></p>
+<p>Let <code>TC<sub>1</sub></code> and <code>declarationIR</code> be the result of &lt;&lt;Decl_ok, typing <code>derivedTypeDeclaration</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,</p>
+<div class="ulist">
+<ul>
+<li>
+<p>and the modified typing context&gt;&gt;</p>
+</li>
+</ul>
+</div>
 </li>
 <li>
 <p>Check that <code>declarationIR</code> has type <code>derivedTypeDeclarationIR</code></p>
@@ -22173,7 +22322,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 </div>
 <div class="paragraph">
 <p>Typing <code>annotationList TYPE type name ;</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -22269,7 +22418,7 @@ and the modified typing context:</p>
 </div>
 <div class="paragraph">
 <p>Typing <code>annotationList PARSER name typeParameterListOpt ( parameterList ) ;</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -22414,7 +22563,7 @@ and the modified typing context:</p>
 </div>
 <div class="paragraph">
 <p>Typing <code>annotationList CONTROL name typeParameterListOpt ( parameterList ) ;</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -22565,7 +22714,7 @@ and the modified typing context:</p>
 </div>
 <div class="paragraph">
 <p>Typing <code>annotationList PACKAGE name typeParameterListOpt ( parameterList ) ;</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
