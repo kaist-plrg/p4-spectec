@@ -12,9 +12,9 @@ module InputHint = Runtime_static.Rel.InputHint
 
 (* Substitue linebreak with indented linebreak *)
 
-let _reindent_lines ~(indent : string) (s : string) : string =
+let reindent_lines ctx (s : string) : string =
   let lines = String.split_on_char '\n' s in
-  String.concat ("\n " ^ indent) lines
+  String.concat ("\n" ^ (ctx |> increment_level |> unordered_bullet)) lines
 
 (* Asciidoc monospace rendering *)
 
@@ -245,7 +245,7 @@ and prose_of_hintexp ctx (exps : exp option list) (hintexp : El.Ast.exp) :
 and prose_of_hintexp' ctx (exps : exp option list) (hintexp : El.Ast.exp)
     (cursor : int) : int * string =
   match hintexp.it with
-  | El.Ast.TextE text -> (cursor, text)
+  | El.Ast.TextE text -> (cursor, text |> reindent_lines ctx)
   | El.Ast.SeqE exps_hint ->
       let cursor, strs =
         List.fold_left

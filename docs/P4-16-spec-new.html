@@ -659,7 +659,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <h1>P4<sub>16</sub> Language Specification : The P4 Language Consortium</h1>
 <div class="details">
 <span id="revnumber">version v1.2.5,</span>
-<span id="revdate">2025-09-30</span>
+<span id="revdate">2025-10-01</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Contents</div>
@@ -959,40 +959,20 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <li><a href="#_canonicalization">8.7. Canonicalization</a></li>
 </ul>
 </li>
-<li><a href="#sec-def-routine">9. P4 routines</a>
+<li><a href="#sec-routine">9. P4 routines</a>
 <ul class="sectlevel2">
-<li><a href="#sec-def-parameterIR">9.1. Parameters</a>
+<li><a href="#sec-def-parameter">9.1. Parameters</a></li>
+<li><a href="#sec-def-function">9.2. Functions</a></li>
+<li><a href="#sec-def-method">9.3. Methods</a></li>
+<li><a href="#sec-def-routine-type-constructor">9.4. Routine type constructors</a>
 <ul class="sectlevel3">
-<li><a href="#sec-sem-Parameter_ok">9.1.1. Type checking</a></li>
-<li><a href="#sec-sem-ParameterType_wf">9.1.2. Well-formedness</a></li>
-</ul>
-</li>
-<li><a href="#sec-def-action">9.2. Actions</a></li>
-<li><a href="#sec-def-function">9.3. Functions</a>
-<ul class="sectlevel3">
-<li><a href="#sec-def-builtinFunction">9.3.1. Built-in functions</a></li>
-<li><a href="#sec-def-definedFunction">9.3.2. User-defined functions</a></li>
-<li><a href="#sec-def-externFunction">9.3.3. Extern functions</a></li>
-</ul>
-</li>
-<li><a href="#sec-def-method">9.4. Methods</a>
-<ul class="sectlevel3">
-<li><a href="#sec-def-builtinMethod">9.4.1. Built-in methods</a></li>
-<li><a href="#sec-def-externMethod">9.4.2. Extern methods</a></li>
-<li><a href="#sec-def-parserApplyMethod">9.4.3. Parser apply methods</a></li>
-<li><a href="#sec-def-controlApplyMethod">9.4.4. Control apply methods</a></li>
-<li><a href="#sec-def-tableApplyMethod">9.4.5. Table apply methods</a></li>
-</ul>
-</li>
-<li><a href="#sec-def-routine-type-constructor">9.5. Routine type constructors</a>
-<ul class="sectlevel3">
-<li><a href="#sec-def-mono-routine-type-constructor">9.5.1. Monomorphic routine type constructors</a></li>
-<li><a href="#sec-def-poly-routine-type-constructor">9.5.2. Polymorphic routine type constructors</a></li>
+<li><a href="#sec-def-mono-routine-type-constructor">9.4.1. Monomorphic routine type constructors</a></li>
+<li><a href="#sec-def-poly-routine-type-constructor">9.4.2. Polymorphic routine type constructors</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#sec-def-object">10. P4 objects</a>
+<li><a href="#sec-object">10. P4 objects</a>
 <ul class="sectlevel2">
 <li><a href="#sec-extern-object">10.1. Extern objects</a></li>
 <li><a href="#sec-parser-object">10.2. Parser objects</a></li>
@@ -3904,7 +3884,7 @@ nesting.</p>
 <pre>relation Type_wf:
    bound |- typeIR
    hint(input %0 %1)
-   hint(prose_in %1 "is a well-formed type, assuming bound type ids" %0)</pre>
+   hint(prose %1 "is a well-formed type, assuming bound type ids" %0)</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -4554,7 +4534,7 @@ rule Type_ok/varbit/expr:
 </div>
 </div>
 <div class="paragraph">
-<p><code>baseTypeIR</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
+<p><code>bound |- baseTypeIR</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -4739,12 +4719,12 @@ as follows:</p>
 </div>
 </div>
 <div class="paragraph">
-<p><code>typeIR</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
+<p><code>bound |- typeIR</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Check that <a href="#definable_type_mono"><code>typeIR</code> can be defined as a monomorphic typedef</a></p>
+<p>Check that <code>$definable_type_mono(typeIR)</code></p>
 </li>
 <li>
 <p>If (Type_wf: <code>bound |- typeIR</code>), then</p>
@@ -4920,12 +4900,12 @@ definable by a polymorphic type definition are as follows:</p>
 </div>
 </div>
 <div class="paragraph">
-<p><code>typeIR &lt; tid<sub>expl</sub>* , tid<sub>impl</sub>* &gt;</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
+<p><code>bound |- typeIR &lt; tid<sub>expl</sub>* , tid<sub>impl</sub>* &gt;</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Check that <a href="#definable_type_poly"><code>typeIR</code> can be defined as a polymorphic typedef</a></p>
+<p>Check that <code>$definable_type_poly(typeIR)</code></p>
 </li>
 <li>
 <p>Check that <code>$distinct_&lt;tid&gt;(tid<sub>expl</sub>* ++ tid<sub>impl</sub>*)</code></p>
@@ -5038,7 +5018,7 @@ rule Type_ok/prefixedTypeName/poly:
 </div>
 </div>
 <div class="paragraph">
-<p><code>TID tid</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
+<p><code>bound |- TID tid</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -5251,7 +5231,7 @@ rule Type_ok/specializedType/poly:
 </div>
 </div>
 <div class="paragraph">
-<p><code>polyTypeDefIR &lt; typeIR<sub>arg</sub>* &gt;</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
+<p><code>bound |- polyTypeDefIR &lt; typeIR<sub>arg</sub>* &gt;</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -5377,7 +5357,7 @@ listValue
 <p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon">the canonicalized form of <code>typeIR</code></a></p>
 </li>
 <li>
-<p>Return <a href="#nestable'_list"><code>typeIR<sub>canon</sub></code> can be nested in a list type</a></p>
+<p>Return <code>$nestable'_list(typeIR<sub>canon</sub>)</code></p>
 </li>
 </ol>
 </div>
@@ -5484,12 +5464,12 @@ listValue
 </div>
 </div>
 <div class="paragraph">
-<p><code>LIST &lt; typeIR &gt;</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
+<p><code>bound |- LIST &lt; typeIR &gt;</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Check that <a href="#nestable_list"><code>typeIR</code> can be nested in a list type</a></p>
+<p>Check that <code>$nestable_list(typeIR)</code></p>
 </li>
 <li>
 <p>If (Type_wf: <code>bound |- typeIR</code>), then</p>
@@ -5595,7 +5575,7 @@ tupleValue
 <p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon">the canonicalized form of <code>typeIR</code></a></p>
 </li>
 <li>
-<p>Return <a href="#nestable'_tuple"><code>typeIR<sub>canon</sub></code> can be nested in a tuple type</a></p>
+<p>Return <code>$nestable'_tuple(typeIR<sub>canon</sub>)</code></p>
 </li>
 </ol>
 </div>
@@ -5788,12 +5768,12 @@ tupleValue
 </div>
 </div>
 <div class="paragraph">
-<p><code>TUPLE &lt; typeIR* &gt;</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
+<p><code>bound |- TUPLE &lt; typeIR* &gt;</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Check that <a href="#nestable_tuple"><code>typeIR</code> can be nested in a tuple type</a>, for each <code>typeIR</code> in <code>typeIR*</code></p>
+<p>Check that <code>$nestable_tuple(typeIR)</code>, for each <code>typeIR</code> in <code>typeIR*</code></p>
 </li>
 <li>
 <p>If (Type_wf: <code>bound |- typeIR</code>), for each <code>typeIR</code> in <code>typeIR*</code>, then</p>
@@ -5980,7 +5960,7 @@ rule Type_ok/headerStackType/specializedType:
 <p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon">the canonicalized form of <code>typeIR</code></a></p>
 </li>
 <li>
-<p>Return <a href="#nestable'_headerStack"><code>typeIR<sub>canon</sub></code> can be nested in a header stack type</a></p>
+<p>Return <code>$nestable'_headerStack(typeIR<sub>canon</sub>)</code></p>
 </li>
 </ol>
 </div>
@@ -6052,12 +6032,12 @@ rule Type_ok/headerStackType/specializedType:
 </div>
 </div>
 <div class="paragraph">
-<p><code>typeIR [ _ ]</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
+<p><code>bound |- typeIR [ _ ]</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Check that <a href="#nestable_headerStack"><code>typeIR</code> can be nested in a header stack type</a></p>
+<p>Check that <code>$nestable_headerStack(typeIR)</code></p>
 </li>
 <li>
 <p>If (Type_wf: <code>bound |- typeIR</code>), then</p>
@@ -6153,7 +6133,7 @@ be obtained from named types, as illustrated in <a href="#sec-def-namedType">Sec
 <p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon">the canonicalized form of <code>typeIR</code></a></p>
 </li>
 <li>
-<p>Return <a href="#nestable'_struct"><code>typeIR<sub>canon</sub></code> can be nested in a struct type</a></p>
+<p>Return <code>$nestable'_struct(typeIR<sub>canon</sub>)</code></p>
 </li>
 </ol>
 </div>
@@ -6347,7 +6327,7 @@ be obtained from named types, as illustrated in <a href="#sec-def-namedType">Sec
 </div>
 </div>
 <div class="paragraph">
-<p><code>STRUCT _ { typeIR id ;* }</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
+<p><code>bound |- STRUCT _ { typeIR id ;* }</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -6355,7 +6335,7 @@ be obtained from named types, as illustrated in <a href="#sec-def-namedType">Sec
 <p>Check that <code>$distinct_&lt;id&gt;(id*)</code></p>
 </li>
 <li>
-<p>Check that <a href="#nestable_struct"><code>typeIR</code> can be nested in a struct type</a>, for each <code>typeIR</code> in <code>typeIR*</code></p>
+<p>Check that <code>$nestable_struct(typeIR)</code>, for each <code>typeIR</code> in <code>typeIR*</code></p>
 </li>
 <li>
 <p>If (Type_wf: <code>bound |- typeIR</code>), for each <code>typeIR</code> in <code>typeIR*</code>, then</p>
@@ -6561,7 +6541,7 @@ headers contained within <code>h1</code>, regardless of how deeply they are nest
 <p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon">the canonicalized form of <code>typeIR</code></a></p>
 </li>
 <li>
-<p>Return <a href="#nestable'_header"><code>typeIR<sub>canon</sub></code> can be used in a header type</a></p>
+<p>Return <code>$nestable'_header(typeIR<sub>canon</sub>)</code></p>
 </li>
 </ol>
 </div>
@@ -6679,7 +6659,7 @@ headers contained within <code>h1</code>, regardless of how deeply they are nest
 <p>Let <code>STRUCT _ { typeIR _ ;* }</code> be <code>typeIR''</code></p>
 </li>
 <li>
-<p>Check that <a href="#nestable_struct_in_header"><code>typeIR</code> can be used in a struct nested in a header type</a>, for each <code>typeIR</code> in <code>typeIR*</code></p>
+<p>Check that <code>$nestable_struct_in_header(typeIR)</code>, for each <code>typeIR</code> in <code>typeIR*</code></p>
 </li>
 <li>
 <p>Return true</p>
@@ -6712,7 +6692,7 @@ headers contained within <code>h1</code>, regardless of how deeply they are nest
 <p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon">the canonicalized form of <code>typeIR</code></a></p>
 </li>
 <li>
-<p>Return <a href="#nestable'_struct_in_header"><code>typeIR<sub>canon</sub></code> can be used in a struct nested in a header type</a></p>
+<p>Return <code>$nestable'_struct_in_header(typeIR<sub>canon</sub>)</code></p>
 </li>
 </ol>
 </div>
@@ -6820,7 +6800,7 @@ headers contained within <code>h1</code>, regardless of how deeply they are nest
 <p>Let <code>STRUCT _ { typeIR _ ;* }</code> be <code>typeIR''</code></p>
 </li>
 <li>
-<p>Check that <a href="#nestable_struct_in_header"><code>typeIR</code> can be used in a struct nested in a header type</a>, for each <code>typeIR</code> in <code>typeIR*</code></p>
+<p>Check that <code>$nestable_struct_in_header(typeIR)</code>, for each <code>typeIR</code> in <code>typeIR*</code></p>
 </li>
 <li>
 <p>Return true</p>
@@ -6853,7 +6833,7 @@ headers contained within <code>h1</code>, regardless of how deeply they are nest
 </div>
 </div>
 <div class="paragraph">
-<p><code>HEADER _ { typeIR id ;* }</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
+<p><code>bound |- HEADER _ { typeIR id ;* }</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -6861,7 +6841,7 @@ headers contained within <code>h1</code>, regardless of how deeply they are nest
 <p>Check that <code>$distinct_&lt;id&gt;(id*)</code></p>
 </li>
 <li>
-<p>Check that <a href="#nestable_header"><code>typeIR</code> can be used in a header type</a>, for each <code>typeIR</code> in <code>typeIR*</code></p>
+<p>Check that <code>$nestable_header(typeIR)</code>, for each <code>typeIR</code> in <code>typeIR*</code></p>
 </li>
 <li>
 <p>If (Type_wf: <code>bound |- typeIR</code>), for each <code>typeIR</code> in <code>typeIR*</code>, then</p>
@@ -6957,7 +6937,7 @@ types can be obtained from named types, as illustrated in
 <p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon">the canonicalized form of <code>typeIR</code></a></p>
 </li>
 <li>
-<p>Return <a href="#nestable'_headerUnion"><code>typeIR<sub>canon</sub></code> can be used in a header union type</a></p>
+<p>Return <code>$nestable'_headerUnion(typeIR<sub>canon</sub>)</code></p>
 </li>
 </ol>
 </div>
@@ -7030,7 +7010,7 @@ types can be obtained from named types, as illustrated in
 </div>
 </div>
 <div class="paragraph">
-<p><code>HEADER_UNION _ { typeIR id ;* }</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
+<p><code>bound |- HEADER_UNION _ { typeIR id ;* }</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -7038,7 +7018,7 @@ types can be obtained from named types, as illustrated in
 <p>Check that <code>$distinct_&lt;id&gt;(id*)</code></p>
 </li>
 <li>
-<p>Check that <a href="#nestable_headerUnion"><code>typeIR</code> can be used in a header union type</a>, for each <code>typeIR</code> in <code>typeIR*</code></p>
+<p>Check that <code>$nestable_headerUnion(typeIR)</code>, for each <code>typeIR</code> in <code>typeIR*</code></p>
 </li>
 <li>
 <p>If (Type_wf: <code>bound |- typeIR</code>), for each <code>typeIR</code> in <code>typeIR*</code>, then</p>
@@ -7129,7 +7109,7 @@ obtained from named types, as illustrated in <a href="#sec-def-namedType">Sectio
 </div>
 </div>
 <div class="paragraph">
-<p><code>ENUM _ { id* }</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
+<p><code>bound |- ENUM _ { id* }</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -7246,7 +7226,7 @@ one of the types listed above, or another <code>typedef</code> name that meets t
 <p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon">the canonicalized form of <code>typeIR</code></a></p>
 </li>
 <li>
-<p>Return <a href="#nestable'_enum_serializable"><code>typeIR<sub>canon</sub></code> can be used in a serializable enum type</a></p>
+<p>Return <code>$nestable'_enum_serializable(typeIR<sub>canon</sub>)</code></p>
 </li>
 </ol>
 </div>
@@ -7306,7 +7286,7 @@ one of the types listed above, or another <code>typedef</code> name that meets t
 <p>Let <code>TYPE _ typeIR</code> be <code>typeIR''</code></p>
 </li>
 <li>
-<p>Return <a href="#nestable_new_in_enum_serializable"><code>typeIR</code> can be used in a new type nested in a serializable enum type</a></p>
+<p>Return <code>$nestable_new_in_enum_serializable(typeIR)</code></p>
 </li>
 </ol>
 </div>
@@ -7336,7 +7316,7 @@ one of the types listed above, or another <code>typedef</code> name that meets t
 </div>
 </div>
 <div class="paragraph">
-<p><code>ENUM _ # typeIR { id = _ ;* }</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
+<p><code>bound |- ENUM _ # typeIR { id = _ ;* }</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -7344,7 +7324,7 @@ one of the types listed above, or another <code>typedef</code> name that meets t
 <p>Check that <code>$distinct_&lt;id&gt;(id*)</code></p>
 </li>
 <li>
-<p>Check that <a href="#nestable_enum_serializable"><code>typeIR</code> can be used in a serializable enum type</a></p>
+<p>Check that <code>$nestable_enum_serializable(typeIR)</code></p>
 </li>
 <li>
 <p>If (Type_wf: <code>bound |- typeIR</code>), then</p>
@@ -7449,7 +7429,7 @@ object types can be obtained from named types, as illustrated in
 </div>
 </div>
 <div class="paragraph">
-<p><code>EXTERN _ { _ : routineTypeDefIR* }</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
+<p><code>bound |- EXTERN _ { _ : routineTypeDefIR* }</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -7537,7 +7517,7 @@ object types can be obtained from named types, as illustrated in
 </div>
 </div>
 <div class="paragraph">
-<p><code>PARSER ( parameterTypeIR* )</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
+<p><code>bound |- PARSER ( parameterTypeIR* )</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -7603,7 +7583,7 @@ object types can be obtained from named types, as illustrated in
 </div>
 </div>
 <div class="paragraph">
-<p><code>CONTROL ( parameterTypeIR* )</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
+<p><code>bound |- CONTROL ( parameterTypeIR* )</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -7673,7 +7653,7 @@ object types can be obtained from named types, as illustrated in
 </div>
 </div>
 <div class="paragraph">
-<p><code>PACKAGE &lt; typeIR* &gt;</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
+<p><code>bound |- PACKAGE &lt; typeIR* &gt;</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -7724,7 +7704,7 @@ object types can be obtained from named types, as illustrated in
 </div>
 </div>
 <div class="paragraph">
-<p><code>TABLE _ # typeIR</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
+<p><code>bound |- TABLE _ # typeIR</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -7866,7 +7846,7 @@ be obtained from named types, as illustrated in <a href="#sec-def-namedType">Sec
 <p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon">the canonicalized form of <code>typeIR</code></a></p>
 </li>
 <li>
-<p>Return <a href="#nestable'_typedef"><code>typeIR<sub>canon</sub></code> can be used in a typedef</a></p>
+<p>Return <code>$nestable'_typedef(typeIR<sub>canon</sub>)</code></p>
 </li>
 </ol>
 </div>
@@ -7970,12 +7950,12 @@ be obtained from named types, as illustrated in <a href="#sec-def-namedType">Sec
 </div>
 </div>
 <div class="paragraph">
-<p><code>TYPEDEF _ typeIR</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
+<p><code>bound |- TYPEDEF _ typeIR</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Check that <a href="#nestable_typedef"><code>typeIR</code> can be used in a typedef</a></p>
+<p>Check that <code>$nestable_typedef(typeIR)</code></p>
 </li>
 <li>
 <p>If (Type_wf: <code>bound |- typeIR</code>), then</p>
@@ -8069,7 +8049,7 @@ be obtained from named types, as illustrated in <a href="#sec-def-namedType">Sec
 <p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon">the canonicalized form of <code>typeIR</code></a></p>
 </li>
 <li>
-<p>Return <a href="#nestable'_new"><code>typeIR<sub>canon</sub></code> can be used in a new type</a></p>
+<p>Return <code>$nestable'_new(typeIR<sub>canon</sub>)</code></p>
 </li>
 </ol>
 </div>
@@ -8174,12 +8154,12 @@ be obtained from named types, as illustrated in <a href="#sec-def-namedType">Sec
 </div>
 </div>
 <div class="paragraph">
-<p><code>TYPE _ typeIR</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
+<p><code>bound |- TYPE _ typeIR</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Check that <a href="#nestable_new"><code>typeIR</code> can be used in a new type</a></p>
+<p>Check that <code>$nestable_new(typeIR)</code></p>
 </li>
 <li>
 <p>If (Type_wf: <code>bound |- typeIR</code>), then</p>
@@ -8260,7 +8240,7 @@ defaultValue
 </div>
 </div>
 <div class="paragraph">
-<p><code>DEFAULT</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
+<p><code>bound |- DEFAULT</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -8326,7 +8306,7 @@ invalidHeaderValue
 </div>
 </div>
 <div class="paragraph">
-<p><code>HEADER_INVALID</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
+<p><code>bound |- HEADER_INVALID</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -8438,7 +8418,7 @@ rule Type_wf/sequenceTypeIR/default:
 </div>
 </div>
 <div class="paragraph">
-<p><code>sequenceTypeIR</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
+<p><code>bound |- sequenceTypeIR</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -8581,7 +8561,7 @@ rule Type_wf/recordTypeIR/default:
 </div>
 </div>
 <div class="paragraph">
-<p><code>recordTypeIR</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
+<p><code>bound |- recordTypeIR</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -8670,7 +8650,7 @@ by the compiler internally and used for type-checking.</p>
 <p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon">the canonicalized form of <code>typeIR</code></a></p>
 </li>
 <li>
-<p>Return <a href="#nestable'_set"><code>typeIR<sub>canon</sub></code> can be used in a set type</a></p>
+<p>Return <code>$nestable'_set(typeIR<sub>canon</sub>)</code></p>
 </li>
 </ol>
 </div>
@@ -8759,7 +8739,7 @@ by the compiler internally and used for type-checking.</p>
 <p>Let <code>TUPLE &lt; typeIR* &gt;</code> be <code>typeIR''</code></p>
 </li>
 <li>
-<p>Check that <a href="#nestable_tuple_in_set"><code>typeIR</code> can be used in a tuple nested in a set type</a>, for each <code>typeIR</code> in <code>typeIR*</code></p>
+<p>Check that <code>$nestable_tuple_in_set(typeIR)</code>, for each <code>typeIR</code> in <code>typeIR*</code></p>
 </li>
 <li>
 <p>Return true</p>
@@ -8794,7 +8774,7 @@ by the compiler internally and used for type-checking.</p>
 <p>Let <code>SEQ &lt; typeIR* &gt;</code> be <code>sequenceTypeIR</code></p>
 </li>
 <li>
-<p>Check that <a href="#nestable_sequence_in_set"><code>typeIR</code> can be used in a sequence nested in a set type</a>, for each <code>typeIR</code> in <code>typeIR*</code></p>
+<p>Check that <code>$nestable_sequence_in_set(typeIR)</code>, for each <code>typeIR</code> in <code>typeIR*</code></p>
 </li>
 <li>
 <p>Return true</p>
@@ -8823,7 +8803,7 @@ by the compiler internally and used for type-checking.</p>
 <p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon">the canonicalized form of <code>typeIR</code></a></p>
 </li>
 <li>
-<p>Return <a href="#nestable'_tuple_in_set"><code>typeIR<sub>canon</sub></code> can be used in a tuple nested in a set type</a></p>
+<p>Return <code>$nestable'_tuple_in_set(typeIR<sub>canon</sub>)</code></p>
 </li>
 </ol>
 </div>
@@ -8912,7 +8892,7 @@ by the compiler internally and used for type-checking.</p>
 <p>Let <code>TUPLE &lt; typeIR* &gt;</code> be <code>typeIR''</code></p>
 </li>
 <li>
-<p>Check that <a href="#nestable_tuple_in_set"><code>typeIR</code> can be used in a tuple nested in a set type</a>, for each <code>typeIR</code> in <code>typeIR*</code></p>
+<p>Check that <code>$nestable_tuple_in_set(typeIR)</code>, for each <code>typeIR</code> in <code>typeIR*</code></p>
 </li>
 <li>
 <p>Return true</p>
@@ -8954,7 +8934,7 @@ by the compiler internally and used for type-checking.</p>
 <p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon">the canonicalized form of <code>typeIR</code></a></p>
 </li>
 <li>
-<p>Return <a href="#nestable'_sequence_in_set"><code>typeIR<sub>canon</sub></code> can be used in a sequence nested in a set type</a></p>
+<p>Return <code>$nestable'_sequence_in_set(typeIR<sub>canon</sub>)</code></p>
 </li>
 </ol>
 </div>
@@ -9043,7 +9023,7 @@ by the compiler internally and used for type-checking.</p>
 <p>Let <code>TUPLE &lt; typeIR* &gt;</code> be <code>typeIR''</code></p>
 </li>
 <li>
-<p>Check that <a href="#nestable_sequence_in_set"><code>typeIR</code> can be used in a sequence nested in a set type</a>, for each <code>typeIR</code> in <code>typeIR*</code></p>
+<p>Check that <code>$nestable_sequence_in_set(typeIR)</code>, for each <code>typeIR</code> in <code>typeIR*</code></p>
 </li>
 <li>
 <p>Return true</p>
@@ -9078,7 +9058,7 @@ by the compiler internally and used for type-checking.</p>
 <p>Let <code>SEQ &lt; typeIR* &gt;</code> be <code>sequenceTypeIR</code></p>
 </li>
 <li>
-<p>Check that <a href="#nestable_sequence_in_set"><code>typeIR</code> can be used in a sequence nested in a set type</a>, for each <code>typeIR</code> in <code>typeIR*</code></p>
+<p>Check that <code>$nestable_sequence_in_set(typeIR)</code>, for each <code>typeIR</code> in <code>typeIR*</code></p>
 </li>
 <li>
 <p>Return true</p>
@@ -9110,12 +9090,12 @@ by the compiler internally and used for type-checking.</p>
 </div>
 </div>
 <div class="paragraph">
-<p><code>SET &lt; [typeIR] &gt;</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
+<p><code>bound |- SET &lt; [typeIR] &gt;</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Check that <a href="#nestable_set"><code>typeIR</code> can be used in a set type</a></p>
+<p>Check that <code>$nestable_set(typeIR)</code></p>
 </li>
 <li>
 <p>If (Type_wf: <code>bound |- typeIR</code>), then</p>
@@ -9213,7 +9193,7 @@ rule Type_wf/tableMetadataTypeIR/struct:
 </div>
 </div>
 <div class="paragraph">
-<p><code>tableMetadataTypeIR</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
+<p><code>bound |- tableMetadataTypeIR</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -9337,39 +9317,23 @@ typedefs until a type is fully expanded.</p>
 </div>
 </div>
 <div class="sect1">
-<h2 id="sec-def-routine">9. P4 routines</h2>
+<h2 id="sec-routine">9. P4 routines</h2>
 <div class="sectionbody">
-<div class="paragraph">
-<p>P4<sub>16</sub> includes four callable entities: actions, functions, methods, and object
-constructors. Object constructors are explained in <a href="#sec-def-object">Chapter 10</a>. The
-other three callable entities are collectively referred to as <strong>routines</strong>.</p>
-</div>
-<div class="paragraph">
-<p>During type checking, each routine is represented by their type:</p>
-</div>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">routineTypeIR
-   : actionTypeIR
-   | functionTypeIR
+   : functionTypeIR
    | methodTypeIR
-   ;</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>The runtime representation of a routine is given by:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">routine
-   : action
-   | function
+   ;
+
+routine
+   : function
    | method
    ;</code></pre>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-def-parameterIR">9.1. Parameters</h3>
+<h3 id="sec-def-parameter">9.1. Parameters</h3>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">direction
@@ -9383,390 +9347,62 @@ parameter
    : annotationList direction type name initializerOpt
    ;
 
+parameterTypeIR
+   : direction typeIR id value?
+   ;
+
 parameterIR
    : annotationList direction typeIR nameIR constantInitializerOptIR
    ;</code></pre>
 </div>
 </div>
-<div class="paragraph">
-<p>Routines can have parameters. Each parameter has a direction, a type, a name,
-and an optional default value.</p>
-</div>
-<div class="sect3">
-<h4 id="sec-sem-Parameter_ok">9.1.1. Type checking</h4>
-<div class="listingblock">
-<div class="content">
-<pre>relation Parameter_ok:
-   cursor typingContext |- parameter : parameterIR # tid*
-   hint(input %0 %1 %2)
-   hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)</pre>
-</div>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>rule Parameter_ok/non-initializer:
-   p TC |- annotationList direction type name /* empty */ : (annotationList direction typeIR nameIR eps) # tid_fresh*
-    -- Type_ok: p TC |- type : typeIR # tid_fresh*
-    -- if bound = $union_set&lt;tid&gt;($bound(p, TC), `{tid_fresh*})
-    -- Type_wf: bound |- typeIR
-    -- if nameIR = $name(name)
-
-rule Parameter_ok/initializer:
-   p TC |- annotationList direction type name (= expression_init) : (annotationList direction typeIR nameIR (= value_init)) # tid_fresh*
-    -- Type_ok: p TC |- type : typeIR # tid_fresh*
-    -- if bound = $union_set&lt;tid&gt;($bound(p, TC), `{tid_fresh*})
-    -- Type_wf: bound |- typeIR
-    -- Expr_ok: p TC |- expression_init : typedExpressionIR_init
-    -- if typeIR_init = $typeof_expression(typedExpressionIR_init)
-    -- if LCTK = $ctkof_expression(typedExpressionIR_init)
-    -- if typedExpressionIR_init_cast = $coerce_unary(typedExpressionIR_init, typeIR)
-    -- if nameIR = $name(name)
-    -- Eval_static: p TC |- typedExpressionIR_init_cast ~&gt; value_init</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Typing <code>annotationList direction type name initializerOpt</code>, under cursor <code>p</code> and typing context <code>TC</code>:</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If <code>initializerOpt</code> matches pattern <code>`EMPTY</code></p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>typeIR</code> and <code>tid<sub>fresh</sub>*</code> be the result of <a href="#Type_ok">typing <code>type</code>, under cursor <code>p</code> and typing context <code>TC</code></a></p>
-</li>
-<li>
-<p>Let <code>bound</code> be <code>$union_set&lt;tid&gt;($bound(p, TC), { tid<sub>fresh</sub>* })</code></p>
-</li>
-<li>
-<p>If (Type_wf: <code>bound |- typeIR</code>), then</p>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
-<li>
-<p>Let <code>nameIR</code> be <code>$name(name)</code></p>
-</li>
-<li>
-<p>Result in <code>annotationList direction typeIR nameIR ?()</code> and <code>tid<sub>fresh</sub>*</code></p>
-</li>
-</ol>
-</div>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>If <code>initializerOpt</code> has type <code>initializer</code></p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>= expression<sub>init</sub></code> be <code>initializerOpt</code></p>
-</li>
-<li>
-<p>Let <code>typeIR</code> and <code>tid<sub>fresh</sub>*</code> be the result of <a href="#Type_ok">typing <code>type</code>, under cursor <code>p</code> and typing context <code>TC</code></a></p>
-</li>
-<li>
-<p>Let <code>bound</code> be <code>$union_set&lt;tid&gt;($bound(p, TC), { tid<sub>fresh</sub>* })</code></p>
-</li>
-<li>
-<p>If (Type_wf: <code>bound |- typeIR</code>), then</p>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
-<li>
-<p>Let <code>typedExpressionIR<sub>init</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>init</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a></p>
-</li>
-<li>
-<p>Let <code>typeIR<sub>init</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>init</sub></code></a></p>
-</li>
-<li>
-<p>Check that <code><a href="#ctkof_expression">the compile-time known-ness of  typedExpressionIR<sub>init</sub></a></code> matches pattern <code>LCTK</code></p>
-</li>
-<li>
-<p>Let <code>typedExpressionIR?</code> be <a href="#coerce_unary">implicitly cast  <code>typedExpressionIR<sub>init</sub></code>  to  <code>typeIR</code></a></p>
-</li>
-<li>
-<p>Check that <code>typedExpressionIR?</code> matches pattern <code>(_)</code></p>
-</li>
-<li>
-<p>Let <code>?(typedExpressionIR<sub>init_cast</sub>)</code> be <code>typedExpressionIR</code>?</p>
-</li>
-<li>
-<p>Let <code>nameIR</code> be <code>$name(name)</code></p>
-</li>
-<li>
-<p>Let <code>value<sub>init</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>init_cast</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a></p>
-</li>
-<li>
-<p>Result in <code>annotationList direction typeIR nameIR ?(= value<sub>init</sub>)</code> and <code>tid<sub>fresh</sub>*</code></p>
-</li>
-</ol>
-</div>
-</li>
-</ol>
-</div>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p>The type of a parameter is represented as in:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parameterTypeIR
-   : direction typeIR id value?
-   ;</code></pre>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="sec-sem-ParameterType_wf">9.1.2. Well-formedness</h4>
-<div class="listingblock">
-<div class="content">
-<pre>relation ParameterType_wf:
-   bound |- parameterTypeIR
-   hint(input %0 %1)
-   hint(prose_in %1 "is a well-formed type, assuming bound type ids" %0)</pre>
-</div>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>rule ParameterType_wf/non-default:
-   bound |- direction typeIR _ eps
-    -- Type_wf: bound |- typeIR
-    -- if ($is_string_typeIR($canon(typeIR)) \/ $is_arbitrary_int_typeIR($canon(typeIR)) \/ $is_objectTypeIR($canon(typeIR))) =&gt; direction = /* empty */
-
-rule ParameterType_wf/default:
-   bound |- direction typeIR _ value
-    -- Type_wf: bound |- typeIR
-    -- if direction = IN \/ direction = /* empty */
-    -- if ($is_string_typeIR($canon(typeIR)) \/ $is_arbitrary_int_typeIR($canon(typeIR)) \/ $is_objectTypeIR($canon(typeIR))) =&gt; direction = /* empty */</pre>
-</div>
-</div>
-<div class="paragraph">
-<p><code>direction typeIR _ value'?</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If ?() is equal to <code>value'</code>?</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>If (Type_wf: <code>bound |- typeIR</code>), then</p>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
-<li>
-<p>Check that <code>$is_string_typeIR(<a href="#canon">the canonicalized form of typeIR</a>) \/ $is_arbitrary_int_typeIR(<a href="#canon">the canonicalized form of typeIR</a>) \/ $is_objectTypeIR(<a href="#canon">the canonicalized form of typeIR</a>) &#8658; direction = </code></p>
-</li>
-<li>
-<p>The relation holds</p>
-</li>
-</ol>
-</div>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Let <code>value''?</code> be <code>value'</code>?</p>
-</li>
-<li>
-<p>If <code>value''?</code> matches pattern <code>(_)</code></p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>?(value)</code> be <code>value''</code>?</p>
-</li>
-<li>
-<p>If (Type_wf: <code>bound |- typeIR</code>), then</p>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
-<li>
-<p>If <code>direction</code> matches pattern <code>IN</code></p>
-</li>
-<li>
-<p>Else if <code>direction</code> matches pattern <code>`EMPTY</code></p>
-</li>
-</ol>
-</div>
-</li>
-</ol>
-</div>
-</li>
-</ol>
-</div>
-</div>
 </div>
 <div class="sect2">
-<h3 id="sec-def-action">9.2. Actions</h3>
-<div class="listingblock">
-<div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">actionTypeIR
-   : ACTION `( parameterTypeIR* )
-   ;
-
-action
-   : ACTION `( parameterListIR ) blockStatementIR
-   ;</code></pre>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="sec-def-function">9.3. Functions</h3>
+<h3 id="sec-def-function">9.2. Functions</h3>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">functionTypeIR
-   : builtinFunctionTypeIR
-   | definedFunctionTypeIR
-   | externFunctionTypeIR
+   : BUILTIN_FUNCTION `( parameterTypeIR* ) -&gt; typeIR
+   | FUNCTION `( parameterTypeIR* ) -&gt; typeIR
+   | EXTERN_FUNCTION `( parameterTypeIR* ) -&gt; typeIR
+   | ACTION `( parameterTypeIR* )
    ;
 
 function
-   : builtinFunction
-   | definedFunction
-   | externFunction
-   ;</code></pre>
-</div>
-</div>
-<div class="sect3">
-<h4 id="sec-def-builtinFunction">9.3.1. Built-in functions</h4>
-<div class="listingblock">
-<div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">builtinFunctionTypeIR
-   : BUILTIN_FUNCTION `( parameterTypeIR* ) -&gt; typeIR
-   ;
-
-builtinFunction
    : BUILTIN_FUNCTION `&lt; typeParameterListIR &gt; `( parameterListIR )
+   | FUNCTION `&lt; typeParameterListIR &gt; `( parameterListIR ) blockStatementIR
+   | ACTION `( parameterListIR ) blockStatementIR
+   | EXTERN_FUNCTION `&lt; typeParameterListIR &gt; `( parameterListIR )
    ;</code></pre>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="sec-def-definedFunction">9.3.2. User-defined functions</h4>
-<div class="listingblock">
-<div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">definedFunctionTypeIR
-   : FUNCTION `( parameterTypeIR* ) -&gt; typeIR
-   ;
-
-definedFunction
-   : FUNCTION `&lt; typeParameterListIR &gt; `( parameterListIR ) blockStatementIR
-   ;</code></pre>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="sec-def-externFunction">9.3.3. Extern functions</h4>
-<div class="listingblock">
-<div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externFunctionTypeIR
-   : EXTERN_FUNCTION `( parameterTypeIR* ) -&gt; typeIR
-   ;
-
-externFunction
-   : EXTERN_FUNCTION `&lt; typeParameterListIR &gt; `( parameterListIR )
-   ;</code></pre>
-</div>
 </div>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-def-method">9.4. Methods</h3>
+<h3 id="sec-def-method">9.3. Methods</h3>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">methodTypeIR
-   : builtinMethodTypeIR
-   | externMethodTypeIR
-   | parserApplyMethodTypeIR
-   | controlApplyMethodTypeIR
-   | tableApplyMethodTypeIR
+   : BUILTIN_METHOD `( parameterTypeIR* ) -&gt; typeIR
+   | EXTERN_METHOD `( parameterTypeIR* ) -&gt; typeIR
+   | EXTERN_METHOD ABSTRACT `( parameterTypeIR* ) -&gt; typeIR
+   | PARSER_APPLY `( parameterTypeIR* )
+   | CONTROL_APPLY `( parameterTypeIR* )
+   | TABLE_APPLY -&gt; typeIR
    ;
 
 method
-   : builtinMethod
-   | externMethod
-   | parserApplyMethod
-   | controlApplyMethod
-   | tableApplyMethod
-   ;</code></pre>
-</div>
-</div>
-<div class="sect3">
-<h4 id="sec-def-builtinMethod">9.4.1. Built-in methods</h4>
-<div class="listingblock">
-<div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">builtinMethodTypeIR
-   : BUILTIN_METHOD `( parameterTypeIR* ) -&gt; typeIR
-   ;
-
-builtinMethod
    : BUILTIN_METHOD `( parameterListIR ) # storageReference
-   ;</code></pre>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="sec-def-externMethod">9.4.2. Extern methods</h4>
-<div class="listingblock">
-<div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externMethodTypeIR
-   : EXTERN_METHOD `( parameterTypeIR* ) -&gt; typeIR
-   | EXTERN_METHOD ABSTRACT `( parameterTypeIR* ) -&gt; typeIR
-   ;
-
-externMethod
-   : EXTERN_METHOD `&lt; typeParameterListIR &gt; `( parameterListIR ) blockStatementIR?
+   | EXTERN_METHOD `&lt; typeParameterListIR &gt; `( parameterListIR ) blockStatementIR?
    | EXTERN_METHOD ABSTRACT `&lt; typeParameterListIR &gt; `( parameterListIR )
+   | PARSER_APPLY `( parameterListIR ) `{ parserLocalDeclarationListIR ; senv }
+   | CONTROL_APPLY `( parameterListIR ) `{ controlLocalDeclarationListIR ; renv ; blockElementStatementListIR }
+   | TABLE_APPLY `{ tablePropertyListIR }
    ;</code></pre>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="sec-def-parserApplyMethod">9.4.3. Parser apply methods</h4>
-<div class="listingblock">
-<div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parserApplyMethodTypeIR
-   : PARSER_APPLY `( parameterTypeIR* )
-   ;
-
-parserApplyMethod
-   : PARSER_APPLY `( parameterListIR ) `{ parserLocalDeclarationListIR ; senv }
-   ;</code></pre>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="sec-def-controlApplyMethod">9.4.4. Control apply methods</h4>
-<div class="listingblock">
-<div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">controlApplyMethodTypeIR
-   : CONTROL_APPLY `( parameterTypeIR* )
-   ;
-
-controlApplyMethod
-   : CONTROL_APPLY `( parameterListIR ) `{ controlLocalDeclarationListIR ; renv ; blockElementStatementListIR }
-   ;</code></pre>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="sec-def-tableApplyMethod">9.4.5. Table apply methods</h4>
-<div class="listingblock">
-<div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tableApplyMethodTypeIR
-   : TABLE_APPLY -&gt; typeIR
-   ;
-
-tableApplyMethod
-   : TABLE_APPLY `{ tablePropertyListIR }
-   ;</code></pre>
-</div>
 </div>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-def-routine-type-constructor">9.5. Routine type constructors</h3>
+<h3 id="sec-def-routine-type-constructor">9.4. Routine type constructors</h3>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">routineTypeDefIR
@@ -9776,7 +9412,7 @@ tableApplyMethod
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-def-mono-routine-type-constructor">9.5.1. Monomorphic routine type constructors</h4>
+<h4 id="sec-def-mono-routine-type-constructor">9.4.1. Monomorphic routine type constructors</h4>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">monoRoutineTypeDefIR = routineTypeIR</code></pre>
@@ -9784,7 +9420,7 @@ tableApplyMethod
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-def-poly-routine-type-constructor">9.5.2. Polymorphic routine type constructors</h4>
+<h4 id="sec-def-poly-routine-type-constructor">9.4.2. Polymorphic routine type constructors</h4>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">polyRoutineTypeDefIR
@@ -9797,7 +9433,7 @@ tableApplyMethod
 </div>
 </div>
 <div class="sect1">
-<h2 id="sec-def-object">10. P4 objects</h2>
+<h2 id="sec-object">10. P4 objects</h2>
 <div class="sectionbody">
 <div class="listingblock">
 <div class="content">
@@ -10079,7 +9715,7 @@ rule Expr_inst/literalExpressionIR-boolean/false:
 </div>
 </div>
 <div class="paragraph">
-<p><code>p IC STO' |- booleanLiteral # _ =&#8658; % %</code></p>
+<p><code>p IC STO |- booleanLiteral # _ =&#8658; % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -10295,7 +9931,7 @@ rule Expr_inst/literalExpressionIR-number/fixint:
 </div>
 </div>
 <div class="paragraph">
-<p><code>p IC STO' |- numberLiteral # _ =&#8658; % %</code></p>
+<p><code>p IC STO |- numberLiteral # _ =&#8658; % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -10393,7 +10029,7 @@ rule Expr_inst/literalExpressionIR-number/fixint:
 </div>
 </div>
 <div class="paragraph">
-<p><code>p IC STO' |- " text " # _ =&#8658; % %</code></p>
+<p><code>p IC STO |- " text " # _ =&#8658; % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -10435,7 +10071,7 @@ rule Expr_ok/referenceExpression/this:
 </div>
 </div>
 <div class="paragraph">
-<p>Typing <code>expression'''</code>, under cursor <code>p</code> and typing context <code>TC</code>:</p>
+<p>Typing <code>expression</code>, under cursor <code>p</code> and typing context <code>TC</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -10528,7 +10164,7 @@ rule Expr_ok/referenceExpression/this:
 </div>
 </div>
 <div class="paragraph">
-<p><code>p IC STO' |- prefixedNameIR # _ =&#8658; % %</code></p>
+<p><code>p IC STO |- prefixedNameIR # _ =&#8658; % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -10604,7 +10240,7 @@ defaultExpressionIR = defaultExpression</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p><code>p IC STO' |- &#8230;&#8203; # _ =&#8658; % %</code></p>
+<p><code>p IC STO |- &#8230;&#8203; # _ =&#8658; % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -10903,7 +10539,7 @@ rule Expr_inst/unaryExpressionIR/minus:
 </div>
 </div>
 <div class="paragraph">
-<p><code>p IC STO' |- unop typedExpressionIR # _ =&#8658; % %</code></p>
+<p><code>p IC STO<sub>0</sub> |- unop typedExpressionIR # _ =&#8658; % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -11023,7 +10659,7 @@ binaryExpressionIR
 <p>Let <code>typedExpressionIR<sub>r</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a></p>
 </li>
 <li>
-<p>Let <code>(typedExpressionIR, typedExpressionIR)?</code> be <a href="#coerce_binary">implicitly cast  <code>typedExpressionIR<sub>l</sub></code>  and  <code>typedExpressionIR<sub>r</sub></code>  to equal types</a></p>
+<p>Let <code>(typedExpressionIR, typedExpressionIR)?</code> be <code>$coerce_binary(typedExpressionIR<sub>l</sub>, typedExpressionIR<sub>r</sub>)</code></p>
 </li>
 <li>
 <p>Check that <code>(typedExpressionIR, typedExpressionIR)?</code> matches pattern <code>(_)</code></p>
@@ -11097,7 +10733,7 @@ binaryExpressionIR
 <p>Let <code>typedExpressionIR<sub>r</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a></p>
 </li>
 <li>
-<p>Let <code>(typedExpressionIR, typedExpressionIR)?</code> be <a href="#coerce_binary">implicitly cast  <code>typedExpressionIR<sub>l</sub></code>  and  <code>typedExpressionIR<sub>r</sub></code>  to equal types</a></p>
+<p>Let <code>(typedExpressionIR, typedExpressionIR)?</code> be <code>$coerce_binary(typedExpressionIR<sub>l</sub>, typedExpressionIR<sub>r</sub>)</code></p>
 </li>
 <li>
 <p>Check that <code>(typedExpressionIR, typedExpressionIR)?</code> matches pattern <code>(_)</code></p>
@@ -11189,7 +10825,7 @@ rule Expr_ok/binaryExpression-divmod/rhs-non-lctk:
 <p>Let <code>typedExpressionIR<sub>r</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a></p>
 </li>
 <li>
-<p>Let <code>(typedExpressionIR, typedExpressionIR)?</code> be <a href="#coerce_binary">implicitly cast  <code>typedExpressionIR<sub>l</sub></code>  and  <code>typedExpressionIR<sub>r</sub></code>  to equal types</a></p>
+<p>Let <code>(typedExpressionIR, typedExpressionIR)?</code> be <code>$coerce_binary(typedExpressionIR<sub>l</sub>, typedExpressionIR<sub>r</sub>)</code></p>
 </li>
 <li>
 <p>Check that <code>(typedExpressionIR, typedExpressionIR)?</code> matches pattern <code>(_)</code></p>
@@ -11431,7 +11067,7 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Let <code>typedExpressionIR<sub>r</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a></p>
 </li>
 <li>
-<p>Let <code>(typedExpressionIR, typedExpressionIR)?</code> be <a href="#coerce_binary">implicitly cast  <code>typedExpressionIR<sub>l</sub></code>  and  <code>typedExpressionIR<sub>r</sub></code>  to equal types</a></p>
+<p>Let <code>(typedExpressionIR, typedExpressionIR)?</code> be <code>$coerce_binary(typedExpressionIR<sub>l</sub>, typedExpressionIR<sub>r</sub>)</code></p>
 </li>
 <li>
 <p>Check that <code>(typedExpressionIR, typedExpressionIR)?</code> matches pattern <code>(_)</code></p>
@@ -11499,7 +11135,7 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Let <code>typedExpressionIR<sub>r</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a></p>
 </li>
 <li>
-<p>Let <code>(typedExpressionIR, typedExpressionIR)?</code> be <a href="#coerce_binary">implicitly cast  <code>typedExpressionIR<sub>l</sub></code>  and  <code>typedExpressionIR<sub>r</sub></code>  to equal types</a></p>
+<p>Let <code>(typedExpressionIR, typedExpressionIR)?</code> be <code>$coerce_binary(typedExpressionIR<sub>l</sub>, typedExpressionIR<sub>r</sub>)</code></p>
 </li>
 <li>
 <p>Check that <code>(typedExpressionIR, typedExpressionIR)?</code> matches pattern <code>(_)</code></p>
@@ -11573,7 +11209,7 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Let <code>typedExpressionIR<sub>r</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a></p>
 </li>
 <li>
-<p>Let <code>(typedExpressionIR, typedExpressionIR)?</code> be <a href="#coerce_binary">implicitly cast  <code>typedExpressionIR<sub>l</sub></code>  and  <code>typedExpressionIR<sub>r</sub></code>  to equal types</a></p>
+<p>Let <code>(typedExpressionIR, typedExpressionIR)?</code> be <code>$coerce_binary(typedExpressionIR<sub>l</sub>, typedExpressionIR<sub>r</sub>)</code></p>
 </li>
 <li>
 <p>Check that <code>(typedExpressionIR, typedExpressionIR)?</code> matches pattern <code>(_)</code></p>
@@ -11721,7 +11357,7 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Let <code>typedExpressionIR<sub>r</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a></p>
 </li>
 <li>
-<p>Let <code>(typedExpressionIR, typedExpressionIR)?</code> be <a href="#coerce_binary">implicitly cast  <code>typedExpressionIR<sub>l</sub></code>  and  <code>typedExpressionIR<sub>r</sub></code>  to equal types</a></p>
+<p>Let <code>(typedExpressionIR, typedExpressionIR)?</code> be <code>$coerce_binary(typedExpressionIR<sub>l</sub>, typedExpressionIR<sub>r</sub>)</code></p>
 </li>
 <li>
 <p>Check that <code>(typedExpressionIR, typedExpressionIR)?</code> matches pattern <code>(_)</code></p>
@@ -12262,7 +11898,7 @@ rule Expr_inst/binaryExpressionIR/lor:
 </div>
 </div>
 <div class="paragraph">
-<p><code>p IC STO' |- typedExpressionIR<sub>l</sub> binop typedExpressionIR<sub>r</sub> # _ =&#8658; % %</code></p>
+<p><code>p IC STO<sub>0</sub> |- typedExpressionIR<sub>l</sub> binop typedExpressionIR<sub>r</sub> # _ =&#8658; % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -12602,7 +12238,7 @@ ternaryExpressionIR
 <p>Let <code>typedExpressionIR<sub>false</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>false</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a></p>
 </li>
 <li>
-<p>Let <code>(typedExpressionIR, typedExpressionIR)?</code> be <a href="#coerce_binary">implicitly cast  <code>typedExpressionIR<sub>true</sub></code>  and  <code>typedExpressionIR<sub>false</sub></code>  to equal types</a></p>
+<p>Let <code>(typedExpressionIR, typedExpressionIR)?</code> be <code>$coerce_binary(typedExpressionIR<sub>true</sub>, typedExpressionIR<sub>false</sub>)</code></p>
 </li>
 <li>
 <p>Check that <code>(typedExpressionIR, typedExpressionIR)?</code> matches pattern <code>(_)</code></p>
@@ -12702,7 +12338,7 @@ rule Expr_inst/ternaryExpressionIR/false:
 </div>
 </div>
 <div class="paragraph">
-<p><code>p IC STO' |- typedExpressionIR<sub>cond</sub> ? typedExpressionIR<sub>true</sub> : typedExpressionIR<sub>false</sub> # _ =&#8658; % %</code></p>
+<p><code>p IC STO<sub>0</sub> |- typedExpressionIR<sub>cond</sub> ? typedExpressionIR<sub>true</sub> : typedExpressionIR<sub>false</sub> # _ =&#8658; % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -12848,7 +12484,7 @@ castExpressionIR
 </div>
 </div>
 <div class="paragraph">
-<p><code>p IC STO' |- ( typeIR ) typedExpressionIR # _ =&#8658; % %</code></p>
+<p><code>p IC STO<sub>0</sub> |- ( typeIR ) typedExpressionIR # _ =&#8658; % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -12941,7 +12577,7 @@ dataExpressionIR
 </div>
 </div>
 <div class="paragraph">
-<p><code>p IC STO' |- {#} # _ =&#8658; % %</code></p>
+<p><code>p IC STO |- {#} # _ =&#8658; % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -13222,7 +12858,7 @@ rule Expr_inst/dataExpressionIR-sequence/default:
 </div>
 </div>
 <div class="paragraph">
-<p><code>p IC STO' |- dataExpressionIR # _ =&#8658; % %</code></p>
+<p><code>p IC STO<sub>0</sub> |- dataExpressionIR # _ =&#8658; % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -13622,7 +13258,7 @@ rule Expr_inst/dataExpressionIR-record/default:
 </div>
 </div>
 <div class="paragraph">
-<p><code>p IC STO' |- dataExpressionIR # _ =&#8658; % %</code></p>
+<p><code>p IC STO<sub>0</sub> |- dataExpressionIR # _ =&#8658; % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -13762,7 +13398,7 @@ errorAccessExpressionIR
 </div>
 </div>
 <div class="paragraph">
-<p><code>p IC STO' |- ERROR . nameIR # _ =&#8658; % %</code></p>
+<p><code>p IC STO |- ERROR . nameIR # _ =&#8658; % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -13916,7 +13552,7 @@ rule Eval_static/memberAccessExpressionIR-type/serenum:
 </div>
 </div>
 <div class="paragraph">
-<p>The local compile-time evaluation of <code>TYPE prefixedNameIR . nameIR # ( _ _ )</code>, under cursor <code>p</code> and typing context <code>TC</code>:</p>
+<p>The local compile-time evaluation of <code>TYPE prefixedNameIR . nameIR # ( typeIR<sub>base</sub> _ )</code>, under cursor <code>p</code> and typing context <code>TC</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -13985,7 +13621,7 @@ rule Expr_inst/memberAccessExpressionIR-type/serenum:
 </div>
 </div>
 <div class="paragraph">
-<p><code>p IC STO' |- TYPE prefixedNameIR . nameIR # _ =&#8658; % %</code></p>
+<p><code>p IC STO |- TYPE prefixedNameIR . nameIR # _ =&#8658; % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -14511,7 +14147,7 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 </div>
 </div>
 <div class="paragraph">
-<p><code>p IC STO' |- typedExpressionIR<sub>base</sub> . "size" # ( typeIR<sub>base</sub> _ ) =&#8658; % %</code></p>
+<p><code>p IC STO |- typedExpressionIR<sub>base</sub> . "size" # ( typeIR<sub>base</sub> _ ) =&#8658; % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -14924,7 +14560,7 @@ sliceAccessExpressionIR
 </div>
 </div>
 <div class="paragraph">
-<p><code>p IC STO' |- typedExpressionIR<sub>base</sub> [ typedExpressionIR<sub>hi</sub> : typedExpressionIR<sub>lo</sub> ] # _ =&#8658; % %</code></p>
+<p><code>p IC STO<sub>0</sub> |- typedExpressionIR<sub>base</sub> [ typedExpressionIR<sub>hi</sub> : typedExpressionIR<sub>lo</sub> ] # _ =&#8658; % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -15254,7 +14890,7 @@ rule Expr_inst/callExpressionIR-builtin-size/type-poly:
 </div>
 </div>
 <div class="paragraph">
-<p><code>p IC STO' |- routineTargetIR &lt; [ ] &gt; ( [ ] ) # _ =&#8658; % %</code></p>
+<p><code>p IC STO |- routineTargetIR &lt; [ ] &gt; ( [ ] ) # _ =&#8658; % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -15629,7 +15265,7 @@ rule Expr_ok/callExpression-constructor/specializedType:
 </div>
 </div>
 <div class="paragraph">
-<p>The local compile-time evaluation of <code>( routineTargetIR ) &lt; typeArgumentIR* &gt; ( argumentIR* ) # ( _ _ )</code>, under cursor <code>p</code> and typing context <code>TC</code>:</p>
+<p>The local compile-time evaluation of <code>( routineTargetIR ) &lt; typeArgumentIR* &gt; ( argumentIR* ) # ( typeIR ctk )</code>, under cursor <code>p</code> and typing context <code>TC</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -15652,7 +15288,7 @@ rule Expr_ok/callExpression-constructor/specializedType:
 </div>
 </div>
 <div class="paragraph">
-<p><code>p IC STO' |- ( routineTargetIR ) &lt; typeArgumentListIR &gt; ( argumentListIR ) # _ =&#8658; % %</code></p>
+<p><code>p IC STO<sub>0</sub> |- ( routineTargetIR ) &lt; typeArgumentListIR &gt; ( argumentListIR ) # expressionNoteIR =&#8658; % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -15748,7 +15384,7 @@ parenthesizedExpressionIR
 </div>
 </div>
 <div class="paragraph">
-<p><code>p IC STO' |- ( typedExpressionIR ) # _ =&#8658; % %</code></p>
+<p><code>p IC STO<sub>0</sub> |- ( typedExpressionIR ) # _ =&#8658; % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -15824,7 +15460,8 @@ statementIR
 <pre>relation Stmt_inst:
    cursor instantiationContext store |- statementIR ==&gt; instantiationContext store statementIR
    hint(input %0 %1 %2 %3)
-   hint(prose_in "the compile-time evaluation of" %3#", under cursor" %0#", instantiation context" %1#", and store" %2)</pre>
+   hint(prose_in "the compile-time evaluation of" %3#", under cursor" %0#", instantiation context" %1#", and store" %2)
+   hint(prose_out "\nthe instantiation context" %4#",\nthe updated store" %5#",\nand the instantiated statement" %6)</pre>
 </div>
 </div>
 <div class="sect2">
@@ -15850,7 +15487,7 @@ emptyStatementIR = emptyStatement</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>Typing <code>;</code>, under cursor <code>p'</code>, typing context <code>TC'</code>, and abstract control flow <code>f'</code>:</p>
+<p>Typing <code>;</code>, under cursor <code>p</code>, typing context <code>TC</code>, and abstract control flow <code>f</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -15869,12 +15506,25 @@ emptyStatementIR = emptyStatement</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The compile-time evaluation of <code>emptyStatementIR</code>, under cursor <code>p'</code>, instantiation context <code>IC'</code>, and store <code>STO'</code>:</p>
+<p>The compile-time evaluation of <code>emptyStatementIR</code>, under cursor <code>p</code>, instantiation context <code>IC</code>, and store <code>STO</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Result in <code>IC'</code>, <code>STO'</code>, and <code>emptyStatementIR</code></p>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the instantiation context <code>IC'</code>,</p>
+</li>
+<li>
+<p>the updated store <code>STO'</code>,</p>
+</li>
+<li>
+<p>and the instantiated statement <code>emptyStatementIR</code></p>
+</li>
+</ul>
+</div>
 </li>
 </ol>
 </div>
@@ -15941,7 +15591,7 @@ for comparison operators, logical operators, concat, range, or mask operators.</
 </div>
 </div>
 <div class="paragraph">
-<p>Typing <code>lvalue = expression ;</code>, under cursor <code>p'</code>, typing context <code>TC'</code>, and abstract control flow <code>f'</code>:</p>
+<p>Typing <code>lvalue = expression ;</code>, under cursor <code>p</code>, typing context <code>TC</code>, and abstract control flow <code>f</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -15952,13 +15602,13 @@ for comparison operators, logical operators, concat, range, or mask operators.</
 <p>Let <code>typedExpressionIR</code> be the result of <a href="#Expr_ok">typing <code>expression</code>, under cursor <code>p'</code> and typing context <code>TC'</code></a></p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>l</sub></code> be <a href="#typeof_lvalue">the type of lvalue  <code>typedLvalueIR</code></a></p>
+<p>Let <code>typeIR<sub>l</sub></code> be <code>$typeof_lvalue(typedLvalueIR)</code></p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>r</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR</code></a></p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR'?</code> be <a href="#coerce_unary">implicitly cast  <code>typedExpressionIR</code>  to  <code>typeIR<sub>l</sub></code></a></p>
+<p>Let <code>typedExpressionIR'?</code> be <code>$coerce_unary(typedExpressionIR, typeIR<sub>l</sub>)</code></p>
 </li>
 <li>
 <p>Check that <code>typedExpressionIR'?</code> matches pattern <code>(_)</code></p>
@@ -16518,12 +16168,25 @@ rule Lvalue_ok/indexAccess/non-lctk:
 </div>
 </div>
 <div class="paragraph">
-<p>The compile-time evaluation of <code>assignmentStatementIR</code>, under cursor <code>p'</code>, instantiation context <code>IC'</code>, and store <code>STO'</code>:</p>
+<p>The compile-time evaluation of <code>assignmentStatementIR</code>, under cursor <code>p</code>, instantiation context <code>IC</code>, and store <code>STO</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Result in <code>IC'</code>, <code>STO'</code>, and <code>assignmentStatementIR</code></p>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the instantiation context <code>IC'</code>,</p>
+</li>
+<li>
+<p>the updated store <code>STO'</code>,</p>
+</li>
+<li>
+<p>and the instantiated statement <code>assignmentStatementIR</code></p>
+</li>
+</ul>
+</div>
 </li>
 </ol>
 </div>
@@ -16570,7 +16233,7 @@ rule Stmt_ok/callStatement/callStatement-typeArgumentList:
 </div>
 </div>
 <div class="paragraph">
-<p>Typing <code>callStatement</code>, under cursor <code>p'</code>, typing context <code>TC'</code>, and abstract control flow <code>f'</code>:</p>
+<p>Typing <code>callStatement</code>, under cursor <code>p</code>, typing context <code>TC</code>, and abstract control flow <code>f</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -16850,12 +16513,25 @@ rule RoutineTarget_ok/memberAccessExpression/memberAccessExpression-expression:
 </div>
 </div>
 <div class="paragraph">
-<p>The compile-time evaluation of <code>callStatementIR</code>, under cursor <code>p'</code>, instantiation context <code>IC'</code>, and store <code>STO'</code>:</p>
+<p>The compile-time evaluation of <code>callStatementIR</code>, under cursor <code>p</code>, instantiation context <code>IC</code>, and store <code>STO</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Result in <code>IC'</code>, <code>STO'</code>, and <code>callStatementIR</code></p>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the instantiation context <code>IC'</code>,</p>
+</li>
+<li>
+<p>the updated store <code>STO'</code>,</p>
+</li>
+<li>
+<p>and the instantiated statement <code>callStatementIR</code></p>
+</li>
+</ul>
+</div>
 </li>
 </ol>
 </div>
@@ -16971,7 +16647,7 @@ invoked.</p>
 </div>
 </div>
 <div class="paragraph">
-<p>Typing <code>namedType . APPLY ( argumentList ) ;</code>, under cursor <code>p'</code>, typing context <code>TC'</code>, and abstract control flow <code>f'</code>:</p>
+<p>Typing <code>namedType . APPLY ( argumentList ) ;</code>, under cursor <code>p</code>, typing context <code>TC<sub>0</sub></code>, and abstract control flow <code>f</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -17056,7 +16732,7 @@ invoked.</p>
 </div>
 </div>
 <div class="paragraph">
-<p>The compile-time evaluation of <code>prefixedNameIR . APPLY ( argumentListIR ) ;</code>, under cursor <code>p'</code>, instantiation context <code>IC'</code>, and store <code>STO'</code>:</p>
+<p>The compile-time evaluation of <code>prefixedNameIR . APPLY ( argumentListIR ) ;</code>, under cursor <code>p</code>, instantiation context <code>IC</code>, and store <code>STO<sub>0</sub></code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -17103,7 +16779,20 @@ invoked.</p>
 <p>Let <code>blockStatementIR</code> be <code>{ [constantDeclarationIR and callStatementIR] }</code></p>
 </li>
 <li>
-<p>Result in <code>IC'</code>, <code>STO<sub>2</sub></code>, and <code>blockStatementIR</code></p>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the instantiation context <code>IC'</code>,</p>
+</li>
+<li>
+<p>the updated store <code>STO<sub>2</sub></code>,</p>
+</li>
+<li>
+<p>and the instantiated statement <code>blockStatementIR</code></p>
+</li>
+</ul>
+</div>
 </li>
 </ol>
 </div>
@@ -17152,7 +16841,7 @@ rule Stmt_ok/returnStatement/expression:
 </div>
 </div>
 <div class="paragraph">
-<p>Typing <code>returnStatement</code>, under cursor <code>LOCAL</code>, typing context <code>TC'</code>, and abstract control flow <code>f'</code>:</p>
+<p>Typing <code>returnStatement</code>, under cursor <code>LOCAL</code>, typing context <code>TC</code>, and abstract control flow <code>f</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -17179,7 +16868,7 @@ rule Stmt_ok/returnStatement/expression:
 <p>Let <code>?(typeIR<sub>ret</sub>)</code> be <code>typeIR'</code>?</p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR'?</code> be <a href="#coerce_unary">implicitly cast  <code>typedExpressionIR</code>  to  <code>typeIR<sub>ret</sub></code></a></p>
+<p>Let <code>typedExpressionIR'?</code> be <code>$coerce_unary(typedExpressionIR, typeIR<sub>ret</sub>)</code></p>
 </li>
 <li>
 <p>Check that <code>typedExpressionIR'?</code> matches pattern <code>(_)</code></p>
@@ -17205,12 +16894,25 @@ rule Stmt_ok/returnStatement/expression:
 </div>
 </div>
 <div class="paragraph">
-<p>The compile-time evaluation of <code>returnStatementIR</code>, under cursor <code>LOCAL</code>, instantiation context <code>IC'</code>, and store <code>STO'</code>:</p>
+<p>The compile-time evaluation of <code>returnStatementIR</code>, under cursor <code>LOCAL</code>, instantiation context <code>IC</code>, and store <code>STO</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Result in <code>IC'</code>, <code>STO'</code>, and <code>returnStatementIR</code></p>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the instantiation context <code>IC'</code>,</p>
+</li>
+<li>
+<p>the updated store <code>STO'</code>,</p>
+</li>
+<li>
+<p>and the instantiated statement <code>returnStatementIR</code></p>
+</li>
+</ul>
+</div>
 </li>
 </ol>
 </div>
@@ -17334,7 +17036,7 @@ call, then the function/method call does not occur.</p>
 </div>
 </div>
 <div class="paragraph">
-<p>Typing <code>EXIT ;</code>, under cursor <code>p'</code>, typing context <code>TC'</code>, and abstract control flow <code>f'</code>:</p>
+<p>Typing <code>EXIT ;</code>, under cursor <code>p</code>, typing context <code>TC</code>, and abstract control flow <code>f</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -17353,12 +17055,25 @@ call, then the function/method call does not occur.</p>
 </div>
 </div>
 <div class="paragraph">
-<p>The compile-time evaluation of <code>exitStatementIR</code>, under cursor <code>p'</code>, instantiation context <code>IC'</code>, and store <code>STO'</code>:</p>
+<p>The compile-time evaluation of <code>exitStatementIR</code>, under cursor <code>p</code>, instantiation context <code>IC</code>, and store <code>STO</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Result in <code>IC'</code>, <code>STO'</code>, and <code>exitStatementIR</code></p>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the instantiation context <code>IC'</code>,</p>
+</li>
+<li>
+<p>the updated store <code>STO'</code>,</p>
+</li>
+<li>
+<p>and the instantiated statement <code>exitStatementIR</code></p>
+</li>
+</ul>
+</div>
 </li>
 </ol>
 </div>
@@ -17405,7 +17120,7 @@ are only visible within the block.</p>
 </div>
 </div>
 <div class="paragraph">
-<p>Typing <code>blockStatement</code>, under cursor <code>LOCAL</code>, typing context <code>TC'</code>, and abstract control flow <code>f'</code>:</p>
+<p>Typing <code>blockStatement</code>, under cursor <code>LOCAL</code>, typing context <code>TC<sub>0</sub></code>, and abstract control flow <code>f<sub>0</sub></code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -17437,8 +17152,14 @@ are only visible within the block.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>TC<sub>1</sub></code> and <code>declarationIR</code> be the result of <a href="#Decl_ok">typing <code>constantDeclaration</code>, under cursor <code>LOCAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context</a></p>
+<p>Let <code>TC<sub>1</sub></code> and <code>declarationIR</code> be the result of &lt;&lt;Decl_ok, typing <code>constantDeclaration</code>, under cursor <code>LOCAL</code> and typing context <code>TC<sub>0</sub></code>,</p>
+<div class="ulist">
+<ul>
+<li>
+<p>and the modified typing context&gt;&gt;</p>
+</li>
+</ul>
+</div>
 </li>
 <li>
 <p>Check that <code>declarationIR</code> has type <code>constantDeclarationIR</code></p>
@@ -17538,7 +17259,7 @@ rule BlockElementStmt_ok/variableDeclaration/initializer:
 <p>Let <code>typedExpressionIR<sub>init</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>init</sub></code>, under cursor <code>LOCAL</code> and typing context <code>TC<sub>0</sub></code></a></p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR?</code> be <a href="#coerce_unary">implicitly cast  <code>typedExpressionIR<sub>init</sub></code>  to  <code>typeIR</code></a></p>
+<p>Let <code>typedExpressionIR?</code> be <code>$coerce_unary(typedExpressionIR<sub>init</sub>, typeIR)</code></p>
 </li>
 <li>
 <p>Check that <code>typedExpressionIR?</code> matches pattern <code>(_)</code></p>
@@ -17597,7 +17318,7 @@ rule BlockElementStmt_ok/variableDeclaration/initializer:
 </div>
 </div>
 <div class="paragraph">
-<p>The compile-time evaluation of <code>annotationList { blockElementStatementListIR }</code>, under cursor <code>LOCAL</code>, instantiation context <code>IC'</code>, and store <code>STO'</code>:</p>
+<p>The compile-time evaluation of <code>annotationList { blockElementStatementListIR }</code>, under cursor <code>LOCAL</code>, instantiation context <code>IC<sub>0</sub></code>, and store <code>STO<sub>0</sub></code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -17605,7 +17326,20 @@ rule BlockElementStmt_ok/variableDeclaration/initializer:
 <p>(Block_inst: <code>IC' STO' |- annotationList { blockElementStatementListIR } =&#8658; IC<sub>1</sub> STO<sub>1</sub> _ { blockElementStatementListIR<sub>inst</sub> }</code>)</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>1</sub></code>, <code>STO<sub>1</sub></code>, and <code>annotationList { blockElementStatementListIR<sub>inst</sub> }</code></p>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the instantiation context <code>IC<sub>1</sub></code>,</p>
+</li>
+<li>
+<p>the updated store <code>STO<sub>1</sub></code>,</p>
+</li>
+<li>
+<p>and the instantiated statement <code>annotationList { blockElementStatementListIR<sub>inst</sub> }</code></p>
+</li>
+</ul>
+</div>
 </li>
 </ol>
 </div>
@@ -17624,7 +17358,7 @@ rule BlockElementStmt_ok/variableDeclaration/initializer:
 </div>
 </div>
 <div class="paragraph">
-<p><code>IC<sub>0'</sub> STO<sub>0'</sub> |- constantDeclarationIR =&#8658; % % %</code></p>
+<p><code>IC<sub>0</sub> STO<sub>0</sub> |- constantDeclarationIR =&#8658; % % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -17655,7 +17389,7 @@ rule BlockElementStmt_ok/variableDeclaration/initializer:
 </div>
 </div>
 <div class="paragraph">
-<p><code>IC<sub>0'</sub> STO<sub>0'</sub> |- variableDeclarationIR =&#8658; % % %</code></p>
+<p><code>IC STO |- variableDeclarationIR =&#8658; % % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -17672,7 +17406,7 @@ rule BlockElementStmt_ok/variableDeclaration/initializer:
 </div>
 </div>
 <div class="paragraph">
-<p><code>IC<sub>0'</sub> STO<sub>0'</sub> |- statementIR =&#8658; % % %</code></p>
+<p><code>IC<sub>0</sub> STO<sub>0</sub> |- statementIR =&#8658; % % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -17734,7 +17468,7 @@ rule Stmt_ok/conditionalStatement/else:
 </div>
 </div>
 <div class="paragraph">
-<p>Typing <code>conditionalStatement</code>, under cursor <code>p'</code>, typing context <code>TC'</code>, and abstract control flow <code>f'</code>:</p>
+<p>Typing <code>conditionalStatement</code>, under cursor <code>p</code>, typing context <code>TC</code>, and abstract control flow <code>f</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -17806,7 +17540,7 @@ rule Stmt_inst/conditionalStatementIR/else:
 </div>
 </div>
 <div class="paragraph">
-<p>The compile-time evaluation of <code>conditionalStatementIR</code>, under cursor <code>p'</code>, instantiation context <code>IC'</code>, and store <code>STO'</code>:</p>
+<p>The compile-time evaluation of <code>conditionalStatementIR</code>, under cursor <code>p</code>, instantiation context <code>IC<sub>0</sub></code>, and store <code>STO<sub>0</sub></code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -17818,7 +17552,20 @@ rule Stmt_inst/conditionalStatementIR/else:
 <p>Let <code>IC<sub>1</sub></code>, <code>STO<sub>1</sub></code>, and <code>statementIR<sub>then_inst</sub></code> be the result of <a href="#Stmt_inst">the compile-time evaluation of <code>statementIR<sub>then</sub></code>, under cursor <code>p'</code>, instantiation context <code>IC'</code>, and store <code>STO'</code></a></p>
 </li>
 <li>
-<p>Result in <code>IC<sub>1</sub></code>, <code>STO<sub>1</sub></code>, and <code>IF ( typedExpressionIR<sub>cond</sub> ) statementIR<sub>then_inst</sub></code></p>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the instantiation context <code>IC<sub>1</sub></code>,</p>
+</li>
+<li>
+<p>the updated store <code>STO<sub>1</sub></code>,</p>
+</li>
+<li>
+<p>and the instantiated statement <code>IF ( typedExpressionIR<sub>cond</sub> ) statementIR<sub>then_inst</sub></code></p>
+</li>
+</ul>
+</div>
 </li>
 </ol>
 </div>
@@ -17834,7 +17581,20 @@ rule Stmt_inst/conditionalStatementIR/else:
 <p>Let <code>IC<sub>2</sub></code>, <code>STO<sub>2</sub></code>, and <code>statementIR<sub>else_inst</sub></code> be the result of <a href="#Stmt_inst">the compile-time evaluation of <code>statementIR<sub>else</sub></code>, under cursor <code>p'</code>, instantiation context <code>IC<sub>1</sub></code>, and store <code>STO<sub>1</sub></code></a></p>
 </li>
 <li>
-<p>Result in <code>IC<sub>2</sub></code>, <code>STO<sub>2</sub></code>, and <code>IF ( typedExpressionIR<sub>cond</sub> ) statementIR<sub>then_inst</sub> ELSE statementIR<sub>else_inst</sub></code></p>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the instantiation context <code>IC<sub>2</sub></code>,</p>
+</li>
+<li>
+<p>the updated store <code>STO<sub>2</sub></code>,</p>
+</li>
+<li>
+<p>and the instantiated statement <code>IF ( typedExpressionIR<sub>cond</sub> ) statementIR<sub>then_inst</sub> ELSE statementIR<sub>else_inst</sub></code></p>
+</li>
+</ul>
+</div>
 </li>
 </ol>
 </div>
@@ -18204,7 +17964,7 @@ rule SwitchCase_table_ok/non-blockStatement:
 </div>
 </div>
 <div class="paragraph">
-<p>Typing <code>SWITCH ( expression<sub>switch</sub> ) { switchCaseList }</code>, under cursor <code>LOCAL</code>, typing context <code>TC'</code>, and abstract control flow <code>f'</code>:</p>
+<p>Typing <code>SWITCH ( expression<sub>switch</sub> ) { switchCaseList }</code>, under cursor <code>LOCAL</code>, typing context <code>TC</code>, and abstract control flow <code>f</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -18344,7 +18104,7 @@ rule SwitchLabel_general_ok/expressionNonBrace:
 <p>Let <code>typedExpressionIR<sub>label</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>label</sub></code>, under cursor <code>LOCAL</code> and typing context <code>TC</code></a></p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR?</code> be <a href="#coerce_unary">implicitly cast  <code>typedExpressionIR<sub>label</sub></code>  to  <code>typeIR</code></a></p>
+<p>Let <code>typedExpressionIR?</code> be <code>$coerce_unary(typedExpressionIR<sub>label</sub>, typeIR)</code></p>
 </li>
 <li>
 <p>Check that <code>typedExpressionIR?</code> matches pattern <code>(_)</code></p>
@@ -18443,7 +18203,7 @@ rule SwitchCase_general_ok/non-blockStatement:
 </div>
 </div>
 <div class="paragraph">
-<p>Typing <code>SWITCH ( expression<sub>switch</sub> ) { switchCaseList }</code>, under cursor <code>LOCAL</code>, typing context <code>TC'</code>, and abstract control flow <code>f'</code>:</p>
+<p>Typing <code>SWITCH ( expression<sub>switch</sub> ) { switchCaseList }</code>, under cursor <code>LOCAL</code>, typing context <code>TC</code>, and abstract control flow <code>f</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -18537,7 +18297,7 @@ rule SwitchCase_inst/non-blockStatementIR:
 </div>
 </div>
 <div class="paragraph">
-<p>The compile-time evaluation of <code>SWITCH ( typedExpressionIR ) { switchCaseListIR }</code>, under cursor <code>p'</code>, instantiation context <code>IC'</code>, and store <code>STO'</code>:</p>
+<p>The compile-time evaluation of <code>SWITCH ( typedExpressionIR ) { switchCaseListIR }</code>, under cursor <code>p</code>, instantiation context <code>IC<sub>0</sub></code>, and store <code>STO<sub>0</sub></code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -18545,7 +18305,20 @@ rule SwitchCase_inst/non-blockStatementIR:
 <p>(SwitchCases_inst: <code>p' IC' STO' |- switchCaseListIR =&#8658; IC<sub>1</sub> STO<sub>1</sub> switchCaseListIR<sub>inst</sub></code>)</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>1</sub></code>, <code>STO<sub>1</sub></code>, and <code>SWITCH ( typedExpressionIR ) { switchCaseListIR<sub>inst</sub> }</code></p>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the instantiation context <code>IC<sub>1</sub></code>,</p>
+</li>
+<li>
+<p>the updated store <code>STO<sub>1</sub></code>,</p>
+</li>
+<li>
+<p>and the instantiated statement <code>SWITCH ( typedExpressionIR ) { switchCaseListIR<sub>inst</sub> }</code></p>
+</li>
+</ul>
+</div>
 </li>
 </ol>
 </div>
@@ -18644,8 +18417,8 @@ following are all legal constant declarations:</p>
 </div>
 </div>
 <div class="paragraph">
-<p>Typing <code>annotationList CONST type name = expression<sub>value</sub> ;</code>, under cursor <code>p'</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+<p>Typing <code>annotationList CONST type name = expression<sub>value</sub> ;</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code>,
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -18666,7 +18439,7 @@ and the modified typing context:</p>
 <p>Check that <code><a href="#ctkof_expression">the compile-time known-ness of  typedExpressionIR<sub>value</sub></a></code> matches pattern <code>LCTK</code></p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR?</code> be <a href="#coerce_unary">implicitly cast  <code>typedExpressionIR<sub>value</sub></code>  to  <code>typeIR</code></a></p>
+<p>Let <code>typedExpressionIR?</code> be <code>$coerce_unary(typedExpressionIR<sub>value</sub>, typeIR)</code></p>
 </li>
 <li>
 <p>Check that <code>typedExpressionIR?</code> matches pattern <code>(_)</code></p>
@@ -18711,7 +18484,7 @@ rule Decl_inst/constantDeclarationIR/non-global:
 </div>
 </div>
 <div class="paragraph">
-<p><code>cursor' IC<sub>0</sub> STO' |- annotationList CONST typeIR nameIR = value ; =&#8658; % % %</code></p>
+<p><code>cursor IC<sub>0</sub> STO |- annotationList CONST typeIR nameIR = value ; =&#8658; % % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -18847,8 +18620,8 @@ rule Decl_ok/instantiation-non-objectInitializer/specializedType:
 </div>
 </div>
 <div class="paragraph">
-<p>Typing <code>annotationList type ( argumentList ) name ;</code>, under cursor <code>p'</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+<p>Typing <code>annotationList type ( argumentList ) name ;</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code>,
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -19022,7 +18795,7 @@ methods.</p>
     -- Type_ok: LOCAL TC_3 |- typeOrVoid : typeIR_ret # eps
     -- if parameter* = $flatten_parameterList(parameterList)
     -- Parameters_ok: LOCAL TC_3 |- parameter* : parameterIR* # tid_impl*
-    -- (if (parameterTypeIR = $typeof_parameterIR(parameterIR)))*
+    -- (if (parameterTypeIR = $parameterIR(parameterIR)))*
     -- if TC_4 = $add_parameters(LOCAL, TC_3, parameterTypeIR*)
     -- if TC_5 = TC_4[LOCAL.KIND = (EXTERN_METHOD -&gt; typeIR_ret)]
     -- Block_ok: TC_5 CONT |- blockStatement : _ f blockStatementIR
@@ -19083,7 +18856,7 @@ methods.</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>parameterTypeIR</code> be <a href="#typeof_parameterIR">the type of  <code>parameterIR</code></a></p>
+<p>Let <code>parameterTypeIR</code> be <code>$parameterIR(parameterIR)</code></p>
 </li>
 </ol>
 </div>
@@ -19188,8 +18961,14 @@ methods.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>TC<sub>1</sub></code> and <code>declarationIR</code> be the result of <a href="#Decl_ok">typing <code>instantiation</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context</a></p>
+<p>Let <code>TC<sub>1</sub></code> and <code>declarationIR</code> be the result of &lt;&lt;Decl_ok, typing <code>instantiation</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code>,</p>
+<div class="ulist">
+<ul>
+<li>
+<p>and the modified typing context&gt;&gt;</p>
+</li>
+</ul>
+</div>
 </li>
 <li>
 <p>Check that <code>declarationIR</code> has type <code>instantiationIR</code></p>
@@ -19266,8 +19045,8 @@ rule Decl_ok/instantiation-objectInitializer/specializedType:
 </div>
 </div>
 <div class="paragraph">
-<p>Typing <code>annotationList type ( argumentList ) name = { objectDeclarationList } ;</code>, under cursor <code>p'</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+<p>Typing <code>annotationList type ( argumentList ) name = { objectDeclarationList } ;</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code>,
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -19524,7 +19303,7 @@ rule Decl_inst/instantiationIR/non-extern-non-global:
 </div>
 </div>
 <div class="paragraph">
-<p><code>cursor' IC<sub>0</sub> STO' |- annotationList typeIR prefixedNameIR &lt; typeArgumentListIR &gt; ( argumentListIR ) nameIR objectInitializerOptIR ; =&#8658; % % %</code></p>
+<p><code>cursor IC<sub>0</sub> STO<sub>0</sub> |- annotationList typeIR prefixedNameIR &lt; typeArgumentListIR &gt; ( argumentListIR ) nameIR objectInitializerOptIR ; =&#8658; % % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -19754,7 +19533,7 @@ on all possible execution paths.</p>
     -- Type_ok: LOCAL TC_1 |- typeOrVoid : typeIR_ret # eps
     -- if parameter* = $flatten_parameterList(parameterList)
     -- Parameters_ok: LOCAL TC_1 |- parameter* : parameterIR* # tid_impl*
-    -- (if (parameterTypeIR = $typeof_parameterIR(parameterIR)))*
+    -- (if (parameterTypeIR = $parameterIR(parameterIR)))*
     -- if TC_2 = $add_parameters(LOCAL, TC_1, parameterTypeIR*)
     -- if TC_3 = TC_2[LOCAL.KIND = FUNCTION -&gt; typeIR_ret]
     -- Block_ok: TC_3 CONT |- blockStatement : _ f blockStatementIR
@@ -19769,8 +19548,8 @@ on all possible execution paths.</p>
 </div>
 </div>
 <div class="paragraph">
-<p>Typing <code>annotationList typeOrVoid name typeParameterListOpt ( parameterList ) blockStatement</code>, under cursor <code>p'</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+<p>Typing <code>annotationList typeOrVoid name typeParameterListOpt ( parameterList ) blockStatement</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code>,
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -19810,7 +19589,7 @@ and the modified typing context:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>parameterTypeIR</code> be <a href="#typeof_parameterIR">the type of  <code>parameterIR</code></a></p>
+<p>Let <code>parameterTypeIR</code> be <code>$parameterIR(parameterIR)</code></p>
 </li>
 </ol>
 </div>
@@ -19912,7 +19691,7 @@ and the modified typing context:</p>
 </div>
 </div>
 <div class="paragraph">
-<p><code>cursor' IC<sub>0</sub> STO' |- annotationList typeIR nameIR &lt; typeParameterListIR , typeParameterListIR<sub>inferred</sub> &gt; ( parameterListIR ) blockStatementIR =&#8658; % % %</code></p>
+<p><code>p IC<sub>0</sub> STO |- annotationList typeIR nameIR &lt; typeParameterListIR , typeParameterListIR<sub>inferred</sub> &gt; ( parameterListIR ) blockStatementIR =&#8658; % % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -20014,20 +19793,20 @@ directionless parameters behave like <code>in</code> parameters.</p>
     -- if TC_1 = TC_0[LOCAL.KIND = ACTION]
     -- if parameter* = $flatten_parameterList(parameterList)
     -- Parameters_ok: LOCAL TC_1 |- parameter* : parameterIR* # eps
-    -- (if (parameterTypeIR = $typeof_parameterIR(parameterIR)))*
+    -- (if (parameterTypeIR = $parameterIR(parameterIR)))*
     -- if TC_2 = $add_parameters(LOCAL, TC_1, parameterTypeIR*)
     -- Block_ok: TC_2 CONT |- blockStatement : _ _ blockStatementIR
     -- if rid = $rid(name, parameterList)
-    -- if actionTypeIR = ACTION `(parameterTypeIR*)
-    -- RoutineTypeDef_wf: $bound(p, TC_0) |- actionTypeIR
-    -- if TC_3 = $add_routine_non_overload(p, TC_0, rid, actionTypeIR)
+    -- if functionTypeIR = ACTION `(parameterTypeIR*)
+    -- RoutineTypeDef_wf: $bound(p, TC_0) |- functionTypeIR
+    -- if TC_3 = $add_routine_non_overload(p, TC_0, rid, functionTypeIR)
     -- if nameIR = $name(name)
     -- if actionDeclarationIR = annotationList ACTION nameIR `(parameterIR*) blockStatementIR</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>Typing <code>annotationList ACTION name ( parameterList ) blockStatement</code>, under cursor <code>p'</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+<p>Typing <code>annotationList ACTION name ( parameterList ) blockStatement</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code>,
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -20048,7 +19827,7 @@ and the modified typing context:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>parameterTypeIR</code> be <a href="#typeof_parameterIR">the type of  <code>parameterIR</code></a></p>
+<p>Let <code>parameterTypeIR</code> be <code>$parameterIR(parameterIR)</code></p>
 </li>
 </ol>
 </div>
@@ -20066,14 +19845,14 @@ and the modified typing context:</p>
 <p>Let <code>rid</code> be <code>$rid(name, parameterList)</code></p>
 </li>
 <li>
-<p>Let <code>actionTypeIR</code> be <code>ACTION ( parameterTypeIR* )</code></p>
+<p>Let <code>functionTypeIR</code> be <code>ACTION ( parameterTypeIR* )</code></p>
 </li>
 <li>
-<p>If (RoutineTypeDef_wf: <code>$bound(p', TC<sub>0</sub>) |- actionTypeIR</code>), then</p>
+<p>If (RoutineTypeDef_wf: <code>$bound(p', TC<sub>0</sub>) |- functionTypeIR</code>), then</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>TC<sub>3</sub></code> be <code>$add_routine_non_overload(p', TC<sub>0</sub>, rid, actionTypeIR)</code></p>
+<p>Let <code>TC<sub>3</sub></code> be <code>$add_routine_non_overload(p', TC<sub>0</sub>, rid, functionTypeIR)</code></p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <code>$name(name)</code></p>
@@ -20097,12 +19876,12 @@ and the modified typing context:</p>
 <pre>rule Decl_inst/actionDeclarationIR:
    p IC_0 STO |- annotationList ACTION nameIR `(parameterListIR) blockStatementIR ==&gt; IC_1 STO eps
     -- if rid = $rid_IR(nameIR, parameterListIR)
-    -- if action = ACTION `(parameterListIR) blockStatementIR
-    -- if IC_1 = $add_routine_non_overload_inst(p, IC_0, rid, action)</pre>
+    -- if function = ACTION `(parameterListIR) blockStatementIR
+    -- if IC_1 = $add_routine_non_overload_inst(p, IC_0, rid, function)</pre>
 </div>
 </div>
 <div class="paragraph">
-<p><code>cursor' IC<sub>0</sub> STO' |- annotationList ACTION nameIR ( parameterListIR ) blockStatementIR =&#8658; % % %</code></p>
+<p><code>p IC<sub>0</sub> STO |- annotationList ACTION nameIR ( parameterListIR ) blockStatementIR =&#8658; % % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -20110,10 +19889,10 @@ and the modified typing context:</p>
 <p>Let <code>rid</code> be <code>$rid_IR(nameIR, parameterListIR)</code></p>
 </li>
 <li>
-<p>Let <code>action</code> be <code>ACTION ( parameterListIR ) blockStatementIR</code></p>
+<p>Let <code>function</code> be <code>ACTION ( parameterListIR ) blockStatementIR</code></p>
 </li>
 <li>
-<p>Let <code>IC<sub>1</sub></code> be <code>$add_routine_non_overload_inst(cursor', IC<sub>0</sub>, rid, action)</code></p>
+<p>Let <code>IC<sub>1</sub></code> be <code>$add_routine_non_overload_inst(cursor', IC<sub>0</sub>, rid, function)</code></p>
 </li>
 <li>
 <p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and <code>?()</code></p>
@@ -20176,7 +19955,7 @@ described in <a href="#sec-error-exprs">[sec-error-exprs]</a>.</p>
 </div>
 <div class="paragraph">
 <p>Typing <code>ERROR { nameList }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -20246,7 +20025,7 @@ and the modified typing context:</p>
 </div>
 </div>
 <div class="paragraph">
-<p><code>GLOBAL IC<sub>0</sub> STO' |- ERROR { nameIR* } =&#8658; % % %</code></p>
+<p><code>GLOBAL IC<sub>0</sub> STO |- ERROR { nameIR* } =&#8658; % % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -20342,7 +20121,7 @@ cannot declare new match kinds.</p>
 </div>
 <div class="paragraph">
 <p>Typing <code>MATCH_KIND { nameList _ }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -20398,7 +20177,7 @@ and the modified typing context:</p>
 </div>
 </div>
 <div class="paragraph">
-<p><code>GLOBAL IC<sub>0</sub> STO' |- MATCH_KIND { nameIR* } =&#8658; % % %</code></p>
+<p><code>GLOBAL IC<sub>0</sub> STO |- MATCH_KIND { nameIR* } =&#8658; % % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -20473,7 +20252,7 @@ externFunctionDeclarationIR
     -- if TC_2 = TC_1[LOCAL.KIND = EXTERN_FUNCTION -&gt; typeIR_ret]
     -- if parameter* = $flatten_parameterList(parameterList)
     -- Parameters_ok: LOCAL TC_2 |- parameter* : parameterIR* # tid_impl*
-    -- (if (parameterTypeIR = $typeof_parameterIR(parameterIR)))*
+    -- (if (parameterTypeIR = $parameterIR(parameterIR)))*
     -- if TC_3 = $add_parameters(LOCAL, TC_2, parameterTypeIR*)
     -- if rid = $rid(name, parameterList)
     -- if functionTypeIR = EXTERN_FUNCTION `(parameterTypeIR*) -&gt; typeIR_ret
@@ -20486,7 +20265,7 @@ externFunctionDeclarationIR
 </div>
 <div class="paragraph">
 <p>Typing <code>annotationList EXTERN typeOrVoid name typeParameterListOpt ( parameterList ) ;</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -20529,7 +20308,7 @@ and the modified typing context:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>parameterTypeIR</code> be <a href="#typeof_parameterIR">the type of  <code>parameterIR</code></a></p>
+<p>Let <code>parameterTypeIR</code> be <code>$parameterIR(parameterIR)</code></p>
 </li>
 </ol>
 </div>
@@ -20583,7 +20362,7 @@ and the modified typing context:</p>
 </div>
 </div>
 <div class="paragraph">
-<p><code>GLOBAL IC<sub>0</sub> STO' |- annotationList EXTERN typeIR nameIR &lt; typeParameterListIR , typeParameterListIR<sub>inferred</sub> &gt; ( parameterListIR ) ; =&#8658; % % %</code></p>
+<p><code>GLOBAL IC<sub>0</sub> STO |- annotationList EXTERN typeIR nameIR &lt; typeParameterListIR , typeParameterListIR<sub>inferred</sub> &gt; ( parameterListIR ) ; =&#8658; % % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -20631,7 +20410,7 @@ and the modified typing context:</p>
 </div>
 <div class="paragraph">
 <p>Typing <code>annotationList EXTERN nonTypeName typeParameterListOpt { methodPrototypeList }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -20725,7 +20504,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 </div>
 </div>
 <div class="paragraph">
-<p><code>GLOBAL IC<sub>0</sub> STO' |- annotationList EXTERN nameIR &lt; typeParameterListIR , typeParameterListIR<sub>inferred</sub> &gt; { methodPrototypeIR* } =&#8658; % % %</code></p>
+<p><code>GLOBAL IC<sub>0</sub> STO |- annotationList EXTERN nameIR &lt; typeParameterListIR , typeParameterListIR<sub>inferred</sub> &gt; { methodPrototypeIR* } =&#8658; % % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -20851,11 +20630,11 @@ example will produce an error:</p>
     -- if TC_1 = TC_0[BLOCK.KIND = PARSER]
     -- if constructorParameter* = $flatten_constructorParameterListOpt(constructorParameterListOpt)
     -- ConstructorParameters_ok: BLOCK TC_1 |- constructorParameter* : constructorParameterIR* # eps
-    -- (if (constructorParameterTypeIR = $typeof_constructorParameterIR(constructorParameterIR)))*
+    -- (if (constructorParameterTypeIR = $constructorParameterIR(constructorParameterIR)))*
     -- if TC_2 = $add_parameters(BLOCK, TC_1, constructorParameterTypeIR*)
     -- if parameter* = $flatten_parameterList(parameterList)
     -- Parameters_ok: BLOCK TC_2 |- parameter* : parameterIR* # eps
-    -- (if (parameterTypeIR = $typeof_parameterIR(parameterIR)))*
+    -- (if (parameterTypeIR = $parameterIR(parameterIR)))*
     -- if TC_3 = $add_parameters(BLOCK, TC_2, parameterTypeIR*)
     -- if parserLocalDeclaration* = $flatten_parserLocalDeclarationList(parserLocalDeclarationList)
     -- ParserLocalDecls_ok: TC_3 |- parserLocalDeclaration* : TC_4 parserLocalDeclarationIR*
@@ -20877,7 +20656,7 @@ example will produce an error:</p>
 </div>
 <div class="paragraph">
 <p>Typing <code>annotationList PARSER name ( parameterList ) constructorParameterListOpt { parserLocalDeclarationList parserStateList }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -20898,7 +20677,7 @@ and the modified typing context:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>constructorParameterTypeIR</code> be <a href="#typeof_constructorParameterIR">the type of  <code>constructorParameterIR</code></a></p>
+<p>Let <code>constructorParameterTypeIR</code> be <code>$constructorParameterIR(constructorParameterIR)</code></p>
 </li>
 </ol>
 </div>
@@ -20923,7 +20702,7 @@ and the modified typing context:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>parameterTypeIR</code> be <a href="#typeof_parameterIR">the type of  <code>parameterIR</code></a></p>
+<p>Let <code>parameterTypeIR</code> be <code>$parameterIR(parameterIR)</code></p>
 </li>
 </ol>
 </div>
@@ -21008,7 +20787,7 @@ and the modified typing context:</p>
 </div>
 </div>
 <div class="paragraph">
-<p><code>GLOBAL IC<sub>0</sub> STO' |- annotationList PARSER nameIR &lt; [ ] &gt; ( parameterListIR ) ( constructorParameterListIR ) { parserLocalDeclarationListIR parserStateListIR } =&#8658; % % %</code></p>
+<p><code>GLOBAL IC<sub>0</sub> STO |- annotationList PARSER nameIR &lt; [ ] &gt; ( parameterListIR ) ( constructorParameterListIR ) { parserLocalDeclarationListIR parserStateListIR } =&#8658; % % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -21101,11 +20880,11 @@ programmer.</p>
     -- if TC_1 = TC_0[BLOCK.KIND = CONTROL]
     -- if constructorParameter* = $flatten_constructorParameterListOpt(constructorParameterListOpt)
     -- ConstructorParameters_ok: BLOCK TC_1 |- constructorParameter* : constructorParameterIR* # eps
-    -- (if (constructorParameterTypeIR = $typeof_constructorParameterIR(constructorParameterIR)))*
+    -- (if (constructorParameterTypeIR = $constructorParameterIR(constructorParameterIR)))*
     -- if TC_2 = $add_parameters(BLOCK, TC_1, constructorParameterTypeIR*)
     -- if parameter* = $flatten_parameterList(parameterList)
     -- Parameters_ok: BLOCK TC_2 |- parameter* : parameterIR* # eps
-    -- (if (parameterTypeIR = $typeof_parameterIR(parameterIR)))*
+    -- (if (parameterTypeIR = $parameterIR(parameterIR)))*
     -- if TC_3 = $add_parameters(BLOCK, TC_2, parameterTypeIR*)
     -- if controlLocalDeclaration* = $flatten_controlLocalDeclarationList(controlLocalDeclarationList)
     -- ControlLocalDecls_ok: TC_3 |- controlLocalDeclaration* : TC_4 controlLocalDeclarationIR*
@@ -21126,7 +20905,7 @@ programmer.</p>
 </div>
 <div class="paragraph">
 <p>Typing <code>annotationList CONTROL name ( parameterList ) constructorParameterListOpt { controlLocalDeclarationList APPLY controlBody }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -21147,7 +20926,7 @@ and the modified typing context:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>constructorParameterTypeIR</code> be <a href="#typeof_constructorParameterIR">the type of  <code>constructorParameterIR</code></a></p>
+<p>Let <code>constructorParameterTypeIR</code> be <code>$constructorParameterIR(constructorParameterIR)</code></p>
 </li>
 </ol>
 </div>
@@ -21172,7 +20951,7 @@ and the modified typing context:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>parameterTypeIR</code> be <a href="#typeof_parameterIR">the type of  <code>parameterIR</code></a></p>
+<p>Let <code>parameterTypeIR</code> be <code>$parameterIR(parameterIR)</code></p>
 </li>
 </ol>
 </div>
@@ -21254,7 +21033,7 @@ and the modified typing context:</p>
 </div>
 </div>
 <div class="paragraph">
-<p><code>GLOBAL IC<sub>0</sub> STO' |- annotationList CONTROL nameIR &lt; [ ] &gt; ( parameterListIR ) ( constructorParameterListIR ) { controlLocalDeclarationListIR APPLY controlBodyIR } =&#8658; % % %</code></p>
+<p><code>GLOBAL IC<sub>0</sub> STO |- annotationList CONTROL nameIR &lt; [ ] &gt; ( parameterListIR ) ( constructorParameterListIR ) { controlLocalDeclarationListIR APPLY controlBodyIR } =&#8658; % % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -21359,7 +21138,7 @@ enumTypeDeclarationIR
 </div>
 <div class="paragraph">
 <p>Typing <code>annotationList ENUM name { nameList<sub>field</sub> _ }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -21447,7 +21226,7 @@ and the modified typing context:</p>
 </div>
 </div>
 <div class="paragraph">
-<p><code>GLOBAL IC<sub>0</sub> STO' |- annotationList ENUM nameIR { nameIR<sub>field</sub>* } =&#8658; % % %</code></p>
+<p><code>GLOBAL IC<sub>0</sub> STO |- annotationList ENUM nameIR { nameIR<sub>field</sub>* } =&#8658; % % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -21520,7 +21299,7 @@ and the modified typing context:</p>
 <p>Let <code>typedExpressionIR</code> be the result of <a href="#Expr_ok">typing <code>expression</code>, under cursor <code>BLOCK</code> and typing context <code>TC<sub>0</sub></code></a></p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR'?</code> be <a href="#coerce_unary">implicitly cast  <code>typedExpressionIR</code>  to  <code>typeIR</code></a></p>
+<p>Let <code>typedExpressionIR'?</code> be <code>$coerce_unary(typedExpressionIR, typeIR)</code></p>
 </li>
 <li>
 <p>Check that <code>typedExpressionIR'?</code> matches pattern <code>(_)</code></p>
@@ -21571,7 +21350,7 @@ and the modified typing context:</p>
 </div>
 <div class="paragraph">
 <p>Typing <code>annotationList ENUM type name { namedExpressionList<sub>field</sub> _ }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -21663,7 +21442,7 @@ and the modified typing context:</p>
 </div>
 </div>
 <div class="paragraph">
-<p><code>GLOBAL IC<sub>0</sub> STO' |- annotationList ENUM typeIR nameIR { nameIR<sub>field</sub> = typedExpressionIR<sub>field</sub>* } =&#8658; % % %</code></p>
+<p><code>GLOBAL IC<sub>0</sub> STO<sub>0</sub> |- annotationList ENUM typeIR nameIR { nameIR<sub>field</sub> = typedExpressionIR<sub>field</sub>* } =&#8658; % % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -21738,7 +21517,7 @@ and the modified typing context:</p>
 </div>
 <div class="paragraph">
 <p>Typing <code>annotationList STRUCT name typeParameterListOpt { typeFieldList }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -21833,7 +21612,7 @@ and the modified typing context:</p>
 </div>
 </div>
 <div class="paragraph">
-<p><code>GLOBAL IC<sub>0</sub> STO' |- annotationList STRUCT nameIR &lt; typeParameterListIR , typeParameterListIR<sub>inferred</sub> &gt; { typeFieldIR* } =&#8658; % % %</code></p>
+<p><code>GLOBAL IC<sub>0</sub> STO |- annotationList STRUCT nameIR &lt; typeParameterListIR , typeParameterListIR<sub>inferred</sub> &gt; { typeFieldIR* } =&#8658; % % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -21888,7 +21667,7 @@ and the modified typing context:</p>
 </div>
 <div class="paragraph">
 <p>Typing <code>annotationList HEADER name typeParameterListOpt { typeFieldList }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -21983,7 +21762,7 @@ and the modified typing context:</p>
 </div>
 </div>
 <div class="paragraph">
-<p><code>GLOBAL IC<sub>0</sub> STO' |- annotationList HEADER nameIR &lt; typeParameterListIR , typeParameterListIR<sub>inferred</sub> &gt; { typeFieldIR* } =&#8658; % % %</code></p>
+<p><code>GLOBAL IC<sub>0</sub> STO |- annotationList HEADER nameIR &lt; typeParameterListIR , typeParameterListIR<sub>inferred</sub> &gt; { typeFieldIR* } =&#8658; % % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -22038,7 +21817,7 @@ and the modified typing context:</p>
 </div>
 <div class="paragraph">
 <p>Typing <code>annotationList HEADER_UNION name typeParameterListOpt { typeFieldList }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -22133,7 +21912,7 @@ and the modified typing context:</p>
 </div>
 </div>
 <div class="paragraph">
-<p><code>GLOBAL IC<sub>0</sub> STO' |- annotationList HEADER_UNION nameIR &lt; typeParameterListIR , typeParameterListIR<sub>inferred</sub> &gt; { typeFieldIR* } =&#8658; % % %</code></p>
+<p><code>GLOBAL IC<sub>0</sub> STO |- annotationList HEADER_UNION nameIR &lt; typeParameterListIR , typeParameterListIR<sub>inferred</sub> &gt; { typeFieldIR* } =&#8658; % % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -22229,7 +22008,7 @@ rule Decl_ok/typedefDeclaration-typedef/derivedTypeDeclaration-poly:
 </div>
 <div class="paragraph">
 <p>Typing <code>annotationList TYPEDEF typedef name ;</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -22286,8 +22065,14 @@ and the modified typing context:</p>
 <p>Let <code>derivedTypeDeclaration</code> be <code>typedef</code></p>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> and <code>declarationIR</code> be the result of <a href="#Decl_ok">typing <code>derivedTypeDeclaration</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context</a></p>
+<p>Let <code>TC<sub>1</sub></code> and <code>declarationIR</code> be the result of &lt;&lt;Decl_ok, typing <code>derivedTypeDeclaration</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,</p>
+<div class="ulist">
+<ul>
+<li>
+<p>and the modified typing context&gt;&gt;</p>
+</li>
+</ul>
+</div>
 </li>
 <li>
 <p>Check that <code>declarationIR</code> has type <code>derivedTypeDeclarationIR</code></p>
@@ -22416,7 +22201,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 </div>
 </div>
 <div class="paragraph">
-<p><code>GLOBAL IC<sub>0</sub> STO' |- annotationList TYPEDEF typedefIR nameIR ; =&#8658; % % %</code></p>
+<p><code>GLOBAL IC<sub>0</sub> STO |- annotationList TYPEDEF typedefIR nameIR ; =&#8658; % % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -22537,7 +22322,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 </div>
 <div class="paragraph">
 <p>Typing <code>annotationList TYPE type name ;</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -22590,7 +22375,7 @@ and the modified typing context:</p>
 </div>
 </div>
 <div class="paragraph">
-<p><code>GLOBAL IC<sub>0</sub> STO' |- annotationList TYPE typeIR nameIR ; =&#8658; % % %</code></p>
+<p><code>GLOBAL IC<sub>0</sub> STO |- annotationList TYPE typeIR nameIR ; =&#8658; % % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -22622,7 +22407,7 @@ and the modified typing context:</p>
     -- if TC_2 = $add_types(BLOCK, TC_1, tid_expl*, (TID tid_expl)*)
     -- if parameter* = $flatten_parameterList(parameterList)
     -- Parameters_ok: BLOCK TC_2 |- parameter* : parameterIR* # tid_impl*
-    -- (if (parameterTypeIR = $typeof_parameterIR(parameterIR)))*
+    -- (if (parameterTypeIR = $parameterIR(parameterIR)))*
     -- if nameIR = $name(name)
     -- if typeIR_parser = PARSER `(parameterTypeIR*)
     -- if typeDefIR_parser = typeIR_parser `&lt;tid_expl* , tid_impl*&gt;
@@ -22633,7 +22418,7 @@ and the modified typing context:</p>
 </div>
 <div class="paragraph">
 <p>Typing <code>annotationList PARSER name typeParameterListOpt ( parameterList ) ;</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -22670,7 +22455,7 @@ and the modified typing context:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>parameterTypeIR</code> be <a href="#typeof_parameterIR">the type of  <code>parameterIR</code></a></p>
+<p>Let <code>parameterTypeIR</code> be <code>$parameterIR(parameterIR)</code></p>
 </li>
 </ol>
 </div>
@@ -22713,14 +22498,14 @@ and the modified typing context:</p>
 <div class="content">
 <pre>rule Decl_inst/parserTypeDeclarationIR:
    GLOBAL IC_0 STO |- annotationList PARSER nameIR `&lt;typeParameterListIR , typeParameterListIR_inferred&gt; `(parameterIR*) ; ==&gt; IC_1 STO eps
-    -- (if (parameterTypeIR = $typeof_parameterIR(parameterIR)))*
+    -- (if (parameterTypeIR = $parameterIR(parameterIR)))*
     -- if typeIR_parser = PARSER `(parameterTypeIR*)
     -- if typeDefIR_parser = typeIR_parser `&lt;typeParameterListIR , typeParameterListIR_inferred&gt;
     -- if IC_1 = $add_typedef_inst(GLOBAL, IC_0, nameIR, typeDefIR_parser)</pre>
 </div>
 </div>
 <div class="paragraph">
-<p><code>GLOBAL IC<sub>0</sub> STO' |- annotationList PARSER nameIR &lt; typeParameterListIR , typeParameterListIR<sub>inferred</sub> &gt; ( parameterIR* ) ; =&#8658; % % %</code></p>
+<p><code>GLOBAL IC<sub>0</sub> STO |- annotationList PARSER nameIR &lt; typeParameterListIR , typeParameterListIR<sub>inferred</sub> &gt; ( parameterIR* ) ; =&#8658; % % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -22729,7 +22514,7 @@ and the modified typing context:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>parameterTypeIR</code> be <a href="#typeof_parameterIR">the type of  <code>parameterIR</code></a></p>
+<p>Let <code>parameterTypeIR</code> be <code>$parameterIR(parameterIR)</code></p>
 </li>
 </ol>
 </div>
@@ -22767,7 +22552,7 @@ and the modified typing context:</p>
     -- if TC_2 = $add_types(BLOCK, TC_1, tid_expl*, (TID tid_expl)*)
     -- if parameter* = $flatten_parameterList(parameterList)
     -- Parameters_ok: BLOCK TC_2 |- parameter* : parameterIR* # tid_impl*
-    -- (if (parameterTypeIR = $typeof_parameterIR(parameterIR)))*
+    -- (if (parameterTypeIR = $parameterIR(parameterIR)))*
     -- if nameIR = $name(name)
     -- if typeIR_control = CONTROL `(parameterTypeIR*)
     -- if typeDefIR_control = typeIR_control `&lt;tid_expl* , tid_impl*&gt;
@@ -22778,7 +22563,7 @@ and the modified typing context:</p>
 </div>
 <div class="paragraph">
 <p>Typing <code>annotationList CONTROL name typeParameterListOpt ( parameterList ) ;</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -22815,7 +22600,7 @@ and the modified typing context:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>parameterTypeIR</code> be <a href="#typeof_parameterIR">the type of  <code>parameterIR</code></a></p>
+<p>Let <code>parameterTypeIR</code> be <code>$parameterIR(parameterIR)</code></p>
 </li>
 </ol>
 </div>
@@ -22857,14 +22642,14 @@ and the modified typing context:</p>
 <div class="content">
 <pre>rule Decl_inst/controlTypeDeclarationIR:
    GLOBAL IC_0 STO |- annotationList CONTROL nameIR `&lt;typeParameterListIR , typeParameterListIR_inferred&gt; `(parameterIR*) ; ==&gt; IC_1 STO eps
-    -- (if (parameterTypeIR = $typeof_parameterIR(parameterIR)))*
+    -- (if (parameterTypeIR = $parameterIR(parameterIR)))*
     -- if typeIR_control = CONTROL `(parameterTypeIR*)
     -- if typeDefIR_control = typeIR_control `&lt;typeParameterListIR , typeParameterListIR_inferred&gt;
     -- if IC_1 = $add_typedef_inst(GLOBAL, IC_0, nameIR, typeDefIR_control)</pre>
 </div>
 </div>
 <div class="paragraph">
-<p><code>GLOBAL IC<sub>0</sub> STO' |- annotationList CONTROL nameIR &lt; typeParameterListIR , typeParameterListIR<sub>inferred</sub> &gt; ( parameterIR* ) ; =&#8658; % % %</code></p>
+<p><code>GLOBAL IC<sub>0</sub> STO |- annotationList CONTROL nameIR &lt; typeParameterListIR , typeParameterListIR<sub>inferred</sub> &gt; ( parameterIR* ) ; =&#8658; % % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -22873,7 +22658,7 @@ and the modified typing context:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>parameterTypeIR</code> be <a href="#typeof_parameterIR">the type of  <code>parameterIR</code></a></p>
+<p>Let <code>parameterTypeIR</code> be <code>$parameterIR(parameterIR)</code></p>
 </li>
 </ol>
 </div>
@@ -22911,7 +22696,7 @@ and the modified typing context:</p>
     -- if TC_2 = $add_types(BLOCK, TC_1, tid_expl*, (TID tid_expl)*)
     -- if constructorParameter* = $flatten_parameterList(parameterList)
     -- ConstructorParameters_ok: BLOCK TC_2 |- constructorParameter* : constructorParameterIR* # tid_impl*
-    -- (if (constructorParameterTypeIR = $typeof_constructorParameterIR(constructorParameterIR)))*
+    -- (if (constructorParameterTypeIR = $constructorParameterIR(constructorParameterIR)))*
     -- if nameIR = $name(name)
     -- (if (_ typeIR_package_inner _ _ = constructorParameterTypeIR))*
     -- if typeIR_package = PACKAGE `&lt;typeIR_package_inner*&gt;
@@ -22929,7 +22714,7 @@ and the modified typing context:</p>
 </div>
 <div class="paragraph">
 <p>Typing <code>annotationList PACKAGE name typeParameterListOpt ( parameterList ) ;</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-and the modified typing context:</p>
+    * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -22966,7 +22751,7 @@ and the modified typing context:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>constructorParameterTypeIR</code> be <a href="#typeof_constructorParameterIR">the type of  <code>constructorParameterIR</code></a></p>
+<p>Let <code>constructorParameterTypeIR</code> be <code>$constructorParameterIR(constructorParameterIR)</code></p>
 </li>
 </ol>
 </div>
@@ -23053,7 +22838,7 @@ and the modified typing context:</p>
 </div>
 </div>
 <div class="paragraph">
-<p><code>GLOBAL IC<sub>0</sub> STO' |- annotationList PACKAGE nameIR &lt; typeParameterListIR , typeParameterListIR<sub>inferred</sub> &gt; ( parameterIR* ) ; =&#8658; % % %</code></p>
+<p><code>GLOBAL IC<sub>0</sub> STO |- annotationList PACKAGE nameIR &lt; typeParameterListIR , typeParameterListIR<sub>inferred</sub> &gt; ( parameterIR* ) ; =&#8658; % % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -24623,7 +24408,7 @@ in parsers and deparsers to access packet data.</p>
 <div id="footer">
 <div id="footer-text">
 Version v1.2.5<br>
-Last updated 2025-09-30 21:40:26 +0900
+Last updated 2025-10-01 11:52:26 +0900
 </div>
 </div>
 </body>
