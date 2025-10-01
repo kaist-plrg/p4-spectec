@@ -530,32 +530,7 @@ rule TypeDef_wf/polyTypeDefIR:
 ;;;; Well-formedness of routine types
 ;;
 
-;;; Function types
-
-rule RoutineType_wf/builtinfunction:
-  bound |- BUILTIN_FUNCTION `( parameterTypeIR* ) `-> typeIR_ret
-  -- ParameterTypes_wf: bound |- parameterTypeIR*
-  -- Type_wf: bound |- typeIR_ret
-
-dec $nestable_function(direction, typeIR) : bool
-dec $nestable_function'(direction, typeIR) : bool
-
-def $nestable_function(direction, typeIR)
-  = $nestable_function'(direction, $canon(typeIR))
-def $nestable_function'(direction, STRING) = false
-  -- if direction =/= `EMPTY
-def $nestable_function'(direction, INT) = false
-  -- if direction =/= `EMPTY
-def $nestable_function'(direction, objectTypeIR) = false
-def $nestable_function'(_, _) = true
-  -- otherwise
-
-rule RoutineType_wf/functiontype:
-  bound |- FUNCTION `( parameterTypeIR* ) `-> typeIR_ret
-  -- ParameterTypes_wf: bound |- parameterTypeIR*
-  -- if (direction typeIR _ _ = parameterTypeIR)* 
-  -- if $nestable_function(direction, typeIR)*
-  -- Type_wf: bound |- typeIR_ret
+;;; Action types
 
 dec $directionless_trailing(direction*) : bool
 dec $directionless_trailing'(bool, direction*) : bool
@@ -583,12 +558,39 @@ def $nestable_action'(_, objectTypeIR) = false
 def $nestable_action'(_, _) = true
   -- otherwise
 
-rule RoutineType_wf/actiontype:
+rule RoutineType_wf/actionTypeIR:
   bound |- ACTION `( parameterTypeIR* )
   -- ParameterTypes_wf: bound |- parameterTypeIR*
   -- if (direction typeIR _ _ = parameterTypeIR)*
   -- if $directionless_trailing(direction*)
   -- if $nestable_action(direction, typeIR)*
+
+;;; Function types
+
+rule RoutineType_wf/builtinfunction:
+  bound |- BUILTIN_FUNCTION `( parameterTypeIR* ) `-> typeIR_ret
+  -- ParameterTypes_wf: bound |- parameterTypeIR*
+  -- Type_wf: bound |- typeIR_ret
+
+dec $nestable_function(direction, typeIR) : bool
+dec $nestable_function'(direction, typeIR) : bool
+
+def $nestable_function(direction, typeIR)
+  = $nestable_function'(direction, $canon(typeIR))
+def $nestable_function'(direction, STRING) = false
+  -- if direction =/= `EMPTY
+def $nestable_function'(direction, INT) = false
+  -- if direction =/= `EMPTY
+def $nestable_function'(direction, objectTypeIR) = false
+def $nestable_function'(_, _) = true
+  -- otherwise
+
+rule RoutineType_wf/definedFunctionTypeIR:
+  bound |- FUNCTION `( parameterTypeIR* ) `-> typeIR_ret
+  -- ParameterTypes_wf: bound |- parameterTypeIR*
+  -- if (direction typeIR _ _ = parameterTypeIR)* 
+  -- if $nestable_function(direction, typeIR)*
+  -- Type_wf: bound |- typeIR_ret
 
 dec $nestable_externfunction(direction, typeIR) : bool
 dec $nestable_externfunction'(direction, typeIR) : bool
@@ -606,7 +608,7 @@ def $nestable_externfunction'(direction, tableObjectTypeIR) = false
 def $nestable_externfunction'(_, _) = true
   -- otherwise
 
-rule RoutineType_wf/externfunctiontype:
+rule RoutineType_wf/externFunctionTypeIR:
   bound |- EXTERN_FUNCTION `( parameterTypeIR* ) `-> typeIR_ret
   -- ParameterTypes_wf: bound |- parameterTypeIR*
   -- if (direction typeIR _ _ = parameterTypeIR)* 
@@ -615,7 +617,7 @@ rule RoutineType_wf/externfunctiontype:
 
 ;;; Method types
 
-rule RoutineType_wf/builtinmethod:
+rule RoutineType_wf/builtinMethodTypeIR:
   bound |- BUILTIN_METHOD `( parameterTypeIR* ) `-> typeIR_ret
   -- ParameterTypes_wf: bound |- parameterTypeIR*
   -- Type_wf: bound |- typeIR_ret
@@ -636,7 +638,7 @@ def $nestable_externmethod'(direction, tableObjectTypeIR) = false
 def $nestable_externmethod'(_, _) = true
   -- otherwise
 
-rule RoutineType_wf/externmethod:
+rule RoutineType_wf/externMethodTypeIR:
   bound |- EXTERN_METHOD `( parameterTypeIR* ) `-> typeIR_ret
   -- ParameterTypes_wf: bound |- parameterTypeIR*
   -- if (direction typeIR _ _ = parameterTypeIR)* 
@@ -659,7 +661,7 @@ def $nestable_externabstractmethod'(direction, tableObjectTypeIR) = false
 def $nestable_externabstractmethod'(_, _) = true
   -- otherwise
 
-rule RoutineType_wf/externabstractmethod:
+rule RoutineType_wf/externAbstractMethodTypeIR:
   bound |- EXTERN_METHOD ABSTRACT `( parameterTypeIR* ) `-> typeIR_ret
   -- ParameterTypes_wf: bound |- parameterTypeIR*
   -- if (direction typeIR _ _ = parameterTypeIR)* 
@@ -682,7 +684,7 @@ def $nestable_parserapplymethod'(direction, tableObjectTypeIR) = false
 def $nestable_parserapplymethod'(_, _) = true
   -- otherwise
 
-rule RoutineType_wf/parserapplymethod:
+rule RoutineType_wf/parserApplyMethodTypeIR:
   bound |- PARSER_APPLY `( parameterTypeIR* )
   -- ParameterTypes_wf: bound |- parameterTypeIR*
   -- if (direction typeIR _ _ = parameterTypeIR)* 
@@ -703,13 +705,13 @@ def $nestable_controlapplymethod'(direction, tableObjectTypeIR) = false
 def $nestable_controlapplymethod'(_, _) = true
   -- otherwise
 
-rule RoutineType_wf/controlapplymethod:
+rule RoutineType_wf/controlApplyMethodTypeIR:
   bound |- CONTROL_APPLY `( parameterTypeIR* )
   -- ParameterTypes_wf: bound |- parameterTypeIR*
   -- if (direction typeIR _ _ = parameterTypeIR)* 
   -- if $nestable_controlapplymethod(direction, typeIR)*
 
-rule RoutineType_wf/tableapplymethod:
+rule RoutineType_wf/tableApplyMethodTypeIR:
   bound |- TABLE_APPLY `-> (TABLE_STRUCT _ `{ _ })
 
 ;;
@@ -718,12 +720,12 @@ rule RoutineType_wf/tableapplymethod:
 
 dec $definable_routine_mono(routineTypeIR) : bool
 
-def $definable_routine_mono(BUILTIN_FUNCTION `( _ ) `-> _) = true
-def $definable_routine_mono(ACTION `( _ )) = true
-def $definable_routine_mono(BUILTIN_METHOD `( _ ) `-> _) = true
-def $definable_routine_mono(PARSER_APPLY `( _ )) = true
-def $definable_routine_mono(CONTROL_APPLY `( _ )) = true
-def $definable_routine_mono(TABLE_APPLY `-> _) = true
+def $definable_routine_mono(actionTypeIR) = true
+def $definable_routine_mono(builtinFunctionTypeIR) = true
+def $definable_routine_mono(builtinMethodTypeIR) = true
+def $definable_routine_mono(parserApplyMethodTypeIR) = true
+def $definable_routine_mono(controlApplyMethodTypeIR) = true
+def $definable_routine_mono(tableApplyMethodTypeIR) = true
 def $definable_routine_mono(_) = false
   -- otherwise
 
@@ -734,10 +736,10 @@ rule RoutineTypeDef_wf/mono:
 
 dec $definable_routine_poly(routineTypeIR) : bool
 
-def $definable_routine_poly(FUNCTION `( _ ) `-> _) = true
-def $definable_routine_poly(EXTERN_FUNCTION `( _ ) `-> _) = true
-def $definable_routine_poly(EXTERN_METHOD `( _ ) `-> _) = true
-def $definable_routine_poly(EXTERN_METHOD ABSTRACT `( _ ) `-> _) = true
+def $definable_routine_poly(definedFunctionTypeIR) = true
+def $definable_routine_poly(externFunctionTypeIR) = true
+def $definable_routine_poly(externMethodTypeIR) = true
+def $definable_routine_poly(externAbstractMethodTypeIR) = true
 def $definable_routine_poly(_) = false
   -- otherwise
 
