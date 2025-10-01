@@ -3904,7 +3904,7 @@ nesting.</p>
 <pre>relation Type_wf:
    bound |- typeIR
    hint(input %0 %1)
-   hint(prose %1 "is a well-formed type, assuming bound type ids" %0)</pre>
+   hint(prose_in %1 "is a well-formed type, assuming bound type ids" %0)</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -4554,7 +4554,7 @@ rule Type_ok/varbit/expr:
 </div>
 </div>
 <div class="paragraph">
-<p><code>bound |- baseTypeIR</code></p>
+<p><code>baseTypeIR</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -4739,12 +4739,12 @@ as follows:</p>
 </div>
 </div>
 <div class="paragraph">
-<p><code>bound |- typeIR</code></p>
+<p><code>typeIR</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Check that <code>$definable_type_mono(typeIR)</code></p>
+<p>Check that <a href="#definable_type_mono"><code>typeIR</code> can be defined as a monomorphic typedef</a></p>
 </li>
 <li>
 <p>If (Type_wf: <code>bound |- typeIR</code>), then</p>
@@ -4920,12 +4920,12 @@ definable by a polymorphic type definition are as follows:</p>
 </div>
 </div>
 <div class="paragraph">
-<p><code>bound |- typeIR &lt; tid<sub>expl</sub>* , tid<sub>impl</sub>* &gt;</code></p>
+<p><code>typeIR &lt; tid<sub>expl</sub>* , tid<sub>impl</sub>* &gt;</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Check that <code>$definable_type_poly(typeIR)</code></p>
+<p>Check that <a href="#definable_type_poly"><code>typeIR</code> can be defined as a polymorphic typedef</a></p>
 </li>
 <li>
 <p>Check that <code>$distinct_&lt;tid&gt;(tid<sub>expl</sub>* ++ tid<sub>impl</sub>*)</code></p>
@@ -5038,7 +5038,7 @@ rule Type_ok/prefixedTypeName/poly:
 </div>
 </div>
 <div class="paragraph">
-<p><code>bound |- TID tid</code></p>
+<p><code>TID tid</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -5251,7 +5251,7 @@ rule Type_ok/specializedType/poly:
 </div>
 </div>
 <div class="paragraph">
-<p><code>bound |- polyTypeDefIR &lt; typeIR<sub>arg</sub>* &gt;</code></p>
+<p><code>polyTypeDefIR &lt; typeIR<sub>arg</sub>* &gt;</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -5377,7 +5377,7 @@ listValue
 <p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon">the canonicalized form of <code>typeIR</code></a></p>
 </li>
 <li>
-<p>Return <code>$nestable'_list(typeIR<sub>canon</sub>)</code></p>
+<p>Return <a href="#nestable'_list"><code>typeIR<sub>canon</sub></code> can be nested in a list type</a></p>
 </li>
 </ol>
 </div>
@@ -5484,12 +5484,12 @@ listValue
 </div>
 </div>
 <div class="paragraph">
-<p><code>bound |- LIST &lt; typeIR &gt;</code></p>
+<p><code>LIST &lt; typeIR &gt;</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Check that <code>$nestable_list(typeIR)</code></p>
+<p>Check that <a href="#nestable_list"><code>typeIR</code> can be nested in a list type</a></p>
 </li>
 <li>
 <p>If (Type_wf: <code>bound |- typeIR</code>), then</p>
@@ -5595,7 +5595,7 @@ tupleValue
 <p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon">the canonicalized form of <code>typeIR</code></a></p>
 </li>
 <li>
-<p>Return <code>$nestable'_tuple(typeIR<sub>canon</sub>)</code></p>
+<p>Return <a href="#nestable'_tuple"><code>typeIR<sub>canon</sub></code> can be nested in a tuple type</a></p>
 </li>
 </ol>
 </div>
@@ -5788,12 +5788,12 @@ tupleValue
 </div>
 </div>
 <div class="paragraph">
-<p><code>bound |- TUPLE &lt; typeIR* &gt;</code></p>
+<p><code>TUPLE &lt; typeIR* &gt;</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Check that <code>$nestable_tuple(typeIR)</code>, for each <code>typeIR</code> in <code>typeIR*</code></p>
+<p>Check that <a href="#nestable_tuple"><code>typeIR</code> can be nested in a tuple type</a>, for each <code>typeIR</code> in <code>typeIR*</code></p>
 </li>
 <li>
 <p>If (Type_wf: <code>bound |- typeIR</code>), for each <code>typeIR</code> in <code>typeIR*</code>, then</p>
@@ -5980,7 +5980,7 @@ rule Type_ok/headerStackType/specializedType:
 <p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon">the canonicalized form of <code>typeIR</code></a></p>
 </li>
 <li>
-<p>Return <code>$nestable'_headerStack(typeIR<sub>canon</sub>)</code></p>
+<p>Return <a href="#nestable'_headerStack"><code>typeIR<sub>canon</sub></code> can be nested in a header stack type</a></p>
 </li>
 </ol>
 </div>
@@ -6052,12 +6052,12 @@ rule Type_ok/headerStackType/specializedType:
 </div>
 </div>
 <div class="paragraph">
-<p><code>bound |- typeIR [ _ ]</code></p>
+<p><code>typeIR [ _ ]</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Check that <code>$nestable_headerStack(typeIR)</code></p>
+<p>Check that <a href="#nestable_headerStack"><code>typeIR</code> can be nested in a header stack type</a></p>
 </li>
 <li>
 <p>If (Type_wf: <code>bound |- typeIR</code>), then</p>
@@ -6153,7 +6153,7 @@ be obtained from named types, as illustrated in <a href="#sec-def-namedType">Sec
 <p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon">the canonicalized form of <code>typeIR</code></a></p>
 </li>
 <li>
-<p>Return <code>$nestable'_struct(typeIR<sub>canon</sub>)</code></p>
+<p>Return <a href="#nestable'_struct"><code>typeIR<sub>canon</sub></code> can be nested in a struct type</a></p>
 </li>
 </ol>
 </div>
@@ -6347,7 +6347,7 @@ be obtained from named types, as illustrated in <a href="#sec-def-namedType">Sec
 </div>
 </div>
 <div class="paragraph">
-<p><code>bound |- STRUCT _ { typeIR id ;* }</code></p>
+<p><code>STRUCT _ { typeIR id ;* }</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -6355,7 +6355,7 @@ be obtained from named types, as illustrated in <a href="#sec-def-namedType">Sec
 <p>Check that <code>$distinct_&lt;id&gt;(id*)</code></p>
 </li>
 <li>
-<p>Check that <code>$nestable_struct(typeIR)</code>, for each <code>typeIR</code> in <code>typeIR*</code></p>
+<p>Check that <a href="#nestable_struct"><code>typeIR</code> can be nested in a struct type</a>, for each <code>typeIR</code> in <code>typeIR*</code></p>
 </li>
 <li>
 <p>If (Type_wf: <code>bound |- typeIR</code>), for each <code>typeIR</code> in <code>typeIR*</code>, then</p>
@@ -6561,7 +6561,7 @@ headers contained within <code>h1</code>, regardless of how deeply they are nest
 <p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon">the canonicalized form of <code>typeIR</code></a></p>
 </li>
 <li>
-<p>Return <code>$nestable'_header(typeIR<sub>canon</sub>)</code></p>
+<p>Return <a href="#nestable'_header"><code>typeIR<sub>canon</sub></code> can be used in a header type</a></p>
 </li>
 </ol>
 </div>
@@ -6679,7 +6679,7 @@ headers contained within <code>h1</code>, regardless of how deeply they are nest
 <p>Let <code>STRUCT _ { typeIR _ ;* }</code> be <code>typeIR''</code></p>
 </li>
 <li>
-<p>Check that <code>$nestable_struct_in_header(typeIR)</code>, for each <code>typeIR</code> in <code>typeIR*</code></p>
+<p>Check that <a href="#nestable_struct_in_header"><code>typeIR</code> can be used in a struct nested in a header type</a>, for each <code>typeIR</code> in <code>typeIR*</code></p>
 </li>
 <li>
 <p>Return true</p>
@@ -6712,7 +6712,7 @@ headers contained within <code>h1</code>, regardless of how deeply they are nest
 <p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon">the canonicalized form of <code>typeIR</code></a></p>
 </li>
 <li>
-<p>Return <code>$nestable'_struct_in_header(typeIR<sub>canon</sub>)</code></p>
+<p>Return <a href="#nestable'_struct_in_header"><code>typeIR<sub>canon</sub></code> can be used in a struct nested in a header type</a></p>
 </li>
 </ol>
 </div>
@@ -6820,7 +6820,7 @@ headers contained within <code>h1</code>, regardless of how deeply they are nest
 <p>Let <code>STRUCT _ { typeIR _ ;* }</code> be <code>typeIR''</code></p>
 </li>
 <li>
-<p>Check that <code>$nestable_struct_in_header(typeIR)</code>, for each <code>typeIR</code> in <code>typeIR*</code></p>
+<p>Check that <a href="#nestable_struct_in_header"><code>typeIR</code> can be used in a struct nested in a header type</a>, for each <code>typeIR</code> in <code>typeIR*</code></p>
 </li>
 <li>
 <p>Return true</p>
@@ -6853,7 +6853,7 @@ headers contained within <code>h1</code>, regardless of how deeply they are nest
 </div>
 </div>
 <div class="paragraph">
-<p><code>bound |- HEADER _ { typeIR id ;* }</code></p>
+<p><code>HEADER _ { typeIR id ;* }</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -6861,7 +6861,7 @@ headers contained within <code>h1</code>, regardless of how deeply they are nest
 <p>Check that <code>$distinct_&lt;id&gt;(id*)</code></p>
 </li>
 <li>
-<p>Check that <code>$nestable_header(typeIR)</code>, for each <code>typeIR</code> in <code>typeIR*</code></p>
+<p>Check that <a href="#nestable_header"><code>typeIR</code> can be used in a header type</a>, for each <code>typeIR</code> in <code>typeIR*</code></p>
 </li>
 <li>
 <p>If (Type_wf: <code>bound |- typeIR</code>), for each <code>typeIR</code> in <code>typeIR*</code>, then</p>
@@ -6957,7 +6957,7 @@ types can be obtained from named types, as illustrated in
 <p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon">the canonicalized form of <code>typeIR</code></a></p>
 </li>
 <li>
-<p>Return <code>$nestable'_headerUnion(typeIR<sub>canon</sub>)</code></p>
+<p>Return <a href="#nestable'_headerUnion"><code>typeIR<sub>canon</sub></code> can be used in a header union type</a></p>
 </li>
 </ol>
 </div>
@@ -7030,7 +7030,7 @@ types can be obtained from named types, as illustrated in
 </div>
 </div>
 <div class="paragraph">
-<p><code>bound |- HEADER_UNION _ { typeIR id ;* }</code></p>
+<p><code>HEADER_UNION _ { typeIR id ;* }</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -7038,7 +7038,7 @@ types can be obtained from named types, as illustrated in
 <p>Check that <code>$distinct_&lt;id&gt;(id*)</code></p>
 </li>
 <li>
-<p>Check that <code>$nestable_headerUnion(typeIR)</code>, for each <code>typeIR</code> in <code>typeIR*</code></p>
+<p>Check that <a href="#nestable_headerUnion"><code>typeIR</code> can be used in a header union type</a>, for each <code>typeIR</code> in <code>typeIR*</code></p>
 </li>
 <li>
 <p>If (Type_wf: <code>bound |- typeIR</code>), for each <code>typeIR</code> in <code>typeIR*</code>, then</p>
@@ -7129,7 +7129,7 @@ obtained from named types, as illustrated in <a href="#sec-def-namedType">Sectio
 </div>
 </div>
 <div class="paragraph">
-<p><code>bound |- ENUM _ { id* }</code></p>
+<p><code>ENUM _ { id* }</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -7246,7 +7246,7 @@ one of the types listed above, or another <code>typedef</code> name that meets t
 <p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon">the canonicalized form of <code>typeIR</code></a></p>
 </li>
 <li>
-<p>Return <code>$nestable'_enum_serializable(typeIR<sub>canon</sub>)</code></p>
+<p>Return <a href="#nestable'_enum_serializable"><code>typeIR<sub>canon</sub></code> can be used in a serializable enum type</a></p>
 </li>
 </ol>
 </div>
@@ -7306,7 +7306,7 @@ one of the types listed above, or another <code>typedef</code> name that meets t
 <p>Let <code>TYPE _ typeIR</code> be <code>typeIR''</code></p>
 </li>
 <li>
-<p>Return <code>$nestable_new_in_enum_serializable(typeIR)</code></p>
+<p>Return <a href="#nestable_new_in_enum_serializable"><code>typeIR</code> can be used in a new type nested in a serializable enum type</a></p>
 </li>
 </ol>
 </div>
@@ -7336,7 +7336,7 @@ one of the types listed above, or another <code>typedef</code> name that meets t
 </div>
 </div>
 <div class="paragraph">
-<p><code>bound |- ENUM _ # typeIR { id = _ ;* }</code></p>
+<p><code>ENUM _ # typeIR { id = _ ;* }</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -7344,7 +7344,7 @@ one of the types listed above, or another <code>typedef</code> name that meets t
 <p>Check that <code>$distinct_&lt;id&gt;(id*)</code></p>
 </li>
 <li>
-<p>Check that <code>$nestable_enum_serializable(typeIR)</code></p>
+<p>Check that <a href="#nestable_enum_serializable"><code>typeIR</code> can be used in a serializable enum type</a></p>
 </li>
 <li>
 <p>If (Type_wf: <code>bound |- typeIR</code>), then</p>
@@ -7449,7 +7449,7 @@ object types can be obtained from named types, as illustrated in
 </div>
 </div>
 <div class="paragraph">
-<p><code>bound |- EXTERN _ { _ : routineTypeDefIR* }</code></p>
+<p><code>EXTERN _ { _ : routineTypeDefIR* }</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -7537,7 +7537,7 @@ object types can be obtained from named types, as illustrated in
 </div>
 </div>
 <div class="paragraph">
-<p><code>bound |- PARSER ( parameterTypeIR* )</code></p>
+<p><code>PARSER ( parameterTypeIR* )</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -7603,7 +7603,7 @@ object types can be obtained from named types, as illustrated in
 </div>
 </div>
 <div class="paragraph">
-<p><code>bound |- CONTROL ( parameterTypeIR* )</code></p>
+<p><code>CONTROL ( parameterTypeIR* )</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -7673,7 +7673,7 @@ object types can be obtained from named types, as illustrated in
 </div>
 </div>
 <div class="paragraph">
-<p><code>bound |- PACKAGE &lt; typeIR* &gt;</code></p>
+<p><code>PACKAGE &lt; typeIR* &gt;</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -7724,7 +7724,7 @@ object types can be obtained from named types, as illustrated in
 </div>
 </div>
 <div class="paragraph">
-<p><code>bound |- TABLE _ # typeIR</code></p>
+<p><code>TABLE _ # typeIR</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -7866,7 +7866,7 @@ be obtained from named types, as illustrated in <a href="#sec-def-namedType">Sec
 <p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon">the canonicalized form of <code>typeIR</code></a></p>
 </li>
 <li>
-<p>Return <code>$nestable'_typedef(typeIR<sub>canon</sub>)</code></p>
+<p>Return <a href="#nestable'_typedef"><code>typeIR<sub>canon</sub></code> can be used in a typedef</a></p>
 </li>
 </ol>
 </div>
@@ -7970,12 +7970,12 @@ be obtained from named types, as illustrated in <a href="#sec-def-namedType">Sec
 </div>
 </div>
 <div class="paragraph">
-<p><code>bound |- TYPEDEF _ typeIR</code></p>
+<p><code>TYPEDEF _ typeIR</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Check that <code>$nestable_typedef(typeIR)</code></p>
+<p>Check that <a href="#nestable_typedef"><code>typeIR</code> can be used in a typedef</a></p>
 </li>
 <li>
 <p>If (Type_wf: <code>bound |- typeIR</code>), then</p>
@@ -8069,7 +8069,7 @@ be obtained from named types, as illustrated in <a href="#sec-def-namedType">Sec
 <p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon">the canonicalized form of <code>typeIR</code></a></p>
 </li>
 <li>
-<p>Return <code>$nestable'_new(typeIR<sub>canon</sub>)</code></p>
+<p>Return <a href="#nestable'_new"><code>typeIR<sub>canon</sub></code> can be used in a new type</a></p>
 </li>
 </ol>
 </div>
@@ -8174,12 +8174,12 @@ be obtained from named types, as illustrated in <a href="#sec-def-namedType">Sec
 </div>
 </div>
 <div class="paragraph">
-<p><code>bound |- TYPE _ typeIR</code></p>
+<p><code>TYPE _ typeIR</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Check that <code>$nestable_new(typeIR)</code></p>
+<p>Check that <a href="#nestable_new"><code>typeIR</code> can be used in a new type</a></p>
 </li>
 <li>
 <p>If (Type_wf: <code>bound |- typeIR</code>), then</p>
@@ -8260,7 +8260,7 @@ defaultValue
 </div>
 </div>
 <div class="paragraph">
-<p><code>bound |- DEFAULT</code></p>
+<p><code>DEFAULT</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -8326,7 +8326,7 @@ invalidHeaderValue
 </div>
 </div>
 <div class="paragraph">
-<p><code>bound |- HEADER_INVALID</code></p>
+<p><code>HEADER_INVALID</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -8438,7 +8438,7 @@ rule Type_wf/sequenceTypeIR/default:
 </div>
 </div>
 <div class="paragraph">
-<p><code>bound |- sequenceTypeIR</code></p>
+<p><code>sequenceTypeIR</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -8581,7 +8581,7 @@ rule Type_wf/recordTypeIR/default:
 </div>
 </div>
 <div class="paragraph">
-<p><code>bound |- recordTypeIR</code></p>
+<p><code>recordTypeIR</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -8670,7 +8670,7 @@ by the compiler internally and used for type-checking.</p>
 <p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon">the canonicalized form of <code>typeIR</code></a></p>
 </li>
 <li>
-<p>Return <code>$nestable'_set(typeIR<sub>canon</sub>)</code></p>
+<p>Return <a href="#nestable'_set"><code>typeIR<sub>canon</sub></code> can be used in a set type</a></p>
 </li>
 </ol>
 </div>
@@ -8759,7 +8759,7 @@ by the compiler internally and used for type-checking.</p>
 <p>Let <code>TUPLE &lt; typeIR* &gt;</code> be <code>typeIR''</code></p>
 </li>
 <li>
-<p>Check that <code>$nestable_tuple_in_set(typeIR)</code>, for each <code>typeIR</code> in <code>typeIR*</code></p>
+<p>Check that <a href="#nestable_tuple_in_set"><code>typeIR</code> can be used in a tuple nested in a set type</a>, for each <code>typeIR</code> in <code>typeIR*</code></p>
 </li>
 <li>
 <p>Return true</p>
@@ -8794,7 +8794,7 @@ by the compiler internally and used for type-checking.</p>
 <p>Let <code>SEQ &lt; typeIR* &gt;</code> be <code>sequenceTypeIR</code></p>
 </li>
 <li>
-<p>Check that <code>$nestable_sequence_in_set(typeIR)</code>, for each <code>typeIR</code> in <code>typeIR*</code></p>
+<p>Check that <a href="#nestable_sequence_in_set"><code>typeIR</code> can be used in a sequence nested in a set type</a>, for each <code>typeIR</code> in <code>typeIR*</code></p>
 </li>
 <li>
 <p>Return true</p>
@@ -8823,7 +8823,7 @@ by the compiler internally and used for type-checking.</p>
 <p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon">the canonicalized form of <code>typeIR</code></a></p>
 </li>
 <li>
-<p>Return <code>$nestable'_tuple_in_set(typeIR<sub>canon</sub>)</code></p>
+<p>Return <a href="#nestable'_tuple_in_set"><code>typeIR<sub>canon</sub></code> can be used in a tuple nested in a set type</a></p>
 </li>
 </ol>
 </div>
@@ -8912,7 +8912,7 @@ by the compiler internally and used for type-checking.</p>
 <p>Let <code>TUPLE &lt; typeIR* &gt;</code> be <code>typeIR''</code></p>
 </li>
 <li>
-<p>Check that <code>$nestable_tuple_in_set(typeIR)</code>, for each <code>typeIR</code> in <code>typeIR*</code></p>
+<p>Check that <a href="#nestable_tuple_in_set"><code>typeIR</code> can be used in a tuple nested in a set type</a>, for each <code>typeIR</code> in <code>typeIR*</code></p>
 </li>
 <li>
 <p>Return true</p>
@@ -8954,7 +8954,7 @@ by the compiler internally and used for type-checking.</p>
 <p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon">the canonicalized form of <code>typeIR</code></a></p>
 </li>
 <li>
-<p>Return <code>$nestable'_sequence_in_set(typeIR<sub>canon</sub>)</code></p>
+<p>Return <a href="#nestable'_sequence_in_set"><code>typeIR<sub>canon</sub></code> can be used in a sequence nested in a set type</a></p>
 </li>
 </ol>
 </div>
@@ -9043,7 +9043,7 @@ by the compiler internally and used for type-checking.</p>
 <p>Let <code>TUPLE &lt; typeIR* &gt;</code> be <code>typeIR''</code></p>
 </li>
 <li>
-<p>Check that <code>$nestable_sequence_in_set(typeIR)</code>, for each <code>typeIR</code> in <code>typeIR*</code></p>
+<p>Check that <a href="#nestable_sequence_in_set"><code>typeIR</code> can be used in a sequence nested in a set type</a>, for each <code>typeIR</code> in <code>typeIR*</code></p>
 </li>
 <li>
 <p>Return true</p>
@@ -9078,7 +9078,7 @@ by the compiler internally and used for type-checking.</p>
 <p>Let <code>SEQ &lt; typeIR* &gt;</code> be <code>sequenceTypeIR</code></p>
 </li>
 <li>
-<p>Check that <code>$nestable_sequence_in_set(typeIR)</code>, for each <code>typeIR</code> in <code>typeIR*</code></p>
+<p>Check that <a href="#nestable_sequence_in_set"><code>typeIR</code> can be used in a sequence nested in a set type</a>, for each <code>typeIR</code> in <code>typeIR*</code></p>
 </li>
 <li>
 <p>Return true</p>
@@ -9110,12 +9110,12 @@ by the compiler internally and used for type-checking.</p>
 </div>
 </div>
 <div class="paragraph">
-<p><code>bound |- SET &lt; [typeIR] &gt;</code></p>
+<p><code>SET &lt; [typeIR] &gt;</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Check that <code>$nestable_set(typeIR)</code></p>
+<p>Check that <a href="#nestable_set"><code>typeIR</code> can be used in a set type</a></p>
 </li>
 <li>
 <p>If (Type_wf: <code>bound |- typeIR</code>), then</p>
@@ -9213,7 +9213,7 @@ rule Type_wf/tableMetadataTypeIR/struct:
 </div>
 </div>
 <div class="paragraph">
-<p><code>bound |- tableMetadataTypeIR</code></p>
+<p><code>tableMetadataTypeIR</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -9525,7 +9525,7 @@ rule Parameter_ok/initializer:
 <pre>relation ParameterType_wf:
    bound |- parameterTypeIR
    hint(input %0 %1)
-   hint(prose %1 "is a well-formed type, assuming bound type ids" %0)</pre>
+   hint(prose_in %1 "is a well-formed type, assuming bound type ids" %0)</pre>
 </div>
 </div>
 <div class="listingblock">
@@ -9533,17 +9533,17 @@ rule Parameter_ok/initializer:
 <pre>rule ParameterType_wf/non-default:
    bound |- direction typeIR _ eps
     -- Type_wf: bound |- typeIR
-    -- if $is_extern_object_typeIR($canon(typeIR)) =&gt; direction = /* empty */
+    -- if ($is_string_typeIR($canon(typeIR)) \/ $is_arbitrary_int_typeIR($canon(typeIR)) \/ $is_objectTypeIR($canon(typeIR))) =&gt; direction = /* empty */
 
 rule ParameterType_wf/default:
    bound |- direction typeIR _ value
     -- Type_wf: bound |- typeIR
-    -- if ~$is_extern_object_typeIR($canon(typeIR))
-    -- if direction = IN \/ direction = /* empty */</pre>
+    -- if direction = IN \/ direction = /* empty */
+    -- if ($is_string_typeIR($canon(typeIR)) \/ $is_arbitrary_int_typeIR($canon(typeIR)) \/ $is_objectTypeIR($canon(typeIR))) =&gt; direction = /* empty */</pre>
 </div>
 </div>
 <div class="paragraph">
-<p><code>bound |- direction typeIR _ value'?</code></p>
+<p><code>direction typeIR _ value'?</code> is a well-formed type, assuming bound type ids <code>bound</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -9556,7 +9556,7 @@ rule ParameterType_wf/default:
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Check that <code>$is_extern_object_typeIR(<a href="#canon">the canonicalized form of typeIR</a>) &#8658; direction = </code></p>
+<p>Check that <code>$is_string_typeIR(<a href="#canon">the canonicalized form of typeIR</a>) \/ $is_arbitrary_int_typeIR(<a href="#canon">the canonicalized form of typeIR</a>) \/ $is_objectTypeIR(<a href="#canon">the canonicalized form of typeIR</a>) &#8658; direction = </code></p>
 </li>
 <li>
 <p>The relation holds</p>
@@ -9581,9 +9581,6 @@ rule ParameterType_wf/default:
 <p>If (Type_wf: <code>bound |- typeIR</code>), then</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
-<li>
-<p>Check that ~<code>$is_extern_object_typeIR(<a href="#canon">the canonicalized form of typeIR</a>)</code></p>
-</li>
 <li>
 <p>If <code>direction</code> matches pattern <code>IN</code></p>
 </li>
