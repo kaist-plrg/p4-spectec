@@ -312,115 +312,105 @@ relation ParameterType_alpha: ``_ typeIR~a~ _ _?`` and ``_ typeIR~b~ _ _?``
 
 relation RoutineType_alpha: ``routineTypeIR`` and ``routineTypeIR'``
 
-. If ``routineTypeIR`` has type ``functionTypeIR``
- .. Let ``functionTypeIR`` be ``routineTypeIR``
- .. If let ``BUILTIN_FUNCTION ( parameterTypeIR~a~* ) -> typeIR~ret_a~`` be ``functionTypeIR``
-  ... Check that ``routineTypeIR'`` has type ``functionTypeIR``
-  ... Let ``functionTypeIR'`` be ``routineTypeIR'``
-  ... Check that ``functionTypeIR'`` matches pattern ``BUILTIN_FUNCTION ( % ) -> %``
-  ... Let ``BUILTIN_FUNCTION ( parameterTypeIR~b~* ) -> typeIR~ret_b~`` be ``functionTypeIR'``
-  ... Group builtinfunction: ``BUILTIN_FUNCTION ( parameterTypeIR~a~* ) -> typeIR~ret_a~`` and ``BUILTIN_FUNCTION ( parameterTypeIR~b~* ) -> typeIR~ret_b~``
+. If ``routineTypeIR`` has type ``actionTypeIR``
+ .. Let ``ACTION ( parameterTypeIR~a~* )`` be ``routineTypeIR``
+ .. Check that ``routineTypeIR'`` has type ``actionTypeIR``
+ .. Let ``ACTION ( parameterTypeIR~b~* )`` be ``routineTypeIR'``
+ .. Group action: ``ACTION ( parameterTypeIR~a~* )`` and ``ACTION ( parameterTypeIR~b~* )``
 
-   .... If [``parameterTypeIR~a~`` and ``parameterTypeIR~b~`` are the same type](ParameterType_alpha), for each ``parameterTypeIR_a`` in ``parameterTypeIR_a*`` and ``parameterTypeIR_b`` in ``parameterTypeIR_b*``, then
-    ..... If [``typeIR~ret_a~`` and ``typeIR~ret_b~`` are the same type](Type_alpha), then
-     ...... The relation holds
+  ... If [``parameterTypeIR~a~`` and ``parameterTypeIR~b~`` are the same type](ParameterType_alpha), for each ``parameterTypeIR_a`` in ``parameterTypeIR_a*`` and ``parameterTypeIR_b`` in ``parameterTypeIR_b*``, then
+   .... The relation holds
 
- .. Else if let ``FUNCTION ( parameterTypeIR~a~* ) -> typeIR~ret_a~`` be ``functionTypeIR``
-  ... Check that ``routineTypeIR'`` has type ``functionTypeIR``
-  ... Let ``functionTypeIR'`` be ``routineTypeIR'``
-  ... Check that ``functionTypeIR'`` matches pattern ``FUNCTION ( % ) -> %``
-  ... Let ``FUNCTION ( parameterTypeIR~b~* ) -> typeIR~ret_b~`` be ``functionTypeIR'``
-  ... Group function: ``FUNCTION ( parameterTypeIR~a~* ) -> typeIR~ret_a~`` and ``FUNCTION ( parameterTypeIR~b~* ) -> typeIR~ret_b~``
+. Else if ``routineTypeIR`` has type ``builtinFunctionTypeIR``
+ .. Let ``BUILTIN_FUNCTION ( parameterTypeIR~a~* ) -> typeIR~ret_a~`` be ``routineTypeIR``
+ .. Check that ``routineTypeIR'`` has type ``builtinFunctionTypeIR``
+ .. Let ``BUILTIN_FUNCTION ( parameterTypeIR~b~* ) -> typeIR~ret_b~`` be ``routineTypeIR'``
+ .. Group builtinfunction: ``BUILTIN_FUNCTION ( parameterTypeIR~a~* ) -> typeIR~ret_a~`` and ``BUILTIN_FUNCTION ( parameterTypeIR~b~* ) -> typeIR~ret_b~``
 
-   .... If [``parameterTypeIR~a~`` and ``parameterTypeIR~b~`` are the same type](ParameterType_alpha), for each ``parameterTypeIR_a`` in ``parameterTypeIR_a*`` and ``parameterTypeIR_b`` in ``parameterTypeIR_b*``, then
-    ..... If [``typeIR~ret_a~`` and ``typeIR~ret_b~`` are the same type](Type_alpha), then
-     ...... The relation holds
-
- .. Else if let ``ACTION ( parameterTypeIR~a~* )`` be ``functionTypeIR``
-  ... Check that ``routineTypeIR'`` has type ``functionTypeIR``
-  ... Let ``functionTypeIR'`` be ``routineTypeIR'``
-  ... Check that ``functionTypeIR'`` matches pattern ``ACTION ( % )``
-  ... Let ``ACTION ( parameterTypeIR~b~* )`` be ``functionTypeIR'``
-  ... Group action: ``ACTION ( parameterTypeIR~a~* )`` and ``ACTION ( parameterTypeIR~b~* )``
-
-   .... If [``parameterTypeIR~a~`` and ``parameterTypeIR~b~`` are the same type](ParameterType_alpha), for each ``parameterTypeIR_a`` in ``parameterTypeIR_a*`` and ``parameterTypeIR_b`` in ``parameterTypeIR_b*``, then
+  ... If [``parameterTypeIR~a~`` and ``parameterTypeIR~b~`` are the same type](ParameterType_alpha), for each ``parameterTypeIR_a`` in ``parameterTypeIR_a*`` and ``parameterTypeIR_b`` in ``parameterTypeIR_b*``, then
+   .... If [``typeIR~ret_a~`` and ``typeIR~ret_b~`` are the same type](Type_alpha), then
     ..... The relation holds
 
- .. Else if let ``EXTERN_FUNCTION ( parameterTypeIR~a~* ) -> typeIR~ret_a~`` be ``functionTypeIR``
-  ... Check that ``routineTypeIR'`` has type ``functionTypeIR``
-  ... Let ``functionTypeIR'`` be ``routineTypeIR'``
-  ... Check that ``functionTypeIR'`` matches pattern ``EXTERN_FUNCTION ( % ) -> %``
-  ... Let ``EXTERN_FUNCTION ( parameterTypeIR~b~* ) -> typeIR~ret_b~`` be ``functionTypeIR'``
-  ... Group externfunction: ``EXTERN_FUNCTION ( parameterTypeIR~a~* ) -> typeIR~ret_a~`` and ``EXTERN_FUNCTION ( parameterTypeIR~b~* ) -> typeIR~ret_b~``
+. Else if ``routineTypeIR`` has type ``definedFunctionTypeIR``
+ .. Let ``FUNCTION ( parameterTypeIR~a~* ) -> typeIR~ret_a~`` be ``routineTypeIR``
+ .. Check that ``routineTypeIR'`` has type ``definedFunctionTypeIR``
+ .. Let ``FUNCTION ( parameterTypeIR~b~* ) -> typeIR~ret_b~`` be ``routineTypeIR'``
+ .. Group function: ``FUNCTION ( parameterTypeIR~a~* ) -> typeIR~ret_a~`` and ``FUNCTION ( parameterTypeIR~b~* ) -> typeIR~ret_b~``
 
-   .... If [``parameterTypeIR~a~`` and ``parameterTypeIR~b~`` are the same type](ParameterType_alpha), for each ``parameterTypeIR_a`` in ``parameterTypeIR_a*`` and ``parameterTypeIR_b`` in ``parameterTypeIR_b*``, then
-    ..... If [``typeIR~ret_a~`` and ``typeIR~ret_b~`` are the same type](Type_alpha), then
-     ...... The relation holds
+  ... If [``parameterTypeIR~a~`` and ``parameterTypeIR~b~`` are the same type](ParameterType_alpha), for each ``parameterTypeIR_a`` in ``parameterTypeIR_a*`` and ``parameterTypeIR_b`` in ``parameterTypeIR_b*``, then
+   .... If [``typeIR~ret_a~`` and ``typeIR~ret_b~`` are the same type](Type_alpha), then
+    ..... The relation holds
 
-. Else if ``routineTypeIR`` has type ``methodTypeIR``
- .. Let ``methodTypeIR`` be ``routineTypeIR``
- .. If let ``BUILTIN_METHOD ( parameterTypeIR~a~* ) -> typeIR~ret_a~`` be ``methodTypeIR``
-  ... Check that ``routineTypeIR'`` has type ``methodTypeIR``
-  ... Let ``methodTypeIR'`` be ``routineTypeIR'``
-  ... Check that ``methodTypeIR'`` matches pattern ``BUILTIN_METHOD ( % ) -> %``
-  ... Let ``BUILTIN_METHOD ( parameterTypeIR~b~* ) -> typeIR~ret_b~`` be ``methodTypeIR'``
-  ... Group builtinmethod: ``BUILTIN_METHOD ( parameterTypeIR~a~* ) -> typeIR~ret_a~`` and ``BUILTIN_METHOD ( parameterTypeIR~b~* ) -> typeIR~ret_b~``
+. Else if ``routineTypeIR`` has type ``externFunctionTypeIR``
+ .. Let ``EXTERN_FUNCTION ( parameterTypeIR~a~* ) -> typeIR~ret_a~`` be ``routineTypeIR``
+ .. Check that ``routineTypeIR'`` has type ``externFunctionTypeIR``
+ .. Let ``EXTERN_FUNCTION ( parameterTypeIR~b~* ) -> typeIR~ret_b~`` be ``routineTypeIR'``
+ .. Group externfunction: ``EXTERN_FUNCTION ( parameterTypeIR~a~* ) -> typeIR~ret_a~`` and ``EXTERN_FUNCTION ( parameterTypeIR~b~* ) -> typeIR~ret_b~``
 
-   .... If [``parameterTypeIR~a~`` and ``parameterTypeIR~b~`` are the same type](ParameterType_alpha), for each ``parameterTypeIR_a`` in ``parameterTypeIR_a*`` and ``parameterTypeIR_b`` in ``parameterTypeIR_b*``, then
-    ..... If [``typeIR~ret_a~`` and ``typeIR~ret_b~`` are the same type](Type_alpha), then
-     ...... The relation holds
+  ... If [``parameterTypeIR~a~`` and ``parameterTypeIR~b~`` are the same type](ParameterType_alpha), for each ``parameterTypeIR_a`` in ``parameterTypeIR_a*`` and ``parameterTypeIR_b`` in ``parameterTypeIR_b*``, then
+   .... If [``typeIR~ret_a~`` and ``typeIR~ret_b~`` are the same type](Type_alpha), then
+    ..... The relation holds
 
- .. Else if let ``EXTERN_METHOD ( parameterTypeIR~a~* ) -> typeIR~ret_a~`` be ``methodTypeIR``
-  ... Check that ``routineTypeIR'`` has type ``methodTypeIR``
-  ... Let ``methodTypeIR'`` be ``routineTypeIR'``
-  ... Check that ``methodTypeIR'`` matches pattern ``EXTERN_METHOD ( % ) -> %``
-  ... Let ``EXTERN_METHOD ( parameterTypeIR~b~* ) -> typeIR~ret_b~`` be ``methodTypeIR'``
+. Else if ``routineTypeIR`` has type ``builtinMethodTypeIR``
+ .. Let ``BUILTIN_METHOD ( parameterTypeIR~a~* ) -> typeIR~ret_a~`` be ``routineTypeIR``
+ .. Check that ``routineTypeIR'`` has type ``builtinMethodTypeIR``
+ .. Let ``BUILTIN_METHOD ( parameterTypeIR~b~* ) -> typeIR~ret_b~`` be ``routineTypeIR'``
+ .. Group builtinmethod: ``BUILTIN_METHOD ( parameterTypeIR~a~* ) -> typeIR~ret_a~`` and ``BUILTIN_METHOD ( parameterTypeIR~b~* ) -> typeIR~ret_b~``
+
+  ... If [``parameterTypeIR~a~`` and ``parameterTypeIR~b~`` are the same type](ParameterType_alpha), for each ``parameterTypeIR_a`` in ``parameterTypeIR_a*`` and ``parameterTypeIR_b`` in ``parameterTypeIR_b*``, then
+   .... If [``typeIR~ret_a~`` and ``typeIR~ret_b~`` are the same type](Type_alpha), then
+    ..... The relation holds
+
+. Else if ``routineTypeIR`` has type ``externMethodTypeIR``
+ .. Let ``externMethodTypeIR`` be ``routineTypeIR``
+ .. If let ``EXTERN_METHOD ( parameterTypeIR~a~* ) -> typeIR~ret_a~`` be ``externMethodTypeIR``
+  ... Check that ``routineTypeIR'`` has type ``externMethodTypeIR``
+  ... Let ``externMethodTypeIR'`` be ``routineTypeIR'``
+  ... Check that ``externMethodTypeIR'`` matches pattern ``EXTERN_METHOD ( % ) -> %``
+  ... Let ``EXTERN_METHOD ( parameterTypeIR~b~* ) -> typeIR~ret_b~`` be ``externMethodTypeIR'``
   ... Group externmethod: ``EXTERN_METHOD ( parameterTypeIR~a~* ) -> typeIR~ret_a~`` and ``EXTERN_METHOD ( parameterTypeIR~b~* ) -> typeIR~ret_b~``
 
    .... If [``parameterTypeIR~a~`` and ``parameterTypeIR~b~`` are the same type](ParameterType_alpha), for each ``parameterTypeIR_a`` in ``parameterTypeIR_a*`` and ``parameterTypeIR_b`` in ``parameterTypeIR_b*``, then
     ..... If [``typeIR~ret_a~`` and ``typeIR~ret_b~`` are the same type](Type_alpha), then
      ...... The relation holds
 
- .. Else if let ``EXTERN_METHOD ABSTRACT ( parameterTypeIR~a~* ) -> typeIR~ret_a~`` be ``methodTypeIR``
-  ... Check that ``routineTypeIR'`` has type ``methodTypeIR``
-  ... Let ``methodTypeIR'`` be ``routineTypeIR'``
-  ... Check that ``methodTypeIR'`` matches pattern ``EXTERN_METHOD ABSTRACT ( % ) -> %``
-  ... Let ``EXTERN_METHOD ABSTRACT ( parameterTypeIR~b~* ) -> typeIR~ret_b~`` be ``methodTypeIR'``
+ .. Else if let ``EXTERN_METHOD ABSTRACT ( parameterTypeIR~a~* ) -> typeIR~ret_a~`` be ``externMethodTypeIR``
+  ... Check that ``routineTypeIR'`` has type ``externMethodTypeIR``
+  ... Let ``externMethodTypeIR'`` be ``routineTypeIR'``
+  ... Check that ``externMethodTypeIR'`` matches pattern ``EXTERN_METHOD ABSTRACT ( % ) -> %``
+  ... Let ``EXTERN_METHOD ABSTRACT ( parameterTypeIR~b~* ) -> typeIR~ret_b~`` be ``externMethodTypeIR'``
   ... Group externmethod-abstract: ``EXTERN_METHOD ABSTRACT ( parameterTypeIR~a~* ) -> typeIR~ret_a~`` and ``EXTERN_METHOD ABSTRACT ( parameterTypeIR~b~* ) -> typeIR~ret_b~``
 
    .... If [``parameterTypeIR~a~`` and ``parameterTypeIR~b~`` are the same type](ParameterType_alpha), for each ``parameterTypeIR_a`` in ``parameterTypeIR_a*`` and ``parameterTypeIR_b`` in ``parameterTypeIR_b*``, then
     ..... If [``typeIR~ret_a~`` and ``typeIR~ret_b~`` are the same type](Type_alpha), then
      ...... The relation holds
 
- .. Else if let ``PARSER_APPLY ( parameterTypeIR~a~* )`` be ``methodTypeIR``
-  ... Check that ``routineTypeIR'`` has type ``methodTypeIR``
-  ... Let ``methodTypeIR'`` be ``routineTypeIR'``
-  ... Check that ``methodTypeIR'`` matches pattern ``PARSER_APPLY ( % )``
-  ... Let ``PARSER_APPLY ( parameterTypeIR~b~* )`` be ``methodTypeIR'``
-  ... Group parserapply: ``PARSER_APPLY ( parameterTypeIR~a~* )`` and ``PARSER_APPLY ( parameterTypeIR~b~* )``
+. Else if ``routineTypeIR`` has type ``parserApplyMethodTypeIR``
+ .. Let ``PARSER_APPLY ( parameterTypeIR~a~* )`` be ``routineTypeIR``
+ .. Check that ``routineTypeIR'`` has type ``parserApplyMethodTypeIR``
+ .. Let ``PARSER_APPLY ( parameterTypeIR~b~* )`` be ``routineTypeIR'``
+ .. Group parserapply: ``PARSER_APPLY ( parameterTypeIR~a~* )`` and ``PARSER_APPLY ( parameterTypeIR~b~* )``
 
-   .... If [``parameterTypeIR~a~`` and ``parameterTypeIR~b~`` are the same type](ParameterType_alpha), for each ``parameterTypeIR_a`` in ``parameterTypeIR_a*`` and ``parameterTypeIR_b`` in ``parameterTypeIR_b*``, then
-    ..... The relation holds
+  ... If [``parameterTypeIR~a~`` and ``parameterTypeIR~b~`` are the same type](ParameterType_alpha), for each ``parameterTypeIR_a`` in ``parameterTypeIR_a*`` and ``parameterTypeIR_b`` in ``parameterTypeIR_b*``, then
+   .... The relation holds
 
- .. Else if let ``CONTROL_APPLY ( parameterTypeIR~a~* )`` be ``methodTypeIR``
-  ... Check that ``routineTypeIR'`` has type ``methodTypeIR``
-  ... Let ``methodTypeIR'`` be ``routineTypeIR'``
-  ... Check that ``methodTypeIR'`` matches pattern ``CONTROL_APPLY ( % )``
-  ... Let ``CONTROL_APPLY ( parameterTypeIR~b~* )`` be ``methodTypeIR'``
-  ... Group controlapply: ``CONTROL_APPLY ( parameterTypeIR~a~* )`` and ``CONTROL_APPLY ( parameterTypeIR~b~* )``
+. Else if ``routineTypeIR`` has type ``controlApplyMethodTypeIR``
+ .. Let ``CONTROL_APPLY ( parameterTypeIR~a~* )`` be ``routineTypeIR``
+ .. Check that ``routineTypeIR'`` has type ``controlApplyMethodTypeIR``
+ .. Let ``CONTROL_APPLY ( parameterTypeIR~b~* )`` be ``routineTypeIR'``
+ .. Group controlapply: ``CONTROL_APPLY ( parameterTypeIR~a~* )`` and ``CONTROL_APPLY ( parameterTypeIR~b~* )``
 
-   .... If [``parameterTypeIR~a~`` and ``parameterTypeIR~b~`` are the same type](ParameterType_alpha), for each ``parameterTypeIR_a`` in ``parameterTypeIR_a*`` and ``parameterTypeIR_b`` in ``parameterTypeIR_b*``, then
-    ..... The relation holds
+  ... If [``parameterTypeIR~a~`` and ``parameterTypeIR~b~`` are the same type](ParameterType_alpha), for each ``parameterTypeIR_a`` in ``parameterTypeIR_a*`` and ``parameterTypeIR_b`` in ``parameterTypeIR_b*``, then
+   .... The relation holds
 
- .. Else if let ``TABLE_APPLY -> typeIR~ret_a~`` be ``methodTypeIR``
-  ... Check that ``routineTypeIR'`` has type ``methodTypeIR``
-  ... Let ``methodTypeIR'`` be ``routineTypeIR'``
-  ... Check that ``methodTypeIR'`` matches pattern ``TABLE_APPLY -> %``
-  ... Let ``TABLE_APPLY -> typeIR~ret_b~`` be ``methodTypeIR'``
-  ... Group tableapply: ``TABLE_APPLY -> typeIR~ret_a~`` and ``TABLE_APPLY -> typeIR~ret_b~``
+. Else if ``routineTypeIR`` has type ``tableApplyMethodTypeIR``
+ .. Let ``TABLE_APPLY -> typeIR~ret_a~`` be ``routineTypeIR``
+ .. Check that ``routineTypeIR'`` has type ``tableApplyMethodTypeIR``
+ .. Let ``TABLE_APPLY -> typeIR~ret_b~`` be ``routineTypeIR'``
+ .. Group tableapply: ``TABLE_APPLY -> typeIR~ret_a~`` and ``TABLE_APPLY -> typeIR~ret_b~``
 
-   .... If [``typeIR~ret_a~`` and ``typeIR~ret_b~`` are the same type](Type_alpha), then
-    ..... The relation holds
+  ... If [``typeIR~ret_a~`` and ``typeIR~ret_b~`` are the same type](Type_alpha), then
+   .... The relation holds
 
 relation RoutineTypeDef_alpha: ``routineTypeDefIR`` and ``routineTypeDefIR'``
 
@@ -676,24 +666,17 @@ relation TypeDef_wf: ``bound`` and ``typeDefIR``
   ... If (Type_wf: ``bound~inner~ |- typeIR``), then
    .... The relation holds
 
-relation ParameterType_wf: ``bound`` and ``direction typeIR _ value''?``
+relation ParameterType_wf: ``bound`` and ``direction typeIR _ value'?``
 
-. Check that ``direction`` matches pattern ```EMPTY``
-. If ``value''?`` matches pattern ``()``
+. Group : ``bound`` and ``direction typeIR _ value'?``
 
-
-. Else if let ``?(value)`` be ``value''``?
- .. Group default-some-extern: ``bound`` and ``typeIR _ ?(value)``
-
+ .. If ?() is equal to ``value'``?
   ... If (Type_wf: ``bound |- typeIR``), then
-   .... Check that ``$is_extern_object_typeIR(<<canon, the canonicalized form of typeIR>>)``
+   .... Check that ``$is_extern_object_typeIR(<<canon, the canonicalized form of typeIR>>) => direction = ``
    .... The relation holds
-. If ``value''?`` matches pattern ``()``
-
-
-. Else if let ``?(value)`` be ``value''``?
- .. Group default-some-not-extern: ``bound`` and ``direction typeIR _ ?(value)``
-
+ .. Let ``value''?`` be ``value'``?
+ .. If ``value''?`` matches pattern ``(_)``
+  ... Let ``?(value)`` be ``value''``?
   ... If (Type_wf: ``bound |- typeIR``), then
    .... Check that ~``$is_extern_object_typeIR(<<canon, the canonicalized form of typeIR>>)``
    .... If ``direction`` matches pattern ``IN``
@@ -715,59 +698,62 @@ relation ParameterTypes_wf: ``bound`` and ``parameterTypeIR``*
 
 relation RoutineType_wf: ``bound`` and ``routineTypeIR``
 
-. If ``routineTypeIR`` has type ``functionTypeIR``
- .. Let ``functionTypeIR`` be ``routineTypeIR``
- .. If let ``BUILTIN_FUNCTION ( parameterTypeIR* ) -> typeIR~ret~`` be ``functionTypeIR``
-  ... Group builtinfunction: ``bound`` and ``BUILTIN_FUNCTION ( parameterTypeIR* ) -> typeIR~ret~``
+. If ``routineTypeIR`` has type ``actionTypeIR``
+ .. Let ``ACTION ( parameterTypeIR* )`` be ``routineTypeIR``
+ .. Group actionTypeIR: ``bound`` and ``ACTION ( parameterTypeIR* )``
 
-   .... If (ParameterTypes_wf: ``bound |- parameterTypeIR*``), then
-    ..... If (Type_wf: ``bound |- typeIR~ret~``), then
-     ...... The relation holds
+  ... If (ParameterTypes_wf: ``bound |- parameterTypeIR*``), then
+   .... Let ``_id*`` be the list of ``_id``, ``_value?*`` be the list of ``_value?``, ``direction*`` be the list of ``direction``, and ``typeIR*`` be the list of ``typeIR``, obtained by repeating:
+    ..... Let ``direction typeIR _ _?`` be ``parameterTypeIR``
+   .... for each ``parameterTypeIR`` in ``parameterTypeIR*``
+   .... Check that ``$directionless_trailing(direction*)``
+   .... Check that ``$nestable_action(direction, typeIR)``, for each ``direction`` in ``direction*`` and ``typeIR`` in ``typeIR*``
+   .... The relation holds
 
- .. Else if let ``FUNCTION ( parameterTypeIR* ) -> typeIR~ret~`` be ``functionTypeIR``
-  ... Group functiontype: ``bound`` and ``FUNCTION ( parameterTypeIR* ) -> typeIR~ret~``
+. Else if ``routineTypeIR`` has type ``builtinFunctionTypeIR``
+ .. Let ``BUILTIN_FUNCTION ( parameterTypeIR* ) -> typeIR~ret~`` be ``routineTypeIR``
+ .. Group builtinfunction: ``bound`` and ``BUILTIN_FUNCTION ( parameterTypeIR* ) -> typeIR~ret~``
 
-   .... If (ParameterTypes_wf: ``bound |- parameterTypeIR*``), then
-    ..... Let ``_id*`` be the list of ``_id``, ``_value?*`` be the list of ``_value?``, ``direction*`` be the list of ``direction``, and ``typeIR*`` be the list of ``typeIR``, obtained by repeating:
-     ...... Let ``direction typeIR _ _?`` be ``parameterTypeIR``
-    ..... for each ``parameterTypeIR`` in ``parameterTypeIR*``
-    ..... Check that ``$nestable_function(direction, typeIR)``, for each ``direction`` in ``direction*`` and ``typeIR`` in ``typeIR*``
-    ..... If (Type_wf: ``bound |- typeIR~ret~``), then
-     ...... The relation holds
-
- .. Else if let ``ACTION ( parameterTypeIR* )`` be ``functionTypeIR``
-  ... Group actiontype: ``bound`` and ``ACTION ( parameterTypeIR* )``
-
-   .... If (ParameterTypes_wf: ``bound |- parameterTypeIR*``), then
-    ..... Let ``_id*`` be the list of ``_id``, ``_value?*`` be the list of ``_value?``, ``direction*`` be the list of ``direction``, and ``typeIR*`` be the list of ``typeIR``, obtained by repeating:
-     ...... Let ``direction typeIR _ _?`` be ``parameterTypeIR``
-    ..... for each ``parameterTypeIR`` in ``parameterTypeIR*``
-    ..... Check that ``$directionless_trailing(direction*)``
-    ..... Check that ``$nestable_action(direction, typeIR)``, for each ``direction`` in ``direction*`` and ``typeIR`` in ``typeIR*``
+  ... If (ParameterTypes_wf: ``bound |- parameterTypeIR*``), then
+   .... If (Type_wf: ``bound |- typeIR~ret~``), then
     ..... The relation holds
 
- .. Else if let ``EXTERN_FUNCTION ( parameterTypeIR* ) -> typeIR~ret~`` be ``functionTypeIR``
-  ... Group externfunctiontype: ``bound`` and ``EXTERN_FUNCTION ( parameterTypeIR* ) -> typeIR~ret~``
+. Else if ``routineTypeIR`` has type ``definedFunctionTypeIR``
+ .. Let ``FUNCTION ( parameterTypeIR* ) -> typeIR~ret~`` be ``routineTypeIR``
+ .. Group definedFunctionTypeIR: ``bound`` and ``FUNCTION ( parameterTypeIR* ) -> typeIR~ret~``
 
-   .... If (ParameterTypes_wf: ``bound |- parameterTypeIR*``), then
-    ..... Let ``_id*`` be the list of ``_id``, ``_value?*`` be the list of ``_value?``, ``direction*`` be the list of ``direction``, and ``typeIR*`` be the list of ``typeIR``, obtained by repeating:
-     ...... Let ``direction typeIR _ _?`` be ``parameterTypeIR``
-    ..... for each ``parameterTypeIR`` in ``parameterTypeIR*``
-    ..... Check that ``$nestable_externfunction(direction, typeIR)``, for each ``direction`` in ``direction*`` and ``typeIR`` in ``typeIR*``
-    ..... If (Type_wf: ``bound |- typeIR~ret~``), then
-     ...... The relation holds
+  ... If (ParameterTypes_wf: ``bound |- parameterTypeIR*``), then
+   .... Let ``_id*`` be the list of ``_id``, ``_value?*`` be the list of ``_value?``, ``direction*`` be the list of ``direction``, and ``typeIR*`` be the list of ``typeIR``, obtained by repeating:
+    ..... Let ``direction typeIR _ _?`` be ``parameterTypeIR``
+   .... for each ``parameterTypeIR`` in ``parameterTypeIR*``
+   .... Check that ``$nestable_function(direction, typeIR)``, for each ``direction`` in ``direction*`` and ``typeIR`` in ``typeIR*``
+   .... If (Type_wf: ``bound |- typeIR~ret~``), then
+    ..... The relation holds
 
-. Else if ``routineTypeIR`` has type ``methodTypeIR``
- .. Let ``methodTypeIR`` be ``routineTypeIR``
- .. If let ``BUILTIN_METHOD ( parameterTypeIR* ) -> typeIR~ret~`` be ``methodTypeIR``
-  ... Group builtinmethod: ``bound`` and ``BUILTIN_METHOD ( parameterTypeIR* ) -> typeIR~ret~``
+. Else if ``routineTypeIR`` has type ``externFunctionTypeIR``
+ .. Let ``EXTERN_FUNCTION ( parameterTypeIR* ) -> typeIR~ret~`` be ``routineTypeIR``
+ .. Group externFunctionTypeIR: ``bound`` and ``EXTERN_FUNCTION ( parameterTypeIR* ) -> typeIR~ret~``
 
-   .... If (ParameterTypes_wf: ``bound |- parameterTypeIR*``), then
-    ..... If (Type_wf: ``bound |- typeIR~ret~``), then
-     ...... The relation holds
+  ... If (ParameterTypes_wf: ``bound |- parameterTypeIR*``), then
+   .... Let ``_id*`` be the list of ``_id``, ``_value?*`` be the list of ``_value?``, ``direction*`` be the list of ``direction``, and ``typeIR*`` be the list of ``typeIR``, obtained by repeating:
+    ..... Let ``direction typeIR _ _?`` be ``parameterTypeIR``
+   .... for each ``parameterTypeIR`` in ``parameterTypeIR*``
+   .... Check that ``$nestable_externfunction(direction, typeIR)``, for each ``direction`` in ``direction*`` and ``typeIR`` in ``typeIR*``
+   .... If (Type_wf: ``bound |- typeIR~ret~``), then
+    ..... The relation holds
 
- .. Else if let ``EXTERN_METHOD ( parameterTypeIR* ) -> typeIR~ret~`` be ``methodTypeIR``
-  ... Group externmethod: ``bound`` and ``EXTERN_METHOD ( parameterTypeIR* ) -> typeIR~ret~``
+. Else if ``routineTypeIR`` has type ``builtinMethodTypeIR``
+ .. Let ``BUILTIN_METHOD ( parameterTypeIR* ) -> typeIR~ret~`` be ``routineTypeIR``
+ .. Group builtinMethodTypeIR: ``bound`` and ``BUILTIN_METHOD ( parameterTypeIR* ) -> typeIR~ret~``
+
+  ... If (ParameterTypes_wf: ``bound |- parameterTypeIR*``), then
+   .... If (Type_wf: ``bound |- typeIR~ret~``), then
+    ..... The relation holds
+
+. Else if ``routineTypeIR`` has type ``externMethodTypeIR``
+ .. Let ``externMethodTypeIR`` be ``routineTypeIR``
+ .. If let ``EXTERN_METHOD ( parameterTypeIR* ) -> typeIR~ret~`` be ``externMethodTypeIR``
+  ... Group externMethodTypeIR: ``bound`` and ``EXTERN_METHOD ( parameterTypeIR* ) -> typeIR~ret~``
 
    .... If (ParameterTypes_wf: ``bound |- parameterTypeIR*``), then
     ..... Let ``_id*`` be the list of ``_id``, ``_value?*`` be the list of ``_value?``, ``direction*`` be the list of ``direction``, and ``typeIR*`` be the list of ``typeIR``, obtained by repeating:
@@ -777,8 +763,8 @@ relation RoutineType_wf: ``bound`` and ``routineTypeIR``
     ..... If (Type_wf: ``bound |- typeIR~ret~``), then
      ...... The relation holds
 
- .. Else if let ``EXTERN_METHOD ABSTRACT ( parameterTypeIR* ) -> typeIR~ret~`` be ``methodTypeIR``
-  ... Group externabstractmethod: ``bound`` and ``EXTERN_METHOD ABSTRACT ( parameterTypeIR* ) -> typeIR~ret~``
+ .. Else if let ``EXTERN_METHOD ABSTRACT ( parameterTypeIR* ) -> typeIR~ret~`` be ``externMethodTypeIR``
+  ... Group externAbstractMethodTypeIR: ``bound`` and ``EXTERN_METHOD ABSTRACT ( parameterTypeIR* ) -> typeIR~ret~``
 
    .... If (ParameterTypes_wf: ``bound |- parameterTypeIR*``), then
     ..... Let ``_id*`` be the list of ``_id``, ``_value?*`` be the list of ``_value?``, ``direction*`` be the list of ``direction``, and ``typeIR*`` be the list of ``typeIR``, obtained by repeating:
@@ -788,34 +774,37 @@ relation RoutineType_wf: ``bound`` and ``routineTypeIR``
     ..... If (Type_wf: ``bound |- typeIR~ret~``), then
      ...... The relation holds
 
- .. Else if let ``PARSER_APPLY ( parameterTypeIR* )`` be ``methodTypeIR``
-  ... Group parserapplymethod: ``bound`` and ``PARSER_APPLY ( parameterTypeIR* )``
+. Else if ``routineTypeIR`` has type ``parserApplyMethodTypeIR``
+ .. Let ``PARSER_APPLY ( parameterTypeIR* )`` be ``routineTypeIR``
+ .. Group parserApplyMethodTypeIR: ``bound`` and ``PARSER_APPLY ( parameterTypeIR* )``
 
-   .... If (ParameterTypes_wf: ``bound |- parameterTypeIR*``), then
-    ..... Let ``_id*`` be the list of ``_id``, ``_value?*`` be the list of ``_value?``, ``direction*`` be the list of ``direction``, and ``typeIR*`` be the list of ``typeIR``, obtained by repeating:
-     ...... Let ``direction typeIR _ _?`` be ``parameterTypeIR``
-    ..... for each ``parameterTypeIR`` in ``parameterTypeIR*``
-    ..... Check that ``$nestable_parserapplymethod(direction, typeIR)``, for each ``direction`` in ``direction*`` and ``typeIR`` in ``typeIR*``
-    ..... The relation holds
-
- .. Else if let ``CONTROL_APPLY ( parameterTypeIR* )`` be ``methodTypeIR``
-  ... Group controlapplymethod: ``bound`` and ``CONTROL_APPLY ( parameterTypeIR* )``
-
-   .... If (ParameterTypes_wf: ``bound |- parameterTypeIR*``), then
-    ..... Let ``_id*`` be the list of ``_id``, ``_value?*`` be the list of ``_value?``, ``direction*`` be the list of ``direction``, and ``typeIR*`` be the list of ``typeIR``, obtained by repeating:
-     ...... Let ``direction typeIR _ _?`` be ``parameterTypeIR``
-    ..... for each ``parameterTypeIR`` in ``parameterTypeIR*``
-    ..... Check that ``$nestable_controlapplymethod(direction, typeIR)``, for each ``direction`` in ``direction*`` and ``typeIR`` in ``typeIR*``
-    ..... The relation holds
-
- .. Else if let ``TABLE_APPLY -> typeIR`` be ``methodTypeIR``
-  ... Check that ``typeIR`` has type ``tableMetadataTypeIR``
-  ... Let ``tableMetadataTypeIR`` be ``typeIR``
-  ... Check that ``tableMetadataTypeIR`` matches pattern ``TABLE_STRUCT % { % }``
-  ... Let ``TABLE_STRUCT _ { _* }`` be ``tableMetadataTypeIR``
-  ... Group tableapplymethod: ``bound`` and ``TABLE_APPLY -> TABLE_STRUCT _ { _* }``
-
+  ... If (ParameterTypes_wf: ``bound |- parameterTypeIR*``), then
+   .... Let ``_id*`` be the list of ``_id``, ``_value?*`` be the list of ``_value?``, ``direction*`` be the list of ``direction``, and ``typeIR*`` be the list of ``typeIR``, obtained by repeating:
+    ..... Let ``direction typeIR _ _?`` be ``parameterTypeIR``
+   .... for each ``parameterTypeIR`` in ``parameterTypeIR*``
+   .... Check that ``$nestable_parserapplymethod(direction, typeIR)``, for each ``direction`` in ``direction*`` and ``typeIR`` in ``typeIR*``
    .... The relation holds
+
+. Else if ``routineTypeIR`` has type ``controlApplyMethodTypeIR``
+ .. Let ``CONTROL_APPLY ( parameterTypeIR* )`` be ``routineTypeIR``
+ .. Group controlApplyMethodTypeIR: ``bound`` and ``CONTROL_APPLY ( parameterTypeIR* )``
+
+  ... If (ParameterTypes_wf: ``bound |- parameterTypeIR*``), then
+   .... Let ``_id*`` be the list of ``_id``, ``_value?*`` be the list of ``_value?``, ``direction*`` be the list of ``direction``, and ``typeIR*`` be the list of ``typeIR``, obtained by repeating:
+    ..... Let ``direction typeIR _ _?`` be ``parameterTypeIR``
+   .... for each ``parameterTypeIR`` in ``parameterTypeIR*``
+   .... Check that ``$nestable_controlapplymethod(direction, typeIR)``, for each ``direction`` in ``direction*`` and ``typeIR`` in ``typeIR*``
+   .... The relation holds
+
+. Else if ``routineTypeIR`` has type ``tableApplyMethodTypeIR``
+ .. Let ``TABLE_APPLY -> typeIR`` be ``routineTypeIR``
+ .. Check that ``typeIR`` has type ``tableMetadataTypeIR``
+ .. Let ``tableMetadataTypeIR`` be ``typeIR``
+ .. Check that ``tableMetadataTypeIR`` matches pattern ``TABLE_STRUCT % { % }``
+ .. Let ``TABLE_STRUCT _ { _* }`` be ``tableMetadataTypeIR``
+ .. Group tableApplyMethodTypeIR: ``bound`` and ``TABLE_APPLY -> TABLE_STRUCT _ { _* }``
+
+  ... The relation holds
 
 relation RoutineTypeDef_wf: ``bound`` and ``routineTypeDefIR``
 
@@ -2028,7 +2017,7 @@ relation Expr_ok: ``p``, ``TC``, and ``expression'''``
   ... Check that ``binop`` is in ``[+, -, and *]``
   ... Let ``typedExpressionIR~l~`` be the result of <<Expr_ok, typing ``expression~l~``, under cursor ``p`` and typing context ``TC``>>
   ... Let ``typedExpressionIR~r~`` be the result of <<Expr_ok, typing ``expression~r~``, under cursor ``p`` and typing context ``TC``>>
-  ... Let ``(typedExpressionIR, typedExpressionIR)?`` be ``$coerce_binary(typedExpressionIR~l~, typedExpressionIR~r~)``
+  ... Let ``(typedExpressionIR, typedExpressionIR)?`` be <<coerce_binary, implicitly cast  ``typedExpressionIR~l~``  and  ``typedExpressionIR~r~``  to equal types>>
   ... Check that ``(typedExpressionIR, typedExpressionIR)?`` matches pattern ``(_)``
   ... Let ``?((typedExpressionIR~l_cast~ and typedExpressionIR~r_cast~))`` be ``(typedExpressionIR, typedExpressionIR)``?
   ... Let ``(typedExpressionIR, typedExpressionIR)'?`` be ``$reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_plusminusmult)``
@@ -2045,7 +2034,7 @@ relation Expr_ok: ``p``, ``TC``, and ``expression'''``
   ... Check that ``binop`` is in ``[|+| and |-|]``
   ... Let ``typedExpressionIR~l~`` be the result of <<Expr_ok, typing ``expression~l~``, under cursor ``p`` and typing context ``TC``>>
   ... Let ``typedExpressionIR~r~`` be the result of <<Expr_ok, typing ``expression~r~``, under cursor ``p`` and typing context ``TC``>>
-  ... Let ``(typedExpressionIR, typedExpressionIR)?`` be ``$coerce_binary(typedExpressionIR~l~, typedExpressionIR~r~)``
+  ... Let ``(typedExpressionIR, typedExpressionIR)?`` be <<coerce_binary, implicitly cast  ``typedExpressionIR~l~``  and  ``typedExpressionIR~r~``  to equal types>>
   ... Check that ``(typedExpressionIR, typedExpressionIR)?`` matches pattern ``(_)``
   ... Let ``?((typedExpressionIR~l_cast~ and typedExpressionIR~r_cast~))`` be ``(typedExpressionIR, typedExpressionIR)``?
   ... Let ``(typedExpressionIR, typedExpressionIR)'?`` be ``$reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_satplusminus)``
@@ -2062,7 +2051,7 @@ relation Expr_ok: ``p``, ``TC``, and ``expression'''``
   ... Check that ``binop`` is in ``[/ and %]``
   ... Let ``typedExpressionIR~l~`` be the result of <<Expr_ok, typing ``expression~l~``, under cursor ``p`` and typing context ``TC``>>
   ... Let ``typedExpressionIR~r~`` be the result of <<Expr_ok, typing ``expression~r~``, under cursor ``p`` and typing context ``TC``>>
-  ... Let ``(typedExpressionIR, typedExpressionIR)?`` be ``$coerce_binary(typedExpressionIR~l~, typedExpressionIR~r~)``
+  ... Let ``(typedExpressionIR, typedExpressionIR)?`` be <<coerce_binary, implicitly cast  ``typedExpressionIR~l~``  and  ``typedExpressionIR~r~``  to equal types>>
   ... Check that ``(typedExpressionIR, typedExpressionIR)?`` matches pattern ``(_)``
   ... Let ``?((typedExpressionIR~l_cast~ and typedExpressionIR~r_cast~))`` be ``(typedExpressionIR, typedExpressionIR)``?
   ... Let ``(typedExpressionIR, typedExpressionIR)'?`` be ``$reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_divmod)``
@@ -2115,7 +2104,7 @@ relation Expr_ok: ``p``, ``TC``, and ``expression'''``
   ... Check that ``binop`` is in ``[== and !=]``
   ... Let ``typedExpressionIR~l~`` be the result of <<Expr_ok, typing ``expression~l~``, under cursor ``p`` and typing context ``TC``>>
   ... Let ``typedExpressionIR~r~`` be the result of <<Expr_ok, typing ``expression~r~``, under cursor ``p`` and typing context ``TC``>>
-  ... Let ``(typedExpressionIR, typedExpressionIR)?`` be ``$coerce_binary(typedExpressionIR~l~, typedExpressionIR~r~)``
+  ... Let ``(typedExpressionIR, typedExpressionIR)?`` be <<coerce_binary, implicitly cast  ``typedExpressionIR~l~``  and  ``typedExpressionIR~r~``  to equal types>>
   ... Check that ``(typedExpressionIR, typedExpressionIR)?`` matches pattern ``(_)``
   ... Let ``?((typedExpressionIR~l_cast~ and typedExpressionIR~r_cast~))`` be ``(typedExpressionIR, typedExpressionIR)``?
   ... Let ``typeIR~cast~`` be <<typeof_expression, the type of  ``typedExpressionIR~l_cast~``>>
@@ -2130,7 +2119,7 @@ relation Expr_ok: ``p``, ``TC``, and ``expression'''``
   ... Check that ``binop`` is in ``[<=, >=, <, and >]``
   ... Let ``typedExpressionIR~l~`` be the result of <<Expr_ok, typing ``expression~l~``, under cursor ``p`` and typing context ``TC``>>
   ... Let ``typedExpressionIR~r~`` be the result of <<Expr_ok, typing ``expression~r~``, under cursor ``p`` and typing context ``TC``>>
-  ... Let ``(typedExpressionIR, typedExpressionIR)?`` be ``$coerce_binary(typedExpressionIR~l~, typedExpressionIR~r~)``
+  ... Let ``(typedExpressionIR, typedExpressionIR)?`` be <<coerce_binary, implicitly cast  ``typedExpressionIR~l~``  and  ``typedExpressionIR~r~``  to equal types>>
   ... Check that ``(typedExpressionIR, typedExpressionIR)?`` matches pattern ``(_)``
   ... Let ``?((typedExpressionIR~l_cast~ and typedExpressionIR~r_cast~))`` be ``(typedExpressionIR, typedExpressionIR)``?
   ... Let ``(typedExpressionIR, typedExpressionIR)'?`` be ``$reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_compare)``
@@ -2147,7 +2136,7 @@ relation Expr_ok: ``p``, ``TC``, and ``expression'''``
   ... Check that ``binop`` is in ``[&, ^, and |]``
   ... Let ``typedExpressionIR~l~`` be the result of <<Expr_ok, typing ``expression~l~``, under cursor ``p`` and typing context ``TC``>>
   ... Let ``typedExpressionIR~r~`` be the result of <<Expr_ok, typing ``expression~r~``, under cursor ``p`` and typing context ``TC``>>
-  ... Let ``(typedExpressionIR, typedExpressionIR)?`` be ``$coerce_binary(typedExpressionIR~l~, typedExpressionIR~r~)``
+  ... Let ``(typedExpressionIR, typedExpressionIR)?`` be <<coerce_binary, implicitly cast  ``typedExpressionIR~l~``  and  ``typedExpressionIR~r~``  to equal types>>
   ... Check that ``(typedExpressionIR, typedExpressionIR)?`` matches pattern ``(_)``
   ... Let ``?((typedExpressionIR~l_cast~ and typedExpressionIR~r_cast~))`` be ``(typedExpressionIR, typedExpressionIR)``?
   ... Let ``(typedExpressionIR, typedExpressionIR)'?`` be ``$reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_bitwise)``
@@ -2182,7 +2171,7 @@ relation Expr_ok: ``p``, ``TC``, and ``expression'''``
   ... Check that ``binop`` is in ``[&& and ||]``
   ... Let ``typedExpressionIR~l~`` be the result of <<Expr_ok, typing ``expression~l~``, under cursor ``p`` and typing context ``TC``>>
   ... Let ``typedExpressionIR~r~`` be the result of <<Expr_ok, typing ``expression~r~``, under cursor ``p`` and typing context ``TC``>>
-  ... Let ``(typedExpressionIR, typedExpressionIR)?`` be ``$coerce_binary(typedExpressionIR~l~, typedExpressionIR~r~)``
+  ... Let ``(typedExpressionIR, typedExpressionIR)?`` be <<coerce_binary, implicitly cast  ``typedExpressionIR~l~``  and  ``typedExpressionIR~r~``  to equal types>>
   ... Check that ``(typedExpressionIR, typedExpressionIR)?`` matches pattern ``(_)``
   ... Let ``?((typedExpressionIR~l_cast~ and typedExpressionIR~r_cast~))`` be ``(typedExpressionIR, typedExpressionIR)``?
   ... Let ``(typedExpressionIR, typedExpressionIR)'?`` be ``$reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_logical)``
@@ -2206,7 +2195,7 @@ relation Expr_ok: ``p``, ``TC``, and ``expression'''``
   ... Check that ``primitiveTypeIR`` matches pattern ``BOOL``
   ... Let ``typedExpressionIR~true~`` be the result of <<Expr_ok, typing ``expression~true~``, under cursor ``p`` and typing context ``TC``>>
   ... Let ``typedExpressionIR~false~`` be the result of <<Expr_ok, typing ``expression~false~``, under cursor ``p`` and typing context ``TC``>>
-  ... Let ``(typedExpressionIR, typedExpressionIR)?`` be ``$coerce_binary(typedExpressionIR~true~, typedExpressionIR~false~)``
+  ... Let ``(typedExpressionIR, typedExpressionIR)?`` be <<coerce_binary, implicitly cast  ``typedExpressionIR~true~``  and  ``typedExpressionIR~false~``  to equal types>>
   ... Check that ``(typedExpressionIR, typedExpressionIR)?`` matches pattern ``(_)``
   ... Let ``?((typedExpressionIR~true_cast~ and typedExpressionIR~false_cast~))`` be ``(typedExpressionIR, typedExpressionIR)``?
   ... Let ``typeIR~cast~`` be <<typeof_expression, the type of  ``typedExpressionIR~true_cast~``>>
@@ -2823,9 +2812,9 @@ relation Stmt_ok: ``p'``, ``TC'``, ``f'``, and ``statement``
 
   ... Let ``typedLvalueIR`` be the result of <<Lvalue_ok, typing ``lvalue``, under cursor ``p'`` and typing context ``TC'``>>
   ... Let ``typedExpressionIR`` be the result of <<Expr_ok, typing ``expression``, under cursor ``p'`` and typing context ``TC'``>>
-  ... Let ``typeIR~l~`` be ``$typeof_lvalue(typedLvalueIR)``
+  ... Let ``typeIR~l~`` be <<typeof_lvalue, the type of lvalue  ``typedLvalueIR``>>
   ... Let ``typeIR~r~`` be <<typeof_expression, the type of  ``typedExpressionIR``>>
-  ... Let ``typedExpressionIR'?`` be ``$coerce_unary(typedExpressionIR, typeIR~l~)``
+  ... Let ``typedExpressionIR'?`` be <<coerce_unary, implicitly cast  ``typedExpressionIR``  to  ``typeIR~l~``>>
   ... Check that ``typedExpressionIR'?`` matches pattern ``(_)``
   ... Let ``?(typedExpressionIR~cast~)`` be ``typedExpressionIR'``?
   ... Result in the typing context ``TC'``, abstract control flow ``f'``, and typed statement ``typedLvalueIR = typedExpressionIR~cast~ ;``
@@ -2922,7 +2911,7 @@ relation Stmt_ok: ``p'``, ``TC'``, ``f'``, and ``statement``
    .... Let ``typeIR'?`` be ``$find_return_type(TC')``
    .... Check that ``typeIR'?`` matches pattern ``(_)``
    .... Let ``?(typeIR~ret~)`` be ``typeIR'``?
-   .... Let ``typedExpressionIR'?`` be ``$coerce_unary(typedExpressionIR, typeIR~ret~)``
+   .... Let ``typedExpressionIR'?`` be <<coerce_unary, implicitly cast  ``typedExpressionIR``  to  ``typeIR~ret~``>>
    .... Check that ``typedExpressionIR'?`` matches pattern ``(_)``
    .... Let ``?(typedExpressionIR~cast~)`` be ``typedExpressionIR'``?
    .... Result in the typing context ``TC'``, abstract control flow ``RET``, and typed statement ``RETURN typedExpressionIR~cast~ ;``
@@ -2994,7 +2983,7 @@ and the modified typing context>>
    .... If (Type_wf: ``$bound(LOCAL, TC~0~) |- typeIR``), then
     ..... Check that ``$is_assignable_typeIR(typeIR)``
     ..... Let ``typedExpressionIR~init~`` be the result of <<Expr_ok, typing ``expression~init~``, under cursor ``LOCAL`` and typing context ``TC~0~``>>
-    ..... Let ``typedExpressionIR?`` be ``$coerce_unary(typedExpressionIR~init~, typeIR)``
+    ..... Let ``typedExpressionIR?`` be <<coerce_unary, implicitly cast  ``typedExpressionIR~init~``  to  ``typeIR``>>
     ..... Check that ``typedExpressionIR?`` matches pattern ``(_)``
     ..... Let ``?(typedExpressionIR~init_cast~)`` be ``typedExpressionIR``?
     ..... Let ``nameIR`` be ``$name(name)``
@@ -3034,25 +3023,23 @@ relation Block_ok: ``TC~0~``, ``f``, and ``annotationList { blockElementStatemen
 
 relation Parameter_ok: ``p``, ``TC``, and ``annotationList direction type name initializerOpt``
 
-. If ``initializerOpt`` matches pattern ```EMPTY``
- .. Group empty: ``p``, ``TC``, and ``annotationList direction type name``
+. Group : ``p``, ``TC``, and ``annotationList direction type name initializerOpt``
 
+ .. If ``initializerOpt`` matches pattern ```EMPTY``
   ... Let ``typeIR`` and ``tid~fresh~*`` be the result of <<Type_ok, typing ``type``, under cursor ``p`` and typing context ``TC``>>
   ... Let ``bound`` be ``$union_set<tid>($bound(p, TC), { tid~fresh~* })``
   ... If (Type_wf: ``bound |- typeIR``), then
    .... Let ``nameIR`` be ``$name(name)``
    .... Result in ``annotationList direction typeIR nameIR ?()`` and ``tid~fresh~*``
-. If ``initializerOpt`` has type ``initializer``
- .. Let ``= expression~init~`` be ``initializerOpt``
- .. Group initializer: ``p``, ``TC``, and ``annotationList direction type name = expression~init~``
-
+ .. If ``initializerOpt`` has type ``initializer``
+  ... Let ``= expression~init~`` be ``initializerOpt``
   ... Let ``typeIR`` and ``tid~fresh~*`` be the result of <<Type_ok, typing ``type``, under cursor ``p`` and typing context ``TC``>>
   ... Let ``bound`` be ``$union_set<tid>($bound(p, TC), { tid~fresh~* })``
   ... If (Type_wf: ``bound |- typeIR``), then
    .... Let ``typedExpressionIR~init~`` be the result of <<Expr_ok, typing ``expression~init~``, under cursor ``p`` and typing context ``TC``>>
    .... Let ``typeIR~init~`` be <<typeof_expression, the type of  ``typedExpressionIR~init~``>>
    .... Check that ``<<ctkof_expression, the compile-time known-ness of  typedExpressionIR~init~>>`` matches pattern ``LCTK``
-   .... Let ``typedExpressionIR?`` be ``$coerce_unary(typedExpressionIR~init~, typeIR)``
+   .... Let ``typedExpressionIR?`` be <<coerce_unary, implicitly cast  ``typedExpressionIR~init~``  to  ``typeIR``>>
    .... Check that ``typedExpressionIR?`` matches pattern ``(_)``
    .... Let ``?(typedExpressionIR~init_cast~)`` be ``typedExpressionIR``?
    .... Let ``nameIR`` be ``$name(name)``
@@ -3103,7 +3090,7 @@ relation ExternMethod_ok: ``TC~0~``, ``tid~extern~``, and ``methodPrototype``
   ... Let ``parameter*`` be ``$flatten_parameterList(parameterList)``
   ... Let ``parameterIR*`` and ``tid~impl~*`` be the result of <<Parameters_ok, typing ``parameter*``, under cursor ``LOCAL`` and typing context ``TC~2~``>>
   ... Let ``parameterTypeIR*`` be the list of ``parameterTypeIR``, obtained by repeating:
-   .... Let ``parameterTypeIR`` be ``$parameterIR(parameterIR)``
+   .... Let ``parameterTypeIR`` be <<typeof_parameterIR, the type of  ``parameterIR``>>
   ... for each ``parameterIR`` in ``parameterIR*``
   ... Let ``TC~3~`` be ``$add_parameters(LOCAL, TC~2~, parameterTypeIR*)``
   ... Let ``rid`` be ``$rid(name, parameterList)``
@@ -3130,7 +3117,7 @@ relation ExternMethod_ok: ``TC~0~``, ``tid~extern~``, and ``methodPrototype``
   ... Let ``parameter*`` be ``$flatten_parameterList(parameterList)``
   ... Let ``parameterIR*`` and ``tid~impl~*`` be the result of <<Parameters_ok, typing ``parameter*``, under cursor ``LOCAL`` and typing context ``TC~2~``>>
   ... Let ``parameterTypeIR*`` be the list of ``parameterTypeIR``, obtained by repeating:
-   .... Let ``parameterTypeIR`` be ``$parameterIR(parameterIR)``
+   .... Let ``parameterTypeIR`` be <<typeof_parameterIR, the type of  ``parameterIR``>>
   ... for each ``parameterIR`` in ``parameterIR*``
   ... Let ``TC~3~`` be ``$add_parameters(LOCAL, TC~2~, parameterTypeIR*)``
   ... Let ``rid`` be ``$rid(name, parameterList)``
@@ -3164,7 +3151,7 @@ relation ExternConstructor_ok: ``TC~0~``, ``tid~extern~``, and ``methodPrototype
  .. Let ``constructorParameter*`` be ``$flatten_parameterList(parameterList)``
  .. (ConstructorParameters_ok: ``BLOCK TC~0~ |- constructorParameter* : constructorParameterIR* # tid~impl~*``)
  .. Let ``constructorParameterTypeIR*`` be the list of ``constructorParameterTypeIR``, obtained by repeating:
-  ... Let ``constructorParameterTypeIR`` be ``$constructorParameterIR(constructorParameterIR)``
+  ... Let ``constructorParameterTypeIR`` be <<typeof_constructorParameterIR, the type of  ``constructorParameterIR``>>
  .. for each ``constructorParameterIR`` in ``constructorParameterIR*``
  .. Let ``typeDefIR'?`` be ``$find_type(GLOBAL, TC~0~, ` nameIR)``
  .. Check that ``typeDefIR'?`` matches pattern ``(_)``
@@ -3256,7 +3243,7 @@ and the modified typing context>>
    .... If (Type_wf: ``$bound(LOCAL, TC~0'~) |- typeIR``), then
     ..... Check that ``$is_assignable_typeIR(typeIR)``
     ..... Let ``typedExpressionIR~init~`` be the result of <<Expr_ok, typing ``expression~init~``, under cursor ``LOCAL`` and typing context ``TC~0'~``>>
-    ..... Let ``typedExpressionIR?`` be ``$coerce_unary(typedExpressionIR~init~, typeIR)``
+    ..... Let ``typedExpressionIR?`` be <<coerce_unary, implicitly cast  ``typedExpressionIR~init~``  to  ``typeIR``>>
     ..... Check that ``typedExpressionIR?`` matches pattern ``(_)``
     ..... Let ``?(typedExpressionIR~init_cast~)`` be ``typedExpressionIR``?
     ..... Let ``nameIR`` be ``$name(name)``
@@ -3410,7 +3397,7 @@ and the modified typing context>>
    .... If (Type_wf: ``$bound(BLOCK, TC~0~) |- typeIR``), then
     ..... Check that ``$is_assignable_typeIR(typeIR)``
     ..... Let ``typedExpressionIR~init~`` be the result of <<Expr_ok, typing ``expression~init~``, under cursor ``BLOCK`` and typing context ``TC~0~``>>
-    ..... Let ``typedExpressionIR?`` be ``$coerce_unary(typedExpressionIR~init~, typeIR)``
+    ..... Let ``typedExpressionIR?`` be <<coerce_unary, implicitly cast  ``typedExpressionIR~init~``  to  ``typeIR``>>
     ..... Check that ``typedExpressionIR?`` matches pattern ``(_)``
     ..... Let ``?(typedExpressionIR~init_cast~)`` be ``typedExpressionIR``?
     ..... Let ``nameIR`` be ``$name(name)``
@@ -3490,10 +3477,8 @@ relation TableAction_ok: ``TC``, ``TBLC~0~``, and ``annotationList tableActionRe
   ... Let ``routineTypeDefIR'?`` be ``$find_routine_non_overloaded(LOCAL, TC, prefixedNameIR)``
   ... Check that ``routineTypeDefIR'?`` matches pattern ``(_)``
   ... Let ``?(routineTypeDefIR)`` be ``routineTypeDefIR'``?
-  ... Check that ``routineTypeDefIR`` has type ``functionTypeIR``
-  ... Let ``functionTypeIR`` be ``routineTypeDefIR``
-  ... Check that ``functionTypeIR`` matches pattern ``ACTION ( % )``
-  ... Let ``ACTION ( parameterTypeIR* )`` be ``functionTypeIR``
+  ... Check that ``routineTypeDefIR`` has type ``actionTypeIR``
+  ... Let ``ACTION ( parameterTypeIR* )`` be ``routineTypeDefIR``
   ... (Call_action_partial_ok: ``TC |- parameterTypeIR* @ [ ] : parameterTypeIR~data~* , parameterTypeIR~control~* @ argumentIR*``)
   ... Check that ``argumentIR*`` matches pattern ``[]``
   ... Let ``TBLC~1~`` be ``$add_action(TBLC~0~, prefixedNameIR, parameterTypeIR*, [ ])``
@@ -3507,10 +3492,8 @@ relation TableAction_ok: ``TC``, ``TBLC~0~``, and ``annotationList tableActionRe
   ... Let ``routineTypeDefIR'?`` be ``$find_routine_non_overloaded(LOCAL, TC, prefixedNameIR)``
   ... Check that ``routineTypeDefIR'?`` matches pattern ``(_)``
   ... Let ``?(routineTypeDefIR)`` be ``routineTypeDefIR'``?
-  ... Check that ``routineTypeDefIR`` has type ``functionTypeIR``
-  ... Let ``functionTypeIR`` be ``routineTypeDefIR``
-  ... Check that ``functionTypeIR`` matches pattern ``ACTION ( % )``
-  ... Let ``ACTION ( parameterTypeIR* )`` be ``functionTypeIR``
+  ... Check that ``routineTypeDefIR`` has type ``actionTypeIR``
+  ... Let ``ACTION ( parameterTypeIR* )`` be ``routineTypeDefIR``
   ... Let ``argument*`` be ``$flatten_argumentList(argumentList)``
   ... Let ``argumentIR*`` be the list of ``argumentIR``, obtained by repeating:
    .... Let ``argumentIR`` be the result of <<Argument_ok, typing ``argument``, under cursor ``LOCAL`` and typing context ``TC``>>
@@ -3922,7 +3905,7 @@ and the modified typing context>>
    .... If (Type_wf: ``$bound(BLOCK, TC~0~) |- typeIR``), then
     ..... Check that ``$is_assignable_typeIR(typeIR)``
     ..... Let ``typedExpressionIR~init~`` be the result of <<Expr_ok, typing ``expression~init~``, under cursor ``BLOCK`` and typing context ``TC~0~``>>
-    ..... Let ``typedExpressionIR?`` be ``$coerce_unary(typedExpressionIR~init~, typeIR)``
+    ..... Let ``typedExpressionIR?`` be <<coerce_unary, implicitly cast  ``typedExpressionIR~init~``  to  ``typeIR``>>
     ..... Check that ``typedExpressionIR?`` matches pattern ``(_)``
     ..... Let ``?(typedExpressionIR~init_cast~)`` be ``typedExpressionIR``?
     ..... Let ``nameIR`` be ``$name(name)``
@@ -3976,7 +3959,7 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
   ... If (Type_wf: ``$bound(p', TC~0~) |- typeIR``), then
    .... Let ``typedExpressionIR~value~`` be the result of <<Expr_ok, typing ``expression~value~``, under cursor ``p'`` and typing context ``TC~0~``>>
    .... Check that ``<<ctkof_expression, the compile-time known-ness of  typedExpressionIR~value~>>`` matches pattern ``LCTK``
-   .... Let ``typedExpressionIR?`` be ``$coerce_unary(typedExpressionIR~value~, typeIR)``
+   .... Let ``typedExpressionIR?`` be <<coerce_unary, implicitly cast  ``typedExpressionIR~value~``  to  ``typeIR``>>
    .... Check that ``typedExpressionIR?`` matches pattern ``(_)``
    .... Let ``?(typedExpressionIR~value_cast~)`` be ``typedExpressionIR``?
    .... Let ``value`` be the result of <<Eval_static, the local compile-time evaluation of ``typedExpressionIR~value_cast~``, under cursor ``p'`` and typing context ``TC~0~``>>
@@ -4097,7 +4080,7 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
   ... Let ``parameter*`` be ``$flatten_parameterList(parameterList)``
   ... Let ``parameterIR*`` and ``tid~impl~*`` be the result of <<Parameters_ok, typing ``parameter*``, under cursor ``LOCAL`` and typing context ``TC~1~``>>
   ... Let ``parameterTypeIR*`` be the list of ``parameterTypeIR``, obtained by repeating:
-   .... Let ``parameterTypeIR`` be ``$parameterIR(parameterIR)``
+   .... Let ``parameterTypeIR`` be <<typeof_parameterIR, the type of  ``parameterIR``>>
   ... for each ``parameterIR`` in ``parameterIR*``
   ... Let ``TC~2~`` be ``$add_parameters(LOCAL, TC~1~, parameterTypeIR*)``
   ... Let ``TC~3~`` be ``TC~2~``[LOCAL.KIND = ``FUNCTION -> typeIR~ret~``]
@@ -4130,14 +4113,14 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
   ... Let ``parameterIR*`` and ``tid*`` be the result of <<Parameters_ok, typing ``parameter*``, under cursor ``LOCAL`` and typing context ``TC~1~``>>
   ... Check that ``tid*`` matches pattern ``[]``
   ... Let ``parameterTypeIR*`` be the list of ``parameterTypeIR``, obtained by repeating:
-   .... Let ``parameterTypeIR`` be ``$parameterIR(parameterIR)``
+   .... Let ``parameterTypeIR`` be <<typeof_parameterIR, the type of  ``parameterIR``>>
   ... for each ``parameterIR`` in ``parameterIR*``
   ... Let ``TC~2~`` be ``$add_parameters(LOCAL, TC~1~, parameterTypeIR*)``
   ... (Block_ok: ``TC~2~ CONT |- blockStatement : _ _ blockStatementIR``)
   ... Let ``rid`` be ``$rid(name, parameterList)``
-  ... Let ``functionTypeIR`` be ``ACTION ( parameterTypeIR* )``
-  ... If (RoutineTypeDef_wf: ``$bound(p', TC~0~) |- functionTypeIR``), then
-   .... Let ``TC~3~`` be ``$add_routine_non_overload(p', TC~0~, rid, functionTypeIR)``
+  ... Let ``actionTypeIR`` be ``ACTION ( parameterTypeIR* )``
+  ... If (RoutineTypeDef_wf: ``$bound(p', TC~0~) |- actionTypeIR``), then
+   .... Let ``TC~3~`` be ``$add_routine_non_overload(p', TC~0~, rid, actionTypeIR)``
    .... Let ``nameIR`` be ``$name(name)``
    .... Let ``actionDeclarationIR`` be ``annotationList ACTION nameIR ( parameterIR* ) blockStatementIR``
    .... Result in ``TC~3~`` and ``actionDeclarationIR``
@@ -4190,7 +4173,7 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
   ... Let ``parameter*`` be ``$flatten_parameterList(parameterList)``
   ... Let ``parameterIR*`` and ``tid~impl~*`` be the result of <<Parameters_ok, typing ``parameter*``, under cursor ``LOCAL`` and typing context ``TC~2~``>>
   ... Let ``parameterTypeIR*`` be the list of ``parameterTypeIR``, obtained by repeating:
-   .... Let ``parameterTypeIR`` be ``$parameterIR(parameterIR)``
+   .... Let ``parameterTypeIR`` be <<typeof_parameterIR, the type of  ``parameterIR``>>
   ... for each ``parameterIR`` in ``parameterIR*``
   ... Let ``TC~3~`` be ``$add_parameters(LOCAL, TC~2~, parameterTypeIR*)``
   ... Let ``rid`` be ``$rid(name, parameterList)``
@@ -4236,14 +4219,14 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
   ... (ConstructorParameters_ok: ``BLOCK TC~1~ |- constructorParameter* : constructorParameterIR* # tid*``)
   ... Check that ``tid*`` matches pattern ``[]``
   ... Let ``constructorParameterTypeIR*`` be the list of ``constructorParameterTypeIR``, obtained by repeating:
-   .... Let ``constructorParameterTypeIR`` be ``$constructorParameterIR(constructorParameterIR)``
+   .... Let ``constructorParameterTypeIR`` be <<typeof_constructorParameterIR, the type of  ``constructorParameterIR``>>
   ... for each ``constructorParameterIR`` in ``constructorParameterIR*``
   ... Let ``TC~2~`` be ``$add_parameters(BLOCK, TC~1~, constructorParameterTypeIR*)``
   ... Let ``parameter*`` be ``$flatten_parameterList(parameterList)``
   ... Let ``parameterIR*`` and ``tid'*`` be the result of <<Parameters_ok, typing ``parameter*``, under cursor ``BLOCK`` and typing context ``TC~2~``>>
   ... Check that ``tid'*`` matches pattern ``[]``
   ... Let ``parameterTypeIR*`` be the list of ``parameterTypeIR``, obtained by repeating:
-   .... Let ``parameterTypeIR`` be ``$parameterIR(parameterIR)``
+   .... Let ``parameterTypeIR`` be <<typeof_parameterIR, the type of  ``parameterIR``>>
   ... for each ``parameterIR`` in ``parameterIR*``
   ... Let ``TC~3~`` be ``$add_parameters(BLOCK, TC~2~, parameterTypeIR*)``
   ... Let ``parserLocalDeclaration*`` be ``$flatten_parserLocalDeclarationList(parserLocalDeclarationList)``
@@ -4274,14 +4257,14 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
   ... (ConstructorParameters_ok: ``BLOCK TC~1~ |- constructorParameter* : constructorParameterIR* # tid*``)
   ... Check that ``tid*`` matches pattern ``[]``
   ... Let ``constructorParameterTypeIR*`` be the list of ``constructorParameterTypeIR``, obtained by repeating:
-   .... Let ``constructorParameterTypeIR`` be ``$constructorParameterIR(constructorParameterIR)``
+   .... Let ``constructorParameterTypeIR`` be <<typeof_constructorParameterIR, the type of  ``constructorParameterIR``>>
   ... for each ``constructorParameterIR`` in ``constructorParameterIR*``
   ... Let ``TC~2~`` be ``$add_parameters(BLOCK, TC~1~, constructorParameterTypeIR*)``
   ... Let ``parameter*`` be ``$flatten_parameterList(parameterList)``
   ... Let ``parameterIR*`` and ``tid'*`` be the result of <<Parameters_ok, typing ``parameter*``, under cursor ``BLOCK`` and typing context ``TC~2~``>>
   ... Check that ``tid'*`` matches pattern ``[]``
   ... Let ``parameterTypeIR*`` be the list of ``parameterTypeIR``, obtained by repeating:
-   .... Let ``parameterTypeIR`` be ``$parameterIR(parameterIR)``
+   .... Let ``parameterTypeIR`` be <<typeof_parameterIR, the type of  ``parameterIR``>>
   ... for each ``parameterIR`` in ``parameterIR*``
   ... Let ``TC~3~`` be ``$add_parameters(BLOCK, TC~2~, parameterTypeIR*)``
   ... Let ``controlLocalDeclaration*`` be ``$flatten_controlLocalDeclarationList(controlLocalDeclarationList)``
@@ -4496,7 +4479,7 @@ and the modified typing context>>
   ... Let ``parameter*`` be ``$flatten_parameterList(parameterList)``
   ... Let ``parameterIR*`` and ``tid~impl~*`` be the result of <<Parameters_ok, typing ``parameter*``, under cursor ``BLOCK`` and typing context ``TC~2~``>>
   ... Let ``parameterTypeIR*`` be the list of ``parameterTypeIR``, obtained by repeating:
-   .... Let ``parameterTypeIR`` be ``$parameterIR(parameterIR)``
+   .... Let ``parameterTypeIR`` be <<typeof_parameterIR, the type of  ``parameterIR``>>
   ... for each ``parameterIR`` in ``parameterIR*``
   ... Let ``nameIR`` be ``$name(name)``
   ... Let ``typeIR~parser~`` be ``PARSER ( parameterTypeIR* )``
@@ -4519,7 +4502,7 @@ and the modified typing context>>
   ... Let ``parameter*`` be ``$flatten_parameterList(parameterList)``
   ... Let ``parameterIR*`` and ``tid~impl~*`` be the result of <<Parameters_ok, typing ``parameter*``, under cursor ``BLOCK`` and typing context ``TC~2~``>>
   ... Let ``parameterTypeIR*`` be the list of ``parameterTypeIR``, obtained by repeating:
-   .... Let ``parameterTypeIR`` be ``$parameterIR(parameterIR)``
+   .... Let ``parameterTypeIR`` be <<typeof_parameterIR, the type of  ``parameterIR``>>
   ... for each ``parameterIR`` in ``parameterIR*``
   ... Let ``nameIR`` be ``$name(name)``
   ... Let ``typeIR~control~`` be ``CONTROL ( parameterTypeIR* )``
@@ -4542,7 +4525,7 @@ and the modified typing context>>
   ... Let ``constructorParameter*`` be ``$flatten_parameterList(parameterList)``
   ... (ConstructorParameters_ok: ``BLOCK TC~2~ |- constructorParameter* : constructorParameterIR* # tid~impl~*``)
   ... Let ``constructorParameterTypeIR*`` be the list of ``constructorParameterTypeIR``, obtained by repeating:
-   .... Let ``constructorParameterTypeIR`` be ``$constructorParameterIR(constructorParameterIR)``
+   .... Let ``constructorParameterTypeIR`` be <<typeof_constructorParameterIR, the type of  ``constructorParameterIR``>>
   ... for each ``constructorParameterIR`` in ``constructorParameterIR*``
   ... Let ``nameIR`` be ``$name(name)``
   ... Let ``_direction*`` be the list of ``_direction``, ``_id*`` be the list of ``_id``, ``_value?*`` be the list of ``_value?``, and ``typeIR_package_inner*`` be the list of ``typeIR_package_inner``, obtained by repeating:
@@ -4588,7 +4571,7 @@ relation Call_convention_expr_ok: ``p``, ``TC``, ``actctxt``, ``direction typeIR
 . If ``direction`` matches pattern ``IN``
  .. Group in: ``p``, ``TC``, ``actctxt``, ``IN typeIR~param~ _ _?``, and ``typedExpressionIR~arg~``
 
-  ... Let ``typedExpressionIR?`` be ``$coerce_unary(typedExpressionIR~arg~, typeIR~param~)``
+  ... Let ``typedExpressionIR?`` be <<coerce_unary, implicitly cast  ``typedExpressionIR~arg~``  to  ``typeIR~param~``>>
   ... Check that ``typedExpressionIR?`` matches pattern ``(_)``
   ... Let ``?(typedExpressionIR~arg_cast~)`` be ``typedExpressionIR``?
   ... Result in ``typedExpressionIR~arg_cast~``
@@ -4606,7 +4589,7 @@ relation Call_convention_expr_ok: ``p``, ``TC``, ``actctxt``, ``direction typeIR
 . If ``direction`` matches pattern ```EMPTY``
  .. Group empty: ``p``, ``TC``, ``actctxt``, ``typeIR~param~ _ _?``, and ``typedExpressionIR~arg~``
 
-  ... If let ``typedExpressionIR?`` be ``$coerce_unary(typedExpressionIR~arg~, typeIR~param~)``
+  ... If let ``typedExpressionIR?`` be <<coerce_unary, implicitly cast  ``typedExpressionIR~arg~``  to  ``typeIR~param~``>>
    .... Check that ``typedExpressionIR?`` matches pattern ``(_)``
    .... Let ``?(typedExpressionIR~arg_cast~)`` be ``typedExpressionIR``?
    .... Result in ``typedExpressionIR~arg_cast~``
@@ -4697,23 +4680,32 @@ relation RoutineTarget_lvalue_ok: ``p``, ``TC``, and ``lvalue``
  .. Let ``routineTargetIR`` be the result of <<RoutineTarget_ok, typing ``expression``, under cursor ``p`` and typing context ``TC``>>
  .. Result in ``routineTargetIR``
 
-relation RoutineType_ok: ``p``, ``TC``, ``routineTargetIR''``, ``typeArgumentIR``*, and ``argumentIR''``*
+relation RoutineType_ok: ``p``, ``TC``, ``routineTargetIR''``, ``typeArgumentIR''``*, and ``argumentIR''``*
 
 . Check that ``routineTargetIR''`` has type ``prefixedNameIR``
 . Let ``prefixedNameIR`` be ``routineTargetIR''``
-. Group referenceExpressionIR: ``p``, ``TC``, ``prefixedNameIR``, ``typeArgumentIR``*, and ``argumentIR``*
+. Group referenceExpressionIR: ``p``, ``TC``, ``prefixedNameIR``, ``typeArgumentIR'``*, and ``argumentIR``*
 
+ .. If ``[ ]`` is equal to ``typeArgumentIR''``*
+  ... Let ``(rid, routineTypeDefIR, id*)'?`` be ``$find_routine_overloaded(p, TC, prefixedNameIR, argumentIR''*)``
+  ... Check that ``(rid, routineTypeDefIR, id*)'?`` matches pattern ``(_)``
+  ... Let ``?((rid, routineTypeDefIR, id*))`` be ``(rid, routineTypeDefIR, id*)'``?
+  ... Check that ``(rid, routineTypeDefIR, id*)`` has type ``(rid, actionTypeIR, id*)``
+  ... Let ``(rid, actionTypeIR, and id~default~*)`` be ``(rid, routineTypeDefIR, id*)``
+  ... If (RoutineType_wf: ``$bound(p, TC) |- actionTypeIR``), then
+   .... Result in ``actionTypeIR``, ``[ ]``, and ``id~default~*``
+ .. Let ``typeArgumentIR*`` be ``typeArgumentIR''``*
  .. Let ``(rid, routineTypeDefIR, id*)?`` be ``$find_routine_overloaded(p, TC, prefixedNameIR, argumentIR''*)``
- .. Check that ``(rid, routineTypeDefIR, id*)?`` matches pattern ``(_)``
- .. Let ``?((rid, routineTypeDefIR, and id~default~*))`` be ``(rid, routineTypeDefIR, id*)``?
- .. Let ``(routineTypeDefIR, tid*)`` be ``$specialize_routineTypeDef(routineTypeDefIR, typeArgumentIR*)``
- .. Check that ``(routineTypeDefIR, tid*)`` has type ``(functionTypeIR, tid*)``
- .. Let ``(functionTypeIR and tid~impl~*)`` be ``(routineTypeDefIR, tid*)``
- .. Let ``bound`` be ``$union_set<tid>($bound(p, TC), { tid~impl~* })``
- .. If (RoutineType_wf: ``bound |- functionTypeIR``), then
-  ... Result in ``functionTypeIR``, ``tid~impl~*``, and ``id~default~*``
+ .. If ``(rid, routineTypeDefIR, id*)?`` matches pattern ``(_)``
+  ... Let ``?((rid, routineTypeDefIR, and id~default~*))`` be ``(rid, routineTypeDefIR, id*)``?
+  ... Let ``(routineTypeDefIR, tid*)`` be ``$specialize_routineTypeDef(routineTypeDefIR, typeArgumentIR*)``
+  ... Check that ``(routineTypeDefIR, tid*)`` has type ``(functionTypeIR, tid*)``
+  ... Let ``(functionTypeIR and tid~impl~*)`` be ``(routineTypeDefIR, tid*)``
+  ... Let ``bound`` be ``$union_set<tid>($bound(p, TC), { tid~impl~* })``
+  ... If (RoutineType_wf: ``bound |- functionTypeIR``), then
+   .... Result in ``functionTypeIR``, ``tid~impl~*``, and ``id~default~*``
 . If let ``typedExpressionIR~base~ . nameIR`` be ``routineTargetIR''``
- .. If ``typeArgumentIR*`` matches pattern ``[]``
+ .. If ``typeArgumentIR''*`` matches pattern ``[]``
   ... If ``argumentIR''*`` matches pattern ``[]``
    .... Group typedExpressionIR-nameIR-builtin-method-header-isValid: ``p``, ``TC``, ``typedExpressionIR~base~ . nameIR``, ``[ ]``, and ``[ ]``
 
@@ -4764,14 +4756,14 @@ relation RoutineType_ok: ``p``, ``TC``, ``routineTargetIR''``, ``typeArgumentIR`
   ... Let ``(rid, routineTypeDefIR, id*)?`` be ``$find_overloaded<routineTypeDefIR>({ rid~f~ : routineTypeDefIR~f~* }, nameIR, id~arg~?*)``
   ... Check that ``(rid, routineTypeDefIR, id*)?`` matches pattern ``(_)``
   ... Let ``?((rid, routineTypeDefIR, and id~default~*))`` be ``(rid, routineTypeDefIR, id*)``?
-  ... Let ``(routineTypeDefIR, tid*)`` be ``$specialize_routineTypeDef(routineTypeDefIR, typeArgumentIR*)``
+  ... Let ``(routineTypeDefIR, tid*)`` be ``$specialize_routineTypeDef(routineTypeDefIR, typeArgumentIR''*)``
   ... Check that ``(routineTypeDefIR, tid*)`` has type ``(routineTypeIR, tid*)``
   ... Let ``(routineTypeIR and tid~impl~*)`` be ``(routineTypeDefIR, tid*)``
   ... Let ``bound`` be ``$union_set<tid>($bound(p, TC), { tid~impl~* })``
   ... If (RoutineType_wf: ``bound |- routineTypeIR``), then
    .... Result in ``routineTypeIR``, ``tid~impl~*``, and ``id~default~*``
  .. If ``nameIR`` is equal to "apply"
-  ... Check that ``typeArgumentIR*`` matches pattern ``[]``
+  ... Check that ``typeArgumentIR''*`` matches pattern ``[]``
   ... Group typedExpressionIR-nameIR-parser-apply-method: ``p``, ``TC``, ``typedExpressionIR~base~ . "apply"``, ``[ ]``, and ``argumentIR``*
 
    .... Let ``typeIR~base~`` be <<typeof_expression, the type of  ``typedExpressionIR~base~``>>
@@ -4831,100 +4823,103 @@ relation RoutineType_ok: ``p``, ``TC``, ``routineTargetIR''``, ``typeArgumentIR`
 . Else if let ``( routineTargetIR )`` be ``routineTargetIR''``
  .. Group parenthesized: ``p``, ``TC``, ``( routineTargetIR )``, ``typeArgumentIR``*, and ``argumentIR``*
 
-  ... (RoutineType_ok: ``p TC |- routineTargetIR < typeArgumentIR* > ( argumentIR''* ) : routineTypeIR < # tid~inserted~* > ( # id~default~* )``)
+  ... (RoutineType_ok: ``p TC |- routineTargetIR < typeArgumentIR''* > ( argumentIR''* ) : routineTypeIR < # tid~inserted~* > ( # id~default~* )``)
   ... Result in ``routineTypeIR``, ``tid~inserted~*``, and ``id~default~*``
 
 relation Call_ok: ``p``, ``TC``, ``routineTypeIR``, ``typeArgumentIR``*, ``tid'``*, ``argumentIR``*, and ``id~default'~``*
 
-. If ``routineTypeIR`` has type ``functionTypeIR``
- .. Let ``functionTypeIR`` be ``routineTypeIR``
- .. If let ``BUILTIN_FUNCTION ( parameterTypeIR* ) -> typeIR~ret~`` be ``functionTypeIR``
-  ... Check that ``tid'*`` matches pattern ``[]``
-  ... Group builtin-function: ``p``, ``TC``, ``BUILTIN_FUNCTION ( parameterTypeIR* ) -> typeIR~ret~``, ``typeArgumentIR``*, ``[ ]``, ``argumentIR``*, and ``id~default~``*
+. If ``routineTypeIR`` has type ``builtinFunctionTypeIR``
+ .. Let ``BUILTIN_FUNCTION ( parameterTypeIR* ) -> typeIR~ret~`` be ``routineTypeIR``
+ .. Check that ``tid'*`` matches pattern ``[]``
+ .. Group builtin-function: ``p``, ``TC``, ``BUILTIN_FUNCTION ( parameterTypeIR* ) -> typeIR~ret~``, ``typeArgumentIR``*, ``[ ]``, ``argumentIR``*, and ``id~default~``*
 
-   .... Let ``parameterTypeIR~non_default~*`` be ``$filter_default_parameters(parameterTypeIR*, id~default'~*)``
-   .... Check that the length of ``parameterTypeIR~non_default~``* is equal to the length of ``argumentIR``*
-   .... Let ``parameterTypeIR~aligned~*`` be ``$align_parameters(parameterTypeIR~non_default~*, argumentIR*)``
-   .... Check that ``$callable_builtin_function(p, TC)``
-   .... (Call_convention_ok: ``p TC NOACTION |- parameterTypeIR~aligned~* @ argumentIR* : argumentIR~cast~*``)
-   .... Result in ``typeIR~ret~``, ``typeArgumentIR*``, and ``argumentIR~cast~*``
+  ... Let ``parameterTypeIR~non_default~*`` be ``$filter_default_parameters(parameterTypeIR*, id~default'~*)``
+  ... Check that the length of ``parameterTypeIR~non_default~``* is equal to the length of ``argumentIR``*
+  ... Let ``parameterTypeIR~aligned~*`` be ``$align_parameters(parameterTypeIR~non_default~*, argumentIR*)``
+  ... Check that ``$callable_builtin_function(p, TC)``
+  ... (Call_convention_ok: ``p TC NOACTION |- parameterTypeIR~aligned~* @ argumentIR* : argumentIR~cast~*``)
+  ... Result in ``typeIR~ret~``, ``typeArgumentIR*``, and ``argumentIR~cast~*``
 
- .. Else if let ``FUNCTION ( parameterTypeIR* ) -> typeIR~ret~`` be ``functionTypeIR``
-  ... Group function: ``p``, ``TC``, ``FUNCTION ( parameterTypeIR* ) -> typeIR~ret~``, ``typeArgumentIR``*, ``tid~infer~``*, ``argumentIR``*, and ``id~default~``*
+. Else if ``routineTypeIR`` has type ``definedFunctionTypeIR``
+ .. Let ``FUNCTION ( parameterTypeIR* ) -> typeIR~ret~`` be ``routineTypeIR``
+ .. Group function: ``p``, ``TC``, ``FUNCTION ( parameterTypeIR* ) -> typeIR~ret~``, ``typeArgumentIR``*, ``tid~infer~``*, ``argumentIR``*, and ``id~default~``*
 
-   .... Let ``parameterTypeIR~non_default~*`` be ``$filter_default_parameters(parameterTypeIR*, id~default'~*)``
-   .... Check that the length of ``parameterTypeIR~non_default~``* is equal to the length of ``argumentIR``*
-   .... Let ``parameterTypeIR~aligned~*`` be ``$align_parameters(parameterTypeIR~non_default~*, argumentIR*)``
-   .... Let ``inference`` be ``$infer(tid'*, parameterTypeIR~aligned~*, argumentIR*)``
-   .... Let ``typeIR?*`` be the list of ``typeIR?``, obtained by repeating:
-    ..... Let ``typeIR?`` be ``$find_map<tid, typeIR>(inference, tid')``
-   .... for each ``tid'`` in ``tid'*``
-   .... Check that ``typeIR?`` matches pattern ``(_)``, for each ``typeIR?`` in ``typeIR?*``
-   .... Let ``typeIR_inferred*`` be the list of ``typeIR_inferred``, obtained by repeating:
-    ..... Let ``?(typeIR~inferred~)`` be ``typeIR``?
-   .... for each ``typeIR?`` in ``typeIR?*``
-   .... Let ``typeArgumentIR~inferred~*`` be ``typeArgumentIR* ++ typeIR~inferred~*``
-   .... Let ``parameterTypeIR_aligned_inferred*`` be the list of ``parameterTypeIR_aligned_inferred``, obtained by repeating:
-    ..... Let ``parameterTypeIR~aligned_inferred~`` be ``$subst_parameterType(inference, parameterTypeIR~aligned~)``
-   .... for each ``parameterTypeIR_aligned`` in ``parameterTypeIR_aligned*``
-   .... Let ``typeIR~ret_inferred~`` be ``$subst_type(inference, typeIR~ret~)``
-   .... Let ``functionTypeIR~inferred~`` be ``FUNCTION ( parameterTypeIR~aligned_inferred~* ) -> typeIR~ret_inferred~``
-   .... If (RoutineType_wf: ``$bound(p, TC) |- functionTypeIR~inferred~``), then
-    ..... Check that ``$callable_function(p, TC)``
-    ..... (Call_convention_ok: ``p TC NOACTION |- parameterTypeIR~aligned_inferred~* @ argumentIR* : argumentIR~cast~*``)
-    ..... Result in ``typeIR~ret_inferred~``, ``typeArgumentIR~inferred~*``, and ``argumentIR~cast~*``
+  ... Let ``parameterTypeIR~non_default~*`` be ``$filter_default_parameters(parameterTypeIR*, id~default'~*)``
+  ... Check that the length of ``parameterTypeIR~non_default~``* is equal to the length of ``argumentIR``*
+  ... Let ``parameterTypeIR~aligned~*`` be ``$align_parameters(parameterTypeIR~non_default~*, argumentIR*)``
+  ... Let ``inference`` be ``$infer(tid'*, parameterTypeIR~aligned~*, argumentIR*)``
+  ... Let ``typeIR?*`` be the list of ``typeIR?``, obtained by repeating:
+   .... Let ``typeIR?`` be ``$find_map<tid, typeIR>(inference, tid')``
+  ... for each ``tid'`` in ``tid'*``
+  ... Check that ``typeIR?`` matches pattern ``(_)``, for each ``typeIR?`` in ``typeIR?*``
+  ... Let ``typeIR_inferred*`` be the list of ``typeIR_inferred``, obtained by repeating:
+   .... Let ``?(typeIR~inferred~)`` be ``typeIR``?
+  ... for each ``typeIR?`` in ``typeIR?*``
+  ... Let ``typeArgumentIR~inferred~*`` be ``typeArgumentIR* ++ typeIR~inferred~*``
+  ... Let ``parameterTypeIR_aligned_inferred*`` be the list of ``parameterTypeIR_aligned_inferred``, obtained by repeating:
+   .... Let ``parameterTypeIR~aligned_inferred~`` be ``$subst_parameterType(inference, parameterTypeIR~aligned~)``
+  ... for each ``parameterTypeIR_aligned`` in ``parameterTypeIR_aligned*``
+  ... Let ``typeIR~ret_inferred~`` be ``$subst_type(inference, typeIR~ret~)``
+  ... Let ``functionTypeIR~inferred~`` be ``FUNCTION ( parameterTypeIR~aligned_inferred~* ) -> typeIR~ret_inferred~``
+  ... If (RoutineType_wf: ``$bound(p, TC) |- functionTypeIR~inferred~``), then
+   .... Check that ``$callable_function(p, TC)``
+   .... (Call_convention_ok: ``p TC NOACTION |- parameterTypeIR~aligned_inferred~* @ argumentIR* : argumentIR~cast~*``)
+   .... Result in ``typeIR~ret_inferred~``, ``typeArgumentIR~inferred~*``, and ``argumentIR~cast~*``
 
- .. Else if let ``EXTERN_FUNCTION ( parameterTypeIR* ) -> typeIR~ret~`` be ``functionTypeIR``
-  ... Group externfunction: ``p``, ``TC``, ``EXTERN_FUNCTION ( parameterTypeIR* ) -> typeIR~ret~``, ``typeArgumentIR``*, ``tid~infer~``*, ``argumentIR``*, and ``id~default~``*
+. Else if ``routineTypeIR`` has type ``externFunctionTypeIR``
+ .. Let ``EXTERN_FUNCTION ( parameterTypeIR* ) -> typeIR~ret~`` be ``routineTypeIR``
+ .. Group externfunction: ``p``, ``TC``, ``EXTERN_FUNCTION ( parameterTypeIR* ) -> typeIR~ret~``, ``typeArgumentIR``*, ``tid~infer~``*, ``argumentIR``*, and ``id~default~``*
 
-   .... Let ``parameterTypeIR~non_default~*`` be ``$filter_default_parameters(parameterTypeIR*, id~default'~*)``
-   .... Check that the length of ``parameterTypeIR~non_default~``* is equal to the length of ``argumentIR``*
-   .... Let ``parameterTypeIR~aligned~*`` be ``$align_parameters(parameterTypeIR~non_default~*, argumentIR*)``
-   .... Let ``inference`` be ``$infer(tid'*, parameterTypeIR~aligned~*, argumentIR*)``
-   .... Let ``typeIR?*`` be the list of ``typeIR?``, obtained by repeating:
-    ..... Let ``typeIR?`` be ``$find_map<tid, typeIR>(inference, tid')``
-   .... for each ``tid'`` in ``tid'*``
-   .... Check that ``typeIR?`` matches pattern ``(_)``, for each ``typeIR?`` in ``typeIR?*``
-   .... Let ``typeIR_inferred*`` be the list of ``typeIR_inferred``, obtained by repeating:
-    ..... Let ``?(typeIR~inferred~)`` be ``typeIR``?
-   .... for each ``typeIR?`` in ``typeIR?*``
-   .... Let ``typeArgumentIR~inferred~*`` be ``typeArgumentIR* ++ typeIR~inferred~*``
-   .... Let ``parameterTypeIR_aligned_inferred*`` be the list of ``parameterTypeIR_aligned_inferred``, obtained by repeating:
-    ..... Let ``parameterTypeIR~aligned_inferred~`` be ``$subst_parameterType(inference, parameterTypeIR~aligned~)``
-   .... for each ``parameterTypeIR_aligned`` in ``parameterTypeIR_aligned*``
-   .... Let ``typeIR~ret_inferred~`` be ``$subst_type(inference, typeIR~ret~)``
-   .... Let ``functionTypeIR~inferred~`` be ``EXTERN_FUNCTION ( parameterTypeIR~aligned_inferred~* ) -> typeIR~ret_inferred~``
-   .... If (RoutineType_wf: ``$bound(p, TC) |- functionTypeIR~inferred~``), then
-    ..... Check that ``$callable_extern_function(p, TC)``
-    ..... (Call_convention_ok: ``p TC NOACTION |- parameterTypeIR~aligned_inferred~* @ argumentIR* : argumentIR~cast~*``)
-    ..... Result in ``typeIR~ret_inferred~``, ``typeArgumentIR~inferred~*``, and ``argumentIR~cast~*``
+  ... Let ``parameterTypeIR~non_default~*`` be ``$filter_default_parameters(parameterTypeIR*, id~default'~*)``
+  ... Check that the length of ``parameterTypeIR~non_default~``* is equal to the length of ``argumentIR``*
+  ... Let ``parameterTypeIR~aligned~*`` be ``$align_parameters(parameterTypeIR~non_default~*, argumentIR*)``
+  ... Let ``inference`` be ``$infer(tid'*, parameterTypeIR~aligned~*, argumentIR*)``
+  ... Let ``typeIR?*`` be the list of ``typeIR?``, obtained by repeating:
+   .... Let ``typeIR?`` be ``$find_map<tid, typeIR>(inference, tid')``
+  ... for each ``tid'`` in ``tid'*``
+  ... Check that ``typeIR?`` matches pattern ``(_)``, for each ``typeIR?`` in ``typeIR?*``
+  ... Let ``typeIR_inferred*`` be the list of ``typeIR_inferred``, obtained by repeating:
+   .... Let ``?(typeIR~inferred~)`` be ``typeIR``?
+  ... for each ``typeIR?`` in ``typeIR?*``
+  ... Let ``typeArgumentIR~inferred~*`` be ``typeArgumentIR* ++ typeIR~inferred~*``
+  ... Let ``parameterTypeIR_aligned_inferred*`` be the list of ``parameterTypeIR_aligned_inferred``, obtained by repeating:
+   .... Let ``parameterTypeIR~aligned_inferred~`` be ``$subst_parameterType(inference, parameterTypeIR~aligned~)``
+  ... for each ``parameterTypeIR_aligned`` in ``parameterTypeIR_aligned*``
+  ... Let ``typeIR~ret_inferred~`` be ``$subst_type(inference, typeIR~ret~)``
+  ... Let ``functionTypeIR~inferred~`` be ``EXTERN_FUNCTION ( parameterTypeIR~aligned_inferred~* ) -> typeIR~ret_inferred~``
+  ... If (RoutineType_wf: ``$bound(p, TC) |- functionTypeIR~inferred~``), then
+   .... Check that ``$callable_extern_function(p, TC)``
+   .... (Call_convention_ok: ``p TC NOACTION |- parameterTypeIR~aligned_inferred~* @ argumentIR* : argumentIR~cast~*``)
+   .... Result in ``typeIR~ret_inferred~``, ``typeArgumentIR~inferred~*``, and ``argumentIR~cast~*``
 
- .. Else if let ``ACTION ( parameterTypeIR* )`` be ``functionTypeIR``
-  ... Check that ``typeArgumentIR*`` matches pattern ``[]``
-  ... Check that ``tid'*`` matches pattern ``[]``
-  ... Group action: ``p``, ``TC``, ``ACTION ( parameterTypeIR* )``, ``[ ]``, ``[ ]``, ``argumentIR``*, and ``id~default~``*
+. Else if ``routineTypeIR`` has type ``actionTypeIR``
+ .. Let ``ACTION ( parameterTypeIR* )`` be ``routineTypeIR``
+ .. Check that ``typeArgumentIR*`` matches pattern ``[]``
+ .. Check that ``tid'*`` matches pattern ``[]``
+ .. Group action: ``p``, ``TC``, ``ACTION ( parameterTypeIR* )``, ``[ ]``, ``[ ]``, ``argumentIR``*, and ``id~default~``*
 
-   .... Let ``parameterTypeIR~non_default~*`` be ``$filter_default_parameters(parameterTypeIR*, id~default'~*)``
-   .... Check that the length of ``parameterTypeIR~non_default~``* is equal to the length of ``argumentIR``*
-   .... Let ``parameterTypeIR~aligned~*`` be ``$align_parameters(parameterTypeIR~non_default~*, argumentIR*)``
-   .... Check that ``$callable_action(p, TC)``
-   .... (Call_convention_ok: ``p TC ACTION |- parameterTypeIR~aligned~* @ argumentIR* : argumentIR~cast~*``)
-   .... Result in ``VOID``, ``[ ]``, and ``argumentIR~cast~*``
+  ... Let ``parameterTypeIR~non_default~*`` be ``$filter_default_parameters(parameterTypeIR*, id~default'~*)``
+  ... Check that the length of ``parameterTypeIR~non_default~``* is equal to the length of ``argumentIR``*
+  ... Let ``parameterTypeIR~aligned~*`` be ``$align_parameters(parameterTypeIR~non_default~*, argumentIR*)``
+  ... Check that ``$callable_action(p, TC)``
+  ... (Call_convention_ok: ``p TC ACTION |- parameterTypeIR~aligned~* @ argumentIR* : argumentIR~cast~*``)
+  ... Result in ``VOID``, ``[ ]``, and ``argumentIR~cast~*``
 
-. Else if ``routineTypeIR`` has type ``methodTypeIR``
- .. Let ``methodTypeIR`` be ``routineTypeIR``
- .. If let ``BUILTIN_METHOD ( parameterTypeIR* ) -> typeIR~ret~`` be ``methodTypeIR``
-  ... Check that ``tid'*`` matches pattern ``[]``
-  ... Group builtin-method: ``p``, ``TC``, ``BUILTIN_METHOD ( parameterTypeIR* ) -> typeIR~ret~``, ``typeArgumentIR``*, ``[ ]``, ``argumentIR``*, and ``id~default~``*
+. Else if ``routineTypeIR`` has type ``builtinMethodTypeIR``
+ .. Let ``BUILTIN_METHOD ( parameterTypeIR* ) -> typeIR~ret~`` be ``routineTypeIR``
+ .. Check that ``tid'*`` matches pattern ``[]``
+ .. Group builtin-method: ``p``, ``TC``, ``BUILTIN_METHOD ( parameterTypeIR* ) -> typeIR~ret~``, ``typeArgumentIR``*, ``[ ]``, ``argumentIR``*, and ``id~default~``*
 
-   .... Let ``parameterTypeIR~non_default~*`` be ``$filter_default_parameters(parameterTypeIR*, id~default'~*)``
-   .... Check that the length of ``parameterTypeIR~non_default~``* is equal to the length of ``argumentIR``*
-   .... Let ``parameterTypeIR~aligned~*`` be ``$align_parameters(parameterTypeIR~non_default~*, argumentIR*)``
-   .... Check that ``$callable_builtin_method(p, TC)``
-   .... (Call_convention_ok: ``p TC NOACTION |- parameterTypeIR~aligned~* @ argumentIR* : argumentIR~cast~*``)
-   .... Result in ``typeIR~ret~``, ``typeArgumentIR*``, and ``argumentIR~cast~*``
+  ... Let ``parameterTypeIR~non_default~*`` be ``$filter_default_parameters(parameterTypeIR*, id~default'~*)``
+  ... Check that the length of ``parameterTypeIR~non_default~``* is equal to the length of ``argumentIR``*
+  ... Let ``parameterTypeIR~aligned~*`` be ``$align_parameters(parameterTypeIR~non_default~*, argumentIR*)``
+  ... Check that ``$callable_builtin_method(p, TC)``
+  ... (Call_convention_ok: ``p TC NOACTION |- parameterTypeIR~aligned~* @ argumentIR* : argumentIR~cast~*``)
+  ... Result in ``typeIR~ret~``, ``typeArgumentIR*``, and ``argumentIR~cast~*``
 
- .. Else if let ``EXTERN_METHOD ( parameterTypeIR* ) -> typeIR~ret~`` be ``methodTypeIR``
+. Else if ``routineTypeIR`` has type ``externMethodTypeIR``
+ .. Let ``externMethodTypeIR`` be ``routineTypeIR``
+ .. If let ``EXTERN_METHOD ( parameterTypeIR* ) -> typeIR~ret~`` be ``externMethodTypeIR``
   ... Group extern-method: ``p``, ``TC``, ``EXTERN_METHOD ( parameterTypeIR* ) -> typeIR~ret~``, ``typeArgumentIR``*, ``tid~infer~``*, ``argumentIR``*, and ``id~default~``*
 
    .... Let ``parameterTypeIR~non_default~*`` be ``$filter_default_parameters(parameterTypeIR*, id~default'~*)``
@@ -4949,7 +4944,7 @@ relation Call_ok: ``p``, ``TC``, ``routineTypeIR``, ``typeArgumentIR``*, ``tid'`
     ..... (Call_convention_ok: ``p TC NOACTION |- parameterTypeIR~aligned_inferred~* @ argumentIR* : argumentIR~cast~*``)
     ..... Result in ``typeIR~ret_inferred~``, ``typeArgumentIR~inferred~*``, and ``argumentIR~cast~*``
 
- .. Else if let ``EXTERN_METHOD ABSTRACT ( parameterTypeIR* ) -> typeIR~ret~`` be ``methodTypeIR``
+ .. Else if let ``EXTERN_METHOD ABSTRACT ( parameterTypeIR* ) -> typeIR~ret~`` be ``externMethodTypeIR``
   ... Group extern-abstract-method: ``p``, ``TC``, ``EXTERN_METHOD ABSTRACT ( parameterTypeIR* ) -> typeIR~ret~``, ``typeArgumentIR``*, ``tid~infer~``*, ``argumentIR``*, and ``id~default~``*
 
    .... Let ``parameterTypeIR~non_default~*`` be ``$filter_default_parameters(parameterTypeIR*, id~default'~*)``
@@ -4974,39 +4969,42 @@ relation Call_ok: ``p``, ``TC``, ``routineTypeIR``, ``typeArgumentIR``*, ``tid'`
     ..... (Call_convention_ok: ``p TC NOACTION |- parameterTypeIR~aligned_inferred~* @ argumentIR* : argumentIR~cast~*``)
     ..... Result in ``typeIR~ret_inferred~``, ``typeArgumentIR~inferred~*``, and ``argumentIR~cast~*``
 
- .. Else if let ``PARSER_APPLY ( parameterTypeIR* )`` be ``methodTypeIR``
-  ... Check that ``typeArgumentIR*`` matches pattern ``[]``
-  ... Check that ``tid'*`` matches pattern ``[]``
-  ... Group parser-apply-method: ``p``, ``TC``, ``PARSER_APPLY ( parameterTypeIR* )``, ``[ ]``, ``[ ]``, ``argumentIR``*, and ``id~default~``*
+. Else if ``routineTypeIR`` has type ``parserApplyMethodTypeIR``
+ .. Let ``PARSER_APPLY ( parameterTypeIR* )`` be ``routineTypeIR``
+ .. Check that ``typeArgumentIR*`` matches pattern ``[]``
+ .. Check that ``tid'*`` matches pattern ``[]``
+ .. Group parser-apply-method: ``p``, ``TC``, ``PARSER_APPLY ( parameterTypeIR* )``, ``[ ]``, ``[ ]``, ``argumentIR``*, and ``id~default~``*
 
-   .... Let ``parameterTypeIR~non_default~*`` be ``$filter_default_parameters(parameterTypeIR*, id~default'~*)``
-   .... Check that the length of ``parameterTypeIR~non_default~``* is equal to the length of ``argumentIR``*
-   .... Let ``parameterTypeIR~aligned~*`` be ``$align_parameters(parameterTypeIR~non_default~*, argumentIR*)``
-   .... Check that ``$callable_parser_apply_method(p, TC)``
-   .... (Call_convention_ok: ``p TC NOACTION |- parameterTypeIR~aligned~* @ argumentIR* : argumentIR~cast~*``)
-   .... Result in ``VOID``, ``[ ]``, and ``argumentIR~cast~*``
+  ... Let ``parameterTypeIR~non_default~*`` be ``$filter_default_parameters(parameterTypeIR*, id~default'~*)``
+  ... Check that the length of ``parameterTypeIR~non_default~``* is equal to the length of ``argumentIR``*
+  ... Let ``parameterTypeIR~aligned~*`` be ``$align_parameters(parameterTypeIR~non_default~*, argumentIR*)``
+  ... Check that ``$callable_parser_apply_method(p, TC)``
+  ... (Call_convention_ok: ``p TC NOACTION |- parameterTypeIR~aligned~* @ argumentIR* : argumentIR~cast~*``)
+  ... Result in ``VOID``, ``[ ]``, and ``argumentIR~cast~*``
 
- .. Else if let ``CONTROL_APPLY ( parameterTypeIR* )`` be ``methodTypeIR``
-  ... Check that ``typeArgumentIR*`` matches pattern ``[]``
-  ... Check that ``tid'*`` matches pattern ``[]``
-  ... Group control-apply-method: ``p``, ``TC``, ``CONTROL_APPLY ( parameterTypeIR* )``, ``[ ]``, ``[ ]``, ``argumentIR``*, and ``id~default~``*
+. Else if ``routineTypeIR`` has type ``controlApplyMethodTypeIR``
+ .. Let ``CONTROL_APPLY ( parameterTypeIR* )`` be ``routineTypeIR``
+ .. Check that ``typeArgumentIR*`` matches pattern ``[]``
+ .. Check that ``tid'*`` matches pattern ``[]``
+ .. Group control-apply-method: ``p``, ``TC``, ``CONTROL_APPLY ( parameterTypeIR* )``, ``[ ]``, ``[ ]``, ``argumentIR``*, and ``id~default~``*
 
-   .... Let ``parameterTypeIR~non_default~*`` be ``$filter_default_parameters(parameterTypeIR*, id~default'~*)``
-   .... Check that the length of ``parameterTypeIR~non_default~``* is equal to the length of ``argumentIR``*
-   .... Let ``parameterTypeIR~aligned~*`` be ``$align_parameters(parameterTypeIR~non_default~*, argumentIR*)``
-   .... Check that ``$callable_control_apply_method(p, TC)``
-   .... (Call_convention_ok: ``p TC NOACTION |- parameterTypeIR~aligned~* @ argumentIR* : argumentIR~cast~*``)
-   .... Result in ``VOID``, ``[ ]``, and ``argumentIR~cast~*``
+  ... Let ``parameterTypeIR~non_default~*`` be ``$filter_default_parameters(parameterTypeIR*, id~default'~*)``
+  ... Check that the length of ``parameterTypeIR~non_default~``* is equal to the length of ``argumentIR``*
+  ... Let ``parameterTypeIR~aligned~*`` be ``$align_parameters(parameterTypeIR~non_default~*, argumentIR*)``
+  ... Check that ``$callable_control_apply_method(p, TC)``
+  ... (Call_convention_ok: ``p TC NOACTION |- parameterTypeIR~aligned~* @ argumentIR* : argumentIR~cast~*``)
+  ... Result in ``VOID``, ``[ ]``, and ``argumentIR~cast~*``
 
- .. Else if let ``TABLE_APPLY -> typeIR~table~`` be ``methodTypeIR``
-  ... Check that ``typeArgumentIR*`` matches pattern ``[]``
-  ... Check that ``tid'*`` matches pattern ``[]``
-  ... Check that ``argumentIR*`` matches pattern ``[]``
-  ... Check that ``id~default'~*`` matches pattern ``[]``
-  ... Group table-apply-method: ``p``, ``TC``, ``TABLE_APPLY -> typeIR~table~``, ``[ ]``, ``[ ]``, ``[ ]``, and ``[ ]``
+. Else if ``routineTypeIR`` has type ``tableApplyMethodTypeIR``
+ .. Let ``TABLE_APPLY -> typeIR~table~`` be ``routineTypeIR``
+ .. Check that ``typeArgumentIR*`` matches pattern ``[]``
+ .. Check that ``tid'*`` matches pattern ``[]``
+ .. Check that ``argumentIR*`` matches pattern ``[]``
+ .. Check that ``id~default'~*`` matches pattern ``[]``
+ .. Group table-apply-method: ``p``, ``TC``, ``TABLE_APPLY -> typeIR~table~``, ``[ ]``, ``[ ]``, ``[ ]``, and ``[ ]``
 
-   .... Check that ``$callable_table_apply_method(p, TC)``
-   .... Result in ``typeIR~table~``, ``[ ]``, and ``[ ]``
+  ... Check that ``$callable_table_apply_method(p, TC)``
+  ... Result in ``typeIR~table~``, ``[ ]``, and ``[ ]``
 
 relation ConstructorType_ok: ``p``, ``TC``, ``prefixedNameIR``, ``typeArgumentIR``*, and ``argumentIR``*
 
@@ -5138,7 +5136,7 @@ relation SwitchLabel_general_ok: ``TC``, ``typeIR``, ``bool``, and ``switchLabel
   ... Let ``expressionNonBrace~label~`` be ``switchLabel``
   ... Let ``expression~label~`` be ``$expressionNonBrace(expressionNonBrace~label~)``
   ... Let ``typedExpressionIR~label~`` be the result of <<Expr_ok, typing ``expression~label~``, under cursor ``LOCAL`` and typing context ``TC``>>
-  ... Let ``typedExpressionIR?`` be ``$coerce_unary(typedExpressionIR~label~, typeIR)``
+  ... Let ``typedExpressionIR?`` be <<coerce_unary, implicitly cast  ``typedExpressionIR~label~``  to  ``typeIR``>>
   ... Check that ``typedExpressionIR?`` matches pattern ``(_)``
   ... Let ``?(typedExpressionIR~label_cast~)`` be ``typedExpressionIR``?
   ... Let ``_ # ( _ ctk )`` be ``typedExpressionIR~label_cast~``
@@ -5191,7 +5189,7 @@ relation Decl_object_ok: ``p``, ``TC~0~``, ``frame``, ``rdenv``, and ``objectDec
   ... Let ``parameter*`` be ``$flatten_parameterList(parameterList)``
   ... Let ``parameterIR*`` and ``tid~impl~*`` be the result of <<Parameters_ok, typing ``parameter*``, under cursor ``LOCAL`` and typing context ``TC~3~``>>
   ... Let ``parameterTypeIR*`` be the list of ``parameterTypeIR``, obtained by repeating:
-   .... Let ``parameterTypeIR`` be ``$parameterIR(parameterIR)``
+   .... Let ``parameterTypeIR`` be <<typeof_parameterIR, the type of  ``parameterIR``>>
   ... for each ``parameterIR`` in ``parameterIR*``
   ... Let ``TC~4~`` be ``$add_parameters(LOCAL, TC~3~, parameterTypeIR*)``
   ... Let ``TC~5~`` be ``TC~4~``[LOCAL.KIND = ``EXTERN_METHOD -> typeIR~ret~``]
@@ -5247,7 +5245,7 @@ relation Enum_serializable_field_ok: ``TC~0~``, ``nameIR~enum~``, ``typeIR``, an
 . Group : ``TC~0~``, ``nameIR~enum~``, ``typeIR``, and ``name = expression``
 
  .. Let ``typedExpressionIR`` be the result of <<Expr_ok, typing ``expression``, under cursor ``BLOCK`` and typing context ``TC~0~``>>
- .. Let ``typedExpressionIR'?`` be ``$coerce_unary(typedExpressionIR, typeIR)``
+ .. Let ``typedExpressionIR'?`` be <<coerce_unary, implicitly cast  ``typedExpressionIR``  to  ``typeIR``>>
  .. Check that ``typedExpressionIR'?`` matches pattern ``(_)``
  .. Let ``?(typedExpressionIR~cast~)`` be ``typedExpressionIR'``?
  .. Check that ``<<ctkof_expression, the compile-time known-ness of  typedExpressionIR~cast~>>`` matches pattern ``LCTK``
@@ -5313,17 +5311,17 @@ relation SelectCase_keyset_simple_ok: ``TC``, ``typeIR~key~``, and ``simpleKeyse
 
   ... Let ``typedExpressionIR~l~`` be the result of <<Expr_ok, typing ``expression~l~``, under cursor ``LOCAL`` and typing context ``TC``>>
   ... Let ``typedExpressionIR~r~`` be the result of <<Expr_ok, typing ``expression~r~``, under cursor ``LOCAL`` and typing context ``TC``>>
-  ... Let ``(typedExpressionIR, typedExpressionIR)?`` be ``$coerce_binary(typedExpressionIR~l~, typedExpressionIR~r~)``
+  ... Let ``(typedExpressionIR, typedExpressionIR)?`` be <<coerce_binary, implicitly cast  ``typedExpressionIR~l~``  and  ``typedExpressionIR~r~``  to equal types>>
   ... Check that ``(typedExpressionIR, typedExpressionIR)?`` matches pattern ``(_)``
   ... Let ``?((typedExpressionIR~l_cast~ and typedExpressionIR~r_cast~))`` be ``(typedExpressionIR, typedExpressionIR)``?
   ... Let ``(typedExpressionIR, typedExpressionIR)'?`` be ``$reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_mask)``
   ... Check that ``(typedExpressionIR, typedExpressionIR)'?`` matches pattern ``(_)``
   ... Let ``?((typedExpressionIR~l_reduced~ and typedExpressionIR~r_reduced~))`` be ``(typedExpressionIR, typedExpressionIR)'``?
   ... Let ``typeIR~reduced~`` be <<typeof_expression, the type of  ``typedExpressionIR~l_reduced~``>>
-  ... Let ``typedExpressionIR?`` be ``$coerce_unary(typedExpressionIR~l_reduced~, typeIR~key~)``
+  ... Let ``typedExpressionIR?`` be <<coerce_unary, implicitly cast  ``typedExpressionIR~l_reduced~``  to  ``typeIR~key~``>>
   ... Check that ``typedExpressionIR?`` matches pattern ``(_)``
   ... Let ``?(typedExpressionIR~l_coerced~)`` be ``typedExpressionIR``?
-  ... Let ``typedExpressionIR'?`` be ``$coerce_unary(typedExpressionIR~r_reduced~, typeIR~key~)``
+  ... Let ``typedExpressionIR'?`` be <<coerce_unary, implicitly cast  ``typedExpressionIR~r_reduced~``  to  ``typeIR~key~``>>
   ... Check that ``typedExpressionIR'?`` matches pattern ``(_)``
   ... Let ``?(typedExpressionIR~r_coerced~)`` be ``typedExpressionIR'``?
   ... Result in ``typedExpressionIR~l_coerced~ &&& typedExpressionIR~r_coerced~``
@@ -5333,7 +5331,7 @@ relation SelectCase_keyset_simple_ok: ``TC``, ``typeIR~key~``, and ``simpleKeyse
 
   ... Let ``typedExpressionIR~l~`` be the result of <<Expr_ok, typing ``expression~l~``, under cursor ``LOCAL`` and typing context ``TC``>>
   ... Let ``typedExpressionIR~r~`` be the result of <<Expr_ok, typing ``expression~r~``, under cursor ``LOCAL`` and typing context ``TC``>>
-  ... Let ``(typedExpressionIR, typedExpressionIR)?`` be ``$coerce_binary(typedExpressionIR~l~, typedExpressionIR~r~)``
+  ... Let ``(typedExpressionIR, typedExpressionIR)?`` be <<coerce_binary, implicitly cast  ``typedExpressionIR~l~``  and  ``typedExpressionIR~r~``  to equal types>>
   ... Check that ``(typedExpressionIR, typedExpressionIR)?`` matches pattern ``(_)``
   ... Let ``?((typedExpressionIR~l_cast~ and typedExpressionIR~r_cast~))`` be ``(typedExpressionIR, typedExpressionIR)``?
   ... Let ``(typedExpressionIR, typedExpressionIR)'?`` be ``$reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_range)``
@@ -5341,10 +5339,10 @@ relation SelectCase_keyset_simple_ok: ``TC``, ``typeIR~key~``, and ``simpleKeyse
   ... Let ``?((typedExpressionIR~l_reduced~ and typedExpressionIR~r_reduced~))`` be ``(typedExpressionIR, typedExpressionIR)'``?
   ... Let ``typeIR~reduced~`` be <<typeof_expression, the type of  ``typedExpressionIR~l_reduced~``>>
   ... Check that ``typeIR~reduced~`` is equal to <<typeof_expression, the type of  ``typedExpressionIR~r_reduced~``>>
-  ... Let ``typedExpressionIR?`` be ``$coerce_unary(typedExpressionIR~l_reduced~, typeIR~key~)``
+  ... Let ``typedExpressionIR?`` be <<coerce_unary, implicitly cast  ``typedExpressionIR~l_reduced~``  to  ``typeIR~key~``>>
   ... Check that ``typedExpressionIR?`` matches pattern ``(_)``
   ... Let ``?(typedExpressionIR~l_coerced~)`` be ``typedExpressionIR``?
-  ... Let ``typedExpressionIR'?`` be ``$coerce_unary(typedExpressionIR~r_reduced~, typeIR~key~)``
+  ... Let ``typedExpressionIR'?`` be <<coerce_unary, implicitly cast  ``typedExpressionIR~r_reduced~``  to  ``typeIR~key~``>>
   ... Check that ``typedExpressionIR'?`` matches pattern ``(_)``
   ... Let ``?(typedExpressionIR~r_coerced~)`` be ``typedExpressionIR'``?
   ... Result in ``typedExpressionIR~l_coerced~ .. typedExpressionIR~r_coerced~``
@@ -5461,7 +5459,7 @@ relation TableEntry_keyset_simple_ok: ``TC``, ``TBLC``, (``typeIR~key~`` and ``t
    .... Let ``NOPRILPM n`` be ``matchMode``
    .... Let ``typedExpressionIR~l~`` be the result of <<Expr_ok, typing ``expression~l~``, under cursor ``LOCAL`` and typing context ``TC``>>
    .... Let ``typedExpressionIR~r~`` be the result of <<Expr_ok, typing ``expression~r~``, under cursor ``LOCAL`` and typing context ``TC``>>
-   .... Let ``(typedExpressionIR, typedExpressionIR)?`` be ``$coerce_binary(typedExpressionIR~l~, typedExpressionIR~r~)``
+   .... Let ``(typedExpressionIR, typedExpressionIR)?`` be <<coerce_binary, implicitly cast  ``typedExpressionIR~l~``  and  ``typedExpressionIR~r~``  to equal types>>
    .... Check that ``(typedExpressionIR, typedExpressionIR)?`` matches pattern ``(_)``
    .... Let ``?((typedExpressionIR~l_cast~ and typedExpressionIR~r_cast~))`` be ``(typedExpressionIR, typedExpressionIR)``?
    .... Let ``(typedExpressionIR, typedExpressionIR)'?`` be ``$reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_mask)``
@@ -5478,7 +5476,7 @@ relation TableEntry_keyset_simple_ok: ``TC``, ``TBLC``, (``typeIR~key~`` and ``t
   ... If "ternary" is equal to ``text``
    .... Let ``typedExpressionIR~l~`` be the result of <<Expr_ok, typing ``expression~l~``, under cursor ``LOCAL`` and typing context ``TC``>>
    .... Let ``typedExpressionIR~r~`` be the result of <<Expr_ok, typing ``expression~r~``, under cursor ``LOCAL`` and typing context ``TC``>>
-   .... Let ``(typedExpressionIR, typedExpressionIR)?`` be ``$coerce_binary(typedExpressionIR~l~, typedExpressionIR~r~)``
+   .... Let ``(typedExpressionIR, typedExpressionIR)?`` be <<coerce_binary, implicitly cast  ``typedExpressionIR~l~``  and  ``typedExpressionIR~r~``  to equal types>>
    .... Check that ``(typedExpressionIR, typedExpressionIR)?`` matches pattern ``(_)``
    .... Let ``?((typedExpressionIR~l_cast~ and typedExpressionIR~r_cast~))`` be ``(typedExpressionIR, typedExpressionIR)``?
    .... Let ``(typedExpressionIR, typedExpressionIR)'?`` be ``$reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_mask)``
@@ -5501,7 +5499,7 @@ relation TableEntry_keyset_simple_ok: ``TC``, ``TBLC``, (``typeIR~key~`` and ``t
 
   ... Let ``typedExpressionIR~l~`` be the result of <<Expr_ok, typing ``expression~l~``, under cursor ``LOCAL`` and typing context ``TC``>>
   ... Let ``typedExpressionIR~r~`` be the result of <<Expr_ok, typing ``expression~r~``, under cursor ``LOCAL`` and typing context ``TC``>>
-  ... Let ``(typedExpressionIR, typedExpressionIR)?`` be ``$coerce_binary(typedExpressionIR~l~, typedExpressionIR~r~)``
+  ... Let ``(typedExpressionIR, typedExpressionIR)?`` be <<coerce_binary, implicitly cast  ``typedExpressionIR~l~``  and  ``typedExpressionIR~r~``  to equal types>>
   ... Check that ``(typedExpressionIR, typedExpressionIR)?`` matches pattern ``(_)``
   ... Let ``?((typedExpressionIR~l_cast~ and typedExpressionIR~r_cast~))`` be ``(typedExpressionIR, typedExpressionIR)``?
   ... Let ``(typedExpressionIR, typedExpressionIR)'?`` be ``$reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_range)``
@@ -6041,7 +6039,7 @@ relation Bind_method: ``rdenv~0~`` and ``methodPrototypeIR``
 
   ... Let ``rid`` be ``$rid_IR(nameIR, parameterIR*)``
   ... Let ``parameterTypeIR*`` be the list of ``parameterTypeIR``, obtained by repeating:
-   .... Let ``parameterTypeIR`` be ``$parameterIR(parameterIR)``
+   .... Let ``parameterTypeIR`` be <<typeof_parameterIR, the type of  ``parameterIR``>>
   ... for each ``parameterIR`` in ``parameterIR*``
   ... Let ``methodTypeIR`` be ``EXTERN_METHOD ( parameterTypeIR* ) -> typeIR~ret~``
   ... Let ``routineTypeDefIR`` be ``methodTypeIR < typeParameterListIR , typeParameterListIR~inferred~ >``
@@ -6053,7 +6051,7 @@ relation Bind_method: ``rdenv~0~`` and ``methodPrototypeIR``
 
   ... Let ``rid`` be ``$rid_IR(nameIR, parameterIR*)``
   ... Let ``parameterTypeIR*`` be the list of ``parameterTypeIR``, obtained by repeating:
-   .... Let ``parameterTypeIR`` be ``$parameterIR(parameterIR)``
+   .... Let ``parameterTypeIR`` be <<typeof_parameterIR, the type of  ``parameterIR``>>
   ... for each ``parameterIR`` in ``parameterIR*``
   ... Let ``methodTypeIR`` be ``EXTERN_METHOD ABSTRACT ( parameterTypeIR* ) -> typeIR~ret~``
   ... Let ``routineTypeDefIR`` be ``methodTypeIR < typeParameterListIR , typeParameterListIR~inferred~ >``
@@ -6493,8 +6491,8 @@ relation Decl_inst: ``cursor'``, ``IC~0~``, ``STO'``, and ``declarationIR``
  .. Group actionDeclarationIR: ``p``, ``IC~0~``, ``STO``, and ``annotationList ACTION nameIR ( parameterListIR ) blockStatementIR``
 
   ... Let ``rid`` be ``$rid_IR(nameIR, parameterListIR)``
-  ... Let ``function`` be ``ACTION ( parameterListIR ) blockStatementIR``
-  ... Let ``IC~1~`` be ``$add_routine_non_overload_inst(cursor', IC~0~, rid, function)``
+  ... Let ``action`` be ``ACTION ( parameterListIR ) blockStatementIR``
+  ... Let ``IC~1~`` be ``$add_routine_non_overload_inst(cursor', IC~0~, rid, action)``
   ... Result in ``IC~1~``, ``STO'``, and ``?()``
 . Check that ``cursor'`` matches pattern ``GLOBAL``
 . If ``declarationIR`` has type ``errorDeclarationIR``
@@ -6680,7 +6678,7 @@ relation Decl_inst: ``cursor'``, ``IC~0~``, ``STO'``, and ``declarationIR``
  .. Group parserTypeDeclarationIR: ``GLOBAL``, ``IC~0~``, ``STO``, and ``annotationList PARSER nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR* ) ;``
 
   ... Let ``parameterTypeIR*`` be the list of ``parameterTypeIR``, obtained by repeating:
-   .... Let ``parameterTypeIR`` be ``$parameterIR(parameterIR)``
+   .... Let ``parameterTypeIR`` be <<typeof_parameterIR, the type of  ``parameterIR``>>
   ... for each ``parameterIR`` in ``parameterIR*``
   ... Let ``typeIR~parser~`` be ``PARSER ( parameterTypeIR* )``
   ... Let ``typeDefIR~parser~`` be ``typeIR~parser~ < typeParameterListIR , typeParameterListIR~inferred~ >``
@@ -6692,7 +6690,7 @@ relation Decl_inst: ``cursor'``, ``IC~0~``, ``STO'``, and ``declarationIR``
  .. Group controlTypeDeclarationIR: ``GLOBAL``, ``IC~0~``, ``STO``, and ``annotationList CONTROL nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR* ) ;``
 
   ... Let ``parameterTypeIR*`` be the list of ``parameterTypeIR``, obtained by repeating:
-   .... Let ``parameterTypeIR`` be ``$parameterIR(parameterIR)``
+   .... Let ``parameterTypeIR`` be <<typeof_parameterIR, the type of  ``parameterIR``>>
   ... for each ``parameterIR`` in ``parameterIR*``
   ... Let ``typeIR~control~`` be ``CONTROL ( parameterTypeIR* )``
   ... Let ``typeDefIR~control~`` be ``typeIR~control~ < typeParameterListIR , typeParameterListIR~inferred~ >``

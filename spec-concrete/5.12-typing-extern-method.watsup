@@ -24,7 +24,7 @@ rule ExternMethod_ok/non-abstract:
   ---- ;; check parameters and add them to the context
   -- if parameter* = $flatten_parameterList(parameterList)
   -- Parameters_ok: LOCAL TC_2 |- parameter* : parameterIR* `# tid_impl*
-  -- if (parameterTypeIR = $parameterIR(parameterIR))*
+  -- if (parameterTypeIR = $typeof_parameterIR(parameterIR))*
   -- if TC_3 = $add_parameters(LOCAL, TC_2, parameterTypeIR*)
   ---- ;; create method type and add it to the context
   -- if rid = $rid(name, parameterList)
@@ -58,7 +58,7 @@ rule ExternMethod_ok/abstract:
   ---- ;; check parameters and add them to the context
   -- if parameter* = $flatten_parameterList(parameterList)
   -- Parameters_ok: LOCAL TC_2 |- parameter* : parameterIR* `# tid_impl*
-  -- if (parameterTypeIR = $parameterIR(parameterIR))*
+  -- if (parameterTypeIR = $typeof_parameterIR(parameterIR))*
   -- if TC_3 = $add_parameters(LOCAL, TC_2, parameterTypeIR*)
   ---- ;; create method type and add it to the context
   -- if rid = $rid(name, parameterList)
@@ -108,7 +108,7 @@ rule ExternConstructor_ok:
   -- ConstructorParameters_ok: BLOCK TC_0 |- constructorParameter*
                                            : constructorParameterIR* `# tid_impl*
   -- if (constructorParameterTypeIR
-      = $constructorParameterIR(constructorParameterIR))*
+      = $typeof_constructorParameterIR(constructorParameterIR))*
   ---- ;; find extern type
   -- if typeIR_extern `< tid_expl* `, eps > = $find_type(GLOBAL, TC_0, `` nameIR)
   ---- ;; add implicit type parameters to the constructor

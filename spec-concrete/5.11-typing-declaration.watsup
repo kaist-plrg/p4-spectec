@@ -119,7 +119,7 @@ rule Decl_object_ok/functionDeclaration:
   ---- ;; check parameters
   -- if parameter* = $flatten_parameterList(parameterList)
   -- Parameters_ok: LOCAL TC_3 |- parameter* : parameterIR* `# tid_impl*
-  -- if (parameterTypeIR = $parameterIR(parameterIR))*
+  -- if (parameterTypeIR = $typeof_parameterIR(parameterIR))*
   -- if TC_4 = $add_parameters(LOCAL, TC_3, parameterTypeIR*)
   ---- ;; check body
   -- if TC_5 = TC_4[ .LOCAL.KIND = (EXTERN_METHOD `-> typeIR_ret) ]
@@ -307,7 +307,7 @@ rule Decl_ok/functionDeclaration:
   ---- ;; check parameters
   -- if parameter* = $flatten_parameterList(parameterList)
   -- Parameters_ok: LOCAL TC_1 |- parameter* : parameterIR* `# tid_impl*
-  -- if (parameterTypeIR = $parameterIR(parameterIR))*
+  -- if (parameterTypeIR = $typeof_parameterIR(parameterIR))*
   -- if TC_2 = $add_parameters(LOCAL, TC_1, parameterTypeIR*)
   ---- ;; check body
   -- if TC_3 = TC_2[ .LOCAL.KIND = FUNCTION `-> typeIR_ret ]
@@ -339,7 +339,7 @@ rule Decl_ok/actionDeclaration:
   ---- ;; check parameters
   -- if parameter* = $flatten_parameterList(parameterList)
   -- Parameters_ok: LOCAL TC_1 |- parameter* : parameterIR* `# eps
-  -- if (parameterTypeIR = $parameterIR(parameterIR))*
+  -- if (parameterTypeIR = $typeof_parameterIR(parameterIR))*
   ---- ;; add parameters to the context
   -- if TC_2 = $add_parameters(LOCAL, TC_1, parameterTypeIR*)
   ---- ;; check body
@@ -405,7 +405,7 @@ rule Decl_ok/externFunctionDeclaration:
   ---- ;; check parameters
   -- if parameter* = $flatten_parameterList(parameterList)
   -- Parameters_ok: LOCAL TC_2 |- parameter* : parameterIR* `# tid_impl*
-  -- if (parameterTypeIR = $parameterIR(parameterIR))*
+  -- if (parameterTypeIR = $typeof_parameterIR(parameterIR))*
   -- if TC_3 = $add_parameters(LOCAL, TC_2, parameterTypeIR*)
   ---- ;; check extern function type and add to context
   -- if rid = $rid(name, parameterList)
@@ -499,12 +499,12 @@ rule Decl_ok/parserDeclaration:
   -- ConstructorParameters_ok: BLOCK TC_1 |- constructorParameter*
                                            : constructorParameterIR* `# eps
   -- if (constructorParameterTypeIR
-      = $constructorParameterIR(constructorParameterIR))*
+      = $typeof_constructorParameterIR(constructorParameterIR))*
   -- if TC_2 = $add_parameters(BLOCK, TC_1, constructorParameterTypeIR*)
   ---- ;; check parameters to apply method
   -- if parameter* = $flatten_parameterList(parameterList)
   -- Parameters_ok: BLOCK TC_2 |- parameter* : parameterIR* `# eps
-  -- if (parameterTypeIR = $parameterIR(parameterIR))*
+  -- if (parameterTypeIR = $typeof_parameterIR(parameterIR))*
   -- if TC_3 = $add_parameters(BLOCK, TC_2, parameterTypeIR*)
   ---- ;; check parser local declarations
   -- if parserLocalDeclaration*
@@ -554,12 +554,12 @@ rule Decl_ok/controlDeclaration:
   -- ConstructorParameters_ok: BLOCK TC_1 |- constructorParameter*
                                            : constructorParameterIR* `# eps
   -- if (constructorParameterTypeIR
-      = $constructorParameterIR(constructorParameterIR))*
+      = $typeof_constructorParameterIR(constructorParameterIR))*
   -- if TC_2 = $add_parameters(BLOCK, TC_1, constructorParameterTypeIR*)
   ---- ;; check parameters to apply method
   -- if parameter* = $flatten_parameterList(parameterList)
   -- Parameters_ok: BLOCK TC_2 |- parameter* : parameterIR* `# eps
-  -- if (parameterTypeIR = $parameterIR(parameterIR))*
+  -- if (parameterTypeIR = $typeof_parameterIR(parameterIR))*
   -- if TC_3 = $add_parameters(BLOCK, TC_2, parameterTypeIR*)
   ---- ;; check control local declarations
   -- if controlLocalDeclaration*
@@ -873,7 +873,7 @@ rule Decl_ok/parserTypeDeclaration:
   ---- ;; check parameters to apply method
   -- if parameter* = $flatten_parameterList(parameterList)
   -- Parameters_ok: BLOCK TC_2 |- parameter* : parameterIR* `# tid_impl*
-  -- if (parameterTypeIR = $parameterIR(parameterIR))*
+  -- if (parameterTypeIR = $typeof_parameterIR(parameterIR))*
   ---- ;; update the context with parser type
   -- if nameIR = $name(name)
   -- if typeIR_parser = PARSER `( parameterTypeIR* )
@@ -900,7 +900,7 @@ rule Decl_ok/controlTypeDeclaration:
   ---- ;; check parameters to apply method
   -- if parameter* = $flatten_parameterList(parameterList)
   -- Parameters_ok: BLOCK TC_2 |- parameter* : parameterIR* `# tid_impl*
-  -- if (parameterTypeIR = $parameterIR(parameterIR))*
+  -- if (parameterTypeIR = $typeof_parameterIR(parameterIR))*
   ---- ;; update the context with control type
   -- if nameIR = $name(name)
   -- if typeIR_control = CONTROL `( parameterTypeIR* )
@@ -929,7 +929,7 @@ rule Decl_ok/packageTypeDeclaration:
   -- ConstructorParameters_ok: BLOCK TC_2 |- constructorParameter*
                                           : constructorParameterIR* `# tid_impl*
   -- if (constructorParameterTypeIR
-        = $constructorParameterIR(constructorParameterIR))*
+        = $typeof_constructorParameterIR(constructorParameterIR))*
   ---- ;; update the context with package type
   -- if nameIR = $name(name)
   -- if (_ typeIR_package_inner _ _ = constructorParameterTypeIR)*

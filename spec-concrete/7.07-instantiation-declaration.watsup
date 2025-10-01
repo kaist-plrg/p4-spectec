@@ -197,8 +197,8 @@ rule Decl_inst/actionDeclarationIR:
             ==> IC_1 STO eps
   ---- ;; bind action to routine environment
   -- if rid = $rid_IR(nameIR, parameterListIR)
-  -- if function = ACTION `( parameterListIR ) blockStatementIR
-  -- if IC_1 = $add_routine_non_overload_inst(p, IC_0, rid, function)
+  -- if action = ACTION `( parameterListIR ) blockStatementIR
+  -- if IC_1 = $add_routine_non_overload_inst(p, IC_0, rid, action)
 
 ;;; errorDeclarationIR
 ;;; syntax errorDeclarationIR = ERROR `{ nameListIR }
@@ -506,7 +506,7 @@ rule Decl_inst/parserTypeDeclarationIR:
                        `( parameterIR* ) `;
                  ==> IC_1 STO eps
   ---- ;; bind parser type to typedef environment
-  -- if (parameterTypeIR = $parameterIR(parameterIR))*
+  -- if (parameterTypeIR = $typeof_parameterIR(parameterIR))*
   -- if typeIR_parser = PARSER `( parameterTypeIR* )
   -- if typeDefIR_parser
       = typeIR_parser `< typeParameterListIR `, typeParameterListIR_inferred >
@@ -524,7 +524,7 @@ rule Decl_inst/controlTypeDeclarationIR:
                        `( parameterIR* ) `;
                  ==> IC_1 STO eps
   ---- ;; bind control type to typedef environment
-  -- if (parameterTypeIR = $parameterIR(parameterIR))*
+  -- if (parameterTypeIR = $typeof_parameterIR(parameterIR))*
   -- if typeIR_control = CONTROL `( parameterTypeIR* )
   -- if typeDefIR_control
       = typeIR_control `< typeParameterListIR `, typeParameterListIR_inferred >

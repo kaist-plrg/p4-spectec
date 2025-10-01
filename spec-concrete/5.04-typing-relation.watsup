@@ -119,12 +119,6 @@ relation Parameters_ok:
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
 
-dec $parameterIR(parameterIR) : parameterTypeIR
-def $parameterIR(_ direction typeIR nameIR eps)
-  = direction typeIR nameIR eps
-def $parameterIR(_ direction typeIR nameIR (`= value))
-  = direction typeIR nameIR value
-
 relation ConstructorParameter_ok:
   cursor typingContext |- constructorParameter
                   : constructorParameterIR `# tid*
@@ -134,10 +128,6 @@ relation ConstructorParameters_ok:
   cursor typingContext |- constructorParameter*
                   : constructorParameterListIR `# tid*
   hint(input %0 %1 %2)
-
-dec $constructorParameterIR(constructorParameterIR) : constructorParameterTypeIR
-def $constructorParameterIR(constructorParameterIR)
-  = $parameterIR(constructorParameterIR)
 
 ;;
 ;;;; Extern method/constructor typing

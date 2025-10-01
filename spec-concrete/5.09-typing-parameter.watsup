@@ -8,38 +8,41 @@
 ;;; syntax initializerOpt
 
 ;;;; `EMPTY
-
-rule Parameter_ok/empty:
-  p TC |- annotationList direction type name `EMPTY
-        : (annotationList direction typeIR nameIR eps)
-            `# tid_fresh*
-  -- Type_ok: p TC |- type : typeIR `# tid_fresh*
-  -- if bound = $union_set<tid>($bound(p, TC), `{ tid_fresh* })
-  -- Type_wf: bound |- typeIR
-  -- if nameIR = $name(name)
-
 ;;;; initializer
 
-rule Parameter_ok/initializer:
-  p TC |- annotationList direction type name (`= expression_init)
-        : (annotationList direction typeIR nameIR (`= value_init))
-            `# tid_fresh*
-  ---- ;; check parameter type
-  -- Type_ok: p TC |- type : typeIR `# tid_fresh*
-  -- if bound = $union_set<tid>($bound(p, TC), `{ tid_fresh* })
-  -- Type_wf: bound |- typeIR
-  ---- ;; check initializer
-  -- Expr_ok: p TC |- expression_init : typedExpressionIR_init
-  -- if typeIR_init = $typeof_expression(typedExpressionIR_init)
-  -- if LCTK = $ctkof_expression(typedExpressionIR_init)
-  ---- ;; check that the initializer type is
-  ---- ;; compatible with the parameter type
-  ---- ;; while inserting implicit casts if necessary
-  -- if typedExpressionIR_init_cast
-      = $coerce_unary(typedExpressionIR_init, typeIR)
-  -- if nameIR = $name(name)
-  ---- ;; evaluate the initializer
-  -- Eval_static: p TC |- typedExpressionIR_init_cast ~> value_init
+rulegroup Parameter_ok {
+
+  rule Parameter_ok/non-initializer:
+    p TC |- annotationList direction type name `EMPTY
+          : (annotationList direction typeIR nameIR eps)
+              `# tid_fresh*
+    -- Type_ok: p TC |- type : typeIR `# tid_fresh*
+    -- if bound = $union_set<tid>($bound(p, TC), `{ tid_fresh* })
+    -- Type_wf: bound |- typeIR
+    -- if nameIR = $name(name)
+
+  rule Parameter_ok/initializer:
+    p TC |- annotationList direction type name (`= expression_init)
+          : (annotationList direction typeIR nameIR (`= value_init))
+              `# tid_fresh*
+    ---- ;; check parameter type
+    -- Type_ok: p TC |- type : typeIR `# tid_fresh*
+    -- if bound = $union_set<tid>($bound(p, TC), `{ tid_fresh* })
+    -- Type_wf: bound |- typeIR
+    ---- ;; check initializer
+    -- Expr_ok: p TC |- expression_init : typedExpressionIR_init
+    -- if typeIR_init = $typeof_expression(typedExpressionIR_init)
+    -- if LCTK = $ctkof_expression(typedExpressionIR_init)
+    ---- ;; check that the initializer type is
+    ---- ;; compatible with the parameter type
+    ---- ;; while inserting implicit casts if necessary
+    -- if typedExpressionIR_init_cast
+        = $coerce_unary(typedExpressionIR_init, typeIR)
+    -- if nameIR = $name(name)
+    ---- ;; evaluate the initializer
+    -- Eval_static: p TC |- typedExpressionIR_init_cast ~> value_init
+
+}
 
 ;;
 ;; Parameter list typing

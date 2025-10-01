@@ -56,26 +56,21 @@ relation ConstructorTypeDef_wf:
 ;;;; Well-formedness of parameter types
 ;;
 
-rule ParameterType_wf/default-empty-extern:
-  bound |- `EMPTY typeIR _ eps
-  -- Type_wf: bound |- typeIR
-  -- if $is_extern_object_typeIR($canon(typeIR))
+rulegroup ParameterType_wf {
 
-rule ParameterType_wf/default-none-not-extern:
-  bound |- direction typeIR _ eps
-  -- Type_wf: bound |- typeIR
-  -- if ~$is_extern_object_typeIR($canon(typeIR))
+  rule ParameterType_wf/non-default:
+    bound |- direction typeIR _ eps
+    -- Type_wf: bound |- typeIR
+    -- if $is_extern_object_typeIR($canon(typeIR))
+          => direction = `EMPTY
 
-rule ParameterType_wf/default-some-extern:
-  bound |- `EMPTY typeIR _ value
-  -- Type_wf: bound |- typeIR
-  -- if $is_extern_object_typeIR($canon(typeIR))
+  rule ParameterType_wf/default:
+    bound |- direction typeIR _ value
+    -- Type_wf: bound |- typeIR
+    -- if ~$is_extern_object_typeIR($canon(typeIR))
+    -- if direction = IN \/ direction = `EMPTY
 
-rule ParameterType_wf/default-some-not-extern:
-  bound |- direction typeIR _ value
-  -- Type_wf: bound |- typeIR
-  -- if ~$is_extern_object_typeIR($canon(typeIR))
-  -- if direction = IN \/ direction = `EMPTY
+}
 
 rule ParameterTypes_wf:
   bound |- parameterTypeIR*
@@ -739,7 +734,6 @@ dec $definable_routine_poly(routineTypeIR) : bool
 def $definable_routine_poly(definedFunctionTypeIR) = true
 def $definable_routine_poly(externFunctionTypeIR) = true
 def $definable_routine_poly(externMethodTypeIR) = true
-def $definable_routine_poly(externAbstractMethodTypeIR) = true
 def $definable_routine_poly(_) = false
   -- otherwise
 

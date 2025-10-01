@@ -86,17 +86,30 @@ rule RoutineTarget_lvalue_ok:
 ;;; referenceExpressionIR
 ;;; syntax referenceExpressionIR = prefixedNameIR
 
-rule RoutineType_ok/referenceExpressionIR:
-  p TC |- prefixedNameIR `< typeArgumentIR* > `( argumentIR* )
-        : functionTypeIR `< `# tid_impl* > `( `# id_default* )
-  ---- ;; find and specialize the function type definition
-  -- if (rid, routineTypeDefIR, id_default*)
-      = $find_routine_overloaded(p, TC, prefixedNameIR, argumentIR*)
-  -- if (functionTypeIR, tid_impl*)
-      = $specialize_routineTypeDef(routineTypeDefIR, typeArgumentIR*)
-  ---- ;; check that the function type is well-formed
-  -- if bound = $union_set<tid>($bound(p, TC), `{ tid_impl* })
-  -- RoutineType_wf: bound |- functionTypeIR
+rulegroup RoutineType_ok/referenceExpressionIR {
+
+  rule RoutineType_ok/actionTypeIR:
+    p TC |- prefixedNameIR `< eps > `( argumentIR* )
+          : actionTypeIR `< `# eps > `( `# id_default* )
+    ---- ;; find the action type definition
+    -- if (rid, actionTypeIR, id_default*)
+        = $find_routine_overloaded(p, TC, prefixedNameIR, argumentIR*)
+    ---- ;; check that the action type is well-formed
+    -- RoutineType_wf: $bound(p, TC) |- actionTypeIR
+
+  rule RoutineType_ok/functionTypeIR:
+    p TC |- prefixedNameIR `< typeArgumentIR* > `( argumentIR* )
+          : functionTypeIR `< `# tid_impl* > `( `# id_default* )
+    ---- ;; find and specialize the function type definition
+    -- if (rid, routineTypeDefIR, id_default*)
+        = $find_routine_overloaded(p, TC, prefixedNameIR, argumentIR*)
+    -- if (functionTypeIR, tid_impl*)
+        = $specialize_routineTypeDef(routineTypeDefIR, typeArgumentIR*)
+    ---- ;; check that the function type is well-formed
+    -- if bound = $union_set<tid>($bound(p, TC), `{ tid_impl* })
+    -- RoutineType_wf: bound |- functionTypeIR
+
+}
 
 ;;; typedLvalueIR `. nameIR
 
