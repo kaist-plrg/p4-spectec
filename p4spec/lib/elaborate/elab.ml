@@ -1299,6 +1299,10 @@ let rec elab_rule_input_with_bind (ctx : Ctx.t) (exps_il : Il.Ast.exp list) :
     Ctx.t * Il.Ast.exp list * Il.Ast.prem list =
   Dataflow.Analysis.analyze_exps_as_bind ctx exps_il
 
+and elab_rule_implicit_input (ctx : Ctx.t) (exps_il : Il.Ast.exp list) :
+    Il.Ast.exp list =
+  Dataflow.Analysis.analyze_exps_as_bound ctx exps_il
+
 and elab_rule_output_with_bind (ctx : Ctx.t) (exps_il : Il.Ast.exp list) :
     Il.Ast.exp list =
   Dataflow.Analysis.analyze_exps_as_bound ctx exps_il
@@ -1321,6 +1325,9 @@ and elab_rulematch (ctx : Ctx.t) (ctxs_local : Ctx.t list)
   let ctx_local_unified, exps_il_input_unified_match, prems_il_match =
     elab_rule_input_with_bind ctx_local_unified exps_il_input_unified
   in
+  let exps_il_input_unified_implicit =
+    elab_rule_implicit_input ctx_local_unified exps_il_input_unified
+  in
   let ctxs_local =
     List.map
       (fun (ctx_local : Ctx.t) ->
@@ -1342,7 +1349,7 @@ and elab_rulematch (ctx : Ctx.t) (ctxs_local : Ctx.t list)
     |> List.split
   in
   let rulematch_il =
-    (exps_il_input_unified, exps_il_input_unified_match, prems_il_match)
+    (exps_il_input_unified_implicit, exps_il_input_unified_match, prems_il_match)
   in
   (ctxs_local, rulematch_il, prems_il_unified_group)
 

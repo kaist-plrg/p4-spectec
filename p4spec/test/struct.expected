@@ -4941,7 +4941,7 @@ relation Type_alpha: typeIR'''' ~~ typeIR'''''
 
       1. (Let (polyTypeDefIR_b < typeIR_b*{typeIR_b <- typeIR_b*} >) be (typeIR''''' as specializedTypeIR))
 
-      2. Group spectype: ((polyTypeDefIR_a < typeIR_a*{} >) as typeIR) ~~ ((polyTypeDefIR_b < typeIR_b*{} >) as typeIR)
+      2. Group spectype: ((polyTypeDefIR_a < typeIR_a*{typeIR_a <- typeIR_a*} >) as typeIR) ~~ ((polyTypeDefIR_b < typeIR_b*{typeIR_b <- typeIR_b*} >) as typeIR)
 
         1. (Let typeIR_a_spec be $specialize_typeDef((polyTypeDefIR_a as typeDefIR), typeIR_a*{typeIR_a <- typeIR_a*}))
 
@@ -4959,7 +4959,7 @@ relation Type_alpha: typeIR'''' ~~ typeIR'''''
 
             1. The relation holds
 
-2. Group typedeftype: typeIR ~~ typeIR'
+2. Group typedeftype: typeIR'''' ~~ typeIR'''''
 
   1. If ((typeIR'''' has type typedefTypeIR)), then
 
@@ -5017,7 +5017,7 @@ relation Type_alpha: typeIR'''' ~~ typeIR'''''
 
       1. (Let (tuple< typeIR_b*{typeIR_b <- typeIR_b*} >) be (typeIR''''' as tupleTypeIR))
 
-      2. Group tupletype: ((tuple< typeIR_a*{} >) as typeIR) ~~ ((tuple< typeIR_b*{} >) as typeIR)
+      2. Group tupletype: ((tuple< typeIR_a*{typeIR_a <- typeIR_a*} >) as typeIR) ~~ ((tuple< typeIR_b*{typeIR_b <- typeIR_b*} >) as typeIR)
 
         1. If (Type_alpha: typeIR_a ~~ typeIR_b)*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*} holds, then
 
@@ -5051,7 +5051,7 @@ relation Type_alpha: typeIR'''' ~~ typeIR'''''
 
         1. If ((tid = tid')), then
 
-          1. Group structtype: ((struct tid { (typeIR_f_a id_f ;)*{} }) as typeIR) ~~ ((struct tid { (typeIR_f_b id_f ;)*{} }) as typeIR)
+          1. Group structtype: ((struct tid { (typeIR_f_a id_f ;)*{id_f <- id_f*, typeIR_f_a <- typeIR_f_a*} }) as typeIR) ~~ ((struct tid { (typeIR_f_b id_f ;)*{id_f <- id_f*, typeIR_f_b <- typeIR_f_b*} }) as typeIR)
 
             1. If (Type_alpha: typeIR_f_a ~~ typeIR_f_b)*{typeIR_f_a <- typeIR_f_a*, typeIR_f_b <- typeIR_f_b*} holds, then
 
@@ -5069,7 +5069,7 @@ relation Type_alpha: typeIR'''' ~~ typeIR'''''
 
         1. If ((tid = tid')), then
 
-          1. Group headertype: ((header tid { (typeIR_f_a id_f ;)*{} }) as typeIR) ~~ ((header tid { (typeIR_f_b id_f ;)*{} }) as typeIR)
+          1. Group headertype: ((header tid { (typeIR_f_a id_f ;)*{id_f <- id_f*, typeIR_f_a <- typeIR_f_a*} }) as typeIR) ~~ ((header tid { (typeIR_f_b id_f ;)*{id_f <- id_f*, typeIR_f_b <- typeIR_f_b*} }) as typeIR)
 
             1. If (Type_alpha: typeIR_f_a ~~ typeIR_f_b)*{typeIR_f_a <- typeIR_f_a*, typeIR_f_b <- typeIR_f_b*} holds, then
 
@@ -5087,7 +5087,7 @@ relation Type_alpha: typeIR'''' ~~ typeIR'''''
 
         1. If ((tid = tid')), then
 
-          1. Group headeruniontype: ((header_union tid { (typeIR_f_a id_f ;)*{} }) as typeIR) ~~ ((header_union tid { (typeIR_f_b id_f ;)*{} }) as typeIR)
+          1. Group headeruniontype: ((header_union tid { (typeIR_f_a id_f ;)*{id_f <- id_f*, typeIR_f_a <- typeIR_f_a*} }) as typeIR) ~~ ((header_union tid { (typeIR_f_b id_f ;)*{id_f <- id_f*, typeIR_f_b <- typeIR_f_b*} }) as typeIR)
 
             1. If (Type_alpha: typeIR_f_a ~~ typeIR_f_b)*{typeIR_f_a <- typeIR_f_a*, typeIR_f_b <- typeIR_f_b*} holds, then
 
@@ -5115,7 +5115,7 @@ relation Type_alpha: typeIR'''' ~~ typeIR'''''
 
               1. If ((tid = tid')), then
 
-                1. Group enumtype: ((enum tid { id_f*{} }) as typeIR) ~~ ((enum tid { id_f*{} }) as typeIR)
+                1. Group enumtype: ((enum tid { id_f*{id_f <- id_f*} }) as typeIR) ~~ ((enum tid { id_f*{id_f <- id_f*} }) as typeIR)
 
                   1. The relation holds
 
@@ -5137,7 +5137,7 @@ relation Type_alpha: typeIR'''' ~~ typeIR'''''
 
                 1. If ((value_f = value_f'))*{value_f <- value_f*, value_f' <- value_f'*}, then
 
-                  1. Group serenumtype: ((enum tid # typeIR_a { (id_f = value_f ;)*{} }) as typeIR) ~~ ((enum tid # typeIR_b { (id_f = value_f ;)*{} }) as typeIR)
+                  1. Group serenumtype: ((enum tid # typeIR_a { (id_f = value_f ;)*{id_f <- id_f*, value_f <- value_f*} }) as typeIR) ~~ ((enum tid # typeIR_b { (id_f = value_f ;)*{id_f <- id_f*, value_f <- value_f*} }) as typeIR)
 
                     1. If (Type_alpha: typeIR_a ~~ typeIR_b) holds, then
 
@@ -5153,7 +5153,7 @@ relation Type_alpha: typeIR'''' ~~ typeIR'''''
 
       2. If ((tid = tid')), then
 
-        1. Group externtype: ((extern tid ({ (rid_a : routineTypeDefIR_a)*{} })) as typeIR) ~~ ((extern tid ({ (rid_b : routineTypeDefIR_b)*{} })) as typeIR)
+        1. Group externtype: ((extern tid ({ (rid_a : routineTypeDefIR_a)*{rid_a <- rid_a*, routineTypeDefIR_a <- routineTypeDefIR_a*} })) as typeIR) ~~ ((extern tid ({ (rid_b : routineTypeDefIR_b)*{rid_b <- rid_b*, routineTypeDefIR_b <- routineTypeDefIR_b*} })) as typeIR)
 
           1. If ($eq_set<rid>(({ rid_a*{rid_a <- rid_a*} }), ({ rid_b*{rid_b <- rid_b*} }))), then
 
@@ -5181,7 +5181,7 @@ relation Type_alpha: typeIR'''' ~~ typeIR'''''
 
       1. (Let (parser( parameterTypeIR_b*{parameterTypeIR_b <- parameterTypeIR_b*} )) be (typeIR''''' as parserObjectTypeIR))
 
-      2. Group parsertype: ((parser( parameterTypeIR_a*{} )) as typeIR) ~~ ((parser( parameterTypeIR_b*{} )) as typeIR)
+      2. Group parsertype: ((parser( parameterTypeIR_a*{parameterTypeIR_a <- parameterTypeIR_a*} )) as typeIR) ~~ ((parser( parameterTypeIR_b*{parameterTypeIR_b <- parameterTypeIR_b*} )) as typeIR)
 
         1. If (ParameterType_alpha: parameterTypeIR_a ~~ parameterTypeIR_b)*{parameterTypeIR_a <- parameterTypeIR_a*, parameterTypeIR_b <- parameterTypeIR_b*} holds, then
 
@@ -5195,7 +5195,7 @@ relation Type_alpha: typeIR'''' ~~ typeIR'''''
 
       1. (Let (control( parameterTypeIR_b*{parameterTypeIR_b <- parameterTypeIR_b*} )) be (typeIR''''' as controlObjectTypeIR))
 
-      2. Group controltype: ((control( parameterTypeIR_a*{} )) as typeIR) ~~ ((control( parameterTypeIR_b*{} )) as typeIR)
+      2. Group controltype: ((control( parameterTypeIR_a*{parameterTypeIR_a <- parameterTypeIR_a*} )) as typeIR) ~~ ((control( parameterTypeIR_b*{parameterTypeIR_b <- parameterTypeIR_b*} )) as typeIR)
 
         1. If (ParameterType_alpha: parameterTypeIR_a ~~ parameterTypeIR_b)*{parameterTypeIR_a <- parameterTypeIR_a*, parameterTypeIR_b <- parameterTypeIR_b*} holds, then
 
@@ -5209,7 +5209,7 @@ relation Type_alpha: typeIR'''' ~~ typeIR'''''
 
       1. (Let (package< typeIR_b*{typeIR_b <- typeIR_b*} >) be (typeIR''''' as packageObjectTypeIR))
 
-      2. Group packagetype: ((package< typeIR_a*{} >) as typeIR) ~~ ((package< typeIR_b*{} >) as typeIR)
+      2. Group packagetype: ((package< typeIR_a*{typeIR_a <- typeIR_a*} >) as typeIR) ~~ ((package< typeIR_b*{typeIR_b <- typeIR_b*} >) as typeIR)
 
         1. If (Type_alpha: typeIR_a ~~ typeIR_b)*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*} holds, then
 
@@ -5261,7 +5261,7 @@ relation Type_alpha: typeIR'''' ~~ typeIR'''''
 
             1. (Let (seq< typeIR_b*{typeIR_b <- typeIR_b*} >) be sequenceTypeIR')
 
-            2. Group sequencetype: ((seq< typeIR_a*{} >) as typeIR) ~~ ((seq< typeIR_b*{} >) as typeIR)
+            2. Group sequencetype: ((seq< typeIR_a*{typeIR_a <- typeIR_a*} >) as typeIR) ~~ ((seq< typeIR_b*{typeIR_b <- typeIR_b*} >) as typeIR)
 
               1. If (Type_alpha: typeIR_a ~~ typeIR_b)*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*} holds, then
 
@@ -5279,7 +5279,7 @@ relation Type_alpha: typeIR'''' ~~ typeIR'''''
 
             1. (Let (seq< typeIR_b*{typeIR_b <- typeIR_b*} ,...>) be sequenceTypeIR')
 
-            2. Group sequencedefaulttype: ((seq< typeIR_a*{} ,...>) as typeIR) ~~ ((seq< typeIR_b*{} ,...>) as typeIR)
+            2. Group sequencedefaulttype: ((seq< typeIR_a*{typeIR_a <- typeIR_a*} ,...>) as typeIR) ~~ ((seq< typeIR_b*{typeIR_b <- typeIR_b*} ,...>) as typeIR)
 
               1. If (Type_alpha: typeIR_a ~~ typeIR_b)*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*} holds, then
 
@@ -5305,7 +5305,7 @@ relation Type_alpha: typeIR'''' ~~ typeIR'''''
 
             2. If ((id = id'))*{id <- id*, id' <- id'*}, then
 
-              1. Group recordtype: ((record{ (typeIR_a id ;)*{} }) as typeIR) ~~ ((record{ (typeIR_b id ;)*{} }) as typeIR)
+              1. Group recordtype: ((record{ (typeIR_a id ;)*{id <- id*, typeIR_a <- typeIR_a*} }) as typeIR) ~~ ((record{ (typeIR_b id ;)*{id <- id*, typeIR_b <- typeIR_b*} }) as typeIR)
 
                 1. If (Type_alpha: typeIR_a ~~ typeIR_b)*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*} holds, then
 
@@ -5325,7 +5325,7 @@ relation Type_alpha: typeIR'''' ~~ typeIR'''''
 
             2. If ((id = id'))*{id <- id*, id' <- id'*}, then
 
-              1. Group recorddefaulttype: ((record{ (typeIR_a id ;)*{} ,...}) as typeIR) ~~ ((record{ (typeIR_b id ;)*{} ,...}) as typeIR)
+              1. Group recorddefaulttype: ((record{ (typeIR_a id ;)*{id <- id*, typeIR_a <- typeIR_a*} ,...}) as typeIR) ~~ ((record{ (typeIR_b id ;)*{id <- id*, typeIR_b <- typeIR_b*} ,...}) as typeIR)
 
                 1. If (Type_alpha: typeIR_a ~~ typeIR_b)*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*} holds, then
 
@@ -5387,7 +5387,7 @@ relation Type_alpha: typeIR'''' ~~ typeIR'''''
 
               1. If ((tid = tid')), then
 
-                1. Group tableenumtype: ((table_enum tid { id_f*{} }) as typeIR) ~~ ((table_enum tid { id_f*{} }) as typeIR)
+                1. Group tableenumtype: ((table_enum tid { id_f*{id_f <- id_f*} }) as typeIR) ~~ ((table_enum tid { id_f*{id_f <- id_f*} }) as typeIR)
 
                   1. The relation holds
 
@@ -5407,7 +5407,7 @@ relation Type_alpha: typeIR'''' ~~ typeIR'''''
 
               1. If ((tid = tid')), then
 
-                1. Group tablestructtype: ((table_struct tid { (typeIR_f_a id_f ;)*{} }) as typeIR) ~~ ((table_struct tid { (typeIR_f_b id_f ;)*{} }) as typeIR)
+                1. Group tablestructtype: ((table_struct tid { (typeIR_f_a id_f ;)*{id_f <- id_f*, typeIR_f_a <- typeIR_f_a*} }) as typeIR) ~~ ((table_struct tid { (typeIR_f_b id_f ;)*{id_f <- id_f*, typeIR_f_b <- typeIR_f_b*} }) as typeIR)
 
                   1. If (Type_alpha: typeIR_f_a ~~ typeIR_f_b)*{typeIR_f_a <- typeIR_f_a*, typeIR_f_b <- typeIR_f_b*} holds, then
 
@@ -5416,7 +5416,7 @@ relation Type_alpha: typeIR'''' ~~ typeIR'''''
 ;; ../../../../spec-concrete/2.2.5-type-alpha.watsup:11.1-15.56
 relation ParameterType_alpha: (_direction typeIR_a _id _value?{_value <- _value?}) ~~ (_direction' typeIR_b _id' _value'?{_value' <- _value'?})
 
-1. Group : (_direction typeIR_a _id _value?{}) ~~ (_direction' typeIR_b _id' _value'?{})
+1. Group : (_direction typeIR_a _id _value?{_value <- _value?}) ~~ (_direction' typeIR_b _id' _value'?{_value' <- _value'?})
 
   1. If (Type_alpha: typeIR_a ~~ typeIR_b) holds, then
 
@@ -5435,7 +5435,7 @@ relation RoutineType_alpha: routineTypeIR ~~ routineTypeIR'
 
       1. (Let (action( parameterTypeIR_b*{parameterTypeIR_b <- parameterTypeIR_b*} )) be (routineTypeIR' as actionTypeIR))
 
-      2. Group action: ((action( parameterTypeIR_a*{} )) as routineTypeIR) ~~ ((action( parameterTypeIR_b*{} )) as routineTypeIR)
+      2. Group action: ((action( parameterTypeIR_a*{parameterTypeIR_a <- parameterTypeIR_a*} )) as routineTypeIR) ~~ ((action( parameterTypeIR_b*{parameterTypeIR_b <- parameterTypeIR_b*} )) as routineTypeIR)
 
         1. If (ParameterType_alpha: parameterTypeIR_a ~~ parameterTypeIR_b)*{parameterTypeIR_a <- parameterTypeIR_a*, parameterTypeIR_b <- parameterTypeIR_b*} holds, then
 
@@ -5449,7 +5449,7 @@ relation RoutineType_alpha: routineTypeIR ~~ routineTypeIR'
 
       1. (Let (builtin_function( parameterTypeIR_b*{parameterTypeIR_b <- parameterTypeIR_b*} )-> typeIR_ret_b) be (routineTypeIR' as builtinFunctionTypeIR))
 
-      2. Group builtinfunction: ((builtin_function( parameterTypeIR_a*{} )-> typeIR_ret_a) as routineTypeIR) ~~ ((builtin_function( parameterTypeIR_b*{} )-> typeIR_ret_b) as routineTypeIR)
+      2. Group builtinfunction: ((builtin_function( parameterTypeIR_a*{parameterTypeIR_a <- parameterTypeIR_a*} )-> typeIR_ret_a) as routineTypeIR) ~~ ((builtin_function( parameterTypeIR_b*{parameterTypeIR_b <- parameterTypeIR_b*} )-> typeIR_ret_b) as routineTypeIR)
 
         1. If (ParameterType_alpha: parameterTypeIR_a ~~ parameterTypeIR_b)*{parameterTypeIR_a <- parameterTypeIR_a*, parameterTypeIR_b <- parameterTypeIR_b*} holds, then
 
@@ -5465,7 +5465,7 @@ relation RoutineType_alpha: routineTypeIR ~~ routineTypeIR'
 
       1. (Let (function( parameterTypeIR_b*{parameterTypeIR_b <- parameterTypeIR_b*} )-> typeIR_ret_b) be (routineTypeIR' as definedFunctionTypeIR))
 
-      2. Group function: ((function( parameterTypeIR_a*{} )-> typeIR_ret_a) as routineTypeIR) ~~ ((function( parameterTypeIR_b*{} )-> typeIR_ret_b) as routineTypeIR)
+      2. Group function: ((function( parameterTypeIR_a*{parameterTypeIR_a <- parameterTypeIR_a*} )-> typeIR_ret_a) as routineTypeIR) ~~ ((function( parameterTypeIR_b*{parameterTypeIR_b <- parameterTypeIR_b*} )-> typeIR_ret_b) as routineTypeIR)
 
         1. If (ParameterType_alpha: parameterTypeIR_a ~~ parameterTypeIR_b)*{parameterTypeIR_a <- parameterTypeIR_a*, parameterTypeIR_b <- parameterTypeIR_b*} holds, then
 
@@ -5481,7 +5481,7 @@ relation RoutineType_alpha: routineTypeIR ~~ routineTypeIR'
 
       1. (Let (extern_function( parameterTypeIR_b*{parameterTypeIR_b <- parameterTypeIR_b*} )-> typeIR_ret_b) be (routineTypeIR' as externFunctionTypeIR))
 
-      2. Group externfunction: ((extern_function( parameterTypeIR_a*{} )-> typeIR_ret_a) as routineTypeIR) ~~ ((extern_function( parameterTypeIR_b*{} )-> typeIR_ret_b) as routineTypeIR)
+      2. Group externfunction: ((extern_function( parameterTypeIR_a*{parameterTypeIR_a <- parameterTypeIR_a*} )-> typeIR_ret_a) as routineTypeIR) ~~ ((extern_function( parameterTypeIR_b*{parameterTypeIR_b <- parameterTypeIR_b*} )-> typeIR_ret_b) as routineTypeIR)
 
         1. If (ParameterType_alpha: parameterTypeIR_a ~~ parameterTypeIR_b)*{parameterTypeIR_a <- parameterTypeIR_a*, parameterTypeIR_b <- parameterTypeIR_b*} holds, then
 
@@ -5497,7 +5497,7 @@ relation RoutineType_alpha: routineTypeIR ~~ routineTypeIR'
 
       1. (Let (builtin_method( parameterTypeIR_b*{parameterTypeIR_b <- parameterTypeIR_b*} )-> typeIR_ret_b) be (routineTypeIR' as builtinMethodTypeIR))
 
-      2. Group builtinmethod: ((builtin_method( parameterTypeIR_a*{} )-> typeIR_ret_a) as routineTypeIR) ~~ ((builtin_method( parameterTypeIR_b*{} )-> typeIR_ret_b) as routineTypeIR)
+      2. Group builtinmethod: ((builtin_method( parameterTypeIR_a*{parameterTypeIR_a <- parameterTypeIR_a*} )-> typeIR_ret_a) as routineTypeIR) ~~ ((builtin_method( parameterTypeIR_b*{parameterTypeIR_b <- parameterTypeIR_b*} )-> typeIR_ret_b) as routineTypeIR)
 
         1. If (ParameterType_alpha: parameterTypeIR_a ~~ parameterTypeIR_b)*{parameterTypeIR_a <- parameterTypeIR_a*, parameterTypeIR_b <- parameterTypeIR_b*} holds, then
 
@@ -5523,7 +5523,7 @@ relation RoutineType_alpha: routineTypeIR ~~ routineTypeIR'
 
             1. (Let (extern_method( parameterTypeIR_b*{parameterTypeIR_b <- parameterTypeIR_b*} )-> typeIR_ret_b) be externMethodTypeIR')
 
-            2. Group externmethod: ((extern_method( parameterTypeIR_a*{} )-> typeIR_ret_a) as routineTypeIR) ~~ ((extern_method( parameterTypeIR_b*{} )-> typeIR_ret_b) as routineTypeIR)
+            2. Group externmethod: ((extern_method( parameterTypeIR_a*{parameterTypeIR_a <- parameterTypeIR_a*} )-> typeIR_ret_a) as routineTypeIR) ~~ ((extern_method( parameterTypeIR_b*{parameterTypeIR_b <- parameterTypeIR_b*} )-> typeIR_ret_b) as routineTypeIR)
 
               1. If (ParameterType_alpha: parameterTypeIR_a ~~ parameterTypeIR_b)*{parameterTypeIR_a <- parameterTypeIR_a*, parameterTypeIR_b <- parameterTypeIR_b*} holds, then
 
@@ -5543,7 +5543,7 @@ relation RoutineType_alpha: routineTypeIR ~~ routineTypeIR'
 
             1. (Let (extern_methodabstract( parameterTypeIR_b*{parameterTypeIR_b <- parameterTypeIR_b*} )-> typeIR_ret_b) be externMethodTypeIR')
 
-            2. Group externmethod-abstract: ((extern_methodabstract( parameterTypeIR_a*{} )-> typeIR_ret_a) as routineTypeIR) ~~ ((extern_methodabstract( parameterTypeIR_b*{} )-> typeIR_ret_b) as routineTypeIR)
+            2. Group externmethod-abstract: ((extern_methodabstract( parameterTypeIR_a*{parameterTypeIR_a <- parameterTypeIR_a*} )-> typeIR_ret_a) as routineTypeIR) ~~ ((extern_methodabstract( parameterTypeIR_b*{parameterTypeIR_b <- parameterTypeIR_b*} )-> typeIR_ret_b) as routineTypeIR)
 
               1. If (ParameterType_alpha: parameterTypeIR_a ~~ parameterTypeIR_b)*{parameterTypeIR_a <- parameterTypeIR_a*, parameterTypeIR_b <- parameterTypeIR_b*} holds, then
 
@@ -5559,7 +5559,7 @@ relation RoutineType_alpha: routineTypeIR ~~ routineTypeIR'
 
       1. (Let (parser_apply( parameterTypeIR_b*{parameterTypeIR_b <- parameterTypeIR_b*} )) be (routineTypeIR' as parserApplyMethodTypeIR))
 
-      2. Group parserapply: ((parser_apply( parameterTypeIR_a*{} )) as routineTypeIR) ~~ ((parser_apply( parameterTypeIR_b*{} )) as routineTypeIR)
+      2. Group parserapply: ((parser_apply( parameterTypeIR_a*{parameterTypeIR_a <- parameterTypeIR_a*} )) as routineTypeIR) ~~ ((parser_apply( parameterTypeIR_b*{parameterTypeIR_b <- parameterTypeIR_b*} )) as routineTypeIR)
 
         1. If (ParameterType_alpha: parameterTypeIR_a ~~ parameterTypeIR_b)*{parameterTypeIR_a <- parameterTypeIR_a*, parameterTypeIR_b <- parameterTypeIR_b*} holds, then
 
@@ -5573,7 +5573,7 @@ relation RoutineType_alpha: routineTypeIR ~~ routineTypeIR'
 
       1. (Let (control_apply( parameterTypeIR_b*{parameterTypeIR_b <- parameterTypeIR_b*} )) be (routineTypeIR' as controlApplyMethodTypeIR))
 
-      2. Group controlapply: ((control_apply( parameterTypeIR_a*{} )) as routineTypeIR) ~~ ((control_apply( parameterTypeIR_b*{} )) as routineTypeIR)
+      2. Group controlapply: ((control_apply( parameterTypeIR_a*{parameterTypeIR_a <- parameterTypeIR_a*} )) as routineTypeIR) ~~ ((control_apply( parameterTypeIR_b*{parameterTypeIR_b <- parameterTypeIR_b*} )) as routineTypeIR)
 
         1. If (ParameterType_alpha: parameterTypeIR_a ~~ parameterTypeIR_b)*{parameterTypeIR_a <- parameterTypeIR_a*, parameterTypeIR_b <- parameterTypeIR_b*} holds, then
 
@@ -5620,7 +5620,7 @@ relation RoutineTypeDef_alpha: routineTypeDefIR ~~ routineTypeDefIR'
 
       1. (Let (routineTypeIR_b < tid_b*{tid_b <- tid_b*} , tid_hidden_b*{tid_hidden_b <- tid_hidden_b*} >) be (routineTypeDefIR' as polyRoutineTypeDefIR))
 
-      2. Group poly: ((routineTypeIR_a < tid_a*{} , tid_hidden_a*{} >) as routineTypeDefIR) ~~ ((routineTypeIR_b < tid_b*{} , tid_hidden_b*{} >) as routineTypeDefIR)
+      2. Group poly: ((routineTypeIR_a < tid_a*{tid_a <- tid_a*} , tid_hidden_a*{tid_hidden_a <- tid_hidden_a*} >) as routineTypeDefIR) ~~ ((routineTypeIR_b < tid_b*{tid_b <- tid_b*} , tid_hidden_b*{tid_hidden_b <- tid_hidden_b*} >) as routineTypeDefIR)
 
         1. If ((|tid_a*{tid_a <- tid_a*}| = |tid_b*{tid_b <- tid_b*}|)), then
 
@@ -10247,7 +10247,7 @@ def $tableEntry_lpm_prefix'(value, n_prefix')
 
               2. Return $tableEntry_lpm_prefix'(value', 0)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:5.1-8.69
+;; ../../../../spec-concrete/5.03-wellformed.watsup:5.1-8.72
 relation Type_wf: bound |- typeIR'''
 
 1. Case analysis on typeIR'''
@@ -10274,7 +10274,7 @@ relation Type_wf: bound |- typeIR'''
 
     1. (Let (polyTypeDefIR < typeIR_arg*{typeIR_arg <- typeIR_arg*} >) be (typeIR''' as specializedTypeIR))
 
-    2. Group specializedTypeIR: bound |- ((polyTypeDefIR < typeIR_arg*{} >) as typeIR)
+    2. Group specializedTypeIR: bound |- ((polyTypeDefIR < typeIR_arg*{typeIR_arg <- typeIR_arg*} >) as typeIR)
 
       1. (Let typeIR be $specialize_typeDef((polyTypeDefIR as typeDefIR), typeIR_arg*{typeIR_arg <- typeIR_arg*}))
 
@@ -10322,7 +10322,7 @@ relation Type_wf: bound |- typeIR'''
 
     1. (Let (tuple< typeIR*{typeIR <- typeIR*} >) be (typeIR''' as tupleTypeIR))
 
-    2. Group tupleTypeIR: bound |- ((tuple< typeIR*{} >) as typeIR)
+    2. Group tupleTypeIR: bound |- ((tuple< typeIR*{typeIR <- typeIR*} >) as typeIR)
 
       1. If ($nestable_tuple(typeIR))*{typeIR <- typeIR*}, then
 
@@ -10346,7 +10346,7 @@ relation Type_wf: bound |- typeIR'''
 
     1. (Let (struct _tid { (typeIR id ;)*{id <- id*, typeIR <- typeIR*} }) be (typeIR''' as structTypeIR))
 
-    2. Group structTypeIR: bound |- ((struct _tid { (typeIR id ;)*{} }) as typeIR)
+    2. Group structTypeIR: bound |- ((struct _tid { (typeIR id ;)*{id <- id*, typeIR <- typeIR*} }) as typeIR)
 
       1. If ($distinct_<id>(id*{id <- id*})), then
 
@@ -10360,7 +10360,7 @@ relation Type_wf: bound |- typeIR'''
 
     1. (Let (header _tid { (typeIR id ;)*{id <- id*, typeIR <- typeIR*} }) be (typeIR''' as headerTypeIR))
 
-    2. Group headerTypeIR: bound |- ((header _tid { (typeIR id ;)*{} }) as typeIR)
+    2. Group headerTypeIR: bound |- ((header _tid { (typeIR id ;)*{id <- id*, typeIR <- typeIR*} }) as typeIR)
 
       1. If ($distinct_<id>(id*{id <- id*})), then
 
@@ -10374,7 +10374,7 @@ relation Type_wf: bound |- typeIR'''
 
     1. (Let (header_union _tid { (typeIR id ;)*{id <- id*, typeIR <- typeIR*} }) be (typeIR''' as headerUnionTypeIR))
 
-    2. Group headerUnionTypeIR: bound |- ((header_union _tid { (typeIR id ;)*{} }) as typeIR)
+    2. Group headerUnionTypeIR: bound |- ((header_union _tid { (typeIR id ;)*{id <- id*, typeIR <- typeIR*} }) as typeIR)
 
       1. If ($distinct_<id>(id*{id <- id*})), then
 
@@ -10394,7 +10394,7 @@ relation Type_wf: bound |- typeIR'''
 
         1. (Let (enum _tid { id*{id <- id*} }) be enumTypeIR)
 
-        2. Group enumTypeIR-non-serializable: bound |- ((enum _tid { id*{} }) as typeIR)
+        2. Group enumTypeIR-non-serializable: bound |- ((enum _tid { id*{id <- id*} }) as typeIR)
 
           1. If ($distinct_<id>(id*{id <- id*})), then
 
@@ -10404,7 +10404,7 @@ relation Type_wf: bound |- typeIR'''
 
         1. (Let (enum _tid # typeIR { (id = _value ;)*{_value <- _value*, id <- id*} }) be enumTypeIR)
 
-        2. Group enumTypeIR-serializable: bound |- ((enum _tid # typeIR { (id = _value ;)*{} }) as typeIR)
+        2. Group enumTypeIR-serializable: bound |- ((enum _tid # typeIR { (id = _value ;)*{_value <- _value*, id <- id*} }) as typeIR)
 
           1. If ($distinct_<id>(id*{id <- id*})), then
 
@@ -10418,7 +10418,7 @@ relation Type_wf: bound |- typeIR'''
 
     1. (Let (extern _tid ({ (_rid : routineTypeDefIR)*{_rid <- _rid*, routineTypeDefIR <- routineTypeDefIR*} })) be (typeIR''' as externObjectTypeIR))
 
-    2. Group externObjectTypeIR: bound |- ((extern _tid ({ (_rid : routineTypeDefIR)*{} })) as typeIR)
+    2. Group externObjectTypeIR: bound |- ((extern _tid ({ (_rid : routineTypeDefIR)*{_rid <- _rid*, routineTypeDefIR <- routineTypeDefIR*} })) as typeIR)
 
       1. If (RoutineTypeDef_wf: bound |- routineTypeDefIR)*{routineTypeDefIR <- routineTypeDefIR*} holds, then
 
@@ -10428,7 +10428,7 @@ relation Type_wf: bound |- typeIR'''
 
     1. (Let (parser( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )) be (typeIR''' as parserObjectTypeIR))
 
-    2. Group parserObjectTypeIR: bound |- ((parser( parameterTypeIR*{} )) as typeIR)
+    2. Group parserObjectTypeIR: bound |- ((parser( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )) as typeIR)
 
       1. If (ParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}) holds, then
 
@@ -10438,7 +10438,7 @@ relation Type_wf: bound |- typeIR'''
 
     1. (Let (control( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )) be (typeIR''' as controlObjectTypeIR))
 
-    2. Group controlObjectTypeIR: bound |- ((control( parameterTypeIR*{} )) as typeIR)
+    2. Group controlObjectTypeIR: bound |- ((control( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )) as typeIR)
 
       1. If (ParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}) holds, then
 
@@ -10448,7 +10448,7 @@ relation Type_wf: bound |- typeIR'''
 
     1. (Let (package< typeIR*{typeIR <- typeIR*} >) be (typeIR''' as packageObjectTypeIR))
 
-    2. Group packageObjectTypeIR: bound |- ((package< typeIR*{} >) as typeIR)
+    2. Group packageObjectTypeIR: bound |- ((package< typeIR*{typeIR <- typeIR*} >) as typeIR)
 
       1. If (Type_wf: bound |- typeIR)*{typeIR <- typeIR*} holds, then
 
@@ -10580,7 +10580,7 @@ relation Type_wf: bound |- typeIR'''
 
           2. The relation holds
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:10.1-13.69
+;; ../../../../spec-concrete/5.03-wellformed.watsup:10.1-13.72
 relation TypeDef_wf: bound |- typeDefIR
 
 1. Case analysis on typeDefIR
@@ -10601,7 +10601,7 @@ relation TypeDef_wf: bound |- typeDefIR
 
     1. (Let (typeIR < tid_expl*{tid_expl <- tid_expl*} , tid_impl*{tid_impl <- tid_impl*} >) be (typeDefIR as polyTypeDefIR))
 
-    2. Group polyTypeDefIR: bound |- ((typeIR < tid_expl*{} , tid_impl*{} >) as typeDefIR)
+    2. Group polyTypeDefIR: bound |- ((typeIR < tid_expl*{tid_expl <- tid_expl*} , tid_impl*{tid_impl <- tid_impl*} >) as typeDefIR)
 
       1. If ($definable_type_poly(typeIR)), then
 
@@ -10613,16 +10613,16 @@ relation TypeDef_wf: bound |- typeDefIR
 
             1. The relation holds
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:15.1-18.69
+;; ../../../../spec-concrete/5.03-wellformed.watsup:15.1-18.72
 relation ParameterType_wf: bound |- (direction typeIR _id value'?{value' <- value'?})
 
-1. Group : bound |- (direction typeIR _id value'?{})
+1. Group : bound |- (direction typeIR _id value'?{value' <- value'?})
 
   1. If ((?() = value'?{value' <- value'?})), then
 
     1. If (Type_wf: bound |- typeIR) holds, then
 
-      1. If (($is_extern_object_typeIR($canon(typeIR)) => (direction = ()))), then
+      1. If (((($is_string_typeIR($canon(typeIR)) \/ $is_arbitrary_int_typeIR($canon(typeIR))) \/ $is_objectTypeIR($canon(typeIR))) => (direction = ()))), then
 
         1. The relation holds
 
@@ -10634,22 +10634,24 @@ relation ParameterType_wf: bound |- (direction typeIR _id value'?{value' <- valu
 
     2. If (Type_wf: bound |- typeIR) holds, then
 
-      1. If (~$is_extern_object_typeIR($canon(typeIR))), then
+      1. Case analysis on direction
 
-        1. Case analysis on direction
+        1. Case (% matches pattern `IN`)
 
-          1. Case (% matches pattern `IN`)
-
-            1. The relation holds
-
-          2. Case (% matches pattern ``EMPTY`)
+          1. If (((($is_string_typeIR($canon(typeIR)) \/ $is_arbitrary_int_typeIR($canon(typeIR))) \/ $is_objectTypeIR($canon(typeIR))) => (direction = ()))), then
 
             1. The relation holds
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:20.1-23.69
+        2. Case (% matches pattern ``EMPTY`)
+
+          1. If (((($is_string_typeIR($canon(typeIR)) \/ $is_arbitrary_int_typeIR($canon(typeIR))) \/ $is_objectTypeIR($canon(typeIR))) => (direction = ()))), then
+
+            1. The relation holds
+
+;; ../../../../spec-concrete/5.03-wellformed.watsup:20.1-23.72
 relation ParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}
 
-1. Group : bound |- parameterTypeIR*{}
+1. Group : bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}
 
   1. (Let (_direction _typeIR id _value?{_value <- _value?}) be parameterTypeIR)*{_direction <- _direction*, _typeIR <- _typeIR*, _value? <- _value?*, id <- id*, parameterTypeIR <- parameterTypeIR*}
 
@@ -10659,7 +10661,7 @@ relation ParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- paramet
 
       1. The relation holds
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:25.1-28.69
+;; ../../../../spec-concrete/5.03-wellformed.watsup:25.1-28.72
 relation RoutineType_wf: bound |- routineTypeIR
 
 1. Case analysis on routineTypeIR
@@ -10668,7 +10670,7 @@ relation RoutineType_wf: bound |- routineTypeIR
 
     1. (Let (action( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )) be (routineTypeIR as actionTypeIR))
 
-    2. Group actionTypeIR: bound |- ((action( parameterTypeIR*{} )) as routineTypeIR)
+    2. Group actionTypeIR: bound |- ((action( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )) as routineTypeIR)
 
       1. If (ParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}) holds, then
 
@@ -10676,7 +10678,7 @@ relation RoutineType_wf: bound |- routineTypeIR
 
         2. If ($directionless_trailing(direction*{direction <- direction*})), then
 
-          1. If ($nestable_action(direction, typeIR))*{direction <- direction*, typeIR <- typeIR*}, then
+          1. If ($nestable_action(typeIR))*{typeIR <- typeIR*}, then
 
             1. The relation holds
 
@@ -10684,7 +10686,7 @@ relation RoutineType_wf: bound |- routineTypeIR
 
     1. (Let (builtin_function( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret) be (routineTypeIR as builtinFunctionTypeIR))
 
-    2. Group builtinfunction: bound |- ((builtin_function( parameterTypeIR*{} )-> typeIR_ret) as routineTypeIR)
+    2. Group builtinfunction: bound |- ((builtin_function( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret) as routineTypeIR)
 
       1. If (ParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}) holds, then
 
@@ -10696,13 +10698,13 @@ relation RoutineType_wf: bound |- routineTypeIR
 
     1. (Let (function( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret) be (routineTypeIR as definedFunctionTypeIR))
 
-    2. Group definedFunctionTypeIR: bound |- ((function( parameterTypeIR*{} )-> typeIR_ret) as routineTypeIR)
+    2. Group definedFunctionTypeIR: bound |- ((function( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret) as routineTypeIR)
 
       1. If (ParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}) holds, then
 
-        1. (Let (direction typeIR _id _value?{_value <- _value?}) be parameterTypeIR)*{_id <- _id*, _value? <- _value?*, direction <- direction*, parameterTypeIR <- parameterTypeIR*, typeIR <- typeIR*}
+        1. (Let (_direction typeIR _id _value?{_value <- _value?}) be parameterTypeIR)*{_direction <- _direction*, _id <- _id*, _value? <- _value?*, parameterTypeIR <- parameterTypeIR*, typeIR <- typeIR*}
 
-        2. If ($nestable_function(direction, typeIR))*{direction <- direction*, typeIR <- typeIR*}, then
+        2. If ($nestable_function(typeIR))*{typeIR <- typeIR*}, then
 
           1. If (Type_wf: bound |- typeIR_ret) holds, then
 
@@ -10712,13 +10714,13 @@ relation RoutineType_wf: bound |- routineTypeIR
 
     1. (Let (extern_function( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret) be (routineTypeIR as externFunctionTypeIR))
 
-    2. Group externFunctionTypeIR: bound |- ((extern_function( parameterTypeIR*{} )-> typeIR_ret) as routineTypeIR)
+    2. Group externFunctionTypeIR: bound |- ((extern_function( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret) as routineTypeIR)
 
       1. If (ParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}) holds, then
 
-        1. (Let (direction typeIR _id _value?{_value <- _value?}) be parameterTypeIR)*{_id <- _id*, _value? <- _value?*, direction <- direction*, parameterTypeIR <- parameterTypeIR*, typeIR <- typeIR*}
+        1. (Let (_direction typeIR _id _value?{_value <- _value?}) be parameterTypeIR)*{_direction <- _direction*, _id <- _id*, _value? <- _value?*, parameterTypeIR <- parameterTypeIR*, typeIR <- typeIR*}
 
-        2. If ($nestable_externfunction(direction, typeIR))*{direction <- direction*, typeIR <- typeIR*}, then
+        2. If ($nestable_externfunction(typeIR))*{typeIR <- typeIR*}, then
 
           1. If (Type_wf: bound |- typeIR_ret) holds, then
 
@@ -10728,7 +10730,7 @@ relation RoutineType_wf: bound |- routineTypeIR
 
     1. (Let (builtin_method( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret) be (routineTypeIR as builtinMethodTypeIR))
 
-    2. Group builtinMethodTypeIR: bound |- ((builtin_method( parameterTypeIR*{} )-> typeIR_ret) as routineTypeIR)
+    2. Group builtinMethodTypeIR: bound |- ((builtin_method( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret) as routineTypeIR)
 
       1. If (ParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}) holds, then
 
@@ -10746,13 +10748,13 @@ relation RoutineType_wf: bound |- routineTypeIR
 
         1. (Let (extern_method( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret) be externMethodTypeIR)
 
-        2. Group externMethodTypeIR: bound |- ((extern_method( parameterTypeIR*{} )-> typeIR_ret) as routineTypeIR)
+        2. Group externMethodTypeIR: bound |- ((extern_method( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret) as routineTypeIR)
 
           1. If (ParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}) holds, then
 
-            1. (Let (direction typeIR _id _value?{_value <- _value?}) be parameterTypeIR)*{_id <- _id*, _value? <- _value?*, direction <- direction*, parameterTypeIR <- parameterTypeIR*, typeIR <- typeIR*}
+            1. (Let (_direction typeIR _id _value?{_value <- _value?}) be parameterTypeIR)*{_direction <- _direction*, _id <- _id*, _value? <- _value?*, parameterTypeIR <- parameterTypeIR*, typeIR <- typeIR*}
 
-            2. If ($nestable_externmethod(direction, typeIR))*{direction <- direction*, typeIR <- typeIR*}, then
+            2. If ($nestable_externmethod(typeIR))*{typeIR <- typeIR*}, then
 
               1. If (Type_wf: bound |- typeIR_ret) holds, then
 
@@ -10762,13 +10764,13 @@ relation RoutineType_wf: bound |- routineTypeIR
 
         1. (Let (extern_methodabstract( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret) be externMethodTypeIR)
 
-        2. Group externAbstractMethodTypeIR: bound |- ((extern_methodabstract( parameterTypeIR*{} )-> typeIR_ret) as routineTypeIR)
+        2. Group externAbstractMethodTypeIR: bound |- ((extern_methodabstract( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret) as routineTypeIR)
 
           1. If (ParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}) holds, then
 
-            1. (Let (direction typeIR _id _value?{_value <- _value?}) be parameterTypeIR)*{_id <- _id*, _value? <- _value?*, direction <- direction*, parameterTypeIR <- parameterTypeIR*, typeIR <- typeIR*}
+            1. (Let (_direction typeIR _id _value?{_value <- _value?}) be parameterTypeIR)*{_direction <- _direction*, _id <- _id*, _value? <- _value?*, parameterTypeIR <- parameterTypeIR*, typeIR <- typeIR*}
 
-            2. If ($nestable_externabstractmethod(direction, typeIR))*{direction <- direction*, typeIR <- typeIR*}, then
+            2. If ($nestable_externabstractmethod(typeIR))*{typeIR <- typeIR*}, then
 
               1. If (Type_wf: bound |- typeIR_ret) holds, then
 
@@ -10778,13 +10780,13 @@ relation RoutineType_wf: bound |- routineTypeIR
 
     1. (Let (parser_apply( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )) be (routineTypeIR as parserApplyMethodTypeIR))
 
-    2. Group parserApplyMethodTypeIR: bound |- ((parser_apply( parameterTypeIR*{} )) as routineTypeIR)
+    2. Group parserApplyMethodTypeIR: bound |- ((parser_apply( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )) as routineTypeIR)
 
       1. If (ParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}) holds, then
 
-        1. (Let (direction typeIR _id _value?{_value <- _value?}) be parameterTypeIR)*{_id <- _id*, _value? <- _value?*, direction <- direction*, parameterTypeIR <- parameterTypeIR*, typeIR <- typeIR*}
+        1. (Let (_direction typeIR _id _value?{_value <- _value?}) be parameterTypeIR)*{_direction <- _direction*, _id <- _id*, _value? <- _value?*, parameterTypeIR <- parameterTypeIR*, typeIR <- typeIR*}
 
-        2. If ($nestable_parserapplymethod(direction, typeIR))*{direction <- direction*, typeIR <- typeIR*}, then
+        2. If ($nestable_parserapplymethod(typeIR))*{typeIR <- typeIR*}, then
 
           1. The relation holds
 
@@ -10792,13 +10794,13 @@ relation RoutineType_wf: bound |- routineTypeIR
 
     1. (Let (control_apply( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )) be (routineTypeIR as controlApplyMethodTypeIR))
 
-    2. Group controlApplyMethodTypeIR: bound |- ((control_apply( parameterTypeIR*{} )) as routineTypeIR)
+    2. Group controlApplyMethodTypeIR: bound |- ((control_apply( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )) as routineTypeIR)
 
       1. If (ParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}) holds, then
 
-        1. (Let (direction typeIR _id _value?{_value <- _value?}) be parameterTypeIR)*{_id <- _id*, _value? <- _value?*, direction <- direction*, parameterTypeIR <- parameterTypeIR*, typeIR <- typeIR*}
+        1. (Let (_direction typeIR _id _value?{_value <- _value?}) be parameterTypeIR)*{_direction <- _direction*, _id <- _id*, _value? <- _value?*, parameterTypeIR <- parameterTypeIR*, typeIR <- typeIR*}
 
-        2. If ($nestable_controlapplymethod(direction, typeIR))*{direction <- direction*, typeIR <- typeIR*}, then
+        2. If ($nestable_controlapplymethod(typeIR))*{typeIR <- typeIR*}, then
 
           1. The relation holds
 
@@ -10814,11 +10816,11 @@ relation RoutineType_wf: bound |- routineTypeIR
 
         1. (Let (table_struct _tid { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} }) be tableMetadataTypeIR)
 
-        2. Group tableApplyMethodTypeIR: bound |- ((table_apply-> ((table_struct _tid { _fieldTypeIR*{} }) as typeIR)) as routineTypeIR)
+        2. Group tableApplyMethodTypeIR: bound |- ((table_apply-> ((table_struct _tid { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} }) as typeIR)) as routineTypeIR)
 
           1. The relation holds
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:30.1-33.69
+;; ../../../../spec-concrete/5.03-wellformed.watsup:30.1-33.72
 relation RoutineTypeDef_wf: bound |- routineTypeDefIR
 
 1. Case analysis on routineTypeDefIR
@@ -10839,7 +10841,7 @@ relation RoutineTypeDef_wf: bound |- routineTypeDefIR
 
     1. (Let (routineTypeIR < tid_expl*{tid_expl <- tid_expl*} , tid_impl*{tid_impl <- tid_impl*} >) be (routineTypeDefIR as polyRoutineTypeDefIR))
 
-    2. Group poly: bound |- ((routineTypeIR < tid_expl*{} , tid_impl*{} >) as routineTypeDefIR)
+    2. Group poly: bound |- ((routineTypeIR < tid_expl*{tid_expl <- tid_expl*} , tid_impl*{tid_impl <- tid_impl*} >) as routineTypeDefIR)
 
       1. If ($definable_routine_poly(routineTypeIR)), then
 
@@ -10851,21 +10853,21 @@ relation RoutineTypeDef_wf: bound |- routineTypeDefIR
 
             1. The relation holds
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:35.1-38.69
+;; ../../../../spec-concrete/5.03-wellformed.watsup:35.1-38.72
 relation ConstructorParameterType_wf: bound |- (direction typeIR _id _value?{_value <- _value?})
 
 1. If ((direction matches pattern ``EMPTY`)), then
 
-  1. Group : bound |- (() typeIR _id _value?{})
+  1. Group : bound |- (() typeIR _id _value?{_value <- _value?})
 
     1. If (Type_wf: bound |- typeIR) holds, then
 
       1. The relation holds
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:40.1-43.69
+;; ../../../../spec-concrete/5.03-wellformed.watsup:40.1-43.72
 relation ConstructorParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}
 
-1. Group : bound |- parameterTypeIR*{}
+1. Group : bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}
 
   1. (Let (_direction _typeIR id _value?{_value <- _value?}) be parameterTypeIR)*{_direction <- _direction*, _typeIR <- _typeIR*, _value? <- _value?*, id <- id*, parameterTypeIR <- parameterTypeIR*}
 
@@ -10875,10 +10877,10 @@ relation ConstructorParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR
 
       1. The relation holds
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:45.1-48.69
+;; ../../../../spec-concrete/5.03-wellformed.watsup:45.1-48.72
 relation ConstructorType_wf: bound |- (constructor( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_object)
 
-1. Group externtype: bound |- (constructor( parameterTypeIR*{} )-> typeIR_object)
+1. Group externtype: bound |- (constructor( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_object)
 
   1. If (ConstructorParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}) holds, then
 
@@ -10896,7 +10898,7 @@ relation ConstructorType_wf: bound |- (constructor( parameterTypeIR*{parameterTy
 
           1. The relation holds
 
-2. Group parsertype: bound |- (constructor( parameterTypeIR*{} )-> typeIR_object)
+2. Group parsertype: bound |- (constructor( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_object)
 
   1. If (ConstructorParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}) holds, then
 
@@ -10914,7 +10916,7 @@ relation ConstructorType_wf: bound |- (constructor( parameterTypeIR*{parameterTy
 
           1. The relation holds
 
-3. Group controltype: bound |- (constructor( parameterTypeIR*{} )-> typeIR_object)
+3. Group controltype: bound |- (constructor( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_object)
 
   1. If (ConstructorParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}) holds, then
 
@@ -10932,7 +10934,7 @@ relation ConstructorType_wf: bound |- (constructor( parameterTypeIR*{parameterTy
 
           1. The relation holds
 
-4. Group packagetype: bound |- (constructor( parameterTypeIR*{} )-> typeIR_object)
+4. Group packagetype: bound |- (constructor( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_object)
 
   1. If (ConstructorParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}) holds, then
 
@@ -10950,10 +10952,10 @@ relation ConstructorType_wf: bound |- (constructor( parameterTypeIR*{parameterTy
 
           1. The relation holds
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:50.1-53.69
+;; ../../../../spec-concrete/5.03-wellformed.watsup:50.1-53.72
 relation ConstructorTypeDef_wf: bound |- (constructorTypeIR < tid_expl*{tid_expl <- tid_expl*} , tid_impl*{tid_impl <- tid_impl*} >)
 
-1. Group : bound |- (constructorTypeIR < tid_expl*{} , tid_impl*{} >)
+1. Group : bound |- (constructorTypeIR < tid_expl*{tid_expl <- tid_expl*} , tid_impl*{tid_impl <- tid_impl*} >)
 
   1. (Let (constructor( _constructorParameterTypeIR*{_constructorParameterTypeIR <- _constructorParameterTypeIR*} )-> typeIR_object) be constructorTypeIR)
 
@@ -10967,14 +10969,14 @@ relation ConstructorTypeDef_wf: bound |- (constructorTypeIR < tid_expl*{tid_expl
 
         1. The relation holds
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:103.1-104.44
+;; ../../../../spec-concrete/5.03-wellformed.watsup:108.1-109.47
 def $nestable_typedef(typeIR)
 
 1. (Let typeIR_canon be $canon(typeIR))
 
 2. Return $nestable'_typedef(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:105.1-106.44
+;; ../../../../spec-concrete/5.03-wellformed.watsup:110.1-111.47
 def $nestable'_typedef(typeIR')
 
 1. Case analysis on typeIR'
@@ -11025,14 +11027,14 @@ def $nestable'_typedef(typeIR')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:125.1-126.45
+;; ../../../../spec-concrete/5.03-wellformed.watsup:130.1-131.48
 def $nestable_new(typeIR)
 
 1. (Let typeIR_canon be $canon(typeIR))
 
 2. Return $nestable'_new(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:127.1-128.45
+;; ../../../../spec-concrete/5.03-wellformed.watsup:132.1-133.48
 def $nestable'_new(typeIR')
 
 1. Case analysis on typeIR'
@@ -11079,14 +11081,14 @@ def $nestable'_new(typeIR')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:147.1-148.48
+;; ../../../../spec-concrete/5.03-wellformed.watsup:152.1-153.51
 def $nestable_list(typeIR)
 
 1. (Let typeIR_canon be $canon(typeIR))
 
 2. Return $nestable'_list(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:149.1-150.48
+;; ../../../../spec-concrete/5.03-wellformed.watsup:154.1-155.51
 def $nestable'_list(typeIR')
 
 1. Case analysis on typeIR'
@@ -11141,14 +11143,14 @@ def $nestable'_list(typeIR')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:170.1-171.49
+;; ../../../../spec-concrete/5.03-wellformed.watsup:175.1-176.52
 def $nestable_tuple(typeIR)
 
 1. (Let typeIR_canon be $canon(typeIR))
 
 2. Return $nestable'_tuple(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:172.1-173.49
+;; ../../../../spec-concrete/5.03-wellformed.watsup:177.1-178.52
 def $nestable'_tuple(typeIR')
 
 1. Case analysis on typeIR'
@@ -11243,14 +11245,14 @@ def $nestable'_tuple(typeIR')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:198.1-199.56
+;; ../../../../spec-concrete/5.03-wellformed.watsup:203.1-204.59
 def $nestable_headerStack(typeIR)
 
 1. (Let typeIR_canon be $canon(typeIR))
 
 2. Return $nestable'_headerStack(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:200.1-201.56
+;; ../../../../spec-concrete/5.03-wellformed.watsup:205.1-206.59
 def $nestable'_headerStack(typeIR')
 
 1. Case analysis on typeIR'
@@ -11277,14 +11279,14 @@ def $nestable'_headerStack(typeIR')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:217.1-218.50
+;; ../../../../spec-concrete/5.03-wellformed.watsup:222.1-223.53
 def $nestable_struct(typeIR)
 
 1. (Let typeIR_canon be $canon(typeIR))
 
 2. Return $nestable'_struct(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:219.1-220.50
+;; ../../../../spec-concrete/5.03-wellformed.watsup:224.1-225.53
 def $nestable'_struct(typeIR')
 
 1. Case analysis on typeIR'
@@ -11379,14 +11381,14 @@ def $nestable'_struct(typeIR')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:246.1-247.48
+;; ../../../../spec-concrete/5.03-wellformed.watsup:251.1-252.51
 def $nestable_header(typeIR)
 
 1. (Let typeIR_canon be $canon(typeIR))
 
 2. Return $nestable'_header(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:248.1-249.48
+;; ../../../../spec-concrete/5.03-wellformed.watsup:253.1-254.51
 def $nestable'_header(typeIR'')
 
 1. Case analysis on typeIR''
@@ -11457,14 +11459,14 @@ def $nestable'_header(typeIR'')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:250.1-251.67
+;; ../../../../spec-concrete/5.03-wellformed.watsup:255.1-256.70
 def $nestable_struct_in_header(typeIR)
 
 1. (Let typeIR_canon be $canon(typeIR))
 
 2. Return $nestable'_struct_in_header(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:252.1-253.67
+;; ../../../../spec-concrete/5.03-wellformed.watsup:257.1-258.70
 def $nestable'_struct_in_header(typeIR'')
 
 1. Case analysis on typeIR''
@@ -11529,14 +11531,14 @@ def $nestable'_struct_in_header(typeIR'')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:290.1-291.54
+;; ../../../../spec-concrete/5.03-wellformed.watsup:295.1-296.57
 def $nestable_headerUnion(typeIR)
 
 1. (Let typeIR_canon be $canon(typeIR))
 
 2. Return $nestable'_headerUnion(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:292.1-293.54
+;; ../../../../spec-concrete/5.03-wellformed.watsup:297.1-298.57
 def $nestable'_headerUnion(typeIR')
 
 1. Case analysis on typeIR'
@@ -11563,14 +11565,14 @@ def $nestable'_headerUnion(typeIR')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:314.1-315.59
+;; ../../../../spec-concrete/5.03-wellformed.watsup:319.1-320.62
 def $nestable_enum_serializable(typeIR)
 
 1. (Let typeIR_canon be $canon(typeIR))
 
 2. Return $nestable'_enum_serializable(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:316.1-317.59
+;; ../../../../spec-concrete/5.03-wellformed.watsup:321.1-322.62
 def $nestable'_enum_serializable(typeIR'')
 
 1. Case analysis on typeIR''
@@ -11609,14 +11611,14 @@ def $nestable'_enum_serializable(typeIR'')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:318.1-319.80
+;; ../../../../spec-concrete/5.03-wellformed.watsup:323.1-324.83
 def $nestable_new_in_enum_serializable(typeIR)
 
 1. (Let typeIR_canon be $canon(typeIR))
 
 2. Return $nestable'_new_in_enum_serializable(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:320.1-321.80
+;; ../../../../spec-concrete/5.03-wellformed.watsup:325.1-326.83
 def $nestable'_new_in_enum_serializable(typeIR')
 
 1. Case analysis on typeIR'
@@ -11655,14 +11657,14 @@ def $nestable'_new_in_enum_serializable(typeIR')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:407.1-408.45
+;; ../../../../spec-concrete/5.03-wellformed.watsup:412.1-413.48
 def $nestable_set(typeIR)
 
 1. (Let typeIR_canon be $canon(typeIR))
 
 2. Return $nestable'_set(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:409.1-410.45
+;; ../../../../spec-concrete/5.03-wellformed.watsup:414.1-415.48
 def $nestable'_set(typeIR'')
 
 1. Case analysis on typeIR''
@@ -11741,14 +11743,14 @@ def $nestable'_set(typeIR'')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:411.1-412.63
+;; ../../../../spec-concrete/5.03-wellformed.watsup:416.1-417.66
 def $nestable_tuple_in_set(typeIR)
 
 1. (Let typeIR_canon be $canon(typeIR))
 
 2. Return $nestable'_tuple_in_set(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:413.1-414.63
+;; ../../../../spec-concrete/5.03-wellformed.watsup:418.1-419.66
 def $nestable'_tuple_in_set(typeIR'')
 
 1. Case analysis on typeIR''
@@ -11809,14 +11811,14 @@ def $nestable'_tuple_in_set(typeIR'')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:415.1-416.66
+;; ../../../../spec-concrete/5.03-wellformed.watsup:420.1-421.69
 def $nestable_sequence_in_set(typeIR)
 
 1. (Let typeIR_canon be $canon(typeIR))
 
 2. Return $nestable'_sequence_in_set(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:417.1-418.66
+;; ../../../../spec-concrete/5.03-wellformed.watsup:422.1-423.69
 def $nestable'_sequence_in_set(typeIR'')
 
 1. Case analysis on typeIR''
@@ -11889,7 +11891,7 @@ def $nestable'_sequence_in_set(typeIR'')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:486.1-487.59
+;; ../../../../spec-concrete/5.03-wellformed.watsup:491.1-492.62
 def $definable_type_mono(typeIR')
 
 1. Case analysis on typeIR'
@@ -11922,7 +11924,7 @@ def $definable_type_mono(typeIR')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:501.1-502.59
+;; ../../../../spec-concrete/5.03-wellformed.watsup:506.1-507.62
 def $definable_type_poly(typeIR')
 
 1. Case analysis on typeIR'
@@ -11985,12 +11987,12 @@ def $definable_type_poly(typeIR')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:530.1-530.47
+;; ../../../../spec-concrete/5.03-wellformed.watsup:535.1-536.75
 def $directionless_trailing(direction*{direction <- direction*})
 
 1. Return $directionless_trailing'(true, $rev_<direction>(direction*{direction <- direction*}))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:531.1-531.54
+;; ../../../../spec-concrete/5.03-wellformed.watsup:537.1-537.54
 def $directionless_trailing'(_bool', direction''*{direction'' <- direction''*})
 
 1. Case analysis on direction''*{direction'' <- direction''*}
@@ -12029,27 +12031,19 @@ def $directionless_trailing'(_bool', direction''*{direction'' <- direction''*})
 
         1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:544.1-544.47
-def $nestable_action(direction, typeIR)
+;; ../../../../spec-concrete/5.03-wellformed.watsup:550.1-551.52
+def $nestable_action(typeIR)
 
-1. Return $nestable_action'(direction, $canon(typeIR))
+1. (Let typeIR_canon be $canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:545.1-545.48
-def $nestable_action'(direction', typeIR')
+2. Return $nestable_action'(typeIR_canon)
+
+;; ../../../../spec-concrete/5.03-wellformed.watsup:552.1-553.52
+def $nestable_action'(typeIR')
 
 1. Case analysis on typeIR'
 
-  1. Case (% has type primitiveTypeIR)
-
-    1. (Let primitiveTypeIR be (typeIR' as primitiveTypeIR))
-
-    2. If ((primitiveTypeIR matches pattern `STRING`)), then
-
-      1. If (~(direction' matches pattern ``EMPTY`)), then
-
-        1. Return false
-
-  2. Case (% has type numberTypeIR)
+  1. Case (% has type numberTypeIR)
 
     1. (Let numberTypeIR be (typeIR' as numberTypeIR))
 
@@ -12057,105 +12051,81 @@ def $nestable_action'(direction', typeIR')
 
       1. Return false
 
-  3. Case (% has type objectTypeIR)
+  2. Case (% has type objectTypeIR)
 
     1. (Let objectTypeIR be (typeIR' as objectTypeIR))
 
     2. Return false
 
+  3. Case (% has type synthesizedTypeIR)
+
+    1. (Let synthesizedTypeIR be (typeIR' as synthesizedTypeIR))
+
+    2. Return false
+
 2. Otherwise
 
   1. Return true
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:570.1-570.49
-def $nestable_function(direction, typeIR)
+;; ../../../../spec-concrete/5.03-wellformed.watsup:578.1-579.53
+def $nestable_function(typeIR)
 
-1. Return $nestable_function'(direction, $canon(typeIR))
+1. (Let typeIR_canon be $canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:571.1-571.50
-def $nestable_function'(direction', typeIR')
+2. Return $nestable_function'(typeIR_canon)
+
+;; ../../../../spec-concrete/5.03-wellformed.watsup:580.1-581.53
+def $nestable_function'(typeIR')
 
 1. Case analysis on typeIR'
 
-  1. Case (% has type primitiveTypeIR)
-
-    1. (Let primitiveTypeIR be (typeIR' as primitiveTypeIR))
-
-    2. If ((primitiveTypeIR matches pattern `STRING`)), then
-
-      1. If (~(direction' matches pattern ``EMPTY`)), then
-
-        1. Return false
-
-  2. Case (% has type numberTypeIR)
-
-    1. (Let numberTypeIR be (typeIR' as numberTypeIR))
-
-    2. If ((numberTypeIR matches pattern `INT`)), then
-
-      1. If (~(direction' matches pattern ``EMPTY`)), then
-
-        1. Return false
-
-  3. Case (% has type objectTypeIR)
+  1. Case (% has type objectTypeIR)
 
     1. (Let objectTypeIR be (typeIR' as objectTypeIR))
 
     2. Return false
 
+  2. Case (% has type synthesizedTypeIR)
+
+    1. (Let synthesizedTypeIR be (typeIR' as synthesizedTypeIR))
+
+    2. Return false
+
 2. Otherwise
 
   1. Return true
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:590.1-590.55
-def $nestable_externfunction(direction, typeIR)
+;; ../../../../spec-concrete/5.03-wellformed.watsup:598.1-599.61
+def $nestable_externfunction(typeIR)
 
-1. Return $nestable_externfunction'(direction, $canon(typeIR))
+1. (Let typeIR_canon be $canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:591.1-591.56
-def $nestable_externfunction'(direction', typeIR')
+2. Return $nestable_externfunction'(typeIR_canon)
+
+;; ../../../../spec-concrete/5.03-wellformed.watsup:600.1-601.61
+def $nestable_externfunction'(typeIR')
 
 1. Case analysis on typeIR'
 
-  1. Case (% has type primitiveTypeIR)
-
-    1. (Let primitiveTypeIR be (typeIR' as primitiveTypeIR))
-
-    2. If ((primitiveTypeIR matches pattern `STRING`)), then
-
-      1. If (~(direction' matches pattern ``EMPTY`)), then
-
-        1. Return false
-
-  2. Case (% has type numberTypeIR)
-
-    1. (Let numberTypeIR be (typeIR' as numberTypeIR))
-
-    2. If ((numberTypeIR matches pattern `INT`)), then
-
-      1. If (~(direction' matches pattern ``EMPTY`)), then
-
-        1. Return false
-
-  3. Case (% has type parserObjectTypeIR)
+  1. Case (% has type parserObjectTypeIR)
 
     1. (Let parserObjectTypeIR be (typeIR' as parserObjectTypeIR))
 
     2. Return false
 
-  4. Case (% has type controlObjectTypeIR)
+  2. Case (% has type controlObjectTypeIR)
 
     1. (Let controlObjectTypeIR be (typeIR' as controlObjectTypeIR))
 
     2. Return false
 
-  5. Case (% has type packageObjectTypeIR)
+  3. Case (% has type packageObjectTypeIR)
 
     1. (Let packageObjectTypeIR be (typeIR' as packageObjectTypeIR))
 
     2. Return false
 
-  6. Case (% has type tableObjectTypeIR)
+  4. Case (% has type tableObjectTypeIR)
 
     1. (Let tableObjectTypeIR be (typeIR' as tableObjectTypeIR))
 
@@ -12165,55 +12135,37 @@ def $nestable_externfunction'(direction', typeIR')
 
   1. Return true
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:620.1-620.53
-def $nestable_externmethod(direction, typeIR)
+;; ../../../../spec-concrete/5.03-wellformed.watsup:627.1-628.59
+def $nestable_externmethod(typeIR)
 
-1. Return $nestable_externmethod'(direction, $canon(typeIR))
+1. (Let typeIR_canon be $canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:621.1-621.54
-def $nestable_externmethod'(direction', typeIR')
+2. Return $nestable_externmethod'(typeIR_canon)
+
+;; ../../../../spec-concrete/5.03-wellformed.watsup:629.1-630.59
+def $nestable_externmethod'(typeIR')
 
 1. Case analysis on typeIR'
 
-  1. Case (% has type primitiveTypeIR)
-
-    1. (Let primitiveTypeIR be (typeIR' as primitiveTypeIR))
-
-    2. If ((primitiveTypeIR matches pattern `STRING`)), then
-
-      1. If (~(direction' matches pattern ``EMPTY`)), then
-
-        1. Return false
-
-  2. Case (% has type numberTypeIR)
-
-    1. (Let numberTypeIR be (typeIR' as numberTypeIR))
-
-    2. If ((numberTypeIR matches pattern `INT`)), then
-
-      1. If (~(direction' matches pattern ``EMPTY`)), then
-
-        1. Return false
-
-  3. Case (% has type parserObjectTypeIR)
+  1. Case (% has type parserObjectTypeIR)
 
     1. (Let parserObjectTypeIR be (typeIR' as parserObjectTypeIR))
 
     2. Return false
 
-  4. Case (% has type controlObjectTypeIR)
+  2. Case (% has type controlObjectTypeIR)
 
     1. (Let controlObjectTypeIR be (typeIR' as controlObjectTypeIR))
 
     2. Return false
 
-  5. Case (% has type packageObjectTypeIR)
+  3. Case (% has type packageObjectTypeIR)
 
     1. (Let packageObjectTypeIR be (typeIR' as packageObjectTypeIR))
 
     2. Return false
 
-  6. Case (% has type tableObjectTypeIR)
+  4. Case (% has type tableObjectTypeIR)
 
     1. (Let tableObjectTypeIR be (typeIR' as tableObjectTypeIR))
 
@@ -12223,55 +12175,37 @@ def $nestable_externmethod'(direction', typeIR')
 
   1. Return true
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:643.1-643.61
-def $nestable_externabstractmethod(direction, typeIR)
+;; ../../../../spec-concrete/5.03-wellformed.watsup:649.1-650.68
+def $nestable_externabstractmethod(typeIR)
 
-1. Return $nestable_externabstractmethod'(direction, $canon(typeIR))
+1. (Let typeIR_canon be $canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:644.1-644.62
-def $nestable_externabstractmethod'(direction', typeIR')
+2. Return $nestable_externabstractmethod'(typeIR_canon)
+
+;; ../../../../spec-concrete/5.03-wellformed.watsup:651.1-652.68
+def $nestable_externabstractmethod'(typeIR')
 
 1. Case analysis on typeIR'
 
-  1. Case (% has type primitiveTypeIR)
-
-    1. (Let primitiveTypeIR be (typeIR' as primitiveTypeIR))
-
-    2. If ((primitiveTypeIR matches pattern `STRING`)), then
-
-      1. If (~(direction' matches pattern ``EMPTY`)), then
-
-        1. Return false
-
-  2. Case (% has type numberTypeIR)
-
-    1. (Let numberTypeIR be (typeIR' as numberTypeIR))
-
-    2. If ((numberTypeIR matches pattern `INT`)), then
-
-      1. If (~(direction' matches pattern ``EMPTY`)), then
-
-        1. Return false
-
-  3. Case (% has type parserObjectTypeIR)
+  1. Case (% has type parserObjectTypeIR)
 
     1. (Let parserObjectTypeIR be (typeIR' as parserObjectTypeIR))
 
     2. Return false
 
-  4. Case (% has type controlObjectTypeIR)
+  2. Case (% has type controlObjectTypeIR)
 
     1. (Let controlObjectTypeIR be (typeIR' as controlObjectTypeIR))
 
     2. Return false
 
-  5. Case (% has type packageObjectTypeIR)
+  3. Case (% has type packageObjectTypeIR)
 
     1. (Let packageObjectTypeIR be (typeIR' as packageObjectTypeIR))
 
     2. Return false
 
-  6. Case (% has type tableObjectTypeIR)
+  4. Case (% has type tableObjectTypeIR)
 
     1. (Let tableObjectTypeIR be (typeIR' as tableObjectTypeIR))
 
@@ -12281,55 +12215,37 @@ def $nestable_externabstractmethod'(direction', typeIR')
 
   1. Return true
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:666.1-666.58
-def $nestable_parserapplymethod(direction, typeIR)
+;; ../../../../spec-concrete/5.03-wellformed.watsup:671.1-672.64
+def $nestable_parserapplymethod(typeIR)
 
-1. Return $nestable_parserapplymethod'(direction, $canon(typeIR))
+1. (Let typeIR_canon be $canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:667.1-667.59
-def $nestable_parserapplymethod'(direction', typeIR')
+2. Return $nestable_parserapplymethod'(typeIR_canon)
+
+;; ../../../../spec-concrete/5.03-wellformed.watsup:673.1-674.64
+def $nestable_parserapplymethod'(typeIR')
 
 1. Case analysis on typeIR'
 
-  1. Case (% has type primitiveTypeIR)
-
-    1. (Let primitiveTypeIR be (typeIR' as primitiveTypeIR))
-
-    2. If ((primitiveTypeIR matches pattern `STRING`)), then
-
-      1. If (~(direction' matches pattern ``EMPTY`)), then
-
-        1. Return false
-
-  2. Case (% has type numberTypeIR)
-
-    1. (Let numberTypeIR be (typeIR' as numberTypeIR))
-
-    2. If ((numberTypeIR matches pattern `INT`)), then
-
-      1. If (~(direction' matches pattern ``EMPTY`)), then
-
-        1. Return false
-
-  3. Case (% has type parserObjectTypeIR)
+  1. Case (% has type parserObjectTypeIR)
 
     1. (Let parserObjectTypeIR be (typeIR' as parserObjectTypeIR))
 
     2. Return false
 
-  4. Case (% has type controlObjectTypeIR)
+  2. Case (% has type controlObjectTypeIR)
 
     1. (Let controlObjectTypeIR be (typeIR' as controlObjectTypeIR))
 
     2. Return false
 
-  5. Case (% has type packageObjectTypeIR)
+  3. Case (% has type packageObjectTypeIR)
 
     1. (Let packageObjectTypeIR be (typeIR' as packageObjectTypeIR))
 
     2. Return false
 
-  6. Case (% has type tableObjectTypeIR)
+  4. Case (% has type tableObjectTypeIR)
 
     1. (Let tableObjectTypeIR be (typeIR' as tableObjectTypeIR))
 
@@ -12339,49 +12255,31 @@ def $nestable_parserapplymethod'(direction', typeIR')
 
   1. Return true
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:688.1-688.59
-def $nestable_controlapplymethod(direction, typeIR)
+;; ../../../../spec-concrete/5.03-wellformed.watsup:692.1-693.65
+def $nestable_controlapplymethod(typeIR)
 
-1. Return $nestable_controlapplymethod'(direction, $canon(typeIR))
+1. (Let typeIR_canon be $canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:689.1-689.60
-def $nestable_controlapplymethod'(direction', typeIR')
+2. Return $nestable_controlapplymethod'(typeIR_canon)
+
+;; ../../../../spec-concrete/5.03-wellformed.watsup:694.1-695.65
+def $nestable_controlapplymethod'(typeIR')
 
 1. Case analysis on typeIR'
 
-  1. Case (% has type primitiveTypeIR)
-
-    1. (Let primitiveTypeIR be (typeIR' as primitiveTypeIR))
-
-    2. If ((primitiveTypeIR matches pattern `STRING`)), then
-
-      1. If (~(direction' matches pattern ``EMPTY`)), then
-
-        1. Return false
-
-  2. Case (% has type numberTypeIR)
-
-    1. (Let numberTypeIR be (typeIR' as numberTypeIR))
-
-    2. If ((numberTypeIR matches pattern `INT`)), then
-
-      1. If (~(direction' matches pattern ``EMPTY`)), then
-
-        1. Return false
-
-  3. Case (% has type parserObjectTypeIR)
+  1. Case (% has type parserObjectTypeIR)
 
     1. (Let parserObjectTypeIR be (typeIR' as parserObjectTypeIR))
 
     2. Return false
 
-  4. Case (% has type packageObjectTypeIR)
+  2. Case (% has type packageObjectTypeIR)
 
     1. (Let packageObjectTypeIR be (typeIR' as packageObjectTypeIR))
 
     2. Return false
 
-  5. Case (% has type tableObjectTypeIR)
+  3. Case (% has type tableObjectTypeIR)
 
     1. (Let tableObjectTypeIR be (typeIR' as tableObjectTypeIR))
 
@@ -12391,7 +12289,7 @@ def $nestable_controlapplymethod'(direction', typeIR')
 
   1. Return true
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:716.1-716.50
+;; ../../../../spec-concrete/5.03-wellformed.watsup:719.1-720.62
 def $definable_routine_mono(routineTypeIR')
 
 1. Case analysis on routineTypeIR'
@@ -12436,7 +12334,7 @@ def $definable_routine_mono(routineTypeIR')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:732.1-732.50
+;; ../../../../spec-concrete/5.03-wellformed.watsup:736.1-737.62
 def $definable_routine_poly(routineTypeIR')
 
 1. Case analysis on routineTypeIR'
@@ -12463,7 +12361,7 @@ def $definable_routine_poly(routineTypeIR')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:766.1-766.48
+;; ../../../../spec-concrete/5.03-wellformed.watsup:771.1-771.48
 def $nestable_constructor_extern(typeIR)
 
 1. Return $nestable'_constructor_extern($canon(typeIR))
@@ -12474,7 +12372,7 @@ def $nestable_constructor_extern(typeIR)
 
   2. Return false
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:767.1-767.49
+;; ../../../../spec-concrete/5.03-wellformed.watsup:772.1-772.49
 def $nestable'_constructor_extern(typeIR')
 
 1. Case analysis on typeIR'
@@ -12501,12 +12399,12 @@ def $nestable'_constructor_extern(typeIR')
 
   1. Return true
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:786.1-786.48
+;; ../../../../spec-concrete/5.03-wellformed.watsup:791.1-791.48
 def $nestable_constructor_parser(typeIR)
 
 1. Return $nestable'_constructor_parser($canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:787.1-787.49
+;; ../../../../spec-concrete/5.03-wellformed.watsup:792.1-792.49
 def $nestable'_constructor_parser(typeIR')
 
 1. Case analysis on typeIR'
@@ -12533,12 +12431,12 @@ def $nestable'_constructor_parser(typeIR')
 
   1. Return true
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:805.1-805.49
+;; ../../../../spec-concrete/5.03-wellformed.watsup:810.1-810.49
 def $nestable_constructor_control(typeIR)
 
 1. Return $nestable'_constructor_control($canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:806.1-806.50
+;; ../../../../spec-concrete/5.03-wellformed.watsup:811.1-811.50
 def $nestable'_constructor_control(typeIR')
 
 1. Case analysis on typeIR'
@@ -12565,12 +12463,12 @@ def $nestable'_constructor_control(typeIR')
 
   1. Return true
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:824.1-824.49
+;; ../../../../spec-concrete/5.03-wellformed.watsup:829.1-829.49
 def $nestable_constructor_package(typeIR)
 
 1. Return $nestable'_constructor_package($canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:825.1-825.50
+;; ../../../../spec-concrete/5.03-wellformed.watsup:830.1-830.50
 def $nestable'_constructor_package(typeIR')
 
 1. If ((typeIR' has type tableObjectTypeIR)), then
@@ -12583,12 +12481,12 @@ def $nestable'_constructor_package(typeIR')
 
   1. Return true
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:845.1-845.42
+;; ../../../../spec-concrete/5.03-wellformed.watsup:850.1-850.42
 def $definable_constructor(typeIR)
 
 1. Return $definable'_constructor($canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:846.1-846.43
+;; ../../../../spec-concrete/5.03-wellformed.watsup:851.1-851.43
 def $definable'_constructor(typeIR')
 
 1. Case analysis on typeIR'
@@ -12630,7 +12528,7 @@ relation Eval_static: p TC |- (expressionIR # (( _typeIR'' _ctk'' ))) ~> %
 
     1. (Let booleanLiteral be (expressionIR as booleanLiteral))
 
-    2. Group literalExpressionIR-boolean: p TC |- ((booleanLiteral as expressionIR) # (( _typeIR _ctk ))) ~> %
+    2. Group literalExpressionIR-boolean: p TC |- ((booleanLiteral as expressionIR) # (( _typeIR'' _ctk'' ))) ~> %
 
       1. Case analysis on booleanLiteral
 
@@ -12646,7 +12544,7 @@ relation Eval_static: p TC |- (expressionIR # (( _typeIR'' _ctk'' ))) ~> %
 
     1. (Let numberLiteral be (expressionIR as numberLiteral))
 
-    2. Group literalExpressionIR-number: p TC |- ((numberLiteral as expressionIR) # (( _typeIR _ctk ))) ~> %
+    2. Group literalExpressionIR-number: p TC |- ((numberLiteral as expressionIR) # (( _typeIR'' _ctk'' ))) ~> %
 
       1. Case analysis on numberLiteral
 
@@ -12672,7 +12570,7 @@ relation Eval_static: p TC |- (expressionIR # (( _typeIR'' _ctk'' ))) ~> %
 
     1. (Let (" text ") be (expressionIR as stringLiteral))
 
-    2. Group literalExpressionIR-stringLiteral: p TC |- (((" text ") as expressionIR) # (( _typeIR _ctk ))) ~> %
+    2. Group literalExpressionIR-stringLiteral: p TC |- (((" text ") as expressionIR) # (( _typeIR'' _ctk'' ))) ~> %
 
       1. Result in : % % |- % ~> ((" text ") as value)
 
@@ -12680,7 +12578,7 @@ relation Eval_static: p TC |- (expressionIR # (( _typeIR'' _ctk'' ))) ~> %
 
     1. (Let prefixedNameIR be (expressionIR as prefixedNameIR))
 
-    2. Group referenceExpressionIR: p TC |- ((prefixedNameIR as expressionIR) # (( _typeIR _ctk ))) ~> %
+    2. Group referenceExpressionIR: p TC |- ((prefixedNameIR as expressionIR) # (( _typeIR'' _ctk'' ))) ~> %
 
       1. (Let value be $find_value(p, TC, prefixedNameIR))
 
@@ -12690,7 +12588,7 @@ relation Eval_static: p TC |- (expressionIR # (( _typeIR'' _ctk'' ))) ~> %
 
     1. (Let defaultExpression be (expressionIR as defaultExpression))
 
-    2. Group defaultExpressionIR: p TC |- (((...) as expressionIR) # (( _typeIR _ctk ))) ~> %
+    2. Group defaultExpressionIR: p TC |- (((...) as expressionIR) # (( _typeIR'' _ctk'' ))) ~> %
 
       1. Result in : % % |- % ~> ((default) as value)
 
@@ -12698,7 +12596,7 @@ relation Eval_static: p TC |- (expressionIR # (( _typeIR'' _ctk'' ))) ~> %
 
     1. (Let (unop typedExpressionIR) be (expressionIR as unaryExpressionIR))
 
-    2. Group unaryExpressionIR: p TC |- (((unop typedExpressionIR) as expressionIR) # (( _typeIR _ctk ))) ~> %
+    2. Group unaryExpressionIR: p TC |- (((unop typedExpressionIR) as expressionIR) # (( _typeIR'' _ctk'' ))) ~> %
 
       1. Case analysis on unop
 
@@ -12730,7 +12628,7 @@ relation Eval_static: p TC |- (expressionIR # (( _typeIR'' _ctk'' ))) ~> %
 
     1. (Let (typedExpressionIR_l binop typedExpressionIR_r) be (expressionIR as binaryExpressionIR))
 
-    2. Group binaryExpressionIR: p TC |- (((typedExpressionIR_l binop typedExpressionIR_r) as expressionIR) # (( _typeIR _ctk ))) ~> %
+    2. Group binaryExpressionIR: p TC |- (((typedExpressionIR_l binop typedExpressionIR_r) as expressionIR) # (( _typeIR'' _ctk'' ))) ~> %
 
       1. Case analysis on binop
 
@@ -12906,7 +12804,7 @@ relation Eval_static: p TC |- (expressionIR # (( _typeIR'' _ctk'' ))) ~> %
 
     1. (Let (typedExpressionIR_cond ? typedExpressionIR_true : typedExpressionIR_false) be (expressionIR as ternaryExpressionIR))
 
-    2. Group ternaryExpressionIR: p TC |- (((typedExpressionIR_cond ? typedExpressionIR_true : typedExpressionIR_false) as expressionIR) # (( _typeIR _ctk ))) ~> %
+    2. Group ternaryExpressionIR: p TC |- (((typedExpressionIR_cond ? typedExpressionIR_true : typedExpressionIR_false) as expressionIR) # (( _typeIR'' _ctk'' ))) ~> %
 
       1. (Eval_static: p TC |- typedExpressionIR_cond ~> value)
 
@@ -12926,7 +12824,7 @@ relation Eval_static: p TC |- (expressionIR # (( _typeIR'' _ctk'' ))) ~> %
 
     1. (Let (( typeIR ) typedExpressionIR) be (expressionIR as castExpressionIR))
 
-    2. Group castExpressionIR: p TC |- (((( typeIR ) typedExpressionIR) as expressionIR) # (( _typeIR _ctk ))) ~> %
+    2. Group castExpressionIR: p TC |- (((( typeIR ) typedExpressionIR) as expressionIR) # (( _typeIR'' _ctk'' ))) ~> %
 
       1. (Eval_static: p TC |- typedExpressionIR ~> value)
 
@@ -12940,11 +12838,11 @@ relation Eval_static: p TC |- (expressionIR # (( _typeIR'' _ctk'' ))) ~> %
 
     2. If ((dataExpressionIR matches pattern `{#}`)), then
 
-      1. Group dataExpressionIR-invalid: p TC |- ((({#}) as expressionIR) # (( _typeIR _ctk ))) ~> %
+      1. Group dataExpressionIR-invalid: p TC |- ((({#}) as expressionIR) # (( _typeIR'' _ctk'' ))) ~> %
 
         1. Result in : % % |- % ~> (({#}) as value)
 
-    3. Group dataExpressionIR-sequence: p TC |- ((dataExpressionIR as expressionIR) # (( _typeIR _ctk ))) ~> %
+    3. Group dataExpressionIR-sequence: p TC |- ((dataExpressionIR as expressionIR) # (( _typeIR'' _ctk'' ))) ~> %
 
       1. Case analysis on dataExpressionIR
 
@@ -12964,7 +12862,7 @@ relation Eval_static: p TC |- (expressionIR # (( _typeIR'' _ctk'' ))) ~> %
 
           3. Result in : % % |- % ~> ((seq( value*{value <- value*} ,...)) as value)
 
-    4. Group dataExpressionIR-record: p TC |- ((dataExpressionIR as expressionIR) # (( _typeIR _ctk ))) ~> %
+    4. Group dataExpressionIR-record: p TC |- ((dataExpressionIR as expressionIR) # (( _typeIR'' _ctk'' ))) ~> %
 
       1. Case analysis on dataExpressionIR
 
@@ -12988,7 +12886,7 @@ relation Eval_static: p TC |- (expressionIR # (( _typeIR'' _ctk'' ))) ~> %
 
     1. (Let (error. nameIR) be (expressionIR as errorAccessExpressionIR))
 
-    2. Group errorAccessExpressionIR: p TC |- (((error. nameIR) as expressionIR) # (( _typeIR _ctk ))) ~> %
+    2. Group errorAccessExpressionIR: p TC |- (((error. nameIR) as expressionIR) # (( _typeIR'' _ctk'' ))) ~> %
 
       1. (Let nameIR_error be "error." ++ nameIR)
 
@@ -13004,7 +12902,7 @@ relation Eval_static: p TC |- (expressionIR # (( _typeIR'' _ctk'' ))) ~> %
 
       1. (Let (type prefixedNameIR) be memberAccessBaseIR)
 
-      2. Group memberAccessExpressionIR-type: p TC |- ((((type prefixedNameIR) . nameIR) as expressionIR) # (( typeIR_base _ctk ))) ~> %
+      2. Group memberAccessExpressionIR-type: p TC |- ((((type prefixedNameIR) . nameIR) as expressionIR) # (( _typeIR'' _ctk'' ))) ~> %
 
         1. (Let typeDefIR'?{typeDefIR' <- typeDefIR'?} be $find_type(p, TC, prefixedNameIR))
 
@@ -13044,7 +12942,7 @@ relation Eval_static: p TC |- (expressionIR # (( _typeIR'' _ctk'' ))) ~> %
 
       2. If ((nameIR = "size")), then
 
-        1. Group memberAccessExpressionIR-expression-stack-size: p TC |- ((((typedExpressionIR_base as memberAccessBaseIR) . "size") as expressionIR) # (( _typeIR _ctk ))) ~> %
+        1. Group memberAccessExpressionIR-expression-stack-size: p TC |- ((((typedExpressionIR_base as memberAccessBaseIR) . "size") as expressionIR) # (( _typeIR'' _ctk'' ))) ~> %
 
           1. (Let (_expressionIR # (( typeIR_base _ctk' ))) be typedExpressionIR_base)
 
@@ -13060,7 +12958,7 @@ relation Eval_static: p TC |- (expressionIR # (( _typeIR'' _ctk'' ))) ~> %
 
     1. (Let (typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ]) be (expressionIR as sliceAccessExpressionIR))
 
-    2. Group sliceAccessExpressionIR: p TC |- (((typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ]) as expressionIR) # (( _typeIR _ctk ))) ~> %
+    2. Group sliceAccessExpressionIR: p TC |- (((typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ]) as expressionIR) # (( _typeIR'' _ctk'' ))) ~> %
 
       1. (Eval_static: p TC |- typedExpressionIR_base ~> value_base)
 
@@ -13082,7 +12980,7 @@ relation Eval_static: p TC |- (expressionIR # (( _typeIR'' _ctk'' ))) ~> %
 
         1. If ((argumentIR*{argumentIR <- argumentIR*} matches pattern [])), then
 
-          1. Group callExpressionIR-builtin-size: p TC |- (((routineTargetIR < [] >( [] )) as expressionIR) # (( _typeIR _ctk ))) ~> %
+          1. Group callExpressionIR-builtin-size: p TC |- (((routineTargetIR < [] >( [] )) as expressionIR) # (( _typeIR'' _ctk'' ))) ~> %
 
             1. Case analysis on routineTargetIR
 
@@ -13132,7 +13030,7 @@ relation Eval_static: p TC |- (expressionIR # (( _typeIR'' _ctk'' ))) ~> %
 
         1. (Let (( routineTargetIR )) be routineTargetIR)
 
-        2. Group callExpressionIR-parenthesized: p TC |- ((((( routineTargetIR )) < typeArgumentIR*{} >( argumentIR*{} )) as expressionIR) # (( typeIR ctk ))) ~> %
+        2. Group callExpressionIR-parenthesized: p TC |- ((((( routineTargetIR )) < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} )) as expressionIR) # (( _typeIR'' _ctk'' ))) ~> %
 
           1. (Eval_static: p TC |- (((routineTargetIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} )) as expressionIR) # (( _typeIR'' _ctk'' ))) ~> value)
 
@@ -13142,7 +13040,7 @@ relation Eval_static: p TC |- (expressionIR # (( _typeIR'' _ctk'' ))) ~> %
 
     1. (Let (( typedExpressionIR )) be (expressionIR as parenthesizedExpressionIR))
 
-    2. Group parenthesizedExpressionIR: p TC |- (((( typedExpressionIR )) as expressionIR) # (( _typeIR _ctk ))) ~> %
+    2. Group parenthesizedExpressionIR: p TC |- (((( typedExpressionIR )) as expressionIR) # (( _typeIR'' _ctk'' ))) ~> %
 
       1. (Eval_static: p TC |- typedExpressionIR ~> value)
 
@@ -13497,7 +13395,7 @@ relation TypeArguments_ok: p TC |- typeArgument*{typeArgument <- typeArgument*} 
 
     1. (Let typeArgument_h :: typeArgument_t*{typeArgument_t <- typeArgument_t*} be typeArgument*{typeArgument <- typeArgument*})
 
-    2. Group cons: p TC |- typeArgument_h :: typeArgument_t*{} : % # %
+    2. Group cons: p TC |- typeArgument_h :: typeArgument_t*{typeArgument_t <- typeArgument_t*} : % # %
 
       1. (TypeArgument_ok: p TC |- typeArgument_h : typeArgumentIR_h # tid_impl_h*{tid_impl_h <- tid_impl_h*})
 
@@ -13562,7 +13460,7 @@ relation Sub_expl_canon_neq: typeIR'''''' <: typeIR'''''''
 
       1. Case (% matches pattern `INT`)
 
-        1. Group arbint: ((int) as typeIR) <: typeIR
+        1. Group arbint: ((int) as typeIR) <: typeIR'''''''
 
           1. If ((((bool) as typeIR) = typeIR''''''')), then
 
@@ -13614,7 +13512,7 @@ relation Sub_expl_canon_neq: typeIR'''''' <: typeIR'''''''
 
         1. (Let (bit< nat >) be numberTypeIR)
 
-        2. Group fixbit: ((bit< nat >) as typeIR) <: typeIR
+        2. Group fixbit: ((bit< nat >) as typeIR) <: typeIR'''''''
 
           1. If ((1 = nat)), then
 
@@ -13638,7 +13536,7 @@ relation Sub_expl_canon_neq: typeIR'''''' <: typeIR'''''''
 
               1. The relation holds
 
-2. Group newtype: typeIR <: typeIR'
+2. Group newtype: typeIR'''''' <: typeIR'''''''
 
   1. If ((typeIR'''''' has type newTypeIR)), then
 
@@ -13656,7 +13554,7 @@ relation Sub_expl_canon_neq: typeIR'''''' <: typeIR'''''''
 
       1. The relation holds
 
-3. Group serenum: typeIR <: typeIR'
+3. Group serenum: typeIR'''''' <: typeIR'''''''
 
   1. If ((typeIR'''''' has type enumTypeIR)), then
 
@@ -13688,7 +13586,7 @@ relation Sub_expl_canon_neq: typeIR'''''' <: typeIR'''''''
 
     1. (Let defaultTypeIR be (typeIR'''''' as defaultTypeIR))
 
-    2. Group default: ((default) as typeIR) <: typeIR_b
+    2. Group default: ((default) as typeIR) <: typeIR'''''''
 
       1. If ($is_defaultable_typeIR(typeIR''''''')), then
 
@@ -13698,7 +13596,7 @@ relation Sub_expl_canon_neq: typeIR'''''' <: typeIR'''''''
 
     1. (Let invalidHeaderTypeIR be (typeIR'''''' as invalidHeaderTypeIR))
 
-    2. Group invalidheader: ((header_invalid) as typeIR) <: typeIR
+    2. Group invalidheader: ((header_invalid) as typeIR) <: typeIR'''''''
 
       1. Case analysis on typeIR'''''''
 
@@ -13724,7 +13622,7 @@ relation Sub_expl_canon_neq: typeIR'''''' <: typeIR'''''''
 
         1. (Let (seq< typeIR_a*{typeIR_a <- typeIR_a*} >) be sequenceTypeIR)
 
-        2. Group seq: ((seq< typeIR_a*{} >) as typeIR) <: typeIR
+        2. Group seq: ((seq< typeIR_a*{typeIR_a <- typeIR_a*} >) as typeIR) <: typeIR'''''''
 
           1. Case analysis on typeIR'''''''
 
@@ -13774,7 +13672,7 @@ relation Sub_expl_canon_neq: typeIR'''''' <: typeIR'''''''
 
         1. (Let (seq< typeIR_a*{typeIR_a <- typeIR_a*} ,...>) be sequenceTypeIR)
 
-        2. Group seqdefault: ((seq< typeIR_a*{} ,...>) as typeIR) <: typeIR
+        2. Group seqdefault: ((seq< typeIR_a*{typeIR_a <- typeIR_a*} ,...>) as typeIR) <: typeIR'''''''
 
           1. Case analysis on typeIR'''''''
 
@@ -13842,7 +13740,7 @@ relation Sub_expl_canon_neq: typeIR'''''' <: typeIR'''''''
 
         1. (Let (record{ (typeIR_a id_a ;)*{id_a <- id_a*, typeIR_a <- typeIR_a*} }) be recordTypeIR)
 
-        2. Group record: ((record{ (typeIR_a id_a ;)*{} }) as typeIR) <: typeIR
+        2. Group record: ((record{ (typeIR_a id_a ;)*{id_a <- id_a*, typeIR_a <- typeIR_a*} }) as typeIR) <: typeIR'''''''
 
           1. Case analysis on typeIR'''''''
 
@@ -13894,7 +13792,7 @@ relation Sub_expl_canon_neq: typeIR'''''' <: typeIR'''''''
 
         1. (Let (record{ (typeIR_a id_a ;)*{id_a <- id_a*, typeIR_a <- typeIR_a*} ,...}) be recordTypeIR)
 
-        2. Group recorddefault: ((record{ (typeIR_a id_a ;)*{} ,...}) as typeIR) <: typeIR
+        2. Group recorddefault: ((record{ (typeIR_a id_a ;)*{id_a <- id_a*, typeIR_a <- typeIR_a*} ,...}) as typeIR) <: typeIR'''''''
 
           1. Case analysis on typeIR'''''''
 
@@ -13970,7 +13868,7 @@ relation Sub_expl_canon_neq: typeIR'''''' <: typeIR'''''''
 
     1. (Let [typeIR_b] be typeIR'*{typeIR' <- typeIR'*})
 
-    2. Group set: typeIR <: ((set< [typeIR_b] >) as typeIR)
+    2. Group set: typeIR'''''' <: ((set< [typeIR_b] >) as typeIR)
 
       1. If ((typeIR'''''' has type setTypeIR)), then
 
@@ -14059,7 +13957,7 @@ relation Sub_impl_canon_neq: typeIR'''''' <: typeIR'''''''
 
       1. (Let (enum _tid # typeIR_a { _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} }) be enumTypeIR)
 
-      2. Group serenum-left: ((enum _tid # typeIR_a { _valueFieldIR*{} }) as typeIR) <: typeIR_b
+      2. Group serenum-left: ((enum _tid # typeIR_a { _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} }) as typeIR) <: typeIR'''''''
 
         1. If (Sub_impl: typeIR_a <: typeIR''''''') holds, then
 
@@ -14069,7 +13967,7 @@ relation Sub_impl_canon_neq: typeIR'''''' <: typeIR'''''''
 
     1. (Let defaultTypeIR be (typeIR'''''' as defaultTypeIR))
 
-    2. Group default: ((default) as typeIR) <: typeIR_b
+    2. Group default: ((default) as typeIR) <: typeIR'''''''
 
       1. If ($is_defaultable_typeIR(typeIR''''''')), then
 
@@ -14079,7 +13977,7 @@ relation Sub_impl_canon_neq: typeIR'''''' <: typeIR'''''''
 
     1. (Let invalidHeaderTypeIR be (typeIR'''''' as invalidHeaderTypeIR))
 
-    2. Group invalidheader: ((header_invalid) as typeIR) <: typeIR
+    2. Group invalidheader: ((header_invalid) as typeIR) <: typeIR'''''''
 
       1. Case analysis on typeIR'''''''
 
@@ -14105,7 +14003,7 @@ relation Sub_impl_canon_neq: typeIR'''''' <: typeIR'''''''
 
         1. (Let (seq< typeIR_a*{typeIR_a <- typeIR_a*} >) be sequenceTypeIR)
 
-        2. Group seq: ((seq< typeIR_a*{} >) as typeIR) <: typeIR
+        2. Group seq: ((seq< typeIR_a*{typeIR_a <- typeIR_a*} >) as typeIR) <: typeIR'''''''
 
           1. Case analysis on typeIR'''''''
 
@@ -14167,7 +14065,7 @@ relation Sub_impl_canon_neq: typeIR'''''' <: typeIR'''''''
 
         1. (Let (seq< typeIR_a*{typeIR_a <- typeIR_a*} ,...>) be sequenceTypeIR)
 
-        2. Group seqdefault: ((seq< typeIR_a*{} ,...>) as typeIR) <: typeIR
+        2. Group seqdefault: ((seq< typeIR_a*{typeIR_a <- typeIR_a*} ,...>) as typeIR) <: typeIR'''''''
 
           1. Case analysis on typeIR'''''''
 
@@ -14235,7 +14133,7 @@ relation Sub_impl_canon_neq: typeIR'''''' <: typeIR'''''''
 
         1. (Let (record{ (typeIR_a id_a ;)*{id_a <- id_a*, typeIR_a <- typeIR_a*} }) be recordTypeIR)
 
-        2. Group record: ((record{ (typeIR_a id_a ;)*{} }) as typeIR) <: typeIR
+        2. Group record: ((record{ (typeIR_a id_a ;)*{id_a <- id_a*, typeIR_a <- typeIR_a*} }) as typeIR) <: typeIR'''''''
 
           1. Case analysis on typeIR'''''''
 
@@ -14287,7 +14185,7 @@ relation Sub_impl_canon_neq: typeIR'''''' <: typeIR'''''''
 
         1. (Let (record{ (typeIR_a id_a ;)*{id_a <- id_a*, typeIR_a <- typeIR_a*} ,...}) be recordTypeIR)
 
-        2. Group recorddefault: ((record{ (typeIR_a id_a ;)*{} ,...}) as typeIR) <: typeIR
+        2. Group recorddefault: ((record{ (typeIR_a id_a ;)*{id_a <- id_a*, typeIR_a <- typeIR_a*} ,...}) as typeIR) <: typeIR'''''''
 
           1. Case analysis on typeIR'''''''
 
@@ -14422,7 +14320,7 @@ relation Expr_ok: p TC |- expression''' : %
 
       2. Result in : % % |- % : (((" text ") as expressionIR) # expressionNoteIR)
 
-2. Group referenceExpression: p TC |- expression : %
+2. Group referenceExpression: p TC |- expression''' : %
 
   1. If ((expression''' has type prefixedNonTypeName)), then
 
@@ -15997,7 +15895,7 @@ relation Stmt_ok: p' TC' f' |- statement : % % %
 
     1. (Let emptyStatement be (statement as emptyStatement))
 
-    2. Group emptyStatement: p TC f |- ((;) as statement) : % % %
+    2. Group emptyStatement: p' TC' f' |- ((;) as statement) : % % %
 
       1. Result in : % % % |- % : TC' f' ((;) as statementIR)
 
@@ -16007,7 +15905,7 @@ relation Stmt_ok: p' TC' f' |- statement : % % %
 
     2. If ((assignop matches pattern `=`)), then
 
-      1. Group assignmentStatement-eq: p TC f |- ((lvalue (=) expression ;) as statement) : % % %
+      1. Group assignmentStatement-eq: p' TC' f' |- ((lvalue (=) expression ;) as statement) : % % %
 
         1. (Lvalue_ok: p' TC' |- lvalue : typedLvalueIR)
 
@@ -16029,7 +15927,7 @@ relation Stmt_ok: p' TC' f' |- statement : % % %
 
     1. (Let callStatement be (statement as callStatement))
 
-    2. Group callStatement: p TC f |- (callStatement as statement) : % % %
+    2. Group callStatement: p' TC' f' |- (callStatement as statement) : % % %
 
       1. Case analysis on callStatement
 
@@ -16079,7 +15977,7 @@ relation Stmt_ok: p' TC' f' |- statement : % % %
 
     1. (Let (namedType .apply( argumentList );) be (statement as directApplicationStatement))
 
-    2. Group directApplicationStatement: p TC_0 f |- ((namedType .apply( argumentList );) as statement) : % % %
+    2. Group directApplicationStatement: p' TC' f' |- ((namedType .apply( argumentList );) as statement) : % % %
 
       1. (Expr_ok: p' TC' |- (((namedType as callTarget) ( () )) as expression) : (expressionIR # (( typeIR_object _ctk ))))
 
@@ -16123,7 +16021,7 @@ relation Stmt_ok: p' TC' f' |- statement : % % %
 
     1. (Let exitStatement be (statement as exitStatement))
 
-    2. Group exitStatement: p TC f |- ((exit;) as statement) : % % %
+    2. Group exitStatement: p' TC' f' |- ((exit;) as statement) : % % %
 
       1. Result in : % % % |- % : TC' f' ((exit;) as statementIR)
 
@@ -16131,7 +16029,7 @@ relation Stmt_ok: p' TC' f' |- statement : % % %
 
     1. (Let conditionalStatement be (statement as conditionalStatement))
 
-    2. Group conditionalStatement: p TC f |- (conditionalStatement as statement) : % % %
+    2. Group conditionalStatement: p' TC' f' |- (conditionalStatement as statement) : % % %
 
       1. Case analysis on conditionalStatement
 
@@ -16175,7 +16073,7 @@ relation Stmt_ok: p' TC' f' |- statement : % % %
 
       1. (Let returnStatement be (statement as returnStatement))
 
-      2. Group returnStatement: (local) TC f |- (returnStatement as statement) : % % %
+      2. Group returnStatement: (local) TC' f' |- (returnStatement as statement) : % % %
 
         1. Case analysis on returnStatement
 
@@ -16211,7 +16109,7 @@ relation Stmt_ok: p' TC' f' |- statement : % % %
 
       1. (Let blockStatement be (statement as blockStatement))
 
-      2. Group blockStatement: (local) TC_0 f_0 |- (blockStatement as statement) : % % %
+      2. Group blockStatement: (local) TC' f' |- (blockStatement as statement) : % % %
 
         1. (Block_ok: TC' f' |- blockStatement : TC_1 f_1 blockStatementIR)
 
@@ -16221,7 +16119,7 @@ relation Stmt_ok: p' TC' f' |- statement : % % %
 
       1. (Let (switch( expression_switch ){ switchCaseList }) be (statement as switchStatement))
 
-      2. Group switchStatement-table: (local) TC f |- ((switch( expression_switch ){ switchCaseList }) as statement) : % % %
+      2. Group switchStatement-table: (local) TC' f' |- ((switch( expression_switch ){ switchCaseList }) as statement) : % % %
 
         1. (Expr_ok: (local) TC' |- expression_switch : typedExpressionIR_switch)
 
@@ -16249,7 +16147,7 @@ relation Stmt_ok: p' TC' f' |- statement : % % %
 
               2. Result in : % % % |- % : TC' f_post (switchStatementIR as statementIR)
 
-      3. Group switchStatement-general: (local) TC f |- ((switch( expression_switch ){ switchCaseList }) as statement) : % % %
+      3. Group switchStatement-general: (local) TC' f' |- ((switch( expression_switch ){ switchCaseList }) as statement) : % % %
 
         1. (Expr_ok: (local) TC' |- expression_switch : typedExpressionIR_switch)
 
@@ -16355,7 +16253,7 @@ relation BlockElementStmts_ok: TC' f' |- blockElementStatement*{blockElementStat
 
   1. Case (% matches pattern [])
 
-    1. Group nil: TC f |- [] : % % %
+    1. Group nil: TC' f' |- [] : % % %
 
       1. Result in : % % |- % : TC' f' []
 
@@ -16363,7 +16261,7 @@ relation BlockElementStmts_ok: TC' f' |- blockElementStatement*{blockElementStat
 
     1. (Let blockElementStatement_h :: blockElementStatement_t*{blockElementStatement_t <- blockElementStatement_t*} be blockElementStatement*{blockElementStatement <- blockElementStatement*})
 
-    2. Group cons: TC_0 f_0 |- blockElementStatement_h :: blockElementStatement_t*{} : % % %
+    2. Group cons: TC' f' |- blockElementStatement_h :: blockElementStatement_t*{blockElementStatement_t <- blockElementStatement_t*} : % % %
 
       1. (BlockElementStmt_ok: TC' f' |- blockElementStatement_h : TC_1 f_1 blockElementStatementIR_h)
 
@@ -16448,7 +16346,7 @@ relation Parameters_ok: p TC |- parameter*{parameter <- parameter*} : % # %
 
     1. (Let parameter_h :: parameter_t*{parameter_t <- parameter_t*} be parameter*{parameter <- parameter*})
 
-    2. Group cons: p TC |- parameter_h :: parameter_t*{} : % # %
+    2. Group cons: p TC |- parameter_h :: parameter_t*{parameter_t <- parameter_t*} : % # %
 
       1. (Parameter_ok: p TC |- parameter_h : parameterIR_h # tid_fresh_h*{tid_fresh_h <- tid_fresh_h*})
 
@@ -16468,7 +16366,7 @@ relation ConstructorParameter_ok: p TC |- constructorParameter : % # %
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:127.1-130.23
 relation ConstructorParameters_ok: p TC |- constructorParameter*{constructorParameter <- constructorParameter*} : % # %
 
-1. Group : p TC |- constructorParameter*{} : % # %
+1. Group : p TC |- constructorParameter*{constructorParameter <- constructorParameter*} : % # %
 
   1. (Parameters_ok: p TC |- constructorParameter*{constructorParameter <- constructorParameter*} : constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} # tid_fresh*{tid_fresh <- tid_fresh*})
 
@@ -16574,7 +16472,7 @@ relation ExternMethods_ok: TC' tid_extern |- methodPrototype*{methodPrototype <-
 
   1. Case (% matches pattern [])
 
-    1. Group nil: TC tid_extern |- [] : % %
+    1. Group nil: TC' tid_extern |- [] : % %
 
       1. Result in : % % |- % : TC' []
 
@@ -16582,7 +16480,7 @@ relation ExternMethods_ok: TC' tid_extern |- methodPrototype*{methodPrototype <-
 
     1. (Let methodPrototype_h :: methodPrototype_t*{methodPrototype_t <- methodPrototype_t*} be methodPrototype*{methodPrototype <- methodPrototype*})
 
-    2. Group cons: TC_0 tid_extern |- methodPrototype_h :: methodPrototype_t*{} : % %
+    2. Group cons: TC' tid_extern |- methodPrototype_h :: methodPrototype_t*{methodPrototype_t <- methodPrototype_t*} : % %
 
       1. (ExternMethod_ok: TC' tid_extern |- methodPrototype_h : TC_1 methodPrototypeIR_h)
 
@@ -16644,7 +16542,7 @@ relation ExternConstructors_ok: TC' tid_extern |- methodPrototype*{methodPrototy
 
   1. Case (% matches pattern [])
 
-    1. Group nil: TC tid_extern |- [] : % %
+    1. Group nil: TC' tid_extern |- [] : % %
 
       1. Result in : % % |- % : TC' []
 
@@ -16652,7 +16550,7 @@ relation ExternConstructors_ok: TC' tid_extern |- methodPrototype*{methodPrototy
 
     1. (Let methodPrototype_h :: methodPrototype_t*{methodPrototype_t <- methodPrototype_t*} be methodPrototype*{methodPrototype <- methodPrototype*})
 
-    2. Group cons: TC_0 tid_extern |- methodPrototype_h :: methodPrototype_t*{} : % %
+    2. Group cons: TC' tid_extern |- methodPrototype_h :: methodPrototype_t*{methodPrototype_t <- methodPrototype_t*} : % %
 
       1. (ExternConstructor_ok: TC' tid_extern |- methodPrototype_h : TC_1 methodPrototypeIR_h)
 
@@ -16667,7 +16565,7 @@ relation ParserTransition_ok: TC_0 nameIR_state*{nameIR_state <- nameIR_state*} 
 
   1. Case (% matches pattern ``EMPTY`)
 
-    1. Group empty: TC_0 nameIR_state*{} |- () : %
+    1. Group empty: TC_0 nameIR_state*{nameIR_state <- nameIR_state*} |- () : %
 
       1. Result in : % % |- % : (transition ("reject" ;))
 
@@ -16679,7 +16577,7 @@ relation ParserTransition_ok: TC_0 nameIR_state*{nameIR_state <- nameIR_state*} 
 
       1. (Let (name ;) be stateExpression)
 
-      2. Group name: TC_0 nameIR_state*{} |- (transition (name ;)) : %
+      2. Group name: TC_0 nameIR_state*{nameIR_state <- nameIR_state*} |- (transition (name ;)) : %
 
         1. (Let nameIR be $name(name))
 
@@ -16693,7 +16591,7 @@ relation ParserTransition_ok: TC_0 nameIR_state*{nameIR_state <- nameIR_state*} 
 
       1. (Let (select( expressionList_key ){ selectCaseList }) be (stateExpression as selectExpression))
 
-      2. Group switch: TC_0 nameIR_state*{} |- (transition ((select( expressionList_key ){ selectCaseList }) as stateExpression)) : %
+      2. Group switch: TC_0 nameIR_state*{nameIR_state <- nameIR_state*} |- (transition ((select( expressionList_key ){ selectCaseList }) as stateExpression)) : %
 
         1. (Let expression_key*{expression_key <- expression_key*} be $flatten_expressionList(expressionList_key))
 
@@ -16720,7 +16618,7 @@ relation ParserStmt_ok: TC_0' |- parserStatement'' : % %
 
     1. (Let constantDeclaration be (parserStatement'' as constantDeclaration))
 
-    2. Group constantDeclaration: TC_0 |- (constantDeclaration as parserStatement) : % %
+    2. Group constantDeclaration: TC_0' |- (constantDeclaration as parserStatement) : % %
 
       1. (Decl_ok: (local) TC_0' |- (constantDeclaration as declaration) : TC_1 declarationIR)
 
@@ -16734,7 +16632,7 @@ relation ParserStmt_ok: TC_0' |- parserStatement'' : % %
 
     1. (Let (annotationList type name initializerOpt ;) be (parserStatement'' as variableDeclaration))
 
-    2. Group variableDeclaration: TC_0 |- ((annotationList type name initializerOpt ;) as parserStatement) : % %
+    2. Group variableDeclaration: TC_0' |- ((annotationList type name initializerOpt ;) as parserStatement) : % %
 
       1. If ((initializerOpt matches pattern ``EMPTY`)), then
 
@@ -16786,7 +16684,7 @@ relation ParserStmt_ok: TC_0' |- parserStatement'' : % %
 
     1. (Let emptyStatement be (parserStatement'' as emptyStatement))
 
-    2. Group emptyStatement: TC |- (emptyStatement as parserStatement) : % %
+    2. Group emptyStatement: TC_0' |- (emptyStatement as parserStatement) : % %
 
       1. (Stmt_ok: (local) TC_0' (cont) |- (emptyStatement as statement) : typingContext flow statementIR)
 
@@ -16804,7 +16702,7 @@ relation ParserStmt_ok: TC_0' |- parserStatement'' : % %
 
     1. (Let assignmentStatement be (parserStatement'' as assignmentStatement))
 
-    2. Group assignmentStatement: TC_0 |- (assignmentStatement as parserStatement) : % %
+    2. Group assignmentStatement: TC_0' |- (assignmentStatement as parserStatement) : % %
 
       1. (Stmt_ok: (local) TC_0' (cont) |- (assignmentStatement as statement) : TC_1 flow statementIR)
 
@@ -16820,7 +16718,7 @@ relation ParserStmt_ok: TC_0' |- parserStatement'' : % %
 
     1. (Let callStatement be (parserStatement'' as callStatement))
 
-    2. Group callStatement: TC_0 |- (callStatement as parserStatement) : % %
+    2. Group callStatement: TC_0' |- (callStatement as parserStatement) : % %
 
       1. (Stmt_ok: (local) TC_0' (cont) |- (callStatement as statement) : TC_1 flow statementIR)
 
@@ -16836,7 +16734,7 @@ relation ParserStmt_ok: TC_0' |- parserStatement'' : % %
 
     1. (Let directApplicationStatement be (parserStatement'' as directApplicationStatement))
 
-    2. Group directApplicationStatement: TC_0 |- (directApplicationStatement as parserStatement) : % %
+    2. Group directApplicationStatement: TC_0' |- (directApplicationStatement as parserStatement) : % %
 
       1. (Stmt_ok: (local) TC_0' (cont) |- (directApplicationStatement as statement) : TC_1 flow statementIR)
 
@@ -16852,7 +16750,7 @@ relation ParserStmt_ok: TC_0' |- parserStatement'' : % %
 
     1. (Let (annotationList { parserStatementList }) be (parserStatement'' as parserBlockStatement))
 
-    2. Group parserBlockStatement: TC_0 |- ((annotationList { parserStatementList }) as parserStatement) : % %
+    2. Group parserBlockStatement: TC_0' |- ((annotationList { parserStatementList }) as parserStatement) : % %
 
       1. (Let parserStatement*{parserStatement <- parserStatement*} be $flatten_parserStatementList(parserStatementList))
 
@@ -16870,7 +16768,7 @@ relation ParserStmt_ok: TC_0' |- parserStatement'' : % %
 
     1. (Let conditionalStatement be (parserStatement'' as conditionalStatement))
 
-    2. Group conditionalStatement: TC_0 |- (conditionalStatement as parserStatement) : % %
+    2. Group conditionalStatement: TC_0' |- (conditionalStatement as parserStatement) : % %
 
       1. (Stmt_ok: (local) TC_0' (cont) |- (conditionalStatement as statement) : TC_1 flow statementIR)
 
@@ -16889,7 +16787,7 @@ relation ParserStmts_ok: TC' |- parserStatement*{parserStatement <- parserStatem
 
   1. Case (% matches pattern [])
 
-    1. Group nil: TC |- [] : % %
+    1. Group nil: TC' |- [] : % %
 
       1. Result in : % |- % : TC' []
 
@@ -16897,7 +16795,7 @@ relation ParserStmts_ok: TC' |- parserStatement*{parserStatement <- parserStatem
 
     1. (Let parserStatement_h :: parserStatement_t*{parserStatement_t <- parserStatement_t*} be parserStatement*{parserStatement <- parserStatement*})
 
-    2. Group cons: TC_0 |- parserStatement_h :: parserStatement_t*{} : % %
+    2. Group cons: TC' |- parserStatement_h :: parserStatement_t*{parserStatement_t <- parserStatement_t*} : % %
 
       1. (ParserStmt_ok: TC' |- parserStatement_h : TC_1 parserStatementIR_h)
 
@@ -16908,7 +16806,7 @@ relation ParserStmts_ok: TC' |- parserStatement*{parserStatement <- parserStatem
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:168.1-170.23
 relation ParserState_ok: TC_0 nameIR_state*{nameIR_state <- nameIR_state*} |- (annotationList state name { parserStatementList transitionStatement }) : %
 
-1. Group : TC_0 nameIR_state*{} |- (annotationList state name { parserStatementList transitionStatement }) : %
+1. Group : TC_0 nameIR_state*{nameIR_state <- nameIR_state*} |- (annotationList state name { parserStatementList transitionStatement }) : %
 
   1. (Let nameIR be $name(name))
 
@@ -16929,7 +16827,7 @@ relation ParserState_ok: TC_0 nameIR_state*{nameIR_state <- nameIR_state*} |- (a
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:172.1-174.20
 relation ParserStates_ok: TC |- parserState*{parserState <- parserState*} : %
 
-1. Group : TC |- parserState*{} : %
+1. Group : TC |- parserState*{parserState <- parserState*} : %
 
   1. (Let (_annotationList state name_state { _parserStatementList _transitionStatement }) be parserState)*{_annotationList <- _annotationList*, _parserStatementList <- _parserStatementList*, _transitionStatement <- _transitionStatement*, name_state <- name_state*, parserState <- parserState*}
 
@@ -17063,7 +16961,7 @@ relation ParserLocalDecls_ok: TC' |- parserLocalDeclaration*{parserLocalDeclarat
 
   1. Case (% matches pattern [])
 
-    1. Group nil: TC |- [] : % %
+    1. Group nil: TC' |- [] : % %
 
       1. Result in : % |- % : TC' []
 
@@ -17071,7 +16969,7 @@ relation ParserLocalDecls_ok: TC' |- parserLocalDeclaration*{parserLocalDeclarat
 
     1. (Let parserLocalDeclaration_h :: parserLocalDeclaration_t*{parserLocalDeclaration_t <- parserLocalDeclaration_t*} be parserLocalDeclaration*{parserLocalDeclaration <- parserLocalDeclaration*})
 
-    2. Group cons: TC_0 |- parserLocalDeclaration_h :: parserLocalDeclaration_t*{} : % %
+    2. Group cons: TC' |- parserLocalDeclaration_h :: parserLocalDeclaration_t*{parserLocalDeclaration_t <- parserLocalDeclaration_t*} : % %
 
       1. (ParserLocalDecl_ok: TC' |- parserLocalDeclaration_h : TC_1 parserLocalDeclarationIR_h)
 
@@ -17111,7 +17009,7 @@ relation TableKeys_ok: TC TBLC' |- tableKey*{tableKey <- tableKey*} : % %
 
   1. Case (% matches pattern [])
 
-    1. Group nil: TC TBLC |- [] : % %
+    1. Group nil: TC TBLC' |- [] : % %
 
       1. Result in : % % |- % : TBLC' []
 
@@ -17119,7 +17017,7 @@ relation TableKeys_ok: TC TBLC' |- tableKey*{tableKey <- tableKey*} : % %
 
     1. (Let tableKey_h :: tableKey_t*{tableKey_t <- tableKey_t*} be tableKey*{tableKey <- tableKey*})
 
-    2. Group cons: TC TBLC_0 |- tableKey_h :: tableKey_t*{} : % %
+    2. Group cons: TC TBLC' |- tableKey_h :: tableKey_t*{tableKey_t <- tableKey_t*} : % %
 
       1. (TableKey_ok: TC TBLC' |- tableKey_h : TBLC_1 tableKeyIR_h)
 
@@ -17130,7 +17028,7 @@ relation TableKeys_ok: TC TBLC' |- tableKey*{tableKey <- tableKey*} : % %
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:198.1-201.23
 relation Call_action_partial_ok: TC |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} @ argumentIR*{argumentIR <- argumentIR*} : % , % @ %
 
-1. Group : TC |- parameterTypeIR*{} @ argumentIR*{} : % , % @ %
+1. Group : TC |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} @ argumentIR*{argumentIR <- argumentIR*} : % , % @ %
 
   1. (Let (parameterTypeIR_data*{parameterTypeIR_data <- parameterTypeIR_data*}, parameterTypeIR_control*{parameterTypeIR_control <- parameterTypeIR_control*}) be $split_dataplane_parameters(parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}))
 
@@ -17208,7 +17106,7 @@ relation TableActions_ok: TC TBLC' |- tableAction*{tableAction <- tableAction*} 
 
   1. Case (% matches pattern [])
 
-    1. Group nil: TC TBLC |- [] : % %
+    1. Group nil: TC TBLC' |- [] : % %
 
       1. Result in : % % |- % : TBLC' []
 
@@ -17216,7 +17114,7 @@ relation TableActions_ok: TC TBLC' |- tableAction*{tableAction <- tableAction*} 
 
     1. (Let tableAction_h :: tableAction_t*{tableAction_t <- tableAction_t*} be tableAction*{tableAction <- tableAction*})
 
-    2. Group cons: TC TBLC_0 |- tableAction_h :: tableAction_t*{} : % %
+    2. Group cons: TC TBLC' |- tableAction_h :: tableAction_t*{tableAction_t <- tableAction_t*} : % %
 
       1. (TableAction_ok: TC TBLC' |- tableAction_h : TBLC_1 tableActionIR_h)
 
@@ -17227,7 +17125,7 @@ relation TableActions_ok: TC TBLC' |- tableAction*{tableAction <- tableAction*} 
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:211.1-214.23
 relation Call_action_default_ok: TC |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} @ argumentIR*{argumentIR <- argumentIR*} : % , % @ %
 
-1. Group : TC |- parameterTypeIR*{} @ argumentIR*{} : % , % @ %
+1. Group : TC |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} @ argumentIR*{argumentIR <- argumentIR*} : % , % @ %
 
   1. (Let (parameterTypeIR_data*{parameterTypeIR_data <- parameterTypeIR_data*}, parameterTypeIR_control*{parameterTypeIR_control <- parameterTypeIR_control*}) be $split_dataplane_parameters(parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}))
 
@@ -17587,7 +17485,7 @@ relation TableEntry_priority_ok: TC tableContext' TBLS |- tableEntryPriority''?{
 
   1. Case (% matches pattern ())
 
-    1. Group non-specified: TC tableContext TBLS |- ?() : % %
+    1. Group non-specified: TC tableContext' TBLS |- ?() : % %
 
       1. If ((tableContext'.mode matches pattern `NOPRI`)), then
 
@@ -17741,7 +17639,7 @@ relation TableEntry_priority_ok: TC tableContext' TBLS |- tableEntryPriority''?{
 
         1. (Let (priority= numberLiteral :) be tableEntryPriority)
 
-        2. Group specified-number: TC TBLC_0 TBLS |- ?((priority= numberLiteral :)) : % %
+        2. Group specified-number: TC tableContext' TBLS |- ?((priority= numberLiteral :)) : % %
 
           1. Case analysis on tableContext'.mode
 
@@ -17817,7 +17715,7 @@ relation TableEntry_priority_ok: TC tableContext' TBLS |- tableEntryPriority''?{
 
         1. (Let (priority=( expression ):) be tableEntryPriority)
 
-        2. Group specified-expression: TC TBLC_0 TBLS |- ?((priority=( expression ):)) : % %
+        2. Group specified-expression: TC tableContext' TBLS |- ?((priority=( expression ):)) : % %
 
           1. Case analysis on tableContext'.mode
 
@@ -17961,7 +17859,7 @@ relation TableEntries_ok: TC TBLC' |- tableEntry*{tableEntry <- tableEntry*} : %
 
   1. Case (% matches pattern [])
 
-    1. Group nil: TC TBLC |- [] : % %
+    1. Group nil: TC TBLC' |- [] : % %
 
       1. Result in : % % |- % : TBLC' []
 
@@ -17969,7 +17867,7 @@ relation TableEntries_ok: TC TBLC' |- tableEntry*{tableEntry <- tableEntry*} : %
 
     1. (Let tableEntry_h :: tableEntry_t*{tableEntry_t <- tableEntry_t*} be tableEntry*{tableEntry <- tableEntry*})
 
-    2. Group cons: TC TBLC_0 |- tableEntry_h :: tableEntry_t*{} : % %
+    2. Group cons: TC TBLC' |- tableEntry_h :: tableEntry_t*{tableEntry_t <- tableEntry_t*} : % %
 
       1. (TableEntry_ok: TC TBLC' |- tableEntry_h : TBLC_1 tableEntryIR_h)
 
@@ -17986,7 +17884,7 @@ relation TableProperty_ok: TC TBLC_0' |- tableProperty : % %
 
     1. (Let (key={ tableKeyList }) be tableProperty)
 
-    2. Group key: TC TBLC_0 |- (key={ tableKeyList }) : % %
+    2. Group key: TC TBLC_0' |- (key={ tableKeyList }) : % %
 
       1. (Let tableKey*{tableKey <- tableKey*} be $flatten_tableKeyList(tableKeyList))
 
@@ -17998,7 +17896,7 @@ relation TableProperty_ok: TC TBLC_0' |- tableProperty : % %
 
     1. (Let (actions={ tableActionList }) be tableProperty)
 
-    2. Group actions: TC TBLC_0 |- (actions={ tableActionList }) : % %
+    2. Group actions: TC TBLC_0' |- (actions={ tableActionList }) : % %
 
       1. (Let tableAction*{tableAction <- tableAction*} be $flatten_tableActionList(tableActionList))
 
@@ -18010,7 +17908,7 @@ relation TableProperty_ok: TC TBLC_0' |- tableProperty : % %
 
     1. (Let (annotationList constOpt entries={ tableEntryList }) be tableProperty)
 
-    2. Group entries: TC TBLC_0 |- (annotationList constOpt entries={ tableEntryList }) : % %
+    2. Group entries: TC TBLC_0' |- (annotationList constOpt entries={ tableEntryList }) : % %
 
       1. (Let tableEntry*{tableEntry <- tableEntry*} be $flatten_tableEntryList(tableEntryList))
 
@@ -18030,7 +17928,7 @@ relation TableProperty_ok: TC TBLC_0' |- tableProperty : % %
 
     1. (Let (annotationList constOpt tableCustomName initializer ;) be tableProperty)
 
-    2. Group default-action: TC TBLC |- (annotationList constOpt tableCustomName initializer ;) : % %
+    2. Group default-action: TC TBLC_0' |- (annotationList constOpt tableCustomName initializer ;) : % %
 
       1. If (("default_action" = $tableCustomName(tableCustomName))), then
 
@@ -18044,7 +17942,7 @@ relation TableProperty_ok: TC TBLC_0' |- tableProperty : % %
 
     3. (Let (annotationList constOpt tableCustomName (= expression) ;) be tableProperty)
 
-    4. Group custom: TC tableContext |- (annotationList constOpt tableCustomName (= expression) ;) : % %
+    4. Group custom: TC TBLC_0' |- (annotationList constOpt tableCustomName (= expression) ;) : % %
 
       1. If (("size" = $tableCustomName(tableCustomName))), then
 
@@ -18187,7 +18085,7 @@ relation TableProperties_ok: TC TBLC' |- tableProperty*{tableProperty <- tablePr
 
   1. Case (% matches pattern [])
 
-    1. Group nil: TC TBLC |- [] : % %
+    1. Group nil: TC TBLC' |- [] : % %
 
       1. Result in : % % |- % : TBLC' []
 
@@ -18195,7 +18093,7 @@ relation TableProperties_ok: TC TBLC' |- tableProperty*{tableProperty <- tablePr
 
     1. (Let tableProperty_h :: tableProperty_t*{tableProperty_t <- tableProperty_t*} be tableProperty*{tableProperty <- tableProperty*})
 
-    2. Group cons: TC TBLC_0 |- tableProperty_h :: tableProperty_t*{} : % %
+    2. Group cons: TC TBLC' |- tableProperty_h :: tableProperty_t*{tableProperty_t <- tableProperty_t*} : % %
 
       1. (TableProperty_ok: TC TBLC' |- tableProperty_h : TBLC_1 tablePropertyIR_h)
 
@@ -18206,7 +18104,7 @@ relation TableProperties_ok: TC TBLC' |- tableProperty*{tableProperty <- tablePr
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:249.1-251.20
 relation Table_ok: TC |- tableProperty*{tableProperty <- tableProperty*} : % %
 
-1. Group : TC |- tableProperty*{} : % %
+1. Group : TC |- tableProperty*{tableProperty <- tableProperty*} : % %
 
   1. If (($count_table_keys(tableProperty*{tableProperty <- tableProperty*}) <= 1)), then
 
@@ -18375,7 +18273,7 @@ relation ControlLocalDecls_ok: TC' |- controlLocalDeclaration*{controlLocalDecla
 
   1. Case (% matches pattern [])
 
-    1. Group nil: TC |- [] : % %
+    1. Group nil: TC' |- [] : % %
 
       1. Result in : % |- % : TC' []
 
@@ -18383,7 +18281,7 @@ relation ControlLocalDecls_ok: TC' |- controlLocalDeclaration*{controlLocalDecla
 
     1. (Let controlLocalDeclaration_h :: controlLocalDeclaration_t*{controlLocalDeclaration_t <- controlLocalDeclaration_t*} be controlLocalDeclaration*{controlLocalDeclaration <- controlLocalDeclaration*})
 
-    2. Group cons: TC_0 |- controlLocalDeclaration_h :: controlLocalDeclaration_t*{} : % %
+    2. Group cons: TC' |- controlLocalDeclaration_h :: controlLocalDeclaration_t*{controlLocalDeclaration_t <- controlLocalDeclaration_t*} : % %
 
       1. (ControlLocalDecl_ok: TC' |- controlLocalDeclaration_h : TC_1 controlLocalDeclarationIR_h)
 
@@ -18400,7 +18298,7 @@ relation Decl_ok: p' TC_0 |- declaration : % %
 
     1. (Let (annotationList const type name (= expression_value) ;) be (declaration as constantDeclaration))
 
-    2. Group constantDeclaration: p TC_0 |- ((annotationList const type name (= expression_value) ;) as declaration) : % %
+    2. Group constantDeclaration: p' TC_0 |- ((annotationList const type name (= expression_value) ;) as declaration) : % %
 
       1. (Type_ok: p' TC_0 |- (type as typeOrVoid) : typeIR # tid*{tid <- tid*})
 
@@ -18438,7 +18336,7 @@ relation Decl_ok: p' TC_0 |- declaration : % %
 
         1. (Let (annotationList type ( argumentList ) name ;) be instantiation)
 
-        2. Group instantiation-non-objectInitializer: p TC_0 |- ((annotationList type ( argumentList ) name ;) as declaration) : % %
+        2. Group instantiation-non-objectInitializer: p' TC_0 |- ((annotationList type ( argumentList ) name ;) as declaration) : % %
 
           1. Case analysis on type
 
@@ -18496,7 +18394,7 @@ relation Decl_ok: p' TC_0 |- declaration : % %
 
         1. (Let (annotationList type ( argumentList ) name (={ objectDeclarationList }) ;) be instantiation)
 
-        2. Group instantiation-objectInitializer: p TC_0 |- ((annotationList type ( argumentList ) name (={ objectDeclarationList }) ;) as declaration) : % %
+        2. Group instantiation-objectInitializer: p' TC_0 |- ((annotationList type ( argumentList ) name (={ objectDeclarationList }) ;) as declaration) : % %
 
           1. Case analysis on type
 
@@ -18610,7 +18508,7 @@ relation Decl_ok: p' TC_0 |- declaration : % %
 
     1. (Let (annotationList (typeOrVoid name typeParameterListOpt ( parameterList )) blockStatement) be (declaration as functionDeclaration))
 
-    2. Group functionDeclaration: p TC_0 |- ((annotationList (typeOrVoid name typeParameterListOpt ( parameterList )) blockStatement) as declaration) : % %
+    2. Group functionDeclaration: p' TC_0 |- ((annotationList (typeOrVoid name typeParameterListOpt ( parameterList )) blockStatement) as declaration) : % %
 
       1. (Let typeParameter*{typeParameter <- typeParameter*} be $flatten_typeParameterListOpt(typeParameterListOpt))
 
@@ -18674,7 +18572,7 @@ relation Decl_ok: p' TC_0 |- declaration : % %
 
     1. (Let (annotationList action name ( parameterList ) blockStatement) be (declaration as actionDeclaration))
 
-    2. Group actionDeclaration: p TC_0 |- ((annotationList action name ( parameterList ) blockStatement) as declaration) : % %
+    2. Group actionDeclaration: p' TC_0 |- ((annotationList action name ( parameterList ) blockStatement) as declaration) : % %
 
       1. (Let TC_1 be TC_0[local.kind = (action)])
 
@@ -19367,7 +19265,7 @@ relation Decls_ok: p TC' |- declaration*{declaration <- declaration*} : % %
 
   1. Case (% matches pattern [])
 
-    1. Group nil: p TC |- [] : % %
+    1. Group nil: p TC' |- [] : % %
 
       1. Result in : % % |- % : TC' []
 
@@ -19375,7 +19273,7 @@ relation Decls_ok: p TC' |- declaration*{declaration <- declaration*} : % %
 
     1. (Let declaration_h :: declaration_t*{declaration_t <- declaration_t*} be declaration*{declaration <- declaration*})
 
-    2. Group cons: p TC_0 |- declaration_h :: declaration_t*{} : % %
+    2. Group cons: p TC' |- declaration_h :: declaration_t*{declaration_t <- declaration_t*} : % %
 
       1. (Decl_ok: p TC' |- declaration_h : TC_1 declarationIR_h)
 
@@ -19406,7 +19304,7 @@ relation Call_convention_expr_ok: p TC actctxt |- (direction typeIR_param _id _v
 
 1. If ((direction matches pattern `IN`)), then
 
-  1. Group in: p TC actctxt |- ((in) typeIR_param _id _value?{}) @ typedExpressionIR_arg : %
+  1. Group in: p TC actctxt |- ((in) typeIR_param _id _value?{_value <- _value?}) @ typedExpressionIR_arg : %
 
     1. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $coerce_unary(typedExpressionIR_arg, typeIR_param))
 
@@ -19416,7 +19314,7 @@ relation Call_convention_expr_ok: p TC actctxt |- (direction typeIR_param _id _v
 
       2. Result in : % % % |- % @ % : typedExpressionIR_arg_cast
 
-2. Group out-inout: p TC actctxt |- (direction typeIR_param _id _value?{}) @ typedExpressionIR_arg : %
+2. Group out-inout: p TC actctxt |- (direction typeIR_param _id _value?{_value <- _value?}) @ typedExpressionIR_arg : %
 
   1. Case analysis on direction
 
@@ -19442,7 +19340,7 @@ relation Call_convention_expr_ok: p TC actctxt |- (direction typeIR_param _id _v
 
 3. If ((direction matches pattern ``EMPTY`)), then
 
-  1. Group empty: p TC actctxt |- (() typeIR_param _id _value?{}) @ typedExpressionIR_arg : %
+  1. Group empty: p TC actctxt |- (() typeIR_param _id _value?{_value <- _value?}) @ typedExpressionIR_arg : %
 
     1. Case analysis on actctxt
 
@@ -19536,7 +19434,7 @@ relation Call_convention_ok: p TC actctxt |- parameterTypeIR*{parameterTypeIR <-
 
       1. (Let argumentIR_h :: argumentIR_t*{argumentIR_t <- argumentIR_t*} be argumentIR*{argumentIR <- argumentIR*})
 
-      2. Group cons: p TC actctxt |- parameterTypeIR_h :: parameterTypeIR_t*{} @ argumentIR_h :: argumentIR_t*{} : %
+      2. Group cons: p TC actctxt |- parameterTypeIR_h :: parameterTypeIR_t*{parameterTypeIR_t <- parameterTypeIR_t*} @ argumentIR_h :: argumentIR_t*{argumentIR_t <- argumentIR_t*} : %
 
         1. (Call_convention_argument_ok: p TC actctxt |- parameterTypeIR_h @ argumentIR_h : argumentIR_h_cast)
 
@@ -19646,7 +19544,7 @@ relation RoutineType_ok: p TC |- routineTargetIR'' < typeArgumentIR''*{typeArgum
 
   1. (Let prefixedNameIR be (routineTargetIR'' as prefixedNameIR))
 
-  2. Group referenceExpressionIR: p TC |- (prefixedNameIR as routineTargetIR) < typeArgumentIR'*{} >( argumentIR*{} ): % <# % >(# % )
+  2. Group referenceExpressionIR: p TC |- (prefixedNameIR as routineTargetIR) < typeArgumentIR''*{typeArgumentIR'' <- typeArgumentIR''*} >( argumentIR''*{argumentIR'' <- argumentIR''*} ): % <# % >(# % )
 
     1. If (([] = typeArgumentIR''*{typeArgumentIR'' <- typeArgumentIR''*})), then
 
@@ -19774,7 +19672,7 @@ relation RoutineType_ok: p TC |- routineTargetIR'' < typeArgumentIR''*{typeArgum
 
                 4. Result in : % % |- % < % >( % ): (methodTypeIR as routineTypeIR) <# [] >(# [] )
 
-    3. Group typedExpressionIR-nameIR-extern-method: p TC |- (typedExpressionIR_base . nameIR) < typeArgumentIR*{} >( argumentIR*{} ): % <# % >(# % )
+    3. Group typedExpressionIR-nameIR-extern-method: p TC |- (typedExpressionIR_base . nameIR) < typeArgumentIR''*{typeArgumentIR'' <- typeArgumentIR''*} >( argumentIR''*{argumentIR'' <- argumentIR''*} ): % <# % >(# % )
 
       1. (Let typeIR_base be $typeof_expression(typedExpressionIR_base))
 
@@ -19808,7 +19706,7 @@ relation RoutineType_ok: p TC |- routineTargetIR'' < typeArgumentIR''*{typeArgum
 
       1. If ((typeArgumentIR''*{typeArgumentIR'' <- typeArgumentIR''*} matches pattern [])), then
 
-        1. Group typedExpressionIR-nameIR-parser-apply-method: p TC |- (typedExpressionIR_base . "apply") < [] >( argumentIR*{} ): % <# % >(# % )
+        1. Group typedExpressionIR-nameIR-parser-apply-method: p TC |- (typedExpressionIR_base . "apply") < [] >( argumentIR''*{argumentIR'' <- argumentIR''*} ): % <# % >(# % )
 
           1. (Let typeIR_base be $typeof_expression(typedExpressionIR_base))
 
@@ -19844,7 +19742,7 @@ relation RoutineType_ok: p TC |- routineTargetIR'' < typeArgumentIR''*{typeArgum
 
                     1. Result in : % % |- % < % >( % ): (methodTypeIR as routineTypeIR) <# [] >(# id_default*{id_default <- id_default*} )
 
-        2. Group typedExpressionIR-nameIR-control-apply-method: p TC |- (typedExpressionIR_base . "apply") < [] >( argumentIR*{} ): % <# % >(# % )
+        2. Group typedExpressionIR-nameIR-control-apply-method: p TC |- (typedExpressionIR_base . "apply") < [] >( argumentIR''*{argumentIR'' <- argumentIR''*} ): % <# % >(# % )
 
           1. (Let typeIR_base be $typeof_expression(typedExpressionIR_base))
 
@@ -19900,7 +19798,7 @@ relation RoutineType_ok: p TC |- routineTargetIR'' < typeArgumentIR''*{typeArgum
 
     1. (Let (( routineTargetIR )) be routineTargetIR'')
 
-    2. Group parenthesized: p TC |- (( routineTargetIR )) < typeArgumentIR*{} >( argumentIR*{} ): % <# % >(# % )
+    2. Group parenthesized: p TC |- (( routineTargetIR )) < typeArgumentIR''*{typeArgumentIR'' <- typeArgumentIR''*} >( argumentIR''*{argumentIR'' <- argumentIR''*} ): % <# % >(# % )
 
       1. (RoutineType_ok: p TC |- routineTargetIR < typeArgumentIR''*{typeArgumentIR'' <- typeArgumentIR''*} >( argumentIR''*{argumentIR'' <- argumentIR''*} ): routineTypeIR <# tid_inserted*{tid_inserted <- tid_inserted*} >(# id_default*{id_default <- id_default*} ))
 
@@ -19917,7 +19815,7 @@ relation Call_ok: p TC |- routineTypeIR < typeArgumentIR*{typeArgumentIR <- type
 
     2. If ((tid'*{tid' <- tid'*} matches pattern [])), then
 
-      1. Group builtin-function: p TC |- ((builtin_function( parameterTypeIR*{} )-> typeIR_ret) as routineTypeIR) < typeArgumentIR*{} # [] >( argumentIR*{} # id_default*{} ): % < % >( % )
+      1. Group builtin-function: p TC |- ((builtin_function( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret) as routineTypeIR) < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # [] >( argumentIR*{argumentIR <- argumentIR*} # id_default'*{id_default' <- id_default'*} ): % < % >( % )
 
         1. (Let parameterTypeIR_non_default*{parameterTypeIR_non_default <- parameterTypeIR_non_default*} be $filter_default_parameters(parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}, id_default'*{id_default' <- id_default'*}))
 
@@ -19935,7 +19833,7 @@ relation Call_ok: p TC |- routineTypeIR < typeArgumentIR*{typeArgumentIR <- type
 
     1. (Let (function( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret) be (routineTypeIR as definedFunctionTypeIR))
 
-    2. Group function: p TC |- ((function( parameterTypeIR*{} )-> typeIR_ret) as routineTypeIR) < typeArgumentIR*{} # tid_infer*{} >( argumentIR*{} # id_default*{} ): % < % >( % )
+    2. Group function: p TC |- ((function( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret) as routineTypeIR) < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # tid'*{tid' <- tid'*} >( argumentIR*{argumentIR <- argumentIR*} # id_default'*{id_default' <- id_default'*} ): % < % >( % )
 
       1. (Let parameterTypeIR_non_default*{parameterTypeIR_non_default <- parameterTypeIR_non_default*} be $filter_default_parameters(parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}, id_default'*{id_default' <- id_default'*}))
 
@@ -19971,7 +19869,7 @@ relation Call_ok: p TC |- routineTypeIR < typeArgumentIR*{typeArgumentIR <- type
 
     1. (Let (extern_function( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret) be (routineTypeIR as externFunctionTypeIR))
 
-    2. Group externfunction: p TC |- ((extern_function( parameterTypeIR*{} )-> typeIR_ret) as routineTypeIR) < typeArgumentIR*{} # tid_infer*{} >( argumentIR*{} # id_default*{} ): % < % >( % )
+    2. Group externfunction: p TC |- ((extern_function( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret) as routineTypeIR) < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # tid'*{tid' <- tid'*} >( argumentIR*{argumentIR <- argumentIR*} # id_default'*{id_default' <- id_default'*} ): % < % >( % )
 
       1. (Let parameterTypeIR_non_default*{parameterTypeIR_non_default <- parameterTypeIR_non_default*} be $filter_default_parameters(parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}, id_default'*{id_default' <- id_default'*}))
 
@@ -20011,7 +19909,7 @@ relation Call_ok: p TC |- routineTypeIR < typeArgumentIR*{typeArgumentIR <- type
 
       1. If ((tid'*{tid' <- tid'*} matches pattern [])), then
 
-        1. Group action: p TC |- ((action( parameterTypeIR*{} )) as routineTypeIR) < [] # [] >( argumentIR*{} # id_default*{} ): % < % >( % )
+        1. Group action: p TC |- ((action( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )) as routineTypeIR) < [] # [] >( argumentIR*{argumentIR <- argumentIR*} # id_default'*{id_default' <- id_default'*} ): % < % >( % )
 
           1. (Let parameterTypeIR_non_default*{parameterTypeIR_non_default <- parameterTypeIR_non_default*} be $filter_default_parameters(parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}, id_default'*{id_default' <- id_default'*}))
 
@@ -20031,7 +19929,7 @@ relation Call_ok: p TC |- routineTypeIR < typeArgumentIR*{typeArgumentIR <- type
 
     2. If ((tid'*{tid' <- tid'*} matches pattern [])), then
 
-      1. Group builtin-method: p TC |- ((builtin_method( parameterTypeIR*{} )-> typeIR_ret) as routineTypeIR) < typeArgumentIR*{} # [] >( argumentIR*{} # id_default*{} ): % < % >( % )
+      1. Group builtin-method: p TC |- ((builtin_method( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret) as routineTypeIR) < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # [] >( argumentIR*{argumentIR <- argumentIR*} # id_default'*{id_default' <- id_default'*} ): % < % >( % )
 
         1. (Let parameterTypeIR_non_default*{parameterTypeIR_non_default <- parameterTypeIR_non_default*} be $filter_default_parameters(parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}, id_default'*{id_default' <- id_default'*}))
 
@@ -20055,7 +19953,7 @@ relation Call_ok: p TC |- routineTypeIR < typeArgumentIR*{typeArgumentIR <- type
 
         1. (Let (extern_method( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret) be externMethodTypeIR)
 
-        2. Group extern-method: p TC |- ((extern_method( parameterTypeIR*{} )-> typeIR_ret) as routineTypeIR) < typeArgumentIR*{} # tid_infer*{} >( argumentIR*{} # id_default*{} ): % < % >( % )
+        2. Group extern-method: p TC |- ((extern_method( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret) as routineTypeIR) < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # tid'*{tid' <- tid'*} >( argumentIR*{argumentIR <- argumentIR*} # id_default'*{id_default' <- id_default'*} ): % < % >( % )
 
           1. (Let parameterTypeIR_non_default*{parameterTypeIR_non_default <- parameterTypeIR_non_default*} be $filter_default_parameters(parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}, id_default'*{id_default' <- id_default'*}))
 
@@ -20091,7 +19989,7 @@ relation Call_ok: p TC |- routineTypeIR < typeArgumentIR*{typeArgumentIR <- type
 
         1. (Let (extern_methodabstract( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret) be externMethodTypeIR)
 
-        2. Group extern-abstract-method: p TC |- ((extern_methodabstract( parameterTypeIR*{} )-> typeIR_ret) as routineTypeIR) < typeArgumentIR*{} # tid_infer*{} >( argumentIR*{} # id_default*{} ): % < % >( % )
+        2. Group extern-abstract-method: p TC |- ((extern_methodabstract( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret) as routineTypeIR) < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # tid'*{tid' <- tid'*} >( argumentIR*{argumentIR <- argumentIR*} # id_default'*{id_default' <- id_default'*} ): % < % >( % )
 
           1. (Let parameterTypeIR_non_default*{parameterTypeIR_non_default <- parameterTypeIR_non_default*} be $filter_default_parameters(parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}, id_default'*{id_default' <- id_default'*}))
 
@@ -20131,7 +20029,7 @@ relation Call_ok: p TC |- routineTypeIR < typeArgumentIR*{typeArgumentIR <- type
 
       1. If ((tid'*{tid' <- tid'*} matches pattern [])), then
 
-        1. Group parser-apply-method: p TC |- ((parser_apply( parameterTypeIR*{} )) as routineTypeIR) < [] # [] >( argumentIR*{} # id_default*{} ): % < % >( % )
+        1. Group parser-apply-method: p TC |- ((parser_apply( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )) as routineTypeIR) < [] # [] >( argumentIR*{argumentIR <- argumentIR*} # id_default'*{id_default' <- id_default'*} ): % < % >( % )
 
           1. (Let parameterTypeIR_non_default*{parameterTypeIR_non_default <- parameterTypeIR_non_default*} be $filter_default_parameters(parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}, id_default'*{id_default' <- id_default'*}))
 
@@ -20153,7 +20051,7 @@ relation Call_ok: p TC |- routineTypeIR < typeArgumentIR*{typeArgumentIR <- type
 
       1. If ((tid'*{tid' <- tid'*} matches pattern [])), then
 
-        1. Group control-apply-method: p TC |- ((control_apply( parameterTypeIR*{} )) as routineTypeIR) < [] # [] >( argumentIR*{} # id_default*{} ): % < % >( % )
+        1. Group control-apply-method: p TC |- ((control_apply( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )) as routineTypeIR) < [] # [] >( argumentIR*{argumentIR <- argumentIR*} # id_default'*{id_default' <- id_default'*} ): % < % >( % )
 
           1. (Let parameterTypeIR_non_default*{parameterTypeIR_non_default <- parameterTypeIR_non_default*} be $filter_default_parameters(parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}, id_default'*{id_default' <- id_default'*}))
 
@@ -20188,7 +20086,7 @@ relation Call_ok: p TC |- routineTypeIR < typeArgumentIR*{typeArgumentIR <- type
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:363.1-366.29
 relation ConstructorType_ok: p TC |- prefixedNameIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} ): % <# % >(# % )
 
-1. Group : p TC |- prefixedNameIR < typeArgumentIR*{} >( argumentIR*{} ): % <# % >(# % )
+1. Group : p TC |- prefixedNameIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} ): % <# % >(# % )
 
   1. (Let (rid, constructorTypeDefIR, id*)?{(rid, constructorTypeDefIR, id*) <- (rid, constructorTypeDefIR, id*)?} be $find_constructor_overloaded(TC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}))
 
@@ -20214,7 +20112,7 @@ relation Inst_ok: cursor' TC instctxt |- constructorTypeIR < typeArgumentIR*{typ
 
 1. If ((cursor' matches pattern `GLOBAL`)), then
 
-  1. Group package: (global) TC instctxt |- constructorTypeIR < typeArgumentIR*{} # tid_infer*{} >( argumentIR*{} # id_default*{} ): % < % >( % )
+  1. Group package: (global) TC instctxt |- constructorTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # tid_infer*{tid_infer <- tid_infer*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): % < % >( % )
 
     1. (Let (constructor( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_object) be constructorTypeIR)
 
@@ -20254,7 +20152,7 @@ relation Inst_ok: cursor' TC instctxt |- constructorTypeIR < typeArgumentIR*{typ
 
               2. Result in : % % % |- % < % # % >( % # % ): typeIR_object_inferred < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
 
-2. Group non-package: p TC instctxt |- constructorTypeIR < typeArgumentIR*{} # tid_infer*{} >( argumentIR*{} # id_default*{} ): % < % >( % )
+2. Group non-package: cursor' TC instctxt |- constructorTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # tid_infer*{tid_infer <- tid_infer*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): % < % >( % )
 
   1. (Let (constructor( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_object) be constructorTypeIR)
 
@@ -21301,7 +21199,7 @@ relation SwitchCases_table_ok: TC f tid_table |- switchCase*{switchCase <- switc
 
     1. (Let switchCase_h :: switchCase_t*{switchCase_t <- switchCase_t*} be switchCase*{switchCase <- switchCase*})
 
-    2. Group cons: TC f tid_table |- switchCase_h :: switchCase_t*{} : % % # %
+    2. Group cons: TC f tid_table |- switchCase_h :: switchCase_t*{switchCase_t <- switchCase_t*} : % % # %
 
       1. (Let b_last be (switchCase_t*{switchCase_t <- switchCase_t*} = []))
 
@@ -21386,7 +21284,7 @@ relation SwitchCases_general_ok: TC f typeIR_switch |- switchCase*{switchCase <-
 
     1. (Let switchCase_h :: switchCase_t*{switchCase_t <- switchCase_t*} be switchCase*{switchCase <- switchCase*})
 
-    2. Group cons: TC f typeIR_switch |- switchCase_h :: switchCase_t*{} : % % # %
+    2. Group cons: TC f typeIR_switch |- switchCase_h :: switchCase_t*{switchCase_t <- switchCase_t*} : % % # %
 
       1. (Let b_last be (switchCase_t*{switchCase_t <- switchCase_t*} = []))
 
@@ -21558,7 +21456,7 @@ relation Decls_object_ok: p TC frame' rdenv' |- objectDeclaration*{objectDeclara
 
   1. Case (% matches pattern [])
 
-    1. Group nil: p TC frame rdenv |- [] : % % %
+    1. Group nil: p TC frame' rdenv' |- [] : % % %
 
       1. Result in : % % % % |- % : frame' rdenv' []
 
@@ -21566,7 +21464,7 @@ relation Decls_object_ok: p TC frame' rdenv' |- objectDeclaration*{objectDeclara
 
     1. (Let objectDeclaration_h :: objectDeclaration_t*{objectDeclaration_t <- objectDeclaration_t*} be objectDeclaration*{objectDeclaration <- objectDeclaration*})
 
-    2. Group cons: p TC frame_0 rdenv_0 |- objectDeclaration_h :: objectDeclaration_t*{} : % % %
+    2. Group cons: p TC frame' rdenv' |- objectDeclaration_h :: objectDeclaration_t*{objectDeclaration_t <- objectDeclaration_t*} : % % %
 
       1. (Decl_object_ok: p TC frame' rdenv' |- objectDeclaration_h : frame_1 rdenv_1 objectDeclarationIR_h)
 
@@ -21688,7 +21586,7 @@ relation Enum_serializable_fields_ok: TC' nameIR_enum typeIR |- namedExpression*
 
   1. Case (% matches pattern [])
 
-    1. Group nil: TC nameIR_enum typeIR |- [] : % % # %
+    1. Group nil: TC' nameIR_enum typeIR |- [] : % % # %
 
       1. Result in : % % % |- % : TC' [] # []
 
@@ -21696,7 +21594,7 @@ relation Enum_serializable_fields_ok: TC' nameIR_enum typeIR |- namedExpression*
 
     1. (Let namedExpression_h :: namedExpression_t*{namedExpression_t <- namedExpression_t*} be namedExpression*{namedExpression <- namedExpression*})
 
-    2. Group cons: TC_0 nameIR_enum typeIR |- namedExpression_h :: namedExpression_t*{} : % % # %
+    2. Group cons: TC' nameIR_enum typeIR |- namedExpression_h :: namedExpression_t*{namedExpression_t <- namedExpression_t*} : % % # %
 
       1. (Enum_serializable_field_ok: TC' nameIR_enum typeIR |- namedExpression_h : TC_1 namedExpressionIR_h # value_field_h)
 
@@ -22066,7 +21964,7 @@ relation SelectCase_keyset_ok: TC typeIR'''*{typeIR''' <- typeIR'''*} |- keysetE
 
       1. Case (% matches pattern `DEFAULT`)
 
-        1. Group simpleKeysetExpression-default: TC typeIR'*{} |- ((default) as keysetExpression) : %
+        1. Group simpleKeysetExpression-default: TC typeIR'''*{typeIR''' <- typeIR'''*} |- ((default) as keysetExpression) : %
 
           1. If (([] = typeIR'''*{typeIR''' <- typeIR'''*})), then
 
@@ -22090,7 +21988,7 @@ relation SelectCase_keyset_ok: TC typeIR'''*{typeIR''' <- typeIR'''*} |- keysetE
 
       2. Case (% matches pattern `_`)
 
-        1. Group simpleKeysetExpression-dontcare: TC typeIR*{} |- ((_) as keysetExpression) : %
+        1. Group simpleKeysetExpression-dontcare: TC typeIR'''*{typeIR''' <- typeIR'''*} |- ((_) as keysetExpression) : %
 
           1. (Let typeIR'*{typeIR' <- typeIR'*} be typeIR'''*{typeIR''' <- typeIR'''*})
 
@@ -22116,7 +22014,7 @@ relation SelectCase_keyset_ok: TC typeIR'''*{typeIR''' <- typeIR'''*} |- keysetE
 
       1. Case (% matches pattern `(DEFAULT)`)
 
-        1. Group tupleKeysetExpression-default: TC typeIR*{} |- (((default)) as keysetExpression) : %
+        1. Group tupleKeysetExpression-default: TC typeIR'''*{typeIR''' <- typeIR'''*} |- (((default)) as keysetExpression) : %
 
           1. (Let typeIR'*{typeIR' <- typeIR'*} be typeIR'''*{typeIR''' <- typeIR'''*})
 
@@ -22136,7 +22034,7 @@ relation SelectCase_keyset_ok: TC typeIR'''*{typeIR''' <- typeIR'''*} |- keysetE
 
       2. Case (% matches pattern `(_)`)
 
-        1. Group tupleKeysetExpression-dontcare: TC typeIR*{} |- (((_)) as keysetExpression) : %
+        1. Group tupleKeysetExpression-dontcare: TC typeIR'''*{typeIR''' <- typeIR'''*} |- (((_)) as keysetExpression) : %
 
           1. (Let typeIR'*{typeIR' <- typeIR'*} be typeIR'''*{typeIR''' <- typeIR'''*})
 
@@ -22158,7 +22056,7 @@ relation SelectCase_keyset_ok: TC typeIR'''*{typeIR''' <- typeIR'''*} |- keysetE
 
         1. (Let (( simpleKeysetExpression_h , simpleKeysetExpressionList_t )) be tupleKeysetExpression)
 
-        2. Group tupleKeysetExpression-list: TC typeIR_key*{} |- ((( simpleKeysetExpression_h , simpleKeysetExpressionList_t )) as keysetExpression) : %
+        2. Group tupleKeysetExpression-list: TC typeIR'''*{typeIR''' <- typeIR'''*} |- ((( simpleKeysetExpression_h , simpleKeysetExpressionList_t )) as keysetExpression) : %
 
           1. (Let simpleKeysetExpression_t*{simpleKeysetExpression_t <- simpleKeysetExpression_t*} be $flatten_simpleKeysetExpressionList(simpleKeysetExpressionList_t))
 
@@ -22173,7 +22071,7 @@ relation SelectCase_keyset_ok: TC typeIR'''*{typeIR''' <- typeIR'''*} |- keysetE
 ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:294.1-296.26
 relation SelectCase_ok: TC nameIR_state*{nameIR_state <- nameIR_state*} typeIR_key*{typeIR_key <- typeIR_key*} |- (keysetExpression : name ;) : %
 
-1. Group : TC nameIR_state*{} typeIR_key*{} |- (keysetExpression : name ;) : %
+1. Group : TC nameIR_state*{nameIR_state <- nameIR_state*} typeIR_key*{typeIR_key <- typeIR_key*} |- (keysetExpression : name ;) : %
 
   1. (SelectCase_keyset_ok: TC typeIR_key*{typeIR_key <- typeIR_key*} |- keysetExpression : keysetExpressionIR)
 
@@ -22561,7 +22459,7 @@ relation TableEntry_keysets_simple_ok: TC TBLC TBLS' |- matchKey*{matchKey <- ma
 
     1. If ((simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*} matches pattern [])), then
 
-      1. Group nil: TC TBLC TBLS |- [] @ [] : % %
+      1. Group nil: TC TBLC TBLS' |- [] @ [] : % %
 
         1. Result in : % % % |- % @ % : TBLS' []
 
@@ -22573,7 +22471,7 @@ relation TableEntry_keysets_simple_ok: TC TBLC TBLS' |- matchKey*{matchKey <- ma
 
       1. (Let simpleKeysetExpression_h :: simpleKeysetExpression_t*{simpleKeysetExpression_t <- simpleKeysetExpression_t*} be simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*})
 
-      2. Group cons: TC TBLC TBLS_0 |- matchKey_h :: matchKey_t*{} @ simpleKeysetExpression_h :: simpleKeysetExpression_t*{} : % %
+      2. Group cons: TC TBLC TBLS' |- matchKey_h :: matchKey_t*{matchKey_t <- matchKey_t*} @ simpleKeysetExpression_h :: simpleKeysetExpression_t*{simpleKeysetExpression_t <- simpleKeysetExpression_t*} : % %
 
         1. (TableEntry_keyset_simple_ok: TC TBLC |- matchKey_h @ simpleKeysetExpression_h : TBLS_1 simpleKeysetExpressionIR_h)
 
@@ -24134,7 +24032,7 @@ relation Expr_inst: p IC STO' |- (expressionIR # _expressionNoteIR') ==> % %
 
     1. (Let booleanLiteral be (expressionIR as booleanLiteral))
 
-    2. Group literalExpressionIR-boolean: p IC STO |- ((booleanLiteral as expressionIR) # _expressionNoteIR) ==> % %
+    2. Group literalExpressionIR-boolean: p IC STO' |- ((booleanLiteral as expressionIR) # _expressionNoteIR') ==> % %
 
       1. Case analysis on booleanLiteral
 
@@ -24150,7 +24048,7 @@ relation Expr_inst: p IC STO' |- (expressionIR # _expressionNoteIR') ==> % %
 
     1. (Let numberLiteral be (expressionIR as numberLiteral))
 
-    2. Group literalExpressionIR-number: p IC STO |- ((numberLiteral as expressionIR) # _expressionNoteIR) ==> % %
+    2. Group literalExpressionIR-number: p IC STO' |- ((numberLiteral as expressionIR) # _expressionNoteIR') ==> % %
 
       1. Case analysis on numberLiteral
 
@@ -24176,7 +24074,7 @@ relation Expr_inst: p IC STO' |- (expressionIR # _expressionNoteIR') ==> % %
 
     1. (Let (" text ") be (expressionIR as stringLiteral))
 
-    2. Group literalExpressionIR-stringLiteral: p IC STO |- (((" text ") as expressionIR) # _expressionNoteIR) ==> % %
+    2. Group literalExpressionIR-stringLiteral: p IC STO' |- (((" text ") as expressionIR) # _expressionNoteIR') ==> % %
 
       1. Result in : % % % |- % ==> STO' ((" text ") as value)
 
@@ -24184,7 +24082,7 @@ relation Expr_inst: p IC STO' |- (expressionIR # _expressionNoteIR') ==> % %
 
     1. (Let prefixedNameIR be (expressionIR as prefixedNameIR))
 
-    2. Group referenceExpressionIR: p IC STO |- ((prefixedNameIR as expressionIR) # _expressionNoteIR) ==> % %
+    2. Group referenceExpressionIR: p IC STO' |- ((prefixedNameIR as expressionIR) # _expressionNoteIR') ==> % %
 
       1. (Let value be $find_value_inst(p, IC, prefixedNameIR))
 
@@ -24194,7 +24092,7 @@ relation Expr_inst: p IC STO' |- (expressionIR # _expressionNoteIR') ==> % %
 
     1. (Let defaultExpression be (expressionIR as defaultExpression))
 
-    2. Group defaultExpressionIR: p IC STO |- (((...) as expressionIR) # _expressionNoteIR) ==> % %
+    2. Group defaultExpressionIR: p IC STO' |- (((...) as expressionIR) # _expressionNoteIR') ==> % %
 
       1. Result in : % % % |- % ==> STO' ((default) as value)
 
@@ -24202,7 +24100,7 @@ relation Expr_inst: p IC STO' |- (expressionIR # _expressionNoteIR') ==> % %
 
     1. (Let (unop typedExpressionIR) be (expressionIR as unaryExpressionIR))
 
-    2. Group unaryExpressionIR: p IC STO_0 |- (((unop typedExpressionIR) as expressionIR) # _expressionNoteIR) ==> % %
+    2. Group unaryExpressionIR: p IC STO' |- (((unop typedExpressionIR) as expressionIR) # _expressionNoteIR') ==> % %
 
       1. Case analysis on unop
 
@@ -24234,7 +24132,7 @@ relation Expr_inst: p IC STO' |- (expressionIR # _expressionNoteIR') ==> % %
 
     1. (Let (typedExpressionIR_l binop typedExpressionIR_r) be (expressionIR as binaryExpressionIR))
 
-    2. Group binaryExpressionIR: p IC STO_0 |- (((typedExpressionIR_l binop typedExpressionIR_r) as expressionIR) # _expressionNoteIR) ==> % %
+    2. Group binaryExpressionIR: p IC STO' |- (((typedExpressionIR_l binop typedExpressionIR_r) as expressionIR) # _expressionNoteIR') ==> % %
 
       1. Case analysis on binop
 
@@ -24410,7 +24308,7 @@ relation Expr_inst: p IC STO' |- (expressionIR # _expressionNoteIR') ==> % %
 
     1. (Let (typedExpressionIR_cond ? typedExpressionIR_true : typedExpressionIR_false) be (expressionIR as ternaryExpressionIR))
 
-    2. Group ternaryExpressionIR: p IC STO_0 |- (((typedExpressionIR_cond ? typedExpressionIR_true : typedExpressionIR_false) as expressionIR) # _expressionNoteIR) ==> % %
+    2. Group ternaryExpressionIR: p IC STO' |- (((typedExpressionIR_cond ? typedExpressionIR_true : typedExpressionIR_false) as expressionIR) # _expressionNoteIR') ==> % %
 
       1. (Expr_inst: p IC STO' |- typedExpressionIR_cond ==> STO_1 value)
 
@@ -24430,7 +24328,7 @@ relation Expr_inst: p IC STO' |- (expressionIR # _expressionNoteIR') ==> % %
 
     1. (Let (( typeIR ) typedExpressionIR) be (expressionIR as castExpressionIR))
 
-    2. Group castExpressionIR: p IC STO_0 |- (((( typeIR ) typedExpressionIR) as expressionIR) # _expressionNoteIR) ==> % %
+    2. Group castExpressionIR: p IC STO' |- (((( typeIR ) typedExpressionIR) as expressionIR) # _expressionNoteIR') ==> % %
 
       1. (Expr_inst: p IC STO' |- typedExpressionIR ==> STO_1 value)
 
@@ -24444,11 +24342,11 @@ relation Expr_inst: p IC STO' |- (expressionIR # _expressionNoteIR') ==> % %
 
     2. If ((dataExpressionIR matches pattern `{#}`)), then
 
-      1. Group dataExpressionIR-invalid: p IC STO |- ((({#}) as expressionIR) # _expressionNoteIR) ==> % %
+      1. Group dataExpressionIR-invalid: p IC STO' |- ((({#}) as expressionIR) # _expressionNoteIR') ==> % %
 
         1. Result in : % % % |- % ==> STO' (({#}) as value)
 
-    3. Group dataExpressionIR-sequence: p IC STO_0 |- ((dataExpressionIR as expressionIR) # _expressionNoteIR) ==> % %
+    3. Group dataExpressionIR-sequence: p IC STO' |- ((dataExpressionIR as expressionIR) # _expressionNoteIR') ==> % %
 
       1. Case analysis on dataExpressionIR
 
@@ -24468,7 +24366,7 @@ relation Expr_inst: p IC STO' |- (expressionIR # _expressionNoteIR') ==> % %
 
           3. Result in : % % % |- % ==> STO_1 ((seq( value*{value <- value*} ,...)) as value)
 
-    4. Group dataExpressionIR-record: p IC STO_0 |- ((dataExpressionIR as expressionIR) # _expressionNoteIR) ==> % %
+    4. Group dataExpressionIR-record: p IC STO' |- ((dataExpressionIR as expressionIR) # _expressionNoteIR') ==> % %
 
       1. Case analysis on dataExpressionIR
 
@@ -24492,7 +24390,7 @@ relation Expr_inst: p IC STO' |- (expressionIR # _expressionNoteIR') ==> % %
 
     1. (Let (error. nameIR) be (expressionIR as errorAccessExpressionIR))
 
-    2. Group errorAccessExpressionIR: p IC STO |- (((error. nameIR) as expressionIR) # _expressionNoteIR) ==> % %
+    2. Group errorAccessExpressionIR: p IC STO' |- (((error. nameIR) as expressionIR) # _expressionNoteIR') ==> % %
 
       1. (Let nameIR_error be "error." ++ nameIR)
 
@@ -24508,7 +24406,7 @@ relation Expr_inst: p IC STO' |- (expressionIR # _expressionNoteIR') ==> % %
 
       1. (Let (type prefixedNameIR) be memberAccessBaseIR)
 
-      2. Group memberAccessExpressionIR-type: p IC STO |- ((((type prefixedNameIR) . nameIR) as expressionIR) # _expressionNoteIR) ==> % %
+      2. Group memberAccessExpressionIR-type: p IC STO' |- ((((type prefixedNameIR) . nameIR) as expressionIR) # _expressionNoteIR') ==> % %
 
         1. (Let typeDefIR'?{typeDefIR' <- typeDefIR'?} be $find_typedef_inst(p, IC, prefixedNameIR))
 
@@ -24554,7 +24452,7 @@ relation Expr_inst: p IC STO' |- (expressionIR # _expressionNoteIR') ==> % %
 
       2. If ((text = "size")), then
 
-        1. Group memberAccessExpressionIR-expression-stack-size: p IC STO |- ((((typedExpressionIR_base as memberAccessBaseIR) . "size") as expressionIR) # (( typeIR_base _ctk ))) ==> % %
+        1. Group memberAccessExpressionIR-expression-stack-size: p IC STO' |- ((((typedExpressionIR_base as memberAccessBaseIR) . "size") as expressionIR) # (( typeIR_base _ctk ))) ==> % %
 
           1. (Let (_expressionIR # (( typeIR _ctk' ))) be typedExpressionIR_base)
 
@@ -24572,7 +24470,7 @@ relation Expr_inst: p IC STO' |- (expressionIR # _expressionNoteIR') ==> % %
 
     1. (Let (typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ]) be (expressionIR as sliceAccessExpressionIR))
 
-    2. Group sliceAccessExpressionIR: p IC STO_0 |- (((typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ]) as expressionIR) # _expressionNoteIR) ==> % %
+    2. Group sliceAccessExpressionIR: p IC STO' |- (((typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ]) as expressionIR) # _expressionNoteIR') ==> % %
 
       1. (Expr_inst: p IC STO' |- typedExpressionIR_base ==> STO_1 value_base)
 
@@ -24592,7 +24490,7 @@ relation Expr_inst: p IC STO' |- (expressionIR # _expressionNoteIR') ==> % %
 
         1. (Let ((prefixedNameIR < typeArgumentListIR >) ( argumentListIR )) be callExpressionIR)
 
-        2. Group callExpressionIR-constructor: p IC STO_0 |- ((((prefixedNameIR < typeArgumentListIR >) ( argumentListIR )) as expressionIR) # _expressionNoteIR) ==> % %
+        2. Group callExpressionIR-constructor: p IC STO' |- ((((prefixedNameIR < typeArgumentListIR >) ( argumentListIR )) as expressionIR) # _expressionNoteIR') ==> % %
 
           1. (Let (cid, constructor, id*)?{(cid, constructor, id*) <- (cid, constructor, id*)?} be $find_constructor_inst(IC, prefixedNameIR, argumentListIR))
 
@@ -24616,7 +24514,7 @@ relation Expr_inst: p IC STO' |- (expressionIR # _expressionNoteIR') ==> % %
 
           1. If ((argumentIR*{argumentIR <- argumentIR*} matches pattern [])), then
 
-            1. Group callExpressionIR-builtin-size: p IC STO |- (((routineTargetIR < [] >( [] )) as expressionIR) # _expressionNoteIR) ==> % %
+            1. Group callExpressionIR-builtin-size: p IC STO' |- (((routineTargetIR < [] >( [] )) as expressionIR) # _expressionNoteIR') ==> % %
 
               1. Case analysis on routineTargetIR
 
@@ -24668,7 +24566,7 @@ relation Expr_inst: p IC STO' |- (expressionIR # _expressionNoteIR') ==> % %
 
           1. (Let (( routineTargetIR )) be routineTargetIR')
 
-          2. Group callExpressionIR-parenthesized: p IC STO_0 |- ((((( routineTargetIR )) < typeArgumentListIR >( argumentListIR )) as expressionIR) # expressionNoteIR) ==> % %
+          2. Group callExpressionIR-parenthesized: p IC STO' |- ((((( routineTargetIR )) < typeArgumentListIR >( argumentListIR )) as expressionIR) # _expressionNoteIR') ==> % %
 
             1. (Expr_inst: p IC STO' |- (((routineTargetIR < typeArgumentListIR >( argumentListIR )) as expressionIR) # _expressionNoteIR') ==> STO_1 value)
 
@@ -24678,7 +24576,7 @@ relation Expr_inst: p IC STO' |- (expressionIR # _expressionNoteIR') ==> % %
 
     1. (Let (( typedExpressionIR )) be (expressionIR as parenthesizedExpressionIR))
 
-    2. Group parenthesizedExpressionIR: p IC STO_0 |- (((( typedExpressionIR )) as expressionIR) # _expressionNoteIR) ==> % %
+    2. Group parenthesizedExpressionIR: p IC STO' |- (((( typedExpressionIR )) as expressionIR) # _expressionNoteIR') ==> % %
 
       1. (Expr_inst: p IC STO' |- typedExpressionIR ==> STO_1 value)
 
@@ -24691,7 +24589,7 @@ relation Exprs_inst: p IC STO' |- typedExpressionIR*{typedExpressionIR <- typedE
 
   1. Case (% matches pattern [])
 
-    1. Group nil: p IC STO |- [] ==> % %
+    1. Group nil: p IC STO' |- [] ==> % %
 
       1. Result in : % % % |- % ==> STO' []
 
@@ -24699,7 +24597,7 @@ relation Exprs_inst: p IC STO' |- typedExpressionIR*{typedExpressionIR <- typedE
 
     1. (Let typedExpressionIR_h :: typedExpressionIR_t*{typedExpressionIR_t <- typedExpressionIR_t*} be typedExpressionIR*{typedExpressionIR <- typedExpressionIR*})
 
-    2. Group cons: p IC STO_0 |- typedExpressionIR_h :: typedExpressionIR_t*{} ==> % %
+    2. Group cons: p IC STO' |- typedExpressionIR_h :: typedExpressionIR_t*{typedExpressionIR_t <- typedExpressionIR_t*} ==> % %
 
       1. (Expr_inst: p IC STO' |- typedExpressionIR_h ==> STO_1 value_h)
 
@@ -24739,7 +24637,7 @@ relation Stmt_inst: p' IC' STO' |- statementIR ==> % % %
 
     1. (Let emptyStatementIR be (statementIR as emptyStatementIR))
 
-    2. Group emptyStatementIR: p IC STO |- (emptyStatementIR as statementIR) ==> % % %
+    2. Group emptyStatementIR: p' IC' STO' |- (emptyStatementIR as statementIR) ==> % % %
 
       1. Result in : % % % |- % ==> IC' STO' (emptyStatementIR as statementIR)
 
@@ -24747,7 +24645,7 @@ relation Stmt_inst: p' IC' STO' |- statementIR ==> % % %
 
     1. (Let assignmentStatementIR be (statementIR as assignmentStatementIR))
 
-    2. Group assignmentStatementIR: p IC STO |- (assignmentStatementIR as statementIR) ==> % % %
+    2. Group assignmentStatementIR: p' IC' STO' |- (assignmentStatementIR as statementIR) ==> % % %
 
       1. Result in : % % % |- % ==> IC' STO' (assignmentStatementIR as statementIR)
 
@@ -24755,7 +24653,7 @@ relation Stmt_inst: p' IC' STO' |- statementIR ==> % % %
 
     1. (Let callStatementIR be (statementIR as callStatementIR))
 
-    2. Group callStatementIR: p IC STO |- (callStatementIR as statementIR) ==> % % %
+    2. Group callStatementIR: p' IC' STO' |- (callStatementIR as statementIR) ==> % % %
 
       1. Result in : % % % |- % ==> IC' STO' (callStatementIR as statementIR)
 
@@ -24763,7 +24661,7 @@ relation Stmt_inst: p' IC' STO' |- statementIR ==> % % %
 
     1. (Let (prefixedNameIR .apply( argumentListIR );) be (statementIR as directApplicationStatementIR))
 
-    2. Group directApplicationStatementIR: p IC STO_0 |- ((prefixedNameIR .apply( argumentListIR );) as statementIR) ==> % % %
+    2. Group directApplicationStatementIR: p' IC' STO' |- ((prefixedNameIR .apply( argumentListIR );) as statementIR) ==> % % %
 
       1. (Let (cid, constructor, id*)?{(cid, constructor, id*) <- (cid, constructor, id*)?} be $find_constructor_inst(IC', prefixedNameIR, []))
 
@@ -24799,7 +24697,7 @@ relation Stmt_inst: p' IC' STO' |- statementIR ==> % % %
 
     1. (Let exitStatementIR be (statementIR as exitStatementIR))
 
-    2. Group exitStatementIR: p IC STO |- (exitStatementIR as statementIR) ==> % % %
+    2. Group exitStatementIR: p' IC' STO' |- (exitStatementIR as statementIR) ==> % % %
 
       1. Result in : % % % |- % ==> IC' STO' (exitStatementIR as statementIR)
 
@@ -24807,7 +24705,7 @@ relation Stmt_inst: p' IC' STO' |- statementIR ==> % % %
 
     1. (Let conditionalStatementIR be (statementIR as conditionalStatementIR))
 
-    2. Group conditionalStatementIR: p IC_0 STO_0 |- (conditionalStatementIR as statementIR) ==> % % %
+    2. Group conditionalStatementIR: p' IC' STO' |- (conditionalStatementIR as statementIR) ==> % % %
 
       1. Case analysis on conditionalStatementIR
 
@@ -24833,7 +24731,7 @@ relation Stmt_inst: p' IC' STO' |- statementIR ==> % % %
 
     1. (Let (switch( typedExpressionIR ){ switchCaseListIR }) be (statementIR as switchStatementIR))
 
-    2. Group switchStatementIR: p IC_0 STO_0 |- ((switch( typedExpressionIR ){ switchCaseListIR }) as statementIR) ==> % % %
+    2. Group switchStatementIR: p' IC' STO' |- ((switch( typedExpressionIR ){ switchCaseListIR }) as statementIR) ==> % % %
 
       1. (SwitchCases_inst: p' IC' STO' |- switchCaseListIR ==> IC_1 STO_1 switchCaseListIR_inst)
 
@@ -24847,7 +24745,7 @@ relation Stmt_inst: p' IC' STO' |- statementIR ==> % % %
 
       1. (Let returnStatementIR be (statementIR as returnStatementIR))
 
-      2. Group returnStatementIR: (local) IC STO |- (returnStatementIR as statementIR) ==> % % %
+      2. Group returnStatementIR: (local) IC' STO' |- (returnStatementIR as statementIR) ==> % % %
 
         1. Result in : % % % |- % ==> IC' STO' (returnStatementIR as statementIR)
 
@@ -24855,7 +24753,7 @@ relation Stmt_inst: p' IC' STO' |- statementIR ==> % % %
 
       1. (Let (annotationList { blockElementStatementListIR }) be (statementIR as blockStatementIR))
 
-      2. Group blockStatementIR: (local) IC_0 STO_0 |- ((annotationList { blockElementStatementListIR }) as statementIR) ==> % % %
+      2. Group blockStatementIR: (local) IC' STO' |- ((annotationList { blockElementStatementListIR }) as statementIR) ==> % % %
 
         1. (Block_inst: IC' STO' |- (annotationList { blockElementStatementListIR }) ==> IC_1 STO_1 (_annotationList { blockElementStatementListIR_inst }))
 
@@ -24870,7 +24768,7 @@ relation BlockElementStmt_inst: IC_0' STO_0' |- blockElementStatementIR ==> % % 
 
     1. (Let constantDeclarationIR be (blockElementStatementIR as constantDeclarationIR))
 
-    2. Group constantDeclarationIR: IC_0 STO_0 |- (constantDeclarationIR as blockElementStatementIR) ==> % % %
+    2. Group constantDeclarationIR: IC_0' STO_0' |- (constantDeclarationIR as blockElementStatementIR) ==> % % %
 
       1. (Decl_inst: (local) IC_0' STO_0' |- (constantDeclarationIR as declarationIR) ==> IC_1 STO_1 declarationIR'?{declarationIR' <- declarationIR'?})
 
@@ -24888,7 +24786,7 @@ relation BlockElementStmt_inst: IC_0' STO_0' |- blockElementStatementIR ==> % % 
 
     1. (Let variableDeclarationIR be (blockElementStatementIR as variableDeclarationIR))
 
-    2. Group variableDeclarationIR: IC STO |- (variableDeclarationIR as blockElementStatementIR) ==> % % %
+    2. Group variableDeclarationIR: IC_0' STO_0' |- (variableDeclarationIR as blockElementStatementIR) ==> % % %
 
       1. Result in : % % |- % ==> IC_0' STO_0' ?((variableDeclarationIR as blockElementStatementIR))
 
@@ -24896,7 +24794,7 @@ relation BlockElementStmt_inst: IC_0' STO_0' |- blockElementStatementIR ==> % % 
 
     1. (Let statementIR be (blockElementStatementIR as statementIR))
 
-    2. Group statementIR: IC_0 STO_0 |- (statementIR as blockElementStatementIR) ==> % % %
+    2. Group statementIR: IC_0' STO_0' |- (statementIR as blockElementStatementIR) ==> % % %
 
       1. (Stmt_inst: (local) IC_0' STO_0' |- statementIR ==> IC_1 STO_1 statementIR_inst)
 
@@ -24909,7 +24807,7 @@ relation BlockElementStmts_inst: IC' STO' |- blockElementStatementIR*{blockEleme
 
   1. Case (% matches pattern [])
 
-    1. Group nil: IC STO |- [] ==> % % %
+    1. Group nil: IC' STO' |- [] ==> % % %
 
       1. Result in : % % |- % ==> IC' STO' []
 
@@ -24917,7 +24815,7 @@ relation BlockElementStmts_inst: IC' STO' |- blockElementStatementIR*{blockEleme
 
     1. (Let blockElementStatementIR_h :: blockElementStatementIR_t*{blockElementStatementIR_t <- blockElementStatementIR_t*} be blockElementStatementIR*{blockElementStatementIR <- blockElementStatementIR*})
 
-    2. Group cons: IC_0 STO_0 |- blockElementStatementIR_h :: blockElementStatementIR_t*{} ==> % % %
+    2. Group cons: IC' STO' |- blockElementStatementIR_h :: blockElementStatementIR_t*{blockElementStatementIR_t <- blockElementStatementIR_t*} ==> % % %
 
       1. (BlockElementStmt_inst: IC' STO' |- blockElementStatementIR_h ==> IC_1 STO_1 blockElementStatementIR'?{blockElementStatementIR' <- blockElementStatementIR'?})
 
@@ -24951,7 +24849,7 @@ relation Bind_method: rdenv_0 |- methodPrototypeIR ==> %
 
     1. (Let (annotationList (typeIR_ret nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{parameterIR <- parameterIR*} )) ;) be methodPrototypeIR)
 
-    2. Group non-abstract: rdenv_0 |- (annotationList (typeIR_ret nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{} )) ;) ==> %
+    2. Group non-abstract: rdenv_0 |- (annotationList (typeIR_ret nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{parameterIR <- parameterIR*} )) ;) ==> %
 
       1. (Let rid be $rid_IR(nameIR, parameterIR*{parameterIR <- parameterIR*}))
 
@@ -24969,7 +24867,7 @@ relation Bind_method: rdenv_0 |- methodPrototypeIR ==> %
 
     1. (Let (annotationList abstract (typeIR_ret nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{parameterIR <- parameterIR*} )) ;) be methodPrototypeIR)
 
-    2. Group abstract: rdenv_0 |- (annotationList abstract (typeIR_ret nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{} )) ;) ==> %
+    2. Group abstract: rdenv_0 |- (annotationList abstract (typeIR_ret nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{parameterIR <- parameterIR*} )) ;) ==> %
 
       1. (Let rid be $rid_IR(nameIR, parameterIR*{parameterIR <- parameterIR*}))
 
@@ -24990,7 +24888,7 @@ relation Bind_methods: rdenv' |- methodPrototypeIR*{methodPrototypeIR <- methodP
 
   1. Case (% matches pattern [])
 
-    1. Group nil: rdenv |- [] ==> %
+    1. Group nil: rdenv' |- [] ==> %
 
       1. Result in : % |- % ==> rdenv'
 
@@ -24998,7 +24896,7 @@ relation Bind_methods: rdenv' |- methodPrototypeIR*{methodPrototypeIR <- methodP
 
     1. (Let methodPrototypeIR_h :: methodPrototypeIR_t*{methodPrototypeIR_t <- methodPrototypeIR_t*} be methodPrototypeIR*{methodPrototypeIR <- methodPrototypeIR*})
 
-    2. Group cons: rdenv_0 |- methodPrototypeIR_h :: methodPrototypeIR_t*{} ==> %
+    2. Group cons: rdenv' |- methodPrototypeIR_h :: methodPrototypeIR_t*{methodPrototypeIR_t <- methodPrototypeIR_t*} ==> %
 
       1. (Bind_method: rdenv' |- methodPrototypeIR_h ==> rdenv_1)
 
@@ -25030,7 +24928,7 @@ relation Bind_constructors: p IC' typeParameterListIR methodPrototypeListIR |- m
 
   1. Case (% matches pattern [])
 
-    1. Group nil: p IC typeParameterListIR methodPrototypeListIR |- [] ==> %
+    1. Group nil: p IC' typeParameterListIR methodPrototypeListIR |- [] ==> %
 
       1. Result in : % % % % |- % ==> IC'
 
@@ -25038,7 +24936,7 @@ relation Bind_constructors: p IC' typeParameterListIR methodPrototypeListIR |- m
 
     1. (Let methodPrototypeIR_h :: methodPrototypeIR_t*{methodPrototypeIR_t <- methodPrototypeIR_t*} be methodPrototypeIR*{methodPrototypeIR <- methodPrototypeIR*})
 
-    2. Group cons: p IC_0 typeParameterListIR methodPrototypeListIR |- methodPrototypeIR_h :: methodPrototypeIR_t*{} ==> %
+    2. Group cons: p IC' typeParameterListIR methodPrototypeListIR |- methodPrototypeIR_h :: methodPrototypeIR_t*{methodPrototypeIR_t <- methodPrototypeIR_t*} ==> %
 
       1. (Bind_constructor: p IC' typeParameterListIR methodPrototypeListIR |- methodPrototypeIR_h ==> IC_1)
 
@@ -25086,7 +24984,7 @@ relation ExternMethods_inst: IC' |- methodPrototypeIR*{methodPrototypeIR <- meth
 
   1. Case (% matches pattern [])
 
-    1. Group nil: IC |- [] ==> %
+    1. Group nil: IC' |- [] ==> %
 
       1. Result in : % |- % ==> IC'
 
@@ -25094,7 +24992,7 @@ relation ExternMethods_inst: IC' |- methodPrototypeIR*{methodPrototypeIR <- meth
 
     1. (Let methodPrototypeIR_h :: methodPrototypeIR_t*{methodPrototypeIR_t <- methodPrototypeIR_t*} be methodPrototypeIR*{methodPrototypeIR <- methodPrototypeIR*})
 
-    2. Group cons: IC_0 |- methodPrototypeIR_h :: methodPrototypeIR_t*{} ==> %
+    2. Group cons: IC' |- methodPrototypeIR_h :: methodPrototypeIR_t*{methodPrototypeIR_t <- methodPrototypeIR_t*} ==> %
 
       1. (ExternMethod_inst: IC' |- methodPrototypeIR_h ==> IC_1)
 
@@ -25111,7 +25009,7 @@ relation ParserStmt_inst: IC_0' STO_0 |- parserStatementIR ==> % % %
 
     1. (Let constantDeclarationIR be (parserStatementIR as constantDeclarationIR))
 
-    2. Group constantDeclarationIR: IC_0 STO_0 |- (constantDeclarationIR as parserStatementIR) ==> % % %
+    2. Group constantDeclarationIR: IC_0' STO_0 |- (constantDeclarationIR as parserStatementIR) ==> % % %
 
       1. (Decl_inst: (local) IC_0' STO_0 |- (constantDeclarationIR as declarationIR) ==> IC_1 STO_1 declarationIR'?{declarationIR' <- declarationIR'?})
 
@@ -25129,7 +25027,7 @@ relation ParserStmt_inst: IC_0' STO_0 |- parserStatementIR ==> % % %
 
     1. (Let variableDeclarationIR be (parserStatementIR as variableDeclarationIR))
 
-    2. Group variableDeclarationIR: IC_0 STO_0 |- (variableDeclarationIR as parserStatementIR) ==> % % %
+    2. Group variableDeclarationIR: IC_0' STO_0 |- (variableDeclarationIR as parserStatementIR) ==> % % %
 
       1. (BlockElementStmt_inst: IC_0' STO_0 |- (variableDeclarationIR as blockElementStatementIR) ==> IC_1 STO_1 blockElementStatementIR'?{blockElementStatementIR' <- blockElementStatementIR'?})
 
@@ -25147,7 +25045,7 @@ relation ParserStmt_inst: IC_0' STO_0 |- parserStatementIR ==> % % %
 
     1. (Let emptyStatementIR be (parserStatementIR as emptyStatementIR))
 
-    2. Group emptyStatementIR: IC_0 STO_0 |- (emptyStatementIR as parserStatementIR) ==> % % %
+    2. Group emptyStatementIR: IC_0' STO_0 |- (emptyStatementIR as parserStatementIR) ==> % % %
 
       1. (Stmt_inst: (local) IC_0' STO_0 |- (emptyStatementIR as statementIR) ==> IC_1 STO_1 statementIR)
 
@@ -25161,7 +25059,7 @@ relation ParserStmt_inst: IC_0' STO_0 |- parserStatementIR ==> % % %
 
     1. (Let assignmentStatementIR be (parserStatementIR as assignmentStatementIR))
 
-    2. Group assignmentStatementIR: IC_0 STO_0 |- (assignmentStatementIR as parserStatementIR) ==> % % %
+    2. Group assignmentStatementIR: IC_0' STO_0 |- (assignmentStatementIR as parserStatementIR) ==> % % %
 
       1. (Stmt_inst: (local) IC_0' STO_0 |- (assignmentStatementIR as statementIR) ==> IC_1 STO_1 statementIR)
 
@@ -25175,7 +25073,7 @@ relation ParserStmt_inst: IC_0' STO_0 |- parserStatementIR ==> % % %
 
     1. (Let callStatementIR be (parserStatementIR as callStatementIR))
 
-    2. Group callStatementIR: IC_0 STO_0 |- (callStatementIR as parserStatementIR) ==> % % %
+    2. Group callStatementIR: IC_0' STO_0 |- (callStatementIR as parserStatementIR) ==> % % %
 
       1. (Stmt_inst: (local) IC_0' STO_0 |- (callStatementIR as statementIR) ==> IC_1 STO_1 statementIR)
 
@@ -25189,7 +25087,7 @@ relation ParserStmt_inst: IC_0' STO_0 |- parserStatementIR ==> % % %
 
     1. (Let (prefixedNameIR .apply( argumentListIR );) be (parserStatementIR as directApplicationStatementIR))
 
-    2. Group directApplicationStatementIR: IC STO_0 |- ((prefixedNameIR .apply( argumentListIR );) as parserStatementIR) ==> % % %
+    2. Group directApplicationStatementIR: IC_0' STO_0 |- ((prefixedNameIR .apply( argumentListIR );) as parserStatementIR) ==> % % %
 
       1. (Let (cid, constructor, id*)?{(cid, constructor, id*) <- (cid, constructor, id*)?} be $find_constructor_inst(IC_0', prefixedNameIR, []))
 
@@ -25225,7 +25123,7 @@ relation ParserStmt_inst: IC_0' STO_0 |- parserStatementIR ==> % % %
 
     1. (Let (annotationList { parserStatementListIR }) be (parserStatementIR as parserBlockStatementIR))
 
-    2. Group parserBlockStatementIR: IC_0 STO_0 |- ((annotationList { parserStatementListIR }) as parserStatementIR) ==> % % %
+    2. Group parserBlockStatementIR: IC_0' STO_0 |- ((annotationList { parserStatementListIR }) as parserStatementIR) ==> % % %
 
       1. (ParserStmts_inst: IC_0' STO_0 |- parserStatementListIR ==> IC_1 STO_1 parserStatementListIR_inst)
 
@@ -25237,7 +25135,7 @@ relation ParserStmt_inst: IC_0' STO_0 |- parserStatementIR ==> % % %
 
     1. (Let conditionalStatementIR be (parserStatementIR as conditionalStatementIR))
 
-    2. Group conditionalStatementIR: IC_0 STO_0 |- (conditionalStatementIR as parserStatementIR) ==> % % %
+    2. Group conditionalStatementIR: IC_0' STO_0 |- (conditionalStatementIR as parserStatementIR) ==> % % %
 
       1. (Stmt_inst: (local) IC_0' STO_0 |- (conditionalStatementIR as statementIR) ==> IC_1 STO_1 statementIR)
 
@@ -25254,7 +25152,7 @@ relation ParserStmts_inst: IC' STO' |- parserStatementIR*{parserStatementIR <- p
 
   1. Case (% matches pattern [])
 
-    1. Group nil: IC STO |- [] ==> % % %
+    1. Group nil: IC' STO' |- [] ==> % % %
 
       1. Result in : % % |- % ==> IC' STO' []
 
@@ -25262,7 +25160,7 @@ relation ParserStmts_inst: IC' STO' |- parserStatementIR*{parserStatementIR <- p
 
     1. (Let parserStatementIR_h :: parserStatementIR_t*{parserStatementIR_t <- parserStatementIR_t*} be parserStatementIR*{parserStatementIR <- parserStatementIR*})
 
-    2. Group cons: IC_0 STO_0 |- parserStatementIR_h :: parserStatementIR_t*{} ==> % % %
+    2. Group cons: IC' STO' |- parserStatementIR_h :: parserStatementIR_t*{parserStatementIR_t <- parserStatementIR_t*} ==> % % %
 
       1. (ParserStmt_inst: IC' STO' |- parserStatementIR_h ==> IC_1 STO_1 parserStatementIR_h_inst)
 
@@ -25290,7 +25188,7 @@ relation ParserStates_inst: IC' STO' |- parserStateIR*{parserStateIR <- parserSt
 
   1. Case (% matches pattern [])
 
-    1. Group nil: IC STO |- [] ==> % %
+    1. Group nil: IC' STO' |- [] ==> % %
 
       1. Result in : % % |- % ==> IC' STO'
 
@@ -25298,7 +25196,7 @@ relation ParserStates_inst: IC' STO' |- parserStateIR*{parserStateIR <- parserSt
 
     1. (Let parserStateIR_h :: parserStateIR_t*{parserStateIR_t <- parserStateIR_t*} be parserStateIR*{parserStateIR <- parserStateIR*})
 
-    2. Group cons: IC_0 STO_0 |- parserStateIR_h :: parserStateIR_t*{} ==> % %
+    2. Group cons: IC' STO' |- parserStateIR_h :: parserStateIR_t*{parserStateIR_t <- parserStateIR_t*} ==> % %
 
       1. (ParserState_inst: IC' STO' |- parserStateIR_h ==> IC_1 STO_1)
 
@@ -25315,7 +25213,7 @@ relation ParserLocalDecl_inst: IC_0' STO_0' |- parserLocalDeclarationIR ==> % % 
 
     1. (Let constantDeclarationIR be (parserLocalDeclarationIR as constantDeclarationIR))
 
-    2. Group constantDeclarationIR: IC_0 STO_0 |- (constantDeclarationIR as parserLocalDeclarationIR) ==> % % %
+    2. Group constantDeclarationIR: IC_0' STO_0' |- (constantDeclarationIR as parserLocalDeclarationIR) ==> % % %
 
       1. (Decl_inst: (block) IC_0' STO_0' |- (constantDeclarationIR as declarationIR) ==> IC_1 STO_1 declarationIR'?{declarationIR' <- declarationIR'?})
 
@@ -25333,7 +25231,7 @@ relation ParserLocalDecl_inst: IC_0' STO_0' |- parserLocalDeclarationIR ==> % % 
 
     1. (Let instantiationIR be (parserLocalDeclarationIR as instantiationIR))
 
-    2. Group instantiationIR: IC_0 STO_0 |- (instantiationIR as parserLocalDeclarationIR) ==> % % %
+    2. Group instantiationIR: IC_0' STO_0' |- (instantiationIR as parserLocalDeclarationIR) ==> % % %
 
       1. (Decl_inst: (block) IC_0' STO_0' |- (instantiationIR as declarationIR) ==> IC_1 STO_1 declarationIR'?{declarationIR' <- declarationIR'?})
 
@@ -25351,7 +25249,7 @@ relation ParserLocalDecl_inst: IC_0' STO_0' |- parserLocalDeclarationIR ==> % % 
 
     1. (Let variableDeclarationIR be (parserLocalDeclarationIR as variableDeclarationIR))
 
-    2. Group variableDeclarationIR: IC STO |- (variableDeclarationIR as parserLocalDeclarationIR) ==> % % %
+    2. Group variableDeclarationIR: IC_0' STO_0' |- (variableDeclarationIR as parserLocalDeclarationIR) ==> % % %
 
       1. Result in : % % |- % ==> IC_0' STO_0' (variableDeclarationIR as parserLocalDeclarationIR)
 
@@ -25359,7 +25257,7 @@ relation ParserLocalDecl_inst: IC_0' STO_0' |- parserLocalDeclarationIR ==> % % 
 
     1. (Let valueSetDeclarationIR be (parserLocalDeclarationIR as valueSetDeclarationIR))
 
-    2. Group valueSetDeclarationIR: IC STO |- (valueSetDeclarationIR as parserLocalDeclarationIR) ==> % % %
+    2. Group valueSetDeclarationIR: IC_0' STO_0' |- (valueSetDeclarationIR as parserLocalDeclarationIR) ==> % % %
 
       1. Result in : % % |- % ==> IC_0' STO_0' (valueSetDeclarationIR as parserLocalDeclarationIR)
 
@@ -25370,7 +25268,7 @@ relation ParserLocalDecls_inst: IC' STO' |- parserLocalDeclarationIR*{parserLoca
 
   1. Case (% matches pattern [])
 
-    1. Group nil: IC STO |- [] ==> % % %
+    1. Group nil: IC' STO' |- [] ==> % % %
 
       1. Result in : % % |- % ==> IC' STO' []
 
@@ -25378,7 +25276,7 @@ relation ParserLocalDecls_inst: IC' STO' |- parserLocalDeclarationIR*{parserLoca
 
     1. (Let parserLocalDeclarationIR_h :: parserLocalDeclarationIR_t*{parserLocalDeclarationIR_t <- parserLocalDeclarationIR_t*} be parserLocalDeclarationIR*{parserLocalDeclarationIR <- parserLocalDeclarationIR*})
 
-    2. Group cons: IC_0 STO_0 |- parserLocalDeclarationIR_h :: parserLocalDeclarationIR_t*{} ==> % % %
+    2. Group cons: IC' STO' |- parserLocalDeclarationIR_h :: parserLocalDeclarationIR_t*{parserLocalDeclarationIR_t <- parserLocalDeclarationIR_t*} ==> % % %
 
       1. (ParserLocalDecl_inst: IC' STO' |- parserLocalDeclarationIR_h ==> IC_1 STO_1 parserLocalDeclarationIR_h_inst)
 
@@ -25395,7 +25293,7 @@ relation TableProperty_inst: IC STO' |- tablePropertyIR ==> % %
 
     1. (Let (key={ tableKeyListIR }) be tablePropertyIR)
 
-    2. Group key: IC STO |- (key={ tableKeyListIR }) ==> % %
+    2. Group key: IC STO' |- (key={ tableKeyListIR }) ==> % %
 
       1. Result in : % % |- % ==> STO' (key={ tableKeyListIR })
 
@@ -25403,7 +25301,7 @@ relation TableProperty_inst: IC STO' |- tablePropertyIR ==> % %
 
     1. (Let (actions={ tableActionListIR }) be tablePropertyIR)
 
-    2. Group actions: IC STO |- (actions={ tableActionListIR }) ==> % %
+    2. Group actions: IC STO' |- (actions={ tableActionListIR }) ==> % %
 
       1. Result in : % % |- % ==> STO' (actions={ tableActionListIR })
 
@@ -25411,7 +25309,7 @@ relation TableProperty_inst: IC STO' |- tablePropertyIR ==> % %
 
     1. (Let (annotationList constOptIR entries={ tableEntryListIR }) be tablePropertyIR)
 
-    2. Group entries: IC STO |- (annotationList constOptIR entries={ tableEntryListIR }) ==> % %
+    2. Group entries: IC STO' |- (annotationList constOptIR entries={ tableEntryListIR }) ==> % %
 
       1. Result in : % % |- % ==> STO' (annotationList constOptIR entries={ tableEntryListIR })
 
@@ -25419,7 +25317,7 @@ relation TableProperty_inst: IC STO' |- tablePropertyIR ==> % %
 
     1. (Let (annotationList constOptIR default_action= tableActionReferenceIR ;) be tablePropertyIR)
 
-    2. Group custom-default-action: IC STO |- (annotationList constOptIR default_action= tableActionReferenceIR ;) ==> % %
+    2. Group custom-default-action: IC STO' |- (annotationList constOptIR default_action= tableActionReferenceIR ;) ==> % %
 
       1. Result in : % % |- % ==> STO' (annotationList constOptIR default_action= tableActionReferenceIR ;)
 
@@ -25427,7 +25325,7 @@ relation TableProperty_inst: IC STO' |- tablePropertyIR ==> % %
 
     1. (Let (annotationList constOptIR custom nameIR (= typedExpressionIR) ;) be tablePropertyIR)
 
-    2. Group custom: IC STO_0 |- (annotationList constOptIR custom nameIR (= typedExpressionIR) ;) ==> % %
+    2. Group custom: IC STO' |- (annotationList constOptIR custom nameIR (= typedExpressionIR) ;) ==> % %
 
       1. (Let IC_inner be $enter_path(IC, nameIR))
 
@@ -25439,7 +25337,7 @@ relation TableProperty_inst: IC STO' |- tablePropertyIR ==> % %
 
     1. (Let (annotationList constOptIR custom_const nameIR constantInitializerIR ;) be tablePropertyIR)
 
-    2. Group custom-const: IC STO |- (annotationList constOptIR custom_const nameIR constantInitializerIR ;) ==> % %
+    2. Group custom-const: IC STO' |- (annotationList constOptIR custom_const nameIR constantInitializerIR ;) ==> % %
 
       1. Result in : % % |- % ==> STO' (annotationList constOptIR custom_const nameIR constantInitializerIR ;)
 
@@ -25450,7 +25348,7 @@ relation TableProperties_inst: IC STO' |- tablePropertyIR*{tablePropertyIR <- ta
 
   1. Case (% matches pattern [])
 
-    1. Group nil: IC STO |- [] ==> % %
+    1. Group nil: IC STO' |- [] ==> % %
 
       1. Result in : % % |- % ==> STO' []
 
@@ -25458,7 +25356,7 @@ relation TableProperties_inst: IC STO' |- tablePropertyIR*{tablePropertyIR <- ta
 
     1. (Let tablePropertyIR_h :: tablePropertyIR_t*{tablePropertyIR_t <- tablePropertyIR_t*} be tablePropertyIR*{tablePropertyIR <- tablePropertyIR*})
 
-    2. Group cons: IC STO_0 |- tablePropertyIR_h :: tablePropertyIR_t*{} ==> % %
+    2. Group cons: IC STO' |- tablePropertyIR_h :: tablePropertyIR_t*{tablePropertyIR_t <- tablePropertyIR_t*} ==> % %
 
       1. (TableProperty_inst: IC STO' |- tablePropertyIR_h ==> STO_1 tablePropertyIR_h_inst)
 
@@ -25475,7 +25373,7 @@ relation ControlLocalDecl_inst: IC_0' STO_0' |- controlLocalDeclarationIR ==> % 
 
     1. (Let constantDeclarationIR be (controlLocalDeclarationIR as constantDeclarationIR))
 
-    2. Group constantDeclarationIR: IC_0 STO_0 |- (constantDeclarationIR as controlLocalDeclarationIR) ==> % % %
+    2. Group constantDeclarationIR: IC_0' STO_0' |- (constantDeclarationIR as controlLocalDeclarationIR) ==> % % %
 
       1. (Decl_inst: (block) IC_0' STO_0' |- (constantDeclarationIR as declarationIR) ==> IC_1 STO_1 declarationIR'?{declarationIR' <- declarationIR'?})
 
@@ -25493,7 +25391,7 @@ relation ControlLocalDecl_inst: IC_0' STO_0' |- controlLocalDeclarationIR ==> % 
 
     1. (Let instantiationIR be (controlLocalDeclarationIR as instantiationIR))
 
-    2. Group instantiationIR: IC_0 STO_0 |- (instantiationIR as controlLocalDeclarationIR) ==> % % %
+    2. Group instantiationIR: IC_0' STO_0' |- (instantiationIR as controlLocalDeclarationIR) ==> % % %
 
       1. (Decl_inst: (block) IC_0' STO_0' |- (instantiationIR as declarationIR) ==> IC_1 STO_1 declarationIR'?{declarationIR' <- declarationIR'?})
 
@@ -25511,7 +25409,7 @@ relation ControlLocalDecl_inst: IC_0' STO_0' |- controlLocalDeclarationIR ==> % 
 
     1. (Let variableDeclarationIR be (controlLocalDeclarationIR as variableDeclarationIR))
 
-    2. Group variableDeclarationIR: IC STO |- (variableDeclarationIR as controlLocalDeclarationIR) ==> % % %
+    2. Group variableDeclarationIR: IC_0' STO_0' |- (variableDeclarationIR as controlLocalDeclarationIR) ==> % % %
 
       1. Result in : % % |- % ==> IC_0' STO_0' ?((variableDeclarationIR as controlLocalDeclarationIR))
 
@@ -25519,7 +25417,7 @@ relation ControlLocalDecl_inst: IC_0' STO_0' |- controlLocalDeclarationIR ==> % 
 
     1. (Let actionDeclarationIR be (controlLocalDeclarationIR as actionDeclarationIR))
 
-    2. Group actionDeclarationIR: IC_0 STO_0 |- (actionDeclarationIR as controlLocalDeclarationIR) ==> % % %
+    2. Group actionDeclarationIR: IC_0' STO_0' |- (actionDeclarationIR as controlLocalDeclarationIR) ==> % % %
 
       1. (Decl_inst: (block) IC_0' STO_0' |- (actionDeclarationIR as declarationIR) ==> IC_1 STO_1 declarationIR?{declarationIR <- declarationIR?})
 
@@ -25531,7 +25429,7 @@ relation ControlLocalDecl_inst: IC_0' STO_0' |- controlLocalDeclarationIR ==> % 
 
     1. (Let (annotationList table typeIR nameIR { tablePropertyListIR }) be (controlLocalDeclarationIR as tableDeclarationIR))
 
-    2. Group tableDeclarationIR: IC_0 STO_0 |- ((annotationList table typeIR nameIR { tablePropertyListIR }) as controlLocalDeclarationIR) ==> % % %
+    2. Group tableDeclarationIR: IC_0' STO_0' |- ((annotationList table typeIR nameIR { tablePropertyListIR }) as controlLocalDeclarationIR) ==> % % %
 
       1. (Let IC_inner be $enter_path(IC_0', nameIR))
 
@@ -25554,7 +25452,7 @@ relation ControlLocalDecls_inst: IC' STO' |- controlLocalDeclarationIR*{controlL
 
   1. Case (% matches pattern [])
 
-    1. Group nil: IC STO |- [] ==> % % %
+    1. Group nil: IC' STO' |- [] ==> % % %
 
       1. Result in : % % |- % ==> IC' STO' []
 
@@ -25562,7 +25460,7 @@ relation ControlLocalDecls_inst: IC' STO' |- controlLocalDeclarationIR*{controlL
 
     1. (Let controlLocalDeclarationIR_h :: controlLocalDeclarationIR_t*{controlLocalDeclarationIR_t <- controlLocalDeclarationIR_t*} be controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*})
 
-    2. Group cons-none: IC_0 STO_0 |- controlLocalDeclarationIR_h :: controlLocalDeclarationIR_t*{} ==> % % %
+    2. Group cons-none: IC' STO' |- controlLocalDeclarationIR_h :: controlLocalDeclarationIR_t*{controlLocalDeclarationIR_t <- controlLocalDeclarationIR_t*} ==> % % %
 
       1. (ControlLocalDecl_inst: IC' STO' |- controlLocalDeclarationIR_h ==> IC_1 STO_1 controlLocalDeclarationIR'?{controlLocalDeclarationIR' <- controlLocalDeclarationIR'?})
 
@@ -25572,7 +25470,7 @@ relation ControlLocalDecls_inst: IC' STO' |- controlLocalDeclarationIR*{controlL
 
         2. Result in : % % |- % ==> IC_2 STO_2 controlLocalDeclarationIR_t_inst*{controlLocalDeclarationIR_t_inst <- controlLocalDeclarationIR_t_inst*}
 
-    3. Group cons-some: IC_0 STO_0 |- controlLocalDeclarationIR_h :: controlLocalDeclarationIR_t*{} ==> % % %
+    3. Group cons-some: IC' STO' |- controlLocalDeclarationIR_h :: controlLocalDeclarationIR_t*{controlLocalDeclarationIR_t <- controlLocalDeclarationIR_t*} ==> % % %
 
       1. (ControlLocalDecl_inst: IC' STO' |- controlLocalDeclarationIR_h ==> IC_1 STO_1 controlLocalDeclarationIR'?{controlLocalDeclarationIR' <- controlLocalDeclarationIR'?})
 
@@ -25593,7 +25491,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
     1. (Let (annotationList const typeIR nameIR (= value) ;) be (declarationIR as constantDeclarationIR))
 
-    2. Group constantDeclarationIR: cursor IC_0 STO |- ((annotationList const typeIR nameIR (= value) ;) as declarationIR) ==> % % %
+    2. Group constantDeclarationIR: cursor' IC_0 STO' |- ((annotationList const typeIR nameIR (= value) ;) as declarationIR) ==> % % %
 
       1. Case analysis on (cursor' matches pattern `GLOBAL`)
 
@@ -25615,7 +25513,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
     1. (Let (annotationList typeIR prefixedNameIR < typeArgumentListIR >( argumentListIR ) nameIR objectInitializerOptIR ;) be (declarationIR as instantiationIR))
 
-    2. Group instantiationIR: cursor IC_0 STO_0 |- ((annotationList typeIR prefixedNameIR < typeArgumentListIR >( argumentListIR ) nameIR objectInitializerOptIR ;) as declarationIR) ==> % % %
+    2. Group instantiationIR: cursor' IC_0 STO' |- ((annotationList typeIR prefixedNameIR < typeArgumentListIR >( argumentListIR ) nameIR objectInitializerOptIR ;) as declarationIR) ==> % % %
 
       1. Case analysis on (cursor' matches pattern `GLOBAL`)
 
@@ -25719,7 +25617,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
     1. (Let (annotationList (typeIR nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterListIR )) blockStatementIR) be (declarationIR as functionDeclarationIR))
 
-    2. Group functionDeclarationIR: p IC_0 STO |- ((annotationList (typeIR nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterListIR )) blockStatementIR) as declarationIR) ==> % % %
+    2. Group functionDeclarationIR: cursor' IC_0 STO' |- ((annotationList (typeIR nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterListIR )) blockStatementIR) as declarationIR) ==> % % %
 
       1. (Let rid be $rid_IR(nameIR, parameterListIR))
 
@@ -25733,7 +25631,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
     1. (Let (annotationList action nameIR ( parameterListIR ) blockStatementIR) be (declarationIR as actionDeclarationIR))
 
-    2. Group actionDeclarationIR: p IC_0 STO |- ((annotationList action nameIR ( parameterListIR ) blockStatementIR) as declarationIR) ==> % % %
+    2. Group actionDeclarationIR: cursor' IC_0 STO' |- ((annotationList action nameIR ( parameterListIR ) blockStatementIR) as declarationIR) ==> % % %
 
       1. (Let rid be $rid_IR(nameIR, parameterListIR))
 
@@ -25751,7 +25649,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
       1. (Let (error{ nameIR*{nameIR <- nameIR*} }) be (declarationIR as errorDeclarationIR))
 
-      2. Group errorDeclarationIR: (global) IC_0 STO |- ((error{ nameIR*{} }) as declarationIR) ==> % % %
+      2. Group errorDeclarationIR: (global) IC_0 STO' |- ((error{ nameIR*{nameIR <- nameIR*} }) as declarationIR) ==> % % %
 
         1. (Let nameIR_error be $concat_text(["error.", nameIR]))*{nameIR <- nameIR*, nameIR_error <- nameIR_error*}
 
@@ -25765,7 +25663,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
       1. (Let (match_kind{ nameIR*{nameIR <- nameIR*} }) be (declarationIR as matchKindDeclarationIR))
 
-      2. Group matchKindDeclarationIR: (global) IC_0 STO |- ((match_kind{ nameIR*{} }) as declarationIR) ==> % % %
+      2. Group matchKindDeclarationIR: (global) IC_0 STO' |- ((match_kind{ nameIR*{nameIR <- nameIR*} }) as declarationIR) ==> % % %
 
         1. (Let value_match_kind be ((match_kind. nameIR) as value))*{nameIR <- nameIR*, value_match_kind <- value_match_kind*}
 
@@ -25777,7 +25675,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
       1. (Let (annotationList extern (typeIR nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterListIR )) ;) be (declarationIR as externFunctionDeclarationIR))
 
-      2. Group externFunctionDeclarationIR: (global) IC_0 STO |- ((annotationList extern (typeIR nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterListIR )) ;) as declarationIR) ==> % % %
+      2. Group externFunctionDeclarationIR: (global) IC_0 STO' |- ((annotationList extern (typeIR nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterListIR )) ;) as declarationIR) ==> % % %
 
         1. (Let rid be $rid_IR(nameIR, parameterListIR))
 
@@ -25791,7 +25689,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
       1. (Let (annotationList extern nameIR < typeParameterListIR , typeParameterListIR_inferred >{ methodPrototypeIR*{methodPrototypeIR <- methodPrototypeIR*} }) be (declarationIR as externObjectDeclarationIR))
 
-      2. Group externObjectDeclarationIR: (global) IC_0 STO |- ((annotationList extern nameIR < typeParameterListIR , typeParameterListIR_inferred >{ methodPrototypeIR*{} }) as declarationIR) ==> % % %
+      2. Group externObjectDeclarationIR: (global) IC_0 STO' |- ((annotationList extern nameIR < typeParameterListIR , typeParameterListIR_inferred >{ methodPrototypeIR*{methodPrototypeIR <- methodPrototypeIR*} }) as declarationIR) ==> % % %
 
         1. (Let (methodPrototypeIR'*{methodPrototypeIR' <- methodPrototypeIR'*}, methodPrototypeIR_method*{methodPrototypeIR_method <- methodPrototypeIR_method*}) be $split_constructors_IR(methodPrototypeIR*{methodPrototypeIR <- methodPrototypeIR*}))
 
@@ -25831,7 +25729,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
       2. If ((typeParameterIR*{typeParameterIR <- typeParameterIR*} matches pattern [])), then
 
-        1. Group parserDeclarationIR: (global) IC_0 STO |- ((annotationList parser nameIR < [] >( parameterListIR )( constructorParameterListIR ){ parserLocalDeclarationListIR parserStateListIR }) as declarationIR) ==> % % %
+        1. Group parserDeclarationIR: (global) IC_0 STO' |- ((annotationList parser nameIR < [] >( parameterListIR )( constructorParameterListIR ){ parserLocalDeclarationListIR parserStateListIR }) as declarationIR) ==> % % %
 
           1. (Let cid be $cid_IR(nameIR, constructorParameterListIR))
 
@@ -25847,7 +25745,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
       2. If ((typeParameterIR*{typeParameterIR <- typeParameterIR*} matches pattern [])), then
 
-        1. Group controlDeclarationIR: (global) IC_0 STO |- ((annotationList control nameIR < [] >( parameterListIR )( constructorParameterListIR ){ controlLocalDeclarationListIR apply controlBodyIR }) as declarationIR) ==> % % %
+        1. Group controlDeclarationIR: (global) IC_0 STO' |- ((annotationList control nameIR < [] >( parameterListIR )( constructorParameterListIR ){ controlLocalDeclarationListIR apply controlBodyIR }) as declarationIR) ==> % % %
 
           1. (Let cid be $cid_IR(nameIR, constructorParameterListIR))
 
@@ -25867,7 +25765,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
           1. (Let (annotationList enum nameIR { nameIR_field*{nameIR_field <- nameIR_field*} }) be enumTypeDeclarationIR)
 
-          2. Group enumTypeDeclarationIR-non-serializable: (global) IC_0 STO |- ((annotationList enum nameIR { nameIR_field*{} }) as declarationIR) ==> % % %
+          2. Group enumTypeDeclarationIR-non-serializable: (global) IC_0 STO' |- ((annotationList enum nameIR { nameIR_field*{nameIR_field <- nameIR_field*} }) as declarationIR) ==> % % %
 
             1. (Let nameIR_enum_field be nameIR ++ "." ++ nameIR_field)*{nameIR_enum_field <- nameIR_enum_field*, nameIR_field <- nameIR_field*}
 
@@ -25885,7 +25783,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
           1. (Let (annotationList enum typeIR nameIR { (nameIR_field = typedExpressionIR_field)*{nameIR_field <- nameIR_field*, typedExpressionIR_field <- typedExpressionIR_field*} }) be enumTypeDeclarationIR)
 
-          2. Group enumTypeDeclarationIR-serializable: (global) IC_0 STO_0 |- ((annotationList enum typeIR nameIR { (nameIR_field = typedExpressionIR_field)*{} }) as declarationIR) ==> % % %
+          2. Group enumTypeDeclarationIR-serializable: (global) IC_0 STO' |- ((annotationList enum typeIR nameIR { (nameIR_field = typedExpressionIR_field)*{nameIR_field <- nameIR_field*, typedExpressionIR_field <- typedExpressionIR_field*} }) as declarationIR) ==> % % %
 
             1. (Exprs_inst: (global) IC_0 STO' |- typedExpressionIR_field*{typedExpressionIR_field <- typedExpressionIR_field*} ==> STO_1 value_field*{value_field <- value_field*})
 
@@ -25905,7 +25803,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
       1. (Let (annotationList struct nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR*{typeFieldIR <- typeFieldIR*} }) be (declarationIR as structTypeDeclarationIR))
 
-      2. Group structTypeDeclarationIR: (global) IC_0 STO |- ((annotationList struct nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR*{} }) as declarationIR) ==> % % %
+      2. Group structTypeDeclarationIR: (global) IC_0 STO' |- ((annotationList struct nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR*{typeFieldIR <- typeFieldIR*} }) as declarationIR) ==> % % %
 
         1. (Let (annotationList_field typeIR_field nameIR_field ;) be typeFieldIR)*{annotationList_field <- annotationList_field*, nameIR_field <- nameIR_field*, typeFieldIR <- typeFieldIR*, typeIR_field <- typeIR_field*}
 
@@ -25919,7 +25817,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
       1. (Let (annotationList header nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR*{typeFieldIR <- typeFieldIR*} }) be (declarationIR as headerTypeDeclarationIR))
 
-      2. Group headerTypeDeclarationIR: (global) IC_0 STO |- ((annotationList header nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR*{} }) as declarationIR) ==> % % %
+      2. Group headerTypeDeclarationIR: (global) IC_0 STO' |- ((annotationList header nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR*{typeFieldIR <- typeFieldIR*} }) as declarationIR) ==> % % %
 
         1. (Let (annotationList_field typeIR_field nameIR_field ;) be typeFieldIR)*{annotationList_field <- annotationList_field*, nameIR_field <- nameIR_field*, typeFieldIR <- typeFieldIR*, typeIR_field <- typeIR_field*}
 
@@ -25933,7 +25831,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
       1. (Let (annotationList header_union nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR*{typeFieldIR <- typeFieldIR*} }) be (declarationIR as headerUnionTypeDeclarationIR))
 
-      2. Group headerUnionTypeDeclarationIR: (global) IC_0 STO |- ((annotationList header_union nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR*{} }) as declarationIR) ==> % % %
+      2. Group headerUnionTypeDeclarationIR: (global) IC_0 STO' |- ((annotationList header_union nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR*{typeFieldIR <- typeFieldIR*} }) as declarationIR) ==> % % %
 
         1. (Let (annotationList_field typeIR_field nameIR_field ;) be typeFieldIR)*{annotationList_field <- annotationList_field*, nameIR_field <- nameIR_field*, typeFieldIR <- typeFieldIR*, typeIR_field <- typeIR_field*}
 
@@ -25953,7 +25851,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
           1. (Let (annotationList typedef typedefIR nameIR ;) be typedefDeclarationIR)
 
-          2. Group typedefDeclarationIR-typedef: (global) IC_0 STO |- ((annotationList typedef typedefIR nameIR ;) as declarationIR) ==> % % %
+          2. Group typedefDeclarationIR-typedef: (global) IC_0 STO' |- ((annotationList typedef typedefIR nameIR ;) as declarationIR) ==> % % %
 
             1. Case analysis on typedefIR
 
@@ -26015,7 +25913,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
           1. (Let (annotationList type typeIR nameIR ;) be typedefDeclarationIR)
 
-          2. Group typedefDeclarationIR-newtype: (global) IC_0 STO |- ((annotationList type typeIR nameIR ;) as declarationIR) ==> % % %
+          2. Group typedefDeclarationIR-newtype: (global) IC_0 STO' |- ((annotationList type typeIR nameIR ;) as declarationIR) ==> % % %
 
             1. (Let typeIR_newtype be ((type nameIR typeIR) as typeIR))
 
@@ -26027,7 +25925,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
       1. (Let (annotationList parser nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{parameterIR <- parameterIR*} );) be (declarationIR as parserTypeDeclarationIR))
 
-      2. Group parserTypeDeclarationIR: (global) IC_0 STO |- ((annotationList parser nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{} );) as declarationIR) ==> % % %
+      2. Group parserTypeDeclarationIR: (global) IC_0 STO' |- ((annotationList parser nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{parameterIR <- parameterIR*} );) as declarationIR) ==> % % %
 
         1. (Let parameterTypeIR be $typeof_parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
 
@@ -26043,7 +25941,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
       1. (Let (annotationList control nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{parameterIR <- parameterIR*} );) be (declarationIR as controlTypeDeclarationIR))
 
-      2. Group controlTypeDeclarationIR: (global) IC_0 STO |- ((annotationList control nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{} );) as declarationIR) ==> % % %
+      2. Group controlTypeDeclarationIR: (global) IC_0 STO' |- ((annotationList control nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{parameterIR <- parameterIR*} );) as declarationIR) ==> % % %
 
         1. (Let parameterTypeIR be $typeof_parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
 
@@ -26059,7 +25957,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
       1. (Let (annotationList package nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{parameterIR <- parameterIR*} );) be (declarationIR as packageTypeDeclarationIR))
 
-      2. Group packageTypeDeclarationIR: (global) IC_0 STO |- ((annotationList package nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{} );) as declarationIR) ==> % % %
+      2. Group packageTypeDeclarationIR: (global) IC_0 STO' |- ((annotationList package nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{parameterIR <- parameterIR*} );) as declarationIR) ==> % % %
 
         1. (Let (_annotationList _direction typeIR _nameIR _constantInitializerOptIR) be parameterIR)*{_annotationList <- _annotationList*, _constantInitializerOptIR <- _constantInitializerOptIR*, _direction <- _direction*, _nameIR <- _nameIR*, parameterIR <- parameterIR*, typeIR <- typeIR*}
 
@@ -26084,7 +25982,7 @@ relation Decls_inst: p IC' STO' |- declarationIR*{declarationIR <- declarationIR
 
   1. Case (% matches pattern [])
 
-    1. Group nil: p IC STO |- [] ==> % % %
+    1. Group nil: p IC' STO' |- [] ==> % % %
 
       1. Result in : % % % |- % ==> IC' STO' []
 
@@ -26092,7 +25990,7 @@ relation Decls_inst: p IC' STO' |- declarationIR*{declarationIR <- declarationIR
 
     1. (Let declarationIR_h :: declarationIR_t*{declarationIR_t <- declarationIR_t*} be declarationIR*{declarationIR <- declarationIR*})
 
-    2. Group cons-none: p IC_0 STO_0 |- declarationIR_h :: declarationIR_t*{} ==> % % %
+    2. Group cons-none: p IC' STO' |- declarationIR_h :: declarationIR_t*{declarationIR_t <- declarationIR_t*} ==> % % %
 
       1. (Decl_inst: p IC' STO' |- declarationIR_h ==> IC_1 STO_1 declarationIR'?{declarationIR' <- declarationIR'?})
 
@@ -26102,7 +26000,7 @@ relation Decls_inst: p IC' STO' |- declarationIR*{declarationIR <- declarationIR
 
         2. Result in : % % % |- % ==> IC_2 STO_2 declarationIR_t_inst*{declarationIR_t_inst <- declarationIR_t_inst*}
 
-    3. Group cons-some: p IC_0 STO_0 |- declarationIR_h :: declarationIR_t*{} ==> % % %
+    3. Group cons-some: p IC' STO' |- declarationIR_h :: declarationIR_t*{declarationIR_t <- declarationIR_t*} ==> % % %
 
       1. (Decl_inst: p IC' STO' |- declarationIR_h ==> IC_1 STO_1 declarationIR'?{declarationIR' <- declarationIR'?})
 
@@ -26153,7 +26051,7 @@ relation Bind_args: p_caller IC_caller | p_callee IC_callee' STO' |- id*{id <- i
 
     1. If ((argumentIR*{argumentIR <- argumentIR*} matches pattern [])), then
 
-      1. Group nil: p_caller IC_caller | p_callee IC_callee STO |- [] [] ==> % %
+      1. Group nil: p_caller IC_caller | p_callee IC_callee' STO' |- [] [] ==> % %
 
         1. Result in : % % | % % % |- % % ==> IC_callee' STO'
 
@@ -26165,7 +26063,7 @@ relation Bind_args: p_caller IC_caller | p_callee IC_callee' STO' |- id*{id <- i
 
       1. (Let argumentIR_h :: argumentIR_t*{argumentIR_t <- argumentIR_t*} be argumentIR*{argumentIR <- argumentIR*})
 
-      2. Group cons: p_caller IC_caller | p_callee IC_callee_0 STO_0 |- id_h :: id_t*{} argumentIR_h :: argumentIR_t*{} ==> % %
+      2. Group cons: p_caller IC_caller | p_callee IC_callee' STO' |- id_h :: id_t*{id_t <- id_t*} argumentIR_h :: argumentIR_t*{argumentIR_t <- argumentIR_t*} ==> % %
 
         1. (Bind_arg: p_caller IC_caller | p_callee IC_callee' STO' |- id_h argumentIR_h ==> IC_callee_1 STO_1)
 
@@ -26182,7 +26080,7 @@ relation Constructor_inst: p IC STO_0 |- constructor < typeArgumentIR*{typeArgum
 
     1. (Let (extern nameIR < typeParameterIR*{typeParameterIR <- typeParameterIR*} >( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ){ methodPrototypeIR*{methodPrototypeIR <- methodPrototypeIR*} }) be constructor)
 
-    2. Group extern: p IC STO_0 |- (extern nameIR < typeParameterIR*{} >( constructorParameterIR*{} ){ methodPrototypeIR*{} }) < typeArgumentIR*{} >( argumentIR*{} # id_default*{} )==> % %
+    2. Group extern: p IC STO_0 |- (extern nameIR < typeParameterIR*{typeParameterIR <- typeParameterIR*} >( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ){ methodPrototypeIR*{methodPrototypeIR <- methodPrototypeIR*} }) < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} # id_default'*{id_default' <- id_default'*} )==> % %
 
       1. (Let p_callee be (block))
 
@@ -26212,7 +26110,7 @@ relation Constructor_inst: p IC STO_0 |- constructor < typeArgumentIR*{typeArgum
 
     2. If ((typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches pattern [])), then
 
-      1. Group parser: p IC STO_0 |- (parser( parameterIR*{} )( constructorParameterIR*{} ){ parserLocalDeclarationIR*{} parserStateIR*{} }) < [] >( argumentIR*{} # id_default*{} )==> % %
+      1. Group parser: p IC STO_0 |- (parser( parameterIR*{parameterIR <- parameterIR*} )( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ){ parserLocalDeclarationIR*{parserLocalDeclarationIR <- parserLocalDeclarationIR*} parserStateIR*{parserStateIR <- parserStateIR*} }) < [] >( argumentIR*{argumentIR <- argumentIR*} # id_default'*{id_default' <- id_default'*} )==> % %
 
         1. (Let p_callee be (block))
 
@@ -26246,7 +26144,7 @@ relation Constructor_inst: p IC STO_0 |- constructor < typeArgumentIR*{typeArgum
 
     2. If ((typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches pattern [])), then
 
-      1. Group control: p IC STO_0 |- (control( parameterIR*{} )( constructorParameterIR*{} ){ controlLocalDeclarationIR*{} apply controlBodyIR }) < [] >( argumentIR*{} # id_default*{} )==> % %
+      1. Group control: p IC STO_0 |- (control( parameterIR*{parameterIR <- parameterIR*} )( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ){ controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*} apply controlBodyIR }) < [] >( argumentIR*{argumentIR <- argumentIR*} # id_default'*{id_default' <- id_default'*} )==> % %
 
         1. (Let p_callee be (block))
 
@@ -26274,7 +26172,7 @@ relation Constructor_inst: p IC STO_0 |- constructor < typeArgumentIR*{typeArgum
 
     1. (Let (package< typeParameterIR*{typeParameterIR <- typeParameterIR*} >( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} )) be constructor)
 
-    2. Group package: p IC STO_0 |- (package< typeParameterIR*{} >( constructorParameterIR*{} )) < typeArgumentIR*{} >( argumentIR*{} # id_default*{} )==> % %
+    2. Group package: p IC STO_0 |- (package< typeParameterIR*{typeParameterIR <- typeParameterIR*} >( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} )) < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} # id_default'*{id_default' <- id_default'*} )==> % %
 
       1. (Let p_callee be (block))
 
@@ -26360,7 +26258,7 @@ relation SwitchCases_inst: p IC' STO' |- switchCaseIR*{switchCaseIR <- switchCas
 
   1. Case (% matches pattern [])
 
-    1. Group nil: p IC STO |- [] ==> % % %
+    1. Group nil: p IC' STO' |- [] ==> % % %
 
       1. Result in : % % % |- % ==> IC' STO' []
 
@@ -26368,7 +26266,7 @@ relation SwitchCases_inst: p IC' STO' |- switchCaseIR*{switchCaseIR <- switchCas
 
     1. (Let switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} be switchCaseIR*{switchCaseIR <- switchCaseIR*})
 
-    2. Group cons: p IC_0 STO_0 |- switchCaseIR_h :: switchCaseIR_t*{} ==> % % %
+    2. Group cons: p IC' STO' |- switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} ==> % % %
 
       1. (SwitchCase_inst: p IC' STO' |- switchCaseIR_h ==> IC_1 STO_1 switchCaseIR_h')
 

@@ -34,7 +34,7 @@ relation Type_alpha: ``typeIR''''`` and ``typeIR'''''``
      ...... The relation holds
    .... If ``~$is_nominal_typeIR(typeIR~a_spec~) /\ ~$is_nominal_typeIR(typeIR~b_spec~)``
     ..... The relation holds
-. Group typedeftype: ``typeIR`` and ``typeIR'``
+. Group typedeftype: ``typeIR''''`` and ``typeIR'''''``
 
  .. If ``typeIR''''`` has type ``typedefTypeIR``
   ... Let ``TYPEDEF _ typeIR~a~`` be ``typeIR''''``
@@ -468,7 +468,7 @@ relation Type_wf: ``bound`` and ``typeIR'''``
  .. Let ``TYPEDEF _ typeIR`` be ``typeIR'''``
  .. Group typedefTypeIR: ``bound`` and ``TYPEDEF _ typeIR``
 
-  ... Check that ``$nestable_typedef(typeIR)``
+  ... Check that <<nestable_typedef, ``typeIR`` can be used in a typedef>>
   ... If (Type_wf: ``bound |- typeIR``), then
    .... The relation holds
 
@@ -476,7 +476,7 @@ relation Type_wf: ``bound`` and ``typeIR'''``
  .. Let ``TYPE _ typeIR`` be ``typeIR'''``
  .. Group newTypeIR: ``bound`` and ``TYPE _ typeIR``
 
-  ... Check that ``$nestable_new(typeIR)``
+  ... Check that <<nestable_new, ``typeIR`` can be used in a new type>>
   ... If (Type_wf: ``bound |- typeIR``), then
    .... The relation holds
 
@@ -484,7 +484,7 @@ relation Type_wf: ``bound`` and ``typeIR'''``
  .. Let ``LIST < typeIR >`` be ``typeIR'''``
  .. Group listTypeIR: ``bound`` and ``LIST < typeIR >``
 
-  ... Check that ``$nestable_list(typeIR)``
+  ... Check that <<nestable_list, ``typeIR`` can be nested in a list type>>
   ... If (Type_wf: ``bound |- typeIR``), then
    .... The relation holds
 
@@ -492,7 +492,7 @@ relation Type_wf: ``bound`` and ``typeIR'''``
  .. Let ``TUPLE < typeIR* >`` be ``typeIR'''``
  .. Group tupleTypeIR: ``bound`` and ``TUPLE < typeIR* >``
 
-  ... Check that ``$nestable_tuple(typeIR)``, for each ``typeIR`` in ``typeIR*``
+  ... Check that <<nestable_tuple, ``typeIR`` can be nested in a tuple type>>, for each ``typeIR`` in ``typeIR*``
   ... If (Type_wf: ``bound |- typeIR``), for each ``typeIR`` in ``typeIR*``, then
    .... The relation holds
 
@@ -500,7 +500,7 @@ relation Type_wf: ``bound`` and ``typeIR'''``
  .. Let ``typeIR [ _ ]`` be ``typeIR'''``
  .. Group headerStackTypeIR: ``bound`` and ``typeIR [ _ ]``
 
-  ... Check that ``$nestable_headerStack(typeIR)``
+  ... Check that <<nestable_headerStack, ``typeIR`` can be nested in a header stack type>>
   ... If (Type_wf: ``bound |- typeIR``), then
    .... The relation holds
 
@@ -509,7 +509,7 @@ relation Type_wf: ``bound`` and ``typeIR'''``
  .. Group structTypeIR: ``bound`` and ``STRUCT _ { typeIR id ;* }``
 
   ... Check that ``$distinct_<id>(id*)``
-  ... Check that ``$nestable_struct(typeIR)``, for each ``typeIR`` in ``typeIR*``
+  ... Check that <<nestable_struct, ``typeIR`` can be nested in a struct type>>, for each ``typeIR`` in ``typeIR*``
   ... If (Type_wf: ``bound |- typeIR``), for each ``typeIR`` in ``typeIR*``, then
    .... The relation holds
 
@@ -518,7 +518,7 @@ relation Type_wf: ``bound`` and ``typeIR'''``
  .. Group headerTypeIR: ``bound`` and ``HEADER _ { typeIR id ;* }``
 
   ... Check that ``$distinct_<id>(id*)``
-  ... Check that ``$nestable_header(typeIR)``, for each ``typeIR`` in ``typeIR*``
+  ... Check that <<nestable_header, ``typeIR`` can be used in a header type>>, for each ``typeIR`` in ``typeIR*``
   ... If (Type_wf: ``bound |- typeIR``), for each ``typeIR`` in ``typeIR*``, then
    .... The relation holds
 
@@ -527,7 +527,7 @@ relation Type_wf: ``bound`` and ``typeIR'''``
  .. Group headerUnionTypeIR: ``bound`` and ``HEADER_UNION _ { typeIR id ;* }``
 
   ... Check that ``$distinct_<id>(id*)``
-  ... Check that ``$nestable_headerUnion(typeIR)``, for each ``typeIR`` in ``typeIR*``
+  ... Check that <<nestable_headerUnion, ``typeIR`` can be used in a header union type>>, for each ``typeIR`` in ``typeIR*``
   ... If (Type_wf: ``bound |- typeIR``), for each ``typeIR`` in ``typeIR*``, then
    .... The relation holds
 
@@ -543,7 +543,7 @@ relation Type_wf: ``bound`` and ``typeIR'''``
   ... Group enumTypeIR-serializable: ``bound`` and ``ENUM _ # typeIR { id = _ ;* }``
 
    .... Check that ``$distinct_<id>(id*)``
-   .... Check that ``$nestable_enum_serializable(typeIR)``
+   .... Check that <<nestable_enum_serializable, ``typeIR`` can be used in a serializable enum type>>
    .... If (Type_wf: ``bound |- typeIR``), then
     ..... The relation holds
 
@@ -631,7 +631,7 @@ relation Type_wf: ``bound`` and ``typeIR'''``
  .. Let ``[typeIR]`` be ``typeIR'``*
  .. Group setTypeIR: ``bound`` and ``SET < [typeIR] >``
 
-  ... Check that ``$nestable_set(typeIR)``
+  ... Check that <<nestable_set, ``typeIR`` can be used in a set type>>
   ... If (Type_wf: ``bound |- typeIR``), then
    .... The relation holds
 
@@ -652,7 +652,7 @@ relation TypeDef_wf: ``bound`` and ``typeDefIR``
  .. Let ``typeIR`` be ``typeDefIR``
  .. Group monoTypeDefIR: ``bound`` and ``typeIR``
 
-  ... Check that ``$definable_type_mono(typeIR)``
+  ... Check that <<definable_type_mono, ``typeIR`` can be defined as a monomorphic typedef>>
   ... If (Type_wf: ``bound |- typeIR``), then
    .... The relation holds
 
@@ -660,7 +660,7 @@ relation TypeDef_wf: ``bound`` and ``typeDefIR``
  .. Let ``typeIR < tid~expl~* , tid~impl~* >`` be ``typeDefIR``
  .. Group polyTypeDefIR: ``bound`` and ``typeIR < tid~expl~* , tid~impl~* >``
 
-  ... Check that ``$definable_type_poly(typeIR)``
+  ... Check that <<definable_type_poly, ``typeIR`` can be defined as a polymorphic typedef>>
   ... Check that ``$distinct_<tid>(tid~expl~* ++ tid~impl~*)``
   ... Let ``bound~inner~`` be ``$union_set<tid>(bound, { tid~expl~* ++ tid~impl~* })``
   ... If (Type_wf: ``bound~inner~ |- typeIR``), then
@@ -672,13 +672,12 @@ relation ParameterType_wf: ``bound`` and ``direction typeIR _ value'?``
 
  .. If ?() is equal to ``value'``?
   ... If (Type_wf: ``bound |- typeIR``), then
-   .... Check that ``$is_extern_object_typeIR(<<canon, the canonicalized form of typeIR>>) => direction = ``
+   .... Check that ``$is_string_typeIR(<<canon, the canonicalized form of typeIR>>) \/ $is_arbitrary_int_typeIR(<<canon, the canonicalized form of typeIR>>) \/ $is_objectTypeIR(<<canon, the canonicalized form of typeIR>>) => direction = ``
    .... The relation holds
  .. Let ``value''?`` be ``value'``?
  .. If ``value''?`` matches pattern ``(_)``
   ... Let ``?(value)`` be ``value''``?
   ... If (Type_wf: ``bound |- typeIR``), then
-   .... Check that ~``$is_extern_object_typeIR(<<canon, the canonicalized form of typeIR>>)``
    .... If ``direction`` matches pattern ``IN``
 
 
@@ -706,8 +705,8 @@ relation RoutineType_wf: ``bound`` and ``routineTypeIR``
    .... Let ``_id*`` be the list of ``_id``, ``_value?*`` be the list of ``_value?``, ``direction*`` be the list of ``direction``, and ``typeIR*`` be the list of ``typeIR``, obtained by repeating:
     ..... Let ``direction typeIR _ _?`` be ``parameterTypeIR``
    .... for each ``parameterTypeIR`` in ``parameterTypeIR*``
-   .... Check that ``$directionless_trailing(direction*)``
-   .... Check that ``$nestable_action(direction, typeIR)``, for each ``direction`` in ``direction*`` and ``typeIR`` in ``typeIR*``
+   .... Check that <<directionless_trailing, directionless parameters in ``direction*`` only appear at the end>>
+   .... Check that <<nestable_action, ``typeIR`` can be used in an action type>>, for each ``typeIR`` in ``typeIR*``
    .... The relation holds
 
 . Else if ``routineTypeIR`` has type ``builtinFunctionTypeIR``
@@ -723,10 +722,10 @@ relation RoutineType_wf: ``bound`` and ``routineTypeIR``
  .. Group definedFunctionTypeIR: ``bound`` and ``FUNCTION ( parameterTypeIR* ) -> typeIR~ret~``
 
   ... If (ParameterTypes_wf: ``bound |- parameterTypeIR*``), then
-   .... Let ``_id*`` be the list of ``_id``, ``_value?*`` be the list of ``_value?``, ``direction*`` be the list of ``direction``, and ``typeIR*`` be the list of ``typeIR``, obtained by repeating:
-    ..... Let ``direction typeIR _ _?`` be ``parameterTypeIR``
+   .... Let ``_direction*`` be the list of ``_direction``, ``_id*`` be the list of ``_id``, ``_value?*`` be the list of ``_value?``, and ``typeIR*`` be the list of ``typeIR``, obtained by repeating:
+    ..... Let ``_ typeIR _ _?`` be ``parameterTypeIR``
    .... for each ``parameterTypeIR`` in ``parameterTypeIR*``
-   .... Check that ``$nestable_function(direction, typeIR)``, for each ``direction`` in ``direction*`` and ``typeIR`` in ``typeIR*``
+   .... Check that <<nestable_function, ``typeIR`` can be used in a function type>>, for each ``typeIR`` in ``typeIR*``
    .... If (Type_wf: ``bound |- typeIR~ret~``), then
     ..... The relation holds
 
@@ -735,10 +734,10 @@ relation RoutineType_wf: ``bound`` and ``routineTypeIR``
  .. Group externFunctionTypeIR: ``bound`` and ``EXTERN_FUNCTION ( parameterTypeIR* ) -> typeIR~ret~``
 
   ... If (ParameterTypes_wf: ``bound |- parameterTypeIR*``), then
-   .... Let ``_id*`` be the list of ``_id``, ``_value?*`` be the list of ``_value?``, ``direction*`` be the list of ``direction``, and ``typeIR*`` be the list of ``typeIR``, obtained by repeating:
-    ..... Let ``direction typeIR _ _?`` be ``parameterTypeIR``
+   .... Let ``_direction*`` be the list of ``_direction``, ``_id*`` be the list of ``_id``, ``_value?*`` be the list of ``_value?``, and ``typeIR*`` be the list of ``typeIR``, obtained by repeating:
+    ..... Let ``_ typeIR _ _?`` be ``parameterTypeIR``
    .... for each ``parameterTypeIR`` in ``parameterTypeIR*``
-   .... Check that ``$nestable_externfunction(direction, typeIR)``, for each ``direction`` in ``direction*`` and ``typeIR`` in ``typeIR*``
+   .... Check that <<nestable_externfunction, ``typeIR`` can be used in an extern function type>>, for each ``typeIR`` in ``typeIR*``
    .... If (Type_wf: ``bound |- typeIR~ret~``), then
     ..... The relation holds
 
@@ -756,10 +755,10 @@ relation RoutineType_wf: ``bound`` and ``routineTypeIR``
   ... Group externMethodTypeIR: ``bound`` and ``EXTERN_METHOD ( parameterTypeIR* ) -> typeIR~ret~``
 
    .... If (ParameterTypes_wf: ``bound |- parameterTypeIR*``), then
-    ..... Let ``_id*`` be the list of ``_id``, ``_value?*`` be the list of ``_value?``, ``direction*`` be the list of ``direction``, and ``typeIR*`` be the list of ``typeIR``, obtained by repeating:
-     ...... Let ``direction typeIR _ _?`` be ``parameterTypeIR``
+    ..... Let ``_direction*`` be the list of ``_direction``, ``_id*`` be the list of ``_id``, ``_value?*`` be the list of ``_value?``, and ``typeIR*`` be the list of ``typeIR``, obtained by repeating:
+     ...... Let ``_ typeIR _ _?`` be ``parameterTypeIR``
     ..... for each ``parameterTypeIR`` in ``parameterTypeIR*``
-    ..... Check that ``$nestable_externmethod(direction, typeIR)``, for each ``direction`` in ``direction*`` and ``typeIR`` in ``typeIR*``
+    ..... Check that <<nestable_externmethod, ``typeIR`` can be used in an extern method type>>, for each ``typeIR`` in ``typeIR*``
     ..... If (Type_wf: ``bound |- typeIR~ret~``), then
      ...... The relation holds
 
@@ -767,10 +766,10 @@ relation RoutineType_wf: ``bound`` and ``routineTypeIR``
   ... Group externAbstractMethodTypeIR: ``bound`` and ``EXTERN_METHOD ABSTRACT ( parameterTypeIR* ) -> typeIR~ret~``
 
    .... If (ParameterTypes_wf: ``bound |- parameterTypeIR*``), then
-    ..... Let ``_id*`` be the list of ``_id``, ``_value?*`` be the list of ``_value?``, ``direction*`` be the list of ``direction``, and ``typeIR*`` be the list of ``typeIR``, obtained by repeating:
-     ...... Let ``direction typeIR _ _?`` be ``parameterTypeIR``
+    ..... Let ``_direction*`` be the list of ``_direction``, ``_id*`` be the list of ``_id``, ``_value?*`` be the list of ``_value?``, and ``typeIR*`` be the list of ``typeIR``, obtained by repeating:
+     ...... Let ``_ typeIR _ _?`` be ``parameterTypeIR``
     ..... for each ``parameterTypeIR`` in ``parameterTypeIR*``
-    ..... Check that ``$nestable_externabstractmethod(direction, typeIR)``, for each ``direction`` in ``direction*`` and ``typeIR`` in ``typeIR*``
+    ..... Check that <<nestable_externabstractmethod, ``typeIR`` can be used in an extern abstract method type>>, for each ``typeIR`` in ``typeIR*``
     ..... If (Type_wf: ``bound |- typeIR~ret~``), then
      ...... The relation holds
 
@@ -779,10 +778,10 @@ relation RoutineType_wf: ``bound`` and ``routineTypeIR``
  .. Group parserApplyMethodTypeIR: ``bound`` and ``PARSER_APPLY ( parameterTypeIR* )``
 
   ... If (ParameterTypes_wf: ``bound |- parameterTypeIR*``), then
-   .... Let ``_id*`` be the list of ``_id``, ``_value?*`` be the list of ``_value?``, ``direction*`` be the list of ``direction``, and ``typeIR*`` be the list of ``typeIR``, obtained by repeating:
-    ..... Let ``direction typeIR _ _?`` be ``parameterTypeIR``
+   .... Let ``_direction*`` be the list of ``_direction``, ``_id*`` be the list of ``_id``, ``_value?*`` be the list of ``_value?``, and ``typeIR*`` be the list of ``typeIR``, obtained by repeating:
+    ..... Let ``_ typeIR _ _?`` be ``parameterTypeIR``
    .... for each ``parameterTypeIR`` in ``parameterTypeIR*``
-   .... Check that ``$nestable_parserapplymethod(direction, typeIR)``, for each ``direction`` in ``direction*`` and ``typeIR`` in ``typeIR*``
+   .... Check that <<nestable_parserapplymethod, ``typeIR`` can be used in a parser apply method type>>, for each ``typeIR`` in ``typeIR*``
    .... The relation holds
 
 . Else if ``routineTypeIR`` has type ``controlApplyMethodTypeIR``
@@ -790,10 +789,10 @@ relation RoutineType_wf: ``bound`` and ``routineTypeIR``
  .. Group controlApplyMethodTypeIR: ``bound`` and ``CONTROL_APPLY ( parameterTypeIR* )``
 
   ... If (ParameterTypes_wf: ``bound |- parameterTypeIR*``), then
-   .... Let ``_id*`` be the list of ``_id``, ``_value?*`` be the list of ``_value?``, ``direction*`` be the list of ``direction``, and ``typeIR*`` be the list of ``typeIR``, obtained by repeating:
-    ..... Let ``direction typeIR _ _?`` be ``parameterTypeIR``
+   .... Let ``_direction*`` be the list of ``_direction``, ``_id*`` be the list of ``_id``, ``_value?*`` be the list of ``_value?``, and ``typeIR*`` be the list of ``typeIR``, obtained by repeating:
+    ..... Let ``_ typeIR _ _?`` be ``parameterTypeIR``
    .... for each ``parameterTypeIR`` in ``parameterTypeIR*``
-   .... Check that ``$nestable_controlapplymethod(direction, typeIR)``, for each ``direction`` in ``direction*`` and ``typeIR`` in ``typeIR*``
+   .... Check that <<nestable_controlapplymethod, ``typeIR`` can be used in a control apply method type>>, for each ``typeIR`` in ``typeIR*``
    .... The relation holds
 
 . Else if ``routineTypeIR`` has type ``tableApplyMethodTypeIR``
@@ -812,7 +811,7 @@ relation RoutineTypeDef_wf: ``bound`` and ``routineTypeDefIR``
  .. Let ``routineTypeIR`` be ``routineTypeDefIR``
  .. Group mono: ``bound`` and ``routineTypeIR``
 
-  ... Check that ``$definable_routine_mono(routineTypeIR)``
+  ... Check that <<definable_routine_mono, ``routineTypeIR`` can be defined as a monomorphic routine>>
   ... If (RoutineType_wf: ``bound |- routineTypeIR``), then
    .... The relation holds
 
@@ -820,7 +819,7 @@ relation RoutineTypeDef_wf: ``bound`` and ``routineTypeDefIR``
  .. Let ``routineTypeIR < tid~expl~* , tid~impl~* >`` be ``routineTypeDefIR``
  .. Group poly: ``bound`` and ``routineTypeIR < tid~expl~* , tid~impl~* >``
 
-  ... Check that ``$definable_routine_poly(routineTypeIR)``
+  ... Check that <<definable_routine_poly, ``routineTypeIR`` can be defined as a polymorphic routine>>
   ... Check that ``$distinct_<tid>(tid~expl~* ++ tid~impl~*)``
   ... Let ``bound~inner~`` be ``$union_set<tid>(bound, { tid~expl~* ++ tid~impl~* })``
   ... If (RoutineType_wf: ``bound~inner~ |- routineTypeIR``), then
@@ -1120,7 +1119,7 @@ relation Eval_static: ``p``, ``TC``, and ``expressionIR # ( _ _ )``
  .. Let ``memberAccessBaseIR . nameIR`` be ``expressionIR``
  .. If ``memberAccessBaseIR`` matches pattern ``TYPE %``
   ... Let ``TYPE prefixedNameIR`` be ``memberAccessBaseIR``
-  ... Group memberAccessExpressionIR-type: ``p``, ``TC``, and ``TYPE prefixedNameIR . nameIR # ( typeIR~base~ _ )``
+  ... Group memberAccessExpressionIR-type: ``p``, ``TC``, and ``TYPE prefixedNameIR . nameIR # ( _ _ )``
 
    .... Let ``typeDefIR'?`` be ``$find_type(p, TC, prefixedNameIR)``
    .... Check that ``typeDefIR'?`` matches pattern ``(_)``
@@ -1186,7 +1185,7 @@ relation Eval_static: ``p``, ``TC``, and ``expressionIR # ( _ _ )``
      ...... Result in ``$sizeof(typeIR~base~, nameIR)``
  .. If ``routineTargetIR`` matches pattern ``( % )``
   ... Let ``( routineTargetIR )`` be ``routineTargetIR``
-  ... Group callExpressionIR-parenthesized: ``p``, ``TC``, and ``( routineTargetIR ) < typeArgumentIR* > ( argumentIR* ) # ( typeIR ctk )``
+  ... Group callExpressionIR-parenthesized: ``p``, ``TC``, and ``( routineTargetIR ) < typeArgumentIR* > ( argumentIR* ) # ( _ _ )``
 
    .... Let ``value`` be the result of <<Eval_static, the local compile-time evaluation of ``routineTargetIR < typeArgumentIR* > ( argumentIR* ) # ( _ _ )``, under cursor ``p`` and typing context ``TC``>>
    .... Result in ``value``
@@ -1441,7 +1440,7 @@ relation Sub_expl_canon_neq: ``typeIR''''''`` and ``typeIR'''''''``
    .... The relation holds
 
  .. Else if let ``BIT < nat >`` be ``numberTypeIR``
-  ... Group fixbit: ``BIT < nat >`` and ``typeIR``
+  ... Group fixbit: ``BIT < nat >`` and ``typeIR'''''''``
 
    .... If 1 is equal to ``nat``
     ..... Check that ``BOOL`` is equal to ``typeIR'''''''``
@@ -1454,7 +1453,7 @@ relation Sub_expl_canon_neq: ``typeIR''''''`` and ``typeIR'''''''``
     ..... Let ``numberTypeIR`` be ``typeIR'''''''``
     ..... Check that ``numberTypeIR`` matches pattern ``BIT < % >``
     ..... The relation holds
-. Group newtype: ``typeIR`` and ``typeIR'``
+. Group newtype: ``typeIR''''''`` and ``typeIR'''''''``
 
  .. If ``typeIR''''''`` has type ``newTypeIR``
   ... Let ``TYPE _ typeIR~a~`` be ``typeIR''''''``
@@ -1464,7 +1463,7 @@ relation Sub_expl_canon_neq: ``typeIR''''''`` and ``typeIR'''''''``
   ... Let ``TYPE _ typeIR~b~`` be ``typeIR'''''''``
   ... If [``typeIR''''''`` can be implicitly cast to ``typeIR~b~``](Sub_impl), then
    .... The relation holds
-. Group serenum: ``typeIR`` and ``typeIR'``
+. Group serenum: ``typeIR''''''`` and ``typeIR'''''''``
 
  .. If ``typeIR''''''`` has type ``enumTypeIR``
   ... Let ``enumTypeIR`` be ``typeIR''''''``
@@ -1480,14 +1479,14 @@ relation Sub_expl_canon_neq: ``typeIR''''''`` and ``typeIR'''''''``
    .... The relation holds
 . If ``typeIR''''''`` has type ``defaultTypeIR``
  .. Let ``defaultTypeIR`` be ``typeIR''''''``
- .. Group default: ``DEFAULT`` and ``typeIR~b~``
+ .. Group default: ``DEFAULT`` and ``typeIR'''''''``
 
   ... Check that ``$is_defaultable_typeIR(typeIR''''''')``
   ... The relation holds
 
 . Else if ``typeIR''''''`` has type ``invalidHeaderTypeIR``
  .. Let ``invalidHeaderTypeIR`` be ``typeIR''''''``
- .. Group invalidheader: ``HEADER_INVALID`` and ``typeIR``
+ .. Group invalidheader: ``HEADER_INVALID`` and ``typeIR'''''''``
 
   ... If ``typeIR'''''''`` has type ``headerTypeIR``
    .... Let ``HEADER _ { _* }`` be ``typeIR'''''''``
@@ -1500,7 +1499,7 @@ relation Sub_expl_canon_neq: ``typeIR''''''`` and ``typeIR'''''''``
 . Else if ``typeIR''''''`` has type ``sequenceTypeIR``
  .. Let ``sequenceTypeIR`` be ``typeIR''''''``
  .. If let ``SEQ < typeIR~a~* >`` be ``sequenceTypeIR``
-  ... Group seq: ``SEQ < typeIR~a~* >`` and ``typeIR``
+  ... Group seq: ``SEQ < typeIR~a~* >`` and ``typeIR'''''''``
 
    .... If ``typeIR'''''''`` has type ``listTypeIR``
     ..... Let ``LIST < typeIR~b~ >`` be ``typeIR'''''''``
@@ -1529,7 +1528,7 @@ relation Sub_expl_canon_neq: ``typeIR''''''`` and ``typeIR'''''''``
      ...... The relation holds
 
  .. Else if let ``SEQ < typeIR~a~* , ... >`` be ``sequenceTypeIR``
-  ... Group seqdefault: ``SEQ < typeIR~a~* , ... >`` and ``typeIR``
+  ... Group seqdefault: ``SEQ < typeIR~a~* , ... >`` and ``typeIR'''''''``
 
    .... If ``typeIR'''''''`` has type ``tupleTypeIR``
     ..... Let ``TUPLE < typeIR~b~* >`` be ``typeIR'''''''``
@@ -1565,7 +1564,7 @@ relation Sub_expl_canon_neq: ``typeIR''''''`` and ``typeIR'''''''``
 . Else if ``typeIR''''''`` has type ``recordTypeIR``
  .. Let ``recordTypeIR`` be ``typeIR''''''``
  .. If let ``RECORD { typeIR~a~ id~a~ ;* }`` be ``recordTypeIR``
-  ... Group record: ``RECORD { typeIR~a~ id~a~ ;* }`` and ``typeIR``
+  ... Group record: ``RECORD { typeIR~a~ id~a~ ;* }`` and ``typeIR'''''''``
 
    .... If ``typeIR'''''''`` has type ``structTypeIR``
     ..... Let ``STRUCT _ { typeIR~b~ id~b~ ;* }`` be ``typeIR'''''''``
@@ -1608,7 +1607,7 @@ relation Sub_expl_canon_neq: ``typeIR''''''`` and ``typeIR'''''''``
      ...... The relation holds
 
  .. Else if let ``RECORD { typeIR~a~ id~a~ ;* , ... }`` be ``recordTypeIR``
-  ... Group recorddefault: ``RECORD { typeIR~a~ id~a~ ;* , ... }`` and ``typeIR``
+  ... Group recorddefault: ``RECORD { typeIR~a~ id~a~ ;* , ... }`` and ``typeIR'''''''``
 
    .... If ``typeIR'''''''`` has type ``structTypeIR``
     ..... Let ``STRUCT _ { typeIR~b~ id~b~ ;* }`` be ``typeIR'''''''``
@@ -1671,7 +1670,7 @@ relation Sub_expl_canon_neq: ``typeIR''''''`` and ``typeIR'''''''``
 . Let ``SET < typeIR'* >`` be ``typeIR'''''''``
 . Check that ``typeIR'*`` matches pattern ``[ _/1 ]``
 . Let ``[typeIR~b~]`` be ``typeIR'``*
-. Group set: ``typeIR`` and ``SET < [typeIR~b~] >``
+. Group set: ``typeIR''''''`` and ``SET < [typeIR~b~] >``
 
  .. If ``typeIR''''''`` has type ``setTypeIR``
   ... Let ``SET < typeIR'''* >`` be ``typeIR''''''``
@@ -1723,21 +1722,21 @@ relation Sub_impl_canon_neq: ``typeIR''''''`` and ``typeIR'''''''``
  .. Let ``enumTypeIR`` be ``typeIR''''''``
  .. Check that ``enumTypeIR`` matches pattern ``ENUM % # % { % }``
  .. Let ``ENUM _ # typeIR~a~ { _* }`` be ``enumTypeIR``
- .. Group serenum-left: ``ENUM _ # typeIR~a~ { _* }`` and ``typeIR~b~``
+ .. Group serenum-left: ``ENUM _ # typeIR~a~ { _* }`` and ``typeIR'''''''``
 
   ... If [``typeIR~a~`` can be implicitly cast to ``typeIR'''''''``](Sub_impl), then
    .... The relation holds
 
 . Else if ``typeIR''''''`` has type ``defaultTypeIR``
  .. Let ``defaultTypeIR`` be ``typeIR''''''``
- .. Group default: ``DEFAULT`` and ``typeIR~b~``
+ .. Group default: ``DEFAULT`` and ``typeIR'''''''``
 
   ... Check that ``$is_defaultable_typeIR(typeIR''''''')``
   ... The relation holds
 
 . Else if ``typeIR''''''`` has type ``invalidHeaderTypeIR``
  .. Let ``invalidHeaderTypeIR`` be ``typeIR''''''``
- .. Group invalidheader: ``HEADER_INVALID`` and ``typeIR``
+ .. Group invalidheader: ``HEADER_INVALID`` and ``typeIR'''''''``
 
   ... If ``typeIR'''''''`` has type ``headerTypeIR``
    .... Let ``HEADER _ { _* }`` be ``typeIR'''''''``
@@ -1750,7 +1749,7 @@ relation Sub_impl_canon_neq: ``typeIR''''''`` and ``typeIR'''''''``
 . Else if ``typeIR''''''`` has type ``sequenceTypeIR``
  .. Let ``sequenceTypeIR`` be ``typeIR''''''``
  .. If let ``SEQ < typeIR~a~* >`` be ``sequenceTypeIR``
-  ... Group seq: ``SEQ < typeIR~a~* >`` and ``typeIR``
+  ... Group seq: ``SEQ < typeIR~a~* >`` and ``typeIR'''''''``
 
    .... If ``typeIR'''''''`` has type ``listTypeIR``
     ..... Let ``LIST < typeIR~b~ >`` be ``typeIR'''''''``
@@ -1786,7 +1785,7 @@ relation Sub_impl_canon_neq: ``typeIR''''''`` and ``typeIR'''''''``
      ...... The relation holds
 
  .. Else if let ``SEQ < typeIR~a~* , ... >`` be ``sequenceTypeIR``
-  ... Group seqdefault: ``SEQ < typeIR~a~* , ... >`` and ``typeIR``
+  ... Group seqdefault: ``SEQ < typeIR~a~* , ... >`` and ``typeIR'''''''``
 
    .... If ``typeIR'''''''`` has type ``tupleTypeIR``
     ..... Let ``TUPLE < typeIR~b~* >`` be ``typeIR'''''''``
@@ -1822,7 +1821,7 @@ relation Sub_impl_canon_neq: ``typeIR''''''`` and ``typeIR'''''''``
 . Else if ``typeIR''''''`` has type ``recordTypeIR``
  .. Let ``recordTypeIR`` be ``typeIR''''''``
  .. If let ``RECORD { typeIR~a~ id~a~ ;* }`` be ``recordTypeIR``
-  ... Group record: ``RECORD { typeIR~a~ id~a~ ;* }`` and ``typeIR``
+  ... Group record: ``RECORD { typeIR~a~ id~a~ ;* }`` and ``typeIR'''''''``
 
    .... If ``typeIR'''''''`` has type ``structTypeIR``
     ..... Let ``STRUCT _ { typeIR~b~ id~b~ ;* }`` be ``typeIR'''''''``
@@ -1865,7 +1864,7 @@ relation Sub_impl_canon_neq: ``typeIR''''''`` and ``typeIR'''''''``
      ...... The relation holds
 
  .. Else if let ``RECORD { typeIR~a~ id~a~ ;* , ... }`` be ``recordTypeIR``
-  ... Group recorddefault: ``RECORD { typeIR~a~ id~a~ ;* , ... }`` and ``typeIR``
+  ... Group recorddefault: ``RECORD { typeIR~a~ id~a~ ;* , ... }`` and ``typeIR'''''''``
 
    .... If ``typeIR'''''''`` has type ``structTypeIR``
     ..... Let ``STRUCT _ { typeIR~b~ id~b~ ;* }`` be ``typeIR'''''''``
@@ -1959,7 +1958,7 @@ relation Expr_ok: ``p``, ``TC``, and ``expression'''``
 
   ... Let ``expressionNoteIR`` be ``( STRING LCTK )``
   ... Result in ``" text " # expressionNoteIR``
-. Group referenceExpression: ``p``, ``TC``, and ``expression``
+. Group referenceExpression: ``p``, ``TC``, and ``expression'''``
 
  .. If ``expression'''`` has type ``prefixedNonTypeName``
   ... Let ``prefixedNonTypeName`` be ``expression'''``
@@ -2801,14 +2800,14 @@ relation Stmt_ok: ``p'``, ``TC'``, ``f'``, and ``statement``
 
 . If ``statement`` has type ``emptyStatement``
  .. Let ``emptyStatement`` be ``statement``
- .. Group emptyStatement: ``p``, ``TC``, ``f``, and ``;``
+ .. Group emptyStatement: ``p'``, ``TC'``, ``f'``, and ``;``
 
   ... Result in the typing context ``TC'``, abstract control flow ``f'``, and typed statement ``;``
 
 . Else if ``statement`` has type ``assignmentStatement``
  .. Let ``lvalue assignop expression ;`` be ``statement``
  .. Check that ``assignop`` matches pattern ``=``
- .. Group assignmentStatement-eq: ``p``, ``TC``, ``f``, and ``lvalue = expression ;``
+ .. Group assignmentStatement-eq: ``p'``, ``TC'``, ``f'``, and ``lvalue = expression ;``
 
   ... Let ``typedLvalueIR`` be the result of <<Lvalue_ok, typing ``lvalue``, under cursor ``p'`` and typing context ``TC'``>>
   ... Let ``typedExpressionIR`` be the result of <<Expr_ok, typing ``expression``, under cursor ``p'`` and typing context ``TC'``>>
@@ -2821,7 +2820,7 @@ relation Stmt_ok: ``p'``, ``TC'``, ``f'``, and ``statement``
 
 . Else if ``statement`` has type ``callStatement``
  .. Let ``callStatement`` be ``statement``
- .. Group callStatement: ``p``, ``TC``, ``f``, and ``callStatement``
+ .. Group callStatement: ``p'``, ``TC'``, ``f'``, and ``callStatement``
 
   ... If let ``lvalue~routine~ ( argumentList ) ;`` be ``callStatement``
    .... Let ``routineTargetIR`` be the result of <<RoutineTarget_lvalue_ok, typing ``lvalue~routine~``, under cursor ``p'`` and typing context ``TC'``>>
@@ -2850,7 +2849,7 @@ relation Stmt_ok: ``p'``, ``TC'``, ``f'``, and ``statement``
 
 . Else if ``statement`` has type ``directApplicationStatement``
  .. Let ``namedType . APPLY ( argumentList ) ;`` be ``statement``
- .. Group directApplicationStatement: ``p``, ``TC~0~``, ``f``, and ``namedType . APPLY ( argumentList ) ;``
+ .. Group directApplicationStatement: ``p'``, ``TC'``, ``f'``, and ``namedType . APPLY ( argumentList ) ;``
 
   ... Let ``expressionIR # ( typeIR~object~ _ )`` be the result of <<Expr_ok, typing ``namedType ( )``, under cursor ``p'`` and typing context ``TC'``>>
   ... Check that ``expressionIR`` has type ``callExpressionIR``
@@ -2874,13 +2873,13 @@ relation Stmt_ok: ``p'``, ``TC'``, ``f'``, and ``statement``
 
 . Else if ``statement`` has type ``exitStatement``
  .. Let ``exitStatement`` be ``statement``
- .. Group exitStatement: ``p``, ``TC``, ``f``, and ``EXIT ;``
+ .. Group exitStatement: ``p'``, ``TC'``, ``f'``, and ``EXIT ;``
 
   ... Result in the typing context ``TC'``, abstract control flow ``f'``, and typed statement ``EXIT ;``
 
 . Else if ``statement`` has type ``conditionalStatement``
  .. Let ``conditionalStatement`` be ``statement``
- .. Group conditionalStatement: ``p``, ``TC``, ``f``, and ``conditionalStatement``
+ .. Group conditionalStatement: ``p'``, ``TC'``, ``f'``, and ``conditionalStatement``
 
   ... If let ``IF ( expression~cond~ ) statement~then~`` be ``conditionalStatement``
    .... Let ``typedExpressionIR~cond~`` be the result of <<Expr_ok, typing ``expression~cond~``, under cursor ``p'`` and typing context ``TC'``>>
@@ -2900,7 +2899,7 @@ relation Stmt_ok: ``p'``, ``TC'``, ``f'``, and ``statement``
 . Check that ``p'`` matches pattern ``LOCAL``
 . If ``statement`` has type ``returnStatement``
  .. Let ``returnStatement`` be ``statement``
- .. Group returnStatement: ``LOCAL``, ``TC``, ``f``, and ``returnStatement``
+ .. Group returnStatement: ``LOCAL``, ``TC'``, ``f'``, and ``returnStatement``
 
   ... If ``returnStatement`` matches pattern ``RETURN ;``
 
@@ -2918,14 +2917,14 @@ relation Stmt_ok: ``p'``, ``TC'``, ``f'``, and ``statement``
 
 . Else if ``statement`` has type ``blockStatement``
  .. Let ``blockStatement`` be ``statement``
- .. Group blockStatement: ``LOCAL``, ``TC~0~``, ``f~0~``, and ``blockStatement``
+ .. Group blockStatement: ``LOCAL``, ``TC'``, ``f'``, and ``blockStatement``
 
   ... (Block_ok: ``TC' f' |- blockStatement : TC~1~ f~1~ blockStatementIR``)
   ... Result in the typing context ``TC~1~``, abstract control flow ``f~1~``, and typed statement ``blockStatementIR``
 
 . Else if ``statement`` has type ``switchStatement``
  .. Let ``SWITCH ( expression~switch~ ) { switchCaseList }`` be ``statement``
- .. Group switchStatement-table: ``LOCAL``, ``TC``, ``f``, and ``SWITCH ( expression~switch~ ) { switchCaseList }``
+ .. Group switchStatement-table: ``LOCAL``, ``TC'``, ``f'``, and ``SWITCH ( expression~switch~ ) { switchCaseList }``
 
   ... Let ``typedExpressionIR~switch~`` be the result of <<Expr_ok, typing ``expression~switch~``, under cursor ``LOCAL`` and typing context ``TC'``>>
   ... Let ``typeIR~switch~`` be <<typeof_expression, the type of  ``typedExpressionIR~switch~``>>
@@ -2940,7 +2939,7 @@ relation Stmt_ok: ``p'``, ``TC'``, ``f'``, and ``statement``
   ... Check that ``$distinct_<switchLabel>(switchLabel*)``
   ... Let ``switchStatementIR`` be ``SWITCH ( typedExpressionIR~switch~ ) { switchCaseIR* }``
   ... Result in the typing context ``TC'``, abstract control flow ``f~post~``, and typed statement ``switchStatementIR``
- .. Group switchStatement-general: ``LOCAL``, ``TC``, ``f``, and ``SWITCH ( expression~switch~ ) { switchCaseList }``
+ .. Group switchStatement-general: ``LOCAL``, ``TC'``, ``f'``, and ``SWITCH ( expression~switch~ ) { switchCaseList }``
 
   ... Let ``typedExpressionIR~switch~`` be the result of <<Expr_ok, typing ``expression~switch~``, under cursor ``LOCAL`` and typing context ``TC'``>>
   ... Let ``typeIR~switch~`` be <<typeof_expression, the type of  ``typedExpressionIR~switch~``>>
@@ -3004,7 +3003,7 @@ relation BlockElementStmts_ok: ``TC'``, ``f'``, and ``blockElementStatement``*
 
 
 . Else if let ``blockElementStatement~h~ :: blockElementStatement~t~*`` be ``blockElementStatement``*
- .. Group cons: ``TC~0~``, ``f~0~``, and ``blockElementStatement~h~ :: blockElementStatement~t~*``
+ .. Group cons: ``TC'``, ``f'``, and ``blockElementStatement~h~ :: blockElementStatement~t~*``
 
   ... (BlockElementStmt_ok: ``TC' f' |- blockElementStatement~h~ : TC~1~ f~1~ blockElementStatementIR~h~``)
   ... (BlockElementStmts_ok: ``TC~1~ f~1~ |- blockElementStatement~t~* : TC~2~ f~2~ blockElementStatementIR~t~*``)
@@ -3134,7 +3133,7 @@ relation ExternMethods_ok: ``TC'``, ``tid~extern~``, and ``methodPrototype``*
 
 
 . Else if let ``methodPrototype~h~ :: methodPrototype~t~*`` be ``methodPrototype``*
- .. Group cons: ``TC~0~``, ``tid~extern~``, and ``methodPrototype~h~ :: methodPrototype~t~*``
+ .. Group cons: ``TC'``, ``tid~extern~``, and ``methodPrototype~h~ :: methodPrototype~t~*``
 
   ... (ExternMethod_ok: ``TC' tid~extern~ |- methodPrototype~h~ : TC~1~ methodPrototypeIR~h~``)
   ... (ExternMethods_ok: ``TC~1~ tid~extern~ |- methodPrototype~t~* : TC~2~ methodPrototypeIR~t~*``)
@@ -3174,7 +3173,7 @@ relation ExternConstructors_ok: ``TC'``, ``tid~extern~``, and ``methodPrototype`
 
 
 . Else if let ``methodPrototype~h~ :: methodPrototype~t~*`` be ``methodPrototype``*
- .. Group cons: ``TC~0~``, ``tid~extern~``, and ``methodPrototype~h~ :: methodPrototype~t~*``
+ .. Group cons: ``TC'``, ``tid~extern~``, and ``methodPrototype~h~ :: methodPrototype~t~*``
 
   ... (ExternConstructor_ok: ``TC' tid~extern~ |- methodPrototype~h~ : TC~1~ methodPrototypeIR~h~``)
   ... (ExternConstructors_ok: ``TC~1~ tid~extern~ |- methodPrototype~t~* : TC~2~ methodPrototypeIR~t~*``)
@@ -3215,7 +3214,7 @@ relation ParserStmt_ok: ``TC~0'~`` and ``parserStatement''``
 
 . If ``parserStatement''`` has type ``constantDeclaration``
  .. Let ``constantDeclaration`` be ``parserStatement''``
- .. Group constantDeclaration: ``TC~0~`` and ``constantDeclaration``
+ .. Group constantDeclaration: ``TC~0'~`` and ``constantDeclaration``
 
   ... Let ``TC~1~`` and ``declarationIR`` be the result of <<Decl_ok, typing ``constantDeclaration``, under cursor ``LOCAL`` and typing context ``TC~0'~``,
 and the modified typing context>>
@@ -3225,7 +3224,7 @@ and the modified typing context>>
 
 . Else if ``parserStatement''`` has type ``variableDeclaration``
  .. Let ``annotationList type name initializerOpt ;`` be ``parserStatement''``
- .. Group variableDeclaration: ``TC~0~`` and ``annotationList type name initializerOpt ;``
+ .. Group variableDeclaration: ``TC~0'~`` and ``annotationList type name initializerOpt ;``
 
   ... If ``initializerOpt`` matches pattern ```EMPTY``
    .... Let ``typeIR`` and ``tid*`` be the result of <<Type_ok, typing ``type``, under cursor ``LOCAL`` and typing context ``TC~0'~``>>
@@ -3253,7 +3252,7 @@ and the modified typing context>>
 
 . Else if ``parserStatement''`` has type ``emptyStatement``
  .. Let ``emptyStatement`` be ``parserStatement''``
- .. Group emptyStatement: ``TC`` and ``emptyStatement``
+ .. Group emptyStatement: ``TC~0'~`` and ``emptyStatement``
 
   ... Let ``typingContext``, ``flow``, and ``statementIR`` be the result of <<Stmt_ok, typing ``emptyStatement``, under cursor ``LOCAL``, typing context ``TC~0'~``, and abstract control flow ``CONT``>>
   ... Check that ``typingContext`` is equal to ``TC~0'~``
@@ -3264,7 +3263,7 @@ and the modified typing context>>
 
 . Else if ``parserStatement''`` has type ``assignmentStatement``
  .. Let ``assignmentStatement`` be ``parserStatement''``
- .. Group assignmentStatement: ``TC~0~`` and ``assignmentStatement``
+ .. Group assignmentStatement: ``TC~0'~`` and ``assignmentStatement``
 
   ... Let ``TC~1~``, ``flow``, and ``statementIR`` be the result of <<Stmt_ok, typing ``assignmentStatement``, under cursor ``LOCAL``, typing context ``TC~0'~``, and abstract control flow ``CONT``>>
   ... Check that ``flow`` matches pattern ``CONT``
@@ -3274,7 +3273,7 @@ and the modified typing context>>
 
 . Else if ``parserStatement''`` has type ``callStatement``
  .. Let ``callStatement`` be ``parserStatement''``
- .. Group callStatement: ``TC~0~`` and ``callStatement``
+ .. Group callStatement: ``TC~0'~`` and ``callStatement``
 
   ... Let ``TC~1~``, ``flow``, and ``statementIR`` be the result of <<Stmt_ok, typing ``callStatement``, under cursor ``LOCAL``, typing context ``TC~0'~``, and abstract control flow ``CONT``>>
   ... Check that ``flow`` matches pattern ``CONT``
@@ -3284,7 +3283,7 @@ and the modified typing context>>
 
 . Else if ``parserStatement''`` has type ``directApplicationStatement``
  .. Let ``directApplicationStatement`` be ``parserStatement''``
- .. Group directApplicationStatement: ``TC~0~`` and ``directApplicationStatement``
+ .. Group directApplicationStatement: ``TC~0'~`` and ``directApplicationStatement``
 
   ... Let ``TC~1~``, ``flow``, and ``statementIR`` be the result of <<Stmt_ok, typing ``directApplicationStatement``, under cursor ``LOCAL``, typing context ``TC~0'~``, and abstract control flow ``CONT``>>
   ... Check that ``flow`` matches pattern ``CONT``
@@ -3294,7 +3293,7 @@ and the modified typing context>>
 
 . Else if ``parserStatement''`` has type ``parserBlockStatement``
  .. Let ``annotationList { parserStatementList }`` be ``parserStatement''``
- .. Group parserBlockStatement: ``TC~0~`` and ``annotationList { parserStatementList }``
+ .. Group parserBlockStatement: ``TC~0'~`` and ``annotationList { parserStatementList }``
 
   ... Let ``parserStatement*`` be ``$flatten_parserStatementList(parserStatementList)``
   ... Let ``TC~1~`` be ``$enter(TC~0'~)``
@@ -3305,7 +3304,7 @@ and the modified typing context>>
 
 . Else if ``parserStatement''`` has type ``conditionalStatement``
  .. Let ``conditionalStatement`` be ``parserStatement''``
- .. Group conditionalStatement: ``TC~0~`` and ``conditionalStatement``
+ .. Group conditionalStatement: ``TC~0'~`` and ``conditionalStatement``
 
   ... Let ``TC~1~``, ``flow``, and ``statementIR`` be the result of <<Stmt_ok, typing ``conditionalStatement``, under cursor ``LOCAL``, typing context ``TC~0'~``, and abstract control flow ``CONT``>>
   ... Check that ``flow`` matches pattern ``CONT``
@@ -3319,7 +3318,7 @@ relation ParserStmts_ok: ``TC'`` and ``parserStatement``*
 
 
 . Else if let ``parserStatement~h~ :: parserStatement~t~*`` be ``parserStatement``*
- .. Group cons: ``TC~0~`` and ``parserStatement~h~ :: parserStatement~t~*``
+ .. Group cons: ``TC'`` and ``parserStatement~h~ :: parserStatement~t~*``
 
   ... (ParserStmt_ok: ``TC' |- parserStatement~h~ : TC~1~ parserStatementIR~h~``)
   ... (ParserStmts_ok: ``TC~1~ |- parserStatement~t~* : TC~2~ parserStatementIR~t~*``)
@@ -3425,7 +3424,7 @@ relation ParserLocalDecls_ok: ``TC'`` and ``parserLocalDeclaration``*
 
 
 . Else if let ``parserLocalDeclaration~h~ :: parserLocalDeclaration~t~*`` be ``parserLocalDeclaration``*
- .. Group cons: ``TC~0~`` and ``parserLocalDeclaration~h~ :: parserLocalDeclaration~t~*``
+ .. Group cons: ``TC'`` and ``parserLocalDeclaration~h~ :: parserLocalDeclaration~t~*``
 
   ... (ParserLocalDecl_ok: ``TC' |- parserLocalDeclaration~h~ : TC~1~ parserLocalDeclarationIR~h~``)
   ... (ParserLocalDecls_ok: ``TC~1~ |- parserLocalDeclaration~t~* : TC~2~ parserLocalDeclarationIR~t~*``)
@@ -3452,7 +3451,7 @@ relation TableKeys_ok: ``TC``, ``TBLC'``, and ``tableKey``*
 
 
 . Else if let ``tableKey~h~ :: tableKey~t~*`` be ``tableKey``*
- .. Group cons: ``TC``, ``TBLC~0~``, and ``tableKey~h~ :: tableKey~t~*``
+ .. Group cons: ``TC``, ``TBLC'``, and ``tableKey~h~ :: tableKey~t~*``
 
   ... (TableKey_ok: ``TC TBLC' |- tableKey~h~ : TBLC~1~ tableKeyIR~h~``)
   ... (TableKeys_ok: ``TC TBLC~1~ |- tableKey~t~* : TBLC~2~ tableKeyIR~t~*``)
@@ -3509,7 +3508,7 @@ relation TableActions_ok: ``TC``, ``TBLC'``, and ``tableAction``*
 
 
 . Else if let ``tableAction~h~ :: tableAction~t~*`` be ``tableAction``*
- .. Group cons: ``TC``, ``TBLC~0~``, and ``tableAction~h~ :: tableAction~t~*``
+ .. Group cons: ``TC``, ``TBLC'``, and ``tableAction~h~ :: tableAction~t~*``
 
   ... (TableAction_ok: ``TC TBLC' |- tableAction~h~ : TBLC~1~ tableActionIR~h~``)
   ... (TableActions_ok: ``TC TBLC~1~ |- tableAction~t~* : TBLC~2~ tableActionIR~t~*``)
@@ -3661,7 +3660,7 @@ relation TableEntry_priority_ok: ``TC``, ``tableContext'``, ``TBLS``, and ``tabl
 
 . Else if let ``?(tableEntryPriority)`` be ``tableEntryPriority''``?
  .. If let ``PRIORITY = numberLiteral :`` be ``tableEntryPriority``
-  ... Group specified-number: ``TC``, ``TBLC~0~``, ``TBLS``, and ?(``PRIORITY = numberLiteral :``)
+  ... Group specified-number: ``TC``, ``tableContext'``, ``TBLS``, and ?(``PRIORITY = numberLiteral :``)
 
    .... If ``tableContext'.MODE`` matches pattern ``PRI``
 
@@ -3670,7 +3669,7 @@ relation TableEntry_priority_ok: ``TC``, ``tableContext'``, ``TBLS``, and ``tabl
 
 
  .. Else if let ``PRIORITY = ( expression ) :`` be ``tableEntryPriority``
-  ... Group specified-expression: ``TC``, ``TBLC~0~``, ``TBLS``, and ?(``PRIORITY = ( expression ) :``)
+  ... Group specified-expression: ``TC``, ``tableContext'``, ``TBLS``, and ?(``PRIORITY = ( expression ) :``)
 
    .... If ``tableContext'.MODE`` matches pattern ``PRI``
 
@@ -3706,7 +3705,7 @@ relation TableEntries_ok: ``TC``, ``TBLC'``, and ``tableEntry``*
 
 
 . Else if let ``tableEntry~h~ :: tableEntry~t~*`` be ``tableEntry``*
- .. Group cons: ``TC``, ``TBLC~0~``, and ``tableEntry~h~ :: tableEntry~t~*``
+ .. Group cons: ``TC``, ``TBLC'``, and ``tableEntry~h~ :: tableEntry~t~*``
 
   ... (TableEntry_ok: ``TC TBLC' |- tableEntry~h~ : TBLC~1~ tableEntryIR~h~``)
   ... (TableEntries_ok: ``TC TBLC~1~ |- tableEntry~t~* : TBLC~2~ tableEntryIR~t~*``)
@@ -3715,21 +3714,21 @@ relation TableEntries_ok: ``TC``, ``TBLC'``, and ``tableEntry``*
 relation TableProperty_ok: ``TC``, ``TBLC~0'~``, and ``tableProperty``
 
 . If let ``KEY = { tableKeyList }`` be ``tableProperty``
- .. Group key: ``TC``, ``TBLC~0~``, and ``KEY = { tableKeyList }``
+ .. Group key: ``TC``, ``TBLC~0'~``, and ``KEY = { tableKeyList }``
 
   ... Let ``tableKey*`` be ``$flatten_tableKeyList(tableKeyList)``
   ... (TableKeys_ok: ``TC TBLC~0'~ |- tableKey* : TBLC~1~ tableKeyIR*``)
   ... Result in ``TBLC~1~`` and ``KEY = { tableKeyIR* }``
 
 . Else if let ``ACTIONS = { tableActionList }`` be ``tableProperty``
- .. Group actions: ``TC``, ``TBLC~0~``, and ``ACTIONS = { tableActionList }``
+ .. Group actions: ``TC``, ``TBLC~0'~``, and ``ACTIONS = { tableActionList }``
 
   ... Let ``tableAction*`` be ``$flatten_tableActionList(tableActionList)``
   ... (TableActions_ok: ``TC TBLC~0'~ |- tableAction* : TBLC~1~ tableActionIR*``)
   ... Result in ``TBLC~1~`` and ``ACTIONS = { tableActionIR* }``
 
 . Else if let ``annotationList constOpt ENTRIES = { tableEntryList }`` be ``tableProperty``
- .. Group entries: ``TC``, ``TBLC~0~``, and ``annotationList constOpt ENTRIES = { tableEntryList }``
+ .. Group entries: ``TC``, ``TBLC~0'~``, and ``annotationList constOpt ENTRIES = { tableEntryList }``
 
   ... Let ``tableEntry*`` be ``$flatten_tableEntryList(tableEntryList)``
   ... Check that ``the length of TBLC~0'~.KEYS = 0 => the length of tableEntry* = 0``
@@ -3740,7 +3739,7 @@ relation TableProperty_ok: ``TC``, ``TBLC~0'~``, and ``tableProperty``
   ... Result in ``TBLC~3~`` and ``annotationList constOptIR ENTRIES = { tableEntryIR* }``
 
 . Else if let ``annotationList constOpt tableCustomName initializer ;`` be ``tableProperty``
- .. Group default-action: ``TC``, ``TBLC``, and ``annotationList constOpt tableCustomName initializer ;``
+ .. Group default-action: ``TC``, ``TBLC~0'~``, and ``annotationList constOpt tableCustomName initializer ;``
 
   ... Check that "default_action" is equal to ``$tableCustomName(tableCustomName)``
   ... (TableDefaultAction_ok: ``TC TBLC~0'~ |- initializer : tableActionReferenceIR``)
@@ -3748,7 +3747,7 @@ relation TableProperty_ok: ``TC``, ``TBLC~0'~``, and ``tableProperty``
   ... Let ``tablePropertyIR`` be ``annotationList constOptIR DEFAULT_ACTION = tableActionReferenceIR ;``
   ... Result in ``TBLC~0'~`` and ``tablePropertyIR``
  .. Let ``annotationList constOpt tableCustomName = expression ;`` be ``tableProperty``
- .. Group custom: ``TC``, ``tableContext``, and ``annotationList constOpt tableCustomName = expression ;``
+ .. Group custom: ``TC``, ``TBLC~0'~``, and ``annotationList constOpt tableCustomName = expression ;``
 
   ... If "size" is equal to ``$tableCustomName(tableCustomName)``
    .... Let ``typedExpressionIR`` be the result of <<Expr_ok, typing ``expression``, under cursor ``LOCAL`` and typing context ``TC``>>
@@ -3824,7 +3823,7 @@ relation TableProperties_ok: ``TC``, ``TBLC'``, and ``tableProperty``*
 
 
 . Else if let ``tableProperty~h~ :: tableProperty~t~*`` be ``tableProperty``*
- .. Group cons: ``TC``, ``TBLC~0~``, and ``tableProperty~h~ :: tableProperty~t~*``
+ .. Group cons: ``TC``, ``TBLC'``, and ``tableProperty~h~ :: tableProperty~t~*``
 
   ... (TableProperty_ok: ``TC TBLC' |- tableProperty~h~ : TBLC~1~ tablePropertyIR~h~``)
   ... (TableProperties_ok: ``TC TBLC~1~ |- tableProperty~t~* : TBLC~2~ tablePropertyIR~t~*``)
@@ -3942,7 +3941,7 @@ relation ControlLocalDecls_ok: ``TC'`` and ``controlLocalDeclaration``*
 
 
 . Else if let ``controlLocalDeclaration~h~ :: controlLocalDeclaration~t~*`` be ``controlLocalDeclaration``*
- .. Group cons: ``TC~0~`` and ``controlLocalDeclaration~h~ :: controlLocalDeclaration~t~*``
+ .. Group cons: ``TC'`` and ``controlLocalDeclaration~h~ :: controlLocalDeclaration~t~*``
 
   ... (ControlLocalDecl_ok: ``TC' |- controlLocalDeclaration~h~ : TC~1~ controlLocalDeclarationIR~h~``)
   ... (ControlLocalDecls_ok: ``TC~1~ |- controlLocalDeclaration~t~* : TC~2~ controlLocalDeclarationIR~t~*``)
@@ -3952,7 +3951,7 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
 
 . If ``declaration`` has type ``constantDeclaration``
  .. Let ``annotationList CONST type name = expression~value~ ;`` be ``declaration``
- .. Group constantDeclaration: ``p``, ``TC~0~``, and ``annotationList CONST type name = expression~value~ ;``
+ .. Group constantDeclaration: ``p'``, ``TC~0~``, and ``annotationList CONST type name = expression~value~ ;``
 
   ... Let ``typeIR`` and ``tid*`` be the result of <<Type_ok, typing ``type``, under cursor ``p'`` and typing context ``TC~0~``>>
   ... Check that ``tid*`` matches pattern ``[]``
@@ -3971,7 +3970,7 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
 . Else if ``declaration`` has type ``instantiation``
  .. Let ``instantiation`` be ``declaration``
  .. If let ``annotationList type ( argumentList ) name ;`` be ``instantiation``
-  ... Group instantiation-non-objectInitializer: ``p``, ``TC~0~``, and ``annotationList type ( argumentList ) name ;``
+  ... Group instantiation-non-objectInitializer: ``p'``, ``TC~0~``, and ``annotationList type ( argumentList ) name ;``
 
    .... If ``type`` has type ``prefixedTypeName``
     ..... Let ``prefixedTypeName`` be ``type``
@@ -4005,7 +4004,7 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
     ..... Result in ``TC~1~`` and ``instantiationIR``
 
  .. Else if let ``annotationList type ( argumentList ) name = { objectDeclarationList } ;`` be ``instantiation``
-  ... Group instantiation-objectInitializer: ``p``, ``TC~0~``, and ``annotationList type ( argumentList ) name = { objectDeclarationList } ;``
+  ... Group instantiation-objectInitializer: ``p'``, ``TC~0~``, and ``annotationList type ( argumentList ) name = { objectDeclarationList } ;``
 
    .... If ``type`` has type ``prefixedTypeName``
     ..... Let ``prefixedTypeName`` be ``type``
@@ -4068,7 +4067,7 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
 
 . Else if ``declaration`` has type ``functionDeclaration``
  .. Let ``annotationList typeOrVoid name typeParameterListOpt ( parameterList ) blockStatement`` be ``declaration``
- .. Group functionDeclaration: ``p``, ``TC~0~``, and ``annotationList typeOrVoid name typeParameterListOpt ( parameterList ) blockStatement``
+ .. Group functionDeclaration: ``p'``, ``TC~0~``, and ``annotationList typeOrVoid name typeParameterListOpt ( parameterList ) blockStatement``
 
   ... Let ``typeParameter*`` be ``$flatten_typeParameterListOpt(typeParameterListOpt)``
   ... Let ``tid_expl*`` be the list of ``tid_expl``, obtained by repeating:
@@ -4106,7 +4105,7 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
 
 . Else if ``declaration`` has type ``actionDeclaration``
  .. Let ``annotationList ACTION name ( parameterList ) blockStatement`` be ``declaration``
- .. Group actionDeclaration: ``p``, ``TC~0~``, and ``annotationList ACTION name ( parameterList ) blockStatement``
+ .. Group actionDeclaration: ``p'``, ``TC~0~``, and ``annotationList ACTION name ( parameterList ) blockStatement``
 
   ... Let ``TC~1~`` be ``TC~0~``[LOCAL.KIND = ``ACTION``]
   ... Let ``parameter*`` be ``$flatten_parameterList(parameterList)``
@@ -4550,7 +4549,7 @@ relation Decls_ok: ``p``, ``TC'``, and ``declaration``*
 
 
 . Else if let ``declaration~h~ :: declaration~t~*`` be ``declaration``*
- .. Group cons: ``p``, ``TC~0~``, and ``declaration~h~ :: declaration~t~*``
+ .. Group cons: ``p``, ``TC'``, and ``declaration~h~ :: declaration~t~*``
 
   ... Let ``TC~1~`` and ``declarationIR~h~`` be the result of <<Decl_ok, typing ``declaration~h~``, under cursor ``p`` and typing context ``TC'``,
 and the modified typing context>>
@@ -4684,7 +4683,7 @@ relation RoutineType_ok: ``p``, ``TC``, ``routineTargetIR''``, ``typeArgumentIR'
 
 . Check that ``routineTargetIR''`` has type ``prefixedNameIR``
 . Let ``prefixedNameIR`` be ``routineTargetIR''``
-. Group referenceExpressionIR: ``p``, ``TC``, ``prefixedNameIR``, ``typeArgumentIR'``*, and ``argumentIR``*
+. Group referenceExpressionIR: ``p``, ``TC``, ``prefixedNameIR``, ``typeArgumentIR''``*, and ``argumentIR''``*
 
  .. If ``[ ]`` is equal to ``typeArgumentIR''``*
   ... Let ``(rid, routineTypeDefIR, id*)'?`` be ``$find_routine_overloaded(p, TC, prefixedNameIR, argumentIR''*)``
@@ -4746,7 +4745,7 @@ relation RoutineType_ok: ``p``, ``TC``, ``routineTargetIR''``, ``typeArgumentIR'
     ..... Let ``parameterTypeIR`` be ``INT "count" ?()``
     ..... Let ``methodTypeIR`` be ``BUILTIN_METHOD ( [parameterTypeIR] ) -> INT``
     ..... Result in ``methodTypeIR``, ``[ ]``, and ``[ ]``
- .. Group typedExpressionIR-nameIR-extern-method: ``p``, ``TC``, ``typedExpressionIR~base~ . nameIR``, ``typeArgumentIR``*, and ``argumentIR``*
+ .. Group typedExpressionIR-nameIR-extern-method: ``p``, ``TC``, ``typedExpressionIR~base~ . nameIR``, ``typeArgumentIR''``*, and ``argumentIR''``*
 
   ... Let ``typeIR~base~`` be <<typeof_expression, the type of  ``typedExpressionIR~base~``>>
   ... Let ``typeIR`` be <<canon, the canonicalized form of ``typeIR~base~``>>
@@ -4764,7 +4763,7 @@ relation RoutineType_ok: ``p``, ``TC``, ``routineTargetIR''``, ``typeArgumentIR'
    .... Result in ``routineTypeIR``, ``tid~impl~*``, and ``id~default~*``
  .. If ``nameIR`` is equal to "apply"
   ... Check that ``typeArgumentIR''*`` matches pattern ``[]``
-  ... Group typedExpressionIR-nameIR-parser-apply-method: ``p``, ``TC``, ``typedExpressionIR~base~ . "apply"``, ``[ ]``, and ``argumentIR``*
+  ... Group typedExpressionIR-nameIR-parser-apply-method: ``p``, ``TC``, ``typedExpressionIR~base~ . "apply"``, ``[ ]``, and ``argumentIR''``*
 
    .... Let ``typeIR~base~`` be <<typeof_expression, the type of  ``typedExpressionIR~base~``>>
    .... Let ``typeIR`` be <<canon, the canonicalized form of ``typeIR~base~``>>
@@ -4787,7 +4786,7 @@ relation RoutineType_ok: ``p``, ``TC``, ``routineTargetIR''``, ``typeArgumentIR'
    .... Check that ``rid'`` is equal to ``rid``
    .... Check that ``methodTypeIR'`` is equal to ``methodTypeIR``
    .... Result in ``methodTypeIR``, ``[ ]``, and ``id~default~*``
-  ... Group typedExpressionIR-nameIR-control-apply-method: ``p``, ``TC``, ``typedExpressionIR~base~ . "apply"``, ``[ ]``, and ``argumentIR``*
+  ... Group typedExpressionIR-nameIR-control-apply-method: ``p``, ``TC``, ``typedExpressionIR~base~ . "apply"``, ``[ ]``, and ``argumentIR''``*
 
    .... Let ``typeIR~base~`` be <<typeof_expression, the type of  ``typedExpressionIR~base~``>>
    .... Let ``typeIR`` be <<canon, the canonicalized form of ``typeIR~base~``>>
@@ -4821,7 +4820,7 @@ relation RoutineType_ok: ``p``, ``TC``, ``routineTargetIR''``, ``typeArgumentIR'
    .... Result in ``methodTypeIR``, ``[ ]``, and ``[ ]``
 
 . Else if let ``( routineTargetIR )`` be ``routineTargetIR''``
- .. Group parenthesized: ``p``, ``TC``, ``( routineTargetIR )``, ``typeArgumentIR``*, and ``argumentIR``*
+ .. Group parenthesized: ``p``, ``TC``, ``( routineTargetIR )``, ``typeArgumentIR''``*, and ``argumentIR''``*
 
   ... (RoutineType_ok: ``p TC |- routineTargetIR < typeArgumentIR''* > ( argumentIR''* ) : routineTypeIR < # tid~inserted~* > ( # id~default~* )``)
   ... Result in ``routineTypeIR``, ``tid~inserted~*``, and ``id~default~*``
@@ -4831,7 +4830,7 @@ relation Call_ok: ``p``, ``TC``, ``routineTypeIR``, ``typeArgumentIR``*, ``tid'`
 . If ``routineTypeIR`` has type ``builtinFunctionTypeIR``
  .. Let ``BUILTIN_FUNCTION ( parameterTypeIR* ) -> typeIR~ret~`` be ``routineTypeIR``
  .. Check that ``tid'*`` matches pattern ``[]``
- .. Group builtin-function: ``p``, ``TC``, ``BUILTIN_FUNCTION ( parameterTypeIR* ) -> typeIR~ret~``, ``typeArgumentIR``*, ``[ ]``, ``argumentIR``*, and ``id~default~``*
+ .. Group builtin-function: ``p``, ``TC``, ``BUILTIN_FUNCTION ( parameterTypeIR* ) -> typeIR~ret~``, ``typeArgumentIR``*, ``[ ]``, ``argumentIR``*, and ``id~default'~``*
 
   ... Let ``parameterTypeIR~non_default~*`` be ``$filter_default_parameters(parameterTypeIR*, id~default'~*)``
   ... Check that the length of ``parameterTypeIR~non_default~``* is equal to the length of ``argumentIR``*
@@ -4842,7 +4841,7 @@ relation Call_ok: ``p``, ``TC``, ``routineTypeIR``, ``typeArgumentIR``*, ``tid'`
 
 . Else if ``routineTypeIR`` has type ``definedFunctionTypeIR``
  .. Let ``FUNCTION ( parameterTypeIR* ) -> typeIR~ret~`` be ``routineTypeIR``
- .. Group function: ``p``, ``TC``, ``FUNCTION ( parameterTypeIR* ) -> typeIR~ret~``, ``typeArgumentIR``*, ``tid~infer~``*, ``argumentIR``*, and ``id~default~``*
+ .. Group function: ``p``, ``TC``, ``FUNCTION ( parameterTypeIR* ) -> typeIR~ret~``, ``typeArgumentIR``*, ``tid'``*, ``argumentIR``*, and ``id~default'~``*
 
   ... Let ``parameterTypeIR~non_default~*`` be ``$filter_default_parameters(parameterTypeIR*, id~default'~*)``
   ... Check that the length of ``parameterTypeIR~non_default~``* is equal to the length of ``argumentIR``*
@@ -4868,7 +4867,7 @@ relation Call_ok: ``p``, ``TC``, ``routineTypeIR``, ``typeArgumentIR``*, ``tid'`
 
 . Else if ``routineTypeIR`` has type ``externFunctionTypeIR``
  .. Let ``EXTERN_FUNCTION ( parameterTypeIR* ) -> typeIR~ret~`` be ``routineTypeIR``
- .. Group externfunction: ``p``, ``TC``, ``EXTERN_FUNCTION ( parameterTypeIR* ) -> typeIR~ret~``, ``typeArgumentIR``*, ``tid~infer~``*, ``argumentIR``*, and ``id~default~``*
+ .. Group externfunction: ``p``, ``TC``, ``EXTERN_FUNCTION ( parameterTypeIR* ) -> typeIR~ret~``, ``typeArgumentIR``*, ``tid'``*, ``argumentIR``*, and ``id~default'~``*
 
   ... Let ``parameterTypeIR~non_default~*`` be ``$filter_default_parameters(parameterTypeIR*, id~default'~*)``
   ... Check that the length of ``parameterTypeIR~non_default~``* is equal to the length of ``argumentIR``*
@@ -4896,7 +4895,7 @@ relation Call_ok: ``p``, ``TC``, ``routineTypeIR``, ``typeArgumentIR``*, ``tid'`
  .. Let ``ACTION ( parameterTypeIR* )`` be ``routineTypeIR``
  .. Check that ``typeArgumentIR*`` matches pattern ``[]``
  .. Check that ``tid'*`` matches pattern ``[]``
- .. Group action: ``p``, ``TC``, ``ACTION ( parameterTypeIR* )``, ``[ ]``, ``[ ]``, ``argumentIR``*, and ``id~default~``*
+ .. Group action: ``p``, ``TC``, ``ACTION ( parameterTypeIR* )``, ``[ ]``, ``[ ]``, ``argumentIR``*, and ``id~default'~``*
 
   ... Let ``parameterTypeIR~non_default~*`` be ``$filter_default_parameters(parameterTypeIR*, id~default'~*)``
   ... Check that the length of ``parameterTypeIR~non_default~``* is equal to the length of ``argumentIR``*
@@ -4908,7 +4907,7 @@ relation Call_ok: ``p``, ``TC``, ``routineTypeIR``, ``typeArgumentIR``*, ``tid'`
 . Else if ``routineTypeIR`` has type ``builtinMethodTypeIR``
  .. Let ``BUILTIN_METHOD ( parameterTypeIR* ) -> typeIR~ret~`` be ``routineTypeIR``
  .. Check that ``tid'*`` matches pattern ``[]``
- .. Group builtin-method: ``p``, ``TC``, ``BUILTIN_METHOD ( parameterTypeIR* ) -> typeIR~ret~``, ``typeArgumentIR``*, ``[ ]``, ``argumentIR``*, and ``id~default~``*
+ .. Group builtin-method: ``p``, ``TC``, ``BUILTIN_METHOD ( parameterTypeIR* ) -> typeIR~ret~``, ``typeArgumentIR``*, ``[ ]``, ``argumentIR``*, and ``id~default'~``*
 
   ... Let ``parameterTypeIR~non_default~*`` be ``$filter_default_parameters(parameterTypeIR*, id~default'~*)``
   ... Check that the length of ``parameterTypeIR~non_default~``* is equal to the length of ``argumentIR``*
@@ -4920,7 +4919,7 @@ relation Call_ok: ``p``, ``TC``, ``routineTypeIR``, ``typeArgumentIR``*, ``tid'`
 . Else if ``routineTypeIR`` has type ``externMethodTypeIR``
  .. Let ``externMethodTypeIR`` be ``routineTypeIR``
  .. If let ``EXTERN_METHOD ( parameterTypeIR* ) -> typeIR~ret~`` be ``externMethodTypeIR``
-  ... Group extern-method: ``p``, ``TC``, ``EXTERN_METHOD ( parameterTypeIR* ) -> typeIR~ret~``, ``typeArgumentIR``*, ``tid~infer~``*, ``argumentIR``*, and ``id~default~``*
+  ... Group extern-method: ``p``, ``TC``, ``EXTERN_METHOD ( parameterTypeIR* ) -> typeIR~ret~``, ``typeArgumentIR``*, ``tid'``*, ``argumentIR``*, and ``id~default'~``*
 
    .... Let ``parameterTypeIR~non_default~*`` be ``$filter_default_parameters(parameterTypeIR*, id~default'~*)``
    .... Check that the length of ``parameterTypeIR~non_default~``* is equal to the length of ``argumentIR``*
@@ -4945,7 +4944,7 @@ relation Call_ok: ``p``, ``TC``, ``routineTypeIR``, ``typeArgumentIR``*, ``tid'`
     ..... Result in ``typeIR~ret_inferred~``, ``typeArgumentIR~inferred~*``, and ``argumentIR~cast~*``
 
  .. Else if let ``EXTERN_METHOD ABSTRACT ( parameterTypeIR* ) -> typeIR~ret~`` be ``externMethodTypeIR``
-  ... Group extern-abstract-method: ``p``, ``TC``, ``EXTERN_METHOD ABSTRACT ( parameterTypeIR* ) -> typeIR~ret~``, ``typeArgumentIR``*, ``tid~infer~``*, ``argumentIR``*, and ``id~default~``*
+  ... Group extern-abstract-method: ``p``, ``TC``, ``EXTERN_METHOD ABSTRACT ( parameterTypeIR* ) -> typeIR~ret~``, ``typeArgumentIR``*, ``tid'``*, ``argumentIR``*, and ``id~default'~``*
 
    .... Let ``parameterTypeIR~non_default~*`` be ``$filter_default_parameters(parameterTypeIR*, id~default'~*)``
    .... Check that the length of ``parameterTypeIR~non_default~``* is equal to the length of ``argumentIR``*
@@ -4973,7 +4972,7 @@ relation Call_ok: ``p``, ``TC``, ``routineTypeIR``, ``typeArgumentIR``*, ``tid'`
  .. Let ``PARSER_APPLY ( parameterTypeIR* )`` be ``routineTypeIR``
  .. Check that ``typeArgumentIR*`` matches pattern ``[]``
  .. Check that ``tid'*`` matches pattern ``[]``
- .. Group parser-apply-method: ``p``, ``TC``, ``PARSER_APPLY ( parameterTypeIR* )``, ``[ ]``, ``[ ]``, ``argumentIR``*, and ``id~default~``*
+ .. Group parser-apply-method: ``p``, ``TC``, ``PARSER_APPLY ( parameterTypeIR* )``, ``[ ]``, ``[ ]``, ``argumentIR``*, and ``id~default'~``*
 
   ... Let ``parameterTypeIR~non_default~*`` be ``$filter_default_parameters(parameterTypeIR*, id~default'~*)``
   ... Check that the length of ``parameterTypeIR~non_default~``* is equal to the length of ``argumentIR``*
@@ -4986,7 +4985,7 @@ relation Call_ok: ``p``, ``TC``, ``routineTypeIR``, ``typeArgumentIR``*, ``tid'`
  .. Let ``CONTROL_APPLY ( parameterTypeIR* )`` be ``routineTypeIR``
  .. Check that ``typeArgumentIR*`` matches pattern ``[]``
  .. Check that ``tid'*`` matches pattern ``[]``
- .. Group control-apply-method: ``p``, ``TC``, ``CONTROL_APPLY ( parameterTypeIR* )``, ``[ ]``, ``[ ]``, ``argumentIR``*, and ``id~default~``*
+ .. Group control-apply-method: ``p``, ``TC``, ``CONTROL_APPLY ( parameterTypeIR* )``, ``[ ]``, ``[ ]``, ``argumentIR``*, and ``id~default'~``*
 
   ... Let ``parameterTypeIR~non_default~*`` be ``$filter_default_parameters(parameterTypeIR*, id~default'~*)``
   ... Check that the length of ``parameterTypeIR~non_default~``* is equal to the length of ``argumentIR``*
@@ -5048,7 +5047,7 @@ relation Inst_ok: ``cursor'``, ``TC``, ``instctxt``, ``constructorTypeIR``, ``ty
   ... Check that ``$instantiable(GLOBAL, TC, instctxt, typeIR~object_inferred~)``
   ... (Call_convention_ok: ``BLOCK TC NOACTION |- parameterTypeIR~aligned_inferred~* @ argumentIR* : argumentIR~cast~*``)
   ... Result in ``typeIR~object_inferred~``, ``typeArgumentIR~inferred~*``, and ``argumentIR~cast~*``
-. Group non-package: ``p``, ``TC``, ``instctxt``, ``constructorTypeIR``, ``typeArgumentIR``*, ``tid~infer~``*, ``argumentIR``*, and ``id~default~``*
+. Group non-package: ``cursor'``, ``TC``, ``instctxt``, ``constructorTypeIR``, ``typeArgumentIR``*, ``tid~infer~``*, ``argumentIR``*, and ``id~default~``*
 
  .. Let ``CONSTRUCTOR ( parameterTypeIR* ) -> typeIR~object~`` be ``constructorTypeIR``
  .. Check that ~``$is_package_object_typeIR(<<canon, the canonicalized form of typeIR~object~>>)``
@@ -5234,7 +5233,7 @@ relation Decls_object_ok: ``p``, ``TC``, ``frame'``, ``rdenv'``, and ``objectDec
 
 
 . Else if let ``objectDeclaration~h~ :: objectDeclaration~t~*`` be ``objectDeclaration``*
- .. Group cons: ``p``, ``TC``, ``frame~0~``, ``rdenv~0~``, and ``objectDeclaration~h~ :: objectDeclaration~t~*``
+ .. Group cons: ``p``, ``TC``, ``frame'``, ``rdenv'``, and ``objectDeclaration~h~ :: objectDeclaration~t~*``
 
   ... (Decl_object_ok: ``p TC frame' rdenv' |- objectDeclaration~h~ : frame~1~ rdenv~1~ objectDeclarationIR~h~``)
   ... (Decls_object_ok: ``p TC frame~1~ rdenv~1~ |- objectDeclaration~t~* : frame~2~ rdenv~2~ objectDeclarationIR~t~*``)
@@ -5262,7 +5261,7 @@ relation Enum_serializable_fields_ok: ``TC'``, ``nameIR~enum~``, ``typeIR``, and
 
 
 . Else if let ``namedExpression~h~ :: namedExpression~t~*`` be ``namedExpression``*
- .. Group cons: ``TC~0~``, ``nameIR~enum~``, ``typeIR``, and ``namedExpression~h~ :: namedExpression~t~*``
+ .. Group cons: ``TC'``, ``nameIR~enum~``, ``typeIR``, and ``namedExpression~h~ :: namedExpression~t~*``
 
   ... (Enum_serializable_field_ok: ``TC' nameIR~enum~ typeIR |- namedExpression~h~ : TC~1~ namedExpressionIR~h~ # value~field_h~``)
   ... (Enum_serializable_fields_ok: ``TC~1~ nameIR~enum~ typeIR |- namedExpression~t~* : TC~2~ namedExpressionIR~t~* # value~field_t~*``)
@@ -5407,7 +5406,7 @@ relation SelectCase_keyset_ok: ``TC``, ``typeIR'''``*, and ``keysetExpression``
 
 
  .. Else if let ``( simpleKeysetExpression~h~ , simpleKeysetExpressionList~t~ )`` be ``tupleKeysetExpression``
-  ... Group tupleKeysetExpression-list: ``TC``, ``typeIR~key~``*, and ``( simpleKeysetExpression~h~ , simpleKeysetExpressionList~t~ )``
+  ... Group tupleKeysetExpression-list: ``TC``, ``typeIR'''``*, and ``( simpleKeysetExpression~h~ , simpleKeysetExpressionList~t~ )``
 
    .... Let ``simpleKeysetExpression~t~*`` be ``$flatten_simpleKeysetExpressionList(simpleKeysetExpressionList~t~)``
    .... Let ``simpleKeysetExpression*`` be ``simpleKeysetExpression~h~ :: simpleKeysetExpression~t~*``
@@ -5518,7 +5517,7 @@ relation TableEntry_keysets_simple_ok: ``TC``, ``TBLC``, ``TBLS'``, ``matchKey``
 . Else if let ``matchKey~h~ :: matchKey~t~*`` be ``matchKey``*
  .. Check that ``simpleKeysetExpression*`` matches pattern ``_ :: _``
  .. Let ``simpleKeysetExpression~h~ :: simpleKeysetExpression~t~*`` be ``simpleKeysetExpression``*
- .. Group cons: ``TC``, ``TBLC``, ``TBLS~0~``, ``matchKey~h~ :: matchKey~t~*``, and ``simpleKeysetExpression~h~ :: simpleKeysetExpression~t~*``
+ .. Group cons: ``TC``, ``TBLC``, ``TBLS'``, ``matchKey~h~ :: matchKey~t~*``, and ``simpleKeysetExpression~h~ :: simpleKeysetExpression~t~*``
 
   ... (TableEntry_keyset_simple_ok: ``TC TBLC |- matchKey~h~ @ simpleKeysetExpression~h~ : TBLS~1~ simpleKeysetExpressionIR~h~``)
   ... Let ``TBLS~2~`` be ``$join_tableEntryState(TBLS', TBLS~1~)``
@@ -5584,7 +5583,7 @@ relation Expr_inst: ``p``, ``IC``, ``STO'``, and ``expressionIR # _``
 
 . If ``expressionIR`` has type ``booleanLiteral``
  .. Let ``booleanLiteral`` be ``expressionIR``
- .. Group literalExpressionIR-boolean: ``p``, ``IC``, ``STO``, and ``booleanLiteral # _``
+ .. Group literalExpressionIR-boolean: ``p``, ``IC``, ``STO'``, and ``booleanLiteral # _``
 
   ... If ``booleanLiteral`` matches pattern ``TRUE``
 
@@ -5594,7 +5593,7 @@ relation Expr_inst: ``p``, ``IC``, ``STO'``, and ``expressionIR # _``
 
 . Else if ``expressionIR`` has type ``numberLiteral``
  .. Let ``numberLiteral`` be ``expressionIR``
- .. Group literalExpressionIR-number: ``p``, ``IC``, ``STO``, and ``numberLiteral # _``
+ .. Group literalExpressionIR-number: ``p``, ``IC``, ``STO'``, and ``numberLiteral # _``
 
   ... If let ``D i`` be ``numberLiteral``
    .... Result in ``STO'`` and ``D i``
@@ -5607,26 +5606,26 @@ relation Expr_inst: ``p``, ``IC``, ``STO'``, and ``expressionIR # _``
 
 . Else if ``expressionIR`` has type ``stringLiteral``
  .. Let ``" text "`` be ``expressionIR``
- .. Group literalExpressionIR-stringLiteral: ``p``, ``IC``, ``STO``, and ``" text " # _``
+ .. Group literalExpressionIR-stringLiteral: ``p``, ``IC``, ``STO'``, and ``" text " # _``
 
   ... Result in ``STO'`` and ``" text "``
 
 . Else if ``expressionIR`` has type ``prefixedNameIR``
  .. Let ``prefixedNameIR`` be ``expressionIR``
- .. Group referenceExpressionIR: ``p``, ``IC``, ``STO``, and ``prefixedNameIR # _``
+ .. Group referenceExpressionIR: ``p``, ``IC``, ``STO'``, and ``prefixedNameIR # _``
 
   ... Let ``value`` be ``$find_value_inst(p, IC, prefixedNameIR)``
   ... Result in ``STO'`` and ``value``
 
 . Else if ``expressionIR`` has type ``defaultExpression``
  .. Let ``defaultExpression`` be ``expressionIR``
- .. Group defaultExpressionIR: ``p``, ``IC``, ``STO``, and ``... # _``
+ .. Group defaultExpressionIR: ``p``, ``IC``, ``STO'``, and ``... # _``
 
   ... Result in ``STO'`` and ``DEFAULT``
 
 . Else if ``expressionIR`` has type ``unaryExpressionIR``
  .. Let ``unop typedExpressionIR`` be ``expressionIR``
- .. Group unaryExpressionIR: ``p``, ``IC``, ``STO~0~``, and ``unop typedExpressionIR # _``
+ .. Group unaryExpressionIR: ``p``, ``IC``, ``STO'``, and ``unop typedExpressionIR # _``
 
   ... If ``unop`` matches pattern ``~``
    .... Result in ``STO~1~`` and ``$un_bnot(value)``
@@ -5642,7 +5641,7 @@ relation Expr_inst: ``p``, ``IC``, ``STO'``, and ``expressionIR # _``
 
 . Else if ``expressionIR`` has type ``binaryExpressionIR``
  .. Let ``typedExpressionIR~l~ binop typedExpressionIR~r~`` be ``expressionIR``
- .. Group binaryExpressionIR: ``p``, ``IC``, ``STO~0~``, and ``typedExpressionIR~l~ binop typedExpressionIR~r~ # _``
+ .. Group binaryExpressionIR: ``p``, ``IC``, ``STO'``, and ``typedExpressionIR~l~ binop typedExpressionIR~r~ # _``
 
   ... If ``binop`` matches pattern ``+``
    .... (Expr_inst: ``p IC STO~1~ |- typedExpressionIR~r~ ==> STO~2~ value~r~``)
@@ -5730,7 +5729,7 @@ relation Expr_inst: ``p``, ``IC``, ``STO'``, and ``expressionIR # _``
 
 . Else if ``expressionIR`` has type ``ternaryExpressionIR``
  .. Let ``typedExpressionIR~cond~ ? typedExpressionIR~true~ : typedExpressionIR~false~`` be ``expressionIR``
- .. Group ternaryExpressionIR: ``p``, ``IC``, ``STO~0~``, and ``typedExpressionIR~cond~ ? typedExpressionIR~true~ : typedExpressionIR~false~ # _``
+ .. Group ternaryExpressionIR: ``p``, ``IC``, ``STO'``, and ``typedExpressionIR~cond~ ? typedExpressionIR~true~ : typedExpressionIR~false~ # _``
 
   ... (Expr_inst: ``p IC STO' |- typedExpressionIR~cond~ ==> STO~1~ value``)
   ... If ``value`` is equal to ``B true``
@@ -5742,7 +5741,7 @@ relation Expr_inst: ``p``, ``IC``, ``STO'``, and ``expressionIR # _``
 
 . Else if ``expressionIR`` has type ``castExpressionIR``
  .. Let ``( typeIR ) typedExpressionIR`` be ``expressionIR``
- .. Group castExpressionIR: ``p``, ``IC``, ``STO~0~``, and ``( typeIR ) typedExpressionIR # _``
+ .. Group castExpressionIR: ``p``, ``IC``, ``STO'``, and ``( typeIR ) typedExpressionIR # _``
 
   ... (Expr_inst: ``p IC STO' |- typedExpressionIR ==> STO~1~ value``)
   ... Let ``value~cast~`` be ``$cast_op(typeIR, value)``
@@ -5751,10 +5750,10 @@ relation Expr_inst: ``p``, ``IC``, ``STO'``, and ``expressionIR # _``
 . Else if ``expressionIR`` has type ``dataExpressionIR``
  .. Let ``dataExpressionIR`` be ``expressionIR``
  .. Check that ``dataExpressionIR`` matches pattern ``{#}``
- .. Group dataExpressionIR-invalid: ``p``, ``IC``, ``STO``, and ``{#} # _``
+ .. Group dataExpressionIR-invalid: ``p``, ``IC``, ``STO'``, and ``{#} # _``
 
   ... Result in ``STO'`` and ``{#}``
- .. Group dataExpressionIR-sequence: ``p``, ``IC``, ``STO~0~``, and ``dataExpressionIR # _``
+ .. Group dataExpressionIR-sequence: ``p``, ``IC``, ``STO'``, and ``dataExpressionIR # _``
 
   ... If let ``SEQ { typedExpressionListIR }`` be ``dataExpressionIR``
    .... (Exprs_inst: ``p IC STO' |- typedExpressionListIR ==> STO~1~ value*``)
@@ -5763,7 +5762,7 @@ relation Expr_inst: ``p``, ``IC``, ``STO'``, and ``expressionIR # _``
   ... Else if let ``SEQ { typedExpressionListIR , ... }`` be ``dataExpressionIR``
    .... (Exprs_inst: ``p IC STO' |- typedExpressionListIR ==> STO~1~ value*``)
    .... Result in ``STO~1~`` and ``SEQ ( value* , ... )``
- .. Group dataExpressionIR-record: ``p``, ``IC``, ``STO~0~``, and ``dataExpressionIR # _``
+ .. Group dataExpressionIR-record: ``p``, ``IC``, ``STO'``, and ``dataExpressionIR # _``
 
   ... If let ``RECORD { nameIR = typedExpressionIR* }`` be ``dataExpressionIR``
    .... (Exprs_inst: ``p IC STO' |- typedExpressionIR* ==> STO~1~ value*``)
@@ -5775,7 +5774,7 @@ relation Expr_inst: ``p``, ``IC``, ``STO'``, and ``expressionIR # _``
 
 . Else if ``expressionIR`` has type ``errorAccessExpressionIR``
  .. Let ``ERROR . nameIR`` be ``expressionIR``
- .. Group errorAccessExpressionIR: ``p``, ``IC``, ``STO``, and ``ERROR . nameIR # _``
+ .. Group errorAccessExpressionIR: ``p``, ``IC``, ``STO'``, and ``ERROR . nameIR # _``
 
   ... Let ``nameIR~error~`` be ``"error." ++ nameIR``
   ... Let ``value~error~`` be ``$find_value_inst(p, IC, ` nameIR~error~)``
@@ -5785,7 +5784,7 @@ relation Expr_inst: ``p``, ``IC``, ``STO'``, and ``expressionIR # _``
  .. Let ``memberAccessBaseIR . nameIR`` be ``expressionIR``
  .. Check that ``memberAccessBaseIR`` matches pattern ``TYPE %``
  .. Let ``TYPE prefixedNameIR`` be ``memberAccessBaseIR``
- .. Group memberAccessExpressionIR-type: ``p``, ``IC``, ``STO``, and ``TYPE prefixedNameIR . nameIR # _``
+ .. Group memberAccessExpressionIR-type: ``p``, ``IC``, ``STO'``, and ``TYPE prefixedNameIR . nameIR # _``
 
   ... Let ``typeDefIR'?`` be ``$find_typedef_inst(p, IC, prefixedNameIR)``
   ... Check that ``typeDefIR'?`` matches pattern ``(_)``
@@ -5806,7 +5805,7 @@ relation Expr_inst: ``p``, ``IC``, ``STO'``, and ``expressionIR # _``
  .. Check that ``memberAccessBaseIR`` has type ``typedExpressionIR``
  .. Let ``typedExpressionIR~base~`` be ``memberAccessBaseIR``
  .. Check that ``text`` is equal to "size"
- .. Group memberAccessExpressionIR-expression-stack-size: ``p``, ``IC``, ``STO``, and ``typedExpressionIR~base~ . "size" # ( typeIR~base~ _ )``
+ .. Group memberAccessExpressionIR-expression-stack-size: ``p``, ``IC``, ``STO'``, and ``typedExpressionIR~base~ . "size" # ( typeIR~base~ _ )``
 
   ... Let ``_ # ( typeIR _ )`` be ``typedExpressionIR~base~``
   ... Check that ``typeIR`` is equal to ``typeIR~base~``
@@ -5817,7 +5816,7 @@ relation Expr_inst: ``p``, ``IC``, ``STO'``, and ``expressionIR # _``
 
 . Else if ``expressionIR`` has type ``sliceAccessExpressionIR``
  .. Let ``typedExpressionIR~base~ [ typedExpressionIR~hi~ : typedExpressionIR~lo~ ]`` be ``expressionIR``
- .. Group sliceAccessExpressionIR: ``p``, ``IC``, ``STO~0~``, and ``typedExpressionIR~base~ [ typedExpressionIR~hi~ : typedExpressionIR~lo~ ] # _``
+ .. Group sliceAccessExpressionIR: ``p``, ``IC``, ``STO'``, and ``typedExpressionIR~base~ [ typedExpressionIR~hi~ : typedExpressionIR~lo~ ] # _``
 
   ... (Expr_inst: ``p IC STO' |- typedExpressionIR~base~ ==> STO~1~ value~base~``)
   ... (Expr_inst: ``p IC STO~1~ |- typedExpressionIR~hi~ ==> STO~2~ value~hi~``)
@@ -5827,7 +5826,7 @@ relation Expr_inst: ``p``, ``IC``, ``STO'``, and ``expressionIR # _``
 . Else if ``expressionIR`` has type ``callExpressionIR``
  .. Let ``callExpressionIR`` be ``expressionIR``
  .. If let ``prefixedNameIR < typeArgumentListIR > ( argumentListIR )`` be ``callExpressionIR``
-  ... Group callExpressionIR-constructor: ``p``, ``IC``, ``STO~0~``, and ``prefixedNameIR < typeArgumentListIR > ( argumentListIR ) # _``
+  ... Group callExpressionIR-constructor: ``p``, ``IC``, ``STO'``, and ``prefixedNameIR < typeArgumentListIR > ( argumentListIR ) # _``
 
    .... Let ``(cid, constructor, id*)?`` be ``$find_constructor_inst(IC, prefixedNameIR, argumentListIR)``
    .... Check that ``(cid, constructor, id*)?`` matches pattern ``(_)``
@@ -5840,7 +5839,7 @@ relation Expr_inst: ``p``, ``IC``, ``STO'``, and ``expressionIR # _``
  .. Else if let ``routineTargetIR < typeArgumentIR* > ( argumentIR* )`` be ``callExpressionIR``
   ... If ``typeArgumentIR*`` matches pattern ``[]``
    .... Check that ``argumentIR*`` matches pattern ``[]``
-   .... Group callExpressionIR-builtin-size: ``p``, ``IC``, ``STO``, and ``routineTargetIR < [ ] > ( [ ] ) # _``
+   .... Group callExpressionIR-builtin-size: ``p``, ``IC``, ``STO'``, and ``routineTargetIR < [ ] > ( [ ] ) # _``
 
     ..... If let ``typedExpressionIR~base~ . nameIR`` be ``routineTargetIR``
      ...... Let ``_ # ( typeIR~base~ _ )`` be ``typedExpressionIR~base~``
@@ -5865,14 +5864,14 @@ relation Expr_inst: ``p``, ``IC``, ``STO'``, and ``expressionIR # _``
   ... Let ``routineTargetIR' < typeArgumentListIR > ( argumentListIR )`` be ``callExpressionIR``
   ... If ``routineTargetIR'`` matches pattern ``( % )``
    .... Let ``( routineTargetIR )`` be ``routineTargetIR'``
-   .... Group callExpressionIR-parenthesized: ``p``, ``IC``, ``STO~0~``, and ``( routineTargetIR ) < typeArgumentListIR > ( argumentListIR ) # expressionNoteIR``
+   .... Group callExpressionIR-parenthesized: ``p``, ``IC``, ``STO'``, and ``( routineTargetIR ) < typeArgumentListIR > ( argumentListIR ) # _``
 
     ..... (Expr_inst: ``p IC STO' |- routineTargetIR < typeArgumentListIR > ( argumentListIR ) # _ ==> STO~1~ value``)
     ..... Result in ``STO~1~`` and ``value``
 
 . Else if ``expressionIR`` has type ``parenthesizedExpressionIR``
  .. Let ``( typedExpressionIR )`` be ``expressionIR``
- .. Group parenthesizedExpressionIR: ``p``, ``IC``, ``STO~0~``, and ``( typedExpressionIR ) # _``
+ .. Group parenthesizedExpressionIR: ``p``, ``IC``, ``STO'``, and ``( typedExpressionIR ) # _``
 
   ... (Expr_inst: ``p IC STO' |- typedExpressionIR ==> STO~1~ value``)
   ... Result in ``STO~1~`` and ``value``
@@ -5883,7 +5882,7 @@ relation Exprs_inst: ``p``, ``IC``, ``STO'``, and ``typedExpressionIR``*
 
 
 . Else if let ``typedExpressionIR~h~ :: typedExpressionIR~t~*`` be ``typedExpressionIR``*
- .. Group cons: ``p``, ``IC``, ``STO~0~``, and ``typedExpressionIR~h~ :: typedExpressionIR~t~*``
+ .. Group cons: ``p``, ``IC``, ``STO'``, and ``typedExpressionIR~h~ :: typedExpressionIR~t~*``
 
   ... (Expr_inst: ``p IC STO' |- typedExpressionIR~h~ ==> STO~1~ value~h~``)
   ... (Exprs_inst: ``p IC STO~1~ |- typedExpressionIR~t~* ==> STO~2~ value~t~*``)
@@ -5908,25 +5907,25 @@ relation Stmt_inst: ``p'``, ``IC'``, ``STO'``, and ``statementIR``
 
 . If ``statementIR`` has type ``emptyStatementIR``
  .. Let ``emptyStatementIR`` be ``statementIR``
- .. Group emptyStatementIR: ``p``, ``IC``, ``STO``, and ``emptyStatementIR``
+ .. Group emptyStatementIR: ``p'``, ``IC'``, ``STO'``, and ``emptyStatementIR``
 
   ... Result in ``IC'``, ``STO'``, and ``emptyStatementIR``
 
 . Else if ``statementIR`` has type ``assignmentStatementIR``
  .. Let ``assignmentStatementIR`` be ``statementIR``
- .. Group assignmentStatementIR: ``p``, ``IC``, ``STO``, and ``assignmentStatementIR``
+ .. Group assignmentStatementIR: ``p'``, ``IC'``, ``STO'``, and ``assignmentStatementIR``
 
   ... Result in ``IC'``, ``STO'``, and ``assignmentStatementIR``
 
 . Else if ``statementIR`` has type ``callStatementIR``
  .. Let ``callStatementIR`` be ``statementIR``
- .. Group callStatementIR: ``p``, ``IC``, ``STO``, and ``callStatementIR``
+ .. Group callStatementIR: ``p'``, ``IC'``, ``STO'``, and ``callStatementIR``
 
   ... Result in ``IC'``, ``STO'``, and ``callStatementIR``
 
 . Else if ``statementIR`` has type ``directApplicationStatementIR``
  .. Let ``prefixedNameIR . APPLY ( argumentListIR ) ;`` be ``statementIR``
- .. Group directApplicationStatementIR: ``p``, ``IC``, ``STO~0~``, and ``prefixedNameIR . APPLY ( argumentListIR ) ;``
+ .. Group directApplicationStatementIR: ``p'``, ``IC'``, ``STO'``, and ``prefixedNameIR . APPLY ( argumentListIR ) ;``
 
   ... Let ``(cid, constructor, id*)?`` be ``$find_constructor_inst(IC', prefixedNameIR, [ ])``
   ... Check that ``(cid, constructor, id*)?`` matches pattern ``(_)``
@@ -5946,13 +5945,13 @@ relation Stmt_inst: ``p'``, ``IC'``, ``STO'``, and ``statementIR``
 
 . Else if ``statementIR`` has type ``exitStatementIR``
  .. Let ``exitStatementIR`` be ``statementIR``
- .. Group exitStatementIR: ``p``, ``IC``, ``STO``, and ``exitStatementIR``
+ .. Group exitStatementIR: ``p'``, ``IC'``, ``STO'``, and ``exitStatementIR``
 
   ... Result in ``IC'``, ``STO'``, and ``exitStatementIR``
 
 . Else if ``statementIR`` has type ``conditionalStatementIR``
  .. Let ``conditionalStatementIR`` be ``statementIR``
- .. Group conditionalStatementIR: ``p``, ``IC~0~``, ``STO~0~``, and ``conditionalStatementIR``
+ .. Group conditionalStatementIR: ``p'``, ``IC'``, ``STO'``, and ``conditionalStatementIR``
 
   ... If let ``IF ( typedExpressionIR~cond~ ) statementIR~then~`` be ``conditionalStatementIR``
    .... Let ``IC~1~``, ``STO~1~``, and ``statementIR~then_inst~`` be the result of <<Stmt_inst, the compile-time evaluation of ``statementIR~then~``, under cursor ``p'``, instantiation context ``IC'``, and store ``STO'``>>
@@ -5965,20 +5964,20 @@ relation Stmt_inst: ``p'``, ``IC'``, ``STO'``, and ``statementIR``
 
 . Else if ``statementIR`` has type ``switchStatementIR``
  .. Let ``SWITCH ( typedExpressionIR ) { switchCaseListIR }`` be ``statementIR``
- .. Group switchStatementIR: ``p``, ``IC~0~``, ``STO~0~``, and ``SWITCH ( typedExpressionIR ) { switchCaseListIR }``
+ .. Group switchStatementIR: ``p'``, ``IC'``, ``STO'``, and ``SWITCH ( typedExpressionIR ) { switchCaseListIR }``
 
   ... (SwitchCases_inst: ``p' IC' STO' |- switchCaseListIR ==> IC~1~ STO~1~ switchCaseListIR~inst~``)
   ... Result in ``IC~1~``, ``STO~1~``, and ``SWITCH ( typedExpressionIR ) { switchCaseListIR~inst~ }``
 . Check that ``p'`` matches pattern ``LOCAL``
 . If ``statementIR`` has type ``returnStatementIR``
  .. Let ``returnStatementIR`` be ``statementIR``
- .. Group returnStatementIR: ``LOCAL``, ``IC``, ``STO``, and ``returnStatementIR``
+ .. Group returnStatementIR: ``LOCAL``, ``IC'``, ``STO'``, and ``returnStatementIR``
 
   ... Result in ``IC'``, ``STO'``, and ``returnStatementIR``
 
 . Else if ``statementIR`` has type ``blockStatementIR``
  .. Let ``annotationList { blockElementStatementListIR }`` be ``statementIR``
- .. Group blockStatementIR: ``LOCAL``, ``IC~0~``, ``STO~0~``, and ``annotationList { blockElementStatementListIR }``
+ .. Group blockStatementIR: ``LOCAL``, ``IC'``, ``STO'``, and ``annotationList { blockElementStatementListIR }``
 
   ... (Block_inst: ``IC' STO' |- annotationList { blockElementStatementListIR } ==> IC~1~ STO~1~ _ { blockElementStatementListIR~inst~ }``)
   ... Result in ``IC~1~``, ``STO~1~``, and ``annotationList { blockElementStatementListIR~inst~ }``
@@ -5987,7 +5986,7 @@ relation BlockElementStmt_inst: ``IC~0'~``, ``STO~0'~``, and ``blockElementState
 
 . If ``blockElementStatementIR`` has type ``constantDeclarationIR``
  .. Let ``constantDeclarationIR`` be ``blockElementStatementIR``
- .. Group constantDeclarationIR: ``IC~0~``, ``STO~0~``, and ``constantDeclarationIR``
+ .. Group constantDeclarationIR: ``IC~0'~``, ``STO~0'~``, and ``constantDeclarationIR``
 
   ... (Decl_inst: ``LOCAL IC~0'~ STO~0'~ |- constantDeclarationIR ==> IC~1~ STO~1~ declarationIR'?``)
   ... Check that ``declarationIR'?`` matches pattern ``(_)``
@@ -5998,13 +5997,13 @@ relation BlockElementStmt_inst: ``IC~0'~``, ``STO~0'~``, and ``blockElementState
 
 . Else if ``blockElementStatementIR`` has type ``variableDeclarationIR``
  .. Let ``variableDeclarationIR`` be ``blockElementStatementIR``
- .. Group variableDeclarationIR: ``IC``, ``STO``, and ``variableDeclarationIR``
+ .. Group variableDeclarationIR: ``IC~0'~``, ``STO~0'~``, and ``variableDeclarationIR``
 
   ... Result in ``IC~0'~``, ``STO~0'~``, and ``?(variableDeclarationIR)``
 
 . Else if ``blockElementStatementIR`` has type ``statementIR``
  .. Let ``statementIR`` be ``blockElementStatementIR``
- .. Group statementIR: ``IC~0~``, ``STO~0~``, and ``statementIR``
+ .. Group statementIR: ``IC~0'~``, ``STO~0'~``, and ``statementIR``
 
   ... Let ``IC~1~``, ``STO~1~``, and ``statementIR~inst~`` be the result of <<Stmt_inst, the compile-time evaluation of ``statementIR``, under cursor ``LOCAL``, instantiation context ``IC~0'~``, and store ``STO~0'~``>>
   ... Result in ``IC~1~``, ``STO~1~``, and ``?(statementIR~inst~)``
@@ -6015,7 +6014,7 @@ relation BlockElementStmts_inst: ``IC'``, ``STO'``, and ``blockElementStatementI
 
 
 . Else if let ``blockElementStatementIR~h~ :: blockElementStatementIR~t~*`` be ``blockElementStatementIR``*
- .. Group cons: ``IC~0~``, ``STO~0~``, and ``blockElementStatementIR~h~ :: blockElementStatementIR~t~*``
+ .. Group cons: ``IC'``, ``STO'``, and ``blockElementStatementIR~h~ :: blockElementStatementIR~t~*``
 
   ... (BlockElementStmt_inst: ``IC' STO' |- blockElementStatementIR~h~ ==> IC~1~ STO~1~ blockElementStatementIR'?``)
   ... Check that ``blockElementStatementIR'?`` matches pattern ``(_)``
@@ -6064,7 +6063,7 @@ relation Bind_methods: ``rdenv'`` and ``methodPrototypeIR``*
 
 
 . Else if let ``methodPrototypeIR~h~ :: methodPrototypeIR~t~*`` be ``methodPrototypeIR``*
- .. Group cons: ``rdenv~0~`` and ``methodPrototypeIR~h~ :: methodPrototypeIR~t~*``
+ .. Group cons: ``rdenv'`` and ``methodPrototypeIR~h~ :: methodPrototypeIR~t~*``
 
   ... (Bind_method: ``rdenv' |- methodPrototypeIR~h~ ==> rdenv~1~``)
   ... (Bind_methods: ``rdenv~1~ |- methodPrototypeIR~t~* ==> rdenv~2~``)
@@ -6087,7 +6086,7 @@ relation Bind_constructors: ``p``, ``IC'``, ``typeParameterListIR``, ``methodPro
 
 
 . Else if let ``methodPrototypeIR~h~ :: methodPrototypeIR~t~*`` be ``methodPrototypeIR``*
- .. Group cons: ``p``, ``IC~0~``, ``typeParameterListIR``, ``methodPrototypeListIR``, and ``methodPrototypeIR~h~ :: methodPrototypeIR~t~*``
+ .. Group cons: ``p``, ``IC'``, ``typeParameterListIR``, ``methodPrototypeListIR``, and ``methodPrototypeIR~h~ :: methodPrototypeIR~t~*``
 
   ... (Bind_constructor: ``p IC' typeParameterListIR methodPrototypeListIR |- methodPrototypeIR~h~ ==> IC~1~``)
   ... (Bind_constructors: ``p IC~1~ typeParameterListIR methodPrototypeListIR |- methodPrototypeIR~t~* ==> IC~2~``)
@@ -6117,7 +6116,7 @@ relation ExternMethods_inst: ``IC'`` and ``methodPrototypeIR``*
 
 
 . Else if let ``methodPrototypeIR~h~ :: methodPrototypeIR~t~*`` be ``methodPrototypeIR``*
- .. Group cons: ``IC~0~`` and ``methodPrototypeIR~h~ :: methodPrototypeIR~t~*``
+ .. Group cons: ``IC'`` and ``methodPrototypeIR~h~ :: methodPrototypeIR~t~*``
 
   ... (ExternMethod_inst: ``IC' |- methodPrototypeIR~h~ ==> IC~1~``)
   ... (ExternMethods_inst: ``IC~1~ |- methodPrototypeIR~t~* ==> IC~2~``)
@@ -6127,7 +6126,7 @@ relation ParserStmt_inst: ``IC~0'~``, ``STO~0~``, and ``parserStatementIR``
 
 . If ``parserStatementIR`` has type ``constantDeclarationIR``
  .. Let ``constantDeclarationIR`` be ``parserStatementIR``
- .. Group constantDeclarationIR: ``IC~0~``, ``STO~0~``, and ``constantDeclarationIR``
+ .. Group constantDeclarationIR: ``IC~0'~``, ``STO~0~``, and ``constantDeclarationIR``
 
   ... (Decl_inst: ``LOCAL IC~0'~ STO~0~ |- constantDeclarationIR ==> IC~1~ STO~1~ declarationIR'?``)
   ... Check that ``declarationIR'?`` matches pattern ``(_)``
@@ -6138,7 +6137,7 @@ relation ParserStmt_inst: ``IC~0'~``, ``STO~0~``, and ``parserStatementIR``
 
 . Else if ``parserStatementIR`` has type ``variableDeclarationIR``
  .. Let ``variableDeclarationIR`` be ``parserStatementIR``
- .. Group variableDeclarationIR: ``IC~0~``, ``STO~0~``, and ``variableDeclarationIR``
+ .. Group variableDeclarationIR: ``IC~0'~``, ``STO~0~``, and ``variableDeclarationIR``
 
   ... (BlockElementStmt_inst: ``IC~0'~ STO~0~ |- variableDeclarationIR ==> IC~1~ STO~1~ blockElementStatementIR'?``)
   ... Check that ``blockElementStatementIR'?`` matches pattern ``(_)``
@@ -6149,7 +6148,7 @@ relation ParserStmt_inst: ``IC~0'~``, ``STO~0~``, and ``parserStatementIR``
 
 . Else if ``parserStatementIR`` has type ``emptyStatementIR``
  .. Let ``emptyStatementIR`` be ``parserStatementIR``
- .. Group emptyStatementIR: ``IC~0~``, ``STO~0~``, and ``emptyStatementIR``
+ .. Group emptyStatementIR: ``IC~0'~``, ``STO~0~``, and ``emptyStatementIR``
 
   ... Let ``IC~1~``, ``STO~1~``, and ``statementIR`` be the result of <<Stmt_inst, the compile-time evaluation of ``emptyStatementIR``, under cursor ``LOCAL``, instantiation context ``IC~0'~``, and store ``STO~0~``>>
   ... Check that ``statementIR`` has type ``emptyStatementIR``
@@ -6158,7 +6157,7 @@ relation ParserStmt_inst: ``IC~0'~``, ``STO~0~``, and ``parserStatementIR``
 
 . Else if ``parserStatementIR`` has type ``assignmentStatementIR``
  .. Let ``assignmentStatementIR`` be ``parserStatementIR``
- .. Group assignmentStatementIR: ``IC~0~``, ``STO~0~``, and ``assignmentStatementIR``
+ .. Group assignmentStatementIR: ``IC~0'~``, ``STO~0~``, and ``assignmentStatementIR``
 
   ... Let ``IC~1~``, ``STO~1~``, and ``statementIR`` be the result of <<Stmt_inst, the compile-time evaluation of ``assignmentStatementIR``, under cursor ``LOCAL``, instantiation context ``IC~0'~``, and store ``STO~0~``>>
   ... Check that ``statementIR`` has type ``assignmentStatementIR``
@@ -6167,7 +6166,7 @@ relation ParserStmt_inst: ``IC~0'~``, ``STO~0~``, and ``parserStatementIR``
 
 . Else if ``parserStatementIR`` has type ``callStatementIR``
  .. Let ``callStatementIR`` be ``parserStatementIR``
- .. Group callStatementIR: ``IC~0~``, ``STO~0~``, and ``callStatementIR``
+ .. Group callStatementIR: ``IC~0'~``, ``STO~0~``, and ``callStatementIR``
 
   ... Let ``IC~1~``, ``STO~1~``, and ``statementIR`` be the result of <<Stmt_inst, the compile-time evaluation of ``callStatementIR``, under cursor ``LOCAL``, instantiation context ``IC~0'~``, and store ``STO~0~``>>
   ... Check that ``statementIR`` has type ``callStatementIR``
@@ -6176,7 +6175,7 @@ relation ParserStmt_inst: ``IC~0'~``, ``STO~0~``, and ``parserStatementIR``
 
 . Else if ``parserStatementIR`` has type ``directApplicationStatementIR``
  .. Let ``prefixedNameIR . APPLY ( argumentListIR ) ;`` be ``parserStatementIR``
- .. Group directApplicationStatementIR: ``IC``, ``STO~0~``, and ``prefixedNameIR . APPLY ( argumentListIR ) ;``
+ .. Group directApplicationStatementIR: ``IC~0'~``, ``STO~0~``, and ``prefixedNameIR . APPLY ( argumentListIR ) ;``
 
   ... Let ``(cid, constructor, id*)?`` be ``$find_constructor_inst(IC~0'~, prefixedNameIR, [ ])``
   ... Check that ``(cid, constructor, id*)?`` matches pattern ``(_)``
@@ -6196,7 +6195,7 @@ relation ParserStmt_inst: ``IC~0'~``, ``STO~0~``, and ``parserStatementIR``
 
 . Else if ``parserStatementIR`` has type ``parserBlockStatementIR``
  .. Let ``annotationList { parserStatementListIR }`` be ``parserStatementIR``
- .. Group parserBlockStatementIR: ``IC~0~``, ``STO~0~``, and ``annotationList { parserStatementListIR }``
+ .. Group parserBlockStatementIR: ``IC~0'~``, ``STO~0~``, and ``annotationList { parserStatementListIR }``
 
   ... (ParserStmts_inst: ``IC~0'~ STO~0~ |- parserStatementListIR ==> IC~1~ STO~1~ parserStatementListIR~inst~``)
   ... Let ``parserBlockStatementIR~inst~`` be ``annotationList { parserStatementListIR~inst~ }``
@@ -6204,7 +6203,7 @@ relation ParserStmt_inst: ``IC~0'~``, ``STO~0~``, and ``parserStatementIR``
 
 . Else if ``parserStatementIR`` has type ``conditionalStatementIR``
  .. Let ``conditionalStatementIR`` be ``parserStatementIR``
- .. Group conditionalStatementIR: ``IC~0~``, ``STO~0~``, and ``conditionalStatementIR``
+ .. Group conditionalStatementIR: ``IC~0'~``, ``STO~0~``, and ``conditionalStatementIR``
 
   ... Let ``IC~1~``, ``STO~1~``, and ``statementIR`` be the result of <<Stmt_inst, the compile-time evaluation of ``conditionalStatementIR``, under cursor ``LOCAL``, instantiation context ``IC~0'~``, and store ``STO~0~``>>
   ... Check that ``statementIR`` has type ``conditionalStatementIR``
@@ -6217,7 +6216,7 @@ relation ParserStmts_inst: ``IC'``, ``STO'``, and ``parserStatementIR``*
 
 
 . Else if let ``parserStatementIR~h~ :: parserStatementIR~t~*`` be ``parserStatementIR``*
- .. Group cons: ``IC~0~``, ``STO~0~``, and ``parserStatementIR~h~ :: parserStatementIR~t~*``
+ .. Group cons: ``IC'``, ``STO'``, and ``parserStatementIR~h~ :: parserStatementIR~t~*``
 
   ... (ParserStmt_inst: ``IC' STO' |- parserStatementIR~h~ ==> IC~1~ STO~1~ parserStatementIR~h_inst~``)
   ... (ParserStmts_inst: ``IC~1~ STO~1~ |- parserStatementIR~t~* ==> IC~2~ STO~2~ parserStatementIR~t_inst~*``)
@@ -6238,7 +6237,7 @@ relation ParserStates_inst: ``IC'``, ``STO'``, and ``parserStateIR``*
 
 
 . Else if let ``parserStateIR~h~ :: parserStateIR~t~*`` be ``parserStateIR``*
- .. Group cons: ``IC~0~``, ``STO~0~``, and ``parserStateIR~h~ :: parserStateIR~t~*``
+ .. Group cons: ``IC'``, ``STO'``, and ``parserStateIR~h~ :: parserStateIR~t~*``
 
   ... (ParserState_inst: ``IC' STO' |- parserStateIR~h~ ==> IC~1~ STO~1~``)
   ... (ParserStates_inst: ``IC~1~ STO~1~ |- parserStateIR~t~* ==> IC~2~ STO~2~``)
@@ -6248,7 +6247,7 @@ relation ParserLocalDecl_inst: ``IC~0'~``, ``STO~0'~``, and ``parserLocalDeclara
 
 . If ``parserLocalDeclarationIR`` has type ``constantDeclarationIR``
  .. Let ``constantDeclarationIR`` be ``parserLocalDeclarationIR``
- .. Group constantDeclarationIR: ``IC~0~``, ``STO~0~``, and ``constantDeclarationIR``
+ .. Group constantDeclarationIR: ``IC~0'~``, ``STO~0'~``, and ``constantDeclarationIR``
 
   ... (Decl_inst: ``BLOCK IC~0'~ STO~0'~ |- constantDeclarationIR ==> IC~1~ STO~1~ declarationIR'?``)
   ... Check that ``declarationIR'?`` matches pattern ``(_)``
@@ -6259,7 +6258,7 @@ relation ParserLocalDecl_inst: ``IC~0'~``, ``STO~0'~``, and ``parserLocalDeclara
 
 . Else if ``parserLocalDeclarationIR`` has type ``instantiationIR``
  .. Let ``instantiationIR`` be ``parserLocalDeclarationIR``
- .. Group instantiationIR: ``IC~0~``, ``STO~0~``, and ``instantiationIR``
+ .. Group instantiationIR: ``IC~0'~``, ``STO~0'~``, and ``instantiationIR``
 
   ... (Decl_inst: ``BLOCK IC~0'~ STO~0'~ |- instantiationIR ==> IC~1~ STO~1~ declarationIR'?``)
   ... Check that ``declarationIR'?`` matches pattern ``(_)``
@@ -6270,13 +6269,13 @@ relation ParserLocalDecl_inst: ``IC~0'~``, ``STO~0'~``, and ``parserLocalDeclara
 
 . Else if ``parserLocalDeclarationIR`` has type ``variableDeclarationIR``
  .. Let ``variableDeclarationIR`` be ``parserLocalDeclarationIR``
- .. Group variableDeclarationIR: ``IC``, ``STO``, and ``variableDeclarationIR``
+ .. Group variableDeclarationIR: ``IC~0'~``, ``STO~0'~``, and ``variableDeclarationIR``
 
   ... Result in ``IC~0'~``, ``STO~0'~``, and ``variableDeclarationIR``
 
 . Else if ``parserLocalDeclarationIR`` has type ``valueSetDeclarationIR``
  .. Let ``valueSetDeclarationIR`` be ``parserLocalDeclarationIR``
- .. Group valueSetDeclarationIR: ``IC``, ``STO``, and ``valueSetDeclarationIR``
+ .. Group valueSetDeclarationIR: ``IC~0'~``, ``STO~0'~``, and ``valueSetDeclarationIR``
 
   ... Result in ``IC~0'~``, ``STO~0'~``, and ``valueSetDeclarationIR``
 
@@ -6286,7 +6285,7 @@ relation ParserLocalDecls_inst: ``IC'``, ``STO'``, and ``parserLocalDeclarationI
 
 
 . Else if let ``parserLocalDeclarationIR~h~ :: parserLocalDeclarationIR~t~*`` be ``parserLocalDeclarationIR``*
- .. Group cons: ``IC~0~``, ``STO~0~``, and ``parserLocalDeclarationIR~h~ :: parserLocalDeclarationIR~t~*``
+ .. Group cons: ``IC'``, ``STO'``, and ``parserLocalDeclarationIR~h~ :: parserLocalDeclarationIR~t~*``
 
   ... (ParserLocalDecl_inst: ``IC' STO' |- parserLocalDeclarationIR~h~ ==> IC~1~ STO~1~ parserLocalDeclarationIR~h_inst~``)
   ... (ParserLocalDecls_inst: ``IC~1~ STO~1~ |- parserLocalDeclarationIR~t~* ==> IC~2~ STO~2~ parserLocalDeclarationIR~t_inst~*``)
@@ -6295,34 +6294,34 @@ relation ParserLocalDecls_inst: ``IC'``, ``STO'``, and ``parserLocalDeclarationI
 relation TableProperty_inst: ``IC``, ``STO'``, and ``tablePropertyIR``
 
 . If let ``KEY = { tableKeyListIR }`` be ``tablePropertyIR``
- .. Group key: ``IC``, ``STO``, and ``KEY = { tableKeyListIR }``
+ .. Group key: ``IC``, ``STO'``, and ``KEY = { tableKeyListIR }``
 
   ... Result in ``STO'`` and ``KEY = { tableKeyListIR }``
 
 . Else if let ``ACTIONS = { tableActionListIR }`` be ``tablePropertyIR``
- .. Group actions: ``IC``, ``STO``, and ``ACTIONS = { tableActionListIR }``
+ .. Group actions: ``IC``, ``STO'``, and ``ACTIONS = { tableActionListIR }``
 
   ... Result in ``STO'`` and ``ACTIONS = { tableActionListIR }``
 
 . Else if let ``annotationList constOptIR ENTRIES = { tableEntryListIR }`` be ``tablePropertyIR``
- .. Group entries: ``IC``, ``STO``, and ``annotationList constOptIR ENTRIES = { tableEntryListIR }``
+ .. Group entries: ``IC``, ``STO'``, and ``annotationList constOptIR ENTRIES = { tableEntryListIR }``
 
   ... Result in ``STO'`` and ``annotationList constOptIR ENTRIES = { tableEntryListIR }``
 
 . Else if let ``annotationList constOptIR DEFAULT_ACTION = tableActionReferenceIR ;`` be ``tablePropertyIR``
- .. Group custom-default-action: ``IC``, ``STO``, and ``annotationList constOptIR DEFAULT_ACTION = tableActionReferenceIR ;``
+ .. Group custom-default-action: ``IC``, ``STO'``, and ``annotationList constOptIR DEFAULT_ACTION = tableActionReferenceIR ;``
 
   ... Result in ``STO'`` and ``annotationList constOptIR DEFAULT_ACTION = tableActionReferenceIR ;``
 
 . Else if let ``annotationList constOptIR CUSTOM nameIR = typedExpressionIR ;`` be ``tablePropertyIR``
- .. Group custom: ``IC``, ``STO~0~``, and ``annotationList constOptIR CUSTOM nameIR = typedExpressionIR ;``
+ .. Group custom: ``IC``, ``STO'``, and ``annotationList constOptIR CUSTOM nameIR = typedExpressionIR ;``
 
   ... Let ``IC~inner~`` be ``$enter_path(IC, nameIR)``
   ... (Expr_inst: ``LOCAL IC~inner~ STO' |- typedExpressionIR ==> STO~1~ value``)
   ... Result in ``STO~1~`` and ``annotationList constOptIR CUSTOM_CONST nameIR = value ;``
 
 . Else if let ``annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR ;`` be ``tablePropertyIR``
- .. Group custom-const: ``IC``, ``STO``, and ``annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR ;``
+ .. Group custom-const: ``IC``, ``STO'``, and ``annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR ;``
 
   ... Result in ``STO'`` and ``annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR ;``
 
@@ -6332,7 +6331,7 @@ relation TableProperties_inst: ``IC``, ``STO'``, and ``tablePropertyIR``*
 
 
 . Else if let ``tablePropertyIR~h~ :: tablePropertyIR~t~*`` be ``tablePropertyIR``*
- .. Group cons: ``IC``, ``STO~0~``, and ``tablePropertyIR~h~ :: tablePropertyIR~t~*``
+ .. Group cons: ``IC``, ``STO'``, and ``tablePropertyIR~h~ :: tablePropertyIR~t~*``
 
   ... (TableProperty_inst: ``IC STO' |- tablePropertyIR~h~ ==> STO~1~ tablePropertyIR~h_inst~``)
   ... (TableProperties_inst: ``IC STO~1~ |- tablePropertyIR~t~* ==> STO~2~ tablePropertyIR~t_inst~*``)
@@ -6342,7 +6341,7 @@ relation ControlLocalDecl_inst: ``IC~0'~``, ``STO~0'~``, and ``controlLocalDecla
 
 . If ``controlLocalDeclarationIR`` has type ``constantDeclarationIR``
  .. Let ``constantDeclarationIR`` be ``controlLocalDeclarationIR``
- .. Group constantDeclarationIR: ``IC~0~``, ``STO~0~``, and ``constantDeclarationIR``
+ .. Group constantDeclarationIR: ``IC~0'~``, ``STO~0'~``, and ``constantDeclarationIR``
 
   ... (Decl_inst: ``BLOCK IC~0'~ STO~0'~ |- constantDeclarationIR ==> IC~1~ STO~1~ declarationIR'?``)
   ... Check that ``declarationIR'?`` matches pattern ``(_)``
@@ -6353,7 +6352,7 @@ relation ControlLocalDecl_inst: ``IC~0'~``, ``STO~0'~``, and ``controlLocalDecla
 
 . Else if ``controlLocalDeclarationIR`` has type ``instantiationIR``
  .. Let ``instantiationIR`` be ``controlLocalDeclarationIR``
- .. Group instantiationIR: ``IC~0~``, ``STO~0~``, and ``instantiationIR``
+ .. Group instantiationIR: ``IC~0'~``, ``STO~0'~``, and ``instantiationIR``
 
   ... (Decl_inst: ``BLOCK IC~0'~ STO~0'~ |- instantiationIR ==> IC~1~ STO~1~ declarationIR'?``)
   ... Check that ``declarationIR'?`` matches pattern ``(_)``
@@ -6364,13 +6363,13 @@ relation ControlLocalDecl_inst: ``IC~0'~``, ``STO~0'~``, and ``controlLocalDecla
 
 . Else if ``controlLocalDeclarationIR`` has type ``variableDeclarationIR``
  .. Let ``variableDeclarationIR`` be ``controlLocalDeclarationIR``
- .. Group variableDeclarationIR: ``IC``, ``STO``, and ``variableDeclarationIR``
+ .. Group variableDeclarationIR: ``IC~0'~``, ``STO~0'~``, and ``variableDeclarationIR``
 
   ... Result in ``IC~0'~``, ``STO~0'~``, and ``?(variableDeclarationIR)``
 
 . Else if ``controlLocalDeclarationIR`` has type ``actionDeclarationIR``
  .. Let ``actionDeclarationIR`` be ``controlLocalDeclarationIR``
- .. Group actionDeclarationIR: ``IC~0~``, ``STO~0~``, and ``actionDeclarationIR``
+ .. Group actionDeclarationIR: ``IC~0'~``, ``STO~0'~``, and ``actionDeclarationIR``
 
   ... (Decl_inst: ``BLOCK IC~0'~ STO~0'~ |- actionDeclarationIR ==> IC~1~ STO~1~ declarationIR?``)
   ... Check that ``declarationIR?`` matches pattern ``()``
@@ -6378,7 +6377,7 @@ relation ControlLocalDecl_inst: ``IC~0'~``, ``STO~0'~``, and ``controlLocalDecla
 
 . Else if ``controlLocalDeclarationIR`` has type ``tableDeclarationIR``
  .. Let ``annotationList TABLE typeIR nameIR { tablePropertyListIR }`` be ``controlLocalDeclarationIR``
- .. Group tableDeclarationIR: ``IC~0~``, ``STO~0~``, and ``annotationList TABLE typeIR nameIR { tablePropertyListIR }``
+ .. Group tableDeclarationIR: ``IC~0'~``, ``STO~0'~``, and ``annotationList TABLE typeIR nameIR { tablePropertyListIR }``
 
   ... Let ``IC~inner~`` be ``$enter_path(IC~0'~, nameIR)``
   ... (Constructor_inst: ``BLOCK IC~0'~ STO~0'~ |- TABLE nameIR { tablePropertyListIR } < [ ] > ( [ ] # [ ] ) ==> STO~1~ object~table~``)
@@ -6394,13 +6393,13 @@ relation ControlLocalDecls_inst: ``IC'``, ``STO'``, and ``controlLocalDeclaratio
 
 
 . Else if let ``controlLocalDeclarationIR~h~ :: controlLocalDeclarationIR~t~*`` be ``controlLocalDeclarationIR``*
- .. Group cons-none: ``IC~0~``, ``STO~0~``, and ``controlLocalDeclarationIR~h~ :: controlLocalDeclarationIR~t~*``
+ .. Group cons-none: ``IC'``, ``STO'``, and ``controlLocalDeclarationIR~h~ :: controlLocalDeclarationIR~t~*``
 
   ... (ControlLocalDecl_inst: ``IC' STO' |- controlLocalDeclarationIR~h~ ==> IC~1~ STO~1~ controlLocalDeclarationIR'?``)
   ... Check that ``controlLocalDeclarationIR'?`` matches pattern ``()``
   ... (ControlLocalDecls_inst: ``IC~1~ STO~1~ |- controlLocalDeclarationIR~t~* ==> IC~2~ STO~2~ controlLocalDeclarationIR~t_inst~*``)
   ... Result in ``IC~2~``, ``STO~2~``, and ``controlLocalDeclarationIR~t_inst~*``
- .. Group cons-some: ``IC~0~``, ``STO~0~``, and ``controlLocalDeclarationIR~h~ :: controlLocalDeclarationIR~t~*``
+ .. Group cons-some: ``IC'``, ``STO'``, and ``controlLocalDeclarationIR~h~ :: controlLocalDeclarationIR~t~*``
 
   ... (ControlLocalDecl_inst: ``IC' STO' |- controlLocalDeclarationIR~h~ ==> IC~1~ STO~1~ controlLocalDeclarationIR'?``)
   ... Check that ``controlLocalDeclarationIR'?`` matches pattern ``(_)``
@@ -6412,7 +6411,7 @@ relation Decl_inst: ``cursor'``, ``IC~0~``, ``STO'``, and ``declarationIR``
 
 . If ``declarationIR`` has type ``constantDeclarationIR``
  .. Let ``annotationList CONST typeIR nameIR = value ;`` be ``declarationIR``
- .. Group constantDeclarationIR: ``cursor``, ``IC~0~``, ``STO``, and ``annotationList CONST typeIR nameIR = value ;``
+ .. Group constantDeclarationIR: ``cursor'``, ``IC~0~``, ``STO'``, and ``annotationList CONST typeIR nameIR = value ;``
 
   ... If true
    .... Let ``IC~1~`` be ``$add_value_inst(GLOBAL, IC~0~, nameIR, value)``
@@ -6425,7 +6424,7 @@ relation Decl_inst: ``cursor'``, ``IC~0~``, ``STO'``, and ``declarationIR``
 
 . Else if ``declarationIR`` has type ``instantiationIR``
  .. Let ``annotationList typeIR prefixedNameIR < typeArgumentListIR > ( argumentListIR ) nameIR objectInitializerOptIR ;`` be ``declarationIR``
- .. Group instantiationIR: ``cursor``, ``IC~0~``, ``STO~0~``, and ``annotationList typeIR prefixedNameIR < typeArgumentListIR > ( argumentListIR ) nameIR objectInitializerOptIR ;``
+ .. Group instantiationIR: ``cursor'``, ``IC~0~``, ``STO'``, and ``annotationList typeIR prefixedNameIR < typeArgumentListIR > ( argumentListIR ) nameIR objectInitializerOptIR ;``
 
   ... If true
    .... Let ``(cid, constructor, id*)?`` be ``$find_constructor_inst(IC~0~, prefixedNameIR, argumentListIR)``
@@ -6479,7 +6478,7 @@ relation Decl_inst: ``cursor'``, ``IC~0~``, ``STO'``, and ``declarationIR``
 
 . Else if ``declarationIR`` has type ``functionDeclarationIR``
  .. Let ``annotationList typeIR nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterListIR ) blockStatementIR`` be ``declarationIR``
- .. Group functionDeclarationIR: ``p``, ``IC~0~``, ``STO``, and ``annotationList typeIR nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterListIR ) blockStatementIR``
+ .. Group functionDeclarationIR: ``cursor'``, ``IC~0~``, ``STO'``, and ``annotationList typeIR nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterListIR ) blockStatementIR``
 
   ... Let ``rid`` be ``$rid_IR(nameIR, parameterListIR)``
   ... Let ``function`` be ``FUNCTION < typeParameterListIR ++ typeParameterListIR~inferred~ > ( parameterListIR ) blockStatementIR``
@@ -6488,7 +6487,7 @@ relation Decl_inst: ``cursor'``, ``IC~0~``, ``STO'``, and ``declarationIR``
 
 . Else if ``declarationIR`` has type ``actionDeclarationIR``
  .. Let ``annotationList ACTION nameIR ( parameterListIR ) blockStatementIR`` be ``declarationIR``
- .. Group actionDeclarationIR: ``p``, ``IC~0~``, ``STO``, and ``annotationList ACTION nameIR ( parameterListIR ) blockStatementIR``
+ .. Group actionDeclarationIR: ``cursor'``, ``IC~0~``, ``STO'``, and ``annotationList ACTION nameIR ( parameterListIR ) blockStatementIR``
 
   ... Let ``rid`` be ``$rid_IR(nameIR, parameterListIR)``
   ... Let ``action`` be ``ACTION ( parameterListIR ) blockStatementIR``
@@ -6497,7 +6496,7 @@ relation Decl_inst: ``cursor'``, ``IC~0~``, ``STO'``, and ``declarationIR``
 . Check that ``cursor'`` matches pattern ``GLOBAL``
 . If ``declarationIR`` has type ``errorDeclarationIR``
  .. Let ``ERROR { nameIR* }`` be ``declarationIR``
- .. Group errorDeclarationIR: ``GLOBAL``, ``IC~0~``, ``STO``, and ``ERROR { nameIR* }``
+ .. Group errorDeclarationIR: ``GLOBAL``, ``IC~0~``, ``STO'``, and ``ERROR { nameIR* }``
 
   ... Let ``nameIR_error*`` be the list of ``nameIR_error``, obtained by repeating:
    .... Let ``nameIR~error~`` be ``$concat_text(["error." and nameIR])``
@@ -6510,7 +6509,7 @@ relation Decl_inst: ``cursor'``, ``IC~0~``, ``STO'``, and ``declarationIR``
 
 . Else if ``declarationIR`` has type ``matchKindDeclarationIR``
  .. Let ``MATCH_KIND { nameIR* }`` be ``declarationIR``
- .. Group matchKindDeclarationIR: ``GLOBAL``, ``IC~0~``, ``STO``, and ``MATCH_KIND { nameIR* }``
+ .. Group matchKindDeclarationIR: ``GLOBAL``, ``IC~0~``, ``STO'``, and ``MATCH_KIND { nameIR* }``
 
   ... Let ``value_match_kind*`` be the list of ``value_match_kind``, obtained by repeating:
    .... Let ``value~match_kind~`` be ``MATCH_KIND . nameIR``
@@ -6520,7 +6519,7 @@ relation Decl_inst: ``cursor'``, ``IC~0~``, ``STO'``, and ``declarationIR``
 
 . Else if ``declarationIR`` has type ``externFunctionDeclarationIR``
  .. Let ``annotationList EXTERN typeIR nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterListIR ) ;`` be ``declarationIR``
- .. Group externFunctionDeclarationIR: ``GLOBAL``, ``IC~0~``, ``STO``, and ``annotationList EXTERN typeIR nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterListIR ) ;``
+ .. Group externFunctionDeclarationIR: ``GLOBAL``, ``IC~0~``, ``STO'``, and ``annotationList EXTERN typeIR nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterListIR ) ;``
 
   ... Let ``rid`` be ``$rid_IR(nameIR, parameterListIR)``
   ... Let ``function`` be ``EXTERN_FUNCTION < typeParameterListIR ++ typeParameterListIR~inferred~ > ( parameterListIR )``
@@ -6529,7 +6528,7 @@ relation Decl_inst: ``cursor'``, ``IC~0~``, ``STO'``, and ``declarationIR``
 
 . Else if ``declarationIR`` has type ``externObjectDeclarationIR``
  .. Let ``annotationList EXTERN nameIR < typeParameterListIR , typeParameterListIR~inferred~ > { methodPrototypeIR* }`` be ``declarationIR``
- .. Group externObjectDeclarationIR: ``GLOBAL``, ``IC~0~``, ``STO``, and ``annotationList EXTERN nameIR < typeParameterListIR , typeParameterListIR~inferred~ > { methodPrototypeIR* }``
+ .. Group externObjectDeclarationIR: ``GLOBAL``, ``IC~0~``, ``STO'``, and ``annotationList EXTERN nameIR < typeParameterListIR , typeParameterListIR~inferred~ > { methodPrototypeIR* }``
 
   ... Let ``(methodPrototypeIR'* and methodPrototypeIR~method~*)`` be ``$split_constructors_IR(methodPrototypeIR*)``
   ... Check that ``methodPrototypeIR'*`` matches pattern ``[]``
@@ -6551,7 +6550,7 @@ relation Decl_inst: ``cursor'``, ``IC~0~``, ``STO'``, and ``declarationIR``
 . Else if ``declarationIR`` has type ``parserDeclarationIR``
  .. Let ``annotationList PARSER nameIR < typeParameterIR* > ( parameterListIR ) ( constructorParameterListIR ) { parserLocalDeclarationListIR parserStateListIR }`` be ``declarationIR``
  .. Check that ``typeParameterIR*`` matches pattern ``[]``
- .. Group parserDeclarationIR: ``GLOBAL``, ``IC~0~``, ``STO``, and ``annotationList PARSER nameIR < [ ] > ( parameterListIR ) ( constructorParameterListIR ) { parserLocalDeclarationListIR parserStateListIR }``
+ .. Group parserDeclarationIR: ``GLOBAL``, ``IC~0~``, ``STO'``, and ``annotationList PARSER nameIR < [ ] > ( parameterListIR ) ( constructorParameterListIR ) { parserLocalDeclarationListIR parserStateListIR }``
 
   ... Let ``cid`` be ``$cid_IR(nameIR, constructorParameterListIR)``
   ... Let ``constructor`` be ``PARSER ( parameterListIR ) ( constructorParameterListIR ) { parserLocalDeclarationListIR parserStateListIR }``
@@ -6561,7 +6560,7 @@ relation Decl_inst: ``cursor'``, ``IC~0~``, ``STO'``, and ``declarationIR``
 . Else if ``declarationIR`` has type ``controlDeclarationIR``
  .. Let ``annotationList CONTROL nameIR < typeParameterIR* > ( parameterListIR ) ( constructorParameterListIR ) { controlLocalDeclarationListIR APPLY controlBodyIR }`` be ``declarationIR``
  .. Check that ``typeParameterIR*`` matches pattern ``[]``
- .. Group controlDeclarationIR: ``GLOBAL``, ``IC~0~``, ``STO``, and ``annotationList CONTROL nameIR < [ ] > ( parameterListIR ) ( constructorParameterListIR ) { controlLocalDeclarationListIR APPLY controlBodyIR }``
+ .. Group controlDeclarationIR: ``GLOBAL``, ``IC~0~``, ``STO'``, and ``annotationList CONTROL nameIR < [ ] > ( parameterListIR ) ( constructorParameterListIR ) { controlLocalDeclarationListIR APPLY controlBodyIR }``
 
   ... Let ``cid`` be ``$cid_IR(nameIR, constructorParameterListIR)``
   ... Let ``constructor`` be ``CONTROL ( parameterListIR ) ( constructorParameterListIR ) { controlLocalDeclarationListIR APPLY controlBodyIR }``
@@ -6571,7 +6570,7 @@ relation Decl_inst: ``cursor'``, ``IC~0~``, ``STO'``, and ``declarationIR``
 . Else if ``declarationIR`` has type ``enumTypeDeclarationIR``
  .. Let ``enumTypeDeclarationIR`` be ``declarationIR``
  .. If let ``annotationList ENUM nameIR { nameIR~field~* }`` be ``enumTypeDeclarationIR``
-  ... Group enumTypeDeclarationIR-non-serializable: ``GLOBAL``, ``IC~0~``, ``STO``, and ``annotationList ENUM nameIR { nameIR~field~* }``
+  ... Group enumTypeDeclarationIR-non-serializable: ``GLOBAL``, ``IC~0~``, ``STO'``, and ``annotationList ENUM nameIR { nameIR~field~* }``
 
    .... Let ``nameIR_enum_field*`` be the list of ``nameIR_enum_field``, obtained by repeating:
     ..... Let ``nameIR~enum_field~`` be ``nameIR ++ "." ++ nameIR~field~``
@@ -6585,7 +6584,7 @@ relation Decl_inst: ``cursor'``, ``IC~0~``, ``STO'``, and ``declarationIR``
    .... Result in ``IC~2~``, ``STO'``, and ``?()``
 
  .. Else if let ``annotationList ENUM typeIR nameIR { nameIR~field~ = typedExpressionIR~field~* }`` be ``enumTypeDeclarationIR``
-  ... Group enumTypeDeclarationIR-serializable: ``GLOBAL``, ``IC~0~``, ``STO~0~``, and ``annotationList ENUM typeIR nameIR { nameIR~field~ = typedExpressionIR~field~* }``
+  ... Group enumTypeDeclarationIR-serializable: ``GLOBAL``, ``IC~0~``, ``STO'``, and ``annotationList ENUM typeIR nameIR { nameIR~field~ = typedExpressionIR~field~* }``
 
    .... (Exprs_inst: ``GLOBAL IC~0~ STO' |- typedExpressionIR~field~* ==> STO~1~ value~field~*``)
    .... Let ``nameIR_serenum_field*`` be the list of ``nameIR_serenum_field``, obtained by repeating:
@@ -6601,7 +6600,7 @@ relation Decl_inst: ``cursor'``, ``IC~0~``, ``STO'``, and ``declarationIR``
 
 . Else if ``declarationIR`` has type ``structTypeDeclarationIR``
  .. Let ``annotationList STRUCT nameIR < typeParameterListIR , typeParameterListIR~inferred~ > { typeFieldIR* }`` be ``declarationIR``
- .. Group structTypeDeclarationIR: ``GLOBAL``, ``IC~0~``, ``STO``, and ``annotationList STRUCT nameIR < typeParameterListIR , typeParameterListIR~inferred~ > { typeFieldIR* }``
+ .. Group structTypeDeclarationIR: ``GLOBAL``, ``IC~0~``, ``STO'``, and ``annotationList STRUCT nameIR < typeParameterListIR , typeParameterListIR~inferred~ > { typeFieldIR* }``
 
   ... Let ``annotationList_field*`` be the list of ``annotationList_field``, ``nameIR_field*`` be the list of ``nameIR_field``, and ``typeIR_field*`` be the list of ``typeIR_field``, obtained by repeating:
    .... Let ``annotationList~field~ typeIR~field~ nameIR~field~ ;`` be ``typeFieldIR``
@@ -6612,7 +6611,7 @@ relation Decl_inst: ``cursor'``, ``IC~0~``, ``STO'``, and ``declarationIR``
 
 . Else if ``declarationIR`` has type ``headerTypeDeclarationIR``
  .. Let ``annotationList HEADER nameIR < typeParameterListIR , typeParameterListIR~inferred~ > { typeFieldIR* }`` be ``declarationIR``
- .. Group headerTypeDeclarationIR: ``GLOBAL``, ``IC~0~``, ``STO``, and ``annotationList HEADER nameIR < typeParameterListIR , typeParameterListIR~inferred~ > { typeFieldIR* }``
+ .. Group headerTypeDeclarationIR: ``GLOBAL``, ``IC~0~``, ``STO'``, and ``annotationList HEADER nameIR < typeParameterListIR , typeParameterListIR~inferred~ > { typeFieldIR* }``
 
   ... Let ``annotationList_field*`` be the list of ``annotationList_field``, ``nameIR_field*`` be the list of ``nameIR_field``, and ``typeIR_field*`` be the list of ``typeIR_field``, obtained by repeating:
    .... Let ``annotationList~field~ typeIR~field~ nameIR~field~ ;`` be ``typeFieldIR``
@@ -6623,7 +6622,7 @@ relation Decl_inst: ``cursor'``, ``IC~0~``, ``STO'``, and ``declarationIR``
 
 . Else if ``declarationIR`` has type ``headerUnionTypeDeclarationIR``
  .. Let ``annotationList HEADER_UNION nameIR < typeParameterListIR , typeParameterListIR~inferred~ > { typeFieldIR* }`` be ``declarationIR``
- .. Group headerUnionTypeDeclarationIR: ``GLOBAL``, ``IC~0~``, ``STO``, and ``annotationList HEADER_UNION nameIR < typeParameterListIR , typeParameterListIR~inferred~ > { typeFieldIR* }``
+ .. Group headerUnionTypeDeclarationIR: ``GLOBAL``, ``IC~0~``, ``STO'``, and ``annotationList HEADER_UNION nameIR < typeParameterListIR , typeParameterListIR~inferred~ > { typeFieldIR* }``
 
   ... Let ``annotationList_field*`` be the list of ``annotationList_field``, ``nameIR_field*`` be the list of ``nameIR_field``, and ``typeIR_field*`` be the list of ``typeIR_field``, obtained by repeating:
    .... Let ``annotationList~field~ typeIR~field~ nameIR~field~ ;`` be ``typeFieldIR``
@@ -6635,7 +6634,7 @@ relation Decl_inst: ``cursor'``, ``IC~0~``, ``STO'``, and ``declarationIR``
 . Else if ``declarationIR`` has type ``typedefDeclarationIR``
  .. Let ``typedefDeclarationIR`` be ``declarationIR``
  .. If let ``annotationList TYPEDEF typedefIR nameIR ;`` be ``typedefDeclarationIR``
-  ... Group typedefDeclarationIR-typedef: ``GLOBAL``, ``IC~0~``, ``STO``, and ``annotationList TYPEDEF typedefIR nameIR ;``
+  ... Group typedefDeclarationIR-typedef: ``GLOBAL``, ``IC~0~``, ``STO'``, and ``annotationList TYPEDEF typedefIR nameIR ;``
 
    .... If ``typedefIR`` has type ``typeIR``
     ..... Let ``typeIR`` be ``typedefIR``
@@ -6667,7 +6666,7 @@ relation Decl_inst: ``cursor'``, ``IC~0~``, ``STO'``, and ``declarationIR``
      ...... Result in ``IC~1~``, ``STO'``, and ``?()``
 
  .. Else if let ``annotationList TYPE typeIR nameIR ;`` be ``typedefDeclarationIR``
-  ... Group typedefDeclarationIR-newtype: ``GLOBAL``, ``IC~0~``, ``STO``, and ``annotationList TYPE typeIR nameIR ;``
+  ... Group typedefDeclarationIR-newtype: ``GLOBAL``, ``IC~0~``, ``STO'``, and ``annotationList TYPE typeIR nameIR ;``
 
    .... Let ``typeIR~newtype~`` be ``TYPE nameIR typeIR``
    .... Let ``IC~1~`` be ``$add_typedef_inst(GLOBAL, IC~0~, nameIR, typeIR~newtype~)``
@@ -6675,7 +6674,7 @@ relation Decl_inst: ``cursor'``, ``IC~0~``, ``STO'``, and ``declarationIR``
 
 . Else if ``declarationIR`` has type ``parserTypeDeclarationIR``
  .. Let ``annotationList PARSER nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR* ) ;`` be ``declarationIR``
- .. Group parserTypeDeclarationIR: ``GLOBAL``, ``IC~0~``, ``STO``, and ``annotationList PARSER nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR* ) ;``
+ .. Group parserTypeDeclarationIR: ``GLOBAL``, ``IC~0~``, ``STO'``, and ``annotationList PARSER nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR* ) ;``
 
   ... Let ``parameterTypeIR*`` be the list of ``parameterTypeIR``, obtained by repeating:
    .... Let ``parameterTypeIR`` be <<typeof_parameterIR, the type of  ``parameterIR``>>
@@ -6687,7 +6686,7 @@ relation Decl_inst: ``cursor'``, ``IC~0~``, ``STO'``, and ``declarationIR``
 
 . Else if ``declarationIR`` has type ``controlTypeDeclarationIR``
  .. Let ``annotationList CONTROL nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR* ) ;`` be ``declarationIR``
- .. Group controlTypeDeclarationIR: ``GLOBAL``, ``IC~0~``, ``STO``, and ``annotationList CONTROL nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR* ) ;``
+ .. Group controlTypeDeclarationIR: ``GLOBAL``, ``IC~0~``, ``STO'``, and ``annotationList CONTROL nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR* ) ;``
 
   ... Let ``parameterTypeIR*`` be the list of ``parameterTypeIR``, obtained by repeating:
    .... Let ``parameterTypeIR`` be <<typeof_parameterIR, the type of  ``parameterIR``>>
@@ -6699,7 +6698,7 @@ relation Decl_inst: ``cursor'``, ``IC~0~``, ``STO'``, and ``declarationIR``
 
 . Else if ``declarationIR`` has type ``packageTypeDeclarationIR``
  .. Let ``annotationList PACKAGE nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR* ) ;`` be ``declarationIR``
- .. Group packageTypeDeclarationIR: ``GLOBAL``, ``IC~0~``, ``STO``, and ``annotationList PACKAGE nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR* ) ;``
+ .. Group packageTypeDeclarationIR: ``GLOBAL``, ``IC~0~``, ``STO'``, and ``annotationList PACKAGE nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR* ) ;``
 
   ... Let ``_annotationList*`` be the list of ``_annotationList``, ``_constantInitializerOptIR*`` be the list of ``_constantInitializerOptIR``, ``_direction*`` be the list of ``_direction``, ``_nameIR*`` be the list of ``_nameIR``, and ``typeIR*`` be the list of ``typeIR``, obtained by repeating:
    .... Let ``_ _ typeIR _ _`` be ``parameterIR``
@@ -6718,13 +6717,13 @@ relation Decls_inst: ``p``, ``IC'``, ``STO'``, and ``declarationIR``*
 
 
 . Else if let ``declarationIR~h~ :: declarationIR~t~*`` be ``declarationIR``*
- .. Group cons-none: ``p``, ``IC~0~``, ``STO~0~``, and ``declarationIR~h~ :: declarationIR~t~*``
+ .. Group cons-none: ``p``, ``IC'``, ``STO'``, and ``declarationIR~h~ :: declarationIR~t~*``
 
   ... (Decl_inst: ``p IC' STO' |- declarationIR~h~ ==> IC~1~ STO~1~ declarationIR'?``)
   ... Check that ``declarationIR'?`` matches pattern ``()``
   ... (Decls_inst: ``p IC~1~ STO~1~ |- declarationIR~t~* ==> IC~2~ STO~2~ declarationIR~t_inst~*``)
   ... Result in ``IC~2~``, ``STO~2~``, and ``declarationIR~t_inst~*``
- .. Group cons-some: ``p``, ``IC~0~``, ``STO~0~``, and ``declarationIR~h~ :: declarationIR~t~*``
+ .. Group cons-some: ``p``, ``IC'``, ``STO'``, and ``declarationIR~h~ :: declarationIR~t~*``
 
   ... (Decl_inst: ``p IC' STO' |- declarationIR~h~ ==> IC~1~ STO~1~ declarationIR'?``)
   ... Check that ``declarationIR'?`` matches pattern ``(_)``
@@ -6760,7 +6759,7 @@ relation Bind_args: ``p~caller~``, ``IC~caller~``, ``p~callee~``, ``IC~callee'~`
 . Else if let ``id~h~ :: id~t~*`` be ``id``*
  .. Check that ``argumentIR*`` matches pattern ``_ :: _``
  .. Let ``argumentIR~h~ :: argumentIR~t~*`` be ``argumentIR``*
- .. Group cons: ``p~caller~``, ``IC~caller~``, ``p~callee~``, ``IC~callee_0~``, ``STO~0~``, ``id~h~ :: id~t~*``, and ``argumentIR~h~ :: argumentIR~t~*``
+ .. Group cons: ``p~caller~``, ``IC~caller~``, ``p~callee~``, ``IC~callee'~``, ``STO'``, ``id~h~ :: id~t~*``, and ``argumentIR~h~ :: argumentIR~t~*``
 
   ... (Bind_arg: ``p~caller~ IC~caller~ | p~callee~ IC~callee'~ STO' |- id~h~ argumentIR~h~ ==> IC~callee_1~ STO~1~``)
   ... (Bind_args: ``p~caller~ IC~caller~ | p~callee~ IC~callee_1~ STO~1~ |- id~t~* argumentIR~t~* ==> IC~callee_2~ STO~2~``)
@@ -6769,7 +6768,7 @@ relation Bind_args: ``p~caller~``, ``IC~caller~``, ``p~callee~``, ``IC~callee'~`
 relation Constructor_inst: ``p``, ``IC``, ``STO~0~``, ``constructor``, ``typeArgumentIR``*, ``argumentIR``*, and ``id~default'~``*
 
 . If let ``EXTERN nameIR < typeParameterIR* > ( constructorParameterIR* ) { methodPrototypeIR* }`` be ``constructor``
- .. Group extern: ``p``, ``IC``, ``STO~0~``, ``EXTERN nameIR < typeParameterIR* > ( constructorParameterIR* ) { methodPrototypeIR* }``, ``typeArgumentIR``*, ``argumentIR``*, and ``id~default~``*
+ .. Group extern: ``p``, ``IC``, ``STO~0~``, ``EXTERN nameIR < typeParameterIR* > ( constructorParameterIR* ) { methodPrototypeIR* }``, ``typeArgumentIR``*, ``argumentIR``*, and ``id~default'~``*
 
   ... Let ``p~callee~`` be ``BLOCK``
   ... Let ``IC~callee_0~`` be ``$inherit_instantiationContext(GLOBAL, IC)``
@@ -6789,7 +6788,7 @@ relation Constructor_inst: ``p``, ``IC``, ``STO~0~``, ``constructor``, ``typeArg
 
 . Else if let ``PARSER ( parameterIR* ) ( constructorParameterIR* ) { parserLocalDeclarationIR* parserStateIR* }`` be ``constructor``
  .. Check that ``typeArgumentIR*`` matches pattern ``[]``
- .. Group parser: ``p``, ``IC``, ``STO~0~``, ``PARSER ( parameterIR* ) ( constructorParameterIR* ) { parserLocalDeclarationIR* parserStateIR* }``, ``[ ]``, ``argumentIR``*, and ``id~default~``*
+ .. Group parser: ``p``, ``IC``, ``STO~0~``, ``PARSER ( parameterIR* ) ( constructorParameterIR* ) { parserLocalDeclarationIR* parserStateIR* }``, ``[ ]``, ``argumentIR``*, and ``id~default'~``*
 
   ... Let ``p~callee~`` be ``BLOCK``
   ... Let ``IC~callee_0~`` be ``$inherit_instantiationContext(GLOBAL, IC)``
@@ -6811,7 +6810,7 @@ relation Constructor_inst: ``p``, ``IC``, ``STO~0~``, ``constructor``, ``typeArg
 
 . Else if let ``CONTROL ( parameterIR* ) ( constructorParameterIR* ) { controlLocalDeclarationIR* APPLY controlBodyIR }`` be ``constructor``
  .. Check that ``typeArgumentIR*`` matches pattern ``[]``
- .. Group control: ``p``, ``IC``, ``STO~0~``, ``CONTROL ( parameterIR* ) ( constructorParameterIR* ) { controlLocalDeclarationIR* APPLY controlBodyIR }``, ``[ ]``, ``argumentIR``*, and ``id~default~``*
+ .. Group control: ``p``, ``IC``, ``STO~0~``, ``CONTROL ( parameterIR* ) ( constructorParameterIR* ) { controlLocalDeclarationIR* APPLY controlBodyIR }``, ``[ ]``, ``argumentIR``*, and ``id~default'~``*
 
   ... Let ``p~callee~`` be ``BLOCK``
   ... Let ``IC~callee_0~`` be ``$inherit_instantiationContext(GLOBAL, IC)``
@@ -6830,7 +6829,7 @@ relation Constructor_inst: ``p``, ``IC``, ``STO~0~``, ``constructor``, ``typeArg
   ... Result in ``STO~3~`` and ``object~control~``
 
 . Else if let ``PACKAGE < typeParameterIR* > ( constructorParameterIR* )`` be ``constructor``
- .. Group package: ``p``, ``IC``, ``STO~0~``, ``PACKAGE < typeParameterIR* > ( constructorParameterIR* )``, ``typeArgumentIR``*, ``argumentIR``*, and ``id~default~``*
+ .. Group package: ``p``, ``IC``, ``STO~0~``, ``PACKAGE < typeParameterIR* > ( constructorParameterIR* )``, ``typeArgumentIR``*, ``argumentIR``*, and ``id~default'~``*
 
   ... Let ``p~callee~`` be ``BLOCK``
   ... Let ``IC~callee_0~`` be ``$inherit_instantiationContext(GLOBAL, IC)``
@@ -6883,7 +6882,7 @@ relation SwitchCases_inst: ``p``, ``IC'``, ``STO'``, and ``switchCaseIR``*
 
 
 . Else if let ``switchCaseIR~h~ :: switchCaseIR~t~*`` be ``switchCaseIR``*
- .. Group cons: ``p``, ``IC~0~``, ``STO~0~``, and ``switchCaseIR~h~ :: switchCaseIR~t~*``
+ .. Group cons: ``p``, ``IC'``, ``STO'``, and ``switchCaseIR~h~ :: switchCaseIR~t~*``
 
   ... (SwitchCase_inst: ``p IC' STO' |- switchCaseIR~h~ ==> IC~1~ STO~1~ switchCaseIR~h'~``)
   ... (SwitchCases_inst: ``p IC~1~ STO~1~ |- switchCaseIR~t~* ==> IC~2~ STO~2~ switchCaseIR~t'~*``)

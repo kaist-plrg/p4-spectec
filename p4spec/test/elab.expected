@@ -4436,7 +4436,7 @@ relation Type_alpha: typeIR ~~ typeIR
 
    match
 
-    (explicit) polyTypeDefIR_a < typeIR_a*{} > as typeIR ~~ polyTypeDefIR_b < typeIR_b*{} > as typeIR
+    (explicit) polyTypeDefIR_a < typeIR_a*{typeIR_a <- typeIR_a*} > as typeIR ~~ polyTypeDefIR_b < typeIR_b*{typeIR_b <- typeIR_b*} > as typeIR
     (implicit) typeIR ~~ typeIR'
     -- if typeIR <: specializedTypeIR
     -- let polyTypeDefIR_a < typeIR_a*{typeIR_a <- typeIR_a*} > = typeIR as specializedTypeIR
@@ -4528,7 +4528,7 @@ relation Type_alpha: typeIR ~~ typeIR
 
    match
 
-    (explicit) tuple< typeIR_a*{} > as typeIR ~~ tuple< typeIR_b*{} > as typeIR
+    (explicit) tuple< typeIR_a*{typeIR_a <- typeIR_a*} > as typeIR ~~ tuple< typeIR_b*{typeIR_b <- typeIR_b*} > as typeIR
     (implicit) typeIR ~~ typeIR'
     -- if typeIR <: tupleTypeIR
     -- let tuple< typeIR_a*{typeIR_a <- typeIR_a*} > = typeIR as tupleTypeIR
@@ -4565,7 +4565,7 @@ relation Type_alpha: typeIR ~~ typeIR
 
    match
 
-    (explicit) struct tid { typeIR_f_a id_f ;*{} } as typeIR ~~ struct tid { typeIR_f_b id_f ;*{} } as typeIR
+    (explicit) struct tid { typeIR_f_a id_f ;*{id_f <- id_f*, typeIR_f_a <- typeIR_f_a*} } as typeIR ~~ struct tid { typeIR_f_b id_f ;*{id_f <- id_f*, typeIR_f_b <- typeIR_f_b*} } as typeIR
     (implicit) typeIR ~~ typeIR'
     -- if typeIR <: structTypeIR
     -- let struct tid { typeIR_f_a id_f ;*{id_f <- id_f*, typeIR_f_a <- typeIR_f_a*} } = typeIR as structTypeIR
@@ -4585,7 +4585,7 @@ relation Type_alpha: typeIR ~~ typeIR
 
    match
 
-    (explicit) header tid { typeIR_f_a id_f ;*{} } as typeIR ~~ header tid { typeIR_f_b id_f ;*{} } as typeIR
+    (explicit) header tid { typeIR_f_a id_f ;*{id_f <- id_f*, typeIR_f_a <- typeIR_f_a*} } as typeIR ~~ header tid { typeIR_f_b id_f ;*{id_f <- id_f*, typeIR_f_b <- typeIR_f_b*} } as typeIR
     (implicit) typeIR ~~ typeIR'
     -- if typeIR <: headerTypeIR
     -- let header tid { typeIR_f_a id_f ;*{id_f <- id_f*, typeIR_f_a <- typeIR_f_a*} } = typeIR as headerTypeIR
@@ -4605,7 +4605,7 @@ relation Type_alpha: typeIR ~~ typeIR
 
    match
 
-    (explicit) header_union tid { typeIR_f_a id_f ;*{} } as typeIR ~~ header_union tid { typeIR_f_b id_f ;*{} } as typeIR
+    (explicit) header_union tid { typeIR_f_a id_f ;*{id_f <- id_f*, typeIR_f_a <- typeIR_f_a*} } as typeIR ~~ header_union tid { typeIR_f_b id_f ;*{id_f <- id_f*, typeIR_f_b <- typeIR_f_b*} } as typeIR
     (implicit) typeIR ~~ typeIR'
     -- if typeIR <: headerUnionTypeIR
     -- let header_union tid { typeIR_f_a id_f ;*{id_f <- id_f*, typeIR_f_a <- typeIR_f_a*} } = typeIR as headerUnionTypeIR
@@ -4625,7 +4625,7 @@ relation Type_alpha: typeIR ~~ typeIR
 
    match
 
-    (explicit) enum tid { id_f*{} } as typeIR ~~ enum tid { id_f*{} } as typeIR
+    (explicit) enum tid { id_f*{id_f <- id_f*} } as typeIR ~~ enum tid { id_f*{id_f <- id_f*} } as typeIR
     (implicit) typeIR ~~ typeIR'
     -- if typeIR <: enumTypeIR
     -- let enumTypeIR = typeIR as enumTypeIR
@@ -4648,7 +4648,7 @@ relation Type_alpha: typeIR ~~ typeIR
 
    match
 
-    (explicit) enum tid # typeIR_a { id_f = value_f ;*{} } as typeIR ~~ enum tid # typeIR_b { id_f = value_f ;*{} } as typeIR
+    (explicit) enum tid # typeIR_a { id_f = value_f ;*{id_f <- id_f*, value_f <- value_f*} } as typeIR ~~ enum tid # typeIR_b { id_f = value_f ;*{id_f <- id_f*, value_f <- value_f*} } as typeIR
     (implicit) typeIR ~~ typeIR'
     -- if typeIR <: enumTypeIR
     -- let enumTypeIR = typeIR as enumTypeIR
@@ -4673,7 +4673,7 @@ relation Type_alpha: typeIR ~~ typeIR
 
    match
 
-    (explicit) extern tid { rid_a : routineTypeDefIR_a*{} } as typeIR ~~ extern tid { rid_b : routineTypeDefIR_b*{} } as typeIR
+    (explicit) extern tid { rid_a : routineTypeDefIR_a*{rid_a <- rid_a*, routineTypeDefIR_a <- routineTypeDefIR_a*} } as typeIR ~~ extern tid { rid_b : routineTypeDefIR_b*{rid_b <- rid_b*, routineTypeDefIR_b <- routineTypeDefIR_b*} } as typeIR
     (implicit) typeIR ~~ typeIR'
     -- if typeIR <: externObjectTypeIR
     -- let extern tid { rid_a : routineTypeDefIR_a*{rid_a <- rid_a*, routineTypeDefIR_a <- routineTypeDefIR_a*} } = typeIR as externObjectTypeIR
@@ -4699,7 +4699,7 @@ relation Type_alpha: typeIR ~~ typeIR
 
    match
 
-    (explicit) parser( parameterTypeIR_a*{} ) as typeIR ~~ parser( parameterTypeIR_b*{} ) as typeIR
+    (explicit) parser( parameterTypeIR_a*{parameterTypeIR_a <- parameterTypeIR_a*} ) as typeIR ~~ parser( parameterTypeIR_b*{parameterTypeIR_b <- parameterTypeIR_b*} ) as typeIR
     (implicit) typeIR ~~ typeIR'
     -- if typeIR <: parserObjectTypeIR
     -- let parser( parameterTypeIR_a*{parameterTypeIR_a <- parameterTypeIR_a*} ) = typeIR as parserObjectTypeIR
@@ -4717,7 +4717,7 @@ relation Type_alpha: typeIR ~~ typeIR
 
    match
 
-    (explicit) control( parameterTypeIR_a*{} ) as typeIR ~~ control( parameterTypeIR_b*{} ) as typeIR
+    (explicit) control( parameterTypeIR_a*{parameterTypeIR_a <- parameterTypeIR_a*} ) as typeIR ~~ control( parameterTypeIR_b*{parameterTypeIR_b <- parameterTypeIR_b*} ) as typeIR
     (implicit) typeIR ~~ typeIR'
     -- if typeIR <: controlObjectTypeIR
     -- let control( parameterTypeIR_a*{parameterTypeIR_a <- parameterTypeIR_a*} ) = typeIR as controlObjectTypeIR
@@ -4735,7 +4735,7 @@ relation Type_alpha: typeIR ~~ typeIR
 
    match
 
-    (explicit) package< typeIR_a*{} > as typeIR ~~ package< typeIR_b*{} > as typeIR
+    (explicit) package< typeIR_a*{typeIR_a <- typeIR_a*} > as typeIR ~~ package< typeIR_b*{typeIR_b <- typeIR_b*} > as typeIR
     (implicit) typeIR ~~ typeIR'
     -- if typeIR <: packageObjectTypeIR
     -- let package< typeIR_a*{typeIR_a <- typeIR_a*} > = typeIR as packageObjectTypeIR
@@ -4791,7 +4791,7 @@ relation Type_alpha: typeIR ~~ typeIR
 
    match
 
-    (explicit) seq< typeIR_a*{} > as typeIR ~~ seq< typeIR_b*{} > as typeIR
+    (explicit) seq< typeIR_a*{typeIR_a <- typeIR_a*} > as typeIR ~~ seq< typeIR_b*{typeIR_b <- typeIR_b*} > as typeIR
     (implicit) typeIR ~~ typeIR'
     -- if typeIR <: sequenceTypeIR
     -- let sequenceTypeIR = typeIR as sequenceTypeIR
@@ -4813,7 +4813,7 @@ relation Type_alpha: typeIR ~~ typeIR
 
    match
 
-    (explicit) seq< typeIR_a*{} ,...> as typeIR ~~ seq< typeIR_b*{} ,...> as typeIR
+    (explicit) seq< typeIR_a*{typeIR_a <- typeIR_a*} ,...> as typeIR ~~ seq< typeIR_b*{typeIR_b <- typeIR_b*} ,...> as typeIR
     (implicit) typeIR ~~ typeIR'
     -- if typeIR <: sequenceTypeIR
     -- let sequenceTypeIR = typeIR as sequenceTypeIR
@@ -4835,7 +4835,7 @@ relation Type_alpha: typeIR ~~ typeIR
 
    match
 
-    (explicit) record{ typeIR_a id ;*{} } as typeIR ~~ record{ typeIR_b id ;*{} } as typeIR
+    (explicit) record{ typeIR_a id ;*{id <- id*, typeIR_a <- typeIR_a*} } as typeIR ~~ record{ typeIR_b id ;*{id <- id*, typeIR_b <- typeIR_b*} } as typeIR
     (implicit) typeIR ~~ typeIR'
     -- if typeIR <: recordTypeIR
     -- let recordTypeIR = typeIR as recordTypeIR
@@ -4858,7 +4858,7 @@ relation Type_alpha: typeIR ~~ typeIR
 
    match
 
-    (explicit) record{ typeIR_a id ;*{} ,...} as typeIR ~~ record{ typeIR_b id ;*{} ,...} as typeIR
+    (explicit) record{ typeIR_a id ;*{id <- id*, typeIR_a <- typeIR_a*} ,...} as typeIR ~~ record{ typeIR_b id ;*{id <- id*, typeIR_b <- typeIR_b*} ,...} as typeIR
     (implicit) typeIR ~~ typeIR'
     -- if typeIR <: recordTypeIR
     -- let recordTypeIR = typeIR as recordTypeIR
@@ -4922,7 +4922,7 @@ relation Type_alpha: typeIR ~~ typeIR
 
    match
 
-    (explicit) table_enum tid { id_f*{} } as typeIR ~~ table_enum tid { id_f*{} } as typeIR
+    (explicit) table_enum tid { id_f*{id_f <- id_f*} } as typeIR ~~ table_enum tid { id_f*{id_f <- id_f*} } as typeIR
     (implicit) typeIR ~~ typeIR'
     -- if typeIR <: tableMetadataTypeIR
     -- let tableMetadataTypeIR = typeIR as tableMetadataTypeIR
@@ -4945,7 +4945,7 @@ relation Type_alpha: typeIR ~~ typeIR
 
    match
 
-    (explicit) table_struct tid { typeIR_f_a id_f ;*{} } as typeIR ~~ table_struct tid { typeIR_f_b id_f ;*{} } as typeIR
+    (explicit) table_struct tid { typeIR_f_a id_f ;*{id_f <- id_f*, typeIR_f_a <- typeIR_f_a*} } as typeIR ~~ table_struct tid { typeIR_f_b id_f ;*{id_f <- id_f*, typeIR_f_b <- typeIR_f_b*} } as typeIR
     (implicit) typeIR ~~ typeIR'
     -- if typeIR <: tableMetadataTypeIR
     -- let tableMetadataTypeIR = typeIR as tableMetadataTypeIR
@@ -4972,7 +4972,7 @@ relation ParameterType_alpha: parameterTypeIR ~~ parameterTypeIR
 
    match
 
-    (explicit) _direction typeIR_a _id _value?{} ~~ _direction' typeIR_b _id' _value'?{}
+    (explicit) _direction typeIR_a _id _value?{_value <- _value?} ~~ _direction' typeIR_b _id' _value'?{_value' <- _value'?}
     (implicit) _direction typeIR_a _id _value?{_value <- _value?} ~~ _direction' typeIR_b _id' _value'?{_value' <- _value'?}
 
    paths
@@ -4989,7 +4989,7 @@ relation RoutineType_alpha: routineTypeIR ~~ routineTypeIR
 
    match
 
-    (explicit) action( parameterTypeIR_a*{} ) as routineTypeIR ~~ action( parameterTypeIR_b*{} ) as routineTypeIR
+    (explicit) action( parameterTypeIR_a*{parameterTypeIR_a <- parameterTypeIR_a*} ) as routineTypeIR ~~ action( parameterTypeIR_b*{parameterTypeIR_b <- parameterTypeIR_b*} ) as routineTypeIR
     (implicit) routineTypeIR ~~ routineTypeIR'
     -- if routineTypeIR <: actionTypeIR
     -- let action( parameterTypeIR_a*{parameterTypeIR_a <- parameterTypeIR_a*} ) = routineTypeIR as actionTypeIR
@@ -5007,7 +5007,7 @@ relation RoutineType_alpha: routineTypeIR ~~ routineTypeIR
 
    match
 
-    (explicit) builtin_function( parameterTypeIR_a*{} )-> typeIR_ret_a as routineTypeIR ~~ builtin_function( parameterTypeIR_b*{} )-> typeIR_ret_b as routineTypeIR
+    (explicit) builtin_function( parameterTypeIR_a*{parameterTypeIR_a <- parameterTypeIR_a*} )-> typeIR_ret_a as routineTypeIR ~~ builtin_function( parameterTypeIR_b*{parameterTypeIR_b <- parameterTypeIR_b*} )-> typeIR_ret_b as routineTypeIR
     (implicit) routineTypeIR ~~ routineTypeIR'
     -- if routineTypeIR <: builtinFunctionTypeIR
     -- let builtin_function( parameterTypeIR_a*{parameterTypeIR_a <- parameterTypeIR_a*} )-> typeIR_ret_a = routineTypeIR as builtinFunctionTypeIR
@@ -5026,7 +5026,7 @@ relation RoutineType_alpha: routineTypeIR ~~ routineTypeIR
 
    match
 
-    (explicit) function( parameterTypeIR_a*{} )-> typeIR_ret_a as routineTypeIR ~~ function( parameterTypeIR_b*{} )-> typeIR_ret_b as routineTypeIR
+    (explicit) function( parameterTypeIR_a*{parameterTypeIR_a <- parameterTypeIR_a*} )-> typeIR_ret_a as routineTypeIR ~~ function( parameterTypeIR_b*{parameterTypeIR_b <- parameterTypeIR_b*} )-> typeIR_ret_b as routineTypeIR
     (implicit) routineTypeIR ~~ routineTypeIR'
     -- if routineTypeIR <: definedFunctionTypeIR
     -- let function( parameterTypeIR_a*{parameterTypeIR_a <- parameterTypeIR_a*} )-> typeIR_ret_a = routineTypeIR as definedFunctionTypeIR
@@ -5045,7 +5045,7 @@ relation RoutineType_alpha: routineTypeIR ~~ routineTypeIR
 
    match
 
-    (explicit) extern_function( parameterTypeIR_a*{} )-> typeIR_ret_a as routineTypeIR ~~ extern_function( parameterTypeIR_b*{} )-> typeIR_ret_b as routineTypeIR
+    (explicit) extern_function( parameterTypeIR_a*{parameterTypeIR_a <- parameterTypeIR_a*} )-> typeIR_ret_a as routineTypeIR ~~ extern_function( parameterTypeIR_b*{parameterTypeIR_b <- parameterTypeIR_b*} )-> typeIR_ret_b as routineTypeIR
     (implicit) routineTypeIR ~~ routineTypeIR'
     -- if routineTypeIR <: externFunctionTypeIR
     -- let extern_function( parameterTypeIR_a*{parameterTypeIR_a <- parameterTypeIR_a*} )-> typeIR_ret_a = routineTypeIR as externFunctionTypeIR
@@ -5064,7 +5064,7 @@ relation RoutineType_alpha: routineTypeIR ~~ routineTypeIR
 
    match
 
-    (explicit) builtin_method( parameterTypeIR_a*{} )-> typeIR_ret_a as routineTypeIR ~~ builtin_method( parameterTypeIR_b*{} )-> typeIR_ret_b as routineTypeIR
+    (explicit) builtin_method( parameterTypeIR_a*{parameterTypeIR_a <- parameterTypeIR_a*} )-> typeIR_ret_a as routineTypeIR ~~ builtin_method( parameterTypeIR_b*{parameterTypeIR_b <- parameterTypeIR_b*} )-> typeIR_ret_b as routineTypeIR
     (implicit) routineTypeIR ~~ routineTypeIR'
     -- if routineTypeIR <: builtinMethodTypeIR
     -- let builtin_method( parameterTypeIR_a*{parameterTypeIR_a <- parameterTypeIR_a*} )-> typeIR_ret_a = routineTypeIR as builtinMethodTypeIR
@@ -5083,7 +5083,7 @@ relation RoutineType_alpha: routineTypeIR ~~ routineTypeIR
 
    match
 
-    (explicit) extern_method( parameterTypeIR_a*{} )-> typeIR_ret_a as routineTypeIR ~~ extern_method( parameterTypeIR_b*{} )-> typeIR_ret_b as routineTypeIR
+    (explicit) extern_method( parameterTypeIR_a*{parameterTypeIR_a <- parameterTypeIR_a*} )-> typeIR_ret_a as routineTypeIR ~~ extern_method( parameterTypeIR_b*{parameterTypeIR_b <- parameterTypeIR_b*} )-> typeIR_ret_b as routineTypeIR
     (implicit) routineTypeIR ~~ routineTypeIR'
     -- if routineTypeIR <: externMethodTypeIR
     -- let externMethodTypeIR = routineTypeIR as externMethodTypeIR
@@ -5106,7 +5106,7 @@ relation RoutineType_alpha: routineTypeIR ~~ routineTypeIR
 
    match
 
-    (explicit) extern_methodabstract( parameterTypeIR_a*{} )-> typeIR_ret_a as routineTypeIR ~~ extern_methodabstract( parameterTypeIR_b*{} )-> typeIR_ret_b as routineTypeIR
+    (explicit) extern_methodabstract( parameterTypeIR_a*{parameterTypeIR_a <- parameterTypeIR_a*} )-> typeIR_ret_a as routineTypeIR ~~ extern_methodabstract( parameterTypeIR_b*{parameterTypeIR_b <- parameterTypeIR_b*} )-> typeIR_ret_b as routineTypeIR
     (implicit) routineTypeIR ~~ routineTypeIR'
     -- if routineTypeIR <: externMethodTypeIR
     -- let externMethodTypeIR = routineTypeIR as externMethodTypeIR
@@ -5129,7 +5129,7 @@ relation RoutineType_alpha: routineTypeIR ~~ routineTypeIR
 
    match
 
-    (explicit) parser_apply( parameterTypeIR_a*{} ) as routineTypeIR ~~ parser_apply( parameterTypeIR_b*{} ) as routineTypeIR
+    (explicit) parser_apply( parameterTypeIR_a*{parameterTypeIR_a <- parameterTypeIR_a*} ) as routineTypeIR ~~ parser_apply( parameterTypeIR_b*{parameterTypeIR_b <- parameterTypeIR_b*} ) as routineTypeIR
     (implicit) routineTypeIR ~~ routineTypeIR'
     -- if routineTypeIR <: parserApplyMethodTypeIR
     -- let parser_apply( parameterTypeIR_a*{parameterTypeIR_a <- parameterTypeIR_a*} ) = routineTypeIR as parserApplyMethodTypeIR
@@ -5147,7 +5147,7 @@ relation RoutineType_alpha: routineTypeIR ~~ routineTypeIR
 
    match
 
-    (explicit) control_apply( parameterTypeIR_a*{} ) as routineTypeIR ~~ control_apply( parameterTypeIR_b*{} ) as routineTypeIR
+    (explicit) control_apply( parameterTypeIR_a*{parameterTypeIR_a <- parameterTypeIR_a*} ) as routineTypeIR ~~ control_apply( parameterTypeIR_b*{parameterTypeIR_b <- parameterTypeIR_b*} ) as routineTypeIR
     (implicit) routineTypeIR ~~ routineTypeIR'
     -- if routineTypeIR <: controlApplyMethodTypeIR
     -- let control_apply( parameterTypeIR_a*{parameterTypeIR_a <- parameterTypeIR_a*} ) = routineTypeIR as controlApplyMethodTypeIR
@@ -5204,7 +5204,7 @@ relation RoutineTypeDef_alpha: routineTypeDefIR ~~ routineTypeDefIR
 
    match
 
-    (explicit) routineTypeIR_a < tid_a*{} , tid_hidden_a*{} > as routineTypeDefIR ~~ routineTypeIR_b < tid_b*{} , tid_hidden_b*{} > as routineTypeDefIR
+    (explicit) routineTypeIR_a < tid_a*{tid_a <- tid_a*} , tid_hidden_a*{tid_hidden_a <- tid_hidden_a*} > as routineTypeDefIR ~~ routineTypeIR_b < tid_b*{tid_b <- tid_b*} , tid_hidden_b*{tid_hidden_b <- tid_hidden_b*} > as routineTypeDefIR
     (implicit) routineTypeDefIR ~~ routineTypeDefIR'
     -- if routineTypeDefIR <: polyRoutineTypeDefIR
     -- let routineTypeIR_a < tid_a*{tid_a <- tid_a*} , tid_hidden_a*{tid_hidden_a <- tid_hidden_a*} > = routineTypeDefIR as polyRoutineTypeDefIR
@@ -9104,10 +9104,10 @@ def $tableEntry_lpm_prefix'(value, nat) : nat =
   -- if ((n \ 2) = 0)
   -- let value' = w' w (n / 2) as int as value
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:5.1-8.69
+;; ../../../../spec-concrete/5.03-wellformed.watsup:5.1-8.72
 relation Type_wf: bound |- typeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:87.1-88.22
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:92.1-93.22
   rulegroup baseTypeIR
 
    match
@@ -9122,7 +9122,7 @@ relation Type_wf: bound |- typeIR
     rulepath baseTypeIR
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:92.1-94.33
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:97.1-99.33
   rulegroup nameTypeIR
 
    match
@@ -9138,12 +9138,12 @@ relation Type_wf: bound |- typeIR
     -- if $in_set<tid>(tid, bound)
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:96.1-99.30
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:101.1-104.30
   rulegroup specializedTypeIR
 
    match
 
-    (explicit) bound |- polyTypeDefIR < typeIR_arg*{} > as typeIR
+    (explicit) bound |- polyTypeDefIR < typeIR_arg*{typeIR_arg <- typeIR_arg*} > as typeIR
     (implicit) bound |- typeIR'
     -- if typeIR' <: specializedTypeIR
     -- let polyTypeDefIR < typeIR_arg*{typeIR_arg <- typeIR_arg*} > = typeIR' as specializedTypeIR
@@ -9155,7 +9155,7 @@ relation Type_wf: bound |- typeIR
     -- if Type_wf: bound |- typeIR holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:120.1-123.30
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:125.1-128.30
   rulegroup typedefTypeIR
 
    match
@@ -9172,7 +9172,7 @@ relation Type_wf: bound |- typeIR
     -- if Type_wf: bound |- typeIR holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:140.1-143.30
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:145.1-148.30
   rulegroup newTypeIR
 
    match
@@ -9189,7 +9189,7 @@ relation Type_wf: bound |- typeIR
     -- if Type_wf: bound |- typeIR holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:165.1-168.30
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:170.1-173.30
   rulegroup listTypeIR
 
    match
@@ -9206,12 +9206,12 @@ relation Type_wf: bound |- typeIR
     -- if Type_wf: bound |- typeIR holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:193.1-196.33
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:198.1-201.33
   rulegroup tupleTypeIR
 
    match
 
-    (explicit) bound |- tuple< typeIR*{} > as typeIR
+    (explicit) bound |- tuple< typeIR*{typeIR <- typeIR*} > as typeIR
     (implicit) bound |- typeIR'
     -- if typeIR' <: tupleTypeIR
     -- let tuple< typeIR*{typeIR <- typeIR*} > = typeIR' as tupleTypeIR
@@ -9223,7 +9223,7 @@ relation Type_wf: bound |- typeIR
     -- (if Type_wf: bound |- typeIR holds)*{typeIR <- typeIR*}
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:212.1-215.30
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:217.1-220.30
   rulegroup headerStackTypeIR
 
    match
@@ -9240,12 +9240,12 @@ relation Type_wf: bound |- typeIR
     -- if Type_wf: bound |- typeIR holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:240.1-244.33
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:245.1-249.33
   rulegroup structTypeIR
 
    match
 
-    (explicit) bound |- struct _tid { typeIR id ;*{} } as typeIR
+    (explicit) bound |- struct _tid { typeIR id ;*{id <- id*, typeIR <- typeIR*} } as typeIR
     (implicit) bound |- typeIR'
     -- if typeIR' <: structTypeIR
     -- let struct _tid { typeIR id ;*{id <- id*, typeIR <- typeIR*} } = typeIR' as structTypeIR
@@ -9258,12 +9258,12 @@ relation Type_wf: bound |- typeIR
     -- (if Type_wf: bound |- typeIR holds)*{typeIR <- typeIR*}
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:284.1-288.33
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:289.1-293.33
   rulegroup headerTypeIR
 
    match
 
-    (explicit) bound |- header _tid { typeIR id ;*{} } as typeIR
+    (explicit) bound |- header _tid { typeIR id ;*{id <- id*, typeIR <- typeIR*} } as typeIR
     (implicit) bound |- typeIR'
     -- if typeIR' <: headerTypeIR
     -- let header _tid { typeIR id ;*{id <- id*, typeIR <- typeIR*} } = typeIR' as headerTypeIR
@@ -9276,12 +9276,12 @@ relation Type_wf: bound |- typeIR
     -- (if Type_wf: bound |- typeIR holds)*{typeIR <- typeIR*}
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:304.1-308.33
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:309.1-313.33
   rulegroup headerUnionTypeIR
 
    match
 
-    (explicit) bound |- header_union _tid { typeIR id ;*{} } as typeIR
+    (explicit) bound |- header_union _tid { typeIR id ;*{id <- id*, typeIR <- typeIR*} } as typeIR
     (implicit) bound |- typeIR'
     -- if typeIR' <: headerUnionTypeIR
     -- let header_union _tid { typeIR id ;*{id <- id*, typeIR <- typeIR*} } = typeIR' as headerUnionTypeIR
@@ -9294,12 +9294,12 @@ relation Type_wf: bound |- typeIR
     -- (if Type_wf: bound |- typeIR holds)*{typeIR <- typeIR*}
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:310.1-312.28
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:315.1-317.28
   rulegroup enumTypeIR-non-serializable
 
    match
 
-    (explicit) bound |- enum _tid { id*{} } as typeIR
+    (explicit) bound |- enum _tid { id*{id <- id*} } as typeIR
     (implicit) bound |- typeIR
     -- if typeIR <: enumTypeIR
     -- let enumTypeIR = typeIR as enumTypeIR
@@ -9312,12 +9312,12 @@ relation Type_wf: bound |- typeIR
     -- if $distinct_<id>(id*{id <- id*})
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:344.1-348.30
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:349.1-353.30
   rulegroup enumTypeIR-serializable
 
    match
 
-    (explicit) bound |- enum _tid # typeIR { id = _value ;*{} } as typeIR
+    (explicit) bound |- enum _tid # typeIR { id = _value ;*{_value <- _value*, id <- id*} } as typeIR
     (implicit) bound |- typeIR'
     -- if typeIR' <: enumTypeIR
     -- let enumTypeIR = typeIR' as enumTypeIR
@@ -9332,12 +9332,12 @@ relation Type_wf: bound |- typeIR
     -- if Type_wf: bound |- typeIR holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:352.1-354.53
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:357.1-359.53
   rulegroup externObjectTypeIR
 
    match
 
-    (explicit) bound |- extern _tid { _rid : routineTypeDefIR*{} } as typeIR
+    (explicit) bound |- extern _tid { _rid : routineTypeDefIR*{_rid <- _rid*, routineTypeDefIR <- routineTypeDefIR*} } as typeIR
     (implicit) bound |- typeIR
     -- if typeIR <: externObjectTypeIR
     -- let extern _tid { _rid : routineTypeDefIR*{_rid <- _rid*, routineTypeDefIR <- routineTypeDefIR*} } = typeIR as externObjectTypeIR
@@ -9348,12 +9348,12 @@ relation Type_wf: bound |- typeIR
     -- (if RoutineTypeDef_wf: bound |- routineTypeDefIR holds)*{routineTypeDefIR <- routineTypeDefIR*}
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:356.1-358.50
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:361.1-363.50
   rulegroup parserObjectTypeIR
 
    match
 
-    (explicit) bound |- parser( parameterTypeIR*{} ) as typeIR
+    (explicit) bound |- parser( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} ) as typeIR
     (implicit) bound |- typeIR
     -- if typeIR <: parserObjectTypeIR
     -- let parser( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} ) = typeIR as parserObjectTypeIR
@@ -9364,12 +9364,12 @@ relation Type_wf: bound |- typeIR
     -- if ParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:360.1-362.50
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:365.1-367.50
   rulegroup controlObjectTypeIR
 
    match
 
-    (explicit) bound |- control( parameterTypeIR*{} ) as typeIR
+    (explicit) bound |- control( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} ) as typeIR
     (implicit) bound |- typeIR
     -- if typeIR <: controlObjectTypeIR
     -- let control( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} ) = typeIR as controlObjectTypeIR
@@ -9380,12 +9380,12 @@ relation Type_wf: bound |- typeIR
     -- if ParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:364.1-366.33
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:369.1-371.33
   rulegroup packageObjectTypeIR
 
    match
 
-    (explicit) bound |- package< typeIR*{} > as typeIR
+    (explicit) bound |- package< typeIR*{typeIR <- typeIR*} > as typeIR
     (implicit) bound |- typeIR'
     -- if typeIR' <: packageObjectTypeIR
     -- let package< typeIR*{typeIR <- typeIR*} > = typeIR' as packageObjectTypeIR
@@ -9396,7 +9396,7 @@ relation Type_wf: bound |- typeIR
     -- (if Type_wf: bound |- typeIR holds)*{typeIR <- typeIR*}
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:368.1-371.30
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:373.1-376.30
   rulegroup tableObjectTypeIR
 
    match
@@ -9417,7 +9417,7 @@ relation Type_wf: bound |- typeIR
     -- if Type_wf: bound |- typeIR holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:375.1-376.19
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:380.1-381.19
   rulegroup defaultTypeIR
 
    match
@@ -9433,7 +9433,7 @@ relation Type_wf: bound |- typeIR
     rulepath defaultTypeIR
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:378.1-379.26
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:383.1-384.26
   rulegroup invalidHeaderTypeIR
 
    match
@@ -9449,7 +9449,7 @@ relation Type_wf: bound |- typeIR
     rulepath invalidHeaderTypeIR
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:381.1-391.2
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:386.1-396.2
   rulegroup sequenceTypeIR
 
    match
@@ -9475,7 +9475,7 @@ relation Type_wf: bound |- typeIR
     -- (if Type_wf: bound |- typeIR holds)*{typeIR <- typeIR*}
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:393.1-405.2
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:398.1-410.2
   rulegroup recordTypeIR
 
    match
@@ -9503,7 +9503,7 @@ relation Type_wf: bound |- typeIR
     -- (if Type_wf: bound |- typeIR holds)*{typeIR <- typeIR*}
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:466.1-469.30
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:471.1-474.30
   rulegroup setTypeIR
 
    match
@@ -9522,7 +9522,7 @@ relation Type_wf: bound |- typeIR
     -- if Type_wf: bound |- typeIR holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:471.1-480.2
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:476.1-485.2
   rulegroup tableMetadataTypeIR
 
    match
@@ -9547,10 +9547,10 @@ relation Type_wf: bound |- typeIR
     -- let table_struct _tid { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } = tableMetadataTypeIR'
     -- the relation holds
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:10.1-13.69
+;; ../../../../spec-concrete/5.03-wellformed.watsup:10.1-13.72
 relation TypeDef_wf: bound |- typeDefIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:496.1-499.30
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:501.1-504.30
   rulegroup monoTypeDefIR
 
    match
@@ -9567,12 +9567,12 @@ relation TypeDef_wf: bound |- typeDefIR
     -- if Type_wf: bound |- typeIR holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:516.1-522.36
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:521.1-527.36
   rulegroup polyTypeDefIR
 
    match
 
-    (explicit) bound |- typeIR < tid_expl*{} , tid_impl*{} > as typeDefIR
+    (explicit) bound |- typeIR < tid_expl*{tid_expl <- tid_expl*} , tid_impl*{tid_impl <- tid_impl*} > as typeDefIR
     (implicit) bound |- typeDefIR
     -- if typeDefIR <: polyTypeDefIR
     -- let typeIR < tid_expl*{tid_expl <- tid_expl*} , tid_impl*{tid_impl <- tid_impl*} > = typeDefIR as polyTypeDefIR
@@ -9586,15 +9586,15 @@ relation TypeDef_wf: bound |- typeDefIR
     -- if Type_wf: bound_inner |- typeIR holds
     -- the relation holds
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:15.1-18.69
+;; ../../../../spec-concrete/5.03-wellformed.watsup:15.1-18.72
 relation ParameterType_wf: bound |- parameterTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:59.1-73.2
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:59.1-78.2
   rulegroup 
 
    match
 
-    (explicit) bound |- direction typeIR _id value'?{}
+    (explicit) bound |- direction typeIR _id value'?{value' <- value'?}
     (implicit) bound |- direction typeIR _id value'?{value' <- value'?}
 
    paths
@@ -9602,7 +9602,7 @@ relation ParameterType_wf: bound |- parameterTypeIR
     rulepath non-default
     -- if (?() = value'?{value' <- value'?})
     -- if Type_wf: bound |- typeIR holds
-    -- if ($is_extern_object_typeIR($canon(typeIR)) => (direction = ))
+    -- if ((($is_string_typeIR($canon(typeIR)) \/ $is_arbitrary_int_typeIR($canon(typeIR))) \/ $is_objectTypeIR($canon(typeIR))) => (direction = ))
     -- the relation holds
 
     rulepath default
@@ -9610,19 +9610,19 @@ relation ParameterType_wf: bound |- parameterTypeIR
     -- if value''?{value'' <- value''?} matches (_)
     -- let ?(value) = value''?{value'' <- value''?}
     -- if Type_wf: bound |- typeIR holds
-    -- if ~$is_extern_object_typeIR($canon(typeIR))
     -- if ((direction = in) \/ (direction = ))
+    -- if ((($is_string_typeIR($canon(typeIR)) \/ $is_arbitrary_int_typeIR($canon(typeIR))) \/ $is_objectTypeIR($canon(typeIR))) => (direction = ))
     -- the relation holds
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:20.1-23.69
+;; ../../../../spec-concrete/5.03-wellformed.watsup:20.1-23.72
 relation ParameterTypes_wf: bound |- parameterTypeIR*
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:75.1-79.51
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:80.1-84.51
   rulegroup 
 
    match
 
-    (explicit) bound |- parameterTypeIR*{}
+    (explicit) bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}
     (implicit) bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}
 
    paths
@@ -9633,15 +9633,15 @@ relation ParameterTypes_wf: bound |- parameterTypeIR*
     -- (if ParameterType_wf: bound |- parameterTypeIR holds)*{parameterTypeIR <- parameterTypeIR*}
     -- the relation holds
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:25.1-28.69
+;; ../../../../spec-concrete/5.03-wellformed.watsup:25.1-28.72
 relation RoutineType_wf: bound |- routineTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:556.1-561.45
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:564.1-569.34
   rulegroup actionTypeIR
 
    match
 
-    (explicit) bound |- action( parameterTypeIR*{} ) as routineTypeIR
+    (explicit) bound |- action( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} ) as routineTypeIR
     (implicit) bound |- routineTypeIR
     -- if routineTypeIR <: actionTypeIR
     -- let action( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} ) = routineTypeIR as actionTypeIR
@@ -9652,15 +9652,15 @@ relation RoutineType_wf: bound |- routineTypeIR
     -- if ParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} holds
     -- (let direction typeIR _id _value?{_value <- _value?} = parameterTypeIR)*{_id <- _id*, _value? <- _value?*, direction <- direction*, parameterTypeIR <- parameterTypeIR*, typeIR <- typeIR*}
     -- if $directionless_trailing(direction*{direction <- direction*})
-    -- (if $nestable_action(direction, typeIR))*{direction <- direction*, typeIR <- typeIR*}
+    -- (if $nestable_action(typeIR))*{typeIR <- typeIR*}
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:565.1-568.34
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:573.1-576.34
   rulegroup builtinfunction
 
    match
 
-    (explicit) bound |- builtin_function( parameterTypeIR*{} )-> typeIR_ret as routineTypeIR
+    (explicit) bound |- builtin_function( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret as routineTypeIR
     (implicit) bound |- routineTypeIR
     -- if routineTypeIR <: builtinFunctionTypeIR
     -- let builtin_function( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret = routineTypeIR as builtinFunctionTypeIR
@@ -9672,12 +9672,12 @@ relation RoutineType_wf: bound |- routineTypeIR
     -- if Type_wf: bound |- typeIR_ret holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:583.1-588.34
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:591.1-596.34
   rulegroup definedFunctionTypeIR
 
    match
 
-    (explicit) bound |- function( parameterTypeIR*{} )-> typeIR_ret as routineTypeIR
+    (explicit) bound |- function( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret as routineTypeIR
     (implicit) bound |- routineTypeIR
     -- if routineTypeIR <: definedFunctionTypeIR
     -- let function( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret = routineTypeIR as definedFunctionTypeIR
@@ -9686,17 +9686,17 @@ relation RoutineType_wf: bound |- routineTypeIR
 
     rulepath definedFunctionTypeIR
     -- if ParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} holds
-    -- (let direction typeIR _id _value?{_value <- _value?} = parameterTypeIR)*{_id <- _id*, _value? <- _value?*, direction <- direction*, parameterTypeIR <- parameterTypeIR*, typeIR <- typeIR*}
-    -- (if $nestable_function(direction, typeIR))*{direction <- direction*, typeIR <- typeIR*}
+    -- (let _direction typeIR _id _value?{_value <- _value?} = parameterTypeIR)*{_direction <- _direction*, _id <- _id*, _value? <- _value?*, parameterTypeIR <- parameterTypeIR*, typeIR <- typeIR*}
+    -- (if $nestable_function(typeIR))*{typeIR <- typeIR*}
     -- if Type_wf: bound |- typeIR_ret holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:606.1-611.34
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:613.1-618.34
   rulegroup externFunctionTypeIR
 
    match
 
-    (explicit) bound |- extern_function( parameterTypeIR*{} )-> typeIR_ret as routineTypeIR
+    (explicit) bound |- extern_function( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret as routineTypeIR
     (implicit) bound |- routineTypeIR
     -- if routineTypeIR <: externFunctionTypeIR
     -- let extern_function( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret = routineTypeIR as externFunctionTypeIR
@@ -9705,17 +9705,17 @@ relation RoutineType_wf: bound |- routineTypeIR
 
     rulepath externFunctionTypeIR
     -- if ParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} holds
-    -- (let direction typeIR _id _value?{_value <- _value?} = parameterTypeIR)*{_id <- _id*, _value? <- _value?*, direction <- direction*, parameterTypeIR <- parameterTypeIR*, typeIR <- typeIR*}
-    -- (if $nestable_externfunction(direction, typeIR))*{direction <- direction*, typeIR <- typeIR*}
+    -- (let _direction typeIR _id _value?{_value <- _value?} = parameterTypeIR)*{_direction <- _direction*, _id <- _id*, _value? <- _value?*, parameterTypeIR <- parameterTypeIR*, typeIR <- typeIR*}
+    -- (if $nestable_externfunction(typeIR))*{typeIR <- typeIR*}
     -- if Type_wf: bound |- typeIR_ret holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:615.1-618.34
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:622.1-625.34
   rulegroup builtinMethodTypeIR
 
    match
 
-    (explicit) bound |- builtin_method( parameterTypeIR*{} )-> typeIR_ret as routineTypeIR
+    (explicit) bound |- builtin_method( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret as routineTypeIR
     (implicit) bound |- routineTypeIR
     -- if routineTypeIR <: builtinMethodTypeIR
     -- let builtin_method( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret = routineTypeIR as builtinMethodTypeIR
@@ -9727,12 +9727,12 @@ relation RoutineType_wf: bound |- routineTypeIR
     -- if Type_wf: bound |- typeIR_ret holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:636.1-641.34
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:642.1-647.34
   rulegroup externMethodTypeIR
 
    match
 
-    (explicit) bound |- extern_method( parameterTypeIR*{} )-> typeIR_ret as routineTypeIR
+    (explicit) bound |- extern_method( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret as routineTypeIR
     (implicit) bound |- routineTypeIR
     -- if routineTypeIR <: externMethodTypeIR
     -- let externMethodTypeIR = routineTypeIR as externMethodTypeIR
@@ -9743,17 +9743,17 @@ relation RoutineType_wf: bound |- routineTypeIR
 
     rulepath externMethodTypeIR
     -- if ParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} holds
-    -- (let direction typeIR _id _value?{_value <- _value?} = parameterTypeIR)*{_id <- _id*, _value? <- _value?*, direction <- direction*, parameterTypeIR <- parameterTypeIR*, typeIR <- typeIR*}
-    -- (if $nestable_externmethod(direction, typeIR))*{direction <- direction*, typeIR <- typeIR*}
+    -- (let _direction typeIR _id _value?{_value <- _value?} = parameterTypeIR)*{_direction <- _direction*, _id <- _id*, _value? <- _value?*, parameterTypeIR <- parameterTypeIR*, typeIR <- typeIR*}
+    -- (if $nestable_externmethod(typeIR))*{typeIR <- typeIR*}
     -- if Type_wf: bound |- typeIR_ret holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:659.1-664.34
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:664.1-669.34
   rulegroup externAbstractMethodTypeIR
 
    match
 
-    (explicit) bound |- extern_methodabstract( parameterTypeIR*{} )-> typeIR_ret as routineTypeIR
+    (explicit) bound |- extern_methodabstract( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret as routineTypeIR
     (implicit) bound |- routineTypeIR
     -- if routineTypeIR <: externMethodTypeIR
     -- let externMethodTypeIR = routineTypeIR as externMethodTypeIR
@@ -9764,17 +9764,17 @@ relation RoutineType_wf: bound |- routineTypeIR
 
     rulepath externAbstractMethodTypeIR
     -- if ParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} holds
-    -- (let direction typeIR _id _value?{_value <- _value?} = parameterTypeIR)*{_id <- _id*, _value? <- _value?*, direction <- direction*, parameterTypeIR <- parameterTypeIR*, typeIR <- typeIR*}
-    -- (if $nestable_externabstractmethod(direction, typeIR))*{direction <- direction*, typeIR <- typeIR*}
+    -- (let _direction typeIR _id _value?{_value <- _value?} = parameterTypeIR)*{_direction <- _direction*, _id <- _id*, _value? <- _value?*, parameterTypeIR <- parameterTypeIR*, typeIR <- typeIR*}
+    -- (if $nestable_externabstractmethod(typeIR))*{typeIR <- typeIR*}
     -- if Type_wf: bound |- typeIR_ret holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:682.1-686.56
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:686.1-690.45
   rulegroup parserApplyMethodTypeIR
 
    match
 
-    (explicit) bound |- parser_apply( parameterTypeIR*{} ) as routineTypeIR
+    (explicit) bound |- parser_apply( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} ) as routineTypeIR
     (implicit) bound |- routineTypeIR
     -- if routineTypeIR <: parserApplyMethodTypeIR
     -- let parser_apply( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} ) = routineTypeIR as parserApplyMethodTypeIR
@@ -9783,16 +9783,16 @@ relation RoutineType_wf: bound |- routineTypeIR
 
     rulepath parserApplyMethodTypeIR
     -- if ParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} holds
-    -- (let direction typeIR _id _value?{_value <- _value?} = parameterTypeIR)*{_id <- _id*, _value? <- _value?*, direction <- direction*, parameterTypeIR <- parameterTypeIR*, typeIR <- typeIR*}
-    -- (if $nestable_parserapplymethod(direction, typeIR))*{direction <- direction*, typeIR <- typeIR*}
+    -- (let _direction typeIR _id _value?{_value <- _value?} = parameterTypeIR)*{_direction <- _direction*, _id <- _id*, _value? <- _value?*, parameterTypeIR <- parameterTypeIR*, typeIR <- typeIR*}
+    -- (if $nestable_parserapplymethod(typeIR))*{typeIR <- typeIR*}
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:703.1-707.57
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:706.1-710.46
   rulegroup controlApplyMethodTypeIR
 
    match
 
-    (explicit) bound |- control_apply( parameterTypeIR*{} ) as routineTypeIR
+    (explicit) bound |- control_apply( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} ) as routineTypeIR
     (implicit) bound |- routineTypeIR
     -- if routineTypeIR <: controlApplyMethodTypeIR
     -- let control_apply( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} ) = routineTypeIR as controlApplyMethodTypeIR
@@ -9801,16 +9801,16 @@ relation RoutineType_wf: bound |- routineTypeIR
 
     rulepath controlApplyMethodTypeIR
     -- if ParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} holds
-    -- (let direction typeIR _id _value?{_value <- _value?} = parameterTypeIR)*{_id <- _id*, _value? <- _value?*, direction <- direction*, parameterTypeIR <- parameterTypeIR*, typeIR <- typeIR*}
-    -- (if $nestable_controlapplymethod(direction, typeIR))*{direction <- direction*, typeIR <- typeIR*}
+    -- (let _direction typeIR _id _value?{_value <- _value?} = parameterTypeIR)*{_direction <- _direction*, _id <- _id*, _value? <- _value?*, parameterTypeIR <- parameterTypeIR*, typeIR <- typeIR*}
+    -- (if $nestable_controlapplymethod(typeIR))*{typeIR <- typeIR*}
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:709.1-710.51
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:712.1-713.51
   rulegroup tableApplyMethodTypeIR
 
    match
 
-    (explicit) bound |- table_apply-> table_struct _tid { _fieldTypeIR*{} } as typeIR as routineTypeIR
+    (explicit) bound |- table_apply-> table_struct _tid { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } as typeIR as routineTypeIR
     (implicit) bound |- routineTypeIR
     -- if routineTypeIR <: tableApplyMethodTypeIR
     -- let table_apply-> typeIR = routineTypeIR as tableApplyMethodTypeIR
@@ -9824,10 +9824,10 @@ relation RoutineType_wf: bound |- routineTypeIR
     rulepath tableApplyMethodTypeIR
     -- the relation holds
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:30.1-33.69
+;; ../../../../spec-concrete/5.03-wellformed.watsup:30.1-33.72
 relation RoutineTypeDef_wf: bound |- routineTypeDefIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:727.1-730.44
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:731.1-734.44
   rulegroup mono
 
    match
@@ -9844,12 +9844,12 @@ relation RoutineTypeDef_wf: bound |- routineTypeDefIR
     -- if RoutineType_wf: bound |- routineTypeIR holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:740.1-746.50
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:745.1-751.50
   rulegroup poly
 
    match
 
-    (explicit) bound |- routineTypeIR < tid_expl*{} , tid_impl*{} > as routineTypeDefIR
+    (explicit) bound |- routineTypeIR < tid_expl*{tid_expl <- tid_expl*} , tid_impl*{tid_impl <- tid_impl*} > as routineTypeDefIR
     (implicit) bound |- routineTypeDefIR
     -- if routineTypeDefIR <: polyRoutineTypeDefIR
     -- let routineTypeIR < tid_expl*{tid_expl <- tid_expl*} , tid_impl*{tid_impl <- tid_impl*} > = routineTypeDefIR as polyRoutineTypeDefIR
@@ -9863,15 +9863,15 @@ relation RoutineTypeDef_wf: bound |- routineTypeDefIR
     -- if RoutineType_wf: bound_inner |- routineTypeIR holds
     -- the relation holds
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:35.1-38.69
+;; ../../../../spec-concrete/5.03-wellformed.watsup:35.1-38.72
 relation ConstructorParameterType_wf: bound |- parameterTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:752.1-754.30
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:757.1-759.30
   rulegroup 
 
    match
 
-    (explicit) bound |- typeIR _id _value?{}
+    (explicit) bound |- typeIR _id _value?{_value <- _value?}
     (implicit) bound |- direction typeIR _id _value?{_value <- _value?}
     -- if direction matches ``EMPTY`
 
@@ -9881,15 +9881,15 @@ relation ConstructorParameterType_wf: bound |- parameterTypeIR
     -- if Type_wf: bound |- typeIR holds
     -- the relation holds
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:40.1-43.69
+;; ../../../../spec-concrete/5.03-wellformed.watsup:40.1-43.72
 relation ConstructorParameterTypes_wf: bound |- parameterTypeIR*
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:756.1-760.62
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:761.1-765.62
   rulegroup 
 
    match
 
-    (explicit) bound |- parameterTypeIR*{}
+    (explicit) bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}
     (implicit) bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}
 
    paths
@@ -9900,15 +9900,15 @@ relation ConstructorParameterTypes_wf: bound |- parameterTypeIR*
     -- (if ConstructorParameterType_wf: bound |- parameterTypeIR holds)*{parameterTypeIR <- parameterTypeIR*}
     -- the relation holds
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:45.1-48.69
+;; ../../../../spec-concrete/5.03-wellformed.watsup:45.1-48.72
 relation ConstructorType_wf: bound |- constructorTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:778.1-784.46
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:783.1-789.46
   rulegroup externtype
 
    match
 
-    (explicit) bound |- constructor( parameterTypeIR*{} )-> typeIR_object
+    (explicit) bound |- constructor( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_object
     (implicit) bound |- constructor( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_object
 
    paths
@@ -9923,12 +9923,12 @@ relation ConstructorType_wf: bound |- constructorTypeIR
     -- (if $nestable_constructor_extern(typeIR))*{typeIR <- typeIR*}
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:797.1-803.46
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:802.1-808.46
   rulegroup parsertype
 
    match
 
-    (explicit) bound |- constructor( parameterTypeIR*{} )-> typeIR_object
+    (explicit) bound |- constructor( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_object
     (implicit) bound |- constructor( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_object
 
    paths
@@ -9943,12 +9943,12 @@ relation ConstructorType_wf: bound |- constructorTypeIR
     -- (if $nestable_constructor_parser(typeIR))*{typeIR <- typeIR*}
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:816.1-822.47
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:821.1-827.47
   rulegroup controltype
 
    match
 
-    (explicit) bound |- constructor( parameterTypeIR*{} )-> typeIR_object
+    (explicit) bound |- constructor( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_object
     (implicit) bound |- constructor( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_object
 
    paths
@@ -9963,12 +9963,12 @@ relation ConstructorType_wf: bound |- constructorTypeIR
     -- (if $nestable_constructor_control(typeIR))*{typeIR <- typeIR*}
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:833.1-839.47
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:838.1-844.47
   rulegroup packagetype
 
    match
 
-    (explicit) bound |- constructor( parameterTypeIR*{} )-> typeIR_object
+    (explicit) bound |- constructor( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_object
     (implicit) bound |- constructor( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_object
 
    paths
@@ -9983,15 +9983,15 @@ relation ConstructorType_wf: bound |- constructorTypeIR
     -- (if $nestable_constructor_package(typeIR))*{typeIR <- typeIR*}
     -- the relation holds
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:50.1-53.69
+;; ../../../../spec-concrete/5.03-wellformed.watsup:50.1-53.72
 relation ConstructorTypeDef_wf: bound |- constructorTypeDefIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:857.1-864.58
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:862.1-869.58
   rulegroup 
 
    match
 
-    (explicit) bound |- constructorTypeIR < tid_expl*{} , tid_impl*{} >
+    (explicit) bound |- constructorTypeIR < tid_expl*{tid_expl <- tid_expl*} , tid_impl*{tid_impl <- tid_impl*} >
     (implicit) bound |- constructorTypeIR < tid_expl*{tid_expl <- tid_expl*} , tid_impl*{tid_impl <- tid_impl*} >
 
    paths
@@ -10004,647 +10004,647 @@ relation ConstructorTypeDef_wf: bound |- constructorTypeDefIR
     -- if ConstructorType_wf: bound_inner |- constructorTypeIR holds
     -- the relation holds
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:103.1-104.44
+;; ../../../../spec-concrete/5.03-wellformed.watsup:108.1-109.47
 def $nestable_typedef(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:108.1-109.38
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:113.1-114.38
   clause 0 : (typeIR) = $nestable'_typedef(typeIR_canon)
   -- let typeIR_canon = $canon(typeIR)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:105.1-106.44
+;; ../../../../spec-concrete/5.03-wellformed.watsup:110.1-111.47
 def $nestable'_typedef(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:110.1-110.36
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:115.1-115.36
   clause 0 : (typeIR) = true
   -- if typeIR <: primitiveTypeIR
   -- let primitiveTypeIR = typeIR as primitiveTypeIR
   -- if primitiveTypeIR matches `BOOL`
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:111.1-111.37
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:116.1-116.37
   clause 1 : (typeIR) = true
   -- if typeIR <: primitiveTypeIR
   -- let primitiveTypeIR = typeIR as primitiveTypeIR
   -- if primitiveTypeIR matches `ERROR`
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:112.1-112.38
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:117.1-117.38
   clause 2 : (typeIR) = true
   -- if typeIR <: primitiveTypeIR
   -- let primitiveTypeIR = typeIR as primitiveTypeIR
   -- if primitiveTypeIR matches `STRING`
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:113.1-113.44
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:118.1-118.44
   clause 3 : (typeIR) = true
   -- if typeIR <: numberTypeIR
   -- let numberTypeIR = typeIR as numberTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:114.1-114.42
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:119.1-119.42
   clause 4 : (typeIR) = true
   -- if typeIR <: nameTypeIR
   -- let nameTypeIR = typeIR as nameTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:115.1-115.41
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:120.1-120.41
   clause 5 : (typeIR) = true
   -- if typeIR <: newTypeIR
   -- let newTypeIR = typeIR as newTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:116.1-116.42
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:121.1-121.42
   clause 6 : (typeIR) = true
   -- if typeIR <: dataTypeIR
   -- let dataTypeIR = typeIR as dataTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:117.1-118.15
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:122.1-123.15
   clause 7 : (_typeIR) = false
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:125.1-126.45
+;; ../../../../spec-concrete/5.03-wellformed.watsup:130.1-131.48
 def $nestable_new(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:130.1-131.38
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:135.1-136.38
   clause 0 : (typeIR) = $nestable'_new(typeIR_canon)
   -- let typeIR_canon = $canon(typeIR)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:127.1-128.45
+;; ../../../../spec-concrete/5.03-wellformed.watsup:132.1-133.48
 def $nestable'_new(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:132.1-132.32
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:137.1-137.32
   clause 0 : (typeIR) = true
   -- if typeIR <: primitiveTypeIR
   -- let primitiveTypeIR = typeIR as primitiveTypeIR
   -- if primitiveTypeIR matches `BOOL`
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:133.1-133.38
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:138.1-138.38
   clause 1 : (typeIR) = true
   -- if typeIR <: numberTypeIR
   -- let numberTypeIR = typeIR as numberTypeIR
   -- if numberTypeIR matches `BIT<%>`
   -- let bit< _nat > = numberTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:134.1-134.38
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:139.1-139.38
   clause 2 : (typeIR) = true
   -- if typeIR <: numberTypeIR
   -- let numberTypeIR = typeIR as numberTypeIR
   -- if numberTypeIR matches `INT<%>`
   -- let int< _nat > = numberTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:135.1-135.38
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:140.1-140.38
   clause 3 : (typeIR) = true
   -- if typeIR <: nameTypeIR
   -- let nameTypeIR = typeIR as nameTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:136.1-136.37
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:141.1-141.37
   clause 4 : (typeIR) = true
   -- if typeIR <: newTypeIR
   -- let newTypeIR = typeIR as newTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:137.1-138.15
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:142.1-143.15
   clause 5 : (_typeIR) = false
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:147.1-148.48
+;; ../../../../spec-concrete/5.03-wellformed.watsup:152.1-153.51
 def $nestable_list(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:152.1-153.38
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:157.1-158.38
   clause 0 : (typeIR) = $nestable'_list(typeIR_canon)
   -- let typeIR_canon = $canon(typeIR)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:149.1-150.48
+;; ../../../../spec-concrete/5.03-wellformed.watsup:154.1-155.51
 def $nestable'_list(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:154.1-154.33
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:159.1-159.33
   clause 0 : (typeIR) = true
   -- if typeIR <: primitiveTypeIR
   -- let primitiveTypeIR = typeIR as primitiveTypeIR
   -- if primitiveTypeIR matches `BOOL`
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:155.1-155.34
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:160.1-160.34
   clause 1 : (typeIR) = true
   -- if typeIR <: primitiveTypeIR
   -- let primitiveTypeIR = typeIR as primitiveTypeIR
   -- if primitiveTypeIR matches `ERROR`
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:156.1-156.39
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:161.1-161.39
   clause 2 : (typeIR) = true
   -- if typeIR <: primitiveTypeIR
   -- let primitiveTypeIR = typeIR as primitiveTypeIR
   -- if primitiveTypeIR matches `MATCH_KIND`
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:157.1-157.35
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:162.1-162.35
   clause 3 : (typeIR) = true
   -- if typeIR <: primitiveTypeIR
   -- let primitiveTypeIR = typeIR as primitiveTypeIR
   -- if primitiveTypeIR matches `STRING`
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:158.1-158.41
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:163.1-163.41
   clause 4 : (typeIR) = true
   -- if typeIR <: numberTypeIR
   -- let numberTypeIR = typeIR as numberTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:159.1-159.39
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:164.1-164.39
   clause 5 : (typeIR) = true
   -- if typeIR <: nameTypeIR
   -- let nameTypeIR = typeIR as nameTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:160.1-160.38
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:165.1-165.38
   clause 6 : (typeIR) = true
   -- if typeIR <: newTypeIR
   -- let newTypeIR = typeIR as newTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:161.1-161.39
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:166.1-166.39
   clause 7 : (typeIR) = true
   -- if typeIR <: dataTypeIR
   -- let dataTypeIR = typeIR as dataTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:162.1-163.15
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:167.1-168.15
   clause 8 : (_typeIR) = false
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:170.1-171.49
+;; ../../../../spec-concrete/5.03-wellformed.watsup:175.1-176.52
 def $nestable_tuple(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:175.1-176.38
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:180.1-181.38
   clause 0 : (typeIR) = $nestable'_tuple(typeIR_canon)
   -- let typeIR_canon = $canon(typeIR)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:172.1-173.49
+;; ../../../../spec-concrete/5.03-wellformed.watsup:177.1-178.52
 def $nestable'_tuple(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:177.1-177.34
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:182.1-182.34
   clause 0 : (typeIR) = true
   -- if typeIR <: primitiveTypeIR
   -- let primitiveTypeIR = typeIR as primitiveTypeIR
   -- if primitiveTypeIR matches `BOOL`
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:178.1-178.35
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:183.1-183.35
   clause 1 : (typeIR) = true
   -- if typeIR <: primitiveTypeIR
   -- let primitiveTypeIR = typeIR as primitiveTypeIR
   -- if primitiveTypeIR matches `ERROR`
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:179.1-179.40
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:184.1-184.40
   clause 2 : (typeIR) = true
   -- if typeIR <: numberTypeIR
   -- let numberTypeIR = typeIR as numberTypeIR
   -- if numberTypeIR matches `BIT<%>`
   -- let bit< _nat > = numberTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:180.1-180.40
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:185.1-185.40
   clause 3 : (typeIR) = true
   -- if typeIR <: numberTypeIR
   -- let numberTypeIR = typeIR as numberTypeIR
   -- if numberTypeIR matches `INT<%>`
   -- let int< _nat > = numberTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:181.1-181.43
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:186.1-186.43
   clause 4 : (typeIR) = true
   -- if typeIR <: numberTypeIR
   -- let numberTypeIR = typeIR as numberTypeIR
   -- if numberTypeIR matches `VARBIT<%>`
   -- let varbit< _nat > = numberTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:182.1-182.40
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:187.1-187.40
   clause 5 : (typeIR) = true
   -- if typeIR <: nameTypeIR
   -- let nameTypeIR = typeIR as nameTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:183.1-183.39
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:188.1-188.39
   clause 6 : (typeIR) = true
   -- if typeIR <: newTypeIR
   -- let newTypeIR = typeIR as newTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:184.1-184.41
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:189.1-189.41
   clause 7 : (typeIR) = true
   -- if typeIR <: tupleTypeIR
   -- let tupleTypeIR = typeIR as tupleTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:185.1-185.47
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:190.1-190.47
   clause 8 : (typeIR) = true
   -- if typeIR <: headerStackTypeIR
   -- let headerStackTypeIR = typeIR as headerStackTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:186.1-186.42
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:191.1-191.42
   clause 9 : (typeIR) = true
   -- if typeIR <: structTypeIR
   -- let structTypeIR = typeIR as structTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:187.1-187.42
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:192.1-192.42
   clause 10 : (typeIR) = true
   -- if typeIR <: headerTypeIR
   -- let headerTypeIR = typeIR as headerTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:188.1-188.47
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:193.1-193.47
   clause 11 : (typeIR) = true
   -- if typeIR <: headerUnionTypeIR
   -- let headerUnionTypeIR = typeIR as headerUnionTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:189.1-189.40
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:194.1-194.40
   clause 12 : (typeIR) = true
   -- if typeIR <: enumTypeIR
   -- let enumTypeIR = typeIR as enumTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:190.1-191.15
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:195.1-196.15
   clause 13 : (_typeIR) = false
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:198.1-199.56
+;; ../../../../spec-concrete/5.03-wellformed.watsup:203.1-204.59
 def $nestable_headerStack(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:203.1-205.38
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:208.1-210.38
   clause 0 : (typeIR) = $nestable'_headerStack(typeIR_canon)
   -- let typeIR_canon = $canon(typeIR)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:200.1-201.56
+;; ../../../../spec-concrete/5.03-wellformed.watsup:205.1-206.59
 def $nestable'_headerStack(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:206.1-206.46
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:211.1-211.46
   clause 0 : (typeIR) = true
   -- if typeIR <: nameTypeIR
   -- let nameTypeIR = typeIR as nameTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:207.1-207.48
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:212.1-212.48
   clause 1 : (typeIR) = true
   -- if typeIR <: headerTypeIR
   -- let headerTypeIR = typeIR as headerTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:208.1-208.53
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:213.1-213.53
   clause 2 : (typeIR) = true
   -- if typeIR <: headerUnionTypeIR
   -- let headerUnionTypeIR = typeIR as headerUnionTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:209.1-210.15
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:214.1-215.15
   clause 3 : (_typeIR) = false
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:217.1-218.50
+;; ../../../../spec-concrete/5.03-wellformed.watsup:222.1-223.53
 def $nestable_struct(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:222.1-223.38
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:227.1-228.38
   clause 0 : (typeIR) = $nestable'_struct(typeIR_canon)
   -- let typeIR_canon = $canon(typeIR)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:219.1-220.50
+;; ../../../../spec-concrete/5.03-wellformed.watsup:224.1-225.53
 def $nestable'_struct(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:224.1-224.35
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:229.1-229.35
   clause 0 : (typeIR) = true
   -- if typeIR <: primitiveTypeIR
   -- let primitiveTypeIR = typeIR as primitiveTypeIR
   -- if primitiveTypeIR matches `BOOL`
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:225.1-225.36
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:230.1-230.36
   clause 1 : (typeIR) = true
   -- if typeIR <: primitiveTypeIR
   -- let primitiveTypeIR = typeIR as primitiveTypeIR
   -- if primitiveTypeIR matches `ERROR`
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:226.1-226.41
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:231.1-231.41
   clause 2 : (typeIR) = true
   -- if typeIR <: numberTypeIR
   -- let numberTypeIR = typeIR as numberTypeIR
   -- if numberTypeIR matches `INT<%>`
   -- let int< _nat > = numberTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:227.1-227.41
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:232.1-232.41
   clause 3 : (typeIR) = true
   -- if typeIR <: numberTypeIR
   -- let numberTypeIR = typeIR as numberTypeIR
   -- if numberTypeIR matches `BIT<%>`
   -- let bit< _nat > = numberTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:228.1-228.44
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:233.1-233.44
   clause 4 : (typeIR) = true
   -- if typeIR <: numberTypeIR
   -- let numberTypeIR = typeIR as numberTypeIR
   -- if numberTypeIR matches `VARBIT<%>`
   -- let varbit< _nat > = numberTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:229.1-229.41
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:234.1-234.41
   clause 5 : (typeIR) = true
   -- if typeIR <: nameTypeIR
   -- let nameTypeIR = typeIR as nameTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:230.1-230.40
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:235.1-235.40
   clause 6 : (typeIR) = true
   -- if typeIR <: newTypeIR
   -- let newTypeIR = typeIR as newTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:231.1-231.42
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:236.1-236.42
   clause 7 : (typeIR) = true
   -- if typeIR <: tupleTypeIR
   -- let tupleTypeIR = typeIR as tupleTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:232.1-232.48
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:237.1-237.48
   clause 8 : (typeIR) = true
   -- if typeIR <: headerStackTypeIR
   -- let headerStackTypeIR = typeIR as headerStackTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:233.1-233.43
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:238.1-238.43
   clause 9 : (typeIR) = true
   -- if typeIR <: structTypeIR
   -- let structTypeIR = typeIR as structTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:234.1-234.43
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:239.1-239.43
   clause 10 : (typeIR) = true
   -- if typeIR <: headerTypeIR
   -- let headerTypeIR = typeIR as headerTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:235.1-235.48
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:240.1-240.48
   clause 11 : (typeIR) = true
   -- if typeIR <: headerUnionTypeIR
   -- let headerUnionTypeIR = typeIR as headerUnionTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:236.1-236.41
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:241.1-241.41
   clause 12 : (typeIR) = true
   -- if typeIR <: enumTypeIR
   -- let enumTypeIR = typeIR as enumTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:237.1-238.15
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:242.1-243.15
   clause 13 : (_typeIR) = false
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:246.1-247.48
+;; ../../../../spec-concrete/5.03-wellformed.watsup:251.1-252.51
 def $nestable_header(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:255.1-257.38
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:260.1-262.38
   clause 0 : (typeIR) = $nestable'_header(typeIR_canon)
   -- let typeIR_canon = $canon(typeIR)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:248.1-249.48
+;; ../../../../spec-concrete/5.03-wellformed.watsup:253.1-254.51
 def $nestable'_header(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:258.1-258.35
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:263.1-263.35
   clause 0 : (typeIR) = true
   -- if typeIR <: primitiveTypeIR
   -- let primitiveTypeIR = typeIR as primitiveTypeIR
   -- if primitiveTypeIR matches `BOOL`
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:259.1-259.41
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:264.1-264.41
   clause 1 : (typeIR) = true
   -- if typeIR <: numberTypeIR
   -- let numberTypeIR = typeIR as numberTypeIR
   -- if numberTypeIR matches `INT<%>`
   -- let int< _nat > = numberTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:260.1-260.41
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:265.1-265.41
   clause 2 : (typeIR) = true
   -- if typeIR <: numberTypeIR
   -- let numberTypeIR = typeIR as numberTypeIR
   -- if numberTypeIR matches `BIT<%>`
   -- let bit< _nat > = numberTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:261.1-261.44
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:266.1-266.44
   clause 3 : (typeIR) = true
   -- if typeIR <: numberTypeIR
   -- let numberTypeIR = typeIR as numberTypeIR
   -- if numberTypeIR matches `VARBIT<%>`
   -- let varbit< _nat > = numberTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:262.1-262.41
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:267.1-267.41
   clause 4 : (typeIR) = true
   -- if typeIR <: nameTypeIR
   -- let nameTypeIR = typeIR as nameTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:263.1-263.40
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:268.1-268.40
   clause 5 : (typeIR) = true
   -- if typeIR <: newTypeIR
   -- let newTypeIR = typeIR as newTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:264.1-264.49
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:269.1-269.49
   clause 6 : (typeIR) = true
   -- if typeIR <: enumTypeIR
   -- let enumTypeIR = typeIR as enumTypeIR
   -- if enumTypeIR matches `ENUM%#%{%}`
   -- let enum _tid # _typeIR { _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = enumTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:265.1-266.44
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:270.1-271.44
   clause 7 : (typeIR') = true
   -- if typeIR' <: structTypeIR
   -- let struct _tid { typeIR _id ;*{_id <- _id*, typeIR <- typeIR*} } = typeIR' as structTypeIR
   -- (if $nestable_struct_in_header(typeIR))*{typeIR <- typeIR*}
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:267.1-268.15
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:272.1-273.15
   clause 8 : (_typeIR) = false
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:250.1-251.67
+;; ../../../../spec-concrete/5.03-wellformed.watsup:255.1-256.70
 def $nestable_struct_in_header(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:270.1-272.38
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:275.1-277.38
   clause 0 : (typeIR) = $nestable'_struct_in_header(typeIR_canon)
   -- let typeIR_canon = $canon(typeIR)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:252.1-253.67
+;; ../../../../spec-concrete/5.03-wellformed.watsup:257.1-258.70
 def $nestable'_struct_in_header(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:273.1-273.45
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:278.1-278.45
   clause 0 : (typeIR) = true
   -- if typeIR <: primitiveTypeIR
   -- let primitiveTypeIR = typeIR as primitiveTypeIR
   -- if primitiveTypeIR matches `BOOL`
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:274.1-274.51
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:279.1-279.51
   clause 1 : (typeIR) = true
   -- if typeIR <: numberTypeIR
   -- let numberTypeIR = typeIR as numberTypeIR
   -- if numberTypeIR matches `INT<%>`
   -- let int< _nat > = numberTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:275.1-275.51
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:280.1-280.51
   clause 2 : (typeIR) = true
   -- if typeIR <: numberTypeIR
   -- let numberTypeIR = typeIR as numberTypeIR
   -- if numberTypeIR matches `BIT<%>`
   -- let bit< _nat > = numberTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:276.1-276.51
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:281.1-281.51
   clause 3 : (typeIR) = true
   -- if typeIR <: nameTypeIR
   -- let nameTypeIR = typeIR as nameTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:277.1-277.50
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:282.1-282.50
   clause 4 : (typeIR) = true
   -- if typeIR <: newTypeIR
   -- let newTypeIR = typeIR as newTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:278.1-278.59
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:283.1-283.59
   clause 5 : (typeIR) = true
   -- if typeIR <: enumTypeIR
   -- let enumTypeIR = typeIR as enumTypeIR
   -- if enumTypeIR matches `ENUM%#%{%}`
   -- let enum _tid # _typeIR { _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = enumTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:279.1-280.44
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:284.1-285.44
   clause 6 : (typeIR') = true
   -- if typeIR' <: structTypeIR
   -- let struct _tid { typeIR _id ;*{_id <- _id*, typeIR <- typeIR*} } = typeIR' as structTypeIR
   -- (if $nestable_struct_in_header(typeIR))*{typeIR <- typeIR*}
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:281.1-282.15
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:286.1-287.15
   clause 7 : (_typeIR) = false
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:290.1-291.54
+;; ../../../../spec-concrete/5.03-wellformed.watsup:295.1-296.57
 def $nestable_headerUnion(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:295.1-297.38
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:300.1-302.38
   clause 0 : (typeIR) = $nestable'_headerUnion(typeIR_canon)
   -- let typeIR_canon = $canon(typeIR)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:292.1-293.54
+;; ../../../../spec-concrete/5.03-wellformed.watsup:297.1-298.57
 def $nestable'_headerUnion(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:298.1-298.46
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:303.1-303.46
   clause 0 : (typeIR) = true
   -- if typeIR <: nameTypeIR
   -- let nameTypeIR = typeIR as nameTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:299.1-299.45
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:304.1-304.45
   clause 1 : (typeIR) = true
   -- if typeIR <: newTypeIR
   -- let newTypeIR = typeIR as newTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:300.1-300.48
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:305.1-305.48
   clause 2 : (typeIR) = true
   -- if typeIR <: headerTypeIR
   -- let headerTypeIR = typeIR as headerTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:301.1-302.15
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:306.1-307.15
   clause 3 : (_typeIR) = false
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:314.1-315.59
+;; ../../../../spec-concrete/5.03-wellformed.watsup:319.1-320.62
 def $nestable_enum_serializable(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:323.1-325.38
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:328.1-330.38
   clause 0 : (typeIR) = $nestable'_enum_serializable(typeIR_canon)
   -- let typeIR_canon = $canon(typeIR)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:316.1-317.59
+;; ../../../../spec-concrete/5.03-wellformed.watsup:321.1-322.62
 def $nestable'_enum_serializable(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:326.1-326.52
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:331.1-331.52
   clause 0 : (typeIR) = true
   -- if typeIR <: numberTypeIR
   -- let numberTypeIR = typeIR as numberTypeIR
   -- if numberTypeIR matches `INT<%>`
   -- let int< _nat > = numberTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:327.1-327.52
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:332.1-332.52
   clause 1 : (typeIR) = true
   -- if typeIR <: numberTypeIR
   -- let numberTypeIR = typeIR as numberTypeIR
   -- if numberTypeIR matches `BIT<%>`
   -- let bit< _nat > = numberTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:328.1-328.52
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:333.1-333.52
   clause 2 : (typeIR) = true
   -- if typeIR <: nameTypeIR
   -- let nameTypeIR = typeIR as nameTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:329.1-330.47
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:334.1-335.47
   clause 3 : (typeIR') = $nestable_new_in_enum_serializable(typeIR)
   -- if typeIR' <: newTypeIR
   -- let type _tid typeIR = typeIR' as newTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:331.1-332.15
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:336.1-337.15
   clause 4 : (_typeIR) = false
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:318.1-319.80
+;; ../../../../spec-concrete/5.03-wellformed.watsup:323.1-324.83
 def $nestable_new_in_enum_serializable(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:334.1-336.38
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:339.1-341.38
   clause 0 : (typeIR) = $nestable'_new_in_enum_serializable(typeIR_canon)
   -- let typeIR_canon = $canon(typeIR)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:320.1-321.80
+;; ../../../../spec-concrete/5.03-wellformed.watsup:325.1-326.83
 def $nestable'_new_in_enum_serializable(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:337.1-337.59
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:342.1-342.59
   clause 0 : (typeIR) = true
   -- if typeIR <: numberTypeIR
   -- let numberTypeIR = typeIR as numberTypeIR
   -- if numberTypeIR matches `INT<%>`
   -- let int< _nat > = numberTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:338.1-338.59
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:343.1-343.59
   clause 1 : (typeIR) = true
   -- if typeIR <: numberTypeIR
   -- let numberTypeIR = typeIR as numberTypeIR
   -- if numberTypeIR matches `BIT<%>`
   -- let bit< _nat > = numberTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:339.1-339.59
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:344.1-344.59
   clause 2 : (typeIR) = true
   -- if typeIR <: nameTypeIR
   -- let nameTypeIR = typeIR as nameTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:340.1-340.58
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:345.1-345.58
   clause 3 : (typeIR) = true
   -- if typeIR <: newTypeIR
   -- let newTypeIR = typeIR as newTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:341.1-342.15
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:346.1-347.15
   clause 4 : (_typeIR) = false
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:407.1-408.45
+;; ../../../../spec-concrete/5.03-wellformed.watsup:412.1-413.48
 def $nestable_set(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:420.1-421.38
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:425.1-426.38
   clause 0 : (typeIR) = $nestable'_set(typeIR_canon)
   -- let typeIR_canon = $canon(typeIR)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:409.1-410.45
+;; ../../../../spec-concrete/5.03-wellformed.watsup:414.1-415.48
 def $nestable'_set(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:422.1-422.32
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:427.1-427.32
   clause 0 : (typeIR) = true
   -- if typeIR <: primitiveTypeIR
   -- let primitiveTypeIR = typeIR as primitiveTypeIR
   -- if primitiveTypeIR matches `BOOL`
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:423.1-423.33
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:428.1-428.33
   clause 1 : (typeIR) = true
   -- if typeIR <: primitiveTypeIR
   -- let primitiveTypeIR = typeIR as primitiveTypeIR
   -- if primitiveTypeIR matches `ERROR`
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:424.1-424.38
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:429.1-429.38
   clause 2 : (typeIR) = true
   -- if typeIR <: numberTypeIR
   -- let numberTypeIR = typeIR as numberTypeIR
   -- if numberTypeIR matches `INT<%>`
   -- let int< _nat > = numberTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:425.1-425.38
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:430.1-430.38
   clause 3 : (typeIR) = true
   -- if typeIR <: numberTypeIR
   -- let numberTypeIR = typeIR as numberTypeIR
   -- if numberTypeIR matches `BIT<%>`
   -- let bit< _nat > = numberTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:426.1-426.38
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:431.1-431.38
   clause 4 : (typeIR) = true
   -- if typeIR <: nameTypeIR
   -- let nameTypeIR = typeIR as nameTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:427.1-427.37
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:432.1-432.37
   clause 5 : (typeIR) = true
   -- if typeIR <: newTypeIR
   -- let newTypeIR = typeIR as newTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:428.1-429.40
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:433.1-434.40
   clause 6 : (typeIR') = true
   -- if typeIR' <: tupleTypeIR
   -- let tuple< typeIR*{typeIR <- typeIR*} > = typeIR' as tupleTypeIR
   -- (if $nestable_tuple_in_set(typeIR))*{typeIR <- typeIR*}
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:430.1-430.38
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:435.1-435.38
   clause 7 : (typeIR) = true
   -- if typeIR <: enumTypeIR
   -- let enumTypeIR = typeIR as enumTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:431.1-432.43
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:436.1-437.43
   clause 8 : (typeIR') = true
   -- if typeIR' <: sequenceTypeIR
   -- let sequenceTypeIR = typeIR' as sequenceTypeIR
@@ -10652,117 +10652,117 @@ def $nestable'_set(typeIR) : bool =
   -- let seq< typeIR*{typeIR <- typeIR*} > = sequenceTypeIR
   -- (if $nestable_sequence_in_set(typeIR))*{typeIR <- typeIR*}
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:433.1-434.15
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:438.1-439.15
   clause 9 : (_typeIR) = false
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:411.1-412.63
+;; ../../../../spec-concrete/5.03-wellformed.watsup:416.1-417.66
 def $nestable_tuple_in_set(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:436.1-438.38
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:441.1-443.38
   clause 0 : (typeIR) = $nestable'_tuple_in_set(typeIR_canon)
   -- let typeIR_canon = $canon(typeIR)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:413.1-414.63
+;; ../../../../spec-concrete/5.03-wellformed.watsup:418.1-419.66
 def $nestable'_tuple_in_set(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:439.1-439.41
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:444.1-444.41
   clause 0 : (typeIR) = true
   -- if typeIR <: primitiveTypeIR
   -- let primitiveTypeIR = typeIR as primitiveTypeIR
   -- if primitiveTypeIR matches `BOOL`
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:440.1-440.47
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:445.1-445.47
   clause 1 : (typeIR) = true
   -- if typeIR <: numberTypeIR
   -- let numberTypeIR = typeIR as numberTypeIR
   -- if numberTypeIR matches `INT<%>`
   -- let int< _nat > = numberTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:441.1-441.47
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:446.1-446.47
   clause 2 : (typeIR) = true
   -- if typeIR <: numberTypeIR
   -- let numberTypeIR = typeIR as numberTypeIR
   -- if numberTypeIR matches `BIT<%>`
   -- let bit< _nat > = numberTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:442.1-442.47
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:447.1-447.47
   clause 3 : (typeIR) = true
   -- if typeIR <: nameTypeIR
   -- let nameTypeIR = typeIR as nameTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:443.1-443.46
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:448.1-448.46
   clause 4 : (typeIR) = true
   -- if typeIR <: newTypeIR
   -- let newTypeIR = typeIR as newTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:444.1-445.40
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:449.1-450.40
   clause 5 : (typeIR') = true
   -- if typeIR' <: tupleTypeIR
   -- let tuple< typeIR*{typeIR <- typeIR*} > = typeIR' as tupleTypeIR
   -- (if $nestable_tuple_in_set(typeIR))*{typeIR <- typeIR*}
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:446.1-446.47
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:451.1-451.47
   clause 6 : (typeIR) = true
   -- if typeIR <: enumTypeIR
   -- let enumTypeIR = typeIR as enumTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:447.1-448.15
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:452.1-453.15
   clause 7 : (_typeIR) = false
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:415.1-416.66
+;; ../../../../spec-concrete/5.03-wellformed.watsup:420.1-421.69
 def $nestable_sequence_in_set(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:450.1-452.38
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:455.1-457.38
   clause 0 : (typeIR) = $nestable'_sequence_in_set(typeIR_canon)
   -- let typeIR_canon = $canon(typeIR)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:417.1-418.66
+;; ../../../../spec-concrete/5.03-wellformed.watsup:422.1-423.69
 def $nestable'_sequence_in_set(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:453.1-453.44
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:458.1-458.44
   clause 0 : (typeIR) = true
   -- if typeIR <: primitiveTypeIR
   -- let primitiveTypeIR = typeIR as primitiveTypeIR
   -- if primitiveTypeIR matches `BOOL`
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:454.1-454.50
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:459.1-459.50
   clause 1 : (typeIR) = true
   -- if typeIR <: numberTypeIR
   -- let numberTypeIR = typeIR as numberTypeIR
   -- if numberTypeIR matches `INT<%>`
   -- let int< _nat > = numberTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:455.1-455.50
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:460.1-460.50
   clause 2 : (typeIR) = true
   -- if typeIR <: numberTypeIR
   -- let numberTypeIR = typeIR as numberTypeIR
   -- if numberTypeIR matches `BIT<%>`
   -- let bit< _nat > = numberTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:456.1-456.50
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:461.1-461.50
   clause 3 : (typeIR) = true
   -- if typeIR <: nameTypeIR
   -- let nameTypeIR = typeIR as nameTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:457.1-457.49
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:462.1-462.49
   clause 4 : (typeIR) = true
   -- if typeIR <: newTypeIR
   -- let newTypeIR = typeIR as newTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:458.1-459.43
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:463.1-464.43
   clause 5 : (typeIR') = true
   -- if typeIR' <: tupleTypeIR
   -- let tuple< typeIR*{typeIR <- typeIR*} > = typeIR' as tupleTypeIR
   -- (if $nestable_sequence_in_set(typeIR))*{typeIR <- typeIR*}
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:460.1-460.50
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:465.1-465.50
   clause 6 : (typeIR) = true
   -- if typeIR <: enumTypeIR
   -- let enumTypeIR = typeIR as enumTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:461.1-462.43
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:466.1-467.43
   clause 7 : (typeIR') = true
   -- if typeIR' <: sequenceTypeIR
   -- let sequenceTypeIR = typeIR' as sequenceTypeIR
@@ -10770,611 +10770,537 @@ def $nestable'_sequence_in_set(typeIR) : bool =
   -- let seq< typeIR*{typeIR <- typeIR*} > = sequenceTypeIR
   -- (if $nestable_sequence_in_set(typeIR))*{typeIR <- typeIR*}
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:463.1-464.15
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:468.1-469.15
   clause 8 : (_typeIR) = false
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:486.1-487.59
+;; ../../../../spec-concrete/5.03-wellformed.watsup:491.1-492.62
 def $definable_type_mono(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:489.1-489.44
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:494.1-494.44
   clause 0 : (typeIR) = true
   -- if typeIR <: nameTypeIR
   -- let nameTypeIR = typeIR as nameTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:490.1-490.45
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:495.1-495.45
   clause 1 : (typeIR) = true
   -- if typeIR <: aliasTypeIR
   -- let aliasTypeIR = typeIR as aliasTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:491.1-491.44
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:496.1-496.44
   clause 2 : (typeIR) = true
   -- if typeIR <: enumTypeIR
   -- let enumTypeIR = typeIR as enumTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:492.1-492.51
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:497.1-497.51
   clause 3 : (typeIR) = true
   -- if typeIR <: tableObjectTypeIR
   -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:493.1-494.15
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:498.1-499.15
   clause 4 : (_typeIR) = false
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:501.1-502.59
+;; ../../../../spec-concrete/5.03-wellformed.watsup:506.1-507.62
 def $definable_type_poly(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:504.1-504.45
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:509.1-509.45
   clause 0 : (typeIR) = true
   -- if typeIR <: tupleTypeIR
   -- let tupleTypeIR = typeIR as tupleTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:505.1-505.51
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:510.1-510.51
   clause 1 : (typeIR) = true
   -- if typeIR <: headerStackTypeIR
   -- let headerStackTypeIR = typeIR as headerStackTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:506.1-506.46
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:511.1-511.46
   clause 2 : (typeIR) = true
   -- if typeIR <: structTypeIR
   -- let structTypeIR = typeIR as structTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:507.1-507.46
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:512.1-512.46
   clause 3 : (typeIR) = true
   -- if typeIR <: headerTypeIR
   -- let headerTypeIR = typeIR as headerTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:508.1-508.51
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:513.1-513.51
   clause 4 : (typeIR) = true
   -- if typeIR <: headerUnionTypeIR
   -- let headerUnionTypeIR = typeIR as headerUnionTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:509.1-509.52
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:514.1-514.52
   clause 5 : (typeIR) = true
   -- if typeIR <: externObjectTypeIR
   -- let externObjectTypeIR = typeIR as externObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:510.1-510.52
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:515.1-515.52
   clause 6 : (typeIR) = true
   -- if typeIR <: parserObjectTypeIR
   -- let parserObjectTypeIR = typeIR as parserObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:511.1-511.53
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:516.1-516.53
   clause 7 : (typeIR) = true
   -- if typeIR <: controlObjectTypeIR
   -- let controlObjectTypeIR = typeIR as controlObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:512.1-512.53
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:517.1-517.53
   clause 8 : (typeIR) = true
   -- if typeIR <: packageObjectTypeIR
   -- let packageObjectTypeIR = typeIR as packageObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:513.1-514.15
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:518.1-519.15
   clause 9 : (_typeIR) = false
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:530.1-530.47
+;; ../../../../spec-concrete/5.03-wellformed.watsup:535.1-536.75
 def $directionless_trailing(direction*) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:533.1-534.65
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:539.1-540.65
   clause 0 : (direction*{direction <- direction*}) = $directionless_trailing'(true, $rev_<direction>(direction*{direction <- direction*}))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:531.1-531.54
+;; ../../../../spec-concrete/5.03-wellformed.watsup:537.1-537.54
 def $directionless_trailing'(bool, direction*) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:536.1-536.44
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:542.1-542.44
   clause 0 : (_bool, direction*{direction <- direction*}) = true
   -- if direction*{direction <- direction*} matches []
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:537.1-538.49
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:543.1-544.49
   clause 1 : (bool, direction'*{direction' <- direction'*}) = $directionless_trailing'(true, direction_t*{direction_t <- direction_t*})
   -- if (bool = true)
   -- if direction'*{direction' <- direction'*} matches _ :: _
   -- let direction :: direction_t*{direction_t <- direction_t*} = direction'*{direction' <- direction'*}
   -- if direction matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:539.1-539.68
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:545.1-545.68
   clause 2 : (bool, direction'*{direction' <- direction'*}) = false
   -- if (bool = false)
   -- if direction'*{direction' <- direction'*} matches _ :: _
   -- let direction :: direction_t*{direction_t <- direction_t*} = direction'*{direction' <- direction'*}
   -- if direction matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:540.1-542.31
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:546.1-548.31
   clause 3 : (_bool, direction*{direction <- direction*}) = $directionless_trailing'(false, direction_t*{direction_t <- direction_t*})
   -- if direction*{direction <- direction*} matches _ :: _
   -- let direction_h :: direction_t*{direction_t <- direction_t*} = direction*{direction <- direction*}
   -- if (direction_h =/= )
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:544.1-544.47
-def $nestable_action(direction, typeIR) : bool =
+;; ../../../../spec-concrete/5.03-wellformed.watsup:550.1-551.52
+def $nestable_action(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:547.1-548.49
-  clause 0 : (direction, typeIR) = $nestable_action'(direction, $canon(typeIR))
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:555.1-557.38
+  clause 0 : (typeIR) = $nestable_action'(typeIR_canon)
+  -- let typeIR_canon = $canon(typeIR)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:545.1-545.48
-def $nestable_action'(direction, typeIR) : bool =
+;; ../../../../spec-concrete/5.03-wellformed.watsup:552.1-553.52
+def $nestable_action'(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:549.1-550.29
-  clause 0 : (direction, typeIR) = false
-  -- if typeIR <: primitiveTypeIR
-  -- let primitiveTypeIR = typeIR as primitiveTypeIR
-  -- if primitiveTypeIR matches `STRING`
-  -- if (direction =/= )
-
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:551.1-551.38
-  clause 1 : (_direction, typeIR) = false
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:558.1-558.35
+  clause 0 : (typeIR) = false
   -- if typeIR <: numberTypeIR
   -- let numberTypeIR = typeIR as numberTypeIR
   -- if numberTypeIR matches `INT`
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:552.1-552.47
-  clause 2 : (_direction, typeIR) = false
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:559.1-559.44
+  clause 1 : (typeIR) = false
   -- if typeIR <: objectTypeIR
   -- let objectTypeIR = typeIR as objectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:553.1-554.15
-  clause 3 : (_direction, _typeIR) = true
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:560.1-560.49
+  clause 2 : (typeIR) = false
+  -- if typeIR <: synthesizedTypeIR
+  -- let synthesizedTypeIR = typeIR as synthesizedTypeIR
+
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:561.1-562.15
+  clause 3 : (_typeIR) = true
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:570.1-570.49
-def $nestable_function(direction, typeIR) : bool =
+;; ../../../../spec-concrete/5.03-wellformed.watsup:578.1-579.53
+def $nestable_function(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:573.1-574.51
-  clause 0 : (direction, typeIR) = $nestable_function'(direction, $canon(typeIR))
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:583.1-585.38
+  clause 0 : (typeIR) = $nestable_function'(typeIR_canon)
+  -- let typeIR_canon = $canon(typeIR)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:571.1-571.50
-def $nestable_function'(direction, typeIR) : bool =
+;; ../../../../spec-concrete/5.03-wellformed.watsup:580.1-581.53
+def $nestable_function'(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:575.1-576.29
-  clause 0 : (direction, typeIR) = false
-  -- if typeIR <: primitiveTypeIR
-  -- let primitiveTypeIR = typeIR as primitiveTypeIR
-  -- if primitiveTypeIR matches `STRING`
-  -- if (direction =/= )
-
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:577.1-578.29
-  clause 1 : (direction, typeIR) = false
-  -- if typeIR <: numberTypeIR
-  -- let numberTypeIR = typeIR as numberTypeIR
-  -- if numberTypeIR matches `INT`
-  -- if (direction =/= )
-
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:579.1-579.57
-  clause 2 : (direction, typeIR) = false
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:586.1-586.46
+  clause 0 : (typeIR) = false
   -- if typeIR <: objectTypeIR
   -- let objectTypeIR = typeIR as objectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:580.1-581.15
-  clause 3 : (_direction, _typeIR) = true
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:587.1-587.51
+  clause 1 : (typeIR) = false
+  -- if typeIR <: synthesizedTypeIR
+  -- let synthesizedTypeIR = typeIR as synthesizedTypeIR
+
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:588.1-589.15
+  clause 2 : (_typeIR) = true
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:590.1-590.55
-def $nestable_externfunction(direction, typeIR) : bool =
+;; ../../../../spec-concrete/5.03-wellformed.watsup:598.1-599.61
+def $nestable_externfunction(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:593.1-594.57
-  clause 0 : (direction, typeIR) = $nestable_externfunction'(direction, $canon(typeIR))
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:603.1-605.38
+  clause 0 : (typeIR) = $nestable_externfunction'(typeIR_canon)
+  -- let typeIR_canon = $canon(typeIR)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:591.1-591.56
-def $nestable_externfunction'(direction, typeIR) : bool =
+;; ../../../../spec-concrete/5.03-wellformed.watsup:600.1-601.61
+def $nestable_externfunction'(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:595.1-596.29
-  clause 0 : (direction, typeIR) = false
-  -- if typeIR <: primitiveTypeIR
-  -- let primitiveTypeIR = typeIR as primitiveTypeIR
-  -- if primitiveTypeIR matches `STRING`
-  -- if (direction =/= )
-
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:597.1-598.29
-  clause 1 : (direction, typeIR) = false
-  -- if typeIR <: numberTypeIR
-  -- let numberTypeIR = typeIR as numberTypeIR
-  -- if numberTypeIR matches `INT`
-  -- if (direction =/= )
-
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:599.1-599.69
-  clause 2 : (direction, typeIR) = false
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:606.1-606.58
+  clause 0 : (typeIR) = false
   -- if typeIR <: parserObjectTypeIR
   -- let parserObjectTypeIR = typeIR as parserObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:600.1-600.70
-  clause 3 : (direction, typeIR) = false
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:607.1-607.59
+  clause 1 : (typeIR) = false
   -- if typeIR <: controlObjectTypeIR
   -- let controlObjectTypeIR = typeIR as controlObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:601.1-601.70
-  clause 4 : (direction, typeIR) = false
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:608.1-608.59
+  clause 2 : (typeIR) = false
   -- if typeIR <: packageObjectTypeIR
   -- let packageObjectTypeIR = typeIR as packageObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:602.1-602.68
-  clause 5 : (direction, typeIR) = false
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:609.1-609.57
+  clause 3 : (typeIR) = false
   -- if typeIR <: tableObjectTypeIR
   -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:603.1-604.15
-  clause 6 : (_direction, _typeIR) = true
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:610.1-611.15
+  clause 4 : (_typeIR) = true
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:620.1-620.53
-def $nestable_externmethod(direction, typeIR) : bool =
+;; ../../../../spec-concrete/5.03-wellformed.watsup:627.1-628.59
+def $nestable_externmethod(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:623.1-624.55
-  clause 0 : (direction, typeIR) = $nestable_externmethod'(direction, $canon(typeIR))
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:632.1-634.38
+  clause 0 : (typeIR) = $nestable_externmethod'(typeIR_canon)
+  -- let typeIR_canon = $canon(typeIR)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:621.1-621.54
-def $nestable_externmethod'(direction, typeIR) : bool =
+;; ../../../../spec-concrete/5.03-wellformed.watsup:629.1-630.59
+def $nestable_externmethod'(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:625.1-626.29
-  clause 0 : (direction, typeIR) = false
-  -- if typeIR <: primitiveTypeIR
-  -- let primitiveTypeIR = typeIR as primitiveTypeIR
-  -- if primitiveTypeIR matches `STRING`
-  -- if (direction =/= )
-
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:627.1-628.29
-  clause 1 : (direction, typeIR) = false
-  -- if typeIR <: numberTypeIR
-  -- let numberTypeIR = typeIR as numberTypeIR
-  -- if numberTypeIR matches `INT`
-  -- if (direction =/= )
-
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:629.1-629.67
-  clause 2 : (direction, typeIR) = false
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:635.1-635.56
+  clause 0 : (typeIR) = false
   -- if typeIR <: parserObjectTypeIR
   -- let parserObjectTypeIR = typeIR as parserObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:630.1-630.68
-  clause 3 : (direction, typeIR) = false
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:636.1-636.57
+  clause 1 : (typeIR) = false
   -- if typeIR <: controlObjectTypeIR
   -- let controlObjectTypeIR = typeIR as controlObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:631.1-631.68
-  clause 4 : (direction, typeIR) = false
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:637.1-637.57
+  clause 2 : (typeIR) = false
   -- if typeIR <: packageObjectTypeIR
   -- let packageObjectTypeIR = typeIR as packageObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:632.1-632.66
-  clause 5 : (direction, typeIR) = false
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:638.1-638.55
+  clause 3 : (typeIR) = false
   -- if typeIR <: tableObjectTypeIR
   -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:633.1-634.15
-  clause 6 : (_direction, _typeIR) = true
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:639.1-640.15
+  clause 4 : (_typeIR) = true
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:643.1-643.61
-def $nestable_externabstractmethod(direction, typeIR) : bool =
+;; ../../../../spec-concrete/5.03-wellformed.watsup:649.1-650.68
+def $nestable_externabstractmethod(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:646.1-647.63
-  clause 0 : (direction, typeIR) = $nestable_externabstractmethod'(direction, $canon(typeIR))
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:654.1-656.38
+  clause 0 : (typeIR) = $nestable_externabstractmethod'(typeIR_canon)
+  -- let typeIR_canon = $canon(typeIR)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:644.1-644.62
-def $nestable_externabstractmethod'(direction, typeIR) : bool =
+;; ../../../../spec-concrete/5.03-wellformed.watsup:651.1-652.68
+def $nestable_externabstractmethod'(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:648.1-649.29
-  clause 0 : (direction, typeIR) = false
-  -- if typeIR <: primitiveTypeIR
-  -- let primitiveTypeIR = typeIR as primitiveTypeIR
-  -- if primitiveTypeIR matches `STRING`
-  -- if (direction =/= )
-
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:650.1-651.29
-  clause 1 : (direction, typeIR) = false
-  -- if typeIR <: numberTypeIR
-  -- let numberTypeIR = typeIR as numberTypeIR
-  -- if numberTypeIR matches `INT`
-  -- if (direction =/= )
-
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:652.1-652.75
-  clause 2 : (direction, typeIR) = false
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:657.1-657.64
+  clause 0 : (typeIR) = false
   -- if typeIR <: parserObjectTypeIR
   -- let parserObjectTypeIR = typeIR as parserObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:653.1-653.76
-  clause 3 : (direction, typeIR) = false
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:658.1-658.65
+  clause 1 : (typeIR) = false
   -- if typeIR <: controlObjectTypeIR
   -- let controlObjectTypeIR = typeIR as controlObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:654.1-654.76
-  clause 4 : (direction, typeIR) = false
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:659.1-659.65
+  clause 2 : (typeIR) = false
   -- if typeIR <: packageObjectTypeIR
   -- let packageObjectTypeIR = typeIR as packageObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:655.1-655.74
-  clause 5 : (direction, typeIR) = false
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:660.1-660.63
+  clause 3 : (typeIR) = false
   -- if typeIR <: tableObjectTypeIR
   -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:656.1-657.15
-  clause 6 : (_direction, _typeIR) = true
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:661.1-662.15
+  clause 4 : (_typeIR) = true
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:666.1-666.58
-def $nestable_parserapplymethod(direction, typeIR) : bool =
+;; ../../../../spec-concrete/5.03-wellformed.watsup:671.1-672.64
+def $nestable_parserapplymethod(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:669.1-670.60
-  clause 0 : (direction, typeIR) = $nestable_parserapplymethod'(direction, $canon(typeIR))
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:676.1-678.38
+  clause 0 : (typeIR) = $nestable_parserapplymethod'(typeIR_canon)
+  -- let typeIR_canon = $canon(typeIR)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:667.1-667.59
-def $nestable_parserapplymethod'(direction, typeIR) : bool =
+;; ../../../../spec-concrete/5.03-wellformed.watsup:673.1-674.64
+def $nestable_parserapplymethod'(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:671.1-672.29
-  clause 0 : (direction, typeIR) = false
-  -- if typeIR <: primitiveTypeIR
-  -- let primitiveTypeIR = typeIR as primitiveTypeIR
-  -- if primitiveTypeIR matches `STRING`
-  -- if (direction =/= )
-
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:673.1-674.29
-  clause 1 : (direction, typeIR) = false
-  -- if typeIR <: numberTypeIR
-  -- let numberTypeIR = typeIR as numberTypeIR
-  -- if numberTypeIR matches `INT`
-  -- if (direction =/= )
-
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:675.1-675.72
-  clause 2 : (direction, typeIR) = false
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:679.1-679.61
+  clause 0 : (typeIR) = false
   -- if typeIR <: parserObjectTypeIR
   -- let parserObjectTypeIR = typeIR as parserObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:676.1-676.73
-  clause 3 : (direction, typeIR) = false
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:680.1-680.62
+  clause 1 : (typeIR) = false
   -- if typeIR <: controlObjectTypeIR
   -- let controlObjectTypeIR = typeIR as controlObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:677.1-677.73
-  clause 4 : (direction, typeIR) = false
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:681.1-681.62
+  clause 2 : (typeIR) = false
   -- if typeIR <: packageObjectTypeIR
   -- let packageObjectTypeIR = typeIR as packageObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:678.1-678.71
-  clause 5 : (direction, typeIR) = false
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:682.1-682.60
+  clause 3 : (typeIR) = false
   -- if typeIR <: tableObjectTypeIR
   -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:679.1-680.15
-  clause 6 : (_direction, _typeIR) = true
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:683.1-684.15
+  clause 4 : (_typeIR) = true
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:688.1-688.59
-def $nestable_controlapplymethod(direction, typeIR) : bool =
+;; ../../../../spec-concrete/5.03-wellformed.watsup:692.1-693.65
+def $nestable_controlapplymethod(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:691.1-692.61
-  clause 0 : (direction, typeIR) = $nestable_controlapplymethod'(direction, $canon(typeIR))
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:697.1-699.38
+  clause 0 : (typeIR) = $nestable_controlapplymethod'(typeIR_canon)
+  -- let typeIR_canon = $canon(typeIR)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:689.1-689.60
-def $nestable_controlapplymethod'(direction, typeIR) : bool =
+;; ../../../../spec-concrete/5.03-wellformed.watsup:694.1-695.65
+def $nestable_controlapplymethod'(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:693.1-694.29
-  clause 0 : (direction, typeIR) = false
-  -- if typeIR <: primitiveTypeIR
-  -- let primitiveTypeIR = typeIR as primitiveTypeIR
-  -- if primitiveTypeIR matches `STRING`
-  -- if (direction =/= )
-
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:695.1-696.29
-  clause 1 : (direction, typeIR) = false
-  -- if typeIR <: numberTypeIR
-  -- let numberTypeIR = typeIR as numberTypeIR
-  -- if numberTypeIR matches `INT`
-  -- if (direction =/= )
-
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:697.1-697.73
-  clause 2 : (direction, typeIR) = false
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:700.1-700.62
+  clause 0 : (typeIR) = false
   -- if typeIR <: parserObjectTypeIR
   -- let parserObjectTypeIR = typeIR as parserObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:698.1-698.74
-  clause 3 : (direction, typeIR) = false
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:701.1-701.63
+  clause 1 : (typeIR) = false
   -- if typeIR <: packageObjectTypeIR
   -- let packageObjectTypeIR = typeIR as packageObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:699.1-699.72
-  clause 4 : (direction, typeIR) = false
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:702.1-702.61
+  clause 2 : (typeIR) = false
   -- if typeIR <: tableObjectTypeIR
   -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:700.1-701.15
-  clause 5 : (_direction, _typeIR) = true
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:703.1-704.15
+  clause 3 : (_typeIR) = true
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:716.1-716.50
+;; ../../../../spec-concrete/5.03-wellformed.watsup:719.1-720.62
 def $definable_routine_mono(routineTypeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:718.1-718.49
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:722.1-722.49
   clause 0 : (routineTypeIR) = true
   -- if routineTypeIR <: actionTypeIR
   -- let actionTypeIR = routineTypeIR as actionTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:719.1-719.58
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:723.1-723.58
   clause 1 : (routineTypeIR) = true
   -- if routineTypeIR <: builtinFunctionTypeIR
   -- let builtinFunctionTypeIR = routineTypeIR as builtinFunctionTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:720.1-720.56
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:724.1-724.56
   clause 2 : (routineTypeIR) = true
   -- if routineTypeIR <: builtinMethodTypeIR
   -- let builtinMethodTypeIR = routineTypeIR as builtinMethodTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:721.1-721.60
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:725.1-725.60
   clause 3 : (routineTypeIR) = true
   -- if routineTypeIR <: parserApplyMethodTypeIR
   -- let parserApplyMethodTypeIR = routineTypeIR as parserApplyMethodTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:722.1-722.61
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:726.1-726.61
   clause 4 : (routineTypeIR) = true
   -- if routineTypeIR <: controlApplyMethodTypeIR
   -- let controlApplyMethodTypeIR = routineTypeIR as controlApplyMethodTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:723.1-723.59
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:727.1-727.59
   clause 5 : (routineTypeIR) = true
   -- if routineTypeIR <: tableApplyMethodTypeIR
   -- let tableApplyMethodTypeIR = routineTypeIR as tableApplyMethodTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:724.1-725.15
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:728.1-729.15
   clause 6 : (_routineTypeIR) = false
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:732.1-732.50
+;; ../../../../spec-concrete/5.03-wellformed.watsup:736.1-737.62
 def $definable_routine_poly(routineTypeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:734.1-734.58
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:739.1-739.58
   clause 0 : (routineTypeIR) = true
   -- if routineTypeIR <: definedFunctionTypeIR
   -- let definedFunctionTypeIR = routineTypeIR as definedFunctionTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:735.1-735.57
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:740.1-740.57
   clause 1 : (routineTypeIR) = true
   -- if routineTypeIR <: externFunctionTypeIR
   -- let externFunctionTypeIR = routineTypeIR as externFunctionTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:736.1-736.55
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:741.1-741.55
   clause 2 : (routineTypeIR) = true
   -- if routineTypeIR <: externMethodTypeIR
   -- let externMethodTypeIR = routineTypeIR as externMethodTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:737.1-738.15
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:742.1-743.15
   clause 3 : (_routineTypeIR) = false
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:766.1-766.48
+;; ../../../../spec-concrete/5.03-wellformed.watsup:771.1-771.48
 def $nestable_constructor_extern(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:769.1-770.50
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:774.1-775.50
   clause 0 : (typeIR) = $nestable'_constructor_extern($canon(typeIR))
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:771.1-771.61
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:776.1-776.61
   clause 1 : (typeIR) = false
   -- if typeIR <: parserObjectTypeIR
   -- let parserObjectTypeIR = typeIR as parserObjectTypeIR
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:767.1-767.49
+;; ../../../../spec-concrete/5.03-wellformed.watsup:772.1-772.49
 def $nestable'_constructor_extern(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:772.1-772.63
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:777.1-777.63
   clause 0 : (typeIR) = false
   -- if typeIR <: controlObjectTypeIR
   -- let controlObjectTypeIR = typeIR as controlObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:773.1-773.63
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:778.1-778.63
   clause 1 : (typeIR) = false
   -- if typeIR <: packageObjectTypeIR
   -- let packageObjectTypeIR = typeIR as packageObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:774.1-774.61
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:779.1-779.61
   clause 2 : (typeIR) = false
   -- if typeIR <: tableObjectTypeIR
   -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:775.1-776.15
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:780.1-781.15
   clause 3 : (_typeIR) = true
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:786.1-786.48
+;; ../../../../spec-concrete/5.03-wellformed.watsup:791.1-791.48
 def $nestable_constructor_parser(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:789.1-790.50
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:794.1-795.50
   clause 0 : (typeIR) = $nestable'_constructor_parser($canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:787.1-787.49
+;; ../../../../spec-concrete/5.03-wellformed.watsup:792.1-792.49
 def $nestable'_constructor_parser(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:791.1-791.63
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:796.1-796.63
   clause 0 : (typeIR) = false
   -- if typeIR <: controlObjectTypeIR
   -- let controlObjectTypeIR = typeIR as controlObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:792.1-792.63
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:797.1-797.63
   clause 1 : (typeIR) = false
   -- if typeIR <: packageObjectTypeIR
   -- let packageObjectTypeIR = typeIR as packageObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:793.1-793.61
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:798.1-798.61
   clause 2 : (typeIR) = false
   -- if typeIR <: tableObjectTypeIR
   -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:794.1-795.15
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:799.1-800.15
   clause 3 : (_typeIR) = true
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:805.1-805.49
+;; ../../../../spec-concrete/5.03-wellformed.watsup:810.1-810.49
 def $nestable_constructor_control(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:808.1-809.51
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:813.1-814.51
   clause 0 : (typeIR) = $nestable'_constructor_control($canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:806.1-806.50
+;; ../../../../spec-concrete/5.03-wellformed.watsup:811.1-811.50
 def $nestable'_constructor_control(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:810.1-810.63
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:815.1-815.63
   clause 0 : (typeIR) = false
   -- if typeIR <: parserObjectTypeIR
   -- let parserObjectTypeIR = typeIR as parserObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:811.1-811.64
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:816.1-816.64
   clause 1 : (typeIR) = false
   -- if typeIR <: packageObjectTypeIR
   -- let packageObjectTypeIR = typeIR as packageObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:812.1-812.62
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:817.1-817.62
   clause 2 : (typeIR) = false
   -- if typeIR <: tableObjectTypeIR
   -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:813.1-814.15
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:818.1-819.15
   clause 3 : (_typeIR) = true
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:824.1-824.49
+;; ../../../../spec-concrete/5.03-wellformed.watsup:829.1-829.49
 def $nestable_constructor_package(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:827.1-828.51
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:832.1-833.51
   clause 0 : (typeIR) = $nestable'_constructor_package($canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:825.1-825.50
+;; ../../../../spec-concrete/5.03-wellformed.watsup:830.1-830.50
 def $nestable'_constructor_package(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:829.1-829.62
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:834.1-834.62
   clause 0 : (typeIR) = false
   -- if typeIR <: tableObjectTypeIR
   -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:830.1-831.15
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:835.1-836.15
   clause 1 : (_typeIR) = true
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:845.1-845.42
+;; ../../../../spec-concrete/5.03-wellformed.watsup:850.1-850.42
 def $definable_constructor(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:848.1-849.44
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:853.1-854.44
   clause 0 : (typeIR) = $definable'_constructor($canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:846.1-846.43
+;; ../../../../spec-concrete/5.03-wellformed.watsup:851.1-851.43
 def $definable'_constructor(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:850.1-850.55
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:855.1-855.55
   clause 0 : (typeIR) = true
   -- if typeIR <: externObjectTypeIR
   -- let externObjectTypeIR = typeIR as externObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:851.1-851.55
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:856.1-856.55
   clause 1 : (typeIR) = true
   -- if typeIR <: parserObjectTypeIR
   -- let parserObjectTypeIR = typeIR as parserObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:852.1-852.56
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:857.1-857.56
   clause 2 : (typeIR) = true
   -- if typeIR <: controlObjectTypeIR
   -- let controlObjectTypeIR = typeIR as controlObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:853.1-853.56
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:858.1-858.56
   clause 3 : (typeIR) = true
   -- if typeIR <: packageObjectTypeIR
   -- let packageObjectTypeIR = typeIR as packageObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:854.1-855.15
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:859.1-860.15
   clause 4 : (_typeIR) = false
   -- otherwise
 
@@ -11907,7 +11833,7 @@ relation Eval_static: cursor typingContext |- typedExpressionIR ~> value
 
    match
 
-    (explicit) p TC |- ( routineTargetIR ) < typeArgumentIR*{} >( argumentIR*{} ) as expressionIR # ( typeIR ctk ) ~> %
+    (explicit) p TC |- ( routineTargetIR ) < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} ) as expressionIR # ( typeIR ctk ) ~> %
     (implicit) p TC |- expressionIR # ( typeIR ctk ) ~> %
     -- if expressionIR <: callExpressionIR
     -- let callExpressionIR = expressionIR as callExpressionIR
@@ -12319,7 +12245,7 @@ relation TypeArguments_ok: cursor typingContext |- typeArgument* : typeArgumentL
 
    match
 
-    (explicit) p TC |- typeArgument_h :: typeArgument_t*{} : % # %
+    (explicit) p TC |- typeArgument_h :: typeArgument_t*{typeArgument_t <- typeArgument_t*} : % # %
     (implicit) p TC |- typeArgument*{typeArgument <- typeArgument*} : % # %
     -- if typeArgument*{typeArgument <- typeArgument*} matches _ :: _
     -- let typeArgument_h :: typeArgument_t*{typeArgument_t <- typeArgument_t*} = typeArgument*{typeArgument <- typeArgument*}
@@ -12610,7 +12536,7 @@ relation Sub_expl_canon_neq: typeIR <: typeIR
 
    match
 
-    (explicit) seq< typeIR_a*{} > as typeIR <: typeIR
+    (explicit) seq< typeIR_a*{typeIR_a <- typeIR_a*} > as typeIR <: typeIR
     (implicit) typeIR' <: typeIR
     -- if typeIR' <: sequenceTypeIR
     -- let sequenceTypeIR = typeIR' as sequenceTypeIR
@@ -12660,7 +12586,7 @@ relation Sub_expl_canon_neq: typeIR <: typeIR
 
    match
 
-    (explicit) seq< typeIR_a*{} ,...> as typeIR <: typeIR
+    (explicit) seq< typeIR_a*{typeIR_a <- typeIR_a*} ,...> as typeIR <: typeIR
     (implicit) typeIR' <: typeIR
     -- if typeIR' <: sequenceTypeIR
     -- let sequenceTypeIR = typeIR' as sequenceTypeIR
@@ -12713,7 +12639,7 @@ relation Sub_expl_canon_neq: typeIR <: typeIR
 
    match
 
-    (explicit) record{ typeIR_a id_a ;*{} } as typeIR <: typeIR
+    (explicit) record{ typeIR_a id_a ;*{id_a <- id_a*, typeIR_a <- typeIR_a*} } as typeIR <: typeIR
     (implicit) typeIR' <: typeIR
     -- if typeIR' <: recordTypeIR
     -- let recordTypeIR = typeIR' as recordTypeIR
@@ -12755,7 +12681,7 @@ relation Sub_expl_canon_neq: typeIR <: typeIR
 
    match
 
-    (explicit) record{ typeIR_a id_a ;*{} ,...} as typeIR <: typeIR
+    (explicit) record{ typeIR_a id_a ;*{id_a <- id_a*, typeIR_a <- typeIR_a*} ,...} as typeIR <: typeIR
     (implicit) typeIR' <: typeIR
     -- if typeIR' <: recordTypeIR
     -- let recordTypeIR = typeIR' as recordTypeIR
@@ -12917,7 +12843,7 @@ relation Sub_impl_canon_neq: typeIR <: typeIR
 
    match
 
-    (explicit) enum _tid # typeIR_a { _valueFieldIR*{} } as typeIR <: typeIR_b
+    (explicit) enum _tid # typeIR_a { _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } as typeIR <: typeIR_b
     (implicit) typeIR <: typeIR_b
     -- if typeIR <: enumTypeIR
     -- let enumTypeIR = typeIR as enumTypeIR
@@ -12977,7 +12903,7 @@ relation Sub_impl_canon_neq: typeIR <: typeIR
 
    match
 
-    (explicit) seq< typeIR_a*{} > as typeIR <: typeIR
+    (explicit) seq< typeIR_a*{typeIR_a <- typeIR_a*} > as typeIR <: typeIR
     (implicit) typeIR' <: typeIR
     -- if typeIR' <: sequenceTypeIR
     -- let sequenceTypeIR = typeIR' as sequenceTypeIR
@@ -13036,7 +12962,7 @@ relation Sub_impl_canon_neq: typeIR <: typeIR
 
    match
 
-    (explicit) seq< typeIR_a*{} ,...> as typeIR <: typeIR
+    (explicit) seq< typeIR_a*{typeIR_a <- typeIR_a*} ,...> as typeIR <: typeIR
     (implicit) typeIR' <: typeIR
     -- if typeIR' <: sequenceTypeIR
     -- let sequenceTypeIR = typeIR' as sequenceTypeIR
@@ -13089,7 +13015,7 @@ relation Sub_impl_canon_neq: typeIR <: typeIR
 
    match
 
-    (explicit) record{ typeIR_a id_a ;*{} } as typeIR <: typeIR
+    (explicit) record{ typeIR_a id_a ;*{id_a <- id_a*, typeIR_a <- typeIR_a*} } as typeIR <: typeIR
     (implicit) typeIR' <: typeIR
     -- if typeIR' <: recordTypeIR
     -- let recordTypeIR = typeIR' as recordTypeIR
@@ -13131,7 +13057,7 @@ relation Sub_impl_canon_neq: typeIR <: typeIR
 
    match
 
-    (explicit) record{ typeIR_a id_a ;*{} ,...} as typeIR <: typeIR
+    (explicit) record{ typeIR_a id_a ;*{id_a <- id_a*, typeIR_a <- typeIR_a*} ,...} as typeIR <: typeIR
     (implicit) typeIR' <: typeIR
     -- if typeIR' <: recordTypeIR
     -- let recordTypeIR = typeIR' as recordTypeIR
@@ -14896,7 +14822,7 @@ relation BlockElementStmts_ok: typingContext flow |- blockElementStatement* : ty
 
    match
 
-    (explicit) TC_0 f_0 |- blockElementStatement_h :: blockElementStatement_t*{} : % % %
+    (explicit) TC_0 f_0 |- blockElementStatement_h :: blockElementStatement_t*{blockElementStatement_t <- blockElementStatement_t*} : % % %
     (implicit) TC_0 f_0 |- blockElementStatement*{blockElementStatement <- blockElementStatement*} : % % %
     -- if blockElementStatement*{blockElementStatement <- blockElementStatement*} matches _ :: _
     -- let blockElementStatement_h :: blockElementStatement_t*{blockElementStatement_t <- blockElementStatement_t*} = blockElementStatement*{blockElementStatement <- blockElementStatement*}
@@ -14989,7 +14915,7 @@ relation Parameters_ok: cursor typingContext |- parameter* : parameterListIR # t
 
    match
 
-    (explicit) p TC |- parameter_h :: parameter_t*{} : % # %
+    (explicit) p TC |- parameter_h :: parameter_t*{parameter_t <- parameter_t*} : % # %
     (implicit) p TC |- parameter*{parameter <- parameter*} : % # %
     -- if parameter*{parameter <- parameter*} matches _ :: _
     -- let parameter_h :: parameter_t*{parameter_t <- parameter_t*} = parameter*{parameter <- parameter*}
@@ -15026,7 +14952,7 @@ relation ConstructorParameters_ok: cursor typingContext |- constructorParameter*
 
    match
 
-    (explicit) p TC |- constructorParameter*{} : % # %
+    (explicit) p TC |- constructorParameter*{constructorParameter <- constructorParameter*} : % # %
     (implicit) p TC |- constructorParameter*{constructorParameter <- constructorParameter*} : % # %
 
    paths
@@ -15126,7 +15052,7 @@ relation ExternMethods_ok: typingContext tid |- methodPrototype* : typingContext
 
    match
 
-    (explicit) TC_0 tid_extern |- methodPrototype_h :: methodPrototype_t*{} : % %
+    (explicit) TC_0 tid_extern |- methodPrototype_h :: methodPrototype_t*{methodPrototype_t <- methodPrototype_t*} : % %
     (implicit) TC_0 tid_extern |- methodPrototype*{methodPrototype <- methodPrototype*} : % %
     -- if methodPrototype*{methodPrototype <- methodPrototype*} matches _ :: _
     -- let methodPrototype_h :: methodPrototype_t*{methodPrototype_t <- methodPrototype_t*} = methodPrototype*{methodPrototype <- methodPrototype*}
@@ -15196,7 +15122,7 @@ relation ExternConstructors_ok: typingContext tid |- methodPrototype* : typingCo
 
    match
 
-    (explicit) TC_0 tid_extern |- methodPrototype_h :: methodPrototype_t*{} : % %
+    (explicit) TC_0 tid_extern |- methodPrototype_h :: methodPrototype_t*{methodPrototype_t <- methodPrototype_t*} : % %
     (implicit) TC_0 tid_extern |- methodPrototype*{methodPrototype <- methodPrototype*} : % %
     -- if methodPrototype*{methodPrototype <- methodPrototype*} matches _ :: _
     -- let methodPrototype_h :: methodPrototype_t*{methodPrototype_t <- methodPrototype_t*} = methodPrototype*{methodPrototype <- methodPrototype*}
@@ -15216,7 +15142,7 @@ relation ParserTransition_ok: typingContext nameIR* |- transitionStatement : tra
 
    match
 
-    (explicit) TC_0 nameIR_state*{} |- : %
+    (explicit) TC_0 nameIR_state*{nameIR_state <- nameIR_state*} |- : %
     (implicit) TC_0 nameIR_state*{nameIR_state <- nameIR_state*} |- transitionStatement : %
     -- if transitionStatement matches ``EMPTY`
 
@@ -15230,7 +15156,7 @@ relation ParserTransition_ok: typingContext nameIR* |- transitionStatement : tra
 
    match
 
-    (explicit) TC_0 nameIR_state*{} |- transition name ; : %
+    (explicit) TC_0 nameIR_state*{nameIR_state <- nameIR_state*} |- transition name ; : %
     (implicit) TC_0 nameIR_state*{nameIR_state <- nameIR_state*} |- transitionStatement : %
     -- if transitionStatement matches `TRANSITION%`
     -- let transition stateExpression = transitionStatement
@@ -15250,7 +15176,7 @@ relation ParserTransition_ok: typingContext nameIR* |- transitionStatement : tra
 
    match
 
-    (explicit) TC_0 nameIR_state*{} |- transition select( expressionList_key ){ selectCaseList } as stateExpression : %
+    (explicit) TC_0 nameIR_state*{nameIR_state <- nameIR_state*} |- transition select( expressionList_key ){ selectCaseList } as stateExpression : %
     (implicit) TC_0 nameIR_state*{nameIR_state <- nameIR_state*} |- transitionStatement : %
     -- if transitionStatement matches `TRANSITION%`
     -- let transition stateExpression = transitionStatement
@@ -15468,7 +15394,7 @@ relation ParserStmts_ok: typingContext |- parserStatement* : typingContext parse
 
    match
 
-    (explicit) TC_0 |- parserStatement_h :: parserStatement_t*{} : % %
+    (explicit) TC_0 |- parserStatement_h :: parserStatement_t*{parserStatement_t <- parserStatement_t*} : % %
     (implicit) TC_0 |- parserStatement*{parserStatement <- parserStatement*} : % %
     -- if parserStatement*{parserStatement <- parserStatement*} matches _ :: _
     -- let parserStatement_h :: parserStatement_t*{parserStatement_t <- parserStatement_t*} = parserStatement*{parserStatement <- parserStatement*}
@@ -15488,7 +15414,7 @@ relation ParserState_ok: typingContext nameIR* |- parserState : parserStateIR
 
    match
 
-    (explicit) TC_0 nameIR_state*{} |- annotationList state name { parserStatementList transitionStatement } : %
+    (explicit) TC_0 nameIR_state*{nameIR_state <- nameIR_state*} |- annotationList state name { parserStatementList transitionStatement } : %
     (implicit) TC_0 nameIR_state*{nameIR_state <- nameIR_state*} |- annotationList state name { parserStatementList transitionStatement } : %
 
    paths
@@ -15511,7 +15437,7 @@ relation ParserStates_ok: typingContext |- parserState* : parserStateIR*
 
    match
 
-    (explicit) TC |- parserState*{} : %
+    (explicit) TC |- parserState*{parserState <- parserState*} : %
     (implicit) TC |- parserState*{parserState <- parserState*} : %
 
    paths
@@ -15650,7 +15576,7 @@ relation ParserLocalDecls_ok: typingContext |- parserLocalDeclaration* : typingC
 
    match
 
-    (explicit) TC_0 |- parserLocalDeclaration_h :: parserLocalDeclaration_t*{} : % %
+    (explicit) TC_0 |- parserLocalDeclaration_h :: parserLocalDeclaration_t*{parserLocalDeclaration_t <- parserLocalDeclaration_t*} : % %
     (implicit) TC_0 |- parserLocalDeclaration*{parserLocalDeclaration <- parserLocalDeclaration*} : % %
     -- if parserLocalDeclaration*{parserLocalDeclaration <- parserLocalDeclaration*} matches _ :: _
     -- let parserLocalDeclaration_h :: parserLocalDeclaration_t*{parserLocalDeclaration_t <- parserLocalDeclaration_t*} = parserLocalDeclaration*{parserLocalDeclaration <- parserLocalDeclaration*}
@@ -15709,7 +15635,7 @@ relation TableKeys_ok: typingContext tableContext |- tableKey* : tableContext ta
 
    match
 
-    (explicit) TC TBLC_0 |- tableKey_h :: tableKey_t*{} : % %
+    (explicit) TC TBLC_0 |- tableKey_h :: tableKey_t*{tableKey_t <- tableKey_t*} : % %
     (implicit) TC TBLC_0 |- tableKey*{tableKey <- tableKey*} : % %
     -- if tableKey*{tableKey <- tableKey*} matches _ :: _
     -- let tableKey_h :: tableKey_t*{tableKey_t <- tableKey_t*} = tableKey*{tableKey <- tableKey*}
@@ -15729,7 +15655,7 @@ relation Call_action_partial_ok: typingContext |- parameterTypeIR* @ argumentLis
 
    match
 
-    (explicit) TC |- parameterTypeIR*{} @ argumentIR*{} : % , % @ %
+    (explicit) TC |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} @ argumentIR*{argumentIR <- argumentIR*} : % , % @ %
     (implicit) TC |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} @ argumentIR*{argumentIR <- argumentIR*} : % , % @ %
 
    paths
@@ -15816,7 +15742,7 @@ relation TableActions_ok: typingContext tableContext |- tableAction* : tableCont
 
    match
 
-    (explicit) TC TBLC_0 |- tableAction_h :: tableAction_t*{} : % %
+    (explicit) TC TBLC_0 |- tableAction_h :: tableAction_t*{tableAction_t <- tableAction_t*} : % %
     (implicit) TC TBLC_0 |- tableAction*{tableAction <- tableAction*} : % %
     -- if tableAction*{tableAction <- tableAction*} matches _ :: _
     -- let tableAction_h :: tableAction_t*{tableAction_t <- tableAction_t*} = tableAction*{tableAction <- tableAction*}
@@ -15836,7 +15762,7 @@ relation Call_action_default_ok: typingContext |- parameterTypeIR* @ argumentLis
 
    match
 
-    (explicit) TC |- parameterTypeIR*{} @ argumentIR*{} : % , % @ %
+    (explicit) TC |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} @ argumentIR*{argumentIR <- argumentIR*} : % , % @ %
     (implicit) TC |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} @ argumentIR*{argumentIR <- argumentIR*} : % , % @ %
 
    paths
@@ -16384,7 +16310,7 @@ relation TableEntries_ok: typingContext tableContext |- tableEntry* : tableConte
 
    match
 
-    (explicit) TC TBLC_0 |- tableEntry_h :: tableEntry_t*{} : % %
+    (explicit) TC TBLC_0 |- tableEntry_h :: tableEntry_t*{tableEntry_t <- tableEntry_t*} : % %
     (implicit) TC TBLC_0 |- tableEntry*{tableEntry <- tableEntry*} : % %
     -- if tableEntry*{tableEntry <- tableEntry*} matches _ :: _
     -- let tableEntry_h :: tableEntry_t*{tableEntry_t <- tableEntry_t*} = tableEntry*{tableEntry <- tableEntry*}
@@ -16558,7 +16484,7 @@ relation TableProperties_ok: typingContext tableContext |- tableProperty* : tabl
 
    match
 
-    (explicit) TC TBLC_0 |- tableProperty_h :: tableProperty_t*{} : % %
+    (explicit) TC TBLC_0 |- tableProperty_h :: tableProperty_t*{tableProperty_t <- tableProperty_t*} : % %
     (implicit) TC TBLC_0 |- tableProperty*{tableProperty <- tableProperty*} : % %
     -- if tableProperty*{tableProperty <- tableProperty*} matches _ :: _
     -- let tableProperty_h :: tableProperty_t*{tableProperty_t <- tableProperty_t*} = tableProperty*{tableProperty <- tableProperty*}
@@ -16578,7 +16504,7 @@ relation Table_ok: typingContext |- tableProperty* : tableContext tablePropertyL
 
    match
 
-    (explicit) TC |- tableProperty*{} : % %
+    (explicit) TC |- tableProperty*{tableProperty <- tableProperty*} : % %
     (implicit) TC |- tableProperty*{tableProperty <- tableProperty*} : % %
 
    paths
@@ -16758,7 +16684,7 @@ relation ControlLocalDecls_ok: typingContext |- controlLocalDeclaration* : typin
 
    match
 
-    (explicit) TC_0 |- controlLocalDeclaration_h :: controlLocalDeclaration_t*{} : % %
+    (explicit) TC_0 |- controlLocalDeclaration_h :: controlLocalDeclaration_t*{controlLocalDeclaration_t <- controlLocalDeclaration_t*} : % %
     (implicit) TC_0 |- controlLocalDeclaration*{controlLocalDeclaration <- controlLocalDeclaration*} : % %
     -- if controlLocalDeclaration*{controlLocalDeclaration <- controlLocalDeclaration*} matches _ :: _
     -- let controlLocalDeclaration_h :: controlLocalDeclaration_t*{controlLocalDeclaration_t <- controlLocalDeclaration_t*} = controlLocalDeclaration*{controlLocalDeclaration <- controlLocalDeclaration*}
@@ -17540,7 +17466,7 @@ relation Decls_ok: cursor typingContext |- declaration* : typingContext declarat
 
    match
 
-    (explicit) p TC_0 |- declaration_h :: declaration_t*{} : % %
+    (explicit) p TC_0 |- declaration_h :: declaration_t*{declaration_t <- declaration_t*} : % %
     (implicit) p TC_0 |- declaration*{declaration <- declaration*} : % %
     -- if declaration*{declaration <- declaration*} matches _ :: _
     -- let declaration_h :: declaration_t*{declaration_t <- declaration_t*} = declaration*{declaration <- declaration*}
@@ -17584,7 +17510,7 @@ relation Call_convention_expr_ok: cursor typingContext actctxt |- parameterTypeI
 
    match
 
-    (explicit) p TC actctxt |- in typeIR_param _id _value?{} @ typedExpressionIR_arg : %
+    (explicit) p TC actctxt |- in typeIR_param _id _value?{_value <- _value?} @ typedExpressionIR_arg : %
     (implicit) p TC actctxt |- direction typeIR_param _id _value?{_value <- _value?} @ typedExpressionIR_arg : %
     -- if direction matches `IN`
 
@@ -17601,7 +17527,7 @@ relation Call_convention_expr_ok: cursor typingContext actctxt |- parameterTypeI
 
    match
 
-    (explicit) p TC actctxt |- direction typeIR_param _id _value?{} @ typedExpressionIR_arg : %
+    (explicit) p TC actctxt |- direction typeIR_param _id _value?{_value <- _value?} @ typedExpressionIR_arg : %
     (implicit) p TC actctxt |- direction typeIR_param _id _value?{_value <- _value?} @ typedExpressionIR_arg : %
 
    paths
@@ -17618,7 +17544,7 @@ relation Call_convention_expr_ok: cursor typingContext actctxt |- parameterTypeI
 
    match
 
-    (explicit) p TC actctxt |- typeIR_param _id _value?{} @ typedExpressionIR_arg : %
+    (explicit) p TC actctxt |- typeIR_param _id _value?{_value <- _value?} @ typedExpressionIR_arg : %
     (implicit) p TC actctxt |- direction typeIR_param _id _value?{_value <- _value?} @ typedExpressionIR_arg : %
     -- if direction matches ``EMPTY`
 
@@ -17730,7 +17656,7 @@ relation Call_convention_ok: cursor typingContext actctxt |- parameterTypeIR* @ 
 
    match
 
-    (explicit) p TC actctxt |- parameterTypeIR_h :: parameterTypeIR_t*{} @ argumentIR_h :: argumentIR_t*{} : %
+    (explicit) p TC actctxt |- parameterTypeIR_h :: parameterTypeIR_t*{parameterTypeIR_t <- parameterTypeIR_t*} @ argumentIR_h :: argumentIR_t*{argumentIR_t <- argumentIR_t*} : %
     (implicit) p TC actctxt |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} @ argumentIR*{argumentIR <- argumentIR*} : %
     -- if parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} matches _ :: _
     -- let parameterTypeIR_h :: parameterTypeIR_t*{parameterTypeIR_t <- parameterTypeIR_t*} = parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}
@@ -17858,7 +17784,7 @@ relation RoutineType_ok: cursor typingContext |- routineTargetIR < typeArgumentL
 
    match
 
-    (explicit) p TC |- prefixedNameIR as routineTargetIR < typeArgumentIR'*{} >( argumentIR*{} ): % <# % >(# % )
+    (explicit) p TC |- prefixedNameIR as routineTargetIR < typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} >( argumentIR*{argumentIR <- argumentIR*} ): % <# % >(# % )
     (implicit) p TC |- routineTargetIR < typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} >( argumentIR*{argumentIR <- argumentIR*} ): % <# % >(# % )
     -- if routineTargetIR <: prefixedNameIR
     -- let prefixedNameIR = routineTargetIR as prefixedNameIR
@@ -18005,7 +17931,7 @@ relation RoutineType_ok: cursor typingContext |- routineTargetIR < typeArgumentL
 
    match
 
-    (explicit) p TC |- typedExpressionIR_base . nameIR < typeArgumentIR*{} >( argumentIR*{} ): % <# % >(# % )
+    (explicit) p TC |- typedExpressionIR_base . nameIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} ): % <# % >(# % )
     (implicit) p TC |- routineTargetIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} ): % <# % >(# % )
     -- if routineTargetIR matches `%.%`
     -- let typedExpressionIR_base . nameIR = routineTargetIR
@@ -18033,7 +17959,7 @@ relation RoutineType_ok: cursor typingContext |- routineTargetIR < typeArgumentL
 
    match
 
-    (explicit) p TC |- typedExpressionIR_base . "apply" < [] >( argumentIR*{} ): % <# % >(# % )
+    (explicit) p TC |- typedExpressionIR_base . "apply" < [] >( argumentIR*{argumentIR <- argumentIR*} ): % <# % >(# % )
     (implicit) p TC |- routineTargetIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} ): % <# % >(# % )
     -- if routineTargetIR matches `%.%`
     -- let typedExpressionIR_base . text = routineTargetIR
@@ -18066,7 +17992,7 @@ relation RoutineType_ok: cursor typingContext |- routineTargetIR < typeArgumentL
 
    match
 
-    (explicit) p TC |- typedExpressionIR_base . "apply" < [] >( argumentIR*{} ): % <# % >(# % )
+    (explicit) p TC |- typedExpressionIR_base . "apply" < [] >( argumentIR*{argumentIR <- argumentIR*} ): % <# % >(# % )
     (implicit) p TC |- routineTargetIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} ): % <# % >(# % )
     -- if routineTargetIR matches `%.%`
     -- let typedExpressionIR_base . text = routineTargetIR
@@ -18122,7 +18048,7 @@ relation RoutineType_ok: cursor typingContext |- routineTargetIR < typeArgumentL
 
    match
 
-    (explicit) p TC |- ( routineTargetIR ) < typeArgumentIR*{} >( argumentIR*{} ): % <# % >(# % )
+    (explicit) p TC |- ( routineTargetIR ) < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} ): % <# % >(# % )
     (implicit) p TC |- routineTargetIR' < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} ): % <# % >(# % )
     -- if routineTargetIR' matches `(%)`
     -- let ( routineTargetIR ) = routineTargetIR'
@@ -18141,7 +18067,7 @@ relation Call_ok: cursor typingContext |- routineTypeIR < typeArgumentListIR # t
 
    match
 
-    (explicit) p TC |- builtin_function( parameterTypeIR*{} )-> typeIR_ret as routineTypeIR < typeArgumentIR*{} # [] >( argumentIR*{} # id_default*{} ): % < % >( % )
+    (explicit) p TC |- builtin_function( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret as routineTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # [] >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): % < % >( % )
     (implicit) p TC |- routineTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # tid*{tid <- tid*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): % < % >( % )
     -- if routineTypeIR <: builtinFunctionTypeIR
     -- let builtin_function( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret = routineTypeIR as builtinFunctionTypeIR
@@ -18162,7 +18088,7 @@ relation Call_ok: cursor typingContext |- routineTypeIR < typeArgumentListIR # t
 
    match
 
-    (explicit) p TC |- function( parameterTypeIR*{} )-> typeIR_ret as routineTypeIR < typeArgumentIR*{} # tid_infer*{} >( argumentIR*{} # id_default*{} ): % < % >( % )
+    (explicit) p TC |- function( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret as routineTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # tid_infer*{tid_infer <- tid_infer*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): % < % >( % )
     (implicit) p TC |- routineTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # tid_infer*{tid_infer <- tid_infer*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): % < % >( % )
     -- if routineTypeIR <: definedFunctionTypeIR
     -- let function( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret = routineTypeIR as definedFunctionTypeIR
@@ -18191,7 +18117,7 @@ relation Call_ok: cursor typingContext |- routineTypeIR < typeArgumentListIR # t
 
    match
 
-    (explicit) p TC |- extern_function( parameterTypeIR*{} )-> typeIR_ret as routineTypeIR < typeArgumentIR*{} # tid_infer*{} >( argumentIR*{} # id_default*{} ): % < % >( % )
+    (explicit) p TC |- extern_function( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret as routineTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # tid_infer*{tid_infer <- tid_infer*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): % < % >( % )
     (implicit) p TC |- routineTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # tid_infer*{tid_infer <- tid_infer*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): % < % >( % )
     -- if routineTypeIR <: externFunctionTypeIR
     -- let extern_function( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret = routineTypeIR as externFunctionTypeIR
@@ -18220,7 +18146,7 @@ relation Call_ok: cursor typingContext |- routineTypeIR < typeArgumentListIR # t
 
    match
 
-    (explicit) p TC |- action( parameterTypeIR*{} ) as routineTypeIR < [] # [] >( argumentIR*{} # id_default*{} ): % < % >( % )
+    (explicit) p TC |- action( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} ) as routineTypeIR < [] # [] >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): % < % >( % )
     (implicit) p TC |- routineTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # tid*{tid <- tid*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): % < % >( % )
     -- if routineTypeIR <: actionTypeIR
     -- let action( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} ) = routineTypeIR as actionTypeIR
@@ -18242,7 +18168,7 @@ relation Call_ok: cursor typingContext |- routineTypeIR < typeArgumentListIR # t
 
    match
 
-    (explicit) p TC |- builtin_method( parameterTypeIR*{} )-> typeIR_ret as routineTypeIR < typeArgumentIR*{} # [] >( argumentIR*{} # id_default*{} ): % < % >( % )
+    (explicit) p TC |- builtin_method( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret as routineTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # [] >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): % < % >( % )
     (implicit) p TC |- routineTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # tid*{tid <- tid*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): % < % >( % )
     -- if routineTypeIR <: builtinMethodTypeIR
     -- let builtin_method( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret = routineTypeIR as builtinMethodTypeIR
@@ -18263,7 +18189,7 @@ relation Call_ok: cursor typingContext |- routineTypeIR < typeArgumentListIR # t
 
    match
 
-    (explicit) p TC |- extern_method( parameterTypeIR*{} )-> typeIR_ret as routineTypeIR < typeArgumentIR*{} # tid_infer*{} >( argumentIR*{} # id_default*{} ): % < % >( % )
+    (explicit) p TC |- extern_method( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret as routineTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # tid_infer*{tid_infer <- tid_infer*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): % < % >( % )
     (implicit) p TC |- routineTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # tid_infer*{tid_infer <- tid_infer*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): % < % >( % )
     -- if routineTypeIR <: externMethodTypeIR
     -- let externMethodTypeIR = routineTypeIR as externMethodTypeIR
@@ -18294,7 +18220,7 @@ relation Call_ok: cursor typingContext |- routineTypeIR < typeArgumentListIR # t
 
    match
 
-    (explicit) p TC |- extern_methodabstract( parameterTypeIR*{} )-> typeIR_ret as routineTypeIR < typeArgumentIR*{} # tid_infer*{} >( argumentIR*{} # id_default*{} ): % < % >( % )
+    (explicit) p TC |- extern_methodabstract( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret as routineTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # tid_infer*{tid_infer <- tid_infer*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): % < % >( % )
     (implicit) p TC |- routineTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # tid_infer*{tid_infer <- tid_infer*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): % < % >( % )
     -- if routineTypeIR <: externMethodTypeIR
     -- let externMethodTypeIR = routineTypeIR as externMethodTypeIR
@@ -18325,7 +18251,7 @@ relation Call_ok: cursor typingContext |- routineTypeIR < typeArgumentListIR # t
 
    match
 
-    (explicit) p TC |- parser_apply( parameterTypeIR*{} ) as routineTypeIR < [] # [] >( argumentIR*{} # id_default*{} ): % < % >( % )
+    (explicit) p TC |- parser_apply( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} ) as routineTypeIR < [] # [] >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): % < % >( % )
     (implicit) p TC |- routineTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # tid*{tid <- tid*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): % < % >( % )
     -- if routineTypeIR <: parserApplyMethodTypeIR
     -- let parser_apply( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} ) = routineTypeIR as parserApplyMethodTypeIR
@@ -18347,7 +18273,7 @@ relation Call_ok: cursor typingContext |- routineTypeIR < typeArgumentListIR # t
 
    match
 
-    (explicit) p TC |- control_apply( parameterTypeIR*{} ) as routineTypeIR < [] # [] >( argumentIR*{} # id_default*{} ): % < % >( % )
+    (explicit) p TC |- control_apply( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} ) as routineTypeIR < [] # [] >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): % < % >( % )
     (implicit) p TC |- routineTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # tid*{tid <- tid*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): % < % >( % )
     -- if routineTypeIR <: controlApplyMethodTypeIR
     -- let control_apply( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} ) = routineTypeIR as controlApplyMethodTypeIR
@@ -18392,7 +18318,7 @@ relation ConstructorType_ok: cursor typingContext |- prefixedNameIR < typeArgume
 
    match
 
-    (explicit) p TC |- prefixedNameIR < typeArgumentIR*{} >( argumentIR*{} ): % <# % >(# % )
+    (explicit) p TC |- prefixedNameIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} ): % <# % >(# % )
     (implicit) p TC |- prefixedNameIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} ): % <# % >(# % )
 
    paths
@@ -18419,7 +18345,7 @@ relation Inst_ok: cursor typingContext instctxt |- constructorTypeIR < typeArgum
 
    match
 
-    (explicit) global TC instctxt |- constructorTypeIR < typeArgumentIR*{} # tid_infer*{} >( argumentIR*{} # id_default*{} ): % < % >( % )
+    (explicit) global TC instctxt |- constructorTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # tid_infer*{tid_infer <- tid_infer*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): % < % >( % )
     (implicit) cursor TC instctxt |- constructorTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # tid_infer*{tid_infer <- tid_infer*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): % < % >( % )
     -- if cursor matches `GLOBAL`
 
@@ -18451,7 +18377,7 @@ relation Inst_ok: cursor typingContext instctxt |- constructorTypeIR < typeArgum
 
    match
 
-    (explicit) p TC instctxt |- constructorTypeIR < typeArgumentIR*{} # tid_infer*{} >( argumentIR*{} # id_default*{} ): % < % >( % )
+    (explicit) p TC instctxt |- constructorTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # tid_infer*{tid_infer <- tid_infer*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): % < % >( % )
     (implicit) p TC instctxt |- constructorTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # tid_infer*{tid_infer <- tid_infer*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): % < % >( % )
 
    paths
@@ -19389,7 +19315,7 @@ relation SwitchCases_table_ok: typingContext flow tid |- switchCase* : flow swit
 
    match
 
-    (explicit) TC f tid_table |- switchCase_h :: switchCase_t*{} : % % # %
+    (explicit) TC f tid_table |- switchCase_h :: switchCase_t*{switchCase_t <- switchCase_t*} : % % # %
     (implicit) TC f tid_table |- switchCase*{switchCase <- switchCase*} : % % # %
     -- if switchCase*{switchCase <- switchCase*} matches _ :: _
     -- let switchCase_h :: switchCase_t*{switchCase_t <- switchCase_t*} = switchCase*{switchCase <- switchCase*}
@@ -19488,7 +19414,7 @@ relation SwitchCases_general_ok: typingContext flow typeIR |- switchCase* : flow
 
    match
 
-    (explicit) TC f typeIR_switch |- switchCase_h :: switchCase_t*{} : % % # %
+    (explicit) TC f typeIR_switch |- switchCase_h :: switchCase_t*{switchCase_t <- switchCase_t*} : % % # %
     (implicit) TC f typeIR_switch |- switchCase*{switchCase <- switchCase*} : % % # %
     -- if switchCase*{switchCase <- switchCase*} matches _ :: _
     -- let switchCase_h :: switchCase_t*{switchCase_t <- switchCase_t*} = switchCase*{switchCase <- switchCase*}
@@ -19632,7 +19558,7 @@ relation Decls_object_ok: cursor typingContext frame rdenv |- objectDeclaration*
 
    match
 
-    (explicit) p TC frame_0 rdenv_0 |- objectDeclaration_h :: objectDeclaration_t*{} : % % %
+    (explicit) p TC frame_0 rdenv_0 |- objectDeclaration_h :: objectDeclaration_t*{objectDeclaration_t <- objectDeclaration_t*} : % % %
     (implicit) p TC frame_0 rdenv_0 |- objectDeclaration*{objectDeclaration <- objectDeclaration*} : % % %
     -- if objectDeclaration*{objectDeclaration <- objectDeclaration*} matches _ :: _
     -- let objectDeclaration_h :: objectDeclaration_t*{objectDeclaration_t <- objectDeclaration_t*} = objectDeclaration*{objectDeclaration <- objectDeclaration*}
@@ -19751,7 +19677,7 @@ relation Enum_serializable_fields_ok: typingContext nameIR typeIR |- namedExpres
 
    match
 
-    (explicit) TC_0 nameIR_enum typeIR |- namedExpression_h :: namedExpression_t*{} : % % # %
+    (explicit) TC_0 nameIR_enum typeIR |- namedExpression_h :: namedExpression_t*{namedExpression_t <- namedExpression_t*} : % % # %
     (implicit) TC_0 nameIR_enum typeIR |- namedExpression*{namedExpression <- namedExpression*} : % % # %
     -- if namedExpression*{namedExpression <- namedExpression*} matches _ :: _
     -- let namedExpression_h :: namedExpression_t*{namedExpression_t <- namedExpression_t*} = namedExpression*{namedExpression <- namedExpression*}
@@ -20083,7 +20009,7 @@ relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keyse
 
    match
 
-    (explicit) TC typeIR'*{} |- default as keysetExpression : %
+    (explicit) TC typeIR'*{typeIR' <- typeIR'*} |- default as keysetExpression : %
     (implicit) TC typeIR'*{typeIR' <- typeIR'*} |- keysetExpression : %
     -- if keysetExpression <: simpleKeysetExpression
     -- let simpleKeysetExpression = keysetExpression as simpleKeysetExpression
@@ -20113,7 +20039,7 @@ relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keyse
 
    match
 
-    (explicit) TC typeIR*{} |- _ as keysetExpression : %
+    (explicit) TC typeIR*{typeIR <- typeIR*} |- _ as keysetExpression : %
     (implicit) TC typeIR*{typeIR <- typeIR*} |- keysetExpression : %
     -- if keysetExpression <: simpleKeysetExpression
     -- let simpleKeysetExpression = keysetExpression as simpleKeysetExpression
@@ -20179,7 +20105,7 @@ relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keyse
 
    match
 
-    (explicit) TC typeIR*{} |- (default) as keysetExpression : %
+    (explicit) TC typeIR*{typeIR <- typeIR*} |- (default) as keysetExpression : %
     (implicit) TC typeIR*{typeIR <- typeIR*} |- keysetExpression : %
     -- if keysetExpression <: tupleKeysetExpression
     -- let tupleKeysetExpression = keysetExpression as tupleKeysetExpression
@@ -20205,7 +20131,7 @@ relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keyse
 
    match
 
-    (explicit) TC typeIR*{} |- (_) as keysetExpression : %
+    (explicit) TC typeIR*{typeIR <- typeIR*} |- (_) as keysetExpression : %
     (implicit) TC typeIR*{typeIR <- typeIR*} |- keysetExpression : %
     -- if keysetExpression <: tupleKeysetExpression
     -- let tupleKeysetExpression = keysetExpression as tupleKeysetExpression
@@ -20231,7 +20157,7 @@ relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keyse
 
    match
 
-    (explicit) TC typeIR_key*{} |- ( simpleKeysetExpression_h , simpleKeysetExpressionList_t ) as keysetExpression : %
+    (explicit) TC typeIR_key*{typeIR_key <- typeIR_key*} |- ( simpleKeysetExpression_h , simpleKeysetExpressionList_t ) as keysetExpression : %
     (implicit) TC typeIR_key*{typeIR_key <- typeIR_key*} |- keysetExpression : %
     -- if keysetExpression <: tupleKeysetExpression
     -- let tupleKeysetExpression = keysetExpression as tupleKeysetExpression
@@ -20255,7 +20181,7 @@ relation SelectCase_ok: typingContext nameIR* typeIR* |- selectCase : selectCase
 
    match
 
-    (explicit) TC nameIR_state*{} typeIR_key*{} |- keysetExpression : name ; : %
+    (explicit) TC nameIR_state*{nameIR_state <- nameIR_state*} typeIR_key*{typeIR_key <- typeIR_key*} |- keysetExpression : name ; : %
     (implicit) TC nameIR_state*{nameIR_state <- nameIR_state*} typeIR_key*{typeIR_key <- typeIR_key*} |- keysetExpression : name ; : %
 
    paths
@@ -20578,7 +20504,7 @@ relation TableEntry_keysets_simple_ok: typingContext tableContext tableEntryStat
 
    match
 
-    (explicit) TC TBLC TBLS_0 |- matchKey_h :: matchKey_t*{} @ simpleKeysetExpression_h :: simpleKeysetExpression_t*{} : % %
+    (explicit) TC TBLC TBLS_0 |- matchKey_h :: matchKey_t*{matchKey_t <- matchKey_t*} @ simpleKeysetExpression_h :: simpleKeysetExpression_t*{simpleKeysetExpression_t <- simpleKeysetExpression_t*} : % %
     (implicit) TC TBLC TBLS_0 |- matchKey*{matchKey <- matchKey*} @ simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*} : % %
     -- if matchKey*{matchKey <- matchKey*} matches _ :: _
     -- let matchKey_h :: matchKey_t*{matchKey_t <- matchKey_t*} = matchKey*{matchKey <- matchKey*}
@@ -22484,7 +22410,7 @@ relation Exprs_inst: cursor instantiationContext store |- typedExpressionIR* ==>
 
    match
 
-    (explicit) p IC STO_0 |- typedExpressionIR_h :: typedExpressionIR_t*{} ==> % %
+    (explicit) p IC STO_0 |- typedExpressionIR_h :: typedExpressionIR_t*{typedExpressionIR_t <- typedExpressionIR_t*} ==> % %
     (implicit) p IC STO_0 |- typedExpressionIR*{typedExpressionIR <- typedExpressionIR*} ==> % %
     -- if typedExpressionIR*{typedExpressionIR <- typedExpressionIR*} matches _ :: _
     -- let typedExpressionIR_h :: typedExpressionIR_t*{typedExpressionIR_t <- typedExpressionIR_t*} = typedExpressionIR*{typedExpressionIR <- typedExpressionIR*}
@@ -22775,7 +22701,7 @@ relation BlockElementStmts_inst: instantiationContext store |- blockElementState
 
    match
 
-    (explicit) IC_0 STO_0 |- blockElementStatementIR_h :: blockElementStatementIR_t*{} ==> % % %
+    (explicit) IC_0 STO_0 |- blockElementStatementIR_h :: blockElementStatementIR_t*{blockElementStatementIR_t <- blockElementStatementIR_t*} ==> % % %
     (implicit) IC_0 STO_0 |- blockElementStatementIR*{blockElementStatementIR <- blockElementStatementIR*} ==> % % %
     -- if blockElementStatementIR*{blockElementStatementIR <- blockElementStatementIR*} matches _ :: _
     -- let blockElementStatementIR_h :: blockElementStatementIR_t*{blockElementStatementIR_t <- blockElementStatementIR_t*} = blockElementStatementIR*{blockElementStatementIR <- blockElementStatementIR*}
@@ -22816,7 +22742,7 @@ relation Bind_method: rdenv |- methodPrototypeIR ==> rdenv
 
    match
 
-    (explicit) rdenv_0 |- annotationList typeIR_ret nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{} ) ; ==> %
+    (explicit) rdenv_0 |- annotationList typeIR_ret nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{parameterIR <- parameterIR*} ) ; ==> %
     (implicit) rdenv_0 |- methodPrototypeIR ==> %
     -- if methodPrototypeIR matches `%%;`
     -- let annotationList typeIR_ret nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{parameterIR <- parameterIR*} ) ; = methodPrototypeIR
@@ -22836,7 +22762,7 @@ relation Bind_method: rdenv |- methodPrototypeIR ==> rdenv
 
    match
 
-    (explicit) rdenv_0 |- annotationList abstract typeIR_ret nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{} ) ; ==> %
+    (explicit) rdenv_0 |- annotationList abstract typeIR_ret nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{parameterIR <- parameterIR*} ) ; ==> %
     (implicit) rdenv_0 |- methodPrototypeIR ==> %
     -- if methodPrototypeIR matches `%ABSTRACT%;`
     -- let annotationList abstract typeIR_ret nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{parameterIR <- parameterIR*} ) ; = methodPrototypeIR
@@ -22873,7 +22799,7 @@ relation Bind_methods: rdenv |- methodPrototypeIR* ==> rdenv
 
    match
 
-    (explicit) rdenv_0 |- methodPrototypeIR_h :: methodPrototypeIR_t*{} ==> %
+    (explicit) rdenv_0 |- methodPrototypeIR_h :: methodPrototypeIR_t*{methodPrototypeIR_t <- methodPrototypeIR_t*} ==> %
     (implicit) rdenv_0 |- methodPrototypeIR*{methodPrototypeIR <- methodPrototypeIR*} ==> %
     -- if methodPrototypeIR*{methodPrototypeIR <- methodPrototypeIR*} matches _ :: _
     -- let methodPrototypeIR_h :: methodPrototypeIR_t*{methodPrototypeIR_t <- methodPrototypeIR_t*} = methodPrototypeIR*{methodPrototypeIR <- methodPrototypeIR*}
@@ -22928,7 +22854,7 @@ relation Bind_constructors: cursor instantiationContext typeParameterListIR meth
 
    match
 
-    (explicit) p IC_0 typeParameterListIR methodPrototypeListIR |- methodPrototypeIR_h :: methodPrototypeIR_t*{} ==> %
+    (explicit) p IC_0 typeParameterListIR methodPrototypeListIR |- methodPrototypeIR_h :: methodPrototypeIR_t*{methodPrototypeIR_t <- methodPrototypeIR_t*} ==> %
     (implicit) p IC_0 typeParameterListIR methodPrototypeListIR |- methodPrototypeIR*{methodPrototypeIR <- methodPrototypeIR*} ==> %
     -- if methodPrototypeIR*{methodPrototypeIR <- methodPrototypeIR*} matches _ :: _
     -- let methodPrototypeIR_h :: methodPrototypeIR_t*{methodPrototypeIR_t <- methodPrototypeIR_t*} = methodPrototypeIR*{methodPrototypeIR <- methodPrototypeIR*}
@@ -23001,7 +22927,7 @@ relation ExternMethods_inst: instantiationContext |- methodPrototypeIR* ==> inst
 
    match
 
-    (explicit) IC_0 |- methodPrototypeIR_h :: methodPrototypeIR_t*{} ==> %
+    (explicit) IC_0 |- methodPrototypeIR_h :: methodPrototypeIR_t*{methodPrototypeIR_t <- methodPrototypeIR_t*} ==> %
     (implicit) IC_0 |- methodPrototypeIR*{methodPrototypeIR <- methodPrototypeIR*} ==> %
     -- if methodPrototypeIR*{methodPrototypeIR <- methodPrototypeIR*} matches _ :: _
     -- let methodPrototypeIR_h :: methodPrototypeIR_t*{methodPrototypeIR_t <- methodPrototypeIR_t*} = methodPrototypeIR*{methodPrototypeIR <- methodPrototypeIR*}
@@ -23196,7 +23122,7 @@ relation ParserStmts_inst: instantiationContext store |- parserStatementIR* ==> 
 
    match
 
-    (explicit) IC_0 STO_0 |- parserStatementIR_h :: parserStatementIR_t*{} ==> % % %
+    (explicit) IC_0 STO_0 |- parserStatementIR_h :: parserStatementIR_t*{parserStatementIR_t <- parserStatementIR_t*} ==> % % %
     (implicit) IC_0 STO_0 |- parserStatementIR*{parserStatementIR <- parserStatementIR*} ==> % % %
     -- if parserStatementIR*{parserStatementIR <- parserStatementIR*} matches _ :: _
     -- let parserStatementIR_h :: parserStatementIR_t*{parserStatementIR_t <- parserStatementIR_t*} = parserStatementIR*{parserStatementIR <- parserStatementIR*}
@@ -23249,7 +23175,7 @@ relation ParserStates_inst: instantiationContext store |- parserStateIR* ==> ins
 
    match
 
-    (explicit) IC_0 STO_0 |- parserStateIR_h :: parserStateIR_t*{} ==> % %
+    (explicit) IC_0 STO_0 |- parserStateIR_h :: parserStateIR_t*{parserStateIR_t <- parserStateIR_t*} ==> % %
     (implicit) IC_0 STO_0 |- parserStateIR*{parserStateIR <- parserStateIR*} ==> % %
     -- if parserStateIR*{parserStateIR <- parserStateIR*} matches _ :: _
     -- let parserStateIR_h :: parserStateIR_t*{parserStateIR_t <- parserStateIR_t*} = parserStateIR*{parserStateIR <- parserStateIR*}
@@ -23356,7 +23282,7 @@ relation ParserLocalDecls_inst: instantiationContext store |- parserLocalDeclara
 
    match
 
-    (explicit) IC_0 STO_0 |- parserLocalDeclarationIR_h :: parserLocalDeclarationIR_t*{} ==> % % %
+    (explicit) IC_0 STO_0 |- parserLocalDeclarationIR_h :: parserLocalDeclarationIR_t*{parserLocalDeclarationIR_t <- parserLocalDeclarationIR_t*} ==> % % %
     (implicit) IC_0 STO_0 |- parserLocalDeclarationIR*{parserLocalDeclarationIR <- parserLocalDeclarationIR*} ==> % % %
     -- if parserLocalDeclarationIR*{parserLocalDeclarationIR <- parserLocalDeclarationIR*} matches _ :: _
     -- let parserLocalDeclarationIR_h :: parserLocalDeclarationIR_t*{parserLocalDeclarationIR_t <- parserLocalDeclarationIR_t*} = parserLocalDeclarationIR*{parserLocalDeclarationIR <- parserLocalDeclarationIR*}
@@ -23485,7 +23411,7 @@ relation TableProperties_inst: instantiationContext store |- tablePropertyIR* ==
 
    match
 
-    (explicit) IC STO_0 |- tablePropertyIR_h :: tablePropertyIR_t*{} ==> % %
+    (explicit) IC STO_0 |- tablePropertyIR_h :: tablePropertyIR_t*{tablePropertyIR_t <- tablePropertyIR_t*} ==> % %
     (implicit) IC STO_0 |- tablePropertyIR*{tablePropertyIR <- tablePropertyIR*} ==> % %
     -- if tablePropertyIR*{tablePropertyIR <- tablePropertyIR*} matches _ :: _
     -- let tablePropertyIR_h :: tablePropertyIR_t*{tablePropertyIR_t <- tablePropertyIR_t*} = tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}
@@ -23615,7 +23541,7 @@ relation ControlLocalDecls_inst: instantiationContext store |- controlLocalDecla
 
    match
 
-    (explicit) IC_0 STO_0 |- controlLocalDeclarationIR_h :: controlLocalDeclarationIR_t*{} ==> % % %
+    (explicit) IC_0 STO_0 |- controlLocalDeclarationIR_h :: controlLocalDeclarationIR_t*{controlLocalDeclarationIR_t <- controlLocalDeclarationIR_t*} ==> % % %
     (implicit) IC_0 STO_0 |- controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*} ==> % % %
     -- if controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*} matches _ :: _
     -- let controlLocalDeclarationIR_h :: controlLocalDeclarationIR_t*{controlLocalDeclarationIR_t <- controlLocalDeclarationIR_t*} = controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*}
@@ -23633,7 +23559,7 @@ relation ControlLocalDecls_inst: instantiationContext store |- controlLocalDecla
 
    match
 
-    (explicit) IC_0 STO_0 |- controlLocalDeclarationIR_h :: controlLocalDeclarationIR_t*{} ==> % % %
+    (explicit) IC_0 STO_0 |- controlLocalDeclarationIR_h :: controlLocalDeclarationIR_t*{controlLocalDeclarationIR_t <- controlLocalDeclarationIR_t*} ==> % % %
     (implicit) IC_0 STO_0 |- controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*} ==> % % %
     -- if controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*} matches _ :: _
     -- let controlLocalDeclarationIR_h :: controlLocalDeclarationIR_t*{controlLocalDeclarationIR_t <- controlLocalDeclarationIR_t*} = controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*}
@@ -23799,7 +23725,7 @@ relation Decl_inst: cursor instantiationContext store |- declarationIR ==> insta
 
    match
 
-    (explicit) global IC_0 STO |- error{ nameIR*{} } as declarationIR ==> % % %
+    (explicit) global IC_0 STO |- error{ nameIR*{nameIR <- nameIR*} } as declarationIR ==> % % %
     (implicit) cursor IC_0 STO |- declarationIR ==> % % %
     -- if cursor matches `GLOBAL`
     -- if declarationIR <: errorDeclarationIR
@@ -23818,7 +23744,7 @@ relation Decl_inst: cursor instantiationContext store |- declarationIR ==> insta
 
    match
 
-    (explicit) global IC_0 STO |- match_kind{ nameIR*{} } as declarationIR ==> % % %
+    (explicit) global IC_0 STO |- match_kind{ nameIR*{nameIR <- nameIR*} } as declarationIR ==> % % %
     (implicit) cursor IC_0 STO |- declarationIR ==> % % %
     -- if cursor matches `GLOBAL`
     -- if declarationIR <: matchKindDeclarationIR
@@ -23855,7 +23781,7 @@ relation Decl_inst: cursor instantiationContext store |- declarationIR ==> insta
 
    match
 
-    (explicit) global IC_0 STO |- annotationList extern nameIR < typeParameterListIR , typeParameterListIR_inferred >{ methodPrototypeIR*{} } as declarationIR ==> % % %
+    (explicit) global IC_0 STO |- annotationList extern nameIR < typeParameterListIR , typeParameterListIR_inferred >{ methodPrototypeIR*{methodPrototypeIR <- methodPrototypeIR*} } as declarationIR ==> % % %
     (implicit) cursor IC_0 STO |- declarationIR ==> % % %
     -- if cursor matches `GLOBAL`
     -- if declarationIR <: externObjectDeclarationIR
@@ -23929,7 +23855,7 @@ relation Decl_inst: cursor instantiationContext store |- declarationIR ==> insta
 
    match
 
-    (explicit) global IC_0 STO |- annotationList enum nameIR { nameIR_field*{} } as declarationIR ==> % % %
+    (explicit) global IC_0 STO |- annotationList enum nameIR { nameIR_field*{nameIR_field <- nameIR_field*} } as declarationIR ==> % % %
     (implicit) cursor IC_0 STO |- declarationIR ==> % % %
     -- if cursor matches `GLOBAL`
     -- if declarationIR <: enumTypeDeclarationIR
@@ -23952,7 +23878,7 @@ relation Decl_inst: cursor instantiationContext store |- declarationIR ==> insta
 
    match
 
-    (explicit) global IC_0 STO_0 |- annotationList enum typeIR nameIR { nameIR_field = typedExpressionIR_field*{} } as declarationIR ==> % % %
+    (explicit) global IC_0 STO_0 |- annotationList enum typeIR nameIR { nameIR_field = typedExpressionIR_field*{nameIR_field <- nameIR_field*, typedExpressionIR_field <- typedExpressionIR_field*} } as declarationIR ==> % % %
     (implicit) cursor IC_0 STO_0 |- declarationIR ==> % % %
     -- if cursor matches `GLOBAL`
     -- if declarationIR <: enumTypeDeclarationIR
@@ -23976,7 +23902,7 @@ relation Decl_inst: cursor instantiationContext store |- declarationIR ==> insta
 
    match
 
-    (explicit) global IC_0 STO |- annotationList struct nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR*{} } as declarationIR ==> % % %
+    (explicit) global IC_0 STO |- annotationList struct nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR*{typeFieldIR <- typeFieldIR*} } as declarationIR ==> % % %
     (implicit) cursor IC_0 STO |- declarationIR ==> % % %
     -- if cursor matches `GLOBAL`
     -- if declarationIR <: structTypeDeclarationIR
@@ -23995,7 +23921,7 @@ relation Decl_inst: cursor instantiationContext store |- declarationIR ==> insta
 
    match
 
-    (explicit) global IC_0 STO |- annotationList header nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR*{} } as declarationIR ==> % % %
+    (explicit) global IC_0 STO |- annotationList header nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR*{typeFieldIR <- typeFieldIR*} } as declarationIR ==> % % %
     (implicit) cursor IC_0 STO |- declarationIR ==> % % %
     -- if cursor matches `GLOBAL`
     -- if declarationIR <: headerTypeDeclarationIR
@@ -24014,7 +23940,7 @@ relation Decl_inst: cursor instantiationContext store |- declarationIR ==> insta
 
    match
 
-    (explicit) global IC_0 STO |- annotationList header_union nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR*{} } as declarationIR ==> % % %
+    (explicit) global IC_0 STO |- annotationList header_union nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR*{typeFieldIR <- typeFieldIR*} } as declarationIR ==> % % %
     (implicit) cursor IC_0 STO |- declarationIR ==> % % %
     -- if cursor matches `GLOBAL`
     -- if declarationIR <: headerUnionTypeDeclarationIR
@@ -24112,7 +24038,7 @@ relation Decl_inst: cursor instantiationContext store |- declarationIR ==> insta
 
    match
 
-    (explicit) global IC_0 STO |- annotationList parser nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{} ); as declarationIR ==> % % %
+    (explicit) global IC_0 STO |- annotationList parser nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{parameterIR <- parameterIR*} ); as declarationIR ==> % % %
     (implicit) cursor IC_0 STO |- declarationIR ==> % % %
     -- if cursor matches `GLOBAL`
     -- if declarationIR <: parserTypeDeclarationIR
@@ -24132,7 +24058,7 @@ relation Decl_inst: cursor instantiationContext store |- declarationIR ==> insta
 
    match
 
-    (explicit) global IC_0 STO |- annotationList control nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{} ); as declarationIR ==> % % %
+    (explicit) global IC_0 STO |- annotationList control nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{parameterIR <- parameterIR*} ); as declarationIR ==> % % %
     (implicit) cursor IC_0 STO |- declarationIR ==> % % %
     -- if cursor matches `GLOBAL`
     -- if declarationIR <: controlTypeDeclarationIR
@@ -24152,7 +24078,7 @@ relation Decl_inst: cursor instantiationContext store |- declarationIR ==> insta
 
    match
 
-    (explicit) global IC_0 STO |- annotationList package nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{} ); as declarationIR ==> % % %
+    (explicit) global IC_0 STO |- annotationList package nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{parameterIR <- parameterIR*} ); as declarationIR ==> % % %
     (implicit) cursor IC_0 STO |- declarationIR ==> % % %
     -- if cursor matches `GLOBAL`
     -- if declarationIR <: packageTypeDeclarationIR
@@ -24192,7 +24118,7 @@ relation Decls_inst: cursor instantiationContext store |- declarationIR* ==> ins
 
    match
 
-    (explicit) p IC_0 STO_0 |- declarationIR_h :: declarationIR_t*{} ==> % % %
+    (explicit) p IC_0 STO_0 |- declarationIR_h :: declarationIR_t*{declarationIR_t <- declarationIR_t*} ==> % % %
     (implicit) p IC_0 STO_0 |- declarationIR*{declarationIR <- declarationIR*} ==> % % %
     -- if declarationIR*{declarationIR <- declarationIR*} matches _ :: _
     -- let declarationIR_h :: declarationIR_t*{declarationIR_t <- declarationIR_t*} = declarationIR*{declarationIR <- declarationIR*}
@@ -24210,7 +24136,7 @@ relation Decls_inst: cursor instantiationContext store |- declarationIR* ==> ins
 
    match
 
-    (explicit) p IC_0 STO_0 |- declarationIR_h :: declarationIR_t*{} ==> % % %
+    (explicit) p IC_0 STO_0 |- declarationIR_h :: declarationIR_t*{declarationIR_t <- declarationIR_t*} ==> % % %
     (implicit) p IC_0 STO_0 |- declarationIR*{declarationIR <- declarationIR*} ==> % % %
     -- if declarationIR*{declarationIR <- declarationIR*} matches _ :: _
     -- let declarationIR_h :: declarationIR_t*{declarationIR_t <- declarationIR_t*} = declarationIR*{declarationIR <- declarationIR*}
@@ -24287,7 +24213,7 @@ relation Bind_args: cursor instantiationContext | cursor instantiationContext st
 
    match
 
-    (explicit) p_caller IC_caller | p_callee IC_callee_0 STO_0 |- id_h :: id_t*{} argumentIR_h :: argumentIR_t*{} ==> % %
+    (explicit) p_caller IC_caller | p_callee IC_callee_0 STO_0 |- id_h :: id_t*{id_t <- id_t*} argumentIR_h :: argumentIR_t*{argumentIR_t <- argumentIR_t*} ==> % %
     (implicit) p_caller IC_caller | p_callee IC_callee_0 STO_0 |- id*{id <- id*} argumentIR*{argumentIR <- argumentIR*} ==> % %
     -- if id*{id <- id*} matches _ :: _
     -- let id_h :: id_t*{id_t <- id_t*} = id*{id <- id*}
@@ -24309,7 +24235,7 @@ relation Constructor_inst: cursor instantiationContext store |- constructor < ty
 
    match
 
-    (explicit) p IC STO_0 |- extern nameIR < typeParameterIR*{} >( constructorParameterIR*{} ){ methodPrototypeIR*{} } < typeArgumentIR*{} >( argumentIR*{} # id_default*{} )==> % %
+    (explicit) p IC STO_0 |- extern nameIR < typeParameterIR*{typeParameterIR <- typeParameterIR*} >( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ){ methodPrototypeIR*{methodPrototypeIR <- methodPrototypeIR*} } < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} )==> % %
     (implicit) p IC STO_0 |- constructor < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} )==> % %
     -- if constructor matches `EXTERN%<%>(%){%}`
     -- let extern nameIR < typeParameterIR*{typeParameterIR <- typeParameterIR*} >( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ){ methodPrototypeIR*{methodPrototypeIR <- methodPrototypeIR*} } = constructor
@@ -24334,7 +24260,7 @@ relation Constructor_inst: cursor instantiationContext store |- constructor < ty
 
    match
 
-    (explicit) p IC STO_0 |- parser( parameterIR*{} )( constructorParameterIR*{} ){ parserLocalDeclarationIR*{} parserStateIR*{} } < [] >( argumentIR*{} # id_default*{} )==> % %
+    (explicit) p IC STO_0 |- parser( parameterIR*{parameterIR <- parameterIR*} )( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ){ parserLocalDeclarationIR*{parserLocalDeclarationIR <- parserLocalDeclarationIR*} parserStateIR*{parserStateIR <- parserStateIR*} } < [] >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} )==> % %
     (implicit) p IC STO_0 |- constructor < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} )==> % %
     -- if constructor matches `PARSER(%)(%){%%}`
     -- let parser( parameterIR*{parameterIR <- parameterIR*} )( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ){ parserLocalDeclarationIR*{parserLocalDeclarationIR <- parserLocalDeclarationIR*} parserStateIR*{parserStateIR <- parserStateIR*} } = constructor
@@ -24362,7 +24288,7 @@ relation Constructor_inst: cursor instantiationContext store |- constructor < ty
 
    match
 
-    (explicit) p IC STO_0 |- control( parameterIR*{} )( constructorParameterIR*{} ){ controlLocalDeclarationIR*{} apply controlBodyIR } < [] >( argumentIR*{} # id_default*{} )==> % %
+    (explicit) p IC STO_0 |- control( parameterIR*{parameterIR <- parameterIR*} )( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ){ controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*} apply controlBodyIR } < [] >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} )==> % %
     (implicit) p IC STO_0 |- constructor < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} )==> % %
     -- if constructor matches `CONTROL(%)(%){%APPLY%}`
     -- let control( parameterIR*{parameterIR <- parameterIR*} )( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ){ controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*} apply controlBodyIR } = constructor
@@ -24388,7 +24314,7 @@ relation Constructor_inst: cursor instantiationContext store |- constructor < ty
 
    match
 
-    (explicit) p IC STO_0 |- package< typeParameterIR*{} >( constructorParameterIR*{} ) < typeArgumentIR*{} >( argumentIR*{} # id_default*{} )==> % %
+    (explicit) p IC STO_0 |- package< typeParameterIR*{typeParameterIR <- typeParameterIR*} >( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ) < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} )==> % %
     (implicit) p IC STO_0 |- constructor < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} )==> % %
     -- if constructor matches `PACKAGE<%>(%)`
     -- let package< typeParameterIR*{typeParameterIR <- typeParameterIR*} >( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ) = constructor
@@ -24488,7 +24414,7 @@ relation SwitchCases_inst: cursor instantiationContext store |- switchCaseIR* ==
 
    match
 
-    (explicit) p IC_0 STO_0 |- switchCaseIR_h :: switchCaseIR_t*{} ==> % % %
+    (explicit) p IC_0 STO_0 |- switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} ==> % % %
     (implicit) p IC_0 STO_0 |- switchCaseIR*{switchCaseIR <- switchCaseIR*} ==> % % %
     -- if switchCaseIR*{switchCaseIR <- switchCaseIR*} matches _ :: _
     -- let switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} = switchCaseIR*{switchCaseIR <- switchCaseIR*}
