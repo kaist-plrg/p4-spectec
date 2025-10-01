@@ -460,7 +460,7 @@ and prose_of_instr (ctx : Ctx.t) instr =
       else
         F.asprintf "%s%s\n%sLet %s be %s%s" (bullet ctx)
           (prose_of_out_iterexps ctx out_iters)
-          (ctx |> increment_level |> bullet)
+          (ctx |> increment_level |> unordered_bullet)
           (code_of_exp ctx exp_l) (prose_of_exp ctx exp_r)
           (prose_of_in_iterexps ctx ("\n" ^ bullet ctx) in_iters)
   | RuleI (id_rel, notexp, iterexps) -> (
@@ -483,7 +483,7 @@ and prose_of_instr (ctx : Ctx.t) instr =
             F.asprintf "%s%s\n%sLet %s be the result of <<%s, %s>>%s"
               (bullet ctx)
               (prose_of_out_iterexps ctx out_iters)
-              (ctx |> increment_level |> bullet)
+              (ctx |> increment_level |> unordered_bullet)
               (code_of_exps ctx outputs) (string_of_relid id_rel)
               (prose_of_hintexp (ctx |> increment_level) exps_opt prose_hint)
               (prose_of_in_iterexps ctx ("\n" ^ bullet ctx) in_iters)
