@@ -174,8 +174,8 @@ p.lead, .paragraph.lead > p, #preamble > .sectionbody > .paragraph:first-of-type
 div, dl, dt, dd, ul, ol, li, h1, h2, h3, #toctitle, .sidebarblock > .content > .title, h4, h5, h6, pre, form, p, blockquote, th, td { margin: 0; padding: 0; direction: ltr; }
 
 /* Default Link Styles */
-a { color: #4183c4; text-decoration: none; line-height: inherit; }
-a:hover, a:focus { color: #4183c4; }
+a { color: #3040a0; text-decoration: none; line-height: inherit; }
+a:hover, a:focus { color: #3040a0; }
 a img { border: none; }
 
 /* Default paragraph styles */
@@ -207,7 +207,7 @@ strong, b { font-weight: bold; line-height: inherit; }
 
 small { font-size: 60%; line-height: inherit; }
 
-code { font-family: Monaco, "DejaVu Sans Mono", "Courier New", monospace; font-weight: normal; color: #B12146; }
+code { font-family: Monaco, "DejaVu Sans Mono", "Courier New", monospace; font-weight: normal; }
 
 /* Lists */
 ul, ol, dl { font-size: 1em; line-height: 1.4; margin-bottom: 1em; list-style-position: outside; font-family: helvetica, arial, freesans, clean, sans-serif; }
@@ -289,7 +289,8 @@ a:hover, a:focus { text-decoration: underline; }
 .clearfix:before, .clearfix:after, .float-group:before, .float-group:after { content: " "; display: table; }
 .clearfix:after, .float-group:after { clear: both; }
 
-*:not(pre) > code { font-size: 0.86667em; padding: 1px 5px 1px 5px; white-space: nowrap; background-color: transparent; border: 1px solid #dddddd; -webkit-border-radius: 3px; border-radius: 3px; text-shadow: none; }
+*:not(pre) > code { font-size: 0.86667em; white-space: nowrap; background-color: transparent; text-shadow: none;  color: #404040 }
+a code { color: #5060c0; }
 
 pre, pre > code { line-height: 1.6; color: black; font-family: Consolas, "Liberation Mono", Courier, monospace; font-weight: normal; }
 
@@ -638,7 +639,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 
 #content h1 > a.anchor, h2 > a.anchor, h3 > a.anchor, #toctitle > a.anchor, .sidebarblock > .content > .title > a.anchor, h4 > a.anchor, h5 > a.anchor, h6 > a.anchor { color: #333333; }
 
-#header, #content, #footnotes { max-width: 660px; padding-left: 0; padding-right: 0; }
+#header, #content, #footnotes { max-width: 880px; padding-left: 0; padding-right: 0; }
 
 
 #content ul li { padding-left: .7em; }
@@ -650,6 +651,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 .quoteblock blockquote { background: url('../images/github/blockquote-arrow.png?1372292342') 0 2px no-repeat; padding-left: 1em; }
 
 .sidebarblock > .content > .title { margin-top: -20px; margin-right: -20px; margin-left: -20px; margin-bottom: 20px; padding: 1em; font-size: 0.8em; background: #eaeaea; }
+
 </style>
 </head>
 <body class="book toc2 toc-left">
@@ -657,7 +659,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <h1>P4<sub>16</sub> Language Specification : The P4 Language Consortium</h1>
 <div class="details">
 <span id="revnumber">version v1.2.5,</span>
-<span id="revdate">2025-09-30</span>
+<span id="revdate">2025-10-01</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Contents</div>
@@ -2033,9 +2035,9 @@ For example, the architecture might contain a declaration such as the following:
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">control MatchActionPipe&lt;H&gt;(in bit&lt;4&gt; inputPort,
-                           inout H parsedHeaders,
-                           out bit&lt;4&gt; outputPort);</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">control</span> MatchActionPipe<span style="color: #0550ae">&lt;</span>H<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">in</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">4</span><span style="color: #0550ae">&gt;</span> inputPort<span style="color: #24292f;background-color: #f6f8fa">,</span>
+                           <span style="color: #cf222e">inout</span> H parsedHeaders<span style="color: #24292f;background-color: #f6f8fa">,</span>
+                           <span style="color: #cf222e">out</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">4</span><span style="color: #0550ae">&gt;</span> outputPort<span style="color: #24292f;background-color: #f6f8fa">);</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -2083,13 +2085,13 @@ incremental checksum unit:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">extern Checksum16 {
-    Checksum16();              // constructor
-    void clear();              // prepare unit for computation
-    void update&lt;T&gt;(in T data); // add data to checksum
-    void remove&lt;T&gt;(in T data); // remove data from existing checksum
-    bit&lt;16&gt; get(); // get the checksum for the data added since last clear
-}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">extern</span> Checksum16 <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    Checksum16<span style="color: #24292f;background-color: #f6f8fa">();</span>              <span style="color: #6e7781">// constructor
+</span>    <span style="color: #953800">void</span> clear<span style="color: #24292f;background-color: #f6f8fa">();</span>              <span style="color: #6e7781">// prepare unit for computation
+</span>    <span style="color: #953800">void</span> update<span style="color: #0550ae">&lt;</span>T<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">in</span> T data<span style="color: #24292f;background-color: #f6f8fa">);</span> <span style="color: #6e7781">// add data to checksum
+</span>    <span style="color: #953800">void</span> remove<span style="color: #0550ae">&lt;</span>T<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">in</span> T data<span style="color: #24292f;background-color: #f6f8fa">);</span> <span style="color: #6e7781">// remove data from existing checksum
+</span>    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">16</span><span style="color: #0550ae">&gt;</span> get<span style="color: #24292f;background-color: #f6f8fa">();</span> <span style="color: #6e7781">// get the checksum for the data added since last clear
+</span><span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 </div>
@@ -2163,77 +2165,77 @@ of these blocks has to be provided by the switch programmer.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">// File "very_simple_switch_model.p4"
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #6e7781">// File "very_simple_switch_model.p4"
 // Very Simple Switch P4 declaration
 // core library needed for packet_in and packet_out definitions
-# include &lt;core.p4&gt;
-/* Various constants and structure declarations */
-/* ports are represented using 4-bit values */
-typedef bit&lt;4&gt; PortId;
-/* only 8 ports are "real" */
-const PortId REAL_PORT_COUNT = 4w8;  // 4w8 is the number 8 in 4 bits
-/* metadata accompanying an input packet */
-struct InControl {
-    PortId inputPort;
-}
-/* special input port values */
-const PortId RECIRCULATE_IN_PORT = 0xD;
-const PortId CPU_IN_PORT = 0xE;
-/* metadata that must be computed for outgoing packets */
-struct OutControl {
-    PortId outputPort;
-}
-/* special output port values for outgoing packet */
-const PortId DROP_PORT = 0xF;
-const PortId CPU_OUT_PORT = 0xE;
-const PortId RECIRCULATE_OUT_PORT = 0xD;
-/* Prototypes for all programmable blocks */
-/**
+</span><span style="color: #6e7781"># include</span> <span style="color: #0550ae">&lt;</span>core<span style="color: #0550ae">.</span>p4<span style="color: #0550ae">&gt;</span>
+<span style="color: #6e7781">/* Various constants and structure declarations */</span>
+<span style="color: #6e7781">/* ports are represented using 4-bit values */</span>
+<span style="color: #cf222e">typedef</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">4</span><span style="color: #0550ae">&gt;</span> PortId<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #6e7781">/* only 8 ports are "real" */</span>
+<span style="color: #cf222e">const</span> PortId REAL_PORT_COUNT <span style="color: #0550ae">=</span> <span style="color: #0550ae">4w8</span><span style="color: #24292f;background-color: #f6f8fa">;</span>  <span style="color: #6e7781">// 4w8 is the number 8 in 4 bits
+</span><span style="color: #6e7781">/* metadata accompanying an input packet */</span>
+<span style="color: #cf222e">struct</span> InControl <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    PortId inputPort<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #6e7781">/* special input port values */</span>
+<span style="color: #cf222e">const</span> PortId RECIRCULATE_IN_PORT <span style="color: #0550ae">=</span> <span style="color: #0550ae">0xD</span><span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #cf222e">const</span> PortId CPU_IN_PORT <span style="color: #0550ae">=</span> <span style="color: #0550ae">0xE</span><span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #6e7781">/* metadata that must be computed for outgoing packets */</span>
+<span style="color: #cf222e">struct</span> OutControl <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    PortId outputPort<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #6e7781">/* special output port values for outgoing packet */</span>
+<span style="color: #cf222e">const</span> PortId DROP_PORT <span style="color: #0550ae">=</span> <span style="color: #0550ae">0xF</span><span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #cf222e">const</span> PortId CPU_OUT_PORT <span style="color: #0550ae">=</span> <span style="color: #0550ae">0xE</span><span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #cf222e">const</span> PortId RECIRCULATE_OUT_PORT <span style="color: #0550ae">=</span> <span style="color: #0550ae">0xD</span><span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #6e7781">/* Prototypes for all programmable blocks */</span>
+<span style="color: #6e7781">/**
  * Programmable parser.
  * @param &lt;H&gt; type of headers; defined by user
  * @param b input packet
  * @param parsedHeaders headers constructed by parser
- */
-parser Parser&lt;H&gt;(packet_in b,
-                 out H parsedHeaders);
-/**
+ */</span>
+<span style="color: #cf222e">parser</span> Parser<span style="color: #0550ae">&lt;</span>H<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">packet_in</span> b<span style="color: #24292f;background-color: #f6f8fa">,</span>
+                 <span style="color: #cf222e">out</span> H parsedHeaders<span style="color: #24292f;background-color: #f6f8fa">);</span>
+<span style="color: #6e7781">/**
  * Match-action pipeline
  * @param &lt;H&gt; type of input and output headers
  * @param headers headers received from the parser and sent to the deparser
  * @param parseError error that may have surfaced during parsing
  * @param inCtrl information from architecture, accompanying input packet
  * @param outCtrl information for architecture, accompanying output packet
- */
-control Pipe&lt;H&gt;(inout H headers,
-                in error parseError,// parser error
-                in InControl inCtrl,// input port
-                out OutControl outCtrl); // output port
-/**
+ */</span>
+<span style="color: #cf222e">control</span> Pipe<span style="color: #0550ae">&lt;</span>H<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">inout</span> H headers<span style="color: #24292f;background-color: #f6f8fa">,</span>
+                <span style="color: #cf222e">in</span> <span style="color: #953800">error</span> parseError<span style="color: #24292f;background-color: #f6f8fa">,</span><span style="color: #6e7781">// parser error
+</span>                <span style="color: #cf222e">in</span> InControl inCtrl<span style="color: #24292f;background-color: #f6f8fa">,</span><span style="color: #6e7781">// input port
+</span>                <span style="color: #cf222e">out</span> OutControl outCtrl<span style="color: #24292f;background-color: #f6f8fa">);</span> <span style="color: #6e7781">// output port
+</span><span style="color: #6e7781">/**
  * VSS deparser.
  * @param &lt;H&gt; type of headers; defined by user
  * @param b output packet
  * @param outputHeaders headers for output packet
- */
-control Deparser&lt;H&gt;(inout H outputHeaders,
-                    packet_out b);
-/**
+ */</span>
+<span style="color: #cf222e">control</span> Deparser<span style="color: #0550ae">&lt;</span>H<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">inout</span> H outputHeaders<span style="color: #24292f;background-color: #f6f8fa">,</span>
+                    <span style="color: #cf222e">packet_out</span> b<span style="color: #24292f;background-color: #f6f8fa">);</span>
+<span style="color: #6e7781">/**
  * Top-level package declaration - must be instantiated by user.
  * The arguments to the package indicate blocks that
  * must be instantiated by the user.
  * @param &lt;H&gt; user-defined type of the headers processed.
- */
-package VSS&lt;H&gt;(Parser&lt;H&gt; p,
-               Pipe&lt;H&gt; map,
-               Deparser&lt;H&gt; d);
-// Architecture-specific objects that can be instantiated
+ */</span>
+<span style="color: #cf222e">package</span> VSS<span style="color: #0550ae">&lt;</span>H<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span>Parser<span style="color: #0550ae">&lt;</span>H<span style="color: #0550ae">&gt;</span> p<span style="color: #24292f;background-color: #f6f8fa">,</span>
+               Pipe<span style="color: #0550ae">&lt;</span>H<span style="color: #0550ae">&gt;</span> map<span style="color: #24292f;background-color: #f6f8fa">,</span>
+               Deparser<span style="color: #0550ae">&lt;</span>H<span style="color: #0550ae">&gt;</span> d<span style="color: #24292f;background-color: #f6f8fa">);</span>
+<span style="color: #6e7781">// Architecture-specific objects that can be instantiated
 // Checksum unit
-extern Checksum16 {
-    Checksum16();              // constructor
-    void clear();              // prepare unit for computation
-    void update&lt;T&gt;(in T data); // add data to checksum
-    void remove&lt;T&gt;(in T data); // remove data from existing checksum
-    bit&lt;16&gt; get(); // get the checksum for the data added since last clear
-}</code></pre>
+</span><span style="color: #cf222e">extern</span> Checksum16 <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    Checksum16<span style="color: #24292f;background-color: #f6f8fa">();</span>              <span style="color: #6e7781">// constructor
+</span>    <span style="color: #953800">void</span> clear<span style="color: #24292f;background-color: #f6f8fa">();</span>              <span style="color: #6e7781">// prepare unit for computation
+</span>    <span style="color: #953800">void</span> update<span style="color: #0550ae">&lt;</span>T<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">in</span> T data<span style="color: #24292f;background-color: #f6f8fa">);</span> <span style="color: #6e7781">// add data to checksum
+</span>    <span style="color: #953800">void</span> remove<span style="color: #0550ae">&lt;</span>T<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">in</span> T data<span style="color: #24292f;background-color: #f6f8fa">);</span> <span style="color: #6e7781">// remove data from existing checksum
+</span>    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">16</span><span style="color: #0550ae">&gt;</span> get<span style="color: #24292f;background-color: #f6f8fa">();</span> <span style="color: #6e7781">// get the checksum for the data added since last clear
+</span><span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -2263,7 +2265,7 @@ the width modifier can be omitted, writing just <code>15</code>.</p>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">parser Parser&lt;H&gt;(packet_in b, out H parsedHeaders);</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">parser</span> Parser<span style="color: #0550ae">&lt;</span>H<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">packet_in</span> b<span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #cf222e">out</span> H parsedHeaders<span style="color: #24292f;background-color: #f6f8fa">);</span></code></pre>
 </div>
 </div>
 </div>
@@ -2285,10 +2287,10 @@ also be provided by the programmer.</p>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">control Pipe&lt;H&gt;(inout H headers,
-                in error parseError,
-                in InControl inCtrl,
-                out OutControl outCtrl);</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">control</span> Pipe<span style="color: #0550ae">&lt;</span>H<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">inout</span> H headers<span style="color: #24292f;background-color: #f6f8fa">,</span>
+                <span style="color: #cf222e">in</span> <span style="color: #953800">error</span> parseError<span style="color: #24292f;background-color: #f6f8fa">,</span>
+                <span style="color: #cf222e">in</span> InControl inCtrl<span style="color: #24292f;background-color: #f6f8fa">,</span>
+                <span style="color: #cf222e">out</span> OutControl outCtrl<span style="color: #24292f;background-color: #f6f8fa">);</span></code></pre>
 </div>
 </div>
 </div>
@@ -2317,7 +2319,7 @@ on a type variable H:</p>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">package VSS&lt;H&gt;</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">package</span> VSS<span style="color: #0550ae">&lt;</span>H<span style="color: #0550ae">&gt;</span></code></pre>
 </div>
 </div>
 </div>
@@ -2561,221 +2563,221 @@ IPv4 headers as computed by the pipeline.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">// Include P4 core library
-# include &lt;core.p4&gt;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #6e7781">// Include P4 core library
+</span><span style="color: #6e7781"># include</span> <span style="color: #0550ae">&lt;</span>core<span style="color: #0550ae">.</span>p4<span style="color: #0550ae">&gt;</span>
 
-// Include very simple switch architecture declarations
-# include "very_simple_switch_model.p4"
+<span style="color: #6e7781">// Include very simple switch architecture declarations
+</span><span style="color: #6e7781"># include</span> <span style="color: #0a3069">"very_simple_switch_model.p4"</span>
 
-// This program processes packets comprising an Ethernet and an IPv4
+<span style="color: #6e7781">// This program processes packets comprising an Ethernet and an IPv4
 // header, and it forwards packets using the destination IP address
+</span>
+<span style="color: #cf222e">typedef</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">48</span><span style="color: #0550ae">&gt;</span>  EthernetAddress<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #cf222e">typedef</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span>  IPv4Address<span style="color: #24292f;background-color: #f6f8fa">;</span>
 
-typedef bit&lt;48&gt;  EthernetAddress;
-typedef bit&lt;32&gt;  IPv4Address;
+<span style="color: #6e7781">// Standard Ethernet header
+</span><span style="color: #cf222e">header</span> <span style="color: #953800">Ethernet_h</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    EthernetAddress dstAddr<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    EthernetAddress srcAddr<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">16</span><span style="color: #0550ae">&gt;</span>         etherType<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-// Standard Ethernet header
-header Ethernet_h {
-    EthernetAddress dstAddr;
-    EthernetAddress srcAddr;
-    bit&lt;16&gt;         etherType;
-}
+<span style="color: #6e7781">// IPv4 header (without options)
+</span><span style="color: #cf222e">header</span> <span style="color: #953800">IPv4_h</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">4</span><span style="color: #0550ae">&gt;</span>       version<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">4</span><span style="color: #0550ae">&gt;</span>       ihl<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span>       diffserv<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">16</span><span style="color: #0550ae">&gt;</span>      totalLen<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">16</span><span style="color: #0550ae">&gt;</span>      identification<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">3</span><span style="color: #0550ae">&gt;</span>       flags<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">13</span><span style="color: #0550ae">&gt;</span>      fragOffset<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span>       ttl<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span>       protocol<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">16</span><span style="color: #0550ae">&gt;</span>      hdrChecksum<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    IPv4Address  srcAddr<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    IPv4Address  dstAddr<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-// IPv4 header (without options)
-header IPv4_h {
-    bit&lt;4&gt;       version;
-    bit&lt;4&gt;       ihl;
-    bit&lt;8&gt;       diffserv;
-    bit&lt;16&gt;      totalLen;
-    bit&lt;16&gt;      identification;
-    bit&lt;3&gt;       flags;
-    bit&lt;13&gt;      fragOffset;
-    bit&lt;8&gt;       ttl;
-    bit&lt;8&gt;       protocol;
-    bit&lt;16&gt;      hdrChecksum;
-    IPv4Address  srcAddr;
-    IPv4Address  dstAddr;
-}
+<span style="color: #6e7781">// Structure of parsed headers
+</span><span style="color: #cf222e">struct</span> Parsed_packet <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #953800">Ethernet_h</span> ethernet<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #953800">IPv4_h</span>     ip<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-// Structure of parsed headers
-struct Parsed_packet {
-    Ethernet_h ethernet;
-    IPv4_h     ip;
-}
-
-// Parser section
-
-// User-defined errors that may be signaled during parsing
-error {
-    IPv4OptionsNotSupported,
-    IPv4IncorrectVersion,
+<span style="color: #6e7781">// Parser section
+</span>
+<span style="color: #6e7781">// User-defined errors that may be signaled during parsing
+</span><span style="color: #953800">error</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    IPv4OptionsNotSupported<span style="color: #24292f;background-color: #f6f8fa">,</span>
+    IPv4IncorrectVersion<span style="color: #24292f;background-color: #f6f8fa">,</span>
     IPv4ChecksumError
-}
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-parser TopParser(packet_in b, out Parsed_packet p) {
-    Checksum16() ck;  // instantiate checksum unit
+<span style="color: #cf222e">parser</span> TopParser<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">packet_in</span> b<span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #cf222e">out</span> Parsed_packet p<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    Checksum16<span style="color: #24292f;background-color: #f6f8fa">()</span> ck<span style="color: #24292f;background-color: #f6f8fa">;</span>  <span style="color: #6e7781">// instantiate checksum unit
+</span>
+    <span style="color: #cf222e">state</span> start <span style="color: #24292f;background-color: #f6f8fa">{</span>
+        b<span style="color: #0550ae">.</span><span style="color: #953800">extract</span><span style="color: #24292f;background-color: #f6f8fa">(</span>p<span style="color: #0550ae">.</span>ethernet<span style="color: #24292f;background-color: #f6f8fa">);</span>
+        <span style="color: #cf222e">transition</span> <span style="color: #cf222e">select</span><span style="color: #24292f;background-color: #f6f8fa">(</span>p<span style="color: #0550ae">.</span>ethernet<span style="color: #0550ae">.</span>etherType<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+            <span style="color: #0550ae">0x0800</span><span style="color: #24292f;background-color: #f6f8fa">:</span> parse_ipv4<span style="color: #24292f;background-color: #f6f8fa">;</span>
+            <span style="color: #6e7781">// no default rule: all other packets rejected
+</span>        <span style="color: #24292f;background-color: #f6f8fa">}</span>
+    <span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-    state start {
-        b.extract(p.ethernet);
-        transition select(p.ethernet.etherType) {
-            0x0800: parse_ipv4;
-            // no default rule: all other packets rejected
-        }
-    }
+    <span style="color: #cf222e">state</span> parse_ipv4 <span style="color: #24292f;background-color: #f6f8fa">{</span>
+        b<span style="color: #0550ae">.</span><span style="color: #953800">extract</span><span style="color: #24292f;background-color: #f6f8fa">(</span>p<span style="color: #0550ae">.</span>ip<span style="color: #24292f;background-color: #f6f8fa">);</span>
+        <span style="color: #953800">verify</span><span style="color: #24292f;background-color: #f6f8fa">(</span>p<span style="color: #0550ae">.</span>ip<span style="color: #0550ae">.</span>version <span style="color: #0550ae">==</span> <span style="color: #0550ae">4w4</span><span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #953800">error</span><span style="color: #0550ae">.</span>IPv4IncorrectVersion<span style="color: #24292f;background-color: #f6f8fa">);</span>
+        <span style="color: #953800">verify</span><span style="color: #24292f;background-color: #f6f8fa">(</span>p<span style="color: #0550ae">.</span>ip<span style="color: #0550ae">.</span>ihl <span style="color: #0550ae">==</span> <span style="color: #0550ae">4w5</span><span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #953800">error</span><span style="color: #0550ae">.</span>IPv4OptionsNotSupported<span style="color: #24292f;background-color: #f6f8fa">);</span>
+        ck<span style="color: #0550ae">.</span>clear<span style="color: #24292f;background-color: #f6f8fa">();</span>
+        ck<span style="color: #0550ae">.</span>update<span style="color: #24292f;background-color: #f6f8fa">(</span>p<span style="color: #0550ae">.</span>ip<span style="color: #24292f;background-color: #f6f8fa">);</span>
+        <span style="color: #6e7781">// Verify that packet checksum is zero
+</span>        <span style="color: #953800">verify</span><span style="color: #24292f;background-color: #f6f8fa">(</span>ck<span style="color: #0550ae">.</span>get<span style="color: #24292f;background-color: #f6f8fa">()</span> <span style="color: #0550ae">==</span> <span style="color: #0550ae">16w0</span><span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #953800">error</span><span style="color: #0550ae">.</span>IPv4ChecksumError<span style="color: #24292f;background-color: #f6f8fa">);</span>
+        <span style="color: #cf222e">transition</span> accept<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-    state parse_ipv4 {
-        b.extract(p.ip);
-        verify(p.ip.version == 4w4, error.IPv4IncorrectVersion);
-        verify(p.ip.ihl == 4w5, error.IPv4OptionsNotSupported);
-        ck.clear();
-        ck.update(p.ip);
-        // Verify that packet checksum is zero
-        verify(ck.get() == 16w0, error.IPv4ChecksumError);
-        transition accept;
-    }
-}
-
-// Match-action pipeline section
-
-control TopPipe(inout Parsed_packet headers,
-                in error parseError, // parser error
-                in InControl inCtrl, // input port
-                out OutControl outCtrl) {
-     IPv4Address nextHop;  // local variable
-
-     /**
+<span style="color: #6e7781">// Match-action pipeline section
+</span>
+<span style="color: #cf222e">control</span> TopPipe<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">inout</span> Parsed_packet headers<span style="color: #24292f;background-color: #f6f8fa">,</span>
+                <span style="color: #cf222e">in</span> <span style="color: #953800">error</span> parseError<span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #6e7781">// parser error
+</span>                <span style="color: #cf222e">in</span> InControl inCtrl<span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #6e7781">// input port
+</span>                <span style="color: #cf222e">out</span> OutControl outCtrl<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+     IPv4Address nextHop<span style="color: #24292f;background-color: #f6f8fa">;</span>  <span style="color: #6e7781">// local variable
+</span>
+     <span style="color: #6e7781">/**
       * Indicates that a packet is dropped by setting the
       * output port to the DROP_PORT
-      */
-      action Drop_action() {
-          outCtrl.outputPort = DROP_PORT;
-      }
+      */</span>
+      <span style="color: #cf222e">action</span> Drop_action<span style="color: #24292f;background-color: #f6f8fa">()</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+          outCtrl<span style="color: #0550ae">.</span>outputPort <span style="color: #0550ae">=</span> DROP_PORT<span style="color: #24292f;background-color: #f6f8fa">;</span>
+      <span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-     /**
+     <span style="color: #6e7781">/**
       * Set the next hop and the output port.
       * Decrements ipv4 ttl field.
       * @param ipv4_dest ipv4 address of next hop
       * @param port output port
-      */
-      action Set_nhop(IPv4Address ipv4_dest, PortId port) {
-          nextHop = ipv4_dest;
-          headers.ip.ttl = headers.ip.ttl - 1;
-          outCtrl.outputPort = port;
-      }
+      */</span>
+      <span style="color: #cf222e">action</span> Set_nhop<span style="color: #24292f;background-color: #f6f8fa">(</span>IPv4Address ipv4_dest<span style="color: #24292f;background-color: #f6f8fa">,</span> PortId port<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+          nextHop <span style="color: #0550ae">=</span> ipv4_dest<span style="color: #24292f;background-color: #f6f8fa">;</span>
+          headers<span style="color: #0550ae">.</span>ip<span style="color: #0550ae">.</span>ttl <span style="color: #0550ae">=</span> headers<span style="color: #0550ae">.</span>ip<span style="color: #0550ae">.</span>ttl <span style="color: #0550ae">-</span> <span style="color: #0550ae">1</span><span style="color: #24292f;background-color: #f6f8fa">;</span>
+          outCtrl<span style="color: #0550ae">.</span>outputPort <span style="color: #0550ae">=</span> port<span style="color: #24292f;background-color: #f6f8fa">;</span>
+      <span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-     /**
+     <span style="color: #6e7781">/**
       * Computes address of next IPv4 hop and output port
       * based on the IPv4 destination of the current packet.
       * Decrements packet IPv4 TTL.
       * @param nextHop IPv4 address of next hop
-      */
-     table ipv4_match {
-         key = { headers.ip.dstAddr: lpm; }  // longest-prefix match
-         actions = {
-              Drop_action;
-              Set_nhop;
-         }
-         size = 1024;
-         default_action = Drop_action;
-     }
+      */</span>
+     <span style="color: #cf222e">table</span> ipv4_match <span style="color: #24292f;background-color: #f6f8fa">{</span>
+         <span style="color: #cf222e">key</span> <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> headers<span style="color: #0550ae">.</span>ip<span style="color: #0550ae">.</span>dstAddr<span style="color: #24292f;background-color: #f6f8fa">:</span> lpm<span style="color: #24292f;background-color: #f6f8fa">;</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>  <span style="color: #6e7781">// longest-prefix match
+</span>         <span style="color: #cf222e">actions</span> <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+              Drop_action<span style="color: #24292f;background-color: #f6f8fa">;</span>
+              Set_nhop<span style="color: #24292f;background-color: #f6f8fa">;</span>
+         <span style="color: #24292f;background-color: #f6f8fa">}</span>
+         <span style="color: #cf222e">size</span> <span style="color: #0550ae">=</span> <span style="color: #0550ae">1024</span><span style="color: #24292f;background-color: #f6f8fa">;</span>
+         <span style="color: #cf222e">default_action</span> <span style="color: #0550ae">=</span> Drop_action<span style="color: #24292f;background-color: #f6f8fa">;</span>
+     <span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-     /**
+     <span style="color: #6e7781">/**
       * Send the packet to the CPU port
-      */
-      action Send_to_cpu() {
-          outCtrl.outputPort = CPU_OUT_PORT;
-      }
+      */</span>
+      <span style="color: #cf222e">action</span> Send_to_cpu<span style="color: #24292f;background-color: #f6f8fa">()</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+          outCtrl<span style="color: #0550ae">.</span>outputPort <span style="color: #0550ae">=</span> CPU_OUT_PORT<span style="color: #24292f;background-color: #f6f8fa">;</span>
+      <span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-     /**
+     <span style="color: #6e7781">/**
       * Check packet TTL and send to CPU if expired.
-      */
-     table check_ttl {
-         key = { headers.ip.ttl: exact; }
-         actions = { Send_to_cpu; NoAction; }
-         const default_action = NoAction; // defined in core.p4
-     }
+      */</span>
+     <span style="color: #cf222e">table</span> check_ttl <span style="color: #24292f;background-color: #f6f8fa">{</span>
+         <span style="color: #cf222e">key</span> <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> headers<span style="color: #0550ae">.</span>ip<span style="color: #0550ae">.</span>ttl<span style="color: #24292f;background-color: #f6f8fa">:</span> exact<span style="color: #24292f;background-color: #f6f8fa">;</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
+         <span style="color: #cf222e">actions</span> <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> Send_to_cpu<span style="color: #24292f;background-color: #f6f8fa">;</span> NoAction<span style="color: #24292f;background-color: #f6f8fa">;</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
+         <span style="color: #cf222e">const</span> <span style="color: #cf222e">default_action</span> <span style="color: #0550ae">=</span> NoAction<span style="color: #24292f;background-color: #f6f8fa">;</span> <span style="color: #6e7781">// defined in core.p4
+</span>     <span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-     /**
+     <span style="color: #6e7781">/**
       * Set the destination MAC address of the packet
       * @param dmac destination MAC address.
-      */
-      action Set_dmac(EthernetAddress dmac) {
-          headers.ethernet.dstAddr = dmac;
-      }
+      */</span>
+      <span style="color: #cf222e">action</span> Set_dmac<span style="color: #24292f;background-color: #f6f8fa">(</span>EthernetAddress dmac<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+          headers<span style="color: #0550ae">.</span>ethernet<span style="color: #0550ae">.</span>dstAddr <span style="color: #0550ae">=</span> dmac<span style="color: #24292f;background-color: #f6f8fa">;</span>
+      <span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-     /**
+     <span style="color: #6e7781">/**
       * Set the destination Ethernet address of the packet
       * based on the next hop IP address.
       * @param nextHop IPv4 address of next hop.
-      */
-      table dmac {
-          key = { nextHop: exact; }
-          actions = {
-               Drop_action;
-               Set_dmac;
-          }
-          size = 1024;
-          default_action = Drop_action;
-      }
+      */</span>
+      <span style="color: #cf222e">table</span> dmac <span style="color: #24292f;background-color: #f6f8fa">{</span>
+          <span style="color: #cf222e">key</span> <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> nextHop<span style="color: #24292f;background-color: #f6f8fa">:</span> exact<span style="color: #24292f;background-color: #f6f8fa">;</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
+          <span style="color: #cf222e">actions</span> <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+               Drop_action<span style="color: #24292f;background-color: #f6f8fa">;</span>
+               Set_dmac<span style="color: #24292f;background-color: #f6f8fa">;</span>
+          <span style="color: #24292f;background-color: #f6f8fa">}</span>
+          <span style="color: #cf222e">size</span> <span style="color: #0550ae">=</span> <span style="color: #0550ae">1024</span><span style="color: #24292f;background-color: #f6f8fa">;</span>
+          <span style="color: #cf222e">default_action</span> <span style="color: #0550ae">=</span> Drop_action<span style="color: #24292f;background-color: #f6f8fa">;</span>
+      <span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-      /**
+      <span style="color: #6e7781">/**
        * Set the source MAC address.
        * @param smac: source MAC address to use
-       */
-       action Set_smac(EthernetAddress smac) {
-           headers.ethernet.srcAddr = smac;
-       }
+       */</span>
+       <span style="color: #cf222e">action</span> Set_smac<span style="color: #24292f;background-color: #f6f8fa">(</span>EthernetAddress smac<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+           headers<span style="color: #0550ae">.</span>ethernet<span style="color: #0550ae">.</span>srcAddr <span style="color: #0550ae">=</span> smac<span style="color: #24292f;background-color: #f6f8fa">;</span>
+       <span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-      /**
+      <span style="color: #6e7781">/**
        * Set the source mac address based on the output port.
-       */
-      table smac {
-           key = { outCtrl.outputPort: exact; }
-           actions = {
-                Drop_action;
-                Set_smac;
-          }
-          size = 16;
-          default_action = Drop_action;
-      }
+       */</span>
+      <span style="color: #cf222e">table</span> smac <span style="color: #24292f;background-color: #f6f8fa">{</span>
+           <span style="color: #cf222e">key</span> <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> outCtrl<span style="color: #0550ae">.</span>outputPort<span style="color: #24292f;background-color: #f6f8fa">:</span> exact<span style="color: #24292f;background-color: #f6f8fa">;</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
+           <span style="color: #cf222e">actions</span> <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+                Drop_action<span style="color: #24292f;background-color: #f6f8fa">;</span>
+                Set_smac<span style="color: #24292f;background-color: #f6f8fa">;</span>
+          <span style="color: #24292f;background-color: #f6f8fa">}</span>
+          <span style="color: #cf222e">size</span> <span style="color: #0550ae">=</span> <span style="color: #0550ae">16</span><span style="color: #24292f;background-color: #f6f8fa">;</span>
+          <span style="color: #cf222e">default_action</span> <span style="color: #0550ae">=</span> Drop_action<span style="color: #24292f;background-color: #f6f8fa">;</span>
+      <span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-      apply {
-          if (parseError != error.NoError) {
-              Drop_action();  // invoke drop directly
-              return;
-          }
+      <span style="color: #cf222e">apply</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+          <span style="color: #cf222e">if</span> <span style="color: #24292f;background-color: #f6f8fa">(</span>parseError <span style="color: #0550ae">!=</span> <span style="color: #953800">error</span><span style="color: #0550ae">.</span>NoError<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+              Drop_action<span style="color: #24292f;background-color: #f6f8fa">();</span>  <span style="color: #6e7781">// invoke drop directly
+</span>              <span style="color: #cf222e">return</span><span style="color: #24292f;background-color: #f6f8fa">;</span>
+          <span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-          ipv4_match.apply(); // Match result will go into nextHop
-          if (outCtrl.outputPort == DROP_PORT) return;
+          ipv4_match<span style="color: #0550ae">.</span><span style="color: #cf222e">apply</span><span style="color: #24292f;background-color: #f6f8fa">();</span> <span style="color: #6e7781">// Match result will go into nextHop
+</span>          <span style="color: #cf222e">if</span> <span style="color: #24292f;background-color: #f6f8fa">(</span>outCtrl<span style="color: #0550ae">.</span>outputPort <span style="color: #0550ae">==</span> DROP_PORT<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #cf222e">return</span><span style="color: #24292f;background-color: #f6f8fa">;</span>
 
-          check_ttl.apply();
-          if (outCtrl.outputPort == CPU_OUT_PORT) return;
+          check_ttl<span style="color: #0550ae">.</span><span style="color: #cf222e">apply</span><span style="color: #24292f;background-color: #f6f8fa">();</span>
+          <span style="color: #cf222e">if</span> <span style="color: #24292f;background-color: #f6f8fa">(</span>outCtrl<span style="color: #0550ae">.</span>outputPort <span style="color: #0550ae">==</span> CPU_OUT_PORT<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #cf222e">return</span><span style="color: #24292f;background-color: #f6f8fa">;</span>
 
-          dmac.apply();
-          if (outCtrl.outputPort == DROP_PORT) return;
+          dmac<span style="color: #0550ae">.</span><span style="color: #cf222e">apply</span><span style="color: #24292f;background-color: #f6f8fa">();</span>
+          <span style="color: #cf222e">if</span> <span style="color: #24292f;background-color: #f6f8fa">(</span>outCtrl<span style="color: #0550ae">.</span>outputPort <span style="color: #0550ae">==</span> DROP_PORT<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #cf222e">return</span><span style="color: #24292f;background-color: #f6f8fa">;</span>
 
-          smac.apply();
-    }
-}
+          smac<span style="color: #0550ae">.</span><span style="color: #cf222e">apply</span><span style="color: #24292f;background-color: #f6f8fa">();</span>
+    <span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-// deparser section
-control TopDeparser(inout Parsed_packet p, packet_out b) {
-    Checksum16() ck;
-    apply {
-        b.emit(p.ethernet);
-        if (p.ip.isValid()) {
-            ck.clear();              // prepare checksum unit
-            p.ip.hdrChecksum = 16w0; // clear checksum
-            ck.update(p.ip);         // compute new checksum.
-            p.ip.hdrChecksum = ck.get();
-        }
-        b.emit(p.ip);
-    }
-}
+<span style="color: #6e7781">// deparser section
+</span><span style="color: #cf222e">control</span> TopDeparser<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">inout</span> Parsed_packet p<span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #cf222e">packet_out</span> b<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    Checksum16<span style="color: #24292f;background-color: #f6f8fa">()</span> ck<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #cf222e">apply</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+        b<span style="color: #0550ae">.</span>emit<span style="color: #24292f;background-color: #f6f8fa">(</span>p<span style="color: #0550ae">.</span>ethernet<span style="color: #24292f;background-color: #f6f8fa">);</span>
+        <span style="color: #cf222e">if</span> <span style="color: #24292f;background-color: #f6f8fa">(</span>p<span style="color: #0550ae">.</span>ip<span style="color: #0550ae">.</span><span style="color: #953800">isValid</span><span style="color: #24292f;background-color: #f6f8fa">())</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+            ck<span style="color: #0550ae">.</span>clear<span style="color: #24292f;background-color: #f6f8fa">();</span>              <span style="color: #6e7781">// prepare checksum unit
+</span>            p<span style="color: #0550ae">.</span>ip<span style="color: #0550ae">.</span>hdrChecksum <span style="color: #0550ae">=</span> <span style="color: #0550ae">16w0</span><span style="color: #24292f;background-color: #f6f8fa">;</span> <span style="color: #6e7781">// clear checksum
+</span>            ck<span style="color: #0550ae">.</span>update<span style="color: #24292f;background-color: #f6f8fa">(</span>p<span style="color: #0550ae">.</span>ip<span style="color: #24292f;background-color: #f6f8fa">);</span>         <span style="color: #6e7781">// compute new checksum.
+</span>            p<span style="color: #0550ae">.</span>ip<span style="color: #0550ae">.</span>hdrChecksum <span style="color: #0550ae">=</span> ck<span style="color: #0550ae">.</span>get<span style="color: #24292f;background-color: #f6f8fa">();</span>
+        <span style="color: #24292f;background-color: #f6f8fa">}</span>
+        b<span style="color: #0550ae">.</span>emit<span style="color: #24292f;background-color: #f6f8fa">(</span>p<span style="color: #0550ae">.</span>ip<span style="color: #24292f;background-color: #f6f8fa">);</span>
+    <span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-// Instantiate the top-level VSS package
-VSS(TopParser(),
-    TopPipe(),
-    TopDeparser()) main;</code></pre>
+<span style="color: #6e7781">// Instantiate the top-level VSS package
+</span>VSS<span style="color: #24292f;background-color: #f6f8fa">(</span>TopParser<span style="color: #24292f;background-color: #f6f8fa">(),</span>
+    TopPipe<span style="color: #24292f;background-color: #f6f8fa">(),</span>
+    TopDeparser<span style="color: #24292f;background-color: #f6f8fa">())</span> main<span style="color: #24292f;background-color: #f6f8fa">;</span></code></pre>
 </div>
 </div>
 </div>
@@ -2966,16 +2968,16 @@ literal. Here are some examples of numeric literals:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">32w255         // a 32-bit unsigned number with value 255
-32w0d255       // same value as above
-32w0xFF        // same value as above
-32s0xFF        // a 32-bit signed number with value 255
-8w0b10101010   // an 8-bit unsigned number with value 0xAA
-8w0b_1010_1010 // same value as above
-8w170          // same value as above
-8s0b1010_1010  // an 8-bit signed number with value -86
-16w0377        // 16-bit unsigned number with value 377 (not 255!)
-16w0o377       // 16-bit unsigned number with value 255 (base 8)</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #0550ae">32w255</span>         <span style="color: #6e7781">// a 32-bit unsigned number with value 255
+</span><span style="color: #0550ae">32w0d255</span>       <span style="color: #6e7781">// same value as above
+</span><span style="color: #0550ae">32w0xFF</span>        <span style="color: #6e7781">// same value as above
+</span><span style="color: #0550ae">32s0xFF</span>        <span style="color: #6e7781">// a 32-bit signed number with value 255
+</span><span style="color: #0550ae">8w0b10101010</span>   <span style="color: #6e7781">// an 8-bit unsigned number with value 0xAA
+</span><span style="color: #0550ae">8w0b_1010_1010</span> <span style="color: #6e7781">// same value as above
+</span><span style="color: #0550ae">8w170</span>          <span style="color: #6e7781">// same value as above
+</span><span style="color: #0550ae">8s0b1010_1010</span>  <span style="color: #6e7781">// an 8-bit signed number with value -86
+</span><span style="color: #0550ae">16w0377</span>        <span style="color: #6e7781">// 16-bit unsigned number with value 377 (not 255!)
+</span><span style="color: #0550ae">16w0o377</span>       <span style="color: #6e7781">// 16-bit unsigned number with value 255 (base 8)</span></code></pre>
 </div>
 </div>
 </div>
@@ -3018,10 +3020,10 @@ unprintable ASCII characters).</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">"simple string"
-"string \" with \" embedded \" quotes"
-"string with embedded
-line terminator"</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #0a3069">"simple string"</span>
+<span style="color: #0a3069">"string \" with \" embedded \" quotes"</span>
+<span style="color: #0a3069">"string with embedded
+line terminator"</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -3030,9 +3032,9 @@ literal:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">"one string \" with a quote inside;" ++ (" " ++ "another string")
-// can be constant folded to
-"one string \" with a quote inside; another string"</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #0a3069">"one string \" with a quote inside;"</span> <span style="color: #0550ae">++</span> <span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0a3069">" "</span> <span style="color: #0550ae">++</span> <span style="color: #0a3069">"another string"</span><span style="color: #24292f;background-color: #f6f8fa">)</span>
+<span style="color: #6e7781">// can be constant folded to
+</span><span style="color: #0a3069">"one string \" with a quote inside; another string"</span></code></pre>
 </div>
 </div>
 </div>
@@ -3088,13 +3090,13 @@ have the same meaning:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">enum E {
-     a, b, c
-}
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">enum</span> E <span style="color: #24292f;background-color: #f6f8fa">{</span>
+     a<span style="color: #24292f;background-color: #f6f8fa">,</span> b<span style="color: #24292f;background-color: #f6f8fa">,</span> c
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-enum E {
-     a, b, c,
-}</code></pre>
+<span style="color: #cf222e">enum</span> E <span style="color: #24292f;background-color: #f6f8fa">{</span>
+     a<span style="color: #24292f;background-color: #f6f8fa">,</span> b<span style="color: #24292f;background-color: #f6f8fa">,</span> c<span style="color: #24292f;background-color: #f6f8fa">,</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -3103,13 +3105,13 @@ directives:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">enum E {
-#if SUPPORT_A
-    a,
-#endif
-    b,
-    c,
-}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">enum</span> E <span style="color: #24292f;background-color: #f6f8fa">{</span>
+<span style="color: #6e7781">#if</span> SUPPORT_A
+    a<span style="color: #24292f;background-color: #f6f8fa">,</span>
+<span style="color: #6e7781">#endif</span>
+    b<span style="color: #24292f;background-color: #f6f8fa">,</span>
+    c<span style="color: #24292f;background-color: #f6f8fa">,</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 </div>
@@ -3154,14 +3156,14 @@ prefixedTypeName
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">const bit&lt;32&gt; x = 2;
-control c() {
-   int&lt;32&gt; x = 0;
-   apply {
-       x = x + (int&lt;32&gt;).x;  // x is the int&lt;32&gt; local variable,
-                             // .x is the top-level bit&lt;32&gt; variable
-   }
-}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">const</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> x <span style="color: #0550ae">=</span> <span style="color: #0550ae">2</span><span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #cf222e">control</span> c<span style="color: #24292f;background-color: #f6f8fa">()</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+   <span style="color: #953800">int</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> x <span style="color: #0550ae">=</span> <span style="color: #0550ae">0</span><span style="color: #24292f;background-color: #f6f8fa">;</span>
+   <span style="color: #cf222e">apply</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+       x <span style="color: #0550ae">=</span> x <span style="color: #0550ae">+</span> <span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #953800">int</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">)</span><span style="color: #0550ae">.</span>x<span style="color: #24292f;background-color: #f6f8fa">;</span>  <span style="color: #6e7781">// x is the int&lt;32&gt; local variable,
+</span>                             <span style="color: #6e7781">// .x is the top-level bit&lt;32&gt; variable
+</span>   <span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -3172,13 +3174,13 @@ possible for the same name (name shadowing).</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">const bit&lt;4&gt; x = 1;
-control p() {
-    const bit&lt;8&gt; x = 8;    // x declaration shadows global x
-    const bit&lt;4&gt; y = .x;   // reference to top-level x
-    const bit&lt;8&gt; z = x;    // reference to p's local x
-    apply {}
-}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">const</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">4</span><span style="color: #0550ae">&gt;</span> x <span style="color: #0550ae">=</span> <span style="color: #0550ae">1</span><span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #cf222e">control</span> p<span style="color: #24292f;background-color: #f6f8fa">()</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #cf222e">const</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span> x <span style="color: #0550ae">=</span> <span style="color: #0550ae">8</span><span style="color: #24292f;background-color: #f6f8fa">;</span>    <span style="color: #6e7781">// x declaration shadows global x
+</span>    <span style="color: #cf222e">const</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">4</span><span style="color: #0550ae">&gt;</span> y <span style="color: #0550ae">=</span> <span style="color: #0550ae">.</span>x<span style="color: #24292f;background-color: #f6f8fa">;</span>   <span style="color: #6e7781">// reference to top-level x
+</span>    <span style="color: #cf222e">const</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span> z <span style="color: #0550ae">=</span> x<span style="color: #24292f;background-color: #f6f8fa">;</span>    <span style="color: #6e7781">// reference to p's local x
+</span>    <span style="color: #cf222e">apply</span> <span style="color: #24292f;background-color: #f6f8fa">{}</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 </div>
@@ -3317,8 +3319,8 @@ can specify a file name either within double quotes or within <code>&lt;&gt;</co
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"># include &lt;system_file&gt;
-# include "user_file"</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #6e7781"># include</span> <span style="color: #0550ae">&lt;</span>system_file<span style="color: #0550ae">&gt;</span>
+<span style="color: #6e7781"># include</span> <span style="color: #0a3069">"user_file"</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -3634,25 +3636,25 @@ variable.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">// architecture declaration
-parser P(/* parameters omitted */);
-control C(/* parameters omitted */);
-control D(/* parameters omitted */);
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #6e7781">// architecture declaration
+</span><span style="color: #cf222e">parser</span> P<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #6e7781">/* parameters omitted */</span><span style="color: #24292f;background-color: #f6f8fa">);</span>
+<span style="color: #cf222e">control</span> C<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #6e7781">/* parameters omitted */</span><span style="color: #24292f;background-color: #f6f8fa">);</span>
+<span style="color: #cf222e">control</span> D<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #6e7781">/* parameters omitted */</span><span style="color: #24292f;background-color: #f6f8fa">);</span>
 
-package Switch(P prs, C ctrl, D dep);
+<span style="color: #cf222e">package</span> Switch<span style="color: #24292f;background-color: #f6f8fa">(</span>P prs<span style="color: #24292f;background-color: #f6f8fa">,</span> C ctrl<span style="color: #24292f;background-color: #f6f8fa">,</span> D dep<span style="color: #24292f;background-color: #f6f8fa">);</span>
 
-extern Checksum16 { /* body omitted */}
+<span style="color: #cf222e">extern</span> Checksum16 <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span><span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-// user code
-Checksum16() ck16; // checksum unit instance
+<span style="color: #6e7781">// user code
+</span>Checksum16<span style="color: #24292f;background-color: #f6f8fa">()</span> ck16<span style="color: #24292f;background-color: #f6f8fa">;</span> <span style="color: #6e7781">// checksum unit instance
+</span>
+<span style="color: #cf222e">parser</span> TopParser<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #6e7781">/* parameters omitted */</span><span style="color: #24292f;background-color: #f6f8fa">)(</span>Checksum16 unit<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span><span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #cf222e">control</span> Pipe<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #6e7781">/* parameters omitted */</span><span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span><span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #cf222e">control</span> TopDeparser<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #6e7781">/* parameters omitted */</span><span style="color: #24292f;background-color: #f6f8fa">)(</span>Checksum16 unit<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span><span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-parser TopParser(/* parameters omitted */)(Checksum16 unit) { /* body omitted */}
-control Pipe(/* parameters omitted */) { /* body omitted */}
-control TopDeparser(/* parameters omitted */)(Checksum16 unit) { /* body omitted */}
-
-Switch(TopParser(ck16),
-       Pipe(),
-       TopDeparser(ck16)) main;</code></pre>
+Switch<span style="color: #24292f;background-color: #f6f8fa">(</span>TopParser<span style="color: #24292f;background-color: #f6f8fa">(</span>ck16<span style="color: #24292f;background-color: #f6f8fa">),</span>
+       Pipe<span style="color: #24292f;background-color: #f6f8fa">(),</span>
+       TopDeparser<span style="color: #24292f;background-color: #f6f8fa">(</span>ck16<span style="color: #24292f;background-color: #f6f8fa">))</span> main<span style="color: #24292f;background-color: #f6f8fa">;</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -4205,9 +4207,9 @@ definitions whose values are arbitrary-precision integers.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">const int a = 5;
-const int b = 2 * a;
-const int c = b - a + 3;</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">const</span> <span style="color: #953800">int</span> a <span style="color: #0550ae">=</span> <span style="color: #0550ae">5</span><span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #cf222e">const</span> <span style="color: #953800">int</span> b <span style="color: #0550ae">=</span> <span style="color: #0550ae">2</span> <span style="color: #0550ae">*</span> a<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #cf222e">const</span> <span style="color: #953800">int</span> c <span style="color: #0550ae">=</span> b <span style="color: #0550ae">-</span> a <span style="color: #0550ae">+</span> <span style="color: #0550ae">3</span><span style="color: #24292f;background-color: #f6f8fa">;</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -4343,9 +4345,9 @@ details. Note that <code>bit&lt;W&gt;</code> type refers to both cases of <code>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">const bit&lt;32&gt; x = 10;   // 32-bit constant with value 10.
-const bit&lt;(x + 2)&gt; y = 15;  // 12-bit constant with value 15.
-                            // expression for width must use ()</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">const</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> x <span style="color: #0550ae">=</span> <span style="color: #0550ae">10</span><span style="color: #24292f;background-color: #f6f8fa">;</span>   <span style="color: #6e7781">// 32-bit constant with value 10.
+</span><span style="color: #cf222e">const</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span>x <span style="color: #0550ae">+</span> <span style="color: #0550ae">2</span><span style="color: #24292f;background-color: #f6f8fa">)</span><span style="color: #0550ae">&gt;</span> y <span style="color: #0550ae">=</span> <span style="color: #0550ae">15</span><span style="color: #24292f;background-color: #f6f8fa">;</span>  <span style="color: #6e7781">// 12-bit constant with value 15.
+</span>                            <span style="color: #6e7781">// expression for width must use ()</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -4552,10 +4554,10 @@ struct type <code>S0</code>:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">struct S0 {
-    bit&lt;32&gt; x;
-    bit&lt;32&gt; y;
-}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">struct</span> S0 <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> x<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> y<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -4564,7 +4566,7 @@ type of the following example:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">void f(S s) {}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #953800">void</span> f<span style="color: #24292f;background-color: #f6f8fa">(</span>S s<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{}</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -4573,12 +4575,12 @@ type parameters.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">struct S1&lt;T, U&gt; {
-    T x;
-    U y;
-}
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">struct</span> S1<span style="color: #0550ae">&lt;</span>T<span style="color: #24292f;background-color: #f6f8fa">,</span> U<span style="color: #0550ae">&gt;</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    T x<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    U y<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-void f(S1&lt;bit&lt;32&gt;, bit&lt;32&gt;&gt; s) {}</code></pre>
+<span style="color: #953800">void</span> f<span style="color: #24292f;background-color: #f6f8fa">(</span>S1<span style="color: #0550ae">&lt;</span><span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;&gt;</span> s<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{}</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -5052,11 +5054,11 @@ arbitrary <code>T</code>.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">extern Register&lt;T&gt; {
-    Register(bit&lt;32&gt; size);
-    T read(bit&lt;32&gt; index);
-    void write(bit&lt;32&gt; index, T value);
-}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">extern</span> Register<span style="color: #0550ae">&lt;</span>T<span style="color: #0550ae">&gt;</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    Register<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> <span style="color: #cf222e">size</span><span style="color: #24292f;background-color: #f6f8fa">);</span>
+    T read<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> index<span style="color: #24292f;background-color: #f6f8fa">);</span>
+    <span style="color: #953800">void</span> write<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> index<span style="color: #24292f;background-color: #f6f8fa">,</span> T value<span style="color: #24292f;background-color: #f6f8fa">);</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -5065,7 +5067,7 @@ specializing the Register type:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">Register&lt;bit&lt;32&gt;&gt;(128) registerBank;</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">Register<span style="color: #0550ae">&lt;</span><span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">128</span><span style="color: #24292f;background-color: #f6f8fa">)</span> registerBank<span style="color: #24292f;background-color: #f6f8fa">;</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -5079,40 +5081,40 @@ with appropriate type arguments. For example</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">// generic structure type
-struct S&lt;T&gt; {
-    T field;
-    bool valid;
-}
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #6e7781">// generic structure type
+</span><span style="color: #cf222e">struct</span> S<span style="color: #0550ae">&lt;</span>T<span style="color: #0550ae">&gt;</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    T field<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #953800">bool</span> valid<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-struct G&lt;T&gt; {
-    S&lt;T&gt; s;
-}
+<span style="color: #cf222e">struct</span> G<span style="color: #0550ae">&lt;</span>T<span style="color: #0550ae">&gt;</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    S<span style="color: #0550ae">&lt;</span>T<span style="color: #0550ae">&gt;</span> s<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-// specialize S by replacing 'T' with 'bit&lt;32&gt;'
-const S&lt;bit&lt;32&gt;&gt; s = { field = 32w0, valid = false };
-// Specialize G by replacing 'T' with 'bit&lt;32&gt;'
-const G&lt;bit&lt;32&gt;&gt; g = { s = { field = 0, valid = false } };
+<span style="color: #6e7781">// specialize S by replacing 'T' with 'bit&lt;32&gt;'
+</span><span style="color: #cf222e">const</span> S<span style="color: #0550ae">&lt;</span><span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;&gt;</span> s <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> field <span style="color: #0550ae">=</span> <span style="color: #0550ae">32w0</span><span style="color: #24292f;background-color: #f6f8fa">,</span> valid <span style="color: #0550ae">=</span> false <span style="color: #24292f;background-color: #f6f8fa">};</span>
+<span style="color: #6e7781">// Specialize G by replacing 'T' with 'bit&lt;32&gt;'
+</span><span style="color: #cf222e">const</span> G<span style="color: #0550ae">&lt;</span><span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;&gt;</span> g <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> s <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> field <span style="color: #0550ae">=</span> <span style="color: #0550ae">0</span><span style="color: #24292f;background-color: #f6f8fa">,</span> valid <span style="color: #0550ae">=</span> false <span style="color: #24292f;background-color: #f6f8fa">}</span> <span style="color: #24292f;background-color: #f6f8fa">};</span>
 
-// generic header type
-header H&lt;T&gt; {
-    T field;
-}
+<span style="color: #6e7781">// generic header type
+</span><span style="color: #cf222e">header</span> H<span style="color: #0550ae">&lt;</span>T<span style="color: #0550ae">&gt;</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    T field<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-// Specialize H by replacing 'T' with 'bit&lt;8&gt;'
-const H&lt;bit&lt;8&gt;&gt; h = { field = 1 };
-// Header stack produced from a specialization of a generic header type
-H&lt;bit&lt;8&gt;&gt;[10] stack;
+<span style="color: #6e7781">// Specialize H by replacing 'T' with 'bit&lt;8&gt;'
+</span><span style="color: #cf222e">const</span> H<span style="color: #0550ae">&lt;</span><span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;&gt;</span> h <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> field <span style="color: #0550ae">=</span> <span style="color: #0550ae">1</span> <span style="color: #24292f;background-color: #f6f8fa">};</span>
+<span style="color: #6e7781">// Header stack produced from a specialization of a generic header type
+</span>H<span style="color: #0550ae">&lt;</span><span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;&gt;</span><span style="color: #24292f;background-color: #f6f8fa">[</span><span style="color: #0550ae">10</span><span style="color: #24292f;background-color: #f6f8fa">]</span> stack<span style="color: #24292f;background-color: #f6f8fa">;</span>
 
-// Generic header union
-header_union HU&lt;T&gt; {
-    H&lt;bit&lt;32&gt;&gt; h32;
-    H&lt;bit&lt;8&gt;&gt;  h8;
-    H&lt;T&gt;       ht;
-}
+<span style="color: #6e7781">// Generic header union
+</span><span style="color: #cf222e">header_union</span> HU<span style="color: #0550ae">&lt;</span>T<span style="color: #0550ae">&gt;</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    H<span style="color: #0550ae">&lt;</span><span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;&gt;</span> h32<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    H<span style="color: #0550ae">&lt;</span><span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;&gt;</span>  h8<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    H<span style="color: #0550ae">&lt;</span>T<span style="color: #0550ae">&gt;</span>       ht<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-// Header union with a type obtained by specializing a generic header union type
-HU&lt;bit&gt; hu;</code></pre>
+<span style="color: #6e7781">// Header union with a type obtained by specializing a generic header union type
+</span>HU<span style="color: #0550ae">&lt;</span><span style="color: #953800">bit</span><span style="color: #0550ae">&gt;</span> hu<span style="color: #24292f;background-color: #f6f8fa">;</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -5295,7 +5297,7 @@ type. The type of a list where all elements have type <code>T</code> is written 
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">list&lt;T&gt;</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">list</span><span style="color: #0550ae">&lt;</span>T<span style="color: #0550ae">&gt;</span></code></pre>
 </div>
 </div>
 <div class="listingblock">
@@ -5491,7 +5493,7 @@ The type of tuples with <code>n</code> component types <code>T1</code>, &#8230;&
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">tuple&lt;T1, /* more fields omitted */, Tn&gt;</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">tuple</span><span style="color: #0550ae">&lt;</span>T1<span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #6e7781">/* more fields omitted */</span><span style="color: #24292f;background-color: #f6f8fa">,</span> Tn<span style="color: #0550ae">&gt;</span></code></pre>
 </div>
 </div>
 <div class="listingblock">
@@ -5826,13 +5828,13 @@ which may be valid.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">header Mpls_h {
-    bit&lt;20&gt; label;
-    bit&lt;3&gt;  tc;
-    bit     bos;
-    bit&lt;8&gt;  ttl;
-}
-Mpls_h[10] mpls;</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">header</span> <span style="color: #953800">Mpls_h</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">20</span><span style="color: #0550ae">&gt;</span> label<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">3</span><span style="color: #0550ae">&gt;</span>  tc<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #953800">bit</span>     bos<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span>  ttl<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #953800">Mpls_h</span><span style="color: #24292f;background-color: #f6f8fa">[</span><span style="color: #0550ae">10</span><span style="color: #24292f;background-color: #f6f8fa">]</span> mpls<span style="color: #24292f;background-color: #f6f8fa">;</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -6075,14 +6077,14 @@ contains the headers recognized by a simple parser:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">header Tcp_h { /* fields omitted */ }
-header Udp_h { /* fields omitted */ }
-struct Parsed_headers {
-    Ethernet_h ethernet;
-    Ip_h       ip;
-    Tcp_h      tcp;
-    Udp_h      udp;
-}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">header</span> <span style="color: #953800">Tcp_h</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* fields omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #cf222e">header</span> <span style="color: #953800">Udp_h</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* fields omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #cf222e">struct</span> Parsed_headers <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #953800">Ethernet_h</span> ethernet<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #953800">Ip_h</span>       ip<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #953800">Tcp_h</span>      tcp<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #953800">Udp_h</span>      udp<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -6389,7 +6391,7 @@ and <code>setInvalid()</code>.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">header Empty_h { }</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">header</span> <span style="color: #953800">Empty_h</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -6402,23 +6404,23 @@ source code. An example of a header including a struct is included below.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">struct ipv6_addr {
-    bit&lt;32&gt; Addr0;
-    bit&lt;32&gt; Addr1;
-    bit&lt;32&gt; Addr2;
-    bit&lt;32&gt; Addr3;
-}
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">struct</span> ipv6_addr <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> Addr0<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> Addr1<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> Addr2<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> Addr3<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-header ipv6_t {
-    bit&lt;4&gt;    version;
-    bit&lt;8&gt;    trafficClass;
-    bit&lt;20&gt;   flowLabel;
-    bit&lt;16&gt;   payloadLen;
-    bit&lt;8&gt;    nextHdr;
-    bit&lt;8&gt;    hopLimit;
-    ipv6_addr src;
-    ipv6_addr dst;
-}</code></pre>
+<span style="color: #cf222e">header</span> <span style="color: #953800">ipv6_t</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">4</span><span style="color: #0550ae">&gt;</span>    version<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span>    trafficClass<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">20</span><span style="color: #0550ae">&gt;</span>   flowLabel<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">16</span><span style="color: #0550ae">&gt;</span>   payloadLen<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span>    nextHdr<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span>    hopLimit<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    ipv6_addr src<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    ipv6_addr dst<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -6434,11 +6436,11 @@ types---e.g., restricting headers to sizes that are an integer number of bytes.<
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">header Ethernet_h {
-   bit&lt;48&gt; dstAddr;
-   bit&lt;48&gt; srcAddr;
-   bit&lt;16&gt; etherType;
-}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">header</span> <span style="color: #953800">Ethernet_h</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+   <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">48</span><span style="color: #0550ae">&gt;</span> dstAddr<span style="color: #24292f;background-color: #f6f8fa">;</span>
+   <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">48</span><span style="color: #0550ae">&gt;</span> srcAddr<span style="color: #24292f;background-color: #f6f8fa">;</span>
+   <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">16</span><span style="color: #0550ae">&gt;</span> etherType<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -6446,7 +6448,7 @@ types---e.g., restricting headers to sizes that are an integer number of bytes.<
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">Ethernet_h ethernetHeader;</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #953800">Ethernet_h</span> ethernetHeader<span style="color: #24292f;background-color: #f6f8fa">;</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -6460,21 +6462,21 @@ operation also sets the validity bit of the extracted header to <code>true</code
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">header IPv4_h {
-   bit&lt;4&gt;       version;
-   bit&lt;4&gt;       ihl;
-   bit&lt;8&gt;       diffserv;
-   bit&lt;16&gt;      totalLen;
-   bit&lt;16&gt;      identification;
-   bit&lt;3&gt;       flags;
-   bit&lt;13&gt;      fragOffset;
-   bit&lt;8&gt;       ttl;
-   bit&lt;8&gt;       protocol;
-   bit&lt;16&gt;      hdrChecksum;
-   bit&lt;32&gt;      srcAddr;
-   bit&lt;32&gt;      dstAddr;
-   varbit&lt;320&gt;  options;
-}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">header</span> <span style="color: #953800">IPv4_h</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+   <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">4</span><span style="color: #0550ae">&gt;</span>       version<span style="color: #24292f;background-color: #f6f8fa">;</span>
+   <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">4</span><span style="color: #0550ae">&gt;</span>       ihl<span style="color: #24292f;background-color: #f6f8fa">;</span>
+   <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span>       diffserv<span style="color: #24292f;background-color: #f6f8fa">;</span>
+   <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">16</span><span style="color: #0550ae">&gt;</span>      totalLen<span style="color: #24292f;background-color: #f6f8fa">;</span>
+   <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">16</span><span style="color: #0550ae">&gt;</span>      identification<span style="color: #24292f;background-color: #f6f8fa">;</span>
+   <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">3</span><span style="color: #0550ae">&gt;</span>       flags<span style="color: #24292f;background-color: #f6f8fa">;</span>
+   <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">13</span><span style="color: #0550ae">&gt;</span>      fragOffset<span style="color: #24292f;background-color: #f6f8fa">;</span>
+   <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span>       ttl<span style="color: #24292f;background-color: #f6f8fa">;</span>
+   <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span>       protocol<span style="color: #24292f;background-color: #f6f8fa">;</span>
+   <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">16</span><span style="color: #0550ae">&gt;</span>      hdrChecksum<span style="color: #24292f;background-color: #f6f8fa">;</span>
+   <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span>      srcAddr<span style="color: #24292f;background-color: #f6f8fa">;</span>
+   <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span>      dstAddr<span style="color: #24292f;background-color: #f6f8fa">;</span>
+   <span style="color: #953800">varbit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">320</span><span style="color: #0550ae">&gt;</span>  options<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -6690,7 +6692,7 @@ headers contained within <code>h1</code>, regardless of how deeply they are nest
 <p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon">the canonicalized form of <code>typeIR</code></a></p>
 </li>
 <li>
-<p>Return <code>$nestable'_struct_in_header(typeIR)</code></p>
+<p>Return <code>$nestable'_struct_in_header(typeIR<sub>canon</sub>)</code></p>
 </li>
 </ol>
 </div>
@@ -7076,7 +7078,7 @@ enumValue
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">enum Suits { Clubs, Diamonds, Hearths, Spades }</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">enum</span> Suits <span style="color: #24292f;background-color: #f6f8fa">{</span> Clubs<span style="color: #24292f;background-color: #f6f8fa">,</span> Diamonds<span style="color: #24292f;background-color: #f6f8fa">,</span> Hearths<span style="color: #24292f;background-color: #f6f8fa">,</span> Spades <span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -7135,13 +7137,13 @@ integer value for each symbolic entry in the enumeration.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">enum bit&lt;16&gt; EtherType {
-  VLAN      = 0x8100,
-  QINQ      = 0x9100,
-  MPLS      = 0x8847,
-  IPV4      = 0x0800,
-  IPV6      = 0x86dd
-}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">enum</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">16</span><span style="color: #0550ae">&gt;</span> EtherType <span style="color: #24292f;background-color: #f6f8fa">{</span>
+  VLAN      <span style="color: #0550ae">=</span> <span style="color: #0550ae">0x8100</span><span style="color: #24292f;background-color: #f6f8fa">,</span>
+  QINQ      <span style="color: #0550ae">=</span> <span style="color: #0550ae">0x9100</span><span style="color: #24292f;background-color: #f6f8fa">,</span>
+  MPLS      <span style="color: #0550ae">=</span> <span style="color: #0550ae">0x8847</span><span style="color: #24292f;background-color: #f6f8fa">,</span>
+  IPV4      <span style="color: #0550ae">=</span> <span style="color: #0550ae">0x0800</span><span style="color: #24292f;background-color: #f6f8fa">,</span>
+  IPV6      <span style="color: #0550ae">=</span> <span style="color: #0550ae">0x86dd</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -7166,12 +7168,12 @@ representation range of the underlying type.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">enum bit&lt;8&gt; FailingExample {
-  first           = 1,
-  second          = 2,
-  third           = 3,
-  unrepresentable = 300
-}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">enum</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span> FailingExample <span style="color: #24292f;background-color: #f6f8fa">{</span>
+  first           <span style="color: #0550ae">=</span> <span style="color: #0550ae">1</span><span style="color: #24292f;background-color: #f6f8fa">,</span>
+  second          <span style="color: #0550ae">=</span> <span style="color: #0550ae">2</span><span style="color: #24292f;background-color: #f6f8fa">,</span>
+  third           <span style="color: #0550ae">=</span> <span style="color: #0550ae">3</span><span style="color: #24292f;background-color: #f6f8fa">,</span>
+  unrepresentable <span style="color: #0550ae">=</span> <span style="color: #0550ae">300</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -7384,14 +7386,14 @@ objects can be invoked on a packet:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">extern packet_out {
-    void emit&lt;T&gt;(in T hdr);
-}
-control d(packet_out b, in Hdr h) {
-    apply {
-        b.emit(h.ipv4);       // write ipv4 header into output packet
-    }                         // by calling emit method
-}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">extern</span> <span style="color: #cf222e">packet_out</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #953800">void</span> emit<span style="color: #0550ae">&lt;</span>T<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">in</span> T hdr<span style="color: #24292f;background-color: #f6f8fa">);</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #cf222e">control</span> d<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">packet_out</span> b<span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #cf222e">in</span> Hdr h<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #cf222e">apply</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+        b<span style="color: #0550ae">.</span>emit<span style="color: #24292f;background-color: #f6f8fa">(</span>h<span style="color: #0550ae">.</span>ipv4<span style="color: #24292f;background-color: #f6f8fa">);</span>       <span style="color: #6e7781">// write ipv4 header into output packet
+</span>    <span style="color: #24292f;background-color: #f6f8fa">}</span>                         <span style="color: #6e7781">// by calling emit method
+</span><span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -7476,10 +7478,10 @@ that is parameterized on a type variable <code>H</code>. That parser receives as
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">struct Counters { /* Fields omitted */ }
-parser P&lt;H&gt;(packet_in b,
-             out H packetHeaders,
-             out Counters counters);</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">struct</span> Counters <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* Fields omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #cf222e">parser</span> P<span style="color: #0550ae">&lt;</span>H<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">packet_in</span> b<span style="color: #24292f;background-color: #f6f8fa">,</span>
+             <span style="color: #cf222e">out</span> H packetHeaders<span style="color: #24292f;background-color: #f6f8fa">,</span>
+             <span style="color: #cf222e">out</span> Counters counters<span style="color: #24292f;background-color: #f6f8fa">);</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -7788,9 +7790,9 @@ typedefDeclaration
 <h4 id="_typedef_declaration">8.5.1. <code>typedef</code> declaration</h4>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">typedef bit&lt;32&gt; u32;
-typedef struct Point { int&lt;32&gt; x; int&lt;32&gt; y; } Pt;
-typedef Empty_h[32] HeaderStack;</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">typedef</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> u32<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #cf222e">typedef</span> <span style="color: #cf222e">struct</span> Point <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #953800">int</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> x<span style="color: #24292f;background-color: #f6f8fa">;</span> <span style="color: #953800">int</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> y<span style="color: #24292f;background-color: #f6f8fa">;</span> <span style="color: #24292f;background-color: #f6f8fa">}</span> Pt<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #cf222e">typedef</span> <span style="color: #953800">Empty_h</span><span style="color: #24292f;background-color: #f6f8fa">[</span><span style="color: #0550ae">32</span><span style="color: #24292f;background-color: #f6f8fa">]</span> HeaderStack<span style="color: #24292f;background-color: #f6f8fa">;</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -7804,12 +7806,12 @@ the suitable number of type arguments:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">struct S&lt;T&gt; {
-   T field;
-}
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">struct</span> S<span style="color: #0550ae">&lt;</span>T<span style="color: #0550ae">&gt;</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+   T field<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-// typedef S X;  -- illegal: S does not have type arguments
-typedef S&lt;bit&lt;32&gt;&gt; X;  // -- legal</code></pre>
+<span style="color: #6e7781">// typedef S X;  -- illegal: S does not have type arguments
+</span><span style="color: #cf222e">typedef</span> S<span style="color: #0550ae">&lt;</span><span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;&gt;</span> X<span style="color: #24292f;background-color: #f6f8fa">;</span>  <span style="color: #6e7781">// -- legal</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -7977,8 +7979,8 @@ type.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">type bit&lt;32&gt; U32;
-U32 x = (U32)0;</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">type</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> U32<span style="color: #24292f;background-color: #f6f8fa">;</span>
+U32 x <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">(</span>U32<span style="color: #24292f;background-color: #f6f8fa">)</span><span style="color: #0550ae">0</span><span style="color: #24292f;background-color: #f6f8fa">;</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -8000,7 +8002,7 @@ ports:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">type bit&lt;9&gt; PortId_t;</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">type</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">9</span><span style="color: #0550ae">&gt;</span> <span style="color: #953800">PortId_t</span><span style="color: #24292f;background-color: #f6f8fa">;</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -8195,24 +8197,24 @@ suitable type using the syntax <code>...</code> (see <a href="#sec-default-value
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">struct S {
-     bit&lt;32&gt; b32;
-     bool b;
-}
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">struct</span> S <span style="color: #24292f;background-color: #f6f8fa">{</span>
+     <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> b32<span style="color: #24292f;background-color: #f6f8fa">;</span>
+     <span style="color: #953800">bool</span> b<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-enum int&lt;8&gt; N0 {
-   one = 1,
-   zero = 0,
-   two = 2
-}
+<span style="color: #cf222e">enum</span> <span style="color: #953800">int</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span> N0 <span style="color: #24292f;background-color: #f6f8fa">{</span>
+   one <span style="color: #0550ae">=</span> <span style="color: #0550ae">1</span><span style="color: #24292f;background-color: #f6f8fa">,</span>
+   zero <span style="color: #0550ae">=</span> <span style="color: #0550ae">0</span><span style="color: #24292f;background-color: #f6f8fa">,</span>
+   two <span style="color: #0550ae">=</span> <span style="color: #0550ae">2</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-enum N1 {
-     A, B, C, F
-}
+<span style="color: #cf222e">enum</span> N1 <span style="color: #24292f;background-color: #f6f8fa">{</span>
+     A<span style="color: #24292f;background-color: #f6f8fa">,</span> B<span style="color: #24292f;background-color: #f6f8fa">,</span> C<span style="color: #24292f;background-color: #f6f8fa">,</span> F
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-S s0 = ...;  // initialize s0 with the default value { 0, false }
-N0 n0 = ...;  // initialize n0 with the default value 0
-N1 n1 = ...;  // initialize n1 with the default value N1.A</code></pre>
+S s0 <span style="color: #0550ae">=</span> <span style="color: #0550ae">...</span><span style="color: #24292f;background-color: #f6f8fa">;</span>  <span style="color: #6e7781">// initialize s0 with the default value { 0, false }
+</span>N0 n0 <span style="color: #0550ae">=</span> <span style="color: #0550ae">...</span><span style="color: #24292f;background-color: #f6f8fa">;</span>  <span style="color: #6e7781">// initialize n0 with the default value 0
+</span>N1 n1 <span style="color: #0550ae">=</span> <span style="color: #0550ae">...</span><span style="color: #24292f;background-color: #f6f8fa">;</span>  <span style="color: #6e7781">// initialize n1 with the default value N1.A</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -8270,9 +8272,9 @@ header union type from the context.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">header H { bit&lt;32&gt; x; bit&lt;32&gt; y; }
-H h;
-h = {#};   // This make the header h become invalid</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">header</span> H <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> x<span style="color: #24292f;background-color: #f6f8fa">;</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> y<span style="color: #24292f;background-color: #f6f8fa">;</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
+H h<span style="color: #24292f;background-color: #f6f8fa">;</span>
+h <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span><span style="color: #0550ae">#</span><span style="color: #24292f;background-color: #f6f8fa">};</span>   <span style="color: #6e7781">// This make the header h become invalid</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -8322,7 +8324,7 @@ invalidHeaderValue
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">tuple&lt;bit&lt;32&gt;, bool&gt; x = { 10, false };</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">tuple</span><span style="color: #0550ae">&lt;</span><span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #953800">bool</span><span style="color: #0550ae">&gt;</span> x <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #0550ae">10</span><span style="color: #24292f;background-color: #f6f8fa">,</span> false <span style="color: #24292f;background-color: #f6f8fa">};</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -8355,14 +8357,14 @@ several header fields simultaneously to a learning provider:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">extern LearningProvider&lt;T&gt; {
-    LearningProvider();
-    void learn(in T data);
-}
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">extern</span> LearningProvider<span style="color: #0550ae">&lt;</span>T<span style="color: #0550ae">&gt;</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    LearningProvider<span style="color: #24292f;background-color: #f6f8fa">();</span>
+    <span style="color: #953800">void</span> learn<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">in</span> T data<span style="color: #24292f;background-color: #f6f8fa">);</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-LearningProvider&lt;tuple&lt;bit&lt;48&gt;, bit&lt;32&gt;&gt;&gt;() lp;
+LearningProvider<span style="color: #0550ae">&lt;</span><span style="color: #cf222e">tuple</span><span style="color: #0550ae">&lt;</span><span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">48</span><span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;&gt;&gt;</span><span style="color: #24292f;background-color: #f6f8fa">()</span> lp<span style="color: #24292f;background-color: #f6f8fa">;</span>
 
-lp.learn( { hdr.ethernet.srcAddr, hdr.ipv4.src } );</code></pre>
+lp<span style="color: #0550ae">.</span>learn<span style="color: #24292f;background-color: #f6f8fa">(</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> hdr<span style="color: #0550ae">.</span>ethernet<span style="color: #0550ae">.</span>srcAddr<span style="color: #24292f;background-color: #f6f8fa">,</span> hdr<span style="color: #0550ae">.</span>ipv4<span style="color: #0550ae">.</span>src <span style="color: #24292f;background-color: #f6f8fa">}</span> <span style="color: #24292f;background-color: #f6f8fa">);</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -8373,11 +8375,11 @@ the structure:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">struct S {
-    bit&lt;32&gt; a;
-    bit&lt;32&gt; b;
-}
-const S x = { 10, 20 }; // a = 10, b = 20</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">struct</span> S <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> a<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> b<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #cf222e">const</span> S x <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #0550ae">10</span><span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #0550ae">20</span> <span style="color: #24292f;background-color: #f6f8fa">};</span> <span style="color: #6e7781">// a = 10, b = 20</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -8490,17 +8492,17 @@ equality comparison expression:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">struct S {
-    bit&lt;32&gt; a;
-    bit&lt;32&gt; b;
-}
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">struct</span> S <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> a<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> b<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-void f() {
-  S s;
+<span style="color: #953800">void</span> f<span style="color: #24292f;background-color: #f6f8fa">()</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+  S s<span style="color: #24292f;background-color: #f6f8fa">;</span>
 
-  // Compare s with a record expression
-  bool b = s == (S) { a = 1, b = 2 };
-}</code></pre>
+  <span style="color: #6e7781">// Compare s with a record expression
+</span>  <span style="color: #953800">bool</span> b <span style="color: #0550ae">=</span> s <span style="color: #0550ae">==</span> <span style="color: #24292f;background-color: #f6f8fa">(</span>S<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> a <span style="color: #0550ae">=</span> <span style="color: #0550ae">1</span><span style="color: #24292f;background-color: #f6f8fa">,</span> b <span style="color: #0550ae">=</span> <span style="color: #0550ae">2</span> <span style="color: #24292f;background-color: #f6f8fa">};</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -9139,15 +9141,15 @@ the table:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">if (ipv4_match.apply().hit) {
-    // there was a hit
-} else {
-    // there was a miss
-}
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">if</span> <span style="color: #24292f;background-color: #f6f8fa">(</span>ipv4_match<span style="color: #0550ae">.</span><span style="color: #cf222e">apply</span><span style="color: #24292f;background-color: #f6f8fa">()</span><span style="color: #0550ae">.</span>hit<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #6e7781">// there was a hit
+</span><span style="color: #24292f;background-color: #f6f8fa">}</span> <span style="color: #cf222e">else</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #6e7781">// there was a miss
+</span><span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-if (ipv4_host.apply().miss) {
-    ipv4_lpm.apply(); // Look up the route only if host table missed
-}</code></pre>
+<span style="color: #cf222e">if</span> <span style="color: #24292f;background-color: #f6f8fa">(</span>ipv4_host<span style="color: #0550ae">.</span><span style="color: #cf222e">apply</span><span style="color: #24292f;background-color: #f6f8fa">()</span><span style="color: #0550ae">.</span>miss<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    ipv4_lpm<span style="color: #0550ae">.</span><span style="color: #cf222e">apply</span><span style="color: #24292f;background-color: #f6f8fa">();</span> <span style="color: #6e7781">// Look up the route only if host table missed
+</span><span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -9157,9 +9159,9 @@ statement:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">switch (dmac.apply().action_run) {
-    Drop_action: { return; }
-}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">switch</span> <span style="color: #24292f;background-color: #f6f8fa">(</span>dmac<span style="color: #0550ae">.</span><span style="color: #cf222e">apply</span><span style="color: #24292f;background-color: #f6f8fa">()</span><span style="color: #0550ae">.</span>action_run<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    Drop_action<span style="color: #24292f;background-color: #f6f8fa">:</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #cf222e">return</span><span style="color: #24292f;background-color: #f6f8fa">;</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -9241,12 +9243,12 @@ specializedTypeIR
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">struct S&lt;T, U&gt; {
-    T t;
-    U u;
-}
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">struct</span> S<span style="color: #0550ae">&lt;</span>T<span style="color: #24292f;background-color: #f6f8fa">,</span> U<span style="color: #0550ae">&gt;</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    T t<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    U u<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-typedef S&lt;int&lt;32&gt;, bit&lt;32&gt;&gt; A;</code></pre>
+<span style="color: #cf222e">typedef</span> S<span style="color: #0550ae">&lt;</span><span style="color: #953800">int</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;&gt;</span> A<span style="color: #24292f;background-color: #f6f8fa">;</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -16516,13 +16518,13 @@ has the effect of creating and applying a local instance of that type.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">control Callee(/* parameters omitted */) { /* body omitted */ }
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">control</span> Callee<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #6e7781">/* parameters omitted */</span><span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-control Caller(/* parameters omitted */)(/* parameters omitted */) {
-    apply {
-        Callee.apply(/* arguments omitted */); // Callee is treated as an instance
-    }
-}</code></pre>
+<span style="color: #cf222e">control</span> Caller<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #6e7781">/* parameters omitted */</span><span style="color: #24292f;background-color: #f6f8fa">)(</span><span style="color: #6e7781">/* parameters omitted */</span><span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #cf222e">apply</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+        Callee<span style="color: #0550ae">.</span><span style="color: #cf222e">apply</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #6e7781">/* arguments omitted */</span><span style="color: #24292f;background-color: #f6f8fa">);</span> <span style="color: #6e7781">// Callee is treated as an instance
+</span>    <span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -16530,12 +16532,12 @@ control Caller(/* parameters omitted */)(/* parameters omitted */) {
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">control Caller(/* parameters omitted */)(/* parameters omitted */) {
-    @name("Callee") Callee() Callee_inst; // local instance of Callee
-    apply {
-        Callee_inst.apply(/* arguments omitted */);         // Callee_inst is applied
-    }
-}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">control</span> Caller<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #6e7781">/* parameters omitted */</span><span style="color: #24292f;background-color: #f6f8fa">)(</span><span style="color: #6e7781">/* parameters omitted */</span><span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #0550ae">@name</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0a3069">"Callee"</span><span style="color: #24292f;background-color: #f6f8fa">)</span> Callee<span style="color: #24292f;background-color: #f6f8fa">()</span> Callee_inst<span style="color: #24292f;background-color: #f6f8fa">;</span> <span style="color: #6e7781">// local instance of Callee
+</span>    <span style="color: #cf222e">apply</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+        Callee_inst<span style="color: #0550ae">.</span><span style="color: #cf222e">apply</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #6e7781">/* arguments omitted */</span><span style="color: #24292f;background-color: #f6f8fa">);</span>         <span style="color: #6e7781">// Callee_inst is applied
+</span>    <span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -16548,14 +16550,14 @@ controls or parsers:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">control Callee&lt;T&gt;(/* parameters omitted */) { /* body omitted */ }
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">control</span> Callee<span style="color: #0550ae">&lt;</span>T<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #6e7781">/* parameters omitted */</span><span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-control Caller(/* parameters omitted */)(/* parameters omitted */) {
-    apply {
-        // Callee&lt;bit&lt;32&gt;&gt; is treated as an instance
-        Callee&lt;bit&lt;32&gt;&gt;.apply(/* arguments omitted */);
-    }
-}</code></pre>
+<span style="color: #cf222e">control</span> Caller<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #6e7781">/* parameters omitted */</span><span style="color: #24292f;background-color: #f6f8fa">)(</span><span style="color: #6e7781">/* parameters omitted */</span><span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #cf222e">apply</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+        <span style="color: #6e7781">// Callee&lt;bit&lt;32&gt;&gt; is treated as an instance
+</span>        Callee<span style="color: #0550ae">&lt;</span><span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;&gt;.</span><span style="color: #cf222e">apply</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #6e7781">/* arguments omitted */</span><span style="color: #24292f;background-color: #f6f8fa">);</span>
+    <span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -17653,12 +17655,12 @@ actions of the table <code>t</code>, or <code>default</code>.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">switch (t.apply().action_run) {
-   action1:          // fall-through to action2:
-   action2: { /* body omitted */ }
-   action3: { /* body omitted */ }  // no fall-through from action2 to action3 labels
-   default: { /* body omitted */ }
-}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">switch</span> <span style="color: #24292f;background-color: #f6f8fa">(</span>t<span style="color: #0550ae">.</span><span style="color: #cf222e">apply</span><span style="color: #24292f;background-color: #f6f8fa">()</span><span style="color: #0550ae">.</span>action_run<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+   action1<span style="color: #24292f;background-color: #f6f8fa">:</span>          <span style="color: #6e7781">// fall-through to action2:
+</span>   action2<span style="color: #24292f;background-color: #f6f8fa">:</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
+   action3<span style="color: #24292f;background-color: #f6f8fa">:</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>  <span style="color: #6e7781">// no fall-through from action2 to action3 labels
+</span>   <span style="color: #cf222e">default</span><span style="color: #24292f;background-color: #f6f8fa">:</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -17916,14 +17918,14 @@ ambiguity with a block statement.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">// Assume the expression hdr.ethernet.etherType has type bit&lt;16&gt;.
-switch (hdr.ethernet.etherType) {
-   0x86dd: { /* body omitted */ }
-   0x0800:          // fall-through to the next body
-   0x0802: { /* body omitted */ }
-   0xcafe: { /* body omitted */ }
-   default: { /* body omitted */ }
-}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #6e7781">// Assume the expression hdr.ethernet.etherType has type bit&lt;16&gt;.
+</span><span style="color: #cf222e">switch</span> <span style="color: #24292f;background-color: #f6f8fa">(</span>hdr<span style="color: #0550ae">.</span>ethernet<span style="color: #0550ae">.</span>etherType<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+   <span style="color: #0550ae">0x86dd</span><span style="color: #24292f;background-color: #f6f8fa">:</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
+   <span style="color: #0550ae">0x0800</span><span style="color: #24292f;background-color: #f6f8fa">:</span>          <span style="color: #6e7781">// fall-through to the next body
+</span>   <span style="color: #0550ae">0x0802</span><span style="color: #24292f;background-color: #f6f8fa">:</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
+   <span style="color: #0550ae">0xcafe</span><span style="color: #24292f;background-color: #f6f8fa">:</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
+   <span style="color: #cf222e">default</span><span style="color: #24292f;background-color: #f6f8fa">:</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 <div class="listingblock">
@@ -18249,12 +18251,12 @@ following are all legal constant declarations:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">const bit&lt;32&gt; COUNTER = 32w0x0;
-struct Version {
-    bit&lt;32&gt; major;
-    bit&lt;32&gt; minor;
-}
-const Version version = { 32w0, 32w0 };</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">const</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> COUNTER <span style="color: #0550ae">=</span> <span style="color: #0550ae">32w0x0</span><span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #cf222e">struct</span> Version <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> major<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> minor<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #cf222e">const</span> Version version <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #0550ae">32w0</span><span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #0550ae">32w0</span> <span style="color: #24292f;background-color: #f6f8fa">};</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -18414,21 +18416,21 @@ follows:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">// from target library
-enum CounterType {
-   Packets,
-   Bytes,
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #6e7781">// from target library
+</span><span style="color: #cf222e">enum</span> CounterType <span style="color: #24292f;background-color: #f6f8fa">{</span>
+   Packets<span style="color: #24292f;background-color: #f6f8fa">,</span>
+   Bytes<span style="color: #24292f;background-color: #f6f8fa">,</span>
    Both
-}
-extern Counter {
-    Counter(bit&lt;32&gt; size, CounterType type);
-    void increment(in bit&lt;32&gt; index);
-}
-// user program
-control c(/* parameters omitted */) {
-    Counter(32w1024, CounterType.Both) ctr;  // instantiation
-    apply { /* body omitted */ }
-}</code></pre>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #cf222e">extern</span> Counter <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    Counter<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> <span style="color: #cf222e">size</span><span style="color: #24292f;background-color: #f6f8fa">,</span> CounterType <span style="color: #cf222e">type</span><span style="color: #24292f;background-color: #f6f8fa">);</span>
+    <span style="color: #953800">void</span> increment<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">in</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> index<span style="color: #24292f;background-color: #f6f8fa">);</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #6e7781">// user program
+</span><span style="color: #cf222e">control</span> c<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #6e7781">/* parameters omitted */</span><span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    Counter<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">32w1024</span><span style="color: #24292f;background-color: #f6f8fa">,</span> CounterType<span style="color: #0550ae">.</span>Both<span style="color: #24292f;background-color: #f6f8fa">)</span> ctr<span style="color: #24292f;background-color: #f6f8fa">;</span>  <span style="color: #6e7781">// instantiation
+</span>    <span style="color: #cf222e">apply</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -18439,9 +18441,9 @@ following program is not valid:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">// Program
-control c(/* parameters omitted */) { /* body omitted */ }
-c() c1;  // illegal top-level instantiation</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #6e7781">// Program
+</span><span style="color: #cf222e">control</span> c<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #6e7781">/* parameters omitted */</span><span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
+c<span style="color: #24292f;background-color: #f6f8fa">()</span> c1<span style="color: #24292f;background-color: #f6f8fa">;</span>  <span style="color: #6e7781">// illegal top-level instantiation</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -18625,14 +18627,14 @@ current object instance:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">// Instantiate a balancer
-Balancer() b = {  // provide an implementation for the abstract methods
-    bit&lt;4&gt; on_new_flow(in bit&lt;32&gt; address) {
-        // uses the address and the number of flows to balance the load
-        bit&lt;32&gt; count = this.getFlowCount();  // call method of the same instance
-        return (address + count)[3:0];
-    }
-}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #6e7781">// Instantiate a balancer
+</span>Balancer<span style="color: #24292f;background-color: #f6f8fa">()</span> b <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>  <span style="color: #6e7781">// provide an implementation for the abstract methods
+</span>    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">4</span><span style="color: #0550ae">&gt;</span> on_new_flow<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">in</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> address<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+        <span style="color: #6e7781">// uses the address and the number of flows to balance the load
+</span>        <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> count <span style="color: #0550ae">=</span> <span style="color: #cf222e">this</span><span style="color: #0550ae">.</span>getFlowCount<span style="color: #24292f;background-color: #f6f8fa">();</span>  <span style="color: #6e7781">// call method of the same instance
+</span>        <span style="color: #cf222e">return</span> <span style="color: #24292f;background-color: #f6f8fa">(</span>address <span style="color: #0550ae">+</span> count<span style="color: #24292f;background-color: #f6f8fa">)[</span><span style="color: #0550ae">3</span><span style="color: #24292f;background-color: #f6f8fa">:</span><span style="color: #0550ae">0</span><span style="color: #24292f;background-color: #f6f8fa">];</span>
+    <span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -19365,9 +19367,9 @@ functionDeclarationIR
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">bit&lt;32&gt; max(in bit&lt;32&gt; left, in bit&lt;32&gt; right) {
-   return (left &gt; right) ? left : right;
-}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> max<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">in</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> left<span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #cf222e">in</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> right<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+   <span style="color: #cf222e">return</span> <span style="color: #24292f;background-color: #f6f8fa">(</span>left <span style="color: #0550ae">&gt;</span> right<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #0550ae">?</span> left <span style="color: #24292f;background-color: #f6f8fa">:</span> right<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -19602,9 +19604,9 @@ instances of that control block.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">action Forward_a(out bit&lt;9&gt; outputPort, bit&lt;9&gt; port) {
-    outputPort = port;
-}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">action</span> Forward_a<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">out</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">9</span><span style="color: #0550ae">&gt;</span> outputPort<span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">9</span><span style="color: #0550ae">&gt;</span> port<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    outputPort <span style="color: #0550ae">=</span> port<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -19788,7 +19790,7 @@ described in <a href="#sec-error-exprs">[sec-error-exprs]</a>.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">error { ParseError, PacketTooShort }</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #953800">error</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> ParseError<span style="color: #24292f;background-color: #f6f8fa">,</span> PacketTooShort <span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -19945,11 +19947,11 @@ matchKindDeclarationIR
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">match_kind {
-   exact,
-   ternary,
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #953800">match_kind</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+   exact<span style="color: #24292f;background-color: #f6f8fa">,</span>
+   ternary<span style="color: #24292f;background-color: #f6f8fa">,</span>
    lpm
-}</code></pre>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -20440,7 +20442,7 @@ generic---e.g., the following declaration is illegal:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">parser P&lt;H&gt;(inout H data) { /* body omitted */ }</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">parser</span> P<span style="color: #0550ae">&lt;</span>H<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">inout</span> H data<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -20463,17 +20465,17 @@ example will produce an error:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">// erroneous example
-parser p() {
-    bit&lt;4&gt; t;
-    state start {
-       t = 1;
-       transition t;
-    }
-    state t {  // error: name t is duplicated
-       transition accept;
-    }
-}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #6e7781">// erroneous example
+</span><span style="color: #cf222e">parser</span> p<span style="color: #24292f;background-color: #f6f8fa">()</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">4</span><span style="color: #0550ae">&gt;</span> t<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #cf222e">state</span> start <span style="color: #24292f;background-color: #f6f8fa">{</span>
+       t <span style="color: #0550ae">=</span> <span style="color: #0550ae">1</span><span style="color: #24292f;background-color: #f6f8fa">;</span>
+       <span style="color: #cf222e">transition</span> t<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #24292f;background-color: #f6f8fa">}</span>
+    <span style="color: #cf222e">state</span> t <span style="color: #24292f;background-color: #f6f8fa">{</span>  <span style="color: #6e7781">// error: name t is duplicated
+</span>       <span style="color: #cf222e">transition</span> accept<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 <div class="sect3">
@@ -20723,7 +20725,7 @@ programmer.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">control C&lt;H&gt;(inout H data) { /* Body omitted */ }</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">control</span> C<span style="color: #0550ae">&lt;</span>H<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">inout</span> H data<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* Body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 <div class="sect3">
@@ -22769,14 +22771,14 @@ implemented by the P4 programmers.  Such methods are described with the
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">extern Balancer {
-    Balancer();
-    // get the number of active flows
-    bit&lt;32&gt; getFlowCount();
-    // return port index used for load-balancing
-    // @param address: IPv4 source address of flow
-    abstract bit&lt;4&gt; on_new_flow(in bit&lt;32&gt; address);
-}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">extern</span> Balancer <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    Balancer<span style="color: #24292f;background-color: #f6f8fa">();</span>
+    <span style="color: #6e7781">// get the number of active flows
+</span>    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> getFlowCount<span style="color: #24292f;background-color: #f6f8fa">();</span>
+    <span style="color: #6e7781">// return port index used for load-balancing
+</span>    <span style="color: #6e7781">// @param address: IPv4 source address of flow
+</span>    <span style="color: #cf222e">abstract</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">4</span><span style="color: #0550ae">&gt;</span> on_new_flow<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">in</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> address<span style="color: #24292f;background-color: #f6f8fa">);</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -23361,14 +23363,14 @@ is not allowed:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">parser p(packet_in p, out bit&lt;32&gt; value) {
-  ...
-}
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">parser</span> p<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">packet_in</span> p<span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #cf222e">out</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> value<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+  <span style="color: #0550ae">...</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-// The following will cause an error about a duplicate declaration
+<span style="color: #6e7781">// The following will cause an error about a duplicate declaration
 //parser p(packet_in p, out Headers headers) {
 //   ...
-//}</code></pre>
+//}</span></code></pre>
 </div>
 </div>
 </div>
@@ -24180,69 +24182,69 @@ in parsers and deparsers to access packet data.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">/// Standard error codes.  New error codes can be declared by users.
-error {
-    NoError,           /// No error.
-    PacketTooShort,    /// Not enough bits in packet for 'extract'.
-    NoMatch,           /// 'select' expression has no matches.
-    StackOutOfBounds,  /// Reference to invalid element of a header stack.
-    HeaderTooShort,    /// Extracting too many bits into a varbit field.
-    ParserTimeout,     /// Parser execution time limit exceeded.
-    ParserInvalidArgument  /// Parser operation was called with a value
-                           /// not supported by the implementation.
-}
-extern packet_in {
-    /// Read a header from the packet into a fixed-sized header @hdr
-    /// and advance the cursor.
-    /// May trigger error PacketTooShort or StackOutOfBounds.
-    /// @T must be a fixed-size header type
-    void extract&lt;T&gt;(out T hdr);
-    /// Read bits from the packet into a variable-sized header @variableSizeHeader
-    /// and advance the cursor.
-    /// @T must be a header containing exactly 1 varbit field.
-    /// May trigger errors PacketTooShort, StackOutOfBounds, or HeaderTooShort.
-    void extract&lt;T&gt;(out T variableSizeHeader,
-                    in bit&lt;32&gt; variableFieldSizeInBits);
-    /// Read bits from the packet without advancing the cursor.
-    /// @returns: the bits read from the packet.
-    /// T may be an arbitrary fixed-size type.
-    T lookahead&lt;T&gt;();
-    /// Advance the packet cursor by the specified number of bits.
-    void advance(in bit&lt;32&gt; sizeInBits);
-    /// @return packet length in bytes.  This method may be unavailable on
-    /// some target architectures.
-    bit&lt;32&gt; length();
-}
-extern packet_out {
-    /// Write @data into the output packet, skipping invalid headers
-    /// and advancing the cursor
-    /// @T can be a header type, a header stack, a header_union, or a struct
-    /// containing fields with such types.
-    void emit&lt;T&gt;(in T data);
-}
-action NoAction() {}
-/// Standard match kinds for table key fields.
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #6e7781">/// Standard error codes.  New error codes can be declared by users.
+</span><span style="color: #953800">error</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    NoError<span style="color: #24292f;background-color: #f6f8fa">,</span>           <span style="color: #6e7781">/// No error.
+</span>    PacketTooShort<span style="color: #24292f;background-color: #f6f8fa">,</span>    <span style="color: #6e7781">/// Not enough bits in packet for 'extract'.
+</span>    NoMatch<span style="color: #24292f;background-color: #f6f8fa">,</span>           <span style="color: #6e7781">/// 'select' expression has no matches.
+</span>    StackOutOfBounds<span style="color: #24292f;background-color: #f6f8fa">,</span>  <span style="color: #6e7781">/// Reference to invalid element of a header stack.
+</span>    HeaderTooShort<span style="color: #24292f;background-color: #f6f8fa">,</span>    <span style="color: #6e7781">/// Extracting too many bits into a varbit field.
+</span>    ParserTimeout<span style="color: #24292f;background-color: #f6f8fa">,</span>     <span style="color: #6e7781">/// Parser execution time limit exceeded.
+</span>    ParserInvalidArgument  <span style="color: #6e7781">/// Parser operation was called with a value
+</span>                           <span style="color: #6e7781">/// not supported by the implementation.
+</span><span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #cf222e">extern</span> <span style="color: #cf222e">packet_in</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #6e7781">/// Read a header from the packet into a fixed-sized header @hdr
+</span>    <span style="color: #6e7781">/// and advance the cursor.
+</span>    <span style="color: #6e7781">/// May trigger error PacketTooShort or StackOutOfBounds.
+</span>    <span style="color: #6e7781">/// @T must be a fixed-size header type
+</span>    <span style="color: #953800">void</span> <span style="color: #953800">extract</span><span style="color: #0550ae">&lt;</span>T<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">out</span> T hdr<span style="color: #24292f;background-color: #f6f8fa">);</span>
+    <span style="color: #6e7781">/// Read bits from the packet into a variable-sized header @variableSizeHeader
+</span>    <span style="color: #6e7781">/// and advance the cursor.
+</span>    <span style="color: #6e7781">/// @T must be a header containing exactly 1 varbit field.
+</span>    <span style="color: #6e7781">/// May trigger errors PacketTooShort, StackOutOfBounds, or HeaderTooShort.
+</span>    <span style="color: #953800">void</span> <span style="color: #953800">extract</span><span style="color: #0550ae">&lt;</span>T<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">out</span> T variableSizeHeader<span style="color: #24292f;background-color: #f6f8fa">,</span>
+                    <span style="color: #cf222e">in</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> variableFieldSizeInBits<span style="color: #24292f;background-color: #f6f8fa">);</span>
+    <span style="color: #6e7781">/// Read bits from the packet without advancing the cursor.
+</span>    <span style="color: #6e7781">/// @returns: the bits read from the packet.
+</span>    <span style="color: #6e7781">/// T may be an arbitrary fixed-size type.
+</span>    T lookahead<span style="color: #0550ae">&lt;</span>T<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">();</span>
+    <span style="color: #6e7781">/// Advance the packet cursor by the specified number of bits.
+</span>    <span style="color: #953800">void</span> advance<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">in</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> sizeInBits<span style="color: #24292f;background-color: #f6f8fa">);</span>
+    <span style="color: #6e7781">/// @return packet length in bytes.  This method may be unavailable on
+</span>    <span style="color: #6e7781">/// some target architectures.
+</span>    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> length<span style="color: #24292f;background-color: #f6f8fa">();</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #cf222e">extern</span> <span style="color: #cf222e">packet_out</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #6e7781">/// Write @data into the output packet, skipping invalid headers
+</span>    <span style="color: #6e7781">/// and advancing the cursor
+</span>    <span style="color: #6e7781">/// @T can be a header type, a header stack, a header_union, or a struct
+</span>    <span style="color: #6e7781">/// containing fields with such types.
+</span>    <span style="color: #953800">void</span> emit<span style="color: #0550ae">&lt;</span>T<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">in</span> T data<span style="color: #24292f;background-color: #f6f8fa">);</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #cf222e">action</span> NoAction<span style="color: #24292f;background-color: #f6f8fa">()</span> <span style="color: #24292f;background-color: #f6f8fa">{}</span>
+<span style="color: #6e7781">/// Standard match kinds for table key fields.
 /// Some architectures may not support all these match kinds.
 /// Architectures can declare additional match kinds.
-match_kind {
-    /// Match bits exactly.
-    exact,
-    /// Ternary match, using a mask.
-    ternary,
-    /// Longest-prefix match.
-    lpm
-}
+</span><span style="color: #953800">match_kind</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #6e7781">/// Match bits exactly.
+</span>    exact<span style="color: #24292f;background-color: #f6f8fa">,</span>
+    <span style="color: #6e7781">/// Ternary match, using a mask.
+</span>    ternary<span style="color: #24292f;background-color: #f6f8fa">,</span>
+    <span style="color: #6e7781">/// Longest-prefix match.
+</span>    lpm
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-/// Static assert evaluates a boolean expression
+<span style="color: #6e7781">/// Static assert evaluates a boolean expression
 /// at compilation time.  If the expression evaluates to
 /// false, compilation is stopped and the corresponding message is printed.
 /// The function returns a boolean, so that it can be used
 /// as a global constant value in a program, e.g.:
 /// const version = static_assert(V1MODEL_VERSION &gt; 20180000, "Expected a v1 model version &gt;= 20180000");
-extern bool static_assert(bool check, string message);
+</span><span style="color: #cf222e">extern</span> <span style="color: #953800">bool</span> static_assert<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #953800">bool</span> check<span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #953800">string</span> message<span style="color: #24292f;background-color: #f6f8fa">);</span>
 
-/// Like the above but using a default message.
-extern bool static_assert(bool check);</code></pre>
+<span style="color: #6e7781">/// Like the above but using a default message.
+</span><span style="color: #cf222e">extern</span> <span style="color: #953800">bool</span> static_assert<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #953800">bool</span> check<span style="color: #24292f;background-color: #f6f8fa">);</span></code></pre>
 </div>
 </div>
 </div>
@@ -24257,7 +24259,7 @@ extern bool static_assert(bool check);</code></pre>
 <div id="footer">
 <div id="footer-text">
 Version v1.2.5<br>
-Last updated 2025-09-30 20:56:00 +0900
+Last updated 2025-10-01 11:52:26 +0900
 </div>
 </div>
 </body>
