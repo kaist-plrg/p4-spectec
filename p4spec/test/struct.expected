@@ -15868,7 +15868,7 @@ relation Lvalue_ok: p TC |- lvalue : %
 
       4. Result in : % % |- % : typedLvalueIR
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:98.1-102.111
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:98.1-102.110
 relation Stmt_ok: p' TC' f' |- statement : % % %
 
 1. Case analysis on statement
@@ -16147,7 +16147,7 @@ relation Stmt_ok: p' TC' f' |- statement : % % %
 
             2. Result in : % % % |- % : TC' f_post (switchStatementIR as statementIR)
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:104.1-109.125
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:104.1-109.124
 relation BlockElementStmt_ok: TC_0 f |- blockElementStatement : % % %
 
 1. Case analysis on blockElementStatement
@@ -16228,7 +16228,7 @@ relation BlockElementStmt_ok: TC_0 f |- blockElementStatement : % % %
 
       2. Result in : % % |- % : TC_1 f_post (statementIR as blockElementStatementIR)
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:111.1-116.126
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:111.1-116.125
 relation BlockElementStmts_ok: TC' f' |- blockElementStatement*{blockElementStatement <- blockElementStatement*} : % % %
 
 1. Case analysis on blockElementStatement*{blockElementStatement <- blockElementStatement*}
@@ -16251,7 +16251,7 @@ relation BlockElementStmts_ok: TC' f' |- blockElementStatement*{blockElementStat
 
       3. Result in : % % |- % : TC_2 f_2 blockElementStatementIR_h :: blockElementStatementIR_t*{blockElementStatementIR_t <- blockElementStatementIR_t*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:118.1-123.117
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:118.1-123.116
 relation Block_ok: TC_0 f |- (annotationList { blockElementStatementList }) : % % %
 
 1. Group : TC_0 f |- (annotationList { blockElementStatementList }) : % % %
@@ -26348,3 +26348,125 @@ def $align_cparams_with_args'(({ (id : constructorParameterIR)*{constructorParam
 def $init_table(tablePropertyListIR)
 
 1. Return tablePropertyListIR
+
+;; ../../../../spec-concrete/8-mini-evaluation.watsup:1.32-1.45
+syntax globalEvaluationLayer = {venv venv}
+
+;; ../../../../spec-concrete/8-mini-evaluation.watsup:2.31-2.44
+syntax blockEvaluationLayer = {venv venv}
+
+;; ../../../../spec-concrete/8-mini-evaluation.watsup:3.31-3.46
+syntax localEvaluationLayer = {venvs venv*}
+
+;; ../../../../spec-concrete/8-mini-evaluation.watsup:6.3-8.33
+syntax evaluationContext = {global globalEvaluationLayer, block blockEvaluationLayer, local localEvaluationLayer}
+
+;; ../../../../spec-concrete/8-mini-evaluation.watsup:11.1-12.9
+syntax expressionResult = 
+   | b bool
+   | error. id
+   | match_kind. id
+   | " text " hint(print "#%#")
+   | d int hint(print %)
+   | nat w int hint(print %#W#%)
+   | nat s int hint(print %#S#%)
+   | nat v int # nat
+   | [ value* ]
+   | ( value* )
+   | [ value* #( nat ; nat )]
+   | struct tid { fieldValue* }
+   | header tid { fieldValue* }
+   | header_union tid { fieldValue* }
+   | tid . id
+   | tid . id # value
+   | ! oid
+   | default
+   | {#}
+   | seq( value* )
+   | seq( value* ,...)
+   | record{ fieldValue* }
+   | record{ fieldValue* ,...}
+   | set{ value }
+   | set{ value &&& value }
+   | set{ value .. value }
+   | table_enum tid . id
+   | table_struct tid { fieldValue* }
+   | exit
+
+;; ../../../../spec-concrete/8-mini-evaluation.watsup:15.1-17.17
+syntax statementResult = 
+   | cont
+   | exit
+   | return value
+
+;; ../../../../spec-concrete/8-mini-evaluation.watsup:21.1-26.71
+relation Expr_eval: p EC STO |- (expressionIR # (( _typeIR _ctk ))) : % %
+
+1. If ((expressionIR has type booleanLiteral)), then
+
+  1. (Let booleanLiteral be (expressionIR as booleanLiteral))
+
+  2. Group literalExpressionIR-boolean: p EC STO |- ((booleanLiteral as expressionIR) # (( _typeIR _ctk ))) : % %
+
+    1. Case analysis on booleanLiteral
+
+      1. Case (% matches pattern `TRUE`)
+
+        1. Result in : % % % |- % : STO ((b true) as expressionResult)
+
+      2. Case (% matches pattern `FALSE`)
+
+        1. Result in : % % % |- % : STO ((b false) as expressionResult)
+
+;; ../../../../spec-concrete/8-mini-evaluation.watsup:38.1-43.101
+relation Stmt_eval: p EC STO |- statementIR : % % %
+
+1. If ((statementIR has type conditionalStatementIR)), then
+
+  1. (Let conditionalStatementIR be (statementIR as conditionalStatementIR))
+
+  2. Group conditionalStatementIR: p EC STO |- (conditionalStatementIR as statementIR) : % % %
+
+    1. Case analysis on conditionalStatementIR
+
+      1. Case (% matches pattern `IF(%)%`)
+
+        1. (Let (if( typedExpressionIR_cond ) statementIR_then) be conditionalStatementIR)
+
+        2. (Expr_eval: p EC STO |- typedExpressionIR_cond : STO_cond expressionResult)
+
+        3. If ((((b true) as expressionResult) = expressionResult)), then
+
+          1. (Stmt_eval: p EC STO_cond |- statementIR_then : EC_then STO_then statementResult)
+
+          2. Result in : % % % |- % : EC_then STO_then statementResult
+
+        4. If ((((b false) as expressionResult) = expressionResult)), then
+
+          1. Result in : % % % |- % : EC STO_cond (cont)
+
+        5. If ((expressionResult matches pattern `EXIT`)), then
+
+          1. Result in : % % % |- % : EC STO_cond (exit)
+
+      2. Case (% matches pattern `IF(%)%ELSE%`)
+
+        1. (Let (if( typedExpressionIR_cond ) statementIR_then else statementIR_else) be conditionalStatementIR)
+
+        2. (Expr_eval: p EC STO |- typedExpressionIR_cond : STO_cond expressionResult)
+
+        3. If ((((b true) as expressionResult) = expressionResult)), then
+
+          1. (Stmt_eval: p EC STO_cond |- statementIR_then : EC_then STO_then statementResult)
+
+          2. Result in : % % % |- % : EC_then STO_then statementResult
+
+        4. If ((((b false) as expressionResult) = expressionResult)), then
+
+          1. (Stmt_eval: p EC STO_cond |- statementIR_else : EC_else STO_else statementResult)
+
+          2. Result in : % % % |- % : EC_else STO_else statementResult
+
+        5. If ((expressionResult matches pattern `EXIT`)), then
+
+          1. Result in : % % % |- % : EC STO_cond (exit)

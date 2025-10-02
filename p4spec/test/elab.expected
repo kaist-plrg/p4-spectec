@@ -14429,7 +14429,7 @@ relation Lvalue_ok: cursor typingContext |- lvalue : typedLvalueIR
     -- let typedLvalueIR = ( typedLvalueIR_base ) #( typeIR_base )
     -- output: % % |- % : typedLvalueIR
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:98.1-102.111
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:98.1-102.110
 relation Stmt_ok: cursor typingContext flow |- statement : typingContext flow statementIR
 
   ;; ../../../../spec-concrete/5.10-typing-statement.watsup:10.1-11.25
@@ -14693,7 +14693,7 @@ relation Stmt_ok: cursor typingContext flow |- statement : typingContext flow st
     -- let switchStatementIR = switch( typedExpressionIR_switch ){ switchCaseIR*{switchCaseIR <- switchCaseIR*} }
     -- output: % % % |- % : TC f_post switchStatementIR as statementIR
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:104.1-109.125
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:104.1-109.124
 relation BlockElementStmt_ok: typingContext flow |- blockElementStatement : typingContext flow blockElementStatementIR
 
   ;; ../../../../spec-concrete/5.10-typing-statement.watsup:427.1-429.77
@@ -14770,7 +14770,7 @@ relation BlockElementStmt_ok: typingContext flow |- blockElementStatement : typi
     -- Stmt_ok: local TC_0 f |- statement : TC_1 f_post statementIR
     -- output: % % |- % : TC_1 f_post statementIR as blockElementStatementIR
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:111.1-116.126
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:111.1-116.125
 relation BlockElementStmts_ok: typingContext flow |- blockElementStatement* : typingContext flow blockElementStatementIR*
 
   ;; ../../../../spec-concrete/5.10-typing-statement.watsup:485.1-486.25
@@ -14804,7 +14804,7 @@ relation BlockElementStmts_ok: typingContext flow |- blockElementStatement* : ty
     -- BlockElementStmts_ok: TC_1 f_1 |- blockElementStatement_t*{blockElementStatement_t <- blockElementStatement_t*} : TC_2 f_2 blockElementStatementIR_t*{blockElementStatementIR_t <- blockElementStatementIR_t*}
     -- output: % % |- % : TC_2 f_2 blockElementStatementIR_h :: blockElementStatementIR_t*{blockElementStatementIR_t <- blockElementStatementIR_t*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:118.1-123.117
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:118.1-123.116
 relation Block_ok: typingContext flow |- blockStatement : typingContext flow blockStatementIR
 
   ;; ../../../../spec-concrete/5.10-typing-statement.watsup:502.1-513.72
@@ -24473,3 +24473,142 @@ def $init_table(tablePropertyListIR) : tablePropertyListIR =
 
   ;; ../../../../spec-concrete/7.11-instantiation-constructor-call.watsup:310.1-310.59
   clause 0 : (tablePropertyListIR) = tablePropertyListIR
+
+;; ../../../../spec-concrete/8-mini-evaluation.watsup:1.32-1.45
+syntax globalEvaluationLayer = {venv venv}
+
+;; ../../../../spec-concrete/8-mini-evaluation.watsup:2.31-2.44
+syntax blockEvaluationLayer = {venv venv}
+
+;; ../../../../spec-concrete/8-mini-evaluation.watsup:3.31-3.46
+syntax localEvaluationLayer = {venvs venv*}
+
+;; ../../../../spec-concrete/8-mini-evaluation.watsup:6.3-8.33
+syntax evaluationContext = {global globalEvaluationLayer, block blockEvaluationLayer, local localEvaluationLayer}
+
+;; ../../../../spec-concrete/8-mini-evaluation.watsup:11.1-12.9
+syntax expressionResult = 
+   | b bool
+   | error. id
+   | match_kind. id
+   | " text " hint(print "#%#")
+   | d int hint(print %)
+   | nat w int hint(print %#W#%)
+   | nat s int hint(print %#S#%)
+   | nat v int # nat
+   | [ value* ]
+   | ( value* )
+   | [ value* #( nat ; nat )]
+   | struct tid { fieldValue* }
+   | header tid { fieldValue* }
+   | header_union tid { fieldValue* }
+   | tid . id
+   | tid . id # value
+   | ! oid
+   | default
+   | {#}
+   | seq( value* )
+   | seq( value* ,...)
+   | record{ fieldValue* }
+   | record{ fieldValue* ,...}
+   | set{ value }
+   | set{ value &&& value }
+   | set{ value .. value }
+   | table_enum tid . id
+   | table_struct tid { fieldValue* }
+   | exit
+
+;; ../../../../spec-concrete/8-mini-evaluation.watsup:15.1-17.17
+syntax statementResult = 
+   | cont
+   | exit
+   | return value
+
+;; ../../../../spec-concrete/8-mini-evaluation.watsup:21.1-26.71
+relation Expr_eval: cursor evaluationContext store |- typedExpressionIR : store expressionResult
+
+  ;; ../../../../spec-concrete/8-mini-evaluation.watsup:28.1-36.2
+  rulegroup literalExpressionIR-boolean
+
+   match
+
+    (explicit) p EC STO |- booleanLiteral as expressionIR # ( _typeIR _ctk ) : % %
+    (implicit) p EC STO |- expressionIR # ( _typeIR _ctk ) : % %
+    -- if expressionIR <: booleanLiteral
+    -- let booleanLiteral = expressionIR as booleanLiteral
+
+   paths
+
+    rulepath true
+    -- if (true = booleanLiteral)
+    -- output: % % % |- % : STO b true as expressionResult
+
+    rulepath false
+    -- if (false = booleanLiteral)
+    -- output: % % % |- % : STO b false as expressionResult
+
+;; ../../../../spec-concrete/8-mini-evaluation.watsup:38.1-43.101
+relation Stmt_eval: cursor evaluationContext store |- statementIR : evaluationContext store statementResult
+
+  ;; ../../../../spec-concrete/8-mini-evaluation.watsup:45.1-85.2
+  rulegroup conditionalStatementIR
+
+   match
+
+    (explicit) p EC STO |- conditionalStatementIR as statementIR : % % %
+    (implicit) p EC STO |- statementIR : % % %
+    -- if statementIR <: conditionalStatementIR
+    -- let conditionalStatementIR = statementIR as conditionalStatementIR
+
+   paths
+
+    rulepath non-else-cont-true
+    -- let conditionalStatementIR' = conditionalStatementIR
+    -- if conditionalStatementIR' matches `IF(%)%`
+    -- let if( typedExpressionIR_cond ) statementIR_then = conditionalStatementIR'
+    -- Expr_eval: p EC STO |- typedExpressionIR_cond : STO_cond expressionResult
+    -- if (b true as expressionResult = expressionResult)
+    -- Stmt_eval: p EC STO_cond |- statementIR_then : EC_then STO_then statementResult
+    -- output: % % % |- % : EC_then STO_then statementResult
+
+    rulepath non-else-cont-false
+    -- let conditionalStatementIR' = conditionalStatementIR
+    -- if conditionalStatementIR' matches `IF(%)%`
+    -- let if( typedExpressionIR_cond ) statementIR_then = conditionalStatementIR'
+    -- Expr_eval: p EC STO |- typedExpressionIR_cond : STO_cond expressionResult
+    -- if (b false as expressionResult = expressionResult)
+    -- output: % % % |- % : EC STO_cond cont
+
+    rulepath non-else-exit
+    -- let conditionalStatementIR' = conditionalStatementIR
+    -- if conditionalStatementIR' matches `IF(%)%`
+    -- let if( typedExpressionIR_cond ) statementIR_then = conditionalStatementIR'
+    -- Expr_eval: p EC STO |- typedExpressionIR_cond : STO_cond expressionResult
+    -- if (exit = expressionResult)
+    -- output: % % % |- % : EC STO_cond exit
+
+    rulepath else-cont-true
+    -- let conditionalStatementIR' = conditionalStatementIR
+    -- if conditionalStatementIR' matches `IF(%)%ELSE%`
+    -- let if( typedExpressionIR_cond ) statementIR_then else statementIR_else = conditionalStatementIR'
+    -- Expr_eval: p EC STO |- typedExpressionIR_cond : STO_cond expressionResult
+    -- if (b true as expressionResult = expressionResult)
+    -- Stmt_eval: p EC STO_cond |- statementIR_then : EC_then STO_then statementResult
+    -- output: % % % |- % : EC_then STO_then statementResult
+
+    rulepath else-cont-false
+    -- let conditionalStatementIR' = conditionalStatementIR
+    -- if conditionalStatementIR' matches `IF(%)%ELSE%`
+    -- let if( typedExpressionIR_cond ) statementIR_then else statementIR_else = conditionalStatementIR'
+    -- Expr_eval: p EC STO |- typedExpressionIR_cond : STO_cond expressionResult
+    -- if (b false as expressionResult = expressionResult)
+    -- Stmt_eval: p EC STO_cond |- statementIR_else : EC_else STO_else statementResult
+    -- output: % % % |- % : EC_else STO_else statementResult
+
+    rulepath else-exit
+    -- let conditionalStatementIR' = conditionalStatementIR
+    -- if conditionalStatementIR' matches `IF(%)%ELSE%`
+    -- let if( typedExpressionIR_cond ) statementIR_then else statementIR_else = conditionalStatementIR'
+    -- Expr_eval: p EC STO |- typedExpressionIR_cond : STO_cond expressionResult
+    -- if (exit = expressionResult)
+    -- output: % % % |- % : EC STO_cond exit
