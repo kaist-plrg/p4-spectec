@@ -321,16 +321,6 @@ relation RoutineType_alpha: ``routineTypeIR`` and ``routineTypeIR'``
   ... If [``parameterTypeIR~a~`` and ``parameterTypeIR~b~`` are the same type](ParameterType_alpha), for each ``parameterTypeIR_a`` in ``parameterTypeIR_a*`` and ``parameterTypeIR_b`` in ``parameterTypeIR_b*``, then
    .... The relation holds
 
-. Else if ``routineTypeIR`` has type ``builtinFunctionTypeIR``
- .. Let ``BUILTIN_FUNCTION ( parameterTypeIR~a~* ) -> typeIR~ret_a~`` be ``routineTypeIR``
- .. Check that ``routineTypeIR'`` has type ``builtinFunctionTypeIR``
- .. Let ``BUILTIN_FUNCTION ( parameterTypeIR~b~* ) -> typeIR~ret_b~`` be ``routineTypeIR'``
- .. Group builtinfunction: ``BUILTIN_FUNCTION ( parameterTypeIR~a~* ) -> typeIR~ret_a~`` and ``BUILTIN_FUNCTION ( parameterTypeIR~b~* ) -> typeIR~ret_b~``
-
-  ... If [``parameterTypeIR~a~`` and ``parameterTypeIR~b~`` are the same type](ParameterType_alpha), for each ``parameterTypeIR_a`` in ``parameterTypeIR_a*`` and ``parameterTypeIR_b`` in ``parameterTypeIR_b*``, then
-   .... If [``typeIR~ret_a~`` and ``typeIR~ret_b~`` are the same type](Type_alpha), then
-    ..... The relation holds
-
 . Else if ``routineTypeIR`` has type ``definedFunctionTypeIR``
  .. Let ``FUNCTION ( parameterTypeIR~a~* ) -> typeIR~ret_a~`` be ``routineTypeIR``
  .. Check that ``routineTypeIR'`` has type ``definedFunctionTypeIR``
@@ -431,7 +421,7 @@ relation RoutineTypeDef_alpha: ``routineTypeDefIR`` and ``routineTypeDefIR'``
 
   ... Check that the length of ``tid~a~``* is equal to the length of ``tid~b~``*
   ... Check that the length of ``tid~hidden_a~``* is equal to the length of ``tid~hidden_b~``*
-  ... Let ``tid~fresh~*`` be ``$fresh_tids(the length of tid~a~* + the length of tid~hidden_a~*)``
+  ... Let ``tid~fresh~*`` be <<fresh_tids, ``the length of tid~a~* + the length of tid~hidden_a~*`` fresh type variables>>
   ... Let ``tid~a'~*`` be ``tid~a~* ++ tid~hidden_a~*``
   ... Let ``theta~a~`` be ``{ tid~a'~ : TID tid~fresh~* }``
   ... Let ``routineTypeIR~a_subst~`` be ``$subst_routineType(theta~a~, routineTypeIR~a~)``
@@ -709,14 +699,6 @@ relation RoutineType_wf: ``bound`` and ``routineTypeIR``
    .... Check that <<nestable_action, ``typeIR`` can be used in an action type>>, for each ``typeIR`` in ``typeIR*``
    .... The relation holds
 
-. Else if ``routineTypeIR`` has type ``builtinFunctionTypeIR``
- .. Let ``BUILTIN_FUNCTION ( parameterTypeIR* ) -> typeIR~ret~`` be ``routineTypeIR``
- .. Group builtinfunction: ``bound`` and ``BUILTIN_FUNCTION ( parameterTypeIR* ) -> typeIR~ret~``
-
-  ... If (ParameterTypes_wf: ``bound |- parameterTypeIR*``), then
-   .... If (Type_wf: ``bound |- typeIR~ret~``), then
-    ..... The relation holds
-
 . Else if ``routineTypeIR`` has type ``definedFunctionTypeIR``
  .. Let ``FUNCTION ( parameterTypeIR* ) -> typeIR~ret~`` be ``routineTypeIR``
  .. Group definedFunctionTypeIR: ``bound`` and ``FUNCTION ( parameterTypeIR* ) -> typeIR~ret~``
@@ -752,7 +734,7 @@ relation RoutineType_wf: ``bound`` and ``routineTypeIR``
 . Else if ``routineTypeIR`` has type ``externMethodTypeIR``
  .. Let ``externMethodTypeIR`` be ``routineTypeIR``
  .. If let ``EXTERN_METHOD ( parameterTypeIR* ) -> typeIR~ret~`` be ``externMethodTypeIR``
-  ... Group externMethodTypeIR: ``bound`` and ``EXTERN_METHOD ( parameterTypeIR* ) -> typeIR~ret~``
+  ... Group externMethodTypeIR-non-abstract: ``bound`` and ``EXTERN_METHOD ( parameterTypeIR* ) -> typeIR~ret~``
 
    .... If (ParameterTypes_wf: ``bound |- parameterTypeIR*``), then
     ..... Let ``_direction*`` be the list of ``_direction``, ``_id*`` be the list of ``_id``, ``_value?*`` be the list of ``_value?``, and ``typeIR*`` be the list of ``typeIR``, obtained by repeating:
@@ -763,7 +745,7 @@ relation RoutineType_wf: ``bound`` and ``routineTypeIR``
      ...... The relation holds
 
  .. Else if let ``EXTERN_METHOD ABSTRACT ( parameterTypeIR* ) -> typeIR~ret~`` be ``externMethodTypeIR``
-  ... Group externAbstractMethodTypeIR: ``bound`` and ``EXTERN_METHOD ABSTRACT ( parameterTypeIR* ) -> typeIR~ret~``
+  ... Group externMethodTypeIR-abstract: ``bound`` and ``EXTERN_METHOD ABSTRACT ( parameterTypeIR* ) -> typeIR~ret~``
 
    .... If (ParameterTypes_wf: ``bound |- parameterTypeIR*``), then
     ..... Let ``_direction*`` be the list of ``_direction``, ``_id*`` be the list of ``_id``, ``_value?*`` be the list of ``_value?``, and ``typeIR*`` be the list of ``typeIR``, obtained by repeating:
@@ -809,7 +791,7 @@ relation RoutineTypeDef_wf: ``bound`` and ``routineTypeDefIR``
 
 . If ``routineTypeDefIR`` has type ``routineTypeIR``
  .. Let ``routineTypeIR`` be ``routineTypeDefIR``
- .. Group mono: ``bound`` and ``routineTypeIR``
+ .. Group monoRoutineTypeDefIR: ``bound`` and ``routineTypeIR``
 
   ... Check that <<definable_routine_mono, ``routineTypeIR`` can be defined as a monomorphic routine>>
   ... If (RoutineType_wf: ``bound |- routineTypeIR``), then
@@ -817,7 +799,7 @@ relation RoutineTypeDef_wf: ``bound`` and ``routineTypeDefIR``
 
 . Else if ``routineTypeDefIR`` has type ``polyRoutineTypeDefIR``
  .. Let ``routineTypeIR < tid~expl~* , tid~impl~* >`` be ``routineTypeDefIR``
- .. Group poly: ``bound`` and ``routineTypeIR < tid~expl~* , tid~impl~* >``
+ .. Group polyRoutineTypeDefIR: ``bound`` and ``routineTypeIR < tid~expl~* , tid~impl~* >``
 
   ... Check that <<definable_routine_poly, ``routineTypeIR`` can be defined as a polymorphic routine>>
   ... Check that ``$distinct_<tid>(tid~expl~* ++ tid~impl~*)``
@@ -1298,7 +1280,7 @@ relation Type_ok: ``p``, ``TC``, and ``typeOrVoid``
    .... Check that ``typeDefIR`` has type ``polyTypeDefIR``
    .... Let ``polyTypeDefIR`` be ``typeDefIR``
    .... Let ``typeIR < tid~expl~* , tid~impl~* >`` be ``polyTypeDefIR``
-   .... Let ``typeArgument*`` be ``$flatten_typeArgumentList(typeArgumentList')``
+   .... Let ``typeArgument*`` be <<flatten_typeArgumentList, the list of type arguments in ``typeArgumentList'``>>
    .... (TypeArguments_ok: ``p TC |- typeArgument* : typeIR~arg~* # tid~fresh~*``)
    .... Result in the type ``polyTypeDefIR < typeIR~arg~* >`` and set of fresh type variables ``tid~fresh~*``
 
@@ -1344,7 +1326,7 @@ relation Type_ok: ``p``, ``TC``, and ``typeOrVoid``
  .. Let ``TUPLE < typeArgumentList >`` be ``typeOrVoid``
  .. Group tupleType: ``p``, ``TC``, and ``TUPLE < typeArgumentList >``
 
-  ... Let ``typeArgument*`` be ``$flatten_typeArgumentList(typeArgumentList)``
+  ... Let ``typeArgument*`` be <<flatten_typeArgumentList, the list of type arguments in ``typeArgumentList``>>
   ... (TypeArguments_ok: ``p TC |- typeArgument* : typeIR~arg~* # tid~fresh~*``)
   ... Let ``i~idx~*`` be ``$init_(the length of typeIR~arg~*)``
   ... Let ``tid_tparam*`` be the list of ``tid_tparam``, obtained by repeating:
@@ -1367,7 +1349,7 @@ relation TypeArgument_ok: ``p``, ``TC``, and ``typeArgument``
  .. Let ``nonTypeName`` be ``typeArgument``
  .. Group nonTypeName: ``p``, ``TC``, and ``nonTypeName``
 
-  ... Let ``tid`` be ``$name(nonTypeName)``
+  ... Let ``tid`` be <<name, the name of ``nonTypeName``>>
   ... Result in ``TID tid`` and ``[ ]``
 . Check that ``typeArgument`` has type ``realTypeArgument``
 . Let ``realTypeArgument`` be ``typeArgument``
@@ -2229,9 +2211,9 @@ relation Expr_ok: ``p``, ``TC``, and ``expression'''``
    .... Let ``expressionList`` be ``dataElementExpression``
    .... Group dataExpression-sequence: ``p``, ``TC``, and ``{ expressionList _ }``
 
-    ..... Let ``expression~e~*`` be ``$flatten_expressionList(expressionList)``
+    ..... Let ``expression~e~*`` be <<flatten_expressionList, the list of expressions in ``expressionList``>>
     ..... If false
-     ...... Check that ``expression~e~``* is equal to ``$flatten_expressionList(expressionList)``
+     ...... Check that ``expression~e~``* is equal to <<flatten_expressionList, the list of expressions in ``expressionList``>>
      ...... Let ``typedExpressionIR_e*`` be the list of ``typedExpressionIR_e``, obtained by repeating:
       ....... Let ``typedExpressionIR~e~`` be the result of <<Expr_ok, typing ``expression~e~``, under cursor ``p`` and typing context ``TC``>>
      ...... for each ``expression_e`` in ``expression_e*``
@@ -2273,7 +2255,7 @@ relation Expr_ok: ``p``, ``TC``, and ``expression'''``
    .... Group dataExpression-record: ``p``, ``TC``, and ``{ recordElementExpression _ }``
 
     ..... If let ``name~f~ = expression~f~`` be ``recordElementExpression``
-     ...... Let ``nameIR~f~`` be ``$name(name~f~)``
+     ...... Let ``nameIR~f~`` be <<name, the name of ``name~f~``>>
      ...... Let ``typedExpressionIR~f~`` be the result of <<Expr_ok, typing ``expression~f~``, under cursor ``p`` and typing context ``TC``>>
      ...... Let ``typeIR~f~`` be <<typeof_expression, the type of  ``typedExpressionIR~f~``>>
      ...... Let ``ctk~f~`` be <<ctkof_expression, the compile-time known-ness of  ``typedExpressionIR~f~``>>
@@ -2282,7 +2264,7 @@ relation Expr_ok: ``p``, ``TC``, and ``expression'''``
      ...... Result in ``RECORD { [nameIR~f~ = typedExpressionIR~f~] } # expressionNoteIR``
 
     ..... Else if let ``name~f~ = expression~f~ , ...`` be ``recordElementExpression``
-     ...... Let ``nameIR~f~`` be ``$name(name~f~)``
+     ...... Let ``nameIR~f~`` be <<name, the name of ``name~f~``>>
      ...... Let ``typedExpressionIR~f~`` be the result of <<Expr_ok, typing ``expression~f~``, under cursor ``p`` and typing context ``TC``>>
      ...... Let ``typeIR~f~`` be <<typeof_expression, the type of  ``typedExpressionIR~f~``>>
      ...... Let ``ctk~f~`` be <<ctkof_expression, the compile-time known-ness of  ``typedExpressionIR~f~``>>
@@ -2291,10 +2273,10 @@ relation Expr_ok: ``p``, ``TC``, and ``expression'''``
      ...... Result in ``RECORD { [nameIR~f~ = typedExpressionIR~f~] , ... } # expressionNoteIR``
 
     ..... Else if let ``name~f_h~ = expression~f_h~ , namedExpressionList~t~`` be ``recordElementExpression``
-     ...... Let ``name~f_t~ = expression~f_t~*`` be ``$flatten_namedExpressionList(namedExpressionList~t~)``
+     ...... Let ``name~f_t~ = expression~f_t~*`` be <<flatten_namedExpressionList, the list of named expressions in ``namedExpressionList~t~``>>
      ...... Let ``name~f~*`` be ``name~f_h~ :: name~f_t~*``
      ...... Let ``nameIR_f*`` be the list of ``nameIR_f``, obtained by repeating:
-      ....... Let ``nameIR~f~`` be ``$name(name~f~)``
+      ....... Let ``nameIR~f~`` be <<name, the name of ``name~f~``>>
      ...... for each ``name_f`` in ``name_f*``
      ...... Let ``expression~f~*`` be ``expression~f_h~ :: expression~f_t~*``
      ...... Let ``typedExpressionIR_f*`` be the list of ``typedExpressionIR_f``, obtained by repeating:
@@ -2312,10 +2294,10 @@ relation Expr_ok: ``p``, ``TC``, and ``expression'''``
      ...... Result in ``RECORD { nameIR~f~ = typedExpressionIR~f~* } # expressionNoteIR``
 
     ..... Else if let ``name~f_h~ = expression~f_h~ , namedExpressionList~t~ , ...`` be ``recordElementExpression``
-     ...... Let ``name~f_t~ = expression~f_t~*`` be ``$flatten_namedExpressionList(namedExpressionList~t~)``
+     ...... Let ``name~f_t~ = expression~f_t~*`` be <<flatten_namedExpressionList, the list of named expressions in ``namedExpressionList~t~``>>
      ...... Let ``name~f~*`` be ``name~f_h~ :: name~f_t~*``
      ...... Let ``nameIR_f*`` be the list of ``nameIR_f``, obtained by repeating:
-      ....... Let ``nameIR~f~`` be ``$name(name~f~)``
+      ....... Let ``nameIR~f~`` be <<name, the name of ``name~f~``>>
      ...... for each ``name_f`` in ``name_f*``
      ...... Let ``expression~f~*`` be ``expression~f_h~ :: expression~f_t~*``
      ...... Let ``typedExpressionIR_f*`` be the list of ``typedExpressionIR_f``, obtained by repeating:
@@ -2336,7 +2318,7 @@ relation Expr_ok: ``p``, ``TC``, and ``expression'''``
  .. Let ``ERROR . member`` be ``expression'''``
  .. Group errorAccessExpression: ``p``, ``TC``, and ``ERROR . member``
 
-  ... Let ``nameIR`` be ``$name(member)``
+  ... Let ``nameIR`` be <<name, the name of ``member``>>
   ... Let ``nameIR~error~`` be ``"error." ++ nameIR``
   ... Check that ``ERROR . nameIR`` is equal to ``$find_value(p, TC, ` nameIR~error~)``
   ... Let ``expressionNoteIR`` be ``( ERROR LCTK )``
@@ -2358,13 +2340,13 @@ relation Expr_ok: ``p``, ``TC``, and ``expression'''``
    .... Check that ``typeIR`` has type ``enumTypeIR``
    .... Let ``enumTypeIR`` be ``typeIR``
    .... If let ``ENUM _ { nameIR~f~* }`` be ``enumTypeIR``
-    ..... Let ``nameIR`` be ``$name(member)``
+    ..... Let ``nameIR`` be <<name, the name of ``member``>>
     ..... Check that ``nameIR`` is in ``nameIR~f~``*
     ..... Let ``expressionNoteIR`` be ``( typeIR~base~ LCTK )``
     ..... Result in ``TYPE prefixedNameIR~base~ . nameIR # expressionNoteIR``
 
    .... Else if let ``ENUM _ # _ { nameIR~f~ = _ ;* }`` be ``enumTypeIR``
-    ..... Let ``nameIR`` be ``$name(member)``
+    ..... Let ``nameIR`` be <<name, the name of ``member``>>
     ..... Check that ``nameIR`` is in ``nameIR~f~``*
     ..... Let ``expressionNoteIR`` be ``( typeIR~base~ LCTK )``
     ..... Result in ``TYPE prefixedNameIR~base~ . nameIR # expressionNoteIR``
@@ -2373,7 +2355,7 @@ relation Expr_ok: ``p``, ``TC``, and ``expression'''``
   ... Let ``expression~base~`` be ``memberAccessBase``
   ... Group memberAccessExpression-expression: ``p``, ``TC``, and ``expression~base~ . member``
 
-   .... If "size" is equal to ``$name(member)``
+   .... If "size" is equal to <<name, the name of ``member``>>
     ..... Let ``typedExpressionIR~base~`` be the result of <<Expr_ok, typing ``expression~base~``, under cursor ``p`` and typing context ``TC``>>
     ..... Let ``typeIR~base~`` be <<typeof_expression, the type of  ``typedExpressionIR~base~``>>
     ..... Let ``typeIR'`` be <<canon, the canonicalized form of ``typeIR~base~``>>
@@ -2381,7 +2363,7 @@ relation Expr_ok: ``p``, ``TC``, and ``expression'''``
     ..... Let ``typeIR [ n~size~ ]`` be ``typeIR'``
     ..... Let ``expressionNoteIR`` be ``( BIT < 32 > LCTK )``
     ..... Result in ``typedExpressionIR~base~ . "size" # expressionNoteIR``
-   .... If "lastIndex" is equal to ``$name(member)``
+   .... If "lastIndex" is equal to <<name, the name of ``member``>>
     ..... If ``p = BLOCK /\ $is_parser_blockKind(TC.BLOCK.KIND)``
      ...... Let ``typedExpressionIR~base~`` be the result of <<Expr_ok, typing ``expression~base~``, under cursor ``p`` and typing context ``TC``>>
      ...... Let ``typeIR~base~`` be <<typeof_expression, the type of  ``typedExpressionIR~base~``>>
@@ -2398,7 +2380,7 @@ relation Expr_ok: ``p``, ``TC``, and ``expression'''``
      ...... Let ``typeIR [ n~size~ ]`` be ``typeIR'``
      ...... Let ``expressionNoteIR`` be ``( BIT < 32 > DYN )``
      ...... Result in ``typedExpressionIR~base~ . "lastIndex" # expressionNoteIR``
-   .... If "last" is equal to ``$name(member)``
+   .... If "last" is equal to <<name, the name of ``member``>>
     ..... If ``p = BLOCK /\ $is_parser_blockKind(TC.BLOCK.KIND)``
      ...... Let ``typedExpressionIR~base~`` be the result of <<Expr_ok, typing ``expression~base~``, under cursor ``p`` and typing context ``TC``>>
      ...... Let ``typeIR~base~`` be <<typeof_expression, the type of  ``typedExpressionIR~base~``>>
@@ -2415,7 +2397,7 @@ relation Expr_ok: ``p``, ``TC``, and ``expression'''``
      ...... Let ``typeIR [ n~size~ ]`` be ``typeIR'``
      ...... Let ``expressionNoteIR`` be ``( typeIR DYN )``
      ...... Result in ``typedExpressionIR~base~ . "last" # expressionNoteIR``
-   .... If "next" is equal to ``$name(member)``
+   .... If "next" is equal to <<name, the name of ``member``>>
     ..... If ``p = BLOCK /\ $is_parser_blockKind(TC.BLOCK.KIND)``
      ...... Let ``typedExpressionIR~base~`` be the result of <<Expr_ok, typing ``expression~base~``, under cursor ``p`` and typing context ``TC``>>
      ...... Let ``typeIR~base~`` be <<typeof_expression, the type of  ``typedExpressionIR~base~``>>
@@ -2437,7 +2419,7 @@ relation Expr_ok: ``p``, ``TC``, and ``expression'''``
    .... Let ``typeIR'`` be <<canon, the canonicalized form of ``typeIR~base~``>>
    .... If ``typeIR'`` has type ``structTypeIR``
     ..... Let ``STRUCT _ { typeIR~f~ nameIR~f~ ;* }`` be ``typeIR'``
-    ..... Let ``nameIR`` be ``$name(member)``
+    ..... Let ``nameIR`` be <<name, the name of ``member``>>
     ..... Let ``typeIR''?`` be ``$assoc_<nameIR, typeIR>(nameIR, (nameIR~f~ and typeIR~f~)*)``
     ..... Check that ``typeIR''?`` matches pattern ``(_)``
     ..... Let ``?(typeIR)`` be ``typeIR''``?
@@ -2446,7 +2428,7 @@ relation Expr_ok: ``p``, ``TC``, and ``expression'''``
 
    .... Else if ``typeIR'`` has type ``headerTypeIR``
     ..... Let ``HEADER _ { typeIR~f~ nameIR~f~ ;* }`` be ``typeIR'``
-    ..... Let ``nameIR`` be ``$name(member)``
+    ..... Let ``nameIR`` be <<name, the name of ``member``>>
     ..... Let ``typeIR''?`` be ``$assoc_<nameIR, typeIR>(nameIR, (nameIR~f~ and typeIR~f~)*)``
     ..... Check that ``typeIR''?`` matches pattern ``(_)``
     ..... Let ``?(typeIR)`` be ``typeIR''``?
@@ -2455,7 +2437,7 @@ relation Expr_ok: ``p``, ``TC``, and ``expression'''``
 
    .... Else if ``typeIR'`` has type ``headerUnionTypeIR``
     ..... Let ``HEADER_UNION _ { typeIR~f~ nameIR~f~ ;* }`` be ``typeIR'``
-    ..... Let ``nameIR`` be ``$name(member)``
+    ..... Let ``nameIR`` be <<name, the name of ``member``>>
     ..... Let ``typeIR''?`` be ``$assoc_<nameIR, typeIR>(nameIR, (nameIR~f~ and typeIR~f~)*)``
     ..... Check that ``typeIR''?`` matches pattern ``(_)``
     ..... Let ``?(typeIR)`` be ``typeIR''``?
@@ -2466,7 +2448,7 @@ relation Expr_ok: ``p``, ``TC``, and ``expression'''``
     ..... Let ``tableMetadataTypeIR`` be ``typeIR'``
     ..... Check that ``tableMetadataTypeIR`` matches pattern ``TABLE_STRUCT % { % }``
     ..... Let ``TABLE_STRUCT _ { typeIR~f~ nameIR~f~ ;* }`` be ``tableMetadataTypeIR``
-    ..... Let ``nameIR`` be ``$name(member)``
+    ..... Let ``nameIR`` be <<name, the name of ``member``>>
     ..... Let ``typeIR''?`` be ``$assoc_<nameIR, typeIR>(nameIR, (nameIR~f~ and typeIR~f~)*)``
     ..... Check that ``typeIR''?`` matches pattern ``(_)``
     ..... Let ``?(typeIR)`` be ``typeIR''``?
@@ -2561,7 +2543,7 @@ relation Expr_ok: ``p``, ``TC``, and ``expression'''``
    .... Check that ``callTarget`` has type ``routineTarget``
    .... Let ``routineTarget`` be ``callTarget``
    .... Let ``routineTargetIR`` be the result of <<RoutineTarget_ok, typing ``routineTarget``, under cursor ``p`` and typing context ``TC``>>
-   .... Let ``argument*`` be ``$flatten_argumentList(argumentList)``
+   .... Let ``argument*`` be <<flatten_argumentList, the list of arguments in ``argumentList``>>
    .... Let ``argumentIR*`` be the list of ``argumentIR``, obtained by repeating:
     ..... Let ``argumentIR`` be the result of <<Argument_ok, typing ``argument``, under cursor ``p`` and typing context ``TC``>>
    .... for each ``argument`` in ``argument*``
@@ -2576,9 +2558,9 @@ relation Expr_ok: ``p``, ``TC``, and ``expression'''``
 
   ... Else if let ``routineTarget < realTypeArgumentList > ( argumentList )`` be ``callExpression``
    .... Let ``routineTargetIR`` be the result of <<RoutineTarget_ok, typing ``routineTarget``, under cursor ``p`` and typing context ``TC``>>
-   .... Let ``realTypeArgument*`` be ``$flatten_realTypeArgumentList(realTypeArgumentList)``
+   .... Let ``realTypeArgument*`` be <<flatten_realTypeArgumentList, the list of real type arguments in ``realTypeArgumentList``>>
    .... (TypeArguments_ok: ``p TC |- realTypeArgument* : typeArgumentIR* # tid~impl~*``)
-   .... Let ``argument*`` be ``$flatten_argumentList(argumentList)``
+   .... Let ``argument*`` be <<flatten_argumentList, the list of arguments in ``argumentList``>>
    .... Let ``argumentIR*`` be the list of ``argumentIR``, obtained by repeating:
     ..... Let ``argumentIR`` be the result of <<Argument_ok, typing ``argument``, under cursor ``p`` and typing context ``TC``>>
    .... for each ``argument`` in ``argument*``
@@ -2596,7 +2578,7 @@ relation Expr_ok: ``p``, ``TC``, and ``expression'''``
 
   ... If ``callTarget`` has type ``prefixedTypeName``
    .... Let ``prefixedTypeName`` be ``callTarget``
-   .... Let ``argument*`` be ``$flatten_argumentList(argumentList)``
+   .... Let ``argument*`` be <<flatten_argumentList, the list of arguments in ``argumentList``>>
    .... Let ``argumentIR*`` be the list of ``argumentIR``, obtained by repeating:
     ..... Let ``argumentIR`` be the result of <<Argument_ok, typing ``argument``, under cursor ``p`` and typing context ``TC``>>
    .... for each ``argument`` in ``argument*``
@@ -2610,9 +2592,9 @@ relation Expr_ok: ``p``, ``TC``, and ``expression'''``
 
   ... Else if ``callTarget`` has type ``specializedType``
    .... Let ``prefixedTypeName < typeArgumentList >`` be ``callTarget``
-   .... Let ``typeArgument*`` be ``$flatten_typeArgumentList(typeArgumentList)``
+   .... Let ``typeArgument*`` be <<flatten_typeArgumentList, the list of type arguments in ``typeArgumentList``>>
    .... (TypeArguments_ok: ``p TC |- typeArgument* : typeArgumentIR* # tid~impl~*``)
-   .... Let ``argument*`` be ``$flatten_argumentList(argumentList)``
+   .... Let ``argument*`` be <<flatten_argumentList, the list of arguments in ``argumentList``>>
    .... Let ``argumentIR*`` be the list of ``argumentIR``, obtained by repeating:
     ..... Let ``argumentIR`` be the result of <<Argument_ok, typing ``argument``, under cursor ``p`` and typing context ``TC``>>
    .... for each ``argument`` in ``argument*``
@@ -2646,14 +2628,14 @@ relation Argument_ok: ``p``, ``TC``, and ``argument``
 . If let ``name = expression`` be ``argument``
  .. Group name-expression: ``p``, ``TC``, and ``name = expression``
 
-  ... Let ``nameIR`` be ``$name(name)``
+  ... Let ``nameIR`` be <<name, the name of ``name``>>
   ... Let ``typedExpressionIR`` be the result of <<Expr_ok, typing ``expression``, under cursor ``p`` and typing context ``TC``>>
   ... Result in ``nameIR = typedExpressionIR``
 
 . Else if let ``name = _`` be ``argument``
  .. Group name-dontcare: ``p``, ``TC``, and ``name = _``
 
-  ... Let ``nameIR`` be ``$name(name)``
+  ... Let ``nameIR`` be <<name, the name of ``name``>>
   ... Result in ``nameIR = _``
 
 . Else if ``argument`` matches pattern ``_``
@@ -2684,7 +2666,7 @@ relation Lvalue_ok: ``p``, ``TC``, and ``lvalue``
   ... Let ``typeIR'`` be <<canon, the canonicalized form of ``typeIR~base~``>>
   ... If ``typeIR'`` has type ``headerStackTypeIR``
    .... Let ``typeIR [ _ ]`` be ``typeIR'``
-   .... Let ``nameIR`` be ``$name(member)``
+   .... Let ``nameIR`` be <<name, the name of ``member``>>
    .... If ``nameIR`` = "next"
     ..... If ``p = BLOCK /\ $is_parser_blockKind(TC.BLOCK.KIND)``
      ...... Let ``typedLvalueIR`` be ``typedLvalueIR~base~ . nameIR # ( typeIR )``
@@ -2703,7 +2685,7 @@ relation Lvalue_ok: ``p``, ``TC``, and ``lvalue``
 
   ... Else if ``typeIR'`` has type ``structTypeIR``
    .... Let ``STRUCT _ { typeIR~f~ nameIR~f~ ;* }`` be ``typeIR'``
-   .... Let ``nameIR`` be ``$name(member)``
+   .... Let ``nameIR`` be <<name, the name of ``member``>>
    .... Let ``typeIR''?`` be ``$assoc_<nameIR, typeIR>(nameIR, (nameIR~f~ and typeIR~f~)*)``
    .... Check that ``typeIR''?`` matches pattern ``(_)``
    .... Let ``?(typeIR)`` be ``typeIR''``?
@@ -2712,7 +2694,7 @@ relation Lvalue_ok: ``p``, ``TC``, and ``lvalue``
 
   ... Else if ``typeIR'`` has type ``headerTypeIR``
    .... Let ``HEADER _ { typeIR~f~ nameIR~f~ ;* }`` be ``typeIR'``
-   .... Let ``nameIR`` be ``$name(member)``
+   .... Let ``nameIR`` be <<name, the name of ``member``>>
    .... Let ``typeIR''?`` be ``$assoc_<nameIR, typeIR>(nameIR, (nameIR~f~ and typeIR~f~)*)``
    .... Check that ``typeIR''?`` matches pattern ``(_)``
    .... Let ``?(typeIR)`` be ``typeIR''``?
@@ -2721,7 +2703,7 @@ relation Lvalue_ok: ``p``, ``TC``, and ``lvalue``
 
   ... Else if ``typeIR'`` has type ``headerUnionTypeIR``
    .... Let ``HEADER_UNION _ { typeIR~f~ nameIR~f~ ;* }`` be ``typeIR'``
-   .... Let ``nameIR`` be ``$name(member)``
+   .... Let ``nameIR`` be <<name, the name of ``member``>>
    .... Let ``typeIR''?`` be ``$assoc_<nameIR, typeIR>(nameIR, (nameIR~f~ and typeIR~f~)*)``
    .... Check that ``typeIR''?`` matches pattern ``(_)``
    .... Let ``?(typeIR)`` be ``typeIR''``?
@@ -2824,7 +2806,7 @@ relation Stmt_ok: ``p'``, ``TC'``, ``f'``, and ``statement``
 
   ... If let ``lvalue~routine~ ( argumentList ) ;`` be ``callStatement``
    .... Let ``routineTargetIR`` be the result of <<RoutineTarget_lvalue_ok, typing ``lvalue~routine~``, under cursor ``p'`` and typing context ``TC'``>>
-   .... Let ``argument*`` be ``$flatten_argumentList(argumentList)``
+   .... Let ``argument*`` be <<flatten_argumentList, the list of arguments in ``argumentList``>>
    .... Let ``argumentIR*`` be the list of ``argumentIR``, obtained by repeating:
     ..... Let ``argumentIR`` be the result of <<Argument_ok, typing ``argument``, under cursor ``p'`` and typing context ``TC'``>>
    .... for each ``argument`` in ``argument*``
@@ -2835,9 +2817,9 @@ relation Stmt_ok: ``p'``, ``TC'``, ``f'``, and ``statement``
 
   ... Else if let ``lvalue~routine~ < typeArgumentList > ( argumentList ) ;`` be ``callStatement``
    .... Let ``routineTargetIR`` be the result of <<RoutineTarget_lvalue_ok, typing ``lvalue~routine~``, under cursor ``p'`` and typing context ``TC'``>>
-   .... Let ``typeArgument*`` be ``$flatten_typeArgumentList(typeArgumentList)``
+   .... Let ``typeArgument*`` be <<flatten_typeArgumentList, the list of type arguments in ``typeArgumentList``>>
    .... (TypeArguments_ok: ``p' TC' |- typeArgument* : typeArgumentIR* # tid~impl~*``)
-   .... Let ``argument*`` be ``$flatten_argumentList(argumentList)``
+   .... Let ``argument*`` be <<flatten_argumentList, the list of arguments in ``argumentList``>>
    .... Let ``argumentIR*`` be the list of ``argumentIR``, obtained by repeating:
     ..... Let ``argumentIR`` be the result of <<Argument_ok, typing ``argument``, under cursor ``p'`` and typing context ``TC'``>>
    .... for each ``argument`` in ``argument*``
@@ -2934,7 +2916,7 @@ relation Stmt_ok: ``p'``, ``TC'``, ``f'``, and ``statement``
   ... Check that ``tableMetadataTypeIR`` matches pattern ``TABLE_ENUM % { % }``
   ... Let ``TABLE_ENUM tid~table_enum~ { _* }`` be ``tableMetadataTypeIR``
   ... Let ``tid~table~`` be ``$strip_prefix($strip_suffix(tid~table_enum~, ")"), "action_list(")``
-  ... Let ``switchCase*`` be ``$flatten_switchCaseList(switchCaseList)``
+  ... Let ``switchCase*`` be <<flatten_switchCaseList, the list of switch cases in ``switchCaseList``>>
   ... (SwitchCases_table_ok: ``TC' f' tid~table~ |- switchCase* : f~post~ switchCaseIR* # switchLabel*``)
   ... Check that ``$distinct_<switchLabel>(switchLabel*)``
   ... Let ``switchStatementIR`` be ``SWITCH ( typedExpressionIR~switch~ ) { switchCaseIR* }``
@@ -2944,7 +2926,7 @@ relation Stmt_ok: ``p'``, ``TC'``, ``f'``, and ``statement``
   ... Let ``typedExpressionIR~switch~`` be the result of <<Expr_ok, typing ``expression~switch~``, under cursor ``LOCAL`` and typing context ``TC'``>>
   ... Let ``typeIR~switch~`` be <<typeof_expression, the type of  ``typedExpressionIR~switch~``>>
   ... Check that ``$compat_switch(typeIR~switch~)``
-  ... Let ``switchCase*`` be ``$flatten_switchCaseList(switchCaseList)``
+  ... Let ``switchCase*`` be <<flatten_switchCaseList, the list of switch cases in ``switchCaseList``>>
   ... (SwitchCases_general_ok: ``TC' f' typeIR~switch~ |- switchCase* : f~post~ switchCaseIR* # switchLabel*``)
   ... Check that ``$distinct_<switchLabel>(switchLabel*)``
   ... Let ``switchStatementIR`` be ``SWITCH ( typedExpressionIR~switch~ ) { switchCaseIR* }``
@@ -2971,7 +2953,7 @@ and the modified typing context>>
    .... Check that ``tid*`` matches pattern ``[]``
    .... If (Type_wf: ``$bound(LOCAL, TC~0~) |- typeIR``), then
     ..... Check that ``$is_assignable_typeIR(typeIR)``
-    ..... Let ``nameIR`` be ``$name(name)``
+    ..... Let ``nameIR`` be <<name, the name of ``name``>>
     ..... Let ``TC~1~`` be ``$add_var(LOCAL, TC~0~, nameIR, INOUT typeIR DYN ?())``
     ..... Let ``variableDeclarationIR`` be ``annotationList typeIR nameIR ?() ;``
     ..... Result in ``TC~1~``, ``f``, and ``variableDeclarationIR``
@@ -2985,7 +2967,7 @@ and the modified typing context>>
     ..... Let ``typedExpressionIR?`` be <<coerce_unary, implicitly cast  ``typedExpressionIR~init~``  to  ``typeIR``>>
     ..... Check that ``typedExpressionIR?`` matches pattern ``(_)``
     ..... Let ``?(typedExpressionIR~init_cast~)`` be ``typedExpressionIR``?
-    ..... Let ``nameIR`` be ``$name(name)``
+    ..... Let ``nameIR`` be <<name, the name of ``name``>>
     ..... Let ``TC~1~`` be ``$add_var(LOCAL, TC~0~, nameIR, INOUT typeIR DYN ?())``
     ..... Let ``variableDeclarationIR`` be ``annotationList typeIR nameIR ?(= typedExpressionIR~init_cast~) ;``
     ..... Result in ``TC~1~``, ``f``, and ``variableDeclarationIR``
@@ -3013,7 +2995,7 @@ relation Block_ok: ``TC~0~``, ``f``, and ``annotationList { blockElementStatemen
 
 . Group : ``TC~0~``, ``f``, and ``annotationList { blockElementStatementList }``
 
- .. Let ``blockElementStatement*`` be ``$flatten_blockElementStatementList(blockElementStatementList)``
+ .. Let ``blockElementStatement*`` be <<flatten_blockElementStatementList, the list of block element statements in ``blockElementStatementList``>>
  .. Let ``TC~1~`` be ``$enter(TC~0~)``
  .. (BlockElementStmts_ok: ``TC~1~ f |- blockElementStatement* : TC~2~ f~post~ blockElementStatementIR*``)
  .. Let ``TC~3~`` be ``$exit(TC~2~)``
@@ -3028,7 +3010,7 @@ relation Parameter_ok: ``p``, ``TC``, and ``annotationList direction type name i
   ... Let ``typeIR`` and ``tid~fresh~*`` be the result of <<Type_ok, typing ``type``, under cursor ``p`` and typing context ``TC``>>
   ... Let ``bound`` be ``$union_set<tid>($bound(p, TC), { tid~fresh~* })``
   ... If (Type_wf: ``bound |- typeIR``), then
-   .... Let ``nameIR`` be ``$name(name)``
+   .... Let ``nameIR`` be <<name, the name of ``name``>>
    .... Result in ``annotationList direction typeIR nameIR ?()`` and ``tid~fresh~*``
  .. If ``initializerOpt`` has type ``initializer``
   ... Let ``= expression~init~`` be ``initializerOpt``
@@ -3041,7 +3023,7 @@ relation Parameter_ok: ``p``, ``TC``, and ``annotationList direction type name i
    .... Let ``typedExpressionIR?`` be <<coerce_unary, implicitly cast  ``typedExpressionIR~init~``  to  ``typeIR``>>
    .... Check that ``typedExpressionIR?`` matches pattern ``(_)``
    .... Let ``?(typedExpressionIR~init_cast~)`` be ``typedExpressionIR``?
-   .... Let ``nameIR`` be ``$name(name)``
+   .... Let ``nameIR`` be <<name, the name of ``name``>>
    .... Let ``value~init~`` be the result of <<Eval_static, the local compile-time evaluation of ``typedExpressionIR~init_cast~``, under cursor ``p`` and typing context ``TC``>>
    .... Result in ``annotationList direction typeIR nameIR ?(= value~init~)`` and ``tid~fresh~*``
 
@@ -3076,17 +3058,17 @@ relation ExternMethod_ok: ``TC~0~``, ``tid~extern~``, and ``methodPrototype``
 . If let ``annotationList typeOrVoid name typeParameterListOpt ( parameterList ) ;`` be ``methodPrototype``
  .. Group non-abstract: ``TC~0~``, ``tid~extern~``, and ``annotationList typeOrVoid name typeParameterListOpt ( parameterList ) ;``
 
-  ... Let ``nameIR`` be ``$name(name)``
+  ... Let ``nameIR`` be <<name, the name of ``name``>>
   ... Check that ``nameIR`` is not equal to ``tid~extern~``
-  ... Let ``typeParameter*`` be ``$flatten_typeParameterListOpt(typeParameterListOpt)``
+  ... Let ``typeParameter*`` be <<flatten_typeParameterListOpt, the list of type parameters in ``typeParameterListOpt``>>
   ... Let ``tid_expl*`` be the list of ``tid_expl``, obtained by repeating:
-   .... Let ``tid~expl~`` be ``$name(typeParameter)``
+   .... Let ``tid~expl~`` be <<name, the name of ``typeParameter``>>
   ... for each ``typeParameter`` in ``typeParameter*``
   ... Let ``TC~1~`` be ``$add_types(LOCAL, TC~0~, tid~expl~*, TID tid~expl~*)``
   ... Let ``typeIR~ret~`` and ``tid*`` be the result of <<Type_ok, typing ``typeOrVoid``, under cursor ``LOCAL`` and typing context ``TC~1~``>>
   ... Check that ``tid*`` matches pattern ``[]``
   ... Let ``TC~2~`` be ``TC~1~``[LOCAL.KIND = ``EXTERN_METHOD -> typeIR~ret~``]
-  ... Let ``parameter*`` be ``$flatten_parameterList(parameterList)``
+  ... Let ``parameter*`` be <<flatten_parameterList, the list of parameters in ``parameterList``>>
   ... Let ``parameterIR*`` and ``tid~impl~*`` be the result of <<Parameters_ok, typing ``parameter*``, under cursor ``LOCAL`` and typing context ``TC~2~``>>
   ... Let ``parameterTypeIR*`` be the list of ``parameterTypeIR``, obtained by repeating:
    .... Let ``parameterTypeIR`` be <<typeof_parameterIR, the type of  ``parameterIR``>>
@@ -3103,17 +3085,17 @@ relation ExternMethod_ok: ``TC~0~``, ``tid~extern~``, and ``methodPrototype``
 . Else if let ``annotationList ABSTRACT typeOrVoid name typeParameterListOpt ( parameterList ) ;`` be ``methodPrototype``
  .. Group abstract: ``TC~0~``, ``tid~extern~``, and ``annotationList ABSTRACT typeOrVoid name typeParameterListOpt ( parameterList ) ;``
 
-  ... Let ``nameIR`` be ``$name(name)``
+  ... Let ``nameIR`` be <<name, the name of ``name``>>
   ... Check that ``nameIR`` is not equal to ``tid~extern~``
-  ... Let ``typeParameter*`` be ``$flatten_typeParameterListOpt(typeParameterListOpt)``
+  ... Let ``typeParameter*`` be <<flatten_typeParameterListOpt, the list of type parameters in ``typeParameterListOpt``>>
   ... Let ``tid_expl*`` be the list of ``tid_expl``, obtained by repeating:
-   .... Let ``tid~expl~`` be ``$name(typeParameter)``
+   .... Let ``tid~expl~`` be <<name, the name of ``typeParameter``>>
   ... for each ``typeParameter`` in ``typeParameter*``
   ... Let ``TC~1~`` be ``$add_types(LOCAL, TC~0~, tid~expl~*, TID tid~expl~*)``
   ... Let ``typeIR~ret~`` and ``tid*`` be the result of <<Type_ok, typing ``typeOrVoid``, under cursor ``LOCAL`` and typing context ``TC~1~``>>
   ... Check that ``tid*`` matches pattern ``[]``
   ... Let ``TC~2~`` be ``TC~1~``[LOCAL.KIND = ``EXTERN_METHOD ABSTRACT -> typeIR~ret~``]
-  ... Let ``parameter*`` be ``$flatten_parameterList(parameterList)``
+  ... Let ``parameter*`` be <<flatten_parameterList, the list of parameters in ``parameterList``>>
   ... Let ``parameterIR*`` and ``tid~impl~*`` be the result of <<Parameters_ok, typing ``parameter*``, under cursor ``LOCAL`` and typing context ``TC~2~``>>
   ... Let ``parameterTypeIR*`` be the list of ``parameterTypeIR``, obtained by repeating:
    .... Let ``parameterTypeIR`` be <<typeof_parameterIR, the type of  ``parameterIR``>>
@@ -3145,9 +3127,9 @@ relation ExternConstructor_ok: ``TC~0~``, ``tid~extern~``, and ``methodPrototype
 . Let ``annotationList typeIdentifier ( parameterList ) ;`` be ``methodPrototype``
 . Group : ``TC~0~``, ``tid~extern~``, and ``annotationList typeIdentifier ( parameterList ) ;``
 
- .. Let ``nameIR`` be ``$name(typeIdentifier)``
+ .. Let ``nameIR`` be <<name, the name of ``typeIdentifier``>>
  .. Check that ``nameIR`` is equal to ``tid~extern~``
- .. Let ``constructorParameter*`` be ``$flatten_parameterList(parameterList)``
+ .. Let ``constructorParameter*`` be <<flatten_parameterList, the list of parameters in ``parameterList``>>
  .. (ConstructorParameters_ok: ``BLOCK TC~0~ |- constructorParameter* : constructorParameterIR* # tid~impl~*``)
  .. Let ``constructorParameterTypeIR*`` be the list of ``constructorParameterTypeIR``, obtained by repeating:
   ... Let ``constructorParameterTypeIR`` be <<typeof_constructorParameterIR, the type of  ``constructorParameterIR``>>
@@ -3189,7 +3171,7 @@ relation ParserTransition_ok: ``TC~0~``, ``nameIR~state~``*, and ``transitionSta
   ... Let ``name ;`` be ``stateExpression``
   ... Group name: ``TC~0~``, ``nameIR~state~``*, and ``TRANSITION name ;``
 
-   .... Let ``nameIR`` be ``$name(name)``
+   .... Let ``nameIR`` be <<name, the name of ``name``>>
    .... Check that ``nameIR`` is in ``nameIR~state~``*
    .... Let ``transitionStatementIR`` be ``TRANSITION nameIR ;``
    .... Result in ``transitionStatementIR``
@@ -3197,7 +3179,7 @@ relation ParserTransition_ok: ``TC~0~``, ``nameIR~state~``*, and ``transitionSta
   ... Let ``SELECT ( expressionList~key~ ) { selectCaseList }`` be ``stateExpression``
   ... Group switch: ``TC~0~``, ``nameIR~state~``*, and ``TRANSITION SELECT ( expressionList~key~ ) { selectCaseList }``
 
-   .... Let ``expression~key~*`` be ``$flatten_expressionList(expressionList~key~)``
+   .... Let ``expression~key~*`` be <<flatten_expressionList, the list of expressions in ``expressionList~key~``>>
    .... Let ``typedExpressionIR_key*`` be the list of ``typedExpressionIR_key``, obtained by repeating:
     ..... Let ``typedExpressionIR~key~`` be the result of <<Expr_ok, typing ``expression~key~``, under cursor ``LOCAL`` and typing context ``TC~0~``>>
    .... for each ``expression_key`` in ``expression_key*``
@@ -3205,7 +3187,7 @@ relation ParserTransition_ok: ``TC~0~``, ``nameIR~state~``*, and ``transitionSta
     ..... Let ``typeIR~key~`` be <<typeof_expression, the type of  ``typedExpressionIR~key~``>>
    .... for each ``typedExpressionIR_key`` in ``typedExpressionIR_key*``
    .... If (Type_wf: ``$bound(LOCAL, TC~0~) |- SET < [typeIR~key~] >``), for each ``typeIR_key`` in ``typeIR_key*``, then
-    ..... Let ``selectCase*`` be ``$flatten_selectCaseList(selectCaseList)``
+    ..... Let ``selectCase*`` be <<flatten_selectCaseList, the list of select cases in ``selectCaseList``>>
     ..... (SelectCase_ok: ``TC~0~ nameIR~state~* typeIR~key~* |- selectCase : selectCaseIR``), for each ``selectCase`` in ``selectCase*`` and ``selectCaseIR`` in ``selectCaseIR*``
     ..... Let ``transitionStatementIR`` be ``TRANSITION SELECT ( typedExpressionIR~key~* ) { selectCaseIR* }``
     ..... Result in ``transitionStatementIR``
@@ -3231,7 +3213,7 @@ and the modified typing context>>
    .... Check that ``tid*`` matches pattern ``[]``
    .... If (Type_wf: ``$bound(LOCAL, TC~0'~) |- typeIR``), then
     ..... Check that ``$is_assignable_typeIR(typeIR)``
-    ..... Let ``nameIR`` be ``$name(name)``
+    ..... Let ``nameIR`` be <<name, the name of ``name``>>
     ..... Let ``TC~1~`` be ``$add_var(LOCAL, TC~0'~, nameIR, INOUT typeIR DYN ?())``
     ..... Let ``variableDeclarationIR`` be ``annotationList typeIR nameIR ?() ;``
     ..... Result in ``TC~1~`` and ``variableDeclarationIR``
@@ -3245,7 +3227,7 @@ and the modified typing context>>
     ..... Let ``typedExpressionIR?`` be <<coerce_unary, implicitly cast  ``typedExpressionIR~init~``  to  ``typeIR``>>
     ..... Check that ``typedExpressionIR?`` matches pattern ``(_)``
     ..... Let ``?(typedExpressionIR~init_cast~)`` be ``typedExpressionIR``?
-    ..... Let ``nameIR`` be ``$name(name)``
+    ..... Let ``nameIR`` be <<name, the name of ``name``>>
     ..... Let ``TC~1~`` be ``$add_var(LOCAL, TC~0'~, nameIR, INOUT typeIR DYN ?())``
     ..... Let ``variableDeclarationIR`` be ``annotationList typeIR nameIR ?(= typedExpressionIR~init_cast~) ;``
     ..... Result in ``TC~1~`` and ``variableDeclarationIR``
@@ -3295,7 +3277,7 @@ and the modified typing context>>
  .. Let ``annotationList { parserStatementList }`` be ``parserStatement''``
  .. Group parserBlockStatement: ``TC~0'~`` and ``annotationList { parserStatementList }``
 
-  ... Let ``parserStatement*`` be ``$flatten_parserStatementList(parserStatementList)``
+  ... Let ``parserStatement*`` be <<flatten_parserStatementList, the list of parser statements in ``parserStatementList``>>
   ... Let ``TC~1~`` be ``$enter(TC~0'~)``
   ... (ParserStmts_ok: ``TC~1~ |- parserStatement* : TC~2~ parserStatementIR*``)
   ... Let ``TC~3~`` be ``$exit(TC~2~)``
@@ -3328,9 +3310,9 @@ relation ParserState_ok: ``TC~0~``, ``nameIR~state~``*, and ``annotationList STA
 
 . Group : ``TC~0~``, ``nameIR~state~``*, and ``annotationList STATE name { parserStatementList transitionStatement }``
 
- .. Let ``nameIR`` be ``$name(name)``
+ .. Let ``nameIR`` be <<name, the name of ``name``>>
  .. Let ``TC~1~`` be ``$enter(TC~0~)``
- .. Let ``parserStatement*`` be ``$flatten_parserStatementList(parserStatementList)``
+ .. Let ``parserStatement*`` be <<flatten_parserStatementList, the list of parser statements in ``parserStatementList``>>
  .. (ParserStmts_ok: ``TC~1~ |- parserStatement* : TC~2~ parserStatementIR*``)
  .. (ParserTransition_ok: ``TC~2~ nameIR~state~* |- transitionStatement : transitionStatementIR``)
  .. Let ``TC~3~`` be ``$exit(TC~2~)``
@@ -3345,7 +3327,7 @@ relation ParserStates_ok: ``TC`` and ``parserState``*
   ... Let ``_ STATE name~state~ { _ _ }`` be ``parserState``
  .. for each ``parserState`` in ``parserState*``
  .. Let ``nameIR_state*`` be the list of ``nameIR_state``, obtained by repeating:
-  ... Let ``nameIR~state~`` be ``$name(name~state~)``
+  ... Let ``nameIR~state~`` be <<name, the name of ``name~state~``>>
  .. for each ``name_state`` in ``name_state*``
  .. Check that ``$distinct_<nameIR>(nameIR~state~*)``
  .. Check that "start" is in ``nameIR~state~``*
@@ -3385,7 +3367,7 @@ and the modified typing context>>
    .... Check that ``tid*`` matches pattern ``[]``
    .... If (Type_wf: ``$bound(BLOCK, TC~0~) |- typeIR``), then
     ..... Check that ``$is_assignable_typeIR(typeIR)``
-    ..... Let ``nameIR`` be ``$name(name)``
+    ..... Let ``nameIR`` be <<name, the name of ``name``>>
     ..... Let ``TC~1~`` be ``$add_var(BLOCK, TC~0~, nameIR, INOUT typeIR DYN ?())``
     ..... Let ``variableDeclarationIR`` be ``annotationList typeIR nameIR ?() ;``
     ..... Result in ``TC~1~`` and ``variableDeclarationIR``
@@ -3399,7 +3381,7 @@ and the modified typing context>>
     ..... Let ``typedExpressionIR?`` be <<coerce_unary, implicitly cast  ``typedExpressionIR~init~``  to  ``typeIR``>>
     ..... Check that ``typedExpressionIR?`` matches pattern ``(_)``
     ..... Let ``?(typedExpressionIR~init_cast~)`` be ``typedExpressionIR``?
-    ..... Let ``nameIR`` be ``$name(name)``
+    ..... Let ``nameIR`` be <<name, the name of ``name``>>
     ..... Let ``TC~1~`` be ``$add_var(BLOCK, TC~0~, nameIR, INOUT typeIR DYN ?())``
     ..... Let ``variableDeclarationIR`` be ``annotationList typeIR nameIR ?(= typedExpressionIR~init_cast~) ;``
     ..... Result in ``TC~1~`` and ``variableDeclarationIR``
@@ -3413,7 +3395,7 @@ and the modified typing context>>
   ... If (Type_wf: ``$bound(BLOCK, TC~0~) |- SET < [typeIR] >``), then
    .... Let ``typedExpressionIR`` be the result of <<Expr_ok, typing ``expression``, under cursor ``BLOCK`` and typing context ``TC~0~``>>
    .... Check that ~``<<ctkof_expression, the compile-time known-ness of  typedExpressionIR>>`` matches pattern ``DYN``
-   .... Let ``nameIR`` be ``$name(name)``
+   .... Let ``nameIR`` be <<name, the name of ``name``>>
    .... Let ``TC~1~`` be ``$add_var(BLOCK, TC~0~, nameIR, SET < [typeIR] > CTK ?())``
    .... Let ``valueSetDeclarationIR`` be ``annotationList VALUE_SET < typeIR > ( typedExpressionIR ) nameIR ;``
    .... Result in ``TC~1~`` and ``valueSetDeclarationIR``
@@ -3437,7 +3419,7 @@ relation TableKey_ok: ``TC``, ``TBLC~0~``, and ``expression : name~matchkind~ an
  .. Let ``typedExpressionIR`` be the result of <<Expr_ok, typing ``expression``, under cursor ``LOCAL`` and typing context ``TC``>>
  .. Let ``typeIR`` be <<typeof_expression, the type of  ``typedExpressionIR``>>
  .. If (Type_wf: ``$bound(LOCAL, TC) |- SET < [typeIR] >``), then
-  ... Let ``nameIR~matchkind~`` be ``$name(name~matchkind~)``
+  ... Let ``nameIR~matchkind~`` be <<name, the name of ``name~matchkind~``>>
   ... Check that ``MATCH_KIND . nameIR~matchkind~`` is equal to ``$find_value(LOCAL, TC, ` nameIR~matchkind~)``
   ... Check that ``$compat_table_key(nameIR~matchkind~, typeIR)``
   ... Let ``TBLC~1~`` be ``$update_mode(TBLC~0~, nameIR~matchkind~, typeIR)``
@@ -3493,7 +3475,7 @@ relation TableAction_ok: ``TC``, ``TBLC~0~``, and ``annotationList tableActionRe
   ... Let ``?(routineTypeDefIR)`` be ``routineTypeDefIR'``?
   ... Check that ``routineTypeDefIR`` has type ``actionTypeIR``
   ... Let ``ACTION ( parameterTypeIR* )`` be ``routineTypeDefIR``
-  ... Let ``argument*`` be ``$flatten_argumentList(argumentList)``
+  ... Let ``argument*`` be <<flatten_argumentList, the list of arguments in ``argumentList``>>
   ... Let ``argumentIR*`` be the list of ``argumentIR``, obtained by repeating:
    .... Let ``argumentIR`` be the result of <<Argument_ok, typing ``argument``, under cursor ``LOCAL`` and typing context ``TC``>>
   ... for each ``argument`` in ``argument*``
@@ -3544,7 +3526,7 @@ relation TableDefaultAction_ok: ``TC``, ``TBLC``, and ``= expression``
   ... Let ``(parameterTypeIR*, argumentListIR)?`` be ``$find_action(TBLC, prefixedNameIR)``
   ... Check that ``(parameterTypeIR*, argumentListIR)?`` matches pattern ``(_)``
   ... Let ``?((parameterTypeIR~action~* and argumentIR~action~*))`` be ``(parameterTypeIR*, argumentListIR)``?
-  ... Let ``argument*`` be ``$flatten_argumentList(argumentList)``
+  ... Let ``argument*`` be <<flatten_argumentList, the list of arguments in ``argumentList``>>
   ... Let ``argumentIR*`` be the list of ``argumentIR``, obtained by repeating:
    .... Let ``argumentIR`` be the result of <<Argument_ok, typing ``argument``, under cursor ``LOCAL`` and typing context ``TC``>>
   ... for each ``argument`` in ``argument*``
@@ -3595,7 +3577,7 @@ relation TableEntry_keyset_ok: ``TC``, ``TBLC``, and ``keysetExpression``
  .. Else if let ``( simpleKeysetExpression~h~ , simpleKeysetExpressionList~t~ )`` be ``tupleKeysetExpression``
   ... Group tupleKeysetExpression-list: ``TC``, ``TBLC``, and ``( simpleKeysetExpression~h~ , simpleKeysetExpressionList~t~ )``
 
-   .... Let ``simpleKeysetExpression~t~*`` be ``$flatten_simpleKeysetExpressionList(simpleKeysetExpressionList~t~)``
+   .... Let ``simpleKeysetExpression~t~*`` be <<flatten_simpleKeysetExpressionList, the list of simple keyset expressions in ``simpleKeysetExpressionList~t~``>>
    .... Let ``simpleKeysetExpression*`` be ``simpleKeysetExpression~h~ :: simpleKeysetExpression~t~*``
    .... Check that the length of ``TBLC.KEYS`` is equal to the length of ``simpleKeysetExpression``*
    .... (TableEntry_keysets_simple_ok: ``TC TBLC NOLPM |- TBLC.KEYS @ simpleKeysetExpression* : TBLS simpleKeysetExpressionIR*``)
@@ -3643,7 +3625,7 @@ relation TableEntry_action_ok: ``TC``, ``TBLC``, and ``tableActionReference``
   ... Let ``(parameterTypeIR*, argumentListIR)?`` be ``$find_action(TBLC, prefixedNameIR)``
   ... Check that ``(parameterTypeIR*, argumentListIR)?`` matches pattern ``(_)``
   ... Let ``?((parameterTypeIR~action~* and argumentIR~action~*))`` be ``(parameterTypeIR*, argumentListIR)``?
-  ... Let ``argument*`` be ``$flatten_argumentList(argumentList)``
+  ... Let ``argument*`` be <<flatten_argumentList, the list of arguments in ``argumentList``>>
   ... Let ``argumentIR*`` be the list of ``argumentIR``, obtained by repeating:
    .... Let ``argumentIR`` be the result of <<Argument_ok, typing ``argument``, under cursor ``LOCAL`` and typing context ``TC``>>
   ... for each ``argument`` in ``argument*``
@@ -3685,7 +3667,7 @@ relation TableEntry_ok: ``TC``, ``TBLC~0~``, and ``tableEntry``
   ... (TableEntry_keyset_ok: ``TC TBLC~0~ |- keysetExpression : TBLS keysetExpressionIR``)
   ... (TableEntry_action_ok: ``TC TBLC~0~ |- tableActionReference : tableActionReferenceIR``)
   ... (TableEntry_priority_ok: ``TC TBLC~0~ TBLS |- ?(tableEntryPriority) : TBLC~1~ tableEntryPriorityOptIR``)
-  ... Let ``constOptIR`` be ``$flatten_constOpt(constOpt)``
+  ... Let ``constOptIR`` be <<flatten_constOpt, the optional const qualifier in ``constOpt``>>
   ... Let ``tableEntryIR`` be ``constOptIR tableEntryPriorityOptIR keysetExpressionIR : tableActionReferenceIR annotationList ;``
   ... Result in ``TBLC~1~`` and ``tableEntryIR``
 
@@ -3695,7 +3677,7 @@ relation TableEntry_ok: ``TC``, ``TBLC~0~``, and ``tableEntry``
   ... (TableEntry_keyset_ok: ``TC TBLC~0~ |- keysetExpression : TBLS keysetExpressionIR``)
   ... (TableEntry_action_ok: ``TC TBLC~0~ |- tableActionReference : tableActionReferenceIR``)
   ... (TableEntry_priority_ok: ``TC TBLC~0~ TBLS |- ?() : TBLC~1~ tableEntryPriorityOptIR``)
-  ... Let ``constOptIR`` be ``$flatten_constOpt(constOpt)``
+  ... Let ``constOptIR`` be <<flatten_constOpt, the optional const qualifier in ``constOpt``>>
   ... Let ``tableEntryIR`` be ``constOptIR tableEntryPriorityOptIR keysetExpressionIR : tableActionReferenceIR annotationList ;``
   ... Result in ``TBLC~1~`` and ``tableEntryIR``
 
@@ -3716,24 +3698,24 @@ relation TableProperty_ok: ``TC``, ``TBLC~0'~``, and ``tableProperty``
 . If let ``KEY = { tableKeyList }`` be ``tableProperty``
  .. Group key: ``TC``, ``TBLC~0'~``, and ``KEY = { tableKeyList }``
 
-  ... Let ``tableKey*`` be ``$flatten_tableKeyList(tableKeyList)``
+  ... Let ``tableKey*`` be <<flatten_tableKeyList, the list of table keys in ``tableKeyList``>>
   ... (TableKeys_ok: ``TC TBLC~0'~ |- tableKey* : TBLC~1~ tableKeyIR*``)
   ... Result in ``TBLC~1~`` and ``KEY = { tableKeyIR* }``
 
 . Else if let ``ACTIONS = { tableActionList }`` be ``tableProperty``
  .. Group actions: ``TC``, ``TBLC~0'~``, and ``ACTIONS = { tableActionList }``
 
-  ... Let ``tableAction*`` be ``$flatten_tableActionList(tableActionList)``
+  ... Let ``tableAction*`` be <<flatten_tableActionList, the list of table actions in ``tableActionList``>>
   ... (TableActions_ok: ``TC TBLC~0'~ |- tableAction* : TBLC~1~ tableActionIR*``)
   ... Result in ``TBLC~1~`` and ``ACTIONS = { tableActionIR* }``
 
 . Else if let ``annotationList constOpt ENTRIES = { tableEntryList }`` be ``tableProperty``
  .. Group entries: ``TC``, ``TBLC~0'~``, and ``annotationList constOpt ENTRIES = { tableEntryList }``
 
-  ... Let ``tableEntry*`` be ``$flatten_tableEntryList(tableEntryList)``
+  ... Let ``tableEntry*`` be <<flatten_tableEntryList, the list of table entries in ``tableEntryList``>>
   ... Check that ``the length of TBLC~0'~.KEYS = 0 => the length of tableEntry* = 0``
   ... Let ``TBLC~1~`` be ``TBLC~0'~``[ENTRIES.SIZE = the length of ``tableEntry``*]
-  ... Let ``constOptIR`` be ``$flatten_constOpt(constOpt)``
+  ... Let ``constOptIR`` be <<flatten_constOpt, the optional const qualifier in ``constOpt``>>
   ... Let ``TBLC~2~`` be ``TBLC~1~``[ENTRIES.CONST = ``constOptIR`` is equal to ?(``CONST``)]
   ... (TableEntries_ok: ``TC TBLC~2~ |- tableEntry* : TBLC~3~ tableEntryIR*``)
   ... Result in ``TBLC~3~`` and ``annotationList constOptIR ENTRIES = { tableEntryIR* }``
@@ -3741,30 +3723,30 @@ relation TableProperty_ok: ``TC``, ``TBLC~0'~``, and ``tableProperty``
 . Else if let ``annotationList constOpt tableCustomName initializer ;`` be ``tableProperty``
  .. Group default-action: ``TC``, ``TBLC~0'~``, and ``annotationList constOpt tableCustomName initializer ;``
 
-  ... Check that "default_action" is equal to ``$tableCustomName(tableCustomName)``
+  ... Check that "default_action" is equal to <<tableCustomName, the name of ``tableCustomName``>>
   ... (TableDefaultAction_ok: ``TC TBLC~0'~ |- initializer : tableActionReferenceIR``)
-  ... Let ``constOptIR`` be ``$flatten_constOpt(constOpt)``
+  ... Let ``constOptIR`` be <<flatten_constOpt, the optional const qualifier in ``constOpt``>>
   ... Let ``tablePropertyIR`` be ``annotationList constOptIR DEFAULT_ACTION = tableActionReferenceIR ;``
   ... Result in ``TBLC~0'~`` and ``tablePropertyIR``
  .. Let ``annotationList constOpt tableCustomName = expression ;`` be ``tableProperty``
  .. Group custom: ``TC``, ``TBLC~0'~``, and ``annotationList constOpt tableCustomName = expression ;``
 
-  ... If "size" is equal to ``$tableCustomName(tableCustomName)``
+  ... If "size" is equal to <<tableCustomName, the name of ``tableCustomName``>>
    .... Let ``typedExpressionIR`` be the result of <<Expr_ok, typing ``expression``, under cursor ``LOCAL`` and typing context ``TC``>>
    .... Let ``typeIR`` be <<typeof_expression, the type of  ``typedExpressionIR``>>
    .... If ``$is_arbitrary_int_typeIR(typeIR)``
-    ..... Let ``constOptIR`` be ``$flatten_constOpt(constOpt)``
+    ..... Let ``constOptIR`` be <<flatten_constOpt, the optional const qualifier in ``constOpt``>>
     ..... Let ``tablePropertyIR`` be ``annotationList constOptIR CUSTOM "size" = typedExpressionIR ;``
     ..... Result in ``TBLC~0'~`` and ``tablePropertyIR``
    .... If ``$is_fixed_int_typeIR(typeIR)``
-    ..... Let ``constOptIR`` be ``$flatten_constOpt(constOpt)``
+    ..... Let ``constOptIR`` be <<flatten_constOpt, the optional const qualifier in ``constOpt``>>
     ..... Let ``tablePropertyIR`` be ``annotationList constOptIR CUSTOM "size" = typedExpressionIR ;``
     ..... Result in ``TBLC~0'~`` and ``tablePropertyIR``
    .... If ``$is_fixed_bit_typeIR(typeIR)``
-    ..... Let ``constOptIR`` be ``$flatten_constOpt(constOpt)``
+    ..... Let ``constOptIR`` be <<flatten_constOpt, the optional const qualifier in ``constOpt``>>
     ..... Let ``tablePropertyIR`` be ``annotationList constOptIR CUSTOM "size" = typedExpressionIR ;``
     ..... Result in ``TBLC~0'~`` and ``tablePropertyIR``
-  ... If "largest_priority_wins" is equal to ``$tableCustomName(tableCustomName)``
+  ... If "largest_priority_wins" is equal to <<tableCustomName, the name of ``tableCustomName``>>
    .... Let ``typedExpressionIR`` be the result of <<Expr_ok, typing ``expression``, under cursor ``LOCAL`` and typing context ``TC``>>
    .... Let ``typeIR`` be <<typeof_expression, the type of  ``typedExpressionIR``>>
    .... Check that ``BOOL`` is equal to <<canon, the canonicalized form of ``typeIR``>>
@@ -3774,10 +3756,10 @@ relation TableProperty_ok: ``TC``, ``TBLC~0'~``, and ``tableProperty``
    .... Check that ``primitiveValue`` matches pattern ``B %``
    .... Let ``B b~largest_priority_wins~`` be ``primitiveValue``
    .... Let ``TBLC~1~`` be ``TBLC~0'~``[PRIORITIES.LARGEST_WINS = ``b~largest_priority_wins~``]
-   .... Let ``constOptIR`` be ``$flatten_constOpt(constOpt)``
+   .... Let ``constOptIR`` be <<flatten_constOpt, the optional const qualifier in ``constOpt``>>
    .... Let ``tablePropertyIR`` be ``annotationList constOptIR CUSTOM_CONST "largest_priority_wins" = B b~largest_priority_wins~ ;``
    .... Result in ``TBLC~1~`` and ``tablePropertyIR``
-  ... If "priority_delta" is equal to ``$tableCustomName(tableCustomName)``
+  ... If "priority_delta" is equal to <<tableCustomName, the name of ``tableCustomName``>>
    .... Let ``typedExpressionIR`` be the result of <<Expr_ok, typing ``expression``, under cursor ``LOCAL`` and typing context ``TC``>>
    .... Let ``typeIR`` be <<typeof_expression, the type of  ``typedExpressionIR``>>
    .... If ``$is_arbitrary_int_typeIR(typeIR)``
@@ -3787,7 +3769,7 @@ relation TableProperty_ok: ``TC``, ``TBLC~0'~``, and ``tableProperty``
     ..... Let ``n~delta~`` be ``int``
     ..... Check that ``n~delta~`` is greater than 0
     ..... Let ``TBLC~1~`` be ``TBLC~0'~``[PRIORITIES.DELTA = ``n~delta~``]
-    ..... Let ``constOptIR`` be ``$flatten_constOpt(constOpt)``
+    ..... Let ``constOptIR`` be <<flatten_constOpt, the optional const qualifier in ``constOpt``>>
     ..... Let ``tablePropertyIR`` be ``annotationList constOptIR CUSTOM_CONST "priority_delta" = D n~delta~ ;``
     ..... Result in ``TBLC~1~`` and ``tablePropertyIR``
    .... If ``$is_fixed_int_typeIR(typeIR)``
@@ -3797,7 +3779,7 @@ relation TableProperty_ok: ``TC``, ``TBLC~0'~``, and ``tableProperty``
     ..... Let ``n~delta~`` be ``int``
     ..... Check that ``n~delta~`` is greater than 0
     ..... Let ``TBLC~1~`` be ``TBLC~0'~``[PRIORITIES.DELTA = ``n~delta~``]
-    ..... Let ``constOptIR`` be ``$flatten_constOpt(constOpt)``
+    ..... Let ``constOptIR`` be <<flatten_constOpt, the optional const qualifier in ``constOpt``>>
     ..... Let ``tablePropertyIR`` be ``annotationList constOptIR CUSTOM_CONST "priority_delta" = D n~delta~ ;``
     ..... Result in ``TBLC~1~`` and ``tablePropertyIR``
    .... If ``$is_fixed_bit_typeIR(typeIR)``
@@ -3807,13 +3789,13 @@ relation TableProperty_ok: ``TC``, ``TBLC~0'~``, and ``tableProperty``
     ..... Let ``n~delta~`` be ``int``
     ..... Check that ``n~delta~`` is greater than 0
     ..... Let ``TBLC~1~`` be ``TBLC~0'~``[PRIORITIES.DELTA = ``n~delta~``]
-    ..... Let ``constOptIR`` be ``$flatten_constOpt(constOpt)``
+    ..... Let ``constOptIR`` be <<flatten_constOpt, the optional const qualifier in ``constOpt``>>
     ..... Let ``tablePropertyIR`` be ``annotationList constOptIR CUSTOM_CONST "priority_delta" = D n~delta~ ;``
     ..... Result in ``TBLC~1~`` and ``tablePropertyIR``
-  ... Let ``nameIR`` be ``$tableCustomName(tableCustomName)``
+  ... Let ``nameIR`` be <<tableCustomName, the name of ``tableCustomName``>>
   ... If ``nameIR =/= "size" /\ nameIR =/= "largest_priority_wins" /\ nameIR =/= "priority_delta"``
    .... Let ``typedExpressionIR`` be the result of <<Expr_ok, typing ``expression``, under cursor ``LOCAL`` and typing context ``TC``>>
-   .... Let ``constOptIR`` be ``$flatten_constOpt(constOpt)``
+   .... Let ``constOptIR`` be <<flatten_constOpt, the optional const qualifier in ``constOpt``>>
    .... Let ``tablePropertyIR`` be ``annotationList constOptIR CUSTOM nameIR = typedExpressionIR ;``
    .... Result in ``TBLC~0'~`` and ``tablePropertyIR``
 
@@ -3843,7 +3825,7 @@ relation TableType_ok: ``TC~0~``, ``TBLC``, and ``name``
 
 . Group : ``TC~0~``, ``TBLC``, and ``name``
 
- .. Let ``nameIR`` be ``$name(name)``
+ .. Let ``nameIR`` be <<name, the name of ``name``>>
  .. Let ``tid~enum~`` be ``"action_list(" ++ nameIR ++ ")"``
  .. Let ``(prefixedNameIR~action~, _*, and _)*`` be ``TBLC.ACTIONS``
  .. Let ``id_enum_field*`` be the list of ``id_enum_field``, obtained by repeating:
@@ -3893,7 +3875,7 @@ and the modified typing context>>
    .... Check that ``tid*`` matches pattern ``[]``
    .... If (Type_wf: ``$bound(BLOCK, TC~0~) |- typeIR``), then
     ..... Check that ``$is_assignable_typeIR(typeIR)``
-    ..... Let ``nameIR`` be ``$name(name)``
+    ..... Let ``nameIR`` be <<name, the name of ``name``>>
     ..... Let ``TC~1~`` be ``$add_var(BLOCK, TC~0~, nameIR, INOUT typeIR DYN ?())``
     ..... Let ``variableDeclarationIR`` be ``annotationList typeIR nameIR ?() ;``
     ..... Result in ``TC~1~`` and ``variableDeclarationIR``
@@ -3907,7 +3889,7 @@ and the modified typing context>>
     ..... Let ``typedExpressionIR?`` be <<coerce_unary, implicitly cast  ``typedExpressionIR~init~``  to  ``typeIR``>>
     ..... Check that ``typedExpressionIR?`` matches pattern ``(_)``
     ..... Let ``?(typedExpressionIR~init_cast~)`` be ``typedExpressionIR``?
-    ..... Let ``nameIR`` be ``$name(name)``
+    ..... Let ``nameIR`` be <<name, the name of ``name``>>
     ..... Let ``TC~1~`` be ``$add_var(BLOCK, TC~0~, nameIR, INOUT typeIR DYN ?())``
     ..... Let ``variableDeclarationIR`` be ``annotationList typeIR nameIR ?(= typedExpressionIR~init_cast~) ;``
     ..... Result in ``TC~1~`` and ``variableDeclarationIR``
@@ -3927,9 +3909,9 @@ and the modified typing context>>
  .. Group tableDeclaration: ``TC~0~`` and ``annotationList TABLE name { tablePropertyList }``
 
   ... Let ``TC~1~`` be ``TC~0~``[LOCAL.KIND = ``TABLE_APPLY_METHOD``]
-  ... Let ``tableProperty*`` be ``$flatten_tablePropertyList(tablePropertyList)``
+  ... Let ``tableProperty*`` be <<flatten_tablePropertyList, the list of table properties in ``tablePropertyList``>>
   ... (Table_ok: ``TC~1~ |- tableProperty* : TBLC tablePropertyIR*``)
-  ... Let ``nameIR`` be ``$name(name)``
+  ... Let ``nameIR`` be <<name, the name of ``name``>>
   ... (TableType_ok: ``TC~1~ TBLC |- name : TC~2~ typeIR~table~``)
   ... Let ``TC~3~`` be ``$add_var(BLOCK, TC~2~, nameIR, typeIR~table~ DYN ?())``
   ... Let ``tableDeclarationIR`` be ``annotationList TABLE typeIR~table~ nameIR { tablePropertyIR* }``
@@ -3962,7 +3944,7 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
    .... Check that ``typedExpressionIR?`` matches pattern ``(_)``
    .... Let ``?(typedExpressionIR~value_cast~)`` be ``typedExpressionIR``?
    .... Let ``value`` be the result of <<Eval_static, the local compile-time evaluation of ``typedExpressionIR~value_cast~``, under cursor ``p'`` and typing context ``TC~0~``>>
-   .... Let ``nameIR`` be ``$name(name)``
+   .... Let ``nameIR`` be <<name, the name of ``name``>>
    .... Let ``TC~1~`` be ``$add_var(p', TC~0~, nameIR, typeIR LCTK ?(value))``
    .... Let ``constantDeclarationIR`` be ``annotationList CONST typeIR nameIR = value ;``
    .... Result in ``TC~1~`` and ``constantDeclarationIR``
@@ -3974,23 +3956,23 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
 
    .... If ``type`` has type ``prefixedTypeName``
     ..... Let ``prefixedTypeName`` be ``type``
-    ..... Let ``argument*`` be ``$flatten_argumentList(argumentList)``
+    ..... Let ``argument*`` be <<flatten_argumentList, the list of arguments in ``argumentList``>>
     ..... Let ``argumentIR*`` be the list of ``argumentIR``, obtained by repeating:
      ...... Let ``argumentIR`` be the result of <<Argument_ok, typing ``argument``, under cursor ``p'`` and typing context ``TC~0~``>>
     ..... for each ``argument`` in ``argument*``
     ..... Let ``prefixedNameIR`` be ``$prefixedTypeName(prefixedTypeName)``
     ..... (ConstructorType_ok: ``p' TC~0~ |- prefixedNameIR < [ ] > ( argumentIR* ) : constructorTypeIR < # tid~impl~* > ( # id~default~* )``)
     ..... (Inst_ok: ``p' TC~0~ NAMED |- constructorTypeIR < [ ] # tid~impl~* > ( argumentIR* # id~default~* ) : typeIR~object~ < typeArgumentIR~inferred~* > ( argumentIR~cast~* )``)
-    ..... Let ``nameIR`` be ``$name(name)``
+    ..... Let ``nameIR`` be <<name, the name of ``name``>>
     ..... Let ``TC~1~`` be ``$add_var(p', TC~0~, nameIR, typeIR~object~ CTK ?())``
     ..... Let ``instantiationIR`` be ``annotationList typeIR~object~ prefixedNameIR < typeArgumentIR~inferred~* > ( argumentIR* ) nameIR ?() ;``
     ..... Result in ``TC~1~`` and ``instantiationIR``
 
    .... Else if ``type`` has type ``specializedType``
     ..... Let ``prefixedTypeName < typeArgumentList >`` be ``type``
-    ..... Let ``typeArgument*`` be ``$flatten_typeArgumentList(typeArgumentList)``
+    ..... Let ``typeArgument*`` be <<flatten_typeArgumentList, the list of type arguments in ``typeArgumentList``>>
     ..... (TypeArguments_ok: ``p' TC~0~ |- typeArgument* : typeArgumentIR* # tid~impl~*``)
-    ..... Let ``argument*`` be ``$flatten_argumentList(argumentList)``
+    ..... Let ``argument*`` be <<flatten_argumentList, the list of arguments in ``argumentList``>>
     ..... Let ``argumentIR*`` be the list of ``argumentIR``, obtained by repeating:
      ...... Let ``argumentIR`` be the result of <<Argument_ok, typing ``argument``, under cursor ``p'`` and typing context ``TC~0~``>>
     ..... for each ``argument`` in ``argument*``
@@ -3998,7 +3980,7 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
     ..... (ConstructorType_ok: ``p' TC~0~ |- prefixedNameIR < typeArgumentIR* > ( argumentIR* ) : constructorTypeIR < # tid~inserted~* > ( # id~default~* )``)
     ..... Let ``tid~infer~*`` be ``tid~impl~* ++ tid~inserted~*``
     ..... (Inst_ok: ``p' TC~0~ NAMED |- constructorTypeIR < typeArgumentIR* # tid~infer~* > ( argumentIR* # id~default~* ) : typeIR~object~ < typeArgumentIR~inferred~* > ( argumentIR~cast~* )``)
-    ..... Let ``nameIR`` be ``$name(name)``
+    ..... Let ``nameIR`` be <<name, the name of ``name``>>
     ..... Let ``TC~1~`` be ``$add_var(p', TC~0~, nameIR, typeIR~object~ CTK ?())``
     ..... Let ``instantiationIR`` be ``annotationList typeIR~object~ prefixedNameIR < typeArgumentIR~inferred~* > ( argumentIR* ) nameIR ?() ;``
     ..... Result in ``TC~1~`` and ``instantiationIR``
@@ -4008,7 +3990,7 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
 
    .... If ``type`` has type ``prefixedTypeName``
     ..... Let ``prefixedTypeName`` be ``type``
-    ..... Let ``argument*`` be ``$flatten_argumentList(argumentList)``
+    ..... Let ``argument*`` be <<flatten_argumentList, the list of arguments in ``argumentList``>>
     ..... Let ``argumentIR*`` be the list of ``argumentIR``, obtained by repeating:
      ...... Let ``argumentIR`` be the result of <<Argument_ok, typing ``argument``, under cursor ``p'`` and typing context ``TC~0~``>>
     ..... for each ``argument`` in ``argument*``
@@ -4022,23 +4004,23 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
     ..... Let ``EXTERN tid~extern~ rdenv~extern~`` be ``typeIR``
     ..... Check that ``tid'``* is equal to ``tid~impl~``*
     ..... Let ``TC~1~`` be ``$add_var(LOCAL, TC~0~, "this", typeIR~object~ CTK ?())``
-    ..... Let ``objectDeclaration*`` be ``$flatten_objectDeclarationList(objectDeclarationList)``
+    ..... Let ``objectDeclaration*`` be <<flatten_objectDeclarationList, the list of object declarations in ``objectDeclarationList``>>
     ..... (Decls_object_ok: ``p' TC~1~ { [ ] } { [ ] } |- objectDeclaration* : frame~init~ rdenv~init~ objectDeclarationIR*``)
     ..... Let ``tid*`` be ``tid~expl~* ++ tid~impl~*``
     ..... Let ``theta`` be ``{ tid : typeIR~arg~* }``
     ..... Let ``rdenv~init_subst~`` be ``$subst_rdenv(theta, rdenv~extern~, rdenv~init~)``
     ..... Let ``typeIR~object_init~`` be ``EXTERN tid~extern~ rdenv~init_subst~ < tid~expl~* , tid~impl~* > < typeIR~arg~* >``
     ..... Check that ``$is_concrete_extern_object(typeIR~object_init~)``
-    ..... Let ``nameIR`` be ``$name(name)``
+    ..... Let ``nameIR`` be <<name, the name of ``name``>>
     ..... Let ``TC~2~`` be ``$add_var(p', TC~0~, nameIR, typeIR~object_init~ CTK ?())``
     ..... Let ``instantiationIR`` be ``annotationList typeIR~object_init~ prefixedNameIR < typeArgumentIR~inferred~* > ( argumentIR* ) nameIR ?(= { objectDeclarationIR* }) ;``
     ..... Result in ``TC~2~`` and ``instantiationIR``
 
    .... Else if ``type`` has type ``specializedType``
     ..... Let ``prefixedTypeName < typeArgumentList >`` be ``type``
-    ..... Let ``typeArgument*`` be ``$flatten_typeArgumentList(typeArgumentList)``
+    ..... Let ``typeArgument*`` be <<flatten_typeArgumentList, the list of type arguments in ``typeArgumentList``>>
     ..... (TypeArguments_ok: ``p' TC~0~ |- typeArgument* : typeArgumentIR* # tid~impl~*``)
-    ..... Let ``argument*`` be ``$flatten_argumentList(argumentList)``
+    ..... Let ``argument*`` be <<flatten_argumentList, the list of arguments in ``argumentList``>>
     ..... Let ``argumentIR*`` be the list of ``argumentIR``, obtained by repeating:
      ...... Let ``argumentIR`` be the result of <<Argument_ok, typing ``argument``, under cursor ``p'`` and typing context ``TC~0~``>>
     ..... for each ``argument`` in ``argument*``
@@ -4053,14 +4035,14 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
     ..... Let ``EXTERN tid~extern~ rdenv~extern~`` be ``typeIR``
     ..... Check that ``tid'``* is equal to ``tid~impl~``*
     ..... Let ``TC~1~`` be ``$add_var(LOCAL, TC~0~, "this", typeIR~object~ CTK ?())``
-    ..... Let ``objectDeclaration*`` be ``$flatten_objectDeclarationList(objectDeclarationList)``
+    ..... Let ``objectDeclaration*`` be <<flatten_objectDeclarationList, the list of object declarations in ``objectDeclarationList``>>
     ..... (Decls_object_ok: ``p' TC~1~ { [ ] } { [ ] } |- objectDeclaration* : frame~init~ rdenv~init~ objectDeclarationIR*``)
     ..... Let ``tid*`` be ``tid~expl~* ++ tid~impl~*``
     ..... Let ``theta`` be ``{ tid : typeIR~arg~* }``
     ..... Let ``rdenv~init_subst~`` be ``$subst_rdenv(theta, rdenv~extern~, rdenv~init~)``
     ..... Let ``typeIR~object_init~`` be ``EXTERN tid~extern~ rdenv~init_subst~ < tid~expl~* , tid~impl~* > < typeIR~arg~* >``
     ..... Check that ``$is_concrete_extern_object(typeIR~object_init~)``
-    ..... Let ``nameIR`` be ``$name(name)``
+    ..... Let ``nameIR`` be <<name, the name of ``name``>>
     ..... Let ``TC~2~`` be ``$add_var(p', TC~0~, nameIR, typeIR~object_init~ CTK ?())``
     ..... Let ``instantiationIR`` be ``annotationList typeIR~object_init~ prefixedNameIR < typeArgumentIR~inferred~* > ( argumentIR* ) nameIR ?(= { objectDeclarationIR* }) ;``
     ..... Result in ``TC~2~`` and ``instantiationIR``
@@ -4069,14 +4051,14 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
  .. Let ``annotationList typeOrVoid name typeParameterListOpt ( parameterList ) blockStatement`` be ``declaration``
  .. Group functionDeclaration: ``p'``, ``TC~0~``, and ``annotationList typeOrVoid name typeParameterListOpt ( parameterList ) blockStatement``
 
-  ... Let ``typeParameter*`` be ``$flatten_typeParameterListOpt(typeParameterListOpt)``
+  ... Let ``typeParameter*`` be <<flatten_typeParameterListOpt, the list of type parameters in ``typeParameterListOpt``>>
   ... Let ``tid_expl*`` be the list of ``tid_expl``, obtained by repeating:
-   .... Let ``tid~expl~`` be ``$name(typeParameter)``
+   .... Let ``tid~expl~`` be <<name, the name of ``typeParameter``>>
   ... for each ``typeParameter`` in ``typeParameter*``
   ... Let ``TC~1~`` be ``$add_types(LOCAL, TC~0~, tid~expl~*, TID tid~expl~*)``
   ... Let ``typeIR~ret~`` and ``tid*`` be the result of <<Type_ok, typing ``typeOrVoid``, under cursor ``LOCAL`` and typing context ``TC~1~``>>
   ... Check that ``tid*`` matches pattern ``[]``
-  ... Let ``parameter*`` be ``$flatten_parameterList(parameterList)``
+  ... Let ``parameter*`` be <<flatten_parameterList, the list of parameters in ``parameterList``>>
   ... Let ``parameterIR*`` and ``tid~impl~*`` be the result of <<Parameters_ok, typing ``parameter*``, under cursor ``LOCAL`` and typing context ``TC~1~``>>
   ... Let ``parameterTypeIR*`` be the list of ``parameterTypeIR``, obtained by repeating:
    .... Let ``parameterTypeIR`` be <<typeof_parameterIR, the type of  ``parameterIR``>>
@@ -4090,7 +4072,7 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
    .... Let ``routineTypeDefIR`` be ``functionTypeIR < tid~expl~* , tid~impl~* >``
    .... If (RoutineTypeDef_wf: ``$bound(p', TC~0~) |- routineTypeDefIR``), then
     ..... Let ``TC~4~`` be ``$add_routine_overload(p', TC~0~, rid, routineTypeDefIR)``
-    ..... Let ``nameIR`` be ``$name(name)``
+    ..... Let ``nameIR`` be <<name, the name of ``name``>>
     ..... Let ``functionDeclarationIR`` be ``annotationList typeIR~ret~ nameIR < tid~expl~* , tid~impl~* > ( parameterIR* ) blockStatementIR``
     ..... Result in ``TC~4~`` and ``functionDeclarationIR``
   ... If ``typeIR~ret~`` is equal to ``VOID``
@@ -4099,7 +4081,7 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
    .... Let ``routineTypeDefIR`` be ``functionTypeIR < tid~expl~* , tid~impl~* >``
    .... If (RoutineTypeDef_wf: ``$bound(p', TC~0~) |- routineTypeDefIR``), then
     ..... Let ``TC~4~`` be ``$add_routine_overload(p', TC~0~, rid, routineTypeDefIR)``
-    ..... Let ``nameIR`` be ``$name(name)``
+    ..... Let ``nameIR`` be <<name, the name of ``name``>>
     ..... Let ``functionDeclarationIR`` be ``annotationList typeIR~ret~ nameIR < tid~expl~* , tid~impl~* > ( parameterIR* ) blockStatementIR``
     ..... Result in ``TC~4~`` and ``functionDeclarationIR``
 
@@ -4108,7 +4090,7 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
  .. Group actionDeclaration: ``p'``, ``TC~0~``, and ``annotationList ACTION name ( parameterList ) blockStatement``
 
   ... Let ``TC~1~`` be ``TC~0~``[LOCAL.KIND = ``ACTION``]
-  ... Let ``parameter*`` be ``$flatten_parameterList(parameterList)``
+  ... Let ``parameter*`` be <<flatten_parameterList, the list of parameters in ``parameterList``>>
   ... Let ``parameterIR*`` and ``tid*`` be the result of <<Parameters_ok, typing ``parameter*``, under cursor ``LOCAL`` and typing context ``TC~1~``>>
   ... Check that ``tid*`` matches pattern ``[]``
   ... Let ``parameterTypeIR*`` be the list of ``parameterTypeIR``, obtained by repeating:
@@ -4120,7 +4102,7 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
   ... Let ``actionTypeIR`` be ``ACTION ( parameterTypeIR* )``
   ... If (RoutineTypeDef_wf: ``$bound(p', TC~0~) |- actionTypeIR``), then
    .... Let ``TC~3~`` be ``$add_routine_non_overload(p', TC~0~, rid, actionTypeIR)``
-   .... Let ``nameIR`` be ``$name(name)``
+   .... Let ``nameIR`` be <<name, the name of ``name``>>
    .... Let ``actionDeclarationIR`` be ``annotationList ACTION nameIR ( parameterIR* ) blockStatementIR``
    .... Result in ``TC~3~`` and ``actionDeclarationIR``
 . Check that ``p'`` matches pattern ``GLOBAL``
@@ -4128,9 +4110,9 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
  .. Let ``ERROR { nameList }`` be ``declaration``
  .. Group errorDeclaration: ``GLOBAL``, ``TC~0~``, and ``ERROR { nameList }``
 
-  ... Let ``name*`` be ``$flatten_nameList(nameList)``
+  ... Let ``name*`` be <<flatten_nameList, the list of names in ``nameList``>>
   ... Let ``nameIR*`` be the list of ``nameIR``, obtained by repeating:
-   .... Let ``nameIR`` be ``$name(name)``
+   .... Let ``nameIR`` be <<name, the name of ``name``>>
   ... for each ``name`` in ``name*``
   ... Check that ``$distinct_<nameIR>(nameIR*)``
   ... Let ``nameIR_error*`` be the list of ``nameIR_error``, obtained by repeating:
@@ -4146,9 +4128,9 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
  .. Let ``MATCH_KIND { nameList _ }`` be ``declaration``
  .. Group matchKindDeclaration: ``GLOBAL``, ``TC~0~``, and ``MATCH_KIND { nameList _ }``
 
-  ... Let ``name*`` be ``$flatten_nameList(nameList)``
+  ... Let ``name*`` be <<flatten_nameList, the list of names in ``nameList``>>
   ... Let ``nameIR*`` be the list of ``nameIR``, obtained by repeating:
-   .... Let ``nameIR`` be ``$name(name)``
+   .... Let ``nameIR`` be <<name, the name of ``name``>>
   ... for each ``name`` in ``name*``
   ... Check that ``$distinct_<nameIR>(nameIR*)``
   ... Let ``value_match_kind*`` be the list of ``value_match_kind``, obtained by repeating:
@@ -4161,15 +4143,15 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
  .. Let ``annotationList EXTERN typeOrVoid name typeParameterListOpt ( parameterList ) ;`` be ``declaration``
  .. Group externFunctionDeclaration: ``GLOBAL``, ``TC~0~``, and ``annotationList EXTERN typeOrVoid name typeParameterListOpt ( parameterList ) ;``
 
-  ... Let ``typeParameter*`` be ``$flatten_typeParameterListOpt(typeParameterListOpt)``
+  ... Let ``typeParameter*`` be <<flatten_typeParameterListOpt, the list of type parameters in ``typeParameterListOpt``>>
   ... Let ``tid_expl*`` be the list of ``tid_expl``, obtained by repeating:
-   .... Let ``tid~expl~`` be ``$name(typeParameter)``
+   .... Let ``tid~expl~`` be <<name, the name of ``typeParameter``>>
   ... for each ``typeParameter`` in ``typeParameter*``
   ... Let ``TC~1~`` be ``$add_types(LOCAL, TC~0~, tid~expl~*, TID tid~expl~*)``
   ... Let ``typeIR~ret~`` and ``tid*`` be the result of <<Type_ok, typing ``typeOrVoid``, under cursor ``LOCAL`` and typing context ``TC~1~``>>
   ... Check that ``tid*`` matches pattern ``[]``
   ... Let ``TC~2~`` be ``TC~1~``[LOCAL.KIND = ``EXTERN_FUNCTION -> typeIR~ret~``]
-  ... Let ``parameter*`` be ``$flatten_parameterList(parameterList)``
+  ... Let ``parameter*`` be <<flatten_parameterList, the list of parameters in ``parameterList``>>
   ... Let ``parameterIR*`` and ``tid~impl~*`` be the result of <<Parameters_ok, typing ``parameter*``, under cursor ``LOCAL`` and typing context ``TC~2~``>>
   ... Let ``parameterTypeIR*`` be the list of ``parameterTypeIR``, obtained by repeating:
    .... Let ``parameterTypeIR`` be <<typeof_parameterIR, the type of  ``parameterIR``>>
@@ -4180,7 +4162,7 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
   ... Let ``routineTypeDefIR`` be ``functionTypeIR < tid~expl~* , tid~impl~* >``
   ... If (RoutineTypeDef_wf: ``$bound(GLOBAL, TC~0~) |- routineTypeDefIR``), then
    .... Let ``TC~4~`` be ``$add_routine_overload(GLOBAL, TC~0~, rid, routineTypeDefIR)``
-   .... Let ``nameIR`` be ``$name(name)``
+   .... Let ``nameIR`` be <<name, the name of ``name``>>
    .... Let ``externFunctionDeclarationIR`` be ``annotationList EXTERN typeIR~ret~ nameIR < tid~expl~* , tid~impl~* > ( parameterIR* ) ;``
    .... Result in ``TC~4~`` and ``externFunctionDeclarationIR``
 
@@ -4188,15 +4170,15 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
  .. Let ``annotationList EXTERN nonTypeName typeParameterListOpt { methodPrototypeList }`` be ``declaration``
  .. Group externObjectDeclaration: ``GLOBAL``, ``TC~0~``, and ``annotationList EXTERN nonTypeName typeParameterListOpt { methodPrototypeList }``
 
-  ... Let ``methodPrototype*`` be ``$flatten_methodPrototypeList(methodPrototypeList)``
+  ... Let ``methodPrototype*`` be <<flatten_methodPrototypeList, the list of method prototypes in ``methodPrototypeList``>>
   ... Let ``(methodPrototype~constructor~* and methodPrototype~method~*)`` be ``$split_constructors(methodPrototype*)``
   ... Let ``TC~1~`` be ``TC~0~``[BLOCK.KIND = ``EXTERN``]
-  ... Let ``typeParameter*`` be ``$flatten_typeParameterListOpt(typeParameterListOpt)``
+  ... Let ``typeParameter*`` be <<flatten_typeParameterListOpt, the list of type parameters in ``typeParameterListOpt``>>
   ... Let ``tid_expl*`` be the list of ``tid_expl``, obtained by repeating:
-   .... Let ``tid~expl~`` be ``$name(typeParameter)``
+   .... Let ``tid~expl~`` be <<name, the name of ``typeParameter``>>
   ... for each ``typeParameter`` in ``typeParameter*``
   ... Let ``TC~2~`` be ``$add_types(BLOCK, TC~1~, tid~expl~*, TID tid~expl~*)``
-  ... Let ``nameIR`` be ``$name(nonTypeName)``
+  ... Let ``nameIR`` be <<name, the name of ``nonTypeName``>>
   ... (ExternMethods_ok: ``TC~2~ nameIR |- methodPrototype~method~* : TC~3~ methodPrototypeIR~method~*``)
   ... Let ``typeIR~extern~`` be ``EXTERN nameIR TC~3~.BLOCK.RDENV``
   ... Let ``typeDefIR~extern~`` be ``typeIR~extern~ < tid~expl~* , [ ] >``
@@ -4214,24 +4196,24 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
  .. Group parserDeclaration: ``GLOBAL``, ``TC~0~``, and ``annotationList PARSER name ( parameterList ) constructorParameterListOpt { parserLocalDeclarationList parserStateList }``
 
   ... Let ``TC~1~`` be ``TC~0~``[BLOCK.KIND = ``PARSER``]
-  ... Let ``constructorParameter*`` be ``$flatten_constructorParameterListOpt(constructorParameterListOpt)``
+  ... Let ``constructorParameter*`` be <<flatten_constructorParameterListOpt, the list of constructor parameters in ``constructorParameterListOpt``>>
   ... (ConstructorParameters_ok: ``BLOCK TC~1~ |- constructorParameter* : constructorParameterIR* # tid*``)
   ... Check that ``tid*`` matches pattern ``[]``
   ... Let ``constructorParameterTypeIR*`` be the list of ``constructorParameterTypeIR``, obtained by repeating:
    .... Let ``constructorParameterTypeIR`` be <<typeof_constructorParameterIR, the type of  ``constructorParameterIR``>>
   ... for each ``constructorParameterIR`` in ``constructorParameterIR*``
   ... Let ``TC~2~`` be ``$add_parameters(BLOCK, TC~1~, constructorParameterTypeIR*)``
-  ... Let ``parameter*`` be ``$flatten_parameterList(parameterList)``
+  ... Let ``parameter*`` be <<flatten_parameterList, the list of parameters in ``parameterList``>>
   ... Let ``parameterIR*`` and ``tid'*`` be the result of <<Parameters_ok, typing ``parameter*``, under cursor ``BLOCK`` and typing context ``TC~2~``>>
   ... Check that ``tid'*`` matches pattern ``[]``
   ... Let ``parameterTypeIR*`` be the list of ``parameterTypeIR``, obtained by repeating:
    .... Let ``parameterTypeIR`` be <<typeof_parameterIR, the type of  ``parameterIR``>>
   ... for each ``parameterIR`` in ``parameterIR*``
   ... Let ``TC~3~`` be ``$add_parameters(BLOCK, TC~2~, parameterTypeIR*)``
-  ... Let ``parserLocalDeclaration*`` be ``$flatten_parserLocalDeclarationList(parserLocalDeclarationList)``
+  ... Let ``parserLocalDeclaration*`` be <<flatten_parserLocalDeclarationList, the list of parser local declarations in ``parserLocalDeclarationList``>>
   ... (ParserLocalDecls_ok: ``TC~3~ |- parserLocalDeclaration* : TC~4~ parserLocalDeclarationIR*``)
   ... Let ``TC~5~`` be ``TC~4~``[LOCAL.KIND = ``PARSER_STATE``]
-  ... Let ``parserState*`` be ``$flatten_parserStateList(parserStateList)``
+  ... Let ``parserState*`` be <<flatten_parserStateList, the list of parser states in ``parserStateList``>>
   ... (ParserStates_ok: ``TC~5~ |- parserState* : parserStateIR*``)
   ... Let ``methodTypeIR`` be ``PARSER_APPLY ( parameterTypeIR* )``
   ... If (RoutineTypeDef_wf: ``$bound(GLOBAL, TC~0~) |- methodTypeIR``), then
@@ -4242,7 +4224,7 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
    .... Let ``constructorTypeDefIR`` be ``constructorTypeIR < [ ] , [ ] >``
    .... If (ConstructorTypeDef_wf: ``$bound(GLOBAL, TC~0~) |- constructorTypeDefIR``), then
     ..... Let ``TC~6~`` be ``$add_constructor(TC~0~, cid, constructorTypeDefIR)``
-    ..... Let ``nameIR`` be ``$name(name)``
+    ..... Let ``nameIR`` be <<name, the name of ``name``>>
     ..... Let ``parserDeclarationIR`` be ``annotationList PARSER nameIR < [ ] > ( parameterIR* ) ( constructorParameterIR* ) { parserLocalDeclarationIR* parserStateIR* }``
     ..... Result in ``TC~6~`` and ``parserDeclarationIR``
 
@@ -4252,21 +4234,21 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
  .. Group controlDeclaration: ``GLOBAL``, ``TC~0~``, and ``annotationList CONTROL name ( parameterList ) constructorParameterListOpt { controlLocalDeclarationList APPLY controlBody }``
 
   ... Let ``TC~1~`` be ``TC~0~``[BLOCK.KIND = ``CONTROL``]
-  ... Let ``constructorParameter*`` be ``$flatten_constructorParameterListOpt(constructorParameterListOpt)``
+  ... Let ``constructorParameter*`` be <<flatten_constructorParameterListOpt, the list of constructor parameters in ``constructorParameterListOpt``>>
   ... (ConstructorParameters_ok: ``BLOCK TC~1~ |- constructorParameter* : constructorParameterIR* # tid*``)
   ... Check that ``tid*`` matches pattern ``[]``
   ... Let ``constructorParameterTypeIR*`` be the list of ``constructorParameterTypeIR``, obtained by repeating:
    .... Let ``constructorParameterTypeIR`` be <<typeof_constructorParameterIR, the type of  ``constructorParameterIR``>>
   ... for each ``constructorParameterIR`` in ``constructorParameterIR*``
   ... Let ``TC~2~`` be ``$add_parameters(BLOCK, TC~1~, constructorParameterTypeIR*)``
-  ... Let ``parameter*`` be ``$flatten_parameterList(parameterList)``
+  ... Let ``parameter*`` be <<flatten_parameterList, the list of parameters in ``parameterList``>>
   ... Let ``parameterIR*`` and ``tid'*`` be the result of <<Parameters_ok, typing ``parameter*``, under cursor ``BLOCK`` and typing context ``TC~2~``>>
   ... Check that ``tid'*`` matches pattern ``[]``
   ... Let ``parameterTypeIR*`` be the list of ``parameterTypeIR``, obtained by repeating:
    .... Let ``parameterTypeIR`` be <<typeof_parameterIR, the type of  ``parameterIR``>>
   ... for each ``parameterIR`` in ``parameterIR*``
   ... Let ``TC~3~`` be ``$add_parameters(BLOCK, TC~2~, parameterTypeIR*)``
-  ... Let ``controlLocalDeclaration*`` be ``$flatten_controlLocalDeclarationList(controlLocalDeclarationList)``
+  ... Let ``controlLocalDeclaration*`` be <<flatten_controlLocalDeclarationList, the list of control local declarations in ``controlLocalDeclarationList``>>
   ... (ControlLocalDecls_ok: ``TC~3~ |- controlLocalDeclaration* : TC~4~ controlLocalDeclarationIR*``)
   ... Let ``TC~5~`` be ``TC~4~``[LOCAL.KIND = ``CONTROL_APPLY_METHOD``]
   ... (Block_ok: ``TC~5~ CONT |- controlBody : _ _ controlBodyIR``)
@@ -4279,7 +4261,7 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
    .... Let ``constructorTypeDefIR`` be ``constructorTypeIR < [ ] , [ ] >``
    .... If (ConstructorTypeDef_wf: ``$bound(GLOBAL, TC~0~) |- constructorTypeDefIR``), then
     ..... Let ``TC~6~`` be ``$add_constructor(TC~0~, cid, constructorTypeDefIR)``
-    ..... Let ``nameIR`` be ``$name(name)``
+    ..... Let ``nameIR`` be <<name, the name of ``name``>>
     ..... Let ``controlDeclarationIR`` be ``annotationList CONTROL nameIR < [ ] > ( parameterIR* ) ( constructorParameterIR* ) { controlLocalDeclarationIR* APPLY controlBodyIR }``
     ..... Result in ``TC~6~`` and ``controlDeclarationIR``
 
@@ -4288,10 +4270,10 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
  .. If let ``annotationList ENUM name { nameList~field~ _ }`` be ``enumTypeDeclaration``
   ... Group enumTypeDeclaration-non-serializable: ``GLOBAL``, ``TC~0~``, and ``annotationList ENUM name { nameList~field~ _ }``
 
-   .... Let ``nameIR`` be ``$name(name)``
-   .... Let ``name~field~*`` be ``$flatten_nameList(nameList~field~)``
+   .... Let ``nameIR`` be <<name, the name of ``name``>>
+   .... Let ``name~field~*`` be <<flatten_nameList, the list of names in ``nameList~field~``>>
    .... Let ``nameIR_field*`` be the list of ``nameIR_field``, obtained by repeating:
-    ..... Let ``nameIR~field~`` be ``$name(name~field~)``
+    ..... Let ``nameIR~field~`` be <<name, the name of ``name~field~``>>
    .... for each ``name_field`` in ``name_field*``
    .... Let ``typeIR~enum~`` be ``ENUM nameIR { nameIR~field~* }``
    .... If (TypeDef_wf: ``$bound(GLOBAL, TC~0~) |- typeIR~enum~``), then
@@ -4312,8 +4294,8 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
    .... Let ``typeIR`` and ``tid*`` be the result of <<Type_ok, typing ``type``, under cursor ``GLOBAL`` and typing context ``TC~0~``>>
    .... Check that ``tid*`` matches pattern ``[]``
    .... If (Type_wf: ``$bound(GLOBAL, TC~0~) |- typeIR``), then
-    ..... Let ``nameIR`` be ``$name(name)``
-    ..... Let ``namedExpression~field~*`` be ``$flatten_namedExpressionList(namedExpressionList~field~)``
+    ..... Let ``nameIR`` be <<name, the name of ``name``>>
+    ..... Let ``namedExpression~field~*`` be <<flatten_namedExpressionList, the list of named expressions in ``namedExpressionList~field~``>>
     ..... (Enum_serializable_fields_ok: ``TC~0~ nameIR typeIR |- namedExpression~field~* : TC~1~ namedExpressionIR~field~* # value~field~*``)
     ..... Let ``_typedExpressionIR*`` be the list of ``_typedExpressionIR`` and ``nameIR_field*`` be the list of ``nameIR_field``, obtained by repeating:
      ...... Let ``nameIR~field~ = _`` be ``namedExpressionIR~field~``
@@ -4332,19 +4314,19 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
  .. Let ``annotationList STRUCT name typeParameterListOpt { typeFieldList }`` be ``declaration``
  .. Group structTypeDeclaration: ``GLOBAL``, ``TC~0~``, and ``annotationList STRUCT name typeParameterListOpt { typeFieldList }``
 
-  ... Let ``typeParameter*`` be ``$flatten_typeParameterListOpt(typeParameterListOpt)``
+  ... Let ``typeParameter*`` be <<flatten_typeParameterListOpt, the list of type parameters in ``typeParameterListOpt``>>
   ... Let ``tid_expl*`` be the list of ``tid_expl``, obtained by repeating:
-   .... Let ``tid~expl~`` be ``$name(typeParameter)``
+   .... Let ``tid~expl~`` be <<name, the name of ``typeParameter``>>
   ... for each ``typeParameter`` in ``typeParameter*``
   ... Let ``TC~1~`` be ``$add_types(BLOCK, TC~0~, tid~expl~*, TID tid~expl~*)``
-  ... Let ``annotationList~field~ type~field~ name~field~ ;*`` be ``$flatten_typeFieldList(typeFieldList)``
+  ... Let ``annotationList~field~ type~field~ name~field~ ;*`` be <<flatten_typeFieldList, the list of type fields in ``typeFieldList``>>
   ... Let ``tid_impl_field**`` be the list of ``tid_impl_field*`` and ``typeIR_field*`` be the list of ``typeIR_field``, obtained by repeating:
    .... Let ``typeIR~field~`` and ``tid~impl_field~*`` be the result of <<Type_ok, typing ``type~field~``, under cursor ``BLOCK`` and typing context ``TC~1~``>>
   ... for each ``type_field`` in ``type_field*``
   ... Let ``tid~impl~*`` be ``$concat_<tid>(tid~impl_field~**)``
-  ... Let ``nameIR`` be ``$name(name)``
+  ... Let ``nameIR`` be <<name, the name of ``name``>>
   ... Let ``nameIR_field*`` be the list of ``nameIR_field``, obtained by repeating:
-   .... Let ``nameIR~field~`` be ``$name(name~field~)``
+   .... Let ``nameIR~field~`` be <<name, the name of ``name~field~``>>
   ... for each ``name_field`` in ``name_field*``
   ... Let ``typeIR~struct~`` be ``STRUCT nameIR { typeIR~field~ nameIR~field~ ;* }``
   ... Let ``typeDefIR~struct~`` be ``typeIR~struct~ < tid~expl~* , tid~impl~* >``
@@ -4357,19 +4339,19 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
  .. Let ``annotationList HEADER name typeParameterListOpt { typeFieldList }`` be ``declaration``
  .. Group headerTypeDeclaration: ``GLOBAL``, ``TC~0~``, and ``annotationList HEADER name typeParameterListOpt { typeFieldList }``
 
-  ... Let ``typeParameter*`` be ``$flatten_typeParameterListOpt(typeParameterListOpt)``
+  ... Let ``typeParameter*`` be <<flatten_typeParameterListOpt, the list of type parameters in ``typeParameterListOpt``>>
   ... Let ``tid_expl*`` be the list of ``tid_expl``, obtained by repeating:
-   .... Let ``tid~expl~`` be ``$name(typeParameter)``
+   .... Let ``tid~expl~`` be <<name, the name of ``typeParameter``>>
   ... for each ``typeParameter`` in ``typeParameter*``
   ... Let ``TC~1~`` be ``$add_types(BLOCK, TC~0~, tid~expl~*, TID tid~expl~*)``
-  ... Let ``annotationList~f~ type~f~ name~f~ ;*`` be ``$flatten_typeFieldList(typeFieldList)``
+  ... Let ``annotationList~f~ type~f~ name~f~ ;*`` be <<flatten_typeFieldList, the list of type fields in ``typeFieldList``>>
   ... Let ``tid_impl_f**`` be the list of ``tid_impl_f*`` and ``typeIR_f*`` be the list of ``typeIR_f``, obtained by repeating:
    .... Let ``typeIR~f~`` and ``tid~impl_f~*`` be the result of <<Type_ok, typing ``type~f~``, under cursor ``BLOCK`` and typing context ``TC~1~``>>
   ... for each ``type_f`` in ``type_f*``
   ... Let ``tid~impl~*`` be ``$concat_<tid>(tid~impl_f~**)``
-  ... Let ``nameIR`` be ``$name(name)``
+  ... Let ``nameIR`` be <<name, the name of ``name``>>
   ... Let ``nameIR_f*`` be the list of ``nameIR_f``, obtained by repeating:
-   .... Let ``nameIR~f~`` be ``$name(name~f~)``
+   .... Let ``nameIR~f~`` be <<name, the name of ``name~f~``>>
   ... for each ``name_f`` in ``name_f*``
   ... Let ``typeIR~header~`` be ``HEADER nameIR { typeIR~f~ nameIR~f~ ;* }``
   ... Let ``typeDefIR~header~`` be ``typeIR~header~ < tid~expl~* , tid~impl~* >``
@@ -4382,19 +4364,19 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
  .. Let ``annotationList HEADER_UNION name typeParameterListOpt { typeFieldList }`` be ``declaration``
  .. Group headerUnionTypeDeclaration: ``GLOBAL``, ``TC~0~``, and ``annotationList HEADER_UNION name typeParameterListOpt { typeFieldList }``
 
-  ... Let ``typeParameter*`` be ``$flatten_typeParameterListOpt(typeParameterListOpt)``
+  ... Let ``typeParameter*`` be <<flatten_typeParameterListOpt, the list of type parameters in ``typeParameterListOpt``>>
   ... Let ``tid_expl*`` be the list of ``tid_expl``, obtained by repeating:
-   .... Let ``tid~expl~`` be ``$name(typeParameter)``
+   .... Let ``tid~expl~`` be <<name, the name of ``typeParameter``>>
   ... for each ``typeParameter`` in ``typeParameter*``
   ... Let ``TC~1~`` be ``$add_types(BLOCK, TC~0~, tid~expl~*, TID tid~expl~*)``
-  ... Let ``annotationList~f~ type~f~ name~f~ ;*`` be ``$flatten_typeFieldList(typeFieldList)``
+  ... Let ``annotationList~f~ type~f~ name~f~ ;*`` be <<flatten_typeFieldList, the list of type fields in ``typeFieldList``>>
   ... Let ``tid_impl_f**`` be the list of ``tid_impl_f*`` and ``typeIR_f*`` be the list of ``typeIR_f``, obtained by repeating:
    .... Let ``typeIR~f~`` and ``tid~impl_f~*`` be the result of <<Type_ok, typing ``type~f~``, under cursor ``BLOCK`` and typing context ``TC~1~``>>
   ... for each ``type_f`` in ``type_f*``
   ... Let ``tid~impl~*`` be ``$concat_<tid>(tid~impl_f~**)``
-  ... Let ``nameIR`` be ``$name(name)``
+  ... Let ``nameIR`` be <<name, the name of ``name``>>
   ... Let ``nameIR_f*`` be the list of ``nameIR_f``, obtained by repeating:
-   .... Let ``nameIR~f~`` be ``$name(name~f~)``
+   .... Let ``nameIR~f~`` be <<name, the name of ``name~f~``>>
   ... for each ``name_f`` in ``name_f*``
   ... Let ``typeIR~union~`` be ``HEADER_UNION nameIR { typeIR~f~ nameIR~f~ ;* }``
   ... Let ``typeDefIR~union~`` be ``typeIR~union~ < tid~expl~* , tid~impl~* >``
@@ -4413,7 +4395,7 @@ relation Decl_ok: ``p'``, ``TC~0~``, and ``declaration``
     ..... Let ``typeIR`` and ``tid'*`` be the result of <<Type_ok, typing ``type``, under cursor ``GLOBAL`` and typing context ``TC~0~``>>
     ..... Check that ``tid'*`` matches pattern ``[]``
     ..... If (Type_wf: ``$bound(GLOBAL, TC~0~) |- typeIR``), then
-     ...... Let ``nameIR`` be ``$name(name)``
+     ...... Let ``nameIR`` be <<name, the name of ``name``>>
      ...... Let ``typeIR~typedef~`` be ``TYPEDEF nameIR typeIR``
      ...... If (TypeDef_wf: ``$bound(GLOBAL, TC~0~) |- typeIR~typedef~``), then
       ....... Let ``TC~1~`` be ``$add_type(GLOBAL, TC~0~, nameIR, typeIR~typedef~)``
@@ -4434,7 +4416,7 @@ and the modified typing context>>
     ..... Let ``?(typeDefIR)`` be ``typeDefIR'``?
     ..... If ``typeDefIR`` has type ``typeIR``
      ...... Let ``typeIR`` be ``typeDefIR``
-     ...... Let ``nameIR`` be ``$name(name)``
+     ...... Let ``nameIR`` be <<name, the name of ``name``>>
      ...... Let ``typeIR~typedef~`` be ``TYPEDEF nameIR typeIR``
      ...... If (TypeDef_wf: ``$bound(GLOBAL, TC~0~) |- typeIR~typedef~``), then
       ....... Let ``TC~2~`` be ``$add_type(GLOBAL, TC~0~, nameIR, typeIR~typedef~)``
@@ -4445,7 +4427,7 @@ and the modified typing context>>
      ...... Let ``typeIR < tid''* , tid'''* >`` be ``typeDefIR``
      ...... Check that ``tid''*`` matches pattern ``[]``
      ...... Check that ``tid'''*`` matches pattern ``[]``
-     ...... Let ``nameIR`` be ``$name(name)``
+     ...... Let ``nameIR`` be <<name, the name of ``name``>>
      ...... Let ``typeIR~typedef~`` be ``TYPEDEF nameIR typeIR < [ ] , [ ] > < [ ] >``
      ...... If (TypeDef_wf: ``$bound(GLOBAL, TC~0~) |- typeIR~typedef~``), then
       ....... Let ``TC~2~`` be ``$add_type(GLOBAL, TC~0~, nameIR, typeIR~typedef~)``
@@ -4458,7 +4440,7 @@ and the modified typing context>>
    .... Let ``typeIR`` and ``tid*`` be the result of <<Type_ok, typing ``type``, under cursor ``GLOBAL`` and typing context ``TC~0~``>>
    .... Check that ``tid*`` matches pattern ``[]``
    .... If (Type_wf: ``$bound(GLOBAL, TC~0~) |- typeIR``), then
-    ..... Let ``nameIR`` be ``$name(name)``
+    ..... Let ``nameIR`` be <<name, the name of ``name``>>
     ..... Let ``typeIR~newtype~`` be ``TYPE nameIR typeIR``
     ..... If (TypeDef_wf: ``$bound(GLOBAL, TC~0~) |- typeIR~newtype~``), then
      ...... Let ``TC~1~`` be ``$add_type(GLOBAL, TC~0~, nameIR, typeIR~newtype~)``
@@ -4470,17 +4452,17 @@ and the modified typing context>>
  .. Group parserTypeDeclaration: ``GLOBAL``, ``TC~0~``, and ``annotationList PARSER name typeParameterListOpt ( parameterList ) ;``
 
   ... Let ``TC~1~`` be ``TC~0~``[BLOCK.KIND = ``PARSER``]
-  ... Let ``typeParameter*`` be ``$flatten_typeParameterListOpt(typeParameterListOpt)``
+  ... Let ``typeParameter*`` be <<flatten_typeParameterListOpt, the list of type parameters in ``typeParameterListOpt``>>
   ... Let ``tid_expl*`` be the list of ``tid_expl``, obtained by repeating:
-   .... Let ``tid~expl~`` be ``$name(typeParameter)``
+   .... Let ``tid~expl~`` be <<name, the name of ``typeParameter``>>
   ... for each ``typeParameter`` in ``typeParameter*``
   ... Let ``TC~2~`` be ``$add_types(BLOCK, TC~1~, tid~expl~*, TID tid~expl~*)``
-  ... Let ``parameter*`` be ``$flatten_parameterList(parameterList)``
+  ... Let ``parameter*`` be <<flatten_parameterList, the list of parameters in ``parameterList``>>
   ... Let ``parameterIR*`` and ``tid~impl~*`` be the result of <<Parameters_ok, typing ``parameter*``, under cursor ``BLOCK`` and typing context ``TC~2~``>>
   ... Let ``parameterTypeIR*`` be the list of ``parameterTypeIR``, obtained by repeating:
    .... Let ``parameterTypeIR`` be <<typeof_parameterIR, the type of  ``parameterIR``>>
   ... for each ``parameterIR`` in ``parameterIR*``
-  ... Let ``nameIR`` be ``$name(name)``
+  ... Let ``nameIR`` be <<name, the name of ``name``>>
   ... Let ``typeIR~parser~`` be ``PARSER ( parameterTypeIR* )``
   ... Let ``typeDefIR~parser~`` be ``typeIR~parser~ < tid~expl~* , tid~impl~* >``
   ... If (TypeDef_wf: ``$bound(GLOBAL, TC~0~) |- typeDefIR~parser~``), then
@@ -4493,17 +4475,17 @@ and the modified typing context>>
  .. Group controlTypeDeclaration: ``GLOBAL``, ``TC~0~``, and ``annotationList CONTROL name typeParameterListOpt ( parameterList ) ;``
 
   ... Let ``TC~1~`` be ``TC~0~``[BLOCK.KIND = ``CONTROL``]
-  ... Let ``typeParameter*`` be ``$flatten_typeParameterListOpt(typeParameterListOpt)``
+  ... Let ``typeParameter*`` be <<flatten_typeParameterListOpt, the list of type parameters in ``typeParameterListOpt``>>
   ... Let ``tid_expl*`` be the list of ``tid_expl``, obtained by repeating:
-   .... Let ``tid~expl~`` be ``$name(typeParameter)``
+   .... Let ``tid~expl~`` be <<name, the name of ``typeParameter``>>
   ... for each ``typeParameter`` in ``typeParameter*``
   ... Let ``TC~2~`` be ``$add_types(BLOCK, TC~1~, tid~expl~*, TID tid~expl~*)``
-  ... Let ``parameter*`` be ``$flatten_parameterList(parameterList)``
+  ... Let ``parameter*`` be <<flatten_parameterList, the list of parameters in ``parameterList``>>
   ... Let ``parameterIR*`` and ``tid~impl~*`` be the result of <<Parameters_ok, typing ``parameter*``, under cursor ``BLOCK`` and typing context ``TC~2~``>>
   ... Let ``parameterTypeIR*`` be the list of ``parameterTypeIR``, obtained by repeating:
    .... Let ``parameterTypeIR`` be <<typeof_parameterIR, the type of  ``parameterIR``>>
   ... for each ``parameterIR`` in ``parameterIR*``
-  ... Let ``nameIR`` be ``$name(name)``
+  ... Let ``nameIR`` be <<name, the name of ``name``>>
   ... Let ``typeIR~control~`` be ``CONTROL ( parameterTypeIR* )``
   ... Let ``typeDefIR~control~`` be ``typeIR~control~ < tid~expl~* , tid~impl~* >``
   ... If (TypeDef_wf: ``$bound(GLOBAL, TC~0~) |- typeDefIR~control~``), then
@@ -4516,17 +4498,17 @@ and the modified typing context>>
  .. Group packageTypeDeclaration: ``GLOBAL``, ``TC~0~``, and ``annotationList PACKAGE name typeParameterListOpt ( parameterList ) ;``
 
   ... Let ``TC~1~`` be ``TC~0~``[BLOCK.KIND = ``PACKAGE``]
-  ... Let ``typeParameter*`` be ``$flatten_typeParameterListOpt(typeParameterListOpt)``
+  ... Let ``typeParameter*`` be <<flatten_typeParameterListOpt, the list of type parameters in ``typeParameterListOpt``>>
   ... Let ``tid_expl*`` be the list of ``tid_expl``, obtained by repeating:
-   .... Let ``tid~expl~`` be ``$name(typeParameter)``
+   .... Let ``tid~expl~`` be <<name, the name of ``typeParameter``>>
   ... for each ``typeParameter`` in ``typeParameter*``
   ... Let ``TC~2~`` be ``$add_types(BLOCK, TC~1~, tid~expl~*, TID tid~expl~*)``
-  ... Let ``constructorParameter*`` be ``$flatten_parameterList(parameterList)``
+  ... Let ``constructorParameter*`` be <<flatten_parameterList, the list of parameters in ``parameterList``>>
   ... (ConstructorParameters_ok: ``BLOCK TC~2~ |- constructorParameter* : constructorParameterIR* # tid~impl~*``)
   ... Let ``constructorParameterTypeIR*`` be the list of ``constructorParameterTypeIR``, obtained by repeating:
    .... Let ``constructorParameterTypeIR`` be <<typeof_constructorParameterIR, the type of  ``constructorParameterIR``>>
   ... for each ``constructorParameterIR`` in ``constructorParameterIR*``
-  ... Let ``nameIR`` be ``$name(name)``
+  ... Let ``nameIR`` be <<name, the name of ``name``>>
   ... Let ``_direction*`` be the list of ``_direction``, ``_id*`` be the list of ``_id``, ``_value?*`` be the list of ``_value?``, and ``typeIR_package_inner*`` be the list of ``typeIR_package_inner``, obtained by repeating:
    .... Let ``_ typeIR~package_inner~ _ _?`` be ``constructorParameterTypeIR``
   ... for each ``constructorParameterTypeIR`` in ``constructorParameterTypeIR*``
@@ -4560,7 +4542,7 @@ relation Program_ok: ``p4program``
 
 . Group : ``p4program``
 
- .. Let ``declaration*`` be ``$flatten_p4program(p4program)``
+ .. Let ``declaration*`` be <<flatten_p4program, the list of declarations in ``p4program``>>
  .. Let ``TC~0~`` be ``$empty_typingContext``
  .. (Decls_ok: ``GLOBAL TC~0~ |- declaration* : TC~1~ declarationIR*``)
  .. Result in ``TC~1~`` and ``declarationIR* ;``
@@ -4655,12 +4637,12 @@ relation RoutineTarget_ok: ``p``, ``TC``, and ``routineTarget``
   ... If ``memberAccessBase`` has type ``prefixedTypeName``
    .... Let ``prefixedTypeName`` be ``memberAccessBase``
    .... Let ``prefixedNameIR`` be ``$prefixedTypeName(prefixedTypeName)``
-   .... Let ``nameIR`` be ``$name(member)``
+   .... Let ``nameIR`` be <<name, the name of ``member``>>
    .... Result in ``TYPE prefixedNameIR . nameIR``
 
   ... Else if ``memberAccessBase`` has type ``expression``
    .... Let ``expression~base~`` be ``memberAccessBase``
-   .... Let ``nameIR`` be ``$name(member)``
+   .... Let ``nameIR`` be <<name, the name of ``member``>>
    .... Let ``typedExpressionIR~base~`` be the result of <<Expr_ok, typing ``expression~base~``, under cursor ``p`` and typing context ``TC``>>
    .... Result in ``typedExpressionIR~base~ . nameIR``
 
@@ -4675,7 +4657,7 @@ relation RoutineTarget_lvalue_ok: ``p``, ``TC``, and ``lvalue``
 
 . Group : ``p``, ``TC``, and ``lvalue``
 
- .. Let ``expression`` be ``$lvalue(lvalue)``
+ .. Let ``expression`` be <<lvalue_as_expression, the expression corresponding to ``lvalue``>>
  .. Let ``routineTargetIR`` be the result of <<RoutineTarget_ok, typing ``expression``, under cursor ``p`` and typing context ``TC``>>
  .. Result in ``routineTargetIR``
 
@@ -4825,31 +4807,19 @@ relation RoutineType_ok: ``p``, ``TC``, ``routineTargetIR''``, ``typeArgumentIR'
   ... (RoutineType_ok: ``p TC |- routineTargetIR < typeArgumentIR''* > ( argumentIR''* ) : routineTypeIR < # tid~inserted~* > ( # id~default~* )``)
   ... Result in ``routineTypeIR``, ``tid~inserted~*``, and ``id~default~*``
 
-relation Call_ok: ``p``, ``TC``, ``routineTypeIR``, ``typeArgumentIR``*, ``tid'``*, ``argumentIR``*, and ``id~default'~``*
+relation Call_ok: ``p``, ``TC``, ``routineTypeIR``, ``typeArgumentIR``*, ``tid~infer'~``*, ``argumentIR``*, and ``id~default'~``*
 
-. If ``routineTypeIR`` has type ``builtinFunctionTypeIR``
- .. Let ``BUILTIN_FUNCTION ( parameterTypeIR* ) -> typeIR~ret~`` be ``routineTypeIR``
- .. Check that ``tid'*`` matches pattern ``[]``
- .. Group builtin-function: ``p``, ``TC``, ``BUILTIN_FUNCTION ( parameterTypeIR* ) -> typeIR~ret~``, ``typeArgumentIR``*, ``[ ]``, ``argumentIR``*, and ``id~default'~``*
-
-  ... Let ``parameterTypeIR~non_default~*`` be ``$filter_default_parameters(parameterTypeIR*, id~default'~*)``
-  ... Check that the length of ``parameterTypeIR~non_default~``* is equal to the length of ``argumentIR``*
-  ... Let ``parameterTypeIR~aligned~*`` be ``$align_parameters(parameterTypeIR~non_default~*, argumentIR*)``
-  ... Check that ``$callable_builtin_function(p, TC)``
-  ... (Call_convention_ok: ``p TC NOACTION |- parameterTypeIR~aligned~* @ argumentIR* : argumentIR~cast~*``)
-  ... Result in ``typeIR~ret~``, ``typeArgumentIR*``, and ``argumentIR~cast~*``
-
-. Else if ``routineTypeIR`` has type ``definedFunctionTypeIR``
+. If ``routineTypeIR`` has type ``definedFunctionTypeIR``
  .. Let ``FUNCTION ( parameterTypeIR* ) -> typeIR~ret~`` be ``routineTypeIR``
- .. Group function: ``p``, ``TC``, ``FUNCTION ( parameterTypeIR* ) -> typeIR~ret~``, ``typeArgumentIR``*, ``tid'``*, ``argumentIR``*, and ``id~default'~``*
+ .. Group function: ``p``, ``TC``, ``FUNCTION ( parameterTypeIR* ) -> typeIR~ret~``, ``typeArgumentIR``*, ``tid~infer'~``*, ``argumentIR``*, and ``id~default'~``*
 
   ... Let ``parameterTypeIR~non_default~*`` be ``$filter_default_parameters(parameterTypeIR*, id~default'~*)``
   ... Check that the length of ``parameterTypeIR~non_default~``* is equal to the length of ``argumentIR``*
   ... Let ``parameterTypeIR~aligned~*`` be ``$align_parameters(parameterTypeIR~non_default~*, argumentIR*)``
-  ... Let ``inference`` be ``$infer(tid'*, parameterTypeIR~aligned~*, argumentIR*)``
+  ... Let ``inference`` be ``$infer(tid~infer'~*, parameterTypeIR~aligned~*, argumentIR*)``
   ... Let ``typeIR?*`` be the list of ``typeIR?``, obtained by repeating:
-   .... Let ``typeIR?`` be ``$find_map<tid, typeIR>(inference, tid')``
-  ... for each ``tid'`` in ``tid'*``
+   .... Let ``typeIR?`` be ``$find_map<tid, typeIR>(inference, tid~infer'~)``
+  ... for each ``tid_infer'`` in ``tid_infer'*``
   ... Check that ``typeIR?`` matches pattern ``(_)``, for each ``typeIR?`` in ``typeIR?*``
   ... Let ``typeIR_inferred*`` be the list of ``typeIR_inferred``, obtained by repeating:
    .... Let ``?(typeIR~inferred~)`` be ``typeIR``?
@@ -4867,15 +4837,15 @@ relation Call_ok: ``p``, ``TC``, ``routineTypeIR``, ``typeArgumentIR``*, ``tid'`
 
 . Else if ``routineTypeIR`` has type ``externFunctionTypeIR``
  .. Let ``EXTERN_FUNCTION ( parameterTypeIR* ) -> typeIR~ret~`` be ``routineTypeIR``
- .. Group externfunction: ``p``, ``TC``, ``EXTERN_FUNCTION ( parameterTypeIR* ) -> typeIR~ret~``, ``typeArgumentIR``*, ``tid'``*, ``argumentIR``*, and ``id~default'~``*
+ .. Group externfunction: ``p``, ``TC``, ``EXTERN_FUNCTION ( parameterTypeIR* ) -> typeIR~ret~``, ``typeArgumentIR``*, ``tid~infer'~``*, ``argumentIR``*, and ``id~default'~``*
 
   ... Let ``parameterTypeIR~non_default~*`` be ``$filter_default_parameters(parameterTypeIR*, id~default'~*)``
   ... Check that the length of ``parameterTypeIR~non_default~``* is equal to the length of ``argumentIR``*
   ... Let ``parameterTypeIR~aligned~*`` be ``$align_parameters(parameterTypeIR~non_default~*, argumentIR*)``
-  ... Let ``inference`` be ``$infer(tid'*, parameterTypeIR~aligned~*, argumentIR*)``
+  ... Let ``inference`` be ``$infer(tid~infer'~*, parameterTypeIR~aligned~*, argumentIR*)``
   ... Let ``typeIR?*`` be the list of ``typeIR?``, obtained by repeating:
-   .... Let ``typeIR?`` be ``$find_map<tid, typeIR>(inference, tid')``
-  ... for each ``tid'`` in ``tid'*``
+   .... Let ``typeIR?`` be ``$find_map<tid, typeIR>(inference, tid~infer'~)``
+  ... for each ``tid_infer'`` in ``tid_infer'*``
   ... Check that ``typeIR?`` matches pattern ``(_)``, for each ``typeIR?`` in ``typeIR?*``
   ... Let ``typeIR_inferred*`` be the list of ``typeIR_inferred``, obtained by repeating:
    .... Let ``?(typeIR~inferred~)`` be ``typeIR``?
@@ -4894,7 +4864,7 @@ relation Call_ok: ``p``, ``TC``, ``routineTypeIR``, ``typeArgumentIR``*, ``tid'`
 . Else if ``routineTypeIR`` has type ``actionTypeIR``
  .. Let ``ACTION ( parameterTypeIR* )`` be ``routineTypeIR``
  .. Check that ``typeArgumentIR*`` matches pattern ``[]``
- .. Check that ``tid'*`` matches pattern ``[]``
+ .. Check that ``tid~infer'~*`` matches pattern ``[]``
  .. Group action: ``p``, ``TC``, ``ACTION ( parameterTypeIR* )``, ``[ ]``, ``[ ]``, ``argumentIR``*, and ``id~default'~``*
 
   ... Let ``parameterTypeIR~non_default~*`` be ``$filter_default_parameters(parameterTypeIR*, id~default'~*)``
@@ -4906,7 +4876,7 @@ relation Call_ok: ``p``, ``TC``, ``routineTypeIR``, ``typeArgumentIR``*, ``tid'`
 
 . Else if ``routineTypeIR`` has type ``builtinMethodTypeIR``
  .. Let ``BUILTIN_METHOD ( parameterTypeIR* ) -> typeIR~ret~`` be ``routineTypeIR``
- .. Check that ``tid'*`` matches pattern ``[]``
+ .. Check that ``tid~infer'~*`` matches pattern ``[]``
  .. Group builtin-method: ``p``, ``TC``, ``BUILTIN_METHOD ( parameterTypeIR* ) -> typeIR~ret~``, ``typeArgumentIR``*, ``[ ]``, ``argumentIR``*, and ``id~default'~``*
 
   ... Let ``parameterTypeIR~non_default~*`` be ``$filter_default_parameters(parameterTypeIR*, id~default'~*)``
@@ -4919,15 +4889,15 @@ relation Call_ok: ``p``, ``TC``, ``routineTypeIR``, ``typeArgumentIR``*, ``tid'`
 . Else if ``routineTypeIR`` has type ``externMethodTypeIR``
  .. Let ``externMethodTypeIR`` be ``routineTypeIR``
  .. If let ``EXTERN_METHOD ( parameterTypeIR* ) -> typeIR~ret~`` be ``externMethodTypeIR``
-  ... Group extern-method: ``p``, ``TC``, ``EXTERN_METHOD ( parameterTypeIR* ) -> typeIR~ret~``, ``typeArgumentIR``*, ``tid'``*, ``argumentIR``*, and ``id~default'~``*
+  ... Group extern-method: ``p``, ``TC``, ``EXTERN_METHOD ( parameterTypeIR* ) -> typeIR~ret~``, ``typeArgumentIR``*, ``tid~infer'~``*, ``argumentIR``*, and ``id~default'~``*
 
    .... Let ``parameterTypeIR~non_default~*`` be ``$filter_default_parameters(parameterTypeIR*, id~default'~*)``
    .... Check that the length of ``parameterTypeIR~non_default~``* is equal to the length of ``argumentIR``*
    .... Let ``parameterTypeIR~aligned~*`` be ``$align_parameters(parameterTypeIR~non_default~*, argumentIR*)``
-   .... Let ``inference`` be ``$infer(tid'*, parameterTypeIR~aligned~*, argumentIR*)``
+   .... Let ``inference`` be ``$infer(tid~infer'~*, parameterTypeIR~aligned~*, argumentIR*)``
    .... Let ``typeIR?*`` be the list of ``typeIR?``, obtained by repeating:
-    ..... Let ``typeIR?`` be ``$find_map<tid, typeIR>(inference, tid')``
-   .... for each ``tid'`` in ``tid'*``
+    ..... Let ``typeIR?`` be ``$find_map<tid, typeIR>(inference, tid~infer'~)``
+   .... for each ``tid_infer'`` in ``tid_infer'*``
    .... Check that ``typeIR?`` matches pattern ``(_)``, for each ``typeIR?`` in ``typeIR?*``
    .... Let ``typeIR_inferred*`` be the list of ``typeIR_inferred``, obtained by repeating:
     ..... Let ``?(typeIR~inferred~)`` be ``typeIR``?
@@ -4944,15 +4914,15 @@ relation Call_ok: ``p``, ``TC``, ``routineTypeIR``, ``typeArgumentIR``*, ``tid'`
     ..... Result in ``typeIR~ret_inferred~``, ``typeArgumentIR~inferred~*``, and ``argumentIR~cast~*``
 
  .. Else if let ``EXTERN_METHOD ABSTRACT ( parameterTypeIR* ) -> typeIR~ret~`` be ``externMethodTypeIR``
-  ... Group extern-abstract-method: ``p``, ``TC``, ``EXTERN_METHOD ABSTRACT ( parameterTypeIR* ) -> typeIR~ret~``, ``typeArgumentIR``*, ``tid'``*, ``argumentIR``*, and ``id~default'~``*
+  ... Group extern-abstract-method: ``p``, ``TC``, ``EXTERN_METHOD ABSTRACT ( parameterTypeIR* ) -> typeIR~ret~``, ``typeArgumentIR``*, ``tid~infer'~``*, ``argumentIR``*, and ``id~default'~``*
 
    .... Let ``parameterTypeIR~non_default~*`` be ``$filter_default_parameters(parameterTypeIR*, id~default'~*)``
    .... Check that the length of ``parameterTypeIR~non_default~``* is equal to the length of ``argumentIR``*
    .... Let ``parameterTypeIR~aligned~*`` be ``$align_parameters(parameterTypeIR~non_default~*, argumentIR*)``
-   .... Let ``inference`` be ``$infer(tid'*, parameterTypeIR~aligned~*, argumentIR*)``
+   .... Let ``inference`` be ``$infer(tid~infer'~*, parameterTypeIR~aligned~*, argumentIR*)``
    .... Let ``typeIR?*`` be the list of ``typeIR?``, obtained by repeating:
-    ..... Let ``typeIR?`` be ``$find_map<tid, typeIR>(inference, tid')``
-   .... for each ``tid'`` in ``tid'*``
+    ..... Let ``typeIR?`` be ``$find_map<tid, typeIR>(inference, tid~infer'~)``
+   .... for each ``tid_infer'`` in ``tid_infer'*``
    .... Check that ``typeIR?`` matches pattern ``(_)``, for each ``typeIR?`` in ``typeIR?*``
    .... Let ``typeIR_inferred*`` be the list of ``typeIR_inferred``, obtained by repeating:
     ..... Let ``?(typeIR~inferred~)`` be ``typeIR``?
@@ -4971,7 +4941,7 @@ relation Call_ok: ``p``, ``TC``, ``routineTypeIR``, ``typeArgumentIR``*, ``tid'`
 . Else if ``routineTypeIR`` has type ``parserApplyMethodTypeIR``
  .. Let ``PARSER_APPLY ( parameterTypeIR* )`` be ``routineTypeIR``
  .. Check that ``typeArgumentIR*`` matches pattern ``[]``
- .. Check that ``tid'*`` matches pattern ``[]``
+ .. Check that ``tid~infer'~*`` matches pattern ``[]``
  .. Group parser-apply-method: ``p``, ``TC``, ``PARSER_APPLY ( parameterTypeIR* )``, ``[ ]``, ``[ ]``, ``argumentIR``*, and ``id~default'~``*
 
   ... Let ``parameterTypeIR~non_default~*`` be ``$filter_default_parameters(parameterTypeIR*, id~default'~*)``
@@ -4984,7 +4954,7 @@ relation Call_ok: ``p``, ``TC``, ``routineTypeIR``, ``typeArgumentIR``*, ``tid'`
 . Else if ``routineTypeIR`` has type ``controlApplyMethodTypeIR``
  .. Let ``CONTROL_APPLY ( parameterTypeIR* )`` be ``routineTypeIR``
  .. Check that ``typeArgumentIR*`` matches pattern ``[]``
- .. Check that ``tid'*`` matches pattern ``[]``
+ .. Check that ``tid~infer'~*`` matches pattern ``[]``
  .. Group control-apply-method: ``p``, ``TC``, ``CONTROL_APPLY ( parameterTypeIR* )``, ``[ ]``, ``[ ]``, ``argumentIR``*, and ``id~default'~``*
 
   ... Let ``parameterTypeIR~non_default~*`` be ``$filter_default_parameters(parameterTypeIR*, id~default'~*)``
@@ -4997,7 +4967,7 @@ relation Call_ok: ``p``, ``TC``, ``routineTypeIR``, ``typeArgumentIR``*, ``tid'`
 . Else if ``routineTypeIR`` has type ``tableApplyMethodTypeIR``
  .. Let ``TABLE_APPLY -> typeIR~table~`` be ``routineTypeIR``
  .. Check that ``typeArgumentIR*`` matches pattern ``[]``
- .. Check that ``tid'*`` matches pattern ``[]``
+ .. Check that ``tid~infer'~*`` matches pattern ``[]``
  .. Check that ``argumentIR*`` matches pattern ``[]``
  .. Check that ``id~default'~*`` matches pattern ``[]``
  .. Group table-apply-method: ``p``, ``TC``, ``TABLE_APPLY -> typeIR~table~``, ``[ ]``, ``[ ]``, ``[ ]``, and ``[ ]``
@@ -5133,7 +5103,7 @@ relation SwitchLabel_general_ok: ``TC``, ``typeIR``, ``bool``, and ``switchLabel
   ... Result in ``DEFAULT``
  .. If ``switchLabel`` has type ``expressionNonBrace``
   ... Let ``expressionNonBrace~label~`` be ``switchLabel``
-  ... Let ``expression~label~`` be ``$expressionNonBrace(expressionNonBrace~label~)``
+  ... Let ``expression~label~`` be <<expressionNonBrace_as_expression, the expression corresponding to ``expressionNonBrace~label~``>>
   ... Let ``typedExpressionIR~label~`` be the result of <<Expr_ok, typing ``expression~label~``, under cursor ``LOCAL`` and typing context ``TC``>>
   ... Let ``typedExpressionIR?`` be <<coerce_unary, implicitly cast  ``typedExpressionIR~label~``  to  ``typeIR``>>
   ... Check that ``typedExpressionIR?`` matches pattern ``(_)``
@@ -5178,14 +5148,14 @@ relation Decl_object_ok: ``p``, ``TC~0~``, ``frame``, ``rdenv``, and ``objectDec
 
   ... Let ``TC~1~`` be ``TC~0~``[BLOCK.KIND = ``EXTERN``]
   ... Let ``TC~2~`` be ``TC~1~``[BLOCK.FRAME = ``frame``]
-  ... Let ``typeParameter*`` be ``$flatten_typeParameterListOpt(typeParameterListOpt)``
+  ... Let ``typeParameter*`` be <<flatten_typeParameterListOpt, the list of type parameters in ``typeParameterListOpt``>>
   ... Let ``tid_expl*`` be the list of ``tid_expl``, obtained by repeating:
-   .... Let ``tid~expl~`` be ``$name(typeParameter)``
+   .... Let ``tid~expl~`` be <<name, the name of ``typeParameter``>>
   ... for each ``typeParameter`` in ``typeParameter*``
   ... Let ``TC~3~`` be ``$add_types(LOCAL, TC~2~, tid~expl~*, TID tid~expl~*)``
   ... Let ``typeIR~ret~`` and ``tid*`` be the result of <<Type_ok, typing ``typeOrVoid``, under cursor ``LOCAL`` and typing context ``TC~3~``>>
   ... Check that ``tid*`` matches pattern ``[]``
-  ... Let ``parameter*`` be ``$flatten_parameterList(parameterList)``
+  ... Let ``parameter*`` be <<flatten_parameterList, the list of parameters in ``parameterList``>>
   ... Let ``parameterIR*`` and ``tid~impl~*`` be the result of <<Parameters_ok, typing ``parameter*``, under cursor ``LOCAL`` and typing context ``TC~3~``>>
   ... Let ``parameterTypeIR*`` be the list of ``parameterTypeIR``, obtained by repeating:
    .... Let ``parameterTypeIR`` be <<typeof_parameterIR, the type of  ``parameterIR``>>
@@ -5199,7 +5169,7 @@ relation Decl_object_ok: ``p``, ``TC~0~``, ``frame``, ``rdenv``, and ``objectDec
    .... Let ``routineTypeDefIR`` be ``methodTypeIR < tid~expl~* , tid~impl~* >``
    .... If (RoutineTypeDef_wf: ``$bound(p, TC~0~) |- routineTypeDefIR``), then
     ..... Let ``rdenv~init~`` be ``$update_map<rid, routineTypeDefIR>(rdenv, rid, routineTypeDefIR)``
-    ..... Let ``nameIR`` be ``$name(name)``
+    ..... Let ``nameIR`` be <<name, the name of ``name``>>
     ..... Let ``functionDeclarationIR`` be ``annotationList typeIR~ret~ nameIR < tid~expl~* , tid~impl~* > ( parameterIR* ) blockStatementIR``
     ..... Result in ``frame``, ``rdenv~init~``, and ``functionDeclarationIR``
   ... If ``typeIR~ret~`` is equal to ``VOID``
@@ -5208,7 +5178,7 @@ relation Decl_object_ok: ``p``, ``TC~0~``, ``frame``, ``rdenv``, and ``objectDec
    .... Let ``routineTypeDefIR`` be ``methodTypeIR < tid~expl~* , tid~impl~* >``
    .... If (RoutineTypeDef_wf: ``$bound(p, TC~0~) |- routineTypeDefIR``), then
     ..... Let ``rdenv~init~`` be ``$update_map<rid, routineTypeDefIR>(rdenv, rid, routineTypeDefIR)``
-    ..... Let ``nameIR`` be ``$name(name)``
+    ..... Let ``nameIR`` be <<name, the name of ``name``>>
     ..... Let ``functionDeclarationIR`` be ``annotationList typeIR~ret~ nameIR < tid~expl~* , tid~impl~* > ( parameterIR* ) blockStatementIR``
     ..... Result in ``frame``, ``rdenv~init~``, and ``functionDeclarationIR``
 
@@ -5249,7 +5219,7 @@ relation Enum_serializable_field_ok: ``TC~0~``, ``nameIR~enum~``, ``typeIR``, an
  .. Let ``?(typedExpressionIR~cast~)`` be ``typedExpressionIR'``?
  .. Check that ``<<ctkof_expression, the compile-time known-ness of  typedExpressionIR~cast~>>`` matches pattern ``LCTK``
  .. Let ``value`` be the result of <<Eval_static, the local compile-time evaluation of ``typedExpressionIR~cast~``, under cursor ``BLOCK`` and typing context ``TC~0~``>>
- .. Let ``nameIR`` be ``$name(name)``
+ .. Let ``nameIR`` be <<name, the name of ``name``>>
  .. Let ``typeIR~enum~`` be ``ENUM nameIR~enum~ # typeIR { [ ] }``
  .. Let ``value~enum~`` be ``nameIR~enum~ . nameIR # value``
  .. Let ``TC~1~`` be ``$add_var(BLOCK, TC~0~, nameIR, typeIR~enum~ LCTK ?(value~enum~))``
@@ -5408,7 +5378,7 @@ relation SelectCase_keyset_ok: ``TC``, ``typeIR'''``*, and ``keysetExpression``
  .. Else if let ``( simpleKeysetExpression~h~ , simpleKeysetExpressionList~t~ )`` be ``tupleKeysetExpression``
   ... Group tupleKeysetExpression-list: ``TC``, ``typeIR'''``*, and ``( simpleKeysetExpression~h~ , simpleKeysetExpressionList~t~ )``
 
-   .... Let ``simpleKeysetExpression~t~*`` be ``$flatten_simpleKeysetExpressionList(simpleKeysetExpressionList~t~)``
+   .... Let ``simpleKeysetExpression~t~*`` be <<flatten_simpleKeysetExpressionList, the list of simple keyset expressions in ``simpleKeysetExpressionList~t~``>>
    .... Let ``simpleKeysetExpression*`` be ``simpleKeysetExpression~h~ :: simpleKeysetExpression~t~*``
    .... Check that the length of ``typeIR'''``* is equal to the length of ``simpleKeysetExpression``*
    .... (SelectCase_keyset_simple_ok: ``TC typeIR''' |- simpleKeysetExpression : simpleKeysetExpressionIR``), for each ``simpleKeysetExpression`` in ``simpleKeysetExpression*``, ``simpleKeysetExpressionIR`` in ``simpleKeysetExpressionIR*``, and ``typeIR'''`` in ``typeIR'''*``
@@ -5419,7 +5389,7 @@ relation SelectCase_ok: ``TC``, ``nameIR~state~``*, ``typeIR~key~``*, and ``keys
 . Group : ``TC``, ``nameIR~state~``*, ``typeIR~key~``*, and ``keysetExpression : name ;``
 
  .. (SelectCase_keyset_ok: ``TC typeIR~key~* |- keysetExpression : keysetExpressionIR``)
- .. Let ``nameIR`` be ``$name(name)``
+ .. Let ``nameIR`` be <<name, the name of ``name``>>
  .. Check that ``nameIR`` is in ``nameIR~state~``*
  .. Result in ``keysetExpressionIR : nameIR ;``
 
@@ -5931,7 +5901,7 @@ relation Stmt_inst: ``p'``, ``IC'``, ``STO'``, and ``statementIR``
   ... Check that ``(cid, constructor, id*)?`` matches pattern ``(_)``
   ... Let ``?((_, constructor, and _*))`` be ``(cid, constructor, id*)``?
   ... (Constructor_inst: ``p' IC' STO' |- constructor < [ ] > ( [ ] # [ ] ) ==> STO~1~ object``)
-  ... Let ``tid~fresh~`` be ``$fresh_tid``
+  ... Let ``tid~fresh~`` be <<fresh_tid, a fresh type variable>>
   ... Let ``tid`` be ``$flatten_prefixedNameIR(prefixedNameIR)``
   ... Let ``typeIR`` be ``TID tid``
   ... Let ``nameIR`` be ``$concat_text([tid, "_", and tid~fresh~])``
@@ -6182,7 +6152,7 @@ relation ParserStmt_inst: ``IC~0'~``, ``STO~0~``, and ``parserStatementIR``
   ... Let ``?((_, constructor, and _*))`` be ``(cid, constructor, id*)``?
   ... (Constructor_inst: ``LOCAL IC~0'~ STO~0~ |- constructor < [ ] > ( [ ] # [ ] ) ==> STO~1~ object``)
   ... Let ``tid`` be ``$flatten_prefixedNameIR(prefixedNameIR)``
-  ... Let ``tid~fresh~`` be ``$fresh_tid``
+  ... Let ``tid~fresh~`` be <<fresh_tid, a fresh type variable>>
   ... Let ``nameIR`` be ``tid ++ "_" ++ tid~fresh~``
   ... Let ``oid`` be ``IC~0'~.PATH ++ [nameIR]``
   ... Let ``STO~2~`` be ``$add_map<oid, object>(STO~1~, oid, object)``

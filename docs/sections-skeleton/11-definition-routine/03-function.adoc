@@ -2,26 +2,92 @@
 [#sec-def-function]
 === Functions
 
+The internal representation of functions and function types is as follows:
+
 ${syntax: functionTypeIR
           function}
 
-[#sec-def-builtinFunctionTypeIR]
-[#sec-def-builtinFunction]
-==== Built-in functions
-
-${syntax: builtinFunctionTypeIR
-          builtinFunction}
-
+[#sec-def-functionPrototype]
+[#sec-def-functionDeclaration]
 [#sec-def-definedFunctionTypeIR]
 [#sec-def-definedFunction]
 ==== User-defined functions
 
-${syntax: definedFunctionTypeIR
-          definedFunction}
+Functions can only be declared at the top level and all parameters must have a direction.
+P4 functions are modeled after functions as found in most other programming languages,
+but the language does not permit recursive functions.
 
+${syntax: functionPrototype
+          functionDeclaration}
+
+Here is an example of a function that returns the maximum of two 32-bit values:
+
+[source,p4]
+----
+bit<32> max(in bit<32> left, in bit<32> right) {
+   return (left > right) ? left : right;
+}
+----
+
+A function returns a value using the `return` statement.  A function with a
+return type of `void` can simply use the `return` statement with no arguments.
+A function with a non-void return type must return a value of the suitable type
+on all possible execution paths.
+
+Internally, defined function types are represented as follows:
+
+${syntax: definedFunctionTypeIR}
+
+Also, the runtime representation of a defined function is as follows:
+
+${syntax: definedFunction}
+
+===== Type checking
+
+User-defined functions are introduced by `function` declarations. Its typing
+rule is explained in <<sec-sem-Decl_ok-functionDeclaration>>.
+
+===== Type nesting
+
+${funcprose: nestable_function}
+${funcprose: nestable'_function}
+
+[#sec-sem-RoutineType_wf-definedFunctionTypeIR]
+===== Well-formedness
+
+${rulegroup: RoutineType_wf/definedFunctionTypeIR}
+${ruleprose: RoutineType_wf/definedFunctionTypeIR}
+
+[#sec-def-externDeclaration]
 [#sec-def-externFunctionTypeIR]
 [#sec-def-externFunction]
 ==== Extern functions
 
-${syntax: externFunctionTypeIR
-          externFunction}
+An extern function declaration describes the name and type signature of the
+function, but not its implementation.
+
+${syntax: externDeclaration}
+
+Internally, extern function types are represented as follows:
+
+${syntax: externFunctionTypeIR}
+
+Also, the runtime representation of an extern function is as follows:
+
+${syntax: externFunction}
+
+===== Type checking
+
+Extern functions are introduced by `extern` declarations. Its typing rule is
+explained in <<sec-sem-Decl_ok-externFunctionDeclaration>>.
+
+===== Type nesting
+
+${funcprose: nestable_externfunction}
+${funcprose: nestable'_externfunction}
+
+[#sec-sem-RoutineType_wf-externFunctionTypeIR]
+===== Well-formedness
+
+${rulegroup: RoutineType_wf/externFunctionTypeIR}
+${ruleprose: RoutineType_wf/externFunctionTypeIR}

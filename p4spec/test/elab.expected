@@ -155,19 +155,19 @@ syntax numberLiteral =
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
 
-;; ../../../../spec-concrete/1-syntax.watsup:30.24-30.57
+;; ../../../../spec-concrete/1-syntax.watsup:30.24-31.43
 syntax stringLiteral = 
    | " text " hint(print "#%#")
 
-;; ../../../../spec-concrete/1-syntax.watsup:43.21-43.29
+;; ../../../../spec-concrete/1-syntax.watsup:44.21-44.29
 syntax identifier = 
    | text
 
-;; ../../../../spec-concrete/1-syntax.watsup:44.25-44.34
+;; ../../../../spec-concrete/1-syntax.watsup:45.25-45.34
 syntax typeIdentifier = 
    | text
 
-;; ../../../../spec-concrete/1-syntax.watsup:51.1-53.30
+;; ../../../../spec-concrete/1-syntax.watsup:52.1-54.30
 syntax nonTypeName = 
    | text
    | apply
@@ -178,7 +178,7 @@ syntax nonTypeName =
    | type
    | priority
 
-;; ../../../../spec-concrete/1-syntax.watsup:56.1-57.23
+;; ../../../../spec-concrete/1-syntax.watsup:57.1-58.23
 syntax prefixedNonTypeName = 
    | text
    | apply
@@ -190,15 +190,15 @@ syntax prefixedNonTypeName =
    | priority
    | . nonTypeName
 
-;; ../../../../spec-concrete/1-syntax.watsup:63.19-63.33
+;; ../../../../spec-concrete/1-syntax.watsup:64.19-64.33
 syntax typeName = typeIdentifier
 
-;; ../../../../spec-concrete/1-syntax.watsup:66.1-67.21
+;; ../../../../spec-concrete/1-syntax.watsup:67.1-68.21
 syntax prefixedTypeName = 
    | text
    | . typeName
 
-;; ../../../../spec-concrete/1-syntax.watsup:74.1-76.36
+;; ../../../../spec-concrete/1-syntax.watsup:75.1-77.36
 syntax tableCustomName = 
    | text
    | text
@@ -207,7 +207,7 @@ syntax tableCustomName =
    | type
    | priority
 
-;; ../../../../spec-concrete/1-syntax.watsup:83.1-85.9
+;; ../../../../spec-concrete/1-syntax.watsup:84.1-86.9
 syntax name = 
    | text
    | apply
@@ -220,7 +220,7 @@ syntax name =
    | text
    | list
 
-;; ../../../../spec-concrete/1-syntax.watsup:88.1-89.21
+;; ../../../../spec-concrete/1-syntax.watsup:89.1-90.21
 syntax nameList = 
    | text
    | apply
@@ -234,30 +234,30 @@ syntax nameList =
    | list
    | nameList , name
 
-;; ../../../../spec-concrete/1-syntax.watsup:91.1-91.40
+;; ../../../../spec-concrete/1-syntax.watsup:92.1-93.43
 def $flatten_nameList(nameList) : name* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:92.1-92.35
+  ;; ../../../../spec-concrete/1-syntax.watsup:94.1-94.35
   clause 0 : (nameList) = [name]
   -- if nameList <: name
   -- let name = nameList as name
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:93.1-94.42
+  ;; ../../../../spec-concrete/1-syntax.watsup:95.1-96.42
   clause 1 : (nameList') = $flatten_nameList(nameList) ++ [name]
   -- if nameList' matches `%,%`
   -- let nameList , name = nameList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:96.17-96.21
+;; ../../../../spec-concrete/1-syntax.watsup:98.17-98.21
 syntax member = name
 
-;; ../../../../spec-concrete/1-syntax.watsup:102.20-102.45
+;; ../../../../spec-concrete/1-syntax.watsup:104.20-104.45
 syntax direction = 
    | 
    | in
    | out
    | inout
 
-;; ../../../../spec-concrete/1-syntax.watsup:115.1-126.32
+;; ../../../../spec-concrete/1-syntax.watsup:117.1-128.32
 syntax baseType = 
    | bool
    | error
@@ -272,29 +272,29 @@ syntax baseType =
    | varbit< int >
    | varbit<( expression )>
 
-;; ../../../../spec-concrete/1-syntax.watsup:134.26-134.64
+;; ../../../../spec-concrete/1-syntax.watsup:136.26-136.64
 syntax specializedType = 
    | prefixedTypeName < typeArgumentList >
 
-;; ../../../../spec-concrete/1-syntax.watsup:137.1-138.20
+;; ../../../../spec-concrete/1-syntax.watsup:139.1-140.20
 syntax namedType = 
    | text
    | . typeName
    | prefixedTypeName < typeArgumentList >
 
-;; ../../../../spec-concrete/1-syntax.watsup:144.26-144.51
+;; ../../../../spec-concrete/1-syntax.watsup:146.26-146.51
 syntax headerStackType = 
    | namedType [ expression ]
 
-;; ../../../../spec-concrete/1-syntax.watsup:152.19-152.41
+;; ../../../../spec-concrete/1-syntax.watsup:154.19-154.41
 syntax listType = 
    | list< typeArgument >
 
-;; ../../../../spec-concrete/1-syntax.watsup:158.20-158.47
+;; ../../../../spec-concrete/1-syntax.watsup:160.20-160.47
 syntax tupleType = 
    | tuple< typeArgumentList >
 
-;; ../../../../spec-concrete/1-syntax.watsup:165.1-169.14
+;; ../../../../spec-concrete/1-syntax.watsup:167.1-171.14
 syntax type = 
    | bool
    | error
@@ -315,7 +315,7 @@ syntax type =
    | list< typeArgument >
    | tuple< typeArgumentList >
 
-;; ../../../../spec-concrete/1-syntax.watsup:172.1-174.15
+;; ../../../../spec-concrete/1-syntax.watsup:174.1-176.15
 syntax typeOrVoid = 
    | bool
    | error
@@ -338,10 +338,10 @@ syntax typeOrVoid =
    | void
    | text
 
-;; ../../../../spec-concrete/1-syntax.watsup:180.24-180.28
+;; ../../../../spec-concrete/1-syntax.watsup:182.24-182.28
 syntax typeParameter = name
 
-;; ../../../../spec-concrete/1-syntax.watsup:183.1-184.39
+;; ../../../../spec-concrete/1-syntax.watsup:185.1-186.39
 syntax typeParameterList = 
    | text
    | apply
@@ -355,116 +355,116 @@ syntax typeParameterList =
    | list
    | typeParameterList , typeParameter
 
-;; ../../../../spec-concrete/1-syntax.watsup:186.1-186.67
+;; ../../../../spec-concrete/1-syntax.watsup:188.1-189.53
 def $flatten_typeParameterList(typeParameterList) : typeParameter* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:187.1-187.62
+  ;; ../../../../spec-concrete/1-syntax.watsup:190.1-190.62
   clause 0 : (typeParameterList) = [typeParameter]
   -- if typeParameterList <: typeParameter
   -- let typeParameter = typeParameterList as typeParameter
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:188.1-189.69
+  ;; ../../../../spec-concrete/1-syntax.watsup:191.1-192.69
   clause 1 : (typeParameterList') = $flatten_typeParameterList(typeParameterList) ++ [typeParameter]
   -- if typeParameterList' matches `%,%`
   -- let typeParameterList , typeParameter = typeParameterList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:192.1-193.27
+;; ../../../../spec-concrete/1-syntax.watsup:195.1-196.27
 syntax typeParameterListOpt = 
    | 
    | < typeParameterList >
 
-;; ../../../../spec-concrete/1-syntax.watsup:195.1-195.73
+;; ../../../../spec-concrete/1-syntax.watsup:198.1-199.53
 def $flatten_typeParameterListOpt(typeParameterListOpt) : typeParameter* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:196.1-196.48
+  ;; ../../../../spec-concrete/1-syntax.watsup:200.1-200.48
   clause 0 : (typeParameterListOpt) = []
   -- if typeParameterListOpt matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:197.1-198.50
+  ;; ../../../../spec-concrete/1-syntax.watsup:201.1-202.50
   clause 1 : (typeParameterListOpt) = $flatten_typeParameterList(typeParameterList)
   -- if typeParameterListOpt matches `<%>`
   -- let < typeParameterList > = typeParameterListOpt
 
-;; ../../../../spec-concrete/1-syntax.watsup:207.3-207.52
+;; ../../../../spec-concrete/1-syntax.watsup:211.3-211.52
 syntax parameter = 
    | annotationList direction type name initializerOpt
 
-;; ../../../../spec-concrete/1-syntax.watsup:210.1-211.39
+;; ../../../../spec-concrete/1-syntax.watsup:214.1-215.39
 syntax nonEmptyParameterList = 
    | annotationList direction type name initializerOpt
    | nonEmptyParameterList , parameter
 
-;; ../../../../spec-concrete/1-syntax.watsup:214.1-215.26
+;; ../../../../spec-concrete/1-syntax.watsup:218.1-219.26
 syntax parameterList = 
    | 
    | annotationList direction type name initializerOpt
    | nonEmptyParameterList , parameter
 
-;; ../../../../spec-concrete/1-syntax.watsup:217.1-217.55
+;; ../../../../spec-concrete/1-syntax.watsup:221.1-222.48
 def $flatten_parameterList(parameterList) : parameter* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:218.1-218.41
+  ;; ../../../../spec-concrete/1-syntax.watsup:223.1-223.41
   clause 0 : (parameterList) = []
   -- if parameterList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:219.1-219.50
+  ;; ../../../../spec-concrete/1-syntax.watsup:224.1-224.50
   clause 1 : (parameterList) = [parameter]
   -- if parameterList <: parameter
   -- let parameter = parameterList as parameter
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:220.1-221.67
+  ;; ../../../../spec-concrete/1-syntax.watsup:225.1-226.67
   clause 2 : (parameterList) = $flatten_parameterList(nonEmptyParameterList as parameterList) ++ [parameter]
   -- if parameterList <: nonEmptyParameterList
   -- let nonEmptyParameterList' = parameterList as nonEmptyParameterList
   -- if nonEmptyParameterList' matches `%,%`
   -- let nonEmptyParameterList , parameter = nonEmptyParameterList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:227.31-227.40
+;; ../../../../spec-concrete/1-syntax.watsup:232.31-232.40
 syntax constructorParameter = parameter
 
-;; ../../../../spec-concrete/1-syntax.watsup:229.35-229.48
+;; ../../../../spec-concrete/1-syntax.watsup:234.35-234.48
 syntax constructorParameterList = parameterList
 
-;; ../../../../spec-concrete/1-syntax.watsup:232.1-233.23
+;; ../../../../spec-concrete/1-syntax.watsup:237.1-238.23
 syntax constructorParameterListOpt = 
    | 
    | ( parameterList )
 
-;; ../../../../spec-concrete/1-syntax.watsup:235.1-236.26
+;; ../../../../spec-concrete/1-syntax.watsup:240.1-242.60
 def $flatten_constructorParameterListOpt(constructorParameterListOpt) : constructorParameter* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:238.1-238.55
+  ;; ../../../../spec-concrete/1-syntax.watsup:243.1-243.55
   clause 0 : (constructorParameterListOpt) = []
   -- if constructorParameterListOpt matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:239.1-240.42
+  ;; ../../../../spec-concrete/1-syntax.watsup:244.1-245.42
   clause 1 : (constructorParameterListOpt) = $flatten_parameterList(parameterList)
   -- if constructorParameterListOpt matches `(%)`
   -- let ( parameterList ) = constructorParameterListOpt
 
-;; ../../../../spec-concrete/1-syntax.watsup:246.26-246.44
+;; ../../../../spec-concrete/1-syntax.watsup:251.26-251.44
 syntax namedExpression = 
    | name = expression
 
-;; ../../../../spec-concrete/1-syntax.watsup:249.1-250.43
+;; ../../../../spec-concrete/1-syntax.watsup:254.1-255.43
 syntax namedExpressionList = 
    | name = expression
    | namedExpressionList , namedExpression
 
-;; ../../../../spec-concrete/1-syntax.watsup:252.1-252.73
+;; ../../../../spec-concrete/1-syntax.watsup:257.1-258.55
 def $flatten_namedExpressionList(namedExpressionList) : namedExpression* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:253.1-253.68
+  ;; ../../../../spec-concrete/1-syntax.watsup:259.1-259.68
   clause 0 : (namedExpressionList) = [namedExpression]
   -- if namedExpressionList <: namedExpression
   -- let namedExpression = namedExpressionList as namedExpression
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:254.1-255.75
+  ;; ../../../../spec-concrete/1-syntax.watsup:260.1-261.75
   clause 1 : (namedExpressionList') = $flatten_namedExpressionList(namedExpressionList) ++ [namedExpression]
   -- if namedExpressionList' matches `%,%`
   -- let namedExpressionList , namedExpression = namedExpressionList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:266.1-268.18
+;; ../../../../spec-concrete/1-syntax.watsup:272.1-274.18
 syntax literalExpression = 
    | true
    | false
@@ -473,7 +473,7 @@ syntax literalExpression =
    | nat s int hint(print %#S#%)
    | " text " hint(print "#%#")
 
-;; ../../../../spec-concrete/1-syntax.watsup:275.1-276.9
+;; ../../../../spec-concrete/1-syntax.watsup:281.1-282.9
 syntax referenceExpression = 
    | text
    | apply
@@ -486,22 +486,22 @@ syntax referenceExpression =
    | . nonTypeName
    | this
 
-;; ../../../../spec-concrete/1-syntax.watsup:282.28-282.32
+;; ../../../../spec-concrete/1-syntax.watsup:288.28-288.32
 syntax defaultExpression = 
    | ...
 
-;; ../../../../spec-concrete/1-syntax.watsup:290.15-290.32
+;; ../../../../spec-concrete/1-syntax.watsup:296.15-296.32
 syntax unop = 
    | !
    | ~
    | -
    | +
 
-;; ../../../../spec-concrete/1-syntax.watsup:292.26-292.41
+;; ../../../../spec-concrete/1-syntax.watsup:298.26-298.41
 syntax unaryExpression = 
    | unop expression
 
-;; ../../../../spec-concrete/1-syntax.watsup:295.1-297.35
+;; ../../../../spec-concrete/1-syntax.watsup:301.1-303.35
 syntax binop = 
    | *
    | /
@@ -525,88 +525,88 @@ syntax binop =
    | &&
    | ||
 
-;; ../../../../spec-concrete/1-syntax.watsup:299.27-299.54
+;; ../../../../spec-concrete/1-syntax.watsup:305.27-305.54
 syntax binaryExpression = 
    | expression binop expression
 
-;; ../../../../spec-concrete/1-syntax.watsup:302.3-302.38
+;; ../../../../spec-concrete/1-syntax.watsup:308.3-308.38
 syntax binaryExpressionNonBrace = 
    | expressionNonBrace binop expression
 
-;; ../../../../spec-concrete/1-syntax.watsup:305.3-305.41
+;; ../../../../spec-concrete/1-syntax.watsup:311.3-311.41
 syntax ternaryExpression = 
    | expression ? expression : expression
 
-;; ../../../../spec-concrete/1-syntax.watsup:308.3-308.49
+;; ../../../../spec-concrete/1-syntax.watsup:314.3-314.49
 syntax ternaryExpressionNonBrace = 
    | expressionNonBrace ? expression : expression
 
-;; ../../../../spec-concrete/1-syntax.watsup:314.25-314.45
+;; ../../../../spec-concrete/1-syntax.watsup:320.25-320.45
 syntax castExpression = 
    | ( type ) expression
 
-;; ../../../../spec-concrete/1-syntax.watsup:323.1-324.48
+;; ../../../../spec-concrete/1-syntax.watsup:329.1-330.48
 syntax dataExpression = 
    | {#}
    | { dataElementExpression trailingCommaOpt }
 
-;; ../../../../spec-concrete/1-syntax.watsup:333.3-333.18
+;; ../../../../spec-concrete/1-syntax.watsup:339.3-339.18
 syntax errorAccessExpression = 
    | error. member
 
-;; ../../../../spec-concrete/1-syntax.watsup:336.3-336.29
+;; ../../../../spec-concrete/1-syntax.watsup:342.3-342.29
 syntax memberAccessExpression = 
    | memberAccessBase . member
 
-;; ../../../../spec-concrete/1-syntax.watsup:339.3-339.29
+;; ../../../../spec-concrete/1-syntax.watsup:345.3-345.29
 syntax indexAccessExpression = 
    | expression [ expression ]
 
-;; ../../../../spec-concrete/1-syntax.watsup:342.3-342.43
+;; ../../../../spec-concrete/1-syntax.watsup:348.3-348.43
 syntax sliceAccessExpression = 
    | expression [ expression : expression ]
 
-;; ../../../../spec-concrete/1-syntax.watsup:345.1-348.26
+;; ../../../../spec-concrete/1-syntax.watsup:351.1-354.26
 syntax accessExpression = 
    | error. member
    | memberAccessBase . member
    | expression [ expression ]
    | expression [ expression : expression ]
 
-;; ../../../../spec-concrete/1-syntax.watsup:351.3-351.37
+;; ../../../../spec-concrete/1-syntax.watsup:357.3-357.37
 syntax memberAccessExpressionNonBrace = 
    | memberAccessBaseNonBrace . member
 
-;; ../../../../spec-concrete/1-syntax.watsup:354.3-354.37
+;; ../../../../spec-concrete/1-syntax.watsup:360.3-360.37
 syntax indexAccessExpressionNonBrace = 
    | expressionNonBrace [ expression ]
 
-;; ../../../../spec-concrete/1-syntax.watsup:357.3-357.51
+;; ../../../../spec-concrete/1-syntax.watsup:363.3-363.51
 syntax sliceAccessExpressionNonBrace = 
    | expressionNonBrace [ expression : expression ]
 
-;; ../../../../spec-concrete/1-syntax.watsup:360.1-363.34
+;; ../../../../spec-concrete/1-syntax.watsup:366.1-369.34
 syntax accessExpressionNonBrace = 
    | error. member
    | memberAccessBaseNonBrace . member
    | expressionNonBrace [ expression ]
    | expressionNonBrace [ expression : expression ]
 
-;; ../../../../spec-concrete/1-syntax.watsup:377.1-378.62
+;; ../../../../spec-concrete/1-syntax.watsup:383.1-384.62
 syntax callExpression = 
    | callTarget ( argumentList )
    | routineTarget < realTypeArgumentList >( argumentList )
 
-;; ../../../../spec-concrete/1-syntax.watsup:381.1-382.70
+;; ../../../../spec-concrete/1-syntax.watsup:387.1-388.70
 syntax callExpressionNonBrace = 
    | callTargetNonBrace ( argumentList )
    | routineTargetNonBrace < realTypeArgumentList >( argumentList )
 
-;; ../../../../spec-concrete/1-syntax.watsup:388.34-388.49
+;; ../../../../spec-concrete/1-syntax.watsup:394.34-394.49
 syntax parenthesizedExpression = 
    | ( expression )
 
-;; ../../../../spec-concrete/1-syntax.watsup:395.1-405.28
+;; ../../../../spec-concrete/1-syntax.watsup:401.1-411.28
 syntax expression = 
    | true
    | false
@@ -639,7 +639,7 @@ syntax expression =
    | routineTarget < realTypeArgumentList >( argumentList )
    | ( expression )
 
-;; ../../../../spec-concrete/1-syntax.watsup:409.1-411.33
+;; ../../../../spec-concrete/1-syntax.watsup:415.1-417.33
 syntax expressionList = 
    | 
    | true
@@ -674,24 +674,24 @@ syntax expressionList =
    | ( expression )
    | expressionList , expression
 
-;; ../../../../spec-concrete/1-syntax.watsup:413.1-413.58
+;; ../../../../spec-concrete/1-syntax.watsup:419.1-420.49
 def $flatten_expressionList(expressionList) : expression* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:414.1-414.42
+  ;; ../../../../spec-concrete/1-syntax.watsup:421.1-421.42
   clause 0 : (expressionList) = []
   -- if expressionList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:415.1-415.53
+  ;; ../../../../spec-concrete/1-syntax.watsup:422.1-422.53
   clause 1 : (expressionList) = [expression]
   -- if expressionList <: expression
   -- let expression = expressionList as expression
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:416.1-417.60
+  ;; ../../../../spec-concrete/1-syntax.watsup:423.1-424.60
   clause 2 : (expressionList') = $flatten_expressionList(expressionList) ++ [expression]
   -- if expressionList' matches `%,%`
   -- let expressionList , expression = expressionList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:420.1-421.15
+;; ../../../../spec-concrete/1-syntax.watsup:427.1-428.15
 syntax memberAccessBase = 
    | text
    | . typeName
@@ -726,17 +726,17 @@ syntax memberAccessBase =
    | routineTarget < realTypeArgumentList >( argumentList )
    | ( expression )
 
-;; ../../../../spec-concrete/1-syntax.watsup:423.36-423.50
+;; ../../../../spec-concrete/1-syntax.watsup:430.36-430.50
 syntax sequenceElementExpression = expressionList
 
-;; ../../../../spec-concrete/1-syntax.watsup:426.1-429.54
+;; ../../../../spec-concrete/1-syntax.watsup:433.1-436.54
 syntax recordElementExpression = 
    | name = expression
    | name = expression ,...
    | name = expression , namedExpressionList
    | name = expression , namedExpressionList ,...
 
-;; ../../../../spec-concrete/1-syntax.watsup:432.1-433.28
+;; ../../../../spec-concrete/1-syntax.watsup:439.1-440.28
 syntax dataElementExpression = 
    | 
    | true
@@ -775,13 +775,13 @@ syntax dataElementExpression =
    | name = expression , namedExpressionList
    | name = expression , namedExpressionList ,...
 
-;; ../../../../spec-concrete/1-syntax.watsup:435.24-435.34
+;; ../../../../spec-concrete/1-syntax.watsup:442.24-442.34
 syntax routineTarget = expression
 
-;; ../../../../spec-concrete/1-syntax.watsup:436.28-436.37
+;; ../../../../spec-concrete/1-syntax.watsup:443.28-443.37
 syntax constructorTarget = namedType
 
-;; ../../../../spec-concrete/1-syntax.watsup:439.1-440.22
+;; ../../../../spec-concrete/1-syntax.watsup:446.1-447.22
 syntax callTarget = 
    | true
    | false
@@ -817,7 +817,7 @@ syntax callTarget =
    | . typeName
    | prefixedTypeName < typeArgumentList >
 
-;; ../../../../spec-concrete/1-syntax.watsup:447.1-455.28
+;; ../../../../spec-concrete/1-syntax.watsup:454.1-462.28
 syntax expressionNonBrace = 
    | true
    | false
@@ -847,7 +847,7 @@ syntax expressionNonBrace =
    | routineTargetNonBrace < realTypeArgumentList >( argumentList )
    | ( expression )
 
-;; ../../../../spec-concrete/1-syntax.watsup:458.1-459.23
+;; ../../../../spec-concrete/1-syntax.watsup:465.1-466.23
 syntax memberAccessBaseNonBrace = 
    | text
    | . typeName
@@ -879,10 +879,10 @@ syntax memberAccessBaseNonBrace =
    | routineTargetNonBrace < realTypeArgumentList >( argumentList )
    | ( expression )
 
-;; ../../../../spec-concrete/1-syntax.watsup:461.32-461.50
+;; ../../../../spec-concrete/1-syntax.watsup:468.32-468.50
 syntax routineTargetNonBrace = expressionNonBrace
 
-;; ../../../../spec-concrete/1-syntax.watsup:464.1-465.22
+;; ../../../../spec-concrete/1-syntax.watsup:471.1-472.22
 syntax callTargetNonBrace = 
    | true
    | false
@@ -915,74 +915,74 @@ syntax callTargetNonBrace =
    | . typeName
    | prefixedTypeName < typeArgumentList >
 
-;; ../../../../spec-concrete/1-syntax.watsup:467.1-467.57
-def $expressionNonBrace(expressionNonBrace) : expression =
+;; ../../../../spec-concrete/1-syntax.watsup:474.1-475.54
+def $expressionNonBrace_as_expression(expressionNonBrace) : expression =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:468.1-468.63
+  ;; ../../../../spec-concrete/1-syntax.watsup:476.1-476.77
   clause 0 : (expressionNonBrace) = literalExpression as expression
   -- if expressionNonBrace <: literalExpression
   -- let literalExpression = expressionNonBrace as literalExpression
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:469.1-469.67
+  ;; ../../../../spec-concrete/1-syntax.watsup:477.1-477.81
   clause 1 : (expressionNonBrace) = referenceExpression as expression
   -- if expressionNonBrace <: referenceExpression
   -- let referenceExpression = expressionNonBrace as referenceExpression
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:470.1-470.59
+  ;; ../../../../spec-concrete/1-syntax.watsup:478.1-478.73
   clause 2 : (expressionNonBrace) = unaryExpression as expression
   -- if expressionNonBrace <: unaryExpression
   -- let unaryExpression = expressionNonBrace as unaryExpression
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:471.1-475.65
+  ;; ../../../../spec-concrete/1-syntax.watsup:479.1-483.79
   clause 3 : (expressionNonBrace) = expression_l binop expression_r as expression
   -- if expressionNonBrace <: binaryExpressionNonBrace
   -- let expressionNonBrace_l binop expression_r = expressionNonBrace as binaryExpressionNonBrace
-  -- let expression_l = $expressionNonBrace(expressionNonBrace_l)
+  -- let expression_l = $expressionNonBrace_as_expression(expressionNonBrace_l)
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:476.1-480.71
+  ;; ../../../../spec-concrete/1-syntax.watsup:484.1-488.85
   clause 4 : (expressionNonBrace) = expression_cond ? expression_true : expression_false as expression
   -- if expressionNonBrace <: ternaryExpressionNonBrace
   -- let expressionNonBrace_cond ? expression_true : expression_false = expressionNonBrace as ternaryExpressionNonBrace
-  -- let expression_cond = $expressionNonBrace(expressionNonBrace_cond)
+  -- let expression_cond = $expressionNonBrace_as_expression(expressionNonBrace_cond)
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:481.1-481.57
+  ;; ../../../../spec-concrete/1-syntax.watsup:489.1-489.71
   clause 5 : (expressionNonBrace) = castExpression as expression
   -- if expressionNonBrace <: castExpression
   -- let castExpression = expressionNonBrace as castExpression
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:482.1-482.71
+  ;; ../../../../spec-concrete/1-syntax.watsup:490.1-490.85
   clause 6 : (expressionNonBrace) = errorAccessExpression as expression
   -- if expressionNonBrace <: errorAccessExpression
   -- let errorAccessExpression = expressionNonBrace as errorAccessExpression
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:483.1-484.31
+  ;; ../../../../spec-concrete/1-syntax.watsup:491.1-492.31
   clause 7 : (expressionNonBrace) = prefixedTypeName as memberAccessBase . member as expression
   -- if expressionNonBrace <: memberAccessExpressionNonBrace
   -- let memberAccessBaseNonBrace . member = expressionNonBrace as memberAccessExpressionNonBrace
   -- if memberAccessBaseNonBrace <: prefixedTypeName
   -- let prefixedTypeName = memberAccessBaseNonBrace as prefixedTypeName
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:485.1-487.71
+  ;; ../../../../spec-concrete/1-syntax.watsup:493.1-495.85
   clause 8 : (expressionNonBrace) = expression_base as memberAccessBase . member as expression
   -- if expressionNonBrace <: memberAccessExpressionNonBrace
   -- let memberAccessBaseNonBrace . member = expressionNonBrace as memberAccessExpressionNonBrace
   -- if memberAccessBaseNonBrace <: expressionNonBrace
   -- let expressionNonBrace_base = memberAccessBaseNonBrace as expressionNonBrace
-  -- let expression_base = $expressionNonBrace(expressionNonBrace_base)
+  -- let expression_base = $expressionNonBrace_as_expression(expressionNonBrace_base)
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:488.1-492.71
+  ;; ../../../../spec-concrete/1-syntax.watsup:496.1-500.85
   clause 9 : (expressionNonBrace) = expression_base [ expression_index ] as expression
   -- if expressionNonBrace <: indexAccessExpressionNonBrace
   -- let expressionNonBrace_base [ expression_index ] = expressionNonBrace as indexAccessExpressionNonBrace
-  -- let expression_base = $expressionNonBrace(expressionNonBrace_base)
+  -- let expression_base = $expressionNonBrace_as_expression(expressionNonBrace_base)
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:493.1-497.71
+  ;; ../../../../spec-concrete/1-syntax.watsup:501.1-505.85
   clause 10 : (expressionNonBrace) = expression_base [ expression_hi : expression_lo ] as expression
   -- if expressionNonBrace <: sliceAccessExpressionNonBrace
   -- let expressionNonBrace_base [ expression_hi : expression_lo ] = expressionNonBrace as sliceAccessExpressionNonBrace
-  -- let expression_base = $expressionNonBrace(expressionNonBrace_base)
+  -- let expression_base = $expressionNonBrace_as_expression(expressionNonBrace_base)
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:498.1-502.61
+  ;; ../../../../spec-concrete/1-syntax.watsup:506.1-510.75
   clause 11 : (expressionNonBrace') = expression as callTarget ( argumentList ) as expression
   -- if expressionNonBrace' <: callExpressionNonBrace
   -- let callExpressionNonBrace = expressionNonBrace' as callExpressionNonBrace
@@ -990,9 +990,9 @@ def $expressionNonBrace(expressionNonBrace) : expression =
   -- let callTargetNonBrace ( argumentList ) = callExpressionNonBrace
   -- if callTargetNonBrace <: expressionNonBrace
   -- let expressionNonBrace = callTargetNonBrace as expressionNonBrace
-  -- let expression = $expressionNonBrace(expressionNonBrace)
+  -- let expression = $expressionNonBrace_as_expression(expressionNonBrace)
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:503.1-506.40
+  ;; ../../../../spec-concrete/1-syntax.watsup:511.1-514.40
   clause 12 : (expressionNonBrace) = constructorTarget as callTarget ( argumentList ) as expression
   -- if expressionNonBrace <: callExpressionNonBrace
   -- let callExpressionNonBrace = expressionNonBrace as callExpressionNonBrace
@@ -1001,20 +1001,20 @@ def $expressionNonBrace(expressionNonBrace) : expression =
   -- if callTargetNonBrace <: constructorTarget
   -- let constructorTarget = callTargetNonBrace as constructorTarget
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:507.1-511.61
+  ;; ../../../../spec-concrete/1-syntax.watsup:515.1-519.75
   clause 13 : (expressionNonBrace') = expression < realTypeArgumentList >( argumentList ) as expression
   -- if expressionNonBrace' <: callExpressionNonBrace
   -- let callExpressionNonBrace = expressionNonBrace' as callExpressionNonBrace
   -- if callExpressionNonBrace matches `%<%>(%)`
   -- let expressionNonBrace < realTypeArgumentList >( argumentList ) = callExpressionNonBrace
-  -- let expression = $expressionNonBrace(expressionNonBrace)
+  -- let expression = $expressionNonBrace_as_expression(expressionNonBrace)
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:512.1-512.75
+  ;; ../../../../spec-concrete/1-syntax.watsup:520.1-520.89
   clause 14 : (expressionNonBrace) = parenthesizedExpression as expression
   -- if expressionNonBrace <: parenthesizedExpression
   -- let parenthesizedExpression = expressionNonBrace as parenthesizedExpression
 
-;; ../../../../spec-concrete/1-syntax.watsup:519.1-523.7
+;; ../../../../spec-concrete/1-syntax.watsup:527.1-531.7
 syntax simpleKeysetExpression = 
    | true
    | false
@@ -1051,7 +1051,7 @@ syntax simpleKeysetExpression =
    | default
    | _
 
-;; ../../../../spec-concrete/1-syntax.watsup:526.1-527.57
+;; ../../../../spec-concrete/1-syntax.watsup:534.1-535.57
 syntax simpleKeysetExpressionList = 
    | true
    | false
@@ -1089,20 +1089,20 @@ syntax simpleKeysetExpressionList =
    | _
    | simpleKeysetExpressionList , simpleKeysetExpression
 
-;; ../../../../spec-concrete/1-syntax.watsup:529.1-530.28
+;; ../../../../spec-concrete/1-syntax.watsup:537.1-539.63
 def $flatten_simpleKeysetExpressionList(simpleKeysetExpressionList) : simpleKeysetExpression* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:531.1-532.27
+  ;; ../../../../spec-concrete/1-syntax.watsup:540.1-541.27
   clause 0 : (simpleKeysetExpressionList) = [simpleKeysetExpression]
   -- if simpleKeysetExpressionList <: simpleKeysetExpression
   -- let simpleKeysetExpression = simpleKeysetExpressionList as simpleKeysetExpression
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:533.1-537.34
+  ;; ../../../../spec-concrete/1-syntax.watsup:542.1-546.34
   clause 1 : (simpleKeysetExpressionList') = $flatten_simpleKeysetExpressionList(simpleKeysetExpressionList) ++ [simpleKeysetExpression]
   -- if simpleKeysetExpressionList' matches `%,%`
   -- let simpleKeysetExpressionList , simpleKeysetExpression = simpleKeysetExpressionList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:540.1-544.62
+;; ../../../../spec-concrete/1-syntax.watsup:549.1-553.62
 syntax tupleKeysetExpression = 
    | ( expression &&& expression )
    | ( expression .. expression )
@@ -1110,7 +1110,7 @@ syntax tupleKeysetExpression =
    | (_)
    | ( simpleKeysetExpression , simpleKeysetExpressionList )
 
-;; ../../../../spec-concrete/1-syntax.watsup:547.1-548.26
+;; ../../../../spec-concrete/1-syntax.watsup:556.1-557.26
 syntax keysetExpression = 
    | true
    | false
@@ -1152,7 +1152,7 @@ syntax keysetExpression =
    | (_)
    | ( simpleKeysetExpression , simpleKeysetExpressionList )
 
-;; ../../../../spec-concrete/1-syntax.watsup:555.1-557.7
+;; ../../../../spec-concrete/1-syntax.watsup:564.1-566.7
 syntax realTypeArgument = 
    | bool
    | error
@@ -1175,7 +1175,7 @@ syntax realTypeArgument =
    | void
    | _
 
-;; ../../../../spec-concrete/1-syntax.watsup:560.1-561.45
+;; ../../../../spec-concrete/1-syntax.watsup:569.1-570.45
 syntax realTypeArgumentList = 
    | bool
    | error
@@ -1199,20 +1199,20 @@ syntax realTypeArgumentList =
    | _
    | realTypeArgumentList , realTypeArgument
 
-;; ../../../../spec-concrete/1-syntax.watsup:563.1-563.76
+;; ../../../../spec-concrete/1-syntax.watsup:572.1-573.57
 def $flatten_realTypeArgumentList(realTypeArgumentList) : realTypeArgument* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:564.1-564.71
+  ;; ../../../../spec-concrete/1-syntax.watsup:574.1-574.71
   clause 0 : (realTypeArgumentList) = [realTypeArgument]
   -- if realTypeArgumentList <: realTypeArgument
   -- let realTypeArgument = realTypeArgumentList as realTypeArgument
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:565.1-566.78
+  ;; ../../../../spec-concrete/1-syntax.watsup:575.1-576.78
   clause 1 : (realTypeArgumentList') = $flatten_realTypeArgumentList(realTypeArgumentList) ++ [realTypeArgument]
   -- if realTypeArgumentList' matches `%,%`
   -- let realTypeArgumentList , realTypeArgument = realTypeArgumentList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:569.1-570.16
+;; ../../../../spec-concrete/1-syntax.watsup:579.1-580.16
 syntax typeArgument = 
    | bool
    | error
@@ -1243,7 +1243,7 @@ syntax typeArgument =
    | type
    | priority
 
-;; ../../../../spec-concrete/1-syntax.watsup:574.1-576.37
+;; ../../../../spec-concrete/1-syntax.watsup:584.1-586.37
 syntax typeArgumentList = 
    | 
    | bool
@@ -1276,24 +1276,24 @@ syntax typeArgumentList =
    | priority
    | typeArgumentList , typeArgument
 
-;; ../../../../spec-concrete/1-syntax.watsup:578.1-578.64
+;; ../../../../spec-concrete/1-syntax.watsup:588.1-589.52
 def $flatten_typeArgumentList(typeArgumentList) : typeArgument* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:579.1-579.44
+  ;; ../../../../spec-concrete/1-syntax.watsup:590.1-590.44
   clause 0 : (typeArgumentList) = []
   -- if typeArgumentList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:580.1-580.59
+  ;; ../../../../spec-concrete/1-syntax.watsup:591.1-591.59
   clause 1 : (typeArgumentList) = [typeArgument]
   -- if typeArgumentList <: typeArgument
   -- let typeArgument = typeArgumentList as typeArgument
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:581.1-582.66
+  ;; ../../../../spec-concrete/1-syntax.watsup:592.1-593.66
   clause 2 : (typeArgumentList') = $flatten_typeArgumentList(typeArgumentList) ++ [typeArgument]
   -- if typeArgumentList' matches `%,%`
   -- let typeArgumentList , typeArgument = typeArgumentList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:589.1-592.7
+;; ../../../../spec-concrete/1-syntax.watsup:600.1-603.7
 syntax argument = 
    | true
    | false
@@ -1329,7 +1329,7 @@ syntax argument =
    | name =_
    | _
 
-;; ../../../../spec-concrete/1-syntax.watsup:595.1-596.37
+;; ../../../../spec-concrete/1-syntax.watsup:606.1-607.37
 syntax argumentListNonEmpty = 
    | true
    | false
@@ -1366,7 +1366,7 @@ syntax argumentListNonEmpty =
    | _
    | argumentListNonEmpty , argument
 
-;; ../../../../spec-concrete/1-syntax.watsup:599.1-600.25
+;; ../../../../spec-concrete/1-syntax.watsup:610.1-611.25
 syntax argumentList = 
    | 
    | true
@@ -1404,26 +1404,26 @@ syntax argumentList =
    | _
    | argumentListNonEmpty , argument
 
-;; ../../../../spec-concrete/1-syntax.watsup:602.1-602.52
+;; ../../../../spec-concrete/1-syntax.watsup:613.1-614.47
 def $flatten_argumentList(argumentList) : argument* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:603.1-603.40
+  ;; ../../../../spec-concrete/1-syntax.watsup:615.1-615.40
   clause 0 : (argumentList) = []
   -- if argumentList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:604.1-604.47
+  ;; ../../../../spec-concrete/1-syntax.watsup:616.1-616.47
   clause 1 : (argumentList) = [argument]
   -- if argumentList <: argument
   -- let argument = argumentList as argument
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:605.1-606.62
+  ;; ../../../../spec-concrete/1-syntax.watsup:617.1-618.62
   clause 2 : (argumentList) = $flatten_argumentList(argumentListNonEmpty as argumentList) ++ [argument]
   -- if argumentList <: argumentListNonEmpty
   -- let argumentListNonEmpty' = argumentList as argumentListNonEmpty
   -- if argumentListNonEmpty' matches `%,%`
   -- let argumentListNonEmpty , argument = argumentListNonEmpty'
 
-;; ../../../../spec-concrete/1-syntax.watsup:613.1-617.16
+;; ../../../../spec-concrete/1-syntax.watsup:625.1-629.16
 syntax lvalue = 
    | text
    | apply
@@ -1440,11 +1440,69 @@ syntax lvalue =
    | lvalue [ expression : expression ]
    | ( lvalue )
 
-;; ../../../../spec-concrete/1-syntax.watsup:627.25-627.27
+;; ../../../../spec-concrete/1-syntax.watsup:631.1-632.54
+def $lvalue_as_expression(lvalue) : expression =
+
+  ;; ../../../../spec-concrete/1-syntax.watsup:633.1-633.69
+  clause 0 : (lvalue) = referenceExpression as expression
+  -- if lvalue <: referenceExpression
+  -- let referenceExpression = lvalue as referenceExpression
+
+  ;; ../../../../spec-concrete/1-syntax.watsup:634.1-636.61
+  clause 1 : (lvalue) = expression_base as memberAccessBase . member as expression
+  -- if lvalue matches `%.%`
+  -- let lvalue_base . member = lvalue
+  -- let expression_base = $lvalue_as_expression(lvalue_base)
+
+  ;; ../../../../spec-concrete/1-syntax.watsup:637.1-639.61
+  clause 2 : (lvalue) = expression_base [ expression_index ] as expression
+  -- if lvalue matches `%[%]`
+  -- let lvalue_base [ expression_index ] = lvalue
+  -- let expression_base = $lvalue_as_expression(lvalue_base)
+
+  ;; ../../../../spec-concrete/1-syntax.watsup:640.1-642.61
+  clause 3 : (lvalue) = expression_base [ expression_hi : expression_lo ] as expression
+  -- if lvalue matches `%[%:%]`
+  -- let lvalue_base [ expression_hi : expression_lo ] = lvalue
+  -- let expression_base = $lvalue_as_expression(lvalue_base)
+
+  ;; ../../../../spec-concrete/1-syntax.watsup:643.1-644.51
+  clause 4 : (lvalue') = ( expression ) as expression
+  -- if lvalue' matches `(%)`
+  -- let ( lvalue ) = lvalue'
+  -- let expression = $lvalue_as_expression(lvalue)
+
+;; ../../../../spec-concrete/1-syntax.watsup:646.1-647.51
+def $expression_as_lvalue(expression) : lvalue? =
+
+  ;; ../../../../spec-concrete/1-syntax.watsup:648.1-648.69
+  clause 0 : (expression) = ?(referenceExpression as lvalue)
+  -- if expression <: referenceExpression
+  -- let referenceExpression = expression as referenceExpression
+
+  ;; ../../../../spec-concrete/1-syntax.watsup:649.1-650.51
+  clause 1 : (expression') = ?(lvalue . member)
+  -- if expression' <: memberAccessExpression
+  -- let memberAccessBase . member = expression' as memberAccessExpression
+  -- if memberAccessBase <: expression
+  -- let expression = memberAccessBase as expression
+  -- let lvalue'?{lvalue' <- lvalue'?} = $expression_as_lvalue(expression)
+  -- if lvalue'?{lvalue' <- lvalue'?} matches (_)
+  -- let ?(lvalue) = lvalue'?{lvalue' <- lvalue'?}
+
+  ;; ../../../../spec-concrete/1-syntax.watsup:651.1-652.51
+  clause 2 : (expression') = ?(( lvalue ))
+  -- if expression' <: parenthesizedExpression
+  -- let ( expression ) = expression' as parenthesizedExpression
+  -- let lvalue'?{lvalue' <- lvalue'?} = $expression_as_lvalue(expression)
+  -- if lvalue'?{lvalue' <- lvalue'?} matches (_)
+  -- let ?(lvalue) = lvalue'?{lvalue' <- lvalue'?}
+
+;; ../../../../spec-concrete/1-syntax.watsup:662.25-662.27
 syntax emptyStatement = 
    | ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:634.1-636.34
+;; ../../../../spec-concrete/1-syntax.watsup:669.1-671.34
 syntax assignop = 
    | =
    | +=
@@ -1460,45 +1518,45 @@ syntax assignop =
    | ^=
    | |=
 
-;; ../../../../spec-concrete/1-syntax.watsup:638.30-638.59
+;; ../../../../spec-concrete/1-syntax.watsup:673.30-673.59
 syntax assignmentStatement = 
    | lvalue assignop expression ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:645.1-646.54
+;; ../../../../spec-concrete/1-syntax.watsup:680.1-681.54
 syntax callStatement = 
    | lvalue ( argumentList );
    | lvalue < typeArgumentList >( argumentList );
 
-;; ../../../../spec-concrete/1-syntax.watsup:652.37-652.76
+;; ../../../../spec-concrete/1-syntax.watsup:687.37-687.76
 syntax directApplicationStatement = 
    | namedType .apply( argumentList );
 
-;; ../../../../spec-concrete/1-syntax.watsup:659.1-660.25
+;; ../../../../spec-concrete/1-syntax.watsup:694.1-695.25
 syntax returnStatement = 
    | return;
    | return expression ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:666.24-666.31
+;; ../../../../spec-concrete/1-syntax.watsup:701.24-701.31
 syntax exitStatement = 
    | exit;
 
-;; ../../../../spec-concrete/1-syntax.watsup:674.25-674.70
+;; ../../../../spec-concrete/1-syntax.watsup:709.25-709.70
 syntax blockStatement = 
    | annotationList { blockElementStatementList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:683.1-684.48
+;; ../../../../spec-concrete/1-syntax.watsup:718.1-719.48
 syntax conditionalStatement = 
    | if( expression ) statement
    | if( expression ) statement else statement
 
-;; ../../../../spec-concrete/1-syntax.watsup:693.1-696.31
+;; ../../../../spec-concrete/1-syntax.watsup:728.1-731.31
 syntax forInitStatement = 
    | annotationList type name initializerOpt
    | lvalue ( argumentList )
    | lvalue < typeArgumentList >( argumentList )
    | lvalue assignop expression
 
-;; ../../../../spec-concrete/1-syntax.watsup:699.1-700.53
+;; ../../../../spec-concrete/1-syntax.watsup:734.1-735.53
 syntax forInitStatementListNonEmpty = 
    | annotationList type name initializerOpt
    | lvalue ( argumentList )
@@ -1506,7 +1564,7 @@ syntax forInitStatementListNonEmpty =
    | lvalue assignop expression
    | forInitStatementListNonEmpty , forInitStatement
 
-;; ../../../../spec-concrete/1-syntax.watsup:703.1-704.33
+;; ../../../../spec-concrete/1-syntax.watsup:738.1-739.33
 syntax forInitStatementList = 
    | 
    | annotationList type name initializerOpt
@@ -1515,10 +1573,10 @@ syntax forInitStatementList =
    | lvalue assignop expression
    | forInitStatementListNonEmpty , forInitStatement
 
-;; ../../../../spec-concrete/1-syntax.watsup:706.29-706.45
+;; ../../../../spec-concrete/1-syntax.watsup:741.29-741.45
 syntax forUpdateStatement = forInitStatement
 
-;; ../../../../spec-concrete/1-syntax.watsup:709.1-710.57
+;; ../../../../spec-concrete/1-syntax.watsup:744.1-745.57
 syntax forUpdateStatementListNonEmpty = 
    | annotationList type name initializerOpt
    | lvalue ( argumentList )
@@ -1526,7 +1584,7 @@ syntax forUpdateStatementListNonEmpty =
    | lvalue assignop expression
    | forUpdateStatementListNonEmpty , forUpdateStatement
 
-;; ../../../../spec-concrete/1-syntax.watsup:713.1-714.35
+;; ../../../../spec-concrete/1-syntax.watsup:748.1-749.35
 syntax forUpdateStatementList = 
    | 
    | annotationList type name initializerOpt
@@ -1535,7 +1593,7 @@ syntax forUpdateStatementList =
    | lvalue assignop expression
    | forUpdateStatementListNonEmpty , forUpdateStatement
 
-;; ../../../../spec-concrete/1-syntax.watsup:717.1-718.30
+;; ../../../../spec-concrete/1-syntax.watsup:752.1-753.30
 syntax forCollectionExpression = 
    | true
    | false
@@ -1569,13 +1627,13 @@ syntax forCollectionExpression =
    | ( expression )
    | expression .. expression
 
-;; ../../../../spec-concrete/1-syntax.watsup:721.1-726.81
+;; ../../../../spec-concrete/1-syntax.watsup:756.1-761.81
 syntax forStatement = 
    | annotationList for( forInitStatementList ; expression ; forUpdateStatementList ) statement
    | annotationList for( type name in forCollectionExpression ) statement
    | annotationList for( annotationListNonEmpty type name in forCollectionExpression ) statement
 
-;; ../../../../spec-concrete/1-syntax.watsup:733.1-734.23
+;; ../../../../spec-concrete/1-syntax.watsup:768.1-769.23
 syntax switchLabel = 
    | default
    | true
@@ -1606,41 +1664,41 @@ syntax switchLabel =
    | routineTargetNonBrace < realTypeArgumentList >( argumentList )
    | ( expression )
 
-;; ../../../../spec-concrete/1-syntax.watsup:737.1-738.19
+;; ../../../../spec-concrete/1-syntax.watsup:772.1-773.19
 syntax switchCase = 
    | switchLabel : blockStatement
    | switchLabel :
 
-;; ../../../../spec-concrete/1-syntax.watsup:741.1-742.30
+;; ../../../../spec-concrete/1-syntax.watsup:776.1-777.30
 syntax switchCaseList = 
    | 
    | switchCaseList switchCase
 
-;; ../../../../spec-concrete/1-syntax.watsup:744.1-744.58
+;; ../../../../spec-concrete/1-syntax.watsup:779.1-780.50
 def $flatten_switchCaseList(switchCaseList) : switchCase* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:745.1-745.42
+  ;; ../../../../spec-concrete/1-syntax.watsup:781.1-781.42
   clause 0 : (switchCaseList) = []
   -- if switchCaseList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:746.1-747.62
+  ;; ../../../../spec-concrete/1-syntax.watsup:782.1-783.62
   clause 1 : (switchCaseList') = $flatten_switchCaseList(switchCaseList) ++ [switchCase]
   -- if switchCaseList' matches `%%`
   -- let switchCaseList switchCase = switchCaseList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:749.26-749.68
+;; ../../../../spec-concrete/1-syntax.watsup:785.26-785.68
 syntax switchStatement = 
    | switch( expression ){ switchCaseList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:755.25-755.33
+;; ../../../../spec-concrete/1-syntax.watsup:791.25-791.33
 syntax breakStatement = 
    | break;
 
-;; ../../../../spec-concrete/1-syntax.watsup:757.28-757.39
+;; ../../../../spec-concrete/1-syntax.watsup:793.28-793.39
 syntax continueStatement = 
    | continue;
 
-;; ../../../../spec-concrete/1-syntax.watsup:764.1-775.20
+;; ../../../../spec-concrete/1-syntax.watsup:800.1-811.20
 syntax statement = 
    | ;
    | lvalue assignop expression ;
@@ -1660,24 +1718,24 @@ syntax statement =
    | continue;
    | switch( expression ){ switchCaseList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:785.22-785.35
+;; ../../../../spec-concrete/1-syntax.watsup:821.22-821.35
 syntax initializer = 
    | = expression
 
-;; ../../../../spec-concrete/1-syntax.watsup:788.3-788.48
+;; ../../../../spec-concrete/1-syntax.watsup:824.3-824.48
 syntax constantDeclaration = 
    | annotationList const type name initializer ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:791.1-792.16
+;; ../../../../spec-concrete/1-syntax.watsup:827.1-828.16
 syntax initializerOpt = 
    | 
    | = expression
 
-;; ../../../../spec-concrete/1-syntax.watsup:795.3-795.45
+;; ../../../../spec-concrete/1-syntax.watsup:831.3-831.45
 syntax variableDeclaration = 
    | annotationList type name initializerOpt ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:798.1-800.14
+;; ../../../../spec-concrete/1-syntax.watsup:834.1-836.14
 syntax blockElementStatement = 
    | annotationList const type name initializer ;
    | annotationList type name initializerOpt ;
@@ -1699,114 +1757,114 @@ syntax blockElementStatement =
    | continue;
    | switch( expression ){ switchCaseList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:803.1-804.52
+;; ../../../../spec-concrete/1-syntax.watsup:839.1-840.52
 syntax blockElementStatementList = 
    | 
    | blockElementStatementList blockElementStatement
 
-;; ../../../../spec-concrete/1-syntax.watsup:806.1-807.27
+;; ../../../../spec-concrete/1-syntax.watsup:842.1-844.62
 def $flatten_blockElementStatementList(blockElementStatementList) : blockElementStatement* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:808.1-808.53
+  ;; ../../../../spec-concrete/1-syntax.watsup:845.1-845.53
   clause 0 : (blockElementStatementList) = []
   -- if blockElementStatementList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:809.1-813.30
+  ;; ../../../../spec-concrete/1-syntax.watsup:846.1-850.30
   clause 1 : (blockElementStatementList') = $flatten_blockElementStatementList(blockElementStatementList) ++ [blockElementStatement]
   -- if blockElementStatementList' matches `%%`
   -- let blockElementStatementList blockElementStatement = blockElementStatementList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:820.3-820.58
+;; ../../../../spec-concrete/1-syntax.watsup:857.3-857.58
 syntax functionPrototype = 
    | typeOrVoid name typeParameterListOpt ( parameterList )
 
-;; ../../../../spec-concrete/1-syntax.watsup:823.3-823.50
+;; ../../../../spec-concrete/1-syntax.watsup:860.3-860.50
 syntax functionDeclaration = 
    | annotationList functionPrototype blockStatement
 
-;; ../../../../spec-concrete/1-syntax.watsup:830.3-830.63
+;; ../../../../spec-concrete/1-syntax.watsup:867.3-867.63
 syntax actionDeclaration = 
    | annotationList action name ( parameterList ) blockStatement
 
-;; ../../../../spec-concrete/1-syntax.watsup:838.28-838.57
+;; ../../../../spec-concrete/1-syntax.watsup:875.28-875.57
 syntax objectInitializer = 
    | ={ objectDeclarationList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:842.1-843.68
+;; ../../../../spec-concrete/1-syntax.watsup:879.1-880.68
 syntax instantiation = 
    | annotationList type ( argumentList ) name ;
    | annotationList type ( argumentList ) name objectInitializer ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:846.1-847.18
+;; ../../../../spec-concrete/1-syntax.watsup:883.1-884.18
 syntax objectDeclaration = 
    | annotationList functionPrototype blockStatement
    | annotationList type ( argumentList ) name ;
    | annotationList type ( argumentList ) name objectInitializer ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:850.1-851.44
+;; ../../../../spec-concrete/1-syntax.watsup:887.1-888.44
 syntax objectDeclarationList = 
    | 
    | objectDeclarationList objectDeclaration
 
-;; ../../../../spec-concrete/1-syntax.watsup:853.1-853.79
+;; ../../../../spec-concrete/1-syntax.watsup:890.1-891.57
 def $flatten_objectDeclarationList(objectDeclarationList) : objectDeclaration* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:854.1-854.49
+  ;; ../../../../spec-concrete/1-syntax.watsup:892.1-892.49
   clause 0 : (objectDeclarationList) = []
   -- if objectDeclarationList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:855.1-859.29
+  ;; ../../../../spec-concrete/1-syntax.watsup:893.1-897.29
   clause 1 : (objectDeclarationList') = $flatten_objectDeclarationList(objectDeclarationList) ++ [objectDeclaration]
   -- if objectDeclarationList' matches `%%`
   -- let objectDeclarationList objectDeclaration = objectDeclarationList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:865.27-865.46
+;; ../../../../spec-concrete/1-syntax.watsup:903.27-903.46
 syntax errorDeclaration = 
    | error{ nameList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:871.31-871.72
+;; ../../../../spec-concrete/1-syntax.watsup:909.31-909.72
 syntax matchKindDeclaration = 
    | match_kind{ nameList trailingCommaOpt }
 
-;; ../../../../spec-concrete/1-syntax.watsup:882.1-883.76
+;; ../../../../spec-concrete/1-syntax.watsup:920.1-921.76
 syntax enumTypeDeclaration = 
    | annotationList enum name { nameList trailingCommaOpt }
    | annotationList enum type name { namedExpressionList trailingCommaOpt }
 
-;; ../../../../spec-concrete/1-syntax.watsup:889.20-889.47
+;; ../../../../spec-concrete/1-syntax.watsup:927.20-927.47
 syntax typeField = 
    | annotationList type name ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:892.1-893.28
+;; ../../../../spec-concrete/1-syntax.watsup:930.1-931.28
 syntax typeFieldList = 
    | 
    | typeFieldList typeField
 
-;; ../../../../spec-concrete/1-syntax.watsup:895.1-895.55
+;; ../../../../spec-concrete/1-syntax.watsup:933.1-934.49
 def $flatten_typeFieldList(typeFieldList) : typeField* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:896.1-896.41
+  ;; ../../../../spec-concrete/1-syntax.watsup:935.1-935.41
   clause 0 : (typeFieldList) = []
   -- if typeFieldList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:897.1-898.59
+  ;; ../../../../spec-concrete/1-syntax.watsup:936.1-937.59
   clause 1 : (typeFieldList') = $flatten_typeFieldList(typeFieldList) ++ [typeField]
   -- if typeFieldList' matches `%%`
   -- let typeFieldList typeField = typeFieldList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:901.3-901.69
+;; ../../../../spec-concrete/1-syntax.watsup:940.3-940.69
 syntax structTypeDeclaration = 
    | annotationList struct name typeParameterListOpt { typeFieldList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:904.3-904.69
+;; ../../../../spec-concrete/1-syntax.watsup:943.3-943.69
 syntax headerTypeDeclaration = 
    | annotationList header name typeParameterListOpt { typeFieldList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:907.3-907.75
+;; ../../../../spec-concrete/1-syntax.watsup:946.3-946.75
 syntax headerUnionTypeDeclaration = 
    | annotationList header_union name typeParameterListOpt { typeFieldList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:910.1-913.31
+;; ../../../../spec-concrete/1-syntax.watsup:949.1-952.31
 syntax derivedTypeDeclaration = 
    | annotationList enum name { nameList trailingCommaOpt }
    | annotationList enum type name { namedExpressionList trailingCommaOpt }
@@ -1814,7 +1872,7 @@ syntax derivedTypeDeclaration =
    | annotationList header name typeParameterListOpt { typeFieldList }
    | annotationList header_union name typeParameterListOpt { typeFieldList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:920.1-921.27
+;; ../../../../spec-concrete/1-syntax.watsup:959.1-960.27
 syntax typedef = 
    | bool
    | error
@@ -1840,83 +1898,83 @@ syntax typedef =
    | annotationList header name typeParameterListOpt { typeFieldList }
    | annotationList header_union name typeParameterListOpt { typeFieldList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:924.1-925.37
+;; ../../../../spec-concrete/1-syntax.watsup:963.1-964.37
 syntax typedefDeclaration = 
    | annotationList typedef typedef name ;
    | annotationList type type name ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:932.3-932.45
+;; ../../../../spec-concrete/1-syntax.watsup:971.3-971.45
 syntax externFunctionDeclaration = 
    | annotationList extern functionPrototype ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:935.1-937.49
+;; ../../../../spec-concrete/1-syntax.watsup:974.1-976.49
 syntax methodPrototype = 
    | annotationList typeIdentifier ( parameterList );
    | annotationList functionPrototype ;
    | annotationList abstract functionPrototype ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:940.1-941.40
+;; ../../../../spec-concrete/1-syntax.watsup:979.1-980.40
 syntax methodPrototypeList = 
    | 
    | methodPrototypeList methodPrototype
 
-;; ../../../../spec-concrete/1-syntax.watsup:943.1-943.73
+;; ../../../../spec-concrete/1-syntax.watsup:982.1-983.55
 def $flatten_methodPrototypeList(methodPrototypeList) : methodPrototype* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:944.1-944.47
+  ;; ../../../../spec-concrete/1-syntax.watsup:984.1-984.47
   clause 0 : (methodPrototypeList) = []
   -- if methodPrototypeList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:945.1-948.77
+  ;; ../../../../spec-concrete/1-syntax.watsup:985.1-988.77
   clause 1 : (methodPrototypeList') = $flatten_methodPrototypeList(methodPrototypeList) ++ [methodPrototype]
   -- if methodPrototypeList' matches `%%`
   -- let methodPrototypeList methodPrototype = methodPrototypeList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:951.3-951.82
+;; ../../../../spec-concrete/1-syntax.watsup:991.3-991.82
 syntax externObjectDeclaration = 
    | annotationList extern nonTypeName typeParameterListOpt { methodPrototypeList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:954.1-955.28
+;; ../../../../spec-concrete/1-syntax.watsup:994.1-995.28
 syntax externDeclaration = 
    | annotationList extern functionPrototype ;
    | annotationList extern nonTypeName typeParameterListOpt { methodPrototypeList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:965.21-965.48
+;; ../../../../spec-concrete/1-syntax.watsup:1005.21-1005.48
 syntax selectCase = 
    | keysetExpression : name ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:968.1-969.30
+;; ../../../../spec-concrete/1-syntax.watsup:1008.1-1009.30
 syntax selectCaseList = 
    | 
    | selectCaseList selectCase
 
-;; ../../../../spec-concrete/1-syntax.watsup:971.1-971.58
+;; ../../../../spec-concrete/1-syntax.watsup:1011.1-1012.50
 def $flatten_selectCaseList(selectCaseList) : selectCase* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:972.1-972.42
+  ;; ../../../../spec-concrete/1-syntax.watsup:1013.1-1013.42
   clause 0 : (selectCaseList) = []
   -- if selectCaseList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:973.1-974.62
+  ;; ../../../../spec-concrete/1-syntax.watsup:1014.1-1015.62
   clause 1 : (selectCaseList') = $flatten_selectCaseList(selectCaseList) ++ [selectCase]
   -- if selectCaseList' matches `%%`
   -- let selectCaseList selectCase = selectCaseList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:976.27-976.73
+;; ../../../../spec-concrete/1-syntax.watsup:1017.27-1017.73
 syntax selectExpression = 
    | select( expressionList ){ selectCaseList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:983.1-984.21
+;; ../../../../spec-concrete/1-syntax.watsup:1024.1-1025.21
 syntax stateExpression = 
    | name ;
    | select( expressionList ){ selectCaseList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:987.1-988.31
+;; ../../../../spec-concrete/1-syntax.watsup:1028.1-1029.31
 syntax transitionStatement = 
    | 
    | transition stateExpression
 
-;; ../../../../spec-concrete/1-syntax.watsup:995.1-997.21
+;; ../../../../spec-concrete/1-syntax.watsup:1036.1-1038.21
 syntax valueSetType = 
    | bool
    | error
@@ -1934,19 +1992,19 @@ syntax valueSetType =
    | text
    | . typeName
 
-;; ../../../../spec-concrete/1-syntax.watsup:1000.3-1000.69
+;; ../../../../spec-concrete/1-syntax.watsup:1041.3-1041.69
 syntax valueSetDeclaration = 
    | annotationList value_set< valueSetType >( expression ) name ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:1007.3-1007.72
+;; ../../../../spec-concrete/1-syntax.watsup:1048.3-1048.72
 syntax parserTypeDeclaration = 
    | annotationList parser name typeParameterListOpt ( parameterList );
 
-;; ../../../../spec-concrete/1-syntax.watsup:1015.31-1015.70
+;; ../../../../spec-concrete/1-syntax.watsup:1056.31-1056.70
 syntax parserBlockStatement = 
    | annotationList { parserStatementList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:1018.1-1025.25
+;; ../../../../spec-concrete/1-syntax.watsup:1059.1-1066.25
 syntax parserStatement = 
    | annotationList const type name initializer ;
    | annotationList type name initializerOpt ;
@@ -1959,46 +2017,46 @@ syntax parserStatement =
    | if( expression ) statement
    | if( expression ) statement else statement
 
-;; ../../../../spec-concrete/1-syntax.watsup:1028.1-1029.40
+;; ../../../../spec-concrete/1-syntax.watsup:1069.1-1070.40
 syntax parserStatementList = 
    | 
    | parserStatementList parserStatement
 
-;; ../../../../spec-concrete/1-syntax.watsup:1031.1-1031.73
+;; ../../../../spec-concrete/1-syntax.watsup:1072.1-1073.55
 def $flatten_parserStatementList(parserStatementList) : parserStatement* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1032.1-1032.47
+  ;; ../../../../spec-concrete/1-syntax.watsup:1074.1-1074.47
   clause 0 : (parserStatementList) = []
   -- if parserStatementList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1033.1-1034.77
+  ;; ../../../../spec-concrete/1-syntax.watsup:1075.1-1076.77
   clause 1 : (parserStatementList') = $flatten_parserStatementList(parserStatementList) ++ [parserStatement]
   -- if parserStatementList' matches `%%`
   -- let parserStatementList parserStatement = parserStatementList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:1037.3-1037.73
+;; ../../../../spec-concrete/1-syntax.watsup:1079.3-1079.73
 syntax parserState = 
    | annotationList state name { parserStatementList transitionStatement }
 
-;; ../../../../spec-concrete/1-syntax.watsup:1040.1-1041.32
+;; ../../../../spec-concrete/1-syntax.watsup:1082.1-1083.32
 syntax parserStateList = 
    | annotationList state name { parserStatementList transitionStatement }
    | parserStateList parserState
 
-;; ../../../../spec-concrete/1-syntax.watsup:1043.1-1043.61
+;; ../../../../spec-concrete/1-syntax.watsup:1085.1-1086.51
 def $flatten_parserStateList(parserStateList) : parserState* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1044.1-1044.56
+  ;; ../../../../spec-concrete/1-syntax.watsup:1087.1-1087.56
   clause 0 : (parserStateList) = [parserState]
   -- if parserStateList <: parserState
   -- let parserState = parserStateList as parserState
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1045.1-1046.65
+  ;; ../../../../spec-concrete/1-syntax.watsup:1088.1-1089.65
   clause 1 : (parserStateList') = $flatten_parserStateList(parserStateList) ++ [parserState]
   -- if parserStateList' matches `%%`
   -- let parserStateList parserState = parserStateList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:1049.1-1052.24
+;; ../../../../spec-concrete/1-syntax.watsup:1092.1-1095.24
 syntax parserLocalDeclaration = 
    | annotationList const type name initializer ;
    | annotationList type ( argumentList ) name ;
@@ -2006,70 +2064,70 @@ syntax parserLocalDeclaration =
    | annotationList type name initializerOpt ;
    | annotationList value_set< valueSetType >( expression ) name ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:1055.1-1056.54
+;; ../../../../spec-concrete/1-syntax.watsup:1098.1-1099.54
 syntax parserLocalDeclarationList = 
    | 
    | parserLocalDeclarationList parserLocalDeclaration
 
-;; ../../../../spec-concrete/1-syntax.watsup:1058.1-1059.28
+;; ../../../../spec-concrete/1-syntax.watsup:1101.1-1103.63
 def $flatten_parserLocalDeclarationList(parserLocalDeclarationList) : parserLocalDeclaration* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1060.1-1060.54
+  ;; ../../../../spec-concrete/1-syntax.watsup:1104.1-1104.54
   clause 0 : (parserLocalDeclarationList) = []
   -- if parserLocalDeclarationList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1061.1-1065.34
+  ;; ../../../../spec-concrete/1-syntax.watsup:1105.1-1109.34
   clause 1 : (parserLocalDeclarationList') = $flatten_parserLocalDeclarationList(parserLocalDeclarationList) ++ [parserLocalDeclaration]
   -- if parserLocalDeclarationList' matches `%%`
   -- let parserLocalDeclarationList parserLocalDeclaration = parserLocalDeclarationList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:1068.3-1070.52
+;; ../../../../spec-concrete/1-syntax.watsup:1112.3-1114.52
 syntax parserDeclaration = 
    | annotationList parser name typeParameterListOpt ( parameterList ) constructorParameterListOpt { parserLocalDeclarationList parserStateList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:1080.16-1080.21
+;; ../../../../spec-concrete/1-syntax.watsup:1124.16-1124.21
 syntax const = 
    | const
 
-;; ../../../../spec-concrete/1-syntax.watsup:1083.1-1084.10
+;; ../../../../spec-concrete/1-syntax.watsup:1127.1-1128.10
 syntax constOpt = 
    | 
    | const
 
-;; ../../../../spec-concrete/1-syntax.watsup:1086.1-1086.41
+;; ../../../../spec-concrete/1-syntax.watsup:1130.1-1131.54
 def $flatten_constOpt(constOpt) : const? =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1087.1-1087.36
+  ;; ../../../../spec-concrete/1-syntax.watsup:1132.1-1132.36
   clause 0 : (constOpt) = ?()
   -- if constOpt matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1088.1-1088.37
+  ;; ../../../../spec-concrete/1-syntax.watsup:1133.1-1133.37
   clause 1 : (constOpt) = ?(const)
   -- if constOpt <: const
   -- let const = constOpt as const
 
-;; ../../../../spec-concrete/1-syntax.watsup:1094.19-1094.55
+;; ../../../../spec-concrete/1-syntax.watsup:1139.19-1139.55
 syntax tableKey = 
    | expression : name annotationList ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:1097.1-1098.26
+;; ../../../../spec-concrete/1-syntax.watsup:1142.1-1143.26
 syntax tableKeyList = 
    | 
    | tableKeyList tableKey
 
-;; ../../../../spec-concrete/1-syntax.watsup:1100.1-1100.52
+;; ../../../../spec-concrete/1-syntax.watsup:1145.1-1146.48
 def $flatten_tableKeyList(tableKeyList) : tableKey* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1101.1-1101.40
+  ;; ../../../../spec-concrete/1-syntax.watsup:1147.1-1147.40
   clause 0 : (tableKeyList) = []
   -- if tableKeyList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1102.1-1103.56
+  ;; ../../../../spec-concrete/1-syntax.watsup:1148.1-1149.56
   clause 1 : (tableKeyList') = $flatten_tableKeyList(tableKeyList) ++ [tableKey]
   -- if tableKeyList' matches `%%`
   -- let tableKeyList tableKey = tableKeyList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:1110.1-1111.42
+;; ../../../../spec-concrete/1-syntax.watsup:1156.1-1157.42
 syntax tableActionReference = 
    | text
    | apply
@@ -2082,90 +2140,90 @@ syntax tableActionReference =
    | . nonTypeName
    | prefixedNonTypeName ( argumentList )
 
-;; ../../../../spec-concrete/1-syntax.watsup:1113.22-1113.60
+;; ../../../../spec-concrete/1-syntax.watsup:1159.22-1159.60
 syntax tableAction = 
    | annotationList tableActionReference ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:1116.1-1117.32
+;; ../../../../spec-concrete/1-syntax.watsup:1162.1-1163.32
 syntax tableActionList = 
    | 
    | tableActionList tableAction
 
-;; ../../../../spec-concrete/1-syntax.watsup:1119.1-1119.61
+;; ../../../../spec-concrete/1-syntax.watsup:1165.1-1166.51
 def $flatten_tableActionList(tableActionList) : tableAction* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1120.1-1120.43
+  ;; ../../../../spec-concrete/1-syntax.watsup:1167.1-1167.43
   clause 0 : (tableActionList) = []
   -- if tableActionList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1121.1-1122.63
+  ;; ../../../../spec-concrete/1-syntax.watsup:1168.1-1169.63
   clause 1 : (tableActionList') = $flatten_tableActionList(tableActionList) ++ [tableAction]
   -- if tableActionList' matches `%%`
   -- let tableActionList tableAction = tableActionList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:1129.1-1130.35
+;; ../../../../spec-concrete/1-syntax.watsup:1176.1-1177.35
 syntax tableEntryPriority = 
    | priority= numberLiteral :
    | priority=( expression ):
 
-;; ../../../../spec-concrete/1-syntax.watsup:1133.1-1134.72
+;; ../../../../spec-concrete/1-syntax.watsup:1180.1-1181.72
 syntax tableEntry = 
    | constOpt tableEntryPriority keysetExpression : tableActionReference annotationList ;
    | constOpt keysetExpression : tableActionReference annotationList ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:1137.1-1138.30
+;; ../../../../spec-concrete/1-syntax.watsup:1184.1-1185.30
 syntax tableEntryList = 
    | 
    | tableEntryList tableEntry
 
-;; ../../../../spec-concrete/1-syntax.watsup:1140.1-1140.58
+;; ../../../../spec-concrete/1-syntax.watsup:1187.1-1188.51
 def $flatten_tableEntryList(tableEntryList) : tableEntry* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1141.1-1141.42
+  ;; ../../../../spec-concrete/1-syntax.watsup:1189.1-1189.42
   clause 0 : (tableEntryList) = []
   -- if tableEntryList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1142.1-1143.62
+  ;; ../../../../spec-concrete/1-syntax.watsup:1190.1-1191.62
   clause 1 : (tableEntryList') = $flatten_tableEntryList(tableEntryList) ++ [tableEntry]
   -- if tableEntryList' matches `%%`
   -- let tableEntryList tableEntry = tableEntryList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:1150.1-1153.59
+;; ../../../../spec-concrete/1-syntax.watsup:1198.1-1201.59
 syntax tableProperty = 
    | key={ tableKeyList }
    | actions={ tableActionList }
    | annotationList constOpt entries={ tableEntryList }
    | annotationList constOpt tableCustomName initializer ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:1156.1-1157.36
+;; ../../../../spec-concrete/1-syntax.watsup:1204.1-1205.36
 syntax tablePropertyList = 
    | 
    | tablePropertyList tableProperty
 
-;; ../../../../spec-concrete/1-syntax.watsup:1159.1-1159.67
+;; ../../../../spec-concrete/1-syntax.watsup:1207.1-1208.54
 def $flatten_tablePropertyList(tablePropertyList) : tableProperty* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1160.1-1160.45
+  ;; ../../../../spec-concrete/1-syntax.watsup:1209.1-1209.45
   clause 0 : (tablePropertyList) = []
   -- if tablePropertyList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1161.1-1162.69
+  ;; ../../../../spec-concrete/1-syntax.watsup:1210.1-1211.69
   clause 1 : (tablePropertyList') = $flatten_tablePropertyList(tablePropertyList) ++ [tableProperty]
   -- if tablePropertyList' matches `%%`
   -- let tablePropertyList tableProperty = tablePropertyList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:1165.3-1165.51
+;; ../../../../spec-concrete/1-syntax.watsup:1214.3-1214.51
 syntax tableDeclaration = 
    | annotationList table name { tablePropertyList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:1172.3-1172.73
+;; ../../../../spec-concrete/1-syntax.watsup:1221.3-1221.73
 syntax controlTypeDeclaration = 
    | annotationList control name typeParameterListOpt ( parameterList );
 
-;; ../../../../spec-concrete/1-syntax.watsup:1178.22-1178.36
+;; ../../../../spec-concrete/1-syntax.watsup:1227.22-1227.36
 syntax controlBody = blockStatement
 
-;; ../../../../spec-concrete/1-syntax.watsup:1181.1-1185.21
+;; ../../../../spec-concrete/1-syntax.watsup:1230.1-1234.21
 syntax controlLocalDeclaration = 
    | annotationList const type name initializer ;
    | annotationList type ( argumentList ) name ;
@@ -2174,32 +2232,32 @@ syntax controlLocalDeclaration =
    | annotationList action name ( parameterList ) blockStatement
    | annotationList table name { tablePropertyList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:1188.1-1189.56
+;; ../../../../spec-concrete/1-syntax.watsup:1237.1-1238.56
 syntax controlLocalDeclarationList = 
    | 
    | controlLocalDeclarationList controlLocalDeclaration
 
-;; ../../../../spec-concrete/1-syntax.watsup:1191.1-1192.29
+;; ../../../../spec-concrete/1-syntax.watsup:1240.1-1242.64
 def $flatten_controlLocalDeclarationList(controlLocalDeclarationList) : controlLocalDeclaration* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1194.1-1194.55
+  ;; ../../../../spec-concrete/1-syntax.watsup:1243.1-1243.55
   clause 0 : (controlLocalDeclarationList) = []
   -- if controlLocalDeclarationList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1195.1-1199.32
+  ;; ../../../../spec-concrete/1-syntax.watsup:1244.1-1248.32
   clause 1 : (controlLocalDeclarationList') = $flatten_controlLocalDeclarationList(controlLocalDeclarationList) ++ [controlLocalDeclaration]
   -- if controlLocalDeclarationList' matches `%%`
   -- let controlLocalDeclarationList controlLocalDeclaration = controlLocalDeclarationList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:1202.3-1204.55
+;; ../../../../spec-concrete/1-syntax.watsup:1251.3-1253.55
 syntax controlDeclaration = 
    | annotationList control name typeParameterListOpt ( parameterList ) constructorParameterListOpt { controlLocalDeclarationList apply controlBody }
 
-;; ../../../../spec-concrete/1-syntax.watsup:1211.3-1211.73
+;; ../../../../spec-concrete/1-syntax.watsup:1260.3-1260.73
 syntax packageTypeDeclaration = 
    | annotationList package name typeParameterListOpt ( parameterList );
 
-;; ../../../../spec-concrete/1-syntax.watsup:1218.1-1222.27
+;; ../../../../spec-concrete/1-syntax.watsup:1267.1-1271.27
 syntax typeDeclaration = 
    | annotationList enum name { nameList trailingCommaOpt }
    | annotationList enum type name { namedExpressionList trailingCommaOpt }
@@ -2212,7 +2270,7 @@ syntax typeDeclaration =
    | annotationList control name typeParameterListOpt ( parameterList );
    | annotationList package name typeParameterListOpt ( parameterList );
 
-;; ../../../../spec-concrete/1-syntax.watsup:1229.1-1238.20
+;; ../../../../spec-concrete/1-syntax.watsup:1278.1-1287.20
 syntax declaration = 
    | annotationList const type name initializer ;
    | annotationList type ( argumentList ) name ;
@@ -2236,7 +2294,7 @@ syntax declaration =
    | annotationList control name typeParameterListOpt ( parameterList );
    | annotationList package name typeParameterListOpt ( parameterList );
 
-;; ../../../../spec-concrete/1-syntax.watsup:1245.1-1262.27
+;; ../../../../spec-concrete/1-syntax.watsup:1294.1-1311.27
 syntax annotationToken = 
    | unexpected_token
    | abstract
@@ -2330,30 +2388,30 @@ syntax annotationToken =
    | ;
    | @
 
-;; ../../../../spec-concrete/1-syntax.watsup:1265.1-1267.35
+;; ../../../../spec-concrete/1-syntax.watsup:1314.1-1316.35
 syntax annotationBody = 
    | 
    | annotationBody ( annotationBody )
    | annotationBody annotationToken
 
-;; ../../../../spec-concrete/1-syntax.watsup:1270.3-1270.41
+;; ../../../../spec-concrete/1-syntax.watsup:1319.3-1319.41
 syntax structuredAnnotationBody = 
    | dataElementExpression trailingCommaOpt
 
-;; ../../../../spec-concrete/1-syntax.watsup:1273.1-1275.42
+;; ../../../../spec-concrete/1-syntax.watsup:1322.1-1324.42
 syntax annotation = 
    | @ name
    | @ name ( annotationBody )
    | @ name [ structuredAnnotationBody ]
 
-;; ../../../../spec-concrete/1-syntax.watsup:1278.1-1279.38
+;; ../../../../spec-concrete/1-syntax.watsup:1327.1-1328.38
 syntax annotationListNonEmpty = 
    | @ name
    | @ name ( annotationBody )
    | @ name [ structuredAnnotationBody ]
    | annotationListNonEmpty annotation
 
-;; ../../../../spec-concrete/1-syntax.watsup:1282.1-1283.27
+;; ../../../../spec-concrete/1-syntax.watsup:1331.1-1332.27
 syntax annotationList = 
    | 
    | @ name
@@ -2361,25 +2419,25 @@ syntax annotationList =
    | @ name [ structuredAnnotationBody ]
    | annotationListNonEmpty annotation
 
-;; ../../../../spec-concrete/1-syntax.watsup:1290.1-1292.17
+;; ../../../../spec-concrete/1-syntax.watsup:1339.1-1341.17
 syntax p4program = 
    | 
    | p4program declaration
    | p4program ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:1294.1-1294.49
+;; ../../../../spec-concrete/1-syntax.watsup:1343.1-1344.50
 def $flatten_p4program(p4program) : declaration* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1295.1-1295.37
+  ;; ../../../../spec-concrete/1-syntax.watsup:1345.1-1345.37
   clause 0 : (p4program) = []
   -- if p4program matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1296.1-1297.53
+  ;; ../../../../spec-concrete/1-syntax.watsup:1346.1-1347.53
   clause 1 : (p4program') = $flatten_p4program(p4program) ++ [declaration]
   -- if p4program' matches `%%`
   -- let p4program declaration = p4program'
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1298.1-1299.34
+  ;; ../../../../spec-concrete/1-syntax.watsup:1348.1-1349.34
   clause 2 : (p4program') = $flatten_p4program(p4program)
   -- if p4program' matches `%;`
   -- let p4program ; = p4program'
@@ -2393,7 +2451,7 @@ syntax cursor =
 ;; ../../../../spec-concrete/2.0-domain.watsup:13.17-13.21
 syntax nameIR = text
 
-;; ../../../../spec-concrete/2.0-domain.watsup:15.1-15.25
+;; ../../../../spec-concrete/2.0-domain.watsup:15.1-16.34
 def $name(name) : nameIR =
 
   ;; ../../../../spec-concrete/2.0-domain.watsup:17.1-17.21
@@ -2452,7 +2510,7 @@ def $name(name) : nameIR =
   clause 9 : (name) = "list"
   -- if name matches `LIST`
 
-;; ../../../../spec-concrete/2.0-domain.watsup:28.1-28.47
+;; ../../../../spec-concrete/2.0-domain.watsup:28.1-29.34
 def $tableCustomName(tableCustomName) : nameIR =
 
   ;; ../../../../spec-concrete/2.0-domain.watsup:30.1-30.32
@@ -2487,110 +2545,84 @@ syntax id = text
 ;; ../../../../spec-concrete/2.0-domain.watsup:47.14-47.16
 syntax tid = id
 
-;; ../../../../spec-concrete/2.0-domain.watsup:49.1-49.23
+;; ../../../../spec-concrete/2.0-domain.watsup:49.1-50.41
 def $fresh_tid : tid =
 
-;; ../../../../spec-concrete/2.0-domain.watsup:50.1-50.28
+;; ../../../../spec-concrete/2.0-domain.watsup:52.1-53.43
 def $fresh_tids(nat) : tid* =
 
-  ;; ../../../../spec-concrete/2.0-domain.watsup:52.1-52.25
+  ;; ../../../../spec-concrete/2.0-domain.watsup:54.1-54.25
   clause 0 : (nat) = []
   -- if (nat = 0)
 
-  ;; ../../../../spec-concrete/2.0-domain.watsup:53.1-55.22
+  ;; ../../../../spec-concrete/2.0-domain.watsup:55.1-57.22
   clause 1 : (n) = $fresh_tid :: $fresh_tids(n')
   -- if (n =/= 0)
   -- let int = (n - 1)
   -- if int <: nat
   -- let n' = int as nat
 
-;; ../../../../spec-concrete/2.0-domain.watsup:65.14-65.24
+;; ../../../../spec-concrete/2.0-domain.watsup:67.14-67.24
 syntax pid = 
    | id # bool
 
-;; ../../../../spec-concrete/2.0-domain.watsup:66.14-66.26
+;; ../../../../spec-concrete/2.0-domain.watsup:68.14-68.26
 syntax rid = 
    | id ( pid* )
 
-;; ../../../../spec-concrete/2.0-domain.watsup:68.1-68.36
+;; ../../../../spec-concrete/2.0-domain.watsup:70.1-70.36
 def $rid(name, parameterList) : rid =
 
-  ;; ../../../../spec-concrete/2.0-domain.watsup:72.1-73.42
+  ;; ../../../../spec-concrete/2.0-domain.watsup:74.1-75.42
   clause 0 : (name, parameterList) = $name(name) ( $pids(parameterList) )
 
-;; ../../../../spec-concrete/2.0-domain.watsup:69.1-69.32
+;; ../../../../spec-concrete/2.0-domain.watsup:71.1-71.32
 def $pids(parameterList) : pid* =
 
-  ;; ../../../../spec-concrete/2.0-domain.watsup:75.1-75.24
+  ;; ../../../../spec-concrete/2.0-domain.watsup:77.1-77.24
   clause 0 : (parameterList) = []
   -- if parameterList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/2.0-domain.watsup:76.1-76.39
+  ;; ../../../../spec-concrete/2.0-domain.watsup:78.1-78.39
   clause 1 : (parameterList) = [$pid(parameter)]
   -- if parameterList <: parameter
   -- let parameter = parameterList as parameter
 
-  ;; ../../../../spec-concrete/2.0-domain.watsup:77.1-78.56
+  ;; ../../../../spec-concrete/2.0-domain.watsup:79.1-80.56
   clause 2 : (parameterList) = $pids(nonEmptyParameterList as parameterList) ++ [$pid(parameter)]
   -- if parameterList <: nonEmptyParameterList
   -- let nonEmptyParameterList' = parameterList as nonEmptyParameterList
   -- if nonEmptyParameterList' matches `%,%`
   -- let nonEmptyParameterList , parameter = nonEmptyParameterList'
 
-;; ../../../../spec-concrete/2.0-domain.watsup:70.1-70.26
+;; ../../../../spec-concrete/2.0-domain.watsup:72.1-72.26
 def $pid(parameter) : pid =
 
-  ;; ../../../../spec-concrete/2.0-domain.watsup:80.1-80.51
+  ;; ../../../../spec-concrete/2.0-domain.watsup:82.1-82.51
   clause 0 : (_annotationList _direction _type name initializerOpt) = $name(name) # false
   -- if initializerOpt matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/2.0-domain.watsup:81.1-81.55
+  ;; ../../../../spec-concrete/2.0-domain.watsup:83.1-83.55
   clause 1 : (_annotationList _direction _type name initializerOpt) = $name(name) # true
   -- if initializerOpt <: initializer
   -- let initializer = initializerOpt as initializer
 
-;; ../../../../spec-concrete/2.0-domain.watsup:87.14-87.17
+;; ../../../../spec-concrete/2.0-domain.watsup:89.14-89.17
 syntax cid = rid
 
-;; ../../../../spec-concrete/2.0-domain.watsup:89.1-89.50
+;; ../../../../spec-concrete/2.0-domain.watsup:91.1-91.50
 def $cid(name, constructorParameterListOpt) : cid =
 
-  ;; ../../../../spec-concrete/2.0-domain.watsup:91.1-91.46
+  ;; ../../../../spec-concrete/2.0-domain.watsup:93.1-93.46
   clause 0 : (name, constructorParameterListOpt) = $name(name) ( [] )
   -- if constructorParameterListOpt matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/2.0-domain.watsup:92.1-93.42
+  ;; ../../../../spec-concrete/2.0-domain.watsup:94.1-95.42
   clause 1 : (name, constructorParameterListOpt) = $name(name) ( $pids(parameterList) )
   -- if constructorParameterListOpt matches `(%)`
   -- let ( parameterList ) = constructorParameterListOpt
 
-;; ../../../../spec-concrete/2.0-domain.watsup:96.1-96.48
-def $expression_as_lvalue(expression) : lvalue? =
-
-  ;; ../../../../spec-concrete/2.0-domain.watsup:98.1-98.69
-  clause 0 : (expression) = ?(referenceExpression as lvalue)
-  -- if expression <: referenceExpression
-  -- let referenceExpression = expression as referenceExpression
-
-  ;; ../../../../spec-concrete/2.0-domain.watsup:99.1-100.51
-  clause 1 : (expression') = ?(lvalue . member)
-  -- if expression' <: memberAccessExpression
-  -- let memberAccessBase . member = expression' as memberAccessExpression
-  -- if memberAccessBase <: expression
-  -- let expression = memberAccessBase as expression
-  -- let lvalue'?{lvalue' <- lvalue'?} = $expression_as_lvalue(expression)
-  -- if lvalue'?{lvalue' <- lvalue'?} matches (_)
-  -- let ?(lvalue) = lvalue'?{lvalue' <- lvalue'?}
-
-  ;; ../../../../spec-concrete/2.0-domain.watsup:101.1-102.51
-  clause 2 : (expression') = ?(( lvalue ))
-  -- if expression' <: parenthesizedExpression
-  -- let ( expression ) = expression' as parenthesizedExpression
-  -- let lvalue'?{lvalue' <- lvalue'?} = $expression_as_lvalue(expression)
-  -- if lvalue'?{lvalue' <- lvalue'?} matches (_)
-  -- let ?(lvalue) = lvalue'?{lvalue' <- lvalue'?}
-
-;; ../../../../spec-concrete/2.0-domain.watsup:108.14-108.17
+;; ../../../../spec-concrete/2.0-domain.watsup:101.14-101.17
 syntax oid = id*
 
 ;; ../../../../spec-concrete/2.1.1-value.watsup:14.1-17.18
@@ -3037,46 +3069,41 @@ syntax parameterTypeIR =
 syntax actionTypeIR = 
    | action( parameterTypeIR* )
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:175.3-175.52
-syntax builtinFunctionTypeIR = 
-   | builtin_function( parameterTypeIR* )-> typeIR
-
-;; ../../../../spec-concrete/2.2.1-type.watsup:178.3-178.44
+;; ../../../../spec-concrete/2.2.1-type.watsup:175.3-175.44
 syntax definedFunctionTypeIR = 
    | function( parameterTypeIR* )-> typeIR
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:181.3-181.51
+;; ../../../../spec-concrete/2.2.1-type.watsup:178.3-178.51
 syntax externFunctionTypeIR = 
    | extern_function( parameterTypeIR* )-> typeIR
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:184.1-186.25
+;; ../../../../spec-concrete/2.2.1-type.watsup:181.1-182.25
 syntax functionTypeIR = 
-   | builtin_function( parameterTypeIR* )-> typeIR
    | function( parameterTypeIR* )-> typeIR
    | extern_function( parameterTypeIR* )-> typeIR
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:189.3-189.50
+;; ../../../../spec-concrete/2.2.1-type.watsup:185.3-185.50
 syntax builtinMethodTypeIR = 
    | builtin_method( parameterTypeIR* )-> typeIR
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:192.1-193.60
+;; ../../../../spec-concrete/2.2.1-type.watsup:188.1-189.60
 syntax externMethodTypeIR = 
    | extern_method( parameterTypeIR* )-> typeIR
    | extern_methodabstract( parameterTypeIR* )-> typeIR
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:196.3-196.37
+;; ../../../../spec-concrete/2.2.1-type.watsup:192.3-192.37
 syntax parserApplyMethodTypeIR = 
    | parser_apply( parameterTypeIR* )
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:199.3-199.38
+;; ../../../../spec-concrete/2.2.1-type.watsup:195.3-195.38
 syntax controlApplyMethodTypeIR = 
    | control_apply( parameterTypeIR* )
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:202.3-202.25
+;; ../../../../spec-concrete/2.2.1-type.watsup:198.3-198.25
 syntax tableApplyMethodTypeIR = 
    | table_apply-> typeIR
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:205.1-209.27
+;; ../../../../spec-concrete/2.2.1-type.watsup:201.1-205.27
 syntax methodTypeIR = 
    | builtin_method( parameterTypeIR* )-> typeIR
    | extern_method( parameterTypeIR* )-> typeIR
@@ -3085,10 +3112,9 @@ syntax methodTypeIR =
    | control_apply( parameterTypeIR* )
    | table_apply-> typeIR
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:212.1-214.17
+;; ../../../../spec-concrete/2.2.1-type.watsup:208.1-210.17
 syntax routineTypeIR = 
    | action( parameterTypeIR* )
-   | builtin_function( parameterTypeIR* )-> typeIR
    | function( parameterTypeIR* )-> typeIR
    | extern_function( parameterTypeIR* )-> typeIR
    | builtin_method( parameterTypeIR* )-> typeIR
@@ -3098,17 +3124,16 @@ syntax routineTypeIR =
    | control_apply( parameterTypeIR* )
    | table_apply-> typeIR
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:220.31-220.44
+;; ../../../../spec-concrete/2.2.1-type.watsup:216.31-216.44
 syntax monoRoutineTypeDefIR = routineTypeIR
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:222.31-222.62
+;; ../../../../spec-concrete/2.2.1-type.watsup:218.31-218.62
 syntax polyRoutineTypeDefIR = 
    | routineTypeIR < tid* , tid* >
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:225.1-226.25
+;; ../../../../spec-concrete/2.2.1-type.watsup:221.1-222.25
 syntax routineTypeDefIR = 
    | action( parameterTypeIR* )
-   | builtin_function( parameterTypeIR* )-> typeIR
    | function( parameterTypeIR* )-> typeIR
    | extern_function( parameterTypeIR* )-> typeIR
    | builtin_method( parameterTypeIR* )-> typeIR
@@ -3119,14 +3144,14 @@ syntax routineTypeDefIR =
    | table_apply-> typeIR
    | routineTypeIR < tid* , tid* >
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:232.37-232.52
+;; ../../../../spec-concrete/2.2.1-type.watsup:228.37-228.52
 syntax constructorParameterTypeIR = parameterTypeIR
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:239.3-239.58
+;; ../../../../spec-concrete/2.2.1-type.watsup:235.3-235.58
 syntax constructorTypeIR = 
    | constructor( constructorParameterTypeIR* )-> typeIR
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:245.31-245.66
+;; ../../../../spec-concrete/2.2.1-type.watsup:241.31-241.66
 syntax constructorTypeDefIR = 
    | constructorTypeIR < tid* , tid* >
 
@@ -3590,34 +3615,27 @@ def $free_routineType(routineTypeIR) : bound =
 
   ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:145.1-151.43
   clause 1 : (routineTypeIR) = $union_set<tid>(bound_params, bound_ret)
-  -- if routineTypeIR <: builtinFunctionTypeIR
-  -- let builtin_function( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret = routineTypeIR as builtinFunctionTypeIR
-  -- let bound_params = $unions_set<tid>($free_parameterType(parameterTypeIR)*{parameterTypeIR <- parameterTypeIR*})
-  -- let bound_ret = $free_type(typeIR_ret)
-
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:153.1-159.43
-  clause 2 : (routineTypeIR) = $union_set<tid>(bound_params, bound_ret)
   -- if routineTypeIR <: definedFunctionTypeIR
   -- let function( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret = routineTypeIR as definedFunctionTypeIR
   -- let bound_params = $unions_set<tid>($free_parameterType(parameterTypeIR)*{parameterTypeIR <- parameterTypeIR*})
   -- let bound_ret = $free_type(typeIR_ret)
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:161.1-167.43
-  clause 3 : (routineTypeIR) = $union_set<tid>(bound_params, bound_ret)
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:153.1-159.43
+  clause 2 : (routineTypeIR) = $union_set<tid>(bound_params, bound_ret)
   -- if routineTypeIR <: externFunctionTypeIR
   -- let extern_function( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret = routineTypeIR as externFunctionTypeIR
   -- let bound_params = $unions_set<tid>($free_parameterType(parameterTypeIR)*{parameterTypeIR <- parameterTypeIR*})
   -- let bound_ret = $free_type(typeIR_ret)
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:169.1-175.43
-  clause 4 : (routineTypeIR) = $union_set<tid>(bound_params, bound_ret)
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:161.1-167.43
+  clause 3 : (routineTypeIR) = $union_set<tid>(bound_params, bound_ret)
   -- if routineTypeIR <: builtinMethodTypeIR
   -- let builtin_method( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret = routineTypeIR as builtinMethodTypeIR
   -- let bound_params = $unions_set<tid>($free_parameterType(parameterTypeIR)*{parameterTypeIR <- parameterTypeIR*})
   -- let bound_ret = $free_type(typeIR_ret)
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:177.1-183.43
-  clause 5 : (routineTypeIR) = $union_set<tid>(bound_params, bound_ret)
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:169.1-175.43
+  clause 4 : (routineTypeIR) = $union_set<tid>(bound_params, bound_ret)
   -- if routineTypeIR <: externMethodTypeIR
   -- let externMethodTypeIR = routineTypeIR as externMethodTypeIR
   -- if externMethodTypeIR matches `EXTERN_METHOD(%)->%`
@@ -3625,8 +3643,8 @@ def $free_routineType(routineTypeIR) : bound =
   -- let bound_params = $unions_set<tid>($free_parameterType(parameterTypeIR)*{parameterTypeIR <- parameterTypeIR*})
   -- let bound_ret = $free_type(typeIR_ret)
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:185.1-191.43
-  clause 6 : (routineTypeIR) = $union_set<tid>(bound_params, bound_ret)
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:177.1-183.43
+  clause 5 : (routineTypeIR) = $union_set<tid>(bound_params, bound_ret)
   -- if routineTypeIR <: externMethodTypeIR
   -- let externMethodTypeIR = routineTypeIR as externMethodTypeIR
   -- if externMethodTypeIR matches `EXTERN_METHODABSTRACT(%)->%`
@@ -3634,20 +3652,20 @@ def $free_routineType(routineTypeIR) : bound =
   -- let bound_params = $unions_set<tid>($free_parameterType(parameterTypeIR)*{parameterTypeIR <- parameterTypeIR*})
   -- let bound_ret = $free_type(typeIR_ret)
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:193.1-198.64
-  clause 7 : (routineTypeIR) = bound_params
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:185.1-190.64
+  clause 6 : (routineTypeIR) = bound_params
   -- if routineTypeIR <: parserApplyMethodTypeIR
   -- let parser_apply( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} ) = routineTypeIR as parserApplyMethodTypeIR
   -- let bound_params = $unions_set<tid>($free_parameterType(parameterTypeIR)*{parameterTypeIR <- parameterTypeIR*})
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:200.1-205.64
-  clause 8 : (routineTypeIR) = bound_params
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:192.1-197.64
+  clause 7 : (routineTypeIR) = bound_params
   -- if routineTypeIR <: controlApplyMethodTypeIR
   -- let control_apply( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} ) = routineTypeIR as controlApplyMethodTypeIR
   -- let bound_params = $unions_set<tid>($free_parameterType(parameterTypeIR)*{parameterTypeIR <- parameterTypeIR*})
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:207.1-211.43
-  clause 9 : (routineTypeIR) = bound_ret
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:199.1-203.43
+  clause 8 : (routineTypeIR) = bound_ret
   -- if routineTypeIR <: tableApplyMethodTypeIR
   -- let table_apply-> typeIR_ret = routineTypeIR as tableApplyMethodTypeIR
   -- let bound_ret = $free_type(typeIR_ret)
@@ -3655,12 +3673,12 @@ def $free_routineType(routineTypeIR) : bound =
 ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:12.1-12.51
 def $free_routineTypeDef(routineTypeDefIR) : bound =
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:217.1-218.37
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:209.1-210.37
   clause 0 : (routineTypeDefIR) = $free_routineType(routineTypeIR)
   -- if routineTypeDefIR <: routineTypeIR
   -- let routineTypeIR = routineTypeDefIR as routineTypeIR
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:220.1-225.49
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:212.1-217.49
   clause 1 : (routineTypeDefIR) = $diff_set<tid>(bound_base, bound_tparams)
   -- if routineTypeDefIR <: polyRoutineTypeDefIR
   -- let routineTypeIR < tid*{tid <- tid*} , tid_hidden*{tid_hidden <- tid_hidden*} > = routineTypeDefIR as polyRoutineTypeDefIR
@@ -3670,18 +3688,18 @@ def $free_routineTypeDef(routineTypeDefIR) : bound =
 ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:14.1-14.40
 def $subst_type(theta, typeIR) : typeIR =
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:231.1-231.43
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:223.1-223.43
   clause 0 : (set<pair<tid, typeIR>>, typeIR) = typeIR
   -- if (set<pair<tid, typeIR>> = { [] })
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:232.1-233.15
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:224.1-225.15
   clause 1 : (theta, typeIR) = $subst_type'(theta, typeIR)
   -- otherwise
 
 ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:15.1-15.41
 def $subst_type'(theta, typeIR) : typeIR =
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:237.1-238.52
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:229.1-230.52
   clause 0 : (theta, typeIR') = typeIR
   -- if typeIR' <: nameTypeIR
   -- let tid tid = typeIR' as nameTypeIR
@@ -3689,7 +3707,7 @@ def $subst_type'(theta, typeIR) : typeIR =
   -- if typeIR''?{typeIR'' <- typeIR''?} matches (_)
   -- let ?(typeIR) = typeIR''?{typeIR'' <- typeIR''?}
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:240.1-244.54
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:232.1-236.54
   clause 1 : (theta, typeIR') = polyTypeDefIR_subst < typeIR_subst*{typeIR_subst <- typeIR_subst*} > as typeIR
   -- if typeIR' <: specializedTypeIR
   -- let polyTypeDefIR < typeIR*{typeIR <- typeIR*} > = typeIR' as specializedTypeIR
@@ -3698,55 +3716,55 @@ def $subst_type'(theta, typeIR) : typeIR =
   -- let polyTypeDefIR_subst = typeDefIR as polyTypeDefIR
   -- (let typeIR_subst = $subst_type'(theta, typeIR))*{typeIR <- typeIR*, typeIR_subst <- typeIR_subst*}
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:248.1-250.51
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:240.1-242.51
   clause 2 : (theta, typeIR') = typedef tid typeIR_subst as typeIR
   -- if typeIR' <: typedefTypeIR
   -- let typedef tid typeIR = typeIR' as typedefTypeIR
   -- let typeIR_subst = $subst_type'(theta, typeIR)
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:252.1-254.51
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:244.1-246.51
   clause 3 : (theta, typeIR') = type tid typeIR_subst as typeIR
   -- if typeIR' <: newTypeIR
   -- let type tid typeIR = typeIR' as newTypeIR
   -- let typeIR_subst = $subst_type'(theta, typeIR)
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:258.1-260.51
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:250.1-252.51
   clause 4 : (theta, typeIR') = list< typeIR_subst > as typeIR
   -- if typeIR' <: listTypeIR
   -- let list< typeIR > = typeIR' as listTypeIR
   -- let typeIR_subst = $subst_type'(theta, typeIR)
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:262.1-264.54
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:254.1-256.54
   clause 5 : (theta, typeIR') = tuple< typeIR_subst*{typeIR_subst <- typeIR_subst*} > as typeIR
   -- if typeIR' <: tupleTypeIR
   -- let tuple< typeIR*{typeIR <- typeIR*} > = typeIR' as tupleTypeIR
   -- (let typeIR_subst = $subst_type'(theta, typeIR))*{typeIR <- typeIR*, typeIR_subst <- typeIR_subst*}
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:266.1-268.51
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:258.1-260.51
   clause 6 : (theta, typeIR') = typeIR_subst [ n ] as typeIR
   -- if typeIR' <: headerStackTypeIR
   -- let typeIR [ n ] = typeIR' as headerStackTypeIR
   -- let typeIR_subst = $subst_type'(theta, typeIR)
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:270.1-275.58
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:262.1-267.58
   clause 7 : (theta, typeIR) = struct tid { typeIR_f_subst id_f ;*{id_f <- id_f*, typeIR_f_subst <- typeIR_f_subst*} } as typeIR
   -- if typeIR <: structTypeIR
   -- let struct tid { typeIR_f id_f ;*{id_f <- id_f*, typeIR_f <- typeIR_f*} } = typeIR as structTypeIR
   -- (let typeIR_f_subst = $subst_type'(theta, typeIR_f))*{typeIR_f <- typeIR_f*, typeIR_f_subst <- typeIR_f_subst*}
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:277.1-282.58
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:269.1-274.58
   clause 8 : (theta, typeIR) = header tid { typeIR_f_subst id_f ;*{id_f <- id_f*, typeIR_f_subst <- typeIR_f_subst*} } as typeIR
   -- if typeIR <: headerTypeIR
   -- let header tid { typeIR_f id_f ;*{id_f <- id_f*, typeIR_f <- typeIR_f*} } = typeIR as headerTypeIR
   -- (let typeIR_f_subst = $subst_type'(theta, typeIR_f))*{typeIR_f <- typeIR_f*, typeIR_f_subst <- typeIR_f_subst*}
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:284.1-289.58
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:276.1-281.58
   clause 9 : (theta, typeIR) = header_union tid { typeIR_f_subst id_f ;*{id_f <- id_f*, typeIR_f_subst <- typeIR_f_subst*} } as typeIR
   -- if typeIR <: headerUnionTypeIR
   -- let header_union tid { typeIR_f id_f ;*{id_f <- id_f*, typeIR_f <- typeIR_f*} } = typeIR as headerUnionTypeIR
   -- (let typeIR_f_subst = $subst_type'(theta, typeIR_f))*{typeIR_f <- typeIR_f*, typeIR_f_subst <- typeIR_f_subst*}
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:291.1-296.51
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:283.1-288.51
   clause 10 : (theta, typeIR') = enum tid # typeIR_subst { valueFieldIR*{valueFieldIR <- valueFieldIR*} } as typeIR
   -- if typeIR' <: enumTypeIR
   -- let enumTypeIR = typeIR' as enumTypeIR
@@ -3754,37 +3772,37 @@ def $subst_type'(theta, typeIR) : typeIR =
   -- let enum tid # typeIR { valueFieldIR*{valueFieldIR <- valueFieldIR*} } = enumTypeIR
   -- let typeIR_subst = $subst_type'(theta, typeIR)
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:300.1-306.60
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:292.1-298.60
   clause 11 : (theta, typeIR) = extern tid { rid : routineTypeDefIR_subst*{rid <- rid*, routineTypeDefIR_subst <- routineTypeDefIR_subst*} } as typeIR
   -- if typeIR <: externObjectTypeIR
   -- let extern tid { rid : routineTypeDefIR*{rid <- rid*, routineTypeDefIR <- routineTypeDefIR*} } = typeIR as externObjectTypeIR
   -- (let routineTypeDefIR_subst = $subst_routineTypeDef'(theta, routineTypeDefIR))*{routineTypeDefIR <- routineTypeDefIR*, routineTypeDefIR_subst <- routineTypeDefIR_subst*}
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:308.1-311.58
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:300.1-303.58
   clause 12 : (theta, typeIR) = parser( parameterTypeIR_subst*{parameterTypeIR_subst <- parameterTypeIR_subst*} ) as typeIR
   -- if typeIR <: parserObjectTypeIR
   -- let parser( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} ) = typeIR as parserObjectTypeIR
   -- (let parameterTypeIR_subst = $subst_parameterType'(theta, parameterTypeIR))*{parameterTypeIR <- parameterTypeIR*, parameterTypeIR_subst <- parameterTypeIR_subst*}
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:313.1-316.58
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:305.1-308.58
   clause 13 : (theta, typeIR) = control( parameterTypeIR_subst*{parameterTypeIR_subst <- parameterTypeIR_subst*} ) as typeIR
   -- if typeIR <: controlObjectTypeIR
   -- let control( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} ) = typeIR as controlObjectTypeIR
   -- (let parameterTypeIR_subst = $subst_parameterType'(theta, parameterTypeIR))*{parameterTypeIR <- parameterTypeIR*, parameterTypeIR_subst <- parameterTypeIR_subst*}
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:318.1-320.54
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:310.1-312.54
   clause 14 : (theta, typeIR') = package< typeIR_subst*{typeIR_subst <- typeIR_subst*} > as typeIR
   -- if typeIR' <: packageObjectTypeIR
   -- let package< typeIR*{typeIR <- typeIR*} > = typeIR' as packageObjectTypeIR
   -- (let typeIR_subst = $subst_type'(theta, typeIR))*{typeIR <- typeIR*, typeIR_subst <- typeIR_subst*}
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:322.1-324.51
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:314.1-316.51
   clause 15 : (theta, typeIR') = table tid # typeIR_subst as typeIR
   -- if typeIR' <: tableObjectTypeIR
   -- let table tid # typeIR = typeIR' as tableObjectTypeIR
   -- let typeIR_subst = $subst_type'(theta, typeIR)
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:328.1-330.54
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:320.1-322.54
   clause 16 : (theta, typeIR') = seq< typeIR_subst*{typeIR_subst <- typeIR_subst*} > as typeIR
   -- if typeIR' <: sequenceTypeIR
   -- let sequenceTypeIR = typeIR' as sequenceTypeIR
@@ -3792,7 +3810,7 @@ def $subst_type'(theta, typeIR) : typeIR =
   -- let seq< typeIR*{typeIR <- typeIR*} > = sequenceTypeIR
   -- (let typeIR_subst = $subst_type'(theta, typeIR))*{typeIR <- typeIR*, typeIR_subst <- typeIR_subst*}
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:332.1-334.54
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:324.1-326.54
   clause 17 : (theta, typeIR') = seq< typeIR_subst*{typeIR_subst <- typeIR_subst*} ,...> as typeIR
   -- if typeIR' <: sequenceTypeIR
   -- let sequenceTypeIR = typeIR' as sequenceTypeIR
@@ -3800,7 +3818,7 @@ def $subst_type'(theta, typeIR) : typeIR =
   -- let seq< typeIR*{typeIR <- typeIR*} ,...> = sequenceTypeIR
   -- (let typeIR_subst = $subst_type'(theta, typeIR))*{typeIR <- typeIR*, typeIR_subst <- typeIR_subst*}
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:336.1-341.58
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:328.1-333.58
   clause 18 : (theta, typeIR) = record{ typeIR_f_subst id_f ;*{id_f <- id_f*, typeIR_f_subst <- typeIR_f_subst*} } as typeIR
   -- if typeIR <: recordTypeIR
   -- let recordTypeIR = typeIR as recordTypeIR
@@ -3808,7 +3826,7 @@ def $subst_type'(theta, typeIR) : typeIR =
   -- let record{ typeIR_f id_f ;*{id_f <- id_f*, typeIR_f <- typeIR_f*} } = recordTypeIR
   -- (let typeIR_f_subst = $subst_type'(theta, typeIR_f))*{typeIR_f <- typeIR_f*, typeIR_f_subst <- typeIR_f_subst*}
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:343.1-348.58
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:335.1-340.58
   clause 19 : (theta, typeIR) = record{ typeIR_f_subst id_f ;*{id_f <- id_f*, typeIR_f_subst <- typeIR_f_subst*} ,...} as typeIR
   -- if typeIR <: recordTypeIR
   -- let recordTypeIR = typeIR as recordTypeIR
@@ -3816,36 +3834,36 @@ def $subst_type'(theta, typeIR) : typeIR =
   -- let record{ typeIR_f id_f ;*{id_f <- id_f*, typeIR_f <- typeIR_f*} ,...} = recordTypeIR
   -- (let typeIR_f_subst = $subst_type'(theta, typeIR_f))*{typeIR_f <- typeIR_f*, typeIR_f_subst <- typeIR_f_subst*}
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:350.1-352.54
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:342.1-344.54
   clause 20 : (theta, typeIR') = set< typeIR_subst*{typeIR_subst <- typeIR_subst*} > as typeIR
   -- if typeIR' <: setTypeIR
   -- let set< typeIR*{typeIR <- typeIR*} > = typeIR' as setTypeIR
   -- (let typeIR_subst = $subst_type'(theta, typeIR))*{typeIR <- typeIR*, typeIR_subst <- typeIR_subst*}
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:356.1-357.15
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:348.1-349.15
   clause 21 : (theta, typeIR) = typeIR
   -- otherwise
 
 ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:16.1-16.49
 def $subst_typeDef(theta, typeDefIR) : typeDefIR =
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:363.1-363.52
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:355.1-355.52
   clause 0 : (set<pair<tid, typeIR>>, typeDefIR) = typeDefIR
   -- if (set<pair<tid, typeIR>> = { [] })
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:364.1-366.15
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:356.1-358.15
   clause 1 : (theta, typeDefIR) = $subst_typeDef'(theta, typeDefIR)
   -- otherwise
 
 ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:17.1-17.50
 def $subst_typeDef'(theta, typeDefIR) : typeDefIR =
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:368.1-368.65
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:360.1-360.65
   clause 0 : (theta, typeDefIR) = $subst_type'(theta, typeIR) as typeDefIR
   -- if typeDefIR <: typeIR
   -- let typeIR = typeDefIR as typeIR
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:370.1-389.62
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:362.1-381.62
   clause 1 : (theta, typeDefIR) = typeIR_base_subst < tid_fresh_spec*{tid_fresh_spec <- tid_fresh_spec*} , tid_fresh_hidden*{tid_fresh_hidden <- tid_fresh_hidden*} > as typeDefIR
   -- if typeDefIR <: polyTypeDefIR
   -- let typeIR_base < tid*{tid <- tid*} , tid_hidden*{tid_hidden <- tid_hidden*} > = typeDefIR as polyTypeDefIR
@@ -3865,71 +3883,64 @@ def $subst_typeDef'(theta, typeDefIR) : typeDefIR =
 ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:18.1-18.67
 def $subst_parameterType(theta, parameterTypeIR) : parameterTypeIR =
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:395.1-396.20
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:387.1-388.20
   clause 0 : (set<pair<tid, typeIR>>, parameterTypeIR) = parameterTypeIR
   -- if (set<pair<tid, typeIR>> = { [] })
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:397.1-399.15
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:389.1-391.15
   clause 1 : (theta, parameterTypeIR) = $subst_parameterType'(theta, parameterTypeIR)
   -- otherwise
 
 ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:19.1-19.68
 def $subst_parameterType'(theta, parameterTypeIR) : parameterTypeIR =
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:401.1-403.51
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:393.1-395.51
   clause 0 : (theta, direction typeIR id value?{value <- value?}) = direction typeIR_subst id value?{value <- value?}
   -- let typeIR_subst = $subst_type'(theta, typeIR)
 
 ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:20.1-20.61
 def $subst_routineType(theta, routineTypeIR) : routineTypeIR =
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:409.1-410.18
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:401.1-402.18
   clause 0 : (set<pair<tid, typeIR>>, routineTypeIR) = routineTypeIR
   -- if (set<pair<tid, typeIR>> = { [] })
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:411.1-413.15
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:403.1-405.15
   clause 1 : (theta, routineTypeIR) = $subst_routineType'(theta, routineTypeIR)
   -- otherwise
 
 ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:21.1-21.62
 def $subst_routineType'(theta, routineTypeIR) : routineTypeIR =
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:415.1-421.58
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:407.1-413.58
   clause 0 : (theta, routineTypeIR) = action( parameterTypeIR_subst*{parameterTypeIR_subst <- parameterTypeIR_subst*} ) as routineTypeIR
   -- if routineTypeIR <: actionTypeIR
   -- let action( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} ) = routineTypeIR as actionTypeIR
   -- (let parameterTypeIR_subst = $subst_parameterType'(theta, parameterTypeIR))*{parameterTypeIR <- parameterTypeIR*, parameterTypeIR_subst <- parameterTypeIR_subst*}
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:423.1-430.59
-  clause 1 : (theta, routineTypeIR) = builtin_function( parameterTypeIR_subst*{parameterTypeIR_subst <- parameterTypeIR_subst*} )-> typeIR_ret_subst as routineTypeIR
-  -- if routineTypeIR <: builtinFunctionTypeIR
-  -- let builtin_function( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret = routineTypeIR as builtinFunctionTypeIR
-  -- (let parameterTypeIR_subst = $subst_parameterType'(theta, parameterTypeIR))*{parameterTypeIR <- parameterTypeIR*, parameterTypeIR_subst <- parameterTypeIR_subst*}
-  -- let typeIR_ret_subst = $subst_type'(theta, typeIR_ret)
-
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:432.1-439.59
-  clause 2 : (theta, routineTypeIR) = function( parameterTypeIR_subst*{parameterTypeIR_subst <- parameterTypeIR_subst*} )-> typeIR_ret_subst as routineTypeIR
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:415.1-422.59
+  clause 1 : (theta, routineTypeIR) = function( parameterTypeIR_subst*{parameterTypeIR_subst <- parameterTypeIR_subst*} )-> typeIR_ret_subst as routineTypeIR
   -- if routineTypeIR <: definedFunctionTypeIR
   -- let function( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret = routineTypeIR as definedFunctionTypeIR
   -- (let parameterTypeIR_subst = $subst_parameterType'(theta, parameterTypeIR))*{parameterTypeIR <- parameterTypeIR*, parameterTypeIR_subst <- parameterTypeIR_subst*}
   -- let typeIR_ret_subst = $subst_type'(theta, typeIR_ret)
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:441.1-448.59
-  clause 3 : (theta, routineTypeIR) = extern_function( parameterTypeIR_subst*{parameterTypeIR_subst <- parameterTypeIR_subst*} )-> typeIR_ret_subst as routineTypeIR
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:424.1-431.59
+  clause 2 : (theta, routineTypeIR) = extern_function( parameterTypeIR_subst*{parameterTypeIR_subst <- parameterTypeIR_subst*} )-> typeIR_ret_subst as routineTypeIR
   -- if routineTypeIR <: externFunctionTypeIR
   -- let extern_function( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret = routineTypeIR as externFunctionTypeIR
   -- (let parameterTypeIR_subst = $subst_parameterType'(theta, parameterTypeIR))*{parameterTypeIR <- parameterTypeIR*, parameterTypeIR_subst <- parameterTypeIR_subst*}
   -- let typeIR_ret_subst = $subst_type'(theta, typeIR_ret)
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:450.1-457.59
-  clause 4 : (theta, routineTypeIR) = builtin_method( parameterTypeIR_subst*{parameterTypeIR_subst <- parameterTypeIR_subst*} )-> typeIR_ret_subst as routineTypeIR
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:433.1-440.59
+  clause 3 : (theta, routineTypeIR) = builtin_method( parameterTypeIR_subst*{parameterTypeIR_subst <- parameterTypeIR_subst*} )-> typeIR_ret_subst as routineTypeIR
   -- if routineTypeIR <: builtinMethodTypeIR
   -- let builtin_method( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret = routineTypeIR as builtinMethodTypeIR
   -- (let parameterTypeIR_subst = $subst_parameterType'(theta, parameterTypeIR))*{parameterTypeIR <- parameterTypeIR*, parameterTypeIR_subst <- parameterTypeIR_subst*}
   -- let typeIR_ret_subst = $subst_type'(theta, typeIR_ret)
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:459.1-466.59
-  clause 5 : (theta, routineTypeIR) = extern_method( parameterTypeIR_subst*{parameterTypeIR_subst <- parameterTypeIR_subst*} )-> typeIR_ret_subst as routineTypeIR
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:442.1-449.59
+  clause 4 : (theta, routineTypeIR) = extern_method( parameterTypeIR_subst*{parameterTypeIR_subst <- parameterTypeIR_subst*} )-> typeIR_ret_subst as routineTypeIR
   -- if routineTypeIR <: externMethodTypeIR
   -- let externMethodTypeIR = routineTypeIR as externMethodTypeIR
   -- if externMethodTypeIR matches `EXTERN_METHOD(%)->%`
@@ -3937,8 +3948,8 @@ def $subst_routineType'(theta, routineTypeIR) : routineTypeIR =
   -- (let parameterTypeIR_subst = $subst_parameterType'(theta, parameterTypeIR))*{parameterTypeIR <- parameterTypeIR*, parameterTypeIR_subst <- parameterTypeIR_subst*}
   -- let typeIR_ret_subst = $subst_type'(theta, typeIR_ret)
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:468.1-475.59
-  clause 6 : (theta, routineTypeIR) = extern_methodabstract( parameterTypeIR_subst*{parameterTypeIR_subst <- parameterTypeIR_subst*} )-> typeIR_ret_subst as routineTypeIR
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:451.1-458.59
+  clause 5 : (theta, routineTypeIR) = extern_methodabstract( parameterTypeIR_subst*{parameterTypeIR_subst <- parameterTypeIR_subst*} )-> typeIR_ret_subst as routineTypeIR
   -- if routineTypeIR <: externMethodTypeIR
   -- let externMethodTypeIR = routineTypeIR as externMethodTypeIR
   -- if externMethodTypeIR matches `EXTERN_METHODABSTRACT(%)->%`
@@ -3946,20 +3957,20 @@ def $subst_routineType'(theta, routineTypeIR) : routineTypeIR =
   -- (let parameterTypeIR_subst = $subst_parameterType'(theta, parameterTypeIR))*{parameterTypeIR <- parameterTypeIR*, parameterTypeIR_subst <- parameterTypeIR_subst*}
   -- let typeIR_ret_subst = $subst_type'(theta, typeIR_ret)
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:477.1-483.58
-  clause 7 : (theta, routineTypeIR) = parser_apply( parameterTypeIR_subst*{parameterTypeIR_subst <- parameterTypeIR_subst*} ) as routineTypeIR
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:460.1-466.58
+  clause 6 : (theta, routineTypeIR) = parser_apply( parameterTypeIR_subst*{parameterTypeIR_subst <- parameterTypeIR_subst*} ) as routineTypeIR
   -- if routineTypeIR <: parserApplyMethodTypeIR
   -- let parser_apply( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} ) = routineTypeIR as parserApplyMethodTypeIR
   -- (let parameterTypeIR_subst = $subst_parameterType'(theta, parameterTypeIR))*{parameterTypeIR <- parameterTypeIR*, parameterTypeIR_subst <- parameterTypeIR_subst*}
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:485.1-491.58
-  clause 8 : (theta, routineTypeIR) = control_apply( parameterTypeIR_subst*{parameterTypeIR_subst <- parameterTypeIR_subst*} ) as routineTypeIR
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:468.1-474.58
+  clause 7 : (theta, routineTypeIR) = control_apply( parameterTypeIR_subst*{parameterTypeIR_subst <- parameterTypeIR_subst*} ) as routineTypeIR
   -- if routineTypeIR <: controlApplyMethodTypeIR
   -- let control_apply( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} ) = routineTypeIR as controlApplyMethodTypeIR
   -- (let parameterTypeIR_subst = $subst_parameterType'(theta, parameterTypeIR))*{parameterTypeIR <- parameterTypeIR*, parameterTypeIR_subst <- parameterTypeIR_subst*}
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:493.1-498.59
-  clause 9 : (theta, routineTypeIR) = table_apply-> typeIR_ret_subst as routineTypeIR
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:476.1-481.59
+  clause 8 : (theta, routineTypeIR) = table_apply-> typeIR_ret_subst as routineTypeIR
   -- if routineTypeIR <: tableApplyMethodTypeIR
   -- let table_apply-> typeIR_ret = routineTypeIR as tableApplyMethodTypeIR
   -- let typeIR_ret_subst = $subst_type'(theta, typeIR_ret)
@@ -3967,23 +3978,23 @@ def $subst_routineType'(theta, routineTypeIR) : routineTypeIR =
 ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:22.1-22.70
 def $subst_routineTypeDef(theta, routineTypeDefIR) : routineTypeDefIR =
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:504.1-505.21
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:487.1-488.21
   clause 0 : (set<pair<tid, typeIR>>, routineTypeDefIR) = routineTypeDefIR
   -- if (set<pair<tid, typeIR>> = { [] })
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:506.1-508.15
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:489.1-491.15
   clause 1 : (theta, routineTypeDefIR) = $subst_routineTypeDef'(theta, routineTypeDefIR)
   -- otherwise
 
 ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:23.1-23.71
 def $subst_routineTypeDef'(theta, routineTypeDefIR) : routineTypeDefIR =
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:510.1-511.46
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:493.1-494.46
   clause 0 : (theta, routineTypeDefIR) = $subst_routineType'(theta, routineTypeIR) as routineTypeDefIR
   -- if routineTypeDefIR <: routineTypeIR
   -- let routineTypeIR = routineTypeDefIR as routineTypeIR
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:513.1-532.73
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:496.1-515.73
   clause 1 : (theta, routineTypeDefIR) = routineTypeIR_subst < tid_fresh_spec*{tid_fresh_spec <- tid_fresh_spec*} , tid_fresh_hidden*{tid_fresh_hidden <- tid_fresh_hidden*} > as routineTypeDefIR
   -- if routineTypeDefIR <: polyRoutineTypeDefIR
   -- let routineTypeIR < tid*{tid <- tid*} , tid_hidden*{tid_hidden <- tid_hidden*} > = routineTypeDefIR as polyRoutineTypeDefIR
@@ -4003,48 +4014,48 @@ def $subst_routineTypeDef'(theta, routineTypeDefIR) : routineTypeDefIR =
 ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:24.1-24.73
 def $subst_constructorType(theta, constructorTypeIR) : constructorTypeIR =
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:538.1-539.22
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:521.1-522.22
   clause 0 : (set<pair<tid, typeIR>>, constructorTypeIR) = constructorTypeIR
   -- if (set<pair<tid, typeIR>> = { [] })
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:540.1-542.15
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:523.1-525.15
   clause 1 : (theta, constructorTypeIR) = $subst_constructorType'(theta, constructorTypeIR)
   -- otherwise
 
 ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:25.1-25.74
 def $subst_constructorType'(theta, constructorTypeIR) : constructorTypeIR =
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:544.1-551.59
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:527.1-534.59
   clause 0 : (theta, constructor( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_obj) = constructor( parameterTypeIR_subst*{parameterTypeIR_subst <- parameterTypeIR_subst*} )-> typeIR_obj_subst
   -- (let parameterTypeIR_subst = $subst_parameterType'(theta, parameterTypeIR))*{parameterTypeIR <- parameterTypeIR*, parameterTypeIR_subst <- parameterTypeIR_subst*}
   -- let typeIR_obj_subst = $subst_type'(theta, typeIR_obj)
 
-;; ../../../../spec-concrete/2.2.3-type-subst.watsup:561.1-561.53
+;; ../../../../spec-concrete/2.2.3-type-subst.watsup:544.1-544.53
 def $specialize_typeDef(typeDefIR, typeIR*) : typeIR =
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:563.1-563.46
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:546.1-546.46
   clause 0 : (typeDefIR, typeIR'*{typeIR' <- typeIR'*}) = typeIR
   -- if typeDefIR <: typeIR
   -- let typeIR = typeDefIR as typeIR
   -- if typeIR'*{typeIR' <- typeIR'*} matches []
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:565.1-568.49
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:548.1-551.49
   clause 1 : (typeDefIR, typeIR_arg*{typeIR_arg <- typeIR_arg*}) = $subst_type(theta, typeIR_base)
   -- if typeDefIR <: polyTypeDefIR
   -- let typeIR_base < tid*{tid <- tid*} , tid_hidden*{tid_hidden <- tid_hidden*} > = typeDefIR as polyTypeDefIR
   -- let tid_tparam*{tid_tparam <- tid_tparam*} = tid*{tid <- tid*} ++ tid_hidden*{tid_hidden <- tid_hidden*}
   -- let theta = { tid_tparam : typeIR_arg*{tid_tparam <- tid_tparam*, typeIR_arg <- typeIR_arg*} }
 
-;; ../../../../spec-concrete/2.2.3-type-subst.watsup:574.1-575.29
+;; ../../../../spec-concrete/2.2.3-type-subst.watsup:557.1-558.29
 def $specialize_routineTypeDef(routineTypeDefIR, typeIR*) : (routineTypeDefIR, tid*) =
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:577.1-578.25
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:560.1-561.25
   clause 0 : (routineTypeDefIR, typeIR*{typeIR <- typeIR*}) = (routineTypeIR as routineTypeDefIR, [])
   -- if routineTypeDefIR <: routineTypeIR
   -- let routineTypeIR = routineTypeDefIR as routineTypeIR
   -- if typeIR*{typeIR <- typeIR*} matches []
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:580.1-587.49
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:563.1-570.49
   clause 1 : (routineTypeDefIR, typeIR_arg*{typeIR_arg <- typeIR_arg*}) = ($subst_routineType(theta, routineTypeIR) as routineTypeDefIR, [])
   -- if routineTypeDefIR <: polyRoutineTypeDefIR
   -- let routineTypeIR < tid*{tid <- tid*} , tid_hidden*{tid_hidden <- tid_hidden*} > = routineTypeDefIR as polyRoutineTypeDefIR
@@ -4052,7 +4063,7 @@ def $specialize_routineTypeDef(routineTypeDefIR, typeIR*) : (routineTypeDefIR, t
   -- if (|tid_tparam*{tid_tparam <- tid_tparam*}| = |typeIR_arg*{typeIR_arg <- typeIR_arg*}|)
   -- let theta = { tid_tparam : typeIR_arg*{tid_tparam <- tid_tparam*, typeIR_arg <- typeIR_arg*} }
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:589.1-597.54
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:572.1-580.54
   clause 2 : (routineTypeDefIR, typeIR_arg*{typeIR_arg <- typeIR_arg*}) = ($subst_routineType(theta, routineTypeIR), tid_fresh*{tid_fresh <- tid_fresh*}) as (routineTypeDefIR, tid*)
   -- if routineTypeDefIR <: polyRoutineTypeDefIR
   -- let routineTypeIR < tid*{tid <- tid*} , tid_hidden*{tid_hidden <- tid_hidden*} > = routineTypeDefIR as polyRoutineTypeDefIR
@@ -4061,7 +4072,7 @@ def $specialize_routineTypeDef(routineTypeDefIR, typeIR*) : (routineTypeDefIR, t
   -- let tid_fresh*{tid_fresh <- tid_fresh*} = $fresh_tids(|tid_tparam*{tid_tparam <- tid_tparam*}|)
   -- let theta = { tid_tparam : tid tid_fresh as typeIR*{tid_fresh <- tid_fresh*, tid_tparam <- tid_tparam*} }
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:599.1-610.53
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:582.1-593.53
   clause 3 : (routineTypeDefIR, typeIR_arg*{typeIR_arg <- typeIR_arg*}) = ($subst_routineType(theta, routineTypeIR), tid_fresh*{tid_fresh <- tid_fresh*}) as (routineTypeDefIR, tid*)
   -- if routineTypeDefIR <: polyRoutineTypeDefIR
   -- let routineTypeIR < tid*{tid <- tid*} , tid_hidden*{tid_hidden <- tid_hidden*} > = routineTypeDefIR as polyRoutineTypeDefIR
@@ -4071,17 +4082,17 @@ def $specialize_routineTypeDef(routineTypeDefIR, typeIR*) : (routineTypeDefIR, t
   -- let typeIR_arg_new*{typeIR_arg_new <- typeIR_arg_new*} = typeIR_arg*{typeIR_arg <- typeIR_arg*} ++ tid tid_fresh as typeIR*{tid_fresh <- tid_fresh*}
   -- let theta = { tid_tparam : typeIR_arg_new*{tid_tparam <- tid_tparam*, typeIR_arg_new <- typeIR_arg_new*} }
 
-;; ../../../../spec-concrete/2.2.3-type-subst.watsup:616.1-617.30
+;; ../../../../spec-concrete/2.2.3-type-subst.watsup:599.1-600.30
 def $specialize_constructorTypeDef(constructorTypeDefIR, typeIR*) : (constructorTypeIR, tid*) =
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:619.1-628.57
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:602.1-611.57
   clause 0 : (constructorTypeIR < tid*{tid <- tid*} , tid_hidden*{tid_hidden <- tid_hidden*} >, typeIR_arg*{typeIR_arg <- typeIR_arg*}) = (constructorTypeIR_subst, [])
   -- let tid_tparam*{tid_tparam <- tid_tparam*} = tid*{tid <- tid*} ++ tid_hidden*{tid_hidden <- tid_hidden*}
   -- if (|tid_tparam*{tid_tparam <- tid_tparam*}| = |typeIR_arg*{typeIR_arg <- typeIR_arg*}|)
   -- let theta = { tid_tparam : typeIR_arg*{tid_tparam <- tid_tparam*, typeIR_arg <- typeIR_arg*} }
   -- let constructorTypeIR_subst = $subst_constructorType(theta, constructorTypeIR)
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:630.1-640.57
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:613.1-623.57
   clause 1 : (constructorTypeIR < tid*{tid <- tid*} , tid_hidden*{tid_hidden <- tid_hidden*} >, typeIR_arg*{typeIR_arg <- typeIR_arg*}) = (constructorTypeIR_subst, tid_fresh*{tid_fresh <- tid_fresh*})
   -- let tid_tparam*{tid_tparam <- tid_tparam*} = tid*{tid <- tid*} ++ tid_hidden*{tid_hidden <- tid_hidden*}
   -- if ((|tid_tparam*{tid_tparam <- tid_tparam*}| > 0) /\ (|typeIR_arg*{typeIR_arg <- typeIR_arg*}| = 0))
@@ -4089,7 +4100,7 @@ def $specialize_constructorTypeDef(constructorTypeDefIR, typeIR*) : (constructor
   -- let theta = { tid_tparam : tid tid_fresh as typeIR*{tid_fresh <- tid_fresh*, tid_tparam <- tid_tparam*} }
   -- let constructorTypeIR_subst = $subst_constructorType(theta, constructorTypeIR)
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:642.1-655.57
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:625.1-638.57
   clause 2 : (constructorTypeIR < tid*{tid <- tid*} , tid_hidden*{tid_hidden <- tid_hidden*} >, typeIR_arg*{typeIR_arg <- typeIR_arg*}) = (constructorTypeIR_subst, tid_fresh*{tid_fresh <- tid_fresh*})
   -- let tid_tparam*{tid_tparam <- tid_tparam*} = tid*{tid <- tid*} ++ tid_hidden*{tid_hidden <- tid_hidden*}
   -- if (((|tid_hidden*{tid_hidden <- tid_hidden*}| > 0) /\ (|tid*{tid <- tid*}| = |typeIR_arg*{typeIR_arg <- typeIR_arg*}|)) /\ (|typeIR_arg*{typeIR_arg <- typeIR_arg*}| > 0))
@@ -4098,21 +4109,21 @@ def $specialize_constructorTypeDef(constructorTypeDefIR, typeIR*) : (constructor
   -- let theta = { tid_tparam : typeIR_arg_new*{tid_tparam <- tid_tparam*, typeIR_arg_new <- typeIR_arg_new*} }
   -- let constructorTypeIR_subst = $subst_constructorType(theta, constructorTypeIR)
 
-;; ../../../../spec-concrete/2.2.3-type-subst.watsup:662.1-663.48
+;; ../../../../spec-concrete/2.2.3-type-subst.watsup:645.1-646.48
 def $canon(typeIR) : typeIR =
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:665.1-666.65
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:648.1-649.65
   clause 0 : (typeIR') = $canon(typeIR)
   -- if typeIR' <: specializedTypeIR
   -- let polyTypeDefIR < typeIR_arg*{typeIR_arg <- typeIR_arg*} > = typeIR' as specializedTypeIR
   -- let typeIR = $specialize_typeDef(polyTypeDefIR as typeDefIR, typeIR_arg*{typeIR_arg <- typeIR_arg*})
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:668.1-668.46
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:651.1-651.46
   clause 1 : (typeIR') = $canon(typeIR)
   -- if typeIR' <: typedefTypeIR
   -- let typedef _tid typeIR = typeIR' as typedefTypeIR
 
-  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:670.1-671.15
+  ;; ../../../../spec-concrete/2.2.3-type-subst.watsup:653.1-654.15
   clause 2 : (typeIR) = typeIR
   -- otherwise
 
@@ -5003,25 +5014,6 @@ relation RoutineType_alpha: routineTypeIR ~~ routineTypeIR
     -- the relation holds
 
   ;; ../../../../spec-concrete/2.2.5-type-alpha.watsup:206.1-210.46
-  rulegroup builtinfunction
-
-   match
-
-    (explicit) builtin_function( parameterTypeIR_a*{parameterTypeIR_a <- parameterTypeIR_a*} )-> typeIR_ret_a as routineTypeIR ~~ builtin_function( parameterTypeIR_b*{parameterTypeIR_b <- parameterTypeIR_b*} )-> typeIR_ret_b as routineTypeIR
-    (implicit) routineTypeIR ~~ routineTypeIR'
-    -- if routineTypeIR <: builtinFunctionTypeIR
-    -- let builtin_function( parameterTypeIR_a*{parameterTypeIR_a <- parameterTypeIR_a*} )-> typeIR_ret_a = routineTypeIR as builtinFunctionTypeIR
-    -- if routineTypeIR' <: builtinFunctionTypeIR
-    -- let builtin_function( parameterTypeIR_b*{parameterTypeIR_b <- parameterTypeIR_b*} )-> typeIR_ret_b = routineTypeIR' as builtinFunctionTypeIR
-
-   paths
-
-    rulepath builtinfunction
-    -- (if ParameterType_alpha: parameterTypeIR_a ~~ parameterTypeIR_b holds)*{parameterTypeIR_a <- parameterTypeIR_a*, parameterTypeIR_b <- parameterTypeIR_b*}
-    -- if Type_alpha: typeIR_ret_a ~~ typeIR_ret_b holds
-    -- the relation holds
-
-  ;; ../../../../spec-concrete/2.2.5-type-alpha.watsup:212.1-216.46
   rulegroup function
 
    match
@@ -5040,7 +5032,7 @@ relation RoutineType_alpha: routineTypeIR ~~ routineTypeIR
     -- if Type_alpha: typeIR_ret_a ~~ typeIR_ret_b holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/2.2.5-type-alpha.watsup:218.1-222.46
+  ;; ../../../../spec-concrete/2.2.5-type-alpha.watsup:212.1-216.46
   rulegroup externfunction
 
    match
@@ -5059,7 +5051,7 @@ relation RoutineType_alpha: routineTypeIR ~~ routineTypeIR
     -- if Type_alpha: typeIR_ret_a ~~ typeIR_ret_b holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/2.2.5-type-alpha.watsup:224.1-228.46
+  ;; ../../../../spec-concrete/2.2.5-type-alpha.watsup:218.1-222.46
   rulegroup builtinmethod
 
    match
@@ -5078,7 +5070,7 @@ relation RoutineType_alpha: routineTypeIR ~~ routineTypeIR
     -- if Type_alpha: typeIR_ret_a ~~ typeIR_ret_b holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/2.2.5-type-alpha.watsup:230.1-234.46
+  ;; ../../../../spec-concrete/2.2.5-type-alpha.watsup:224.1-228.46
   rulegroup externmethod
 
    match
@@ -5101,7 +5093,7 @@ relation RoutineType_alpha: routineTypeIR ~~ routineTypeIR
     -- if Type_alpha: typeIR_ret_a ~~ typeIR_ret_b holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/2.2.5-type-alpha.watsup:236.1-240.46
+  ;; ../../../../spec-concrete/2.2.5-type-alpha.watsup:230.1-234.46
   rulegroup externmethod-abstract
 
    match
@@ -5124,7 +5116,7 @@ relation RoutineType_alpha: routineTypeIR ~~ routineTypeIR
     -- if Type_alpha: typeIR_ret_a ~~ typeIR_ret_b holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/2.2.5-type-alpha.watsup:242.1-245.68
+  ;; ../../../../spec-concrete/2.2.5-type-alpha.watsup:236.1-239.68
   rulegroup parserapply
 
    match
@@ -5142,7 +5134,7 @@ relation RoutineType_alpha: routineTypeIR ~~ routineTypeIR
     -- (if ParameterType_alpha: parameterTypeIR_a ~~ parameterTypeIR_b holds)*{parameterTypeIR_a <- parameterTypeIR_a*, parameterTypeIR_b <- parameterTypeIR_b*}
     -- the relation holds
 
-  ;; ../../../../spec-concrete/2.2.5-type-alpha.watsup:247.1-250.68
+  ;; ../../../../spec-concrete/2.2.5-type-alpha.watsup:241.1-244.68
   rulegroup controlapply
 
    match
@@ -5160,7 +5152,7 @@ relation RoutineType_alpha: routineTypeIR ~~ routineTypeIR
     -- (if ParameterType_alpha: parameterTypeIR_a ~~ parameterTypeIR_b holds)*{parameterTypeIR_a <- parameterTypeIR_a*, parameterTypeIR_b <- parameterTypeIR_b*}
     -- the relation holds
 
-  ;; ../../../../spec-concrete/2.2.5-type-alpha.watsup:252.1-255.46
+  ;; ../../../../spec-concrete/2.2.5-type-alpha.watsup:246.1-249.46
   rulegroup tableapply
 
    match
@@ -5181,7 +5173,7 @@ relation RoutineType_alpha: routineTypeIR ~~ routineTypeIR
 ;; ../../../../spec-concrete/2.2.5-type-alpha.watsup:23.1-27.56
 relation RoutineTypeDef_alpha: routineTypeDefIR ~~ routineTypeDefIR
 
-  ;; ../../../../spec-concrete/2.2.5-type-alpha.watsup:261.1-263.59
+  ;; ../../../../spec-concrete/2.2.5-type-alpha.watsup:255.1-257.59
   rulegroup mono
 
    match
@@ -5199,7 +5191,7 @@ relation RoutineTypeDef_alpha: routineTypeDefIR ~~ routineTypeDefIR
     -- if RoutineType_alpha: routineTypeIR_a ~~ routineTypeIR_b holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/2.2.5-type-alpha.watsup:265.1-284.71
+  ;; ../../../../spec-concrete/2.2.5-type-alpha.watsup:259.1-278.71
   rulegroup poly
 
    match
@@ -9655,24 +9647,7 @@ relation RoutineType_wf: bound |- routineTypeIR
     -- (if $nestable_action(typeIR))*{typeIR <- typeIR*}
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:573.1-576.34
-  rulegroup builtinfunction
-
-   match
-
-    (explicit) bound |- builtin_function( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret as routineTypeIR
-    (implicit) bound |- routineTypeIR
-    -- if routineTypeIR <: builtinFunctionTypeIR
-    -- let builtin_function( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret = routineTypeIR as builtinFunctionTypeIR
-
-   paths
-
-    rulepath builtinfunction
-    -- if ParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} holds
-    -- if Type_wf: bound |- typeIR_ret holds
-    -- the relation holds
-
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:591.1-596.34
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:586.1-591.34
   rulegroup definedFunctionTypeIR
 
    match
@@ -9691,7 +9666,7 @@ relation RoutineType_wf: bound |- routineTypeIR
     -- if Type_wf: bound |- typeIR_ret holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:613.1-618.34
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:608.1-613.34
   rulegroup externFunctionTypeIR
 
    match
@@ -9710,7 +9685,7 @@ relation RoutineType_wf: bound |- routineTypeIR
     -- if Type_wf: bound |- typeIR_ret holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:622.1-625.34
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:617.1-620.34
   rulegroup builtinMethodTypeIR
 
    match
@@ -9727,8 +9702,8 @@ relation RoutineType_wf: bound |- routineTypeIR
     -- if Type_wf: bound |- typeIR_ret holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:642.1-647.34
-  rulegroup externMethodTypeIR
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:637.1-642.34
+  rulegroup externMethodTypeIR-non-abstract
 
    match
 
@@ -9741,15 +9716,15 @@ relation RoutineType_wf: bound |- routineTypeIR
 
    paths
 
-    rulepath externMethodTypeIR
+    rulepath externMethodTypeIR-non-abstract
     -- if ParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} holds
     -- (let _direction typeIR _id _value?{_value <- _value?} = parameterTypeIR)*{_direction <- _direction*, _id <- _id*, _value? <- _value?*, parameterTypeIR <- parameterTypeIR*, typeIR <- typeIR*}
     -- (if $nestable_externmethod(typeIR))*{typeIR <- typeIR*}
     -- if Type_wf: bound |- typeIR_ret holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:664.1-669.34
-  rulegroup externAbstractMethodTypeIR
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:659.1-664.34
+  rulegroup externMethodTypeIR-abstract
 
    match
 
@@ -9762,14 +9737,14 @@ relation RoutineType_wf: bound |- routineTypeIR
 
    paths
 
-    rulepath externAbstractMethodTypeIR
+    rulepath externMethodTypeIR-abstract
     -- if ParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} holds
     -- (let _direction typeIR _id _value?{_value <- _value?} = parameterTypeIR)*{_direction <- _direction*, _id <- _id*, _value? <- _value?*, parameterTypeIR <- parameterTypeIR*, typeIR <- typeIR*}
     -- (if $nestable_externabstractmethod(typeIR))*{typeIR <- typeIR*}
     -- if Type_wf: bound |- typeIR_ret holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:686.1-690.45
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:681.1-685.45
   rulegroup parserApplyMethodTypeIR
 
    match
@@ -9787,7 +9762,7 @@ relation RoutineType_wf: bound |- routineTypeIR
     -- (if $nestable_parserapplymethod(typeIR))*{typeIR <- typeIR*}
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:706.1-710.46
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:701.1-705.46
   rulegroup controlApplyMethodTypeIR
 
    match
@@ -9805,7 +9780,7 @@ relation RoutineType_wf: bound |- routineTypeIR
     -- (if $nestable_controlapplymethod(typeIR))*{typeIR <- typeIR*}
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:712.1-713.51
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:707.1-708.51
   rulegroup tableApplyMethodTypeIR
 
    match
@@ -9827,8 +9802,8 @@ relation RoutineType_wf: bound |- routineTypeIR
 ;; ../../../../spec-concrete/5.03-wellformed.watsup:30.1-33.72
 relation RoutineTypeDef_wf: bound |- routineTypeDefIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:731.1-734.44
-  rulegroup mono
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:725.1-728.44
+  rulegroup monoRoutineTypeDefIR
 
    match
 
@@ -9839,13 +9814,13 @@ relation RoutineTypeDef_wf: bound |- routineTypeDefIR
 
    paths
 
-    rulepath mono
+    rulepath monoRoutineTypeDefIR
     -- if $definable_routine_mono(routineTypeIR)
     -- if RoutineType_wf: bound |- routineTypeIR holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:745.1-751.50
-  rulegroup poly
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:739.1-745.50
+  rulegroup polyRoutineTypeDefIR
 
    match
 
@@ -9856,7 +9831,7 @@ relation RoutineTypeDef_wf: bound |- routineTypeDefIR
 
    paths
 
-    rulepath poly
+    rulepath polyRoutineTypeDefIR
     -- if $definable_routine_poly(routineTypeIR)
     -- if $distinct_<tid>(tid_expl*{tid_expl <- tid_expl*} ++ tid_impl*{tid_impl <- tid_impl*})
     -- let bound_inner = $union_set<tid>(bound, { tid_expl*{tid_expl <- tid_expl*} ++ tid_impl*{tid_impl <- tid_impl*} })
@@ -9866,7 +9841,7 @@ relation RoutineTypeDef_wf: bound |- routineTypeDefIR
 ;; ../../../../spec-concrete/5.03-wellformed.watsup:35.1-38.72
 relation ConstructorParameterType_wf: bound |- parameterTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:757.1-759.30
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:751.1-753.30
   rulegroup 
 
    match
@@ -9884,7 +9859,7 @@ relation ConstructorParameterType_wf: bound |- parameterTypeIR
 ;; ../../../../spec-concrete/5.03-wellformed.watsup:40.1-43.72
 relation ConstructorParameterTypes_wf: bound |- parameterTypeIR*
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:761.1-765.62
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:755.1-759.62
   rulegroup 
 
    match
@@ -9903,7 +9878,7 @@ relation ConstructorParameterTypes_wf: bound |- parameterTypeIR*
 ;; ../../../../spec-concrete/5.03-wellformed.watsup:45.1-48.72
 relation ConstructorType_wf: bound |- constructorTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:783.1-789.46
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:777.1-783.46
   rulegroup externtype
 
    match
@@ -9923,7 +9898,7 @@ relation ConstructorType_wf: bound |- constructorTypeIR
     -- (if $nestable_constructor_extern(typeIR))*{typeIR <- typeIR*}
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:802.1-808.46
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:796.1-802.46
   rulegroup parsertype
 
    match
@@ -9943,7 +9918,7 @@ relation ConstructorType_wf: bound |- constructorTypeIR
     -- (if $nestable_constructor_parser(typeIR))*{typeIR <- typeIR*}
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:821.1-827.47
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:815.1-821.47
   rulegroup controltype
 
    match
@@ -9963,7 +9938,7 @@ relation ConstructorType_wf: bound |- constructorTypeIR
     -- (if $nestable_constructor_control(typeIR))*{typeIR <- typeIR*}
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:838.1-844.47
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:832.1-838.47
   rulegroup packagetype
 
    match
@@ -9986,7 +9961,7 @@ relation ConstructorType_wf: bound |- constructorTypeIR
 ;; ../../../../spec-concrete/5.03-wellformed.watsup:50.1-53.72
 relation ConstructorTypeDef_wf: bound |- constructorTypeDefIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:862.1-869.58
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:856.1-863.58
   rulegroup 
 
    match
@@ -10890,11 +10865,11 @@ def $directionless_trailing'(bool, direction*) : bool =
 def $nestable_action(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:555.1-557.38
-  clause 0 : (typeIR) = $nestable_action'(typeIR_canon)
+  clause 0 : (typeIR) = $nestable'_action(typeIR_canon)
   -- let typeIR_canon = $canon(typeIR)
 
 ;; ../../../../spec-concrete/5.03-wellformed.watsup:552.1-553.52
-def $nestable_action'(typeIR) : bool =
+def $nestable'_action(typeIR) : bool =
 
   ;; ../../../../spec-concrete/5.03-wellformed.watsup:558.1-558.35
   clause 0 : (typeIR) = false
@@ -10916,391 +10891,386 @@ def $nestable_action'(typeIR) : bool =
   clause 3 : (_typeIR) = true
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:578.1-579.53
+;; ../../../../spec-concrete/5.03-wellformed.watsup:573.1-574.53
 def $nestable_function(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:583.1-585.38
-  clause 0 : (typeIR) = $nestable_function'(typeIR_canon)
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:578.1-580.38
+  clause 0 : (typeIR) = $nestable'_function(typeIR_canon)
   -- let typeIR_canon = $canon(typeIR)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:580.1-581.53
-def $nestable_function'(typeIR) : bool =
+;; ../../../../spec-concrete/5.03-wellformed.watsup:575.1-576.53
+def $nestable'_function(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:586.1-586.46
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:581.1-581.46
   clause 0 : (typeIR) = false
   -- if typeIR <: objectTypeIR
   -- let objectTypeIR = typeIR as objectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:587.1-587.51
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:582.1-582.51
   clause 1 : (typeIR) = false
   -- if typeIR <: synthesizedTypeIR
   -- let synthesizedTypeIR = typeIR as synthesizedTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:588.1-589.15
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:583.1-584.15
   clause 2 : (_typeIR) = true
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:598.1-599.61
+;; ../../../../spec-concrete/5.03-wellformed.watsup:593.1-594.61
 def $nestable_externfunction(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:603.1-605.38
-  clause 0 : (typeIR) = $nestable_externfunction'(typeIR_canon)
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:598.1-600.38
+  clause 0 : (typeIR) = $nestable'_externfunction(typeIR_canon)
   -- let typeIR_canon = $canon(typeIR)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:600.1-601.61
-def $nestable_externfunction'(typeIR) : bool =
+;; ../../../../spec-concrete/5.03-wellformed.watsup:595.1-596.61
+def $nestable'_externfunction(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:606.1-606.58
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:601.1-601.58
   clause 0 : (typeIR) = false
   -- if typeIR <: parserObjectTypeIR
   -- let parserObjectTypeIR = typeIR as parserObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:607.1-607.59
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:602.1-602.59
   clause 1 : (typeIR) = false
   -- if typeIR <: controlObjectTypeIR
   -- let controlObjectTypeIR = typeIR as controlObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:608.1-608.59
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:603.1-603.59
   clause 2 : (typeIR) = false
   -- if typeIR <: packageObjectTypeIR
   -- let packageObjectTypeIR = typeIR as packageObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:609.1-609.57
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:604.1-604.57
   clause 3 : (typeIR) = false
   -- if typeIR <: tableObjectTypeIR
   -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:610.1-611.15
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:605.1-606.15
   clause 4 : (_typeIR) = true
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:627.1-628.59
+;; ../../../../spec-concrete/5.03-wellformed.watsup:622.1-623.59
 def $nestable_externmethod(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:632.1-634.38
-  clause 0 : (typeIR) = $nestable_externmethod'(typeIR_canon)
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:627.1-629.38
+  clause 0 : (typeIR) = $nestable'_externmethod(typeIR_canon)
   -- let typeIR_canon = $canon(typeIR)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:629.1-630.59
-def $nestable_externmethod'(typeIR) : bool =
+;; ../../../../spec-concrete/5.03-wellformed.watsup:624.1-625.59
+def $nestable'_externmethod(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:635.1-635.56
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:630.1-630.56
   clause 0 : (typeIR) = false
   -- if typeIR <: parserObjectTypeIR
   -- let parserObjectTypeIR = typeIR as parserObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:636.1-636.57
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:631.1-631.57
   clause 1 : (typeIR) = false
   -- if typeIR <: controlObjectTypeIR
   -- let controlObjectTypeIR = typeIR as controlObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:637.1-637.57
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:632.1-632.57
   clause 2 : (typeIR) = false
   -- if typeIR <: packageObjectTypeIR
   -- let packageObjectTypeIR = typeIR as packageObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:638.1-638.55
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:633.1-633.55
   clause 3 : (typeIR) = false
   -- if typeIR <: tableObjectTypeIR
   -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:639.1-640.15
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:634.1-635.15
   clause 4 : (_typeIR) = true
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:649.1-650.68
+;; ../../../../spec-concrete/5.03-wellformed.watsup:644.1-645.68
 def $nestable_externabstractmethod(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:654.1-656.38
-  clause 0 : (typeIR) = $nestable_externabstractmethod'(typeIR_canon)
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:649.1-651.38
+  clause 0 : (typeIR) = $nestable'_externabstractmethod(typeIR_canon)
   -- let typeIR_canon = $canon(typeIR)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:651.1-652.68
-def $nestable_externabstractmethod'(typeIR) : bool =
+;; ../../../../spec-concrete/5.03-wellformed.watsup:646.1-647.68
+def $nestable'_externabstractmethod(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:657.1-657.64
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:652.1-652.64
   clause 0 : (typeIR) = false
   -- if typeIR <: parserObjectTypeIR
   -- let parserObjectTypeIR = typeIR as parserObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:658.1-658.65
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:653.1-653.65
   clause 1 : (typeIR) = false
   -- if typeIR <: controlObjectTypeIR
   -- let controlObjectTypeIR = typeIR as controlObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:659.1-659.65
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:654.1-654.65
   clause 2 : (typeIR) = false
   -- if typeIR <: packageObjectTypeIR
   -- let packageObjectTypeIR = typeIR as packageObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:660.1-660.63
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:655.1-655.63
   clause 3 : (typeIR) = false
   -- if typeIR <: tableObjectTypeIR
   -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:661.1-662.15
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:656.1-657.15
   clause 4 : (_typeIR) = true
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:671.1-672.64
+;; ../../../../spec-concrete/5.03-wellformed.watsup:666.1-667.64
 def $nestable_parserapplymethod(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:676.1-678.38
-  clause 0 : (typeIR) = $nestable_parserapplymethod'(typeIR_canon)
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:671.1-673.38
+  clause 0 : (typeIR) = $nestable'_parserapplymethod(typeIR_canon)
   -- let typeIR_canon = $canon(typeIR)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:673.1-674.64
-def $nestable_parserapplymethod'(typeIR) : bool =
+;; ../../../../spec-concrete/5.03-wellformed.watsup:668.1-669.64
+def $nestable'_parserapplymethod(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:679.1-679.61
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:674.1-674.61
   clause 0 : (typeIR) = false
   -- if typeIR <: parserObjectTypeIR
   -- let parserObjectTypeIR = typeIR as parserObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:680.1-680.62
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:675.1-675.62
   clause 1 : (typeIR) = false
   -- if typeIR <: controlObjectTypeIR
   -- let controlObjectTypeIR = typeIR as controlObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:681.1-681.62
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:676.1-676.62
   clause 2 : (typeIR) = false
   -- if typeIR <: packageObjectTypeIR
   -- let packageObjectTypeIR = typeIR as packageObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:682.1-682.60
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:677.1-677.60
   clause 3 : (typeIR) = false
   -- if typeIR <: tableObjectTypeIR
   -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:683.1-684.15
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:678.1-679.15
   clause 4 : (_typeIR) = true
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:692.1-693.65
+;; ../../../../spec-concrete/5.03-wellformed.watsup:687.1-688.65
 def $nestable_controlapplymethod(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:697.1-699.38
-  clause 0 : (typeIR) = $nestable_controlapplymethod'(typeIR_canon)
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:692.1-694.38
+  clause 0 : (typeIR) = $nestable'_controlapplymethod(typeIR_canon)
   -- let typeIR_canon = $canon(typeIR)
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:694.1-695.65
-def $nestable_controlapplymethod'(typeIR) : bool =
+;; ../../../../spec-concrete/5.03-wellformed.watsup:689.1-690.65
+def $nestable'_controlapplymethod(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:700.1-700.62
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:695.1-695.62
   clause 0 : (typeIR) = false
   -- if typeIR <: parserObjectTypeIR
   -- let parserObjectTypeIR = typeIR as parserObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:701.1-701.63
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:696.1-696.63
   clause 1 : (typeIR) = false
   -- if typeIR <: packageObjectTypeIR
   -- let packageObjectTypeIR = typeIR as packageObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:702.1-702.61
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:697.1-697.61
   clause 2 : (typeIR) = false
   -- if typeIR <: tableObjectTypeIR
   -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:703.1-704.15
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:698.1-699.15
   clause 3 : (_typeIR) = true
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:719.1-720.62
+;; ../../../../spec-concrete/5.03-wellformed.watsup:714.1-715.62
 def $definable_routine_mono(routineTypeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:722.1-722.49
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:717.1-717.49
   clause 0 : (routineTypeIR) = true
   -- if routineTypeIR <: actionTypeIR
   -- let actionTypeIR = routineTypeIR as actionTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:723.1-723.58
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:718.1-718.56
   clause 1 : (routineTypeIR) = true
-  -- if routineTypeIR <: builtinFunctionTypeIR
-  -- let builtinFunctionTypeIR = routineTypeIR as builtinFunctionTypeIR
-
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:724.1-724.56
-  clause 2 : (routineTypeIR) = true
   -- if routineTypeIR <: builtinMethodTypeIR
   -- let builtinMethodTypeIR = routineTypeIR as builtinMethodTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:725.1-725.60
-  clause 3 : (routineTypeIR) = true
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:719.1-719.60
+  clause 2 : (routineTypeIR) = true
   -- if routineTypeIR <: parserApplyMethodTypeIR
   -- let parserApplyMethodTypeIR = routineTypeIR as parserApplyMethodTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:726.1-726.61
-  clause 4 : (routineTypeIR) = true
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:720.1-720.61
+  clause 3 : (routineTypeIR) = true
   -- if routineTypeIR <: controlApplyMethodTypeIR
   -- let controlApplyMethodTypeIR = routineTypeIR as controlApplyMethodTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:727.1-727.59
-  clause 5 : (routineTypeIR) = true
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:721.1-721.59
+  clause 4 : (routineTypeIR) = true
   -- if routineTypeIR <: tableApplyMethodTypeIR
   -- let tableApplyMethodTypeIR = routineTypeIR as tableApplyMethodTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:728.1-729.15
-  clause 6 : (_routineTypeIR) = false
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:722.1-723.15
+  clause 5 : (_routineTypeIR) = false
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:736.1-737.62
+;; ../../../../spec-concrete/5.03-wellformed.watsup:730.1-731.62
 def $definable_routine_poly(routineTypeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:739.1-739.58
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:733.1-733.58
   clause 0 : (routineTypeIR) = true
   -- if routineTypeIR <: definedFunctionTypeIR
   -- let definedFunctionTypeIR = routineTypeIR as definedFunctionTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:740.1-740.57
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:734.1-734.57
   clause 1 : (routineTypeIR) = true
   -- if routineTypeIR <: externFunctionTypeIR
   -- let externFunctionTypeIR = routineTypeIR as externFunctionTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:741.1-741.55
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:735.1-735.55
   clause 2 : (routineTypeIR) = true
   -- if routineTypeIR <: externMethodTypeIR
   -- let externMethodTypeIR = routineTypeIR as externMethodTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:742.1-743.15
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:736.1-737.15
   clause 3 : (_routineTypeIR) = false
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:771.1-771.48
+;; ../../../../spec-concrete/5.03-wellformed.watsup:765.1-765.48
 def $nestable_constructor_extern(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:774.1-775.50
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:768.1-769.50
   clause 0 : (typeIR) = $nestable'_constructor_extern($canon(typeIR))
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:776.1-776.61
-  clause 1 : (typeIR) = false
-  -- if typeIR <: parserObjectTypeIR
-  -- let parserObjectTypeIR = typeIR as parserObjectTypeIR
-
-;; ../../../../spec-concrete/5.03-wellformed.watsup:772.1-772.49
+;; ../../../../spec-concrete/5.03-wellformed.watsup:766.1-766.49
 def $nestable'_constructor_extern(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:777.1-777.63
-  clause 0 : (typeIR) = false
-  -- if typeIR <: controlObjectTypeIR
-  -- let controlObjectTypeIR = typeIR as controlObjectTypeIR
-
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:778.1-778.63
-  clause 1 : (typeIR) = false
-  -- if typeIR <: packageObjectTypeIR
-  -- let packageObjectTypeIR = typeIR as packageObjectTypeIR
-
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:779.1-779.61
-  clause 2 : (typeIR) = false
-  -- if typeIR <: tableObjectTypeIR
-  -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
-
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:780.1-781.15
-  clause 3 : (_typeIR) = true
-  -- otherwise
-
-;; ../../../../spec-concrete/5.03-wellformed.watsup:791.1-791.48
-def $nestable_constructor_parser(typeIR) : bool =
-
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:794.1-795.50
-  clause 0 : (typeIR) = $nestable'_constructor_parser($canon(typeIR))
-
-;; ../../../../spec-concrete/5.03-wellformed.watsup:792.1-792.49
-def $nestable'_constructor_parser(typeIR) : bool =
-
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:796.1-796.63
-  clause 0 : (typeIR) = false
-  -- if typeIR <: controlObjectTypeIR
-  -- let controlObjectTypeIR = typeIR as controlObjectTypeIR
-
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:797.1-797.63
-  clause 1 : (typeIR) = false
-  -- if typeIR <: packageObjectTypeIR
-  -- let packageObjectTypeIR = typeIR as packageObjectTypeIR
-
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:798.1-798.61
-  clause 2 : (typeIR) = false
-  -- if typeIR <: tableObjectTypeIR
-  -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
-
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:799.1-800.15
-  clause 3 : (_typeIR) = true
-  -- otherwise
-
-;; ../../../../spec-concrete/5.03-wellformed.watsup:810.1-810.49
-def $nestable_constructor_control(typeIR) : bool =
-
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:813.1-814.51
-  clause 0 : (typeIR) = $nestable'_constructor_control($canon(typeIR))
-
-;; ../../../../spec-concrete/5.03-wellformed.watsup:811.1-811.50
-def $nestable'_constructor_control(typeIR) : bool =
-
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:815.1-815.63
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:770.1-770.62
   clause 0 : (typeIR) = false
   -- if typeIR <: parserObjectTypeIR
   -- let parserObjectTypeIR = typeIR as parserObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:816.1-816.64
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:771.1-771.63
+  clause 1 : (typeIR) = false
+  -- if typeIR <: controlObjectTypeIR
+  -- let controlObjectTypeIR = typeIR as controlObjectTypeIR
+
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:772.1-772.63
+  clause 2 : (typeIR) = false
+  -- if typeIR <: packageObjectTypeIR
+  -- let packageObjectTypeIR = typeIR as packageObjectTypeIR
+
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:773.1-773.61
+  clause 3 : (typeIR) = false
+  -- if typeIR <: tableObjectTypeIR
+  -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
+
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:774.1-775.15
+  clause 4 : (_typeIR) = true
+  -- otherwise
+
+;; ../../../../spec-concrete/5.03-wellformed.watsup:785.1-785.48
+def $nestable_constructor_parser(typeIR) : bool =
+
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:788.1-789.50
+  clause 0 : (typeIR) = $nestable'_constructor_parser($canon(typeIR))
+
+;; ../../../../spec-concrete/5.03-wellformed.watsup:786.1-786.49
+def $nestable'_constructor_parser(typeIR) : bool =
+
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:790.1-790.63
+  clause 0 : (typeIR) = false
+  -- if typeIR <: controlObjectTypeIR
+  -- let controlObjectTypeIR = typeIR as controlObjectTypeIR
+
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:791.1-791.63
   clause 1 : (typeIR) = false
   -- if typeIR <: packageObjectTypeIR
   -- let packageObjectTypeIR = typeIR as packageObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:817.1-817.62
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:792.1-792.61
   clause 2 : (typeIR) = false
   -- if typeIR <: tableObjectTypeIR
   -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:818.1-819.15
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:793.1-794.15
   clause 3 : (_typeIR) = true
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:829.1-829.49
+;; ../../../../spec-concrete/5.03-wellformed.watsup:804.1-804.49
+def $nestable_constructor_control(typeIR) : bool =
+
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:807.1-808.51
+  clause 0 : (typeIR) = $nestable'_constructor_control($canon(typeIR))
+
+;; ../../../../spec-concrete/5.03-wellformed.watsup:805.1-805.50
+def $nestable'_constructor_control(typeIR) : bool =
+
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:809.1-809.63
+  clause 0 : (typeIR) = false
+  -- if typeIR <: parserObjectTypeIR
+  -- let parserObjectTypeIR = typeIR as parserObjectTypeIR
+
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:810.1-810.64
+  clause 1 : (typeIR) = false
+  -- if typeIR <: packageObjectTypeIR
+  -- let packageObjectTypeIR = typeIR as packageObjectTypeIR
+
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:811.1-811.62
+  clause 2 : (typeIR) = false
+  -- if typeIR <: tableObjectTypeIR
+  -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
+
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:812.1-813.15
+  clause 3 : (_typeIR) = true
+  -- otherwise
+
+;; ../../../../spec-concrete/5.03-wellformed.watsup:823.1-823.49
 def $nestable_constructor_package(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:832.1-833.51
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:826.1-827.51
   clause 0 : (typeIR) = $nestable'_constructor_package($canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:830.1-830.50
+;; ../../../../spec-concrete/5.03-wellformed.watsup:824.1-824.50
 def $nestable'_constructor_package(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:834.1-834.62
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:828.1-828.62
   clause 0 : (typeIR) = false
   -- if typeIR <: tableObjectTypeIR
   -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:835.1-836.15
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:829.1-830.15
   clause 1 : (_typeIR) = true
   -- otherwise
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:850.1-850.42
+;; ../../../../spec-concrete/5.03-wellformed.watsup:844.1-844.42
 def $definable_constructor(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:853.1-854.44
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:847.1-848.44
   clause 0 : (typeIR) = $definable'_constructor($canon(typeIR))
 
-;; ../../../../spec-concrete/5.03-wellformed.watsup:851.1-851.43
+;; ../../../../spec-concrete/5.03-wellformed.watsup:845.1-845.43
 def $definable'_constructor(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:855.1-855.55
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:849.1-849.55
   clause 0 : (typeIR) = true
   -- if typeIR <: externObjectTypeIR
   -- let externObjectTypeIR = typeIR as externObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:856.1-856.55
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:850.1-850.55
   clause 1 : (typeIR) = true
   -- if typeIR <: parserObjectTypeIR
   -- let parserObjectTypeIR = typeIR as parserObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:857.1-857.56
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:851.1-851.56
   clause 2 : (typeIR) = true
   -- if typeIR <: controlObjectTypeIR
   -- let controlObjectTypeIR = typeIR as controlObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:858.1-858.56
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:852.1-852.56
   clause 3 : (typeIR) = true
   -- if typeIR <: packageObjectTypeIR
   -- let packageObjectTypeIR = typeIR as packageObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.03-wellformed.watsup:859.1-860.15
+  ;; ../../../../spec-concrete/5.03-wellformed.watsup:853.1-854.15
   clause 4 : (_typeIR) = false
   -- otherwise
 
@@ -17761,7 +17731,7 @@ relation RoutineTarget_ok: cursor typingContext |- routineTarget : routineTarget
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:334.1-337.73
 relation RoutineTarget_lvalue_ok: cursor typingContext |- lvalue : routineTargetIR
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:75.1-78.60
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:61.1-64.60
   rulegroup 
 
    match
@@ -17772,14 +17742,14 @@ relation RoutineTarget_lvalue_ok: cursor typingContext |- lvalue : routineTarget
    paths
 
     rulepath 
-    -- let expression = $lvalue(lvalue)
+    -- let expression = $lvalue_as_expression(lvalue)
     -- RoutineTarget_ok: p TC |- expression : routineTargetIR
     -- output: % % |- % : routineTargetIR
 
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:339.1-342.29
 relation RoutineType_ok: cursor typingContext |- routineTargetIR < typeArgumentListIR >( argumentIR* ): routineTypeIR <# tid* >(# id* )
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:89.1-112.2
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:75.1-98.2
   rulegroup referenceExpressionIR
 
    match
@@ -17813,7 +17783,7 @@ relation RoutineType_ok: cursor typingContext |- routineTargetIR < typeArgumentL
     -- if RoutineType_wf: bound |- functionTypeIR as routineTypeIR holds
     -- output: % % |- % < % >( % ): functionTypeIR as routineTypeIR <# tid_impl*{tid_impl <- tid_impl*} >(# id_default*{id_default <- id_default*} )
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:116.1-122.55
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:102.1-108.55
   rulegroup typedExpressionIR-nameIR-builtin-method-minmax-SizeIn-BitsBytes
 
    match
@@ -17832,7 +17802,7 @@ relation RoutineType_ok: cursor typingContext |- routineTargetIR < typeArgumentL
     -- let methodTypeIR = builtin_method( [] )-> int as typeIR as methodTypeIR
     -- output: % % |- % < % >( % ): methodTypeIR as routineTypeIR <# [] >(# [] )
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:124.1-135.67
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:110.1-121.67
   rulegroup typedExpressionIR-nameIR-builtin-method-stack-push-pop-front
 
    match
@@ -17857,7 +17827,7 @@ relation RoutineType_ok: cursor typingContext |- routineTargetIR < typeArgumentL
     -- let methodTypeIR = builtin_method( [parameterTypeIR] )-> int as typeIR as methodTypeIR
     -- output: % % |- % < % >( % ): methodTypeIR as routineTypeIR <# [] >(# [] )
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:137.1-146.56
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:123.1-132.56
   rulegroup typedExpressionIR-nameIR-builtin-method-header-isValid
 
    match
@@ -17880,7 +17850,7 @@ relation RoutineType_ok: cursor typingContext |- routineTargetIR < typeArgumentL
     -- let methodTypeIR = builtin_method( [] )-> bool as typeIR as methodTypeIR
     -- output: % % |- % < % >( % ): methodTypeIR as routineTypeIR <# [] >(# [] )
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:148.1-157.56
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:134.1-143.56
   rulegroup typedExpressionIR-nameIR-builtin-method-union-isValid
 
    match
@@ -17903,7 +17873,7 @@ relation RoutineType_ok: cursor typingContext |- routineTargetIR < typeArgumentL
     -- let methodTypeIR = builtin_method( [] )-> bool as typeIR as methodTypeIR
     -- output: % % |- % < % >( % ): methodTypeIR as routineTypeIR <# [] >(# [] )
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:159.1-168.56
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:145.1-154.56
   rulegroup typedExpressionIR-nameIR-builtin-method-header-set-ValidInvalid
 
    match
@@ -17926,7 +17896,7 @@ relation RoutineType_ok: cursor typingContext |- routineTargetIR < typeArgumentL
     -- let methodTypeIR = builtin_method( [] )-> void as typeIR as methodTypeIR
     -- output: % % |- % < % >( % ): methodTypeIR as routineTypeIR <# [] >(# [] )
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:170.1-188.44
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:156.1-174.44
   rulegroup typedExpressionIR-nameIR-extern-method
 
    match
@@ -17954,7 +17924,7 @@ relation RoutineType_ok: cursor typingContext |- routineTargetIR < typeArgumentL
     -- if RoutineType_wf: bound |- routineTypeIR holds
     -- output: % % |- % < % >( % ): routineTypeIR <# tid_impl*{tid_impl <- tid_impl*} >(# id_default*{id_default <- id_default*} )
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:190.1-208.22
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:176.1-194.22
   rulegroup typedExpressionIR-nameIR-parser-apply-method
 
    match
@@ -17987,7 +17957,7 @@ relation RoutineType_ok: cursor typingContext |- routineTargetIR < typeArgumentL
     -- if (methodTypeIR' = methodTypeIR)
     -- output: % % |- % < % >( % ): methodTypeIR as routineTypeIR <# [] >(# id_default*{id_default <- id_default*} )
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:210.1-228.22
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:196.1-214.22
   rulegroup typedExpressionIR-nameIR-control-apply-method
 
    match
@@ -18020,7 +17990,7 @@ relation RoutineType_ok: cursor typingContext |- routineTargetIR < typeArgumentL
     -- if (methodTypeIR' = methodTypeIR)
     -- output: % % |- % < % >( % ): methodTypeIR as routineTypeIR <# [] >(# id_default*{id_default <- id_default*} )
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:230.1-237.52
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:216.1-223.52
   rulegroup typedExpressionIR-nameIR-table-apply-method
 
    match
@@ -18043,7 +18013,7 @@ relation RoutineType_ok: cursor typingContext |- routineTargetIR < typeArgumentL
     -- let methodTypeIR = table_apply-> typeIR_table as methodTypeIR
     -- output: % % |- % < % >( % ): methodTypeIR as routineTypeIR <# [] >(# [] )
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:243.1-247.85
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:229.1-233.85
   rulegroup parenthesized
 
    match
@@ -18062,28 +18032,7 @@ relation RoutineType_ok: cursor typingContext |- routineTargetIR < typeArgumentL
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:349.1-353.35
 relation Call_ok: cursor typingContext |- routineTypeIR < typeArgumentListIR # tid* >( argumentListIR # id* ): typeIR < typeArgumentListIR >( argumentListIR )
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:264.1-281.40
-  rulegroup builtin-function
-
-   match
-
-    (explicit) p TC |- builtin_function( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret as routineTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # [] >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): % < % >( % )
-    (implicit) p TC |- routineTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # tid*{tid <- tid*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): % < % >( % )
-    -- if routineTypeIR <: builtinFunctionTypeIR
-    -- let builtin_function( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret = routineTypeIR as builtinFunctionTypeIR
-    -- if tid*{tid <- tid*} matches []
-
-   paths
-
-    rulepath builtin-function
-    -- let parameterTypeIR_non_default*{parameterTypeIR_non_default <- parameterTypeIR_non_default*} = $filter_default_parameters(parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}, id_default*{id_default <- id_default*})
-    -- if (|parameterTypeIR_non_default*{parameterTypeIR_non_default <- parameterTypeIR_non_default*}| = |argumentIR*{argumentIR <- argumentIR*}|)
-    -- let parameterTypeIR_aligned*{parameterTypeIR_aligned <- parameterTypeIR_aligned*} = $align_parameters(parameterTypeIR_non_default*{parameterTypeIR_non_default <- parameterTypeIR_non_default*}, argumentIR*{argumentIR <- argumentIR*})
-    -- if $callable_builtin_function(p, TC)
-    -- Call_convention_ok: p TC noaction |- parameterTypeIR_aligned*{parameterTypeIR_aligned <- parameterTypeIR_aligned*} @ argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
-    -- output: % % |- % < % # % >( % # % ): typeIR_ret < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
-
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:295.1-325.40
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:254.1-284.40
   rulegroup function
 
    match
@@ -18112,7 +18061,7 @@ relation Call_ok: cursor typingContext |- routineTypeIR < typeArgumentListIR # t
     -- Call_convention_ok: p TC noaction |- parameterTypeIR_aligned_inferred*{parameterTypeIR_aligned_inferred <- parameterTypeIR_aligned_inferred*} @ argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- output: % % |- % < % # % >( % # % ): typeIR_ret_inferred < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:337.1-367.40
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:296.1-326.40
   rulegroup externfunction
 
    match
@@ -18141,7 +18090,7 @@ relation Call_ok: cursor typingContext |- routineTypeIR < typeArgumentListIR # t
     -- Call_convention_ok: p TC noaction |- parameterTypeIR_aligned_inferred*{parameterTypeIR_aligned_inferred <- parameterTypeIR_aligned_inferred*} @ argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- output: % % |- % < % # % >( % # % ): typeIR_ret_inferred < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:379.1-395.38
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:338.1-354.38
   rulegroup action
 
    match
@@ -18163,7 +18112,7 @@ relation Call_ok: cursor typingContext |- routineTypeIR < typeArgumentListIR # t
     -- Call_convention_ok: p TC action |- parameterTypeIR_aligned*{parameterTypeIR_aligned <- parameterTypeIR_aligned*} @ argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- output: % % |- % < % # % >( % # % ): void as typeIR < [] >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:408.1-425.40
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:367.1-384.40
   rulegroup builtin-method
 
    match
@@ -18184,7 +18133,7 @@ relation Call_ok: cursor typingContext |- routineTypeIR < typeArgumentListIR # t
     -- Call_convention_ok: p TC noaction |- parameterTypeIR_aligned*{parameterTypeIR_aligned <- parameterTypeIR_aligned*} @ argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- output: % % |- % < % # % >( % # % ): typeIR_ret < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:437.1-467.40
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:396.1-426.40
   rulegroup extern-method
 
    match
@@ -18215,7 +18164,7 @@ relation Call_ok: cursor typingContext |- routineTypeIR < typeArgumentListIR # t
     -- Call_convention_ok: p TC noaction |- parameterTypeIR_aligned_inferred*{parameterTypeIR_aligned_inferred <- parameterTypeIR_aligned_inferred*} @ argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- output: % % |- % < % # % >( % # % ): typeIR_ret_inferred < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:479.1-509.40
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:438.1-468.40
   rulegroup extern-abstract-method
 
    match
@@ -18246,7 +18195,7 @@ relation Call_ok: cursor typingContext |- routineTypeIR < typeArgumentListIR # t
     -- Call_convention_ok: p TC noaction |- parameterTypeIR_aligned_inferred*{parameterTypeIR_aligned_inferred <- parameterTypeIR_aligned_inferred*} @ argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- output: % % |- % < % # % >( % # % ): typeIR_ret_inferred < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:520.1-537.40
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:479.1-496.40
   rulegroup parser-apply-method
 
    match
@@ -18268,7 +18217,7 @@ relation Call_ok: cursor typingContext |- routineTypeIR < typeArgumentListIR # t
     -- Call_convention_ok: p TC noaction |- parameterTypeIR_aligned*{parameterTypeIR_aligned <- parameterTypeIR_aligned*} @ argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- output: % % |- % < % # % >( % # % ): void as typeIR < [] >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:548.1-565.40
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:507.1-524.40
   rulegroup control-apply-method
 
    match
@@ -18290,7 +18239,7 @@ relation Call_ok: cursor typingContext |- routineTypeIR < typeArgumentListIR # t
     -- Call_convention_ok: p TC noaction |- parameterTypeIR_aligned*{parameterTypeIR_aligned <- parameterTypeIR_aligned*} @ argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- output: % % |- % < % # % >( % # % ): void as typeIR < [] >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:577.1-581.44
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:536.1-540.44
   rulegroup table-apply-method
 
    match
@@ -19353,7 +19302,7 @@ relation SwitchLabel_general_ok: typingContext typeIR bool |- switchLabel : swit
     -- let switchLabel' = switchLabel
     -- if switchLabel' <: expressionNonBrace
     -- let expressionNonBrace_label = switchLabel' as expressionNonBrace
-    -- let expression_label = $expressionNonBrace(expressionNonBrace_label)
+    -- let expression_label = $expressionNonBrace_as_expression(expressionNonBrace_label)
     -- Expr_ok: local TC |- expression_label : typedExpressionIR_label
     -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $coerce_unary(typedExpressionIR_label, typeIR_switch)
     -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
@@ -21149,185 +21098,138 @@ def $instantiable(cursor, typingContext, instctxt, typeIR) : bool =
   clause 4 : (p, TC, instctxt, typeIR) = $instantiable_table(p, TC, instctxt)
   -- if $is_table_object_typeIR($canon(typeIR))
 
-;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:61.1-61.33
-def $lvalue(lvalue) : expression =
-
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:62.1-62.55
-  clause 0 : (lvalue) = referenceExpression as expression
-  -- if lvalue <: referenceExpression
-  -- let referenceExpression = lvalue as referenceExpression
-
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:63.1-65.47
-  clause 1 : (lvalue) = expression_base as memberAccessBase . member as expression
-  -- if lvalue matches `%.%`
-  -- let lvalue_base . member = lvalue
-  -- let expression_base = $lvalue(lvalue_base)
-
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:66.1-68.47
-  clause 2 : (lvalue) = expression_base [ expression_index ] as expression
-  -- if lvalue matches `%[%]`
-  -- let lvalue_base [ expression_index ] = lvalue
-  -- let expression_base = $lvalue(lvalue_base)
-
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:69.1-71.47
-  clause 3 : (lvalue) = expression_base [ expression_hi : expression_lo ] as expression
-  -- if lvalue matches `%[%:%]`
-  -- let lvalue_base [ expression_hi : expression_lo ] = lvalue
-  -- let expression_base = $lvalue(lvalue_base)
-
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:72.1-73.37
-  clause 4 : (lvalue') = ( expression ) as expression
-  -- if lvalue' matches `(%)`
-  -- let ( lvalue ) = lvalue'
-  -- let expression = $lvalue(lvalue)
-
-;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:258.1-258.61
-def $callable_builtin_function(cursor, typingContext) : bool =
-
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:260.1-260.50
-  clause 0 : (cursor, TC) = true
-  -- if cursor matches `GLOBAL`
-
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:261.1-261.49
-  clause 1 : (cursor, TC) = true
-  -- if cursor matches `BLOCK`
-
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:262.1-262.49
-  clause 2 : (cursor, TC) = true
-  -- if cursor matches `LOCAL`
-
-;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:285.1-285.53
+;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:244.1-244.53
 def $callable_function(cursor, typingContext) : bool =
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:287.1-287.43
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:246.1-246.43
   clause 0 : (cursor, TC) = false
   -- if cursor matches `GLOBAL`
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:288.1-290.44
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:247.1-249.44
   clause 1 : (cursor, TC) = ($is_parser_blockKind(TC.block.kind) \/ $is_control_blockKind(TC.block.kind))
   -- if cursor matches `BLOCK`
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:291.1-293.60
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:250.1-252.60
   clause 2 : (cursor, TC) = (~$is_extern_method_localKind(TC.local.kind) /\ ~$is_extern_abstract_method_localKind(TC.local.kind))
   -- if cursor matches `LOCAL`
 
-;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:329.1-329.60
+;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:288.1-288.60
 def $callable_extern_function(cursor, typingContext) : bool =
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:331.1-331.50
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:290.1-290.50
   clause 0 : (cursor, TC) = false
   -- if cursor matches `GLOBAL`
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:332.1-334.44
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:291.1-293.44
   clause 1 : (cursor, TC) = ($is_parser_blockKind(TC.block.kind) \/ $is_control_blockKind(TC.block.kind))
   -- if cursor matches `BLOCK`
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:335.1-335.48
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:294.1-294.48
   clause 2 : (cursor, TC) = true
   -- if cursor matches `LOCAL`
 
-;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:371.1-371.51
+;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:330.1-330.51
 def $callable_action(cursor, typingContext) : bool =
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:373.1-373.41
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:332.1-332.41
   clause 0 : (cursor, TC) = false
   -- if cursor matches `GLOBAL`
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:374.1-374.40
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:333.1-333.40
   clause 1 : (cursor, TC) = false
   -- if cursor matches `BLOCK`
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:375.1-377.57
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:334.1-336.57
   clause 2 : (cursor, TC) = ($is_action_localKind(TC.local.kind) \/ $is_control_apply_method_localKind(TC.local.kind))
   -- if cursor matches `LOCAL`
 
-;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:402.1-402.59
+;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:361.1-361.59
 def $callable_builtin_method(cursor, typingContext) : bool =
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:404.1-404.48
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:363.1-363.48
   clause 0 : (cursor, TC) = true
   -- if cursor matches `GLOBAL`
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:405.1-405.47
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:364.1-364.47
   clause 1 : (cursor, TC) = true
   -- if cursor matches `BLOCK`
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:406.1-406.47
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:365.1-365.47
   clause 2 : (cursor, TC) = true
   -- if cursor matches `LOCAL`
 
-;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:429.1-429.58
+;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:388.1-388.58
 def $callable_extern_method(cursor, typingContext) : bool =
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:431.1-431.48
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:390.1-390.48
   clause 0 : (cursor, TC) = false
   -- if cursor matches `GLOBAL`
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:432.1-434.44
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:391.1-393.44
   clause 1 : (cursor, TC) = ($is_parser_blockKind(TC.block.kind) \/ $is_control_blockKind(TC.block.kind))
   -- if cursor matches `BLOCK`
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:435.1-435.46
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:394.1-394.46
   clause 2 : (cursor, TC) = true
   -- if cursor matches `LOCAL`
 
-;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:471.1-471.67
+;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:430.1-430.67
 def $callable_extern_abstract_method(cursor, typingContext) : bool =
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:473.1-473.57
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:432.1-432.57
   clause 0 : (cursor, TC) = false
   -- if cursor matches `GLOBAL`
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:474.1-476.44
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:433.1-435.44
   clause 1 : (cursor, TC) = ($is_parser_blockKind(TC.block.kind) \/ $is_control_blockKind(TC.block.kind))
   -- if cursor matches `BLOCK`
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:477.1-477.55
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:436.1-436.55
   clause 2 : (cursor, TC) = true
   -- if cursor matches `LOCAL`
 
-;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:513.1-513.64
+;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:472.1-472.64
 def $callable_parser_apply_method(cursor, typingContext) : bool =
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:515.1-515.54
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:474.1-474.54
   clause 0 : (cursor, TC) = false
   -- if cursor matches `GLOBAL`
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:516.1-516.53
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:475.1-475.53
   clause 1 : (cursor, TC) = false
   -- if cursor matches `BLOCK`
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:517.1-518.46
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:476.1-477.46
   clause 2 : (cursor, TC) = $is_parser_state_localKind(TC.local.kind)
   -- if cursor matches `LOCAL`
 
-;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:541.1-541.65
+;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:500.1-500.65
 def $callable_control_apply_method(cursor, typingContext) : bool =
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:543.1-543.55
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:502.1-502.55
   clause 0 : (cursor, TC) = false
   -- if cursor matches `GLOBAL`
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:544.1-544.54
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:503.1-503.54
   clause 1 : (cursor, TC) = false
   -- if cursor matches `BLOCK`
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:545.1-546.54
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:504.1-505.54
   clause 2 : (cursor, TC) = $is_control_apply_method_localKind(TC.local.kind)
   -- if cursor matches `LOCAL`
 
-;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:569.1-569.63
+;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:528.1-528.63
 def $callable_table_apply_method(cursor, typingContext) : bool =
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:571.1-571.53
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:530.1-530.53
   clause 0 : (cursor, TC) = false
   -- if cursor matches `GLOBAL`
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:572.1-572.52
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:531.1-531.52
   clause 1 : (cursor, TC) = false
   -- if cursor matches `BLOCK`
 
-  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:573.1-575.55
+  ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:532.1-534.55
   clause 2 : (cursor, TC) = ($is_control_apply_method_localKind(TC.local.kind) \/ $is_table_apply_method_localKind(TC.local.kind))
   -- if cursor matches `LOCAL`
 
@@ -21367,46 +21269,41 @@ syntax storageReference =
 syntax action = 
    | action( parameterListIR ) blockStatementIR
 
-;; ../../../../spec-concrete/6.2.1-routine.watsup:10.3-10.65
-syntax builtinFunction = 
-   | builtin_function< typeParameterListIR >( parameterListIR )
-
-;; ../../../../spec-concrete/6.2.1-routine.watsup:13.3-13.74
+;; ../../../../spec-concrete/6.2.1-routine.watsup:10.3-10.74
 syntax definedFunction = 
    | function< typeParameterListIR >( parameterListIR ) blockStatementIR
 
-;; ../../../../spec-concrete/6.2.1-routine.watsup:16.3-16.64
+;; ../../../../spec-concrete/6.2.1-routine.watsup:13.3-13.64
 syntax externFunction = 
    | extern_function< typeParameterListIR >( parameterListIR )
 
-;; ../../../../spec-concrete/6.2.1-routine.watsup:19.1-21.19
+;; ../../../../spec-concrete/6.2.1-routine.watsup:16.1-17.19
 syntax function = 
-   | builtin_function< typeParameterListIR >( parameterListIR )
    | function< typeParameterListIR >( parameterListIR ) blockStatementIR
    | extern_function< typeParameterListIR >( parameterListIR )
 
-;; ../../../../spec-concrete/6.2.1-routine.watsup:24.3-24.58
+;; ../../../../spec-concrete/6.2.1-routine.watsup:20.3-20.58
 syntax builtinMethod = 
    | builtin_method( parameterListIR )# storageReference
 
-;; ../../../../spec-concrete/6.2.1-routine.watsup:27.1-28.73
+;; ../../../../spec-concrete/6.2.1-routine.watsup:23.1-24.73
 syntax externMethod = 
    | extern_method< typeParameterListIR >( parameterListIR ) blockStatementIR?
    | extern_methodabstract< typeParameterListIR >( parameterListIR )
 
-;; ../../../../spec-concrete/6.2.1-routine.watsup:31.3-32.46
+;; ../../../../spec-concrete/6.2.1-routine.watsup:27.3-28.46
 syntax parserApplyMethod = 
    | parser_apply( parameterListIR ){ parserLocalDeclarationListIR ; senv }
 
-;; ../../../../spec-concrete/6.2.1-routine.watsup:35.3-36.78
+;; ../../../../spec-concrete/6.2.1-routine.watsup:31.3-32.78
 syntax controlApplyMethod = 
    | control_apply( parameterListIR ){ controlLocalDeclarationListIR ; renv ; blockElementStatementListIR }
 
-;; ../../../../spec-concrete/6.2.1-routine.watsup:39.3-39.39
+;; ../../../../spec-concrete/6.2.1-routine.watsup:35.3-35.39
 syntax tableApplyMethod = 
    | table_apply{ tablePropertyListIR }
 
-;; ../../../../spec-concrete/6.2.1-routine.watsup:42.1-46.21
+;; ../../../../spec-concrete/6.2.1-routine.watsup:38.1-42.21
 syntax method = 
    | builtin_method( parameterListIR )# storageReference
    | extern_method< typeParameterListIR >( parameterListIR ) blockStatementIR?
@@ -21415,10 +21312,9 @@ syntax method =
    | control_apply( parameterListIR ){ controlLocalDeclarationListIR ; renv ; blockElementStatementListIR }
    | table_apply{ tablePropertyListIR }
 
-;; ../../../../spec-concrete/6.2.1-routine.watsup:48.18-48.44
+;; ../../../../spec-concrete/6.2.1-routine.watsup:44.18-44.44
 syntax routine = 
    | action( parameterListIR ) blockStatementIR
-   | builtin_function< typeParameterListIR >( parameterListIR )
    | function< typeParameterListIR >( parameterListIR ) blockStatementIR
    | extern_function< typeParameterListIR >( parameterListIR )
    | builtin_method( parameterListIR )# storageReference

@@ -6,25 +6,3 @@
 
 [#sec-extern-abstract-method]
 ==== Extern abstract methods
-
-Typical extern object methods are built-in, and are implemented by the target
-architecture.  P4 programmers can only call such methods.
-
-However, some types of extern objects may provide methods that can be
-implemented by the P4 programmers.  Such methods are described with the
-`abstract` keyword prior to the method definition.  Here is an example:
-
-[source,p4]
-----
-extern Balancer {
-    Balancer();
-    // get the number of active flows
-    bit<32> getFlowCount();
-    // return port index used for load-balancing
-    // @param address: IPv4 source address of flow
-    abstract bit<4> on_new_flow(in bit<32> address);
-}
-----
-
-When such an object is instantiated the user has to supply an implementation
-of all the `abstract` methods (see <<sec-instantiating-abstract-methods>>).

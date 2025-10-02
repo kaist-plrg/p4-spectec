@@ -1,5 +1,12 @@
 [#sec-def-routine-type-constructor]
-=== Routine type constructors
+=== Routine type definitions (routine type constructors)
+
+As in the case for types (see <<sec-def-typeDefIR>>), some routines in P4~16~
+can be generic, taking type parameters. Thus, declarations of routines are
+essentially declarations of routine constructors, that create new routines when
+applied to type arguments.
+
+The internal representation of routine type definitions is as follows:
 
 ${syntax: routineTypeDefIR}
 
@@ -8,7 +15,30 @@ ${syntax: routineTypeDefIR}
 
 ${syntax: monoRoutineTypeDefIR}
 
+A monomorphic routine type definition is one that does not take any type parameters.
+The types that are definable by a monomorphic routine type definition are as follows:
+
+${funcprose: definable_routine_mono}
+
+[#sec-sem-RoutineTypeDef_wf-monoRoutineTypeDefIR]
+===== Well-formedness
+
+${rulegroup: RoutineTypeDef_wf/monoRoutineTypeDefIR}
+${ruleprose: RoutineTypeDef_wf/monoRoutineTypeDefIR}
+
 [#sec-def-poly-routine-type-constructor]
 ==== Polymorphic routine type constructors
 
 ${syntax: polyRoutineTypeDefIR}
+
+A polymorphic routine type definition may take type parameters. The routine
+types that are definable by a polymorphic routine type definition are as
+follows:
+
+${funcprose: definable_routine_poly}
+
+[#sec-sem-RoutineTypeDef_wf-polyRoutineTypeDefIR]
+===== Well-formedness
+
+${rulegroup: RoutineTypeDef_wf/polyRoutineTypeDefIR}
+${ruleprose: RoutineTypeDef_wf/polyRoutineTypeDefIR}

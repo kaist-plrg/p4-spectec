@@ -143,14 +143,6 @@ def $free_routineType(
       = $unions_set<tid>($free_parameterType(parameterTypeIR)*)
 
 def $free_routineType(
-    BUILTIN_FUNCTION `( parameterTypeIR* ) `-> typeIR_ret
-  )
-  = $union_set<tid>(bound_params, bound_ret)
-  -- if bound_params
-      = $unions_set<tid>($free_parameterType(parameterTypeIR)*)
-  -- if bound_ret = $free_type(typeIR_ret)
-
-def $free_routineType(
     FUNCTION `( parameterTypeIR* ) `-> typeIR_ret
   )
   = $union_set<tid>(bound_params, bound_ret)
@@ -419,15 +411,6 @@ def $subst_routineType'(
   = ACTION `( parameterTypeIR_subst* )
   -- if (parameterTypeIR_subst
         = $subst_parameterType'(theta, parameterTypeIR))*
-
-def $subst_routineType'(
-    theta,
-    BUILTIN_FUNCTION `( parameterTypeIR* ) `-> typeIR_ret
-  )
-  = BUILTIN_FUNCTION `( parameterTypeIR_subst* ) `-> typeIR_ret_subst
-  -- if (parameterTypeIR_subst
-        = $subst_parameterType'(theta, parameterTypeIR))*
-  -- if typeIR_ret_subst = $subst_type'(theta, typeIR_ret)
 
 def $subst_routineType'(
     theta,

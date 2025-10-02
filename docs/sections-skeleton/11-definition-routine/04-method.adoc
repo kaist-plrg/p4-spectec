@@ -1,5 +1,8 @@
+[#sec-def-methodTypeIR]
 [#sec-def-method]
 === Methods 
+
+The internal representation of methods and method types is as follows:
 
 ${syntax: methodTypeIR
           method}
@@ -11,30 +14,177 @@ ${syntax: methodTypeIR
 ${syntax: builtinMethodTypeIR
           builtinMethod}
 
+[#sec-sem-RoutineType_wf-builtinMethodTypeIR]
+===== Well-formnedness
+
+${rulegroup: RoutineType_wf/builtinMethodTypeIR}
+${ruleprose: RoutineType_wf/builtinMethodTypeIR}
+
 [#sec-def-externMethodTypeIR]
 [#sec-def-externMethod]
 ==== Extern methods
 
+Internally, extern methods are represented as follows:
+
 ${syntax: externMethodTypeIR
           externMethod}
 
+===== Extern methods
+
+Typical extern object methods are built-in, and are implemented by the target
+architecture. P4 programmers can only call such methods.
+
+====== Type nesting
+
+${funcprose: nestable_externmethod}
+${funcprose: nestable'_externmethod}
+
+[#sec-sem-RoutineType_wf-externMethodTypeIR-non-abstract]
+====== Well-formedness
+
+${rulegroup: RoutineType_wf/externMethodTypeIR-non-abstract}
+${ruleprose: RoutineType_wf/externMethodTypeIR-non-abstract}
+
+===== Extern abstract methods
+
+Some types of extern objects may provide methods that can be implemented by the
+P4 programmers.  Such methods are described with the `abstract` keyword prior
+to the method definition.  Here is an example:
+
+[source,p4]
+----
+extern Balancer {
+    Balancer();
+    // get the number of active flows
+    bit<32> getFlowCount();
+    // return port index used for load-balancing
+    // @param address: IPv4 source address of flow
+    abstract bit<4> on_new_flow(in bit<32> address);
+}
+----
+
+When such an object is instantiated the user has to supply an implementation
+of all the `abstract` methods (see <<sec-instantiating-abstract-methods>>).
+
+====== Type nesting
+
+${funcprose: nestable_externabstractmethod}
+${funcprose: nestable'_externabstractmethod}
+
+[#sec-sem-RoutineType_wf-externMethodTypeIR-abstract]
+====== Well-formedness
+
+${rulegroup: RoutineType_wf/externMethodTypeIR-abstract}
+${ruleprose: RoutineType_wf/externMethodTypeIR-abstract}
+
 [#sec-def-parserApplyMethodTypeIR]
 [#sec-def-parserApplyMethod]
+
 ==== Parser apply methods
+
+P4 allows parsers to invoke the services of other parsers, similar to
+subroutines. To invoke the services of another parser, the sub-parser must be
+first instantiated; the services of an instance are invoked by calling it using
+its `apply` method.
+
+The following example shows a sub-parser invocation:
+
+[source,p4]
+----
+parser callee(packet_in packet, out IPv4 ipv4) { /* body omitted */ }
+parser caller(packet_in packet, out Headers h) {
+     callee() subparser;  // instance of callee
+     state subroutine {
+          subparser.apply(packet, h.ipv4);  // invoke sub-parser
+          transition accept;  // accept if sub-parser ends in accept state
+     }
+}
+----
+
+A parser apply method is represented internally as follows:
 
 ${syntax: parserApplyMethodTypeIR
           parserApplyMethod}
+
+===== Type checking
+
+A parser apply method is introduced by a ``parser`` declaration. Its typing
+rule is explained in <<sec-sem-Decl_ok-parserDeclaration>>.
+
+===== Type nesting
+
+${funcprose: nestable_parserapplymethod}
+${funcprose: nestable'_parserapplymethod}
+
+[#sec-sem-RoutineType_wf-parserApplyMethodTypeIR]
+===== Well-formedness
+
+${rulegroup: RoutineType_wf/parserApplyMethodTypeIR}
+${ruleprose: RoutineType_wf/parserApplyMethodTypeIR}
 
 [#sec-def-controlApplyMethodTypeIR]
 [#sec-def-controlApplyMethod]
 ==== Control apply methods
 
+P4 allows controls to invoke the services of other controls, similar
+to subroutines. To invoke the services of another control, it must be
+first instantiated; the services of an instance are invoked by calling
+it using its `apply` method.
+
+The following example shows a control invocation:
+
+[source,p4]
+----
+control Callee(inout IPv4 ipv4) { /* body omitted */ }
+control Caller(inout Headers h) {
+     Callee() instance;  // instance of callee
+     apply {
+          instance.apply(h.ipv4);  // invoke control
+     }
+}
+----
+
+Control apply methods are represented internally as follows:
+
 ${syntax: controlApplyMethodTypeIR
           controlApplyMethod}
+
+===== Type checking
+
+A control apply method is introduced by a ``control`` declaration. Its typing
+rule is explained in <<sec-sem-Decl_ok-controlDelaration>>.
+
+===== Type nesting
+
+${funcprose: nestable_controlapplymethod}
+${funcprose: nestable'_controlapplymethod}
+
+[#sec-sem-RoutineType_wf-controlApplyMethodTypeIR]
+===== Well-formedness
+
+${rulegroup: RoutineType_wf/controlApplyMethodTypeIR}
+${ruleprose: RoutineType_wf/controlApplyMethodTypeIR}
 
 [#sec-def-tableApplyMethodTypeIR]
 [#sec-def-tableApplyMethod]
 ==== Table apply methods
 
+A `table` can be invoked by calling its `apply` method. Calling an apply method
+on a table instance returns a synthesized table metadata structure, explained in
+<<sec-def-tableMetadataTypeIR>>.
+
+The internal representation of a table apply method is as follows:
+
 ${syntax: tableApplyMethodTypeIR
           tableApplyMethod}
+
+===== Type checking
+
+A table apply method is introduced by a ``table`` declaration. Its typing rule
+is explained in <<sec-sem-ControlLocalDecl_ok-tableDeclaration>>.
+
+[#sec-sem-RoutineType_wf-tableApplyMethodTypeIR]
+===== Well-formedness
+
+${rulegroup: RoutineType_wf/tableApplyMethodTypeIR}
+${ruleprose: RoutineType_wf/tableApplyMethodTypeIR}
