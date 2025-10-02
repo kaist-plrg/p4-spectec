@@ -1564,4 +1564,4 @@ declarationList_:
   | dl = declarationList_ { dl |> wrap_list_v "declaration" }
 
 p4program:
-	| dl = declarationList END { dl #@@ "program" }
+	| dl = declarationList END { dl #@@ "p4program" }
