@@ -6784,26 +6784,26 @@ relation Stmt_inst: `p'`, `IC'`, `STO'`, and `statementIR`
  .. Group conditionalStatementIR: `p'`, `IC'`, `STO'`, and `conditionalStatementIR`
 
   ... If let `IF ( typedExpressionIR~cond~ ) statementIR~then~` be `conditionalStatementIR`:
-   .... Let `IC~1~`, `STO~1~`, and `statementIR~then_inst~` be the result of <<Stmt_inst, the compile-time evaluation of `statementIR~then~`, under cursor `p'`, instantiation context `IC'`, and store `STO'`>>.
+   .... Let `IC~then~`, `STO~1~`, and `statementIR~then_inst~` be the result of <<Stmt_inst, the compile-time evaluation of `statementIR~then~`, under cursor `p'`, instantiation context `IC'`, and store `STO'`>>.
    .... Result in 
-          * the instantiation context `IC~1~`,
+          * the instantiation context `IC'`,
           * the updated store `STO~1~`,
           * and the instantiated statement `IF ( typedExpressionIR~cond~ ) statementIR~then_inst~`.
 
   ... Else if let `IF ( typedExpressionIR~cond~ ) statementIR~then~ ELSE statementIR~else~` be `conditionalStatementIR`:
-   .... Let `IC~1~`, `STO~1~`, and `statementIR~then_inst~` be the result of <<Stmt_inst, the compile-time evaluation of `statementIR~then~`, under cursor `p'`, instantiation context `IC'`, and store `STO'`>>.
-   .... Let `IC~2~`, `STO~2~`, and `statementIR~else_inst~` be the result of <<Stmt_inst, the compile-time evaluation of `statementIR~else~`, under cursor `p'`, instantiation context `IC~1~`, and store `STO~1~`>>.
+   .... Let `IC~then~`, `STO~1~`, and `statementIR~then_inst~` be the result of <<Stmt_inst, the compile-time evaluation of `statementIR~then~`, under cursor `p'`, instantiation context `IC'`, and store `STO'`>>.
+   .... Let `IC~else~`, `STO~2~`, and `statementIR~else_inst~` be the result of <<Stmt_inst, the compile-time evaluation of `statementIR~else~`, under cursor `p'`, instantiation context `IC'`, and store `STO~1~`>>.
    .... Result in 
-          * the instantiation context `IC~2~`,
+          * the instantiation context `IC'`,
           * the updated store `STO~2~`,
           * and the instantiated statement `IF ( typedExpressionIR~cond~ ) statementIR~then_inst~ ELSE statementIR~else_inst~`.
 
 . Else if let `SWITCH ( typedExpressionIR ) { switchCaseListIR }` be `statementIR`:
  .. Group switchStatementIR: `p'`, `IC'`, `STO'`, and `SWITCH ( typedExpressionIR ) { switchCaseListIR }`
 
-  ... <<SwitchCases_inst, `p' IC' STO' |- switchCaseListIR ==> IC~1~ STO~1~ switchCaseListIR~inst~`>>.
+  ... <<SwitchCases_inst, `p' IC' STO' |- switchCaseListIR ==> STO~1~ switchCaseListIR~inst~`>>.
   ... Result in 
-        * the instantiation context `IC~1~`,
+        * the instantiation context `IC'`,
         * the updated store `STO~1~`,
         * and the instantiated statement `SWITCH ( typedExpressionIR ) { switchCaseListIR~inst~ }`.
 . Check that `p'` matches pattern `LOCAL`.
@@ -6870,7 +6870,7 @@ relation Block_inst: `IC~0~`, `STO~0~`, and `annotationList { blockElementStatem
  .. Let `IC~1~` be `$enter_inst(IC~0~)`.
  .. <<BlockElementStmts_inst, `IC~1~ STO~0~ |- blockElementStatementListIR ==> IC~2~ STO~1~ blockElementStatementListIR~inst~`>>.
  .. Let `IC~3~` be `$exit_inst(IC~2~)`.
- .. Result in `IC~2~`, `STO~1~`, and `annotationList { blockElementStatementListIR~inst~ }`.
+ .. Result in `IC~3~`, `STO~1~`, and `annotationList { blockElementStatementListIR~inst~ }`.
 
 relation Bind_method: `rdenv~0~` and `methodPrototypeIR`
 
@@ -7778,29 +7778,29 @@ for each `constructorParameterIR~default~` in `constructorParameterIR~default~^{
   ... Let `object~table~` be `TABLE nameIR { venv tablePropertyListIR~dynamic~ }`.
   ... Result in `STO~1~` and `object~table~`.
 
-relation SwitchCase_inst: `p`, `instantiationContext`, `store`, and `switchCaseIR`
+relation SwitchCase_inst: `p`, `IC`, `store`, and `switchCaseIR`
 
-. Group : `p`, `instantiationContext`, `store`, and `switchCaseIR`
+. Group : `p`, `IC`, `store`, and `switchCaseIR`
 
  .. If let `switchLabelIR : blockStatementIR` be `switchCaseIR`:
-  ... Let `IC~1~`, `STO~1~`, and `statementIR` be the result of <<Stmt_inst, the compile-time evaluation of `blockStatementIR`, under cursor `p`, instantiation context `instantiationContext`, and store `store`>>.
+  ... Let `IC~switch~`, `STO~1~`, and `statementIR` be the result of <<Stmt_inst, the compile-time evaluation of `blockStatementIR`, under cursor `p`, instantiation context `IC`, and store `store`>>.
   ... Check that `statementIR` has type `blockStatementIR`.
   ... Let `blockStatementIR~inst~` be `statementIR`.
-  ... Result in `IC~1~`, `STO~1~`, and `switchLabelIR : blockStatementIR~inst~`.
+  ... Result in `STO~1~` and `switchLabelIR : blockStatementIR~inst~`.
 
  .. Else if let `switchLabelIR :` be `switchCaseIR`:
-  ... Result in `instantiationContext`, `store`, and `switchLabelIR :`.
+  ... Result in `store` and `switchLabelIR :`.
 
-relation SwitchCases_inst: `p`, `IC'`, `STO'`, and `switchCaseIR^{asterisk}^`
+relation SwitchCases_inst: `p`, `IC`, `STO'`, and `switchCaseIR^{asterisk}^`
 
 . If `switchCaseIR^{asterisk}^` matches pattern `[]`:
- .. Group nil: `p`, `IC'`, `STO'`, and `[ ]`
+ .. Group nil: `p`, `IC`, `STO'`, and `[ ]`
 
-  ... Result in `IC'`, `STO'`, and `[ ]`.
+  ... Result in `STO'` and `[ ]`.
 
 . Else if let `switchCaseIR~h~ :: switchCaseIR~t~^{asterisk}^` be `switchCaseIR^{asterisk}^`:
- .. Group cons: `p`, `IC'`, `STO'`, and `switchCaseIR~h~ :: switchCaseIR~t~^{asterisk}^`
+ .. Group cons: `p`, `IC`, `STO'`, and `switchCaseIR~h~ :: switchCaseIR~t~^{asterisk}^`
 
-  ... <<SwitchCase_inst, `p IC' STO' |- switchCaseIR~h~ ==> IC~1~ STO~1~ switchCaseIR~h'~`>>.
-  ... <<SwitchCases_inst, `p IC~1~ STO~1~ |- switchCaseIR~t~^{asterisk}^ ==> IC~2~ STO~2~ switchCaseIR~t'~^{asterisk}^`>>.
-  ... Result in `IC~2~`, `STO~2~`, and `switchCaseIR~h'~ :: switchCaseIR~t'~^{asterisk}^`.
+  ... <<SwitchCase_inst, `p IC STO' |- switchCaseIR~h~ ==> STO~1~ switchCaseIR~h'~`>>.
+  ... <<SwitchCases_inst, `p IC STO~1~ |- switchCaseIR~t~^{asterisk}^ ==> STO~2~ switchCaseIR~t'~^{asterisk}^`>>.
+  ... Result in `STO~2~` and `switchCaseIR~h'~ :: switchCaseIR~t'~^{asterisk}^`.

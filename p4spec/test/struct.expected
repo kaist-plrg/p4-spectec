@@ -24609,19 +24609,19 @@ relation Stmt_inst: p' IC' STO' |- statementIR ==> % % %
 
           1. (Let (if( typedExpressionIR_cond ) statementIR_then) be conditionalStatementIR)
 
-          2. (Stmt_inst: p' IC' STO' |- statementIR_then ==> IC_1 STO_1 statementIR_then_inst)
+          2. (Stmt_inst: p' IC' STO' |- statementIR_then ==> IC_then STO_1 statementIR_then_inst)
 
-          3. Result in : % % % |- % ==> IC_1 STO_1 ((if( typedExpressionIR_cond ) statementIR_then_inst) as statementIR)
+          3. Result in : % % % |- % ==> IC' STO_1 ((if( typedExpressionIR_cond ) statementIR_then_inst) as statementIR)
 
         2. Case (% matches pattern `IF(%)%ELSE%`)
 
           1. (Let (if( typedExpressionIR_cond ) statementIR_then else statementIR_else) be conditionalStatementIR)
 
-          2. (Stmt_inst: p' IC' STO' |- statementIR_then ==> IC_1 STO_1 statementIR_then_inst)
+          2. (Stmt_inst: p' IC' STO' |- statementIR_then ==> IC_then STO_1 statementIR_then_inst)
 
-          3. (Stmt_inst: p' IC_1 STO_1 |- statementIR_else ==> IC_2 STO_2 statementIR_else_inst)
+          3. (Stmt_inst: p' IC' STO_1 |- statementIR_else ==> IC_else STO_2 statementIR_else_inst)
 
-          4. Result in : % % % |- % ==> IC_2 STO_2 ((if( typedExpressionIR_cond ) statementIR_then_inst else statementIR_else_inst) as statementIR)
+          4. Result in : % % % |- % ==> IC' STO_2 ((if( typedExpressionIR_cond ) statementIR_then_inst else statementIR_else_inst) as statementIR)
 
   7. Case (% has type switchStatementIR)
 
@@ -24629,9 +24629,9 @@ relation Stmt_inst: p' IC' STO' |- statementIR ==> % % %
 
     2. Group switchStatementIR: p' IC' STO' |- ((switch( typedExpressionIR ){ switchCaseListIR }) as statementIR) ==> % % %
 
-      1. (SwitchCases_inst: p' IC' STO' |- switchCaseListIR ==> IC_1 STO_1 switchCaseListIR_inst)
+      1. (SwitchCases_inst: p' IC' STO' |- switchCaseListIR ==> STO_1 switchCaseListIR_inst)
 
-      2. Result in : % % % |- % ==> IC_1 STO_1 ((switch( typedExpressionIR ){ switchCaseListIR_inst }) as statementIR)
+      2. Result in : % % % |- % ==> IC' STO_1 ((switch( typedExpressionIR ){ switchCaseListIR_inst }) as statementIR)
 
 2. If ((p' matches pattern `LOCAL`)), then
 
@@ -24734,7 +24734,7 @@ relation Block_inst: IC_0 STO_0 |- (annotationList { blockElementStatementListIR
 
   3. (Let IC_3 be $exit_inst(IC_2))
 
-  4. Result in : % % |- % ==> IC_2 STO_1 (annotationList { blockElementStatementListIR_inst })
+  4. Result in : % % |- % ==> IC_3 STO_1 (annotationList { blockElementStatementListIR_inst })
 
 ;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:53.1-55.20
 relation Bind_method: rdenv_0 |- methodPrototypeIR ==> %
@@ -26123,9 +26123,9 @@ relation Constructor_inst: p IC STO_0 |- constructor < typeArgumentIR*{typeArgum
               3. Result in : % % % |- % < % >( % # % )==> STO_1 object_table
 
 ;; ../../../../spec-concrete/7.06-instantiation-statement.watsup:103.1-106.26
-relation SwitchCase_inst: p instantiationContext store |- switchCaseIR ==> % % %
+relation SwitchCase_inst: p IC store |- switchCaseIR ==> % %
 
-1. Group : p instantiationContext store |- switchCaseIR ==> % % %
+1. Group : p IC store |- switchCaseIR ==> % %
 
   1. Case analysis on switchCaseIR
 
@@ -26133,42 +26133,42 @@ relation SwitchCase_inst: p instantiationContext store |- switchCaseIR ==> % % %
 
       1. (Let (switchLabelIR : blockStatementIR) be switchCaseIR)
 
-      2. (Stmt_inst: p instantiationContext store |- (blockStatementIR as statementIR) ==> IC_1 STO_1 statementIR)
+      2. (Stmt_inst: p IC store |- (blockStatementIR as statementIR) ==> IC_switch STO_1 statementIR)
 
       3. If ((statementIR has type blockStatementIR)), then
 
         1. (Let blockStatementIR_inst be (statementIR as blockStatementIR))
 
-        2. Result in : % % % |- % ==> IC_1 STO_1 (switchLabelIR : blockStatementIR_inst)
+        2. Result in : % % % |- % ==> STO_1 (switchLabelIR : blockStatementIR_inst)
 
     2. Case (% matches pattern `%:`)
 
       1. (Let (switchLabelIR :) be switchCaseIR)
 
-      2. Result in : % % % |- % ==> instantiationContext store (switchLabelIR :)
+      2. Result in : % % % |- % ==> store (switchLabelIR :)
 
-;; ../../../../spec-concrete/7.06-instantiation-statement.watsup:126.1-129.26
-relation SwitchCases_inst: p IC' STO' |- switchCaseIR*{switchCaseIR <- switchCaseIR*} ==> % % %
+;; ../../../../spec-concrete/7.06-instantiation-statement.watsup:127.1-130.26
+relation SwitchCases_inst: p IC STO' |- switchCaseIR*{switchCaseIR <- switchCaseIR*} ==> % %
 
 1. Case analysis on switchCaseIR*{switchCaseIR <- switchCaseIR*}
 
   1. Case (% matches pattern [])
 
-    1. Group nil: p IC' STO' |- [] ==> % % %
+    1. Group nil: p IC STO' |- [] ==> % %
 
-      1. Result in : % % % |- % ==> IC' STO' []
+      1. Result in : % % % |- % ==> STO' []
 
   2. Case (% matches pattern _ :: _)
 
     1. (Let switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} be switchCaseIR*{switchCaseIR <- switchCaseIR*})
 
-    2. Group cons: p IC' STO' |- switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} ==> % % %
+    2. Group cons: p IC STO' |- switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} ==> % %
 
-      1. (SwitchCase_inst: p IC' STO' |- switchCaseIR_h ==> IC_1 STO_1 switchCaseIR_h')
+      1. (SwitchCase_inst: p IC STO' |- switchCaseIR_h ==> STO_1 switchCaseIR_h')
 
-      2. (SwitchCases_inst: p IC_1 STO_1 |- switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} ==> IC_2 STO_2 switchCaseIR_t'*{switchCaseIR_t' <- switchCaseIR_t'*})
+      2. (SwitchCases_inst: p IC STO_1 |- switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} ==> STO_2 switchCaseIR_t'*{switchCaseIR_t' <- switchCaseIR_t'*})
 
-      3. Result in : % % % |- % ==> IC_2 STO_2 switchCaseIR_h' :: switchCaseIR_t'*{switchCaseIR_t' <- switchCaseIR_t'*}
+      3. Result in : % % % |- % ==> STO_2 switchCaseIR_h' :: switchCaseIR_t'*{switchCaseIR_t' <- switchCaseIR_t'*}
 
 ;; ../../../../spec-concrete/7.07-instantiation-declaration.watsup:35.1-35.36
 def $merge_venvs(venv, ({ (id : value)*{id <- id*, value <- value*} }))

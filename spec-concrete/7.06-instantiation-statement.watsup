@@ -64,7 +64,7 @@ rule Stmt_inst/exitStatementIR:
 
 rule Stmt_inst/blockStatementIR:
   LOCAL IC_0 STO_0 |- annotationList `{ blockElementStatementListIR }
-              ==> IC_1 STO_1 (annotationList `{ blockElementStatementListIR_inst })
+                  ==> IC_1 STO_1 (annotationList `{ blockElementStatementListIR_inst })
   -- Block_inst: IC_0 STO_0 |- annotationList `{ blockElementStatementListIR }
                            ==> IC_1 STO_1 (_ `{ blockElementStatementListIR_inst })
 
@@ -77,15 +77,15 @@ rule Stmt_inst/blockStatementIR:
 rulegroup Stmt_inst/conditionalStatementIR {
 
   rule Stmt_inst/non-else:
-    p IC_0 STO_0 |- IF `( typedExpressionIR_cond ) statementIR_then
-                ==> IC_1 STO_1 (IF `( typedExpressionIR_cond ) statementIR_then_inst)
-    -- Stmt_inst: p IC_0 STO_0 |- statementIR_then ==> IC_1 STO_1 statementIR_then_inst
+    p IC STO_0 |- IF `( typedExpressionIR_cond ) statementIR_then
+              ==> IC STO_1 (IF `( typedExpressionIR_cond ) statementIR_then_inst)
+    -- Stmt_inst: p IC STO_0 |- statementIR_then ==> IC_then STO_1 statementIR_then_inst
 
   rule Stmt_inst/else:
-    p IC_0 STO_0 |- IF `( typedExpressionIR_cond ) statementIR_then ELSE statementIR_else
-                ==> IC_2 STO_2 (IF `( typedExpressionIR_cond ) statementIR_then_inst ELSE statementIR_else_inst)
-    -- Stmt_inst: p IC_0 STO_0 |- statementIR_then ==> IC_1 STO_1 statementIR_then_inst
-    -- Stmt_inst: p IC_1 STO_1 |- statementIR_else ==> IC_2 STO_2 statementIR_else_inst
+    p IC STO_0 |- IF `( typedExpressionIR_cond ) statementIR_then ELSE statementIR_else
+              ==> IC STO_2 (IF `( typedExpressionIR_cond ) statementIR_then_inst ELSE statementIR_else_inst)
+    -- Stmt_inst: p IC STO_0 |- statementIR_then ==> IC_then STO_1 statementIR_then_inst
+    -- Stmt_inst: p IC STO_1 |- statementIR_else ==> IC_else STO_2 statementIR_else_inst
 
 }
 
@@ -102,7 +102,7 @@ rulegroup Stmt_inst/conditionalStatementIR {
 
 relation SwitchCase_inst:
   cursor instantiationContext store |- switchCaseIR
-                                   ==> instantiationContext store switchCaseIR
+                                   ==> store switchCaseIR
   hint(input %0 %1 %2 %3)
 
 ;;;;; switchLabelIR `: blockStatementIR
@@ -111,13 +111,14 @@ relation SwitchCase_inst:
 rulegroup SwitchCase_inst {
 
   rule SwitchCase_inst/blockStatementIR:
-    p IC_0 STO_0 |- switchLabelIR `: blockStatementIR
-                ==> IC_1 STO_1 (switchLabelIR `: blockStatementIR_inst)
-    -- Stmt_inst: p IC_0 STO_0 |- blockStatementIR ==> IC_1 STO_1 blockStatementIR_inst
+    p IC STO_0 |- switchLabelIR `: blockStatementIR
+              ==> STO_1 (switchLabelIR `: blockStatementIR_inst)
+    -- Stmt_inst: p IC STO_0 |- blockStatementIR
+                            ==> IC_switch STO_1 blockStatementIR_inst
 
   rule SwitchCase_inst/non-blockStatementIR:
     p IC STO |- switchLabelIR `:
-            ==> IC STO (switchLabelIR `:)
+            ==> STO (switchLabelIR `:)
 
 }
 
@@ -125,23 +126,26 @@ rulegroup SwitchCase_inst {
 
 relation SwitchCases_inst:
   cursor instantiationContext store |- switchCaseIR*
-                                   ==> instantiationContext store switchCaseIR*
+                                   ==> store switchCaseIR*
   hint(input %0 %1 %2 %3)
 
 rule SwitchCases_inst/nil:
-  p IC STO |- eps ==> IC STO eps
+  p IC STO |- eps ==> STO eps
 
 rule SwitchCases_inst/cons:
-  p IC_0 STO_0 |- switchCaseIR_h :: switchCaseIR_t*
-              ==> IC_2 STO_2 (switchCaseIR_h' :: switchCaseIR_t'*)
-  -- SwitchCase_inst: p IC_0 STO_0 |- switchCaseIR_h ==> IC_1 STO_1 switchCaseIR_h'
-  -- SwitchCases_inst: p IC_1 STO_1 |- switchCaseIR_t* ==> IC_2 STO_2 switchCaseIR_t'*
+  p IC STO_0 |- switchCaseIR_h :: switchCaseIR_t*
+            ==> STO_2 (switchCaseIR_h' :: switchCaseIR_t'*)
+  -- SwitchCase_inst: p IC STO_0 |- switchCaseIR_h
+                                ==> STO_1 switchCaseIR_h'
+  -- SwitchCases_inst: p IC STO_1 |- switchCaseIR_t*
+                                 ==> STO_2 switchCaseIR_t'*
 
 rule Stmt_inst/switchStatementIR:
-  p IC_0 STO_0 |- SWITCH `( typedExpressionIR ) `{ switchCaseListIR } 
-              ==> IC_1 STO_1 (SWITCH `( typedExpressionIR ) `{ switchCaseListIR_inst })
+  p IC STO_0 |- SWITCH `( typedExpressionIR ) `{ switchCaseListIR } 
+            ==> IC STO_1 (SWITCH `( typedExpressionIR ) `{ switchCaseListIR_inst })
   ---- ;; instantiate switch cases
-  -- SwitchCases_inst: p IC_0 STO_0 |- switchCaseListIR ==> IC_1 STO_1 switchCaseListIR_inst
+  -- SwitchCases_inst: p IC STO_0 |- switchCaseListIR
+                                 ==> STO_1 switchCaseListIR_inst
 
 ;;
 ;; syntax blockElementStatementIR
@@ -150,19 +154,24 @@ rule Stmt_inst/switchStatementIR:
 ;;; constantDeclarationIR
 
 rule BlockElementStmt_inst/constantDeclarationIR:
-  IC_0 STO_0 |- constantDeclarationIR ==> IC_1 STO_1 constantDeclarationIR_inst
-  -- Decl_inst: LOCAL IC_0 STO_0 |- constantDeclarationIR ==> IC_1 STO_1 constantDeclarationIR_inst
+  IC_0 STO_0 |- constantDeclarationIR
+            ==> IC_1 STO_1 constantDeclarationIR_inst
+  -- Decl_inst: LOCAL IC_0 STO_0 |- constantDeclarationIR
+                                ==> IC_1 STO_1 constantDeclarationIR_inst
 
 ;;; variableDeclarationIR
 
 rule BlockElementStmt_inst/variableDeclarationIR:
-  IC STO |- variableDeclarationIR ==> IC STO variableDeclarationIR
+  IC STO |- variableDeclarationIR
+        ==> IC STO variableDeclarationIR
 
 ;;; statementIR
 
 rule BlockElementStmt_inst/statementIR:
-  IC_0 STO_0 |- statementIR ==> IC_1 STO_1 statementIR_inst
-  -- Stmt_inst: LOCAL IC_0 STO_0 |- statementIR ==> IC_1 STO_1 statementIR_inst
+  IC_0 STO_0 |- statementIR
+            ==> IC_1 STO_1 statementIR_inst
+  -- Stmt_inst: LOCAL IC_0 STO_0 |- statementIR
+                                ==> IC_1 STO_1 statementIR_inst
 
 ;;
 ;; syntax blockElementStatementListIR
@@ -187,7 +196,7 @@ rule BlockElementStmts_inst/cons:
 
 rule Block_inst:
   IC_0 STO_0 |- annotationList `{ blockElementStatementListIR }
-            ==> IC_2 STO_1 (annotationList `{ blockElementStatementListIR_inst })
+            ==> IC_3 STO_1 (annotationList `{ blockElementStatementListIR_inst })
   -- if IC_1 = $enter_inst(IC_0)
   -- BlockElementStmts_inst: IC_1 STO_0 |- blockElementStatementListIR
                                        ==> IC_2 STO_1 blockElementStatementListIR_inst

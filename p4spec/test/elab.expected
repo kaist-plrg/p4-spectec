@@ -22483,8 +22483,8 @@ relation Stmt_inst: cursor instantiationContext store |- statementIR ==> instant
 
    match
 
-    (explicit) p IC_0 STO_0 |- conditionalStatementIR as statementIR ==> % % %
-    (implicit) p IC_0 STO_0 |- statementIR ==> % % %
+    (explicit) p IC STO_0 |- conditionalStatementIR as statementIR ==> % % %
+    (implicit) p IC STO_0 |- statementIR ==> % % %
     -- if statementIR <: conditionalStatementIR
     -- let conditionalStatementIR = statementIR as conditionalStatementIR
 
@@ -22494,37 +22494,37 @@ relation Stmt_inst: cursor instantiationContext store |- statementIR ==> instant
     -- let conditionalStatementIR' = conditionalStatementIR
     -- if conditionalStatementIR' matches `IF(%)%`
     -- let if( typedExpressionIR_cond ) statementIR_then = conditionalStatementIR'
-    -- Stmt_inst: p IC_0 STO_0 |- statementIR_then ==> IC_1 STO_1 statementIR_then_inst
-    -- output: % % % |- % ==> IC_1 STO_1 if( typedExpressionIR_cond ) statementIR_then_inst as statementIR
+    -- Stmt_inst: p IC STO_0 |- statementIR_then ==> IC_then STO_1 statementIR_then_inst
+    -- output: % % % |- % ==> IC STO_1 if( typedExpressionIR_cond ) statementIR_then_inst as statementIR
 
     rulepath else
     -- let conditionalStatementIR' = conditionalStatementIR
     -- if conditionalStatementIR' matches `IF(%)%ELSE%`
     -- let if( typedExpressionIR_cond ) statementIR_then else statementIR_else = conditionalStatementIR'
-    -- Stmt_inst: p IC_0 STO_0 |- statementIR_then ==> IC_1 STO_1 statementIR_then_inst
-    -- Stmt_inst: p IC_1 STO_1 |- statementIR_else ==> IC_2 STO_2 statementIR_else_inst
-    -- output: % % % |- % ==> IC_2 STO_2 if( typedExpressionIR_cond ) statementIR_then_inst else statementIR_else_inst as statementIR
+    -- Stmt_inst: p IC STO_0 |- statementIR_then ==> IC_then STO_1 statementIR_then_inst
+    -- Stmt_inst: p IC STO_1 |- statementIR_else ==> IC_else STO_2 statementIR_else_inst
+    -- output: % % % |- % ==> IC STO_2 if( typedExpressionIR_cond ) statementIR_then_inst else statementIR_else_inst as statementIR
 
-  ;; ../../../../spec-concrete/7.06-instantiation-statement.watsup:140.1-144.93
+  ;; ../../../../spec-concrete/7.06-instantiation-statement.watsup:143.1-148.65
   rulegroup switchStatementIR
 
    match
 
-    (explicit) p IC_0 STO_0 |- switch( typedExpressionIR ){ switchCaseListIR } as statementIR ==> % % %
-    (implicit) p IC_0 STO_0 |- statementIR ==> % % %
+    (explicit) p IC STO_0 |- switch( typedExpressionIR ){ switchCaseListIR } as statementIR ==> % % %
+    (implicit) p IC STO_0 |- statementIR ==> % % %
     -- if statementIR <: switchStatementIR
     -- let switch( typedExpressionIR ){ switchCaseListIR } = statementIR as switchStatementIR
 
    paths
 
     rulepath switchStatementIR
-    -- SwitchCases_inst: p IC_0 STO_0 |- switchCaseListIR ==> IC_1 STO_1 switchCaseListIR_inst
-    -- output: % % % |- % ==> IC_1 STO_1 switch( typedExpressionIR ){ switchCaseListIR_inst } as statementIR
+    -- SwitchCases_inst: p IC STO_0 |- switchCaseListIR ==> STO_1 switchCaseListIR_inst
+    -- output: % % % |- % ==> IC STO_1 switch( typedExpressionIR ){ switchCaseListIR_inst } as statementIR
 
 ;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:34.1-37.23
 relation BlockElementStmt_inst: instantiationContext store |- blockElementStatementIR ==> instantiationContext store blockElementStatementIR?
 
-  ;; ../../../../spec-concrete/7.06-instantiation-statement.watsup:152.1-154.100
+  ;; ../../../../spec-concrete/7.06-instantiation-statement.watsup:156.1-160.74
   rulegroup constantDeclarationIR
 
    match
@@ -22544,7 +22544,7 @@ relation BlockElementStmt_inst: instantiationContext store |- blockElementStatem
     -- let constantDeclarationIR_inst = declarationIR as constantDeclarationIR
     -- output: % % |- % ==> IC_1 STO_1 ?(constantDeclarationIR_inst as blockElementStatementIR)
 
-  ;; ../../../../spec-concrete/7.06-instantiation-statement.watsup:158.1-159.67
+  ;; ../../../../spec-concrete/7.06-instantiation-statement.watsup:164.1-166.41
   rulegroup variableDeclarationIR
 
    match
@@ -22559,7 +22559,7 @@ relation BlockElementStmt_inst: instantiationContext store |- blockElementStatem
     rulepath variableDeclarationIR
     -- output: % % |- % ==> IC STO ?(variableDeclarationIR as blockElementStatementIR)
 
-  ;; ../../../../spec-concrete/7.06-instantiation-statement.watsup:163.1-165.80
+  ;; ../../../../spec-concrete/7.06-instantiation-statement.watsup:170.1-174.64
   rulegroup statementIR
 
    match
@@ -22578,7 +22578,7 @@ relation BlockElementStmt_inst: instantiationContext store |- blockElementStatem
 ;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:39.1-42.23
 relation BlockElementStmts_inst: instantiationContext store |- blockElementStatementIR* ==> instantiationContext store blockElementStatementIR*
 
-  ;; ../../../../spec-concrete/7.06-instantiation-statement.watsup:171.1-172.31
+  ;; ../../../../spec-concrete/7.06-instantiation-statement.watsup:180.1-181.31
   rulegroup nil
 
    match
@@ -22592,7 +22592,7 @@ relation BlockElementStmts_inst: instantiationContext store |- blockElementState
     rulepath nil
     -- output: % % |- % ==> IC STO []
 
-  ;; ../../../../spec-concrete/7.06-instantiation-statement.watsup:174.1-180.86
+  ;; ../../../../spec-concrete/7.06-instantiation-statement.watsup:183.1-189.86
   rulegroup cons
 
    match
@@ -22614,7 +22614,7 @@ relation BlockElementStmts_inst: instantiationContext store |- blockElementState
 ;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:44.1-47.23
 relation Block_inst: instantiationContext store |- blockStatementIR ==> instantiationContext store blockStatementIR
 
-  ;; ../../../../spec-concrete/7.06-instantiation-statement.watsup:188.1-194.32
+  ;; ../../../../spec-concrete/7.06-instantiation-statement.watsup:197.1-203.32
   rulegroup 
 
    match
@@ -22628,7 +22628,7 @@ relation Block_inst: instantiationContext store |- blockStatementIR ==> instanti
     -- let IC_1 = $enter_inst(IC_0)
     -- BlockElementStmts_inst: IC_1 STO_0 |- blockElementStatementListIR ==> IC_2 STO_1 blockElementStatementListIR_inst
     -- let IC_3 = $exit_inst(IC_2)
-    -- output: % % |- % ==> IC_2 STO_1 annotationList { blockElementStatementListIR_inst }
+    -- output: % % |- % ==> IC_3 STO_1 annotationList { blockElementStatementListIR_inst }
 
 ;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:53.1-55.20
 relation Bind_method: rdenv |- methodPrototypeIR ==> rdenv
@@ -24257,70 +24257,68 @@ relation Constructor_inst: cursor instantiationContext store |- constructor < ty
     -- output: % % % |- % < % >( % # % )==> STO_1 object_table
 
 ;; ../../../../spec-concrete/7.06-instantiation-statement.watsup:103.1-106.26
-relation SwitchCase_inst: cursor instantiationContext store |- switchCaseIR ==> instantiationContext store switchCaseIR
+relation SwitchCase_inst: cursor instantiationContext store |- switchCaseIR ==> store switchCaseIR
 
-  ;; ../../../../spec-concrete/7.06-instantiation-statement.watsup:111.1-122.2
+  ;; ../../../../spec-concrete/7.06-instantiation-statement.watsup:111.1-123.2
   rulegroup 
 
    match
 
-    (explicit) p instantiationContext store |- switchCaseIR ==> % % %
-    (implicit) p instantiationContext store |- switchCaseIR ==> % % %
+    (explicit) p IC store |- switchCaseIR ==> % %
+    (implicit) p IC store |- switchCaseIR ==> % %
 
    paths
 
     rulepath blockStatementIR
-    -- let IC_0 = instantiationContext
     -- let STO_0 = store
     -- let switchCaseIR' = switchCaseIR
     -- if switchCaseIR' matches `%:%`
     -- let switchLabelIR : blockStatementIR = switchCaseIR'
-    -- Stmt_inst: p IC_0 STO_0 |- blockStatementIR as statementIR ==> IC_1 STO_1 statementIR
+    -- Stmt_inst: p IC STO_0 |- blockStatementIR as statementIR ==> IC_switch STO_1 statementIR
     -- if statementIR <: blockStatementIR
     -- let blockStatementIR_inst = statementIR as blockStatementIR
-    -- output: % % % |- % ==> IC_1 STO_1 switchLabelIR : blockStatementIR_inst
+    -- output: % % % |- % ==> STO_1 switchLabelIR : blockStatementIR_inst
 
     rulepath non-blockStatementIR
-    -- let IC = instantiationContext
     -- let STO = store
     -- let switchCaseIR' = switchCaseIR
     -- if switchCaseIR' matches `%:`
     -- let switchLabelIR : = switchCaseIR'
-    -- output: % % % |- % ==> IC STO switchLabelIR :
+    -- output: % % % |- % ==> STO switchLabelIR :
 
-;; ../../../../spec-concrete/7.06-instantiation-statement.watsup:126.1-129.26
-relation SwitchCases_inst: cursor instantiationContext store |- switchCaseIR* ==> instantiationContext store switchCaseIR*
+;; ../../../../spec-concrete/7.06-instantiation-statement.watsup:127.1-130.26
+relation SwitchCases_inst: cursor instantiationContext store |- switchCaseIR* ==> store switchCaseIR*
 
-  ;; ../../../../spec-concrete/7.06-instantiation-statement.watsup:131.1-132.33
+  ;; ../../../../spec-concrete/7.06-instantiation-statement.watsup:132.1-133.30
   rulegroup nil
 
    match
 
-    (explicit) p IC STO |- [] ==> % % %
-    (implicit) p IC STO |- switchCaseIR*{switchCaseIR <- switchCaseIR*} ==> % % %
+    (explicit) p IC STO |- [] ==> % %
+    (implicit) p IC STO |- switchCaseIR*{switchCaseIR <- switchCaseIR*} ==> % %
     -- if switchCaseIR*{switchCaseIR <- switchCaseIR*} matches []
 
    paths
 
     rulepath nil
-    -- output: % % % |- % ==> IC STO []
+    -- output: % % % |- % ==> STO []
 
-  ;; ../../../../spec-concrete/7.06-instantiation-statement.watsup:134.1-138.87
+  ;; ../../../../spec-concrete/7.06-instantiation-statement.watsup:135.1-141.60
   rulegroup cons
 
    match
 
-    (explicit) p IC_0 STO_0 |- switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} ==> % % %
-    (implicit) p IC_0 STO_0 |- switchCaseIR*{switchCaseIR <- switchCaseIR*} ==> % % %
+    (explicit) p IC STO_0 |- switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} ==> % %
+    (implicit) p IC STO_0 |- switchCaseIR*{switchCaseIR <- switchCaseIR*} ==> % %
     -- if switchCaseIR*{switchCaseIR <- switchCaseIR*} matches _ :: _
     -- let switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} = switchCaseIR*{switchCaseIR <- switchCaseIR*}
 
    paths
 
     rulepath cons
-    -- SwitchCase_inst: p IC_0 STO_0 |- switchCaseIR_h ==> IC_1 STO_1 switchCaseIR_h'
-    -- SwitchCases_inst: p IC_1 STO_1 |- switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} ==> IC_2 STO_2 switchCaseIR_t'*{switchCaseIR_t' <- switchCaseIR_t'*}
-    -- output: % % % |- % ==> IC_2 STO_2 switchCaseIR_h' :: switchCaseIR_t'*{switchCaseIR_t' <- switchCaseIR_t'*}
+    -- SwitchCase_inst: p IC STO_0 |- switchCaseIR_h ==> STO_1 switchCaseIR_h'
+    -- SwitchCases_inst: p IC STO_1 |- switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} ==> STO_2 switchCaseIR_t'*{switchCaseIR_t' <- switchCaseIR_t'*}
+    -- output: % % % |- % ==> STO_2 switchCaseIR_h' :: switchCaseIR_t'*{switchCaseIR_t' <- switchCaseIR_t'*}
 
 ;; ../../../../spec-concrete/7.07-instantiation-declaration.watsup:35.1-35.36
 def $merge_venvs(venv, venv) : venv =

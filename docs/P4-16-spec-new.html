@@ -20932,13 +20932,13 @@ rule Stmt_ok/conditionalStatement/else:
 <div class="listingblock">
 <div class="content">
 <pre>rule Stmt_inst/conditionalStatementIR/non-else:
-   p IC_0 STO_0 |- IF `(typedExpressionIR_cond) statementIR_then ==&gt; IC_1 STO_1 (IF `(typedExpressionIR_cond) statementIR_then_inst)
-    -- Stmt_inst: p IC_0 STO_0 |- statementIR_then ==&gt; IC_1 STO_1 statementIR_then_inst
+   p IC STO_0 |- IF `(typedExpressionIR_cond) statementIR_then ==&gt; IC STO_1 (IF `(typedExpressionIR_cond) statementIR_then_inst)
+    -- Stmt_inst: p IC STO_0 |- statementIR_then ==&gt; IC_then STO_1 statementIR_then_inst
 
 rule Stmt_inst/conditionalStatementIR/else:
-   p IC_0 STO_0 |- IF `(typedExpressionIR_cond) statementIR_then ELSE statementIR_else ==&gt; IC_2 STO_2 (IF `(typedExpressionIR_cond) statementIR_then_inst ELSE statementIR_else_inst)
-    -- Stmt_inst: p IC_0 STO_0 |- statementIR_then ==&gt; IC_1 STO_1 statementIR_then_inst
-    -- Stmt_inst: p IC_1 STO_1 |- statementIR_else ==&gt; IC_2 STO_2 statementIR_else_inst</pre>
+   p IC STO_0 |- IF `(typedExpressionIR_cond) statementIR_then ELSE statementIR_else ==&gt; IC STO_2 (IF `(typedExpressionIR_cond) statementIR_then_inst ELSE statementIR_else_inst)
+    -- Stmt_inst: p IC STO_0 |- statementIR_then ==&gt; IC_then STO_1 statementIR_then_inst
+    -- Stmt_inst: p IC STO_1 |- statementIR_else ==&gt; IC_else STO_2 statementIR_else_inst</pre>
 </div>
 </div>
 </div>
@@ -20958,14 +20958,14 @@ rule Stmt_inst/conditionalStatementIR/else:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>IC<sub>1</sub></code>, <code>STO<sub>1</sub></code>, and <code>statementIR<sub>then_inst</sub></code> be the result of <a href="#Stmt_inst">the compile-time evaluation of <code>statementIR<sub>then</sub></code>, under cursor <code>p'</code>, instantiation context <code>IC'</code>, and store <code>STO'</code></a>.</p>
+<p>Let <code>IC<sub>then</sub></code>, <code>STO<sub>1</sub></code>, and <code>statementIR<sub>then_inst</sub></code> be the result of <a href="#Stmt_inst">the compile-time evaluation of <code>statementIR<sub>then</sub></code>, under cursor <code>p'</code>, instantiation context <code>IC'</code>, and store <code>STO'</code></a>.</p>
 </li>
 <li>
 <p>Result in</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the instantiation context <code>IC<sub>1</sub></code>,</p>
+<p>the instantiation context <code>IC'</code>,</p>
 </li>
 <li>
 <p>the updated store <code>STO<sub>1</sub></code>,</p>
@@ -20984,17 +20984,17 @@ rule Stmt_inst/conditionalStatementIR/else:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>IC<sub>1</sub></code>, <code>STO<sub>1</sub></code>, and <code>statementIR<sub>then_inst</sub></code> be the result of <a href="#Stmt_inst">the compile-time evaluation of <code>statementIR<sub>then</sub></code>, under cursor <code>p'</code>, instantiation context <code>IC'</code>, and store <code>STO'</code></a>.</p>
+<p>Let <code>IC<sub>then</sub></code>, <code>STO<sub>1</sub></code>, and <code>statementIR<sub>then_inst</sub></code> be the result of <a href="#Stmt_inst">the compile-time evaluation of <code>statementIR<sub>then</sub></code>, under cursor <code>p'</code>, instantiation context <code>IC'</code>, and store <code>STO'</code></a>.</p>
 </li>
 <li>
-<p>Let <code>IC<sub>2</sub></code>, <code>STO<sub>2</sub></code>, and <code>statementIR<sub>else_inst</sub></code> be the result of <a href="#Stmt_inst">the compile-time evaluation of <code>statementIR<sub>else</sub></code>, under cursor <code>p'</code>, instantiation context <code>IC<sub>1</sub></code>, and store <code>STO<sub>1</sub></code></a>.</p>
+<p>Let <code>IC<sub>else</sub></code>, <code>STO<sub>2</sub></code>, and <code>statementIR<sub>else_inst</sub></code> be the result of <a href="#Stmt_inst">the compile-time evaluation of <code>statementIR<sub>else</sub></code>, under cursor <code>p'</code>, instantiation context <code>IC'</code>, and store <code>STO<sub>1</sub></code></a>.</p>
 </li>
 <li>
 <p>Result in</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the instantiation context <code>IC<sub>2</sub></code>,</p>
+<p>the instantiation context <code>IC'</code>,</p>
 </li>
 <li>
 <p>the updated store <code>STO<sub>2</sub></code>,</p>
@@ -21734,7 +21734,7 @@ rule SwitchCase_general_ok/non-blockStatement:
 <div class="listingblock">
 <div class="content">
 <pre>relation SwitchCase_inst:
-   cursor instantiationContext store |- switchCaseIR ==&gt; instantiationContext store switchCaseIR
+   cursor instantiationContext store |- switchCaseIR ==&gt; store switchCaseIR
    hint(input %0 %1 %2 %3)</pre>
 </div>
 </div>
@@ -21744,11 +21744,11 @@ rule SwitchCase_general_ok/non-blockStatement:
 <div class="listingblock">
 <div class="content">
 <pre>rule SwitchCase_inst/blockStatementIR:
-   p IC_0 STO_0 |- switchLabelIR : blockStatementIR ==&gt; IC_1 STO_1 (switchLabelIR : blockStatementIR_inst)
-    -- Stmt_inst: p IC_0 STO_0 |- blockStatementIR ==&gt; IC_1 STO_1 blockStatementIR_inst
+   p IC STO_0 |- switchLabelIR : blockStatementIR ==&gt; STO_1 (switchLabelIR : blockStatementIR_inst)
+    -- Stmt_inst: p IC STO_0 |- blockStatementIR ==&gt; IC_switch STO_1 blockStatementIR_inst
 
 rule SwitchCase_inst/non-blockStatementIR:
-   p IC STO |- switchLabelIR : ==&gt; IC STO (switchLabelIR :)</pre>
+   p IC STO |- switchLabelIR : ==&gt; STO (switchLabelIR :)</pre>
 </div>
 </div>
 </div>
@@ -21759,7 +21759,7 @@ rule SwitchCase_inst/non-blockStatementIR:
 </div>
 </div>
 <div class="paragraph">
-<p><code>p instantiationContext store |- switchCaseIR =&#8658; % % %</code></p>
+<p><code>p IC store |- switchCaseIR =&#8658; % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -21768,7 +21768,7 @@ rule SwitchCase_inst/non-blockStatementIR:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>IC<sub>1</sub></code>, <code>STO<sub>1</sub></code>, and <code>statementIR</code> be the result of <a href="#Stmt_inst">the compile-time evaluation of <code>blockStatementIR</code>, under cursor <code>p</code>, instantiation context <code>instantiationContext</code>, and store <code>store</code></a>.</p>
+<p>Let <code>IC<sub>switch</sub></code>, <code>STO<sub>1</sub></code>, and <code>statementIR</code> be the result of <a href="#Stmt_inst">the compile-time evaluation of <code>blockStatementIR</code>, under cursor <code>p</code>, instantiation context <code>IC</code>, and store <code>store</code></a>.</p>
 </li>
 <li>
 <p>Check that <code>statementIR</code> has type <code>blockStatementIR</code>.</p>
@@ -21777,7 +21777,7 @@ rule SwitchCase_inst/non-blockStatementIR:
 <p>Let <code>blockStatementIR<sub>inst</sub></code> be <code>statementIR</code>.</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>1</sub></code>, <code>STO<sub>1</sub></code>, and <code>switchLabelIR : blockStatementIR<sub>inst</sub></code>.</p>
+<p>Result in <code>STO<sub>1</sub></code> and <code>switchLabelIR : blockStatementIR<sub>inst</sub></code>.</p>
 </li>
 </ol>
 </div>
@@ -21787,7 +21787,7 @@ rule SwitchCase_inst/non-blockStatementIR:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Result in <code>instantiationContext</code>, <code>store</code>, and <code>switchLabelIR :</code>.</p>
+<p>Result in <code>store</code> and <code>switchLabelIR :</code>.</p>
 </li>
 </ol>
 </div>
@@ -21800,8 +21800,8 @@ rule SwitchCase_inst/non-blockStatementIR:
 <div class="listingblock">
 <div class="content">
 <pre>rule Stmt_inst/switchStatementIR:
-   p IC_0 STO_0 |- SWITCH `(typedExpressionIR) `{switchCaseListIR} ==&gt; IC_1 STO_1 (SWITCH `(typedExpressionIR) `{switchCaseListIR_inst})
-    -- SwitchCases_inst: p IC_0 STO_0 |- switchCaseListIR ==&gt; IC_1 STO_1 switchCaseListIR_inst</pre>
+   p IC STO_0 |- SWITCH `(typedExpressionIR) `{switchCaseListIR} ==&gt; IC STO_1 (SWITCH `(typedExpressionIR) `{switchCaseListIR_inst})
+    -- SwitchCases_inst: p IC STO_0 |- switchCaseListIR ==&gt; STO_1 switchCaseListIR_inst</pre>
 </div>
 </div>
 </div>
@@ -21817,14 +21817,14 @@ rule SwitchCase_inst/non-blockStatementIR:
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p><a href="#SwitchCases_inst"><code>p' IC' STO' |- switchCaseListIR =&#8658; IC<sub>1</sub> STO<sub>1</sub> switchCaseListIR<sub>inst</sub></code></a>.</p>
+<p><a href="#SwitchCases_inst"><code>p' IC' STO' |- switchCaseListIR =&#8658; STO<sub>1</sub> switchCaseListIR<sub>inst</sub></code></a>.</p>
 </li>
 <li>
 <p>Result in</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the instantiation context <code>IC<sub>1</sub></code>,</p>
+<p>the instantiation context <code>IC'</code>,</p>
 </li>
 <li>
 <p>the updated store <code>STO<sub>1</sub></code>,</p>
