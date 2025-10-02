@@ -12,18 +12,20 @@ module InputHint = Runtime_static.Rel.InputHint
 
 (* Substitue linebreak with indented linebreak *)
 
-let _reindent_lines ~(indent : string) (s : string) : string =
+let reindent_lines ctx (s : string) : string =
   let lines = String.split_on_char '\n' s in
-  String.concat ("\n " ^ indent) lines
+  String.concat ("\n" ^ (ctx |> increment_level |> unordered_bullet)) lines
 
 (* Asciidoc monospace rendering *)
 
 let render_mono ctx s =
-  match ctx.mode with Code -> s | Prose -> "``" ^ s ^ "``"
+  match ctx.mode with Code -> s | Prose -> "`" ^ s ^ "`"
 
 let render_subscript s = "~" ^ s ^ "~"
 let render_superscript s = "^" ^ s ^ "^"
 let render_bold s = "**" ^ s ^ "**"
+let render_attach_block = "+\n"
+let render_open_block s = "--\n" ^ s ^ "\n--"
 
 (* Take only the outputs and construct a full list of expressions, for correct HolE `Next rendering *)
 let output_to_signature (out_exps : exp list) (inputs : InputHint.t) :
@@ -68,10 +70,10 @@ let prose_of_cond ctx =
 
 let code_of_iter iter =
   match iter with
-  | Il.Ast.List -> "*" |> render_superscript
+  | Il.Ast.List -> "{asterisk}" |> render_superscript
   | Il.Ast.Opt -> "?" |> render_superscript
 
-let code_of_iterexp (iter, _) = string_of_iter iter
+let code_of_iterexp (iter, _) = code_of_iter iter
 
 let code_of_iterexps iterexps =
   iterexps |> List.map code_of_iterexp |> String.concat ""
@@ -119,6 +121,9 @@ let code_of_varid ctx varid =
         |> render_mono ctx
     | _ -> assert false
 
+let code_of_var ctx (id, _typ, iters) =
+  code_of_varid ctx id ^ String.concat "" (List.map code_of_iter iters)
+
 (** Printing as prose **)
 
 (* Prose list: a and b / a, b, ..., y and z *)
@@ -143,7 +148,11 @@ let rec prose_of_exp ctx exp =
   | Il.Ast.NumE n -> string_of_num n
   | Il.Ast.TextE text -> "\"" ^ String.escaped text ^ "\""
   | Il.Ast.VarE varid -> code_of_varid ctx varid
-  | Il.Ast.UnE (unop, _, exp) -> string_of_unop unop ^ prose_of_exp ctx exp
+  | Il.Ast.UnE (unop, _, exp) -> (
+    match unop with
+    | #Bool.unop -> prose_of_exp (ctx |> negate) exp
+    | #Num.unop -> (string_of_unop unop ^ prose_of_exp (ctx |> in_code) exp) |> render_mono ctx
+  )
   | Il.Ast.BinE (binop, _, exp_l, exp_r) ->
       (* always print as code *)
       prose_of_exp (ctx |> in_code) exp_l
@@ -162,11 +171,13 @@ let rec prose_of_exp ctx exp =
   | Il.Ast.UpCastE (_typ, exp) | Il.Ast.DownCastE (_typ, exp) ->
       F.asprintf "%s" (code_of_exp ctx exp)
   | Il.Ast.SubE (exp, typ) ->
-      F.asprintf "%s has type %s" (code_of_exp ctx exp) (code_of_typ ctx typ)
+    let verb = if ctx.neg then "does not have type" else "has type" in
+      F.asprintf "%s %s %s" (code_of_exp ctx exp) verb (code_of_typ ctx typ)
   | Il.Ast.MatchE (exp, pattern) ->
-      F.asprintf "%s matches pattern %s" (code_of_exp ctx exp)
+    let verb = if ctx.neg then "does not match pattern" else "matches pattern" in
+      F.asprintf "%s %s %s" (code_of_exp ctx exp) verb
         (code_of_pattern pattern |> render_mono ctx)
-  | Il.Ast.TupleE es -> "(" ^ prose_of_exps ctx es ^ ")"
+  | Il.Ast.TupleE es -> "(" ^ prose_of_exps ctx ~sep:(Some ", ") es ^ ")"
   | Il.Ast.CaseE notexp -> code_of_notexp ctx notexp
   | Il.Ast.StrE expfields ->
       "{"
@@ -175,11 +186,11 @@ let rec prose_of_exp ctx exp =
              (fun (atom, exp) -> code_of_atom atom ^ " " ^ prose_of_exp ctx exp)
              expfields)
       ^ "}"
-  | Il.Ast.OptE (Some exp) -> "?(" ^ prose_of_exp ctx exp ^ ")"
+  | Il.Ast.OptE (Some exp) -> "?" ^ prose_of_exp ctx exp ^ ""
   | Il.Ast.OptE None -> "?()"
   | Il.Ast.ListE [] -> "[ ]" |> render_mono ctx
   | Il.Ast.ListE exps ->
-      "[" ^ prose_of_exps (ctx |> in_code) exps ^ "]" |> render_mono ctx
+      "[" ^ prose_of_exps (ctx |> in_code) ~sep:(Some ", ") exps ^ "]" |> render_mono ctx
   | Il.Ast.ConsE (exp_h, exp_t) ->
       prose_of_exp (ctx |> in_code) exp_h
       ^ " :: "
@@ -191,7 +202,7 @@ let rec prose_of_exp ctx exp =
       ^ prose_of_exp (ctx |> in_code) exp_r
       |> render_mono ctx
   | Il.Ast.MemE (exp_e, exp_s) ->
-      prose_of_exp ctx exp_e ^ " is in " ^ prose_of_exp ctx exp_s
+      prose_of_exp ctx exp_e ^ (if ctx.neg then " is not in " else " is in ") ^ prose_of_exp ctx exp_s
   | Il.Ast.LenE exp -> "the length of " ^ prose_of_exp ctx exp
   | Il.Ast.DotE (exp_b, atom) ->
       prose_of_exp (ctx |> in_code) exp_b ^ "." ^ code_of_atom atom
@@ -205,7 +216,12 @@ let rec prose_of_exp ctx exp =
       prose_of_exp ctx exp_b ^ "[" ^ prose_of_path ctx path ^ " = "
       ^ prose_of_exp ctx exp_f ^ "]"
   | Il.Ast.CallE (defid, targs, args) -> (
-      let hintexp_opt = HEnv.get_func defid ctx.penv.prose_in in
+      let hintexp_opt =
+        match exp.note with
+        | Il.Ast.BoolT when ctx.neg -> HEnv.get_func defid ctx.penv.prose_false
+        | Il.Ast.BoolT -> HEnv.get_func defid ctx.penv.prose_true
+        | _ -> HEnv.get_func defid ctx.penv.prose_in
+      in
       match hintexp_opt with
       | Some hintexp ->
           let exps =
@@ -222,11 +238,22 @@ let rec prose_of_exp ctx exp =
             (prose_of_args (ctx |> in_code) args)
           |> render_mono ctx)
   | Il.Ast.IterE (exp, iterexp) ->
-      prose_of_exp ctx exp ^ code_of_iterexp iterexp
+    if snd(iterexp) = [] then prose_of_exp ctx exp
+    else
+      (prose_of_exp (ctx |> in_code) exp ^ code_of_iterexp iterexp) |> render_mono ctx
 
-and prose_of_exps ctx exps = prose_of_list (List.map (prose_of_exp ctx) exps)
+(* if sep is None, use natural language list *)
+and prose_of_exps ctx ?(sep : string option = None) exps =
+  match sep with
+  | None -> prose_of_list (List.map (prose_of_exp ctx) exps)
+  | Some s -> String.concat s (List.map (prose_of_exp ctx) exps)
+
 and code_of_exp ctx exp = prose_of_exp (ctx |> in_code) exp |> render_mono ctx
-and code_of_exps ctx exps = prose_of_list (List.map (code_of_exp ctx) exps)
+(* if sep is None, use natural language list *)
+and code_of_exps ctx ?(sep : string option = None) exps = 
+  match sep with
+  | None -> prose_of_list (List.map (code_of_exp ctx) exps)
+  | Some s -> String.concat s (List.map (code_of_exp ctx) exps)
 
 and code_of_notexp ctx notexp =
   let mixop, exps = notexp in
@@ -245,7 +272,7 @@ and prose_of_hintexp ctx (exps : exp option list) (hintexp : El.Ast.exp) :
 and prose_of_hintexp' ctx (exps : exp option list) (hintexp : El.Ast.exp)
     (cursor : int) : int * string =
   match hintexp.it with
-  | El.Ast.TextE text -> (cursor, text)
+  | El.Ast.TextE text -> (cursor, text |> reindent_lines ctx)
   | El.Ast.SeqE exps_hint ->
       let cursor, strs =
         List.fold_left
@@ -311,19 +338,20 @@ and prose_of_case ctx exp case =
         (prose_of_instrs (ctx |> clear_cond) instrs)
   | Some _ -> (
       match (guard, instrs) with
-      | MatchG _, instr_let :: instrs -> (
+      | MatchG _, instr_let :: instrs_rest 
+      | SubG _, instr_let :: instrs_rest -> (
           match instr_let.it with
           | LetI (exp_l, exp_r, iterexps) ->
-              F.asprintf "%s%s let %s be %s\n%s" (bullet ctx)
+              F.asprintf "%s%s let %s be %s:\n%s" (bullet ctx)
                 (prose_of_cond ctx) (code_of_exp ctx exp_l)
                 (prose_of_exp ctx exp_r)
-                (prose_of_instrs (ctx |> increment_level) instrs)
+                (prose_of_instrs (ctx |> increment_level) instrs_rest)
           | _ ->
-              F.asprintf "%s%s %s\n%s" (bullet ctx) (prose_of_cond ctx)
+              F.asprintf "%s%s %s:\n%s" (bullet ctx) (prose_of_cond ctx)
                 (prose_of_guard ctx exp guard)
                 (prose_of_instrs (ctx |> increment_level) instrs))
       | _ ->
-          F.asprintf "%s%s %s\n%s" (bullet ctx) (prose_of_cond ctx)
+          F.asprintf "%s%s %s:\n%s" (bullet ctx) (prose_of_cond ctx)
             (prose_of_guard ctx exp guard)
             (prose_of_instrs (ctx |> increment_level) instrs))
   | _ -> failwith "no condition style for case"
@@ -340,7 +368,9 @@ and prose_of_cases ctx exp cases =
 
 and prose_of_guard ctx exp_case guard =
   match guard with
-  | BoolG b -> string_of_bool b
+  | BoolG b ->
+      F.asprintf "%s"
+        (prose_of_exp (ctx |> as_bool b) exp_case)
   | CmpG (cmpop, _, exp) ->
       F.asprintf "%s %s %s"
         (prose_of_exp ctx exp_case)
@@ -361,8 +391,8 @@ and prose_of_out_iterexp ctx ((iter, vars) : iterexp) =
   | List ->
       let iterated_var var =
         F.asprintf "%s be the list of %s"
-          (string_of_var var ^ "*" |> render_mono ctx)
-          (string_of_var var |> render_mono ctx)
+          (code_of_var (ctx |> in_code) var ^ code_of_iter Il.Ast.List |> render_mono ctx)
+          (code_of_var (ctx |> in_code) var |> render_mono ctx)
       in
       List.map iterated_var vars |> prose_of_list
   | Opt -> assert false
@@ -374,8 +404,8 @@ and prose_of_in_iterexp ctx ((iter, vars) : iterexp) =
   | List ->
       let iterated_var var =
         F.asprintf "%s in %s"
-          (string_of_var var |> render_mono ctx)
-          (string_of_var var ^ "*" |> render_mono ctx)
+          (code_of_var (ctx |> in_code) var |> render_mono ctx)
+          (code_of_var (ctx |> in_code) var ^ code_of_iter Il.Ast.List |> render_mono ctx)
       in
       List.map iterated_var vars |> prose_of_list
 
@@ -387,12 +417,12 @@ and prose_of_out_iterexps ctx iterexps =
     F.asprintf "Let %s, obtained by repeating:"
       (iterexps |> List.hd |> prose_of_out_iterexp ctx)
 
-and prose_of_in_iterexps ctx sep iterexps =
+and prose_of_in_iterexps ctx ~prefix iterexps =
   if List.is_empty iterexps then ""
   else if List.length iterexps > 1 then
     failwith "prosing nested iterations not supported"
   else
-    F.asprintf "%sfor each %s" sep
+    F.asprintf "%sfor each %s" prefix
       (iterexps |> List.hd |> prose_of_in_iterexp ctx)
 
 (* Instruction *)
@@ -401,48 +431,53 @@ and prose_of_instr (ctx : Ctx.t) instr =
   match instr.it with
   | IfI (exp_cond, iterexps, instrs_then, _) ->
       if ctx.cond_style = Some Check then
-        F.asprintf "%sCheck that %s%s\n%s" (bullet ctx)
+        F.asprintf "%sCheck that %s%s.\n%s" (bullet ctx)
           (prose_of_exp ctx exp_cond)
-          (prose_of_in_iterexps ctx ", " iterexps)
+          (prose_of_in_iterexps ctx ~prefix:", " iterexps)
           (prose_of_instrs (ctx |> clear_cond) instrs_then)
       else
-        F.asprintf "%sIf %s%s\n%s" (bullet ctx)
+        F.asprintf "%sIf %s%s:\n%s" (bullet ctx)
           (prose_of_exp ctx exp_cond)
-          (prose_of_in_iterexps ctx ", " iterexps)
+          (prose_of_in_iterexps ctx ~prefix:", " iterexps)
           (prose_of_instrs (ctx |> increment_level) instrs_then)
   | HoldI (id, notexp, iterexps, holdcase) -> (
-      let prosed_relation =
-        let prose_of_hint_opt = Hintenv.get_rel id ctx.penv.prose_true in
-        match prose_of_hint_opt with
-        | Some prose_of_hint ->
+      let prosed_relation ctx =
+        let hintexp_opt = 
+          if ctx.neg then Hintenv.get_rel id ctx.penv.prose_false
+          else Hintenv.get_rel id ctx.penv.prose_true
+        in
+        match hintexp_opt with
+        | Some hintexp ->
             let mixop, exps = notexp in
             let exps = List.map (fun e -> Some e) exps in
-            F.asprintf "[%s](%s)%s"
-              (prose_of_hintexp (ctx |> increment_level) exps prose_of_hint)
+            F.asprintf "<<%s, %s>>%s"
               (string_of_relid id)
-              (prose_of_in_iterexps ctx ", " iterexps)
+              (prose_of_hintexp (ctx |> increment_level) exps hintexp)
+              (prose_of_in_iterexps ctx ~prefix:", " iterexps)
         | None ->
-            F.asprintf "(%s: %s)%s" (string_of_relid id)
+            F.asprintf "<<%s, %s>>%s%s"
+              (string_of_relid id)
               (code_of_notexp ctx notexp)
-              (prose_of_in_iterexps ctx ", " iterexps)
+              (if ctx.neg then " does not hold" else " holds")
+              (prose_of_in_iterexps ctx ~prefix:", " iterexps)
       in
       match holdcase with
       | BothH (instrs_hold, instrs_nothold) ->
-          F.asprintf "%sIf %s, then\n%s\n%sOtherwise\n\n%s" (bullet ctx)
-            prosed_relation
+          F.asprintf "%sIf %s:\n%s\n%sOtherwise:\n\n%s" (bullet ctx)
+            (prosed_relation ctx)
             (prose_of_instrs (ctx |> increment_level) instrs_hold)
             (bullet ctx)
             (prose_of_instrs (ctx |> increment_level) instrs_nothold)
       | HoldH (instrs_hold, _) ->
-          F.asprintf "%sIf %s, then\n%s" (bullet ctx) prosed_relation
-            (prose_of_instrs (ctx |> increment_level) instrs_hold)
+          F.asprintf "%sCheck that %s.\n%s" (bullet ctx) (prosed_relation ctx)
+            (prose_of_instrs ctx instrs_hold)
       | NotHoldH (instrs_nothold, _) ->
-          F.asprintf "%sIf %s does not hold, then\n%s" (bullet ctx)
-            prosed_relation
-            (prose_of_instrs (ctx |> increment_level) instrs_nothold))
+          F.asprintf "%sCheck that %s.\n%s" (bullet ctx)
+            (prosed_relation (ctx |> negate))
+            (prose_of_instrs ctx instrs_nothold))
   | CaseI (exp, cases, _) -> prose_of_cases ctx exp cases
   | OtherwiseI instr ->
-      F.asprintf "%sOtherwise\n%s" (bullet ctx)
+      F.asprintf "%sOtherwise:\n%s" (bullet ctx)
         (prose_of_instr (ctx |> increment_level) instr)
   | GroupI (id_group, exps_group, instrs_group) ->
       Format.asprintf "%sGroup %s: %s\n\n%s" (bullet ctx)
@@ -452,17 +487,21 @@ and prose_of_instr (ctx : Ctx.t) instr =
   | LetI (exp_l, exp_r, iterexps) ->
       let out_iters, in_iters = split_iterexps [ exp_l ] iterexps in
       (* With no output iterators, print as a single line *)
-      if List.is_empty out_iters then
-        F.asprintf "%sLet %s be %s%s" (bullet ctx) (code_of_exp ctx exp_l)
+      let loop_body =
+        F.asprintf "Let %s be %s"
+          (code_of_exp ctx exp_l)
           (prose_of_exp ctx exp_r)
-          (prose_of_in_iterexps ctx ", " in_iters)
+      in
+      if List.is_empty out_iters then
+        F.asprintf "%s%s%s." (bullet ctx) loop_body (prose_of_in_iterexps ctx ~prefix:", " in_iters)
         (* With output iterators, print as a block with the loop contents indented *)
       else
-        F.asprintf "%s%s\n%sLet %s be %s%s" (bullet ctx)
+        F.asprintf "%s%s\n%s%s%s." (bullet ctx)
           (prose_of_out_iterexps ctx out_iters)
-          (ctx |> increment_level |> bullet)
-          (code_of_exp ctx exp_l) (prose_of_exp ctx exp_r)
-          (prose_of_in_iterexps ctx ("\n" ^ bullet ctx) in_iters)
+          (render_attach_block)
+          ((ctx |> increment_level |> unordered_bullet)
+           ^ loop_body |> render_open_block)
+          (prose_of_in_iterexps ctx ~prefix:("\n" ^ render_attach_block) in_iters)
   | RuleI (id_rel, notexp, iterexps) -> (
       let prose_hint_opt = Hintenv.get_rel id_rel ctx.penv.prose_in in
       let input_hint = IEnv.find id_rel ctx.ienv in
@@ -474,24 +513,28 @@ and prose_of_instr (ctx : Ctx.t) instr =
       | Some prose_hint ->
           let mixop, exps = notexp in
           let exps_opt = List.map (fun e -> Some e) exps in
-          if List.is_empty out_iters then
-            F.asprintf "%sLet %s be the result of <<%s, %s>>%s" (bullet ctx)
+          let loop_body =
+            F.asprintf "Let %s be the result of <<%s, %s>>"
               (code_of_exps ctx outputs) (string_of_relid id_rel)
               (prose_of_hintexp (ctx |> increment_level) exps_opt prose_hint)
-              (prose_of_in_iterexps ctx ", " in_iters)
+          in
+          if List.is_empty out_iters then
+            F.asprintf "%s%s%s." (bullet ctx)
+              (loop_body)
+              (prose_of_in_iterexps ctx ~prefix:", " in_iters)
           else
-            F.asprintf "%s%s\n%sLet %s be the result of <<%s, %s>>%s"
+            F.asprintf "%s%s\n%s%s%s."
               (bullet ctx)
               (prose_of_out_iterexps ctx out_iters)
-              (ctx |> increment_level |> bullet)
-              (code_of_exps ctx outputs) (string_of_relid id_rel)
-              (prose_of_hintexp (ctx |> increment_level) exps_opt prose_hint)
-              (prose_of_in_iterexps ctx ("\n" ^ bullet ctx) in_iters)
+              (render_attach_block)
+              ((ctx |> increment_level |> unordered_bullet) ^ loop_body
+               |> render_open_block)
+              (prose_of_in_iterexps ctx ~prefix:("\n" ^ render_attach_block) in_iters)
       | None ->
-          F.asprintf "%s(%s: %s)%s" (bullet ctx) (string_of_relid id_rel)
+          F.asprintf "%s<<%s, %s>>%s." (bullet ctx) (string_of_relid id_rel)
             (code_of_notexp ctx notexp)
-            (prose_of_in_iterexps ctx ", " iterexps))
-  | ResultI [] -> F.asprintf "%sThe relation holds" (bullet ctx)
+            (prose_of_in_iterexps ctx ~prefix:", " iterexps))
+  | ResultI [] -> F.asprintf "%sThe relation holds." (bullet ctx)
   | ResultI exps -> (
       let result_opt =
         match ctx.def with
@@ -506,11 +549,11 @@ and prose_of_instr (ctx : Ctx.t) instr =
             output_to_signature exps
               (IEnv.find_opt rid ctx.ienv |> Option.value ~default:[])
           in
-          F.asprintf "%sResult in %s" (bullet ctx)
+          F.asprintf "%sResult in %s." (bullet ctx)
             (prose_of_hintexp (ctx |> increment_level) exps_opt hintexp)
-      | None -> F.asprintf "%sResult in %s" (bullet ctx) (code_of_exps ctx exps)
+      | None -> F.asprintf "%sResult in %s." (bullet ctx) (code_of_exps ctx exps)
       )
-  | ReturnI exp -> F.asprintf "%sReturn %s" (bullet ctx) (prose_of_exp ctx exp)
+  | ReturnI exp -> F.asprintf "%sReturn %s." (bullet ctx) (prose_of_exp ctx exp)
   | DebugI exp -> F.asprintf "%sDebug: %s" (bullet ctx) (prose_of_exp ctx exp)
 
 and prose_of_instrs ctx instrs =

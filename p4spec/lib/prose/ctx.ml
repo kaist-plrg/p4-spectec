@@ -44,6 +44,8 @@ let as_cond cond_style ctx = { ctx with cond_style = Some cond_style }
 let clear_cond ctx = { ctx with cond_style = None }
 let in_code ctx = { ctx with mode = Code }
 let in_prose ctx = { ctx with mode = Prose }
+let negate ctx = { ctx with neg = not ctx.neg }
+let as_bool b ctx = { ctx with neg = b }
 let increment_level ctx = { ctx with level = ctx.level + 1; cond_style = None }
 let in_rel r ctx = { ctx with def = Relation r }
 
@@ -51,3 +53,8 @@ let bullet ctx : string (* = String.make (ctx.level + 1) '.' ^ " " *) =
   Format.asprintf "%s%s "
     (String.make ctx.level ' ')
     (String.make (ctx.level + 1) '.')
+
+let unordered_bullet ctx : string =
+  Format.asprintf "%s%s "
+    (String.make (ctx.level * 2) ' ')
+    ("*")
