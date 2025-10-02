@@ -587,9 +587,22 @@ let code_of_ruleprose (ctx : Ctx.t) (id_rel : id) (mixop : mixop)
 let code_of_funcprose (ctx : Ctx.t) (id_def : id) (tparams : tparam list)
     (args_input : arg list) (instrs : instr list) : string =
   let prose_of_funcinput =
-    F.asprintf "%s%s%s" (string_of_defid id_def)
-      (string_of_tparams tparams)
-      (prose_of_args (ctx |> in_code) args_input)
-    |> render_mono ctx
+    let hintexp_opt = HEnv.get_func id_def ctx.penv.prose_in in
+    match hintexp_opt with
+    | Some hintexp ->
+        let exps =
+          args_input
+          |> List.filter_map (fun arg ->
+                 match arg.it with
+                 | Il.Ast.ExpA exp -> Some exp
+                 | Il.Ast.DefA _ -> None)
+        in
+        F.asprintf "*%s*"
+          (prose_of_hintexp ctx (exps |> List.map (fun a -> Some a)) hintexp)
+    | None ->
+        F.asprintf "%s%s%s" (string_of_defid id_def)
+          (string_of_tparams tparams)
+          (prose_of_args (ctx |> in_code) args_input)
+        |> render_mono ctx
   in
   F.asprintf "%s\n\n%s" prose_of_funcinput (prose_of_instrs ctx instrs)
