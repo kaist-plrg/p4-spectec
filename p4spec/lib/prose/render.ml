@@ -2,7 +2,7 @@ open Sl.Ast
 open Xl
 open Sl.Print
 open Util.Source
-open Ctx
+open Rctx
 module HEnv = Hintenv
 module F = Format
 module IEnv = Runtime_static.Envs.IEnv
@@ -426,7 +426,7 @@ and prose_of_in_iterexps ctx ~prefix iterexps =
 
 (* Instruction *)
 
-and prose_of_instr (ctx : Ctx.t) instr =
+and prose_of_instr (ctx : Rctx.t) instr =
   match instr.it with
   | IfI (exp_cond, iterexps, instrs_then, _) ->
       if ctx.cond_style = Some Check then
@@ -621,13 +621,13 @@ let prose_of_spec ctx spec = prose_of_defs ctx spec
 
 (* Entry points for splicer *)
 
-let code_of_ruleprose (ctx : Ctx.t) (id_rel : id) (mixop : mixop)
+let code_of_ruleprose (ctx : Rctx.t) (id_rel : id) (mixop : mixop)
     (inputs : int list) (exps_input : exp list) (instrs : instr list) : string =
   F.asprintf "%s\n\n%s"
     (prose_of_relinput ctx id_rel mixop inputs exps_input)
     (prose_of_instrs (ctx |> in_rel id_rel) instrs)
 
-let code_of_funcprose (ctx : Ctx.t) (id_def : id) (tparams : tparam list)
+let code_of_funcprose (ctx : Rctx.t) (id_def : id) (tparams : tparam list)
     (args_input : arg list) (instrs : instr list) : string =
   let prose_of_funcinput =
     F.asprintf "%s%s%s" (string_of_defid id_def)
