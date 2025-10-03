@@ -16,7 +16,7 @@ let reindent_lines ctx (s : string) : string =
   let lines = String.split_on_char '\n' s in
   String.concat ("\n" ^ (ctx |> increment_level |> unordered_bullet)) lines
 
-(* Asciidoc monospace rendering *)
+(* Asciidoc rendering *)
 
 let render_mono ctx s =
   match ctx.mode with Code -> s | Prose -> "`" ^ s ^ "`"
@@ -146,7 +146,7 @@ let rec prose_of_exp ctx exp =
   match exp.it with
   | Il.Ast.BoolE b -> string_of_bool b
   | Il.Ast.NumE n -> string_of_num n
-  | Il.Ast.TextE text -> "\"" ^ String.escaped text ^ "\""
+  | Il.Ast.TextE text -> ("\"" ^ String.escaped text ^ "\"") |> render_mono ctx
   | Il.Ast.VarE varid -> code_of_varid ctx varid
   | Il.Ast.UnE (unop, _, exp) -> (
     match unop with
@@ -341,7 +341,7 @@ and prose_of_case ctx exp case =
       | MatchG _, instr_let :: instrs_rest 
       | SubG _, instr_let :: instrs_rest -> (
           match instr_let.it with
-          | LetI (exp_l, exp_r, iterexps) ->
+          | LetI (exp_l, exp_r, iterexps) when (Il.Eq.eq_exp exp exp_r) ->
               F.asprintf "%s%s let %s be %s:\n%s" (bullet ctx)
                 (prose_of_cond ctx) (code_of_exp ctx exp_l)
                 (prose_of_exp ctx exp_r)
@@ -399,8 +399,6 @@ and prose_of_out_iterexp ctx ((iter, vars) : iterexp) =
 
 and prose_of_in_iterexp ctx ((iter, vars) : iterexp) =
   match iter with
-  (* Optional should not appear *)
-  | Opt -> "?__"
   | List ->
       let iterated_var var =
         F.asprintf "%s in %s"
@@ -408,6 +406,7 @@ and prose_of_in_iterexp ctx ((iter, vars) : iterexp) =
           (code_of_var (ctx |> in_code) var ^ code_of_iter Il.Ast.List |> render_mono ctx)
       in
       List.map iterated_var vars |> prose_of_list
+  | Opt -> assert false
 
 and prose_of_out_iterexps ctx iterexps =
   if List.is_empty iterexps then ""
@@ -454,6 +453,7 @@ and prose_of_instr (ctx : Ctx.t) instr =
               (string_of_relid id)
               (prose_of_hintexp (ctx |> increment_level) exps hintexp)
               (prose_of_in_iterexps ctx ~prefix:", " iterexps)
+        (* fallback : print notation ^ "holds" *)
         | None ->
             F.asprintf "<<%s, %s>>%s%s"
               (string_of_relid id)
