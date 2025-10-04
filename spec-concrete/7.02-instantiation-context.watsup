@@ -190,13 +190,21 @@ def $add_routine_non_overload_inst(BLOCK, IC, rid, routine) = IC[ .BLOCK.RENV = 
 
 ;;; Adder for constructors
 
-dec $add_constructor_inst(cursor, instantiationContext, cid, constructor)
+dec $add_constructor_inst(instantiationContext, cid, constructor)
   : instantiationContext
 
-def $add_constructor_inst(GLOBAL, IC, cid, constructor)
+def $add_constructor_inst(IC, cid, constructor)
   = IC[ .GLOBAL.CENV = cenv ]
   -- if cenv
       = $add_map<cid, constructor>(IC.GLOBAL.CENV, cid, constructor)
+
+dec $add_constructors_inst(instantiationContext, cid*, constructor*)
+  : instantiationContext
+
+def $add_constructors_inst(IC, eps, eps) = IC
+def $add_constructors_inst(IC, cid_h :: cid_t*, constructor_h :: constructor_t*)
+  = $add_constructors_inst(IC', cid_t*, constructor_t*)
+  -- if IC' = $add_constructor_inst(IC, cid_h, constructor_h)
 
 ;;
 ;; Finders

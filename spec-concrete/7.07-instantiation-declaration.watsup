@@ -239,6 +239,71 @@ rule Decl_inst/externFunctionDeclarationIR:
 
 ;;;; externObjectDeclarationIR
 
+dec $ridof_externMethodPrototypeIR(externMethodPrototypeIR) : rid
+  hint(prose_in "the routine id of " %0)
+
+def $ridof_externMethodPrototypeIR(
+    _ (_ nameIR `< _ `, _ > `( parameterListIR )) `;
+  )
+  = $rid_IR(nameIR, parameterListIR)
+def $ridof_externMethodPrototypeIR(
+    _ ABSTRACT (_ nameIR `< _ `, _ > `( parameterListIR )) `;
+  )
+  = $rid_IR(nameIR, parameterListIR)
+
+dec $typeof_externMethodPrototypeIR(externMethodPrototypeIR) : routineTypeDefIR
+  hint(prose_in "the routine type definition of " %0)
+
+def $typeof_externMethodPrototypeIR(
+    _ (typeIR_ret nameIR
+      `< typeParameterListIR_expl `, typeParameterListIR_impl >
+      `( parameterIR* )) `;
+  )
+  = routineTypeDefIR
+  -- if (parameterTypeIR = $typeof_parameterIR(parameterIR))*
+  -- if externMethodTypeIR
+      = EXTERN_METHOD `( parameterTypeIR* ) `-> typeIR_ret
+  -- if routineTypeDefIR
+      = externMethodTypeIR `< typeParameterListIR_expl `, typeParameterListIR_impl >
+def $typeof_externMethodPrototypeIR(
+    _ ABSTRACT (typeIR_ret nameIR
+      `< typeParameterListIR_expl `, typeParameterListIR_impl >
+      `( parameterIR* )) `;
+  )
+  = routineTypeDefIR
+  -- if (parameterTypeIR = $typeof_parameterIR(parameterIR))*
+  -- if externMethodTypeIR
+      = EXTERN_METHOD ABSTRACT `( parameterTypeIR* ) `-> typeIR_ret
+  -- if routineTypeDefIR
+      = externMethodTypeIR `< typeParameterListIR_expl `, typeParameterListIR_impl >
+
+dec $cidof_externConstructorPrototypeIR(externConstructorPrototypeIR) : cid
+  hint(prose_in "the constructor id of " %0)
+
+def $cidof_externConstructorPrototypeIR(
+    _ nameIR `< `, _ > `( parameterIR* ) `;
+  )
+  = $cid_IR(nameIR, parameterIR*)
+
+dec $constructor_of_externConstructorPrototypeIR(
+    typeParameterListIR,
+    externMethodPrototypeListIR,
+    externConstructorPrototypeIR
+  ) : constructor
+  hint(prose_in "the constructor of " %2 "with type parameters " %0 " and methods " %1)
+
+def $constructor_of_externConstructorPrototypeIR(
+    typeParameterListIR_expl,
+    externMethodPrototypeListIR,
+    _ nameIR `< `, typeParameterListIR_impl > `( parameterIR* ) `;
+  )
+  = constructor
+  -- if typeParameterListIR
+      = typeParameterListIR_expl ++ typeParameterListIR_impl
+  -- if constructor
+      = EXTERN nameIR `< typeParameterListIR >
+          `( parameterIR* ) `{ externMethodPrototypeListIR }
+
 rulegroup Decl_inst/externObjectDeclarationIR {
 
   rule Decl_inst/non-constructor:
@@ -247,7 +312,10 @@ rulegroup Decl_inst/externObjectDeclarationIR {
                         `{ eps externMethodPrototypeIR* }
                   ==> IC_2 STO eps
     ---- ;; bind methods to routine environment
-    -- Bind_methods: $empty_rdenv |- externMethodPrototypeIR* ==> rdenv
+    -- if (rid = $ridof_externMethodPrototypeIR(externMethodPrototypeIR))*
+    -- if (routineTypeDefIR
+        = $typeof_externMethodPrototypeIR(externMethodPrototypeIR))*
+    -- if rdenv = `{ (rid `: routineTypeDefIR)* }
     ---- ;; add polymorphic extern type to typedef environment
     -- if externObjectTypeIR = EXTERN nameIR rdenv
     -- if polyTypeDefIR = externObjectTypeIR `< typeParameterListIR `, eps >
@@ -256,7 +324,7 @@ rulegroup Decl_inst/externObjectDeclarationIR {
     -- if cid = $cid_IR(nameIR, eps)
     -- if constructor
         = EXTERN nameIR `< typeParameterListIR > `( eps ) `{ externMethodPrototypeIR* }
-    -- if IC_2 = $add_constructor_inst(GLOBAL, IC_1, cid, constructor)
+    -- if IC_2 = $add_constructor_inst(IC_1, cid, constructor)
 
   rule Decl_inst/constructor:
     GLOBAL IC_0 STO |- annotationList EXTERN nameIR
@@ -264,15 +332,22 @@ rulegroup Decl_inst/externObjectDeclarationIR {
                         `{ externConstructorPrototypeIR* externMethodPrototypeIR* }
                    ==> IC_2 STO eps
     ---- ;; bind methods to routine environment
-    -- Bind_methods: $empty_rdenv |- externMethodPrototypeIR* ==> rdenv
+    -- if (rid = $ridof_externMethodPrototypeIR(externMethodPrototypeIR))*
+    -- if (routineTypeDefIR
+        = $typeof_externMethodPrototypeIR(externMethodPrototypeIR))*
+    -- if rdenv = `{ (rid `: routineTypeDefIR)* }
     ---- ;; add polymorphic extern type to typedef environment
     -- if externObjectTypeIR = EXTERN nameIR rdenv
     -- if polyTypeDefIR = externObjectTypeIR `< typeParameterListIR `, eps >
     -- if IC_1 = $add_typedef_inst(GLOBAL, IC_0, nameIR, polyTypeDefIR)
     ---- ;; bind extern constructors to constructor environment
-    -- Bind_constructors:
-        GLOBAL IC_1
-        typeParameterListIR externMethodPrototypeIR* |- externConstructorPrototypeIR* ==> IC_2
+    -- if (cid = $cidof_externConstructorPrototypeIR(externConstructorPrototypeIR))*
+    -- if (constructor
+        = $constructor_of_externConstructorPrototypeIR(
+            typeParameterListIR,
+            externMethodPrototypeIR*,
+            externConstructorPrototypeIR))*
+    -- if IC_2 = $add_constructors_inst(IC_1, cid*, constructor*)
 
 }
 
@@ -292,7 +367,7 @@ rule Decl_inst/parserDeclarationIR:
   -- if constructor 
       = PARSER `( parameterListIR ) `( constructorParameterListIR )
           `{ parserLocalDeclarationListIR parserStateListIR }
-  -- if IC_1 = $add_constructor_inst(GLOBAL, IC_0, cid, constructor)
+  -- if IC_1 = $add_constructor_inst(IC_0, cid, constructor)
 
 ;;; controlDeclarationIR
 ;;; syntax controlDeclarationIR =
@@ -311,7 +386,7 @@ rule Decl_inst/controlDeclarationIR:
   -- if constructor
       = CONTROL `( parameterListIR ) `( constructorParameterListIR )
           `{ controlLocalDeclarationListIR APPLY controlBodyIR }
-  -- if IC_1 = $add_constructor_inst(GLOBAL, IC_0, cid, constructor)
+  -- if IC_1 = $add_constructor_inst(IC_0, cid, constructor)
 
 ;;; typeDeclarationIR
 ;;; syntax typeDeclarationIR
@@ -524,7 +599,7 @@ rule Decl_inst/packageTypeDeclarationIR:
   -- if cid = $cid_IR(nameIR, parameterIR*)
   -- if constructor_package
       = PACKAGE `< typeParameterListIR ++ typeParameterListIR_inferred > `( parameterIR* )
-  -- if IC_2 = $add_constructor_inst(GLOBAL, IC_1, cid, constructor_package)
+  -- if IC_2 = $add_constructor_inst(IC_1, cid, constructor_package)
 
 ;;
 ;; syntax declarationListIR

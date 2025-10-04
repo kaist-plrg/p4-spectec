@@ -6870,77 +6870,6 @@ relation Block_inst: `IC~0~`, `STO~0~`, and `annotationList { blockElementStatem
  .. Let `IC~3~` be `$exit_inst(IC~2~)`.
  .. Result in `IC~3~`, `STO~1~`, and `annotationList { blockElementStatementListIR~inst~ }`.
 
-relation Bind_method: `rdenv~0~` and `externMethodPrototypeIR`
-
-. If let `annotationList typeIR~ret~ nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR^{asterisk}^ ) ;` be `externMethodPrototypeIR`:
- .. Group non-abstract: `rdenv~0~` and `annotationList typeIR~ret~ nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR^{asterisk}^ ) ;`
-
-  ... Let `rid` be `$rid_IR(nameIR, parameterIR^{asterisk}^)`.
-  ... Let `parameterTypeIR^{asterisk}^` be the list of `parameterTypeIR`, obtained by repeating:
-+
---
-      * Let `parameterTypeIR` be <<typeof_parameterIR, the type of  `parameterIR`>>
---
-+
-for each `parameterIR` in `parameterIR^{asterisk}^`.
-  ... Let `methodTypeIR` be `EXTERN_METHOD ( parameterTypeIR^{asterisk}^ ) -> typeIR~ret~`.
-  ... Let `routineTypeDefIR` be `methodTypeIR < typeParameterListIR , typeParameterListIR~inferred~ >`.
-  ... Let `rdenv~1~` be `$add_map<rid, routineTypeDefIR>(rdenv~0~, rid, routineTypeDefIR)`.
-  ... Result in `rdenv~1~`.
-
-. Else if let `annotationList ABSTRACT typeIR~ret~ nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR^{asterisk}^ ) ;` be `externMethodPrototypeIR`:
- .. Group abstract: `rdenv~0~` and `annotationList ABSTRACT typeIR~ret~ nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR^{asterisk}^ ) ;`
-
-  ... Let `rid` be `$rid_IR(nameIR, parameterIR^{asterisk}^)`.
-  ... Let `parameterTypeIR^{asterisk}^` be the list of `parameterTypeIR`, obtained by repeating:
-+
---
-      * Let `parameterTypeIR` be <<typeof_parameterIR, the type of  `parameterIR`>>
---
-+
-for each `parameterIR` in `parameterIR^{asterisk}^`.
-  ... Let `methodTypeIR` be `EXTERN_METHOD ABSTRACT ( parameterTypeIR^{asterisk}^ ) -> typeIR~ret~`.
-  ... Let `routineTypeDefIR` be `methodTypeIR < typeParameterListIR , typeParameterListIR~inferred~ >`.
-  ... Let `rdenv~1~` be `$add_map<rid, routineTypeDefIR>(rdenv~0~, rid, routineTypeDefIR)`.
-  ... Result in `rdenv~1~`.
-
-relation Bind_methods: `rdenv'` and `externMethodPrototypeIR^{asterisk}^`
-
-. If `externMethodPrototypeIR^{asterisk}^` matches pattern `[]`:
- .. Group nil: `rdenv'` and `[ ]`
-
-  ... Result in `rdenv'`.
-
-. Else if let `externMethodPrototypeIR~h~ :: externMethodPrototypeIR~t~^{asterisk}^` be `externMethodPrototypeIR^{asterisk}^`:
- .. Group cons: `rdenv'` and `externMethodPrototypeIR~h~ :: externMethodPrototypeIR~t~^{asterisk}^`
-
-  ... <<Bind_method, `rdenv' |- externMethodPrototypeIR~h~ ==> rdenv~1~`>>.
-  ... <<Bind_methods, `rdenv~1~ |- externMethodPrototypeIR~t~^{asterisk}^ ==> rdenv~2~`>>.
-  ... Result in `rdenv~2~`.
-
-relation Bind_constructor: `p`, `IC~0~`, `typeParameterListIR`, `externMethodPrototypeListIR`, and `annotationList nameIR < , typeParameterListIR~inferred~ > ( parameterListIR ) ;`
-
-. Group constructor: `p`, `IC~0~`, `typeParameterListIR`, `externMethodPrototypeListIR`, and `annotationList nameIR < , typeParameterListIR~inferred~ > ( parameterListIR ) ;`
-
- .. Let `cid` be `$cid_IR(nameIR, parameterListIR)`.
- .. Let `constructor` be `EXTERN nameIR < typeParameterListIR ++ typeParameterListIR~inferred~ > ( parameterListIR ) { externMethodPrototypeListIR }`.
- .. Let `IC~1~` be `$add_constructor_inst(p, IC~0~, cid, constructor)`.
- .. Result in `IC~1~`.
-
-relation Bind_constructors: `p`, `IC'`, `typeParameterListIR`, `externMethodPrototypeListIR`, and `externConstructorPrototypeIR^{asterisk}^`
-
-. If `externConstructorPrototypeIR^{asterisk}^` matches pattern `[]`:
- .. Group nil: `p`, `IC'`, `typeParameterListIR`, `externMethodPrototypeListIR`, and `[ ]`
-
-  ... Result in `IC'`.
-
-. Else if let `externConstructorPrototypeIR~h~ :: externConstructorPrototypeIR~t~^{asterisk}^` be `externConstructorPrototypeIR^{asterisk}^`:
- .. Group cons: `p`, `IC'`, `typeParameterListIR`, `externMethodPrototypeListIR`, and `externConstructorPrototypeIR~h~ :: externConstructorPrototypeIR~t~^{asterisk}^`
-
-  ... <<Bind_constructor, `p IC' typeParameterListIR externMethodPrototypeListIR |- externConstructorPrototypeIR~h~ ==> IC~1~`>>.
-  ... <<Bind_constructors, `p IC~1~ typeParameterListIR externMethodPrototypeListIR |- externConstructorPrototypeIR~t~^{asterisk}^ ==> IC~2~`>>.
-  ... Result in `IC~2~`.
-
 relation ExternMethod_inst: `IC~0~` and `externMethodPrototypeIR`
 
 . If let `annotationList typeIR nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterListIR ) ;` be `externMethodPrototypeIR`:
@@ -7379,20 +7308,62 @@ for each `nameIR` in `nameIR^{asterisk}^`.
  .. Group externObjectDeclarationIR: `GLOBAL`, `IC~0~`, `STO'`, and `annotationList EXTERN nameIR < typeParameterListIR , > { externConstructorPrototypeIR'^{asterisk}^ externMethodPrototypeIR^{asterisk}^ }`
 
   ... Check that `[ ]` is equal to `externConstructorPrototypeIR'^{asterisk}^`.
-  ... <<Bind_methods, `$empty_rdenv |- externMethodPrototypeIR^{asterisk}^ ==> rdenv`>>.
+  ... Let `rid^{asterisk}^` be the list of `rid`, obtained by repeating:
++
+--
+      * Let `rid` be <<ridof_externMethodPrototypeIR, the routine id of  `externMethodPrototypeIR`>>
+--
++
+for each `externMethodPrototypeIR` in `externMethodPrototypeIR^{asterisk}^`.
+  ... Let `routineTypeDefIR^{asterisk}^` be the list of `routineTypeDefIR`, obtained by repeating:
++
+--
+      * Let `routineTypeDefIR` be <<typeof_externMethodPrototypeIR, the routine type definition of  `externMethodPrototypeIR`>>
+--
++
+for each `externMethodPrototypeIR` in `externMethodPrototypeIR^{asterisk}^`.
+  ... Let `rdenv` be `{ rid : routineTypeDefIR^{asterisk}^ }`.
   ... Let `externObjectTypeIR` be `EXTERN nameIR rdenv`.
   ... Let `polyTypeDefIR` be `externObjectTypeIR < typeParameterListIR , [ ] >`.
   ... Let `IC~1~` be `$add_typedef_inst(GLOBAL, IC~0~, nameIR, polyTypeDefIR)`.
   ... Let `cid` be `$cid_IR(nameIR, [ ])`.
   ... Let `constructor` be `EXTERN nameIR < typeParameterListIR > ( [ ] ) { externMethodPrototypeIR^{asterisk}^ }`.
-  ... Let `IC~2~` be `$add_constructor_inst(GLOBAL, IC~1~, cid, constructor)`.
+  ... Let `IC~2~` be `$add_constructor_inst(IC~1~, cid, constructor)`.
   ... Result in `IC~2~`, `STO'`, and `?()`.
   ... Let `externConstructorPrototypeIR^{asterisk}^` be `externConstructorPrototypeIR'^{asterisk}^`.
-  ... <<Bind_methods, `$empty_rdenv |- externMethodPrototypeIR^{asterisk}^ ==> rdenv`>>.
+  ... Let `rid^{asterisk}^` be the list of `rid`, obtained by repeating:
++
+--
+      * Let `rid` be <<ridof_externMethodPrototypeIR, the routine id of  `externMethodPrototypeIR`>>
+--
++
+for each `externMethodPrototypeIR` in `externMethodPrototypeIR^{asterisk}^`.
+  ... Let `routineTypeDefIR^{asterisk}^` be the list of `routineTypeDefIR`, obtained by repeating:
++
+--
+      * Let `routineTypeDefIR` be <<typeof_externMethodPrototypeIR, the routine type definition of  `externMethodPrototypeIR`>>
+--
++
+for each `externMethodPrototypeIR` in `externMethodPrototypeIR^{asterisk}^`.
+  ... Let `rdenv` be `{ rid : routineTypeDefIR^{asterisk}^ }`.
   ... Let `externObjectTypeIR` be `EXTERN nameIR rdenv`.
   ... Let `polyTypeDefIR` be `externObjectTypeIR < typeParameterListIR , [ ] >`.
   ... Let `IC~1~` be `$add_typedef_inst(GLOBAL, IC~0~, nameIR, polyTypeDefIR)`.
-  ... <<Bind_constructors, `GLOBAL IC~1~ typeParameterListIR externMethodPrototypeIR^{asterisk}^ |- externConstructorPrototypeIR^{asterisk}^ ==> IC~2~`>>.
+  ... Let `cid^{asterisk}^` be the list of `cid`, obtained by repeating:
++
+--
+      * Let `cid` be <<cidof_externConstructorPrototypeIR, the constructor id of  `externConstructorPrototypeIR`>>
+--
++
+for each `externConstructorPrototypeIR` in `externConstructorPrototypeIR^{asterisk}^`.
+  ... Let `constructor^{asterisk}^` be the list of `constructor`, obtained by repeating:
++
+--
+      * Let `constructor` be <<constructor_of_externConstructorPrototypeIR, the constructor of  `externConstructorPrototypeIR` with type parameters  `typeParameterListIR`  and methods  `externMethodPrototypeIR^{asterisk}^`>>
+--
++
+for each `externConstructorPrototypeIR` in `externConstructorPrototypeIR^{asterisk}^`.
+  ... Let `IC~2~` be `$add_constructors_inst(IC~1~, cid^{asterisk}^, constructor^{asterisk}^)`.
   ... Result in `IC~2~`, `STO'`, and `?()`.
 
 . Else if let `annotationList PARSER nameIR < typeParameterIR^{asterisk}^ > ( parameterListIR ) ( constructorParameterListIR ) { parserLocalDeclarationListIR parserStateListIR }` be `declarationIR`:
@@ -7401,7 +7372,7 @@ for each `nameIR` in `nameIR^{asterisk}^`.
 
   ... Let `cid` be `$cid_IR(nameIR, constructorParameterListIR)`.
   ... Let `constructor` be `PARSER ( parameterListIR ) ( constructorParameterListIR ) { parserLocalDeclarationListIR parserStateListIR }`.
-  ... Let `IC~1~` be `$add_constructor_inst(GLOBAL, IC~0~, cid, constructor)`.
+  ... Let `IC~1~` be `$add_constructor_inst(IC~0~, cid, constructor)`.
   ... Result in `IC~1~`, `STO'`, and `?()`.
 
 . Else if let `annotationList CONTROL nameIR < typeParameterIR^{asterisk}^ > ( parameterListIR ) ( constructorParameterListIR ) { controlLocalDeclarationListIR APPLY controlBodyIR }` be `declarationIR`:
@@ -7410,7 +7381,7 @@ for each `nameIR` in `nameIR^{asterisk}^`.
 
   ... Let `cid` be `$cid_IR(nameIR, constructorParameterListIR)`.
   ... Let `constructor` be `CONTROL ( parameterListIR ) ( constructorParameterListIR ) { controlLocalDeclarationListIR APPLY controlBodyIR }`.
-  ... Let `IC~1~` be `$add_constructor_inst(GLOBAL, IC~0~, cid, constructor)`.
+  ... Let `IC~1~` be `$add_constructor_inst(IC~0~, cid, constructor)`.
   ... Result in `IC~1~`, `STO'`, and `?()`.
 
 . Else if let `enumTypeDeclarationIR` be `declarationIR`:
@@ -7582,7 +7553,7 @@ for each `parameterIR` in `parameterIR^{asterisk}^`.
   ... Let `IC~1~` be `$add_typedef_inst(GLOBAL, IC~0~, nameIR, typeDefIR~package~)`.
   ... Let `cid` be `$cid_IR(nameIR, parameterIR^{asterisk}^)`.
   ... Let `constructor~package~` be `PACKAGE < typeParameterListIR ++ typeParameterListIR~inferred~ > ( parameterIR^{asterisk}^ )`.
-  ... Let `IC~2~` be `$add_constructor_inst(GLOBAL, IC~1~, cid, constructor~package~)`.
+  ... Let `IC~2~` be `$add_constructor_inst(IC~1~, cid, constructor~package~)`.
   ... Result in `IC~2~`, `STO'`, and `?()`.
 
 relation Decls_inst: `p`, `IC'`, `STO'`, and `declarationIR^{asterisk}^`

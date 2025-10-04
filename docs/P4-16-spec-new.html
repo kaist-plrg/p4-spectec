@@ -13793,21 +13793,27 @@ externObjectDeclarationIR
 <div class="content">
 <pre>rule Decl_inst/externObjectDeclarationIR/non-constructor:
    GLOBAL IC_0 STO |- annotationList EXTERN nameIR `&lt;typeParameterListIR ,&gt; `{eps externMethodPrototypeIR*} ==&gt; IC_2 STO eps
-    -- Bind_methods: $empty_rdenv |- externMethodPrototypeIR* ==&gt; rdenv
+    -- (if (rid = $ridof_externMethodPrototypeIR(externMethodPrototypeIR)))*
+    -- (if (routineTypeDefIR = $typeof_externMethodPrototypeIR(externMethodPrototypeIR)))*
+    -- if rdenv = `{(rid : routineTypeDefIR)*}
     -- if externObjectTypeIR = EXTERN nameIR rdenv
     -- if polyTypeDefIR = externObjectTypeIR `&lt;typeParameterListIR , eps&gt;
     -- if IC_1 = $add_typedef_inst(GLOBAL, IC_0, nameIR, polyTypeDefIR)
     -- if cid = $cid_IR(nameIR, eps)
     -- if constructor = EXTERN nameIR `&lt;typeParameterListIR&gt; `(eps) `{externMethodPrototypeIR*}
-    -- if IC_2 = $add_constructor_inst(GLOBAL, IC_1, cid, constructor)
+    -- if IC_2 = $add_constructor_inst(IC_1, cid, constructor)
 
 rule Decl_inst/externObjectDeclarationIR/constructor:
    GLOBAL IC_0 STO |- annotationList EXTERN nameIR `&lt;typeParameterListIR ,&gt; `{externConstructorPrototypeIR* externMethodPrototypeIR*} ==&gt; IC_2 STO eps
-    -- Bind_methods: $empty_rdenv |- externMethodPrototypeIR* ==&gt; rdenv
+    -- (if (rid = $ridof_externMethodPrototypeIR(externMethodPrototypeIR)))*
+    -- (if (routineTypeDefIR = $typeof_externMethodPrototypeIR(externMethodPrototypeIR)))*
+    -- if rdenv = `{(rid : routineTypeDefIR)*}
     -- if externObjectTypeIR = EXTERN nameIR rdenv
     -- if polyTypeDefIR = externObjectTypeIR `&lt;typeParameterListIR , eps&gt;
     -- if IC_1 = $add_typedef_inst(GLOBAL, IC_0, nameIR, polyTypeDefIR)
-    -- Bind_constructors: GLOBAL IC_1 typeParameterListIR externMethodPrototypeIR* |- externConstructorPrototypeIR* ==&gt; IC_2</pre>
+    -- (if (cid = $cidof_externConstructorPrototypeIR(externConstructorPrototypeIR)))*
+    -- (if (constructor = $constructor_of_externConstructorPrototypeIR(typeParameterListIR, externMethodPrototypeIR*, externConstructorPrototypeIR)))*
+    -- if IC_2 = $add_constructors_inst(IC_1, cid*, constructor*)</pre>
 </div>
 </div>
 </div>
@@ -13826,7 +13832,41 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <p>Check that <code>[ ]</code> is equal to <code>externConstructorPrototypeIR'<sup>*</sup></code>.</p>
 </li>
 <li>
-<p><a href="#Bind_methods"><code>$empty_rdenv |- externMethodPrototypeIR<sup>*</sup> =&#8658; rdenv</code></a>.</p>
+<p>Let <code>rid<sup>*</sup></code> be the list of <code>rid</code>, obtained by repeating:</p>
+<div class="openblock">
+<div class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Let <code>rid</code> be <a href="#ridof_externMethodPrototypeIR">the routine id of  <code>externMethodPrototypeIR</code></a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>for each <code>externMethodPrototypeIR</code> in <code>externMethodPrototypeIR<sup>*</sup></code>.</p>
+</div>
+</li>
+<li>
+<p>Let <code>routineTypeDefIR<sup>*</sup></code> be the list of <code>routineTypeDefIR</code>, obtained by repeating:</p>
+<div class="openblock">
+<div class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Let <code>routineTypeDefIR</code> be <a href="#typeof_externMethodPrototypeIR">the routine type definition of  <code>externMethodPrototypeIR</code></a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>for each <code>externMethodPrototypeIR</code> in <code>externMethodPrototypeIR<sup>*</sup></code>.</p>
+</div>
+</li>
+<li>
+<p>Let <code>rdenv</code> be <code>{ rid : routineTypeDefIR<sup>*</sup> }</code>.</p>
 </li>
 <li>
 <p>Let <code>externObjectTypeIR</code> be <code>EXTERN nameIR rdenv</code>.</p>
@@ -13844,7 +13884,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <p>Let <code>constructor</code> be <code>EXTERN nameIR &lt; typeParameterListIR &gt; ( [ ] ) { externMethodPrototypeIR<sup>*</sup> }</code>.</p>
 </li>
 <li>
-<p>Let <code>IC<sub>2</sub></code> be <code>$add_constructor_inst(GLOBAL, IC<sub>1</sub>, cid, constructor)</code>.</p>
+<p>Let <code>IC<sub>2</sub></code> be <code>$add_constructor_inst(IC<sub>1</sub>, cid, constructor)</code>.</p>
 </li>
 <li>
 <p>Result in <code>IC<sub>2</sub></code>, <code>STO'</code>, and <code>?()</code>.</p>
@@ -13853,7 +13893,41 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <p>Let <code>externConstructorPrototypeIR<sup>*</sup></code> be <code>externConstructorPrototypeIR'<sup>*</sup></code>.</p>
 </li>
 <li>
-<p><a href="#Bind_methods"><code>$empty_rdenv |- externMethodPrototypeIR<sup>*</sup> =&#8658; rdenv</code></a>.</p>
+<p>Let <code>rid<sup>*</sup></code> be the list of <code>rid</code>, obtained by repeating:</p>
+<div class="openblock">
+<div class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Let <code>rid</code> be <a href="#ridof_externMethodPrototypeIR">the routine id of  <code>externMethodPrototypeIR</code></a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>for each <code>externMethodPrototypeIR</code> in <code>externMethodPrototypeIR<sup>*</sup></code>.</p>
+</div>
+</li>
+<li>
+<p>Let <code>routineTypeDefIR<sup>*</sup></code> be the list of <code>routineTypeDefIR</code>, obtained by repeating:</p>
+<div class="openblock">
+<div class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Let <code>routineTypeDefIR</code> be <a href="#typeof_externMethodPrototypeIR">the routine type definition of  <code>externMethodPrototypeIR</code></a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>for each <code>externMethodPrototypeIR</code> in <code>externMethodPrototypeIR<sup>*</sup></code>.</p>
+</div>
+</li>
+<li>
+<p>Let <code>rdenv</code> be <code>{ rid : routineTypeDefIR<sup>*</sup> }</code>.</p>
 </li>
 <li>
 <p>Let <code>externObjectTypeIR</code> be <code>EXTERN nameIR rdenv</code>.</p>
@@ -13865,7 +13939,41 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <p>Let <code>IC<sub>1</sub></code> be <code>$add_typedef_inst(GLOBAL, IC<sub>0</sub>, nameIR, polyTypeDefIR)</code>.</p>
 </li>
 <li>
-<p><a href="#Bind_constructors"><code>GLOBAL IC<sub>1</sub> typeParameterListIR externMethodPrototypeIR<sup>*</sup> |- externConstructorPrototypeIR<sup>*</sup> =&#8658; IC<sub>2</sub></code></a>.</p>
+<p>Let <code>cid<sup>*</sup></code> be the list of <code>cid</code>, obtained by repeating:</p>
+<div class="openblock">
+<div class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Let <code>cid</code> be <a href="#cidof_externConstructorPrototypeIR">the constructor id of  <code>externConstructorPrototypeIR</code></a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>for each <code>externConstructorPrototypeIR</code> in <code>externConstructorPrototypeIR<sup>*</sup></code>.</p>
+</div>
+</li>
+<li>
+<p>Let <code>constructor<sup>*</sup></code> be the list of <code>constructor</code>, obtained by repeating:</p>
+<div class="openblock">
+<div class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Let <code>constructor</code> be <a href="#constructor_of_externConstructorPrototypeIR">the constructor of  <code>externConstructorPrototypeIR</code> with type parameters  <code>typeParameterListIR</code>  and methods  <code>externMethodPrototypeIR<sup>*</sup></code></a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>for each <code>externConstructorPrototypeIR</code> in <code>externConstructorPrototypeIR<sup>*</sup></code>.</p>
+</div>
+</li>
+<li>
+<p>Let <code>IC<sub>2</sub></code> be <code>$add_constructors_inst(IC<sub>1</sub>, cid<sup>*</sup>, constructor<sup>*</sup>)</code>.</p>
 </li>
 <li>
 <p>Result in <code>IC<sub>2</sub></code>, <code>STO'</code>, and <code>?()</code>.</p>
@@ -14110,7 +14218,7 @@ example will produce an error:</p>
    GLOBAL IC_0 STO |- annotationList PARSER nameIR `&lt;eps&gt; `(parameterListIR) `(constructorParameterListIR) `{parserLocalDeclarationListIR parserStateListIR} ==&gt; IC_1 STO eps
     -- if cid = $cid_IR(nameIR, constructorParameterListIR)
     -- if constructor = PARSER `(parameterListIR) `(constructorParameterListIR) `{parserLocalDeclarationListIR parserStateListIR}
-    -- if IC_1 = $add_constructor_inst(GLOBAL, IC_0, cid, constructor)</pre>
+    -- if IC_1 = $add_constructor_inst(IC_0, cid, constructor)</pre>
 </div>
 </div>
 </div>
@@ -14132,7 +14240,7 @@ example will produce an error:</p>
 <p>Let <code>constructor</code> be <code>PARSER ( parameterListIR ) ( constructorParameterListIR ) { parserLocalDeclarationListIR parserStateListIR }</code>.</p>
 </li>
 <li>
-<p>Let <code>IC<sub>1</sub></code> be <code>$add_constructor_inst(GLOBAL, IC<sub>0</sub>, cid, constructor)</code>.</p>
+<p>Let <code>IC<sub>1</sub></code> be <code>$add_constructor_inst(IC<sub>0</sub>, cid, constructor)</code>.</p>
 </li>
 <li>
 <p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and <code>?()</code>.</p>
@@ -14376,7 +14484,7 @@ programmer.</p>
    GLOBAL IC_0 STO |- annotationList CONTROL nameIR `&lt;eps&gt; `(parameterListIR) `(constructorParameterListIR) `{controlLocalDeclarationListIR APPLY controlBodyIR} ==&gt; IC_1 STO eps
     -- if cid = $cid_IR(nameIR, constructorParameterListIR)
     -- if constructor = CONTROL `(parameterListIR) `(constructorParameterListIR) `{controlLocalDeclarationListIR APPLY controlBodyIR}
-    -- if IC_1 = $add_constructor_inst(GLOBAL, IC_0, cid, constructor)</pre>
+    -- if IC_1 = $add_constructor_inst(IC_0, cid, constructor)</pre>
 </div>
 </div>
 </div>
@@ -14398,7 +14506,7 @@ programmer.</p>
 <p>Let <code>constructor</code> be <code>CONTROL ( parameterListIR ) ( constructorParameterListIR ) { controlLocalDeclarationListIR APPLY controlBodyIR }</code>.</p>
 </li>
 <li>
-<p>Let <code>IC<sub>1</sub></code> be <code>$add_constructor_inst(GLOBAL, IC<sub>0</sub>, cid, constructor)</code>.</p>
+<p>Let <code>IC<sub>1</sub></code> be <code>$add_constructor_inst(IC<sub>0</sub>, cid, constructor)</code>.</p>
 </li>
 <li>
 <p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and <code>?()</code>.</p>
@@ -16423,7 +16531,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
     -- if IC_1 = $add_typedef_inst(GLOBAL, IC_0, nameIR, typeDefIR_package)
     -- if cid = $cid_IR(nameIR, parameterIR*)
     -- if constructor_package = PACKAGE `&lt;typeParameterListIR ++ typeParameterListIR_inferred&gt; `(parameterIR*)
-    -- if IC_2 = $add_constructor_inst(GLOBAL, IC_1, cid, constructor_package)</pre>
+    -- if IC_2 = $add_constructor_inst(IC_1, cid, constructor_package)</pre>
 </div>
 </div>
 </div>
@@ -16471,7 +16579,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>constructor<sub>package</sub></code> be <code>PACKAGE &lt; typeParameterListIR ++ typeParameterListIR<sub>inferred</sub> &gt; ( parameterIR<sup>*</sup> )</code>.</p>
 </li>
 <li>
-<p>Let <code>IC<sub>2</sub></code> be <code>$add_constructor_inst(GLOBAL, IC<sub>1</sub>, cid, constructor<sub>package</sub>)</code>.</p>
+<p>Let <code>IC<sub>2</sub></code> be <code>$add_constructor_inst(IC<sub>1</sub>, cid, constructor<sub>package</sub>)</code>.</p>
 </li>
 <li>
 <p>Result in <code>IC<sub>2</sub></code>, <code>STO'</code>, and <code>?()</code>.</p>

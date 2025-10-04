@@ -23809,15 +23809,36 @@ def $add_routine_non_overload_inst(cursor, IC, rid, routine)
       2. Return IC[block.renv = renv]
 
 ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:193.1-194.25
-def $add_constructor_inst(cursor, IC, cid, constructor)
+def $add_constructor_inst(IC, cid, constructor)
 
-1. If ((cursor matches pattern `GLOBAL`)), then
+1. (Let cenv be $add_map<cid, constructor>(IC.global.cenv, cid, constructor))
 
-  1. (Let cenv be $add_map<cid, constructor>(IC.global.cenv, cid, constructor))
+2. Return IC[global.cenv = cenv]
 
-  2. Return IC[global.cenv = cenv]
+;; ../../../../spec-concrete/7.02-instantiation-context.watsup:201.1-202.25
+def $add_constructors_inst(IC, cid*{cid <- cid*}, constructor*{constructor <- constructor*})
 
-;; ../../../../spec-concrete/7.02-instantiation-context.watsup:207.1-207.75
+1. Case analysis on cid*{cid <- cid*}
+
+  1. Case (% matches pattern [])
+
+    1. If ((constructor*{constructor <- constructor*} matches pattern [])), then
+
+      1. Return IC
+
+  2. Case (% matches pattern _ :: _)
+
+    1. (Let cid_h :: cid_t*{cid_t <- cid_t*} be cid*{cid <- cid*})
+
+    2. If ((constructor*{constructor <- constructor*} matches pattern _ :: _)), then
+
+      1. (Let constructor_h :: constructor_t*{constructor_t <- constructor_t*} be constructor*{constructor <- constructor*})
+
+      2. (Let IC' be $add_constructor_inst(IC, cid_h, constructor_h))
+
+      3. Return $add_constructors_inst(IC', cid_t*{cid_t <- cid_t*}, constructor_t*{constructor_t <- constructor_t*})
+
+;; ../../../../spec-concrete/7.02-instantiation-context.watsup:215.1-215.75
 def $find_value_inst(p', IC, prefixedNameIR)
 
 1. If ((prefixedNameIR matches pattern `.%`)), then
@@ -23884,7 +23905,7 @@ def $find_value_inst(p', IC, prefixedNameIR)
 
         1. Return $find_value_inst((block), IC, (` id))
 
-;; ../../../../spec-concrete/7.02-instantiation-context.watsup:226.1-226.82
+;; ../../../../spec-concrete/7.02-instantiation-context.watsup:234.1-234.82
 def $find_typedef_inst(_cursor, IC, prefixedNameIR)
 
 1. Case analysis on prefixedNameIR
@@ -23901,7 +23922,7 @@ def $find_typedef_inst(_cursor, IC, prefixedNameIR)
 
     2. Return $find_map<tid, typeDefIR>(IC.global.tdenv, nameIR)
 
-;; ../../../../spec-concrete/7.02-instantiation-context.watsup:235.1-236.29
+;; ../../../../spec-concrete/7.02-instantiation-context.watsup:243.1-244.29
 def $find_constructor_inst(IC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*})
 
 1. Case analysis on prefixedNameIR
@@ -24740,106 +24761,6 @@ relation Block_inst: IC_0 STO_0 |- (annotationList { blockElementStatementListIR
   4. Result in : % % |- % ==> IC_3 STO_1 (annotationList { blockElementStatementListIR_inst })
 
 ;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:53.1-55.20
-relation Bind_method: rdenv_0 |- externMethodPrototypeIR ==> %
-
-1. Case analysis on externMethodPrototypeIR
-
-  1. Case (% matches pattern `%%;`)
-
-    1. (Let (annotationList (typeIR_ret nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{parameterIR <- parameterIR*} )) ;) be externMethodPrototypeIR)
-
-    2. Group non-abstract: rdenv_0 |- (annotationList (typeIR_ret nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{parameterIR <- parameterIR*} )) ;) ==> %
-
-      1. (Let rid be $rid_IR(nameIR, parameterIR*{parameterIR <- parameterIR*}))
-
-      2. (Let parameterTypeIR be $typeof_parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
-
-      3. (Let methodTypeIR be ((extern_method( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret) as methodTypeIR))
-
-      4. (Let routineTypeDefIR be (((methodTypeIR as routineTypeIR) < typeParameterListIR , typeParameterListIR_inferred >) as routineTypeDefIR))
-
-      5. (Let rdenv_1 be $add_map<rid, routineTypeDefIR>(rdenv_0, rid, routineTypeDefIR))
-
-      6. Result in : % |- % ==> rdenv_1
-
-  2. Case (% matches pattern `%ABSTRACT%;`)
-
-    1. (Let (annotationList abstract (typeIR_ret nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{parameterIR <- parameterIR*} )) ;) be externMethodPrototypeIR)
-
-    2. Group abstract: rdenv_0 |- (annotationList abstract (typeIR_ret nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{parameterIR <- parameterIR*} )) ;) ==> %
-
-      1. (Let rid be $rid_IR(nameIR, parameterIR*{parameterIR <- parameterIR*}))
-
-      2. (Let parameterTypeIR be $typeof_parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
-
-      3. (Let methodTypeIR be ((extern_methodabstract( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret) as methodTypeIR))
-
-      4. (Let routineTypeDefIR be (((methodTypeIR as routineTypeIR) < typeParameterListIR , typeParameterListIR_inferred >) as routineTypeDefIR))
-
-      5. (Let rdenv_1 be $add_map<rid, routineTypeDefIR>(rdenv_0, rid, routineTypeDefIR))
-
-      6. Result in : % |- % ==> rdenv_1
-
-;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:57.1-59.20
-relation Bind_methods: rdenv' |- externMethodPrototypeIR*{externMethodPrototypeIR <- externMethodPrototypeIR*} ==> %
-
-1. Case analysis on externMethodPrototypeIR*{externMethodPrototypeIR <- externMethodPrototypeIR*}
-
-  1. Case (% matches pattern [])
-
-    1. Group nil: rdenv' |- [] ==> %
-
-      1. Result in : % |- % ==> rdenv'
-
-  2. Case (% matches pattern _ :: _)
-
-    1. (Let externMethodPrototypeIR_h :: externMethodPrototypeIR_t*{externMethodPrototypeIR_t <- externMethodPrototypeIR_t*} be externMethodPrototypeIR*{externMethodPrototypeIR <- externMethodPrototypeIR*})
-
-    2. Group cons: rdenv' |- externMethodPrototypeIR_h :: externMethodPrototypeIR_t*{externMethodPrototypeIR_t <- externMethodPrototypeIR_t*} ==> %
-
-      1. (Bind_method: rdenv' |- externMethodPrototypeIR_h ==> rdenv_1)
-
-      2. (Bind_methods: rdenv_1 |- externMethodPrototypeIR_t*{externMethodPrototypeIR_t <- externMethodPrototypeIR_t*} ==> rdenv_2)
-
-      3. Result in : % |- % ==> rdenv_2
-
-;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:61.1-66.29
-relation Bind_constructor: p IC_0 typeParameterListIR externMethodPrototypeListIR |- (annotationList nameIR <, typeParameterListIR_inferred >( parameterListIR );) ==> %
-
-1. Group constructor: p IC_0 typeParameterListIR externMethodPrototypeListIR |- (annotationList nameIR <, typeParameterListIR_inferred >( parameterListIR );) ==> %
-
-  1. (Let cid be $cid_IR(nameIR, parameterListIR))
-
-  2. (Let constructor be (extern nameIR < typeParameterListIR ++ typeParameterListIR_inferred >( parameterListIR ){ externMethodPrototypeListIR }))
-
-  3. (Let IC_1 be $add_constructor_inst(p, IC_0, cid, constructor))
-
-  4. Result in : % % % % |- % ==> IC_1
-
-;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:68.1-72.29
-relation Bind_constructors: p IC' typeParameterListIR externMethodPrototypeListIR |- externConstructorPrototypeIR*{externConstructorPrototypeIR <- externConstructorPrototypeIR*} ==> %
-
-1. Case analysis on externConstructorPrototypeIR*{externConstructorPrototypeIR <- externConstructorPrototypeIR*}
-
-  1. Case (% matches pattern [])
-
-    1. Group nil: p IC' typeParameterListIR externMethodPrototypeListIR |- [] ==> %
-
-      1. Result in : % % % % |- % ==> IC'
-
-  2. Case (% matches pattern _ :: _)
-
-    1. (Let externConstructorPrototypeIR_h :: externConstructorPrototypeIR_t*{externConstructorPrototypeIR_t <- externConstructorPrototypeIR_t*} be externConstructorPrototypeIR*{externConstructorPrototypeIR <- externConstructorPrototypeIR*})
-
-    2. Group cons: p IC' typeParameterListIR externMethodPrototypeListIR |- externConstructorPrototypeIR_h :: externConstructorPrototypeIR_t*{externConstructorPrototypeIR_t <- externConstructorPrototypeIR_t*} ==> %
-
-      1. (Bind_constructor: p IC' typeParameterListIR externMethodPrototypeListIR |- externConstructorPrototypeIR_h ==> IC_1)
-
-      2. (Bind_constructors: p IC_1 typeParameterListIR externMethodPrototypeListIR |- externConstructorPrototypeIR_t*{externConstructorPrototypeIR_t <- externConstructorPrototypeIR_t*} ==> IC_2)
-
-      3. Result in : % % % % |- % ==> IC_2
-
-;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:74.1-76.20
 relation ExternMethod_inst: IC_0 |- externMethodPrototypeIR ==> %
 
 1. Case analysis on externMethodPrototypeIR
@@ -24872,7 +24793,7 @@ relation ExternMethod_inst: IC_0 |- externMethodPrototypeIR ==> %
 
       4. Result in : % |- % ==> IC_1
 
-;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:78.1-80.20
+;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:57.1-59.20
 relation ExternMethods_inst: IC' |- externMethodPrototypeIR*{externMethodPrototypeIR <- externMethodPrototypeIR*} ==> %
 
 1. Case analysis on externMethodPrototypeIR*{externMethodPrototypeIR <- externMethodPrototypeIR*}
@@ -24895,7 +24816,7 @@ relation ExternMethods_inst: IC' |- externMethodPrototypeIR*{externMethodPrototy
 
       3. Result in : % |- % ==> IC_2
 
-;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:86.1-89.23
+;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:65.1-68.23
 relation ParserStmt_inst: IC_0' STO_0 |- parserStatementIR ==> % % %
 
 1. Case analysis on parserStatementIR
@@ -25040,7 +24961,7 @@ relation ParserStmt_inst: IC_0' STO_0 |- parserStatementIR ==> % % %
 
         2. Result in : % % |- % ==> IC_1 STO_1 (conditionalStatementIR_inst as parserStatementIR)
 
-;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:91.1-94.23
+;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:70.1-73.23
 relation ParserStmts_inst: IC' STO' |- parserStatementIR*{parserStatementIR <- parserStatementIR*} ==> % % %
 
 1. Case analysis on parserStatementIR*{parserStatementIR <- parserStatementIR*}
@@ -25063,7 +24984,7 @@ relation ParserStmts_inst: IC' STO' |- parserStatementIR*{parserStatementIR <- p
 
       3. Result in : % % |- % ==> IC_2 STO_2 parserStatementIR_h_inst :: parserStatementIR_t_inst*{parserStatementIR_t_inst <- parserStatementIR_t_inst*}
 
-;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:96.1-99.23
+;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:75.1-78.23
 relation ParserState_inst: IC_0 STO_0 |- (annotationList state nameIR { parserStatementListIR transitionStatementIR }) ==> % %
 
 1. Group : IC_0 STO_0 |- (annotationList state nameIR { parserStatementListIR transitionStatementIR }) ==> % %
@@ -25076,7 +24997,7 @@ relation ParserState_inst: IC_0 STO_0 |- (annotationList state nameIR { parserSt
 
   4. Result in : % % |- % ==> IC_2 STO_1
 
-;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:101.1-104.23
+;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:80.1-83.23
 relation ParserStates_inst: IC' STO' |- parserStateIR*{parserStateIR <- parserStateIR*} ==> % %
 
 1. Case analysis on parserStateIR*{parserStateIR <- parserStateIR*}
@@ -25099,7 +25020,7 @@ relation ParserStates_inst: IC' STO' |- parserStateIR*{parserStateIR <- parserSt
 
       3. Result in : % % |- % ==> IC_2 STO_2
 
-;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:106.1-109.23
+;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:85.1-88.23
 relation ParserLocalDecl_inst: IC_0' STO_0' |- parserLocalDeclarationIR ==> % % %
 
 1. Case analysis on parserLocalDeclarationIR
@@ -25156,7 +25077,7 @@ relation ParserLocalDecl_inst: IC_0' STO_0' |- parserLocalDeclarationIR ==> % % 
 
       1. Result in : % % |- % ==> IC_0' STO_0' (valueSetDeclarationIR as parserLocalDeclarationIR)
 
-;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:111.1-114.23
+;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:90.1-93.23
 relation ParserLocalDecls_inst: IC' STO' |- parserLocalDeclarationIR*{parserLocalDeclarationIR <- parserLocalDeclarationIR*} ==> % % %
 
 1. Case analysis on parserLocalDeclarationIR*{parserLocalDeclarationIR <- parserLocalDeclarationIR*}
@@ -25179,7 +25100,7 @@ relation ParserLocalDecls_inst: IC' STO' |- parserLocalDeclarationIR*{parserLoca
 
       3. Result in : % % |- % ==> IC_2 STO_2 parserLocalDeclarationIR_h_inst :: parserLocalDeclarationIR_t_inst*{parserLocalDeclarationIR_t_inst <- parserLocalDeclarationIR_t_inst*}
 
-;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:120.1-123.23
+;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:99.1-102.23
 relation TableProperty_inst: IC STO' |- tablePropertyIR ==> % %
 
 1. Case analysis on tablePropertyIR
@@ -25236,7 +25157,7 @@ relation TableProperty_inst: IC STO' |- tablePropertyIR ==> % %
 
       1. Result in : % % |- % ==> STO' (annotationList constOptIR custom_const nameIR constantInitializerIR ;)
 
-;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:125.1-128.23
+;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:104.1-107.23
 relation TableProperties_inst: IC STO' |- tablePropertyIR*{tablePropertyIR <- tablePropertyIR*} ==> % %
 
 1. Case analysis on tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}
@@ -25259,7 +25180,7 @@ relation TableProperties_inst: IC STO' |- tablePropertyIR*{tablePropertyIR <- ta
 
       3. Result in : % % |- % ==> STO_2 tablePropertyIR_h_inst :: tablePropertyIR_t_inst*{tablePropertyIR_t_inst <- tablePropertyIR_t_inst*}
 
-;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:130.1-133.23
+;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:109.1-112.23
 relation ControlLocalDecl_inst: IC_0' STO_0' |- controlLocalDeclarationIR ==> % % %
 
 1. Case analysis on controlLocalDeclarationIR
@@ -25340,7 +25261,7 @@ relation ControlLocalDecl_inst: IC_0' STO_0' |- controlLocalDeclarationIR ==> % 
 
       7. Result in : % % |- % ==> IC_1 STO_1 ?((constantDeclarationIR as controlLocalDeclarationIR))
 
-;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:135.1-138.23
+;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:114.1-117.23
 relation ControlLocalDecls_inst: IC' STO' |- controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*} ==> % % %
 
 1. Case analysis on controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*}
@@ -25377,7 +25298,7 @@ relation ControlLocalDecls_inst: IC' STO' |- controlLocalDeclarationIR*{controlL
 
         3. Result in : % % |- % ==> IC_2 STO_2 controlLocalDeclarationIR_h_inst :: controlLocalDeclarationIR_t_inst*{controlLocalDeclarationIR_t_inst <- controlLocalDeclarationIR_t_inst*}
 
-;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:144.1-147.26
+;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:123.1-126.26
 relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
 1. Case analysis on declarationIR
@@ -25588,35 +25509,47 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
         1. If (([] = externConstructorPrototypeIR'*{externConstructorPrototypeIR' <- externConstructorPrototypeIR'*})), then
 
-          1. (Bind_methods: $empty_rdenv |- externMethodPrototypeIR*{externMethodPrototypeIR <- externMethodPrototypeIR*} ==> rdenv)
+          1. (Let rid be $ridof_externMethodPrototypeIR(externMethodPrototypeIR))*{externMethodPrototypeIR <- externMethodPrototypeIR*, rid <- rid*}
 
-          2. (Let externObjectTypeIR be (extern nameIR rdenv))
+          2. (Let routineTypeDefIR be $typeof_externMethodPrototypeIR(externMethodPrototypeIR))*{externMethodPrototypeIR <- externMethodPrototypeIR*, routineTypeDefIR <- routineTypeDefIR*}
 
-          3. (Let polyTypeDefIR be ((externObjectTypeIR as typeIR) < typeParameterListIR , [] >))
+          3. (Let rdenv be ({ (rid : routineTypeDefIR)*{rid <- rid*, routineTypeDefIR <- routineTypeDefIR*} }))
 
-          4. (Let IC_1 be $add_typedef_inst((global), IC_0, nameIR, (polyTypeDefIR as typeDefIR)))
+          4. (Let externObjectTypeIR be (extern nameIR rdenv))
 
-          5. (Let cid be $cid_IR(nameIR, []))
+          5. (Let polyTypeDefIR be ((externObjectTypeIR as typeIR) < typeParameterListIR , [] >))
 
-          6. (Let constructor be (extern nameIR < typeParameterListIR >( [] ){ externMethodPrototypeIR*{externMethodPrototypeIR <- externMethodPrototypeIR*} }))
+          6. (Let IC_1 be $add_typedef_inst((global), IC_0, nameIR, (polyTypeDefIR as typeDefIR)))
 
-          7. (Let IC_2 be $add_constructor_inst((global), IC_1, cid, constructor))
+          7. (Let cid be $cid_IR(nameIR, []))
 
-          8. Result in : % % % |- % ==> IC_2 STO' ?()
+          8. (Let constructor be (extern nameIR < typeParameterListIR >( [] ){ externMethodPrototypeIR*{externMethodPrototypeIR <- externMethodPrototypeIR*} }))
+
+          9. (Let IC_2 be $add_constructor_inst(IC_1, cid, constructor))
+
+          10. Result in : % % % |- % ==> IC_2 STO' ?()
 
         2. (Let externConstructorPrototypeIR*{externConstructorPrototypeIR <- externConstructorPrototypeIR*} be externConstructorPrototypeIR'*{externConstructorPrototypeIR' <- externConstructorPrototypeIR'*})
 
-        3. (Bind_methods: $empty_rdenv |- externMethodPrototypeIR*{externMethodPrototypeIR <- externMethodPrototypeIR*} ==> rdenv)
+        3. (Let rid be $ridof_externMethodPrototypeIR(externMethodPrototypeIR))*{externMethodPrototypeIR <- externMethodPrototypeIR*, rid <- rid*}
 
-        4. (Let externObjectTypeIR be (extern nameIR rdenv))
+        4. (Let routineTypeDefIR be $typeof_externMethodPrototypeIR(externMethodPrototypeIR))*{externMethodPrototypeIR <- externMethodPrototypeIR*, routineTypeDefIR <- routineTypeDefIR*}
 
-        5. (Let polyTypeDefIR be ((externObjectTypeIR as typeIR) < typeParameterListIR , [] >))
+        5. (Let rdenv be ({ (rid : routineTypeDefIR)*{rid <- rid*, routineTypeDefIR <- routineTypeDefIR*} }))
 
-        6. (Let IC_1 be $add_typedef_inst((global), IC_0, nameIR, (polyTypeDefIR as typeDefIR)))
+        6. (Let externObjectTypeIR be (extern nameIR rdenv))
 
-        7. (Bind_constructors: (global) IC_1 typeParameterListIR externMethodPrototypeIR*{externMethodPrototypeIR <- externMethodPrototypeIR*} |- externConstructorPrototypeIR*{externConstructorPrototypeIR <- externConstructorPrototypeIR*} ==> IC_2)
+        7. (Let polyTypeDefIR be ((externObjectTypeIR as typeIR) < typeParameterListIR , [] >))
 
-        8. Result in : % % % |- % ==> IC_2 STO' ?()
+        8. (Let IC_1 be $add_typedef_inst((global), IC_0, nameIR, (polyTypeDefIR as typeDefIR)))
+
+        9. (Let cid be $cidof_externConstructorPrototypeIR(externConstructorPrototypeIR))*{cid <- cid*, externConstructorPrototypeIR <- externConstructorPrototypeIR*}
+
+        10. (Let constructor be $constructor_of_externConstructorPrototypeIR(typeParameterListIR, externMethodPrototypeIR*{externMethodPrototypeIR <- externMethodPrototypeIR*}, externConstructorPrototypeIR))*{constructor <- constructor*, externConstructorPrototypeIR <- externConstructorPrototypeIR*}
+
+        11. (Let IC_2 be $add_constructors_inst(IC_1, cid*{cid <- cid*}, constructor*{constructor <- constructor*}))
+
+        12. Result in : % % % |- % ==> IC_2 STO' ?()
 
     5. Case (% has type parserDeclarationIR)
 
@@ -25630,7 +25563,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
           2. (Let constructor be (parser( parameterListIR )( constructorParameterListIR ){ parserLocalDeclarationListIR parserStateListIR }))
 
-          3. (Let IC_1 be $add_constructor_inst((global), IC_0, cid, constructor))
+          3. (Let IC_1 be $add_constructor_inst(IC_0, cid, constructor))
 
           4. Result in : % % % |- % ==> IC_1 STO' ?()
 
@@ -25646,7 +25579,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
           2. (Let constructor be (control( parameterListIR )( constructorParameterListIR ){ controlLocalDeclarationListIR apply controlBodyIR }))
 
-          3. (Let IC_1 be $add_constructor_inst((global), IC_0, cid, constructor))
+          3. (Let IC_1 be $add_constructor_inst(IC_0, cid, constructor))
 
           4. Result in : % % % |- % ==> IC_1 STO' ?()
 
@@ -25866,11 +25799,11 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
         6. (Let constructor_package be (package< typeParameterListIR ++ typeParameterListIR_inferred >( parameterIR*{parameterIR <- parameterIR*} )))
 
-        7. (Let IC_2 be $add_constructor_inst((global), IC_1, cid, constructor_package))
+        7. (Let IC_2 be $add_constructor_inst(IC_1, cid, constructor_package))
 
         8. Result in : % % % |- % ==> IC_2 STO' ?()
 
-;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:149.1-152.26
+;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:128.1-131.26
 relation Decls_inst: p IC' STO' |- declarationIR*{declarationIR <- declarationIR*} ==> % % %
 
 1. Case analysis on declarationIR*{declarationIR <- declarationIR*}
@@ -25907,7 +25840,7 @@ relation Decls_inst: p IC' STO' |- declarationIR*{declarationIR <- declarationIR
 
         3. Result in : % % % |- % ==> IC_2 STO_2 declarationIR_h_inst :: declarationIR_t_inst*{declarationIR_t_inst <- declarationIR_t_inst*}
 
-;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:154.1-156.17
+;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:133.1-135.17
 relation Program_inst: |- p4program ==> % % % % %
 
 1. Group : |- p4program ==> % % % % %
@@ -25924,7 +25857,7 @@ relation Program_inst: |- p4program ==> % % % % %
 
     1. Result in : |- % ==> IC_1.global.cenv IC_1.global.tdenv IC_1.global.renv IC_1.global.venv STO_1
 
-;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:164.1-168.35
+;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:143.1-147.35
 relation Bind_arg: p_caller IC_caller | p_callee IC_callee_0 STO_0 |- id argumentIR ==> % %
 
 1. Group : p_caller IC_caller | p_callee IC_callee_0 STO_0 |- id argumentIR ==> % %
@@ -25937,7 +25870,7 @@ relation Bind_arg: p_caller IC_caller | p_callee IC_callee_0 STO_0 |- id argumen
 
   4. Result in : % % | % % % |- % % ==> IC_callee_1 STO_1
 
-;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:170.1-174.35
+;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:149.1-153.35
 relation Bind_args: p_caller IC_caller | p_callee IC_callee' STO' |- id*{id <- id*} argumentIR*{argumentIR <- argumentIR*} ==> % %
 
 1. Case analysis on id*{id <- id*}
@@ -25966,7 +25899,7 @@ relation Bind_args: p_caller IC_caller | p_callee IC_callee' STO' |- id*{id <- i
 
         3. Result in : % % | % % % |- % % ==> IC_callee_2 STO_2
 
-;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:181.1-186.35
+;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:160.1-165.35
 relation Constructor_inst: p IC STO_0 |- constructor < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} # id_default'*{id_default' <- id_default'*} )==> % %
 
 1. Case analysis on constructor
@@ -26196,6 +26129,66 @@ def $merge_renv_with_extern(renv, set<pair<rid, routine>>')
     3. (Let renv_post be $update_map<rid, routine>(renv, rid_h, routine_h_post))
 
     4. Return $merge_renv_with_extern(renv_post, ({ (rid_t : routine_t)*{rid_t <- rid_t*, routine_t <- routine_t*} }))
+
+;; ../../../../spec-concrete/7.07-instantiation-declaration.watsup:242.1-243.41
+def $ridof_externMethodPrototypeIR(externMethodPrototypeIR)
+
+1. Case analysis on externMethodPrototypeIR
+
+  1. Case (% matches pattern `%%;`)
+
+    1. (Let (_annotationList (_typeIR nameIR < _typeParameterListIR , _typeParameterListIR' >( parameterListIR )) ;) be externMethodPrototypeIR)
+
+    2. Return $rid_IR(nameIR, parameterListIR)
+
+  2. Case (% matches pattern `%ABSTRACT%;`)
+
+    1. (Let (_annotationList abstract (_typeIR nameIR < _typeParameterListIR , _typeParameterListIR' >( parameterListIR )) ;) be externMethodPrototypeIR)
+
+    2. Return $rid_IR(nameIR, parameterListIR)
+
+;; ../../../../spec-concrete/7.07-instantiation-declaration.watsup:254.1-255.54
+def $typeof_externMethodPrototypeIR(externMethodPrototypeIR)
+
+1. Case analysis on externMethodPrototypeIR
+
+  1. Case (% matches pattern `%%;`)
+
+    1. (Let (_annotationList (typeIR_ret nameIR < typeParameterListIR_expl , typeParameterListIR_impl >( parameterIR*{parameterIR <- parameterIR*} )) ;) be externMethodPrototypeIR)
+
+    2. (Let parameterTypeIR be $typeof_parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
+
+    3. (Let externMethodTypeIR be (extern_method( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret))
+
+    4. (Let routineTypeDefIR be (((externMethodTypeIR as routineTypeIR) < typeParameterListIR_expl , typeParameterListIR_impl >) as routineTypeDefIR))
+
+    5. Return routineTypeDefIR
+
+  2. Case (% matches pattern `%ABSTRACT%;`)
+
+    1. (Let (_annotationList abstract (typeIR_ret nameIR < typeParameterListIR_expl , typeParameterListIR_impl >( parameterIR*{parameterIR <- parameterIR*} )) ;) be externMethodPrototypeIR)
+
+    2. (Let parameterTypeIR be $typeof_parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
+
+    3. (Let externMethodTypeIR be (extern_methodabstract( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret))
+
+    4. (Let routineTypeDefIR be (((externMethodTypeIR as routineTypeIR) < typeParameterListIR_expl , typeParameterListIR_impl >) as routineTypeDefIR))
+
+    5. Return routineTypeDefIR
+
+;; ../../../../spec-concrete/7.07-instantiation-declaration.watsup:280.1-281.45
+def $cidof_externConstructorPrototypeIR((_annotationList nameIR <, _typeParameterListIR >( parameterIR*{parameterIR <- parameterIR*} );))
+
+1. Return $cid_IR(nameIR, parameterIR*{parameterIR <- parameterIR*})
+
+;; ../../../../spec-concrete/7.07-instantiation-declaration.watsup:288.1-293.88
+def $constructor_of_externConstructorPrototypeIR(typeParameterListIR_expl, externMethodPrototypeListIR, (_annotationList nameIR <, typeParameterListIR_impl >( parameterIR*{parameterIR <- parameterIR*} );))
+
+1. (Let typeParameterListIR be typeParameterListIR_expl ++ typeParameterListIR_impl)
+
+2. (Let constructor be (extern nameIR < typeParameterListIR >( parameterIR*{parameterIR <- parameterIR*} ){ externMethodPrototypeListIR }))
+
+3. Return constructor
 
 ;; ../../../../spec-concrete/7.11-instantiation-constructor-call.watsup:7.1-8.33
 def $partition_default_parameters(parameterIR*{parameterIR <- parameterIR*}, id_default*{id_default <- id_default*})
