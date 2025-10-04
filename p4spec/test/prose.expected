@@ -619,7 +619,7 @@ relation ParameterType_wf: `bound` and `direction typeIR _ value'^?^`
 
 . Group : `bound` and `direction typeIR _ value'^?^`
 
- .. If ?() is equal to `value'^?^`:
+ .. If `value'^?^` is equal to ?():
   ... Check that <<Type_wf, `bound |- typeIR`>> holds.
   ... Check that `$is_string_typeIR(<<canon, the canonicalized form of typeIR>>) \/ $is_arbitrary_int_typeIR(<<canon, the canonicalized form of typeIR>>) \/ $is_objectTypeIR(<<canon, the canonicalized form of typeIR>>) => direction = `.
   ... The relation holds.
@@ -1212,13 +1212,13 @@ relation Type_ok: `p`, `TC`, and `typeOrVoid`
 
  .. If `typeOrVoid` matches pattern `VOID`:
   ... Result in the type `VOID` and set of fresh type variables `[ ]`.
- .. If `BOOL` is equal to `typeOrVoid`:
+ .. If `typeOrVoid` is equal to `BOOL`:
   ... Result in the type `BOOL` and set of fresh type variables `[ ]`.
- .. If `ERROR` is equal to `typeOrVoid`:
+ .. If `typeOrVoid` is equal to `ERROR`:
   ... Result in the type `ERROR` and set of fresh type variables `[ ]`.
- .. If `MATCH_KIND` is equal to `typeOrVoid`:
+ .. If `typeOrVoid` is equal to `MATCH_KIND`:
   ... Result in the type `MATCH_KIND` and set of fresh type variables `[ ]`.
- .. If `STRING` is equal to `typeOrVoid`:
+ .. If `typeOrVoid` is equal to `STRING`:
   ... Result in the type `STRING` and set of fresh type variables `[ ]`.
 . If let `baseType` be `typeOrVoid`:
  .. Check that `baseType` matches pattern `INT`.
@@ -1432,7 +1432,7 @@ relation Sub_expl_canon_neq: `typeIR''''''` and `typeIR'''''''`
  .. If `numberTypeIR` matches pattern `INT`:
   ... Group arbint: `INT` and `typeIR'''''''`
 
-   .... If `BOOL` is equal to `typeIR'''''''`:
+   .... If `typeIR'''''''` is equal to `BOOL`:
     ..... The relation holds.
    .... If `typeIR'''''''` has type `numberTypeIR`:
     ..... Let `numberTypeIR'` be `typeIR'''''''`.
@@ -1452,18 +1452,18 @@ relation Sub_expl_canon_neq: `typeIR''''''` and `typeIR'''''''`
 
    .... Else if `numberTypeIR` matches pattern `INT < % >`:
     ..... The relation holds.
-   .... Check that `BIT < nat >` is equal to `numberTypeIR`.
+   .... Check that `numberTypeIR` is equal to `BIT < nat >`.
    .... The relation holds.
 
  .. Else if let `BIT < nat >` be `numberTypeIR`:
   ... Group fixbit: `BIT < nat >` and `typeIR'''''''`
 
-   .... If 1 is equal to `nat`:
-    ..... Check that `BOOL` is equal to `typeIR'''''''`.
+   .... If `nat` is equal to 1:
+    ..... Check that `typeIR'''''''` is equal to `BOOL`.
     ..... The relation holds.
-   .... If `INT` is equal to `typeIR'''''''`:
+   .... If `typeIR'''''''` is equal to `INT`:
     ..... The relation holds.
-   .... If `INT < nat >` is equal to `typeIR'''''''`:
+   .... If `typeIR'''''''` is equal to `INT < nat >`:
     ..... The relation holds.
    .... If `typeIR'''''''` has type `numberTypeIR`:
     ..... Let `numberTypeIR` be `typeIR'''''''`.
@@ -2100,7 +2100,7 @@ relation Expr_ok: `p`, `TC`, and `expression'''`
   ... Let `?_ typeIR ctk _^?^` be `varTypeIR^?^`.
   ... Let `expressionNoteIR` be `( typeIR ctk )`.
   ... Result in the typed expression `prefixedNameIR # expressionNoteIR`.
- .. If `THIS` is equal to `expression'''`:
+ .. If `expression'''` is equal to `THIS`:
   ... Let `prefixedNameIR` be `` "this"`.
   ... Let `varTypeIR^?^` be `$find_var(p, TC, prefixedNameIR)`.
   ... Check that `varTypeIR^?^` matches pattern `(_)`.
@@ -5316,7 +5316,7 @@ relation RoutineTarget_ok: `p`, `TC`, and `routineTarget`
   ... Let `prefixedNameIR` be <<prefixedNonTypeName, the prefixed name of  `prefixedNonTypeName`>>.
   ... Check that `prefixedNameIR = ` "verify" \/ prefixedNameIR = . "verify" => p = BLOCK /\ $is_parser_blockKind(TC.BLOCK.KIND) \/ p = LOCAL /\ $is_parser_state_localKind(TC.LOCAL.KIND)`.
   ... Result in the typed routine target `prefixedNameIR`.
- .. If `THIS` is equal to `routineTarget`:
+ .. If `routineTarget` is equal to `THIS`:
   ... Result in the typed routine target `` "this"`.
 . If let `memberAccessBase . member` be `routineTarget`:
  .. Group memberAccessExpression: `p`, `TC`, and `memberAccessBase . member`
@@ -5351,7 +5351,7 @@ relation RoutineType_ok: `p`, `TC`, `routineTargetIR''`, `typeArgumentIR''^{aste
 . Let `prefixedNameIR` be `routineTargetIR''`.
 . Group referenceExpressionIR: `p`, `TC`, `prefixedNameIR`, `typeArgumentIR''^{asterisk}^`, and `argumentIR''^{asterisk}^`
 
- .. If `[ ]` is equal to `typeArgumentIR''^{asterisk}^`:
+ .. If `typeArgumentIR''^{asterisk}^` is equal to `[ ]`:
   ... Let `(rid, routineTypeDefIR, id*)'^?^` be `$find_routine_overloaded(p, TC, prefixedNameIR, argumentIR''^{asterisk}^)`.
   ... Check that `(rid, routineTypeDefIR, id*)'^?^` matches pattern `(_)`.
   ... Let `?(rid, routineTypeDefIR, id*)` be `(rid, routineTypeDefIR, id*)'^?^`.
@@ -5816,7 +5816,7 @@ relation SwitchLabel_table_ok: `TC`, `tid~table~`, `bool`, and `switchLabel`
 
 . Group : `TC`, `tid~table~`, `bool`, and `switchLabel`
 
- .. If true is equal to `bool`:
+ .. If `bool` is equal to true:
   ... Check that `switchLabel` matches pattern `DEFAULT`.
   ... Result in `DEFAULT`.
  .. If `switchLabel` has type `prefixedNonTypeName`:
@@ -5869,7 +5869,7 @@ relation SwitchLabel_general_ok: `TC`, `typeIR`, `bool`, and `switchLabel`
 
 . Group : `TC`, `typeIR`, `bool`, and `switchLabel`
 
- .. If true is equal to `bool`:
+ .. If `bool` is equal to true:
   ... Check that `switchLabel` matches pattern `DEFAULT`.
   ... Result in `DEFAULT`.
  .. If `switchLabel` has type `expressionNonBrace`:
@@ -6148,7 +6148,7 @@ relation SelectCase_keyset_ok: `TC`, `typeIR'''^{asterisk}^`, and `keysetExpress
  .. If `simpleKeysetExpression` matches pattern `DEFAULT`:
   ... Group simpleKeysetExpression-default: `TC`, `typeIR'''^{asterisk}^`, and `DEFAULT`
 
-   .... If `[ ]` is equal to `typeIR'''^{asterisk}^`:
+   .... If `typeIR'''^{asterisk}^` is equal to `[ ]`:
     ..... Result in `DEFAULT`.
    .... Let `typeIR''^{asterisk}^` be `typeIR'''^{asterisk}^`.
    .... If `typeIR''^{asterisk}^` matches pattern `[ _/1 ]`:
@@ -6220,7 +6220,7 @@ relation TableEntry_keyset_simple_ok: `TC`, `TBLC`, (`typeIR~key~`, `text`), and
  .. Let `expression` be `simpleKeysetExpression`.
  .. Group expression: `TC`, `TBLC`, (`typeIR~key~`, `text`), and `expression`
 
-  ... If "lpm" = `text`:
+  ... If `text` = "lpm":
    .... Let `matchMode` be `TBLC.MODE`.
    .... Check that `matchMode` matches pattern `NOPRILPM %`.
    .... Let `NOPRILPM n` be `matchMode`.
@@ -6232,7 +6232,7 @@ relation TableEntry_keyset_simple_ok: `TC`, `TBLC`, (`typeIR~key~`, `text`), and
    .... Let `typedExpressionIR~set~` be `( typeIR~set~ ) typedExpressionIR # ( typeIR~set~ ctk )`.
    .... Result in `LPM n` and `typedExpressionIR~set~`.
 
-  ... Else if "lpm" =/= `text`:
+  ... Else if `text` =/= "lpm":
    .... Let `typedExpressionIR` be the result of <<Expr_ok, typing `expression`, under cursor `LOCAL` and typing context `TC`>>.
    .... Let `typeIR` be <<typeof_expression, the type of  `typedExpressionIR`>>.
    .... Let `ctk` be <<ctkof_expression, the compile-time known-ness of  `typedExpressionIR`>>.
@@ -6243,7 +6243,7 @@ relation TableEntry_keyset_simple_ok: `TC`, `TBLC`, (`typeIR~key~`, `text`), and
 . If let `expression~l~ &&& expression~r~` be `simpleKeysetExpression`:
  .. Group mask: `TC`, `TBLC`, (`typeIR~key~`, `text`), and `expression~l~ &&& expression~r~`
 
-  ... If "lpm" is equal to `text`:
+  ... If `text` = "lpm":
    .... Let `matchMode` be `TBLC.MODE`.
    .... Check that `matchMode` matches pattern `NOPRILPM %`.
    .... Let `NOPRILPM n` be `matchMode`.
@@ -6263,7 +6263,8 @@ relation TableEntry_keyset_simple_ok: `TC`, `TBLC`, (`typeIR~key~`, `text`), and
    .... Let `i~r~` be `$to_number(value~r~)`.
    .... Let `n~prefix~` be `$tableEntry_lpm_prefix(n W $to_bitstr(n, i~r~))`.
    .... Result in `LPM n~prefix~` and `typedExpressionIR~l_reduced~ &&& typedExpressionIR~r_reduced~`.
-  ... If "ternary" is equal to `text`:
+
+  ... Else if `text` = "ternary":
    .... Let `typedExpressionIR~l~` be the result of <<Expr_ok, typing `expression~l~`, under cursor `LOCAL` and typing context `TC`>>.
    .... Let `typedExpressionIR~r~` be the result of <<Expr_ok, typing `expression~r~`, under cursor `LOCAL` and typing context `TC`>>.
    .... Let `(typedExpressionIR, typedExpressionIR)^?^` be <<coerce_binary, implicitly cast  `typedExpressionIR~l~`  and  `typedExpressionIR~r~`  to equal types>>.
@@ -6280,26 +6281,26 @@ relation TableEntry_keyset_simple_ok: `TC`, `TBLC`, (`typeIR~key~`, `text`), and
 . Else if `simpleKeysetExpression` matches pattern `DEFAULT`:
  .. Group default: `TC`, `TBLC`, (`typeIR~key~`, `text`), and `DEFAULT`
 
-  ... If "lpm" = `text`:
+  ... If `text` = "lpm":
    .... Let `matchMode` be `TBLC.MODE`.
    .... Check that `matchMode` matches pattern `NOPRILPM %`.
    .... Let `NOPRILPM n` be `matchMode`.
    .... Result in `LPM n` and `DEFAULT`.
 
-  ... Else if "lpm" =/= `text`:
+  ... Else if `text` =/= "lpm":
    .... Check that `text` is not equal to "exact".
    .... Result in `NOLPM` and `DEFAULT`.
 
 . Else if `simpleKeysetExpression` matches pattern `_`:
  .. Group dontcare: `TC`, `TBLC`, (`typeIR~key~`, `text`), and `_`
 
-  ... If "lpm" = `text`:
+  ... If `text` = "lpm":
    .... Let `matchMode` be `TBLC.MODE`.
    .... Check that `matchMode` matches pattern `NOPRILPM %`.
    .... Let `NOPRILPM _` be `matchMode`.
    .... Result in `LPM 0` and `_`.
 
-  ... Else if "lpm" =/= `text`:
+  ... Else if `text` =/= "lpm":
    .... Check that `text` is not equal to "exact".
    .... Result in `NOLPM` and `_`.
 . If `text` is equal to "range":
@@ -7307,7 +7308,7 @@ for each `nameIR` in `nameIR^{asterisk}^`.
 . Else if let `annotationList EXTERN nameIR < typeParameterListIR , > { externConstructorPrototypeIR'^{asterisk}^ externMethodPrototypeIR^{asterisk}^ }` be `declarationIR`:
  .. Group externObjectDeclarationIR: `GLOBAL`, `IC~0~`, `STO'`, and `annotationList EXTERN nameIR < typeParameterListIR , > { externConstructorPrototypeIR'^{asterisk}^ externMethodPrototypeIR^{asterisk}^ }`
 
-  ... Check that `[ ]` is equal to `externConstructorPrototypeIR'^{asterisk}^`.
+  ... Check that `externConstructorPrototypeIR'^{asterisk}^` is equal to `[ ]`.
   ... Let `rid^{asterisk}^` be the list of `rid`, obtained by repeating:
 +
 --

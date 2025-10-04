@@ -10633,7 +10633,7 @@ relation ParameterType_wf: bound |- (direction typeIR _id value'?{value' <- valu
 
 1. Group : bound |- (direction typeIR _id value'?{value' <- value'?})
 
-  1. If ((?() = value'?{value' <- value'?})), then
+  1. If ((value'?{value' <- value'?} = ?())), then
 
     1. If (Type_wf: bound |- typeIR) holds, then
 
@@ -13052,19 +13052,19 @@ relation Type_ok: p TC |- typeOrVoid : % # %
 
     1. Result in : % % |- % : ((void) as typeIR) # []
 
-  2. If ((((bool) as typeOrVoid) = typeOrVoid)), then
+  2. If ((typeOrVoid = ((bool) as typeOrVoid))), then
 
     1. Result in : % % |- % : ((bool) as typeIR) # []
 
-  3. If ((((error) as typeOrVoid) = typeOrVoid)), then
+  3. If ((typeOrVoid = ((error) as typeOrVoid))), then
 
     1. Result in : % % |- % : ((error) as typeIR) # []
 
-  4. If ((((match_kind) as typeOrVoid) = typeOrVoid)), then
+  4. If ((typeOrVoid = ((match_kind) as typeOrVoid))), then
 
     1. Result in : % % |- % : ((match_kind) as typeIR) # []
 
-  5. If ((((string) as typeOrVoid) = typeOrVoid)), then
+  5. If ((typeOrVoid = ((string) as typeOrVoid))), then
 
     1. Result in : % % |- % : ((string) as typeIR) # []
 
@@ -13459,7 +13459,7 @@ relation Sub_expl_canon_neq: typeIR'''''' <: typeIR'''''''
 
         1. Group arbint: ((int) as typeIR) <: typeIR'''''''
 
-          1. If ((((bool) as typeIR) = typeIR''''''')), then
+          1. If ((typeIR''''''' = ((bool) as typeIR))), then
 
             1. The relation holds
 
@@ -13501,7 +13501,7 @@ relation Sub_expl_canon_neq: typeIR'''''' <: typeIR'''''''
 
                 1. The relation holds
 
-            2. If (((bit< nat >) = numberTypeIR)), then
+            2. If ((numberTypeIR = (bit< nat >))), then
 
               1. The relation holds
 
@@ -13511,17 +13511,17 @@ relation Sub_expl_canon_neq: typeIR'''''' <: typeIR'''''''
 
         2. Group fixbit: ((bit< nat >) as typeIR) <: typeIR'''''''
 
-          1. If ((1 = nat)), then
+          1. If ((nat = 1)), then
 
-            1. If ((((bool) as typeIR) = typeIR''''''')), then
+            1. If ((typeIR''''''' = ((bool) as typeIR))), then
 
               1. The relation holds
 
-          2. If ((((int) as typeIR) = typeIR''''''')), then
+          2. If ((typeIR''''''' = ((int) as typeIR))), then
 
             1. The relation holds
 
-          3. If ((((int< nat >) as typeIR) = typeIR''''''')), then
+          3. If ((typeIR''''''' = ((int< nat >) as typeIR))), then
 
             1. The relation holds
 
@@ -14335,7 +14335,7 @@ relation Expr_ok: p TC |- expression''' : %
 
       3. Result in : % % |- % : ((prefixedNameIR as expressionIR) # expressionNoteIR)
 
-  2. If ((((this) as expression) = expression''')), then
+  2. If ((expression''' = ((this) as expression))), then
 
     1. (Let prefixedNameIR be (` "this"))
 
@@ -19475,7 +19475,7 @@ relation RoutineTarget_ok: p TC |- routineTarget : %
 
       1. Result in : % % |- % : (prefixedNameIR as routineTargetIR)
 
-  2. If ((((this) as routineTarget) = routineTarget)), then
+  2. If ((routineTarget = ((this) as routineTarget))), then
 
     1. Result in : % % |- % : ((` "this") as routineTargetIR)
 
@@ -19539,7 +19539,7 @@ relation RoutineType_ok: p TC |- routineTargetIR'' < typeArgumentIR''*{typeArgum
 
   2. Group referenceExpressionIR: p TC |- (prefixedNameIR as routineTargetIR) < typeArgumentIR''*{typeArgumentIR'' <- typeArgumentIR''*} >( argumentIR''*{argumentIR'' <- argumentIR''*} ): % <# % >(# % )
 
-    1. If (([] = typeArgumentIR''*{typeArgumentIR'' <- typeArgumentIR''*})), then
+    1. If ((typeArgumentIR''*{typeArgumentIR'' <- typeArgumentIR''*} = [])), then
 
       1. (Let (rid, routineTypeDefIR, id*)'?{(rid, routineTypeDefIR, id*)' <- (rid, routineTypeDefIR, id*)'?} be $find_routine_overloaded(p, TC, prefixedNameIR, argumentIR''*{argumentIR'' <- argumentIR''*}))
 
@@ -21092,7 +21092,7 @@ relation SwitchLabel_table_ok: TC tid_table bool |- switchLabel : %
 
 1. Group : TC tid_table bool |- switchLabel : %
 
-  1. If ((true = bool)), then
+  1. If ((bool = true)), then
 
     1. If ((switchLabel matches pattern `DEFAULT`)), then
 
@@ -21187,7 +21187,7 @@ relation SwitchLabel_general_ok: TC typeIR bool |- switchLabel : %
 
 1. Group : TC typeIR bool |- switchLabel : %
 
-  1. If ((true = bool)), then
+  1. If ((bool = true)), then
 
     1. If ((switchLabel matches pattern `DEFAULT`)), then
 
@@ -21931,7 +21931,7 @@ relation SelectCase_keyset_ok: TC typeIR'''*{typeIR''' <- typeIR'''*} |- keysetE
 
         1. Group simpleKeysetExpression-default: TC typeIR'''*{typeIR''' <- typeIR'''*} |- ((default) as keysetExpression) : %
 
-          1. If (([] = typeIR'''*{typeIR''' <- typeIR'''*})), then
+          1. If ((typeIR'''*{typeIR''' <- typeIR'''*} = [])), then
 
             1. Result in : % % |- % : ((default) as keysetExpressionIR)
 
@@ -22225,9 +22225,9 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key, text) @ simpleKeys
 
   2. Group expression: TC TBLC |- (typeIR_key, text) @ (expression as simpleKeysetExpression) : % %
 
-    1. Case analysis on "lpm"
+    1. Case analysis on text
 
-      1. Case (% = text)
+      1. Case (% = "lpm")
 
         1. (Let matchMode be TBLC.mode)
 
@@ -22249,7 +22249,7 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key, text) @ simpleKeys
 
             3. Result in : % % |- % @ % : (lpm n) (typedExpressionIR_set as simpleKeysetExpressionIR)
 
-      2. Case (% =/= text)
+      2. Case (% =/= "lpm")
 
         1. (Expr_ok: (local) TC |- expression : typedExpressionIR)
 
@@ -22273,21 +22273,57 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key, text) @ simpleKeys
 
     2. Group mask: TC TBLC |- (typeIR_key, text) @ (expression_l &&& expression_r) : % %
 
-      1. If (("lpm" = text)), then
+      1. Case analysis on text
 
-        1. (Let matchMode be TBLC.mode)
+        1. Case (% = "lpm")
 
-        2. If ((matchMode matches pattern `NOPRILPM%`)), then
+          1. (Let matchMode be TBLC.mode)
 
-          1. (Let (noprilpm n) be matchMode)
+          2. If ((matchMode matches pattern `NOPRILPM%`)), then
 
-          2. (Expr_ok: (local) TC |- expression_l : typedExpressionIR_l)
+            1. (Let (noprilpm n) be matchMode)
 
-          3. (Expr_ok: (local) TC |- expression_r : typedExpressionIR_r)
+            2. (Expr_ok: (local) TC |- expression_l : typedExpressionIR_l)
 
-          4. (Let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} be $coerce_binary(typedExpressionIR_l, typedExpressionIR_r))
+            3. (Expr_ok: (local) TC |- expression_r : typedExpressionIR_r)
 
-          5. If (((typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches pattern (_))), then
+            4. (Let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} be $coerce_binary(typedExpressionIR_l, typedExpressionIR_r))
+
+            5. If (((typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches pattern (_))), then
+
+              1. (Let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) be (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?})
+
+              2. (Let (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} be $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_mask))
+
+              3. If (((typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} matches pattern (_))), then
+
+                1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?})
+
+                2. (Let typeIR_reduced be $typeof_expression(typedExpressionIR_r_reduced))
+
+                3. (Let ctk_r_reduced be $ctkof_expression(typedExpressionIR_r_reduced))
+
+                4. If (Sub_impl: typeIR_reduced <: typeIR_key) holds, then
+
+                  1. If ((ctk_r_reduced matches pattern `LCTK`)), then
+
+                    1. (Eval_static: (local) TC |- typedExpressionIR_r_reduced ~> value_r)
+
+                    2. (Let i_r be $to_number(value_r))
+
+                    3. (Let n_prefix be $tableEntry_lpm_prefix(((n w $to_bitstr((n as int), i_r)) as value)))
+
+                    4. Result in : % % |- % @ % : (lpm n_prefix) (typedExpressionIR_l_reduced &&& typedExpressionIR_r_reduced)
+
+        2. Case (% = "ternary")
+
+          1. (Expr_ok: (local) TC |- expression_l : typedExpressionIR_l)
+
+          2. (Expr_ok: (local) TC |- expression_r : typedExpressionIR_r)
+
+          3. (Let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} be $coerce_binary(typedExpressionIR_l, typedExpressionIR_r))
+
+          4. If (((typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches pattern (_))), then
 
             1. (Let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) be (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?})
 
@@ -22303,49 +22339,15 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key, text) @ simpleKeys
 
               4. If (Sub_impl: typeIR_reduced <: typeIR_key) holds, then
 
-                1. If ((ctk_r_reduced matches pattern `LCTK`)), then
-
-                  1. (Eval_static: (local) TC |- typedExpressionIR_r_reduced ~> value_r)
-
-                  2. (Let i_r be $to_number(value_r))
-
-                  3. (Let n_prefix be $tableEntry_lpm_prefix(((n w $to_bitstr((n as int), i_r)) as value)))
-
-                  4. Result in : % % |- % @ % : (lpm n_prefix) (typedExpressionIR_l_reduced &&& typedExpressionIR_r_reduced)
-
-      2. If (("ternary" = text)), then
-
-        1. (Expr_ok: (local) TC |- expression_l : typedExpressionIR_l)
-
-        2. (Expr_ok: (local) TC |- expression_r : typedExpressionIR_r)
-
-        3. (Let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} be $coerce_binary(typedExpressionIR_l, typedExpressionIR_r))
-
-        4. If (((typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches pattern (_))), then
-
-          1. (Let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) be (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?})
-
-          2. (Let (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} be $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_mask))
-
-          3. If (((typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} matches pattern (_))), then
-
-            1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?})
-
-            2. (Let typeIR_reduced be $typeof_expression(typedExpressionIR_r_reduced))
-
-            3. (Let ctk_r_reduced be $ctkof_expression(typedExpressionIR_r_reduced))
-
-            4. If (Sub_impl: typeIR_reduced <: typeIR_key) holds, then
-
-              1. Result in : % % |- % @ % : (nolpm) (typedExpressionIR_l_reduced &&& typedExpressionIR_r_reduced)
+                1. Result in : % % |- % @ % : (nolpm) (typedExpressionIR_l_reduced &&& typedExpressionIR_r_reduced)
 
   2. Case (% matches pattern `DEFAULT`)
 
     1. Group default: TC TBLC |- (typeIR_key, text) @ (default) : % %
 
-      1. Case analysis on "lpm"
+      1. Case analysis on text
 
-        1. Case (% = text)
+        1. Case (% = "lpm")
 
           1. (Let matchMode be TBLC.mode)
 
@@ -22355,7 +22357,7 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key, text) @ simpleKeys
 
             2. Result in : % % |- % @ % : (lpm n) (default)
 
-        2. Case (% =/= text)
+        2. Case (% =/= "lpm")
 
           1. If ((text =/= "exact")), then
 
@@ -22365,9 +22367,9 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key, text) @ simpleKeys
 
     1. Group dontcare: TC TBLC |- (typeIR_key, text) @ (_) : % %
 
-      1. Case analysis on "lpm"
+      1. Case analysis on text
 
-        1. Case (% = text)
+        1. Case (% = "lpm")
 
           1. (Let matchMode be TBLC.mode)
 
@@ -22377,7 +22379,7 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key, text) @ simpleKeys
 
             2. Result in : % % |- % @ % : (lpm 0) (_)
 
-        2. Case (% =/= text)
+        2. Case (% =/= "lpm")
 
           1. If ((text =/= "exact")), then
 
@@ -25507,7 +25509,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
       2. Group externObjectDeclarationIR: (global) IC_0 STO' |- ((annotationList extern nameIR < typeParameterListIR ,>{ externConstructorPrototypeIR'*{externConstructorPrototypeIR' <- externConstructorPrototypeIR'*} externMethodPrototypeIR*{externMethodPrototypeIR <- externMethodPrototypeIR*} }) as declarationIR) ==> % % %
 
-        1. If (([] = externConstructorPrototypeIR'*{externConstructorPrototypeIR' <- externConstructorPrototypeIR'*})), then
+        1. If ((externConstructorPrototypeIR'*{externConstructorPrototypeIR' <- externConstructorPrototypeIR'*} = [])), then
 
           1. (Let rid be $ridof_externMethodPrototypeIR(externMethodPrototypeIR))*{externMethodPrototypeIR <- externMethodPrototypeIR*, rid <- rid*}
 

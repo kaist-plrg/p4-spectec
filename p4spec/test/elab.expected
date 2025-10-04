@@ -9607,7 +9607,7 @@ relation ParameterType_wf: bound |- parameterTypeIR
    paths
 
     rulepath non-default
-    -- if (?() = value'?{value' <- value'?})
+    -- if (value'?{value' <- value'?} = ?())
     -- if Type_wf: bound |- typeIR holds
     -- if ((($is_string_typeIR($canon(typeIR)) \/ $is_arbitrary_int_typeIR($canon(typeIR))) \/ $is_objectTypeIR($canon(typeIR))) => (direction = ))
     -- the relation holds
@@ -11305,11 +11305,11 @@ relation Eval_static: cursor typingContext |- typedExpressionIR ~> value
    paths
 
     rulepath true
-    -- if (true = booleanLiteral)
+    -- if (booleanLiteral = true)
     -- output: % % |- % ~> b true as value
 
     rulepath false
-    -- if (false = booleanLiteral)
+    -- if (booleanLiteral = false)
     -- output: % % |- % ~> b false as value
 
   ;; ../../../../spec-concrete/5.06.1-expression-static-eval.watsup:28.1-39.2
@@ -11402,22 +11402,22 @@ relation Eval_static: cursor typingContext |- typedExpressionIR ~> value
    paths
 
     rulepath bnot
-    -- if (~ = unop)
+    -- if (unop = ~)
     -- Eval_static: p TC |- typedExpressionIR ~> value
     -- output: % % |- % ~> $un_bnot(value)
 
     rulepath lnot
-    -- if (! = unop)
+    -- if (unop = !)
     -- Eval_static: p TC |- typedExpressionIR ~> value
     -- output: % % |- % ~> $un_lnot(value)
 
     rulepath plus
-    -- if (+ = unop)
+    -- if (unop = +)
     -- Eval_static: p TC |- typedExpressionIR ~> value
     -- output: % % |- % ~> $un_plus(value)
 
     rulepath minus
-    -- if (- = unop)
+    -- if (unop = -)
     -- Eval_static: p TC |- typedExpressionIR ~> value
     -- output: % % |- % ~> $un_minus(value)
 
@@ -11434,127 +11434,127 @@ relation Eval_static: cursor typingContext |- typedExpressionIR ~> value
    paths
 
     rulepath plus
-    -- if (+ = binop)
+    -- if (binop = +)
     -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
     -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
     -- output: % % |- % ~> $bin_plus(value_l, value_r)
 
     rulepath satplus
-    -- if (|+| = binop)
+    -- if (binop = |+|)
     -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
     -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
     -- output: % % |- % ~> $bin_satplus(value_l, value_r)
 
     rulepath minus
-    -- if (- = binop)
+    -- if (binop = -)
     -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
     -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
     -- output: % % |- % ~> $bin_minus(value_l, value_r)
 
     rulepath satminus
-    -- if (|-| = binop)
+    -- if (binop = |-|)
     -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
     -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
     -- output: % % |- % ~> $bin_satminus(value_l, value_r)
 
     rulepath mul
-    -- if (* = binop)
+    -- if (binop = *)
     -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
     -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
     -- output: % % |- % ~> $bin_mul(value_l, value_r)
 
     rulepath div
-    -- if (/ = binop)
+    -- if (binop = /)
     -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
     -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
     -- output: % % |- % ~> $bin_div(value_l, value_r)
 
     rulepath mod
-    -- if (% = binop)
+    -- if (binop = %)
     -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
     -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
     -- output: % % |- % ~> $bin_mod(value_l, value_r)
 
     rulepath shl
-    -- if (<< = binop)
+    -- if (binop = <<)
     -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
     -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
     -- output: % % |- % ~> $bin_shl(value_l, value_r)
 
     rulepath shr
-    -- if (>> = binop)
+    -- if (binop = >>)
     -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
     -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
     -- output: % % |- % ~> $bin_shr(value_l, value_r)
 
     rulepath le
-    -- if (<= = binop)
+    -- if (binop = <=)
     -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
     -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
     -- output: % % |- % ~> b $bin_le(value_l, value_r) as value
 
     rulepath ge
-    -- if (>= = binop)
+    -- if (binop = >=)
     -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
     -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
     -- output: % % |- % ~> b $bin_ge(value_l, value_r) as value
 
     rulepath lt
-    -- if (< = binop)
+    -- if (binop = <)
     -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
     -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
     -- output: % % |- % ~> b $bin_lt(value_l, value_r) as value
 
     rulepath gt
-    -- if (> = binop)
+    -- if (binop = >)
     -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
     -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
     -- output: % % |- % ~> b $bin_gt(value_l, value_r) as value
 
     rulepath eq
-    -- if (== = binop)
+    -- if (binop = ==)
     -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
     -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
     -- output: % % |- % ~> b $bin_eq(value_l, value_r) as value
 
     rulepath ne
-    -- if (!= = binop)
+    -- if (binop = !=)
     -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
     -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
     -- output: % % |- % ~> b $bin_ne(value_l, value_r) as value
 
     rulepath band
-    -- if (& = binop)
+    -- if (binop = &)
     -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
     -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
     -- output: % % |- % ~> $bin_band(value_l, value_r)
 
     rulepath bxor
-    -- if (^ = binop)
+    -- if (binop = ^)
     -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
     -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
     -- output: % % |- % ~> $bin_bxor(value_l, value_r)
 
     rulepath bor
-    -- if (| = binop)
+    -- if (binop = |)
     -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
     -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
     -- output: % % |- % ~> $bin_bor(value_l, value_r)
 
     rulepath concat
-    -- if (++ = binop)
+    -- if (binop = ++)
     -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
     -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
     -- output: % % |- % ~> $bin_concat(value_l, value_r)
 
     rulepath land
-    -- if (&& = binop)
+    -- if (binop = &&)
     -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
     -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
     -- output: % % |- % ~> $bin_land(value_l, value_r)
 
     rulepath lor
-    -- if (|| = binop)
+    -- if (binop = ||)
     -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
     -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
     -- output: % % |- % ~> $bin_lor(value_l, value_r)
@@ -11863,23 +11863,23 @@ relation Type_ok: cursor typingContext |- typeOrVoid : typeIR # tid*
    paths
 
     rulepath void
-    -- if (void = typeOrVoid)
+    -- if (typeOrVoid = void)
     -- output: % % |- % : void as typeIR # []
 
     rulepath boolean
-    -- if (bool as typeOrVoid = typeOrVoid)
+    -- if (typeOrVoid = bool as typeOrVoid)
     -- output: % % |- % : bool as typeIR # []
 
     rulepath error
-    -- if (error as typeOrVoid = typeOrVoid)
+    -- if (typeOrVoid = error as typeOrVoid)
     -- output: % % |- % : error as typeIR # []
 
     rulepath matchkind
-    -- if (match_kind as typeOrVoid = typeOrVoid)
+    -- if (typeOrVoid = match_kind as typeOrVoid)
     -- output: % % |- % : match_kind as typeIR # []
 
     rulepath string
-    -- if (string as typeOrVoid = typeOrVoid)
+    -- if (typeOrVoid = string as typeOrVoid)
     -- output: % % |- % : string as typeIR # []
 
   ;; ../../../../spec-concrete/5.05.1-typing-type.watsup:36.1-37.27
@@ -11942,7 +11942,7 @@ relation Type_ok: cursor typingContext |- typeOrVoid : typeIR # tid*
    paths
 
     rulepath none
-    -- if (bit = baseType)
+    -- if (baseType = bit)
     -- output: % % |- % : bit< 1 > as typeIR # []
 
     rulepath integer
@@ -12038,7 +12038,7 @@ relation Type_ok: cursor typingContext |- typeOrVoid : typeIR # tid*
    paths
 
     rulepath mono
-    -- if ( = typeArgumentList')
+    -- if (typeArgumentList' = )
     -- let prefixedNameIR = $prefixedTypeName(prefixedTypeName)
     -- let typeDefIR'?{typeDefIR' <- typeDefIR'?} = $find_type(p, TC, prefixedNameIR)
     -- if typeDefIR'?{typeDefIR' <- typeDefIR'?} matches (_)
@@ -12328,7 +12328,7 @@ relation Sub_expl_canon_neq: typeIR <: typeIR
    paths
 
     rulepath boolean
-    -- if (bool as typeIR = typeIR)
+    -- if (typeIR = bool as typeIR)
     -- the relation holds
 
     rulepath fixint
@@ -12365,7 +12365,7 @@ relation Sub_expl_canon_neq: typeIR <: typeIR
 
     rulepath arbint
     -- let _nat = nat
-    -- if (int = numberTypeIR)
+    -- if (numberTypeIR = int)
     -- the relation holds
 
     rulepath fixint
@@ -12377,7 +12377,7 @@ relation Sub_expl_canon_neq: typeIR <: typeIR
 
     rulepath fixbit
     -- let w = nat
-    -- if (bit< w > = numberTypeIR)
+    -- if (numberTypeIR = bit< w >)
     -- the relation holds
 
   ;; ../../../../spec-concrete/5.05.2-subtype.watsup:53.1-67.2
@@ -12395,18 +12395,18 @@ relation Sub_expl_canon_neq: typeIR <: typeIR
    paths
 
     rulepath boolean
-    -- if (1 = nat)
-    -- if (bool as typeIR = typeIR)
+    -- if (nat = 1)
+    -- if (typeIR = bool as typeIR)
     -- the relation holds
 
     rulepath arbint
     -- let _nat = nat
-    -- if (int as typeIR = typeIR)
+    -- if (typeIR = int as typeIR)
     -- the relation holds
 
     rulepath fixint
     -- let w = nat
-    -- if (int< w > as typeIR = typeIR)
+    -- if (typeIR = int< w > as typeIR)
     -- the relation holds
 
     rulepath fixbit
@@ -13105,12 +13105,12 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
    paths
 
     rulepath true
-    -- if (true = booleanLiteral)
+    -- if (booleanLiteral = true)
     -- let expressionNoteIR = ( bool as typeIR lctk )
     -- output: % % |- % : true as expressionIR # expressionNoteIR
 
     rulepath false
-    -- if (false = booleanLiteral)
+    -- if (booleanLiteral = false)
     -- let expressionNoteIR = ( bool as typeIR lctk )
     -- output: % % |- % : false as expressionIR # expressionNoteIR
 
@@ -13185,7 +13185,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- output: % % |- % : prefixedNameIR as expressionIR # expressionNoteIR
 
     rulepath this
-    -- if (this as expression = expression)
+    -- if (expression = this as expression)
     -- let prefixedNameIR = ` "this"
     -- let varTypeIR?{varTypeIR <- varTypeIR?} = $find_var(p, TC, prefixedNameIR)
     -- if varTypeIR?{varTypeIR <- varTypeIR?} matches (_)
@@ -14572,7 +14572,7 @@ relation Stmt_ok: cursor typingContext flow |- statement : typingContext flow st
    paths
 
     rulepath non-expression
-    -- if (return; = returnStatement)
+    -- if (returnStatement = return;)
     -- if (?(void as typeIR) = $find_return_type(TC))
     -- output: % % % |- % : TC ret return; as statementIR
 
@@ -14742,7 +14742,7 @@ relation BlockElementStmt_ok: typingContext flow |- blockElementStatement : typi
    paths
 
     rulepath empty
-    -- if ( = initializerOpt)
+    -- if (initializerOpt = )
     -- Type_ok: local TC_0 |- type as typeOrVoid : typeIR # tid*{tid <- tid*}
     -- if tid*{tid <- tid*} matches []
     -- if Type_wf: $bound(local, TC_0) |- typeIR holds
@@ -14854,7 +14854,7 @@ relation Parameter_ok: cursor typingContext |- parameter : parameterIR # tid*
    paths
 
     rulepath non-initializer
-    -- if ( = initializerOpt)
+    -- if (initializerOpt = )
     -- Type_ok: p TC |- type as typeOrVoid : typeIR # tid_fresh*{tid_fresh <- tid_fresh*}
     -- let bound = $union_set<tid>($bound(p, TC), { tid_fresh*{tid_fresh <- tid_fresh*} })
     -- if Type_wf: bound |- typeIR holds
@@ -15212,7 +15212,7 @@ relation ParserStmt_ok: typingContext |- parserStatement : typingContext parserS
    paths
 
     rulepath empty
-    -- if ( = initializerOpt)
+    -- if (initializerOpt = )
     -- Type_ok: local TC_0 |- type as typeOrVoid : typeIR # tid*{tid <- tid*}
     -- if tid*{tid <- tid*} matches []
     -- if Type_wf: $bound(local, TC_0) |- typeIR holds
@@ -15487,7 +15487,7 @@ relation ParserLocalDecl_ok: typingContext |- parserLocalDeclaration : typingCon
    paths
 
     rulepath empty
-    -- if ( = initializerOpt)
+    -- if (initializerOpt = )
     -- Type_ok: block TC_0 |- type as typeOrVoid : typeIR # tid*{tid <- tid*}
     -- if tid*{tid <- tid*} matches []
     -- if Type_wf: $bound(block, TC_0) |- typeIR holds
@@ -16578,7 +16578,7 @@ relation ControlLocalDecl_ok: typingContext |- controlLocalDeclaration : typingC
    paths
 
     rulepath empty
-    -- if ( = initializerOpt)
+    -- if (initializerOpt = )
     -- Type_ok: block TC_0 |- type as typeOrVoid : typeIR # tid*{tid <- tid*}
     -- if tid*{tid <- tid*} matches []
     -- if Type_wf: $bound(block, TC_0) |- typeIR holds
@@ -17534,14 +17534,14 @@ relation Call_convention_expr_ok: cursor typingContext actctxt |- parameterTypeI
    paths
 
     rulepath action
-    -- if (action = actctxt)
+    -- if (actctxt = action)
     -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $coerce_unary(typedExpressionIR_arg, typeIR_param)
     -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
     -- let ?(typedExpressionIR_arg_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- output: % % % |- % @ % : typedExpressionIR_arg_cast
 
     rulepath non-action
-    -- if (noaction = actctxt)
+    -- if (actctxt = noaction)
     -- let typeIR_arg = $typeof_expression(typedExpressionIR_arg)
     -- let ctk_arg = $ctkof_expression(typedExpressionIR_arg)
     -- if Type_alpha: typeIR_param ~~ typeIR_arg holds
@@ -17694,7 +17694,7 @@ relation RoutineTarget_ok: cursor typingContext |- routineTarget : routineTarget
     -- output: % % |- % : prefixedNameIR as routineTargetIR
 
     rulepath this
-    -- if (this as routineTarget = routineTarget)
+    -- if (routineTarget = this as routineTarget)
     -- output: % % |- % : ` "this" as routineTargetIR
 
   ;; ../../../../spec-concrete/5.15.4-typing-routine-call.watsup:35.1-47.2
@@ -17775,7 +17775,7 @@ relation RoutineType_ok: cursor typingContext |- routineTargetIR < typeArgumentL
    paths
 
     rulepath actionTypeIR
-    -- if ([] = typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*})
+    -- if (typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} = [])
     -- let (rid, routineTypeDefIR, id*)'?{(rid, routineTypeDefIR, id*)' <- (rid, routineTypeDefIR, id*)'?} = $find_routine_overloaded(p, TC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*})
     -- if (rid, routineTypeDefIR, id*)'?{(rid, routineTypeDefIR, id*)' <- (rid, routineTypeDefIR, id*)'?} matches (_)
     -- let ?((rid, routineTypeDefIR, id*)) = (rid, routineTypeDefIR, id*)'?{(rid, routineTypeDefIR, id*)' <- (rid, routineTypeDefIR, id*)'?}
@@ -19202,8 +19202,8 @@ relation SwitchLabel_table_ok: typingContext tid bool |- switchLabel : switchLab
    paths
 
     rulepath default
-    -- if (true = bool)
-    -- if (default = switchLabel)
+    -- if (bool = true)
+    -- if (switchLabel = default)
     -- output: % % % |- % : default
 
     rulepath expressionNonBrace-prefixedNonTypeName
@@ -19305,8 +19305,8 @@ relation SwitchLabel_general_ok: typingContext typeIR bool |- switchLabel : swit
 
     rulepath default
     -- let _typeIR = typeIR
-    -- if (true = bool)
-    -- if (default = switchLabel)
+    -- if (bool = true)
+    -- if (switchLabel = default)
     -- output: % % % |- % : default
 
     rulepath expressionNonBrace
@@ -19969,7 +19969,7 @@ relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keyse
    paths
 
     rulepath zero-to-one
-    -- if ([] = typeIR'*{typeIR' <- typeIR'*})
+    -- if (typeIR'*{typeIR' <- typeIR'*} = [])
     -- output: % % |- % : default as keysetExpressionIR
 
     rulepath one-to-one
@@ -20285,7 +20285,7 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey @ s
    paths
 
     rulepath lpm
-    -- if ("lpm" = text)
+    -- if (text = "lpm")
     -- let matchMode = TBLC.mode
     -- if matchMode matches `NOPRILPM%`
     -- let noprilpm n = matchMode
@@ -20321,7 +20321,7 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey @ s
    paths
 
     rulepath lpm
-    -- if ("lpm" = text)
+    -- if (text = "lpm")
     -- let matchMode = TBLC.mode
     -- if matchMode matches `NOPRILPM%`
     -- let noprilpm n = matchMode
@@ -20343,7 +20343,7 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey @ s
     -- output: % % |- % @ % : lpm n_prefix typedExpressionIR_l_reduced &&& typedExpressionIR_r_reduced
 
     rulepath ternary
-    -- if ("ternary" = text)
+    -- if (text = "ternary")
     -- Expr_ok: local TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: local TC |- expression_r : typedExpressionIR_r
     -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
@@ -20396,7 +20396,7 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey @ s
    paths
 
     rulepath lpm
-    -- if ("lpm" = text)
+    -- if (text = "lpm")
     -- let matchMode = TBLC.mode
     -- if matchMode matches `NOPRILPM%`
     -- let noprilpm n = matchMode
@@ -20420,7 +20420,7 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey @ s
    paths
 
     rulepath lpm
-    -- if ("lpm" = text)
+    -- if (text = "lpm")
     -- let matchMode = TBLC.mode
     -- if matchMode matches `NOPRILPM%`
     -- let noprilpm _nat = matchMode
@@ -21734,11 +21734,11 @@ relation Expr_inst: cursor instantiationContext store |- typedExpressionIR ==> s
    paths
 
     rulepath true
-    -- if (true = booleanLiteral)
+    -- if (booleanLiteral = true)
     -- output: % % % |- % ==> STO b true as value
 
     rulepath false
-    -- if (false = booleanLiteral)
+    -- if (booleanLiteral = false)
     -- output: % % % |- % ==> STO b false as value
 
   ;; ../../../../spec-concrete/7.04-instantiation-expression.watsup:27.1-38.2
@@ -21831,22 +21831,22 @@ relation Expr_inst: cursor instantiationContext store |- typedExpressionIR ==> s
    paths
 
     rulepath bnot
-    -- if (~ = unop)
+    -- if (unop = ~)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR ==> STO_1 value
     -- output: % % % |- % ==> STO_1 $un_bnot(value)
 
     rulepath lnot
-    -- if (! = unop)
+    -- if (unop = !)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR ==> STO_1 value
     -- output: % % % |- % ==> STO_1 $un_lnot(value)
 
     rulepath plus
-    -- if (+ = unop)
+    -- if (unop = +)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR ==> STO_1 value
     -- output: % % % |- % ==> STO_1 $un_plus(value)
 
     rulepath minus
-    -- if (- = unop)
+    -- if (unop = -)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR ==> STO_1 value
     -- output: % % % |- % ==> STO_1 $un_minus(value)
 
@@ -21863,127 +21863,127 @@ relation Expr_inst: cursor instantiationContext store |- typedExpressionIR ==> s
    paths
 
     rulepath plus
-    -- if (+ = binop)
+    -- if (binop = +)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==> STO_1 value_l
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r
     -- output: % % % |- % ==> STO_2 $bin_plus(value_l, value_r)
 
     rulepath satplus
-    -- if (|+| = binop)
+    -- if (binop = |+|)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==> STO_1 value_l
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r
     -- output: % % % |- % ==> STO_2 $bin_satplus(value_l, value_r)
 
     rulepath minus
-    -- if (- = binop)
+    -- if (binop = -)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==> STO_1 value_l
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r
     -- output: % % % |- % ==> STO_2 $bin_minus(value_l, value_r)
 
     rulepath satminus
-    -- if (|-| = binop)
+    -- if (binop = |-|)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==> STO_1 value_l
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r
     -- output: % % % |- % ==> STO_2 $bin_satminus(value_l, value_r)
 
     rulepath mul
-    -- if (* = binop)
+    -- if (binop = *)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==> STO_1 value_l
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r
     -- output: % % % |- % ==> STO_2 $bin_mul(value_l, value_r)
 
     rulepath div
-    -- if (/ = binop)
+    -- if (binop = /)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==> STO_1 value_l
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r
     -- output: % % % |- % ==> STO_2 $bin_div(value_l, value_r)
 
     rulepath mod
-    -- if (% = binop)
+    -- if (binop = %)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==> STO_1 value_l
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r
     -- output: % % % |- % ==> STO_2 $bin_mod(value_l, value_r)
 
     rulepath shl
-    -- if (<< = binop)
+    -- if (binop = <<)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==> STO_1 value_l
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r
     -- output: % % % |- % ==> STO_2 $bin_shl(value_l, value_r)
 
     rulepath shr
-    -- if (>> = binop)
+    -- if (binop = >>)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==> STO_1 value_l
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r
     -- output: % % % |- % ==> STO_2 $bin_shr(value_l, value_r)
 
     rulepath le
-    -- if (<= = binop)
+    -- if (binop = <=)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==> STO_1 value_l
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r
     -- output: % % % |- % ==> STO_2 b $bin_le(value_l, value_r) as value
 
     rulepath ge
-    -- if (>= = binop)
+    -- if (binop = >=)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==> STO_1 value_l
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r
     -- output: % % % |- % ==> STO_2 b $bin_ge(value_l, value_r) as value
 
     rulepath lt
-    -- if (< = binop)
+    -- if (binop = <)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==> STO_1 value_l
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r
     -- output: % % % |- % ==> STO_2 b $bin_lt(value_l, value_r) as value
 
     rulepath gt
-    -- if (> = binop)
+    -- if (binop = >)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==> STO_1 value_l
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r
     -- output: % % % |- % ==> STO_2 b $bin_gt(value_l, value_r) as value
 
     rulepath eq
-    -- if (== = binop)
+    -- if (binop = ==)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==> STO_1 value_l
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r
     -- output: % % % |- % ==> STO_2 b $bin_eq(value_l, value_r) as value
 
     rulepath ne
-    -- if (!= = binop)
+    -- if (binop = !=)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==> STO_1 value_l
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r
     -- output: % % % |- % ==> STO_2 b $bin_ne(value_l, value_r) as value
 
     rulepath band
-    -- if (& = binop)
+    -- if (binop = &)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==> STO_1 value_l
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r
     -- output: % % % |- % ==> STO_2 $bin_band(value_l, value_r)
 
     rulepath bxor
-    -- if (^ = binop)
+    -- if (binop = ^)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==> STO_1 value_l
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r
     -- output: % % % |- % ==> STO_2 $bin_bxor(value_l, value_r)
 
     rulepath bor
-    -- if (| = binop)
+    -- if (binop = |)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==> STO_1 value_l
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r
     -- output: % % % |- % ==> STO_2 $bin_bor(value_l, value_r)
 
     rulepath concat
-    -- if (++ = binop)
+    -- if (binop = ++)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==> STO_1 value_l
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r
     -- output: % % % |- % ==> STO_2 $bin_concat(value_l, value_r)
 
     rulepath land
-    -- if (&& = binop)
+    -- if (binop = &&)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==> STO_1 value_l
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r
     -- output: % % % |- % ==> STO_2 $bin_land(value_l, value_r)
 
     rulepath lor
-    -- if (|| = binop)
+    -- if (binop = ||)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==> STO_1 value_l
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r
     -- output: % % % |- % ==> STO_2 $bin_lor(value_l, value_r)
@@ -23370,7 +23370,7 @@ relation Decl_inst: cursor instantiationContext store |- declarationIR ==> insta
    paths
 
     rulepath global
-    -- if (global = cursor)
+    -- if (cursor = global)
     -- let IC_1 = $add_value_inst(global, IC_0, nameIR, value)
     -- output: % % % |- % ==> IC_1 STO ?()
 
@@ -23394,7 +23394,7 @@ relation Decl_inst: cursor instantiationContext store |- declarationIR ==> insta
    paths
 
     rulepath extern-global
-    -- if (global = cursor)
+    -- if (cursor = global)
     -- let (cid, constructor, id*)?{(cid, constructor, id*) <- (cid, constructor, id*)?} = $find_constructor_inst(IC_0, prefixedNameIR, argumentListIR)
     -- if (cid, constructor, id*)?{(cid, constructor, id*) <- (cid, constructor, id*)?} matches (_)
     -- let ?((_cid, constructor, id_default*{id_default <- id_default*})) = (cid, constructor, id*)?{(cid, constructor, id*) <- (cid, constructor, id*)?}
@@ -23438,7 +23438,7 @@ relation Decl_inst: cursor instantiationContext store |- declarationIR ==> insta
     -- output: % % % |- % ==> IC_1 STO_2 ?(constantDeclarationIR as declarationIR)
 
     rulepath non-extern-global
-    -- if (global = cursor)
+    -- if (cursor = global)
     -- let (cid, constructor, id*)?{(cid, constructor, id*) <- (cid, constructor, id*)?} = $find_constructor_inst(IC_0, prefixedNameIR, argumentListIR)
     -- if (cid, constructor, id*)?{(cid, constructor, id*) <- (cid, constructor, id*)?} matches (_)
     -- let ?((_cid, constructor, id_default*{id_default <- id_default*})) = (cid, constructor, id*)?{(cid, constructor, id*) <- (cid, constructor, id*)?}
@@ -23571,7 +23571,7 @@ relation Decl_inst: cursor instantiationContext store |- declarationIR ==> insta
    paths
 
     rulepath non-constructor
-    -- if ([] = externConstructorPrototypeIR'*{externConstructorPrototypeIR' <- externConstructorPrototypeIR'*})
+    -- if (externConstructorPrototypeIR'*{externConstructorPrototypeIR' <- externConstructorPrototypeIR'*} = [])
     -- (let rid = $ridof_externMethodPrototypeIR(externMethodPrototypeIR))*{externMethodPrototypeIR <- externMethodPrototypeIR*, rid <- rid*}
     -- (let routineTypeDefIR = $typeof_externMethodPrototypeIR(externMethodPrototypeIR))*{externMethodPrototypeIR <- externMethodPrototypeIR*, routineTypeDefIR <- routineTypeDefIR*}
     -- let rdenv = { rid : routineTypeDefIR*{rid <- rid*, routineTypeDefIR <- routineTypeDefIR*} }
@@ -24442,11 +24442,11 @@ relation Expr_eval: cursor evaluationContext store |- typedExpressionIR : store 
    paths
 
     rulepath true
-    -- if (true = booleanLiteral)
+    -- if (booleanLiteral = true)
     -- output: % % % |- % : STO b true as expressionResult
 
     rulepath false
-    -- if (false = booleanLiteral)
+    -- if (booleanLiteral = false)
     -- output: % % % |- % : STO b false as expressionResult
 
 ;; ../../../../spec-concrete/8-mini-evaluation.watsup:38.1-43.101
