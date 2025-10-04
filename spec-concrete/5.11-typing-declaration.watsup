@@ -421,38 +421,38 @@ rule Decl_ok/externFunctionDeclaration:
 
 ;;;; externObjectDeclaration
 ;;;; syntax externObjectDeclaration =
-;;;;   annotationList EXTERN nonTypeName typeParameterListOpt `{ methodPrototypeList }
+;;;;   annotationList EXTERN nonTypeName
+;;;;      typeParameterListOpt `{ externConstructorOrMethodPrototypeList }
 
-dec $split_constructors(methodPrototype*) : (methodPrototype*, methodPrototype*)
+dec $split_constructors(externConstructorOrMethodPrototype*)
+  : (externConstructorPrototype*, externMethodPrototype*)
+  hint(prose_in "split constructors and methods in" %0)
 
 def $split_constructors(eps) = (eps, eps)
-def $split_constructors(methodPrototype_h :: methodPrototype_t*)
-  = (methodPrototype_h :: methodPrototype_t_constructor*,
-     methodPrototype_t_method*)
-  -- if _ _ `( _ ) `; = methodPrototype_h
-  -- if (methodPrototype_t_constructor*, methodPrototype_t_method*)
-      = $split_constructors(methodPrototype_t*)
-def $split_constructors(methodPrototype_h :: methodPrototype_t*)
-  = (methodPrototype_t_constructor*,
-     methodPrototype_h :: methodPrototype_t_method*)
-  -- if _ _ `; = methodPrototype_h
-  -- if (methodPrototype_t_constructor*, methodPrototype_t_method*)
-      = $split_constructors(methodPrototype_t*)
-def $split_constructors(methodPrototype_h :: methodPrototype_t*)
-  = (methodPrototype_t_constructor*,
-     methodPrototype_h :: methodPrototype_t_method*)
-  -- if _ ABSTRACT _ `; = methodPrototype_h
-  -- if (methodPrototype_t_constructor*, methodPrototype_t_method*)
-      = $split_constructors(methodPrototype_t*)
+def $split_constructors(
+    externConstructorPrototype_h :: externConstructorOrMethodPrototype_t*
+  )
+  = (externConstructorPrototype_h :: externConstructorPrototype_t*,
+     externMethodPrototype_t*)
+  -- if (externConstructorPrototype_t*, externMethodPrototype_t*)
+      = $split_constructors(externConstructorOrMethodPrototype_t*)
+def $split_constructors(
+    externMethodPrototype_h :: externConstructorOrMethodPrototype_t*
+  )
+  = (externConstructorPrototype_t*,
+     externMethodPrototype_h :: externMethodPrototype_t*)
+  -- if (externConstructorPrototype_t*, externMethodPrototype_t*)
+      = $split_constructors(externConstructorOrMethodPrototype_t*)
 
 rule Decl_ok/externObjectDeclaration:
   GLOBAL TC_0 |- annotationList EXTERN nonTypeName
-                  typeParameterListOpt `{ methodPrototypeList }
+                  typeParameterListOpt `{ externConstructorOrMethodPrototypeList }
                : TC_8 externObjectDeclarationIR
   ---- ;; split methods and constructors
-  -- if methodPrototype* = $flatten_methodPrototypeList(methodPrototypeList)
-  -- if (methodPrototype_constructor*, methodPrototype_method*)
-      = $split_constructors(methodPrototype*)
+  -- if externConstructorOrMethodPrototype*
+      = $flatten_externConstructorOrMethodPrototypeList(externConstructorOrMethodPrototypeList)
+  -- if (externConstructorPrototype*, externMethodPrototype*)
+      = $split_constructors(externConstructorOrMethodPrototype*)
   ---- ;; set block context
   -- if TC_1 = TC_0 [ .BLOCK.KIND = EXTERN ]
   ---- ;; check type parameters and add to context
@@ -461,8 +461,8 @@ rule Decl_ok/externObjectDeclaration:
   -- if TC_2 = $add_types(BLOCK, TC_1, tid_expl*, (TID tid_expl)*)
   ---- ;; check methods
   -- if nameIR = $name(nonTypeName)
-  -- ExternMethods_ok: TC_2 nameIR |- methodPrototype_method*
-                                    : TC_3 methodPrototypeIR_method*
+  -- ExternMethods_ok: TC_2 nameIR |- externMethodPrototype*
+                                    : TC_3 externMethodPrototypeIR*
   ---- ;; create extern object type and add to context
   -- if typeIR_extern = EXTERN nameIR TC_3.BLOCK.RDENV
   -- if typeDefIR_extern = typeIR_extern `< tid_expl* `, eps >
@@ -472,13 +472,13 @@ rule Decl_ok/externObjectDeclaration:
   ---- ;; add type parameters to context again
   -- if TC_6 = $add_types(BLOCK, TC_5, tid_expl*, (TID tid_expl)*)
   ---- ;; check constructors and add to context
-  -- ExternConstructors_ok: TC_6 nameIR |- methodPrototype_constructor*
-                                         : TC_7 methodPrototypeIR_constructor*
+  -- ExternConstructors_ok: TC_6 nameIR |- externConstructorPrototype*
+                                         : TC_7 externConstructorPrototypeIR*
   -- if TC_8 = TC_4[ .GLOBAL.CDENV = TC_7.GLOBAL.CDENV ]
   ---- ;; create IR
   -- if externObjectDeclarationIR
-      = annotationList EXTERN nameIR `< tid_expl* `, eps >
-        `{ methodPrototypeIR_constructor* ++ methodPrototypeIR_method* }
+      = annotationList EXTERN nameIR `< tid_expl* `, >
+        `{ externConstructorPrototypeIR* externMethodPrototypeIR* }
 
 ;;; parserDeclaration
 ;;; syntax parserDeclaration =

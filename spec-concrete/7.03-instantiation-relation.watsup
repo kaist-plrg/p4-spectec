@@ -51,29 +51,32 @@ relation Block_inst:
 ;;
 
 relation Bind_method:
-  rdenv |- methodPrototypeIR ==> rdenv
+  rdenv |- externMethodPrototypeIR ==> rdenv
   hint(input %0 %1)
 
 relation Bind_methods:
-  rdenv |- methodPrototypeIR* ==> rdenv
+  rdenv |- externMethodPrototypeIR* ==> rdenv
   hint(input %0 %1)
 
 relation Bind_constructor:
-  cursor instantiationContext typeParameterListIR methodPrototypeListIR |- methodPrototypeIR
-                                                                       ==> instantiationContext
+  cursor instantiationContext
+  typeParameterListIR externMethodPrototypeListIR
+  |- externConstructorPrototypeIR
+  ==> instantiationContext
   hint(input %0 %1 %2 %3 %4)
 
 relation Bind_constructors:
-  cursor instantiationContext typeParameterListIR methodPrototypeListIR |- methodPrototypeIR*
-                                                                       ==> instantiationContext
+  cursor instantiationContext typeParameterListIR externMethodPrototypeListIR
+  |- externConstructorPrototypeIR*
+  ==> instantiationContext
   hint(input %0 %1 %2 %3 %4)
 
 relation ExternMethod_inst:
-  instantiationContext |- methodPrototypeIR ==> instantiationContext
+  instantiationContext |- externMethodPrototypeIR ==> instantiationContext
   hint(input %0 %1)
 
 relation ExternMethods_inst:
-  instantiationContext |- methodPrototypeIR* ==> instantiationContext
+  instantiationContext |- externMethodPrototypeIR* ==> instantiationContext
   hint(input %0 %1)
 
 ;;

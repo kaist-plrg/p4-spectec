@@ -158,7 +158,7 @@ rule Bind_args/cons:
 
 rule Constructor_inst/extern:
   p IC STO_0 |- (EXTERN nameIR `< typeParameterIR* >
-                  `( constructorParameterIR* ) `{ methodPrototypeIR* })
+                  `( constructorParameterIR* ) `{ externMethodPrototypeIR* })
                   `< typeArgumentIR* > `( argumentIR* `# id_default* )
             ==> STO_1 object_extern
   ---- ;; initialize the callee context
@@ -182,7 +182,7 @@ rule Constructor_inst/extern:
       = $add_values_inst(p_callee, IC_callee_2, id_cparam_default*, value_default*)
   ---- ;; instantiate method prototypes
   -- ExternMethods_inst:
-      IC_callee_3 |- methodPrototypeIR* ==> IC_callee_4
+      IC_callee_3 |- externMethodPrototypeIR* ==> IC_callee_4
   ---- ;; create an extern object with the final callee context
   -- if object_extern
       = EXTERN nameIR `{ IC_callee_4.BLOCK.TENV

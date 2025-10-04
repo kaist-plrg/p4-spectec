@@ -137,7 +137,8 @@
   enumTypeDeclaration typeField typeFieldList structTypeDeclaration headerTypeDeclaration headerUnionTypeDeclaration derivedTypeDeclaration
   (* >> Typedef and newtype declarations *) typedef typedefDeclaration
   (* >> Extern declarations *)
-  externFunctionDeclaration methodPrototype methodPrototypeList externObjectDeclaration externDeclaration
+  externFunctionDeclaration externConstructorPrototype externMethodPrototype
+  externConstructorOrMethodPrototypeList externObjectDeclaration externDeclaration
   (* >> Parser statements and declarations *)
   (* >>>> Select expressions *) selectCase selectCaseList selectExpression
   (* >>>> Transition statements *) stateExpression transitionStatement
@@ -1195,25 +1196,33 @@ externFunctionDeclaration:
       decl }
 ;
 
-methodPrototype:
+%inline externConstructorPrototype:
 	| al = annotationList tid = typeIdentifier L_PAREN pl = parameterList R_PAREN SEMICOLON
-    { [ NT al; NT tid; Term "("; NT pl; Term ")"; Term ";" ] #@ "methodPrototype" }
+    { [ NT al; NT tid; Term "("; NT pl; Term ")"; Term ";" ] #@ "externConstructorPrototype" }
+
+%inline externMethodPrototype:
 	| al = annotationList p = functionPrototype pop_scope SEMICOLON
-    { [ NT al; NT p; Term ";" ] #@ "methodPrototype" }
+    { [ NT al; NT p; Term ";" ] #@ "externMethodPrototype" }
 	| al = annotationList ABSTRACT p = functionPrototype
     pop_scope SEMICOLON
-    { [ NT al; Term "ABSTRACT"; NT p; Term ";" ] #@ "methodPrototype" }
+    { [ NT al; Term "ABSTRACT"; NT p; Term ";" ] #@ "externMethodPrototype" }
 ;
 
-methodPrototypeList:
-  | (* empty *) { [ Term "`EMPTY" ] #@ "methodPrototypeList" }
-  | ps = methodPrototypeList p = methodPrototype
-    { [ NT ps; NT p ] #@ "methodPrototypeList" }
+externConstructorOrMethodPrototype:
+  | p = externConstructorPrototype
+  | p = externMethodPrototype
+    { p }
+;
+
+externConstructorOrMethodPrototypeList:
+  | (* empty *) { [ Term "`EMPTY" ] #@ "externConstructorOrMethodPrototypeList" }
+  | pl = externConstructorOrMethodPrototypeList p = externConstructorOrMethodPrototype
+    { [ NT pl; NT p ] #@ "externConstructorOrMethodPrototypeList" }
 ;
 
 externObjectDeclaration:
   | al = annotationList EXTERN n = push_externName tpl = typeParameterListOpt
-    L_BRACE pl = methodPrototypeList R_BRACE pop_scope
+    L_BRACE pl = externConstructorOrMethodPrototypeList R_BRACE pop_scope
     { let decl =
         [ NT al; Term "EXTERN"; NT n; NT tpl; Term "{"; NT pl; Term "}" ]
           #@ "externObjectDeclaration"

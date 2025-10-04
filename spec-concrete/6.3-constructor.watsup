@@ -4,12 +4,16 @@
 
 syntax constructor =
   | EXTERN nameIR `< typeParameterListIR >
-    `( constructorParameterListIR ) `{ methodPrototypeListIR }
-  | PARSER `( parameterListIR ) `( constructorParameterListIR )
+      `( constructorParameterListIR )
+      `{ externMethodPrototypeListIR }
+  | PARSER `( parameterListIR )
+      `( constructorParameterListIR )
       `{ parserLocalDeclarationListIR
          parserStateListIR }
-  | CONTROL `( parameterListIR ) `( constructorParameterListIR )
+  | CONTROL `( parameterListIR )
+      `( constructorParameterListIR )
       `{ controlLocalDeclarationListIR
          APPLY controlBodyIR }
-  | PACKAGE `< typeParameterListIR > `( constructorParameterListIR )
+  | PACKAGE `< typeParameterListIR >
+      `( constructorParameterListIR )
   | TABLE nameIR `{ tablePropertyListIR }

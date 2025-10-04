@@ -3333,9 +3333,9 @@ relation ConstructorParameters_ok: `p`, `TC`, and `constructorParameter^{asteris
  .. Let `constructorParameterIR^{asterisk}^` and `tid~fresh~^{asterisk}^` be the result of <<Parameters_ok, typing `constructorParameter^{asterisk}^`, under cursor `p` and typing context `TC`>>.
  .. Result in the constructor parameter list `constructorParameterIR^{asterisk}^` and set of fresh type variables `tid~fresh~^{asterisk}^`.
 
-relation ExternMethod_ok: `TC~0~`, `tid~extern~`, and `methodPrototype`
+relation ExternMethod_ok: `TC~0~`, `tid~extern~`, and `externMethodPrototype`
 
-. If let `annotationList typeOrVoid name typeParameterListOpt ( parameterList ) ;` be `methodPrototype`:
+. If let `annotationList typeOrVoid name typeParameterListOpt ( parameterList ) ;` be `externMethodPrototype`:
  .. Group non-abstract: `TC~0~`, `tid~extern~`, and `annotationList typeOrVoid name typeParameterListOpt ( parameterList ) ;`
 
   ... Let `nameIR` be <<name, the name of `name`>>.
@@ -3367,10 +3367,10 @@ for each `parameterIR` in `parameterIR^{asterisk}^`.
   ... Let `routineTypeDefIR` be `methodTypeIR < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ >`.
   ... Check that <<RoutineTypeDef_wf, `$bound(BLOCK, TC~0~) |- routineTypeDefIR`>> holds.
   ... Let `TC~4~` be `$add_routine_overload(BLOCK, TC~0~, rid, routineTypeDefIR)`.
-  ... Let `methodPrototypeIR` be `annotationList typeIR~ret~ nameIR < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) ;`.
-  ... Result in the updated typing context `TC~4~` and the typed method prototype `methodPrototypeIR`.
+  ... Let `externMethodPrototypeIR` be `annotationList typeIR~ret~ nameIR < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) ;`.
+  ... Result in the updated typing context `TC~4~` and the typed method prototype `externMethodPrototypeIR`.
 
-. Else if let `annotationList ABSTRACT typeOrVoid name typeParameterListOpt ( parameterList ) ;` be `methodPrototype`:
+. Else if let `annotationList ABSTRACT typeOrVoid name typeParameterListOpt ( parameterList ) ;` be `externMethodPrototype`:
  .. Group abstract: `TC~0~`, `tid~extern~`, and `annotationList ABSTRACT typeOrVoid name typeParameterListOpt ( parameterList ) ;`
 
   ... Let `nameIR` be <<name, the name of `name`>>.
@@ -3402,27 +3402,25 @@ for each `parameterIR` in `parameterIR^{asterisk}^`.
   ... Let `routineTypeDefIR` be `methodTypeIR < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ >`.
   ... Check that <<RoutineTypeDef_wf, `$bound(BLOCK, TC~0~) |- routineTypeDefIR`>> holds.
   ... Let `TC~4~` be `$add_routine_overload(BLOCK, TC~0~, rid, routineTypeDefIR)`.
-  ... Let `methodPrototypeIR` be `annotationList ABSTRACT typeIR~ret~ nameIR < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) ;`.
-  ... Result in the updated typing context `TC~4~` and the typed method prototype `methodPrototypeIR`.
+  ... Let `externMethodPrototypeIR` be `annotationList ABSTRACT typeIR~ret~ nameIR < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) ;`.
+  ... Result in the updated typing context `TC~4~` and the typed method prototype `externMethodPrototypeIR`.
 
-relation ExternMethods_ok: `TC'`, `tid~extern~`, and `methodPrototype^{asterisk}^`
+relation ExternMethods_ok: `TC'`, `tid~extern~`, and `externMethodPrototype^{asterisk}^`
 
-. If `methodPrototype^{asterisk}^` matches pattern `[]`:
+. If `externMethodPrototype^{asterisk}^` matches pattern `[]`:
  .. Group nil: `TC'`, `tid~extern~`, and `[ ]`
 
   ... Result in the updated typing context `TC'` and the typed method prototypes `[ ]`.
 
-. Else if let `methodPrototype~h~ :: methodPrototype~t~^{asterisk}^` be `methodPrototype^{asterisk}^`:
- .. Group cons: `TC'`, `tid~extern~`, and `methodPrototype~h~ :: methodPrototype~t~^{asterisk}^`
+. Else if let `externMethodPrototype~h~ :: externMethodPrototype~t~^{asterisk}^` be `externMethodPrototype^{asterisk}^`:
+ .. Group cons: `TC'`, `tid~extern~`, and `externMethodPrototype~h~ :: externMethodPrototype~t~^{asterisk}^`
 
-  ... Let `TC~1~` and `methodPrototypeIR~h~` be the result of <<ExternMethod_ok, typing `methodPrototype~h~`, under typing context `TC'` for an extern object `tid~extern~`>>.
-  ... Let `TC~2~` and `methodPrototypeIR~t~^{asterisk}^` be the result of <<ExternMethods_ok, typing `methodPrototype~t~^{asterisk}^`, under typing context `TC~1~` for an extern object `tid~extern~`>>.
-  ... Result in the updated typing context `TC~2~` and the typed method prototypes `methodPrototypeIR~h~ :: methodPrototypeIR~t~^{asterisk}^`.
+  ... Let `TC~1~` and `externMethodPrototypeIR~h~` be the result of <<ExternMethod_ok, typing `externMethodPrototype~h~`, under typing context `TC'` for an extern object `tid~extern~`>>.
+  ... Let `TC~2~` and `externMethodPrototypeIR~t~^{asterisk}^` be the result of <<ExternMethods_ok, typing `externMethodPrototype~t~^{asterisk}^`, under typing context `TC~1~` for an extern object `tid~extern~`>>.
+  ... Result in the updated typing context `TC~2~` and the typed method prototypes `externMethodPrototypeIR~h~ :: externMethodPrototypeIR~t~^{asterisk}^`.
 
-relation ExternConstructor_ok: `TC~0~`, `tid~extern~`, and `methodPrototype`
+relation ExternConstructor_ok: `TC~0~`, `tid~extern~`, and `annotationList typeIdentifier ( parameterList ) ;`
 
-. Check that `methodPrototype` matches pattern `%  % ( % ) ;`.
-. Let `annotationList typeIdentifier ( parameterList ) ;` be `methodPrototype`.
 . Group : `TC~0~`, `tid~extern~`, and `annotationList typeIdentifier ( parameterList ) ;`
 
  .. Let `nameIR` be <<name, the name of `typeIdentifier`>>.
@@ -3448,22 +3446,22 @@ for each `constructorParameterIR` in `constructorParameterIR^{asterisk}^`.
  .. Let `constructorTypeDefIR` be `constructorTypeIR < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ >`.
  .. Check that <<ConstructorTypeDef_wf, `$bound(BLOCK, TC~0~) |- constructorTypeDefIR`>> holds.
  .. Let `TC~1~` be `$add_constructor(TC~0~, cid, constructorTypeDefIR)`.
- .. Let `methodPrototypeIR` be `annotationList nameIR < , tid~impl~^{asterisk}^ > ( constructorParameterIR^{asterisk}^ ) ;`.
- .. Result in the updated typing context `TC~1~` and the typed constructor prototype `methodPrototypeIR`.
+ .. Let `externConstructorPrototypeIR` be `annotationList nameIR < , tid~impl~^{asterisk}^ > ( constructorParameterIR^{asterisk}^ ) ;`.
+ .. Result in the updated typing context `TC~1~` and the typed constructor prototype `externConstructorPrototypeIR`.
 
-relation ExternConstructors_ok: `TC'`, `tid~extern~`, and `methodPrototype^{asterisk}^`
+relation ExternConstructors_ok: `TC'`, `tid~extern~`, and `externConstructorPrototype^{asterisk}^`
 
-. If `methodPrototype^{asterisk}^` matches pattern `[]`:
+. If `externConstructorPrototype^{asterisk}^` matches pattern `[]`:
  .. Group nil: `TC'`, `tid~extern~`, and `[ ]`
 
   ... Result in the updated typing context `TC'` and the typed constructor prototypes `[ ]`.
 
-. Else if let `methodPrototype~h~ :: methodPrototype~t~^{asterisk}^` be `methodPrototype^{asterisk}^`:
- .. Group cons: `TC'`, `tid~extern~`, and `methodPrototype~h~ :: methodPrototype~t~^{asterisk}^`
+. Else if let `externConstructorPrototype~h~ :: externConstructorPrototype~t~^{asterisk}^` be `externConstructorPrototype^{asterisk}^`:
+ .. Group cons: `TC'`, `tid~extern~`, and `externConstructorPrototype~h~ :: externConstructorPrototype~t~^{asterisk}^`
 
-  ... Let `TC~1~` and `methodPrototypeIR~h~` be the result of <<ExternConstructor_ok, typing `methodPrototype~h~`, under typing context `TC'` for an extern object `tid~extern~`>>.
-  ... Let `TC~2~` and `methodPrototypeIR~t~^{asterisk}^` be the result of <<ExternConstructors_ok, typing `methodPrototype~t~^{asterisk}^`, under typing context `TC~1~` for an extern object `tid~extern~`>>.
-  ... Result in the updated typing context `TC~2~` and the typed constructor prototypes `methodPrototypeIR~h~ :: methodPrototypeIR~t~^{asterisk}^`.
+  ... Let `TC~1~` and `externConstructorPrototypeIR~h~` be the result of <<ExternConstructor_ok, typing `externConstructorPrototype~h~`, under typing context `TC'` for an extern object `tid~extern~`>>.
+  ... Let `TC~2~` and `externConstructorPrototypeIR~t~^{asterisk}^` be the result of <<ExternConstructors_ok, typing `externConstructorPrototype~t~^{asterisk}^`, under typing context `TC~1~` for an extern object `tid~extern~`>>.
+  ... Result in the updated typing context `TC~2~` and the typed constructor prototypes `externConstructorPrototypeIR~h~ :: externConstructorPrototypeIR~t~^{asterisk}^`.
 
 relation ParserTransition_ok: `TC~0~`, `nameIR~state~^{asterisk}^`, and `transitionStatement`
 
@@ -4756,11 +4754,11 @@ for each `parameterIR` in `parameterIR^{asterisk}^`.
   ... Let `externFunctionDeclarationIR` be `annotationList EXTERN typeIR~ret~ nameIR < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) ;`.
   ... Result in the modified typing context `TC~4~` and the typed declaration `externFunctionDeclarationIR`.
 
-. Else if let `annotationList EXTERN nonTypeName typeParameterListOpt { methodPrototypeList }` be `declaration`:
- .. Group externObjectDeclaration: `GLOBAL`, `TC~0~`, and `annotationList EXTERN nonTypeName typeParameterListOpt { methodPrototypeList }`
+. Else if let `annotationList EXTERN nonTypeName typeParameterListOpt { externConstructorOrMethodPrototypeList }` be `declaration`:
+ .. Group externObjectDeclaration: `GLOBAL`, `TC~0~`, and `annotationList EXTERN nonTypeName typeParameterListOpt { externConstructorOrMethodPrototypeList }`
 
-  ... Let `methodPrototype^{asterisk}^` be <<flatten_methodPrototypeList, the list of method prototypes in `methodPrototypeList`>>.
-  ... Let `(methodPrototype~constructor~^{asterisk}^, methodPrototype~method~^{asterisk}^)` be `$split_constructors(methodPrototype^{asterisk}^)`.
+  ... Let `externConstructorOrMethodPrototype^{asterisk}^` be <<flatten_externConstructorOrMethodPrototypeList, the list of extern constructor or method prototypes in `externConstructorOrMethodPrototypeList`>>.
+  ... Let `(externConstructorPrototype^{asterisk}^, externMethodPrototype^{asterisk}^)` be <<split_constructors, split constructors and methods in `externConstructorOrMethodPrototype^{asterisk}^`>>.
   ... Let `TC~1~` be `TC~0~`[BLOCK.KIND = `EXTERN`].
   ... Let `typeParameter^{asterisk}^` be <<flatten_typeParameterListOpt, the list of type parameters in `typeParameterListOpt`>>.
   ... Let `tid~expl~^{asterisk}^` be the list of `tid~expl~`, obtained by repeating:
@@ -4772,15 +4770,15 @@ for each `parameterIR` in `parameterIR^{asterisk}^`.
 for each `typeParameter` in `typeParameter^{asterisk}^`.
   ... Let `TC~2~` be `$add_types(BLOCK, TC~1~, tid~expl~^{asterisk}^, TID tid~expl~^{asterisk}^)`.
   ... Let `nameIR` be <<name, the name of `nonTypeName`>>.
-  ... Let `TC~3~` and `methodPrototypeIR~method~^{asterisk}^` be the result of <<ExternMethods_ok, typing `methodPrototype~method~^{asterisk}^`, under typing context `TC~2~` for an extern object `nameIR`>>.
+  ... Let `TC~3~` and `externMethodPrototypeIR^{asterisk}^` be the result of <<ExternMethods_ok, typing `externMethodPrototype^{asterisk}^`, under typing context `TC~2~` for an extern object `nameIR`>>.
   ... Let `typeIR~extern~` be `EXTERN nameIR TC~3~.BLOCK.RDENV`.
   ... Let `typeDefIR~extern~` be `typeIR~extern~ < tid~expl~^{asterisk}^ , [ ] >`.
   ... Let `TC~4~` be `$add_type(GLOBAL, TC~0~, nameIR, typeDefIR~extern~)`.
   ... Let `TC~5~` be `TC~4~`[BLOCK.KIND = `EXTERN`].
   ... Let `TC~6~` be `$add_types(BLOCK, TC~5~, tid~expl~^{asterisk}^, TID tid~expl~^{asterisk}^)`.
-  ... Let `TC~7~` and `methodPrototypeIR~constructor~^{asterisk}^` be the result of <<ExternConstructors_ok, typing `methodPrototype~constructor~^{asterisk}^`, under typing context `TC~6~` for an extern object `nameIR`>>.
+  ... Let `TC~7~` and `externConstructorPrototypeIR^{asterisk}^` be the result of <<ExternConstructors_ok, typing `externConstructorPrototype^{asterisk}^`, under typing context `TC~6~` for an extern object `nameIR`>>.
   ... Let `TC~8~` be `TC~4~`[GLOBAL.CDENV = `TC~7~.GLOBAL.CDENV`].
-  ... Let `externObjectDeclarationIR` be `annotationList EXTERN nameIR < tid~expl~^{asterisk}^ , [ ] > { methodPrototypeIR~constructor~^{asterisk}^ ++ methodPrototypeIR~method~^{asterisk}^ }`.
+  ... Let `externObjectDeclarationIR` be `annotationList EXTERN nameIR < tid~expl~^{asterisk}^ , > { externConstructorPrototypeIR^{asterisk}^ externMethodPrototypeIR^{asterisk}^ }`.
   ... Result in the modified typing context `TC~8~` and the typed declaration `externObjectDeclarationIR`.
 
 . Else if let `annotationList PARSER name typeParameterListOpt ( parameterList ) constructorParameterListOpt { parserLocalDeclarationList parserStateList }` be `declaration`:
@@ -6872,9 +6870,9 @@ relation Block_inst: `IC~0~`, `STO~0~`, and `annotationList { blockElementStatem
  .. Let `IC~3~` be `$exit_inst(IC~2~)`.
  .. Result in `IC~3~`, `STO~1~`, and `annotationList { blockElementStatementListIR~inst~ }`.
 
-relation Bind_method: `rdenv~0~` and `methodPrototypeIR`
+relation Bind_method: `rdenv~0~` and `externMethodPrototypeIR`
 
-. If let `annotationList typeIR~ret~ nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR^{asterisk}^ ) ;` be `methodPrototypeIR`:
+. If let `annotationList typeIR~ret~ nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR^{asterisk}^ ) ;` be `externMethodPrototypeIR`:
  .. Group non-abstract: `rdenv~0~` and `annotationList typeIR~ret~ nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR^{asterisk}^ ) ;`
 
   ... Let `rid` be `$rid_IR(nameIR, parameterIR^{asterisk}^)`.
@@ -6890,7 +6888,7 @@ for each `parameterIR` in `parameterIR^{asterisk}^`.
   ... Let `rdenv~1~` be `$add_map<rid, routineTypeDefIR>(rdenv~0~, rid, routineTypeDefIR)`.
   ... Result in `rdenv~1~`.
 
-. Else if let `annotationList ABSTRACT typeIR~ret~ nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR^{asterisk}^ ) ;` be `methodPrototypeIR`:
+. Else if let `annotationList ABSTRACT typeIR~ret~ nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR^{asterisk}^ ) ;` be `externMethodPrototypeIR`:
  .. Group abstract: `rdenv~0~` and `annotationList ABSTRACT typeIR~ret~ nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR^{asterisk}^ ) ;`
 
   ... Let `rid` be `$rid_IR(nameIR, parameterIR^{asterisk}^)`.
@@ -6906,48 +6904,46 @@ for each `parameterIR` in `parameterIR^{asterisk}^`.
   ... Let `rdenv~1~` be `$add_map<rid, routineTypeDefIR>(rdenv~0~, rid, routineTypeDefIR)`.
   ... Result in `rdenv~1~`.
 
-relation Bind_methods: `rdenv'` and `methodPrototypeIR^{asterisk}^`
+relation Bind_methods: `rdenv'` and `externMethodPrototypeIR^{asterisk}^`
 
-. If `methodPrototypeIR^{asterisk}^` matches pattern `[]`:
+. If `externMethodPrototypeIR^{asterisk}^` matches pattern `[]`:
  .. Group nil: `rdenv'` and `[ ]`
 
   ... Result in `rdenv'`.
 
-. Else if let `methodPrototypeIR~h~ :: methodPrototypeIR~t~^{asterisk}^` be `methodPrototypeIR^{asterisk}^`:
- .. Group cons: `rdenv'` and `methodPrototypeIR~h~ :: methodPrototypeIR~t~^{asterisk}^`
+. Else if let `externMethodPrototypeIR~h~ :: externMethodPrototypeIR~t~^{asterisk}^` be `externMethodPrototypeIR^{asterisk}^`:
+ .. Group cons: `rdenv'` and `externMethodPrototypeIR~h~ :: externMethodPrototypeIR~t~^{asterisk}^`
 
-  ... <<Bind_method, `rdenv' |- methodPrototypeIR~h~ ==> rdenv~1~`>>.
-  ... <<Bind_methods, `rdenv~1~ |- methodPrototypeIR~t~^{asterisk}^ ==> rdenv~2~`>>.
+  ... <<Bind_method, `rdenv' |- externMethodPrototypeIR~h~ ==> rdenv~1~`>>.
+  ... <<Bind_methods, `rdenv~1~ |- externMethodPrototypeIR~t~^{asterisk}^ ==> rdenv~2~`>>.
   ... Result in `rdenv~2~`.
 
-relation Bind_constructor: `p`, `IC~0~`, `typeParameterListIR`, `methodPrototypeListIR`, and `methodPrototypeIR`
+relation Bind_constructor: `p`, `IC~0~`, `typeParameterListIR`, `externMethodPrototypeListIR`, and `annotationList nameIR < , typeParameterListIR~inferred~ > ( parameterListIR ) ;`
 
-. Check that `methodPrototypeIR` matches pattern `%  % < , % > ( % ) ;`.
-. Let `annotationList nameIR < , typeParameterListIR~inferred~ > ( parameterListIR ) ;` be `methodPrototypeIR`.
-. Group constructor: `p`, `IC~0~`, `typeParameterListIR`, `methodPrototypeListIR`, and `annotationList nameIR < , typeParameterListIR~inferred~ > ( parameterListIR ) ;`
+. Group constructor: `p`, `IC~0~`, `typeParameterListIR`, `externMethodPrototypeListIR`, and `annotationList nameIR < , typeParameterListIR~inferred~ > ( parameterListIR ) ;`
 
  .. Let `cid` be `$cid_IR(nameIR, parameterListIR)`.
- .. Let `constructor` be `EXTERN nameIR < typeParameterListIR ++ typeParameterListIR~inferred~ > ( parameterListIR ) { methodPrototypeListIR }`.
+ .. Let `constructor` be `EXTERN nameIR < typeParameterListIR ++ typeParameterListIR~inferred~ > ( parameterListIR ) { externMethodPrototypeListIR }`.
  .. Let `IC~1~` be `$add_constructor_inst(p, IC~0~, cid, constructor)`.
  .. Result in `IC~1~`.
 
-relation Bind_constructors: `p`, `IC'`, `typeParameterListIR`, `methodPrototypeListIR`, and `methodPrototypeIR^{asterisk}^`
+relation Bind_constructors: `p`, `IC'`, `typeParameterListIR`, `externMethodPrototypeListIR`, and `externConstructorPrototypeIR^{asterisk}^`
 
-. If `methodPrototypeIR^{asterisk}^` matches pattern `[]`:
- .. Group nil: `p`, `IC'`, `typeParameterListIR`, `methodPrototypeListIR`, and `[ ]`
+. If `externConstructorPrototypeIR^{asterisk}^` matches pattern `[]`:
+ .. Group nil: `p`, `IC'`, `typeParameterListIR`, `externMethodPrototypeListIR`, and `[ ]`
 
   ... Result in `IC'`.
 
-. Else if let `methodPrototypeIR~h~ :: methodPrototypeIR~t~^{asterisk}^` be `methodPrototypeIR^{asterisk}^`:
- .. Group cons: `p`, `IC'`, `typeParameterListIR`, `methodPrototypeListIR`, and `methodPrototypeIR~h~ :: methodPrototypeIR~t~^{asterisk}^`
+. Else if let `externConstructorPrototypeIR~h~ :: externConstructorPrototypeIR~t~^{asterisk}^` be `externConstructorPrototypeIR^{asterisk}^`:
+ .. Group cons: `p`, `IC'`, `typeParameterListIR`, `externMethodPrototypeListIR`, and `externConstructorPrototypeIR~h~ :: externConstructorPrototypeIR~t~^{asterisk}^`
 
-  ... <<Bind_constructor, `p IC' typeParameterListIR methodPrototypeListIR |- methodPrototypeIR~h~ ==> IC~1~`>>.
-  ... <<Bind_constructors, `p IC~1~ typeParameterListIR methodPrototypeListIR |- methodPrototypeIR~t~^{asterisk}^ ==> IC~2~`>>.
+  ... <<Bind_constructor, `p IC' typeParameterListIR externMethodPrototypeListIR |- externConstructorPrototypeIR~h~ ==> IC~1~`>>.
+  ... <<Bind_constructors, `p IC~1~ typeParameterListIR externMethodPrototypeListIR |- externConstructorPrototypeIR~t~^{asterisk}^ ==> IC~2~`>>.
   ... Result in `IC~2~`.
 
-relation ExternMethod_inst: `IC~0~` and `methodPrototypeIR`
+relation ExternMethod_inst: `IC~0~` and `externMethodPrototypeIR`
 
-. If let `annotationList typeIR nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterListIR ) ;` be `methodPrototypeIR`:
+. If let `annotationList typeIR nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterListIR ) ;` be `externMethodPrototypeIR`:
  .. Group non-abstract: `IC~0~` and `annotationList typeIR nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterListIR ) ;`
 
   ... Let `rid` be `$rid_IR(nameIR, parameterListIR)`.
@@ -6955,7 +6951,7 @@ relation ExternMethod_inst: `IC~0~` and `methodPrototypeIR`
   ... Let `IC~1~` be `$add_routine_overload_inst(BLOCK, IC~0~, rid, method)`.
   ... Result in `IC~1~`.
 
-. Else if let `annotationList ABSTRACT typeIR nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterListIR ) ;` be `methodPrototypeIR`:
+. Else if let `annotationList ABSTRACT typeIR nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterListIR ) ;` be `externMethodPrototypeIR`:
  .. Group abstract: `IC~0~` and `annotationList ABSTRACT typeIR nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterListIR ) ;`
 
   ... Let `rid` be `$rid_IR(nameIR, parameterListIR)`.
@@ -6963,18 +6959,18 @@ relation ExternMethod_inst: `IC~0~` and `methodPrototypeIR`
   ... Let `IC~1~` be `$add_routine_overload_inst(BLOCK, IC~0~, rid, method)`.
   ... Result in `IC~1~`.
 
-relation ExternMethods_inst: `IC'` and `methodPrototypeIR^{asterisk}^`
+relation ExternMethods_inst: `IC'` and `externMethodPrototypeIR^{asterisk}^`
 
-. If `methodPrototypeIR^{asterisk}^` matches pattern `[]`:
+. If `externMethodPrototypeIR^{asterisk}^` matches pattern `[]`:
  .. Group nil: `IC'` and `[ ]`
 
   ... Result in `IC'`.
 
-. Else if let `methodPrototypeIR~h~ :: methodPrototypeIR~t~^{asterisk}^` be `methodPrototypeIR^{asterisk}^`:
- .. Group cons: `IC'` and `methodPrototypeIR~h~ :: methodPrototypeIR~t~^{asterisk}^`
+. Else if let `externMethodPrototypeIR~h~ :: externMethodPrototypeIR~t~^{asterisk}^` be `externMethodPrototypeIR^{asterisk}^`:
+ .. Group cons: `IC'` and `externMethodPrototypeIR~h~ :: externMethodPrototypeIR~t~^{asterisk}^`
 
-  ... <<ExternMethod_inst, `IC' |- methodPrototypeIR~h~ ==> IC~1~`>>.
-  ... <<ExternMethods_inst, `IC~1~ |- methodPrototypeIR~t~^{asterisk}^ ==> IC~2~`>>.
+  ... <<ExternMethod_inst, `IC' |- externMethodPrototypeIR~h~ ==> IC~1~`>>.
+  ... <<ExternMethods_inst, `IC~1~ |- externMethodPrototypeIR~t~^{asterisk}^ ==> IC~2~`>>.
   ... Result in `IC~2~`.
 
 relation ParserStmt_inst: `IC~0'~`, `STO~0~`, and `parserStatementIR`
@@ -7379,24 +7375,24 @@ for each `nameIR` in `nameIR^{asterisk}^`.
   ... Let `IC~1~` be `$add_routine_overload_inst(GLOBAL, IC~0~, rid, function)`.
   ... Result in `IC~1~`, `STO'`, and `?()`.
 
-. Else if let `annotationList EXTERN nameIR < typeParameterListIR , typeParameterListIR~inferred~ > { methodPrototypeIR^{asterisk}^ }` be `declarationIR`:
- .. Group externObjectDeclarationIR: `GLOBAL`, `IC~0~`, `STO'`, and `annotationList EXTERN nameIR < typeParameterListIR , typeParameterListIR~inferred~ > { methodPrototypeIR^{asterisk}^ }`
+. Else if let `annotationList EXTERN nameIR < typeParameterListIR , > { externConstructorPrototypeIR'^{asterisk}^ externMethodPrototypeIR^{asterisk}^ }` be `declarationIR`:
+ .. Group externObjectDeclarationIR: `GLOBAL`, `IC~0~`, `STO'`, and `annotationList EXTERN nameIR < typeParameterListIR , > { externConstructorPrototypeIR'^{asterisk}^ externMethodPrototypeIR^{asterisk}^ }`
 
-  ... Let `(methodPrototypeIR'^{asterisk}^, methodPrototypeIR~method~^{asterisk}^)` be `$split_constructors_IR(methodPrototypeIR^{asterisk}^)`.
-  ... Check that `methodPrototypeIR'^{asterisk}^` matches pattern `[]`.
-  ... <<Bind_methods, `$empty_rdenv |- methodPrototypeIR~method~^{asterisk}^ ==> rdenv`>>.
+  ... Check that `[ ]` is equal to `externConstructorPrototypeIR'^{asterisk}^`.
+  ... <<Bind_methods, `$empty_rdenv |- externMethodPrototypeIR^{asterisk}^ ==> rdenv`>>.
   ... Let `externObjectTypeIR` be `EXTERN nameIR rdenv`.
   ... Let `polyTypeDefIR` be `externObjectTypeIR < typeParameterListIR , [ ] >`.
   ... Let `IC~1~` be `$add_typedef_inst(GLOBAL, IC~0~, nameIR, polyTypeDefIR)`.
   ... Let `cid` be `$cid_IR(nameIR, [ ])`.
-  ... Let `constructor` be `EXTERN nameIR < typeParameterListIR > ( [ ] ) { methodPrototypeIR~method~^{asterisk}^ }`.
+  ... Let `constructor` be `EXTERN nameIR < typeParameterListIR > ( [ ] ) { externMethodPrototypeIR^{asterisk}^ }`.
   ... Let `IC~2~` be `$add_constructor_inst(GLOBAL, IC~1~, cid, constructor)`.
   ... Result in `IC~2~`, `STO'`, and `?()`.
-  ... <<Bind_methods, `$empty_rdenv |- methodPrototypeIR~method~^{asterisk}^ ==> rdenv`>>.
+  ... Let `externConstructorPrototypeIR^{asterisk}^` be `externConstructorPrototypeIR'^{asterisk}^`.
+  ... <<Bind_methods, `$empty_rdenv |- externMethodPrototypeIR^{asterisk}^ ==> rdenv`>>.
   ... Let `externObjectTypeIR` be `EXTERN nameIR rdenv`.
   ... Let `polyTypeDefIR` be `externObjectTypeIR < typeParameterListIR , [ ] >`.
   ... Let `IC~1~` be `$add_typedef_inst(GLOBAL, IC~0~, nameIR, polyTypeDefIR)`.
-  ... <<Bind_constructors, `GLOBAL IC~1~ typeParameterListIR methodPrototypeIR~method~^{asterisk}^ |- methodPrototypeIR'^{asterisk}^ ==> IC~2~`>>.
+  ... <<Bind_constructors, `GLOBAL IC~1~ typeParameterListIR externMethodPrototypeIR^{asterisk}^ |- externConstructorPrototypeIR^{asterisk}^ ==> IC~2~`>>.
   ... Result in `IC~2~`, `STO'`, and `?()`.
 
 . Else if let `annotationList PARSER nameIR < typeParameterIR^{asterisk}^ > ( parameterListIR ) ( constructorParameterListIR ) { parserLocalDeclarationListIR parserStateListIR }` be `declarationIR`:
@@ -7650,8 +7646,8 @@ relation Bind_args: `p~caller~`, `IC~caller~`, `p~callee~`, `IC~callee'~`, `STO'
 
 relation Constructor_inst: `p`, `IC`, `STO~0~`, `constructor`, `typeArgumentIR^{asterisk}^`, `argumentIR^{asterisk}^`, and `id~default'~^{asterisk}^`
 
-. If let `EXTERN nameIR < typeParameterIR^{asterisk}^ > ( constructorParameterIR^{asterisk}^ ) { methodPrototypeIR^{asterisk}^ }` be `constructor`:
- .. Group extern: `p`, `IC`, `STO~0~`, `EXTERN nameIR < typeParameterIR^{asterisk}^ > ( constructorParameterIR^{asterisk}^ ) { methodPrototypeIR^{asterisk}^ }`, `typeArgumentIR^{asterisk}^`, `argumentIR^{asterisk}^`, and `id~default'~^{asterisk}^`
+. If let `EXTERN nameIR < typeParameterIR^{asterisk}^ > ( constructorParameterIR^{asterisk}^ ) { externMethodPrototypeIR^{asterisk}^ }` be `constructor`:
+ .. Group extern: `p`, `IC`, `STO~0~`, `EXTERN nameIR < typeParameterIR^{asterisk}^ > ( constructorParameterIR^{asterisk}^ ) { externMethodPrototypeIR^{asterisk}^ }`, `typeArgumentIR^{asterisk}^`, `argumentIR^{asterisk}^`, and `id~default'~^{asterisk}^`
 
   ... Let `p~callee~` be `BLOCK`.
   ... Let `IC~callee_0~` be `$inherit_instantiationContext(GLOBAL, IC)`.
@@ -7673,7 +7669,7 @@ for each `constructorParameterIR~aligned~` in `constructorParameterIR~aligned~^{
 +
 for each `constructorParameterIR~default~` in `constructorParameterIR~default~^{asterisk}^`.
   ... Let `IC~callee_3~` be `$add_values_inst(p~callee~, IC~callee_2~, id~cparam_default~^{asterisk}^, value~default~^{asterisk}^)`.
-  ... <<ExternMethods_inst, `IC~callee_3~ |- methodPrototypeIR^{asterisk}^ ==> IC~callee_4~`>>.
+  ... <<ExternMethods_inst, `IC~callee_3~ |- externMethodPrototypeIR^{asterisk}^ ==> IC~callee_4~`>>.
   ... Let `object~extern~` be `EXTERN nameIR { IC~callee_4~.BLOCK.TENV IC~callee_4~.BLOCK.VENV IC~callee_4~.BLOCK.RENV }`.
   ... Result in `STO~1~` and `object~extern~`.
 

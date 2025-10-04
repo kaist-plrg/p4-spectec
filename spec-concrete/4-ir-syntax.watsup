@@ -550,17 +550,21 @@ syntax typedefDeclarationIR =
 syntax externFunctionDeclarationIR =
   annotationList EXTERN functionPrototypeIR `;
 
-syntax methodPrototypeIR =
-  | annotationList nameIR `< `, typeParameterListIR > `( parameterListIR ) `;
+syntax externConstructorPrototypeIR =
+  annotationList nameIR `< `, typeParameterListIR > `( parameterListIR ) `;
+
+syntax externConstructorPrototypeListIR = externConstructorPrototypeIR*
+
+syntax externMethodPrototypeIR =
   | annotationList functionPrototypeIR `;
   | annotationList ABSTRACT functionPrototypeIR `;
 
-syntax methodPrototypeListIR = methodPrototypeIR*
+syntax externMethodPrototypeListIR = externMethodPrototypeIR*
 
 syntax externObjectDeclarationIR =
-  annotationList EXTERN nameIR
-    `< typeParameterListIR `, typeParameterListIR >
-    `{ methodPrototypeListIR }
+  annotationList EXTERN nameIR `< typeParameterListIR `, >
+    `{ externConstructorPrototypeListIR
+       externMethodPrototypeListIR }
 
 syntax externDeclarationIR =
   | externFunctionDeclarationIR

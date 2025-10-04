@@ -239,40 +239,15 @@ rule Decl_inst/externFunctionDeclarationIR:
 
 ;;;; externObjectDeclarationIR
 
-dec $split_constructors_IR(methodPrototypeIR*) : (methodPrototypeIR*, methodPrototypeIR*)
-
-def $split_constructors_IR(eps) = (eps, eps)
-def $split_constructors_IR(methodPrototypeIR_h :: methodPrototypeIR_t*)
-  = (methodPrototypeIR_h :: methodPrototypeIR_t_constructor*,
-     methodPrototypeIR_t_method*)
-  -- if _ _ `< `, _ > `( _ ) `; = methodPrototypeIR_h
-  -- if (methodPrototypeIR_t_constructor*, methodPrototypeIR_t_method*)
-      = $split_constructors_IR(methodPrototypeIR_t*)
-def $split_constructors_IR(methodPrototypeIR_h :: methodPrototypeIR_t*)
-  = (methodPrototypeIR_t_constructor*,
-     methodPrototypeIR_h :: methodPrototypeIR_t_method*)
-  -- if _ _ `; = methodPrototypeIR_h
-  -- if (methodPrototypeIR_t_constructor*, methodPrototypeIR_t_method*)
-      = $split_constructors_IR(methodPrototypeIR_t*)
-def $split_constructors_IR(methodPrototypeIR_h :: methodPrototypeIR_t*)
-  = (methodPrototypeIR_t_constructor*,
-     methodPrototypeIR_h :: methodPrototypeIR_t_method*)
-  -- if _ ABSTRACT _ `; = methodPrototypeIR_h
-  -- if (methodPrototypeIR_t_constructor*, methodPrototypeIR_t_method*)
-      = $split_constructors_IR(methodPrototypeIR_t*)
-
 rulegroup Decl_inst/externObjectDeclarationIR {
 
   rule Decl_inst/non-constructor:
     GLOBAL IC_0 STO |- annotationList EXTERN nameIR
-                      `< typeParameterListIR `, typeParameterListIR_inferred >
-                      `{ methodPrototypeIR* }
+                        `< typeParameterListIR `, >
+                        `{ eps externMethodPrototypeIR* }
                   ==> IC_2 STO eps
-    ---- ;; split extern methods and constructors
-    -- if (eps, methodPrototypeIR_method*)
-        = $split_constructors_IR(methodPrototypeIR*)
     ---- ;; bind methods to routine environment
-    -- Bind_methods: $empty_rdenv |- methodPrototypeIR_method* ==> rdenv
+    -- Bind_methods: $empty_rdenv |- externMethodPrototypeIR* ==> rdenv
     ---- ;; add polymorphic extern type to typedef environment
     -- if externObjectTypeIR = EXTERN nameIR rdenv
     -- if polyTypeDefIR = externObjectTypeIR `< typeParameterListIR `, eps >
@@ -280,26 +255,24 @@ rulegroup Decl_inst/externObjectDeclarationIR {
     ---- ;; if no constructor was provided, add a default constructor
     -- if cid = $cid_IR(nameIR, eps)
     -- if constructor
-        = EXTERN nameIR `< typeParameterListIR > `( eps ) `{ methodPrototypeIR_method* }
+        = EXTERN nameIR `< typeParameterListIR > `( eps ) `{ externMethodPrototypeIR* }
     -- if IC_2 = $add_constructor_inst(GLOBAL, IC_1, cid, constructor)
 
   rule Decl_inst/constructor:
     GLOBAL IC_0 STO |- annotationList EXTERN nameIR
-                       `< typeParameterListIR `, typeParameterListIR_inferred >
-                       `{ methodPrototypeIR* }
+                        `< typeParameterListIR `, >
+                        `{ externConstructorPrototypeIR* externMethodPrototypeIR* }
                    ==> IC_2 STO eps
-    ---- ;; split extern methods and constructors
-    -- if (methodPrototypeIR_constructor*, methodPrototypeIR_method*) 
-        = $split_constructors_IR(methodPrototypeIR*)
     ---- ;; bind methods to routine environment
-    -- Bind_methods: $empty_rdenv |- methodPrototypeIR_method* ==> rdenv
+    -- Bind_methods: $empty_rdenv |- externMethodPrototypeIR* ==> rdenv
     ---- ;; add polymorphic extern type to typedef environment
     -- if externObjectTypeIR = EXTERN nameIR rdenv
     -- if polyTypeDefIR = externObjectTypeIR `< typeParameterListIR `, eps >
     -- if IC_1 = $add_typedef_inst(GLOBAL, IC_0, nameIR, polyTypeDefIR)
     ---- ;; bind extern constructors to constructor environment
     -- Bind_constructors:
-        GLOBAL IC_1 typeParameterListIR methodPrototypeIR_method* |- methodPrototypeIR_constructor* ==> IC_2
+        GLOBAL IC_1
+        typeParameterListIR externMethodPrototypeIR* |- externConstructorPrototypeIR* ==> IC_2
 
 }
 

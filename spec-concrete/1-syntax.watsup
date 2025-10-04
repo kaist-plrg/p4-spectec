@@ -970,25 +970,37 @@ syntax typedefDeclaration =
 syntax externFunctionDeclaration =
   annotationList EXTERN functionPrototype `;
 
-syntax methodPrototype =
+syntax externConstructorPrototype =
   | annotationList typeIdentifier `( parameterList ) `;
+
+syntax externMethodPrototype =
   | annotationList functionPrototype `;
   | annotationList ABSTRACT functionPrototype `;
 
-syntax methodPrototypeList =
-  | `EMPTY
-  | methodPrototypeList methodPrototype
+syntax externConstructorOrMethodPrototype =
+  | externConstructorPrototype
+  | externMethodPrototype
 
-dec $flatten_methodPrototypeList(methodPrototypeList) : methodPrototype*
-  hint(prose_in "the list of method prototypes in" %0)
-def $flatten_methodPrototypeList(`EMPTY) = eps
-def $flatten_methodPrototypeList(
-    methodPrototypeList methodPrototype
+syntax externConstructorOrMethodPrototypeList =
+  | `EMPTY
+  | externConstructorOrMethodPrototypeList externConstructorOrMethodPrototype
+
+dec $flatten_externConstructorOrMethodPrototypeList(
+    externConstructorOrMethodPrototypeList
+  ) : externConstructorOrMethodPrototype*
+  hint(prose_in "the list of extern constructor or method prototypes in" %0)
+def $flatten_externConstructorOrMethodPrototypeList(`EMPTY) = eps
+def $flatten_externConstructorOrMethodPrototypeList(
+    externConstructorOrMethodPrototypeList
+    externConstructorOrMethodPrototype
   )
-  = $flatten_methodPrototypeList(methodPrototypeList) ++ [ methodPrototype ]
+  = $flatten_externConstructorOrMethodPrototypeList(
+      externConstructorOrMethodPrototypeList
+    ) ++ [ externConstructorOrMethodPrototype ]
 
 syntax externObjectDeclaration =
-  annotationList EXTERN nonTypeName typeParameterListOpt `{ methodPrototypeList }
+  annotationList EXTERN nonTypeName
+    typeParameterListOpt `{ externConstructorOrMethodPrototypeList }
 
 syntax externDeclaration =
   | externFunctionDeclaration

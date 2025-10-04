@@ -7502,19 +7502,27 @@ one of the types listed above, or another <code>typedef</code> name that meets t
 invoked to perform computations and to alter the state of the object. Extern
 object declarations can also optionally declare constructor methods; these must
 have the same name as the enclosing <code>extern</code> type, no type parameters, and no
-return type.  Extern declarations may only appear as allowed by the
+return type. Extern declarations may only appear as allowed by the
 architecture model and may be specific to a target.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">methodPrototype
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externConstructorPrototype
    : annotationList typeIdentifier `( parameterList ) ;
-   | annotationList functionPrototype ;
+   ;
+
+externMethodPrototype
+   : annotationList functionPrototype ;
    | annotationList ABSTRACT functionPrototype ;
    ;
 
+externConstructorOrMethodPrototype
+   : externConstructorPrototype
+   | externMethodPrototype
+   ;
+
 externObjectDeclaration
-   : annotationList EXTERN nonTypeName typeParameterListOpt `{ methodPrototypeList }
+   : annotationList EXTERN nonTypeName typeParameterListOpt `{ externConstructorOrMethodPrototypeList }
    ;</code></pre>
 </div>
 </div>
@@ -11470,7 +11478,7 @@ constructorTypeDefIR
    ;
 
 constructor
-   : EXTERN nameIR `&lt; typeParameterListIR &gt; `( constructorParameterListIR ) `{ methodPrototypeListIR }
+   : EXTERN nameIR `&lt; typeParameterListIR &gt; `( constructorParameterListIR ) `{ externMethodPrototypeListIR }
    | PARSER `( parameterListIR ) `( constructorParameterListIR ) `{ parserLocalDeclarationListIR parserStateListIR }
    | CONTROL `( parameterListIR ) `( constructorParameterListIR ) `{ controlLocalDeclarationListIR APPLY controlBodyIR }
    | PACKAGE `&lt; typeParameterListIR &gt; `( constructorParameterListIR )
@@ -13657,6 +13665,17 @@ externFunctionDeclarationIR
 </div>
 <div class="sect3">
 <h4 id="sec-externObjectDeclaration">11.7.2. Extern object declaration</h4>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externObjectDeclaration
+   : annotationList EXTERN nonTypeName typeParameterListOpt `{ externConstructorOrMethodPrototypeList }
+   ;
+
+externObjectDeclarationIR
+   : annotationList EXTERN nameIR `&lt; typeParameterListIR , &gt; `{ externConstructorPrototypeListIR externMethodPrototypeListIR }
+   ;</code></pre>
+</div>
+</div>
 <div class="sect4">
 <h5 id="sec-sem-Decl_ok-externObjectDeclaration">11.7.2.1. Type checking</h5>
 <details>
@@ -13665,23 +13684,23 @@ externFunctionDeclarationIR
 <div class="listingblock">
 <div class="content">
 <pre>rule Decl_ok/externObjectDeclaration:
-   GLOBAL TC_0 |- annotationList EXTERN nonTypeName typeParameterListOpt `{methodPrototypeList} : TC_8 externObjectDeclarationIR
-    -- if methodPrototype* = $flatten_methodPrototypeList(methodPrototypeList)
-    -- if (methodPrototype_constructor*, methodPrototype_method*) = $split_constructors(methodPrototype*)
+   GLOBAL TC_0 |- annotationList EXTERN nonTypeName typeParameterListOpt `{externConstructorOrMethodPrototypeList} : TC_8 externObjectDeclarationIR
+    -- if externConstructorOrMethodPrototype* = $flatten_externConstructorOrMethodPrototypeList(externConstructorOrMethodPrototypeList)
+    -- if (externConstructorPrototype*, externMethodPrototype*) = $split_constructors(externConstructorOrMethodPrototype*)
     -- if TC_1 = TC_0[BLOCK.KIND = EXTERN]
     -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
     -- (if (tid_expl = $name(typeParameter)))*
     -- if TC_2 = $add_types(BLOCK, TC_1, tid_expl*, (TID tid_expl)*)
     -- if nameIR = $name(nonTypeName)
-    -- ExternMethods_ok: TC_2 nameIR |- methodPrototype_method* : TC_3 methodPrototypeIR_method*
+    -- ExternMethods_ok: TC_2 nameIR |- externMethodPrototype* : TC_3 externMethodPrototypeIR*
     -- if typeIR_extern = EXTERN nameIR TC_3.BLOCK.RDENV
     -- if typeDefIR_extern = typeIR_extern `&lt;tid_expl* , eps&gt;
     -- if TC_4 = $add_type(GLOBAL, TC_0, nameIR, typeDefIR_extern)
     -- if TC_5 = TC_4[BLOCK.KIND = EXTERN]
     -- if TC_6 = $add_types(BLOCK, TC_5, tid_expl*, (TID tid_expl)*)
-    -- ExternConstructors_ok: TC_6 nameIR |- methodPrototype_constructor* : TC_7 methodPrototypeIR_constructor*
+    -- ExternConstructors_ok: TC_6 nameIR |- externConstructorPrototype* : TC_7 externConstructorPrototypeIR*
     -- if TC_8 = TC_4[GLOBAL.CDENV = TC_7.GLOBAL.CDENV]
-    -- if externObjectDeclarationIR = annotationList EXTERN nameIR `&lt;tid_expl* , eps&gt; `{methodPrototypeIR_constructor* ++ methodPrototypeIR_method*}</pre>
+    -- if externObjectDeclarationIR = annotationList EXTERN nameIR `&lt;tid_expl* ,&gt; `{externConstructorPrototypeIR* externMethodPrototypeIR*}</pre>
 </div>
 </div>
 </div>
@@ -13692,16 +13711,16 @@ externFunctionDeclarationIR
 </div>
 </div>
 <div class="paragraph">
-<p>Typing <code>annotationList EXTERN nonTypeName typeParameterListOpt { methodPrototypeList }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
+<p>Typing <code>annotationList EXTERN nonTypeName typeParameterListOpt { externConstructorOrMethodPrototypeList }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
     * and the modified typing context:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>methodPrototype<sup>*</sup></code> be <a href="#flatten_methodPrototypeList">the list of method prototypes in <code>methodPrototypeList</code></a>.</p>
+<p>Let <code>externConstructorOrMethodPrototype<sup>*</sup></code> be <a href="#flatten_externConstructorOrMethodPrototypeList">the list of extern constructor or method prototypes in <code>externConstructorOrMethodPrototypeList</code></a>.</p>
 </li>
 <li>
-<p>Let <code>(methodPrototype<sub>constructor</sub><sup>*</sup>, methodPrototype<sub>method</sub><sup>*</sup>)</code> be <code>$split_constructors(methodPrototype<sup>*</sup>)</code>.</p>
+<p>Let <code>(externConstructorPrototype<sup>*</sup>, externMethodPrototype<sup>*</sup>)</code> be <a href="#split_constructors">split constructors and methods in <code>externConstructorOrMethodPrototype<sup>*</sup></code></a>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub></code>[BLOCK.KIND = <code>EXTERN</code>].</p>
@@ -13733,7 +13752,7 @@ externFunctionDeclarationIR
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>nonTypeName</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>3</sub></code> and <code>methodPrototypeIR<sub>method</sub><sup>*</sup></code> be the result of <a href="#ExternMethods_ok">typing <code>methodPrototype<sub>method</sub><sup>*</sup></code>, under typing context <code>TC<sub>2</sub></code> for an extern object <code>nameIR</code></a>.</p>
+<p>Let <code>TC<sub>3</sub></code> and <code>externMethodPrototypeIR<sup>*</sup></code> be the result of <a href="#ExternMethods_ok">typing <code>externMethodPrototype<sup>*</sup></code>, under typing context <code>TC<sub>2</sub></code> for an extern object <code>nameIR</code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>extern</sub></code> be <code>EXTERN nameIR TC<sub>3</sub>.BLOCK.RDENV</code>.</p>
@@ -13751,13 +13770,13 @@ externFunctionDeclarationIR
 <p>Let <code>TC<sub>6</sub></code> be <code>$add_types(BLOCK, TC<sub>5</sub>, tid<sub>expl</sub><sup>*</sup>, TID tid<sub>expl</sub><sup>*</sup>)</code>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>7</sub></code> and <code>methodPrototypeIR<sub>constructor</sub><sup>*</sup></code> be the result of <a href="#ExternConstructors_ok">typing <code>methodPrototype<sub>constructor</sub><sup>*</sup></code>, under typing context <code>TC<sub>6</sub></code> for an extern object <code>nameIR</code></a>.</p>
+<p>Let <code>TC<sub>7</sub></code> and <code>externConstructorPrototypeIR<sup>*</sup></code> be the result of <a href="#ExternConstructors_ok">typing <code>externConstructorPrototype<sup>*</sup></code>, under typing context <code>TC<sub>6</sub></code> for an extern object <code>nameIR</code></a>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>8</sub></code> be <code>TC<sub>4</sub></code>[GLOBAL.CDENV = <code>TC<sub>7</sub>.GLOBAL.CDENV</code>].</p>
 </li>
 <li>
-<p>Let <code>externObjectDeclarationIR</code> be <code>annotationList EXTERN nameIR &lt; tid<sub>expl</sub><sup>*</sup> , [ ] &gt; { methodPrototypeIR<sub>constructor</sub><sup>*</sup> ++ methodPrototypeIR<sub>method</sub><sup>*</sup> }</code>.</p>
+<p>Let <code>externObjectDeclarationIR</code> be <code>annotationList EXTERN nameIR &lt; tid<sub>expl</sub><sup>*</sup> , &gt; { externConstructorPrototypeIR<sup>*</sup> externMethodPrototypeIR<sup>*</sup> }</code>.</p>
 </li>
 <li>
 <p>Result in the modified typing context <code>TC<sub>8</sub></code> and the typed declaration <code>externObjectDeclarationIR</code>.</p>
@@ -13773,24 +13792,22 @@ externFunctionDeclarationIR
 <div class="listingblock">
 <div class="content">
 <pre>rule Decl_inst/externObjectDeclarationIR/non-constructor:
-   GLOBAL IC_0 STO |- annotationList EXTERN nameIR `&lt;typeParameterListIR , typeParameterListIR_inferred&gt; `{methodPrototypeIR*} ==&gt; IC_2 STO eps
-    -- if (eps, methodPrototypeIR_method*) = $split_constructors_IR(methodPrototypeIR*)
-    -- Bind_methods: $empty_rdenv |- methodPrototypeIR_method* ==&gt; rdenv
+   GLOBAL IC_0 STO |- annotationList EXTERN nameIR `&lt;typeParameterListIR ,&gt; `{eps externMethodPrototypeIR*} ==&gt; IC_2 STO eps
+    -- Bind_methods: $empty_rdenv |- externMethodPrototypeIR* ==&gt; rdenv
     -- if externObjectTypeIR = EXTERN nameIR rdenv
     -- if polyTypeDefIR = externObjectTypeIR `&lt;typeParameterListIR , eps&gt;
     -- if IC_1 = $add_typedef_inst(GLOBAL, IC_0, nameIR, polyTypeDefIR)
     -- if cid = $cid_IR(nameIR, eps)
-    -- if constructor = EXTERN nameIR `&lt;typeParameterListIR&gt; `(eps) `{methodPrototypeIR_method*}
+    -- if constructor = EXTERN nameIR `&lt;typeParameterListIR&gt; `(eps) `{externMethodPrototypeIR*}
     -- if IC_2 = $add_constructor_inst(GLOBAL, IC_1, cid, constructor)
 
 rule Decl_inst/externObjectDeclarationIR/constructor:
-   GLOBAL IC_0 STO |- annotationList EXTERN nameIR `&lt;typeParameterListIR , typeParameterListIR_inferred&gt; `{methodPrototypeIR*} ==&gt; IC_2 STO eps
-    -- if (methodPrototypeIR_constructor*, methodPrototypeIR_method*) = $split_constructors_IR(methodPrototypeIR*)
-    -- Bind_methods: $empty_rdenv |- methodPrototypeIR_method* ==&gt; rdenv
+   GLOBAL IC_0 STO |- annotationList EXTERN nameIR `&lt;typeParameterListIR ,&gt; `{externConstructorPrototypeIR* externMethodPrototypeIR*} ==&gt; IC_2 STO eps
+    -- Bind_methods: $empty_rdenv |- externMethodPrototypeIR* ==&gt; rdenv
     -- if externObjectTypeIR = EXTERN nameIR rdenv
     -- if polyTypeDefIR = externObjectTypeIR `&lt;typeParameterListIR , eps&gt;
     -- if IC_1 = $add_typedef_inst(GLOBAL, IC_0, nameIR, polyTypeDefIR)
-    -- Bind_constructors: GLOBAL IC_1 typeParameterListIR methodPrototypeIR_method* |- methodPrototypeIR_constructor* ==&gt; IC_2</pre>
+    -- Bind_constructors: GLOBAL IC_1 typeParameterListIR externMethodPrototypeIR* |- externConstructorPrototypeIR* ==&gt; IC_2</pre>
 </div>
 </div>
 </div>
@@ -13801,18 +13818,15 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 </div>
 </div>
 <div class="paragraph">
-<p><code>GLOBAL IC<sub>0</sub> STO' |- annotationList EXTERN nameIR &lt; typeParameterListIR , typeParameterListIR<sub>inferred</sub> &gt; { methodPrototypeIR<sup>*</sup> } =&#8658; % % %</code></p>
+<p><code>GLOBAL IC<sub>0</sub> STO' |- annotationList EXTERN nameIR &lt; typeParameterListIR , &gt; { externConstructorPrototypeIR'<sup>*</sup> externMethodPrototypeIR<sup>*</sup> } =&#8658; % % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>(methodPrototypeIR'<sup>*</sup>, methodPrototypeIR<sub>method</sub><sup>*</sup>)</code> be <code>$split_constructors_IR(methodPrototypeIR<sup>*</sup>)</code>.</p>
+<p>Check that <code>[ ]</code> is equal to <code>externConstructorPrototypeIR'<sup>*</sup></code>.</p>
 </li>
 <li>
-<p>Check that <code>methodPrototypeIR'<sup>*</sup></code> matches pattern <code>[]</code>.</p>
-</li>
-<li>
-<p><a href="#Bind_methods"><code>$empty_rdenv |- methodPrototypeIR<sub>method</sub><sup>*</sup> =&#8658; rdenv</code></a>.</p>
+<p><a href="#Bind_methods"><code>$empty_rdenv |- externMethodPrototypeIR<sup>*</sup> =&#8658; rdenv</code></a>.</p>
 </li>
 <li>
 <p>Let <code>externObjectTypeIR</code> be <code>EXTERN nameIR rdenv</code>.</p>
@@ -13827,7 +13841,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <p>Let <code>cid</code> be <code>$cid_IR(nameIR, [ ])</code>.</p>
 </li>
 <li>
-<p>Let <code>constructor</code> be <code>EXTERN nameIR &lt; typeParameterListIR &gt; ( [ ] ) { methodPrototypeIR<sub>method</sub><sup>*</sup> }</code>.</p>
+<p>Let <code>constructor</code> be <code>EXTERN nameIR &lt; typeParameterListIR &gt; ( [ ] ) { externMethodPrototypeIR<sup>*</sup> }</code>.</p>
 </li>
 <li>
 <p>Let <code>IC<sub>2</sub></code> be <code>$add_constructor_inst(GLOBAL, IC<sub>1</sub>, cid, constructor)</code>.</p>
@@ -13836,7 +13850,10 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <p>Result in <code>IC<sub>2</sub></code>, <code>STO'</code>, and <code>?()</code>.</p>
 </li>
 <li>
-<p><a href="#Bind_methods"><code>$empty_rdenv |- methodPrototypeIR<sub>method</sub><sup>*</sup> =&#8658; rdenv</code></a>.</p>
+<p>Let <code>externConstructorPrototypeIR<sup>*</sup></code> be <code>externConstructorPrototypeIR'<sup>*</sup></code>.</p>
+</li>
+<li>
+<p><a href="#Bind_methods"><code>$empty_rdenv |- externMethodPrototypeIR<sup>*</sup> =&#8658; rdenv</code></a>.</p>
 </li>
 <li>
 <p>Let <code>externObjectTypeIR</code> be <code>EXTERN nameIR rdenv</code>.</p>
@@ -13848,7 +13865,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <p>Let <code>IC<sub>1</sub></code> be <code>$add_typedef_inst(GLOBAL, IC<sub>0</sub>, nameIR, polyTypeDefIR)</code>.</p>
 </li>
 <li>
-<p><a href="#Bind_constructors"><code>GLOBAL IC<sub>1</sub> typeParameterListIR methodPrototypeIR<sub>method</sub><sup>*</sup> |- methodPrototypeIR'<sup>*</sup> =&#8658; IC<sub>2</sub></code></a>.</p>
+<p><a href="#Bind_constructors"><code>GLOBAL IC<sub>1</sub> typeParameterListIR externMethodPrototypeIR<sup>*</sup> |- externConstructorPrototypeIR<sup>*</sup> =&#8658; IC<sub>2</sub></code></a>.</p>
 </li>
 <li>
 <p>Result in <code>IC<sub>2</sub></code>, <code>STO'</code>, and <code>?()</code>.</p>
@@ -28498,7 +28515,7 @@ in parsers and deparsers to access packet data.</p>
 <div id="footer">
 <div id="footer-text">
 Version v1.2.5<br>
-Last updated 2025-10-03 14:24:56 +0900
+Last updated 2025-10-03 14:27:49 +0900
 </div>
 </div>
 </body>
