@@ -8031,7 +8031,7 @@ syntax parameterIR =
    | annotationList direction typeIR nameIR constantInitializerOptIR
 
 ;; ../../../../spec-concrete/4-ir-syntax.watsup:45.1-46.35
-def $typeof_parameterIR((_annotationList direction typeIR nameIR constantInitializerOptIR'))
+def $type_of_parameterIR((_annotationList direction typeIR nameIR constantInitializerOptIR'))
 
 1. (Let constantInitializerIR?{constantInitializerIR <- constantInitializerIR?} be constantInitializerOptIR')
 
@@ -8052,9 +8052,9 @@ syntax parameterListIR = parameterIR*
 syntax constructorParameterIR = parameterIR
 
 ;; ../../../../spec-concrete/4-ir-syntax.watsup:60.1-62.35
-def $typeof_constructorParameterIR(constructorParameterIR)
+def $type_of_constructorParameterIR(constructorParameterIR)
 
-1. Return $typeof_parameterIR(constructorParameterIR)
+1. Return $type_of_parameterIR(constructorParameterIR)
 
 ;; ../../../../spec-concrete/4-ir-syntax.watsup:66.37-66.49
 syntax constructorParameterListIR = parameterIR*
@@ -8183,12 +8183,12 @@ syntax typedExpressionIR =
 syntax typedExpressionListIR = typedExpressionIR*
 
 ;; ../../../../spec-concrete/4-ir-syntax.watsup:205.1-206.35
-def $typeof_expression((_expressionIR # (( typeIR _ctk ))))
+def $type_of_expression((_expressionIR # (( typeIR _ctk ))))
 
 1. Return typeIR
 
 ;; ../../../../spec-concrete/4-ir-syntax.watsup:209.1-210.54
-def $ctkof_expression((_expressionIR # (( _typeIR ctk ))))
+def $ctk_of_expression((_expressionIR # (( _typeIR ctk ))))
 
 1. Return ctk
 
@@ -8251,7 +8251,7 @@ syntax typedLvalueIR =
    | lvalueIR #( typeIR )
 
 ;; ../../../../spec-concrete/4-ir-syntax.watsup:269.1-270.42
-def $typeof_lvalue((_lvalueIR #( typeIR )))
+def $type_of_lvalue((_lvalueIR #( typeIR )))
 
 1. Return typeIR
 
@@ -8751,7 +8751,7 @@ syntax flow =
    | cont
    | ret
 
-;; ../../../../spec-concrete/5.0-flow.watsup:9.1-10.56
+;; ../../../../spec-concrete/5.0-flow.watsup:9.1-10.58
 def $join_flow(flow'', flow''')
 
 1. If ((flow'' matches pattern `RET`)), then
@@ -8768,11 +8768,11 @@ def $join_flow(flow'', flow''')
 syntax varTypeIR = 
    | direction typeIR ctk value?
 
-;; ../../../../spec-concrete/5.01-env.watsup:12.16-12.34
-syntax frame = map<id, varTypeIR>
+;; ../../../../spec-concrete/5.01-env.watsup:12.20-12.38
+syntax typeFrame = map<id, varTypeIR>
 
-;; ../../../../spec-concrete/5.01-env.watsup:14.1-14.25
-def $empty_frame
+;; ../../../../spec-concrete/5.01-env.watsup:14.1-14.33
+def $empty_typeFrame
 
 1. Return $empty_map<id, varTypeIR>
 
@@ -9033,8 +9033,8 @@ def $find_non_overloaded'<V>(set<pair<rid, V>>', id)
 
       2. Return V_t_found*{V_t_found <- V_t_found*}
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:8.3-11.18
-syntax globalTypingLayer = {cdenv cdenv, tdenv tdenv, rdenv rdenv, frame frame}
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:8.3-11.22
+syntax globalTypingLayer = {constructor cdenv, type tdenv, routine rdenv, frame typeFrame}
 
 ;; ../../../../spec-concrete/5.02.1-typing-context.watsup:16.1-20.12
 syntax blockKind = 
@@ -9064,8 +9064,8 @@ def $is_package_blockKind(blockKind)
 
 1. Return (blockKind = (package))
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:35.3-39.18
-syntax blockTypingLayer = {id id, kind blockKind, tdenv tdenv, rdenv rdenv, frame frame}
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:35.3-39.22
+syntax blockTypingLayer = {id id, kind blockKind, type tdenv, routine rdenv, frame typeFrame}
 
 ;; ../../../../spec-concrete/5.02.1-typing-context.watsup:44.1-52.23
 syntax localKind = 
@@ -9175,8 +9175,8 @@ def $is_table_apply_method_localKind(localKind')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:105.3-108.20
-syntax localTypingLayer = {id id, kind localKind, tdenv tdenv, frames frame*}
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:105.3-108.24
+syntax localTypingLayer = {id id, kind localKind, type tdenv, frames typeFrame*}
 
 ;; ../../../../spec-concrete/5.02.1-typing-context.watsup:115.3-117.29
 syntax typingContext = {global globalTypingLayer, block blockTypingLayer, local localTypingLayer}
@@ -9184,11 +9184,11 @@ syntax typingContext = {global globalTypingLayer, block blockTypingLayer, local 
 ;; ../../../../spec-concrete/5.02.1-typing-context.watsup:125.1-125.41
 def $empty_typingContext
 
-1. (Let globalTypingLayer be {cdenv $empty_cdenv, tdenv $empty_tdenv, rdenv $empty_rdenv, frame $empty_frame})
+1. (Let globalTypingLayer be {constructor $empty_cdenv, type $empty_tdenv, routine $empty_rdenv, frame $empty_typeFrame})
 
-2. (Let blockTypingLayer be {id "", kind (), tdenv $empty_tdenv, rdenv $empty_rdenv, frame $empty_frame})
+2. (Let blockTypingLayer be {id "", kind (), type $empty_tdenv, routine $empty_rdenv, frame $empty_typeFrame})
 
-3. (Let localTypingLayer be {id "", kind (), tdenv $empty_tdenv, frames [$empty_frame]})
+3. (Let localTypingLayer be {id "", kind (), type $empty_tdenv, frames [$empty_typeFrame]})
 
 4. (Let TC be {global globalTypingLayer, block blockTypingLayer, local localTypingLayer})
 
@@ -9205,31 +9205,31 @@ def $bound(cursor, TC)
 
   2. Case (% matches pattern `BLOCK`)
 
-    1. Return $dom_map<tid, typeDefIR>(TC.block.tdenv)
+    1. Return $dom_map<tid, typeDefIR>(TC.block.type)
 
   3. Case (% matches pattern `LOCAL`)
 
     1. (Let bound_block be $bound((block), TC))
 
-    2. (Let bound_local be $dom_map<tid, typeDefIR>(TC.local.tdenv))
+    2. (Let bound_local be $dom_map<tid, typeDefIR>(TC.local.type))
 
     3. Return $union_set<tid>(bound_block, bound_local)
 
 ;; ../../../../spec-concrete/5.02.1-typing-context.watsup:165.1-165.42
 def $enter(TC)
 
-1. Return TC[local.frames = $empty_frame :: TC.local.frames]
+1. Return TC[local.frames = $empty_typeFrame :: TC.local.frames]
 
 ;; ../../../../spec-concrete/5.02.1-typing-context.watsup:169.1-169.41
 def $exit(TC)
 
-1. (Let frame*{frame <- frame*} be TC.local.frames)
+1. (Let typeFrame*{typeFrame <- typeFrame*} be TC.local.frames)
 
-2. If ((frame*{frame <- frame*} matches pattern _ :: _)), then
+2. If ((typeFrame*{typeFrame <- typeFrame*} matches pattern _ :: _)), then
 
-  1. (Let frame_h :: frame_t*{frame_t <- frame_t*} be frame*{frame <- frame*})
+  1. (Let typeFrame_h :: typeFrame_t*{typeFrame_t <- typeFrame_t*} be typeFrame*{typeFrame <- typeFrame*})
 
-  2. Return TC[local.frames = frame_t*{frame_t <- frame_t*}]
+  2. Return TC[local.frames = typeFrame_t*{typeFrame_t <- typeFrame_t*}]
 
 ;; ../../../../spec-concrete/5.02.1-typing-context.watsup:180.1-180.67
 def $add_var(cursor, TC, id, varTypeIR)
@@ -9238,51 +9238,51 @@ def $add_var(cursor, TC, id, varTypeIR)
 
   1. Case (% matches pattern `GLOBAL`)
 
-    1. (Let frame be TC.global.frame)
+    1. (Let typeFrame be TC.global.frame)
 
-    2. If (~$in_set<id>(id, $dom_map<id, varTypeIR>(frame))), then
+    2. If (~$in_set<id>(id, $dom_map<id, varTypeIR>(typeFrame))), then
 
       1. (Let (_direction typeIR _ctk _value?{_value <- _value?}) be varTypeIR)
 
       2. If (((id = "main") => $is_package_object_typeIR($canon(typeIR)))), then
 
-        1. (Let frame_update be $add_map<id, varTypeIR>(frame, id, varTypeIR))
+        1. (Let typeFrame_update be $add_map<id, varTypeIR>(typeFrame, id, varTypeIR))
 
-        2. (Let TC' be TC[global.frame = frame_update])
+        2. (Let TC' be TC[global.frame = typeFrame_update])
 
         3. Return TC'
 
   2. Case (% matches pattern `BLOCK`)
 
-    1. (Let frame be TC.block.frame)
+    1. (Let typeFrame be TC.block.frame)
 
-    2. If (~$in_set<id>(id, $dom_map<id, varTypeIR>(frame))), then
+    2. If (~$in_set<id>(id, $dom_map<id, varTypeIR>(typeFrame))), then
 
       1. If ((id =/= "main")), then
 
-        1. (Let frame_update be $add_map<id, varTypeIR>(TC.block.frame, id, varTypeIR))
+        1. (Let typeFrame_update be $add_map<id, varTypeIR>(TC.block.frame, id, varTypeIR))
 
-        2. (Let TC' be TC[block.frame = frame_update])
+        2. (Let TC' be TC[block.frame = typeFrame_update])
 
         3. Return TC'
 
   3. Case (% matches pattern `LOCAL`)
 
-    1. (Let frame'*{frame' <- frame'*} be TC.local.frames)
+    1. (Let typeFrame'*{typeFrame' <- typeFrame'*} be TC.local.frames)
 
-    2. If ((frame'*{frame' <- frame'*} matches pattern _ :: _)), then
+    2. If ((typeFrame'*{typeFrame' <- typeFrame'*} matches pattern _ :: _)), then
 
-      1. (Let frame_h :: frame_t*{frame_t <- frame_t*} be frame'*{frame' <- frame'*})
+      1. (Let typeFrame_h :: typeFrame_t*{typeFrame_t <- typeFrame_t*} be typeFrame'*{typeFrame' <- typeFrame'*})
 
-      2. If (~$in_set<id>(id, $dom_map<id, varTypeIR>(frame_h))), then
+      2. If (~$in_set<id>(id, $dom_map<id, varTypeIR>(typeFrame_h))), then
 
         1. If ((id =/= "main")), then
 
-          1. (Let frame_h_update be $add_map<id, varTypeIR>(frame_h, id, varTypeIR))
+          1. (Let typeFrame_h_update be $add_map<id, varTypeIR>(typeFrame_h, id, varTypeIR))
 
-          2. (Let frame*{frame <- frame*} be frame_h_update :: frame_t*{frame_t <- frame_t*})
+          2. (Let typeFrame*{typeFrame <- typeFrame*} be typeFrame_h_update :: typeFrame_t*{typeFrame_t <- typeFrame_t*})
 
-          3. (Let TC' be TC[local.frames = frame*{frame <- frame*}])
+          3. (Let TC' be TC[local.frames = typeFrame*{typeFrame <- typeFrame*}])
 
           4. Return TC'
 
@@ -9311,7 +9311,7 @@ def $add_vars(p, TC, id*{id <- id*}, varTypeIR*{varTypeIR <- varTypeIR*})
 
       4. Return TC''
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:211.1-211.75
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:214.1-214.75
 def $add_parameter(cursor, TC, (direction typeIR id value?{value <- value?}))
 
 1. Case analysis on direction
@@ -9348,7 +9348,7 @@ def $add_parameter(cursor, TC, (direction typeIR id value?{value <- value?}))
 
     3. Return TC'
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:212.1-212.77
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:215.1-215.77
 def $add_parameters(cursor, TC, parameterTypeIR*{parameterTypeIR <- parameterTypeIR*})
 
 1. Case analysis on parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}
@@ -9367,7 +9367,7 @@ def $add_parameters(cursor, TC, parameterTypeIR*{parameterTypeIR <- parameterTyp
 
     4. Return TC''
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:229.1-229.78
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:232.1-232.78
 def $add_constructorParameter(TC, (direction typeIR id value''?{value'' <- value''?}))
 
 1. Case analysis on value''?{value'' <- value''?}
@@ -9390,7 +9390,7 @@ def $add_constructorParameter(TC, (direction typeIR id value''?{value'' <- value
 
     4. Return TC'
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:230.1-230.80
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:233.1-233.80
 def $add_constructorParameters(TC, parameterTypeIR*{parameterTypeIR <- parameterTypeIR*})
 
 1. Case analysis on parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}
@@ -9409,48 +9409,48 @@ def $add_constructorParameters(TC, parameterTypeIR*{parameterTypeIR <- parameter
 
     4. Return TC''
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:246.1-246.69
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:249.1-249.69
 def $add_type(cursor, TC, tid, typeDefIR)
 
 1. Case analysis on cursor
 
   1. Case (% matches pattern `GLOBAL`)
 
-    1. (Let tdenv be TC.global.tdenv)
+    1. (Let tdenv be TC.global.type)
 
     2. If (~$in_set<tid>(tid, $dom_map<tid, typeDefIR>(tdenv))), then
 
       1. (Let tdenv_update be $add_map<tid, typeDefIR>(tdenv, tid, typeDefIR))
 
-      2. (Let TC' be TC[global.tdenv = tdenv_update])
+      2. (Let TC' be TC[global.type = tdenv_update])
 
       3. Return TC'
 
   2. Case (% matches pattern `BLOCK`)
 
-    1. (Let tdenv be TC.block.tdenv)
+    1. (Let tdenv be TC.block.type)
 
     2. If (~$in_set<tid>(tid, $dom_map<tid, typeDefIR>(tdenv))), then
 
       1. (Let tdenv_update be $add_map<tid, typeDefIR>(tdenv, tid, typeDefIR))
 
-      2. (Let TC' be TC[block.tdenv = tdenv_update])
+      2. (Let TC' be TC[block.type = tdenv_update])
 
       3. Return TC'
 
   3. Case (% matches pattern `LOCAL`)
 
-    1. (Let tdenv be TC.local.tdenv)
+    1. (Let tdenv be TC.local.type)
 
     2. If (~$in_set<tid>(tid, $dom_map<tid, typeDefIR>(tdenv))), then
 
       1. (Let tdenv_update be $add_map<tid, typeDefIR>(tdenv, tid, typeDefIR))
 
-      2. (Let TC' be TC[local.tdenv = tdenv_update])
+      2. (Let TC' be TC[local.type = tdenv_update])
 
       3. Return TC'
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:266.1-266.72
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:269.1-269.72
 def $add_types(p, TC, tid*{tid <- tid*}, typeDefIR*{typeDefIR <- typeDefIR*})
 
 1. Case analysis on tid*{tid <- tid*}
@@ -9475,43 +9475,43 @@ def $add_types(p, TC, tid*{tid <- tid*}, typeDefIR*{typeDefIR <- typeDefIR*})
 
       4. Return TC''
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:274.1-274.88
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:277.1-277.88
 def $add_routine_overload(cursor, TC, rid, routineTypeDefIR)
 
 1. Case analysis on cursor
 
   1. Case (% matches pattern `GLOBAL`)
 
-    1. (Let rdenv be TC.global.rdenv)
+    1. (Let rdenv be TC.global.routine)
 
     2. If (~$in_set<rid>(rid, $dom_map<rid, routineTypeDefIR>(rdenv))), then
 
       1. (Let rdenv_update be $add_map<rid, routineTypeDefIR>(rdenv, rid, routineTypeDefIR))
 
-      2. (Let TC' be TC[global.rdenv = rdenv_update])
+      2. (Let TC' be TC[global.routine = rdenv_update])
 
       3. Return TC'
 
   2. Case (% matches pattern `BLOCK`)
 
-    1. (Let rdenv be TC.block.rdenv)
+    1. (Let rdenv be TC.block.routine)
 
     2. If (~$in_set<rid>(rid, $dom_map<rid, routineTypeDefIR>(rdenv))), then
 
       1. (Let rdenv_update be $add_map<rid, routineTypeDefIR>(rdenv, rid, routineTypeDefIR))
 
-      2. (Let TC' be TC[block.rdenv = rdenv_update])
+      2. (Let TC' be TC[block.routine = rdenv_update])
 
       3. Return TC'
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:289.1-289.92
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:292.1-292.92
 def $add_routine_non_overload(cursor, TC, rid, routineTypeDefIR)
 
 1. Case analysis on cursor
 
   1. Case (% matches pattern `GLOBAL`)
 
-    1. (Let rdenv be TC.global.rdenv)
+    1. (Let rdenv be TC.global.routine)
 
     2. (Let (id ( _pid*{_pid <- _pid*} )) be rid)
 
@@ -9521,13 +9521,13 @@ def $add_routine_non_overload(cursor, TC, rid, routineTypeDefIR)
 
       1. (Let rdenv_update be $add_map<rid, routineTypeDefIR>(rdenv, rid, routineTypeDefIR))
 
-      2. (Let TC' be TC[global.rdenv = rdenv_update])
+      2. (Let TC' be TC[global.routine = rdenv_update])
 
       3. Return TC'
 
   2. Case (% matches pattern `BLOCK`)
 
-    1. (Let rdenv be TC.block.rdenv)
+    1. (Let rdenv be TC.block.routine)
 
     2. (Let (id ( _pid*{_pid <- _pid*} )) be rid)
 
@@ -9537,33 +9537,33 @@ def $add_routine_non_overload(cursor, TC, rid, routineTypeDefIR)
 
       1. (Let rdenv_update be $add_map<rid, routineTypeDefIR>(rdenv, rid, routineTypeDefIR))
 
-      2. (Let TC' be TC[block.rdenv = rdenv_update])
+      2. (Let TC' be TC[block.routine = rdenv_update])
 
       3. Return TC'
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:310.1-310.79
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:313.1-313.79
 def $add_constructor(TC, cid, constructorTypeDefIR)
 
-1. (Let cdenv be TC.global.cdenv)
+1. (Let cdenv be TC.global.constructor)
 
 2. If (~$in_set<cid>(cid, $dom_map<cid, constructorTypeDefIR>(cdenv))), then
 
   1. (Let cdenv_update be $add_map<cid, constructorTypeDefIR>(cdenv, cid, constructorTypeDefIR))
 
-  2. (Let TC' be TC[global.cdenv = cdenv_update])
+  2. (Let TC' be TC[global.constructor = cdenv_update])
 
   3. Return TC'
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:325.1-325.66
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:328.1-328.66
 def $find_var(p', TC, prefixedNameIR)
 
 1. If ((prefixedNameIR matches pattern `.%`)), then
 
   1. (Let (. id) be prefixedNameIR)
 
-  2. (Let frame be TC.global.frame)
+  2. (Let typeFrame be TC.global.frame)
 
-  3. Return $find_map<id, varTypeIR>(frame, id)
+  3. Return $find_map<id, varTypeIR>(typeFrame, id)
 
 2. Case analysis on p'
 
@@ -9573,9 +9573,9 @@ def $find_var(p', TC, prefixedNameIR)
 
       1. (Let (` id) be prefixedNameIR)
 
-      2. (Let frame be TC.global.frame)
+      2. (Let typeFrame be TC.global.frame)
 
-      3. Return $find_map<id, varTypeIR>(frame, id)
+      3. Return $find_map<id, varTypeIR>(typeFrame, id)
 
   2. Case (% matches pattern `BLOCK`)
 
@@ -9583,9 +9583,9 @@ def $find_var(p', TC, prefixedNameIR)
 
       1. (Let (` id) be prefixedNameIR)
 
-      2. (Let frame be TC.block.frame)
+      2. (Let typeFrame be TC.block.frame)
 
-      3. (Let varTypeIR'?{varTypeIR' <- varTypeIR'?} be $find_map<id, varTypeIR>(frame, id))
+      3. (Let varTypeIR'?{varTypeIR' <- varTypeIR'?} be $find_map<id, varTypeIR>(typeFrame, id))
 
       4. If ((varTypeIR'?{varTypeIR' <- varTypeIR'?} matches pattern (_))), then
 
@@ -9593,7 +9593,7 @@ def $find_var(p', TC, prefixedNameIR)
 
         2. Return ?(varTypeIR)
 
-      5. If ((?() = $find_map<id, varTypeIR>(frame, id))), then
+      5. If ((?() = $find_map<id, varTypeIR>(typeFrame, id))), then
 
         1. Return $find_var((global), TC, (` id))
 
@@ -9603,9 +9603,9 @@ def $find_var(p', TC, prefixedNameIR)
 
       1. (Let (` id) be prefixedNameIR)
 
-      2. (Let frame*{frame <- frame*} be TC.local.frames)
+      2. (Let typeFrame*{typeFrame <- typeFrame*} be TC.local.frames)
 
-      3. (Let varTypeIR'?{varTypeIR' <- varTypeIR'?} be $find_maps<id, varTypeIR>(frame*{frame <- frame*}, id))
+      3. (Let varTypeIR'?{varTypeIR' <- varTypeIR'?} be $find_maps<id, varTypeIR>(typeFrame*{typeFrame <- typeFrame*}, id))
 
       4. If ((varTypeIR'?{varTypeIR' <- varTypeIR'?} matches pattern (_))), then
 
@@ -9613,20 +9613,20 @@ def $find_var(p', TC, prefixedNameIR)
 
         2. Return ?(varTypeIR)
 
-      5. If ((?() = $find_maps<id, varTypeIR>(frame*{frame <- frame*}, id))), then
+      5. If ((?() = $find_maps<id, varTypeIR>(typeFrame*{typeFrame <- typeFrame*}, id))), then
 
         1. Return $find_var((block), TC, (` id))
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:346.1-346.63
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:349.1-349.63
 def $find_value(p', TC, prefixedNameIR)
 
 1. If ((prefixedNameIR matches pattern `.%`)), then
 
   1. (Let (. id) be prefixedNameIR)
 
-  2. (Let frame be TC.global.frame)
+  2. (Let typeFrame be TC.global.frame)
 
-  3. (Let varTypeIR?{varTypeIR <- varTypeIR?} be $find_map<id, varTypeIR>(frame, id))
+  3. (Let varTypeIR?{varTypeIR <- varTypeIR?} be $find_map<id, varTypeIR>(typeFrame, id))
 
   4. If ((varTypeIR?{varTypeIR <- varTypeIR?} matches pattern (_))), then
 
@@ -9646,9 +9646,9 @@ def $find_value(p', TC, prefixedNameIR)
 
       1. (Let (` id) be prefixedNameIR)
 
-      2. (Let frame be TC.global.frame)
+      2. (Let typeFrame be TC.global.frame)
 
-      3. (Let varTypeIR?{varTypeIR <- varTypeIR?} be $find_map<id, varTypeIR>(frame, id))
+      3. (Let varTypeIR?{varTypeIR <- varTypeIR?} be $find_map<id, varTypeIR>(typeFrame, id))
 
       4. If ((varTypeIR?{varTypeIR <- varTypeIR?} matches pattern (_))), then
 
@@ -9666,9 +9666,9 @@ def $find_value(p', TC, prefixedNameIR)
 
       1. (Let (` id) be prefixedNameIR)
 
-      2. (Let frame be TC.block.frame)
+      2. (Let typeFrame be TC.block.frame)
 
-      3. (Let varTypeIR?{varTypeIR <- varTypeIR?} be $find_map<id, varTypeIR>(frame, id))
+      3. (Let varTypeIR?{varTypeIR <- varTypeIR?} be $find_map<id, varTypeIR>(typeFrame, id))
 
       4. If ((varTypeIR?{varTypeIR <- varTypeIR?} matches pattern (_))), then
 
@@ -9680,7 +9680,7 @@ def $find_value(p', TC, prefixedNameIR)
 
           2. Return value
 
-      5. If ((?() = $find_map<id, varTypeIR>(frame, id))), then
+      5. If ((?() = $find_map<id, varTypeIR>(typeFrame, id))), then
 
         1. Return $find_value((global), TC, (` id))
 
@@ -9690,9 +9690,9 @@ def $find_value(p', TC, prefixedNameIR)
 
       1. (Let (` id) be prefixedNameIR)
 
-      2. (Let frame*{frame <- frame*} be TC.local.frames)
+      2. (Let typeFrame*{typeFrame <- typeFrame*} be TC.local.frames)
 
-      3. (Let varTypeIR?{varTypeIR <- varTypeIR?} be $find_maps<id, varTypeIR>(frame*{frame <- frame*}, id))
+      3. (Let varTypeIR?{varTypeIR <- varTypeIR?} be $find_maps<id, varTypeIR>(typeFrame*{typeFrame <- typeFrame*}, id))
 
       4. If ((varTypeIR?{varTypeIR <- varTypeIR?} matches pattern (_))), then
 
@@ -9704,18 +9704,18 @@ def $find_value(p', TC, prefixedNameIR)
 
           2. Return value
 
-      5. If ((?() = $find_maps<id, varTypeIR>(frame*{frame <- frame*}, id))), then
+      5. If ((?() = $find_maps<id, varTypeIR>(typeFrame*{typeFrame <- typeFrame*}, id))), then
 
         1. Return $find_value((block), TC, (` id))
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:369.1-369.67
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:372.1-372.67
 def $find_type(p', TC, prefixedNameIR)
 
 1. If ((prefixedNameIR matches pattern `.%`)), then
 
   1. (Let (. tid) be prefixedNameIR)
 
-  2. (Let tdenv be TC.global.tdenv)
+  2. (Let tdenv be TC.global.type)
 
   3. Return $find_map<tid, typeDefIR>(tdenv, tid)
 
@@ -9727,7 +9727,7 @@ def $find_type(p', TC, prefixedNameIR)
 
       1. (Let (` tid) be prefixedNameIR)
 
-      2. (Let tdenv be TC.global.tdenv)
+      2. (Let tdenv be TC.global.type)
 
       3. Return $find_map<tid, typeDefIR>(tdenv, tid)
 
@@ -9737,7 +9737,7 @@ def $find_type(p', TC, prefixedNameIR)
 
       1. (Let (` tid) be prefixedNameIR)
 
-      2. (Let tdenv be TC.block.tdenv)
+      2. (Let tdenv be TC.block.type)
 
       3. (Let typeDefIR'?{typeDefIR' <- typeDefIR'?} be $find_map<tid, typeDefIR>(tdenv, tid))
 
@@ -9757,7 +9757,7 @@ def $find_type(p', TC, prefixedNameIR)
 
       1. (Let (` tid) be prefixedNameIR)
 
-      2. (Let tdenv*{tdenv <- tdenv*} be [TC.local.tdenv])
+      2. (Let tdenv*{tdenv <- tdenv*} be [TC.local.type])
 
       3. (Let typeDefIR'?{typeDefIR' <- typeDefIR'?} be $find_maps<tid, typeDefIR>(tdenv*{tdenv <- tdenv*}, tid))
 
@@ -9771,12 +9771,12 @@ def $find_type(p', TC, prefixedNameIR)
 
         1. Return $find_type((block), TC, (` tid))
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:392.1-392.41
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:395.1-395.41
 def $ids_arguments(argumentIR*{argumentIR <- argumentIR*})
 
 1. Return $id_argument(argumentIR)*{argumentIR <- argumentIR*}
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:393.1-393.35
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:396.1-396.35
 def $id_argument(argumentIR)
 
 1. If ((argumentIR has type typedExpressionIR)), then
@@ -9803,7 +9803,7 @@ def $id_argument(argumentIR)
 
     1. Return ?()
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:401.1-402.34
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:404.1-405.34
 def $find_routine_overloaded(cursor, TC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*})
 
 1. Case analysis on cursor
@@ -9816,7 +9816,7 @@ def $find_routine_overloaded(cursor, TC, prefixedNameIR, argumentIR*{argumentIR 
 
         1. (Let (. id) be prefixedNameIR)
 
-        2. (Let rdenv be TC.global.rdenv)
+        2. (Let rdenv be TC.global.routine)
 
         3. (Let id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*} be $ids_arguments(argumentIR*{argumentIR <- argumentIR*}))
 
@@ -9826,7 +9826,7 @@ def $find_routine_overloaded(cursor, TC, prefixedNameIR, argumentIR*{argumentIR 
 
         1. (Let (` id) be prefixedNameIR)
 
-        2. (Let rdenv be TC.global.rdenv)
+        2. (Let rdenv be TC.global.routine)
 
         3. (Let id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*} be $ids_arguments(argumentIR*{argumentIR <- argumentIR*}))
 
@@ -9838,7 +9838,7 @@ def $find_routine_overloaded(cursor, TC, prefixedNameIR, argumentIR*{argumentIR 
 
       1. (Let (` id) be prefixedNameIR)
 
-      2. (Let rdenv be TC.block.rdenv)
+      2. (Let rdenv be TC.block.routine)
 
       3. (Let id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*} be $ids_arguments(argumentIR*{argumentIR <- argumentIR*}))
 
@@ -9862,14 +9862,14 @@ def $find_routine_overloaded(cursor, TC, prefixedNameIR, argumentIR*{argumentIR 
 
       2. Return $find_routine_overloaded((block), TC, (` id), argumentIR*{argumentIR <- argumentIR*})
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:427.1-428.22
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:430.1-431.22
 def $find_routine_non_overloaded(p', TC, prefixedNameIR)
 
 1. If ((prefixedNameIR matches pattern `.%`)), then
 
   1. (Let (. id) be prefixedNameIR)
 
-  2. Return $find_non_overloaded<routineTypeDefIR>(TC.global.rdenv, id)
+  2. Return $find_non_overloaded<routineTypeDefIR>(TC.global.routine, id)
 
 2. Case analysis on p'
 
@@ -9879,7 +9879,7 @@ def $find_routine_non_overloaded(p', TC, prefixedNameIR)
 
       1. (Let (` id) be prefixedNameIR)
 
-      2. Return $find_non_overloaded<routineTypeDefIR>(TC.global.rdenv, id)
+      2. Return $find_non_overloaded<routineTypeDefIR>(TC.global.routine, id)
 
   2. Case (% matches pattern `BLOCK`)
 
@@ -9887,7 +9887,7 @@ def $find_routine_non_overloaded(p', TC, prefixedNameIR)
 
       1. (Let (` id) be prefixedNameIR)
 
-      2. (Let routineTypeDefIR'?{routineTypeDefIR' <- routineTypeDefIR'?} be $find_non_overloaded<routineTypeDefIR>(TC.block.rdenv, id))
+      2. (Let routineTypeDefIR'?{routineTypeDefIR' <- routineTypeDefIR'?} be $find_non_overloaded<routineTypeDefIR>(TC.block.routine, id))
 
       3. If ((routineTypeDefIR'?{routineTypeDefIR' <- routineTypeDefIR'?} matches pattern (_))), then
 
@@ -9895,7 +9895,7 @@ def $find_routine_non_overloaded(p', TC, prefixedNameIR)
 
         2. Return ?(routineTypeDefIR)
 
-      4. If ((?() = $find_non_overloaded<routineTypeDefIR>(TC.block.rdenv, id))), then
+      4. If ((?() = $find_non_overloaded<routineTypeDefIR>(TC.block.routine, id))), then
 
         1. Return $find_routine_non_overloaded((global), TC, (` id))
 
@@ -9907,7 +9907,7 @@ def $find_routine_non_overloaded(p', TC, prefixedNameIR)
 
       2. Return $find_routine_non_overloaded((block), TC, (` id))
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:446.1-447.38
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:449.1-450.38
 def $find_constructor_overloaded(TC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*})
 
 1. Case analysis on prefixedNameIR
@@ -9916,7 +9916,7 @@ def $find_constructor_overloaded(TC, prefixedNameIR, argumentIR*{argumentIR <- a
 
     1. (Let (. id) be prefixedNameIR)
 
-    2. (Let cdenv be TC.global.cdenv)
+    2. (Let cdenv be TC.global.constructor)
 
     3. (Let id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*} be $ids_arguments(argumentIR*{argumentIR <- argumentIR*}))
 
@@ -9926,13 +9926,13 @@ def $find_constructor_overloaded(TC, prefixedNameIR, argumentIR*{argumentIR <- a
 
     1. (Let (` id) be prefixedNameIR)
 
-    2. (Let cdenv be TC.global.cdenv)
+    2. (Let cdenv be TC.global.constructor)
 
     3. (Let id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*} be $ids_arguments(argumentIR*{argumentIR <- argumentIR*}))
 
     4. Return $find_overloaded<constructorTypeDefIR>(cdenv, id, id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*})
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:460.1-460.47
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:463.1-463.47
 def $find_return_type(TC)
 
 1. (Let localKind be TC.local.kind)
@@ -10883,7 +10883,7 @@ relation ConstructorParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR
 ;; ../../../../spec-concrete/5.03-wellformed.watsup:45.1-48.72
 relation ConstructorType_wf: bound |- (constructor( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_object)
 
-1. Group externtype: bound |- (constructor( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_object)
+1. Group externObjectTypeIR: bound |- (constructor( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_object)
 
   1. If (ConstructorParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}) holds, then
 
@@ -10893,7 +10893,7 @@ relation ConstructorType_wf: bound |- (constructor( parameterTypeIR*{parameterTy
 
       2. If ((typeIR' has type externObjectTypeIR)), then
 
-        1. (Let (extern _tid _map<rid, routineTypeDefIR>) be (typeIR' as externObjectTypeIR))
+        1. (Let externObjectTypeIR be (typeIR' as externObjectTypeIR))
 
         2. (Let (_direction typeIR _id _value?{_value <- _value?}) be parameterTypeIR)*{_direction <- _direction*, _id <- _id*, _value? <- _value?*, parameterTypeIR <- parameterTypeIR*, typeIR <- typeIR*}
 
@@ -10901,7 +10901,7 @@ relation ConstructorType_wf: bound |- (constructor( parameterTypeIR*{parameterTy
 
           1. The relation holds
 
-2. Group parsertype: bound |- (constructor( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_object)
+2. Group parserObjectTypeIR: bound |- (constructor( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_object)
 
   1. If (ConstructorParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}) holds, then
 
@@ -10911,7 +10911,7 @@ relation ConstructorType_wf: bound |- (constructor( parameterTypeIR*{parameterTy
 
       2. If ((typeIR' has type parserObjectTypeIR)), then
 
-        1. (Let (parser( _parameterTypeIR*{_parameterTypeIR <- _parameterTypeIR*} )) be (typeIR' as parserObjectTypeIR))
+        1. (Let parserObjectTypeIR be (typeIR' as parserObjectTypeIR))
 
         2. (Let (_direction typeIR _id _value?{_value <- _value?}) be parameterTypeIR)*{_direction <- _direction*, _id <- _id*, _value? <- _value?*, parameterTypeIR <- parameterTypeIR*, typeIR <- typeIR*}
 
@@ -10919,7 +10919,7 @@ relation ConstructorType_wf: bound |- (constructor( parameterTypeIR*{parameterTy
 
           1. The relation holds
 
-3. Group controltype: bound |- (constructor( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_object)
+3. Group controlObjectTypeIR: bound |- (constructor( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_object)
 
   1. If (ConstructorParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}) holds, then
 
@@ -10929,7 +10929,7 @@ relation ConstructorType_wf: bound |- (constructor( parameterTypeIR*{parameterTy
 
       2. If ((typeIR' has type controlObjectTypeIR)), then
 
-        1. (Let (control( _parameterTypeIR*{_parameterTypeIR <- _parameterTypeIR*} )) be (typeIR' as controlObjectTypeIR))
+        1. (Let controlObjectTypeIR be (typeIR' as controlObjectTypeIR))
 
         2. (Let (_direction typeIR _id _value?{_value <- _value?}) be parameterTypeIR)*{_direction <- _direction*, _id <- _id*, _value? <- _value?*, parameterTypeIR <- parameterTypeIR*, typeIR <- typeIR*}
 
@@ -10937,7 +10937,7 @@ relation ConstructorType_wf: bound |- (constructor( parameterTypeIR*{parameterTy
 
           1. The relation holds
 
-4. Group packagetype: bound |- (constructor( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_object)
+4. Group packageObjectTypeIR: bound |- (constructor( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_object)
 
   1. If (ConstructorParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}) holds, then
 
@@ -10947,7 +10947,7 @@ relation ConstructorType_wf: bound |- (constructor( parameterTypeIR*{parameterTy
 
       2. If ((typeIR' has type packageObjectTypeIR)), then
 
-        1. (Let (package< _typeIR*{_typeIR <- _typeIR*} >) be (typeIR' as packageObjectTypeIR))
+        1. (Let packageObjectTypeIR be (typeIR' as packageObjectTypeIR))
 
         2. (Let (_direction typeIR _id _value?{_value <- _value?}) be parameterTypeIR)*{_direction <- _direction*, _id <- _id*, _value? <- _value?*, parameterTypeIR <- parameterTypeIR*, typeIR <- typeIR*}
 
@@ -14379,9 +14379,9 @@ relation Expr_ok: p TC |- expression''' : %
 
             1. (Let ?(typedExpressionIR_reduced) be typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-            2. (Let typeIR_reduced be $typeof_expression(typedExpressionIR_reduced))
+            2. (Let typeIR_reduced be $type_of_expression(typedExpressionIR_reduced))
 
-            3. (Let ctk_reduced be $ctkof_expression(typedExpressionIR_reduced))
+            3. (Let ctk_reduced be $ctk_of_expression(typedExpressionIR_reduced))
 
             4. (Let expressionNoteIR be (( typeIR_reduced ctk_reduced )))
 
@@ -14399,9 +14399,9 @@ relation Expr_ok: p TC |- expression''' : %
 
             1. (Let ?(typedExpressionIR_reduced) be typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-            2. (Let typeIR_reduced be $typeof_expression(typedExpressionIR_reduced))
+            2. (Let typeIR_reduced be $type_of_expression(typedExpressionIR_reduced))
 
-            3. (Let ctk_reduced be $ctkof_expression(typedExpressionIR_reduced))
+            3. (Let ctk_reduced be $ctk_of_expression(typedExpressionIR_reduced))
 
             4. (Let expressionNoteIR be (( typeIR_reduced ctk_reduced )))
 
@@ -14421,9 +14421,9 @@ relation Expr_ok: p TC |- expression''' : %
 
             1. (Let ?(typedExpressionIR_reduced) be typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-            2. (Let typeIR_reduced be $typeof_expression(typedExpressionIR_reduced))
+            2. (Let typeIR_reduced be $type_of_expression(typedExpressionIR_reduced))
 
-            3. (Let ctk_reduced be $ctkof_expression(typedExpressionIR_reduced))
+            3. (Let ctk_reduced be $ctk_of_expression(typedExpressionIR_reduced))
 
             4. (Let expressionNoteIR be (( typeIR_reduced ctk_reduced )))
 
@@ -14439,9 +14439,9 @@ relation Expr_ok: p TC |- expression''' : %
 
             1. (Let ?(typedExpressionIR_reduced) be typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-            2. (Let typeIR_reduced be $typeof_expression(typedExpressionIR_reduced))
+            2. (Let typeIR_reduced be $type_of_expression(typedExpressionIR_reduced))
 
-            3. (Let ctk_reduced be $ctkof_expression(typedExpressionIR_reduced))
+            3. (Let ctk_reduced be $ctk_of_expression(typedExpressionIR_reduced))
 
             4. (Let expressionNoteIR be (( typeIR_reduced ctk_reduced )))
 
@@ -14471,11 +14471,11 @@ relation Expr_ok: p TC |- expression''' : %
 
             1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?})
 
-            2. (Let typeIR_reduced be $typeof_expression(typedExpressionIR_l_reduced))
+            2. (Let typeIR_reduced be $type_of_expression(typedExpressionIR_l_reduced))
 
-            3. (Let ctk_l_reduced be $ctkof_expression(typedExpressionIR_l_reduced))
+            3. (Let ctk_l_reduced be $ctk_of_expression(typedExpressionIR_l_reduced))
 
-            4. (Let ctk_r_reduced be $ctkof_expression(typedExpressionIR_r_reduced))
+            4. (Let ctk_r_reduced be $ctk_of_expression(typedExpressionIR_r_reduced))
 
             5. (Let ctk_reduced be $join_ctk(ctk_l_reduced, ctk_r_reduced))
 
@@ -14503,11 +14503,11 @@ relation Expr_ok: p TC |- expression''' : %
 
             1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?})
 
-            2. (Let typeIR_reduced be $typeof_expression(typedExpressionIR_l_reduced))
+            2. (Let typeIR_reduced be $type_of_expression(typedExpressionIR_l_reduced))
 
-            3. (Let ctk_l_reduced be $ctkof_expression(typedExpressionIR_l_reduced))
+            3. (Let ctk_l_reduced be $ctk_of_expression(typedExpressionIR_l_reduced))
 
-            4. (Let ctk_r_reduced be $ctkof_expression(typedExpressionIR_r_reduced))
+            4. (Let ctk_r_reduced be $ctk_of_expression(typedExpressionIR_r_reduced))
 
             5. (Let ctk_reduced be $join_ctk(ctk_l_reduced, ctk_r_reduced))
 
@@ -14535,11 +14535,11 @@ relation Expr_ok: p TC |- expression''' : %
 
             1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?})
 
-            2. (Let typeIR_reduced be $typeof_expression(typedExpressionIR_l_reduced))
+            2. (Let typeIR_reduced be $type_of_expression(typedExpressionIR_l_reduced))
 
-            3. (Let ctk_l_reduced be $ctkof_expression(typedExpressionIR_l_reduced))
+            3. (Let ctk_l_reduced be $ctk_of_expression(typedExpressionIR_l_reduced))
 
-            4. (Let ctk_r_reduced be $ctkof_expression(typedExpressionIR_r_reduced))
+            4. (Let ctk_r_reduced be $ctk_of_expression(typedExpressionIR_r_reduced))
 
             5. Case analysis on (ctk_r_reduced matches pattern `LCTK`)
 
@@ -14583,13 +14583,13 @@ relation Expr_ok: p TC |- expression''' : %
 
           1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?})
 
-          2. (Let typeIR_l_reduced be $typeof_expression(typedExpressionIR_l_reduced))
+          2. (Let typeIR_l_reduced be $type_of_expression(typedExpressionIR_l_reduced))
 
-          3. (Let ctk_l_reduced be $ctkof_expression(typedExpressionIR_l_reduced))
+          3. (Let ctk_l_reduced be $ctk_of_expression(typedExpressionIR_l_reduced))
 
-          4. (Let typeIR_r_reduced be $typeof_expression(typedExpressionIR_r_reduced))
+          4. (Let typeIR_r_reduced be $type_of_expression(typedExpressionIR_r_reduced))
 
-          5. (Let ctk_r_reduced be $ctkof_expression(typedExpressionIR_r_reduced))
+          5. (Let ctk_r_reduced be $ctk_of_expression(typedExpressionIR_r_reduced))
 
           6. If ($is_fixed_bit_typeIR(typeIR_r_reduced)), then
 
@@ -14631,11 +14631,11 @@ relation Expr_ok: p TC |- expression''' : %
 
           1. (Let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) be (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?})
 
-          2. (Let typeIR_cast be $typeof_expression(typedExpressionIR_l_cast))
+          2. (Let typeIR_cast be $type_of_expression(typedExpressionIR_l_cast))
 
-          3. (Let ctk_l_cast be $ctkof_expression(typedExpressionIR_l_cast))
+          3. (Let ctk_l_cast be $ctk_of_expression(typedExpressionIR_l_cast))
 
-          4. (Let ctk_r_cast be $ctkof_expression(typedExpressionIR_r_cast))
+          4. (Let ctk_r_cast be $ctk_of_expression(typedExpressionIR_r_cast))
 
           5. If ($is_equalable_typeIR(typeIR_cast)), then
 
@@ -14665,11 +14665,11 @@ relation Expr_ok: p TC |- expression''' : %
 
             1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?})
 
-            2. (Let typeIR_reduced be $typeof_expression(typedExpressionIR_l_reduced))
+            2. (Let typeIR_reduced be $type_of_expression(typedExpressionIR_l_reduced))
 
-            3. (Let ctk_l_reduced be $ctkof_expression(typedExpressionIR_l_reduced))
+            3. (Let ctk_l_reduced be $ctk_of_expression(typedExpressionIR_l_reduced))
 
-            4. (Let ctk_r_reduced be $ctkof_expression(typedExpressionIR_r_reduced))
+            4. (Let ctk_r_reduced be $ctk_of_expression(typedExpressionIR_r_reduced))
 
             5. (Let ctk_reduced be $join_ctk(ctk_l_reduced, ctk_r_reduced))
 
@@ -14697,11 +14697,11 @@ relation Expr_ok: p TC |- expression''' : %
 
             1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?})
 
-            2. (Let typeIR_reduced be $typeof_expression(typedExpressionIR_l_reduced))
+            2. (Let typeIR_reduced be $type_of_expression(typedExpressionIR_l_reduced))
 
-            3. (Let ctk_l_reduced be $ctkof_expression(typedExpressionIR_l_reduced))
+            3. (Let ctk_l_reduced be $ctk_of_expression(typedExpressionIR_l_reduced))
 
-            4. (Let ctk_r_reduced be $ctkof_expression(typedExpressionIR_r_reduced))
+            4. (Let ctk_r_reduced be $ctk_of_expression(typedExpressionIR_r_reduced))
 
             5. (Let ctk_reduced be $join_ctk(ctk_l_reduced, ctk_r_reduced))
 
@@ -14723,13 +14723,13 @@ relation Expr_ok: p TC |- expression''' : %
 
           1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?})
 
-          2. (Let typeIR_l_reduced be $typeof_expression(typedExpressionIR_l_reduced))
+          2. (Let typeIR_l_reduced be $type_of_expression(typedExpressionIR_l_reduced))
 
-          3. (Let ctk_l_reduced be $ctkof_expression(typedExpressionIR_l_reduced))
+          3. (Let ctk_l_reduced be $ctk_of_expression(typedExpressionIR_l_reduced))
 
-          4. (Let typeIR_r_reduced be $typeof_expression(typedExpressionIR_r_reduced))
+          4. (Let typeIR_r_reduced be $type_of_expression(typedExpressionIR_r_reduced))
 
-          5. (Let ctk_r_reduced be $ctkof_expression(typedExpressionIR_r_reduced))
+          5. (Let ctk_r_reduced be $ctk_of_expression(typedExpressionIR_r_reduced))
 
           6. (Let typeIR?{typeIR <- typeIR?} be $result_concat(typeIR_l_reduced, typeIR_r_reduced))
 
@@ -14763,11 +14763,11 @@ relation Expr_ok: p TC |- expression''' : %
 
             1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?})
 
-            2. (Let typeIR_reduced be $typeof_expression(typedExpressionIR_l_reduced))
+            2. (Let typeIR_reduced be $type_of_expression(typedExpressionIR_l_reduced))
 
-            3. (Let ctk_l_reduced be $ctkof_expression(typedExpressionIR_l_reduced))
+            3. (Let ctk_l_reduced be $ctk_of_expression(typedExpressionIR_l_reduced))
 
-            4. (Let ctk_r_reduced be $ctkof_expression(typedExpressionIR_r_reduced))
+            4. (Let ctk_r_reduced be $ctk_of_expression(typedExpressionIR_r_reduced))
 
             5. (Let ctk_reduced be $join_ctk(ctk_l_reduced, ctk_r_reduced))
 
@@ -14801,11 +14801,11 @@ relation Expr_ok: p TC |- expression''' : %
 
             1. (Let ?((typedExpressionIR_true_cast, typedExpressionIR_false_cast)) be (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?})
 
-            2. (Let typeIR_cast be $typeof_expression(typedExpressionIR_true_cast))
+            2. (Let typeIR_cast be $type_of_expression(typedExpressionIR_true_cast))
 
-            3. (Let ctk_true_cast be $ctkof_expression(typedExpressionIR_true_cast))
+            3. (Let ctk_true_cast be $ctk_of_expression(typedExpressionIR_true_cast))
 
-            4. (Let ctk_false_cast be $ctkof_expression(typedExpressionIR_false_cast))
+            4. (Let ctk_false_cast be $ctk_of_expression(typedExpressionIR_false_cast))
 
             5. If (($is_arbitrary_int_typeIR(typeIR_cast) => (ctk_cond =/= (dyn)))), then
 
@@ -14829,9 +14829,9 @@ relation Expr_ok: p TC |- expression''' : %
 
           1. (Expr_ok: p TC |- expression : typedExpressionIR)
 
-          2. (Let typeIR be $typeof_expression(typedExpressionIR))
+          2. (Let typeIR be $type_of_expression(typedExpressionIR))
 
-          3. (Let ctk be $ctkof_expression(typedExpressionIR))
+          3. (Let ctk be $ctk_of_expression(typedExpressionIR))
 
           4. If (Sub_expl: typeIR <: typeIR_t) holds, then
 
@@ -14875,9 +14875,9 @@ relation Expr_ok: p TC |- expression''' : %
 
                     1. (Expr_ok: p TC |- expression_e : typedExpressionIR_e)*{expression_e <- expression_e*, typedExpressionIR_e <- typedExpressionIR_e*}
 
-                    2. (Let typeIR_e be $typeof_expression(typedExpressionIR_e))*{typeIR_e <- typeIR_e*, typedExpressionIR_e <- typedExpressionIR_e*}
+                    2. (Let typeIR_e be $type_of_expression(typedExpressionIR_e))*{typeIR_e <- typeIR_e*, typedExpressionIR_e <- typedExpressionIR_e*}
 
-                    3. (Let ctk_e be $ctkof_expression(typedExpressionIR_e))*{ctk_e <- ctk_e*, typedExpressionIR_e <- typedExpressionIR_e*}
+                    3. (Let ctk_e be $ctk_of_expression(typedExpressionIR_e))*{ctk_e <- ctk_e*, typedExpressionIR_e <- typedExpressionIR_e*}
 
                     4. (Let typeIR be ((seq< typeIR_e*{typeIR_e <- typeIR_e*} >) as typeIR))
 
@@ -14905,9 +14905,9 @@ relation Expr_ok: p TC |- expression''' : %
 
                         1. (Expr_ok: p TC |- expression_e_h : typedExpressionIR_e_h)*{expression_e_h <- expression_e_h*, typedExpressionIR_e_h <- typedExpressionIR_e_h*}
 
-                        2. (Let typeIR_e_h be $typeof_expression(typedExpressionIR_e_h))*{typeIR_e_h <- typeIR_e_h*, typedExpressionIR_e_h <- typedExpressionIR_e_h*}
+                        2. (Let typeIR_e_h be $type_of_expression(typedExpressionIR_e_h))*{typeIR_e_h <- typeIR_e_h*, typedExpressionIR_e_h <- typedExpressionIR_e_h*}
 
-                        3. (Let ctk_e_h be $ctkof_expression(typedExpressionIR_e_h))*{ctk_e_h <- ctk_e_h*, typedExpressionIR_e_h <- typedExpressionIR_e_h*}
+                        3. (Let ctk_e_h be $ctk_of_expression(typedExpressionIR_e_h))*{ctk_e_h <- ctk_e_h*, typedExpressionIR_e_h <- typedExpressionIR_e_h*}
 
                         4. (Let typeIR be ((seq< typeIR_e_h*{typeIR_e_h <- typeIR_e_h*} ,...>) as typeIR))
 
@@ -14933,9 +14933,9 @@ relation Expr_ok: p TC |- expression''' : %
 
                   3. (Expr_ok: p TC |- expression_f : typedExpressionIR_f)
 
-                  4. (Let typeIR_f be $typeof_expression(typedExpressionIR_f))
+                  4. (Let typeIR_f be $type_of_expression(typedExpressionIR_f))
 
-                  5. (Let ctk_f be $ctkof_expression(typedExpressionIR_f))
+                  5. (Let ctk_f be $ctk_of_expression(typedExpressionIR_f))
 
                   6. (Let typeIR be ((record{ [(typeIR_f nameIR_f ;)] }) as typeIR))
 
@@ -14951,9 +14951,9 @@ relation Expr_ok: p TC |- expression''' : %
 
                   3. (Expr_ok: p TC |- expression_f : typedExpressionIR_f)
 
-                  4. (Let typeIR_f be $typeof_expression(typedExpressionIR_f))
+                  4. (Let typeIR_f be $type_of_expression(typedExpressionIR_f))
 
-                  5. (Let ctk_f be $ctkof_expression(typedExpressionIR_f))
+                  5. (Let ctk_f be $ctk_of_expression(typedExpressionIR_f))
 
                   6. (Let typeIR be ((record{ [(typeIR_f nameIR_f ;)] ,...}) as typeIR))
 
@@ -14975,9 +14975,9 @@ relation Expr_ok: p TC |- expression''' : %
 
                   6. (Expr_ok: p TC |- expression_f : typedExpressionIR_f)*{expression_f <- expression_f*, typedExpressionIR_f <- typedExpressionIR_f*}
 
-                  7. (Let typeIR_f be $typeof_expression(typedExpressionIR_f))*{typeIR_f <- typeIR_f*, typedExpressionIR_f <- typedExpressionIR_f*}
+                  7. (Let typeIR_f be $type_of_expression(typedExpressionIR_f))*{typeIR_f <- typeIR_f*, typedExpressionIR_f <- typedExpressionIR_f*}
 
-                  8. (Let ctk_f be $ctkof_expression(typedExpressionIR_f))*{ctk_f <- ctk_f*, typedExpressionIR_f <- typedExpressionIR_f*}
+                  8. (Let ctk_f be $ctk_of_expression(typedExpressionIR_f))*{ctk_f <- ctk_f*, typedExpressionIR_f <- typedExpressionIR_f*}
 
                   9. (Let typeIR be ((record{ (typeIR_f nameIR_f ;)*{nameIR_f <- nameIR_f*, typeIR_f <- typeIR_f*} }) as typeIR))
 
@@ -15001,9 +15001,9 @@ relation Expr_ok: p TC |- expression''' : %
 
                   6. (Expr_ok: p TC |- expression_f : typedExpressionIR_f)*{expression_f <- expression_f*, typedExpressionIR_f <- typedExpressionIR_f*}
 
-                  7. (Let typeIR_f be $typeof_expression(typedExpressionIR_f))*{typeIR_f <- typeIR_f*, typedExpressionIR_f <- typedExpressionIR_f*}
+                  7. (Let typeIR_f be $type_of_expression(typedExpressionIR_f))*{typeIR_f <- typeIR_f*, typedExpressionIR_f <- typedExpressionIR_f*}
 
-                  8. (Let ctk_f be $ctkof_expression(typedExpressionIR_f))*{ctk_f <- ctk_f*, typedExpressionIR_f <- typedExpressionIR_f*}
+                  8. (Let ctk_f be $ctk_of_expression(typedExpressionIR_f))*{ctk_f <- ctk_f*, typedExpressionIR_f <- typedExpressionIR_f*}
 
                   9. (Let typeIR be ((record{ (typeIR_f nameIR_f ;)*{nameIR_f <- nameIR_f*, typeIR_f <- typeIR_f*} ,...}) as typeIR))
 
@@ -15095,7 +15095,7 @@ relation Expr_ok: p TC |- expression''' : %
 
             1. (Expr_ok: p TC |- expression_base : typedExpressionIR_base)
 
-            2. (Let typeIR_base be $typeof_expression(typedExpressionIR_base))
+            2. (Let typeIR_base be $type_of_expression(typedExpressionIR_base))
 
             3. (Let typeIR' be $canon(typeIR_base))
 
@@ -15113,7 +15113,7 @@ relation Expr_ok: p TC |- expression''' : %
 
               1. (Expr_ok: p TC |- expression_base : typedExpressionIR_base)
 
-              2. (Let typeIR_base be $typeof_expression(typedExpressionIR_base))
+              2. (Let typeIR_base be $type_of_expression(typedExpressionIR_base))
 
               3. (Let typeIR' be $canon(typeIR_base))
 
@@ -15129,7 +15129,7 @@ relation Expr_ok: p TC |- expression''' : %
 
               1. (Expr_ok: p TC |- expression_base : typedExpressionIR_base)
 
-              2. (Let typeIR_base be $typeof_expression(typedExpressionIR_base))
+              2. (Let typeIR_base be $type_of_expression(typedExpressionIR_base))
 
               3. (Let typeIR' be $canon(typeIR_base))
 
@@ -15147,7 +15147,7 @@ relation Expr_ok: p TC |- expression''' : %
 
               1. (Expr_ok: p TC |- expression_base : typedExpressionIR_base)
 
-              2. (Let typeIR_base be $typeof_expression(typedExpressionIR_base))
+              2. (Let typeIR_base be $type_of_expression(typedExpressionIR_base))
 
               3. (Let typeIR' be $canon(typeIR_base))
 
@@ -15163,7 +15163,7 @@ relation Expr_ok: p TC |- expression''' : %
 
               1. (Expr_ok: p TC |- expression_base : typedExpressionIR_base)
 
-              2. (Let typeIR_base be $typeof_expression(typedExpressionIR_base))
+              2. (Let typeIR_base be $type_of_expression(typedExpressionIR_base))
 
               3. (Let typeIR' be $canon(typeIR_base))
 
@@ -15181,7 +15181,7 @@ relation Expr_ok: p TC |- expression''' : %
 
               1. (Expr_ok: p TC |- expression_base : typedExpressionIR_base)
 
-              2. (Let typeIR_base be $typeof_expression(typedExpressionIR_base))
+              2. (Let typeIR_base be $type_of_expression(typedExpressionIR_base))
 
               3. (Let typeIR' be $canon(typeIR_base))
 
@@ -15197,7 +15197,7 @@ relation Expr_ok: p TC |- expression''' : %
 
               1. (Expr_ok: p TC |- expression_base : typedExpressionIR_base)
 
-              2. (Let typeIR_base be $typeof_expression(typedExpressionIR_base))
+              2. (Let typeIR_base be $type_of_expression(typedExpressionIR_base))
 
               3. (Let typeIR' be $canon(typeIR_base))
 
@@ -15211,7 +15211,7 @@ relation Expr_ok: p TC |- expression''' : %
 
           5. (Expr_ok: p TC |- expression_base : typedExpressionIR_base)
 
-          6. (Let typeIR_base be $typeof_expression(typedExpressionIR_base))
+          6. (Let typeIR_base be $type_of_expression(typedExpressionIR_base))
 
           7. (Let typeIR' be $canon(typeIR_base))
 
@@ -15295,13 +15295,13 @@ relation Expr_ok: p TC |- expression''' : %
 
       2. (Expr_ok: p TC |- expression_index : typedExpressionIR_index)
 
-      3. (Let typeIR_base be $typeof_expression(typedExpressionIR_base))
+      3. (Let typeIR_base be $type_of_expression(typedExpressionIR_base))
 
-      4. (Let ctk_base be $ctkof_expression(typedExpressionIR_base))
+      4. (Let ctk_base be $ctk_of_expression(typedExpressionIR_base))
 
-      5. (Let typeIR_index be $typeof_expression(typedExpressionIR_index))
+      5. (Let typeIR_index be $type_of_expression(typedExpressionIR_index))
 
-      6. (Let ctk_index be $ctkof_expression(typedExpressionIR_index))
+      6. (Let ctk_index be $ctk_of_expression(typedExpressionIR_index))
 
       7. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $reduce_serenum_unary(typedExpressionIR_index, $compat_array_index))
 
@@ -15379,9 +15379,9 @@ relation Expr_ok: p TC |- expression''' : %
 
         1. (Let ?(typedExpressionIR_base_reduced) be typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
-        2. (Let typeIR_base_reduced be $typeof_expression(typedExpressionIR_base_reduced))
+        2. (Let typeIR_base_reduced be $type_of_expression(typedExpressionIR_base_reduced))
 
-        3. (Let ctk_base_reduced be $ctkof_expression(typedExpressionIR_base_reduced))
+        3. (Let ctk_base_reduced be $ctk_of_expression(typedExpressionIR_base_reduced))
 
         4. (Let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} be $reduce_serenum_unary(typedExpressionIR_hi, $compat_bitslice_index))
 
@@ -15395,13 +15395,13 @@ relation Expr_ok: p TC |- expression''' : %
 
             1. (Let ?(typedExpressionIR_lo_reduced) be typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?})
 
-            2. (Let typeIR_hi_reduced be $typeof_expression(typedExpressionIR_hi_reduced))
+            2. (Let typeIR_hi_reduced be $type_of_expression(typedExpressionIR_hi_reduced))
 
-            3. (Let ctk_hi_reduced be $ctkof_expression(typedExpressionIR_hi_reduced))
+            3. (Let ctk_hi_reduced be $ctk_of_expression(typedExpressionIR_hi_reduced))
 
-            4. (Let typeIR_lo_reduced be $typeof_expression(typedExpressionIR_lo_reduced))
+            4. (Let typeIR_lo_reduced be $type_of_expression(typedExpressionIR_lo_reduced))
 
-            5. (Let ctk_lo_reduced be $ctkof_expression(typedExpressionIR_lo_reduced))
+            5. (Let ctk_lo_reduced be $ctk_of_expression(typedExpressionIR_lo_reduced))
 
             6. If ((ctk_hi_reduced matches pattern `LCTK`)), then
 
@@ -15571,9 +15571,9 @@ relation Expr_ok: p TC |- expression''' : %
 
       1. (Expr_ok: p TC |- expression : typedExpressionIR)
 
-      2. (Let typeIR be $typeof_expression(typedExpressionIR))
+      2. (Let typeIR be $type_of_expression(typedExpressionIR))
 
-      3. (Let ctk be $ctkof_expression(typedExpressionIR))
+      3. (Let ctk be $ctk_of_expression(typedExpressionIR))
 
       4. (Let expressionNoteIR be (( typeIR ctk )))
 
@@ -15908,9 +15908,9 @@ relation Stmt_ok: p' TC' f' |- statement : % % %
 
         2. (Expr_ok: p' TC' |- expression : typedExpressionIR)
 
-        3. (Let typeIR_l be $typeof_lvalue(typedLvalueIR))
+        3. (Let typeIR_l be $type_of_lvalue(typedLvalueIR))
 
-        4. (Let typeIR_r be $typeof_expression(typedExpressionIR))
+        4. (Let typeIR_r be $type_of_expression(typedExpressionIR))
 
         5. (Let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} be $coerce_unary(typedExpressionIR, typeIR_l))
 
@@ -16036,7 +16036,7 @@ relation Stmt_ok: p' TC' f' |- statement : % % %
 
           2. (Expr_ok: p' TC' |- expression_cond : typedExpressionIR_cond)
 
-          3. (Let typeIR_cond be $typeof_expression(typedExpressionIR_cond))
+          3. (Let typeIR_cond be $type_of_expression(typedExpressionIR_cond))
 
           4. If ((((bool) as typeIR) = $canon(typeIR_cond))), then
 
@@ -16050,7 +16050,7 @@ relation Stmt_ok: p' TC' f' |- statement : % % %
 
           2. (Expr_ok: p' TC' |- expression_cond : typedExpressionIR_cond)
 
-          3. (Let typeIR_cond be $typeof_expression(typedExpressionIR_cond))
+          3. (Let typeIR_cond be $type_of_expression(typedExpressionIR_cond))
 
           4. If ((((bool) as typeIR) = $canon(typeIR_cond))), then
 
@@ -16086,7 +16086,7 @@ relation Stmt_ok: p' TC' f' |- statement : % % %
 
             2. (Expr_ok: (local) TC' |- expression : typedExpressionIR)
 
-            3. (Let typeIR be $typeof_expression(typedExpressionIR))
+            3. (Let typeIR be $type_of_expression(typedExpressionIR))
 
             4. (Let typeIR'?{typeIR' <- typeIR'?} be $find_return_type(TC'))
 
@@ -16120,7 +16120,7 @@ relation Stmt_ok: p' TC' f' |- statement : % % %
 
         1. (Expr_ok: (local) TC' |- expression_switch : typedExpressionIR_switch)
 
-        2. (Let typeIR_switch be $typeof_expression(typedExpressionIR_switch))
+        2. (Let typeIR_switch be $type_of_expression(typedExpressionIR_switch))
 
         3. (Let typeIR be $canon(typeIR_switch))
 
@@ -16148,7 +16148,7 @@ relation Stmt_ok: p' TC' f' |- statement : % % %
 
         1. (Expr_ok: (local) TC' |- expression_switch : typedExpressionIR_switch)
 
-        2. (Let typeIR_switch be $typeof_expression(typedExpressionIR_switch))
+        2. (Let typeIR_switch be $type_of_expression(typedExpressionIR_switch))
 
         3. If ($compat_switch(typeIR_switch)), then
 
@@ -16312,9 +16312,9 @@ relation Parameter_ok: p TC |- (annotationList direction type name initializerOp
 
       1. (Expr_ok: p TC |- expression_init : typedExpressionIR_init)
 
-      2. (Let typeIR_init be $typeof_expression(typedExpressionIR_init))
+      2. (Let typeIR_init be $type_of_expression(typedExpressionIR_init))
 
-      3. If (($ctkof_expression(typedExpressionIR_init) matches pattern `LCTK`)), then
+      3. If (($ctk_of_expression(typedExpressionIR_init) matches pattern `LCTK`)), then
 
         1. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $coerce_unary(typedExpressionIR_init, typeIR))
 
@@ -16400,7 +16400,7 @@ relation ExternMethod_ok: TC_0 tid_extern |- externMethodPrototype : % %
 
           3. (Parameters_ok: (local) TC_2 |- parameter*{parameter <- parameter*} : parameterIR*{parameterIR <- parameterIR*} # tid_impl*{tid_impl <- tid_impl*})
 
-          4. (Let parameterTypeIR be $typeof_parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
+          4. (Let parameterTypeIR be $type_of_parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
 
           5. (Let TC_3 be $add_parameters((local), TC_2, parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}))
 
@@ -16444,7 +16444,7 @@ relation ExternMethod_ok: TC_0 tid_extern |- externMethodPrototype : % %
 
           3. (Parameters_ok: (local) TC_2 |- parameter*{parameter <- parameter*} : parameterIR*{parameterIR <- parameterIR*} # tid_impl*{tid_impl <- tid_impl*})
 
-          4. (Let parameterTypeIR be $typeof_parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
+          4. (Let parameterTypeIR be $type_of_parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
 
           5. (Let TC_3 be $add_parameters((local), TC_2, parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}))
 
@@ -16498,7 +16498,7 @@ relation ExternConstructor_ok: TC_0 tid_extern |- (annotationList typeIdentifier
 
     2. (ConstructorParameters_ok: (block) TC_0 |- constructorParameter*{constructorParameter <- constructorParameter*} : constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} # tid_impl*{tid_impl <- tid_impl*})
 
-    3. (Let constructorParameterTypeIR be $typeof_constructorParameterIR(constructorParameterIR))*{constructorParameterIR <- constructorParameterIR*, constructorParameterTypeIR <- constructorParameterTypeIR*}
+    3. (Let constructorParameterTypeIR be $type_of_constructorParameterIR(constructorParameterIR))*{constructorParameterIR <- constructorParameterIR*, constructorParameterTypeIR <- constructorParameterTypeIR*}
 
     4. (Let typeDefIR'?{typeDefIR' <- typeDefIR'?} be $find_type((global), TC_0, (` nameIR)))
 
@@ -16590,7 +16590,7 @@ relation ParserTransition_ok: TC_0 nameIR_state*{nameIR_state <- nameIR_state*} 
 
         2. (Expr_ok: (local) TC_0 |- expression_key : typedExpressionIR_key)*{expression_key <- expression_key*, typedExpressionIR_key <- typedExpressionIR_key*}
 
-        3. (Let typeIR_key be $typeof_expression(typedExpressionIR_key))*{typeIR_key <- typeIR_key*, typedExpressionIR_key <- typedExpressionIR_key*}
+        3. (Let typeIR_key be $type_of_expression(typedExpressionIR_key))*{typeIR_key <- typeIR_key*, typedExpressionIR_key <- typedExpressionIR_key*}
 
         4. If (Type_wf: $bound((local), TC_0) |- ((set< [typeIR_key] >) as typeIR))*{typeIR_key <- typeIR_key*} holds, then
 
@@ -16937,7 +16937,7 @@ relation ParserLocalDecl_ok: TC_0 |- parserLocalDeclaration : % %
 
           1. (Expr_ok: (block) TC_0 |- expression : typedExpressionIR)
 
-          2. If (~($ctkof_expression(typedExpressionIR) matches pattern `DYN`)), then
+          2. If (~($ctk_of_expression(typedExpressionIR) matches pattern `DYN`)), then
 
             1. (Let nameIR be $name(name))
 
@@ -16977,7 +16977,7 @@ relation TableKey_ok: TC TBLC_0 |- (expression : name_matchkind annotationList ;
 
   1. (Expr_ok: (local) TC |- expression : typedExpressionIR)
 
-  2. (Let typeIR be $typeof_expression(typedExpressionIR))
+  2. (Let typeIR be $type_of_expression(typedExpressionIR))
 
   3. If (Type_wf: $bound((local), TC) |- ((set< [typeIR] >) as typeIR)) holds, then
 
@@ -17722,7 +17722,7 @@ relation TableEntry_priority_ok: TC tableContext' TBLS |- tableEntryPriority''?{
 
                     1. (Expr_ok: (local) TC |- expression : typedExpressionIR)
 
-                    2. If (($ctkof_expression(typedExpressionIR) matches pattern `LCTK`)), then
+                    2. If (($ctk_of_expression(typedExpressionIR) matches pattern `LCTK`)), then
 
                       1. (Eval_static: (local) TC |- typedExpressionIR ~> value)
 
@@ -17744,7 +17744,7 @@ relation TableEntry_priority_ok: TC tableContext' TBLS |- tableEntryPriority''?{
 
                       1. (Expr_ok: (local) TC |- expression : typedExpressionIR)
 
-                      2. If (($ctkof_expression(typedExpressionIR) matches pattern `LCTK`)), then
+                      2. If (($ctk_of_expression(typedExpressionIR) matches pattern `LCTK`)), then
 
                         1. (Eval_static: (local) TC |- typedExpressionIR ~> value)
 
@@ -17768,7 +17768,7 @@ relation TableEntry_priority_ok: TC tableContext' TBLS |- tableEntryPriority''?{
 
                     1. (Expr_ok: (local) TC |- expression : typedExpressionIR)
 
-                    2. If (($ctkof_expression(typedExpressionIR) matches pattern `LCTK`)), then
+                    2. If (($ctk_of_expression(typedExpressionIR) matches pattern `LCTK`)), then
 
                       1. (Eval_static: (local) TC |- typedExpressionIR ~> value)
 
@@ -17790,7 +17790,7 @@ relation TableEntry_priority_ok: TC tableContext' TBLS |- tableEntryPriority''?{
 
                       1. (Expr_ok: (local) TC |- expression : typedExpressionIR)
 
-                      2. If (($ctkof_expression(typedExpressionIR) matches pattern `LCTK`)), then
+                      2. If (($ctk_of_expression(typedExpressionIR) matches pattern `LCTK`)), then
 
                         1. (Eval_static: (local) TC |- typedExpressionIR ~> value)
 
@@ -17941,7 +17941,7 @@ relation TableProperty_ok: TC TBLC_0' |- tableProperty : % %
 
         1. (Expr_ok: (local) TC |- expression : typedExpressionIR)
 
-        2. (Let typeIR be $typeof_expression(typedExpressionIR))
+        2. (Let typeIR be $type_of_expression(typedExpressionIR))
 
         3. If ($is_arbitrary_int_typeIR(typeIR)), then
 
@@ -17971,7 +17971,7 @@ relation TableProperty_ok: TC TBLC_0' |- tableProperty : % %
 
         1. (Expr_ok: (local) TC |- expression : typedExpressionIR)
 
-        2. (Let typeIR be $typeof_expression(typedExpressionIR))
+        2. (Let typeIR be $type_of_expression(typedExpressionIR))
 
         3. If ((((bool) as typeIR) = $canon(typeIR))), then
 
@@ -17997,7 +17997,7 @@ relation TableProperty_ok: TC TBLC_0' |- tableProperty : % %
 
         1. (Expr_ok: (local) TC |- expression : typedExpressionIR)
 
-        2. (Let typeIR be $typeof_expression(typedExpressionIR))
+        2. (Let typeIR be $type_of_expression(typedExpressionIR))
 
         3. If ($is_arbitrary_int_typeIR(typeIR)), then
 
@@ -18301,7 +18301,7 @@ relation Decl_ok: p' TC_0 |- declaration : % %
 
           1. (Expr_ok: p' TC_0 |- expression_value : typedExpressionIR_value)
 
-          2. If (($ctkof_expression(typedExpressionIR_value) matches pattern `LCTK`)), then
+          2. If (($ctk_of_expression(typedExpressionIR_value) matches pattern `LCTK`)), then
 
             1. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $coerce_unary(typedExpressionIR_value, typeIR))
 
@@ -18421,7 +18421,7 @@ relation Decl_ok: p' TC_0 |- declaration : % %
 
                       2. (Let objectDeclaration*{objectDeclaration <- objectDeclaration*} be $flatten_objectDeclarationList(objectDeclarationList))
 
-                      3. (Decls_object_ok: p' TC_1 ({ [] }) ({ [] }) |- objectDeclaration*{objectDeclaration <- objectDeclaration*} : frame_init rdenv_init objectDeclarationIR*{objectDeclarationIR <- objectDeclarationIR*})
+                      3. (Decls_object_ok: p' TC_1 ({ [] }) ({ [] }) |- objectDeclaration*{objectDeclaration <- objectDeclaration*} : typeFrame_init rdenv_init objectDeclarationIR*{objectDeclarationIR <- objectDeclarationIR*})
 
                       4. (Let tid*{tid <- tid*} be tid_expl*{tid_expl <- tid_expl*} ++ tid_impl*{tid_impl <- tid_impl*})
 
@@ -18477,7 +18477,7 @@ relation Decl_ok: p' TC_0 |- declaration : % %
 
                       2. (Let objectDeclaration*{objectDeclaration <- objectDeclaration*} be $flatten_objectDeclarationList(objectDeclarationList))
 
-                      3. (Decls_object_ok: p' TC_1 ({ [] }) ({ [] }) |- objectDeclaration*{objectDeclaration <- objectDeclaration*} : frame_init rdenv_init objectDeclarationIR*{objectDeclarationIR <- objectDeclarationIR*})
+                      3. (Decls_object_ok: p' TC_1 ({ [] }) ({ [] }) |- objectDeclaration*{objectDeclaration <- objectDeclaration*} : typeFrame_init rdenv_init objectDeclarationIR*{objectDeclarationIR <- objectDeclarationIR*})
 
                       4. (Let tid*{tid <- tid*} be tid_expl*{tid_expl <- tid_expl*} ++ tid_impl*{tid_impl <- tid_impl*})
 
@@ -18517,7 +18517,7 @@ relation Decl_ok: p' TC_0 |- declaration : % %
 
         2. (Parameters_ok: (local) TC_1 |- parameter*{parameter <- parameter*} : parameterIR*{parameterIR <- parameterIR*} # tid_impl*{tid_impl <- tid_impl*})
 
-        3. (Let parameterTypeIR be $typeof_parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
+        3. (Let parameterTypeIR be $type_of_parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
 
         4. (Let TC_2 be $add_parameters((local), TC_1, parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}))
 
@@ -18575,7 +18575,7 @@ relation Decl_ok: p' TC_0 |- declaration : % %
 
       4. If ((tid*{tid <- tid*} matches pattern [])), then
 
-        1. (Let parameterTypeIR be $typeof_parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
+        1. (Let parameterTypeIR be $type_of_parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
 
         2. (Let TC_2 be $add_parameters((local), TC_1, parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}))
 
@@ -18659,7 +18659,7 @@ relation Decl_ok: p' TC_0 |- declaration : % %
 
           3. (Parameters_ok: (local) TC_2 |- parameter*{parameter <- parameter*} : parameterIR*{parameterIR <- parameterIR*} # tid_impl*{tid_impl <- tid_impl*})
 
-          4. (Let parameterTypeIR be $typeof_parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
+          4. (Let parameterTypeIR be $type_of_parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
 
           5. (Let TC_3 be $add_parameters((local), TC_2, parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}))
 
@@ -18701,7 +18701,7 @@ relation Decl_ok: p' TC_0 |- declaration : % %
 
         8. (ExternMethods_ok: TC_2 nameIR |- externMethodPrototype*{externMethodPrototype <- externMethodPrototype*} : TC_3 externMethodPrototypeIR*{externMethodPrototypeIR <- externMethodPrototypeIR*})
 
-        9. (Let typeIR_extern be ((extern nameIR TC_3.block.rdenv) as typeIR))
+        9. (Let typeIR_extern be ((extern nameIR TC_3.block.routine) as typeIR))
 
         10. (Let typeDefIR_extern be ((typeIR_extern < tid_expl*{tid_expl <- tid_expl*} , [] >) as typeDefIR))
 
@@ -18713,7 +18713,7 @@ relation Decl_ok: p' TC_0 |- declaration : % %
 
         14. (ExternConstructors_ok: TC_6 nameIR |- externConstructorPrototype*{externConstructorPrototype <- externConstructorPrototype*} : TC_7 externConstructorPrototypeIR*{externConstructorPrototypeIR <- externConstructorPrototypeIR*})
 
-        15. (Let TC_8 be TC_4[global.cdenv = TC_7.global.cdenv])
+        15. (Let TC_8 be TC_4[global.constructor = TC_7.global.constructor])
 
         16. (Let externObjectDeclarationIR be (annotationList extern nameIR < tid_expl*{tid_expl <- tid_expl*} ,>{ externConstructorPrototypeIR*{externConstructorPrototypeIR <- externConstructorPrototypeIR*} externMethodPrototypeIR*{externMethodPrototypeIR <- externMethodPrototypeIR*} }))
 
@@ -18735,7 +18735,7 @@ relation Decl_ok: p' TC_0 |- declaration : % %
 
           4. If ((tid*{tid <- tid*} matches pattern [])), then
 
-            1. (Let constructorParameterTypeIR be $typeof_constructorParameterIR(constructorParameterIR))*{constructorParameterIR <- constructorParameterIR*, constructorParameterTypeIR <- constructorParameterTypeIR*}
+            1. (Let constructorParameterTypeIR be $type_of_constructorParameterIR(constructorParameterIR))*{constructorParameterIR <- constructorParameterIR*, constructorParameterTypeIR <- constructorParameterTypeIR*}
 
             2. (Let TC_2 be $add_parameters((block), TC_1, constructorParameterTypeIR*{constructorParameterTypeIR <- constructorParameterTypeIR*}))
 
@@ -18745,7 +18745,7 @@ relation Decl_ok: p' TC_0 |- declaration : % %
 
             5. If ((tid'*{tid' <- tid'*} matches pattern [])), then
 
-              1. (Let parameterTypeIR be $typeof_parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
+              1. (Let parameterTypeIR be $type_of_parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
 
               2. (Let TC_3 be $add_parameters((block), TC_2, parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}))
 
@@ -18799,7 +18799,7 @@ relation Decl_ok: p' TC_0 |- declaration : % %
 
           4. If ((tid*{tid <- tid*} matches pattern [])), then
 
-            1. (Let constructorParameterTypeIR be $typeof_constructorParameterIR(constructorParameterIR))*{constructorParameterIR <- constructorParameterIR*, constructorParameterTypeIR <- constructorParameterTypeIR*}
+            1. (Let constructorParameterTypeIR be $type_of_constructorParameterIR(constructorParameterIR))*{constructorParameterIR <- constructorParameterIR*, constructorParameterTypeIR <- constructorParameterTypeIR*}
 
             2. (Let TC_2 be $add_parameters((block), TC_1, constructorParameterTypeIR*{constructorParameterTypeIR <- constructorParameterTypeIR*}))
 
@@ -18809,7 +18809,7 @@ relation Decl_ok: p' TC_0 |- declaration : % %
 
             5. If ((tid'*{tid' <- tid'*} matches pattern [])), then
 
-              1. (Let parameterTypeIR be $typeof_parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
+              1. (Let parameterTypeIR be $type_of_parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
 
               2. (Let TC_3 be $add_parameters((block), TC_2, parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}))
 
@@ -19061,7 +19061,7 @@ relation Decl_ok: p' TC_0 |- declaration : % %
 
                   1. (Let derivedTypeDeclarationIR be (declarationIR as derivedTypeDeclarationIR))
 
-                  2. (Let ({ tid'*{tid' <- tid'*} }) be $diff_set<tid>($dom_map<tid, typeDefIR>(TC_1.global.tdenv), $dom_map<tid, typeDefIR>(TC_0.global.tdenv)))
+                  2. (Let ({ tid'*{tid' <- tid'*} }) be $diff_set<tid>($dom_map<tid, typeDefIR>(TC_1.global.type), $dom_map<tid, typeDefIR>(TC_0.global.type)))
 
                   3. If ((tid'*{tid' <- tid'*} matches pattern [ _/1 ])), then
 
@@ -19153,7 +19153,7 @@ relation Decl_ok: p' TC_0 |- declaration : % %
 
         6. (Parameters_ok: (block) TC_2 |- parameter*{parameter <- parameter*} : parameterIR*{parameterIR <- parameterIR*} # tid_impl*{tid_impl <- tid_impl*})
 
-        7. (Let parameterTypeIR be $typeof_parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
+        7. (Let parameterTypeIR be $type_of_parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
 
         8. (Let nameIR be $name(name))
 
@@ -19187,7 +19187,7 @@ relation Decl_ok: p' TC_0 |- declaration : % %
 
         6. (Parameters_ok: (block) TC_2 |- parameter*{parameter <- parameter*} : parameterIR*{parameterIR <- parameterIR*} # tid_impl*{tid_impl <- tid_impl*})
 
-        7. (Let parameterTypeIR be $typeof_parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
+        7. (Let parameterTypeIR be $type_of_parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
 
         8. (Let nameIR be $name(name))
 
@@ -19221,7 +19221,7 @@ relation Decl_ok: p' TC_0 |- declaration : % %
 
         6. (ConstructorParameters_ok: (block) TC_2 |- constructorParameter*{constructorParameter <- constructorParameter*} : constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} # tid_impl*{tid_impl <- tid_impl*})
 
-        7. (Let constructorParameterTypeIR be $typeof_constructorParameterIR(constructorParameterIR))*{constructorParameterIR <- constructorParameterIR*, constructorParameterTypeIR <- constructorParameterTypeIR*}
+        7. (Let constructorParameterTypeIR be $type_of_constructorParameterIR(constructorParameterIR))*{constructorParameterIR <- constructorParameterIR*, constructorParameterTypeIR <- constructorParameterTypeIR*}
 
         8. (Let nameIR be $name(name))
 
@@ -19313,7 +19313,7 @@ relation Call_convention_expr_ok: p TC actctxt |- (direction typeIR_param _id _v
 
     1. Case (% matches pattern `OUT`)
 
-      1. (Let typeIR_arg be $typeof_expression(typedExpressionIR_arg))
+      1. (Let typeIR_arg be $type_of_expression(typedExpressionIR_arg))
 
       2. If (Type_alpha: typeIR_param ~~ typeIR_arg) holds, then
 
@@ -19323,7 +19323,7 @@ relation Call_convention_expr_ok: p TC actctxt |- (direction typeIR_param _id _v
 
     2. Case (% matches pattern `INOUT`)
 
-      1. (Let typeIR_arg be $typeof_expression(typedExpressionIR_arg))
+      1. (Let typeIR_arg be $type_of_expression(typedExpressionIR_arg))
 
       2. If (Type_alpha: typeIR_param ~~ typeIR_arg) holds, then
 
@@ -19349,9 +19349,9 @@ relation Call_convention_expr_ok: p TC actctxt |- (direction typeIR_param _id _v
 
       2. Case (% matches pattern `NOACTION`)
 
-        1. (Let typeIR_arg be $typeof_expression(typedExpressionIR_arg))
+        1. (Let typeIR_arg be $type_of_expression(typedExpressionIR_arg))
 
-        2. (Let ctk_arg be $ctkof_expression(typedExpressionIR_arg))
+        2. (Let ctk_arg be $ctk_of_expression(typedExpressionIR_arg))
 
         3. If (Type_alpha: typeIR_param ~~ typeIR_arg) holds, then
 
@@ -19599,7 +19599,7 @@ relation RoutineType_ok: p TC |- routineTargetIR'' < typeArgumentIR''*{typeArgum
 
             1. If (nameIR is in ["isValid"]), then
 
-              1. (Let typeIR_base be $typeof_expression(typedExpressionIR_base))
+              1. (Let typeIR_base be $type_of_expression(typedExpressionIR_base))
 
               2. (Let typeIR be $canon(typeIR_base))
 
@@ -19615,7 +19615,7 @@ relation RoutineType_ok: p TC |- routineTargetIR'' < typeArgumentIR''*{typeArgum
 
             1. If (nameIR is in ["isValid"]), then
 
-              1. (Let typeIR_base be $typeof_expression(typedExpressionIR_base))
+              1. (Let typeIR_base be $type_of_expression(typedExpressionIR_base))
 
               2. (Let typeIR be $canon(typeIR_base))
 
@@ -19631,7 +19631,7 @@ relation RoutineType_ok: p TC |- routineTargetIR'' < typeArgumentIR''*{typeArgum
 
             1. If (nameIR is in ["setValid", "setInvalid"]), then
 
-              1. (Let typeIR_base be $typeof_expression(typedExpressionIR_base))
+              1. (Let typeIR_base be $type_of_expression(typedExpressionIR_base))
 
               2. (Let typeIR be $canon(typeIR_base))
 
@@ -19651,7 +19651,7 @@ relation RoutineType_ok: p TC |- routineTargetIR'' < typeArgumentIR''*{typeArgum
 
             1. If (nameIR is in ["push_front", "pop_front"]), then
 
-              1. (Let typeIR_base be $typeof_expression(typedExpressionIR_base))
+              1. (Let typeIR_base be $type_of_expression(typedExpressionIR_base))
 
               2. (Let typeIR' be $canon(typeIR_base))
 
@@ -19667,7 +19667,7 @@ relation RoutineType_ok: p TC |- routineTargetIR'' < typeArgumentIR''*{typeArgum
 
     3. Group typedExpressionIR-nameIR-extern-method: p TC |- (typedExpressionIR_base . nameIR) < typeArgumentIR''*{typeArgumentIR'' <- typeArgumentIR''*} >( argumentIR''*{argumentIR'' <- argumentIR''*} ): % <# % >(# % )
 
-      1. (Let typeIR_base be $typeof_expression(typedExpressionIR_base))
+      1. (Let typeIR_base be $type_of_expression(typedExpressionIR_base))
 
       2. (Let typeIR be $canon(typeIR_base))
 
@@ -19701,7 +19701,7 @@ relation RoutineType_ok: p TC |- routineTargetIR'' < typeArgumentIR''*{typeArgum
 
         1. Group typedExpressionIR-nameIR-parser-apply-method: p TC |- (typedExpressionIR_base . "apply") < [] >( argumentIR''*{argumentIR'' <- argumentIR''*} ): % <# % >(# % )
 
-          1. (Let typeIR_base be $typeof_expression(typedExpressionIR_base))
+          1. (Let typeIR_base be $type_of_expression(typedExpressionIR_base))
 
           2. (Let typeIR be $canon(typeIR_base))
 
@@ -19737,7 +19737,7 @@ relation RoutineType_ok: p TC |- routineTargetIR'' < typeArgumentIR''*{typeArgum
 
         2. Group typedExpressionIR-nameIR-control-apply-method: p TC |- (typedExpressionIR_base . "apply") < [] >( argumentIR''*{argumentIR'' <- argumentIR''*} ): % <# % >(# % )
 
-          1. (Let typeIR_base be $typeof_expression(typedExpressionIR_base))
+          1. (Let typeIR_base be $type_of_expression(typedExpressionIR_base))
 
           2. (Let typeIR be $canon(typeIR_base))
 
@@ -19775,7 +19775,7 @@ relation RoutineType_ok: p TC |- routineTargetIR'' < typeArgumentIR''*{typeArgum
 
           1. Group typedExpressionIR-nameIR-table-apply-method: p TC |- (typedExpressionIR_base . "apply") < [] >( [] ): % <# % >(# % )
 
-            1. (Let typeIR_base be $typeof_expression(typedExpressionIR_base))
+            1. (Let typeIR_base be $type_of_expression(typedExpressionIR_base))
 
             2. (Let typeIR be $canon(typeIR_base))
 
@@ -21326,7 +21326,7 @@ def $compat'_switch(typeIR)
   1. Return false
 
 ;; ../../../../spec-concrete/5.11-typing-declaration.watsup:92.1-95.29
-relation Decl_object_ok: p TC_0 frame rdenv |- objectDeclaration : % % %
+relation Decl_object_ok: p TC_0 typeFrame rdenv |- objectDeclaration : % % %
 
 1. Case analysis on objectDeclaration
 
@@ -21334,11 +21334,11 @@ relation Decl_object_ok: p TC_0 frame rdenv |- objectDeclaration : % % %
 
     1. (Let (annotationList (typeOrVoid name typeParameterListOpt ( parameterList )) blockStatement) be (objectDeclaration as functionDeclaration))
 
-    2. Group functionDeclaration: p TC_0 frame rdenv |- ((annotationList (typeOrVoid name typeParameterListOpt ( parameterList )) blockStatement) as objectDeclaration) : % % %
+    2. Group functionDeclaration: p TC_0 typeFrame rdenv |- ((annotationList (typeOrVoid name typeParameterListOpt ( parameterList )) blockStatement) as objectDeclaration) : % % %
 
       1. (Let TC_1 be TC_0[block.kind = (extern)])
 
-      2. (Let TC_2 be TC_1[block.frame = frame])
+      2. (Let TC_2 be TC_1[block.frame = typeFrame])
 
       3. (Let typeParameter*{typeParameter <- typeParameter*} be $flatten_typeParameterListOpt(typeParameterListOpt))
 
@@ -21354,7 +21354,7 @@ relation Decl_object_ok: p TC_0 frame rdenv |- objectDeclaration : % % %
 
         2. (Parameters_ok: (local) TC_3 |- parameter*{parameter <- parameter*} : parameterIR*{parameterIR <- parameterIR*} # tid_impl*{tid_impl <- tid_impl*})
 
-        3. (Let parameterTypeIR be $typeof_parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
+        3. (Let parameterTypeIR be $type_of_parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
 
         4. (Let TC_4 be $add_parameters((local), TC_3, parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}))
 
@@ -21378,7 +21378,7 @@ relation Decl_object_ok: p TC_0 frame rdenv |- objectDeclaration : % % %
 
             3. (Let functionDeclarationIR be (annotationList (typeIR_ret nameIR < tid_expl*{tid_expl <- tid_expl*} , tid_impl*{tid_impl <- tid_impl*} >( parameterIR*{parameterIR <- parameterIR*} )) blockStatementIR))
 
-            4. Result in : % % % % |- % : frame rdenv_init (functionDeclarationIR as objectDeclarationIR)
+            4. Result in : % % % % |- % : typeFrame rdenv_init (functionDeclarationIR as objectDeclarationIR)
 
         8. If ((typeIR_ret = ((void) as typeIR))), then
 
@@ -21396,13 +21396,13 @@ relation Decl_object_ok: p TC_0 frame rdenv |- objectDeclaration : % % %
 
             3. (Let functionDeclarationIR be (annotationList (typeIR_ret nameIR < tid_expl*{tid_expl <- tid_expl*} , tid_impl*{tid_impl <- tid_impl*} >( parameterIR*{parameterIR <- parameterIR*} )) blockStatementIR))
 
-            4. Result in : % % % % |- % : frame rdenv_init (functionDeclarationIR as objectDeclarationIR)
+            4. Result in : % % % % |- % : typeFrame rdenv_init (functionDeclarationIR as objectDeclarationIR)
 
   2. Case (% has type instantiation)
 
     1. (Let instantiation be (objectDeclaration as instantiation))
 
-    2. Group instantiation: p TC_0 frame rdenv |- (instantiation as objectDeclaration) : % % %
+    2. Group instantiation: p TC_0 typeFrame rdenv |- (instantiation as objectDeclaration) : % % %
 
       1. (Decl_ok: p TC_0 |- (instantiation as declaration) : TC_1 declarationIR)
 
@@ -21418,32 +21418,32 @@ relation Decl_object_ok: p TC_0 frame rdenv |- objectDeclaration : % % %
 
           1. (Let ?(varTypeIR) be varTypeIR'?{varTypeIR' <- varTypeIR'?})
 
-          2. (Let frame_init be $update_map<id, varTypeIR>(frame, nameIR, varTypeIR))
+          2. (Let typeFrame_init be $update_map<id, varTypeIR>(typeFrame, nameIR, varTypeIR))
 
-          3. Result in : % % % % |- % : frame_init rdenv (instantiationIR as objectDeclarationIR)
+          3. Result in : % % % % |- % : typeFrame_init rdenv (instantiationIR as objectDeclarationIR)
 
 ;; ../../../../spec-concrete/5.11-typing-declaration.watsup:155.1-158.29
-relation Decls_object_ok: p TC frame' rdenv' |- objectDeclaration*{objectDeclaration <- objectDeclaration*} : % % %
+relation Decls_object_ok: p TC typeFrame' rdenv' |- objectDeclaration*{objectDeclaration <- objectDeclaration*} : % % %
 
 1. Case analysis on objectDeclaration*{objectDeclaration <- objectDeclaration*}
 
   1. Case (% matches pattern [])
 
-    1. Group nil: p TC frame' rdenv' |- [] : % % %
+    1. Group nil: p TC typeFrame' rdenv' |- [] : % % %
 
-      1. Result in : % % % % |- % : frame' rdenv' []
+      1. Result in : % % % % |- % : typeFrame' rdenv' []
 
   2. Case (% matches pattern _ :: _)
 
     1. (Let objectDeclaration_h :: objectDeclaration_t*{objectDeclaration_t <- objectDeclaration_t*} be objectDeclaration*{objectDeclaration <- objectDeclaration*})
 
-    2. Group cons: p TC frame' rdenv' |- objectDeclaration_h :: objectDeclaration_t*{objectDeclaration_t <- objectDeclaration_t*} : % % %
+    2. Group cons: p TC typeFrame' rdenv' |- objectDeclaration_h :: objectDeclaration_t*{objectDeclaration_t <- objectDeclaration_t*} : % % %
 
-      1. (Decl_object_ok: p TC frame' rdenv' |- objectDeclaration_h : frame_1 rdenv_1 objectDeclarationIR_h)
+      1. (Decl_object_ok: p TC typeFrame' rdenv' |- objectDeclaration_h : typeFrame_1 rdenv_1 objectDeclarationIR_h)
 
-      2. (Decls_object_ok: p TC frame_1 rdenv_1 |- objectDeclaration_t*{objectDeclaration_t <- objectDeclaration_t*} : frame_2 rdenv_2 objectDeclarationIR_t*{objectDeclarationIR_t <- objectDeclarationIR_t*})
+      2. (Decls_object_ok: p TC typeFrame_1 rdenv_1 |- objectDeclaration_t*{objectDeclaration_t <- objectDeclaration_t*} : typeFrame_2 rdenv_2 objectDeclarationIR_t*{objectDeclarationIR_t <- objectDeclarationIR_t*})
 
-      3. Result in : % % % % |- % : frame_2 rdenv_2 objectDeclarationIR_h :: objectDeclarationIR_t*{objectDeclarationIR_t <- objectDeclarationIR_t*}
+      3. Result in : % % % % |- % : typeFrame_2 rdenv_2 objectDeclarationIR_h :: objectDeclarationIR_t*{objectDeclarationIR_t <- objectDeclarationIR_t*}
 
 ;; ../../../../spec-concrete/5.11-typing-declaration.watsup:173.1-173.46
 def $subst_rdenv(theta, rdenv_extern, set<pair<rid, routineTypeDefIR>>')
@@ -21530,7 +21530,7 @@ relation Enum_serializable_field_ok: TC_0 nameIR_enum typeIR |- (name = expressi
 
     1. (Let ?(typedExpressionIR_cast) be typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-    2. If (($ctkof_expression(typedExpressionIR_cast) matches pattern `LCTK`)), then
+    2. If (($ctk_of_expression(typedExpressionIR_cast) matches pattern `LCTK`)), then
 
       1. (Eval_static: (block) TC_0 |- typedExpressionIR_cast ~> value)
 
@@ -21582,7 +21582,7 @@ relation SelectCase_keyset_simple_ok: TC typeIR_key |- simpleKeysetExpression : 
 
     1. (Expr_ok: (local) TC |- expression : typedExpressionIR)
 
-    2. (Let typeIR'' be $typeof_expression(typedExpressionIR))
+    2. (Let typeIR'' be $type_of_expression(typedExpressionIR))
 
     3. If ((typeIR'' has type setTypeIR)), then
 
@@ -21600,7 +21600,7 @@ relation SelectCase_keyset_simple_ok: TC typeIR_key |- simpleKeysetExpression : 
 
     1. (Expr_ok: (local) TC |- expression : typedExpressionIR)
 
-    2. (Let typeIR'' be $typeof_expression(typedExpressionIR))
+    2. (Let typeIR'' be $type_of_expression(typedExpressionIR))
 
     3. If ((typeIR'' has type setTypeIR)), then
 
@@ -21624,7 +21624,7 @@ relation SelectCase_keyset_simple_ok: TC typeIR_key |- simpleKeysetExpression : 
 
     1. (Expr_ok: (local) TC |- expression : typedExpressionIR)
 
-    2. (Let typeIR be $typeof_expression(typedExpressionIR))
+    2. (Let typeIR be $type_of_expression(typedExpressionIR))
 
     3. If (~$is_set_typeIR(typeIR)), then
 
@@ -21660,7 +21660,7 @@ relation SelectCase_keyset_simple_ok: TC typeIR_key |- simpleKeysetExpression : 
 
           1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?})
 
-          2. (Let typeIR_reduced be $typeof_expression(typedExpressionIR_l_reduced))
+          2. (Let typeIR_reduced be $type_of_expression(typedExpressionIR_l_reduced))
 
           3. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $coerce_unary(typedExpressionIR_l_reduced, typeIR_key))
 
@@ -21698,9 +21698,9 @@ relation SelectCase_keyset_simple_ok: TC typeIR_key |- simpleKeysetExpression : 
 
           1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?})
 
-          2. (Let typeIR_reduced be $typeof_expression(typedExpressionIR_l_reduced))
+          2. (Let typeIR_reduced be $type_of_expression(typedExpressionIR_l_reduced))
 
-          3. If ((typeIR_reduced = $typeof_expression(typedExpressionIR_r_reduced))), then
+          3. If ((typeIR_reduced = $type_of_expression(typedExpressionIR_r_reduced))), then
 
             1. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $coerce_unary(typedExpressionIR_l_reduced, typeIR_key))
 
@@ -22237,9 +22237,9 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key, text) @ simpleKeys
 
           2. (Expr_ok: (local) TC |- expression : typedExpressionIR)
 
-          3. (Let typeIR be $typeof_expression(typedExpressionIR))
+          3. (Let typeIR be $type_of_expression(typedExpressionIR))
 
-          4. (Let ctk be $ctkof_expression(typedExpressionIR))
+          4. (Let ctk be $ctk_of_expression(typedExpressionIR))
 
           5. If (Sub_impl: typeIR <: typeIR_key) holds, then
 
@@ -22253,9 +22253,9 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key, text) @ simpleKeys
 
         1. (Expr_ok: (local) TC |- expression : typedExpressionIR)
 
-        2. (Let typeIR be $typeof_expression(typedExpressionIR))
+        2. (Let typeIR be $type_of_expression(typedExpressionIR))
 
-        3. (Let ctk be $ctkof_expression(typedExpressionIR))
+        3. (Let ctk be $ctk_of_expression(typedExpressionIR))
 
         4. If (Sub_impl: typeIR <: typeIR_key) holds, then
 
@@ -22299,9 +22299,9 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key, text) @ simpleKeys
 
                 1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?})
 
-                2. (Let typeIR_reduced be $typeof_expression(typedExpressionIR_r_reduced))
+                2. (Let typeIR_reduced be $type_of_expression(typedExpressionIR_r_reduced))
 
-                3. (Let ctk_r_reduced be $ctkof_expression(typedExpressionIR_r_reduced))
+                3. (Let ctk_r_reduced be $ctk_of_expression(typedExpressionIR_r_reduced))
 
                 4. If (Sub_impl: typeIR_reduced <: typeIR_key) holds, then
 
@@ -22333,9 +22333,9 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key, text) @ simpleKeys
 
               1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?})
 
-              2. (Let typeIR_reduced be $typeof_expression(typedExpressionIR_r_reduced))
+              2. (Let typeIR_reduced be $type_of_expression(typedExpressionIR_r_reduced))
 
-              3. (Let ctk_r_reduced be $ctkof_expression(typedExpressionIR_r_reduced))
+              3. (Let ctk_r_reduced be $ctk_of_expression(typedExpressionIR_r_reduced))
 
               4. If (Sub_impl: typeIR_reduced <: typeIR_key) holds, then
 
@@ -22409,9 +22409,9 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key, text) @ simpleKeys
 
           1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?})
 
-          2. (Let typeIR_reduced be $typeof_expression(typedExpressionIR_r_reduced))
+          2. (Let typeIR_reduced be $type_of_expression(typedExpressionIR_r_reduced))
 
-          3. (Let ctk_r_reduced be $ctkof_expression(typedExpressionIR_r_reduced))
+          3. (Let ctk_r_reduced be $ctk_of_expression(typedExpressionIR_r_reduced))
 
           4. If (Sub_impl: typeIR_reduced <: typeIR_key) holds, then
 
@@ -22604,7 +22604,7 @@ relation Expr_lvalue_ok: p TC |- (expressionIR # (( _typeIR _ctk )))
 
         1. If (Expr_lvalue_ok: p TC |- typedExpressionIR_base) holds, then
 
-          1. (Let typeIR_base be $typeof_expression(typedExpressionIR_base))
+          1. (Let typeIR_base be $type_of_expression(typedExpressionIR_base))
 
           2. (Let typeIR' be $canon(typeIR_base))
 
@@ -22696,7 +22696,7 @@ def $infer'(constraint, parameterTypeIR, argumentIR)
 
   2. (Let (_direction typeIR_param _id _value?{_value <- _value?}) be parameterTypeIR)
 
-  3. (Let typeIR_arg be $typeof_expression(typedExpressionIR))
+  3. (Let typeIR_arg be $type_of_expression(typedExpressionIR))
 
   4. Return $gen_constraint_type(constraint, typeIR_param, typeIR_arg)
 
@@ -22708,7 +22708,7 @@ def $infer'(constraint, parameterTypeIR, argumentIR)
 
     2. (Let (_direction typeIR_param _id _value?{_value <- _value?}) be parameterTypeIR)
 
-    3. (Let typeIR_arg be $typeof_expression(typedExpressionIR))
+    3. (Let typeIR_arg be $type_of_expression(typedExpressionIR))
 
     4. Return $gen_constraint_type(constraint, typeIR_param, typeIR_arg)
 
@@ -23474,7 +23474,27 @@ syntax state =
    | 
    | annotationList { parserStatementListIR transitionStatementIR }
 
-;; ../../../../spec-concrete/6.3-constructor.watsup:6.1-19.42
+;; ../../../../spec-concrete/6.3-constructor.watsup:6.3-8.37
+syntax externObjectConstructor = 
+   | extern nameIR < typeParameterListIR >( constructorParameterListIR ){ externMethodPrototypeListIR }
+
+;; ../../../../spec-concrete/6.3-constructor.watsup:11.3-14.27
+syntax parserObjectConstructor = 
+   | parser( parameterListIR )( constructorParameterListIR ){ parserLocalDeclarationListIR parserStateListIR }
+
+;; ../../../../spec-concrete/6.3-constructor.watsup:17.3-20.29
+syntax controlObjectConstructor = 
+   | control( parameterListIR )( constructorParameterListIR ){ controlLocalDeclarationListIR apply controlBodyIR }
+
+;; ../../../../spec-concrete/6.3-constructor.watsup:23.3-24.36
+syntax packageObjectConstructor = 
+   | package< typeParameterListIR >( constructorParameterListIR )
+
+;; ../../../../spec-concrete/6.3-constructor.watsup:27.3-27.40
+syntax tableObjectConstructor = 
+   | table nameIR { tablePropertyListIR }
+
+;; ../../../../spec-concrete/6.3-constructor.watsup:30.1-34.27
 syntax constructor = 
    | extern nameIR < typeParameterListIR >( constructorParameterListIR ){ externMethodPrototypeListIR }
    | parser( parameterListIR )( constructorParameterListIR ){ parserLocalDeclarationListIR parserStateListIR }
@@ -23482,33 +23502,33 @@ syntax constructor =
    | package< typeParameterListIR >( constructorParameterListIR )
    | table nameIR { tablePropertyListIR }
 
-;; ../../../../spec-concrete/6.4.1-object.watsup:13.23-13.54
+;; ../../../../spec-concrete/6.4.1-object.watsup:13.23-13.55
 syntax externObject = 
-   | extern tid { theta venv renv }
+   | extern tid { theta frame renv }
 
 ;; ../../../../spec-concrete/6.4.1-object.watsup:22.3-25.14
 syntax parserObject = 
-   | parser( parameterListIR ){ venv parserLocalDeclarationListIR senv }
+   | parser( parameterListIR ){ frame parserLocalDeclarationListIR senv }
 
 ;; ../../../../spec-concrete/6.4.1-object.watsup:35.3-39.23
 syntax controlObject = 
-   | control( parameterListIR ){ venv controlLocalDeclarationListIR renv controlBodyIR }
+   | control( parameterListIR ){ frame controlLocalDeclarationListIR renv controlBodyIR }
 
-;; ../../../../spec-concrete/6.4.1-object.watsup:47.24-47.47
+;; ../../../../spec-concrete/6.4.1-object.watsup:47.24-47.48
 syntax packageObject = 
-   | package{ theta venv }
+   | package{ theta frame }
 
-;; ../../../../spec-concrete/6.4.1-object.watsup:54.22-54.61
+;; ../../../../spec-concrete/6.4.1-object.watsup:54.22-54.62
 syntax tableObject = 
-   | table tid { venv tablePropertyListIR }
+   | table tid { frame tablePropertyListIR }
 
 ;; ../../../../spec-concrete/6.4.1-object.watsup:57.1-61.16
 syntax object = 
-   | extern tid { theta venv renv }
-   | parser( parameterListIR ){ venv parserLocalDeclarationListIR senv }
-   | control( parameterListIR ){ venv controlLocalDeclarationListIR renv controlBodyIR }
-   | package{ theta venv }
-   | table tid { venv tablePropertyListIR }
+   | extern tid { theta frame renv }
+   | parser( parameterListIR ){ frame parserLocalDeclarationListIR senv }
+   | control( parameterListIR ){ frame controlLocalDeclarationListIR renv controlBodyIR }
+   | package{ theta frame }
+   | table tid { frame tablePropertyListIR }
 
 ;; ../../../../spec-concrete/6.4.2-object-aux.watsup:7.1-7.37
 def $is_extern_object(object')
@@ -23531,11 +23551,11 @@ def $empty_tenv
 
 1. Return $empty_map<tid, typeIR>
 
-;; ../../../../spec-concrete/7.01-env.watsup:12.15-12.29
-syntax venv = map<id, value>
+;; ../../../../spec-concrete/7.01-env.watsup:12.16-12.30
+syntax frame = map<id, value>
 
-;; ../../../../spec-concrete/7.01-env.watsup:14.1-14.23
-def $empty_venv
+;; ../../../../spec-concrete/7.01-env.watsup:14.1-14.25
+def $empty_frame
 
 1. Return $empty_map<id, value>
 
@@ -23571,14 +23591,14 @@ def $empty_store
 
 1. Return $empty_map<oid, object>
 
-;; ../../../../spec-concrete/7.02-instantiation-context.watsup:8.3-11.16
-syntax globalInstantiationLayer = {cenv cenv, tdenv tdenv, renv renv, venv venv}
+;; ../../../../spec-concrete/7.02-instantiation-context.watsup:8.3-11.18
+syntax globalInstantiationLayer = {constructor cenv, type tdenv, routine renv, frame frame}
 
-;; ../../../../spec-concrete/7.02-instantiation-context.watsup:16.3-19.16
-syntax blockInstantiationLayer = {tenv tenv, renv renv, senv senv, venv venv}
+;; ../../../../spec-concrete/7.02-instantiation-context.watsup:16.3-19.18
+syntax blockInstantiationLayer = {type tenv, routine renv, state senv, frame frame}
 
-;; ../../../../spec-concrete/7.02-instantiation-context.watsup:24.3-25.18
-syntax localInstantiationLayer = {tenv tenv, venvs venv*}
+;; ../../../../spec-concrete/7.02-instantiation-context.watsup:24.3-25.20
+syntax localInstantiationLayer = {type tenv, frames frame*}
 
 ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:32.3-35.36
 syntax instantiationContext = {path oid, global globalInstantiationLayer, block blockInstantiationLayer, local localInstantiationLayer}
@@ -23586,11 +23606,11 @@ syntax instantiationContext = {path oid, global globalInstantiationLayer, block 
 ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:43.1-43.55
 def $empty_instantiationContext
 
-1. (Let globalInstantiationLayer be {cenv $empty_cenv, tdenv $empty_tdenv, renv $empty_renv, venv $empty_venv})
+1. (Let globalInstantiationLayer be {constructor $empty_cenv, type $empty_tdenv, routine $empty_renv, frame $empty_frame})
 
-2. (Let blockInstantiationLayer be {tenv $empty_tenv, renv $empty_renv, senv $empty_senv, venv $empty_venv})
+2. (Let blockInstantiationLayer be {type $empty_tenv, routine $empty_renv, state $empty_senv, frame $empty_frame})
 
-3. (Let localInstantiationLayer be {tenv $empty_tenv, venvs [$empty_venv]})
+3. (Let localInstantiationLayer be {type $empty_tenv, frames [$empty_frame]})
 
 4. (Let IC be {path [], global globalInstantiationLayer, block blockInstantiationLayer, local localInstantiationLayer})
 
@@ -23599,18 +23619,18 @@ def $empty_instantiationContext
 ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:69.1-69.61
 def $enter_inst(IC)
 
-1. Return IC[local.venvs = $empty_venv :: IC.local.venvs]
+1. Return IC[local.frames = $empty_frame :: IC.local.frames]
 
 ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:73.1-73.60
 def $exit_inst(IC)
 
-1. (Let venv*{venv <- venv*} be IC.local.venvs)
+1. (Let frame*{frame <- frame*} be IC.local.frames)
 
-2. If ((venv*{venv <- venv*} matches pattern _ :: _)), then
+2. If ((frame*{frame <- frame*} matches pattern _ :: _)), then
 
-  1. (Let venv_h :: venv_t*{venv_t <- venv_t*} be venv*{venv <- venv*})
+  1. (Let frame_h :: frame_t*{frame_t <- frame_t*} be frame*{frame <- frame*})
 
-  2. Return IC[local.venvs = venv_t*{venv_t <- venv_t*}]
+  2. Return IC[local.frames = frame_t*{frame_t <- frame_t*}]
 
 ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:82.1-82.65
 def $enter_path(IC, id)
@@ -23624,15 +23644,15 @@ def $inherit_instantiationContext(cursor, IC)
 
   1. Case (% matches pattern `GLOBAL`)
 
-    1. (Let blockInstantiationLayer be {tenv $empty_tenv, renv $empty_renv, senv $empty_senv, venv $empty_venv})
+    1. (Let blockInstantiationLayer be {type $empty_tenv, routine $empty_renv, state $empty_senv, frame $empty_frame})
 
-    2. (Let localInstantiationLayer be {tenv $empty_tenv, venvs [$empty_venv]})
+    2. (Let localInstantiationLayer be {type $empty_tenv, frames [$empty_frame]})
 
     3. Return IC[block = blockInstantiationLayer][local = localInstantiationLayer]
 
   2. Case (% matches pattern `BLOCK`)
 
-    1. (Let localInstantiationLayer be {tenv $empty_tenv, venvs [$empty_venv]})
+    1. (Let localInstantiationLayer be {type $empty_tenv, frames [$empty_frame]})
 
     2. Return IC[local = localInstantiationLayer]
 
@@ -23647,33 +23667,33 @@ def $add_value_inst(cursor, IC, id, value)
 
   1. Case (% matches pattern `GLOBAL`)
 
-    1. If (~$in_set<id>(id, $dom_map<id, value>(IC.global.venv))), then
+    1. If (~$in_set<id>(id, $dom_map<id, value>(IC.global.frame))), then
 
-      1. (Let venv be $add_map<id, value>(IC.global.venv, id, value))
+      1. (Let frame be $add_map<id, value>(IC.global.frame, id, value))
 
-      2. Return IC[global.venv = venv]
+      2. Return IC[global.frame = frame]
 
   2. Case (% matches pattern `BLOCK`)
 
-    1. If (~$in_set<id>(id, $dom_map<id, value>(IC.block.venv))), then
+    1. If (~$in_set<id>(id, $dom_map<id, value>(IC.block.frame))), then
 
-      1. (Let venv be $add_map<id, value>(IC.block.venv, id, value))
+      1. (Let frame be $add_map<id, value>(IC.block.frame, id, value))
 
-      2. Return IC[block.venv = venv]
+      2. Return IC[block.frame = frame]
 
   3. Case (% matches pattern `LOCAL`)
 
-    1. (Let venv*{venv <- venv*} be IC.local.venvs)
+    1. (Let frame*{frame <- frame*} be IC.local.frames)
 
-    2. If ((venv*{venv <- venv*} matches pattern _ :: _)), then
+    2. If ((frame*{frame <- frame*} matches pattern _ :: _)), then
 
-      1. (Let venv_h :: venv_t*{venv_t <- venv_t*} be venv*{venv <- venv*})
+      1. (Let frame_h :: frame_t*{frame_t <- frame_t*} be frame*{frame <- frame*})
 
-      2. If (~$in_set<id>(id, $dom_map<id, value>(venv_h))), then
+      2. If (~$in_set<id>(id, $dom_map<id, value>(frame_h))), then
 
-        1. (Let venv_h' be $add_map<id, value>(venv_h, id, value))
+        1. (Let frame_h' be $add_map<id, value>(frame_h, id, value))
 
-        2. Return IC[local.venvs = venv_h' :: venv_t*{venv_t <- venv_t*}]
+        2. Return IC[local.frames = frame_h' :: frame_t*{frame_t <- frame_t*}]
 
 ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:117.1-117.86
 def $add_values_inst(p, IC, id*{id <- id*}, value*{value <- value*})
@@ -23705,20 +23725,20 @@ def $add_typedef_inst(cursor, IC, tid, typeDefIR)
 
 1. If ((cursor matches pattern `GLOBAL`)), then
 
-  1. (Let tdenv be $add_map<tid, typeDefIR>(IC.global.tdenv, tid, typeDefIR))
+  1. (Let tdenv be $add_map<tid, typeDefIR>(IC.global.type, tid, typeDefIR))
 
-  2. Return IC[global.tdenv = tdenv]
+  2. Return IC[global.type = tdenv]
 
 ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:144.1-144.88
 def $add_state_inst(cursor, IC, nameIR, state)
 
 1. If ((cursor matches pattern `BLOCK`)), then
 
-  1. If (~$in_set<nameIR>(nameIR, $dom_map<nameIR, state>(IC.block.senv))), then
+  1. If (~$in_set<nameIR>(nameIR, $dom_map<nameIR, state>(IC.block.state))), then
 
-    1. (Let senv be $add_map<nameIR, state>(IC.block.senv, nameIR, state))
+    1. (Let senv be $add_map<nameIR, state>(IC.block.state, nameIR, state))
 
-    2. Return IC[block.senv = senv]
+    2. Return IC[block.state = senv]
 
 ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:152.1-152.88
 def $add_types_inst(p, IC, tid*{tid <- tid*}, typeIR*{typeIR <- typeIR*})
@@ -23750,15 +23770,15 @@ def $add_type_inst(cursor, IC, tid, typeIR)
 
   1. Case (% matches pattern `BLOCK`)
 
-    1. (Let tenv be $add_map<tid, typeIR>(IC.block.tenv, tid, typeIR))
+    1. (Let tenv be $add_map<tid, typeIR>(IC.block.type, tid, typeIR))
 
-    2. Return IC[block.tenv = tenv]
+    2. Return IC[block.type = tenv]
 
   2. Case (% matches pattern `LOCAL`)
 
-    1. (Let tenv be $add_map<tid, typeIR>(IC.local.tenv, tid, typeIR))
+    1. (Let tenv be $add_map<tid, typeIR>(IC.local.type, tid, typeIR))
 
-    2. Return IC[local.tenv = tenv]
+    2. Return IC[local.type = tenv]
 
 ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:167.1-168.25
 def $add_routine_overload_inst(cursor, IC, rid, routine)
@@ -23767,19 +23787,19 @@ def $add_routine_overload_inst(cursor, IC, rid, routine)
 
   1. Case (% matches pattern `GLOBAL`)
 
-    1. If (~$in_set<rid>(rid, $dom_map<rid, routine>(IC.global.renv))), then
+    1. If (~$in_set<rid>(rid, $dom_map<rid, routine>(IC.global.routine))), then
 
-      1. (Let renv be $add_map<rid, routine>(IC.global.renv, rid, routine))
+      1. (Let renv be $add_map<rid, routine>(IC.global.routine, rid, routine))
 
-      2. Return IC[global.renv = renv]
+      2. Return IC[global.routine = renv]
 
   2. Case (% matches pattern `BLOCK`)
 
-    1. If (~$in_set<rid>(rid, $dom_map<rid, routine>(IC.block.renv))), then
+    1. If (~$in_set<rid>(rid, $dom_map<rid, routine>(IC.block.routine))), then
 
-      1. (Let renv be $add_map<rid, routine>(IC.block.renv, rid, routine))
+      1. (Let renv be $add_map<rid, routine>(IC.block.routine, rid, routine))
 
-      2. Return IC[block.renv = renv]
+      2. Return IC[block.routine = renv]
 
 ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:177.1-178.25
 def $add_routine_non_overload_inst(cursor, IC, rid, routine)
@@ -23790,32 +23810,32 @@ def $add_routine_non_overload_inst(cursor, IC, rid, routine)
 
     1. (Let (id ( _pid*{_pid <- _pid*} )) be rid)
 
-    2. (Let ({ (id_k ( _pid'*{_pid' <- _pid'*} ))*{_pid'* <- _pid'**, id_k <- id_k*} }) be $dom_map<rid, routine>(IC.global.renv))
+    2. (Let ({ (id_k ( _pid'*{_pid' <- _pid'*} ))*{_pid'* <- _pid'**, id_k <- id_k*} }) be $dom_map<rid, routine>(IC.global.routine))
 
     3. If (~$in_set<id>(id, ({ id_k*{id_k <- id_k*} }))), then
 
-      1. (Let renv be $add_map<rid, routine>(IC.global.renv, rid, routine))
+      1. (Let renv be $add_map<rid, routine>(IC.global.routine, rid, routine))
 
-      2. Return IC[global.renv = renv]
+      2. Return IC[global.routine = renv]
 
   2. Case (% matches pattern `BLOCK`)
 
     1. (Let (id ( _pid*{_pid <- _pid*} )) be rid)
 
-    2. (Let ({ (id_k ( _pid'*{_pid' <- _pid'*} ))*{_pid'* <- _pid'**, id_k <- id_k*} }) be $dom_map<rid, routine>(IC.block.renv))
+    2. (Let ({ (id_k ( _pid'*{_pid' <- _pid'*} ))*{_pid'* <- _pid'**, id_k <- id_k*} }) be $dom_map<rid, routine>(IC.block.routine))
 
     3. If (~$in_set<id>(id, ({ id_k*{id_k <- id_k*} }))), then
 
-      1. (Let renv be $add_map<rid, routine>(IC.block.renv, rid, routine))
+      1. (Let renv be $add_map<rid, routine>(IC.block.routine, rid, routine))
 
-      2. Return IC[block.renv = renv]
+      2. Return IC[block.routine = renv]
 
 ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:193.1-194.25
 def $add_constructor_inst(IC, cid, constructor)
 
-1. (Let cenv be $add_map<cid, constructor>(IC.global.cenv, cid, constructor))
+1. (Let cenv be $add_map<cid, constructor>(IC.global.constructor, cid, constructor))
 
-2. Return IC[global.cenv = cenv]
+2. Return IC[global.constructor = cenv]
 
 ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:201.1-202.25
 def $add_constructors_inst(IC, cid*{cid <- cid*}, constructor*{constructor <- constructor*})
@@ -23847,7 +23867,7 @@ def $find_value_inst(p', IC, prefixedNameIR)
 
   1. (Let (. id) be prefixedNameIR)
 
-  2. (Let value'?{value' <- value'?} be $find_map<id, value>(IC.global.venv, id))
+  2. (Let value'?{value' <- value'?} be $find_map<id, value>(IC.global.frame, id))
 
   3. If ((value'?{value' <- value'?} matches pattern (_))), then
 
@@ -23863,7 +23883,7 @@ def $find_value_inst(p', IC, prefixedNameIR)
 
       1. (Let (` id) be prefixedNameIR)
 
-      2. (Let value'?{value' <- value'?} be $find_map<id, value>(IC.global.venv, id))
+      2. (Let value'?{value' <- value'?} be $find_map<id, value>(IC.global.frame, id))
 
       3. If ((value'?{value' <- value'?} matches pattern (_))), then
 
@@ -23877,7 +23897,7 @@ def $find_value_inst(p', IC, prefixedNameIR)
 
       1. (Let (` id) be prefixedNameIR)
 
-      2. (Let value'?{value' <- value'?} be $find_map<id, value>(IC.block.venv, id))
+      2. (Let value'?{value' <- value'?} be $find_map<id, value>(IC.block.frame, id))
 
       3. If ((value'?{value' <- value'?} matches pattern (_))), then
 
@@ -23885,7 +23905,7 @@ def $find_value_inst(p', IC, prefixedNameIR)
 
         2. Return value
 
-      4. If ((?() = $find_map<id, value>(IC.block.venv, id))), then
+      4. If ((?() = $find_map<id, value>(IC.block.frame, id))), then
 
         1. Return $find_value_inst((global), IC, (` id))
 
@@ -23895,7 +23915,7 @@ def $find_value_inst(p', IC, prefixedNameIR)
 
       1. (Let (` id) be prefixedNameIR)
 
-      2. (Let value'?{value' <- value'?} be $find_maps<id, value>(IC.local.venvs, id))
+      2. (Let value'?{value' <- value'?} be $find_maps<id, value>(IC.local.frames, id))
 
       3. If ((value'?{value' <- value'?} matches pattern (_))), then
 
@@ -23903,7 +23923,7 @@ def $find_value_inst(p', IC, prefixedNameIR)
 
         2. Return value
 
-      4. If ((?() = $find_maps<id, value>(IC.local.venvs, id))), then
+      4. If ((?() = $find_maps<id, value>(IC.local.frames, id))), then
 
         1. Return $find_value_inst((block), IC, (` id))
 
@@ -23916,13 +23936,13 @@ def $find_typedef_inst(_cursor, IC, prefixedNameIR)
 
     1. (Let (` nameIR) be prefixedNameIR)
 
-    2. Return $find_map<tid, typeDefIR>(IC.global.tdenv, nameIR)
+    2. Return $find_map<tid, typeDefIR>(IC.global.type, nameIR)
 
   2. Case (% matches pattern `.%`)
 
     1. (Let (. nameIR) be prefixedNameIR)
 
-    2. Return $find_map<tid, typeDefIR>(IC.global.tdenv, nameIR)
+    2. Return $find_map<tid, typeDefIR>(IC.global.type, nameIR)
 
 ;; ../../../../spec-concrete/7.02-instantiation-context.watsup:243.1-244.29
 def $find_constructor_inst(IC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*})
@@ -23935,7 +23955,7 @@ def $find_constructor_inst(IC, prefixedNameIR, argumentIR*{argumentIR <- argumen
 
     2. (Let id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*} be $ids_arguments(argumentIR*{argumentIR <- argumentIR*}))
 
-    3. Return $find_overloaded<constructor>(IC.global.cenv, id, id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*})
+    3. Return $find_overloaded<constructor>(IC.global.constructor, id, id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*})
 
   2. Case (% matches pattern `.%`)
 
@@ -23943,7 +23963,7 @@ def $find_constructor_inst(IC, prefixedNameIR, argumentIR*{argumentIR <- argumen
 
     2. (Let id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*} be $ids_arguments(argumentIR*{argumentIR <- argumentIR*}))
 
-    3. Return $find_overloaded<constructor>(IC.global.cenv, id, id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*})
+    3. Return $find_overloaded<constructor>(IC.global.constructor, id, id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*})
 
 ;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:5.1-7.26
 relation Expr_inst: p IC STO' |- (expressionIR # _expressionNoteIR') ==> % %
@@ -25251,7 +25271,7 @@ relation ControlLocalDecl_inst: IC_0' STO_0' |- controlLocalDeclarationIR ==> % 
 
       1. (Let IC_inner be $enter_path(IC_0', nameIR))
 
-      2. (Constructor_inst: (block) IC_0' STO_0' |- (table nameIR { tablePropertyListIR }) < [] >( [] # [] )==> STO_1 object_table)
+      2. (Constructor_inst: (block) IC_0' STO_0' |- ((table nameIR { tablePropertyListIR }) as constructor) < [] >( [] # [] )==> STO_1 object_table)
 
       3. (Let oid be IC_0'.path ++ [nameIR])
 
@@ -25349,7 +25369,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
             4. If ((object has type externObject)), then
 
-              1. (Let (extern tid { tenv venv renv }) be (object as externObject))
+              1. (Let (extern tid { tenv frame renv }) be (object as externObject))
 
               2. (Let IC_decl be $empty_instantiationContext[path = IC_0.path][global = IC_0.global])
 
@@ -25357,11 +25377,11 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
               4. (Decls_inst: (block) IC_decl STO_1 |- (objectDeclarationListIR as declarationIR*) ==> IC_decl_post STO_2 _declarationIR*{_declarationIR <- _declarationIR*})
 
-              5. (Let venv_merged be $merge_venvs(venv, IC_decl_post.block.venv))
+              5. (Let frame_merged be $merge_frames(frame, IC_decl_post.block.frame))
 
-              6. (Let renv_merged be $merge_renv_with_extern(renv, IC_decl_post.block.renv))
+              6. (Let renv_merged be $merge_renv_with_extern(renv, IC_decl_post.block.routine))
 
-              7. (Let object_merged be ((extern tid { tenv venv_merged renv_merged }) as object))
+              7. (Let object_merged be ((extern tid { tenv frame_merged renv_merged }) as object))
 
               8. (Let oid be IC_0.path ++ [nameIR])
 
@@ -25395,7 +25415,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
             4. If ((object has type externObject)), then
 
-              1. (Let (extern tid { tenv venv renv }) be (object as externObject))
+              1. (Let (extern tid { tenv frame renv }) be (object as externObject))
 
               2. (Let IC_decl be $empty_instantiationContext[path = IC_0.path][global = IC_0.global])
 
@@ -25403,11 +25423,11 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
               4. (Decls_inst: (block) IC_decl STO_1 |- (objectDeclarationListIR as declarationIR*) ==> IC_decl_post STO_2 _declarationIR*{_declarationIR <- _declarationIR*})
 
-              5. (Let venv_merged be $merge_venvs(venv, IC_decl_post.block.venv))
+              5. (Let frame_merged be $merge_frames(frame, IC_decl_post.block.frame))
 
-              6. (Let renv_merged be $merge_renv_with_extern(renv, IC_decl_post.block.renv))
+              6. (Let renv_merged be $merge_renv_with_extern(renv, IC_decl_post.block.routine))
 
-              7. (Let object_merged be ((extern tid { tenv venv_merged renv_merged }) as object))
+              7. (Let object_merged be ((extern tid { tenv frame_merged renv_merged }) as object))
 
               8. (Let oid be IC_0.path ++ [nameIR])
 
@@ -25511,9 +25531,9 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
         1. If ((externConstructorPrototypeIR'*{externConstructorPrototypeIR' <- externConstructorPrototypeIR'*} = [])), then
 
-          1. (Let rid be $ridof_externMethodPrototypeIR(externMethodPrototypeIR))*{externMethodPrototypeIR <- externMethodPrototypeIR*, rid <- rid*}
+          1. (Let rid be $rid_of_externMethodPrototypeIR(externMethodPrototypeIR))*{externMethodPrototypeIR <- externMethodPrototypeIR*, rid <- rid*}
 
-          2. (Let routineTypeDefIR be $typeof_externMethodPrototypeIR(externMethodPrototypeIR))*{externMethodPrototypeIR <- externMethodPrototypeIR*, routineTypeDefIR <- routineTypeDefIR*}
+          2. (Let routineTypeDefIR be $type_of_externMethodPrototypeIR(externMethodPrototypeIR))*{externMethodPrototypeIR <- externMethodPrototypeIR*, routineTypeDefIR <- routineTypeDefIR*}
 
           3. (Let rdenv be ({ (rid : routineTypeDefIR)*{rid <- rid*, routineTypeDefIR <- routineTypeDefIR*} }))
 
@@ -25525,7 +25545,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
           7. (Let cid be $cid_IR(nameIR, []))
 
-          8. (Let constructor be (extern nameIR < typeParameterListIR >( [] ){ externMethodPrototypeIR*{externMethodPrototypeIR <- externMethodPrototypeIR*} }))
+          8. (Let constructor be ((extern nameIR < typeParameterListIR >( [] ){ externMethodPrototypeIR*{externMethodPrototypeIR <- externMethodPrototypeIR*} }) as constructor))
 
           9. (Let IC_2 be $add_constructor_inst(IC_1, cid, constructor))
 
@@ -25533,9 +25553,9 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
         2. (Let externConstructorPrototypeIR*{externConstructorPrototypeIR <- externConstructorPrototypeIR*} be externConstructorPrototypeIR'*{externConstructorPrototypeIR' <- externConstructorPrototypeIR'*})
 
-        3. (Let rid be $ridof_externMethodPrototypeIR(externMethodPrototypeIR))*{externMethodPrototypeIR <- externMethodPrototypeIR*, rid <- rid*}
+        3. (Let rid be $rid_of_externMethodPrototypeIR(externMethodPrototypeIR))*{externMethodPrototypeIR <- externMethodPrototypeIR*, rid <- rid*}
 
-        4. (Let routineTypeDefIR be $typeof_externMethodPrototypeIR(externMethodPrototypeIR))*{externMethodPrototypeIR <- externMethodPrototypeIR*, routineTypeDefIR <- routineTypeDefIR*}
+        4. (Let routineTypeDefIR be $type_of_externMethodPrototypeIR(externMethodPrototypeIR))*{externMethodPrototypeIR <- externMethodPrototypeIR*, routineTypeDefIR <- routineTypeDefIR*}
 
         5. (Let rdenv be ({ (rid : routineTypeDefIR)*{rid <- rid*, routineTypeDefIR <- routineTypeDefIR*} }))
 
@@ -25545,7 +25565,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
         8. (Let IC_1 be $add_typedef_inst((global), IC_0, nameIR, (polyTypeDefIR as typeDefIR)))
 
-        9. (Let cid be $cidof_externConstructorPrototypeIR(externConstructorPrototypeIR))*{cid <- cid*, externConstructorPrototypeIR <- externConstructorPrototypeIR*}
+        9. (Let cid be $cid_of_externConstructorPrototypeIR(externConstructorPrototypeIR))*{cid <- cid*, externConstructorPrototypeIR <- externConstructorPrototypeIR*}
 
         10. (Let constructor be $constructor_of_externConstructorPrototypeIR(typeParameterListIR, externMethodPrototypeIR*{externMethodPrototypeIR <- externMethodPrototypeIR*}, externConstructorPrototypeIR))*{constructor <- constructor*, externConstructorPrototypeIR <- externConstructorPrototypeIR*}
 
@@ -25563,7 +25583,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
           1. (Let cid be $cid_IR(nameIR, constructorParameterListIR))
 
-          2. (Let constructor be (parser( parameterListIR )( constructorParameterListIR ){ parserLocalDeclarationListIR parserStateListIR }))
+          2. (Let constructor be ((parser( parameterListIR )( constructorParameterListIR ){ parserLocalDeclarationListIR parserStateListIR }) as constructor))
 
           3. (Let IC_1 be $add_constructor_inst(IC_0, cid, constructor))
 
@@ -25579,7 +25599,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
           1. (Let cid be $cid_IR(nameIR, constructorParameterListIR))
 
-          2. (Let constructor be (control( parameterListIR )( constructorParameterListIR ){ controlLocalDeclarationListIR apply controlBodyIR }))
+          2. (Let constructor be ((control( parameterListIR )( constructorParameterListIR ){ controlLocalDeclarationListIR apply controlBodyIR }) as constructor))
 
           3. (Let IC_1 be $add_constructor_inst(IC_0, cid, constructor))
 
@@ -25701,7 +25721,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
                 2. (Decl_inst: (global) IC_0 $empty_store |- (derivedTypeDeclarationIR as declarationIR) ==> IC_local _store _declarationIR?{_declarationIR <- _declarationIR?})
 
-                3. (Let ({ tid*{tid <- tid*} }) be $diff_set<tid>($dom_map<tid, typeDefIR>(IC_local.global.tdenv), $dom_map<tid, typeDefIR>(IC_0.global.tdenv)))
+                3. (Let ({ tid*{tid <- tid*} }) be $diff_set<tid>($dom_map<tid, typeDefIR>(IC_local.global.type), $dom_map<tid, typeDefIR>(IC_0.global.type)))
 
                 4. If ((tid*{tid <- tid*} matches pattern [ _/1 ])), then
 
@@ -25757,7 +25777,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
       2. Group parserTypeDeclarationIR: (global) IC_0 STO' |- ((annotationList parser nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{parameterIR <- parameterIR*} );) as declarationIR) ==> % % %
 
-        1. (Let parameterTypeIR be $typeof_parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
+        1. (Let parameterTypeIR be $type_of_parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
 
         2. (Let typeIR_parser be ((parser( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )) as typeIR))
 
@@ -25773,7 +25793,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
       2. Group controlTypeDeclarationIR: (global) IC_0 STO' |- ((annotationList control nameIR < typeParameterListIR , typeParameterListIR_inferred >( parameterIR*{parameterIR <- parameterIR*} );) as declarationIR) ==> % % %
 
-        1. (Let parameterTypeIR be $typeof_parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
+        1. (Let parameterTypeIR be $type_of_parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
 
         2. (Let typeIR_control be ((control( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )) as typeIR))
 
@@ -25799,7 +25819,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR ==> % % %
 
         5. (Let cid be $cid_IR(nameIR, parameterIR*{parameterIR <- parameterIR*}))
 
-        6. (Let constructor_package be (package< typeParameterListIR ++ typeParameterListIR_inferred >( parameterIR*{parameterIR <- parameterIR*} )))
+        6. (Let constructor_package be ((package< typeParameterListIR ++ typeParameterListIR_inferred >( parameterIR*{parameterIR <- parameterIR*} )) as constructor))
 
         7. (Let IC_2 be $add_constructor_inst(IC_1, cid, constructor_package))
 
@@ -25857,7 +25877,7 @@ relation Program_inst: |- p4program ==> % % % % %
 
   5. If ((declarationIR'*{declarationIR' <- declarationIR'*} matches pattern [])), then
 
-    1. Result in : |- % ==> IC_1.global.cenv IC_1.global.tdenv IC_1.global.renv IC_1.global.venv STO_1
+    1. Result in : |- % ==> IC_1.global.constructor IC_1.global.type IC_1.global.routine IC_1.global.frame STO_1
 
 ;; ../../../../spec-concrete/7.03-instantiation-relation.watsup:143.1-147.35
 relation Bind_arg: p_caller IC_caller | p_callee IC_callee_0 STO_0 |- id argumentIR ==> % %
@@ -25906,11 +25926,11 @@ relation Constructor_inst: p IC STO_0 |- constructor < typeArgumentIR*{typeArgum
 
 1. Case analysis on constructor
 
-  1. Case (% matches pattern `EXTERN%<%>(%){%}`)
+  1. Case (% has type externObjectConstructor)
 
-    1. (Let (extern nameIR < typeParameterIR*{typeParameterIR <- typeParameterIR*} >( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ){ externMethodPrototypeIR*{externMethodPrototypeIR <- externMethodPrototypeIR*} }) be constructor)
+    1. (Let (extern nameIR < typeParameterIR*{typeParameterIR <- typeParameterIR*} >( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ){ externMethodPrototypeIR*{externMethodPrototypeIR <- externMethodPrototypeIR*} }) be (constructor as externObjectConstructor))
 
-    2. Group extern: p IC STO_0 |- (extern nameIR < typeParameterIR*{typeParameterIR <- typeParameterIR*} >( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ){ externMethodPrototypeIR*{externMethodPrototypeIR <- externMethodPrototypeIR*} }) < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} # id_default'*{id_default' <- id_default'*} )==> % %
+    2. Group extern: p IC STO_0 |- ((extern nameIR < typeParameterIR*{typeParameterIR <- typeParameterIR*} >( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ){ externMethodPrototypeIR*{externMethodPrototypeIR <- externMethodPrototypeIR*} }) as constructor) < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} # id_default'*{id_default' <- id_default'*} )==> % %
 
       1. (Let p_callee be (block))
 
@@ -25930,17 +25950,17 @@ relation Constructor_inst: p IC STO_0 |- constructor < typeArgumentIR*{typeArgum
 
       9. (ExternMethods_inst: IC_callee_3 |- externMethodPrototypeIR*{externMethodPrototypeIR <- externMethodPrototypeIR*} ==> IC_callee_4)
 
-      10. (Let object_extern be ((extern nameIR { IC_callee_4.block.tenv IC_callee_4.block.venv IC_callee_4.block.renv }) as object))
+      10. (Let object_extern be ((extern nameIR { IC_callee_4.block.type IC_callee_4.block.frame IC_callee_4.block.routine }) as object))
 
       11. Result in : % % % |- % < % >( % # % )==> STO_1 object_extern
 
-  2. Case (% matches pattern `PARSER(%)(%){%%}`)
+  2. Case (% has type parserObjectConstructor)
 
-    1. (Let (parser( parameterIR*{parameterIR <- parameterIR*} )( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ){ parserLocalDeclarationIR*{parserLocalDeclarationIR <- parserLocalDeclarationIR*} parserStateIR*{parserStateIR <- parserStateIR*} }) be constructor)
+    1. (Let (parser( parameterIR*{parameterIR <- parameterIR*} )( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ){ parserLocalDeclarationIR*{parserLocalDeclarationIR <- parserLocalDeclarationIR*} parserStateIR*{parserStateIR <- parserStateIR*} }) be (constructor as parserObjectConstructor))
 
     2. If ((typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches pattern [])), then
 
-      1. Group parser: p IC STO_0 |- (parser( parameterIR*{parameterIR <- parameterIR*} )( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ){ parserLocalDeclarationIR*{parserLocalDeclarationIR <- parserLocalDeclarationIR*} parserStateIR*{parserStateIR <- parserStateIR*} }) < [] >( argumentIR*{argumentIR <- argumentIR*} # id_default'*{id_default' <- id_default'*} )==> % %
+      1. Group parser: p IC STO_0 |- ((parser( parameterIR*{parameterIR <- parameterIR*} )( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ){ parserLocalDeclarationIR*{parserLocalDeclarationIR <- parserLocalDeclarationIR*} parserStateIR*{parserStateIR <- parserStateIR*} }) as constructor) < [] >( argumentIR*{argumentIR <- argumentIR*} # id_default'*{id_default' <- id_default'*} )==> % %
 
         1. (Let p_callee be (block))
 
@@ -25964,17 +25984,17 @@ relation Constructor_inst: p IC STO_0 |- constructor < typeArgumentIR*{typeArgum
 
         11. (ParserStates_inst: IC_local_2 STO_2 |- parserStateIR*{parserStateIR <- parserStateIR*} ==> IC_state STO_3)
 
-        12. (Let object_parser be ((parser( parameterIR*{parameterIR <- parameterIR*} ){ IC_callee_2.block.venv parserLocalDeclarationIR_inst*{parserLocalDeclarationIR_inst <- parserLocalDeclarationIR_inst*} IC_state.block.senv }) as object))
+        12. (Let object_parser be ((parser( parameterIR*{parameterIR <- parameterIR*} ){ IC_callee_2.block.frame parserLocalDeclarationIR_inst*{parserLocalDeclarationIR_inst <- parserLocalDeclarationIR_inst*} IC_state.block.state }) as object))
 
         13. Result in : % % % |- % < % >( % # % )==> STO_3 object_parser
 
-  3. Case (% matches pattern `CONTROL(%)(%){%APPLY%}`)
+  3. Case (% has type controlObjectConstructor)
 
-    1. (Let (control( parameterIR*{parameterIR <- parameterIR*} )( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ){ controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*} apply controlBodyIR }) be constructor)
+    1. (Let (control( parameterIR*{parameterIR <- parameterIR*} )( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ){ controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*} apply controlBodyIR }) be (constructor as controlObjectConstructor))
 
     2. If ((typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches pattern [])), then
 
-      1. Group control: p IC STO_0 |- (control( parameterIR*{parameterIR <- parameterIR*} )( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ){ controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*} apply controlBodyIR }) < [] >( argumentIR*{argumentIR <- argumentIR*} # id_default'*{id_default' <- id_default'*} )==> % %
+      1. Group control: p IC STO_0 |- ((control( parameterIR*{parameterIR <- parameterIR*} )( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ){ controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*} apply controlBodyIR }) as constructor) < [] >( argumentIR*{argumentIR <- argumentIR*} # id_default'*{id_default' <- id_default'*} )==> % %
 
         1. (Let p_callee be (block))
 
@@ -25994,15 +26014,15 @@ relation Constructor_inst: p IC STO_0 |- constructor < typeArgumentIR*{typeArgum
 
         9. (Block_inst: IC_local_0 STO_2 |- controlBodyIR ==> IC_local_1 STO_3 controlBodyIR')
 
-        10. (Let object_control be ((control( parameterIR*{parameterIR <- parameterIR*} ){ IC_callee_2.block.venv controlLocalDeclarationIR'*{controlLocalDeclarationIR' <- controlLocalDeclarationIR'*} IC_local_1.block.renv controlBodyIR' }) as object))
+        10. (Let object_control be ((control( parameterIR*{parameterIR <- parameterIR*} ){ IC_callee_2.block.frame controlLocalDeclarationIR'*{controlLocalDeclarationIR' <- controlLocalDeclarationIR'*} IC_local_1.block.routine controlBodyIR' }) as object))
 
         11. Result in : % % % |- % < % >( % # % )==> STO_3 object_control
 
-  4. Case (% matches pattern `PACKAGE<%>(%)`)
+  4. Case (% has type packageObjectConstructor)
 
-    1. (Let (package< typeParameterIR*{typeParameterIR <- typeParameterIR*} >( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} )) be constructor)
+    1. (Let (package< typeParameterIR*{typeParameterIR <- typeParameterIR*} >( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} )) be (constructor as packageObjectConstructor))
 
-    2. Group package: p IC STO_0 |- (package< typeParameterIR*{typeParameterIR <- typeParameterIR*} >( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} )) < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} # id_default'*{id_default' <- id_default'*} )==> % %
+    2. Group package: p IC STO_0 |- ((package< typeParameterIR*{typeParameterIR <- typeParameterIR*} >( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} )) as constructor) < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} # id_default'*{id_default' <- id_default'*} )==> % %
 
       1. (Let p_callee be (block))
 
@@ -26020,13 +26040,13 @@ relation Constructor_inst: p IC STO_0 |- constructor < typeArgumentIR*{typeArgum
 
       8. (Let IC_callee_3 be $add_values_inst(p_callee, IC_callee_2, id_cparam_default*{id_cparam_default <- id_cparam_default*}, value_default*{value_default <- value_default*}))
 
-      9. (Let object_package be ((package{ IC_callee_3.block.tenv IC_callee_3.block.venv }) as object))
+      9. (Let object_package be ((package{ IC_callee_3.block.type IC_callee_3.block.frame }) as object))
 
       10. Result in : % % % |- % < % >( % # % )==> STO_1 object_package
 
-  5. Case (% matches pattern `TABLE%{%}`)
+  5. Case (% has type tableObjectConstructor)
 
-    1. (Let (table nameIR { tablePropertyListIR }) be constructor)
+    1. (Let (table nameIR { tablePropertyListIR }) be (constructor as tableObjectConstructor))
 
     2. If ((typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches pattern [])), then
 
@@ -26034,7 +26054,7 @@ relation Constructor_inst: p IC STO_0 |- constructor < typeArgumentIR*{typeArgum
 
         1. If ((id_default'*{id_default' <- id_default'*} matches pattern [])), then
 
-          1. Group table: p IC STO_0 |- (table nameIR { tablePropertyListIR }) < [] >( [] # [] )==> % %
+          1. Group table: p IC STO_0 |- ((table nameIR { tablePropertyListIR }) as constructor) < [] >( [] # [] )==> % %
 
             1. (Let p_callee be (local))
 
@@ -26046,13 +26066,13 @@ relation Constructor_inst: p IC STO_0 |- constructor < typeArgumentIR*{typeArgum
 
             5. (Let tablePropertyListIR_dynamic be $init_table(tablePropertyListIR_inst))
 
-            6. (Let venv'*{venv' <- venv'*} be IC_frame.local.venvs)
+            6. (Let frame'*{frame' <- frame'*} be IC_frame.local.frames)
 
-            7. If ((venv'*{venv' <- venv'*} matches pattern _ :: _)), then
+            7. If ((frame'*{frame' <- frame'*} matches pattern _ :: _)), then
 
-              1. (Let venv :: _venv*{_venv <- _venv*} be venv'*{venv' <- venv'*})
+              1. (Let frame :: _frame*{_frame <- _frame*} be frame'*{frame' <- frame'*})
 
-              2. (Let object_table be ((table nameIR { venv tablePropertyListIR_dynamic }) as object))
+              2. (Let object_table be ((table nameIR { frame tablePropertyListIR_dynamic }) as object))
 
               3. Result in : % % % |- % < % >( % # % )==> STO_1 object_table
 
@@ -26104,10 +26124,10 @@ relation SwitchCases_inst: p IC STO' |- switchCaseIR*{switchCaseIR <- switchCase
 
       3. Result in : % % % |- % ==> STO_2 switchCaseIR_h' :: switchCaseIR_t'*{switchCaseIR_t' <- switchCaseIR_t'*}
 
-;; ../../../../spec-concrete/7.07-instantiation-declaration.watsup:35.1-35.36
-def $merge_venvs(venv, ({ (id : value)*{id <- id*, value <- value*} }))
+;; ../../../../spec-concrete/7.07-instantiation-declaration.watsup:35.1-35.40
+def $merge_frames(frame, ({ (id : value)*{id <- id*, value <- value*} }))
 
-1. Return $adds_map<id, value>(venv, id*{id <- id*}, value*{value <- value*})
+1. Return $adds_map<id, value>(frame, id*{id <- id*}, value*{value <- value*})
 
 ;; ../../../../spec-concrete/7.07-instantiation-declaration.watsup:41.1-41.47
 def $merge_renv_with_extern(renv, set<pair<rid, routine>>')
@@ -26133,7 +26153,7 @@ def $merge_renv_with_extern(renv, set<pair<rid, routine>>')
     4. Return $merge_renv_with_extern(renv_post, ({ (rid_t : routine_t)*{rid_t <- rid_t*, routine_t <- routine_t*} }))
 
 ;; ../../../../spec-concrete/7.07-instantiation-declaration.watsup:242.1-243.41
-def $ridof_externMethodPrototypeIR(externMethodPrototypeIR)
+def $rid_of_externMethodPrototypeIR(externMethodPrototypeIR)
 
 1. Case analysis on externMethodPrototypeIR
 
@@ -26150,7 +26170,7 @@ def $ridof_externMethodPrototypeIR(externMethodPrototypeIR)
     2. Return $rid_IR(nameIR, parameterListIR)
 
 ;; ../../../../spec-concrete/7.07-instantiation-declaration.watsup:254.1-255.54
-def $typeof_externMethodPrototypeIR(externMethodPrototypeIR)
+def $type_of_externMethodPrototypeIR(externMethodPrototypeIR)
 
 1. Case analysis on externMethodPrototypeIR
 
@@ -26158,7 +26178,7 @@ def $typeof_externMethodPrototypeIR(externMethodPrototypeIR)
 
     1. (Let (_annotationList (typeIR_ret nameIR < typeParameterListIR_expl , typeParameterListIR_impl >( parameterIR*{parameterIR <- parameterIR*} )) ;) be externMethodPrototypeIR)
 
-    2. (Let parameterTypeIR be $typeof_parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
+    2. (Let parameterTypeIR be $type_of_parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
 
     3. (Let externMethodTypeIR be (extern_method( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret))
 
@@ -26170,7 +26190,7 @@ def $typeof_externMethodPrototypeIR(externMethodPrototypeIR)
 
     1. (Let (_annotationList abstract (typeIR_ret nameIR < typeParameterListIR_expl , typeParameterListIR_impl >( parameterIR*{parameterIR <- parameterIR*} )) ;) be externMethodPrototypeIR)
 
-    2. (Let parameterTypeIR be $typeof_parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
+    2. (Let parameterTypeIR be $type_of_parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameterTypeIR <- parameterTypeIR*}
 
     3. (Let externMethodTypeIR be (extern_methodabstract( parameterTypeIR*{parameterTypeIR <- parameterTypeIR*} )-> typeIR_ret))
 
@@ -26179,7 +26199,7 @@ def $typeof_externMethodPrototypeIR(externMethodPrototypeIR)
     5. Return routineTypeDefIR
 
 ;; ../../../../spec-concrete/7.07-instantiation-declaration.watsup:280.1-281.45
-def $cidof_externConstructorPrototypeIR((_annotationList nameIR <, _typeParameterListIR >( parameterIR*{parameterIR <- parameterIR*} );))
+def $cid_of_externConstructorPrototypeIR((_annotationList nameIR <, _typeParameterListIR >( parameterIR*{parameterIR <- parameterIR*} );))
 
 1. Return $cid_IR(nameIR, parameterIR*{parameterIR <- parameterIR*})
 
@@ -26188,7 +26208,7 @@ def $constructor_of_externConstructorPrototypeIR(typeParameterListIR_expl, exter
 
 1. (Let typeParameterListIR be typeParameterListIR_expl ++ typeParameterListIR_impl)
 
-2. (Let constructor be (extern nameIR < typeParameterListIR >( parameterIR*{parameterIR <- parameterIR*} ){ externMethodPrototypeListIR }))
+2. (Let constructor be ((extern nameIR < typeParameterListIR >( parameterIR*{parameterIR <- parameterIR*} ){ externMethodPrototypeListIR }) as constructor))
 
 3. Return constructor
 
@@ -26304,14 +26324,14 @@ def $init_table(tablePropertyListIR)
 
 1. Return tablePropertyListIR
 
-;; ../../../../spec-concrete/8-mini-evaluation.watsup:1.32-1.45
-syntax globalEvaluationLayer = {venv venv}
+;; ../../../../spec-concrete/8-mini-evaluation.watsup:1.32-1.47
+syntax globalEvaluationLayer = {frame frame}
 
-;; ../../../../spec-concrete/8-mini-evaluation.watsup:2.31-2.44
-syntax blockEvaluationLayer = {venv venv}
+;; ../../../../spec-concrete/8-mini-evaluation.watsup:2.31-2.46
+syntax blockEvaluationLayer = {frame frame}
 
-;; ../../../../spec-concrete/8-mini-evaluation.watsup:3.31-3.46
-syntax localEvaluationLayer = {venvs venv*}
+;; ../../../../spec-concrete/8-mini-evaluation.watsup:3.31-3.48
+syntax localEvaluationLayer = {frames frame*}
 
 ;; ../../../../spec-concrete/8-mini-evaluation.watsup:6.3-8.33
 syntax evaluationContext = {global globalEvaluationLayer, block blockEvaluationLayer, local localEvaluationLayer}

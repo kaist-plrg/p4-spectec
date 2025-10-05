@@ -5,24 +5,24 @@
 ;; Global layer
 
 syntax globalInstantiationLayer =
-  { CENV cenv,
-    TDENV tdenv,
-    RENV renv,
-    VENV venv }
+  { CONSTRUCTOR cenv,
+    TYPE tdenv,
+    ROUTINE renv,
+    FRAME frame }
 
 ;; Block Layer
 
 syntax blockInstantiationLayer =
-  { TENV tenv,
-    RENV renv,
-    SENV senv,
-    VENV venv }
+  { TYPE tenv,
+    ROUTINE renv,
+    STATE senv,
+    FRAME frame }
 
 ;; Local layer
 
 syntax localInstantiationLayer =
-  { TENV tenv,
-    VENVS venv* }
+  { TYPE tenv,
+    FRAMES frame* }
 
 ;;
 ;; Instantiation context
@@ -44,18 +44,18 @@ dec $empty_instantiationContext : instantiationContext
 
 def $empty_instantiationContext = IC
   -- if globalInstantiationLayer
-      = { CENV $empty_cenv,
-          TDENV $empty_tdenv,
-          RENV $empty_renv,
-          VENV $empty_venv }
+      = { CONSTRUCTOR $empty_cenv,
+          TYPE $empty_tdenv,
+          ROUTINE $empty_renv,
+          FRAME $empty_frame }
   -- if blockInstantiationLayer
-      = { TENV $empty_tenv,
-          RENV $empty_renv,
-          SENV $empty_senv,
-          VENV $empty_venv }
+      = { TYPE $empty_tenv,
+          ROUTINE $empty_renv,
+          STATE $empty_senv,
+          FRAME $empty_frame }
   -- if localInstantiationLayer
-      = { TENV $empty_tenv,
-          VENVS ([ $empty_venv ]) }
+      = { TYPE $empty_tenv,
+          FRAMES ([ $empty_frame ]) }
   -- if IC
       = { PATH ([]), 
           GLOBAL globalInstantiationLayer,
@@ -68,12 +68,12 @@ def $empty_instantiationContext = IC
 
 dec $enter_inst(instantiationContext) : instantiationContext
 
-def $enter_inst(IC) = IC[ .LOCAL.VENVS = $empty_venv :: IC.LOCAL.VENVS ]
+def $enter_inst(IC) = IC[ .LOCAL.FRAMES = $empty_frame :: IC.LOCAL.FRAMES ]
 
 dec $exit_inst(instantiationContext) : instantiationContext
 
-def $exit_inst(IC) = IC[ .LOCAL.VENVS = venv_t* ]
-  -- if IC.LOCAL.VENVS = venv_h :: venv_t*
+def $exit_inst(IC) = IC[ .LOCAL.FRAMES = frame_t* ]
+  -- if IC.LOCAL.FRAMES = frame_h :: frame_t*
 
 ;;
 ;; Path entry
@@ -93,18 +93,18 @@ dec $inherit_instantiationContext(cursor, instantiationContext)
 def $inherit_instantiationContext(GLOBAL, IC)
   = IC[ .BLOCK = blockInstantiationLayer ][ .LOCAL = localInstantiationLayer ]
   -- if blockInstantiationLayer
-      = { TENV $empty_tenv,
-          RENV $empty_renv,
-          SENV $empty_senv,
-          VENV $empty_venv }
+      = { TYPE $empty_tenv,
+          ROUTINE $empty_renv,
+          STATE $empty_senv,
+          FRAME $empty_frame }
   -- if localInstantiationLayer
-      = { TENV $empty_tenv,
-          VENVS ([ $empty_venv ]) }
+      = { TYPE $empty_tenv,
+          FRAMES ([ $empty_frame ]) }
 def $inherit_instantiationContext(BLOCK, IC)
   = IC[ .LOCAL = localInstantiationLayer ]
   -- if localInstantiationLayer
-      = { TENV $empty_tenv,
-          VENVS ([ $empty_venv ]) }
+      = { TYPE $empty_tenv,
+          FRAMES ([ $empty_frame ]) }
 def $inherit_instantiationContext(LOCAL, IC) = IC
 
 ;;
@@ -116,16 +116,16 @@ def $inherit_instantiationContext(LOCAL, IC) = IC
 dec $add_value_inst(cursor, instantiationContext, id, value): instantiationContext
 dec $add_values_inst(cursor, instantiationContext, id*, value*): instantiationContext
 
-def $add_value_inst(GLOBAL, IC, id, value) = IC[ .GLOBAL.VENV = venv ]
-  -- if ~$in_set<id>(id, $dom_map<id, value>(IC.GLOBAL.VENV))
-  -- if venv = $add_map<id, value>(IC.GLOBAL.VENV, id, value)
-def $add_value_inst(BLOCK, IC, id, value) = IC[ .BLOCK.VENV = venv ]
-  -- if ~$in_set<id>(id, $dom_map<id, value>(IC.BLOCK.VENV))
-  -- if venv = $add_map<id, value>(IC.BLOCK.VENV, id, value)
-def $add_value_inst(LOCAL, IC, id, value) = IC[ .LOCAL.VENVS = venv_h' :: venv_t* ]
-  -- if IC.LOCAL.VENVS = venv_h :: venv_t*
-  -- if ~$in_set<id>(id, $dom_map<id, value>(venv_h))
-  -- if venv_h' = $add_map<id, value>(venv_h, id, value)
+def $add_value_inst(GLOBAL, IC, id, value) = IC[ .GLOBAL.FRAME = frame ]
+  -- if ~$in_set<id>(id, $dom_map<id, value>(IC.GLOBAL.FRAME))
+  -- if frame = $add_map<id, value>(IC.GLOBAL.FRAME, id, value)
+def $add_value_inst(BLOCK, IC, id, value) = IC[ .BLOCK.FRAME = frame ]
+  -- if ~$in_set<id>(id, $dom_map<id, value>(IC.BLOCK.FRAME))
+  -- if frame = $add_map<id, value>(IC.BLOCK.FRAME, id, value)
+def $add_value_inst(LOCAL, IC, id, value) = IC[ .LOCAL.FRAMES = frame_h' :: frame_t* ]
+  -- if IC.LOCAL.FRAMES = frame_h :: frame_t*
+  -- if ~$in_set<id>(id, $dom_map<id, value>(frame_h))
+  -- if frame_h' = $add_map<id, value>(frame_h, id, value)
 
 def $add_values_inst(p, IC, eps, eps) = IC
 def $add_values_inst(p, IC, id_h :: id_t*, value_h :: value_t*) = IC''
@@ -136,16 +136,16 @@ def $add_values_inst(p, IC, id_h :: id_t*, value_h :: value_t*) = IC''
 
 dec $add_typedef_inst(cursor, instantiationContext, tid, typeDefIR) : instantiationContext
 
-def $add_typedef_inst(GLOBAL, IC, tid, typeDefIR) = IC[ .GLOBAL.TDENV = tdenv ]
-  -- if $add_map<tid, typeDefIR>(IC.GLOBAL.TDENV, tid, typeDefIR) = tdenv
+def $add_typedef_inst(GLOBAL, IC, tid, typeDefIR) = IC[ .GLOBAL.TYPE = tdenv ]
+  -- if $add_map<tid, typeDefIR>(IC.GLOBAL.TYPE, tid, typeDefIR) = tdenv
 
 ;;; Adder for parser states
 
 dec $add_state_inst(cursor, instantiationContext, nameIR, state) : instantiationContext
 
-def $add_state_inst(BLOCK, IC, nameIR, state) = IC[ .BLOCK.SENV = senv ]
-  -- if ~$in_set<nameIR>(nameIR, $dom_map<nameIR, state>(IC.BLOCK.SENV))
-  -- if senv = $add_map<nameIR, state>(IC.BLOCK.SENV, nameIR, state)
+def $add_state_inst(BLOCK, IC, nameIR, state) = IC[ .BLOCK.STATE = senv ]
+  -- if ~$in_set<nameIR>(nameIR, $dom_map<nameIR, state>(IC.BLOCK.STATE))
+  -- if senv = $add_map<nameIR, state>(IC.BLOCK.STATE, nameIR, state)
 
 ;;; Adder for type variables
 
@@ -157,36 +157,36 @@ def $add_types_inst(p, IC, tid_h :: tid_t*, typeIR_h :: typeIR_t*) =
     $add_types_inst(p, IC', tid_t*, typeIR_t*)
   -- if IC' = $add_type_inst(p, IC, tid_h, typeIR_h)
 
-def $add_type_inst(BLOCK, IC, tid, typeIR) = IC[ .BLOCK.TENV = tenv ]
-  -- if tenv = $add_map<tid, typeIR>(IC.BLOCK.TENV, tid, typeIR)
-def $add_type_inst(LOCAL, IC, tid, typeIR) = IC[ .LOCAL.TENV = tenv ]
-  -- if tenv = $add_map<tid, typeIR>(IC.LOCAL.TENV, tid, typeIR)
+def $add_type_inst(BLOCK, IC, tid, typeIR) = IC[ .BLOCK.TYPE = tenv ]
+  -- if tenv = $add_map<tid, typeIR>(IC.BLOCK.TYPE, tid, typeIR)
+def $add_type_inst(LOCAL, IC, tid, typeIR) = IC[ .LOCAL.TYPE = tenv ]
+  -- if tenv = $add_map<tid, typeIR>(IC.LOCAL.TYPE, tid, typeIR)
 
 ;;; Adder for routines
 
 dec $add_routine_overload_inst(cursor, instantiationContext, rid, routine)
   : instantiationContext
 
-def $add_routine_overload_inst(GLOBAL, IC, rid, routine) = IC[ .GLOBAL.RENV = renv ]
-  -- if ~$in_set<rid>(rid, $dom_map<rid, routine>(IC.GLOBAL.RENV))
-  -- if renv = $add_map<rid, routine>(IC.GLOBAL.RENV, rid, routine)
-def $add_routine_overload_inst(BLOCK, IC, rid, routine) = IC[ .BLOCK.RENV = renv ]
-  -- if ~$in_set<rid>(rid, $dom_map<rid, routine>(IC.BLOCK.RENV))
-  -- if renv = $add_map<rid, routine>(IC.BLOCK.RENV, rid, routine)
+def $add_routine_overload_inst(GLOBAL, IC, rid, routine) = IC[ .GLOBAL.ROUTINE = renv ]
+  -- if ~$in_set<rid>(rid, $dom_map<rid, routine>(IC.GLOBAL.ROUTINE))
+  -- if renv = $add_map<rid, routine>(IC.GLOBAL.ROUTINE, rid, routine)
+def $add_routine_overload_inst(BLOCK, IC, rid, routine) = IC[ .BLOCK.ROUTINE = renv ]
+  -- if ~$in_set<rid>(rid, $dom_map<rid, routine>(IC.BLOCK.ROUTINE))
+  -- if renv = $add_map<rid, routine>(IC.BLOCK.ROUTINE, rid, routine)
 
 dec $add_routine_non_overload_inst(cursor, instantiationContext, rid, routine)
   : instantiationContext
 
-def $add_routine_non_overload_inst(GLOBAL, IC, rid, routine) = IC[ .GLOBAL.RENV = renv ]
+def $add_routine_non_overload_inst(GLOBAL, IC, rid, routine) = IC[ .GLOBAL.ROUTINE = renv ]
   -- if id `( _ ) = rid
-  -- if `{ (id_k `( _ ))* } = $dom_map<rid, routine>(IC.GLOBAL.RENV)
+  -- if `{ (id_k `( _ ))* } = $dom_map<rid, routine>(IC.GLOBAL.ROUTINE)
   -- if ~$in_set<id>(id, `{ id_k* })
-  -- if renv = $add_map<rid, routine>(IC.GLOBAL.RENV, rid, routine)
-def $add_routine_non_overload_inst(BLOCK, IC, rid, routine) = IC[ .BLOCK.RENV = renv ]
+  -- if renv = $add_map<rid, routine>(IC.GLOBAL.ROUTINE, rid, routine)
+def $add_routine_non_overload_inst(BLOCK, IC, rid, routine) = IC[ .BLOCK.ROUTINE = renv ]
   -- if id `( _ ) = rid
-  -- if `{ (id_k `( _ ))* } = $dom_map<rid, routine>(IC.BLOCK.RENV)
+  -- if `{ (id_k `( _ ))* } = $dom_map<rid, routine>(IC.BLOCK.ROUTINE)
   -- if ~$in_set<id>(id, `{ id_k* })
-  -- if renv = $add_map<rid, routine>(IC.BLOCK.RENV, rid, routine)
+  -- if renv = $add_map<rid, routine>(IC.BLOCK.ROUTINE, rid, routine)
 
 ;;; Adder for constructors
 
@@ -194,9 +194,9 @@ dec $add_constructor_inst(instantiationContext, cid, constructor)
   : instantiationContext
 
 def $add_constructor_inst(IC, cid, constructor)
-  = IC[ .GLOBAL.CENV = cenv ]
+  = IC[ .GLOBAL.CONSTRUCTOR = cenv ]
   -- if cenv
-      = $add_map<cid, constructor>(IC.GLOBAL.CENV, cid, constructor)
+      = $add_map<cid, constructor>(IC.GLOBAL.CONSTRUCTOR, cid, constructor)
 
 dec $add_constructors_inst(instantiationContext, cid*, constructor*)
   : instantiationContext
@@ -215,28 +215,28 @@ def $add_constructors_inst(IC, cid_h :: cid_t*, constructor_h :: constructor_t*)
 dec $find_value_inst(cursor, instantiationContext, prefixedNameIR) : value
 
 def $find_value_inst(p, IC, `. id) = value
-  -- if value = $find_map<id, value>(IC.GLOBAL.VENV, id)
+  -- if value = $find_map<id, value>(IC.GLOBAL.FRAME, id)
 def $find_value_inst(GLOBAL, IC, `` id) = value
-  -- if value = $find_map<id, value>(IC.GLOBAL.VENV, id)
+  -- if value = $find_map<id, value>(IC.GLOBAL.FRAME, id)
 def $find_value_inst(BLOCK, IC, `` id) = value
-  -- if value = $find_map<id, value>(IC.BLOCK.VENV, id)
+  -- if value = $find_map<id, value>(IC.BLOCK.FRAME, id)
 def $find_value_inst(BLOCK, IC, `` id)
   = $find_value_inst(GLOBAL, IC, `` id)
-  -- if eps = $find_map<id, value>(IC.BLOCK.VENV, id)
+  -- if eps = $find_map<id, value>(IC.BLOCK.FRAME, id)
 def $find_value_inst(LOCAL, IC, `` id) = value
-  -- if value = $find_maps<id, value>(IC.LOCAL.VENVS, id)
+  -- if value = $find_maps<id, value>(IC.LOCAL.FRAMES, id)
 def $find_value_inst(LOCAL, IC, `` id)
   = $find_value_inst(BLOCK, IC, `` id)
-  -- if eps = $find_maps<id, value>(IC.LOCAL.VENVS, id)
+  -- if eps = $find_maps<id, value>(IC.LOCAL.FRAMES, id)
 
 ;;; Finder for typedefs
 
 dec $find_typedef_inst(cursor, instantiationContext, prefixedNameIR) : typeDefIR?
 
 def $find_typedef_inst(_, IC, `` nameIR)
-  = $find_map<tid, typeDefIR>(IC.GLOBAL.TDENV, nameIR)
+  = $find_map<tid, typeDefIR>(IC.GLOBAL.TYPE, nameIR)
 def $find_typedef_inst(_, IC, `. nameIR)
-  = $find_map<tid, typeDefIR>(IC.GLOBAL.TDENV, nameIR)
+  = $find_map<tid, typeDefIR>(IC.GLOBAL.TYPE, nameIR)
 
 ;;; Finder for constructors 
 
@@ -244,8 +244,8 @@ dec $find_constructor_inst(instantiationContext, prefixedNameIR, argumentIR*)
   : (cid, constructor, id*)?
 
 def $find_constructor_inst(IC, `` id, argumentIR*)
-  = $find_overloaded<constructor>(IC.GLOBAL.CENV, id, (id_arg?)*)
+  = $find_overloaded<constructor>(IC.GLOBAL.CONSTRUCTOR, id, (id_arg?)*)
   -- if (id_arg?)* = $ids_arguments(argumentIR*)
 def $find_constructor_inst(IC, `. id, argumentIR*)
-  = $find_overloaded<constructor>(IC.GLOBAL.CENV, id, (id_arg?)*)
+  = $find_overloaded<constructor>(IC.GLOBAL.CONSTRUCTOR, id, (id_arg?)*)
   -- if (id_arg?)* = $ids_arguments(argumentIR*)

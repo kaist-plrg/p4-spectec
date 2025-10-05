@@ -2,38 +2,38 @@
 ;; Objects
 ;;
 
-syntax venv
+syntax frame
 
 ;;
 ;;;; Extern object
 ;;;; Name of the extern object (tid), bound type variables (theta),
-;;;; value environment (venv), and routine environment for methods (renv)
+;;;; value environment (frame), and routine environment for methods (renv)
 ;;
 
-syntax externObject = EXTERN tid `{ theta venv renv }
+syntax externObject = EXTERN tid `{ theta frame renv }
 
 ;;
 ;;;; Parser object
-;;;; Apply parameters (parameterListIR), value environment (venv),
+;;;; Apply parameters (parameterListIR), value environment (frame),
 ;;;; local declarations (parserLocalDeclarationListIR), and state environment (senv)
 ;;
 
 syntax parserObject =
   PARSER `( parameterListIR )
-    `{ venv
+    `{ frame
        parserLocalDeclarationListIR
        senv }
 
 ;;
 ;;;; Control object
-;;;; Apply parameters (parameterListIR), value environment (venv),
+;;;; Apply parameters (parameterListIR), value environment (frame),
 ;;;; local declarations (controlLocalDeclarationListIR),
 ;;;; routine environment for actions (renv), and body (controlBodyIR)
 ;;
 
 syntax controlObject =
   CONTROL `( parameterListIR )
-    `{ venv
+    `{ frame
        controlLocalDeclarationListIR
        renv
        controlBodyIR }
@@ -41,17 +41,17 @@ syntax controlObject =
 ;;
 ;;;; Package object
 ;;;; Name of the package (tid), bound type variables (theta),
-;;;; and value environment (venv)
+;;;; and value environment (frame)
 ;;
 
-syntax packageObject = PACKAGE `{ theta venv }
+syntax packageObject = PACKAGE `{ theta frame }
 
 ;;
 ;;;; Table object
-;;;; Name of the table (tid) and value environment (venv)
+;;;; Name of the table (tid) and value environment (frame)
 ;;
 
-syntax tableObject = TABLE tid `{ venv tablePropertyListIR }
+syntax tableObject = TABLE tid `{ frame tablePropertyListIR }
 
 syntax object =
   | externObject
