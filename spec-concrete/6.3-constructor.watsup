@@ -2,18 +2,33 @@
 ;; Constructors
 ;;
 
+syntax externObjectConstructor =
+  EXTERN nameIR `< typeParameterListIR >
+    `( constructorParameterListIR )
+    `{ externMethodPrototypeListIR }
+
+syntax parserObjectConstructor =
+  PARSER `( parameterListIR )
+    `( constructorParameterListIR )
+    `{ parserLocalDeclarationListIR
+       parserStateListIR }
+
+syntax controlObjectConstructor =
+  CONTROL `( parameterListIR )
+    `( constructorParameterListIR )
+    `{ controlLocalDeclarationListIR
+       APPLY controlBodyIR }
+
+syntax packageObjectConstructor =
+  PACKAGE `< typeParameterListIR >
+    `( constructorParameterListIR )
+
+syntax tableObjectConstructor =
+  TABLE nameIR `{ tablePropertyListIR }
+
 syntax constructor =
-  | EXTERN nameIR `< typeParameterListIR >
-      `( constructorParameterListIR )
-      `{ externMethodPrototypeListIR }
-  | PARSER `( parameterListIR )
-      `( constructorParameterListIR )
-      `{ parserLocalDeclarationListIR
-         parserStateListIR }
-  | CONTROL `( parameterListIR )
-      `( constructorParameterListIR )
-      `{ controlLocalDeclarationListIR
-         APPLY controlBodyIR }
-  | PACKAGE `< typeParameterListIR >
-      `( constructorParameterListIR )
-  | TABLE nameIR `{ tablePropertyListIR }
+  | externObjectConstructor
+  | parserObjectConstructor
+  | controlObjectConstructor
+  | packageObjectConstructor
+  | tableObjectConstructor
