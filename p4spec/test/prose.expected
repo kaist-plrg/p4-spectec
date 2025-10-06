@@ -933,129 +933,31 @@ relation Eval_static: `p`, `TC`, and `expressionIR # ( _ _ )`
 . Else if let `unop typedExpressionIR` be `expressionIR`:
  .. Group unaryExpressionIR: `p`, `TC`, and `unop typedExpressionIR # ( _ _ )`
 
-  ... If `unop` matches pattern `~`:
-   .... Let `value` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR`, under cursor `p` and typing context `TC`>>.
-   .... Result in `$un_bnot(value)`.
+  ... Let `value` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR`, under cursor `p` and typing context `TC`>>.
+  ... Result in `$un_op(unop, value)`.
 
-  ... Else if `unop` matches pattern `!`:
-   .... Let `value` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR`, under cursor `p` and typing context `TC`>>.
-   .... Result in `$un_lnot(value)`.
+. Else if let `typedExpressionIR~l~ binop' typedExpressionIR~r~` be `expressionIR`:
+ .. Group binaryExpressionIR: `p`, `TC`, and `typedExpressionIR~l~ binop' typedExpressionIR~r~ # ( _ _ )`
 
-  ... Else if `unop` matches pattern `+`:
-   .... Let `value` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR`, under cursor `p` and typing context `TC`>>.
-   .... Result in `$un_plus(value)`.
+  ... Check that `binop'` is not in `[&&, ||]`.
+  ... Let `value~l~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~l~`, under cursor `p` and typing context `TC`>>.
+  ... Let `value~r~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~r~`, under cursor `p` and typing context `TC`>>.
+  ... Result in `$bin_op(binop', value~l~, value~r~)`.
+  ... If `binop'` matches pattern `&&`:
+   .... Let `value` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~l~`, under cursor `p` and typing context `TC`>>.
+   .... If `value` is equal to `B false`:
+    ..... Result in `B false`.
+   .... If `value` is equal to `B true`:
+    ..... Let `value~r~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~r~`, under cursor `p` and typing context `TC`>>.
+    ..... Result in `value~r~`.
 
-  ... Else if `unop` matches pattern `-`:
-   .... Let `value` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR`, under cursor `p` and typing context `TC`>>.
-   .... Result in `$un_minus(value)`.
-
-. Else if let `typedExpressionIR~l~ binop typedExpressionIR~r~` be `expressionIR`:
- .. Group binaryExpressionIR: `p`, `TC`, and `typedExpressionIR~l~ binop typedExpressionIR~r~ # ( _ _ )`
-
-  ... If `binop` matches pattern `+`:
-   .... Let `value~l~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~l~`, under cursor `p` and typing context `TC`>>.
-   .... Let `value~r~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~r~`, under cursor `p` and typing context `TC`>>.
-   .... Result in `$bin_plus(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `|+|`:
-   .... Let `value~l~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~l~`, under cursor `p` and typing context `TC`>>.
-   .... Let `value~r~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~r~`, under cursor `p` and typing context `TC`>>.
-   .... Result in `$bin_satplus(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `-`:
-   .... Let `value~l~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~l~`, under cursor `p` and typing context `TC`>>.
-   .... Let `value~r~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~r~`, under cursor `p` and typing context `TC`>>.
-   .... Result in `$bin_minus(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `|-|`:
-   .... Let `value~l~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~l~`, under cursor `p` and typing context `TC`>>.
-   .... Let `value~r~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~r~`, under cursor `p` and typing context `TC`>>.
-   .... Result in `$bin_satminus(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `*`:
-   .... Let `value~l~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~l~`, under cursor `p` and typing context `TC`>>.
-   .... Let `value~r~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~r~`, under cursor `p` and typing context `TC`>>.
-   .... Result in `$bin_mul(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `/`:
-   .... Let `value~l~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~l~`, under cursor `p` and typing context `TC`>>.
-   .... Let `value~r~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~r~`, under cursor `p` and typing context `TC`>>.
-   .... Result in `$bin_div(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `%`:
-   .... Let `value~l~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~l~`, under cursor `p` and typing context `TC`>>.
-   .... Let `value~r~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~r~`, under cursor `p` and typing context `TC`>>.
-   .... Result in `$bin_mod(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `<<`:
-   .... Let `value~l~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~l~`, under cursor `p` and typing context `TC`>>.
-   .... Let `value~r~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~r~`, under cursor `p` and typing context `TC`>>.
-   .... Result in `$bin_shl(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `>>`:
-   .... Let `value~l~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~l~`, under cursor `p` and typing context `TC`>>.
-   .... Let `value~r~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~r~`, under cursor `p` and typing context `TC`>>.
-   .... Result in `$bin_shr(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `<=`:
-   .... Let `value~l~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~l~`, under cursor `p` and typing context `TC`>>.
-   .... Let `value~r~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~r~`, under cursor `p` and typing context `TC`>>.
-   .... Result in `B $bin_le(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `>=`:
-   .... Let `value~l~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~l~`, under cursor `p` and typing context `TC`>>.
-   .... Let `value~r~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~r~`, under cursor `p` and typing context `TC`>>.
-   .... Result in `B $bin_ge(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `<`:
-   .... Let `value~l~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~l~`, under cursor `p` and typing context `TC`>>.
-   .... Let `value~r~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~r~`, under cursor `p` and typing context `TC`>>.
-   .... Result in `B $bin_lt(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `>`:
-   .... Let `value~l~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~l~`, under cursor `p` and typing context `TC`>>.
-   .... Let `value~r~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~r~`, under cursor `p` and typing context `TC`>>.
-   .... Result in `B $bin_gt(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `==`:
-   .... Let `value~l~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~l~`, under cursor `p` and typing context `TC`>>.
-   .... Let `value~r~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~r~`, under cursor `p` and typing context `TC`>>.
-   .... Result in `B $bin_eq(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `!=`:
-   .... Let `value~l~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~l~`, under cursor `p` and typing context `TC`>>.
-   .... Let `value~r~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~r~`, under cursor `p` and typing context `TC`>>.
-   .... Result in `B $bin_ne(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `&`:
-   .... Let `value~l~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~l~`, under cursor `p` and typing context `TC`>>.
-   .... Let `value~r~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~r~`, under cursor `p` and typing context `TC`>>.
-   .... Result in `$bin_band(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `^`:
-   .... Let `value~l~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~l~`, under cursor `p` and typing context `TC`>>.
-   .... Let `value~r~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~r~`, under cursor `p` and typing context `TC`>>.
-   .... Result in `$bin_bxor(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `|`:
-   .... Let `value~l~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~l~`, under cursor `p` and typing context `TC`>>.
-   .... Let `value~r~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~r~`, under cursor `p` and typing context `TC`>>.
-   .... Result in `$bin_bor(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `++`:
-   .... Let `value~l~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~l~`, under cursor `p` and typing context `TC`>>.
-   .... Let `value~r~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~r~`, under cursor `p` and typing context `TC`>>.
-   .... Result in `$bin_concat(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `&&`:
-   .... Let `value~l~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~l~`, under cursor `p` and typing context `TC`>>.
-   .... Let `value~r~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~r~`, under cursor `p` and typing context `TC`>>.
-   .... Result in `$bin_land(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `||`:
-   .... Let `value~l~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~l~`, under cursor `p` and typing context `TC`>>.
-   .... Let `value~r~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~r~`, under cursor `p` and typing context `TC`>>.
-   .... Result in `$bin_lor(value~l~, value~r~)`.
+  ... Else if `binop'` matches pattern `||`:
+   .... Let `value` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~l~`, under cursor `p` and typing context `TC`>>.
+   .... If `value` is equal to `B true`:
+    ..... Result in `B true`.
+   .... If `value` is equal to `B false`:
+    ..... Let `value~r~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~r~`, under cursor `p` and typing context `TC`>>.
+    ..... Result in `value~r~`.
 
 . Else if let `typedExpressionIR~cond~ ? typedExpressionIR~true~ : typedExpressionIR~false~` be `expressionIR`:
  .. Group ternaryExpressionIR: `p`, `TC`, and `typedExpressionIR~cond~ ? typedExpressionIR~true~ : typedExpressionIR~false~ # ( _ _ )`
@@ -6432,129 +6334,31 @@ relation Expr_inst: `p`, `IC`, `STO'`, and `expressionIR # _`
 . Else if let `unop typedExpressionIR` be `expressionIR`:
  .. Group unaryExpressionIR: `p`, `IC`, `STO'`, and `unop typedExpressionIR # _`
 
-  ... If `unop` matches pattern `~`:
-   .... <<Expr_inst, `p IC STO' |- typedExpressionIR ==> STO~1~ value`>>.
-   .... Result in `STO~1~` and `$un_bnot(value)`.
+  ... <<Expr_inst, `p IC STO' |- typedExpressionIR ==> STO~1~ value`>>.
+  ... Result in `STO~1~` and `$un_op(unop, value)`.
+. Let `( _ _ )` be `_`.
+. If let `typedExpressionIR~l~ binop' typedExpressionIR~r~` be `expressionIR`:
+ .. Group binaryExpressionIR: `p`, `IC`, `STO'`, and `typedExpressionIR~l~ binop' typedExpressionIR~r~ # ( _ _ )`
 
-  ... Else if `unop` matches pattern `!`:
-   .... <<Expr_inst, `p IC STO' |- typedExpressionIR ==> STO~1~ value`>>.
-   .... Result in `STO~1~` and `$un_lnot(value)`.
+  ... Check that `binop'` is not in `[&&, ||]`.
+  ... <<Expr_inst, `p IC STO' |- typedExpressionIR~l~ ==> STO~1~ value~l~`>>.
+  ... <<Expr_inst, `p IC STO~1~ |- typedExpressionIR~r~ ==> STO~2~ value~r~`>>.
+  ... Result in `STO~2~` and `$bin_op(binop', value~l~, value~r~)`.
+  ... If `binop'` matches pattern `&&`:
+   .... <<Expr_inst, `p IC STO' |- typedExpressionIR~l~ ==> STO~1~ value`>>.
+   .... If `value` is equal to `B false`:
+    ..... Result in `STO~1~` and `B false`.
+   .... If `value` is equal to `B true`:
+    ..... <<Expr_inst, `p IC STO~1~ |- typedExpressionIR~r~ ==> STO~2~ value~r~`>>.
+    ..... Result in `STO~2~` and `value~r~`.
 
-  ... Else if `unop` matches pattern `+`:
-   .... <<Expr_inst, `p IC STO' |- typedExpressionIR ==> STO~1~ value`>>.
-   .... Result in `STO~1~` and `$un_plus(value)`.
-
-  ... Else if `unop` matches pattern `-`:
-   .... <<Expr_inst, `p IC STO' |- typedExpressionIR ==> STO~1~ value`>>.
-   .... Result in `STO~1~` and `$un_minus(value)`.
-
-. Else if let `typedExpressionIR~l~ binop typedExpressionIR~r~` be `expressionIR`:
- .. Group binaryExpressionIR: `p`, `IC`, `STO'`, and `typedExpressionIR~l~ binop typedExpressionIR~r~ # _`
-
-  ... If `binop` matches pattern `+`:
-   .... <<Expr_inst, `p IC STO' |- typedExpressionIR~l~ ==> STO~1~ value~l~`>>.
-   .... <<Expr_inst, `p IC STO~1~ |- typedExpressionIR~r~ ==> STO~2~ value~r~`>>.
-   .... Result in `STO~2~` and `$bin_plus(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `|+|`:
-   .... <<Expr_inst, `p IC STO' |- typedExpressionIR~l~ ==> STO~1~ value~l~`>>.
-   .... <<Expr_inst, `p IC STO~1~ |- typedExpressionIR~r~ ==> STO~2~ value~r~`>>.
-   .... Result in `STO~2~` and `$bin_satplus(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `-`:
-   .... <<Expr_inst, `p IC STO' |- typedExpressionIR~l~ ==> STO~1~ value~l~`>>.
-   .... <<Expr_inst, `p IC STO~1~ |- typedExpressionIR~r~ ==> STO~2~ value~r~`>>.
-   .... Result in `STO~2~` and `$bin_minus(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `|-|`:
-   .... <<Expr_inst, `p IC STO' |- typedExpressionIR~l~ ==> STO~1~ value~l~`>>.
-   .... <<Expr_inst, `p IC STO~1~ |- typedExpressionIR~r~ ==> STO~2~ value~r~`>>.
-   .... Result in `STO~2~` and `$bin_satminus(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `*`:
-   .... <<Expr_inst, `p IC STO' |- typedExpressionIR~l~ ==> STO~1~ value~l~`>>.
-   .... <<Expr_inst, `p IC STO~1~ |- typedExpressionIR~r~ ==> STO~2~ value~r~`>>.
-   .... Result in `STO~2~` and `$bin_mul(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `/`:
-   .... <<Expr_inst, `p IC STO' |- typedExpressionIR~l~ ==> STO~1~ value~l~`>>.
-   .... <<Expr_inst, `p IC STO~1~ |- typedExpressionIR~r~ ==> STO~2~ value~r~`>>.
-   .... Result in `STO~2~` and `$bin_div(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `%`:
-   .... <<Expr_inst, `p IC STO' |- typedExpressionIR~l~ ==> STO~1~ value~l~`>>.
-   .... <<Expr_inst, `p IC STO~1~ |- typedExpressionIR~r~ ==> STO~2~ value~r~`>>.
-   .... Result in `STO~2~` and `$bin_mod(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `<<`:
-   .... <<Expr_inst, `p IC STO' |- typedExpressionIR~l~ ==> STO~1~ value~l~`>>.
-   .... <<Expr_inst, `p IC STO~1~ |- typedExpressionIR~r~ ==> STO~2~ value~r~`>>.
-   .... Result in `STO~2~` and `$bin_shl(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `>>`:
-   .... <<Expr_inst, `p IC STO' |- typedExpressionIR~l~ ==> STO~1~ value~l~`>>.
-   .... <<Expr_inst, `p IC STO~1~ |- typedExpressionIR~r~ ==> STO~2~ value~r~`>>.
-   .... Result in `STO~2~` and `$bin_shr(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `<=`:
-   .... <<Expr_inst, `p IC STO' |- typedExpressionIR~l~ ==> STO~1~ value~l~`>>.
-   .... <<Expr_inst, `p IC STO~1~ |- typedExpressionIR~r~ ==> STO~2~ value~r~`>>.
-   .... Result in `STO~2~` and `B $bin_le(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `>=`:
-   .... <<Expr_inst, `p IC STO' |- typedExpressionIR~l~ ==> STO~1~ value~l~`>>.
-   .... <<Expr_inst, `p IC STO~1~ |- typedExpressionIR~r~ ==> STO~2~ value~r~`>>.
-   .... Result in `STO~2~` and `B $bin_ge(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `<`:
-   .... <<Expr_inst, `p IC STO' |- typedExpressionIR~l~ ==> STO~1~ value~l~`>>.
-   .... <<Expr_inst, `p IC STO~1~ |- typedExpressionIR~r~ ==> STO~2~ value~r~`>>.
-   .... Result in `STO~2~` and `B $bin_lt(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `>`:
-   .... <<Expr_inst, `p IC STO' |- typedExpressionIR~l~ ==> STO~1~ value~l~`>>.
-   .... <<Expr_inst, `p IC STO~1~ |- typedExpressionIR~r~ ==> STO~2~ value~r~`>>.
-   .... Result in `STO~2~` and `B $bin_gt(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `==`:
-   .... <<Expr_inst, `p IC STO' |- typedExpressionIR~l~ ==> STO~1~ value~l~`>>.
-   .... <<Expr_inst, `p IC STO~1~ |- typedExpressionIR~r~ ==> STO~2~ value~r~`>>.
-   .... Result in `STO~2~` and `B $bin_eq(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `!=`:
-   .... <<Expr_inst, `p IC STO' |- typedExpressionIR~l~ ==> STO~1~ value~l~`>>.
-   .... <<Expr_inst, `p IC STO~1~ |- typedExpressionIR~r~ ==> STO~2~ value~r~`>>.
-   .... Result in `STO~2~` and `B $bin_ne(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `&`:
-   .... <<Expr_inst, `p IC STO' |- typedExpressionIR~l~ ==> STO~1~ value~l~`>>.
-   .... <<Expr_inst, `p IC STO~1~ |- typedExpressionIR~r~ ==> STO~2~ value~r~`>>.
-   .... Result in `STO~2~` and `$bin_band(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `^`:
-   .... <<Expr_inst, `p IC STO' |- typedExpressionIR~l~ ==> STO~1~ value~l~`>>.
-   .... <<Expr_inst, `p IC STO~1~ |- typedExpressionIR~r~ ==> STO~2~ value~r~`>>.
-   .... Result in `STO~2~` and `$bin_bxor(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `|`:
-   .... <<Expr_inst, `p IC STO' |- typedExpressionIR~l~ ==> STO~1~ value~l~`>>.
-   .... <<Expr_inst, `p IC STO~1~ |- typedExpressionIR~r~ ==> STO~2~ value~r~`>>.
-   .... Result in `STO~2~` and `$bin_bor(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `++`:
-   .... <<Expr_inst, `p IC STO' |- typedExpressionIR~l~ ==> STO~1~ value~l~`>>.
-   .... <<Expr_inst, `p IC STO~1~ |- typedExpressionIR~r~ ==> STO~2~ value~r~`>>.
-   .... Result in `STO~2~` and `$bin_concat(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `&&`:
-   .... <<Expr_inst, `p IC STO' |- typedExpressionIR~l~ ==> STO~1~ value~l~`>>.
-   .... <<Expr_inst, `p IC STO~1~ |- typedExpressionIR~r~ ==> STO~2~ value~r~`>>.
-   .... Result in `STO~2~` and `$bin_land(value~l~, value~r~)`.
-
-  ... Else if `binop` matches pattern `||`:
-   .... <<Expr_inst, `p IC STO' |- typedExpressionIR~l~ ==> STO~1~ value~l~`>>.
-   .... <<Expr_inst, `p IC STO~1~ |- typedExpressionIR~r~ ==> STO~2~ value~r~`>>.
-   .... Result in `STO~2~` and `$bin_lor(value~l~, value~r~)`.
+  ... Else if `binop'` matches pattern `||`:
+   .... <<Expr_inst, `p IC STO' |- typedExpressionIR~l~ ==> STO~1~ value`>>.
+   .... If `value` is equal to `B true`:
+    ..... Result in `STO~1~` and `B true`.
+   .... If `value` is equal to `B false`:
+    ..... <<Expr_inst, `p IC STO~1~ |- typedExpressionIR~r~ ==> STO~2~ value~r~`>>.
+    ..... Result in `STO~2~` and `value~r~`.
 
 . Else if let `typedExpressionIR~cond~ ? typedExpressionIR~true~ : typedExpressionIR~false~` be `expressionIR`:
  .. Group ternaryExpressionIR: `p`, `IC`, `STO'`, and `typedExpressionIR~cond~ ? typedExpressionIR~true~ : typedExpressionIR~false~ # _`
@@ -6606,36 +6410,34 @@ relation Expr_inst: `p`, `IC`, `STO'`, and `expressionIR # _`
   ... Result in `STO'` and `value~error~`.
 
 . Else if let `memberAccessBaseIR . nameIR` be `expressionIR`:
- .. Check that `memberAccessBaseIR` matches pattern `TYPE %`.
- .. Let `TYPE prefixedNameIR` be `memberAccessBaseIR`.
- .. Group memberAccessExpressionIR-type: `p`, `IC`, `STO'`, and `TYPE prefixedNameIR . nameIR # _`
+ .. If `memberAccessBaseIR` matches pattern `TYPE %`:
+  ... Let `TYPE prefixedNameIR` be `memberAccessBaseIR`.
+  ... Group memberAccessExpressionIR-type: `p`, `IC`, `STO'`, and `TYPE prefixedNameIR . nameIR # _`
 
-  ... Let `typeDefIR'^?^` be `$find_typedef_inst(p, IC, prefixedNameIR)`.
-  ... Check that `typeDefIR'^?^` matches pattern `(_)`.
-  ... Let `?typeDefIR` be `typeDefIR'^?^`.
-  ... Check that `typeDefIR` has type `enumTypeIR`.
-  ... Let `enumTypeIR` be `typeDefIR`.
-  ... If let `ENUM tid { _^{asterisk}^ }` be `enumTypeIR`:
-   .... Result in `STO'` and `tid . nameIR`.
+   .... Let `typeDefIR'^?^` be `$find_typedef_inst(p, IC, prefixedNameIR)`.
+   .... Check that `typeDefIR'^?^` matches pattern `(_)`.
+   .... Let `?typeDefIR` be `typeDefIR'^?^`.
+   .... Check that `typeDefIR` has type `enumTypeIR`.
+   .... Let `enumTypeIR` be `typeDefIR`.
+   .... If let `ENUM tid { _^{asterisk}^ }` be `enumTypeIR`:
+    ..... Result in `STO'` and `tid . nameIR`.
 
-  ... Else if let `ENUM tid # _ { id~member~ = value~member~ ;^{asterisk}^ }` be `enumTypeIR`:
-   .... Let `value'^?^` be `$assoc_<nameIR, value>(nameIR, (id~member~, value~member~)^{asterisk}^)`.
-   .... Check that `value'^?^` matches pattern `(_)`.
-   .... Let `?value` be `value'^?^`.
-   .... Result in `STO'` and `tid . nameIR # value`.
-. Let `( typeIR~base~ _ )` be `_`.
-. If let `memberAccessBaseIR . text` be `expressionIR`:
- .. Check that `memberAccessBaseIR` has type `typedExpressionIR`.
- .. Let `typedExpressionIR~base~` be `memberAccessBaseIR`.
- .. Check that `text` is equal to "size".
- .. Group memberAccessExpressionIR-expression-stack-size: `p`, `IC`, `STO'`, and `typedExpressionIR~base~ . "size" # ( typeIR~base~ _ )`
+   .... Else if let `ENUM tid # _ { id~member~ = value~member~ ;^{asterisk}^ }` be `enumTypeIR`:
+    ..... Let `value'^?^` be `$assoc_<nameIR, value>(nameIR, (id~member~, value~member~)^{asterisk}^)`.
+    ..... Check that `value'^?^` matches pattern `(_)`.
+    ..... Let `?value` be `value'^?^`.
+    ..... Result in `STO'` and `tid . nameIR # value`.
+ .. If `memberAccessBaseIR` has type `typedExpressionIR`:
+  ... Let `typedExpressionIR~base~` be `memberAccessBaseIR`.
+  ... Check that `nameIR` is equal to "size".
+  ... Group memberAccessExpressionIR-expression-stack-size: `p`, `IC`, `STO'`, and `typedExpressionIR~base~ . "size" # ( _ _ )`
 
-  ... Let `_ # ( typeIR _ )` be `typedExpressionIR~base~`.
-  ... Check that `typeIR` is equal to `typeIR~base~`.
-  ... Let `typeIR'` be <<canon, the canonicalized form of `typeIR~base~`>>.
-  ... Check that `typeIR'` has type `headerStackTypeIR`.
-  ... Let `_ [ n~size~ ]` be `typeIR'`.
-  ... Result in `STO'` and `D n~size~`.
+   .... Let `_ # ( typeIR _ )` be `typedExpressionIR~base~`.
+   .... Check that `typeIR` is equal to `_`.
+   .... Let `typeIR'` be <<canon, the canonicalized form of `_`>>.
+   .... Check that `typeIR'` has type `headerStackTypeIR`.
+   .... Let `_ [ n~size~ ]` be `typeIR'`.
+   .... Result in `STO'` and `D n~size~`.
 
 . Else if let `typedExpressionIR~base~ [ typedExpressionIR~hi~ : typedExpressionIR~lo~ ]` be `expressionIR`:
  .. Group sliceAccessExpressionIR: `p`, `IC`, `STO'`, and `typedExpressionIR~base~ [ typedExpressionIR~hi~ : typedExpressionIR~lo~ ] # _`
@@ -6663,23 +6465,23 @@ relation Expr_inst: `p`, `IC`, `STO'`, and `expressionIR # _`
    .... Group callExpressionIR-builtin-size: `p`, `IC`, `STO'`, and `routineTargetIR < [ ] > ( [ ] ) # _`
 
     ..... If let `typedExpressionIR~base~ . nameIR` be `routineTargetIR`:
-     ...... Let `_ # ( typeIR~base~ _ )` be `typedExpressionIR~base~`.
+     ...... Let `_ # ( _ _ )` be `typedExpressionIR~base~`.
      ...... Check that `nameIR` is in `["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]`.
-     ...... Result in `STO'` and `$sizeof(typeIR~base~, nameIR)`.
+     ...... Result in `STO'` and `$sizeof(_, nameIR)`.
 
     ..... Else if let `TYPE prefixedNameIR . nameIR` be `routineTargetIR`:
      ...... Let `typeDefIR'^?^` be `$find_typedef_inst(p, IC, prefixedNameIR)`.
      ...... Check that `typeDefIR'^?^` matches pattern `(_)`.
      ...... Let `?typeDefIR` be `typeDefIR'^?^`.
-     ...... If let `typeIR~base~` be `typeDefIR`:
+     ...... If let `_` be `typeDefIR`:
       ....... Check that `nameIR` is in `["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]`.
-      ....... Result in `STO'` and `$sizeof(typeIR~base~, nameIR)`.
+      ....... Result in `STO'` and `$sizeof(_, nameIR)`.
 
-     ...... Else if let `typeIR~base~ < tid^{asterisk}^ , tid'^{asterisk}^ >` be `typeDefIR`:
+     ...... Else if let `_ < tid^{asterisk}^ , tid'^{asterisk}^ >` be `typeDefIR`:
       ....... Check that `tid^{asterisk}^` matches pattern `[]`.
       ....... Check that `tid'^{asterisk}^` matches pattern `[]`.
       ....... Check that `nameIR` is in `["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]`.
-      ....... Result in `STO'` and `$sizeof(typeIR~base~, nameIR)`.
+      ....... Result in `STO'` and `$sizeof(_, nameIR)`.
   ... Let `routineTargetIR' < typeArgumentListIR > ( argumentListIR )` be `callExpressionIR`.
   ... If `routineTargetIR'` matches pattern `( % )`:
    .... Let `( routineTargetIR )` be `routineTargetIR'`.

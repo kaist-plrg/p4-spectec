@@ -3544,11 +3544,11 @@ The only difference is that the operands are now of type <code>typedExpressionIR
 <h4 id="sec-abstract-machine-typing-context">7.2.2. Typing context</h4>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">globalTypingLayer = {CDENV cdenv, TDENV tdenv, RDENV rdenv, FRAME frame}
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">globalTypingLayer = {CONSTRUCTOR cdenv, TYPE tdenv, ROUTINE rdenv, FRAME typeFrame}
 
-blockTypingLayer = {ID id, KIND blockKind, TDENV tdenv, RDENV rdenv, FRAME frame}
+blockTypingLayer = {ID id, KIND blockKind, TYPE tdenv, ROUTINE rdenv, FRAME typeFrame}
 
-localTypingLayer = {ID id, KIND localKind, TDENV tdenv, FRAMES frame*}
+localTypingLayer = {ID id, KIND localKind, TYPE tdenv, FRAMES typeFrame*}
 
 typingContext = {GLOBAL globalTypingLayer, BLOCK blockTypingLayer, LOCAL localTypingLayer}</code></pre>
 </div>
@@ -3582,7 +3582,7 @@ control-flow scope.</p>
    : direction typeIR ctk value?
    ;
 
-frame = map&lt;id, varTypeIR&gt;</code></pre>
+frame = map&lt;id, value&gt;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -9595,8 +9595,8 @@ rule Parameter_ok/initializer:
     -- if bound = $union_set&lt;tid&gt;($bound(p, TC), `{tid_fresh*})
     -- Type_wf: bound |- typeIR
     -- Expr_ok: p TC |- expression_init : typedExpressionIR_init
-    -- if typeIR_init = $typeof_expression(typedExpressionIR_init)
-    -- if LCTK = $ctkof_expression(typedExpressionIR_init)
+    -- if typeIR_init = $type_of_expression(typedExpressionIR_init)
+    -- if LCTK = $ctk_of_expression(typedExpressionIR_init)
     -- if typedExpressionIR_init_cast = $coerce_unary(typedExpressionIR_init, typeIR)
     -- if nameIR = $name(name)
     -- Eval_static: p TC |- typedExpressionIR_init_cast ~&gt; value_init</pre>
@@ -9656,10 +9656,10 @@ rule Parameter_ok/initializer:
 <p>Let <code>typedExpressionIR<sub>init</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>init</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>init</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>init</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>init</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>init</sub></code></a>.</p>
 </li>
 <li>
-<p>Check that <code><a href="#ctkof_expression">the compile-time known-ness of  typedExpressionIR<sub>init</sub></a></code> matches pattern <code>LCTK</code>.</p>
+<p>Check that <code><a href="#ctk_of_expression">the compile-time known-ness of  typedExpressionIR<sub>init</sub></a></code> matches pattern <code>LCTK</code>.</p>
 </li>
 <li>
 <p>Let <code>typedExpressionIR<sup>?</sup></code> be <a href="#coerce_unary">implicitly cast  <code>typedExpressionIR<sub>init</sub></code>  to  <code>typeIR</code></a>.</p>
@@ -11810,7 +11810,7 @@ constructors.</p>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externObject
-   : EXTERN tid `{ theta venv renv }
+   : EXTERN tid `{ theta frame renv }
    ;</code></pre>
 </div>
 </div>
@@ -12042,7 +12042,7 @@ rule is explained in <a href="#sec-sem-Decl_ok-parserDeclaration">Section 11.8.1
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parserObject
-   : PARSER `( parameterListIR ) `{ venv parserLocalDeclarationListIR senv }
+   : PARSER `( parameterListIR ) `{ frame parserLocalDeclarationListIR senv }
    ;</code></pre>
 </div>
 </div>
@@ -12258,7 +12258,7 @@ rule is explained in <a href="#sec-sem-Decl_ok-controlDeclaration">Section 11.9.
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">controlObject
-   : CONTROL `( parameterListIR ) `{ venv controlLocalDeclarationListIR renv controlBodyIR }
+   : CONTROL `( parameterListIR ) `{ frame controlLocalDeclarationListIR renv controlBodyIR }
    ;</code></pre>
 </div>
 </div>
@@ -12528,7 +12528,7 @@ Its typing rule is explained in <a href="#sec-sem-Decl_ok-tableDeclaration">[sec
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tableObject
-   : TABLE tid `{ venv tablePropertyListIR }
+   : TABLE tid `{ frame tablePropertyListIR }
    ;</code></pre>
 </div>
 </div>
@@ -12569,7 +12569,7 @@ with them.</p>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">packageObject
-   : PACKAGE `{ theta venv }
+   : PACKAGE `{ theta frame }
    ;</code></pre>
 </div>
 </div>
@@ -12773,7 +12773,7 @@ following are all legal constant declarations:</p>
     -- Type_ok: p TC_0 |- type : typeIR # eps
     -- Type_wf: $bound(p, TC_0) |- typeIR
     -- Expr_ok: p TC_0 |- expression_value : typedExpressionIR_value
-    -- if LCTK = $ctkof_expression(typedExpressionIR_value)
+    -- if LCTK = $ctk_of_expression(typedExpressionIR_value)
     -- if typedExpressionIR_value_cast = $coerce_unary(typedExpressionIR_value, typeIR)
     -- Eval_static: p TC_0 |- typedExpressionIR_value_cast ~&gt; value
     -- if nameIR = $name(name)
@@ -12807,7 +12807,7 @@ following are all legal constant declarations:</p>
 <p>Let <code>typedExpressionIR<sub>value</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>value</sub></code>, under cursor <code>p'</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
 </li>
 <li>
-<p>Check that <code><a href="#ctkof_expression">the compile-time known-ness of  typedExpressionIR<sub>value</sub></a></code> matches pattern <code>LCTK</code>.</p>
+<p>Check that <code><a href="#ctk_of_expression">the compile-time known-ness of  typedExpressionIR<sub>value</sub></a></code> matches pattern <code>LCTK</code>.</p>
 </li>
 <li>
 <p>Let <code>typedExpressionIR<sup>?</sup></code> be <a href="#coerce_unary">implicitly cast  <code>typedExpressionIR<sub>value</sub></code>  to  <code>typeIR</code></a>.</p>
@@ -13179,16 +13179,16 @@ methods.</p>
 <div class="listingblock">
 <div class="content">
 <pre>rule Decl_object_ok/functionDeclaration:
-   p TC_0 frame rdenv |- annotationList (typeOrVoid name typeParameterListOpt `(parameterList)) blockStatement : frame rdenv_init functionDeclarationIR
+   p TC_0 typeFrame rdenv |- annotationList (typeOrVoid name typeParameterListOpt `(parameterList)) blockStatement : typeFrame rdenv_init functionDeclarationIR
     -- if TC_1 = TC_0[BLOCK.KIND = EXTERN]
-    -- if TC_2 = TC_1[BLOCK.FRAME = frame]
+    -- if TC_2 = TC_1[BLOCK.FRAME = typeFrame]
     -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
     -- (if (tid_expl = $name(typeParameter)))*
     -- if TC_3 = $add_types(LOCAL, TC_2, tid_expl*, (TID tid_expl)*)
     -- Type_ok: LOCAL TC_3 |- typeOrVoid : typeIR_ret # eps
     -- if parameter* = $flatten_parameterList(parameterList)
     -- Parameters_ok: LOCAL TC_3 |- parameter* : parameterIR* # tid_impl*
-    -- (if (parameterTypeIR = $typeof_parameterIR(parameterIR)))*
+    -- (if (parameterTypeIR = $type_of_parameterIR(parameterIR)))*
     -- if TC_4 = $add_parameters(LOCAL, TC_3, parameterTypeIR*)
     -- if TC_5 = TC_4[LOCAL.KIND = (EXTERN_METHOD -&gt; typeIR_ret)]
     -- Block_ok: TC_5 CONT |- blockStatement : _ f blockStatementIR
@@ -13210,7 +13210,7 @@ methods.</p>
 </div>
 </div>
 <div class="paragraph">
-<p><code>p TC<sub>0</sub> frame rdenv |- annotationList typeOrVoid name typeParameterListOpt ( parameterList ) blockStatement : % % %</code></p>
+<p><code>p TC<sub>0</sub> typeFrame rdenv |- annotationList typeOrVoid name typeParameterListOpt ( parameterList ) blockStatement : % % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -13218,7 +13218,7 @@ methods.</p>
 <p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub></code>[BLOCK.KIND = <code>EXTERN</code>].</p>
 </li>
 <li>
-<p>Let <code>TC<sub>2</sub></code> be <code>TC<sub>1</sub></code>[BLOCK.FRAME = <code>frame</code>].</p>
+<p>Let <code>TC<sub>2</sub></code> be <code>TC<sub>1</sub></code>[BLOCK.FRAME = <code>typeFrame</code>].</p>
 </li>
 <li>
 <p>Let <code>typeParameter<sup>*</sup></code> be <a href="#flatten_typeParameterListOpt">the list of type parameters in <code>typeParameterListOpt</code></a>.</p>
@@ -13262,7 +13262,7 @@ methods.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>parameterTypeIR</code> be <a href="#typeof_parameterIR">the type of  <code>parameterIR</code></a></p>
+<p>Let <code>parameterTypeIR</code> be <a href="#type_of_parameterIR">the type of  <code>parameterIR</code></a></p>
 </li>
 </ul>
 </div>
@@ -13307,7 +13307,7 @@ methods.</p>
 <p>Let <code>functionDeclarationIR</code> be <code>annotationList typeIR<sub>ret</sub> nameIR &lt; tid<sub>expl</sub><sup>*</sup> , tid<sub>impl</sub><sup>*</sup> &gt; ( parameterIR<sup>*</sup> ) blockStatementIR</code>.</p>
 </li>
 <li>
-<p>Result in <code>frame</code>, <code>rdenv<sub>init</sub></code>, and <code>functionDeclarationIR</code>.</p>
+<p>Result in <code>typeFrame</code>, <code>rdenv<sub>init</sub></code>, and <code>functionDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -13338,7 +13338,7 @@ methods.</p>
 <p>Let <code>functionDeclarationIR</code> be <code>annotationList typeIR<sub>ret</sub> nameIR &lt; tid<sub>expl</sub><sup>*</sup> , tid<sub>impl</sub><sup>*</sup> &gt; ( parameterIR<sup>*</sup> ) blockStatementIR</code>.</p>
 </li>
 <li>
-<p>Result in <code>frame</code>, <code>rdenv<sub>init</sub></code>, and <code>functionDeclarationIR</code>.</p>
+<p>Result in <code>typeFrame</code>, <code>rdenv<sub>init</sub></code>, and <code>functionDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -13351,11 +13351,11 @@ methods.</p>
 <div class="listingblock">
 <div class="content">
 <pre>rule Decl_object_ok/instantiation:
-   p TC_0 frame rdenv |- instantiation : frame_init rdenv instantiationIR
+   p TC_0 typeFrame rdenv |- instantiation : typeFrame_init rdenv instantiationIR
     -- Decl_ok: p TC_0 |- instantiation : TC_1 instantiationIR
     -- if _ _ _ `&lt;_&gt; `(_) nameIR _ ; = instantiationIR
     -- if varTypeIR = $find_var(p, TC_1, ` nameIR)
-    -- if frame_init = $update_map&lt;id, varTypeIR&gt;(frame, nameIR, varTypeIR)</pre>
+    -- if typeFrame_init = $update_map&lt;id, varTypeIR&gt;(typeFrame, nameIR, varTypeIR)</pre>
 </div>
 </div>
 </div>
@@ -13366,7 +13366,7 @@ methods.</p>
 </div>
 </div>
 <div class="paragraph">
-<p><code>p TC<sub>0</sub> frame rdenv |- instantiation : % % %</code></p>
+<p><code>p TC<sub>0</sub> typeFrame rdenv |- instantiation : % % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -13399,10 +13399,10 @@ methods.</p>
 <p>Let <code>?varTypeIR</code> be <code>varTypeIR'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>frame<sub>init</sub></code> be <code>$update_map&lt;id, varTypeIR&gt;(frame, nameIR, varTypeIR)</code>.</p>
+<p>Let <code>typeFrame<sub>init</sub></code> be <code>$update_map&lt;id, varTypeIR&gt;(typeFrame, nameIR, varTypeIR)</code>.</p>
 </li>
 <li>
-<p>Result in <code>frame<sub>init</sub></code>, <code>rdenv</code>, and <code>instantiationIR</code>.</p>
+<p>Result in <code>typeFrame<sub>init</sub></code>, <code>rdenv</code>, and <code>instantiationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -13422,7 +13422,7 @@ methods.</p>
     -- if typeIR_object = ((EXTERN tid_extern rdenv_extern) `&lt;tid_expl* , tid_impl*&gt;) `&lt;typeIR_arg*&gt;
     -- if TC_1 = $add_var(LOCAL, TC_0, "this", /* empty */ typeIR_object CTK eps)
     -- if objectDeclaration* = $flatten_objectDeclarationList(objectDeclarationList)
-    -- Decls_object_ok: p TC_1 (`{eps}) (`{eps}) |- objectDeclaration* : frame_init rdenv_init objectDeclarationIR*
+    -- Decls_object_ok: p TC_1 (`{eps}) (`{eps}) |- objectDeclaration* : typeFrame_init rdenv_init objectDeclarationIR*
     -- if tid* = tid_expl* ++ tid_impl*
     -- if theta = `{(tid : typeIR_arg)*}
     -- if rdenv_init_subst = $subst_rdenv(theta, rdenv_extern, rdenv_init)
@@ -13446,7 +13446,7 @@ rule Decl_ok/instantiation-objectInitializer/specializedType:
     -- if typeIR_object = ((EXTERN tid_extern rdenv_extern) `&lt;tid_expl* , tid_impl*&gt;) `&lt;typeIR_arg*&gt;
     -- if TC_1 = $add_var(LOCAL, TC_0, "this", /* empty */ typeIR_object CTK eps)
     -- if objectDeclaration* = $flatten_objectDeclarationList(objectDeclarationList)
-    -- Decls_object_ok: p TC_1 (`{eps}) (`{eps}) |- objectDeclaration* : frame_init rdenv_init objectDeclarationIR*
+    -- Decls_object_ok: p TC_1 (`{eps}) (`{eps}) |- objectDeclaration* : typeFrame_init rdenv_init objectDeclarationIR*
     -- if tid* = tid_expl* ++ tid_impl*
     -- if theta = `{(tid : typeIR_arg)*}
     -- if rdenv_init_subst = $subst_rdenv(theta, rdenv_extern, rdenv_init)
@@ -13528,7 +13528,7 @@ rule Decl_ok/instantiation-objectInitializer/specializedType:
 <p>Let <code>objectDeclaration<sup>*</sup></code> be <a href="#flatten_objectDeclarationList">the list of object declarations in <code>objectDeclarationList</code></a>.</p>
 </li>
 <li>
-<p><a href="#Decls_object_ok"><code>p' TC<sub>1</sub> { [ ] } { [ ] } |- objectDeclaration<sup>*</sup> : frame<sub>init</sub> rdenv<sub>init</sub> objectDeclarationIR<sup>*</sup></code></a>.</p>
+<p><a href="#Decls_object_ok"><code>p' TC<sub>1</sub> { [ ] } { [ ] } |- objectDeclaration<sup>*</sup> : typeFrame<sub>init</sub> rdenv<sub>init</sub> objectDeclarationIR<sup>*</sup></code></a>.</p>
 </li>
 <li>
 <p>Let <code>tid<sup>*</sup></code> be <code>tid<sub>expl</sub><sup>*</sup> ++ tid<sub>impl</sub><sup>*</sup></code>.</p>
@@ -13627,7 +13627,7 @@ rule Decl_ok/instantiation-objectInitializer/specializedType:
 <p>Let <code>objectDeclaration<sup>*</sup></code> be <a href="#flatten_objectDeclarationList">the list of object declarations in <code>objectDeclarationList</code></a>.</p>
 </li>
 <li>
-<p><a href="#Decls_object_ok"><code>p' TC<sub>1</sub> { [ ] } { [ ] } |- objectDeclaration<sup>*</sup> : frame<sub>init</sub> rdenv<sub>init</sub> objectDeclarationIR<sup>*</sup></code></a>.</p>
+<p><a href="#Decls_object_ok"><code>p' TC<sub>1</sub> { [ ] } { [ ] } |- objectDeclaration<sup>*</sup> : typeFrame<sub>init</sub> rdenv<sub>init</sub> objectDeclarationIR<sup>*</sup></code></a>.</p>
 </li>
 <li>
 <p>Let <code>tid<sup>*</sup></code> be <code>tid<sub>expl</sub><sup>*</sup> ++ tid<sub>impl</sub><sup>*</sup></code>.</p>
@@ -13675,13 +13675,13 @@ rule Decl_ok/instantiation-objectInitializer/specializedType:
     -- if (_, constructor, id_default*) = $find_constructor_inst(IC_0, prefixedNameIR, argumentListIR)
     -- if IC_inner = $enter_path(IC_0, nameIR)
     -- Constructor_inst: GLOBAL IC_inner STO_0 |- constructor `&lt;typeArgumentListIR&gt; `(argumentListIR # id_default*) ==&gt; STO_1 object
-    -- if EXTERN tid `{tenv venv renv} = object
+    -- if EXTERN tid `{tenv frame renv} = object
     -- if IC_decl = $empty_instantiationContext[PATH = IC_0.PATH][GLOBAL = IC_0.GLOBAL]
     -- if objectDeclarationListIR = $flatten_objectInitializerOptIR(objectInitializerOptIR)
     -- Decls_inst: BLOCK IC_decl STO_1 |- objectDeclarationListIR ==&gt; IC_decl_post STO_2 _
-    -- if venv_merged = $merge_venvs(venv, IC_decl_post.BLOCK.VENV)
-    -- if renv_merged = $merge_renv_with_extern(renv, IC_decl_post.BLOCK.RENV)
-    -- if object_merged = EXTERN tid `{tenv venv_merged renv_merged}
+    -- if frame_merged = $merge_frames(frame, IC_decl_post.BLOCK.FRAME)
+    -- if renv_merged = $merge_renv_with_extern(renv, IC_decl_post.BLOCK.ROUTINE)
+    -- if object_merged = EXTERN tid `{tenv frame_merged renv_merged}
     -- if oid = IC_0.PATH ++ nameIR
     -- if STO_3 = $add_map&lt;oid, object&gt;(STO_2, oid, object_merged)
     -- if IC_1 = $add_value_inst(GLOBAL, IC_0, nameIR, ! oid)
@@ -13692,13 +13692,13 @@ rule Decl_inst/instantiationIR/extern-non-global:
     -- if (_, constructor, id_default*) = $find_constructor_inst(IC_0, prefixedNameIR, argumentListIR)
     -- if IC_inner = $enter_path(IC_0, nameIR)
     -- Constructor_inst: p IC_inner STO_0 |- constructor `&lt;typeArgumentListIR&gt; `(argumentListIR # id_default*) ==&gt; STO_1 object
-    -- if EXTERN tid `{tenv venv renv} = object
+    -- if EXTERN tid `{tenv frame renv} = object
     -- if IC_decl = $empty_instantiationContext[PATH = IC_0.PATH][GLOBAL = IC_0.GLOBAL]
     -- if objectDeclarationListIR = $flatten_objectInitializerOptIR(objectInitializerOptIR)
     -- Decls_inst: BLOCK IC_decl STO_1 |- objectDeclarationListIR ==&gt; IC_decl_post STO_2 _
-    -- if venv_merged = $merge_venvs(venv, IC_decl_post.BLOCK.VENV)
-    -- if renv_merged = $merge_renv_with_extern(renv, IC_decl_post.BLOCK.RENV)
-    -- if object_merged = EXTERN tid `{tenv venv_merged renv_merged}
+    -- if frame_merged = $merge_frames(frame, IC_decl_post.BLOCK.FRAME)
+    -- if renv_merged = $merge_renv_with_extern(renv, IC_decl_post.BLOCK.ROUTINE)
+    -- if object_merged = EXTERN tid `{tenv frame_merged renv_merged}
     -- if oid = IC_0.PATH ++ nameIR
     -- if STO_3 = $add_map&lt;oid, object&gt;(STO_2, oid, object_merged)
     -- if IC_1 = $add_value_inst(GLOBAL, IC_0, nameIR, ! oid)
@@ -13763,7 +13763,7 @@ rule Decl_inst/instantiationIR/non-extern-non-global:
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Let <code>EXTERN tid { tenv venv renv }</code> be <code>object</code>.</p>
+<p>Let <code>EXTERN tid { tenv frame renv }</code> be <code>object</code>.</p>
 </li>
 <li>
 <p>Let <code>IC<sub>decl</sub></code> be <code>$empty_instantiationContext</code>[PATH = <code>IC<sub>0</sub>.PATH</code>][GLOBAL = <code>IC<sub>0</sub>.GLOBAL</code>].</p>
@@ -13775,13 +13775,13 @@ rule Decl_inst/instantiationIR/non-extern-non-global:
 <p><a href="#Decls_inst"><code>BLOCK IC<sub>decl</sub> STO<sub>1</sub> |- objectDeclarationListIR =&#8658; IC<sub>decl_post</sub> STO<sub>2</sub> _<sup>*</sup></code></a>.</p>
 </li>
 <li>
-<p>Let <code>venv<sub>merged</sub></code> be <code>$merge_venvs(venv, IC<sub>decl_post</sub>.BLOCK.VENV)</code>.</p>
+<p>Let <code>frame<sub>merged</sub></code> be <code>$merge_frames(frame, IC<sub>decl_post</sub>.BLOCK.FRAME)</code>.</p>
 </li>
 <li>
-<p>Let <code>renv<sub>merged</sub></code> be <code>$merge_renv_with_extern(renv, IC<sub>decl_post</sub>.BLOCK.RENV)</code>.</p>
+<p>Let <code>renv<sub>merged</sub></code> be <code>$merge_renv_with_extern(renv, IC<sub>decl_post</sub>.BLOCK.ROUTINE)</code>.</p>
 </li>
 <li>
-<p>Let <code>object<sub>merged</sub></code> be <code>EXTERN tid { tenv venv<sub>merged</sub> renv<sub>merged</sub> }</code>.</p>
+<p>Let <code>object<sub>merged</sub></code> be <code>EXTERN tid { tenv frame<sub>merged</sub> renv<sub>merged</sub> }</code>.</p>
 </li>
 <li>
 <p>Let <code>oid</code> be <code>IC<sub>0</sub>.PATH ++ [nameIR]</code>.</p>
@@ -13844,7 +13844,7 @@ rule Decl_inst/instantiationIR/non-extern-non-global:
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Let <code>EXTERN tid { tenv venv renv }</code> be <code>object</code>.</p>
+<p>Let <code>EXTERN tid { tenv frame renv }</code> be <code>object</code>.</p>
 </li>
 <li>
 <p>Let <code>IC<sub>decl</sub></code> be <code>$empty_instantiationContext</code>[PATH = <code>IC<sub>0</sub>.PATH</code>][GLOBAL = <code>IC<sub>0</sub>.GLOBAL</code>].</p>
@@ -13856,13 +13856,13 @@ rule Decl_inst/instantiationIR/non-extern-non-global:
 <p><a href="#Decls_inst"><code>BLOCK IC<sub>decl</sub> STO<sub>1</sub> |- objectDeclarationListIR =&#8658; IC<sub>decl_post</sub> STO<sub>2</sub> _<sup>*</sup></code></a>.</p>
 </li>
 <li>
-<p>Let <code>venv<sub>merged</sub></code> be <code>$merge_venvs(venv, IC<sub>decl_post</sub>.BLOCK.VENV)</code>.</p>
+<p>Let <code>frame<sub>merged</sub></code> be <code>$merge_frames(frame, IC<sub>decl_post</sub>.BLOCK.FRAME)</code>.</p>
 </li>
 <li>
-<p>Let <code>renv<sub>merged</sub></code> be <code>$merge_renv_with_extern(renv, IC<sub>decl_post</sub>.BLOCK.RENV)</code>.</p>
+<p>Let <code>renv<sub>merged</sub></code> be <code>$merge_renv_with_extern(renv, IC<sub>decl_post</sub>.BLOCK.ROUTINE)</code>.</p>
 </li>
 <li>
-<p>Let <code>object<sub>merged</sub></code> be <code>EXTERN tid { tenv venv<sub>merged</sub> renv<sub>merged</sub> }</code>.</p>
+<p>Let <code>object<sub>merged</sub></code> be <code>EXTERN tid { tenv frame<sub>merged</sub> renv<sub>merged</sub> }</code>.</p>
 </li>
 <li>
 <p>Let <code>oid</code> be <code>IC<sub>0</sub>.PATH ++ [nameIR]</code>.</p>
@@ -13947,7 +13947,7 @@ functionDeclarationIR
     -- Type_ok: LOCAL TC_1 |- typeOrVoid : typeIR_ret # eps
     -- if parameter* = $flatten_parameterList(parameterList)
     -- Parameters_ok: LOCAL TC_1 |- parameter* : parameterIR* # tid_impl*
-    -- (if (parameterTypeIR = $typeof_parameterIR(parameterIR)))*
+    -- (if (parameterTypeIR = $type_of_parameterIR(parameterIR)))*
     -- if TC_2 = $add_parameters(LOCAL, TC_1, parameterTypeIR*)
     -- if TC_3 = TC_2[LOCAL.KIND = FUNCTION -&gt; typeIR_ret]
     -- Block_ok: TC_3 CONT |- blockStatement : _ f blockStatementIR
@@ -14016,7 +14016,7 @@ functionDeclarationIR
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>parameterTypeIR</code> be <a href="#typeof_parameterIR">the type of  <code>parameterIR</code></a></p>
+<p>Let <code>parameterTypeIR</code> be <a href="#type_of_parameterIR">the type of  <code>parameterIR</code></a></p>
 </li>
 </ul>
 </div>
@@ -14167,7 +14167,7 @@ actionDeclarationIR
     -- if TC_1 = TC_0[LOCAL.KIND = ACTION]
     -- if parameter* = $flatten_parameterList(parameterList)
     -- Parameters_ok: LOCAL TC_1 |- parameter* : parameterIR* # eps
-    -- (if (parameterTypeIR = $typeof_parameterIR(parameterIR)))*
+    -- (if (parameterTypeIR = $type_of_parameterIR(parameterIR)))*
     -- if TC_2 = $add_parameters(LOCAL, TC_1, parameterTypeIR*)
     -- Block_ok: TC_2 CONT |- blockStatement : _ _ blockStatementIR
     -- if rid = $rid(name, parameterList)
@@ -14210,7 +14210,7 @@ actionDeclarationIR
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>parameterTypeIR</code> be <a href="#typeof_parameterIR">the type of  <code>parameterIR</code></a></p>
+<p>Let <code>parameterTypeIR</code> be <a href="#type_of_parameterIR">the type of  <code>parameterIR</code></a></p>
 </li>
 </ul>
 </div>
@@ -14711,7 +14711,7 @@ externFunctionDeclarationIR
     -- if TC_2 = TC_1[LOCAL.KIND = EXTERN_FUNCTION -&gt; typeIR_ret]
     -- if parameter* = $flatten_parameterList(parameterList)
     -- Parameters_ok: LOCAL TC_2 |- parameter* : parameterIR* # tid_impl*
-    -- (if (parameterTypeIR = $typeof_parameterIR(parameterIR)))*
+    -- (if (parameterTypeIR = $type_of_parameterIR(parameterIR)))*
     -- if TC_3 = $add_parameters(LOCAL, TC_2, parameterTypeIR*)
     -- if rid = $rid(name, parameterList)
     -- if functionTypeIR = EXTERN_FUNCTION `(parameterTypeIR*) -&gt; typeIR_ret
@@ -14780,7 +14780,7 @@ externFunctionDeclarationIR
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>parameterTypeIR</code> be <a href="#typeof_parameterIR">the type of  <code>parameterIR</code></a></p>
+<p>Let <code>parameterTypeIR</code> be <a href="#type_of_parameterIR">the type of  <code>parameterIR</code></a></p>
 </li>
 </ul>
 </div>
@@ -14892,13 +14892,13 @@ externObjectDeclarationIR
     -- if TC_2 = $add_types(BLOCK, TC_1, tid_expl*, (TID tid_expl)*)
     -- if nameIR = $name(nonTypeName)
     -- ExternMethods_ok: TC_2 nameIR |- externMethodPrototype* : TC_3 externMethodPrototypeIR*
-    -- if typeIR_extern = EXTERN nameIR TC_3.BLOCK.RDENV
+    -- if typeIR_extern = EXTERN nameIR TC_3.BLOCK.ROUTINE
     -- if typeDefIR_extern = typeIR_extern `&lt;tid_expl* , eps&gt;
     -- if TC_4 = $add_type(GLOBAL, TC_0, nameIR, typeDefIR_extern)
     -- if TC_5 = TC_4[BLOCK.KIND = EXTERN]
     -- if TC_6 = $add_types(BLOCK, TC_5, tid_expl*, (TID tid_expl)*)
     -- ExternConstructors_ok: TC_6 nameIR |- externConstructorPrototype* : TC_7 externConstructorPrototypeIR*
-    -- if TC_8 = TC_4[GLOBAL.CDENV = TC_7.GLOBAL.CDENV]
+    -- if TC_8 = TC_4[GLOBAL.CONSTRUCTOR = TC_7.GLOBAL.CONSTRUCTOR]
     -- if externObjectDeclarationIR = annotationList EXTERN nameIR `&lt;tid_expl* ,&gt; `{externConstructorPrototypeIR* externMethodPrototypeIR*}</pre>
 </div>
 </div>
@@ -14954,7 +14954,7 @@ externObjectDeclarationIR
 <p>Let <code>TC<sub>3</sub></code> and <code>externMethodPrototypeIR<sup>*</sup></code> be the result of <a href="#ExternMethods_ok">typing <code>externMethodPrototype<sup>*</sup></code>, under typing context <code>TC<sub>2</sub></code> for an extern object <code>nameIR</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>extern</sub></code> be <code>EXTERN nameIR TC<sub>3</sub>.BLOCK.RDENV</code>.</p>
+<p>Let <code>typeIR<sub>extern</sub></code> be <code>EXTERN nameIR TC<sub>3</sub>.BLOCK.ROUTINE</code>.</p>
 </li>
 <li>
 <p>Let <code>typeDefIR<sub>extern</sub></code> be <code>typeIR<sub>extern</sub> &lt; tid<sub>expl</sub><sup>*</sup> , [ ] &gt;</code>.</p>
@@ -14972,7 +14972,7 @@ externObjectDeclarationIR
 <p>Let <code>TC<sub>7</sub></code> and <code>externConstructorPrototypeIR<sup>*</sup></code> be the result of <a href="#ExternConstructors_ok">typing <code>externConstructorPrototype<sup>*</sup></code>, under typing context <code>TC<sub>6</sub></code> for an extern object <code>nameIR</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>8</sub></code> be <code>TC<sub>4</sub></code>[GLOBAL.CDENV = <code>TC<sub>7</sub>.GLOBAL.CDENV</code>].</p>
+<p>Let <code>TC<sub>8</sub></code> be <code>TC<sub>4</sub></code>[GLOBAL.CONSTRUCTOR = <code>TC<sub>7</sub>.GLOBAL.CONSTRUCTOR</code>].</p>
 </li>
 <li>
 <p>Let <code>externObjectDeclarationIR</code> be <code>annotationList EXTERN nameIR &lt; tid<sub>expl</sub><sup>*</sup> , &gt; { externConstructorPrototypeIR<sup>*</sup> externMethodPrototypeIR<sup>*</sup> }</code>.</p>
@@ -14992,8 +14992,8 @@ externObjectDeclarationIR
 <div class="content">
 <pre>rule Decl_inst/externObjectDeclarationIR/non-constructor:
    GLOBAL IC_0 STO |- annotationList EXTERN nameIR `&lt;typeParameterListIR ,&gt; `{eps externMethodPrototypeIR*} ==&gt; IC_2 STO eps
-    -- (if (rid = $ridof_externMethodPrototypeIR(externMethodPrototypeIR)))*
-    -- (if (routineTypeDefIR = $typeof_externMethodPrototypeIR(externMethodPrototypeIR)))*
+    -- (if (rid = $rid_of_externMethodPrototypeIR(externMethodPrototypeIR)))*
+    -- (if (routineTypeDefIR = $type_of_externMethodPrototypeIR(externMethodPrototypeIR)))*
     -- if rdenv = `{(rid : routineTypeDefIR)*}
     -- if externObjectTypeIR = EXTERN nameIR rdenv
     -- if polyTypeDefIR = externObjectTypeIR `&lt;typeParameterListIR , eps&gt;
@@ -15004,13 +15004,13 @@ externObjectDeclarationIR
 
 rule Decl_inst/externObjectDeclarationIR/constructor:
    GLOBAL IC_0 STO |- annotationList EXTERN nameIR `&lt;typeParameterListIR ,&gt; `{externConstructorPrototypeIR* externMethodPrototypeIR*} ==&gt; IC_2 STO eps
-    -- (if (rid = $ridof_externMethodPrototypeIR(externMethodPrototypeIR)))*
-    -- (if (routineTypeDefIR = $typeof_externMethodPrototypeIR(externMethodPrototypeIR)))*
+    -- (if (rid = $rid_of_externMethodPrototypeIR(externMethodPrototypeIR)))*
+    -- (if (routineTypeDefIR = $type_of_externMethodPrototypeIR(externMethodPrototypeIR)))*
     -- if rdenv = `{(rid : routineTypeDefIR)*}
     -- if externObjectTypeIR = EXTERN nameIR rdenv
     -- if polyTypeDefIR = externObjectTypeIR `&lt;typeParameterListIR , eps&gt;
     -- if IC_1 = $add_typedef_inst(GLOBAL, IC_0, nameIR, polyTypeDefIR)
-    -- (if (cid = $cidof_externConstructorPrototypeIR(externConstructorPrototypeIR)))*
+    -- (if (cid = $cid_of_externConstructorPrototypeIR(externConstructorPrototypeIR)))*
     -- (if (constructor = $constructor_of_externConstructorPrototypeIR(typeParameterListIR, externMethodPrototypeIR*, externConstructorPrototypeIR)))*
     -- if IC_2 = $add_constructors_inst(IC_1, cid*, constructor*)</pre>
 </div>
@@ -15037,7 +15037,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>rid</code> be <a href="#ridof_externMethodPrototypeIR">the routine id of  <code>externMethodPrototypeIR</code></a></p>
+<p>Let <code>rid</code> be <a href="#rid_of_externMethodPrototypeIR">the routine id of  <code>externMethodPrototypeIR</code></a></p>
 </li>
 </ul>
 </div>
@@ -15054,7 +15054,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>routineTypeDefIR</code> be <a href="#typeof_externMethodPrototypeIR">the routine type definition of  <code>externMethodPrototypeIR</code></a></p>
+<p>Let <code>routineTypeDefIR</code> be <a href="#type_of_externMethodPrototypeIR">the routine type definition of  <code>externMethodPrototypeIR</code></a></p>
 </li>
 </ul>
 </div>
@@ -15098,7 +15098,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>rid</code> be <a href="#ridof_externMethodPrototypeIR">the routine id of  <code>externMethodPrototypeIR</code></a></p>
+<p>Let <code>rid</code> be <a href="#rid_of_externMethodPrototypeIR">the routine id of  <code>externMethodPrototypeIR</code></a></p>
 </li>
 </ul>
 </div>
@@ -15115,7 +15115,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>routineTypeDefIR</code> be <a href="#typeof_externMethodPrototypeIR">the routine type definition of  <code>externMethodPrototypeIR</code></a></p>
+<p>Let <code>routineTypeDefIR</code> be <a href="#type_of_externMethodPrototypeIR">the routine type definition of  <code>externMethodPrototypeIR</code></a></p>
 </li>
 </ul>
 </div>
@@ -15144,7 +15144,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>cid</code> be <a href="#cidof_externConstructorPrototypeIR">the constructor id of  <code>externConstructorPrototypeIR</code></a></p>
+<p>Let <code>cid</code> be <a href="#cid_of_externConstructorPrototypeIR">the constructor id of  <code>externConstructorPrototypeIR</code></a></p>
 </li>
 </ul>
 </div>
@@ -15196,11 +15196,11 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
     -- if TC_1 = TC_0[BLOCK.KIND = PARSER]
     -- if constructorParameter* = $flatten_constructorParameterListOpt(constructorParameterListOpt)
     -- ConstructorParameters_ok: BLOCK TC_1 |- constructorParameter* : constructorParameterIR* # eps
-    -- (if (constructorParameterTypeIR = $typeof_constructorParameterIR(constructorParameterIR)))*
+    -- (if (constructorParameterTypeIR = $type_of_constructorParameterIR(constructorParameterIR)))*
     -- if TC_2 = $add_parameters(BLOCK, TC_1, constructorParameterTypeIR*)
     -- if parameter* = $flatten_parameterList(parameterList)
     -- Parameters_ok: BLOCK TC_2 |- parameter* : parameterIR* # eps
-    -- (if (parameterTypeIR = $typeof_parameterIR(parameterIR)))*
+    -- (if (parameterTypeIR = $type_of_parameterIR(parameterIR)))*
     -- if TC_3 = $add_parameters(BLOCK, TC_2, parameterTypeIR*)
     -- if parserLocalDeclaration* = $flatten_parserLocalDeclarationList(parserLocalDeclarationList)
     -- ParserLocalDecls_ok: TC_3 |- parserLocalDeclaration* : TC_4 parserLocalDeclarationIR*
@@ -15252,7 +15252,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>constructorParameterTypeIR</code> be <a href="#typeof_constructorParameterIR">the type of  <code>constructorParameterIR</code></a></p>
+<p>Let <code>constructorParameterTypeIR</code> be <a href="#type_of_constructorParameterIR">the type of  <code>constructorParameterIR</code></a></p>
 </li>
 </ul>
 </div>
@@ -15281,7 +15281,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>parameterTypeIR</code> be <a href="#typeof_parameterIR">the type of  <code>parameterIR</code></a></p>
+<p>Let <code>parameterTypeIR</code> be <a href="#type_of_parameterIR">the type of  <code>parameterIR</code></a></p>
 </li>
 </ul>
 </div>
@@ -15404,11 +15404,11 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
     -- if TC_1 = TC_0[BLOCK.KIND = CONTROL]
     -- if constructorParameter* = $flatten_constructorParameterListOpt(constructorParameterListOpt)
     -- ConstructorParameters_ok: BLOCK TC_1 |- constructorParameter* : constructorParameterIR* # eps
-    -- (if (constructorParameterTypeIR = $typeof_constructorParameterIR(constructorParameterIR)))*
+    -- (if (constructorParameterTypeIR = $type_of_constructorParameterIR(constructorParameterIR)))*
     -- if TC_2 = $add_parameters(BLOCK, TC_1, constructorParameterTypeIR*)
     -- if parameter* = $flatten_parameterList(parameterList)
     -- Parameters_ok: BLOCK TC_2 |- parameter* : parameterIR* # eps
-    -- (if (parameterTypeIR = $typeof_parameterIR(parameterIR)))*
+    -- (if (parameterTypeIR = $type_of_parameterIR(parameterIR)))*
     -- if TC_3 = $add_parameters(BLOCK, TC_2, parameterTypeIR*)
     -- if controlLocalDeclaration* = $flatten_controlLocalDeclarationList(controlLocalDeclarationList)
     -- ControlLocalDecls_ok: TC_3 |- controlLocalDeclaration* : TC_4 controlLocalDeclarationIR*
@@ -15459,7 +15459,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>constructorParameterTypeIR</code> be <a href="#typeof_constructorParameterIR">the type of  <code>constructorParameterIR</code></a></p>
+<p>Let <code>constructorParameterTypeIR</code> be <a href="#type_of_constructorParameterIR">the type of  <code>constructorParameterIR</code></a></p>
 </li>
 </ul>
 </div>
@@ -15488,7 +15488,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>parameterTypeIR</code> be <a href="#typeof_parameterIR">the type of  <code>parameterIR</code></a></p>
+<p>Let <code>parameterTypeIR</code> be <a href="#type_of_parameterIR">the type of  <code>parameterIR</code></a></p>
 </li>
 </ul>
 </div>
@@ -15862,7 +15862,7 @@ enumTypeDeclarationIR
    TC_0 nameIR_enum typeIR |- name = expression : TC_1 (nameIR = typedExpressionIR_cast) # value
     -- Expr_ok: BLOCK TC_0 |- expression : typedExpressionIR
     -- if typedExpressionIR_cast = $coerce_unary(typedExpressionIR, typeIR)
-    -- if LCTK = $ctkof_expression(typedExpressionIR_cast)
+    -- if LCTK = $ctk_of_expression(typedExpressionIR_cast)
     -- Eval_static: BLOCK TC_0 |- typedExpressionIR_cast ~&gt; value
     -- if nameIR = $name(name)
     -- if typeIR_enum = ENUM nameIR_enum # typeIR `{eps}
@@ -15895,7 +15895,7 @@ enumTypeDeclarationIR
 <p>Let <code>?typedExpressionIR<sub>cast</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Check that <code><a href="#ctkof_expression">the compile-time known-ness of  typedExpressionIR<sub>cast</sub></a></code> matches pattern <code>LCTK</code>.</p>
+<p>Check that <code><a href="#ctk_of_expression">the compile-time known-ness of  typedExpressionIR<sub>cast</sub></a></code> matches pattern <code>LCTK</code>.</p>
 </li>
 <li>
 <p>Let <code>value</code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>cast</sub></code>, under cursor <code>BLOCK</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
@@ -16700,7 +16700,7 @@ typedefDeclarationIR
 rule Decl_ok/typedefDeclaration-typedef/derivedTypeDeclaration-mono:
    GLOBAL TC_0 |- annotationList TYPEDEF derivedTypeDeclaration name ; : TC_1 typedefDeclarationIR
     -- Decl_ok: GLOBAL TC_0 |- derivedTypeDeclaration : TC_1 derivedTypeDeclarationIR
-    -- if `{tid} = $diff_set&lt;tid&gt;($dom_map&lt;tid, typeDefIR&gt;(TC_1.GLOBAL.TDENV), $dom_map&lt;tid, typeDefIR&gt;(TC_0.GLOBAL.TDENV))
+    -- if `{tid} = $diff_set&lt;tid&gt;($dom_map&lt;tid, typeDefIR&gt;(TC_1.GLOBAL.TYPE), $dom_map&lt;tid, typeDefIR&gt;(TC_0.GLOBAL.TYPE))
     -- if typeIR = $find_type(GLOBAL, TC_1, ` tid)
     -- if nameIR = $name(name)
     -- if typeIR_typedef = TYPEDEF nameIR typeIR
@@ -16711,7 +16711,7 @@ rule Decl_ok/typedefDeclaration-typedef/derivedTypeDeclaration-mono:
 rule Decl_ok/typedefDeclaration-typedef/derivedTypeDeclaration-poly:
    GLOBAL TC_0 |- annotationList TYPEDEF derivedTypeDeclaration name ; : TC_1 typedefDeclarationIR
     -- Decl_ok: GLOBAL TC_0 |- derivedTypeDeclaration : TC_1 derivedTypeDeclarationIR
-    -- if `{tid} = $diff_set&lt;tid&gt;($dom_map&lt;tid, typeDefIR&gt;(TC_1.GLOBAL.TDENV), $dom_map&lt;tid, typeDefIR&gt;(TC_0.GLOBAL.TDENV))
+    -- if `{tid} = $diff_set&lt;tid&gt;($dom_map&lt;tid, typeDefIR&gt;(TC_1.GLOBAL.TYPE), $dom_map&lt;tid, typeDefIR&gt;(TC_0.GLOBAL.TYPE))
     -- if typeIR `&lt;eps , eps&gt; = $find_type(GLOBAL, TC_1, ` tid)
     -- if nameIR = $name(name)
     -- if typeIR_typedef = TYPEDEF nameIR ((typeIR `&lt;eps , eps&gt;) `&lt;eps&gt;)
@@ -16788,7 +16788,7 @@ rule Decl_ok/typedefDeclaration-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>derivedTypeDeclarationIR</code> be <code>declarationIR</code>.</p>
 </li>
 <li>
-<p>Let <code>{ tid'<sup>*</sup> }</code> be <a href="#diff_set">the difference of the sets <code>&lt;&lt;dom_map, the domain of the map TC<sub>1</sub>.GLOBAL.TDENV</a></code> and <code><a href="#dom_map">the domain of the map TC<sub>0</sub>.GLOBAL.TDENV</a></code>&gt;&gt;.</p>
+<p>Let <code>{ tid'<sup>*</sup> }</code> be <a href="#diff_set">the difference of the sets <code>&lt;&lt;dom_map, the domain of the map TC<sub>1</sub>.GLOBAL.TYPE</a></code> and <code><a href="#dom_map">the domain of the map TC<sub>0</sub>.GLOBAL.TYPE</a></code>&gt;&gt;.</p>
 </li>
 <li>
 <p>Check that <code>tid'<sup>*</sup></code> matches pattern <code>[ _/1 ]</code>.</p>
@@ -16882,7 +16882,7 @@ rule Decl_ok/typedefDeclaration-typedef/derivedTypeDeclaration-poly:
 rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclarationIR-mono:
    GLOBAL IC_0 STO |- annotationList TYPEDEF derivedTypeDeclarationIR nameIR ; ==&gt; IC_1 STO eps
     -- Decl_inst: GLOBAL IC_0 $empty_store |- derivedTypeDeclarationIR ==&gt; IC_local _ _
-    -- if `{tid_newtype} = $diff_set&lt;tid&gt;($dom_map&lt;tid, typeDefIR&gt;(IC_local.GLOBAL.TDENV), $dom_map&lt;tid, typeDefIR&gt;(IC_0.GLOBAL.TDENV))
+    -- if `{tid_newtype} = $diff_set&lt;tid&gt;($dom_map&lt;tid, typeDefIR&gt;(IC_local.GLOBAL.TYPE), $dom_map&lt;tid, typeDefIR&gt;(IC_0.GLOBAL.TYPE))
     -- if typeIR = $find_typedef_inst(GLOBAL, IC_local, . tid_newtype)
     -- if typeIR_typedef = TYPEDEF nameIR typeIR
     -- if IC_1 = $add_typedef_inst(GLOBAL, IC_0, nameIR, typeIR_typedef)
@@ -16890,7 +16890,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclarationIR-mono:
 rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
    GLOBAL IC_0 STO |- annotationList TYPEDEF derivedTypeDeclarationIR nameIR ; ==&gt; IC_1 STO eps
     -- Decl_inst: GLOBAL IC_0 $empty_store |- derivedTypeDeclarationIR ==&gt; IC_local _ _
-    -- if `{tid_newtype} = $diff_set&lt;tid&gt;($dom_map&lt;tid, typeDefIR&gt;(IC_local.GLOBAL.TDENV), $dom_map&lt;tid, typeDefIR&gt;(IC_0.GLOBAL.TDENV))
+    -- if `{tid_newtype} = $diff_set&lt;tid&gt;($dom_map&lt;tid, typeDefIR&gt;(IC_local.GLOBAL.TYPE), $dom_map&lt;tid, typeDefIR&gt;(IC_0.GLOBAL.TYPE))
     -- if typeIR `&lt;eps , eps&gt; = $find_typedef_inst(GLOBAL, IC_local, . tid_newtype)
     -- if typeIR_typedef = TYPEDEF nameIR ((typeIR `&lt;eps , eps&gt;) `&lt;eps&gt;)
     -- if IC_1 = $add_typedef_inst(GLOBAL, IC_0, nameIR, typeIR_typedef)</pre>
@@ -16932,7 +16932,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <p><a href="#Decl_inst"><code>GLOBAL IC<sub>0</sub> $empty_store |- derivedTypeDeclarationIR =&#8658; IC<sub>local</sub> _ _<sup>?</sup></code></a>.</p>
 </li>
 <li>
-<p>Let <code>{ tid<sup>*</sup> }</code> be <a href="#diff_set">the difference of the sets <code>&lt;&lt;dom_map, the domain of the map IC<sub>local</sub>.GLOBAL.TDENV</a></code> and <code><a href="#dom_map">the domain of the map IC<sub>0</sub>.GLOBAL.TDENV</a></code>&gt;&gt;.</p>
+<p>Let <code>{ tid<sup>*</sup> }</code> be <a href="#diff_set">the difference of the sets <code>&lt;&lt;dom_map, the domain of the map IC<sub>local</sub>.GLOBAL.TYPE</a></code> and <code><a href="#dom_map">the domain of the map IC<sub>0</sub>.GLOBAL.TYPE</a></code>&gt;&gt;.</p>
 </li>
 <li>
 <p>Check that <code>tid<sup>*</sup></code> matches pattern <code>[ _/1 ]</code>.</p>
@@ -17113,7 +17113,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
     -- if TC_2 = $add_types(BLOCK, TC_1, tid_expl*, (TID tid_expl)*)
     -- if parameter* = $flatten_parameterList(parameterList)
     -- Parameters_ok: BLOCK TC_2 |- parameter* : parameterIR* # tid_impl*
-    -- (if (parameterTypeIR = $typeof_parameterIR(parameterIR)))*
+    -- (if (parameterTypeIR = $type_of_parameterIR(parameterIR)))*
     -- if nameIR = $name(name)
     -- if typeIR_parser = PARSER `(parameterTypeIR*)
     -- if typeDefIR_parser = typeIR_parser `&lt;tid_expl* , tid_impl*&gt;
@@ -17174,7 +17174,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>parameterTypeIR</code> be <a href="#typeof_parameterIR">the type of  <code>parameterIR</code></a></p>
+<p>Let <code>parameterTypeIR</code> be <a href="#type_of_parameterIR">the type of  <code>parameterIR</code></a></p>
 </li>
 </ul>
 </div>
@@ -17218,7 +17218,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <div class="content">
 <pre>rule Decl_inst/parserTypeDeclarationIR:
    GLOBAL IC_0 STO |- annotationList PARSER nameIR `&lt;typeParameterListIR , typeParameterListIR_inferred&gt; `(parameterIR*) ; ==&gt; IC_1 STO eps
-    -- (if (parameterTypeIR = $typeof_parameterIR(parameterIR)))*
+    -- (if (parameterTypeIR = $type_of_parameterIR(parameterIR)))*
     -- if typeIR_parser = PARSER `(parameterTypeIR*)
     -- if typeDefIR_parser = typeIR_parser `&lt;typeParameterListIR , typeParameterListIR_inferred&gt;
     -- if IC_1 = $add_typedef_inst(GLOBAL, IC_0, nameIR, typeDefIR_parser)</pre>
@@ -17243,7 +17243,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>parameterTypeIR</code> be <a href="#typeof_parameterIR">the type of  <code>parameterIR</code></a></p>
+<p>Let <code>parameterTypeIR</code> be <a href="#type_of_parameterIR">the type of  <code>parameterIR</code></a></p>
 </li>
 </ul>
 </div>
@@ -17286,7 +17286,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
     -- if TC_2 = $add_types(BLOCK, TC_1, tid_expl*, (TID tid_expl)*)
     -- if parameter* = $flatten_parameterList(parameterList)
     -- Parameters_ok: BLOCK TC_2 |- parameter* : parameterIR* # tid_impl*
-    -- (if (parameterTypeIR = $typeof_parameterIR(parameterIR)))*
+    -- (if (parameterTypeIR = $type_of_parameterIR(parameterIR)))*
     -- if nameIR = $name(name)
     -- if typeIR_control = CONTROL `(parameterTypeIR*)
     -- if typeDefIR_control = typeIR_control `&lt;tid_expl* , tid_impl*&gt;
@@ -17347,7 +17347,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>parameterTypeIR</code> be <a href="#typeof_parameterIR">the type of  <code>parameterIR</code></a></p>
+<p>Let <code>parameterTypeIR</code> be <a href="#type_of_parameterIR">the type of  <code>parameterIR</code></a></p>
 </li>
 </ul>
 </div>
@@ -17390,7 +17390,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <div class="content">
 <pre>rule Decl_inst/controlTypeDeclarationIR:
    GLOBAL IC_0 STO |- annotationList CONTROL nameIR `&lt;typeParameterListIR , typeParameterListIR_inferred&gt; `(parameterIR*) ; ==&gt; IC_1 STO eps
-    -- (if (parameterTypeIR = $typeof_parameterIR(parameterIR)))*
+    -- (if (parameterTypeIR = $type_of_parameterIR(parameterIR)))*
     -- if typeIR_control = CONTROL `(parameterTypeIR*)
     -- if typeDefIR_control = typeIR_control `&lt;typeParameterListIR , typeParameterListIR_inferred&gt;
     -- if IC_1 = $add_typedef_inst(GLOBAL, IC_0, nameIR, typeDefIR_control)</pre>
@@ -17415,7 +17415,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>parameterTypeIR</code> be <a href="#typeof_parameterIR">the type of  <code>parameterIR</code></a></p>
+<p>Let <code>parameterTypeIR</code> be <a href="#type_of_parameterIR">the type of  <code>parameterIR</code></a></p>
 </li>
 </ul>
 </div>
@@ -17458,7 +17458,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
     -- if TC_2 = $add_types(BLOCK, TC_1, tid_expl*, (TID tid_expl)*)
     -- if constructorParameter* = $flatten_parameterList(parameterList)
     -- ConstructorParameters_ok: BLOCK TC_2 |- constructorParameter* : constructorParameterIR* # tid_impl*
-    -- (if (constructorParameterTypeIR = $typeof_constructorParameterIR(constructorParameterIR)))*
+    -- (if (constructorParameterTypeIR = $type_of_constructorParameterIR(constructorParameterIR)))*
     -- if nameIR = $name(name)
     -- (if (_ typeIR_package_inner _ _ = constructorParameterTypeIR))*
     -- if typeIR_package = PACKAGE `&lt;typeIR_package_inner*&gt;
@@ -17526,7 +17526,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>constructorParameterTypeIR</code> be <a href="#typeof_constructorParameterIR">the type of  <code>constructorParameterIR</code></a></p>
+<p>Let <code>constructorParameterTypeIR</code> be <a href="#type_of_constructorParameterIR">the type of  <code>constructorParameterIR</code></a></p>
 </li>
 </ul>
 </div>
@@ -17891,8 +17891,8 @@ for comparison operators, logical operators, concat, range, or mask operators.</
    p TC f |- lvalue = expression ; : TC f (typedLvalueIR = typedExpressionIR_cast ;)
     -- Lvalue_ok: p TC |- lvalue : typedLvalueIR
     -- Expr_ok: p TC |- expression : typedExpressionIR
-    -- if typeIR_l = $typeof_lvalue(typedLvalueIR)
-    -- if typeIR_r = $typeof_expression(typedExpressionIR)
+    -- if typeIR_l = $type_of_lvalue(typedLvalueIR)
+    -- if typeIR_r = $type_of_expression(typedExpressionIR)
     -- if typedExpressionIR_cast = $coerce_unary(typedExpressionIR, typeIR_l)</pre>
 </div>
 </div>
@@ -17915,10 +17915,10 @@ for comparison operators, logical operators, concat, range, or mask operators.</
 <p>Let <code>typedExpressionIR</code> be the result of <a href="#Expr_ok">typing <code>expression</code>, under cursor <code>p'</code> and typing context <code>TC'</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>l</sub></code> be <a href="#typeof_lvalue">the type of lvalue  <code>typedLvalueIR</code></a>.</p>
+<p>Let <code>typeIR<sub>l</sub></code> be <a href="#type_of_lvalue">the type of lvalue  <code>typedLvalueIR</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>r</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR</code></a>.</p>
+<p>Let <code>typeIR<sub>r</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR</code></a>.</p>
 </li>
 <li>
 <p>Let <code>typedExpressionIR'<sup>?</sup></code> be <a href="#coerce_unary">implicitly cast  <code>typedExpressionIR</code>  to  <code>typeIR<sub>l</sub></code></a>.</p>
@@ -19350,7 +19350,7 @@ still performed after the execution of the <code>return</code> statement.  See
 rule Stmt_ok/returnStatement/expression:
    LOCAL TC f |- RETURN expression ; : TC RET (RETURN typedExpressionIR_cast ;)
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
-    -- if typeIR = $typeof_expression(typedExpressionIR)
+    -- if typeIR = $type_of_expression(typedExpressionIR)
     -- if typeIR_ret = $find_return_type(TC)
     -- if typedExpressionIR_cast = $coerce_unary(typedExpressionIR, typeIR_ret)</pre>
 </div>
@@ -19401,7 +19401,7 @@ rule Stmt_ok/returnStatement/expression:
 <p>Let <code>typedExpressionIR</code> be the result of <a href="#Expr_ok">typing <code>expression</code>, under cursor <code>LOCAL</code> and typing context <code>TC'</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR</code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR</code></a>.</p>
+<p>Let <code>typeIR</code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR</code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR'<sup>?</sup></code> be <code>$find_return_type(TC')</code>.</p>
@@ -20196,14 +20196,14 @@ innermost <code>if</code> statement that does not have an <code>else</code> stat
 <pre>rule Stmt_ok/conditionalStatement/non-else:
    p TC f |- IF `(expression_cond) statement_then : TC f (IF `(typedExpressionIR_cond) statementIR_then)
     -- Expr_ok: p TC |- expression_cond : typedExpressionIR_cond
-    -- if typeIR_cond = $typeof_expression(typedExpressionIR_cond)
+    -- if typeIR_cond = $type_of_expression(typedExpressionIR_cond)
     -- if BOOL = $canon(typeIR_cond)
     -- Stmt_ok: p TC f |- statement_then : TC_then f_then statementIR_then
 
 rule Stmt_ok/conditionalStatement/else:
    p TC f |- IF `(expression_cond) statement_then ELSE statement_else : TC f_post (IF `(typedExpressionIR_cond) statementIR_then ELSE statementIR_else)
     -- Expr_ok: p TC |- expression_cond : typedExpressionIR_cond
-    -- if typeIR_cond = $typeof_expression(typedExpressionIR_cond)
+    -- if typeIR_cond = $type_of_expression(typedExpressionIR_cond)
     -- if BOOL = $canon(typeIR_cond)
     -- Stmt_ok: p TC f |- statement_then : TC_then f_then statementIR_then
     -- Stmt_ok: p TC f |- statement_else : TC_else f_else statementIR_else
@@ -20230,7 +20230,7 @@ rule Stmt_ok/conditionalStatement/else:
 <p>Let <code>typedExpressionIR<sub>cond</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>cond</sub></code>, under cursor <code>p'</code> and typing context <code>TC'</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>cond</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>cond</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>cond</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>cond</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>BOOL</code> is equal to <a href="#canon">the canonicalized form of <code>typeIR<sub>cond</sub></code></a>.</p>
@@ -20265,7 +20265,7 @@ rule Stmt_ok/conditionalStatement/else:
 <p>Let <code>typedExpressionIR<sub>cond</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>cond</sub></code>, under cursor <code>p'</code> and typing context <code>TC'</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>cond</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>cond</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>cond</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>cond</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>BOOL</code> is equal to <a href="#canon">the canonicalized form of <code>typeIR<sub>cond</sub></code></a>.</p>
@@ -20986,7 +20986,7 @@ rule SwitchCase_table_ok/non-blockStatement:
 <pre>rule Stmt_ok/switchStatement-table:
    LOCAL TC f |- SWITCH `(expression_switch) `{switchCaseList} : TC f_post switchStatementIR
     -- Expr_ok: LOCAL TC |- expression_switch : typedExpressionIR_switch
-    -- if typeIR_switch = $typeof_expression(typedExpressionIR_switch)
+    -- if typeIR_switch = $type_of_expression(typedExpressionIR_switch)
     -- if TABLE_ENUM tid_table_enum `{_} = $canon(typeIR_switch)
     -- if tid_table = $strip_prefix($strip_suffix(tid_table_enum, ")"), "action_list(")
     -- if switchCase* = $flatten_switchCaseList(switchCaseList)
@@ -21011,7 +21011,7 @@ rule SwitchCase_table_ok/non-blockStatement:
 <p>Let <code>typedExpressionIR<sub>switch</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>switch</sub></code>, under cursor <code>LOCAL</code> and typing context <code>TC'</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>switch</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>switch</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>switch</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>switch</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>switch</sub></code></a>.</p>
@@ -21269,7 +21269,7 @@ rule SwitchCase_general_ok/non-blockStatement:
 <pre>rule Stmt_ok/switchStatement-general:
    LOCAL TC f |- SWITCH `(expression_switch) `{switchCaseList} : TC f_post switchStatementIR
     -- Expr_ok: LOCAL TC |- expression_switch : typedExpressionIR_switch
-    -- if typeIR_switch = $typeof_expression(typedExpressionIR_switch)
+    -- if typeIR_switch = $type_of_expression(typedExpressionIR_switch)
     -- if $compat_switch(typeIR_switch)
     -- if switchCase* = $flatten_switchCaseList(switchCaseList)
     -- SwitchCases_general_ok: TC f typeIR_switch |- switchCase* : f_post switchCaseIR* # switchLabel*
@@ -21293,7 +21293,7 @@ rule SwitchCase_general_ok/non-blockStatement:
 <p>Let <code>typedExpressionIR<sub>switch</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>switch</sub></code>, under cursor <code>LOCAL</code> and typing context <code>TC'</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>switch</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>switch</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>switch</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>switch</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>$compat_switch(typeIR<sub>switch</sub>)</code>.</p>
@@ -22361,8 +22361,8 @@ unaryExpressionIR
    p TC |- ! expression : (! typedExpressionIR_reduced) # expressionNoteIR
     -- Expr_ok: p TC |- expression : typedExpressionIR
     -- if typedExpressionIR_reduced = $reduce_serenum_unary(typedExpressionIR, $compat_lnot)
-    -- if typeIR_reduced = $typeof_expression(typedExpressionIR_reduced)
-    -- if ctk_reduced = $ctkof_expression(typedExpressionIR_reduced)
+    -- if typeIR_reduced = $type_of_expression(typedExpressionIR_reduced)
+    -- if ctk_reduced = $ctk_of_expression(typedExpressionIR_reduced)
     -- if expressionNoteIR = `(typeIR_reduced ctk_reduced)</pre>
 </div>
 </div>
@@ -22391,10 +22391,10 @@ unaryExpressionIR
 <p>Let <code>?typedExpressionIR<sub>reduced</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>reduced</sub></code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>expressionNoteIR</code> be <code>( typeIR<sub>reduced</sub> ctk<sub>reduced</sub> )</code>.</p>
@@ -22419,8 +22419,8 @@ unaryExpressionIR
    p TC |- ~ expression : (~ typedExpressionIR_reduced) # expressionNoteIR
     -- Expr_ok: p TC |- expression : typedExpressionIR
     -- if typedExpressionIR_reduced = $reduce_serenum_unary(typedExpressionIR, $compat_bnot)
-    -- if typeIR_reduced = $typeof_expression(typedExpressionIR_reduced)
-    -- if ctk_reduced = $ctkof_expression(typedExpressionIR_reduced)
+    -- if typeIR_reduced = $type_of_expression(typedExpressionIR_reduced)
+    -- if ctk_reduced = $ctk_of_expression(typedExpressionIR_reduced)
     -- if expressionNoteIR = `(typeIR_reduced ctk_reduced)</pre>
 </div>
 </div>
@@ -22449,10 +22449,10 @@ unaryExpressionIR
 <p>Let <code>?typedExpressionIR<sub>reduced</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>reduced</sub></code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>expressionNoteIR</code> be <code>( typeIR<sub>reduced</sub> ctk<sub>reduced</sub> )</code>.</p>
@@ -22478,8 +22478,8 @@ unaryExpressionIR
     -- if unop = + \/ unop = -
     -- Expr_ok: p TC |- expression : typedExpressionIR
     -- if typedExpressionIR_reduced = $reduce_serenum_unary(typedExpressionIR, $compat_uplusminus)
-    -- if typeIR_reduced = $typeof_expression(typedExpressionIR_reduced)
-    -- if ctk_reduced = $ctkof_expression(typedExpressionIR_reduced)
+    -- if typeIR_reduced = $type_of_expression(typedExpressionIR_reduced)
+    -- if ctk_reduced = $ctk_of_expression(typedExpressionIR_reduced)
     -- if expressionNoteIR = `(typeIR_reduced ctk_reduced)</pre>
 </div>
 </div>
@@ -22512,10 +22512,10 @@ unaryExpressionIR
 <p>Let <code>?typedExpressionIR<sub>reduced</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>reduced</sub></code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>expressionNoteIR</code> be <code>( typeIR<sub>reduced</sub> ctk<sub>reduced</sub> )</code>.</p>
@@ -22543,10 +22543,10 @@ unaryExpressionIR
 <p>Let <code>?typedExpressionIR<sub>reduced</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>reduced</sub></code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>expressionNoteIR</code> be <code>( typeIR<sub>reduced</sub> ctk<sub>reduced</sub> )</code>.</p>
@@ -22568,20 +22568,8 @@ unaryExpressionIR
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>rule Eval_static/unaryExpressionIR/bnot:
-   p TC |- (~ typedExpressionIR) # `(_ _) ~&gt; $un_bnot(value)
-    -- Eval_static: p TC |- typedExpressionIR ~&gt; value
-
-rule Eval_static/unaryExpressionIR/lnot:
-   p TC |- (! typedExpressionIR) # `(_ _) ~&gt; $un_lnot(value)
-    -- Eval_static: p TC |- typedExpressionIR ~&gt; value
-
-rule Eval_static/unaryExpressionIR/plus:
-   p TC |- (+ typedExpressionIR) # `(_ _) ~&gt; $un_plus(value)
-    -- Eval_static: p TC |- typedExpressionIR ~&gt; value
-
-rule Eval_static/unaryExpressionIR/minus:
-   p TC |- (- typedExpressionIR) # `(_ _) ~&gt; $un_minus(value)
+<pre>rule Eval_static/unaryExpressionIR:
+   p TC |- (unop typedExpressionIR) # `(_ _) ~&gt; $un_op(unop, value)
     -- Eval_static: p TC |- typedExpressionIR ~&gt; value</pre>
 </div>
 </div>
@@ -22598,56 +22586,10 @@ rule Eval_static/unaryExpressionIR/minus:
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>If <code>unop</code> matches pattern <code>~</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
 <p>Let <code>value</code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Result in <code>$un_bnot(value)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>unop</code> matches pattern <code>!</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>value</code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Result in <code>$un_lnot(value)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>unop</code> matches pattern <code>+</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>value</code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Result in <code>$un_plus(value)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>unop</code> matches pattern <code>-</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>value</code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Result in <code>$un_minus(value)</code>.</p>
-</li>
-</ol>
-</div>
+<p>Result in <code><a href="#un_op">unop value</a></code>.</p>
 </li>
 </ol>
 </div>
@@ -22659,20 +22601,8 @@ rule Eval_static/unaryExpressionIR/minus:
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>rule Expr_inst/unaryExpressionIR/bnot:
-   p IC STO_0 |- (~ typedExpressionIR) # _ ==&gt; STO_1 $un_bnot(value)
-    -- Expr_inst: p IC STO_0 |- typedExpressionIR ==&gt; STO_1 value
-
-rule Expr_inst/unaryExpressionIR/lnot:
-   p IC STO_0 |- (! typedExpressionIR) # _ ==&gt; STO_1 $un_lnot(value)
-    -- Expr_inst: p IC STO_0 |- typedExpressionIR ==&gt; STO_1 value
-
-rule Expr_inst/unaryExpressionIR/plus:
-   p IC STO_0 |- (+ typedExpressionIR) # _ ==&gt; STO_1 $un_plus(value)
-    -- Expr_inst: p IC STO_0 |- typedExpressionIR ==&gt; STO_1 value
-
-rule Expr_inst/unaryExpressionIR/minus:
-   p IC STO_0 |- (- typedExpressionIR) # _ ==&gt; STO_1 $un_minus(value)
+<pre>rule Expr_inst/unaryExpressionIR:
+   p IC STO_0 |- (unop typedExpressionIR) # _ ==&gt; STO_1 $un_op(unop, value)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR ==&gt; STO_1 value</pre>
 </div>
 </div>
@@ -22689,56 +22619,10 @@ rule Expr_inst/unaryExpressionIR/minus:
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>If <code>unop</code> matches pattern <code>~</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
 <p><a href="#Expr_inst"><code>p IC STO' |- typedExpressionIR =&#8658; STO<sub>1</sub> value</code></a>.</p>
 </li>
 <li>
-<p>Result in <code>STO<sub>1</sub></code> and <code>$un_bnot(value)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>unop</code> matches pattern <code>!</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p><a href="#Expr_inst"><code>p IC STO' |- typedExpressionIR =&#8658; STO<sub>1</sub> value</code></a>.</p>
-</li>
-<li>
-<p>Result in <code>STO<sub>1</sub></code> and <code>$un_lnot(value)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>unop</code> matches pattern <code>+</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p><a href="#Expr_inst"><code>p IC STO' |- typedExpressionIR =&#8658; STO<sub>1</sub> value</code></a>.</p>
-</li>
-<li>
-<p>Result in <code>STO<sub>1</sub></code> and <code>$un_plus(value)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>unop</code> matches pattern <code>-</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p><a href="#Expr_inst"><code>p IC STO' |- typedExpressionIR =&#8658; STO<sub>1</sub> value</code></a>.</p>
-</li>
-<li>
-<p>Result in <code>STO<sub>1</sub></code> and <code>$un_minus(value)</code>.</p>
-</li>
-</ol>
-</div>
+<p>Result in <code>STO<sub>1</sub></code> and <code><a href="#un_op">unop value</a></code>.</p>
 </li>
 </ol>
 </div>
@@ -22797,9 +22681,9 @@ binaryExpressionIR
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
     -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast) = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
     -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced) = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_plusminusmult)
-    -- if typeIR_reduced = $typeof_expression(typedExpressionIR_l_reduced)
-    -- if ctk_l_reduced = $ctkof_expression(typedExpressionIR_l_reduced)
-    -- if ctk_r_reduced = $ctkof_expression(typedExpressionIR_r_reduced)
+    -- if typeIR_reduced = $type_of_expression(typedExpressionIR_l_reduced)
+    -- if ctk_l_reduced = $ctk_of_expression(typedExpressionIR_l_reduced)
+    -- if ctk_r_reduced = $ctk_of_expression(typedExpressionIR_r_reduced)
     -- if ctk_reduced = $join_ctk(ctk_l_reduced, ctk_r_reduced)
     -- if expressionNoteIR = `(typeIR_reduced ctk_reduced)</pre>
 </div>
@@ -22844,13 +22728,13 @@ binaryExpressionIR
 <p>Let <code>?(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>reduced</sub></code> be <code>$join_ctk(ctk<sub>l_reduced</sub>, ctk<sub>r_reduced</sub>)</code>.</p>
@@ -22881,9 +22765,9 @@ binaryExpressionIR
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
     -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast) = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
     -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced) = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_satplusminus)
-    -- if typeIR_reduced = $typeof_expression(typedExpressionIR_l_reduced)
-    -- if ctk_l_reduced = $ctkof_expression(typedExpressionIR_l_reduced)
-    -- if ctk_r_reduced = $ctkof_expression(typedExpressionIR_r_reduced)
+    -- if typeIR_reduced = $type_of_expression(typedExpressionIR_l_reduced)
+    -- if ctk_l_reduced = $ctk_of_expression(typedExpressionIR_l_reduced)
+    -- if ctk_r_reduced = $ctk_of_expression(typedExpressionIR_r_reduced)
     -- if ctk_reduced = $join_ctk(ctk_l_reduced, ctk_r_reduced)
     -- if expressionNoteIR = `(typeIR_reduced ctk_reduced)</pre>
 </div>
@@ -22928,13 +22812,13 @@ binaryExpressionIR
 <p>Let <code>?(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>reduced</sub></code> be <code>$join_ctk(ctk<sub>l_reduced</sub>, ctk<sub>r_reduced</sub>)</code>.</p>
@@ -22965,9 +22849,9 @@ binaryExpressionIR
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
     -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast) = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
     -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced) = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_divmod)
-    -- if typeIR_reduced = $typeof_expression(typedExpressionIR_l_reduced)
-    -- if ctk_l_reduced = $ctkof_expression(typedExpressionIR_l_reduced)
-    -- if ctk_r_reduced = $ctkof_expression(typedExpressionIR_r_reduced)
+    -- if typeIR_reduced = $type_of_expression(typedExpressionIR_l_reduced)
+    -- if ctk_l_reduced = $ctk_of_expression(typedExpressionIR_l_reduced)
+    -- if ctk_r_reduced = $ctk_of_expression(typedExpressionIR_r_reduced)
     -- if ctk_r_reduced = LCTK
     -- Eval_static: p TC |- typedExpressionIR_r_reduced ~&gt; value_r
     -- if n_r = $to_number(value_r)
@@ -22982,9 +22866,9 @@ rule Expr_ok/binaryExpression-divmod/rhs-non-lctk:
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
     -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast) = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
     -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced) = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_divmod)
-    -- if typeIR_reduced = $typeof_expression(typedExpressionIR_l_reduced)
-    -- if ctk_l_reduced = $ctkof_expression(typedExpressionIR_l_reduced)
-    -- if ctk_r_reduced = $ctkof_expression(typedExpressionIR_r_reduced)
+    -- if typeIR_reduced = $type_of_expression(typedExpressionIR_l_reduced)
+    -- if ctk_l_reduced = $ctk_of_expression(typedExpressionIR_l_reduced)
+    -- if ctk_r_reduced = $ctk_of_expression(typedExpressionIR_r_reduced)
     -- if ctk_r_reduced =/= LCTK
     -- if ctk_reduced = $join_ctk(ctk_l_reduced, ctk_r_reduced)
     -- if expressionNoteIR = `(typeIR_reduced ctk_reduced)</pre>
@@ -23030,13 +22914,13 @@ rule Expr_ok/binaryExpression-divmod/rhs-non-lctk:
 <p>Let <code>?(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>If <code>ctk<sub>r_reduced</sub></code> does not match pattern <code>LCTK</code>:</p>
@@ -23104,10 +22988,10 @@ rule Expr_ok/binaryExpression-divmod/rhs-non-lctk:
     -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
     -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced) = $reduce_serenum_binary(typedExpressionIR_l, typedExpressionIR_r, $compat_shift)
-    -- if typeIR_l_reduced = $typeof_expression(typedExpressionIR_l_reduced)
-    -- if ctk_l_reduced = $ctkof_expression(typedExpressionIR_l_reduced)
-    -- if typeIR_r_reduced = $typeof_expression(typedExpressionIR_r_reduced)
-    -- if ctk_r_reduced = $ctkof_expression(typedExpressionIR_r_reduced)
+    -- if typeIR_l_reduced = $type_of_expression(typedExpressionIR_l_reduced)
+    -- if ctk_l_reduced = $ctk_of_expression(typedExpressionIR_l_reduced)
+    -- if typeIR_r_reduced = $type_of_expression(typedExpressionIR_r_reduced)
+    -- if ctk_r_reduced = $ctk_of_expression(typedExpressionIR_r_reduced)
     -- if $is_fixed_bit_typeIR(typeIR_r_reduced)
     -- if ctk_reduced = $join_ctk(ctk_l_reduced, ctk_r_reduced)
     -- if expressionNoteIR = `(typeIR_l_reduced ctk_reduced)
@@ -23118,10 +23002,10 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
     -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
     -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced) = $reduce_serenum_binary(typedExpressionIR_l, typedExpressionIR_r, $compat_shift)
-    -- if typeIR_l_reduced = $typeof_expression(typedExpressionIR_l_reduced)
-    -- if ctk_l_reduced = $ctkof_expression(typedExpressionIR_l_reduced)
-    -- if typeIR_r_reduced = $typeof_expression(typedExpressionIR_r_reduced)
-    -- if ctk_r_reduced = $ctkof_expression(typedExpressionIR_r_reduced)
+    -- if typeIR_l_reduced = $type_of_expression(typedExpressionIR_l_reduced)
+    -- if ctk_l_reduced = $ctk_of_expression(typedExpressionIR_l_reduced)
+    -- if typeIR_r_reduced = $type_of_expression(typedExpressionIR_r_reduced)
+    -- if ctk_r_reduced = $ctk_of_expression(typedExpressionIR_r_reduced)
     -- if ctk_r_reduced = LCTK
     -- if $is_arbitrary_int_typeIR(typeIR_r_reduced) \/ $is_fixed_int_typeIR(typeIR_r_reduced)
     -- if ctk_reduced = $join_ctk(ctk_l_reduced, ctk_r_reduced)
@@ -23159,16 +23043,16 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Let <code>?(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>l_reduced</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>l_reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>r_reduced</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>r_reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>If <code>$is_fixed_bit_typeIR(typeIR<sub>r_reduced</sub>)</code>:</p>
@@ -23244,9 +23128,9 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
     -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
     -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast) = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
-    -- if typeIR_cast = $typeof_expression(typedExpressionIR_l_cast)
-    -- if ctk_l_cast = $ctkof_expression(typedExpressionIR_l_cast)
-    -- if ctk_r_cast = $ctkof_expression(typedExpressionIR_r_cast)
+    -- if typeIR_cast = $type_of_expression(typedExpressionIR_l_cast)
+    -- if ctk_l_cast = $ctk_of_expression(typedExpressionIR_l_cast)
+    -- if ctk_r_cast = $ctk_of_expression(typedExpressionIR_r_cast)
     -- if $is_equalable_typeIR(typeIR_cast)
     -- if ctk_cast = $join_ctk(ctk_l_cast, ctk_r_cast)
     -- if expressionNoteIR = `(BOOL ctk_cast)</pre>
@@ -23283,13 +23167,13 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Let <code>?(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>cast</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>l_cast</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>cast</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_cast</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>l_cast</sub></code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>l_cast</sub></code></a>.</p>
+<p>Let <code>ctk<sub>l_cast</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>l_cast</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>r_cast</sub></code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>r_cast</sub></code></a>.</p>
+<p>Let <code>ctk<sub>r_cast</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>r_cast</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>$is_equalable_typeIR(typeIR<sub>cast</sub>)</code>.</p>
@@ -23323,9 +23207,9 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
     -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast) = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
     -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced) = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_compare)
-    -- if typeIR_reduced = $typeof_expression(typedExpressionIR_l_reduced)
-    -- if ctk_l_reduced = $ctkof_expression(typedExpressionIR_l_reduced)
-    -- if ctk_r_reduced = $ctkof_expression(typedExpressionIR_r_reduced)
+    -- if typeIR_reduced = $type_of_expression(typedExpressionIR_l_reduced)
+    -- if ctk_l_reduced = $ctk_of_expression(typedExpressionIR_l_reduced)
+    -- if ctk_r_reduced = $ctk_of_expression(typedExpressionIR_r_reduced)
     -- if ctk_reduced = $join_ctk(ctk_l_reduced, ctk_r_reduced)
     -- if expressionNoteIR = `(BOOL ctk_reduced)</pre>
 </div>
@@ -23370,13 +23254,13 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Let <code>?(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>reduced</sub></code> be <code>$join_ctk(ctk<sub>l_reduced</sub>, ctk<sub>r_reduced</sub>)</code>.</p>
@@ -23407,9 +23291,9 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
     -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast) = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
     -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced) = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_bitwise)
-    -- if typeIR_reduced = $typeof_expression(typedExpressionIR_l_reduced)
-    -- if ctk_l_reduced = $ctkof_expression(typedExpressionIR_l_reduced)
-    -- if ctk_r_reduced = $ctkof_expression(typedExpressionIR_r_reduced)
+    -- if typeIR_reduced = $type_of_expression(typedExpressionIR_l_reduced)
+    -- if ctk_l_reduced = $ctk_of_expression(typedExpressionIR_l_reduced)
+    -- if ctk_r_reduced = $ctk_of_expression(typedExpressionIR_r_reduced)
     -- if ctk_reduced = $join_ctk(ctk_l_reduced, ctk_r_reduced)
     -- if expressionNoteIR = `(typeIR_reduced ctk_reduced)</pre>
 </div>
@@ -23454,13 +23338,13 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Let <code>?(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>reduced</sub></code> be <code>$join_ctk(ctk<sub>l_reduced</sub>, ctk<sub>r_reduced</sub>)</code>.</p>
@@ -23489,10 +23373,10 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
     -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
     -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced) = $reduce_serenum_binary(typedExpressionIR_l, typedExpressionIR_r, $compat_concat)
-    -- if typeIR_l_reduced = $typeof_expression(typedExpressionIR_l_reduced)
-    -- if ctk_l_reduced = $ctkof_expression(typedExpressionIR_l_reduced)
-    -- if typeIR_r_reduced = $typeof_expression(typedExpressionIR_r_reduced)
-    -- if ctk_r_reduced = $ctkof_expression(typedExpressionIR_r_reduced)
+    -- if typeIR_l_reduced = $type_of_expression(typedExpressionIR_l_reduced)
+    -- if ctk_l_reduced = $ctk_of_expression(typedExpressionIR_l_reduced)
+    -- if typeIR_r_reduced = $type_of_expression(typedExpressionIR_r_reduced)
+    -- if ctk_r_reduced = $ctk_of_expression(typedExpressionIR_r_reduced)
     -- if typeIR_reduced = $result_concat(typeIR_l_reduced, typeIR_r_reduced)
     -- if ctk_reduced = $join_ctk(ctk_l_reduced, ctk_r_reduced)
     -- if expressionNoteIR = `(typeIR_reduced ctk_reduced)</pre>
@@ -23526,16 +23410,16 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Let <code>?(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>l_reduced</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>l_reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>r_reduced</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>r_reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sup>?</sup></code> be <code>$result_concat(typeIR<sub>l_reduced</sub>, typeIR<sub>r_reduced</sub>)</code>.</p>
@@ -23575,9 +23459,9 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
     -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast) = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
     -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced) = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_logical)
-    -- if typeIR_reduced = $typeof_expression(typedExpressionIR_l_reduced)
-    -- if ctk_l_reduced = $ctkof_expression(typedExpressionIR_l_reduced)
-    -- if ctk_r_reduced = $ctkof_expression(typedExpressionIR_r_reduced)
+    -- if typeIR_reduced = $type_of_expression(typedExpressionIR_l_reduced)
+    -- if ctk_l_reduced = $ctk_of_expression(typedExpressionIR_l_reduced)
+    -- if ctk_r_reduced = $ctk_of_expression(typedExpressionIR_r_reduced)
     -- if ctk_reduced = $join_ctk(ctk_l_reduced, ctk_r_reduced)
     -- if expressionNoteIR = `(typeIR_reduced ctk_reduced)</pre>
 </div>
@@ -23622,13 +23506,13 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Let <code>?(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>reduced</sub></code> be <code>$join_ctk(ctk<sub>l_reduced</sub>, ctk<sub>r_reduced</sub>)</code>.</p>
@@ -23650,109 +23534,28 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>rule Eval_static/binaryExpressionIR/plus:
-   p TC |- (typedExpressionIR_l + typedExpressionIR_r) # `(_ _) ~&gt; $bin_plus(value_l, value_r)
+<pre>rule Eval_static/binaryExpressionIR/non-short-circuit:
+   p TC |- (typedExpressionIR_l binop typedExpressionIR_r) # `(_ _) ~&gt; $bin_op(binop, value_l, value_r)
+    -- if ~(binop &lt;- [&amp;&amp;, ||])
     -- Eval_static: p TC |- typedExpressionIR_l ~&gt; value_l
     -- Eval_static: p TC |- typedExpressionIR_r ~&gt; value_r
 
-rule Eval_static/binaryExpressionIR/satplus:
-   p TC |- (typedExpressionIR_l |+| typedExpressionIR_r) # `(_ _) ~&gt; $bin_satplus(value_l, value_r)
-    -- Eval_static: p TC |- typedExpressionIR_l ~&gt; value_l
+rule Eval_static/binaryExpressionIR/land-false:
+   p TC |- (typedExpressionIR_l &amp;&amp; typedExpressionIR_r) # `(_ _) ~&gt; (B false)
+    -- Eval_static: p TC |- typedExpressionIR_l ~&gt; (B false)
+
+rule Eval_static/binaryExpressionIR/land-true:
+   p TC |- (typedExpressionIR_l &amp;&amp; typedExpressionIR_r) # `(_ _) ~&gt; value_r
+    -- Eval_static: p TC |- typedExpressionIR_l ~&gt; (B true)
     -- Eval_static: p TC |- typedExpressionIR_r ~&gt; value_r
 
-rule Eval_static/binaryExpressionIR/minus:
-   p TC |- (typedExpressionIR_l - typedExpressionIR_r) # `(_ _) ~&gt; $bin_minus(value_l, value_r)
-    -- Eval_static: p TC |- typedExpressionIR_l ~&gt; value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~&gt; value_r
+rule Eval_static/binaryExpressionIR/lor-true:
+   p TC |- (typedExpressionIR_l || typedExpressionIR_r) # `(_ _) ~&gt; (B true)
+    -- Eval_static: p TC |- typedExpressionIR_l ~&gt; (B true)
 
-rule Eval_static/binaryExpressionIR/satminus:
-   p TC |- (typedExpressionIR_l |-| typedExpressionIR_r) # `(_ _) ~&gt; $bin_satminus(value_l, value_r)
-    -- Eval_static: p TC |- typedExpressionIR_l ~&gt; value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~&gt; value_r
-
-rule Eval_static/binaryExpressionIR/mul:
-   p TC |- (typedExpressionIR_l * typedExpressionIR_r) # `(_ _) ~&gt; $bin_mul(value_l, value_r)
-    -- Eval_static: p TC |- typedExpressionIR_l ~&gt; value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~&gt; value_r
-
-rule Eval_static/binaryExpressionIR/div:
-   p TC |- (typedExpressionIR_l / typedExpressionIR_r) # `(_ _) ~&gt; $bin_div(value_l, value_r)
-    -- Eval_static: p TC |- typedExpressionIR_l ~&gt; value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~&gt; value_r
-
-rule Eval_static/binaryExpressionIR/mod:
-   p TC |- (typedExpressionIR_l % typedExpressionIR_r) # `(_ _) ~&gt; $bin_mod(value_l, value_r)
-    -- Eval_static: p TC |- typedExpressionIR_l ~&gt; value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~&gt; value_r
-
-rule Eval_static/binaryExpressionIR/shl:
-   p TC |- (typedExpressionIR_l &lt;&lt; typedExpressionIR_r) # `(_ _) ~&gt; $bin_shl(value_l, value_r)
-    -- Eval_static: p TC |- typedExpressionIR_l ~&gt; value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~&gt; value_r
-
-rule Eval_static/binaryExpressionIR/shr:
-   p TC |- (typedExpressionIR_l &gt;&gt; typedExpressionIR_r) # `(_ _) ~&gt; $bin_shr(value_l, value_r)
-    -- Eval_static: p TC |- typedExpressionIR_l ~&gt; value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~&gt; value_r
-
-rule Eval_static/binaryExpressionIR/le:
-   p TC |- (typedExpressionIR_l &lt;= typedExpressionIR_r) # `(_ _) ~&gt; (B $bin_le(value_l, value_r))
-    -- Eval_static: p TC |- typedExpressionIR_l ~&gt; value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~&gt; value_r
-
-rule Eval_static/binaryExpressionIR/ge:
-   p TC |- (typedExpressionIR_l &gt;= typedExpressionIR_r) # `(_ _) ~&gt; (B $bin_ge(value_l, value_r))
-    -- Eval_static: p TC |- typedExpressionIR_l ~&gt; value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~&gt; value_r
-
-rule Eval_static/binaryExpressionIR/lt:
-   p TC |- (typedExpressionIR_l &lt; typedExpressionIR_r) # `(_ _) ~&gt; (B $bin_lt(value_l, value_r))
-    -- Eval_static: p TC |- typedExpressionIR_l ~&gt; value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~&gt; value_r
-
-rule Eval_static/binaryExpressionIR/gt:
-   p TC |- (typedExpressionIR_l &gt; typedExpressionIR_r) # `(_ _) ~&gt; (B $bin_gt(value_l, value_r))
-    -- Eval_static: p TC |- typedExpressionIR_l ~&gt; value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~&gt; value_r
-
-rule Eval_static/binaryExpressionIR/eq:
-   p TC |- (typedExpressionIR_l == typedExpressionIR_r) # `(_ _) ~&gt; (B $bin_eq(value_l, value_r))
-    -- Eval_static: p TC |- typedExpressionIR_l ~&gt; value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~&gt; value_r
-
-rule Eval_static/binaryExpressionIR/ne:
-   p TC |- (typedExpressionIR_l != typedExpressionIR_r) # `(_ _) ~&gt; (B $bin_ne(value_l, value_r))
-    -- Eval_static: p TC |- typedExpressionIR_l ~&gt; value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~&gt; value_r
-
-rule Eval_static/binaryExpressionIR/band:
-   p TC |- (typedExpressionIR_l &amp; typedExpressionIR_r) # `(_ _) ~&gt; $bin_band(value_l, value_r)
-    -- Eval_static: p TC |- typedExpressionIR_l ~&gt; value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~&gt; value_r
-
-rule Eval_static/binaryExpressionIR/bxor:
-   p TC |- (typedExpressionIR_l ^ typedExpressionIR_r) # `(_ _) ~&gt; $bin_bxor(value_l, value_r)
-    -- Eval_static: p TC |- typedExpressionIR_l ~&gt; value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~&gt; value_r
-
-rule Eval_static/binaryExpressionIR/bor:
-   p TC |- (typedExpressionIR_l | typedExpressionIR_r) # `(_ _) ~&gt; $bin_bor(value_l, value_r)
-    -- Eval_static: p TC |- typedExpressionIR_l ~&gt; value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~&gt; value_r
-
-rule Eval_static/binaryExpressionIR/concat:
-   p TC |- (typedExpressionIR_l ++ typedExpressionIR_r) # `(_ _) ~&gt; $bin_concat(value_l, value_r)
-    -- Eval_static: p TC |- typedExpressionIR_l ~&gt; value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~&gt; value_r
-
-rule Eval_static/binaryExpressionIR/land:
-   p TC |- (typedExpressionIR_l &amp;&amp; typedExpressionIR_r) # `(_ _) ~&gt; $bin_land(value_l, value_r)
-    -- Eval_static: p TC |- typedExpressionIR_l ~&gt; value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~&gt; value_r
-
-rule Eval_static/binaryExpressionIR/lor:
-   p TC |- (typedExpressionIR_l || typedExpressionIR_r) # `(_ _) ~&gt; $bin_lor(value_l, value_r)
-    -- Eval_static: p TC |- typedExpressionIR_l ~&gt; value_l
+rule Eval_static/binaryExpressionIR/lor-false:
+   p TC |- (typedExpressionIR_l || typedExpressionIR_r) # `(_ _) ~&gt; value_r
+    -- Eval_static: p TC |- typedExpressionIR_l ~&gt; (B false)
     -- Eval_static: p TC |- typedExpressionIR_r ~&gt; value_r</pre>
 </div>
 </div>
@@ -23764,14 +23567,13 @@ rule Eval_static/binaryExpressionIR/lor:
 </div>
 </div>
 <div class="paragraph">
-<p>The local compile-time evaluation of <code>typedExpressionIR<sub>l</sub> binop typedExpressionIR<sub>r</sub> # ( _ _ )</code>, under cursor <code>p</code> and typing context <code>TC</code>:</p>
+<p>The local compile-time evaluation of <code>typedExpressionIR<sub>l</sub> binop' typedExpressionIR<sub>r</sub> # ( _ _ )</code>, under cursor <code>p</code> and typing context <code>TC</code>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>If <code>binop</code> matches pattern <code>+</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
+<p>Check that <code>binop'</code> is not in <code>[&amp;&amp;, ||]</code>.</p>
+</li>
 <li>
 <p>Let <code>value<sub>l</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>l</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
@@ -23779,327 +23581,70 @@ rule Eval_static/binaryExpressionIR/lor:
 <p>Let <code>value<sub>r</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Result in <code>$bin_plus(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
+<p>Result in <code><a href="#bin_op">value<sub>l</sub> binop' value<sub>r</sub></a></code>.</p>
+</li>
+<li>
+<p>If <code>binop'</code> matches pattern <code>&amp;&amp;</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>value</code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>l</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
+</li>
+<li>
+<p>If <code>value</code> is equal to <code>B false</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Result in <code>B false</code>.</p>
 </li>
 </ol>
 </div>
 </li>
 <li>
-<p>Else if <code>binop</code> matches pattern <code>|+|</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>value<sub>l</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>l</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
+<p>If <code>value</code> is equal to <code>B true</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
 <li>
 <p>Let <code>value<sub>r</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Result in <code>$bin_satplus(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
+<p>Result in <code>value<sub>r</sub></code>.</p>
+</li>
+</ol>
+</div>
 </li>
 </ol>
 </div>
 </li>
 <li>
-<p>Else if <code>binop</code> matches pattern <code>-</code>:</p>
+<p>Else if <code>binop'</code> matches pattern <code>||</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>value<sub>l</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>l</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
+<p>Let <code>value</code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>l</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>value<sub>r</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
+<p>If <code>value</code> is equal to <code>B true</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
 <li>
-<p>Result in <code>$bin_minus(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
+<p>Result in <code>B true</code>.</p>
 </li>
 </ol>
 </div>
 </li>
 <li>
-<p>Else if <code>binop</code> matches pattern <code>|-|</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>value<sub>l</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>l</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
+<p>If <code>value</code> is equal to <code>B false</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
 <li>
 <p>Let <code>value<sub>r</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Result in <code>$bin_satminus(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
+<p>Result in <code>value<sub>r</sub></code>.</p>
 </li>
 </ol>
 </div>
-</li>
-<li>
-<p>Else if <code>binop</code> matches pattern <code>*</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>value<sub>l</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>l</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Let <code>value<sub>r</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Result in <code>$bin_mul(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>binop</code> matches pattern <code>/</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>value<sub>l</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>l</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Let <code>value<sub>r</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Result in <code>$bin_div(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>binop</code> matches pattern <code>%</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>value<sub>l</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>l</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Let <code>value<sub>r</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Result in <code>$bin_mod(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>binop</code> matches pattern <code>&lt;&lt;</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>value<sub>l</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>l</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Let <code>value<sub>r</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Result in <code>$bin_shl(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>binop</code> matches pattern <code>&gt;&gt;</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>value<sub>l</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>l</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Let <code>value<sub>r</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Result in <code>$bin_shr(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>binop</code> matches pattern <code>&#8656;</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>value<sub>l</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>l</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Let <code>value<sub>r</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Result in <code>B $bin_le(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>binop</code> matches pattern <code>&gt;=</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>value<sub>l</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>l</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Let <code>value<sub>r</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Result in <code>B $bin_ge(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>binop</code> matches pattern <code>&lt;</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>value<sub>l</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>l</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Let <code>value<sub>r</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Result in <code>B $bin_lt(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>binop</code> matches pattern <code>&gt;</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>value<sub>l</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>l</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Let <code>value<sub>r</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Result in <code>B $bin_gt(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>binop</code> matches pattern <code>==</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>value<sub>l</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>l</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Let <code>value<sub>r</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Result in <code>B $bin_eq(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>binop</code> matches pattern <code>!=</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>value<sub>l</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>l</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Let <code>value<sub>r</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Result in <code>B $bin_ne(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>binop</code> matches pattern <code>&amp;</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>value<sub>l</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>l</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Let <code>value<sub>r</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Result in <code>$bin_band(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>binop</code> matches pattern <code>^</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>value<sub>l</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>l</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Let <code>value<sub>r</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Result in <code>$bin_bxor(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>binop</code> matches pattern <code>|</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>value<sub>l</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>l</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Let <code>value<sub>r</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Result in <code>$bin_bor(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>binop</code> matches pattern <code>++</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>value<sub>l</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>l</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Let <code>value<sub>r</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Result in <code>$bin_concat(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>binop</code> matches pattern <code>&amp;&amp;</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>value<sub>l</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>l</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Let <code>value<sub>r</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Result in <code>$bin_land(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>binop</code> matches pattern <code>||</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>value<sub>l</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>l</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Let <code>value<sub>r</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Result in <code>$bin_lor(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
 </li>
 </ol>
 </div>
@@ -24114,109 +23659,28 @@ rule Eval_static/binaryExpressionIR/lor:
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>rule Expr_inst/binaryExpressionIR/plus:
-   p IC STO_0 |- (typedExpressionIR_l + typedExpressionIR_r) # _ ==&gt; STO_2 $bin_plus(value_l, value_r)
+<pre>rule Expr_inst/binaryExpressionIR/non-short-circuit:
+   p IC STO_0 |- (typedExpressionIR_l binop typedExpressionIR_r) # `(_ _) ==&gt; STO_2 $bin_op(binop, value_l, value_r)
+    -- if ~(binop &lt;- [&amp;&amp;, ||])
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==&gt; STO_1 value_l
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==&gt; STO_2 value_r
 
-rule Expr_inst/binaryExpressionIR/satplus:
-   p IC STO_0 |- (typedExpressionIR_l |+| typedExpressionIR_r) # _ ==&gt; STO_2 $bin_satplus(value_l, value_r)
-    -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==&gt; STO_1 value_l
+rule Expr_inst/binaryExpressionIR/land-false:
+   p IC STO_0 |- (typedExpressionIR_l &amp;&amp; typedExpressionIR_r) # `(_ _) ==&gt; STO_1 (B false)
+    -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==&gt; STO_1 (B false)
+
+rule Expr_inst/binaryExpressionIR/land-true:
+   p IC STO_0 |- (typedExpressionIR_l &amp;&amp; typedExpressionIR_r) # `(_ _) ==&gt; STO_2 value_r
+    -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==&gt; STO_1 (B true)
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==&gt; STO_2 value_r
 
-rule Expr_inst/binaryExpressionIR/minus:
-   p IC STO_0 |- (typedExpressionIR_l - typedExpressionIR_r) # _ ==&gt; STO_2 $bin_minus(value_l, value_r)
-    -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==&gt; STO_1 value_l
-    -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==&gt; STO_2 value_r
+rule Expr_inst/binaryExpressionIR/lor-true:
+   p IC STO_0 |- (typedExpressionIR_l || typedExpressionIR_r) # `(_ _) ==&gt; STO_1 (B true)
+    -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==&gt; STO_1 (B true)
 
-rule Expr_inst/binaryExpressionIR/satminus:
-   p IC STO_0 |- (typedExpressionIR_l |-| typedExpressionIR_r) # _ ==&gt; STO_2 $bin_satminus(value_l, value_r)
-    -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==&gt; STO_1 value_l
-    -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==&gt; STO_2 value_r
-
-rule Expr_inst/binaryExpressionIR/mul:
-   p IC STO_0 |- (typedExpressionIR_l * typedExpressionIR_r) # _ ==&gt; STO_2 $bin_mul(value_l, value_r)
-    -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==&gt; STO_1 value_l
-    -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==&gt; STO_2 value_r
-
-rule Expr_inst/binaryExpressionIR/div:
-   p IC STO_0 |- (typedExpressionIR_l / typedExpressionIR_r) # _ ==&gt; STO_2 $bin_div(value_l, value_r)
-    -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==&gt; STO_1 value_l
-    -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==&gt; STO_2 value_r
-
-rule Expr_inst/binaryExpressionIR/mod:
-   p IC STO_0 |- (typedExpressionIR_l % typedExpressionIR_r) # _ ==&gt; STO_2 $bin_mod(value_l, value_r)
-    -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==&gt; STO_1 value_l
-    -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==&gt; STO_2 value_r
-
-rule Expr_inst/binaryExpressionIR/shl:
-   p IC STO_0 |- (typedExpressionIR_l &lt;&lt; typedExpressionIR_r) # _ ==&gt; STO_2 $bin_shl(value_l, value_r)
-    -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==&gt; STO_1 value_l
-    -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==&gt; STO_2 value_r
-
-rule Expr_inst/binaryExpressionIR/shr:
-   p IC STO_0 |- (typedExpressionIR_l &gt;&gt; typedExpressionIR_r) # _ ==&gt; STO_2 $bin_shr(value_l, value_r)
-    -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==&gt; STO_1 value_l
-    -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==&gt; STO_2 value_r
-
-rule Expr_inst/binaryExpressionIR/le:
-   p IC STO_0 |- (typedExpressionIR_l &lt;= typedExpressionIR_r) # _ ==&gt; STO_2 (B $bin_le(value_l, value_r))
-    -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==&gt; STO_1 value_l
-    -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==&gt; STO_2 value_r
-
-rule Expr_inst/binaryExpressionIR/ge:
-   p IC STO_0 |- (typedExpressionIR_l &gt;= typedExpressionIR_r) # _ ==&gt; STO_2 (B $bin_ge(value_l, value_r))
-    -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==&gt; STO_1 value_l
-    -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==&gt; STO_2 value_r
-
-rule Expr_inst/binaryExpressionIR/lt:
-   p IC STO_0 |- (typedExpressionIR_l &lt; typedExpressionIR_r) # _ ==&gt; STO_2 (B $bin_lt(value_l, value_r))
-    -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==&gt; STO_1 value_l
-    -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==&gt; STO_2 value_r
-
-rule Expr_inst/binaryExpressionIR/gt:
-   p IC STO_0 |- (typedExpressionIR_l &gt; typedExpressionIR_r) # _ ==&gt; STO_2 (B $bin_gt(value_l, value_r))
-    -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==&gt; STO_1 value_l
-    -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==&gt; STO_2 value_r
-
-rule Expr_inst/binaryExpressionIR/eq:
-   p IC STO_0 |- (typedExpressionIR_l == typedExpressionIR_r) # _ ==&gt; STO_2 (B $bin_eq(value_l, value_r))
-    -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==&gt; STO_1 value_l
-    -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==&gt; STO_2 value_r
-
-rule Expr_inst/binaryExpressionIR/ne:
-   p IC STO_0 |- (typedExpressionIR_l != typedExpressionIR_r) # _ ==&gt; STO_2 (B $bin_ne(value_l, value_r))
-    -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==&gt; STO_1 value_l
-    -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==&gt; STO_2 value_r
-
-rule Expr_inst/binaryExpressionIR/band:
-   p IC STO_0 |- (typedExpressionIR_l &amp; typedExpressionIR_r) # _ ==&gt; STO_2 $bin_band(value_l, value_r)
-    -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==&gt; STO_1 value_l
-    -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==&gt; STO_2 value_r
-
-rule Expr_inst/binaryExpressionIR/bxor:
-   p IC STO_0 |- (typedExpressionIR_l ^ typedExpressionIR_r) # _ ==&gt; STO_2 $bin_bxor(value_l, value_r)
-    -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==&gt; STO_1 value_l
-    -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==&gt; STO_2 value_r
-
-rule Expr_inst/binaryExpressionIR/bor:
-   p IC STO_0 |- (typedExpressionIR_l | typedExpressionIR_r) # _ ==&gt; STO_2 $bin_bor(value_l, value_r)
-    -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==&gt; STO_1 value_l
-    -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==&gt; STO_2 value_r
-
-rule Expr_inst/binaryExpressionIR/concat:
-   p IC STO_0 |- (typedExpressionIR_l ++ typedExpressionIR_r) # _ ==&gt; STO_2 $bin_concat(value_l, value_r)
-    -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==&gt; STO_1 value_l
-    -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==&gt; STO_2 value_r
-
-rule Expr_inst/binaryExpressionIR/land:
-   p IC STO_0 |- (typedExpressionIR_l &amp;&amp; typedExpressionIR_r) # _ ==&gt; STO_2 $bin_land(value_l, value_r)
-    -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==&gt; STO_1 value_l
-    -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==&gt; STO_2 value_r
-
-rule Expr_inst/binaryExpressionIR/lor:
-   p IC STO_0 |- (typedExpressionIR_l || typedExpressionIR_r) # _ ==&gt; STO_2 $bin_lor(value_l, value_r)
-    -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==&gt; STO_1 value_l
+rule Expr_inst/binaryExpressionIR/lor-false:
+   p IC STO_0 |- (typedExpressionIR_l || typedExpressionIR_r) # `(_ _) ==&gt; STO_2 value_r
+    -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==&gt; STO_1 (B false)
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==&gt; STO_2 value_r</pre>
 </div>
 </div>
@@ -24228,14 +23692,13 @@ rule Expr_inst/binaryExpressionIR/lor:
 </div>
 </div>
 <div class="paragraph">
-<p><code>p IC STO' |- typedExpressionIR<sub>l</sub> binop typedExpressionIR<sub>r</sub> # _ =&#8658; % %</code></p>
+<p><code>p IC STO' |- typedExpressionIR<sub>l</sub> binop' typedExpressionIR<sub>r</sub> # ( _ _ ) =&#8658; % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>If <code>binop</code> matches pattern <code>+</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
+<p>Check that <code>binop'</code> is not in <code>[&amp;&amp;, ||]</code>.</p>
+</li>
 <li>
 <p><a href="#Expr_inst"><code>p IC STO' |- typedExpressionIR<sub>l</sub> =&#8658; STO<sub>1</sub> value<sub>l</sub></code></a>.</p>
 </li>
@@ -24243,327 +23706,70 @@ rule Expr_inst/binaryExpressionIR/lor:
 <p><a href="#Expr_inst"><code>p IC STO<sub>1</sub> |- typedExpressionIR<sub>r</sub> =&#8658; STO<sub>2</sub> value<sub>r</sub></code></a>.</p>
 </li>
 <li>
-<p>Result in <code>STO<sub>2</sub></code> and <code>$bin_plus(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
+<p>Result in <code>STO<sub>2</sub></code> and <code><a href="#bin_op">value<sub>l</sub> binop' value<sub>r</sub></a></code>.</p>
+</li>
+<li>
+<p>If <code>binop'</code> matches pattern <code>&amp;&amp;</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p><a href="#Expr_inst"><code>p IC STO' |- typedExpressionIR<sub>l</sub> =&#8658; STO<sub>1</sub> value</code></a>.</p>
+</li>
+<li>
+<p>If <code>value</code> is equal to <code>B false</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Result in <code>STO<sub>1</sub></code> and <code>B false</code>.</p>
 </li>
 </ol>
 </div>
 </li>
 <li>
-<p>Else if <code>binop</code> matches pattern <code>|+|</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p><a href="#Expr_inst"><code>p IC STO' |- typedExpressionIR<sub>l</sub> =&#8658; STO<sub>1</sub> value<sub>l</sub></code></a>.</p>
-</li>
+<p>If <code>value</code> is equal to <code>B true</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
 <li>
 <p><a href="#Expr_inst"><code>p IC STO<sub>1</sub> |- typedExpressionIR<sub>r</sub> =&#8658; STO<sub>2</sub> value<sub>r</sub></code></a>.</p>
 </li>
 <li>
-<p>Result in <code>STO<sub>2</sub></code> and <code>$bin_satplus(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
+<p>Result in <code>STO<sub>2</sub></code> and <code>value<sub>r</sub></code>.</p>
+</li>
+</ol>
+</div>
 </li>
 </ol>
 </div>
 </li>
 <li>
-<p>Else if <code>binop</code> matches pattern <code>-</code>:</p>
+<p>Else if <code>binop'</code> matches pattern <code>||</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p><a href="#Expr_inst"><code>p IC STO' |- typedExpressionIR<sub>l</sub> =&#8658; STO<sub>1</sub> value<sub>l</sub></code></a>.</p>
+<p><a href="#Expr_inst"><code>p IC STO' |- typedExpressionIR<sub>l</sub> =&#8658; STO<sub>1</sub> value</code></a>.</p>
 </li>
 <li>
-<p><a href="#Expr_inst"><code>p IC STO<sub>1</sub> |- typedExpressionIR<sub>r</sub> =&#8658; STO<sub>2</sub> value<sub>r</sub></code></a>.</p>
-</li>
+<p>If <code>value</code> is equal to <code>B true</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
 <li>
-<p>Result in <code>STO<sub>2</sub></code> and <code>$bin_minus(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
+<p>Result in <code>STO<sub>1</sub></code> and <code>B true</code>.</p>
 </li>
 </ol>
 </div>
 </li>
 <li>
-<p>Else if <code>binop</code> matches pattern <code>|-|</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p><a href="#Expr_inst"><code>p IC STO' |- typedExpressionIR<sub>l</sub> =&#8658; STO<sub>1</sub> value<sub>l</sub></code></a>.</p>
-</li>
+<p>If <code>value</code> is equal to <code>B false</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
 <li>
 <p><a href="#Expr_inst"><code>p IC STO<sub>1</sub> |- typedExpressionIR<sub>r</sub> =&#8658; STO<sub>2</sub> value<sub>r</sub></code></a>.</p>
 </li>
 <li>
-<p>Result in <code>STO<sub>2</sub></code> and <code>$bin_satminus(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
+<p>Result in <code>STO<sub>2</sub></code> and <code>value<sub>r</sub></code>.</p>
 </li>
 </ol>
 </div>
-</li>
-<li>
-<p>Else if <code>binop</code> matches pattern <code>*</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p><a href="#Expr_inst"><code>p IC STO' |- typedExpressionIR<sub>l</sub> =&#8658; STO<sub>1</sub> value<sub>l</sub></code></a>.</p>
-</li>
-<li>
-<p><a href="#Expr_inst"><code>p IC STO<sub>1</sub> |- typedExpressionIR<sub>r</sub> =&#8658; STO<sub>2</sub> value<sub>r</sub></code></a>.</p>
-</li>
-<li>
-<p>Result in <code>STO<sub>2</sub></code> and <code>$bin_mul(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>binop</code> matches pattern <code>/</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p><a href="#Expr_inst"><code>p IC STO' |- typedExpressionIR<sub>l</sub> =&#8658; STO<sub>1</sub> value<sub>l</sub></code></a>.</p>
-</li>
-<li>
-<p><a href="#Expr_inst"><code>p IC STO<sub>1</sub> |- typedExpressionIR<sub>r</sub> =&#8658; STO<sub>2</sub> value<sub>r</sub></code></a>.</p>
-</li>
-<li>
-<p>Result in <code>STO<sub>2</sub></code> and <code>$bin_div(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>binop</code> matches pattern <code>%</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p><a href="#Expr_inst"><code>p IC STO' |- typedExpressionIR<sub>l</sub> =&#8658; STO<sub>1</sub> value<sub>l</sub></code></a>.</p>
-</li>
-<li>
-<p><a href="#Expr_inst"><code>p IC STO<sub>1</sub> |- typedExpressionIR<sub>r</sub> =&#8658; STO<sub>2</sub> value<sub>r</sub></code></a>.</p>
-</li>
-<li>
-<p>Result in <code>STO<sub>2</sub></code> and <code>$bin_mod(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>binop</code> matches pattern <code>&lt;&lt;</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p><a href="#Expr_inst"><code>p IC STO' |- typedExpressionIR<sub>l</sub> =&#8658; STO<sub>1</sub> value<sub>l</sub></code></a>.</p>
-</li>
-<li>
-<p><a href="#Expr_inst"><code>p IC STO<sub>1</sub> |- typedExpressionIR<sub>r</sub> =&#8658; STO<sub>2</sub> value<sub>r</sub></code></a>.</p>
-</li>
-<li>
-<p>Result in <code>STO<sub>2</sub></code> and <code>$bin_shl(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>binop</code> matches pattern <code>&gt;&gt;</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p><a href="#Expr_inst"><code>p IC STO' |- typedExpressionIR<sub>l</sub> =&#8658; STO<sub>1</sub> value<sub>l</sub></code></a>.</p>
-</li>
-<li>
-<p><a href="#Expr_inst"><code>p IC STO<sub>1</sub> |- typedExpressionIR<sub>r</sub> =&#8658; STO<sub>2</sub> value<sub>r</sub></code></a>.</p>
-</li>
-<li>
-<p>Result in <code>STO<sub>2</sub></code> and <code>$bin_shr(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>binop</code> matches pattern <code>&#8656;</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p><a href="#Expr_inst"><code>p IC STO' |- typedExpressionIR<sub>l</sub> =&#8658; STO<sub>1</sub> value<sub>l</sub></code></a>.</p>
-</li>
-<li>
-<p><a href="#Expr_inst"><code>p IC STO<sub>1</sub> |- typedExpressionIR<sub>r</sub> =&#8658; STO<sub>2</sub> value<sub>r</sub></code></a>.</p>
-</li>
-<li>
-<p>Result in <code>STO<sub>2</sub></code> and <code>B $bin_le(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>binop</code> matches pattern <code>&gt;=</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p><a href="#Expr_inst"><code>p IC STO' |- typedExpressionIR<sub>l</sub> =&#8658; STO<sub>1</sub> value<sub>l</sub></code></a>.</p>
-</li>
-<li>
-<p><a href="#Expr_inst"><code>p IC STO<sub>1</sub> |- typedExpressionIR<sub>r</sub> =&#8658; STO<sub>2</sub> value<sub>r</sub></code></a>.</p>
-</li>
-<li>
-<p>Result in <code>STO<sub>2</sub></code> and <code>B $bin_ge(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>binop</code> matches pattern <code>&lt;</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p><a href="#Expr_inst"><code>p IC STO' |- typedExpressionIR<sub>l</sub> =&#8658; STO<sub>1</sub> value<sub>l</sub></code></a>.</p>
-</li>
-<li>
-<p><a href="#Expr_inst"><code>p IC STO<sub>1</sub> |- typedExpressionIR<sub>r</sub> =&#8658; STO<sub>2</sub> value<sub>r</sub></code></a>.</p>
-</li>
-<li>
-<p>Result in <code>STO<sub>2</sub></code> and <code>B $bin_lt(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>binop</code> matches pattern <code>&gt;</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p><a href="#Expr_inst"><code>p IC STO' |- typedExpressionIR<sub>l</sub> =&#8658; STO<sub>1</sub> value<sub>l</sub></code></a>.</p>
-</li>
-<li>
-<p><a href="#Expr_inst"><code>p IC STO<sub>1</sub> |- typedExpressionIR<sub>r</sub> =&#8658; STO<sub>2</sub> value<sub>r</sub></code></a>.</p>
-</li>
-<li>
-<p>Result in <code>STO<sub>2</sub></code> and <code>B $bin_gt(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>binop</code> matches pattern <code>==</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p><a href="#Expr_inst"><code>p IC STO' |- typedExpressionIR<sub>l</sub> =&#8658; STO<sub>1</sub> value<sub>l</sub></code></a>.</p>
-</li>
-<li>
-<p><a href="#Expr_inst"><code>p IC STO<sub>1</sub> |- typedExpressionIR<sub>r</sub> =&#8658; STO<sub>2</sub> value<sub>r</sub></code></a>.</p>
-</li>
-<li>
-<p>Result in <code>STO<sub>2</sub></code> and <code>B $bin_eq(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>binop</code> matches pattern <code>!=</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p><a href="#Expr_inst"><code>p IC STO' |- typedExpressionIR<sub>l</sub> =&#8658; STO<sub>1</sub> value<sub>l</sub></code></a>.</p>
-</li>
-<li>
-<p><a href="#Expr_inst"><code>p IC STO<sub>1</sub> |- typedExpressionIR<sub>r</sub> =&#8658; STO<sub>2</sub> value<sub>r</sub></code></a>.</p>
-</li>
-<li>
-<p>Result in <code>STO<sub>2</sub></code> and <code>B $bin_ne(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>binop</code> matches pattern <code>&amp;</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p><a href="#Expr_inst"><code>p IC STO' |- typedExpressionIR<sub>l</sub> =&#8658; STO<sub>1</sub> value<sub>l</sub></code></a>.</p>
-</li>
-<li>
-<p><a href="#Expr_inst"><code>p IC STO<sub>1</sub> |- typedExpressionIR<sub>r</sub> =&#8658; STO<sub>2</sub> value<sub>r</sub></code></a>.</p>
-</li>
-<li>
-<p>Result in <code>STO<sub>2</sub></code> and <code>$bin_band(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>binop</code> matches pattern <code>^</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p><a href="#Expr_inst"><code>p IC STO' |- typedExpressionIR<sub>l</sub> =&#8658; STO<sub>1</sub> value<sub>l</sub></code></a>.</p>
-</li>
-<li>
-<p><a href="#Expr_inst"><code>p IC STO<sub>1</sub> |- typedExpressionIR<sub>r</sub> =&#8658; STO<sub>2</sub> value<sub>r</sub></code></a>.</p>
-</li>
-<li>
-<p>Result in <code>STO<sub>2</sub></code> and <code>$bin_bxor(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>binop</code> matches pattern <code>|</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p><a href="#Expr_inst"><code>p IC STO' |- typedExpressionIR<sub>l</sub> =&#8658; STO<sub>1</sub> value<sub>l</sub></code></a>.</p>
-</li>
-<li>
-<p><a href="#Expr_inst"><code>p IC STO<sub>1</sub> |- typedExpressionIR<sub>r</sub> =&#8658; STO<sub>2</sub> value<sub>r</sub></code></a>.</p>
-</li>
-<li>
-<p>Result in <code>STO<sub>2</sub></code> and <code>$bin_bor(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>binop</code> matches pattern <code>++</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p><a href="#Expr_inst"><code>p IC STO' |- typedExpressionIR<sub>l</sub> =&#8658; STO<sub>1</sub> value<sub>l</sub></code></a>.</p>
-</li>
-<li>
-<p><a href="#Expr_inst"><code>p IC STO<sub>1</sub> |- typedExpressionIR<sub>r</sub> =&#8658; STO<sub>2</sub> value<sub>r</sub></code></a>.</p>
-</li>
-<li>
-<p>Result in <code>STO<sub>2</sub></code> and <code>$bin_concat(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>binop</code> matches pattern <code>&amp;&amp;</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p><a href="#Expr_inst"><code>p IC STO' |- typedExpressionIR<sub>l</sub> =&#8658; STO<sub>1</sub> value<sub>l</sub></code></a>.</p>
-</li>
-<li>
-<p><a href="#Expr_inst"><code>p IC STO<sub>1</sub> |- typedExpressionIR<sub>r</sub> =&#8658; STO<sub>2</sub> value<sub>r</sub></code></a>.</p>
-</li>
-<li>
-<p>Result in <code>STO<sub>2</sub></code> and <code>$bin_land(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>binop</code> matches pattern <code>||</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p><a href="#Expr_inst"><code>p IC STO' |- typedExpressionIR<sub>l</sub> =&#8658; STO<sub>1</sub> value<sub>l</sub></code></a>.</p>
-</li>
-<li>
-<p><a href="#Expr_inst"><code>p IC STO<sub>1</sub> |- typedExpressionIR<sub>r</sub> =&#8658; STO<sub>2</sub> value<sub>r</sub></code></a>.</p>
-</li>
-<li>
-<p>Result in <code>STO<sub>2</sub></code> and <code>$bin_lor(value<sub>l</sub>, value<sub>r</sub>)</code>.</p>
 </li>
 </ol>
 </div>
@@ -24599,9 +23805,9 @@ ternaryExpressionIR
     -- Expr_ok: p TC |- expression_true : typedExpressionIR_true
     -- Expr_ok: p TC |- expression_false : typedExpressionIR_false
     -- if (typedExpressionIR_true_cast, typedExpressionIR_false_cast) = $coerce_binary(typedExpressionIR_true, typedExpressionIR_false)
-    -- if typeIR_cast = $typeof_expression(typedExpressionIR_true_cast)
-    -- if ctk_true_cast = $ctkof_expression(typedExpressionIR_true_cast)
-    -- if ctk_false_cast = $ctkof_expression(typedExpressionIR_false_cast)
+    -- if typeIR_cast = $type_of_expression(typedExpressionIR_true_cast)
+    -- if ctk_true_cast = $ctk_of_expression(typedExpressionIR_true_cast)
+    -- if ctk_false_cast = $ctk_of_expression(typedExpressionIR_false_cast)
     -- if $is_arbitrary_int_typeIR(typeIR_cast) =&gt; (ctk_cond =/= DYN)
     -- if ctk = $joins_ctk([ctk_cond, ctk_true_cast, ctk_false_cast])
     -- if expressionNoteIR = `(typeIR_cast ctk)</pre>
@@ -24650,13 +23856,13 @@ ternaryExpressionIR
 <p>Let <code>?(typedExpressionIR<sub>true_cast</sub>, typedExpressionIR<sub>false_cast</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>cast</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>true_cast</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>cast</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>true_cast</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>true_cast</sub></code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>true_cast</sub></code></a>.</p>
+<p>Let <code>ctk<sub>true_cast</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>true_cast</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>false_cast</sub></code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>false_cast</sub></code></a>.</p>
+<p>Let <code>ctk<sub>false_cast</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>false_cast</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>$is_arbitrary_int_typeIR(typeIR<sub>cast</sub>) &#8658; ctk<sub>cond</sub> =/= DYN</code>.</p>
@@ -24823,8 +24029,8 @@ castExpressionIR
     -- Type_ok: p TC |- type_t : typeIR_t # eps
     -- Type_wf: $bound(p, TC) |- typeIR_t
     -- Expr_ok: p TC |- expression : typedExpressionIR
-    -- if typeIR = $typeof_expression(typedExpressionIR)
-    -- if ctk = $ctkof_expression(typedExpressionIR)
+    -- if typeIR = $type_of_expression(typedExpressionIR)
+    -- if ctk = $ctk_of_expression(typedExpressionIR)
     -- Sub_expl: typeIR &lt;: typeIR_t
     -- if expressionNoteIR = `(typeIR_t ctk)</pre>
 </div>
@@ -24854,10 +24060,10 @@ castExpressionIR
 <p>Let <code>typedExpressionIR</code> be the result of <a href="#Expr_ok">typing <code>expression</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR</code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR</code></a>.</p>
+<p>Let <code>typeIR</code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR</code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk</code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR</code></a>.</p>
+<p>Let <code>ctk</code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR</code></a>.</p>
 </li>
 <li>
 <p>Check that <a href="#Sub_expl"><code>typeIR</code> can be explicitly cast to <code>typeIR<sub>t</sub></code></a>.</p>
@@ -25083,8 +24289,8 @@ dataExpressionIR
     -- if ~(... &lt;- expression_e*)
     -- if expression_e* = $flatten_expressionList(expressionList)
     -- (Expr_ok: p TC |- expression_e : typedExpressionIR_e)*
-    -- (if (typeIR_e = $typeof_expression(typedExpressionIR_e)))*
-    -- (if (ctk_e = $ctkof_expression(typedExpressionIR_e)))*
+    -- (if (typeIR_e = $type_of_expression(typedExpressionIR_e)))*
+    -- (if (ctk_e = $ctk_of_expression(typedExpressionIR_e)))*
     -- if typeIR = SEQ `&lt;typeIR_e*&gt;
     -- if ctk = $joins_ctk(ctk_e*)
     -- if expressionNoteIR = `(typeIR ctk)
@@ -25097,8 +24303,8 @@ rule Expr_ok/dataExpression-sequence/default:
     -- if expression_e_h* = $rev_&lt;expression&gt;(expression_e_h_rev*)
     -- if ~(... &lt;- expression_e_h*)
     -- (Expr_ok: p TC |- expression_e_h : typedExpressionIR_e_h)*
-    -- (if (typeIR_e_h = $typeof_expression(typedExpressionIR_e_h)))*
-    -- (if (ctk_e_h = $ctkof_expression(typedExpressionIR_e_h)))*
+    -- (if (typeIR_e_h = $type_of_expression(typedExpressionIR_e_h)))*
+    -- (if (ctk_e_h = $ctk_of_expression(typedExpressionIR_e_h)))*
     -- if typeIR = SEQ `&lt;typeIR_e_h* , ...&gt;
     -- if ctk = $joins_ctk(ctk_e_h*)
     -- if expressionNoteIR = `(typeIR ctk)</pre>
@@ -25150,7 +24356,7 @@ rule Expr_ok/dataExpression-sequence/default:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>typeIR<sub>e</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>e</sub></code></a></p>
+<p>Let <code>typeIR<sub>e</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>e</sub></code></a></p>
 </li>
 </ul>
 </div>
@@ -25167,7 +24373,7 @@ rule Expr_ok/dataExpression-sequence/default:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>ctk<sub>e</sub></code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>e</sub></code></a></p>
+<p>Let <code>ctk<sub>e</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>e</sub></code></a></p>
 </li>
 </ul>
 </div>
@@ -25241,7 +24447,7 @@ rule Expr_ok/dataExpression-sequence/default:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>typeIR<sub>e_h</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>e_h</sub></code></a></p>
+<p>Let <code>typeIR<sub>e_h</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>e_h</sub></code></a></p>
 </li>
 </ul>
 </div>
@@ -25258,7 +24464,7 @@ rule Expr_ok/dataExpression-sequence/default:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>ctk<sub>e_h</sub></code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>e_h</sub></code></a></p>
+<p>Let <code>ctk<sub>e_h</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>e_h</sub></code></a></p>
 </li>
 </ul>
 </div>
@@ -25452,8 +24658,8 @@ rule Expr_inst/dataExpressionIR-sequence/default:
    p TC |- `{(name_f = expression_f) _} : (RECORD `{(nameIR_f = typedExpressionIR_f)}) # expressionNoteIR
     -- if nameIR_f = $name(name_f)
     -- Expr_ok: p TC |- expression_f : typedExpressionIR_f
-    -- if typeIR_f = $typeof_expression(typedExpressionIR_f)
-    -- if ctk_f = $ctkof_expression(typedExpressionIR_f)
+    -- if typeIR_f = $type_of_expression(typedExpressionIR_f)
+    -- if ctk_f = $ctk_of_expression(typedExpressionIR_f)
     -- if typeIR = RECORD `{(typeIR_f nameIR_f ;)}
     -- if expressionNoteIR = `(typeIR ctk_f)
 
@@ -25461,8 +24667,8 @@ rule Expr_ok/dataExpression-record/single-default:
    p TC |- `{(name_f = expression_f , ...) _} : (RECORD `{(nameIR_f = typedExpressionIR_f) , ...}) # expressionNoteIR
     -- if nameIR_f = $name(name_f)
     -- Expr_ok: p TC |- expression_f : typedExpressionIR_f
-    -- if typeIR_f = $typeof_expression(typedExpressionIR_f)
-    -- if ctk_f = $ctkof_expression(typedExpressionIR_f)
+    -- if typeIR_f = $type_of_expression(typedExpressionIR_f)
+    -- if ctk_f = $ctk_of_expression(typedExpressionIR_f)
     -- if typeIR = RECORD `{(typeIR_f nameIR_f ;) , ...}
     -- if expressionNoteIR = `(typeIR ctk_f)
 
@@ -25473,8 +24679,8 @@ rule Expr_ok/dataExpression-record/multiple-non-default:
     -- (if (nameIR_f = $name(name_f)))*
     -- if expression_f* = expression_f_h :: expression_f_t*
     -- (Expr_ok: p TC |- expression_f : typedExpressionIR_f)*
-    -- (if (typeIR_f = $typeof_expression(typedExpressionIR_f)))*
-    -- (if (ctk_f = $ctkof_expression(typedExpressionIR_f)))*
+    -- (if (typeIR_f = $type_of_expression(typedExpressionIR_f)))*
+    -- (if (ctk_f = $ctk_of_expression(typedExpressionIR_f)))*
     -- if typeIR = RECORD `{(typeIR_f nameIR_f ;)*}
     -- if ctk = $joins_ctk(ctk_f*)
     -- if expressionNoteIR = `(typeIR ctk)
@@ -25486,8 +24692,8 @@ rule Expr_ok/dataExpression-record/multiple-default:
     -- (if (nameIR_f = $name(name_f)))*
     -- if expression_f* = expression_f_h :: expression_f_t*
     -- (Expr_ok: p TC |- expression_f : typedExpressionIR_f)*
-    -- (if (typeIR_f = $typeof_expression(typedExpressionIR_f)))*
-    -- (if (ctk_f = $ctkof_expression(typedExpressionIR_f)))*
+    -- (if (typeIR_f = $type_of_expression(typedExpressionIR_f)))*
+    -- (if (ctk_f = $ctk_of_expression(typedExpressionIR_f)))*
     -- if typeIR = RECORD `{(typeIR_f nameIR_f ;)* , ...}
     -- if ctk = $joins_ctk(ctk_f*)
     -- if expressionNoteIR = `(typeIR ctk)</pre>
@@ -25516,10 +24722,10 @@ rule Expr_ok/dataExpression-record/multiple-default:
 <p>Let <code>typedExpressionIR<sub>f</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>f</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>f</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>f</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>f</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>f</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>f</sub></code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>f</sub></code></a>.</p>
+<p>Let <code>ctk<sub>f</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>f</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR</code> be <code>RECORD { [typeIR<sub>f</sub> nameIR<sub>f</sub> ;] }</code>.</p>
@@ -25544,10 +24750,10 @@ rule Expr_ok/dataExpression-record/multiple-default:
 <p>Let <code>typedExpressionIR<sub>f</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>f</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>f</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>f</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>f</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>f</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>f</sub></code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>f</sub></code></a>.</p>
+<p>Let <code>ctk<sub>f</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>f</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR</code> be <code>RECORD { [typeIR<sub>f</sub> nameIR<sub>f</sub> ;] , &#8230;&#8203; }</code>.</p>
@@ -25615,7 +24821,7 @@ rule Expr_ok/dataExpression-record/multiple-default:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>typeIR<sub>f</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>f</sub></code></a></p>
+<p>Let <code>typeIR<sub>f</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>f</sub></code></a></p>
 </li>
 </ul>
 </div>
@@ -25632,7 +24838,7 @@ rule Expr_ok/dataExpression-record/multiple-default:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>ctk<sub>f</sub></code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>f</sub></code></a></p>
+<p>Let <code>ctk<sub>f</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>f</sub></code></a></p>
 </li>
 </ul>
 </div>
@@ -25711,7 +24917,7 @@ rule Expr_ok/dataExpression-record/multiple-default:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>typeIR<sub>f</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>f</sub></code></a></p>
+<p>Let <code>typeIR<sub>f</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>f</sub></code></a></p>
 </li>
 </ul>
 </div>
@@ -25728,7 +24934,7 @@ rule Expr_ok/dataExpression-record/multiple-default:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>ctk<sub>f</sub></code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>f</sub></code></a></p>
+<p>Let <code>ctk<sub>f</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>f</sub></code></a></p>
 </li>
 </ul>
 </div>
@@ -26353,7 +25559,7 @@ rule Expr_inst/memberAccessExpressionIR-type/serenum:
    p TC |- expression_base . member : (typedExpressionIR_base . "size") # expressionNoteIR
     -- if "size" = $name(member)
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
-    -- if typeIR_base = $typeof_expression(typedExpressionIR_base)
+    -- if typeIR_base = $type_of_expression(typedExpressionIR_base)
     -- if typeIR `[n_size] = $canon(typeIR_base)
     -- if expressionNoteIR = `((BIT `&lt;32&gt;) LCTK)
 
@@ -26362,7 +25568,7 @@ rule Expr_ok/memberAccessExpression-expression/headerstack-lastIndex:
     -- if "lastIndex" = $name(member)
     -- if (p = BLOCK /\ $is_parser_blockKind(TC.BLOCK.KIND)) \/ (p = LOCAL /\ $is_parser_state_localKind(TC.LOCAL.KIND))
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
-    -- if typeIR_base = $typeof_expression(typedExpressionIR_base)
+    -- if typeIR_base = $type_of_expression(typedExpressionIR_base)
     -- if typeIR `[n_size] = $canon(typeIR_base)
     -- if expressionNoteIR = `((BIT `&lt;32&gt;) DYN)
 
@@ -26371,7 +25577,7 @@ rule Expr_ok/memberAccessExpression-expression/headerstack-last:
     -- if "last" = $name(member)
     -- if (p = BLOCK /\ $is_parser_blockKind(TC.BLOCK.KIND)) \/ (p = LOCAL /\ $is_parser_state_localKind(TC.LOCAL.KIND))
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
-    -- if typeIR_base = $typeof_expression(typedExpressionIR_base)
+    -- if typeIR_base = $type_of_expression(typedExpressionIR_base)
     -- if typeIR `[n_size] = $canon(typeIR_base)
     -- if expressionNoteIR = `(typeIR DYN)
 
@@ -26380,14 +25586,14 @@ rule Expr_ok/memberAccessExpression-expression/headerstack-next:
     -- if "next" = $name(member)
     -- if (p = BLOCK /\ $is_parser_blockKind(TC.BLOCK.KIND)) \/ (p = LOCAL /\ $is_parser_state_localKind(TC.LOCAL.KIND))
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
-    -- if typeIR_base = $typeof_expression(typedExpressionIR_base)
+    -- if typeIR_base = $type_of_expression(typedExpressionIR_base)
     -- if typeIR `[n_size] = $canon(typeIR_base)
     -- if expressionNoteIR = `(typeIR DYN)
 
 rule Expr_ok/memberAccessExpression-expression/struct:
    p TC |- expression_base . member : (typedExpressionIR_base . nameIR) # expressionNoteIR
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
-    -- if typeIR_base = $typeof_expression(typedExpressionIR_base)
+    -- if typeIR_base = $type_of_expression(typedExpressionIR_base)
     -- if STRUCT _ `{(typeIR_f nameIR_f ;)*} = $canon(typeIR_base)
     -- if nameIR = $name(member)
     -- if typeIR = $assoc_&lt;nameIR, typeIR&gt;(nameIR, (nameIR_f, typeIR_f)*)
@@ -26396,7 +25602,7 @@ rule Expr_ok/memberAccessExpression-expression/struct:
 rule Expr_ok/memberAccessExpression-expression/header:
    p TC |- expression_base . member : (typedExpressionIR_base . nameIR) # expressionNoteIR
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
-    -- if typeIR_base = $typeof_expression(typedExpressionIR_base)
+    -- if typeIR_base = $type_of_expression(typedExpressionIR_base)
     -- if HEADER _ `{(typeIR_f nameIR_f ;)*} = $canon(typeIR_base)
     -- if nameIR = $name(member)
     -- if typeIR = $assoc_&lt;nameIR, typeIR&gt;(nameIR, (nameIR_f, typeIR_f)*)
@@ -26405,7 +25611,7 @@ rule Expr_ok/memberAccessExpression-expression/header:
 rule Expr_ok/memberAccessExpression-expression/headerunion:
    p TC |- expression_base . member : (typedExpressionIR_base . nameIR) # expressionNoteIR
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
-    -- if typeIR_base = $typeof_expression(typedExpressionIR_base)
+    -- if typeIR_base = $type_of_expression(typedExpressionIR_base)
     -- if HEADER_UNION _ `{(typeIR_f nameIR_f ;)*} = $canon(typeIR_base)
     -- if nameIR = $name(member)
     -- if typeIR = $assoc_&lt;nameIR, typeIR&gt;(nameIR, (nameIR_f, typeIR_f)*)
@@ -26414,7 +25620,7 @@ rule Expr_ok/memberAccessExpression-expression/headerunion:
 rule Expr_ok/memberAccessExpression-expression/tablestruct:
    p TC |- expression_base . member : (typedExpressionIR_base . nameIR) # expressionNoteIR
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
-    -- if typeIR_base = $typeof_expression(typedExpressionIR_base)
+    -- if typeIR_base = $type_of_expression(typedExpressionIR_base)
     -- if TABLE_STRUCT _ `{(typeIR_f nameIR_f ;)*} = $canon(typeIR_base)
     -- if nameIR = $name(member)
     -- if typeIR = $assoc_&lt;nameIR, typeIR&gt;(nameIR, (nameIR_f, typeIR_f)*)
@@ -26441,7 +25647,7 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typedExpressionIR<sub>base</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>base</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR'</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
@@ -26473,7 +25679,7 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typedExpressionIR<sub>base</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>base</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR'</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
@@ -26501,7 +25707,7 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typedExpressionIR<sub>base</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>base</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR'</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
@@ -26536,7 +25742,7 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typedExpressionIR<sub>base</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>base</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR'</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
@@ -26564,7 +25770,7 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typedExpressionIR<sub>base</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>base</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR'</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
@@ -26599,7 +25805,7 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typedExpressionIR<sub>base</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>base</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR'</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
@@ -26627,7 +25833,7 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typedExpressionIR<sub>base</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>base</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR'</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
@@ -26654,7 +25860,7 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typedExpressionIR<sub>base</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>base</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR'</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
@@ -26832,7 +26038,7 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 </div>
 </div>
 <div class="paragraph">
-<p><code>p IC STO' |- typedExpressionIR<sub>base</sub> . "size" # ( typeIR<sub>base</sub> _ ) =&#8658; % %</code></p>
+<p><code>p IC STO' |- typedExpressionIR<sub>base</sub> . "size" # ( _ _ ) =&#8658; % %</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -26840,10 +26046,10 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>_ # ( typeIR _ )</code> be <code>typedExpressionIR<sub>base</sub></code>.</p>
 </li>
 <li>
-<p>Check that <code>typeIR</code> is equal to <code>typeIR<sub>base</sub></code>.</p>
+<p>Check that <code>typeIR</code> is equal to <code>_</code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR'</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
+<p>Let <code>typeIR'</code> be <a href="#canon">the canonicalized form of <code>_</code></a>.</p>
 </li>
 <li>
 <p>Check that <code>typeIR'</code> has type <code>headerStackTypeIR</code>.</p>
@@ -26883,10 +26089,10 @@ indexAccessExpressionIR
    p TC |- expression_base `[expression_index] : (typedExpressionIR_base `[typedExpressionIR_index_reduced]) # expressionNoteIR
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
     -- Expr_ok: p TC |- expression_index : typedExpressionIR_index
-    -- if typeIR_base = $typeof_expression(typedExpressionIR_base)
-    -- if ctk_base = $ctkof_expression(typedExpressionIR_base)
-    -- if typeIR_index = $typeof_expression(typedExpressionIR_index)
-    -- if ctk_index = $ctkof_expression(typedExpressionIR_index)
+    -- if typeIR_base = $type_of_expression(typedExpressionIR_base)
+    -- if ctk_base = $ctk_of_expression(typedExpressionIR_base)
+    -- if typeIR_index = $type_of_expression(typedExpressionIR_index)
+    -- if ctk_index = $ctk_of_expression(typedExpressionIR_index)
     -- if typedExpressionIR_index_reduced = $reduce_serenum_unary(typedExpressionIR_index, $compat_array_index)
     -- if TUPLE `&lt;typeIR_e*&gt; = $canon(typeIR_base)
     -- if ctk_index = LCTK
@@ -26899,10 +26105,10 @@ rule Expr_ok/indexAccessExpression/headerstack-lctk:
    p TC |- expression_base `[expression_index] : (typedExpressionIR_base `[typedExpressionIR_index_reduced]) # expressionNoteIR
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
     -- Expr_ok: p TC |- expression_index : typedExpressionIR_index
-    -- if typeIR_base = $typeof_expression(typedExpressionIR_base)
-    -- if ctk_base = $ctkof_expression(typedExpressionIR_base)
-    -- if typeIR_index = $typeof_expression(typedExpressionIR_index)
-    -- if ctk_index = $ctkof_expression(typedExpressionIR_index)
+    -- if typeIR_base = $type_of_expression(typedExpressionIR_base)
+    -- if ctk_base = $ctk_of_expression(typedExpressionIR_base)
+    -- if typeIR_index = $type_of_expression(typedExpressionIR_index)
+    -- if ctk_index = $ctk_of_expression(typedExpressionIR_index)
     -- if typedExpressionIR_index_reduced = $reduce_serenum_unary(typedExpressionIR_index, $compat_array_index)
     -- if typeIR `[n_size] = $canon(typeIR_base)
     -- if ctk_index = LCTK
@@ -26915,10 +26121,10 @@ rule Expr_ok/indexAccessExpression/headerstack-non-lctk:
    p TC |- expression_base `[expression_index] : (typedExpressionIR_base `[typedExpressionIR_index_reduced]) # expressionNoteIR
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
     -- Expr_ok: p TC |- expression_index : typedExpressionIR_index
-    -- if typeIR_base = $typeof_expression(typedExpressionIR_base)
-    -- if ctk_base = $ctkof_expression(typedExpressionIR_base)
-    -- if typeIR_index = $typeof_expression(typedExpressionIR_index)
-    -- if ctk_index = $ctkof_expression(typedExpressionIR_index)
+    -- if typeIR_base = $type_of_expression(typedExpressionIR_base)
+    -- if ctk_base = $ctk_of_expression(typedExpressionIR_base)
+    -- if typeIR_index = $type_of_expression(typedExpressionIR_index)
+    -- if ctk_index = $ctk_of_expression(typedExpressionIR_index)
     -- if typedExpressionIR_index_reduced = $reduce_serenum_unary(typedExpressionIR_index, $compat_array_index)
     -- if typeIR `[n_size] = $canon(typeIR_base)
     -- if ctk_index =/= LCTK
@@ -26944,16 +26150,16 @@ rule Expr_ok/indexAccessExpression/headerstack-non-lctk:
 <p>Let <code>typedExpressionIR<sub>index</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>index</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>base</sub></code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
+<p>Let <code>ctk<sub>base</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>index</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>index</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>index</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>index</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>index</sub></code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>index</sub></code></a>.</p>
+<p>Let <code>ctk<sub>index</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>index</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typedExpressionIR<sup>?</sup></code> be <code>$reduce_serenum_unary(typedExpressionIR<sub>index</sub>, $compat_array_index)</code>.</p>
@@ -27076,14 +26282,14 @@ sliceAccessExpressionIR
     -- Expr_ok: p TC |- expression_hi : typedExpressionIR_hi
     -- Expr_ok: p TC |- expression_lo : typedExpressionIR_lo
     -- if typedExpressionIR_base_reduced = $reduce_serenum_unary(typedExpressionIR_base, $compat_bitslice_base)
-    -- if typeIR_base_reduced = $typeof_expression(typedExpressionIR_base_reduced)
-    -- if ctk_base_reduced = $ctkof_expression(typedExpressionIR_base_reduced)
+    -- if typeIR_base_reduced = $type_of_expression(typedExpressionIR_base_reduced)
+    -- if ctk_base_reduced = $ctk_of_expression(typedExpressionIR_base_reduced)
     -- if typedExpressionIR_hi_reduced = $reduce_serenum_unary(typedExpressionIR_hi, $compat_bitslice_index)
     -- if typedExpressionIR_lo_reduced = $reduce_serenum_unary(typedExpressionIR_lo, $compat_bitslice_index)
-    -- if typeIR_hi_reduced = $typeof_expression(typedExpressionIR_hi_reduced)
-    -- if ctk_hi_reduced = $ctkof_expression(typedExpressionIR_hi_reduced)
-    -- if typeIR_lo_reduced = $typeof_expression(typedExpressionIR_lo_reduced)
-    -- if ctk_lo_reduced = $ctkof_expression(typedExpressionIR_lo_reduced)
+    -- if typeIR_hi_reduced = $type_of_expression(typedExpressionIR_hi_reduced)
+    -- if ctk_hi_reduced = $ctk_of_expression(typedExpressionIR_hi_reduced)
+    -- if typeIR_lo_reduced = $type_of_expression(typedExpressionIR_lo_reduced)
+    -- if ctk_lo_reduced = $ctk_of_expression(typedExpressionIR_lo_reduced)
     -- if ctk_hi_reduced = LCTK
     -- Eval_static: p TC |- typedExpressionIR_hi_reduced ~&gt; value_hi
     -- if n_hi = $to_number(value_hi)
@@ -27127,10 +26333,10 @@ sliceAccessExpressionIR
 <p>Let <code>?typedExpressionIR<sub>base_reduced</sub></code> be <code>typedExpressionIR<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base_reduced</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>base_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>base_reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>base_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>base_reduced</sub></code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>base_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>base_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>base_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typedExpressionIR'<sup>?</sup></code> be <code>$reduce_serenum_unary(typedExpressionIR<sub>hi</sub>, $compat_bitslice_index)</code>.</p>
@@ -27151,16 +26357,16 @@ sliceAccessExpressionIR
 <p>Let <code>?typedExpressionIR<sub>lo_reduced</sub></code> be <code>typedExpressionIR''<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>hi_reduced</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>hi_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>hi_reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>hi_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>hi_reduced</sub></code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>hi_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>hi_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>hi_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>lo_reduced</sub></code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR<sub>lo_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>lo_reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>lo_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>lo_reduced</sub></code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>lo_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>lo_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>lo_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>ctk<sub>hi_reduced</sub></code> matches pattern <code>LCTK</code>.</p>
@@ -27650,13 +26856,13 @@ rule Expr_inst/callExpressionIR-builtin-size/type-poly:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>_ # ( typeIR<sub>base</sub> _ )</code> be <code>typedExpressionIR<sub>base</sub></code>.</p>
+<p>Let <code>_ # ( _ _ )</code> be <code>typedExpressionIR<sub>base</sub></code>.</p>
 </li>
 <li>
 <p>Check that <code>nameIR</code> is in <code>["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]</code>.</p>
 </li>
 <li>
-<p>Result in <code>STO'</code> and <code>$sizeof(typeIR<sub>base</sub>, nameIR)</code>.</p>
+<p>Result in <code>STO'</code> and <code>$sizeof(_, nameIR)</code>.</p>
 </li>
 </ol>
 </div>
@@ -27675,20 +26881,20 @@ rule Expr_inst/callExpressionIR-builtin-size/type-poly:
 <p>Let <code>?typeDefIR</code> be <code>typeDefIR'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>If let <code>typeIR<sub>base</sub></code> be <code>typeDefIR</code>:</p>
+<p>If let <code>_</code> be <code>typeDefIR</code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
 <p>Check that <code>nameIR</code> is in <code>["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]</code>.</p>
 </li>
 <li>
-<p>Result in <code>STO'</code> and <code>$sizeof(typeIR<sub>base</sub>, nameIR)</code>.</p>
+<p>Result in <code>STO'</code> and <code>$sizeof(_, nameIR)</code>.</p>
 </li>
 </ol>
 </div>
 </li>
 <li>
-<p>Else if let <code>typeIR<sub>base</sub> &lt; tid<sup>*</sup> , tid'<sup>*</sup> &gt;</code> be <code>typeDefIR</code>:</p>
+<p>Else if let <code>_ &lt; tid<sup>*</sup> , tid'<sup>*</sup> &gt;</code> be <code>typeDefIR</code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
@@ -27701,7 +26907,7 @@ rule Expr_inst/callExpressionIR-builtin-size/type-poly:
 <p>Check that <code>nameIR</code> is in <code>["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]</code>.</p>
 </li>
 <li>
-<p>Result in <code>STO'</code> and <code>$sizeof(typeIR<sub>base</sub>, nameIR)</code>.</p>
+<p>Result in <code>STO'</code> and <code>$sizeof(_, nameIR)</code>.</p>
 </li>
 </ol>
 </div>
@@ -28115,8 +27321,8 @@ parenthesizedExpressionIR
 <pre>rule Expr_ok/parenthesizedExpression:
    p TC |- `(expression) : (`(typedExpressionIR)) # expressionNoteIR
     -- Expr_ok: p TC |- expression : typedExpressionIR
-    -- if typeIR = $typeof_expression(typedExpressionIR)
-    -- if ctk = $ctkof_expression(typedExpressionIR)
+    -- if typeIR = $type_of_expression(typedExpressionIR)
+    -- if ctk = $ctk_of_expression(typedExpressionIR)
     -- if expressionNoteIR = `(typeIR ctk)</pre>
 </div>
 </div>
@@ -28136,10 +27342,10 @@ parenthesizedExpressionIR
 <p>Let <code>typedExpressionIR</code> be the result of <a href="#Expr_ok">typing <code>expression</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR</code> be <a href="#typeof_expression">the type of  <code>typedExpressionIR</code></a>.</p>
+<p>Let <code>typeIR</code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR</code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk</code> be <a href="#ctkof_expression">the compile-time known-ness of  <code>typedExpressionIR</code></a>.</p>
+<p>Let <code>ctk</code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR</code></a>.</p>
 </li>
 <li>
 <p>Let <code>expressionNoteIR</code> be <code>( typeIR ctk )</code>.</p>

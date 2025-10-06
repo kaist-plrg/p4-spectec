@@ -5772,7 +5772,28 @@ def $bitacc
 
 
 
-;; ../../../../spec-concrete/3-numerics.watsup:24.1-24.28
+;; ../../../../spec-concrete/3-numerics.watsup:22.1-22.32
+def $un_op(unop, value)
+
+1. Case analysis on unop
+
+  1. Case (% matches pattern `~`)
+
+    1. Return $un_bnot(value)
+
+  2. Case (% matches pattern `!`)
+
+    1. Return $un_lnot(value)
+
+  3. Case (% matches pattern `+`)
+
+    1. Return $un_plus(value)
+
+  4. Case (% matches pattern `-`)
+
+    1. Return $un_minus(value)
+
+;; ../../../../spec-concrete/3-numerics.watsup:26.1-26.28
 def $un_bnot(value)
 
 1. If ((value has type numberLiteral)), then
@@ -5787,7 +5808,7 @@ def $un_bnot(value)
 
     3. Return ((w w i') as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:31.1-31.28
+;; ../../../../spec-concrete/3-numerics.watsup:35.1-35.28
 def $un_lnot(value)
 
 1. If ((value has type primitiveValue)), then
@@ -5800,7 +5821,7 @@ def $un_lnot(value)
 
     2. Return ((b ~b) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:37.1-37.28
+;; ../../../../spec-concrete/3-numerics.watsup:43.1-43.28
 def $un_plus(value)
 
 1. If ((value has type numberLiteral)), then
@@ -5827,7 +5848,7 @@ def $un_plus(value)
 
       2. Return ((w s i) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:45.1-45.29
+;; ../../../../spec-concrete/3-numerics.watsup:53.1-53.29
 def $un_minus(value)
 
 1. If ((value has type numberLiteral)), then
@@ -5858,7 +5879,88 @@ def $un_minus(value)
 
       3. Return ((w s i') as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:59.1-59.36
+;; ../../../../spec-concrete/3-numerics.watsup:67.1-67.41
+def $bin_op(binop, value_l, value_r)
+
+1. Case analysis on binop
+
+  1. Case (% matches pattern `+`)
+
+    1. Return $bin_plus(value_l, value_r)
+
+  2. Case (% matches pattern `|+|`)
+
+    1. Return $bin_satplus(value_l, value_r)
+
+  3. Case (% matches pattern `-`)
+
+    1. Return $bin_minus(value_l, value_r)
+
+  4. Case (% matches pattern `|-|`)
+
+    1. Return $bin_satminus(value_l, value_r)
+
+  5. Case (% matches pattern `*`)
+
+    1. Return $bin_mul(value_l, value_r)
+
+  6. Case (% matches pattern `/`)
+
+    1. Return $bin_div(value_l, value_r)
+
+  7. Case (% matches pattern `%`)
+
+    1. Return $bin_mod(value_l, value_r)
+
+  8. Case (% matches pattern `<<`)
+
+    1. Return $bin_shl(value_l, value_r)
+
+  9. Case (% matches pattern `>>`)
+
+    1. Return $bin_shr(value_l, value_r)
+
+  10. Case (% matches pattern `<=`)
+
+    1. Return ((b $bin_le(value_l, value_r)) as value)
+
+  11. Case (% matches pattern `>=`)
+
+    1. Return ((b $bin_ge(value_l, value_r)) as value)
+
+  12. Case (% matches pattern `<`)
+
+    1. Return ((b $bin_lt(value_l, value_r)) as value)
+
+  13. Case (% matches pattern `>`)
+
+    1. Return ((b $bin_gt(value_l, value_r)) as value)
+
+  14. Case (% matches pattern `==`)
+
+    1. Return ((b $bin_eq(value_l, value_r)) as value)
+
+  15. Case (% matches pattern `!=`)
+
+    1. Return ((b $bin_ne(value_l, value_r)) as value)
+
+  16. Case (% matches pattern `&`)
+
+    1. Return $bin_band(value_l, value_r)
+
+  17. Case (% matches pattern `^`)
+
+    1. Return $bin_bxor(value_l, value_r)
+
+  18. Case (% matches pattern `|`)
+
+    1. Return $bin_bor(value_l, value_r)
+
+  19. Case (% matches pattern `++`)
+
+    1. Return $bin_concat(value_l, value_r)
+
+;; ../../../../spec-concrete/3-numerics.watsup:71.1-71.36
 def $bin_plus(value, value')
 
 1. If ((value has type numberLiteral)), then
@@ -5933,12 +6035,12 @@ def $bin_plus(value, value')
 
             8. Return ((w s i') as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:73.1-73.39
+;; ../../../../spec-concrete/3-numerics.watsup:87.1-87.39
 def $bin_satplus
 
 
 
-;; ../../../../spec-concrete/3-numerics.watsup:77.1-77.37
+;; ../../../../spec-concrete/3-numerics.watsup:93.1-93.37
 def $bin_minus(value, value')
 
 1. If ((value has type numberLiteral)), then
@@ -5987,12 +6089,12 @@ def $bin_minus(value, value')
 
             6. Return ((w w i') as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:91.1-91.40
+;; ../../../../spec-concrete/3-numerics.watsup:109.1-109.40
 def $bin_satminus
 
 
 
-;; ../../../../spec-concrete/3-numerics.watsup:95.1-95.35
+;; ../../../../spec-concrete/3-numerics.watsup:115.1-115.35
 def $bin_mul(value, value')
 
 1. If ((value has type numberLiteral)), then
@@ -6013,7 +6115,7 @@ def $bin_mul(value, value')
 
         2. Return ((d (i_l * i_r)) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:109.1-109.35
+;; ../../../../spec-concrete/3-numerics.watsup:131.1-131.35
 def $bin_div(value, value')
 
 1. If ((value has type numberLiteral)), then
@@ -6034,7 +6136,7 @@ def $bin_div(value, value')
 
         2. Return ((d (i_l / i_r)) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:115.1-115.35
+;; ../../../../spec-concrete/3-numerics.watsup:139.1-139.35
 def $bin_mod(value, value')
 
 1. If ((value has type numberLiteral)), then
@@ -6055,7 +6157,7 @@ def $bin_mod(value, value')
 
         2. Return ((d (i_l \ i_r)) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:121.1-121.35
+;; ../../../../spec-concrete/3-numerics.watsup:147.1-147.35
 def $bin_shl(value, value')
 
 1. If ((value has type numberLiteral)), then
@@ -6166,7 +6268,7 @@ def $bin_shl(value, value')
 
             5. Return ((w_l s i') as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:148.1-148.35
+;; ../../../../spec-concrete/3-numerics.watsup:176.1-176.35
 def $bin_shr(value, value')
 
 1. If ((value has type numberLiteral)), then
@@ -6317,7 +6419,7 @@ def $bin_shr(value, value')
 
               3. Return ((w_l s i'') as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:198.1-198.33
+;; ../../../../spec-concrete/3-numerics.watsup:228.1-228.33
 def $bin_le(value, value')
 
 1. If ((value has type numberLiteral)), then
@@ -6376,7 +6478,7 @@ def $bin_le(value, value')
 
             3. Return (i_l' <= i_r')
 
-;; ../../../../spec-concrete/3-numerics.watsup:208.1-208.33
+;; ../../../../spec-concrete/3-numerics.watsup:240.1-240.33
 def $bin_ge(value, value')
 
 1. If ((value has type numberLiteral)), then
@@ -6435,7 +6537,7 @@ def $bin_ge(value, value')
 
             3. Return (i_l' >= i_r')
 
-;; ../../../../spec-concrete/3-numerics.watsup:218.1-218.33
+;; ../../../../spec-concrete/3-numerics.watsup:252.1-252.33
 def $bin_lt(value, value')
 
 1. If ((value has type numberLiteral)), then
@@ -6494,7 +6596,7 @@ def $bin_lt(value, value')
 
             3. Return (i_l' < i_r')
 
-;; ../../../../spec-concrete/3-numerics.watsup:228.1-228.33
+;; ../../../../spec-concrete/3-numerics.watsup:264.1-264.33
 def $bin_gt(value, value')
 
 1. If ((value has type numberLiteral)), then
@@ -6553,7 +6655,7 @@ def $bin_gt(value, value')
 
             3. Return (i_l' > i_r')
 
-;; ../../../../spec-concrete/3-numerics.watsup:238.1-238.33
+;; ../../../../spec-concrete/3-numerics.watsup:276.1-276.33
 def $bin_eq(value, value')
 
 1. Case analysis on value
@@ -6738,7 +6840,7 @@ def $bin_eq(value, value')
 
         2. Return ((w_a = w_b) /\ (i_a = i_b))
 
-;; ../../../../spec-concrete/3-numerics.watsup:239.1-239.36
+;; ../../../../spec-concrete/3-numerics.watsup:277.1-277.36
 def $bin_eqs(value*{value <- value*}, value'*{value' <- value'*})
 
 1. Case analysis on value*{value <- value*}
@@ -6773,7 +6875,7 @@ def $bin_eqs(value*{value <- value*}, value'*{value' <- value'*})
 
       2. Return ($bin_eq(value_a_h, value_b_h) /\ $bin_eqs(value_a_t*{value_a_t <- value_a_t*}, value_b_t*{value_b_t <- value_b_t*}))
 
-;; ../../../../spec-concrete/3-numerics.watsup:240.1-240.55
+;; ../../../../spec-concrete/3-numerics.watsup:278.1-278.55
 def $bin_eqs_fields((value, id)*{(value, id) <- (value, id)*}, (value, id)'*{(value, id)' <- (value, id)'*})
 
 1. Case analysis on (value, id)*{(value, id) <- (value, id)*}
@@ -6808,12 +6910,12 @@ def $bin_eqs_fields((value, id)*{(value, id) <- (value, id)*}, (value, id)'*{(va
 
       2. Return (((id_a_h = id_b_h) /\ $bin_eq(value_a_h, value_b_h)) /\ $bin_eqs_fields((value_a_t, id_a_t)*{id_a_t <- id_a_t*, value_a_t <- value_a_t*}, (value_b_t, id_b_t)*{id_b_t <- id_b_t*, value_b_t <- value_b_t*}))
 
-;; ../../../../spec-concrete/3-numerics.watsup:297.1-297.33
+;; ../../../../spec-concrete/3-numerics.watsup:337.1-337.33
 def $bin_ne(value_l, value_r)
 
 1. Return ~$bin_eq(value_l, value_r)
 
-;; ../../../../spec-concrete/3-numerics.watsup:303.1-303.36
+;; ../../../../spec-concrete/3-numerics.watsup:345.1-345.36
 def $bin_band(value, value')
 
 1. If ((value has type numberLiteral)), then
@@ -6862,7 +6964,7 @@ def $bin_band(value, value')
 
             4. Return ((w s i') as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:315.1-315.36
+;; ../../../../spec-concrete/3-numerics.watsup:358.1-358.36
 def $bin_bxor(value, value')
 
 1. If ((value has type numberLiteral)), then
@@ -6911,7 +7013,7 @@ def $bin_bxor(value, value')
 
             4. Return ((w s i') as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:327.1-327.35
+;; ../../../../spec-concrete/3-numerics.watsup:371.1-371.35
 def $bin_bor(value, value')
 
 1. If ((value has type numberLiteral)), then
@@ -6960,7 +7062,7 @@ def $bin_bor(value, value')
 
             4. Return ((w s i') as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:339.1-339.38
+;; ../../../../spec-concrete/3-numerics.watsup:384.1-384.38
 def $bin_concat(value, value')
 
 1. If ((value has type numberLiteral)), then
@@ -7049,7 +7151,7 @@ def $bin_concat(value, value')
 
             7. Return ((w s i''') as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:367.1-367.36
+;; ../../../../spec-concrete/3-numerics.watsup:413.1-413.36
 def $bin_land(value, value')
 
 1. If ((value has type primitiveValue)), then
@@ -7070,7 +7172,7 @@ def $bin_land(value, value')
 
         2. Return ((b (b_l /\ b_r)) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:373.1-373.35
+;; ../../../../spec-concrete/3-numerics.watsup:419.1-419.35
 def $bin_lor(value, value')
 
 1. If ((value has type primitiveValue)), then
@@ -7091,7 +7193,7 @@ def $bin_lor(value, value')
 
         2. Return ((b (b_l \/ b_r)) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:381.1-381.36
+;; ../../../../spec-concrete/3-numerics.watsup:427.1-427.36
 def $cast_op(typeIR, value'')
 
 1. Case analysis on value''
@@ -7202,12 +7304,12 @@ def $cast_op(typeIR, value'')
 
         2. Return $cast_set_range(typeIR, value_l, value_u)
 
-;; ../../../../spec-concrete/3-numerics.watsup:383.1-383.29
+;; ../../../../spec-concrete/3-numerics.watsup:429.1-429.29
 def $default(typeIR)
 
 1. Return $default'($canon(typeIR))
 
-;; ../../../../spec-concrete/3-numerics.watsup:384.1-384.30
+;; ../../../../spec-concrete/3-numerics.watsup:430.1-430.30
 def $default'(typeIR'')
 
 1. Case analysis on typeIR''
@@ -7328,12 +7430,12 @@ def $default'(typeIR'')
 
           2. Return ((tid . id_zero # value_zero) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:388.1-388.37
+;; ../../../../spec-concrete/3-numerics.watsup:434.1-434.37
 def $cast_bool(typeIR, b)
 
 1. Return $cast_bool'($canon(typeIR), b)
 
-;; ../../../../spec-concrete/3-numerics.watsup:389.1-389.38
+;; ../../../../spec-concrete/3-numerics.watsup:435.1-435.38
 def $cast_bool'(typeIR'', b')
 
 1. Case analysis on typeIR''
@@ -7370,12 +7472,12 @@ def $cast_bool'(typeIR'', b')
 
     2. Return $cast_bool(typeIR, b')
 
-;; ../../../../spec-concrete/3-numerics.watsup:402.1-402.38
+;; ../../../../spec-concrete/3-numerics.watsup:448.1-448.38
 def $cast_arbint(typeIR, i)
 
 1. Return $cast_arbint'($canon(typeIR), i)
 
-;; ../../../../spec-concrete/3-numerics.watsup:403.1-403.39
+;; ../../../../spec-concrete/3-numerics.watsup:449.1-449.39
 def $cast_arbint'(typeIR''', i)
 
 1. Case analysis on typeIR'''
@@ -7426,12 +7528,12 @@ def $cast_arbint'(typeIR''', i)
 
       2. Return ((set{ $cast_arbint(typeIR, i) }) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:418.1-418.43
+;; ../../../../spec-concrete/3-numerics.watsup:464.1-464.43
 def $cast_fixbit(typeIR, w, i)
 
 1. Return $cast_fixbit'($canon(typeIR), w, i)
 
-;; ../../../../spec-concrete/3-numerics.watsup:419.1-419.44
+;; ../../../../spec-concrete/3-numerics.watsup:465.1-465.44
 def $cast_fixbit'(typeIR''', w', i)
 
 1. Case analysis on typeIR'''
@@ -7486,12 +7588,12 @@ def $cast_fixbit'(typeIR''', w', i)
 
       2. Return ((set{ $cast_fixbit(typeIR, w', i) }) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:436.1-436.43
+;; ../../../../spec-concrete/3-numerics.watsup:482.1-482.43
 def $cast_fixint(typeIR, w, i)
 
 1. Return $cast_fixint'($canon(typeIR), w, i)
 
-;; ../../../../spec-concrete/3-numerics.watsup:437.1-437.44
+;; ../../../../spec-concrete/3-numerics.watsup:483.1-483.44
 def $cast_fixint'(typeIR''', w', i)
 
 1. Case analysis on typeIR'''
@@ -7538,12 +7640,12 @@ def $cast_fixint'(typeIR''', w', i)
 
       2. Return ((set{ $cast_fixint(typeIR, w', i) }) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:453.1-453.52
+;; ../../../../spec-concrete/3-numerics.watsup:499.1-499.52
 def $cast_struct(typeIR, tid, (value_f, id_f)*{id_f <- id_f*, value_f <- value_f*})
 
 1. Return $cast_struct'($canon(typeIR), tid, (value_f, id_f)*{id_f <- id_f*, value_f <- value_f*})
 
-;; ../../../../spec-concrete/3-numerics.watsup:454.1-454.53
+;; ../../../../spec-concrete/3-numerics.watsup:500.1-500.53
 def $cast_struct'(typeIR, tid', (value_f, id_f)*{id_f <- id_f*, value_f <- value_f*})
 
 1. If ((typeIR has type structTypeIR)), then
@@ -7554,12 +7656,12 @@ def $cast_struct'(typeIR, tid', (value_f, id_f)*{id_f <- id_f*, value_f <- value
 
     1. Return ((struct tid { (value_f id_f ;)*{id_f <- id_f*, value_f <- value_f*} }) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:467.1-467.52
+;; ../../../../spec-concrete/3-numerics.watsup:513.1-513.52
 def $cast_header(typeIR, tid, (value_f, id_f)*{id_f <- id_f*, value_f <- value_f*})
 
 1. Return $cast_header'($canon(typeIR), tid, (value_f, id_f)*{id_f <- id_f*, value_f <- value_f*})
 
-;; ../../../../spec-concrete/3-numerics.watsup:468.1-468.53
+;; ../../../../spec-concrete/3-numerics.watsup:514.1-514.53
 def $cast_header'(typeIR, tid', (value_f, id_f)*{id_f <- id_f*, value_f <- value_f*})
 
 1. If ((typeIR has type headerTypeIR)), then
@@ -7570,12 +7672,12 @@ def $cast_header'(typeIR, tid', (value_f, id_f)*{id_f <- id_f*, value_f <- value
 
     1. Return ((header tid { (value_f id_f ;)*{id_f <- id_f*, value_f <- value_f*} }) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:485.1-485.43
+;; ../../../../spec-concrete/3-numerics.watsup:531.1-531.43
 def $cast_sequence(typeIR, value*{value <- value*})
 
 1. Return $cast_sequence'($canon(typeIR), value*{value <- value*})
 
-;; ../../../../spec-concrete/3-numerics.watsup:486.1-486.44
+;; ../../../../spec-concrete/3-numerics.watsup:532.1-532.44
 def $cast_sequence'(typeIR'', value*{value <- value*})
 
 1. Case analysis on typeIR''
@@ -7618,12 +7720,12 @@ def $cast_sequence'(typeIR'', value*{value <- value*})
 
     3. Return ((header tid { (value_cast id_f ;)*{id_f <- id_f*, value_cast <- value_cast*} }) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:516.1-516.47
+;; ../../../../spec-concrete/3-numerics.watsup:562.1-562.47
 def $cast_record(typeIR, (value, id)*{id <- id*, value <- value*})
 
 1. Return $cast_record'($canon(typeIR), (value, id)*{id <- id*, value <- value*})
 
-;; ../../../../spec-concrete/3-numerics.watsup:517.1-517.48
+;; ../../../../spec-concrete/3-numerics.watsup:563.1-563.48
 def $cast_record'(typeIR, (value_f, id_f)*{id_f <- id_f*, value_f <- value_f*})
 
 1. Case analysis on typeIR
@@ -7656,12 +7758,12 @@ def $cast_record'(typeIR, (value_f, id_f)*{id_f <- id_f*, value_f <- value_f*})
 
       3. Return ((header tid { (value_f_cast id_f ;)*{id_f <- id_f*, value_f_cast <- value_f_cast*} }) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:551.1-551.47
+;; ../../../../spec-concrete/3-numerics.watsup:597.1-597.47
 def $cast_set_singleton(typeIR, value)
 
 1. Return $cast_set_singleton'($canon(typeIR), value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:552.1-552.48
+;; ../../../../spec-concrete/3-numerics.watsup:598.1-598.48
 def $cast_set_singleton'(typeIR'', value)
 
 1. If ((typeIR'' has type setTypeIR)), then
@@ -7674,12 +7776,12 @@ def $cast_set_singleton'(typeIR'', value)
 
     2. Return ((set{ $cast_op(typeIR, value) }) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:560.1-560.49
+;; ../../../../spec-concrete/3-numerics.watsup:606.1-606.49
 def $cast_set_mask(typeIR, value_b, value_m)
 
 1. Return $cast_set_mask'($canon(typeIR), value_b, value_m)
 
-;; ../../../../spec-concrete/3-numerics.watsup:561.1-561.50
+;; ../../../../spec-concrete/3-numerics.watsup:607.1-607.50
 def $cast_set_mask'(typeIR'', value_b, value_m)
 
 1. If ((typeIR'' has type setTypeIR)), then
@@ -7696,12 +7798,12 @@ def $cast_set_mask'(typeIR'', value_b, value_m)
 
     4. Return ((set{ value_b_cast &&& value_m_cast }) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:571.1-571.50
+;; ../../../../spec-concrete/3-numerics.watsup:617.1-617.50
 def $cast_set_range(typeIR, value_l, value_u)
 
 1. Return $cast_set_range'($canon(typeIR), value_l, value_u)
 
-;; ../../../../spec-concrete/3-numerics.watsup:572.1-572.51
+;; ../../../../spec-concrete/3-numerics.watsup:618.1-618.51
 def $cast_set_range'(typeIR'', value_l, value_u)
 
 1. If ((typeIR'' has type setTypeIR)), then
@@ -7718,7 +7820,7 @@ def $cast_set_range'(typeIR'', value_l, value_u)
 
     4. Return ((set{ value_l_cast .. value_u_cast }) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:637.1-637.44
+;; ../../../../spec-concrete/3-numerics.watsup:683.1-683.44
 def $bitacc_op(value_b, value_h, value_l)
 
 1. (Let i_b be $to_number(value_b))
@@ -7737,7 +7839,7 @@ def $bitacc_op(value_b, value_h, value_l)
 
   3. Return ((w w i) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:650.1-650.32
+;; ../../../../spec-concrete/3-numerics.watsup:696.1-696.32
 def $sizeof(typeIR, text)
 
 1. Case analysis on text
@@ -7758,17 +7860,17 @@ def $sizeof(typeIR, text)
 
     1. Return $sizeof_maxSizeInBytes(typeIR)
 
-;; ../../../../spec-concrete/3-numerics.watsup:652.1-652.42
+;; ../../../../spec-concrete/3-numerics.watsup:698.1-698.42
 def $sizeof_minSizeInBits(typeIR)
 
 1. Return ((d ($sizeof_minSizeInBits'(typeIR) as int)) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:653.1-653.41
+;; ../../../../spec-concrete/3-numerics.watsup:699.1-699.41
 def $sizeof_minSizeInBits'(typeIR)
 
 1. Return $sizeof_minSizeInBits''($canon(typeIR))
 
-;; ../../../../spec-concrete/3-numerics.watsup:654.1-654.42
+;; ../../../../spec-concrete/3-numerics.watsup:700.1-700.42
 def $sizeof_minSizeInBits''(typeIR'')
 
 1. Case analysis on typeIR''
@@ -7851,24 +7953,24 @@ def $sizeof_minSizeInBits''(typeIR'')
 
     2. Return $min($sizeof_minSizeInBits'(typeIR)*{typeIR <- typeIR*})
 
-;; ../../../../spec-concrete/3-numerics.watsup:656.1-656.43
+;; ../../../../spec-concrete/3-numerics.watsup:702.1-702.43
 def $sizeof_minSizeInBytes(typeIR)
 
 1. (Let n_size be $sizeof_minSizeInBits'(typeIR))
 
 2. Return ((d ((n_size / 8) as int)) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:658.1-658.42
+;; ../../../../spec-concrete/3-numerics.watsup:704.1-704.42
 def $sizeof_maxSizeInBits(typeIR)
 
 1. Return ((d ($sizeof_maxSizeInBits'(typeIR) as int)) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:659.1-659.41
+;; ../../../../spec-concrete/3-numerics.watsup:705.1-705.41
 def $sizeof_maxSizeInBits'(typeIR)
 
 1. Return $sizeof_maxSizeInBits''($canon(typeIR))
 
-;; ../../../../spec-concrete/3-numerics.watsup:660.1-660.42
+;; ../../../../spec-concrete/3-numerics.watsup:706.1-706.42
 def $sizeof_maxSizeInBits''(typeIR'')
 
 1. Case analysis on typeIR''
@@ -7951,7 +8053,7 @@ def $sizeof_maxSizeInBits''(typeIR'')
 
     2. Return $max($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
 
-;; ../../../../spec-concrete/3-numerics.watsup:662.1-662.43
+;; ../../../../spec-concrete/3-numerics.watsup:708.1-708.43
 def $sizeof_maxSizeInBytes(typeIR)
 
 1. (Let n_size be $sizeof_maxSizeInBits'(typeIR))
@@ -12595,207 +12697,53 @@ relation Eval_static: p TC |- (expressionIR # (( _typeIR'' _ctk'' ))) ~> %
 
     2. Group unaryExpressionIR: p TC |- (((unop typedExpressionIR) as expressionIR) # (( _typeIR'' _ctk'' ))) ~> %
 
-      1. Case analysis on unop
+      1. (Eval_static: p TC |- typedExpressionIR ~> value)
 
-        1. Case (% matches pattern `~`)
-
-          1. (Eval_static: p TC |- typedExpressionIR ~> value)
-
-          2. Result in : % % |- % ~> $un_bnot(value)
-
-        2. Case (% matches pattern `!`)
-
-          1. (Eval_static: p TC |- typedExpressionIR ~> value)
-
-          2. Result in : % % |- % ~> $un_lnot(value)
-
-        3. Case (% matches pattern `+`)
-
-          1. (Eval_static: p TC |- typedExpressionIR ~> value)
-
-          2. Result in : % % |- % ~> $un_plus(value)
-
-        4. Case (% matches pattern `-`)
-
-          1. (Eval_static: p TC |- typedExpressionIR ~> value)
-
-          2. Result in : % % |- % ~> $un_minus(value)
+      2. Result in : % % |- % ~> $un_op(unop, value)
 
   7. Case (% has type binaryExpressionIR)
 
-    1. (Let (typedExpressionIR_l binop typedExpressionIR_r) be (expressionIR as binaryExpressionIR))
+    1. (Let (typedExpressionIR_l binop' typedExpressionIR_r) be (expressionIR as binaryExpressionIR))
 
-    2. Group binaryExpressionIR: p TC |- (((typedExpressionIR_l binop typedExpressionIR_r) as expressionIR) # (( _typeIR'' _ctk'' ))) ~> %
+    2. Group binaryExpressionIR: p TC |- (((typedExpressionIR_l binop' typedExpressionIR_r) as expressionIR) # (( _typeIR'' _ctk'' ))) ~> %
 
-      1. Case analysis on binop
+      1. If (~binop' is in [(&&), (||)]), then
 
-        1. Case (% matches pattern `+`)
+        1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
 
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+        2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+        3. Result in : % % |- % ~> $bin_op(binop', value_l, value_r)
 
-          3. Result in : % % |- % ~> $bin_plus(value_l, value_r)
+      2. Case analysis on binop'
 
-        2. Case (% matches pattern `|+|`)
+        1. Case (% matches pattern `&&`)
 
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+          1. (Eval_static: p TC |- typedExpressionIR_l ~> value)
 
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+          2. If ((value = ((b false) as value))), then
 
-          3. Result in : % % |- % ~> $bin_satplus(value_l, value_r)
+            1. Result in : % % |- % ~> ((b false) as value)
 
-        3. Case (% matches pattern `-`)
+          3. If ((value = ((b true) as value))), then
 
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+            1. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+            2. Result in : % % |- % ~> value_r
 
-          3. Result in : % % |- % ~> $bin_minus(value_l, value_r)
+        2. Case (% matches pattern `||`)
 
-        4. Case (% matches pattern `|-|`)
+          1. (Eval_static: p TC |- typedExpressionIR_l ~> value)
 
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
+          2. If ((value = ((b true) as value))), then
 
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
+            1. Result in : % % |- % ~> ((b true) as value)
 
-          3. Result in : % % |- % ~> $bin_satminus(value_l, value_r)
+          3. If ((value = ((b false) as value))), then
 
-        5. Case (% matches pattern `*`)
+            1. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
 
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
-
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
-
-          3. Result in : % % |- % ~> $bin_mul(value_l, value_r)
-
-        6. Case (% matches pattern `/`)
-
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
-
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
-
-          3. Result in : % % |- % ~> $bin_div(value_l, value_r)
-
-        7. Case (% matches pattern `%`)
-
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
-
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
-
-          3. Result in : % % |- % ~> $bin_mod(value_l, value_r)
-
-        8. Case (% matches pattern `<<`)
-
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
-
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
-
-          3. Result in : % % |- % ~> $bin_shl(value_l, value_r)
-
-        9. Case (% matches pattern `>>`)
-
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
-
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
-
-          3. Result in : % % |- % ~> $bin_shr(value_l, value_r)
-
-        10. Case (% matches pattern `<=`)
-
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
-
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
-
-          3. Result in : % % |- % ~> ((b $bin_le(value_l, value_r)) as value)
-
-        11. Case (% matches pattern `>=`)
-
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
-
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
-
-          3. Result in : % % |- % ~> ((b $bin_ge(value_l, value_r)) as value)
-
-        12. Case (% matches pattern `<`)
-
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
-
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
-
-          3. Result in : % % |- % ~> ((b $bin_lt(value_l, value_r)) as value)
-
-        13. Case (% matches pattern `>`)
-
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
-
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
-
-          3. Result in : % % |- % ~> ((b $bin_gt(value_l, value_r)) as value)
-
-        14. Case (% matches pattern `==`)
-
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
-
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
-
-          3. Result in : % % |- % ~> ((b $bin_eq(value_l, value_r)) as value)
-
-        15. Case (% matches pattern `!=`)
-
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
-
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
-
-          3. Result in : % % |- % ~> ((b $bin_ne(value_l, value_r)) as value)
-
-        16. Case (% matches pattern `&`)
-
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
-
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
-
-          3. Result in : % % |- % ~> $bin_band(value_l, value_r)
-
-        17. Case (% matches pattern `^`)
-
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
-
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
-
-          3. Result in : % % |- % ~> $bin_bxor(value_l, value_r)
-
-        18. Case (% matches pattern `|`)
-
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
-
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
-
-          3. Result in : % % |- % ~> $bin_bor(value_l, value_r)
-
-        19. Case (% matches pattern `++`)
-
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
-
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
-
-          3. Result in : % % |- % ~> $bin_concat(value_l, value_r)
-
-        20. Case (% matches pattern `&&`)
-
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
-
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
-
-          3. Result in : % % |- % ~> $bin_land(value_l, value_r)
-
-        21. Case (% matches pattern `||`)
-
-          1. (Eval_static: p TC |- typedExpressionIR_l ~> value_l)
-
-          2. (Eval_static: p TC |- typedExpressionIR_r ~> value_r)
-
-          3. Result in : % % |- % ~> $bin_lor(value_l, value_r)
+            2. Result in : % % |- % ~> value_r
 
   8. Case (% has type ternaryExpressionIR)
 
@@ -24044,209 +23992,59 @@ relation Expr_inst: p IC STO' |- (expressionIR # _expressionNoteIR') ==> % %
 
     2. Group unaryExpressionIR: p IC STO' |- (((unop typedExpressionIR) as expressionIR) # _expressionNoteIR') ==> % %
 
-      1. Case analysis on unop
+      1. (Expr_inst: p IC STO' |- typedExpressionIR ==> STO_1 value)
 
-        1. Case (% matches pattern `~`)
+      2. Result in : % % % |- % ==> STO_1 $un_op(unop, value)
 
-          1. (Expr_inst: p IC STO' |- typedExpressionIR ==> STO_1 value)
+2. (Let (( _typeIR _ctk )) be _expressionNoteIR')
 
-          2. Result in : % % % |- % ==> STO_1 $un_bnot(value)
+3. Case analysis on expressionIR
 
-        2. Case (% matches pattern `!`)
+  1. Case (% has type binaryExpressionIR)
 
-          1. (Expr_inst: p IC STO' |- typedExpressionIR ==> STO_1 value)
+    1. (Let (typedExpressionIR_l binop' typedExpressionIR_r) be (expressionIR as binaryExpressionIR))
 
-          2. Result in : % % % |- % ==> STO_1 $un_lnot(value)
+    2. Group binaryExpressionIR: p IC STO' |- (((typedExpressionIR_l binop' typedExpressionIR_r) as expressionIR) # (( _typeIR _ctk ))) ==> % %
 
-        3. Case (% matches pattern `+`)
+      1. If (~binop' is in [(&&), (||)]), then
 
-          1. (Expr_inst: p IC STO' |- typedExpressionIR ==> STO_1 value)
+        1. (Expr_inst: p IC STO' |- typedExpressionIR_l ==> STO_1 value_l)
 
-          2. Result in : % % % |- % ==> STO_1 $un_plus(value)
+        2. (Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r)
 
-        4. Case (% matches pattern `-`)
+        3. Result in : % % % |- % ==> STO_2 $bin_op(binop', value_l, value_r)
 
-          1. (Expr_inst: p IC STO' |- typedExpressionIR ==> STO_1 value)
+      2. Case analysis on binop'
 
-          2. Result in : % % % |- % ==> STO_1 $un_minus(value)
+        1. Case (% matches pattern `&&`)
 
-  7. Case (% has type binaryExpressionIR)
+          1. (Expr_inst: p IC STO' |- typedExpressionIR_l ==> STO_1 value)
 
-    1. (Let (typedExpressionIR_l binop typedExpressionIR_r) be (expressionIR as binaryExpressionIR))
+          2. If ((value = ((b false) as value))), then
 
-    2. Group binaryExpressionIR: p IC STO' |- (((typedExpressionIR_l binop typedExpressionIR_r) as expressionIR) # _expressionNoteIR') ==> % %
+            1. Result in : % % % |- % ==> STO_1 ((b false) as value)
 
-      1. Case analysis on binop
+          3. If ((value = ((b true) as value))), then
 
-        1. Case (% matches pattern `+`)
+            1. (Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r)
 
-          1. (Expr_inst: p IC STO' |- typedExpressionIR_l ==> STO_1 value_l)
+            2. Result in : % % % |- % ==> STO_2 value_r
 
-          2. (Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r)
+        2. Case (% matches pattern `||`)
 
-          3. Result in : % % % |- % ==> STO_2 $bin_plus(value_l, value_r)
+          1. (Expr_inst: p IC STO' |- typedExpressionIR_l ==> STO_1 value)
 
-        2. Case (% matches pattern `|+|`)
+          2. If ((value = ((b true) as value))), then
 
-          1. (Expr_inst: p IC STO' |- typedExpressionIR_l ==> STO_1 value_l)
+            1. Result in : % % % |- % ==> STO_1 ((b true) as value)
 
-          2. (Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r)
+          3. If ((value = ((b false) as value))), then
 
-          3. Result in : % % % |- % ==> STO_2 $bin_satplus(value_l, value_r)
+            1. (Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r)
 
-        3. Case (% matches pattern `-`)
+            2. Result in : % % % |- % ==> STO_2 value_r
 
-          1. (Expr_inst: p IC STO' |- typedExpressionIR_l ==> STO_1 value_l)
-
-          2. (Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r)
-
-          3. Result in : % % % |- % ==> STO_2 $bin_minus(value_l, value_r)
-
-        4. Case (% matches pattern `|-|`)
-
-          1. (Expr_inst: p IC STO' |- typedExpressionIR_l ==> STO_1 value_l)
-
-          2. (Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r)
-
-          3. Result in : % % % |- % ==> STO_2 $bin_satminus(value_l, value_r)
-
-        5. Case (% matches pattern `*`)
-
-          1. (Expr_inst: p IC STO' |- typedExpressionIR_l ==> STO_1 value_l)
-
-          2. (Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r)
-
-          3. Result in : % % % |- % ==> STO_2 $bin_mul(value_l, value_r)
-
-        6. Case (% matches pattern `/`)
-
-          1. (Expr_inst: p IC STO' |- typedExpressionIR_l ==> STO_1 value_l)
-
-          2. (Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r)
-
-          3. Result in : % % % |- % ==> STO_2 $bin_div(value_l, value_r)
-
-        7. Case (% matches pattern `%`)
-
-          1. (Expr_inst: p IC STO' |- typedExpressionIR_l ==> STO_1 value_l)
-
-          2. (Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r)
-
-          3. Result in : % % % |- % ==> STO_2 $bin_mod(value_l, value_r)
-
-        8. Case (% matches pattern `<<`)
-
-          1. (Expr_inst: p IC STO' |- typedExpressionIR_l ==> STO_1 value_l)
-
-          2. (Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r)
-
-          3. Result in : % % % |- % ==> STO_2 $bin_shl(value_l, value_r)
-
-        9. Case (% matches pattern `>>`)
-
-          1. (Expr_inst: p IC STO' |- typedExpressionIR_l ==> STO_1 value_l)
-
-          2. (Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r)
-
-          3. Result in : % % % |- % ==> STO_2 $bin_shr(value_l, value_r)
-
-        10. Case (% matches pattern `<=`)
-
-          1. (Expr_inst: p IC STO' |- typedExpressionIR_l ==> STO_1 value_l)
-
-          2. (Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r)
-
-          3. Result in : % % % |- % ==> STO_2 ((b $bin_le(value_l, value_r)) as value)
-
-        11. Case (% matches pattern `>=`)
-
-          1. (Expr_inst: p IC STO' |- typedExpressionIR_l ==> STO_1 value_l)
-
-          2. (Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r)
-
-          3. Result in : % % % |- % ==> STO_2 ((b $bin_ge(value_l, value_r)) as value)
-
-        12. Case (% matches pattern `<`)
-
-          1. (Expr_inst: p IC STO' |- typedExpressionIR_l ==> STO_1 value_l)
-
-          2. (Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r)
-
-          3. Result in : % % % |- % ==> STO_2 ((b $bin_lt(value_l, value_r)) as value)
-
-        13. Case (% matches pattern `>`)
-
-          1. (Expr_inst: p IC STO' |- typedExpressionIR_l ==> STO_1 value_l)
-
-          2. (Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r)
-
-          3. Result in : % % % |- % ==> STO_2 ((b $bin_gt(value_l, value_r)) as value)
-
-        14. Case (% matches pattern `==`)
-
-          1. (Expr_inst: p IC STO' |- typedExpressionIR_l ==> STO_1 value_l)
-
-          2. (Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r)
-
-          3. Result in : % % % |- % ==> STO_2 ((b $bin_eq(value_l, value_r)) as value)
-
-        15. Case (% matches pattern `!=`)
-
-          1. (Expr_inst: p IC STO' |- typedExpressionIR_l ==> STO_1 value_l)
-
-          2. (Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r)
-
-          3. Result in : % % % |- % ==> STO_2 ((b $bin_ne(value_l, value_r)) as value)
-
-        16. Case (% matches pattern `&`)
-
-          1. (Expr_inst: p IC STO' |- typedExpressionIR_l ==> STO_1 value_l)
-
-          2. (Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r)
-
-          3. Result in : % % % |- % ==> STO_2 $bin_band(value_l, value_r)
-
-        17. Case (% matches pattern `^`)
-
-          1. (Expr_inst: p IC STO' |- typedExpressionIR_l ==> STO_1 value_l)
-
-          2. (Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r)
-
-          3. Result in : % % % |- % ==> STO_2 $bin_bxor(value_l, value_r)
-
-        18. Case (% matches pattern `|`)
-
-          1. (Expr_inst: p IC STO' |- typedExpressionIR_l ==> STO_1 value_l)
-
-          2. (Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r)
-
-          3. Result in : % % % |- % ==> STO_2 $bin_bor(value_l, value_r)
-
-        19. Case (% matches pattern `++`)
-
-          1. (Expr_inst: p IC STO' |- typedExpressionIR_l ==> STO_1 value_l)
-
-          2. (Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r)
-
-          3. Result in : % % % |- % ==> STO_2 $bin_concat(value_l, value_r)
-
-        20. Case (% matches pattern `&&`)
-
-          1. (Expr_inst: p IC STO' |- typedExpressionIR_l ==> STO_1 value_l)
-
-          2. (Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r)
-
-          3. Result in : % % % |- % ==> STO_2 $bin_land(value_l, value_r)
-
-        21. Case (% matches pattern `||`)
-
-          1. (Expr_inst: p IC STO' |- typedExpressionIR_l ==> STO_1 value_l)
-
-          2. (Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r)
-
-          3. Result in : % % % |- % ==> STO_2 $bin_lor(value_l, value_r)
-
-  8. Case (% has type ternaryExpressionIR)
+  2. Case (% has type ternaryExpressionIR)
 
     1. (Let (typedExpressionIR_cond ? typedExpressionIR_true : typedExpressionIR_false) be (expressionIR as ternaryExpressionIR))
 
@@ -24266,7 +24064,7 @@ relation Expr_inst: p IC STO' |- (expressionIR # _expressionNoteIR') ==> % %
 
         2. Result in : % % % |- % ==> STO_2 value_false
 
-  9. Case (% has type castExpressionIR)
+  3. Case (% has type castExpressionIR)
 
     1. (Let (( typeIR ) typedExpressionIR) be (expressionIR as castExpressionIR))
 
@@ -24278,7 +24076,7 @@ relation Expr_inst: p IC STO' |- (expressionIR # _expressionNoteIR') ==> % %
 
       3. Result in : % % % |- % ==> STO_1 value_cast
 
-  10. Case (% has type dataExpressionIR)
+  4. Case (% has type dataExpressionIR)
 
     1. (Let dataExpressionIR be (expressionIR as dataExpressionIR))
 
@@ -24328,7 +24126,7 @@ relation Expr_inst: p IC STO' |- (expressionIR # _expressionNoteIR') ==> % %
 
           3. Result in : % % % |- % ==> STO_1 ((record{ (value nameIR ;)*{nameIR <- nameIR*, value <- value*} ,...}) as value)
 
-  11. Case (% has type errorAccessExpressionIR)
+  5. Case (% has type errorAccessExpressionIR)
 
     1. (Let (error. nameIR) be (expressionIR as errorAccessExpressionIR))
 
@@ -24340,7 +24138,7 @@ relation Expr_inst: p IC STO' |- (expressionIR # _expressionNoteIR') ==> % %
 
       3. Result in : % % % |- % ==> STO' value_error
 
-  12. Case (% has type memberAccessExpressionIR)
+  6. Case (% has type memberAccessExpressionIR)
 
     1. (Let (memberAccessBaseIR . nameIR) be (expressionIR as memberAccessExpressionIR))
 
@@ -24380,27 +24178,19 @@ relation Expr_inst: p IC STO' |- (expressionIR # _expressionNoteIR') ==> % %
 
                   2. Result in : % % % |- % ==> STO' ((tid . nameIR # value) as value)
 
-2. (Let (( typeIR_base _ctk )) be _expressionNoteIR')
-
-3. Case analysis on expressionIR
-
-  1. Case (% has type memberAccessExpressionIR)
-
-    1. (Let (memberAccessBaseIR . text) be (expressionIR as memberAccessExpressionIR))
-
-    2. If ((memberAccessBaseIR has type typedExpressionIR)), then
+    3. If ((memberAccessBaseIR has type typedExpressionIR)), then
 
       1. (Let typedExpressionIR_base be (memberAccessBaseIR as typedExpressionIR))
 
-      2. If ((text = "size")), then
+      2. If ((nameIR = "size")), then
 
-        1. Group memberAccessExpressionIR-expression-stack-size: p IC STO' |- ((((typedExpressionIR_base as memberAccessBaseIR) . "size") as expressionIR) # (( typeIR_base _ctk ))) ==> % %
+        1. Group memberAccessExpressionIR-expression-stack-size: p IC STO' |- ((((typedExpressionIR_base as memberAccessBaseIR) . "size") as expressionIR) # (( _typeIR _ctk ))) ==> % %
 
           1. (Let (_expressionIR # (( typeIR _ctk' ))) be typedExpressionIR_base)
 
-          2. If ((typeIR = typeIR_base)), then
+          2. If ((typeIR = _typeIR)), then
 
-            1. (Let typeIR' be $canon(typeIR_base))
+            1. (Let typeIR' be $canon(_typeIR))
 
             2. If ((typeIR' has type headerStackTypeIR)), then
 
@@ -24408,7 +24198,7 @@ relation Expr_inst: p IC STO' |- (expressionIR # _expressionNoteIR') ==> % %
 
               2. Result in : % % % |- % ==> STO' ((d (n_size as int)) as value)
 
-  2. Case (% has type sliceAccessExpressionIR)
+  7. Case (% has type sliceAccessExpressionIR)
 
     1. (Let (typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ]) be (expressionIR as sliceAccessExpressionIR))
 
@@ -24422,7 +24212,7 @@ relation Expr_inst: p IC STO' |- (expressionIR # _expressionNoteIR') ==> % %
 
       4. Result in : % % % |- % ==> STO_3 $bitacc_op(value_base, value_hi, value_lo)
 
-  3. Case (% has type callExpressionIR)
+  8. Case (% has type callExpressionIR)
 
     1. (Let callExpressionIR be (expressionIR as callExpressionIR))
 
@@ -24464,11 +24254,11 @@ relation Expr_inst: p IC STO' |- (expressionIR # _expressionNoteIR') ==> % %
 
                   1. (Let (typedExpressionIR_base . nameIR) be routineTargetIR)
 
-                  2. (Let (_expressionIR # (( typeIR_base _ctk ))) be typedExpressionIR_base)
+                  2. (Let (_expressionIR # (( _typeIR _ctk ))) be typedExpressionIR_base)
 
                   3. If (nameIR is in ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]), then
 
-                    1. Result in : % % % |- % ==> STO' $sizeof(typeIR_base, nameIR)
+                    1. Result in : % % % |- % ==> STO' $sizeof(_typeIR, nameIR)
 
                 2. Case (% matches pattern `TYPE%.%`)
 
@@ -24484,15 +24274,15 @@ relation Expr_inst: p IC STO' |- (expressionIR # _expressionNoteIR') ==> % %
 
                       1. Case (% has type typeIR)
 
-                        1. (Let typeIR_base be (typeDefIR as typeIR))
+                        1. (Let _typeIR be (typeDefIR as typeIR))
 
                         2. If (nameIR is in ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]), then
 
-                          1. Result in : % % % |- % ==> STO' $sizeof(typeIR_base, nameIR)
+                          1. Result in : % % % |- % ==> STO' $sizeof(_typeIR, nameIR)
 
                       2. Case (% has type polyTypeDefIR)
 
-                        1. (Let (typeIR_base < tid*{tid <- tid*} , tid'*{tid' <- tid'*} >) be (typeDefIR as polyTypeDefIR))
+                        1. (Let (_typeIR < tid*{tid <- tid*} , tid'*{tid' <- tid'*} >) be (typeDefIR as polyTypeDefIR))
 
                         2. If ((tid*{tid <- tid*} matches pattern [])), then
 
@@ -24500,7 +24290,7 @@ relation Expr_inst: p IC STO' |- (expressionIR # _expressionNoteIR') ==> % %
 
                             1. If (nameIR is in ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]), then
 
-                              1. Result in : % % % |- % ==> STO' $sizeof(typeIR_base, nameIR)
+                              1. Result in : % % % |- % ==> STO' $sizeof(_typeIR, nameIR)
 
         3. (Let (routineTargetIR' < typeArgumentListIR >( argumentListIR )) be callExpressionIR)
 
@@ -24514,7 +24304,7 @@ relation Expr_inst: p IC STO' |- (expressionIR # _expressionNoteIR') ==> % %
 
             2. Result in : % % % |- % ==> STO_1 value
 
-  4. Case (% has type parenthesizedExpressionIR)
+  9. Case (% has type parenthesizedExpressionIR)
 
     1. (Let (( typedExpressionIR )) be (expressionIR as parenthesizedExpressionIR))
 

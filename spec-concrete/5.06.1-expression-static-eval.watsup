@@ -59,25 +59,9 @@ rule Eval_static/defaultExpressionIR:
 ;;;; unaryExpressionIR
 ;;;; syntax unaryExpressionIR = unop typedExpressionIR
 
-rulegroup Eval_static/unaryExpressionIR {
-
-  rule Eval_static/bnot:
-    p TC |- (`~ typedExpressionIR) `# `( _ _ ) ~> $un_bnot(value)
-    -- Eval_static: p TC |- typedExpressionIR ~> value
-
-  rule Eval_static/lnot:
-    p TC |- (`! typedExpressionIR) `# `( _ _ ) ~> $un_lnot(value)
-    -- Eval_static: p TC |- typedExpressionIR ~> value
-
-  rule Eval_static/plus:
-    p TC |- (`+ typedExpressionIR) `# `( _ _ ) ~> $un_plus(value)
-    -- Eval_static: p TC |- typedExpressionIR ~> value
-
-  rule Eval_static/minus:
-    p TC |- (`- typedExpressionIR) `# `( _ _ ) ~> $un_minus(value)
-    -- Eval_static: p TC |- typedExpressionIR ~> value
-
-}
+rule Eval_static/unaryExpressionIR:
+  p TC |- (unop typedExpressionIR) `# `( _ _ ) ~> $un_op(unop, value)
+  -- Eval_static: p TC |- typedExpressionIR ~> value
 
 ;;;; binaryExpressionIR
 ;;;; syntax binaryExpressionIR =
@@ -85,134 +69,34 @@ rulegroup Eval_static/unaryExpressionIR {
 
 rulegroup Eval_static/binaryExpressionIR {
 
-  rule Eval_static/plus:
-    p TC |- (typedExpressionIR_l `+ typedExpressionIR_r) `# `( _ _ )
-         ~> $bin_plus(value_l, value_r)
+  rule Eval_static/non-short-circuit:
+    p TC |- (typedExpressionIR_l binop typedExpressionIR_r) `# `( _ _ )
+         ~> $bin_op(binop, value_l, value_r)
+    -- if ~(binop <- [ `&&, `|| ])
     -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
     -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
 
-  rule Eval_static/satplus:
-    p TC |- (typedExpressionIR_l `|+| typedExpressionIR_r) `# `( _ _ )
-         ~> $bin_satplus(value_l, value_r)
-    -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
-
-  rule Eval_static/minus:
-    p TC |- (typedExpressionIR_l `- typedExpressionIR_r) `# `( _ _ )
-         ~> $bin_minus(value_l, value_r)
-    -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
-
-  rule Eval_static/satminus:
-    p TC |- (typedExpressionIR_l `|-| typedExpressionIR_r) `# `( _ _ )
-         ~> $bin_satminus(value_l, value_r)
-    -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
-
-  rule Eval_static/mul:
-    p TC |- (typedExpressionIR_l `* typedExpressionIR_r) `# `( _ _ )
-         ~> $bin_mul(value_l, value_r)
-    -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
-
-  rule Eval_static/div:
-    p TC |- (typedExpressionIR_l `/ typedExpressionIR_r) `# `( _ _ )
-         ~> $bin_div(value_l, value_r)
-    -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
-
-  rule Eval_static/mod:
-    p TC |- (typedExpressionIR_l `% typedExpressionIR_r) `# `( _ _ )
-         ~> $bin_mod(value_l, value_r)
-    -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
-
-  rule Eval_static/shl:
-    p TC |- (typedExpressionIR_l `<< typedExpressionIR_r) `# `( _ _ )
-         ~> $bin_shl(value_l, value_r)
-    -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
-
-  rule Eval_static/shr:
-    p TC |- (typedExpressionIR_l `>> typedExpressionIR_r) `# `( _ _ )
-         ~> $bin_shr(value_l, value_r)
-    -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
-
-  rule Eval_static/le:
-    p TC |- (typedExpressionIR_l `<= typedExpressionIR_r) `# `( _ _ )
-         ~> (B $bin_le(value_l, value_r))
-    -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
-
-  rule Eval_static/ge:
-    p TC |- (typedExpressionIR_l `>= typedExpressionIR_r) `# `( _ _ )
-         ~> (B $bin_ge(value_l, value_r))
-    -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
-
-  rule Eval_static/lt:
-    p TC |- (typedExpressionIR_l ``< typedExpressionIR_r) `# `( _ _ )
-         ~> (B $bin_lt(value_l, value_r))
-    -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
-
-  rule Eval_static/gt:
-    p TC |- (typedExpressionIR_l ``> typedExpressionIR_r) `# `( _ _ )
-         ~> (B $bin_gt(value_l, value_r))
-    -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
-
-  rule Eval_static/eq:
-    p TC |- (typedExpressionIR_l `== typedExpressionIR_r) `# `( _ _ )
-         ~> (B $bin_eq(value_l, value_r))
-    -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
-
-  rule Eval_static/ne:
-    p TC |- (typedExpressionIR_l `!= typedExpressionIR_r) `# `( _ _ )
-         ~> (B $bin_ne(value_l, value_r))
-    -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
-
-  rule Eval_static/band:
-    p TC |- (typedExpressionIR_l `& typedExpressionIR_r) `# `( _ _ )
-         ~> $bin_band(value_l, value_r)
-    -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
-
-  rule Eval_static/bxor:
-    p TC |- (typedExpressionIR_l `^ typedExpressionIR_r) `# `( _ _ )
-         ~> $bin_bxor(value_l, value_r)
-    -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
-
-  rule Eval_static/bor:
-    p TC |- (typedExpressionIR_l `| typedExpressionIR_r) `# `( _ _ )
-         ~> $bin_bor(value_l, value_r)
-    -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
-
-  rule Eval_static/concat:
-    p TC |- (typedExpressionIR_l `++ typedExpressionIR_r) `# `( _ _ )
-         ~> $bin_concat(value_l, value_r)
-    -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
-
-  ;; (TODO) Shoule be short-circuiting
-  rule Eval_static/land:
+  rule Eval_static/land-false:
     p TC |- (typedExpressionIR_l `&& typedExpressionIR_r) `# `( _ _ )
-         ~> $bin_land(value_l, value_r)
-    -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
+         ~> (B false)
+    -- Eval_static: p TC |- typedExpressionIR_l ~> (B false)
+
+  rule Eval_static/land-true:
+    p TC |- (typedExpressionIR_l `&& typedExpressionIR_r) `# `( _ _ )
+         ~> value_r
+    -- Eval_static: p TC |- typedExpressionIR_l ~> (B true)
     -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
 
-  ;; (TODO) Shoule be short-circuiting
-  rule Eval_static/lor:
+  rule Eval_static/lor-true:
     p TC |- (typedExpressionIR_l `|| typedExpressionIR_r) `# `( _ _ )
-         ~> $bin_lor(value_l, value_r)
-    -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
-    -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
+         ~> (B true)
+    -- Eval_static: p TC |- typedExpressionIR_l ~> (B true)
 
+  rule Eval_static/lor-false:
+    p TC |- (typedExpressionIR_l `|| typedExpressionIR_r) `# `( _ _ )
+         ~> value_r
+    -- Eval_static: p TC |- typedExpressionIR_l ~> (B false)
+    -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
 }
 
 ;;;; ternaryExpressionIR
