@@ -26,6 +26,13 @@ let render_unordered_bullet level =
     (String.make (level * 2) ' ')
     ("*")
 
+let render_link ~(link : string) ~(text : string) : string
+  = "<<" ^ link ^ ", " ^ text ^ ">>"
+
+
+let reindent_lines ~level (s : string) : string =
+  let lines = String.split_on_char '\n' s in
+  String.concat ("\n" ^ (render_unordered_bullet (level + 1))) lines
 (** Printing as prose **)
 
 (* Prose list: a and b / a, b, ..., y and z *)
@@ -47,6 +54,7 @@ let prose_of_list items =
 (* Identifiers *)
 
 let string_of_relid = Sl.Print.string_of_relid
+let string_of_relpathid = Sl.Print.string_of_relpathid
 let string_of_defid = Sl.Print.string_of_defid
 
 let code_of_varid ?(mode = Prose) varid =
@@ -129,7 +137,8 @@ let rec prose_of_exp ?(mode = Prose) exp : string =
   | Il.Ast.VarE varid -> code_of_varid ~mode varid
   | Il.Ast.UnE (unop, _, exp) -> (
     match unop with
-    | #Bool.unop -> failwith "TODO"
+    (* | #Bool.unop ->  TODO *)
+    | #Bool.unop
     | #Num.unop -> (string_of_unop unop ^ prose_of_exp ~mode:Code exp) |> render_mono ~mode
   )
   | Il.Ast.BinE (binop, _, exp_l, exp_r) ->
@@ -230,6 +239,11 @@ and prose_of_exps ~mode ?(sep : string option = None) exps =
 
 and code_of_exp ~mode exp = prose_of_exp ~mode:Code exp |> render_mono ~mode
 
+and code_of_exps ~mode ?(sep : string option = None) exps = 
+  match sep with
+  | None -> prose_of_list (List.map (code_of_exp ~mode) exps)
+  | Some s -> String.concat s (List.map (code_of_exp ~mode) exps)
+
 and code_of_notexp ~mode notexp =
   let mixop, exps = notexp in
   let len = List.length mixop + List.length exps in
@@ -239,6 +253,38 @@ and code_of_notexp ~mode notexp =
   |> List.filter_map (fun str -> if str = "" then None else Some str)
   |> String.concat " " |> render_mono ~mode
 
+and prose_of_hintexp ~level (exps : exp list) (hintexp : El.Ast.exp) :
+    string =
+  let _, str = prose_of_hintexp' ~level exps hintexp 0 in
+  str
+
+and prose_of_hintexp' ~level (exps : exp list) (hintexp : El.Ast.exp)
+    (cursor : int) : int * string =
+  match hintexp.it with
+  | El.Ast.TextE text -> (cursor, text |> reindent_lines ~level)
+  | El.Ast.SeqE exps_hint ->
+      let cursor, strs =
+        List.fold_left
+          (fun (cur, acc) exp ->
+            let cur, str = prose_of_hintexp' ~level exps exp cur in
+            (cur, acc @ [ str ]))
+          (cursor, []) exps_hint
+      in
+      (cursor, String.concat " " strs)
+  | El.Ast.HoleE `Next -> 
+      (* cursor holds position for HoleE.Next *)
+      let exp = List.nth exps cursor in
+      (* access HoleE.Next with current cursor *)
+      (cursor + 1, code_of_exp ~mode:Prose exp)
+  | El.Ast.HoleE (`Num i) -> 
+      (* accesses HoleE.Num with index *)
+    let exp = List.nth exps i in
+    (cursor, code_of_exp ~mode:Prose exp)
+  | El.Ast.FuseE (exp_l, exp_r) ->
+      let cursor_l, str_l = prose_of_hintexp' ~level exps exp_l cursor in
+      let cursor_r, str_r = prose_of_hintexp' ~level exps exp_r cursor_l in
+      (cursor_r, str_l ^ str_r)
+  | _ -> failwith "unsupported prose hint"
 (* Paths *)
 
 and prose_of_path ~mode path =
@@ -267,20 +313,71 @@ let string_of_targs = Sl.Print.string_of_targs
 
 let rec prose_of_cond ?(mode = Prose) (cond : cond) : string =
   match cond with
-  | ExpCond exp -> "the condition " ^ render_mono ~mode (string_of_exp exp)
+  | ExpCond exp -> prose_of_exp exp
   | RelCond (relcall, relid) -> "relcond!"
   | ForAllCond (cond, vars) -> "forall!"
   | ForAnyCond (cond, vars) -> "forany!"
+
+let prose_of_relcall ~level (relcall : relcall) rid : string =
+  match relcall with
+  | Prose (hintexp, [], exps_in) ->
+    render_link ~link:(string_of_relid rid)
+      ~text:(prose_of_hintexp ~level exps_in hintexp)
+  | Prose (hintexp, exps_out, exps_in) ->
+    F.asprintf "%s be the result of %s"
+      (code_of_exps ~mode:Prose exps_out)
+      (render_link ~link:(string_of_relid rid)
+      ~text:(prose_of_hintexp ~level exps_in hintexp))
+  | Mixop (mixop, exps) ->
+    render_link
+      ~link:(string_of_relid rid)
+      ~text:(code_of_notexp ~mode:Code (mixop, exps))
 
 let rec prose_of_instr ?(level = 0) ?(mode = Prose) (instr : instr) : string =
   (* let bullet = render_ordered_bullet level in *)
   match instr.it with
   | Branch (branchtype, cond, instrs) ->
-    F.asprintf "%s%s %s: \n%s"
+    F.asprintf "%s%s%s:\n%s"
       (render_ordered_bullet level) (prose_of_branchtype branchtype)
       (prose_of_cond ~mode cond)
-      (prose_of_instrs ~level:(level + 1) ~mode instrs)
-  | _ -> ""
+      (prose_of_instrs ~level:(level + 1) instrs)
+  | Bind (branchtype, exp_l, exp_r, instrs) ->
+    F.asprintf "%s%slet %s be %s:\n%s"
+      (render_ordered_bullet level) (prose_of_branchtype branchtype)
+      (prose_of_exp ~mode:Code exp_l) (prose_of_exp ~mode:Code exp_r)
+      (prose_of_instrs ~level:(level + 1) instrs)
+  | Otherwise instr ->
+    F.asprintf "%sOtherwise:\n%s" (render_ordered_bullet level)
+      (prose_of_instr ~level:(level + 1) instr)
+  | Check cond ->
+    F.asprintf "%sCheck that %s." (render_ordered_bullet level)
+      (prose_of_cond ~mode cond)
+  | Let (exp_l, exp_r) ->
+    F.asprintf "%sLet %s be %s."
+      (render_ordered_bullet level)
+      (code_of_exp ~mode:Prose exp_l)
+      (prose_of_exp ~mode:Prose exp_r)
+  | Rel (relcall, rid) ->
+    F.asprintf "%sLet %s."
+      (render_ordered_bullet level)
+      (prose_of_relcall ~level relcall rid)
+  | Return exp ->
+    F.asprintf "%sReturn %s."
+      (render_ordered_bullet level)
+      (prose_of_exp ~mode:Prose exp)
+  | Result (Some hintexp, exps) -> 
+    F.asprintf "%sResult in %s."
+      (render_ordered_bullet level)
+      (prose_of_hintexp ~level:(level + 1) exps hintexp)
+  | Result (None, exps) ->
+    F.asprintf "%sResult in %s."
+      (render_ordered_bullet level)
+      (prose_of_exps ~mode:Prose exps)
+  | Group (id, _, instrs) ->
+    F.asprintf "%sGroup %s:\n%s"
+      (render_ordered_bullet level) (string_of_relpathid id)
+      (prose_of_instrs ~level:(level + 1) instrs)
+  | ForEach _ -> F.asprintf "%sForEach." (render_ordered_bullet level)
 
 and prose_of_instrs ?(level = 0) ?(mode = Prose) instrs =
   List.map (prose_of_instr ~level ~mode) instrs |> String.concat "\n"

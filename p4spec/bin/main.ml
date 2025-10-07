@@ -472,7 +472,7 @@ let json_command =
                Format.printf "Error while parsing %s: %s" filename err))
 
 let prose_command =
-  Core.Command.basic ~summary:"insert structured control flow to a p4_16 spec"
+  Core.Command.basic ~summary:"generate asciidoc prose from a p4_16 spec"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map filenames = anon (sequence ("filename" %: string)) in

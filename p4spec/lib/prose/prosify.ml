@@ -177,7 +177,7 @@ and prosify_instr ctx instr : Pl.Ast.instr list =
     [ Pl.Ast.Let (exp_l, exp_r) $ instr.at
       |> prosify_iterated_let [ exp_l ] iterexps ]
   | RuleI (id, (mixop, exps), iterexps) -> 
-    let hint_opt = HEnv.get_rel id ctx.penv.prose_out in
+    let hint_opt = HEnv.get_rel id ctx.penv.prose_in in
     let inputs = IEnv.find_opt id ctx.ienv |> Option.value ~default:[] in
     let exps_in, exps_out = InputHint.split_exps_without_idx inputs exps in
     let relation = match hint_opt with
