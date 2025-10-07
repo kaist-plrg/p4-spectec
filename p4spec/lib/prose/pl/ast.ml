@@ -5,6 +5,10 @@ open Util.Source
 type rid = Il.Ast.id
 type fid = Il.Ast.id
 
+(* Notation *)
+
+type mixop = Il.Ast.mixop
+
 (* Iterators *)
 
 type iter = Il.Ast.iter
@@ -30,10 +34,19 @@ type arg = Il.Ast.arg
 
 type branchtype = If | ElseIf | Else
 
+(* Relation renderer *)
+
+type relcall =
+  (* prose hint, outputs, inputs *)
+  | Prose of hintexp * exp list * exp list
+  (* mixop, exps *)
+  | Mixop of mixop * exp list
+
 type cond =
   | ExpCond of exp
-  (* prose_true/false, exps *)
-  | RelCond of hintexp option * exp list * rid
+  | RelCond of relcall * rid
+  | ForAllCond of cond * var list
+  | ForAnyCond of cond * var list
 
 type instr = instr' phrase
 and instr' =
@@ -49,19 +62,16 @@ and instr' =
   | ForEach of var list * instr * var list
   (* Let % be % *)
   | Let of exp * exp
-  (* Let %,%,... be the result of %(%,%,...) :% *)
-  | Rel of exp list * hintexp option * exp list * rid
-  (* Result in %(%) *)
+  (* Let %exps be the result of %renderer(%exps) : %rid *)
+  | Rel of relcall * rid
+  (* Result in %prose_out(%exps) *)
   | Result of hintexp option * exp list
-
-
-type rel = rid * exp list * instr list
-
-type func = fid * tparam list * arg list * instr list
+  | Return of exp
+  | Group of rid * exp list * instr list
 
 type def = def' phrase
 and def' =
-  | RelD of rel
-  | DecD of func
+  | RelD of rid * exp list * instr list
+  | DecD of fid * tparam list * arg list * instr list
 
 type spec = def list

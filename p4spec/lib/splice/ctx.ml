@@ -10,7 +10,7 @@ module RuleProseMap = Map.Make (Kinds.RuleProseId)
 module FuncProseMap = Map.Make (Kinds.FuncProseId)
 
 type t = {
-  prose_ctx : Prose.Ctx.t;
+  prose_ctx : Prose.Rctx.t;
   mutable syntax : Kinds.syntax SyntaxMap.t;
   mutable relation : Kinds.relation RelationMap.t;
   mutable rulegroup : Kinds.rulegroup RuleGroupMap.t;
@@ -77,7 +77,7 @@ let init_sl (ctx : t) (spec_sl : Sl.Ast.spec) : unit =
   List.iter (init_sl_def ctx) spec_sl
 
 let init (spec_el : El.Ast.spec) (spec_sl : Sl.Ast.spec) : t =
-  let prose_ctx = Prose.Ctx.init spec_sl in
+  let prose_ctx = Prose.Rctx.init spec_sl in
   let ctx =
     {
       prose_ctx;

@@ -481,8 +481,8 @@ let prose_command =
          let spec = List.concat_map Frontend.Parse.parse_file filenames in
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
-         let ctx = Prose.Ctx.init spec_sl in
-         Format.printf "%s\n" (Prose.Render.prose_of_spec ctx spec_sl);
+         let spec_pl = Prose.Prosify.prosify_spec spec_sl in
+         Format.printf "%s\n" (Prose.Pl.Print.prose_of_spec spec_pl);
          ()
        with
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
