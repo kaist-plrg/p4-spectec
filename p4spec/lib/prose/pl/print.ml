@@ -14,8 +14,11 @@ let render_mono ~mode s =
 let render_subscript s = "~" ^ s ^ "~"
 let render_superscript s = "^" ^ s ^ "^"
 let render_bold s = "**" ^ s ^ "**"
-let render_attach_block = "+\n"
-let render_open_block s = "--\n" ^ s ^ "\n--"
+let render_indent level = String.make (level * 2) ' '
+let render_attach_block level = render_indent level ^ "+\n"
+let render_open_block level s =
+  F.asprintf "%s--\n%s\n%s--"
+    (render_indent level) s (render_indent level)
 let render_ordered_bullet level =
   Format.asprintf "%s%s "
     (String.make level ' ')
@@ -107,6 +110,23 @@ let code_of_iterexp (iter, _) = code_of_iter iter
 let code_of_var ~mode (id, _typ, iters) =
   code_of_varid ~mode id ^ String.concat "" (List.map code_of_iter iters)
 
+(* Iterated Variables *)
+
+let prose_of_in_itervars ~mode vars : string =
+  let prose_of_in_var var =
+    F.asprintf "%s in %s"
+      (code_of_var ~mode:Code var |> render_mono ~mode)
+      (code_of_var ~mode:Code var ^ code_of_iter Il.Ast.List |> render_mono ~mode)
+  in
+  List.map prose_of_in_var vars |> prose_of_list
+
+let prose_of_out_itervars ~mode vars : string =
+  let prose_of_out_var var =
+    F.asprintf "%s be the list of %s"
+      (code_of_var ~mode:Code var ^ code_of_iter Il.Ast.List |> render_mono ~mode)
+      (code_of_var ~mode:Code var |> render_mono ~mode)
+  in
+  List.map prose_of_out_var vars |> prose_of_list
 
 let prose_of_branchtype branchtype =
   match branchtype with
@@ -333,65 +353,80 @@ let prose_of_relcall ~level (relcall : relcall) rid : string =
       ~link:(string_of_relid rid)
       ~text:(code_of_notexp ~mode:Code (mixop, exps))
 
-let rec prose_of_instr ?(level = 0) ?(mode = Prose) (instr : instr) : string =
+let rec prose_of_instr ?(level = 0) ?(unordered = false) (instr : instr) : string =
+  let bullet = if unordered then render_unordered_bullet level
+  else render_ordered_bullet level in
   (* let bullet = render_ordered_bullet level in *)
   match instr.it with
   | Branch (branchtype, cond, instrs) ->
     F.asprintf "%s%s%s:\n%s"
-      (render_ordered_bullet level) (prose_of_branchtype branchtype)
-      (prose_of_cond ~mode cond)
+      bullet (prose_of_branchtype branchtype)
+      (prose_of_cond ~mode:Prose cond)
       (prose_of_instrs ~level:(level + 1) instrs)
   | Bind (branchtype, exp_l, exp_r, instrs) ->
     F.asprintf "%s%slet %s be %s:\n%s"
-      (render_ordered_bullet level) (prose_of_branchtype branchtype)
+      bullet (prose_of_branchtype branchtype)
       (prose_of_exp ~mode:Code exp_l) (prose_of_exp ~mode:Code exp_r)
       (prose_of_instrs ~level:(level + 1) instrs)
   | Otherwise instr ->
-    F.asprintf "%sOtherwise:\n%s" (render_ordered_bullet level)
+    F.asprintf "%sOtherwise:\n%s" bullet
       (prose_of_instr ~level:(level + 1) instr)
   | Check cond ->
-    F.asprintf "%sCheck that %s." (render_ordered_bullet level)
-      (prose_of_cond ~mode cond)
+    F.asprintf "%sCheck that %s." bullet
+      (prose_of_cond ~mode:Prose cond)
   | Let (exp_l, exp_r) ->
     F.asprintf "%sLet %s be %s."
-      (render_ordered_bullet level)
+      bullet
       (code_of_exp ~mode:Prose exp_l)
       (prose_of_exp ~mode:Prose exp_r)
   | Rel (relcall, rid) ->
     F.asprintf "%sLet %s."
-      (render_ordered_bullet level)
+      bullet
       (prose_of_relcall ~level relcall rid)
   | Return exp ->
     F.asprintf "%sReturn %s."
-      (render_ordered_bullet level)
+      bullet
       (prose_of_exp ~mode:Prose exp)
-  | Result (Some hintexp, exps) -> 
+  | Result (Some hintexp, exps) ->
     F.asprintf "%sResult in %s."
-      (render_ordered_bullet level)
+      bullet
       (prose_of_hintexp ~level:(level + 1) exps hintexp)
   | Result (None, exps) ->
     F.asprintf "%sResult in %s."
-      (render_ordered_bullet level)
+      bullet
       (prose_of_exps ~mode:Prose exps)
   | Group (id, _, instrs) ->
     F.asprintf "%sGroup %s:\n%s"
-      (render_ordered_bullet level) (string_of_relpathid id)
+      bullet (string_of_relpathid id)
       (prose_of_instrs ~level:(level + 1) instrs)
-  | ForEach _ -> F.asprintf "%sForEach." (render_ordered_bullet level)
+  | ForEach ([], instr, vars_in) ->
+    F.asprintf "%s%s, for each %s"
+      bullet
+      (prose_of_instr ~level instr)
+      (prose_of_in_itervars ~mode:Prose vars_in)
+  | ForEach (vars_out, instr, vars_in) ->
+    F.asprintf "%sLet %s, obtained by repeating:\n%s%s\n%s%sfor each %s"
+      bullet
+      (prose_of_out_itervars ~mode:Prose vars_out)
+      (render_attach_block level)
+      (prose_of_instr ~level:(level + 1) ~unordered:true instr |> render_open_block level)
+      (render_attach_block level)
+      (render_indent level)
+      (prose_of_in_itervars ~mode:Prose vars_in)
 
-and prose_of_instrs ?(level = 0) ?(mode = Prose) instrs =
-  List.map (prose_of_instr ~level ~mode) instrs |> String.concat "\n"
+and prose_of_instrs ?(level = 0) instrs =
+  List.map (prose_of_instr ~level ) instrs |> String.concat "\n"
 
-let prose_of_def ?(mode = Prose) (def : def) : string =
+let prose_of_def (def : def) : string =
   match def.it with
   | RelD (relid, exps_input, instrs) ->
       "\n\nrelation " ^ string_of_relid relid ^ ": "
-      ^ prose_of_exps ~mode exps_input ^ "\n\n"
-      ^ prose_of_instrs ~mode instrs
+      ^ prose_of_exps ~mode:Prose exps_input ^ "\n\n"
+      ^ prose_of_instrs instrs
   | DecD _ -> ""
 
-let prose_of_defs ?(mode = Prose) defs =
-  List.map (prose_of_def ~mode) defs |> String.concat "\n"
+let prose_of_defs defs =
+  List.map prose_of_def defs |> String.concat "\n"
 
 let prose_of_spec (spec : spec) = prose_of_defs spec
 

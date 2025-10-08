@@ -16,6 +16,8 @@ type iter = Il.Ast.iter
 (* Variables *)
 type var = Il.Ast.var
 
+type itervars = var list
+
 (* Expressions *)
 
 type exp = Il.Ast.exp
@@ -45,8 +47,8 @@ type relcall =
 type cond =
   | ExpCond of exp
   | RelCond of relcall * rid
-  | ForAllCond of cond * var list
-  | ForAnyCond of cond * var list
+  | ForAllCond of cond * itervars
+  | ForAnyCond of cond * itervars
 
 type instr = instr' phrase
 and instr' =
@@ -59,7 +61,7 @@ and instr' =
   (* Check that % *)
   | Check of cond
   (* Let %, obtained by repeating %, for each % *)
-  | ForEach of var list * instr * var list
+  | ForEach of itervars * instr * itervars
   (* Let % be % *)
   | Let of exp * exp
   (* Let %exps be the result of %renderer(%exps) : %rid *)
