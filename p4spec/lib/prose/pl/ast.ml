@@ -15,13 +15,11 @@ type iter = Il.Ast.iter
 
 (* Variables *)
 type var = Il.Ast.var
-
 type itervars = var list
 
 (* Expressions *)
 
 type exp = Il.Ast.exp
-
 type hintexp = El.Ast.exp
 
 (* Type parameters *)
@@ -51,6 +49,7 @@ type cond =
   | ForAnyCond of cond * itervars
 
 type instr = instr' phrase
+
 and instr' =
   (* % %: \n -> % *)
   | Branch of branchtype * cond * instr list
@@ -72,6 +71,7 @@ and instr' =
   | Group of rid * exp list * instr list
 
 type def = def' phrase
+
 and def' =
   | RelD of rid * exp list * instr list
   | DecD of fid * tparam list * arg list * instr list
