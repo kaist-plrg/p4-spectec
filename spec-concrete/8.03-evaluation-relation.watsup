@@ -1,0 +1,81 @@
+;;
+;;;; Expression evaluation
+;;
+
+relation Expr_eval:
+  cursor evaluationContext store |- typedExpressionIR
+                                  : store expressionResult
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "evaluating" %3#", under cursor" %0#", evaluation context" %1#", and store" %2)
+  hint(prose_out "the resulting store" %4#" and expression result" %5)
+
+;;
+;;;; Argument evaluation
+;;
+
+relation Argument_eval:
+  cursor evaluationContext store |- argumentIR
+                                  : store expressionResult
+  hint(input %0 %1 %2 %3)
+
+;;
+;;;; Statement evaluation
+;;
+
+relation Stmt_eval:
+  cursor evaluationContext store |- statementIR
+                                  : evaluationContext store statementResult
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "the compile-time evaluation of" %3#
+              ", under cursor" %0#", evaluation context" %1#", and store" %2)
+  hint(prose_out "\nthe evaluation context" %4#",\nthe updated store" %5#
+               ",\nand the instantiated statement" %6)
+
+relation BlockElementStmt_eval:
+  evaluationContext store |- blockElementStatementIR
+                           : evaluationContext store statementResult
+  hint(input %0 %1 %2)
+
+relation Block_eval:
+  evaluationContext store |- blockStatementIR
+                           : evaluationContext store statementResult
+  hint(input %0 %1 %2)
+
+;;
+;;;; Parser evaluation
+;;
+
+relation ParserStmt_eval:
+  evaluationContext store |- parserStatementIR
+                           : evaluationContext store statementResult
+  hint(input %0 %1 %2)
+
+relation ParserState_eval:
+  evaluationContext store |- parserStateIR
+                         ==> evaluationContext store transitionResult
+  hint(input %0 %1 %2)
+
+relation ParserLocalDecl_eval:
+  evaluationContext store |- parserLocalDeclarationIR
+                           : evaluationContext store declarationResult
+  hint(input %0 %1 %2)
+
+;;
+;;;; Control evaluation
+;;
+
+relation ControlLocalDecl_eval:
+  evaluationContext store |- controlLocalDeclarationIR
+                           : evaluationContext store declarationResult
+  hint(input %0 %1 %2)
+
+;;
+;;;; Call evaluation
+;;
+
+relation Call_eval:
+  cursor evaluationContext store |- routine
+                                      `< typeArgumentListIR >
+                                      `( argumentListIR )
+                                  : evaluationContext store expressionResult
+  hint(input %0 %1 %2 %3 %4 %5)

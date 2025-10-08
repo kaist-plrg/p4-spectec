@@ -934,7 +934,7 @@ relation Eval_static: `p`, `TC`, and `expressionIR # ( _ _ )`
  .. Group unaryExpressionIR: `p`, `TC`, and `unop typedExpressionIR # ( _ _ )`
 
   ... Let `value` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR`, under cursor `p` and typing context `TC`>>.
-  ... Result in `$un_op(unop, value)`.
+  ... Result in `<<un_op, unop value>>`.
 
 . Else if let `typedExpressionIR~l~ binop' typedExpressionIR~r~` be `expressionIR`:
  .. Group binaryExpressionIR: `p`, `TC`, and `typedExpressionIR~l~ binop' typedExpressionIR~r~ # ( _ _ )`
@@ -942,7 +942,7 @@ relation Eval_static: `p`, `TC`, and `expressionIR # ( _ _ )`
   ... Check that `binop'` is not in `[&&, ||]`.
   ... Let `value~l~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~l~`, under cursor `p` and typing context `TC`>>.
   ... Let `value~r~` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~r~`, under cursor `p` and typing context `TC`>>.
-  ... Result in `$bin_op(binop', value~l~, value~r~)`.
+  ... Result in `<<bin_op, value~l~ binop' value~r~>>`.
   ... If `binop'` matches pattern `&&`:
    .... Let `value` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR~l~`, under cursor `p` and typing context `TC`>>.
    .... If `value` is equal to `B false`:
@@ -6335,7 +6335,7 @@ relation Expr_inst: `p`, `IC`, `STO'`, and `expressionIR # _`
  .. Group unaryExpressionIR: `p`, `IC`, `STO'`, and `unop typedExpressionIR # _`
 
   ... <<Expr_inst, `p IC STO' |- typedExpressionIR ==> STO~1~ value`>>.
-  ... Result in `STO~1~` and `$un_op(unop, value)`.
+  ... Result in `STO~1~` and `<<un_op, unop value>>`.
 . Let `( _ _ )` be `_`.
 . If let `typedExpressionIR~l~ binop' typedExpressionIR~r~` be `expressionIR`:
  .. Group binaryExpressionIR: `p`, `IC`, `STO'`, and `typedExpressionIR~l~ binop' typedExpressionIR~r~ # ( _ _ )`
@@ -6343,7 +6343,7 @@ relation Expr_inst: `p`, `IC`, `STO'`, and `expressionIR # _`
   ... Check that `binop'` is not in `[&&, ||]`.
   ... <<Expr_inst, `p IC STO' |- typedExpressionIR~l~ ==> STO~1~ value~l~`>>.
   ... <<Expr_inst, `p IC STO~1~ |- typedExpressionIR~r~ ==> STO~2~ value~r~`>>.
-  ... Result in `STO~2~` and `$bin_op(binop', value~l~, value~r~)`.
+  ... Result in `STO~2~` and `<<bin_op, value~l~ binop' value~r~>>`.
   ... If `binop'` matches pattern `&&`:
    .... <<Expr_inst, `p IC STO' |- typedExpressionIR~l~ ==> STO~1~ value`>>.
    .... If `value` is equal to `B false`:
@@ -7390,7 +7390,7 @@ relation Program_inst: `p4program`
  .. Let `STO~0~` be `$empty_store`.
  .. <<Decls_inst, `GLOBAL IC~0~ STO~0~ |- declarationIR^{asterisk}^ ==> IC~1~ STO~1~ declarationIR'^{asterisk}^`>>.
  .. Check that `declarationIR'^{asterisk}^` matches pattern `[]`.
- .. Result in `IC~1~.GLOBAL.CONSTRUCTOR`, `IC~1~.GLOBAL.TYPE`, `IC~1~.GLOBAL.ROUTINE`, `IC~1~.GLOBAL.FRAME`, and `STO~1~`.
+ .. Result in `IC~1~.GLOBAL` and `STO~1~`.
 
 relation Bind_arg: `p~caller~`, `IC~caller~`, `p~callee~`, `IC~callee_0~`, `STO~0~`, `id`, and `argumentIR`
 
@@ -7575,17 +7575,111 @@ relation SwitchCases_inst: `p`, `IC`, `STO'`, and `switchCaseIR^{asterisk}^`
   ... <<SwitchCases_inst, `p IC STO~1~ |- switchCaseIR~t~^{asterisk}^ ==> STO~2~ switchCaseIR~t'~^{asterisk}^`>>.
   ... Result in `STO~2~` and `switchCaseIR~h'~ :: switchCaseIR~t'~^{asterisk}^`.
 
-relation Expr_eval: `p`, `EC`, `STO`, and `expressionIR # ( _ _ )`
+relation Expr_eval: `p`, `EC`, `STO'`, and `expressionIR # _`
 
-. Check that `expressionIR` has type `booleanLiteral`.
-. Let `booleanLiteral` be `expressionIR`.
-. Group literalExpressionIR-boolean: `p`, `EC`, `STO`, and `booleanLiteral # ( _ _ )`
+. If let `booleanLiteral` be `expressionIR`:
+ .. Group literalExpressionIR-boolean: `p`, `EC`, `STO'`, and `booleanLiteral # _`
 
- .. If `booleanLiteral` matches pattern `TRUE`:
-  ... Result in the resulting store `STO` and expression result `B true`.
+  ... If `booleanLiteral` matches pattern `TRUE`:
+   .... Result in the resulting store `STO'` and expression result `B true`.
 
- .. Else if `booleanLiteral` matches pattern `FALSE`:
-  ... Result in the resulting store `STO` and expression result `B false`.
+  ... Else if `booleanLiteral` matches pattern `FALSE`:
+   .... Result in the resulting store `STO'` and expression result `B false`.
+
+. Else if let `numberLiteral` be `expressionIR`:
+ .. Group literalExpressionIR-number: `p`, `EC`, `STO'`, and `numberLiteral # _`
+
+  ... If let `D i` be `numberLiteral`:
+   .... Result in the resulting store `STO'` and expression result `D i`.
+
+  ... Else if let `n W i` be `numberLiteral`:
+   .... Result in the resulting store `STO'` and expression result `n W i`.
+
+  ... Else if let `n S i` be `numberLiteral`:
+   .... Result in the resulting store `STO'` and expression result `n S i`.
+
+. Else if let `" text "` be `expressionIR`:
+ .. Group literalExpressionIR-stringLiteral: `p`, `EC`, `STO'`, and `" text " # _`
+
+  ... Result in the resulting store `STO'` and expression result `" text "`.
+
+. Else if let `prefixedNameIR` be `expressionIR`:
+ .. Group referenceExpressionIR: `p`, `EC`, `STO'`, and `prefixedNameIR # _`
+
+  ... Let `value` be `$find_value_eval(p, EC, prefixedNameIR)`.
+  ... Result in the resulting store `STO'` and expression result `value`.
+
+. Else if let `defaultExpression` be `expressionIR`:
+ .. Group defaultExpressionIR: `p`, `EC`, `STO'`, and `... # _`
+
+  ... Result in the resulting store `STO'` and expression result `DEFAULT`.
+
+. Else if let `unop typedExpressionIR` be `expressionIR`:
+ .. Group unaryExpressionIR: `p`, `EC`, `STO'`, and `unop typedExpressionIR # _`
+
+  ... Let `STO~1~` and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR`, under cursor `p`, evaluation context `EC`, and store `STO'`>>.
+  ... Check that `expressionResult` has type `value`.
+  ... Let `value` be `expressionResult`.
+  ... Result in the resulting store `STO~1~` and expression result `<<un_op, unop value>>`.
+. Let `( _ _ )` be `_`.
+. If let `typedExpressionIR~l~ binop' typedExpressionIR~r~` be `expressionIR`:
+ .. Group binaryExpressionIR: `p`, `EC`, `STO'`, and `typedExpressionIR~l~ binop' typedExpressionIR~r~ # ( _ _ )`
+
+  ... Check that `binop'` is not in `[&&, ||]`.
+  ... Let `STO~1~` and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR~l~`, under cursor `p`, evaluation context `EC`, and store `STO'`>>.
+  ... Check that `expressionResult` has type `value`.
+  ... Let `value~l~` be `expressionResult`.
+  ... Let `STO~2~` and `expressionResult'` be the result of <<Expr_eval, evaluating `typedExpressionIR~r~`, under cursor `p`, evaluation context `EC`, and store `STO~1~`>>.
+  ... Check that `expressionResult'` has type `value`.
+  ... Let `value~r~` be `expressionResult'`.
+  ... Result in the resulting store `STO~2~` and expression result `<<bin_op, value~l~ binop' value~r~>>`.
+  ... If `binop'` matches pattern `&&`:
+   .... Let `STO~1~` and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR~l~`, under cursor `p`, evaluation context `EC`, and store `STO'`>>.
+   .... If `expressionResult` is equal to `B false`:
+    ..... Result in the resulting store `STO~1~` and expression result `B false`.
+   .... If `expressionResult` is equal to `B true`:
+    ..... Let `STO~2~` and `expressionResult'` be the result of <<Expr_eval, evaluating `typedExpressionIR~r~`, under cursor `p`, evaluation context `EC`, and store `STO~1~`>>.
+    ..... Check that `expressionResult'` has type `value`.
+    ..... Let `value~r~` be `expressionResult'`.
+    ..... Result in the resulting store `STO~2~` and expression result `value~r~`.
+
+  ... Else if `binop'` matches pattern `||`:
+   .... Let `STO~1~` and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR~l~`, under cursor `p`, evaluation context `EC`, and store `STO'`>>.
+   .... If `expressionResult` is equal to `B true`:
+    ..... Result in the resulting store `STO~1~` and expression result `B true`.
+   .... If `expressionResult` is equal to `B false`:
+    ..... Let `STO~2~` and `expressionResult'` be the result of <<Expr_eval, evaluating `typedExpressionIR~r~`, under cursor `p`, evaluation context `EC`, and store `STO~1~`>>.
+    ..... Check that `expressionResult'` has type `value`.
+    ..... Let `value~r~` be `expressionResult'`.
+    ..... Result in the resulting store `STO~2~` and expression result `value~r~`.
+
+. Else if let `typedExpressionIR~cond~ ? typedExpressionIR~true~ : typedExpressionIR~false~` be `expressionIR`:
+ .. Group ternaryExpressionIR: `p`, `EC`, `STO'`, and `typedExpressionIR~cond~ ? typedExpressionIR~true~ : typedExpressionIR~false~ # _`
+
+  ... Let `STO~1~` and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR~cond~`, under cursor `p`, evaluation context `EC`, and store `STO'`>>.
+  ... If `expressionResult` is equal to `B true`:
+   .... Let `STO~2~` and `expressionResult'` be the result of <<Expr_eval, evaluating `typedExpressionIR~true~`, under cursor `p`, evaluation context `EC`, and store `STO~1~`>>.
+   .... Check that `expressionResult'` has type `value`.
+   .... Let `value~true~` be `expressionResult'`.
+   .... Result in the resulting store `STO~2~` and expression result `value~true~`.
+  ... If `expressionResult` is equal to `B false`:
+   .... Let `STO~2~` and `expressionResult'` be the result of <<Expr_eval, evaluating `typedExpressionIR~false~`, under cursor `p`, evaluation context `EC`, and store `STO~1~`>>.
+   .... Check that `expressionResult'` has type `value`.
+   .... Let `value~false~` be `expressionResult'`.
+   .... Result in the resulting store `STO~2~` and expression result `value~false~`.
+
+. Else if let `( typeIR ) typedExpressionIR` be `expressionIR`:
+ .. Group castExpressionIR: `p`, `EC`, `STO'`, and `( typeIR ) typedExpressionIR # _`
+
+  ... Let `STO~1~` and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR`, under cursor `p`, evaluation context `EC`, and store `STO'`>>.
+  ... Check that `expressionResult` has type `value`.
+  ... Let `value` be `expressionResult`.
+  ... Let `value~cast~` be `$cast_op(typeIR, value)`.
+  ... Result in the resulting store `STO~1~` and expression result `value~cast~`.
+
+relation Argument_eval: `cursor`, `evaluationContext`, `store`, and `argumentIR`
+
+
 
 relation Stmt_eval: `p`, `EC`, `STO`, and `statementIR`
 
@@ -7596,38 +7690,66 @@ relation Stmt_eval: `p`, `EC`, `STO`, and `statementIR`
  .. If let `IF ( typedExpressionIR~cond~ ) statementIR~then~` be `conditionalStatementIR`:
   ... Let `STO~cond~` and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR~cond~`, under cursor `p`, evaluation context `EC`, and store `STO`>>.
   ... If `B true` is equal to `expressionResult`:
-   .... Let `EC~then~`, `STO~then~`, and `statementResult` be the result of <<Stmt_eval, evaluating `statementIR~then~`, under cursor `p`, evaluation context `EC`, and store `STO~cond~`>>.
+   .... Let `EC~then~`, `STO~then~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `statementIR~then~`, under cursor `p`, evaluation context `EC`, and store `STO~cond~`>>.
    .... Result in 
-          * the resulting evaluation context `EC~then~`,
-          * store `STO~then~`,
-          * and statement result `statementResult`.
+          * the evaluation context `EC~then~`,
+          * the updated store `STO~then~`,
+          * and the instantiated statement `statementResult`.
   ... If `B false` is equal to `expressionResult`:
    .... Result in 
-          * the resulting evaluation context `EC`,
-          * store `STO~cond~`,
-          * and statement result `CONT`.
+          * the evaluation context `EC`,
+          * the updated store `STO~cond~`,
+          * and the instantiated statement `CONT`.
   ... If `expressionResult` matches pattern `EXIT`:
    .... Result in 
-          * the resulting evaluation context `EC`,
-          * store `STO~cond~`,
-          * and statement result `EXIT`.
+          * the evaluation context `EC`,
+          * the updated store `STO~cond~`,
+          * and the instantiated statement `EXIT`.
 
  .. Else if let `IF ( typedExpressionIR~cond~ ) statementIR~then~ ELSE statementIR~else~` be `conditionalStatementIR`:
   ... Let `STO~cond~` and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR~cond~`, under cursor `p`, evaluation context `EC`, and store `STO`>>.
   ... If `B true` is equal to `expressionResult`:
-   .... Let `EC~then~`, `STO~then~`, and `statementResult` be the result of <<Stmt_eval, evaluating `statementIR~then~`, under cursor `p`, evaluation context `EC`, and store `STO~cond~`>>.
+   .... Let `EC~then~`, `STO~then~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `statementIR~then~`, under cursor `p`, evaluation context `EC`, and store `STO~cond~`>>.
    .... Result in 
-          * the resulting evaluation context `EC~then~`,
-          * store `STO~then~`,
-          * and statement result `statementResult`.
+          * the evaluation context `EC~then~`,
+          * the updated store `STO~then~`,
+          * and the instantiated statement `statementResult`.
   ... If `B false` is equal to `expressionResult`:
-   .... Let `EC~else~`, `STO~else~`, and `statementResult` be the result of <<Stmt_eval, evaluating `statementIR~else~`, under cursor `p`, evaluation context `EC`, and store `STO~cond~`>>.
+   .... Let `EC~else~`, `STO~else~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `statementIR~else~`, under cursor `p`, evaluation context `EC`, and store `STO~cond~`>>.
    .... Result in 
-          * the resulting evaluation context `EC~else~`,
-          * store `STO~else~`,
-          * and statement result `statementResult`.
+          * the evaluation context `EC~else~`,
+          * the updated store `STO~else~`,
+          * and the instantiated statement `statementResult`.
   ... If `expressionResult` matches pattern `EXIT`:
    .... Result in 
-          * the resulting evaluation context `EC`,
-          * store `STO~cond~`,
-          * and statement result `EXIT`.
+          * the evaluation context `EC`,
+          * the updated store `STO~cond~`,
+          * and the instantiated statement `EXIT`.
+
+relation BlockElementStmt_eval: `evaluationContext`, `store`, and `blockElementStatementIR`
+
+
+
+relation Block_eval: `evaluationContext`, `store`, and `blockStatementIR`
+
+
+
+relation ParserStmt_eval: `evaluationContext`, `store`, and `parserStatementIR`
+
+
+
+relation ParserState_eval: `evaluationContext`, `store`, and `parserStateIR`
+
+
+
+relation ParserLocalDecl_eval: `evaluationContext`, `store`, and `parserLocalDeclarationIR`
+
+
+
+relation ControlLocalDecl_eval: `evaluationContext`, `store`, and `controlLocalDeclarationIR`
+
+
+
+relation Call_eval: `cursor`, `evaluationContext`, `store`, `routine`, `typeArgumentListIR`, and `argumentListIR`
+
+
