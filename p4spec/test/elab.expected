@@ -24499,8 +24499,8 @@ def $find_value_eval(cursor, evaluationContext, prefixedNameIR) : value =
   -- let ` id = prefixedNameIR
   -- if (?() = $find_maps<id, value>(EC.local.frames, id))
 
-;; ../../../../spec-concrete/8.01-evaluation-context.watsup:165.1-165.79
-def $find_typedef_eval(cursor, evaluationContext, prefixedNameIR) : typeDefIR? =
+;; ../../../../spec-concrete/8.01-evaluation-context.watsup:165.1-165.76
+def $find_type_eval(cursor, evaluationContext, prefixedNameIR) : typeDefIR? =
 
   ;; ../../../../spec-concrete/8.01-evaluation-context.watsup:167.1-168.54
   clause 0 : (_cursor, EC, prefixedNameIR) = $find_map<tid, typeDefIR>(EC.global.type, nameIR)
@@ -24559,19 +24559,24 @@ syntax expressionResult =
    | table_struct tid { fieldValue* }
    | exit
 
-;; ../../../../spec-concrete/8.02-evaluation-result.watsup:14.1-16.17
+;; ../../../../spec-concrete/8.02-evaluation-result.watsup:10.1-11.9
+syntax expressionListResult = 
+   | { value* }
+   | exit
+
+;; ../../../../spec-concrete/8.02-evaluation-result.watsup:18.1-20.18
 syntax statementResult = 
    | cont
    | exit
-   | return value
+   | return value?
 
-;; ../../../../spec-concrete/8.02-evaluation-result.watsup:23.1-25.13
+;; ../../../../spec-concrete/8.02-evaluation-result.watsup:27.1-29.13
 syntax transitionResult = 
    | accept
    | reject
    | state id
 
-;; ../../../../spec-concrete/8.02-evaluation-result.watsup:32.1-33.9
+;; ../../../../spec-concrete/8.02-evaluation-result.watsup:36.1-37.9
 syntax declarationResult = 
    | cont
    | exit
@@ -24694,7 +24699,7 @@ relation Expr_eval: cursor evaluationContext store |- typedExpressionIR : store 
     -- let value = expressionResult as value
     -- output: % % % |- % : STO_1 $un_op(unop, value) as expressionResult
 
-  ;; ../../../../spec-concrete/8.04-evaluation-expression.watsup:68.1-99.2
+  ;; ../../../../spec-concrete/8.04-evaluation-expression.watsup:68.1-131.2
   rulegroup binaryExpressionIR
 
    match
@@ -24706,22 +24711,43 @@ relation Expr_eval: cursor evaluationContext store |- typedExpressionIR : store 
 
    paths
 
-    rulepath non-short-circuit
+    rulepath non-short-circuit-exit
     -- let binop = binop'
     -- if ~binop <- [&&, ||]
+    -- Exprs_eval: p EC STO_0 |- [typedExpressionIR_l, typedExpressionIR_r] : STO_1 expressionListResult
+    -- if expressionListResult matches `EXIT`
+    -- output: % % % |- % : STO_1 exit
+
+    rulepath non-short-circuit-cont
+    -- let binop = binop'
+    -- if ~binop <- [&&, ||]
+    -- Exprs_eval: p EC STO_0 |- [typedExpressionIR_l, typedExpressionIR_r] : STO_1 expressionListResult
+    -- if expressionListResult matches `{%}`
+    -- let { value'*{value' <- value'*} } = expressionListResult
+    -- if value'*{value' <- value'*} matches [ _/2 ]
+    -- let [value_l, value_r] = value'*{value' <- value'*}
+    -- let value = $bin_op(binop, value_l, value_r)
+    -- output: % % % |- % : STO_1 value as expressionResult
+
+    rulepath land-exit
+    -- if (binop' = &&)
     -- Expr_eval: p EC STO_0 |- typedExpressionIR_l : STO_1 expressionResult
-    -- if expressionResult <: value
-    -- let value_l = expressionResult as value
-    -- Expr_eval: p EC STO_1 |- typedExpressionIR_r : STO_2 expressionResult'
-    -- if expressionResult' <: value
-    -- let value_r = expressionResult' as value
-    -- output: % % % |- % : STO_2 $bin_op(binop, value_l, value_r) as expressionResult
+    -- if expressionResult matches `EXIT`
+    -- output: % % % |- % : STO_1 exit
 
     rulepath land-false
     -- if (binop' = &&)
     -- Expr_eval: p EC STO_0 |- typedExpressionIR_l : STO_1 expressionResult
     -- if (expressionResult = b false as expressionResult)
     -- output: % % % |- % : STO_1 b false as expressionResult
+
+    rulepath land-true-exit
+    -- if (binop' = &&)
+    -- Expr_eval: p EC STO_0 |- typedExpressionIR_l : STO_1 expressionResult
+    -- if (expressionResult = b true as expressionResult)
+    -- Expr_eval: p EC STO_1 |- typedExpressionIR_r : STO_2 expressionResult'
+    -- if expressionResult' matches `EXIT`
+    -- output: % % % |- % : STO_2 exit
 
     rulepath land-true
     -- if (binop' = &&)
@@ -24732,11 +24758,25 @@ relation Expr_eval: cursor evaluationContext store |- typedExpressionIR : store 
     -- let value_r = expressionResult' as value
     -- output: % % % |- % : STO_2 value_r as expressionResult
 
+    rulepath lor-exit
+    -- if (binop' = ||)
+    -- Expr_eval: p EC STO_0 |- typedExpressionIR_l : STO_1 expressionResult
+    -- if expressionResult matches `EXIT`
+    -- output: % % % |- % : STO_1 exit
+
     rulepath lor-true
     -- if (binop' = ||)
     -- Expr_eval: p EC STO_0 |- typedExpressionIR_l : STO_1 expressionResult
     -- if (expressionResult = b true as expressionResult)
     -- output: % % % |- % : STO_1 b true as expressionResult
+
+    rulepath lor-false-exit
+    -- if (binop' = ||)
+    -- Expr_eval: p EC STO_0 |- typedExpressionIR_l : STO_1 expressionResult
+    -- if (expressionResult = b false as expressionResult)
+    -- Expr_eval: p EC STO_1 |- typedExpressionIR_r : STO_2 expressionResult'
+    -- if expressionResult' matches `EXIT`
+    -- output: % % % |- % : STO_2 exit
 
     rulepath lor-false
     -- if (binop' = ||)
@@ -24747,7 +24787,7 @@ relation Expr_eval: cursor evaluationContext store |- typedExpressionIR : store 
     -- let value_r = expressionResult' as value
     -- output: % % % |- % : STO_2 value_r as expressionResult
 
-  ;; ../../../../spec-concrete/8.04-evaluation-expression.watsup:105.1-119.2
+  ;; ../../../../spec-concrete/8.04-evaluation-expression.watsup:137.1-156.2
   rulegroup ternaryExpressionIR
 
    match
@@ -24759,23 +24799,24 @@ relation Expr_eval: cursor evaluationContext store |- typedExpressionIR : store 
 
    paths
 
-    rulepath true
+    rulepath cond-exit
+    -- Expr_eval: p EC STO_0 |- typedExpressionIR_cond : STO_1 expressionResult
+    -- if expressionResult matches `EXIT`
+    -- output: % % % |- % : STO_1 exit
+
+    rulepath cond-true
     -- Expr_eval: p EC STO_0 |- typedExpressionIR_cond : STO_1 expressionResult
     -- if (expressionResult = b true as expressionResult)
-    -- Expr_eval: p EC STO_1 |- typedExpressionIR_true : STO_2 expressionResult'
-    -- if expressionResult' <: value
-    -- let value_true = expressionResult' as value
-    -- output: % % % |- % : STO_2 value_true as expressionResult
+    -- Expr_eval: p EC STO_1 |- typedExpressionIR_true : STO_2 expressionResult_true
+    -- output: % % % |- % : STO_2 expressionResult_true
 
-    rulepath false
+    rulepath cond-false
     -- Expr_eval: p EC STO_0 |- typedExpressionIR_cond : STO_1 expressionResult
     -- if (expressionResult = b false as expressionResult)
-    -- Expr_eval: p EC STO_1 |- typedExpressionIR_false : STO_2 expressionResult'
-    -- if expressionResult' <: value
-    -- let value_false = expressionResult' as value
-    -- output: % % % |- % : STO_2 value_false as expressionResult
+    -- Expr_eval: p EC STO_1 |- typedExpressionIR_false : STO_2 expressionResult_false
+    -- output: % % % |- % : STO_2 expressionResult_false
 
-  ;; ../../../../spec-concrete/8.04-evaluation-expression.watsup:124.1-127.45
+  ;; ../../../../spec-concrete/8.04-evaluation-expression.watsup:161.1-164.45
   rulegroup castExpressionIR
 
    match
@@ -24794,15 +24835,464 @@ relation Expr_eval: cursor evaluationContext store |- typedExpressionIR : store 
     -- let value_cast = $cast_op(typeIR, value)
     -- output: % % % |- % : STO_1 value_cast as expressionResult
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:16.1-19.26
+  ;; ../../../../spec-concrete/8.04-evaluation-expression.watsup:171.1-172.35
+  rulegroup dataExpressionIR-invalid
+
+   match
+
+    (explicit) p EC STO |- {#} as expressionIR # _expressionNoteIR : % %
+    (implicit) p EC STO |- expressionIR # _expressionNoteIR : % %
+    -- if expressionIR <: dataExpressionIR
+    -- let dataExpressionIR = expressionIR as dataExpressionIR
+    -- if dataExpressionIR matches `{#}`
+
+   paths
+
+    rulepath dataExpressionIR-invalid
+    -- output: % % % |- % : STO {#} as expressionResult
+
+  ;; ../../../../spec-concrete/8.04-evaluation-expression.watsup:177.1-191.2
+  rulegroup dataExpressionIR-sequence
+
+   match
+
+    (explicit) p EC STO_0 |- dataExpressionIR as expressionIR # _expressionNoteIR : % %
+    (implicit) p EC STO_0 |- expressionIR # _expressionNoteIR : % %
+    -- if expressionIR <: dataExpressionIR
+    -- let dataExpressionIR = expressionIR as dataExpressionIR
+
+   paths
+
+    rulepath non-default
+    -- let dataExpressionIR' = dataExpressionIR
+    -- if dataExpressionIR' matches `SEQ{%}`
+    -- let seq{ typedExpressionListIR } = dataExpressionIR'
+    -- Exprs_eval: p EC STO_0 |- typedExpressionListIR : STO_1 expressionListResult
+    -- if expressionListResult matches `{%}`
+    -- let { value*{value <- value*} } = expressionListResult
+    -- output: % % % |- % : STO_1 seq( value*{value <- value*} ) as expressionResult
+
+    rulepath default
+    -- let dataExpressionIR' = dataExpressionIR
+    -- if dataExpressionIR' matches `SEQ{%,...}`
+    -- let seq{ typedExpressionListIR ,...} = dataExpressionIR'
+    -- Exprs_eval: p EC STO_0 |- typedExpressionListIR : STO_1 expressionListResult
+    -- if expressionListResult matches `{%}`
+    -- let { value*{value <- value*} } = expressionListResult
+    -- output: % % % |- % : STO_1 seq( value*{value <- value*} ,...) as expressionResult
+
+  ;; ../../../../spec-concrete/8.04-evaluation-expression.watsup:196.1-210.2
+  rulegroup dataExpressionIR-record
+
+   match
+
+    (explicit) p EC STO_0 |- dataExpressionIR as expressionIR # _expressionNoteIR : % %
+    (implicit) p EC STO_0 |- expressionIR # _expressionNoteIR : % %
+    -- if expressionIR <: dataExpressionIR
+    -- let dataExpressionIR = expressionIR as dataExpressionIR
+
+   paths
+
+    rulepath non-default
+    -- let dataExpressionIR' = dataExpressionIR
+    -- if dataExpressionIR' matches `RECORD{%}`
+    -- let record{ nameIR = typedExpressionIR*{nameIR <- nameIR*, typedExpressionIR <- typedExpressionIR*} } = dataExpressionIR'
+    -- Exprs_eval: p EC STO_0 |- typedExpressionIR*{typedExpressionIR <- typedExpressionIR*} : STO_1 expressionListResult
+    -- if expressionListResult matches `{%}`
+    -- let { value*{value <- value*} } = expressionListResult
+    -- output: % % % |- % : STO_1 record{ value nameIR ;*{nameIR <- nameIR*, value <- value*} } as expressionResult
+
+    rulepath default
+    -- let dataExpressionIR' = dataExpressionIR
+    -- if dataExpressionIR' matches `RECORD{%,...}`
+    -- let record{ nameIR = typedExpressionIR*{nameIR <- nameIR*, typedExpressionIR <- typedExpressionIR*} ,...} = dataExpressionIR'
+    -- Exprs_eval: p EC STO_0 |- typedExpressionIR*{typedExpressionIR <- typedExpressionIR*} : STO_1 expressionListResult
+    -- if expressionListResult matches `{%}`
+    -- let { value*{value <- value*} } = expressionListResult
+    -- output: % % % |- % : STO_1 record{ value nameIR ;*{nameIR <- nameIR*, value <- value*} ,...} as expressionResult
+
+  ;; ../../../../spec-concrete/8.04-evaluation-expression.watsup:218.1-221.63
+  rulegroup errorAccessExpressionIR
+
+   match
+
+    (explicit) p EC STO |- error. nameIR as expressionIR # _expressionNoteIR : % %
+    (implicit) p EC STO |- expressionIR # _expressionNoteIR : % %
+    -- if expressionIR <: errorAccessExpressionIR
+    -- let error. nameIR = expressionIR as errorAccessExpressionIR
+
+   paths
+
+    rulepath errorAccessExpressionIR
+    -- let nameIR_error = "error." ++ nameIR
+    -- let value_error = $find_value_eval(p, EC, ` nameIR_error)
+    -- output: % % % |- % : STO value_error as expressionResult
+
+  ;; ../../../../spec-concrete/8.04-evaluation-expression.watsup:229.1-243.2
+  rulegroup memberAccessExpressionIR-type
+
+   match
+
+    (explicit) p EC STO |- type prefixedNameIR . nameIR as expressionIR # _expressionNoteIR : % %
+    (implicit) p EC STO |- expressionIR # _expressionNoteIR : % %
+    -- if expressionIR <: memberAccessExpressionIR
+    -- let memberAccessBaseIR . nameIR = expressionIR as memberAccessExpressionIR
+    -- if memberAccessBaseIR matches `TYPE%`
+    -- let type prefixedNameIR = memberAccessBaseIR
+
+   paths
+
+    rulepath enum
+    -- let typeDefIR'?{typeDefIR' <- typeDefIR'?} = $find_type_eval(p, EC, prefixedNameIR)
+    -- if typeDefIR'?{typeDefIR' <- typeDefIR'?} matches (_)
+    -- let ?(typeDefIR) = typeDefIR'?{typeDefIR' <- typeDefIR'?}
+    -- if typeDefIR <: enumTypeIR
+    -- let enumTypeIR = typeDefIR as enumTypeIR
+    -- if enumTypeIR matches `ENUM%{%}`
+    -- let enum tid { _id*{_id <- _id*} } = enumTypeIR
+    -- output: % % % |- % : STO tid . nameIR as expressionResult
+
+    rulepath serenum
+    -- let typeDefIR'?{typeDefIR' <- typeDefIR'?} = $find_type_eval(p, EC, prefixedNameIR)
+    -- if typeDefIR'?{typeDefIR' <- typeDefIR'?} matches (_)
+    -- let ?(typeDefIR) = typeDefIR'?{typeDefIR' <- typeDefIR'?}
+    -- if typeDefIR <: enumTypeIR
+    -- let enumTypeIR = typeDefIR as enumTypeIR
+    -- if enumTypeIR matches `ENUM%#%{%}`
+    -- let enum tid # _typeIR { id_member = value_member ;*{id_member <- id_member*, value_member <- value_member*} } = enumTypeIR
+    -- let value'?{value' <- value'?} = $assoc_<nameIR, value>(nameIR, (id_member, value_member)*{id_member <- id_member*, value_member <- value_member*})
+    -- if value'?{value' <- value'?} matches (_)
+    -- let ?(value) = value'?{value' <- value'?}
+    -- output: % % % |- % : STO tid . nameIR # value as expressionResult
+
+  ;; ../../../../spec-concrete/8.04-evaluation-expression.watsup:247.1-284.2
+  rulegroup memberAccessExpressionIR-expression
+
+   match
+
+    (explicit) p EC STO |- typedExpressionIR_base as memberAccessBaseIR . nameIR' as expressionIR # ( typeIR_base _ctk ) : % %
+    (implicit) p EC STO |- expressionIR # ( typeIR_base _ctk ) : % %
+    -- if expressionIR <: memberAccessExpressionIR
+    -- let memberAccessBaseIR . nameIR' = expressionIR as memberAccessExpressionIR
+    -- if memberAccessBaseIR <: typedExpressionIR
+    -- let typedExpressionIR_base = memberAccessBaseIR as typedExpressionIR
+
+   paths
+
+    rulepath exit
+    -- let nameIR = nameIR'
+    -- Expr_eval: p EC STO |- typedExpressionIR_base : store expressionResult
+    -- if (store = STO)
+    -- if expressionResult matches `EXIT`
+    -- output: % % % |- % : STO exit
+
+    rulepath stack-size
+    -- if (nameIR' = "size")
+    -- Expr_eval: p EC STO |- typedExpressionIR_base : store expressionResult
+    -- if (store = STO)
+    -- if expressionResult <: value
+    -- let value_base = expressionResult as value
+    -- let value = value_base
+    -- if value <: headerStackValue
+    -- let [ _value*{_value <- _value*} #( _nat ; n_size )] = value as headerStackValue
+    -- output: % % % |- % : STO d n_size as int as expressionResult
+
+    rulepath struct
+    -- let nameIR = nameIR'
+    -- Expr_eval: p EC STO |- typedExpressionIR_base : store expressionResult
+    -- if (store = STO)
+    -- if expressionResult <: value
+    -- let value_base = expressionResult as value
+    -- let value = value_base
+    -- if value <: structValue
+    -- let struct _tid { value_field id_field ;*{id_field <- id_field*, value_field <- value_field*} } = value as structValue
+    -- let value'?{value' <- value'?} = $assoc_<nameIR, value>(nameIR, (id_field, value_field)*{id_field <- id_field*, value_field <- value_field*})
+    -- if value'?{value' <- value'?} matches (_)
+    -- let ?(value_member) = value'?{value' <- value'?}
+    -- output: % % % |- % : STO value_member as expressionResult
+
+    rulepath header
+    -- let nameIR = nameIR'
+    -- Expr_eval: p EC STO |- typedExpressionIR_base : store expressionResult
+    -- if (store = STO)
+    -- if expressionResult <: value
+    -- let value_base = expressionResult as value
+    -- let value = value_base
+    -- if value <: headerValue
+    -- let header _tid { value_field id_field ;*{id_field <- id_field*, value_field <- value_field*} } = value as headerValue
+    -- let value'?{value' <- value'?} = $assoc_<nameIR, value>(nameIR, (id_field, value_field)*{id_field <- id_field*, value_field <- value_field*})
+    -- if value'?{value' <- value'?} matches (_)
+    -- let ?(value_member) = value'?{value' <- value'?}
+    -- output: % % % |- % : STO value_member as expressionResult
+
+    rulepath headerUnion
+    -- let nameIR = nameIR'
+    -- Expr_eval: p EC STO |- typedExpressionIR_base : store expressionResult
+    -- if (store = STO)
+    -- if expressionResult <: value
+    -- let value_base = expressionResult as value
+    -- let value = value_base
+    -- if value <: headerUnionValue
+    -- let header_union _tid { value_field id_field ;*{id_field <- id_field*, value_field <- value_field*} } = value as headerUnionValue
+    -- let value'?{value' <- value'?} = $assoc_<nameIR, value>(nameIR, (id_field, value_field)*{id_field <- id_field*, value_field <- value_field*})
+    -- if value'?{value' <- value'?} matches (_)
+    -- let ?(value_member) = value'?{value' <- value'?}
+    -- output: % % % |- % : STO value_member as expressionResult
+
+  ;; ../../../../spec-concrete/8.04-evaluation-expression.watsup:291.1-310.2
+  rulegroup indexAccessExpressionIR
+
+   match
+
+    (explicit) p EC STO_0 |- typedExpressionIR_base [ typedExpressionIR_index ] as expressionIR # _expressionNoteIR : % %
+    (implicit) p EC STO_0 |- expressionIR # _expressionNoteIR : % %
+    -- if expressionIR <: indexAccessExpressionIR
+    -- let typedExpressionIR_base [ typedExpressionIR_index ] = expressionIR as indexAccessExpressionIR
+
+   paths
+
+    rulepath exit
+    -- Exprs_eval: p EC STO_0 |- [typedExpressionIR_base, typedExpressionIR_index] : STO_1 expressionListResult
+    -- if expressionListResult matches `EXIT`
+    -- output: % % % |- % : STO_1 exit
+
+    rulepath tuple-exit
+    -- Exprs_eval: p EC STO_0 |- [typedExpressionIR_base, typedExpressionIR_index] : STO_1 expressionListResult
+    -- if expressionListResult matches `{%}`
+    -- let { value'*{value' <- value'*} } = expressionListResult
+    -- if value'*{value' <- value'*} matches [ _/2 ]
+    -- let [value_base, value_index] = value'*{value' <- value'*}
+    -- let value'' = value_base
+    -- if value'' <: tupleValue
+    -- let ( value_elem*{value_elem <- value_elem*} ) = value'' as tupleValue
+    -- let int = $to_number(value_index)
+    -- if int <: nat
+    -- let n_index = int as nat
+    -- let value = value_elem*{value_elem <- value_elem*}[n_index]
+    -- output: % % % |- % : STO_1 value as expressionResult
+
+  ;; ../../../../spec-concrete/8.04-evaluation-expression.watsup:316.1-333.2
+  rulegroup sliceAccessExpressionIR
+
+   match
+
+    (explicit) p EC STO_0 |- typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ] as expressionIR # _expressionNoteIR : % %
+    (implicit) p EC STO_0 |- expressionIR # _expressionNoteIR : % %
+    -- if expressionIR <: sliceAccessExpressionIR
+    -- let typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ] = expressionIR as sliceAccessExpressionIR
+
+   paths
+
+    rulepath exit
+    -- Exprs_eval: p EC STO_0 |- [typedExpressionIR_base, typedExpressionIR_hi, typedExpressionIR_lo] : STO_1 expressionListResult
+    -- if expressionListResult matches `EXIT`
+    -- output: % % % |- % : STO_1 exit
+
+    rulepath cont
+    -- Exprs_eval: p EC STO_0 |- [typedExpressionIR_base, typedExpressionIR_hi, typedExpressionIR_lo] : STO_1 expressionListResult
+    -- if expressionListResult matches `{%}`
+    -- let { value'*{value' <- value'*} } = expressionListResult
+    -- if value'*{value' <- value'*} matches [ _/3 ]
+    -- let [value_base, value_hi, value_lo] = value'*{value' <- value'*}
+    -- let value = $bitacc_op(value_base, value_hi, value_lo)
+    -- output: % % % |- % : STO_1 value as expressionResult
+
+  ;; ../../../../spec-concrete/8.04-evaluation-expression.watsup:351.1-353.62
+  rulegroup parenthesizedExpressionIR
+
+   match
+
+    (explicit) p EC STO_0 |- ( typedExpressionIR ) as expressionIR # _expressionNoteIR : % %
+    (implicit) p EC STO_0 |- expressionIR # _expressionNoteIR : % %
+    -- if expressionIR <: parenthesizedExpressionIR
+    -- let ( typedExpressionIR ) = expressionIR as parenthesizedExpressionIR
+
+   paths
+
+    rulepath parenthesizedExpressionIR
+    -- Expr_eval: p EC STO_0 |- typedExpressionIR : STO_1 expressionResult
+    -- if expressionResult <: value
+    -- let value = expressionResult as value
+    -- output: % % % |- % : STO_1 value as expressionResult
+
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:12.1-17.76
+relation Exprs_eval: cursor evaluationContext store |- typedExpressionIR* : store expressionListResult
+
+  ;; ../../../../spec-concrete/8.04-evaluation-expression.watsup:361.1-362.35
+  rulegroup nil
+
+   match
+
+    (explicit) p EC STO |- [] : % %
+    (implicit) p EC STO |- typedExpressionIR*{typedExpressionIR <- typedExpressionIR*} : % %
+    -- if typedExpressionIR*{typedExpressionIR <- typedExpressionIR*} matches []
+
+   paths
+
+    rulepath nil
+    -- output: % % % |- % : STO { [] }
+
+  ;; ../../../../spec-concrete/8.04-evaluation-expression.watsup:364.1-368.53
+  rulegroup cons-head-exit
+
+   match
+
+    (explicit) p EC STO_0 |- typedExpressionIR_h :: typedExpressionIR_t*{typedExpressionIR_t <- typedExpressionIR_t*} : % %
+    (implicit) p EC STO_0 |- typedExpressionIR*{typedExpressionIR <- typedExpressionIR*} : % %
+    -- if typedExpressionIR*{typedExpressionIR <- typedExpressionIR*} matches _ :: _
+    -- let typedExpressionIR_h :: typedExpressionIR_t*{typedExpressionIR_t <- typedExpressionIR_t*} = typedExpressionIR*{typedExpressionIR <- typedExpressionIR*}
+
+   paths
+
+    rulepath cons-head-exit
+    -- Expr_eval: p EC STO_0 |- typedExpressionIR_h : STO_1 expressionResult
+    -- if expressionResult matches `EXIT`
+    -- output: % % % |- % : STO_1 exit
+
+  ;; ../../../../spec-concrete/8.04-evaluation-expression.watsup:370.1-376.65
+  rulegroup cons-head-cont
+
+   match
+
+    (explicit) p EC STO_0 |- typedExpressionIR_h :: typedExpressionIR_t*{typedExpressionIR_t <- typedExpressionIR_t*} : % %
+    (implicit) p EC STO_0 |- typedExpressionIR*{typedExpressionIR <- typedExpressionIR*} : % %
+    -- if typedExpressionIR*{typedExpressionIR <- typedExpressionIR*} matches _ :: _
+    -- let typedExpressionIR_h :: typedExpressionIR_t*{typedExpressionIR_t <- typedExpressionIR_t*} = typedExpressionIR*{typedExpressionIR <- typedExpressionIR*}
+
+   paths
+
+    rulepath cons-head-cont
+    -- Expr_eval: p EC STO_0 |- typedExpressionIR_h : STO_1 expressionResult
+    -- if expressionResult <: value
+    -- let value_h = expressionResult as value
+    -- Exprs_eval: p EC STO_1 |- typedExpressionIR_t*{typedExpressionIR_t <- typedExpressionIR_t*} : STO_2 expressionListResult
+    -- if expressionListResult matches `{%}`
+    -- let { value_t*{value_t <- value_t*} } = expressionListResult
+    -- output: % % % |- % : STO_2 { value_h :: value_t*{value_t <- value_t*} }
+
+  ;; ../../../../spec-concrete/8.04-evaluation-expression.watsup:378.1-384.54
+  rulegroup cons-tail-exit
+
+   match
+
+    (explicit) p EC STO_0 |- typedExpressionIR_h :: typedExpressionIR_t*{typedExpressionIR_t <- typedExpressionIR_t*} : % %
+    (implicit) p EC STO_0 |- typedExpressionIR*{typedExpressionIR <- typedExpressionIR*} : % %
+    -- if typedExpressionIR*{typedExpressionIR <- typedExpressionIR*} matches _ :: _
+    -- let typedExpressionIR_h :: typedExpressionIR_t*{typedExpressionIR_t <- typedExpressionIR_t*} = typedExpressionIR*{typedExpressionIR <- typedExpressionIR*}
+
+   paths
+
+    rulepath cons-tail-exit
+    -- Expr_eval: p EC STO_0 |- typedExpressionIR_h : STO_1 expressionResult
+    -- if expressionResult <: value
+    -- let value_h = expressionResult as value
+    -- Exprs_eval: p EC STO_1 |- typedExpressionIR_t*{typedExpressionIR_t <- typedExpressionIR_t*} : STO_2 expressionListResult
+    -- if expressionListResult matches `EXIT`
+    -- output: % % % |- % : STO_2 exit
+
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:23.1-26.26
 relation Argument_eval: cursor evaluationContext store |- argumentIR : store expressionResult
 
+  ;; ../../../../spec-concrete/8.05-evaluation-argument.watsup:9.1-11.62
+  rulegroup typedExpressionIR
 
+   match
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:25.1-32.55
+    (explicit) p EC STO_0 |- typedExpressionIR as argumentIR : % %
+    (implicit) p EC STO_0 |- argumentIR : % %
+    -- if argumentIR <: typedExpressionIR
+    -- let typedExpressionIR = argumentIR as typedExpressionIR
+
+   paths
+
+    rulepath typedExpressionIR
+    -- Expr_eval: p EC STO_0 |- typedExpressionIR : STO_1 expressionResult
+    -- if expressionResult <: value
+    -- let value = expressionResult as value
+    -- output: % % % |- % : STO_1 value as expressionResult
+
+  ;; ../../../../spec-concrete/8.05-evaluation-argument.watsup:15.1-17.62
+  rulegroup nameIR-typedExpressionIR
+
+   match
+
+    (explicit) p EC STO_0 |- nameIR = typedExpressionIR : % %
+    (implicit) p EC STO_0 |- argumentIR : % %
+    -- if argumentIR matches `%=%`
+    -- let nameIR = typedExpressionIR = argumentIR
+
+   paths
+
+    rulepath nameIR-typedExpressionIR
+    -- Expr_eval: p EC STO_0 |- typedExpressionIR : STO_1 expressionResult
+    -- if expressionResult <: value
+    -- let value = expressionResult as value
+    -- output: % % % |- % : STO_1 value as expressionResult
+
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:32.1-39.55
 relation Stmt_eval: cursor evaluationContext store |- statementIR : evaluationContext store statementResult
 
-  ;; ../../../../spec-concrete/8.10-mini-evaluation.watsup:1.1-42.2
+  ;; ../../../../spec-concrete/8.06-evaluation-statement.watsup:9.1-10.31
+  rulegroup emptyStatementIR
+
+   match
+
+    (explicit) p EC STO |- ; as statementIR : % % %
+    (implicit) p EC STO |- statementIR : % % %
+    -- if statementIR <: emptyStatement
+    -- let emptyStatement = statementIR as emptyStatement
+    -- if (emptyStatement = ;)
+
+   paths
+
+    rulepath emptyStatementIR
+    -- output: % % % |- % : EC STO cont
+
+  ;; ../../../../spec-concrete/8.06-evaluation-statement.watsup:25.1-36.2
+  rulegroup returnStatementIR
+
+   match
+
+    (explicit) local EC store |- returnStatementIR as statementIR : % % %
+    (implicit) cursor EC store |- statementIR : % % %
+    -- if cursor matches `LOCAL`
+    -- if statementIR <: returnStatementIR
+    -- let returnStatementIR = statementIR as returnStatementIR
+
+   paths
+
+    rulepath non-expression
+    -- let STO = store
+    -- if (returnStatementIR = return;)
+    -- output: % % % |- % : EC STO return ?()
+
+    rulepath expression
+    -- let STO_0 = store
+    -- let returnStatementIR' = returnStatementIR
+    -- if returnStatementIR' matches `RETURN%;`
+    -- let return typedExpressionIR ; = returnStatementIR'
+    -- Expr_eval: local EC STO_0 |- typedExpressionIR : STO_1 expressionResult
+    -- if expressionResult <: value
+    -- let value = expressionResult as value
+    -- output: % % % |- % : EC STO_1 return ?(value)
+
+  ;; ../../../../spec-concrete/8.06-evaluation-statement.watsup:41.1-42.36
+  rulegroup exitStatement
+
+   match
+
+    (explicit) p EC STO |- exit; as statementIR : % % %
+    (implicit) p EC STO |- statementIR : % % %
+    -- if statementIR <: exitStatement
+    -- let exitStatement = statementIR as exitStatement
+    -- if (exitStatement = exit;)
+
+   paths
+
+    rulepath exitStatement
+    -- output: % % % |- % : EC STO exit
+
+  ;; ../../../../spec-concrete/8.06-evaluation-statement.watsup:54.1-89.2
   rulegroup conditionalStatementIR
 
    match
@@ -24819,7 +25309,7 @@ relation Stmt_eval: cursor evaluationContext store |- statementIR : evaluationCo
     -- if conditionalStatementIR' matches `IF(%)%`
     -- let if( typedExpressionIR_cond ) statementIR_then = conditionalStatementIR'
     -- Expr_eval: p EC STO |- typedExpressionIR_cond : STO_cond expressionResult
-    -- if (b true as expressionResult = expressionResult)
+    -- if (expressionResult = b true as expressionResult)
     -- Stmt_eval: p EC STO_cond |- statementIR_then : EC_then STO_then statementResult
     -- output: % % % |- % : EC_then STO_then statementResult
 
@@ -24828,7 +25318,7 @@ relation Stmt_eval: cursor evaluationContext store |- statementIR : evaluationCo
     -- if conditionalStatementIR' matches `IF(%)%`
     -- let if( typedExpressionIR_cond ) statementIR_then = conditionalStatementIR'
     -- Expr_eval: p EC STO |- typedExpressionIR_cond : STO_cond expressionResult
-    -- if (b false as expressionResult = expressionResult)
+    -- if (expressionResult = b false as expressionResult)
     -- output: % % % |- % : EC STO_cond cont
 
     rulepath non-else-exit
@@ -24836,7 +25326,7 @@ relation Stmt_eval: cursor evaluationContext store |- statementIR : evaluationCo
     -- if conditionalStatementIR' matches `IF(%)%`
     -- let if( typedExpressionIR_cond ) statementIR_then = conditionalStatementIR'
     -- Expr_eval: p EC STO |- typedExpressionIR_cond : STO_cond expressionResult
-    -- if (exit = expressionResult)
+    -- if expressionResult matches `EXIT`
     -- output: % % % |- % : EC STO_cond exit
 
     rulepath else-cont-true
@@ -24844,7 +25334,7 @@ relation Stmt_eval: cursor evaluationContext store |- statementIR : evaluationCo
     -- if conditionalStatementIR' matches `IF(%)%ELSE%`
     -- let if( typedExpressionIR_cond ) statementIR_then else statementIR_else = conditionalStatementIR'
     -- Expr_eval: p EC STO |- typedExpressionIR_cond : STO_cond expressionResult
-    -- if (b true as expressionResult = expressionResult)
+    -- if (expressionResult = b true as expressionResult)
     -- Stmt_eval: p EC STO_cond |- statementIR_then : EC_then STO_then statementResult
     -- output: % % % |- % : EC_then STO_then statementResult
 
@@ -24853,7 +25343,7 @@ relation Stmt_eval: cursor evaluationContext store |- statementIR : evaluationCo
     -- if conditionalStatementIR' matches `IF(%)%ELSE%`
     -- let if( typedExpressionIR_cond ) statementIR_then else statementIR_else = conditionalStatementIR'
     -- Expr_eval: p EC STO |- typedExpressionIR_cond : STO_cond expressionResult
-    -- if (b false as expressionResult = expressionResult)
+    -- if (expressionResult = b false as expressionResult)
     -- Stmt_eval: p EC STO_cond |- statementIR_else : EC_else STO_else statementResult
     -- output: % % % |- % : EC_else STO_else statementResult
 
@@ -24862,40 +25352,40 @@ relation Stmt_eval: cursor evaluationContext store |- statementIR : evaluationCo
     -- if conditionalStatementIR' matches `IF(%)%ELSE%`
     -- let if( typedExpressionIR_cond ) statementIR_then else statementIR_else = conditionalStatementIR'
     -- Expr_eval: p EC STO |- typedExpressionIR_cond : STO_cond expressionResult
-    -- if (exit = expressionResult)
+    -- if expressionResult matches `EXIT`
     -- output: % % % |- % : EC STO_cond exit
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:34.1-37.23
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:41.1-44.23
 relation BlockElementStmt_eval: evaluationContext store |- blockElementStatementIR : evaluationContext store statementResult
 
 
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:39.1-42.23
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:46.1-49.23
 relation Block_eval: evaluationContext store |- blockStatementIR : evaluationContext store statementResult
 
 
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:48.1-51.23
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:55.1-58.23
 relation ParserStmt_eval: evaluationContext store |- parserStatementIR : evaluationContext store statementResult
 
 
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:53.1-56.23
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:60.1-63.23
 relation ParserState_eval: evaluationContext store |- parserStateIR ==> evaluationContext store transitionResult
 
 
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:58.1-61.23
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:65.1-68.23
 relation ParserLocalDecl_eval: evaluationContext store |- parserLocalDeclarationIR : evaluationContext store declarationResult
 
 
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:67.1-70.23
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:74.1-77.23
 relation ControlLocalDecl_eval: evaluationContext store |- controlLocalDeclarationIR : evaluationContext store declarationResult
 
 
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:76.1-81.32
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:83.1-88.32
 relation Call_eval: cursor evaluationContext store |- routine < typeArgumentListIR >( argumentListIR ): evaluationContext store expressionResult
 
 

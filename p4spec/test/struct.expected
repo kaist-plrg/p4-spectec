@@ -26409,8 +26409,8 @@ def $find_value_eval(p', EC, prefixedNameIR)
 
         1. Return $find_value_eval((block), EC, (` id))
 
-;; ../../../../spec-concrete/8.01-evaluation-context.watsup:165.1-165.79
-def $find_typedef_eval(_cursor, EC, prefixedNameIR)
+;; ../../../../spec-concrete/8.01-evaluation-context.watsup:165.1-165.76
+def $find_type_eval(_cursor, EC, prefixedNameIR)
 
 1. Case analysis on prefixedNameIR
 
@@ -26479,19 +26479,24 @@ syntax expressionResult =
    | table_struct tid { fieldValue* }
    | exit
 
-;; ../../../../spec-concrete/8.02-evaluation-result.watsup:14.1-16.17
+;; ../../../../spec-concrete/8.02-evaluation-result.watsup:10.1-11.9
+syntax expressionListResult = 
+   | { value* }
+   | exit
+
+;; ../../../../spec-concrete/8.02-evaluation-result.watsup:18.1-20.18
 syntax statementResult = 
    | cont
    | exit
-   | return value
+   | return value?
 
-;; ../../../../spec-concrete/8.02-evaluation-result.watsup:23.1-25.13
+;; ../../../../spec-concrete/8.02-evaluation-result.watsup:27.1-29.13
 syntax transitionResult = 
    | accept
    | reject
    | state id
 
-;; ../../../../spec-concrete/8.02-evaluation-result.watsup:32.1-33.9
+;; ../../../../spec-concrete/8.02-evaluation-result.watsup:36.1-37.9
 syntax declarationResult = 
    | cont
    | exit
@@ -26595,19 +26600,25 @@ relation Expr_eval: p EC STO' |- (expressionIR # _expressionNoteIR') : % %
 
       1. If (~binop' is in [(&&), (||)]), then
 
-        1. (Expr_eval: p EC STO' |- typedExpressionIR_l : STO_1 expressionResult)
+        1. (Exprs_eval: p EC STO' |- [typedExpressionIR_l, typedExpressionIR_r] : STO_1 expressionListResult)
 
-        2. If ((expressionResult has type value)), then
+        2. Case analysis on expressionListResult
 
-          1. (Let value_l be (expressionResult as value))
+          1. Case (% matches pattern `EXIT`)
 
-          2. (Expr_eval: p EC STO_1 |- typedExpressionIR_r : STO_2 expressionResult')
+            1. Result in : % % % |- % : STO_1 (exit)
 
-          3. If ((expressionResult' has type value)), then
+          2. Case (% matches pattern `{%}`)
 
-            1. (Let value_r be (expressionResult' as value))
+            1. (Let ({ value'*{value' <- value'*} }) be expressionListResult)
 
-            2. Result in : % % % |- % : STO_2 ($bin_op(binop', value_l, value_r) as expressionResult)
+            2. If ((value'*{value' <- value'*} matches pattern [ _/2 ])), then
+
+              1. (Let [value_l, value_r] be value'*{value' <- value'*})
+
+              2. (Let value be $bin_op(binop', value_l, value_r))
+
+              3. Result in : % % % |- % : STO_1 (value as expressionResult)
 
       2. Case analysis on binop'
 
@@ -26615,15 +26626,23 @@ relation Expr_eval: p EC STO' |- (expressionIR # _expressionNoteIR') : % %
 
           1. (Expr_eval: p EC STO' |- typedExpressionIR_l : STO_1 expressionResult)
 
-          2. If ((expressionResult = ((b false) as expressionResult))), then
+          2. If ((expressionResult matches pattern `EXIT`)), then
+
+            1. Result in : % % % |- % : STO_1 (exit)
+
+          3. If ((expressionResult = ((b false) as expressionResult))), then
 
             1. Result in : % % % |- % : STO_1 ((b false) as expressionResult)
 
-          3. If ((expressionResult = ((b true) as expressionResult))), then
+          4. If ((expressionResult = ((b true) as expressionResult))), then
 
             1. (Expr_eval: p EC STO_1 |- typedExpressionIR_r : STO_2 expressionResult')
 
-            2. If ((expressionResult' has type value)), then
+            2. If ((expressionResult' matches pattern `EXIT`)), then
+
+              1. Result in : % % % |- % : STO_2 (exit)
+
+            3. If ((expressionResult' has type value)), then
 
               1. (Let value_r be (expressionResult' as value))
 
@@ -26633,15 +26652,23 @@ relation Expr_eval: p EC STO' |- (expressionIR # _expressionNoteIR') : % %
 
           1. (Expr_eval: p EC STO' |- typedExpressionIR_l : STO_1 expressionResult)
 
-          2. If ((expressionResult = ((b true) as expressionResult))), then
+          2. If ((expressionResult matches pattern `EXIT`)), then
+
+            1. Result in : % % % |- % : STO_1 (exit)
+
+          3. If ((expressionResult = ((b true) as expressionResult))), then
 
             1. Result in : % % % |- % : STO_1 ((b true) as expressionResult)
 
-          3. If ((expressionResult = ((b false) as expressionResult))), then
+          4. If ((expressionResult = ((b false) as expressionResult))), then
 
             1. (Expr_eval: p EC STO_1 |- typedExpressionIR_r : STO_2 expressionResult')
 
-            2. If ((expressionResult' has type value)), then
+            2. If ((expressionResult' matches pattern `EXIT`)), then
+
+              1. Result in : % % % |- % : STO_2 (exit)
+
+            3. If ((expressionResult' has type value)), then
 
               1. (Let value_r be (expressionResult' as value))
 
@@ -26655,25 +26682,21 @@ relation Expr_eval: p EC STO' |- (expressionIR # _expressionNoteIR') : % %
 
       1. (Expr_eval: p EC STO' |- typedExpressionIR_cond : STO_1 expressionResult)
 
-      2. If ((expressionResult = ((b true) as expressionResult))), then
+      2. If ((expressionResult matches pattern `EXIT`)), then
 
-        1. (Expr_eval: p EC STO_1 |- typedExpressionIR_true : STO_2 expressionResult')
+        1. Result in : % % % |- % : STO_1 (exit)
 
-        2. If ((expressionResult' has type value)), then
+      3. If ((expressionResult = ((b true) as expressionResult))), then
 
-          1. (Let value_true be (expressionResult' as value))
+        1. (Expr_eval: p EC STO_1 |- typedExpressionIR_true : STO_2 expressionResult_true)
 
-          2. Result in : % % % |- % : STO_2 (value_true as expressionResult)
+        2. Result in : % % % |- % : STO_2 expressionResult_true
 
-      3. If ((expressionResult = ((b false) as expressionResult))), then
+      4. If ((expressionResult = ((b false) as expressionResult))), then
 
-        1. (Expr_eval: p EC STO_1 |- typedExpressionIR_false : STO_2 expressionResult')
+        1. (Expr_eval: p EC STO_1 |- typedExpressionIR_false : STO_2 expressionResult_false)
 
-        2. If ((expressionResult' has type value)), then
-
-          1. (Let value_false be (expressionResult' as value))
-
-          2. Result in : % % % |- % : STO_2 (value_false as expressionResult)
+        2. Result in : % % % |- % : STO_2 expressionResult_false
 
   3. Case (% has type castExpressionIR)
 
@@ -26691,95 +26714,482 @@ relation Expr_eval: p EC STO' |- (expressionIR # _expressionNoteIR') : % %
 
         3. Result in : % % % |- % : STO_1 (value_cast as expressionResult)
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:16.1-19.26
-relation Argument_eval: cursor evaluationContext store |- argumentIR : % %
+  4. Case (% has type dataExpressionIR)
 
+    1. (Let dataExpressionIR be (expressionIR as dataExpressionIR))
 
+    2. If ((dataExpressionIR matches pattern `{#}`)), then
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:25.1-32.55
-relation Stmt_eval: p EC STO |- statementIR : % % %
+      1. Group dataExpressionIR-invalid: p EC STO' |- ((({#}) as expressionIR) # _expressionNoteIR') : % %
 
-1. If ((statementIR has type conditionalStatementIR)), then
+        1. Result in : % % % |- % : STO' (({#}) as expressionResult)
 
-  1. (Let conditionalStatementIR be (statementIR as conditionalStatementIR))
+    3. Group dataExpressionIR-sequence: p EC STO' |- ((dataExpressionIR as expressionIR) # _expressionNoteIR') : % %
 
-  2. Group conditionalStatementIR: p EC STO |- (conditionalStatementIR as statementIR) : % % %
+      1. Case analysis on dataExpressionIR
 
-    1. Case analysis on conditionalStatementIR
+        1. Case (% matches pattern `SEQ{%}`)
 
-      1. Case (% matches pattern `IF(%)%`)
+          1. (Let (seq{ typedExpressionListIR }) be dataExpressionIR)
 
-        1. (Let (if( typedExpressionIR_cond ) statementIR_then) be conditionalStatementIR)
+          2. (Exprs_eval: p EC STO' |- typedExpressionListIR : STO_1 expressionListResult)
 
-        2. (Expr_eval: p EC STO |- typedExpressionIR_cond : STO_cond expressionResult)
+          3. If ((expressionListResult matches pattern `{%}`)), then
 
-        3. If ((((b true) as expressionResult) = expressionResult)), then
+            1. (Let ({ value*{value <- value*} }) be expressionListResult)
 
-          1. (Stmt_eval: p EC STO_cond |- statementIR_then : EC_then STO_then statementResult)
+            2. Result in : % % % |- % : STO_1 ((seq( value*{value <- value*} )) as expressionResult)
 
-          2. Result in : % % % |- % : EC_then STO_then statementResult
+        2. Case (% matches pattern `SEQ{%,...}`)
 
-        4. If ((((b false) as expressionResult) = expressionResult)), then
+          1. (Let (seq{ typedExpressionListIR ,...}) be dataExpressionIR)
 
-          1. Result in : % % % |- % : EC STO_cond (cont)
+          2. (Exprs_eval: p EC STO' |- typedExpressionListIR : STO_1 expressionListResult)
 
-        5. If ((expressionResult matches pattern `EXIT`)), then
+          3. If ((expressionListResult matches pattern `{%}`)), then
 
-          1. Result in : % % % |- % : EC STO_cond (exit)
+            1. (Let ({ value*{value <- value*} }) be expressionListResult)
 
-      2. Case (% matches pattern `IF(%)%ELSE%`)
+            2. Result in : % % % |- % : STO_1 ((seq( value*{value <- value*} ,...)) as expressionResult)
 
-        1. (Let (if( typedExpressionIR_cond ) statementIR_then else statementIR_else) be conditionalStatementIR)
+    4. Group dataExpressionIR-record: p EC STO' |- ((dataExpressionIR as expressionIR) # _expressionNoteIR') : % %
 
-        2. (Expr_eval: p EC STO |- typedExpressionIR_cond : STO_cond expressionResult)
+      1. Case analysis on dataExpressionIR
 
-        3. If ((((b true) as expressionResult) = expressionResult)), then
+        1. Case (% matches pattern `RECORD{%}`)
 
-          1. (Stmt_eval: p EC STO_cond |- statementIR_then : EC_then STO_then statementResult)
+          1. (Let (record{ (nameIR = typedExpressionIR)*{nameIR <- nameIR*, typedExpressionIR <- typedExpressionIR*} }) be dataExpressionIR)
 
-          2. Result in : % % % |- % : EC_then STO_then statementResult
+          2. (Exprs_eval: p EC STO' |- typedExpressionIR*{typedExpressionIR <- typedExpressionIR*} : STO_1 expressionListResult)
 
-        4. If ((((b false) as expressionResult) = expressionResult)), then
+          3. If ((expressionListResult matches pattern `{%}`)), then
 
-          1. (Stmt_eval: p EC STO_cond |- statementIR_else : EC_else STO_else statementResult)
+            1. (Let ({ value*{value <- value*} }) be expressionListResult)
 
-          2. Result in : % % % |- % : EC_else STO_else statementResult
+            2. Result in : % % % |- % : STO_1 ((record{ (value nameIR ;)*{nameIR <- nameIR*, value <- value*} }) as expressionResult)
 
-        5. If ((expressionResult matches pattern `EXIT`)), then
+        2. Case (% matches pattern `RECORD{%,...}`)
 
-          1. Result in : % % % |- % : EC STO_cond (exit)
+          1. (Let (record{ (nameIR = typedExpressionIR)*{nameIR <- nameIR*, typedExpressionIR <- typedExpressionIR*} ,...}) be dataExpressionIR)
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:34.1-37.23
+          2. (Exprs_eval: p EC STO' |- typedExpressionIR*{typedExpressionIR <- typedExpressionIR*} : STO_1 expressionListResult)
+
+          3. If ((expressionListResult matches pattern `{%}`)), then
+
+            1. (Let ({ value*{value <- value*} }) be expressionListResult)
+
+            2. Result in : % % % |- % : STO_1 ((record{ (value nameIR ;)*{nameIR <- nameIR*, value <- value*} ,...}) as expressionResult)
+
+  5. Case (% has type errorAccessExpressionIR)
+
+    1. (Let (error. nameIR) be (expressionIR as errorAccessExpressionIR))
+
+    2. Group errorAccessExpressionIR: p EC STO' |- (((error. nameIR) as expressionIR) # _expressionNoteIR') : % %
+
+      1. (Let nameIR_error be "error." ++ nameIR)
+
+      2. (Let value_error be $find_value_eval(p, EC, (` nameIR_error)))
+
+      3. Result in : % % % |- % : STO' (value_error as expressionResult)
+
+  6. Case (% has type memberAccessExpressionIR)
+
+    1. (Let (memberAccessBaseIR . nameIR) be (expressionIR as memberAccessExpressionIR))
+
+    2. If ((memberAccessBaseIR matches pattern `TYPE%`)), then
+
+      1. (Let (type prefixedNameIR) be memberAccessBaseIR)
+
+      2. Group memberAccessExpressionIR-type: p EC STO' |- ((((type prefixedNameIR) . nameIR) as expressionIR) # _expressionNoteIR') : % %
+
+        1. (Let typeDefIR'?{typeDefIR' <- typeDefIR'?} be $find_type_eval(p, EC, prefixedNameIR))
+
+        2. If ((typeDefIR'?{typeDefIR' <- typeDefIR'?} matches pattern (_))), then
+
+          1. (Let ?(typeDefIR) be typeDefIR'?{typeDefIR' <- typeDefIR'?})
+
+          2. If ((typeDefIR has type enumTypeIR)), then
+
+            1. (Let enumTypeIR be (typeDefIR as enumTypeIR))
+
+            2. Case analysis on enumTypeIR
+
+              1. Case (% matches pattern `ENUM%{%}`)
+
+                1. (Let (enum tid { _id*{_id <- _id*} }) be enumTypeIR)
+
+                2. Result in : % % % |- % : STO' ((tid . nameIR) as expressionResult)
+
+              2. Case (% matches pattern `ENUM%#%{%}`)
+
+                1. (Let (enum tid # _typeIR { (id_member = value_member ;)*{id_member <- id_member*, value_member <- value_member*} }) be enumTypeIR)
+
+                2. (Let value'?{value' <- value'?} be $assoc_<nameIR, value>(nameIR, (id_member, value_member)*{id_member <- id_member*, value_member <- value_member*}))
+
+                3. If ((value'?{value' <- value'?} matches pattern (_))), then
+
+                  1. (Let ?(value) be value'?{value' <- value'?})
+
+                  2. Result in : % % % |- % : STO' ((tid . nameIR # value) as expressionResult)
+
+    3. If ((memberAccessBaseIR has type typedExpressionIR)), then
+
+      1. (Let typedExpressionIR_base be (memberAccessBaseIR as typedExpressionIR))
+
+      2. Group memberAccessExpressionIR-expression: p EC STO' |- ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # (( _typeIR _ctk ))) : % %
+
+        1. (Expr_eval: p EC STO' |- typedExpressionIR_base : store expressionResult)
+
+        2. If ((store = STO')), then
+
+          1. If ((expressionResult matches pattern `EXIT`)), then
+
+            1. Result in : % % % |- % : STO' (exit)
+
+          2. If ((expressionResult has type value)), then
+
+            1. (Let value_base be (expressionResult as value))
+
+            2. Case analysis on value_base
+
+              1. Case (% has type structValue)
+
+                1. (Let (struct _tid { (value_field id_field ;)*{id_field <- id_field*, value_field <- value_field*} }) be (value_base as structValue))
+
+                2. (Let value'?{value' <- value'?} be $assoc_<nameIR, value>(nameIR, (id_field, value_field)*{id_field <- id_field*, value_field <- value_field*}))
+
+                3. If ((value'?{value' <- value'?} matches pattern (_))), then
+
+                  1. (Let ?(value_member) be value'?{value' <- value'?})
+
+                  2. Result in : % % % |- % : STO' (value_member as expressionResult)
+
+              2. Case (% has type headerValue)
+
+                1. (Let (header _tid { (value_field id_field ;)*{id_field <- id_field*, value_field <- value_field*} }) be (value_base as headerValue))
+
+                2. (Let value'?{value' <- value'?} be $assoc_<nameIR, value>(nameIR, (id_field, value_field)*{id_field <- id_field*, value_field <- value_field*}))
+
+                3. If ((value'?{value' <- value'?} matches pattern (_))), then
+
+                  1. (Let ?(value_member) be value'?{value' <- value'?})
+
+                  2. Result in : % % % |- % : STO' (value_member as expressionResult)
+
+              3. Case (% has type headerUnionValue)
+
+                1. (Let (header_union _tid { (value_field id_field ;)*{id_field <- id_field*, value_field <- value_field*} }) be (value_base as headerUnionValue))
+
+                2. (Let value'?{value' <- value'?} be $assoc_<nameIR, value>(nameIR, (id_field, value_field)*{id_field <- id_field*, value_field <- value_field*}))
+
+                3. If ((value'?{value' <- value'?} matches pattern (_))), then
+
+                  1. (Let ?(value_member) be value'?{value' <- value'?})
+
+                  2. Result in : % % % |- % : STO' (value_member as expressionResult)
+
+        3. If ((nameIR = "size")), then
+
+          1. If ((store = STO')), then
+
+            1. If ((expressionResult has type value)), then
+
+              1. (Let value_base be (expressionResult as value))
+
+              2. If ((value_base has type headerStackValue)), then
+
+                1. (Let ([ _value*{_value <- _value*} #( _nat ; n_size )]) be (value_base as headerStackValue))
+
+                2. Result in : % % % |- % : STO' ((d (n_size as int)) as expressionResult)
+
+  7. Case (% has type indexAccessExpressionIR)
+
+    1. (Let (typedExpressionIR_base [ typedExpressionIR_index ]) be (expressionIR as indexAccessExpressionIR))
+
+    2. Group indexAccessExpressionIR: p EC STO' |- (((typedExpressionIR_base [ typedExpressionIR_index ]) as expressionIR) # _expressionNoteIR') : % %
+
+      1. (Exprs_eval: p EC STO' |- [typedExpressionIR_base, typedExpressionIR_index] : STO_1 expressionListResult)
+
+      2. If ((expressionListResult matches pattern `EXIT`)), then
+
+        1. Result in : % % % |- % : STO_1 (exit)
+
+      3. (Exprs_eval: p EC STO' |- [typedExpressionIR_base, typedExpressionIR_index] : STO_1 expressionListResult)
+
+      4. If ((expressionListResult matches pattern `{%}`)), then
+
+        1. (Let ({ value'*{value' <- value'*} }) be expressionListResult)
+
+        2. If ((value'*{value' <- value'*} matches pattern [ _/2 ])), then
+
+          1. (Let [value_base, value_index] be value'*{value' <- value'*})
+
+          2. If ((value_base has type tupleValue)), then
+
+            1. (Let (( value_elem*{value_elem <- value_elem*} )) be (value_base as tupleValue))
+
+            2. (Let int be $to_number(value_index))
+
+            3. If ((int has type nat)), then
+
+              1. (Let n_index be (int as nat))
+
+              2. (Let value be value_elem*{value_elem <- value_elem*}[n_index])
+
+              3. Result in : % % % |- % : STO_1 (value as expressionResult)
+
+  8. Case (% has type sliceAccessExpressionIR)
+
+    1. (Let (typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ]) be (expressionIR as sliceAccessExpressionIR))
+
+    2. Group sliceAccessExpressionIR: p EC STO' |- (((typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ]) as expressionIR) # _expressionNoteIR') : % %
+
+      1. (Exprs_eval: p EC STO' |- [typedExpressionIR_base, typedExpressionIR_hi, typedExpressionIR_lo] : STO_1 expressionListResult)
+
+      2. If ((expressionListResult matches pattern `EXIT`)), then
+
+        1. Result in : % % % |- % : STO_1 (exit)
+
+      3. (Exprs_eval: p EC STO' |- [typedExpressionIR_base, typedExpressionIR_hi, typedExpressionIR_lo] : STO_1 expressionListResult)
+
+      4. If ((expressionListResult matches pattern `{%}`)), then
+
+        1. (Let ({ value'*{value' <- value'*} }) be expressionListResult)
+
+        2. If ((value'*{value' <- value'*} matches pattern [ _/3 ])), then
+
+          1. (Let [value_base, value_hi, value_lo] be value'*{value' <- value'*})
+
+          2. (Let value be $bitacc_op(value_base, value_hi, value_lo))
+
+          3. Result in : % % % |- % : STO_1 (value as expressionResult)
+
+  9. Case (% has type parenthesizedExpressionIR)
+
+    1. (Let (( typedExpressionIR )) be (expressionIR as parenthesizedExpressionIR))
+
+    2. Group parenthesizedExpressionIR: p EC STO' |- (((( typedExpressionIR )) as expressionIR) # _expressionNoteIR') : % %
+
+      1. (Expr_eval: p EC STO' |- typedExpressionIR : STO_1 expressionResult)
+
+      2. If ((expressionResult has type value)), then
+
+        1. (Let value be (expressionResult as value))
+
+        2. Result in : % % % |- % : STO_1 (value as expressionResult)
+
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:12.1-17.76
+relation Exprs_eval: p EC STO' |- typedExpressionIR*{typedExpressionIR <- typedExpressionIR*} : % %
+
+1. Case analysis on typedExpressionIR*{typedExpressionIR <- typedExpressionIR*}
+
+  1. Case (% matches pattern [])
+
+    1. Group nil: p EC STO' |- [] : % %
+
+      1. Result in : % % % |- % : STO' ({ [] })
+
+  2. Case (% matches pattern _ :: _)
+
+    1. (Let typedExpressionIR_h :: typedExpressionIR_t*{typedExpressionIR_t <- typedExpressionIR_t*} be typedExpressionIR*{typedExpressionIR <- typedExpressionIR*})
+
+    2. Group cons-head-exit: p EC STO' |- typedExpressionIR_h :: typedExpressionIR_t*{typedExpressionIR_t <- typedExpressionIR_t*} : % %
+
+      1. (Expr_eval: p EC STO' |- typedExpressionIR_h : STO_1 expressionResult)
+
+      2. If ((expressionResult matches pattern `EXIT`)), then
+
+        1. Result in : % % % |- % : STO_1 (exit)
+
+    3. Group cons-head-cont: p EC STO' |- typedExpressionIR_h :: typedExpressionIR_t*{typedExpressionIR_t <- typedExpressionIR_t*} : % %
+
+      1. (Expr_eval: p EC STO' |- typedExpressionIR_h : STO_1 expressionResult)
+
+      2. If ((expressionResult has type value)), then
+
+        1. (Let value_h be (expressionResult as value))
+
+        2. (Exprs_eval: p EC STO_1 |- typedExpressionIR_t*{typedExpressionIR_t <- typedExpressionIR_t*} : STO_2 expressionListResult)
+
+        3. If ((expressionListResult matches pattern `{%}`)), then
+
+          1. (Let ({ value_t*{value_t <- value_t*} }) be expressionListResult)
+
+          2. Result in : % % % |- % : STO_2 ({ value_h :: value_t*{value_t <- value_t*} })
+
+    4. Group cons-tail-exit: p EC STO' |- typedExpressionIR_h :: typedExpressionIR_t*{typedExpressionIR_t <- typedExpressionIR_t*} : % %
+
+      1. (Expr_eval: p EC STO' |- typedExpressionIR_h : STO_1 expressionResult)
+
+      2. If ((expressionResult has type value)), then
+
+        1. (Let value_h be (expressionResult as value))
+
+        2. (Exprs_eval: p EC STO_1 |- typedExpressionIR_t*{typedExpressionIR_t <- typedExpressionIR_t*} : STO_2 expressionListResult)
+
+        3. If ((expressionListResult matches pattern `EXIT`)), then
+
+          1. Result in : % % % |- % : STO_2 (exit)
+
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:23.1-26.26
+relation Argument_eval: p EC STO_0 |- argumentIR : % %
+
+1. If ((argumentIR has type typedExpressionIR)), then
+
+  1. (Let typedExpressionIR be (argumentIR as typedExpressionIR))
+
+  2. Group typedExpressionIR: p EC STO_0 |- (typedExpressionIR as argumentIR) : % %
+
+    1. (Expr_eval: p EC STO_0 |- typedExpressionIR : STO_1 expressionResult)
+
+    2. If ((expressionResult has type value)), then
+
+      1. (Let value be (expressionResult as value))
+
+      2. Result in : % % % |- % : STO_1 (value as expressionResult)
+
+2. If ((argumentIR matches pattern `%=%`)), then
+
+  1. (Let (nameIR = typedExpressionIR) be argumentIR)
+
+  2. Group nameIR-typedExpressionIR: p EC STO_0 |- (nameIR = typedExpressionIR) : % %
+
+    1. (Expr_eval: p EC STO_0 |- typedExpressionIR : STO_1 expressionResult)
+
+    2. If ((expressionResult has type value)), then
+
+      1. (Let value be (expressionResult as value))
+
+      2. Result in : % % % |- % : STO_1 (value as expressionResult)
+
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:32.1-39.55
+relation Stmt_eval: p' EC STO' |- statementIR : % % %
+
+1. Case analysis on statementIR
+
+  1. Case (% has type emptyStatement)
+
+    1. (Let emptyStatement be (statementIR as emptyStatement))
+
+    2. Group emptyStatementIR: p' EC STO' |- ((;) as statementIR) : % % %
+
+      1. Result in : % % % |- % : EC STO' (cont)
+
+  2. Case (% has type exitStatement)
+
+    1. (Let exitStatement be (statementIR as exitStatement))
+
+    2. Group exitStatement: p' EC STO' |- ((exit;) as statementIR) : % % %
+
+      1. Result in : % % % |- % : EC STO' (exit)
+
+  3. Case (% has type conditionalStatementIR)
+
+    1. (Let conditionalStatementIR be (statementIR as conditionalStatementIR))
+
+    2. Group conditionalStatementIR: p' EC STO' |- (conditionalStatementIR as statementIR) : % % %
+
+      1. Case analysis on conditionalStatementIR
+
+        1. Case (% matches pattern `IF(%)%`)
+
+          1. (Let (if( typedExpressionIR_cond ) statementIR_then) be conditionalStatementIR)
+
+          2. (Expr_eval: p' EC STO' |- typedExpressionIR_cond : STO_cond expressionResult)
+
+          3. If ((expressionResult = ((b true) as expressionResult))), then
+
+            1. (Stmt_eval: p' EC STO_cond |- statementIR_then : EC_then STO_then statementResult)
+
+            2. Result in : % % % |- % : EC_then STO_then statementResult
+
+          4. If ((expressionResult = ((b false) as expressionResult))), then
+
+            1. Result in : % % % |- % : EC STO_cond (cont)
+
+          5. If ((expressionResult matches pattern `EXIT`)), then
+
+            1. Result in : % % % |- % : EC STO_cond (exit)
+
+        2. Case (% matches pattern `IF(%)%ELSE%`)
+
+          1. (Let (if( typedExpressionIR_cond ) statementIR_then else statementIR_else) be conditionalStatementIR)
+
+          2. (Expr_eval: p' EC STO' |- typedExpressionIR_cond : STO_cond expressionResult)
+
+          3. If ((expressionResult = ((b true) as expressionResult))), then
+
+            1. (Stmt_eval: p' EC STO_cond |- statementIR_then : EC_then STO_then statementResult)
+
+            2. Result in : % % % |- % : EC_then STO_then statementResult
+
+          4. If ((expressionResult = ((b false) as expressionResult))), then
+
+            1. (Stmt_eval: p' EC STO_cond |- statementIR_else : EC_else STO_else statementResult)
+
+            2. Result in : % % % |- % : EC_else STO_else statementResult
+
+          5. If ((expressionResult matches pattern `EXIT`)), then
+
+            1. Result in : % % % |- % : EC STO_cond (exit)
+
+2. If ((p' matches pattern `LOCAL`)), then
+
+  1. If ((statementIR has type returnStatementIR)), then
+
+    1. (Let returnStatementIR be (statementIR as returnStatementIR))
+
+    2. Group returnStatementIR: (local) EC STO' |- (returnStatementIR as statementIR) : % % %
+
+      1. Case analysis on returnStatementIR
+
+        1. Case (% matches pattern `RETURN;`)
+
+          1. Result in : % % % |- % : EC STO' (return ?())
+
+        2. Case (% matches pattern `RETURN%;`)
+
+          1. (Let (return typedExpressionIR ;) be returnStatementIR)
+
+          2. (Expr_eval: (local) EC STO' |- typedExpressionIR : STO_1 expressionResult)
+
+          3. If ((expressionResult has type value)), then
+
+            1. (Let value be (expressionResult as value))
+
+            2. Result in : % % % |- % : EC STO_1 (return ?(value))
+
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:41.1-44.23
 relation BlockElementStmt_eval: evaluationContext store |- blockElementStatementIR : % % %
 
 
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:39.1-42.23
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:46.1-49.23
 relation Block_eval: evaluationContext store |- blockStatementIR : % % %
 
 
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:48.1-51.23
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:55.1-58.23
 relation ParserStmt_eval: evaluationContext store |- parserStatementIR : % % %
 
 
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:53.1-56.23
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:60.1-63.23
 relation ParserState_eval: evaluationContext store |- parserStateIR ==> % % %
 
 
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:58.1-61.23
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:65.1-68.23
 relation ParserLocalDecl_eval: evaluationContext store |- parserLocalDeclarationIR : % % %
 
 
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:67.1-70.23
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:74.1-77.23
 relation ControlLocalDecl_eval: evaluationContext store |- controlLocalDeclarationIR : % % %
 
 
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:76.1-81.32
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:83.1-88.32
 relation Call_eval: cursor evaluationContext store |- routine < typeArgumentListIR >( argumentListIR ): % % %
 
 
