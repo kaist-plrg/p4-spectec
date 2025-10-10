@@ -41,7 +41,7 @@ let prosify_iterated_let exps_out iterexps (instr : Pl.Ast.instr) =
   if List.is_empty iterexps then instr
   else
     let out_vars, in_vars = split_iters exps_out iterexps in
-    Pl.Ast.ForEach (out_vars, instr, in_vars) $ no_region
+    Pl.Ast.ForEachI (out_vars, instr, in_vars) $ no_region
 
 let prosify_iterated_cond ?(neg = false) iterexps (cond : Pl.Ast.cond) =
   if List.is_empty iterexps then cond
@@ -72,11 +72,11 @@ let rec prosify_case ctx exp (guard, instrs) : Pl.Ast.instr list =
   let instrs_pl = prosify_instrs ctx instrs in
   let cond = prosify_guard ctx exp guard in
   match ctx.cond_style with
-  | Some Check -> [ Pl.Ast.Check cond $ no_region ] @ instrs_pl
-  | Some If -> [ Pl.Ast.Branch (Pl.Ast.If, cond, instrs_pl) $ no_region ]
+  | Some Check -> [ Pl.Ast.CheckI cond $ no_region ] @ instrs_pl
+  | Some If -> [ Pl.Ast.BranchI (Pl.Ast.If, cond, instrs_pl) $ no_region ]
   | Some ElseIf ->
-      [ Pl.Ast.Branch (Pl.Ast.ElseIf, cond, instrs_pl) $ no_region ]
-  | Some Else -> [ Pl.Ast.Branch (Pl.Ast.Else, cond, instrs_pl) $ no_region ]
+      [ Pl.Ast.BranchI (Pl.Ast.ElseIf, cond, instrs_pl) $ no_region ]
+  | Some Else -> [ Pl.Ast.BranchI (Pl.Ast.Else, cond, instrs_pl) $ no_region ]
   | None -> assert false
 
 and prosify_cases ctx ~closed exp cases : Pl.Ast.instr list =
@@ -101,7 +101,7 @@ and prosify_instr ctx instr : Pl.Ast.instr list =
       | Some Check ->
           let instrs_pl = prosify_instrs ctx instrs in
           let cond = Pl.Ast.ExpCond exp |> prosify_iterated_cond iterexps in
-          let instr_check = Pl.Ast.Check cond $ instr.at in
+          let instr_check = Pl.Ast.CheckI cond $ instr.at in
           [ instr_check ] @ instrs_pl
       | Some cond_style ->
           let branchtype =
@@ -113,7 +113,7 @@ and prosify_instr ctx instr : Pl.Ast.instr list =
           in
           let instrs_pl = prosify_instrs ctx instrs in
           let cond = Pl.Ast.ExpCond exp |> prosify_iterated_cond iterexps in
-          [ Pl.Ast.Branch (branchtype, cond, instrs_pl) $ instr.at ]
+          [ Pl.Ast.BranchI (branchtype, cond, instrs_pl) $ instr.at ]
       | _ -> assert false)
   | HoldI (id, (mixop, exps), iterexps, holdcase) -> (
       match holdcase with
@@ -130,7 +130,7 @@ and prosify_instr ctx instr : Pl.Ast.instr list =
             |> prosify_iterated_cond ~neg:false iterexps
           in
           let instr_if =
-            Pl.Ast.Branch (Pl.Ast.If, cond_if, instrs_hold_sl) $ instr.at
+            Pl.Ast.BranchI (Pl.Ast.If, cond_if, instrs_hold_sl) $ instr.at
           in
           (* create else-branch for not-hold *)
           let instrs_nothold_sl = prosify_instrs ctx instrs_nothold in
@@ -144,7 +144,7 @@ and prosify_instr ctx instr : Pl.Ast.instr list =
             |> prosify_iterated_cond ~neg:true iterexps
           in
           let instr_else =
-            Pl.Ast.Branch (Pl.Ast.Else, cond_else, instrs_nothold_sl) $ instr.at
+            Pl.Ast.BranchI (Pl.Ast.Else, cond_else, instrs_nothold_sl) $ instr.at
           in
           [ instr_if; instr_else ]
       | HoldH (instrs_hold, _) ->
@@ -158,7 +158,7 @@ and prosify_instr ctx instr : Pl.Ast.instr list =
             Pl.Ast.RelCond (relation_true, id) |> prosify_iterated_cond iterexps
           in
           let instr =
-            Pl.Ast.Branch (Pl.Ast.If, cond, instrs_hold_sl) $ instr.at
+            Pl.Ast.BranchI (Pl.Ast.If, cond, instrs_hold_sl) $ instr.at
           in
           [ instr ]
       | NotHoldH (instrs_nothold, _) ->
@@ -173,21 +173,21 @@ and prosify_instr ctx instr : Pl.Ast.instr list =
             |> prosify_iterated_cond iterexps
           in
           let instr =
-            Pl.Ast.Branch (Pl.Ast.If, cond, instrs_nothold_sl) $ instr.at
+            Pl.Ast.BranchI (Pl.Ast.If, cond, instrs_nothold_sl) $ instr.at
           in
           [ instr ])
   | CaseI (exp, cases, Some _) -> prosify_cases ctx ~closed:false exp cases
   | CaseI (exp, cases, None) -> prosify_cases ctx ~closed:true exp cases
   | OtherwiseI instr ->
       let instrs = prosify_instr ctx instr in
-      List.map (fun instr -> Pl.Ast.Otherwise instr $ instr.at) instrs
+      List.map (fun instr -> Pl.Ast.OtherwiseI instr $ instr.at) instrs
   | GroupI (id, exps, instrs) ->
       (* TODO *)
       let instrs = prosify_instrs ctx instrs in
-      [ Pl.Ast.Group (id, exps, instrs) $ instr.at ]
+      [ Pl.Ast.GroupI (id, exps, instrs) $ instr.at ]
   | LetI (exp_l, exp_r, iterexps) ->
       [
-        Pl.Ast.Let (exp_l, exp_r)
+        Pl.Ast.LetI (exp_l, exp_r)
         $ instr.at
         |> prosify_iterated_let [ exp_l ] iterexps;
       ]
@@ -201,7 +201,7 @@ and prosify_instr ctx instr : Pl.Ast.instr list =
         | None -> Pl.Ast.Mixop (mixop, exps)
       in
       [
-        Pl.Ast.Rel (relation, id)
+        Pl.Ast.RelI (relation, id)
         $ instr.at
         |> prosify_iterated_let exps_out iterexps;
       ]
@@ -210,8 +210,8 @@ and prosify_instr ctx instr : Pl.Ast.instr list =
       let hint_opt = HEnv.get_rel rid ctx.penv.prose_out in
       let inputs = IEnv.find_opt rid ctx.ienv |> Option.value ~default:[] in
       let hint_opt = Option.map (align_hint inputs) hint_opt in
-      [ Pl.Ast.Result (hint_opt, exps) $ instr.at ]
-  | ReturnI exp -> [ Pl.Ast.Return exp $ instr.at ]
+      [ Pl.Ast.ResultI (hint_opt, exps) $ instr.at ]
+  | ReturnI exp -> [ Pl.Ast.ReturnI exp $ instr.at ]
   | DebugI exp -> []
 
 and prosify_instrs ctx (instrs : instr list) : Pl.Ast.instr list =

@@ -52,23 +52,23 @@ type instr = instr' phrase
 
 and instr' =
   (* % %: \n -> % *)
-  | Branch of branchtype * cond * instr list
+  | BranchI of branchtype * cond * instr list
   (* % let % be %: \n -> % *)
-  | Bind of branchtype * exp * exp * instr list
+  | BindI of branchtype * exp * exp * instr list
   (* Otherwise: \n -> % *)
-  | Otherwise of instr
+  | OtherwiseI of instr
   (* Check that % *)
-  | Check of cond
+  | CheckI of cond
   (* Let %, obtained by repeating %, for each % *)
-  | ForEach of itervars * instr * itervars
+  | ForEachI of itervars * instr * itervars
   (* Let % be % *)
-  | Let of exp * exp
+  | LetI of exp * exp
   (* Let %exps be the result of %renderer(%exps) : %rid *)
-  | Rel of relcall * rid
+  | RelI of relcall * rid
   (* Result in %prose_out(%exps) *)
-  | Result of hintexp option * exp list
-  | Return of exp
-  | Group of rid * exp list * instr list
+  | ResultI of hintexp option * exp list
+  | ReturnI of exp
+  | GroupI of rid * exp list * instr list
 
 type def = def' phrase
 

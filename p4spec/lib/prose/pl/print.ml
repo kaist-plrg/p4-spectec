@@ -296,6 +296,7 @@ and prose_of_hintexp' ~level (exps : exp list) (hintexp : El.Ast.exp)
       let cursor_r, str_r = prose_of_hintexp' ~level exps exp_r cursor_l in
       (cursor_r, str_l ^ str_r)
   | _ -> failwith "unsupported prose hint"
+
 (* Paths *)
 
 and prose_of_path ~mode path =
@@ -352,43 +353,43 @@ let rec prose_of_instr ?(level = 0) ?(unordered = false) (instr : instr) :
   in
   (* let bullet = render_ordered_bullet level in *)
   match instr.it with
-  | Branch (branchtype, cond, instrs) ->
+  | BranchI (branchtype, cond, instrs) ->
       F.asprintf "%s%s%s:\n%s" bullet
         (prose_of_branchtype branchtype)
         (prose_of_cond ~mode:Prose cond)
         (prose_of_instrs ~level:(level + 1) instrs)
-  | Bind (branchtype, exp_l, exp_r, instrs) ->
+  | BindI (branchtype, exp_l, exp_r, instrs) ->
       F.asprintf "%s%slet %s be %s:\n%s" bullet
         (prose_of_branchtype branchtype)
         (prose_of_exp ~mode:Code exp_l)
         (prose_of_exp ~mode:Code exp_r)
         (prose_of_instrs ~level:(level + 1) instrs)
-  | Otherwise instr ->
+  | OtherwiseI instr ->
       F.asprintf "%sOtherwise:\n%s" bullet
         (prose_of_instr ~level:(level + 1) instr)
-  | Check cond ->
+  | CheckI cond ->
       F.asprintf "%sCheck that %s." bullet (prose_of_cond ~mode:Prose cond)
-  | Let (exp_l, exp_r) ->
+  | LetI (exp_l, exp_r) ->
       F.asprintf "%sLet %s be %s." bullet
         (code_of_exp ~mode:Prose exp_l)
         (prose_of_exp ~mode:Prose exp_r)
-  | Rel (relcall, rid) ->
+  | RelI (relcall, rid) ->
       F.asprintf "%sLet %s." bullet (prose_of_relcall ~level relcall rid)
-  | Return exp ->
+  | ReturnI exp ->
       F.asprintf "%sReturn %s." bullet (prose_of_exp ~mode:Prose exp)
-  | Result (Some hintexp, exps) ->
+  | ResultI (Some hintexp, exps) ->
       F.asprintf "%sResult in %s." bullet
         (prose_of_hintexp ~level:(level + 1) exps hintexp)
-  | Result (None, exps) ->
+  | ResultI (None, exps) ->
       F.asprintf "%sResult in %s." bullet (prose_of_exps ~mode:Prose exps)
-  | Group (id, _, instrs) ->
+  | GroupI (id, _, instrs) ->
       F.asprintf "%sGroup %s:\n%s" bullet (string_of_relpathid id)
         (prose_of_instrs ~level:(level + 1) instrs)
-  | ForEach ([], instr, vars_in) ->
+  | ForEachI ([], instr, vars_in) ->
       F.asprintf "%s%s, for each %s" bullet
         (prose_of_instr ~level instr)
         (prose_of_in_itervars ~mode:Prose vars_in)
-  | ForEach (vars_out, instr, vars_in) ->
+  | ForEachI (vars_out, instr, vars_in) ->
       F.asprintf "%sLet %s, obtained by repeating:\n%s%s\n%s%sfor each %s"
         bullet
         (prose_of_out_itervars ~mode:Prose vars_out)
