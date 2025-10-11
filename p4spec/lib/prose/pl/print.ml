@@ -144,23 +144,23 @@ let code_of_cmpop = Sl.Print.string_of_cmpop
 
 let rec prose_of_exp ?(mode = Prose) exp : string =
   match exp.it with
-  | Il.Ast.BoolE b -> string_of_bool b
-  | Il.Ast.NumE n -> string_of_num n
-  | Il.Ast.TextE text -> "\"" ^ String.escaped text ^ "\"" |> render_mono ~mode
-  | Il.Ast.VarE varid -> code_of_varid ~mode varid
-  | Il.Ast.UnE (unop, _, exp) -> (
+  | BoolE b -> string_of_bool b
+  | NumE n -> string_of_num n
+  | TextE text -> "\"" ^ String.escaped text ^ "\"" |> render_mono ~mode
+  | VarE varid -> code_of_varid ~mode varid
+  | UnE (unop, _, exp) -> (
       match unop with
       (* | #Bool.unop ->  TODO *)
       | #Bool.unop | #Num.unop ->
           string_of_unop unop ^ prose_of_exp ~mode:Code exp |> render_mono ~mode
       )
-  | Il.Ast.BinE (binop, _, exp_l, exp_r) ->
+  | BinE (binop, _, exp_l, exp_r) ->
       (* always print as code *)
       prose_of_exp ~mode:Code exp_l
       ^ " " ^ string_of_binop binop ^ " "
       ^ prose_of_exp ~mode:Code exp_r
       |> render_mono ~mode
-  | Il.Ast.CmpE (cmpop, _, exp_l, exp_r) ->
+  | CmpE (cmpop, _, exp_l, exp_r) ->
       if mode = Prose then
         prose_of_exp ~mode exp_l ^ " " ^ prose_of_cmpop cmpop ^ " "
         ^ prose_of_exp ~mode exp_r
@@ -169,18 +169,18 @@ let rec prose_of_exp ?(mode = Prose) exp : string =
         ^ " " ^ string_of_cmpop cmpop ^ " "
         ^ prose_of_exp ~mode:Code exp_r
         |> render_mono ~mode
-  | Il.Ast.UpCastE (_typ, exp) | Il.Ast.DownCastE (_typ, exp) ->
+  | UpCastE (_typ, exp) | DownCastE (_typ, exp) ->
       F.asprintf "%s" (code_of_exp ~mode exp)
-  | Il.Ast.SubE (exp, typ) ->
+  | SubE (exp, typ) ->
       let verb = "has type" in
       F.asprintf "%s %s %s" (code_of_exp ~mode exp) verb (code_of_typ ~mode typ)
-  | Il.Ast.MatchE (exp, pattern) ->
+  | MatchE (exp, pattern) ->
       let verb = "matches pattern" in
       F.asprintf "%s %s %s" (code_of_exp ~mode exp) verb
         (code_of_pattern pattern |> render_mono ~mode)
-  | Il.Ast.TupleE es -> "(" ^ prose_of_exps ~mode ~sep:(Some ", ") es ^ ")"
-  | Il.Ast.CaseE notexp -> code_of_notexp ~mode notexp
-  | Il.Ast.StrE expfields ->
+  | TupleE es -> "(" ^ prose_of_exps ~mode ~sep:(Some ", ") es ^ ")"
+  | CaseE notexp -> code_of_notexp ~mode notexp
+  | StrE expfields ->
       "{"
       ^ String.concat ", "
           (List.map
@@ -188,56 +188,54 @@ let rec prose_of_exp ?(mode = Prose) exp : string =
                code_of_atom atom ^ " " ^ prose_of_exp ~mode exp)
              expfields)
       ^ "}"
-  | Il.Ast.OptE (Some exp) -> "?" ^ prose_of_exp ~mode exp ^ ""
-  | Il.Ast.OptE None -> "?()"
-  | Il.Ast.ListE [] -> "[ ]" |> render_mono ~mode
-  | Il.Ast.ListE exps ->
+  | OptE (Some exp) -> "?" ^ prose_of_exp ~mode exp ^ ""
+  | OptE None -> "?()"
+  | ListE [] -> "[ ]" |> render_mono ~mode
+  | ListE exps ->
       "[" ^ prose_of_exps ~mode:Code ~sep:(Some ", ") exps ^ "]"
       |> render_mono ~mode
-  | Il.Ast.ConsE (exp_h, exp_t) ->
+  | ConsE (exp_h, exp_t) ->
       prose_of_exp ~mode:Code exp_h ^ " :: " ^ prose_of_exp ~mode:Code exp_t
       |> render_mono ~mode
-  | Il.Ast.CatE (exp_l, exp_r) ->
+  | CatE (exp_l, exp_r) ->
       prose_of_exp ~mode:Code exp_l ^ " ++ " ^ prose_of_exp ~mode:Code exp_r
       |> render_mono ~mode
-  | Il.Ast.MemE (exp_e, exp_s) ->
+  | MemE (exp_e, exp_s) ->
       prose_of_exp ~mode exp_e ^ " is in " ^ prose_of_exp ~mode exp_s
-  | Il.Ast.LenE exp -> "the length of " ^ prose_of_exp ~mode exp
-  | Il.Ast.DotE (exp_b, atom) ->
+  | LenE exp -> "the length of " ^ prose_of_exp ~mode exp
+  | DotE (exp_b, atom) ->
       prose_of_exp ~mode:Code exp_b ^ "." ^ code_of_atom atom
       |> render_mono ~mode
-  | Il.Ast.IdxE (exp_b, exp_i) ->
+  | IdxE (exp_b, exp_i) ->
       prose_of_exp ~mode exp_b ^ "[" ^ prose_of_exp ~mode exp_i ^ "]"
-  | Il.Ast.SliceE (exp_b, exp_l, exp_h) ->
+  | SliceE (exp_b, exp_l, exp_h) ->
       prose_of_exp ~mode exp_b ^ "[" ^ prose_of_exp ~mode exp_l ^ " : "
       ^ prose_of_exp ~mode exp_h ^ "]"
-  | Il.Ast.UpdE (exp_b, path, exp_f) ->
+  | UpdE (exp_b, path, exp_f) ->
       prose_of_exp ~mode exp_b ^ "[" ^ prose_of_path ~mode path ^ " = "
       ^ prose_of_exp ~mode exp_f ^ "]"
-  | Il.Ast.CallE (defid, targs, args) ->
-      (* TODO : re-add hints *)
-      (* let hintexp_opt = *)
-      (*   match exp.note with *)
-      (*   | Il.Ast.BoolT when ctx.neg -> HEnv.get_func defid ctx.penv.prose_false *)
-      (*   | Il.Ast.BoolT -> HEnv.get_func defid ctx.penv.prose_true *)
-      (*   | _ -> HEnv.get_func defid ctx.penv.prose_in *)
-      (* in *)
-      (* match hintexp_opt with *)
-      (* | Some hintexp -> *)
-      (*     let exps = *)
-      (*       args *)
-      (*       |> List.filter_map (fun arg -> *)
-      (*              match arg.it with *)
-      (*              | Il.Ast.ExpA exp -> Some exp *)
-      (*              | Il.Ast.DefA _ -> None) *)
-      (*     in *)
-      (*     F.asprintf "<<%s, %s>>" defid.it *)
-      (*       (prose_of_hintexp ctx (exps |> List.map (fun a -> Some a)) hintexp) *)
-      (* | None -> *)
-      F.asprintf "%s%s%s" (string_of_defid defid) (string_of_targs targs)
-        (prose_of_args ~mode:Code args)
-      |> render_mono ~mode
-  | Il.Ast.IterE (exp, iterexp) ->
+  | CallE (funcall, id) -> (
+      match funcall with
+      | BoolProse (prose_true, _prose_false, args) ->
+          let exps =
+            args
+            |> List.filter_map (fun arg ->
+                   match arg.it with ExpA exp -> Some exp | DefA _ -> None)
+          in
+          F.asprintf "<<%s, %s>>" id.it (prose_of_hintexp exps prose_true)
+      | InProse (prose_in, args) ->
+          let exps =
+            args
+            |> List.filter_map (fun arg ->
+                   match arg.it with ExpA exp -> Some exp | DefA _ -> None)
+          in
+          F.asprintf "<<%s, %s>>" id.it (prose_of_hintexp exps prose_in)
+      | Def (targs, args) ->
+          F.asprintf "<<%s, %s%s%s>>" id.it (string_of_defid id)
+            (string_of_targs targs)
+            (prose_of_args ~mode:Code args)
+          |> render_mono ~mode)
+  | IterE (exp, iterexp) ->
       if snd iterexp = [] then prose_of_exp ~mode exp
       else
         prose_of_exp ~mode:Code exp ^ code_of_iterexp iterexp
@@ -249,9 +247,10 @@ and prose_of_exps ~mode ?(sep : string option = None) exps =
   | None -> prose_of_list (List.map (prose_of_exp ~mode) exps)
   | Some s -> String.concat s (List.map (prose_of_exp ~mode) exps)
 
-and code_of_exp ~mode exp = prose_of_exp ~mode:Code exp |> render_mono ~mode
+and code_of_exp ~mode (exp : exp) =
+  prose_of_exp ~mode:Code exp |> render_mono ~mode
 
-and code_of_exps ~mode ?(sep : string option = None) exps =
+and code_of_exps ~mode ?(sep : string option = None) (exps : exp list) =
   match sep with
   | None -> prose_of_list (List.map (code_of_exp ~mode) exps)
   | Some s -> String.concat s (List.map (code_of_exp ~mode) exps)
@@ -265,7 +264,8 @@ and code_of_notexp ~mode notexp =
   |> List.filter_map (fun str -> if str = "" then None else Some str)
   |> String.concat " " |> render_mono ~mode
 
-and prose_of_hintexp ~level (exps : exp list) (hintexp : El.Ast.exp) : string =
+and prose_of_hintexp ?(level = 0) (exps : exp list) (hintexp : El.Ast.exp) :
+    string =
   let _, str = prose_of_hintexp' ~level exps hintexp 0 in
   str
 
@@ -301,20 +301,19 @@ and prose_of_hintexp' ~level (exps : exp list) (hintexp : El.Ast.exp)
 
 and prose_of_path ~mode path =
   match path.it with
-  | Il.Ast.RootP -> ""
-  | Il.Ast.IdxP (path, exp) ->
+  | RootP -> ""
+  | IdxP (path, exp) ->
       prose_of_path ~mode path ^ "[" ^ prose_of_exp ~mode exp ^ "]"
-  | Il.Ast.SliceP (path, exp_l, exp_h) ->
+  | SliceP (path, exp_l, exp_h) ->
       prose_of_path ~mode path ^ "[" ^ prose_of_exp ~mode exp_l ^ " : "
       ^ prose_of_exp ~mode exp_h ^ "]"
-  | Il.Ast.DotP ({ it = Il.Ast.RootP; _ }, atom) -> code_of_atom atom
-  | Il.Ast.DotP (path, atom) ->
-      prose_of_path ~mode path ^ "." ^ code_of_atom atom
+  | DotP ({ it = RootP; _ }, atom) -> code_of_atom atom
+  | DotP (path, atom) -> prose_of_path ~mode path ^ "." ^ code_of_atom atom
 
 and prose_of_arg ~mode arg =
   match arg.it with
-  | Il.Ast.ExpA exp -> prose_of_exp ~mode exp
-  | Il.Ast.DefA defid -> string_of_defid defid
+  | ExpA exp -> prose_of_exp ~mode exp
+  | DefA defid -> string_of_defid defid
 
 (* TODO: prose *)
 and prose_of_args ~mode args =
@@ -358,12 +357,12 @@ let rec prose_of_instr ?(level = 0) ?(unordered = false) (instr : instr) :
         (prose_of_branchtype branchtype)
         (prose_of_cond ~mode:Prose cond)
         (prose_of_instrs ~level:(level + 1) instrs)
-  | BindI (branchtype, exp_l, exp_r, instrs) ->
-      F.asprintf "%s%slet %s be %s:\n%s" bullet
-        (prose_of_branchtype branchtype)
-        (prose_of_exp ~mode:Code exp_l)
-        (prose_of_exp ~mode:Code exp_r)
-        (prose_of_instrs ~level:(level + 1) instrs)
+  (* | BindI (branchtype, exp_l, exp_r, instrs) -> *)
+  (*     F.asprintf "%s%slet %s be %s:\n%s" bullet *)
+  (*       (prose_of_branchtype branchtype) *)
+  (*       (prose_of_exp ~mode:Code exp_l) *)
+  (*       (prose_of_exp ~mode:Code exp_r) *)
+  (*       (prose_of_instrs ~level:(level + 1) instrs) *)
   | OtherwiseI instr ->
       F.asprintf "%sOtherwise:\n%s" bullet
         (prose_of_instr ~level:(level + 1) instr)

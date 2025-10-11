@@ -1,11 +1,22 @@
 open Util.Source
 
+(* Numbers *)
+
+type num = Il.Ast.num
+
+(* Texts *)
+
+type text = Il.Ast.text
+
 (* Identifiers *)
 
-type rid = Il.Ast.id
-type fid = Il.Ast.id
+type id = Il.Ast.id
 
-(* Notation *)
+(* Atoms *)
+
+type atom = Il.Ast.atom
+
+(* Mixfix operatros *)
 
 type mixop = Il.Ast.mixop
 
@@ -14,21 +25,94 @@ type mixop = Il.Ast.mixop
 type iter = Il.Ast.iter
 
 (* Variables *)
+
 type var = Il.Ast.var
 type itervars = var list
 
-(* Expressions *)
+(* Types *)
 
-type exp = Il.Ast.exp
-type hintexp = El.Ast.exp
+type typ = Il.Ast.typ
+type typ' = Il.Ast.typ'
+
+(* Operators *)
+
+type unop = Il.Ast.unop
+type binop = Il.Ast.binop
+type cmpop = Il.Ast.cmpop
+
+type optyp = Il.Ast.optyp
+
+(* Expressions *)
+and exp = (exp', typ') note_phrase
+
+and exp' =
+  | BoolE of bool (* bool *)
+  | NumE of num (* num *)
+  | TextE of text (* text *)
+  | VarE of id (* varid *)
+  | UnE of unop * optyp * exp (* unop exp *)
+  | BinE of binop * optyp * exp * exp (* exp binop exp *)
+  | CmpE of cmpop * optyp * exp * exp (* exp cmpop exp *)
+  | UpCastE of typ * exp (* exp as typ *)
+  | DownCastE of typ * exp (* exp as typ *)
+  | SubE of exp * typ (* exp `<:` typ *)
+  | MatchE of exp * pattern (* exp `matches` pattern *)
+  | TupleE of exp list (* `(` exp* `)` *)
+  | CaseE of notexp (* notexp *)
+  | StrE of (atom * exp) list (* { expfield* } *)
+  | OptE of exp option (* exp? *)
+  | ListE of exp list (* `[` exp* `]` *)
+  | ConsE of exp * exp (* exp `::` exp *)
+  | CatE of exp * exp (* exp `++` exp *)
+  | MemE of exp * exp (* exp `<-` exp *)
+  | LenE of exp (* `|` exp `|` *)
+  | DotE of exp * atom (* exp.atom *)
+  | IdxE of exp * exp (* exp `[` exp `]` *)
+  | SliceE of exp * exp * exp (* exp `[` exp `:` exp `]` *)
+  | UpdE of exp * path * exp (* exp `[` path `=` exp `]` *)
+  | CallE of funcall * id
+  | IterE of exp * iterexp (* exp iterexp *)
+
+and notexp = mixop * exp list
+and iterexp = iter * var list
+
+(* Patterns *)
+and pattern = Il.Ast.pattern
+
+(* Path *)
+and path = (path', typ') note_phrase
+
+and path' =
+  | RootP (* *)
+  | IdxP of path * exp (* path `[` exp `]` *)
+  | SliceP of path * exp * exp (* path `[` exp `:` exp `]` *)
+  | DotP of path * atom (* path `.` atom *)
+
+(* Arguments *)
+and arg = arg' phrase
+
+and arg' =
+  | ExpA of exp
+  (* exp *)
+  | DefA of id (* `$`id *)
+
+(* Type arguments *)
+and targ = Il.Ast.targ
+
+(* Function Renderers *)
+and funcall =
+  (* prose_true, prose_false?, inputs *)
+  | BoolProse of hintexp * hintexp option * arg list
+  (* prose_in, inputs *)
+  | InProse of hintexp * arg list
+  (* $def<targs>(args) *)
+  | Def of targ list * arg list
+
+and hintexp = El.Ast.exp
 
 (* Type parameters *)
 
 type tparam = Il.Ast.tparam
-
-(* Arguments *)
-
-type arg = Il.Ast.arg
 
 (* Branch types *)
 
@@ -44,8 +128,10 @@ type relcall =
 
 type cond =
   | ExpCond of exp
-  | RelCond of relcall * rid
+  | RelCond of relcall * id
+  (* %, for all % in % *)
   | ForAllCond of cond * itervars
+  (* %, for any % in % *)
   | ForAnyCond of cond * itervars
 
 type instr = instr' phrase
@@ -53,8 +139,6 @@ type instr = instr' phrase
 and instr' =
   (* % %: \n -> % *)
   | BranchI of branchtype * cond * instr list
-  (* % let % be %: \n -> % *)
-  | BindI of branchtype * exp * exp * instr list
   (* Otherwise: \n -> % *)
   | OtherwiseI of instr
   (* Check that % *)
@@ -64,16 +148,16 @@ and instr' =
   (* Let % be % *)
   | LetI of exp * exp
   (* Let %exps be the result of %renderer(%exps) : %rid *)
-  | RelI of relcall * rid
+  | RelI of relcall * id
   (* Result in %prose_out(%exps) *)
   | ResultI of hintexp option * exp list
   | ReturnI of exp
-  | GroupI of rid * exp list * instr list
+  | GroupI of id * exp list * instr list
 
 type def = def' phrase
 
 and def' =
-  | RelD of rid * exp list * instr list
-  | DecD of fid * tparam list * arg list * instr list
+  | RelD of id * exp list * instr list
+  | DecD of id * tparam list * arg list * instr list
 
 type spec = def list
