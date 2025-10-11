@@ -148,12 +148,14 @@ let rec prose_of_exp ?(mode = Prose) exp : string =
   | NumE n -> string_of_num n
   | TextE text -> "\"" ^ String.escaped text ^ "\"" |> render_mono ~mode
   | VarE varid -> code_of_varid ~mode varid
-  | UnE (unop, _, exp) -> (
-      match unop with
-      (* | #Bool.unop ->  TODO *)
-      | #Bool.unop | #Num.unop ->
-          string_of_unop unop ^ prose_of_exp ~mode:Code exp |> render_mono ~mode
-      )
+  | UnE (#Bool.unop, _, { it = MatchE (exp, pattern); _ }) ->
+      F.asprintf "%s does not match pattern %s" (code_of_exp ~mode exp)
+        (code_of_pattern pattern |> render_mono ~mode)
+  | UnE (#Bool.unop, _, { it = SubE (exp, typ); _ }) ->
+      F.asprintf "%s does not have type %s" (code_of_exp ~mode exp)
+        (code_of_typ ~mode typ)
+  | UnE (unop, _, exp) ->
+      string_of_unop unop ^ prose_of_exp ~mode:Code exp |> render_mono ~mode
   | BinE (binop, _, exp_l, exp_r) ->
       (* always print as code *)
       prose_of_exp ~mode:Code exp_l
@@ -170,13 +172,22 @@ let rec prose_of_exp ?(mode = Prose) exp : string =
         ^ prose_of_exp ~mode:Code exp_r
         |> render_mono ~mode
   | UpCastE (_typ, exp) | DownCastE (_typ, exp) ->
-      F.asprintf "%s" (code_of_exp ~mode exp)
+      F.asprintf "%s as .." (code_of_exp ~mode exp)
   | SubE (exp, typ) ->
-      let verb = "has type" in
-      F.asprintf "%s %s %s" (code_of_exp ~mode exp) verb (code_of_typ ~mode typ)
+      F.asprintf "%s has type %s" (code_of_exp ~mode exp)
+        (code_of_typ ~mode typ)
+  | MatchE (exp, Il.Ast.ListP `Nil) ->
+      F.asprintf "%s is an empty list" (code_of_exp ~mode exp)
+  | MatchE (exp, Il.Ast.ListP `Cons) ->
+      F.asprintf "%s is a non-empty list" (code_of_exp ~mode exp)
+  | MatchE (exp, Il.Ast.ListP (`Fixed len)) ->
+      F.asprintf "%s is a list of length %d" (code_of_exp ~mode exp) len
+  | MatchE (exp, Il.Ast.OptP `None) ->
+      F.asprintf "%s is None" (code_of_exp ~mode exp)
+  | MatchE (exp, Il.Ast.OptP `Some) ->
+      F.asprintf "%s is Some value" (code_of_exp ~mode exp)
   | MatchE (exp, pattern) ->
-      let verb = "matches pattern" in
-      F.asprintf "%s %s %s" (code_of_exp ~mode exp) verb
+      F.asprintf "%s matches pattern %s" (code_of_exp ~mode exp)
         (code_of_pattern pattern |> render_mono ~mode)
   | TupleE es -> "(" ^ prose_of_exps ~mode ~sep:(Some ", ") es ^ ")"
   | CaseE notexp -> code_of_notexp ~mode notexp
@@ -352,17 +363,32 @@ let rec prose_of_instr ?(level = 0) ?(unordered = false) (instr : instr) :
   in
   (* let bullet = render_ordered_bullet level in *)
   match instr.it with
+  | BranchI
+      ( branchtype,
+        ExpCond { it = MatchE (exp, _); _ },
+        { it = LetI (exp_l, exp_r); _ } :: instrs_rest )
+    when Eq.eq_exp exp_r exp ->
+      F.asprintf "%s%slet %s be %s:\n%s" bullet
+        (prose_of_branchtype branchtype)
+        (code_of_exp ~mode:Prose exp_l)
+        (prose_of_exp ~mode:Code exp_r)
+        (prose_of_instrs ~level:(level + 1) instrs_rest)
+  | BranchI
+      ( branchtype,
+        ExpCond { it = SubE (exp, typ); _ },
+        { it = LetI (exp_l, { it = DownCastE (typ_r, exp_r); _ }); _ }
+        :: instrs_rest )
+    when Eq.eq_exp exp_r exp && Eq.eq_typ typ_r typ ->
+      F.asprintf "%s%slet %s be %s:\n%s" bullet
+        (prose_of_branchtype branchtype)
+        (code_of_exp ~mode:Prose exp_l)
+        (code_of_exp ~mode:Prose exp_r)
+        (prose_of_instrs ~level:(level + 1) instrs_rest)
   | BranchI (branchtype, cond, instrs) ->
       F.asprintf "%s%s%s:\n%s" bullet
         (prose_of_branchtype branchtype)
         (prose_of_cond ~mode:Prose cond)
         (prose_of_instrs ~level:(level + 1) instrs)
-  (* | BindI (branchtype, exp_l, exp_r, instrs) -> *)
-  (*     F.asprintf "%s%slet %s be %s:\n%s" bullet *)
-  (*       (prose_of_branchtype branchtype) *)
-  (*       (prose_of_exp ~mode:Code exp_l) *)
-  (*       (prose_of_exp ~mode:Code exp_r) *)
-  (*       (prose_of_instrs ~level:(level + 1) instrs) *)
   | OtherwiseI instr ->
       F.asprintf "%sOtherwise:\n%s" bullet
         (prose_of_instr ~level:(level + 1) instr)
