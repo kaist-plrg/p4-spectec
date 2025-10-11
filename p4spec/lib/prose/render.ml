@@ -617,7 +617,7 @@ let prose_of_def ctx def =
       ^ prose_of_exps ctx exps_input
       ^ "\n\n"
       ^ prose_of_instrs (ctx |> in_rel relid) instrs
-  | DecD (defid, tparams, args_input, instrs, _hints) -> ""
+  | DecD (defid, tparams, args_input, _, instrs, _hints) -> ""
 
 let prose_of_defs ctx defs = String.concat "" (List.map (prose_of_def ctx) defs)
 

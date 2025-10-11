@@ -369,7 +369,7 @@ and string_of_rel ?(verbose = false) rel =
 (* Functions *)
 
 let string_of_func ?(verbose = false) func =
-  let defid, tparams, args_input, instrs, _hints = func in
+  let defid, tparams, args_input, _typ, instrs, _hints = func in
   string_of_defid defid ^ string_of_tparams tparams ^ string_of_args args_input
   ^ "\n\n"
   ^ string_of_instrs ~verbose instrs

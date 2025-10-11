@@ -105,8 +105,11 @@ module RuleProse : Splice = struct
   let render (ctx : Ctx.t) (keys : key list) (values : value list) : string =
     List.map2
       (fun ((id_rel, _) : key) ((mixop, inputs, exps, instrs) : value) ->
-        Prose.Render.code_of_ruleprose ctx.prose_ctx (id_rel $ no_region) mixop
-          inputs exps instrs)
+        let rulegroup_pl =
+          Prose.Prosify.prosify_rulegroup ctx.prose_ctx (id_rel $ no_region)
+            mixop inputs exps instrs
+        in
+        Prose.Pl.Print.prose_of_rulegroup rulegroup_pl)
       keys values
     |> String.concat "\n\n"
 end
@@ -129,9 +132,12 @@ module FuncProse : Splice = struct
 
   let render (ctx : Ctx.t) (keys : key list) (values : value list) : string =
     List.map2
-      (fun (id_def : key) ((tparams, args, instrs) : value) ->
-        Prose.Render.code_of_funcprose ctx.prose_ctx (id_def $ no_region)
-          tparams args instrs)
+      (fun (id_def : key) ((tparams, args, typ, instrs) : value) ->
+        let func_pl =
+          Prose.Prosify.prosify_func ctx.prose_ctx (id_def $ no_region) tparams
+            args typ instrs
+        in
+        Prose.Pl.Print.prose_of_func func_pl)
       keys values
     |> String.concat "\n\n"
 end

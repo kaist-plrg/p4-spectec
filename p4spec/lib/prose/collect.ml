@@ -69,7 +69,7 @@ let collect_def (penv : PEnv.t) (ienv : IEnv.t) (def : def) : PEnv.t * IEnv.t =
   | RelD (rid, (mixop, inputs), _, _, hints) ->
       let ienv = IEnv.add rid inputs ienv in
       (collect_rel_def rid penv hints, ienv)
-  | DecD (fid, _, _, _, hints) -> (collect_dec_def fid penv hints, ienv)
+  | DecD (fid, _, _, _, _, hints) -> (collect_dec_def fid penv hints, ienv)
 
 let collect_spec (spec : spec) : PEnv.t * IEnv.t =
   List.fold_left

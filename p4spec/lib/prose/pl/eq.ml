@@ -7,6 +7,16 @@ let eq_pattern = Il.Eq.eq_pattern
 let eq_id = Il.Eq.eq_id
 let eq_atom = Il.Eq.eq_atom
 let eq_mixop = Il.Eq.eq_mixop
+let eq_targs = Il.Eq.eq_targs
+
+(* Function prose *)
+
+let eq_funcprose (funcprose_a : funcprose) (funcprose_b : funcprose) : bool =
+  match (funcprose_a, funcprose_b) with
+  | BoolProse (id_a, _, _), BoolProse (id_b, _, _) -> eq_id id_a id_b
+  | InputProse (id_a, _), InputProse (id_b, _) -> eq_id id_a id_b
+  | Def id_a, Def id_b -> eq_id id_a id_b
+  | _ -> false
 
 (* Expressions *)
 
@@ -59,8 +69,10 @@ let rec eq_exp (exp_a : exp) (exp_b : exp) : bool =
       eq_exp exp_b_a exp_b_b && eq_exp exp_l_a exp_l_b && eq_exp exp_h_a exp_h_b
   | UpdE (exp_b_a, path_a, exp_f_a), UpdE (exp_b_b, path_b, exp_f_b) ->
       eq_exp exp_b_a exp_b_b && eq_path path_a path_b && eq_exp exp_f_a exp_f_b
-  | CallE (funcall_a, id_a), CallE (funcall_b, id_b) ->
-      eq_id id_a id_b (* TODO: compare funcalls *)
+  | CallE (funcprose_a, targs_a, args_a), CallE (funcprose_b, targs_b, args_b)
+    ->
+      eq_funcprose funcprose_a funcprose_b
+      && eq_targs targs_a targs_b && eq_args args_a args_b
   | IterE (exp_a, iterexp_a), IterE (exp_b, iterexp_b) ->
       eq_exp exp_a exp_b && eq_iterexp iterexp_a iterexp_b
   | _ -> false
@@ -76,5 +88,14 @@ and eq_path (path_a : path) (path_b : path) : bool =
   | SliceP (path_a, exp_l_a, exp_h_a), SliceP (path_b, exp_l_b, exp_h_b) ->
       eq_path path_a path_b && eq_exp exp_l_a exp_l_b && eq_exp exp_h_a exp_h_b
   | DotP (path_a, atom_a), DotP (path_b, atom_b) ->
-      eq_path path_a path_b && eq_atom atom_a atom_b
+      eq_path path_a path_b && Atom.eq atom_a atom_b
   | _ -> false
+
+and eq_arg (arg_a : arg) (arg_b : arg) : bool =
+  match (arg_a.it, arg_b.it) with
+  | ExpA exp_a, ExpA exp_b -> eq_exp exp_a exp_b
+  | DefA id_a, DefA id_b -> eq_id id_a id_b
+  | _ -> false
+
+and eq_args (args_a : arg list) (args_b : arg list) : bool =
+  List.length args_a = List.length args_b && List.for_all2 eq_arg args_a args_b

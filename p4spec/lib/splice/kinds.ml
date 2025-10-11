@@ -32,4 +32,5 @@ type ruleprose = Sl.Ast.mixop * int list * Sl.Ast.exp list * Sl.Ast.instr list
 
 module FuncProseId = String
 
-type funcprose = Sl.Ast.tparam list * Sl.Ast.arg list * Sl.Ast.instr list
+type funcprose =
+  Sl.Ast.tparam list * Sl.Ast.arg list * Sl.Ast.typ * Sl.Ast.instr list

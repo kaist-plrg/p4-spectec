@@ -225,23 +225,23 @@ let rec prose_of_exp ?(mode = Prose) exp : string =
   | UpdE (exp_b, path, exp_f) ->
       prose_of_exp ~mode exp_b ^ "[" ^ prose_of_path ~mode path ^ " = "
       ^ prose_of_exp ~mode exp_f ^ "]"
-  | CallE (funcall, id) -> (
-      match funcall with
-      | BoolProse (prose_true, _prose_false, args) ->
+  | CallE (funcprose, targs, args) -> (
+      match funcprose with
+      | BoolProse (id, prose_true, _prose_false) ->
           let exps =
             args
             |> List.filter_map (fun arg ->
                    match arg.it with ExpA exp -> Some exp | DefA _ -> None)
           in
           F.asprintf "<<%s, %s>>" id.it (prose_of_hintexp exps prose_true)
-      | InProse (prose_in, args) ->
+      | InputProse (id, prose_in) ->
           let exps =
             args
             |> List.filter_map (fun arg ->
                    match arg.it with ExpA exp -> Some exp | DefA _ -> None)
           in
           F.asprintf "<<%s, %s>>" id.it (prose_of_hintexp exps prose_in)
-      | Def (targs, args) ->
+      | Def id ->
           F.asprintf "<<%s, %s%s%s>>" id.it (string_of_defid id)
             (string_of_targs targs)
             (prose_of_args ~mode:Code args)
@@ -351,9 +351,9 @@ let prose_of_relcall ~level (relcall : relcall) rid : string =
         (code_of_exps ~mode:Prose exps_out)
         (render_link ~link:(string_of_relid rid)
            ~text:(prose_of_hintexp ~level exps_in hintexp))
-  | Mixop (mixop, exps) ->
-      render_link ~link:(string_of_relid rid)
-        ~text:(code_of_notexp ~mode:Code (mixop, exps))
+  | Mixop (mixop, exps) -> ""
+(* render_link ~link:(string_of_relid rid) *)
+(*   ~text:(code_of_notexp ~mode:Code (mixop, exps)) *)
 
 let rec prose_of_instr ?(level = 0) ?(unordered = false) (instr : instr) :
     string =
@@ -382,7 +382,7 @@ let rec prose_of_instr ?(level = 0) ?(unordered = false) (instr : instr) :
       F.asprintf "%s%slet %s be %s:\n%s" bullet
         (prose_of_branchtype branchtype)
         (code_of_exp ~mode:Prose exp_l)
-        (code_of_exp ~mode:Prose exp_r)
+        (prose_of_exp ~mode:Prose exp_r)
         (prose_of_instrs ~level:(level + 1) instrs_rest)
   | BranchI (branchtype, cond, instrs) ->
       F.asprintf "%s%s%s:\n%s" bullet
@@ -462,20 +462,31 @@ let prose_of_spec (spec : spec) = prose_of_defs spec
 (*       |> String.capitalize_ascii *)
 (*   | None -> code_of_relinput ctx mixop inputs exps_input *)
 
-(* (* entrypoint for splicer *) *)
-(**)
-(* let prose_of_rulegroup (id_rel : rid) (mixop : mixop) (inputs : int list) (exps_input : exp list) *)
-(*   (instrs : instr list) : string = *)
-(*   F.asprintf "%s\n\n%s" *)
-(*     (prose_of_rel_signature hintexp  *)
-(*     (prose_of_instrs instrs) *)
-(**)
-(* let prose_of_func (id_def : fid) (tparams : tparam list) *)
-(*     (args_input : arg list) (instrs : instr list) : string = *)
-(*   let prose_of_funcinput = *)
-(*     F.asprintf "%s%s%s" (string_of_defid id_def) *)
-(*       (string_of_tparams tparams) *)
-(*       (prose_of_args ~mode:Code args_input) *)
-(*     |> render_mono ~mode:Code *)
-(*   in *)
-(*   F.asprintf "%s\n\n%s" prose_of_funcinput (prose_of_instrs instrs) *)
+(* entrypoint for splicer *)
+
+let prose_of_rulegroup (relcall, id, instrs) : string =
+  F.asprintf "%s\n\n%s"
+    (prose_of_relcall ~level:0 relcall id)
+    (prose_of_instrs instrs)
+
+let prose_of_funcprose (funcprose : funcprose) (args : arg list) : string =
+  let exps_input =
+    args
+    |> List.filter_map (fun arg ->
+           match arg.it with ExpA exp -> Some exp | DefA _ -> None)
+  in
+  match funcprose with
+  | BoolProse (id, prose_true, _prose_false) ->
+      prose_of_hintexp ~level:0 exps_input prose_true
+  | InputProse (id, prose_in) -> prose_of_hintexp ~level:0 exps_input prose_in
+  | Def id -> string_of_defid id
+
+let prose_of_func (funcprose, tparams, args, instrs) : string =
+  let prose_of_funcdef =
+    F.asprintf "%s%s%s"
+      (prose_of_funcprose funcprose args)
+      (string_of_tparams tparams)
+      (prose_of_args ~mode:Code args)
+    |> render_mono ~mode:Code
+  in
+  F.asprintf "%s\n\n%s" prose_of_funcdef (prose_of_instrs instrs)

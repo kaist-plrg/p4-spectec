@@ -70,7 +70,7 @@ and exp' =
   | IdxE of exp * exp (* exp `[` exp `]` *)
   | SliceE of exp * exp * exp (* exp `[` exp `:` exp `]` *)
   | UpdE of exp * path * exp (* exp `[` path `=` exp `]` *)
-  | CallE of funcall * id
+  | CallE of funcprose * targ list * arg list
   | IterE of exp * iterexp (* exp iterexp *)
 
 and notexp = mixop * exp list
@@ -100,13 +100,13 @@ and arg' =
 and targ = Il.Ast.targ
 
 (* Function Renderers *)
-and funcall =
+and funcprose =
   (* prose_true, prose_false?, inputs *)
-  | BoolProse of hintexp * hintexp option * arg list
+  | BoolProse of id * hintexp * hintexp option
   (* prose_in, inputs *)
-  | InProse of hintexp * arg list
+  | InputProse of id * hintexp
   (* $def<targs>(args) *)
-  | Def of targ list * arg list
+  | Def of id
 
 and hintexp = El.Ast.exp
 
@@ -158,6 +158,6 @@ type def = def' phrase
 
 and def' =
   | RelD of id * exp list * instr list
-  | DecD of id * tparam list * arg list * instr list
+  | DecD of id * tparam list * arg list * typ * instr list
 
 type spec = def list

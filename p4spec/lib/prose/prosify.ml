@@ -132,23 +132,23 @@ let rec prosify_exp (ctx : Ctx.t) (exp : exp) : Pl.Ast.exp =
         let exp_f = prosify_exp ctx exp_f in
         Pl.Ast.UpdE (exp_b, path, exp_f)
     | CallE (id, targs, args) ->
-        let args = prosify_args ctx args in
-        let funcall =
+        let funcprose =
           match exp.note with
           (* conditional functions have prose_true and optionally false *)
           | BoolT -> (
               match HEnv.get_func id ctx.penv.prose_true with
               | Some prose_true ->
                   let prose_false_opt = HEnv.get_func id ctx.penv.prose_false in
-                  Pl.Ast.BoolProse (prose_true, prose_false_opt, args)
-              | None -> Pl.Ast.Def (targs, args))
+                  Pl.Ast.BoolProse (id, prose_true, prose_false_opt)
+              | None -> Pl.Ast.Def id)
           (* Non-boolean functions have prose_in *)
           | _ -> (
               match HEnv.get_func id ctx.penv.prose_in with
-              | Some prose_in -> Pl.Ast.InProse (prose_in, args)
-              | None -> Pl.Ast.Def (targs, args))
+              | Some prose_in -> Pl.Ast.InputProse (id, prose_in)
+              | None -> Pl.Ast.Def id)
         in
-        Pl.Ast.CallE (funcall, id)
+        let args = prosify_args ctx args in
+        Pl.Ast.CallE (funcprose, targs, args)
     | IterE (exp, iterexp) ->
         let exp = prosify_exp ctx exp in
         Pl.Ast.IterE (exp, iterexp)
@@ -394,3 +394,40 @@ let prosify_def (ctx : Ctx.t) (def : def) : Pl.Ast.def option =
 let prosify_spec (spec : spec) : Pl.Ast.spec =
   let ctx = Ctx.init spec in
   List.filter_map (prosify_def ctx) spec
+
+(* Splicer entrypoints *)
+
+let prosify_rulegroup (ctx : Ctx.t) (id_rel : id) (mixop : mixop)
+    (inputs : int list) (exps : exp list) (instrs : instr list) =
+  let ctx = ctx |> in_rel id_rel in
+  let relcall =
+    let prose_in_opt = HEnv.get_rel id_rel ctx.penv.prose_in in
+    match prose_in_opt with
+    | Some hintexp ->
+        let exps_in, exps_out = InputHint.split_exps_without_idx inputs exps in
+        let exps_in = prosify_exps ctx exps_in in
+        let exps_out = prosify_exps ctx exps_out in
+        Pl.Ast.Prose (hintexp, exps_out, exps_in)
+    | None -> Pl.Ast.Mixop (mixop, prosify_exps ctx exps)
+  in
+  let instrs = prosify_instrs ctx instrs in
+  (relcall, id_rel, instrs)
+
+let prosify_func (ctx : Ctx.t) (id_def : id) (tparams : tparam list)
+    (args_input : arg list) (typ : typ) (instrs : instr list) =
+  let funcprose =
+    match typ.it with
+    | BoolT -> (
+        match HEnv.get_func id_def ctx.penv.prose_true with
+        | Some prose_true ->
+            let prose_false_opt = HEnv.get_func id_def ctx.penv.prose_false in
+            Pl.Ast.BoolProse (id_def, prose_true, prose_false_opt)
+        | None -> Pl.Ast.Def id_def)
+    | _ -> (
+        match HEnv.get_func id_def ctx.penv.prose_in with
+        | Some prose_in -> Pl.Ast.InputProse (id_def, prose_in)
+        | None -> Pl.Ast.Def id_def)
+  in
+  let args_input = prosify_args ctx args_input in
+  let instrs = prosify_instrs ctx instrs in
+  (funcprose, tparams, args_input, instrs)

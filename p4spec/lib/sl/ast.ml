@@ -169,7 +169,7 @@ type rel = id * (mixop * int list) * exp list * instr list * hint list
 (* Functions *)
 
 (* id `<` list(tparam, `,`) `>` list(param, `,`) `:` instr* hint* *)
-type func = id * tparam list * arg list * instr list * hint list
+type func = id * tparam list * arg list * typ * instr list * hint list
 [@@deriving yojson]
 
 (* Definitions *)
