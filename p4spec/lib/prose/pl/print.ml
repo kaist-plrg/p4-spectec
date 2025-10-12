@@ -13,10 +13,8 @@ let render_subscript s = "~" ^ s ^ "~"
 let render_superscript s = "^" ^ s ^ "^"
 let render_bold s = "**" ^ s ^ "**"
 let render_indent level = String.make (level * 2) ' '
-let render_attach_block level = render_indent level ^ "+\n"
-
-let render_open_block level s =
-  F.asprintf "%s--\n%s\n%s--" (render_indent level) s (render_indent level)
+let render_attach_block level = "+\n"
+let render_open_block level s = F.asprintf "--\n%s\n--" s
 
 let render_ordered_bullet level =
   Format.asprintf "%s%s " (String.make level ' ') (String.make (level + 1) '.')
@@ -233,19 +231,19 @@ let rec prose_of_exp ?(mode = Prose) exp : string =
             |> List.filter_map (fun arg ->
                    match arg.it with ExpA exp -> Some exp | DefA _ -> None)
           in
-          F.asprintf "<<%s, %s>>" id.it (prose_of_hintexp exps prose_true)
+          render_link ~link:id.it ~text:(prose_of_hintexp exps prose_true)
       | InputProse (id, prose_in) ->
           let exps =
             args
             |> List.filter_map (fun arg ->
                    match arg.it with ExpA exp -> Some exp | DefA _ -> None)
           in
-          F.asprintf "<<%s, %s>>" id.it (prose_of_hintexp exps prose_in)
+          render_link ~link:id.it ~text:(prose_of_hintexp exps prose_in)
       | Def id ->
-          F.asprintf "<<%s, %s%s%s>>" id.it (string_of_defid id)
-            (string_of_targs targs)
-            (prose_of_args ~mode:Code args)
-          |> render_mono ~mode)
+          render_link ~link:id.it
+            ~text:
+              (string_of_defid id ^ string_of_targs targs
+              ^ prose_of_args ~mode:Code args))
   | IterE (exp, iterexp) ->
       if snd iterexp = [] then prose_of_exp ~mode exp
       else
@@ -429,14 +427,12 @@ let rec prose_of_instr ?(level = 0) ?(unordered = false) (instr : instr) :
         (prose_of_instr ~level instr)
         (prose_of_in_itervars ~mode:Prose vars_in)
   | ForEachI (vars_out, instr, vars_in) ->
-      F.asprintf "%sLet %s, obtained by repeating:\n%s%s\n%s%sfor each %s"
-        bullet
+      F.asprintf "%sLet %s, obtained by repeating:\n%s%s\n%sfor each %s" bullet
         (prose_of_out_itervars ~mode:Prose vars_out)
         (render_attach_block level)
         (prose_of_instr ~level:(level + 1) ~unordered:true instr
         |> render_open_block level)
         (render_attach_block level)
-        (render_indent level)
         (prose_of_in_itervars ~mode:Prose vars_in)
 
 and prose_of_instrs ?(level = 0) instrs =
