@@ -398,17 +398,16 @@ let prosify_spec (spec : spec) : Pl.Ast.spec =
 (* Splicer entrypoints *)
 
 let prosify_rulegroup (ctx : Ctx.t) (id_rel : id) (mixop : mixop)
-    (inputs : int list) (exps : exp list) (instrs : instr list) =
+    (inputs : int list) (exps_in : exp list) (instrs : instr list) =
+  assert (List.length inputs = List.length exps_in);
   let ctx = ctx |> in_rel id_rel in
   let relcall =
     let prose_in_opt = HEnv.get_rel id_rel ctx.penv.prose_in in
     match prose_in_opt with
     | Some hintexp ->
-        let exps_in, exps_out = InputHint.split_exps_without_idx inputs exps in
         let exps_in = prosify_exps ctx exps_in in
-        let exps_out = prosify_exps ctx exps_out in
-        Pl.Ast.Prose (hintexp, exps_out, exps_in)
-    | None -> Pl.Ast.Mixop (mixop, prosify_exps ctx exps)
+        Pl.Ast.Prose (hintexp, [], exps_in)
+    | None -> Pl.Ast.Mixop (mixop, prosify_exps ctx exps_in)
   in
   let instrs = prosify_instrs ctx instrs in
   (relcall, id_rel, instrs)

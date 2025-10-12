@@ -268,12 +268,26 @@ and code_of_exps ~mode ?(sep : string option = None) (exps : exp list) =
 
 and code_of_notexp ~mode notexp =
   let mixop, exps = notexp in
+  assert (List.length mixop - List.length exps = 1);
   let len = List.length mixop + List.length exps in
   List.init len (fun idx ->
       if idx mod 2 = 0 then idx / 2 |> List.nth mixop |> code_of_atoms
       else idx / 2 |> List.nth exps |> prose_of_exp ~mode:Code)
   |> List.filter_map (fun str -> if str = "" then None else Some str)
   |> String.concat " " |> render_mono ~mode
+
+and code_of_relinput ~mode notexp =
+  let mixop, exps_input = notexp in
+  let exps =
+    List.init
+      (List.length mixop - 1)
+      (fun idx ->
+        match List.nth_opt exps_input idx with
+        | Some exp_input -> exp_input
+        | None -> VarE ("%" $ no_region) $$ (no_region, Il.Ast.TextT))
+  in
+  let notexp = (mixop, exps) in
+  code_of_notexp ~mode notexp
 
 and prose_of_hintexp ?(level = 0) (exps : exp list) (hintexp : El.Ast.exp) :
     string =
@@ -351,9 +365,9 @@ let prose_of_relcall ~level (relcall : relcall) rid : string =
         (code_of_exps ~mode:Prose exps_out)
         (render_link ~link:(string_of_relid rid)
            ~text:(prose_of_hintexp ~level exps_in hintexp))
-  | Mixop (mixop, exps) -> ""
-(* render_link ~link:(string_of_relid rid) *)
-(*   ~text:(code_of_notexp ~mode:Code (mixop, exps)) *)
+  | Mixop (mixop, exps) ->
+      render_link ~link:(string_of_relid rid)
+        ~text:(code_of_relinput ~mode:Prose (mixop, exps))
 
 let rec prose_of_instr ?(level = 0) ?(unordered = false) (instr : instr) :
     string =
@@ -438,29 +452,6 @@ let prose_of_def (def : def) : string =
 
 let prose_of_defs defs = List.map prose_of_def defs |> String.concat "\n"
 let prose_of_spec (spec : spec) = prose_of_defs spec
-
-(* let code_of_relinput mixop inputs exps_input = *)
-(*   let exps_input = List.combine inputs exps_input in *)
-(*   let exps = *)
-(*     List.init *)
-(*       (List.length mixop - 1) *)
-(*       (fun idx -> *)
-(*         match List.assoc_opt idx exps_input with *)
-(*         | Some exp_input -> exp_input *)
-(*         | None -> Il.Ast.VarE ("%" $ no_region) $$ (no_region, Il.Ast.TextT)) *)
-(*   in *)
-(*   let notexp = (mixop, exps) in *)
-(*   code_of_notexp ~mode:Code notexp |> render_mono ~mode:Code *)
-(**)
-(* let prose_of_relinput id_rel mixop inputs exps_input = *)
-(*   let prose_hint_opt = Hintenv.get_rel id_rel ctx.penv.prose_in in *)
-(*   match prose_hint_opt with *)
-(*   | Some prose_hint -> *)
-(*       let exps_opt = List.map Option.some exps_input in *)
-(*       F.asprintf "%s:" *)
-(*         (prose_of_hintexp (ctx |> increment_level) exps_opt prose_hint) *)
-(*       |> String.capitalize_ascii *)
-(*   | None -> code_of_relinput ctx mixop inputs exps_input *)
 
 (* entrypoint for splicer *)
 
