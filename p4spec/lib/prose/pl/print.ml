@@ -26,9 +26,9 @@ let render_link ~(link : string) ~(text : string) : string =
   "<<" ^ link ^ ", " ^ text ^ ">>"
 
 (** Printing as prose **)
-let reindent_lines ~level (s : string) : string =
+let reindent_lines ?(level = 0) (s : string) : string =
   let lines = String.split_on_char '\n' s in
-  String.concat ("\n" ^ render_unordered_bullet (level + 1)) lines
+  String.concat ("\n" ^ render_unordered_bullet level) lines
 
 (* Prose list: a and b / a, b, ..., y and z *)
 
@@ -104,7 +104,7 @@ let code_of_var ~mode (id, _typ, iters) =
 
 (* Iterated Variables *)
 
-let prose_of_in_itervars ~mode vars : string =
+let prose_of_in_itervars ?(mode = Prose) vars : string =
   let prose_of_in_var var =
     F.asprintf "%s in %s"
       (code_of_var ~mode:Code var |> render_mono ~mode)
@@ -113,7 +113,7 @@ let prose_of_in_itervars ~mode vars : string =
   in
   List.map prose_of_in_var vars |> prose_of_list
 
-let prose_of_out_itervars ~mode vars : string =
+let prose_of_out_itervars ?(mode = Prose) vars : string =
   let prose_of_out_var var =
     F.asprintf "%s be the list of %s"
       (code_of_var ~mode:Code var ^ code_of_iter Il.Ast.List
@@ -170,7 +170,7 @@ let rec prose_of_exp ?(mode = Prose) exp : string =
         ^ prose_of_exp ~mode:Code exp_r
         |> render_mono ~mode
   | UpCastE (_typ, exp) | DownCastE (_typ, exp) ->
-      F.asprintf "%s as .." (code_of_exp ~mode exp)
+      F.asprintf "%s" (code_of_exp ~mode exp)
   | SubE (exp, typ) ->
       F.asprintf "%s has type %s" (code_of_exp ~mode exp)
         (code_of_typ ~mode typ)
@@ -251,15 +251,17 @@ let rec prose_of_exp ?(mode = Prose) exp : string =
         |> render_mono ~mode
 
 (* if sep is None, use natural language list *)
-and prose_of_exps ~mode ?(sep : string option = None) exps =
+
+and prose_of_exps ?(mode = Prose) ?(sep : string option = None) exps =
   match sep with
   | None -> prose_of_list (List.map (prose_of_exp ~mode) exps)
   | Some s -> String.concat s (List.map (prose_of_exp ~mode) exps)
 
-and code_of_exp ~mode (exp : exp) =
+and code_of_exp ?(mode = Prose) (exp : exp) =
   prose_of_exp ~mode:Code exp |> render_mono ~mode
 
-and code_of_exps ~mode ?(sep : string option = None) (exps : exp list) =
+and code_of_exps ?(mode = Prose) ?(sep : string option = None) (exps : exp list)
+    =
   match sep with
   | None -> prose_of_list (List.map (code_of_exp ~mode) exps)
   | Some s -> String.concat s (List.map (code_of_exp ~mode) exps)
@@ -287,20 +289,19 @@ and code_of_relinput ~mode notexp =
   let notexp = (mixop, exps) in
   code_of_notexp ~mode notexp
 
-and prose_of_hintexp ?(level = 0) (exps : exp list) (hintexp : El.Ast.exp) :
-    string =
-  let _, str = prose_of_hintexp' ~level exps hintexp 0 in
+and prose_of_hintexp (exps : exp list) (hintexp : El.Ast.exp) : string =
+  let _, str = prose_of_hintexp' exps hintexp 0 in
   str
 
-and prose_of_hintexp' ~level (exps : exp list) (hintexp : El.Ast.exp)
-    (cursor : int) : int * string =
+and prose_of_hintexp' (exps : exp list) (hintexp : El.Ast.exp) (cursor : int) :
+    int * string =
   match hintexp.it with
-  | El.Ast.TextE text -> (cursor, text |> reindent_lines ~level)
+  | El.Ast.TextE text -> (cursor, text |> reindent_lines ~level:0)
   | El.Ast.SeqE exps_hint ->
       let cursor, strs =
         List.fold_left
           (fun (cur, acc) exp ->
-            let cur, str = prose_of_hintexp' ~level exps exp cur in
+            let cur, str = prose_of_hintexp' exps exp cur in
             (cur, acc @ [ str ]))
           (cursor, []) exps_hint
       in
@@ -315,8 +316,8 @@ and prose_of_hintexp' ~level (exps : exp list) (hintexp : El.Ast.exp)
       let exp = List.nth exps i in
       (cursor, code_of_exp ~mode:Prose exp)
   | El.Ast.FuseE (exp_l, exp_r) ->
-      let cursor_l, str_l = prose_of_hintexp' ~level exps exp_l cursor in
-      let cursor_r, str_r = prose_of_hintexp' ~level exps exp_r cursor_l in
+      let cursor_l, str_l = prose_of_hintexp' exps exp_l cursor in
+      let cursor_r, str_r = prose_of_hintexp' exps exp_r cursor_l in
       (cursor_r, str_l ^ str_r)
   | _ -> failwith "unsupported prose hint"
 
@@ -346,26 +347,30 @@ and prose_of_args ~mode args =
 
 let string_of_targs = Sl.Print.string_of_targs
 
-let rec prose_of_cond ?(mode = Prose) (cond : cond) : string =
-  match cond with
-  | ExpCond exp -> prose_of_exp exp
-  | RelCond (relcall, relid) -> "relcond!"
-  | ForAllCond (cond, vars) -> "forall!"
-  | ForAnyCond (cond, vars) -> "forany!"
-
-let prose_of_relcall ~level (relcall : relcall) rid : string =
+let prose_of_relcall ?(level = 0) (relcall : relcall) rid : string =
   match relcall with
   | Prose (hintexp, [], exps_in) ->
       render_link ~link:(string_of_relid rid)
-        ~text:(prose_of_hintexp ~level exps_in hintexp)
+        ~text:(prose_of_hintexp exps_in hintexp)
   | Prose (hintexp, exps_out, exps_in) ->
       F.asprintf "%s be the result of %s"
         (code_of_exps ~mode:Prose exps_out)
         (render_link ~link:(string_of_relid rid)
-           ~text:(prose_of_hintexp ~level exps_in hintexp))
+           ~text:(prose_of_hintexp exps_in hintexp))
   | Mixop (mixop, exps) ->
       render_link ~link:(string_of_relid rid)
         ~text:(code_of_relinput ~mode:Prose (mixop, exps))
+
+let rec prose_of_cond ?(mode = Prose) (cond : cond) : string =
+  match cond with
+  | ExpCond exp -> prose_of_exp exp
+  | RelCond (relcall, relid) -> prose_of_relcall relcall relid
+  | ForAllCond (cond, vars) ->
+      F.asprintf "%s, for all %s" (prose_of_cond ~mode cond)
+        (prose_of_in_itervars ~mode vars)
+  | ForAnyCond (cond, vars) -> assert false
+(* F.asprintf "%s, for any %s" *)
+(*   (prose_of_cond ~mode cond) (prose_of_in_itervars ~mode vars) *)
 
 let rec prose_of_instr ?(level = 0) ?(unordered = false) (instr : instr) :
     string =
@@ -373,7 +378,6 @@ let rec prose_of_instr ?(level = 0) ?(unordered = false) (instr : instr) :
     if unordered then render_unordered_bullet level
     else render_ordered_bullet level
   in
-  (* let bullet = render_ordered_bullet level in *)
   match instr.it with
   | BranchI
       ( branchtype,
@@ -382,8 +386,7 @@ let rec prose_of_instr ?(level = 0) ?(unordered = false) (instr : instr) :
     when Eq.eq_exp exp_r exp ->
       F.asprintf "%s%slet %s be %s:\n%s" bullet
         (prose_of_branchtype branchtype)
-        (code_of_exp ~mode:Prose exp_l)
-        (prose_of_exp ~mode:Code exp_r)
+        (code_of_exp exp_l) (prose_of_exp exp_r)
         (prose_of_instrs ~level:(level + 1) instrs_rest)
   | BranchI
       ( branchtype,
@@ -393,56 +396,55 @@ let rec prose_of_instr ?(level = 0) ?(unordered = false) (instr : instr) :
     when Eq.eq_exp exp_r exp && Eq.eq_typ typ_r typ ->
       F.asprintf "%s%slet %s be %s:\n%s" bullet
         (prose_of_branchtype branchtype)
-        (code_of_exp ~mode:Prose exp_l)
-        (prose_of_exp ~mode:Prose exp_r)
+        (code_of_exp exp_l) (prose_of_exp exp_r)
         (prose_of_instrs ~level:(level + 1) instrs_rest)
   | BranchI (branchtype, cond, instrs) ->
       F.asprintf "%s%s%s:\n%s" bullet
         (prose_of_branchtype branchtype)
-        (prose_of_cond ~mode:Prose cond)
+        (prose_of_cond cond)
         (prose_of_instrs ~level:(level + 1) instrs)
   | OtherwiseI instr ->
       F.asprintf "%sOtherwise:\n%s" bullet
         (prose_of_instr ~level:(level + 1) instr)
-  | CheckI cond ->
-      F.asprintf "%sCheck that %s." bullet (prose_of_cond ~mode:Prose cond)
+  | CheckI cond -> F.asprintf "%sCheck that %s." bullet (prose_of_cond cond)
   | LetI (exp_l, exp_r) ->
-      F.asprintf "%sLet %s be %s." bullet
-        (code_of_exp ~mode:Prose exp_l)
-        (prose_of_exp ~mode:Prose exp_r)
+      F.asprintf "%sLet %s be %s." bullet (code_of_exp exp_l)
+        (prose_of_exp exp_r)
   | RelI (relcall, rid) ->
       F.asprintf "%sLet %s." bullet (prose_of_relcall ~level relcall rid)
-  | ReturnI exp ->
-      F.asprintf "%sReturn %s." bullet (prose_of_exp ~mode:Prose exp)
+  | ReturnI exp -> F.asprintf "%sReturn %s." bullet (prose_of_exp exp)
   | ResultI (Some hintexp, exps) ->
-      F.asprintf "%sResult in %s." bullet
-        (prose_of_hintexp ~level:(level + 1) exps hintexp)
+      F.asprintf "%sResult in %s." bullet (prose_of_hintexp exps hintexp)
+  | ResultI (None, []) -> bullet ^ "The relation holds."
   | ResultI (None, exps) ->
-      F.asprintf "%sResult in %s." bullet (prose_of_exps ~mode:Prose exps)
+      F.asprintf "%sResult in %s." bullet (prose_of_exps exps)
   | GroupI (id, _, instrs) ->
       F.asprintf "%sGroup %s:\n%s" bullet (string_of_relpathid id)
         (prose_of_instrs ~level:(level + 1) instrs)
   | ForEachI ([], instr, vars_in) ->
       F.asprintf "%s%s, for each %s" bullet
         (prose_of_instr ~level instr)
-        (prose_of_in_itervars ~mode:Prose vars_in)
+        (prose_of_in_itervars vars_in)
   | ForEachI (vars_out, instr, vars_in) ->
       F.asprintf "%sLet %s, obtained by repeating:\n%s%s\n%sfor each %s" bullet
-        (prose_of_out_itervars ~mode:Prose vars_out)
+        (prose_of_out_itervars vars_out)
         (render_attach_block level)
         (prose_of_instr ~level:(level + 1) ~unordered:true instr
         |> render_open_block level)
         (render_attach_block level)
-        (prose_of_in_itervars ~mode:Prose vars_in)
+        (prose_of_in_itervars vars_in)
+  | CheckLetI (exp_l, exp_r) ->
+      F.asprintf "%sLet! %s be %s." bullet (code_of_exp exp_l)
+        (prose_of_exp exp_r)
 
 and prose_of_instrs ?(level = 0) instrs =
+  let instrs = Shorthand.apply_all_shorthands instrs in
   List.map (prose_of_instr ~level) instrs |> String.concat "\n"
 
 let prose_of_def (def : def) : string =
   match def.it with
   | RelD (relid, exps_input, instrs) ->
-      "\n\nrelation " ^ string_of_relid relid ^ ": "
-      ^ prose_of_exps ~mode:Prose exps_input
+      "\n\nrelation " ^ string_of_relid relid ^ ": " ^ prose_of_exps exps_input
       ^ "\n\n" ^ prose_of_instrs instrs
   | DecD _ -> ""
 
@@ -464,8 +466,8 @@ let prose_of_funcprose (funcprose : funcprose) (args : arg list) : string =
   in
   match funcprose with
   | BoolProse (id, prose_true, _prose_false) ->
-      prose_of_hintexp ~level:0 exps_input prose_true
-  | InputProse (id, prose_in) -> prose_of_hintexp ~level:0 exps_input prose_in
+      prose_of_hintexp exps_input prose_true
+  | InputProse (id, prose_in) -> prose_of_hintexp exps_input prose_in
   | Def id -> string_of_defid id
 
 let prose_of_func (funcprose, tparams, args, instrs) : string =
@@ -474,6 +476,6 @@ let prose_of_func (funcprose, tparams, args, instrs) : string =
       (prose_of_funcprose funcprose args)
       (string_of_tparams tparams)
       (prose_of_args ~mode:Code args)
-    |> render_mono ~mode:Code
+    |> render_mono ~mode:Prose
   in
   F.asprintf "%s\n\n%s" prose_of_funcdef (prose_of_instrs instrs)

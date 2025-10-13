@@ -152,7 +152,9 @@ and instr' =
   (* Result in %prose_out(%exps) *)
   | ResultI of hintexp option * exp list
   | ReturnI of exp
-  | GroupI of id * exp list * instr list
+  | GroupI of id * exp list * instr list (* Pre-processed instructions *)
+  (* Check - let *)
+  | CheckLetI of exp * exp
 
 type def = def' phrase
 
