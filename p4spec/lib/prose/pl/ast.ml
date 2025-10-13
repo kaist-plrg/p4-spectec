@@ -155,6 +155,7 @@ and instr' =
   | GroupI of id * exp list * instr list (* Pre-processed instructions *)
   (* Check - let *)
   | CheckLetI of exp * exp
+  | OptionGetI of exp * exp
 
 type def = def' phrase
 

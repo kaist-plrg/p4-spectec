@@ -223,8 +223,8 @@ let rec prose_of_exp ?(mode = Prose) exp : string =
   | UpdE (exp_b, path, exp_f) ->
       prose_of_exp ~mode exp_b ^ "[" ^ prose_of_path ~mode path ^ " = "
       ^ prose_of_exp ~mode exp_f ^ "]"
-  | CallE (funcprose, targs, args) -> (
-      match funcprose with
+  | CallE (funcprose, targs, args) ->
+      (match funcprose with
       | BoolProse (id, prose_true, _prose_false) ->
           let exps =
             args
@@ -244,6 +244,7 @@ let rec prose_of_exp ?(mode = Prose) exp : string =
             ~text:
               (string_of_defid id ^ string_of_targs targs
               ^ prose_of_args ~mode:Code args))
+      |> render_mono ~mode
   | IterE (exp, iterexp) ->
       if snd iterexp = [] then prose_of_exp ~mode exp
       else
@@ -434,7 +435,10 @@ let rec prose_of_instr ?(level = 0) ?(unordered = false) (instr : instr) :
         (render_attach_block level)
         (prose_of_in_itervars vars_in)
   | CheckLetI (exp_l, exp_r) ->
-      F.asprintf "%sLet! %s be %s." bullet (code_of_exp exp_l)
+      F.asprintf "%sLet!~type~ %s be %s." bullet (code_of_exp exp_l)
+        (prose_of_exp exp_r)
+  | OptionGetI (exp_l, exp_r) ->
+      F.asprintf "%sLet!~option~ %s be %s." bullet (code_of_exp exp_l)
         (prose_of_exp exp_r)
 
 and prose_of_instrs ?(level = 0) instrs =
