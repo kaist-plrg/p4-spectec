@@ -116,7 +116,7 @@ let rec struct_def (ienv : IEnv.t) (tdenv : TDEnv.t) (def : def) : Sl.Ast.def =
 and struct_rel_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region) (id_rel : id)
     (nottyp : nottyp) (inputs : int list) (rulegroups : rulegroup list)
     (hints : hint list) : Sl.Ast.def =
-  let mixop, _ = nottyp.it in
+  let mixop, typs = nottyp.it in
   let frees = Il.Free.free_rulegroups rulegroups in
   let rulegroups, exps_match_impl_group, prems_match_group =
     List.fold_left
@@ -134,7 +134,38 @@ and struct_rel_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region) (id_rel : id)
       ([], [], []) rulegroups
   in
   let exps_match_unified, prems_match_group =
-    struct_rule_matches frees exps_match_impl_group prems_match_group
+    match rulegroups with
+    | [] ->
+        let typs_match = List.map (fun i -> List.nth typs i) inputs in
+        let exps_match_unified, _ =
+          List.fold_left
+            (fun (exps_match, frees) typ_match ->
+              let id_base, typ_base, iters =
+                Elaborate.Fresh.fresh_from_typ frees typ_match.at typ_match
+              in
+              let frees = IdSet.add id_base frees in
+              let exp_base =
+                Il.Ast.VarE id_base $$ (typ_base.at, typ_base.it)
+              in
+              let exp_match, _ =
+                List.fold_left
+                  (fun (exp_match, iters) iter ->
+                    let typ =
+                      Il.Ast.IterT (exp_match.note $ exp_match.at, iter)
+                    in
+                    let var = (id_base, typ_base, iters) in
+                    let iterexp = (iter, [ var ]) in
+                    let exp_match =
+                      Il.Ast.IterE (exp_match, iterexp) $$ (exp_match.at, typ)
+                    in
+                    (exp_match, iters @ [ iter ]))
+                  (exp_base, []) iters
+              in
+              (exps_match @ [ exp_match ], frees))
+            ([], IdSet.empty) typs_match
+        in
+        (exps_match_unified, [])
+    | _ -> struct_rule_matches frees exps_match_impl_group prems_match_group
   in
   let instrs =
     List.map2

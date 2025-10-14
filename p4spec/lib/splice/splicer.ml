@@ -68,8 +68,11 @@ module RuleGroup : Splice = struct
   type value = Kinds.rulegroup
 
   let name = "rulegroup"
-  let prefix = Some "\n----\n"
-  let suffix = Some "\n----"
+
+  let prefix =
+    Some ".Click to view the specification source\n[%collapsible]\n====\n----\n"
+
+  let suffix = Some "\n----\n====\n\n[.empty]\n--\n\n\n--\n\n"
 
   let parse_keys (source : Source.t) : key list =
     [ Parser.parse_rulegroup_id source ]

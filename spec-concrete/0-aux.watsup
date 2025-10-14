@@ -28,6 +28,7 @@ dec $min(nat*) : nat
 dec $int_to_text(int) : text
 
 dec $concat_text(text*) : text
+  hint(prose_in "the concatenation of" %0)
 def $concat_text(eps) = ""
 def $concat_text(t_h :: t_t*) = t_h ++ $concat_text(t_t*)
 
@@ -39,12 +40,14 @@ dec $strip_suffix(text, text) : text
 ;;
 
 dec $init_(nat) : nat*
+  hint(prose_in "the list of the first" %0 "natural numbers")
 def $init_(0) = eps
 def $init_(n) = n' :: $init_(n')
   -- if n =/= 0
   -- if n' = $(n - 1)
 
 dec $repeat_<X>(X, nat) : X*
+  hint(prose_in "a list of" %1 "copies of" %0)
 def $repeat_<X>(X, 0) = eps
 def $repeat_<X>(X, n) = X ++ $repeat_<X>(X, n')
   -- if n =/= 0
@@ -60,6 +63,7 @@ dec $assoc_<X, Y>(X, (X, Y)*) : Y?
 
 dec $distinct_<K>(K*) : bool
   hint(prose_true "the elements of" %0 "are distinct")
+  hint(prose_false "the elements of" %0 "are not distinct")
 
 ;;
 ;; General set functions
@@ -75,17 +79,24 @@ dec $in_set<K>(K, set<K>) : bool
 def $in_set<K>(K, `{ K_e* }) = K <- K_e*
 
 dec $intersect_set<K>(set<K>, set<K>) : set<K>
+  hint(prose_in "the intersection of the sets" %0 "and" %1)
 
 dec $union_set<K>(set<K>, set<K>) : set<K>
+  hint(prose_in "the union of the sets" %0 "and" %1)
 
 dec $unions_set<K>(set<K>*) : set<K>
+  hint(prose_in "the union of the sets" %0)
 
 dec $diff_set<K>(set<K>, set<K>) : set<K>
+  hint(prose_in "the difference of the sets" %0 "and" %1)
 
 dec $sub_set<K>(set<K>, set<K>) : bool
   hint(prose_true %0 "is a subset of" %1)
+  hint(prose_false %0 "is not a subset of" %1)
 
 dec $eq_set<K>(set<K>, set<K>) : bool
+  hint(prose_true %0 "is equal to" %1)
+  hint(prose_false %0 "is not equal to" %1)
 
 ;;
 ;; General map functions
@@ -99,6 +110,7 @@ dec $empty_map<K, V> : map<K, V>
 def $empty_map<K, V> = `{ eps }
 
 dec $dom_map<K, V>(map<K, V>) : set<K>
+  hint(prose_in "the domain of the map" %0)
 def $dom_map<K, V>(`{ (K `: V)* }) = `{ K* }
 
 dec $find_map<K, V>(map<K, V>, K) : V?

@@ -61,6 +61,7 @@ let rec rename_let_alias (rename : Renamer.t) (instrs : instr list) : instr list
           instr_h :: instrs_t
       | GroupI (id_group, exps_group, instrs_group) ->
           let instrs_group = rename_let_alias rename instrs_group in
+          let exps_group = List.map (Renamer.rename_exp rename) exps_group in
           let instr_h =
             GroupI (id_group, exps_group, instrs_group) $ instr_h.at
           in

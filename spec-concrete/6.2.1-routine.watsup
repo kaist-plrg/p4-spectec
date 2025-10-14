@@ -4,22 +4,41 @@
 
 syntax renv, senv
 
-syntax function =
-  | BUILTIN_FUNCTION `< typeParameterListIR > `( parameterListIR )
-  | FUNCTION `< typeParameterListIR > `( parameterListIR ) blockStatementIR
-  | ACTION `( parameterListIR ) blockStatementIR
-  | EXTERN_FUNCTION `< typeParameterListIR > `( parameterListIR )
+syntax action = ACTION `( parameterListIR ) blockStatementIR
 
-syntax method =
-  | BUILTIN_METHOD `( parameterListIR ) `# storageReference
+syntax definedFunction =
+  FUNCTION `< typeParameterListIR > `( parameterListIR ) blockStatementIR
+
+syntax externFunction =
+  EXTERN_FUNCTION `< typeParameterListIR > `( parameterListIR )
+
+syntax function =
+  | definedFunction
+  | externFunction
+
+syntax builtinMethod =
+  BUILTIN_METHOD `( parameterListIR ) `# storageReference
+
+syntax externMethod =
   | EXTERN_METHOD `< typeParameterListIR > `( parameterListIR ) blockStatementIR?
   | EXTERN_METHOD ABSTRACT `< typeParameterListIR > `( parameterListIR )
-  | PARSER_APPLY `( parameterListIR )
-    `{ parserLocalDeclarationListIR `; senv }
-  | CONTROL_APPLY `( parameterListIR )
-    `{ controlLocalDeclarationListIR `; renv `; blockElementStatementListIR }
-  | TABLE_APPLY `{ tablePropertyListIR }
 
-syntax routine = 
-  | function
-  | method
+syntax parserApplyMethod =
+  PARSER_APPLY `( parameterListIR )
+    `{ parserLocalDeclarationListIR `; senv }
+
+syntax controlApplyMethod =
+  CONTROL_APPLY `( parameterListIR )
+    `{ controlLocalDeclarationListIR `; renv `; blockElementStatementListIR }
+
+syntax tableApplyMethod =
+  TABLE_APPLY `{ tablePropertyListIR }
+
+syntax method =
+  | builtinMethod
+  | externMethod
+  | parserApplyMethod
+  | controlApplyMethod
+  | tableApplyMethod
+
+syntax routine = action | function | method

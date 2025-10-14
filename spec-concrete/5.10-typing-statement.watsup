@@ -24,8 +24,8 @@ rule Stmt_ok/assignmentStatement-eq:
   ---- ;; check expression
   -- Expr_ok: p TC |- expression : typedExpressionIR
   ---- ;; fetch annotations
-  -- if typeIR_l = $typeof_lvalue(typedLvalueIR)
-  -- if typeIR_r = $typeof_expression(typedExpressionIR)
+  -- if typeIR_l = $type_of_lvalue(typedLvalueIR)
+  -- if typeIR_r = $type_of_expression(typedExpressionIR)
   ---- ;; check type compatibility
   ---- ;; while inserting implicit casts if necessary
   -- if typedExpressionIR_cast = $coerce_unary(typedExpressionIR, typeIR_l)
@@ -140,7 +140,7 @@ rulegroup Stmt_ok/returnStatement {
     ---- ;; check expression
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
     ---- ;; fetch annotation
-    -- if typeIR = $typeof_expression(typedExpressionIR)
+    -- if typeIR = $type_of_expression(typedExpressionIR)
     ---- ;; check the return type in the context
     -- if typeIR_ret = $find_return_type(TC)
     ---- ;; check type compatibility
@@ -177,7 +177,7 @@ rulegroup Stmt_ok/conditionalStatement {
     -- Expr_ok: p TC |- expression_cond : typedExpressionIR_cond
     ---- ;; fetch annotation
     ---- ;; the condition must be a boolean type
-    -- if typeIR_cond = $typeof_expression(typedExpressionIR_cond)
+    -- if typeIR_cond = $type_of_expression(typedExpressionIR_cond)
     -- if BOOL = $canon(typeIR_cond)
     ---- ;; check then statement
     -- Stmt_ok: p TC f |- statement_then : TC_then f_then statementIR_then
@@ -190,7 +190,7 @@ rulegroup Stmt_ok/conditionalStatement {
     -- Expr_ok: p TC |- expression_cond : typedExpressionIR_cond
     ---- ;; fetch annotation
     ---- ;; the condition must be a boolean type
-    -- if typeIR_cond = $typeof_expression(typedExpressionIR_cond)
+    -- if typeIR_cond = $type_of_expression(typedExpressionIR_cond)
     -- if BOOL = $canon(typeIR_cond)
     ---- ;; check then and else statements
     -- Stmt_ok: p TC f |- statement_then : TC_then f_then statementIR_then
@@ -295,7 +295,7 @@ rule Stmt_ok/switchStatement-table:
               : TC f_post switchStatementIR
   ---- ;; check expression
   -- Expr_ok: LOCAL TC |- expression_switch : typedExpressionIR_switch
-  -- if typeIR_switch = $typeof_expression(typedExpressionIR_switch)
+  -- if typeIR_switch = $type_of_expression(typedExpressionIR_switch)
   ---- ;; if the expression is the result of table apply method
   -- if TABLE_ENUM tid_table_enum `{ _ } = $canon(typeIR_switch)
   -- if tid_table = $strip_prefix($strip_suffix(tid_table_enum, ")"), "action_list(")
@@ -328,7 +328,7 @@ rulegroup SwitchLabel_general_ok {
   rule SwitchLabel_general_ok/expressionNonBrace:
     TC typeIR_switch _ |- expressionNonBrace_label : typedExpressionIR_label_cast
     ---- ;; check that the label is of switch key type
-    -- if expression_label = $expressionNonBrace(expressionNonBrace_label)
+    -- if expression_label = $expressionNonBrace_as_expression(expressionNonBrace_label)
     -- Expr_ok: LOCAL TC |- expression_label : typedExpressionIR_label
     -- if typedExpressionIR_label_cast
         = $coerce_unary(typedExpressionIR_label, typeIR_switch)
@@ -405,7 +405,7 @@ rule Stmt_ok/switchStatement-general:
               : TC f_post switchStatementIR
   ---- ;; check expression
   -- Expr_ok: LOCAL TC |- expression_switch : typedExpressionIR_switch
-  -- if typeIR_switch = $typeof_expression(typedExpressionIR_switch)
+  -- if typeIR_switch = $type_of_expression(typedExpressionIR_switch)
   ---- ;; if the expression is error, numeric or enumerated type
   -- if $compat_switch(typeIR_switch)
   ---- ;; check switch cases

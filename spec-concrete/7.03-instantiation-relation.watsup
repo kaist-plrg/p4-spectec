@@ -50,30 +50,12 @@ relation Block_inst:
 ;;;; Extern method/constructor instantiation
 ;;
 
-relation Bind_method:
-  rdenv |- methodPrototypeIR ==> rdenv
-  hint(input %0 %1)
-
-relation Bind_methods:
-  rdenv |- methodPrototypeIR* ==> rdenv
-  hint(input %0 %1)
-
-relation Bind_constructor:
-  cursor instantiationContext typeParameterListIR methodPrototypeListIR |- methodPrototypeIR
-                                                                       ==> instantiationContext
-  hint(input %0 %1 %2 %3 %4)
-
-relation Bind_constructors:
-  cursor instantiationContext typeParameterListIR methodPrototypeListIR |- methodPrototypeIR*
-                                                                       ==> instantiationContext
-  hint(input %0 %1 %2 %3 %4)
-
 relation ExternMethod_inst:
-  instantiationContext |- methodPrototypeIR ==> instantiationContext
+  instantiationContext |- externMethodPrototypeIR ==> instantiationContext
   hint(input %0 %1)
 
 relation ExternMethods_inst:
-  instantiationContext |- methodPrototypeIR* ==> instantiationContext
+  instantiationContext |- externMethodPrototypeIR* ==> instantiationContext
   hint(input %0 %1)
 
 ;;
@@ -149,7 +131,7 @@ relation Decls_inst:
   hint(input %0 %1 %2 %3)
 
 relation Program_inst:
-  |- p4program ==> cenv tdenv renv venv store
+  |- p4program ==> cenv tdenv renv frame store
   hint(input %0)
 
 ;;

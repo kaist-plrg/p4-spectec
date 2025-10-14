@@ -1,0 +1,86 @@
+syntax globalEvaluationLayer = { FRAME frame }
+syntax blockEvaluationLayer = { FRAME frame }
+syntax localEvaluationLayer = { FRAMES frame* }
+
+syntax evaluationContext =
+  { GLOBAL globalEvaluationLayer,
+    BLOCK blockEvaluationLayer,
+    LOCAL localEvaluationLayer }
+
+syntax expressionResult =
+  | value
+  | EXIT
+
+syntax statementResult =
+  | CONT
+  | EXIT
+  | RETURN value
+
+var EC : evaluationContext
+
+relation Expr_eval:
+  cursor evaluationContext store |- typedExpressionIR
+                                  : store expressionResult
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "evaluating" %3#", under cursor" %0#", evaluation context" %1#", and store" %2)
+  hint(prose_out "the resulting store" %4#" and expression result" %5)
+
+rulegroup Expr_eval/literalExpressionIR-boolean {
+
+  rule Expr_eval/true:
+    p EC STO |- TRUE `# `( _ _ ) : STO (B true)
+
+  rule Expr_eval/false:
+    p EC STO |- FALSE `# `( _ _ ) : STO (B false)
+
+}
+
+relation Stmt_eval:
+  cursor evaluationContext store |- statementIR
+                                  : evaluationContext store statementResult
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "evaluating" %3#", under cursor" %0#", evaluation context" %1#", and store" %2)
+  hint(prose_out "\nthe resulting evaluation context" %4#",\nstore" %5#",\nand statement result" %6)
+
+rulegroup Stmt_eval/conditionalStatementIR {
+
+  rule Stmt_eval/non-else-cont-true:
+    p EC STO |- IF `( typedExpressionIR_cond ) statementIR_then
+              : EC_then STO_then statementResult
+    -- Expr_eval: p EC STO |- typedExpressionIR_cond : STO_cond expressionResult
+    -- if B true = expressionResult
+    -- Stmt_eval: p EC STO_cond |- statementIR_then : EC_then STO_then statementResult
+
+  rule Stmt_eval/non-else-cont-false:
+    p EC STO |- IF `( typedExpressionIR_cond ) statementIR_then
+              : EC STO_cond CONT
+    -- Expr_eval: p EC STO |- typedExpressionIR_cond : STO_cond expressionResult
+    -- if B false = expressionResult
+
+  rule Stmt_eval/non-else-exit:
+    p EC STO |- IF `( typedExpressionIR_cond ) statementIR_then
+              : EC STO_cond EXIT
+    -- Expr_eval: p EC STO |- typedExpressionIR_cond : STO_cond expressionResult
+    -- if EXIT = expressionResult
+
+  rule Stmt_eval/else-cont-true:
+    p EC STO |- IF `( typedExpressionIR_cond ) statementIR_then ELSE statementIR_else
+              : EC_then STO_then statementResult
+    -- Expr_eval: p EC STO |- typedExpressionIR_cond : STO_cond expressionResult
+    -- if B true = expressionResult
+    -- Stmt_eval: p EC STO_cond |- statementIR_then : EC_then STO_then statementResult
+
+  rule Stmt_eval/else-cont-false:
+    p EC STO |- IF `( typedExpressionIR_cond ) statementIR_then ELSE statementIR_else
+              : EC_else STO_else statementResult
+    -- Expr_eval: p EC STO |- typedExpressionIR_cond : STO_cond expressionResult
+    -- if B false = expressionResult
+    -- Stmt_eval: p EC STO_cond |- statementIR_else : EC_else STO_else statementResult
+
+  rule Stmt_eval/else-exit:
+    p EC STO |- IF `( typedExpressionIR_cond ) statementIR_then ELSE statementIR_else
+              : EC STO_cond EXIT
+    -- Expr_eval: p EC STO |- typedExpressionIR_cond : STO_cond expressionResult
+    -- if EXIT = expressionResult
+
+}

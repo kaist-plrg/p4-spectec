@@ -19,6 +19,9 @@ dec $bitacc(int, int, int) : int
 ;; Unary operations
 ;;
 
+dec $un_op(unop, value) : value
+  hint(prose_in %0 %1)
+
 ;;; Unary bitwise not
 
 dec $un_bnot(value) : value
@@ -26,11 +29,15 @@ dec $un_bnot(value) : value
 def $un_bnot(w W i) = w W i'
   -- if i' = $bneg(i)
 
+def $un_op(`~, value) = $un_bnot(value)
+
 ;;; Unary logical not
 
 dec $un_lnot(value) : value
 
 def $un_lnot(B b) = B (~b)
+
+def $un_op(`!, value) = $un_lnot(value)
 
 ;;; Unary plus
 
@@ -39,6 +46,8 @@ dec $un_plus(value) : value
 def $un_plus(D i) = D i
 def $un_plus(w W i) = w W i
 def $un_plus(w S i) = w S i
+
+def $un_op(`+, value) = $un_plus(value)
 
 ;;; Unary minus
 
@@ -50,9 +59,14 @@ def $un_minus(w W i) = w W i'
 def $un_minus(w S i) = w S i'
   -- if i' = $to_bitstr(w, $to_int(w, $(-i)))
 
+def $un_op(`-, value) = $un_minus(value)
+
 ;;
 ;; Binary operation
 ;;
+
+dec $bin_op(binop, value, value) : value
+  hint(prose_in %1 %0 %2)
 
 ;;; Binary plus
 
@@ -68,9 +82,13 @@ def $bin_plus(w S i_l, w S i_r) = w S i'
   -- if i_r' = $to_int(w, i_r)
   -- if i' = $to_bitstr(w, $(i_l' + i_r'))
 
+def $bin_op(`+, value_l, value_r) = $bin_plus(value_l, value_r)
+
 ;;; Binary saturating plus
 
 dec $bin_satplus(value, value) : value 
+
+def $bin_op(`|+|, value_l, value_r) = $bin_satplus(value_l, value_r)
 
 ;;; Binary minus
 
@@ -86,9 +104,13 @@ def $bin_plus(w S i_l, w S i_r) = w S i'
   -- if i_r' = $to_int(w, i_r)
   -- if i' = $to_bitstr(w, $(i_l' - i_r'))
 
+def $bin_op(`-, value_l, value_r) = $bin_minus(value_l, value_r)
+
 ;;; Binary saturating minus
 
 dec $bin_satminus(value, value) : value
+
+def $bin_op(`|-|, value_l, value_r) = $bin_satminus(value_l, value_r)
 
 ;;; Binary multiplication
 
@@ -104,17 +126,23 @@ def $bin_plus(w S i_l, w S i_r) = w S i'
   -- if i_r' = $to_int(w, i_r)
   -- if i' = $to_bitstr(w, $(i_l' * i_r'))
 
+def $bin_op(`*, value_l, value_r) = $bin_mul(value_l, value_r)
+
 ;;; Binary division
 
 dec $bin_div(value, value) : value
 
 def $bin_div(D i_l, D i_r) = D $(i_l / i_r)
 
+def $bin_op(`/, value_l, value_r) = $bin_div(value_l, value_r)
+
 ;;; Binary modulo
 
 dec $bin_mod(value, value) : value
 
 def $bin_mod(D i_l, D i_r) = D $(i_l \ i_r)
+
+def $bin_op(`%, value_l, value_r) = $bin_mod(value_l, value_r)
 
 ;;; Binary shift left
 
@@ -142,6 +170,8 @@ def $bin_shl(w_l S i_l, w_r S i_r) = w_l S i'
   -- if i_l' = $to_int(w_l, i_l)
   -- if i_r' = $to_int(w_r, i_r)
   -- if i' = $to_bitstr(w_l, $shl(i_l', i_r'))
+
+def $bin_op(`<<, value_l, value_r) = $bin_shl(value_l, value_r)
 
 ;;; Binary shift right
 
@@ -193,6 +223,8 @@ def $bin_shr(w_l S i_l, w_r S i_r) = w_l S i''
   -- if i' = $shr(i_l, i_r)
   -- if i'' = $to_bitstr(w_l, i')
 
+def $bin_op(`>>, value_l, value_r) = $bin_shr(value_l, value_r)
+
 ;;; Binary less than or equal
 
 dec $bin_le(value, value) : bool
@@ -202,6 +234,8 @@ def $bin_le(w W i_l, w W i_r) = $(i_l <= i_r)
 def $bin_le(w S i_l, w S i_r) = $(i_l' <= i_r')
   -- if i_l' = $to_int(w, i_l)
   -- if i_r' = $to_int(w, i_r)
+
+def $bin_op(`<=, value_l, value_r) = B $bin_le(value_l, value_r)
 
 ;;; Binary greater than or equal
 
@@ -213,6 +247,8 @@ def $bin_ge(w S i_l, w S i_r) = $(i_l' >= i_r')
   -- if i_l' = $to_int(w, i_l)
   -- if i_r' = $to_int(w, i_r)
 
+def $bin_op(`>=, value_l, value_r) = B $bin_ge(value_l, value_r)
+
 ;;; Binary less than
 
 dec $bin_lt(value, value) : bool
@@ -223,6 +259,8 @@ def $bin_lt(w S i_l, w S i_r) = $(i_l' < i_r')
   -- if i_l' = $to_int(w, i_l)
   -- if i_r' = $to_int(w, i_r)
 
+def $bin_op(``<, value_l, value_r) = B $bin_lt(value_l, value_r)
+
 ;;; Binary greater than
 
 dec $bin_gt(value, value) : bool
@@ -232,6 +270,8 @@ def $bin_gt(w W i_l, w W i_r) = $(i_l > i_r)
 def $bin_gt(w S i_l, w S i_r) = $(i_l' > i_r')
   -- if i_l' = $to_int(w, i_l)
   -- if i_r' = $to_int(w, i_r)
+
+def $bin_op(``>, value_l, value_r) = B $bin_gt(value_l, value_r)
 
 ;;; Binary equals
 
@@ -292,11 +332,15 @@ def $bin_eqs_fields(
   = (id_a_h = id_b_h) /\ $bin_eq(value_a_h, value_b_h)
     /\ $bin_eqs_fields((value_a_t, id_a_t)*, (value_b_t, id_b_t)*)
 
+def $bin_op(`==, value_l, value_r) = B $bin_eq(value_l, value_r)
+
 ;;; Binary not equals
 
 dec $bin_ne(value, value) : bool
 
 def $bin_ne(value_l, value_r) = ~$bin_eq(value_l, value_r)
+
+def $bin_op(`!=, value_l, value_r) = B $bin_ne(value_l, value_r)
 
 ;;; Binary bitwise and
 
@@ -304,11 +348,12 @@ dec $bin_band(value, value) : value
 
 def $bin_band(w W i_l, w W i_r) = w W i'
   -- if i' = $to_bitstr(w, $band(i_l, i_r))
-
 def $bin_band(w S i_l, w S i_r) = w S i'
   -- if i_l' = $to_int(w, i_l)
   -- if i_r' = $to_int(w, i_r)
   -- if i' = $to_bitstr(w, $band(i_l', i_r'))
+
+def $bin_op(`&, value_l, value_r) = $bin_band(value_l, value_r)
 
 ;;; Binary bitwise xor
 
@@ -316,11 +361,12 @@ dec $bin_bxor(value, value) : value
 
 def $bin_bxor(w W i_l, w W i_r) = w W i'
   -- if i' = $to_bitstr(w, $bxor(i_l, i_r))
-
 def $bin_bxor(w S i_l, w S i_r) = w S i'
   -- if i_l' = $to_int(w, i_l)
   -- if i_r' = $to_int(w, i_r)
   -- if i' = $to_bitstr(w, $bxor(i_l', i_r'))
+
+def $bin_op(`^, value_l, value_r) = $bin_bxor(value_l, value_r)
 
 ;;; Binary bitwise or
 
@@ -328,11 +374,12 @@ dec $bin_bor(value, value) : value
 
 def $bin_bor(w W i_l, w W i_r) = w W i'
   -- if i' = $to_bitstr(w, $bor(i_l, i_r))
-
 def $bin_bor(w S i_l, w S i_r) = w S i'
   -- if i_l' = $to_int(w, i_l)
   -- if i_r' = $to_int(w, i_r)
   -- if i' = $to_bitstr(w, $bor(i_l', i_r'))
+
+def $bin_op(`|, value_l, value_r) = $bin_bor(value_l, value_r)
 
 ;;; Binary bitwise concat
 
@@ -348,7 +395,6 @@ def $bin_concat(w_l W i_l, w_r S i_r) = w W i''
   -- if i_l'' = $(i_l' + i_r)
   -- if w = $(w_l + w_r)
   -- if i'' = $to_bitstr(w, i_l'')
-
 def $bin_concat(w_l S i_l, w_r W i_r) = w S i'''
   -- if i_l' = $to_int(w_l, i_l)
   -- if i_l'' = $shl(i_l', w_r)
@@ -361,6 +407,8 @@ def $bin_concat(w_l S i_l, w_r S i_r) = w S i'''
   -- if i_l''' = $(i_l'' + i_r)
   -- if w = $(w_l + w_r)
   -- if i''' = $to_bitstr(w, i_l''')
+
+def $bin_op(`++, value_l, value_r) = $bin_concat(value_l, value_r)
 
 ;;; Binary logical and
 

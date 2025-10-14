@@ -56,26 +56,26 @@ relation ConstructorTypeDef_wf:
 ;;;; Well-formedness of parameter types
 ;;
 
-rule ParameterType_wf/default-empty-extern:
-  bound |- `EMPTY typeIR _ eps
-  -- Type_wf: bound |- typeIR
-  -- if $is_extern_object_typeIR($canon(typeIR))
+rulegroup ParameterType_wf {
 
-rule ParameterType_wf/default-none-not-extern:
-  bound |- direction typeIR _ eps
-  -- Type_wf: bound |- typeIR
-  -- if ~$is_extern_object_typeIR($canon(typeIR))
+  rule ParameterType_wf/non-default:
+    bound |- direction typeIR _ eps
+    -- Type_wf: bound |- typeIR
+    -- if ($is_string_typeIR($canon(typeIR))
+          \/ $is_arbitrary_int_typeIR($canon(typeIR))
+          \/ $is_objectTypeIR($canon(typeIR)))
+          => direction = `EMPTY
 
-rule ParameterType_wf/default-some-extern:
-  bound |- `EMPTY typeIR _ value
-  -- Type_wf: bound |- typeIR
-  -- if $is_extern_object_typeIR($canon(typeIR))
+  rule ParameterType_wf/default:
+    bound |- direction typeIR _ value
+    -- Type_wf: bound |- typeIR
+    -- if direction = IN \/ direction = `EMPTY
+    -- if ($is_string_typeIR($canon(typeIR))
+          \/ $is_arbitrary_int_typeIR($canon(typeIR))
+          \/ $is_objectTypeIR($canon(typeIR)))
+          => direction = `EMPTY
 
-rule ParameterType_wf/default-some-not-extern:
-  bound |- direction typeIR _ value
-  -- Type_wf: bound |- typeIR
-  -- if ~$is_extern_object_typeIR($canon(typeIR))
-  -- if direction = IN \/ direction = `EMPTY
+}
 
 rule ParameterTypes_wf:
   bound |- parameterTypeIR*
@@ -107,8 +107,10 @@ rule Type_wf/specializedTypeIR:
 
 dec $nestable_typedef(typeIR) : bool
   hint(prose_true %0 "can be used in a typedef")
+  hint(prose_false %0 "cannot be used in a typedef")
 dec $nestable'_typedef(typeIR) : bool
   hint(prose_true %0 "can be used in a typedef")
+  hint(prose_false %0 "cannot be used in a typedef")
 
 def $nestable_typedef(typeIR) = $nestable'_typedef(typeIR_canon)
   -- if typeIR_canon = $canon(typeIR)
@@ -129,8 +131,10 @@ rule Type_wf/typedefTypeIR:
 
 dec $nestable_new(typeIR) : bool
   hint(prose_true %0 "can be used in a new type")
+  hint(prose_false %0 "cannot be used in a new type")
 dec $nestable'_new(typeIR) : bool
   hint(prose_true %0 "can be used in a new type")
+  hint(prose_false %0 "cannot be used in a new type")
 
 def $nestable_new(typeIR) = $nestable'_new(typeIR_canon)
   -- if typeIR_canon = $canon(typeIR)
@@ -151,8 +155,10 @@ rule Type_wf/newTypeIR:
 
 dec $nestable_list(typeIR) : bool
   hint(prose_true %0 "can be nested in a list type")
+  hint(prose_false %0 "cannot be nested in a list type")
 dec $nestable'_list(typeIR) : bool
   hint(prose_true %0 "can be nested in a list type")
+  hint(prose_false %0 "cannot be nested in a list type")
 
 def $nestable_list(typeIR) = $nestable'_list(typeIR_canon)
   -- if typeIR_canon = $canon(typeIR)
@@ -174,8 +180,10 @@ rule Type_wf/listTypeIR:
 
 dec $nestable_tuple(typeIR) : bool
   hint(prose_true %0 "can be nested in a tuple type")
+  hint(prose_false %0 "cannot be nested in a tuple type")
 dec $nestable'_tuple(typeIR) : bool
   hint(prose_true %0 "can be nested in a tuple type")
+  hint(prose_false %0 "cannot be nested in a tuple type")
 
 def $nestable_tuple(typeIR) = $nestable'_tuple(typeIR_canon)
   -- if typeIR_canon = $canon(typeIR)
@@ -202,8 +210,10 @@ rule Type_wf/tupleTypeIR:
 
 dec $nestable_headerStack(typeIR) : bool
   hint(prose_true %0 "can be nested in a header stack type")
+  hint(prose_false %0 "cannot be nested in a header stack type")
 dec $nestable'_headerStack(typeIR) : bool
   hint(prose_true %0 "can be nested in a header stack type")
+  hint(prose_false %0 "cannot be nested in a header stack type")
 
 def $nestable_headerStack(typeIR)
   = $nestable'_headerStack(typeIR_canon)
@@ -221,8 +231,10 @@ rule Type_wf/headerStackTypeIR:
 
 dec $nestable_struct(typeIR) : bool
   hint(prose_true %0 "can be nested in a struct type")
+  hint(prose_false %0 "cannot be nested in a struct type")
 dec $nestable'_struct(typeIR) : bool
   hint(prose_true %0 "can be nested in a struct type")
+  hint(prose_false %0 "cannot be nested in a struct type")
 
 def $nestable_struct(typeIR) = $nestable'_struct(typeIR_canon)
   -- if typeIR_canon = $canon(typeIR)
@@ -250,12 +262,16 @@ rule Type_wf/structTypeIR:
 
 dec $nestable_header(typeIR) : bool
   hint(prose_true %0 "can be used in a header type")
+  hint(prose_false %0 "cannot be used in a header type")
 dec $nestable'_header(typeIR) : bool
   hint(prose_true %0 "can be used in a header type")
+  hint(prose_false %0 "cannot be used in a header type")
 dec $nestable_struct_in_header(typeIR) : bool
   hint(prose_true %0 "can be used in a struct nested in a header type")
+  hint(prose_false %0 "cannot be used in a struct nested in a header type")
 dec $nestable'_struct_in_header(typeIR) : bool
   hint(prose_true %0 "can be used in a struct nested in a header type")
+  hint(prose_false %0 "cannot be used in a struct nested in a header type")
 
 def $nestable_header(typeIR)
   = $nestable'_header(typeIR_canon)
@@ -294,8 +310,10 @@ rule Type_wf/headerTypeIR:
 
 dec $nestable_headerUnion(typeIR) : bool
   hint(prose_true %0 "can be used in a header union type")
+  hint(prose_false %0 "cannot be used in a header union type")
 dec $nestable'_headerUnion(typeIR) : bool
   hint(prose_true %0 "can be used in a header union type")
+  hint(prose_false %0 "cannot be used in a header union type")
 
 def $nestable_headerUnion(typeIR)
   = $nestable'_headerUnion(typeIR_canon)
@@ -318,12 +336,16 @@ rule Type_wf/enumTypeIR-non-serializable:
 
 dec $nestable_enum_serializable(typeIR) : bool
   hint(prose_true %0 "can be used in a serializable enum type")
+  hint(prose_false %0 "cannot be used in a serializable enum type")
 dec $nestable'_enum_serializable(typeIR) : bool
   hint(prose_true %0 "can be used in a serializable enum type")
+  hint(prose_false %0 "cannot be used in a serializable enum type")
 dec $nestable_new_in_enum_serializable(typeIR) : bool
   hint(prose_true %0 "can be used in a new type nested in a serializable enum type")
+  hint(prose_false %0 "cannot be used in a new type nested in a serializable enum type")
 dec $nestable'_new_in_enum_serializable(typeIR) : bool
   hint(prose_true %0 "can be used in a new type nested in a serializable enum type")
+  hint(prose_false %0 "cannot be used in a new type nested in a serializable enum type")
 
 def $nestable_enum_serializable(typeIR)
   = $nestable'_enum_serializable(typeIR_canon)
@@ -411,16 +433,22 @@ rulegroup Type_wf/recordTypeIR {
 
 dec $nestable_set(typeIR) : bool
   hint(prose_true %0 "can be used in a set type")
+  hint(prose_false %0 "cannot be used in a set type")
 dec $nestable'_set(typeIR) : bool
   hint(prose_true %0 "can be used in a set type")
+  hint(prose_false %0 "cannot be used in a set type")
 dec $nestable_tuple_in_set(typeIR) : bool
   hint(prose_true %0 "can be used in a tuple nested in a set type")
+  hint(prose_false %0 "cannot be used in a tuple nested in a set type")
 dec $nestable'_tuple_in_set(typeIR) : bool
   hint(prose_true %0 "can be used in a tuple nested in a set type")
+  hint(prose_false %0 "cannot be used in a tuple nested in a set type")
 dec $nestable_sequence_in_set(typeIR) : bool
   hint(prose_true %0 "can be used in a sequence nested in a set type")
+  hint(prose_false %0 "cannot be used in a sequence nested in a set type")
 dec $nestable'_sequence_in_set(typeIR) : bool
   hint(prose_true %0 "can be used in a sequence nested in a set type")
+  hint(prose_false %0 "cannot be used in a sequence nested in a set type")
 
 def $nestable_set(typeIR) = $nestable'_set(typeIR_canon)
   -- if typeIR_canon = $canon(typeIR)
@@ -490,6 +518,7 @@ rulegroup Type_wf/tableMetadataTypeIR {
 
 dec $definable_type_mono(typeIR) : bool
   hint(prose_true %0 "can be defined as a monomorphic typedef")
+  hint(prose_false %0 "cannot be defined as a monomorphic typedef")
 
 def $definable_type_mono(nameTypeIR) = true
 def $definable_type_mono(aliasTypeIR) = true
@@ -505,6 +534,7 @@ rule TypeDef_wf/monoTypeDefIR:
 
 dec $definable_type_poly(typeIR) : bool
   hint(prose_true %0 "can be defined as a polymorphic typedef")
+  hint(prose_false %0 "cannot be defined as a polymorphic typedef")
 
 def $definable_type_poly(tupleTypeIR) = true
 def $definable_type_poly(headerStackTypeIR) = true
@@ -530,34 +560,11 @@ rule TypeDef_wf/polyTypeDefIR:
 ;;;; Well-formedness of routine types
 ;;
 
-;;; Function types
-
-rule RoutineType_wf/builtinfunction:
-  bound |- BUILTIN_FUNCTION `( parameterTypeIR* ) `-> typeIR_ret
-  -- ParameterTypes_wf: bound |- parameterTypeIR*
-  -- Type_wf: bound |- typeIR_ret
-
-dec $nestable_function(direction, typeIR) : bool
-dec $nestable_function'(direction, typeIR) : bool
-
-def $nestable_function(direction, typeIR)
-  = $nestable_function'(direction, $canon(typeIR))
-def $nestable_function'(direction, STRING) = false
-  -- if direction =/= `EMPTY
-def $nestable_function'(direction, INT) = false
-  -- if direction =/= `EMPTY
-def $nestable_function'(direction, objectTypeIR) = false
-def $nestable_function'(_, _) = true
-  -- otherwise
-
-rule RoutineType_wf/functiontype:
-  bound |- FUNCTION `( parameterTypeIR* ) `-> typeIR_ret
-  -- ParameterTypes_wf: bound |- parameterTypeIR*
-  -- if (direction typeIR _ _ = parameterTypeIR)* 
-  -- if $nestable_function(direction, typeIR)*
-  -- Type_wf: bound |- typeIR_ret
+;;; Action types
 
 dec $directionless_trailing(direction*) : bool
+  hint(prose_true "directionless parameters in" %0 "only appear at the end")
+  hint(prose_false "directionless parameters in" %0 "do not only appear at the end")
 dec $directionless_trailing'(bool, direction*) : bool
 
 def $directionless_trailing(direction*)
@@ -571,145 +578,178 @@ def $directionless_trailing'(_, direction_h :: direction_t*)
   = $directionless_trailing'(false, direction_t*)
   -- if direction_h =/= `EMPTY
 
-dec $nestable_action(direction, typeIR) : bool
-dec $nestable_action'(direction, typeIR) : bool
+dec $nestable_action(typeIR) : bool
+  hint(prose_true %0 "can be used in an action type")
+  hint(prose_false %0 "cannot be used in an action type")
+dec $nestable'_action(typeIR) : bool
+  hint(prose_true %0 "can be used in an action type")
+  hint(prose_false %0 "cannot be used in an action type")
 
-def $nestable_action(direction, typeIR)
-  = $nestable_action'(direction, $canon(typeIR))
-def $nestable_action'(direction, STRING) = false
-  -- if direction =/= `EMPTY
-def $nestable_action'(_, INT) = false
-def $nestable_action'(_, objectTypeIR) = false
-def $nestable_action'(_, _) = true
+def $nestable_action(typeIR)
+  = $nestable'_action(typeIR_canon)
+  -- if typeIR_canon = $canon(typeIR)
+def $nestable'_action(INT) = false
+def $nestable'_action(objectTypeIR) = false
+def $nestable'_action(synthesizedTypeIR) = false
+def $nestable'_action(_) = true
   -- otherwise
 
-rule RoutineType_wf/actiontype:
+rule RoutineType_wf/actionTypeIR:
   bound |- ACTION `( parameterTypeIR* )
   -- ParameterTypes_wf: bound |- parameterTypeIR*
   -- if (direction typeIR _ _ = parameterTypeIR)*
   -- if $directionless_trailing(direction*)
-  -- if $nestable_action(direction, typeIR)*
+  -- if $nestable_action(typeIR)*
 
-dec $nestable_externfunction(direction, typeIR) : bool
-dec $nestable_externfunction'(direction, typeIR) : bool
+;;; Function types
 
-def $nestable_externfunction(direction, typeIR)
-  = $nestable_externfunction'(direction, $canon(typeIR))
-def $nestable_externfunction'(direction, STRING) = false
-  -- if direction =/= `EMPTY
-def $nestable_externfunction'(direction, INT) = false
-  -- if direction =/= `EMPTY
-def $nestable_externfunction'(direction, parserObjectTypeIR) = false
-def $nestable_externfunction'(direction, controlObjectTypeIR) = false
-def $nestable_externfunction'(direction, packageObjectTypeIR) = false
-def $nestable_externfunction'(direction, tableObjectTypeIR) = false
-def $nestable_externfunction'(_, _) = true
+dec $nestable_function(typeIR) : bool
+  hint(prose_true %0 "can be used in a function type")
+  hint(prose_false %0 "cannot be used in a function type")
+dec $nestable'_function(typeIR) : bool
+  hint(prose_true %0 "can be used in a function type")
+  hint(prose_false %0 "cannot be used in a function type")
+
+def $nestable_function(typeIR)
+  = $nestable'_function(typeIR_canon)
+  -- if typeIR_canon = $canon(typeIR)
+def $nestable'_function(objectTypeIR) = false
+def $nestable'_function(synthesizedTypeIR) = false
+def $nestable'_function(_) = true
   -- otherwise
 
-rule RoutineType_wf/externfunctiontype:
+rule RoutineType_wf/definedFunctionTypeIR:
+  bound |- FUNCTION `( parameterTypeIR* ) `-> typeIR_ret
+  -- ParameterTypes_wf: bound |- parameterTypeIR*
+  -- if (_ typeIR _ _ = parameterTypeIR)* 
+  -- if $nestable_function(typeIR)*
+  -- Type_wf: bound |- typeIR_ret
+
+dec $nestable_externfunction(typeIR) : bool
+  hint(prose_true %0 "can be used in an extern function type")
+  hint(prose_false %0 "cannot be used in an extern function type")
+dec $nestable'_externfunction(typeIR) : bool
+  hint(prose_true %0 "can be used in an extern function type")
+  hint(prose_false %0 "cannot be used in an extern function type")
+
+def $nestable_externfunction(typeIR)
+  = $nestable'_externfunction(typeIR_canon)
+  -- if typeIR_canon = $canon(typeIR)
+def $nestable'_externfunction(parserObjectTypeIR) = false
+def $nestable'_externfunction(controlObjectTypeIR) = false
+def $nestable'_externfunction(packageObjectTypeIR) = false
+def $nestable'_externfunction(tableObjectTypeIR) = false
+def $nestable'_externfunction(_) = true
+  -- otherwise
+
+rule RoutineType_wf/externFunctionTypeIR:
   bound |- EXTERN_FUNCTION `( parameterTypeIR* ) `-> typeIR_ret
   -- ParameterTypes_wf: bound |- parameterTypeIR*
-  -- if (direction typeIR _ _ = parameterTypeIR)* 
-  -- if $nestable_externfunction(direction, typeIR)*
+  -- if (_ typeIR _ _ = parameterTypeIR)* 
+  -- if $nestable_externfunction(typeIR)*
   -- Type_wf: bound |- typeIR_ret
 
 ;;; Method types
 
-rule RoutineType_wf/builtinmethod:
+rule RoutineType_wf/builtinMethodTypeIR:
   bound |- BUILTIN_METHOD `( parameterTypeIR* ) `-> typeIR_ret
   -- ParameterTypes_wf: bound |- parameterTypeIR*
   -- Type_wf: bound |- typeIR_ret
 
-dec $nestable_externmethod(direction, typeIR) : bool
-dec $nestable_externmethod'(direction, typeIR) : bool
+dec $nestable_externmethod(typeIR) : bool
+  hint(prose_true %0 "can be used in an extern method type")
+  hint(prose_false %0 "cannot be used in an extern method type")
+dec $nestable'_externmethod(typeIR) : bool
+  hint(prose_true %0 "can be used in an extern method type")
+  hint(prose_false %0 "cannot be used in an extern method type")
 
-def $nestable_externmethod(direction, typeIR)
-  = $nestable_externmethod'(direction, $canon(typeIR))
-def $nestable_externmethod'(direction, STRING) = false
-  -- if direction =/= `EMPTY
-def $nestable_externmethod'(direction, INT) = false
-  -- if direction =/= `EMPTY
-def $nestable_externmethod'(direction, parserObjectTypeIR) = false
-def $nestable_externmethod'(direction, controlObjectTypeIR) = false
-def $nestable_externmethod'(direction, packageObjectTypeIR) = false
-def $nestable_externmethod'(direction, tableObjectTypeIR) = false
-def $nestable_externmethod'(_, _) = true
+def $nestable_externmethod(typeIR)
+  = $nestable'_externmethod(typeIR_canon)
+  -- if typeIR_canon = $canon(typeIR)
+def $nestable'_externmethod(parserObjectTypeIR) = false
+def $nestable'_externmethod(controlObjectTypeIR) = false
+def $nestable'_externmethod(packageObjectTypeIR) = false
+def $nestable'_externmethod(tableObjectTypeIR) = false
+def $nestable'_externmethod(_) = true
   -- otherwise
 
-rule RoutineType_wf/externmethod:
+rule RoutineType_wf/externMethodTypeIR-non-abstract:
   bound |- EXTERN_METHOD `( parameterTypeIR* ) `-> typeIR_ret
   -- ParameterTypes_wf: bound |- parameterTypeIR*
-  -- if (direction typeIR _ _ = parameterTypeIR)* 
-  -- if $nestable_externmethod(direction, typeIR)*
+  -- if (_ typeIR _ _ = parameterTypeIR)* 
+  -- if $nestable_externmethod(typeIR)*
   -- Type_wf: bound |- typeIR_ret
 
-dec $nestable_externabstractmethod(direction, typeIR) : bool
-dec $nestable_externabstractmethod'(direction, typeIR) : bool
+dec $nestable_externabstractmethod(typeIR) : bool
+  hint(prose_true %0 "can be used in an extern abstract method type")
+  hint(prose_false %0 "cannot be used in an extern abstract method type")
+dec $nestable'_externabstractmethod(typeIR) : bool
+  hint(prose_true %0 "can be used in an extern abstract method type")
+  hint(prose_false %0 "cannot be used in an extern abstract method type")
 
-def $nestable_externabstractmethod(direction, typeIR)
-  = $nestable_externabstractmethod'(direction, $canon(typeIR))
-def $nestable_externabstractmethod'(direction, STRING) = false
-  -- if direction =/= `EMPTY
-def $nestable_externabstractmethod'(direction, INT) = false
-  -- if direction =/= `EMPTY
-def $nestable_externabstractmethod'(direction, parserObjectTypeIR) = false
-def $nestable_externabstractmethod'(direction, controlObjectTypeIR) = false
-def $nestable_externabstractmethod'(direction, packageObjectTypeIR) = false
-def $nestable_externabstractmethod'(direction, tableObjectTypeIR) = false
-def $nestable_externabstractmethod'(_, _) = true
+def $nestable_externabstractmethod(typeIR)
+  = $nestable'_externabstractmethod(typeIR_canon)
+  -- if typeIR_canon = $canon(typeIR)
+def $nestable'_externabstractmethod(parserObjectTypeIR) = false
+def $nestable'_externabstractmethod(controlObjectTypeIR) = false
+def $nestable'_externabstractmethod(packageObjectTypeIR) = false
+def $nestable'_externabstractmethod(tableObjectTypeIR) = false
+def $nestable'_externabstractmethod(_) = true
   -- otherwise
 
-rule RoutineType_wf/externabstractmethod:
+rule RoutineType_wf/externMethodTypeIR-abstract:
   bound |- EXTERN_METHOD ABSTRACT `( parameterTypeIR* ) `-> typeIR_ret
   -- ParameterTypes_wf: bound |- parameterTypeIR*
-  -- if (direction typeIR _ _ = parameterTypeIR)* 
-  -- if $nestable_externabstractmethod(direction, typeIR)*
+  -- if (_ typeIR _ _ = parameterTypeIR)* 
+  -- if $nestable_externabstractmethod(typeIR)*
   -- Type_wf: bound |- typeIR_ret
 
-dec $nestable_parserapplymethod(direction, typeIR) : bool
-dec $nestable_parserapplymethod'(direction, typeIR) : bool
+dec $nestable_parserapplymethod(typeIR) : bool
+  hint(prose_true %0 "can be used in a parser apply method type")
+  hint(prose_false %0 "cannot be used in a parser apply method type")
+dec $nestable'_parserapplymethod(typeIR) : bool
+  hint(prose_true %0 "can be used in a parser apply method type")
+  hint(prose_false %0 "cannot be used in a parser apply method type")
 
-def $nestable_parserapplymethod(direction, typeIR)
-  = $nestable_parserapplymethod'(direction, $canon(typeIR))
-def $nestable_parserapplymethod'(direction, STRING) = false
-  -- if direction =/= `EMPTY
-def $nestable_parserapplymethod'(direction, INT) = false
-  -- if direction =/= `EMPTY
-def $nestable_parserapplymethod'(direction, parserObjectTypeIR) = false
-def $nestable_parserapplymethod'(direction, controlObjectTypeIR) = false
-def $nestable_parserapplymethod'(direction, packageObjectTypeIR) = false
-def $nestable_parserapplymethod'(direction, tableObjectTypeIR) = false
-def $nestable_parserapplymethod'(_, _) = true
+def $nestable_parserapplymethod(typeIR)
+  = $nestable'_parserapplymethod(typeIR_canon)
+  -- if typeIR_canon = $canon(typeIR)
+def $nestable'_parserapplymethod(parserObjectTypeIR) = false
+def $nestable'_parserapplymethod(controlObjectTypeIR) = false
+def $nestable'_parserapplymethod(packageObjectTypeIR) = false
+def $nestable'_parserapplymethod(tableObjectTypeIR) = false
+def $nestable'_parserapplymethod(_) = true
   -- otherwise
 
-rule RoutineType_wf/parserapplymethod:
+rule RoutineType_wf/parserApplyMethodTypeIR:
   bound |- PARSER_APPLY `( parameterTypeIR* )
   -- ParameterTypes_wf: bound |- parameterTypeIR*
-  -- if (direction typeIR _ _ = parameterTypeIR)* 
-  -- if $nestable_parserapplymethod(direction, typeIR)*
+  -- if (_ typeIR _ _ = parameterTypeIR)* 
+  -- if $nestable_parserapplymethod(typeIR)*
 
-dec $nestable_controlapplymethod(direction, typeIR) : bool
-dec $nestable_controlapplymethod'(direction, typeIR) : bool
+dec $nestable_controlapplymethod(typeIR) : bool
+  hint(prose_true %0 "can be used in a control apply method type")
+  hint(prose_false %0 "cannot be used in a control apply method type")
+dec $nestable'_controlapplymethod(typeIR) : bool
+  hint(prose_true %0 "can be used in a control apply method type")
+  hint(prose_false %0 "cannot be used in a control apply method type")
 
-def $nestable_controlapplymethod(direction, typeIR)
-  = $nestable_controlapplymethod'(direction, $canon(typeIR))
-def $nestable_controlapplymethod'(direction, STRING) = false
-  -- if direction =/= `EMPTY
-def $nestable_controlapplymethod'(direction, INT) = false
-  -- if direction =/= `EMPTY
-def $nestable_controlapplymethod'(direction, parserObjectTypeIR) = false
-def $nestable_controlapplymethod'(direction, packageObjectTypeIR) = false
-def $nestable_controlapplymethod'(direction, tableObjectTypeIR) = false
-def $nestable_controlapplymethod'(_, _) = true
+def $nestable_controlapplymethod(typeIR)
+  = $nestable'_controlapplymethod(typeIR_canon)
+  -- if typeIR_canon = $canon(typeIR)
+def $nestable'_controlapplymethod(parserObjectTypeIR) = false
+def $nestable'_controlapplymethod(packageObjectTypeIR) = false
+def $nestable'_controlapplymethod(tableObjectTypeIR) = false
+def $nestable'_controlapplymethod(_) = true
   -- otherwise
 
-rule RoutineType_wf/controlapplymethod:
+rule RoutineType_wf/controlApplyMethodTypeIR:
   bound |- CONTROL_APPLY `( parameterTypeIR* )
   -- ParameterTypes_wf: bound |- parameterTypeIR*
-  -- if (direction typeIR _ _ = parameterTypeIR)* 
-  -- if $nestable_controlapplymethod(direction, typeIR)*
+  -- if (_ typeIR _ _ = parameterTypeIR)* 
+  -- if $nestable_controlapplymethod(typeIR)*
 
-rule RoutineType_wf/tableapplymethod:
+rule RoutineType_wf/tableApplyMethodTypeIR:
   bound |- TABLE_APPLY `-> (TABLE_STRUCT _ `{ _ })
 
 ;;
@@ -717,31 +757,33 @@ rule RoutineType_wf/tableapplymethod:
 ;;
 
 dec $definable_routine_mono(routineTypeIR) : bool
+  hint(prose_true %0 "can be defined as a monomorphic routine")
+  hint(prose_false %0 "cannot be defined as a monomorphic routine")
 
-def $definable_routine_mono(BUILTIN_FUNCTION `( _ ) `-> _) = true
-def $definable_routine_mono(ACTION `( _ )) = true
-def $definable_routine_mono(BUILTIN_METHOD `( _ ) `-> _) = true
-def $definable_routine_mono(PARSER_APPLY `( _ )) = true
-def $definable_routine_mono(CONTROL_APPLY `( _ )) = true
-def $definable_routine_mono(TABLE_APPLY `-> _) = true
+def $definable_routine_mono(actionTypeIR) = true
+def $definable_routine_mono(builtinMethodTypeIR) = true
+def $definable_routine_mono(parserApplyMethodTypeIR) = true
+def $definable_routine_mono(controlApplyMethodTypeIR) = true
+def $definable_routine_mono(tableApplyMethodTypeIR) = true
 def $definable_routine_mono(_) = false
   -- otherwise
 
-rule RoutineTypeDef_wf/mono:
+rule RoutineTypeDef_wf/monoRoutineTypeDefIR:
   bound |- routineTypeIR
   -- if $definable_routine_mono(routineTypeIR)
   -- RoutineType_wf: bound |- routineTypeIR
 
 dec $definable_routine_poly(routineTypeIR) : bool
+  hint(prose_true %0 "can be defined as a polymorphic routine")
+  hint(prose_false %0 "cannot be defined as a polymorphic routine")
 
-def $definable_routine_poly(FUNCTION `( _ ) `-> _) = true
-def $definable_routine_poly(EXTERN_FUNCTION `( _ ) `-> _) = true
-def $definable_routine_poly(EXTERN_METHOD `( _ ) `-> _) = true
-def $definable_routine_poly(EXTERN_METHOD ABSTRACT `( _ ) `-> _) = true
+def $definable_routine_poly(definedFunctionTypeIR) = true
+def $definable_routine_poly(externFunctionTypeIR) = true
+def $definable_routine_poly(externMethodTypeIR) = true
 def $definable_routine_poly(_) = false
   -- otherwise
 
-rule RoutineTypeDef_wf/poly:
+rule RoutineTypeDef_wf/polyRoutineTypeDefIR:
   bound |- routineTypeIR `< tid_expl* `, tid_impl* >
   -- if $definable_routine_poly(routineTypeIR)
   -- if $distinct_<tid>(tid_expl* ++ tid_impl*)
@@ -772,18 +814,18 @@ dec $nestable'_constructor_extern(typeIR) : bool
 
 def $nestable_constructor_extern(typeIR)
   = $nestable'_constructor_extern($canon(typeIR))
-def $nestable_constructor_extern(parserObjectTypeIR) = false
+def $nestable'_constructor_extern(parserObjectTypeIR) = false
 def $nestable'_constructor_extern(controlObjectTypeIR) = false
 def $nestable'_constructor_extern(packageObjectTypeIR) = false
 def $nestable'_constructor_extern(tableObjectTypeIR) = false
 def $nestable'_constructor_extern(_) = true
   -- otherwise
 
-rule ConstructorType_wf/externtype:
+rule ConstructorType_wf/externObjectTypeIR:
   bound |- CONSTRUCTOR `( parameterTypeIR* ) `-> typeIR_object
   -- ConstructorParameterTypes_wf: bound |- parameterTypeIR*
   -- Type_wf: bound |- typeIR_object
-  -- if EXTERN _ _ = $canon(typeIR_object)
+  -- if externObjectTypeIR = $canon(typeIR_object)
   -- if (_ typeIR _ _ = parameterTypeIR)*
   -- if $nestable_constructor_extern(typeIR)*
 
@@ -798,11 +840,11 @@ def $nestable'_constructor_parser(tableObjectTypeIR) = false
 def $nestable'_constructor_parser(_) = true
   -- otherwise
 
-rule ConstructorType_wf/parsertype:
+rule ConstructorType_wf/parserObjectTypeIR:
   bound |- CONSTRUCTOR `( parameterTypeIR* ) `-> typeIR_object
   -- ConstructorParameterTypes_wf: bound |- parameterTypeIR*
   -- Type_wf: bound |- typeIR_object
-  -- if PARSER `( _ ) = $canon(typeIR_object)
+  -- if parserObjectTypeIR = $canon(typeIR_object)
   -- if (_ typeIR _ _ = parameterTypeIR)*
   -- if $nestable_constructor_parser(typeIR)*
 
@@ -817,11 +859,11 @@ def $nestable'_constructor_control(tableObjectTypeIR) = false
 def $nestable'_constructor_control(_) = true
   -- otherwise
 
-rule ConstructorType_wf/controltype:
+rule ConstructorType_wf/controlObjectTypeIR:
   bound |- CONSTRUCTOR `( parameterTypeIR* ) `-> typeIR_object
   -- ConstructorParameterTypes_wf: bound |- parameterTypeIR*
   -- Type_wf: bound |- typeIR_object
-  -- if CONTROL `( _ ) = $canon(typeIR_object)
+  -- if controlObjectTypeIR = $canon(typeIR_object)
   -- if (_ typeIR _ _ = parameterTypeIR)*
   -- if $nestable_constructor_control(typeIR)*
 
@@ -834,11 +876,11 @@ def $nestable'_constructor_package(tableObjectTypeIR) = false
 def $nestable'_constructor_package(_) = true
   -- otherwise
 
-rule ConstructorType_wf/packagetype:
+rule ConstructorType_wf/packageObjectTypeIR:
   bound |- CONSTRUCTOR `( parameterTypeIR* ) `-> typeIR_object
   -- ConstructorParameterTypes_wf: bound |- parameterTypeIR*
   -- Type_wf: bound |- typeIR_object
-  -- if PACKAGE `< _ > = $canon(typeIR_object)
+  -- if packageObjectTypeIR = $canon(typeIR_object)
   -- if (_ typeIR _ _ = parameterTypeIR)*
   -- if $nestable_constructor_package(typeIR)*
 

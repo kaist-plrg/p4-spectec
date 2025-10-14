@@ -176,6 +176,7 @@ and rename_instr (rename : t) (instr : instr) : instr =
       OtherwiseI instr $ at
   | GroupI (id_group, exps_group, instrs_group) ->
       let instrs_group = List.map (rename_instr rename) instrs_group in
+      let exps_group = List.map (rename_exp rename) exps_group in
       GroupI (id_group, exps_group, instrs_group) $ at
   | LetI (exp_l, exp_r, iterexps) ->
       let exp_l = rename_exp rename exp_l in

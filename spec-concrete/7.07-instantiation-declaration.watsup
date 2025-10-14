@@ -32,9 +32,9 @@ rulegroup Decl_inst/constantDeclarationIR {
 
 ;; Merge value environments
 
-dec $merge_venvs(venv, venv) : venv
-def $merge_venvs(venv, `{ (id `: value)* })
-  = $adds_map<id, value>(venv, id*, value*)
+dec $merge_frames(frame, frame) : frame
+def $merge_frames(frame, `{ (id `: value)* })
+  = $adds_map<id, value>(frame, id*, value*)
 
 ;; Merge routine environments and transform functions to extern methods
 
@@ -64,7 +64,7 @@ rulegroup Decl_inst/instantiationIR {
                                   `( argumentListIR `# id_default* )
                              ==> STO_1 object
     ---- ;; if object is an extern
-    -- if EXTERN tid `{ tenv venv renv } = object
+    -- if EXTERN tid `{ tenv frame renv } = object
     ---- ;; initialize context for object declarations
     -- if IC_decl
         = $empty_instantiationContext[ .PATH = IC_0.PATH ][ .GLOBAL = IC_0.GLOBAL ]
@@ -73,13 +73,13 @@ rulegroup Decl_inst/instantiationIR {
     -- Decls_inst: BLOCK IC_decl STO_1 |- objectDeclarationListIR
                                       ==> IC_decl_post STO_2 _
     ---- ;; merge value environments
-    -- if venv_merged
-        = $merge_venvs(venv, IC_decl_post.BLOCK.VENV)
+    -- if frame_merged
+        = $merge_frames(frame, IC_decl_post.BLOCK.FRAME)
     ---- ;; merge routine environments and transform functions to extern methods
     -- if renv_merged
-        = $merge_renv_with_extern(renv, IC_decl_post.BLOCK.RENV)
+        = $merge_renv_with_extern(renv, IC_decl_post.BLOCK.ROUTINE)
     ---- ;; create new object with merged environments
-    -- if object_merged = EXTERN tid `{ tenv venv_merged renv_merged }
+    -- if object_merged = EXTERN tid `{ tenv frame_merged renv_merged }
     ---- ;; add object to store
     -- if oid = IC_0.PATH ++ nameIR
     -- if STO_3 = $add_map<oid, object>(STO_2, oid, object_merged)
@@ -100,7 +100,7 @@ rulegroup Decl_inst/instantiationIR {
         p IC_inner STO_0 |- constructor `< typeArgumentListIR > `( argumentListIR `# id_default* )
                         ==> STO_1 object
     ---- ;; if object is an extern
-    -- if EXTERN tid `{ tenv venv renv } = object
+    -- if EXTERN tid `{ tenv frame renv } = object
     ---- ;; initialize context for object declarations
     -- if IC_decl
         = $empty_instantiationContext[ .PATH = IC_0.PATH ][ .GLOBAL = IC_0.GLOBAL ]
@@ -109,13 +109,13 @@ rulegroup Decl_inst/instantiationIR {
     -- Decls_inst: BLOCK IC_decl STO_1 |- objectDeclarationListIR
                                       ==> IC_decl_post STO_2 _
     ---- ;; merge value environments
-    -- if venv_merged
-        = $merge_venvs(venv, IC_decl_post.BLOCK.VENV)
+    -- if frame_merged
+        = $merge_frames(frame, IC_decl_post.BLOCK.FRAME)
     ---- ;; merge routine environments and transform functions to extern methods
     -- if renv_merged
-        = $merge_renv_with_extern(renv, IC_decl_post.BLOCK.RENV)
+        = $merge_renv_with_extern(renv, IC_decl_post.BLOCK.ROUTINE)
     ---- ;; create new object with merged environments
-    -- if object_merged = EXTERN tid `{ tenv venv_merged renv_merged }
+    -- if object_merged = EXTERN tid `{ tenv frame_merged renv_merged }
     ---- ;; add object to store
     -- if oid = IC_0.PATH ++ nameIR
     -- if STO_3 = $add_map<oid, object>(STO_2, oid, object_merged)
@@ -197,8 +197,8 @@ rule Decl_inst/actionDeclarationIR:
             ==> IC_1 STO eps
   ---- ;; bind action to routine environment
   -- if rid = $rid_IR(nameIR, parameterListIR)
-  -- if function = ACTION `( parameterListIR ) blockStatementIR
-  -- if IC_1 = $add_routine_non_overload_inst(p, IC_0, rid, function)
+  -- if action = ACTION `( parameterListIR ) blockStatementIR
+  -- if IC_1 = $add_routine_non_overload_inst(p, IC_0, rid, action)
 
 ;;; errorDeclarationIR
 ;;; syntax errorDeclarationIR = ERROR `{ nameListIR }
@@ -239,40 +239,83 @@ rule Decl_inst/externFunctionDeclarationIR:
 
 ;;;; externObjectDeclarationIR
 
-dec $split_constructors_IR(methodPrototypeIR*) : (methodPrototypeIR*, methodPrototypeIR*)
+dec $rid_of_externMethodPrototypeIR(externMethodPrototypeIR) : rid
+  hint(prose_in "the routine id of " %0)
 
-def $split_constructors_IR(eps) = (eps, eps)
-def $split_constructors_IR(methodPrototypeIR_h :: methodPrototypeIR_t*)
-  = (methodPrototypeIR_h :: methodPrototypeIR_t_constructor*,
-     methodPrototypeIR_t_method*)
-  -- if _ _ `< `, _ > `( _ ) `; = methodPrototypeIR_h
-  -- if (methodPrototypeIR_t_constructor*, methodPrototypeIR_t_method*)
-      = $split_constructors_IR(methodPrototypeIR_t*)
-def $split_constructors_IR(methodPrototypeIR_h :: methodPrototypeIR_t*)
-  = (methodPrototypeIR_t_constructor*,
-     methodPrototypeIR_h :: methodPrototypeIR_t_method*)
-  -- if _ _ `; = methodPrototypeIR_h
-  -- if (methodPrototypeIR_t_constructor*, methodPrototypeIR_t_method*)
-      = $split_constructors_IR(methodPrototypeIR_t*)
-def $split_constructors_IR(methodPrototypeIR_h :: methodPrototypeIR_t*)
-  = (methodPrototypeIR_t_constructor*,
-     methodPrototypeIR_h :: methodPrototypeIR_t_method*)
-  -- if _ ABSTRACT _ `; = methodPrototypeIR_h
-  -- if (methodPrototypeIR_t_constructor*, methodPrototypeIR_t_method*)
-      = $split_constructors_IR(methodPrototypeIR_t*)
+def $rid_of_externMethodPrototypeIR(
+    _ (_ nameIR `< _ `, _ > `( parameterListIR )) `;
+  )
+  = $rid_IR(nameIR, parameterListIR)
+def $rid_of_externMethodPrototypeIR(
+    _ ABSTRACT (_ nameIR `< _ `, _ > `( parameterListIR )) `;
+  )
+  = $rid_IR(nameIR, parameterListIR)
+
+dec $type_of_externMethodPrototypeIR(externMethodPrototypeIR) : routineTypeDefIR
+  hint(prose_in "the routine type definition of " %0)
+
+def $type_of_externMethodPrototypeIR(
+    _ (typeIR_ret nameIR
+      `< typeParameterListIR_expl `, typeParameterListIR_impl >
+      `( parameterIR* )) `;
+  )
+  = routineTypeDefIR
+  -- if (parameterTypeIR = $type_of_parameterIR(parameterIR))*
+  -- if externMethodTypeIR
+      = EXTERN_METHOD `( parameterTypeIR* ) `-> typeIR_ret
+  -- if routineTypeDefIR
+      = externMethodTypeIR `< typeParameterListIR_expl `, typeParameterListIR_impl >
+def $type_of_externMethodPrototypeIR(
+    _ ABSTRACT (typeIR_ret nameIR
+      `< typeParameterListIR_expl `, typeParameterListIR_impl >
+      `( parameterIR* )) `;
+  )
+  = routineTypeDefIR
+  -- if (parameterTypeIR = $type_of_parameterIR(parameterIR))*
+  -- if externMethodTypeIR
+      = EXTERN_METHOD ABSTRACT `( parameterTypeIR* ) `-> typeIR_ret
+  -- if routineTypeDefIR
+      = externMethodTypeIR `< typeParameterListIR_expl `, typeParameterListIR_impl >
+
+dec $cid_of_externConstructorPrototypeIR(externConstructorPrototypeIR) : cid
+  hint(prose_in "the constructor id of " %0)
+
+def $cid_of_externConstructorPrototypeIR(
+    _ nameIR `< `, _ > `( parameterIR* ) `;
+  )
+  = $cid_IR(nameIR, parameterIR*)
+
+dec $constructor_of_externConstructorPrototypeIR(
+    typeParameterListIR,
+    externMethodPrototypeListIR,
+    externConstructorPrototypeIR
+  ) : constructor
+  hint(prose_in "the constructor of " %2 "with type parameters " %0 " and methods " %1)
+
+def $constructor_of_externConstructorPrototypeIR(
+    typeParameterListIR_expl,
+    externMethodPrototypeListIR,
+    _ nameIR `< `, typeParameterListIR_impl > `( parameterIR* ) `;
+  )
+  = constructor
+  -- if typeParameterListIR
+      = typeParameterListIR_expl ++ typeParameterListIR_impl
+  -- if constructor
+      = EXTERN nameIR `< typeParameterListIR >
+          `( parameterIR* ) `{ externMethodPrototypeListIR }
 
 rulegroup Decl_inst/externObjectDeclarationIR {
 
   rule Decl_inst/non-constructor:
     GLOBAL IC_0 STO |- annotationList EXTERN nameIR
-                      `< typeParameterListIR `, typeParameterListIR_inferred >
-                      `{ methodPrototypeIR* }
+                        `< typeParameterListIR `, >
+                        `{ eps externMethodPrototypeIR* }
                   ==> IC_2 STO eps
-    ---- ;; split extern methods and constructors
-    -- if (eps, methodPrototypeIR_method*)
-        = $split_constructors_IR(methodPrototypeIR*)
     ---- ;; bind methods to routine environment
-    -- Bind_methods: $empty_rdenv |- methodPrototypeIR_method* ==> rdenv
+    -- if (rid = $rid_of_externMethodPrototypeIR(externMethodPrototypeIR))*
+    -- if (routineTypeDefIR
+        = $type_of_externMethodPrototypeIR(externMethodPrototypeIR))*
+    -- if rdenv = `{ (rid `: routineTypeDefIR)* }
     ---- ;; add polymorphic extern type to typedef environment
     -- if externObjectTypeIR = EXTERN nameIR rdenv
     -- if polyTypeDefIR = externObjectTypeIR `< typeParameterListIR `, eps >
@@ -280,26 +323,31 @@ rulegroup Decl_inst/externObjectDeclarationIR {
     ---- ;; if no constructor was provided, add a default constructor
     -- if cid = $cid_IR(nameIR, eps)
     -- if constructor
-        = EXTERN nameIR `< typeParameterListIR > `( eps ) `{ methodPrototypeIR_method* }
-    -- if IC_2 = $add_constructor_inst(GLOBAL, IC_1, cid, constructor)
+        = EXTERN nameIR `< typeParameterListIR > `( eps ) `{ externMethodPrototypeIR* }
+    -- if IC_2 = $add_constructor_inst(IC_1, cid, constructor)
 
   rule Decl_inst/constructor:
     GLOBAL IC_0 STO |- annotationList EXTERN nameIR
-                       `< typeParameterListIR `, typeParameterListIR_inferred >
-                       `{ methodPrototypeIR* }
+                        `< typeParameterListIR `, >
+                        `{ externConstructorPrototypeIR* externMethodPrototypeIR* }
                    ==> IC_2 STO eps
-    ---- ;; split extern methods and constructors
-    -- if (methodPrototypeIR_constructor*, methodPrototypeIR_method*) 
-        = $split_constructors_IR(methodPrototypeIR*)
     ---- ;; bind methods to routine environment
-    -- Bind_methods: $empty_rdenv |- methodPrototypeIR_method* ==> rdenv
+    -- if (rid = $rid_of_externMethodPrototypeIR(externMethodPrototypeIR))*
+    -- if (routineTypeDefIR
+        = $type_of_externMethodPrototypeIR(externMethodPrototypeIR))*
+    -- if rdenv = `{ (rid `: routineTypeDefIR)* }
     ---- ;; add polymorphic extern type to typedef environment
     -- if externObjectTypeIR = EXTERN nameIR rdenv
     -- if polyTypeDefIR = externObjectTypeIR `< typeParameterListIR `, eps >
     -- if IC_1 = $add_typedef_inst(GLOBAL, IC_0, nameIR, polyTypeDefIR)
     ---- ;; bind extern constructors to constructor environment
-    -- Bind_constructors:
-        GLOBAL IC_1 typeParameterListIR methodPrototypeIR_method* |- methodPrototypeIR_constructor* ==> IC_2
+    -- if (cid = $cid_of_externConstructorPrototypeIR(externConstructorPrototypeIR))*
+    -- if (constructor
+        = $constructor_of_externConstructorPrototypeIR(
+            typeParameterListIR,
+            externMethodPrototypeIR*,
+            externConstructorPrototypeIR))*
+    -- if IC_2 = $add_constructors_inst(IC_1, cid*, constructor*)
 
 }
 
@@ -319,7 +367,7 @@ rule Decl_inst/parserDeclarationIR:
   -- if constructor 
       = PARSER `( parameterListIR ) `( constructorParameterListIR )
           `{ parserLocalDeclarationListIR parserStateListIR }
-  -- if IC_1 = $add_constructor_inst(GLOBAL, IC_0, cid, constructor)
+  -- if IC_1 = $add_constructor_inst(IC_0, cid, constructor)
 
 ;;; controlDeclarationIR
 ;;; syntax controlDeclarationIR =
@@ -338,7 +386,7 @@ rule Decl_inst/controlDeclarationIR:
   -- if constructor
       = CONTROL `( parameterListIR ) `( constructorParameterListIR )
           `{ controlLocalDeclarationListIR APPLY controlBodyIR }
-  -- if IC_1 = $add_constructor_inst(GLOBAL, IC_0, cid, constructor)
+  -- if IC_1 = $add_constructor_inst(IC_0, cid, constructor)
 
 ;;; typeDeclarationIR
 ;;; syntax typeDeclarationIR
@@ -460,8 +508,8 @@ rulegroup Decl_inst/typedefDeclarationIR-typedef {
     ---- ;; diff the local and global context to get the declared type id
     -- if `{ tid_newtype }
         = $diff_set<tid>(
-            $dom_map<tid, typeDefIR>(IC_local.GLOBAL.TDENV),
-            $dom_map<tid, typeDefIR>(IC_0.GLOBAL.TDENV))
+            $dom_map<tid, typeDefIR>(IC_local.GLOBAL.TYPE),
+            $dom_map<tid, typeDefIR>(IC_0.GLOBAL.TYPE))
     ---- ;; find the type definition
     -- if typeIR = $find_typedef_inst(GLOBAL, IC_local, `. tid_newtype)
     -- if typeIR_typedef = TYPEDEF nameIR typeIR
@@ -475,8 +523,8 @@ rulegroup Decl_inst/typedefDeclarationIR-typedef {
     ---- ;; diff the local and global context to get the declared type id
     -- if `{ tid_newtype }
         = $diff_set<tid>(
-            $dom_map<tid, typeDefIR>(IC_local.GLOBAL.TDENV),
-            $dom_map<tid, typeDefIR>(IC_0.GLOBAL.TDENV))
+            $dom_map<tid, typeDefIR>(IC_local.GLOBAL.TYPE),
+            $dom_map<tid, typeDefIR>(IC_0.GLOBAL.TYPE))
     -- if typeIR `< eps `, eps >
         = $find_typedef_inst(GLOBAL, IC_local, `. tid_newtype)
     -- if typeIR_typedef = TYPEDEF nameIR ((typeIR `< eps `, eps >) `< eps >)
@@ -506,7 +554,7 @@ rule Decl_inst/parserTypeDeclarationIR:
                        `( parameterIR* ) `;
                  ==> IC_1 STO eps
   ---- ;; bind parser type to typedef environment
-  -- if (parameterTypeIR = $parameterIR(parameterIR))*
+  -- if (parameterTypeIR = $type_of_parameterIR(parameterIR))*
   -- if typeIR_parser = PARSER `( parameterTypeIR* )
   -- if typeDefIR_parser
       = typeIR_parser `< typeParameterListIR `, typeParameterListIR_inferred >
@@ -524,7 +572,7 @@ rule Decl_inst/controlTypeDeclarationIR:
                        `( parameterIR* ) `;
                  ==> IC_1 STO eps
   ---- ;; bind control type to typedef environment
-  -- if (parameterTypeIR = $parameterIR(parameterIR))*
+  -- if (parameterTypeIR = $type_of_parameterIR(parameterIR))*
   -- if typeIR_control = CONTROL `( parameterTypeIR* )
   -- if typeDefIR_control
       = typeIR_control `< typeParameterListIR `, typeParameterListIR_inferred >
@@ -551,7 +599,7 @@ rule Decl_inst/packageTypeDeclarationIR:
   -- if cid = $cid_IR(nameIR, parameterIR*)
   -- if constructor_package
       = PACKAGE `< typeParameterListIR ++ typeParameterListIR_inferred > `( parameterIR* )
-  -- if IC_2 = $add_constructor_inst(GLOBAL, IC_1, cid, constructor_package)
+  -- if IC_2 = $add_constructor_inst(IC_1, cid, constructor_package)
 
 ;;
 ;; syntax declarationListIR
@@ -579,7 +627,7 @@ rule Decls_inst/cons-some:
 ;;
 
 rule Program_inst:
-  |- p4program ==> IC_1.GLOBAL.CENV IC_1.GLOBAL.TDENV IC_1.GLOBAL.RENV IC_1.GLOBAL.VENV STO_1
+  |- p4program ==> IC_1.GLOBAL.CONSTRUCTOR IC_1.GLOBAL.TYPE IC_1.GLOBAL.ROUTINE IC_1.GLOBAL.FRAME STO_1
   ---- ;; type check the program
   -- Program_ok: |- p4program : _ (declarationIR* `;)
   ---- ;; instantiate the declarations

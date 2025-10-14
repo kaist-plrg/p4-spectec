@@ -13,7 +13,7 @@ var p : cursor
 syntax nameIR = text
 
 dec $name(name) : nameIR
-
+  hint(prose_in "the name of" %0)
 def $name(`ID t) = t
 def $name(`TID t) = t
 def $name(APPLY) = "apply"
@@ -26,7 +26,7 @@ def $name(PRIORITY) = "priority"
 def $name(LIST) = "list"
 
 dec $tableCustomName(tableCustomName) : nameIR
-
+  hint(prose_in "the name of" %0)
 def $tableCustomName(`ID t) = t
 def $tableCustomName(`TID t) = t
 def $tableCustomName(APPLY) = "apply"
@@ -47,8 +47,10 @@ syntax id = text
 syntax tid = id
 
 dec $fresh_tid() : tid
-dec $fresh_tids(nat) : tid*
+  hint(prose_in "a fresh type variable")
 
+dec $fresh_tids(nat) : tid*
+  hint(prose_in %0 "fresh type variables")
 def $fresh_tids(0) = eps
 def $fresh_tids(n) = $fresh_tid() :: $fresh_tids(n')
   -- if n =/= 0
@@ -91,15 +93,6 @@ dec $cid(name, constructorParameterListOpt) : cid
 def $cid(name, `EMPTY) = $name(name) `( eps )
 def $cid(name, `( parameterList ))
   = $name(name) `( $pids(parameterList) )
-
-
-dec $expression_as_lvalue(expression) : lvalue?
-
-def $expression_as_lvalue(referenceExpression) = referenceExpression
-def $expression_as_lvalue(expression `. member) = lvalue `. member
-  -- if lvalue = $expression_as_lvalue(expression)
-def $expression_as_lvalue(`( expression )) = `( lvalue )
-  -- if lvalue = $expression_as_lvalue(expression)
 
 ;;
 ;; Object names (fully qualified paths)

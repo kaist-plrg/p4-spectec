@@ -11,10 +11,12 @@ An extern object declaration declares an object and all methods that can be
 invoked to perform computations and to alter the state of the object. Extern
 object declarations can also optionally declare constructor methods; these must
 have the same name as the enclosing `extern` type, no type parameters, and no
-return type.  Extern declarations may only appear as allowed by the
+return type. Extern declarations may only appear as allowed by the
 architecture model and may be specific to a target.
 
-${syntax: methodPrototype
+${syntax: externConstructorPrototype
+          externMethodPrototype
+          externConstructorOrMethodPrototype
           externObjectDeclaration}
 
 For example, the P4 core library introduces two extern objects `packet_in` and
@@ -136,12 +138,6 @@ ${ruleprose: Type_wf/controlObjectTypeIR}
 A package type describes the signature of a package.
 
 ${syntax: packageTypeDeclaration}
-
-All parameters of a package are evaluated at compilation time, and in
-consequence they must all be directionless (they cannot be `in`, `out`, or
-`inout`). Otherwise package types are very similar to parser type declarations.
-Packages can only be instantiated; there are no runtime behaviors associated
-with them.
 
 Package types can be referred to using their name and type arguments.
 Internally, package types are represented as:

@@ -168,21 +168,44 @@ syntax parameterTypeIR = direction typeIR id value?
 ;; Routine types
 ;;
 
-syntax functionTypeIR =
-  | BUILTIN_FUNCTION `( parameterTypeIR* ) `-> typeIR
-  | FUNCTION `( parameterTypeIR* ) `-> typeIR
-  | EXTERN_FUNCTION `( parameterTypeIR* ) `-> typeIR
-  | ACTION `( parameterTypeIR* )
+syntax actionTypeIR =
+  ACTION `( parameterTypeIR* )
 
-syntax methodTypeIR =
-  | BUILTIN_METHOD `( parameterTypeIR* ) `-> typeIR
+syntax definedFunctionTypeIR =
+  FUNCTION `( parameterTypeIR* ) `-> typeIR
+
+syntax externFunctionTypeIR =
+  EXTERN_FUNCTION `( parameterTypeIR* ) `-> typeIR
+
+syntax functionTypeIR =
+  | definedFunctionTypeIR
+  | externFunctionTypeIR
+
+syntax builtinMethodTypeIR =
+  BUILTIN_METHOD `( parameterTypeIR* ) `-> typeIR
+
+syntax externMethodTypeIR =
   | EXTERN_METHOD `( parameterTypeIR* ) `-> typeIR
   | EXTERN_METHOD ABSTRACT `( parameterTypeIR* ) `-> typeIR
-  | PARSER_APPLY `( parameterTypeIR* )
-  | CONTROL_APPLY `( parameterTypeIR* )
-  | TABLE_APPLY `-> typeIR
+
+syntax parserApplyMethodTypeIR =
+  PARSER_APPLY `( parameterTypeIR* )
+
+syntax controlApplyMethodTypeIR =
+  CONTROL_APPLY `( parameterTypeIR* )
+
+syntax tableApplyMethodTypeIR =
+  TABLE_APPLY `-> typeIR
+
+syntax methodTypeIR =
+  | builtinMethodTypeIR
+  | externMethodTypeIR
+  | parserApplyMethodTypeIR
+  | controlApplyMethodTypeIR
+  | tableApplyMethodTypeIR
 
 syntax routineTypeIR =
+  | actionTypeIR
   | functionTypeIR
   | methodTypeIR
 

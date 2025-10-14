@@ -1,0 +1,101 @@
+=== Fully-qualified names
+
+Instantiation may create multiple instances from one type, each of which
+must have a unique, fully-qualified name.
+
+${syntax: oid}
+
+A fully qualified name consists of the local name of a controllable entity
+prepended with the fully qualified name of its enclosing namespace.  Hence,
+the following program constructs, which enclose controllable entities, must
+themselves have unique, fully-qualified names.
+
+The local names of instances are derived based on how the instance is used.
+If the instance is bound to a name, that name becomes its local control plane
+name.  For example, if `control` `C` is declared as,
+
+[source,p4]
+----
+control C(/* parameters omitted */)() { /* body omitted */ }
+----
+
+and instantiated as,
+
+[source,p4]
+----
+C() c_inst;
+----
+
+then the local name of the instance is `c_inst`.
+
+Alternatively, if the instance is created as an actual argument, then its
+local name is the name of the formal parameter to which it will be bound. For
+example, if `extern` `E` and `control` `C` are declared as,
+
+[source,p4]
+----
+extern E { /* body omitted */ }
+control C( /* parameters omitted */ )(E e_in) { /* body omitted */ }
+----
+
+and instantiated as,
+
+[source,p4]
+----
+C(E()) c_inst;
+----
+
+then the local name of the extern instance is `e_in`.
+
+If the construct being instantiated is passed as an argument to a package,
+the instance name is derived from the user-supplied type definition when
+possible.  In the following example, the local name of the instance of `MyC`
+is `c`, and the local name of the `extern` is `e2`, not `e1`.
+
+[source,p4]
+----
+extern E { /* body omitted */ }
+control ArchC(E e1);
+package Arch(ArchC c);
+
+control MyC(E e2)() { /* body omitted */ }
+Arch(MyC()) main;
+----
+
+Note that in this example, the architecture will supply an instance of the
+extern when it applies the instance of `MyC` passed to the `Arch` package.
+The fully-qualified name of that instance is `main.c.e2`.
+
+Next, consider a larger example that demonstrates name generation when there
+are multiple instances.
+
+[source,p4]
+----
+control Callee() {
+    table t { /* body omitted */ }
+    apply { t.apply(); }
+}
+control Caller() {
+    Callee() c1;
+    Callee() c2;
+    apply {
+       c1.apply();
+       c2.apply();
+    }
+}
+control Simple();
+package Top(Simple s);
+Top(Caller()) main;
+----
+
+The compile-time evaluation of this program produces the structure in
+<<fig-evalmultiple>>. Notice that there are two instances of the `table t`.
+These instances must both be exposed to the control plane. To name an object
+in this hierarchy, one uses a path composed of the names of containing
+instances.  In this case, the two tables have names `s.c1.t` and `s.c2.t`,
+where `s` is the name of the argument to the package instantiation, which is
+derived from the name of its corresponding formal parameter.
+
+.Evaluating a program that has several instantiations of the same component.
+[#fig-evalmultiple]
+image::evalmultiple.png[width=250,align="center"]

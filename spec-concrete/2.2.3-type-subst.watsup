@@ -136,12 +136,11 @@ def $free_parameterType(_ typeIR _ _) = $free_type(typeIR)
 ;;
 
 def $free_routineType(
-    BUILTIN_FUNCTION `( parameterTypeIR* ) `-> typeIR_ret
+    ACTION `( parameterTypeIR* )
   )
-  = $union_set<tid>(bound_params, bound_ret)
+  = bound_params
   -- if bound_params
       = $unions_set<tid>($free_parameterType(parameterTypeIR)*)
-  -- if bound_ret = $free_type(typeIR_ret)
 
 def $free_routineType(
     FUNCTION `( parameterTypeIR* ) `-> typeIR_ret
@@ -158,13 +157,6 @@ def $free_routineType(
   -- if bound_params
       = $unions_set<tid>($free_parameterType(parameterTypeIR)*)
   -- if bound_ret = $free_type(typeIR_ret)
-
-def $free_routineType(
-    ACTION `( parameterTypeIR* )
-  )
-  = bound_params
-  -- if bound_params
-      = $unions_set<tid>($free_parameterType(parameterTypeIR)*)
 
 def $free_routineType(
     BUILTIN_METHOD `( parameterTypeIR* ) `-> typeIR_ret
@@ -414,12 +406,11 @@ def $subst_routineType(theta, routineTypeIR)
 
 def $subst_routineType'(
     theta,
-    BUILTIN_FUNCTION `( parameterTypeIR* ) `-> typeIR_ret
+    ACTION `( parameterTypeIR* )
   )
-  = BUILTIN_FUNCTION `( parameterTypeIR_subst* ) `-> typeIR_ret_subst
+  = ACTION `( parameterTypeIR_subst* )
   -- if (parameterTypeIR_subst
         = $subst_parameterType'(theta, parameterTypeIR))*
-  -- if typeIR_ret_subst = $subst_type'(theta, typeIR_ret)
 
 def $subst_routineType'(
     theta,
@@ -438,14 +429,6 @@ def $subst_routineType'(
   -- if (parameterTypeIR_subst
         = $subst_parameterType'(theta, parameterTypeIR))*
   -- if typeIR_ret_subst = $subst_type'(theta, typeIR_ret)
-
-def $subst_routineType'(
-    theta,
-    ACTION `( parameterTypeIR* )
-  )
-  = ACTION `( parameterTypeIR_subst* )
-  -- if (parameterTypeIR_subst
-        = $subst_parameterType'(theta, parameterTypeIR))*
 
 def $subst_routineType'(
     theta,
@@ -660,7 +643,7 @@ def $specialize_constructorTypeDef(
 ;;
 
 dec $canon(typeIR) : typeIR
-hint(prose_in "the canonicalized form of" %0)
+  hint(prose_in "the canonicalized form of" %0)
 
 def $canon(polyTypeDefIR `< typeIR_arg* >) = $canon(typeIR)
   -- if typeIR = $specialize_typeDef(polyTypeDefIR, typeIR_arg*)

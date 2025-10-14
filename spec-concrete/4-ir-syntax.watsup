@@ -7,14 +7,17 @@ syntax prefixedNameIR =
   | `. nameIR
 
 dec $prefixedNonTypeName(prefixedNonTypeName) : prefixedNameIR
+  hint(prose_in "the prefixed name of " %0)
 def $prefixedNonTypeName(nonTypeName) = `` $name(nonTypeName)
 def $prefixedNonTypeName(`ID `. nonTypeName) = `. $name(nonTypeName)
 
 dec $prefixedTypeName(prefixedTypeName) : prefixedNameIR
+  hint(prose_in "the prefixed name of " %0)
 def $prefixedTypeName(typeName) = `` $name(typeName)
 def $prefixedTypeName(`TID `. typeName) = `. $name(typeName)
 
 dec $flatten_prefixedNameIR(prefixedNameIR) : nameIR
+  hint(prose_in "the string form of " %0)
 def $flatten_prefixedNameIR(`` nameIR) = nameIR
 def $flatten_prefixedNameIR(`. nameIR) = "." ++ nameIR
 
@@ -32,10 +35,19 @@ syntax typeParameterListIR = typeParameterIR*
 ;; Parameters
 ;;
 
-syntax constantInitializerOptIR
+syntax constantInitializerIR = `= value
+
+syntax constantInitializerOptIR = constantInitializerIR?
 
 syntax parameterIR =
   annotationList direction typeIR nameIR constantInitializerOptIR
+
+dec $type_of_parameterIR(parameterIR) : parameterTypeIR
+  hint(prose_in "the type of " %0)
+def $type_of_parameterIR(_ direction typeIR nameIR eps)
+  = direction typeIR nameIR eps
+def $type_of_parameterIR(_ direction typeIR nameIR (`= value))
+  = direction typeIR nameIR value
 
 syntax parameterListIR = parameterIR*
 
@@ -44,6 +56,12 @@ syntax parameterListIR = parameterIR*
 ;;
 
 syntax constructorParameterIR = parameterIR
+
+dec $type_of_constructorParameterIR(constructorParameterIR)
+  : constructorParameterTypeIR
+  hint(prose_in "the type of " %0)
+def $type_of_constructorParameterIR(constructorParameterIR)
+  = $type_of_parameterIR(constructorParameterIR)
 
 syntax constructorParameterListIR = parameterIR*
 
@@ -184,13 +202,13 @@ syntax typedExpressionIR =
 
 syntax typedExpressionListIR = typedExpressionIR*
 
-dec $typeof_expression(typedExpressionIR) : typeIR
+dec $type_of_expression(typedExpressionIR) : typeIR
   hint(prose_in "the type of " %0)
-def $typeof_expression(_ `# `( typeIR _ )) = typeIR
+def $type_of_expression(_ `# `( typeIR _ )) = typeIR
 
-dec $ctkof_expression(typedExpressionIR) : ctk
+dec $ctk_of_expression(typedExpressionIR) : ctk
   hint(prose_in "the compile-time known-ness of " %0)
-def $ctkof_expression(_ `# `( _ ctk )) = ctk
+def $ctk_of_expression(_ `# `( _ ctk )) = ctk
 
 syntax memberAccessBaseIR =
   | TYPE prefixedNameIR
@@ -248,8 +266,9 @@ syntax lvalueIR =
 
 syntax typedLvalueIR = lvalueIR `# `( typeIR )
 
-dec $typeof_lvalue(typedLvalueIR) : typeIR
-def $typeof_lvalue(_ `# `( typeIR )) = typeIR
+dec $type_of_lvalue(typedLvalueIR) : typeIR
+  hint(prose_in "the type of lvalue " %0)
+def $type_of_lvalue(_ `# `( typeIR )) = typeIR
 
 ;;
 ;; Statements
@@ -399,10 +418,6 @@ syntax statementIR =
 ;;;; Constant and variable declarations
 ;;
 
-syntax constantInitializerIR = `= value
-
-syntax constantInitializerOptIR = constantInitializerIR?
-
 syntax constantDeclarationIR =
   annotationList CONST typeIR nameIR constantInitializerIR `;
 
@@ -535,17 +550,21 @@ syntax typedefDeclarationIR =
 syntax externFunctionDeclarationIR =
   annotationList EXTERN functionPrototypeIR `;
 
-syntax methodPrototypeIR =
-  | annotationList nameIR `< `, typeParameterListIR > `( parameterListIR ) `;
+syntax externConstructorPrototypeIR =
+  annotationList nameIR `< `, typeParameterListIR > `( parameterListIR ) `;
+
+syntax externConstructorPrototypeListIR = externConstructorPrototypeIR*
+
+syntax externMethodPrototypeIR =
   | annotationList functionPrototypeIR `;
   | annotationList ABSTRACT functionPrototypeIR `;
 
-syntax methodPrototypeListIR = methodPrototypeIR*
+syntax externMethodPrototypeListIR = externMethodPrototypeIR*
 
 syntax externObjectDeclarationIR =
-  annotationList EXTERN nameIR
-    `< typeParameterListIR `, typeParameterListIR >
-    `{ methodPrototypeListIR }
+  annotationList EXTERN nameIR `< typeParameterListIR `, >
+    `{ externConstructorPrototypeListIR
+       externMethodPrototypeListIR }
 
 syntax externDeclarationIR =
   | externFunctionDeclarationIR
