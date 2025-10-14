@@ -232,7 +232,7 @@ let rec prose_of_exp ?(mode = Prose) exp : string =
   | UpdE (exp_b, path, exp_f) ->
       prose_of_exp ~mode exp_b ^ "[" ^ prose_of_path ~mode path ^ " = "
       ^ prose_of_exp ~mode exp_f ^ "]"
-  | CallE (funcprose, targs, args) ->
+  | CallE (funcprose, targs, args) -> (
       if mode = Code then
         let id = id_of_funcprose funcprose in
         render_link ~link:id.it
@@ -241,7 +241,7 @@ let rec prose_of_exp ?(mode = Prose) exp : string =
             ^ prose_of_args ~mode:Code args)
         |> render_mono ~mode
       else
-        (match funcprose with
+        match funcprose with
         | BoolProse (id, prose_true, _prose_false) ->
             let exps =
               args
@@ -260,8 +260,8 @@ let rec prose_of_exp ?(mode = Prose) exp : string =
             render_link ~link:id.it
               ~text:
                 (string_of_defid id ^ string_of_targs targs
-                ^ prose_of_args ~mode:Code args))
-        |> render_mono ~mode
+                ^ prose_of_args ~mode:Code args)
+            |> render_mono ~mode)
   | IterE (exp, iterexp) ->
       if snd iterexp = [] then prose_of_exp ~mode exp
       else
@@ -394,7 +394,7 @@ let prose_of_reldef (relcall : relcall) rid : string =
 
 let rec prose_of_cond ?(mode = Prose) (cond : cond) : string =
   match cond with
-  | ExpCond exp -> prose_of_exp exp
+  | ExpCond exp -> prose_of_exp ~mode exp
   | RelCond (relcall, relid) -> prose_of_relcall relcall relid
   | ForAllCond (cond, vars) ->
       F.asprintf "%s, for all %s" (prose_of_cond ~mode cond)
