@@ -415,7 +415,7 @@ let rec prose_of_instr ?(level = 0) ?(unordered = false) (instr : instr) :
         ExpCond { it = MatchE (exp, _); _ },
         { it = LetI (exp_l, exp_r); _ } :: instrs_rest )
     when Eq.eq_exp exp_r exp ->
-      F.asprintf "%s%slet %s be %s:\n%s" bullet
+      F.asprintf "%s%slet %s be %s:%s" bullet
         (prose_of_branchtype branchtype)
         (code_of_exp exp_l) (prose_of_exp exp_r)
         (prose_of_instrs ~level:(level + 1) instrs_rest)
@@ -425,18 +425,18 @@ let rec prose_of_instr ?(level = 0) ?(unordered = false) (instr : instr) :
         { it = LetI (exp_l, { it = DownCastE (typ_r, exp_r); _ }); _ }
         :: instrs_rest )
     when Eq.eq_exp exp_r exp && Eq.eq_typ typ_r typ ->
-      F.asprintf "%s%slet %s be %s:\n%s" bullet
+      F.asprintf "%s%slet %s be %s:%s" bullet
         (prose_of_branchtype branchtype)
         (code_of_exp exp_l) (prose_of_exp exp_r)
         (prose_of_instrs ~level:(level + 1) instrs_rest)
   | BranchI (branchtype, cond, instrs) ->
-      F.asprintf "%s%s%s:\n%s" bullet
+      F.asprintf "%s%s%s:%s" bullet
         (prose_of_branchtype branchtype)
         (prose_of_cond cond)
         (prose_of_instrs ~level:(level + 1) instrs)
   | OtherwiseI instr ->
-      F.asprintf "%sOtherwise:\n%s" bullet
-        (prose_of_instr ~level:(level + 1) instr)
+      F.asprintf "%sOtherwise:%s" bullet
+        (prose_of_instrs ~level:(level + 1) [ instr ])
   | CheckI cond -> F.asprintf "%sCheck that %s." bullet (prose_of_cond cond)
   | LetI (exp_l, exp_r) ->
       F.asprintf "%sLet %s be %s." bullet (code_of_exp exp_l)
@@ -450,7 +450,7 @@ let rec prose_of_instr ?(level = 0) ?(unordered = false) (instr : instr) :
   | ResultI (None, exps) ->
       F.asprintf "%sResult in %s." bullet (prose_of_exps exps)
   | GroupI (id, _, instrs) ->
-      F.asprintf "%sGroup %s:\n%s" bullet (string_of_relpathid id)
+      F.asprintf "%sGroup %s:%s" bullet (string_of_relpathid id)
         (prose_of_instrs ~level:(level + 1) instrs)
   | ForEachI ([], instr, vars_in) ->
       F.asprintf "%s%s, for each %s" bullet
@@ -473,7 +473,11 @@ let rec prose_of_instr ?(level = 0) ?(unordered = false) (instr : instr) :
 
 and prose_of_instrs ?(level = 0) instrs =
   let instrs = Shorthand.apply_all_shorthands instrs in
-  List.map (prose_of_instr ~level) instrs |> String.concat "\n"
+  match instrs with
+  | [ { it = ReturnI ({ it = BoolE b; _ } as exp); _ } ] ->
+      F.asprintf " return %s." (code_of_exp exp)
+  | instrs ->
+      "\n" ^ (List.map (prose_of_instr ~level) instrs |> String.concat "\n")
 
 let prose_of_def (def : def) : string =
   match def.it with
