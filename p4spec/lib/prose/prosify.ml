@@ -7,8 +7,6 @@ module HEnv = Hintenv
 module IEnv = Runtime_static.Envs.IEnv
 module InputHint = Runtime_static.Rel.InputHint
 
-let ( let* ) = Option.bind
-
 let split_iters (exps_out : exp list) (iterexps : iterexp list) :
     var list * var list =
   let out_ids = Il.Free.free_exps exps_out in

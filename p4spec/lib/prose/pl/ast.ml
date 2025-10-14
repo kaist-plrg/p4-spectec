@@ -152,8 +152,7 @@ and instr' =
   (* Result in %prose_out(%exps) *)
   | ResultI of hintexp option * exp list
   | ReturnI of exp
-  | GroupI of id * exp list * instr list (* Pre-processed instructions *)
-  (* Check - let *)
+  | GroupI of id * exp list * instr list  (** Shorthand instructions **)
   | CheckLetI of exp * exp
   | OptionGetI of exp * exp
 

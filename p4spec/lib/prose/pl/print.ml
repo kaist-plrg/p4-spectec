@@ -25,7 +25,16 @@ let render_unordered_bullet level =
 let render_link ~(link : string) ~(text : string) : string =
   "<<" ^ link ^ ", " ^ text ^ ">>"
 
-(** Printing as prose **)
+(* AST utilities *)
+
+let id_of_funcprose funcprose =
+  match funcprose with
+  | BoolProse (id, _, _) -> id
+  | InputProse (id, _) -> id
+  | Def id -> id
+
+(* Printing as prose *)
+
 let reindent_lines ?(level = 0) (s : string) : string =
   let lines = String.split_on_char '\n' s in
   String.concat ("\n" ^ render_unordered_bullet level) lines
@@ -224,27 +233,35 @@ let rec prose_of_exp ?(mode = Prose) exp : string =
       prose_of_exp ~mode exp_b ^ "[" ^ prose_of_path ~mode path ^ " = "
       ^ prose_of_exp ~mode exp_f ^ "]"
   | CallE (funcprose, targs, args) ->
-      (match funcprose with
-      | BoolProse (id, prose_true, _prose_false) ->
-          let exps =
-            args
-            |> List.filter_map (fun arg ->
-                   match arg.it with ExpA exp -> Some exp | DefA _ -> None)
-          in
-          render_link ~link:id.it ~text:(prose_of_hintexp exps prose_true)
-      | InputProse (id, prose_in) ->
-          let exps =
-            args
-            |> List.filter_map (fun arg ->
-                   match arg.it with ExpA exp -> Some exp | DefA _ -> None)
-          in
-          render_link ~link:id.it ~text:(prose_of_hintexp exps prose_in)
-      | Def id ->
-          render_link ~link:id.it
-            ~text:
-              (string_of_defid id ^ string_of_targs targs
-              ^ prose_of_args ~mode:Code args))
-      |> render_mono ~mode
+      if mode = Code then
+        let id = id_of_funcprose funcprose in
+        render_link ~link:id.it
+          ~text:
+            (string_of_defid id ^ string_of_targs targs
+            ^ prose_of_args ~mode:Code args)
+        |> render_mono ~mode
+      else
+        (match funcprose with
+        | BoolProse (id, prose_true, _prose_false) ->
+            let exps =
+              args
+              |> List.filter_map (fun arg ->
+                     match arg.it with ExpA exp -> Some exp | DefA _ -> None)
+            in
+            render_link ~link:id.it ~text:(prose_of_hintexp exps prose_true)
+        | InputProse (id, prose_in) ->
+            let exps =
+              args
+              |> List.filter_map (fun arg ->
+                     match arg.it with ExpA exp -> Some exp | DefA _ -> None)
+            in
+            render_link ~link:id.it ~text:(prose_of_hintexp exps prose_in)
+        | Def id ->
+            render_link ~link:id.it
+              ~text:
+                (string_of_defid id ^ string_of_targs targs
+                ^ prose_of_args ~mode:Code args))
+        |> render_mono ~mode
   | IterE (exp, iterexp) ->
       if snd iterexp = [] then prose_of_exp ~mode exp
       else
@@ -360,7 +377,20 @@ let prose_of_relcall ?(level = 0) (relcall : relcall) rid : string =
            ~text:(prose_of_hintexp exps_in hintexp))
   | Mixop (mixop, exps) ->
       render_link ~link:(string_of_relid rid)
+        ~text:(code_of_notexp ~mode:Prose (mixop, exps))
+
+let prose_of_reldef (relcall : relcall) rid : string =
+  match relcall with
+  | Prose (hintexp, [], exps_in) ->
+      render_link ~link:(string_of_relid rid)
+        ~text:(prose_of_hintexp exps_in hintexp)
+      ^ " is defined as:"
+  | Prose (hintexp, exps_out, exps_in) -> assert false
+  | Mixop (mixop, exps) ->
+      render_link ~link:(string_of_relid rid)
         ~text:(code_of_relinput ~mode:Prose (mixop, exps))
+
+(* Conditions *)
 
 let rec prose_of_cond ?(mode = Prose) (cond : cond) : string =
   match cond with
@@ -413,7 +443,7 @@ let rec prose_of_instr ?(level = 0) ?(unordered = false) (instr : instr) :
         (prose_of_exp exp_r)
   | RelI (relcall, rid) ->
       F.asprintf "%sLet %s." bullet (prose_of_relcall ~level relcall rid)
-  | ReturnI exp -> F.asprintf "%sReturn %s." bullet (prose_of_exp exp)
+  | ReturnI exp -> F.asprintf "%sReturn %s." bullet (code_of_exp exp)
   | ResultI (Some hintexp, exps) ->
       F.asprintf "%sResult in %s." bullet (prose_of_hintexp exps hintexp)
   | ResultI (None, []) -> bullet ^ "The relation holds."
@@ -458,28 +488,25 @@ let prose_of_spec (spec : spec) = prose_of_defs spec
 (* entrypoint for splicer *)
 
 let prose_of_rulegroup (relcall, id, instrs) : string =
-  F.asprintf "%s\n\n%s"
-    (prose_of_relcall ~level:0 relcall id)
-    (prose_of_instrs instrs)
+  F.asprintf "%s\n\n%s" (prose_of_reldef relcall id) (prose_of_instrs instrs)
 
-let prose_of_funcprose (funcprose : funcprose) (args : arg list) : string =
+let prose_of_funcdef (funcprose : funcprose) (tparams : tparam list)
+    (args : arg list) : string =
   let exps_input =
     args
     |> List.filter_map (fun arg ->
            match arg.it with ExpA exp -> Some exp | DefA _ -> None)
   in
   match funcprose with
-  | BoolProse (id, prose_true, _prose_false) ->
+  | BoolProse (_id, prose_true, _prose_false) ->
       prose_of_hintexp exps_input prose_true
-  | InputProse (id, prose_in) -> prose_of_hintexp exps_input prose_in
-  | Def id -> string_of_defid id
+  | InputProse (_id, prose_in) -> prose_of_hintexp exps_input prose_in
+  | Def id ->
+      string_of_defid id ^ string_of_tparams tparams
+      ^ prose_of_args ~mode:Code args
+      |> render_mono ~mode:Prose
 
 let prose_of_func (funcprose, tparams, args, instrs) : string =
-  let prose_of_funcdef =
-    F.asprintf "%s%s%s"
-      (prose_of_funcprose funcprose args)
-      (string_of_tparams tparams)
-      (prose_of_args ~mode:Code args)
-    |> render_mono ~mode:Prose
-  in
-  F.asprintf "%s\n\n%s" prose_of_funcdef (prose_of_instrs instrs)
+  F.asprintf "%s\n\n%s"
+    (prose_of_funcdef funcprose tparams args)
+    (prose_of_instrs instrs)
