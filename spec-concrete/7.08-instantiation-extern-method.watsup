@@ -14,10 +14,9 @@ rule ExternMethod_inst/non-abstract:
     ---- ;; bind extern method to routine environment
     -- if rid = $rid_IR(nameIR, parameterListIR)
     -- if method
-        = EXTERN_METHOD
+        = EXTERN_METHOD nameIR
           `< typeParameterListIR ++ typeParameterListIR_inferred >
-          `( parameterListIR )
-          (`EMPTY `{ eps })
+          `( parameterListIR ) eps
     -- if IC_1 = $add_routine_overload_inst(BLOCK, IC_0, rid, method)
 
 ;;; annotationList ABSTRACT functionPrototypeIR `;
@@ -30,7 +29,7 @@ rule ExternMethod_inst/abstract:
   ---- ;; bind extern abstract method to routine environment
   -- if rid = $rid_IR(nameIR, parameterListIR)
   -- if method
-      = EXTERN_METHOD ABSTRACT 
+      = EXTERN_METHOD ABSTRACT nameIR
           `< typeParameterListIR ++ typeParameterListIR_inferred >
           `( parameterListIR )
   -- if IC_1 = $add_routine_overload_inst(BLOCK, IC_0, rid, method)

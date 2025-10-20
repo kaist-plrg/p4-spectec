@@ -974,7 +974,7 @@ relation Eval_static: `p`, `TC`, and `expressionIR # ( _ _ )`
  .. Group castExpressionIR: `p`, `TC`, and `( typeIR ) typedExpressionIR # ( _ _ )`
 
   ... Let `value` be the result of <<Eval_static, the local compile-time evaluation of `typedExpressionIR`, under cursor `p` and typing context `TC`>>.
-  ... Let `value~cast~` be `$cast_op(typeIR, value)`.
+  ... Let `value~cast~` be <<cast_op, cast `value` to type `typeIR`>>.
   ... Result in `value~cast~`.
 
 . Else if let `dataExpressionIR` be `expressionIR`:
@@ -6336,9 +6336,9 @@ relation Expr_inst: `p`, `IC`, `STO'`, and `expressionIR # _`
 
   ... <<Expr_inst, `p IC STO' |- typedExpressionIR ==> STO~1~ value`>>.
   ... Result in `STO~1~` and `<<un_op, unop value>>`.
-. Let `( _ _ )` be `_`.
-. If let `typedExpressionIR~l~ binop' typedExpressionIR~r~` be `expressionIR`:
- .. Group binaryExpressionIR: `p`, `IC`, `STO'`, and `typedExpressionIR~l~ binop' typedExpressionIR~r~ # ( _ _ )`
+
+. Else if let `typedExpressionIR~l~ binop' typedExpressionIR~r~` be `expressionIR`:
+ .. Group binaryExpressionIR: `p`, `IC`, `STO'`, and `typedExpressionIR~l~ binop' typedExpressionIR~r~ # _`
 
   ... Check that `binop'` is not in `[&&, ||]`.
   ... <<Expr_inst, `p IC STO' |- typedExpressionIR~l~ ==> STO~1~ value~l~`>>.
@@ -6375,7 +6375,7 @@ relation Expr_inst: `p`, `IC`, `STO'`, and `expressionIR # _`
  .. Group castExpressionIR: `p`, `IC`, `STO'`, and `( typeIR ) typedExpressionIR # _`
 
   ... <<Expr_inst, `p IC STO' |- typedExpressionIR ==> STO~1~ value`>>.
-  ... Let `value~cast~` be `$cast_op(typeIR, value)`.
+  ... Let `value~cast~` be <<cast_op, cast `value` to type `typeIR`>>.
   ... Result in `STO~1~` and `value~cast~`.
 
 . Else if let `dataExpressionIR` be `expressionIR`:
@@ -6410,34 +6410,36 @@ relation Expr_inst: `p`, `IC`, `STO'`, and `expressionIR # _`
   ... Result in `STO'` and `value~error~`.
 
 . Else if let `memberAccessBaseIR . nameIR` be `expressionIR`:
- .. If `memberAccessBaseIR` matches pattern `TYPE %`:
-  ... Let `TYPE prefixedNameIR` be `memberAccessBaseIR`.
-  ... Group memberAccessExpressionIR-type: `p`, `IC`, `STO'`, and `TYPE prefixedNameIR . nameIR # _`
+ .. Check that `memberAccessBaseIR` matches pattern `TYPE %`.
+ .. Let `TYPE prefixedNameIR` be `memberAccessBaseIR`.
+ .. Group memberAccessExpressionIR-type: `p`, `IC`, `STO'`, and `TYPE prefixedNameIR . nameIR # _`
 
-   .... Let `typeDefIR'^?^` be `$find_typedef_inst(p, IC, prefixedNameIR)`.
-   .... Check that `typeDefIR'^?^` matches pattern `(_)`.
-   .... Let `?typeDefIR` be `typeDefIR'^?^`.
-   .... Check that `typeDefIR` has type `enumTypeIR`.
-   .... Let `enumTypeIR` be `typeDefIR`.
-   .... If let `ENUM tid { _^{asterisk}^ }` be `enumTypeIR`:
-    ..... Result in `STO'` and `tid . nameIR`.
+  ... Let `typeDefIR'^?^` be `$find_typedef_inst(p, IC, prefixedNameIR)`.
+  ... Check that `typeDefIR'^?^` matches pattern `(_)`.
+  ... Let `?typeDefIR` be `typeDefIR'^?^`.
+  ... Check that `typeDefIR` has type `enumTypeIR`.
+  ... Let `enumTypeIR` be `typeDefIR`.
+  ... If let `ENUM tid { _^{asterisk}^ }` be `enumTypeIR`:
+   .... Result in `STO'` and `tid . nameIR`.
 
-   .... Else if let `ENUM tid # _ { id~member~ = value~member~ ;^{asterisk}^ }` be `enumTypeIR`:
-    ..... Let `value'^?^` be `$assoc_<nameIR, value>(nameIR, (id~member~, value~member~)^{asterisk}^)`.
-    ..... Check that `value'^?^` matches pattern `(_)`.
-    ..... Let `?value` be `value'^?^`.
-    ..... Result in `STO'` and `tid . nameIR # value`.
- .. If `memberAccessBaseIR` has type `typedExpressionIR`:
-  ... Let `typedExpressionIR~base~` be `memberAccessBaseIR`.
-  ... Check that `nameIR` is equal to "size".
-  ... Group memberAccessExpressionIR-expression-stack-size: `p`, `IC`, `STO'`, and `typedExpressionIR~base~ . "size" # ( _ _ )`
+  ... Else if let `ENUM tid # _ { id~member~ = value~member~ ;^{asterisk}^ }` be `enumTypeIR`:
+   .... Let `value'^?^` be `$assoc_<nameIR, value>(nameIR, (id~member~, value~member~)^{asterisk}^)`.
+   .... Check that `value'^?^` matches pattern `(_)`.
+   .... Let `?value` be `value'^?^`.
+   .... Result in `STO'` and `tid . nameIR # value`.
+. Let `( typeIR~base~ _ )` be `_`.
+. If let `memberAccessBaseIR . text` be `expressionIR`:
+ .. Check that `memberAccessBaseIR` has type `typedExpressionIR`.
+ .. Let `typedExpressionIR~base~` be `memberAccessBaseIR`.
+ .. Check that `text` is equal to "size".
+ .. Group memberAccessExpressionIR-expression-stack-size: `p`, `IC`, `STO'`, and `typedExpressionIR~base~ . "size" # ( typeIR~base~ _ )`
 
-   .... Let `_ # ( typeIR _ )` be `typedExpressionIR~base~`.
-   .... Check that `typeIR` is equal to `_`.
-   .... Let `typeIR'` be <<canon, the canonicalized form of `_`>>.
-   .... Check that `typeIR'` has type `headerStackTypeIR`.
-   .... Let `_ [ n~size~ ]` be `typeIR'`.
-   .... Result in `STO'` and `D n~size~`.
+  ... Let `_ # ( typeIR _ )` be `typedExpressionIR~base~`.
+  ... Check that `typeIR` is equal to `typeIR~base~`.
+  ... Let `typeIR'` be <<canon, the canonicalized form of `typeIR~base~`>>.
+  ... Check that `typeIR'` has type `headerStackTypeIR`.
+  ... Let `_ [ n~size~ ]` be `typeIR'`.
+  ... Result in `STO'` and `D n~size~`.
 
 . Else if let `typedExpressionIR~base~ [ typedExpressionIR~hi~ : typedExpressionIR~lo~ ]` be `expressionIR`:
  .. Group sliceAccessExpressionIR: `p`, `IC`, `STO'`, and `typedExpressionIR~base~ [ typedExpressionIR~hi~ : typedExpressionIR~lo~ ] # _`
@@ -6465,23 +6467,23 @@ relation Expr_inst: `p`, `IC`, `STO'`, and `expressionIR # _`
    .... Group callExpressionIR-builtin-size: `p`, `IC`, `STO'`, and `routineTargetIR < [ ] > ( [ ] ) # _`
 
     ..... If let `typedExpressionIR~base~ . nameIR` be `routineTargetIR`:
-     ...... Let `_ # ( _ _ )` be `typedExpressionIR~base~`.
+     ...... Let `_ # ( typeIR~base~ _ )` be `typedExpressionIR~base~`.
      ...... Check that `nameIR` is in `["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]`.
-     ...... Result in `STO'` and `$sizeof(_, nameIR)`.
+     ...... Result in `STO'` and `$sizeof(typeIR~base~, nameIR)`.
 
     ..... Else if let `TYPE prefixedNameIR . nameIR` be `routineTargetIR`:
      ...... Let `typeDefIR'^?^` be `$find_typedef_inst(p, IC, prefixedNameIR)`.
      ...... Check that `typeDefIR'^?^` matches pattern `(_)`.
      ...... Let `?typeDefIR` be `typeDefIR'^?^`.
-     ...... If let `_` be `typeDefIR`:
+     ...... If let `typeIR~base~` be `typeDefIR`:
       ....... Check that `nameIR` is in `["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]`.
-      ....... Result in `STO'` and `$sizeof(_, nameIR)`.
+      ....... Result in `STO'` and `$sizeof(typeIR~base~, nameIR)`.
 
-     ...... Else if let `_ < tid^{asterisk}^ , tid'^{asterisk}^ >` be `typeDefIR`:
+     ...... Else if let `typeIR~base~ < tid^{asterisk}^ , tid'^{asterisk}^ >` be `typeDefIR`:
       ....... Check that `tid^{asterisk}^` matches pattern `[]`.
       ....... Check that `tid'^{asterisk}^` matches pattern `[]`.
       ....... Check that `nameIR` is in `["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]`.
-      ....... Result in `STO'` and `$sizeof(_, nameIR)`.
+      ....... Result in `STO'` and `$sizeof(typeIR~base~, nameIR)`.
   ... Let `routineTargetIR' < typeArgumentListIR > ( argumentListIR )` be `callExpressionIR`.
   ... If `routineTargetIR'` matches pattern `( % )`:
    .... Let `( routineTargetIR )` be `routineTargetIR'`.
@@ -6679,7 +6681,7 @@ relation ExternMethod_inst: `IC~0~` and `externMethodPrototypeIR`
  .. Group non-abstract: `IC~0~` and `annotationList typeIR nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterListIR ) ;`
 
   ... Let `rid` be `$rid_IR(nameIR, parameterListIR)`.
-  ... Let `method` be `EXTERN_METHOD < typeParameterListIR ++ typeParameterListIR~inferred~ > ( parameterListIR ) ?{ [ ] }`.
+  ... Let `method` be `EXTERN_METHOD nameIR < typeParameterListIR ++ typeParameterListIR~inferred~ > ( parameterListIR ) ?()`.
   ... Let `IC~1~` be `$add_routine_overload_inst(BLOCK, IC~0~, rid, method)`.
   ... Result in `IC~1~`.
 
@@ -6687,7 +6689,7 @@ relation ExternMethod_inst: `IC~0~` and `externMethodPrototypeIR`
  .. Group abstract: `IC~0~` and `annotationList ABSTRACT typeIR nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterListIR ) ;`
 
   ... Let `rid` be `$rid_IR(nameIR, parameterListIR)`.
-  ... Let `method` be `EXTERN_METHOD ABSTRACT < typeParameterListIR ++ typeParameterListIR~inferred~ > ( parameterListIR )`.
+  ... Let `method` be `EXTERN_METHOD ABSTRACT nameIR < typeParameterListIR ++ typeParameterListIR~inferred~ > ( parameterListIR )`.
   ... Let `IC~1~` be `$add_routine_overload_inst(BLOCK, IC~0~, rid, method)`.
   ... Result in `IC~1~`.
 
@@ -6804,7 +6806,7 @@ relation ParserState_inst: `IC~0~`, `STO~0~`, and `annotationList STATE nameIR {
 . Group : `IC~0~`, `STO~0~`, and `annotationList STATE nameIR { parserStatementListIR transitionStatementIR }`
 
  .. <<ParserStmts_inst, `IC~0~ STO~0~ |- parserStatementListIR ==> IC~1~ STO~1~ parserStatementListIR~inst~`>>.
- .. Let `state` be `annotationList { parserStatementListIR~inst~ transitionStatementIR }`.
+ .. Let `state` be `annotationList STATE { parserStatementListIR~inst~ transitionStatementIR }`.
  .. Let `IC~2~` be `$add_state_inst(BLOCK, IC~1~, nameIR, state)`.
  .. Result in `IC~2~` and `STO~1~`.
 
@@ -7007,22 +7009,22 @@ relation Decl_inst: `cursor'`, `IC~0~`, `STO'`, and `declarationIR`
    .... Let `IC~inner~` be `$enter_path(IC~0~, nameIR)`.
    .... <<Constructor_inst, `GLOBAL IC~inner~ STO' |- constructor < typeArgumentListIR > ( argumentListIR # id~default~^{asterisk}^ ) ==> STO~1~ object`>>.
    .... If `object` has type `externObject`:
-    ..... Let `EXTERN tid { tenv frame renv }` be `object`.
+    ..... Let `EXTERN tid < tenv > { frame renv }` be `object`.
     ..... Let `IC~decl~` be `$empty_instantiationContext`[PATH = `IC~0~.PATH`][GLOBAL = `IC~0~.GLOBAL`].
     ..... Let `objectDeclarationListIR` be `$flatten_objectInitializerOptIR(objectInitializerOptIR)`.
     ..... <<Decls_inst, `BLOCK IC~decl~ STO~1~ |- objectDeclarationListIR ==> IC~decl_post~ STO~2~ _^{asterisk}^`>>.
     ..... Let `frame~merged~` be `$merge_frames(frame, IC~decl_post~.BLOCK.FRAME)`.
     ..... Let `renv~merged~` be `$merge_renv_with_extern(renv, IC~decl_post~.BLOCK.ROUTINE)`.
-    ..... Let `object~merged~` be `EXTERN tid { tenv frame~merged~ renv~merged~ }`.
+    ..... Let `object~merged~` be `EXTERN tid < tenv > { frame~merged~ renv~merged~ }`.
     ..... Let `oid` be `IC~0~.PATH ++ [nameIR]`.
     ..... Let `STO~3~` be `$add_map<oid, object>(STO~2~, oid, object~merged~)`.
     ..... Let `IC~1~` be `$add_value_inst(GLOBAL, IC~0~, nameIR, ! oid)`.
-    ..... Result in `IC~1~`, `STO~2~`, and `?()`.
+    ..... Result in `IC~1~`, `STO~3~`, and `?()`.
    .... If `$is_extern_object(object)`:
     ..... Let `oid` be `IC~0~.PATH ++ [nameIR]`.
     ..... Let `STO~2~` be `$add_map<oid, object>(STO~1~, oid, object)`.
     ..... Let `IC~1~` be `$add_value_inst(GLOBAL, IC~0~, nameIR, ! oid)`.
-    ..... Result in `IC~1~`, `STO~1~`, and `?()`.
+    ..... Result in `IC~1~`, `STO~2~`, and `?()`.
 
   ... Else if `cursor'` matches pattern `GLOBAL`:
    .... Let `(cid, constructor, id*)^?^` be `$find_constructor_inst(IC~0~, prefixedNameIR, argumentListIR)`.
@@ -7031,30 +7033,30 @@ relation Decl_inst: `cursor'`, `IC~0~`, `STO'`, and `declarationIR`
    .... Let `IC~inner~` be `$enter_path(IC~0~, nameIR)`.
    .... <<Constructor_inst, `cursor' IC~inner~ STO' |- constructor < typeArgumentListIR > ( argumentListIR # id~default~^{asterisk}^ ) ==> STO~1~ object`>>.
    .... If `object` has type `externObject`:
-    ..... Let `EXTERN tid { tenv frame renv }` be `object`.
+    ..... Let `EXTERN tid < tenv > { frame renv }` be `object`.
     ..... Let `IC~decl~` be `$empty_instantiationContext`[PATH = `IC~0~.PATH`][GLOBAL = `IC~0~.GLOBAL`].
     ..... Let `objectDeclarationListIR` be `$flatten_objectInitializerOptIR(objectInitializerOptIR)`.
     ..... <<Decls_inst, `BLOCK IC~decl~ STO~1~ |- objectDeclarationListIR ==> IC~decl_post~ STO~2~ _^{asterisk}^`>>.
     ..... Let `frame~merged~` be `$merge_frames(frame, IC~decl_post~.BLOCK.FRAME)`.
     ..... Let `renv~merged~` be `$merge_renv_with_extern(renv, IC~decl_post~.BLOCK.ROUTINE)`.
-    ..... Let `object~merged~` be `EXTERN tid { tenv frame~merged~ renv~merged~ }`.
+    ..... Let `object~merged~` be `EXTERN tid < tenv > { frame~merged~ renv~merged~ }`.
     ..... Let `oid` be `IC~0~.PATH ++ [nameIR]`.
     ..... Let `STO~3~` be `$add_map<oid, object>(STO~2~, oid, object~merged~)`.
     ..... Let `IC~1~` be `$add_value_inst(GLOBAL, IC~0~, nameIR, ! oid)`.
     ..... Let `constantDeclarationIR` be `CONST typeIR nameIR = ! oid ;`.
-    ..... Result in `IC~1~`, `STO~2~`, and `?constantDeclarationIR`.
+    ..... Result in `IC~1~`, `STO~3~`, and `?constantDeclarationIR`.
    .... If `$is_extern_object(object)`:
     ..... Let `oid` be `IC~0~.PATH ++ [nameIR]`.
     ..... Let `STO~2~` be `$add_map<oid, object>(STO~1~, oid, object)`.
     ..... Let `IC~1~` be `$add_value_inst(cursor', IC~0~, nameIR, ! oid)`.
     ..... Let `constantDeclarationIR` be `CONST typeIR nameIR = ! oid ;`.
-    ..... Result in `IC~1~`, `STO~1~`, and `?constantDeclarationIR`.
+    ..... Result in `IC~1~`, `STO~2~`, and `?constantDeclarationIR`.
 
 . Else if let `annotationList typeIR nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterListIR ) blockStatementIR` be `declarationIR`:
  .. Group functionDeclarationIR: `cursor'`, `IC~0~`, `STO'`, and `annotationList typeIR nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterListIR ) blockStatementIR`
 
   ... Let `rid` be `$rid_IR(nameIR, parameterListIR)`.
-  ... Let `function` be `FUNCTION < typeParameterListIR ++ typeParameterListIR~inferred~ > ( parameterListIR ) blockStatementIR`.
+  ... Let `function` be `FUNCTION nameIR < typeParameterListIR ++ typeParameterListIR~inferred~ > ( parameterListIR ) blockStatementIR`.
   ... Let `IC~1~` be `$add_routine_overload_inst(cursor', IC~0~, rid, function)`.
   ... Result in `IC~1~`, `STO'`, and `?()`.
 
@@ -7062,7 +7064,7 @@ relation Decl_inst: `cursor'`, `IC~0~`, `STO'`, and `declarationIR`
  .. Group actionDeclarationIR: `cursor'`, `IC~0~`, `STO'`, and `annotationList ACTION nameIR ( parameterListIR ) blockStatementIR`
 
   ... Let `rid` be `$rid_IR(nameIR, parameterListIR)`.
-  ... Let `action` be `ACTION ( parameterListIR ) blockStatementIR`.
+  ... Let `action` be `ACTION nameIR ( parameterListIR ) blockStatementIR`.
   ... Let `IC~1~` be `$add_routine_non_overload_inst(cursor', IC~0~, rid, action)`.
   ... Result in `IC~1~`, `STO'`, and `?()`.
 . Check that `cursor'` matches pattern `GLOBAL`.
@@ -7103,7 +7105,7 @@ for each `nameIR` in `nameIR^{asterisk}^`.
  .. Group externFunctionDeclarationIR: `GLOBAL`, `IC~0~`, `STO'`, and `annotationList EXTERN typeIR nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterListIR ) ;`
 
   ... Let `rid` be `$rid_IR(nameIR, parameterListIR)`.
-  ... Let `function` be `EXTERN_FUNCTION < typeParameterListIR ++ typeParameterListIR~inferred~ > ( parameterListIR )`.
+  ... Let `function` be `EXTERN_FUNCTION nameIR < typeParameterListIR ++ typeParameterListIR~inferred~ > ( parameterListIR )`.
   ... Let `IC~1~` be `$add_routine_overload_inst(GLOBAL, IC~0~, rid, function)`.
   ... Result in `IC~1~`, `STO'`, and `?()`.
 
@@ -7444,7 +7446,7 @@ for each `constructorParameterIR~aligned~` in `constructorParameterIR~aligned~^{
 for each `constructorParameterIR~default~` in `constructorParameterIR~default~^{asterisk}^`.
   ... Let `IC~callee_3~` be `$add_values_inst(p~callee~, IC~callee_2~, id~cparam_default~^{asterisk}^, value~default~^{asterisk}^)`.
   ... <<ExternMethods_inst, `IC~callee_3~ |- externMethodPrototypeIR^{asterisk}^ ==> IC~callee_4~`>>.
-  ... Let `object~extern~` be `EXTERN nameIR { IC~callee_4~.BLOCK.TYPE IC~callee_4~.BLOCK.FRAME IC~callee_4~.BLOCK.ROUTINE }`.
+  ... Let `object~extern~` be `EXTERN nameIR < IC~callee_4~.BLOCK.TYPE > { IC~callee_4~.BLOCK.FRAME IC~callee_4~.BLOCK.ROUTINE }`.
   ... Result in `STO~1~` and `object~extern~`.
 
 . Else if let `PARSER ( parameterIR^{asterisk}^ ) ( constructorParameterIR^{asterisk}^ ) { parserLocalDeclarationIR^{asterisk}^ parserStateIR^{asterisk}^ }` be `constructor`:
@@ -7470,10 +7472,8 @@ for each `constructorParameterIR~aligned~` in `constructorParameterIR~aligned~^{
 +
 for each `constructorParameterIR~default~` in `constructorParameterIR~default~^{asterisk}^`.
   ... Let `IC~callee_2~` be `$add_values_inst(p~callee~, IC~callee_1~, id~cparam_default~^{asterisk}^, value~default~^{asterisk}^)`.
-  ... <<ParserLocalDecls_inst, `IC~callee_2~ STO~1~ |- parserLocalDeclarationIR^{asterisk}^ ==> IC~local_0~ STO~2~ parserLocalDeclarationIR~inst~^{asterisk}^`>>.
-  ... Let `IC~local_1~` be `$add_state_inst(BLOCK, IC~local_0~, "accept", )`.
-  ... Let `IC~local_2~` be `$add_state_inst(BLOCK, IC~local_1~, "reject", )`.
-  ... <<ParserStates_inst, `IC~local_2~ STO~2~ |- parserStateIR^{asterisk}^ ==> IC~state~ STO~3~`>>.
+  ... <<ParserLocalDecls_inst, `IC~callee_2~ STO~1~ |- parserLocalDeclarationIR^{asterisk}^ ==> IC~local~ STO~2~ parserLocalDeclarationIR~inst~^{asterisk}^`>>.
+  ... <<ParserStates_inst, `IC~local~ STO~2~ |- parserStateIR^{asterisk}^ ==> IC~state~ STO~3~`>>.
   ... Let `object~parser~` be `PARSER ( parameterIR^{asterisk}^ ) { IC~callee_2~.BLOCK.FRAME parserLocalDeclarationIR~inst~^{asterisk}^ IC~state~.BLOCK.STATE }`.
   ... Result in `STO~3~` and `object~parser~`.
 
@@ -7528,7 +7528,7 @@ for each `constructorParameterIR~aligned~` in `constructorParameterIR~aligned~^{
 +
 for each `constructorParameterIR~default~` in `constructorParameterIR~default~^{asterisk}^`.
   ... Let `IC~callee_3~` be `$add_values_inst(p~callee~, IC~callee_2~, id~cparam_default~^{asterisk}^, value~default~^{asterisk}^)`.
-  ... Let `object~package~` be `PACKAGE { IC~callee_3~.BLOCK.TYPE IC~callee_3~.BLOCK.FRAME }`.
+  ... Let `object~package~` be `PACKAGE < IC~callee_3~.BLOCK.TYPE > { IC~callee_3~.BLOCK.FRAME }`.
   ... Result in `STO~1~` and `object~package~`.
 
 . Else if let `TABLE nameIR { tablePropertyListIR }` be `constructor`:
@@ -7575,217 +7575,252 @@ relation SwitchCases_inst: `p`, `IC`, `STO'`, and `switchCaseIR^{asterisk}^`
   ... <<SwitchCases_inst, `p IC STO~1~ |- switchCaseIR~t~^{asterisk}^ ==> STO~2~ switchCaseIR~t'~^{asterisk}^`>>.
   ... Result in `STO~2~` and `switchCaseIR~h'~ :: switchCaseIR~t'~^{asterisk}^`.
 
-relation Expr_eval: `p`, `EC`, `STO'`, and `expressionIR # _`
+relation Expr_eval: `p`, `EC'`, `STO'`, and `expressionIR # _`
 
 . If let `booleanLiteral` be `expressionIR`:
- .. Group literalExpressionIR-boolean: `p`, `EC`, `STO'`, and `booleanLiteral # _`
+ .. Group literalExpressionIR-boolean: `p`, `EC'`, `STO'`, and `booleanLiteral # _`
 
-  ... If `booleanLiteral` matches pattern `TRUE`:
-   .... Result in the resulting store `STO'` and expression result `B true`.
+  ... If let `expressionResult` be `CONT B true`:
+   .... Result in the resulting evaluation context `EC'`, store `STO'` and expression result `expressionResult`.
 
-  ... Else if `booleanLiteral` matches pattern `FALSE`:
-   .... Result in the resulting store `STO'` and expression result `B false`.
+  ... Else if let `expressionResult` be `CONT B false`:
+   .... Result in the resulting evaluation context `EC'`, store `STO'` and expression result `expressionResult`.
 
 . Else if let `numberLiteral` be `expressionIR`:
- .. Group literalExpressionIR-number: `p`, `EC`, `STO'`, and `numberLiteral # _`
+ .. Group literalExpressionIR-number: `p`, `EC'`, `STO'`, and `numberLiteral # _`
 
   ... If let `D i` be `numberLiteral`:
-   .... Result in the resulting store `STO'` and expression result `D i`.
+   .... Let `expressionResult` be `CONT D i`.
+   .... Result in the resulting evaluation context `EC'`, store `STO'` and expression result `expressionResult`.
 
   ... Else if let `n W i` be `numberLiteral`:
-   .... Result in the resulting store `STO'` and expression result `n W i`.
+   .... Let `expressionResult` be `CONT n W i`.
+   .... Result in the resulting evaluation context `EC'`, store `STO'` and expression result `expressionResult`.
 
   ... Else if let `n S i` be `numberLiteral`:
-   .... Result in the resulting store `STO'` and expression result `n S i`.
+   .... Let `expressionResult` be `CONT n S i`.
+   .... Result in the resulting evaluation context `EC'`, store `STO'` and expression result `expressionResult`.
 
 . Else if let `" text "` be `expressionIR`:
- .. Group literalExpressionIR-stringLiteral: `p`, `EC`, `STO'`, and `" text " # _`
+ .. Group literalExpressionIR-stringLiteral: `p`, `EC'`, `STO'`, and `" text " # _`
 
-  ... Result in the resulting store `STO'` and expression result `" text "`.
+  ... Let `expressionResult` be `CONT " text "`.
+  ... Result in the resulting evaluation context `EC'`, store `STO'` and expression result `expressionResult`.
 
 . Else if let `prefixedNameIR` be `expressionIR`:
- .. Group referenceExpressionIR: `p`, `EC`, `STO'`, and `prefixedNameIR # _`
+ .. Group referenceExpressionIR: `p`, `EC'`, `STO'`, and `prefixedNameIR # _`
 
-  ... Let `value` be `$find_value_eval(p, EC, prefixedNameIR)`.
-  ... Result in the resulting store `STO'` and expression result `value`.
+  ... Let `value` be `$find_value_eval(p, EC', prefixedNameIR)`.
+  ... Result in the resulting evaluation context `EC'`, store `STO'` and expression result `CONT value`.
 
 . Else if let `defaultExpression` be `expressionIR`:
- .. Group defaultExpressionIR: `p`, `EC`, `STO'`, and `... # _`
+ .. Group defaultExpressionIR: `p`, `EC'`, `STO'`, and `... # _`
 
-  ... Result in the resulting store `STO'` and expression result `DEFAULT`.
+  ... Result in the resulting evaluation context `EC'`, store `STO'` and expression result `CONT DEFAULT`.
 
 . Else if let `unop typedExpressionIR` be `expressionIR`:
- .. Group unaryExpressionIR: `p`, `EC`, `STO'`, and `unop typedExpressionIR # _`
+ .. Group unaryExpressionIR: `p`, `EC'`, `STO'`, and `unop typedExpressionIR # _`
 
-  ... Let `STO~1~` and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR`, under cursor `p`, evaluation context `EC`, and store `STO'`>>.
-  ... Check that `expressionResult` has type `value`.
-  ... Let `value` be `expressionResult`.
-  ... Result in the resulting store `STO~1~` and expression result `<<un_op, unop value>>`.
+  ... Let `EC~1~`, `STO~1~`, and `expressionResult'` be the result of <<Expr_eval, evaluating `typedExpressionIR`, under cursor `p`, evaluation context `EC'`, and store `STO'`>>.
+  ... If let `exitResult` be `expressionResult'`:
+   .... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `EXIT`.
+
+  ... Else if let `CONT value` be `expressionResult'`:
+   .... Let `expressionResult` be `CONT <<un_op, unop value>>`.
+   .... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
 . Let `( _ _ )` be `_`.
 . If let `typedExpressionIR~l~ binop' typedExpressionIR~r~` be `expressionIR`:
- .. Group binaryExpressionIR: `p`, `EC`, `STO'`, and `typedExpressionIR~l~ binop' typedExpressionIR~r~ # ( _ _ )`
+ .. Group binaryExpressionIR: `p`, `EC'`, `STO'`, and `typedExpressionIR~l~ binop' typedExpressionIR~r~ # ( _ _ )`
 
   ... Check that `binop'` is not in `[&&, ||]`.
-  ... Let `STO~1~` and `expressionListResult` be the result of <<Exprs_eval, evaluating `[typedExpressionIR~l~, typedExpressionIR~r~]`, under cursor `p`, evaluation context `EC`, and store `STO'`>>.
-  ... If `expressionListResult` matches pattern `EXIT`:
-   .... Result in the resulting store `STO~1~` and expression result `EXIT`.
+  ... Let `EC~1~`, `STO~1~`, and `expressionListResult` be the result of <<Exprs_eval, evaluating `[typedExpressionIR~l~, typedExpressionIR~r~]`, under cursor `p`, evaluation context `EC'`, and store `STO'`>>.
+  ... If let `exitResult` be `expressionListResult`:
+   .... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `EXIT`.
 
-  ... Else if let `{ value'^{asterisk}^ }` be `expressionListResult`:
+  ... Else if let `CONT value'^{asterisk}^` be `expressionListResult`:
    .... Check that `value'^{asterisk}^` matches pattern `[ _/2 ]`.
    .... Let `[value~l~, value~r~]` be `value'^{asterisk}^`.
    .... Let `value` be <<bin_op, `value~l~` `binop'` `value~r~`>>.
-   .... Result in the resulting store `STO~1~` and expression result `value`.
+   .... Let `expressionResult` be `CONT value`.
+   .... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
   ... If `binop'` matches pattern `&&`:
-   .... Let `STO~1~` and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR~l~`, under cursor `p`, evaluation context `EC`, and store `STO'`>>.
-   .... If `expressionResult` matches pattern `EXIT`:
-    ..... Result in the resulting store `STO~1~` and expression result `EXIT`.
-   .... If `expressionResult` is equal to `B false`:
-    ..... Result in the resulting store `STO~1~` and expression result `B false`.
-   .... If `expressionResult` is equal to `B true`:
-    ..... Let `STO~2~` and `expressionResult'` be the result of <<Expr_eval, evaluating `typedExpressionIR~r~`, under cursor `p`, evaluation context `EC`, and store `STO~1~`>>.
-    ..... If `expressionResult'` matches pattern `EXIT`:
-     ...... Result in the resulting store `STO~2~` and expression result `EXIT`.
-    ..... If `expressionResult'` has type `value`:
-     ...... Let `value~r~` be `expressionResult'`.
-     ...... Result in the resulting store `STO~2~` and expression result `value~r~`.
+   .... Let `EC~1~`, `STO~1~`, and `expressionResult'` be the result of <<Expr_eval, evaluating `typedExpressionIR~l~`, under cursor `p`, evaluation context `EC'`, and store `STO'`>>.
+   .... If `expressionResult'` has type `exitResult`:
+    ..... Let `exitResult` be `expressionResult'`.
+    ..... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `EXIT`.
+   .... If `expressionResult'` is equal to `CONT B false`:
+    ..... Let `expressionResult` be `CONT B false`.
+    ..... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
+   .... If `expressionResult'` is equal to `CONT B true`:
+    ..... Let `EC~2~`, `STO~2~`, and `expressionResult''` be the result of <<Expr_eval, evaluating `typedExpressionIR~r~`, under cursor `p`, evaluation context `EC~1~`, and store `STO~1~`>>.
+    ..... Check that `expressionResult''` has type `exitResult`.
+    ..... Let `exitResult` be `expressionResult''`.
+    ..... Result in the resulting evaluation context `EC~2~`, store `STO~2~` and expression result `EXIT`.
+    ..... Let `EC~2~`, `STO~2~`, and `expressionResult~r~` be the result of <<Expr_eval, evaluating `typedExpressionIR~r~`, under cursor `p`, evaluation context `EC~1~`, and store `STO~1~`>>.
+    ..... Result in the resulting evaluation context `EC~2~`, store `STO~2~` and expression result `expressionResult~r~`.
 
   ... Else if `binop'` matches pattern `||`:
-   .... Let `STO~1~` and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR~l~`, under cursor `p`, evaluation context `EC`, and store `STO'`>>.
-   .... If `expressionResult` matches pattern `EXIT`:
-    ..... Result in the resulting store `STO~1~` and expression result `EXIT`.
-   .... If `expressionResult` is equal to `B true`:
-    ..... Result in the resulting store `STO~1~` and expression result `B true`.
-   .... If `expressionResult` is equal to `B false`:
-    ..... Let `STO~2~` and `expressionResult'` be the result of <<Expr_eval, evaluating `typedExpressionIR~r~`, under cursor `p`, evaluation context `EC`, and store `STO~1~`>>.
-    ..... If `expressionResult'` matches pattern `EXIT`:
-     ...... Result in the resulting store `STO~2~` and expression result `EXIT`.
-    ..... If `expressionResult'` has type `value`:
-     ...... Let `value~r~` be `expressionResult'`.
-     ...... Result in the resulting store `STO~2~` and expression result `value~r~`.
+   .... Let `EC~1~`, `STO~1~`, and `expressionResult'` be the result of <<Expr_eval, evaluating `typedExpressionIR~l~`, under cursor `p`, evaluation context `EC'`, and store `STO'`>>.
+   .... If `expressionResult'` has type `exitResult`:
+    ..... Let `exitResult` be `expressionResult'`.
+    ..... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `EXIT`.
+   .... If `expressionResult'` is equal to `CONT B true`:
+    ..... Let `expressionResult` be `CONT B true`.
+    ..... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
+   .... If `expressionResult'` is equal to `CONT B false`:
+    ..... Let `EC~2~`, `STO~2~`, and `expressionResult''` be the result of <<Expr_eval, evaluating `typedExpressionIR~r~`, under cursor `p`, evaluation context `EC~1~`, and store `STO~1~`>>.
+    ..... Check that `expressionResult''` has type `exitResult`.
+    ..... Let `exitResult` be `expressionResult''`.
+    ..... Result in the resulting evaluation context `EC~2~`, store `STO~2~` and expression result `EXIT`.
+    ..... Let `EC~2~`, `STO~2~`, and `expressionResult~r~` be the result of <<Expr_eval, evaluating `typedExpressionIR~r~`, under cursor `p`, evaluation context `EC~1~`, and store `STO~1~`>>.
+    ..... Result in the resulting evaluation context `EC~2~`, store `STO~2~` and expression result `expressionResult~r~`.
 
 . Else if let `typedExpressionIR~cond~ ? typedExpressionIR~true~ : typedExpressionIR~false~` be `expressionIR`:
- .. Group ternaryExpressionIR: `p`, `EC`, `STO'`, and `typedExpressionIR~cond~ ? typedExpressionIR~true~ : typedExpressionIR~false~ # _`
+ .. Group ternaryExpressionIR: `p`, `EC'`, `STO'`, and `typedExpressionIR~cond~ ? typedExpressionIR~true~ : typedExpressionIR~false~ # _`
 
-  ... Let `STO~1~` and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR~cond~`, under cursor `p`, evaluation context `EC`, and store `STO'`>>.
-  ... If `expressionResult` matches pattern `EXIT`:
-   .... Result in the resulting store `STO~1~` and expression result `EXIT`.
-  ... If `expressionResult` is equal to `B true`:
-   .... Let `STO~2~` and `expressionResult~true~` be the result of <<Expr_eval, evaluating `typedExpressionIR~true~`, under cursor `p`, evaluation context `EC`, and store `STO~1~`>>.
-   .... Result in the resulting store `STO~2~` and expression result `expressionResult~true~`.
-  ... If `expressionResult` is equal to `B false`:
-   .... Let `STO~2~` and `expressionResult~false~` be the result of <<Expr_eval, evaluating `typedExpressionIR~false~`, under cursor `p`, evaluation context `EC`, and store `STO~1~`>>.
-   .... Result in the resulting store `STO~2~` and expression result `expressionResult~false~`.
+  ... Let `EC~1~`, `STO~1~`, and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR~cond~`, under cursor `p`, evaluation context `EC'`, and store `STO'`>>.
+  ... If `expressionResult` has type `exitResult`:
+   .... Let `exitResult` be `expressionResult`.
+   .... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `EXIT`.
+  ... If `expressionResult` is equal to `CONT B true`:
+   .... Let `EC~2~`, `STO~2~`, and `expressionResult~true~` be the result of <<Expr_eval, evaluating `typedExpressionIR~true~`, under cursor `p`, evaluation context `EC~1~`, and store `STO~1~`>>.
+   .... Result in the resulting evaluation context `EC~2~`, store `STO~2~` and expression result `expressionResult~true~`.
+  ... If `expressionResult` is equal to `CONT B false`:
+   .... Let `EC~2~`, `STO~2~`, and `expressionResult~false~` be the result of <<Expr_eval, evaluating `typedExpressionIR~false~`, under cursor `p`, evaluation context `EC~1~`, and store `STO~1~`>>.
+   .... Result in the resulting evaluation context `EC~2~`, store `STO~2~` and expression result `expressionResult~false~`.
 
 . Else if let `( typeIR ) typedExpressionIR` be `expressionIR`:
- .. Group castExpressionIR: `p`, `EC`, `STO'`, and `( typeIR ) typedExpressionIR # _`
+ .. Group castExpressionIR: `p`, `EC'`, `STO'`, and `( typeIR ) typedExpressionIR # _`
 
-  ... Let `STO~1~` and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR`, under cursor `p`, evaluation context `EC`, and store `STO'`>>.
-  ... Check that `expressionResult` has type `value`.
-  ... Let `value` be `expressionResult`.
-  ... Let `value~cast~` be `$cast_op(typeIR, value)`.
-  ... Result in the resulting store `STO~1~` and expression result `value~cast~`.
+  ... Let `EC~1~`, `STO~1~`, and `expressionResult'` be the result of <<Expr_eval, evaluating `typedExpressionIR`, under cursor `p`, evaluation context `EC'`, and store `STO'`>>.
+  ... If let `exitResult` be `expressionResult'`:
+   .... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `EXIT`.
+
+  ... Else if let `CONT value` be `expressionResult'`:
+   .... Let `value~cast~` be <<cast_op, cast `value` to type `typeIR`>>.
+   .... Let `expressionResult` be `CONT value~cast~`.
+   .... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
 
 . Else if let `dataExpressionIR` be `expressionIR`:
  .. Check that `dataExpressionIR` matches pattern `{#}`.
- .. Group dataExpressionIR-invalid: `p`, `EC`, `STO'`, and `{#} # _`
+ .. Group dataExpressionIR-invalid: `p`, `EC'`, `STO'`, and `{#} # _`
 
-  ... Result in the resulting store `STO'` and expression result `{#}`.
- .. Group dataExpressionIR-sequence: `p`, `EC`, `STO'`, and `dataExpressionIR # _`
+  ... Let `expressionResult` be `CONT {#}`.
+  ... Result in the resulting evaluation context `EC'`, store `STO'` and expression result `expressionResult`.
+ .. Group dataExpressionIR-sequence: `p`, `EC'`, `STO'`, and `dataExpressionIR # _`
 
   ... If let `SEQ { typedExpressionListIR }` be `dataExpressionIR`:
-   .... Let `STO~1~` and `expressionListResult` be the result of <<Exprs_eval, evaluating `typedExpressionListIR`, under cursor `p`, evaluation context `EC`, and store `STO'`>>.
-   .... Check that `expressionListResult` matches pattern `{ % }`.
-   .... Let `{ value^{asterisk}^ }` be `expressionListResult`.
-   .... Result in the resulting store `STO~1~` and expression result `SEQ ( value^{asterisk}^ )`.
+   .... Let `EC~1~`, `STO~1~`, and `expressionListResult` be the result of <<Exprs_eval, evaluating `typedExpressionListIR`, under cursor `p`, evaluation context `EC'`, and store `STO'`>>.
+   .... If let `exitResult` be `expressionListResult`:
+    ..... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `EXIT`.
+
+   .... Else if let `CONT value^{asterisk}^` be `expressionListResult`:
+    ..... Let `expressionResult` be `CONT SEQ ( value^{asterisk}^ )`.
+    ..... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
 
   ... Else if let `SEQ { typedExpressionListIR , ... }` be `dataExpressionIR`:
-   .... Let `STO~1~` and `expressionListResult` be the result of <<Exprs_eval, evaluating `typedExpressionListIR`, under cursor `p`, evaluation context `EC`, and store `STO'`>>.
-   .... Check that `expressionListResult` matches pattern `{ % }`.
-   .... Let `{ value^{asterisk}^ }` be `expressionListResult`.
-   .... Result in the resulting store `STO~1~` and expression result `SEQ ( value^{asterisk}^ , ... )`.
- .. Group dataExpressionIR-record: `p`, `EC`, `STO'`, and `dataExpressionIR # _`
+   .... Let `EC~1~`, `STO~1~`, and `expressionListResult` be the result of <<Exprs_eval, evaluating `typedExpressionListIR`, under cursor `p`, evaluation context `EC'`, and store `STO'`>>.
+   .... If let `exitResult` be `expressionListResult`:
+    ..... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `EXIT`.
+
+   .... Else if let `CONT value^{asterisk}^` be `expressionListResult`:
+    ..... Let `expressionResult` be `CONT SEQ ( value^{asterisk}^ , ... )`.
+    ..... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
+ .. Group dataExpressionIR-record: `p`, `EC'`, `STO'`, and `dataExpressionIR # _`
 
   ... If let `RECORD { nameIR = typedExpressionIR^{asterisk}^ }` be `dataExpressionIR`:
-   .... Let `STO~1~` and `expressionListResult` be the result of <<Exprs_eval, evaluating `typedExpressionIR^{asterisk}^`, under cursor `p`, evaluation context `EC`, and store `STO'`>>.
-   .... Check that `expressionListResult` matches pattern `{ % }`.
-   .... Let `{ value^{asterisk}^ }` be `expressionListResult`.
-   .... Result in the resulting store `STO~1~` and expression result `RECORD { value nameIR ;^{asterisk}^ }`.
+   .... Let `EC~1~`, `STO~1~`, and `expressionListResult` be the result of <<Exprs_eval, evaluating `typedExpressionIR^{asterisk}^`, under cursor `p`, evaluation context `EC'`, and store `STO'`>>.
+   .... If let `exitResult` be `expressionListResult`:
+    ..... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `EXIT`.
+
+   .... Else if let `CONT value^{asterisk}^` be `expressionListResult`:
+    ..... Let `expressionResult` be `CONT RECORD { value nameIR ;^{asterisk}^ }`.
+    ..... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
 
   ... Else if let `RECORD { nameIR = typedExpressionIR^{asterisk}^ , ... }` be `dataExpressionIR`:
-   .... Let `STO~1~` and `expressionListResult` be the result of <<Exprs_eval, evaluating `typedExpressionIR^{asterisk}^`, under cursor `p`, evaluation context `EC`, and store `STO'`>>.
-   .... Check that `expressionListResult` matches pattern `{ % }`.
-   .... Let `{ value^{asterisk}^ }` be `expressionListResult`.
-   .... Result in the resulting store `STO~1~` and expression result `RECORD { value nameIR ;^{asterisk}^ , ... }`.
+   .... Let `EC~1~`, `STO~1~`, and `expressionListResult` be the result of <<Exprs_eval, evaluating `typedExpressionIR^{asterisk}^`, under cursor `p`, evaluation context `EC'`, and store `STO'`>>.
+   .... If let `exitResult` be `expressionListResult`:
+    ..... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `EXIT`.
+
+   .... Else if let `CONT value^{asterisk}^` be `expressionListResult`:
+    ..... Let `expressionResult` be `CONT RECORD { value nameIR ;^{asterisk}^ , ... }`.
+    ..... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
 
 . Else if let `ERROR . nameIR` be `expressionIR`:
- .. Group errorAccessExpressionIR: `p`, `EC`, `STO'`, and `ERROR . nameIR # _`
+ .. Group errorAccessExpressionIR: `p`, `EC'`, `STO'`, and `ERROR . nameIR # _`
 
   ... Let `nameIR~error~` be `"error." ++ nameIR`.
-  ... Let `value~error~` be `$find_value_eval(p, EC, ` nameIR~error~)`.
-  ... Result in the resulting store `STO'` and expression result `value~error~`.
+  ... Let `value~error~` be `$find_value_eval(p, EC', ` nameIR~error~)`.
+  ... Let `expressionResult` be `CONT value~error~`.
+  ... Result in the resulting evaluation context `EC'`, store `STO'` and expression result `expressionResult`.
 
 . Else if let `memberAccessBaseIR . nameIR` be `expressionIR`:
  .. If `memberAccessBaseIR` matches pattern `TYPE %`:
   ... Let `TYPE prefixedNameIR` be `memberAccessBaseIR`.
-  ... Group memberAccessExpressionIR-type: `p`, `EC`, `STO'`, and `TYPE prefixedNameIR . nameIR # _`
+  ... Group memberAccessExpressionIR-type: `p`, `EC'`, `STO'`, and `TYPE prefixedNameIR . nameIR # _`
 
-   .... Let `typeDefIR'^?^` be `$find_type_eval(p, EC, prefixedNameIR)`.
+   .... Let `typeDefIR'^?^` be `$find_type_eval(p, EC', prefixedNameIR)`.
    .... Check that `typeDefIR'^?^` matches pattern `(_)`.
    .... Let `?typeDefIR` be `typeDefIR'^?^`.
    .... Check that `typeDefIR` has type `enumTypeIR`.
    .... Let `enumTypeIR` be `typeDefIR`.
    .... If let `ENUM tid { _^{asterisk}^ }` be `enumTypeIR`:
-    ..... Result in the resulting store `STO'` and expression result `tid . nameIR`.
+    ..... Let `expressionResult` be `CONT tid . nameIR`.
+    ..... Result in the resulting evaluation context `EC'`, store `STO'` and expression result `expressionResult`.
 
    .... Else if let `ENUM tid # _ { id~member~ = value~member~ ;^{asterisk}^ }` be `enumTypeIR`:
     ..... Let `value'^?^` be `$assoc_<nameIR, value>(nameIR, (id~member~, value~member~)^{asterisk}^)`.
     ..... Check that `value'^?^` matches pattern `(_)`.
     ..... Let `?value` be `value'^?^`.
-    ..... Result in the resulting store `STO'` and expression result `tid . nameIR # value`.
+    ..... Let `expressionResult` be `CONT tid . nameIR # value`.
+    ..... Result in the resulting evaluation context `EC'`, store `STO'` and expression result `expressionResult`.
  .. If `memberAccessBaseIR` has type `typedExpressionIR`:
   ... Let `typedExpressionIR~base~` be `memberAccessBaseIR`.
-  ... Group memberAccessExpressionIR-expression: `p`, `EC`, `STO'`, and `typedExpressionIR~base~ . nameIR # ( _ _ )`
+  ... Group memberAccessExpressionIR-expression: `p`, `EC'`, `STO'`, and `typedExpressionIR~base~ . nameIR # ( _ _ )`
 
-   .... Let `store` and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR~base~`, under cursor `p`, evaluation context `EC`, and store `STO'`>>.
-   .... If `store` is equal to `STO'`:
-    ..... If `expressionResult` matches pattern `EXIT`:
-     ...... Result in the resulting store `STO'` and expression result `EXIT`.
-    ..... If `expressionResult` has type `value`:
-     ...... Let `value~base~` be `expressionResult`.
-     ...... If let `STRUCT _ { value~field~ id~field~ ;^{asterisk}^ }` be `value~base~`:
-      ....... Let `value'^?^` be `$assoc_<nameIR, value>(nameIR, (id~field~, value~field~)^{asterisk}^)`.
-      ....... Check that `value'^?^` matches pattern `(_)`.
-      ....... Let `?value~member~` be `value'^?^`.
-      ....... Result in the resulting store `STO'` and expression result `value~member~`.
+   .... Let `EC~1~`, `STO~1~`, and `expressionResult'` be the result of <<Expr_eval, evaluating `typedExpressionIR~base~`, under cursor `p`, evaluation context `EC'`, and store `STO'`>>.
+   .... If let `exitResult` be `expressionResult'`:
+    ..... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `EXIT`.
 
-     ...... Else if let `HEADER _ { value~field~ id~field~ ;^{asterisk}^ }` be `value~base~`:
-      ....... Let `value'^?^` be `$assoc_<nameIR, value>(nameIR, (id~field~, value~field~)^{asterisk}^)`.
-      ....... Check that `value'^?^` matches pattern `(_)`.
-      ....... Let `?value~member~` be `value'^?^`.
-      ....... Result in the resulting store `STO'` and expression result `value~member~`.
+   .... Else if let `CONT value~base~` be `expressionResult'`:
+    ..... If let `STRUCT _ { value~field~ id~field~ ;^{asterisk}^ }` be `value~base~`:
+     ...... Let `value'^?^` be `$assoc_<nameIR, value>(nameIR, (id~field~, value~field~)^{asterisk}^)`.
+     ...... Check that `value'^?^` matches pattern `(_)`.
+     ...... Let `?value~member~` be `value'^?^`.
+     ...... Let `expressionResult` be `CONT value~member~`.
+     ...... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
 
-     ...... Else if let `HEADER_UNION _ { value~field~ id~field~ ;^{asterisk}^ }` be `value~base~`:
-      ....... Let `value'^?^` be `$assoc_<nameIR, value>(nameIR, (id~field~, value~field~)^{asterisk}^)`.
-      ....... Check that `value'^?^` matches pattern `(_)`.
-      ....... Let `?value~member~` be `value'^?^`.
-      ....... Result in the resulting store `STO'` and expression result `value~member~`.
-   .... If `nameIR` is equal to "size":
-    ..... Check that `store` is equal to `STO'`.
-    ..... Check that `expressionResult` has type `value`.
-    ..... Let `value~base~` be `expressionResult`.
-    ..... Check that `value~base~` has type `headerStackValue`.
-    ..... Let `[ _^{asterisk}^ # ( _ ; n~size~ ) ]` be `value~base~`.
-    ..... Result in the resulting store `STO'` and expression result `D n~size~`.
+    ..... Else if let `HEADER _ { value~field~ id~field~ ;^{asterisk}^ }` be `value~base~`:
+     ...... Let `value'^?^` be `$assoc_<nameIR, value>(nameIR, (id~field~, value~field~)^{asterisk}^)`.
+     ...... Check that `value'^?^` matches pattern `(_)`.
+     ...... Let `?value~member~` be `value'^?^`.
+     ...... Let `expressionResult` be `CONT value~member~`.
+     ...... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
+
+    ..... Else if let `HEADER_UNION _ { value~field~ id~field~ ;^{asterisk}^ }` be `value~base~`:
+     ...... Let `value'^?^` be `$assoc_<nameIR, value>(nameIR, (id~field~, value~field~)^{asterisk}^)`.
+     ...... Check that `value'^?^` matches pattern `(_)`.
+     ...... Let `?value~member~` be `value'^?^`.
+     ...... Let `expressionResult` be `CONT value~member~`.
+     ...... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
+   .... Check that `nameIR` is equal to "size".
+   .... Check that `expressionResult'` has type `continueResult<value>`.
+   .... Let `CONT value~base~` be `expressionResult'`.
+   .... Check that `value~base~` has type `headerStackValue`.
+   .... Let `[ _^{asterisk}^ # ( _ ; n~size~ ) ]` be `value~base~`.
+   .... Let `expressionResult` be `CONT D n~size~`.
+   .... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
 
 . Else if let `typedExpressionIR~base~ [ typedExpressionIR~index~ ]` be `expressionIR`:
- .. Group indexAccessExpressionIR: `p`, `EC`, `STO'`, and `typedExpressionIR~base~ [ typedExpressionIR~index~ ] # _`
+ .. Group indexAccessExpressionIR: `p`, `EC'`, `STO'`, and `typedExpressionIR~base~ [ typedExpressionIR~index~ ] # _`
 
-  ... Let `STO~1~` and `expressionListResult` be the result of <<Exprs_eval, evaluating `[typedExpressionIR~base~, typedExpressionIR~index~]`, under cursor `p`, evaluation context `EC`, and store `STO'`>>.
-  ... If `expressionListResult` matches pattern `EXIT`:
-   .... Result in the resulting store `STO~1~` and expression result `EXIT`.
-  ... Let `STO~1~` and `expressionListResult` be the result of <<Exprs_eval, evaluating `[typedExpressionIR~base~, typedExpressionIR~index~]`, under cursor `p`, evaluation context `EC`, and store `STO'`>>.
-  ... If `expressionListResult` matches pattern `{ % }`:
-   .... Let `{ value'^{asterisk}^ }` be `expressionListResult`.
+  ... Let `EC~1~`, `STO~1~`, and `expressionListResult` be the result of <<Exprs_eval, evaluating `[typedExpressionIR~base~, typedExpressionIR~index~]`, under cursor `p`, evaluation context `EC'`, and store `STO'`>>.
+  ... If `expressionListResult` has type `exitResult`:
+   .... Let `exitResult` be `expressionListResult`.
+   .... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `EXIT`.
+  ... Let `EC~1~`, `STO~1~`, and `expressionListResult` be the result of <<Exprs_eval, evaluating `[typedExpressionIR~base~, typedExpressionIR~index~]`, under cursor `p`, evaluation context `EC'`, and store `STO'`>>.
+  ... If `expressionListResult` has type `continueResult<value*>`:
+   .... Let `CONT value'^{asterisk}^` be `expressionListResult`.
    .... Check that `value'^{asterisk}^` matches pattern `[ _/2 ]`.
    .... Let `[value~base~, value~index~]` be `value'^{asterisk}^`.
    .... Check that `value~base~` has type `tupleValue`.
@@ -7794,158 +7829,237 @@ relation Expr_eval: `p`, `EC`, `STO'`, and `expressionIR # _`
    .... Check that `int` has type `nat`.
    .... Let `n~index~` be `int`.
    .... Let `value` be `value~elem~^{asterisk}^`[`n~index~`].
-   .... Result in the resulting store `STO~1~` and expression result `value`.
+   .... Let `expressionResult` be `CONT value`.
+   .... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
 
 . Else if let `typedExpressionIR~base~ [ typedExpressionIR~hi~ : typedExpressionIR~lo~ ]` be `expressionIR`:
- .. Group sliceAccessExpressionIR: `p`, `EC`, `STO'`, and `typedExpressionIR~base~ [ typedExpressionIR~hi~ : typedExpressionIR~lo~ ] # _`
+ .. Group sliceAccessExpressionIR: `p`, `EC'`, `STO'`, and `typedExpressionIR~base~ [ typedExpressionIR~hi~ : typedExpressionIR~lo~ ] # _`
 
-  ... Let `STO~1~` and `expressionListResult` be the result of <<Exprs_eval, evaluating `[typedExpressionIR~base~, typedExpressionIR~hi~, typedExpressionIR~lo~]`, under cursor `p`, evaluation context `EC`, and store `STO'`>>.
-  ... If `expressionListResult` matches pattern `EXIT`:
-   .... Result in the resulting store `STO~1~` and expression result `EXIT`.
-  ... Let `STO~1~` and `expressionListResult` be the result of <<Exprs_eval, evaluating `[typedExpressionIR~base~, typedExpressionIR~hi~, typedExpressionIR~lo~]`, under cursor `p`, evaluation context `EC`, and store `STO'`>>.
-  ... If `expressionListResult` matches pattern `{ % }`:
-   .... Let `{ value'^{asterisk}^ }` be `expressionListResult`.
+  ... Let `EC~1~`, `STO~1~`, and `expressionListResult` be the result of <<Exprs_eval, evaluating `[typedExpressionIR~base~, typedExpressionIR~hi~, typedExpressionIR~lo~]`, under cursor `p`, evaluation context `EC'`, and store `STO'`>>.
+  ... If `expressionListResult` has type `exitResult`:
+   .... Let `exitResult` be `expressionListResult`.
+   .... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `EXIT`.
+  ... Let `EC~1~`, `STO~1~`, and `expressionListResult` be the result of <<Exprs_eval, evaluating `[typedExpressionIR~base~, typedExpressionIR~hi~, typedExpressionIR~lo~]`, under cursor `p`, evaluation context `EC'`, and store `STO'`>>.
+  ... If `expressionListResult` has type `continueResult<value*>`:
+   .... Let `CONT value'^{asterisk}^` be `expressionListResult`.
    .... Check that `value'^{asterisk}^` matches pattern `[ _/3 ]`.
    .... Let `[value~base~, value~hi~, value~lo~]` be `value'^{asterisk}^`.
    .... Let `value` be `$bitacc_op(value~base~, value~hi~, value~lo~)`.
-   .... Result in the resulting store `STO~1~` and expression result `value`.
+   .... Let `expressionResult` be `CONT value`.
+   .... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
 
 . Else if let `( typedExpressionIR )` be `expressionIR`:
- .. Group parenthesizedExpressionIR: `p`, `EC`, `STO'`, and `( typedExpressionIR ) # _`
+ .. Group parenthesizedExpressionIR: `p`, `EC'`, `STO'`, and `( typedExpressionIR ) # _`
 
-  ... Let `STO~1~` and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR`, under cursor `p`, evaluation context `EC`, and store `STO'`>>.
-  ... Check that `expressionResult` has type `value`.
-  ... Let `value` be `expressionResult`.
-  ... Result in the resulting store `STO~1~` and expression result `value`.
+  ... Let `EC~1~`, `STO~1~`, and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR`, under cursor `p`, evaluation context `EC'`, and store `STO'`>>.
+  ... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
 
-relation Exprs_eval: `p`, `EC`, `STO'`, and `typedExpressionIR^{asterisk}^`
+relation Exprs_eval: `p`, `evaluationContext`, `store`, and `typedExpressionIR''^{asterisk}^`
 
-. If `typedExpressionIR^{asterisk}^` matches pattern `[]`:
- .. Group nil: `p`, `EC`, `STO'`, and `[ ]`
+. Group : `p`, `evaluationContext`, `store`, and `typedExpressionIR''^{asterisk}^`
 
-  ... Result in the resulting store `STO'` and expression list result `{ [ ] }`.
+ .. If `typedExpressionIR''^{asterisk}^` is equal to `[ ]`:
+  ... Result in the resulting evaluation context `evaluationContext`, store `store` and expression list result `CONT [ ]`.
+ .. Let `typedExpressionIR'''^{asterisk}^` be `typedExpressionIR''^{asterisk}^`.
+ .. If `typedExpressionIR'''^{asterisk}^` matches pattern `_ :: _`:
+  ... Let `typedExpressionIR~h~ :: typedExpressionIR~t~^{asterisk}^` be `typedExpressionIR'''^{asterisk}^`.
+  ... Let `EC~1~`, `STO~1~`, and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR~h~`, under cursor `p`, evaluation context `evaluationContext`, and store `store`>>.
+  ... If let `exitResult` be `expressionResult`:
+   .... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression list result `EXIT`.
 
-. Else if let `typedExpressionIR~h~ :: typedExpressionIR~t~^{asterisk}^` be `typedExpressionIR^{asterisk}^`:
- .. Group cons-head-exit: `p`, `EC`, `STO'`, and `typedExpressionIR~h~ :: typedExpressionIR~t~^{asterisk}^`
+  ... Else if let `CONT value~h~` be `expressionResult`:
+   .... Let `EC~2~`, `STO~2~`, and `expressionListResult` be the result of <<Exprs_eval, evaluating `typedExpressionIR~t~^{asterisk}^`, under cursor `p`, evaluation context `EC~1~`, and store `STO~1~`>>.
+   .... If let `exitResult` be `expressionListResult`:
+    ..... Result in the resulting evaluation context `EC~2~`, store `STO~2~` and expression list result `EXIT`.
 
-  ... Let `STO~1~` and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR~h~`, under cursor `p`, evaluation context `EC`, and store `STO'`>>.
-  ... Check that `expressionResult` matches pattern `EXIT`.
-  ... Result in the resulting store `STO~1~` and expression list result `EXIT`.
- .. Group cons-head-cont: `p`, `EC`, `STO'`, and `typedExpressionIR~h~ :: typedExpressionIR~t~^{asterisk}^`
+   .... Else if let `CONT value~t~^{asterisk}^` be `expressionListResult`:
+    ..... Result in the resulting evaluation context `EC~2~`, store `STO~2~` and expression list result `CONT value~h~ :: value~t~^{asterisk}^`.
 
-  ... Let `STO~1~` and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR~h~`, under cursor `p`, evaluation context `EC`, and store `STO'`>>.
-  ... Check that `expressionResult` has type `value`.
-  ... Let `value~h~` be `expressionResult`.
-  ... Let `STO~2~` and `expressionListResult` be the result of <<Exprs_eval, evaluating `typedExpressionIR~t~^{asterisk}^`, under cursor `p`, evaluation context `EC`, and store `STO~1~`>>.
-  ... Check that `expressionListResult` matches pattern `{ % }`.
-  ... Let `{ value~t~^{asterisk}^ }` be `expressionListResult`.
-  ... Result in the resulting store `STO~2~` and expression list result `{ value~h~ :: value~t~^{asterisk}^ }`.
- .. Group cons-tail-exit: `p`, `EC`, `STO'`, and `typedExpressionIR~h~ :: typedExpressionIR~t~^{asterisk}^`
+relation Expr_eval_lvalue: `cursor`, `evaluationContext`, `store`, and `typedExpressionIR`
 
-  ... Let `STO~1~` and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR~h~`, under cursor `p`, evaluation context `EC`, and store `STO'`>>.
-  ... Check that `expressionResult` has type `value`.
-  ... Let `value~h~` be `expressionResult`.
-  ... Let `STO~2~` and `expressionListResult` be the result of <<Exprs_eval, evaluating `typedExpressionIR~t~^{asterisk}^`, under cursor `p`, evaluation context `EC`, and store `STO~1~`>>.
-  ... Check that `expressionListResult` matches pattern `EXIT`.
-  ... Result in the resulting store `STO~2~` and expression list result `EXIT`.
 
-relation Argument_eval: `p`, `EC`, `STO~0~`, and `argumentIR`
+
+relation Argument_eval: `p`, `EC~0~`, `STO~0~`, and `argumentIR`
 
 . If `argumentIR` has type `typedExpressionIR`:
  .. Let `typedExpressionIR` be `argumentIR`.
- .. Group typedExpressionIR: `p`, `EC`, `STO~0~`, and `typedExpressionIR`
+ .. Group typedExpressionIR: `p`, `EC~0~`, `STO~0~`, and `typedExpressionIR`
 
-  ... Let `STO~1~` and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR`, under cursor `p`, evaluation context `EC`, and store `STO~0~`>>.
-  ... Check that `expressionResult` has type `value`.
-  ... Let `value` be `expressionResult`.
-  ... Result in `STO~1~` and `value`.
+  ... Let `EC~1~`, `STO~1~`, and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR`, under cursor `p`, evaluation context `EC~0~`, and store `STO~0~`>>.
+  ... Result in `EC~1~`, `STO~1~`, and `expressionResult`.
 . If `argumentIR` matches pattern `% = %`:
  .. Let `nameIR = typedExpressionIR` be `argumentIR`.
- .. Group nameIR-typedExpressionIR: `p`, `EC`, `STO~0~`, and `nameIR = typedExpressionIR`
+ .. Group nameIR-typedExpressionIR: `p`, `EC~0~`, `STO~0~`, and `nameIR = typedExpressionIR`
 
-  ... Let `STO~1~` and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR`, under cursor `p`, evaluation context `EC`, and store `STO~0~`>>.
-  ... Check that `expressionResult` has type `value`.
-  ... Let `value` be `expressionResult`.
-  ... Result in `STO~1~` and `value`.
+  ... Let `EC~1~`, `STO~1~`, and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR`, under cursor `p`, evaluation context `EC~0~`, and store `STO~0~`>>.
+  ... Result in `EC~1~`, `STO~1~`, and `expressionResult`.
 
-relation Stmt_eval: `p'`, `EC`, `STO'`, and `statementIR`
+relation Argument_eval_lvalue: `p`, `EC~0'~`, `STO~0'~`, and `argumentIR`
+
+. Check that `argumentIR` has type `typedExpressionIR`.
+. Let `typedExpressionIR` be `argumentIR`.
+. Group typedExpressionIR: `p`, `EC~0'~`, `STO~0'~`, and `typedExpressionIR`
+
+ .. Let `typedLvalueIR'^?^` be `$typedExpressionIR_as_typedLvalueIR(typedExpressionIR)`.
+ .. Check that `typedLvalueIR'^?^` matches pattern `(_)`.
+ .. Let `?typedLvalueIR` be `typedLvalueIR'^?^`.
+ .. <<Lvalue_eval, `p EC~0'~ STO~0'~ |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult`>>.
+ .. Result in `EC~1~`, `STO~1~`, and `storageReferenceResult`.
+. If let `nameIR = typedExpressionIR` be `argumentIR`:
+ .. Group nameIR-typedExpressionIR: `p`, `EC~0'~`, `STO~0'~`, and `nameIR = typedExpressionIR`
+
+  ... <<Expr_eval_lvalue, `p EC~0'~ STO~0'~ |- typedExpressionIR : EC~1~ STO~1~ storageReferenceResult`>>.
+  ... Result in `EC~1~`, `STO~1~`, and `storageReferenceResult`.
+
+. Else if let `nameIR = _` be `argumentIR`:
+ .. Group nameIR-dontcare: `p`, `EC~0'~`, `STO~0'~`, and `nameIR = _`
+
+  ... Result in `EC~0'~`, `STO~0'~`, and `CONT ?()`.
+ .. Group dontcare: `p`, `EC~0'~`, `STO~0'~`, and `nameIR = _`
+
+  ... Result in `EC~0'~`, `STO~0'~`, and `CONT ?()`.
+
+relation Lvalue_eval: `p`, `EC'`, `STO'`, and `lvalueIR # _`
+
+. If `lvalueIR` has type `referenceExpressionIR`:
+ .. Let `referenceExpressionIR` be `lvalueIR`.
+ .. Group referenceExpressionIR: `p`, `EC'`, `STO'`, and `referenceExpressionIR # _`
+
+  ... Let `storageReferenceResult` be `CONT ?referenceExpressionIR`.
+  ... Result in `EC'`, `STO'`, and `storageReferenceResult`.
+. If `lvalueIR` matches pattern `% . %`:
+ .. Let `typedLvalueIR . nameIR` be `lvalueIR`.
+ .. Group typedLvalueIR-nameIR: `p`, `EC'`, `STO'`, and `typedLvalueIR . nameIR # _`
+
+  ... <<Lvalue_eval, `p EC' STO' |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult'`>>.
+  ... If `storageReferenceResult'` matches pattern `EXIT`:
+   .... Result in `EC~1~`, `STO~1~`, and `EXIT`.
+  ... If `storageReferenceResult'` has type `continueResult<storageReference?>`:
+   .... Let `CONT storageReference'^?^` be `storageReferenceResult'`.
+   .... Check that `storageReference'^?^` matches pattern `(_)`.
+   .... Let `?storageReference` be `storageReference'^?^`.
+   .... Let `storageReferenceResult` be `CONT ?storageReference . nameIR`.
+   .... Result in `EC~1~`, `STO~1~`, and `storageReferenceResult`.
+
+relation Lvalue_read: `p`, `EC`, and `storageReference`
+
+. Check that `storageReference` has type `prefixedNameIR`.
+. Let `prefixedNameIR` be `storageReference`.
+. Group referenceExpressionIR: `p`, `EC`, and `prefixedNameIR`
+
+ .. Let `value` be `$find_value_eval(p, EC, prefixedNameIR)`.
+ .. Result in `value`.
+
+relation Lvalue_write: `p`, `EC~0~`, `storageReference`, and `value`
+
+. Check that `storageReference` has type `prefixedNameIR`.
+. Let `prefixedNameIR` be `storageReference`.
+. Group referenceExpressionIR: `p`, `EC~0~`, `prefixedNameIR`, and `value`
+
+ .. Let `EC~1~` be `$add_value_eval(p, EC~0~, prefixedNameIR, value)`.
+ .. Result in `EC~1~`.
+
+relation Stmt_eval: `p'`, `EC'`, `STO'`, and `statementIR`
 
 . If let `emptyStatement` be `statementIR`:
- .. Group emptyStatementIR: `p'`, `EC`, `STO'`, and `;`
+ .. Group emptyStatementIR: `p'`, `EC'`, `STO'`, and `;`
 
   ... Result in 
-        * the evaluation context `EC`,
+        * the evaluation context `EC'`,
         * the updated store `STO'`,
         * and the instantiated statement `CONT`.
 
+. Else if let `routineTargetIR < typeArgumentIR^{asterisk}^ > ( argumentIR^{asterisk}^ ) ;` be `statementIR`:
+ .. Group callStatementIR: `p'`, `EC'`, `STO'`, and `routineTargetIR < typeArgumentIR^{asterisk}^ > ( argumentIR^{asterisk}^ ) ;`
+
+  ... <<Callee_eval, `p' EC' STO' |- routineTargetIR < _ > ( argumentIR^{asterisk}^ ) : EC~1~ STO~1~ calleeResult`>>.
+  ... Check that `calleeResult` has type `continueResult<callee>`.
+  ... Let `CONT callee` be `calleeResult`.
+  ... <<Call_eval, `p' EC' STO' |- callee @ < typeArgumentIR^{asterisk}^ > ( argumentIR^{asterisk}^ ) : evaluationContext store callResult`>>.
+  ... Check that `evaluationContext` is equal to `EC~1~`.
+  ... Check that `store` is equal to `STO~1~`.
+  ... Check that `callResult` has type `exitResult`.
+  ... Let `exitResult` be `callResult`.
+  ... Result in 
+        * the evaluation context `EC~1~`,
+        * the updated store `STO~1~`,
+        * and the instantiated statement `CONT`.
+
 . Else if let `exitStatement` be `statementIR`:
- .. Group exitStatement: `p'`, `EC`, `STO'`, and `EXIT ;`
+ .. Group exitStatement: `p'`, `EC'`, `STO'`, and `EXIT ;`
 
   ... Result in 
-        * the evaluation context `EC`,
+        * the evaluation context `EC'`,
         * the updated store `STO'`,
         * and the instantiated statement `EXIT`.
 
 . Else if let `conditionalStatementIR` be `statementIR`:
- .. Group conditionalStatementIR: `p'`, `EC`, `STO'`, and `conditionalStatementIR`
+ .. Group conditionalStatementIR: `p'`, `EC'`, `STO'`, and `conditionalStatementIR`
 
   ... If let `IF ( typedExpressionIR~cond~ ) statementIR~then~` be `conditionalStatementIR`:
-   .... Let `STO~cond~` and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR~cond~`, under cursor `p'`, evaluation context `EC`, and store `STO'`>>.
-   .... If `expressionResult` is equal to `B true`:
-    ..... Let `EC~then~`, `STO~then~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `statementIR~then~`, under cursor `p'`, evaluation context `EC`, and store `STO~cond~`>>.
+   .... Let `EC~cond~`, `STO~cond~`, and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR~cond~`, under cursor `p'`, evaluation context `EC'`, and store `STO'`>>.
+   .... If `expressionResult` has type `exitResult`:
+    ..... Let `exitResult` be `expressionResult`.
     ..... Result in 
-            * the evaluation context `EC~then~`,
-            * the updated store `STO~then~`,
-            * and the instantiated statement `statementResult`.
-   .... If `expressionResult` is equal to `B false`:
-    ..... Result in 
-            * the evaluation context `EC`,
-            * the updated store `STO~cond~`,
-            * and the instantiated statement `CONT`.
-   .... If `expressionResult` matches pattern `EXIT`:
-    ..... Result in 
-            * the evaluation context `EC`,
+            * the evaluation context `EC~cond~`,
             * the updated store `STO~cond~`,
             * and the instantiated statement `EXIT`.
-
-  ... Else if let `IF ( typedExpressionIR~cond~ ) statementIR~then~ ELSE statementIR~else~` be `conditionalStatementIR`:
-   .... Let `STO~cond~` and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR~cond~`, under cursor `p'`, evaluation context `EC`, and store `STO'`>>.
-   .... If `expressionResult` is equal to `B true`:
-    ..... Let `EC~then~`, `STO~then~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `statementIR~then~`, under cursor `p'`, evaluation context `EC`, and store `STO~cond~`>>.
+   .... If `expressionResult` is equal to `CONT B true`:
+    ..... Let `EC~then~`, `STO~then~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `statementIR~then~`, under cursor `p'`, evaluation context `EC~cond~`, and store `STO~cond~`>>.
     ..... Result in 
             * the evaluation context `EC~then~`,
             * the updated store `STO~then~`,
             * and the instantiated statement `statementResult`.
-   .... If `expressionResult` is equal to `B false`:
-    ..... Let `EC~else~`, `STO~else~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `statementIR~else~`, under cursor `p'`, evaluation context `EC`, and store `STO~cond~`>>.
+   .... If `expressionResult` is equal to `CONT B false`:
+    ..... Result in 
+            * the evaluation context `EC~cond~`,
+            * the updated store `STO~cond~`,
+            * and the instantiated statement `CONT`.
+
+  ... Else if let `IF ( typedExpressionIR~cond~ ) statementIR~then~ ELSE statementIR~else~` be `conditionalStatementIR`:
+   .... Let `EC~cond~`, `STO~cond~`, and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR~cond~`, under cursor `p'`, evaluation context `EC'`, and store `STO'`>>.
+   .... If `expressionResult` has type `exitResult`:
+    ..... Let `exitResult` be `expressionResult`.
+    ..... Result in 
+            * the evaluation context `EC~cond~`,
+            * the updated store `STO~cond~`,
+            * and the instantiated statement `EXIT`.
+   .... If `expressionResult` is equal to `CONT B true`:
+    ..... Let `EC~then~`, `STO~then~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `statementIR~then~`, under cursor `p'`, evaluation context `EC~cond~`, and store `STO~cond~`>>.
+    ..... Result in 
+            * the evaluation context `EC~then~`,
+            * the updated store `STO~then~`,
+            * and the instantiated statement `statementResult`.
+   .... If `expressionResult` is equal to `CONT B false`:
+    ..... Let `EC~else~`, `STO~else~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `statementIR~else~`, under cursor `p'`, evaluation context `EC~cond~`, and store `STO~cond~`>>.
     ..... Result in 
             * the evaluation context `EC~else~`,
             * the updated store `STO~else~`,
             * and the instantiated statement `statementResult`.
-   .... If `expressionResult` matches pattern `EXIT`:
-    ..... Result in 
-            * the evaluation context `EC`,
-            * the updated store `STO~cond~`,
-            * and the instantiated statement `EXIT`.
 . Check that `p'` matches pattern `LOCAL`.
 . Check that `statementIR` has type `returnStatementIR`.
 . Let `returnStatementIR` be `statementIR`.
-. Group returnStatementIR: `LOCAL`, `EC`, `STO'`, and `returnStatementIR`
+. Group returnStatementIR: `LOCAL`, `EC'`, `STO'`, and `returnStatementIR`
 
  .. If `returnStatementIR` matches pattern `RETURN ;`:
   ... Result in 
-        * the evaluation context `EC`,
+        * the evaluation context `EC'`,
         * the updated store `STO'`,
         * and the instantiated statement `RETURN ?()`.
 
  .. Else if let `RETURN typedExpressionIR ;` be `returnStatementIR`:
-  ... Let `STO~1~` and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR`, under cursor `LOCAL`, evaluation context `EC`, and store `STO'`>>.
-  ... Check that `expressionResult` has type `value`.
-  ... Let `value` be `expressionResult`.
-  ... Result in 
-        * the evaluation context `EC`,
-        * the updated store `STO~1~`,
-        * and the instantiated statement `RETURN ?value`.
+  ... Let `EC~1~`, `STO~1~`, and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR`, under cursor `LOCAL`, evaluation context `EC'`, and store `STO'`>>.
+  ... If let `exitResult` be `expressionResult`:
+   .... Result in 
+          * the evaluation context `EC~1~`,
+          * the updated store `STO~1~`,
+          * and the instantiated statement `EXIT`.
+
+  ... Else if let `CONT value` be `expressionResult`:
+   .... Result in 
+          * the evaluation context `EC~1~`,
+          * the updated store `STO~1~`,
+          * and the instantiated statement `RETURN ?value`.
 
 relation BlockElementStmt_eval: `evaluationContext`, `store`, and `blockElementStatementIR`
 
@@ -7955,22 +8069,491 @@ relation Block_eval: `evaluationContext`, `store`, and `blockStatementIR`
 
 
 
-relation ParserStmt_eval: `evaluationContext`, `store`, and `parserStatementIR`
+relation ParserStmt_eval: `EC~0~`, `STO~0'~`, and `parserStatementIR`
+
+. If let `constantDeclarationIR` be `parserStatementIR`:
+ .. Group constantDeclarationIR: `EC~0~`, `STO~0'~`, and `constantDeclarationIR`
+
+  ... <<Decl_eval, `LOCAL EC~0~ STO~0'~ |- constantDeclarationIR : EC~1~ STO~1~ declarationResult`>>.
+  ... Check that `declarationResult` has type `continueEmptyResult`.
+  ... Let `continueEmptyResult` be `declarationResult`.
+  ... Result in `EC~1~` and `STO~1~`.
+
+. Else if let `annotationList typeIR nameIR initializerIR^?^ ;` be `parserStatementIR`:
+ .. Group variableDeclarationIR: `EC~0~`, `STO~0'~`, and `annotationList typeIR nameIR initializerIR^?^ ;`
+
+  ... If `initializerIR^?^` is equal to ?():
+   .... Let `value~init~` be <<default, the default value for type `typeIR`>>.
+   .... Let `EC~1~` be `$add_value_eval(LOCAL, EC~0~, ` nameIR, value~init~)`.
+   .... Result in `EC~1~` and `STO~0'~`.
+  ... Let `initializerOptIR` be `initializerIR^?^`.
+  ... If `initializerOptIR` matches pattern `(_)`:
+   .... Let `?= typedExpressionIR~init~` be `initializerOptIR`.
+   .... Let `EC~1~`, `STO~1~`, and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR~init~`, under cursor `LOCAL`, evaluation context `EC~0~`, and store `STO~0'~`>>.
+   .... Check that `expressionResult` has type `continueResult<value>`.
+   .... Let `CONT value~init~` be `expressionResult`.
+   .... Let `EC~2~` be `$add_value_eval(LOCAL, EC~1~, ` nameIR, value~init~)`.
+   .... Result in `EC~2~` and `STO~1~`.
+
+. Else if let `emptyStatementIR` be `parserStatementIR`:
+ .. Group emptyStatementIR: `EC~0~`, `STO~0'~`, and `emptyStatementIR`
+
+  ... Let `EC~1~`, `STO~1~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `emptyStatementIR`, under cursor `LOCAL`, evaluation context `EC~0~`, and store `STO~0'~`>>.
+  ... Check that `statementResult` has type `continueEmptyResult`.
+  ... Let `continueEmptyResult` be `statementResult`.
+  ... Result in `EC~1~` and `STO~1~`.
+
+. Else if let `assignmentStatementIR` be `parserStatementIR`:
+ .. Group assignmentStatementIR: `EC~0~`, `STO~0'~`, and `assignmentStatementIR`
+
+  ... Let `EC~1~`, `STO~1~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `assignmentStatementIR`, under cursor `LOCAL`, evaluation context `EC~0~`, and store `STO~0'~`>>.
+  ... Check that `statementResult` has type `continueEmptyResult`.
+  ... Let `continueEmptyResult` be `statementResult`.
+  ... Result in `EC~1~` and `STO~1~`.
+
+. Else if let `callStatementIR` be `parserStatementIR`:
+ .. Group callStatementIR: `EC~0~`, `STO~0'~`, and `callStatementIR`
+
+  ... Let `EC~1~`, `STO~1~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `callStatementIR`, under cursor `LOCAL`, evaluation context `EC~0~`, and store `STO~0'~`>>.
+  ... Check that `statementResult` has type `continueEmptyResult`.
+  ... Let `continueEmptyResult` be `statementResult`.
+  ... Result in `EC~1~` and `STO~1~`.
+
+. Else if let `conditionalStatementIR` be `parserStatementIR`:
+ .. Group conditionalStatementIR: `EC~0~`, `STO~0'~`, and `conditionalStatementIR`
+
+  ... Let `EC~1~`, `STO~1~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `conditionalStatementIR`, under cursor `LOCAL`, evaluation context `EC~0~`, and store `STO~0'~`>>.
+  ... Check that `statementResult` has type `continueEmptyResult`.
+  ... Let `continueEmptyResult` be `statementResult`.
+  ... Result in `EC~1~` and `STO~1~`.
+
+relation ParserStmts_eval: `evaluationContext`, `store`, and `parserStatementIR^{asterisk}^`
+
+. Group : `evaluationContext`, `store`, and `parserStatementIR^{asterisk}^`
+
+ .. If `parserStatementIR^{asterisk}^` is equal to `[ ]`:
+  ... Result in `evaluationContext` and `store`.
+ .. Let `parserStatementIR'^{asterisk}^` be `parserStatementIR^{asterisk}^`.
+ .. If `parserStatementIR'^{asterisk}^` matches pattern `_ :: _`:
+  ... Let `parserStatementIR~h~ :: parserStatementIR~t~^{asterisk}^` be `parserStatementIR'^{asterisk}^`.
+  ... <<ParserStmt_eval, `evaluationContext store |- parserStatementIR~h~ : EC~1~ STO~1~`>>.
+  ... <<ParserStmts_eval, `EC~1~ STO~1~ |- parserStatementIR~t~^{asterisk}^ : EC~2~ STO~2~`>>.
+  ... Result in `EC~2~` and `STO~2~`.
+
+relation ParserTransition_eval: `evaluationContext`, `store`, and `transitionStatementIR`
 
 
 
-relation ParserState_eval: `evaluationContext`, `store`, and `parserStateIR`
+relation ParserState_eval: `EC~0~`, `STO~0~`, and `annotationList STATE { parserStatementListIR transitionStatementIR }`
 
+. Group : `EC~0~`, `STO~0~`, and `annotationList STATE { parserStatementListIR transitionStatementIR }`
 
+ .. <<ParserStmts_eval, `EC~0~ STO~0~ |- parserStatementListIR : EC~1~ STO~1~`>>.
+ .. <<ParserTransition_eval, `EC~1~ STO~1~ |- transitionStatementIR : EC~2~ STO~2~ transitionResult`>>.
+ .. Result in `EC~2~`, `STO~2~`, and `transitionResult`.
 
-relation ParserLocalDecl_eval: `evaluationContext`, `store`, and `parserLocalDeclarationIR`
+relation ParserState_trans: `EC~0~`, `STO~0~`, and `nameIR`
 
+. Group accept: `EC~0~`, `STO~0~`, and `nameIR`
 
+ .. Let `state'^?^` be `$find_state(LOCAL, EC~0~, nameIR)`.
+ .. Check that `state'^?^` matches pattern `(_)`.
+ .. Let `?state` be `state'^?^`.
+ .. <<ParserState_eval, `EC~0~ STO~0~ |- state : EC~1~ STO~1~ transitionResult`>>.
+ .. Check that `transitionResult` has type `acceptTransitionResult`.
+ .. Let `acceptTransitionResult` be `transitionResult`.
+ .. Result in `EC~1~`, `STO~1~`, and `ACCEPT`.
+. Group reject: `EC~0~`, `STO~0~`, and `nameIR`
+
+ .. Let `state'^?^` be `$find_state(LOCAL, EC~0~, nameIR)`.
+ .. Check that `state'^?^` matches pattern `(_)`.
+ .. Let `?state` be `state'^?^`.
+ .. <<ParserState_eval, `EC~0~ STO~0~ |- state : EC~1~ STO~1~ transitionResult`>>.
+ .. Check that `transitionResult` has type `rejectTransitionResult`.
+ .. Let `rejectTransitionResult` be `transitionResult`.
+ .. Result in `EC~1~`, `STO~1~`, and `REJECT`.
+. Group state: `EC~0~`, `STO~0~`, and `nameIR`
+
+ .. Let `state'^?^` be `$find_state(LOCAL, EC~0~, nameIR)`.
+ .. Check that `state'^?^` matches pattern `(_)`.
+ .. Let `?state` be `state'^?^`.
+ .. <<ParserState_eval, `EC~0~ STO~0~ |- state : EC~1~ STO~1~ transitionResult'`>>.
+ .. Check that `transitionResult'` has type `stateTransitionResult`.
+ .. Let `STATE nameIR~next~` be `transitionResult'`.
+ .. <<ParserState_trans, `EC~1~ STO~1~ |- TRANSITION nameIR~next~ : EC~2~ STO~2~ transitionResult`>>.
+ .. Result in `EC~2~`, `STO~2~`, and `transitionResult`.
+
+relation ParserLocalDecl_eval: `EC~0~`, `STO~0'~`, and `parserLocalDeclarationIR`
+
+. If let `constantDeclarationIR` be `parserLocalDeclarationIR`:
+ .. Group constantDeclarationIR: `EC~0~`, `STO~0'~`, and `constantDeclarationIR`
+
+  ... <<Decl_eval, `BLOCK EC~0~ STO~0'~ |- constantDeclarationIR : EC~1~ STO~1~ declarationResult`>>.
+  ... Check that `declarationResult` has type `continueEmptyResult`.
+  ... Let `continueEmptyResult` be `declarationResult`.
+  ... Result in `EC~1~` and `STO~1~`.
+
+. Else if let `annotationList typeIR nameIR initializerIR^?^ ;` be `parserLocalDeclarationIR`:
+ .. Group variableDeclarationIR: `EC~0~`, `STO~0'~`, and `annotationList typeIR nameIR initializerIR^?^ ;`
+
+  ... If `initializerIR^?^` is equal to ?():
+   .... Let `value~init~` be <<default, the default value for type `typeIR`>>.
+   .... Let `EC~1~` be `$add_value_eval(BLOCK, EC~0~, ` nameIR, value~init~)`.
+   .... Result in `EC~1~` and `STO~0'~`.
+  ... Let `initializerOptIR` be `initializerIR^?^`.
+  ... If `initializerOptIR` matches pattern `(_)`:
+   .... Let `?= typedExpressionIR~init~` be `initializerOptIR`.
+   .... Let `EC~1~`, `STO~1~`, and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR~init~`, under cursor `BLOCK`, evaluation context `EC~0~`, and store `STO~0'~`>>.
+   .... Check that `expressionResult` has type `continueResult<value>`.
+   .... Let `CONT value~init~` be `expressionResult`.
+   .... Let `EC~2~` be `$add_value_eval(BLOCK, EC~1~, ` nameIR, value~init~)`.
+   .... Result in `EC~2~` and `STO~1~`.
+
+relation ParserLocalDecls_eval: `evaluationContext`, `store`, and `parserLocalDeclarationIR^{asterisk}^`
+
+. Group : `evaluationContext`, `store`, and `parserLocalDeclarationIR^{asterisk}^`
+
+ .. If `parserLocalDeclarationIR^{asterisk}^` is equal to `[ ]`:
+  ... Result in `evaluationContext` and `store`.
+ .. Let `parserLocalDeclarationIR'^{asterisk}^` be `parserLocalDeclarationIR^{asterisk}^`.
+ .. If `parserLocalDeclarationIR'^{asterisk}^` matches pattern `_ :: _`:
+  ... Let `parserLocalDeclarationIR~h~ :: parserLocalDeclarationListIR~t~` be `parserLocalDeclarationIR'^{asterisk}^`.
+  ... <<ParserLocalDecl_eval, `evaluationContext store |- parserLocalDeclarationIR~h~ : EC~1~ STO~1~`>>.
+  ... <<ParserLocalDecls_eval, `EC~1~ STO~1~ |- parserLocalDeclarationListIR~t~ : EC~2~ STO~2~`>>.
+  ... Result in `EC~2~` and `STO~2~`.
 
 relation ControlLocalDecl_eval: `evaluationContext`, `store`, and `controlLocalDeclarationIR`
 
 
 
-relation Call_eval: `cursor`, `evaluationContext`, `store`, `routine`, `typeArgumentListIR`, and `argumentListIR`
+relation Decl_eval: `p`, `EC~0~`, `STO`, and `declarationIR`
+
+. Check that `declarationIR` has type `constantDeclarationIR`.
+. Let `annotationList CONST typeIR nameIR = value ;` be `declarationIR`.
+. Group constantDeclarationIR: `p`, `EC~0~`, `STO`, and `annotationList CONST typeIR nameIR = value ;`
+
+ .. Let `EC~1~` be `$add_value_eval(p, EC~0~, ` nameIR, value)`.
+ .. Result in `EC~1~`, `STO`, and `CONT`.
+
+relation Callee_eval: `p`, `EC~0~`, `STO~0~`, `routineTargetIR`, and `argumentListIR`
+
+. Check that `routineTargetIR` matches pattern `% . %`.
+. Let `typedExpressionIR . nameIR` be `routineTargetIR`.
+. Group typedExpressionIR-nameIR-extern-method: `p`, `EC~0~`, `STO~0~`, `typedExpressionIR . nameIR`, and `argumentListIR`
+
+ .. Let `typedLvalueIR'^?^` be `$typedExpressionIR_as_typedLvalueIR(typedExpressionIR)`.
+ .. Check that `typedLvalueIR'^?^` matches pattern `(_)`.
+ .. Let `?typedLvalueIR` be `typedLvalueIR'^?^`.
+ .. <<Lvalue_eval, `p EC~0~ STO~0~ |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult`>>.
+ .. If `storageReferenceResult` matches pattern `EXIT`:
+  ... Result in `EC~1~`, `STO~1~`, and `EXIT`.
+ .. If `storageReferenceResult` has type `continueResult<storageReference?>`:
+  ... Let `CONT storageReference'^?^` be `storageReferenceResult`.
+  ... Check that `storageReference'^?^` matches pattern `(_)`.
+  ... Let `?storageReference` be `storageReference'^?^`.
+  ... <<Lvalue_read, `p EC~1~ |- storageReference : value`>>.
+  ... Check that `value` has type `objectReferenceValue`.
+  ... Let `! oid` be `value`.
+  ... Let `object'^?^` be `$find_map<oid, object>(STO~1~, oid)`.
+  ... Check that `object'^?^` matches pattern `(_)`.
+  ... Let `?object` be `object'^?^`.
+  ... Check that `object` has type `externObject`.
+  ... Let `EXTERN _ < _ > { _ renv }` be `object`.
+  ... Let `id~arg~^?^^{asterisk}^` be `$ids_arguments(argumentListIR)`.
+  ... Let `(rid, routine, id*)^?^` be `$find_overloaded<routine>(renv, nameIR, id~arg~^?^^{asterisk}^)`.
+  ... Check that `(rid, routine, id*)^?^` matches pattern `(_)`.
+  ... Let `?(_, routine, id~default~^{asterisk}^)` be `(rid, routine, id*)^?^`.
+  ... Check that `routine` has type `externMethod`.
+  ... Let `externMethod` be `routine`.
+  ... Check that `externMethod` matches pattern `EXTERN_METHOD % < % > ( % ) %`.
+  ... Let `EXTERN_METHOD nameIR' < typeParameterListIR > ( parameterListIR ) blockStatementIR^?^` be `externMethod`.
+  ... Check that `nameIR'` is equal to `nameIR`.
+  ... Let `externMethodCallee` be `EXTERN_METHOD oid . nameIR < typeParameterListIR > ( parameterListIR # id~default~^{asterisk}^ ) blockStatementIR^?^`.
+  ... Result in `EC~1~`, `STO~1~`, and `CONT externMethodCallee`.
+
+relation Copy_in_argument: `STO~0~`, `p~caller~`, `EC~caller_0~`, `_ direction typeIR nameIR _`, `p~callee~`, `EC~callee_0~`, and `argumentIR`
+
+. Group directionless-in: `STO~0~`, `p~caller~`, `EC~caller_0~`, `_ direction typeIR nameIR _`, `p~callee~`, `EC~callee_0~`, and `argumentIR`
+
+ .. If `direction` matches pattern ``EMPTY`:
+  ... <<Argument_eval, `p~caller~ EC~caller_0~ STO~0~ |- argumentIR : EC~caller_1~ STO~1~ expressionResult`>>.
+  ... If let `exitResult` be `expressionResult`:
+   .... Result in `STO~1~`, `EC~caller_1~`, `EC~callee_0~`, and `EXIT`.
+
+  ... Else if let `CONT value` be `expressionResult`:
+   .... Let `EC~callee_1~` be `$add_value_eval(p~callee~, EC~callee_0~, ` nameIR, value)`.
+   .... Result in `STO~1~`, `EC~caller_1~`, `EC~callee_1~`, and `CONT ?()`.
+
+ .. Else if `direction` matches pattern `IN`:
+  ... <<Argument_eval, `p~caller~ EC~caller_0~ STO~0~ |- argumentIR : EC~caller_1~ STO~1~ expressionResult`>>.
+  ... If let `exitResult` be `expressionResult`:
+   .... Result in `STO~1~`, `EC~caller_1~`, `EC~callee_0~`, and `EXIT`.
+
+  ... Else if let `CONT value` be `expressionResult`:
+   .... Let `EC~callee_1~` be `$add_value_eval(p~callee~, EC~callee_0~, ` nameIR, value)`.
+   .... Result in `STO~1~`, `EC~caller_1~`, `EC~callee_1~`, and `CONT ?()`.
+. If `direction` matches pattern `INOUT`:
+ .. Group inout: `STO~0~`, `p~caller~`, `EC~caller_0~`, `_ INOUT typeIR nameIR _`, `p~callee~`, `EC~callee_0~`, and `argumentIR`
+
+  ... <<Argument_eval_lvalue, `p~caller~ EC~caller_0~ STO~0~ |- argumentIR : EC~caller_1~ STO~1~ storageReferenceResult`>>.
+  ... If `storageReferenceResult` matches pattern `EXIT`:
+   .... Result in `STO~1~`, `EC~caller_1~`, `EC~callee_0~`, and `EXIT`.
+  ... If `storageReferenceResult` has type `continueResult<storageReference?>`:
+   .... Let `CONT storageReference'^?^` be `storageReferenceResult`.
+   .... Check that `storageReference'^?^` matches pattern `(_)`.
+   .... Let `?storageReference` be `storageReference'^?^`.
+   .... <<Lvalue_read, `p~caller~ EC~caller_1~ |- storageReference : value`>>.
+   .... Let `EC~callee_1~` be `$add_value_eval(p~callee~, EC~callee_0~, ` nameIR, value)`.
+   .... Result in `STO~1~`, `EC~caller_1~`, `EC~callee_1~`, and `CONT ?storageReference`.
+
+. Else if `direction` matches pattern `OUT`:
+ .. Group out: `STO~0~`, `p~caller~`, `EC~caller_0~`, `_ OUT typeIR nameIR _`, `p~callee~`, `EC~callee_0~`, and `argumentIR`
+
+  ... <<Argument_eval_lvalue, `p~caller~ EC~caller_0~ STO~0~ |- argumentIR : EC~caller_1~ STO~1~ storageReferenceResult`>>.
+  ... If `storageReferenceResult` matches pattern `EXIT`:
+   .... Result in `STO~1~`, `EC~caller_1~`, `EC~callee_0~`, and `EXIT`.
+  ... If `storageReferenceResult` has type `continueResult<storageReference?>`:
+   .... Let `CONT storageReference^?^` be `storageReferenceResult`.
+   .... Let `typeIR~subst~` be `$subst_type_eval(p~callee~, EC~callee_0~, typeIR)`.
+   .... Let `value~init~` be <<default, the default value for type `typeIR~subst~`>>.
+   .... Let `EC~callee_1~` be `$add_value_eval(p~callee~, EC~callee_0~, ` nameIR, value~init~)`.
+   .... Result in `STO~1~`, `EC~caller_1~`, `EC~callee_1~`, and `CONT storageReference^?^`.
+
+relation Copy_in: `store`, `p~caller~`, `evaluationContext`, `parameterIR''^{asterisk}^`, `p~callee~`, `evaluationContext'`, and `argumentIR''^{asterisk}^`
+
+. Group : `store`, `p~caller~`, `evaluationContext`, `parameterIR''^{asterisk}^`, `p~callee~`, `evaluationContext'`, and `argumentIR''^{asterisk}^`
+
+ .. If `parameterIR''^{asterisk}^` is equal to `[ ]`:
+  ... Check that `argumentIR''^{asterisk}^` is equal to `[ ]`.
+  ... Result in `store`, `evaluationContext`, `evaluationContext'`, and `CONT [ ]`.
+ .. Let `parameterIR'''^{asterisk}^` be `parameterIR''^{asterisk}^`.
+ .. If `parameterIR'''^{asterisk}^` matches pattern `_ :: _`:
+  ... Let `parameterIR~h~ :: parameterIR~t~^{asterisk}^` be `parameterIR'''^{asterisk}^`.
+  ... Let `argumentIR'''^{asterisk}^` be `argumentIR''^{asterisk}^`.
+  ... Check that `argumentIR'''^{asterisk}^` matches pattern `_ :: _`.
+  ... Let `argumentIR~h~ :: argumentIR~t~^{asterisk}^` be `argumentIR'''^{asterisk}^`.
+  ... <<Copy_in_argument, `store p~caller~ evaluationContext parameterIR~h~ @ p~callee~ evaluationContext' argumentIR~h~ ~> STO~1~ EC~caller_1~ @ EC~callee_1~ # copyInResult`>>.
+  ... If let `exitResult` be `copyInResult`:
+   .... Result in `STO~1~`, `EC~caller_1~`, `EC~callee_1~`, and `EXIT`.
+
+  ... Else if let `CONT storageReference~h~^?^` be `copyInResult`:
+   .... <<Copy_in, `STO~1~ p~caller~ EC~caller_1~ parameterIR~t~^{asterisk}^ @ p~callee~ EC~callee_1~ argumentIR~t~^{asterisk}^ ~> STO~2~ EC~caller_2~ @ EC~callee_2~ # copyInListResult`>>.
+   .... If let `exitResult` be `copyInListResult`:
+    ..... Result in `STO~2~`, `EC~caller_2~`, `EC~callee_2~`, and `EXIT`.
+
+   .... Else if let `CONT storageReference'^?^^{asterisk}^` be `copyInListResult`:
+    ..... Check that `storageReference'^?^^{asterisk}^` has type `storageReference*`.
+    ..... Let `storageReference~t~^{asterisk}^` be `storageReference'^?^^{asterisk}^`.
+    ..... Let `storageReference^?^^{asterisk}^` be `storageReference~h~^?^ :: storageReference~t~^{asterisk}^`.
+    ..... Result in `STO~2~`, `EC~caller_2~`, `EC~callee_2~`, and `CONT storageReference^?^^{asterisk}^`.
+
+relation Copy_in_default: `parameterIR^{asterisk}^`, `p~callee~`, `EC~callee_0~`, and `value^{asterisk}^`
+
+. Group : `parameterIR^{asterisk}^`, `p~callee~`, `EC~callee_0~`, and `value^{asterisk}^`
+
+ .. Let `_^{asterisk}^` be the list of `_`, `_^{asterisk}^` be the list of `_`, `_^{asterisk}^` be the list of `_`, `_^{asterisk}^` be the list of `_`, and `nameIR^{asterisk}^` be the list of `nameIR`, obtained by repeating:
++
+--
+    * Let `_ _ _ nameIR _` be `parameterIR`
+--
++
+for each `parameterIR` in `parameterIR^{asterisk}^`.
+ .. Let `EC~callee_1~` be `$add_values_eval(p~callee~, EC~callee_0~, ` nameIR^{asterisk}^, value^{asterisk}^)`.
+ .. Result in `EC~callee_1~`.
+
+relation Copy_out_argument: `p~caller~`, `EC~caller_0'~`, `_ direction typeIR nameIR _`, `p~callee~`, `EC~callee~`, and `storageReference'''^?^`
+
+. Check that `storageReference'''^?^` matches pattern `()`.
+. Group in-directionless: `p~caller~`, `EC~caller_0'~`, `_ direction typeIR nameIR _`, `p~callee~`, `EC~callee~`, and ?()
+
+ .. If `direction` matches pattern `IN`:
+  ... Result in `EC~caller_0'~`.
+
+ .. Else if `direction` matches pattern ``EMPTY`:
+  ... Result in `EC~caller_0'~`.
+. Group out-inout: `p~caller~`, `EC~caller_0'~`, `_ direction typeIR nameIR _`, `p~callee~`, `EC~callee~`, and `storageReference'''^?^`
+
+ .. If `storageReference'''^?^` is equal to ?():
+  ... If `direction` matches pattern `OUT`:
+   .... Result in `EC~caller_0'~`.
+
+  ... Else if `direction` matches pattern `INOUT`:
+   .... Result in `EC~caller_0'~`.
+ .. Let `storageReference''^?^` be `storageReference'''^?^`.
+ .. If `storageReference''^?^` matches pattern `(_)`:
+  ... Let `?storageReference` be `storageReference''^?^`.
+  ... If let `value` be `$find_value_eval(p~callee~, EC~callee~, ` nameIR)`:
+   .... <<Lvalue_write, `p~caller~ EC~caller_0'~ |- storageReference -> value : EC~caller_1~`>>.
+   .... Result in `EC~caller_1~`.
+
+  ... Else if let `value` be `$find_value_eval(p~callee~, EC~callee~, ` nameIR)`:
+   .... <<Lvalue_write, `p~caller~ EC~caller_0'~ |- storageReference -> value : EC~caller_1~`>>.
+   .... Result in `EC~caller_1~`.
+
+relation Copy_out: `p~caller~`, `evaluationContext`, `parameterIR^{asterisk}^`, `p~callee~`, `EC~callee~`, and `storageReference^?^^{asterisk}^`
+
+. Group : `p~caller~`, `evaluationContext`, `parameterIR^{asterisk}^`, `p~callee~`, `EC~callee~`, and `storageReference^?^^{asterisk}^`
+
+ .. If `parameterIR^{asterisk}^` is equal to `[ ]`:
+  ... Check that `storageReference^?^^{asterisk}^` is equal to `[ ]`.
+  ... Result in `evaluationContext`.
+ .. Let `parameterIR'^{asterisk}^` be `parameterIR^{asterisk}^`.
+ .. If `parameterIR'^{asterisk}^` matches pattern `_ :: _`:
+  ... Let `parameterIR~h~ :: parameterIR~t~^{asterisk}^` be `parameterIR'^{asterisk}^`.
+  ... Let `storageReference'^?^^{asterisk}^` be `storageReference^?^^{asterisk}^`.
+  ... Check that `storageReference'^?^^{asterisk}^` matches pattern `_ :: _`.
+  ... Let `storageReference~h~^?^ :: storageReference~t~^?^^{asterisk}^` be `storageReference'^?^^{asterisk}^`.
+  ... <<Copy_out_argument, `p~caller~ evaluationContext parameterIR~h~ @ p~callee~ EC~callee~ storageReference~h~^?^ ~> EC~caller_1~`>>.
+  ... <<Copy_out, `p~caller~ EC~caller_1~ parameterIR~t~^{asterisk}^ @ p~callee~ EC~callee~ storageReference~t~^?^^{asterisk}^ ~> EC~caller_2~`>>.
+  ... Result in `EC~caller_2~`.
+
+relation Call_eval: `p`, `EC~0~`, `STO~0~`, `callee`, `typeArgumentIR^{asterisk}^`, and `argumentIR^{asterisk}^`
+
+. Check that `callee` has type `externMethodCallee`.
+. Let `EXTERN_METHOD oid . nameIR < typeParameterIR^{asterisk}^ > ( parameterIR^{asterisk}^ # id~default~^{asterisk}^ ) blockStatementIR^?^` be `callee`.
+. Check that `blockStatementIR^?^` matches pattern `()`.
+. Group externMethodCallee: `p`, `EC~0~`, `STO~0~`, `EXTERN_METHOD oid . nameIR < typeParameterIR^{asterisk}^ > ( parameterIR^{asterisk}^ # id~default~^{asterisk}^ ) ?()`, `typeArgumentIR^{asterisk}^`, and `argumentIR^{asterisk}^`
+
+ .. Debug: `nameIR`
+ .. Let `EC~callee_0~` be `$inherit_evaluationContext(GLOBAL, EC~0~)`.
+ .. Let `(parameterIR~aligned~^{asterisk}^, argumentIR~aligned~^{asterisk}^, parameterIR~default~^{asterisk}^, value~default~^{asterisk}^)` be `$align_params_with_args(parameterIR^{asterisk}^, argumentIR^{asterisk}^, id~default~^{asterisk}^)`.
+ .. Let `EC~callee_1~` be `$add_types_eval(LOCAL, EC~callee_0~, typeParameterIR^{asterisk}^, typeArgumentIR^{asterisk}^)`.
+ .. <<Copy_in, `STO~0~ p EC~0~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_1~ argumentIR~aligned~^{asterisk}^ ~> STO~1~ EC~1~ @ EC~callee_2~ # copyInListResult`>>.
+ .. Check that `copyInListResult` has type `continueResult<storageReference?*>`.
+ .. Let `CONT storageReference^?^^{asterisk}^` be `copyInListResult`.
+ .. <<Copy_in_default, `parameterIR~default~^{asterisk}^ @ LOCAL EC~callee_2~ value~default~^{asterisk}^ ~> @ EC~callee_3~`>>.
+ .. Let `_^{asterisk}^` be the list of `_`, `_^{asterisk}^` be the list of `_`, `_^{asterisk}^` be the list of `_`, `_^{asterisk}^` be the list of `_`, and `nameIR~param~^{asterisk}^` be the list of `nameIR~param~`, obtained by repeating:
++
+--
+    * Let `_ _ _ nameIR~param~ _` be `parameterIR`
+--
++
+for each `parameterIR` in `parameterIR^{asterisk}^`.
+ .. <<ExternMethodCall_eval, `EC~callee_3~ STO~1~ |- oid . nameIR ( nameIR~param~^{asterisk}^ ) : EC~callee_4~ STO~2~ callResult`>>.
+ .. Check that `callResult` has type `returnResult`.
+ .. Let `RETURN _^?^` be `callResult`.
+ .. <<Copy_out, `p EC~1~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_4~ storageReference^?^^{asterisk}^ ~> EC~2~`>>.
+ .. Result in `EC~2~`, `STO~2~`, and `EXIT`.
+
+relation ExternMethodCall_eval: `evaluationContext`, `store`, `oid`, `nameIR`, and `nameIR'^{asterisk}^`
 
 
+
+relation Var_init: `EC~0~`, `typeIR`, and `nameIR`
+
+. Group : `EC~0~`, `typeIR`, and `nameIR`
+
+ .. Let `value` be <<default, the default value for type `typeIR`>>.
+ .. Let `EC~1~` be `$add_value_eval(GLOBAL, EC~0~, ` nameIR, value)`.
+ .. Result in the resulting evaluation context `EC~1~`.
+
+relation Extern_init: `EC`, `STO~0~`, and `nameIR`
+
+. Group : `EC`, `STO~0~`, and `nameIR`
+
+ .. Let `IC` be {PATH `[ ]`, GLOBAL `EC.GLOBAL`, BLOCK `EC.BLOCK`, LOCAL `EC.LOCAL`}.
+ .. Let `(cid, constructor, id*)^?^` be `$find_constructor_inst(IC, ` nameIR, [ ])`.
+ .. Check that `(cid, constructor, id*)^?^` matches pattern `(_)`.
+ .. Let `?(_, constructor, _^{asterisk}^)` be `(cid, constructor, id*)^?^`.
+ .. <<Constructor_inst, `GLOBAL IC STO~0~ |- constructor < [ ] > ( [ ] # [ ] ) ==> STO~1~ object`>>.
+ .. Let `oid~object~` be `[nameIR]`.
+ .. Let `STO~2~` be `$add_map<oid, object>(STO~1~, oid~object~, object)`.
+ .. Result in the resulting store `STO~2~`.
+
+relation Program_init: `p4program`
+
+. Group : `p4program`
+
+ .. <<Program_inst, `|- p4program ==> globalEvaluationLayer STO`>>.
+ .. Let `blockEvaluationLayer` be {TYPE `$empty_tenv`, ROUTINE `$empty_renv`, STATE `$empty_senv`, FRAME `$empty_frame`}.
+ .. Let `localEvaluationLayer` be {TYPE `$empty_tenv`, FRAMES `[$empty_frame]`}.
+ .. Let `EC` be {GLOBAL `globalEvaluationLayer`, BLOCK `blockEvaluationLayer`, LOCAL `localEvaluationLayer`}.
+ .. Result in the resulting evaluation context `EC` and store `STO`.
+
+relation Parser_invoke: `EC~caller_0~`, `STO~0~`, `parserObject`, and `argumentListIR`
+
+. Group : `EC~caller_0~`, `STO~0~`, `parserObject`, and `argumentListIR`
+
+ .. Let `PARSER ( parameterListIR ) { frame parserLocalDeclarationListIR senv }` be `parserObject`.
+ .. Let `EC~callee_0~` be `$inherit_evaluationContext(GLOBAL, EC~caller_0~)`.
+ .. Let `EC~callee_1~` be `EC~callee_0~`[BLOCK.FRAME = `frame`][BLOCK.STATE = `senv`].
+ .. Let `(parameterIR~aligned~^{asterisk}^, argumentIR~aligned~^{asterisk}^, parameterIR~default~^{asterisk}^, value~default~^{asterisk}^)` be `$align_params_with_args(parameterListIR, argumentListIR, [ ])`.
+ .. <<Copy_in, `STO~0~ GLOBAL EC~caller_0~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_1~ argumentIR~aligned~^{asterisk}^ ~> STO~1~ EC~caller_1~ @ EC~callee_2~ # copyInListResult`>>.
+ .. Check that `copyInListResult` has type `continueResult<storageReference?*>`.
+ .. Let `CONT storageReference^?^^{asterisk}^` be `copyInListResult`.
+ .. <<Copy_in_default, `parameterIR~default~^{asterisk}^ @ BLOCK EC~callee_2~ value~default~^{asterisk}^ ~> @ EC~callee_3~`>>.
+ .. <<ParserLocalDecls_eval, `EC~callee_3~ STO~1~ |- parserLocalDeclarationListIR : EC~callee_4~ STO~2~`>>.
+ .. <<ParserState_trans, `EC~callee_4~ STO~2~ |- TRANSITION "start" : EC~callee_5~ STO~3~ transitionResult`>>.
+ .. <<Copy_out, `GLOBAL EC~caller_1~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_5~ storageReference^?^^{asterisk}^ ~> EC~caller_2~`>>.
+ .. Result in `EC~caller_2~`, `STO~2~`, and `transitionResult`.
+
+relation V1Model_init: `p4program`
+
+. Group : `p4program`
+
+ .. Let `EC~0~` and `STO~0~` be the result of <<Program_init, initializing the evaluation context and store for `p4program`>>.
+ .. Let `STO~1~` be the result of <<Extern_init, instantiating extern `EC~0~` in the evaluation context `STO~0~` and store `"packet_in"`>>.
+ .. Let `EC~1~` be `$add_value_eval(GLOBAL, EC~0~, ` "packet_in", ! ["packet_in"])`.
+ .. Let `STO~2~` be the result of <<Extern_init, instantiating extern `EC~1~` in the evaluation context `STO~1~` and store `"packet_out"`>>.
+ .. Let `EC~2~` be `$add_value_eval(GLOBAL, EC~1~, ` "packet_out", ! ["packet_out"])`.
+ .. Let `object'^?^` be `$find_map<oid, object>(STO~2~, ["main"])`.
+ .. Check that `object'^?^` matches pattern `(_)`.
+ .. Let `?object` be `object'^?^`.
+ .. Check that `object` has type `packageObject`.
+ .. Let `PACKAGE < tenv > { _ }` be `object`.
+ .. Let `typeIR^?^` be `$find_map<tid, typeIR>(tenv, "H")`.
+ .. Check that `typeIR^?^` matches pattern `(_)`.
+ .. Let `?typeIR~hdr~` be `typeIR^?^`.
+ .. Let `typeIR'^?^` be `$find_map<tid, typeIR>(tenv, "M")`.
+ .. Check that `typeIR'^?^` matches pattern `(_)`.
+ .. Let `?typeIR~meta~` be `typeIR'^?^`.
+ .. Let `EC~3~` be the result of <<Var_init, instantiating global variable `"hdr"` of type `typeIR~hdr~` in the evaluation context `EC~2~`>>.
+ .. Let `EC~4~` be the result of <<Var_init, instantiating global variable `"meta"` of type `typeIR~meta~` in the evaluation context `EC~3~`>>.
+ .. Let `typeDefIR'^?^` be `$find_type_eval(GLOBAL, EC~4~, ` "standard_metadata_t")`.
+ .. Check that `typeDefIR'^?^` matches pattern `(_)`.
+ .. Let `?typeDefIR` be `typeDefIR'^?^`.
+ .. Check that `typeDefIR` has type `polyTypeDefIR`.
+ .. Let `polyTypeDefIR~standard_metadata~` be `typeDefIR`.
+ .. Let `typeIR~std_meta~` be `polyTypeDefIR~standard_metadata~ < [ ] >`.
+ .. Let `EC~5~` be the result of <<Var_init, instantiating global variable `"standard_metadata"` of type `typeIR~std_meta~` in the evaluation context `EC~4~`>>.
+ .. Result in the resulting evaluation context `EC~5~` and store `STO~2~`.
+
+relation V1Model_parser: `EC~0~` and `STO~0~`
+
+. Group : `EC~0~` and `STO~0~`
+
+ .. Let `object'^?^` be `$find_map<oid, object>(STO~0~, ["main", "p"])`.
+ .. Check that `object'^?^` matches pattern `(_)`.
+ .. Let `?object` be `object'^?^`.
+ .. Check that `object` has type `parserObject`.
+ .. Let `parserObject` be `object`.
+ .. Let `typeDefIR'^?^` be `$find_type_eval(GLOBAL, EC~0~, ` "packet_in")`.
+ .. Check that `typeDefIR'^?^` matches pattern `(_)`.
+ .. Let `?typeDefIR` be `typeDefIR'^?^`.
+ .. Check that `typeDefIR` has type `polyTypeDefIR`.
+ .. Let `polyTypeDefIR~packet_in~` be `typeDefIR`.
+ .. Let `typeIR~packet_in~` be `polyTypeDefIR~packet_in~ < [ ] >`.
+ .. Let `argumentIR~packet_in~` be `. "packet_in" # ( typeIR~packet_in~ CTK )`.
+ .. Let `object'''^?^` be `$find_map<oid, object>(STO~0~, ["main"])`.
+ .. Check that `object'''^?^` matches pattern `(_)`.
+ .. Let `?object''` be `object'''^?^`.
+ .. Check that `object''` has type `packageObject`.
+ .. Let `PACKAGE < tenv > { _ }` be `object''`.
+ .. Let `typeIR^?^` be `$find_map<tid, typeIR>(tenv, "H")`.
+ .. Check that `typeIR^?^` matches pattern `(_)`.
+ .. Let `?typeIR~hdr~` be `typeIR^?^`.
+ .. Let `typeIR'^?^` be `$find_map<tid, typeIR>(tenv, "M")`.
+ .. Check that `typeIR'^?^` matches pattern `(_)`.
+ .. Let `?typeIR~meta~` be `typeIR'^?^`.
+ .. Let `argumentIR~hdr~` be `. "hdr" # ( typeIR~hdr~ DYN )`.
+ .. Let `argumentIR~meta~` be `. "meta" # ( typeIR~meta~ DYN )`.
+ .. Let `typeDefIR'''^?^` be `$find_type_eval(GLOBAL, EC~0~, ` "standard_metadata_t")`.
+ .. Check that `typeDefIR'''^?^` matches pattern `(_)`.
+ .. Let `?typeDefIR''` be `typeDefIR'''^?^`.
+ .. Check that `typeDefIR''` has type `polyTypeDefIR`.
+ .. Let `polyTypeDefIR~standard_metadata~` be `typeDefIR''`.
+ .. Let `typeIR~std_meta~` be `polyTypeDefIR~standard_metadata~ < [ ] >`.
+ .. Let `argumentIR~standard_metadata~` be `. "standard_metadata" # ( typeIR~std_meta~ DYN )`.
+ .. Let `argumentIR^{asterisk}^` be `[argumentIR~packet_in~, argumentIR~hdr~, argumentIR~meta~, argumentIR~standard_metadata~]`.
+ .. <<Parser_invoke, `EC~0~ STO~0~ |- parserObject . APPLY ( argumentIR^{asterisk}^ ) : EC~1~ STO~1~ transitionResult`>>.
+ .. Result in `transitionResult`, `EC~1~`, and `STO~1~`.

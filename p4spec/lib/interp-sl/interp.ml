@@ -1262,7 +1262,7 @@ and eval_rule (ctx : Ctx.t) (id : id) (notexp : notexp) : Ctx.t =
   let values_output =
     match invoke_rel ctx id values_input with
     | Some values_output -> values_output
-    | None -> error id.at "relation was not matched"
+    | None -> error id.at (F.asprintf "relation %s was not matched" id.it)
   in
   assign_exps ctx exps_output values_output
 
@@ -1379,7 +1379,8 @@ and eval_debug_instr (ctx : Ctx.t) (exp : exp) : Ctx.t * Sign.t =
 and invoke_rel (ctx : Ctx.t) (id : id) (values_input : value list) :
     value list option =
   let _, _, exps_input, instrs = Ctx.find_rel Local ctx id in
-  check (instrs <> []) id.at "relation has no instructions";
+  check (instrs <> []) id.at
+    (F.asprintf "relation %s has no instructions" id.it);
   let invoke_rel' () =
     let ctx_local = Ctx.localize_rule ctx id values_input in
     let ctx_local = assign_exps ctx_local exps_input values_input in
@@ -1468,7 +1469,7 @@ and invoke_func_def (ctx : Ctx.t) (id : id) (targs : targ list)
               (Dep.Edges.Func (id, idx_arg)))
           values_input;
         value_output
-    | _ -> error id.at "function was not matched"
+    | _ -> error id.at (F.asprintf "function %s was not matched" id.it)
   in
   if (not ctx.testing.derive) && Cache.is_cached_func id.it then (
     let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in

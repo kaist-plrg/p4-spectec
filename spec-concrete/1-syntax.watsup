@@ -648,6 +648,12 @@ dec $expression_as_lvalue(expression) : lvalue?
 def $expression_as_lvalue(referenceExpression) = referenceExpression
 def $expression_as_lvalue(expression `. member) = lvalue `. member
   -- if lvalue = $expression_as_lvalue(expression)
+def $expression_as_lvalue(expression_base `[ expression_index ])
+  = lvalue_base `[ expression_index ]
+  -- if lvalue_base = $expression_as_lvalue(expression_base)
+def $expression_as_lvalue(expression_base `[ expression_hi `: expression_lo ])
+  = lvalue_base `[ expression_hi `: expression_lo ]
+  -- if lvalue_base = $expression_as_lvalue(expression_base)
 def $expression_as_lvalue(`( expression )) = `( lvalue )
   -- if lvalue = $expression_as_lvalue(expression)
 

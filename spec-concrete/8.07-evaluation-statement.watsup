@@ -1,0 +1,116 @@
+;;
+;; Statement evaluation
+;;
+;; syntax statementIR
+;;
+
+;;; emptyStatementIR
+
+rule Stmt_eval/emptyStatementIR:
+  p EC STO |- `; : EC STO CONT
+
+;;; (TODO) assignmentStatementIR
+
+;;; callStatementIR
+;;; syntax callStatementIR =
+;;;   routineTargetIR `< typeArgumentListIR > `( argumentListIR ) `;
+
+rule Stmt_eval/callStatementIR:
+  p EC_0 STO_0 |- routineTargetIR `< typeArgumentIR* > `( argumentIR* ) `;
+                : EC_1 STO_1 CONT
+  -- Callee_eval:
+      p EC_0 STO_0 |- routineTargetIR `< `_ > `( argumentIR* )
+                    : EC_1 STO_1 (CONT callee)
+  -- Call_eval:
+      p EC_0 STO_0 |- callee `@ `< typeArgumentIR* > `( argumentIR* )
+                    : EC_1 STO_1 EXIT
+
+;;; directApplicationStatementIR
+;;; direct applications should have been handled during instantiation
+
+;;; returnStatementIR
+;;; syntax returnStatementIR
+
+;;;; RETURN `;
+;;;; RETURN typedExpressionIR `;
+
+rulegroup Stmt_eval/returnStatementIR {
+
+  rule Stmt_eval/non-expression:
+    LOCAL EC STO |- RETURN `; : EC STO (RETURN eps)
+
+  rule Stmt_eval/expression-exit:
+    LOCAL EC_0 STO_0 |- RETURN typedExpressionIR `;
+                      : EC_1 STO_1 EXIT
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 EXIT
+
+  rule Stmt_eval/expression-cont:
+    LOCAL EC_0 STO_0 |- RETURN typedExpressionIR `;
+                      : EC_1 STO_1 (RETURN value)
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (CONT value)
+
+}
+
+;;; exitStatementIR
+;;; syntax exitStatementIR = EXIT `;
+
+rule Stmt_eval/exitStatement:
+  p EC STO |- EXIT `; : EC STO EXIT
+
+;;; (TODO) blockStatementIR
+;;; syntax blockStatementIR =
+;;;   annotationList `{ blockElementStatementListIR }
+
+;;; conditionalStatementIR
+;;; syntax conditionalStatementIR =
+
+;;;; IF `( typedExpressionIR ) statementIR
+;;;; IF `( typedExpressionIR ) statementIR ELSE statementIR
+
+rulegroup Stmt_eval/conditionalStatementIR {
+
+  rule Stmt_eval/non-else-exit:
+    p EC STO |- IF `( typedExpressionIR_cond ) statementIR_then
+              : EC_cond STO_cond EXIT
+    -- Expr_eval: p EC STO |- typedExpressionIR_cond : EC_cond STO_cond EXIT
+
+  rule Stmt_eval/non-else-cont-true:
+    p EC STO |- IF `( typedExpressionIR_cond ) statementIR_then
+              : EC_then STO_then statementResult
+    -- Expr_eval: p EC STO |- typedExpressionIR_cond : EC_cond STO_cond (CONT (B true))
+    -- Stmt_eval: p EC_cond STO_cond |- statementIR_then : EC_then STO_then statementResult
+
+  rule Stmt_eval/non-else-cont-false:
+    p EC STO |- IF `( typedExpressionIR_cond ) statementIR_then
+              : EC_cond STO_cond CONT
+    -- Expr_eval: p EC STO |- typedExpressionIR_cond : EC_cond STO_cond (CONT (B false))
+
+  rule Stmt_eval/else-exit:
+    p EC STO |- IF `( typedExpressionIR_cond ) statementIR_then ELSE statementIR_else
+              : EC_cond STO_cond EXIT
+    -- Expr_eval: p EC STO |- typedExpressionIR_cond : EC_cond STO_cond EXIT
+
+  rule Stmt_eval/else-cont-true:
+    p EC STO |- IF `( typedExpressionIR_cond ) statementIR_then ELSE statementIR_else
+              : EC_then STO_then statementResult
+    -- Expr_eval: p EC STO |- typedExpressionIR_cond : EC_cond STO_cond (CONT (B true))
+    -- Stmt_eval: p EC_cond STO_cond |- statementIR_then : EC_then STO_then statementResult
+
+  rule Stmt_eval/else-cont-false:
+    p EC STO |- IF `( typedExpressionIR_cond ) statementIR_then ELSE statementIR_else
+              : EC_else STO_else statementResult
+    -- Expr_eval: p EC STO |- typedExpressionIR_cond : EC_cond STO_cond (CONT (B false))
+    -- Stmt_eval: p EC_cond STO_cond |- statementIR_else : EC_else STO_else statementResult
+
+}
+
+;;; (TODO) forStatement
+
+;;; (TODO) breakStatement
+
+;;; (TODO) continueStatement
+
+;;; (TODO) switchStatement
+;;; syntax switchStatement = SWITCH `( expression ) `{ switchCaseList }

@@ -264,11 +264,43 @@ syntax lvalueIR =
   | typedLvalueIR `[ typedExpressionIR `: typedExpressionIR ]
   | `( typedLvalueIR )
 
-syntax typedLvalueIR = lvalueIR `# `( typeIR )
+syntax lvalueNoteIR = `( typeIR )
+
+syntax typedLvalueIR = lvalueIR `# lvalueNoteIR
 
 dec $type_of_lvalue(typedLvalueIR) : typeIR
   hint(prose_in "the type of lvalue " %0)
 def $type_of_lvalue(_ `# `( typeIR )) = typeIR
+
+dec $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
+  : typedLvalueIR?
+def $typedExpressionIR_as_typedLvalueIR(
+    referenceExpressionIR `# `( typeIR _ )
+  )
+  = referenceExpressionIR `# `( typeIR )
+def $typedExpressionIR_as_typedLvalueIR(
+    (typedExpressionIR `. nameIR) `# `( typeIR _ )
+  )
+  = (typedLvalueIR `. nameIR) `# `( typeIR )
+  -- if typedLvalueIR
+      = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
+def $typedExpressionIR_as_typedLvalueIR(
+    (typedExpressionIR_base `[ typedExpressionIR_index ]) `# `( typeIR _ )
+  )
+  = (typedLvalueIR_base `[ typedExpressionIR_index ]) `# `( typeIR )
+  -- if typedLvalueIR_base
+      = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base)
+def $typedExpressionIR_as_typedLvalueIR(
+    (typedExpressionIR_base `[ typedExpressionIR_hi `: typedExpressionIR_lo ]) `# `( typeIR _ )
+  )
+  = (typedLvalueIR_base `[ typedExpressionIR_hi `: typedExpressionIR_lo ]) `# `( typeIR )
+  -- if typedLvalueIR_base
+      = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base)
+def $typedExpressionIR_as_typedLvalueIR(
+    (`( typedExpressionIR )) `# `( typeIR _ )
+  ) = (`( typedLvalueIR )) `# `( typeIR )
+  -- if typedLvalueIR
+      = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
 
 ;;
 ;; Statements

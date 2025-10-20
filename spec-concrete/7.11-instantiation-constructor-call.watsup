@@ -185,8 +185,8 @@ rule Constructor_inst/extern:
       IC_callee_3 |- externMethodPrototypeIR* ==> IC_callee_4
   ---- ;; create an extern object with the final callee context
   -- if object_extern
-      = EXTERN nameIR `{ IC_callee_4.BLOCK.TYPE
-                         IC_callee_4.BLOCK.FRAME
+      = EXTERN nameIR `< IC_callee_4.BLOCK.TYPE >
+                      `{ IC_callee_4.BLOCK.FRAME
                          IC_callee_4.BLOCK.ROUTINE }
 
 ;;; PARSER `( parameterListIR ) `( constructorParameterListIR )
@@ -217,15 +217,10 @@ rule Constructor_inst/parser:
   ---- ;; instantiate local declarations
   -- ParserLocalDecls_inst:
       IC_callee_2 STO_1 |- parserLocalDeclarationIR*
-                       ==> IC_local_0 STO_2 parserLocalDeclarationIR_inst*
-  ---- ;; add accept and reject states
-  -- if IC_local_1
-      = $add_state_inst(BLOCK, IC_local_0, "accept", `EMPTY)
-  -- if IC_local_2
-      = $add_state_inst(BLOCK, IC_local_1, "reject", `EMPTY)
+                       ==> IC_local STO_2 parserLocalDeclarationIR_inst*
   ---- ;; instantiate parser states
   -- ParserStates_inst:
-      IC_local_2 STO_2 |- parserStateIR* ==> IC_state STO_3
+      IC_local STO_2 |- parserStateIR* ==> IC_state STO_3
   ---- ;; create parser object with the callee value environment
   ---- ;; and instantiated state environment
   -- if object_parser
@@ -300,7 +295,7 @@ rule Constructor_inst/package:
       = $add_values_inst(p_callee, IC_callee_2, id_cparam_default*, value_default*)
   ---- ;; create package object with final callee context
   -- if object_package
-      = PACKAGE `{ IC_callee_3.BLOCK.TYPE IC_callee_3.BLOCK.FRAME }
+      = PACKAGE `< IC_callee_3.BLOCK.TYPE > `{ IC_callee_3.BLOCK.FRAME }
 
 ;;; TABLE nameIR `{ tablePropertyListIR }
 

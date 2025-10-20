@@ -17,7 +17,8 @@ let boot_cold (spec : spec) (relname : string) (includes_p4 : string list)
         not (List.exists (String.equal filename_p4) excludes_p4))
       filenames_p4
   in
-  Interp_sl.Run.cover spec relname includes_p4 filenames_p4 filenames_ignore
+  Interp_sl.Run.cover_program spec relname includes_p4 filenames_p4
+    filenames_ignore
 
 (* On warm boot, load the coverage from a file *)
 

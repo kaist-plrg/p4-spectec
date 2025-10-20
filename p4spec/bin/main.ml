@@ -130,12 +130,36 @@ let run_sl_command =
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
          match
-           Interp_sl.Run.run ~derive spec_sl relname includes_p4 filename_p4
-             filenames_ignore
+           Interp_sl.Run.run_program ~derive spec_sl relname includes_p4
+             filename_p4 filenames_ignore
          with
          | Pass _ -> Format.printf "passed\n"
          | Fail (_, msg, _) -> Format.printf "failed: %s\n" msg
          | IllFormed (_, msg, _) -> Format.printf "ill-formed: %s\n" msg
+       with
+       | CommandError msg -> Format.printf "%s\n" msg
+       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
+       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+
+let sim_command =
+  Core.Command.basic
+    ~summary:"simulate a target architecture with a p4_16 program and spec"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map filenames_spec = anon (sequence ("filename" %: string))
+     and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
+     and filename_p4 = flag "-p" (required string) ~doc:"p4 file of interest"
+     and arch = flag "-arch" (required string) ~doc:"target architecture" in
+     fun () ->
+       try
+         if List.length filenames_spec = 0 then
+           raise (CommandError "no input files provided");
+         let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
+         let spec_il = Elaborate.Elab.elab_spec spec in
+         let spec_sl = Structure.Struct.struct_spec spec_il in
+         if arch <> "v1model" then
+           raise (CommandError "only arch=v1model is supported for now");
+         Arch.V1model.run spec_sl includes_p4 filename_p4
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
@@ -175,7 +199,7 @@ let cover_dangling_command =
              filenames_p4
          in
          let cover =
-           Interp_sl.Run.cover spec_sl relname includes_p4 filenames_p4
+           Interp_sl.Run.cover_program spec_sl relname includes_p4 filenames_p4
              filenames_ignore
          in
          Runtime_testgen.Cov.Multiple.log ~filename_cov_opt:(Some filename_cov)
@@ -312,7 +336,7 @@ let interesting_command =
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
          let result =
-           Interp_sl.Run.run spec_sl relname includes_p4 filename_p4
+           Interp_sl.Run.run_program spec_sl relname includes_p4 filename_p4
              filenames_ignore
          in
          match result with
@@ -497,6 +521,7 @@ let command =
       ("prose", prose_command);
       ("run-il", run_il_command);
       ("run-sl", run_sl_command);
+      ("sim", sim_command);
       ("cover-dangling", cover_dangling_command);
       ("testgen", run_testgen_command);
       ("testgen-dbg", run_testgen_debug_command);

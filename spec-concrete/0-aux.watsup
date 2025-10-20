@@ -36,6 +36,14 @@ dec $strip_prefix(text, text) : text
 dec $strip_suffix(text, text) : text
 
 ;;
+;; General option functions
+;;
+
+dec $opt_as_seq_<X>(X?) : X*
+def $opt_as_seq_<X>(eps) = eps
+def $opt_as_seq_<X>(X) = [ X ]
+
+;;
 ;; General sequence functions
 ;;
 
@@ -122,3 +130,9 @@ dec $add_map<K, V>(map<K, V>, K, V) : map<K, V>
 dec $adds_map<K, V>(map<K, V>, K*, V*) : map<K, V>
 
 dec $update_map<K, V>(map<K, V>, K, V) : map<K, V>
+
+dec $extend_map<K, V>(map<K, V>, map<K, V>) : map<K, V>
+def $extend_map<K, V>(`{ (K_a `: V_a)* }, `{ (K_b `: V_b)* })
+  = `{ (K_c `: V_c)* }
+  -- if `{ (K_c `: V_c)* }
+      = $adds_map<K, V>(`{ (K_a `: V_a)* }, K_b*, V_b*)

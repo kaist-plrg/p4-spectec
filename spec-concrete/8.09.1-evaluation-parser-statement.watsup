@@ -1,0 +1,106 @@
+;;
+;; Parser transition statement evaluation
+;;
+;; syntax transitionStatementIR = TRANSITION stateExpressionIR
+;;
+
+;;; syntax stateExpressionIR
+
+;;;; nameIR `;
+
+;;;; selectExpressionIR
+
+;;
+;; Parser statement evaluation
+;;
+;; syntax parserStatementIR
+;;
+
+;;; constantDeclarationIR
+
+rule ParserStmt_eval/constantDeclarationIR:
+  EC_0 STO_0 |- constantDeclarationIR : EC_1 STO_1
+  -- Decl_eval:
+      LOCAL EC_0 STO_0 |- constantDeclarationIR : EC_1 STO_1 CONT
+
+;;; variableDeclarationIR
+
+rulegroup ParserStmt_eval/variableDeclarationIR {
+
+  rule ParserStmt_eval/non-initializer:
+    EC_0 STO |- annotationList typeIR nameIR eps `;
+              : EC_1 STO
+    ---- ;; (TODO) take type arguments into account
+    ---- ;; get initial value
+    -- if value_init = $default(typeIR)
+    ---- ;; update evaluation context
+    -- if EC_1
+        = $add_value_eval(LOCAL, EC_0, `` nameIR, value_init)
+
+  rule ParserStmt_eval/initializer:
+    EC_0 STO_0 |- annotationList typeIR nameIR (`= typedExpressionIR_init) `;
+                : EC_2 STO_1
+    ---- ;; evaluate initializer
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR_init
+                          : EC_1 STO_1 (CONT value_init)
+    ---- ;; update evaluation context
+    -- if EC_2
+        = $add_value_eval(LOCAL, EC_1, `` nameIR, value_init)
+
+}
+
+;;; emptyStatementIR
+
+rule ParserStmt_eval/emptyStatementIR:
+  EC_0 STO_0 |- emptyStatementIR : EC_1 STO_1
+  -- Stmt_eval:
+      LOCAL EC_0 STO_0 |- emptyStatementIR : EC_1 STO_1 CONT
+
+;;; assignmentStatementIR
+
+rule ParserStmt_eval/assignmentStatementIR:
+  EC_0 STO_0 |- assignmentStatementIR : EC_1 STO_1
+  -- Stmt_eval:
+      LOCAL EC_0 STO_0 |- assignmentStatementIR : EC_1 STO_1 CONT
+
+;;; callStatementIR
+
+rule ParserStmt_eval/callStatementIR:
+  EC_0 STO_0 |- callStatementIR : EC_1 STO_1
+  -- Stmt_eval:
+      LOCAL EC_0 STO_0 |- callStatementIR : EC_1 STO_1 CONT
+
+;;; directApplicationStatementIR
+;;; syntax directApplicationStatementIR =
+;;;   prefixedNameIR `. APPLY `( argumentListIR ) `;
+
+;;; parserBlockStatementIR
+
+;;; conditionalStatementIR
+
+rule ParserStmt_eval/conditionalStatementIR:
+  EC_0 STO_0 |- conditionalStatementIR : EC_1 STO_1
+  -- Stmt_eval:
+      LOCAL EC_0 STO_0 |- conditionalStatementIR : EC_1 STO_1 CONT
+
+;;
+;; Parser statement list evaluation
+;;
+;; syntax parserStatementListIR
+;;
+
+rulegroup ParserStmts_eval {
+
+  rule ParserStmts_eval/nil:
+    EC STO |- eps : EC STO
+
+  rule ParserStmts_eval/cons:
+    EC_0 STO_0 |- parserStatementIR_h :: parserStatementIR_t*
+                : EC_2 STO_2
+    -- ParserStmt_eval:
+        EC_0 STO_0 |- parserStatementIR_h : EC_1 STO_1
+    -- ParserStmts_eval:
+        EC_1 STO_1 |- parserStatementIR_t* : EC_2 STO_2
+
+}

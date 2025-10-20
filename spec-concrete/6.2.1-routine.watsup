@@ -4,24 +4,24 @@
 
 syntax renv, senv
 
-syntax action = ACTION `( parameterListIR ) blockStatementIR
+syntax action = ACTION nameIR `( parameterListIR ) blockStatementIR
 
 syntax definedFunction =
-  FUNCTION `< typeParameterListIR > `( parameterListIR ) blockStatementIR
+  FUNCTION nameIR `< typeParameterListIR > `( parameterListIR ) blockStatementIR
 
 syntax externFunction =
-  EXTERN_FUNCTION `< typeParameterListIR > `( parameterListIR )
+  EXTERN_FUNCTION nameIR `< typeParameterListIR > `( parameterListIR )
 
 syntax function =
   | definedFunction
   | externFunction
 
 syntax builtinMethod =
-  BUILTIN_METHOD `( parameterListIR ) `# storageReference
+  BUILTIN_METHOD nameIR `( parameterListIR )
 
 syntax externMethod =
-  | EXTERN_METHOD `< typeParameterListIR > `( parameterListIR ) blockStatementIR?
-  | EXTERN_METHOD ABSTRACT `< typeParameterListIR > `( parameterListIR )
+  | EXTERN_METHOD nameIR `< typeParameterListIR > `( parameterListIR ) blockStatementIR?
+  | EXTERN_METHOD ABSTRACT nameIR `< typeParameterListIR > `( parameterListIR )
 
 syntax parserApplyMethod =
   PARSER_APPLY `( parameterListIR )
@@ -42,3 +42,47 @@ syntax method =
   | tableApplyMethod
 
 syntax routine = action | function | method
+
+;;
+;; Callees
+;;
+
+syntax actionCallee =
+  ACTION nameIR `( parameterListIR `# id* ) blockStatementIR
+
+syntax definedFunctionCallee =
+  FUNCTION nameIR `< typeParameterListIR >
+    `( parameterListIR `# id* ) blockStatementIR
+
+syntax externFunctionCallee =
+  EXTERN_FUNCTION nameIR `< typeParameterListIR > `( parameterListIR `# id* )
+
+syntax functionCallee = definedFunctionCallee | externFunctionCallee
+
+syntax builtinMethodCallee =
+  BUILTIN_METHOD storageReference `. nameIR
+    `< typeArgumentListIR > `( parameterListIR )
+
+syntax externMethodCallee =
+  EXTERN_METHOD oid `. nameIR `< typeParameterListIR >
+    `( parameterListIR `# id* ) blockStatementIR?
+
+syntax parserApplyMethodCallee =
+  PARSER oid `. APPLY `( parameterListIR `# id* )
+    `{ parserLocalDeclarationListIR `; senv }
+
+syntax controlApplyMethodCallee =
+  CONTROL oid `. APPLY `( parameterListIR `# id* )
+    `{ controlLocalDeclarationListIR `; renv `; blockElementStatementListIR }
+
+syntax tableApplyMethodCallee =
+  TABLE oid `. APPLY `{ tablePropertyListIR }
+
+syntax methodCallee =
+  | builtinMethodCallee
+  | externMethodCallee
+  | parserApplyMethodCallee
+  | controlApplyMethodCallee
+  | tableApplyMethodCallee
+
+syntax callee = actionCallee | functionCallee | methodCallee

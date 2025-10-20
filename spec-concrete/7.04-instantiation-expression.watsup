@@ -68,30 +68,30 @@ rule Expr_inst/unaryExpressionIR:
 rulegroup Expr_inst/binaryExpressionIR {
 
   rule Expr_inst/non-short-circuit:
-    p IC STO_0 |- (typedExpressionIR_l binop typedExpressionIR_r) `# `( _ _ )
+    p IC STO_0 |- (typedExpressionIR_l binop typedExpressionIR_r) `# _
               ==> STO_2 $bin_op(binop, value_l, value_r)
     -- if ~(binop <- [ `&&, `|| ])
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==> STO_1 value_l
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r
 
   rule Expr_inst/land-false:
-    p IC STO_0 |- (typedExpressionIR_l `&& typedExpressionIR_r) `# `( _ _ )
+    p IC STO_0 |- (typedExpressionIR_l `&& typedExpressionIR_r) `# _
               ==> STO_1 (B false)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==> STO_1 (B false)
 
   rule Expr_inst/land-true:
-    p IC STO_0 |- (typedExpressionIR_l `&& typedExpressionIR_r) `# `( _ _ )
+    p IC STO_0 |- (typedExpressionIR_l `&& typedExpressionIR_r) `# _
               ==> STO_2 value_r
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==> STO_1 (B true)
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r
 
   rule Expr_inst/lor-true:
-    p IC STO_0 |- (typedExpressionIR_l `|| typedExpressionIR_r) `# `( _ _ )
+    p IC STO_0 |- (typedExpressionIR_l `|| typedExpressionIR_r) `# _
               ==> STO_1 (B true)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==> STO_1 (B true)
 
   rule Expr_inst/lor-false:
-    p IC STO_0 |- (typedExpressionIR_l `|| typedExpressionIR_r) `# `( _ _ )
+    p IC STO_0 |- (typedExpressionIR_l `|| typedExpressionIR_r) `# _
               ==> STO_2 value_r
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==> STO_1 (B false)
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==> STO_2 value_r

@@ -15,10 +15,12 @@
 rulegroup Expr_eval/literalExpressionIR-boolean {
 
   rule Expr_eval/true:
-    p EC STO |- TRUE `# _ : STO (B true)
+    p EC STO |- TRUE `# _ : EC STO expressionResult
+    -- if expressionResult = CONT (B true)
 
   rule Expr_eval/false:
-    p EC STO |- FALSE `# _ : STO (B false)
+    p EC STO |- FALSE `# _ : EC STO expressionResult
+    -- if expressionResult = CONT (B false)
 
 }
 
@@ -27,39 +29,52 @@ rulegroup Expr_eval/literalExpressionIR-boolean {
 rulegroup Expr_eval/literalExpressionIR-number {
 
   rule Expr_eval/arbint:
-    p EC STO |- (D i) `# _ : STO (D i)
+    p EC STO |- (D i) `# _ : EC STO expressionResult
+    -- if expressionResult = CONT (D i)
 
   rule Expr_eval/fixbit:
-    p EC STO |- (n W i) `# _ : STO (n W i)
+    p EC STO |- (n W i) `# _ : EC STO expressionResult
+    -- if expressionResult = CONT (n W i)
 
   rule Expr_eval/fixint:
-    p EC STO |- (n S i) `# _ : STO (n S i)
+    p EC STO |- (n S i) `# _ : EC STO expressionResult
+    -- if expressionResult = CONT (n S i)
 
 }
 
 ;;;;; stringLiteral
 
 rule Expr_eval/literalExpressionIR-stringLiteral:
-  p EC STO |- (`" text `") `# _ : STO (`" text `")
+  p EC STO |- (`" text `") `# _ : EC STO expressionResult
+  -- if expressionResult = CONT (`" text `")
 
 ;;;; referenceExpressionIR
 ;;;; syntax referenceExpressionIR = prefixedNameIR
 
 rule Expr_eval/referenceExpressionIR:
-  p EC STO |- prefixedNameIR `# _ : STO value
+  p EC STO |- prefixedNameIR `# _ : EC STO (CONT value)
   -- if value = $find_value_eval(p, EC, prefixedNameIR)
 
 ;;;; defaultExpressionIR
 
 rule Expr_eval/defaultExpressionIR:
-  p EC STO |- `... `# _ : STO DEFAULT
+  p EC STO |- `... `# _ : EC STO (CONT DEFAULT)
 
 ;;;; unaryExpressionIR
 ;;;; syntax unaryExpressionIR = unop typedExpressionIR
 
-rule Expr_eval/unaryExpressionIR:
-  p EC STO_0 |- (unop typedExpressionIR) `# _ : STO_1 $un_op(unop, value)
-  -- Expr_eval: p EC STO_0 |- typedExpressionIR : STO_1 value
+rulegroup Expr_eval/unaryExpressionIR {
+
+  rule Expr_eval/exit:
+    p EC_0 STO_0 |- (unop typedExpressionIR) `# _ : EC_1 STO_1 EXIT
+    -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 EXIT
+
+  rule Expr_eval/cont:
+    p EC_0 STO_0 |- (unop typedExpressionIR) `# _ : EC_1 STO_1 expressionResult
+    -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (CONT value)
+    -- if expressionResult = CONT $un_op(unop, value)
+
+}
 
 ;;;; binaryExpressionIR
 ;;;; syntax binaryExpressionIR =
@@ -68,65 +83,68 @@ rule Expr_eval/unaryExpressionIR:
 rulegroup Expr_eval/binaryExpressionIR {
 
   rule Expr_eval/non-short-circuit-exit:
-    p EC STO_0 |- (typedExpressionIR_l binop typedExpressionIR_r) `# `( _ _ )
-                : STO_1 EXIT
+    p EC_0 STO_0 |- (typedExpressionIR_l binop typedExpressionIR_r) `# `( _ _ )
+                  : EC_1 STO_1 EXIT
     -- if ~(binop <- [ `&&, `|| ])
     -- Exprs_eval:
-        p EC STO_0 |- [ typedExpressionIR_l, typedExpressionIR_r ]
-                    : STO_1 EXIT
+        p EC_0 STO_0 |- [ typedExpressionIR_l, typedExpressionIR_r ]
+                      : EC_1 STO_1 EXIT
 
   rule Expr_eval/non-short-circuit-cont:
-    p EC STO_0 |- (typedExpressionIR_l binop typedExpressionIR_r) `# `( _ _ )
-                : STO_1 value
+    p EC_0 STO_0 |- (typedExpressionIR_l binop typedExpressionIR_r) `# `( _ _ )
+                  : EC_1 STO_1 expressionResult
     -- if ~(binop <- [ `&&, `|| ])
     -- Exprs_eval:
-        p EC STO_0 |- [ typedExpressionIR_l, typedExpressionIR_r ]
-                    : STO_1 (`{ [ value_l, value_r] })
+        p EC_0 STO_0 |- [ typedExpressionIR_l, typedExpressionIR_r ]
+                      : EC_1 STO_1 (CONT ([ value_l, value_r]))
     -- if value = $bin_op(binop, value_l, value_r)
+    -- if expressionResult = CONT value
 
   rule Expr_eval/land-exit:
-    p EC STO_0 |- (typedExpressionIR_l `&& typedExpressionIR_r) `# `( _ _ )
-                : STO_1 EXIT
-    -- Expr_eval: p EC STO_0 |- typedExpressionIR_l : STO_1 EXIT
+    p EC_0 STO_0 |- (typedExpressionIR_l `&& typedExpressionIR_r) `# `( _ _ )
+                  : EC_1 STO_1 EXIT
+    -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_l : EC_1 STO_1 EXIT
 
   rule Expr_eval/land-false:
-    p EC STO_0 |- (typedExpressionIR_l `&& typedExpressionIR_r) `# `( _ _ )
-                : STO_1 (B false)
-    -- Expr_eval: p EC STO_0 |- typedExpressionIR_l : STO_1 (B false)
+    p EC_0 STO_0 |- (typedExpressionIR_l `&& typedExpressionIR_r) `# `( _ _ )
+                  : EC_1 STO_1 expressionResult
+    -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_l : EC_1 STO_1 (CONT (B false))
+    -- if expressionResult = CONT (B false)
 
   rule Expr_eval/land-true-exit:
-    p EC STO_0 |- (typedExpressionIR_l `&& typedExpressionIR_r) `# `( _ _ )
-                : STO_2 EXIT
-    -- Expr_eval: p EC STO_0 |- typedExpressionIR_l : STO_1 (B true)
-    -- Expr_eval: p EC STO_1 |- typedExpressionIR_r : STO_2 EXIT
+    p EC_0 STO_0 |- (typedExpressionIR_l `&& typedExpressionIR_r) `# `( _ _ )
+                  : EC_2 STO_2 EXIT
+    -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_l : EC_1 STO_1 (CONT (B true))
+    -- Expr_eval: p EC_1 STO_1 |- typedExpressionIR_r : EC_2 STO_2 EXIT
 
   rule Expr_eval/land-true:
-    p EC STO_0 |- (typedExpressionIR_l `&& typedExpressionIR_r) `# `( _ _ )
-                : STO_2 value_r
-    -- Expr_eval: p EC STO_0 |- typedExpressionIR_l : STO_1 (B true)
-    -- Expr_eval: p EC STO_1 |- typedExpressionIR_r : STO_2 value_r
+    p EC_0 STO_0 |- (typedExpressionIR_l `&& typedExpressionIR_r) `# `( _ _ )
+                  : EC_2 STO_2 expressionResult_r
+    -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_l : EC_1 STO_1 (CONT (B true))
+    -- Expr_eval: p EC_1 STO_1 |- typedExpressionIR_r : EC_2 STO_2 expressionResult_r
 
   rule Expr_eval/lor-exit:
-    p EC STO_0 |- (typedExpressionIR_l `|| typedExpressionIR_r) `# `( _ _ )
-                : STO_1 EXIT
-    -- Expr_eval: p EC STO_0 |- typedExpressionIR_l : STO_1 EXIT
+    p EC_0 STO_0 |- (typedExpressionIR_l `|| typedExpressionIR_r) `# `( _ _ )
+                  : EC_1 STO_1 EXIT
+    -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_l : EC_1 STO_1 EXIT
 
   rule Expr_eval/lor-true:
-    p EC STO_0 |- (typedExpressionIR_l `|| typedExpressionIR_r) `# `( _ _ )
-                : STO_1 (B true)
-    -- Expr_eval: p EC STO_0 |- typedExpressionIR_l : STO_1 (B true)
+    p EC_0 STO_0 |- (typedExpressionIR_l `|| typedExpressionIR_r) `# `( _ _ )
+                  : EC_1 STO_1 expressionResult
+    -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_l : EC_1 STO_1 (CONT (B true))
+    -- if expressionResult = CONT (B true)
 
   rule Expr_eval/lor-false-exit:
-    p EC STO_0 |- (typedExpressionIR_l `|| typedExpressionIR_r) `# `( _ _ )
-                : STO_2 EXIT
-    -- Expr_eval: p EC STO_0 |- typedExpressionIR_l : STO_1 (B false)
-    -- Expr_eval: p EC STO_1 |- typedExpressionIR_r : STO_2 EXIT
+    p EC_0 STO_0 |- (typedExpressionIR_l `|| typedExpressionIR_r) `# `( _ _ )
+                  : EC_2 STO_2 EXIT
+    -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_l : EC_1 STO_1 (CONT (B false))
+    -- Expr_eval: p EC_1 STO_1 |- typedExpressionIR_r : EC_2 STO_2 EXIT
 
   rule Expr_eval/lor-false:
-    p EC STO_0 |- (typedExpressionIR_l `|| typedExpressionIR_r) `# `( _ _ )
-                : STO_2 value_r
-    -- Expr_eval: p EC STO_0 |- typedExpressionIR_l : STO_1 (B false)
-    -- Expr_eval: p EC STO_1 |- typedExpressionIR_r : STO_2 value_r
+    p EC_0 STO_0 |- (typedExpressionIR_l `|| typedExpressionIR_r) `# `( _ _ )
+                  : EC_2 STO_2 expressionResult_r
+    -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_l : EC_1 STO_1 (CONT (B false))
+    -- Expr_eval: p EC_1 STO_1 |- typedExpressionIR_r : EC_2 STO_2 expressionResult_r
 
 }
 
@@ -137,31 +155,45 @@ rulegroup Expr_eval/binaryExpressionIR {
 rulegroup Expr_eval/ternaryExpressionIR {
 
   rule Expr_eval/cond-exit:
-    p EC STO_0 |- (typedExpressionIR_cond `? typedExpressionIR_true `: typedExpressionIR_false) `# _
-                : STO_1 EXIT
-    -- Expr_eval: p EC STO_0 |- typedExpressionIR_cond : STO_1 EXIT
+    p EC_0 STO_0 |- (typedExpressionIR_cond `? typedExpressionIR_true
+                                            `: typedExpressionIR_false) `# _
+                  : EC_1 STO_1 EXIT
+    -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_cond : EC_1 STO_1 EXIT
 
   rule Expr_eval/cond-true:
-    p EC STO_0 |- (typedExpressionIR_cond `? typedExpressionIR_true `: typedExpressionIR_false) `# _
-                : STO_2 expressionResult_true
-    -- Expr_eval: p EC STO_0 |- typedExpressionIR_cond : STO_1 (B true)
-    -- Expr_eval: p EC STO_1 |- typedExpressionIR_true : STO_2 expressionResult_true
+    p EC_0 STO_0 |- (typedExpressionIR_cond `? typedExpressionIR_true
+                                            `: typedExpressionIR_false) `# _
+                  : EC_2 STO_2 expressionResult_true
+    -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_cond : EC_1 STO_1 (CONT (B true))
+    -- Expr_eval: p EC_1 STO_1 |- typedExpressionIR_true : EC_2 STO_2 expressionResult_true
 
   rule Expr_eval/cond-false:
-    p EC STO_0 |- (typedExpressionIR_cond `? typedExpressionIR_true `: typedExpressionIR_false) `# _
-                : STO_2 expressionResult_false
-    -- Expr_eval: p EC STO_0 |- typedExpressionIR_cond : STO_1 (B false)
-    -- Expr_eval: p EC STO_1 |- typedExpressionIR_false : STO_2 expressionResult_false
+    p EC_0 STO_0 |- (typedExpressionIR_cond `? typedExpressionIR_true
+                                            `: typedExpressionIR_false) `# _
+                  : EC_2 STO_2 expressionResult_false
+    -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_cond : EC_1 STO_1 (CONT (B false))
+    -- Expr_eval: p EC_1 STO_1 |- typedExpressionIR_false : EC_2 STO_2 expressionResult_false
 
 }
 
 ;;;; castExpressionIR
 ;;;; syntax castExpressionIR = `( typeIR ) typedExpressionIR
 
-rule Expr_eval/castExpressionIR:
-  p EC STO_0 |- (`( typeIR ) typedExpressionIR) `# _ : STO_1 value_cast
-  -- Expr_eval: p EC STO_0 |- typedExpressionIR : STO_1 value
-  -- if value_cast = $cast_op(typeIR, value)
+rulegroup Expr_eval/castExpressionIR {
+
+  rule Expr_eval/exit:
+    p EC_0 STO_0 |- (`( typeIR ) typedExpressionIR) `# _
+                  : EC_1 STO_1 EXIT
+    -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 EXIT
+
+  rule Expr_eval/cont:
+    p EC_0 STO_0 |- (`( typeIR ) typedExpressionIR) `# _
+                  : EC_1 STO_1 expressionResult
+    -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (CONT value)
+    -- if value_cast = $cast_op(typeIR, value)
+    -- if expressionResult = CONT value_cast
+
+}
 
 ;;;; dataExpressionIR
 ;;;; syntax dataExpressionIR
@@ -169,24 +201,39 @@ rule Expr_eval/castExpressionIR:
 ;;;;; `{#}
 
 rule Expr_eval/dataExpressionIR-invalid:
-  p EC STO |- `{#} `# _ : STO `{#}
+  p EC STO |- `{#} `# _ : EC STO expressionResult
+  -- if expressionResult = CONT `{#}
 
 ;;;;; SEQ `{ typedExpressionListIR }
 ;;;;; SEQ `{ typedExpressionListIR `, `... }
 
 rulegroup Expr_eval/dataExpressionIR-sequence {
 
-  rule Expr_eval/non-default:
-    p EC STO_0 |- (SEQ `{ typedExpressionListIR }) `# _
-                : STO_1 (SEQ `( value* ))
+  rule Expr_eval/non-default-exit:
+    p EC_0 STO_0 |- (SEQ `{ typedExpressionListIR }) `# _
+                  : EC_1 STO_1 EXIT
     -- Exprs_eval:
-        p EC STO_0 |- typedExpressionListIR : STO_1 (`{ value* })
+        p EC_0 STO_0 |- typedExpressionListIR : EC_1 STO_1 EXIT
 
-  rule Expr_eval/default:
-    p EC STO_0 |- (SEQ `{ typedExpressionListIR `, `... }) `# _
-                : STO_1 (SEQ `( value* `, `... ))
+  rule Expr_eval/non-default-cont:
+    p EC_0 STO_0 |- (SEQ `{ typedExpressionListIR }) `# _
+                  : EC_1 STO_1 expressionResult
     -- Exprs_eval:
-        p EC STO_0 |- typedExpressionListIR : STO_1 (`{ value* })
+        p EC_0 STO_0 |- typedExpressionListIR : EC_1 STO_1 (CONT value*)
+    -- if expressionResult = CONT (SEQ `( value* ))
+
+  rule Expr_eval/default-exit:
+    p EC_0 STO_0 |- (SEQ `{ typedExpressionListIR `, `... }) `# _
+                  : EC_1 STO_1 EXIT
+    -- Exprs_eval:
+        p EC_0 STO_0 |- typedExpressionListIR : EC_1 STO_1 EXIT
+
+  rule Expr_eval/default-cont:
+    p EC_0 STO_0 |- (SEQ `{ typedExpressionListIR `, `... }) `# _
+                  : EC_1 STO_1 expressionResult
+    -- Exprs_eval:
+        p EC_0 STO_0 |- typedExpressionListIR : EC_1 STO_1 (CONT value*)
+    -- if expressionResult = CONT (SEQ `( value* `, `... ))
 
 }
 
@@ -195,17 +242,31 @@ rulegroup Expr_eval/dataExpressionIR-sequence {
 
 rulegroup Expr_eval/dataExpressionIR-record {
 
-  rule Expr_eval/non-default:
-    p EC STO_0 |- (RECORD `{ (nameIR `= typedExpressionIR)* }) `# _
-                : STO_1 (RECORD `{ (value nameIR `;)* })
+   rule Expr_eval/non-default-exit:
+    p EC_0 STO_0 |- (RECORD `{ (nameIR `= typedExpressionIR)* }) `# _
+                  : EC_1 STO_1 EXIT
     -- Exprs_eval:
-        p EC STO_0 |- typedExpressionIR* : STO_1 (`{ value* })
+        p EC_0 STO_0 |- typedExpressionIR* : EC_1 STO_1 EXIT
 
-  rule Expr_eval/default:
-    p EC STO_0 |- (RECORD `{ (nameIR `= typedExpressionIR)* `, `... }) `# _
-              : STO_1 (RECORD `{ (value nameIR `;)* `, `... })
+  rule Expr_eval/non-default-cont:
+    p EC_0 STO_0 |- (RECORD `{ (nameIR `= typedExpressionIR)* }) `# _
+                  : EC_1 STO_1 expressionResult
     -- Exprs_eval:
-        p EC STO_0 |- typedExpressionIR* : STO_1 (`{ value* })
+        p EC_0 STO_0 |- typedExpressionIR* : EC_1 STO_1 (CONT value*)
+    -- if expressionResult = CONT (RECORD `{ (value nameIR `;)* })
+
+  rule Expr_eval/default-exit:
+    p EC_0 STO_0 |- (RECORD `{ (nameIR `= typedExpressionIR)* `, `... }) `# _
+                  : EC_1 STO_1 EXIT
+    -- Exprs_eval:
+        p EC_0 STO_0 |- typedExpressionIR* : EC_1 STO_1 EXIT
+
+  rule Expr_eval/default-cont:
+    p EC_0 STO_0 |- (RECORD `{ (nameIR `= typedExpressionIR)* `, `... }) `# _
+                  : EC_1 STO_1 expressionResult
+    -- Exprs_eval:
+        p EC_0 STO_0 |- typedExpressionIR* : EC_1 STO_1 (CONT value*)
+    -- if expressionResult = CONT (RECORD `{ (value nameIR `;)* `, `... })
 
 }
 
@@ -216,9 +277,10 @@ rulegroup Expr_eval/dataExpressionIR-record {
 ;;;;; syntax errorAccessExpressionIR = ERROR `. nameIR
 
 rule Expr_eval/errorAccessExpressionIR:
-  p EC STO |- (ERROR `. nameIR) `# _ : STO value_error
+  p EC STO |- (ERROR `. nameIR) `# _ : EC STO expressionResult
   -- if nameIR_error = "error." ++ nameIR
   -- if value_error = $find_value_eval(p, EC, `` nameIR_error)
+  -- if expressionResult = CONT value_error
 
 ;;;;; memberAccessExpressionIR
 ;;;;; syntax memberAccessExpressionIR = memberAccessBaseIR `. nameIR
@@ -230,15 +292,17 @@ rulegroup Expr_eval/memberAccessExpressionIR-type {
 
   rule Expr_eval/enum:
     p EC STO |- ((TYPE prefixedNameIR) `. nameIR) `# _
-              : STO (tid `. nameIR)
+              : EC STO expressionResult
     -- if ENUM tid `{ _ } = $find_type_eval(p, EC, prefixedNameIR)
+    -- if expressionResult = CONT (tid `. nameIR)
 
   rule Expr_eval/serenum:
     p EC STO |- ((TYPE prefixedNameIR) `. nameIR) `# _
-              : STO (tid `. nameIR `# value)
+              : EC STO expressionResult
     -- if ENUM tid `# _ `{ (id_member `= value_member `;)* }
         = $find_type_eval(p, EC, prefixedNameIR)
     -- if value = $assoc_<nameIR, value>(nameIR, (id_member, value_member)*)
+    -- if expressionResult = CONT (tid `. nameIR `# value)
 
 }
 
@@ -247,39 +311,43 @@ rulegroup Expr_eval/memberAccessExpressionIR-type {
 rulegroup Expr_eval/memberAccessExpressionIR-expression {
 
   rule Expr_eval/exit:
-    p EC STO |- (typedExpressionIR_base `. nameIR) `# `( typeIR_base _ )
-              : STO EXIT
-    -- Expr_eval: p EC STO |- typedExpressionIR_base : STO EXIT
+    p EC_0 STO_0 |- (typedExpressionIR_base `. nameIR) `# `( typeIR_base _ )
+                  : EC_1 STO_1 EXIT
+    -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_base : EC_1 STO_1 EXIT
 
   rule Expr_eval/stack-size:
-    p EC STO |- (typedExpressionIR_base `. "size") `# `( typeIR_base _ )
-              : STO (D n_size)
-    -- Expr_eval: p EC STO |- typedExpressionIR_base : STO value_base 
+    p EC_0 STO_0 |- (typedExpressionIR_base `. "size") `# `( typeIR_base _ )
+                  : EC_1 STO_1 expressionResult
+    -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_base : EC_1 STO_1 (CONT value_base) 
     -- if `[ _ `# `( _; n_size ) ] = value_base
+    -- if expressionResult = CONT (D n_size)
 
   rule Expr_eval/struct:
-    p EC STO |- (typedExpressionIR_base `. nameIR) `# `( typeIR_base _ )
-              : STO value_member
-    -- Expr_eval: p EC STO |- typedExpressionIR_base : STO value_base
+    p EC_0 STO_0 |- (typedExpressionIR_base `. nameIR) `# `( typeIR_base _ )
+                  : EC_1 STO_1 expressionResult
+    -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_base : EC_1 STO_1 (CONT value_base)
     -- if STRUCT _ `{ (value_field id_field `;)* } = value_base
     -- if value_member
         = $assoc_<nameIR, value>(nameIR, (id_field, value_field)*)
+    -- if expressionResult = CONT value_member
 
-   rule Expr_eval/header:
-    p EC STO |- (typedExpressionIR_base `. nameIR) `# `( typeIR_base _ )
-              : STO value_member
-    -- Expr_eval: p EC STO |- typedExpressionIR_base : STO value_base
+  rule Expr_eval/header:
+    p EC_0 STO_0 |- (typedExpressionIR_base `. nameIR) `# `( typeIR_base _ )
+                  : EC_1 STO_1 expressionResult
+    -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_base : EC_1 STO_1 (CONT value_base)
     -- if HEADER _ `{ (value_field id_field `;)* } = value_base
     -- if value_member
         = $assoc_<nameIR, value>(nameIR, (id_field, value_field)*)
+    -- if expressionResult = CONT value_member
 
-   rule Expr_eval/headerUnion:
-    p EC STO |- (typedExpressionIR_base `. nameIR) `# `( typeIR_base _ )
-              : STO value_member
-    -- Expr_eval: p EC STO |- typedExpressionIR_base : STO value_base
+  rule Expr_eval/headerunion:
+    p EC_0 STO_0 |- (typedExpressionIR_base `. nameIR) `# `( typeIR_base _ )
+                  : EC_1 STO_1 expressionResult
+    -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_base : EC_1 STO_1 (CONT value_base)
     -- if HEADER_UNION _ `{ (value_field id_field `;)* } = value_base
     -- if value_member
-        = $assoc_<nameIR, value>(nameIR, (id_field, value_field)*) 
+        = $assoc_<nameIR, value>(nameIR, (id_field, value_field)*)
+    -- if expressionResult = CONT value_member
 
 }
 
@@ -291,21 +359,22 @@ rulegroup Expr_eval/memberAccessExpressionIR-expression {
 rulegroup Expr_eval/indexAccessExpressionIR {
   
   rule Expr_eval/exit:
-    p EC STO_0 |- (typedExpressionIR_base `[ typedExpressionIR_index ]) `# _
-                : STO_1 EXIT
+    p EC_0 STO_0 |- (typedExpressionIR_base `[ typedExpressionIR_index ]) `# _
+                  : EC_1 STO_1 EXIT
     -- Exprs_eval:
-        p EC STO_0 |- [ typedExpressionIR_base, typedExpressionIR_index ]
-                    : STO_1 EXIT
+        p EC_0 STO_0 |- [ typedExpressionIR_base, typedExpressionIR_index ]
+                      : EC_1 STO_1 EXIT
 
   rule Expr_eval/tuple-exit:
-    p EC STO_0 |- (typedExpressionIR_base `[ typedExpressionIR_index ]) `# _
-                : STO_1 value
+    p EC_0 STO_0 |- (typedExpressionIR_base `[ typedExpressionIR_index ]) `# _
+                  : EC_1 STO_1 expressionResult
     -- Exprs_eval:
-        p EC STO_0 |- [ typedExpressionIR_base, typedExpressionIR_index ]
-                    : STO_1 (`{ [ value_base, value_index ] })
+        p EC_0 STO_0 |- [ typedExpressionIR_base, typedExpressionIR_index ]
+                      : EC_1 STO_1 (CONT ([ value_base, value_index ]))
     -- if `( value_elem* ) = value_base
     -- if n_index = $to_number(value_index)
     -- if value = value_elem*[n_index]
+    -- if expressionResult = CONT value
 
 }
 
@@ -316,19 +385,22 @@ rulegroup Expr_eval/indexAccessExpressionIR {
 rulegroup Expr_eval/sliceAccessExpressionIR {
 
   rule Expr_eval/exit:
-    p EC STO_0 |- (typedExpressionIR_base `[ typedExpressionIR_hi `: typedExpressionIR_lo ]) `# _
-                : STO_1 EXIT
+    p EC_0 STO_0 |- (typedExpressionIR_base `[ typedExpressionIR_hi
+                                            `: typedExpressionIR_lo ]) `# _
+                  : EC_1 STO_1 EXIT
     -- Exprs_eval:
-        p EC STO_0 |- [ typedExpressionIR_base, typedExpressionIR_hi, typedExpressionIR_lo ]
-                    : STO_1 EXIT
+        p EC_0 STO_0 |- [ typedExpressionIR_base, typedExpressionIR_hi, typedExpressionIR_lo ]
+                      : EC_1 STO_1 EXIT
 
   rule Expr_eval/cont:
-    p EC STO_0 |- (typedExpressionIR_base `[ typedExpressionIR_hi `: typedExpressionIR_lo ]) `# _
-                : STO_1 value
+    p EC_0 STO_0 |- (typedExpressionIR_base `[ typedExpressionIR_hi
+                                            `: typedExpressionIR_lo ]) `# _
+                  : EC_1 STO_1 expressionResult
     -- Exprs_eval:
-        p EC STO_0 |- [ typedExpressionIR_base, typedExpressionIR_hi, typedExpressionIR_lo ]
-                    : STO_1 (`{ [ value_base, value_hi, value_lo ] })
+        p EC_0 STO_0 |- [ typedExpressionIR_base, typedExpressionIR_hi, typedExpressionIR_lo ]
+                      : EC_1 STO_1 (CONT ([ value_base, value_hi, value_lo ]))
     -- if value = $bitacc_op(value_base, value_hi, value_lo)
+    -- if expressionResult = CONT value
 
 }
 
@@ -349,8 +421,8 @@ rulegroup Expr_eval/sliceAccessExpressionIR {
 ;;;; syntax parenthesizedExpressionIR = `( typedExpressionIR )
 
 rule Expr_eval/parenthesizedExpressionIR:
-  p EC STO_0 |- (`( typedExpressionIR )) `# _ : STO_1 value
-  -- Expr_eval: p EC STO_0 |- typedExpressionIR : STO_1 value
+  p EC_0 STO_0 |- (`( typedExpressionIR )) `# _ : EC_1 STO_1 expressionResult
+  -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult
 
 ;;
 ;; Expression list instantiation
@@ -358,27 +430,31 @@ rule Expr_eval/parenthesizedExpressionIR:
 ;; syntax typedExpressionListIR
 ;;
 
-rule Exprs_eval/nil:
-  p EC STO |- eps : STO (`{ eps })
+rulegroup Exprs_eval {
 
-rule Exprs_eval/cons-head-exit:
-  p EC STO_0 |- typedExpressionIR_h :: typedExpressionIR_t*
-              : STO_1 EXIT
-  -- Expr_eval:
-      p EC STO_0 |- typedExpressionIR_h : STO_1 EXIT
+  rule Exprs_eval/nil:
+    p EC STO |- eps : EC STO (CONT eps)
 
-rule Exprs_eval/cons-head-cont:
-  p EC STO_0 |- typedExpressionIR_h :: typedExpressionIR_t*
-              : STO_2 (`{ value_h :: value_t* })
-  -- Expr_eval:
-      p EC STO_0 |- typedExpressionIR_h : STO_1 value_h
-  -- Exprs_eval:
-      p EC STO_1 |- typedExpressionIR_t* : STO_2 (`{ value_t* })
+  rule Exprs_eval/cons-head-exit:
+    p EC_0 STO_0 |- typedExpressionIR_h :: typedExpressionIR_t*
+                  : EC_1 STO_1 EXIT
+    -- Expr_eval:
+        p EC_0 STO_0 |- typedExpressionIR_h : EC_1 STO_1 EXIT
 
-rule Exprs_eval/cons-tail-exit:
-  p EC STO_0 |- typedExpressionIR_h :: typedExpressionIR_t*
-              : STO_2 EXIT
-  -- Expr_eval:
-      p EC STO_0 |- typedExpressionIR_h : STO_1 value_h
-  -- Exprs_eval:
-      p EC STO_1 |- typedExpressionIR_t* : STO_2 EXIT
+  rule Exprs_eval/cons-head-cont-tail-exit:
+    p EC_0 STO_0 |- typedExpressionIR_h :: typedExpressionIR_t*
+                  : EC_2 STO_2 EXIT
+    -- Expr_eval:
+        p EC_0 STO_0 |- typedExpressionIR_h : EC_1 STO_1 (CONT value_h)
+    -- Exprs_eval:
+        p EC_1 STO_1 |- typedExpressionIR_t* : EC_2 STO_2 EXIT
+
+  rule Exprs_eval/cons-head-cont-tail-cont:
+    p EC_0 STO_0 |- typedExpressionIR_h :: typedExpressionIR_t*
+                  : EC_2 STO_2 (CONT (value_h :: value_t*))
+    -- Expr_eval:
+        p EC_0 STO_0 |- typedExpressionIR_h : EC_1 STO_1 (CONT value_h)
+    -- Exprs_eval:
+        p EC_1 STO_1 |- typedExpressionIR_t* : EC_2 STO_2 (CONT value_t*)
+
+}

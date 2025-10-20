@@ -1,0 +1,68 @@
+;;
+;; L-value evaluation
+;;
+;; syntax typedLvalueIR = lvalueIR `# `( typeIR )
+;;
+
+;;; syntax lvalueIR
+
+;;;; referenceExpressionIR
+
+rule Lvalue_eval/referenceExpressionIR:
+  p EC STO |- referenceExpressionIR `# _
+            : EC STO storageReferenceResult
+  -- if storageReferenceResult = CONT (referenceExpressionIR)
+
+;;;; typedLvalueIR `. nameIR
+
+rulegroup Lvalue_eval/typedLvalueIR-nameIR {
+
+  rule Lvalue_eval/exit:
+    p EC_0 STO_0 |- (typedLvalueIR `. nameIR) `# _
+                  : EC_1 STO_1 EXIT
+    -- Lvalue_eval:
+        p EC_0 STO_0 |- typedLvalueIR 
+                      : EC_1 STO_1 EXIT
+
+  rule Lvalue_eval/cont:
+    p EC_0 STO_0 |- (typedLvalueIR `. nameIR) `# _
+                  : EC_1 STO_1 storageReferenceResult
+    -- Lvalue_eval:
+        p EC_0 STO_0 |- typedLvalueIR 
+                      : EC_1 STO_1 (CONT storageReference)
+    -- if storageReferenceResult
+        = CONT (storageReference `. nameIR)
+
+}
+
+;;;; typedLvalueIR `[ typedExpressionIR ]
+
+;;;; typedLvalueIR `[ typedExpressionIR `: typedExpressionIR ]
+
+;;;; `( typedLvalueIR )
+
+;;
+;; L-value reads
+;;
+;; syntax storageReference
+;;
+
+;;; referenceExpressionIR
+;;; syntax referenceExpressionIR = prefixedNameIR
+
+rule Lvalue_read/referenceExpressionIR:
+  p EC |- prefixedNameIR : value
+  -- if value = $find_value_eval(p, EC, prefixedNameIR)
+
+;;
+;; L-value writes
+;;
+;; syntax storageReference
+;;
+
+;;; referenceExpressionIR
+;;; syntax referenceExpressionIR = prefixedNameIR
+
+rule Lvalue_write/referenceExpressionIR:
+  p EC_0 |- prefixedNameIR -> value : EC_1
+  -- if EC_1 = $add_value_eval(p, EC_0, prefixedNameIR, value)
