@@ -1,0 +1,126 @@
+(* Bit manipulation *)
+
+type bits = bool Array.t
+
+let string_to_bits str =
+  let char_to_bits c =
+    let n =
+      match c with
+      | '0' .. '9' -> Char.code c - Char.code '0'
+      | 'a' .. 'f' -> Char.code c - Char.code 'a' + 10
+      | 'A' .. 'F' -> Char.code c - Char.code 'A' + 10
+      | _ -> assert false
+    in
+    [ n land 8 <> 0; n land 4 <> 0; n land 2 <> 0; n land 1 <> 0 ]
+  in
+  str |> String.to_seq |> List.of_seq |> List.map char_to_bits |> List.flatten
+  |> Array.of_list
+
+let bits_to_string bits =
+  let bits_to_int bits =
+    List.fold_left (fun i bit -> (i lsl 1) + if bit then 1 else 0) 0 bits
+  in
+  let int_to_char i =
+    if i < 10 then Char.chr (i + Char.code '0')
+    else Char.chr (i - 10 + Char.code 'A')
+  in
+  let len = Array.length bits in
+  let rec loop idx str =
+    if idx >= len then str
+    else
+      let bits = Array.sub bits idx (min 4 (len - idx)) |> Array.to_list in
+      let bits =
+        if List.length bits < 4 then
+          bits @ List.init (4 - List.length bits) (fun _ -> false)
+        else bits
+      in
+      let c = bits |> bits_to_int |> int_to_char in
+      loop (idx + 4) (str ^ String.make 1 c)
+  in
+  loop 0 ""
+
+let bits_to_int_unsigned bits =
+  Array.fold_left
+    (fun i bit -> Bigint.((i lsl 1) + if bit then one else zero))
+    Bigint.zero bits
+
+let bits_to_int_signed bits =
+  let ssig = bits.(0) in
+  let int_unsigned = bits_to_int_unsigned bits in
+  if ssig then
+    let int_max =
+      let len = Array.length bits - 1 in
+      Bigint.(one lsl len)
+    in
+    Bigint.(int_unsigned - (int_max * (one + one)))
+  else int_unsigned
+
+let int_to_bits_unsigned value size =
+  Array.init size (fun i -> Bigint.(value land (one lsl i) > zero))
+  |> Array.to_list |> List.rev |> Array.of_list
+
+let int_to_bits_signed value size =
+  let mask = Bigint.((one lsl size) - one) in
+  let value = Bigint.(value land mask) in
+  int_to_bits_unsigned value size
+
+(* Core extern objects *)
+
+(* Input packet *)
+
+module PacketIn = struct
+  type t = { bits : bits; idx : int; len : int }
+
+  let init (pkt : string) =
+    let bits = string_to_bits pkt in
+    { bits; idx = 0; len = Array.length bits }
+
+  (* Read a header from the packet into a fixed-sized header @hdr and advance the cursor.
+     May trigger error PacketTooShort or StackOutOfBounds.
+     @T must be a fixed-size header type
+
+     void extract<T>(out T hdr); *)
+  (* let extract (ctx : Ctx.t) pkt : Ctx.t * SSig.t * t = *)
+
+  (* Read bits from the packet into a variable-sized header @variableSizeHeader
+     and advance the cursor.
+     @T must be a header containing exactly 1 varbit field.
+     May trigger errors PacketTooShort, StackOutOfBounds, or HeaderTooShort.
+
+     void extract<T>(out T variableSizeHeader,
+                      in bit<32> variableFieldSizeInBits); *)
+  (* let extract_varsize (ctx : Ctx.t) pkt : Ctx.t * SSig.t * t = *)
+
+  (* Read bits from the packet without advancing the cursor.
+     @returns: the bits read from the packet.
+     T may be an arbitrary fixed-size type.
+
+     T lookahead<T>(); *)
+  (* let lookahead (ctx : Ctx.t) pkt : SSig.t = *)
+
+  (* Advance the packet cursor by the specified number of bits.
+
+     void advance(in bit<32> sizeInBits); *)
+  (* let advance (ctx : Ctx.t) pkt = *)
+
+  (* @return packet length in bytes.  This method may be unavailable on
+     some target architectures.
+
+     bit<32> length(); *)
+  (* let length pkt = *)
+end
+
+(* Output packet *)
+
+module PacketOut = struct
+  type t = { bits : bits }
+
+  let init () = { bits = Array.make 0 false }
+
+  (* Write @hdr into the output packet, advancing cursor.
+     @T can be a header type, a header stack, a header_union, or a struct
+     containing fields with such types.
+
+     void emit<T>(in T hdr); *)
+  (* let emit (ctx : Ctx.t) pkt = *)
+end

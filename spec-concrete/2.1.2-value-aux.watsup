@@ -21,3 +21,22 @@ def $to_number(D i) = i
 def $to_number(w S i) = $to_int(w, i)
 def $to_number(w W i) = i
 def $to_number(w V i `# _) = i
+
+;;
+;; Update a field value
+;;
+
+dec $update_fieldValue(fieldValue*, id, value) : fieldValue*
+
+def $update_fieldValue(eps, id, value) = eps
+def $update_fieldValue(
+    (value_field_h id_field_h `;) :: fieldValue_t*,
+    id, value
+  ) = (value id `;) :: fieldValue_t*
+  -- if id_field_h = id
+def $update_fieldValue(
+    (value_field_h id_field_h `;) :: fieldValue_t*,
+    id, value
+  ) = (value_field_h id_field_h `;) ::
+      $update_fieldValue(fieldValue_t*, id, value)
+  -- otherwise

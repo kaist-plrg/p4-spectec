@@ -9,9 +9,20 @@ relation V1Model_init:
   hint(prose_out "the resulting evaluation context" %1#" and store" %2)
 
 rule V1Model_init:
-  |- p4program : EC_5 STO_2
+  |- p4program : EC_0 STO_0
   ---- ;; instantiate the program
   -- Program_init: |- p4program : EC_0 STO_0
+
+;;
+;; V1Model packet setup
+;;
+
+relation V1Model_init_packet:
+  evaluationContext store |- evaluationContext store
+  hint(input %0 %1)
+
+rule V1Model_init_packet:
+  EC_0 STO_0 |- EC_5 STO_2
   ---- ;; initialize the packet_in and packet_out externs
   -- Extern_init: EC_0 STO_0 |- "packet_in" : STO_1
   -- if EC_1
@@ -39,13 +50,11 @@ rule V1Model_init:
 ;;
 
 relation V1Model_parser:
-  evaluationContext store |- transitionResult evaluationContext store
+  evaluationContext store |- evaluationContext store transitionResult
   hint(input %0 %1)
 
 rule V1Model_parser:
-  EC_0 STO_0 |- transitionResult EC_1 STO_1
-  ---- ;; find the parser object
-  -- if parserObject = $find_map<oid, object>(STO_0, [ "main", "p" ])
+  EC_0 STO_0 |- EC_1 STO_1 ACCEPT
   ---- ;; prepare the arguments
   ---- ;; packet_in
   -- if polyTypeDefIR_packet_in
@@ -73,7 +82,12 @@ rule V1Model_parser:
   -- if argumentIR*
       = [ argumentIR_packet_in, argumentIR_hdr,
           argumentIR_meta, argumentIR_standard_metadata ]
-  ---- ;; invoke the parser object
-  -- Parser_invoke:
-      EC_0 STO_0 |- parserObject `. APPLY `( argumentIR* )
-                  : EC_1 STO_1 transitionResult
+  ---- ;; invoke the parser object (main.p)
+  -- if typedExpressionIR_main = (`` "main") `# `( VOID CTK )
+  -- if typedExpressionIR_p
+      = (typedExpressionIR_main `. "p") `# `( VOID CTK )
+  -- if routineTargetIR
+      = typedExpressionIR_p `. "apply"
+  -- Stmt_eval:
+      GLOBAL EC_0 STO_0 |- routineTargetIR `< eps > `( argumentIR* ) `;
+                         : EC_1 STO_1 ACCEPT

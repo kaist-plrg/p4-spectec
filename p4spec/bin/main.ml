@@ -149,6 +149,7 @@ let sim_command =
      let%map filenames_spec = anon (sequence ("filename" %: string))
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and filename_p4 = flag "-p" (required string) ~doc:"p4 file of interest"
+     and filename_stf = flag "-stf" (required string) ~doc:"stf test file"
      and arch = flag "-arch" (required string) ~doc:"target architecture" in
      fun () ->
        try
@@ -159,7 +160,7 @@ let sim_command =
          let spec_sl = Structure.Struct.struct_spec spec_il in
          if arch <> "v1model" then
            raise (CommandError "only arch=v1model is supported for now");
-         Arch.V1model.run spec_sl includes_p4 filename_p4
+         Arch.V1model.run spec_sl includes_p4 filename_p4 filename_stf
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)

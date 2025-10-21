@@ -59,23 +59,27 @@ relation Lvalue_eval:
   hint(input %0 %1 %2 %3)
 
 relation Lvalue_read:
-  cursor evaluationContext |- storageReference : value
-  hint(input %0 %1 %2)
+  cursor evaluationContext store |- storageReference : value
+  hint(input %0 %1 %2 %3)
 
 relation Lvalue_write:
-  cursor evaluationContext |- storageReference -> value
-                            : evaluationContext
-  hint(input %0 %1 %2 %3)
+  cursor evaluationContext store |- storageReference -> value
+                                  : evaluationContext
+  hint(input %0 %1 %2 %3 %4)
 
 ;;
 ;;;; Statement evaluation
 ;;
 
 syntax returnResult = RETURN value?
+syntax acceptTransitionResult = ACCEPT
+syntax rejectTransitionResult = REJECT
 
 syntax statementResult =
   | continueEmptyResult
+  | acceptTransitionResult
   | exitResult
+  | rejectTransitionResult
   | returnResult
 
 relation Stmt_eval:
@@ -101,8 +105,6 @@ relation Block_eval:
 ;;;; Parser evaluation
 ;;
 
-syntax acceptTransitionResult = ACCEPT
-syntax rejectTransitionResult = REJECT
 syntax stateTransitionResult = STATE id
 
 syntax transitionResult =
@@ -206,19 +208,20 @@ relation Copy_in_default:
   hint(input %0 %1 %2 %3)
 
 relation Copy_out_argument:
-  cursor evaluationContext parameterIR
-  `@ cursor evaluationContext storageReference?
+  store cursor evaluationContext parameterIR
+     `@ cursor evaluationContext storageReference?
   ~> evaluationContext
-  hint(input %0 %1 %2 %3 %4 %5)
+  hint(input %0 %1 %2 %3 %4 %5 %6)
 
 relation Copy_out:
-  cursor evaluationContext parameterListIR
-  `@ cursor evaluationContext storageReference?*
+  store cursor evaluationContext parameterListIR
+        `@ cursor evaluationContext storageReference?*
   ~> evaluationContext
-  hint(input %0 %1 %2 %3 %4 %5)
+  hint(input %0 %1 %2 %3 %4 %5 %6)
 
 syntax callResult =
   | returnResult
+  | acceptTransitionResult
   | exitResult
   | rejectTransitionResult
 
@@ -233,3 +236,9 @@ relation ExternMethodCall_eval:
   evaluationContext store |- oid `. nameIR `( nameIR* )
                            : evaluationContext store callResult
   hint(input %0 %1 %2 %3 %4)
+
+rule ExternMethodCall_eval:
+  EC STO |- oid `. nameIR `( nameIR_param* ) : EC STO EXIT
+  -- debug oid
+  -- debug nameIR
+  -- debug nameIR_param*

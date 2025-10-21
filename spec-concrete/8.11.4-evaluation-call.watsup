@@ -41,7 +41,6 @@ rulegroup Call_eval/externMethodCallee {
                     `@ `< typeArgumentIR* > `( argumentIR* )
                   : EC_2 STO_2 EXIT
     ---- ;; create the callee context
-    -- debug nameIR
     -- if EC_callee_0
         = $inherit_evaluationContext(GLOBAL, EC_0)
     ---- ;; align parameters with arguments
@@ -66,8 +65,8 @@ rulegroup Call_eval/externMethodCallee {
                            : EC_callee_4 STO_2 (RETURN _)
     ---- ;; copy-out
     -- Copy_out:
-        p EC_1 parameterIR_aligned*
-        `@ LOCAL EC_callee_4 storageReference?*
+        STO_2 p EC_1 parameterIR_aligned*
+           `@ LOCAL EC_callee_4 storageReference?*
         ~> EC_2
 
 }
@@ -75,8 +74,47 @@ rulegroup Call_eval/externMethodCallee {
 ;;;;; EXTERN_METHOD ABSTRACT nameIR
 ;;;;;   `< typeParameterListIR > `( parameterListIR )
 
-;;;; parserApplyMethod
+;;;; parserApplyMethodCallee
 
-;;;; controlApplyMethod
+rule Call_eval/parserApplyMethodCallee:
+  p EC_0 STO_0 |- parserApplyMethodCallee
+                  `@ `< typeArgumentListIR > `( argumentListIR )
+                : EC_2 STO_3 ACCEPT
+  ---- ;; unpack the parser apply method callee
+  -- if PARSER _ `. APPLY `( parameterListIR `# id_default* )
+          `{ frame `; parserLocalDeclarationListIR `; senv }
+      = parserApplyMethodCallee
+  ---- ;; create the callee context
+  -- if EC_callee_0
+      = $inherit_evaluationContext(GLOBAL, EC_0)
+  -- if EC_callee_1
+      = EC_callee_0[ .BLOCK.FRAME = frame ][ .BLOCK.STATE = senv ]
+  ---- ;; align parameters with arguments
+  -- if (parameterIR_aligned*, argumentIR_aligned*,
+         parameterIR_default*, value_default*)
+      = $align_params_with_args(parameterListIR, argumentListIR, id_default*)
+  ---- ;; copy-in
+  -- Copy_in:
+      STO_0 p EC_0 parameterIR_aligned*
+         `@ BLOCK EC_callee_1 argumentIR_aligned*
+      ~> STO_1 EC_1 `@ EC_callee_2 `# (CONT storageReference?*)
+  -- Copy_in_default:
+      parameterIR_default* `@ BLOCK EC_callee_2 value_default*
+      ~> `@ EC_callee_3
+  ---- ;; evaluate local declarations
+  -- ParserLocalDecls_eval:
+      EC_callee_3 STO_1 |- parserLocalDeclarationListIR
+                          : EC_callee_4 STO_2
+  ---- ;; execute the parser state machine
+  -- ParserState_trans:
+      EC_callee_4 STO_2 |- TRANSITION "start"
+                         : EC_callee_5 STO_3 ACCEPT
+  ---- ;; copy-out
+  -- Copy_out:
+      STO_3 p EC_1 parameterIR_aligned*
+         `@ BLOCK EC_callee_5 storageReference?*
+      ~> EC_2
 
-;;;; tableApplyMethod
+;;;; controlApplyMethodCallee
+
+;;;; tableApplyMethodCallee

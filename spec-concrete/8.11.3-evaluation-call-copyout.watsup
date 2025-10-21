@@ -5,8 +5,8 @@
 ;;; IN | `EMPTY
 
 rule Copy_out_argument/in-directionless:
-  p_caller EC_caller_0 (_ direction typeIR nameIR _)
-  `@ p_callee EC_callee eps
+  STO p_caller EC_caller_0 (_ direction typeIR nameIR _)
+   `@ p_callee EC_callee eps
   ~> EC_caller_0
   ---- ;; check parameter direction
   -- if direction = IN \/ direction = `EMPTY
@@ -16,15 +16,15 @@ rule Copy_out_argument/in-directionless:
 rulegroup Copy_out_argument/out-inout {
 
   rule Copy_out_argument/dontcare:
-    p_caller EC_caller (_ direction typeIR nameIR _)
-    `@ p_callee EC_callee eps
+    STO p_caller EC_caller (_ direction typeIR nameIR _)
+     `@ p_callee EC_callee eps
     ~> EC_caller
     ---- ;; check parameter direction
     -- if direction = OUT \/ direction = INOUT
 
   rule Copy_out_argument/non-dontcare:
-    p_caller EC_caller_0 (_ direction typeIR nameIR _)
-    `@ p_callee EC_callee storageReference
+    STO p_caller EC_caller_0 (_ direction typeIR nameIR _)
+     `@ p_callee EC_callee storageReference
     ~> EC_caller_1
     ---- ;; check parameter direction
     -- if direction = OUT \/ direction = INOUT
@@ -32,8 +32,8 @@ rulegroup Copy_out_argument/out-inout {
     ---- ;; (TODO) support := without backticks
     -- if value = $find_value_eval(p_callee, EC_callee, `` nameIR)
     -- Lvalue_write:
-        p_caller EC_caller_0 |- storageReference -> value
-                              : EC_caller_1
+        p_caller EC_caller_0 STO |- storageReference -> value
+                                  : EC_caller_1
 
 }
 
@@ -44,22 +44,22 @@ rulegroup Copy_out_argument/out-inout {
 rulegroup Copy_out {
 
   rule Copy_out/nil:
-    p_caller EC_caller eps `@ p_callee EC_callee eps
+    STO p_caller EC_caller eps `@ p_callee EC_callee eps
     ~> EC_caller
 
   rule Copy_out/cons:
-    p_caller EC_caller_0 (parameterIR_h :: parameterIR_t*)
-    `@ p_callee EC_callee (storageReference_h? :: storageReference_t?*)
+    STO p_caller EC_caller_0 (parameterIR_h :: parameterIR_t*)
+     `@ p_callee EC_callee (storageReference_h? :: storageReference_t?*)
     ~> EC_caller_2
     ----
     -- Copy_out_argument:
-        p_caller EC_caller_0 parameterIR_h
-        `@ p_callee EC_callee storageReference_h?
+        STO p_caller EC_caller_0 parameterIR_h
+         `@ p_callee EC_callee storageReference_h?
         ~> EC_caller_1
     ----
     -- Copy_out:
-        p_caller EC_caller_1 parameterIR_t*
-        `@ p_callee EC_callee storageReference_t?*
+        STO p_caller EC_caller_1 parameterIR_t*
+         `@ p_callee EC_callee storageReference_t?*
         ~> EC_caller_2
 
 }

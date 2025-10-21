@@ -51,8 +51,27 @@ rulegroup Lvalue_eval/typedLvalueIR-nameIR {
 ;;; syntax referenceExpressionIR = prefixedNameIR
 
 rule Lvalue_read/referenceExpressionIR:
-  p EC |- prefixedNameIR : value
+  p EC STO |- prefixedNameIR : value
   -- if value = $find_value_eval(p, EC, prefixedNameIR)
+
+;;; storageReference `. nameIR
+
+rulegroup Lvalue_read/storageReference-nameIR {
+
+  rule Lvalue_read/package:
+    p EC_0 STO |- storageReference `. nameIR : value
+    ---- ;; read base value
+    -- Lvalue_read:
+        p EC_0 STO |- storageReference : value_base
+    ---- ;; if the base value is a reference to a package
+    -- if `! oid = value_base
+    -- if PACKAGE `< _ > `{ frame }
+        = $find_map<oid, object>(STO, oid)
+    ---- ;; look up the name in the package frame
+    -- if value
+        = $find_map<nameIR, value>(frame, nameIR)
+
+}
 
 ;;
 ;; L-value writes
@@ -64,5 +83,26 @@ rule Lvalue_read/referenceExpressionIR:
 ;;; syntax referenceExpressionIR = prefixedNameIR
 
 rule Lvalue_write/referenceExpressionIR:
-  p EC_0 |- prefixedNameIR -> value : EC_1
+  p EC_0 STO |- prefixedNameIR -> value : EC_1
   -- if EC_1 = $add_value_eval(p, EC_0, prefixedNameIR, value)
+
+;;; storageReference `. nameIR
+
+rulegroup Lvalue_write/storageReference-nameIR {
+
+  rule Lvalue_write/struct:
+    p EC_0 STO |- (storageReference `. nameIR) -> value : EC_1
+    ---- ;; read base value
+    -- Lvalue_read:
+        p EC_0 STO |- storageReference : value_base
+    ---- ;; if the base value is a struct
+    -- if STRUCT tid `{ fieldValue* } = value_base
+    ---- ;; update the field and write back
+    -- if fieldValue_update*
+        = $update_fieldValue(fieldValue*, nameIR, value)
+    -- if value_base_update
+        = STRUCT tid `{ fieldValue_update* }
+    -- Lvalue_write:
+        p EC_0 STO |- storageReference -> value_base_update : EC_1
+
+}

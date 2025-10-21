@@ -72,17 +72,13 @@ dec $add_value_eval(cursor, evaluationContext, prefixedNameIR, value): evaluatio
 dec $add_values_eval(cursor, evaluationContext, prefixedNameIR*, value*): evaluationContext
 
 def $add_value_eval(GLOBAL, EC, `. id, value) = EC[ .GLOBAL.FRAME = frame ]
-  -- if ~$in_set<id>(id, $dom_map<id, value>(EC.GLOBAL.FRAME))
   -- if frame = $add_map<id, value>(EC.GLOBAL.FRAME, id, value)
 def $add_value_eval(GLOBAL, EC, `` id, value) = EC[ .GLOBAL.FRAME = frame ]
-  -- if ~$in_set<id>(id, $dom_map<id, value>(EC.GLOBAL.FRAME))
   -- if frame = $add_map<id, value>(EC.GLOBAL.FRAME, id, value)
 def $add_value_eval(BLOCK, EC, `` id, value) = EC[ .BLOCK.FRAME = frame ]
-  -- if ~$in_set<id>(id, $dom_map<id, value>(EC.BLOCK.FRAME))
   -- if frame = $add_map<id, value>(EC.BLOCK.FRAME, id, value)
 def $add_value_eval(LOCAL, EC, `` id, value) = EC[ .LOCAL.FRAMES = frame_h' :: frame_t* ]
   -- if EC.LOCAL.FRAMES = frame_h :: frame_t*
-  -- if ~$in_set<id>(id, $dom_map<id, value>(frame_h))
   -- if frame_h' = $add_map<id, value>(frame_h, id, value)
 
 def $add_values_eval(p, EC, eps, eps) = EC
@@ -102,7 +98,6 @@ def $add_typedef_eval(GLOBAL, EC, tid, typeDefIR) = EC[ .GLOBAL.TYPE = tdenv ]
 dec $add_state_eval(cursor, evaluationContext, nameIR, state) : evaluationContext
 
 def $add_state_eval(BLOCK, EC, nameIR, state) = EC[ .BLOCK.STATE = senv ]
-  -- if ~$in_set<nameIR>(nameIR, $dom_map<nameIR, state>(EC.BLOCK.STATE))
   -- if senv = $add_map<nameIR, state>(EC.BLOCK.STATE, nameIR, state)
 
 ;;; Adder for type variables
@@ -126,10 +121,8 @@ dec $add_routine_overload_eval(cursor, evaluationContext, rid, routine)
   : evaluationContext
 
 def $add_routine_overload_eval(GLOBAL, EC, rid, routine) = EC[ .GLOBAL.ROUTINE = renv ]
-  -- if ~$in_set<rid>(rid, $dom_map<rid, routine>(EC.GLOBAL.ROUTINE))
   -- if renv = $add_map<rid, routine>(EC.GLOBAL.ROUTINE, rid, routine)
 def $add_routine_overload_eval(BLOCK, EC, rid, routine) = EC[ .BLOCK.ROUTINE = renv ]
-  -- if ~$in_set<rid>(rid, $dom_map<rid, routine>(EC.BLOCK.ROUTINE))
   -- if renv = $add_map<rid, routine>(EC.BLOCK.ROUTINE, rid, routine)
 
 dec $add_routine_non_overload_eval(cursor, evaluationContext, rid, routine)
@@ -138,12 +131,10 @@ dec $add_routine_non_overload_eval(cursor, evaluationContext, rid, routine)
 def $add_routine_non_overload_eval(GLOBAL, EC, rid, routine) = EC[ .GLOBAL.ROUTINE = renv ]
   -- if id `( _ ) = rid
   -- if `{ (id_k `( _ ))* } = $dom_map<rid, routine>(EC.GLOBAL.ROUTINE)
-  -- if ~$in_set<id>(id, `{ id_k* })
   -- if renv = $add_map<rid, routine>(EC.GLOBAL.ROUTINE, rid, routine)
 def $add_routine_non_overload_eval(BLOCK, EC, rid, routine) = EC[ .BLOCK.ROUTINE = renv ]
   -- if id `( _ ) = rid
   -- if `{ (id_k `( _ ))* } = $dom_map<rid, routine>(EC.BLOCK.ROUTINE)
-  -- if ~$in_set<id>(id, `{ id_k* })
   -- if renv = $add_map<rid, routine>(EC.BLOCK.ROUTINE, rid, routine)
 
 ;;; Adder for constructors
