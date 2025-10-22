@@ -40,7 +40,7 @@ rule V1Model_init_packet:
   -- Var_init: EC_3 |- typeIR_meta "meta" : EC_4
   ---- ;; standard_metadata
   -- if polyTypeDefIR_standard_metadata
-      = $find_type_eval(GLOBAL, EC_4, `` "standard_metadata_t")
+      = $find_typeDef_eval(GLOBAL, EC_4, `` "standard_metadata_t")
   -- if typeIR_std_meta
       = polyTypeDefIR_standard_metadata `< eps >
   -- Var_init: EC_4 |- typeIR_std_meta "standard_metadata" : EC_5
@@ -58,7 +58,7 @@ rule V1Model_parser:
   ---- ;; prepare the arguments
   ---- ;; packet_in
   -- if polyTypeDefIR_packet_in
-      = $find_type_eval(GLOBAL, EC_0, `` "packet_in")
+      = $find_typeDef_eval(GLOBAL, EC_0, `` "packet_in")
   -- if typeIR_packet_in = polyTypeDefIR_packet_in `< eps >
   -- if argumentIR_packet_in
       = (`. "packet_in") `# `( typeIR_packet_in CTK )
@@ -73,7 +73,7 @@ rule V1Model_parser:
       = (`. "meta") `# `( typeIR_meta DYN )
   ---- ;; standard_metadata
   -- if polyTypeDefIR_standard_metadata
-      = $find_type_eval(GLOBAL, EC_0, `` "standard_metadata_t")
+      = $find_typeDef_eval(GLOBAL, EC_0, `` "standard_metadata_t")
   -- if typeIR_std_meta
       = polyTypeDefIR_standard_metadata `< eps >
   -- if argumentIR_standard_metadata
@@ -90,4 +90,4 @@ rule V1Model_parser:
       = typedExpressionIR_p `. "apply"
   -- Stmt_eval:
       GLOBAL EC_0 STO_0 |- routineTargetIR `< eps > `( argumentIR* ) `;
-                         : EC_1 STO_1 ACCEPT
+                         : EC_1 STO_1 CONT

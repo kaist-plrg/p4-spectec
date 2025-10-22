@@ -293,14 +293,14 @@ rulegroup Expr_eval/memberAccessExpressionIR-type {
   rule Expr_eval/enum:
     p EC STO |- ((TYPE prefixedNameIR) `. nameIR) `# _
               : EC STO expressionResult
-    -- if ENUM tid `{ _ } = $find_type_eval(p, EC, prefixedNameIR)
+    -- if ENUM tid `{ _ } = $find_typeDef_eval(p, EC, prefixedNameIR)
     -- if expressionResult = CONT (tid `. nameIR)
 
   rule Expr_eval/serenum:
     p EC STO |- ((TYPE prefixedNameIR) `. nameIR) `# _
               : EC STO expressionResult
     -- if ENUM tid `# _ `{ (id_member `= value_member `;)* }
-        = $find_type_eval(p, EC, prefixedNameIR)
+        = $find_typeDef_eval(p, EC, prefixedNameIR)
     -- if value = $assoc_<nameIR, value>(nameIR, (id_member, value_member)*)
     -- if expressionResult = CONT (tid `. nameIR `# value)
 
@@ -335,7 +335,8 @@ rulegroup Expr_eval/memberAccessExpressionIR-expression {
     p EC_0 STO_0 |- (typedExpressionIR_base `. nameIR) `# `( typeIR_base _ )
                   : EC_1 STO_1 expressionResult
     -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_base : EC_1 STO_1 (CONT value_base)
-    -- if HEADER _ `{ (value_field id_field `;)* } = value_base
+    ---- ;; (TODO) what to do for invalid headers?
+    -- if HEADER _ `{ true `; (value_field id_field `;)* } = value_base
     -- if value_member
         = $assoc_<nameIR, value>(nameIR, (id_field, value_field)*)
     -- if expressionResult = CONT value_member

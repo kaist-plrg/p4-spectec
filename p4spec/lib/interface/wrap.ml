@@ -2,6 +2,8 @@ open Il.Ast
 open Xl.Atom
 open Util.Source
 
+(* Atom generator *)
+
 let wrap_atom (s : string) : atom =
   match s with
   | "<:" -> Sub $ no_region
@@ -78,8 +80,12 @@ let wrap_atom (s : string) : atom =
       SilentAtom s $ no_region
   | _ -> Atom s $ no_region
 
+(* Type generators *)
+
 let wrap_var_t (s : string) : typ' = VarT (s $ no_region, [])
 let wrap_iter_t (i : iter) (t : typ') : typ' = IterT (t $ no_region, i)
+
+(* Value note generators *)
 
 let with_fresh_val (typ : typ') : vnote =
   let vid = Runtime_dynamic.Value.fresh () in
@@ -87,7 +93,19 @@ let with_fresh_val (typ : typ') : vnote =
 
 let with_typ (typ : typ') (v : value') : value = v $$$ with_fresh_val typ
 
+(* Value generators *)
+
 type symbol = NT of value | Term of string
+
+let wrap_bool_v (b : bool) : value = BoolV b |> with_typ BoolT
+
+let wrap_num_v_nat (n : int) : value =
+  NumV (`Nat (Bigint.of_int n)) |> with_typ (NumT `NatT)
+
+let wrap_num_v_int (i : int) : value =
+  NumV (`Int (Bigint.of_int i)) |> with_typ (NumT `IntT)
+
+let wrap_text_v (s : string) : value = TextV s |> with_typ TextT
 
 let wrap_case_v (vs : symbol list) : value' =
   let rec build_mixop acc_mixop acc_terms = function
@@ -115,6 +133,9 @@ let wrap_opt_v (s : string) (v : value option) : value =
 
 let wrap_list_v (s : string) (vs : value list) : value =
   ListV vs |> with_typ (wrap_iter_t List (wrap_var_t s))
+
+let wrap_list_v_typed (t : typ') (vs : value list) : value =
+  ListV vs |> with_typ (wrap_iter_t List t)
 
 let ( #@ ) (vs : symbol list) (s : string) : value =
   vs |> wrap_case_v |> with_typ (wrap_var_t s)

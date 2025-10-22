@@ -35,21 +35,21 @@ def $align_params_with_args(parameterIR*, argumentIR*, id*)
 
 rulegroup Call_eval/externMethodCallee {
 
-  rule Call_eval/non-abstract:
+  rule Call_eval/non-abstract-accept:
     p EC_0 STO_0 |- (EXTERN_METHOD oid `. nameIR `< typeParameterIR* >
                       `( parameterIR* `# id_default* ) eps)
                     `@ `< typeArgumentIR* > `( argumentIR* )
-                  : EC_2 STO_2 EXIT
+                  : EC_2 STO_2 acceptTransitionResult
     ---- ;; create the callee context
     -- if EC_callee_0
         = $inherit_evaluationContext(GLOBAL, EC_0)
+    ---- ;; bind type parameters and arguments in callee context
+    -- if EC_callee_1
+        = $add_types_eval(LOCAL, EC_callee_0, typeParameterIR*, typeArgumentIR*)
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
            parameterIR_default*, value_default*)
         = $align_params_with_args(parameterIR*, argumentIR*, id_default*)
-    ---- ;; bind type parameters and arguments in callee context
-    -- if EC_callee_1
-        = $add_types_eval(LOCAL, EC_callee_0, typeParameterIR*, typeArgumentIR*)
     ---- ;; copy-in
     -- Copy_in:
         STO_0 p EC_0 parameterIR_aligned*
@@ -62,7 +62,7 @@ rulegroup Call_eval/externMethodCallee {
     -- if (_ _ _ nameIR_param _ = parameterIR)*
     -- ExternMethodCall_eval:
         EC_callee_3 STO_1 |- oid `. nameIR `( nameIR_param* )
-                           : EC_callee_4 STO_2 (RETURN _)
+                           : EC_callee_4 STO_2 acceptTransitionResult
     ---- ;; copy-out
     -- Copy_out:
         STO_2 p EC_1 parameterIR_aligned*

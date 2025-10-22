@@ -1,3 +1,6 @@
+open Interface.Wrap
+open Interface.Unwrap
+
 (* Bit manipulation *)
 
 type bits = bool Array.t
@@ -69,18 +72,70 @@ let int_to_bits_signed value size =
 (* Input packet *)
 
 module PacketIn = struct
+  (* Type and initializer *)
+
   type t = { bits : bits; idx : int; len : int }
 
   let init (pkt : string) =
     let bits = string_to_bits pkt in
     { bits; idx = 0; len = Array.length bits }
 
+  (* Size *)
+
+  (* Parser *)
+
+  let parse (pkt : t) (size : int) =
+    let bits = Array.sub pkt.bits pkt.idx size in
+    let pkt = { pkt with idx = pkt.idx + size } in
+    (pkt, bits)
+
   (* Read a header from the packet into a fixed-sized header @hdr and advance the cursor.
      May trigger error PacketTooShort or StackOutOfBounds.
      @T must be a fixed-size header type
 
      void extract<T>(out T hdr); *)
-  (* let extract (ctx : Ctx.t) pkt : Ctx.t * SSig.t * t = *)
+  let extract call_rel_one call_func (value_ctx : Sl.Ast.value)
+      (value_sto : Sl.Ast.value) (pkt : t) :
+      t * Sl.Ast.value * Sl.Ast.value * Sl.Ast.value =
+    (* Get "T" *)
+    let value_cursor = [ Term "LOCAL" ] #@ "cursor" in
+    let value_nameIR = wrap_text_v "T" in
+    let value_typ =
+      call_func "find_type_eval" [] [ value_cursor; value_ctx; value_nameIR ]
+      |> unwrap_opt_v |> Option.get
+    in
+    (* Get size of "T" after canonicalization *)
+    let value_typ_subst =
+      call_func "subst_type_eval" [] [ value_cursor; value_ctx; value_typ ]
+    in
+    let size =
+      call_func "sizeof_maxSizeInBits'" [] [ value_typ_subst ] |> unwrap_num_v
+    in
+    (* Parse from packet *)
+    let pkt, bits = parse pkt (Bigint.to_int_exn size) in
+    let value_prefixedNameIR =
+      let value_nameIR = wrap_text_v "hdr" in
+      [ Term "`"; NT value_nameIR ] #@ "prefixedNameIR"
+    in
+    let value_hdr =
+      call_func "find_value_eval" []
+        [ value_cursor; value_ctx; value_prefixedNameIR ]
+    in
+    let value_bits =
+      Array.to_list bits |> List.map wrap_bool_v
+      |> wrap_list_v_typed Il.Ast.BoolT
+    in
+    let value_hdr =
+      call_func "write_value_from_bits" [] [ value_hdr; value_bits ]
+    in
+    (* Update "hdr" in context *)
+    let value_ctx =
+      call_rel_one "Lvalue_write"
+        [ value_cursor; value_ctx; value_sto; value_prefixedNameIR; value_hdr ]
+    in
+    (* Create call result *)
+    let value_callResult = [ Term "ACCEPT" ] #@ "acceptTransitionResult" in
+    (pkt, value_ctx, value_sto, value_callResult)
 
   (* Read bits from the packet into a variable-sized header @variableSizeHeader
      and advance the cursor.

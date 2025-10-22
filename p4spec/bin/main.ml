@@ -158,9 +158,8 @@ let sim_command =
          let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
-         if arch <> "v1model" then
-           raise (CommandError "only arch=v1model is supported for now");
-         Arch.V1model.run spec_sl includes_p4 filename_p4 filename_stf
+         let (module Runner) = Arch.Gen.gen arch in
+         Runner.run spec_sl includes_p4 filename_p4 filename_stf
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
