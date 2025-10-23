@@ -49,7 +49,17 @@ syntax packageObject = PACKAGE `< theta > `{ frame }
 ;;;; Name of the table (tid) and value environment (frame)
 ;;
 
-syntax tableObject = TABLE tid `{ frame tablePropertyListIR }
+syntax tableObjectProperty =
+  { KEYS tableKeysPropertyIR,
+    ACTIONS tableActionsPropertyIR,
+    DEFAULT_ACTION tableDefaultActionPropertyIR,
+    ENTRIES tableEntriesPropertyIR,
+    CUSTOMS tableCustomPropertyIR* }
+
+var TBL : tableObjectProperty
+
+syntax tableObject =
+  TABLE tid `{ frame tableObjectProperty }
 
 syntax object =
   | externObject

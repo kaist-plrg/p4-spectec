@@ -17,6 +17,16 @@ module Make (Interp : Sim.INTERP) : Sim.ARCH = struct
 
   let externs = ref Externs.empty
 
+  let get_pkt_in () =
+    match Externs.find "packet_in" !externs with
+    | PacketIn pkt_in -> pkt_in
+    | _ -> assert false
+
+  let get_pkt_out () =
+    match Externs.find "packet_out" !externs with
+    | PacketOut pkt_out -> pkt_out
+    | _ -> assert false
+
   (* Call entry points *)
 
   let call_rel (relname : string) (expect : int)
@@ -94,6 +104,12 @@ module Make (Interp : Sim.INTERP) : Sim.ARCH = struct
         in
         externs := Externs.add oid (PacketIn packet_in) !externs;
         [ value_ctx; value_sto; value_callResult ]
+    | PacketOut packet_out, "emit", [ "hdr" ] ->
+        let packet_out, value_ctx, value_sto, value_callResult =
+          Core.PacketOut.emit call_func value_ctx value_sto packet_out
+        in
+        externs := Externs.add oid (PacketOut packet_out) !externs;
+        [ value_ctx; value_sto; value_callResult ]
     | _ ->
         failwith
           ("Unsupported extern method call: " ^ oid ^ "." ^ name ^ "("
@@ -142,6 +158,42 @@ module Make (Interp : Sim.INTERP) : Sim.ARCH = struct
       Sl.Ast.value * Sl.Ast.value * Sl.Ast.value =
     call_rel_three "V1Model_verify" [ value_ctx; value_sto ]
 
+  let drive_ig (value_ctx : Sl.Ast.value) (value_sto : Sl.Ast.value) :
+      Sl.Ast.value * Sl.Ast.value * Sl.Ast.value =
+    call_rel_three "V1Model_ingress" [ value_ctx; value_sto ]
+
+  let drive_eg (value_ctx : Sl.Ast.value) (value_sto : Sl.Ast.value) :
+      Sl.Ast.value * Sl.Ast.value * Sl.Ast.value =
+    call_rel_three "V1Model_egress" [ value_ctx; value_sto ]
+
+  let drive_ck (value_ctx : Sl.Ast.value) (value_sto : Sl.Ast.value) :
+      Sl.Ast.value * Sl.Ast.value * Sl.Ast.value =
+    call_rel_three "V1Model_check" [ value_ctx; value_sto ]
+
+  let drive_dep (value_ctx : Sl.Ast.value) (value_sto : Sl.Ast.value) :
+      Sl.Ast.value * Sl.Ast.value * Sl.Ast.value =
+    call_rel_three "V1Model_deparse" [ value_ctx; value_sto ]
+
+  let resulting_port_packet (value_ctx : Sl.Ast.value)
+      (value_sto : Sl.Ast.value) : IO.result option =
+    (* Get egress port *)
+    let value_cursor = [ Term "GLOBAL" ] #@ "cursor" in
+    let value_prefixedNameIR =
+      let value_nameIR = wrap_text_v "standard_metadata" in
+      [ Term "`"; NT value_nameIR ] #@ "prefixedNameIR"
+    in
+    let _value_standard_metadata =
+      call_func "find_value_eval" []
+        [ value_cursor; value_ctx; value_prefixedNameIR ]
+    in
+    (* Get output packet *)
+    let header = get_pkt_out () |> Format.asprintf "%a" Core.PacketOut.pp in
+    let payload =
+      get_pkt_in () |> Format.asprintf "%a" Core.PacketIn.pp_payload
+    in
+    let packet = header ^ payload in
+    Some (0, packet)
+
   let drive_pipe (value_ctx : Sl.Ast.value) (value_sto : Sl.Ast.value)
       (port_in : IO.port) (packet_in : IO.packet) :
       Sl.Ast.value * Sl.Ast.value * IO.result option =
@@ -157,5 +209,23 @@ module Make (Interp : Sim.INTERP) : Sim.ARCH = struct
     let value_ctx, value_sto, _value_verify_result =
       drive_vr value_ctx value_sto
     in
-    (value_ctx, value_sto, None)
+    (* Ingress block *)
+    let value_ctx, value_sto, _value_verify_result =
+      drive_ig value_ctx value_sto
+    in
+    (* Egress block *)
+    let value_ctx, value_sto, _value_verify_result =
+      drive_eg value_ctx value_sto
+    in
+    (* Check block *)
+    let value_ctx, value_sto, _value_check_result =
+      drive_ck value_ctx value_sto
+    in
+    (* Deparser block *)
+    let value_ctx, value_sto, _value_deparse_result =
+      drive_dep value_ctx value_sto
+    in
+    (* Get resulting port and packet *)
+    let result_opt = resulting_port_packet value_ctx value_sto in
+    (value_ctx, value_sto, result_opt)
 end

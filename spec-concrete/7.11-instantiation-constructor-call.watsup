@@ -299,11 +299,6 @@ rule Constructor_inst/package:
 
 ;;; TABLE nameIR `{ tablePropertyListIR }
 
-;; (TODO) Create runtime representation of table
-
-dec $init_table(tablePropertyListIR) : tablePropertyListIR
-def $init_table(tablePropertyListIR) = tablePropertyListIR
-
 rule Constructor_inst/table:
   p IC STO_0 |- (TABLE nameIR `{ tablePropertyListIR })
                   `< eps > `( eps `# eps )
@@ -317,9 +312,8 @@ rule Constructor_inst/table:
   -- TableProperties_inst:
       IC_frame STO_0 |- tablePropertyListIR
                     ==> STO_1 tablePropertyListIR_inst
-  -- if tablePropertyListIR_dynamic
-      = $init_table(tablePropertyListIR_inst)
+  -- if TBL = $init_table(tablePropertyListIR_inst)
   ---- ;; create table object with table frame
   -- if frame :: _ = IC_frame.LOCAL.FRAMES
   -- if object_table
-      = TABLE nameIR `{ frame tablePropertyListIR_dynamic }
+      = TABLE nameIR `{ frame TBL }

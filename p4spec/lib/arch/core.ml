@@ -42,31 +42,6 @@ let bits_to_string bits =
   in
   loop 0 ""
 
-let bits_to_int_unsigned bits =
-  Array.fold_left
-    (fun i bit -> Bigint.((i lsl 1) + if bit then one else zero))
-    Bigint.zero bits
-
-let bits_to_int_signed bits =
-  let ssig = bits.(0) in
-  let int_unsigned = bits_to_int_unsigned bits in
-  if ssig then
-    let int_max =
-      let len = Array.length bits - 1 in
-      Bigint.(one lsl len)
-    in
-    Bigint.(int_unsigned - (int_max * (one + one)))
-  else int_unsigned
-
-let int_to_bits_unsigned value size =
-  Array.init size (fun i -> Bigint.(value land (one lsl i) > zero))
-  |> Array.to_list |> List.rev |> Array.of_list
-
-let int_to_bits_signed value size =
-  let mask = Bigint.((one lsl size) - one) in
-  let value = Bigint.(value land mask) in
-  int_to_bits_unsigned value size
-
 (* Core extern objects *)
 
 (* Input packet *)
@@ -75,6 +50,12 @@ module PacketIn = struct
   (* Type and initializer *)
 
   type t = { bits : bits; idx : int; len : int }
+
+  let pp fmt (pkt : t) = Format.fprintf fmt "%s" (bits_to_string pkt.bits)
+
+  let pp_payload fmt (pkt : t) =
+    let bits = Array.sub pkt.bits pkt.idx (pkt.len - pkt.idx) in
+    Format.fprintf fmt "%s" (bits_to_string bits)
 
   let init (pkt : string) =
     let bits = string_to_bits pkt in
@@ -134,7 +115,10 @@ module PacketIn = struct
         [ value_cursor; value_ctx; value_sto; value_prefixedNameIR; value_hdr ]
     in
     (* Create call result *)
-    let value_callResult = [ Term "ACCEPT" ] #@ "acceptTransitionResult" in
+    let value_callResult =
+      let value_eps = wrap_opt_v "value" None in
+      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+    in
     (pkt, value_ctx, value_sto, value_callResult)
 
   (* Read bits from the packet into a variable-sized header @variableSizeHeader
@@ -170,6 +154,7 @@ end
 module PacketOut = struct
   type t = { bits : bits }
 
+  let pp fmt pkt = Format.fprintf fmt "%s" (bits_to_string pkt.bits)
   let init () = { bits = Array.make 0 false }
 
   (* Write @hdr into the output packet, advancing cursor.
@@ -177,5 +162,28 @@ module PacketOut = struct
      containing fields with such types.
 
      void emit<T>(in T hdr); *)
-  (* let emit (ctx : Ctx.t) pkt = *)
+  let emit call_func (value_ctx : Sl.Ast.value) (value_sto : Sl.Ast.value)
+      (pkt : t) : t * Sl.Ast.value * Sl.Ast.value * Sl.Ast.value =
+    (* Get "hdr" in context *)
+    let value_cursor = [ Term "LOCAL" ] #@ "cursor" in
+    let value_prefixedNameIR =
+      let value_nameIR = wrap_text_v "hdr" in
+      [ Term "`"; NT value_nameIR ] #@ "prefixedNameIR"
+    in
+    let value_hdr =
+      call_func "find_value_eval" []
+        [ value_cursor; value_ctx; value_prefixedNameIR ]
+    in
+    (* Get bits of "hdr" *)
+    let value_bits = call_func "write_bits_from_value" [] [ value_hdr ] in
+    let bits =
+      unwrap_list_v value_bits |> List.map unwrap_bool_v |> Array.of_list
+    in
+    let pkt = { bits = Array.append pkt.bits bits } in
+    (* Create call result *)
+    let value_callResult =
+      let value_eps = wrap_opt_v "value" None in
+      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+    in
+    (pkt, value_ctx, value_sto, value_callResult)
 end

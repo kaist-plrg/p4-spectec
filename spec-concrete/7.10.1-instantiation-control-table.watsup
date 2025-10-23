@@ -59,3 +59,64 @@ rule TableProperties_inst/cons:
       IC STO_0 |- tablePropertyIR_h ==> STO_1 tablePropertyIR_h_inst
   -- TableProperties_inst:
       IC STO_1 |- tablePropertyIR_t* ==> STO_2 tablePropertyIR_t_inst*
+
+;;
+;; Create runtime representation of table
+;;
+
+dec $is_tableKeysPropertyIR(tablePropertyIR) : bool
+def $is_tableKeysPropertyIR(tableKeysPropertyIR) = true
+def $is_tableKeysPropertyIR(_) = false
+  -- otherwise
+
+dec $is_tableActionsPropertyIR(tablePropertyIR) : bool
+def $is_tableActionsPropertyIR(tableActionsPropertyIR) = true
+def $is_tableActionsPropertyIR(_) = false
+  -- otherwise
+
+dec $is_tableDefaultActionPropertyIR(tablePropertyIR) : bool
+def $is_tableDefaultActionPropertyIR(tableDefaultActionPropertyIR) = true
+def $is_tableDefaultActionPropertyIR(_) = false
+  -- otherwise
+
+dec $is_tableEntriesPropertyIR(tablePropertyIR) : bool
+def $is_tableEntriesPropertyIR(tableEntriesPropertyIR) = true
+def $is_tableEntriesPropertyIR(_) = false
+  -- otherwise
+
+dec $is_tableCustomPropertyIR(tablePropertyIR) : bool
+def $is_tableCustomPropertyIR(tableCustomPropertyIR) = true
+def $is_tableCustomPropertyIR(_) = false
+  -- otherwise
+
+dec $init_table(tablePropertyListIR) : tableObjectProperty
+dec $init_tableKeys(tablePropertyListIR) : tableKeysPropertyIR
+dec $init_tableEntries(tablePropertyListIR) : tableEntriesPropertyIR
+
+def $init_tableKeys(tablePropertyIR*) = tableKeysPropertyIR
+  -- if [ tableKeysPropertyIR ]
+      = $filter_<tablePropertyIR>(tablePropertyIR*, def $is_tableKeysPropertyIR)
+def $init_tableKeys(tablePropertyIR*) = KEY `= `{ eps }
+  -- if eps
+      = $filter_<tablePropertyIR>(tablePropertyIR*, def $is_tableKeysPropertyIR)
+
+def $init_tableEntries(tablePropertyIR*) = tableEntriesPropertyIR
+  -- if [ tableEntriesPropertyIR ]
+      = $filter_<tablePropertyIR>(tablePropertyIR*, def $is_tableEntriesPropertyIR)
+def $init_tableEntries(tablePropertyIR*)
+  = `EMPTY eps ENTRIES `= `{ eps }
+
+def $init_table(tablePropertyIR*) = TBL
+  -- if tableKeysPropertyIR = $init_tableKeys(tablePropertyIR*)
+  -- if [ tableActionsPropertyIR ]
+      = $filter_<tablePropertyIR>(tablePropertyIR*, def $is_tableActionsPropertyIR)
+  -- if [ tableDefaultActionPropertyIR ]
+      = $filter_<tablePropertyIR>(tablePropertyIR*, def $is_tableDefaultActionPropertyIR)
+  -- if tableEntriesPropertyIR = $init_tableEntries(tablePropertyIR*)
+  -- if tableCustomPropertyIR*
+      = $filter_<tablePropertyIR>(tablePropertyIR*, def $is_tableCustomPropertyIR)
+  -- if TBL = { KEYS tableKeysPropertyIR,
+                ACTIONS tableActionsPropertyIR,
+                DEFAULT_ACTION tableDefaultActionPropertyIR,
+                ENTRIES tableEntriesPropertyIR,
+                CUSTOMS tableCustomPropertyIR* }

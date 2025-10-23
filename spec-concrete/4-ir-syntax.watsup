@@ -731,17 +731,36 @@ syntax tableEntryIR =
 syntax tableEntryListIR = tableEntryIR*
 
 ;;
+;;;;;;;; Table custom property
+;;
+
+syntax tableCustomPropertyIR
+
+;;
 ;;;;;;;; Table properties
 ;;
 
-syntax tablePropertyIR =
-  | KEY `= `{ tableKeyListIR }
-  | ACTIONS `= `{ tableActionListIR }
-  | annotationList constOptIR ENTRIES `= `{ tableEntryListIR }
-  | annotationList constOptIR DEFAULT_ACTION `= tableActionReferenceIR `;
+syntax tableKeysPropertyIR = KEY `= `{ tableKeyListIR }
+
+syntax tableActionsPropertyIR = ACTIONS `= `{ tableActionListIR }
+
+syntax tableDefaultActionPropertyIR =
+  annotationList constOptIR DEFAULT_ACTION `= tableActionReferenceIR `;
+
+syntax tableEntriesPropertyIR =
+  annotationList constOptIR ENTRIES `= `{ tableEntryListIR }
+
+syntax tableCustomPropertyIR =
   ;; (TODO) Consider extending syntax value in syntax expressionIR
   | annotationList constOptIR CUSTOM nameIR initializerIR `;
   | annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR `;
+
+syntax tablePropertyIR =
+  | tableKeysPropertyIR
+  | tableActionsPropertyIR
+  | tableDefaultActionPropertyIR
+  | tableEntriesPropertyIR
+  | tableCustomPropertyIR
 
 syntax tablePropertyListIR = tablePropertyIR*
 

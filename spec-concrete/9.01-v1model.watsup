@@ -57,6 +57,14 @@ def $V1Model_setup_packet_in_argument(EC) = argumentIR_packet_in
   -- if argumentIR_packet_in
       = (`. "packet_in") `# `( typeIR_packet_in CTK )
 
+dec $V1Model_setup_packet_out_argument(evaluationContext) : argumentIR
+def $V1Model_setup_packet_out_argument(EC) = argumentIR_packet_out
+  -- if polyTypeDefIR_packet_out
+      = $find_typeDef_eval(GLOBAL, EC, `` "packet_out")
+  -- if typeIR_packet_out = polyTypeDefIR_packet_out `< eps >
+  -- if argumentIR_packet_out
+      = (`. "packet_out") `# `( typeIR_packet_out CTK )
+
 dec $V1Model_setup_hdr_argument(store) : argumentIR
 def $V1Model_setup_hdr_argument(STO) = argumentIR_hdr
   -- if PACKAGE `< tenv > `{ _ }
@@ -140,4 +148,118 @@ rule V1Model_verify:
       = typedExpressionIR_v `. "apply"
   -- Stmt_eval:
       GLOBAL EC_0 STO_0 |- routineTargetIR `< eps > `( argumentIR* ) `;
-                         : EC_1 STO_1 (RETURN eps)
+                         : EC_1 STO_1 CONT
+
+;;
+;; V1Model ingress invocation
+;;
+
+relation V1Model_ingress:
+  evaluationContext store |- evaluationContext store callResult
+  hint(input %0 %1)
+
+rule V1Model_ingress:
+  EC_0 STO_0 |- EC_1 STO_1 (RETURN eps)
+  ---- ;; prepare the arguments
+  -- if argumentIR_hdr
+      = $V1Model_setup_hdr_argument(STO_0)
+  -- if argumentIR_meta
+      = $V1Model_setup_meta_argument(STO_0)
+  -- if argumentIR_standard_metadata
+      = $V1Model_setup_standard_metadata_argument(EC_0)
+  -- if argumentIR*
+      = [ argumentIR_hdr, argumentIR_meta, argumentIR_standard_metadata ]
+  ---- ;; invoke the verify object (main.v)
+  ---- ;; (TODO) VOID types need to be handled properly
+  -- if typedExpressionIR_main = (`` "main") `# `( VOID CTK )
+  -- if typedExpressionIR_v
+      = (typedExpressionIR_main `. "ig") `# `( VOID CTK )
+  -- if routineTargetIR
+      = typedExpressionIR_v `. "apply"
+  -- Stmt_eval:
+      GLOBAL EC_0 STO_0 |- routineTargetIR `< eps > `( argumentIR* ) `;
+                         : EC_1 STO_1 CONT
+
+;;
+;; V1Model ingress invocation
+;;
+
+relation V1Model_egress:
+  evaluationContext store |- evaluationContext store callResult
+  hint(input %0 %1)
+
+rule V1Model_egress:
+  EC_0 STO_0 |- EC_1 STO_1 (RETURN eps)
+  ---- ;; prepare the arguments
+  -- if argumentIR_hdr
+      = $V1Model_setup_hdr_argument(STO_0)
+  -- if argumentIR_meta
+      = $V1Model_setup_meta_argument(STO_0)
+  -- if argumentIR_standard_metadata
+      = $V1Model_setup_standard_metadata_argument(EC_0)
+  -- if argumentIR*
+      = [ argumentIR_hdr, argumentIR_meta, argumentIR_standard_metadata ]
+  ---- ;; invoke the verify object (main.v)
+  ---- ;; (TODO) VOID types need to be handled properly
+  -- if typedExpressionIR_main = (`` "main") `# `( VOID CTK )
+  -- if typedExpressionIR_v
+      = (typedExpressionIR_main `. "eg") `# `( VOID CTK )
+  -- if routineTargetIR
+      = typedExpressionIR_v `. "apply"
+  -- Stmt_eval:
+      GLOBAL EC_0 STO_0 |- routineTargetIR `< eps > `( argumentIR* ) `;
+                         : EC_1 STO_1 CONT
+
+;;
+;; V1Model check invocation
+;;
+
+relation V1Model_check:
+  evaluationContext store |- evaluationContext store callResult
+  hint(input %0 %1)
+
+rule V1Model_check:
+  EC_0 STO_0 |- EC_1 STO_1 (RETURN eps)
+  ---- ;; prepare the arguments
+  -- if argumentIR_hdr
+      = $V1Model_setup_hdr_argument(STO_0)
+  -- if argumentIR_meta
+      = $V1Model_setup_meta_argument(STO_0)
+  -- if argumentIR* = [ argumentIR_hdr, argumentIR_meta ]
+  ---- ;; invoke the verify object (main.v)
+  ---- ;; (TODO) VOID types need to be handled properly
+  -- if typedExpressionIR_main = (`` "main") `# `( VOID CTK )
+  -- if typedExpressionIR_v
+      = (typedExpressionIR_main `. "ck") `# `( VOID CTK )
+  -- if routineTargetIR
+      = typedExpressionIR_v `. "apply"
+  -- Stmt_eval:
+      GLOBAL EC_0 STO_0 |- routineTargetIR `< eps > `( argumentIR* ) `;
+                         : EC_1 STO_1 CONT
+
+;;
+;; V1Model deparser invocation
+;;
+
+relation V1Model_deparse:
+  evaluationContext store |- evaluationContext store callResult
+  hint(input %0 %1)
+
+rule V1Model_deparse:
+  EC_0 STO_0 |- EC_1 STO_1 (RETURN eps)
+  ---- ;; prepare the arguments
+  -- if argumentIR_packet_out
+      = $V1Model_setup_packet_out_argument(EC_0)
+  -- if argumentIR_hdr
+      = $V1Model_setup_hdr_argument(STO_0)
+  -- if argumentIR* = [ argumentIR_packet_out, argumentIR_hdr ]
+  ---- ;; invoke the verify object (main.v)
+  ---- ;; (TODO) VOID types need to be handled properly
+  -- if typedExpressionIR_main = (`` "main") `# `( VOID CTK )
+  -- if typedExpressionIR_v
+      = (typedExpressionIR_main `. "dep") `# `( VOID CTK )
+  -- if routineTargetIR
+      = typedExpressionIR_v `. "apply"
+  -- Stmt_eval:
+      GLOBAL EC_0 STO_0 |- routineTargetIR `< eps > `( argumentIR* ) `;
+                         : EC_1 STO_1 CONT

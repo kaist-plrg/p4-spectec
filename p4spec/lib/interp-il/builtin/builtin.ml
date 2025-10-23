@@ -45,8 +45,8 @@ let funcs =
   |> Funcs.add "shr" Numerics.shr
   |> Funcs.add "shr_arith" Numerics.shr_arith
   |> Funcs.add "pow2" Numerics.pow2
-  |> Funcs.add "to_int" Numerics.to_int
-  |> Funcs.add "to_bitstr" Numerics.to_bitstr
+  |> Funcs.add "bitstr_to_int" Numerics.bitstr_to_int
+  |> Funcs.add "int_to_bitstr" Numerics.int_to_bitstr
   |> Funcs.add "bneg" Numerics.bneg
   |> Funcs.add "band" Numerics.band
   |> Funcs.add "bxor" Numerics.bxor

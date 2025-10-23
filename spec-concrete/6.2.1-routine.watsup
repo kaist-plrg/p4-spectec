@@ -2,7 +2,7 @@
 ;; Routines
 ;;
 
-syntax renv, senv, frame
+syntax renv, senv, frame, tableObjectProperty
 
 syntax action = ACTION nameIR `( parameterListIR ) blockStatementIR
 
@@ -48,7 +48,7 @@ syntax routine = action | function | method
 ;;
 
 syntax actionCallee =
-  ACTION nameIR `( parameterListIR `# id* ) blockStatementIR
+  ACTION cursor `. nameIR `( parameterListIR `# id* ) blockStatementIR
 
 syntax definedFunctionCallee =
   FUNCTION nameIR `< typeParameterListIR >
@@ -76,7 +76,7 @@ syntax controlApplyMethodCallee =
     `{ frame `; controlLocalDeclarationListIR `; renv `; controlBodyIR }
 
 syntax tableApplyMethodCallee =
-  TABLE oid `. APPLY `{ tablePropertyListIR }
+  TABLE oid `. APPLY `{ frame `; tableObjectProperty }
 
 syntax methodCallee =
   | builtinMethodCallee

@@ -76,38 +76,38 @@ let pow2 (at : region) (targs : targ list) (values_input : value list) : value =
   let width = bigint_of_value value_width in
   pow2' width |> value_of_bigint
 
-(* dec $to_int(int, bitstr) : int *)
+(* dec $bitstr_to_int(int, bitstr) : int *)
 
-let rec to_int' (w : Bigint.t) (n : Bigint.t) : Bigint.t =
+let rec bitstr_to_int' (w : Bigint.t) (n : Bigint.t) : Bigint.t =
   let two = Bigint.(one + one) in
   let w' = pow2' w in
-  if Bigint.(n >= w' / two) then to_int' w Bigint.(n - w')
-  else if Bigint.(n < -(w' / two)) then to_int' w Bigint.(n + w')
+  if Bigint.(n >= w' / two) then bitstr_to_int' w Bigint.(n - w')
+  else if Bigint.(n < -(w' / two)) then bitstr_to_int' w Bigint.(n + w')
   else n
 
-let to_int (at : region) (targs : targ list) (values_input : value list) : value
-    =
+let bitstr_to_int (at : region) (targs : targ list) (values_input : value list)
+    : value =
   Extract.zero at targs;
   let value_width, value_bitstr = Extract.two at values_input in
   let width = bigint_of_value value_width in
   let bitstr = bigint_of_value value_bitstr in
-  to_int' width bitstr |> value_of_bigint
+  bitstr_to_int' width bitstr |> value_of_bigint
 
-(* dec $to_bitstr(int, int) : bitstr *)
+(* dec $int_to_bitstr(int, int) : bitstr *)
 
-let rec to_bitstr' (w : Bigint.t) (n : Bigint.t) : Bigint.t =
+let rec int_to_bitstr' (w : Bigint.t) (n : Bigint.t) : Bigint.t =
   let w' = pow2' w in
   if Bigint.(n >= w') then Bigint.(n % w')
-  else if Bigint.(n < zero) then to_bitstr' w Bigint.(n + w')
+  else if Bigint.(n < zero) then int_to_bitstr' w Bigint.(n + w')
   else n
 
-let to_bitstr (at : region) (targs : targ list) (values_input : value list) :
-    value =
+let int_to_bitstr (at : region) (targs : targ list) (values_input : value list)
+    : value =
   Extract.zero at targs;
   let value_width, value_int = Extract.two at values_input in
   let width = bigint_of_value value_width in
   let rawint = bigint_of_value value_int in
-  to_bitstr' width rawint |> value_of_bigint
+  int_to_bitstr' width rawint |> value_of_bigint
 
 (* dec $bneg(int) : int *)
 

@@ -951,41 +951,100 @@ rule TableProperties_ok/cons:
 ;; syntax table
 ;;
 
-dec $count_table_keys(tableProperty*) : nat
-
-def $count_table_keys(eps) = 0
-def $count_table_keys(
-    (KEY `= `{ _ }) :: tableProperty_t*
-  )
-  = $(1 + $count_table_keys(tableProperty_t*))
-def $count_table_keys(
-    tableProperty_h :: tableProperty_t*
-  )
-  = $count_table_keys(tableProperty_t*)
+dec $is_tableKeysProperty(tableProperty) : bool
+def $is_tableKeysProperty(KEY `= `{ _ }) = true
+def $is_tableKeysProperty(_) = false
   -- otherwise
 
-dec $count_table_actions(tableProperty*) : nat
-
-def $count_table_actions(eps) = 0
-def $count_table_actions(
-    (ACTIONS `= `{ _ }) :: tableProperty_t*
-  )
-  = $(1 + $count_table_actions(tableProperty_t*))
-def $count_table_actions(
-    tableProperty_h :: tableProperty_t*
-  )
-  = $count_table_actions(tableProperty_t*)
+dec $is_tableActionsProperty(tableProperty) : bool
+def $is_tableActionsProperty(ACTIONS `= `{ _ }) = true
+def $is_tableActionsProperty(_) = false
   -- otherwise
 
-rule Table_ok:
-  TC |- tableProperty* : TBLC_1 tablePropertyIR*
-  ---- ;; check that the table has at most one key property
-  -- if $($count_table_keys(tableProperty*) <= 1)
-  ---- ;; check that the table has exactly one action property
-  -- if $($count_table_actions(tableProperty*) = 1)
-  ---- ;; check table properties
-  -- if TBLC_0 = $empty_tableContext
-  -- TableProperties_ok: TC TBLC_0 |- tableProperty* : TBLC_1 tablePropertyIR*
+dec $is_tableDefaultActionProperty(tableProperty) : bool
+def $is_tableDefaultActionProperty(_ _ tableCustomName _ `;) = true
+  -- if "default_action" = $tableCustomName(tableCustomName)
+def $is_tableDefaultActionProperty(_) = false
+  -- otherwise
+
+dec $insert_NoAction_tablePropertyIR(
+    tableContext,
+    tablePropertyIR*
+  ) : (tableContext, tablePropertyIR*)
+
+def $insert_NoAction_tablePropertyIR(TBLC, eps) = (TBLC, eps)
+def $insert_NoAction_tablePropertyIR(
+    TBLC_0,
+    tablePropertyIR_h :: tablePropertyIR_t*
+  )
+  = (TBLC_1, tablePropertyIR_h_updated :: tablePropertyIR_t*)
+  ---- ;; check that NoAction is not already present in actions
+  -- if ACTIONS `= `{ tableActionIR* } = tablePropertyIR_h
+  -- if (_ tableActionReferenceIR `; = tableActionIR)*
+  -- if tableActionReferenceIR_NoAction = (`. "NoAction") `( eps )
+  -- if ~(tableActionReferenceIR_NoAction <- tableActionReferenceIR*)
+  ---- ;; insert NoAction to table context and table properties
+  -- if TBLC_1 = $add_action(TBLC_0, `. "NoAction", eps, eps)
+  -- if tableActionIR_NoAction
+      = `EMPTY tableActionReferenceIR_NoAction `;
+  -- if tablePropertyIR_h_updated
+      = ACTIONS `= `{ tableActionIR* ++ [ tableActionIR_NoAction ] }
+def $insert_NoAction_tablePropertyIR(
+    TBLC_0,
+    tablePropertyIR_h :: tablePropertyIR_t*
+  )
+  = (TBLC_0, tablePropertyIR_h :: tablePropertyIR_t*)
+  ---- ;; check that NoAction is already present in actions
+  -- if ACTIONS `= `{ tableActionIR* } = tablePropertyIR_h
+  -- if (_ tableActionReferenceIR `; = tableActionIR)*
+  -- if tableActionReferenceIR_NoAction
+      = (`. "NoAction") `( eps )
+  -- if (tableActionReferenceIR_NoAction <- tableActionReferenceIR*)
+def $insert_NoAction_tablePropertyIR(
+    TBLC_0,
+    tablePropertyIR_h :: tablePropertyIR_t*
+  )
+  = (TBLC_1, tablePropertyIR_h :: tablePropertyIR_t_updated*)
+  -- if (TBLC_1, tablePropertyIR_t_updated*)
+      = $insert_NoAction_tablePropertyIR(
+          TBLC_0,
+          tablePropertyIR_t*
+        )
+
+rulegroup Table_ok {
+
+  rule Table_ok/zero-default-action:
+    TC |- tableProperty*
+        : TBLC_2 (tablePropertyIR_updated* ++ [ tablePropertyIR_default_action ])
+    ---- ;; check that the table has at most one key property
+    -- if $(|$filter_<tableProperty>(tableProperty*, def $is_tableKeysProperty)| <= 1)
+    ---- ;; check that the table has exactly one action property
+    -- if |$filter_<tableProperty>(tableProperty*, def $is_tableActionsProperty)| = 1
+    ---- ;; check that the table no default action property
+    -- if |$filter_<tableProperty>(tableProperty*, def $is_tableDefaultActionProperty)| = 0
+    ---- ;; check table properties
+    -- if TBLC_0 = $empty_tableContext
+    -- TableProperties_ok: TC TBLC_0 |- tableProperty* : TBLC_1 tablePropertyIR*
+    ---- ;; insert NoAction as default_action
+    -- if tablePropertyIR_default_action
+        = `EMPTY eps DEFAULT_ACTION `= ((`` "NoAction") `( eps )) `;
+    -- if (TBLC_2, tablePropertyIR_updated*)
+        = $insert_NoAction_tablePropertyIR(TBLC_1, tablePropertyIR*)
+
+  rule Table_ok/one-default-action:
+    TC |- tableProperty* : TBLC_1 tablePropertyIR*
+    ---- ;; check that the table has at most one key property
+    -- if $(|$filter_<tableProperty>(tableProperty*, def $is_tableKeysProperty)| <= 1)
+    ---- ;; check that the table has exactly one action property
+    -- if |$filter_<tableProperty>(tableProperty*, def $is_tableActionsProperty)| = 1
+    ---- ;; check that the table no default action property
+    -- if |$filter_<tableProperty>(tableProperty*, def $is_tableDefaultActionProperty)| = 1
+    ---- ;; check table properties
+    -- if TBLC_0 = $empty_tableContext
+    -- TableProperties_ok: TC TBLC_0 |- tableProperty* : TBLC_1 tablePropertyIR*
+
+}
+
 
 rule TableType_ok:
   TC_0 TBLC |- name : TC_1 typeIR_table

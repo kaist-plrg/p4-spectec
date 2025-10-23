@@ -12,11 +12,16 @@ dec $bitstr_to_int(int, int) : int
 dec $int_to_bitstr(int, int) : int
 
 ;;
-;; Convert an actual bitstring to a raw integer
+;; Convert an actual bitstring to a raw integer and vice-versa
 ;;
 
-dec $bits_to_int_unsigned(bool*) : int
-dec $bits_to_int_signed(bool*) : int
+syntax bits = bool*
+
+dec $bits_to_int_unsigned(bits) : int
+dec $bits_to_int_signed(bits) : int
+
+dec $int_to_bits_unsigned(nat, int) : bits
+dec $int_to_bits_signed(nat, int) : bits
 
 ;;
 ;; Underlying raw integer of a numeric value
@@ -96,3 +101,24 @@ def $write_value_from_bits'(
   ) = (HEADER tid `{ true `; fieldValue_updated* }, b_rest*)
   -- if (fieldValue_updated*, b_rest*)
       = $write_value_fields_from_bits'(fieldValue*, b*) 
+
+;;
+;; Write bits from a value
+;;
+
+dec $write_bits_from_value(value) : bool*
+
+def $write_bits_from_value(B b) = [ b ]
+def $write_bits_from_value(w S i)
+  = $int_to_bits_signed(w, i)
+def $write_bits_from_value(w W i)
+  = $int_to_bits_unsigned(w, i)
+
+def $write_bits_from_value(
+    STRUCT _ `{ (value_field id_field `;)* }
+  )
+  = $concat_<bool>($write_bits_from_value(value_field)*)
+def $write_bits_from_value(
+    HEADER _ `{ true `; (value_field id_field `;)* }
+  )
+  = $concat_<bool>($write_bits_from_value(value_field)*)

@@ -156,6 +156,15 @@ relation ParserLocalDecls_eval:
 ;;;; Control evaluation
 ;;
 
+syntax tableResult =
+  | exitResult
+  | returnResult
+
+relation Table_eval:
+  evaluationContext store |- tableObjectProperty
+                           : evaluationContext store tableResult
+  hint(input %0 %1 %2)
+
 syntax controlBodyResult =
   | exitResult
   | returnResult

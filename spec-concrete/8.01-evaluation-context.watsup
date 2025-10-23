@@ -178,6 +178,23 @@ def $find_value_eval(LOCAL, EC, `` id)
   = $find_value_eval(BLOCK, EC, `` id)
   -- if eps = $find_maps<id, value>(EC.LOCAL.FRAMES, id)
 
+dec $find_value_cursor_eval(cursor, evaluationContext, prefixedNameIR) : cursor
+
+def $find_value_cursor_eval(p, EC, `. id) = GLOBAL
+  -- if value = $find_map<id, value>(EC.GLOBAL.FRAME, id)
+def $find_value_cursor_eval(GLOBAL, EC, `` id) = GLOBAL
+  -- if value = $find_map<id, value>(EC.GLOBAL.FRAME, id)
+def $find_value_cursor_eval(BLOCK, EC, `` id) = BLOCK
+  -- if value = $find_map<id, value>(EC.BLOCK.FRAME, id)
+def $find_value_cursor_eval(BLOCK, EC, `` id)
+  = $find_value_cursor_eval(GLOBAL, EC, `` id)
+  -- if eps = $find_map<id, value>(EC.BLOCK.FRAME, id)
+def $find_value_cursor_eval(LOCAL, EC, `` id) = LOCAL
+  -- if value = $find_maps<id, value>(EC.LOCAL.FRAMES, id)
+def $find_value_cursor_eval(LOCAL, EC, `` id)
+  = $find_value_cursor_eval(BLOCK, EC, `` id)
+  -- if eps = $find_maps<id, value>(EC.LOCAL.FRAMES, id)
+
 ;;; Finder for typedefs
 
 dec $find_typeDef_eval(cursor, evaluationContext, prefixedNameIR) : typeDefIR?
@@ -198,6 +215,44 @@ def $find_type_eval(LOCAL, EC, nameIR)
 def $find_type_eval(LOCAL, EC, nameIR)
   = $find_type_eval(BLOCK, EC, nameIR)
   -- if eps = $find_map<tid, typeIR>(EC.LOCAL.TYPE, nameIR)
+
+;;; Finder for routines
+
+dec $find_routine_overloaded_eval(cursor, evaluationContext, prefixedNameIR, argumentIR*)
+  : (cursor, rid, routine, id*)?
+
+def $find_routine_overloaded_eval(GLOBAL, EC, `` id, argumentIR*)
+  = (GLOBAL, rid, routine, id_default*)
+  -- if (id_arg?)* = $ids_arguments(argumentIR*)
+  -- if (rid, routine, id_default*)
+      = $find_overloaded<routine>(EC.GLOBAL.ROUTINE, id, (id_arg?)*)
+def $find_routine_overloaded_eval(GLOBAL, EC, `` id, argumentIR*)
+  = eps
+  -- if (id_arg?)* = $ids_arguments(argumentIR*)
+  -- if eps
+      = $find_overloaded<routine>(EC.GLOBAL.ROUTINE, id, (id_arg?)*)
+def $find_routine_overloaded_eval(GLOBAL, EC, `. id, argumentIR*)
+  = (GLOBAL, rid, routine, id_default*)
+  -- if (id_arg?)* = $ids_arguments(argumentIR*)
+  -- if (rid, routine, id_default*)
+      = $find_overloaded<routine>(EC.GLOBAL.ROUTINE, id, (id_arg?)*)
+def $find_routine_overloaded_eval(GLOBAL, EC, `. id, argumentIR*)
+  = eps
+  -- if (id_arg?)* = $ids_arguments(argumentIR*)
+  -- if eps
+      = $find_overloaded<routine>(EC.GLOBAL.ROUTINE, id, (id_arg?)*)
+def $find_routine_overloaded_eval(BLOCK, EC, `` id, argumentIR*)
+  = (BLOCK, rid, routine, id_default*)
+  -- if (id_arg?)* = $ids_arguments(argumentIR*)
+  -- if (rid, routine, id_default*)
+      = $find_overloaded<routine>(EC.BLOCK.ROUTINE, id, (id_arg?)*)
+def $find_routine_overloaded_eval(BLOCK, EC, `` id, argumentIR*)
+  = $find_routine_overloaded_eval(GLOBAL, EC, `` id, argumentIR*)
+  -- if (id_arg?)* = $ids_arguments(argumentIR*)
+  -- if eps
+      = $find_overloaded<routine>(EC.BLOCK.ROUTINE, id, (id_arg?)*)
+def $find_routine_overloaded_eval(LOCAL, EC, `` id, argumentIR*)
+  = $find_routine_overloaded_eval(BLOCK, EC, `` id, argumentIR*)
 
 ;;; Finder for constructors 
 

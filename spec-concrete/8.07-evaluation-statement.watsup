@@ -9,7 +9,43 @@
 rule Stmt_eval/emptyStatementIR:
   p EC STO |- `; : EC STO CONT
 
-;;; (TODO) assignmentStatementIR
+;;; assignmentStatementIR
+;;; syntax assignmentStatementIR = typedLvalueIR assignop typedExpressionIR `;
+
+rulegroup Stmt_eval/assignmentStatementIR {
+
+  rule Stmt_eval/typedLvalueIR-exit:
+    p EC_0 STO_0 |- typedLvalueIR `= typedExpressionIR `;
+                  : EC_1 STO_1 EXIT
+    ---- ;; evaluate l-value
+    -- Lvalue_eval:
+        p EC_0 STO_0 |- typedLvalueIR : EC_1 STO_1 EXIT
+
+  rule Stmt_eval/typedLvalueIR-cont-typedExpressionIR-exit:
+    p EC_0 STO_0 |- typedLvalueIR `= typedExpressionIR `;
+                  : EC_2 STO_2 EXIT
+    ---- ;; evaluate l-value
+    -- Lvalue_eval:
+        p EC_0 STO_0 |- typedLvalueIR : EC_1 STO_1 (CONT storageReference)
+    ---- ;; evaluate expression
+    -- Expr_eval:
+        p EC_1 STO_1 |- typedExpressionIR : EC_2 STO_2 EXIT
+
+  rule Stmt_eval/typedLvalueIR-cont-typedExpressionIR-cont:
+    p EC_0 STO_0 |- typedLvalueIR `= typedExpressionIR `;
+                  : EC_3 STO_2 CONT
+    ---- ;; evaluate l-value
+    -- Lvalue_eval:
+        p EC_0 STO_0 |- typedLvalueIR : EC_1 STO_1 (CONT storageReference)
+    ---- ;; evaluate expression
+    -- Expr_eval:
+        p EC_1 STO_1 |- typedExpressionIR : EC_2 STO_2 (CONT value)
+    ---- ;; perform assignment
+    -- Lvalue_write:
+        p EC_2 STO_2 |- storageReference -> value
+                      : EC_3
+
+}
 
 ;;; callStatementIR
 ;;; syntax callStatementIR =
@@ -29,7 +65,7 @@ rulegroup Stmt_eval/callStatementIR {
 
   rule Stmt_eval/return:
     p EC_0 STO_0 |- routineTargetIR `< typeArgumentIR* > `( argumentIR* ) `;
-                  : EC_2 STO_2 returnResult
+                  : EC_2 STO_2 CONT
     -- Callee_eval:
         p EC_0 STO_0 |- routineTargetIR `< `_ > `( argumentIR* )
                       : EC_1 STO_1 (CONT callee)
@@ -162,6 +198,10 @@ rulegroup BlockElementStmt_eval/constantDeclarationIR {
 ;;; variableDeclarationIR
 
 ;;; statementIR
+
+rule BlockElementStmt_eval/statementIR:
+  EC_0 STO_0 |- statementIR : EC_1 STO_1 statementResult
+  -- Stmt_eval: LOCAL EC_0 STO_0 |- statementIR : EC_1 STO_1 statementResult
 
 ;;
 ;; syntax blockElementStatementListIR

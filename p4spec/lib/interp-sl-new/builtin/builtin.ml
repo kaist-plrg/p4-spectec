@@ -49,6 +49,8 @@ let funcs =
   |> Funcs.add "int_to_bitstr" Numerics.int_to_bitstr
   |> Funcs.add "bits_to_int_unsigned" Numerics.bits_to_int_unsigned
   |> Funcs.add "bits_to_int_signed" Numerics.bits_to_int_signed
+  |> Funcs.add "int_to_bits_unsigned" Numerics.int_to_bits_unsigned
+  |> Funcs.add "int_to_bits_signed" Numerics.int_to_bits_signed
   |> Funcs.add "bneg" Numerics.bneg
   |> Funcs.add "band" Numerics.band
   |> Funcs.add "bxor" Numerics.bxor
