@@ -134,9 +134,13 @@ module Make (Interp : Sim.INTERP) : Sim.ARCH = struct
     in
     (value_ctx, value_sto)
 
-  let drive_parser_block (value_ctx : Sl.Ast.value) (value_sto : Sl.Ast.value) :
+  let drive_p (value_ctx : Sl.Ast.value) (value_sto : Sl.Ast.value) :
       Sl.Ast.value * Sl.Ast.value * Sl.Ast.value =
     call_rel_three "V1Model_parser" [ value_ctx; value_sto ]
+
+  let drive_vr (value_ctx : Sl.Ast.value) (value_sto : Sl.Ast.value) :
+      Sl.Ast.value * Sl.Ast.value * Sl.Ast.value =
+    call_rel_three "V1Model_verify" [ value_ctx; value_sto ]
 
   let drive_pipe (value_ctx : Sl.Ast.value) (value_sto : Sl.Ast.value)
       (port_in : IO.port) (packet_in : IO.packet) :
@@ -147,7 +151,11 @@ module Make (Interp : Sim.INTERP) : Sim.ARCH = struct
     in
     (* Parser block *)
     let value_ctx, value_sto, _value_parser_result =
-      drive_parser_block value_ctx value_sto
+      drive_p value_ctx value_sto
+    in
+    (* Verify block *)
+    let value_ctx, value_sto, _value_verify_result =
+      drive_vr value_ctx value_sto
     in
     (value_ctx, value_sto, None)
 end

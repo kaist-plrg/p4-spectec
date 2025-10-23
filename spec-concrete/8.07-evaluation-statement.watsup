@@ -15,15 +15,29 @@ rule Stmt_eval/emptyStatementIR:
 ;;; syntax callStatementIR =
 ;;;   routineTargetIR `< typeArgumentListIR > `( argumentListIR ) `;
 
-rule Stmt_eval/callStatementIR-accept:
-  p EC_0 STO_0 |- routineTargetIR `< typeArgumentIR* > `( argumentIR* ) `;
-                : EC_2 STO_2 CONT
-  -- Callee_eval:
-      p EC_0 STO_0 |- routineTargetIR `< `_ > `( argumentIR* )
-                    : EC_1 STO_1 (CONT callee)
-  -- Call_eval:
-      p EC_1 STO_1 |- callee `@ `< typeArgumentIR* > `( argumentIR* )
-                    : EC_2 STO_2 acceptTransitionResult
+rulegroup Stmt_eval/callStatementIR {
+
+  rule Stmt_eval/accept:
+    p EC_0 STO_0 |- routineTargetIR `< typeArgumentIR* > `( argumentIR* ) `;
+                  : EC_2 STO_2 CONT
+    -- Callee_eval:
+        p EC_0 STO_0 |- routineTargetIR `< `_ > `( argumentIR* )
+                      : EC_1 STO_1 (CONT callee)
+    -- Call_eval:
+        p EC_1 STO_1 |- callee `@ `< typeArgumentIR* > `( argumentIR* )
+                      : EC_2 STO_2 acceptTransitionResult
+
+  rule Stmt_eval/return:
+    p EC_0 STO_0 |- routineTargetIR `< typeArgumentIR* > `( argumentIR* ) `;
+                  : EC_2 STO_2 returnResult
+    -- Callee_eval:
+        p EC_0 STO_0 |- routineTargetIR `< `_ > `( argumentIR* )
+                      : EC_1 STO_1 (CONT callee)
+    -- Call_eval:
+        p EC_1 STO_1 |- callee `@ `< typeArgumentIR* > `( argumentIR* )
+                      : EC_2 STO_2 returnResult
+
+}
 
 ;;; directApplicationStatementIR
 ;;; direct applications should have been handled during instantiation
@@ -59,9 +73,13 @@ rulegroup Stmt_eval/returnStatementIR {
 rule Stmt_eval/exitStatement:
   p EC STO |- EXIT `; : EC STO EXIT
 
-;;; (TODO) blockStatementIR
 ;;; syntax blockStatementIR =
 ;;;   annotationList `{ blockElementStatementListIR }
+
+rule Stmt_eval/blockStatement:
+  p EC_0 STO_0 |- blockStatementIR : EC_1 STO_1 statementResult
+  -- Block_eval:
+      EC_0 STO_0 |- blockStatementIR : EC_1 STO_1 statementResult
 
 ;;; conditionalStatementIR
 ;;; syntax conditionalStatementIR =
@@ -114,3 +132,72 @@ rulegroup Stmt_eval/conditionalStatementIR {
 
 ;;; (TODO) switchStatement
 ;;; syntax switchStatement = SWITCH `( expression ) `{ switchCaseList }
+
+;;
+;; Block statement instantiation
+;;
+
+;;
+;; syntax blockElementStatementIR
+;;
+
+;;; constantDeclarationIR
+
+rulegroup BlockElementStmt_eval/constantDeclarationIR {
+
+  rule BlockElementStmt_eval/exit:
+    EC_0 STO_0 |- constantDeclarationIR
+                : EC_1 STO_1 EXIT
+    -- Decl_eval: LOCAL EC_0 STO_0 |- constantDeclarationIR
+                                    : EC_1 STO_1 EXIT
+
+  rule BlockElementStmt_eval/cont:
+    EC_0 STO_0 |- constantDeclarationIR
+                : EC_1 STO_1 CONT
+    -- Decl_eval: LOCAL EC_0 STO_0 |- constantDeclarationIR
+                                    : EC_1 STO_1 CONT
+
+}
+
+;;; variableDeclarationIR
+
+;;; statementIR
+
+;;
+;; syntax blockElementStatementListIR
+;;
+
+rulegroup BlockElementStmts_eval {
+
+  rule BlockElementStmts_eval/nil:
+    EC STO |- eps : EC STO CONT
+
+  rule BlockElementStmts_eval/cons-head-exit:
+    EC_0 STO_0 |- blockElementStatementIR_h :: blockElementStatementIR_t*
+                : EC_1 STO_1 EXIT
+    -- BlockElementStmt_eval:
+        EC_0 STO_0 |- blockElementStatementIR_h : EC_1 STO_1 EXIT
+
+  rule BlockElementStmts_eval/cons-head-exit:
+    EC_0 STO_0 |- blockElementStatementIR_h :: blockElementStatementIR_t*
+                : EC_2 STO_2 statementResult
+    -- BlockElementStmt_eval:
+        EC_0 STO_0 |- blockElementStatementIR_h : EC_1 STO_1 CONT
+    -- BlockElementStmts_eval:
+        EC_1 STO_1 |- blockElementStatementIR_t*
+                    : EC_2 STO_2 statementResult
+
+}
+
+;;
+;; syntax blockStatmentIR = annotationList `{ blockElementStatementListIR }
+;;
+
+rule Block_eval:
+  EC_0 STO_0 |- annotationList `{ blockElementStatementListIR }
+              : EC_3 STO_1 statementResult
+  -- if EC_1 = $enter_eval(EC_0)
+  -- BlockElementStmts_eval:
+      EC_1 STO_0 |- blockElementStatementListIR
+                  : EC_2 STO_1 statementResult
+  -- if EC_3 = $exit_eval(EC_2)

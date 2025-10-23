@@ -96,6 +96,11 @@ relation BlockElementStmt_eval:
                            : evaluationContext store statementResult
   hint(input %0 %1 %2)
 
+relation BlockElementStmts_eval:
+  evaluationContext store |- blockElementStatementListIR
+                           : evaluationContext store statementResult
+  hint(input %0 %1 %2)
+
 relation Block_eval:
   evaluationContext store |- blockStatementIR
                            : evaluationContext store statementResult
@@ -151,12 +156,26 @@ relation ParserLocalDecls_eval:
 ;;;; Control evaluation
 ;;
 
+syntax controlBodyResult =
+  | exitResult
+  | returnResult
+
+relation ControlBody_eval:
+  evaluationContext store |- controlBodyIR
+                           : evaluationContext store controlBodyResult
+  hint(input %0 %1 %2)
+
 syntax declarationResult =
   | continueEmptyResult
   | exitResult
 
 relation ControlLocalDecl_eval:
   evaluationContext store |- controlLocalDeclarationIR
+                           : evaluationContext store declarationResult
+  hint(input %0 %1 %2)
+
+relation ControlLocalDecls_eval:
+  evaluationContext store |- controlLocalDeclarationIR*
                            : evaluationContext store declarationResult
   hint(input %0 %1 %2)
 

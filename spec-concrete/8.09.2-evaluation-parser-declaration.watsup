@@ -23,9 +23,9 @@ rulegroup ParserLocalDecl_eval/variableDeclarationIR {
   rule ParserLocalDecl_eval/non-initializer:
     EC_0 STO |- annotationList typeIR nameIR eps `;
               : EC_1 STO
-    ---- ;; (TODO) take type arguments into account
     ---- ;; get initial value
-    -- if value_init = $default(typeIR)
+    -- if typeIR_subst = $subst_type_eval(BLOCK, EC_0, typeIR)
+    -- if value_init = $default(typeIR_subst)
     ---- ;; update evaluation context
     -- if EC_1
         = $add_value_eval(BLOCK, EC_0, `` nameIR, value_init)
