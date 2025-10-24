@@ -5013,7 +5013,7 @@ rule Type_ok/prefixedTypeName/poly:
 <p>Check that <code>typeDefIR'<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typeDefIR</code> be <code>typeDefIR'<sup>?</sup></code>.</p>
+<p>Let <code>typeDefIR</code> be <code>typeDefIR'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>If let <code>typeIR</code> be <code>typeDefIR</code>:</p>
@@ -5219,7 +5219,7 @@ rule Type_ok/specializedType/poly:
 <p>Check that <code>typeDefIR'<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typeDefIR</code> be <code>typeDefIR'<sup>?</sup></code>.</p>
+<p>Let <code>typeDefIR</code> be <code>typeDefIR'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Check that <code>typeDefIR</code> has type <code>typeIR</code>.</p>
@@ -5240,7 +5240,7 @@ rule Type_ok/specializedType/poly:
 <p>Let <code>typeDefIR'<sup>?</sup></code> be <code><a href="#find_type">$find_type(p, TC, prefixedNameIR)</a></code>.</p>
 </li>
 <li>
-<p>Else if let <code>?typeDefIR</code> be <code>typeDefIR'<sup>?</sup></code>:</p>
+<p>Else if let <code>typeDefIR</code> be <code>typeDefIR'<sup>?</sup></code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -8872,7 +8872,7 @@ rule Parameter_ok/initializer:
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
 </li>
 <li>
-<p>Result in the parameter <code>annotationList direction typeIR nameIR ?()</code> and set of fresh type variables <code>tid<sub>fresh</sub><sup>*</sup></code>.</p>
+<p>Result in the parameter <code>annotationList direction typeIR nameIR None</code> and set of fresh type variables <code>tid<sub>fresh</sub><sup>*</sup></code>.</p>
 </li>
 </ol>
 </div>
@@ -8906,7 +8906,7 @@ rule Parameter_ok/initializer:
 <p>Check that <code>typedExpressionIR<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typedExpressionIR<sub>init_cast</sub></code> be <code>typedExpressionIR<sup>?</sup></code>.</p>
+<p>Let <code>typedExpressionIR<sub>init_cast</sub></code> be <code>typedExpressionIR<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
@@ -8915,7 +8915,7 @@ rule Parameter_ok/initializer:
 <p>Let <code>value<sub>init</sub></code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>init_cast</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Result in the parameter <code>annotationList direction typeIR nameIR ?= value<sub>init</sub></code> and set of fresh type variables <code>tid<sub>fresh</sub><sup>*</sup></code>.</p>
+<p>Result in the parameter <code>annotationList direction typeIR nameIR = value<sub>init</sub></code> and set of fresh type variables <code>tid<sub>fresh</sub><sup>*</sup></code>.</p>
 </li>
 </ol>
 </div>
@@ -8973,7 +8973,7 @@ rule ParameterType_wf/default:
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>If <code>value'<sup>?</sup></code> is equal to ?():</p>
+<p>If <code>value'<sup>?</sup></code> is equal to <code>None</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -8992,7 +8992,7 @@ rule ParameterType_wf/default:
 <p>Let <code>value''<sup>?</sup></code> be <code>value'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Else if let <code>?value</code> be <code>value''<sup>?</sup></code>:</p>
+<p>Else if let <code>value</code> be <code>value''<sup>?</sup></code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -11628,7 +11628,7 @@ following are all legal constant declarations:</p>
 <p>Check that <code>typedExpressionIR<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typedExpressionIR<sub>value_cast</sub></code> be <code>typedExpressionIR<sup>?</sup></code>.</p>
+<p>Let <code>typedExpressionIR<sub>value_cast</sub></code> be <code>typedExpressionIR<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>value</code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>value_cast</sub></code>, under cursor <code>p'</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
@@ -11637,7 +11637,7 @@ following are all legal constant declarations:</p>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_var">$add_var(p', TC<sub>0</sub>, nameIR, typeIR LCTK ?value)</a></code>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_var">$add_var(p', TC<sub>0</sub>, nameIR, typeIR LCTK value)</a></code>.</p>
 </li>
 <li>
 <p>Let <code>constantDeclarationIR</code> be <code>annotationList CONST typeIR nameIR = value ;</code>.</p>
@@ -11686,7 +11686,7 @@ rule Decl_inst/constantDeclarationIR/non-global:
 <p>Let <code>IC<sub>1</sub></code> be <code><a href="#add_value_inst">$add_value_inst(GLOBAL, IC<sub>0</sub>, nameIR, value)</a></code>.</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and ?().</p>
+<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and <code>None</code>.</p>
 </li>
 </ol>
 </div>
@@ -11702,7 +11702,7 @@ rule Decl_inst/constantDeclarationIR/non-global:
 <p>Let <code>constantDeclarationIR</code> be <code>annotationList CONST typeIR nameIR = value ;</code>.</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and ?<code>constantDeclarationIR</code>.</p>
+<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and <code>constantDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -11862,10 +11862,10 @@ rule Decl_ok/instantiation-non-objectInitializer/specializedType:
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_var">$add_var(p', TC<sub>0</sub>, nameIR, typeIR<sub>object</sub> CTK ?())</a></code>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_var">$add_var(p', TC<sub>0</sub>, nameIR, typeIR<sub>object</sub> CTK None)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>instantiationIR</code> be <code>annotationList typeIR<sub>object</sub> prefixedNameIR &lt; typeArgumentIR<sub>inferred</sub><sup>*</sup> &gt; ( argumentIR<sup>*</sup> ) nameIR ?() ;</code>.</p>
+<p>Let <code>instantiationIR</code> be <code>annotationList typeIR<sub>object</sub> prefixedNameIR &lt; typeArgumentIR<sub>inferred</sub><sup>*</sup> &gt; ( argumentIR<sup>*</sup> ) nameIR None ;</code>.</p>
 </li>
 <li>
 <p>Result in the modified typing context <code>TC<sub>1</sub></code> and the typed declaration <code>instantiationIR</code>.</p>
@@ -11919,10 +11919,10 @@ rule Decl_ok/instantiation-non-objectInitializer/specializedType:
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_var">$add_var(p', TC<sub>0</sub>, nameIR, typeIR<sub>object</sub> CTK ?())</a></code>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_var">$add_var(p', TC<sub>0</sub>, nameIR, typeIR<sub>object</sub> CTK None)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>instantiationIR</code> be <code>annotationList typeIR<sub>object</sub> prefixedNameIR &lt; typeArgumentIR<sub>inferred</sub><sup>*</sup> &gt; ( argumentIR<sup>*</sup> ) nameIR ?() ;</code>.</p>
+<p>Let <code>instantiationIR</code> be <code>annotationList typeIR<sub>object</sub> prefixedNameIR &lt; typeArgumentIR<sub>inferred</sub><sup>*</sup> &gt; ( argumentIR<sup>*</sup> ) nameIR None ;</code>.</p>
 </li>
 <li>
 <p>Result in the modified typing context <code>TC<sub>1</sub></code> and the typed declaration <code>instantiationIR</code>.</p>
@@ -12208,7 +12208,7 @@ methods.</p>
 <p>Check that <code>varTypeIR'<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?varTypeIR</code> be <code>varTypeIR'<sup>?</sup></code>.</p>
+<p>Let <code>varTypeIR</code> be <code>varTypeIR'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeFrame<sub>init</sub></code> be <code><a href="#update_map">$update_map&lt;id, varTypeIR&gt;(typeFrame, nameIR, varTypeIR)</a></code>.</p>
@@ -12334,7 +12334,7 @@ rule Decl_ok/instantiation-objectInitializer/specializedType:
 <p>Check that <code>tid'<sup>*</sup></code> is equal to <code>tid<sub>impl</sub><sup>*</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_var">$add_var(LOCAL, TC<sub>0</sub>, "this", typeIR<sub>object</sub> CTK ?())</a></code>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_var">$add_var(LOCAL, TC<sub>0</sub>, "this", typeIR<sub>object</sub> CTK None)</a></code>.</p>
 </li>
 <li>
 <p>Let <code>objectDeclaration<sup>*</sup></code> be <a href="#flatten_objectDeclarationList">the list of object declarations in <code>objectDeclarationList</code></a>.</p>
@@ -12361,10 +12361,10 @@ rule Decl_ok/instantiation-objectInitializer/specializedType:
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_var">$add_var(p', TC<sub>0</sub>, nameIR, typeIR<sub>object_init</sub> CTK ?())</a></code>.</p>
+<p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_var">$add_var(p', TC<sub>0</sub>, nameIR, typeIR<sub>object_init</sub> CTK None)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>instantiationIR</code> be <code>annotationList typeIR<sub>object_init</sub> prefixedNameIR &lt; typeArgumentIR<sub>inferred</sub><sup>*</sup> &gt; ( argumentIR<sup>*</sup> ) nameIR ?= { objectDeclarationIR<sup>*</sup> } ;</code>.</p>
+<p>Let <code>instantiationIR</code> be <code>annotationList typeIR<sub>object_init</sub> prefixedNameIR &lt; typeArgumentIR<sub>inferred</sub><sup>*</sup> &gt; ( argumentIR<sup>*</sup> ) nameIR = { objectDeclarationIR<sup>*</sup> } ;</code>.</p>
 </li>
 <li>
 <p>Result in the modified typing context <code>TC<sub>2</sub></code> and the typed declaration <code>instantiationIR</code>.</p>
@@ -12433,7 +12433,7 @@ rule Decl_ok/instantiation-objectInitializer/specializedType:
 <p>Check that <code>tid'<sup>*</sup></code> is equal to <code>tid<sub>impl</sub><sup>*</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_var">$add_var(LOCAL, TC<sub>0</sub>, "this", typeIR<sub>object</sub> CTK ?())</a></code>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_var">$add_var(LOCAL, TC<sub>0</sub>, "this", typeIR<sub>object</sub> CTK None)</a></code>.</p>
 </li>
 <li>
 <p>Let <code>objectDeclaration<sup>*</sup></code> be <a href="#flatten_objectDeclarationList">the list of object declarations in <code>objectDeclarationList</code></a>.</p>
@@ -12460,10 +12460,10 @@ rule Decl_ok/instantiation-objectInitializer/specializedType:
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_var">$add_var(p', TC<sub>0</sub>, nameIR, typeIR<sub>object_init</sub> CTK ?())</a></code>.</p>
+<p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_var">$add_var(p', TC<sub>0</sub>, nameIR, typeIR<sub>object_init</sub> CTK None)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>instantiationIR</code> be <code>annotationList typeIR<sub>object_init</sub> prefixedNameIR &lt; typeArgumentIR<sub>inferred</sub><sup>*</sup> &gt; ( argumentIR<sup>*</sup> ) nameIR ?= { objectDeclarationIR<sup>*</sup> } ;</code>.</p>
+<p>Let <code>instantiationIR</code> be <code>annotationList typeIR<sub>object_init</sub> prefixedNameIR &lt; typeArgumentIR<sub>inferred</sub><sup>*</sup> &gt; ( argumentIR<sup>*</sup> ) nameIR = { objectDeclarationIR<sup>*</sup> } ;</code>.</p>
 </li>
 <li>
 <p>Result in the modified typing context <code>TC<sub>2</sub></code> and the typed declaration <code>instantiationIR</code>.</p>
@@ -12562,7 +12562,7 @@ rule Decl_inst/instantiationIR/non-extern-non-global:
 <p>Check that <code>(cid, constructor, id*)<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?(_, constructor, id<sub>default</sub><sup>*</sup>)</code> be <code>(cid, constructor, id*)<sup>?</sup></code>.</p>
+<p>Let <code>(_, constructor, id<sub>default</sub><sup>*</sup>)</code> be <code>(cid, constructor, id*)<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>IC<sub>inner</sub></code> be <code><a href="#enter_path">$enter_path(IC<sub>0</sub>, nameIR)</a></code>.</p>
@@ -12602,7 +12602,7 @@ rule Decl_inst/instantiationIR/non-extern-non-global:
 <p>Let <code>IC<sub>1</sub></code> be <code><a href="#add_value_inst">$add_value_inst(GLOBAL, IC<sub>0</sub>, nameIR, ! oid)</a></code>.</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>1</sub></code>, <code>STO<sub>2</sub></code>, and ?().</p>
+<p>Result in <code>IC<sub>1</sub></code>, <code>STO<sub>2</sub></code>, and <code>None</code>.</p>
 </li>
 </ol>
 </div>
@@ -12621,7 +12621,7 @@ rule Decl_inst/instantiationIR/non-extern-non-global:
 <p>Let <code>IC<sub>1</sub></code> be <code><a href="#add_value_inst">$add_value_inst(GLOBAL, IC<sub>0</sub>, nameIR, ! oid)</a></code>.</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>1</sub></code>, <code>STO<sub>1</sub></code>, and ?().</p>
+<p>Result in <code>IC<sub>1</sub></code>, <code>STO<sub>1</sub></code>, and <code>None</code>.</p>
 </li>
 </ol>
 </div>
@@ -12640,7 +12640,7 @@ rule Decl_inst/instantiationIR/non-extern-non-global:
 <p>Check that <code>(cid, constructor, id*)<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?(_, constructor, id<sub>default</sub><sup>*</sup>)</code> be <code>(cid, constructor, id*)<sup>?</sup></code>.</p>
+<p>Let <code>(_, constructor, id<sub>default</sub><sup>*</sup>)</code> be <code>(cid, constructor, id*)<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>IC<sub>inner</sub></code> be <code><a href="#enter_path">$enter_path(IC<sub>0</sub>, nameIR)</a></code>.</p>
@@ -12683,7 +12683,7 @@ rule Decl_inst/instantiationIR/non-extern-non-global:
 <p>Let <code>constantDeclarationIR</code> be <code>CONST typeIR nameIR = ! oid ;</code>.</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>1</sub></code>, <code>STO<sub>2</sub></code>, and ?<code>constantDeclarationIR</code>.</p>
+<p>Result in <code>IC<sub>1</sub></code>, <code>STO<sub>2</sub></code>, and <code>constantDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -12705,7 +12705,7 @@ rule Decl_inst/instantiationIR/non-extern-non-global:
 <p>Let <code>constantDeclarationIR</code> be <code>CONST typeIR nameIR = ! oid ;</code>.</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>1</sub></code>, <code>STO<sub>1</sub></code>, and ?<code>constantDeclarationIR</code>.</p>
+<p>Result in <code>IC<sub>1</sub></code>, <code>STO<sub>1</sub></code>, and <code>constantDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -12942,7 +12942,7 @@ functionDeclarationIR
 <p>Let <code>IC<sub>1</sub></code> be <code><a href="#add_routine_overload_inst">$add_routine_overload_inst(cursor', IC<sub>0</sub>, rid, function)</a></code>.</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and ?().</p>
+<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and <code>None</code>.</p>
 </li>
 </ol>
 </div>
@@ -13092,7 +13092,7 @@ actionDeclarationIR
 <p>Let <code>IC<sub>1</sub></code> be <code><a href="#add_routine_non_overload_inst">$add_routine_non_overload_inst(cursor', IC<sub>0</sub>, rid, action)</a></code>.</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and ?().</p>
+<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and <code>None</code>.</p>
 </li>
 </ol>
 </div>
@@ -13224,7 +13224,7 @@ described in <a href="#sec-error-exprs">[sec-error-exprs]</a>.</p>
 </div>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_vars">$add_vars(GLOBAL, TC<sub>0</sub>, nameIR<sub>error</sub><sup>*</sup>, ERROR LCTK ?value<sub>error</sub><sup>*</sup>)</a></code>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_vars">$add_vars(GLOBAL, TC<sub>0</sub>, nameIR<sub>error</sub><sup>*</sup>, ERROR LCTK value<sub>error</sub><sup>*</sup>)</a></code>.</p>
 </li>
 <li>
 <p>Result in the modified typing context <code>TC<sub>1</sub></code> and the typed declaration <code>ERROR { nameIR<sup>*</sup> }</code>.</p>
@@ -13296,7 +13296,7 @@ described in <a href="#sec-error-exprs">[sec-error-exprs]</a>.</p>
 <p>Let <code>IC<sub>1</sub></code> be <code><a href="#add_values_inst">$add_values_inst(GLOBAL, IC<sub>0</sub>, nameIR<sub>error</sub><sup>*</sup>, value<sub>error</sub><sup>*</sup>)</a></code>.</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and ?().</p>
+<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and <code>None</code>.</p>
 </li>
 </ol>
 </div>
@@ -13413,7 +13413,7 @@ cannot declare new match kinds.</p>
 </div>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_vars">$add_vars(GLOBAL, TC<sub>0</sub>, nameIR<sup>*</sup>, MATCH_KIND LCTK ?value<sub>match_kind</sub><sup>*</sup>)</a></code>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_vars">$add_vars(GLOBAL, TC<sub>0</sub>, nameIR<sup>*</sup>, MATCH_KIND LCTK value<sub>match_kind</sub><sup>*</sup>)</a></code>.</p>
 </li>
 <li>
 <p>Result in the modified typing context <code>TC<sub>1</sub></code> and the typed declaration <code>MATCH_KIND { nameIR<sup>*</sup> }</code>.</p>
@@ -13467,7 +13467,7 @@ cannot declare new match kinds.</p>
 <p>Let <code>IC<sub>1</sub></code> be <code><a href="#add_values_inst">$add_values_inst(GLOBAL, IC<sub>0</sub>, nameIR<sup>*</sup>, value<sub>match_kind</sub><sup>*</sup>)</a></code>.</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and ?().</p>
+<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and <code>None</code>.</p>
 </li>
 </ol>
 </div>
@@ -13662,7 +13662,7 @@ externFunctionDeclarationIR
 <p>Let <code>IC<sub>1</sub></code> be <code><a href="#add_routine_overload_inst">$add_routine_overload_inst(GLOBAL, IC<sub>0</sub>, rid, function)</a></code>.</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and ?().</p>
+<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and <code>None</code>.</p>
 </li>
 </ol>
 </div>
@@ -13892,7 +13892,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <p>Let <code>IC<sub>2</sub></code> be <code><a href="#add_constructor_inst">$add_constructor_inst(IC<sub>1</sub>, cid, constructor)</a></code>.</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>2</sub></code>, <code>STO'</code>, and ?().</p>
+<p>Result in <code>IC<sub>2</sub></code>, <code>STO'</code>, and <code>None</code>.</p>
 </li>
 <li>
 <p>Let <code>externConstructorPrototypeIR<sup>*</sup></code> be <code>externConstructorPrototypeIR'<sup>*</sup></code>.</p>
@@ -13981,7 +13981,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <p>Let <code>IC<sub>2</sub></code> be <code><a href="#add_constructors_inst">$add_constructors_inst(IC<sub>1</sub>, cid<sup>*</sup>, constructor<sup>*</sup>)</a></code>.</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>2</sub></code>, <code>STO'</code>, and ?().</p>
+<p>Result in <code>IC<sub>2</sub></code>, <code>STO'</code>, and <code>None</code>.</p>
 </li>
 </ol>
 </div>
@@ -14190,7 +14190,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <p>Let <code>IC<sub>1</sub></code> be <code><a href="#add_constructor_inst">$add_constructor_inst(IC<sub>0</sub>, cid, constructor)</a></code>.</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and ?().</p>
+<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and <code>None</code>.</p>
 </li>
 </ol>
 </div>
@@ -14394,7 +14394,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <p>Let <code>IC<sub>1</sub></code> be <code><a href="#add_constructor_inst">$add_constructor_inst(IC<sub>0</sub>, cid, constructor)</a></code>.</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and ?().</p>
+<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and <code>None</code>.</p>
 </li>
 </ol>
 </div>
@@ -14566,7 +14566,7 @@ enumTypeDeclarationIR
 </div>
 </li>
 <li>
-<p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_vars">$add_vars(GLOBAL, TC<sub>1</sub>, id<sub>field</sub><sup>*</sup>, typeIR<sub>enum</sub> LCTK ?value<sub>field</sub><sup>*</sup>)</a></code>.</p>
+<p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_vars">$add_vars(GLOBAL, TC<sub>1</sub>, id<sub>field</sub><sup>*</sup>, typeIR<sub>enum</sub> LCTK value<sub>field</sub><sup>*</sup>)</a></code>.</p>
 </li>
 <li>
 <p>Let <code>enumTypeDeclarationIR</code> be <code>annotationList ENUM nameIR { nameIR<sub>field</sub><sup>*</sup> }</code>.</p>
@@ -14649,7 +14649,7 @@ enumTypeDeclarationIR
 <p>Let <code>IC<sub>2</sub></code> be <code><a href="#add_typedef_inst">$add_typedef_inst(GLOBAL, IC<sub>1</sub>, nameIR, typeIR<sub>enum</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>2</sub></code>, <code>STO'</code>, and ?().</p>
+<p>Result in <code>IC<sub>2</sub></code>, <code>STO'</code>, and <code>None</code>.</p>
 </li>
 </ol>
 </div>
@@ -14698,7 +14698,7 @@ enumTypeDeclarationIR
 <p>Check that <code>typedExpressionIR'<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typedExpressionIR<sub>cast</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
+<p>Let <code>typedExpressionIR<sub>cast</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Check that <code><a href="#ctk_of_expression">$ctk_of_expression(typedExpressionIR<sub>cast</sub>)</a></code> matches pattern <code>LCTK</code>.</p>
@@ -14716,7 +14716,7 @@ enumTypeDeclarationIR
 <p>Let <code>value<sub>enum</sub></code> be <code>nameIR<sub>enum</sub> . nameIR # value</code>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_var">$add_var(BLOCK, TC<sub>0</sub>, nameIR, typeIR<sub>enum</sub> LCTK ?value<sub>enum</sub>)</a></code>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_var">$add_var(BLOCK, TC<sub>0</sub>, nameIR, typeIR<sub>enum</sub> LCTK value<sub>enum</sub>)</a></code>.</p>
 </li>
 <li>
 <p>Result in <code>TC<sub>1</sub></code>, <code>nameIR = typedExpressionIR<sub>cast</sub></code>, and <code>value</code>.</p>
@@ -14813,7 +14813,7 @@ enumTypeDeclarationIR
 <p>Let <code>typeIR<sub>enum</sub></code> be <code>ENUM nameIR # typeIR { nameIR<sub>field</sub> = value<sub>field</sub> ;<sup>*</sup> }</code>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_vars">$add_vars(GLOBAL, TC<sub>0</sub>, id<sub>field</sub><sup>*</sup>, typeIR<sub>enum</sub> LCTK ?value<sub>field</sub><sup>*</sup>)</a></code>.</p>
+<p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_vars">$add_vars(GLOBAL, TC<sub>0</sub>, id<sub>field</sub><sup>*</sup>, typeIR<sub>enum</sub> LCTK value<sub>field</sub><sup>*</sup>)</a></code>.</p>
 </li>
 <li>
 <p>Check that <a href="#TypeDef_wf"><code>typeIR<sub>enum</sub></code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, $bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;.</p>
@@ -14906,7 +14906,7 @@ enumTypeDeclarationIR
 <p>Let <code>IC<sub>2</sub></code> be <code><a href="#add_typedef_inst">$add_typedef_inst(GLOBAL, IC<sub>1</sub>, nameIR, typeIR<sub>serenum</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>2</sub></code>, <code>STO<sub>1</sub></code>, and ?().</p>
+<p>Result in <code>IC<sub>2</sub></code>, <code>STO<sub>1</sub></code>, and <code>None</code>.</p>
 </li>
 </ol>
 </div>
@@ -15089,7 +15089,7 @@ enumTypeDeclarationIR
 <p>Let <code>IC<sub>1</sub></code> be <code><a href="#add_typedef_inst">$add_typedef_inst(GLOBAL, IC<sub>0</sub>, nameIR, typeDefIR)</a></code>.</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and ?().</p>
+<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and <code>None</code>.</p>
 </li>
 </ol>
 </div>
@@ -15271,7 +15271,7 @@ enumTypeDeclarationIR
 <p>Let <code>IC<sub>1</sub></code> be <code><a href="#add_typedef_inst">$add_typedef_inst(GLOBAL, IC<sub>0</sub>, nameIR, typeDefIR)</a></code>.</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and ?().</p>
+<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and <code>None</code>.</p>
 </li>
 </ol>
 </div>
@@ -15453,7 +15453,7 @@ enumTypeDeclarationIR
 <p>Let <code>IC<sub>1</sub></code> be <code><a href="#add_typedef_inst">$add_typedef_inst(GLOBAL, IC<sub>0</sub>, nameIR, typeDefIR)</a></code>.</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and ?().</p>
+<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and <code>None</code>.</p>
 </li>
 </ol>
 </div>
@@ -15609,7 +15609,7 @@ rule Decl_ok/typedefDeclaration-typedef/derivedTypeDeclaration-poly:
 <p>Check that <code>typeDefIR'<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typeDefIR</code> be <code>typeDefIR'<sup>?</sup></code>.</p>
+<p>Let <code>typeDefIR</code> be <code>typeDefIR'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>If let <code>typeIR</code> be <code>typeDefIR</code>:</p>
@@ -15725,7 +15725,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>IC<sub>1</sub></code> be <code><a href="#add_typedef_inst">$add_typedef_inst(GLOBAL, IC<sub>0</sub>, nameIR, typeIR<sub>typedef</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and ?().</p>
+<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and <code>None</code>.</p>
 </li>
 </ol>
 </div>
@@ -15753,7 +15753,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <p>Check that <code>typeDefIR'<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typeDefIR</code> be <code>typeDefIR'<sup>?</sup></code>.</p>
+<p>Let <code>typeDefIR</code> be <code>typeDefIR'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>If let <code>typeIR</code> be <code>typeDefIR</code>:</p>
@@ -15766,7 +15766,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>IC<sub>1</sub></code> be <code><a href="#add_typedef_inst">$add_typedef_inst(GLOBAL, IC<sub>0</sub>, nameIR, typeIR<sub>typedef</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and ?().</p>
+<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and <code>None</code>.</p>
 </li>
 </ol>
 </div>
@@ -15788,7 +15788,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>IC<sub>1</sub></code> be <code><a href="#add_typedef_inst">$add_typedef_inst(GLOBAL, IC<sub>0</sub>, nameIR, typeIR<sub>typedef</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and ?().</p>
+<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and <code>None</code>.</p>
 </li>
 </ol>
 </div>
@@ -15895,7 +15895,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>IC<sub>1</sub></code> be <code><a href="#add_typedef_inst">$add_typedef_inst(GLOBAL, IC<sub>0</sub>, nameIR, typeIR<sub>newtype</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and ?().</p>
+<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and <code>None</code>.</p>
 </li>
 </ol>
 </div>
@@ -16069,7 +16069,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>IC<sub>1</sub></code> be <code><a href="#add_typedef_inst">$add_typedef_inst(GLOBAL, IC<sub>0</sub>, nameIR, typeDefIR<sub>parser</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and ?().</p>
+<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and <code>None</code>.</p>
 </li>
 </ol>
 </div>
@@ -16241,7 +16241,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>IC<sub>1</sub></code> be <code><a href="#add_typedef_inst">$add_typedef_inst(GLOBAL, IC<sub>0</sub>, nameIR, typeDefIR<sub>control</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and ?().</p>
+<p>Result in <code>IC<sub>1</sub></code>, <code>STO'</code>, and <code>None</code>.</p>
 </li>
 </ol>
 </div>
@@ -16467,7 +16467,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>IC<sub>2</sub></code> be <code><a href="#add_constructor_inst">$add_constructor_inst(IC<sub>1</sub>, cid, constructor<sub>package</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>2</sub></code>, <code>STO'</code>, and ?().</p>
+<p>Result in <code>IC<sub>2</sub></code>, <code>STO'</code>, and <code>None</code>.</p>
 </li>
 </ol>
 </div>
@@ -16733,7 +16733,7 @@ for comparison operators, logical operators, concat, range, or mask operators.</
 <p>Check that <code>typedExpressionIR'<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typedExpressionIR<sub>cast</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
+<p>Let <code>typedExpressionIR<sub>cast</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Result in</p>
@@ -16809,7 +16809,7 @@ for comparison operators, logical operators, concat, range, or mask operators.</
 <p>Check that <code>varTypeIR<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?direction typeIR ctk value<sup>?</sup></code> be <code>varTypeIR<sup>?</sup></code>.</p>
+<p>Let <code>direction typeIR ctk value<sup>?</sup></code> be <code>varTypeIR<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Check that <code>ctk</code> matches pattern <code>DYN</code>.</p>
@@ -16993,7 +16993,7 @@ rule Lvalue_ok/memberAccess/headerunion:
 <p>Check that <code>typeIR''<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typeIR</code> be <code>typeIR''<sup>?</sup></code>.</p>
+<p>Let <code>typeIR</code> be <code>typeIR''<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typedLvalueIR</code> be <code>typedLvalueIR<sub>base</sub> . nameIR # ( typeIR )</code>.</p>
@@ -17018,7 +17018,7 @@ rule Lvalue_ok/memberAccess/headerunion:
 <p>Check that <code>typeIR''<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typeIR</code> be <code>typeIR''<sup>?</sup></code>.</p>
+<p>Let <code>typeIR</code> be <code>typeIR''<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typedLvalueIR</code> be <code>typedLvalueIR<sub>base</sub> . nameIR # ( typeIR )</code>.</p>
@@ -17043,7 +17043,7 @@ rule Lvalue_ok/memberAccess/headerunion:
 <p>Check that <code>typeIR''<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typeIR</code> be <code>typeIR''<sup>?</sup></code>.</p>
+<p>Let <code>typeIR</code> be <code>typeIR''<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typedLvalueIR</code> be <code>typedLvalueIR<sub>base</sub> . nameIR # ( typeIR )</code>.</p>
@@ -17127,7 +17127,7 @@ rule Lvalue_ok/indexAccess/non-lctk:
 <p>Check that <code>typedExpressionIR<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typedExpressionIR<sub>index_reduced</sub></code> be <code>typedExpressionIR<sup>?</sup></code>.</p>
+<p>Let <code>typedExpressionIR<sub>index_reduced</sub></code> be <code>typedExpressionIR<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>If <code>ctk<sub>index</sub></code> matches pattern <code>LCTK</code>:</p>
@@ -17234,7 +17234,7 @@ rule Lvalue_ok/indexAccess/non-lctk:
 <p>Check that <code>typedExpressionIR<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typedExpressionIR<sub>hi_reduced</sub></code> be <code>typedExpressionIR<sup>?</sup></code>.</p>
+<p>Let <code>typedExpressionIR<sub>hi_reduced</sub></code> be <code>typedExpressionIR<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typedExpressionIR'<sup>?</sup></code> be <code><a href="#reduce_serenum_unary">$reduce_serenum_unary(typedExpressionIR<sub>lo</sub>, $compat_bitslice_index)</a></code>.</p>
@@ -17243,7 +17243,7 @@ rule Lvalue_ok/indexAccess/non-lctk:
 <p>Check that <code>typedExpressionIR'<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typedExpressionIR<sub>lo_reduced</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
+<p>Let <code>typedExpressionIR<sub>lo_reduced</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>_ # ( typeIR<sub>hi_reduced</sub> ctk<sub>hi_reduced</sub> )</code> be <code>typedExpressionIR<sub>hi_reduced</sub></code>.</p>
@@ -17971,7 +17971,7 @@ invoked.</p>
 <p>Let <code>nameIR<sub>object</sub></code> be <code>"__direct_application"</code>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_var">$add_var(p', TC', nameIR<sub>object</sub>, typeIR<sub>object</sub> CTK ?())</a></code>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_var">$add_var(p', TC', nameIR<sub>object</sub>, typeIR<sub>object</sub> CTK None)</a></code>.</p>
 </li>
 <li>
 <p>Let <code>lvalue</code> be <code>nameIR<sub>object</sub> . "apply"</code>.</p>
@@ -18058,7 +18058,7 @@ invoked.</p>
 <p>Check that <code>(cid, constructor, id*)<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?(_, constructor, _<sup>*</sup>)</code> be <code>(cid, constructor, id*)<sup>?</sup></code>.</p>
+<p>Let <code>(_, constructor, _<sup>*</sup>)</code> be <code>(cid, constructor, id*)<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <a href="#Constructor_inst"><code>p' IC' STO' |- constructor &lt; [ ] &gt; ( [ ] # [ ] ) =&#8658; STO<sub>1</sub> object</code></a>.</p>
@@ -18175,7 +18175,7 @@ rule Stmt_ok/returnStatement/expression:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Check that ?<code>VOID</code> is equal to <code><a href="#find_return_type">$find_return_type(TC')</a></code>.</p>
+<p>Check that <code>VOID</code> is equal to <code><a href="#find_return_type">$find_return_type(TC')</a></code>.</p>
 </li>
 <li>
 <p>Result in</p>
@@ -18213,7 +18213,7 @@ rule Stmt_ok/returnStatement/expression:
 <p>Check that <code>typeIR'<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typeIR<sub>ret</sub></code> be <code>typeIR'<sup>?</sup></code>.</p>
+<p>Let <code>typeIR<sub>ret</sub></code> be <code>typeIR'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typedExpressionIR'<sup>?</sup></code> be <a href="#coerce_unary">implicitly cast  <code>typedExpressionIR</code>  to  <code>typeIR<sub>ret</sub></code></a>.</p>
@@ -18222,7 +18222,7 @@ rule Stmt_ok/returnStatement/expression:
 <p>Check that <code>typedExpressionIR'<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typedExpressionIR<sub>cast</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
+<p>Let <code>typedExpressionIR<sub>cast</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Result in</p>
@@ -18682,10 +18682,10 @@ rule BlockElementStmt_ok/variableDeclaration/initializer:
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_var">$add_var(LOCAL, TC<sub>0</sub>, nameIR, INOUT typeIR DYN ?())</a></code>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_var">$add_var(LOCAL, TC<sub>0</sub>, nameIR, INOUT typeIR DYN None)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>variableDeclarationIR</code> be <code>annotationList typeIR nameIR ?() ;</code>.</p>
+<p>Let <code>variableDeclarationIR</code> be <code>annotationList typeIR nameIR None ;</code>.</p>
 </li>
 <li>
 <p>Result in</p>
@@ -18732,16 +18732,16 @@ rule BlockElementStmt_ok/variableDeclaration/initializer:
 <p>Check that <code>typedExpressionIR<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typedExpressionIR<sub>init_cast</sub></code> be <code>typedExpressionIR<sup>?</sup></code>.</p>
+<p>Let <code>typedExpressionIR<sub>init_cast</sub></code> be <code>typedExpressionIR<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_var">$add_var(LOCAL, TC<sub>0</sub>, nameIR, INOUT typeIR DYN ?())</a></code>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_var">$add_var(LOCAL, TC<sub>0</sub>, nameIR, INOUT typeIR DYN None)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>variableDeclarationIR</code> be <code>annotationList typeIR nameIR ?= typedExpressionIR<sub>init_cast</sub> ;</code>.</p>
+<p>Let <code>variableDeclarationIR</code> be <code>annotationList typeIR nameIR = typedExpressionIR<sub>init_cast</sub> ;</code>.</p>
 </li>
 <li>
 <p>Result in</p>
@@ -18889,7 +18889,7 @@ rule BlockElementStmt_ok/variableDeclaration/initializer:
 <p>Check that <code>declarationIR'<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?declarationIR</code> be <code>declarationIR'<sup>?</sup></code>.</p>
+<p>Let <code>declarationIR</code> be <code>declarationIR'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Check that <code>declarationIR</code> has type <code>constantDeclarationIR</code>.</p>
@@ -18898,7 +18898,7 @@ rule BlockElementStmt_ok/variableDeclaration/initializer:
 <p>Let <code>constantDeclarationIR<sub>inst</sub></code> be <code>declarationIR</code>.</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>1</sub></code>, <code>STO<sub>1</sub></code>, and ?<code>constantDeclarationIR<sub>inst</sub></code>.</p>
+<p>Result in <code>IC<sub>1</sub></code>, <code>STO<sub>1</sub></code>, and <code>constantDeclarationIR<sub>inst</sub></code>.</p>
 </li>
 </ol>
 </div>
@@ -18924,7 +18924,7 @@ rule BlockElementStmt_ok/variableDeclaration/initializer:
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Result in <code>IC<sub>0'</sub></code>, <code>STO<sub>0'</sub></code>, and ?<code>variableDeclarationIR</code>.</p>
+<p>Result in <code>IC<sub>0'</sub></code>, <code>STO<sub>0'</sub></code>, and <code>variableDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -18954,7 +18954,7 @@ rule BlockElementStmt_ok/variableDeclaration/initializer:
 <p>Let <code>IC<sub>1</sub></code>, <code>STO<sub>1</sub></code>, and <code>statementIR<sub>inst</sub></code> be the result of <a href="#Stmt_inst">the compile-time evaluation of <code>statementIR</code>, under cursor <code>LOCAL</code>, instantiation context <code>IC<sub>0'</sub></code>, and store <code>STO<sub>0'</sub></code></a>.</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>1</sub></code>, <code>STO<sub>1</sub></code>, and ?<code>statementIR<sub>inst</sub></code>.</p>
+<p>Result in <code>IC<sub>1</sub></code>, <code>STO<sub>1</sub></code>, and <code>statementIR<sub>inst</sub></code>.</p>
 </li>
 </ol>
 </div>
@@ -19680,13 +19680,13 @@ rule SwitchLabel_table_ok/expressionNonBrace-prefixedNonTypeName:
 <p>Check that <code>varTypeIR<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?_ typeIR<sub>label</sub> ctk<sub>label</sub> value<sup>?</sup></code> be <code>varTypeIR<sup>?</sup></code>.</p>
+<p>Let <code>_ typeIR<sub>label</sub> ctk<sub>label</sub> value<sup>?</sup></code> be <code>varTypeIR<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Check that <code>value<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?value<sub>label</sub></code> be <code>value<sup>?</sup></code>.</p>
+<p>Let <code>value<sub>label</sub></code> be <code>value<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Check that <code>value<sub>label</sub></code> is equal to <code>TABLE_ENUM tid<sub>table_enum</sub> . nameIR<sub>label</sub></code>.</p>
@@ -19966,7 +19966,7 @@ rule SwitchLabel_general_ok/expressionNonBrace:
 <p>Check that <code>typedExpressionIR<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typedExpressionIR<sub>label_cast</sub></code> be <code>typedExpressionIR<sup>?</sup></code>.</p>
+<p>Let <code>typedExpressionIR<sub>label_cast</sub></code> be <code>typedExpressionIR<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>_ # ( _ ctk )</code> be <code>typedExpressionIR<sub>label_cast</sub></code>.</p>
@@ -20916,7 +20916,7 @@ rule Expr_ok/referenceExpression/this:
 <p>Check that <code>varTypeIR<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?_ typeIR ctk _<sup>?</sup></code> be <code>varTypeIR<sup>?</sup></code>.</p>
+<p>Let <code>_ typeIR ctk _<sup>?</sup></code> be <code>varTypeIR<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>expressionNoteIR</code> be <code>( typeIR ctk )</code>.</p>
@@ -20941,7 +20941,7 @@ rule Expr_ok/referenceExpression/this:
 <p>Check that <code>varTypeIR<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?_ typeIR ctk _<sup>?</sup></code> be <code>varTypeIR<sup>?</sup></code>.</p>
+<p>Let <code>_ typeIR ctk _<sup>?</sup></code> be <code>varTypeIR<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>expressionNoteIR</code> be <code>( typeIR ctk )</code>.</p>
@@ -21185,7 +21185,7 @@ unaryExpressionIR
 <p>Check that <code>typedExpressionIR'<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typedExpressionIR<sub>reduced</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
+<p>Let <code>typedExpressionIR<sub>reduced</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
@@ -21243,7 +21243,7 @@ unaryExpressionIR
 <p>Check that <code>typedExpressionIR'<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typedExpressionIR<sub>reduced</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
+<p>Let <code>typedExpressionIR<sub>reduced</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
@@ -21306,7 +21306,7 @@ unaryExpressionIR
 <p>Check that <code>typedExpressionIR'<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typedExpressionIR<sub>reduced</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
+<p>Let <code>typedExpressionIR<sub>reduced</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
@@ -21337,7 +21337,7 @@ unaryExpressionIR
 <p>Check that <code>typedExpressionIR'<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typedExpressionIR<sub>reduced</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
+<p>Let <code>typedExpressionIR<sub>reduced</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
@@ -21513,7 +21513,7 @@ binaryExpressionIR
 <p>Check that <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
+<p>Let <code>(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code> be <code><a href="#reduce_serenum_binary">$reduce_serenum_binary(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>, $compat_plusminusmult)</a></code>.</p>
@@ -21522,7 +21522,7 @@ binaryExpressionIR
 <p>Check that <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
+<p>Let <code>(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
@@ -21597,7 +21597,7 @@ binaryExpressionIR
 <p>Check that <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
+<p>Let <code>(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code> be <code><a href="#reduce_serenum_binary">$reduce_serenum_binary(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>, $compat_satplusminus)</a></code>.</p>
@@ -21606,7 +21606,7 @@ binaryExpressionIR
 <p>Check that <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
+<p>Let <code>(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
@@ -21699,7 +21699,7 @@ rule Expr_ok/binaryExpression-divmod/rhs-non-lctk:
 <p>Check that <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
+<p>Let <code>(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code> be <code><a href="#reduce_serenum_binary">$reduce_serenum_binary(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>, $compat_divmod)</a></code>.</p>
@@ -21708,7 +21708,7 @@ rule Expr_ok/binaryExpression-divmod/rhs-non-lctk:
 <p>Check that <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
+<p>Let <code>(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
@@ -21837,7 +21837,7 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Check that <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
+<p>Let <code>(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>l_reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
@@ -21961,7 +21961,7 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Check that <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
+<p>Let <code>(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>cast</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_cast</sub></code></a>.</p>
@@ -22039,7 +22039,7 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Check that <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
+<p>Let <code>(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code> be <code><a href="#reduce_serenum_binary">$reduce_serenum_binary(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>, $compat_compare)</a></code>.</p>
@@ -22048,7 +22048,7 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Check that <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
+<p>Let <code>(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
@@ -22123,7 +22123,7 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Check that <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
+<p>Let <code>(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code> be <code><a href="#reduce_serenum_binary">$reduce_serenum_binary(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>, $compat_bitwise)</a></code>.</p>
@@ -22132,7 +22132,7 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Check that <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
+<p>Let <code>(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
@@ -22204,7 +22204,7 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Check that <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
+<p>Let <code>(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>l_reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
@@ -22225,7 +22225,7 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Check that <code>typeIR<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typeIR<sub>reduced</sub></code> be <code>typeIR<sup>?</sup></code>.</p>
+<p>Let <code>typeIR<sub>reduced</sub></code> be <code>typeIR<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>reduced</sub></code> be <code><a href="#join_ctk">$join_ctk(ctk<sub>l_reduced</sub>, ctk<sub>r_reduced</sub>)</a></code>.</p>
@@ -22291,7 +22291,7 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Check that <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
+<p>Let <code>(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code> be <code><a href="#reduce_serenum_binary">$reduce_serenum_binary(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>, $compat_logical)</a></code>.</p>
@@ -22300,7 +22300,7 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Check that <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
+<p>Let <code>(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
@@ -22650,7 +22650,7 @@ ternaryExpressionIR
 <p>Check that <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?(typedExpressionIR<sub>true_cast</sub>, typedExpressionIR<sub>false_cast</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
+<p>Let <code>(typedExpressionIR<sub>true_cast</sub>, typedExpressionIR<sub>false_cast</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>cast</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>true_cast</sub></code></a>.</p>
@@ -24128,7 +24128,7 @@ rule Expr_ok/memberAccessExpression-type/serenum:
 <p>Check that <code>typeDefIR'<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typeDefIR</code> be <code>typeDefIR'<sup>?</sup></code>.</p>
+<p>Let <code>typeDefIR</code> be <code>typeDefIR'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Check that <code>typeDefIR</code> has type <code>typeIR</code>.</p>
@@ -24223,7 +24223,7 @@ rule Eval_static/memberAccessExpressionIR-type/serenum:
 <p>Check that <code>typeDefIR'<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typeDefIR</code> be <code>typeDefIR'<sup>?</sup></code>.</p>
+<p>Let <code>typeDefIR</code> be <code>typeDefIR'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Check that <code>typeDefIR</code> has type <code>enumTypeIR</code>.</p>
@@ -24255,7 +24255,7 @@ rule Eval_static/memberAccessExpressionIR-type/serenum:
 <p>Check that <code>value'<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?value</code> be <code>value'<sup>?</sup></code>.</p>
+<p>Let <code>value</code> be <code>value'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Result in <code>tid . nameIR # value</code>.</p>
@@ -24302,7 +24302,7 @@ rule Expr_inst/memberAccessExpressionIR-type/serenum:
 <p>Check that <code>typeDefIR'<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typeDefIR</code> be <code>typeDefIR'<sup>?</sup></code>.</p>
+<p>Let <code>typeDefIR</code> be <code>typeDefIR'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Check that <code>typeDefIR</code> has type <code>enumTypeIR</code>.</p>
@@ -24331,7 +24331,7 @@ rule Expr_inst/memberAccessExpressionIR-type/serenum:
 <p>Check that <code>value'<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?value</code> be <code>value'<sup>?</sup></code>.</p>
+<p>Let <code>value</code> be <code>value'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Result in <code>STO'</code> and <code>tid . nameIR # value</code>.</p>
@@ -24676,7 +24676,7 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Check that <code>typeIR''<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typeIR</code> be <code>typeIR''<sup>?</sup></code>.</p>
+<p>Let <code>typeIR</code> be <code>typeIR''<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>expressionNoteIR</code> be <code>( typeIR DYN )</code>.</p>
@@ -24701,7 +24701,7 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Check that <code>typeIR''<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typeIR</code> be <code>typeIR''<sup>?</sup></code>.</p>
+<p>Let <code>typeIR</code> be <code>typeIR''<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>expressionNoteIR</code> be <code>( typeIR DYN )</code>.</p>
@@ -24726,7 +24726,7 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Check that <code>typeIR''<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typeIR</code> be <code>typeIR''<sup>?</sup></code>.</p>
+<p>Let <code>typeIR</code> be <code>typeIR''<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>expressionNoteIR</code> be <code>( typeIR DYN )</code>.</p>
@@ -24757,7 +24757,7 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Check that <code>typeIR''<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typeIR</code> be <code>typeIR''<sup>?</sup></code>.</p>
+<p>Let <code>typeIR</code> be <code>typeIR''<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>expressionNoteIR</code> be <code>( typeIR DYN )</code>.</p>
@@ -24965,7 +24965,7 @@ rule Expr_ok/indexAccessExpression/headerstack-non-lctk:
 <p>Check that <code>typedExpressionIR<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typedExpressionIR<sub>index_reduced</sub></code> be <code>typedExpressionIR<sup>?</sup></code>.</p>
+<p>Let <code>typedExpressionIR<sub>index_reduced</sub></code> be <code>typedExpressionIR<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR'</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
@@ -25127,7 +25127,7 @@ sliceAccessExpressionIR
 <p>Check that <code>typedExpressionIR<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typedExpressionIR<sub>base_reduced</sub></code> be <code>typedExpressionIR<sup>?</sup></code>.</p>
+<p>Let <code>typedExpressionIR<sub>base_reduced</sub></code> be <code>typedExpressionIR<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>base_reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>base_reduced</sub></code></a>.</p>
@@ -25142,7 +25142,7 @@ sliceAccessExpressionIR
 <p>Check that <code>typedExpressionIR'<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typedExpressionIR<sub>hi_reduced</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
+<p>Let <code>typedExpressionIR<sub>hi_reduced</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typedExpressionIR''<sup>?</sup></code> be <code><a href="#reduce_serenum_unary">$reduce_serenum_unary(typedExpressionIR<sub>lo</sub>, $compat_bitslice_index)</a></code>.</p>
@@ -25151,7 +25151,7 @@ sliceAccessExpressionIR
 <p>Check that <code>typedExpressionIR''<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typedExpressionIR<sub>lo_reduced</sub></code> be <code>typedExpressionIR''<sup>?</sup></code>.</p>
+<p>Let <code>typedExpressionIR<sub>lo_reduced</sub></code> be <code>typedExpressionIR''<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>hi_reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>hi_reduced</sub></code></a>.</p>
@@ -25573,7 +25573,7 @@ rule Eval_static/callExpressionIR-builtin-size/type-poly:
 <p>Check that <code>typeDefIR'<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typeDefIR</code> be <code>typeDefIR'<sup>?</sup></code>.</p>
+<p>Let <code>typeDefIR</code> be <code>typeDefIR'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>If let <code>typeIR<sub>base</sub></code> be <code>typeDefIR</code>:</p>
@@ -25675,7 +25675,7 @@ rule Expr_inst/callExpressionIR-builtin-size/type-poly:
 <p>Check that <code>typeDefIR'<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let <code>?typeDefIR</code> be <code>typeDefIR'<sup>?</sup></code>.</p>
+<p>Let <code>typeDefIR</code> be <code>typeDefIR'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>If let <code>_</code> be <code>typeDefIR</code>:</p>
