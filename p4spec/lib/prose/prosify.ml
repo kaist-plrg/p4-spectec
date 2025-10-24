@@ -284,7 +284,7 @@ and prosify_instr ctx instr : Pl.Ast.instr list =
           in
           [ instr_if; instr_else ]
       | HoldH (instrs_hold, _) ->
-          let instrs_hold_sl = prosify_instrs ctx instrs_hold in
+          let instrs_hold_pl = prosify_instrs ctx instrs_hold in
           let relation_true =
             match HEnv.get_rel id ctx.penv.prose_true with
             | Some hintexp -> Pl.Ast.Prose (hintexp, [], exps)
@@ -293,12 +293,10 @@ and prosify_instr ctx instr : Pl.Ast.instr list =
           let cond =
             Pl.Ast.RelCond (relation_true, id) |> prosify_iterated_cond iterexps
           in
-          let instr =
-            Pl.Ast.BranchI (Pl.Ast.If, cond, instrs_hold_sl) $ instr.at
-          in
-          [ instr ]
+          let instr = Pl.Ast.CheckI cond $ instr.at in
+          instr :: instrs_hold_pl
       | NotHoldH (instrs_nothold, _) ->
-          let instrs_nothold_sl = prosify_instrs ctx instrs_nothold in
+          let instrs_nothold_pl = prosify_instrs ctx instrs_nothold in
           let relation_false =
             match HEnv.get_rel id ctx.penv.prose_false with
             | Some hintexp -> Pl.Ast.Prose (hintexp, [], exps)
@@ -308,10 +306,8 @@ and prosify_instr ctx instr : Pl.Ast.instr list =
             Pl.Ast.RelCond (relation_false, id)
             |> prosify_iterated_cond iterexps
           in
-          let instr =
-            Pl.Ast.BranchI (Pl.Ast.If, cond, instrs_nothold_sl) $ instr.at
-          in
-          [ instr ])
+          let instr = Pl.Ast.CheckI cond $ instr.at in
+          instr :: instrs_nothold_pl)
   | CaseI (exp, cases, Some _) -> prosify_cases ctx ~closed:false exp cases
   | CaseI (exp, cases, None) -> prosify_cases ctx ~closed:true exp cases
   | OtherwiseI instr ->
