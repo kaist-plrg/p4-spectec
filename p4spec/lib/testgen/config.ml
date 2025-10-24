@@ -67,7 +67,7 @@ type t = {
 
 let load_mixops (mixopenv : MixopEnv.t) (def : def) : MixopEnv.t =
   match def.it with
-  | TypD (id, _, deftyp) -> (
+  | TypD (id, _, deftyp, _) -> (
       match deftyp.it with
       | VariantT typcases ->
           let nottyps = List.map fst typcases in
@@ -116,7 +116,7 @@ let load_mixops (mixopenv : MixopEnv.t) (def : def) : MixopEnv.t =
 
 let load_def (tdenv : TDEnv.t) (def : def) : TDEnv.t =
   match def.it with
-  | TypD (id, tparams, deftyp) ->
+  | TypD (id, tparams, deftyp, _) ->
       let typdef = (tparams, deftyp) in
       TDEnv.add id typdef tdenv
   | _ -> tdenv

@@ -196,9 +196,11 @@ syntax expressionIR =
   | parenthesizedExpressionIR
 
 syntax expressionNoteIR = `( typeIR ctk )
+  hint(prose "type" %0 "and compile-time known-ness" %1)
 
 syntax typedExpressionIR =
   expressionIR `# expressionNoteIR
+  hint(prose %0 "annotated with" %1)
 
 syntax typedExpressionListIR = typedExpressionIR*
 
@@ -265,6 +267,7 @@ syntax lvalueIR =
   | `( typedLvalueIR )
 
 syntax typedLvalueIR = lvalueIR `# `( typeIR )
+  hint(prose %0 "with type" %1)
 
 dec $type_of_lvalue(typedLvalueIR) : typeIR
   hint(prose_in "the type of lvalue " %0)

@@ -105,7 +105,8 @@ let struct_clause_path ((prems, exp_output) : prem list * exp) :
 let rec struct_def (ienv : IEnv.t) (tdenv : TDEnv.t) (def : def) : Sl.Ast.def =
   let at = def.at in
   match def.it with
-  | TypD (id, tparams, deftyp) -> Sl.Ast.TypD (id, tparams, deftyp) $ at
+  | TypD (id, tparams, deftyp, hints) ->
+      Sl.Ast.TypD (id, tparams, deftyp, hints) $ at
   | RelD (id, nottyp, inputs, rulegroups, hints) ->
       struct_rel_def ienv tdenv at id nottyp inputs rulegroups hints
   | DecD (id, tparams, _params, typ, clauses, hints) ->
@@ -194,7 +195,7 @@ and struct_dec_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region) (id_dec : id)
 
 let load_def (ienv : IEnv.t) (tdenv : TDEnv.t) (def : def) : IEnv.t * TDEnv.t =
   match def.it with
-  | TypD (id, tparams, deftyp) ->
+  | TypD (id, tparams, deftyp, _hints) ->
       let typdef = (tparams, deftyp) in
       let tdenv = TDEnv.add id typdef tdenv in
       (ienv, tdenv)

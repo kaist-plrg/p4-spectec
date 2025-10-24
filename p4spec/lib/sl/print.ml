@@ -380,7 +380,7 @@ let rec string_of_def ?(verbose = false) def =
   ";; " ^ string_of_region def.at ^ "\n"
   ^
   match def.it with
-  | TypD (typid, tparams, deftyp) ->
+  | TypD (typid, tparams, deftyp, _) ->
       "syntax " ^ string_of_typid typid ^ string_of_tparams tparams ^ " = "
       ^ string_of_deftyp deftyp
   | RelD rel -> "relation " ^ string_of_rel ~verbose rel

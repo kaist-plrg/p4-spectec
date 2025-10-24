@@ -378,7 +378,8 @@ and infer_binop (ctx : Ctx.t) (at : region) (binop : binop)
   in
   List.fold_left
     (fun binop_infer
-         (optyp_il, plaintyp_l_expect, plaintyp_r_expect, plaintyp_res_expect) ->
+         (optyp_il, plaintyp_l_expect, plaintyp_r_expect, plaintyp_res_expect)
+       ->
       match binop_infer with
       | Ok _ -> binop_infer
       | _ -> (
@@ -1442,8 +1443,8 @@ let rec elab_def (ctx : Ctx.t) (def : def) : Ctx.t * Il.Ast.def option =
   let at = def.at in
   match def.it with
   | SynD syns -> elab_syn_def ctx syns |> wrap_none
-  | TypD (id, tparams, deftyp, _hints) ->
-      elab_typ_def ctx id tparams deftyp |> wrap_some
+  | TypD (id, tparams, deftyp, hints) ->
+      elab_typ_def ctx id tparams deftyp hints |> wrap_some
   | VarD (id, plaintyp, _hints) -> elab_var_def ctx id plaintyp |> wrap_none
   | RelD (id, nottyp, hints) -> elab_rel_def ctx at id nottyp hints |> wrap_some
   | RuleGroupD (id_rel, id_rulegroup, rules) ->
@@ -1483,7 +1484,7 @@ and elab_syn_def (ctx : Ctx.t) (syns : (id * tparam list) list) : Ctx.t =
 (* Elaboration of type definitions *)
 
 and elab_typ_def (ctx : Ctx.t) (id : id) (tparams : tparam list)
-    (deftyp : deftyp) : Ctx.t * Il.Ast.def =
+    (deftyp : deftyp) (hints : hint list) : Ctx.t * Il.Ast.def =
   let td_opt = Ctx.find_typdef_opt ctx id in
   let ctx =
     match td_opt with
@@ -1508,7 +1509,7 @@ and elab_typ_def (ctx : Ctx.t) (id : id) (tparams : tparam list)
   check (List.for_all valid_tid tparams) id.at "invalid type parameter";
   let ctx_local = Ctx.add_tparams ctx tparams in
   let td, deftyp_il = elab_deftyp ctx_local id tparams deftyp in
-  let def_il = Il.Ast.TypD (id, tparams, deftyp_il) $ deftyp.at in
+  let def_il = Il.Ast.TypD (id, tparams, deftyp_il, hints) $ deftyp.at in
   let ctx = Ctx.update_typdef ctx id td in
   (ctx, def_il)
 

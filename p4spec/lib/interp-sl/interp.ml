@@ -1484,7 +1484,7 @@ and invoke_func_def (ctx : Ctx.t) (id : id) (targs : targ list)
 
 let load_def (ctx : Ctx.t) (def : def) : Ctx.t =
   match def.it with
-  | TypD (id, tparams, deftyp) ->
+  | TypD (id, tparams, deftyp, _) ->
       let typdef = (tparams, deftyp) in
       Ctx.add_typdef Global ctx id typdef
   | RelD (id, (mixop, inputs), relmatch, relpaths, _) ->
