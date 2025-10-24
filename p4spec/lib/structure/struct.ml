@@ -108,8 +108,8 @@ let rec struct_def (ienv : IEnv.t) (tdenv : TDEnv.t) (def : def) : Sl.Ast.def =
   | TypD (id, tparams, deftyp) -> Sl.Ast.TypD (id, tparams, deftyp) $ at
   | RelD (id, nottyp, inputs, rulegroups, hints) ->
       struct_rel_def ienv tdenv at id nottyp inputs rulegroups hints
-  | DecD (id, tparams, _params, _typ, clauses, hints) ->
-      struct_dec_def ienv tdenv at id tparams clauses hints
+  | DecD (id, tparams, _params, typ, clauses, hints) ->
+      struct_dec_def ienv tdenv at id tparams typ clauses hints
 
 (* Structuring relation definitions *)
 
@@ -182,13 +182,13 @@ and struct_rel_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region) (id_rel : id)
 (* Structuring declaration definitions *)
 
 and struct_dec_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region) (id_dec : id)
-    (tparams : tparam list) (clauses : clause list) (hints : hint list) :
-    Sl.Ast.def =
+    (tparams : tparam list) (typ : typ) (clauses : clause list)
+    (hints : hint list) : Sl.Ast.def =
   let args_input, paths = Antiunify.antiunify_clauses clauses in
   let instrs = List.concat_map struct_clause_path paths in
   let instrs = Optimize.optimize ienv tdenv instrs in
   let instrs = Instrument.instrument tdenv instrs in
-  Sl.Ast.DecD (id_dec, tparams, args_input, instrs, hints) $ at
+  Sl.Ast.DecD (id_dec, tparams, args_input, typ, instrs, hints) $ at
 
 (* Load type definitions *)
 

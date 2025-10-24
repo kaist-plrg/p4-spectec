@@ -68,8 +68,8 @@ let init_sl_def (ctx : t) (def_sl : Sl.Ast.def) : unit =
   match def_sl.it with
   | RelD (id_rel, (mixop, inputs), _, instrs, _) ->
       init_sl_rule_instrs ctx id_rel mixop inputs instrs
-  | DecD (id_func, tparams, args_input, instrs, _) ->
-      let funcprose = (tparams, args_input, instrs) in
+  | DecD (id_func, tparams, args_input, typ, instrs, _) ->
+      let funcprose = (tparams, args_input, typ, instrs) in
       ctx.funcprose <- FuncProseMap.add id_func.it funcprose ctx.funcprose
   | _ -> ()
 

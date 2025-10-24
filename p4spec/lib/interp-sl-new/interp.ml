@@ -1517,7 +1517,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP = struct
     | RelD (id, (mixop, inputs), relmatch, relpaths, _) ->
         let rel = (mixop, inputs, relmatch, relpaths) in
         Ctx.add_rel Global ctx id rel
-    | DecD (id, tparams, args_input, instrs, _) ->
+    | DecD (id, tparams, args_input, _typ, instrs, _) ->
         let func = (tparams, args_input, instrs) in
         Ctx.add_func Global ctx id func
 

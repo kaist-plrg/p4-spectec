@@ -96,7 +96,7 @@ module Cover = struct
     | TypD _ -> cover
     | RelD (id, _, _, instrs, _) ->
         if IdSet.mem id ignores then cover else init_instrs cover id instrs
-    | DecD (id, _, _, instrs, _) ->
+    | DecD (id, _, _, _, instrs, _) ->
         if IdSet.mem id ignores then cover else init_instrs cover id instrs
 
   let init_spec (ignores : IdSet.t) (spec : spec) : t =
