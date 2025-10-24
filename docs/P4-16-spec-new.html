@@ -4411,7 +4411,10 @@ rule Type_ok/fixint/expr:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let!<sub>type</sub> <code>n</code> be <code>int</code>.</p>
+<p>Check that <code>int</code> has type <code>nat</code>.</p>
+</li>
+<li>
+<p>Let <code>n</code> be <code>int</code>.</p>
 </li>
 <li>
 <p>Result in the type <code>INT &lt; n &gt;</code> and set of fresh type variables <code>[ ]</code>.</p>
@@ -4433,7 +4436,10 @@ rule Type_ok/fixint/expr:
 <p>Let <code>int</code> be <code><a href="#to_number">$to_number(value)</a></code>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>n</code> be <code>int</code>.</p>
+<p>Check that <code>int</code> has type <code>nat</code>.</p>
+</li>
+<li>
+<p>Let <code>n</code> be <code>int</code>.</p>
 </li>
 <li>
 <p>Result in the type <code>INT &lt; n &gt;</code> and set of fresh type variables <code>[ ]</code>.</p>
@@ -4528,7 +4534,10 @@ rule Type_ok/fixbit/expr:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let!<sub>type</sub> <code>n</code> be <code>int</code>.</p>
+<p>Check that <code>int</code> has type <code>nat</code>.</p>
+</li>
+<li>
+<p>Let <code>n</code> be <code>int</code>.</p>
 </li>
 <li>
 <p>Result in the type <code>BIT &lt; n &gt;</code> and set of fresh type variables <code>[ ]</code>.</p>
@@ -4550,7 +4559,10 @@ rule Type_ok/fixbit/expr:
 <p>Let <code>int</code> be <code><a href="#to_number">$to_number(value)</a></code>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>n</code> be <code>int</code>.</p>
+<p>Check that <code>int</code> has type <code>nat</code>.</p>
+</li>
+<li>
+<p>Let <code>n</code> be <code>int</code>.</p>
 </li>
 <li>
 <p>Result in the type <code>BIT &lt; n &gt;</code> and set of fresh type variables <code>[ ]</code>.</p>
@@ -4620,7 +4632,10 @@ rule Type_ok/varbit/expr:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let!<sub>type</sub> <code>n</code> be <code>int</code>.</p>
+<p>Check that <code>int</code> has type <code>nat</code>.</p>
+</li>
+<li>
+<p>Let <code>n</code> be <code>int</code>.</p>
 </li>
 <li>
 <p>Result in the type <code>VARBIT &lt; n &gt;</code> and set of fresh type variables <code>[ ]</code>.</p>
@@ -4642,7 +4657,10 @@ rule Type_ok/varbit/expr:
 <p>Let <code>int</code> be <code><a href="#to_number">$to_number(value)</a></code>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>n</code> be <code>int</code>.</p>
+<p>Check that <code>int</code> has type <code>nat</code>.</p>
+</li>
+<li>
+<p>Let <code>n</code> be <code>int</code>.</p>
 </li>
 <li>
 <p>Result in the type <code>VARBIT &lt; n &gt;</code> and set of fresh type variables <code>[ ]</code>.</p>
@@ -4989,7 +5007,13 @@ rule Type_ok/prefixedTypeName/poly:
 <p>Let <code>prefixedNameIR</code> be <a href="#prefixedTypeName">the prefixed name of  <code>prefixedTypeName</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>typeDefIR</code> be <code><a href="#find_type">$find_type(p, TC, prefixedNameIR)</a></code>.</p>
+<p>Let <code>typeDefIR'<sup>?</sup></code> be <code><a href="#find_type">$find_type(p, TC, prefixedNameIR)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>typeDefIR'<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typeDefIR</code> be <code>typeDefIR'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>If let <code>typeIR</code> be <code>typeDefIR</code>:</p>
@@ -5189,10 +5213,19 @@ rule Type_ok/specializedType/poly:
 <p>Let <code>prefixedNameIR</code> be <a href="#prefixedTypeName">the prefixed name of  <code>prefixedTypeName</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>typeDefIR</code> be <code><a href="#find_type">$find_type(p, TC, prefixedNameIR)</a></code>.</p>
+<p>Let <code>typeDefIR'<sup>?</sup></code> be <code><a href="#find_type">$find_type(p, TC, prefixedNameIR)</a></code>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>typeIR</code> be <code>typeDefIR</code>.</p>
+<p>Check that <code>typeDefIR'<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typeDefIR</code> be <code>typeDefIR'<sup>?</sup></code>.</p>
+</li>
+<li>
+<p>Check that <code>typeDefIR</code> has type <code>typeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>typeIR</code> be <code>typeDefIR</code>.</p>
 </li>
 <li>
 <p>Result in the type <code>typeIR</code> and set of fresh type variables <code>[ ]</code>.</p>
@@ -5211,7 +5244,10 @@ rule Type_ok/specializedType/poly:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let!<sub>type</sub> <code>polyTypeDefIR</code> be <code>typeDefIR</code>.</p>
+<p>Check that <code>typeDefIR</code> has type <code>polyTypeDefIR</code>.</p>
+</li>
+<li>
+<p>Let <code>polyTypeDefIR</code> be <code>typeDefIR</code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR &lt; tid<sub>expl</sub><sup>*</sup> , tid<sub>impl</sub><sup>*</sup> &gt;</code> be <code>polyTypeDefIR</code>.</p>
@@ -5788,7 +5824,10 @@ rule Type_ok/headerStackType/specializedType:
 <p>Let <code>int</code> be <code><a href="#to_number">$to_number(value<sub>size</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>n<sub>size</sub></code> be <code>int</code>.</p>
+<p>Check that <code>int</code> has type <code>nat</code>.</p>
+</li>
+<li>
+<p>Let <code>n<sub>size</sub></code> be <code>int</code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>stack</sub></code> be <code>TID "T" [ n<sub>size</sub> ]</code>.</p>
@@ -5819,7 +5858,10 @@ rule Type_ok/headerStackType/specializedType:
 <p>Let <code>int</code> be <code><a href="#to_number">$to_number(value<sub>size</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>n<sub>size</sub></code> be <code>int</code>.</p>
+<p>Check that <code>int</code> has type <code>nat</code>.</p>
+</li>
+<li>
+<p>Let <code>n<sub>size</sub></code> be <code>int</code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>stack</sub></code> be <code>TID "T" [ n<sub>size</sub> ]</code>.</p>
@@ -6338,7 +6380,10 @@ headers contained within <code>h1</code>, regardless of how deeply they are nest
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let!<sub>type</sub> <code>ENUM _ # _ { _<sup>*</sup> }</code> be <code>enumTypeIR</code>.</p>
+<p>Check that <code>enumTypeIR</code> matches pattern <code>ENUM % # % { % }</code>.</p>
+</li>
+<li>
+<p>Let <code>ENUM _ # _ { _<sup>*</sup> }</code> be <code>enumTypeIR</code>.</p>
 </li>
 <li>
 <p>Return <code>true</code>.</p>
@@ -6423,7 +6468,10 @@ headers contained within <code>h1</code>, regardless of how deeply they are nest
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let!<sub>type</sub> <code>ENUM _ # _ { _<sup>*</sup> }</code> be <code>enumTypeIR</code>.</p>
+<p>Check that <code>enumTypeIR</code> matches pattern <code>ENUM % # % { % }</code>.</p>
+</li>
+<li>
+<p>Let <code>ENUM _ # _ { _<sup>*</sup> }</code> be <code>enumTypeIR</code>.</p>
 </li>
 <li>
 <p>Return <code>true</code>.</p>
@@ -7330,10 +7378,16 @@ object types can be obtained from named types, as illustrated in
 <p>Let <code>typeIR''</code> be <a href="#canon">the canonicalized form of <code>typeIR</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>tableMetadataTypeIR</code> be <code>typeIR''</code>.</p>
+<p>Check that <code>typeIR''</code> has type <code>tableMetadataTypeIR</code>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>TABLE_STRUCT _ { _<sup>*</sup> }</code> be <code>tableMetadataTypeIR</code>.</p>
+<p>Let <code>tableMetadataTypeIR</code> be <code>typeIR''</code>.</p>
+</li>
+<li>
+<p>Check that <code>tableMetadataTypeIR</code> matches pattern <code>TABLE_STRUCT % { % }</code>.</p>
+</li>
+<li>
+<p>Let <code>TABLE_STRUCT _ { _<sup>*</sup> }</code> be <code>tableMetadataTypeIR</code>.</p>
 </li>
 <li>
 <p>Check that <a href="#Type_wf"><code>typeIR</code> is a well-formed type, assuming bound type ids <code>bound</code></a>.</p>
@@ -8259,7 +8313,10 @@ by the compiler internally and used for type-checking.</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let!<sub>type</sub> <code>SEQ &lt; typeIR<sup>*</sup> &gt;</code> be <code>sequenceTypeIR</code>.</p>
+<p>Check that <code>sequenceTypeIR</code> matches pattern <code>SEQ &lt; % &gt;</code>.</p>
+</li>
+<li>
+<p>Let <code>SEQ &lt; typeIR<sup>*</sup> &gt;</code> be <code>sequenceTypeIR</code>.</p>
 </li>
 <li>
 <p>Check that <a href="#nestable_sequence_in_set"><code>typeIR</code> can be used in a sequence nested in a set type</a>, for all <code>typeIR</code> in <code>typeIR<sup>*</sup></code>.</p>
@@ -8417,7 +8474,10 @@ by the compiler internally and used for type-checking.</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let!<sub>type</sub> <code>SEQ &lt; typeIR<sup>*</sup> &gt;</code> be <code>sequenceTypeIR</code>.</p>
+<p>Check that <code>sequenceTypeIR</code> matches pattern <code>SEQ &lt; % &gt;</code>.</p>
+</li>
+<li>
+<p>Let <code>SEQ &lt; typeIR<sup>*</sup> &gt;</code> be <code>sequenceTypeIR</code>.</p>
 </li>
 <li>
 <p>Check that <a href="#nestable_sequence_in_set"><code>typeIR</code> can be used in a sequence nested in a set type</a>, for all <code>typeIR</code> in <code>typeIR<sup>*</sup></code>.</p>
@@ -8840,7 +8900,13 @@ rule Parameter_ok/initializer:
 <p>Check that <code><a href="#ctk_of_expression">$ctk_of_expression(typedExpressionIR<sub>init</sub>)</a></code> matches pattern <code>LCTK</code>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>typedExpressionIR<sub>init_cast</sub></code> be <a href="#coerce_unary">implicitly cast  <code>typedExpressionIR<sub>init</sub></code>  to  <code>typeIR</code></a>.</p>
+<p>Let <code>typedExpressionIR<sup>?</sup></code> be <a href="#coerce_unary">implicitly cast  <code>typedExpressionIR<sub>init</sub></code>  to  <code>typeIR</code></a>.</p>
+</li>
+<li>
+<p>Check that <code>typedExpressionIR<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typedExpressionIR<sub>init_cast</sub></code> be <code>typedExpressionIR<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
@@ -10741,7 +10807,10 @@ constructors.</p>
 <p>Let <code>typeIR'</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>object</sub></code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>externObjectTypeIR</code> be <code>typeIR'</code>.</p>
+<p>Check that <code>typeIR'</code> has type <code>externObjectTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>externObjectTypeIR</code> be <code>typeIR'</code>.</p>
 </li>
 <li>
 <p>Let <code><em><sup>*</sup></code> be the list of <code></em></code>, <code><em><sup>*</sup></code> be the list of <code></em></code>, <code><em><sup>?</sup><sup>*</sup></code> be the list of <code></em><sup>?</sup></code>, and <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
@@ -10932,7 +11001,10 @@ rule is explained in <a href="#sec-sem-Decl_ok-parserDeclaration">Section 11.8.1
 <p>Let <code>typeIR'</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>object</sub></code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>parserObjectTypeIR</code> be <code>typeIR'</code>.</p>
+<p>Check that <code>typeIR'</code> has type <code>parserObjectTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>parserObjectTypeIR</code> be <code>typeIR'</code>.</p>
 </li>
 <li>
 <p>Let <code><em><sup>*</sup></code> be the list of <code></em></code>, <code><em><sup>*</sup></code> be the list of <code></em></code>, <code><em><sup>?</sup><sup>*</sup></code> be the list of <code></em><sup>?</sup></code>, and <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
@@ -11117,7 +11189,10 @@ rule is explained in <a href="#sec-sem-Decl_ok-controlDeclaration">Section 11.9.
 <p>Let <code>typeIR'</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>object</sub></code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>controlObjectTypeIR</code> be <code>typeIR'</code>.</p>
+<p>Check that <code>typeIR'</code> has type <code>controlObjectTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>controlObjectTypeIR</code> be <code>typeIR'</code>.</p>
 </li>
 <li>
 <p>Let <code><em><sup>*</sup></code> be the list of <code></em></code>, <code><em><sup>*</sup></code> be the list of <code></em></code>, <code><em><sup>?</sup><sup>*</sup></code> be the list of <code></em><sup>?</sup></code>, and <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
@@ -11391,7 +11466,10 @@ with them.</p>
 <p>Let <code>typeIR'</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>object</sub></code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>packageObjectTypeIR</code> be <code>typeIR'</code>.</p>
+<p>Check that <code>typeIR'</code> has type <code>packageObjectTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>packageObjectTypeIR</code> be <code>typeIR'</code>.</p>
 </li>
 <li>
 <p>Let <code><em><sup>*</sup></code> be the list of <code></em></code>, <code><em><sup>*</sup></code> be the list of <code></em></code>, <code><em><sup>?</sup><sup>*</sup></code> be the list of <code></em><sup>?</sup></code>, and <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
@@ -11544,7 +11622,13 @@ following are all legal constant declarations:</p>
 <p>Check that <code><a href="#ctk_of_expression">$ctk_of_expression(typedExpressionIR<sub>value</sub>)</a></code> matches pattern <code>LCTK</code>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>typedExpressionIR<sub>value_cast</sub></code> be <a href="#coerce_unary">implicitly cast  <code>typedExpressionIR<sub>value</sub></code>  to  <code>typeIR</code></a>.</p>
+<p>Let <code>typedExpressionIR<sup>?</sup></code> be <a href="#coerce_unary">implicitly cast  <code>typedExpressionIR<sub>value</sub></code>  to  <code>typeIR</code></a>.</p>
+</li>
+<li>
+<p>Check that <code>typedExpressionIR<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typedExpressionIR<sub>value_cast</sub></code> be <code>typedExpressionIR<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>value</code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>value_cast</sub></code>, under cursor <code>p'</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
@@ -12109,13 +12193,22 @@ methods.</p>
 </div>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>instantiationIR</code> be <code>declarationIR</code>.</p>
+<p>Check that <code>declarationIR</code> has type <code>instantiationIR</code>.</p>
+</li>
+<li>
+<p>Let <code>instantiationIR</code> be <code>declarationIR</code>.</p>
 </li>
 <li>
 <p>Let <code>_ _ _ &lt; _ &gt; ( _ ) nameIR _ ;</code> be <code>instantiationIR</code>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>varTypeIR</code> be <code><a href="#find_var">$find_var(p, TC<sub>1</sub>, ` nameIR)</a></code>.</p>
+<p>Let <code>varTypeIR'<sup>?</sup></code> be <code><a href="#find_var">$find_var(p, TC<sub>1</sub>, ` nameIR)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>varTypeIR'<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?varTypeIR</code> be <code>varTypeIR'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeFrame<sub>init</sub></code> be <code><a href="#update_map">$update_map&lt;id, varTypeIR&gt;(typeFrame, nameIR, varTypeIR)</a></code>.</p>
@@ -12226,10 +12319,16 @@ rule Decl_ok/instantiation-objectInitializer/specializedType:
 <p>Check that <code><a href="#is_extern_object_typeIR">$is_extern_object_typeIR(&lt;&lt;canon, $canon(typeIR<sub>object</sub>)</a>)&gt;&gt;</code>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>typeIR &lt; tid<sub>expl</sub><sup>*</sup> , tid'<sup>*</sup> &gt; &lt; typeIR<sub>arg</sub><sup>*</sup> &gt;</code> be <code>typeIR<sub>object</sub></code>.</p>
+<p>Check that <code>typeIR<sub>object</sub></code> has type <code>specializedTypeIR</code>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>EXTERN tid<sub>extern</sub> rdenv<sub>extern</sub></code> be <code>typeIR</code>.</p>
+<p>Let <code>typeIR &lt; tid<sub>expl</sub><sup>*</sup> , tid'<sup>*</sup> &gt; &lt; typeIR<sub>arg</sub><sup>*</sup> &gt;</code> be <code>typeIR<sub>object</sub></code>.</p>
+</li>
+<li>
+<p>Check that <code>typeIR</code> has type <code>externObjectTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>EXTERN tid<sub>extern</sub> rdenv<sub>extern</sub></code> be <code>typeIR</code>.</p>
 </li>
 <li>
 <p>Check that <code>tid'<sup>*</sup></code> is equal to <code>tid<sub>impl</sub><sup>*</sup></code>.</p>
@@ -12319,10 +12418,16 @@ rule Decl_ok/instantiation-objectInitializer/specializedType:
 <p>Check that <code><a href="#is_extern_object_typeIR">$is_extern_object_typeIR(&lt;&lt;canon, $canon(typeIR<sub>object</sub>)</a>)&gt;&gt;</code>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>typeIR &lt; tid<sub>expl</sub><sup>*</sup> , tid'<sup>*</sup> &gt; &lt; typeIR<sub>arg</sub><sup>*</sup> &gt;</code> be <code>typeIR<sub>object</sub></code>.</p>
+<p>Check that <code>typeIR<sub>object</sub></code> has type <code>specializedTypeIR</code>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>EXTERN tid<sub>extern</sub> rdenv<sub>extern</sub></code> be <code>typeIR</code>.</p>
+<p>Let <code>typeIR &lt; tid<sub>expl</sub><sup>*</sup> , tid'<sup>*</sup> &gt; &lt; typeIR<sub>arg</sub><sup>*</sup> &gt;</code> be <code>typeIR<sub>object</sub></code>.</p>
+</li>
+<li>
+<p>Check that <code>typeIR</code> has type <code>externObjectTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>EXTERN tid<sub>extern</sub> rdenv<sub>extern</sub></code> be <code>typeIR</code>.</p>
 </li>
 <li>
 <p>Check that <code>tid'<sup>*</sup></code> is equal to <code>tid<sub>impl</sub><sup>*</sup></code>.</p>
@@ -12451,7 +12556,13 @@ rule Decl_inst/instantiationIR/non-extern-non-global:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let!<sub>option</sub> <code>(_, constructor, id<sub>default</sub><sup>*</sup>)</code> be <code><a href="#find_constructor_inst">$find_constructor_inst(IC<sub>0</sub>, prefixedNameIR, argumentListIR)</a></code>.</p>
+<p>Let <code>(cid, constructor, id*)<sup>?</sup></code> be <code><a href="#find_constructor_inst">$find_constructor_inst(IC<sub>0</sub>, prefixedNameIR, argumentListIR)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>(cid, constructor, id*)<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?(_, constructor, id<sub>default</sub><sup>*</sup>)</code> be <code>(cid, constructor, id*)<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>IC<sub>inner</sub></code> be <code><a href="#enter_path">$enter_path(IC<sub>0</sub>, nameIR)</a></code>.</p>
@@ -12523,7 +12634,13 @@ rule Decl_inst/instantiationIR/non-extern-non-global:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let!<sub>option</sub> <code>(_, constructor, id<sub>default</sub><sup>*</sup>)</code> be <code><a href="#find_constructor_inst">$find_constructor_inst(IC<sub>0</sub>, prefixedNameIR, argumentListIR)</a></code>.</p>
+<p>Let <code>(cid, constructor, id*)<sup>?</sup></code> be <code><a href="#find_constructor_inst">$find_constructor_inst(IC<sub>0</sub>, prefixedNameIR, argumentListIR)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>(cid, constructor, id*)<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?(_, constructor, id<sub>default</sub><sup>*</sup>)</code> be <code>(cid, constructor, id*)<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>IC<sub>inner</sub></code> be <code><a href="#enter_path">$enter_path(IC<sub>0</sub>, nameIR)</a></code>.</p>
@@ -14575,7 +14692,13 @@ enumTypeDeclarationIR
 <p>Let <code>typedExpressionIR</code> be the result of <a href="#Expr_ok">typing <code>expression</code>, under cursor <code>BLOCK</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>typedExpressionIR<sub>cast</sub></code> be <a href="#coerce_unary">implicitly cast  <code>typedExpressionIR</code>  to  <code>typeIR</code></a>.</p>
+<p>Let <code>typedExpressionIR'<sup>?</sup></code> be <a href="#coerce_unary">implicitly cast  <code>typedExpressionIR</code>  to  <code>typeIR</code></a>.</p>
+</li>
+<li>
+<p>Check that <code>typedExpressionIR'<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typedExpressionIR<sub>cast</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Check that <code><a href="#ctk_of_expression">$ctk_of_expression(typedExpressionIR<sub>cast</sub>)</a></code> matches pattern <code>LCTK</code>.</p>
@@ -15465,16 +15588,28 @@ rule Decl_ok/typedefDeclaration-typedef/derivedTypeDeclaration-poly:
 </div>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>derivedTypeDeclarationIR</code> be <code>declarationIR</code>.</p>
+<p>Check that <code>declarationIR</code> has type <code>derivedTypeDeclarationIR</code>.</p>
+</li>
+<li>
+<p>Let <code>derivedTypeDeclarationIR</code> be <code>declarationIR</code>.</p>
 </li>
 <li>
 <p>Let <code>{ tid'<sup>*</sup> }</code> be <a href="#diff_set">the difference of the sets <code>&lt;&lt;dom_map, $dom_map&lt;tid, typeDefIR&gt;(TC<sub>1</sub>.GLOBAL.TYPE)</a></code> and <code><a href="#dom_map">$dom_map&lt;tid, typeDefIR&gt;(TC<sub>0</sub>.GLOBAL.TYPE)</a></code>&gt;&gt;.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>[tid]</code> be <code>tid'<sup>*</sup></code>.</p>
+<p>Check that <code>tid'<sup>*</sup></code> is a list of length 1.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>typeDefIR</code> be <code><a href="#find_type">$find_type(GLOBAL, TC<sub>1</sub>, ` tid)</a></code>.</p>
+<p>Let <code>[tid]</code> be <code>tid'<sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Let <code>typeDefIR'<sup>?</sup></code> be <code><a href="#find_type">$find_type(GLOBAL, TC<sub>1</sub>, ` tid)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>typeDefIR'<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typeDefIR</code> be <code>typeDefIR'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>If let <code>typeIR</code> be <code>typeDefIR</code>:</p>
@@ -15606,10 +15741,19 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>{ tid<sup>*</sup> }</code> be <a href="#diff_set">the difference of the sets <code>&lt;&lt;dom_map, $dom_map&lt;tid, typeDefIR&gt;(IC<sub>local</sub>.GLOBAL.TYPE)</a></code> and <code><a href="#dom_map">$dom_map&lt;tid, typeDefIR&gt;(IC<sub>0</sub>.GLOBAL.TYPE)</a></code>&gt;&gt;.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>[tid<sub>newtype</sub>]</code> be <code>tid<sup>*</sup></code>.</p>
+<p>Check that <code>tid<sup>*</sup></code> is a list of length 1.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>typeDefIR</code> be <code><a href="#find_typedef_inst">$find_typedef_inst(GLOBAL, IC<sub>local</sub>, . tid<sub>newtype</sub>)</a></code>.</p>
+<p>Let <code>[tid<sub>newtype</sub>]</code> be <code>tid<sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Let <code>typeDefIR'<sup>?</sup></code> be <code><a href="#find_typedef_inst">$find_typedef_inst(GLOBAL, IC<sub>local</sub>, . tid<sub>newtype</sub>)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>typeDefIR'<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typeDefIR</code> be <code>typeDefIR'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>If let <code>typeIR</code> be <code>typeDefIR</code>:</p>
@@ -16583,7 +16727,13 @@ for comparison operators, logical operators, concat, range, or mask operators.</
 <p>Let <code>typeIR<sub>r</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>typedExpressionIR<sub>cast</sub></code> be <a href="#coerce_unary">implicitly cast  <code>typedExpressionIR</code>  to  <code>typeIR<sub>l</sub></code></a>.</p>
+<p>Let <code>typedExpressionIR'<sup>?</sup></code> be <a href="#coerce_unary">implicitly cast  <code>typedExpressionIR</code>  to  <code>typeIR<sub>l</sub></code></a>.</p>
+</li>
+<li>
+<p>Check that <code>typedExpressionIR'<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typedExpressionIR<sub>cast</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Result in</p>
@@ -16653,7 +16803,13 @@ for comparison operators, logical operators, concat, range, or mask operators.</
 <p>Let <code>prefixedNameIR</code> be <a href="#prefixedNonTypeName">the prefixed name of  <code>prefixedNonTypeName</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>direction typeIR ctk value<sup>?</sup></code> be <code><a href="#find_var">$find_var(p, TC, prefixedNameIR)</a></code>.</p>
+<p>Let <code>varTypeIR<sup>?</sup></code> be <code><a href="#find_var">$find_var(p, TC, prefixedNameIR)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>varTypeIR<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?direction typeIR ctk value<sup>?</sup></code> be <code>varTypeIR<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Check that <code>ctk</code> matches pattern <code>DYN</code>.</p>
@@ -16831,7 +16987,13 @@ rule Lvalue_ok/memberAccess/headerunion:
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>member</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>typeIR</code> be <code><a href="#assoc_">$assoc_&lt;nameIR, typeIR&gt;(nameIR, (nameIR<sub>f</sub>, typeIR<sub>f</sub>)<sup>*</sup>)</a></code>.</p>
+<p>Let <code>typeIR''<sup>?</sup></code> be <code><a href="#assoc_">$assoc_&lt;nameIR, typeIR&gt;(nameIR, (nameIR<sub>f</sub>, typeIR<sub>f</sub>)<sup>*</sup>)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>typeIR''<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typeIR</code> be <code>typeIR''<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typedLvalueIR</code> be <code>typedLvalueIR<sub>base</sub> . nameIR # ( typeIR )</code>.</p>
@@ -16850,7 +17012,13 @@ rule Lvalue_ok/memberAccess/headerunion:
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>member</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>typeIR</code> be <code><a href="#assoc_">$assoc_&lt;nameIR, typeIR&gt;(nameIR, (nameIR<sub>f</sub>, typeIR<sub>f</sub>)<sup>*</sup>)</a></code>.</p>
+<p>Let <code>typeIR''<sup>?</sup></code> be <code><a href="#assoc_">$assoc_&lt;nameIR, typeIR&gt;(nameIR, (nameIR<sub>f</sub>, typeIR<sub>f</sub>)<sup>*</sup>)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>typeIR''<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typeIR</code> be <code>typeIR''<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typedLvalueIR</code> be <code>typedLvalueIR<sub>base</sub> . nameIR # ( typeIR )</code>.</p>
@@ -16869,7 +17037,13 @@ rule Lvalue_ok/memberAccess/headerunion:
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>member</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>typeIR</code> be <code><a href="#assoc_">$assoc_&lt;nameIR, typeIR&gt;(nameIR, (nameIR<sub>f</sub>, typeIR<sub>f</sub>)<sup>*</sup>)</a></code>.</p>
+<p>Let <code>typeIR''<sup>?</sup></code> be <code><a href="#assoc_">$assoc_&lt;nameIR, typeIR&gt;(nameIR, (nameIR<sub>f</sub>, typeIR<sub>f</sub>)<sup>*</sup>)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>typeIR''<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typeIR</code> be <code>typeIR''<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typedLvalueIR</code> be <code>typedLvalueIR<sub>base</sub> . nameIR # ( typeIR )</code>.</p>
@@ -16935,7 +17109,10 @@ rule Lvalue_ok/indexAccess/non-lctk:
 <p>Let <code>typeIR'</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>typeIR [ n<sub>size</sub> ]</code> be <code>typeIR'</code>.</p>
+<p>Check that <code>typeIR'</code> has type <code>headerStackTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>typeIR [ n<sub>size</sub> ]</code> be <code>typeIR'</code>.</p>
 </li>
 <li>
 <p>Let <code>typedExpressionIR<sub>index</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>index</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
@@ -16944,7 +17121,13 @@ rule Lvalue_ok/indexAccess/non-lctk:
 <p>Let <code>_ # ( typeIR<sub>index</sub> ctk<sub>index</sub> )</code> be <code>typedExpressionIR<sub>index</sub></code>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>typedExpressionIR<sub>index_reduced</sub></code> be <code><a href="#reduce_serenum_unary">$reduce_serenum_unary(typedExpressionIR<sub>index</sub>, $compat_array_index)</a></code>.</p>
+<p>Let <code>typedExpressionIR<sup>?</sup></code> be <code><a href="#reduce_serenum_unary">$reduce_serenum_unary(typedExpressionIR<sub>index</sub>, $compat_array_index)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>typedExpressionIR<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typedExpressionIR<sub>index_reduced</sub></code> be <code>typedExpressionIR<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>If <code>ctk<sub>index</sub></code> matches pattern <code>LCTK</code>:</p>
@@ -16957,7 +17140,10 @@ rule Lvalue_ok/indexAccess/non-lctk:
 <p>Let <code>int</code> be <code><a href="#to_number">$to_number(value<sub>index</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>n<sub>index</sub></code> be <code>int</code>.</p>
+<p>Check that <code>int</code> has type <code>nat</code>.</p>
+</li>
+<li>
+<p>Let <code>n<sub>index</sub></code> be <code>int</code>.</p>
 </li>
 <li>
 <p>Check that <code>n<sub>index</sub></code> is less than <code>n<sub>size</sub></code>.</p>
@@ -17042,10 +17228,22 @@ rule Lvalue_ok/indexAccess/non-lctk:
 <p>Let <code>typedExpressionIR<sub>lo</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>lo</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>typedExpressionIR<sub>hi_reduced</sub></code> be <code><a href="#reduce_serenum_unary">$reduce_serenum_unary(typedExpressionIR<sub>hi</sub>, $compat_bitslice_index)</a></code>.</p>
+<p>Let <code>typedExpressionIR<sup>?</sup></code> be <code><a href="#reduce_serenum_unary">$reduce_serenum_unary(typedExpressionIR<sub>hi</sub>, $compat_bitslice_index)</a></code>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>typedExpressionIR<sub>lo_reduced</sub></code> be <code><a href="#reduce_serenum_unary">$reduce_serenum_unary(typedExpressionIR<sub>lo</sub>, $compat_bitslice_index)</a></code>.</p>
+<p>Check that <code>typedExpressionIR<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typedExpressionIR<sub>hi_reduced</sub></code> be <code>typedExpressionIR<sup>?</sup></code>.</p>
+</li>
+<li>
+<p>Let <code>typedExpressionIR'<sup>?</sup></code> be <code><a href="#reduce_serenum_unary">$reduce_serenum_unary(typedExpressionIR<sub>lo</sub>, $compat_bitslice_index)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>typedExpressionIR'<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typedExpressionIR<sub>lo_reduced</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>_ # ( typeIR<sub>hi_reduced</sub> ctk<sub>hi_reduced</sub> )</code> be <code>typedExpressionIR<sub>hi_reduced</sub></code>.</p>
@@ -17063,7 +17261,10 @@ rule Lvalue_ok/indexAccess/non-lctk:
 <p>Let <code>int</code> be <code><a href="#to_number">$to_number(value<sub>hi</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>n<sub>hi</sub></code> be <code>int</code>.</p>
+<p>Check that <code>int</code> has type <code>nat</code>.</p>
+</li>
+<li>
+<p>Let <code>n<sub>hi</sub></code> be <code>int</code>.</p>
 </li>
 <li>
 <p>Check that <code>ctk<sub>lo_reduced</sub></code> matches pattern <code>LCTK</code>.</p>
@@ -17075,7 +17276,10 @@ rule Lvalue_ok/indexAccess/non-lctk:
 <p>Let <code>int'</code> be <code><a href="#to_number">$to_number(value<sub>lo</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>n<sub>lo</sub></code> be <code>int'</code>.</p>
+<p>Check that <code>int'</code> has type <code>nat</code>.</p>
+</li>
+<li>
+<p>Let <code>n<sub>lo</sub></code> be <code>int'</code>.</p>
 </li>
 <li>
 <p>Check that <code><a href="#is_valid_bitslice">$is_valid_bitslice(typeIR<sub>base</sub>, n<sub>lo</sub>, n<sub>hi</sub>)</a></code>.</p>
@@ -17084,7 +17288,10 @@ rule Lvalue_ok/indexAccess/non-lctk:
 <p>Let <code>int''</code> be <code>n<sub>hi</sub> - n<sub>lo</sub> + 1</code>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>n<sub>slice</sub></code> be <code>int''</code>.</p>
+<p>Check that <code>int''</code> has type <code>nat</code>.</p>
+</li>
+<li>
+<p>Let <code>n<sub>slice</sub></code> be <code>int''</code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR</code> be <code>BIT &lt; n<sub>slice</sub> &gt;</code>.</p>
@@ -17740,10 +17947,16 @@ invoked.</p>
 <p>Let <code>expressionIR # ( typeIR<sub>object</sub> _ )</code> be the result of <a href="#Expr_ok">typing <code>namedType ( )</code>, under cursor <code>p'</code> and typing context <code>TC'</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>callExpressionIR</code> be <code>expressionIR</code>.</p>
+<p>Check that <code>expressionIR</code> has type <code>callExpressionIR</code>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>prefixedNameIR &lt; typeArgumentIR<sup>*</sup> &gt; ( argumentIR<sup>*</sup> )</code> be <code>callExpressionIR</code>.</p>
+<p>Let <code>callExpressionIR</code> be <code>expressionIR</code>.</p>
+</li>
+<li>
+<p>Check that <code>callExpressionIR</code> matches pattern <code>% ( % )</code>.</p>
+</li>
+<li>
+<p>Let <code>prefixedNameIR &lt; typeArgumentIR<sup>*</sup> &gt; ( argumentIR<sup>*</sup> )</code> be <code>callExpressionIR</code>.</p>
 </li>
 <li>
 <p>Check that <code>typeArgumentIR<sup>*</sup></code> is an empty list.</p>
@@ -17767,7 +17980,10 @@ invoked.</p>
 <p>Let <code><em></code>, <code></em></code>, and <code>statementIR</code> be the result of <a href="#Stmt_ok">typing <code>lvalue ( argumentList ) ;</code>, under cursor <code>p'</code>, typing context <code>TC<sub>1</sub></code>, and abstract control flow <code>f'</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>callStatementIR</code> be <code>statementIR</code>.</p>
+<p>Check that <code>statementIR</code> has type <code>callStatementIR</code>.</p>
+</li>
+<li>
+<p>Let <code>callStatementIR</code> be <code>statementIR</code>.</p>
 </li>
 <li>
 <p>Let <code>routineTargetIR &lt; typeArgumentIR'<sup>*</sup> &gt; ( argumentIR<sub>cast</sub><sup>*</sup> ) ;</code> be <code>callStatementIR</code>.</p>
@@ -17836,7 +18052,13 @@ invoked.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let!<sub>option</sub> <code>(_, constructor, _<sup>*</sup>)</code> be <code><a href="#find_constructor_inst">$find_constructor_inst(IC', prefixedNameIR, [ ])</a></code>.</p>
+<p>Let <code>(cid, constructor, id*)<sup>?</sup></code> be <code><a href="#find_constructor_inst">$find_constructor_inst(IC', prefixedNameIR, [ ])</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>(cid, constructor, id*)<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?(_, constructor, _<sup>*</sup>)</code> be <code>(cid, constructor, id*)<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <a href="#Constructor_inst"><code>p' IC' STO' |- constructor &lt; [ ] &gt; ( [ ] # [ ] ) =&#8658; STO<sub>1</sub> object</code></a>.</p>
@@ -17985,10 +18207,22 @@ rule Stmt_ok/returnStatement/expression:
 <p>Let <code>typeIR</code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>typeIR<sub>ret</sub></code> be <code><a href="#find_return_type">$find_return_type(TC')</a></code>.</p>
+<p>Let <code>typeIR'<sup>?</sup></code> be <code><a href="#find_return_type">$find_return_type(TC')</a></code>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>typedExpressionIR<sub>cast</sub></code> be <a href="#coerce_unary">implicitly cast  <code>typedExpressionIR</code>  to  <code>typeIR<sub>ret</sub></code></a>.</p>
+<p>Check that <code>typeIR'<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typeIR<sub>ret</sub></code> be <code>typeIR'<sup>?</sup></code>.</p>
+</li>
+<li>
+<p>Let <code>typedExpressionIR'<sup>?</sup></code> be <a href="#coerce_unary">implicitly cast  <code>typedExpressionIR</code>  to  <code>typeIR<sub>ret</sub></code></a>.</p>
+</li>
+<li>
+<p>Check that <code>typedExpressionIR'<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typedExpressionIR<sub>cast</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Result in</p>
@@ -18367,7 +18601,10 @@ are only visible within the block.</p>
 </div>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>constantDeclarationIR</code> be <code>declarationIR</code>.</p>
+<p>Check that <code>declarationIR</code> has type <code>constantDeclarationIR</code>.</p>
+</li>
+<li>
+<p>Let <code>constantDeclarationIR</code> be <code>declarationIR</code>.</p>
 </li>
 <li>
 <p>Result in</p>
@@ -18489,7 +18726,13 @@ rule BlockElementStmt_ok/variableDeclaration/initializer:
 <p>Let <code>typedExpressionIR<sub>init</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>init</sub></code>, under cursor <code>LOCAL</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>typedExpressionIR<sub>init_cast</sub></code> be <a href="#coerce_unary">implicitly cast  <code>typedExpressionIR<sub>init</sub></code>  to  <code>typeIR</code></a>.</p>
+<p>Let <code>typedExpressionIR<sup>?</sup></code> be <a href="#coerce_unary">implicitly cast  <code>typedExpressionIR<sub>init</sub></code>  to  <code>typeIR</code></a>.</p>
+</li>
+<li>
+<p>Check that <code>typedExpressionIR<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typedExpressionIR<sub>init_cast</sub></code> be <code>typedExpressionIR<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
@@ -18643,10 +18886,16 @@ rule BlockElementStmt_ok/variableDeclaration/initializer:
 <p>Let <a href="#Decl_inst"><code>LOCAL IC<sub>0'</sub> STO<sub>0'</sub> |- constantDeclarationIR =&#8658; IC<sub>1</sub> STO<sub>1</sub> declarationIR'<sup>?</sup></code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>?declarationIR</code> be <code>declarationIR'<sup>?</sup></code>.</p>
+<p>Check that <code>declarationIR'<sup>?</sup></code> is Some value.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>constantDeclarationIR<sub>inst</sub></code> be <code>declarationIR</code>.</p>
+<p>Let <code>?declarationIR</code> be <code>declarationIR'<sup>?</sup></code>.</p>
+</li>
+<li>
+<p>Check that <code>declarationIR</code> has type <code>constantDeclarationIR</code>.</p>
+</li>
+<li>
+<p>Let <code>constantDeclarationIR<sub>inst</sub></code> be <code>declarationIR</code>.</p>
 </li>
 <li>
 <p>Result in <code>IC<sub>1</sub></code>, <code>STO<sub>1</sub></code>, and ?<code>constantDeclarationIR<sub>inst</sub></code>.</p>
@@ -19413,7 +19662,10 @@ rule SwitchLabel_table_ok/expressionNonBrace-prefixedNonTypeName:
 <p>Let <code>prefixedNameIR</code> be <a href="#prefixedNonTypeName">the prefixed name of  <code>prefixedNonTypeName</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>` nameIR<sub>label</sub></code> be <code>prefixedNameIR</code>.</p>
+<p>Check that <code>prefixedNameIR</code> matches pattern <code>` %</code>.</p>
+</li>
+<li>
+<p>Let <code>` nameIR<sub>label</sub></code> be <code>prefixedNameIR</code>.</p>
 </li>
 <li>
 <p>Let <code>tid<sub>table_enum</sub></code> be <code>"action_list("  tid~table~  ")"</code>.</p>
@@ -19422,10 +19674,19 @@ rule SwitchLabel_table_ok/expressionNonBrace-prefixedNonTypeName:
 <p>Let <code>id<sub>label</sub></code> be <code>tid<sub>table_enum</sub>  "."  nameIR<sub>label</sub></code>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>_ typeIR<sub>label</sub> ctk<sub>label</sub> value<sup>?</sup></code> be <code><a href="#find_var">$find_var(LOCAL, TC, ` id<sub>label</sub>)</a></code>.</p>
+<p>Let <code>varTypeIR<sup>?</sup></code> be <code><a href="#find_var">$find_var(LOCAL, TC, ` id<sub>label</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>?value<sub>label</sub></code> be <code>value<sup>?</sup></code>.</p>
+<p>Check that <code>varTypeIR<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?_ typeIR<sub>label</sub> ctk<sub>label</sub> value<sup>?</sup></code> be <code>varTypeIR<sup>?</sup></code>.</p>
+</li>
+<li>
+<p>Check that <code>value<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?value<sub>label</sub></code> be <code>value<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Check that <code>value<sub>label</sub></code> is equal to <code>TABLE_ENUM tid<sub>table_enum</sub> . nameIR<sub>label</sub></code>.</p>
@@ -19553,10 +19814,16 @@ rule SwitchCase_table_ok/non-blockStatement:
 <p>Let <code>typeIR</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>switch</sub></code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>tableMetadataTypeIR</code> be <code>typeIR</code>.</p>
+<p>Check that <code>typeIR</code> has type <code>tableMetadataTypeIR</code>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>TABLE_ENUM tid<sub>table_enum</sub> { _<sup>*</sup> }</code> be <code>tableMetadataTypeIR</code>.</p>
+<p>Let <code>tableMetadataTypeIR</code> be <code>typeIR</code>.</p>
+</li>
+<li>
+<p>Check that <code>tableMetadataTypeIR</code> matches pattern <code>TABLE_ENUM % { % }</code>.</p>
+</li>
+<li>
+<p>Let <code>TABLE_ENUM tid<sub>table_enum</sub> { _<sup>*</sup> }</code> be <code>tableMetadataTypeIR</code>.</p>
 </li>
 <li>
 <p>Let <code>tid<sub>table</sub></code> be <code><a href="#strip_prefix">$strip_prefix(&lt;&lt;strip_suffix, $strip_suffix(tid<sub>table_enum</sub>, ")")</a>, "action_list(")&gt;&gt;</code>.</p>
@@ -19693,7 +19960,13 @@ rule SwitchLabel_general_ok/expressionNonBrace:
 <p>Let <code>typedExpressionIR<sub>label</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>label</sub></code>, under cursor <code>LOCAL</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>typedExpressionIR<sub>label_cast</sub></code> be <a href="#coerce_unary">implicitly cast  <code>typedExpressionIR<sub>label</sub></code>  to  <code>typeIR</code></a>.</p>
+<p>Let <code>typedExpressionIR<sup>?</sup></code> be <a href="#coerce_unary">implicitly cast  <code>typedExpressionIR<sub>label</sub></code>  to  <code>typeIR</code></a>.</p>
+</li>
+<li>
+<p>Check that <code>typedExpressionIR<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typedExpressionIR<sub>label_cast</sub></code> be <code>typedExpressionIR<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>_ # ( _ ctk )</code> be <code>typedExpressionIR<sub>label_cast</sub></code>.</p>
@@ -19892,7 +20165,10 @@ rule SwitchCase_inst/non-blockStatementIR:
 <p>Let <code>IC<sub>switch</sub></code>, <code>STO<sub>1</sub></code>, and <code>statementIR</code> be the result of <a href="#Stmt_inst">the compile-time evaluation of <code>blockStatementIR</code>, under cursor <code>p</code>, instantiation context <code>IC</code>, and store <code>store</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>blockStatementIR<sub>inst</sub></code> be <code>statementIR</code>.</p>
+<p>Check that <code>statementIR</code> has type <code>blockStatementIR</code>.</p>
+</li>
+<li>
+<p>Let <code>blockStatementIR<sub>inst</sub></code> be <code>statementIR</code>.</p>
 </li>
 <li>
 <p>Result in <code>STO<sub>1</sub></code> and <code>switchLabelIR : blockStatementIR<sub>inst</sub></code>.</p>
@@ -20634,7 +20910,13 @@ rule Expr_ok/referenceExpression/this:
 <p>Let <code>prefixedNameIR</code> be <a href="#prefixedNonTypeName">the prefixed name of  <code>prefixedNonTypeName</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>_ typeIR ctk _<sup>?</sup></code> be <code><a href="#find_var">$find_var(p, TC, prefixedNameIR)</a></code>.</p>
+<p>Let <code>varTypeIR<sup>?</sup></code> be <code><a href="#find_var">$find_var(p, TC, prefixedNameIR)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>varTypeIR<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?_ typeIR ctk _<sup>?</sup></code> be <code>varTypeIR<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>expressionNoteIR</code> be <code>( typeIR ctk )</code>.</p>
@@ -20653,7 +20935,13 @@ rule Expr_ok/referenceExpression/this:
 <p>Let <code>prefixedNameIR</code> be <code>` "this"</code>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>_ typeIR ctk _<sup>?</sup></code> be <code><a href="#find_var">$find_var(p, TC, prefixedNameIR)</a></code>.</p>
+<p>Let <code>varTypeIR<sup>?</sup></code> be <code><a href="#find_var">$find_var(p, TC, prefixedNameIR)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>varTypeIR<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?_ typeIR ctk _<sup>?</sup></code> be <code>varTypeIR<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>expressionNoteIR</code> be <code>( typeIR ctk )</code>.</p>
@@ -20891,7 +21179,13 @@ unaryExpressionIR
 <p>Let <code>typedExpressionIR</code> be the result of <a href="#Expr_ok">typing <code>expression</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>typedExpressionIR<sub>reduced</sub></code> be <code><a href="#reduce_serenum_unary">$reduce_serenum_unary(typedExpressionIR, $compat_lnot)</a></code>.</p>
+<p>Let <code>typedExpressionIR'<sup>?</sup></code> be <code><a href="#reduce_serenum_unary">$reduce_serenum_unary(typedExpressionIR, $compat_lnot)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>typedExpressionIR'<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typedExpressionIR<sub>reduced</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
@@ -20943,7 +21237,13 @@ unaryExpressionIR
 <p>Let <code>typedExpressionIR</code> be the result of <a href="#Expr_ok">typing <code>expression</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>typedExpressionIR<sub>reduced</sub></code> be <code><a href="#reduce_serenum_unary">$reduce_serenum_unary(typedExpressionIR, $compat_bnot)</a></code>.</p>
+<p>Let <code>typedExpressionIR'<sup>?</sup></code> be <code><a href="#reduce_serenum_unary">$reduce_serenum_unary(typedExpressionIR, $compat_bnot)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>typedExpressionIR'<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typedExpressionIR<sub>reduced</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
@@ -21000,7 +21300,13 @@ unaryExpressionIR
 <p>Let <code>typedExpressionIR</code> be the result of <a href="#Expr_ok">typing <code>expression</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>typedExpressionIR<sub>reduced</sub></code> be <code><a href="#reduce_serenum_unary">$reduce_serenum_unary(typedExpressionIR, $compat_uplusminus)</a></code>.</p>
+<p>Let <code>typedExpressionIR'<sup>?</sup></code> be <code><a href="#reduce_serenum_unary">$reduce_serenum_unary(typedExpressionIR, $compat_uplusminus)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>typedExpressionIR'<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typedExpressionIR<sub>reduced</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
@@ -21025,7 +21331,13 @@ unaryExpressionIR
 <p>Let <code>typedExpressionIR</code> be the result of <a href="#Expr_ok">typing <code>expression</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>typedExpressionIR<sub>reduced</sub></code> be <code><a href="#reduce_serenum_unary">$reduce_serenum_unary(typedExpressionIR, $compat_uplusminus)</a></code>.</p>
+<p>Let <code>typedExpressionIR'<sup>?</sup></code> be <code><a href="#reduce_serenum_unary">$reduce_serenum_unary(typedExpressionIR, $compat_uplusminus)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>typedExpressionIR'<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typedExpressionIR<sub>reduced</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
@@ -21195,10 +21507,22 @@ binaryExpressionIR
 <p>Let <code>typedExpressionIR<sub>r</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>)</code> be <a href="#coerce_binary">implicitly cast  <code>typedExpressionIR<sub>l</sub></code>  and  <code>typedExpressionIR<sub>r</sub></code>  to equal types</a>.</p>
+<p>Let <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code> be <a href="#coerce_binary">implicitly cast  <code>typedExpressionIR<sub>l</sub></code>  and  <code>typedExpressionIR<sub>r</sub></code>  to equal types</a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code><a href="#reduce_serenum_binary">$reduce_serenum_binary(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>, $compat_plusminusmult)</a></code>.</p>
+<p>Check that <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
+</li>
+<li>
+<p>Let <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code> be <code><a href="#reduce_serenum_binary">$reduce_serenum_binary(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>, $compat_plusminusmult)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
@@ -21267,10 +21591,22 @@ binaryExpressionIR
 <p>Let <code>typedExpressionIR<sub>r</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>)</code> be <a href="#coerce_binary">implicitly cast  <code>typedExpressionIR<sub>l</sub></code>  and  <code>typedExpressionIR<sub>r</sub></code>  to equal types</a>.</p>
+<p>Let <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code> be <a href="#coerce_binary">implicitly cast  <code>typedExpressionIR<sub>l</sub></code>  and  <code>typedExpressionIR<sub>r</sub></code>  to equal types</a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code><a href="#reduce_serenum_binary">$reduce_serenum_binary(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>, $compat_satplusminus)</a></code>.</p>
+<p>Check that <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
+</li>
+<li>
+<p>Let <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code> be <code><a href="#reduce_serenum_binary">$reduce_serenum_binary(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>, $compat_satplusminus)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
@@ -21357,10 +21693,22 @@ rule Expr_ok/binaryExpression-divmod/rhs-non-lctk:
 <p>Let <code>typedExpressionIR<sub>r</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>)</code> be <a href="#coerce_binary">implicitly cast  <code>typedExpressionIR<sub>l</sub></code>  and  <code>typedExpressionIR<sub>r</sub></code>  to equal types</a>.</p>
+<p>Let <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code> be <a href="#coerce_binary">implicitly cast  <code>typedExpressionIR<sub>l</sub></code>  and  <code>typedExpressionIR<sub>r</sub></code>  to equal types</a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code><a href="#reduce_serenum_binary">$reduce_serenum_binary(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>, $compat_divmod)</a></code>.</p>
+<p>Check that <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
+</li>
+<li>
+<p>Let <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code> be <code><a href="#reduce_serenum_binary">$reduce_serenum_binary(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>, $compat_divmod)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
@@ -21382,7 +21730,10 @@ rule Expr_ok/binaryExpression-divmod/rhs-non-lctk:
 <p>Let <code>int</code> be <code><a href="#to_number">$to_number(value<sub>r</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>n<sub>r</sub></code> be <code>int</code>.</p>
+<p>Check that <code>int</code> has type <code>nat</code>.</p>
+</li>
+<li>
+<p>Let <code>n<sub>r</sub></code> be <code>int</code>.</p>
 </li>
 <li>
 <p>Check that <code>n<sub>r</sub></code> is greater than 0.</p>
@@ -21480,7 +21831,13 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Let <code>typedExpressionIR<sub>r</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code><a href="#reduce_serenum_binary">$reduce_serenum_binary(typedExpressionIR<sub>l</sub>, typedExpressionIR<sub>r</sub>, $compat_shift)</a></code>.</p>
+<p>Let <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code> be <code><a href="#reduce_serenum_binary">$reduce_serenum_binary(typedExpressionIR<sub>l</sub>, typedExpressionIR<sub>r</sub>, $compat_shift)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>l_reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
@@ -21598,7 +21955,13 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Let <code>typedExpressionIR<sub>r</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>)</code> be <a href="#coerce_binary">implicitly cast  <code>typedExpressionIR<sub>l</sub></code>  and  <code>typedExpressionIR<sub>r</sub></code>  to equal types</a>.</p>
+<p>Let <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code> be <a href="#coerce_binary">implicitly cast  <code>typedExpressionIR<sub>l</sub></code>  and  <code>typedExpressionIR<sub>r</sub></code>  to equal types</a>.</p>
+</li>
+<li>
+<p>Check that <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>cast</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_cast</sub></code></a>.</p>
@@ -21670,10 +22033,22 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Let <code>typedExpressionIR<sub>r</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>)</code> be <a href="#coerce_binary">implicitly cast  <code>typedExpressionIR<sub>l</sub></code>  and  <code>typedExpressionIR<sub>r</sub></code>  to equal types</a>.</p>
+<p>Let <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code> be <a href="#coerce_binary">implicitly cast  <code>typedExpressionIR<sub>l</sub></code>  and  <code>typedExpressionIR<sub>r</sub></code>  to equal types</a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code><a href="#reduce_serenum_binary">$reduce_serenum_binary(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>, $compat_compare)</a></code>.</p>
+<p>Check that <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
+</li>
+<li>
+<p>Let <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code> be <code><a href="#reduce_serenum_binary">$reduce_serenum_binary(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>, $compat_compare)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
@@ -21742,10 +22117,22 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Let <code>typedExpressionIR<sub>r</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>)</code> be <a href="#coerce_binary">implicitly cast  <code>typedExpressionIR<sub>l</sub></code>  and  <code>typedExpressionIR<sub>r</sub></code>  to equal types</a>.</p>
+<p>Let <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code> be <a href="#coerce_binary">implicitly cast  <code>typedExpressionIR<sub>l</sub></code>  and  <code>typedExpressionIR<sub>r</sub></code>  to equal types</a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code><a href="#reduce_serenum_binary">$reduce_serenum_binary(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>, $compat_bitwise)</a></code>.</p>
+<p>Check that <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
+</li>
+<li>
+<p>Let <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code> be <code><a href="#reduce_serenum_binary">$reduce_serenum_binary(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>, $compat_bitwise)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
@@ -21811,7 +22198,13 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Let <code>typedExpressionIR<sub>r</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code><a href="#reduce_serenum_binary">$reduce_serenum_binary(typedExpressionIR<sub>l</sub>, typedExpressionIR<sub>r</sub>, $compat_concat)</a></code>.</p>
+<p>Let <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code> be <code><a href="#reduce_serenum_binary">$reduce_serenum_binary(typedExpressionIR<sub>l</sub>, typedExpressionIR<sub>r</sub>, $compat_concat)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>l_reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
@@ -21826,7 +22219,13 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>typeIR<sub>reduced</sub></code> be <code><a href="#result_concat">$result_concat(typeIR<sub>l_reduced</sub>, typeIR<sub>r_reduced</sub>)</a></code>.</p>
+<p>Let <code>typeIR<sup>?</sup></code> be <code><a href="#result_concat">$result_concat(typeIR<sub>l_reduced</sub>, typeIR<sub>r_reduced</sub>)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>typeIR<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typeIR<sub>reduced</sub></code> be <code>typeIR<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>reduced</sub></code> be <code><a href="#join_ctk">$join_ctk(ctk<sub>l_reduced</sub>, ctk<sub>r_reduced</sub>)</a></code>.</p>
@@ -21886,10 +22285,22 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Let <code>typedExpressionIR<sub>r</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>)</code> be <a href="#coerce_binary">implicitly cast  <code>typedExpressionIR<sub>l</sub></code>  and  <code>typedExpressionIR<sub>r</sub></code>  to equal types</a>.</p>
+<p>Let <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code> be <a href="#coerce_binary">implicitly cast  <code>typedExpressionIR<sub>l</sub></code>  and  <code>typedExpressionIR<sub>r</sub></code>  to equal types</a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code><a href="#reduce_serenum_binary">$reduce_serenum_binary(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>, $compat_logical)</a></code>.</p>
+<p>Check that <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
+</li>
+<li>
+<p>Let <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code> be <code><a href="#reduce_serenum_binary">$reduce_serenum_binary(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>, $compat_logical)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
@@ -22218,7 +22629,10 @@ ternaryExpressionIR
 <p>Let <code>_ # ( typeIR ctk<sub>cond</sub> )</code> be <code>typedExpressionIR<sub>cond</sub></code>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>primitiveTypeIR</code> be <code>typeIR</code>.</p>
+<p>Check that <code>typeIR</code> has type <code>primitiveTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>primitiveTypeIR</code> be <code>typeIR</code>.</p>
 </li>
 <li>
 <p>Check that <code>primitiveTypeIR</code> matches pattern <code>BOOL</code>.</p>
@@ -22230,7 +22644,13 @@ ternaryExpressionIR
 <p>Let <code>typedExpressionIR<sub>false</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>false</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>(typedExpressionIR<sub>true_cast</sub>, typedExpressionIR<sub>false_cast</sub>)</code> be <a href="#coerce_binary">implicitly cast  <code>typedExpressionIR<sub>true</sub></code>  and  <code>typedExpressionIR<sub>false</sub></code>  to equal types</a>.</p>
+<p>Let <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code> be <a href="#coerce_binary">implicitly cast  <code>typedExpressionIR<sub>true</sub></code>  and  <code>typedExpressionIR<sub>false</sub></code>  to equal types</a>.</p>
+</li>
+<li>
+<p>Check that <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?(typedExpressionIR<sub>true_cast</sub>, typedExpressionIR<sub>false_cast</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>cast</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>true_cast</sub></code></a>.</p>
@@ -22783,10 +23203,16 @@ rule Expr_ok/dataExpression-sequence/default:
 <p>Let <code>expression''<sup>*</sup></code> be <code><a href="#rev_">$rev_&lt;expression&gt;(expression<sub>e</sub><sup>*</sup>)</a></code>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>expression' :: expression<sub>e_h_rev</sub><sup>*</sup></code> be <code>expression''<sup>*</sup></code>.</p>
+<p>Check that <code>expression''<sup>*</sup></code> is a non-empty list.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>defaultExpression</code> be <code>expression'</code>.</p>
+<p>Let <code>expression' :: expression<sub>e_h_rev</sub><sup>*</sup></code> be <code>expression''<sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Check that <code>expression'</code> has type <code>defaultExpression</code>.</p>
+</li>
+<li>
+<p>Let <code>defaultExpression</code> be <code>expression'</code>.</p>
 </li>
 <li>
 <p>Let <code>expression<sub>e_h</sub><sup>*</sup></code> be <code><a href="#rev_">$rev_&lt;expression&gt;(expression<sub>e_h_rev</sub><sup>*</sup>)</a></code>.</p>
@@ -23696,16 +24122,28 @@ rule Expr_ok/memberAccessExpression-type/serenum:
 <p>Let <code>prefixedNameIR<sub>base</sub></code> be <a href="#prefixedTypeName">the prefixed name of  <code>prefixedTypeName<sub>base</sub></code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>typeDefIR</code> be <code><a href="#find_type">$find_type(p, TC, prefixedNameIR<sub>base</sub>)</a></code>.</p>
+<p>Let <code>typeDefIR'<sup>?</sup></code> be <code><a href="#find_type">$find_type(p, TC, prefixedNameIR<sub>base</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>typeIR<sub>base</sub></code> be <code>typeDefIR</code>.</p>
+<p>Check that <code>typeDefIR'<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typeDefIR</code> be <code>typeDefIR'<sup>?</sup></code>.</p>
+</li>
+<li>
+<p>Check that <code>typeDefIR</code> has type <code>typeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>typeIR<sub>base</sub></code> be <code>typeDefIR</code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>enumTypeIR</code> be <code>typeIR</code>.</p>
+<p>Check that <code>typeIR</code> has type <code>enumTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>enumTypeIR</code> be <code>typeIR</code>.</p>
 </li>
 <li>
 <p>If let <code>ENUM _ { nameIR<sub>f</sub><sup>*</sup> }</code> be <code>enumTypeIR</code>:</p>
@@ -23779,10 +24217,19 @@ rule Eval_static/memberAccessExpressionIR-type/serenum:
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let!<sub>option</sub> <code>typeDefIR</code> be <code><a href="#find_type">$find_type(p, TC, prefixedNameIR)</a></code>.</p>
+<p>Let <code>typeDefIR'<sup>?</sup></code> be <code><a href="#find_type">$find_type(p, TC, prefixedNameIR)</a></code>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>enumTypeIR</code> be <code>typeDefIR</code>.</p>
+<p>Check that <code>typeDefIR'<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typeDefIR</code> be <code>typeDefIR'<sup>?</sup></code>.</p>
+</li>
+<li>
+<p>Check that <code>typeDefIR</code> has type <code>enumTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>enumTypeIR</code> be <code>typeDefIR</code>.</p>
 </li>
 <li>
 <p>If let <code>ENUM tid { id<sub>member</sub><sup>*</sup> }</code> be <code>enumTypeIR</code>:</p>
@@ -23802,7 +24249,13 @@ rule Eval_static/memberAccessExpressionIR-type/serenum:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let!<sub>option</sub> <code>value</code> be <code><a href="#assoc_">$assoc_&lt;id, value&gt;(nameIR, (id<sub>member</sub>, value<sub>member</sub>)<sup>*</sup>)</a></code>.</p>
+<p>Let <code>value'<sup>?</sup></code> be <code><a href="#assoc_">$assoc_&lt;id, value&gt;(nameIR, (id<sub>member</sub>, value<sub>member</sub>)<sup>*</sup>)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>value'<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?value</code> be <code>value'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Result in <code>tid . nameIR # value</code>.</p>
@@ -23843,10 +24296,19 @@ rule Expr_inst/memberAccessExpressionIR-type/serenum:
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let!<sub>option</sub> <code>typeDefIR</code> be <code><a href="#find_typedef_inst">$find_typedef_inst(p, IC, prefixedNameIR)</a></code>.</p>
+<p>Let <code>typeDefIR'<sup>?</sup></code> be <code><a href="#find_typedef_inst">$find_typedef_inst(p, IC, prefixedNameIR)</a></code>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>enumTypeIR</code> be <code>typeDefIR</code>.</p>
+<p>Check that <code>typeDefIR'<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typeDefIR</code> be <code>typeDefIR'<sup>?</sup></code>.</p>
+</li>
+<li>
+<p>Check that <code>typeDefIR</code> has type <code>enumTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>enumTypeIR</code> be <code>typeDefIR</code>.</p>
 </li>
 <li>
 <p>If let <code>ENUM tid { _<sup>*</sup> }</code> be <code>enumTypeIR</code>:</p>
@@ -23863,7 +24325,13 @@ rule Expr_inst/memberAccessExpressionIR-type/serenum:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let!<sub>option</sub> <code>value</code> be <code><a href="#assoc_">$assoc_&lt;nameIR, value&gt;(nameIR, (id<sub>member</sub>, value<sub>member</sub>)<sup>*</sup>)</a></code>.</p>
+<p>Let <code>value'<sup>?</sup></code> be <code><a href="#assoc_">$assoc_&lt;nameIR, value&gt;(nameIR, (id<sub>member</sub>, value<sub>member</sub>)<sup>*</sup>)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>value'<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?value</code> be <code>value'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Result in <code>STO'</code> and <code>tid . nameIR # value</code>.</p>
@@ -23982,7 +24450,10 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typeIR'</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>typeIR [ n<sub>size</sub> ]</code> be <code>typeIR'</code>.</p>
+<p>Check that <code>typeIR'</code> has type <code>headerStackTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>typeIR [ n<sub>size</sub> ]</code> be <code>typeIR'</code>.</p>
 </li>
 <li>
 <p>Let <code>expressionNoteIR</code> be <code>( BIT &lt; 32 &gt; LCTK )</code>.</p>
@@ -24011,7 +24482,10 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typeIR'</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>typeIR [ n<sub>size</sub> ]</code> be <code>typeIR'</code>.</p>
+<p>Check that <code>typeIR'</code> has type <code>headerStackTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>typeIR [ n<sub>size</sub> ]</code> be <code>typeIR'</code>.</p>
 </li>
 <li>
 <p>Let <code>expressionNoteIR</code> be <code>( BIT &lt; 32 &gt; DYN )</code>.</p>
@@ -24036,7 +24510,10 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typeIR'</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>typeIR [ n<sub>size</sub> ]</code> be <code>typeIR'</code>.</p>
+<p>Check that <code>typeIR'</code> has type <code>headerStackTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>typeIR [ n<sub>size</sub> ]</code> be <code>typeIR'</code>.</p>
 </li>
 <li>
 <p>Let <code>expressionNoteIR</code> be <code>( BIT &lt; 32 &gt; DYN )</code>.</p>
@@ -24068,7 +24545,10 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typeIR'</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>typeIR [ n<sub>size</sub> ]</code> be <code>typeIR'</code>.</p>
+<p>Check that <code>typeIR'</code> has type <code>headerStackTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>typeIR [ n<sub>size</sub> ]</code> be <code>typeIR'</code>.</p>
 </li>
 <li>
 <p>Let <code>expressionNoteIR</code> be <code>( typeIR DYN )</code>.</p>
@@ -24093,7 +24573,10 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typeIR'</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>typeIR [ n<sub>size</sub> ]</code> be <code>typeIR'</code>.</p>
+<p>Check that <code>typeIR'</code> has type <code>headerStackTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>typeIR [ n<sub>size</sub> ]</code> be <code>typeIR'</code>.</p>
 </li>
 <li>
 <p>Let <code>expressionNoteIR</code> be <code>( typeIR DYN )</code>.</p>
@@ -24125,7 +24608,10 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typeIR'</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>typeIR [ n<sub>size</sub> ]</code> be <code>typeIR'</code>.</p>
+<p>Check that <code>typeIR'</code> has type <code>headerStackTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>typeIR [ n<sub>size</sub> ]</code> be <code>typeIR'</code>.</p>
 </li>
 <li>
 <p>Let <code>expressionNoteIR</code> be <code>( typeIR DYN )</code>.</p>
@@ -24150,7 +24636,10 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typeIR'</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>typeIR [ n<sub>size</sub> ]</code> be <code>typeIR'</code>.</p>
+<p>Check that <code>typeIR'</code> has type <code>headerStackTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>typeIR [ n<sub>size</sub> ]</code> be <code>typeIR'</code>.</p>
 </li>
 <li>
 <p>Let <code>expressionNoteIR</code> be <code>( typeIR DYN )</code>.</p>
@@ -24181,7 +24670,13 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>member</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>typeIR</code> be <code><a href="#assoc_">$assoc_&lt;nameIR, typeIR&gt;(nameIR, (nameIR<sub>f</sub>, typeIR<sub>f</sub>)<sup>*</sup>)</a></code>.</p>
+<p>Let <code>typeIR''<sup>?</sup></code> be <code><a href="#assoc_">$assoc_&lt;nameIR, typeIR&gt;(nameIR, (nameIR<sub>f</sub>, typeIR<sub>f</sub>)<sup>*</sup>)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>typeIR''<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typeIR</code> be <code>typeIR''<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>expressionNoteIR</code> be <code>( typeIR DYN )</code>.</p>
@@ -24200,7 +24695,13 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>member</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>typeIR</code> be <code><a href="#assoc_">$assoc_&lt;nameIR, typeIR&gt;(nameIR, (nameIR<sub>f</sub>, typeIR<sub>f</sub>)<sup>*</sup>)</a></code>.</p>
+<p>Let <code>typeIR''<sup>?</sup></code> be <code><a href="#assoc_">$assoc_&lt;nameIR, typeIR&gt;(nameIR, (nameIR<sub>f</sub>, typeIR<sub>f</sub>)<sup>*</sup>)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>typeIR''<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typeIR</code> be <code>typeIR''<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>expressionNoteIR</code> be <code>( typeIR DYN )</code>.</p>
@@ -24219,7 +24720,13 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>member</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>typeIR</code> be <code><a href="#assoc_">$assoc_&lt;nameIR, typeIR&gt;(nameIR, (nameIR<sub>f</sub>, typeIR<sub>f</sub>)<sup>*</sup>)</a></code>.</p>
+<p>Let <code>typeIR''<sup>?</sup></code> be <code><a href="#assoc_">$assoc_&lt;nameIR, typeIR&gt;(nameIR, (nameIR<sub>f</sub>, typeIR<sub>f</sub>)<sup>*</sup>)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>typeIR''<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typeIR</code> be <code>typeIR''<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>expressionNoteIR</code> be <code>( typeIR DYN )</code>.</p>
@@ -24235,13 +24742,22 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let!<sub>type</sub> <code>TABLE_STRUCT _ { typeIR<sub>f</sub> nameIR<sub>f</sub> ;<sup>*</sup> }</code> be <code>tableMetadataTypeIR</code>.</p>
+<p>Check that <code>tableMetadataTypeIR</code> matches pattern <code>TABLE_STRUCT % { % }</code>.</p>
+</li>
+<li>
+<p>Let <code>TABLE_STRUCT _ { typeIR<sub>f</sub> nameIR<sub>f</sub> ;<sup>*</sup> }</code> be <code>tableMetadataTypeIR</code>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>member</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>typeIR</code> be <code><a href="#assoc_">$assoc_&lt;nameIR, typeIR&gt;(nameIR, (nameIR<sub>f</sub>, typeIR<sub>f</sub>)<sup>*</sup>)</a></code>.</p>
+<p>Let <code>typeIR''<sup>?</sup></code> be <code><a href="#assoc_">$assoc_&lt;nameIR, typeIR&gt;(nameIR, (nameIR<sub>f</sub>, typeIR<sub>f</sub>)<sup>*</sup>)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>typeIR''<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typeIR</code> be <code>typeIR''<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>expressionNoteIR</code> be <code>( typeIR DYN )</code>.</p>
@@ -24287,7 +24803,10 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typeIR</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>_ [ n<sub>size</sub> ]</code> be <code>typeIR</code>.</p>
+<p>Check that <code>typeIR</code> has type <code>headerStackTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>_ [ n<sub>size</sub> ]</code> be <code>typeIR</code>.</p>
 </li>
 <li>
 <p>Result in <code>D n<sub>size</sub></code>.</p>
@@ -24330,7 +24849,10 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typeIR'</code> be <a href="#canon">the canonicalized form of <code>_</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>_ [ n<sub>size</sub> ]</code> be <code>typeIR'</code>.</p>
+<p>Check that <code>typeIR'</code> has type <code>headerStackTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>_ [ n<sub>size</sub> ]</code> be <code>typeIR'</code>.</p>
 </li>
 <li>
 <p>Result in <code>STO'</code> and <code>D n<sub>size</sub></code>.</p>
@@ -24437,7 +24959,13 @@ rule Expr_ok/indexAccessExpression/headerstack-non-lctk:
 <p>Let <code>ctk<sub>index</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>index</sub></code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>typedExpressionIR<sub>index_reduced</sub></code> be <code><a href="#reduce_serenum_unary">$reduce_serenum_unary(typedExpressionIR<sub>index</sub>, $compat_array_index)</a></code>.</p>
+<p>Let <code>typedExpressionIR<sup>?</sup></code> be <code><a href="#reduce_serenum_unary">$reduce_serenum_unary(typedExpressionIR<sub>index</sub>, $compat_array_index)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>typedExpressionIR<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typedExpressionIR<sub>index_reduced</sub></code> be <code>typedExpressionIR<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR'</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
@@ -24456,7 +24984,10 @@ rule Expr_ok/indexAccessExpression/headerstack-non-lctk:
 <p>Let <code>int</code> be <code><a href="#to_number">$to_number(value<sub>index</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>n<sub>index</sub></code> be <code>int</code>.</p>
+<p>Check that <code>int</code> has type <code>nat</code>.</p>
+</li>
+<li>
+<p>Let <code>n<sub>index</sub></code> be <code>int</code>.</p>
 </li>
 <li>
 <p>Check that <code>n<sub>index</sub></code> is less than the length of <code>typeIR<sub>e</sub><sup>*</sup></code>.</p>
@@ -24485,7 +25016,10 @@ rule Expr_ok/indexAccessExpression/headerstack-non-lctk:
 <p>Let <code>int</code> be <code><a href="#to_number">$to_number(value<sub>index</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>n<sub>index</sub></code> be <code>int</code>.</p>
+<p>Check that <code>int</code> has type <code>nat</code>.</p>
+</li>
+<li>
+<p>Let <code>n<sub>index</sub></code> be <code>int</code>.</p>
 </li>
 <li>
 <p>Check that <code>n<sub>index</sub></code> is less than <code>n<sub>size</sub></code>.</p>
@@ -24587,7 +25121,13 @@ sliceAccessExpressionIR
 <p>Let <code>typedExpressionIR<sub>lo</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>lo</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>typedExpressionIR<sub>base_reduced</sub></code> be <code><a href="#reduce_serenum_unary">$reduce_serenum_unary(typedExpressionIR<sub>base</sub>, $compat_bitslice_base)</a></code>.</p>
+<p>Let <code>typedExpressionIR<sup>?</sup></code> be <code><a href="#reduce_serenum_unary">$reduce_serenum_unary(typedExpressionIR<sub>base</sub>, $compat_bitslice_base)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>typedExpressionIR<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typedExpressionIR<sub>base_reduced</sub></code> be <code>typedExpressionIR<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>base_reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>base_reduced</sub></code></a>.</p>
@@ -24596,10 +25136,22 @@ sliceAccessExpressionIR
 <p>Let <code>ctk<sub>base_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>base_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>typedExpressionIR<sub>hi_reduced</sub></code> be <code><a href="#reduce_serenum_unary">$reduce_serenum_unary(typedExpressionIR<sub>hi</sub>, $compat_bitslice_index)</a></code>.</p>
+<p>Let <code>typedExpressionIR'<sup>?</sup></code> be <code><a href="#reduce_serenum_unary">$reduce_serenum_unary(typedExpressionIR<sub>hi</sub>, $compat_bitslice_index)</a></code>.</p>
 </li>
 <li>
-<p>Let!<sub>option</sub> <code>typedExpressionIR<sub>lo_reduced</sub></code> be <code><a href="#reduce_serenum_unary">$reduce_serenum_unary(typedExpressionIR<sub>lo</sub>, $compat_bitslice_index)</a></code>.</p>
+<p>Check that <code>typedExpressionIR'<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typedExpressionIR<sub>hi_reduced</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
+</li>
+<li>
+<p>Let <code>typedExpressionIR''<sup>?</sup></code> be <code><a href="#reduce_serenum_unary">$reduce_serenum_unary(typedExpressionIR<sub>lo</sub>, $compat_bitslice_index)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>typedExpressionIR''<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typedExpressionIR<sub>lo_reduced</sub></code> be <code>typedExpressionIR''<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>hi_reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>hi_reduced</sub></code></a>.</p>
@@ -24623,7 +25175,10 @@ sliceAccessExpressionIR
 <p>Let <code>int</code> be <code><a href="#to_number">$to_number(value<sub>hi</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>n<sub>hi</sub></code> be <code>int</code>.</p>
+<p>Check that <code>int</code> has type <code>nat</code>.</p>
+</li>
+<li>
+<p>Let <code>n<sub>hi</sub></code> be <code>int</code>.</p>
 </li>
 <li>
 <p>Check that <code>ctk<sub>lo_reduced</sub></code> matches pattern <code>LCTK</code>.</p>
@@ -24635,7 +25190,10 @@ sliceAccessExpressionIR
 <p>Let <code>int'</code> be <code><a href="#to_number">$to_number(value<sub>lo</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>n<sub>lo</sub></code> be <code>int'</code>.</p>
+<p>Check that <code>int'</code> has type <code>nat</code>.</p>
+</li>
+<li>
+<p>Let <code>n<sub>lo</sub></code> be <code>int'</code>.</p>
 </li>
 <li>
 <p>Check that <code><a href="#is_valid_bitslice">$is_valid_bitslice(typeIR<sub>base_reduced</sub>, n<sub>lo</sub>, n<sub>hi</sub>)</a></code>.</p>
@@ -24644,7 +25202,10 @@ sliceAccessExpressionIR
 <p>Let <code>int''</code> be <code>n<sub>hi</sub> - n<sub>lo</sub> + 1</code>.</p>
 </li>
 <li>
-<p>Let!<sub>type</sub> <code>n<sub>slice</sub></code> be <code>int''</code>.</p>
+<p>Check that <code>int''</code> has type <code>nat</code>.</p>
+</li>
+<li>
+<p>Let <code>n<sub>slice</sub></code> be <code>int''</code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR</code> be <code>BIT &lt; n<sub>slice</sub> &gt;</code>.</p>
@@ -24832,7 +25393,10 @@ rule Expr_ok/callExpression-routine/typeArgumentList:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let!<sub>type</sub> <code>routineTarget</code> be <code>callTarget</code>.</p>
+<p>Check that <code>callTarget</code> has type <code>routineTarget</code>.</p>
+</li>
+<li>
+<p>Let <code>routineTarget</code> be <code>callTarget</code>.</p>
 </li>
 <li>
 <p>Let <code>routineTargetIR</code> be the result of <a href="#RoutineTarget_ok">typing <code>routineTarget</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
@@ -25003,7 +25567,13 @@ rule Eval_static/callExpressionIR-builtin-size/type-poly:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let!<sub>option</sub> <code>typeDefIR</code> be <code><a href="#find_type">$find_type(p, TC, prefixedNameIR)</a></code>.</p>
+<p>Let <code>typeDefIR'<sup>?</sup></code> be <code><a href="#find_type">$find_type(p, TC, prefixedNameIR)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>typeDefIR'<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typeDefIR</code> be <code>typeDefIR'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>If let <code>typeIR<sub>base</sub></code> be <code>typeDefIR</code>:</p>
@@ -25099,7 +25669,13 @@ rule Expr_inst/callExpressionIR-builtin-size/type-poly:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let!<sub>option</sub> <code>typeDefIR</code> be <code><a href="#find_typedef_inst">$find_typedef_inst(p, IC, prefixedNameIR)</a></code>.</p>
+<p>Let <code>typeDefIR'<sup>?</sup></code> be <code><a href="#find_typedef_inst">$find_typedef_inst(p, IC, prefixedNameIR)</a></code>.</p>
+</li>
+<li>
+<p>Check that <code>typeDefIR'<sup>?</sup></code> is Some value.</p>
+</li>
+<li>
+<p>Let <code>?typeDefIR</code> be <code>typeDefIR'<sup>?</sup></code>.</p>
 </li>
 <li>
 <p>If let <code>_</code> be <code>typeDefIR</code>:</p>

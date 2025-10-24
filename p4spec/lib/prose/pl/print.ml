@@ -206,8 +206,8 @@ let rec prose_of_exp ?(mode = Prose) exp : string =
                code_of_atom atom ^ " " ^ prose_of_exp ~mode exp)
              expfields)
       ^ "}"
-  | OptE (Some exp) -> "?" ^ prose_of_exp ~mode exp ^ ""
-  | OptE None -> "?()"
+  | OptE (Some exp) -> "" ^ prose_of_exp ~mode exp ^ ""
+  | OptE None -> "None" |> render_mono ~mode
   | ListE [] -> "[ ]" |> render_mono ~mode
   | ListE exps ->
       "[" ^ prose_of_exps ~mode:Code ~sep:(Some ", ") exps ^ "]"

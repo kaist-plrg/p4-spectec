@@ -40,5 +40,4 @@ let rec apply_shorthand (shorthand : shorthand) (instrs : instr list) :
           shortened_instrs @ apply_shorthand shorthand instrs_rest
       | None -> instr_h :: apply_shorthand shorthand instrs_t)
 
-let apply_all_shorthands (instrs : instr list) : instr list =
-  instrs |> apply_shorthand force_let |> apply_shorthand option_get
+let apply_all_shorthands (instrs : instr list) : instr list = instrs
