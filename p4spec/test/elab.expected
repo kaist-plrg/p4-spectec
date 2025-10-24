@@ -2940,14 +2940,28 @@ def $write_value_from_bits'(value, bool*) : (value, bool*) =
   -- let b_t*{b_t <- b_t*} = b*{b <- b*}[w : n_t]
   -- let i = $int_to_bitstr(w as int, $bits_to_int_unsigned(b_h*{b_h <- b_h*}))
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:94.1-98.56
-  clause 2 : (value, b*{b <- b*}) = (struct tid { fieldValue_updated*{fieldValue_updated <- fieldValue_updated*} } as value, b_rest*{b_rest <- b_rest*})
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:76.1-81.57
+  clause 2 : (value, b*{b <- b*}) = (w s i as value, b_t*{b_t <- b_t*})
+  -- if value <: numberLiteral
+  -- let numberLiteral = value as numberLiteral
+  -- if numberLiteral matches `%S%`
+  -- let w s _int = numberLiteral
+  -- if (|b*{b <- b*}| >= w)
+  -- let b_h*{b_h <- b_h*} = b*{b <- b*}[0 : w]
+  -- let int = (|b*{b <- b*}| - w)
+  -- if int <: nat
+  -- let n_t = int as nat
+  -- let b_t*{b_t <- b_t*} = b*{b <- b*}[w : n_t]
+  -- let i = $int_to_bitstr(w as int, $bits_to_int_signed(b_h*{b_h <- b_h*}))
+
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:100.1-104.56
+  clause 3 : (value, b*{b <- b*}) = (struct tid { fieldValue_updated*{fieldValue_updated <- fieldValue_updated*} } as value, b_rest*{b_rest <- b_rest*})
   -- if value <: structValue
   -- let struct tid { fieldValue*{fieldValue <- fieldValue*} } = value as structValue
   -- let (fieldValue_updated*{fieldValue_updated <- fieldValue_updated*}, b_rest*{b_rest <- b_rest*}) = $write_value_fields_from_bits'(fieldValue*{fieldValue <- fieldValue*}, b*{b <- b*})
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:99.1-103.56
-  clause 3 : (value, b*{b <- b*}) = (header tid { true ; fieldValue_updated*{fieldValue_updated <- fieldValue_updated*} } as value, b_rest*{b_rest <- b_rest*})
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:105.1-109.56
+  clause 4 : (value, b*{b <- b*}) = (header tid { true ; fieldValue_updated*{fieldValue_updated <- fieldValue_updated*} } as value, b_rest*{b_rest <- b_rest*})
   -- if value <: headerValue
   -- let header tid { _bool ; fieldValue*{fieldValue <- fieldValue*} } = value as headerValue
   -- let (fieldValue_updated*{fieldValue_updated <- fieldValue_updated*}, b_rest*{b_rest <- b_rest*}) = $write_value_fields_from_bits'(fieldValue*{fieldValue <- fieldValue*}, b*{b <- b*})
@@ -2955,11 +2969,11 @@ def $write_value_from_bits'(value, bool*) : (value, bool*) =
 ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:62.1-62.78
 def $write_value_fields_from_bits'(fieldValue*, bool*) : (fieldValue*, bool*) =
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:77.1-77.56
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:83.1-83.56
   clause 0 : (fieldValue*{fieldValue <- fieldValue*}, b*{b <- b*}) = ([], b*{b <- b*})
   -- if fieldValue*{fieldValue <- fieldValue*} matches []
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:78.1-85.60
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:84.1-91.60
   clause 1 : (fieldValue*{fieldValue <- fieldValue*}, b*{b <- b*}) = (fieldValue_h_updated :: fieldValue_t_updated*{fieldValue_t_updated <- fieldValue_t_updated*}, b_rest*{b_rest <- b_rest*})
   -- if fieldValue*{fieldValue <- fieldValue*} matches _ :: _
   -- let fieldValue_h :: fieldValue_t*{fieldValue_t <- fieldValue_t*} = fieldValue*{fieldValue <- fieldValue*}
@@ -2969,40 +2983,40 @@ def $write_value_fields_from_bits'(fieldValue*, bool*) : (fieldValue*, bool*) =
 ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:63.1-63.75
 def $write_value_field_from_bits'(fieldValue, bool*) : (fieldValue, bool*) =
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:87.1-92.43
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:93.1-98.43
   clause 0 : (value id ;, b*{b <- b*}) = (value_updated id ;, b_rest*{b_rest <- b_rest*})
   -- let (value_updated, b_rest*{b_rest <- b_rest*}) = $write_value_from_bits'(value, b*{b <- b*})
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:109.1-109.42
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:115.1-115.42
 def $write_bits_from_value(value) : bool* =
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:111.1-111.40
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:117.1-117.40
   clause 0 : (value) = [b]
   -- if value <: primitiveValue
   -- let primitiveValue = value as primitiveValue
   -- if primitiveValue matches `B%`
   -- let b b = primitiveValue
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:112.1-113.30
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:118.1-119.30
   clause 1 : (value) = $int_to_bits_signed(w, i)
   -- if value <: numberLiteral
   -- let numberLiteral = value as numberLiteral
   -- if numberLiteral matches `%S%`
   -- let w s i = numberLiteral
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:114.1-115.32
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:120.1-121.32
   clause 2 : (value) = $int_to_bits_unsigned(w, i)
   -- if value <: numberLiteral
   -- let numberLiteral = value as numberLiteral
   -- if numberLiteral matches `%W%`
   -- let w w i = numberLiteral
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:117.1-120.57
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:123.1-126.57
   clause 3 : (value) = $concat_<bool>($write_bits_from_value(value_field)*{value_field <- value_field*})
   -- if value <: structValue
   -- let struct _tid { value_field id_field ;*{id_field <- id_field*, value_field <- value_field*} } = value as structValue
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:121.1-124.57
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:127.1-130.57
   clause 4 : (value) = $concat_<bool>($write_bits_from_value(value_field)*{value_field <- value_field*})
   -- if value <: headerValue
   -- let header _tid { bool ; value_field id_field ;*{id_field <- id_field*, value_field <- value_field*} } = value as headerValue
@@ -27966,10 +27980,175 @@ def $V1Model_setup_standard_metadata_argument(evaluationContext) : argumentIR =
   -- let typeIR_std_meta = polyTypeDefIR_standard_metadata < [] > as typeIR
   -- let argumentIR_standard_metadata = . "standard_metadata" as expressionIR # ( typeIR_std_meta dyn ) as argumentIR
 
-;; ../../../../spec-concrete/9.01-v1model.watsup:97.1-99.20
+;; ../../../../spec-concrete/9.01-v1model.watsup:93.1-93.77
+def $V1Model_setup_main_callee(evaluationContext, store) : typedExpressionIR =
+
+  ;; ../../../../spec-concrete/9.01-v1model.watsup:94.1-106.47
+  clause 0 : (EC, STO) = typedExpressionIR_main
+  -- let typeDefIR'?{typeDefIR' <- typeDefIR'?} = $find_typeDef_eval(global, EC, ` "V1Switch")
+  -- if typeDefIR'?{typeDefIR' <- typeDefIR'?} matches (_)
+  -- let ?(typeDefIR) = typeDefIR'?{typeDefIR' <- typeDefIR'?}
+  -- if typeDefIR <: polyTypeDefIR
+  -- let polyTypeDefIR_package = typeDefIR as polyTypeDefIR
+  -- let object'?{object' <- object'?} = $find_map<oid, object>(STO, ["main"])
+  -- if object'?{object' <- object'?} matches (_)
+  -- let ?(object) = object'?{object' <- object'?}
+  -- if object <: packageObject
+  -- let package< tenv >{ _frame } = object as packageObject
+  -- let typeIR?{typeIR <- typeIR?} = $find_map<tid, typeIR>(tenv, "H")
+  -- if typeIR?{typeIR <- typeIR?} matches (_)
+  -- let ?(typeIR_hdr) = typeIR?{typeIR <- typeIR?}
+  -- let typeIR'?{typeIR' <- typeIR'?} = $find_map<tid, typeIR>(tenv, "M")
+  -- if typeIR'?{typeIR' <- typeIR'?} matches (_)
+  -- let ?(typeIR_meta) = typeIR'?{typeIR' <- typeIR'?}
+  -- let typeIR_package = polyTypeDefIR_package < [typeIR_hdr, typeIR_meta] > as typeIR
+  -- let typedExpressionIR_main = ` "main" as expressionIR # ( typeIR_package ctk )
+
+;; ../../../../spec-concrete/9.01-v1model.watsup:108.1-111.22
+def $V1Model_setup_parser_callee(evaluationContext, store, typedExpressionIR) : typedExpressionIR =
+
+  ;; ../../../../spec-concrete/9.01-v1model.watsup:112.1-127.66
+  clause 0 : (EC, STO, typedExpressionIR_main) = typedExpressionIR_parser
+  -- let typeDefIR'?{typeDefIR' <- typeDefIR'?} = $find_typeDef_eval(global, EC, ` "Parser")
+  -- if typeDefIR'?{typeDefIR' <- typeDefIR'?} matches (_)
+  -- let ?(typeDefIR) = typeDefIR'?{typeDefIR' <- typeDefIR'?}
+  -- if typeDefIR <: polyTypeDefIR
+  -- let polyTypeDefIR_parser = typeDefIR as polyTypeDefIR
+  -- let object'?{object' <- object'?} = $find_map<oid, object>(STO, ["main"])
+  -- if object'?{object' <- object'?} matches (_)
+  -- let ?(object) = object'?{object' <- object'?}
+  -- if object <: packageObject
+  -- let package< tenv >{ _frame } = object as packageObject
+  -- let typeIR?{typeIR <- typeIR?} = $find_map<tid, typeIR>(tenv, "H")
+  -- if typeIR?{typeIR <- typeIR?} matches (_)
+  -- let ?(typeIR_hdr) = typeIR?{typeIR <- typeIR?}
+  -- let typeIR'?{typeIR' <- typeIR'?} = $find_map<tid, typeIR>(tenv, "M")
+  -- if typeIR'?{typeIR' <- typeIR'?} matches (_)
+  -- let ?(typeIR_meta) = typeIR'?{typeIR' <- typeIR'?}
+  -- let typeIR_parser = polyTypeDefIR_parser < [typeIR_hdr, typeIR_meta] > as typeIR
+  -- let typedExpressionIR_parser = typedExpressionIR_main as memberAccessBaseIR . "p" as expressionIR # ( typeIR_parser ctk )
+
+;; ../../../../spec-concrete/9.01-v1model.watsup:129.1-132.22
+def $V1Model_setup_verify_callee(evaluationContext, store, typedExpressionIR) : typedExpressionIR =
+
+  ;; ../../../../spec-concrete/9.01-v1model.watsup:133.1-148.67
+  clause 0 : (EC, STO, typedExpressionIR_main) = typedExpressionIR_verify
+  -- let typeDefIR'?{typeDefIR' <- typeDefIR'?} = $find_typeDef_eval(global, EC, ` "VerifyChecksum")
+  -- if typeDefIR'?{typeDefIR' <- typeDefIR'?} matches (_)
+  -- let ?(typeDefIR) = typeDefIR'?{typeDefIR' <- typeDefIR'?}
+  -- if typeDefIR <: polyTypeDefIR
+  -- let polyTypeDefIR_verify = typeDefIR as polyTypeDefIR
+  -- let object'?{object' <- object'?} = $find_map<oid, object>(STO, ["main"])
+  -- if object'?{object' <- object'?} matches (_)
+  -- let ?(object) = object'?{object' <- object'?}
+  -- if object <: packageObject
+  -- let package< tenv >{ _frame } = object as packageObject
+  -- let typeIR?{typeIR <- typeIR?} = $find_map<tid, typeIR>(tenv, "H")
+  -- if typeIR?{typeIR <- typeIR?} matches (_)
+  -- let ?(typeIR_hdr) = typeIR?{typeIR <- typeIR?}
+  -- let typeIR'?{typeIR' <- typeIR'?} = $find_map<tid, typeIR>(tenv, "M")
+  -- if typeIR'?{typeIR' <- typeIR'?} matches (_)
+  -- let ?(typeIR_meta) = typeIR'?{typeIR' <- typeIR'?}
+  -- let typeIR_verify = polyTypeDefIR_verify < [typeIR_hdr, typeIR_meta] > as typeIR
+  -- let typedExpressionIR_verify = typedExpressionIR_main as memberAccessBaseIR . "vr" as expressionIR # ( typeIR_verify ctk )
+
+;; ../../../../spec-concrete/9.01-v1model.watsup:150.1-153.22
+def $V1Model_setup_ingress_callee(evaluationContext, store, typedExpressionIR) : typedExpressionIR =
+
+  ;; ../../../../spec-concrete/9.01-v1model.watsup:154.1-169.68
+  clause 0 : (EC, STO, typedExpressionIR_main) = typedExpressionIR_ingress
+  -- let typeDefIR'?{typeDefIR' <- typeDefIR'?} = $find_typeDef_eval(global, EC, ` "Ingress")
+  -- if typeDefIR'?{typeDefIR' <- typeDefIR'?} matches (_)
+  -- let ?(typeDefIR) = typeDefIR'?{typeDefIR' <- typeDefIR'?}
+  -- if typeDefIR <: polyTypeDefIR
+  -- let polyTypeDefIR_ingress = typeDefIR as polyTypeDefIR
+  -- let object'?{object' <- object'?} = $find_map<oid, object>(STO, ["main"])
+  -- if object'?{object' <- object'?} matches (_)
+  -- let ?(object) = object'?{object' <- object'?}
+  -- if object <: packageObject
+  -- let package< tenv >{ _frame } = object as packageObject
+  -- let typeIR?{typeIR <- typeIR?} = $find_map<tid, typeIR>(tenv, "H")
+  -- if typeIR?{typeIR <- typeIR?} matches (_)
+  -- let ?(typeIR_hdr) = typeIR?{typeIR <- typeIR?}
+  -- let typeIR'?{typeIR' <- typeIR'?} = $find_map<tid, typeIR>(tenv, "M")
+  -- if typeIR'?{typeIR' <- typeIR'?} matches (_)
+  -- let ?(typeIR_meta) = typeIR'?{typeIR' <- typeIR'?}
+  -- let typeIR_ingress = polyTypeDefIR_ingress < [typeIR_hdr, typeIR_meta] > as typeIR
+  -- let typedExpressionIR_ingress = typedExpressionIR_main as memberAccessBaseIR . "ig" as expressionIR # ( typeIR_ingress ctk )
+
+;; ../../../../spec-concrete/9.01-v1model.watsup:171.1-174.22
+def $V1Model_setup_egress_callee(evaluationContext, store, typedExpressionIR) : typedExpressionIR =
+
+  ;; ../../../../spec-concrete/9.01-v1model.watsup:175.1-190.67
+  clause 0 : (EC, STO, typedExpressionIR_main) = typedExpressionIR_egress
+  -- let typeDefIR'?{typeDefIR' <- typeDefIR'?} = $find_typeDef_eval(global, EC, ` "Egress")
+  -- if typeDefIR'?{typeDefIR' <- typeDefIR'?} matches (_)
+  -- let ?(typeDefIR) = typeDefIR'?{typeDefIR' <- typeDefIR'?}
+  -- if typeDefIR <: polyTypeDefIR
+  -- let polyTypeDefIR_egress = typeDefIR as polyTypeDefIR
+  -- let object'?{object' <- object'?} = $find_map<oid, object>(STO, ["main"])
+  -- if object'?{object' <- object'?} matches (_)
+  -- let ?(object) = object'?{object' <- object'?}
+  -- if object <: packageObject
+  -- let package< tenv >{ _frame } = object as packageObject
+  -- let typeIR?{typeIR <- typeIR?} = $find_map<tid, typeIR>(tenv, "H")
+  -- if typeIR?{typeIR <- typeIR?} matches (_)
+  -- let ?(typeIR_hdr) = typeIR?{typeIR <- typeIR?}
+  -- let typeIR'?{typeIR' <- typeIR'?} = $find_map<tid, typeIR>(tenv, "M")
+  -- if typeIR'?{typeIR' <- typeIR'?} matches (_)
+  -- let ?(typeIR_meta) = typeIR'?{typeIR' <- typeIR'?}
+  -- let typeIR_egress = polyTypeDefIR_egress < [typeIR_hdr, typeIR_meta] > as typeIR
+  -- let typedExpressionIR_egress = typedExpressionIR_main as memberAccessBaseIR . "eg" as expressionIR # ( typeIR_egress ctk )
+
+;; ../../../../spec-concrete/9.01-v1model.watsup:192.1-195.22
+def $V1Model_setup_check_callee(evaluationContext, store, typedExpressionIR) : typedExpressionIR =
+
+  ;; ../../../../spec-concrete/9.01-v1model.watsup:196.1-211.66
+  clause 0 : (EC, STO, typedExpressionIR_main) = typedExpressionIR_check
+  -- let typeDefIR'?{typeDefIR' <- typeDefIR'?} = $find_typeDef_eval(global, EC, ` "ComputeChecksum")
+  -- if typeDefIR'?{typeDefIR' <- typeDefIR'?} matches (_)
+  -- let ?(typeDefIR) = typeDefIR'?{typeDefIR' <- typeDefIR'?}
+  -- if typeDefIR <: polyTypeDefIR
+  -- let polyTypeDefIR_check = typeDefIR as polyTypeDefIR
+  -- let object'?{object' <- object'?} = $find_map<oid, object>(STO, ["main"])
+  -- if object'?{object' <- object'?} matches (_)
+  -- let ?(object) = object'?{object' <- object'?}
+  -- if object <: packageObject
+  -- let package< tenv >{ _frame } = object as packageObject
+  -- let typeIR?{typeIR <- typeIR?} = $find_map<tid, typeIR>(tenv, "H")
+  -- if typeIR?{typeIR <- typeIR?} matches (_)
+  -- let ?(typeIR_hdr) = typeIR?{typeIR <- typeIR?}
+  -- let typeIR'?{typeIR' <- typeIR'?} = $find_map<tid, typeIR>(tenv, "M")
+  -- if typeIR'?{typeIR' <- typeIR'?} matches (_)
+  -- let ?(typeIR_meta) = typeIR'?{typeIR' <- typeIR'?}
+  -- let typeIR_check = polyTypeDefIR_check < [typeIR_hdr, typeIR_meta] > as typeIR
+  -- let typedExpressionIR_check = typedExpressionIR_main as memberAccessBaseIR . "ck" as expressionIR # ( typeIR_check ctk )
+
+;; ../../../../spec-concrete/9.01-v1model.watsup:213.1-216.22
+def $V1Model_setup_deparse_callee(evaluationContext, store, typedExpressionIR) : typedExpressionIR =
+
+  ;; ../../../../spec-concrete/9.01-v1model.watsup:217.1-231.69
+  clause 0 : (EC, STO, typedExpressionIR_main) = typedExpressionIR_deparse
+  -- let typeDefIR'?{typeDefIR' <- typeDefIR'?} = $find_typeDef_eval(global, EC, ` "Deparser")
+  -- if typeDefIR'?{typeDefIR' <- typeDefIR'?} matches (_)
+  -- let ?(typeDefIR) = typeDefIR'?{typeDefIR' <- typeDefIR'?}
+  -- if typeDefIR <: polyTypeDefIR
+  -- let polyTypeDefIR_deparse = typeDefIR as polyTypeDefIR
+  -- let object'?{object' <- object'?} = $find_map<oid, object>(STO, ["main"])
+  -- if object'?{object' <- object'?} matches (_)
+  -- let ?(object) = object'?{object' <- object'?}
+  -- if object <: packageObject
+  -- let package< tenv >{ _frame } = object as packageObject
+  -- let typeIR?{typeIR <- typeIR?} = $find_map<tid, typeIR>(tenv, "H")
+  -- if typeIR?{typeIR <- typeIR?} matches (_)
+  -- let ?(typeIR_hdr) = typeIR?{typeIR <- typeIR?}
+  -- let typeIR_deparse = polyTypeDefIR_deparse < [typeIR_hdr] > as typeIR
+  -- let typedExpressionIR_deparse = typedExpressionIR_main as memberAccessBaseIR . "dep" as expressionIR # ( typeIR_deparse ctk )
+
+;; ../../../../spec-concrete/9.01-v1model.watsup:237.1-239.20
 relation V1Model_parser: evaluationContext store |- evaluationContext store transitionResult
 
-  ;; ../../../../spec-concrete/9.01-v1model.watsup:101.1-124.43
+  ;; ../../../../spec-concrete/9.01-v1model.watsup:241.1-263.43
   rulegroup 
 
    match
@@ -27985,8 +28164,8 @@ relation V1Model_parser: evaluationContext store |- evaluationContext store tran
     -- let argumentIR_meta = $V1Model_setup_meta_argument(STO_0)
     -- let argumentIR_standard_metadata = $V1Model_setup_standard_metadata_argument(EC_0)
     -- let argumentIR*{argumentIR <- argumentIR*} = [argumentIR_packet_in, argumentIR_hdr, argumentIR_meta, argumentIR_standard_metadata]
-    -- let typedExpressionIR_main = ` "main" as expressionIR # ( void as typeIR ctk )
-    -- let typedExpressionIR_p = typedExpressionIR_main as memberAccessBaseIR . "p" as expressionIR # ( void as typeIR ctk )
+    -- let typedExpressionIR_main = $V1Model_setup_main_callee(EC_0, STO_0)
+    -- let typedExpressionIR_p = $V1Model_setup_parser_callee(EC_0, STO_0, typedExpressionIR_main)
     -- let routineTargetIR = typedExpressionIR_p . "apply"
     -- Stmt_eval: global EC_0 STO_0 |- routineTargetIR < [] >( argumentIR*{argumentIR <- argumentIR*} ); as statementIR : EC_1 STO_1 statementResult
     -- if statementResult <: continueEmptyResult
@@ -27994,10 +28173,10 @@ relation V1Model_parser: evaluationContext store |- evaluationContext store tran
     -- if (continueEmptyResult = cont)
     -- output: % % |- EC_1 STO_1 accept as transitionResult
 
-;; ../../../../spec-concrete/9.01-v1model.watsup:130.1-132.20
+;; ../../../../spec-concrete/9.01-v1model.watsup:269.1-271.20
 relation V1Model_verify: evaluationContext store |- evaluationContext store callResult
 
-  ;; ../../../../spec-concrete/9.01-v1model.watsup:134.1-151.43
+  ;; ../../../../spec-concrete/9.01-v1model.watsup:273.1-289.43
   rulegroup 
 
    match
@@ -28011,19 +28190,19 @@ relation V1Model_verify: evaluationContext store |- evaluationContext store call
     -- let argumentIR_hdr = $V1Model_setup_hdr_argument(STO_0)
     -- let argumentIR_meta = $V1Model_setup_meta_argument(STO_0)
     -- let argumentIR*{argumentIR <- argumentIR*} = [argumentIR_hdr, argumentIR_meta]
-    -- let typedExpressionIR_main = ` "main" as expressionIR # ( void as typeIR ctk )
-    -- let typedExpressionIR_v = typedExpressionIR_main as memberAccessBaseIR . "vr" as expressionIR # ( void as typeIR ctk )
-    -- let routineTargetIR = typedExpressionIR_v . "apply"
+    -- let typedExpressionIR_main = $V1Model_setup_main_callee(EC_0, STO_0)
+    -- let typedExpressionIR_vr = $V1Model_setup_verify_callee(EC_0, STO_0, typedExpressionIR_main)
+    -- let routineTargetIR = typedExpressionIR_vr . "apply"
     -- Stmt_eval: global EC_0 STO_0 |- routineTargetIR < [] >( argumentIR*{argumentIR <- argumentIR*} ); as statementIR : EC_1 STO_1 statementResult
     -- if statementResult <: continueEmptyResult
     -- let continueEmptyResult = statementResult as continueEmptyResult
     -- if (continueEmptyResult = cont)
     -- output: % % |- EC_1 STO_1 return ?() as callResult
 
-;; ../../../../spec-concrete/9.01-v1model.watsup:157.1-159.20
+;; ../../../../spec-concrete/9.01-v1model.watsup:295.1-297.20
 relation V1Model_ingress: evaluationContext store |- evaluationContext store callResult
 
-  ;; ../../../../spec-concrete/9.01-v1model.watsup:161.1-181.43
+  ;; ../../../../spec-concrete/9.01-v1model.watsup:299.1-318.43
   rulegroup 
 
    match
@@ -28038,19 +28217,19 @@ relation V1Model_ingress: evaluationContext store |- evaluationContext store cal
     -- let argumentIR_meta = $V1Model_setup_meta_argument(STO_0)
     -- let argumentIR_standard_metadata = $V1Model_setup_standard_metadata_argument(EC_0)
     -- let argumentIR*{argumentIR <- argumentIR*} = [argumentIR_hdr, argumentIR_meta, argumentIR_standard_metadata]
-    -- let typedExpressionIR_main = ` "main" as expressionIR # ( void as typeIR ctk )
-    -- let typedExpressionIR_v = typedExpressionIR_main as memberAccessBaseIR . "ig" as expressionIR # ( void as typeIR ctk )
-    -- let routineTargetIR = typedExpressionIR_v . "apply"
+    -- let typedExpressionIR_main = $V1Model_setup_main_callee(EC_0, STO_0)
+    -- let typedExpressionIR_ig = $V1Model_setup_ingress_callee(EC_0, STO_0, typedExpressionIR_main)
+    -- let routineTargetIR = typedExpressionIR_ig . "apply"
     -- Stmt_eval: global EC_0 STO_0 |- routineTargetIR < [] >( argumentIR*{argumentIR <- argumentIR*} ); as statementIR : EC_1 STO_1 statementResult
     -- if statementResult <: continueEmptyResult
     -- let continueEmptyResult = statementResult as continueEmptyResult
     -- if (continueEmptyResult = cont)
     -- output: % % |- EC_1 STO_1 return ?() as callResult
 
-;; ../../../../spec-concrete/9.01-v1model.watsup:187.1-189.20
+;; ../../../../spec-concrete/9.01-v1model.watsup:324.1-326.20
 relation V1Model_egress: evaluationContext store |- evaluationContext store callResult
 
-  ;; ../../../../spec-concrete/9.01-v1model.watsup:191.1-211.43
+  ;; ../../../../spec-concrete/9.01-v1model.watsup:328.1-347.43
   rulegroup 
 
    match
@@ -28065,19 +28244,19 @@ relation V1Model_egress: evaluationContext store |- evaluationContext store call
     -- let argumentIR_meta = $V1Model_setup_meta_argument(STO_0)
     -- let argumentIR_standard_metadata = $V1Model_setup_standard_metadata_argument(EC_0)
     -- let argumentIR*{argumentIR <- argumentIR*} = [argumentIR_hdr, argumentIR_meta, argumentIR_standard_metadata]
-    -- let typedExpressionIR_main = ` "main" as expressionIR # ( void as typeIR ctk )
-    -- let typedExpressionIR_v = typedExpressionIR_main as memberAccessBaseIR . "eg" as expressionIR # ( void as typeIR ctk )
-    -- let routineTargetIR = typedExpressionIR_v . "apply"
+    -- let typedExpressionIR_main = $V1Model_setup_main_callee(EC_0, STO_0)
+    -- let typedExpressionIR_eg = $V1Model_setup_egress_callee(EC_0, STO_0, typedExpressionIR_main)
+    -- let routineTargetIR = typedExpressionIR_eg . "apply"
     -- Stmt_eval: global EC_0 STO_0 |- routineTargetIR < [] >( argumentIR*{argumentIR <- argumentIR*} ); as statementIR : EC_1 STO_1 statementResult
     -- if statementResult <: continueEmptyResult
     -- let continueEmptyResult = statementResult as continueEmptyResult
     -- if (continueEmptyResult = cont)
     -- output: % % |- EC_1 STO_1 return ?() as callResult
 
-;; ../../../../spec-concrete/9.01-v1model.watsup:217.1-219.20
+;; ../../../../spec-concrete/9.01-v1model.watsup:353.1-355.20
 relation V1Model_check: evaluationContext store |- evaluationContext store callResult
 
-  ;; ../../../../spec-concrete/9.01-v1model.watsup:221.1-238.43
+  ;; ../../../../spec-concrete/9.01-v1model.watsup:357.1-373.43
   rulegroup 
 
    match
@@ -28091,19 +28270,19 @@ relation V1Model_check: evaluationContext store |- evaluationContext store callR
     -- let argumentIR_hdr = $V1Model_setup_hdr_argument(STO_0)
     -- let argumentIR_meta = $V1Model_setup_meta_argument(STO_0)
     -- let argumentIR*{argumentIR <- argumentIR*} = [argumentIR_hdr, argumentIR_meta]
-    -- let typedExpressionIR_main = ` "main" as expressionIR # ( void as typeIR ctk )
-    -- let typedExpressionIR_v = typedExpressionIR_main as memberAccessBaseIR . "ck" as expressionIR # ( void as typeIR ctk )
-    -- let routineTargetIR = typedExpressionIR_v . "apply"
+    -- let typedExpressionIR_main = $V1Model_setup_main_callee(EC_0, STO_0)
+    -- let typedExpressionIR_ck = $V1Model_setup_check_callee(EC_0, STO_0, typedExpressionIR_main)
+    -- let routineTargetIR = typedExpressionIR_ck . "apply"
     -- Stmt_eval: global EC_0 STO_0 |- routineTargetIR < [] >( argumentIR*{argumentIR <- argumentIR*} ); as statementIR : EC_1 STO_1 statementResult
     -- if statementResult <: continueEmptyResult
     -- let continueEmptyResult = statementResult as continueEmptyResult
     -- if (continueEmptyResult = cont)
     -- output: % % |- EC_1 STO_1 return ?() as callResult
 
-;; ../../../../spec-concrete/9.01-v1model.watsup:244.1-246.20
+;; ../../../../spec-concrete/9.01-v1model.watsup:379.1-381.20
 relation V1Model_deparse: evaluationContext store |- evaluationContext store callResult
 
-  ;; ../../../../spec-concrete/9.01-v1model.watsup:248.1-265.43
+  ;; ../../../../spec-concrete/9.01-v1model.watsup:383.1-399.43
   rulegroup 
 
    match
@@ -28117,9 +28296,9 @@ relation V1Model_deparse: evaluationContext store |- evaluationContext store cal
     -- let argumentIR_packet_out = $V1Model_setup_packet_out_argument(EC_0)
     -- let argumentIR_hdr = $V1Model_setup_hdr_argument(STO_0)
     -- let argumentIR*{argumentIR <- argumentIR*} = [argumentIR_packet_out, argumentIR_hdr]
-    -- let typedExpressionIR_main = ` "main" as expressionIR # ( void as typeIR ctk )
-    -- let typedExpressionIR_v = typedExpressionIR_main as memberAccessBaseIR . "dep" as expressionIR # ( void as typeIR ctk )
-    -- let routineTargetIR = typedExpressionIR_v . "apply"
+    -- let typedExpressionIR_main = $V1Model_setup_main_callee(EC_0, STO_0)
+    -- let typedExpressionIR_dep = $V1Model_setup_deparse_callee(EC_0, STO_0, typedExpressionIR_main)
+    -- let routineTargetIR = typedExpressionIR_dep . "apply"
     -- Stmt_eval: global EC_0 STO_0 |- routineTargetIR < [] >( argumentIR*{argumentIR <- argumentIR*} ); as statementIR : EC_1 STO_1 statementResult
     -- if statementResult <: continueEmptyResult
     -- let continueEmptyResult = statementResult as continueEmptyResult

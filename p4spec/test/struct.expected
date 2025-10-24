@@ -3172,25 +3172,47 @@ def $write_value_from_bits'(value, bool'*{bool' <- bool'*})
 
     1. (Let numberLiteral be (value as numberLiteral))
 
-    2. If ((numberLiteral matches pattern `%W%`)), then
+    2. Case analysis on numberLiteral
 
-      1. (Let (w w _int) be numberLiteral)
+      1. Case (% matches pattern `%W%`)
 
-      2. If ((|bool'*{bool' <- bool'*}| >= w)), then
+        1. (Let (w w _int) be numberLiteral)
 
-        1. (Let b_h*{b_h <- b_h*} be bool'*{bool' <- bool'*}[0 : w])
+        2. If ((|bool'*{bool' <- bool'*}| >= w)), then
 
-        2. (Let int be (|bool'*{bool' <- bool'*}| - w))
+          1. (Let b_h*{b_h <- b_h*} be bool'*{bool' <- bool'*}[0 : w])
 
-        3. If ((int has type nat)), then
+          2. (Let int be (|bool'*{bool' <- bool'*}| - w))
 
-          1. (Let n_t be (int as nat))
+          3. If ((int has type nat)), then
 
-          2. (Let b_t*{b_t <- b_t*} be bool'*{bool' <- bool'*}[w : n_t])
+            1. (Let n_t be (int as nat))
 
-          3. (Let i be $int_to_bitstr((w as int), $bits_to_int_unsigned(b_h*{b_h <- b_h*})))
+            2. (Let b_t*{b_t <- b_t*} be bool'*{bool' <- bool'*}[w : n_t])
 
-          4. Return (((w w i) as value), b_t*{b_t <- b_t*})
+            3. (Let i be $int_to_bitstr((w as int), $bits_to_int_unsigned(b_h*{b_h <- b_h*})))
+
+            4. Return (((w w i) as value), b_t*{b_t <- b_t*})
+
+      2. Case (% matches pattern `%S%`)
+
+        1. (Let (w s _int) be numberLiteral)
+
+        2. If ((|bool'*{bool' <- bool'*}| >= w)), then
+
+          1. (Let b_h*{b_h <- b_h*} be bool'*{bool' <- bool'*}[0 : w])
+
+          2. (Let int be (|bool'*{bool' <- bool'*}| - w))
+
+          3. If ((int has type nat)), then
+
+            1. (Let n_t be (int as nat))
+
+            2. (Let b_t*{b_t <- b_t*} be bool'*{bool' <- bool'*}[w : n_t])
+
+            3. (Let i be $int_to_bitstr((w as int), $bits_to_int_signed(b_h*{b_h <- b_h*})))
+
+            4. Return (((w s i) as value), b_t*{b_t <- b_t*})
 
   3. Case (% has type structValue)
 
@@ -3234,7 +3256,7 @@ def $write_value_field_from_bits'((value id ;), b*{b <- b*})
 
 2. Return ((value_updated id ;), b_rest*{b_rest <- b_rest*})
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:109.1-109.42
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:115.1-115.42
 def $write_bits_from_value(value)
 
 1. Case analysis on value
@@ -29839,7 +29861,288 @@ def $V1Model_setup_standard_metadata_argument(EC)
 
     4. Return argumentIR_standard_metadata
 
-;; ../../../../spec-concrete/9.01-v1model.watsup:97.1-99.20
+;; ../../../../spec-concrete/9.01-v1model.watsup:93.1-93.77
+def $V1Model_setup_main_callee(EC, STO)
+
+1. (Let typeDefIR'?{typeDefIR' <- typeDefIR'?} be $find_typeDef_eval((global), EC, (` "V1Switch")))
+
+2. If ((typeDefIR'?{typeDefIR' <- typeDefIR'?} matches pattern (_))), then
+
+  1. (Let ?(typeDefIR) be typeDefIR'?{typeDefIR' <- typeDefIR'?})
+
+  2. If ((typeDefIR has type polyTypeDefIR)), then
+
+    1. (Let polyTypeDefIR_package be (typeDefIR as polyTypeDefIR))
+
+    2. (Let object'?{object' <- object'?} be $find_map<oid, object>(STO, ["main"]))
+
+    3. If ((object'?{object' <- object'?} matches pattern (_))), then
+
+      1. (Let ?(object) be object'?{object' <- object'?})
+
+      2. If ((object has type packageObject)), then
+
+        1. (Let (package< tenv >{ _frame }) be (object as packageObject))
+
+        2. (Let typeIR?{typeIR <- typeIR?} be $find_map<tid, typeIR>(tenv, "H"))
+
+        3. If ((typeIR?{typeIR <- typeIR?} matches pattern (_))), then
+
+          1. (Let ?(typeIR_hdr) be typeIR?{typeIR <- typeIR?})
+
+          2. (Let typeIR'?{typeIR' <- typeIR'?} be $find_map<tid, typeIR>(tenv, "M"))
+
+          3. If ((typeIR'?{typeIR' <- typeIR'?} matches pattern (_))), then
+
+            1. (Let ?(typeIR_meta) be typeIR'?{typeIR' <- typeIR'?})
+
+            2. (Let typeIR_package be ((polyTypeDefIR_package < [typeIR_hdr, typeIR_meta] >) as typeIR))
+
+            3. (Let typedExpressionIR_main be (((` "main") as expressionIR) # (( typeIR_package (ctk) ))))
+
+            4. Return typedExpressionIR_main
+
+;; ../../../../spec-concrete/9.01-v1model.watsup:108.1-111.22
+def $V1Model_setup_parser_callee(EC, STO, typedExpressionIR_main)
+
+1. (Let typeDefIR'?{typeDefIR' <- typeDefIR'?} be $find_typeDef_eval((global), EC, (` "Parser")))
+
+2. If ((typeDefIR'?{typeDefIR' <- typeDefIR'?} matches pattern (_))), then
+
+  1. (Let ?(typeDefIR) be typeDefIR'?{typeDefIR' <- typeDefIR'?})
+
+  2. If ((typeDefIR has type polyTypeDefIR)), then
+
+    1. (Let polyTypeDefIR_parser be (typeDefIR as polyTypeDefIR))
+
+    2. (Let object'?{object' <- object'?} be $find_map<oid, object>(STO, ["main"]))
+
+    3. If ((object'?{object' <- object'?} matches pattern (_))), then
+
+      1. (Let ?(object) be object'?{object' <- object'?})
+
+      2. If ((object has type packageObject)), then
+
+        1. (Let (package< tenv >{ _frame }) be (object as packageObject))
+
+        2. (Let typeIR?{typeIR <- typeIR?} be $find_map<tid, typeIR>(tenv, "H"))
+
+        3. If ((typeIR?{typeIR <- typeIR?} matches pattern (_))), then
+
+          1. (Let ?(typeIR_hdr) be typeIR?{typeIR <- typeIR?})
+
+          2. (Let typeIR'?{typeIR' <- typeIR'?} be $find_map<tid, typeIR>(tenv, "M"))
+
+          3. If ((typeIR'?{typeIR' <- typeIR'?} matches pattern (_))), then
+
+            1. (Let ?(typeIR_meta) be typeIR'?{typeIR' <- typeIR'?})
+
+            2. (Let typeIR_parser be ((polyTypeDefIR_parser < [typeIR_hdr, typeIR_meta] >) as typeIR))
+
+            3. (Let typedExpressionIR_parser be ((((typedExpressionIR_main as memberAccessBaseIR) . "p") as expressionIR) # (( typeIR_parser (ctk) ))))
+
+            4. Return typedExpressionIR_parser
+
+;; ../../../../spec-concrete/9.01-v1model.watsup:129.1-132.22
+def $V1Model_setup_verify_callee(EC, STO, typedExpressionIR_main)
+
+1. (Let typeDefIR'?{typeDefIR' <- typeDefIR'?} be $find_typeDef_eval((global), EC, (` "VerifyChecksum")))
+
+2. If ((typeDefIR'?{typeDefIR' <- typeDefIR'?} matches pattern (_))), then
+
+  1. (Let ?(typeDefIR) be typeDefIR'?{typeDefIR' <- typeDefIR'?})
+
+  2. If ((typeDefIR has type polyTypeDefIR)), then
+
+    1. (Let polyTypeDefIR_verify be (typeDefIR as polyTypeDefIR))
+
+    2. (Let object'?{object' <- object'?} be $find_map<oid, object>(STO, ["main"]))
+
+    3. If ((object'?{object' <- object'?} matches pattern (_))), then
+
+      1. (Let ?(object) be object'?{object' <- object'?})
+
+      2. If ((object has type packageObject)), then
+
+        1. (Let (package< tenv >{ _frame }) be (object as packageObject))
+
+        2. (Let typeIR?{typeIR <- typeIR?} be $find_map<tid, typeIR>(tenv, "H"))
+
+        3. If ((typeIR?{typeIR <- typeIR?} matches pattern (_))), then
+
+          1. (Let ?(typeIR_hdr) be typeIR?{typeIR <- typeIR?})
+
+          2. (Let typeIR'?{typeIR' <- typeIR'?} be $find_map<tid, typeIR>(tenv, "M"))
+
+          3. If ((typeIR'?{typeIR' <- typeIR'?} matches pattern (_))), then
+
+            1. (Let ?(typeIR_meta) be typeIR'?{typeIR' <- typeIR'?})
+
+            2. (Let typeIR_verify be ((polyTypeDefIR_verify < [typeIR_hdr, typeIR_meta] >) as typeIR))
+
+            3. (Let typedExpressionIR_verify be ((((typedExpressionIR_main as memberAccessBaseIR) . "vr") as expressionIR) # (( typeIR_verify (ctk) ))))
+
+            4. Return typedExpressionIR_verify
+
+;; ../../../../spec-concrete/9.01-v1model.watsup:150.1-153.22
+def $V1Model_setup_ingress_callee(EC, STO, typedExpressionIR_main)
+
+1. (Let typeDefIR'?{typeDefIR' <- typeDefIR'?} be $find_typeDef_eval((global), EC, (` "Ingress")))
+
+2. If ((typeDefIR'?{typeDefIR' <- typeDefIR'?} matches pattern (_))), then
+
+  1. (Let ?(typeDefIR) be typeDefIR'?{typeDefIR' <- typeDefIR'?})
+
+  2. If ((typeDefIR has type polyTypeDefIR)), then
+
+    1. (Let polyTypeDefIR_ingress be (typeDefIR as polyTypeDefIR))
+
+    2. (Let object'?{object' <- object'?} be $find_map<oid, object>(STO, ["main"]))
+
+    3. If ((object'?{object' <- object'?} matches pattern (_))), then
+
+      1. (Let ?(object) be object'?{object' <- object'?})
+
+      2. If ((object has type packageObject)), then
+
+        1. (Let (package< tenv >{ _frame }) be (object as packageObject))
+
+        2. (Let typeIR?{typeIR <- typeIR?} be $find_map<tid, typeIR>(tenv, "H"))
+
+        3. If ((typeIR?{typeIR <- typeIR?} matches pattern (_))), then
+
+          1. (Let ?(typeIR_hdr) be typeIR?{typeIR <- typeIR?})
+
+          2. (Let typeIR'?{typeIR' <- typeIR'?} be $find_map<tid, typeIR>(tenv, "M"))
+
+          3. If ((typeIR'?{typeIR' <- typeIR'?} matches pattern (_))), then
+
+            1. (Let ?(typeIR_meta) be typeIR'?{typeIR' <- typeIR'?})
+
+            2. (Let typeIR_ingress be ((polyTypeDefIR_ingress < [typeIR_hdr, typeIR_meta] >) as typeIR))
+
+            3. (Let typedExpressionIR_ingress be ((((typedExpressionIR_main as memberAccessBaseIR) . "ig") as expressionIR) # (( typeIR_ingress (ctk) ))))
+
+            4. Return typedExpressionIR_ingress
+
+;; ../../../../spec-concrete/9.01-v1model.watsup:171.1-174.22
+def $V1Model_setup_egress_callee(EC, STO, typedExpressionIR_main)
+
+1. (Let typeDefIR'?{typeDefIR' <- typeDefIR'?} be $find_typeDef_eval((global), EC, (` "Egress")))
+
+2. If ((typeDefIR'?{typeDefIR' <- typeDefIR'?} matches pattern (_))), then
+
+  1. (Let ?(typeDefIR) be typeDefIR'?{typeDefIR' <- typeDefIR'?})
+
+  2. If ((typeDefIR has type polyTypeDefIR)), then
+
+    1. (Let polyTypeDefIR_egress be (typeDefIR as polyTypeDefIR))
+
+    2. (Let object'?{object' <- object'?} be $find_map<oid, object>(STO, ["main"]))
+
+    3. If ((object'?{object' <- object'?} matches pattern (_))), then
+
+      1. (Let ?(object) be object'?{object' <- object'?})
+
+      2. If ((object has type packageObject)), then
+
+        1. (Let (package< tenv >{ _frame }) be (object as packageObject))
+
+        2. (Let typeIR?{typeIR <- typeIR?} be $find_map<tid, typeIR>(tenv, "H"))
+
+        3. If ((typeIR?{typeIR <- typeIR?} matches pattern (_))), then
+
+          1. (Let ?(typeIR_hdr) be typeIR?{typeIR <- typeIR?})
+
+          2. (Let typeIR'?{typeIR' <- typeIR'?} be $find_map<tid, typeIR>(tenv, "M"))
+
+          3. If ((typeIR'?{typeIR' <- typeIR'?} matches pattern (_))), then
+
+            1. (Let ?(typeIR_meta) be typeIR'?{typeIR' <- typeIR'?})
+
+            2. (Let typeIR_egress be ((polyTypeDefIR_egress < [typeIR_hdr, typeIR_meta] >) as typeIR))
+
+            3. (Let typedExpressionIR_egress be ((((typedExpressionIR_main as memberAccessBaseIR) . "eg") as expressionIR) # (( typeIR_egress (ctk) ))))
+
+            4. Return typedExpressionIR_egress
+
+;; ../../../../spec-concrete/9.01-v1model.watsup:192.1-195.22
+def $V1Model_setup_check_callee(EC, STO, typedExpressionIR_main)
+
+1. (Let typeDefIR'?{typeDefIR' <- typeDefIR'?} be $find_typeDef_eval((global), EC, (` "ComputeChecksum")))
+
+2. If ((typeDefIR'?{typeDefIR' <- typeDefIR'?} matches pattern (_))), then
+
+  1. (Let ?(typeDefIR) be typeDefIR'?{typeDefIR' <- typeDefIR'?})
+
+  2. If ((typeDefIR has type polyTypeDefIR)), then
+
+    1. (Let polyTypeDefIR_check be (typeDefIR as polyTypeDefIR))
+
+    2. (Let object'?{object' <- object'?} be $find_map<oid, object>(STO, ["main"]))
+
+    3. If ((object'?{object' <- object'?} matches pattern (_))), then
+
+      1. (Let ?(object) be object'?{object' <- object'?})
+
+      2. If ((object has type packageObject)), then
+
+        1. (Let (package< tenv >{ _frame }) be (object as packageObject))
+
+        2. (Let typeIR?{typeIR <- typeIR?} be $find_map<tid, typeIR>(tenv, "H"))
+
+        3. If ((typeIR?{typeIR <- typeIR?} matches pattern (_))), then
+
+          1. (Let ?(typeIR_hdr) be typeIR?{typeIR <- typeIR?})
+
+          2. (Let typeIR'?{typeIR' <- typeIR'?} be $find_map<tid, typeIR>(tenv, "M"))
+
+          3. If ((typeIR'?{typeIR' <- typeIR'?} matches pattern (_))), then
+
+            1. (Let ?(typeIR_meta) be typeIR'?{typeIR' <- typeIR'?})
+
+            2. (Let typeIR_check be ((polyTypeDefIR_check < [typeIR_hdr, typeIR_meta] >) as typeIR))
+
+            3. (Let typedExpressionIR_check be ((((typedExpressionIR_main as memberAccessBaseIR) . "ck") as expressionIR) # (( typeIR_check (ctk) ))))
+
+            4. Return typedExpressionIR_check
+
+;; ../../../../spec-concrete/9.01-v1model.watsup:213.1-216.22
+def $V1Model_setup_deparse_callee(EC, STO, typedExpressionIR_main)
+
+1. (Let typeDefIR'?{typeDefIR' <- typeDefIR'?} be $find_typeDef_eval((global), EC, (` "Deparser")))
+
+2. If ((typeDefIR'?{typeDefIR' <- typeDefIR'?} matches pattern (_))), then
+
+  1. (Let ?(typeDefIR) be typeDefIR'?{typeDefIR' <- typeDefIR'?})
+
+  2. If ((typeDefIR has type polyTypeDefIR)), then
+
+    1. (Let polyTypeDefIR_deparse be (typeDefIR as polyTypeDefIR))
+
+    2. (Let object'?{object' <- object'?} be $find_map<oid, object>(STO, ["main"]))
+
+    3. If ((object'?{object' <- object'?} matches pattern (_))), then
+
+      1. (Let ?(object) be object'?{object' <- object'?})
+
+      2. If ((object has type packageObject)), then
+
+        1. (Let (package< tenv >{ _frame }) be (object as packageObject))
+
+        2. (Let typeIR?{typeIR <- typeIR?} be $find_map<tid, typeIR>(tenv, "H"))
+
+        3. If ((typeIR?{typeIR <- typeIR?} matches pattern (_))), then
+
+          1. (Let ?(typeIR_hdr) be typeIR?{typeIR <- typeIR?})
+
+          2. (Let typeIR_deparse be ((polyTypeDefIR_deparse < [typeIR_hdr] >) as typeIR))
+
+          3. (Let typedExpressionIR_deparse be ((((typedExpressionIR_main as memberAccessBaseIR) . "dep") as expressionIR) # (( typeIR_deparse (ctk) ))))
+
+          4. Return typedExpressionIR_deparse
+
+;; ../../../../spec-concrete/9.01-v1model.watsup:237.1-239.20
 relation V1Model_parser: EC_0 STO_0 |- % % %
 
 1. Group : EC_0 STO_0 |- % % %
@@ -29854,9 +30157,9 @@ relation V1Model_parser: EC_0 STO_0 |- % % %
 
   5. (Let argumentIR*{argumentIR <- argumentIR*} be [argumentIR_packet_in, argumentIR_hdr, argumentIR_meta, argumentIR_standard_metadata])
 
-  6. (Let typedExpressionIR_main be (((` "main") as expressionIR) # (( ((void) as typeIR) (ctk) ))))
+  6. (Let typedExpressionIR_main be $V1Model_setup_main_callee(EC_0, STO_0))
 
-  7. (Let typedExpressionIR_p be ((((typedExpressionIR_main as memberAccessBaseIR) . "p") as expressionIR) # (( ((void) as typeIR) (ctk) ))))
+  7. (Let typedExpressionIR_p be $V1Model_setup_parser_callee(EC_0, STO_0, typedExpressionIR_main))
 
   8. (Let routineTargetIR be (typedExpressionIR_p . "apply"))
 
@@ -29868,7 +30171,7 @@ relation V1Model_parser: EC_0 STO_0 |- % % %
 
     2. Result in : % % |- EC_1 STO_1 ((accept) as transitionResult)
 
-;; ../../../../spec-concrete/9.01-v1model.watsup:130.1-132.20
+;; ../../../../spec-concrete/9.01-v1model.watsup:269.1-271.20
 relation V1Model_verify: EC_0 STO_0 |- % % %
 
 1. Group : EC_0 STO_0 |- % % %
@@ -29879,11 +30182,11 @@ relation V1Model_verify: EC_0 STO_0 |- % % %
 
   3. (Let argumentIR*{argumentIR <- argumentIR*} be [argumentIR_hdr, argumentIR_meta])
 
-  4. (Let typedExpressionIR_main be (((` "main") as expressionIR) # (( ((void) as typeIR) (ctk) ))))
+  4. (Let typedExpressionIR_main be $V1Model_setup_main_callee(EC_0, STO_0))
 
-  5. (Let typedExpressionIR_v be ((((typedExpressionIR_main as memberAccessBaseIR) . "vr") as expressionIR) # (( ((void) as typeIR) (ctk) ))))
+  5. (Let typedExpressionIR_vr be $V1Model_setup_verify_callee(EC_0, STO_0, typedExpressionIR_main))
 
-  6. (Let routineTargetIR be (typedExpressionIR_v . "apply"))
+  6. (Let routineTargetIR be (typedExpressionIR_vr . "apply"))
 
   7. (Stmt_eval: (global) EC_0 STO_0 |- ((routineTargetIR < [] >( argumentIR*{argumentIR <- argumentIR*} );) as statementIR) : EC_1 STO_1 statementResult)
 
@@ -29893,7 +30196,7 @@ relation V1Model_verify: EC_0 STO_0 |- % % %
 
     2. Result in : % % |- EC_1 STO_1 ((return ?()) as callResult)
 
-;; ../../../../spec-concrete/9.01-v1model.watsup:157.1-159.20
+;; ../../../../spec-concrete/9.01-v1model.watsup:295.1-297.20
 relation V1Model_ingress: EC_0 STO_0 |- % % %
 
 1. Group : EC_0 STO_0 |- % % %
@@ -29906,11 +30209,11 @@ relation V1Model_ingress: EC_0 STO_0 |- % % %
 
   4. (Let argumentIR*{argumentIR <- argumentIR*} be [argumentIR_hdr, argumentIR_meta, argumentIR_standard_metadata])
 
-  5. (Let typedExpressionIR_main be (((` "main") as expressionIR) # (( ((void) as typeIR) (ctk) ))))
+  5. (Let typedExpressionIR_main be $V1Model_setup_main_callee(EC_0, STO_0))
 
-  6. (Let typedExpressionIR_v be ((((typedExpressionIR_main as memberAccessBaseIR) . "ig") as expressionIR) # (( ((void) as typeIR) (ctk) ))))
+  6. (Let typedExpressionIR_ig be $V1Model_setup_ingress_callee(EC_0, STO_0, typedExpressionIR_main))
 
-  7. (Let routineTargetIR be (typedExpressionIR_v . "apply"))
+  7. (Let routineTargetIR be (typedExpressionIR_ig . "apply"))
 
   8. (Stmt_eval: (global) EC_0 STO_0 |- ((routineTargetIR < [] >( argumentIR*{argumentIR <- argumentIR*} );) as statementIR) : EC_1 STO_1 statementResult)
 
@@ -29920,7 +30223,7 @@ relation V1Model_ingress: EC_0 STO_0 |- % % %
 
     2. Result in : % % |- EC_1 STO_1 ((return ?()) as callResult)
 
-;; ../../../../spec-concrete/9.01-v1model.watsup:187.1-189.20
+;; ../../../../spec-concrete/9.01-v1model.watsup:324.1-326.20
 relation V1Model_egress: EC_0 STO_0 |- % % %
 
 1. Group : EC_0 STO_0 |- % % %
@@ -29933,11 +30236,11 @@ relation V1Model_egress: EC_0 STO_0 |- % % %
 
   4. (Let argumentIR*{argumentIR <- argumentIR*} be [argumentIR_hdr, argumentIR_meta, argumentIR_standard_metadata])
 
-  5. (Let typedExpressionIR_main be (((` "main") as expressionIR) # (( ((void) as typeIR) (ctk) ))))
+  5. (Let typedExpressionIR_main be $V1Model_setup_main_callee(EC_0, STO_0))
 
-  6. (Let typedExpressionIR_v be ((((typedExpressionIR_main as memberAccessBaseIR) . "eg") as expressionIR) # (( ((void) as typeIR) (ctk) ))))
+  6. (Let typedExpressionIR_eg be $V1Model_setup_egress_callee(EC_0, STO_0, typedExpressionIR_main))
 
-  7. (Let routineTargetIR be (typedExpressionIR_v . "apply"))
+  7. (Let routineTargetIR be (typedExpressionIR_eg . "apply"))
 
   8. (Stmt_eval: (global) EC_0 STO_0 |- ((routineTargetIR < [] >( argumentIR*{argumentIR <- argumentIR*} );) as statementIR) : EC_1 STO_1 statementResult)
 
@@ -29947,7 +30250,7 @@ relation V1Model_egress: EC_0 STO_0 |- % % %
 
     2. Result in : % % |- EC_1 STO_1 ((return ?()) as callResult)
 
-;; ../../../../spec-concrete/9.01-v1model.watsup:217.1-219.20
+;; ../../../../spec-concrete/9.01-v1model.watsup:353.1-355.20
 relation V1Model_check: EC_0 STO_0 |- % % %
 
 1. Group : EC_0 STO_0 |- % % %
@@ -29958,11 +30261,11 @@ relation V1Model_check: EC_0 STO_0 |- % % %
 
   3. (Let argumentIR*{argumentIR <- argumentIR*} be [argumentIR_hdr, argumentIR_meta])
 
-  4. (Let typedExpressionIR_main be (((` "main") as expressionIR) # (( ((void) as typeIR) (ctk) ))))
+  4. (Let typedExpressionIR_main be $V1Model_setup_main_callee(EC_0, STO_0))
 
-  5. (Let typedExpressionIR_v be ((((typedExpressionIR_main as memberAccessBaseIR) . "ck") as expressionIR) # (( ((void) as typeIR) (ctk) ))))
+  5. (Let typedExpressionIR_ck be $V1Model_setup_check_callee(EC_0, STO_0, typedExpressionIR_main))
 
-  6. (Let routineTargetIR be (typedExpressionIR_v . "apply"))
+  6. (Let routineTargetIR be (typedExpressionIR_ck . "apply"))
 
   7. (Stmt_eval: (global) EC_0 STO_0 |- ((routineTargetIR < [] >( argumentIR*{argumentIR <- argumentIR*} );) as statementIR) : EC_1 STO_1 statementResult)
 
@@ -29972,7 +30275,7 @@ relation V1Model_check: EC_0 STO_0 |- % % %
 
     2. Result in : % % |- EC_1 STO_1 ((return ?()) as callResult)
 
-;; ../../../../spec-concrete/9.01-v1model.watsup:244.1-246.20
+;; ../../../../spec-concrete/9.01-v1model.watsup:379.1-381.20
 relation V1Model_deparse: EC_0 STO_0 |- % % %
 
 1. Group : EC_0 STO_0 |- % % %
@@ -29983,11 +30286,11 @@ relation V1Model_deparse: EC_0 STO_0 |- % % %
 
   3. (Let argumentIR*{argumentIR <- argumentIR*} be [argumentIR_packet_out, argumentIR_hdr])
 
-  4. (Let typedExpressionIR_main be (((` "main") as expressionIR) # (( ((void) as typeIR) (ctk) ))))
+  4. (Let typedExpressionIR_main be $V1Model_setup_main_callee(EC_0, STO_0))
 
-  5. (Let typedExpressionIR_v be ((((typedExpressionIR_main as memberAccessBaseIR) . "dep") as expressionIR) # (( ((void) as typeIR) (ctk) ))))
+  5. (Let typedExpressionIR_dep be $V1Model_setup_deparse_callee(EC_0, STO_0, typedExpressionIR_main))
 
-  6. (Let routineTargetIR be (typedExpressionIR_v . "apply"))
+  6. (Let routineTargetIR be (typedExpressionIR_dep . "apply"))
 
   7. (Stmt_eval: (global) EC_0 STO_0 |- ((routineTargetIR < [] >( argumentIR*{argumentIR <- argumentIR*} );) as statementIR) : EC_1 STO_1 statementResult)
 
