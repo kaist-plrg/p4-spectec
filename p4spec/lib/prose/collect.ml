@@ -4,74 +4,29 @@ open Util.Source
 open Sl.Ast
 open Domain.Lib
 open Runtime_static.Envs
-module PEnv = Penv
 
-let collect_rel_def (rid : RId.t) (penv : PEnv.t) hints : PEnv.t =
+let collect_def (defid : Hintdb.def_id) (hdb : Hintdb.t) hints : Hintdb.t =
   let open El.Ast in
   List.fold_left
-    (fun penv { hintid; hintexp } ->
+    (fun hdb { hintid; hintexp } ->
       match hintid.it with
-      | "prose_in" ->
-          PEnv.
-            { penv with prose_in = Hintenv.add_rel rid hintexp penv.prose_in }
-      | "prose_out" ->
-          PEnv.
-            { penv with prose_out = Hintenv.add_rel rid hintexp penv.prose_out }
-      | "prose_true" ->
-          PEnv.
-            {
-              penv with
-              prose_true = Hintenv.add_rel rid hintexp penv.prose_true;
-            }
-      | "prose_false" ->
-          PEnv.
-            {
-              penv with
-              prose_false = Hintenv.add_rel rid hintexp penv.prose_false;
-            }
-      | _ -> penv)
-    penv hints
-
-let collect_dec_def (fid : FId.t) (penv : PEnv.t) hints : PEnv.t =
-  let open El.Ast in
-  List.fold_left
-    (fun penv { hintid; hintexp } ->
-      match hintid.it with
-      | "prose_in" ->
-          PEnv.
-            { penv with prose_in = Hintenv.add_func fid hintexp penv.prose_in }
-      | "prose_out" ->
-          PEnv.
-            {
-              penv with
-              prose_out = Hintenv.add_func fid hintexp penv.prose_out;
-            }
-      | "prose_true" ->
-          PEnv.
-            {
-              penv with
-              prose_true = Hintenv.add_func fid hintexp penv.prose_true;
-            }
-      | "prose_false" ->
-          PEnv.
-            {
-              penv with
-              prose_false = Hintenv.add_func fid hintexp penv.prose_false;
-            }
-      | _ -> penv)
-    penv hints
+      | "prose_in" | "prose_out" | "prose_true" | "prose_false" ->
+          Hintdb.add hintid.it defid hintexp hdb
+      | _ -> hdb)
+    hdb hints
 
 (* Collect hints into proseHintEnv *)
 
-let collect_def (penv : PEnv.t) (ienv : IEnv.t) (def : def) : PEnv.t * IEnv.t =
+let collect_defs (hdb : Hintdb.t) (ienv : IEnv.t) (def : def) :
+    Hintdb.t * IEnv.t =
   match def.it with
-  | TypD _ -> (penv, ienv)
+  | TypD (tid, _, deftyp, hints) -> (collect_def (`Typ tid) hdb hints, ienv)
   | RelD (rid, (mixop, inputs), _, _, hints) ->
       let ienv = IEnv.add rid inputs ienv in
-      (collect_rel_def rid penv hints, ienv)
-  | DecD (fid, _, _, _, _, hints) -> (collect_dec_def fid penv hints, ienv)
+      (collect_def (`Rel rid) hdb hints, ienv)
+  | DecD (fid, _, _, _, _, hints) -> (collect_def (`Func fid) hdb hints, ienv)
 
-let collect_spec (spec : spec) : PEnv.t * IEnv.t =
+let collect_spec (spec : spec) : Hintdb.t * IEnv.t =
   List.fold_left
-    (fun (penv, ienv) def -> collect_def penv ienv def)
-    (PEnv.empty, IEnv.empty) spec
+    (fun (hdb, ienv) def -> collect_defs hdb ienv def)
+    (Hintdb.empty, IEnv.empty) spec

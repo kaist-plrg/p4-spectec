@@ -14,7 +14,7 @@ let force_let instrs =
     :: instrs_rest
     when Eq.eq_exp exp exp_r ->
       Some ([ CheckLetI (exp_l, exp) $ exp_r.at ], instrs_rest)
-  | { it = CheckI (ExpCond { it = SubE (exp, typ); _ }); at; _ }
+  | { it = CheckI (ExpCond { it = SubE (exp, typ); _ }); _ }
     :: { it = LetI (exp_l, { it = DownCastE (typ_r, exp_r); _ }); _ }
     :: instrs_rest
     when Eq.eq_exp exp exp_r && Eq.eq_typ typ typ_r ->

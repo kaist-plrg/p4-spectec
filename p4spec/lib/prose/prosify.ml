@@ -134,14 +134,16 @@ let rec prosify_exp (ctx : Ctx.t) (exp : exp) : Pl.Ast.exp =
           match exp.note with
           (* conditional functions have prose_true and optionally false *)
           | BoolT -> (
-              match HEnv.get_func id ctx.penv.prose_true with
+              match Hintdb.get "prose_true" (`Func id) ctx.hintdb with
               | Some prose_true ->
-                  let prose_false_opt = HEnv.get_func id ctx.penv.prose_false in
+                  let prose_false_opt =
+                    Hintdb.get "prose_false" (`Func id) ctx.hintdb
+                  in
                   Pl.Ast.BoolProse (id, prose_true, prose_false_opt)
               | None -> Pl.Ast.Def id)
           (* Non-boolean functions have prose_in *)
           | _ -> (
-              match HEnv.get_func id ctx.penv.prose_in with
+              match Hintdb.get "prose_in" (`Func id) ctx.hintdb with
               | Some prose_in -> Pl.Ast.InputProse (id, prose_in)
               | None -> Pl.Ast.Def id)
         in
@@ -256,7 +258,7 @@ and prosify_instr ctx instr : Pl.Ast.instr list =
           (* create if-branch for hold *)
           let instrs_hold_sl = prosify_instrs ctx instrs_hold in
           let relation_true =
-            match HEnv.get_rel id ctx.penv.prose_true with
+            match Hintdb.get "prose_true" (`Rel id) ctx.hintdb with
             | Some hintexp -> Pl.Ast.Prose (hintexp, [], exps)
             | None -> Pl.Ast.Mixop (mixop, exps)
           in
@@ -270,7 +272,7 @@ and prosify_instr ctx instr : Pl.Ast.instr list =
           (* create else-branch for not-hold *)
           let instrs_nothold_sl = prosify_instrs ctx instrs_nothold in
           let relation_false =
-            match HEnv.get_rel id ctx.penv.prose_false with
+            match Hintdb.get "prose_false" (`Rel id) ctx.hintdb with
             | Some hintexp -> Pl.Ast.Prose (hintexp, [], exps)
             | None -> Pl.Ast.Mixop (mixop, exps)
           in
@@ -286,7 +288,7 @@ and prosify_instr ctx instr : Pl.Ast.instr list =
       | HoldH (instrs_hold, _) ->
           let instrs_hold_pl = prosify_instrs ctx instrs_hold in
           let relation_true =
-            match HEnv.get_rel id ctx.penv.prose_true with
+            match Hintdb.get "prose_true" (`Rel id) ctx.hintdb with
             | Some hintexp -> Pl.Ast.Prose (hintexp, [], exps)
             | None -> Pl.Ast.Mixop (mixop, exps)
           in
@@ -298,7 +300,7 @@ and prosify_instr ctx instr : Pl.Ast.instr list =
       | NotHoldH (instrs_nothold, _) ->
           let instrs_nothold_pl = prosify_instrs ctx instrs_nothold in
           let relation_false =
-            match HEnv.get_rel id ctx.penv.prose_false with
+            match Hintdb.get "prose_false" (`Rel id) ctx.hintdb with
             | Some hintexp -> Pl.Ast.Prose (hintexp, [], exps)
             | None -> Pl.Ast.Mixop (mixop, exps)
           in
@@ -327,7 +329,7 @@ and prosify_instr ctx instr : Pl.Ast.instr list =
         |> prosify_iterated_let [ exp_l ] iterexps;
       ]
   | RuleI (id, (mixop, exps), iterexps) ->
-      let hint_opt = HEnv.get_rel id ctx.penv.prose_in in
+      let hint_opt = Hintdb.get "prose_in" (`Rel id) ctx.hintdb in
       let inputs = IEnv.find_opt id ctx.ienv |> Option.value ~default:[] in
       let exps_in, exps_out = InputHint.split_exps_without_idx inputs exps in
       let exps_in = prosify_exps ctx exps_in in
@@ -345,7 +347,7 @@ and prosify_instr ctx instr : Pl.Ast.instr list =
       ]
   | ResultI exps ->
       let rid = get_rel_id ctx in
-      let hint_opt = HEnv.get_rel rid ctx.penv.prose_out in
+      let hint_opt = Hintdb.get "prose_out" (`Rel rid) ctx.hintdb in
       let inputs = IEnv.find_opt rid ctx.ienv |> Option.value ~default:[] in
       let hint_opt = Option.map (align_hint inputs) hint_opt in
       let exps = prosify_exps ctx exps in
@@ -396,7 +398,7 @@ let prosify_rulegroup (ctx : Ctx.t) (id_rel : id) (mixop : mixop)
   assert (List.length inputs = List.length exps_in);
   let ctx = ctx |> in_rel id_rel in
   let relcall =
-    let prose_in_opt = HEnv.get_rel id_rel ctx.penv.prose_in in
+    let prose_in_opt = Hintdb.get "prose_in" (`Rel id_rel) ctx.hintdb in
     match prose_in_opt with
     | Some hintexp ->
         let exps_in = prosify_exps ctx exps_in in
@@ -411,13 +413,15 @@ let prosify_func (ctx : Ctx.t) (id_def : id) (tparams : tparam list)
   let funcprose =
     match typ.it with
     | BoolT -> (
-        match HEnv.get_func id_def ctx.penv.prose_true with
+        match Hintdb.get "prose_true" (`Func id_def) ctx.hintdb with
         | Some prose_true ->
-            let prose_false_opt = HEnv.get_func id_def ctx.penv.prose_false in
+            let prose_false_opt =
+              Hintdb.get "prose_false" (`Func id_def) ctx.hintdb
+            in
             Pl.Ast.BoolProse (id_def, prose_true, prose_false_opt)
         | None -> Pl.Ast.Def id_def)
     | _ -> (
-        match HEnv.get_func id_def ctx.penv.prose_in with
+        match Hintdb.get "prose_in" (`Func id_def) ctx.hintdb with
         | Some prose_in -> Pl.Ast.InputProse (id_def, prose_in)
         | None -> Pl.Ast.Def id_def)
   in
