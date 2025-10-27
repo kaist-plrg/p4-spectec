@@ -85,13 +85,13 @@ let update_hit_new (fuel : int) (pid : pid) (idx_seed : int) (strategy : string)
   | Pass (_, _, _, cover) when PIdSet.for_all (SCov.is_hit cover) pids_hit_new
     ->
       let filename_hit_p4 =
-        Filesys.cp filename_gen_p4 config.storage.dirname_welltyped_p4
+        Util.Filesys.cp filename_gen_p4 config.storage.dirname_welltyped_p4
       in
       update_hit_new' fuel pid idx_seed strategy idx_method idx_mutation config
         log filename_hit_p4 kind true pids_hit_new
   | Fail (_, _, cover) when PIdSet.for_all (SCov.is_hit cover) pids_hit_new ->
       let filename_hit_p4 =
-        Filesys.cp filename_gen_p4 config.storage.dirname_illtyped_p4
+        Util.Filesys.cp filename_gen_p4 config.storage.dirname_illtyped_p4
       in
       update_hit_new' fuel pid idx_seed strategy idx_method idx_mutation config
         log filename_hit_p4 kind false pids_hit_new
@@ -134,7 +134,7 @@ let update_close_miss_new (fuel : int) (pid : pid) (idx_seed : int)
   | Pass (_, _, _, cover)
     when PIdSet.for_all (SCov.is_close_miss cover) pids_close_miss_new ->
       let filename_close_miss_p4 =
-        Filesys.cp filename_gen_p4 config.storage.dirname_close_miss_p4
+        Util.Filesys.cp filename_gen_p4 config.storage.dirname_close_miss_p4
       in
       update_close_miss_new' fuel pid idx_seed strategy idx_method idx_mutation
         config log filename_close_miss_p4 pids_close_miss_new
@@ -195,7 +195,7 @@ let classify_mutation' (fuel : int) (pid : pid) (idx_seed : int)
     (value_program : value) : unit =
   let filename_gen_p4 =
     F.asprintf "%s/%s_F%dP%dS%d%s%dM%dT%d.p4" dirname_gen_tmp
-      (Filesys.base ~suffix:".p4" filename_p4)
+      (Util.Filesys.base ~suffix:".p4" filename_p4)
       fuel pid idx_seed
       (if strategy = "Derive" then "D"
        else if strategy = "Random" then "R"
@@ -500,7 +500,7 @@ let fuzz_phantom (fuel : int) (pid : pid) (config : Config.t) (log : Logger.t)
     config.storage.dirname_gen ^ "/fuel" ^ string_of_int fuel ^ "phantom"
     ^ string_of_int pid
   in
-  Filesys.mkdir dirname_gen_tmp;
+  Util.Filesys.mkdir dirname_gen_tmp;
   (* Randomly sample N close-miss filenames *)
   let filenames_p4 =
     Rand.random_sample Config.samples_close_miss filenames_p4
@@ -512,7 +512,7 @@ let fuzz_phantom (fuel : int) (pid : pid) (config : Config.t) (log : Logger.t)
        (Printexc.to_string err)
      |> Logger.warn config.modes.logmode log);
   (* Remove the directory for the generated programs *)
-  Filesys.rmdir dirname_gen_tmp
+  Util.Filesys.rmdir dirname_gen_tmp
 
 let fuzz_phantoms (fuel : int) (config : Config.t) (log : Logger.t)
     (query : Query.t) : unit =

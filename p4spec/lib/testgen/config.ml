@@ -141,17 +141,17 @@ let init_specenv (spec_il : Il.Ast.spec) (spec : spec) (relname : string)
   { runner; spec_il; spec; relname; tdenv; mixopenv; includes_p4; ignores }
 
 let init_storage (dirname_gen : string) : storage =
-  Filesys.mkdir dirname_gen;
+  Util.Filesys.mkdir dirname_gen;
   let dirname_log = dirname_gen ^ "/log" in
-  Filesys.mkdir dirname_log;
+  Util.Filesys.mkdir dirname_log;
   let dirname_query = dirname_gen ^ "/query" in
-  Filesys.mkdir dirname_query;
+  Util.Filesys.mkdir dirname_query;
   let dirname_close_miss_p4 = dirname_gen ^ "/closemiss" in
-  Filesys.mkdir dirname_close_miss_p4;
+  Util.Filesys.mkdir dirname_close_miss_p4;
   let dirname_welltyped_p4 = dirname_gen ^ "/welltyped" in
-  Filesys.mkdir dirname_welltyped_p4;
+  Util.Filesys.mkdir dirname_welltyped_p4;
   let dirname_illtyped_p4 = dirname_gen ^ "/illtyped" in
-  Filesys.mkdir dirname_illtyped_p4;
+  Util.Filesys.mkdir dirname_illtyped_p4;
   {
     dirname_gen;
     dirname_log;

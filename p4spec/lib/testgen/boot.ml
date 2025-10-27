@@ -10,8 +10,8 @@ open Util.Source
 let boot_cold (module Runner : Sim.DRIVER) (spec : spec) (relname : string)
     (includes_p4 : string list) (excludes_p4 : string list)
     (dirname_p4 : string) (filenames_ignore : string list) : MCov.Cover.t =
-  let excludes_p4 = Filesys.collect_excludes excludes_p4 in
-  let filenames_p4 = Filesys.collect_files ~suffix:".p4" dirname_p4 in
+  let excludes_p4 = Util.Filesys.collect_excludes excludes_p4 in
+  let filenames_p4 = Util.Filesys.collect_files ~suffix:".p4" dirname_p4 in
   let filenames_p4 =
     List.filter
       (fun filename_p4 ->

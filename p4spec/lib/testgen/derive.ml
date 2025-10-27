@@ -94,7 +94,7 @@ let debug_phantom (spec : spec) (relname : string) (includes_p4 : string list)
           in
           let filename_dot =
             F.asprintf "%s/%s_p%d_v%d.dot" dirname_debug
-              (Filesys.base ~suffix:".p4" filename_p4)
+              (Util.Filesys.base ~suffix:".p4" filename_p4)
               pid vid_related
           in
           let oc_dot = open_out filename_dot in
@@ -102,7 +102,7 @@ let debug_phantom (spec : spec) (relname : string) (includes_p4 : string list)
           close_out oc_dot;
           let filename_dot_sub =
             F.asprintf "%s/%s_p%d_v%d_sub.dot" dirname_debug
-              (Filesys.base ~suffix:".p4" filename_p4)
+              (Util.Filesys.base ~suffix:".p4" filename_p4)
               pid vid_related
           in
           let oc_dot_sub = open_out filename_dot_sub in
@@ -132,7 +132,7 @@ let debug_phantom (spec : spec) (relname : string) (includes_p4 : string list)
               F.asprintf "Found close-AST for pid %d" pid |> print_endline;
               let filename_value =
                 F.asprintf "%s/%s_p%d_v%d.value" dirname_debug
-                  (Filesys.base ~suffix:".p4" filename_p4)
+                  (Util.Filesys.base ~suffix:".p4" filename_p4)
                   pid vid_related
               in
               let oc_value = open_out filename_value in
