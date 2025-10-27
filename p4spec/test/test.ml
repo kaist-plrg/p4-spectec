@@ -1,3 +1,4 @@
+module Sim = Runtime_simulator.Simulator
 open Util.Error
 open Util.Source
 
@@ -246,15 +247,14 @@ let run_il_command =
 
 (* SL interpreter test *)
 
-let run_sl negative spec_sl relname includes_p4 filename_p4 =
+let run_sl (module Runner : Sim.DRIVER) negative spec_sl relname includes_p4
+    filename_p4 =
   let time_start = start () in
   try
-    (match
-       Interp_sl.Run.run_program spec_sl relname includes_p4 filename_p4 []
-     with
+    (match Runner.run_program spec_sl relname includes_p4 filename_p4 [] with
     | Pass _ -> if negative then raise (TestRunNegErr time_start)
     | Fail (at, msg, _) -> raise (TestRunErr (msg, at, time_start))
-    | IllFormed (at, msg, _) -> raise (TestRunErr (msg, at, time_start)));
+    | IllFormed (at, msg) -> raise (TestRunErr (msg, at, time_start)));
     time_start
   with
   | TestRunErr _ as err -> raise err
@@ -273,8 +273,9 @@ let run_sl_test negative stat spec_sl relname includes_p4 excludes_p4
     })
   else
     try
+      let (module Runner) = Arch.Gen.gen_placeholder () in
       let time_start =
-        run_sl negative spec_sl relname includes_p4 filename_p4
+        run_sl (module Runner) negative spec_sl relname includes_p4 filename_p4
       in
       let duration = stop time_start in
       let log = Format.asprintf "Run success: %s" filename_p4 in

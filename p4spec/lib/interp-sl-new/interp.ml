@@ -9,6 +9,7 @@ module Rel = Runtime_dynamic_sl.Rel
 open Runtime_dynamic_sl.Envs
 module Sim = Runtime_simulator.Simulator
 module Dep = Runtime_testgen.Dep
+module Ignore = Runtime_testgen.Cov.Ignore
 module SCov = Runtime_testgen.Cov.Single
 module MCov = Runtime_testgen.Cov.Multiple
 open Error
@@ -1017,7 +1018,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP = struct
   and eval_hold_instr (ctx : Ctx.t) (id : id) (notexp : notexp)
       (iterexps : iterexp list) (holdcase : holdcase) : Ctx.t * Sign.t =
     (* Copy the current coverage information *)
-    let cover_backup = !(ctx.testing.cover) in
+    let cover_backup = !(ctx.coverage) in
     (* Evaluate the hold condition *)
     let cond, value_cond = eval_hold_cond_iter ctx id notexp iterexps in
     (* Evaluate the hold case, and restore the coverage information
@@ -1027,7 +1028,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP = struct
     | BothH (instrs_hold, instrs_not_hold) ->
         if cond then eval_instrs ctx Cont instrs_hold
         else (
-          ctx.testing.cover := cover_backup;
+          ctx.coverage := cover_backup;
           eval_instrs ctx Cont instrs_not_hold)
     | HoldH (instrs_hold, phantom_opt) ->
         (match phantom_opt with
@@ -1035,7 +1036,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP = struct
         | None -> ());
         if cond then eval_instrs ctx Cont instrs_hold else (ctx, Cont)
     | NotHoldH (instrs_not_hold, phantom_opt) ->
-        ctx.testing.cover := cover_backup;
+        ctx.coverage := cover_backup;
         (match phantom_opt with
         | Some (pid, _) -> Ctx.cover ctx cond pid vid
         | None -> ());
@@ -1420,7 +1421,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP = struct
           Some values_output
       | _ -> None
     in
-    if (not ctx.testing.derive) && Cache.is_cached_rule id.it then (
+    if (not (Ctx.deriving ctx)) && Cache.is_cached_rule id.it then (
       let cache_result = Cache.Cache.find !rule_cache (id.it, values_input) in
       match cache_result with
       | Some values_output -> Some values_output
@@ -1497,7 +1498,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP = struct
           value_output
       | _ -> error id.at (F.asprintf "function %s was not matched" id.it)
     in
-    if (not ctx.testing.derive) && Cache.is_cached_func id.it then (
+    if (not (Ctx.deriving ctx)) && Cache.is_cached_func id.it then (
       let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
       match cache_result with
       | Some value_output -> value_output
@@ -1526,37 +1527,43 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP = struct
 
   (* Entry point *)
 
+  let do_eval_rel (ctx : Ctx.t) (spec : spec) (relname : string)
+      (values_input : value list) : value list =
+    let ctx = load_spec ctx spec in
+    match invoke_rel ctx (relname $ no_region) values_input with
+    | Some values_output -> values_output
+    | None -> error no_region (F.asprintf "relation %s was not matched" relname)
+
   let eval_rel_call (spec : spec) (relname : string) (values_input : value list)
       : value list =
     Builtin.init ();
     Value.refresh ();
     Cache.Cache.clear !func_cache;
     Cache.Cache.clear !rule_cache;
-    let graph = Dep.Graph.empty () in
-    let vid = -1 in
     let cover = ref (SCov.init IdSet.empty spec) in
-    let ctx = Ctx.empty ~derive:false "FOO.P4" graph vid cover in
+    let ctx = Ctx.empty_no_derive cover in
     let ctx = load_spec ctx spec in
     match invoke_rel ctx (relname $ no_region) values_input with
     | Some values_output -> values_output
     | None -> error no_region (F.asprintf "relation %s was not matched" relname)
 
   let eval_rel_call_program (spec : spec) (relname : string)
-      (includes_p4 : string list) (filename_p4 : string) : value list =
+      (includes_p4 : string list) (filename_p4 : string)
+      (filenames_ignore : string list) : Sim.runresult =
     Builtin.init ();
     Value.refresh ();
     Cache.Cache.clear !func_cache;
     Cache.Cache.clear !rule_cache;
-    let cover = ref (SCov.init IdSet.empty spec) in
-    let value_program = Interface.Parse.parse_file includes_p4 filename_p4 in
-    let graph = Dep.Graph.assemble_graph value_program in
-    let ctx =
-      Ctx.empty ~derive:false filename_p4 graph value_program.note.vid cover
-    in
-    let ctx = load_spec ctx spec in
-    match invoke_rel ctx (relname $ no_region) [ value_program ] with
-    | Some values_output -> values_output
-    | None -> error no_region (F.asprintf "relation %s was not matched" relname)
+    let ignores = Ignore.init filenames_ignore in
+    let cover = ref (SCov.init ignores spec) in
+    try
+      let value_program = Interface.Parse.parse_file includes_p4 filename_p4 in
+      let ctx = Ctx.empty_no_derive cover in
+      let values_output = do_eval_rel ctx spec relname [ value_program ] in
+      Sim.Pass (values_output, !(ctx.coverage))
+    with
+    | Util.Error.ParseError (at, msg) -> Sim.IllFormed (at, msg)
+    | Util.Error.InterpError (at, msg) -> Sim.Fail (at, msg, !cover)
 
   let eval_func_call (spec : spec) (funcname : string) (targs : targ list)
       (values_input : value list) : value =
@@ -1564,10 +1571,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP = struct
     Value.refresh ();
     Cache.Cache.clear !func_cache;
     Cache.Cache.clear !rule_cache;
-    let graph = Dep.Graph.empty () in
-    let vid = -1 in
     let cover = ref (SCov.init IdSet.empty spec) in
-    let ctx = Ctx.empty ~derive:false "FOO.P4" graph vid cover in
+    let ctx = Ctx.empty_no_derive cover in
     let ctx = load_spec ctx spec in
     invoke_func_def' ctx (funcname $ no_region) targs values_input
 end

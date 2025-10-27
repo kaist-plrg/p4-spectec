@@ -61,19 +61,6 @@ module Make (Interp : Sim.INTERP) : Sim.ARCH = struct
       (values_input : Sl.Ast.value list) : Sl.Ast.value =
     Interp.eval_func_call !spec funcname typs_input values_input
 
-  (* Extern initialization *)
-
-  (* Initialization *)
-
-  let init (spec_ : Sl.Ast.spec) (includes_p4 : string list)
-      (filename_p4 : string) : Sl.Ast.value * Sl.Ast.value =
-    init_spec spec_;
-    match
-      Interp.eval_rel_call_program !spec "V1Model_init" includes_p4 filename_p4
-    with
-    | [ value_ctx; value_sto ] -> (value_ctx, value_sto)
-    | _ -> failwith "Unexpected return from V1Model_init"
-
   (* Extern calls *)
 
   let eval_extern_func_call (_values_input : Sl.Ast.value list) :
@@ -116,11 +103,24 @@ module Make (Interp : Sim.INTERP) : Sim.ARCH = struct
           ^ String.concat ", " names_param
           ^ ")")
 
+  (* Pipeline initializer *)
+
+  let init_pipe (spec_ : Sl.Ast.spec) (includes_p4 : string list)
+      (filename_p4 : string) (filenames_ignore : string list) :
+      Sl.Ast.value * Sl.Ast.value =
+    init_spec spec_;
+    match
+      Interp.eval_rel_call_program !spec "V1Model_init" includes_p4 filename_p4
+        filenames_ignore
+    with
+    | Pass ([ value_ctx; value_sto ], _) -> (value_ctx, value_sto)
+    | _ -> failwith "Unexpected return from V1Model_init"
+
   (* Pipeline driver *)
 
-  let setup_port_packet (value_ctx : Sl.Ast.value) (value_sto : Sl.Ast.value)
-      (port_in : IO.port) (packet_in : IO.packet) : Sl.Ast.value * Sl.Ast.value
-      =
+  let setup_rx (value_ctx : Sl.Ast.value) (value_sto : Sl.Ast.value)
+      (rx : IO.rx) : Sl.Ast.value * Sl.Ast.value =
+    let port_in, packet_in = rx in
     (* Setup packet_in and packet_out externs *)
     let value_ctx, value_sto =
       call_rel_two "V1Model_init_packet" [ value_ctx; value_sto ]
@@ -175,7 +175,7 @@ module Make (Interp : Sim.INTERP) : Sim.ARCH = struct
     call_rel_three "V1Model_deparse" [ value_ctx; value_sto ]
 
   let resulting_port_packet (value_ctx : Sl.Ast.value)
-      (value_sto : Sl.Ast.value) : IO.result option =
+      (value_sto : Sl.Ast.value) : IO.tx option =
     (* Get egress port *)
     let value_cursor = [ Term "GLOBAL" ] #@ "cursor" in
     let value_prefixedNameIR =
@@ -195,12 +195,9 @@ module Make (Interp : Sim.INTERP) : Sim.ARCH = struct
     Some (0, packet)
 
   let drive_pipe (value_ctx : Sl.Ast.value) (value_sto : Sl.Ast.value)
-      (port_in : IO.port) (packet_in : IO.packet) :
-      Sl.Ast.value * Sl.Ast.value * IO.result option =
+      (rx : IO.rx) : Sl.Ast.value * Sl.Ast.value * IO.tx option =
     (* Setup port and packet *)
-    let value_ctx, value_sto =
-      setup_port_packet value_ctx value_sto port_in packet_in
-    in
+    let value_ctx, value_sto = setup_rx value_ctx value_sto rx in
     (* Parser block *)
     let value_ctx, value_sto, _value_parser_result =
       drive_p value_ctx value_sto

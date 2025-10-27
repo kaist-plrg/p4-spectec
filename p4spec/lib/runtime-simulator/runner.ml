@@ -9,19 +9,30 @@ module Make
   module rec Arch : ARCH = MakeArch (Interp)
   and Interp : INTERP = MakeInterp (Arch)
 
+  (* Relation runner *)
+
+  let run_program (spec : Sl.Ast.spec) (relname : string)
+      (includes_p4 : string list) (filename_p4 : string)
+      (filenames_ignore : string list) : runresult =
+    Interp.eval_rel_call_program spec relname includes_p4 filename_p4
+      filenames_ignore
+
+  (* STF test runner *)
+
   let run_stf_stmt (value_ctx : Sl.Ast.value) (value_sto : Sl.Ast.value)
-      (pass : bool) (queue_packet : result list) (queue_expect : result list)
+      (pass : bool) (queue_packet : IO.tx list) (queue_expect : IO.tx list)
       (stmt_stf : Stf.Ast.stmt) :
-      Sl.Ast.value * Sl.Ast.value * bool * result list * result list =
+      Sl.Ast.value * Sl.Ast.value * bool * IO.tx list * IO.tx list =
     match stmt_stf with
     (* Packet I/O *)
     | Stf.Ast.Packet (port_in, packet_in) -> (
         let port_in = int_of_string port_in in
         let packet_in = String.uppercase_ascii packet_in in
-        let value_ctx, value_sto, result_out =
-          Arch.drive_pipe value_ctx value_sto port_in packet_in
+        let rx = (port_in, packet_in) in
+        let value_ctx, value_sto, tx_opt =
+          Arch.drive_pipe value_ctx value_sto rx
         in
-        match result_out with
+        match tx_opt with
         | None -> (value_ctx, value_sto, pass, queue_packet, queue_expect)
         | Some (port_out, packet_out) -> (
             match queue_expect with
@@ -80,9 +91,12 @@ module Make
         queue_expect);
     pass
 
-  let run (spec : Sl.Ast.spec) (includes_p4 : string list)
-      (filename_p4 : string) (filename_stf : string) : unit =
-    let value_ctx, value_sto = Arch.init spec includes_p4 filename_p4 in
+  let run_stf_test (spec : Sl.Ast.spec) (includes_p4 : string list)
+      (filename_p4 : string) (filename_stf : string)
+      (filenames_ignore : string list) : unit =
+    let value_ctx, value_sto =
+      Arch.init_pipe spec includes_p4 filename_p4 filenames_ignore
+    in
     let stf_stmts = Stf.Parse.parse_file filename_stf in
     let _ = run_stf_stmts value_ctx value_sto stf_stmts in
     ()

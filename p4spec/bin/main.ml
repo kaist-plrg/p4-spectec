@@ -117,7 +117,6 @@ let run_sl_command =
      and relname = flag "-rel" (required string) ~doc:"relation to run"
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and filename_p4 = flag "-p" (required string) ~doc:"p4 file of interest"
-     and derive = flag "-derive" no_arg ~doc:"derive value dependency graph"
      and filenames_ignore =
        flag "-ignore" (listed string)
          ~doc:"relations or functions to ignore when reporting coverage"
@@ -129,13 +128,14 @@ let run_sl_command =
          let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
+         let (module Runner) = Arch.Gen.gen_placeholder () in
          match
-           Interp_sl.Run.run_program ~derive spec_sl relname includes_p4
-             filename_p4 filenames_ignore
+           Runner.run_program spec_sl relname includes_p4 filename_p4
+             filenames_ignore
          with
          | Pass _ -> Format.printf "passed\n"
          | Fail (_, msg, _) -> Format.printf "failed: %s\n" msg
-         | IllFormed (_, msg, _) -> Format.printf "ill-formed: %s\n" msg
+         | IllFormed (_, msg) -> Format.printf "ill-formed: %s\n" msg
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
@@ -150,7 +150,11 @@ let sim_command =
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and filename_p4 = flag "-p" (required string) ~doc:"p4 file of interest"
      and filename_stf = flag "-stf" (required string) ~doc:"stf test file"
-     and arch = flag "-arch" (required string) ~doc:"target architecture" in
+     and arch = flag "-arch" (required string) ~doc:"target architecture"
+     and filenames_ignore =
+       flag "-ignore" (listed string)
+         ~doc:"relations or functions to ignore when reporting coverage"
+     in
      fun () ->
        try
          if List.length filenames_spec = 0 then
@@ -159,7 +163,8 @@ let sim_command =
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
          let (module Runner) = Arch.Gen.gen arch in
-         Runner.run spec_sl includes_p4 filename_p4 filename_stf
+         Runner.run_stf_test spec_sl includes_p4 filename_p4 filename_stf
+           filenames_ignore
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)

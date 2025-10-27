@@ -9,3 +9,7 @@ let gen arch =
       : Sim.DRIVER)
   | _ ->
       Format.asprintf "architecture %s is not supported" arch |> error_no_region
+
+let gen_placeholder () =
+  (module Runner.Make (Placeholder.Make) (Interp_sl_new.Interp.Make)
+  : Sim.DRIVER)

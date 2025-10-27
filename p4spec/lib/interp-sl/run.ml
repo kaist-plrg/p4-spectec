@@ -10,8 +10,6 @@ open Error
 module F = Format
 open Util.Source
 
-type target = Relation of string | Function of string
-
 type res =
   | Pass of value list * Dep.Graph.t * vid * SCov.Cover.t
   | Fail of region * string * SCov.Cover.t

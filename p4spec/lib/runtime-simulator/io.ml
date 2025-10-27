@@ -2,7 +2,8 @@
 
 type port = int
 type packet = string
-type result = port * packet
+type rx = port * packet
+type tx = port * packet
 
 let compare_packet packet_out packet_expect : bool =
   let to_list s = List.init (String.length s) (String.get s) in
