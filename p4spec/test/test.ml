@@ -251,10 +251,13 @@ let run_sl (module Runner : Sim.DRIVER) negative spec_sl relname includes_p4
     filename_p4 =
   let time_start = start () in
   try
-    (match Runner.run_program spec_sl relname includes_p4 filename_p4 [] with
+    (match
+       Runner.run_program ~derive:false spec_sl relname includes_p4 filename_p4
+         []
+     with
     | Pass _ -> if negative then raise (TestRunNegErr time_start)
     | Fail (at, msg, _) -> raise (TestRunErr (msg, at, time_start))
-    | IllFormed (at, msg) -> raise (TestRunErr (msg, at, time_start)));
+    | IllFormed (at, msg, _) -> raise (TestRunErr (msg, at, time_start)));
     time_start
   with
   | TestRunErr _ as err -> raise err
@@ -367,8 +370,9 @@ let cover_dangling_test specdir relname includes_p4 excludes_p4 testdirs_p4 =
       (fun filename_p4 -> not (List.mem filename_p4 excludes_p4))
       filenames_p4
   in
+  let (module Runner) = Arch.Gen.gen_placeholder () in
   let cover =
-    Interp_sl.Run.cover_program spec_sl relname includes_p4 filenames_p4 []
+    Runner.cover_programs spec_sl relname includes_p4 filenames_p4 []
   in
   Runtime_testgen.Cov.Multiple.log ~filename_cov_opt:None cover
 

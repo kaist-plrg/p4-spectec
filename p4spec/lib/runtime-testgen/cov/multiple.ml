@@ -101,6 +101,42 @@ module Cover = struct
 
   let init_spec (ignores : IdSet.t) (spec : spec) : t =
     List.fold_left (init_def ignores) empty spec
+
+  (* Load from file *)
+
+  let load_line (line : string) : pid * Branch.t =
+    let data = String.split_on_char ' ' line in
+    match data with
+    | pid :: status :: origin :: filenames ->
+        let pid = int_of_string pid in
+        let status =
+          match status with
+          | "Hit_likely" -> Branch.Hit (true, filenames)
+          | "Hit_unlikely" -> Branch.Hit (false, filenames)
+          | "Miss" ->
+              if
+                List.length filenames == 1
+                && String.length (List.hd filenames) < 2
+              then Branch.Miss []
+              else Branch.Miss filenames
+          | _ -> assert false
+        in
+        let origin = origin $ no_region in
+        let branch = Branch.{ origin; status } in
+        (pid, branch)
+    | _ -> assert false
+
+  let rec load_lines (cover : t) (ic : in_channel) : t =
+    try
+      let line = input_line ic in
+      if String.starts_with ~prefix:"#" line then load_lines cover ic
+      else
+        let pid, branch = load_line line in
+        let cover = add pid branch cover in
+        load_lines cover ic
+    with End_of_file -> cover
+
+  let load_file (filename : string) : t = open_in filename |> load_lines empty
 end
 
 (* Querying coverage *)
@@ -217,3 +253,5 @@ let log ~(filename_cov_opt : string option) (cover : Cover.t) : unit =
 
 let init (ignores : IdSet.t) (spec : spec) : Cover.t =
   Cover.init_spec ignores spec
+
+let load (filename : string) : Cover.t = Cover.load_file filename

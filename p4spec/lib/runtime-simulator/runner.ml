@@ -1,3 +1,5 @@
+open Domain.Lib
+module MCov = Runtime_testgen.Cov.Multiple
 open Io
 open Simulator
 
@@ -11,11 +13,22 @@ module Make
 
   (* Relation runner *)
 
-  let run_program (spec : Sl.Ast.spec) (relname : string)
+  let run_program ~(derive : bool) (spec : Sl.Ast.spec) (relname : string)
       (includes_p4 : string list) (filename_p4 : string)
-      (filenames_ignore : string list) : runresult =
-    Interp.eval_rel_call_program spec relname includes_p4 filename_p4
+      (filenames_ignore : string list) : program_result =
+    Interp.eval_program ~derive spec relname includes_p4 filename_p4
       filenames_ignore
+
+  let run_program_with_ignores ~(derive : bool) (spec : Sl.Ast.spec)
+      (relname : string) (includes_p4 : string list) (filename_p4 : string)
+      (ignores : IdSet.t) : program_result =
+    Interp.eval_program_with_ignores ~derive spec relname includes_p4
+      filename_p4 ignores
+
+  let run_program_with_ignores_internal ~(derive : bool) (spec : Sl.Ast.spec)
+      (relname : string) (value_program : Sl.Ast.value) (ignores : IdSet.t) :
+      rel_result =
+    Interp.eval_rel ~ignores spec relname [ value_program ]
 
   (* STF test runner *)
 
@@ -100,4 +113,11 @@ module Make
     let stf_stmts = Stf.Parse.parse_file filename_stf in
     let _ = run_stf_stmts value_ctx value_sto stf_stmts in
     ()
+
+  (* Coverage runner *)
+
+  let cover_programs (spec : Sl.Ast.spec) (relname : string)
+      (includes_p4 : string list) (filenames_p4 : string list)
+      (filenames_ignore : string list) : MCov.Cover.t =
+    Interp.cover_programs spec relname includes_p4 filenames_p4 filenames_ignore
 end

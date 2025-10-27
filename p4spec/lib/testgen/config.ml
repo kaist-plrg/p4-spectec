@@ -6,6 +6,7 @@ module MixopEnv = Runtime_testgen.Envs.MixopEnv
 module Ignore = Runtime_testgen.Cov.Ignore
 module SCov = Runtime_testgen.Cov.Single
 module MCov = Runtime_testgen.Cov.Multiple
+module Sim = Runtime_simulator.Simulator
 
 (* Hyperparameters for the fuzzing loop *)
 
@@ -29,6 +30,7 @@ let timeout_seed = 30
 
 (* Environment for the spec *)
 type specenv = {
+  runner : (module Sim.DRIVER);
   spec_il : Il.Ast.spec;
   spec : spec;
   relname : string;
@@ -133,9 +135,10 @@ let load_spec (tdenv : TDEnv.t) (mixopenv : MixopEnv.t) (spec : spec) :
 
 let init_specenv (spec_il : Il.Ast.spec) (spec : spec) (relname : string)
     (includes_p4 : string list) (filenames_ignore : string list) : specenv =
+  let runner = Arch.Gen.gen_placeholder () in
   let tdenv, mixopenv = load_spec TDEnv.empty MixopEnv.empty spec in
   let ignores = Ignore.init filenames_ignore in
-  { spec_il; spec; relname; tdenv; mixopenv; includes_p4; ignores }
+  { runner; spec_il; spec; relname; tdenv; mixopenv; includes_p4; ignores }
 
 let init_storage (dirname_gen : string) : storage =
   Filesys.mkdir dirname_gen;

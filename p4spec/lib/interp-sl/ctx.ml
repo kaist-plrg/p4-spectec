@@ -23,21 +23,16 @@ type cursor = Global | Local
 
 (* Context *)
 
-(* Testing layer
+(* Testing and coverage layer
 
    The interpreter relies on the fact that both graph and cover
    are mutable, so that they can be updated in place.
    Their references are copied when constructing sub-contexts,
    thus sharing the same graph and cover across contexts. *)
 
-type testing = {
-  (* Value dependency graph *)
-  derive : bool;
-  graph : Dep.Graph.t;
-  vid_program : vid;
-  (* Branch coverage of phantoms *)
-  cover : SCov.Cover.t ref;
-}
+type coverage = SCov.Cover.t ref
+type vdg = { graph : Dep.Graph.t; vid_program : vid }
+type testing = EndToEnd of [ `On of vdg | `Off of vdg ] | Partial
 
 (* Global layer *)
 
@@ -76,9 +71,8 @@ type local =
     }
 
 type t = {
-  (* Filename of the source file *)
-  filename : string;
-  (* Testing layer *)
+  (* Testing and coverage layers *)
+  coverage : coverage;
   testing : testing;
   (* Global layer *)
   global : global;
@@ -86,21 +80,28 @@ type t = {
   local : local;
 }
 
-(* Value dependencies *)
-
-let add_node ?(taint = false) (ctx : t) (value : value) : unit =
-  if ctx.testing.derive then Dep.Graph.add_node ~taint ctx.testing.graph value
-
-let add_edge (ctx : t) (value_from : value) (value_to : value)
-    (label : Dep.Edges.label) : unit =
-  if ctx.testing.derive then
-    Dep.Graph.add_edge ctx.testing.graph value_from value_to label
-
 (* Cover *)
 
 let cover (ctx : t) (hit : bool) (pid : pid) (vid : vid) : unit =
-  if hit then ctx.testing.cover := SCov.hit !(ctx.testing.cover) pid
-  else ctx.testing.cover := SCov.miss !(ctx.testing.cover) pid vid
+  if hit then ctx.coverage := SCov.hit !(ctx.coverage) pid
+  else ctx.coverage := SCov.miss !(ctx.coverage) pid vid
+
+(* Value dependencies *)
+
+let deriving (ctx : t) : bool =
+  match ctx.testing with EndToEnd (`On _) -> true | _ -> false
+
+let add_node ?(taint = false) (ctx : t) (value : value) : unit =
+  match ctx.testing with
+  | EndToEnd (`On { graph; _ }) -> Dep.Graph.add_node ~taint graph value
+  | _ -> ()
+
+let add_edge (ctx : t) (value_from : value) (value_to : value)
+    (label : Dep.Edges.label) : unit =
+  match ctx.testing with
+  | EndToEnd (`On { graph; _ }) ->
+      Dep.Graph.add_edge graph value_from value_to label
+  | _ -> ()
 
 (* Finders *)
 
@@ -278,12 +279,20 @@ let empty_global () : global =
 
 let empty_local () : local = Empty
 
-let empty ~(derive : bool) (filename : string) (graph : Dep.Graph.t)
-    (vid_program : vid) (cover : SCov.Cover.t ref) : t =
-  let testing = { derive; graph; vid_program; cover } in
+let empty_end_to_end ~(derive : bool) (vdg : vdg) (cover : SCov.Cover.t ref) : t
+    =
+  let coverage = cover in
+  let testing = if derive then EndToEnd (`On vdg) else EndToEnd (`Off vdg) in
   let global = empty_global () in
   let local = empty_local () in
-  { filename; testing; global; local }
+  { coverage; testing; global; local }
+
+let empty_partial (cover : SCov.Cover.t ref) : t =
+  let coverage = cover in
+  let testing = Partial in
+  let global = empty_global () in
+  let local = empty_local () in
+  { coverage; testing; global; local }
 
 (* Constructing a local context *)
 

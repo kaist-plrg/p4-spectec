@@ -130,12 +130,12 @@ let run_sl_command =
          let spec_sl = Structure.Struct.struct_spec spec_il in
          let (module Runner) = Arch.Gen.gen_placeholder () in
          match
-           Runner.run_program spec_sl relname includes_p4 filename_p4
-             filenames_ignore
+           Runner.run_program ~derive:false spec_sl relname includes_p4
+             filename_p4 filenames_ignore
          with
          | Pass _ -> Format.printf "passed\n"
          | Fail (_, msg, _) -> Format.printf "failed: %s\n" msg
-         | IllFormed (_, msg) -> Format.printf "ill-formed: %s\n" msg
+         | IllFormed (_, msg, _) -> Format.printf "ill-formed: %s\n" msg
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
@@ -203,8 +203,9 @@ let cover_dangling_command =
                not (List.exists (String.equal filename_p4) excludes_p4))
              filenames_p4
          in
+         let (module Runner) = Arch.Gen.gen_placeholder () in
          let cover =
-           Interp_sl.Run.cover_program spec_sl relname includes_p4 filenames_p4
+           Runner.cover_programs spec_sl relname includes_p4 filenames_p4
              filenames_ignore
          in
          Runtime_testgen.Cov.Multiple.log ~filename_cov_opt:(Some filename_cov)
@@ -340,14 +341,17 @@ let interesting_command =
          let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
+         let (module Runner) = Arch.Gen.gen_placeholder () in
          let result =
-           Interp_sl.Run.run_program spec_sl relname includes_p4 filename_p4
-             filenames_ignore
+           Runner.run_program ~derive:false spec_sl relname includes_p4
+             filename_p4 filenames_ignore
          in
          match result with
          | Pass (_, _, _, cover_single) ->
              if check_well_typed then (
-               let branch = Interp_sl.Interp.SCov.Cover.find pid cover_single in
+               let branch =
+                 Runtime_testgen.Cov.Single.Cover.find pid cover_single
+               in
                match branch.status with
                | Hit ->
                    Printf.printf "WellTyped: Hit\n";
@@ -366,7 +370,9 @@ let interesting_command =
                Printf.printf "IllTyped\n";
                exit 10)
              else
-               let branch = Interp_sl.Interp.SCov.Cover.find pid cover_single in
+               let branch =
+                 Runtime_testgen.Cov.Single.Cover.find pid cover_single
+               in
                match branch.status with
                | Hit ->
                    Printf.printf "IllTyped: Hit\n";

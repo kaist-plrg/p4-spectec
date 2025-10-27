@@ -2,6 +2,7 @@ open Interface.Wrap
 open Interface.Unwrap
 module IO = Runtime_simulator.Io
 module Sim = Runtime_simulator.Simulator
+open Error
 
 module Make (Interp : Sim.INTERP) : Sim.ARCH = struct
   (* Specification *)
@@ -31,7 +32,11 @@ module Make (Interp : Sim.INTERP) : Sim.ARCH = struct
 
   let call_rel (relname : string) (expect : int)
       (values_input : Sl.Ast.value list) : Sl.Ast.value list =
-    let values_output = Interp.eval_rel_call !spec relname values_input in
+    let values_output =
+      match Interp.eval_rel !spec relname values_input with
+      | Pass (values_output, _) -> values_output
+      | Fail (at, msg, _) -> error at msg
+    in
     if List.length values_output <> expect then
       failwith
         (Printf.sprintf "Expected %d return values from %s, got %d" expect
@@ -59,7 +64,9 @@ module Make (Interp : Sim.INTERP) : Sim.ARCH = struct
 
   let call_func (funcname : string) (typs_input : Sl.Ast.typ list)
       (values_input : Sl.Ast.value list) : Sl.Ast.value =
-    Interp.eval_func_call !spec funcname typs_input values_input
+    match Interp.eval_func !spec funcname typs_input values_input with
+    | Pass (value_output, _) -> value_output
+    | Fail (at, msg, _) -> error at msg
 
   (* Extern calls *)
 
@@ -110,10 +117,10 @@ module Make (Interp : Sim.INTERP) : Sim.ARCH = struct
       Sl.Ast.value * Sl.Ast.value =
     init_spec spec_;
     match
-      Interp.eval_rel_call_program !spec "V1Model_init" includes_p4 filename_p4
-        filenames_ignore
+      Interp.eval_program ~derive:false !spec "V1Model_init" includes_p4
+        filename_p4 filenames_ignore
     with
-    | Pass ([ value_ctx; value_sto ], _) -> (value_ctx, value_sto)
+    | Pass ([ value_ctx; value_sto ], _, _, _) -> (value_ctx, value_sto)
     | _ -> failwith "Unexpected return from V1Model_init"
 
   (* Pipeline driver *)

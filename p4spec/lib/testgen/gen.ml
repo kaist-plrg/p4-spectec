@@ -3,6 +3,7 @@ open Sl.Ast
 module Dep = Runtime_testgen.Dep
 module SCov = Runtime_testgen.Cov.Single
 module MCov = Runtime_testgen.Cov.Multiple
+module Sim = Runtime_simulator.Simulator
 module F = Format
 open Util.Source
 
@@ -75,8 +76,9 @@ let update_hit_new (fuel : int) (pid : pid) (idx_seed : int) (strategy : string)
   (* Re-run the SL interpreter to make sure of the new hits *)
   (* Then copy the interesting test program to the output directory
      and update the running coverage *)
+  let (module Runner : Sim.DRIVER) = config.specenv.runner in
   match
-    Interp_sl.Run.run_program' ~derive:false config.specenv.spec
+    Runner.run_program_with_ignores ~derive:false config.specenv.spec
       config.specenv.relname config.specenv.includes_p4 filename_gen_p4
       config.specenv.ignores
   with
@@ -123,8 +125,9 @@ let update_close_miss_new (fuel : int) (pid : pid) (idx_seed : int)
      and update the running coverage *)
   (* Then copy the interesting test program to the output directory
      and update the running coverage *)
+  let (module Runner : Sim.DRIVER) = config.specenv.runner in
   match
-    Interp_sl.Run.run_program' ~derive:false config.specenv.spec
+    Runner.run_program_with_ignores ~derive:false config.specenv.spec
       config.specenv.relname config.specenv.includes_p4 filename_gen_p4
       config.specenv.ignores
   with
@@ -149,14 +152,13 @@ let update_interesting (fuel : int) (pid : pid) (idx_seed : int)
     filename_gen_p4
   |> Logger.log config.modes.logmode log;
   let welltyped, cover =
+    let (module Runner : Sim.DRIVER) = config.specenv.runner in
     match
-      Interp_sl.Run.run_program_testgen config.specenv.spec
-        config.specenv.relname filename_gen_p4 value_program
-        config.specenv.ignores
+      Runner.run_program_with_ignores_internal ~derive:false config.specenv.spec
+        config.specenv.relname value_program config.specenv.ignores
     with
-    | Pass (_, _, _, cover) -> (true, cover)
+    | Pass (_, cover) -> (true, cover)
     | Fail (_, _, cover) -> (false, cover)
-    | IllFormed (_, _, cover) -> (false, cover)
   in
   let time_end = Unix.gettimeofday () in
   F.asprintf
@@ -428,13 +430,13 @@ let fuzz_seed (fuel : int) (pid : pid) (idx_seed : int) (config : Config.t)
   let derive =
     match config.modes.mutationmode with
     | Random -> false
-    | Derive -> true
-    | Hybrid -> true
+    | Derive | Hybrid -> true
   in
   (* Run SL interpreter on the program,
      and if it is well-typed, start generating tests from it *)
+  let (module Runner : Sim.DRIVER) = config.specenv.runner in
   (match
-     Interp_sl.Run.run_program' ~derive config.specenv.spec
+     Runner.run_program_with_ignores ~derive config.specenv.spec
        config.specenv.relname config.specenv.includes_p4 filename_p4
        config.specenv.ignores
    with
@@ -605,8 +607,8 @@ let fuzzer_init (spec_il : Il.Ast.spec) (spec : spec) (relname : string)
     match modes.bootmode with
     | Cold (excludes_p4, dirname_seed_p4) ->
         let cover_seed =
-          Boot.boot_cold spec relname includes_p4 excludes_p4 dirname_seed_p4
-            filenames_ignore
+          Boot.boot_cold specenv.runner spec relname includes_p4 excludes_p4
+            dirname_seed_p4 filenames_ignore
         in
         (* Log the initial coverage for later use in warm boot *)
         let filename_cov = dirname_gen ^ "/boot.coverage" in
