@@ -52,14 +52,14 @@ let merge_failtrace_reason (failtraces : failtrace list) : reason =
        (fun acc (i, Failtrace (_, _, reason, _)) ->
          match (acc, reason) with
          | Root premise, _ -> RootClause (i, premise)
-         | RootClause (_, premise_1), Root premise_2
-         | RootClause (_, premise_1), RootClause (_, premise_2) ->
-             if premise_1 < premise_2 then RootClause (i, premise_2) else acc
+         | RootClause (_, premise_a), Root premise_b
+         | RootClause (_, premise_a), RootClause (_, premise_b) ->
+             if premise_a < premise_b then RootClause (i, premise_b) else acc
          | RootClause _, _ -> acc
          | _, Root premise | _, RootClause (_, premise) ->
              RootClause (i, premise)
-         | MismatchClause (_, premise_1), MismatchClause (_, premise_2) ->
-             if premise_1 < premise_2 then MismatchClause (i, premise_2)
+         | MismatchClause (_, premise_a), MismatchClause (_, premise_b) ->
+             if premise_a < premise_b then MismatchClause (i, premise_b)
              else acc
          | _, MismatchClause (_, max_premise) | _, Mismatch max_premise ->
              MismatchClause (i, max_premise)
