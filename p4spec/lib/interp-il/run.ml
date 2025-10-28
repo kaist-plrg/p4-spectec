@@ -17,7 +17,7 @@ let run ?(debug : bool = false) ?(profile : bool = false)
   Value.refresh ();
   Cache.Cache.clear !Interp.func_cache;
   Cache.Cache.clear !Interp.rule_cache;
-  Trace_mode.set (if trace then `Full else `Concise);
+  Trace_mode.set (if trace then Full else Concise);
   try
     let value_program = Interface.Parse.parse_file includes_p4 filename_p4 in
     let ctx = Ctx.empty ~debug ~profile filename_p4 in

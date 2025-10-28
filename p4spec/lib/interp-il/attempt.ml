@@ -14,9 +14,9 @@ let ( let* ) (attempt : 'a attempt) (f : 'a -> 'b) : 'b =
 
 let error_with_failtraces (failtraces : failtrace list) =
   let sfailtrace =
-    if Trace_mode.get () = `Full then
-      prettify_failtraces ~depth_limit:false failtraces
-    else prune_failtraces failtraces |> prettify_failtraces
+    match Trace_mode.get () with
+    | Full -> prettify_failtraces ~depth_limit:false failtraces
+    | Concise -> prune_failtraces failtraces |> prettify_failtraces
   in
   error no_region ("tracing backtrack logs:\n" ^ sfailtrace)
 
