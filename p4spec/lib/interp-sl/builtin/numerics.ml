@@ -1,7 +1,6 @@
 open Xl
 open Il.Ast
 module Value = Runtime_dynamic.Value
-module Dep = Runtime_testgen.Dep
 open Util.Source
 
 (* Conversion between meta-bits and OCaml bool array *)

@@ -24,7 +24,7 @@ let ( let* ) = Option.bind
 let func_cache = ref (Cache.Cache.create ~size:10000)
 let rule_cache = ref (Cache.Cache.create ~size:10000)
 
-module Make (Arch : Sim.ARCH) : Sim.INTERP = struct
+module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Assignments *)
 
   (* Assigning a value to an expression *)

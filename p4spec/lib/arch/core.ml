@@ -1,3 +1,4 @@
+module Value = Runtime_dynamic.Value
 open Interface.Wrap
 open Interface.Unwrap
 
@@ -75,9 +76,8 @@ module PacketIn = struct
      @T must be a fixed-size header type
 
      void extract<T>(out T hdr); *)
-  let extract call_rel_one call_func (value_ctx : Sl.Ast.value)
-      (value_sto : Sl.Ast.value) (pkt : t) :
-      t * Sl.Ast.value * Sl.Ast.value * Sl.Ast.value =
+  let extract call_rel_one call_func (value_ctx : Value.t) (value_sto : Value.t)
+      (pkt : t) : t * Value.t * Value.t * Value.t =
     (* Get "T" *)
     let value_cursor = [ Term "LOCAL" ] #@ "cursor" in
     let value_nameIR = wrap_text_v "T" in
@@ -162,8 +162,8 @@ module PacketOut = struct
      containing fields with such types.
 
      void emit<T>(in T hdr); *)
-  let emit call_func (value_ctx : Sl.Ast.value) (value_sto : Sl.Ast.value)
-      (pkt : t) : t * Sl.Ast.value * Sl.Ast.value * Sl.Ast.value =
+  let emit call_func (value_ctx : Value.t) (value_sto : Value.t) (pkt : t) :
+      t * Value.t * Value.t * Value.t =
     (* Get "hdr" in context *)
     let value_cursor = [ Term "LOCAL" ] #@ "cursor" in
     let value_prefixedNameIR =

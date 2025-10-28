@@ -1,14 +1,16 @@
 open Interface.Wrap
 open Interface.Unwrap
+module Value = Runtime_dynamic.Value
 module IO = Runtime_simulator.Io
 module Sim = Runtime_simulator.Simulator
 open Error
 
-module Make (Interp : Sim.INTERP) : Sim.ARCH = struct
+module Make (Interp_IL : Sim.INTERP_IL) (Interp_SL : Sim.INTERP_SL) : Sim.ARCH =
+struct
   (* Specification *)
 
-  let spec : Sl.Ast.spec ref = ref []
-  let init_spec (spec_ : Sl.Ast.spec) : unit = spec := spec_
+  let spec : Sim.spec ref = ref Sim.Empty
+  let init_spec (spec_ : Sim.spec) : unit = spec := spec_
 
   (* Extern objects *)
 
@@ -30,10 +32,16 @@ module Make (Interp : Sim.INTERP) : Sim.ARCH = struct
 
   (* Call entry points *)
 
-  let call_rel (relname : string) (expect : int)
-      (values_input : Sl.Ast.value list) : Sl.Ast.value list =
+  let call_rel (relname : string) (expect : int) (values_input : Value.t list) :
+      Value.t list =
+    let result =
+      match !spec with
+      | IL spec_il -> Interp_IL.eval_rel spec_il relname values_input
+      | SL spec_sl -> Interp_SL.eval_rel spec_sl relname values_input
+      | Empty -> assert false
+    in
     let values_output =
-      match Interp.eval_rel !spec relname values_input with
+      match result with
       | Pass (values_output, _) -> values_output
       | Fail (at, msg, _) -> error at msg
     in
@@ -44,38 +52,43 @@ module Make (Interp : Sim.INTERP) : Sim.ARCH = struct
            (List.length values_output));
     values_output
 
-  let call_rel_one (relname : string) (values_input : Sl.Ast.value list) :
-      Sl.Ast.value =
+  let call_rel_one (relname : string) (values_input : Value.t list) : Value.t =
     match call_rel relname 1 values_input with
     | [ value ] -> value
     | _ -> assert false
 
-  let call_rel_two (relname : string) (values_input : Sl.Ast.value list) :
-      Sl.Ast.value * Sl.Ast.value =
+  let call_rel_two (relname : string) (values_input : Value.t list) :
+      Value.t * Value.t =
     match call_rel relname 2 values_input with
     | [ value_a; value_b ] -> (value_a, value_b)
     | _ -> assert false
 
-  let call_rel_three (relname : string) (values_input : Sl.Ast.value list) :
-      Sl.Ast.value * Sl.Ast.value * Sl.Ast.value =
+  let call_rel_three (relname : string) (values_input : Value.t list) :
+      Value.t * Value.t * Value.t =
     match call_rel relname 3 values_input with
     | [ value_a; value_b; value_c ] -> (value_a, value_b, value_c)
     | _ -> assert false
 
   let call_func (funcname : string) (typs_input : Sl.Ast.typ list)
-      (values_input : Sl.Ast.value list) : Sl.Ast.value =
-    match Interp.eval_func !spec funcname typs_input values_input with
+      (values_input : Value.t list) : Value.t =
+    let result =
+      match !spec with
+      | IL spec_il ->
+          Interp_IL.eval_func spec_il funcname typs_input values_input
+      | SL spec_sl ->
+          Interp_SL.eval_func spec_sl funcname typs_input values_input
+      | Empty -> assert false
+    in
+    match result with
     | Pass (value_output, _) -> value_output
     | Fail (at, msg, _) -> error at msg
 
   (* Extern calls *)
 
-  let eval_extern_func_call (_values_input : Sl.Ast.value list) :
-      Sl.Ast.value list =
+  let eval_extern_func_call (_values_input : Value.t list) : Value.t list =
     failwith "TODO"
 
-  let eval_extern_method_call (values_input : Sl.Ast.value list) :
-      Sl.Ast.value list =
+  let eval_extern_method_call (values_input : Value.t list) : Value.t list =
     let value_ctx, value_sto, value_oid, value_name, value_names_param =
       match values_input with
       | [ value_ctx; value_sto; value_oid; value_name; value_names_param ] ->
@@ -112,20 +125,26 @@ module Make (Interp : Sim.INTERP) : Sim.ARCH = struct
 
   (* Pipeline initializer *)
 
-  let init_pipe (spec_ : Sl.Ast.spec) (includes_p4 : string list)
-      (filename_p4 : string) : Sl.Ast.value * Sl.Ast.value =
+  let init_pipe (spec_ : Sim.spec) (includes_p4 : string list)
+      (filename_p4 : string) : Value.t * Value.t =
     init_spec spec_;
-    match
-      Interp.eval_program ~derive:false !spec "V1Model_init" includes_p4
-        filename_p4
-    with
+    let result =
+      match !spec with
+      | IL spec_il ->
+          Interp_IL.eval_program spec_il "V1Model_init" includes_p4 filename_p4
+      | SL spec_sl ->
+          Interp_SL.eval_program ~derive:false spec_sl "V1Model_init"
+            includes_p4 filename_p4
+      | Empty -> assert false
+    in
+    match result with
     | Pass ([ value_ctx; value_sto ], _, _, _) -> (value_ctx, value_sto)
     | _ -> failwith "Unexpected return from V1Model_init"
 
   (* Pipeline driver *)
 
-  let setup_rx (value_ctx : Sl.Ast.value) (value_sto : Sl.Ast.value)
-      (rx : IO.rx) : Sl.Ast.value * Sl.Ast.value =
+  let setup_rx (value_ctx : Value.t) (value_sto : Value.t) (rx : IO.rx) :
+      Value.t * Value.t =
     let port_in, packet_in = rx in
     (* Setup packet_in and packet_out externs *)
     let value_ctx, value_sto =
@@ -156,32 +175,32 @@ module Make (Interp : Sim.INTERP) : Sim.ARCH = struct
     in
     (value_ctx, value_sto)
 
-  let drive_p (value_ctx : Sl.Ast.value) (value_sto : Sl.Ast.value) :
-      Sl.Ast.value * Sl.Ast.value * Sl.Ast.value =
+  let drive_p (value_ctx : Value.t) (value_sto : Value.t) :
+      Value.t * Value.t * Value.t =
     call_rel_three "V1Model_parser" [ value_ctx; value_sto ]
 
-  let drive_vr (value_ctx : Sl.Ast.value) (value_sto : Sl.Ast.value) :
-      Sl.Ast.value * Sl.Ast.value * Sl.Ast.value =
+  let drive_vr (value_ctx : Value.t) (value_sto : Value.t) :
+      Value.t * Value.t * Value.t =
     call_rel_three "V1Model_verify" [ value_ctx; value_sto ]
 
-  let drive_ig (value_ctx : Sl.Ast.value) (value_sto : Sl.Ast.value) :
-      Sl.Ast.value * Sl.Ast.value * Sl.Ast.value =
+  let drive_ig (value_ctx : Value.t) (value_sto : Value.t) :
+      Value.t * Value.t * Value.t =
     call_rel_three "V1Model_ingress" [ value_ctx; value_sto ]
 
-  let drive_eg (value_ctx : Sl.Ast.value) (value_sto : Sl.Ast.value) :
-      Sl.Ast.value * Sl.Ast.value * Sl.Ast.value =
+  let drive_eg (value_ctx : Value.t) (value_sto : Value.t) :
+      Value.t * Value.t * Value.t =
     call_rel_three "V1Model_egress" [ value_ctx; value_sto ]
 
-  let drive_ck (value_ctx : Sl.Ast.value) (value_sto : Sl.Ast.value) :
-      Sl.Ast.value * Sl.Ast.value * Sl.Ast.value =
+  let drive_ck (value_ctx : Value.t) (value_sto : Value.t) :
+      Value.t * Value.t * Value.t =
     call_rel_three "V1Model_check" [ value_ctx; value_sto ]
 
-  let drive_dep (value_ctx : Sl.Ast.value) (value_sto : Sl.Ast.value) :
-      Sl.Ast.value * Sl.Ast.value * Sl.Ast.value =
+  let drive_dep (value_ctx : Value.t) (value_sto : Value.t) :
+      Value.t * Value.t * Value.t =
     call_rel_three "V1Model_deparse" [ value_ctx; value_sto ]
 
-  let resulting_port_packet (value_ctx : Sl.Ast.value)
-      (value_sto : Sl.Ast.value) : IO.tx option =
+  let resulting_port_packet (value_ctx : Value.t) (value_sto : Value.t) :
+      IO.tx option =
     (* Get egress port *)
     let value_cursor = [ Term "GLOBAL" ] #@ "cursor" in
     let value_prefixedNameIR =
@@ -200,8 +219,8 @@ module Make (Interp : Sim.INTERP) : Sim.ARCH = struct
     let packet = header ^ payload in
     Some (0, packet)
 
-  let drive_pipe (value_ctx : Sl.Ast.value) (value_sto : Sl.Ast.value)
-      (rx : IO.rx) : Sl.Ast.value * Sl.Ast.value * IO.tx option =
+  let drive_pipe (value_ctx : Value.t) (value_sto : Value.t) (rx : IO.rx) :
+      Value.t * Value.t * IO.tx option =
     (* Setup port and packet *)
     let value_ctx, value_sto = setup_rx value_ctx value_sto rx in
     (* Parser block *)

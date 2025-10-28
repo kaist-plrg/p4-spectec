@@ -46,12 +46,12 @@ let elab_command =
   Core.Command.basic ~summary:"parse and elaborate a p4_16 spec"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
-     let%map filenames = anon (sequence ("filename" %: string)) in
+     let%map filenames_spec =
+       anon (non_empty_sequence_as_list ("filename" %: string))
+     in
      fun () ->
        try
-         if List.length filenames = 0 then
-           raise (CommandError "no input files provided");
-         let spec = List.concat_map Frontend.Parse.parse_file filenames in
+         let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
          let spec_il = Elaborate.Elab.elab_spec spec in
          Format.printf "%s\n" (Il.Print.string_of_spec spec_il);
          ()
@@ -64,12 +64,12 @@ let struct_command =
   Core.Command.basic ~summary:"insert structured control flow to a p4_16 spec"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
-     let%map filenames = anon (sequence ("filename" %: string)) in
+     let%map filenames_spec =
+       anon (non_empty_sequence_as_list ("filename" %: string))
+     in
      fun () ->
        try
-         if List.length filenames = 0 then
-           raise (CommandError "no input files provided");
-         let spec = List.concat_map Frontend.Parse.parse_file filenames in
+         let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
          Format.printf "%s\n" (Sl.Print.string_of_spec spec_sl);
@@ -84,7 +84,8 @@ let run_il_command =
     ~summary:"run semantics of a p4_16 spec based on backtracking IL"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
-     let%map filenames_spec = anon (sequence ("filename" %: string))
+     let%map filenames_spec =
+       anon (non_empty_sequence_as_list ("filename" %: string))
      and relname = flag "-rel" (required string) ~doc:"relation to run"
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and filename_p4 = flag "-p" (required string) ~doc:"p4 file of interest"
@@ -92,17 +93,17 @@ let run_il_command =
      and profile = flag "-profile" no_arg ~doc:"profiling" in
      fun () ->
        try
-         if List.length filenames_spec = 0 then
-           raise (CommandError "no input files provided");
          let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
          let spec_il = Elaborate.Elab.elab_spec spec in
+         let (module Runner) = Arch.Gen.gen_placeholder () in
+         let spec_sim = Runtime_simulator.Simulator.IL spec_il in
          match
-           Interp_il.Run.run ~debug ~profile spec_il relname includes_p4
+           Runner.run_program ~derive:false spec_sim relname includes_p4
              filename_p4
          with
          | Pass _ -> Format.printf "passed\n"
-         | Fail (_, msg) -> Format.printf "failed: %s\n" msg
-         | IllFormed (_, msg) -> Format.printf "ill-formed: %s\n" msg
+         | Fail (_, msg, _) -> Format.printf "failed: %s\n" msg
+         | IllFormed (_, msg, _) -> Format.printf "ill-formed: %s\n" msg
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
@@ -113,20 +114,20 @@ let run_sl_command =
     ~summary:"run semantics of a p4_16 spec based on non-backtracking SL"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
-     let%map filenames_spec = anon (sequence ("filename" %: string))
+     let%map filenames_spec =
+       anon (non_empty_sequence_as_list ("filename" %: string))
      and relname = flag "-rel" (required string) ~doc:"relation to run"
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and filename_p4 = flag "-p" (required string) ~doc:"p4 file of interest" in
      fun () ->
        try
-         if List.length filenames_spec = 0 then
-           raise (CommandError "no input files provided");
          let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
          let (module Runner) = Arch.Gen.gen_placeholder () in
+         let spec_sim = Runtime_simulator.Simulator.SL spec_sl in
          match
-           Runner.run_program ~derive:false spec_sl relname includes_p4
+           Runner.run_program ~derive:false spec_sim relname includes_p4
              filename_p4
          with
          | Pass _ -> Format.printf "passed\n"
@@ -142,20 +143,35 @@ let sim_command =
     ~summary:"simulate a target architecture with a p4_16 program and spec"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
-     let%map filenames_spec = anon (sequence ("filename" %: string))
+     let%map_open.Command filenames_spec =
+       anon (non_empty_sequence_as_list ("filename" %: string))
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and filename_p4 = flag "-p" (required string) ~doc:"p4 file of interest"
      and filename_stf = flag "-stf" (required string) ~doc:"stf test file"
-     and arch = flag "-arch" (required string) ~doc:"target architecture" in
+     and arch = flag "-arch" (required string) ~doc:"target architecture"
+     and mode =
+       Command.Param.choose_one
+         [
+           flag "il" no_arg ~doc:"Run IL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b `IL);
+           flag "sl" no_arg ~doc:"Run SL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b `SL);
+         ]
+         ~if_nothing_chosen:(Default_to `SL)
+     in
      fun () ->
        try
-         if List.length filenames_spec = 0 then
-           raise (CommandError "no input files provided");
          let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
          let spec_il = Elaborate.Elab.elab_spec spec in
-         let spec_sl = Structure.Struct.struct_spec spec_il in
+         let spec_sim =
+           match mode with
+           | `IL -> Runtime_simulator.Simulator.IL spec_il
+           | `SL ->
+               let spec_sl = Structure.Struct.struct_spec spec_il in
+               Runtime_simulator.Simulator.SL spec_sl
+         in
          let (module Runner) = Arch.Gen.gen arch in
-         Runner.run_stf_test spec_sl includes_p4 filename_p4 filename_stf
+         Runner.run_stf_test spec_sim includes_p4 filename_p4 filename_stf
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
@@ -165,7 +181,8 @@ let cover_dangling_command =
   Core.Command.basic ~summary:"measure dangling coverage of the P4 type system"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
-     let%map filenames_spec = anon (sequence ("filename" %: string))
+     let%map filenames_spec =
+       anon (non_empty_sequence_as_list ("filename" %: string))
      and relname = flag "-rel" (required string) ~doc:"relation to run"
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and excludes_p4 = flag "-e" (listed string) ~doc:"p4 test exclude paths"
@@ -176,8 +193,6 @@ let cover_dangling_command =
      in
      fun () ->
        try
-         if List.length filenames_spec = 0 then
-           raise (CommandError "no input files provided");
          let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
@@ -207,7 +222,8 @@ let run_testgen_command =
     ~summary:"generate negative type checker tests from a p4_16 spec"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
-     let%map filenames_spec = anon (sequence ("filename" %: string))
+     let%map filenames_spec =
+       anon (non_empty_sequence_as_list ("filename" %: string))
      and relname = flag "-rel" (required string) ~doc:"relation to run"
      and fuel = flag "-fuel" (required int) ~doc:"fuel for test generation"
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
@@ -234,8 +250,6 @@ let run_testgen_command =
      in
      fun () ->
        try
-         if List.length filenames_spec = 0 then
-           raise (CommandError "no input files provided");
          let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
@@ -275,7 +289,8 @@ let run_testgen_debug_command =
     ~summary:"debug close-AST deriver in negative type checker generator"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
-     let%map filenames_spec = anon (sequence ("filename" %: string))
+     let%map filenames_spec =
+       anon (non_empty_sequence_as_list ("filename" %: string))
      and relname = flag "-rel" (required string) ~doc:"relation to run"
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and filename_p4 = flag "-p" (required string) ~doc:"p4 file to typecheck"
@@ -284,8 +299,6 @@ let run_testgen_debug_command =
      and pid = flag "-pid" (required int) ~doc:"phantom id to close-miss" in
      fun () ->
        try
-         if List.length filenames_spec = 0 then
-           raise (CommandError "no input files provided");
          let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
@@ -300,7 +313,8 @@ let interesting_command =
   Core.Command.basic ~summary:"interestingness test for reducing p4_16 programs"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
-     let%map filenames_spec = anon (sequence ("filename" %: string))
+     let%map filenames_spec =
+       anon (non_empty_sequence_as_list ("filename" %: string))
      and relname = flag "-rel" (required string) ~doc:"relation to run"
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and check_well_typed =
@@ -314,14 +328,13 @@ let interesting_command =
      in
      fun () ->
        try
-         if List.length filenames_spec = 0 then
-           raise (CommandError "no input files provided");
          let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
          let (module Runner) = Arch.Gen.gen_placeholder () in
+         let spec_sim = Runtime_simulator.Simulator.SL spec_sl in
          let result =
-           Runner.run_program ~derive:false spec_sl relname includes_p4
+           Runner.run_program ~derive:false spec_sim relname includes_p4
              filename_p4
          in
          match result with
@@ -373,15 +386,14 @@ let splice_command =
   Core.Command.basic ~summary:"splice a skeleton p4_16 specification document"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
-     let%map filenames_spec = anon (sequence ("filename" %: string))
+     let%map filenames_spec =
+       anon (non_empty_sequence_as_list ("filename" %: string))
      and filenames_input =
        flag "-splice" (listed string) ~doc:"skeleton documents"
      and filenames_output = flag "-out" (listed string) ~doc:"output files"
      and inplace = flag "-inplace" no_arg ~doc:"splice in place" in
      fun () ->
        try
-         if List.length filenames_spec = 0 then
-           raise (CommandError "no input files provided");
          if
            (not inplace)
            && List.length filenames_input <> List.length filenames_output
@@ -404,7 +416,8 @@ let parse_command =
   Core.Command.basic ~summary:"parse a P4 program"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
-     let%map filenames = anon (sequence ("filename" %: string))
+     let%map filenames_spec =
+       anon (non_empty_sequence_as_list ("filename" %: string))
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and filename_p4 = flag "-p" (required string) ~doc:"p4 file to typecheck"
      and roundtrip =
@@ -412,7 +425,7 @@ let parse_command =
      in
      fun () ->
        try
-         let spec = List.concat_map Frontend.Parse.parse_file filenames in
+         let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
          let spec_il = Elaborate.Elab.elab_spec spec in
          let parsed_p4_file =
            Interface.Parse.parse_file includes_p4 filename_p4

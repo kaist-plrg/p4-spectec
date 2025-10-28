@@ -77,8 +77,9 @@ let update_hit_new (fuel : int) (pid : pid) (idx_seed : int) (strategy : string)
   (* Then copy the interesting test program to the output directory
      and update the running coverage *)
   let (module Runner : Sim.DRIVER) = config.specenv.runner in
+  let spec_sim = Sim.SL config.specenv.spec in
   match
-    Runner.run_program ~derive:false config.specenv.spec config.specenv.relname
+    Runner.run_program ~derive:false spec_sim config.specenv.relname
       config.specenv.includes_p4 filename_gen_p4
   with
   | Pass (_, _, _, cover) when PIdSet.for_all (SCov.is_hit cover) pids_hit_new
@@ -125,8 +126,9 @@ let update_close_miss_new (fuel : int) (pid : pid) (idx_seed : int)
   (* Then copy the interesting test program to the output directory
      and update the running coverage *)
   let (module Runner : Sim.DRIVER) = config.specenv.runner in
+  let spec_sim = Sim.SL config.specenv.spec in
   match
-    Runner.run_program ~derive:false config.specenv.spec config.specenv.relname
+    Runner.run_program ~derive:false spec_sim config.specenv.relname
       config.specenv.includes_p4 filename_gen_p4
   with
   | Pass (_, _, _, cover)
@@ -431,8 +433,9 @@ let fuzz_seed (fuel : int) (pid : pid) (idx_seed : int) (config : Config.t)
   (* Run SL interpreter on the program,
      and if it is well-typed, start generating tests from it *)
   let (module Runner : Sim.DRIVER) = config.specenv.runner in
+  let spec_sim = Sim.SL config.specenv.spec in
   (match
-     Runner.run_program ~derive config.specenv.spec config.specenv.relname
+     Runner.run_program ~derive spec_sim config.specenv.relname
        config.specenv.includes_p4 filename_p4
    with
   | Pass (_, graph, vid_program, cover) ->

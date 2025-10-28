@@ -53,16 +53,6 @@ rulegroup Stmt_eval/assignmentStatementIR {
 
 rulegroup Stmt_eval/callStatementIR {
 
-  rule Stmt_eval/accept:
-    p EC_0 STO_0 |- routineTargetIR `< typeArgumentIR* > `( argumentIR* ) `;
-                  : EC_2 STO_2 CONT
-    -- Callee_eval:
-        p EC_0 STO_0 |- routineTargetIR `< `_ > `( argumentIR* )
-                      : EC_1 STO_1 (CONT callee)
-    -- Call_eval:
-        p EC_1 STO_1 |- callee `@ `< typeArgumentIR* > `( argumentIR* )
-                      : EC_2 STO_2 acceptTransitionResult
-
   rule Stmt_eval/return:
     p EC_0 STO_0 |- routineTargetIR `< typeArgumentIR* > `( argumentIR* ) `;
                   : EC_2 STO_2 CONT

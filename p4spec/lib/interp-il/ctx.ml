@@ -48,8 +48,6 @@ type local = {
 }
 
 type t = {
-  (* Filename of the source file *)
-  filename : string;
   (* Config *)
   config : config;
   (* Execution trace *)
@@ -247,12 +245,12 @@ let empty_global () : global =
 let empty_local () : local =
   { tdenv = TDEnv.empty; fenv = FEnv.empty; venv = VEnv.empty }
 
-let empty ~(debug : bool) ~(profile : bool) (filename : string) : t =
+let empty ~(debug : bool) ~(profile : bool) : t =
   let config = { debug; profile } in
   let trace = Trace.Empty in
   let global = empty_global () in
   let local = empty_local () in
-  { filename; config; trace; global; local }
+  { config; trace; global; local }
 
 (* Constructing a local context *)
 

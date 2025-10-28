@@ -15,6 +15,7 @@ let fresh () =
 (* Value *)
 
 type t = value
+type id = vid
 
 (* Stringifier *)
 

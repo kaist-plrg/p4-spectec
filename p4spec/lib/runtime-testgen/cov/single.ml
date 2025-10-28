@@ -157,3 +157,4 @@ let collect_miss (cover : Cover.t) : (pid * vid list) list =
 (* Constructor *)
 
 let init (spec : spec) : Cover.t = Cover.init_spec spec
+let empty : Cover.t = Cover.empty

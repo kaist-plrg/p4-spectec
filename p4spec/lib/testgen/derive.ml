@@ -1,5 +1,6 @@
 open Domain.Lib
 open Sl.Ast
+module Sim = Runtime_simulator.Simulator
 module Dep = Runtime_testgen.Dep
 module SCov = Runtime_testgen.Cov.Single
 module F = Format
@@ -60,8 +61,9 @@ let derive_phantom (pid : pid) (graph : Dep.Graph.t) (cover : SCov.Cover.t) :
 let debug_phantom (spec : spec) (relname : string) (includes_p4 : string list)
     (filename_p4 : string) (dirname_debug : string) (pid : pid) : unit =
   let (module Runner) = Arch.Gen.gen_placeholder () in
+  let spec_sim = Sim.SL spec in
   match
-    Runner.run_program ~derive:true spec relname includes_p4 filename_p4
+    Runner.run_program ~derive:true spec_sim relname includes_p4 filename_p4
   with
   | Fail _ -> print_endline "failed"
   | IllFormed _ -> print_endline "ill-formed"

@@ -3,6 +3,26 @@ open Il.Ast
 module Value = Runtime_dynamic.Value
 open Util.Source
 
+(* Conversion between meta-bits and OCaml bool array *)
+
+let bits_of_value (value : value) : bool array =
+  value |> Value.get_list |> List.map Value.get_bool |> Array.of_list
+
+let value_of_bits (bits : bool array) : value =
+  let value =
+    let vid = Value.fresh () in
+    let typ = VarT ("bits" $ no_region, []) in
+    let values_bit =
+      Array.to_list bits
+      |> List.map (fun b ->
+             let vid = Value.fresh () in
+             let typ = BoolT in
+             BoolV b $$$ { vid; typ })
+    in
+    ListV values_bit $$$ { vid; typ }
+  in
+  value
+
 (* Conversion between meta-numerics and OCaml numerics *)
 
 let bigint_of_value (value : value) : Bigint.t =
@@ -108,6 +128,66 @@ let int_to_bitstr (at : region) (targs : targ list) (values_input : value list)
   let width = bigint_of_value value_width in
   let rawint = bigint_of_value value_int in
   int_to_bitstr' width rawint |> value_of_bigint
+
+(* dec $bits_to_int_unsigned(bool* ) : int *)
+
+let bits_to_int_unsigned' (bits : bool array) : Bigint.t =
+  Array.fold_left
+    (fun i bit -> Bigint.((i lsl 1) + if bit then one else zero))
+    Bigint.zero bits
+
+let bits_to_int_unsigned (at : region) (targs : targ list)
+    (values_input : value list) : value =
+  Extract.zero at targs;
+  let value_bits = Extract.one at values_input in
+  let bits = bits_of_value value_bits in
+  bits_to_int_unsigned' bits |> value_of_bigint
+
+(* dec $bits_to_int_signed(bool* ) : int *)
+
+let bits_to_int_signed' (bits : bool array) : Bigint.t =
+  let sign = bits.(0) in
+  let int_unsigned = bits_to_int_unsigned' bits in
+  if sign then
+    let int_max =
+      let len = Array.length bits - 1 in
+      Bigint.(one lsl len)
+    in
+    Bigint.(int_unsigned - (int_max * (one + one)))
+  else int_unsigned
+
+let bits_to_int_signed (at : region) (targs : targ list)
+    (values_input : value list) : value =
+  Extract.zero at targs;
+  let value_bits = Extract.one at values_input in
+  let bits = bits_of_value value_bits in
+  bits_to_int_signed' bits |> value_of_bigint
+
+(* dec $int_to_bits_unsigned(int) : bool* *)
+
+let int_to_bits_unsigned' (value : Bigint.t) (width : int) : bool array =
+  Array.init width (fun i -> Bigint.(value land (one lsl i) > zero))
+  |> Array.to_list |> List.rev |> Array.of_list
+
+let int_to_bits_unsigned (at : region) (targs : targ list)
+    (values_input : value list) : value =
+  Extract.zero at targs;
+  let value_width, value_int = Extract.two at values_input in
+  let width = bigint_of_value value_width |> Bigint.to_int_exn in
+  let value = bigint_of_value value_int in
+  int_to_bits_unsigned' value width |> value_of_bits
+
+(* dec $int_to_bits_signed(int) : bool* *)
+
+let int_to_bits_signed (at : region) (targs : targ list)
+    (values_input : value list) : value =
+  Extract.zero at targs;
+  let value_width, value_int = Extract.two at values_input in
+  let width = bigint_of_value value_width |> Bigint.to_int_exn in
+  let value = bigint_of_value value_int in
+  let mask = Bigint.((one lsl width) - one) in
+  let value = Bigint.(value land mask) in
+  int_to_bits_unsigned' value width |> value_of_bits
 
 (* dec $bneg(int) : int *)
 
