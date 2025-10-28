@@ -209,9 +209,7 @@ let classify_mutation' (fuel : int) (pid : pid) (idx_seed : int)
   in
   (* Write the mutated program to a file *)
   let oc = open_out filename_gen_p4 in
-  F.asprintf "%s\n%a\n" comment_gen_p4
-    (Interface.Unparse.pp_program config.specenv.spec_il)
-    value_program
+  F.asprintf "%s\n%s\n" comment_gen_p4 (config.specenv.printer value_program)
   |> output_string oc;
   close_out oc;
   (* Check if the mutated program is interesting, and if so, update *)

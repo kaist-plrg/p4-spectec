@@ -31,7 +31,7 @@ let timeout_seed = 30
 (* Environment for the spec *)
 type specenv = {
   runner : (module Sim.DRIVER);
-  spec_il : Il.Ast.spec;
+  printer : Sl.Ast.value -> string;
   spec : spec;
   relname : string;
   tdenv : TDEnv.t;
@@ -136,9 +136,12 @@ let load_spec (tdenv : TDEnv.t) (mixopenv : MixopEnv.t) (spec : spec) :
 let init_specenv (spec_il : Il.Ast.spec) (spec : spec) (relname : string)
     (includes_p4 : string list) (filenames_ignore : string list) : specenv =
   let runner = Arch.Gen.gen_placeholder () in
+  let printer value_program =
+    Format.asprintf "%a\n" (Interface.Unparse.pp_program spec_il) value_program
+  in
   let tdenv, mixopenv = load_spec TDEnv.empty MixopEnv.empty spec in
   let ignores = Ignore.init filenames_ignore in
-  { runner; spec_il; spec; relname; tdenv; mixopenv; includes_p4; ignores }
+  { runner; printer; spec; relname; tdenv; mixopenv; includes_p4; ignores }
 
 let init_storage (dirname_gen : string) : storage =
   Util.Filesys.mkdir dirname_gen;
