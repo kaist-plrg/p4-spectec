@@ -9,8 +9,8 @@ module F = Format
 type mode = Code | Prose
 type context = { in_code : bool; in_link : bool }
 
-let default_context = { in_code = false; in_link = false }
-let code_context = { in_code = true; in_link = false }
+let in_prose = { in_code = false; in_link = false }
+let in_code = { in_code = true; in_link = false }
 let code context = { context with in_code = true }
 let link context = { context with in_link = true }
 let adoc_mono ctx s = if ctx.in_code then s else "`" ^ s ^ "`"
@@ -121,8 +121,8 @@ let code_of_var ctx (id, _typ, iters) =
 let render_in_itervars ctx vars : string =
   let render_in_var var =
     F.asprintf "%s in %s"
-      (code_of_var code_context var |> adoc_mono ctx)
-      (code_of_var code_context var ^ code_of_iter Il.Ast.List |> adoc_mono ctx)
+      (code_of_var in_code var |> adoc_mono ctx)
+      (code_of_var in_code var ^ code_of_iter Il.Ast.List |> adoc_mono ctx)
   in
   List.map render_in_var vars |> render_list
 
@@ -133,9 +133,8 @@ let render_out_itervars ctx vars : string =
     else
       Some
         (F.asprintf "%s be the list of %s"
-           (code_of_var code_context var ^ code_of_iter Il.Ast.List
-           |> adoc_mono ctx)
-           (code_of_var code_context var |> adoc_mono ctx))
+           (code_of_var in_code var ^ code_of_iter Il.Ast.List |> adoc_mono ctx)
+           (code_of_var in_code var |> adoc_mono ctx))
   in
   List.filter_map render_out_var vars |> render_list
 
@@ -157,6 +156,10 @@ let code_of_cmpop = Sl.Print.string_of_cmpop
 
 (* Expressions *)
 
+let as_code ctx renderer =
+  let string = renderer () in
+  adoc_mono ctx string
+
 let rec render_exp ctx exp : string =
   match exp.it with
   | BoolE b -> string_of_bool b
@@ -170,18 +173,16 @@ let rec render_exp ctx exp : string =
       F.asprintf "%s does not have type %s" (code_of_exp ctx exp)
         (code_of_typ ctx typ)
   | UnE (unop, _, exp) ->
-      string_of_unop unop ^ render_exp code_context exp |> adoc_mono ctx
+      string_of_unop unop ^ render_exp in_code exp |> adoc_mono ctx
   | BinE (binop, _, exp_l, exp_r) ->
       (* always print as code *)
-      render_exp code_context exp_l
-      ^ " " ^ string_of_binop binop ^ " "
-      ^ render_exp code_context exp_r
+      render_exp in_code exp_l ^ " " ^ string_of_binop binop ^ " "
+      ^ render_exp in_code exp_r
       |> adoc_mono ctx
   | CmpE (cmpop, _, exp_l, exp_r) ->
       if ctx.in_code then
-        render_exp code_context exp_l
-        ^ " " ^ string_of_cmpop cmpop ^ " "
-        ^ render_exp code_context exp_r
+        render_exp in_code exp_l ^ " " ^ string_of_cmpop cmpop ^ " "
+        ^ render_exp in_code exp_r
         |> adoc_mono ctx
       else
         render_exp ctx exp_l ^ " " ^ render_cmpop cmpop ^ " "
@@ -216,19 +217,18 @@ let rec render_exp ctx exp : string =
   | OptE None -> "None" |> adoc_mono ctx
   | ListE [] -> "[ ]" |> adoc_mono ctx
   | ListE exps ->
-      "[" ^ render_exps code_context ~sep:(Some ", ") exps ^ "]"
-      |> adoc_mono ctx
+      "[" ^ render_exps in_code ~sep:(Some ", ") exps ^ "]" |> adoc_mono ctx
   | ConsE (exp_h, exp_t) ->
-      render_exp code_context exp_h ^ " :: " ^ render_exp code_context exp_t
+      render_exp in_code exp_h ^ " :: " ^ render_exp in_code exp_t
       |> adoc_mono ctx
   | CatE (exp_l, exp_r) ->
-      render_exp code_context exp_l ^ " ++ " ^ render_exp code_context exp_r
+      render_exp in_code exp_l ^ " ++ " ^ render_exp in_code exp_r
       |> adoc_mono ctx
   | MemE (exp_e, exp_s) ->
       render_exp ctx exp_e ^ " is in " ^ render_exp ctx exp_s
   | LenE exp -> "the length of " ^ render_exp ctx exp
   | DotE (exp_b, atom) ->
-      render_exp code_context exp_b ^ "." ^ code_of_atom atom |> adoc_mono ctx
+      render_exp in_code exp_b ^ "." ^ code_of_atom atom |> adoc_mono ctx
   | IdxE (exp_b, exp_i) ->
       render_exp ctx exp_b ^ "[" ^ render_exp ctx exp_i ^ "]"
   | SliceE (exp_b, exp_l, exp_h) ->
@@ -243,7 +243,7 @@ let rec render_exp ctx exp : string =
         adoc_link ~link:id.it
           ~text:
             (string_of_defid id ^ string_of_targs targs
-            ^ render_args code_context args)
+           ^ render_args in_code args)
         |> adoc_mono ctx
       else
         match funcprose with
@@ -265,12 +265,11 @@ let rec render_exp ctx exp : string =
             adoc_link ~link:id.it
               ~text:
                 (string_of_defid id ^ string_of_targs targs
-                ^ render_args code_context args)
+               ^ render_args in_code args)
             |> adoc_mono ctx)
   | IterE (exp, iterexp) ->
       if snd iterexp = [] then render_exp ctx exp
-      else
-        render_exp code_context exp ^ code_of_iterexp iterexp |> adoc_mono ctx
+      else render_exp in_code exp ^ code_of_iterexp iterexp |> adoc_mono ctx
 
 (* if sep is None, use natural language list *)
 
@@ -279,7 +278,7 @@ and render_exps ctx ?(sep : string option = None) exps =
   | None -> render_list (List.map (render_exp ctx) exps)
   | Some s -> String.concat s (List.map (render_exp ctx) exps)
 
-and code_of_exp ctx (exp : exp) = render_exp code_context exp |> adoc_mono ctx
+and code_of_exp ctx (exp : exp) = render_exp in_code exp |> adoc_mono ctx
 
 and code_of_exps ctx ?(sep : string option = None) (exps : exp list) =
   match sep with
@@ -292,7 +291,7 @@ and code_of_notexp ctx notexp =
   let len = List.length mixop + List.length exps in
   List.init len (fun idx ->
       if idx mod 2 = 0 then idx / 2 |> List.nth mixop |> code_of_atoms
-      else idx / 2 |> List.nth exps |> render_exp code_context)
+      else idx / 2 |> List.nth exps |> render_exp in_code)
   |> List.filter_map (fun str -> if str = "" then None else Some str)
   |> String.concat " " |> adoc_mono ctx
 
@@ -345,7 +344,7 @@ and render_renderer ctx (renderer : relcall) id : string =
   match renderer with
   | Prose (hintexp, [], exps_in) -> render_hintexp ctx exps_in hintexp
   | Prose (hintexp, exps_out, exps_in) -> assert false
-  | Mixop (mixop, exps) -> code_of_relinput default_context (mixop, exps)
+  | Mixop (mixop, exps) -> code_of_relinput in_prose (mixop, exps)
 
 (* Paths *)
 
@@ -376,26 +375,26 @@ let render_relcall ?(level = 0) (relcall : relcall) rid : string =
   match relcall with
   | Prose (hintexp, [], exps_in) ->
       adoc_link ~link:(string_of_relid rid)
-        ~text:(render_hintexp default_context exps_in hintexp)
+        ~text:(render_hintexp in_prose exps_in hintexp)
   | Prose (hintexp, exps_out, exps_in) ->
       F.asprintf "%s be the result of %s"
-        (code_of_exps default_context exps_out)
+        (code_of_exps in_prose exps_out)
         (adoc_link ~link:(string_of_relid rid)
-           ~text:(render_hintexp default_context exps_in hintexp))
+           ~text:(render_hintexp in_prose exps_in hintexp))
   | Mixop (mixop, exps) ->
       adoc_link ~link:(string_of_relid rid)
-        ~text:(code_of_notexp default_context (mixop, exps))
+        ~text:(code_of_notexp in_prose (mixop, exps))
 
 let render_reldef (relcall : relcall) rid : string =
   match relcall with
   | Prose (hintexp, [], exps_in) ->
       adoc_link ~link:(string_of_relid rid)
-        ~text:(render_hintexp default_context exps_in hintexp)
+        ~text:(render_hintexp in_prose exps_in hintexp)
       ^ " is defined as:"
   | Prose (hintexp, exps_out, exps_in) -> assert false
   | Mixop (mixop, exps) ->
       adoc_link ~link:(string_of_relid rid)
-        ~text:(code_of_relinput default_context (mixop, exps))
+        ~text:(code_of_relinput in_prose (mixop, exps))
 
 (* Conditions *)
 
@@ -423,8 +422,8 @@ let rec render_instr ?(level = 0) ?(unordered = false) (instr : instr) : string
     when Eq.eq_exp exp_r exp ->
       F.asprintf "%s%slet %s be %s:%s" bullet
         (render_branchtype branchtype)
-        (code_of_exp default_context exp_l)
-        (render_exp default_context exp_r)
+        (as_code in_prose (fun () -> render_exp in_code exp_l))
+        (render_exp in_prose exp_r)
         (render_instrs ~level:(level + 1) instrs_rest)
   | BranchI
       ( branchtype,
@@ -434,62 +433,60 @@ let rec render_instr ?(level = 0) ?(unordered = false) (instr : instr) : string
     when Eq.eq_exp exp_r exp && Eq.eq_typ typ_r typ ->
       F.asprintf "%s%slet %s be %s:%s" bullet
         (render_branchtype branchtype)
-        (code_of_exp default_context exp_l)
-        (render_exp default_context exp_r)
+        (as_code in_prose (fun () -> render_exp in_code exp_l))
+        (render_exp in_prose exp_r)
         (render_instrs ~level:(level + 1) instrs_rest)
   | BranchI (branchtype, cond, instrs) ->
       F.asprintf "%s%s%s:%s" bullet
         (render_branchtype branchtype)
-        (render_cond default_context cond)
+        (render_cond in_prose cond)
         (render_instrs ~level:(level + 1) instrs)
   | OtherwiseI instr ->
       F.asprintf "%sOtherwise:%s" bullet
         (render_instrs ~level:(level + 1) [ instr ])
   | CheckI cond ->
-      F.asprintf "%sCheck that %s." bullet (render_cond default_context cond)
+      F.asprintf "%sCheck that %s." bullet (render_cond in_prose cond)
   | LetI (exp_l, exp_r) ->
       F.asprintf "%sLet %s be %s." bullet
-        (code_of_exp default_context exp_l)
-        (render_exp default_context exp_r)
+        (as_code in_prose (fun () -> render_exp in_code exp_l))
+        (render_exp in_prose exp_r)
   | RelI (relcall, rid) ->
       F.asprintf "%sLet %s." bullet (render_relcall ~level relcall rid)
-  | ReturnI exp ->
-      F.asprintf "%sReturn %s." bullet (code_of_exp default_context exp)
+  | ReturnI exp -> F.asprintf "%sReturn %s." bullet (code_of_exp in_prose exp)
   | ResultI (Some hintexp, exps) ->
-      F.asprintf "%sResult in %s." bullet
-        (render_hintexp default_context exps hintexp)
+      F.asprintf "%sResult in %s." bullet (render_hintexp in_prose exps hintexp)
   | ResultI (None, []) -> bullet ^ "The relation holds."
   | ResultI (None, exps) ->
-      F.asprintf "%sResult in %s." bullet (render_exps default_context exps)
+      F.asprintf "%sResult in %s." bullet (render_exps in_prose exps)
   | GroupI (id, _, instrs) ->
       F.asprintf "%sGroup %s:%s" bullet (string_of_relpathid id)
         (render_instrs ~level:(level + 1) instrs)
   | ForEachI ([], instr, vars_in) ->
       F.asprintf "%s%s, for each %s" bullet
         (render_instr ~level instr)
-        (render_in_itervars default_context vars_in)
+        (render_in_itervars in_prose vars_in)
   | ForEachI (vars_out, instr, vars_in) ->
       F.asprintf "%sLet %s, obtained by repeating:\n%s%s\n%sfor each %s" bullet
-        (render_out_itervars default_context vars_out)
+        (render_out_itervars in_prose vars_out)
         (adoc_attach_block level)
         (render_instr ~level:(level + 1) ~unordered:true instr
         |> adoc_open_block level)
         (adoc_attach_block level)
-        (render_in_itervars default_context vars_in)
+        (render_in_itervars in_prose vars_in)
   | CheckLetI (exp_l, exp_r) ->
       F.asprintf "%sLet!~type~ %s be %s." bullet
-        (code_of_exp default_context exp_l)
-        (render_exp default_context exp_r)
+        (code_of_exp in_prose exp_l)
+        (render_exp in_prose exp_r)
   | OptionGetI (exp_l, exp_r) ->
       F.asprintf "%sLet!~option~ %s be %s." bullet
-        (code_of_exp default_context exp_l)
-        (render_exp default_context exp_r)
+        (code_of_exp in_prose exp_l)
+        (render_exp in_prose exp_r)
 
 and render_instrs ?(level = 0) instrs =
   let instrs = Shorthand.apply_all_shorthands instrs in
   match instrs with
   | [ { it = ReturnI ({ it = BoolE b; _ } as exp); _ } ] ->
-      F.asprintf " return %s." (code_of_exp default_context exp)
+      F.asprintf " return %s." (code_of_exp in_prose exp)
   | instrs ->
       "\n" ^ (List.map (render_instr ~level) instrs |> String.concat "\n")
 
@@ -497,7 +494,7 @@ let render_def (def : def) : string =
   match def.it with
   | RelD (relid, exps_input, instrs) ->
       "\n\nrelation " ^ string_of_relid relid ^ ": "
-      ^ render_exps default_context exps_input
+      ^ render_exps in_prose exps_input
       ^ "\n\n" ^ render_instrs instrs
   | DecD _ -> ""
 
@@ -521,13 +518,11 @@ let render_funcdef (funcprose : funcprose) (tparams : tparam list)
   in
   match funcprose with
   | BoolProse (_id, prose_true, _prose_false) ->
-      render_hintexp default_context exps_input prose_true
-  | InputProse (_id, prose_in) ->
-      render_hintexp default_context exps_input prose_in
+      render_hintexp in_prose exps_input prose_true
+  | InputProse (_id, prose_in) -> render_hintexp in_prose exps_input prose_in
   | Def id ->
-      string_of_defid id ^ string_of_tparams tparams
-      ^ render_args code_context args
-      |> adoc_mono default_context
+      string_of_defid id ^ string_of_tparams tparams ^ render_args in_code args
+      |> adoc_mono in_prose
 
 let render_func (funcprose, tparams, args, instrs) : string =
   F.asprintf "%s\n\n%s"
