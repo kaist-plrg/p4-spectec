@@ -9,7 +9,6 @@ module Rel = Runtime_dynamic_sl.Rel
 open Runtime_dynamic_sl.Envs
 module Sim = Runtime_simulator.Simulator
 module Dep = Runtime_testgen.Dep
-module Ignore = Runtime_testgen.Cov.Ignore
 module SCov = Runtime_testgen.Cov.Single
 module MCov = Runtime_testgen.Cov.Multiple
 open Error
@@ -1535,14 +1534,12 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP = struct
     | None -> error no_region (F.asprintf "relation %s was not matched" relname)
 
   let eval_program ~(derive : bool) (spec : spec) (relname : string)
-      (includes_p4 : string list) (filename_p4 : string)
-      (filenames_ignore : string list) : Sim.program_result =
+      (includes_p4 : string list) (filename_p4 : string) : Sim.program_result =
     Builtin.init ();
     Value.refresh ();
     Cache.Cache.clear !func_cache;
     Cache.Cache.clear !rule_cache;
-    let ignores = Ignore.init filenames_ignore in
-    let cover = ref (SCov.init ignores spec) in
+    let cover = ref (SCov.init spec) in
     try
       let value_program = Interface.Parse.parse_file includes_p4 filename_p4 in
       let graph = Dep.Graph.assemble_graph value_program in
@@ -1554,32 +1551,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP = struct
     | Util.Error.ParseError (at, msg) -> Sim.IllFormed (at, msg, !cover)
     | Util.Error.InterpError (at, msg) -> Sim.Fail (at, msg, !cover)
 
-  let eval_program_with_ignores ~(derive : bool) (spec : spec)
-      (relname : string) (includes_p4 : string list) (filename_p4 : string)
-      (ignores : IdSet.t) : Sim.program_result =
+  let eval_rel (spec : spec) (relname : string) (values_input : value list) :
+      Sim.rel_result =
     Builtin.init ();
     Value.refresh ();
     Cache.Cache.clear !func_cache;
     Cache.Cache.clear !rule_cache;
-    let cover = ref (SCov.init ignores spec) in
-    try
-      let value_program = Interface.Parse.parse_file includes_p4 filename_p4 in
-      let graph = Dep.Graph.assemble_graph value_program in
-      let vdg = Ctx.{ graph; vid_program = value_program.note.vid } in
-      let ctx = Ctx.empty_end_to_end ~derive vdg cover in
-      let values_output = do_eval_rel ctx spec relname [ value_program ] in
-      Sim.Pass (values_output, graph, value_program.note.vid, !(ctx.coverage))
-    with
-    | Util.Error.ParseError (at, msg) -> Sim.IllFormed (at, msg, !cover)
-    | Util.Error.InterpError (at, msg) -> Sim.Fail (at, msg, !cover)
-
-  let eval_rel ?(ignores = IdSet.empty) (spec : spec) (relname : string)
-      (values_input : value list) : Sim.rel_result =
-    Builtin.init ();
-    Value.refresh ();
-    Cache.Cache.clear !func_cache;
-    Cache.Cache.clear !rule_cache;
-    let cover = ref (SCov.init ignores spec) in
+    let cover = ref (SCov.init spec) in
     let ctx = Ctx.empty_partial cover in
     let ctx = load_spec ctx spec in
     try
@@ -1597,7 +1575,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP = struct
     Value.refresh ();
     Cache.Cache.clear !func_cache;
     Cache.Cache.clear !rule_cache;
-    let cover = ref (SCov.init IdSet.empty spec) in
+    let cover = ref (SCov.init spec) in
     let ctx = Ctx.empty_partial cover in
     let ctx = load_spec ctx spec in
     try
@@ -1611,16 +1589,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP = struct
   (* Entry point for coverage *)
 
   let cover_programs (spec : spec) (relname : string)
-      (includes_p4 : string list) (filenames_p4 : string list)
-      (filenames_ignore : string list) : MCov.Cover.t =
-    let ignores = Ignore.init filenames_ignore in
-    let cover_multi = MCov.init ignores spec in
+      (includes_p4 : string list) (filenames_p4 : string list) : MCov.Cover.t =
+    let cover_multi = MCov.init spec in
     List.fold_left
       (fun cover_multi filename_p4 ->
         let wellformed, welltyped, cover_single =
           match
-            eval_program_with_ignores ~derive:false spec relname includes_p4
-              filename_p4 ignores
+            eval_program ~derive:false spec relname includes_p4 filename_p4
           with
           | Pass (_, _, _, cover_single) -> (true, true, cover_single)
           | Fail (_, _, cover_single) -> (true, false, cover_single)

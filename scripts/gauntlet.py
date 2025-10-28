@@ -370,8 +370,6 @@ class GauntletRunner:
             "-i", str(self.project_root / "p4c" / "p4include"),
             "-d", str(loop_dir),
             "-cov", str(cov_file),
-            "-ignore", str(self.project_root / "ignores" / "function.ignore"),
-            "-ignore", str(self.project_root / "ignores" / "relation.ignore"),
         ]
 
         print(f"Measuring coverage for {loop_name}...")

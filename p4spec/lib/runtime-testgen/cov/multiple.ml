@@ -91,16 +91,18 @@ module Cover = struct
   and init_instrs (cover : t) (id : id) (instrs : instr list) : t =
     List.fold_left (fun cover instr -> init_instr cover id instr) cover instrs
 
-  let init_def (ignores : IdSet.t) (cover : t) (def : def) : t =
+  let init_def (cover : t) (def : def) : t =
     match def.it with
     | TypD _ -> cover
-    | RelD (id, _, _, instrs, _) ->
-        if IdSet.mem id ignores then cover else init_instrs cover id instrs
-    | DecD (id, _, _, _, instrs, _) ->
-        if IdSet.mem id ignores then cover else init_instrs cover id instrs
+    | RelD (id, _, _, instrs, hints) | DecD (id, _, _, _, instrs, hints) ->
+        if
+          List.exists
+            (fun (hint : hint) -> hint.hintid.it = "testgen_ignore")
+            hints
+        then cover
+        else init_instrs cover id instrs
 
-  let init_spec (ignores : IdSet.t) (spec : spec) : t =
-    List.fold_left (init_def ignores) empty spec
+  let init_spec (spec : spec) : t = List.fold_left init_def empty spec
 
   (* Load from file *)
 
@@ -251,7 +253,5 @@ let log ~(filename_cov_opt : string option) (cover : Cover.t) : unit =
 
 (* Constructor *)
 
-let init (ignores : IdSet.t) (spec : spec) : Cover.t =
-  Cover.init_spec ignores spec
-
+let init (spec : spec) : Cover.t = Cover.init_spec spec
 let load (filename : string) : Cover.t = Cover.load_file filename

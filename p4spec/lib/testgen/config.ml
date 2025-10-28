@@ -3,7 +3,6 @@ open Sl.Ast
 module TDEnv = Runtime_dynamic_sl.Envs.TDEnv
 module Mixops = Runtime_testgen.Mixops
 module MixopEnv = Runtime_testgen.Envs.MixopEnv
-module Ignore = Runtime_testgen.Cov.Ignore
 module SCov = Runtime_testgen.Cov.Single
 module MCov = Runtime_testgen.Cov.Multiple
 module Sim = Runtime_simulator.Simulator
@@ -37,7 +36,6 @@ type specenv = {
   tdenv : TDEnv.t;
   mixopenv : MixopEnv.t;
   includes_p4 : string list;
-  ignores : IdSet.t;
 }
 
 (* Storage for generated files *)
@@ -134,14 +132,13 @@ let load_spec (tdenv : TDEnv.t) (mixopenv : MixopEnv.t) (spec : spec) :
 (* Constructor *)
 
 let init_specenv (spec_il : Il.Ast.spec) (spec : spec) (relname : string)
-    (includes_p4 : string list) (filenames_ignore : string list) : specenv =
+    (includes_p4 : string list) : specenv =
   let runner = Arch.Gen.gen_placeholder () in
   let printer value_program =
     Format.asprintf "%a\n" (Interface.Unparse.pp_program spec_il) value_program
   in
   let tdenv, mixopenv = load_spec TDEnv.empty MixopEnv.empty spec in
-  let ignores = Ignore.init filenames_ignore in
-  { runner; printer; spec; relname; tdenv; mixopenv; includes_p4; ignores }
+  { runner; printer; spec; relname; tdenv; mixopenv; includes_p4 }
 
 let init_storage (dirname_gen : string) : storage =
   Util.Filesys.mkdir dirname_gen;

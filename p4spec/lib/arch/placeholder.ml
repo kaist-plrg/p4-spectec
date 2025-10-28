@@ -14,8 +14,7 @@ module Make (Interp : Sim.INTERP) : Sim.ARCH = struct
       "eval_extern_method_call not implemented for the placeholder simulator"
 
   let init_pipe (_spec : Sl.Ast.spec) (_includes_p4 : string list)
-      (_filename_p4 : string) (filenames_ignore : string list) :
-      Sl.Ast.value * Sl.Ast.value =
+      (_filename_p4 : string) : Sl.Ast.value * Sl.Ast.value =
     error_no_region "init_pipe not implemented for the placeholder simulator"
 
   let drive_pipe (_value_ctx : Sl.Ast.value) (_value_sto : Sl.Ast.value)

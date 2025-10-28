@@ -49,7 +49,6 @@ def run_coverage(
     relname : str,
     include: Directory,
     exclude: Directory,
-    ignore_files: List[Filepath],
     testdata: Directory,
     output_path: Filepath,
 ) -> None:
@@ -81,7 +80,6 @@ def run_coverage(
         "-d",
         testdata,
         *[cmd for file in coverage_dirs for cmd in ["-d", file]],
-        *[cmd for file in ignore_files for cmd in ["-ignore", file]],
         "-cov",
         output_path,
     ]
@@ -142,13 +140,6 @@ if __name__ == "__main__":
         help="Exclude directory for P4 tests",
     )
     parser.add_argument(
-        "--ignores",
-        nargs="*",
-        type=Directory,
-        default=["ignores/relation.ignore", "ignores/function.ignore"],
-        help="List of ignore files for skipping phantom ids",
-    )
-    parser.add_argument(
         "--testdata",
         type=Directory,
         default="p4c/testdata/p4_16_samples",
@@ -182,7 +173,6 @@ if __name__ == "__main__":
         exit(1)
     print(f"[CONFIG] Testdata directory: {TESTDATA_DIR}")
 
-    IGNORE_FILES: List[Filepath] = args.ignores
     WORK_DIR: Directory = Directory(args.dir)
 
     # P4SPECTEC_PATH must be set
@@ -208,7 +198,6 @@ if __name__ == "__main__":
         RELNAME,
         INCLUDE_DIR,
         EXCLUDE_DIR,
-        IGNORE_FILES,
         TESTDATA_DIR,
         OUTPUT_PATH,
     )

@@ -20,11 +20,13 @@ dec $bitacc(int, int, int) : int
 ;;
 
 dec $un_op(unop, value) : value
+  hint(testgen_ignore)
   hint(prose_in %0 %1)
 
 ;;; Unary bitwise not
 
 dec $un_bnot(value) : value
+  hint(testgen_ignore)
 
 def $un_bnot(w W i) = w W i'
   -- if i' = $bneg(i)
@@ -34,6 +36,7 @@ def $un_op(`~, value) = $un_bnot(value)
 ;;; Unary logical not
 
 dec $un_lnot(value) : value
+  hint(testgen_ignore)
 
 def $un_lnot(B b) = B (~b)
 
@@ -42,6 +45,7 @@ def $un_op(`!, value) = $un_lnot(value)
 ;;; Unary plus
 
 dec $un_plus(value) : value
+  hint(testgen_ignore)
 
 def $un_plus(D i) = D i
 def $un_plus(w W i) = w W i
@@ -52,6 +56,7 @@ def $un_op(`+, value) = $un_plus(value)
 ;;; Unary minus
 
 dec $un_minus(value) : value
+  hint(testgen_ignore)
 
 def $un_minus(D i) = D $(-i)
 def $un_minus(w W i) = w W i'
@@ -66,11 +71,13 @@ def $un_op(`-, value) = $un_minus(value)
 ;;
 
 dec $bin_op(binop, value, value) : value
+  hint(testgen_ignore)
   hint(prose_in %1 %0 %2)
 
 ;;; Binary plus
 
 dec $bin_plus(value, value) : value
+  hint(testgen_ignore)
 
 def $bin_plus(D i_l, D i_r) = D $(i_l + i_r)
 def $bin_plus(w W i_l, w W i_r) = w W i'
@@ -87,12 +94,14 @@ def $bin_op(`+, value_l, value_r) = $bin_plus(value_l, value_r)
 ;;; Binary saturating plus
 
 dec $bin_satplus(value, value) : value 
+  hint(testgen_ignore)
 
 def $bin_op(`|+|, value_l, value_r) = $bin_satplus(value_l, value_r)
 
 ;;; Binary minus
 
 dec $bin_minus(value, value) : value
+  hint(testgen_ignore)
 
 def $bin_minus(D i_l, D i_r) = D $(i_l - i_r)
 def $bin_minus(w W i_l, w W i_r) = w W i'
@@ -109,12 +118,14 @@ def $bin_op(`-, value_l, value_r) = $bin_minus(value_l, value_r)
 ;;; Binary saturating minus
 
 dec $bin_satminus(value, value) : value
+  hint(testgen_ignore)
 
 def $bin_op(`|-|, value_l, value_r) = $bin_satminus(value_l, value_r)
 
 ;;; Binary multiplication
 
 dec $bin_mul(value, value) : value
+  hint(testgen_ignore)
 
 def $bin_mul(D i_l, D i_r) = D $(i_l * i_r)
 def $bin_minus(w W i_l, w W i_r) = w W i'
@@ -131,6 +142,7 @@ def $bin_op(`*, value_l, value_r) = $bin_mul(value_l, value_r)
 ;;; Binary division
 
 dec $bin_div(value, value) : value
+  hint(testgen_ignore)
 
 def $bin_div(D i_l, D i_r) = D $(i_l / i_r)
 
@@ -139,6 +151,7 @@ def $bin_op(`/, value_l, value_r) = $bin_div(value_l, value_r)
 ;;; Binary modulo
 
 dec $bin_mod(value, value) : value
+  hint(testgen_ignore)
 
 def $bin_mod(D i_l, D i_r) = D $(i_l \ i_r)
 
@@ -147,6 +160,7 @@ def $bin_op(`%, value_l, value_r) = $bin_mod(value_l, value_r)
 ;;; Binary shift left
 
 dec $bin_shl(value, value) : value
+  hint(testgen_ignore)
 
 def $bin_shl(D i_l, D i_r) = D $shl(i_l, i_r)
 def $bin_shl(D i_l, w_r W i_r) = D $shl(i_l, i_r)
@@ -176,6 +190,7 @@ def $bin_op(`<<, value_l, value_r) = $bin_shl(value_l, value_r)
 ;;; Binary shift right
 
 dec $bin_shr(value, value) : value
+  hint(testgen_ignore)
 
 def $bin_shr(D i_l, D i_r) = D $shr(i_l, i_r)
 def $bin_shr(D i_l, w_r W i_r) = D $shr(i_l, i_r)
@@ -228,6 +243,7 @@ def $bin_op(`>>, value_l, value_r) = $bin_shr(value_l, value_r)
 ;;; Binary less than or equal
 
 dec $bin_le(value, value) : bool
+  hint(testgen_ignore)
 
 def $bin_le(D i_l, D i_r) = $(i_l <= i_r)
 def $bin_le(w W i_l, w W i_r) = $(i_l <= i_r)
@@ -240,6 +256,7 @@ def $bin_op(`<=, value_l, value_r) = B $bin_le(value_l, value_r)
 ;;; Binary greater than or equal
 
 dec $bin_ge(value, value) : bool
+  hint(testgen_ignore)
 
 def $bin_ge(D i_l, D i_r) = $(i_l >= i_r)
 def $bin_ge(w W i_l, w W i_r) = $(i_l >= i_r)
@@ -252,6 +269,7 @@ def $bin_op(`>=, value_l, value_r) = B $bin_ge(value_l, value_r)
 ;;; Binary less than
 
 dec $bin_lt(value, value) : bool
+  hint(testgen_ignore)
 
 def $bin_lt(D i_l, D i_r) = $(i_l < i_r)
 def $bin_lt(w W i_l, w W i_r) = $(i_l < i_r)
@@ -264,6 +282,7 @@ def $bin_op(``<, value_l, value_r) = B $bin_lt(value_l, value_r)
 ;;; Binary greater than
 
 dec $bin_gt(value, value) : bool
+  hint(testgen_ignore)
 
 def $bin_gt(D i_l, D i_r) = $(i_l > i_r)
 def $bin_gt(w W i_l, w W i_r) = $(i_l > i_r)
@@ -276,8 +295,11 @@ def $bin_op(``>, value_l, value_r) = B $bin_gt(value_l, value_r)
 ;;; Binary equals
 
 dec $bin_eq(value, value) : bool
+  hint(testgen_ignore)
 dec $bin_eqs(value*, value*) : bool
+  hint(testgen_ignore)
 dec $bin_eqs_fields((value, id)*, (value, id)*) : bool
+  hint(testgen_ignore)
 
 def $bin_eq(primitiveValue_a, primitiveValue_b)
   = (primitiveValue_a = primitiveValue_b)
@@ -337,6 +359,7 @@ def $bin_op(`==, value_l, value_r) = B $bin_eq(value_l, value_r)
 ;;; Binary not equals
 
 dec $bin_ne(value, value) : bool
+  hint(testgen_ignore)
 
 def $bin_ne(value_l, value_r) = ~$bin_eq(value_l, value_r)
 
@@ -345,6 +368,7 @@ def $bin_op(`!=, value_l, value_r) = B $bin_ne(value_l, value_r)
 ;;; Binary bitwise and
 
 dec $bin_band(value, value) : value
+  hint(testgen_ignore)
 
 def $bin_band(w W i_l, w W i_r) = w W i'
   -- if i' = $int_to_bitstr(w, $band(i_l, i_r))
@@ -358,6 +382,7 @@ def $bin_op(`&, value_l, value_r) = $bin_band(value_l, value_r)
 ;;; Binary bitwise xor
 
 dec $bin_bxor(value, value) : value
+  hint(testgen_ignore)
 
 def $bin_bxor(w W i_l, w W i_r) = w W i'
   -- if i' = $int_to_bitstr(w, $bxor(i_l, i_r))
@@ -371,6 +396,7 @@ def $bin_op(`^, value_l, value_r) = $bin_bxor(value_l, value_r)
 ;;; Binary bitwise or
 
 dec $bin_bor(value, value) : value
+  hint(testgen_ignore)
 
 def $bin_bor(w W i_l, w W i_r) = w W i'
   -- if i' = $int_to_bitstr(w, $bor(i_l, i_r))
@@ -384,6 +410,7 @@ def $bin_op(`|, value_l, value_r) = $bin_bor(value_l, value_r)
 ;;; Binary bitwise concat
 
 dec $bin_concat(value, value) : value
+  hint(testgen_ignore)
 
 def $bin_concat(w_l W i_l, w_r W i_r) = w W i''
   -- if i_l' = $shl(i_l, w_r)
@@ -413,12 +440,14 @@ def $bin_op(`++, value_l, value_r) = $bin_concat(value_l, value_r)
 ;;; Binary logical and
 
 dec $bin_land(value, value) : value
+  hint(testgen_ignore)
 
 def $bin_land(B b_l, B b_r) = B (b_l /\ b_r)
 
 ;;; Binary logical or
 
 dec $bin_lor(value, value) : value
+  hint(testgen_ignore)
 
 def $bin_lor(B b_l, B b_r) = B (b_l \/ b_r)
 
@@ -427,6 +456,7 @@ def $bin_lor(B b_l, B b_r) = B (b_l \/ b_r)
 ;;
 
 dec $cast_op(typeIR, value) : value
+  hint(testgen_ignore)
   hint(prose_in "cast" %1 "to type" %0)
 
 dec $default(typeIR) : value
@@ -437,7 +467,9 @@ dec $default'(typeIR) : value
 ;;; Cast from boolean
 
 dec $cast_bool(typeIR, bool) : value
+  hint(testgen_ignore)
 dec $cast_bool'(typeIR, bool) : value
+  hint(testgen_ignore)
 
 def $cast_bool(typeIR, b) = $cast_bool'($canon(typeIR), b)
 
@@ -451,7 +483,9 @@ def $cast_op(typeIR, B b) = $cast_bool(typeIR, b)
 ;;; Cast from integer
 
 dec $cast_arbint(typeIR, int) : value
+  hint(testgen_ignore)
 dec $cast_arbint'(typeIR, int) : value
+  hint(testgen_ignore)
 
 def $cast_arbint(typeIR, i) = $cast_arbint'($canon(typeIR), i)
 
@@ -467,7 +501,9 @@ def $cast_op(typeIR, D i) = $cast_arbint(typeIR, i)
 ;;; Cast from fixed unsigned integer
 
 dec $cast_fixbit(typeIR, nat, int) : value
+  hint(testgen_ignore)
 dec $cast_fixbit'(typeIR, nat, int) : value
+  hint(testgen_ignore)
 
 def $cast_fixbit(typeIR, w, i) = $cast_fixbit'($canon(typeIR), w, i)
 
@@ -485,7 +521,9 @@ def $cast_op(typeIR, w W i) = $cast_fixbit(typeIR, w, i)
 ;;; Cast from fixed signed integer
 
 dec $cast_fixint(typeIR, nat, int) : value
+  hint(testgen_ignore)
 dec $cast_fixint'(typeIR, nat, int) : value
+  hint(testgen_ignore)
 
 def $cast_fixint(typeIR, w, i) = $cast_fixint'($canon(typeIR), w, i)
 
@@ -502,7 +540,9 @@ def $cast_op(typeIR, w S i) = $cast_fixint(typeIR, w, i)
 ;;; Cast from struct
 
 dec $cast_struct(typeIR, tid, (value, id)*) : value
+  hint(testgen_ignore)
 dec $cast_struct'(typeIR, tid, (value, id)*) : value
+  hint(testgen_ignore)
 
 def $cast_struct(typeIR, tid, (value_f, id_f)*)
   = $cast_struct'($canon(typeIR), tid, (value_f, id_f)*)
@@ -516,7 +556,9 @@ def $cast_op(typeIR, STRUCT tid `{ (value_f id_f `;)* })
 ;;; Cast from header
 
 dec $cast_header(typeIR, tid, bool, (value, id)*) : value
+  hint(testgen_ignore)
 dec $cast_header'(typeIR, tid, bool, (value, id)*) : value
+  hint(testgen_ignore)
 
 def $cast_header(typeIR, tid, b, (value_f, id_f)*)
   = $cast_header'($canon(typeIR), tid, b, (value_f, id_f)*)
@@ -534,7 +576,9 @@ def $cast_op(typeIR, _ `. _ `# value) = $cast_op(typeIR, value)
 ;; Cast from sequence
 
 dec $cast_sequence(typeIR, value*) : value
+  hint(testgen_ignore)
 dec $cast_sequence'(typeIR, value*) : value
+  hint(testgen_ignore)
 
 def $cast_sequence(typeIR, value*)
   = $cast_sequence'($canon(typeIR), value*)
@@ -565,7 +609,9 @@ def $cast_op(typeIR, SEQ `( value* )) = $cast_sequence(typeIR, value*)
 ;; Cast from record
 
 dec $cast_record(typeIR, (value, id)*) : value
+  hint(testgen_ignore)
 dec $cast_record'(typeIR, (value, id)*) : value
+  hint(testgen_ignore)
 
 def $cast_record(typeIR, (value, id)*)
   = $cast_record'($canon(typeIR), (value, id)*)
@@ -600,7 +646,9 @@ def $cast_op(typeIR, DEFAULT) = $default(typeIR)
 ;; Cast from set
 
 dec $cast_set_singleton(typeIR, value) : value
+  hint(testgen_ignore)
 dec $cast_set_singleton'(typeIR, value) : value
+  hint(testgen_ignore)
 
 def $cast_set_singleton(typeIR, value)
   = $cast_set_singleton'($canon(typeIR), value)
@@ -609,7 +657,9 @@ def $cast_set_singleton'(SET `< typeIR >, value)
   = SET `{ $cast_op(typeIR, value) }
 
 dec $cast_set_mask(typeIR, value, value) : value
+  hint(testgen_ignore)
 dec $cast_set_mask'(typeIR, value, value) : value
+  hint(testgen_ignore)
 
 def $cast_set_mask(typeIR, value_b, value_m)
   = $cast_set_mask'($canon(typeIR), value_b, value_m)
@@ -620,7 +670,9 @@ def $cast_set_mask'(SET `< typeIR >, value_b, value_m)
   -- if value_m_cast = $cast_op(typeIR, value_m)
 
 dec $cast_set_range(typeIR, value, value) : value
+  hint(testgen_ignore)
 dec $cast_set_range'(typeIR, value, value) : value
+  hint(testgen_ignore)
 
 def $cast_set_range(typeIR, value_l, value_u)
   = $cast_set_range'($canon(typeIR), value_l, value_u)
@@ -686,6 +738,7 @@ def $default'(ENUM tid `# typeIR `{ (id_f `= value_f `;)* })
 ;;
 
 dec $bitacc_op(value, value, value) : value
+  hint(testgen_ignore)
 
 def $bitacc_op(value_b, value_h, value_l) = w W i
   -- if i_b = $to_number(value_b)
@@ -699,18 +752,27 @@ def $bitacc_op(value_b, value_h, value_l) = w W i
 ;;
 
 dec $sizeof(typeIR, id) : value
+  hint(testgen_ignore)
 
 dec $sizeof_minSizeInBits(typeIR) : value
+  hint(testgen_ignore)
 dec $sizeof_minSizeInBits'(typeIR) : nat
+  hint(testgen_ignore)
 dec $sizeof_minSizeInBits''(typeIR) : nat
+  hint(testgen_ignore)
 
 dec $sizeof_minSizeInBytes(typeIR) : value
+  hint(testgen_ignore)
 
 dec $sizeof_maxSizeInBits(typeIR) : value
+  hint(testgen_ignore)
 dec $sizeof_maxSizeInBits'(typeIR) : nat
+  hint(testgen_ignore)
 dec $sizeof_maxSizeInBits''(typeIR) : nat
+  hint(testgen_ignore)
 
 dec $sizeof_maxSizeInBytes(typeIR) : value
+  hint(testgen_ignore)
 
 ;;; Minimum size in bits
 

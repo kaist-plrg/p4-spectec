@@ -113,12 +113,11 @@ module Make (Interp : Sim.INTERP) : Sim.ARCH = struct
   (* Pipeline initializer *)
 
   let init_pipe (spec_ : Sl.Ast.spec) (includes_p4 : string list)
-      (filename_p4 : string) (filenames_ignore : string list) :
-      Sl.Ast.value * Sl.Ast.value =
+      (filename_p4 : string) : Sl.Ast.value * Sl.Ast.value =
     init_spec spec_;
     match
       Interp.eval_program ~derive:false !spec "V1Model_init" includes_p4
-        filename_p4 filenames_ignore
+        filename_p4
     with
     | Pass ([ value_ctx; value_sto ], _, _, _) -> (value_ctx, value_sto)
     | _ -> failwith "Unexpected return from V1Model_init"

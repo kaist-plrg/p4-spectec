@@ -30,11 +30,7 @@ module type ARCH = sig
   (* Pipeline evaluation *)
 
   val init_pipe :
-    Sl.Ast.spec ->
-    string list ->
-    string ->
-    string list ->
-    Sl.Ast.value * Sl.Ast.value
+    Sl.Ast.spec -> string list -> string -> Sl.Ast.value * Sl.Ast.value
 
   val drive_pipe :
     Sl.Ast.value ->
@@ -52,20 +48,9 @@ module type INTERP = sig
     string ->
     string list ->
     string ->
-    string list ->
     program_result
 
-  val eval_program_with_ignores :
-    derive:bool ->
-    Sl.Ast.spec ->
-    string ->
-    string list ->
-    string ->
-    IdSet.t ->
-    program_result
-
-  val eval_rel :
-    ?ignores:IdSet.t -> Sl.Ast.spec -> string -> Sl.Ast.value list -> rel_result
+  val eval_rel : Sl.Ast.spec -> string -> Sl.Ast.value list -> rel_result
 
   val eval_func :
     Sl.Ast.spec -> string -> Sl.Ast.typ list -> Sl.Ast.value list -> func_result
@@ -73,12 +58,7 @@ module type INTERP = sig
   (* Coverage *)
 
   val cover_programs :
-    Sl.Ast.spec ->
-    string ->
-    string list ->
-    string list ->
-    string list ->
-    MCov.Cover.t
+    Sl.Ast.spec -> string -> string list -> string list -> MCov.Cover.t
 end
 
 module type DRIVER = sig
@@ -90,38 +70,17 @@ module type DRIVER = sig
     string ->
     string list ->
     string ->
-    string list ->
     program_result
 
-  val run_program_with_ignores :
-    derive:bool ->
-    Sl.Ast.spec ->
-    string ->
-    string list ->
-    string ->
-    IdSet.t ->
-    program_result
-
-  val run_program_with_ignores_internal :
-    derive:bool ->
-    Sl.Ast.spec ->
-    string ->
-    Sl.Ast.value ->
-    IdSet.t ->
-    rel_result
+  val run_program_internal :
+    derive:bool -> Sl.Ast.spec -> string -> Sl.Ast.value -> rel_result
 
   (* Run a P4 program against the spec and a STF test *)
 
-  val run_stf_test :
-    Sl.Ast.spec -> string list -> string -> string -> string list -> unit
+  val run_stf_test : Sl.Ast.spec -> string list -> string -> string -> unit
 
   (* Coverage *)
 
   val cover_programs :
-    Sl.Ast.spec ->
-    string ->
-    string list ->
-    string list ->
-    string list ->
-    MCov.Cover.t
+    Sl.Ast.spec -> string -> string list -> string list -> MCov.Cover.t
 end

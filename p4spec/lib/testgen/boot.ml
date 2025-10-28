@@ -9,7 +9,7 @@ open Util.Source
 
 let boot_cold (module Runner : Sim.DRIVER) (spec : spec) (relname : string)
     (includes_p4 : string list) (excludes_p4 : string list)
-    (dirname_p4 : string) (filenames_ignore : string list) : MCov.Cover.t =
+    (dirname_p4 : string) : MCov.Cover.t =
   let excludes_p4 = Util.Filesys.collect_excludes excludes_p4 in
   let filenames_p4 = Util.Filesys.collect_files ~suffix:".p4" dirname_p4 in
   let filenames_p4 =
@@ -18,7 +18,7 @@ let boot_cold (module Runner : Sim.DRIVER) (spec : spec) (relname : string)
         not (List.exists (String.equal filename_p4) excludes_p4))
       filenames_p4
   in
-  Runner.cover_programs spec relname includes_p4 filenames_p4 filenames_ignore
+  Runner.cover_programs spec relname includes_p4 filenames_p4
 
 (* On warm boot, load the coverage from a file *)
 

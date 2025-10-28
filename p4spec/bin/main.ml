@@ -116,11 +116,7 @@ let run_sl_command =
      let%map filenames_spec = anon (sequence ("filename" %: string))
      and relname = flag "-rel" (required string) ~doc:"relation to run"
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
-     and filename_p4 = flag "-p" (required string) ~doc:"p4 file of interest"
-     and filenames_ignore =
-       flag "-ignore" (listed string)
-         ~doc:"relations or functions to ignore when reporting coverage"
-     in
+     and filename_p4 = flag "-p" (required string) ~doc:"p4 file of interest" in
      fun () ->
        try
          if List.length filenames_spec = 0 then
@@ -131,7 +127,7 @@ let run_sl_command =
          let (module Runner) = Arch.Gen.gen_placeholder () in
          match
            Runner.run_program ~derive:false spec_sl relname includes_p4
-             filename_p4 filenames_ignore
+             filename_p4
          with
          | Pass _ -> Format.printf "passed\n"
          | Fail (_, msg, _) -> Format.printf "failed: %s\n" msg
@@ -150,11 +146,7 @@ let sim_command =
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and filename_p4 = flag "-p" (required string) ~doc:"p4 file of interest"
      and filename_stf = flag "-stf" (required string) ~doc:"stf test file"
-     and arch = flag "-arch" (required string) ~doc:"target architecture"
-     and filenames_ignore =
-       flag "-ignore" (listed string)
-         ~doc:"relations or functions to ignore when reporting coverage"
-     in
+     and arch = flag "-arch" (required string) ~doc:"target architecture" in
      fun () ->
        try
          if List.length filenames_spec = 0 then
@@ -164,7 +156,6 @@ let sim_command =
          let spec_sl = Structure.Struct.struct_spec spec_il in
          let (module Runner) = Arch.Gen.gen arch in
          Runner.run_stf_test spec_sl includes_p4 filename_p4 filename_stf
-           filenames_ignore
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
@@ -180,9 +171,6 @@ let cover_dangling_command =
      and excludes_p4 = flag "-e" (listed string) ~doc:"p4 test exclude paths"
      and dirnames_p4 =
        flag "-d" (listed string) ~doc:"p4 directories of interest"
-     and filenames_ignore =
-       flag "-ignore" (listed string)
-         ~doc:"relations or functions to ignore when reporting coverage"
      and filename_cov =
        flag "-cov" (required string) ~doc:"output coverage file"
      in
@@ -206,7 +194,6 @@ let cover_dangling_command =
          let (module Runner) = Arch.Gen.gen_placeholder () in
          let cover =
            Runner.cover_programs spec_sl relname includes_p4 filenames_p4
-             filenames_ignore
          in
          Runtime_testgen.Cov.Multiple.log ~filename_cov_opt:(Some filename_cov)
            cover
@@ -225,9 +212,6 @@ let run_testgen_command =
      and fuel = flag "-fuel" (required int) ~doc:"fuel for test generation"
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and excludes_p4 = flag "-e" (listed string) ~doc:"p4 test exclude paths"
-     and filenames_ignore =
-       flag "-ignore" (listed string)
-         ~doc:"relations or functions to ignore when reporting coverage"
      and dirname_gen =
        flag "-gen" (required string) ~doc:"directory for generated p4 programs"
      and name_campaign =
@@ -279,9 +263,8 @@ let run_testgen_command =
          let covermode =
            if strict then Testgen.Modes.Strict else Testgen.Modes.Relaxed
          in
-         Testgen.Gen.fuzzer fuel spec_il spec_sl relname includes_p4
-           filenames_ignore dirname_gen name_campaign randseed logmode bootmode
-           mutationmode covermode
+         Testgen.Gen.fuzzer fuel spec_il spec_sl relname includes_p4 dirname_gen
+           name_campaign randseed logmode bootmode mutationmode covermode
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
@@ -296,9 +279,6 @@ let run_testgen_debug_command =
      and relname = flag "-rel" (required string) ~doc:"relation to run"
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and filename_p4 = flag "-p" (required string) ~doc:"p4 file to typecheck"
-     and filenames_ignore =
-       flag "-ignore" (listed string)
-         ~doc:"relations or functions to ignore when reporting coverage"
      and dirname_debug =
        flag "-debug" (required string) ~doc:"directory for debug files"
      and pid = flag "-pid" (required int) ~doc:"phantom id to close-miss" in
@@ -310,7 +290,7 @@ let run_testgen_debug_command =
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
          Testgen.Derive.debug_phantom spec_sl relname includes_p4 filename_p4
-           filenames_ignore dirname_debug pid
+           dirname_debug pid
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
@@ -329,10 +309,8 @@ let interesting_command =
      and check_close_miss =
        flag "-close" no_arg ~doc:"'interesting' if close-miss (default: hit)"
      and pid = flag "-pid" (required int) ~doc:"phantom id to test"
-     and filename_p4 = flag "-p" (required string) ~doc:"p4 file to typecheck"
-     and filenames_ignore =
-       flag "-ignore" (listed string)
-         ~doc:"relations or functions to ignore when reporting coverage"
+     and filename_p4 =
+       flag "-p" (required string) ~doc:"p4 file to typecheck"
      in
      fun () ->
        try
@@ -344,7 +322,7 @@ let interesting_command =
          let (module Runner) = Arch.Gen.gen_placeholder () in
          let result =
            Runner.run_program ~derive:false spec_sl relname includes_p4
-             filename_p4 filenames_ignore
+             filename_p4
          in
          match result with
          | Pass (_, _, _, cover_single) ->

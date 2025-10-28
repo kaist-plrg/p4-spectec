@@ -78,9 +78,8 @@ let update_hit_new (fuel : int) (pid : pid) (idx_seed : int) (strategy : string)
      and update the running coverage *)
   let (module Runner : Sim.DRIVER) = config.specenv.runner in
   match
-    Runner.run_program_with_ignores ~derive:false config.specenv.spec
-      config.specenv.relname config.specenv.includes_p4 filename_gen_p4
-      config.specenv.ignores
+    Runner.run_program ~derive:false config.specenv.spec config.specenv.relname
+      config.specenv.includes_p4 filename_gen_p4
   with
   | Pass (_, _, _, cover) when PIdSet.for_all (SCov.is_hit cover) pids_hit_new
     ->
@@ -127,9 +126,8 @@ let update_close_miss_new (fuel : int) (pid : pid) (idx_seed : int)
      and update the running coverage *)
   let (module Runner : Sim.DRIVER) = config.specenv.runner in
   match
-    Runner.run_program_with_ignores ~derive:false config.specenv.spec
-      config.specenv.relname config.specenv.includes_p4 filename_gen_p4
-      config.specenv.ignores
+    Runner.run_program ~derive:false config.specenv.spec config.specenv.relname
+      config.specenv.includes_p4 filename_gen_p4
   with
   | Pass (_, _, _, cover)
     when PIdSet.for_all (SCov.is_close_miss cover) pids_close_miss_new ->
@@ -154,8 +152,8 @@ let update_interesting (fuel : int) (pid : pid) (idx_seed : int)
   let welltyped, cover =
     let (module Runner : Sim.DRIVER) = config.specenv.runner in
     match
-      Runner.run_program_with_ignores_internal ~derive:false config.specenv.spec
-        config.specenv.relname value_program config.specenv.ignores
+      Runner.run_program_internal ~derive:false config.specenv.spec
+        config.specenv.relname value_program
     with
     | Pass (_, cover) -> (true, cover)
     | Fail (_, _, cover) -> (false, cover)
@@ -434,9 +432,8 @@ let fuzz_seed (fuel : int) (pid : pid) (idx_seed : int) (config : Config.t)
      and if it is well-typed, start generating tests from it *)
   let (module Runner : Sim.DRIVER) = config.specenv.runner in
   (match
-     Runner.run_program_with_ignores ~derive config.specenv.spec
-       config.specenv.relname config.specenv.includes_p4 filename_p4
-       config.specenv.ignores
+     Runner.run_program ~derive config.specenv.spec config.specenv.relname
+       config.specenv.includes_p4 filename_p4
    with
   | Pass (_, graph, vid_program, cover) ->
       let time_end = Unix.gettimeofday () in
@@ -555,11 +552,11 @@ let rec fuzz_loop (fuel : int) (config : Config.t) : Config.t =
 (* Entry point to main fuzzing loop *)
 
 let fuzzer_init (spec_il : Il.Ast.spec) (spec : spec) (relname : string)
-    (includes_p4 : string list) (filenames_ignore : string list)
-    (dirname_gen : string) (name_campaign : string option)
-    (randseed : int option) (logmode : Modes.logmode)
-    (bootmode : Modes.bootmode) (mutationmode : Modes.mutationmode)
-    (covermode : Modes.covermode) : Config.t =
+    (includes_p4 : string list) (dirname_gen : string)
+    (name_campaign : string option) (randseed : int option)
+    (logmode : Modes.logmode) (bootmode : Modes.bootmode)
+    (mutationmode : Modes.mutationmode) (covermode : Modes.covermode) : Config.t
+    =
   (* Name the campaign *)
   let name_campaign =
     match name_campaign with
@@ -596,9 +593,7 @@ let fuzzer_init (spec_il : Il.Ast.spec) (spec : spec) (relname : string)
   (* Create a spec environment *)
   "Loading type definitions from the spec file"
   |> Logger.log modes.logmode log_init;
-  let specenv =
-    Config.init_specenv spec_il spec relname includes_p4 filenames_ignore
-  in
+  let specenv = Config.init_specenv spec_il spec relname includes_p4 in
   (* Create a seed *)
   "Booting initial coverage" |> Logger.log modes.logmode log_init;
   let cover_seed =
@@ -606,7 +601,7 @@ let fuzzer_init (spec_il : Il.Ast.spec) (spec : spec) (relname : string)
     | Cold (excludes_p4, dirname_seed_p4) ->
         let cover_seed =
           Boot.boot_cold specenv.runner spec relname includes_p4 excludes_p4
-            dirname_seed_p4 filenames_ignore
+            dirname_seed_p4
         in
         (* Log the initial coverage for later use in warm boot *)
         let filename_cov = dirname_gen ^ "/boot.coverage" in
@@ -634,15 +629,14 @@ let fuzzer_init (spec_il : Il.Ast.spec) (spec : spec) (relname : string)
   config
 
 let fuzzer (fuel : int) (spec_il : Il.Ast.spec) (spec : spec) (relname : string)
-    (includes_p4 : string list) (filenames_ignore : string list)
-    (dirname_gen : string) (name_campaign : string option)
-    (randseed : int option) (logmode : Modes.logmode)
-    (bootmode : Modes.bootmode) (mutationmode : Modes.mutationmode)
-    (covermode : Modes.covermode) : unit =
+    (includes_p4 : string list) (dirname_gen : string)
+    (name_campaign : string option) (randseed : int option)
+    (logmode : Modes.logmode) (bootmode : Modes.bootmode)
+    (mutationmode : Modes.mutationmode) (covermode : Modes.covermode) : unit =
   (* Initialize the fuzzing configuration *)
   let config =
-    fuzzer_init spec_il spec relname includes_p4 filenames_ignore dirname_gen
-      name_campaign randseed logmode bootmode mutationmode covermode
+    fuzzer_init spec_il spec relname includes_p4 dirname_gen name_campaign
+      randseed logmode bootmode mutationmode covermode
   in
   (* Call the main fuzzing loop *)
   let config = fuzz_loop fuel config in

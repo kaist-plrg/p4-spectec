@@ -58,12 +58,10 @@ let derive_phantom (pid : pid) (graph : Dep.Graph.t) (cover : SCov.Cover.t) :
 (* Entry point for debugging close-ASTs *)
 
 let debug_phantom (spec : spec) (relname : string) (includes_p4 : string list)
-    (filename_p4 : string) (filenames_ignore : string list)
-    (dirname_debug : string) (pid : pid) : unit =
+    (filename_p4 : string) (dirname_debug : string) (pid : pid) : unit =
   let (module Runner) = Arch.Gen.gen_placeholder () in
   match
     Runner.run_program ~derive:true spec relname includes_p4 filename_p4
-      filenames_ignore
   with
   | Fail _ -> print_endline "failed"
   | IllFormed _ -> print_endline "ill-formed"
