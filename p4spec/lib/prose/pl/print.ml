@@ -197,7 +197,7 @@ let rec prose_of_exp ?(mode = Prose) exp : string =
       F.asprintf "%s matches pattern %s" (code_of_exp ~mode exp)
         (code_of_pattern pattern |> render_mono ~mode)
   | TupleE es -> "(" ^ prose_of_exps ~mode ~sep:(Some ", ") es ^ ")"
-  | CaseE (id, renderer) -> prose_of_renderer renderer id
+  | CaseE (id, renderer) -> prose_of_renderer ~mode renderer id
   | StrE expfields ->
       "{"
       ^ String.concat ", "
@@ -248,14 +248,15 @@ let rec prose_of_exp ?(mode = Prose) exp : string =
               |> List.filter_map (fun arg ->
                      match arg.it with ExpA exp -> Some exp | DefA _ -> None)
             in
-            render_link ~link:id.it ~text:(prose_of_hintexp exps prose_true)
+            render_link ~link:id.it
+              ~text:(prose_of_hintexp ~mode exps prose_true)
         | InputProse (id, prose_in) ->
             let exps =
               args
               |> List.filter_map (fun arg ->
                      match arg.it with ExpA exp -> Some exp | DefA _ -> None)
             in
-            render_link ~link:id.it ~text:(prose_of_hintexp exps prose_in)
+            render_link ~link:id.it ~text:(prose_of_hintexp ~mode exps prose_in)
         | Def id ->
             render_link ~link:id.it
               ~text:
@@ -307,19 +308,19 @@ and code_of_relinput ~mode notexp =
   let notexp = (mixop, exps) in
   code_of_notexp ~mode notexp
 
-and prose_of_hintexp (exps : exp list) (hintexp : El.Ast.exp) : string =
-  let _, str = prose_of_hintexp' exps hintexp 0 in
+and prose_of_hintexp ~mode (exps : exp list) (hintexp : El.Ast.exp) : string =
+  let _, str = prose_of_hintexp' ~mode exps hintexp 0 in
   str
 
-and prose_of_hintexp' (exps : exp list) (hintexp : El.Ast.exp) (cursor : int) :
-    int * string =
+and prose_of_hintexp' ~mode (exps : exp list) (hintexp : El.Ast.exp)
+    (cursor : int) : int * string =
   match hintexp.it with
   | El.Ast.TextE text -> (cursor, text |> reindent_lines ~level:0)
   | El.Ast.SeqE exps_hint ->
       let cursor, strs =
         List.fold_left
           (fun (cur, acc) exp ->
-            let cur, str = prose_of_hintexp' exps exp cur in
+            let cur, str = prose_of_hintexp' ~mode exps exp cur in
             (cur, acc @ [ str ]))
           (cursor, []) exps_hint
       in
@@ -328,24 +329,22 @@ and prose_of_hintexp' (exps : exp list) (hintexp : El.Ast.exp) (cursor : int) :
       (* cursor holds position for HoleE.Next *)
       let exp = List.nth exps cursor in
       (* access HoleE.Next with current cursor *)
-      (cursor + 1, code_of_exp ~mode:Prose exp)
+      (cursor + 1, prose_of_exp ~mode exp)
   | El.Ast.HoleE (`Num i) ->
       (* accesses HoleE.Num with index *)
       let exp = List.nth exps i in
-      (cursor, code_of_exp ~mode:Prose exp)
+      (cursor, prose_of_exp ~mode exp)
   | El.Ast.FuseE (exp_l, exp_r) ->
-      let cursor_l, str_l = prose_of_hintexp' exps exp_l cursor in
-      let cursor_r, str_r = prose_of_hintexp' exps exp_r cursor_l in
+      let cursor_l, str_l = prose_of_hintexp' ~mode exps exp_l cursor in
+      let cursor_r, str_r = prose_of_hintexp' ~mode exps exp_r cursor_l in
       (cursor_r, str_l ^ str_r)
   | _ -> failwith "unsupported prose hint"
 
-and prose_of_renderer (renderer : relcall) id : string =
+and prose_of_renderer ~mode (renderer : relcall) id : string =
   match renderer with
-  | Prose (hintexp, [], exps_in) ->
-      prose_of_hintexp exps_in hintexp
+  | Prose (hintexp, [], exps_in) -> prose_of_hintexp ~mode exps_in hintexp
   | Prose (hintexp, exps_out, exps_in) -> assert false
-  | Mixop (mixop, exps) ->
-      code_of_relinput ~mode:Prose (mixop, exps)
+  | Mixop (mixop, exps) -> code_of_relinput ~mode:Prose (mixop, exps)
 
 (* Paths *)
 
@@ -377,12 +376,12 @@ let prose_of_relcall ?(level = 0) (relcall : relcall) rid : string =
   match relcall with
   | Prose (hintexp, [], exps_in) ->
       render_link ~link:(string_of_relid rid)
-        ~text:(prose_of_hintexp exps_in hintexp)
+        ~text:(prose_of_hintexp ~mode:Prose exps_in hintexp)
   | Prose (hintexp, exps_out, exps_in) ->
       F.asprintf "%s be the result of %s"
         (code_of_exps ~mode:Prose exps_out)
         (render_link ~link:(string_of_relid rid)
-           ~text:(prose_of_hintexp exps_in hintexp))
+           ~text:(prose_of_hintexp ~mode:Prose exps_in hintexp))
   | Mixop (mixop, exps) ->
       render_link ~link:(string_of_relid rid)
         ~text:(code_of_notexp ~mode:Prose (mixop, exps))
@@ -391,7 +390,7 @@ let prose_of_reldef (relcall : relcall) rid : string =
   match relcall with
   | Prose (hintexp, [], exps_in) ->
       render_link ~link:(string_of_relid rid)
-        ~text:(prose_of_hintexp exps_in hintexp)
+        ~text:(prose_of_hintexp ~mode:Prose exps_in hintexp)
       ^ " is defined as:"
   | Prose (hintexp, exps_out, exps_in) -> assert false
   | Mixop (mixop, exps) ->
@@ -453,7 +452,8 @@ let rec prose_of_instr ?(level = 0) ?(unordered = false) (instr : instr) :
       F.asprintf "%sLet %s." bullet (prose_of_relcall ~level relcall rid)
   | ReturnI exp -> F.asprintf "%sReturn %s." bullet (code_of_exp exp)
   | ResultI (Some hintexp, exps) ->
-      F.asprintf "%sResult in %s." bullet (prose_of_hintexp exps hintexp)
+      F.asprintf "%sResult in %s." bullet
+        (prose_of_hintexp ~mode:Prose exps hintexp)
   | ResultI (None, []) -> bullet ^ "The relation holds."
   | ResultI (None, exps) ->
       F.asprintf "%sResult in %s." bullet (prose_of_exps exps)
@@ -511,8 +511,9 @@ let prose_of_funcdef (funcprose : funcprose) (tparams : tparam list)
   in
   match funcprose with
   | BoolProse (_id, prose_true, _prose_false) ->
-      prose_of_hintexp exps_input prose_true
-  | InputProse (_id, prose_in) -> prose_of_hintexp exps_input prose_in
+      prose_of_hintexp ~mode:Prose exps_input prose_true
+  | InputProse (_id, prose_in) ->
+      prose_of_hintexp ~mode:Prose exps_input prose_in
   | Def id ->
       string_of_defid id ^ string_of_tparams tparams
       ^ prose_of_args ~mode:Code args
