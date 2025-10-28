@@ -84,7 +84,22 @@ let rec prosify_exp (ctx : Ctx.t) (exp : exp) : Pl.Ast.exp =
         Pl.Ast.TupleE exps
     | CaseE (mixop, exps) ->
         let exps = List.map (prosify_exp ctx) exps in
-        Pl.Ast.CaseE (mixop, exps)
+        let typ = exp.note in
+        let id =
+          match typ with
+          | VarT (id, _) -> id
+          | _ ->
+              failwith
+                (Format.asprintf "expected VarT in CaseE, got %s"
+                   (Il.Print.string_of_typ (typ $ no_region)))
+        in
+        let renderer =
+          let prose_opt = Hintdb.get "prose" (`Typ (id, mixop)) ctx.hintdb in
+          match prose_opt with
+          | Some hintexp -> Pl.Ast.Prose (hintexp, [], exps)
+          | None -> Pl.Ast.Mixop (mixop, exps)
+        in
+        Pl.Ast.CaseE (id, renderer)
     | StrE expfields ->
         let atoms, exps = List.split expfields in
         let exps = List.map (prosify_exp ctx) exps in

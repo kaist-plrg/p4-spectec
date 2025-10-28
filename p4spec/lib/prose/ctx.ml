@@ -24,7 +24,8 @@ let create ?(hintdb = Hintdb.empty) ?(ienv = IEnv.empty) () : t =
   { hintdb; ienv; neg = false; cond_style = None; def = None }
 
 let init spec_sl : t =
-  Collect.collect_spec spec_sl |> fun (hintdb, ienv) -> create ~hintdb ~ienv ()
+  let hintdb, ienv = Collect.collect_spec spec_sl in
+  create ~hintdb ~ienv ()
 
 let as_cond cond_style ctx = { ctx with cond_style = Some cond_style }
 let clear_cond ctx = { ctx with cond_style = None }

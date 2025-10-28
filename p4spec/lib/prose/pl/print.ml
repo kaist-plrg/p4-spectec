@@ -197,7 +197,7 @@ let rec prose_of_exp ?(mode = Prose) exp : string =
       F.asprintf "%s matches pattern %s" (code_of_exp ~mode exp)
         (code_of_pattern pattern |> render_mono ~mode)
   | TupleE es -> "(" ^ prose_of_exps ~mode ~sep:(Some ", ") es ^ ")"
-  | CaseE notexp -> code_of_notexp ~mode notexp
+  | CaseE (id, renderer) -> prose_of_renderer renderer id
   | StrE expfields ->
       "{"
       ^ String.concat ", "
@@ -338,6 +338,14 @@ and prose_of_hintexp' (exps : exp list) (hintexp : El.Ast.exp) (cursor : int) :
       let cursor_r, str_r = prose_of_hintexp' exps exp_r cursor_l in
       (cursor_r, str_l ^ str_r)
   | _ -> failwith "unsupported prose hint"
+
+and prose_of_renderer (renderer : relcall) id : string =
+  match renderer with
+  | Prose (hintexp, [], exps_in) ->
+      prose_of_hintexp exps_in hintexp
+  | Prose (hintexp, exps_out, exps_in) -> assert false
+  | Mixop (mixop, exps) ->
+      code_of_relinput ~mode:Prose (mixop, exps)
 
 (* Paths *)
 
