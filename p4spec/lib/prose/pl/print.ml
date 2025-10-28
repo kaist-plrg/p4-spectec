@@ -13,7 +13,7 @@ let in_prose = { in_code = false; in_link = false }
 let in_code = { in_code = true; in_link = false }
 let code context = { context with in_code = true }
 let link context = { context with in_link = true }
-let adoc_mono ctx s = if ctx.in_code then s else "`" ^ s ^ "`"
+let adoc_mono s = "`" ^ s ^ "`"
 let adoc_subscript s = "~" ^ s ^ "~"
 let adoc_superscript s = "^" ^ s ^ "^"
 let adoc_bold s = "**" ^ s ^ "**"
@@ -29,6 +29,8 @@ let adoc_unordered_bullet level =
 
 let adoc_link ~(link : string) ~(text : string) : string =
   "<<" ^ link ^ ", " ^ text ^ ">>"
+
+let as_code ctx string = if ctx.in_code then string else adoc_mono string
 
 (* AST utilities *)
 
@@ -66,16 +68,16 @@ let string_of_relid = Sl.Print.string_of_relid
 let string_of_relpathid = Sl.Print.string_of_relpathid
 let string_of_defid = Sl.Print.string_of_defid
 
-let code_of_varid ctx varid =
+let render_varid ctx varid =
   let varid = varid.it in
-  if String.starts_with ~prefix:"_" varid then "_" |> adoc_mono ctx
+  if String.starts_with ~prefix:"_" varid then "_" |> as_code ctx
   else
     let var_slices = String.split_on_char '_' varid in
     match var_slices with
-    | var_type :: [] -> var_type |> adoc_mono ctx
+    | var_type :: [] -> var_type |> as_code ctx
     | var_type :: var_subscripts ->
         var_type ^ (var_subscripts |> String.concat "_" |> adoc_subscript)
-        |> adoc_mono ctx
+        |> as_code ctx
     | _ -> assert false
 
 (* Notation *)
@@ -91,38 +93,38 @@ let code_of_mixop mixop =
        mixop)
   |> String.trim
 
-let code_of_pattern pattern =
+let code_of_pattern (pattern : pattern) =
   match pattern with
-  | Il.Ast.CaseP mixop -> code_of_mixop mixop
-  | Il.Ast.ListP `Cons -> "_ :: _"
-  | Il.Ast.ListP (`Fixed len) -> Format.asprintf "[ _/%d ]" len
-  | Il.Ast.ListP `Nil -> "[]"
-  | Il.Ast.OptP `Some -> "(_)"
-  | Il.Ast.OptP `None -> "()"
+  | CaseP mixop -> code_of_mixop mixop
+  | ListP `Cons -> "_ :: _"
+  | ListP (`Fixed len) -> Format.asprintf "[ _/%d ]" len
+  | ListP `Nil -> "[]"
+  | OptP `Some -> "(_)"
+  | OptP `None -> "()"
 
-let code_of_typ ctx typ = Sl.Print.string_of_typ typ |> adoc_mono ctx
+let code_of_typ ctx typ = Sl.Print.string_of_typ typ |> as_code ctx
 
 (* Iterators *)
 
-let code_of_iter iter =
+let code_of_iter (iter : iter) =
   match iter with
-  | Il.Ast.List -> "{asterisk}" |> adoc_superscript
-  | Il.Ast.Opt -> "?" |> adoc_superscript
+  | List -> "{asterisk}" |> adoc_superscript
+  | Opt -> "?" |> adoc_superscript
 
 let code_of_iterexp (iter, _) = code_of_iter iter
 
 (* Variables *)
 
-let code_of_var ctx (id, _typ, iters) =
-  code_of_varid ctx id ^ String.concat "" (List.map code_of_iter iters)
+let render_var ctx (id, _typ, iters) =
+  render_varid ctx id ^ String.concat "" (List.map code_of_iter iters)
 
 (* Iterated Variables *)
 
 let render_in_itervars ctx vars : string =
   let render_in_var var =
     F.asprintf "%s in %s"
-      (code_of_var in_code var |> adoc_mono ctx)
-      (code_of_var in_code var ^ code_of_iter Il.Ast.List |> adoc_mono ctx)
+      (render_var in_code var |> as_code ctx)
+      (render_var in_code var ^ code_of_iter List |> as_code ctx)
   in
   List.map render_in_var vars |> render_list
 
@@ -133,8 +135,8 @@ let render_out_itervars ctx vars : string =
     else
       Some
         (F.asprintf "%s be the list of %s"
-           (code_of_var in_code var ^ code_of_iter Il.Ast.List |> adoc_mono ctx)
-           (code_of_var in_code var |> adoc_mono ctx))
+           (render_var in_code var ^ code_of_iter List |> as_code ctx)
+           (render_var in_code var |> as_code ctx))
   in
   List.filter_map render_out_var vars |> render_list
 
@@ -143,50 +145,42 @@ let render_branchtype branchtype =
 
 (* Operators *)
 
-let render_cmpop cmpop =
-  match cmpop with
-  | `EqOp -> "is equal to"
-  | `NeOp -> "is not equal to"
-  | `LtOp -> "is less than"
-  | `GtOp -> "is greater than"
-  | `LeOp -> "is less than or equal to"
-  | `GeOp -> "is greater than or equal to"
-
-let code_of_cmpop = Sl.Print.string_of_cmpop
+let render_cmpop ctx cmpop =
+  if ctx.in_code then Sl.Print.string_of_cmpop cmpop
+  else
+    match cmpop with
+    | `EqOp -> "is equal to"
+    | `NeOp -> "is not equal to"
+    | `LtOp -> "is less than"
+    | `GtOp -> "is greater than"
+    | `LeOp -> "is less than or equal to"
+    | `GeOp -> "is greater than or equal to"
 
 (* Expressions *)
 
-let as_code ctx renderer =
-  let string = renderer () in
-  adoc_mono ctx string
-
 let rec render_exp ctx exp : string =
   match exp.it with
-  | BoolE b -> string_of_bool b
-  | NumE n -> string_of_num n
-  | TextE text -> "\"" ^ String.escaped text ^ "\"" |> adoc_mono ctx
-  | VarE varid -> code_of_varid ctx varid
+  | BoolE b -> string_of_bool b |> as_code ctx
+  | NumE n -> string_of_num n |> as_code ctx
+  | TextE text -> "\"" ^ String.escaped text ^ "\"" |> as_code ctx
+  | VarE varid -> render_varid in_code varid |> as_code ctx
   | UnE (#Bool.unop, _, { it = MatchE (exp, pattern); _ }) ->
       F.asprintf "%s does not match pattern %s" (code_of_exp ctx exp)
-        (code_of_pattern pattern |> adoc_mono ctx)
+        (code_of_pattern pattern |> as_code ctx)
   | UnE (#Bool.unop, _, { it = SubE (exp, typ); _ }) ->
       F.asprintf "%s does not have type %s" (code_of_exp ctx exp)
         (code_of_typ ctx typ)
   | UnE (unop, _, exp) ->
-      string_of_unop unop ^ render_exp in_code exp |> adoc_mono ctx
+      (* always print as code *)
+      string_of_unop unop ^ render_exp in_code exp |> as_code ctx
   | BinE (binop, _, exp_l, exp_r) ->
       (* always print as code *)
       render_exp in_code exp_l ^ " " ^ string_of_binop binop ^ " "
       ^ render_exp in_code exp_r
-      |> adoc_mono ctx
+      |> as_code ctx
   | CmpE (cmpop, _, exp_l, exp_r) ->
-      if ctx.in_code then
-        render_exp in_code exp_l ^ " " ^ string_of_cmpop cmpop ^ " "
-        ^ render_exp in_code exp_r
-        |> adoc_mono ctx
-      else
-        render_exp ctx exp_l ^ " " ^ render_cmpop cmpop ^ " "
-        ^ render_exp ctx exp_r
+      render_exp ctx exp_l ^ " " ^ render_cmpop ctx cmpop ^ " "
+      ^ render_exp ctx exp_r
   | UpCastE (_typ, exp) | DownCastE (_typ, exp) ->
       F.asprintf "%s" (code_of_exp ctx exp)
   | SubE (exp, typ) ->
@@ -203,7 +197,7 @@ let rec render_exp ctx exp : string =
       F.asprintf "%s is Some value" (code_of_exp ctx exp)
   | MatchE (exp, pattern) ->
       F.asprintf "%s matches pattern %s" (code_of_exp ctx exp)
-        (code_of_pattern pattern |> adoc_mono ctx)
+        (code_of_pattern pattern |> as_code ctx)
   | TupleE es -> "(" ^ render_exps ctx ~sep:(Some ", ") es ^ ")"
   | CaseE (id, renderer) -> render_renderer ctx renderer id
   | StrE expfields ->
@@ -214,29 +208,36 @@ let rec render_exp ctx exp : string =
              expfields)
       ^ "}"
   | OptE (Some exp) -> "" ^ render_exp ctx exp ^ ""
-  | OptE None -> "None" |> adoc_mono ctx
-  | ListE [] -> "[ ]" |> adoc_mono ctx
+  | OptE None -> "None" |> as_code ctx
+  | ListE [] -> "[ ]" |> as_code ctx
   | ListE exps ->
-      "[" ^ render_exps in_code ~sep:(Some ", ") exps ^ "]" |> adoc_mono ctx
+      "[" ^ render_exps in_code ~sep:(Some ", ") exps ^ "]" |> as_code ctx
   | ConsE (exp_h, exp_t) ->
+      (* always print as code *)
       render_exp in_code exp_h ^ " :: " ^ render_exp in_code exp_t
-      |> adoc_mono ctx
+      |> as_code ctx
   | CatE (exp_l, exp_r) ->
+      (* always print as code *)
       render_exp in_code exp_l ^ " ++ " ^ render_exp in_code exp_r
-      |> adoc_mono ctx
+      |> as_code ctx
   | MemE (exp_e, exp_s) ->
       render_exp ctx exp_e ^ " is in " ^ render_exp ctx exp_s
   | LenE exp -> "the length of " ^ render_exp ctx exp
   | DotE (exp_b, atom) ->
-      render_exp in_code exp_b ^ "." ^ code_of_atom atom |> adoc_mono ctx
+      render_exp in_code exp_b ^ "." ^ code_of_atom atom |> as_code ctx
   | IdxE (exp_b, exp_i) ->
-      render_exp ctx exp_b ^ "[" ^ render_exp ctx exp_i ^ "]"
+      render_exp in_code exp_b ^ "[" ^ render_exp in_code exp_i ^ "]"
+      |> as_code ctx
   | SliceE (exp_b, exp_l, exp_h) ->
-      render_exp ctx exp_b ^ "[" ^ render_exp ctx exp_l ^ " : "
-      ^ render_exp ctx exp_h ^ "]"
+      (* always print as code *)
+      render_exp in_code exp_b ^ "[" ^ render_exp in_code exp_l ^ " : "
+      ^ render_exp in_code exp_h ^ "]"
+      |> as_code ctx
   | UpdE (exp_b, path, exp_f) ->
-      render_exp ctx exp_b ^ "[" ^ render_path ctx path ^ " = "
-      ^ render_exp ctx exp_f ^ "]"
+      (* always print as code *)
+      render_exp in_code exp_b ^ "[" ^ render_path in_code path ^ " = "
+      ^ render_exp in_code exp_f ^ "]"
+      |> as_code ctx
   | CallE (funcprose, targs, args) -> (
       if ctx.in_code then
         let id = id_of_funcprose funcprose in
@@ -244,7 +245,7 @@ let rec render_exp ctx exp : string =
           ~text:
             (string_of_defid id ^ string_of_targs targs
            ^ render_args in_code args)
-        |> adoc_mono ctx
+        |> as_code ctx
       else
         match funcprose with
         | BoolProse (id, prose_true, _prose_false) ->
@@ -266,10 +267,10 @@ let rec render_exp ctx exp : string =
               ~text:
                 (string_of_defid id ^ string_of_targs targs
                ^ render_args in_code args)
-            |> adoc_mono ctx)
+            |> as_code ctx)
   | IterE (exp, iterexp) ->
       if snd iterexp = [] then render_exp ctx exp
-      else render_exp in_code exp ^ code_of_iterexp iterexp |> adoc_mono ctx
+      else render_exp in_code exp ^ code_of_iterexp iterexp |> as_code ctx
 
 (* if sep is None, use natural language list *)
 
@@ -278,7 +279,7 @@ and render_exps ctx ?(sep : string option = None) exps =
   | None -> render_list (List.map (render_exp ctx) exps)
   | Some s -> String.concat s (List.map (render_exp ctx) exps)
 
-and code_of_exp ctx (exp : exp) = render_exp in_code exp |> adoc_mono ctx
+and code_of_exp ctx (exp : exp) = render_exp in_code exp |> as_code ctx
 
 and code_of_exps ctx ?(sep : string option = None) (exps : exp list) =
   match sep with
@@ -293,7 +294,7 @@ and code_of_notexp ctx notexp =
       if idx mod 2 = 0 then idx / 2 |> List.nth mixop |> code_of_atoms
       else idx / 2 |> List.nth exps |> render_exp in_code)
   |> List.filter_map (fun str -> if str = "" then None else Some str)
-  |> String.concat " " |> adoc_mono ctx
+  |> String.concat " " |> as_code ctx
 
 and code_of_relinput ctx notexp =
   let mixop, exps_input = notexp in
@@ -344,7 +345,7 @@ and render_renderer ctx (renderer : relcall) id : string =
   match renderer with
   | Prose (hintexp, [], exps_in) -> render_hintexp ctx exps_in hintexp
   | Prose (hintexp, exps_out, exps_in) -> assert false
-  | Mixop (mixop, exps) -> code_of_relinput in_prose (mixop, exps)
+  | Mixop (mixop, exps) -> code_of_relinput ctx (mixop, exps)
 
 (* Paths *)
 
@@ -422,7 +423,7 @@ let rec render_instr ?(level = 0) ?(unordered = false) (instr : instr) : string
     when Eq.eq_exp exp_r exp ->
       F.asprintf "%s%slet %s be %s:%s" bullet
         (render_branchtype branchtype)
-        (as_code in_prose (fun () -> render_exp in_code exp_l))
+        (render_exp in_code exp_l |> as_code in_prose)
         (render_exp in_prose exp_r)
         (render_instrs ~level:(level + 1) instrs_rest)
   | BranchI
@@ -433,7 +434,7 @@ let rec render_instr ?(level = 0) ?(unordered = false) (instr : instr) : string
     when Eq.eq_exp exp_r exp && Eq.eq_typ typ_r typ ->
       F.asprintf "%s%slet %s be %s:%s" bullet
         (render_branchtype branchtype)
-        (as_code in_prose (fun () -> render_exp in_code exp_l))
+        (render_exp in_code exp_l |> as_code in_prose)
         (render_exp in_prose exp_r)
         (render_instrs ~level:(level + 1) instrs_rest)
   | BranchI (branchtype, cond, instrs) ->
@@ -448,7 +449,7 @@ let rec render_instr ?(level = 0) ?(unordered = false) (instr : instr) : string
       F.asprintf "%sCheck that %s." bullet (render_cond in_prose cond)
   | LetI (exp_l, exp_r) ->
       F.asprintf "%sLet %s be %s." bullet
-        (as_code in_prose (fun () -> render_exp in_code exp_l))
+        (render_exp in_code exp_l |> as_code in_prose)
         (render_exp in_prose exp_r)
   | RelI (relcall, rid) ->
       F.asprintf "%sLet %s." bullet (render_relcall ~level relcall rid)
@@ -522,7 +523,7 @@ let render_funcdef (funcprose : funcprose) (tparams : tparam list)
   | InputProse (_id, prose_in) -> render_hintexp in_prose exps_input prose_in
   | Def id ->
       string_of_defid id ^ string_of_tparams tparams ^ render_args in_code args
-      |> adoc_mono in_prose
+      |> as_code in_prose
 
 let render_func (funcprose, tparams, args, instrs) : string =
   F.asprintf "%s\n\n%s"
