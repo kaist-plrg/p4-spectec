@@ -4,10 +4,29 @@ open Print
 (* Backtracking *)
 
 type reason =
+  (*
+    One of its children is a root cause node.
+    Argument 1: index # of the clause/rule that caused the failure
+    Argument 2: max execution depth (index # of clause/rule) of the child node referenced by Arg 1
+  *)
   | RootClause of int * int
-  | MismatchClause of int * int (* clause idx, max (premise_idx) *)
+  (*
+    All of its children failed because of a mismatch.
+    Argument 1: index # of the clause/rule that likely caused the failure
+    Argument 2: max execution depth (index # of clause/rule) of the child node referenced by Arg 1
+  *)
+  | MismatchClause of int * int
+  (*
+    This leaf node is a possible "mismatch", i.e. the failure is caused by one of any guard patterns
+    in the beginning of a clause/rule.
+    Argument: index # of the clause/rule that caused the failure
+  *)
+  | Mismatch of int
+  (*
+    Any leaf node that isn't a mismatch. A stronger candidate to be the real cause for failure
+    Argument: index # of the clause/rule that caused the failure
+  *)
   | Root of int
-  | Mismatch of int (* premise idx *)
   | Unknown
 
 type failtrace = Failtrace of region * string * reason * failtrace list
