@@ -292,22 +292,13 @@ type subexp' = Let of exp' * exp' | If of exp'
 let try_extract_exp = function
   | Prem p -> (
       match p.it with
-      | IfPr ifpr -> Some ifpr.it
-      | LetPr (_, ({ it = DownCastE _; _ } as rvalue)) -> Some rvalue.it
-      | LetPr (({ it = CaseE _; _ } as lvalue), _) -> Some lvalue.it
-      | _ -> None)
-  | _ -> None
-
-let try_extract_exp' = function
-  | Prem p -> (
-      match p.it with
       | IfPr ifpr -> Some (If ifpr.it)
       | LetPr (lvalue, rvalue) -> Some (Let (lvalue.it, rvalue.it))
       | _ -> None)
   | _ -> None
 
 let extract_subexps = function
-  | Rel { subtraces; _ } -> subtraces |> List.filter_map try_extract_exp'
+  | Rel { subtraces; _ } -> subtraces |> List.filter_map try_extract_exp
   | _ -> []
 
 let guess_is_cursor_match (exp : subexp') : bool =
