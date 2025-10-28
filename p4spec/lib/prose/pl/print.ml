@@ -11,6 +11,7 @@ type context = { in_code : bool; in_link : bool }
 
 let in_prose = { in_code = false; in_link = false }
 let in_code = { in_code = true; in_link = false }
+let in_link = { in_code = false; in_link = true }
 let code context = { context with in_code = true }
 let link context = { context with in_link = true }
 let adoc_mono s = "`" ^ s ^ "`"
@@ -27,10 +28,11 @@ let adoc_ordered_bullet level =
 let adoc_unordered_bullet level =
   Format.asprintf "%s%s " (String.make (level * 2) ' ') "*"
 
-let adoc_link ~(link : string) ~(text : string) : string =
+let adoc_link ~(link : string) (text : string) : string =
   "<<" ^ link ^ ", " ^ text ^ ">>"
 
 let as_code ctx string = if ctx.in_code then string else adoc_mono string
+let as_link ctx ~link text = if ctx.in_link then text else adoc_link ~link text
 
 (* AST utilities *)
 
@@ -159,6 +161,7 @@ let render_cmpop ctx cmpop =
 (* Expressions *)
 
 let rec render_exp ctx exp : string =
+  let in_code = code ctx in
   match exp.it with
   | BoolE b -> string_of_bool b |> as_code ctx
   | NumE n -> string_of_num n |> as_code ctx
@@ -224,28 +227,34 @@ let rec render_exp ctx exp : string =
       render_exp ctx exp_e ^ " is in " ^ render_exp ctx exp_s
   | LenE exp -> "the length of " ^ render_exp ctx exp
   | DotE (exp_b, atom) ->
-      render_exp in_code exp_b ^ "." ^ code_of_atom atom |> as_code ctx
+      render_exp (code ctx) exp_b ^ "." ^ code_of_atom atom |> as_code ctx
   | IdxE (exp_b, exp_i) ->
-      render_exp in_code exp_b ^ "[" ^ render_exp in_code exp_i ^ "]"
+      render_exp (code ctx) exp_b ^ "[" ^ render_exp (code ctx) exp_i ^ "]"
       |> as_code ctx
   | SliceE (exp_b, exp_l, exp_h) ->
       (* always print as code *)
-      render_exp in_code exp_b ^ "[" ^ render_exp in_code exp_l ^ " : "
-      ^ render_exp in_code exp_h ^ "]"
+      render_exp (code ctx) exp_b
+      ^ "["
+      ^ render_exp (code ctx) exp_l
+      ^ " : "
+      ^ render_exp (code ctx) exp_h
+      ^ "]"
       |> as_code ctx
   | UpdE (exp_b, path, exp_f) ->
       (* always print as code *)
-      render_exp in_code exp_b ^ "[" ^ render_path in_code path ^ " = "
-      ^ render_exp in_code exp_f ^ "]"
+      render_exp (code ctx) exp_b
+      ^ "["
+      ^ render_path (code ctx) path
+      ^ " = "
+      ^ render_exp (code ctx) exp_f
+      ^ "]"
       |> as_code ctx
   | CallE (funcprose, targs, args) -> (
       if ctx.in_code then
         let id = id_of_funcprose funcprose in
-        adoc_link ~link:id.it
-          ~text:
-            (string_of_defid id ^ string_of_targs targs
-           ^ render_args in_code args)
-        |> as_code ctx
+        string_of_defid id ^ string_of_targs targs
+        ^ render_args (ctx |> link |> code) args
+        |> as_link ctx ~link:id.it |> as_code ctx
       else
         match funcprose with
         | BoolProse (id, prose_true, _prose_false) ->
@@ -254,20 +263,18 @@ let rec render_exp ctx exp : string =
               |> List.filter_map (fun arg ->
                      match arg.it with ExpA exp -> Some exp | DefA _ -> None)
             in
-            adoc_link ~link:id.it ~text:(render_hintexp ctx exps prose_true)
+            render_hintexp (link ctx) exps prose_true |> as_link ctx ~link:id.it
         | InputProse (id, prose_in) ->
             let exps =
               args
               |> List.filter_map (fun arg ->
                      match arg.it with ExpA exp -> Some exp | DefA _ -> None)
             in
-            adoc_link ~link:id.it ~text:(render_hintexp ctx exps prose_in)
+            render_hintexp (link ctx) exps prose_in |> as_link ctx ~link:id.it
         | Def id ->
-            adoc_link ~link:id.it
-              ~text:
-                (string_of_defid id ^ string_of_targs targs
-               ^ render_args in_code args)
-            |> as_code ctx)
+            string_of_defid id ^ string_of_targs targs
+            ^ render_args (ctx |> link |> code) args
+            |> as_link ctx ~link:id.it |> as_code ctx)
   | IterE (exp, iterexp) ->
       if snd iterexp = [] then render_exp ctx exp
       else render_exp in_code exp ^ code_of_iterexp iterexp |> as_code ctx
@@ -375,27 +382,27 @@ let string_of_targs = Sl.Print.string_of_targs
 let render_relcall ?(level = 0) (relcall : relcall) rid : string =
   match relcall with
   | Prose (hintexp, [], exps_in) ->
-      adoc_link ~link:(string_of_relid rid)
-        ~text:(render_hintexp in_prose exps_in hintexp)
+      render_hintexp in_link exps_in hintexp
+      |> as_link in_prose ~link:(string_of_relid rid)
   | Prose (hintexp, exps_out, exps_in) ->
       F.asprintf "%s be the result of %s"
         (code_of_exps in_prose exps_out)
-        (adoc_link ~link:(string_of_relid rid)
-           ~text:(render_hintexp in_prose exps_in hintexp))
+        (render_hintexp in_link exps_in hintexp
+        |> as_link in_prose ~link:(string_of_relid rid))
   | Mixop (mixop, exps) ->
-      adoc_link ~link:(string_of_relid rid)
-        ~text:(code_of_notexp in_prose (mixop, exps))
+      code_of_notexp in_link (mixop, exps)
+      |> as_link in_prose ~link:(string_of_relid rid)
 
 let render_reldef (relcall : relcall) rid : string =
   match relcall with
   | Prose (hintexp, [], exps_in) ->
-      adoc_link ~link:(string_of_relid rid)
-        ~text:(render_hintexp in_prose exps_in hintexp)
+      (render_hintexp in_link exps_in hintexp
+      |> as_link in_prose ~link:(string_of_relid rid))
       ^ " is defined as:"
   | Prose (hintexp, exps_out, exps_in) -> assert false
   | Mixop (mixop, exps) ->
-      adoc_link ~link:(string_of_relid rid)
-        ~text:(code_of_relinput in_prose (mixop, exps))
+      code_of_relinput in_link (mixop, exps)
+      |> as_link in_prose ~link:(string_of_relid rid)
 
 (* Conditions *)
 
