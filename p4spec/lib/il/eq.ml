@@ -109,8 +109,10 @@ and eq_values ?(dbg = false) (values_a : value list) (values_b : value list) :
 
 (* Expressions *)
 
-and eq_exp (exp_a : exp) (exp_b : exp) : bool =
-  match (exp_a.it, exp_b.it) with
+and eq_exp (exp_a : exp) (exp_b : exp) : bool = eq_exp' exp_a.it exp_b.it
+
+and eq_exp' (exp_a' : exp') (exp_b' : exp') : bool =
+  match (exp_a', exp_b') with
   | BoolE b_a, BoolE b_b -> b_a = b_b
   | NumE n_a, NumE n_b -> Num.eq n_a n_b
   | TextE t_a, TextE t_b -> t_a = t_b

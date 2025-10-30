@@ -314,25 +314,52 @@ let guess_reason (trace : t) : Util.Attempt.reason =
     | _ -> failwith "trace must be a relation, declaration or iteration"
   in
   let subexps = extract_subexps trace in
+  let open Il.Eq in
   match subexps with
-  | [ If (SubE _) ]
-  | [ If (MatchE _) ]
-  | [ If (SubE _); If (MatchE _) ]
-  | [ If (SubE _); Let (_, DownCastE _); If (MemE _) ]
-  | [ If (SubE _); Let (_, DownCastE _); If (MatchE _) ]
-  | [ If (MatchE _); Let (CaseE _, _); If (MatchE _) ]
-  (* Decl_ok/instantiation-prefixedTypeName-non-objectInitializer *)
+  | [ If (SubE _) ] | [ If (MatchE _) ] -> Mismatch premise_idx
+  | [ If (SubE (exp_a, _)); If (MatchE (exp_b, _)) ] when eq_exp exp_a exp_b ->
+      Mismatch premise_idx
+  (* ex> Expr_ok/binaryExpression-plusminusmult *)
+  | [ If (SubE (exp_a, typ_a)); Let (_, DownCastE (typ_b, exp_b)); If (MemE _) ]
+    when eq_exp exp_a exp_b && eq_typ typ_a typ_b ->
+      Mismatch premise_idx
+  (* ex> Type_ok/boolean *)
   | [
-      If (SubE _);
-      Let (_, DownCastE _);
-      If (MatchE _);
-      Let (CaseE _, _);
-      If (SubE _);
-    ] ->
-      Mismatch premise_idx (* ex> binop *)
-  | [ match_exp; If (MatchE _) ]
-  | [ match_exp; If (SubE _) ]
-  | [ match_exp; If (SubE _); Let (_, DownCastE _); If (MatchE _) ]
-    when guess_is_cursor_match match_exp ->
+   If (SubE (exp_a, typ_a)); Let (_, DownCastE (typ_b, exp_b)); If (MatchE _);
+  ]
+    when eq_exp exp_a exp_b && eq_typ typ_a typ_b ->
+      Mismatch premise_idx
+  (* ParserTransition_ok/name *)
+  | [ If (MatchE (exp_a, _)); Let (CaseE _, exp_b); If (MatchE _) ]
+    when eq_exp' exp_a.it exp_b ->
+      Mismatch premise_idx
+  (* Decl_ok/instantiation-non-objectInitializer *)
+  | [
+   If (SubE (exp_a, typ_a));
+   Let (exp_c, DownCastE (typ_b, exp_b));
+   If (MatchE (exp_d, _));
+   Let (CaseE _, exp_e);
+   Let ((VarE _ as var_a), VarE _);
+   If (SubE (var_c, _));
+  ]
+    when List.for_all Fun.id
+           [
+             eq_exp exp_a exp_b;
+             eq_typ typ_a typ_b;
+             eq_exp' exp_c exp_d.it;
+             eq_exp' exp_d.it exp_e;
+             eq_exp' var_a var_c.it;
+           ] ->
+      Mismatch premise_idx
+  | [ match_exp; If (SubE _) ] when guess_is_cursor_match match_exp ->
+      Mismatch premise_idx
+  | [
+   match_exp;
+   If (SubE (exp_a, typ_a));
+   Let (_, DownCastE (typ_b, exp_b));
+   If (MatchE _);
+  ]
+    when guess_is_cursor_match match_exp
+         && eq_exp exp_a exp_b && eq_typ typ_a typ_b ->
       Mismatch premise_idx
   | _ -> Root premise_idx
