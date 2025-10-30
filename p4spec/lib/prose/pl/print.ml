@@ -69,6 +69,8 @@ let render_list items =
 let string_of_relid = Sl.Print.string_of_relid
 let string_of_relpathid = Sl.Print.string_of_relpathid
 let string_of_defid = Sl.Print.string_of_defid
+let code_of_unop = Sl.Print.string_of_unop
+let code_of_binop = Sl.Print.string_of_binop
 
 let render_varid ctx varid =
   let varid = varid.it in
@@ -133,6 +135,7 @@ let render_in_itervars ctx vars : string =
 let render_out_itervars ctx vars : string =
   let render_out_var var =
     let id, _, _ = var in
+    (* Do not render iterated underscored variables *)
     if String.starts_with ~prefix:"_" id.it then None
     else
       Some
@@ -168,40 +171,44 @@ let rec render_exp ctx exp : string =
   | TextE text -> "\"" ^ String.escaped text ^ "\"" |> as_code ctx
   | VarE varid -> render_varid in_code varid |> as_code ctx
   | UnE (#Bool.unop, _, { it = MatchE (exp, pattern); _ }) ->
-      F.asprintf "%s does not match pattern %s" (code_of_exp ctx exp)
+      F.asprintf "%s does not match pattern %s"
+        (render_exp_as_code ctx exp)
         (code_of_pattern pattern |> as_code ctx)
   | UnE (#Bool.unop, _, { it = SubE (exp, typ); _ }) ->
-      F.asprintf "%s does not have type %s" (code_of_exp ctx exp)
+      F.asprintf "%s does not have type %s"
+        (render_exp_as_code ctx exp)
         (code_of_typ ctx typ)
   | UnE (unop, _, exp) ->
       (* always print as code *)
-      string_of_unop unop ^ render_exp in_code exp |> as_code ctx
+      code_of_unop unop ^ render_exp in_code exp |> as_code ctx
   | BinE (binop, _, exp_l, exp_r) ->
       (* always print as code *)
-      render_exp in_code exp_l ^ " " ^ string_of_binop binop ^ " "
+      render_exp in_code exp_l ^ " " ^ code_of_binop binop ^ " "
       ^ render_exp in_code exp_r
       |> as_code ctx
   | CmpE (cmpop, _, exp_l, exp_r) ->
       render_exp ctx exp_l ^ " " ^ render_cmpop ctx cmpop ^ " "
       ^ render_exp ctx exp_r
-  | UpCastE (_typ, exp) | DownCastE (_typ, exp) ->
-      F.asprintf "%s" (code_of_exp ctx exp)
+  | UpCastE (_typ, exp) | DownCastE (_typ, exp) -> render_exp_as_code ctx exp
   | SubE (exp, typ) ->
-      F.asprintf "%s has type %s" (code_of_exp ctx exp) (code_of_typ ctx typ)
+      F.asprintf "%s has type %s"
+        (render_exp_as_code ctx exp)
+        (code_of_typ ctx typ)
   | MatchE (exp, Il.Ast.ListP `Nil) ->
-      F.asprintf "%s is an empty list" (code_of_exp ctx exp)
+      F.asprintf "%s is an empty list" (render_exp_as_code ctx exp)
   | MatchE (exp, Il.Ast.ListP `Cons) ->
-      F.asprintf "%s is a non-empty list" (code_of_exp ctx exp)
+      F.asprintf "%s is a non-empty list" (render_exp_as_code ctx exp)
   | MatchE (exp, Il.Ast.ListP (`Fixed len)) ->
-      F.asprintf "%s is a list of length %d" (code_of_exp ctx exp) len
+      F.asprintf "%s is a list of length %d" (render_exp_as_code ctx exp) len
   | MatchE (exp, Il.Ast.OptP `None) ->
-      F.asprintf "%s is None" (code_of_exp ctx exp)
+      F.asprintf "%s is None" (render_exp_as_code ctx exp)
   | MatchE (exp, Il.Ast.OptP `Some) ->
-      F.asprintf "%s is Some value" (code_of_exp ctx exp)
+      F.asprintf "%s is Some value" (render_exp_as_code ctx exp)
   | MatchE (exp, pattern) ->
-      F.asprintf "%s matches pattern %s" (code_of_exp ctx exp)
+      F.asprintf "%s matches pattern %s"
+        (render_exp_as_code ctx exp)
         (code_of_pattern pattern |> as_code ctx)
-  | TupleE es -> "(" ^ render_exps ctx ~sep:(Some ", ") es ^ ")"
+  | TupleE es -> "(" ^ render_exps ctx ~sep:", " es ^ ")"
   | CaseE (id, renderer) -> render_renderer ctx renderer id
   | StrE expfields ->
       "{"
@@ -214,7 +221,7 @@ let rec render_exp ctx exp : string =
   | OptE None -> "None" |> as_code ctx
   | ListE [] -> "[ ]" |> as_code ctx
   | ListE exps ->
-      "[" ^ render_exps in_code ~sep:(Some ", ") exps ^ "]" |> as_code ctx
+      "[" ^ render_exps in_code ~sep:", " exps ^ "]" |> as_code ctx
   | ConsE (exp_h, exp_t) ->
       (* always print as code *)
       render_exp in_code exp_h ^ " :: " ^ render_exp in_code exp_t
@@ -227,27 +234,19 @@ let rec render_exp ctx exp : string =
       render_exp ctx exp_e ^ " is in " ^ render_exp ctx exp_s
   | LenE exp -> "the length of " ^ render_exp ctx exp
   | DotE (exp_b, atom) ->
-      render_exp (code ctx) exp_b ^ "." ^ code_of_atom atom |> as_code ctx
+      render_exp in_code exp_b ^ "." ^ code_of_atom atom |> as_code ctx
   | IdxE (exp_b, exp_i) ->
-      render_exp (code ctx) exp_b ^ "[" ^ render_exp (code ctx) exp_i ^ "]"
+      render_exp in_code exp_b ^ "[" ^ render_exp in_code exp_i ^ "]"
       |> as_code ctx
   | SliceE (exp_b, exp_l, exp_h) ->
       (* always print as code *)
-      render_exp (code ctx) exp_b
-      ^ "["
-      ^ render_exp (code ctx) exp_l
-      ^ " : "
-      ^ render_exp (code ctx) exp_h
-      ^ "]"
+      render_exp in_code exp_b ^ "[" ^ render_exp in_code exp_l ^ " : "
+      ^ render_exp in_code exp_h ^ "]"
       |> as_code ctx
   | UpdE (exp_b, path, exp_f) ->
       (* always print as code *)
-      render_exp (code ctx) exp_b
-      ^ "["
-      ^ render_path (code ctx) path
-      ^ " = "
-      ^ render_exp (code ctx) exp_f
-      ^ "]"
+      render_exp in_code exp_b ^ "[" ^ render_path in_code path ^ " = "
+      ^ render_exp in_code exp_f ^ "]"
       |> as_code ctx
   | CallE (funcprose, targs, args) -> (
       if ctx.in_code then
@@ -281,17 +280,14 @@ let rec render_exp ctx exp : string =
 
 (* if sep is None, use natural language list *)
 
-and render_exps ctx ?(sep : string option = None) exps =
-  match sep with
-  | None -> render_list (List.map (render_exp ctx) exps)
-  | Some s -> String.concat s (List.map (render_exp ctx) exps)
+and render_exps ctx ?sep:sep_opt exps =
+  match (ctx.in_code, sep_opt) with
+  | _, Some s -> String.concat s (List.map (render_exp ctx) exps)
+  | true, None -> String.concat ", " (List.map (render_exp ctx) exps)
+  | false, None -> render_list (List.map (render_exp ctx) exps)
 
-and code_of_exp ctx (exp : exp) = render_exp in_code exp |> as_code ctx
-
-and code_of_exps ctx ?(sep : string option = None) (exps : exp list) =
-  match sep with
-  | None -> render_list (List.map (code_of_exp ctx) exps)
-  | Some s -> String.concat s (List.map (code_of_exp ctx) exps)
+and render_exp_as_code ctx (exp : exp) =
+  render_exp (code ctx) exp |> as_code ctx
 
 and code_of_notexp ctx notexp =
   let mixop, exps = notexp in
@@ -386,7 +382,7 @@ let render_relcall ?(level = 0) (relcall : relcall) rid : string =
       |> as_link in_prose ~link:(string_of_relid rid)
   | Prose (hintexp, exps_out, exps_in) ->
       F.asprintf "%s be the result of %s"
-        (code_of_exps in_prose exps_out)
+        (render_exps in_prose exps_out)
         (render_hintexp in_link exps_in hintexp
         |> as_link in_prose ~link:(string_of_relid rid))
   | Mixop (mixop, exps) ->
@@ -460,7 +456,9 @@ let rec render_instr ?(level = 0) ?(unordered = false) (instr : instr) : string
         (render_exp in_prose exp_r)
   | RelI (relcall, rid) ->
       F.asprintf "%sLet %s." bullet (render_relcall ~level relcall rid)
-  | ReturnI exp -> F.asprintf "%sReturn %s." bullet (code_of_exp in_prose exp)
+  | ReturnI exp ->
+      F.asprintf "%sReturn %s." bullet
+        (render_exp in_code exp |> as_code in_prose)
   | ResultI (Some hintexp, exps) ->
       F.asprintf "%sResult in %s." bullet (render_hintexp in_prose exps hintexp)
   | ResultI (None, []) -> bullet ^ "The relation holds."
@@ -483,18 +481,18 @@ let rec render_instr ?(level = 0) ?(unordered = false) (instr : instr) : string
         (render_in_itervars in_prose vars_in)
   | CheckLetI (exp_l, exp_r) ->
       F.asprintf "%sLet!~type~ %s be %s." bullet
-        (code_of_exp in_prose exp_l)
+        (render_exp_as_code in_prose exp_l)
         (render_exp in_prose exp_r)
   | OptionGetI (exp_l, exp_r) ->
       F.asprintf "%sLet!~option~ %s be %s." bullet
-        (code_of_exp in_prose exp_l)
+        (render_exp_as_code in_prose exp_l)
         (render_exp in_prose exp_r)
 
 and render_instrs ?(level = 0) instrs =
   let instrs = Shorthand.apply_all_shorthands instrs in
   match instrs with
   | [ { it = ReturnI ({ it = BoolE b; _ } as exp); _ } ] ->
-      F.asprintf " return %s." (code_of_exp in_prose exp)
+      F.asprintf " return %s." (render_exp_as_code in_prose exp)
   | instrs ->
       "\n" ^ (List.map (render_instr ~level) instrs |> String.concat "\n")
 
