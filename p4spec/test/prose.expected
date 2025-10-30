@@ -7283,13 +7283,9 @@ relation Stmt_eval: `p'`, `EC'`, `STO'`, and `statementIR`
   ... Check that `calleeResult` has type `continueResult<callee>`.
   ... Let `CONT callee` be `calleeResult`.
   ... Let <<Call_eval, `p' EC~1~ STO~1~ |- callee @ < typeArgumentIR^{asterisk}^ > ( argumentIR^{asterisk}^ ) : EC~2~ STO~2~ callResult`>>.
-  ... If let `acceptTransitionResult` be `callResult`:
-   .... Result in 
-* the evaluation context `EC~2~`,
-* the updated store `STO~2~`,
-* and the instantiated statement `CONT`.
-  ... Else if let `returnResult` be `callResult`:
-   .... Result in 
+  ... Check that `callResult` has type `returnResult`.
+  ... Let `returnResult` be `callResult`.
+  ... Result in 
 * the evaluation context `EC~2~`,
 * the updated store `STO~2~`,
 * and the instantiated statement `CONT`.
@@ -7948,7 +7944,7 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
   ... Let `acceptTransitionResult` be `transitionResult`.
   ... Let `EC~2~` be `EC~1~`[GLOBAL.FRAME = `EC~callee_5~.GLOBAL.FRAME`].
   ... Let <<Copy_out, `STO~3~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_5~ storageReference^?^^{asterisk}^ ~> EC~3~`>>.
-  ... Result in `EC~3~`, `STO~3~`, and `ACCEPT`.
+  ... Result in `EC~3~`, `STO~3~`, and `RETURN None`.
 . Else if let `controlApplyMethodCallee` be `callee`:
  .. Group controlApplyMethodCallee:
   ... Let `CONTROL _ . APPLY ( parameterListIR # id~default~^{asterisk}^ ) { frame ; controlLocalDeclarationListIR ; renv ; controlBodyIR }` be `controlApplyMethodCallee`.

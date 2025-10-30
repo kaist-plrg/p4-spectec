@@ -26259,7 +26259,7 @@ relation Stmt_eval: cursor evaluationContext store |- statementIR : evaluationCo
     -- Lvalue_write: p EC_2 STO_2 |- storageReference -> value : EC_3
     -- output: % % % |- % : EC_3 STO_2 cont as statementResult
 
-  ;; ../../../../spec-concrete/8.07-evaluation-statement.watsup:54.1-76.2
+  ;; ../../../../spec-concrete/8.07-evaluation-statement.watsup:54.1-66.2
   rulegroup callStatementIR
 
    match
@@ -26271,15 +26271,6 @@ relation Stmt_eval: cursor evaluationContext store |- statementIR : evaluationCo
 
    paths
 
-    rulepath accept
-    -- Callee_eval: p EC_0 STO_0 |- routineTargetIR <_>( argumentIR*{argumentIR <- argumentIR*} ): EC_1 STO_1 calleeResult
-    -- if calleeResult <: continueResult<callee>
-    -- let cont callee = calleeResult as continueResult<callee>
-    -- Call_eval: p EC_1 STO_1 |- callee @< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} ): EC_2 STO_2 callResult
-    -- if callResult <: acceptTransitionResult
-    -- let acceptTransitionResult = callResult as acceptTransitionResult
-    -- output: % % % |- % : EC_2 STO_2 cont as statementResult
-
     rulepath return
     -- Callee_eval: p EC_0 STO_0 |- routineTargetIR <_>( argumentIR*{argumentIR <- argumentIR*} ): EC_1 STO_1 calleeResult
     -- if calleeResult <: continueResult<callee>
@@ -26289,7 +26280,7 @@ relation Stmt_eval: cursor evaluationContext store |- statementIR : evaluationCo
     -- let returnResult = callResult as returnResult
     -- output: % % % |- % : EC_2 STO_2 cont as statementResult
 
-  ;; ../../../../spec-concrete/8.07-evaluation-statement.watsup:87.1-104.2
+  ;; ../../../../spec-concrete/8.07-evaluation-statement.watsup:77.1-94.2
   rulegroup returnStatementIR
 
    match
@@ -26331,7 +26322,7 @@ relation Stmt_eval: cursor evaluationContext store |- statementIR : evaluationCo
     -- let cont value = expressionResult as continueResult<value>
     -- output: % % % |- % : EC_1 STO_1 return ?(value) as statementResult
 
-  ;; ../../../../spec-concrete/8.07-evaluation-statement.watsup:109.1-110.36
+  ;; ../../../../spec-concrete/8.07-evaluation-statement.watsup:99.1-100.36
   rulegroup exitStatement
 
    match
@@ -26347,7 +26338,7 @@ relation Stmt_eval: cursor evaluationContext store |- statementIR : evaluationCo
     rulepath exitStatement
     -- output: % % % |- % : EC STO exit as statementResult
 
-  ;; ../../../../spec-concrete/8.07-evaluation-statement.watsup:115.1-118.66
+  ;; ../../../../spec-concrete/8.07-evaluation-statement.watsup:105.1-108.66
   rulegroup blockStatement
 
    match
@@ -26363,7 +26354,7 @@ relation Stmt_eval: cursor evaluationContext store |- statementIR : evaluationCo
     -- Block_eval: EC_0 STO_0 |- blockStatementIR : EC_1 STO_1 statementResult
     -- output: % % % |- % : EC_1 STO_1 statementResult
 
-  ;; ../../../../spec-concrete/8.07-evaluation-statement.watsup:126.1-161.2
+  ;; ../../../../spec-concrete/8.07-evaluation-statement.watsup:116.1-151.2
   rulegroup conditionalStatementIR
 
    match
@@ -26433,7 +26424,7 @@ relation Stmt_eval: cursor evaluationContext store |- statementIR : evaluationCo
 ;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:94.1-97.23
 relation BlockElementStmt_eval: evaluationContext store |- blockElementStatementIR : evaluationContext store statementResult
 
-  ;; ../../../../spec-concrete/8.07-evaluation-statement.watsup:182.1-196.2
+  ;; ../../../../spec-concrete/8.07-evaluation-statement.watsup:172.1-186.2
   rulegroup constantDeclarationIR
 
    match
@@ -26459,7 +26450,7 @@ relation BlockElementStmt_eval: evaluationContext store |- blockElementStatement
     -- if (continueEmptyResult = cont)
     -- output: % % |- % : EC_1 STO_1 cont as statementResult
 
-  ;; ../../../../spec-concrete/8.07-evaluation-statement.watsup:202.1-204.77
+  ;; ../../../../spec-concrete/8.07-evaluation-statement.watsup:192.1-194.77
   rulegroup statementIR
 
    match
@@ -26478,7 +26469,7 @@ relation BlockElementStmt_eval: evaluationContext store |- blockElementStatement
 ;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:99.1-102.23
 relation BlockElementStmts_eval: evaluationContext store |- blockElementStatementListIR : evaluationContext store statementResult
 
-  ;; ../../../../spec-concrete/8.07-evaluation-statement.watsup:210.1-230.2
+  ;; ../../../../spec-concrete/8.07-evaluation-statement.watsup:200.1-220.2
   rulegroup 
 
    match
@@ -26522,7 +26513,7 @@ relation BlockElementStmts_eval: evaluationContext store |- blockElementStatemen
 ;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:104.1-107.23
 relation Block_eval: evaluationContext store |- blockStatementIR : evaluationContext store statementResult
 
-  ;; ../../../../spec-concrete/8.07-evaluation-statement.watsup:236.1-243.32
+  ;; ../../../../spec-concrete/8.07-evaluation-statement.watsup:226.1-233.32
   rulegroup 
 
    match
@@ -27671,7 +27662,7 @@ relation Call_eval: cursor evaluationContext store |- callee @< typeArgumentList
     -- if (acceptTransitionResult = accept)
     -- let EC_2 = EC_1[global.frame = EC_callee_5.global.frame]
     -- Copy_out: STO_3 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ block EC_callee_5 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
-    -- output: % % % |- % @< % >( % ): EC_3 STO_3 accept as callResult
+    -- output: % % % |- % @< % >( % ): EC_3 STO_3 return ?() as callResult
 
   ;; ../../../../spec-concrete/8.11.4-evaluation-call.watsup:180.1-219.14
   rulegroup controlApplyMethodCallee

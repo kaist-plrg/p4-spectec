@@ -28258,19 +28258,11 @@ relation Stmt_eval: p' EC' STO' |- statementIR : % % %
 
         2. (Call_eval: p' EC_1 STO_1 |- callee @< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} ): EC_2 STO_2 callResult)
 
-        3. Case analysis on callResult
+        3. If ((callResult has type returnResult)), then
 
-          1. Case (% has type acceptTransitionResult)
+          1. (Let returnResult be (callResult as returnResult))
 
-            1. (Let acceptTransitionResult be (callResult as acceptTransitionResult))
-
-            2. Result in : % % % |- % : EC_2 STO_2 ((cont) as statementResult)
-
-          2. Case (% has type returnResult)
-
-            1. (Let returnResult be (callResult as returnResult))
-
-            2. Result in : % % % |- % : EC_2 STO_2 ((cont) as statementResult)
+          2. Result in : % % % |- % : EC_2 STO_2 ((cont) as statementResult)
 
   4. Case (% has type exitStatement)
 
@@ -29541,7 +29533,7 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR' >( argumentLis
 
           3. (Copy_out: STO_3 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ (block) EC_callee_5 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3)
 
-          4. Result in : % % % |- % @< % >( % ): EC_3 STO_3 ((accept) as callResult)
+          4. Result in : % % % |- % @< % >( % ): EC_3 STO_3 ((return ?()) as callResult)
 
   3. Case (% has type controlApplyMethodCallee)
 

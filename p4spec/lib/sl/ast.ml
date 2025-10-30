@@ -143,15 +143,20 @@ and guard =
 
 and instr = instr' phrase
 and instr' =
+  (* Branching instructions *)
   | IfI of exp * iterexp list * instr list * phantom option
   | HoldI of id * notexp * iterexp list * holdcase
   | CaseI of exp * case list * phantom option 
   | OtherwiseI of instr
+  (* Aggregate instructions *)
   | GroupI of id * exp list * instr list
+  (* Binding instructions *)
   | LetI of exp * exp * iterexp list
   | RuleI of id * notexp * iterexp list
+  (* Result/Return instructions *)
   | ResultI of exp list
   | ReturnI of exp
+  (* Debugging instructions *)
   | DebugI of exp
 [@@deriving yojson]
 

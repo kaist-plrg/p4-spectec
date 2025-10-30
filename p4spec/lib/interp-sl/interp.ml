@@ -25,6 +25,13 @@ let func_cache = ref (Cache.Cache.create ~size:10000)
 let rule_cache = ref (Cache.Cache.create ~size:10000)
 
 module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
+  (* Architecture transactions *)
+
+  let checkpoint () = Arch.checkpoint ()
+
+  let commit_or_rollback (sign : Sign.t) =
+    match sign with Cont -> Arch.rollback () | Res _ | Ret _ -> Arch.commit ()
+
   (* Assignments *)
 
   (* Assigning a value to an expression *)
@@ -943,12 +950,22 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   and eval_if_instr (ctx : Ctx.t) (exp_cond : exp) (iterexps : iterexp list)
       (instrs_then : instr list) (phantom_opt : phantom option) : Ctx.t * Sign.t
       =
+    (* Create an architecture checkpoint *)
+    checkpoint ();
+    (* Evaluate the if condition and mark phantom *)
     let cond, value_cond = eval_if_cond_iter ctx exp_cond iterexps in
     let vid = value_cond.note.vid in
     (match phantom_opt with
     | Some (pid, _) -> Ctx.cover ctx (not cond) pid vid
     | None -> ());
-    if cond then eval_instrs ctx Cont instrs_then else (ctx, Cont)
+    (* Evaluate the then branch if the condition holds *)
+    let ctx, sign =
+      if cond then eval_instrs ctx Cont instrs_then else (ctx, Cont)
+    in
+    (* If the nested instructions did not result/return, rollback;
+       otherwise, commit the architecture changes *)
+    commit_or_rollback sign;
+    (ctx, sign)
 
   (* Hold instruction evaluation *)
 
@@ -1016,6 +1033,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and eval_hold_instr (ctx : Ctx.t) (id : id) (notexp : notexp)
       (iterexps : iterexp list) (holdcase : holdcase) : Ctx.t * Sign.t =
+    (* Create an architecture checkpoint *)
+    checkpoint ();
     (* Copy the current coverage information *)
     let cover_backup = !(ctx.coverage) in
     (* Evaluate the hold condition *)
@@ -1023,23 +1042,29 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     (* Evaluate the hold case, and restore the coverage information
        if the expected behavior is the relation not holding *)
     let vid = value_cond.note.vid in
-    match holdcase with
-    | BothH (instrs_hold, instrs_not_hold) ->
-        if cond then eval_instrs ctx Cont instrs_hold
-        else (
+    let ctx, sign =
+      match holdcase with
+      | BothH (instrs_hold, instrs_not_hold) ->
+          if cond then eval_instrs ctx Cont instrs_hold
+          else (
+            ctx.coverage := cover_backup;
+            eval_instrs ctx Cont instrs_not_hold)
+      | HoldH (instrs_hold, phantom_opt) ->
+          (match phantom_opt with
+          | Some (pid, _) -> Ctx.cover ctx (not cond) pid vid
+          | None -> ());
+          if cond then eval_instrs ctx Cont instrs_hold else (ctx, Cont)
+      | NotHoldH (instrs_not_hold, phantom_opt) ->
           ctx.coverage := cover_backup;
-          eval_instrs ctx Cont instrs_not_hold)
-    | HoldH (instrs_hold, phantom_opt) ->
-        (match phantom_opt with
-        | Some (pid, _) -> Ctx.cover ctx (not cond) pid vid
-        | None -> ());
-        if cond then eval_instrs ctx Cont instrs_hold else (ctx, Cont)
-    | NotHoldH (instrs_not_hold, phantom_opt) ->
-        ctx.coverage := cover_backup;
-        (match phantom_opt with
-        | Some (pid, _) -> Ctx.cover ctx cond pid vid
-        | None -> ());
-        if not cond then eval_instrs ctx Cont instrs_not_hold else (ctx, Cont)
+          (match phantom_opt with
+          | Some (pid, _) -> Ctx.cover ctx cond pid vid
+          | None -> ());
+          if not cond then eval_instrs ctx Cont instrs_not_hold else (ctx, Cont)
+    in
+    (* If the nested instructions did not result/return, rollback;
+       otherwise, commit the architecture changes *)
+    commit_or_rollback sign;
+    (ctx, sign)
 
   (* Case analysis instruction evaluation *)
 
@@ -1078,14 +1103,24 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and eval_case_instr (ctx : Ctx.t) (exp : exp) (cases : case list)
       (phantom_opt : phantom option) : Ctx.t * Sign.t =
+    (* Create an architecture checkpoint *)
+    checkpoint ();
+    (* Evaluate the matching case and mark phantom *)
     let instrs_opt, value_cond = eval_cases ctx exp cases in
     let vid = value_cond.note.vid in
     (match phantom_opt with
     | Some (pid, _) -> Ctx.cover ctx (Option.is_none instrs_opt) pid vid
     | None -> ());
-    match instrs_opt with
-    | Some instrs -> eval_instrs ctx Cont instrs
-    | None -> (ctx, Cont)
+    (* Evaluate the matching case if any *)
+    let ctx, sign =
+      match instrs_opt with
+      | Some instrs -> eval_instrs ctx Cont instrs
+      | None -> (ctx, Cont)
+    in
+    (* If the nested instructions did not result/return, rollback;
+       otherwise, commit the architecture changes *)
+    commit_or_rollback sign;
+    (ctx, sign)
 
   (* Group instruction evaluation *)
 
