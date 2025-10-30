@@ -7,15 +7,15 @@ type reason =
   (*
     One of its children is a root cause node.
     Argument 1: index # of the clause/rule that caused the failure
-    Argument 2: max execution depth (index # of clause/rule) of the child node referenced by Arg 1
+    Argument 2: execution depth (index # of clause/rule) of the child node referenced by Arg 1
   *)
-  | RootClause of int * int
+  | RootParent of int * int
   (*
     All of its children failed because of a mismatch.
     Argument 1: index # of the clause/rule that likely caused the failure
-    Argument 2: max execution depth (index # of clause/rule) of the child node referenced by Arg 1
+    Argument 2: execution depth (index # of clause/rule) of the child node referenced by Arg 1
   *)
-  | MismatchClause of int * int
+  | MismatchParent of int * int
   (*
     This leaf node is a possible "mismatch", i.e. the failure is caused by one of any guard patterns
     in the beginning of a clause/rule.
@@ -33,8 +33,8 @@ type failtrace = Failtrace of region * string * reason * failtrace list
 type 'a attempt = Ok of 'a | Fail of failtrace list
 
 let string_of_reason = function
-  | RootClause (clause_idx, _) -> "Clause " ^ string_of_int clause_idx
-  | MismatchClause (clause_idx, _) ->
+  | RootParent (clause_idx, _) -> "Clause " ^ string_of_int clause_idx
+  | MismatchParent (clause_idx, _) ->
       "MismatchClause at clause " ^ string_of_int clause_idx
   | Mismatch i -> "Mismatch at premise " ^ string_of_int i
   | Root i -> "Root cause at premise " ^ string_of_int i
@@ -70,18 +70,18 @@ let merge_failtrace_reason (failtraces : failtrace list) : reason =
   |> List.fold_left
        (fun acc (i, Failtrace (_, _, reason, _)) ->
          match (acc, reason) with
-         | Root premise, _ -> RootClause (i, premise)
-         | RootClause (_, premise_a), Root premise_b
-         | RootClause (_, premise_a), RootClause (_, premise_b) ->
-             if premise_a < premise_b then RootClause (i, premise_b) else acc
-         | RootClause _, _ -> acc
-         | _, Root premise | _, RootClause (_, premise) ->
-             RootClause (i, premise)
-         | MismatchClause (_, premise_a), MismatchClause (_, premise_b) ->
-             if premise_a < premise_b then MismatchClause (i, premise_b)
+         | Root premise, _ -> RootParent (i, premise)
+         | RootParent (_, premise_a), Root premise_b
+         | RootParent (_, premise_a), RootParent (_, premise_b) ->
+             if premise_a < premise_b then RootParent (i, premise_b) else acc
+         | RootParent _, _ -> acc
+         | _, Root premise | _, RootParent (_, premise) ->
+             RootParent (i, premise)
+         | MismatchParent (_, premise_a), MismatchParent (_, premise_b) ->
+             if premise_a < premise_b then MismatchParent (i, premise_b)
              else acc
-         | _, MismatchClause (_, max_premise) | _, Mismatch max_premise ->
-             MismatchClause (i, max_premise)
+         | _, MismatchParent (_, max_premise) | _, Mismatch max_premise ->
+             MismatchParent (i, max_premise)
          | _, Unknown -> acc)
        Unknown
 
@@ -146,8 +146,8 @@ let rec deepest_failtraces_aux (failtraces : failtrace list) :
                  in
                  let (Failtrace (_, _, cur_reason, _)) = cur_failtrace in
                  match (acc_reason, cur_reason) with
-                 | ( MismatchClause (_, acc_premise_idx),
-                     MismatchClause (_, cur_premise_idx) ) ->
+                 | ( MismatchParent (_, acc_premise_idx),
+                     MismatchParent (_, cur_premise_idx) ) ->
                      if acc_premise_idx > cur_premise_idx then
                        (acc_length, acc_failtraces)
                      else if acc_premise_idx < cur_premise_idx then
@@ -164,14 +164,14 @@ let deepest_failtraces (failtraces : failtrace list) : failtrace list =
 let rec prune_failtraces (failtraces : failtrace list) : failtrace list =
   let reason = merge_failtrace_reason failtraces in
   match reason with
-  | RootClause (i, _) ->
+  | RootParent (i, _) ->
       let (Failtrace (region, msg, reason, fts)) =
         List.nth failtraces (i - 1)
       in
       [ Failtrace (region, msg, reason, prune_failtraces fts) ]
   | Root _ ->
       failwith "Invalid state. List of failtraces cannot have Root fail cause"
-  | MismatchClause _ | Mismatch _ -> deepest_failtraces failtraces
+  | MismatchParent _ | Mismatch _ -> deepest_failtraces failtraces
   | Unknown -> failtraces
 
 let prettify_failtraces ?(depth_limit = false) (failtraces : failtrace list) :
