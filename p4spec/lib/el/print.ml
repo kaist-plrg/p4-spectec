@@ -259,11 +259,18 @@ let string_of_def def =
       ^ string_of_deftyp deftyp
   | VarD (varid, plaintyp, _hints) ->
       "var " ^ string_of_varid varid ^ " : " ^ string_of_plaintyp plaintyp
+  | ExternRelD (relid, nottyp, _hints) ->
+      "extern relation " ^ string_of_relid relid ^ ": "
+      ^ string_of_nottyp nottyp
   | RelD (relid, nottyp, _hints) ->
       "relation " ^ string_of_relid relid ^ ": " ^ string_of_nottyp nottyp
   | RuleGroupD (relid, groupid, rules) ->
       "rulegroup " ^ string_of_relid relid ^ string_of_ruleid groupid ^ ":\n  "
       ^ String.concat "\n  " (List.map string_of_rule rules)
+  | BuiltinDecD (defid, tparams, params, plaintyp, _hints) ->
+      "builtin dec " ^ string_of_defid defid ^ string_of_tparams tparams
+      ^ string_of_params params ^ " : "
+      ^ string_of_plaintyp plaintyp
   | DecD (defid, tparams, params, plaintyp, _hints) ->
       "dec " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : "

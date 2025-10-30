@@ -4,8 +4,9 @@ open Sl.Ast
 module InputHint = Runtime_static.Rel.InputHint
 module Typ = Runtime_dynamic.Typ
 module Value = Runtime_dynamic.Value
-module Cache = Runtime_dynamic.Cache
 module Rel = Runtime_dynamic_sl.Rel
+module Func = Runtime_dynamic_sl.Func
+module Cache = Runtime_dynamic.Cache
 open Runtime_dynamic_sl.Envs
 module Sim = Runtime_simulator.Simulator
 module Dep = Runtime_testgen.Dep
@@ -1298,9 +1299,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Rule instruction evaluation *)
 
   and eval_rule (ctx : Ctx.t) (id : id) (notexp : notexp) : Ctx.t =
-    let rel = Ctx.find_rel Local ctx id in
     let exps_input, exps_output =
-      let _, inputs, _, _ = rel in
+      let inputs = Ctx.find_rel_inputs Local ctx id in
       let _, exps = notexp in
       InputHint.split_exps_without_idx inputs exps
     in
@@ -1424,24 +1424,25 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and invoke_rel (ctx : Ctx.t) (id : id) (values_input : value list) :
       value list option =
-    let _, _, exps_input, instrs = Ctx.find_rel Local ctx id in
-    match instrs with
-    | [] -> invoke_rel_arch ctx id exps_input values_input
-    | _ -> invoke_rel_def ctx id exps_input instrs values_input
+    let rel = Ctx.find_rel Local ctx id in
+    match rel with
+    | Rel.Extern _ -> invoke_extern_rel ctx id values_input
+    | Rel.Defined (_, exps_input, instrs) ->
+        invoke_defined_rel ctx id exps_input instrs values_input
 
-  and invoke_rel_arch (_ctx : Ctx.t) (id : id) (_exps_input : exp list)
-      (values_input : value list) : value list option =
+  and invoke_extern_rel (_ctx : Ctx.t) (id : id) (values_input : value list) :
+      value list option =
     match id.it with
     | "ExternMethodCall_eval" ->
         Some (Arch.eval_extern_method_call values_input)
-    | _ -> error id.at (F.asprintf "unknown arch relation %s" id.it)
+    | _ -> error id.at (F.asprintf "unimplemented extern relation %s" id.it)
 
-  and invoke_rel_def (ctx : Ctx.t) (id : id) (exps_input : exp list)
+  and invoke_defined_rel (ctx : Ctx.t) (id : id) (exps_input : exp list)
       (instrs : instr list) (values_input : value list) : value list option =
     let invoke_rel_def' () =
       let ctx_local = Ctx.localize_rule ctx id values_input in
       let ctx_local = assign_exps ctx_local exps_input values_input in
-      let ctx_local, sign = eval_instrs ctx_local Cont instrs in
+      let _ctx_local, sign = eval_instrs ctx_local Cont instrs in
       match sign with
       | Res values_output ->
           List.iteri
@@ -1469,12 +1470,37 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and invoke_func (ctx : Ctx.t) (id : id) (targs : targ list) (args : arg list)
       : value =
-    if Builtin.is_builtin id then invoke_func_builtin ctx id targs args
-    else invoke_func_def ctx id targs args
-
-  and invoke_func_builtin (ctx : Ctx.t) (id : id) (targs : targ list)
-      (args : arg list) : value =
+    let targs =
+      match targs with
+      | [] -> []
+      | targs ->
+          let theta =
+            (TDEnv.bindings ctx.global.tdenv
+            @
+            match ctx.local with
+            | Empty | Rel _ -> []
+            | Func { tdenv; _ } -> TDEnv.bindings tdenv)
+            |> List.filter_map (fun (tid, (_tparams, deftyp)) ->
+                   match deftyp.it with
+                   | Il.Ast.PlainT typ -> Some (tid, typ)
+                   | _ -> None)
+            |> TIdMap.of_list
+          in
+          List.map (Typ.subst_typ theta) targs
+    in
     let values_input = eval_args ctx args in
+    invoke_func' ctx id targs values_input
+
+  and invoke_func' (ctx : Ctx.t) (id : id) (targs : targ list)
+      (values_input : value list) : value =
+    let func = Ctx.find_func Local ctx id in
+    match func with
+    | Func.Builtin -> invoke_builtin_func ctx id targs values_input
+    | Func.Defined (tparams, args_input, instrs) ->
+        invoke_defined_func ctx id tparams args_input instrs targs values_input
+
+  and invoke_builtin_func (ctx : Ctx.t) (id : id) (targs : targ list)
+      (values_input : value list) : value =
     let value_output = Builtin.invoke ctx id targs values_input in
     List.iteri
       (fun idx_arg value_input ->
@@ -1482,37 +1508,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       values_input;
     value_output
 
-  and invoke_func_def (ctx : Ctx.t) (id : id) (targs : targ list)
-      (args : arg list) : value =
-    let values_input = eval_args ctx args in
-    invoke_func_def' ctx id targs values_input
-
-  and invoke_func_def' (ctx : Ctx.t) (id : id) (targs : targ list)
+  and invoke_defined_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
+      (args_input : arg list) (instrs : instr list) (targs : targ list)
       (values_input : value list) : value =
-    let tparams, args_input, instrs = Ctx.find_func Local ctx id in
-    check (instrs <> []) id.at "function has no instructions";
     let tdenv_local =
       check
         (List.length targs = List.length tparams)
         id.at "arity mismatch in type arguments";
-      let targs =
-        match targs with
-        | [] -> []
-        | targs ->
-            let theta =
-              (TDEnv.bindings ctx.global.tdenv
-              @
-              match ctx.local with
-              | Empty | Rel _ -> []
-              | Func { tdenv; _ } -> TDEnv.bindings tdenv)
-              |> List.filter_map (fun (tid, (_tparams, deftyp)) ->
-                     match deftyp.it with
-                     | Il.Ast.PlainT typ -> Some (tid, typ)
-                     | _ -> None)
-              |> TIdMap.of_list
-            in
-            List.map (Typ.subst_typ theta) targs
-      in
       List.fold_left2
         (fun tdenv_local tparam targ ->
           TDEnv.add tparam ([], Il.Ast.PlainT targ $ targ.at) tdenv_local)
@@ -1549,11 +1551,17 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | TypD (id, tparams, deftyp) ->
         let typdef = (tparams, deftyp) in
         Ctx.add_typdef Global ctx id typdef
-    | RelD (id, (mixop, inputs), relmatch, relpaths, _) ->
-        let rel = (mixop, inputs, relmatch, relpaths) in
+    | ExternRelD (id, (_, inputs), _, _) ->
+        let rel = Rel.Extern inputs in
         Ctx.add_rel Global ctx id rel
+    | RelD (id, (_, inputs), relmatch, relpaths, _) ->
+        let rel = Rel.Defined (inputs, relmatch, relpaths) in
+        Ctx.add_rel Global ctx id rel
+    | BuiltinDecD (id, _, _, _, _) ->
+        let func = Func.Builtin in
+        Ctx.add_func Global ctx id func
     | DecD (id, tparams, args_input, _typ, instrs, _) ->
-        let func = (tparams, args_input, instrs) in
+        let func = Func.Defined (tparams, args_input, instrs) in
         Ctx.add_func Global ctx id func
 
   let load_spec (ctx : Ctx.t) (spec : spec) : Ctx.t =
@@ -1567,6 +1575,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     match invoke_rel ctx (relname $ no_region) values_input with
     | Some values_output -> values_output
     | None -> error no_region (F.asprintf "relation %s was not matched" relname)
+
+  let do_eval_func (ctx : Ctx.t) (spec : spec) (funcname : string)
+      (targs : targ list) (values_input : value list) : value =
+    let ctx = load_spec ctx spec in
+    invoke_func' ctx (funcname $ no_region) targs values_input
 
   let eval_program ~(derive : bool) (spec : spec) (relname : string)
       (includes_p4 : string list) (filename_p4 : string) : Sim.program_result =
@@ -1594,13 +1607,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     Cache.Cache.clear !rule_cache;
     let cover = ref (SCov.init spec) in
     let ctx = Ctx.empty_partial cover in
-    let ctx = load_spec ctx spec in
     try
-      match invoke_rel ctx (relname $ no_region) values_input with
-      | Some values_output -> Sim.Pass (values_output, !(ctx.coverage))
-      | None ->
-          let msg = F.asprintf "relation %s was not matched" relname in
-          Sim.Fail (no_region, msg, !(ctx.coverage))
+      let values_output = do_eval_rel ctx spec relname values_input in
+      Sim.Pass (values_output, !(ctx.coverage))
     with Util.Error.InterpError (at, msg) ->
       Sim.Fail (at, msg, !(ctx.coverage))
 
@@ -1612,11 +1621,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     Cache.Cache.clear !rule_cache;
     let cover = ref (SCov.init spec) in
     let ctx = Ctx.empty_partial cover in
-    let ctx = load_spec ctx spec in
     try
-      let value_output =
-        invoke_func_def' ctx (funcname $ no_region) targs values_input
-      in
+      let value_output = do_eval_func ctx spec funcname targs values_input in
       Sim.Pass (value_output, !(ctx.coverage))
     with Util.Error.InterpError (at, msg) ->
       Sim.Fail (at, msg, !(ctx.coverage))

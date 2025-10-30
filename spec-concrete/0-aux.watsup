@@ -15,25 +15,25 @@ var t : text
 ;; General nat functions
 ;;
 
-dec $sum(nat*) : nat
+builtin dec $sum(nat*) : nat
 
-dec $max(nat*) : nat
+builtin dec $max(nat*) : nat
 
-dec $min(nat*) : nat
+builtin dec $min(nat*) : nat
 
 ;;
 ;; General text functions
 ;;
 
-dec $int_to_text(int) : text
+builtin dec $int_to_text(int) : text
 
 dec $concat_text(text*) : text
   hint(prose_in "the concatenation of" %0)
 def $concat_text(eps) = ""
 def $concat_text(t_h :: t_t*) = t_h ++ $concat_text(t_t*)
 
-dec $strip_prefix(text, text) : text
-dec $strip_suffix(text, text) : text
+builtin dec $strip_prefix(text, text) : text
+builtin dec $strip_suffix(text, text) : text
 
 ;;
 ;; General option functions
@@ -61,11 +61,11 @@ def $repeat_<X>(X, n) = X ++ $repeat_<X>(X, n')
   -- if n =/= 0
   -- if n' = $(n - 1)
 
-dec $rev_<X>(X*) : X*
+builtin dec $rev_<X>(X*) : X*
 
-dec $concat_<X>((X*)*) : X*
+builtin dec $concat_<X>((X*)*) : X*
 
-dec $partition_<X>(X*, nat) : (X*, X*)
+builtin dec $partition_<X>(X*, nat) : (X*, X*)
 
 dec $filter_<X>(X*, def $cond(X) : bool) : X*
 def $filter_<X>(eps, def $cond) = eps
@@ -76,9 +76,9 @@ def $filter_<X>(X_h :: X_t*, def $cond)
   = $filter_<X>(X_t*, def $cond)
     -- if ~$cond(X_h)
 
-dec $assoc_<X, Y>(X, (X, Y)*) : Y?
+builtin dec $assoc_<X, Y>(X, (X, Y)*) : Y?
 
-dec $distinct_<K>(K*) : bool
+builtin dec $distinct_<K>(K*) : bool
   hint(prose_true "the elements of" %0 "are distinct")
   hint(prose_false "the elements of" %0 "are not distinct")
 
@@ -95,23 +95,23 @@ dec $in_set<K>(K, set<K>) : bool
   hint(prose_true %0 "is an element of the set" %1)
 def $in_set<K>(K, `{ K_e* }) = K <- K_e*
 
-dec $intersect_set<K>(set<K>, set<K>) : set<K>
+builtin dec $intersect_set<K>(set<K>, set<K>) : set<K>
   hint(prose_in "the intersection of the sets" %0 "and" %1)
 
-dec $union_set<K>(set<K>, set<K>) : set<K>
+builtin dec $union_set<K>(set<K>, set<K>) : set<K>
   hint(prose_in "the union of the sets" %0 "and" %1)
 
-dec $unions_set<K>(set<K>*) : set<K>
+builtin dec $unions_set<K>(set<K>*) : set<K>
   hint(prose_in "the union of the sets" %0)
 
-dec $diff_set<K>(set<K>, set<K>) : set<K>
+builtin dec $diff_set<K>(set<K>, set<K>) : set<K>
   hint(prose_in "the difference of the sets" %0 "and" %1)
 
-dec $sub_set<K>(set<K>, set<K>) : bool
+builtin dec $sub_set<K>(set<K>, set<K>) : bool
   hint(prose_true %0 "is a subset of" %1)
   hint(prose_false %0 "is not a subset of" %1)
 
-dec $eq_set<K>(set<K>, set<K>) : bool
+builtin dec $eq_set<K>(set<K>, set<K>) : bool
   hint(prose_true %0 "is equal to" %1)
   hint(prose_false %0 "is not equal to" %1)
 
@@ -130,15 +130,15 @@ dec $dom_map<K, V>(map<K, V>) : set<K>
   hint(prose_in "the domain of the map" %0)
 def $dom_map<K, V>(`{ (K `: V)* }) = `{ K* }
 
-dec $find_map<K, V>(map<K, V>, K) : V?
+builtin dec $find_map<K, V>(map<K, V>, K) : V?
 
-dec $find_maps<K, V>(map<K, V>*, K) : V?
+builtin dec $find_maps<K, V>(map<K, V>*, K) : V?
 
-dec $add_map<K, V>(map<K, V>, K, V) : map<K, V>
+builtin dec $add_map<K, V>(map<K, V>, K, V) : map<K, V>
 
-dec $adds_map<K, V>(map<K, V>, K*, V*) : map<K, V>
+builtin dec $adds_map<K, V>(map<K, V>, K*, V*) : map<K, V>
 
-dec $update_map<K, V>(map<K, V>, K, V) : map<K, V>
+builtin dec $update_map<K, V>(map<K, V>, K, V) : map<K, V>
 
 dec $extend_map<K, V>(map<K, V>, map<K, V>) : map<K, V>
 def $extend_map<K, V>(`{ (K_a `: V_a)* }, `{ (K_b `: V_b)* })

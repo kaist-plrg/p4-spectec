@@ -1,12 +1,12 @@
+module InputHint = Runtime_static.Rel.InputHint
 open Sl.Ast
-open Sl.Print
 
 (* Relation *)
 
-type t = mixop * Runtime_static.Rel.InputHint.t * exp list * instr list
+type t =
+  | Extern of InputHint.t
+  | Defined of InputHint.t * exp list * instr list
 
-let to_string (mixop, inputs, _exps_match, instrs) =
-  "relation:\n\n"
-  ^ string_of_instrs ~verbose:true
-      ~signature:(Some (mixop, inputs))
-      ~level:2 instrs
+let to_string = function
+  | Extern _ -> "extern relation"
+  | Defined _ -> "defined relation"

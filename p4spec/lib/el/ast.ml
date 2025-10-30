@@ -177,10 +177,14 @@ and def' =
   | TypD of id * tparam list * deftyp * hint list
   (* `var` id `:` plaintyp hint* *)
   | VarD of id * plaintyp * hint list
+  (* `extern` `relation` id `:` nottyp hint* *)
+  | ExternRelD of id * nottyp * hint list
   (* `relation` id `:` nottyp hint* *)
   | RelD of id * nottyp * hint list
   (* `rulegroup` id`/`id `:` `{` rule* `}` *)
   | RuleGroupD of id * id * rule list
+  (* `builtin` `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` plaintyp hint* *)
+  | BuiltinDecD of id * tparam list * param list * plaintyp * hint list
   (* `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` plaintyp hint* *)
   | DecD of id * tparam list * param list * plaintyp * hint list
   (* `def` id `<` list(tparam, `,`) `>` list(arg, `,`) `=` exp list(`--` prem, nl) *)

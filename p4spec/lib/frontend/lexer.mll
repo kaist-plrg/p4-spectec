@@ -149,7 +149,7 @@ and after_nl_nl = parse
   | "" { NL2 }
 
 and token = parse
-  (* escaped tokens *)
+  (* Escaped tokens specific to P4 *)
   | "`"(upid as s) { TICK_UPID s }
   | "``" { TICK_TICK }
   | "`\"" { TICK_DOUBLE_QUOTE }
@@ -212,7 +212,7 @@ and token = parse
   | "`|+|=" { TICK_BAR_PLUS_BAR_EQ }
   | "`|-|" { TICK_BAR_MINUS_BAR }
   | "`|-|=" { TICK_BAR_MINUS_BAR_EQ }
-  (* normal tokens *)
+  (* Notational tokens *)
   | "<:" { SUB }
   | ":>" { SUP }
   | "|-" { TURNSTILE }
@@ -226,6 +226,7 @@ and token = parse
   | "==>" { DOUBLE_ARROW_LONG }
   | "~>" { SQARROW }
   | "~>*" { SQARROW_STAR }
+  (* Tokens *)
   | "/\\" { AND }
   | "\\/" { OR }
   | "." { DOT }
@@ -270,6 +271,7 @@ and token = parse
   | "=/=" { NEQ }
   | "^" { UP }
   | "|" { BAR }
+  (* Textual tokens *)
   | line_comment? '\n' { Lexing.new_line lexbuf; after_nl lexbuf }
   | "%latex" { LATEX }
   | "bool" { BOOL }
@@ -277,10 +279,12 @@ and token = parse
   | "int" { INT }
   | "text" { TEXT }
   | "syntax" { SYNTAX }
+  | "extern" { EXTERN }
   | "relation" { RELATION }
   | "rulegroup" { RULEGROUP }
   | "rule" { RULE }
   | "var" { VAR }
+  | "builtin" { BUILTIN }
   | "dec" { DEC }
   | "def" { DEF }
   | "if" { IF }

@@ -57,8 +57,6 @@ let funcs =
   |> Funcs.add "bor" Numerics.bor
   |> Funcs.add "bitacc" Numerics.bitacc
 
-let is_builtin (id : id) : bool = Funcs.mem id.it funcs
-
 let invoke (ctx : Ctx.t) (id : id) (targs : targ list) (args : value list) :
     value =
   let func = Funcs.find_opt id.it funcs in

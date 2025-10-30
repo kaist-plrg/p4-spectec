@@ -1,4 +1,3 @@
-open Domain.Lib
 module MCov = Runtime_testgen.Cov.Multiple
 open Io
 open Simulator
@@ -29,6 +28,7 @@ module Make
 
   let run_program_internal ~(derive : bool) (spec : Sl.Ast.spec)
       (relname : string) (value_program : Sl.Ast.value) : rel_result =
+    derive |> ignore;
     Interp_SL.eval_rel spec relname [ value_program ]
 
   (* STF test runner *)

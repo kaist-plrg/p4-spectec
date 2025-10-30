@@ -159,7 +159,9 @@ and instr' =
 type def = def' phrase
 
 and def' =
+  | ExternRelD of id * exp list
   | RelD of id * exp list * instr list
+  | BuiltinDecD of id * tparam list * arg list * typ
   | DecD of id * tparam list * arg list * typ * instr list
 
 type spec = def list

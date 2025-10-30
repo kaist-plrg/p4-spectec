@@ -223,7 +223,7 @@ struct
       Value.t * Value.t * Value.t =
     call_rel_three "V1Model_deparse" [ value_ctx; value_sto ]
 
-  let resulting_port_packet (value_ctx : Value.t) (value_sto : Value.t) :
+  let resulting_port_packet (value_ctx : Value.t) (_value_sto : Value.t) :
       IO.tx option =
     (* Get egress port *)
     let value_cursor = [ Term "GLOBAL" ] #@ "cursor" in

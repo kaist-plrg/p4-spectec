@@ -91,7 +91,6 @@ module Cover = struct
 
   let init_def (cover : t) (def : def) : t =
     match def.it with
-    | TypD _ -> cover
     | RelD (id, _, _, instrs, hints) | DecD (id, _, _, _, instrs, hints) ->
         if
           List.exists
@@ -99,6 +98,7 @@ module Cover = struct
             hints
         then cover
         else init_instrs cover id instrs
+    | _ -> cover
 
   let init_spec (spec : spec) : t = List.fold_left init_def empty spec
 end

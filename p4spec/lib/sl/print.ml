@@ -359,6 +359,10 @@ and string_of_reloutput mixop inputs exps_output =
   let notexp = (mixop, exps) in
   string_of_notexp notexp
 
+and string_of_extern_rel externrel =
+  let relid, (mixop, inputs), exps_match, _hints = externrel in
+  string_of_relid relid ^ ": " ^ string_of_relinput mixop inputs exps_match
+
 and string_of_rel ?(verbose = false) rel =
   let relid, (mixop, inputs), exps_match, instrs, _hints = rel in
   string_of_relid relid ^ ": "
@@ -367,6 +371,10 @@ and string_of_rel ?(verbose = false) rel =
   ^ string_of_instrs ~verbose ~signature:(Some (mixop, inputs)) instrs
 
 (* Functions *)
+
+let string_of_builtin_func builtinfunc =
+  let defid, tparams, args_input, _typ, _hints = builtinfunc in
+  string_of_defid defid ^ string_of_tparams tparams ^ string_of_args args_input
 
 let string_of_func ?(verbose = false) func =
   let defid, tparams, args_input, _typ, instrs, _hints = func in
@@ -383,7 +391,10 @@ let rec string_of_def ?(verbose = false) def =
   | TypD (typid, tparams, deftyp) ->
       "syntax " ^ string_of_typid typid ^ string_of_tparams tparams ^ " = "
       ^ string_of_deftyp deftyp
+  | ExternRelD rel -> "extern relation " ^ string_of_extern_rel rel
   | RelD rel -> "relation " ^ string_of_rel ~verbose rel
+  | BuiltinDecD builtinfunc ->
+      "builtin def " ^ string_of_builtin_func builtinfunc
   | DecD func -> "def " ^ string_of_func ~verbose func
 
 and string_of_defs ?(verbose = false) defs =

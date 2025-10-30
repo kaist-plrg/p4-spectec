@@ -1,14 +1,14 @@
-;; ../../../../spec-concrete/0-aux.watsup:18.1-18.21
-def $sum(nat*) : nat =
+;; ../../../../spec-concrete/0-aux.watsup:18.1-18.29
+builtin def $sum(nat*) : nat
 
-;; ../../../../spec-concrete/0-aux.watsup:20.1-20.21
-def $max(nat*) : nat =
+;; ../../../../spec-concrete/0-aux.watsup:20.1-20.29
+builtin def $max(nat*) : nat
 
-;; ../../../../spec-concrete/0-aux.watsup:22.1-22.21
-def $min(nat*) : nat =
+;; ../../../../spec-concrete/0-aux.watsup:22.1-22.29
+builtin def $min(nat*) : nat
 
-;; ../../../../spec-concrete/0-aux.watsup:28.1-28.29
-def $int_to_text(int) : text =
+;; ../../../../spec-concrete/0-aux.watsup:28.1-28.37
+builtin def $int_to_text(int) : text
 
 ;; ../../../../spec-concrete/0-aux.watsup:30.1-31.43
 def $concat_text(text*) : text =
@@ -22,11 +22,11 @@ def $concat_text(text*) : text =
   -- if text*{text <- text*} matches _ :: _
   -- let t_h :: t_t*{t_t <- t_t*} = text*{text <- text*}
 
-;; ../../../../spec-concrete/0-aux.watsup:35.1-35.37
-def $strip_prefix(text, text) : text =
+;; ../../../../spec-concrete/0-aux.watsup:35.1-35.45
+builtin def $strip_prefix(text, text) : text
 
-;; ../../../../spec-concrete/0-aux.watsup:36.1-36.37
-def $strip_suffix(text, text) : text =
+;; ../../../../spec-concrete/0-aux.watsup:36.1-36.45
+builtin def $strip_suffix(text, text) : text
 
 ;; ../../../../spec-concrete/0-aux.watsup:42.1-42.29
 def $opt_as_seq_<X>(X?) : X* =
@@ -68,14 +68,14 @@ def $repeat_<X>(X, nat) : X* =
   -- if int <: nat
   -- let n' = int as nat
 
-;; ../../../../spec-concrete/0-aux.watsup:64.1-64.22
-def $rev_<X>(X*) : X* =
+;; ../../../../spec-concrete/0-aux.watsup:64.1-64.30
+builtin def $rev_<X>(X*) : X*
 
-;; ../../../../spec-concrete/0-aux.watsup:66.1-66.28
-def $concat_<X>(X**) : X* =
+;; ../../../../spec-concrete/0-aux.watsup:66.1-66.36
+builtin def $concat_<X>(X**) : X*
 
-;; ../../../../spec-concrete/0-aux.watsup:68.1-68.39
-def $partition_<X>(X*, nat) : (X*, X*) =
+;; ../../../../spec-concrete/0-aux.watsup:68.1-68.47
+builtin def $partition_<X>(X*, nat) : (X*, X*)
 
 ;; ../../../../spec-concrete/0-aux.watsup:70.1-70.46
 def $filter_<X>(X*, $cond(X) : bool) : X* =
@@ -96,11 +96,11 @@ def $filter_<X>(X*, $cond(X) : bool) : X* =
   -- let X_h :: X_t*{X_t <- X_t*} = X*{X <- X*}
   -- if ~$cond(X_h)
 
-;; ../../../../spec-concrete/0-aux.watsup:79.1-79.35
-def $assoc_<X, Y>(X, (X, Y)*) : Y? =
+;; ../../../../spec-concrete/0-aux.watsup:79.1-79.43
+builtin def $assoc_<X, Y>(X, (X, Y)*) : Y?
 
 ;; ../../../../spec-concrete/0-aux.watsup:81.1-83.60
-def $distinct_<K>(K*) : bool =
+builtin def $distinct_<K>(K*) : bool
 
 ;; ../../../../spec-concrete/0-aux.watsup:89.17-89.24
 syntax set<K> = 
@@ -119,22 +119,22 @@ def $in_set<K>(K, set<K>) : bool =
   clause 0 : (K, { K_e*{K_e <- K_e*} }) = K <- K_e*{K_e <- K_e*}
 
 ;; ../../../../spec-concrete/0-aux.watsup:98.1-99.60
-def $intersect_set<K>(set<K>, set<K>) : set<K> =
+builtin def $intersect_set<K>(set<K>, set<K>) : set<K>
 
 ;; ../../../../spec-concrete/0-aux.watsup:101.1-102.53
-def $union_set<K>(set<K>, set<K>) : set<K> =
+builtin def $union_set<K>(set<K>, set<K>) : set<K>
 
 ;; ../../../../spec-concrete/0-aux.watsup:104.1-105.44
-def $unions_set<K>(set<K>*) : set<K> =
+builtin def $unions_set<K>(set<K>*) : set<K>
 
 ;; ../../../../spec-concrete/0-aux.watsup:107.1-108.58
-def $diff_set<K>(set<K>, set<K>) : set<K> =
+builtin def $diff_set<K>(set<K>, set<K>) : set<K>
 
 ;; ../../../../spec-concrete/0-aux.watsup:110.1-112.47
-def $sub_set<K>(set<K>, set<K>) : bool =
+builtin def $sub_set<K>(set<K>, set<K>) : bool
 
 ;; ../../../../spec-concrete/0-aux.watsup:114.1-116.44
-def $eq_set<K>(set<K>, set<K>) : bool =
+builtin def $eq_set<K>(set<K>, set<K>) : bool
 
 ;; ../../../../spec-concrete/0-aux.watsup:122.21-122.27
 syntax pair<K, V> = 
@@ -155,20 +155,20 @@ def $dom_map<K, V>(map<K, V>) : set<K> =
   ;; ../../../../spec-concrete/0-aux.watsup:131.1-131.45
   clause 0 : ({ K : V*{K <- K*, V <- V*} }) = { K*{K <- K*} }
 
-;; ../../../../spec-concrete/0-aux.watsup:133.1-133.39
-def $find_map<K, V>(map<K, V>, K) : V? =
+;; ../../../../spec-concrete/0-aux.watsup:133.1-133.47
+builtin def $find_map<K, V>(map<K, V>, K) : V?
 
-;; ../../../../spec-concrete/0-aux.watsup:135.1-135.41
-def $find_maps<K, V>(map<K, V>*, K) : V? =
+;; ../../../../spec-concrete/0-aux.watsup:135.1-135.49
+builtin def $find_maps<K, V>(map<K, V>*, K) : V?
 
-;; ../../../../spec-concrete/0-aux.watsup:137.1-137.48
-def $add_map<K, V>(map<K, V>, K, V) : map<K, V> =
+;; ../../../../spec-concrete/0-aux.watsup:137.1-137.56
+builtin def $add_map<K, V>(map<K, V>, K, V) : map<K, V>
 
-;; ../../../../spec-concrete/0-aux.watsup:139.1-139.51
-def $adds_map<K, V>(map<K, V>, K*, V*) : map<K, V> =
+;; ../../../../spec-concrete/0-aux.watsup:139.1-139.59
+builtin def $adds_map<K, V>(map<K, V>, K*, V*) : map<K, V>
 
-;; ../../../../spec-concrete/0-aux.watsup:141.1-141.51
-def $update_map<K, V>(map<K, V>, K, V) : map<K, V> =
+;; ../../../../spec-concrete/0-aux.watsup:141.1-141.59
+builtin def $update_map<K, V>(map<K, V>, K, V) : map<K, V>
 
 ;; ../../../../spec-concrete/0-aux.watsup:143.1-143.56
 def $extend_map<K, V>(map<K, V>, map<K, V>) : map<K, V> =
@@ -2609,7 +2609,7 @@ syntax id = text
 syntax tid = id
 
 ;; ../../../../spec-concrete/2.0-domain.watsup:49.1-50.41
-def $fresh_tid : tid =
+builtin def $fresh_tid : tid
 
 ;; ../../../../spec-concrete/2.0-domain.watsup:52.1-53.43
 def $fresh_tids(nat) : tid* =
@@ -2835,26 +2835,26 @@ syntax value =
    | table_enum tid . id
    | table_struct tid { fieldValue* }
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:5.1-5.35
-def $bitstr_to_int(int, int) : int =
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:5.1-5.43
+builtin def $bitstr_to_int(int, int) : int
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:12.1-12.35
-def $int_to_bitstr(int, int) : int =
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:12.1-12.43
+builtin def $int_to_bitstr(int, int) : int
 
 ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:18.15-18.20
 syntax bits = bool*
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:20.1-20.38
-def $bits_to_int_unsigned(bits) : int =
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:20.1-20.46
+builtin def $bits_to_int_unsigned(bits) : int
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:21.1-21.36
-def $bits_to_int_signed(bits) : int =
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:21.1-21.44
+builtin def $bits_to_int_signed(bits) : int
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:23.1-23.43
-def $int_to_bits_unsigned(nat, int) : bits =
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:23.1-23.51
+builtin def $int_to_bits_unsigned(nat, int) : bits
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:24.1-24.41
-def $int_to_bits_signed(nat, int) : bits =
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:24.1-24.49
+builtin def $int_to_bits_signed(nat, int) : bits
 
 ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:30.1-30.28
 def $to_number(value) : int =
@@ -5491,32 +5491,32 @@ def $joins_ctk(ctk*) : ctk =
   -- let ctk_b :: ctk_c*{ctk_c <- ctk_c*} = ctk*{ctk <- ctk*}
   -- let ctk_d = $join_ctk(ctk_a, ctk_b)
 
-;; ../../../../spec-concrete/3-numerics.watsup:5.1-5.21
-def $pow2(nat) : int =
+;; ../../../../spec-concrete/3-numerics.watsup:5.1-5.29
+builtin def $pow2(nat) : int
 
-;; ../../../../spec-concrete/3-numerics.watsup:7.1-7.25
-def $shl(int, int) : int =
+;; ../../../../spec-concrete/3-numerics.watsup:7.1-7.33
+builtin def $shl(int, int) : int
 
-;; ../../../../spec-concrete/3-numerics.watsup:8.1-8.25
-def $shr(int, int) : int =
+;; ../../../../spec-concrete/3-numerics.watsup:8.1-8.33
+builtin def $shr(int, int) : int
 
-;; ../../../../spec-concrete/3-numerics.watsup:9.1-9.36
-def $shr_arith(int, int, int) : int =
+;; ../../../../spec-concrete/3-numerics.watsup:9.1-9.44
+builtin def $shr_arith(int, int, int) : int
 
-;; ../../../../spec-concrete/3-numerics.watsup:11.1-11.21
-def $bneg(int) : int =
+;; ../../../../spec-concrete/3-numerics.watsup:11.1-11.29
+builtin def $bneg(int) : int
 
-;; ../../../../spec-concrete/3-numerics.watsup:12.1-12.26
-def $band(int, int) : int =
+;; ../../../../spec-concrete/3-numerics.watsup:12.1-12.34
+builtin def $band(int, int) : int
 
-;; ../../../../spec-concrete/3-numerics.watsup:13.1-13.26
-def $bxor(int, int) : int =
+;; ../../../../spec-concrete/3-numerics.watsup:13.1-13.34
+builtin def $bxor(int, int) : int
 
-;; ../../../../spec-concrete/3-numerics.watsup:14.1-14.25
-def $bor(int, int) : int =
+;; ../../../../spec-concrete/3-numerics.watsup:14.1-14.33
+builtin def $bor(int, int) : int
 
-;; ../../../../spec-concrete/3-numerics.watsup:16.1-16.33
-def $bitacc(int, int, int) : int =
+;; ../../../../spec-concrete/3-numerics.watsup:16.1-16.41
+builtin def $bitacc(int, int, int) : int
 
 ;; ../../../../spec-concrete/3-numerics.watsup:22.1-24.23
 def $un_op(unop, value) : value =
@@ -27717,9 +27717,7 @@ relation Call_eval: cursor evaluationContext store |- callee @< typeArgumentList
     -- output: % % % |- % @< % >( % ): EC_1 STO_1 return ?() as callResult
 
 ;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:263.1-266.29
-relation ExternMethodCall_eval: evaluationContext store |- oid . nameIR ( nameIR* ): evaluationContext store callResult
-
-
+extern relation ExternMethodCall_eval: evaluationContext store |- oid . nameIR ( nameIR* ): evaluationContext store callResult
 
 ;; ../../../../spec-concrete/8.11.4-evaluation-call.watsup:7.1-8.54
 def $align_params_with_args(parameterIR*, argumentIR*, id*) : (parameterIR*, argumentIR*, parameterIR*, value*) =

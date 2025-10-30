@@ -249,6 +249,10 @@ let render_relation_def id_rel nottyp hints =
   "relation " ^ render_relid id_rel ^ ":\n   " ^ render_nottyp nottyp
   ^ if hints = [] then "" else "\n   " ^ render_hints hints
 
+let render_extern_relation_def id_rel nottyp hints =
+  "extern relation " ^ render_relid id_rel ^ ":\n   " ^ render_nottyp nottyp
+  ^ if hints = [] then "" else "\n   " ^ render_hints hints
+
 let render_rulegroup_def _id_rel id_rulegroup rules =
   render_rules id_rulegroup rules
 
@@ -258,9 +262,12 @@ let render_def def =
   | TypD (id_typ, tparams, deftyp, hints) ->
       render_type_def id_typ tparams deftyp hints
   | VarD _ -> ""
+  | ExternRelD (id_rel, nottyp, hints) ->
+      render_extern_relation_def id_rel nottyp hints
   | RelD (id_rel, nottyp, hints) -> render_relation_def id_rel nottyp hints
   | RuleGroupD (id_rel, id_rulegroup, rules) ->
       render_rulegroup_def id_rel id_rulegroup rules
+  | BuiltinDecD _ -> ""
   | DecD _ -> ""
   | DefD _ -> ""
   | SepD -> "\n\n"

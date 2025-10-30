@@ -106,17 +106,37 @@ let rec struct_def (ienv : IEnv.t) (tdenv : TDEnv.t) (def : def) : Sl.Ast.def =
   let at = def.at in
   match def.it with
   | TypD (id, tparams, deftyp) -> Sl.Ast.TypD (id, tparams, deftyp) $ at
+  | ExternRelD (id, nottyp, inputs, hints) ->
+      struct_extern_rel_def at id nottyp inputs hints
   | RelD (id, nottyp, inputs, rulegroups, hints) ->
-      struct_rel_def ienv tdenv at id nottyp inputs rulegroups hints
+      struct_defined_rel_def ienv tdenv at id nottyp inputs rulegroups hints
+  | BuiltinDecD (id, tparams, params, typ, hints) ->
+      struct_builtin_dec_def at id tparams params typ hints
   | DecD (id, tparams, _params, typ, clauses, hints) ->
-      struct_dec_def ienv tdenv at id tparams typ clauses hints
+      struct_defined_dec_def ienv tdenv at id tparams typ clauses hints
 
 (* Structuring relation definitions *)
 
-and struct_rel_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region) (id_rel : id)
-    (nottyp : nottyp) (inputs : int list) (rulegroups : rulegroup list)
-    (hints : hint list) : Sl.Ast.def =
+and struct_extern_rel_def (at : region) (id_rel : id) (nottyp : nottyp)
+    (inputs : int list) (hints : hint list) : Sl.Ast.def =
   let mixop, typs = nottyp.it in
+  let typs_match = List.map (fun i -> List.nth typs i) inputs in
+  let exps_match, _ =
+    List.fold_left
+      (fun (exps_match, frees) typ_match ->
+        let exp_match, frees =
+          Elaborate.Fresh.fresh_exp_from_typ frees typ_match
+        in
+        (exps_match @ [ exp_match ], frees))
+      ([], IdSet.empty) typs_match
+  in
+  let externrel = (id_rel, (mixop, inputs), exps_match, hints) in
+  Sl.Ast.ExternRelD externrel $ at
+
+and struct_defined_rel_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region)
+    (id_rel : id) (nottyp : nottyp) (inputs : int list)
+    (rulegroups : rulegroup list) (hints : hint list) : Sl.Ast.def =
+  let mixop, _ = nottyp.it in
   let frees = Il.Free.free_rulegroups rulegroups in
   let rulegroups, exps_match_impl_group, prems_match_group =
     List.fold_left
@@ -136,35 +156,18 @@ and struct_rel_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region) (id_rel : id)
   let exps_match_unified, prems_match_group =
     match rulegroups with
     | [] ->
+        let mixop, typs = nottyp.it in
         let typs_match = List.map (fun i -> List.nth typs i) inputs in
-        let exps_match_unified, _ =
+        let exps_match, _ =
           List.fold_left
             (fun (exps_match, frees) typ_match ->
-              let id_base, typ_base, iters =
-                Elaborate.Fresh.fresh_from_typ frees typ_match.at typ_match
-              in
-              let frees = IdSet.add id_base frees in
-              let exp_base =
-                Il.Ast.VarE id_base $$ (typ_base.at, typ_base.it)
-              in
-              let exp_match, _ =
-                List.fold_left
-                  (fun (exp_match, iters) iter ->
-                    let typ =
-                      Il.Ast.IterT (exp_match.note $ exp_match.at, iter)
-                    in
-                    let var = (id_base, typ_base, iters) in
-                    let iterexp = (iter, [ var ]) in
-                    let exp_match =
-                      Il.Ast.IterE (exp_match, iterexp) $$ (exp_match.at, typ)
-                    in
-                    (exp_match, iters @ [ iter ]))
-                  (exp_base, []) iters
+              let exp_match, frees =
+                Elaborate.Fresh.fresh_exp_from_typ frees typ_match
               in
               (exps_match @ [ exp_match ], frees))
             ([], IdSet.empty) typs_match
         in
-        (exps_match_unified, [])
+        (exps_match, [])
     | _ -> struct_rule_matches frees exps_match_impl_group prems_match_group
   in
   let instrs =
@@ -181,14 +184,38 @@ and struct_rel_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region) (id_rel : id)
 
 (* Structuring declaration definitions *)
 
-and struct_dec_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region) (id_dec : id)
-    (tparams : tparam list) (typ : typ) (clauses : clause list)
+and struct_builtin_dec_def (at : region) (id_dec : id) (tparams : tparam list)
+    (params : param list) (typ : typ) (hints : hint list) : Sl.Ast.def =
+  let args_input, _ =
+    List.fold_left
+      (fun (args_input, frees) param ->
+        let arg_input, frees =
+          match param.it with
+          | ExpP typ ->
+              let exp_input, frees =
+                Elaborate.Fresh.fresh_exp_from_typ frees typ
+              in
+              let arg_input = ExpA exp_input $ param.at in
+              (arg_input, frees)
+          | DefP (id_def, _, _, _) ->
+              let arg_input = DefA id_def $ param.at in
+              (arg_input, frees)
+        in
+        (args_input @ [ arg_input ], frees))
+      ([], IdSet.empty) params
+  in
+  let builtinfunc = (id_dec, tparams, args_input, typ, hints) in
+  Sl.Ast.BuiltinDecD builtinfunc $ at
+
+and struct_defined_dec_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region)
+    (id_dec : id) (tparams : tparam list) (typ : typ) (clauses : clause list)
     (hints : hint list) : Sl.Ast.def =
   let args_input, paths = Antiunify.antiunify_clauses clauses in
   let instrs = List.concat_map struct_clause_path paths in
   let instrs = Optimize.optimize ienv tdenv instrs in
   let instrs = Instrument.instrument tdenv instrs in
-  Sl.Ast.DecD (id_dec, tparams, args_input, typ, instrs, hints) $ at
+  let func = (id_dec, tparams, args_input, typ, instrs, hints) in
+  Sl.Ast.DecD func $ at
 
 (* Load type definitions *)
 
@@ -198,7 +225,7 @@ let load_def (ienv : IEnv.t) (tdenv : TDEnv.t) (def : def) : IEnv.t * TDEnv.t =
       let typdef = (tparams, deftyp) in
       let tdenv = TDEnv.add id typdef tdenv in
       (ienv, tdenv)
-  | RelD (id, _, inputs, _, _hints) ->
+  | ExternRelD (id, _, inputs, _) | RelD (id, _, inputs, _, _) ->
       let ienv = IEnv.add id inputs ienv in
       (ienv, tdenv)
   | _ -> (ienv, tdenv)

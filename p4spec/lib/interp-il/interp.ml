@@ -4,8 +4,9 @@ open Il.Ast
 module InputHint = Runtime_static.Rel.InputHint
 module Typ = Runtime_dynamic.Typ
 module Value = Runtime_dynamic.Value
-module Cache = Runtime_dynamic.Cache
+module Func = Runtime_dynamic_il.Func
 module Rel = Runtime_dynamic_il.Rel
+module Cache = Runtime_dynamic.Cache
 open Runtime_dynamic_il.Envs
 module Sim = Runtime_simulator.Simulator
 module Dep = Runtime_testgen.Dep
@@ -836,9 +837,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
   (* Rule premise evaluation *)
 
   and eval_rule_prem (ctx : Ctx.t) (id : id) (notexp : notexp) : Ctx.t attempt =
-    let rel = Ctx.find_rel Local ctx id in
     let exps_input, exps_output =
-      let _, inputs, _ = rel in
+      let inputs = Ctx.find_rel_inputs Local ctx id in
       let _, exps = notexp in
       InputHint.split_exps_without_idx inputs exps
     in
@@ -981,26 +981,37 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   and invoke_rel (ctx : Ctx.t) (id : id) (values_input : value list) :
       (Ctx.t * value list) attempt =
-    let _, _, rulegroups = Ctx.find_rel Local ctx id in
-    (match rulegroups with
-    | [] -> invoke_rel_arch ctx id values_input
-    | _ -> invoke_rel_def ctx id values_input)
+    invoke_rel' ctx id values_input
     |> nest id.at (F.asprintf "invocation of relation %s failed" id.it)
 
-  and invoke_rel_arch (ctx : Ctx.t) (id : id) (values_input : value list) :
+  and invoke_rel' (ctx : Ctx.t) (id : id) (values_input : value list) :
+      (Ctx.t * value list) attempt =
+    let rel = Ctx.find_rel Local ctx id in
+    match rel with
+    | Rel.Extern _ -> invoke_extern_rel ctx id values_input
+    | Rel.Defined (_, rulegroups) ->
+        invoke_defined_rel ctx id rulegroups values_input
+
+  and invoke_extern_rel (ctx : Ctx.t) (id : id) (values_input : value list) :
       (Ctx.t * value list) attempt =
     match id.it with
     | "ExternMethodCall_eval" ->
         let values_output = Arch.eval_extern_method_call values_input in
         Ok (ctx, values_output)
-    | _ -> fail id.at (F.asprintf "unknown arch relation %s" id.it)
+    | _ -> fail id.at (F.asprintf "unimplemented extern relation %s" id.it)
 
-  and invoke_rel_def (ctx : Ctx.t) (id : id) (values_input : value list) :
-      (Ctx.t * value list) attempt =
-    (* Find the relation *)
-    let _, _, rulegroups = Ctx.find_rel Local ctx id in
+  and invoke_defined_rel (ctx : Ctx.t) (id : id) (rulegroups : rulegroup list)
+      (values_input : value list) : (Ctx.t * value list) attempt =
     (* Apply the first matching rule *)
     let attempt_rules () =
+      let attempt_rulepath' (ctx_local : Ctx.t) (prems : prem list)
+          (exps_output : exp list) : (Ctx.t * value list) attempt =
+        let* ctx_local = eval_prems ctx_local prems in
+        let ctx_local, values_output = eval_exps ctx_local exps_output in
+        let ctx_local = Ctx.trace_close ctx_local in
+        let ctx = Ctx.trace_commit ctx ctx_local.trace in
+        Ok (ctx, values_output)
+      in
       let attempt_rules =
         rulegroups
         |> List.concat_map (fun rulegroup ->
@@ -1008,17 +1019,6 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
                rulepaths
                |> List.map (fun rulepath ->
                       let id_rulepath, prems, exps_output = rulepath in
-                      let attempt_rulepath' (ctx_local : Ctx.t)
-                          (prems : prem list) (exps_output : exp list) :
-                          (Ctx.t * value list) attempt =
-                        let* ctx_local = eval_prems ctx_local prems in
-                        let ctx_local, values_output =
-                          eval_exps ctx_local exps_output
-                        in
-                        let ctx_local = Ctx.trace_close ctx_local in
-                        let ctx = Ctx.trace_commit ctx ctx_local.trace in
-                        Ok (ctx, values_output)
-                      in
                       let attempt_rulepath () : (Ctx.t * value list) attempt =
                         (* Create a subtrace for the rule path *)
                         let ctx_local = Ctx.localize ctx in
@@ -1083,13 +1083,38 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   and invoke_func' (ctx : Ctx.t) (id : id) (targs : targ list) (args : arg list)
       : (Ctx.t * value) attempt =
-    if Builtin.is_builtin id then invoke_func_builtin ctx id targs args
-    else invoke_func_def ctx id targs args
-
-  and invoke_func_builtin (ctx : Ctx.t) (id : id) (targs : targ list)
-      (args : arg list) : (Ctx.t * value) attempt =
+    (* Evaluate type arguments *)
+    let targs =
+      match targs with
+      | [] -> []
+      | targs ->
+          let theta =
+            TDEnv.bindings ctx.global.tdenv @ TDEnv.bindings ctx.local.tdenv
+            |> List.filter_map (fun (tid, (_tparams, deftyp)) ->
+                   match deftyp.it with
+                   | PlainT typ -> Some (tid, typ)
+                   | _ -> None)
+            |> TIdMap.of_list
+          in
+          List.map (Typ.subst_typ theta) targs
+    in
     (* Evaluate arguments *)
     let ctx, values_input = eval_args ctx args in
+    (* Invoke the function *)
+    invoke_func'' ctx id targs values_input
+
+  and invoke_func'' (ctx : Ctx.t) (id : id) (targs : targ list)
+      (values_input : value list) : (Ctx.t * value) attempt =
+    (* Find the function *)
+    let func = Ctx.find_func Local ctx id in
+    (* Invoke the function *)
+    match func with
+    | Func.Builtin -> invoke_builtin_func ctx id targs values_input
+    | Func.Defined (tparams, clauses) ->
+        invoke_defined_func ctx id tparams clauses targs values_input
+
+  and invoke_builtin_func (ctx : Ctx.t) (id : id) (targs : targ list)
+      (values_input : value list) : (Ctx.t * value) attempt =
     (* Invoke builtin function *)
     let invoke_func_builtin' () =
       let ctx_local = Ctx.localize ctx in
@@ -1115,45 +1140,22 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       let* ctx, value_output = invoke_func_builtin' () in
       Ok (ctx, value_output)
 
-  and invoke_func_def (ctx : Ctx.t) (id : id) (targs : targ list)
-      (args : arg list) : (Ctx.t * value) attempt =
-    (* Evaluate arguments *)
-    let ctx, values_input = eval_args ctx args in
-    invoke_func_def' ctx id targs values_input
-
-  and invoke_func_def' (ctx : Ctx.t) (id : id) (targs : targ list)
-      (values_input : value list) : (Ctx.t * value) attempt =
-    (* Find the function *)
-    let tparams, clauses = Ctx.find_func Local ctx id in
-    guard (clauses <> []) id.at "function has no clauses";
-    (* Evaluate type arguments *)
-    let targs =
-      match targs with
-      | [] -> []
-      | targs ->
-          let theta =
-            TDEnv.bindings ctx.global.tdenv @ TDEnv.bindings ctx.local.tdenv
-            |> List.filter_map (fun (tid, (_tparams, deftyp)) ->
-                   match deftyp.it with
-                   | PlainT typ -> Some (tid, typ)
-                   | _ -> None)
-            |> TIdMap.of_list
-          in
-          List.map (Typ.subst_typ theta) targs
-    in
+  and invoke_defined_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
+      (clauses : clause list) (targs : targ list) (values_input : value list) :
+      (Ctx.t * value) attempt =
     (* Apply the first matching clause *)
     let attempt_clauses () =
+      let attempt_clause'' (ctx_local : Ctx.t) (prems : prem list)
+          (exp_output : exp) : (Ctx.t * value) attempt =
+        let* ctx_local = eval_prems ctx_local prems in
+        let ctx_local, value_output = eval_exp ctx_local exp_output in
+        let ctx_local = Ctx.trace_close ctx_local in
+        let ctx = Ctx.trace_commit ctx ctx_local.trace in
+        Ok (ctx, value_output)
+      in
       let attempt_clauses' =
         List.mapi
           (fun idx_clause clause ->
-            let attempt_clause' (ctx_local : Ctx.t) (prems : prem list)
-                (exp_output : exp) : (Ctx.t * value) attempt =
-              let* ctx_local = eval_prems ctx_local prems in
-              let ctx_local, value_output = eval_exp ctx_local exp_output in
-              let ctx_local = Ctx.trace_close ctx_local in
-              let ctx = Ctx.trace_commit ctx ctx_local.trace in
-              Ok (ctx, value_output)
-            in
             let attempt_clause () : (Ctx.t * value) attempt =
               (* Create a subtrace for the clause *)
               let ctx_local = Ctx.localize ctx in
@@ -1176,7 +1178,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
                 match_clause ctx ctx_local clause values_input
               in
               (* Try evaluating the clause *)
-              attempt_clause' ctx_local prems exp_output
+              attempt_clause'' ctx_local prems exp_output
               |> nest id.at
                    (F.asprintf "application of clause %s%s failed" id.it
                       (Il.Print.string_of_args args_input))
@@ -1212,11 +1214,17 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     | TypD (id, tparams, deftyp) ->
         let typdef = (tparams, deftyp) in
         Ctx.add_typdef Global ctx id typdef
-    | RelD (id, nottyp, inputs, rulegroups, _) ->
-        let rel = (nottyp, inputs, rulegroups) in
+    | ExternRelD (id, _, inputs, _) ->
+        let rel = Rel.Extern inputs in
         Ctx.add_rel Global ctx id rel
+    | RelD (id, _, inputs, rulegroups, _) ->
+        let rel = Rel.Defined (inputs, rulegroups) in
+        Ctx.add_rel Global ctx id rel
+    | BuiltinDecD (id, _, _, _, _) ->
+        let func = Func.Builtin in
+        Ctx.add_func Global ctx id func
     | DecD (id, tparams, _, _, clauses, _) ->
-        let func = (tparams, clauses) in
+        let func = Func.Defined (tparams, clauses) in
         Ctx.add_func Global ctx id func
 
   let load_spec (ctx : Ctx.t) (spec : spec) : Ctx.t =
@@ -1227,13 +1235,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
   let do_eval_rel (ctx : Ctx.t) (spec : spec) (relname : string)
       (values_input : value list) : (Ctx.t * value list) attempt =
     let ctx = load_spec ctx spec in
-    invoke_rel_def ctx (relname $ no_region) values_input
+    invoke_rel ctx (relname $ no_region) values_input
 
   let do_eval_func (ctx : Ctx.t) (spec : spec) (funcname : string)
       (targs : targ list) (values_input : value list) : (Ctx.t * value) attempt
       =
     let ctx = load_spec ctx spec in
-    invoke_func_def' ctx (funcname $ no_region) targs values_input
+    invoke_func'' ctx (funcname $ no_region) targs values_input
 
   let eval_program (spec : spec) (relname : string) (includes_p4 : string list)
       (filename_p4 : string) : Sim.program_result =

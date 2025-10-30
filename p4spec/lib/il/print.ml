@@ -424,10 +424,16 @@ let rec string_of_def def =
   | TypD (typid, tparams, deftyp) ->
       "syntax " ^ string_of_typid typid ^ string_of_tparams tparams ^ " = "
       ^ string_of_deftyp deftyp
+  | ExternRelD (relid, nottyp, _, _) ->
+      "extern relation " ^ string_of_relid relid ^ ": "
+      ^ string_of_nottyp nottyp
   | RelD (relid, nottyp, inputs, rulegroups, _) ->
       "relation " ^ string_of_relid relid ^ ": " ^ string_of_nottyp nottyp
       ^ "\n\n"
       ^ string_of_rulegroups nottyp inputs rulegroups
+  | BuiltinDecD (defid, tparams, params, typ, _) ->
+      "builtin def " ^ string_of_defid defid ^ string_of_tparams tparams
+      ^ string_of_params params ^ " : " ^ string_of_typ typ
   | DecD (defid, tparams, params, typ, clauses, _) ->
       "def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : " ^ string_of_typ typ ^ " ="

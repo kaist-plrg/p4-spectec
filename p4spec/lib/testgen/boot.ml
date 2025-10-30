@@ -1,7 +1,6 @@
 open Sl.Ast
 module MCov = Runtime_testgen.Cov.Multiple
 module Sim = Runtime_simulator.Simulator
-open Util.Source
 
 (* Measure initial coverage of phantoms *)
 

@@ -1,9 +1,10 @@
 open Il.Ast
-open Il.Print
+module InputHint = Runtime_static.Rel.InputHint
 
 (* Relation *)
 
-type t = nottyp * Runtime_static.Rel.InputHint.t * rulegroup list
+type t = Extern of InputHint.t | Defined of InputHint.t * rulegroup list
 
-let to_string (nottyp, inputs, rulegroups) =
-  "relation:\n\n" ^ string_of_rulegroups nottyp inputs rulegroups
+let to_string = function
+  | Extern _ -> "extern relation"
+  | Defined _ -> "defined relation"

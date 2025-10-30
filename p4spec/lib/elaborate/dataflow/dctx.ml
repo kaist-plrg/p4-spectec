@@ -1,23 +1,28 @@
 open Domain.Lib
-open Runtime_static.Envs
+open Runtime_static
 
 (* Context for dataflow analysis *)
 
 type t = {
   (* Input hints for rules *)
-  hints : IEnv.t;
+  hints : Envs.IEnv.t;
   (* Free identifiers over the entire definition *)
   frees : IdSet.t;
   (* Bound variables so far *)
-  bounds : VEnv.t;
+  bounds : Envs.VEnv.t;
   (* Typedefs so far *)
-  tdenv : TDEnv.t;
+  tdenv : Envs.TDEnv.t;
 }
 
 (* Constructors *)
 
 let init (ctx : Ctx.t) : t =
-  let hints = REnv.map (fun (_, _, hint, _) -> hint) ctx.renv in
+  let hints =
+    Envs.REnv.map
+      (function
+        | Rel.Extern (_, _, inputs) | Rel.Defined (_, _, inputs, _) -> inputs)
+      ctx.renv
+  in
   let frees = ctx.frees in
   let bounds = ctx.venv in
   let tdenv = ctx.tdenv in
@@ -25,12 +30,12 @@ let init (ctx : Ctx.t) : t =
 
 (* Promoter *)
 
-let promote (ctx : Ctx.t) (dctx : t) (venv : VEnv.t) : Ctx.t =
+let promote (ctx : Ctx.t) (dctx : t) (venv : Envs.VEnv.t) : Ctx.t =
   let frees = dctx.frees in
   let venv =
-    VEnv.union
+    Envs.VEnv.union
       (fun _ typ_a typ_b ->
-        if not (Runtime_static.Typ.equiv typ_a typ_b) then assert false;
+        if not (Typ.equiv typ_a typ_b) then assert false;
         Some typ_a)
       ctx.venv venv
   in
@@ -44,5 +49,5 @@ let add_free (dctx : t) (id : Id.t) =
 
 (* Finders *)
 
-let find_hint (dctx : t) (id : Id.t) = IEnv.find id dctx.hints
-let find_typdef (dctx : t) (tid : TId.t) = TDEnv.find tid dctx.tdenv
+let find_hint (dctx : t) (id : Id.t) = Envs.IEnv.find id dctx.hints
+let find_typdef (dctx : t) (tid : TId.t) = Envs.TDEnv.find tid dctx.tdenv

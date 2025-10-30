@@ -1,4 +1,3 @@
-open Domain.Lib
 module Value = Runtime_dynamic.Value
 module Dep = Runtime_testgen.Dep
 module SCov = Runtime_testgen.Cov.Single

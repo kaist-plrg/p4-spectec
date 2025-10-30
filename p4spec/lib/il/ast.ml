@@ -206,8 +206,12 @@ type def = def' phrase
 and def' =
   (* `syntax` id `<` list(tparam, `,`) `>` `=` deftyp *)
   | TypD of id * tparam list * deftyp
+  (* `extern` `relation` id `:` nottyp `hint(input` `%`int* `)` hint* *)
+  | ExternRelD of id * nottyp * int list * hint list
   (* `relation` id `:` nottyp `hint(input` `%`int* `)` rulegroup* hint* *)
   | RelD of id * nottyp * int list * rulegroup list * hint list
+  (* `builtin` `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ hint* *)
+  | BuiltinDecD of id * tparam list * param list * typ * hint list
   (* `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ clause* hint* *)
   | DecD of id * tparam list * param list * typ * clause list * hint list
 

@@ -4,6 +4,7 @@ open Runtime_static
 open Attempt
 open Error
 open Util.Source
+module F = Format
 
 (* Checks *)
 
@@ -322,7 +323,7 @@ and infer_unop (ctx : Ctx.t) (at : region) (unop : unop) (plaintyp : plaintyp)
   in
   let fail =
     fail at
-      (Format.asprintf "unary operator `%s` is not defined for operand type %s"
+      (F.asprintf "unary operator `%s` is not defined for operand type %s"
          (El.Print.string_of_unop unop)
          (El.Print.string_of_plaintyp plaintyp))
   in
@@ -370,7 +371,7 @@ and infer_binop (ctx : Ctx.t) (at : region) (binop : binop)
   in
   let fail =
     fail at
-      (Format.asprintf
+      (F.asprintf
          "binary operator `%s` is not defined for operand types %s and %s"
          (El.Print.string_of_binop binop)
          (El.Print.string_of_plaintyp plaintyp_l)
@@ -434,7 +435,7 @@ and infer_cmpop_num (ctx : Ctx.t) (at : region) (cmpop : Xl.Num.cmpop)
   in
   let fail =
     fail at
-      (Format.asprintf
+      (F.asprintf
          "comparison operator `%s` is not defined for operand types %s and %s"
          (El.Print.string_of_cmpop (cmpop :> Il.Ast.cmpop))
          (El.Print.string_of_plaintyp plaintyp_l)
@@ -626,7 +627,7 @@ and infer_tuple_exp (ctx : Ctx.t) (exps : exp list) :
 
 and infer_call_exp (ctx : Ctx.t) (at : region) (id : id) (targs : targ list)
     (args : arg list) : (Ctx.t * Il.Ast.exp' * plaintyp') attempt =
-  let tparams, params, plaintyp = Ctx.find_dec ctx id in
+  let tparams, params, plaintyp = Ctx.find_dec_signature ctx id in
   check
     (List.length targs = List.length tparams)
     id.at "type arguments do not match";
@@ -668,7 +669,7 @@ and elab_exp (ctx : Ctx.t) (plaintyp_expect : plaintyp) (exp : exp) :
     (Ctx.t * Il.Ast.exp) attempt =
   elab_exp' ctx plaintyp_expect exp
   |> nest exp.at
-       (Format.asprintf "elaboration of expression %s as type %s failed"
+       (F.asprintf "elaboration of expression %s as type %s failed"
           (El.Print.string_of_exp exp)
           (El.Print.string_of_plaintyp plaintyp_expect))
 
@@ -725,7 +726,7 @@ and elab_exp_iter (ctx : Ctx.t) (plaintyp_expect : plaintyp)
 
 and fail_cast (at : region) (plaintyp_a : plaintyp) (plaintyp_b : plaintyp) =
   let msg =
-    Format.asprintf "cannot cast %s to %s"
+    F.asprintf "cannot cast %s to %s"
       (El.Print.string_of_plaintyp plaintyp_a)
       (El.Print.string_of_plaintyp plaintyp_b)
   in
@@ -769,7 +770,7 @@ and elab_exp_wildcard (ctx : Ctx.t) (at : region) (plaintyp_expect : plaintyp) :
     (Ctx.t * Il.Ast.exp) attempt =
   let typ_il = elab_plaintyp ctx plaintyp_expect in
   let id_fresh, typ_fresh, iters_fresh =
-    Fresh.fresh_from_exp ~wildcard:true ctx.frees
+    Fresh.fresh_var_from_exp ~wildcard:true ctx.frees
       (Il.Ast.VarE ("_" $ at) $$ (at, typ_il.it))
   in
   let ctx = Ctx.add_free ctx id_fresh in
@@ -793,7 +794,7 @@ and elab_exp_plain' (ctx : Ctx.t) (at : region) (plaintyp_expect : plaintyp)
   match exp with
   | BoolE _ | NumE _ | TextE _ | VarE _ ->
       fail_elab_plain at
-        (Format.asprintf "the type of %s should have been inferred"
+        (F.asprintf "the type of %s should have been inferred"
            (El.Print.string_of_exp (exp $ at)))
   | EpsE -> elab_eps_exp ctx plaintyp_expect
   | ListE exps -> elab_list_exp ctx plaintyp_expect exps
@@ -804,7 +805,7 @@ and elab_exp_plain' (ctx : Ctx.t) (at : region) (plaintyp_expect : plaintyp)
   | IterE (exp, iter) -> elab_iter_exp ctx plaintyp_expect exp iter
   | _ ->
       fail at
-        (Format.asprintf "(TODO elab_exp_plain) %s"
+        (F.asprintf "(TODO elab_exp_plain) %s"
            (El.Print.string_of_exp (exp $ at)))
 
 (* Elaboration of episilon expressions *)
@@ -1140,19 +1141,19 @@ and elab_arg ?(as_def = false) (ctx : Ctx.t) (param : param) (arg : arg) :
       (ctx, arg_il)
   | DefP (id_p, tparams_p, params_p, plaintyp_p), DefA id_a when as_def ->
       check (id_p.it = id_a.it) arg.at
-        (Format.asprintf
+        (F.asprintf
            "function argument does not match the declared function parameter %s"
            (Id.to_string id_p));
-      let ctx = Ctx.add_dec ctx id_p tparams_p params_p plaintyp_p in
+      let ctx = Ctx.add_defined_dec ctx id_p tparams_p params_p plaintyp_p in
       let arg_il = Il.Ast.DefA id_a $ arg.at in
       (ctx, arg_il)
   | DefP (id_p, tparams_p, params_p, plaintyp_p), DefA id_a ->
-      let tparams_a, params_a, plaintyp_a = Ctx.find_dec ctx id_a in
+      let tparams_a, params_a, plaintyp_a = Ctx.find_dec_signature ctx id_a in
       check
         (Types.Equiv.equiv_functyp ctx.tdenv arg.at tparams_p params_p
            plaintyp_p tparams_a params_a plaintyp_a)
         arg.at
-        (Format.asprintf
+        (F.asprintf
            "function argument does not match the declared function parameter %s"
            (Id.to_string id_p));
       let arg_il = Il.Ast.DefA id_a $ arg.at in
@@ -1239,7 +1240,7 @@ and elab_var_prem (ctx : Ctx.t) (id : id) (plaintyp : plaintyp) : Ctx.t =
 (* Elaboration of rule premises *)
 
 and elab_rule_prem (ctx : Ctx.t) (id : id) (exp : exp) : Ctx.t * Il.Ast.prem' =
-  let nottyp, _, inputs = Ctx.find_rel ctx id in
+  let nottyp, _, inputs = Ctx.find_rel_signature ctx id in
   let+ ctx, notexp_il = elab_exp_not ctx (NotationT nottyp) exp in
   let _, exps_il = notexp_il in
   if Rel.InputHint.is_conditional inputs exps_il then
@@ -1253,7 +1254,7 @@ and elab_rule_prem (ctx : Ctx.t) (id : id) (exp : exp) : Ctx.t * Il.Ast.prem' =
 
 and elab_rule_not_prem (ctx : Ctx.t) (id : id) (exp : exp) :
     Ctx.t * Il.Ast.prem' =
-  let nottyp, _, inputs = Ctx.find_rel ctx id in
+  let nottyp, _, inputs = Ctx.find_rel_signature ctx id in
   let+ ctx, notexp_il = elab_exp_not ctx (NotationT nottyp) exp in
   let _, exps_il = notexp_il in
   check
@@ -1387,7 +1388,7 @@ and elab_rulepaths (ctxs_local : Ctx.t list) (id_rule_group : id list)
 
 and elab_rulegroup (ctx : Ctx.t) (at : region) (id_rel : id) (id_rulegroup : id)
     (rules : rule list) : Il.Ast.rulegroup =
-  let nottyp, _, inputs = Ctx.find_rel ctx id_rel in
+  let nottyp, _, inputs, _ = Ctx.find_defined_rel ctx id_rel in
   let ctxs_local =
     List.map
       (fun rule ->
@@ -1445,9 +1446,13 @@ let rec elab_def (ctx : Ctx.t) (def : def) : Ctx.t * Il.Ast.def option =
   | TypD (id, tparams, deftyp, _hints) ->
       elab_typ_def ctx id tparams deftyp |> wrap_some
   | VarD (id, plaintyp, _hints) -> elab_var_def ctx id plaintyp |> wrap_none
+  | ExternRelD (id, nottyp, hints) ->
+      elab_extern_rel_def ctx at id nottyp hints |> wrap_some
   | RelD (id, nottyp, hints) -> elab_rel_def ctx at id nottyp hints |> wrap_some
   | RuleGroupD (id_rel, id_rulegroup, rules) ->
       elab_rulegroup_def ctx at id_rel id_rulegroup rules |> wrap_none
+  | BuiltinDecD (id, tparams, params, plaintyp, hints) ->
+      elab_builtin_dec_def ctx at id tparams params plaintyp hints |> wrap_some
   | DecD (id, tparams, params, plaintyp, hints) ->
       elab_dec_def ctx at id tparams params plaintyp hints |> wrap_some
   | DefD (id, tparams, args, exp, prems) ->
@@ -1557,7 +1562,7 @@ and fetch_rel_input_hint (at : region) (nottyp_il : Il.Ast.nottyp)
       | Some inputs -> inputs
       | None ->
           warn at
-            (Format.asprintf
+            (F.asprintf
                "malformed input hint: should be a sequence of indexed holes \
                 %%N (N < %d)"
                len);
@@ -1567,11 +1572,19 @@ and fetch_rel_input_hint (at : region) (nottyp_il : Il.Ast.nottyp)
       warn at "no input hint provided";
       hint_input_default
 
+and elab_extern_rel_def (ctx : Ctx.t) (at : region) (id : id) (nottyp : nottyp)
+    (hints : hint list) : Ctx.t * Il.Ast.def =
+  let nottyp_il = elab_nottyp ctx (NotationT nottyp) in
+  let inputs = fetch_rel_input_hint at nottyp_il hints in
+  let ctx = Ctx.add_extern_rel ctx id nottyp nottyp_il inputs in
+  let def_il = Il.Ast.ExternRelD (id, nottyp_il, inputs, hints) $ at in
+  (ctx, def_il)
+
 and elab_rel_def (ctx : Ctx.t) (at : region) (id : id) (nottyp : nottyp)
     (hints : hint list) : Ctx.t * Il.Ast.def =
   let nottyp_il = elab_nottyp ctx (NotationT nottyp) in
   let inputs = fetch_rel_input_hint at nottyp_il hints in
-  let ctx = Ctx.add_rel ctx id nottyp nottyp_il inputs in
+  let ctx = Ctx.add_defined_rel ctx id nottyp nottyp_il inputs in
   let def_il = Il.Ast.RelD (id, nottyp_il, inputs, [], hints) $ at in
   (ctx, def_il)
 
@@ -1580,9 +1593,25 @@ and elab_rel_def (ctx : Ctx.t) (at : region) (id : id) (nottyp : nottyp)
 and elab_rulegroup_def (ctx : Ctx.t) (at : region) (id_rel : id)
     (id_rulegroup : id) (rules : rule list) : Ctx.t =
   let rulegroup_il = elab_rulegroup ctx at id_rel id_rulegroup rules in
-  Ctx.add_rulegroup ctx id_rel rulegroup_il
+  Ctx.add_defined_rulegroup ctx id_rel rulegroup_il
 
 (* Elaboration of function declarations *)
+
+and elab_builtin_dec_def (ctx : Ctx.t) (at : region) (id : id)
+    (tparams : tparam list) (params : param list) (plaintyp : plaintyp)
+    (hints : hint list) : Ctx.t * Il.Ast.def =
+  check
+    (List.map it tparams |> distinct ( = ))
+    id.at "type parameters are not distinct";
+  let ctx_local = ctx in
+  let ctx_local = Ctx.add_tparams ctx_local tparams in
+  let params_il = List.map (elab_param ctx_local) params in
+  let typ_il = elab_plaintyp ctx_local plaintyp in
+  let ctx = Ctx.add_builtin_dec ctx id tparams params plaintyp in
+  let def_il =
+    Il.Ast.BuiltinDecD (id, tparams, params_il, typ_il, hints) $ at
+  in
+  (ctx, def_il)
 
 and elab_dec_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
     (params : param list) (plaintyp : plaintyp) (hints : hint list) :
@@ -1595,7 +1624,7 @@ and elab_dec_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
   let params_il = List.map (elab_param ctx_local) params in
   let typ_il = elab_plaintyp ctx_local plaintyp in
   let def_il = Il.Ast.DecD (id, tparams, params_il, typ_il, [], hints) $ at in
-  let ctx = Ctx.add_dec ctx id tparams params plaintyp in
+  let ctx = Ctx.add_defined_dec ctx id tparams params plaintyp in
   (ctx, def_il)
 
 (* Elaboration of function definitions *)
@@ -1616,7 +1645,7 @@ and elab_def_output_with_bind (ctx : Ctx.t) (plaintyp : plaintyp) (exp : exp) :
 
 and elab_def_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
     (args : arg list) (exp : exp) (prems : prem list) : Ctx.t =
-  let tparams_expected, params, plaintyp = Ctx.find_dec ctx id in
+  let tparams_expected, params, plaintyp, _ = Ctx.find_defined_dec ctx id in
   check
     (List.length tparams = List.length tparams_expected
     && List.for_all2 ( = ) (List.map it tparams) (List.map it tparams_expected)
@@ -1636,7 +1665,7 @@ and elab_def_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
   let prems_il = sideconditions_il @ prems_il in
   let _ctx_local, exp_il = elab_def_output_with_bind ctx_local plaintyp exp in
   let clause_il = (args_il, exp_il, prems_il) $ at in
-  Ctx.add_clause ctx id clause_il
+  Ctx.add_defined_clause ctx id clause_il
 
 (* Elaboration of spec *)
 
@@ -1645,27 +1674,47 @@ and elab_def_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
 let populate_rule (ctx : Ctx.t) (def_il : Il.Ast.def) : Il.Ast.def =
   match def_il.it with
   | Il.Ast.RelD (id, nottyp_il, inputs, [], hints) ->
-      let rulegroups_il = Ctx.find_rulegroups ctx id in
+      let _, _, _, rulegroups_il = Ctx.find_defined_rel ctx id in
       Il.Ast.RelD (id, nottyp_il, inputs, rulegroups_il, hints) $ def_il.at
   | Il.Ast.RelD _ -> error def_il.at "relation was already populated"
   | _ -> def_il
 
 let populate_rules (ctx : Ctx.t) (spec_il : Il.Ast.spec) : Il.Ast.spec =
-  List.map (populate_rule ctx) spec_il
+  let spec_il = List.map (populate_rule ctx) spec_il in
+  List.iter
+    (fun def_il ->
+      match def_il.it with
+      | Il.Ast.RelD (id, _, _, [], _) ->
+          warn def_il.at
+            (F.asprintf "relation %s has no rule groups defined"
+               (Id.to_string id))
+      | _ -> ())
+    spec_il;
+  spec_il
 
 (* Populate clauses to their respective function declarations *)
 
 let populate_clause (ctx : Ctx.t) (def_il : Il.Ast.def) : Il.Ast.def =
   match def_il.it with
   | Il.Ast.DecD (id, tparams_il, params_il, typ_il, [], hints) ->
-      let clauses_il = Ctx.find_clauses ctx id in
+      let _, _, _, clauses_il = Ctx.find_defined_dec ctx id in
       Il.Ast.DecD (id, tparams_il, params_il, typ_il, clauses_il, hints)
       $ def_il.at
-  | Il.Ast.DecD _ -> error def_il.at "declaration was already populated"
+  | Il.Ast.DecD _ -> error def_il.at "function was already populated"
   | _ -> def_il
 
 let populate_clauses (ctx : Ctx.t) (spec_il : Il.Ast.spec) : Il.Ast.spec =
-  List.map (populate_clause ctx) spec_il
+  let spec_il = List.map (populate_clause ctx) spec_il in
+  List.iter
+    (fun def_il ->
+      match def_il.it with
+      | Il.Ast.DecD (id, _, _, _, [], _) ->
+          warn def_il.at
+            (F.asprintf "function %s has no rule groups defined"
+               (Id.to_string id))
+      | _ -> ())
+    spec_il;
+  spec_il
 
 let elab_spec (spec : spec) : Il.Ast.spec =
   let ctx = Ctx.init () in

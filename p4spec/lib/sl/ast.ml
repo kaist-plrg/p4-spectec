@@ -167,11 +167,19 @@ type hint = El.Ast.hint
 
 (* Relations *)
 
+(* id `:` mixop `hint(input` `%`int* `)` exp* hint* *)
+type externrel = id * (mixop * int list) * exp list * hint list
+[@@deriving yojson]
+
 (* id `:` mixop `hint(input` `%`int* `)` exp* instr* hint* *)
 type rel = id * (mixop * int list) * exp list * instr list * hint list
 [@@deriving yojson]
 
 (* Functions *)
+
+(* id `<` list(tparam, `,`) `>` list(param, `,`) `:` hint* *)
+type builtinfunc = id * tparam list * arg list * typ * hint list
+[@@deriving yojson]
 
 (* id `<` list(tparam, `,`) `>` list(param, `,`) `:` instr* hint* *)
 type func = id * tparam list * arg list * typ * instr list * hint list
@@ -183,8 +191,12 @@ type def = def' phrase
 and def' =
   (* `syntax` id `<` list(tparam, `,`) `>` `=` deftyp *)
   | TypD of id * tparam list * deftyp
+  (* `extern` `relation` rel *)
+  | ExternRelD of externrel
   (* `relation` rel *)
   | RelD of rel
+  (* `builtin` `dec` builtinfunc *)
+  | BuiltinDecD of builtinfunc
   (* `dec` func *)
   | DecD of func
 [@@deriving yojson]

@@ -481,10 +481,12 @@ and prose_of_instrs ?(level = 0) instrs =
 
 let prose_of_def (def : def) : string =
   match def.it with
+  | ExternRelD (relid, exps_input) ->
+      "\n\nrelation " ^ string_of_relid relid ^ ": " ^ prose_of_exps exps_input
   | RelD (relid, exps_input, instrs) ->
       "\n\nrelation " ^ string_of_relid relid ^ ": " ^ prose_of_exps exps_input
       ^ "\n\n" ^ prose_of_instrs instrs
-  | DecD _ -> ""
+  | BuiltinDecD _ | DecD _ -> ""
 
 let prose_of_defs defs = List.map prose_of_def defs |> String.concat "\n"
 let prose_of_spec (spec : spec) = prose_of_defs spec

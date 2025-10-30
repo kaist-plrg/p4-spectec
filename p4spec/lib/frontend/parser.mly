@@ -60,6 +60,7 @@ let exit_scope () = vars := List.hd !scopes; scopes := List.tl !scopes
 %token ARROW ARROW_SUB
 %token DOUBLE_ARROW DOUBLE_ARROW_SUB DOUBLE_ARROW_BOTH DOUBLE_ARROW_LONG
 %token SQARROW SQARROW_STAR
+
 %token AND OR
 %token DOT DOT2 DOT3
 %token COMMA COMMA_NL SEMICOLON COLON COLON2 COLON_SLASH
@@ -72,8 +73,9 @@ let exit_scope () = vars := List.hd !scopes; scopes := List.tl !scopes
 %token<int> HOLE_NUM
 %token HOLE_MULTI HOLE_NIL
 %token EQ NEQ UP BAR
+
 %token LATEX BOOL NAT INT TEXT
-%token SYNTAX RELATION RULEGROUP RULE VAR DEC DEF
+%token SYNTAX EXTERN RELATION RULEGROUP RULE VAR BUILTIN DEC DEF
 %token IF OTHERWISE DEBUG HINT_LPAREN EPS
 %token<bool> BOOLLIT
 %token<Bigint.t> NATLIT HEXLIT
@@ -172,6 +174,8 @@ relid : id { $1 @@@ $sloc }
 ruleid : ruleid_ { $1 }
 ruleid_ :
   | id { $1 }
+  | EXTERN { "extern" }
+  | BUILTIN { "builtin" }
   | NATLIT { Bigint.to_string $1 }
   | BOOLLIT { Bool.string_of_bool $1 }
   | ruleid_ DOTID { $1 ^ "." ^ $2 }
@@ -745,6 +749,8 @@ def_ :
     { TypD ($2, $4, $8, $6) }
   | VAR varid_bind COLON plaintyp hint*
     { VarD ($2, $4, $5) }
+  | EXTERN RELATION relid COLON nottyp hint*
+    { ExternRelD ($3, $5, $6) }
   | RELATION relid COLON nottyp hint*
     { RelD ($2, $4, $5) }
   | RULE relid ruleids COLON exp prem_list
@@ -755,6 +761,14 @@ def_ :
   | RULEGROUP relid ruleids LBRACE rules RBRACE
     { let id = if $3 = "" then "" else String.sub $3 1 (String.length $3 - 1) in
       RuleGroupD ($2, id @@@ $loc($3), $5) }
+  | BUILTIN DEC DOLLAR defid COLON plaintyp hint*
+    { BuiltinDecD ($4, [], [], $6, $7) }
+  | BUILTIN DEC DOLLAR defid_lparen enter_scope comma_list(param) RPAREN COLON plaintyp hint* exit_scope
+    { BuiltinDecD ($4, [], $6, $9, $10) }
+  | BUILTIN DEC DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE COLON plaintyp hint* exit_scope
+    { BuiltinDecD ($4, $6, [], $9, $10) }
+  | BUILTIN DEC DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE_LPAREN comma_list(param) RPAREN COLON plaintyp hint* exit_scope
+    { BuiltinDecD ($4, $6, $8, $11, $12) }
   | DEC DOLLAR defid COLON plaintyp hint*
     { DecD ($3, [], [], $5, $6) }
   | DEC DOLLAR defid_lparen enter_scope comma_list(param) RPAREN COLON plaintyp hint* exit_scope
