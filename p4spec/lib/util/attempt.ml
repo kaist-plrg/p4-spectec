@@ -5,6 +5,21 @@ open Print
 
 type reason =
   (*
+     Cannot determine the root cause of failure.
+  *)
+  | Unknown
+  (*
+    Any leaf node that isn't a mismatch. A stronger candidate to be the real cause for failure
+    Argument: index # of the clause/rule that caused the failure
+  *)
+  | Root of int
+  (*
+    This leaf node is a possible "mismatch", i.e. the failure is caused by one of any guard patterns
+    in the beginning of a clause/rule.
+    Argument: index # of the clause/rule that caused the failure
+  *)
+  | Mismatch of int
+  (*
     One of its children is a root cause node.
     Argument 1: index # of the clause/rule that caused the failure
     Argument 2: execution depth (index # of clause/rule) of the child node referenced by Arg 1
@@ -16,34 +31,83 @@ type reason =
     Argument 2: execution depth (index # of clause/rule) of the child node referenced by Arg 1
   *)
   | MismatchParent of int * int
-  (*
-    This leaf node is a possible "mismatch", i.e. the failure is caused by one of any guard patterns
-    in the beginning of a clause/rule.
-    Argument: index # of the clause/rule that caused the failure
-  *)
-  | Mismatch of int
-  (*
-    Any leaf node that isn't a mismatch. A stronger candidate to be the real cause for failure
-    Argument: index # of the clause/rule that caused the failure
-  *)
-  | Root of int
-  | Unknown
 
 type failtrace = Failtrace of region * string * reason * failtrace list
 type 'a attempt = Ok of 'a | Fail of failtrace list
 
-let string_of_reason = function
-  | RootParent (clause_idx, _) -> "Clause " ^ string_of_int clause_idx
-  | MismatchParent (clause_idx, _) ->
-      "MismatchClause at clause " ^ string_of_int clause_idx
-  | Mismatch i -> "Mismatch at premise " ^ string_of_int i
-  | Root i -> "Root cause at premise " ^ string_of_int i
-  | Unknown -> "Unknown"
+(* Depth *)
 
 let rec depth (failtrace : failtrace) : int =
   let (Failtrace (_, _, _, subfailtraces)) = failtrace in
   let subdepth = List.map depth subfailtraces |> List.fold_left max 0 in
   subdepth + 1
+
+(* Printing *)
+
+let string_of_reason = function
+  | Unknown -> "Unknown"
+  | Root idx -> "Root cause at premise " ^ string_of_int idx
+  | Mismatch idx -> "Mismatch at premise " ^ string_of_int idx
+  | RootParent (idx_root, _) -> "Contains root at " ^ string_of_int idx_root
+  | MismatchParent (idx_root, _) ->
+      "Contains mismatch at " ^ string_of_int idx_root
+
+let rec string_of_failtrace ?(level = 0) ~(depth_limit : int) ~(bullet : string)
+    (failtrace : failtrace) : string =
+  let (Failtrace (region, msg, reason, subfailtraces)) = failtrace in
+  let msg =
+    if level < depth_limit then ""
+    else
+      Format.asprintf "%s%s because %s (%s) (%s)\n"
+        (indent (level - depth_limit))
+        bullet msg (string_of_region region) (string_of_reason reason)
+  in
+  Format.asprintf "%s%s" msg
+    (string_of_failtraces ~level:(level + 1) ~depth_limit subfailtraces)
+
+and string_of_failtraces ?(level = 0) ~(depth_limit : int)
+    (failtraces : failtrace list) : string =
+  match failtraces with
+  | [] -> ""
+  | [ failtrace ] ->
+      string_of_failtrace ~level ~depth_limit ~bullet:"-" failtrace
+  | failtraces ->
+      List.mapi
+        (fun idx failtrace ->
+          string_of_failtrace ~level ~depth_limit
+            ~bullet:(string_of_int (idx + 1) ^ ".")
+            failtrace)
+        failtraces
+      |> String.concat ""
+
+let prettify_failtraces ?(limit = false) (failtraces : failtrace list) : string
+    =
+  match failtraces with
+  | [] -> ""
+  | [ failtrace ] ->
+      let depth_limit =
+        if limit then
+          let depth = depth failtrace in
+          max 0 (depth - 3)
+        else 0
+      in
+      string_of_failtrace ~depth_limit ~bullet:"-" failtrace
+  | failtraces ->
+      List.mapi
+        (fun idx failtrace ->
+          let depth_limit =
+            if limit then
+              let depth = depth failtrace in
+              max 0 (depth - 3)
+            else 0
+          in
+          string_of_failtrace ~depth_limit
+            ~bullet:(string_of_int (idx + 1) ^ ".")
+            failtrace)
+        failtraces
+      |> String.concat ""
+
+(* Constructors and combinators *)
 
 let fail (at : region) (msg : string) : 'a attempt =
   Fail [ Failtrace (at, msg, Unknown, []) ]
@@ -66,23 +130,30 @@ let rec choice = function
 
 let merge_failtrace_reason (failtraces : failtrace list) : reason =
   failtraces
-  |> List.mapi (fun i x -> (i + 1, x))
+  |> List.mapi (fun idx failtrace -> (idx + 1, failtrace))
   |> List.fold_left
-       (fun acc (i, Failtrace (_, _, reason, _)) ->
-         match (acc, reason) with
-         | Root premise, _ -> RootParent (i, premise)
-         | RootParent (_, premise_a), Root premise_b
-         | RootParent (_, premise_a), RootParent (_, premise_b) ->
-             if premise_a < premise_b then RootParent (i, premise_b) else acc
-         | RootParent _, _ -> acc
-         | _, Root premise | _, RootParent (_, premise) ->
-             RootParent (i, premise)
-         | MismatchParent (_, premise_a), MismatchParent (_, premise_b) ->
-             if premise_a < premise_b then MismatchParent (i, premise_b)
-             else acc
-         | _, MismatchParent (_, max_premise) | _, Mismatch max_premise ->
-             MismatchParent (i, max_premise)
-         | _, Unknown -> acc)
+       (fun reason_acc (idx, Failtrace (_, _, reason, _)) ->
+         match (reason_acc, reason) with
+         | Root idx_root, _ -> RootParent (idx, idx_root)
+         | RootParent (_, depth_child_a), Root idx_root_b ->
+             if depth_child_a < idx_root_b then RootParent (idx, idx_root_b)
+             else reason_acc
+         | RootParent (_, depth_child_a), RootParent (_, depth_child_b) ->
+             if depth_child_a < depth_child_b then
+               RootParent (idx, depth_child_b)
+             else reason_acc
+         | RootParent _, _ -> reason_acc
+         | _, Root idx_root -> RootParent (idx, idx_root)
+         | _, RootParent (_, depth_child) -> RootParent (idx, depth_child)
+         | MismatchParent (_, depth_child_a), MismatchParent (_, depth_child_b)
+           ->
+             if depth_child_a < depth_child_b then
+               MismatchParent (idx, depth_child_b)
+             else reason_acc
+         | _, MismatchParent (_, depth_child_b) ->
+             MismatchParent (idx, depth_child_b)
+         | _, Mismatch idx_mismatch -> MismatchParent (idx, idx_mismatch)
+         | _, Unknown -> reason_acc)
        Unknown
 
 let nest at msg attempt =
@@ -92,111 +163,57 @@ let nest at msg attempt =
       let reason = merge_failtrace_reason failtraces in
       Fail [ Failtrace (at, msg, reason, failtraces) ]
 
-(* Error with backfailtraces *)
+(* Pruning and pretty-printing of failtraces *)
 
-let rec string_of_failtrace ?(level = 0) ~(depth : int) ~(bullet : string)
-    (failtrace : failtrace) : string =
-  let (Failtrace (region, msg, reason, subfailtraces)) = failtrace in
-  let smsg =
-    if level < depth then ""
-    else
-      Format.asprintf "%s%s because %s (%s) (%s)\n"
-        (indent (level - depth))
-        bullet msg (string_of_region region) (string_of_reason reason)
-  in
-  Format.asprintf "%s%s" smsg
-    (string_of_failtraces ~level:(level + 1) ~depth subfailtraces)
+let rec deepest_failtraces (failtraces : failtrace list) : failtrace list =
+  deepest_failtraces' failtraces |> snd
 
-and string_of_failtraces ?(level = 0) ~(depth : int)
-    (failtraces : failtrace list) : string =
+and deepest_failtraces' (failtraces : failtrace list) : int * failtrace list =
   match failtraces with
-  | [] -> ""
-  | [ failtrace ] -> string_of_failtrace ~level ~depth ~bullet:"-" failtrace
-  | failtraces ->
-      List.mapi
-        (fun idx failtrace ->
-          string_of_failtrace ~level ~depth
-            ~bullet:(string_of_int (idx + 1) ^ ".")
-            failtrace)
-        failtraces
-      |> String.concat ""
-
-let rec deepest_failtraces_aux (failtraces : failtrace list) :
-    int * failtrace list =
-  match failtraces with
-  | [] -> failwith "Attempt to compute deepest failtrace on empty failtrace"
-  | [ (Failtrace (_, _, _, []) as ft) ] -> (1, [ ft ])
+  | [] -> failwith "attempt to compute deepest failtrace on empty failtrace"
+  | [ (Failtrace (_, _, _, []) as failtrace) ] -> (1, [ failtrace ])
   | _ ->
-      let length, dfts =
+      let length, subfailtraces_deep =
         failtraces
-        |> List.map (fun (Failtrace (region, message, reason, sub_fts)) ->
-               let length, dfts = deepest_failtraces_aux sub_fts in
-               (length + 1, Failtrace (region, message, reason, dfts)))
+        |> List.map (fun (Failtrace (at, message, reason, subfailtraces)) ->
+               let length, subfailtraces_deep =
+                 deepest_failtraces' subfailtraces
+               in
+               (length + 1, Failtrace (at, message, reason, subfailtraces_deep)))
         |> List.fold_left
-             (fun (acc_length, acc_failtraces) (cur_length, cur_failtrace) ->
-               if acc_length > cur_length then (acc_length, acc_failtraces)
-               else if acc_length < cur_length then
-                 (cur_length, [ cur_failtrace ])
+             (fun (length_acc, failtraces_acc) (length_cur, failtrace_cur) ->
+               if length_acc > length_cur then (length_acc, failtraces_acc)
+               else if length_acc < length_cur then
+                 (length_cur, [ failtrace_cur ])
                else
-                 let acc_reason =
-                   match acc_failtraces with
-                   | Failtrace (_, _, acc_reason, _) :: _ -> acc_reason
-                   | [] ->
-                       failwith "acc_failtraces is guaranteed to be non-empty!"
+                 let reason_acc =
+                   match failtraces with
+                   | Failtrace (_, _, reason_acc, _) :: _ -> reason_acc
+                   | [] -> assert false
                  in
-                 let (Failtrace (_, _, cur_reason, _)) = cur_failtrace in
-                 match (acc_reason, cur_reason) with
-                 | ( MismatchParent (_, acc_premise_idx),
-                     MismatchParent (_, cur_premise_idx) ) ->
-                     if acc_premise_idx > cur_premise_idx then
-                       (acc_length, acc_failtraces)
-                     else if acc_premise_idx < cur_premise_idx then
-                       (cur_length, [ cur_failtrace ])
-                     else (cur_length, cur_failtrace :: acc_failtraces)
-                 | _, _ -> (cur_length, cur_failtrace :: acc_failtraces))
+                 let (Failtrace (_, _, reason_cur, _)) = failtrace_cur in
+                 match (reason_acc, reason_cur) with
+                 | ( MismatchParent (_, depth_child_acc),
+                     MismatchParent (_, depth_child_cur) ) ->
+                     if depth_child_acc > depth_child_cur then
+                       (length_acc, failtraces_acc)
+                     else if depth_child_acc < depth_child_cur then
+                       (length_cur, [ failtrace_cur ])
+                     else (length_cur, failtrace_cur :: failtraces_acc)
+                 | _, _ -> (length_cur, failtrace_cur :: failtraces_acc))
              (0, [])
       in
-      (length, List.rev dfts)
-
-let deepest_failtraces (failtraces : failtrace list) : failtrace list =
-  deepest_failtraces_aux failtraces |> snd
+      (length, List.rev subfailtraces_deep)
 
 let rec prune_failtraces (failtraces : failtrace list) : failtrace list =
   let reason = merge_failtrace_reason failtraces in
   match reason with
-  | RootParent (i, _) ->
-      let (Failtrace (region, msg, reason, fts)) =
-        List.nth failtraces (i - 1)
-      in
-      [ Failtrace (region, msg, reason, prune_failtraces fts) ]
-  | Root _ ->
-      failwith "Invalid state. List of failtraces cannot have Root fail cause"
-  | MismatchParent _ | Mismatch _ -> deepest_failtraces failtraces
   | Unknown -> failtraces
-
-let prettify_failtraces ?(depth_limit = false) (failtraces : failtrace list) :
-    string =
-  match failtraces with
-  | [] -> ""
-  | [ failtrace ] ->
-      let depth =
-        if depth_limit then
-          let depth = depth failtrace in
-          max 0 (depth - 3)
-        else 0
+  | Root _ -> failwith "list of failtraces cannot have a root fail cause"
+  | Mismatch _ -> deepest_failtraces failtraces
+  | RootParent (idx_root, _) ->
+      let (Failtrace (at, msg, reason, failtraces)) =
+        List.nth failtraces (idx_root - 1)
       in
-      string_of_failtrace ~depth ~bullet:"-" failtrace
-  | failtraces ->
-      List.mapi
-        (fun idx failtrace ->
-          let depth =
-            if depth_limit then
-              let depth = depth failtrace in
-              max 0 (depth - 3)
-            else 0
-          in
-          string_of_failtrace ~depth
-            ~bullet:(string_of_int (idx + 1) ^ ".")
-            failtrace)
-        failtraces
-      |> String.concat ""
+      [ Failtrace (at, msg, reason, prune_failtraces failtraces) ]
+  | MismatchParent _ -> deepest_failtraces failtraces

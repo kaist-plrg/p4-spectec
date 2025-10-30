@@ -4,6 +4,8 @@ open Util.Source
 
 (* Execution trace *)
 
+type mode = Full | Concise
+
 type time =
   | ING of float
   (* start time *)
@@ -29,6 +31,11 @@ type t =
   | Iter of { inner : string; time : time; subtraces : t list }
   | Prem of prem
   | Empty
+
+(* Trace mode knob *)
+
+let mode : mode ref = ref Concise
+let set_mode mode_ = mode := mode_
 
 (* Openers *)
 
@@ -287,51 +294,53 @@ let profile (trace : t) : unit =
   Format.printf "Functions:\n";
   Format.printf "%s\n" (log_counter funcs)
 
-type subexp' = Let of exp' * exp' | If of exp'
+(* Guessing reason from traces *)
 
-let try_extract_exp = function
-  | Prem p -> (
-      match p.it with
-      | IfPr ifpr -> Some (If ifpr.it)
-      | LetPr (lvalue, rvalue) -> Some (Let (lvalue.it, rvalue.it))
+type subexp = Let of exp' * exp' | If of exp'
+
+let extract_subexp = function
+  | Prem prem -> (
+      match prem.it with
+      | IfPr exp -> Some (If exp.it)
+      | LetPr (exp_l, exp_r) -> Some (Let (exp_l.it, exp_r.it))
       | _ -> None)
   | _ -> None
 
 let extract_subexps = function
-  | Rel { subtraces; _ } -> subtraces |> List.filter_map try_extract_exp
+  | Rel { subtraces; _ } -> subtraces |> List.filter_map extract_subexp
   | _ -> []
 
-let guess_is_cursor_match (exp : subexp') : bool =
-  match exp with
+let guess_cursor_match (subexp : subexp) : bool =
+  match subexp with
   | If (MatchE ({ it = VarE { it = "cursor"; _ }; _ }, _)) -> true
   | _ -> false
 
 let guess_reason (trace : t) : Util.Attempt.reason =
+  let subexps = extract_subexps trace in
   let premise_idx =
     match trace with
     | Rel { subtraces; _ } | Dec { subtraces; _ } | Iter { subtraces; _ } ->
         List.length subtraces
     | _ -> failwith "trace must be a relation, declaration or iteration"
   in
-  let subexps = extract_subexps trace in
-  let open Il.Eq in
   match subexps with
   | [ If (SubE _) ] | [ If (MatchE _) ] -> Mismatch premise_idx
-  | [ If (SubE (exp_a, _)); If (MatchE (exp_b, _)) ] when eq_exp exp_a exp_b ->
+  | [ If (SubE (exp_a, _)); If (MatchE (exp_b, _)) ]
+    when Il.Eq.eq_exp exp_a exp_b ->
       Mismatch premise_idx
-  (* ex> Expr_ok/binaryExpression-plusminusmult *)
+  (* Expr_ok/binaryExpression-plusminusmult *)
   | [ If (SubE (exp_a, typ_a)); Let (_, DownCastE (typ_b, exp_b)); If (MemE _) ]
-    when eq_exp exp_a exp_b && eq_typ typ_a typ_b ->
+    when Il.Eq.eq_exp exp_a exp_b && Il.Eq.eq_typ typ_a typ_b ->
       Mismatch premise_idx
-  (* ex> Type_ok/boolean *)
+  (* Type_ok/boolean *)
   | [
    If (SubE (exp_a, typ_a)); Let (_, DownCastE (typ_b, exp_b)); If (MatchE _);
   ]
-    when eq_exp exp_a exp_b && eq_typ typ_a typ_b ->
+    when Il.Eq.eq_exp exp_a exp_b && Il.Eq.eq_typ typ_a typ_b ->
       Mismatch premise_idx
   (* ParserTransition_ok/name *)
   | [ If (MatchE (exp_a, _)); Let (CaseE _, exp_b); If (MatchE _) ]
-    when eq_exp' exp_a.it exp_b ->
+    when Il.Eq.eq_exp' exp_a.it exp_b ->
       Mismatch premise_idx
   (* Decl_ok/instantiation-non-objectInitializer *)
   | [
@@ -344,22 +353,22 @@ let guess_reason (trace : t) : Util.Attempt.reason =
   ]
     when List.for_all Fun.id
            [
-             eq_exp exp_a exp_b;
-             eq_typ typ_a typ_b;
-             eq_exp' exp_c exp_d.it;
-             eq_exp' exp_d.it exp_e;
-             eq_exp' var_a var_c.it;
+             Il.Eq.eq_exp exp_a exp_b;
+             Il.Eq.eq_typ typ_a typ_b;
+             Il.Eq.eq_exp' exp_c exp_d.it;
+             Il.Eq.eq_exp' exp_d.it exp_e;
+             Il.Eq.eq_exp' var_a var_c.it;
            ] ->
       Mismatch premise_idx
-  | [ match_exp; If (SubE _) ] when guess_is_cursor_match match_exp ->
+  | [ subexp; If (SubE _) ] when guess_cursor_match subexp ->
       Mismatch premise_idx
   | [
-   match_exp;
+   subexp;
    If (SubE (exp_a, typ_a));
    Let (_, DownCastE (typ_b, exp_b));
    If (MatchE _);
   ]
-    when guess_is_cursor_match match_exp
-         && eq_exp exp_a exp_b && eq_typ typ_a typ_b ->
+    when guess_cursor_match subexp && Il.Eq.eq_exp exp_a exp_b
+         && Il.Eq.eq_typ typ_a typ_b ->
       Mismatch premise_idx
   | _ -> Root premise_idx
