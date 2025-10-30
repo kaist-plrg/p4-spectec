@@ -1089,12 +1089,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       | [] -> []
       | targs ->
           let theta =
-            TDEnv.bindings ctx.global.tdenv @ TDEnv.bindings ctx.local.tdenv
-            |> List.filter_map (fun (tid, (_tparams, deftyp)) ->
-                   match deftyp.it with
-                   | PlainT typ -> Some (tid, typ)
-                   | _ -> None)
-            |> TIdMap.of_list
+            TDEnv.fold
+              (fun tid typdef theta ->
+                let tparams, deftyp = typdef in
+                match (tparams, deftyp.it) with
+                | [], Il.Ast.PlainT typ -> TIdMap.add tid typ theta
+                | _ -> theta)
+              ctx.local.tdenv TIdMap.empty
           in
           List.map (Typ.subst_typ theta) targs
     in

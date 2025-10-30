@@ -1710,8 +1710,7 @@ let populate_clauses (ctx : Ctx.t) (spec_il : Il.Ast.spec) : Il.Ast.spec =
       match def_il.it with
       | Il.Ast.DecD (id, _, _, _, [], _) ->
           warn def_il.at
-            (F.asprintf "function %s has no rule groups defined"
-               (Id.to_string id))
+            (F.asprintf "function %s has no clauses defined" (Id.to_string id))
       | _ -> ())
     spec_il;
   spec_il

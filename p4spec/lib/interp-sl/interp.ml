@@ -1475,16 +1475,18 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       | [] -> []
       | targs ->
           let theta =
-            (TDEnv.bindings ctx.global.tdenv
-            @
-            match ctx.local with
-            | Empty | Rel _ -> []
-            | Func { tdenv; _ } -> TDEnv.bindings tdenv)
-            |> List.filter_map (fun (tid, (_tparams, deftyp)) ->
-                   match deftyp.it with
-                   | Il.Ast.PlainT typ -> Some (tid, typ)
-                   | _ -> None)
-            |> TIdMap.of_list
+            let tdenv_local =
+              match ctx.local with
+              | Empty | Rel _ -> TIdMap.empty
+              | Func { tdenv; _ } -> tdenv
+            in
+            TDEnv.fold
+              (fun tid typdef theta ->
+                let tparams, deftyp = typdef in
+                match (tparams, deftyp.it) with
+                | [], Il.Ast.PlainT typ -> TIdMap.add tid typ theta
+                | _ -> theta)
+              tdenv_local TIdMap.empty
           in
           List.map (Typ.subst_typ theta) targs
     in
