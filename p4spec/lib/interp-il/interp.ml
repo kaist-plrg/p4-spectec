@@ -22,6 +22,18 @@ let func_cache = ref (Cache.Cache.create ~size:10000)
 let rule_cache = ref (Cache.Cache.create ~size:10000)
 
 module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
+  (* Architecture transactions *)
+
+  let checkpoint () = Arch.checkpoint ()
+
+  let restore_on_fail attempt =
+    (match attempt with Fail _ -> Arch.restore () | _ -> ());
+    attempt
+
+  let commit_or_rollback attempt =
+    (match attempt with Ok _ -> Arch.commit () | Fail _ -> Arch.rollback ());
+    attempt
+
   (* Assignments *)
 
   (* Assigning a value to an expression *)
@@ -1025,10 +1037,15 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
                         |> nest id.at
                              (F.asprintf "application of rule %s/%s/%s failed"
                                 id.it id_rulegroup.it id_rulepath.it)
+                        |> restore_on_fail
                       in
                       attempt_rulepath))
       in
       choice attempt_rules
+    in
+    let do_attempt_rules () =
+      checkpoint ();
+      attempt_rules () |> commit_or_rollback
     in
     if Cache.is_cached_rule id.it then (
       let cache_result = Cache.Cache.find !rule_cache (id.it, values_input) in
@@ -1037,14 +1054,12 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
           let ctx = Ctx.trace_replace ctx subtraces in
           Ok (ctx, values_output)
       | None ->
-          let* ctx, values_output = attempt_rules () in
+          let* ctx, values_output = do_attempt_rules () in
           let subtraces = Trace.wipe_subtraces ctx.trace in
           Cache.Cache.add !rule_cache (id.it, values_input)
             (subtraces, values_output);
           Ok (ctx, values_output))
-    else
-      let* ctx, values_output = attempt_rules () in
-      Ok (ctx, values_output)
+    else do_attempt_rules ()
 
   (* Invoke a function *)
 
@@ -1102,6 +1117,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   and invoke_func_def (ctx : Ctx.t) (id : id) (targs : targ list)
       (args : arg list) : (Ctx.t * value) attempt =
+    (* Evaluate arguments *)
     let ctx, values_input = eval_args ctx args in
     invoke_func_def' ctx id targs values_input
 
@@ -1164,11 +1180,16 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
               |> nest id.at
                    (F.asprintf "application of clause %s%s failed" id.it
                       (Il.Print.string_of_args args_input))
+              |> restore_on_fail
             in
             attempt_clause)
           clauses
       in
       choice attempt_clauses'
+    in
+    let do_attempt_clauses () =
+      checkpoint ();
+      attempt_clauses () |> commit_or_rollback
     in
     if Cache.is_cached_func id.it then (
       let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
@@ -1177,14 +1198,12 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
           let ctx = Ctx.trace_replace ctx subtraces in
           Ok (ctx, value_output)
       | None ->
-          let* ctx, value_output = attempt_clauses () in
+          let* ctx, value_output = do_attempt_clauses () in
           let subtraces = Trace.wipe_subtraces ctx.trace in
           Cache.Cache.add !func_cache (id.it, values_input)
             (subtraces, value_output);
           Ok (ctx, value_output))
-    else
-      let* ctx, value_output = attempt_clauses () in
-      Ok (ctx, value_output)
+    else do_attempt_clauses ()
 
   (* Load definitions into the context *)
 

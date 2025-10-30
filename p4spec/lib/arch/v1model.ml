@@ -30,6 +30,30 @@ struct
     | PacketOut pkt_out -> pkt_out
     | _ -> assert false
 
+  (* Transactions *)
+
+  type checkpoints = extern Externs.t list
+
+  let checkpoints : checkpoints ref = ref []
+  let checkpoint () : unit = checkpoints := !externs :: !checkpoints
+
+  let commit () : unit =
+    match !checkpoints with
+    | _ :: checkpoints_t -> checkpoints := checkpoints_t
+    | [] -> assert false
+
+  let restore () : unit =
+    match !checkpoints with
+    | checkpoint_h :: _ -> externs := checkpoint_h
+    | [] -> assert false
+
+  let rollback () : unit =
+    match !checkpoints with
+    | checkpoint_h :: checkpoints_t ->
+        externs := checkpoint_h;
+        checkpoints := checkpoints_t
+    | [] -> assert false
+
   (* Call entry points *)
 
   let call_rel (relname : string) (expect : int) (values_input : Value.t list) :

@@ -5,6 +5,11 @@ open Error
 
 module Make (Interp_IL : Sim.INTERP_IL) (Interp_SL : Sim.INTERP_SL) : Sim.ARCH =
 struct
+  let checkpoint () : unit = ()
+  let commit () : unit = ()
+  let restore () : unit = ()
+  let rollback () : unit = ()
+
   let eval_extern_func_call (_values_input : Value.t list) : Value.t list =
     error_no_region
       "eval_extern_func_call not implemented for the placeholder simulator"

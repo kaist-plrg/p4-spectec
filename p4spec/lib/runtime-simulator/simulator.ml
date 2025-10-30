@@ -24,6 +24,13 @@ type func_result =
   | Fail of region * string * SCov.Cover.t
 
 module type ARCH = sig
+  (* Transactions *)
+
+  val checkpoint : unit -> unit
+  val commit : unit -> unit
+  val restore : unit -> unit
+  val rollback : unit -> unit
+
   (* Extern evaluation *)
 
   val eval_extern_func_call : Value.t list -> Value.t list
