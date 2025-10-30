@@ -74,15 +74,13 @@ let code_of_binop = Sl.Print.string_of_binop
 
 let render_varid ctx varid =
   let varid = varid.it in
-  if String.starts_with ~prefix:"_" varid then "_" |> as_code ctx
-  else
-    let var_slices = String.split_on_char '_' varid in
-    match var_slices with
-    | var_type :: [] -> var_type |> as_code ctx
-    | var_type :: var_subscripts ->
-        var_type ^ (var_subscripts |> String.concat "_" |> adoc_subscript)
-        |> as_code ctx
-    | _ -> assert false
+  let var_slices = String.split_on_char '_' varid in
+  match var_slices with
+  | var_type :: [] -> var_type |> as_code ctx
+  | var_type :: var_subscripts ->
+      var_type ^ (var_subscripts |> String.concat "_" |> adoc_subscript)
+      |> as_code ctx
+  | _ -> assert false
 
 (* Notation *)
 
@@ -125,7 +123,8 @@ let code_of_iterexp (iter, _) = code_of_iter iter
 (* Variables *)
 
 let render_var ctx (id, _typ, iters) =
-  render_varid ctx id ^ String.concat "" (List.map code_of_iter iters)
+  if String.starts_with ~prefix:"_" id.it then "_" |> as_code ctx
+  else render_varid ctx id ^ String.concat "" (List.map code_of_iter iters)
 
 (* Iterated Variables *)
 
