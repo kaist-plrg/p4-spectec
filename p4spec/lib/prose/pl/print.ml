@@ -86,7 +86,12 @@ let render_varid ctx varid =
 
 (* Notation *)
 
-let code_of_atom atom = string_of_atom ~lower:false atom
+let code_of_atom atom =
+  match atom.it with
+  | Atom.SilentAtom _ -> ""
+  | Atom.Tick -> ""
+  | _ -> Atom.string_of_atom atom.it
+
 let code_of_atoms atoms = atoms |> List.map code_of_atom |> String.concat " "
 
 let code_of_mixop mixop =
@@ -209,7 +214,13 @@ let rec render_exp ctx exp : string =
         (render_exp_as_code ctx exp)
         (code_of_pattern pattern |> as_code ctx)
   | TupleE es -> "(" ^ render_exps ctx ~sep:", " es ^ ")"
-  | CaseE (id, renderer) -> render_renderer ctx renderer id
+  | CaseE (id, mixop, exps, prose_hint) -> (
+      if ctx.in_code then code_of_notexp ctx (mixop, exps) |> as_code ctx
+      else
+        match prose_hint with
+        | Some hintexp ->
+            render_hintexp (ctx |> link) exps hintexp |> as_link ctx ~link:id.it
+        | None -> code_of_notexp ctx (mixop, exps) |> as_code ctx)
   | StrE expfields ->
       "{"
       ^ String.concat ", "
@@ -220,8 +231,7 @@ let rec render_exp ctx exp : string =
   | OptE (Some exp) -> "" ^ render_exp ctx exp ^ ""
   | OptE None -> "None" |> as_code ctx
   | ListE [] -> "[ ]" |> as_code ctx
-  | ListE exps ->
-      "[" ^ render_exps in_code ~sep:", " exps ^ "]" |> as_code ctx
+  | ListE exps -> "[" ^ render_exps in_code ~sep:", " exps ^ "]" |> as_code ctx
   | ConsE (exp_h, exp_t) ->
       (* always print as code *)
       render_exp in_code exp_h ^ " :: " ^ render_exp in_code exp_t
@@ -437,7 +447,7 @@ let rec render_instr ?(level = 0) ?(unordered = false) (instr : instr) : string
     when Eq.eq_exp exp_r exp && Eq.eq_typ typ_r typ ->
       F.asprintf "%s%slet %s be %s:%s" bullet
         (render_branchtype branchtype)
-        (render_exp in_code exp_l |> as_code in_prose)
+        (render_exp_as_code in_prose exp_l)
         (render_exp in_prose exp_r)
         (render_instrs ~level:(level + 1) instrs_rest)
   | BranchI (branchtype, cond, instrs) ->
@@ -452,7 +462,7 @@ let rec render_instr ?(level = 0) ?(unordered = false) (instr : instr) : string
       F.asprintf "%sCheck that %s." bullet (render_cond in_prose cond)
   | LetI (exp_l, exp_r) ->
       F.asprintf "%sLet %s be %s." bullet
-        (render_exp in_code exp_l |> as_code in_prose)
+        (render_exp_as_code in_prose exp_l)
         (render_exp in_prose exp_r)
   | RelI (relcall, rid) ->
       F.asprintf "%sLet %s." bullet (render_relcall ~level relcall rid)

@@ -54,8 +54,9 @@ and eq_exp (exp_a : exp) (exp_b : exp) : bool =
   | MatchE (exp_a, pattern_a), MatchE (exp_b, pattern_b) ->
       eq_exp exp_a exp_b && eq_pattern pattern_a pattern_b
   | TupleE exps_a, TupleE exps_b -> eq_exps exps_a exps_b
-  | CaseE (id_a, renderer_a), CaseE (id_b, renderer_b) ->
-      eq_id id_a id_b && eq_renderer renderer_a renderer_b
+  | CaseE (id_a, mixop_a, exps_a, hint_a), CaseE (id_b, mixop_b, exps_b, hint_b)
+    ->
+      eq_id id_a id_b && eq_mixop mixop_a mixop_b && eq_exps exps_a exps_b
   | StrE expfields_a, StrE expfields_b ->
       List.length expfields_a = List.length expfields_b
       && List.for_all2

@@ -58,7 +58,7 @@ and exp' =
   | SubE of exp * typ (* exp `<:` typ *)
   | MatchE of exp * pattern (* exp `matches` pattern *)
   | TupleE of exp list (* `(` exp* `)` *)
-  | CaseE of id * relcall
+  | CaseE of id * mixop * exp list * hintexp option
   | StrE of (atom * exp) list (* { expfield* } *)
   | OptE of exp option (* exp? *)
   | ListE of exp list (* `[` exp* `]` *)
