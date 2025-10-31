@@ -26183,22 +26183,17 @@ syntax returnResult =
    | return value?
 
 ;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:75.33-75.39
-syntax acceptTransitionResult = 
-   | accept
-
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:76.33-76.39
 syntax rejectTransitionResult = 
    | reject
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:79.1-83.17
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:78.1-81.17
 syntax statementResult = 
    | cont
-   | accept
    | exit
    | reject
    | return value?
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:85.1-92.55
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:83.1-90.55
 relation Stmt_eval: cursor evaluationContext store |- statementIR : evaluationContext store statementResult
 
   ;; ../../../../spec-concrete/8.07-evaluation-statement.watsup:9.1-10.31
@@ -26421,7 +26416,7 @@ relation Stmt_eval: cursor evaluationContext store |- statementIR : evaluationCo
     -- Stmt_eval: p EC_cond STO_cond |- statementIR_else : EC_else STO_else statementResult
     -- output: % % % |- % : EC_else STO_else statementResult
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:94.1-97.23
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:92.1-95.23
 relation BlockElementStmt_eval: evaluationContext store |- blockElementStatementIR : evaluationContext store statementResult
 
   ;; ../../../../spec-concrete/8.07-evaluation-statement.watsup:172.1-186.2
@@ -26466,7 +26461,7 @@ relation BlockElementStmt_eval: evaluationContext store |- blockElementStatement
     -- Stmt_eval: local EC_0 STO_0 |- statementIR : EC_1 STO_1 statementResult
     -- output: % % |- % : EC_1 STO_1 statementResult
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:99.1-102.23
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:97.1-100.23
 relation BlockElementStmts_eval: evaluationContext store |- blockElementStatementListIR : evaluationContext store statementResult
 
   ;; ../../../../spec-concrete/8.07-evaluation-statement.watsup:200.1-220.2
@@ -26510,7 +26505,7 @@ relation BlockElementStmts_eval: evaluationContext store |- blockElementStatemen
     -- BlockElementStmts_eval: EC_1 STO_1 |- blockElementStatementIR_t*{blockElementStatementIR_t <- blockElementStatementIR_t*} : EC_2 STO_2 statementResult
     -- output: % % |- % : EC_2 STO_2 statementResult
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:104.1-107.23
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:102.1-105.23
 relation Block_eval: evaluationContext store |- blockStatementIR : evaluationContext store statementResult
 
   ;; ../../../../spec-concrete/8.07-evaluation-statement.watsup:226.1-233.32
@@ -26529,17 +26524,21 @@ relation Block_eval: evaluationContext store |- blockStatementIR : evaluationCon
     -- let EC_3 = $exit_eval(EC_2)
     -- output: % % |- % : EC_3 STO_1 statementResult
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:113.32-113.40
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:111.33-111.39
+syntax acceptTransitionResult = 
+   | accept
+
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:112.32-112.40
 syntax stateTransitionResult = 
    | state id
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:116.1-118.26
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:115.1-117.26
 syntax transitionResult = 
    | accept
    | reject
    | state id
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:120.1-123.23
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:119.1-122.23
 relation ParserStmt_eval: evaluationContext store |- parserStatementIR : evaluationContext store
 
   ;; ../../../../spec-concrete/8.09.1-evaluation-parser-statement.watsup:29.1-32.66
@@ -26667,7 +26666,7 @@ relation ParserStmt_eval: evaluationContext store |- parserStatementIR : evaluat
     -- if (continueEmptyResult = cont)
     -- output: % % |- % : EC_1 STO_1
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:125.1-128.23
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:124.1-127.23
 relation ParserStmts_eval: evaluationContext store |- parserStatementListIR : evaluationContext store
 
   ;; ../../../../spec-concrete/8.09.1-evaluation-parser-statement.watsup:101.1-114.2
@@ -26696,7 +26695,7 @@ relation ParserStmts_eval: evaluationContext store |- parserStatementListIR : ev
     -- ParserStmts_eval: EC_1 STO_1 |- parserStatementIR_t*{parserStatementIR_t <- parserStatementIR_t*} : EC_2 STO_2
     -- output: % % |- % : EC_2 STO_2
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:130.1-133.23
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:129.1-132.23
 relation ParserTransition_eval: evaluationContext store |- transitionStatementIR : evaluationContext store transitionResult
 
   ;; ../../../../spec-concrete/8.09.1-evaluation-parser-statement.watsup:11.1-17.2
@@ -26713,7 +26712,7 @@ relation ParserTransition_eval: evaluationContext store |- transitionStatementIR
     rulepath accept
     -- output: % % |- % : EC_0 STO_0 accept as transitionResult
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:135.1-138.23
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:134.1-137.23
 relation ParserState_eval: evaluationContext store |- state : evaluationContext store transitionResult
 
   ;; ../../../../spec-concrete/8.09.3-evaluation-parser-state.watsup:5.1-13.48
@@ -26731,7 +26730,7 @@ relation ParserState_eval: evaluationContext store |- state : evaluationContext 
     -- ParserTransition_eval: EC_1 STO_1 |- transitionStatementIR : EC_2 STO_2 transitionResult
     -- output: % % |- % : EC_2 STO_2 transitionResult
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:140.1-143.23
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:139.1-142.23
 relation ParserState_trans: evaluationContext store |-transition nameIR : evaluationContext store transitionResult
 
   ;; ../../../../spec-concrete/8.09.3-evaluation-parser-state.watsup:19.1-24.46
@@ -26794,7 +26793,7 @@ relation ParserState_trans: evaluationContext store |-transition nameIR : evalua
     -- ParserState_trans: EC_1 STO_1 |-transition nameIR_next : EC_2 STO_2 transitionResult
     -- output: % % |-transition % : EC_2 STO_2 transitionResult
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:145.1-148.23
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:144.1-147.23
 relation ParserLocalDecl_eval: evaluationContext store |- parserLocalDeclarationIR : evaluationContext store
 
   ;; ../../../../spec-concrete/8.09.2-evaluation-parser-declaration.watsup:9.1-12.66
@@ -26847,7 +26846,7 @@ relation ParserLocalDecl_eval: evaluationContext store |- parserLocalDeclaration
     -- let EC_2 = $add_value_eval(block, EC_1, ` nameIR, value_init)
     -- output: % % |- % : EC_2 STO_1
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:150.1-153.23
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:149.1-152.23
 relation ParserLocalDecls_eval: evaluationContext store |- parserLocalDeclarationIR* : evaluationContext store
 
   ;; ../../../../spec-concrete/8.09.2-evaluation-parser-declaration.watsup:52.1-65.2
@@ -26876,12 +26875,12 @@ relation ParserLocalDecls_eval: evaluationContext store |- parserLocalDeclaratio
     -- ParserLocalDecls_eval: EC_1 STO_1 |- parserLocalDeclarationListIR_t : EC_2 STO_2
     -- output: % % |- % : EC_2 STO_2
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:160.1-161.17
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:159.1-160.17
 syntax tableResult = 
    | exit
    | return value?
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:163.1-166.23
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:162.1-165.23
 relation Table_eval: evaluationContext store |- tableObjectProperty : evaluationContext store tableResult
 
   ;; ../../../../spec-concrete/8.10.1-evaluation-control-table.watsup:10.1-16.42
@@ -26902,12 +26901,12 @@ relation Table_eval: evaluationContext store |- tableObjectProperty : evaluation
     -- if (continueEmptyResult = cont)
     -- output: % % |- % : EC_1 STO_1 return ?() as tableResult
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:169.1-170.17
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:168.1-169.17
 syntax controlBodyResult = 
    | exit
    | return value?
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:172.1-175.23
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:171.1-174.23
 relation ControlBody_eval: evaluationContext store |- controlBodyIR : evaluationContext store controlBodyResult
 
   ;; ../../../../spec-concrete/8.10.2-evaluation-control-statement.watsup:7.1-9.63
@@ -26959,12 +26958,12 @@ relation ControlBody_eval: evaluationContext store |- controlBodyIR : evaluation
     -- if (statementResult = return ?() as statementResult)
     -- output: % % |- % : EC_1 STO_1 return ?() as controlBodyResult
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:178.1-179.15
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:177.1-178.15
 syntax declarationResult = 
    | cont
    | exit
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:181.1-184.23
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:180.1-183.23
 relation ControlLocalDecl_eval: evaluationContext store |- controlLocalDeclarationIR : evaluationContext store declarationResult
 
   ;; ../../../../spec-concrete/8.10.3-evaluation-control-declaration.watsup:9.1-12.79
@@ -27025,7 +27024,7 @@ relation ControlLocalDecl_eval: evaluationContext store |- controlLocalDeclarati
     -- let EC_2 = $add_value_eval(block, EC_1, ` nameIR, value_init)
     -- output: % % |- % : EC_2 STO_1 cont as declarationResult
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:186.1-189.23
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:185.1-188.23
 relation ControlLocalDecls_eval: evaluationContext store |- controlLocalDeclarationIR* : evaluationContext store declarationResult
 
   ;; ../../../../spec-concrete/8.10.3-evaluation-control-declaration.watsup:64.1-86.2
@@ -27069,7 +27068,7 @@ relation ControlLocalDecls_eval: evaluationContext store |- controlLocalDeclarat
     -- ControlLocalDecls_eval: EC_1 STO_1 |- controlLocalDeclarationListIR_t : EC_2 STO_2 declarationResult
     -- output: % % |- % : EC_2 STO_2 declarationResult
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:195.1-198.26
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:194.1-197.26
 relation Decl_eval: cursor evaluationContext store |- declarationIR : evaluationContext store declarationResult
 
   ;; ../../../../spec-concrete/8.08-evaluation-declaration.watsup:11.1-14.58
@@ -27088,12 +27087,12 @@ relation Decl_eval: cursor evaluationContext store |- declarationIR : evaluation
     -- let EC_1 = $add_value_eval(p, EC_0, ` nameIR, value)
     -- output: % % % |- % : EC_1 STO cont as declarationResult
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:205.1-206.15
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:204.1-205.15
 syntax calleeResult = 
    | cont callee
    | exit
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:208.1-211.29
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:207.1-210.29
 relation Callee_eval: cursor evaluationContext store |- routineTargetIR <_>( argumentListIR ): evaluationContext store calleeResult
 
   ;; ../../../../spec-concrete/8.11.1-evaluation-call-callee.watsup:9.1-18.84
@@ -27307,12 +27306,12 @@ relation Callee_eval: cursor evaluationContext store |- routineTargetIR <_>( arg
     -- let tableApplyMethodCallee = table oid .apply{ frame ; TBL }
     -- output: % % % |- % <_>( % ): EC_1 STO_1 cont tableApplyMethodCallee as callee as calleeResult
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:214.1-215.15
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:213.1-214.15
 syntax copyInResult = 
    | cont storageReference?
    | exit
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:217.1-221.35
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:216.1-220.35
 relation Copy_in_argument: store cursor evaluationContext parameterIR @ cursor evaluationContext argumentIR ~> store evaluationContext @ evaluationContext # copyInResult
 
   ;; ../../../../spec-concrete/8.11.2-evaluation-call-copyin.watsup:7.1-34.2
@@ -27392,12 +27391,12 @@ relation Copy_in_argument: store cursor evaluationContext parameterIR @ cursor e
     -- let EC_callee_1 = $add_value_eval(p_callee, EC_callee_0, ` nameIR, value_init)
     -- output: % % % % @ % % % ~> STO_1 EC_caller_1 @ EC_callee_1 # cont storageReference?{storageReference <- storageReference?} as copyInResult
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:224.1-225.15
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:223.1-224.15
 syntax copyInListResult = 
    | cont storageReference?*
    | exit
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:227.1-231.35
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:226.1-230.35
 relation Copy_in: store cursor evaluationContext parameterListIR @ cursor evaluationContext argumentListIR ~> store evaluationContext @ evaluationContext # copyInListResult
 
   ;; ../../../../spec-concrete/8.11.2-evaluation-call-copyin.watsup:100.1-149.2
@@ -27474,7 +27473,7 @@ relation Copy_in: store cursor evaluationContext parameterListIR @ cursor evalua
     -- let storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} = storageReference_h?{storageReference_h <- storageReference_h?} :: storageReference_t*{storageReference_t <- storageReference_t*} as storageReference?*
     -- output: % % % % @ % % % ~> STO_2 EC_caller_2 @ EC_callee_2 # cont storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} as copyInListResult
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:233.1-236.26
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:232.1-235.26
 relation Copy_in_default: parameterListIR @ cursor evaluationContext value* ~>@ evaluationContext
 
   ;; ../../../../spec-concrete/8.11.2-evaluation-call-copyin.watsup:155.1-161.70
@@ -27492,7 +27491,7 @@ relation Copy_in_default: parameterListIR @ cursor evaluationContext value* ~>@ 
     -- let EC_callee_1 = $add_values_eval(p_callee, EC_callee_0, ` nameIR*{nameIR <- nameIR*}, value*{value <- value*})
     -- output: % @ % % % ~>@ EC_callee_1
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:238.1-242.35
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:237.1-241.35
 relation Copy_out_argument: store cursor evaluationContext parameterIR @ cursor evaluationContext storageReference? ~> evaluationContext
 
   ;; ../../../../spec-concrete/8.11.3-evaluation-call-copyout.watsup:7.1-12.45
@@ -27536,7 +27535,7 @@ relation Copy_out_argument: store cursor evaluationContext parameterIR @ cursor 
     -- Lvalue_write: p_caller EC_caller_0 STO |- storageReference -> value : EC_caller_1
     -- output: % % % % @ % % % ~> EC_caller_1
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:244.1-248.35
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:243.1-247.35
 relation Copy_out: store cursor evaluationContext parameterListIR @ cursor evaluationContext storageReference?* ~> evaluationContext
 
   ;; ../../../../spec-concrete/8.11.3-evaluation-call-copyout.watsup:44.1-65.2
@@ -27567,14 +27566,13 @@ relation Copy_out: store cursor evaluationContext parameterListIR @ cursor evalu
     -- Copy_out: STO p_caller EC_caller_1 parameterIR_t*{parameterIR_t <- parameterIR_t*} @ p_callee EC_callee storageReference_t?{storageReference_t <- storageReference_t?}*{storageReference_t? <- storageReference_t?*} ~> EC_caller_2
     -- output: % % % % @ % % % ~> EC_caller_2
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:251.1-254.27
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:250.1-252.17
 syntax callResult = 
-   | return value?
-   | accept
    | exit
    | reject
+   | return value?
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:256.1-261.32
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:254.1-259.32
 relation Call_eval: cursor evaluationContext store |- callee @< typeArgumentListIR >( argumentListIR ): evaluationContext store callResult
 
   ;; ../../../../spec-concrete/8.11.4-evaluation-call.watsup:46.1-80.14
@@ -27716,7 +27714,7 @@ relation Call_eval: cursor evaluationContext store |- callee @< typeArgumentList
     -- let EC_1 = EC_0[block.frame = EC_callee_2.block.frame]
     -- output: % % % |- % @< % >( % ): EC_1 STO_1 return ?() as callResult
 
-;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:263.1-266.29
+;; ../../../../spec-concrete/8.03-evaluation-relation.watsup:261.1-264.29
 extern relation ExternMethodCall_eval: evaluationContext store |- oid . nameIR ( nameIR* ): evaluationContext store callResult
 
 ;; ../../../../spec-concrete/8.11.4-evaluation-call.watsup:7.1-8.54
