@@ -661,7 +661,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <h1>P4<sub>16</sub> Language Specification : The P4 Language Consortium</h1>
 <div class="details">
 <span id="revnumber">version v1.2.5,</span>
-<span id="revdate">2025-10-24</span>
+<span id="revdate">2025-10-31</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Contents</div>
@@ -6296,7 +6296,7 @@ fieldValue
    ;
 
 headerValue
-   : HEADER tid `{ fieldValue* }
+   : HEADER tid `{ bool ; fieldValue* }
    ;</code></pre>
 </div>
 </div>
@@ -9118,7 +9118,7 @@ represented as follows:</p>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">action
-   : ACTION `( parameterListIR ) blockStatementIR
+   : ACTION nameIR `( parameterListIR ) blockStatementIR
    ;</code></pre>
 </div>
 </div>
@@ -9297,7 +9297,7 @@ defined function types are represented as follows:</p>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">definedFunction
-   : FUNCTION `&lt; typeParameterListIR &gt; `( parameterListIR ) blockStatementIR
+   : FUNCTION nameIR `&lt; typeParameterListIR &gt; `( parameterListIR ) blockStatementIR
    ;</code></pre>
 </div>
 </div>
@@ -9425,7 +9425,7 @@ extern function types are represented as follows:</p>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externFunction
-   : EXTERN_FUNCTION `&lt; typeParameterListIR &gt; `( parameterListIR )
+   : EXTERN_FUNCTION nameIR `&lt; typeParameterListIR &gt; `( parameterListIR )
    ;</code></pre>
 </div>
 </div>
@@ -9561,7 +9561,7 @@ method
    ;
 
 builtinMethod
-   : BUILTIN_METHOD `( parameterListIR ) # storageReference
+   : BUILTIN_METHOD nameIR `( parameterListIR )
    ;</code></pre>
 </div>
 </div>
@@ -9616,8 +9616,8 @@ builtinMethod
    ;
 
 externMethod
-   : EXTERN_METHOD `&lt; typeParameterListIR &gt; `( parameterListIR ) blockStatementIR?
-   | EXTERN_METHOD ABSTRACT `&lt; typeParameterListIR &gt; `( parameterListIR )
+   : EXTERN_METHOD nameIR `&lt; typeParameterListIR &gt; `( parameterListIR ) blockStatementIR?
+   | EXTERN_METHOD ABSTRACT nameIR `&lt; typeParameterListIR &gt; `( parameterListIR )
    ;</code></pre>
 </div>
 </div>
@@ -10014,7 +10014,7 @@ methods are represented internally as follows:</p>
    ;
 
 controlApplyMethod
-   : CONTROL_APPLY `( parameterListIR ) `{ controlLocalDeclarationListIR ; renv ; blockElementStatementListIR }
+   : CONTROL_APPLY `( parameterListIR ) `{ controlLocalDeclarationListIR ; renv ; controlBodyIR }
    ;</code></pre>
 </div>
 </div>
@@ -10730,7 +10730,7 @@ constructors.</p>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externObject
-   : EXTERN tid `{ theta frame renv }
+   : EXTERN tid `&lt; theta &gt; `{ frame renv }
    ;</code></pre>
 </div>
 </div>
@@ -11357,7 +11357,7 @@ Its typing rule is explained in <a href="#sec-sem-Decl_ok-tableDeclaration">[sec
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tableObject
-   : TABLE tid `{ frame tablePropertyListIR }
+   : TABLE tid `{ frame tableObjectProperty }
    ;</code></pre>
 </div>
 </div>
@@ -11398,7 +11398,7 @@ with them.</p>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">packageObject
-   : PACKAGE `{ theta frame }
+   : PACKAGE `&lt; theta &gt; `{ frame }
    ;</code></pre>
 </div>
 </div>
@@ -12483,41 +12483,41 @@ rule Decl_ok/instantiation-objectInitializer/specializedType:
 <div class="listingblock">
 <div class="content">
 <pre>rule Decl_inst/instantiationIR/extern-global:
-   GLOBAL IC_0 STO_0 |- annotationList typeIR prefixedNameIR `&lt;typeArgumentListIR&gt; `(argumentListIR) nameIR objectInitializerOptIR ; ==&gt; IC_1 STO_2 eps
+   GLOBAL IC_0 STO_0 |- annotationList typeIR prefixedNameIR `&lt;typeArgumentListIR&gt; `(argumentListIR) nameIR objectInitializerOptIR ; ==&gt; IC_1 STO_3 eps
     -- if (_, constructor, id_default*) = $find_constructor_inst(IC_0, prefixedNameIR, argumentListIR)
     -- if IC_inner = $enter_path(IC_0, nameIR)
     -- Constructor_inst: GLOBAL IC_inner STO_0 |- constructor `&lt;typeArgumentListIR&gt; `(argumentListIR # id_default*) ==&gt; STO_1 object
-    -- if EXTERN tid `{tenv frame renv} = object
+    -- if EXTERN tid `&lt;tenv&gt; `{frame renv} = object
     -- if IC_decl = $empty_instantiationContext[PATH = IC_0.PATH][GLOBAL = IC_0.GLOBAL]
     -- if objectDeclarationListIR = $flatten_objectInitializerOptIR(objectInitializerOptIR)
     -- Decls_inst: BLOCK IC_decl STO_1 |- objectDeclarationListIR ==&gt; IC_decl_post STO_2 _
     -- if frame_merged = $merge_frames(frame, IC_decl_post.BLOCK.FRAME)
     -- if renv_merged = $merge_renv_with_extern(renv, IC_decl_post.BLOCK.ROUTINE)
-    -- if object_merged = EXTERN tid `{tenv frame_merged renv_merged}
+    -- if object_merged = EXTERN tid `&lt;tenv&gt; `{frame_merged renv_merged}
     -- if oid = IC_0.PATH ++ nameIR
     -- if STO_3 = $add_map&lt;oid, object&gt;(STO_2, oid, object_merged)
     -- if IC_1 = $add_value_inst(GLOBAL, IC_0, nameIR, ! oid)
 
 rule Decl_inst/instantiationIR/extern-non-global:
-   p IC_0 STO_0 |- annotationList typeIR prefixedNameIR `&lt;typeArgumentListIR&gt; `(argumentListIR) nameIR objectInitializerOptIR ; ==&gt; IC_1 STO_2 constantDeclarationIR
+   p IC_0 STO_0 |- annotationList typeIR prefixedNameIR `&lt;typeArgumentListIR&gt; `(argumentListIR) nameIR objectInitializerOptIR ; ==&gt; IC_1 STO_3 constantDeclarationIR
     -- if p =/= GLOBAL
     -- if (_, constructor, id_default*) = $find_constructor_inst(IC_0, prefixedNameIR, argumentListIR)
     -- if IC_inner = $enter_path(IC_0, nameIR)
     -- Constructor_inst: p IC_inner STO_0 |- constructor `&lt;typeArgumentListIR&gt; `(argumentListIR # id_default*) ==&gt; STO_1 object
-    -- if EXTERN tid `{tenv frame renv} = object
+    -- if EXTERN tid `&lt;tenv&gt; `{frame renv} = object
     -- if IC_decl = $empty_instantiationContext[PATH = IC_0.PATH][GLOBAL = IC_0.GLOBAL]
     -- if objectDeclarationListIR = $flatten_objectInitializerOptIR(objectInitializerOptIR)
     -- Decls_inst: BLOCK IC_decl STO_1 |- objectDeclarationListIR ==&gt; IC_decl_post STO_2 _
     -- if frame_merged = $merge_frames(frame, IC_decl_post.BLOCK.FRAME)
     -- if renv_merged = $merge_renv_with_extern(renv, IC_decl_post.BLOCK.ROUTINE)
-    -- if object_merged = EXTERN tid `{tenv frame_merged renv_merged}
+    -- if object_merged = EXTERN tid `&lt;tenv&gt; `{frame_merged renv_merged}
     -- if oid = IC_0.PATH ++ nameIR
     -- if STO_3 = $add_map&lt;oid, object&gt;(STO_2, oid, object_merged)
     -- if IC_1 = $add_value_inst(GLOBAL, IC_0, nameIR, ! oid)
     -- if constantDeclarationIR = /* empty */ CONST typeIR nameIR (= (! oid)) ;
 
 rule Decl_inst/instantiationIR/non-extern-global:
-   GLOBAL IC_0 STO_0 |- annotationList typeIR prefixedNameIR `&lt;typeArgumentListIR&gt; `(argumentListIR) nameIR objectInitializerOptIR ; ==&gt; IC_1 STO_1 eps
+   GLOBAL IC_0 STO_0 |- annotationList typeIR prefixedNameIR `&lt;typeArgumentListIR&gt; `(argumentListIR) nameIR objectInitializerOptIR ; ==&gt; IC_1 STO_2 eps
     -- if (_, constructor, id_default*) = $find_constructor_inst(IC_0, prefixedNameIR, argumentListIR)
     -- if IC_inner = $enter_path(IC_0, nameIR)
     -- Constructor_inst: GLOBAL IC_inner STO_0 |- constructor `&lt;typeArgumentListIR&gt; `(argumentListIR # id_default*) ==&gt; STO_1 object
@@ -12527,7 +12527,7 @@ rule Decl_inst/instantiationIR/non-extern-global:
     -- if IC_1 = $add_value_inst(GLOBAL, IC_0, nameIR, ! oid)
 
 rule Decl_inst/instantiationIR/non-extern-non-global:
-   p IC_0 STO_0 |- annotationList typeIR prefixedNameIR `&lt;typeArgumentListIR&gt; `(argumentListIR) nameIR objectInitializerOptIR ; ==&gt; IC_1 STO_1 constantDeclarationIR
+   p IC_0 STO_0 |- annotationList typeIR prefixedNameIR `&lt;typeArgumentListIR&gt; `(argumentListIR) nameIR objectInitializerOptIR ; ==&gt; IC_1 STO_2 constantDeclarationIR
     -- if p =/= GLOBAL
     -- if (_, constructor, id_default*) = $find_constructor_inst(IC_0, prefixedNameIR, argumentListIR)
     -- if IC_inner = $enter_path(IC_0, nameIR)
@@ -12571,7 +12571,7 @@ rule Decl_inst/instantiationIR/non-extern-non-global:
 <p>Let <a href="#Constructor_inst"><code>GLOBAL IC<sub>inner</sub> STO' |- constructor &lt; typeArgumentListIR &gt; ( argumentListIR # id<sub>default</sub><sup>*</sup> ) =&#8658; STO<sub>1</sub> object</code></a>.</p>
 </li>
 <li>
-<p>Else if let <code>EXTERN tid { tenv frame renv }</code> be <code>object</code>:</p>
+<p>Else if let <code>EXTERN tid &lt; tenv &gt; { frame renv }</code> be <code>object</code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
@@ -12590,7 +12590,7 @@ rule Decl_inst/instantiationIR/non-extern-non-global:
 <p>Let <code>renv<sub>merged</sub></code> be <code><a href="#merge_renv_with_extern">$merge_renv_with_extern(renv, IC<sub>decl_post</sub>.BLOCK.ROUTINE)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>object<sub>merged</sub></code> be <code>EXTERN tid { tenv frame<sub>merged</sub> renv<sub>merged</sub> }</code>.</p>
+<p>Let <code>object<sub>merged</sub></code> be <code>EXTERN tid &lt; tenv &gt; { frame<sub>merged</sub> renv<sub>merged</sub> }</code>.</p>
 </li>
 <li>
 <p>Let <code>oid</code> be <code>IC<sub>0</sub>.PATH ++ [nameIR]</code>.</p>
@@ -12602,7 +12602,7 @@ rule Decl_inst/instantiationIR/non-extern-non-global:
 <p>Let <code>IC<sub>1</sub></code> be <code><a href="#add_value_inst">$add_value_inst(GLOBAL, IC<sub>0</sub>, nameIR, ! oid)</a></code>.</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>1</sub></code>, <code>STO<sub>2</sub></code>, and <code>None</code>.</p>
+<p>Result in <code>IC<sub>1</sub></code>, <code>STO<sub>3</sub></code>, and <code>None</code>.</p>
 </li>
 </ol>
 </div>
@@ -12621,7 +12621,7 @@ rule Decl_inst/instantiationIR/non-extern-non-global:
 <p>Let <code>IC<sub>1</sub></code> be <code><a href="#add_value_inst">$add_value_inst(GLOBAL, IC<sub>0</sub>, nameIR, ! oid)</a></code>.</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>1</sub></code>, <code>STO<sub>1</sub></code>, and <code>None</code>.</p>
+<p>Result in <code>IC<sub>1</sub></code>, <code>STO<sub>2</sub></code>, and <code>None</code>.</p>
 </li>
 </ol>
 </div>
@@ -12649,7 +12649,7 @@ rule Decl_inst/instantiationIR/non-extern-non-global:
 <p>Let <a href="#Constructor_inst"><code>cursor' IC<sub>inner</sub> STO' |- constructor &lt; typeArgumentListIR &gt; ( argumentListIR # id<sub>default</sub><sup>*</sup> ) =&#8658; STO<sub>1</sub> object</code></a>.</p>
 </li>
 <li>
-<p>Else if let <code>EXTERN tid { tenv frame renv }</code> be <code>object</code>:</p>
+<p>Else if let <code>EXTERN tid &lt; tenv &gt; { frame renv }</code> be <code>object</code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
@@ -12668,7 +12668,7 @@ rule Decl_inst/instantiationIR/non-extern-non-global:
 <p>Let <code>renv<sub>merged</sub></code> be <code><a href="#merge_renv_with_extern">$merge_renv_with_extern(renv, IC<sub>decl_post</sub>.BLOCK.ROUTINE)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>object<sub>merged</sub></code> be <code>EXTERN tid { tenv frame<sub>merged</sub> renv<sub>merged</sub> }</code>.</p>
+<p>Let <code>object<sub>merged</sub></code> be <code>EXTERN tid &lt; tenv &gt; { frame<sub>merged</sub> renv<sub>merged</sub> }</code>.</p>
 </li>
 <li>
 <p>Let <code>oid</code> be <code>IC<sub>0</sub>.PATH ++ [nameIR]</code>.</p>
@@ -12683,7 +12683,7 @@ rule Decl_inst/instantiationIR/non-extern-non-global:
 <p>Let <code>constantDeclarationIR</code> be <code>CONST typeIR nameIR = ! oid ;</code>.</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>1</sub></code>, <code>STO<sub>2</sub></code>, and <code>constantDeclarationIR</code>.</p>
+<p>Result in <code>IC<sub>1</sub></code>, <code>STO<sub>3</sub></code>, and <code>constantDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -12705,7 +12705,7 @@ rule Decl_inst/instantiationIR/non-extern-non-global:
 <p>Let <code>constantDeclarationIR</code> be <code>CONST typeIR nameIR = ! oid ;</code>.</p>
 </li>
 <li>
-<p>Result in <code>IC<sub>1</sub></code>, <code>STO<sub>1</sub></code>, and <code>constantDeclarationIR</code>.</p>
+<p>Result in <code>IC<sub>1</sub></code>, <code>STO<sub>2</sub></code>, and <code>constantDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -12916,7 +12916,7 @@ functionDeclarationIR
 <pre>rule Decl_inst/functionDeclarationIR:
    p IC_0 STO |- annotationList (typeIR nameIR (`&lt;typeParameterListIR , typeParameterListIR_inferred&gt;) `(parameterListIR)) blockStatementIR ==&gt; IC_1 STO eps
     -- if rid = $rid_IR(nameIR, parameterListIR)
-    -- if function = FUNCTION `&lt;typeParameterListIR ++ typeParameterListIR_inferred&gt; `(parameterListIR) blockStatementIR
+    -- if function = FUNCTION nameIR `&lt;typeParameterListIR ++ typeParameterListIR_inferred&gt; `(parameterListIR) blockStatementIR
     -- if IC_1 = $add_routine_overload_inst(p, IC_0, rid, function)</pre>
 </div>
 </div>
@@ -12936,7 +12936,7 @@ functionDeclarationIR
 <p>Let <code>rid</code> be <code><a href="#rid_IR">$rid_IR(nameIR, parameterListIR)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>function</code> be <code>FUNCTION &lt; typeParameterListIR ++ typeParameterListIR<sub>inferred</sub> &gt; ( parameterListIR ) blockStatementIR</code>.</p>
+<p>Let <code>function</code> be <code>FUNCTION nameIR &lt; typeParameterListIR ++ typeParameterListIR<sub>inferred</sub> &gt; ( parameterListIR ) blockStatementIR</code>.</p>
 </li>
 <li>
 <p>Let <code>IC<sub>1</sub></code> be <code><a href="#add_routine_overload_inst">$add_routine_overload_inst(cursor', IC<sub>0</sub>, rid, function)</a></code>.</p>
@@ -13066,7 +13066,7 @@ actionDeclarationIR
 <pre>rule Decl_inst/actionDeclarationIR:
    p IC_0 STO |- annotationList ACTION nameIR `(parameterListIR) blockStatementIR ==&gt; IC_1 STO eps
     -- if rid = $rid_IR(nameIR, parameterListIR)
-    -- if action = ACTION `(parameterListIR) blockStatementIR
+    -- if action = ACTION nameIR `(parameterListIR) blockStatementIR
     -- if IC_1 = $add_routine_non_overload_inst(p, IC_0, rid, action)</pre>
 </div>
 </div>
@@ -13086,7 +13086,7 @@ actionDeclarationIR
 <p>Let <code>rid</code> be <code><a href="#rid_IR">$rid_IR(nameIR, parameterListIR)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>action</code> be <code>ACTION ( parameterListIR ) blockStatementIR</code>.</p>
+<p>Let <code>action</code> be <code>ACTION nameIR ( parameterListIR ) blockStatementIR</code>.</p>
 </li>
 <li>
 <p>Let <code>IC<sub>1</sub></code> be <code><a href="#add_routine_non_overload_inst">$add_routine_non_overload_inst(cursor', IC<sub>0</sub>, rid, action)</a></code>.</p>
@@ -13636,7 +13636,7 @@ externFunctionDeclarationIR
 <pre>rule Decl_inst/externFunctionDeclarationIR:
    GLOBAL IC_0 STO |- annotationList EXTERN (typeIR nameIR `&lt;typeParameterListIR , typeParameterListIR_inferred&gt; `(parameterListIR)) ; ==&gt; IC_1 STO eps
     -- if rid = $rid_IR(nameIR, parameterListIR)
-    -- if function = EXTERN_FUNCTION `&lt;typeParameterListIR ++ typeParameterListIR_inferred&gt; `(parameterListIR)
+    -- if function = EXTERN_FUNCTION nameIR `&lt;typeParameterListIR ++ typeParameterListIR_inferred&gt; `(parameterListIR)
     -- if IC_1 = $add_routine_overload_inst(GLOBAL, IC_0, rid, function)</pre>
 </div>
 </div>
@@ -13656,7 +13656,7 @@ externFunctionDeclarationIR
 <p>Let <code>rid</code> be <code><a href="#rid_IR">$rid_IR(nameIR, parameterListIR)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>function</code> be <code>EXTERN_FUNCTION &lt; typeParameterListIR ++ typeParameterListIR<sub>inferred</sub> &gt; ( parameterListIR )</code>.</p>
+<p>Let <code>function</code> be <code>EXTERN_FUNCTION nameIR &lt; typeParameterListIR ++ typeParameterListIR<sub>inferred</sub> &gt; ( parameterListIR )</code>.</p>
 </li>
 <li>
 <p>Let <code>IC<sub>1</sub></code> be <code><a href="#add_routine_overload_inst">$add_routine_overload_inst(GLOBAL, IC<sub>0</sub>, rid, function)</a></code>.</p>
@@ -19195,38 +19195,32 @@ rule Stmt_inst/conditionalStatementIR/else:
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>rule Stmt_eval/conditionalStatementIR/non-else-cont-true:
+<pre>rule Stmt_eval/conditionalStatementIR/non-else-exit:
+   p EC STO |- IF `(typedExpressionIR_cond) statementIR_then : EC_cond STO_cond EXIT
+    -- Expr_eval: p EC STO |- typedExpressionIR_cond : EC_cond STO_cond EXIT
+
+rule Stmt_eval/conditionalStatementIR/non-else-cont-true:
    p EC STO |- IF `(typedExpressionIR_cond) statementIR_then : EC_then STO_then statementResult
-    -- Expr_eval: p EC STO |- typedExpressionIR_cond : STO_cond expressionResult
-    -- if B true = expressionResult
-    -- Stmt_eval: p EC STO_cond |- statementIR_then : EC_then STO_then statementResult
+    -- Expr_eval: p EC STO |- typedExpressionIR_cond : EC_cond STO_cond (CONT (B true))
+    -- Stmt_eval: p EC_cond STO_cond |- statementIR_then : EC_then STO_then statementResult
 
 rule Stmt_eval/conditionalStatementIR/non-else-cont-false:
-   p EC STO |- IF `(typedExpressionIR_cond) statementIR_then : EC STO_cond CONT
-    -- Expr_eval: p EC STO |- typedExpressionIR_cond : STO_cond expressionResult
-    -- if B false = expressionResult
+   p EC STO |- IF `(typedExpressionIR_cond) statementIR_then : EC_cond STO_cond CONT
+    -- Expr_eval: p EC STO |- typedExpressionIR_cond : EC_cond STO_cond (CONT (B false))
 
-rule Stmt_eval/conditionalStatementIR/non-else-exit:
-   p EC STO |- IF `(typedExpressionIR_cond) statementIR_then : EC STO_cond EXIT
-    -- Expr_eval: p EC STO |- typedExpressionIR_cond : STO_cond expressionResult
-    -- if EXIT = expressionResult
+rule Stmt_eval/conditionalStatementIR/else-exit:
+   p EC STO |- IF `(typedExpressionIR_cond) statementIR_then ELSE statementIR_else : EC_cond STO_cond EXIT
+    -- Expr_eval: p EC STO |- typedExpressionIR_cond : EC_cond STO_cond EXIT
 
 rule Stmt_eval/conditionalStatementIR/else-cont-true:
    p EC STO |- IF `(typedExpressionIR_cond) statementIR_then ELSE statementIR_else : EC_then STO_then statementResult
-    -- Expr_eval: p EC STO |- typedExpressionIR_cond : STO_cond expressionResult
-    -- if B true = expressionResult
-    -- Stmt_eval: p EC STO_cond |- statementIR_then : EC_then STO_then statementResult
+    -- Expr_eval: p EC STO |- typedExpressionIR_cond : EC_cond STO_cond (CONT (B true))
+    -- Stmt_eval: p EC_cond STO_cond |- statementIR_then : EC_then STO_then statementResult
 
 rule Stmt_eval/conditionalStatementIR/else-cont-false:
    p EC STO |- IF `(typedExpressionIR_cond) statementIR_then ELSE statementIR_else : EC_else STO_else statementResult
-    -- Expr_eval: p EC STO |- typedExpressionIR_cond : STO_cond expressionResult
-    -- if B false = expressionResult
-    -- Stmt_eval: p EC STO_cond |- statementIR_else : EC_else STO_else statementResult
-
-rule Stmt_eval/conditionalStatementIR/else-exit:
-   p EC STO |- IF `(typedExpressionIR_cond) statementIR_then ELSE statementIR_else : EC STO_cond EXIT
-    -- Expr_eval: p EC STO |- typedExpressionIR_cond : STO_cond expressionResult
-    -- if EXIT = expressionResult</pre>
+    -- Expr_eval: p EC STO |- typedExpressionIR_cond : EC_cond STO_cond (CONT (B false))
+    -- Stmt_eval: p EC_cond STO_cond |- statementIR_else : EC_else STO_else statementResult</pre>
 </div>
 </div>
 </div>
@@ -19237,7 +19231,7 @@ rule Stmt_eval/conditionalStatementIR/else-exit:
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Stmt_eval">evaluating <code>conditionalStatementIR</code>, under cursor <code>p</code>, evaluation context <code>EC</code>, and store <code>STO</code></a> is defined as:</p>
+<p><a href="#Stmt_eval">the compile-time evaluation of <code>conditionalStatementIR</code>, under cursor <code>p'</code>, evaluation context <code>EC'</code>, and store <code>STO'</code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -19246,27 +19240,24 @@ rule Stmt_eval/conditionalStatementIR/else-exit:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>STO<sub>cond</sub></code> and <code>expressionResult</code> be the result of <a href="#Expr_eval">evaluating <code>typedExpressionIR<sub>cond</sub></code>, under cursor <code>p</code>, evaluation context <code>EC</code>, and store <code>STO</code></a>.</p>
+<p>Let <code>EC<sub>cond</sub></code>, <code>STO<sub>cond</sub></code>, and <code>expressionResult</code> be the result of <a href="#Expr_eval">evaluating <code>typedExpressionIR<sub>cond</sub></code>, under cursor <code>p'</code>, evaluation context <code>EC'</code>, and store <code>STO'</code></a>.</p>
 </li>
 <li>
-<p>Else if <code>B true</code> is equal to <code>expressionResult</code>:</p>
+<p>Else if let <code>exitResult</code> be <code>expressionResult</code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
-<li>
-<p>Let <code>EC<sub>then</sub></code>, <code>STO<sub>then</sub></code>, and <code>statementResult</code> be the result of <a href="#Stmt_eval">evaluating <code>statementIR<sub>then</sub></code>, under cursor <code>p</code>, evaluation context <code>EC</code>, and store <code>STO<sub>cond</sub></code></a>.</p>
-</li>
 <li>
 <p>Result in</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the resulting evaluation context <code>EC<sub>then</sub></code>,</p>
+<p>the evaluation context <code>EC<sub>cond</sub></code>,</p>
 </li>
 <li>
-<p>store <code>STO<sub>then</sub></code>,</p>
+<p>the updated store <code>STO<sub>cond</sub></code>,</p>
 </li>
 <li>
-<p>and statement result <code>statementResult</code>.</p>
+<p>and the instantiated statement <code>EXIT</code>.</p>
 </li>
 </ul>
 </div>
@@ -19275,21 +19266,24 @@ rule Stmt_eval/conditionalStatementIR/else-exit:
 </div>
 </li>
 <li>
-<p>Else if <code>B false</code> is equal to <code>expressionResult</code>:</p>
+<p>Else if <code>expressionResult</code> is equal to <code>CONT B true</code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
+<li>
+<p>Let <code>EC<sub>then</sub></code>, <code>STO<sub>then</sub></code>, and <code>statementResult</code> be the result of <a href="#Stmt_eval">the compile-time evaluation of <code>statementIR<sub>then</sub></code>, under cursor <code>p'</code>, evaluation context <code>EC<sub>cond</sub></code>, and store <code>STO<sub>cond</sub></code></a>.</p>
+</li>
 <li>
 <p>Result in</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the resulting evaluation context <code>EC</code>,</p>
+<p>the evaluation context <code>EC<sub>then</sub></code>,</p>
 </li>
 <li>
-<p>store <code>STO<sub>cond</sub></code>,</p>
+<p>the updated store <code>STO<sub>then</sub></code>,</p>
 </li>
 <li>
-<p>and statement result <code>CONT</code>.</p>
+<p>and the instantiated statement <code>statementResult</code>.</p>
 </li>
 </ul>
 </div>
@@ -19298,7 +19292,7 @@ rule Stmt_eval/conditionalStatementIR/else-exit:
 </div>
 </li>
 <li>
-<p>Else if <code>expressionResult</code> matches pattern <code>EXIT</code>:</p>
+<p>Else if <code>expressionResult</code> is equal to <code>CONT B false</code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
@@ -19306,13 +19300,13 @@ rule Stmt_eval/conditionalStatementIR/else-exit:
 <div class="ulist">
 <ul>
 <li>
-<p>the resulting evaluation context <code>EC</code>,</p>
+<p>the evaluation context <code>EC<sub>cond</sub></code>,</p>
 </li>
 <li>
-<p>store <code>STO<sub>cond</sub></code>,</p>
+<p>the updated store <code>STO<sub>cond</sub></code>,</p>
 </li>
 <li>
-<p>and statement result <code>EXIT</code>.</p>
+<p>and the instantiated statement <code>CONT</code>.</p>
 </li>
 </ul>
 </div>
@@ -19328,27 +19322,24 @@ rule Stmt_eval/conditionalStatementIR/else-exit:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>STO<sub>cond</sub></code> and <code>expressionResult</code> be the result of <a href="#Expr_eval">evaluating <code>typedExpressionIR<sub>cond</sub></code>, under cursor <code>p</code>, evaluation context <code>EC</code>, and store <code>STO</code></a>.</p>
+<p>Let <code>EC<sub>cond</sub></code>, <code>STO<sub>cond</sub></code>, and <code>expressionResult</code> be the result of <a href="#Expr_eval">evaluating <code>typedExpressionIR<sub>cond</sub></code>, under cursor <code>p'</code>, evaluation context <code>EC'</code>, and store <code>STO'</code></a>.</p>
 </li>
 <li>
-<p>Else if <code>B true</code> is equal to <code>expressionResult</code>:</p>
+<p>Else if let <code>exitResult</code> be <code>expressionResult</code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
-<li>
-<p>Let <code>EC<sub>then</sub></code>, <code>STO<sub>then</sub></code>, and <code>statementResult</code> be the result of <a href="#Stmt_eval">evaluating <code>statementIR<sub>then</sub></code>, under cursor <code>p</code>, evaluation context <code>EC</code>, and store <code>STO<sub>cond</sub></code></a>.</p>
-</li>
 <li>
 <p>Result in</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the resulting evaluation context <code>EC<sub>then</sub></code>,</p>
+<p>the evaluation context <code>EC<sub>cond</sub></code>,</p>
 </li>
 <li>
-<p>store <code>STO<sub>then</sub></code>,</p>
+<p>the updated store <code>STO<sub>cond</sub></code>,</p>
 </li>
 <li>
-<p>and statement result <code>statementResult</code>.</p>
+<p>and the instantiated statement <code>EXIT</code>.</p>
 </li>
 </ul>
 </div>
@@ -19357,24 +19348,24 @@ rule Stmt_eval/conditionalStatementIR/else-exit:
 </div>
 </li>
 <li>
-<p>Else if <code>B false</code> is equal to <code>expressionResult</code>:</p>
+<p>Else if <code>expressionResult</code> is equal to <code>CONT B true</code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Let <code>EC<sub>else</sub></code>, <code>STO<sub>else</sub></code>, and <code>statementResult</code> be the result of <a href="#Stmt_eval">evaluating <code>statementIR<sub>else</sub></code>, under cursor <code>p</code>, evaluation context <code>EC</code>, and store <code>STO<sub>cond</sub></code></a>.</p>
+<p>Let <code>EC<sub>then</sub></code>, <code>STO<sub>then</sub></code>, and <code>statementResult</code> be the result of <a href="#Stmt_eval">the compile-time evaluation of <code>statementIR<sub>then</sub></code>, under cursor <code>p'</code>, evaluation context <code>EC<sub>cond</sub></code>, and store <code>STO<sub>cond</sub></code></a>.</p>
 </li>
 <li>
 <p>Result in</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the resulting evaluation context <code>EC<sub>else</sub></code>,</p>
+<p>the evaluation context <code>EC<sub>then</sub></code>,</p>
 </li>
 <li>
-<p>store <code>STO<sub>else</sub></code>,</p>
+<p>the updated store <code>STO<sub>then</sub></code>,</p>
 </li>
 <li>
-<p>and statement result <code>statementResult</code>.</p>
+<p>and the instantiated statement <code>statementResult</code>.</p>
 </li>
 </ul>
 </div>
@@ -19383,21 +19374,24 @@ rule Stmt_eval/conditionalStatementIR/else-exit:
 </div>
 </li>
 <li>
-<p>Else if <code>expressionResult</code> matches pattern <code>EXIT</code>:</p>
+<p>Else if <code>expressionResult</code> is equal to <code>CONT B false</code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
+<li>
+<p>Let <code>EC<sub>else</sub></code>, <code>STO<sub>else</sub></code>, and <code>statementResult</code> be the result of <a href="#Stmt_eval">the compile-time evaluation of <code>statementIR<sub>else</sub></code>, under cursor <code>p'</code>, evaluation context <code>EC<sub>cond</sub></code>, and store <code>STO<sub>cond</sub></code></a>.</p>
+</li>
 <li>
 <p>Result in</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the resulting evaluation context <code>EC</code>,</p>
+<p>the evaluation context <code>EC<sub>else</sub></code>,</p>
 </li>
 <li>
-<p>store <code>STO<sub>cond</sub></code>,</p>
+<p>the updated store <code>STO<sub>else</sub></code>,</p>
 </li>
 <li>
-<p>and statement result <code>EXIT</code>.</p>
+<p>and the instantiated statement <code>statementResult</code>.</p>
 </li>
 </ul>
 </div>
@@ -20296,6 +20290,7 @@ typedExpressionIR
 <pre>relation Eval_static:
    cursor typingContext |- typedExpressionIR ~&gt; value
    hint(input %0 %1 %2)
+   hint(testgen_ignore )
    hint(prose_in "the local compile-time evaluation of" %2#", under cursor" %0 "and typing context" %1)</pre>
 </div>
 </div>
@@ -22457,26 +22452,26 @@ rule Eval_static/binaryExpressionIR/lor-false:
 <div class="listingblock">
 <div class="content">
 <pre>rule Expr_inst/binaryExpressionIR/non-short-circuit:
-   p IC STO_0 |- (typedExpressionIR_l binop typedExpressionIR_r) # `(_ _) ==&gt; STO_2 $bin_op(binop, value_l, value_r)
+   p IC STO_0 |- (typedExpressionIR_l binop typedExpressionIR_r) # _ ==&gt; STO_2 $bin_op(binop, value_l, value_r)
     -- if ~(binop &lt;- [&amp;&amp;, ||])
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==&gt; STO_1 value_l
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==&gt; STO_2 value_r
 
 rule Expr_inst/binaryExpressionIR/land-false:
-   p IC STO_0 |- (typedExpressionIR_l &amp;&amp; typedExpressionIR_r) # `(_ _) ==&gt; STO_1 (B false)
+   p IC STO_0 |- (typedExpressionIR_l &amp;&amp; typedExpressionIR_r) # _ ==&gt; STO_1 (B false)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==&gt; STO_1 (B false)
 
 rule Expr_inst/binaryExpressionIR/land-true:
-   p IC STO_0 |- (typedExpressionIR_l &amp;&amp; typedExpressionIR_r) # `(_ _) ==&gt; STO_2 value_r
+   p IC STO_0 |- (typedExpressionIR_l &amp;&amp; typedExpressionIR_r) # _ ==&gt; STO_2 value_r
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==&gt; STO_1 (B true)
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==&gt; STO_2 value_r
 
 rule Expr_inst/binaryExpressionIR/lor-true:
-   p IC STO_0 |- (typedExpressionIR_l || typedExpressionIR_r) # `(_ _) ==&gt; STO_1 (B true)
+   p IC STO_0 |- (typedExpressionIR_l || typedExpressionIR_r) # _ ==&gt; STO_1 (B true)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==&gt; STO_1 (B true)
 
 rule Expr_inst/binaryExpressionIR/lor-false:
-   p IC STO_0 |- (typedExpressionIR_l || typedExpressionIR_r) # `(_ _) ==&gt; STO_2 value_r
+   p IC STO_0 |- (typedExpressionIR_l || typedExpressionIR_r) # _ ==&gt; STO_2 value_r
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l ==&gt; STO_1 (B false)
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_r ==&gt; STO_2 value_r</pre>
 </div>
@@ -22489,7 +22484,7 @@ rule Expr_inst/binaryExpressionIR/lor-false:
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Expr_inst"><code>p IC STO' |- typedExpressionIR<sub>l</sub> binop' typedExpressionIR<sub>r</sub> # ( _ _ ) =&#8658; % %</code></a></p>
+<p><a href="#Expr_inst"><code>p IC STO' |- typedExpressionIR<sub>l</sub> binop' typedExpressionIR<sub>r</sub> # _ =&#8658; % %</code></a></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -22903,7 +22898,7 @@ castExpressionIR
 <p>Let <code>value</code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>value<sub>cast</sub></code> be <code><a href="#cast_op">$cast_op(typeIR, value)</a></code>.</p>
+<p>Let <code>value<sub>cast</sub></code> be <a href="#cast_op">cast <code>value</code> to type <code>typeIR</code></a>.</p>
 </li>
 <li>
 <p>Result in <code>value<sub>cast</sub></code>.</p>
@@ -22940,7 +22935,7 @@ castExpressionIR
 <p>Let <a href="#Expr_inst"><code>p IC STO' |- typedExpressionIR =&#8658; STO<sub>1</sub> value</code></a>.</p>
 </li>
 <li>
-<p>Let <code>value<sub>cast</sub></code> be <code><a href="#cast_op">$cast_op(typeIR, value)</a></code>.</p>
+<p>Let <code>value<sub>cast</sub></code> be <a href="#cast_op">cast <code>value</code> to type <code>typeIR</code></a>.</p>
 </li>
 <li>
 <p>Result in <code>STO<sub>1</sub></code> and <code>value<sub>cast</sub></code>.</p>
@@ -24835,7 +24830,7 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Expr_inst"><code>p IC STO' |- typedExpressionIR<sub>base</sub> . "size" # ( _ _ ) =&#8658; % %</code></a></p>
+<p><a href="#Expr_inst"><code>p IC STO' |- typedExpressionIR<sub>base</sub> . "size" # ( typeIR<sub>base</sub> _ ) =&#8658; % %</code></a></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -24843,10 +24838,10 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>_ # ( typeIR _ )</code> be <code>typedExpressionIR<sub>base</sub></code>.</p>
 </li>
 <li>
-<p>Check that <code>typeIR</code> is equal to <code>_</code>.</p>
+<p>Check that <code>typeIR</code> is equal to <code>typeIR<sub>base</sub></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR'</code> be <a href="#canon">the canonicalized form of <code>_</code></a>.</p>
+<p>Let <code>typeIR'</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>typeIR'</code> has type <code>headerStackTypeIR</code>.</p>
@@ -25653,13 +25648,13 @@ rule Expr_inst/callExpressionIR-builtin-size/type-poly:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>_ # ( _ _ )</code> be <code>typedExpressionIR<sub>base</sub></code>.</p>
+<p>Let <code>_ # ( typeIR<sub>base</sub> _ )</code> be <code>typedExpressionIR<sub>base</sub></code>.</p>
 </li>
 <li>
 <p>Check that <code>nameIR</code> is in <code>["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]</code>.</p>
 </li>
 <li>
-<p>Result in <code>STO'</code> and <code><a href="#sizeof">$sizeof(_, nameIR)</a></code>.</p>
+<p>Result in <code>STO'</code> and <code><a href="#sizeof">$sizeof(typeIR<sub>base</sub>, nameIR)</a></code>.</p>
 </li>
 </ol>
 </div>
@@ -25678,20 +25673,20 @@ rule Expr_inst/callExpressionIR-builtin-size/type-poly:
 <p>Let <code>typeDefIR</code> be <code>typeDefIR'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>If let <code>_</code> be <code>typeDefIR</code>:</p>
+<p>If let <code>typeIR<sub>base</sub></code> be <code>typeDefIR</code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
 <p>Check that <code>nameIR</code> is in <code>["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]</code>.</p>
 </li>
 <li>
-<p>Result in <code>STO'</code> and <code><a href="#sizeof">$sizeof(_, nameIR)</a></code>.</p>
+<p>Result in <code>STO'</code> and <code><a href="#sizeof">$sizeof(typeIR<sub>base</sub>, nameIR)</a></code>.</p>
 </li>
 </ol>
 </div>
 </li>
 <li>
-<p>Else let <code>_ &lt; tid<sup>*</sup> , tid'<sup>*</sup> &gt;</code> be <code>typeDefIR</code>:</p>
+<p>Else let <code>typeIR<sub>base</sub> &lt; tid<sup>*</sup> , tid'<sup>*</sup> &gt;</code> be <code>typeDefIR</code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
@@ -25704,7 +25699,7 @@ rule Expr_inst/callExpressionIR-builtin-size/type-poly:
 <p>Check that <code>nameIR</code> is in <code>["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]</code>.</p>
 </li>
 <li>
-<p>Result in <code>STO'</code> and <code><a href="#sizeof">$sizeof(_, nameIR)</a></code>.</p>
+<p>Result in <code>STO'</code> and <code><a href="#sizeof">$sizeof(typeIR<sub>base</sub>, nameIR)</a></code>.</p>
 </li>
 </ol>
 </div>
@@ -26651,12 +26646,11 @@ tableDeclaration
    ;
 
 tablePropertyIR
-   : KEY = `{ tableKeyListIR }
-   | ACTIONS = `{ tableActionListIR }
-   | annotationList constOptIR ENTRIES = `{ tableEntryListIR }
-   | annotationList constOptIR DEFAULT_ACTION = tableActionReferenceIR ;
-   | annotationList constOptIR CUSTOM nameIR initializerIR ;
-   | annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR ;
+   : tableKeysPropertyIR
+   | tableActionsPropertyIR
+   | tableDefaultActionPropertyIR
+   | tableEntriesPropertyIR
+   | tableCustomPropertyIR
    ;
 
 tableDeclarationIR
@@ -27705,7 +27699,7 @@ in parsers and deparsers to access packet data.</p>
 <div id="footer">
 <div id="footer-text">
 Version v1.2.5<br>
-Last updated 2025-10-24 11:55:48 +0900
+Last updated 2025-10-31 13:26:09 +0900
 </div>
 </div>
 </body>

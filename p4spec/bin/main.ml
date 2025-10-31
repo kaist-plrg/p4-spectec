@@ -381,35 +381,35 @@ let interesting_command =
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 
-(* let splice_command = *)
-(*   Core.Command.basic ~summary:"splice a skeleton p4_16 specification document" *)
-(*     (let open Core.Command.Let_syntax in *)
-(*      let open Core.Command.Param in *)
-(*      let%map filenames_spec = *)
-(*        anon (non_empty_sequence_as_list ("filename" %: string)) *)
-(*      and filenames_input = *)
-(*        flag "-splice" (listed string) ~doc:"skeleton documents" *)
-(*      and filenames_output = flag "-out" (listed string) ~doc:"output files" *)
-(*      and inplace = flag "-inplace" no_arg ~doc:"splice in place" in *)
-(*      fun () -> *)
-(*        try *)
-(*          if *)
-(*            (not inplace) *)
-(*            && List.length filenames_input <> List.length filenames_output *)
-(*          then raise (CommandError "number of input and output files must match"); *)
-(*          let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in *)
-(*          let spec_il = Elaborate.Elab.elab_spec spec in *)
-(*          let spec_sl = Structure.Struct.struct_spec spec_il in *)
-(*          let filenames = *)
-(*            if inplace then List.combine filenames_input filenames_input *)
-(*            else List.combine filenames_input filenames_output *)
-(*          in *)
-(*          Splice.Driver.splice_files spec spec_sl filenames *)
-(*        with *)
-(*        | CommandError msg -> Format.printf "%s\n" msg *)
-(*        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg) *)
-(*        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg) *)
-(*        | SpliceError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)) *)
+let splice_command =
+  Core.Command.basic ~summary:"splice a skeleton p4_16 specification document"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map filenames_spec =
+       anon (non_empty_sequence_as_list ("filename" %: string))
+     and filenames_input =
+       flag "-splice" (listed string) ~doc:"skeleton documents"
+     and filenames_output = flag "-out" (listed string) ~doc:"output files"
+     and inplace = flag "-inplace" no_arg ~doc:"splice in place" in
+     fun () ->
+       try
+         if
+           (not inplace)
+           && List.length filenames_input <> List.length filenames_output
+         then raise (CommandError "number of input and output files must match");
+         let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
+         let spec_il = Elaborate.Elab.elab_spec spec in
+         let spec_sl = Structure.Struct.struct_spec spec_il in
+         let filenames =
+           if inplace then List.combine filenames_input filenames_input
+           else List.combine filenames_input filenames_output
+         in
+         Splice.Driver.splice_files spec spec_sl filenames
+       with
+       | CommandError msg -> Format.printf "%s\n" msg
+       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
+       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
+       | SpliceError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 
 let parse_command =
   Core.Command.basic ~summary:"parse a P4 program"
@@ -521,7 +521,7 @@ let command =
     [
       ("elab", elab_command);
       ("struct", struct_command);
-      (* ("prose", prose_command); *)
+      ("prose", prose_command);
       ("run-il", run_il_command);
       ("run-sl", run_sl_command);
       ("sim", sim_command);
@@ -529,7 +529,7 @@ let command =
       ("testgen", run_testgen_command);
       ("testgen-dbg", run_testgen_debug_command);
       ("interesting", interesting_command);
-      (* ("splice", splice_command); *)
+      ("splice", splice_command);
       ("parse", parse_command);
       ("json", json_command);
     ]
