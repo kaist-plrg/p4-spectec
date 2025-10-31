@@ -81,14 +81,17 @@ let run_il_command =
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and filename_p4 = flag "-p" (required string) ~doc:"p4 file of interest"
      and debug = flag "-dbg" no_arg ~doc:"print debug traces"
-     and profile = flag "-profile" no_arg ~doc:"profiling" in
+     and profile = flag "-profile" no_arg ~doc:"profiling"
+     and full_trace =
+       flag "--full-trace" no_arg ~doc:"print full trace upon failure"
+     in
      fun () ->
        try
          let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
          let spec_il = Elaborate.Elab.elab_spec spec in
          match
-           Interp_il.Run.run ~debug ~profile spec_il relname includes_p4
-             filename_p4
+           Interp_il.Run.run ~debug ~profile ~trace:full_trace spec_il relname
+             includes_p4 filename_p4
          with
          | Pass _ -> Format.printf "passed\n"
          | Fail (_, msg) -> Format.printf "failed: %s\n" msg
