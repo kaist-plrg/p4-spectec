@@ -133,10 +133,6 @@ type cond =
   (* %, for any % in % *)
   | ForAnyCond of cond * itervars
 
-type partial_bind =
-  | Ignore
-  | Var of id * string option
-
 type instr = instr' phrase
 
 and instr' =
@@ -156,7 +152,7 @@ and instr' =
   | ResultI of hintexp option * exp list
   | ReturnI of exp
   | GroupI of id * exp list * instr list  (** Shorthand instructions **)
-  | DestructI of partial_bind list * exp
+  | DestructI of (exp * string) list * exp
   | CheckLetI of exp * exp
   | OptionGetI of exp * exp
 

@@ -73,14 +73,16 @@ let code_of_unop = Sl.Print.string_of_unop
 let code_of_binop = Sl.Print.string_of_binop
 
 let render_varid ctx varid =
-  let varid = varid.it in
-  let var_slices = String.split_on_char '_' varid in
-  match var_slices with
-  | var_type :: [] -> var_type |> as_code ctx
-  | var_type :: var_subscripts ->
-      var_type ^ (var_subscripts |> String.concat "_" |> adoc_subscript)
-      |> as_code ctx
-  | _ -> assert false
+  if String.starts_with ~prefix:"_" varid.it then "++_++" |> as_code ctx
+  else
+    let varid = varid.it in
+    let var_slices = String.split_on_char '_' varid in
+    match var_slices with
+    | var_type :: [] -> var_type |> as_code ctx
+    | var_type :: var_subscripts ->
+        var_type ^ (var_subscripts |> String.concat "++_++" |> adoc_subscript)
+        |> as_code ctx
+    | _ -> assert false
 
 (* Notation *)
 
@@ -123,7 +125,7 @@ let code_of_iterexp (iter, _) = code_of_iter iter
 (* Variables *)
 
 let render_var ctx (id, _typ, iters) =
-  if String.starts_with ~prefix:"_" id.it then "_" |> as_code ctx
+  if String.starts_with ~prefix:"_" id.it then "++_++" |> as_code ctx
   else render_varid ctx id ^ String.concat "" (List.map code_of_iter iters)
 
 (* Iterated Variables *)
@@ -476,6 +478,12 @@ let rec render_instr ?(level = 0) ?(unordered = false) (instr : instr) : string
   | GroupI (id, _, instrs) ->
       F.asprintf "%sGroup %s:%s" bullet (string_of_relpathid id)
         (render_instrs ~level:(level + 1) instrs)
+  | DestructI (partial_binds, exp_r) ->
+      let exps, fieldnames = List.split partial_binds in
+      F.asprintf "%sLet %s be %s of %s." bullet
+        (render_exps in_prose exps)
+        (render_list (List.map (fun s -> "the " ^ s) fieldnames))
+        (render_exp in_prose exp_r)
   | ForEachI ([], instr, vars_in) ->
       F.asprintf "%s%s, for each %s" bullet
         (render_instr ~level instr)

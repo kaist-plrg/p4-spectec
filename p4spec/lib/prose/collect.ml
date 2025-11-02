@@ -10,7 +10,8 @@ let collect_hints (defid : Hintdb.def_id) (hdb : Hintdb.t) hints : Hintdb.t =
   List.fold_left
     (fun hdb El.Ast.{ hintid; hintexp } ->
       match hintid.it with
-      | "prose" | "prose_in" | "prose_out" | "prose_true" | "prose_false" | "prose_fields" ->
+      | "prose" | "prose_in" | "prose_out" | "prose_true" | "prose_false"
+      | "prose_fields" ->
           Hintdb.add hintid.it defid hintexp hdb
       | _ -> hdb)
     hdb hints
