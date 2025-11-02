@@ -3,7 +3,9 @@ module InputHint = Runtime_static.Rel.InputHint
 
 (* Relation *)
 
-type t = Extern of InputHint.t | Defined of InputHint.t * rulegroup list
+type t =
+  | Extern of InputHint.t
+  | Defined of nottyp * InputHint.t * rulegroup list
 
 let to_string = function
   | Extern _ -> "extern relation"
