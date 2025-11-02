@@ -354,6 +354,9 @@ and prosify_instr ctx instr : Pl.Ast.instr list =
                 match exp.it with
                 | Il.Ast.VarE id when String.starts_with ~prefix:"_" id.it ->
                     Option.None
+                | Il.Ast.IterE ({ it = Il.Ast.VarE id; _ }, _)
+                  when String.starts_with ~prefix:"_" id.it ->
+                    Option.None
                 | _ ->
                     let exp_pl = prosify_exp ctx exp in
                     Option.Some (exp_pl, field))
