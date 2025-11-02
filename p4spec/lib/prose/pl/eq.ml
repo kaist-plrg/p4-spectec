@@ -18,9 +18,20 @@ let eq_funcprose (funcprose_a : funcprose) (funcprose_b : funcprose) : bool =
   | Def id_a, Def id_b -> eq_id id_a id_b
   | _ -> false
 
+let rec eq_renderer (renderer_a : relcall) (renderer_b : relcall) : bool =
+  match (renderer_a, renderer_b) with
+  | Prose (hint_a, exps_out_a, exps_in_a), Prose (hint_b, exps_out_b, exps_in_b)
+    ->
+      hint_a = hint_b
+      && eq_exps exps_out_a exps_out_b
+      && eq_exps exps_in_a exps_in_b
+  | Mixop (mixop_a, exps_a), Mixop (mixop_b, exps_b) ->
+      eq_mixop mixop_a mixop_b && eq_exps exps_a exps_b
+  | _ -> false
+
 (* Expressions *)
 
-let rec eq_exp (exp_a : exp) (exp_b : exp) : bool =
+and eq_exp (exp_a : exp) (exp_b : exp) : bool =
   match (exp_a.it, exp_b.it) with
   | BoolE b_a, BoolE b_b -> b_a = b_b
   | NumE n_a, NumE n_b -> Num.eq n_a n_b
@@ -43,8 +54,9 @@ let rec eq_exp (exp_a : exp) (exp_b : exp) : bool =
   | MatchE (exp_a, pattern_a), MatchE (exp_b, pattern_b) ->
       eq_exp exp_a exp_b && eq_pattern pattern_a pattern_b
   | TupleE exps_a, TupleE exps_b -> eq_exps exps_a exps_b
-  | CaseE (mixop_a, exps_a), CaseE (mixop_b, exps_b) ->
-      eq_mixop mixop_a mixop_b && eq_exps exps_a exps_b
+  | ( CaseE (id_a, mixop_a, exps_a, _hint_a),
+      CaseE (id_b, mixop_b, exps_b, _hint_b) ) ->
+      eq_id id_a id_b && eq_mixop mixop_a mixop_b && eq_exps exps_a exps_b
   | StrE expfields_a, StrE expfields_b ->
       List.length expfields_a = List.length expfields_b
       && List.for_all2

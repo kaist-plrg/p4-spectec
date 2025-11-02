@@ -196,18 +196,22 @@ syntax expressionIR =
   | parenthesizedExpressionIR
 
 syntax expressionNoteIR = `( typeIR ctk )
+  hint(prose "type" %0 "and compile-time known-ness" %1)
+  hint(prose_fields ["type", "compile-time known-ness"])
 
 syntax typedExpressionIR =
   expressionIR `# expressionNoteIR
+  hint(prose %0 "annotated with" %1)
+  hint(prose_fields ["expression", "note"])
 
 syntax typedExpressionListIR = typedExpressionIR*
 
 dec $type_of_expression(typedExpressionIR) : typeIR
-  hint(prose_in "the type of " %0)
+  hint(prose_in "the type of" %0)
 def $type_of_expression(_ `# `( typeIR _ )) = typeIR
 
 dec $ctk_of_expression(typedExpressionIR) : ctk
-  hint(prose_in "the compile-time known-ness of " %0)
+  hint(prose_in "the compile-time known-ness of" %0)
 def $ctk_of_expression(_ `# `( _ ctk )) = ctk
 
 syntax memberAccessBaseIR =
@@ -267,6 +271,7 @@ syntax lvalueIR =
 syntax lvalueNoteIR = `( typeIR )
 
 syntax typedLvalueIR = lvalueIR `# lvalueNoteIR
+  hint(prose %0 "with note" %1)
 
 dec $type_of_lvalue(typedLvalueIR) : typeIR
   hint(prose_in "the type of lvalue " %0)

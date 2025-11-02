@@ -204,8 +204,8 @@ and hint = El.Ast.hint
 
 type def = def' phrase
 and def' =
-  (* `syntax` id `<` list(tparam, `,`) `>` `=` deftyp *)
-  | TypD of id * tparam list * deftyp
+  (* `syntax` id `<` list(tparam, `,`) `>` `=` deftyp hint* *)
+  | TypD of id * tparam list * deftyp * hint list
   (* `extern` `relation` id `:` nottyp `hint(input` `%`int* `)` hint* *)
   | ExternRelD of id * nottyp * int list * hint list
   (* `relation` id `:` nottyp `hint(input` `%`int* `)` rulegroup* hint* *)

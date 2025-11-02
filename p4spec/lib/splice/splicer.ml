@@ -112,7 +112,7 @@ module RuleProse : Splice = struct
           Prose.Prosify.prosify_rulegroup ctx.prose_ctx (id_rel $ no_region)
             mixop inputs exps instrs
         in
-        Prose.Pl.Print.prose_of_rulegroup rulegroup_pl)
+        Prose.Pl.Print.render_rulegroup rulegroup_pl)
       keys values
     |> String.concat "\n\n"
 end
@@ -140,7 +140,7 @@ module FuncProse : Splice = struct
           Prose.Prosify.prosify_func ctx.prose_ctx (id_def $ no_region) tparams
             args typ instrs
         in
-        Prose.Pl.Print.prose_of_func func_pl)
+        Prose.Pl.Print.render_func func_pl)
       keys values
     |> String.concat "\n\n"
 end

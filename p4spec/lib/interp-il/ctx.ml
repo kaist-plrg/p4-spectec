@@ -169,7 +169,7 @@ let find_rel (cursor : cursor) (ctx : t) (rid : RId.t) : Rel.t =
 
 let find_rel_inputs (cursor : cursor) (ctx : t) (rid : RId.t) : InputHint.t =
   let rel = find_rel cursor ctx rid in
-  match rel with Rel.Extern inputs | Rel.Defined (inputs, _) -> inputs
+  match rel with Rel.Extern inputs | Rel.Defined (_, inputs, _) -> inputs
 
 let bound_rel (cursor : cursor) (ctx : t) (rid : RId.t) : bool =
   find_rel_opt cursor ctx rid |> Option.is_some

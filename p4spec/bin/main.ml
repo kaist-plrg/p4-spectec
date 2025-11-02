@@ -440,7 +440,7 @@ let parse_command =
            in
            Il.Eq.eq_value ~dbg:true parsed_p4_file parsed_p4_string
            |> (fun b ->
-                if b then "Roundtrip successful" else "Roundtrip failed")
+           if b then "Roundtrip successful" else "Roundtrip failed")
            |> print_endline
          else unparsed_p4_string |> print_endline
        with
@@ -509,7 +509,7 @@ let prose_command =
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
          let spec_pl = Prose.Prosify.prosify_spec spec_sl in
-         Format.printf "%s\n" (Prose.Pl.Print.prose_of_spec spec_pl);
+         Format.printf "%s\n" (Prose.Pl.Print.render_spec spec_pl);
          ()
        with
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)

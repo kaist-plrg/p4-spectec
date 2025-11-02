@@ -34,7 +34,7 @@ let hints_of_deftyp hmap (id : id) (deftyp : deftyp) : hmap =
 
 let hints_of_def hmap (def : def) : hmap =
   match def.it with
-  | TypD (id, _, deftyp) -> hints_of_deftyp hmap id deftyp
+  | TypD (id, _, deftyp, _) -> hints_of_deftyp hmap id deftyp
   | _ -> hmap
 
 (* Spec *)

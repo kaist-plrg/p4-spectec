@@ -8473,73 +8473,73 @@ syntax expressionIR =
    | routineTargetIR < typeArgumentListIR >( argumentListIR )
    | ( typedExpressionIR )
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:198.27-198.42
+;; ../../../../spec-concrete/4-ir-syntax.watsup:198.27-200.57
 syntax expressionNoteIR = 
-   | ( typeIR ctk )
+   | ( typeIR ctk ) hint(prose "type" %0 "and compile-time known-ness" %1) hint(prose_fields ["type", "compile-time known-ness"])
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:201.3-201.35
+;; ../../../../spec-concrete/4-ir-syntax.watsup:203.3-205.44
 syntax typedExpressionIR = 
-   | expressionIR # expressionNoteIR
+   | expressionIR # expressionNoteIR hint(prose %0 "annotated with" %1) hint(prose_fields ["expression", "note"])
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:203.32-203.50
+;; ../../../../spec-concrete/4-ir-syntax.watsup:207.32-207.50
 syntax typedExpressionListIR = typedExpressionIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:205.1-206.35
+;; ../../../../spec-concrete/4-ir-syntax.watsup:209.1-210.34
 def $type_of_expression((_expressionIR # (( typeIR _ctk ))))
 
 1. Return typeIR
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:209.1-210.54
+;; ../../../../spec-concrete/4-ir-syntax.watsup:213.1-214.53
 def $ctk_of_expression((_expressionIR # (( _typeIR ctk ))))
 
 1. Return ctk
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:214.1-215.22
+;; ../../../../spec-concrete/4-ir-syntax.watsup:218.1-219.22
 syntax memberAccessBaseIR = 
    | type prefixedNameIR
-   | expressionIR # expressionNoteIR
+   | expressionIR # expressionNoteIR hint(prose %0 "annotated with" %1) hint(prose_fields ["expression", "note"])
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:222.1-226.7
+;; ../../../../spec-concrete/4-ir-syntax.watsup:226.1-230.7
 syntax simpleKeysetExpressionIR = 
-   | expressionIR # expressionNoteIR
+   | expressionIR # expressionNoteIR hint(prose %0 "annotated with" %1) hint(prose_fields ["expression", "note"])
    | typedExpressionIR &&& typedExpressionIR
    | typedExpressionIR .. typedExpressionIR
    | default
    | _
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:228.39-228.64
+;; ../../../../spec-concrete/4-ir-syntax.watsup:232.39-232.64
 syntax simpleKeysetExpressionListIR = simpleKeysetExpressionIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:230.34-230.67
+;; ../../../../spec-concrete/4-ir-syntax.watsup:234.34-234.67
 syntax tupleKeysetExpressionIR = 
    | ( simpleKeysetExpressionListIR )
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:233.1-234.28
+;; ../../../../spec-concrete/4-ir-syntax.watsup:237.1-238.28
 syntax keysetExpressionIR = 
-   | expressionIR # expressionNoteIR
+   | expressionIR # expressionNoteIR hint(prose %0 "annotated with" %1) hint(prose_fields ["expression", "note"])
    | typedExpressionIR &&& typedExpressionIR
    | typedExpressionIR .. typedExpressionIR
    | default
    | _
    | ( simpleKeysetExpressionListIR )
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:240.25-240.31
+;; ../../../../spec-concrete/4-ir-syntax.watsup:244.25-244.31
 syntax typeArgumentIR = typeIR
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:242.29-242.44
+;; ../../../../spec-concrete/4-ir-syntax.watsup:246.29-246.44
 syntax typeArgumentListIR = typeArgumentIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:249.1-252.7
+;; ../../../../spec-concrete/4-ir-syntax.watsup:253.1-256.7
 syntax argumentIR = 
-   | expressionIR # expressionNoteIR
+   | expressionIR # expressionNoteIR hint(prose %0 "annotated with" %1) hint(prose_fields ["expression", "note"])
    | nameIR = typedExpressionIR
    | nameIR =_
    | _
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:254.25-254.36
+;; ../../../../spec-concrete/4-ir-syntax.watsup:258.25-258.36
 syntax argumentListIR = argumentIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:261.1-265.23
+;; ../../../../spec-concrete/4-ir-syntax.watsup:265.1-269.23
 syntax lvalueIR = 
    | ` nameIR
    | . nameIR
@@ -8548,20 +8548,20 @@ syntax lvalueIR =
    | typedLvalueIR [ typedExpressionIR : typedExpressionIR ]
    | ( typedLvalueIR )
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:267.23-267.34
+;; ../../../../spec-concrete/4-ir-syntax.watsup:271.23-271.34
 syntax lvalueNoteIR = 
    | ( typeIR )
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:269.24-269.48
+;; ../../../../spec-concrete/4-ir-syntax.watsup:273.24-274.32
 syntax typedLvalueIR = 
-   | lvalueIR # lvalueNoteIR
+   | lvalueIR # lvalueNoteIR hint(prose %0 "with note" %1)
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:271.1-272.42
+;; ../../../../spec-concrete/4-ir-syntax.watsup:276.1-277.42
 def $type_of_lvalue((_lvalueIR # (( typeIR ))))
 
 1. Return typeIR
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:275.1-276.19
+;; ../../../../spec-concrete/4-ir-syntax.watsup:280.1-281.19
 def $typedExpressionIR_as_typedLvalueIR((expressionIR # (( typeIR _ctk ))))
 
 1. Case analysis on expressionIR
@@ -8624,89 +8624,89 @@ def $typedExpressionIR_as_typedLvalueIR((expressionIR # (( typeIR _ctk ))))
 
       2. Return ?(((( typedLvalueIR )) # (( typeIR ))))
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:313.27-313.41
+;; ../../../../spec-concrete/4-ir-syntax.watsup:318.27-318.41
 syntax emptyStatementIR = emptyStatement
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:320.3-320.46
+;; ../../../../spec-concrete/4-ir-syntax.watsup:325.3-325.46
 syntax assignmentStatementIR = 
    | typedLvalueIR assignop typedExpressionIR ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:327.3-327.65
+;; ../../../../spec-concrete/4-ir-syntax.watsup:332.3-332.65
 syntax callStatementIR = 
    | routineTargetIR < typeArgumentListIR >( argumentListIR );
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:334.3-334.49
+;; ../../../../spec-concrete/4-ir-syntax.watsup:339.3-339.49
 syntax directApplicationStatementIR = 
    | prefixedNameIR .apply( argumentListIR );
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:341.1-342.32
+;; ../../../../spec-concrete/4-ir-syntax.watsup:346.1-347.32
 syntax returnStatementIR = 
    | return;
    | return typedExpressionIR ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:348.26-348.39
+;; ../../../../spec-concrete/4-ir-syntax.watsup:353.26-353.39
 syntax exitStatementIR = exitStatement
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:357.3-357.50
+;; ../../../../spec-concrete/4-ir-syntax.watsup:362.3-362.50
 syntax blockStatementIR = 
    | annotationList { blockElementStatementListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:366.1-367.59
+;; ../../../../spec-concrete/4-ir-syntax.watsup:371.1-372.59
 syntax conditionalStatementIR = 
    | if( typedExpressionIR ) statementIR
    | if( typedExpressionIR ) statementIR else statementIR
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:376.1-379.35
+;; ../../../../spec-concrete/4-ir-syntax.watsup:381.1-384.35
 syntax forInitStatementIR = 
    | annotationList typeIR nameIR initializerOptIR
    | lvalueIR ( argumentListIR )
    | lvalueIR < typeArgumentListIR >( argumentListIR )
    | lvalueIR assignop expressionIR
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:381.33-381.52
+;; ../../../../spec-concrete/4-ir-syntax.watsup:386.33-386.52
 syntax forInitStatementListIR = forInitStatementIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:383.31-383.49
+;; ../../../../spec-concrete/4-ir-syntax.watsup:388.31-388.49
 syntax forUpdateStatementIR = forInitStatementIR
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:385.35-385.56
+;; ../../../../spec-concrete/4-ir-syntax.watsup:390.35-390.56
 syntax forUpdateStatementListIR = forUpdateStatementIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:388.1-389.44
+;; ../../../../spec-concrete/4-ir-syntax.watsup:393.1-394.44
 syntax forCollectionExpressionIR = 
-   | expressionIR # expressionNoteIR
+   | expressionIR # expressionNoteIR hint(prose %0 "annotated with" %1) hint(prose_fields ["expression", "note"])
    | typedExpressionIR .. typedExpressionIR
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:392.1-400.18
+;; ../../../../spec-concrete/4-ir-syntax.watsup:397.1-405.18
 syntax forStatementIR = 
    | annotationList for( forInitStatementListIR ; typedExpressionIR ; forUpdateStatementListIR ) statementIR
    | annotationList for( typeIR nameIR in forCollectionExpressionIR ) statementIR
    | annotationList for( annotationList typeIR nameIR in forCollectionExpressionIR ) statementIR
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:407.1-408.22
+;; ../../../../spec-concrete/4-ir-syntax.watsup:412.1-413.22
 syntax switchLabelIR = 
    | default
-   | expressionIR # expressionNoteIR
+   | expressionIR # expressionNoteIR hint(prose %0 "annotated with" %1) hint(prose_fields ["expression", "note"])
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:411.1-412.21
+;; ../../../../spec-concrete/4-ir-syntax.watsup:416.1-417.21
 syntax switchCaseIR = 
    | switchLabelIR : blockStatementIR
    | switchLabelIR :
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:414.27-414.40
+;; ../../../../spec-concrete/4-ir-syntax.watsup:419.27-419.40
 syntax switchCaseListIR = switchCaseIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:417.3-417.54
+;; ../../../../spec-concrete/4-ir-syntax.watsup:422.3-422.54
 syntax switchStatementIR = 
    | switch( typedExpressionIR ){ switchCaseListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:423.27-423.41
+;; ../../../../spec-concrete/4-ir-syntax.watsup:428.27-428.41
 syntax breakStatementIR = breakStatement
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:425.30-425.47
+;; ../../../../spec-concrete/4-ir-syntax.watsup:430.30-430.47
 syntax continueStatementIR = continueStatement
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:432.1-443.22
+;; ../../../../spec-concrete/4-ir-syntax.watsup:437.1-448.22
 syntax statementIR = 
    | ;
    | typedLvalueIR assignop typedExpressionIR ;
@@ -8725,22 +8725,22 @@ syntax statementIR =
    | continue;
    | switch( typedExpressionIR ){ switchCaseListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:454.3-454.62
+;; ../../../../spec-concrete/4-ir-syntax.watsup:459.3-459.62
 syntax constantDeclarationIR = 
    | annotationList const typeIR nameIR constantInitializerIR ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:456.24-456.44
+;; ../../../../spec-concrete/4-ir-syntax.watsup:461.24-461.44
 syntax initializerIR = 
    | = typedExpressionIR
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:458.27-458.41
+;; ../../../../spec-concrete/4-ir-syntax.watsup:463.27-463.41
 syntax initializerOptIR = initializerIR?
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:461.3-461.51
+;; ../../../../spec-concrete/4-ir-syntax.watsup:466.3-466.51
 syntax variableDeclarationIR = 
    | annotationList typeIR nameIR initializerOptIR ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:464.1-466.16
+;; ../../../../spec-concrete/4-ir-syntax.watsup:469.1-471.16
 syntax blockElementStatementIR = 
    | annotationList const typeIR nameIR constantInitializerIR ;
    | annotationList typeIR nameIR initializerOptIR ;
@@ -8761,41 +8761,41 @@ syntax blockElementStatementIR =
    | continue;
    | switch( typedExpressionIR ){ switchCaseListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:468.38-468.62
+;; ../../../../spec-concrete/4-ir-syntax.watsup:473.38-473.62
 syntax blockElementStatementListIR = blockElementStatementIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:475.3-476.73
+;; ../../../../spec-concrete/4-ir-syntax.watsup:480.3-481.73
 syntax functionPrototypeIR = 
    | typeIR nameIR < typeParameterListIR , typeParameterListIR >( parameterListIR )
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:479.3-479.54
+;; ../../../../spec-concrete/4-ir-syntax.watsup:484.3-484.54
 syntax functionDeclarationIR = 
    | annotationList functionPrototypeIR blockStatementIR
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:486.3-486.69
+;; ../../../../spec-concrete/4-ir-syntax.watsup:491.3-491.69
 syntax actionDeclarationIR = 
    | annotationList action nameIR ( parameterListIR ) blockStatementIR
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:494.30-494.61
+;; ../../../../spec-concrete/4-ir-syntax.watsup:499.30-499.61
 syntax objectInitializerIR = 
    | ={ objectDeclarationListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:496.33-496.53
+;; ../../../../spec-concrete/4-ir-syntax.watsup:501.33-501.53
 syntax objectInitializerOptIR = objectInitializerIR?
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:499.3-501.30
+;; ../../../../spec-concrete/4-ir-syntax.watsup:504.3-506.30
 syntax instantiationIR = 
    | annotationList typeIR prefixedNameIR < typeArgumentListIR >( argumentListIR ) nameIR objectInitializerOptIR ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:504.1-505.20
+;; ../../../../spec-concrete/4-ir-syntax.watsup:509.1-510.20
 syntax objectDeclarationIR = 
    | annotationList functionPrototypeIR blockStatementIR
    | annotationList typeIR prefixedNameIR < typeArgumentListIR >( argumentListIR ) nameIR objectInitializerOptIR ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:507.34-507.54
+;; ../../../../spec-concrete/4-ir-syntax.watsup:512.34-512.54
 syntax objectDeclarationListIR = objectDeclarationIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:509.1-510.28
+;; ../../../../spec-concrete/4-ir-syntax.watsup:514.1-515.28
 def $flatten_objectInitializerOptIR(objectInitializerOptIR')
 
 1. (Let objectInitializerIR?{objectInitializerIR <- objectInitializerIR?} be objectInitializerOptIR')
@@ -8810,39 +8810,39 @@ def $flatten_objectInitializerOptIR(objectInitializerOptIR')
 
   2. Return objectDeclarationListIR
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:520.29-520.50
+;; ../../../../spec-concrete/4-ir-syntax.watsup:525.29-525.50
 syntax errorDeclarationIR = 
    | error{ nameListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:526.33-526.59
+;; ../../../../spec-concrete/4-ir-syntax.watsup:531.33-531.59
 syntax matchKindDeclarationIR = 
    | match_kind{ nameListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:537.1-538.65
+;; ../../../../spec-concrete/4-ir-syntax.watsup:542.1-543.65
 syntax enumTypeDeclarationIR = 
    | annotationList enum nameIR { nameListIR }
    | annotationList enum typeIR nameIR { namedExpressionListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:544.22-544.53
+;; ../../../../spec-concrete/4-ir-syntax.watsup:549.22-549.53
 syntax typeFieldIR = 
    | annotationList typeIR nameIR ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:546.26-546.38
+;; ../../../../spec-concrete/4-ir-syntax.watsup:551.26-551.38
 syntax typeFieldListIR = typeFieldIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:549.3-550.73
+;; ../../../../spec-concrete/4-ir-syntax.watsup:554.3-555.73
 syntax structTypeDeclarationIR = 
    | annotationList struct nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:553.3-554.73
+;; ../../../../spec-concrete/4-ir-syntax.watsup:558.3-559.73
 syntax headerTypeDeclarationIR = 
    | annotationList header nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:557.3-558.73
+;; ../../../../spec-concrete/4-ir-syntax.watsup:562.3-563.73
 syntax headerUnionTypeDeclarationIR = 
    | annotationList header_union nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:561.1-564.33
+;; ../../../../spec-concrete/4-ir-syntax.watsup:566.1-569.33
 syntax derivedTypeDeclarationIR = 
    | annotationList enum nameIR { nameListIR }
    | annotationList enum typeIR nameIR { namedExpressionListIR }
@@ -8850,7 +8850,7 @@ syntax derivedTypeDeclarationIR =
    | annotationList header nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
    | annotationList header_union nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:571.1-572.29
+;; ../../../../spec-concrete/4-ir-syntax.watsup:576.1-577.29
 syntax typedefIR = 
    | void
    | bool
@@ -8893,72 +8893,72 @@ syntax typedefIR =
    | annotationList header nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
    | annotationList header_union nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:575.1-576.41
+;; ../../../../spec-concrete/4-ir-syntax.watsup:580.1-581.41
 syntax typedefDeclarationIR = 
    | annotationList typedef typedefIR nameIR ;
    | annotationList type typeIR nameIR ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:583.3-583.47
+;; ../../../../spec-concrete/4-ir-syntax.watsup:588.3-588.47
 syntax externFunctionDeclarationIR = 
    | annotationList extern functionPrototypeIR ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:586.3-586.76
+;; ../../../../spec-concrete/4-ir-syntax.watsup:591.3-591.76
 syntax externConstructorPrototypeIR = 
    | annotationList nameIR <, typeParameterListIR >( parameterListIR );
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:588.43-588.72
+;; ../../../../spec-concrete/4-ir-syntax.watsup:593.43-593.72
 syntax externConstructorPrototypeListIR = externConstructorPrototypeIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:591.1-592.51
+;; ../../../../spec-concrete/4-ir-syntax.watsup:596.1-597.51
 syntax externMethodPrototypeIR = 
    | annotationList functionPrototypeIR ;
    | annotationList abstract functionPrototypeIR ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:594.38-594.62
+;; ../../../../spec-concrete/4-ir-syntax.watsup:599.38-599.62
 syntax externMethodPrototypeListIR = externMethodPrototypeIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:597.3-599.37
+;; ../../../../spec-concrete/4-ir-syntax.watsup:602.3-604.37
 syntax externObjectDeclarationIR = 
    | annotationList extern nameIR < typeParameterListIR ,>{ externConstructorPrototypeListIR externMethodPrototypeListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:602.1-603.30
+;; ../../../../spec-concrete/4-ir-syntax.watsup:607.1-608.30
 syntax externDeclarationIR = 
    | annotationList extern functionPrototypeIR ;
    | annotationList extern nameIR < typeParameterListIR ,>{ externConstructorPrototypeListIR externMethodPrototypeListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:613.23-613.54
+;; ../../../../spec-concrete/4-ir-syntax.watsup:618.23-618.54
 syntax selectCaseIR = 
    | keysetExpressionIR : nameIR ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:615.27-615.40
+;; ../../../../spec-concrete/4-ir-syntax.watsup:620.27-620.40
 syntax selectCaseListIR = selectCaseIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:618.3-618.58
+;; ../../../../spec-concrete/4-ir-syntax.watsup:623.3-623.58
 syntax selectExpressionIR = 
    | select( typedExpressionListIR ){ selectCaseListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:625.1-626.23
+;; ../../../../spec-concrete/4-ir-syntax.watsup:630.1-631.23
 syntax stateExpressionIR = 
    | nameIR ;
    | select( typedExpressionListIR ){ selectCaseListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:628.32-628.60
+;; ../../../../spec-concrete/4-ir-syntax.watsup:633.32-633.60
 syntax transitionStatementIR = 
    | transition stateExpressionIR
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:635.3-635.72
+;; ../../../../spec-concrete/4-ir-syntax.watsup:640.3-640.72
 syntax valueSetDeclarationIR = 
    | annotationList value_set< typeIR >( typedExpressionIR ) nameIR ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:642.3-643.76
+;; ../../../../spec-concrete/4-ir-syntax.watsup:647.3-648.76
 syntax parserTypeDeclarationIR = 
    | annotationList parser nameIR < typeParameterListIR , typeParameterListIR >( parameterListIR );
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:652.3-652.44
+;; ../../../../spec-concrete/4-ir-syntax.watsup:657.3-657.44
 syntax parserBlockStatementIR = 
    | annotationList { parserStatementListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:655.1-662.27
+;; ../../../../spec-concrete/4-ir-syntax.watsup:660.1-667.27
 syntax parserStatementIR = 
    | annotationList const typeIR nameIR constantInitializerIR ;
    | annotationList typeIR nameIR initializerOptIR ;
@@ -8970,91 +8970,91 @@ syntax parserStatementIR =
    | if( typedExpressionIR ) statementIR
    | if( typedExpressionIR ) statementIR else statementIR
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:664.32-664.50
+;; ../../../../spec-concrete/4-ir-syntax.watsup:669.32-669.50
 syntax parserStatementListIR = parserStatementIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:667.3-668.53
+;; ../../../../spec-concrete/4-ir-syntax.watsup:672.3-673.53
 syntax parserStateIR = 
    | annotationList state nameIR { parserStatementListIR transitionStatementIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:670.28-670.42
+;; ../../../../spec-concrete/4-ir-syntax.watsup:675.28-675.42
 syntax parserStateListIR = parserStateIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:673.1-676.26
+;; ../../../../spec-concrete/4-ir-syntax.watsup:678.1-681.26
 syntax parserLocalDeclarationIR = 
    | annotationList const typeIR nameIR constantInitializerIR ;
    | annotationList typeIR prefixedNameIR < typeArgumentListIR >( argumentListIR ) nameIR objectInitializerOptIR ;
    | annotationList typeIR nameIR initializerOptIR ;
    | annotationList value_set< typeIR >( typedExpressionIR ) nameIR ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:679.3-679.28
+;; ../../../../spec-concrete/4-ir-syntax.watsup:684.3-684.28
 syntax parserLocalDeclarationListIR = parserLocalDeclarationIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:682.3-685.56
+;; ../../../../spec-concrete/4-ir-syntax.watsup:687.3-690.56
 syntax parserDeclarationIR = 
    | annotationList parser nameIR < typeParameterListIR >( parameterListIR )( constructorParameterListIR ){ parserLocalDeclarationListIR parserStateListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:695.18-695.23
+;; ../../../../spec-concrete/4-ir-syntax.watsup:700.18-700.23
 syntax constIR = const
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:697.21-697.29
+;; ../../../../spec-concrete/4-ir-syntax.watsup:702.21-702.29
 syntax constOptIR = constIR?
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:703.21-703.66
+;; ../../../../spec-concrete/4-ir-syntax.watsup:708.21-708.66
 syntax tableKeyIR = 
    | typedExpressionIR : nameIR annotationList ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:705.25-705.36
+;; ../../../../spec-concrete/4-ir-syntax.watsup:710.25-710.36
 syntax tableKeyListIR = tableKeyIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:711.33-711.67
+;; ../../../../spec-concrete/4-ir-syntax.watsup:716.33-716.67
 syntax tableActionReferenceIR = 
    | prefixedNameIR ( argumentListIR )
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:713.24-713.64
+;; ../../../../spec-concrete/4-ir-syntax.watsup:718.24-718.64
 syntax tableActionIR = 
    | annotationList tableActionReferenceIR ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:715.28-715.42
+;; ../../../../spec-concrete/4-ir-syntax.watsup:720.28-720.42
 syntax tableActionListIR = tableActionIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:722.1-723.42
+;; ../../../../spec-concrete/4-ir-syntax.watsup:727.1-728.42
 syntax tableEntryPriorityIR = 
    | priority= numberLiteral :
    | priority=( typedExpressionIR ):
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:725.34-725.55
+;; ../../../../spec-concrete/4-ir-syntax.watsup:730.34-730.55
 syntax tableEntryPriorityOptIR = tableEntryPriorityIR?
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:728.3-729.67
+;; ../../../../spec-concrete/4-ir-syntax.watsup:733.3-734.67
 syntax tableEntryIR = 
    | constOptIR tableEntryPriorityOptIR keysetExpressionIR : tableActionReferenceIR annotationList ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:731.27-731.40
+;; ../../../../spec-concrete/4-ir-syntax.watsup:736.27-736.40
 syntax tableEntryListIR = tableEntryIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:743.30-743.56
+;; ../../../../spec-concrete/4-ir-syntax.watsup:748.30-748.56
 syntax tableKeysPropertyIR = 
    | key={ tableKeyListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:745.33-745.66
+;; ../../../../spec-concrete/4-ir-syntax.watsup:750.33-750.66
 syntax tableActionsPropertyIR = 
    | actions={ tableActionListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:748.3-748.72
+;; ../../../../spec-concrete/4-ir-syntax.watsup:753.3-753.72
 syntax tableDefaultActionPropertyIR = 
    | annotationList constOptIR default_action= tableActionReferenceIR ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:751.3-751.61
+;; ../../../../spec-concrete/4-ir-syntax.watsup:756.3-756.61
 syntax tableEntriesPropertyIR = 
    | annotationList constOptIR entries={ tableEntryListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:755.1-756.75
+;; ../../../../spec-concrete/4-ir-syntax.watsup:760.1-761.75
 syntax tableCustomPropertyIR = 
    | annotationList constOptIR custom nameIR initializerIR ;
    | annotationList constOptIR custom_const nameIR constantInitializerIR ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:759.1-763.26
+;; ../../../../spec-concrete/4-ir-syntax.watsup:764.1-768.26
 syntax tablePropertyIR = 
    | key={ tableKeyListIR }
    | actions={ tableActionListIR }
@@ -9063,21 +9063,21 @@ syntax tablePropertyIR =
    | annotationList constOptIR custom nameIR initializerIR ;
    | annotationList constOptIR custom_const nameIR constantInitializerIR ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:765.30-765.46
+;; ../../../../spec-concrete/4-ir-syntax.watsup:770.30-770.46
 syntax tablePropertyListIR = tablePropertyIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:768.3-768.62
+;; ../../../../spec-concrete/4-ir-syntax.watsup:773.3-773.62
 syntax tableDeclarationIR = 
    | annotationList table typeIR nameIR { tablePropertyListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:775.3-777.28
+;; ../../../../spec-concrete/4-ir-syntax.watsup:780.3-782.28
 syntax controlTypeDeclarationIR = 
    | annotationList control nameIR < typeParameterListIR , typeParameterListIR >( parameterListIR );
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:783.24-783.40
+;; ../../../../spec-concrete/4-ir-syntax.watsup:788.24-788.40
 syntax controlBodyIR = blockStatementIR
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:786.1-790.23
+;; ../../../../spec-concrete/4-ir-syntax.watsup:791.1-795.23
 syntax controlLocalDeclarationIR = 
    | annotationList const typeIR nameIR constantInitializerIR ;
    | annotationList typeIR prefixedNameIR < typeArgumentListIR >( argumentListIR ) nameIR objectInitializerOptIR ;
@@ -9085,18 +9085,18 @@ syntax controlLocalDeclarationIR =
    | annotationList action nameIR ( parameterListIR ) blockStatementIR
    | annotationList table typeIR nameIR { tablePropertyListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:793.3-793.29
+;; ../../../../spec-concrete/4-ir-syntax.watsup:798.3-798.29
 syntax controlLocalDeclarationListIR = controlLocalDeclarationIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:796.3-799.59
+;; ../../../../spec-concrete/4-ir-syntax.watsup:801.3-804.59
 syntax controlDeclarationIR = 
    | annotationList control nameIR < typeParameterListIR >( parameterListIR )( constructorParameterListIR ){ controlLocalDeclarationListIR apply controlBodyIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:806.3-808.28
+;; ../../../../spec-concrete/4-ir-syntax.watsup:811.3-813.28
 syntax packageTypeDeclarationIR = 
    | annotationList package nameIR < typeParameterListIR , typeParameterListIR >( parameterListIR );
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:815.1-819.29
+;; ../../../../spec-concrete/4-ir-syntax.watsup:820.1-824.29
 syntax typeDeclarationIR = 
    | annotationList enum nameIR { nameListIR }
    | annotationList enum typeIR nameIR { namedExpressionListIR }
@@ -9109,7 +9109,7 @@ syntax typeDeclarationIR =
    | annotationList control nameIR < typeParameterListIR , typeParameterListIR >( parameterListIR );
    | annotationList package nameIR < typeParameterListIR , typeParameterListIR >( parameterListIR );
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:826.1-835.22
+;; ../../../../spec-concrete/4-ir-syntax.watsup:831.1-840.22
 syntax declarationIR = 
    | annotationList const typeIR nameIR constantInitializerIR ;
    | annotationList typeIR prefixedNameIR < typeArgumentListIR >( argumentListIR ) nameIR objectInitializerOptIR ;
@@ -9132,7 +9132,7 @@ syntax declarationIR =
    | annotationList control nameIR < typeParameterListIR , typeParameterListIR >( parameterListIR );
    | annotationList package nameIR < typeParameterListIR , typeParameterListIR >( parameterListIR );
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:841.22-841.39
+;; ../../../../spec-concrete/4-ir-syntax.watsup:846.22-846.39
 syntax p4programIR = 
    | declarationIR* ;
 
@@ -22847,7 +22847,7 @@ def $align_parameters'(_map<id, parameterTypeIR>', parameterTypeIR', argumentIR)
 
     1. Return ?(parameterTypeIR')
 
-;; ../../../../spec-concrete/5.15.1-typing-call-convention.watsup:60.1-63.79
+;; ../../../../spec-concrete/5.15.1-typing-call-convention.watsup:60.1-63.82
 relation Expr_lvalue_ok: p TC |- (expressionIR # (( _typeIR _ctk )))
 
 1. Case analysis on expressionIR

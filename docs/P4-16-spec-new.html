@@ -661,7 +661,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <h1>P4<sub>16</sub> Language Specification : The P4 Language Consortium</h1>
 <div class="details">
 <span id="revnumber">version v1.2.5,</span>
-<span id="revdate">2025-10-31</span>
+<span id="revdate">2025-10-24</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Contents</div>
@@ -8863,7 +8863,7 @@ rule Parameter_ok/initializer:
 <p>Let <code>typeIR</code> and <code>tid<sub>fresh</sub><sup>*</sup></code> be the result of <a href="#Type_ok">typing <code>type</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>bound</code> be <a href="#union_set">the union of the sets <code>&lt;&lt;bound, $bound(p, TC)</a></code> and <code>{ tid<sub>fresh</sub><sup>*</sup> }</code>&gt;&gt;.</p>
+<p>Let <code>bound</code> be <a href="#union_set">the union of the sets <code>$bound(p, TC)</code> and <code>{ tid<sub>fresh</sub><sup>*</sup> }</code></a>.</p>
 </li>
 <li>
 <p>Check that <a href="#Type_wf"><code>typeIR</code> is a well-formed type, assuming bound type ids <code>bound</code></a>.</p>
@@ -8885,7 +8885,7 @@ rule Parameter_ok/initializer:
 <p>Let <code>typeIR</code> and <code>tid<sub>fresh</sub><sup>*</sup></code> be the result of <a href="#Type_ok">typing <code>type</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>bound</code> be <a href="#union_set">the union of the sets <code>&lt;&lt;bound, $bound(p, TC)</a></code> and <code>{ tid<sub>fresh</sub><sup>*</sup> }</code>&gt;&gt;.</p>
+<p>Let <code>bound</code> be <a href="#union_set">the union of the sets <code>$bound(p, TC)</code> and <code>{ tid<sub>fresh</sub><sup>*</sup> }</code></a>.</p>
 </li>
 <li>
 <p>Check that <a href="#Type_wf"><code>typeIR</code> is a well-formed type, assuming bound type ids <code>bound</code></a>.</p>
@@ -8894,7 +8894,7 @@ rule Parameter_ok/initializer:
 <p>Let <code>typedExpressionIR<sub>init</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>init</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>init</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>init</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>init</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>init</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code><a href="#ctk_of_expression">$ctk_of_expression(typedExpressionIR<sub>init</sub>)</a></code> matches pattern <code>LCTK</code>.</p>
@@ -8980,7 +8980,7 @@ rule ParameterType_wf/default:
 <p>Check that <a href="#Type_wf"><code>typeIR</code> is a well-formed type, assuming bound type ids <code>bound</code></a>.</p>
 </li>
 <li>
-<p>Check that `<a href="#is_string_typeIR">$is_string_typeIR(&lt;&lt;canon, $canon(typeIR)</a>)&gt;&gt; \/ <a href="#is_arbitrary_int_typeIR">$is_arbitrary_int_typeIR(&lt;&lt;canon, $canon(typeIR)</a>)&gt;&gt; \/ <a href="#is_objectTypeIR">$is_objectTypeIR(&lt;&lt;canon, $canon(typeIR)</a>)&gt;&gt; &#8658; direction = `.</p>
+<p>Check that `<a href="#is_string_typeIR">$is_string_typeIR($canon(typeIR))</a> \/ <a href="#is_arbitrary_int_typeIR">$is_arbitrary_int_typeIR($canon(typeIR))</a> \/ <a href="#is_objectTypeIR">$is_objectTypeIR($canon(typeIR))</a> &#8658; direction = `.</p>
 </li>
 <li>
 <p>The relation holds.</p>
@@ -9003,7 +9003,7 @@ rule ParameterType_wf/default:
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Check that `<a href="#is_string_typeIR">$is_string_typeIR(&lt;&lt;canon, $canon(typeIR)</a>)&gt;&gt; \/ <a href="#is_arbitrary_int_typeIR">$is_arbitrary_int_typeIR(&lt;&lt;canon, $canon(typeIR)</a>)&gt;&gt; \/ <a href="#is_objectTypeIR">$is_objectTypeIR(&lt;&lt;canon, $canon(typeIR)</a>)&gt;&gt; &#8658; direction = `.</p>
+<p>Check that `<a href="#is_string_typeIR">$is_string_typeIR($canon(typeIR))</a> \/ <a href="#is_arbitrary_int_typeIR">$is_arbitrary_int_typeIR($canon(typeIR))</a> \/ <a href="#is_objectTypeIR">$is_objectTypeIR($canon(typeIR))</a> &#8658; direction = `.</p>
 </li>
 <li>
 <p>The relation holds.</p>
@@ -9016,7 +9016,7 @@ rule ParameterType_wf/default:
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Check that `<a href="#is_string_typeIR">$is_string_typeIR(&lt;&lt;canon, $canon(typeIR)</a>)&gt;&gt; \/ <a href="#is_arbitrary_int_typeIR">$is_arbitrary_int_typeIR(&lt;&lt;canon, $canon(typeIR)</a>)&gt;&gt; \/ <a href="#is_objectTypeIR">$is_objectTypeIR(&lt;&lt;canon, $canon(typeIR)</a>)&gt;&gt; &#8658; direction = `.</p>
+<p>Check that `<a href="#is_string_typeIR">$is_string_typeIR($canon(typeIR))</a> \/ <a href="#is_arbitrary_int_typeIR">$is_arbitrary_int_typeIR($canon(typeIR))</a> \/ <a href="#is_objectTypeIR">$is_objectTypeIR($canon(typeIR))</a> &#8658; direction = `.</p>
 </li>
 <li>
 <p>The relation holds.</p>
@@ -9198,7 +9198,7 @@ represented as follows:</p>
 <p>Check that <a href="#ParameterTypes_wf"><code>parameterTypeIR<sup>*</sup></code> is a well-formed type, assuming bound type ids <code>bound</code></a>.</p>
 </li>
 <li>
-<p>Let <code><em><sup>*</sup></code> be the list of <code></em></code>, <code><em><sup>?</sup><sup>*</sup></code> be the list of <code></em><sup>?</sup></code>, <code>direction<sup>*</sup></code> be the list of <code>direction</code>, and <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
+<p>Let <code>direction<sup>*</sup></code> be the list of <code>direction</code> and <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
 <div class="openblock">
 <div class="content">
 <div class="ulist">
@@ -9364,7 +9364,7 @@ defined function types are represented as follows:</p>
 <p>Check that <a href="#ParameterTypes_wf"><code>parameterTypeIR<sup>*</sup></code> is a well-formed type, assuming bound type ids <code>bound</code></a>.</p>
 </li>
 <li>
-<p>Let <code><em><sup>*</sup></code> be the list of <code></em></code>, <code><em><sup>*</sup></code> be the list of <code></em></code>, <code><em><sup>?</sup><sup>*</sup></code> be the list of <code></em><sup>?</sup></code>, and <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
+<p>Let <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
 <div class="openblock">
 <div class="content">
 <div class="ulist">
@@ -9498,7 +9498,7 @@ extern function types are represented as follows:</p>
 <p>Check that <a href="#ParameterTypes_wf"><code>parameterTypeIR<sup>*</sup></code> is a well-formed type, assuming bound type ids <code>bound</code></a>.</p>
 </li>
 <li>
-<p>Let <code><em><sup>*</sup></code> be the list of <code></em></code>, <code><em><sup>*</sup></code> be the list of <code></em></code>, <code><em><sup>?</sup><sup>*</sup></code> be the list of <code></em><sup>?</sup></code>, and <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
+<p>Let <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
 <div class="openblock">
 <div class="content">
 <div class="ulist">
@@ -9696,7 +9696,7 @@ architecture. P4 programmers can only call such methods.</p>
 <p>Check that <a href="#ParameterTypes_wf"><code>parameterTypeIR<sup>*</sup></code> is a well-formed type, assuming bound type ids <code>bound</code></a>.</p>
 </li>
 <li>
-<p>Let <code><em><sup>*</sup></code> be the list of <code></em></code>, <code><em><sup>*</sup></code> be the list of <code></em></code>, <code><em><sup>?</sup><sup>*</sup></code> be the list of <code></em><sup>?</sup></code>, and <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
+<p>Let <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
 <div class="openblock">
 <div class="content">
 <div class="ulist">
@@ -9817,7 +9817,7 @@ of all the <code>abstract</code> methods (see <a href="#sec-instantiating-abstra
 <p>Check that <a href="#ParameterTypes_wf"><code>parameterTypeIR<sup>*</sup></code> is a well-formed type, assuming bound type ids <code>bound</code></a>.</p>
 </li>
 <li>
-<p>Let <code><em><sup>*</sup></code> be the list of <code></em></code>, <code><em><sup>*</sup></code> be the list of <code></em></code>, <code><em><sup>?</sup><sup>*</sup></code> be the list of <code></em><sup>?</sup></code>, and <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
+<p>Let <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
 <div class="openblock">
 <div class="content">
 <div class="ulist">
@@ -9954,7 +9954,7 @@ parserApplyMethod
 <p>Check that <a href="#ParameterTypes_wf"><code>parameterTypeIR<sup>*</sup></code> is a well-formed type, assuming bound type ids <code>bound</code></a>.</p>
 </li>
 <li>
-<p>Let <code><em><sup>*</sup></code> be the list of <code></em></code>, <code><em><sup>*</sup></code> be the list of <code></em></code>, <code><em><sup>?</sup><sup>*</sup></code> be the list of <code></em><sup>?</sup></code>, and <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
+<p>Let <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
 <div class="openblock">
 <div class="content">
 <div class="ulist">
@@ -10083,7 +10083,7 @@ controlApplyMethod
 <p>Check that <a href="#ParameterTypes_wf"><code>parameterTypeIR<sup>*</sup></code> is a well-formed type, assuming bound type ids <code>bound</code></a>.</p>
 </li>
 <li>
-<p>Let <code><em><sup>*</sup></code> be the list of <code></em></code>, <code><em><sup>*</sup></code> be the list of <code></em></code>, <code><em><sup>?</sup><sup>*</sup></code> be the list of <code></em><sup>?</sup></code>, and <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
+<p>Let <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
 <div class="openblock">
 <div class="content">
 <div class="ulist">
@@ -10610,7 +10610,7 @@ constructorTypeDefIR
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Return <code><a href="#definable'_constructor">$definable'_constructor(&lt;&lt;canon, $canon(typeIR)</a>)&gt;&gt;</code>.</p>
+<p>Return <code><a href="#definable'_constructor">$definable'_constructor($canon(typeIR))</a></code>.</p>
 </li>
 </ol>
 </div>
@@ -10742,7 +10742,7 @@ constructors.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Return <code><a href="#nestable'_constructor_extern">$nestable'_constructor_extern(&lt;&lt;canon, $canon(typeIR)</a>)&gt;&gt;</code>.</p>
+<p>Return <code><a href="#nestable'_constructor_extern">$nestable'_constructor_extern($canon(typeIR))</a></code>.</p>
 </li>
 </ol>
 </div>
@@ -10813,7 +10813,7 @@ constructors.</p>
 <p>Let <code>externObjectTypeIR</code> be <code>typeIR'</code>.</p>
 </li>
 <li>
-<p>Let <code><em><sup>*</sup></code> be the list of <code></em></code>, <code><em><sup>*</sup></code> be the list of <code></em></code>, <code><em><sup>?</sup><sup>*</sup></code> be the list of <code></em><sup>?</sup></code>, and <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
+<p>Let <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
 <div class="openblock">
 <div class="content">
 <div class="ulist">
@@ -10939,7 +10939,7 @@ rule is explained in <a href="#sec-sem-Decl_ok-parserDeclaration">Section 11.8.1
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Return <code><a href="#nestable'_constructor_parser">$nestable'_constructor_parser(&lt;&lt;canon, $canon(typeIR)</a>)&gt;&gt;</code>.</p>
+<p>Return <code><a href="#nestable'_constructor_parser">$nestable'_constructor_parser($canon(typeIR))</a></code>.</p>
 </li>
 </ol>
 </div>
@@ -11007,7 +11007,7 @@ rule is explained in <a href="#sec-sem-Decl_ok-parserDeclaration">Section 11.8.1
 <p>Let <code>parserObjectTypeIR</code> be <code>typeIR'</code>.</p>
 </li>
 <li>
-<p>Let <code><em><sup>*</sup></code> be the list of <code></em></code>, <code><em><sup>*</sup></code> be the list of <code></em></code>, <code><em><sup>?</sup><sup>*</sup></code> be the list of <code></em><sup>?</sup></code>, and <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
+<p>Let <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
 <div class="openblock">
 <div class="content">
 <div class="ulist">
@@ -11127,7 +11127,7 @@ rule is explained in <a href="#sec-sem-Decl_ok-controlDeclaration">Section 11.9.
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Return <code><a href="#nestable'_constructor_control">$nestable'_constructor_control(&lt;&lt;canon, $canon(typeIR)</a>)&gt;&gt;</code>.</p>
+<p>Return <code><a href="#nestable'_constructor_control">$nestable'_constructor_control($canon(typeIR))</a></code>.</p>
 </li>
 </ol>
 </div>
@@ -11195,7 +11195,7 @@ rule is explained in <a href="#sec-sem-Decl_ok-controlDeclaration">Section 11.9.
 <p>Let <code>controlObjectTypeIR</code> be <code>typeIR'</code>.</p>
 </li>
 <li>
-<p>Let <code><em><sup>*</sup></code> be the list of <code></em></code>, <code><em><sup>*</sup></code> be the list of <code></em></code>, <code><em><sup>?</sup><sup>*</sup></code> be the list of <code></em><sup>?</sup></code>, and <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
+<p>Let <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
 <div class="openblock">
 <div class="content">
 <div class="ulist">
@@ -11410,7 +11410,7 @@ with them.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Return <code><a href="#nestable'_constructor_package">$nestable'_constructor_package(&lt;&lt;canon, $canon(typeIR)</a>)&gt;&gt;</code>.</p>
+<p>Return <code><a href="#nestable'_constructor_package">$nestable'_constructor_package($canon(typeIR))</a></code>.</p>
 </li>
 </ol>
 </div>
@@ -11472,7 +11472,7 @@ with them.</p>
 <p>Let <code>packageObjectTypeIR</code> be <code>typeIR'</code>.</p>
 </li>
 <li>
-<p>Let <code><em><sup>*</sup></code> be the list of <code></em></code>, <code><em><sup>*</sup></code> be the list of <code></em></code>, <code><em><sup>?</sup><sup>*</sup></code> be the list of <code></em><sup>?</sup></code>, and <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
+<p>Let <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
 <div class="openblock">
 <div class="content">
 <div class="ulist">
@@ -11613,7 +11613,7 @@ following are all legal constant declarations:</p>
 <p>Check that <code>tid<sup>*</sup></code> is an empty list.</p>
 </li>
 <li>
-<p>Check that <a href="#Type_wf"><code>typeIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, $bound(p', TC<sub>0</sub>)</a></code>&gt;&gt;.</p>
+<p>Check that <a href="#Type_wf"><code>typeIR</code> is a well-formed type, assuming bound type ids <code>$bound(p', TC<sub>0</sub>)</code></a>.</p>
 </li>
 <li>
 <p>Let <code>typedExpressionIR<sub>value</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>value</sub></code>, under cursor <code>p'</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
@@ -12027,10 +12027,10 @@ methods.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub></code>[BLOCK.KIND = <code>EXTERN</code>].</p>
+<p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub>[BLOCK.KIND = EXTERN]</code>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>2</sub></code> be <code>TC<sub>1</sub></code>[BLOCK.FRAME = <code>typeFrame</code>].</p>
+<p>Let <code>TC<sub>2</sub></code> be <code>TC<sub>1</sub>[BLOCK.FRAME = typeFrame]</code>.</p>
 </li>
 <li>
 <p>Let <code>typeParameter<sup>*</sup></code> be <a href="#flatten_typeParameterListOpt">the list of type parameters in <code>typeParameterListOpt</code></a>.</p>
@@ -12088,7 +12088,7 @@ methods.</p>
 <p>Let <code>TC<sub>4</sub></code> be <code><a href="#add_parameters">$add_parameters(LOCAL, TC<sub>3</sub>, parameterTypeIR<sup>*</sup>)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>5</sub></code> be <code>TC<sub>4</sub></code>[LOCAL.KIND = <code>EXTERN_METHOD &#8594; typeIR<sub>ret</sub></code>].</p>
+<p>Let <code>TC<sub>5</sub></code> be <code>TC<sub>4</sub>[LOCAL.KIND = EXTERN_METHOD &#8594; typeIR<sub>ret</sub>]</code>.</p>
 </li>
 <li>
 <p>Let <code>_</code>, <code>f</code>, and <code>blockStatementIR</code> be the result of <a href="#Block_ok">typing <code>blockStatement</code>, under typing context <code>TC<sub>5</sub></code> and abstract control flow <code>CONT</code></a>.</p>
@@ -12107,7 +12107,7 @@ methods.</p>
 <p>Let <code>routineTypeDefIR</code> be <code>methodTypeIR &lt; tid<sub>expl</sub><sup>*</sup> , tid<sub>impl</sub><sup>*</sup> &gt;</code>.</p>
 </li>
 <li>
-<p>Check that <a href="#RoutineTypeDef_wf"><code>routineTypeDefIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, $bound(p, TC<sub>0</sub>)</a></code>&gt;&gt;.</p>
+<p>Check that <a href="#RoutineTypeDef_wf"><code>routineTypeDefIR</code> is a well-formed type, assuming bound type ids <code>$bound(p, TC<sub>0</sub>)</code></a>.</p>
 </li>
 <li>
 <p>Let <code>rdenv<sub>init</sub></code> be <code><a href="#update_map">$update_map&lt;rid, routineTypeDefIR&gt;(rdenv, rid, routineTypeDefIR)</a></code>.</p>
@@ -12138,7 +12138,7 @@ methods.</p>
 <p>Let <code>routineTypeDefIR</code> be <code>methodTypeIR &lt; tid<sub>expl</sub><sup>*</sup> , tid<sub>impl</sub><sup>*</sup> &gt;</code>.</p>
 </li>
 <li>
-<p>Check that <a href="#RoutineTypeDef_wf"><code>routineTypeDefIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, $bound(p, TC<sub>0</sub>)</a></code>&gt;&gt;.</p>
+<p>Check that <a href="#RoutineTypeDef_wf"><code>routineTypeDefIR</code> is a well-formed type, assuming bound type ids <code>$bound(p, TC<sub>0</sub>)</code></a>.</p>
 </li>
 <li>
 <p>Let <code>rdenv<sub>init</sub></code> be <code><a href="#update_map">$update_map&lt;rid, routineTypeDefIR&gt;(rdenv, rid, routineTypeDefIR)</a></code>.</p>
@@ -12202,7 +12202,7 @@ methods.</p>
 <p>Let <code>_ _ _ &lt; _ &gt; ( _ ) nameIR _ ;</code> be <code>instantiationIR</code>.</p>
 </li>
 <li>
-<p>Let <code>varTypeIR'<sup>?</sup></code> be <code><a href="#find_var">$find_var(p, TC<sub>1</sub>, ` nameIR)</a></code>.</p>
+<p>Let <code>varTypeIR'<sup>?</sup></code> be <code><a href="#find_var">$find_var(p, TC<sub>1</sub>, nameIR)</a></code>.</p>
 </li>
 <li>
 <p>Check that <code>varTypeIR'<sup>?</sup></code> is Some value.</p>
@@ -12316,7 +12316,7 @@ rule Decl_ok/instantiation-objectInitializer/specializedType:
 <p>Let <a href="#Inst_ok"><code>p' TC<sub>0</sub> NAMED |- constructorTypeIR &lt; [ ] # tid<sub>impl</sub><sup>*</sup> &gt; ( argumentIR<sup>*</sup> # id<sub>default</sub><sup>*</sup> ) : typeIR<sub>object</sub> &lt; typeArgumentIR<sub>inferred</sub><sup>*</sup> &gt; ( argumentIR<sub>cast</sub><sup>*</sup> )</code></a>.</p>
 </li>
 <li>
-<p>Check that <code><a href="#is_extern_object_typeIR">$is_extern_object_typeIR(&lt;&lt;canon, $canon(typeIR<sub>object</sub>)</a>)&gt;&gt;</code>.</p>
+<p>Check that <code><a href="#is_extern_object_typeIR">$is_extern_object_typeIR($canon(typeIR<sub>object</sub>))</a></code>.</p>
 </li>
 <li>
 <p>Check that <code>typeIR<sub>object</sub></code> has type <code>specializedTypeIR</code>.</p>
@@ -12415,7 +12415,7 @@ rule Decl_ok/instantiation-objectInitializer/specializedType:
 <p>Let <a href="#Inst_ok"><code>p' TC<sub>0</sub> NAMED |- constructorTypeIR &lt; typeArgumentIR<sup>*</sup> # tid<sub>infer</sub><sup>*</sup> &gt; ( argumentIR<sup>*</sup> # id<sub>default</sub><sup>*</sup> ) : typeIR<sub>object</sub> &lt; typeArgumentIR<sub>inferred</sub><sup>*</sup> &gt; ( argumentIR<sub>cast</sub><sup>*</sup> )</code></a>.</p>
 </li>
 <li>
-<p>Check that <code><a href="#is_extern_object_typeIR">$is_extern_object_typeIR(&lt;&lt;canon, $canon(typeIR<sub>object</sub>)</a>)&gt;&gt;</code>.</p>
+<p>Check that <code><a href="#is_extern_object_typeIR">$is_extern_object_typeIR($canon(typeIR<sub>object</sub>))</a></code>.</p>
 </li>
 <li>
 <p>Check that <code>typeIR<sub>object</sub></code> has type <code>specializedTypeIR</code>.</p>
@@ -12575,7 +12575,7 @@ rule Decl_inst/instantiationIR/non-extern-non-global:
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Let <code>IC<sub>decl</sub></code> be <code><a href="#empty_instantiationContext">$empty_instantiationContext</a></code>[PATH = <code>IC<sub>0</sub>.PATH</code>][GLOBAL = <code>IC<sub>0</sub>.GLOBAL</code>].</p>
+<p>Let <code>IC<sub>decl</sub></code> be <code><a href="#empty_instantiationContext">$empty_instantiationContext</a>[PATH = IC<sub>0</sub>.PATH][GLOBAL = IC<sub>0</sub>.GLOBAL]</code>.</p>
 </li>
 <li>
 <p>Let <code>objectDeclarationListIR</code> be <code><a href="#flatten_objectInitializerOptIR">$flatten_objectInitializerOptIR(objectInitializerOptIR)</a></code>.</p>
@@ -12653,7 +12653,7 @@ rule Decl_inst/instantiationIR/non-extern-non-global:
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Let <code>IC<sub>decl</sub></code> be <code><a href="#empty_instantiationContext">$empty_instantiationContext</a></code>[PATH = <code>IC<sub>0</sub>.PATH</code>][GLOBAL = <code>IC<sub>0</sub>.GLOBAL</code>].</p>
+<p>Let <code>IC<sub>decl</sub></code> be <code><a href="#empty_instantiationContext">$empty_instantiationContext</a>[PATH = IC<sub>0</sub>.PATH][GLOBAL = IC<sub>0</sub>.GLOBAL]</code>.</p>
 </li>
 <li>
 <p>Let <code>objectDeclarationListIR</code> be <code><a href="#flatten_objectInitializerOptIR">$flatten_objectInitializerOptIR(objectInitializerOptIR)</a></code>.</p>
@@ -12836,7 +12836,7 @@ functionDeclarationIR
 <p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_parameters">$add_parameters(LOCAL, TC<sub>1</sub>, parameterTypeIR<sup>*</sup>)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>3</sub></code> be <code>TC<sub>2</sub></code>[LOCAL.KIND = <code>FUNCTION &#8594; typeIR<sub>ret</sub></code>].</p>
+<p>Let <code>TC<sub>3</sub></code> be <code>TC<sub>2</sub>[LOCAL.KIND = FUNCTION &#8594; typeIR<sub>ret</sub>]</code>.</p>
 </li>
 <li>
 <p>Let <code>_</code>, <code>f</code>, and <code>blockStatementIR</code> be the result of <a href="#Block_ok">typing <code>blockStatement</code>, under typing context <code>TC<sub>3</sub></code> and abstract control flow <code>CONT</code></a>.</p>
@@ -12855,7 +12855,7 @@ functionDeclarationIR
 <p>Let <code>routineTypeDefIR</code> be <code>functionTypeIR &lt; tid<sub>expl</sub><sup>*</sup> , tid<sub>impl</sub><sup>*</sup> &gt;</code>.</p>
 </li>
 <li>
-<p>Check that <a href="#RoutineTypeDef_wf"><code>routineTypeDefIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, $bound(p', TC<sub>0</sub>)</a></code>&gt;&gt;.</p>
+<p>Check that <a href="#RoutineTypeDef_wf"><code>routineTypeDefIR</code> is a well-formed type, assuming bound type ids <code>$bound(p', TC<sub>0</sub>)</code></a>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>4</sub></code> be <code><a href="#add_routine_overload">$add_routine_overload(p', TC<sub>0</sub>, rid, routineTypeDefIR)</a></code>.</p>
@@ -12886,7 +12886,7 @@ functionDeclarationIR
 <p>Let <code>routineTypeDefIR</code> be <code>functionTypeIR &lt; tid<sub>expl</sub><sup>*</sup> , tid<sub>impl</sub><sup>*</sup> &gt;</code>.</p>
 </li>
 <li>
-<p>Check that <a href="#RoutineTypeDef_wf"><code>routineTypeDefIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, $bound(p', TC<sub>0</sub>)</a></code>&gt;&gt;.</p>
+<p>Check that <a href="#RoutineTypeDef_wf"><code>routineTypeDefIR</code> is a well-formed type, assuming bound type ids <code>$bound(p', TC<sub>0</sub>)</code></a>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>4</sub></code> be <code><a href="#add_routine_overload">$add_routine_overload(p', TC<sub>0</sub>, rid, routineTypeDefIR)</a></code>.</p>
@@ -12998,7 +12998,7 @@ actionDeclarationIR
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub></code>[LOCAL.KIND = <code>ACTION</code>].</p>
+<p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub>[LOCAL.KIND = ACTION]</code>.</p>
 </li>
 <li>
 <p>Let <code>parameter<sup>*</sup></code> be <a href="#flatten_parameterList">the list of parameters in <code>parameterList</code></a>.</p>
@@ -13030,7 +13030,7 @@ actionDeclarationIR
 <p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_parameters">$add_parameters(LOCAL, TC<sub>1</sub>, parameterTypeIR<sup>*</sup>)</a></code>.</p>
 </li>
 <li>
-<p>Let <code><em></code>, <code></em></code>, and <code>blockStatementIR</code> be the result of <a href="#Block_ok">typing <code>blockStatement</code>, under typing context <code>TC<sub>2</sub></code> and abstract control flow <code>CONT</code></a>.</p>
+<p>Let <code>_</code>, <code>_</code>, and <code>blockStatementIR</code> be the result of <a href="#Block_ok">typing <code>blockStatement</code>, under typing context <code>TC<sub>2</sub></code> and abstract control flow <code>CONT</code></a>.</p>
 </li>
 <li>
 <p>Let <code>rid</code> be <code><a href="#rid">$rid(name, parameterList)</a></code>.</p>
@@ -13039,7 +13039,7 @@ actionDeclarationIR
 <p>Let <code>actionTypeIR</code> be <code>ACTION ( parameterTypeIR<sup>*</sup> )</code>.</p>
 </li>
 <li>
-<p>Check that <a href="#RoutineTypeDef_wf"><code>actionTypeIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, $bound(p', TC<sub>0</sub>)</a></code>&gt;&gt;.</p>
+<p>Check that <a href="#RoutineTypeDef_wf"><code>actionTypeIR</code> is a well-formed type, assuming bound type ids <code>$bound(p', TC<sub>0</sub>)</code></a>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>3</sub></code> be <code><a href="#add_routine_non_overload">$add_routine_non_overload(p', TC<sub>0</sub>, rid, actionTypeIR)</a></code>.</p>
@@ -13571,7 +13571,7 @@ externFunctionDeclarationIR
 <p>Check that <code>tid<sup>*</sup></code> is an empty list.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>2</sub></code> be <code>TC<sub>1</sub></code>[LOCAL.KIND = <code>EXTERN_FUNCTION &#8594; typeIR<sub>ret</sub></code>].</p>
+<p>Let <code>TC<sub>2</sub></code> be <code>TC<sub>1</sub>[LOCAL.KIND = EXTERN_FUNCTION &#8594; typeIR<sub>ret</sub>]</code>.</p>
 </li>
 <li>
 <p>Let <code>parameter<sup>*</sup></code> be <a href="#flatten_parameterList">the list of parameters in <code>parameterList</code></a>.</p>
@@ -13609,7 +13609,7 @@ externFunctionDeclarationIR
 <p>Let <code>routineTypeDefIR</code> be <code>functionTypeIR &lt; tid<sub>expl</sub><sup>*</sup> , tid<sub>impl</sub><sup>*</sup> &gt;</code>.</p>
 </li>
 <li>
-<p>Check that <a href="#RoutineTypeDef_wf"><code>routineTypeDefIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, $bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;.</p>
+<p>Check that <a href="#RoutineTypeDef_wf"><code>routineTypeDefIR</code> is a well-formed type, assuming bound type ids <code>$bound(GLOBAL, TC<sub>0</sub>)</code></a>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>4</sub></code> be <code><a href="#add_routine_overload">$add_routine_overload(GLOBAL, TC<sub>0</sub>, rid, routineTypeDefIR)</a></code>.</p>
@@ -13728,7 +13728,7 @@ externObjectDeclarationIR
 <p>Let <code>(externConstructorPrototype<sup>*</sup>, externMethodPrototype<sup>*</sup>)</code> be <a href="#split_constructors">split constructors and methods in <code>externConstructorOrMethodPrototype<sup>*</sup></code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub></code>[BLOCK.KIND = <code>EXTERN</code>].</p>
+<p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub>[BLOCK.KIND = EXTERN]</code>.</p>
 </li>
 <li>
 <p>Let <code>typeParameter<sup>*</sup></code> be <a href="#flatten_typeParameterListOpt">the list of type parameters in <code>typeParameterListOpt</code></a>.</p>
@@ -13769,7 +13769,7 @@ externObjectDeclarationIR
 <p>Let <code>TC<sub>4</sub></code> be <code><a href="#add_type">$add_type(GLOBAL, TC<sub>0</sub>, nameIR, typeDefIR<sub>extern</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>5</sub></code> be <code>TC<sub>4</sub></code>[BLOCK.KIND = <code>EXTERN</code>].</p>
+<p>Let <code>TC<sub>5</sub></code> be <code>TC<sub>4</sub>[BLOCK.KIND = EXTERN]</code>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>6</sub></code> be <code><a href="#add_types">$add_types(BLOCK, TC<sub>5</sub>, tid<sub>expl</sub><sup>*</sup>, TID tid<sub>expl</sub><sup>*</sup>)</a></code>.</p>
@@ -13778,7 +13778,7 @@ externObjectDeclarationIR
 <p>Let <code>TC<sub>7</sub></code> and <code>externConstructorPrototypeIR<sup>*</sup></code> be the result of <a href="#ExternConstructors_ok">typing <code>externConstructorPrototype<sup>*</sup></code>, under typing context <code>TC<sub>6</sub></code> for an extern object <code>nameIR</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>8</sub></code> be <code>TC<sub>4</sub></code>[GLOBAL.CONSTRUCTOR = <code>TC<sub>7</sub>.GLOBAL.CONSTRUCTOR</code>].</p>
+<p>Let <code>TC<sub>8</sub></code> be <code>TC<sub>4</sub>[GLOBAL.CONSTRUCTOR = TC<sub>7</sub>.GLOBAL.CONSTRUCTOR]</code>.</p>
 </li>
 <li>
 <p>Let <code>externObjectDeclarationIR</code> be <code>annotationList EXTERN nameIR &lt; tid<sub>expl</sub><sup>*</sup> , &gt; { externConstructorPrototypeIR<sup>*</sup> externMethodPrototypeIR<sup>*</sup> }</code>.</p>
@@ -14040,7 +14040,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub></code>[BLOCK.KIND = <code>PARSER</code>].</p>
+<p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub>[BLOCK.KIND = PARSER]</code>.</p>
 </li>
 <li>
 <p>Let <code>constructorParameter<sup>*</sup></code> be <a href="#flatten_constructorParameterListOpt">the list of constructor parameters in <code>constructorParameterListOpt</code></a>.</p>
@@ -14107,7 +14107,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <p>Let <code>TC<sub>4</sub></code> and <code>parserLocalDeclarationIR<sup>*</sup></code> be the result of <a href="#ParserLocalDecls_ok">typing <code>parserLocalDeclaration<sup>*</sup></code>, under typing context <code>TC<sub>3</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>5</sub></code> be <code>TC<sub>4</sub></code>[LOCAL.KIND = <code>PARSER_STATE</code>].</p>
+<p>Let <code>TC<sub>5</sub></code> be <code>TC<sub>4</sub>[LOCAL.KIND = PARSER_STATE]</code>.</p>
 </li>
 <li>
 <p>Let <code>parserState<sup>*</sup></code> be <a href="#flatten_parserStateList">the list of parser states in <code>parserStateList</code></a>.</p>
@@ -14119,7 +14119,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <p>Let <code>methodTypeIR</code> be <code>PARSER_APPLY ( parameterTypeIR<sup>*</sup> )</code>.</p>
 </li>
 <li>
-<p>Check that <a href="#RoutineTypeDef_wf"><code>methodTypeIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, $bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;.</p>
+<p>Check that <a href="#RoutineTypeDef_wf"><code>methodTypeIR</code> is a well-formed type, assuming bound type ids <code>$bound(GLOBAL, TC<sub>0</sub>)</code></a>.</p>
 </li>
 <li>
 <p>Let <code>cid</code> be <code><a href="#cid">$cid(name, constructorParameterListOpt)</a></code>.</p>
@@ -14137,7 +14137,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <p>Let <code>constructorTypeDefIR</code> be <code>constructorTypeIR &lt; [ ] , [ ] &gt;</code>.</p>
 </li>
 <li>
-<p>Check that <a href="#ConstructorTypeDef_wf"><code>constructorTypeDefIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, $bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;.</p>
+<p>Check that <a href="#ConstructorTypeDef_wf"><code>constructorTypeDefIR</code> is a well-formed type, assuming bound type ids <code>$bound(GLOBAL, TC<sub>0</sub>)</code></a>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>6</sub></code> be <code><a href="#add_constructor">$add_constructor(TC<sub>0</sub>, cid, constructorTypeDefIR)</a></code>.</p>
@@ -14247,7 +14247,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub></code>[BLOCK.KIND = <code>CONTROL</code>].</p>
+<p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub>[BLOCK.KIND = CONTROL]</code>.</p>
 </li>
 <li>
 <p>Let <code>constructorParameter<sup>*</sup></code> be <a href="#flatten_constructorParameterListOpt">the list of constructor parameters in <code>constructorParameterListOpt</code></a>.</p>
@@ -14314,16 +14314,16 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <p>Let <code>TC<sub>4</sub></code> and <code>controlLocalDeclarationIR<sup>*</sup></code> be the result of <a href="#ControlLocalDecls_ok">typing <code>controlLocalDeclaration<sup>*</sup></code>, under typing context <code>TC<sub>3</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>5</sub></code> be <code>TC<sub>4</sub></code>[LOCAL.KIND = <code>CONTROL_APPLY_METHOD</code>].</p>
+<p>Let <code>TC<sub>5</sub></code> be <code>TC<sub>4</sub>[LOCAL.KIND = CONTROL_APPLY_METHOD]</code>.</p>
 </li>
 <li>
-<p>Let <code><em></code>, <code></em></code>, and <code>controlBodyIR</code> be the result of <a href="#Block_ok">typing <code>controlBody</code>, under typing context <code>TC<sub>5</sub></code> and abstract control flow <code>CONT</code></a>.</p>
+<p>Let <code>_</code>, <code>_</code>, and <code>controlBodyIR</code> be the result of <a href="#Block_ok">typing <code>controlBody</code>, under typing context <code>TC<sub>5</sub></code> and abstract control flow <code>CONT</code></a>.</p>
 </li>
 <li>
 <p>Let <code>methodTypeIR</code> be <code>CONTROL_APPLY ( parameterTypeIR<sup>*</sup> )</code>.</p>
 </li>
 <li>
-<p>Check that <a href="#RoutineTypeDef_wf"><code>methodTypeIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, $bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;.</p>
+<p>Check that <a href="#RoutineTypeDef_wf"><code>methodTypeIR</code> is a well-formed type, assuming bound type ids <code>$bound(GLOBAL, TC<sub>0</sub>)</code></a>.</p>
 </li>
 <li>
 <p>Let <code>cid</code> be <code><a href="#cid">$cid(name, constructorParameterListOpt)</a></code>.</p>
@@ -14341,7 +14341,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <p>Let <code>constructorTypeDefIR</code> be <code>constructorTypeIR &lt; [ ] , [ ] &gt;</code>.</p>
 </li>
 <li>
-<p>Check that <a href="#ConstructorTypeDef_wf"><code>constructorTypeDefIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, $bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;.</p>
+<p>Check that <a href="#ConstructorTypeDef_wf"><code>constructorTypeDefIR</code> is a well-formed type, assuming bound type ids <code>$bound(GLOBAL, TC<sub>0</sub>)</code></a>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>6</sub></code> be <code><a href="#add_constructor">$add_constructor(TC<sub>0</sub>, cid, constructorTypeDefIR)</a></code>.</p>
@@ -14526,7 +14526,7 @@ enumTypeDeclarationIR
 <p>Let <code>typeIR<sub>enum</sub></code> be <code>ENUM nameIR { nameIR<sub>field</sub><sup>*</sup> }</code>.</p>
 </li>
 <li>
-<p>Check that <a href="#TypeDef_wf"><code>typeIR<sub>enum</sub></code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, $bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;.</p>
+<p>Check that <a href="#TypeDef_wf"><code>typeIR<sub>enum</sub></code> is a well-formed type, assuming bound type ids <code>$bound(GLOBAL, TC<sub>0</sub>)</code></a>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_type">$add_type(GLOBAL, TC<sub>0</sub>, nameIR, typeIR<sub>enum</sub>)</a></code>.</p>
@@ -14764,7 +14764,7 @@ enumTypeDeclarationIR
 <p>Check that <code>tid<sup>*</sup></code> is an empty list.</p>
 </li>
 <li>
-<p>Check that <a href="#Type_wf"><code>typeIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, $bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;.</p>
+<p>Check that <a href="#Type_wf"><code>typeIR</code> is a well-formed type, assuming bound type ids <code>$bound(GLOBAL, TC<sub>0</sub>)</code></a>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
@@ -14776,7 +14776,7 @@ enumTypeDeclarationIR
 <p>Let <a href="#Enum_serializable_fields_ok"><code>TC<sub>0</sub> nameIR typeIR |- namedExpression<sub>field</sub><sup>*</sup> : TC<sub>1</sub> namedExpressionIR<sub>field</sub><sup>*</sup> # value<sub>field</sub><sup>*</sup></code></a>.</p>
 </li>
 <li>
-<p>Let <code><em><sup>*</sup></code> be the list of <code></em></code> and <code>nameIR<sub>field</sub><sup>*</sup></code> be the list of <code>nameIR<sub>field</sub></code>, obtained by repeating:</p>
+<p>Let <code>nameIR<sub>field</sub><sup>*</sup></code> be the list of <code>nameIR<sub>field</sub></code>, obtained by repeating:</p>
 <div class="openblock">
 <div class="content">
 <div class="ulist">
@@ -14816,7 +14816,7 @@ enumTypeDeclarationIR
 <p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_vars">$add_vars(GLOBAL, TC<sub>0</sub>, id<sub>field</sub><sup>*</sup>, typeIR<sub>enum</sub> LCTK value<sub>field</sub><sup>*</sup>)</a></code>.</p>
 </li>
 <li>
-<p>Check that <a href="#TypeDef_wf"><code>typeIR<sub>enum</sub></code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, $bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;.</p>
+<p>Check that <a href="#TypeDef_wf"><code>typeIR<sub>enum</sub></code> is a well-formed type, assuming bound type ids <code>$bound(GLOBAL, TC<sub>0</sub>)</code></a>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>3</sub></code> be <code><a href="#add_type">$add_type(GLOBAL, TC<sub>2</sub>, nameIR, typeIR<sub>enum</sub>)</a></code>.</p>
@@ -15025,7 +15025,7 @@ enumTypeDeclarationIR
 <p>Let <code>typeDefIR<sub>struct</sub></code> be <code>typeIR<sub>struct</sub> &lt; tid<sub>expl</sub><sup>*</sup> , tid<sub>impl</sub><sup>*</sup> &gt;</code>.</p>
 </li>
 <li>
-<p>Check that <a href="#TypeDef_wf"><code>typeDefIR<sub>struct</sub></code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, $bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;.</p>
+<p>Check that <a href="#TypeDef_wf"><code>typeDefIR<sub>struct</sub></code> is a well-formed type, assuming bound type ids <code>$bound(GLOBAL, TC<sub>0</sub>)</code></a>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_type">$add_type(GLOBAL, TC<sub>0</sub>, nameIR, typeDefIR<sub>struct</sub>)</a></code>.</p>
@@ -15207,7 +15207,7 @@ enumTypeDeclarationIR
 <p>Let <code>typeDefIR<sub>header</sub></code> be <code>typeIR<sub>header</sub> &lt; tid<sub>expl</sub><sup>*</sup> , tid<sub>impl</sub><sup>*</sup> &gt;</code>.</p>
 </li>
 <li>
-<p>Check that <a href="#TypeDef_wf"><code>typeDefIR<sub>header</sub></code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, $bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;.</p>
+<p>Check that <a href="#TypeDef_wf"><code>typeDefIR<sub>header</sub></code> is a well-formed type, assuming bound type ids <code>$bound(GLOBAL, TC<sub>0</sub>)</code></a>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_type">$add_type(GLOBAL, TC<sub>0</sub>, nameIR, typeDefIR<sub>header</sub>)</a></code>.</p>
@@ -15389,7 +15389,7 @@ enumTypeDeclarationIR
 <p>Let <code>typeDefIR<sub>union</sub></code> be <code>typeIR<sub>union</sub> &lt; tid<sub>expl</sub><sup>*</sup> , tid<sub>impl</sub><sup>*</sup> &gt;</code>.</p>
 </li>
 <li>
-<p>Check that <a href="#TypeDef_wf"><code>typeDefIR<sub>union</sub></code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, $bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;.</p>
+<p>Check that <a href="#TypeDef_wf"><code>typeDefIR<sub>union</sub></code> is a well-formed type, assuming bound type ids <code>$bound(GLOBAL, TC<sub>0</sub>)</code></a>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_type">$add_type(GLOBAL, TC<sub>0</sub>, nameIR, typeDefIR<sub>union</sub>)</a></code>.</p>
@@ -15550,7 +15550,7 @@ rule Decl_ok/typedefDeclaration-typedef/derivedTypeDeclaration-poly:
 <p>Check that <code>tid'<sup>*</sup></code> is an empty list.</p>
 </li>
 <li>
-<p>Check that <a href="#Type_wf"><code>typeIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, $bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;.</p>
+<p>Check that <a href="#Type_wf"><code>typeIR</code> is a well-formed type, assuming bound type ids <code>$bound(GLOBAL, TC<sub>0</sub>)</code></a>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
@@ -15559,7 +15559,7 @@ rule Decl_ok/typedefDeclaration-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>typeIR<sub>typedef</sub></code> be <code>TYPEDEF nameIR typeIR</code>.</p>
 </li>
 <li>
-<p>Check that <a href="#TypeDef_wf"><code>typeIR<sub>typedef</sub></code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, $bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;.</p>
+<p>Check that <a href="#TypeDef_wf"><code>typeIR<sub>typedef</sub></code> is a well-formed type, assuming bound type ids <code>$bound(GLOBAL, TC<sub>0</sub>)</code></a>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_type">$add_type(GLOBAL, TC<sub>0</sub>, nameIR, typeIR<sub>typedef</sub>)</a></code>.</p>
@@ -15594,7 +15594,7 @@ rule Decl_ok/typedefDeclaration-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>derivedTypeDeclarationIR</code> be <code>declarationIR</code>.</p>
 </li>
 <li>
-<p>Let <code>{ tid'<sup>*</sup> }</code> be <a href="#diff_set">the difference of the sets <code>&lt;&lt;dom_map, $dom_map&lt;tid, typeDefIR&gt;(TC<sub>1</sub>.GLOBAL.TYPE)</a></code> and <code><a href="#dom_map">$dom_map&lt;tid, typeDefIR&gt;(TC<sub>0</sub>.GLOBAL.TYPE)</a></code>&gt;&gt;.</p>
+<p>Let <code>{ tid'<sup>*</sup> }</code> be <a href="#diff_set">the difference of the sets the domain of the map <code>TC<sub>1</sub>.GLOBAL.TYPE</code> and the domain of the map <code>TC<sub>0</sub>.GLOBAL.TYPE</code></a>.</p>
 </li>
 <li>
 <p>Check that <code>tid'<sup>*</sup></code> is a list of length 1.</p>
@@ -15603,7 +15603,7 @@ rule Decl_ok/typedefDeclaration-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>[tid]</code> be <code>tid'<sup>*</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeDefIR'<sup>?</sup></code> be <code><a href="#find_type">$find_type(GLOBAL, TC<sub>1</sub>, ` tid)</a></code>.</p>
+<p>Let <code>typeDefIR'<sup>?</sup></code> be <code><a href="#find_type">$find_type(GLOBAL, TC<sub>1</sub>, tid)</a></code>.</p>
 </li>
 <li>
 <p>Check that <code>typeDefIR'<sup>?</sup></code> is Some value.</p>
@@ -15622,7 +15622,7 @@ rule Decl_ok/typedefDeclaration-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>typeIR<sub>typedef</sub></code> be <code>TYPEDEF nameIR typeIR</code>.</p>
 </li>
 <li>
-<p>Check that <a href="#TypeDef_wf"><code>typeIR<sub>typedef</sub></code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, $bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;.</p>
+<p>Check that <a href="#TypeDef_wf"><code>typeIR<sub>typedef</sub></code> is a well-formed type, assuming bound type ids <code>$bound(GLOBAL, TC<sub>0</sub>)</code></a>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_type">$add_type(GLOBAL, TC<sub>0</sub>, nameIR, typeIR<sub>typedef</sub>)</a></code>.</p>
@@ -15653,7 +15653,7 @@ rule Decl_ok/typedefDeclaration-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>typeIR<sub>typedef</sub></code> be <code>TYPEDEF nameIR typeIR &lt; [ ] , [ ] &gt; &lt; [ ] &gt;</code>.</p>
 </li>
 <li>
-<p>Check that <a href="#TypeDef_wf"><code>typeIR<sub>typedef</sub></code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, $bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;.</p>
+<p>Check that <a href="#TypeDef_wf"><code>typeIR<sub>typedef</sub></code> is a well-formed type, assuming bound type ids <code>$bound(GLOBAL, TC<sub>0</sub>)</code></a>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_type">$add_type(GLOBAL, TC<sub>0</sub>, nameIR, typeIR<sub>typedef</sub>)</a></code>.</p>
@@ -15738,7 +15738,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <p>Let <a href="#Decl_inst"><code>GLOBAL IC<sub>0</sub> &lt;&lt;empty_store, $empty_store</a> |- derivedTypeDeclarationIR =&#8658; IC<sub>local</sub> _ _<sup>?</sup></code>&gt;&gt;.</p>
 </li>
 <li>
-<p>Let <code>{ tid<sup>*</sup> }</code> be <a href="#diff_set">the difference of the sets <code>&lt;&lt;dom_map, $dom_map&lt;tid, typeDefIR&gt;(IC<sub>local</sub>.GLOBAL.TYPE)</a></code> and <code><a href="#dom_map">$dom_map&lt;tid, typeDefIR&gt;(IC<sub>0</sub>.GLOBAL.TYPE)</a></code>&gt;&gt;.</p>
+<p>Let <code>{ tid<sup>*</sup> }</code> be <a href="#diff_set">the difference of the sets the domain of the map <code>IC<sub>local</sub>.GLOBAL.TYPE</code> and the domain of the map <code>IC<sub>0</sub>.GLOBAL.TYPE</code></a>.</p>
 </li>
 <li>
 <p>Check that <code>tid<sup>*</sup></code> is a list of length 1.</p>
@@ -15840,7 +15840,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <p>Check that <code>tid<sup>*</sup></code> is an empty list.</p>
 </li>
 <li>
-<p>Check that <a href="#Type_wf"><code>typeIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, $bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;.</p>
+<p>Check that <a href="#Type_wf"><code>typeIR</code> is a well-formed type, assuming bound type ids <code>$bound(GLOBAL, TC<sub>0</sub>)</code></a>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
@@ -15849,7 +15849,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>typeIR<sub>newtype</sub></code> be <code>TYPE nameIR typeIR</code>.</p>
 </li>
 <li>
-<p>Check that <a href="#TypeDef_wf"><code>typeIR<sub>newtype</sub></code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, $bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;.</p>
+<p>Check that <a href="#TypeDef_wf"><code>typeIR<sub>newtype</sub></code> is a well-formed type, assuming bound type ids <code>$bound(GLOBAL, TC<sub>0</sub>)</code></a>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_type">$add_type(GLOBAL, TC<sub>0</sub>, nameIR, typeIR<sub>newtype</sub>)</a></code>.</p>
@@ -15942,7 +15942,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub></code>[BLOCK.KIND = <code>PARSER</code>].</p>
+<p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub>[BLOCK.KIND = PARSER]</code>.</p>
 </li>
 <li>
 <p>Let <code>typeParameter<sup>*</sup></code> be <a href="#flatten_typeParameterListOpt">the list of type parameters in <code>typeParameterListOpt</code></a>.</p>
@@ -16000,7 +16000,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>typeDefIR<sub>parser</sub></code> be <code>typeIR<sub>parser</sub> &lt; tid<sub>expl</sub><sup>*</sup> , tid<sub>impl</sub><sup>*</sup> &gt;</code>.</p>
 </li>
 <li>
-<p>Check that <a href="#TypeDef_wf"><code>typeDefIR<sub>parser</sub></code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, $bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;.</p>
+<p>Check that <a href="#TypeDef_wf"><code>typeDefIR<sub>parser</sub></code> is a well-formed type, assuming bound type ids <code>$bound(GLOBAL, TC<sub>0</sub>)</code></a>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>3</sub></code> be <code><a href="#add_type">$add_type(GLOBAL, TC<sub>0</sub>, nameIR, typeDefIR<sub>parser</sub>)</a></code>.</p>
@@ -16115,7 +16115,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub></code>[BLOCK.KIND = <code>CONTROL</code>].</p>
+<p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub>[BLOCK.KIND = CONTROL]</code>.</p>
 </li>
 <li>
 <p>Let <code>typeParameter<sup>*</sup></code> be <a href="#flatten_typeParameterListOpt">the list of type parameters in <code>typeParameterListOpt</code></a>.</p>
@@ -16173,7 +16173,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>typeDefIR<sub>control</sub></code> be <code>typeIR<sub>control</sub> &lt; tid<sub>expl</sub><sup>*</sup> , tid<sub>impl</sub><sup>*</sup> &gt;</code>.</p>
 </li>
 <li>
-<p>Check that <a href="#TypeDef_wf"><code>typeDefIR<sub>control</sub></code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, $bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;.</p>
+<p>Check that <a href="#TypeDef_wf"><code>typeDefIR<sub>control</sub></code> is a well-formed type, assuming bound type ids <code>$bound(GLOBAL, TC<sub>0</sub>)</code></a>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>3</sub></code> be <code><a href="#add_type">$add_type(GLOBAL, TC<sub>0</sub>, nameIR, typeDefIR<sub>control</sub>)</a></code>.</p>
@@ -16294,7 +16294,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub></code>[BLOCK.KIND = <code>PACKAGE</code>].</p>
+<p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub>[BLOCK.KIND = PACKAGE]</code>.</p>
 </li>
 <li>
 <p>Let <code>typeParameter<sup>*</sup></code> be <a href="#flatten_typeParameterListOpt">the list of type parameters in <code>typeParameterListOpt</code></a>.</p>
@@ -16346,7 +16346,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
 </li>
 <li>
-<p>Let <code><em><sup>*</sup></code> be the list of <code></em></code>, <code><em><sup>*</sup></code> be the list of <code></em></code>, <code><em><sup>?</sup><sup>*</sup></code> be the list of <code></em><sup>?</sup></code>, and <code>typeIR<sub>package_inner</sub><sup>*</sup></code> be the list of <code>typeIR<sub>package_inner</sub></code>, obtained by repeating:</p>
+<p>Let <code>typeIR<sub>package_inner</sub><sup>*</sup></code> be the list of <code>typeIR<sub>package_inner</sub></code>, obtained by repeating:</p>
 <div class="openblock">
 <div class="content">
 <div class="ulist">
@@ -16369,7 +16369,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>polyTypeDefIR<sub>package</sub></code> be <code>typeIR<sub>package</sub> &lt; tid<sub>expl</sub><sup>*</sup> , tid<sub>impl</sub><sup>*</sup> &gt;</code>.</p>
 </li>
 <li>
-<p>Check that <a href="#TypeDef_wf"><code>polyTypeDefIR<sub>package</sub></code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, $bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;.</p>
+<p>Check that <a href="#TypeDef_wf"><code>polyTypeDefIR<sub>package</sub></code> is a well-formed type, assuming bound type ids <code>$bound(GLOBAL, TC<sub>0</sub>)</code></a>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>3</sub></code> be <code><a href="#add_type">$add_type(GLOBAL, TC<sub>0</sub>, nameIR, polyTypeDefIR<sub>package</sub>)</a></code>.</p>
@@ -16387,7 +16387,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>constructorTypeDefIR</code> be <code>constructorTypeIR &lt; tid<sub>expl</sub><sup>*</sup> , tid<sub>impl</sub><sup>*</sup> &gt;</code>.</p>
 </li>
 <li>
-<p>Check that <a href="#ConstructorTypeDef_wf"><code>constructorTypeDefIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, $bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;.</p>
+<p>Check that <a href="#ConstructorTypeDef_wf"><code>constructorTypeDefIR</code> is a well-formed type, assuming bound type ids <code>$bound(GLOBAL, TC<sub>0</sub>)</code></a>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>4</sub></code> be <code><a href="#add_constructor">$add_constructor(TC<sub>3</sub>, cid, constructorTypeDefIR)</a></code>.</p>
@@ -16432,7 +16432,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code><em><sup>*</sup></code> be the list of <code></em></code>, <code><em><sup>*</sup></code> be the list of <code></em></code>, <code><em><sup>*</sup></code> be the list of <code></em></code>, <code><em><sup>*</sup></code> be the list of <code></em></code>, and <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
+<p>Let <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
 <div class="openblock">
 <div class="content">
 <div class="ulist">
@@ -16724,7 +16724,7 @@ for comparison operators, logical operators, concat, range, or mask operators.</
 <p>Let <code>typeIR<sub>l</sub></code> be <a href="#type_of_lvalue">the type of lvalue  <code>typedLvalueIR</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>r</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR</code></a>.</p>
+<p>Let <code>typeIR<sub>r</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR</code></a>.</p>
 </li>
 <li>
 <p>Let <code>typedExpressionIR'<sup>?</sup></code> be <a href="#coerce_unary">implicitly cast  <code>typedExpressionIR</code>  to  <code>typeIR<sub>l</sub></code></a>.</p>
@@ -16822,7 +16822,7 @@ for comparison operators, logical operators, concat, range, or mask operators.</
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Result in the typed lvalue <code>prefixedNameIR # ( typeIR )</code>.</p>
+<p>Result in the typed lvalue <a href="#typedLvalueIR"><code>prefixedNameIR</code> with note <code>( typeIR )</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -16832,7 +16832,7 @@ for comparison operators, logical operators, concat, range, or mask operators.</
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Result in the typed lvalue <code>prefixedNameIR # ( typeIR )</code>.</p>
+<p>Result in the typed lvalue <a href="#typedLvalueIR"><code>prefixedNameIR</code> with note <code>( typeIR )</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -16919,7 +16919,7 @@ rule Lvalue_ok/memberAccess/headerunion:
 <div class="olist upperalpha">
 <ol class="upperalpha" type="A">
 <li>
-<p>Let <code>typedLvalueIR</code> be <code>typedLvalueIR<sub>base</sub> . nameIR # ( typeIR )</code>.</p>
+<p>Let <code>typedLvalueIR</code> be <a href="#typedLvalueIR"><code>typedLvalueIR<sub>base</sub> . nameIR</code> with note <code>( typeIR )</code></a>.</p>
 </li>
 <li>
 <p>Result in the typed lvalue <code>typedLvalueIR</code>.</p>
@@ -16932,7 +16932,7 @@ rule Lvalue_ok/memberAccess/headerunion:
 <div class="olist upperalpha">
 <ol class="upperalpha" type="A">
 <li>
-<p>Let <code>typedLvalueIR</code> be <code>typedLvalueIR<sub>base</sub> . nameIR # ( typeIR )</code>.</p>
+<p>Let <code>typedLvalueIR</code> be <a href="#typedLvalueIR"><code>typedLvalueIR<sub>base</sub> . nameIR</code> with note <code>( typeIR )</code></a>.</p>
 </li>
 <li>
 <p>Result in the typed lvalue <code>typedLvalueIR</code>.</p>
@@ -16952,7 +16952,7 @@ rule Lvalue_ok/memberAccess/headerunion:
 <div class="olist upperalpha">
 <ol class="upperalpha" type="A">
 <li>
-<p>Let <code>typedLvalueIR</code> be <code>typedLvalueIR<sub>base</sub> . nameIR # ( typeIR )</code>.</p>
+<p>Let <code>typedLvalueIR</code> be <a href="#typedLvalueIR"><code>typedLvalueIR<sub>base</sub> . nameIR</code> with note <code>( typeIR )</code></a>.</p>
 </li>
 <li>
 <p>Result in the typed lvalue <code>typedLvalueIR</code>.</p>
@@ -16965,7 +16965,7 @@ rule Lvalue_ok/memberAccess/headerunion:
 <div class="olist upperalpha">
 <ol class="upperalpha" type="A">
 <li>
-<p>Let <code>typedLvalueIR</code> be <code>typedLvalueIR<sub>base</sub> . nameIR # ( typeIR )</code>.</p>
+<p>Let <code>typedLvalueIR</code> be <a href="#typedLvalueIR"><code>typedLvalueIR<sub>base</sub> . nameIR</code> with note <code>( typeIR )</code></a>.</p>
 </li>
 <li>
 <p>Result in the typed lvalue <code>typedLvalueIR</code>.</p>
@@ -16996,7 +16996,7 @@ rule Lvalue_ok/memberAccess/headerunion:
 <p>Let <code>typeIR</code> be <code>typeIR''<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typedLvalueIR</code> be <code>typedLvalueIR<sub>base</sub> . nameIR # ( typeIR )</code>.</p>
+<p>Let <code>typedLvalueIR</code> be <a href="#typedLvalueIR"><code>typedLvalueIR<sub>base</sub> . nameIR</code> with note <code>( typeIR )</code></a>.</p>
 </li>
 <li>
 <p>Result in the typed lvalue <code>typedLvalueIR</code>.</p>
@@ -17021,7 +17021,7 @@ rule Lvalue_ok/memberAccess/headerunion:
 <p>Let <code>typeIR</code> be <code>typeIR''<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typedLvalueIR</code> be <code>typedLvalueIR<sub>base</sub> . nameIR # ( typeIR )</code>.</p>
+<p>Let <code>typedLvalueIR</code> be <a href="#typedLvalueIR"><code>typedLvalueIR<sub>base</sub> . nameIR</code> with note <code>( typeIR )</code></a>.</p>
 </li>
 <li>
 <p>Result in the typed lvalue <code>typedLvalueIR</code>.</p>
@@ -17046,7 +17046,7 @@ rule Lvalue_ok/memberAccess/headerunion:
 <p>Let <code>typeIR</code> be <code>typeIR''<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typedLvalueIR</code> be <code>typedLvalueIR<sub>base</sub> . nameIR # ( typeIR )</code>.</p>
+<p>Let <code>typedLvalueIR</code> be <a href="#typedLvalueIR"><code>typedLvalueIR<sub>base</sub> . nameIR</code> with note <code>( typeIR )</code></a>.</p>
 </li>
 <li>
 <p>Result in the typed lvalue <code>typedLvalueIR</code>.</p>
@@ -17118,7 +17118,7 @@ rule Lvalue_ok/indexAccess/non-lctk:
 <p>Let <code>typedExpressionIR<sub>index</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>index</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>_ # ( typeIR<sub>index</sub> ctk<sub>index</sub> )</code> be <code>typedExpressionIR<sub>index</sub></code>.</p>
+<p>Let <a href="#expressionNoteIR">type <code>typeIR<sub>index</sub></code> and compile-time known-ness <code>ctk<sub>index</sub></code></a> be the note of <code>typedExpressionIR<sub>index</sub></code>.</p>
 </li>
 <li>
 <p>Let <code>typedExpressionIR<sup>?</sup></code> be <code><a href="#reduce_serenum_unary">$reduce_serenum_unary(typedExpressionIR<sub>index</sub>, $compat_array_index)</a></code>.</p>
@@ -17149,7 +17149,7 @@ rule Lvalue_ok/indexAccess/non-lctk:
 <p>Check that <code>n<sub>index</sub></code> is less than <code>n<sub>size</sub></code>.</p>
 </li>
 <li>
-<p>Let <code>typedLvalueIR</code> be <code>typedLvalueIR<sub>base</sub> [ typedExpressionIR<sub>index_reduced</sub> ] # ( typeIR )</code>.</p>
+<p>Let <code>typedLvalueIR</code> be <a href="#typedLvalueIR"><code>typedLvalueIR<sub>base</sub> [ typedExpressionIR<sub>index_reduced</sub> ]</code> with note <code>( typeIR )</code></a>.</p>
 </li>
 <li>
 <p>Result in the typed lvalue <code>typedLvalueIR</code>.</p>
@@ -17162,7 +17162,7 @@ rule Lvalue_ok/indexAccess/non-lctk:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>typedLvalueIR</code> be <code>typedLvalueIR<sub>base</sub> [ typedExpressionIR<sub>index_reduced</sub> ] # ( typeIR )</code>.</p>
+<p>Let <code>typedLvalueIR</code> be <a href="#typedLvalueIR"><code>typedLvalueIR<sub>base</sub> [ typedExpressionIR<sub>index_reduced</sub> ]</code> with note <code>( typeIR )</code></a>.</p>
 </li>
 <li>
 <p>Result in the typed lvalue <code>typedLvalueIR</code>.</p>
@@ -17246,10 +17246,10 @@ rule Lvalue_ok/indexAccess/non-lctk:
 <p>Let <code>typedExpressionIR<sub>lo_reduced</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>_ # ( typeIR<sub>hi_reduced</sub> ctk<sub>hi_reduced</sub> )</code> be <code>typedExpressionIR<sub>hi_reduced</sub></code>.</p>
+<p>Let <a href="#expressionNoteIR">type <code>typeIR<sub>hi_reduced</sub></code> and compile-time known-ness <code>ctk<sub>hi_reduced</sub></code></a> be the note of <code>typedExpressionIR<sub>hi_reduced</sub></code>.</p>
 </li>
 <li>
-<p>Let <code>_ # ( typeIR<sub>lo_reduced</sub> ctk<sub>lo_reduced</sub> )</code> be <code>typedExpressionIR<sub>lo_reduced</sub></code>.</p>
+<p>Let <a href="#expressionNoteIR">type <code>typeIR<sub>lo_reduced</sub></code> and compile-time known-ness <code>ctk<sub>lo_reduced</sub></code></a> be the note of <code>typedExpressionIR<sub>lo_reduced</sub></code>.</p>
 </li>
 <li>
 <p>Check that <code>ctk<sub>hi_reduced</sub></code> matches pattern <code>LCTK</code>.</p>
@@ -17297,7 +17297,7 @@ rule Lvalue_ok/indexAccess/non-lctk:
 <p>Let <code>typeIR</code> be <code>BIT &lt; n<sub>slice</sub> &gt;</code>.</p>
 </li>
 <li>
-<p>Let <code>typedLvalueIR</code> be <code>typedLvalueIR<sub>base</sub> [ typedExpressionIR<sub>hi_reduced</sub> : typedExpressionIR<sub>lo_reduced</sub> ] # ( typeIR )</code>.</p>
+<p>Let <code>typedLvalueIR</code> be <a href="#typedLvalueIR"><code>typedLvalueIR<sub>base</sub> [ typedExpressionIR<sub>hi_reduced</sub> : typedExpressionIR<sub>lo_reduced</sub> ]</code> with note <code>( typeIR )</code></a>.</p>
 </li>
 <li>
 <p>Result in the typed lvalue <code>typedLvalueIR</code>.</p>
@@ -17335,7 +17335,7 @@ rule Lvalue_ok/indexAccess/non-lctk:
 <p>Let <code>_ # ( typeIR<sub>base</sub> )</code> be <code>typedLvalueIR<sub>base</sub></code>.</p>
 </li>
 <li>
-<p>Let <code>typedLvalueIR</code> be <code>( typedLvalueIR<sub>base</sub> ) # ( typeIR<sub>base</sub> )</code>.</p>
+<p>Let <code>typedLvalueIR</code> be <a href="#typedLvalueIR"><code>( typedLvalueIR<sub>base</sub> )</code> with note <code>( typeIR<sub>base</sub> )</code></a>.</p>
 </li>
 <li>
 <p>Result in the typed lvalue <code>typedLvalueIR</code>.</p>
@@ -17662,7 +17662,7 @@ rule RoutineTarget_ok/referenceExpression/this:
 <p>Let <code>prefixedNameIR</code> be <a href="#prefixedNonTypeName">the prefixed name of  <code>prefixedNonTypeName</code></a>.</p>
 </li>
 <li>
-<p>Check that <code>prefixedNameIR = ` "verify" \/ prefixedNameIR = . "verify" &#8658; p = BLOCK /\ <a href="#is_parser_blockKind">$is_parser_blockKind(TC.BLOCK.KIND)</a> \/ p = LOCAL /\ <a href="#is_parser_state_localKind">$is_parser_state_localKind(TC.LOCAL.KIND)</a></code>.</p>
+<p>Check that <code>prefixedNameIR = "verify" \/ prefixedNameIR = . "verify" &#8658; p = BLOCK /\ <a href="#is_parser_blockKind">$is_parser_blockKind(TC.BLOCK.KIND)</a> \/ p = LOCAL /\ <a href="#is_parser_state_localKind">$is_parser_state_localKind(TC.LOCAL.KIND)</a></code>.</p>
 </li>
 <li>
 <p>Result in the typed routine target <code>prefixedNameIR</code>.</p>
@@ -17675,7 +17675,7 @@ rule RoutineTarget_ok/referenceExpression/this:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Result in the typed routine target <code>` "this"</code>.</p>
+<p>Result in the typed routine target <code>"this"</code>.</p>
 </li>
 </ol>
 </div>
@@ -17944,7 +17944,7 @@ invoked.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>expressionIR # ( typeIR<sub>object</sub> _ )</code> be the result of <a href="#Expr_ok">typing <code>namedType ( )</code>, under cursor <code>p'</code> and typing context <code>TC'</code></a>.</p>
+<p>Let <a href="#typedExpressionIR"><code>expressionIR</code> annotated with type <code>typeIR<sub>object</sub></code> and compile-time known-ness <code>_</code></a> be the result of <a href="#Expr_ok">typing <code>namedType ( )</code>, under cursor <code>p'</code> and typing context <code>TC'</code></a>.</p>
 </li>
 <li>
 <p>Check that <code>expressionIR</code> has type <code>callExpressionIR</code>.</p>
@@ -17977,7 +17977,7 @@ invoked.</p>
 <p>Let <code>lvalue</code> be <code>nameIR<sub>object</sub> . "apply"</code>.</p>
 </li>
 <li>
-<p>Let <code><em></code>, <code></em></code>, and <code>statementIR</code> be the result of <a href="#Stmt_ok">typing <code>lvalue ( argumentList ) ;</code>, under cursor <code>p'</code>, typing context <code>TC<sub>1</sub></code>, and abstract control flow <code>f'</code></a>.</p>
+<p>Let <code>_</code>, <code>_</code>, and <code>statementIR</code> be the result of <a href="#Stmt_ok">typing <code>lvalue ( argumentList ) ;</code>, under cursor <code>p'</code>, typing context <code>TC<sub>1</sub></code>, and abstract control flow <code>f'</code></a>.</p>
 </li>
 <li>
 <p>Check that <code>statementIR</code> has type <code>callStatementIR</code>.</p>
@@ -17989,7 +17989,7 @@ invoked.</p>
 <p>Let <code>routineTargetIR &lt; typeArgumentIR'<sup>*</sup> &gt; ( argumentIR<sub>cast</sub><sup>*</sup> ) ;</code> be <code>callStatementIR</code>.</p>
 </li>
 <li>
-<p>Check that <code>routineTargetIR</code> is equal to <code>` nameIR<sub>object</sub> # ( typeIR<sub>object</sub> CTK ) . "apply"</code>.</p>
+<p>Check that <code>routineTargetIR</code> is equal to <code>nameIR<sub>object</sub> # ( typeIR<sub>object</sub> CTK ) . "apply"</code>.</p>
 </li>
 <li>
 <p>Check that <code>typeArgumentIR'<sup>*</sup></code> is an empty list.</p>
@@ -18085,7 +18085,7 @@ invoked.</p>
 <p>Let <code>constantDeclarationIR</code> be <code>CONST typeIR nameIR = ! oid ;</code>.</p>
 </li>
 <li>
-<p>Let <code>routineTargetIR</code> be <code>` tid # ( typeIR CTK ) . "apply"</code>.</p>
+<p>Let <code>routineTargetIR</code> be <code>tid # ( typeIR CTK ) . "apply"</code>.</p>
 </li>
 <li>
 <p>Let <code>callStatementIR</code> be <code>routineTargetIR &lt; [ ] &gt; ( argumentListIR ) ;</code>.</p>
@@ -18204,7 +18204,7 @@ rule Stmt_ok/returnStatement/expression:
 <p>Let <code>typedExpressionIR</code> be the result of <a href="#Expr_ok">typing <code>expression</code>, under cursor <code>LOCAL</code> and typing context <code>TC'</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR</code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR</code></a>.</p>
+<p>Let <code>typeIR</code> be <a href="#type_of_expression">the type of <code>typedExpressionIR</code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR'<sup>?</sup></code> be <code><a href="#find_return_type">$find_return_type(TC')</a></code>.</p>
@@ -18673,7 +18673,7 @@ rule BlockElementStmt_ok/variableDeclaration/initializer:
 <p>Check that <code>tid<sup>*</sup></code> is an empty list.</p>
 </li>
 <li>
-<p>Check that <a href="#Type_wf"><code>typeIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, $bound(LOCAL, TC<sub>0</sub>)</a></code>&gt;&gt;.</p>
+<p>Check that <a href="#Type_wf"><code>typeIR</code> is a well-formed type, assuming bound type ids <code>$bound(LOCAL, TC<sub>0</sub>)</code></a>.</p>
 </li>
 <li>
 <p>Check that <code><a href="#is_assignable_typeIR">$is_assignable_typeIR(typeIR)</a></code>.</p>
@@ -18717,7 +18717,7 @@ rule BlockElementStmt_ok/variableDeclaration/initializer:
 <p>Check that <code>tid<sup>*</sup></code> is an empty list.</p>
 </li>
 <li>
-<p>Check that <a href="#Type_wf"><code>typeIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, $bound(LOCAL, TC<sub>0</sub>)</a></code>&gt;&gt;.</p>
+<p>Check that <a href="#Type_wf"><code>typeIR</code> is a well-formed type, assuming bound type ids <code>$bound(LOCAL, TC<sub>0</sub>)</code></a>.</p>
 </li>
 <li>
 <p>Check that <code><a href="#is_assignable_typeIR">$is_assignable_typeIR(typeIR)</a></code>.</p>
@@ -19030,7 +19030,7 @@ rule Stmt_ok/conditionalStatement/else:
 <p>Let <code>typedExpressionIR<sub>cond</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>cond</sub></code>, under cursor <code>p'</code> and typing context <code>TC'</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>cond</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>cond</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>cond</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>cond</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>BOOL</code> is equal to <a href="#canon">the canonicalized form of <code>typeIR<sub>cond</sub></code></a>.</p>
@@ -19065,7 +19065,7 @@ rule Stmt_ok/conditionalStatement/else:
 <p>Let <code>typedExpressionIR<sub>cond</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>cond</sub></code>, under cursor <code>p'</code> and typing context <code>TC'</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>cond</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>cond</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>cond</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>cond</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>BOOL</code> is equal to <a href="#canon">the canonicalized form of <code>typeIR<sub>cond</sub></code></a>.</p>
@@ -19636,7 +19636,7 @@ rule SwitchLabel_table_ok/expressionNonBrace-prefixedNonTypeName:
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>If <code>bool</code> is equal to true:</p>
+<p>If <code>bool</code> is equal to <code>true</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -19659,7 +19659,7 @@ rule SwitchLabel_table_ok/expressionNonBrace-prefixedNonTypeName:
 <p>Check that <code>prefixedNameIR</code> matches pattern <code>` %</code>.</p>
 </li>
 <li>
-<p>Let <code>` nameIR<sub>label</sub></code> be <code>prefixedNameIR</code>.</p>
+<p>Let <code>nameIR<sub>label</sub></code> be <code>prefixedNameIR</code>.</p>
 </li>
 <li>
 <p>Let <code>tid<sub>table_enum</sub></code> be <code>"action_list("  tid~table~  ")"</code>.</p>
@@ -19668,7 +19668,7 @@ rule SwitchLabel_table_ok/expressionNonBrace-prefixedNonTypeName:
 <p>Let <code>id<sub>label</sub></code> be <code>tid<sub>table_enum</sub>  "."  nameIR<sub>label</sub></code>.</p>
 </li>
 <li>
-<p>Let <code>varTypeIR<sup>?</sup></code> be <code><a href="#find_var">$find_var(LOCAL, TC, ` id<sub>label</sub>)</a></code>.</p>
+<p>Let <code>varTypeIR<sup>?</sup></code> be <code><a href="#find_var">$find_var(LOCAL, TC, id<sub>label</sub>)</a></code>.</p>
 </li>
 <li>
 <p>Check that <code>varTypeIR<sup>?</sup></code> is Some value.</p>
@@ -19686,7 +19686,7 @@ rule SwitchLabel_table_ok/expressionNonBrace-prefixedNonTypeName:
 <p>Check that <code>value<sub>label</sub></code> is equal to <code>TABLE_ENUM tid<sub>table_enum</sub> . nameIR<sub>label</sub></code>.</p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR<sub>label</sub></code> be <code>` nameIR<sub>label</sub> # ( typeIR<sub>label</sub> ctk<sub>label</sub> )</code>.</p>
+<p>Let <code>typedExpressionIR<sub>label</sub></code> be <a href="#typedExpressionIR"><code>nameIR<sub>label</sub></code> annotated with type <code>typeIR<sub>label</sub></code> and compile-time known-ness <code>ctk<sub>label</sub></code></a>.</p>
 </li>
 <li>
 <p>Result in <code>typedExpressionIR<sub>label</sub></code>.</p>
@@ -19802,7 +19802,7 @@ rule SwitchCase_table_ok/non-blockStatement:
 <p>Let <code>typedExpressionIR<sub>switch</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>switch</sub></code>, under cursor <code>LOCAL</code> and typing context <code>TC'</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>switch</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>switch</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>switch</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>switch</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>switch</sub></code></a>.</p>
@@ -19820,7 +19820,7 @@ rule SwitchCase_table_ok/non-blockStatement:
 <p>Let <code>TABLE_ENUM tid<sub>table_enum</sub> { _<sup>*</sup> }</code> be <code>tableMetadataTypeIR</code>.</p>
 </li>
 <li>
-<p>Let <code>tid<sub>table</sub></code> be <code><a href="#strip_prefix">$strip_prefix(&lt;&lt;strip_suffix, $strip_suffix(tid<sub>table_enum</sub>, ")")</a>, "action_list(")&gt;&gt;</code>.</p>
+<p>Let <code>tid<sub>table</sub></code> be <code><a href="#strip_prefix">$strip_prefix($strip_suffix(tid<sub>table_enum</sub>, ")"), "action_list(")</a></code>.</p>
 </li>
 <li>
 <p>Let <code>switchCase<sup>*</sup></code> be <a href="#flatten_switchCaseList">the list of switch cases in <code>switchCaseList</code></a>.</p>
@@ -19931,7 +19931,7 @@ rule SwitchLabel_general_ok/expressionNonBrace:
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>If <code>bool</code> is equal to true:</p>
+<p>If <code>bool</code> is equal to <code>true</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -19963,7 +19963,7 @@ rule SwitchLabel_general_ok/expressionNonBrace:
 <p>Let <code>typedExpressionIR<sub>label_cast</sub></code> be <code>typedExpressionIR<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>_ # ( _ ctk )</code> be <code>typedExpressionIR<sub>label_cast</sub></code>.</p>
+<p>Let <a href="#expressionNoteIR">type <code>_</code> and compile-time known-ness <code>ctk</code></a> be the note of <code>typedExpressionIR<sub>label_cast</sub></code>.</p>
 </li>
 <li>
 <p>Check that <code>ctk</code> matches pattern <code>LCTK</code>.</p>
@@ -20081,7 +20081,7 @@ rule SwitchCase_general_ok/non-blockStatement:
 <p>Let <code>typedExpressionIR<sub>switch</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>switch</sub></code>, under cursor <code>LOCAL</code> and typing context <code>TC'</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>switch</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>switch</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>switch</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>switch</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code><a href="#compat_switch">$compat_switch(typeIR<sub>switch</sub>)</a></code>.</p>
@@ -20358,10 +20358,10 @@ rule Expr_ok/literalExpression-boolean/false:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( BOOL LCTK )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>BOOL</code> and compile-time known-ness <code>LCTK</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>TRUE # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>TRUE</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -20371,10 +20371,10 @@ rule Expr_ok/literalExpression-boolean/false:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( BOOL LCTK )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>BOOL</code> and compile-time known-ness <code>LCTK</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>FALSE # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>FALSE</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -20404,7 +20404,7 @@ rule Eval_static/literalExpressionIR-boolean/false:
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Eval_static">the local compile-time evaluation of <code>booleanLiteral # ( _ _ )</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
+<p><a href="#Eval_static">the local compile-time evaluation of <code>booleanLiteral</code> annotated with type <code>_</code> and compile-time known-ness <code>_</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -20589,10 +20589,10 @@ rule Expr_ok/literalExpression-number/fixbit:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( INT LCTK )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>INT</code> and compile-time known-ness <code>LCTK</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>D i # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>D i</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -20602,10 +20602,10 @@ rule Expr_ok/literalExpression-number/fixbit:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( INT &lt; n &gt; LCTK )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>INT &lt; n &gt;</code> and compile-time known-ness <code>LCTK</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>n S i # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>n S i</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -20615,10 +20615,10 @@ rule Expr_ok/literalExpression-number/fixbit:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( BIT &lt; n &gt; LCTK )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>BIT &lt; n &gt;</code> and compile-time known-ness <code>LCTK</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>n W i # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>n W i</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -20651,7 +20651,7 @@ rule Eval_static/literalExpressionIR-number/fixint:
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Eval_static">the local compile-time evaluation of <code>numberLiteral # ( _ _ )</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
+<p><a href="#Eval_static">the local compile-time evaluation of <code>numberLiteral</code> annotated with type <code>_</code> and compile-time known-ness <code>_</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -20785,10 +20785,10 @@ rule Expr_inst/literalExpressionIR-number/fixint:
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( STRING LCTK )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>STRING</code> and compile-time known-ness <code>LCTK</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>" text " # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>" text "</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -20812,7 +20812,7 @@ rule Expr_inst/literalExpressionIR-number/fixint:
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Eval_static">the local compile-time evaluation of <code>" text " # ( _ _ )</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
+<p><a href="#Eval_static">the local compile-time evaluation of <code>" text "</code> annotated with type <code>_</code> and compile-time known-ness <code>_</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -20914,10 +20914,10 @@ rule Expr_ok/referenceExpression/this:
 <p>Let <code>_ typeIR ctk _<sup>?</sup></code> be <code>varTypeIR<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR ctk )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>ctk</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>prefixedNameIR # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>prefixedNameIR</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -20927,7 +20927,7 @@ rule Expr_ok/referenceExpression/this:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>prefixedNameIR</code> be <code>` "this"</code>.</p>
+<p>Let <code>prefixedNameIR</code> be <code>"this"</code>.</p>
 </li>
 <li>
 <p>Let <code>varTypeIR<sup>?</sup></code> be <code><a href="#find_var">$find_var(p, TC, prefixedNameIR)</a></code>.</p>
@@ -20939,10 +20939,10 @@ rule Expr_ok/referenceExpression/this:
 <p>Let <code>_ typeIR ctk _<sup>?</sup></code> be <code>varTypeIR<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR ctk )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>ctk</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>prefixedNameIR # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>prefixedNameIR</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -20970,7 +20970,7 @@ rule Expr_ok/referenceExpression/this:
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Eval_static">the local compile-time evaluation of <code>prefixedNameIR # ( _ _ )</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
+<p><a href="#Eval_static">the local compile-time evaluation of <code>prefixedNameIR</code> annotated with type <code>_</code> and compile-time known-ness <code>_</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -21053,10 +21053,10 @@ defaultExpressionIR = defaultExpression</code></pre>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( DEFAULT LCTK )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>DEFAULT</code> and compile-time known-ness <code>LCTK</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>&#8230;&#8203; # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>&#8230;&#8203;</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -21080,7 +21080,7 @@ defaultExpressionIR = defaultExpression</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Eval_static">the local compile-time evaluation of <code>&#8230;&#8203; # ( _ _ )</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
+<p><a href="#Eval_static">the local compile-time evaluation of <code>&#8230;&#8203;</code> annotated with type <code>_</code> and compile-time known-ness <code>_</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -21183,16 +21183,16 @@ unaryExpressionIR
 <p>Let <code>typedExpressionIR<sub>reduced</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR<sub>reduced</sub> ctk<sub>reduced</sub> )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>! typedExpressionIR<sub>reduced</sub> # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>! typedExpressionIR<sub>reduced</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -21241,16 +21241,16 @@ unaryExpressionIR
 <p>Let <code>typedExpressionIR<sub>reduced</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR<sub>reduced</sub> ctk<sub>reduced</sub> )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>~ typedExpressionIR<sub>reduced</sub> # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>~ typedExpressionIR<sub>reduced</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -21304,16 +21304,16 @@ unaryExpressionIR
 <p>Let <code>typedExpressionIR<sub>reduced</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR<sub>reduced</sub> ctk<sub>reduced</sub> )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>unop typedExpressionIR<sub>reduced</sub> # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>unop typedExpressionIR<sub>reduced</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -21335,16 +21335,16 @@ unaryExpressionIR
 <p>Let <code>typedExpressionIR<sub>reduced</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR<sub>reduced</sub> ctk<sub>reduced</sub> )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>unop typedExpressionIR<sub>reduced</sub> # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>unop typedExpressionIR<sub>reduced</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -21373,7 +21373,7 @@ unaryExpressionIR
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Eval_static">the local compile-time evaluation of <code>unop typedExpressionIR # ( _ _ )</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
+<p><a href="#Eval_static">the local compile-time evaluation of <code>unop typedExpressionIR</code> annotated with type <code>_</code> and compile-time known-ness <code>_</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -21520,22 +21520,22 @@ binaryExpressionIR
 <p>Let <code>(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>reduced</sub></code> be <code><a href="#join_ctk">$join_ctk(ctk<sub>l_reduced</sub>, ctk<sub>r_reduced</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR<sub>reduced</sub> ctk<sub>reduced</sub> )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>typedExpressionIR<sub>l_reduced</sub> binop typedExpressionIR<sub>r_reduced</sub> # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>typedExpressionIR<sub>l_reduced</sub> binop typedExpressionIR<sub>r_reduced</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -21604,22 +21604,22 @@ binaryExpressionIR
 <p>Let <code>(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>reduced</sub></code> be <code><a href="#join_ctk">$join_ctk(ctk<sub>l_reduced</sub>, ctk<sub>r_reduced</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR<sub>reduced</sub> ctk<sub>reduced</sub> )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>typedExpressionIR<sub>l_reduced</sub> binop typedExpressionIR<sub>r_reduced</sub> # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>typedExpressionIR<sub>l_reduced</sub> binop typedExpressionIR<sub>r_reduced</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -21706,13 +21706,13 @@ rule Expr_ok/binaryExpression-divmod/rhs-non-lctk:
 <p>Let <code>(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>If <code>ctk<sub>r_reduced</sub></code> matches pattern <code>LCTK</code>:</p>
@@ -21731,16 +21731,16 @@ rule Expr_ok/binaryExpression-divmod/rhs-non-lctk:
 <p>Let <code>n<sub>r</sub></code> be <code>int</code>.</p>
 </li>
 <li>
-<p>Check that <code>n<sub>r</sub></code> is greater than 0.</p>
+<p>Check that <code>n<sub>r</sub></code> is greater than <code>0</code>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>reduced</sub></code> be <code><a href="#join_ctk">$join_ctk(ctk<sub>l_reduced</sub>, ctk<sub>r_reduced</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR<sub>reduced</sub> ctk<sub>reduced</sub> )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>typedExpressionIR<sub>l_reduced</sub> binop typedExpressionIR<sub>r_reduced</sub> # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>typedExpressionIR<sub>l_reduced</sub> binop typedExpressionIR<sub>r_reduced</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -21753,10 +21753,10 @@ rule Expr_ok/binaryExpression-divmod/rhs-non-lctk:
 <p>Let <code>ctk<sub>reduced</sub></code> be <code><a href="#join_ctk">$join_ctk(ctk<sub>l_reduced</sub>, ctk<sub>r_reduced</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR<sub>reduced</sub> ctk<sub>reduced</sub> )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>typedExpressionIR<sub>l_reduced</sub> binop typedExpressionIR<sub>r_reduced</sub> # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>typedExpressionIR<sub>l_reduced</sub> binop typedExpressionIR<sub>r_reduced</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -21835,16 +21835,16 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Let <code>(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>l_reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>l_reduced</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>r_reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>r_reduced</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Else if <code><a href="#is_fixed_bit_typeIR">$is_fixed_bit_typeIR(typeIR<sub>r_reduced</sub>)</a></code>:</p>
@@ -21854,10 +21854,10 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Let <code>ctk<sub>reduced</sub></code> be <code><a href="#join_ctk">$join_ctk(ctk<sub>l_reduced</sub>, ctk<sub>r_reduced</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR<sub>l_reduced</sub> ctk<sub>reduced</sub> )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>l_reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>typedExpressionIR<sub>l_reduced</sub> binop typedExpressionIR<sub>r_reduced</sub> # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>typedExpressionIR<sub>l_reduced</sub> binop typedExpressionIR<sub>r_reduced</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -21874,10 +21874,10 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Let <code>ctk<sub>reduced</sub></code> be <code><a href="#join_ctk">$join_ctk(ctk<sub>l_reduced</sub>, ctk<sub>r_reduced</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR<sub>l_reduced</sub> ctk<sub>reduced</sub> )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>l_reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>typedExpressionIR<sub>l_reduced</sub> binop typedExpressionIR<sub>r_reduced</sub> # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>typedExpressionIR<sub>l_reduced</sub> binop typedExpressionIR<sub>r_reduced</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -21890,10 +21890,10 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Let <code>ctk<sub>reduced</sub></code> be <code><a href="#join_ctk">$join_ctk(ctk<sub>l_reduced</sub>, ctk<sub>r_reduced</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR<sub>l_reduced</sub> ctk<sub>reduced</sub> )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>l_reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>typedExpressionIR<sub>l_reduced</sub> binop typedExpressionIR<sub>r_reduced</sub> # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>typedExpressionIR<sub>l_reduced</sub> binop typedExpressionIR<sub>r_reduced</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -21959,13 +21959,13 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Let <code>(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>cast</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_cast</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>cast</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>l_cast</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>l_cast</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>l_cast</sub></code></a>.</p>
+<p>Let <code>ctk<sub>l_cast</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR<sub>l_cast</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>r_cast</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>r_cast</sub></code></a>.</p>
+<p>Let <code>ctk<sub>r_cast</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR<sub>r_cast</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code><a href="#is_equalable_typeIR">$is_equalable_typeIR(typeIR<sub>cast</sub>)</a></code>.</p>
@@ -21974,10 +21974,10 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Let <code>ctk<sub>cast</sub></code> be <code><a href="#join_ctk">$join_ctk(ctk<sub>l_cast</sub>, ctk<sub>r_cast</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( BOOL ctk<sub>cast</sub> )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>BOOL</code> and compile-time known-ness <code>ctk<sub>cast</sub></code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>typedExpressionIR<sub>l_cast</sub> binop typedExpressionIR<sub>r_cast</sub> # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>typedExpressionIR<sub>l_cast</sub> binop typedExpressionIR<sub>r_cast</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -22046,22 +22046,22 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Let <code>(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>reduced</sub></code> be <code><a href="#join_ctk">$join_ctk(ctk<sub>l_reduced</sub>, ctk<sub>r_reduced</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( BOOL ctk<sub>reduced</sub> )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>BOOL</code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>typedExpressionIR<sub>l_reduced</sub> binop typedExpressionIR<sub>r_reduced</sub> # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>typedExpressionIR<sub>l_reduced</sub> binop typedExpressionIR<sub>r_reduced</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -22130,22 +22130,22 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Let <code>(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>reduced</sub></code> be <code><a href="#join_ctk">$join_ctk(ctk<sub>l_reduced</sub>, ctk<sub>r_reduced</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR<sub>reduced</sub> ctk<sub>reduced</sub> )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>typedExpressionIR<sub>l_reduced</sub> binop typedExpressionIR<sub>r_reduced</sub> # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>typedExpressionIR<sub>l_reduced</sub> binop typedExpressionIR<sub>r_reduced</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -22202,16 +22202,16 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Let <code>(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>l_reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>l_reduced</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>r_reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>r_reduced</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sup>?</sup></code> be <code><a href="#result_concat">$result_concat(typeIR<sub>l_reduced</sub>, typeIR<sub>r_reduced</sub>)</a></code>.</p>
@@ -22226,10 +22226,10 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Let <code>ctk<sub>reduced</sub></code> be <code><a href="#join_ctk">$join_ctk(ctk<sub>l_reduced</sub>, ctk<sub>r_reduced</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR<sub>reduced</sub> ctk<sub>reduced</sub> )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>typedExpressionIR<sub>l_reduced</sub> ++ typedExpressionIR<sub>r_reduced</sub> # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>typedExpressionIR<sub>l_reduced</sub>  typedExpressionIR~r_++reduced~</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -22298,22 +22298,22 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Let <code>(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>reduced</sub></code> be <code><a href="#join_ctk">$join_ctk(ctk<sub>l_reduced</sub>, ctk<sub>r_reduced</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR<sub>reduced</sub> ctk<sub>reduced</sub> )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>typedExpressionIR<sub>l_reduced</sub> binop typedExpressionIR<sub>r_reduced</sub> # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>typedExpressionIR<sub>l_reduced</sub> binop typedExpressionIR<sub>r_reduced</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -22359,7 +22359,7 @@ rule Eval_static/binaryExpressionIR/lor-false:
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>l</sub> binop' typedExpressionIR<sub>r</sub> # ( _ _ )</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
+<p><a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>l</sub> binop' typedExpressionIR<sub>r</sub></code> annotated with type <code>_</code> and compile-time known-ness <code>_</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -22621,7 +22621,7 @@ ternaryExpressionIR
 <p>Let <code>typedExpressionIR<sub>cond</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>cond</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>_ # ( typeIR ctk<sub>cond</sub> )</code> be <code>typedExpressionIR<sub>cond</sub></code>.</p>
+<p>Let <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>ctk<sub>cond</sub></code></a> be the note of <code>typedExpressionIR<sub>cond</sub></code>.</p>
 </li>
 <li>
 <p>Check that <code>typeIR</code> has type <code>primitiveTypeIR</code>.</p>
@@ -22648,13 +22648,13 @@ ternaryExpressionIR
 <p>Let <code>(typedExpressionIR<sub>true_cast</sub>, typedExpressionIR<sub>false_cast</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>cast</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>true_cast</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>cast</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>true_cast</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>true_cast</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>true_cast</sub></code></a>.</p>
+<p>Let <code>ctk<sub>true_cast</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR<sub>true_cast</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>false_cast</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>false_cast</sub></code></a>.</p>
+<p>Let <code>ctk<sub>false_cast</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR<sub>false_cast</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code><a href="#is_arbitrary_int_typeIR">$is_arbitrary_int_typeIR(typeIR<sub>cast</sub>)</a> &#8658; ctk<sub>cond</sub> =/= DYN</code>.</p>
@@ -22663,10 +22663,10 @@ ternaryExpressionIR
 <p>Let <code>ctk</code> be <code><a href="#joins_ctk">$joins_ctk([ctk<sub>cond</sub>, ctk<sub>true_cast</sub>, ctk<sub>false_cast</sub>])</a></code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR<sub>cast</sub> ctk )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>cast</sub></code> and compile-time known-ness <code>ctk</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>typedExpressionIR<sub>cond</sub> ? typedExpressionIR<sub>true_cast</sub> : typedExpressionIR<sub>false_cast</sub> # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>typedExpressionIR<sub>cond</sub> ? typedExpressionIR<sub>true_cast</sub> : typedExpressionIR<sub>false_cast</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -22697,7 +22697,7 @@ rule Eval_static/ternaryExpressionIR/false:
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>cond</sub> ? typedExpressionIR<sub>true</sub> : typedExpressionIR<sub>false</sub> # ( _ _ )</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
+<p><a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>cond</sub> ? typedExpressionIR<sub>true</sub> : typedExpressionIR<sub>false</sub></code> annotated with type <code>_</code> and compile-time known-ness <code>_</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -22846,25 +22846,25 @@ castExpressionIR
 <p>Check that <code>tid<sup>*</sup></code> is an empty list.</p>
 </li>
 <li>
-<p>Check that <a href="#Type_wf"><code>typeIR<sub>t</sub></code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, $bound(p, TC)</a></code>&gt;&gt;.</p>
+<p>Check that <a href="#Type_wf"><code>typeIR<sub>t</sub></code> is a well-formed type, assuming bound type ids <code>$bound(p, TC)</code></a>.</p>
 </li>
 <li>
 <p>Let <code>typedExpressionIR</code> be the result of <a href="#Expr_ok">typing <code>expression</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR</code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR</code></a>.</p>
+<p>Let <code>typeIR</code> be <a href="#type_of_expression">the type of <code>typedExpressionIR</code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk</code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR</code></a>.</p>
+<p>Let <code>ctk</code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR</code></a>.</p>
 </li>
 <li>
 <p>Check that <a href="#Sub_expl"><code>typeIR</code> can be explicitly cast to <code>typeIR<sub>t</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR<sub>t</sub> ctk )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>t</sub></code> and compile-time known-ness <code>ctk</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>( typeIR<sub>t</sub> ) typedExpressionIR # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>( typeIR<sub>t</sub> ) typedExpressionIR</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -22890,7 +22890,7 @@ castExpressionIR
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Eval_static">the local compile-time evaluation of <code>( typeIR ) typedExpressionIR # ( _ _ )</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
+<p><a href="#Eval_static">the local compile-time evaluation of <code>( typeIR ) typedExpressionIR</code> annotated with type <code>_</code> and compile-time known-ness <code>_</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -22994,10 +22994,10 @@ dataExpressionIR
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( HEADER_INVALID LCTK )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>HEADER_INVALID</code> and compile-time known-ness <code>LCTK</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>{#} # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>{#}</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -23021,7 +23021,7 @@ dataExpressionIR
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Eval_static">the local compile-time evaluation of <code>{#} # ( _ _ )</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
+<p><a href="#Eval_static">the local compile-time evaluation of <code>{#}</code> annotated with type <code>_</code> and compile-time known-ness <code>_</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -23148,7 +23148,7 @@ rule Expr_ok/dataExpression-sequence/default:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>typeIR<sub>e</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>e</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>e</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>e</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -23165,7 +23165,7 @@ rule Expr_ok/dataExpression-sequence/default:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>ctk<sub>e</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>e</sub></code></a>.</p>
+<p>Let <code>ctk<sub>e</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR<sub>e</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -23182,10 +23182,10 @@ rule Expr_ok/dataExpression-sequence/default:
 <p>Let <code>ctk</code> be <code><a href="#joins_ctk">$joins_ctk(ctk<sub>e</sub><sup>*</sup>)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR ctk )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>ctk</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>SEQ { typedExpressionIR<sub>e</sub><sup>*</sup> } # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>SEQ { typedExpressionIR<sub>e</sub><sup>*</sup> }</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -23239,7 +23239,7 @@ rule Expr_ok/dataExpression-sequence/default:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>typeIR<sub>e_h</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>e_h</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>e_h</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>e_h</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -23256,7 +23256,7 @@ rule Expr_ok/dataExpression-sequence/default:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>ctk<sub>e_h</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>e_h</sub></code></a>.</p>
+<p>Let <code>ctk<sub>e_h</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR<sub>e_h</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -23273,10 +23273,10 @@ rule Expr_ok/dataExpression-sequence/default:
 <p>Let <code>ctk</code> be <code><a href="#joins_ctk">$joins_ctk(ctk<sub>e_h</sub><sup>*</sup>)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR ctk )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>ctk</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>SEQ { typedExpressionIR<sub>e_h</sub><sup>*</sup> , &#8230;&#8203; } # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>SEQ { typedExpressionIR<sub>e_h</sub><sup>*</sup> , &#8230;&#8203; }</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -23308,7 +23308,7 @@ rule Eval_static/dataExpressionIR-sequence/default:
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Eval_static">the local compile-time evaluation of <code>dataExpressionIR # ( _ _ )</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
+<p><a href="#Eval_static">the local compile-time evaluation of <code>dataExpressionIR</code> annotated with type <code>_</code> and compile-time known-ness <code>_</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -23514,19 +23514,19 @@ rule Expr_ok/dataExpression-record/multiple-default:
 <p>Let <code>typedExpressionIR<sub>f</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>f</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>f</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>f</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>f</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>f</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>f</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>f</sub></code></a>.</p>
+<p>Let <code>ctk<sub>f</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR<sub>f</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR</code> be <code>RECORD { [typeIR<sub>f</sub> nameIR<sub>f</sub> ;] }</code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR ctk<sub>f</sub> )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>ctk<sub>f</sub></code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>RECORD { [nameIR<sub>f</sub> = typedExpressionIR<sub>f</sub>] } # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>RECORD { [nameIR<sub>f</sub> = typedExpressionIR<sub>f</sub>] }</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -23542,19 +23542,19 @@ rule Expr_ok/dataExpression-record/multiple-default:
 <p>Let <code>typedExpressionIR<sub>f</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>f</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>f</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>f</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>f</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>f</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>f</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>f</sub></code></a>.</p>
+<p>Let <code>ctk<sub>f</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR<sub>f</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR</code> be <code>RECORD { [typeIR<sub>f</sub> nameIR<sub>f</sub> ;] , &#8230;&#8203; }</code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR ctk<sub>f</sub> )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>ctk<sub>f</sub></code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>RECORD { [nameIR<sub>f</sub> = typedExpressionIR<sub>f</sub>] , &#8230;&#8203; } # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>RECORD { [nameIR<sub>f</sub> = typedExpressionIR<sub>f</sub>] , &#8230;&#8203; }</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -23613,7 +23613,7 @@ rule Expr_ok/dataExpression-record/multiple-default:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>typeIR<sub>f</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>f</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>f</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>f</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -23630,7 +23630,7 @@ rule Expr_ok/dataExpression-record/multiple-default:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>ctk<sub>f</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>f</sub></code></a>.</p>
+<p>Let <code>ctk<sub>f</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR<sub>f</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -23647,10 +23647,10 @@ rule Expr_ok/dataExpression-record/multiple-default:
 <p>Let <code>ctk</code> be <code><a href="#joins_ctk">$joins_ctk(ctk<sub>f</sub><sup>*</sup>)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR ctk )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>ctk</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>RECORD { nameIR<sub>f</sub> = typedExpressionIR<sub>f</sub><sup>*</sup> } # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>RECORD { nameIR<sub>f</sub> = typedExpressionIR<sub>f</sub><sup>*</sup> }</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -23709,7 +23709,7 @@ rule Expr_ok/dataExpression-record/multiple-default:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>typeIR<sub>f</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>f</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>f</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>f</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -23726,7 +23726,7 @@ rule Expr_ok/dataExpression-record/multiple-default:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>ctk<sub>f</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>f</sub></code></a>.</p>
+<p>Let <code>ctk<sub>f</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR<sub>f</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -23743,10 +23743,10 @@ rule Expr_ok/dataExpression-record/multiple-default:
 <p>Let <code>ctk</code> be <code><a href="#joins_ctk">$joins_ctk(ctk<sub>f</sub><sup>*</sup>)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR ctk )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>ctk</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>RECORD { nameIR<sub>f</sub> = typedExpressionIR<sub>f</sub><sup>*</sup> , &#8230;&#8203; } # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>RECORD { nameIR<sub>f</sub> = typedExpressionIR<sub>f</sub><sup>*</sup> , &#8230;&#8203; }</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -23778,7 +23778,7 @@ rule Eval_static/dataExpressionIR-record/default:
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Eval_static">the local compile-time evaluation of <code>dataExpressionIR # ( _ _ )</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
+<p><a href="#Eval_static">the local compile-time evaluation of <code>dataExpressionIR</code> annotated with type <code>_</code> and compile-time known-ness <code>_</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -23964,13 +23964,13 @@ errorAccessExpressionIR
 <p>Let <code>nameIR<sub>error</sub></code> be <code>"error." ++ nameIR</code>.</p>
 </li>
 <li>
-<p>Check that <code>ERROR . nameIR</code> is equal to <code><a href="#find_value">$find_value(p, TC, ` nameIR<sub>error</sub>)</a></code>.</p>
+<p>Check that <code>ERROR . nameIR</code> is equal to <code><a href="#find_value">$find_value(p, TC, nameIR<sub>error</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( ERROR LCTK )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>ERROR</code> and compile-time known-ness <code>LCTK</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>ERROR . nameIR # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>ERROR . nameIR</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -23996,7 +23996,7 @@ errorAccessExpressionIR
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Eval_static">the local compile-time evaluation of <code>ERROR . nameIR # ( _ _ )</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
+<p><a href="#Eval_static">the local compile-time evaluation of <code>ERROR . nameIR</code> annotated with type <code>_</code> and compile-time known-ness <code>_</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -24004,7 +24004,7 @@ errorAccessExpressionIR
 <p>Let <code>nameIR<sub>error</sub></code> be <code>"error." ++ nameIR</code>.</p>
 </li>
 <li>
-<p>Let <code>value<sub>error</sub></code> be <code><a href="#find_value">$find_value(p, TC, ` nameIR<sub>error</sub>)</a></code>.</p>
+<p>Let <code>value<sub>error</sub></code> be <code><a href="#find_value">$find_value(p, TC, nameIR<sub>error</sub>)</a></code>.</p>
 </li>
 <li>
 <p>Result in <code>value<sub>error</sub></code>.</p>
@@ -24041,7 +24041,7 @@ errorAccessExpressionIR
 <p>Let <code>nameIR<sub>error</sub></code> be <code>"error." ++ nameIR</code>.</p>
 </li>
 <li>
-<p>Let <code>value<sub>error</sub></code> be <code><a href="#find_value_inst">$find_value_inst(p, IC, ` nameIR<sub>error</sub>)</a></code>.</p>
+<p>Let <code>value<sub>error</sub></code> be <code><a href="#find_value_inst">$find_value_inst(p, IC, nameIR<sub>error</sub>)</a></code>.</p>
 </li>
 <li>
 <p>Result in <code>STO'</code> and <code>value<sub>error</sub></code>.</p>
@@ -24151,10 +24151,10 @@ rule Expr_ok/memberAccessExpression-type/serenum:
 <p>Check that <code>nameIR</code> is in <code>nameIR<sub>f</sub><sup>*</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR<sub>base</sub> LCTK )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>base</sub></code> and compile-time known-ness <code>LCTK</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>TYPE prefixedNameIR<sub>base</sub> . nameIR # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>TYPE prefixedNameIR<sub>base</sub> . nameIR</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -24170,10 +24170,10 @@ rule Expr_ok/memberAccessExpression-type/serenum:
 <p>Check that <code>nameIR</code> is in <code>nameIR<sub>f</sub><sup>*</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR<sub>base</sub> LCTK )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>base</sub></code> and compile-time known-ness <code>LCTK</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>TYPE prefixedNameIR<sub>base</sub> . nameIR # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>TYPE prefixedNameIR<sub>base</sub> . nameIR</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -24207,7 +24207,7 @@ rule Eval_static/memberAccessExpressionIR-type/serenum:
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Eval_static">the local compile-time evaluation of <code>TYPE prefixedNameIR . nameIR # ( _ _ )</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
+<p><a href="#Eval_static">the local compile-time evaluation of <code>TYPE prefixedNameIR . nameIR</code> annotated with type <code>_</code> and compile-time known-ness <code>_</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -24439,7 +24439,7 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typedExpressionIR<sub>base</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>base</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR'</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
@@ -24451,10 +24451,10 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typeIR [ n<sub>size</sub> ]</code> be <code>typeIR'</code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( BIT &lt; 32 &gt; LCTK )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>BIT &lt; 32 &gt;</code> and compile-time known-ness <code>LCTK</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>typedExpressionIR<sub>base</sub> . "size" # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub> . "size"</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -24471,7 +24471,7 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typedExpressionIR<sub>base</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>base</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR'</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
@@ -24483,10 +24483,10 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typeIR [ n<sub>size</sub> ]</code> be <code>typeIR'</code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( BIT &lt; 32 &gt; DYN )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>BIT &lt; 32 &gt;</code> and compile-time known-ness <code>DYN</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>typedExpressionIR<sub>base</sub> . "lastIndex" # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub> . "lastIndex"</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -24499,7 +24499,7 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typedExpressionIR<sub>base</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>base</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR'</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
@@ -24511,10 +24511,10 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typeIR [ n<sub>size</sub> ]</code> be <code>typeIR'</code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( BIT &lt; 32 &gt; DYN )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>BIT &lt; 32 &gt;</code> and compile-time known-ness <code>DYN</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>typedExpressionIR<sub>base</sub> . "lastIndex" # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub> . "lastIndex"</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -24534,7 +24534,7 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typedExpressionIR<sub>base</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>base</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR'</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
@@ -24546,10 +24546,10 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typeIR [ n<sub>size</sub> ]</code> be <code>typeIR'</code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR DYN )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>DYN</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>typedExpressionIR<sub>base</sub> . "last" # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub> . "last"</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -24562,7 +24562,7 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typedExpressionIR<sub>base</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>base</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR'</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
@@ -24574,10 +24574,10 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typeIR [ n<sub>size</sub> ]</code> be <code>typeIR'</code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR DYN )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>DYN</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>typedExpressionIR<sub>base</sub> . "last" # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub> . "last"</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -24597,7 +24597,7 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typedExpressionIR<sub>base</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>base</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR'</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
@@ -24609,10 +24609,10 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typeIR [ n<sub>size</sub> ]</code> be <code>typeIR'</code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR DYN )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>DYN</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>typedExpressionIR<sub>base</sub> . "next" # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub> . "next"</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -24625,7 +24625,7 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typedExpressionIR<sub>base</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>base</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR'</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
@@ -24637,10 +24637,10 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typeIR [ n<sub>size</sub> ]</code> be <code>typeIR'</code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR DYN )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>DYN</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>typedExpressionIR<sub>base</sub> . "next" # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub> . "next"</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -24652,7 +24652,7 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typedExpressionIR<sub>base</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>base</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR'</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
@@ -24674,10 +24674,10 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typeIR</code> be <code>typeIR''<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR DYN )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>DYN</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>typedExpressionIR<sub>base</sub> . nameIR # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub> . nameIR</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -24699,10 +24699,10 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typeIR</code> be <code>typeIR''<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR DYN )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>DYN</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>typedExpressionIR<sub>base</sub> . nameIR # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub> . nameIR</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -24724,10 +24724,10 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typeIR</code> be <code>typeIR''<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR DYN )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>DYN</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>typedExpressionIR<sub>base</sub> . nameIR # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub> . nameIR</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -24755,10 +24755,10 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typeIR</code> be <code>typeIR''<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR DYN )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>DYN</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>typedExpressionIR<sub>base</sub> . nameIR # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub> . nameIR</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -24787,12 +24787,12 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>base</sub> . "size" # ( _ _ )</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
+<p><a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>base</sub> . "size"</code> annotated with type <code>_</code> and compile-time known-ness <code>_</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>_ # ( typeIR<sub>base</sub> _ )</code> be <code>typedExpressionIR<sub>base</sub></code>.</p>
+<p>Let <a href="#expressionNoteIR">type <code>typeIR<sub>base</sub></code> and compile-time known-ness <code>_</code></a> be the note of <code>typedExpressionIR<sub>base</sub></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR</code> be <a href="#canon">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
@@ -24835,7 +24835,7 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>_ # ( typeIR _ )</code> be <code>typedExpressionIR<sub>base</sub></code>.</p>
+<p>Let <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>_</code></a> be the note of <code>typedExpressionIR<sub>base</sub></code>.</p>
 </li>
 <li>
 <p>Check that <code>typeIR</code> is equal to <code>typeIR<sub>base</sub></code>.</p>
@@ -24942,16 +24942,16 @@ rule Expr_ok/indexAccessExpression/headerstack-non-lctk:
 <p>Let <code>typedExpressionIR<sub>index</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>index</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>base</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
+<p>Let <code>ctk<sub>base</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>index</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>index</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>index</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>index</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>index</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>index</sub></code></a>.</p>
+<p>Let <code>ctk<sub>index</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR<sub>index</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typedExpressionIR<sup>?</sup></code> be <code><a href="#reduce_serenum_unary">$reduce_serenum_unary(typedExpressionIR<sub>index</sub>, $compat_array_index)</a></code>.</p>
@@ -24988,10 +24988,10 @@ rule Expr_ok/indexAccessExpression/headerstack-non-lctk:
 <p>Check that <code>n<sub>index</sub></code> is less than the length of <code>typeIR<sub>e</sub><sup>*</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR<sub>e</sub><sup>*</sup>[n<sub>index</sub>] DYN )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>e</sub><sup>*</sup>[n<sub>index</sub>]</code> and compile-time known-ness <code>DYN</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>typedExpressionIR<sub>base</sub> [ typedExpressionIR<sub>index_reduced</sub> ] # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub> [ typedExpressionIR<sub>index_reduced</sub> ]</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -25020,10 +25020,10 @@ rule Expr_ok/indexAccessExpression/headerstack-non-lctk:
 <p>Check that <code>n<sub>index</sub></code> is less than <code>n<sub>size</sub></code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR DYN )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>DYN</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>typedExpressionIR<sub>base</sub> [ typedExpressionIR<sub>index_reduced</sub> ] # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub> [ typedExpressionIR<sub>index_reduced</sub> ]</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -25033,10 +25033,10 @@ rule Expr_ok/indexAccessExpression/headerstack-non-lctk:
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR DYN )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>DYN</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>typedExpressionIR<sub>base</sub> [ typedExpressionIR<sub>index_reduced</sub> ] # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub> [ typedExpressionIR<sub>index_reduced</sub> ]</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -25125,10 +25125,10 @@ sliceAccessExpressionIR
 <p>Let <code>typedExpressionIR<sub>base_reduced</sub></code> be <code>typedExpressionIR<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base_reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>base_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>base_reduced</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>base_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>base_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>base_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>base_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR<sub>base_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typedExpressionIR'<sup>?</sup></code> be <code><a href="#reduce_serenum_unary">$reduce_serenum_unary(typedExpressionIR<sub>hi</sub>, $compat_bitslice_index)</a></code>.</p>
@@ -25149,16 +25149,16 @@ sliceAccessExpressionIR
 <p>Let <code>typedExpressionIR<sub>lo_reduced</sub></code> be <code>typedExpressionIR''<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>hi_reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>hi_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>hi_reduced</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>hi_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>hi_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>hi_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>hi_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR<sub>hi_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>lo_reduced</sub></code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR<sub>lo_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>lo_reduced</sub></code> be <a href="#type_of_expression">the type of <code>typedExpressionIR<sub>lo_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk<sub>lo_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR<sub>lo_reduced</sub></code></a>.</p>
+<p>Let <code>ctk<sub>lo_reduced</sub></code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR<sub>lo_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>ctk<sub>hi_reduced</sub></code> matches pattern <code>LCTK</code>.</p>
@@ -25206,10 +25206,10 @@ sliceAccessExpressionIR
 <p>Let <code>typeIR</code> be <code>BIT &lt; n<sub>slice</sub> &gt;</code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR ctk<sub>base_reduced</sub> )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>ctk<sub>base_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>typedExpressionIR<sub>base</sub> [ typedExpressionIR<sub>hi_reduced</sub> : typedExpressionIR<sub>lo_reduced</sub> ] # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub> [ typedExpressionIR<sub>hi_reduced</sub> : typedExpressionIR<sub>lo_reduced</sub> ]</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -25236,7 +25236,7 @@ sliceAccessExpressionIR
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>base</sub> [ typedExpressionIR<sub>hi</sub> : typedExpressionIR<sub>lo</sub> ] # ( _ _ )</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
+<p><a href="#Eval_static">the local compile-time evaluation of <code>typedExpressionIR<sub>base</sub> [ typedExpressionIR<sub>hi</sub> : typedExpressionIR<sub>lo</sub> ]</code> annotated with type <code>_</code> and compile-time known-ness <code>_</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -25435,10 +25435,10 @@ rule Expr_ok/callExpression-routine/typeArgumentList:
 <p>Let <code>callExpressionIR</code> be <code>routineTargetIR &lt; typeArgumentIR<sub>inferred</sub><sup>*</sup> &gt; ( argumentIR<sub>cast</sub><sup>*</sup> )</code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR<sub>ret</sub> ctk )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>ret</sub></code> and compile-time known-ness <code>ctk</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>callExpressionIR # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>callExpressionIR</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -25495,10 +25495,10 @@ rule Expr_ok/callExpression-routine/typeArgumentList:
 <p>Let <code>callExpressionIR</code> be <code>routineTargetIR &lt; typeArgumentIR<sub>inferred</sub><sup>*</sup> &gt; ( argumentIR<sub>cast</sub><sup>*</sup> )</code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR<sub>ret</sub> ctk )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>ret</sub></code> and compile-time known-ness <code>ctk</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>callExpressionIR # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>callExpressionIR</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -25537,7 +25537,7 @@ rule Eval_static/callExpressionIR-builtin-size/type-poly:
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Eval_static">the local compile-time evaluation of <code>routineTargetIR &lt; [ ] &gt; ( [ ] ) # ( _ _ )</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
+<p><a href="#Eval_static">the local compile-time evaluation of <code>routineTargetIR &lt; [ ] &gt; ( [ ] )</code> annotated with type <code>_</code> and compile-time known-ness <code>_</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -25546,7 +25546,7 @@ rule Eval_static/callExpressionIR-builtin-size/type-poly:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>_ # ( typeIR<sub>base</sub> _ )</code> be <code>typedExpressionIR<sub>base</sub></code>.</p>
+<p>Let <a href="#expressionNoteIR">type <code>typeIR<sub>base</sub></code> and compile-time known-ness <code>_</code></a> be the note of <code>typedExpressionIR<sub>base</sub></code>.</p>
 </li>
 <li>
 <p>Check that <code>nameIR</code> is in <code>["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]</code>.</p>
@@ -25648,7 +25648,7 @@ rule Expr_inst/callExpressionIR-builtin-size/type-poly:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>_ # ( typeIR<sub>base</sub> _ )</code> be <code>typedExpressionIR<sub>base</sub></code>.</p>
+<p>Let <a href="#expressionNoteIR">type <code>typeIR<sub>base</sub></code> and compile-time known-ness <code>_</code></a> be the note of <code>typedExpressionIR<sub>base</sub></code>.</p>
 </li>
 <li>
 <p>Check that <code>nameIR</code> is in <code>["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]</code>.</p>
@@ -25798,10 +25798,10 @@ rule Expr_ok/callExpression-constructor/specializedType:
 <p>Let <code>callExpressionIR</code> be <code>prefixedNameIR &lt; typeArgumentIR<sub>inferred</sub><sup>*</sup> &gt; ( argumentIR<sub>cast</sub><sup>*</sup> )</code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR<sub>object</sub> CTK )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>object</sub></code> and compile-time known-ness <code>CTK</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>callExpressionIR # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>callExpressionIR</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -25855,10 +25855,10 @@ rule Expr_ok/callExpression-constructor/specializedType:
 <p>Let <code>callExpressionIR</code> be <code>prefixedNameIR &lt; typeArgumentIR<sub>inferred</sub><sup>*</sup> &gt; ( argumentIR<sub>cast</sub><sup>*</sup> )</code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR<sub>object</sub> CTK )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>object</sub></code> and compile-time known-ness <code>CTK</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>callExpressionIR # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>callExpressionIR</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -25951,10 +25951,10 @@ rule Expr_ok/callExpression-constructor/specializedType:
 <p>Let <code>callExpressionIR</code> be <code>prefixedNameIR &lt; typeArgumentIR<sub>inferred</sub><sup>*</sup> &gt; ( argumentIR<sub>cast</sub><sup>*</sup> )</code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR<sub>object</sub> CTK )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>object</sub></code> and compile-time known-ness <code>CTK</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>callExpressionIR # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>callExpressionIR</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -26008,10 +26008,10 @@ rule Expr_ok/callExpression-constructor/specializedType:
 <p>Let <code>callExpressionIR</code> be <code>prefixedNameIR &lt; typeArgumentIR<sub>inferred</sub><sup>*</sup> &gt; ( argumentIR<sub>cast</sub><sup>*</sup> )</code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR<sub>object</sub> CTK )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>object</sub></code> and compile-time known-ness <code>CTK</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>callExpressionIR # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>callExpressionIR</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -26042,12 +26042,12 @@ rule Expr_ok/callExpression-constructor/specializedType:
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Eval_static">the local compile-time evaluation of <code>( routineTargetIR ) &lt; typeArgumentIR<sup>*</sup> &gt; ( argumentIR<sup>*</sup> ) # ( _ _ )</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
+<p><a href="#Eval_static">the local compile-time evaluation of <code>( routineTargetIR ) &lt; typeArgumentIR<sup>*</sup> &gt; ( argumentIR<sup>*</sup> )</code> annotated with type <code>_</code> and compile-time known-ness <code>_</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>value</code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>routineTargetIR &lt; typeArgumentIR<sup>*</sup> &gt; ( argumentIR<sup>*</sup> ) # ( _ _ )</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
+<p>Let <code>value</code> be the result of <a href="#Eval_static">the local compile-time evaluation of <code>routineTargetIR &lt; typeArgumentIR<sup>*</sup> &gt; ( argumentIR<sup>*</sup> )</code> annotated with type <code>_</code> and compile-time known-ness <code>_</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
 <p>Result in <code>value</code>.</p>
@@ -26134,16 +26134,16 @@ parenthesizedExpressionIR
 <p>Let <code>typedExpressionIR</code> be the result of <a href="#Expr_ok">typing <code>expression</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR</code> be <a href="#type_of_expression">the type of  <code>typedExpressionIR</code></a>.</p>
+<p>Let <code>typeIR</code> be <a href="#type_of_expression">the type of <code>typedExpressionIR</code></a>.</p>
 </li>
 <li>
-<p>Let <code>ctk</code> be <a href="#ctk_of_expression">the compile-time known-ness of  <code>typedExpressionIR</code></a>.</p>
+<p>Let <code>ctk</code> be <a href="#ctk_of_expression">the compile-time known-ness of <code>typedExpressionIR</code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <code>( typeIR ctk )</code>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>ctk</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <code>( typedExpressionIR ) # expressionNoteIR</code>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>( typedExpressionIR )</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -26168,7 +26168,7 @@ parenthesizedExpressionIR
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Eval_static">the local compile-time evaluation of <code>( typedExpressionIR ) # ( _ _ )</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
+<p><a href="#Eval_static">the local compile-time evaluation of <code>( typedExpressionIR )</code> annotated with type <code>_</code> and compile-time known-ness <code>_</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -27699,7 +27699,7 @@ in parsers and deparsers to access packet data.</p>
 <div id="footer">
 <div id="footer-text">
 Version v1.2.5<br>
-Last updated 2025-10-31 13:26:09 +0900
+Last updated 2025-10-24 11:55:48 +0900
 </div>
 </div>
 </body>
