@@ -1427,7 +1427,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let rel = Ctx.find_rel Local ctx id in
     match rel with
     | Rel.Extern _ -> invoke_extern_rel ctx id values_input
-    | Rel.Defined (_, _, exps_input, instrs) ->
+    | Rel.Defined (_, exps_input, instrs) ->
         invoke_defined_rel ctx id exps_input instrs values_input
 
   and invoke_extern_rel (_ctx : Ctx.t) (id : id) (values_input : value list) :
@@ -1556,8 +1556,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | ExternRelD (id, (_, inputs), _, _) ->
         let rel = Rel.Extern inputs in
         Ctx.add_rel Global ctx id rel
-    | RelD (id, (mixop, inputs), relmatch, relpaths, _) ->
-        let rel = Rel.Defined (mixop, inputs, relmatch, relpaths) in
+    | RelD (id, (_, inputs), relmatch, relpaths, _) ->
+        let rel = Rel.Defined (inputs, relmatch, relpaths) in
         Ctx.add_rel Global ctx id rel
     | BuiltinDecD (id, _, _, _, _) ->
         let func = Func.Builtin in

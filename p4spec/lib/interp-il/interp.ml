@@ -989,7 +989,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     let rel = Ctx.find_rel Local ctx id in
     match rel with
     | Rel.Extern _ -> invoke_extern_rel ctx id values_input
-    | Rel.Defined (_, _, rulegroups) ->
+    | Rel.Defined (_, rulegroups) ->
         invoke_defined_rel ctx id rulegroups values_input
 
   and invoke_extern_rel (ctx : Ctx.t) (id : id) (values_input : value list) :
@@ -1218,8 +1218,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     | ExternRelD (id, _, inputs, _) ->
         let rel = Rel.Extern inputs in
         Ctx.add_rel Global ctx id rel
-    | RelD (id, nottyp, inputs, rulegroups, _) ->
-        let rel = Rel.Defined (nottyp, inputs, rulegroups) in
+    | RelD (id, _, inputs, rulegroups, _) ->
+        let rel = Rel.Defined (inputs, rulegroups) in
         Ctx.add_rel Global ctx id rel
     | BuiltinDecD (id, _, _, _, _) ->
         let func = Func.Builtin in
