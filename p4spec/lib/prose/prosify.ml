@@ -330,6 +330,33 @@ and prosify_instr ctx instr : Pl.Ast.instr list =
       let instrs = prosify_instrs ctx instrs in
       let exps = prosify_exps ctx exps in
       [ Pl.Ast.GroupI (id, exps, instrs) $ instr.at ]
+  | LetI ({ it = CaseE (mixop, exps); note=typ; _  }, exp_r, iterexps) ->
+      let tid =
+        match typ with
+        | VarT (id, _) -> id
+        | _ -> assert false
+      in
+      let hint_opt = Hintdb.get "prose_fields" (`Typ (tid, mixop)) ctx.hintdb in
+      let exps_hint_opt =
+        match hint_opt with
+        | Some { it = ListE exps_hint; _ } ->
+          (* prose_fields expected to have same length as sub-expressions *)
+          assert (List.length exps_hint = List.length exps);
+          List.map (fun exp -> match exp.it with
+            | TextE s -> Some s
+          (* only TextE expected in prose_fields hint *)
+            | _ -> assert false) exps_hint
+        |  _ -> List.init (List.length exps) (fun _ -> None)
+      in
+      
+      let ids = List.map (fun exp -> match exp.it with
+      | VarE id -> id
+      | _ -> assert false) exps
+      in
+      [
+        Pl.Ast.DestructI (
+        |> prosify_iterated_let exps iterexps;
+      ]
   | LetI (exp_l, exp_r, iterexps) ->
       let exp_l_pl = prosify_exp ctx exp_l in
       let exp_r = prosify_exp ctx exp_r in

@@ -7,11 +7,10 @@ open Domain.Lib
 open Runtime_static.Envs
 
 let collect_hints (defid : Hintdb.def_id) (hdb : Hintdb.t) hints : Hintdb.t =
-  let open El.Ast in
   List.fold_left
-    (fun hdb { hintid; hintexp } ->
+    (fun hdb El.Ast.{ hintid; hintexp } ->
       match hintid.it with
-      | "prose" | "prose_in" | "prose_out" | "prose_true" | "prose_false" ->
+      | "prose" | "prose_in" | "prose_out" | "prose_true" | "prose_false" | "prose_fields" ->
           Hintdb.add hintid.it defid hintexp hdb
       | _ -> hdb)
     hdb hints
