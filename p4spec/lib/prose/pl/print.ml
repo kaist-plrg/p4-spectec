@@ -285,9 +285,12 @@ let rec render_exp ctx exp : string =
             string_of_defid id ^ string_of_targs targs
             ^ render_args (ctx |> link |> code) args
             |> as_link ctx ~link:id.it |> as_code ctx)
+  | IterE (exp, (_, [])) -> render_exp ctx exp
+  | IterE (({ it = VarE varid; _ } as exp), iterexp) ->
+      render_exp in_code exp ^ code_of_iterexp iterexp |> as_code ctx
   | IterE (exp, iterexp) ->
-      if snd iterexp = [] then render_exp ctx exp
-      else render_exp in_code exp ^ code_of_iterexp iterexp |> as_code ctx
+      "(" ^ render_exp in_code exp ^ ")" ^ code_of_iterexp iterexp
+      |> as_code ctx
 
 (* if sep is None, use natural language list *)
 
