@@ -25,7 +25,7 @@ rule ExternMethod_ok/non-abstract:
   -- if parameter* = $flatten_parameterList(parameterList)
   -- Parameters_ok: LOCAL TC_2 |- parameter* : parameterIR* `# tid_impl*
   -- if (parameterTypeIR = $parameterTypeIR_of_parameterIR(parameterIR))*
-  -- if TC_3 = $add_parameterTypes_t(LOCAL, TC_2, parameterTypeIR*)
+  -- if TC_3 = $add_parameters_t(LOCAL, TC_2, parameterTypeIR*)
   ---- ;; create method type and add it to the context
   -- if cid = $cid(name, parameterList)
   -- if externMethodTypeDefIR
@@ -33,7 +33,7 @@ rule ExternMethod_ok/non-abstract:
           `( parameterTypeIR* ) `: typeIR_ret
   -- CallableTypeDef_wf: $bound(BLOCK, TC_0) |- externMethodTypeDefIR
   -- if TC_4
-      = $add_callableTypeDef_overload_t(BLOCK, TC_0, cid, externMethodTypeDefIR)
+      = $add_callableDef_overload_t(BLOCK, TC_0, cid, externMethodTypeDefIR)
   ---- ;; create IR
   -- if externMethodPrototypeIR
       = annotationList
@@ -60,7 +60,7 @@ rule ExternMethod_ok/abstract:
   -- if parameter* = $flatten_parameterList(parameterList)
   -- Parameters_ok: LOCAL TC_2 |- parameter* : parameterIR* `# tid_impl*
   -- if (parameterTypeIR = $parameterTypeIR_of_parameterIR(parameterIR))*
-  -- if TC_3 = $add_parameterTypes_t(LOCAL, TC_2, parameterTypeIR*)
+  -- if TC_3 = $add_parameters_t(LOCAL, TC_2, parameterTypeIR*)
   ---- ;; create method type and add it to the context
   -- if cid = $cid(name, parameterList)
   -- if externMethodTypeDefIR
@@ -68,7 +68,7 @@ rule ExternMethod_ok/abstract:
           `( parameterTypeIR* ) `: typeIR_ret
   -- CallableTypeDef_wf: $bound(BLOCK, TC_0) |- externMethodTypeDefIR
   -- if TC_4
-      = $add_callableTypeDef_overload_t(BLOCK, TC_0, cid, externMethodTypeDefIR)
+      = $add_callableDef_overload_t(BLOCK, TC_0, cid, externMethodTypeDefIR)
   ---- ;; create IR
   -- if externMethodPrototypeIR
       = annotationList ABSTRACT
@@ -122,7 +122,7 @@ rule ExternConstructor_ok:
       = CONSTRUCTOR `< tid_expl* `, tid_impl* >
           `( constructorParameterTypeIR* ) `: typeIR_extern_spec
   -- ConstructorTypeDef_wf: $bound(BLOCK, TC_0) |- constructorTypeDefIR
-  -- if TC_1 = $add_constructorTypeDef_t(TC_0, cid, constructorTypeDefIR)
+  -- if TC_1 = $add_constructorDef_t(TC_0, cid, constructorTypeDefIR)
   ---- ;; create IR
   -- if externConstructorPrototypeIR
       = annotationList nameIR `< `, tid_impl* > `( constructorParameterIR* ) `;

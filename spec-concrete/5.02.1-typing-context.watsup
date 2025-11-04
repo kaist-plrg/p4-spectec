@@ -5,9 +5,9 @@
 ;; Global layer
 
 syntax globalTypingLayer =
-  { CONSTRUCTOR constructorTypeDefIREnv,
-    TYPE typeDefIREnv,
-    CALLABLE callableTypeDefIREnv,
+  { CONSTRUCTOR constructorTypeDefEnv,
+    TYPE typeDefEnv,
+    CALLABLE callableTypeDefEnv,
     FRAME typeFrame }
 
 ;; Block layer
@@ -33,8 +33,8 @@ def $is_package_blockKind(blockKind) = blockKind = PACKAGE
 
 syntax blockTypingLayer =
   { KIND blockKind,
-    TYPE typeDefIREnv,
-    CALLABLE callableTypeDefIREnv,
+    TYPE typeDefEnv,
+    CALLABLE callableTypeDefEnv,
     FRAME typeFrame }
 
 ;; Local layer
@@ -94,7 +94,7 @@ def $is_table_apply_method_localKind(_) = false
 
 syntax localTypingLayer =
   { KIND localKind,
-    TYPE typeDefIREnv,
+    TYPE typeDefEnv,
     FRAMES typeFrame* }
 
 ;;
@@ -116,18 +116,18 @@ dec $empty_typingContext : typingContext
 
 def $empty_typingContext = TC
   -- if globalTypingLayer
-      = { CONSTRUCTOR $empty_constructorTypeDefIREnv,
-          TYPE $empty_typeDefIREnv,
-          CALLABLE $empty_callableTypeDefIREnv,
+      = { CONSTRUCTOR $empty_constructorTypeDefEnv,
+          TYPE $empty_typeDefEnv,
+          CALLABLE $empty_callableTypeDefEnv,
           FRAME $empty_typeFrame }
   -- if blockTypingLayer
       = { KIND `EMPTY,
-          TYPE $empty_typeDefIREnv,
-          CALLABLE $empty_callableTypeDefIREnv,
+          TYPE $empty_typeDefEnv,
+          CALLABLE $empty_callableTypeDefEnv,
           FRAME $empty_typeFrame }
   -- if localTypingLayer
       = { KIND `EMPTY,
-          TYPE $empty_typeDefIREnv,
+          TYPE $empty_typeDefEnv,
           FRAMES ([ $empty_typeFrame ]) }
   -- if TC
       = { GLOBAL globalTypingLayer,
@@ -153,7 +153,7 @@ def $bound(LOCAL, TC) = $union_set<tid>(bound_block, bound_local)
 dec $enter_t(typingContext) : typingContext
 
 def $enter_t(TC)
-  = TC [ .LOCAL.FRAMES = $empty_typeFrame :: TC.LOCAL.FRAMES ]
+  = TC[ .LOCAL.FRAMES = $empty_typeFrame :: TC.LOCAL.FRAMES ]
 
 dec $exit_t(typingContext) : typingContext
 
@@ -166,10 +166,10 @@ def $exit_t(TC) = TC [ .LOCAL.FRAMES = typeFrame_t* ]
 
 ;;; Adder for variables
 
-dec $add_varType_t(cursor, typingContext, id, varTypeIR) : typingContext
-dec $add_varTypes_t(cursor, typingContext, id*, varTypeIR*) : typingContext
+dec $add_var_t(cursor, typingContext, id, varTypeIR) : typingContext
+dec $add_vars_t(cursor, typingContext, id*, varTypeIR*) : typingContext
 
-def $add_varType_t(GLOBAL, TC, id, varTypeIR) = TC'
+def $add_var_t(GLOBAL, TC, id, varTypeIR) = TC'
   -- if typeFrame = TC.GLOBAL.FRAME
   -- if ~$in_set<id>(id, $dom_map<id, varTypeIR>(typeFrame))
   -- if _ typeIR _ _ = varTypeIR
@@ -177,14 +177,14 @@ def $add_varType_t(GLOBAL, TC, id, varTypeIR) = TC'
   -- if typeFrame_update
       = $add_map<id, varTypeIR>(typeFrame, id, varTypeIR)
   -- if TC' = TC [ .GLOBAL.FRAME = typeFrame_update ]
-def $add_varType_t(BLOCK, TC, id, varTypeIR) = TC'
+def $add_var_t(BLOCK, TC, id, varTypeIR) = TC'
   -- if typeFrame = TC.BLOCK.FRAME
   -- if ~$in_set<id>(id, $dom_map<id, varTypeIR>(typeFrame))
   -- if id =/= "main"
   -- if typeFrame_update
     = $add_map<id, varTypeIR>(TC.BLOCK.FRAME, id, varTypeIR)
   -- if TC' = TC [ .BLOCK.FRAME = typeFrame_update ]
-def $add_varType_t(LOCAL, TC, id, varTypeIR) = TC'
+def $add_var_t(LOCAL, TC, id, varTypeIR) = TC'
   -- if typeFrame_h :: typeFrame_t* = TC.LOCAL.FRAMES
   -- if ~$in_set<id>(id, $dom_map<id, varTypeIR>(typeFrame_h))
   -- if id =/= "main"
@@ -193,45 +193,45 @@ def $add_varType_t(LOCAL, TC, id, varTypeIR) = TC'
   -- if typeFrame* = typeFrame_h_update :: typeFrame_t*
   -- if TC' = TC [ .LOCAL.FRAMES = typeFrame* ]
 
-def $add_varTypes_t(p, TC, eps, eps) = TC
-def $add_varTypes_t(p, TC, id_h :: id_t*, varTypeIR_h :: varTypeIR_t*) = TC''
-  -- if TC' = $add_varType_t(p, TC, id_h, varTypeIR_h)
-  -- if TC'' = $add_varTypes_t(p, TC', id_t*, varTypeIR_t*)
+def $add_vars_t(p, TC, eps, eps) = TC
+def $add_vars_t(p, TC, id_h :: id_t*, varTypeIR_h :: varTypeIR_t*) = TC''
+  -- if TC' = $add_var_t(p, TC, id_h, varTypeIR_h)
+  -- if TC'' = $add_vars_t(p, TC', id_t*, varTypeIR_t*)
 
 ;;; Adder for parameters
 
-dec $add_parameterType_t(cursor, typingContext, parameterTypeIR) : typingContext
-dec $add_parameterTypes_t(cursor, typingContext, parameterTypeIR*) : typingContext
+dec $add_parameter_t(cursor, typingContext, parameterTypeIR) : typingContext
+dec $add_parameters_t(cursor, typingContext, parameterTypeIR*) : typingContext
 
-def $add_parameterType_t(cursor, TC, `EMPTY typeIR id value?) = TC'
+def $add_parameter_t(cursor, TC, `EMPTY typeIR id value?) = TC'
   -- if varTypeIR = `EMPTY typeIR CTK value?
-  -- if TC' = $add_varType_t(cursor, TC, id, varTypeIR)
-def $add_parameterType_t(cursor, TC, direction typeIR id value?) = TC'
+  -- if TC' = $add_var_t(cursor, TC, id, varTypeIR)
+def $add_parameter_t(cursor, TC, direction typeIR id value?) = TC'
   -- if direction =/= `EMPTY
   -- if varTypeIR = direction typeIR DYN value?
-  -- if TC' = $add_varType_t(cursor, TC, id, varTypeIR)
+  -- if TC' = $add_var_t(cursor, TC, id, varTypeIR)
 
-def $add_parameterTypes_t(cursor, TC, eps) = TC
-def $add_parameterTypes_t(cursor, TC, parameterTypeIR_h :: parameterTypeIR_t*) = TC''
-  -- if TC' = $add_parameterType_t(cursor, TC, parameterTypeIR_h)
-  -- if TC'' = $add_parameterTypes_t(cursor, TC', parameterTypeIR_t*)
+def $add_parameters_t(cursor, TC, eps) = TC
+def $add_parameters_t(cursor, TC, parameterTypeIR_h :: parameterTypeIR_t*) = TC''
+  -- if TC' = $add_parameter_t(cursor, TC, parameterTypeIR_h)
+  -- if TC'' = $add_parameters_t(cursor, TC', parameterTypeIR_t*)
 
 ;;; Adder for constructor parameters
 
-dec $add_constructorParameterType_t(typingContext, parameterTypeIR) : typingContext
-dec $add_constructorParameterTypes_t(typingContext, parameterTypeIR*) : typingContext
+dec $add_constructorParameter_t(typingContext, parameterTypeIR) : typingContext
+dec $add_constructorParameters_t(typingContext, parameterTypeIR*) : typingContext
 
-def $add_constructorParameterType_t(TC, direction typeIR id eps) = TC'
+def $add_constructorParameter_t(TC, direction typeIR id eps) = TC'
   -- if varTypeIR = direction typeIR CTK eps
-  -- if TC' = $add_varType_t(BLOCK, TC, id, varTypeIR)
-def $add_constructorParameterType_t(TC, direction typeIR id value) = TC'
+  -- if TC' = $add_var_t(BLOCK, TC, id, varTypeIR)
+def $add_constructorParameter_t(TC, direction typeIR id value) = TC'
   -- if varTypeIR = direction typeIR CTK value
-  -- if TC' = $add_varType_t(BLOCK, TC, id, varTypeIR)
+  -- if TC' = $add_var_t(BLOCK, TC, id, varTypeIR)
 
-def $add_constructorParameterTypes_t(TC, eps) = TC
-def $add_constructorParameterTypes_t(TC, parameterTypeIR_h :: parameterTypeIR_t*) = TC''
-  -- if TC' = $add_constructorParameterType_t(TC, parameterTypeIR_h)
-  -- if TC'' = $add_constructorParameterTypes_t(TC', parameterTypeIR_t*)
+def $add_constructorParameters_t(TC, eps) = TC
+def $add_constructorParameters_t(TC, parameterTypeIR_h :: parameterTypeIR_t*) = TC''
+  -- if TC' = $add_constructorParameter_t(TC, parameterTypeIR_h)
+  -- if TC'' = $add_constructorParameters_t(TC', parameterTypeIR_t*)
 
 ;;; Adder for types
 
@@ -239,23 +239,23 @@ dec $add_typeDef_t(cursor, typingContext, tid, typeDefIR) : typingContext
 dec $add_typeDefs_t(cursor, typingContext, tid*, typeDefIR*) : typingContext
 
 def $add_typeDef_t(GLOBAL, TC, tid, typeDefIR) = TC'
-  -- if typeDefIREnv = TC.BLOCK.TYPE
-  -- if ~$in_set<tid>(tid, $dom_map<tid, typeDefIR>(typeDefIREnv))
-  -- if typeDefIREnv_update
+  -- if typeDefEnv = TC.BLOCK.TYPE
+  -- if ~$in_set<tid>(tid, $dom_map<tid, typeDefIR>(typeDefEnv))
+  -- if typeDefEnv_update
       = $add_map<tid, typeDefIR>(TC.GLOBAL.TYPE, tid, typeDefIR)
-  -- if TC' = TC [ .GLOBAL.TYPE = typeDefIREnv_update ]
+  -- if TC' = TC [ .GLOBAL.TYPE = typeDefEnv_update ]
 def $add_typeDef_t(BLOCK, TC, tid, typeDefIR) = TC'
-  -- if typeDefIREnv = TC.BLOCK.TYPE
-  -- if ~$in_set<tid>(tid, $dom_map<tid, typeDefIR>(typeDefIREnv))
-  -- if typeDefIREnv_update
-      = $add_map<tid, typeDefIR>(typeDefIREnv, tid, typeDefIR)
-  -- if TC' = TC [ .BLOCK.TYPE = typeDefIREnv_update ]
+  -- if typeDefEnv = TC.BLOCK.TYPE
+  -- if ~$in_set<tid>(tid, $dom_map<tid, typeDefIR>(typeDefEnv))
+  -- if typeDefEnv_update
+      = $add_map<tid, typeDefIR>(typeDefEnv, tid, typeDefIR)
+  -- if TC' = TC [ .BLOCK.TYPE = typeDefEnv_update ]
 def $add_typeDef_t(LOCAL, TC, tid, typeDefIR) = TC'
-  -- if typeDefIREnv = TC.LOCAL.TYPE
-  -- if ~$in_set<tid>(tid, $dom_map<tid, typeDefIR>(typeDefIREnv))
-  -- if typeDefIREnv_update
-      = $add_map<tid, typeDefIR>(typeDefIREnv, tid, typeDefIR)
-  -- if TC' = TC [ .LOCAL.TYPE = typeDefIREnv_update ]
+  -- if typeDefEnv = TC.LOCAL.TYPE
+  -- if ~$in_set<tid>(tid, $dom_map<tid, typeDefIR>(typeDefEnv))
+  -- if typeDefEnv_update
+      = $add_map<tid, typeDefIR>(typeDefEnv, tid, typeDefIR)
+  -- if TC' = TC [ .LOCAL.TYPE = typeDefEnv_update ]
 
 def $add_typeDefs_t(p, TC, eps, eps) = TC
 def $add_typeDefs_t(p, TC, tid_h :: tid_t*, typeDefIR_h :: typeDefIR_t*) = TC''
@@ -264,52 +264,55 @@ def $add_typeDefs_t(p, TC, tid_h :: tid_t*, typeDefIR_h :: typeDefIR_t*) = TC''
 
 ;;; Adder for callables
 
-dec $add_callableTypeDef_overload_t(cursor, typingContext, cid, callableTypeDefIR) : typingContext
+dec $add_callableDef_overload_t(cursor, typingContext, cid, callableTypeDefIR)
+  : typingContext
 
-def $add_callableTypeDef_overload_t(GLOBAL, TC, cid, callableTypeDefIR) = TC'
-  -- if callableTypeDefIREnv = TC.GLOBAL.CALLABLE
-  -- if ~$in_set<cid>(cid, $dom_map<cid, callableTypeDefIR>(callableTypeDefIREnv))
-  -- if callableTypeDefIREnv_update
-        = $add_map<cid, callableTypeDefIR>(callableTypeDefIREnv, cid, callableTypeDefIR)
-  -- if TC' = TC [ .GLOBAL.CALLABLE = callableTypeDefIREnv_update ]
-def $add_callableTypeDef_overload_t(BLOCK, TC, cid, callableTypeDefIR) = TC'
-  -- if callableTypeDefIREnv = TC.BLOCK.CALLABLE
-  -- if ~$in_set<cid>(cid, $dom_map<cid, callableTypeDefIR>(callableTypeDefIREnv))
-  -- if callableTypeDefIREnv_update
-        = $add_map<cid, callableTypeDefIR>(callableTypeDefIREnv, cid, callableTypeDefIR)
-  -- if TC' = TC [ .BLOCK.CALLABLE = callableTypeDefIREnv_update ]
+def $add_callableDef_overload_t(GLOBAL, TC, cid, callableTypeDefIR) = TC'
+  -- if callableTypeDefEnv = TC.GLOBAL.CALLABLE
+  -- if ~$in_set<cid>(cid, $dom_map<cid, callableTypeDefIR>(callableTypeDefEnv))
+  -- if callableTypeDefEnv_update
+        = $add_map<cid, callableTypeDefIR>(callableTypeDefEnv, cid, callableTypeDefIR)
+  -- if TC' = TC [ .GLOBAL.CALLABLE = callableTypeDefEnv_update ]
+def $add_callableDef_overload_t(BLOCK, TC, cid, callableTypeDefIR) = TC'
+  -- if callableTypeDefEnv = TC.BLOCK.CALLABLE
+  -- if ~$in_set<cid>(cid, $dom_map<cid, callableTypeDefIR>(callableTypeDefEnv))
+  -- if callableTypeDefEnv_update
+        = $add_map<cid, callableTypeDefIR>(callableTypeDefEnv, cid, callableTypeDefIR)
+  -- if TC' = TC [ .BLOCK.CALLABLE = callableTypeDefEnv_update ]
 
-dec $add_callableTypeDef_non_overload_t(cursor, typingContext, cid, callableTypeDefIR) : typingContext
+dec $add_callableDef_non_overload_t(cursor, typingContext, cid, callableTypeDefIR)
+  : typingContext
 
-def $add_callableTypeDef_non_overload_t(GLOBAL, TC, cid, callableTypeDefIR) = TC'
-  -- if callableTypeDefIREnv = TC.GLOBAL.CALLABLE
+def $add_callableDef_non_overload_t(GLOBAL, TC, cid, callableTypeDefIR) = TC'
+  -- if callableTypeDefEnv = TC.GLOBAL.CALLABLE
   -- if id `( _ ) = cid
-  -- if `{ (id_k `( _ ))* } = $dom_map<cid, callableTypeDefIR>(callableTypeDefIREnv)
+  -- if `{ (id_k `( _ ))* } = $dom_map<cid, callableTypeDefIR>(callableTypeDefEnv)
   -- if ~$in_set<id>(id, `{ id_k* })
-  -- if callableTypeDefIREnv_update
-        = $add_map<cid, callableTypeDefIR>(callableTypeDefIREnv, cid, callableTypeDefIR)
-  -- if TC' = TC [ .GLOBAL.CALLABLE = callableTypeDefIREnv_update ]
-def $add_callableTypeDef_non_overload_t(BLOCK, TC, cid, callableTypeDefIR) = TC'
-  -- if callableTypeDefIREnv = TC.BLOCK.CALLABLE
+  -- if callableTypeDefEnv_update
+        = $add_map<cid, callableTypeDefIR>(callableTypeDefEnv, cid, callableTypeDefIR)
+  -- if TC' = TC [ .GLOBAL.CALLABLE = callableTypeDefEnv_update ]
+def $add_callableDef_non_overload_t(BLOCK, TC, cid, callableTypeDefIR) = TC'
+  -- if callableTypeDefEnv = TC.BLOCK.CALLABLE
   -- if id `( _ ) = cid
-  -- if `{ (id_k `( _ ))* } = $dom_map<cid, callableTypeDefIR>(callableTypeDefIREnv)
+  -- if `{ (id_k `( _ ))* } = $dom_map<cid, callableTypeDefIR>(callableTypeDefEnv)
   -- if ~$in_set<id>(id, `{ id_k* })
-  -- if callableTypeDefIREnv_update
-        = $add_map<cid, callableTypeDefIR>(callableTypeDefIREnv, cid, callableTypeDefIR)
-  -- if TC' = TC [ .BLOCK.CALLABLE = callableTypeDefIREnv_update ]
+  -- if callableTypeDefEnv_update
+        = $add_map<cid, callableTypeDefIR>(callableTypeDefEnv, cid, callableTypeDefIR)
+  -- if TC' = TC [ .BLOCK.CALLABLE = callableTypeDefEnv_update ]
 
 ;;; Adder for constructors
 
-dec $add_constructorTypeDef_t(typingContext, cid, constructorTypeDefIR) : typingContext
+dec $add_constructorDef_t(typingContext, cid, constructorTypeDefIR)
+  : typingContext
 
-def $add_constructorTypeDef_t(TC, cid, constructorTypeDefIR) = TC'
-  -- if constructorTypeDefIREnv = TC.GLOBAL.CONSTRUCTOR
-  -- if ~$in_set<cid>(cid, $dom_map<cid, constructorTypeDefIR>(constructorTypeDefIREnv))
-  -- if constructorTypeDefIREnv_update
+def $add_constructorDef_t(TC, cid, constructorTypeDefIR) = TC'
+  -- if constructorTypeDefEnv = TC.GLOBAL.CONSTRUCTOR
+  -- if ~$in_set<cid>(cid, $dom_map<cid, constructorTypeDefIR>(constructorTypeDefEnv))
+  -- if constructorTypeDefEnv_update
         = $add_map<cid, constructorTypeDefIR>(
-            constructorTypeDefIREnv, cid, constructorTypeDefIR
+            constructorTypeDefEnv, cid, constructorTypeDefIR
           )
-  -- if TC' = TC [ .GLOBAL.CONSTRUCTOR = constructorTypeDefIREnv_update ]
+  -- if TC' = TC [ .GLOBAL.CONSTRUCTOR = constructorTypeDefEnv_update ]
 
 ;;
 ;; Finders
@@ -317,54 +320,54 @@ def $add_constructorTypeDef_t(TC, cid, constructorTypeDefIR) = TC'
 
 ;;; Finder for variables
 
-dec $find_varType_t(cursor, typingContext, prefixedNameIR) : varTypeIR?
+dec $find_var_t(cursor, typingContext, prefixedNameIR) : varTypeIR?
 
-def $find_varType_t(p, TC, `. id) = $find_map<id, varTypeIR>(typeFrame, id)
+def $find_var_t(p, TC, `. id) = $find_map<id, varTypeIR>(typeFrame, id)
   -- if typeFrame = TC.GLOBAL.FRAME
-def $find_varType_t(GLOBAL, TC, `` id) = $find_map<id, varTypeIR>(typeFrame, id)
+def $find_var_t(GLOBAL, TC, `` id) = $find_map<id, varTypeIR>(typeFrame, id)
   -- if typeFrame = TC.GLOBAL.FRAME
-def $find_varType_t(BLOCK, TC, `` id) = varTypeIR
+def $find_var_t(BLOCK, TC, `` id) = varTypeIR
   -- if typeFrame = TC.BLOCK.FRAME
   -- if varTypeIR = $find_map<id, varTypeIR>(typeFrame, id)
-def $find_varType_t(BLOCK, TC, `` id) = $find_varType_t(GLOBAL, TC, `` id)
+def $find_var_t(BLOCK, TC, `` id) = $find_var_t(GLOBAL, TC, `` id)
   -- if typeFrame = TC.BLOCK.FRAME
   -- if eps = $find_map<id, varTypeIR>(typeFrame, id)
-def $find_varType_t(LOCAL, TC, `` id) = varTypeIR
+def $find_var_t(LOCAL, TC, `` id) = varTypeIR
   -- if typeFrame* = TC.LOCAL.FRAMES
   -- if varTypeIR = $find_maps<id, varTypeIR>(typeFrame*, id)
-def $find_varType_t(LOCAL, TC, `` id) = $find_varType_t(BLOCK, TC, `` id)
+def $find_var_t(LOCAL, TC, `` id) = $find_var_t(BLOCK, TC, `` id)
   -- if typeFrame* = TC.LOCAL.FRAMES
   -- if eps = $find_maps<id, varTypeIR>(typeFrame*, id)
 
 ;;; Finder for values
 
-dec $find_varType_value_t(cursor, typingContext, prefixedNameIR) : value
+dec $find_var_value_t(cursor, typingContext, prefixedNameIR) : value
 
-def $find_varType_value_t(p, TC, prefixedNameIR) = value
-  -- if _ _ _ value = $find_varType_t(p, TC, prefixedNameIR)
+def $find_var_value_t(p, TC, prefixedNameIR) = value
+  -- if _ _ _ value = $find_var_t(p, TC, prefixedNameIR)
 
 ;;; Finder for types
 
 dec $find_typeDef_t(cursor, typingContext, prefixedNameIR) : typeDefIR?
 
 def $find_typeDef_t(p, TC, `. tid)
-  = $find_map<tid, typeDefIR>(typeDefIREnv, tid)
-  -- if typeDefIREnv = TC.GLOBAL.TYPE
+  = $find_map<tid, typeDefIR>(typeDefEnv, tid)
+  -- if typeDefEnv = TC.GLOBAL.TYPE
 def $find_typeDef_t(GLOBAL, TC, `` tid)
-  = $find_map<tid, typeDefIR>(typeDefIREnv, tid)
-  -- if typeDefIREnv = TC.GLOBAL.TYPE
+  = $find_map<tid, typeDefIR>(typeDefEnv, tid)
+  -- if typeDefEnv = TC.GLOBAL.TYPE
 def $find_typeDef_t(BLOCK, TC, `` tid) = typeDefIR
-  -- if typeDefIREnv = TC.BLOCK.TYPE
-  -- if typeDefIR = $find_map<tid, typeDefIR>(typeDefIREnv, tid)
+  -- if typeDefEnv = TC.BLOCK.TYPE
+  -- if typeDefIR = $find_map<tid, typeDefIR>(typeDefEnv, tid)
 def $find_typeDef_t(BLOCK, TC, `` tid) = $find_typeDef_t(GLOBAL, TC, `` tid)
-  -- if typeDefIREnv = TC.BLOCK.TYPE
-  -- if eps = $find_map<tid, typeDefIR>(typeDefIREnv, tid)
+  -- if typeDefEnv = TC.BLOCK.TYPE
+  -- if eps = $find_map<tid, typeDefIR>(typeDefEnv, tid)
 def $find_typeDef_t(LOCAL, TC, `` tid) = typeDefIR
-  -- if typeDefIREnv* = TC.LOCAL.TYPE
-  -- if typeDefIR = $find_maps<tid, typeDefIR>(typeDefIREnv*, tid)
+  -- if typeDefEnv* = TC.LOCAL.TYPE
+  -- if typeDefIR = $find_maps<tid, typeDefIR>(typeDefEnv*, tid)
 def $find_typeDef_t(LOCAL, TC, `` tid) = $find_typeDef_t(BLOCK, TC, `` tid)
-  -- if typeDefIREnv* = TC.LOCAL.TYPE
-  -- if eps = $find_maps<tid, typeDefIR>(typeDefIREnv*, tid)
+  -- if typeDefEnv* = TC.LOCAL.TYPE
+  -- if eps = $find_maps<tid, typeDefIR>(typeDefEnv*, tid)
 
 ;;; Finder for callables
 
@@ -377,58 +380,58 @@ def $id_argument(nameIR `= _) = nameIR
 def $id_argument(nameIR `= `_) = nameIR
 def $id_argument(`_) = eps
 
-dec $find_callableTypeDef_overloaded_t(cursor, typingContext, prefixedNameIR, argumentIR*)
+dec $find_callableDef_overloaded_t(cursor, typingContext, prefixedNameIR, argumentIR*)
   : (cid, callableTypeDefIR, id*)?
 
-def $find_callableTypeDef_overloaded_t(GLOBAL, TC, `. id, argumentIR*)
-  = $find_overloaded<callableTypeDefIR>(callableTypeDefIREnv, id, (id_arg?)*)
-  -- if callableTypeDefIREnv = TC.GLOBAL.CALLABLE
+def $find_callableDef_overloaded_t(GLOBAL, TC, `. id, argumentIR*)
+  = $find_overloaded<callableTypeDefIR>(callableTypeDefEnv, id, (id_arg?)*)
+  -- if callableTypeDefEnv = TC.GLOBAL.CALLABLE
   -- if (id_arg?)* = $ids_arguments(argumentIR*)
-def $find_callableTypeDef_overloaded_t(GLOBAL, TC, `` id, argumentIR*)
-  = $find_overloaded<callableTypeDefIR>(callableTypeDefIREnv, id, (id_arg?)*)
-  -- if callableTypeDefIREnv = TC.GLOBAL.CALLABLE
+def $find_callableDef_overloaded_t(GLOBAL, TC, `` id, argumentIR*)
+  = $find_overloaded<callableTypeDefIR>(callableTypeDefEnv, id, (id_arg?)*)
+  -- if callableTypeDefEnv = TC.GLOBAL.CALLABLE
   -- if (id_arg?)* = $ids_arguments(argumentIR*)
-def $find_callableTypeDef_overloaded_t(BLOCK, TC, `` id, argumentIR*)
+def $find_callableDef_overloaded_t(BLOCK, TC, `` id, argumentIR*)
   = (cid, callableTypeDefIR, id_default*)
-  -- if callableTypeDefIREnv = TC.BLOCK.CALLABLE
+  -- if callableTypeDefEnv = TC.BLOCK.CALLABLE
   -- if (id_arg?)* = $ids_arguments(argumentIR*)
   -- if (cid, callableTypeDefIR, id_default*)
-      = $find_overloaded<callableTypeDefIR>(callableTypeDefIREnv, id, (id_arg?)*)
-def $find_callableTypeDef_overloaded_t(BLOCK, TC, `` id, argumentIR*)
-  = $find_callableTypeDef_overloaded_t(GLOBAL, TC, `` id, argumentIR*)
-  -- if callableTypeDefIREnv = TC.BLOCK.CALLABLE
+      = $find_overloaded<callableTypeDefIR>(callableTypeDefEnv, id, (id_arg?)*)
+def $find_callableDef_overloaded_t(BLOCK, TC, `` id, argumentIR*)
+  = $find_callableDef_overloaded_t(GLOBAL, TC, `` id, argumentIR*)
+  -- if callableTypeDefEnv = TC.BLOCK.CALLABLE
   -- if (id_arg?)* = $ids_arguments(argumentIR*)
   -- if eps
-      = $find_overloaded<callableTypeDefIR>(callableTypeDefIREnv, id, (id_arg?)*)
-def $find_callableTypeDef_overloaded_t(LOCAL, TC, `` id, argumentIR*)
-  = $find_callableTypeDef_overloaded_t(BLOCK, TC, `` id, argumentIR*) 
+      = $find_overloaded<callableTypeDefIR>(callableTypeDefEnv, id, (id_arg?)*)
+def $find_callableDef_overloaded_t(LOCAL, TC, `` id, argumentIR*)
+  = $find_callableDef_overloaded_t(BLOCK, TC, `` id, argumentIR*) 
 
-dec $find_callableTypeDef_non_overloaded_t(cursor, typingContext, prefixedNameIR)
+dec $find_callableDef_non_overloaded_t(cursor, typingContext, prefixedNameIR)
   : callableTypeDefIR?
 
-def $find_callableTypeDef_non_overloaded_t(p, TC, `. id)
+def $find_callableDef_non_overloaded_t(p, TC, `. id)
   = $find_non_overloaded<callableTypeDefIR>(TC.GLOBAL.CALLABLE, id)
-def $find_callableTypeDef_non_overloaded_t(GLOBAL, TC, `` id)
+def $find_callableDef_non_overloaded_t(GLOBAL, TC, `` id)
   = $find_non_overloaded<callableTypeDefIR>(TC.GLOBAL.CALLABLE, id)
-def $find_callableTypeDef_non_overloaded_t(BLOCK, TC, `` id) = callableTypeDefIR
+def $find_callableDef_non_overloaded_t(BLOCK, TC, `` id) = callableTypeDefIR
   -- if callableTypeDefIR
       = $find_non_overloaded<callableTypeDefIR>(TC.BLOCK.CALLABLE, id)
-def $find_callableTypeDef_non_overloaded_t(BLOCK, TC, `` id)
-  = $find_callableTypeDef_non_overloaded_t(GLOBAL, TC, `` id)
+def $find_callableDef_non_overloaded_t(BLOCK, TC, `` id)
+  = $find_callableDef_non_overloaded_t(GLOBAL, TC, `` id)
   -- if eps 
       = $find_non_overloaded<callableTypeDefIR>(TC.BLOCK.CALLABLE, id)
-def $find_callableTypeDef_non_overloaded_t(LOCAL, TC, `` id)
-  = $find_callableTypeDef_non_overloaded_t(BLOCK, TC, `` id)
+def $find_callableDef_non_overloaded_t(LOCAL, TC, `` id)
+  = $find_callableDef_non_overloaded_t(BLOCK, TC, `` id)
 
 ;;; Finder for constructors
 
-dec $find_constructorTypeDef_overloaded_t(typingContext, prefixedNameIR, argumentIR*)
+dec $find_constructorDef_overloaded_t(typingContext, prefixedNameIR, argumentIR*)
   : (cid, constructorTypeDefIR, id*)?
 
-def $find_constructorTypeDef_overloaded_t(TC, `. id, argumentIR*)
+def $find_constructorDef_overloaded_t(TC, `. id, argumentIR*)
   = $find_overloaded<constructorTypeDefIR>(TC.GLOBAL.CONSTRUCTOR, id, (id_arg?)*)
   -- if (id_arg?)* = $ids_arguments(argumentIR*)
-def $find_constructorTypeDef_overloaded_t(TC, `` id, argumentIR*)
+def $find_constructorDef_overloaded_t(TC, `` id, argumentIR*)
   = $find_overloaded<constructorTypeDefIR>(TC.GLOBAL.CONSTRUCTOR, id, (id_arg?)*)
   -- if (id_arg?)* = $ids_arguments(argumentIR*)
 

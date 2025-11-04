@@ -53,7 +53,7 @@ rule TableKey_ok:
   ---- ;; check match kind
   -- if nameIR_matchkind = $name(name_matchkind)
   -- if MATCH_KIND `. nameIR_matchkind
-      = $find_varType_value_t(LOCAL, TC, `` nameIR_matchkind)
+      = $find_var_value_t(LOCAL, TC, `` nameIR_matchkind)
   ---- ;; check compatibility with the match kind
   -- if $compat_table_key(nameIR_matchkind, typeIR)
   ---- ;; update table context
@@ -124,7 +124,7 @@ rule TableAction_ok/prefixedNonTypeName:
   ---- ;; check that the action exists
   -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
   -- if ACTION `( parameterTypeIR* )
-      = $find_callableTypeDef_non_overloaded_t(LOCAL, TC, prefixedNameIR)
+      = $find_callableDef_non_overloaded_t(LOCAL, TC, prefixedNameIR)
   ---- ;; check that the action reference is a valid data-plane call
   -- Call_action_partial_ok: TC |- parameterTypeIR* `@ eps
                                  : parameterTypeIR_data* `, parameterTypeIR_control*
@@ -142,7 +142,7 @@ rule TableAction_ok/prefixedNonTypeName-argumentList:
   ---- ;; check that the action exists
   -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
   -- if ACTION `( parameterTypeIR* )
-      = $find_callableTypeDef_non_overloaded_t(LOCAL, TC, prefixedNameIR)
+      = $find_callableDef_non_overloaded_t(LOCAL, TC, prefixedNameIR)
   ---- ;; check arguments
   -- if argument* = $flatten_argumentList(argumentList)
   -- (Argument_ok: LOCAL TC |- argument : argumentIR)*
@@ -1068,7 +1068,7 @@ rule TableType_ok:
   -- if (varTypeIR_enum_field
         = `EMPTY typeIR_table_enum LCTK value_enum_field)*
   -- if TC_1
-      = $add_varTypes_t(
+      = $add_vars_t(
           BLOCK, TC_0,
           (tid_enum ++ "." ++ id_enum_field)*,
           varTypeIR_enum_field*

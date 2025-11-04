@@ -109,7 +109,7 @@ rule Stmt_ok/directApplicationStatement:
   -- if $compat_direct_application(typeIR_object)
   ---- ;; insert temporary variable for the constructed type
   -- if nameIR_object = "__direct_application"
-  -- if TC_1 = $add_varType_t(p, TC_0, nameIR_object, `EMPTY typeIR_object CTK eps)
+  -- if TC_1 = $add_var_t(p, TC_0, nameIR_object, `EMPTY typeIR_object CTK eps)
   ---- ;; check apply method
   -- if lvalue = (`ID nameIR_object) `. (`ID "apply")
   -- Stmt_ok: p TC_1 f |- lvalue `( argumentList ) `; : _ _ callStatementIR
@@ -232,7 +232,7 @@ rulegroup SwitchLabel_table_ok {
     -- if tid_table_enum = "action_list(" ++ tid_table ++ ")" 
     -- if id_label = tid_table_enum ++ "." ++ nameIR_label
     -- if _ typeIR_label ctk_label value_label
-        = $find_varType_t(LOCAL, TC, `` id_label)
+        = $find_var_t(LOCAL, TC, `` id_label)
     -- if value_label
         = TABLE_ENUM tid_table_enum `. nameIR_label
     ---- ;; create typed switch label
@@ -443,7 +443,7 @@ rulegroup BlockElementStmt_ok/variableDeclaration {
     -- if $is_assignable_typeIR(typeIR)
     ---- ;; update the context
     -- if nameIR = $name(name)
-    -- if TC_1 = $add_varType_t(LOCAL, TC_0, nameIR, INOUT typeIR DYN eps)
+    -- if TC_1 = $add_var_t(LOCAL, TC_0, nameIR, INOUT typeIR DYN eps)
     ---- ;; create IR
     -- if variableDeclarationIR
         = annotationList typeIR nameIR eps `;
@@ -464,7 +464,7 @@ rulegroup BlockElementStmt_ok/variableDeclaration {
         = $coerce_unary(typedExpressionIR_init, typeIR)
     ---- ;; update the context
     -- if nameIR = $name(name)
-    -- if TC_1 = $add_varType_t(LOCAL, TC_0, nameIR, INOUT typeIR DYN eps)
+    -- if TC_1 = $add_var_t(LOCAL, TC_0, nameIR, INOUT typeIR DYN eps)
     ---- ;; create IR
     -- if variableDeclarationIR
         = annotationList typeIR nameIR (`= typedExpressionIR_init_cast) `;
