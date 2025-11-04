@@ -348,8 +348,8 @@ def $bin_eq(
 def $bin_eq(tid_a `. id_field_a, tid_b `. id_field_b)
   = (tid_a = tid_b) /\ (id_field_a = id_field_b)
 def $bin_eq(
-    tid_a `. id_field_a `( value_field_a ),
-    tid_b `. id_field_b `( value_field_b )
+    tid_a `. id_field_a `. value_field_a,
+    tid_b `. id_field_b `. value_field_b
   )
   = (tid_a = tid_b) /\ (id_field_a = id_field_b)
     /\ $bin_eq(value_field_a, value_field_b)
@@ -588,7 +588,7 @@ def $cast_op(typeIR, HEADER tid `{ b `; (value_field id_field `;)* })
 
 ;;; Cast from serializable enum field
 
-def $cast_op(typeIR, _ `. _ `( value )) = $cast_op(typeIR, value)
+def $cast_op(typeIR, _ `. _ `. value) = $cast_op(typeIR, value)
 
 ;; Cast from sequence
 
@@ -742,12 +742,12 @@ def $default'(HEADER_UNION tid `{ (typeIR_f id_f `;)* })
 def $default'(ENUM tid `{ id_f_h :: _ }) = tid `. id_f_h
 
 def $default'(ENUM tid `< typeIR > `{ (id_field `= value_field `;)* })
-  = tid `. id_zero `( value_zero )
+  = tid `. id_zero `. value_zero
   -- if value_zero = $cast_arbint(typeIR, 0)
   -- if id_zero = $assoc_<value, id>(value_zero, (value_field, id_field)*)
 
 def $default'(ENUM tid `< typeIR > `{ (id_field `= value_field `;)* })
-  = tid `. id_zero `( value_zero )
+  = tid `. id_zero `. value_zero
   -- if value_zero = $cast_arbint(typeIR, 0)
   -- if eps = $assoc_<value, id>(value_zero, (value_field, id_field)*)
   -- if id_zero = "__UNSPECIFIED"

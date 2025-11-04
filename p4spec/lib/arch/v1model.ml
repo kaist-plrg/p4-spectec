@@ -232,7 +232,7 @@ struct
       [ Term "`"; NT value_nameIR ] #@ "prefixedNameIR"
     in
     let _value_standard_metadata =
-      call_func "find_value_eval" []
+      call_func "find_var_e" []
         [ value_cursor; value_ctx; value_prefixedNameIR ]
     in
     (* Get output packet *)

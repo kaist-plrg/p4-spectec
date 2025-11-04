@@ -1,0 +1,45 @@
+;;
+;; Parser state evaluation
+;;
+
+rule ParserState_eval:
+  EC_0 STO_0 |- annotationList STATE
+                  `{ parserStatementListIR transitionStatementIR }
+              : EC_2 STO_2 transitionResult
+  -- ParserStmts_eval:
+      EC_0 STO_0 |- parserStatementListIR
+                  : EC_1 STO_1
+  -- ParserTransition_eval:
+      EC_1 STO_1 |- transitionStatementIR
+                  : EC_2 STO_2 transitionResult
+ 
+;;
+;; Parser state transition
+;;
+
+rule ParserState_trans/accept:
+  EC_0 STO_0 |- TRANSITION nameIR
+              : EC_1 STO_1 ACCEPT
+  -- if state = $find_state_e(LOCAL, EC_0, nameIR)
+  -- ParserState_eval:
+      EC_0 STO_0 |- state
+                  : EC_1 STO_1 ACCEPT
+
+rule ParserState_trans/reject:
+  EC_0 STO_0 |- TRANSITION nameIR
+              : EC_1 STO_1 REJECT
+  -- if state = $find_state_e(LOCAL, EC_0, nameIR)
+  -- ParserState_eval:
+      EC_0 STO_0 |- state
+                  : EC_1 STO_1 REJECT
+
+rule ParserState_trans/state:
+  EC_0 STO_0 |- TRANSITION nameIR
+              : EC_2 STO_2 transitionResult
+  -- if state = $find_state_e(LOCAL, EC_0, nameIR)
+  -- ParserState_eval:
+      EC_0 STO_0 |- state
+                  : EC_1 STO_1 (STATE nameIR_next)
+  -- ParserState_trans:
+      EC_1 STO_1 |- TRANSITION nameIR_next
+                  : EC_2 STO_2 transitionResult

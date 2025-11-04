@@ -82,12 +82,12 @@ module PacketIn = struct
     let value_cursor = [ Term "LOCAL" ] #@ "cursor" in
     let value_nameIR = wrap_text_v "T" in
     let value_typ =
-      call_func "find_type_eval" [] [ value_cursor; value_ctx; value_nameIR ]
+      call_func "find_type_e" [] [ value_cursor; value_ctx; value_nameIR ]
       |> unwrap_opt_v |> Option.get
     in
     (* Get size of "T" after canonicalization *)
     let value_typ_subst =
-      call_func "subst_type_eval" [] [ value_cursor; value_ctx; value_typ ]
+      call_func "subst_type_e" [] [ value_cursor; value_ctx; value_typ ]
     in
     let size =
       call_func "sizeof_maxSizeInBits'" [] [ value_typ_subst ] |> unwrap_num_v
@@ -99,7 +99,7 @@ module PacketIn = struct
       [ Term "`"; NT value_nameIR ] #@ "prefixedNameIR"
     in
     let value_hdr =
-      call_func "find_value_eval" []
+      call_func "find_var_e" []
         [ value_cursor; value_ctx; value_prefixedNameIR ]
     in
     let value_bits =
@@ -171,7 +171,7 @@ module PacketOut = struct
       [ Term "`"; NT value_nameIR ] #@ "prefixedNameIR"
     in
     let value_hdr =
-      call_func "find_value_eval" []
+      call_func "find_var_e" []
         [ value_cursor; value_ctx; value_prefixedNameIR ]
     in
     (* Get bits of "hdr" *)

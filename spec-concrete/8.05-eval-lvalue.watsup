@@ -1,0 +1,145 @@
+;;
+;; L-value evaluation to storage reference
+;;
+;; syntax typedLvalueIR = lvalueIR `# `( typeIR )
+;;
+
+;;; syntax lvalueIR
+
+;;;; referenceExpressionIR
+
+rule Lvalue_eval/referenceExpressionIR:
+  p EC STO |- referenceExpressionIR `# _
+            : EC STO (`` referenceExpressionIR)
+
+;;;; typedLvalueIR `. nameIR
+
+rulegroup Lvalue_eval/typedLvalueIR-nameIR {
+
+  rule Lvalue_eval/exit:
+    p EC_0 STO_0 |- (typedLvalueIR `. nameIR) `# _
+                  : EC_1 STO_1 EXIT
+    -- Lvalue_eval:
+        p EC_0 STO_0 |- typedLvalueIR 
+                      : EC_1 STO_1 EXIT
+
+  rule Lvalue_eval/cont:
+    p EC_0 STO_0 |- (typedLvalueIR `. nameIR) `# _
+                  : EC_1 STO_1 storageReferenceResult
+    -- Lvalue_eval:
+        p EC_0 STO_0 |- typedLvalueIR 
+                      : EC_1 STO_1 (`` storageReference)
+    -- if storageReferenceResult
+        = `` (storageReference `. nameIR)
+
+}
+
+;;;; typedLvalueIR `[ typedExpressionIR ]
+
+;;;; typedLvalueIR `[ typedExpressionIR `: typedExpressionIR ]
+
+;;;; `( typedLvalueIR )
+
+;;
+;; L-value read to value
+;;
+;; syntax storageReference
+;;
+
+;;; referenceExpressionIR
+;;; syntax referenceExpressionIR = prefixedNameIR
+
+rule Lvalue_read/referenceExpressionIR:
+  p EC STO |- prefixedNameIR : value
+  -- if value = $find_var_e(p, EC, prefixedNameIR)
+
+;;; storageReference `. nameIR
+
+rulegroup Lvalue_read/storageReference-nameIR {
+
+  rule Lvalue_read/package:
+    p EC_0 STO |- storageReference `. nameIR : value
+    ---- ;; read base value
+    -- Lvalue_read:
+        p EC_0 STO |- storageReference : value_base
+    ---- ;; if the base value is a reference to a package
+    -- if `! oid = value_base
+    -- if PACKAGE `< _ > `{ frame }
+        = $find_map<oid, object>(STO, oid)
+    ---- ;; look up the name in the package frame
+    -- if value
+        = $find_map<nameIR, value>(frame, nameIR)
+
+  rule Lvalue_read/struct:
+    p EC_0 STO |- storageReference `. nameIR : value
+    ---- ;; read base value
+    -- Lvalue_read:
+        p EC_0 STO |- storageReference : value_base
+    ---- ;; if the base value is a struct
+    -- if STRUCT tid `{ (value_field id_field `;)* } = value_base
+    ---- ;; look up the field in the struct
+    -- if value
+        = $assoc_<id, value>(nameIR, (id_field, value_field)*)
+
+  rule Lvalue_read/header:
+    p EC_0 STO |- storageReference `. nameIR : value
+    ---- ;; read base value
+    -- Lvalue_read:
+        p EC_0 STO |- storageReference : value_base
+    ---- ;; if the base value is a header 
+    -- if HEADER tid `{ _ `; (value_field id_field `;)* } = value_base
+    ---- ;; look up the field in the header
+    -- if value
+        = $assoc_<id, value>(nameIR, (id_field, value_field)*)
+
+}
+
+;;
+;; L-value write to storage reference
+;;
+;; syntax storageReference
+;;
+
+;;; referenceExpressionIR
+;;; syntax referenceExpressionIR = prefixedNameIR
+
+rule Lvalue_write/referenceExpressionIR:
+  p EC_0 STO |- prefixedNameIR -> value : EC_1
+  -- if p_ref = $find_var_cursor_e(p, EC_0, prefixedNameIR)
+  -- if EC_1 = $add_var_e(p_ref, EC_0, prefixedNameIR, value)
+
+;;; storageReference `. nameIR
+
+rulegroup Lvalue_write/storageReference-nameIR {
+
+  rule Lvalue_write/struct:
+    p EC_0 STO |- (storageReference `. nameIR) -> value : EC_1
+    ---- ;; read base value
+    -- Lvalue_read:
+        p EC_0 STO |- storageReference : value_base
+    ---- ;; if the base value is a struct
+    -- if STRUCT tid `{ fieldValue* } = value_base
+    ---- ;; update the field and write back
+    -- if fieldValue_update*
+        = $update_fieldValue(fieldValue*, nameIR, value)
+    -- if value_base_update
+        = STRUCT tid `{ fieldValue_update* }
+    -- Lvalue_write:
+        p EC_0 STO |- storageReference -> value_base_update : EC_1
+
+  rule Lvalue_write/header:
+    p EC_0 STO |- (storageReference `. nameIR) -> value : EC_1
+    ---- ;; read base value
+    -- Lvalue_read:
+        p EC_0 STO |- storageReference : value_base
+    ---- ;; if the base value is a header
+    -- if HEADER tid `{ b_valid `; fieldValue* } = value_base
+    ---- ;; update the field and write back
+    -- if fieldValue_update*
+        = $update_fieldValue(fieldValue*, nameIR, value)
+    -- if value_base_update
+        = HEADER tid `{ b_valid `; fieldValue_update* }
+    -- Lvalue_write:
+        p EC_0 STO |- storageReference -> value_base_update : EC_1
+
+}

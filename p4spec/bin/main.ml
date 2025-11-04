@@ -174,7 +174,8 @@ let sim_command =
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
-       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
+       | ArchError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 
 let cover_dangling_command =
   Core.Command.basic ~summary:"measure dangling coverage of the P4 type system"
