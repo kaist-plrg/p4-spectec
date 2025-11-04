@@ -1,0 +1,147 @@
+;;
+;; Metavariables for int, nat, bool, and text
+;;
+
+var b : bool
+
+var i : int
+
+var n : nat
+var w : nat
+
+var t : text
+
+;;
+;; General nat functions
+;;
+
+builtin dec $sum(nat*) : nat
+
+builtin dec $max(nat*) : nat
+
+builtin dec $min(nat*) : nat
+
+;;
+;; General text functions
+;;
+
+builtin dec $int_to_text(int) : text
+
+dec $concat_text(text*) : text
+  hint(prose_in "the concatenation of" %0)
+def $concat_text(eps) = ""
+def $concat_text(t_h :: t_t*) = t_h ++ $concat_text(t_t*)
+
+builtin dec $strip_prefix(text, text) : text
+builtin dec $strip_suffix(text, text) : text
+
+;;
+;; General option functions
+;;
+
+dec $opt_as_seq_<X>(X?) : X*
+def $opt_as_seq_<X>(eps) = eps
+def $opt_as_seq_<X>(X) = [ X ]
+
+;;
+;; General sequence functions
+;;
+
+dec $init_(nat) : nat*
+  hint(prose_in "the list of the first" %0 "natural numbers")
+def $init_(0) = eps
+def $init_(n) = n' :: $init_(n')
+  -- if n =/= 0
+  -- if n' = $(n - 1)
+
+dec $repeat_<X>(X, nat) : X*
+  hint(prose_in "a list of" %1 "copies of" %0)
+def $repeat_<X>(X, 0) = eps
+def $repeat_<X>(X, n) = X ++ $repeat_<X>(X, n')
+  -- if n =/= 0
+  -- if n' = $(n - 1)
+
+builtin dec $rev_<X>(X*) : X*
+
+builtin dec $concat_<X>((X*)*) : X*
+
+builtin dec $partition_<X>(X*, nat) : (X*, X*)
+
+dec $filter_<X>(X*, def $cond(X) : bool) : X*
+def $filter_<X>(eps, def $cond) = eps
+def $filter_<X>(X_h :: X_t*, def $cond)
+  = X_h :: $filter_<X>(X_t*, def $cond)
+    -- if $cond(X_h)
+def $filter_<X>(X_h :: X_t*, def $cond)
+  = $filter_<X>(X_t*, def $cond)
+    -- if ~$cond(X_h)
+
+builtin dec $assoc_<X, Y>(X, (X, Y)*) : Y?
+
+builtin dec $distinct_<K>(K*) : bool
+  hint(prose_true "the elements of" %0 "are distinct")
+  hint(prose_false "the elements of" %0 "are not distinct")
+
+;;
+;; General set functions
+;;
+
+syntax set<K> = `{ K* }
+
+dec $empty_set<K> : set<K>
+def $empty_set<K> = `{ eps }
+
+dec $in_set<K>(K, set<K>) : bool
+  hint(prose_true %0 "is an element of the set" %1)
+def $in_set<K>(K, `{ K_e* }) = K <- K_e*
+
+builtin dec $intersect_set<K>(set<K>, set<K>) : set<K>
+  hint(prose_in "the intersection of the sets" %0 "and" %1)
+
+builtin dec $union_set<K>(set<K>, set<K>) : set<K>
+  hint(prose_in "the union of the sets" %0 "and" %1)
+
+builtin dec $unions_set<K>(set<K>*) : set<K>
+  hint(prose_in "the union of the sets" %0)
+
+builtin dec $diff_set<K>(set<K>, set<K>) : set<K>
+  hint(prose_in "the difference of the sets" %0 "and" %1)
+
+builtin dec $sub_set<K>(set<K>, set<K>) : bool
+  hint(prose_true %0 "is a subset of" %1)
+  hint(prose_false %0 "is not a subset of" %1)
+
+builtin dec $eq_set<K>(set<K>, set<K>) : bool
+  hint(prose_true %0 "is equal to" %1)
+  hint(prose_false %0 "is not equal to" %1)
+
+;;
+;; General map functions
+;;
+
+syntax pair<K, V> = K `: V
+
+syntax map<K, V> = set<pair<K, V>>
+
+dec $empty_map<K, V> : map<K, V>
+def $empty_map<K, V> = `{ eps }
+
+dec $dom_map<K, V>(map<K, V>) : set<K>
+  hint(prose_in "the domain of the map" %0)
+def $dom_map<K, V>(`{ (K `: V)* }) = `{ K* }
+
+builtin dec $find_map<K, V>(map<K, V>, K) : V?
+
+builtin dec $find_maps<K, V>(map<K, V>*, K) : V?
+
+builtin dec $add_map<K, V>(map<K, V>, K, V) : map<K, V>
+
+builtin dec $adds_map<K, V>(map<K, V>, K*, V*) : map<K, V>
+
+builtin dec $update_map<K, V>(map<K, V>, K, V) : map<K, V>
+
+dec $extend_map<K, V>(map<K, V>, map<K, V>) : map<K, V>
+def $extend_map<K, V>(`{ (K_a `: V_a)* }, `{ (K_b `: V_b)* })
+  = `{ (K_c `: V_c)* }
+  -- if `{ (K_c `: V_c)* }
+      = $adds_map<K, V>(`{ (K_a `: V_a)* }, K_b*, V_b*)

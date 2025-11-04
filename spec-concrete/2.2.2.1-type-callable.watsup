@@ -1,0 +1,59 @@
+;;
+;; Callable types
+;;
+
+;;
+;;;; Parameter types
+;;
+
+syntax parameterTypeIR = direction typeIR id value?
+
+;;
+;;;; Action types
+;;
+
+syntax actionTypeIR = ACTION `( parameterTypeIR* )
+
+;;
+;;;; Function types
+;;
+
+syntax definedFunctionTypeIR = FUNCTION `( parameterTypeIR* ) `: typeIR
+
+syntax externFunctionTypeIR = EXTERN_FUNCTION `( parameterTypeIR* ) `: typeIR
+
+syntax functionTypeIR =
+  | definedFunctionTypeIR
+  | externFunctionTypeIR
+
+;;
+;;;; Method types
+;;
+
+syntax builtinMethodTypeIR = BUILTIN_METHOD `( parameterTypeIR* ) `: typeIR
+
+syntax externMethodTypeIR =
+  | EXTERN_METHOD `( parameterTypeIR* ) `: typeIR
+  | EXTERN_METHOD ABSTRACT `( parameterTypeIR* ) `: typeIR
+
+syntax parserApplyMethodTypeIR = PARSER_APPLY `( parameterTypeIR* )
+
+syntax controlApplyMethodTypeIR = CONTROL_APPLY `( parameterTypeIR* )
+
+syntax tableApplyMethodTypeIR = TABLE_APPLY `: typeIR
+
+syntax methodTypeIR =
+  | builtinMethodTypeIR
+  | externMethodTypeIR
+  | parserApplyMethodTypeIR
+  | controlApplyMethodTypeIR
+  | tableApplyMethodTypeIR
+
+;;
+;;;; Callable types
+;;
+
+syntax callableTypeIR =
+  | actionTypeIR
+  | functionTypeIR
+  | methodTypeIR

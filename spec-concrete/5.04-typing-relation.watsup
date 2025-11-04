@@ -3,7 +3,7 @@
 ;;;; of expressions that are local compile-time known
 ;;
 
-relation Eval_static:
+relation Expr_eval_lctk:
   cursor typingContext |- typedExpressionIR ~> value
   hint(input %0 %1 %2)
   hint(testgen_ignore)
@@ -408,39 +408,39 @@ relation Call_convention_ok:
              #", under cursor" %0#", typing context" %1 #", and action context" %2)
 
 ;;
-;;;; Routine typing
+;;;; Callable typing
 ;;
 
-;; Finds the type of a routine target,
+;; Finds the type of a callable target,
 ;; inserts fresh type variables for parameters with don't care types, (tid*)
 ;; and also identifies the ids of default arguments (id*)
 
-dec $is_static_routineTarget(routineTargetIR) : ctk
+dec $is_static_callableTarget(callableTargetIR) : ctk
 
-def $is_static_routineTarget(_ `. nameIR) = LCTK
+def $is_static_callableTarget(_ `. nameIR) = LCTK
   -- if nameIR <- [ "minSizeInBits", "minSizeInBytes",
                     "maxSizeInBits", "maxSizeInBytes" ]
-def $is_static_routineTarget(TYPE _ `. nameIR) = LCTK
+def $is_static_callableTarget(TYPE _ `. nameIR) = LCTK
   -- if nameIR <- [ "minSizeInBits", "minSizeInBytes",
                     "maxSizeInBits", "maxSizeInBytes" ]
-def $is_static_routineTarget(_) = DYN
+def $is_static_callableTarget(_) = DYN
   -- otherwise
 
-relation RoutineTarget_ok:
-  cursor typingContext |- routineTarget : routineTargetIR
+relation CallableTarget_ok:
+  cursor typingContext |- callableTarget : callableTargetIR
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
-  hint(prose_out "the typed routine target" %3)
+  hint(prose_out "the typed callable target" %3)
 
-relation RoutineTarget_lvalue_ok:
-  cursor typingContext |- lvalue : routineTargetIR
+relation CallableTarget_lvalue_ok:
+  cursor typingContext |- lvalue : callableTargetIR
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
-  hint(prose_out "the typed routine target" %3)
+  hint(prose_out "the typed callable target" %3)
 
-relation RoutineType_ok:
-  cursor typingContext |- routineTargetIR `< typeArgumentListIR > `( argumentIR* )
-                        : routineTypeIR `< `# tid* > `( `# id* )
+relation CallableType_ok:
+  cursor typingContext |- callableTargetIR `< typeArgumentListIR > `( argumentIR* )
+                        : callableTypeIR `< `# tid* > `( `# id* )
   hint(input %0 %1 %2 %3 %4)
 
 ;; Checks that an action/function/method invocation is valid,
@@ -449,7 +449,7 @@ relation RoutineType_ok:
 ;; and inserts implicit casts for arguments, if necessary
 
 relation Call_ok:
-  cursor typingContext |- routineTypeIR `< typeArgumentListIR `# tid* >
+  cursor typingContext |- callableTypeIR `< typeArgumentListIR `# tid* >
                             `( argumentListIR `# id* )
                         : typeIR `< typeArgumentListIR > `( argumentListIR )
   hint(input %0 %1 %2 %3 %4 %5 %6)

@@ -108,8 +108,8 @@
   errorAccessExpression memberAccessExpression indexAccessExpression accessExpression
   memberAccessExpressionNonBrace indexAccessExpressionNonBrace accessExpressionNonBrace
   (* >> Call expressions *)
-  routineTarget constructorTarget callTarget callExpression
-  routineTargetNonBrace callTargetNonBrace callExpressionNonBrace
+  callableTarget constructorTarget callTarget callExpression
+  callableTargetNonBrace callTargetNonBrace callExpressionNonBrace
   (* >> Parenthesized Expressions *) parenthesizedExpression
   (* >> Expressions *)
   expression expressionList memberAccessBase sequenceElementExpression recordElementExpression dataElementExpression
@@ -600,7 +600,7 @@ namedExpressionList:
 ;
 
 (* >> Call expressions *)
-%inline routineTarget:
+%inline callableTarget:
   | e = expression { e }
 ;
 
@@ -609,7 +609,7 @@ namedExpressionList:
 ;
 
 %inline callTarget:
-	| t = routineTarget
+	| t = callableTarget
 	| t = constructorTarget
 		{ t }
 ;
@@ -617,17 +617,17 @@ namedExpressionList:
 %inline callExpression:
 	| t = callTarget L_PAREN args = argumentList R_PAREN
 		{ [ NT t; Term "("; NT args; Term ")" ] #@ "callExpression" }
-	| t = routineTarget l_angle targs = realTypeArgumentList r_angle L_PAREN args = argumentList R_PAREN
+	| t = callableTarget l_angle targs = realTypeArgumentList r_angle L_PAREN args = argumentList R_PAREN
 		{ [ NT t; Term "<"; NT targs; Term ">"; Term "("; NT args; Term ")" ]
       #@ "callExpression" }
 ;
 
-%inline routineTargetNonBrace:
+%inline callableTargetNonBrace:
   | e = expressionNonBrace { e }
 ;
 
 %inline callTargetNonBrace:
-	| t = routineTargetNonBrace
+	| t = callableTargetNonBrace
 	| t = constructorTarget
 		{ t }
 ;
@@ -635,7 +635,7 @@ namedExpressionList:
 %inline callExpressionNonBrace:
 	| t = callTargetNonBrace L_PAREN args = argumentList R_PAREN
 		{ [ NT t; Term "("; NT args; Term ")" ] #@ "callExpressionNonBrace" }
-	| t = routineTargetNonBrace l_angle targs = realTypeArgumentList r_angle L_PAREN args = argumentList R_PAREN
+	| t = callableTargetNonBrace l_angle targs = realTypeArgumentList r_angle L_PAREN args = argumentList R_PAREN
 		{ [ NT t; Term "<"; NT targs; Term ">"; Term "("; NT args; Term ")" ]
       #@ "callExpressionNonBrace" }
 

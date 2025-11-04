@@ -14,8 +14,7 @@ rulegroup Parameter_ok {
 
   rule Parameter_ok/non-initializer:
     p TC |- annotationList direction type name `EMPTY
-          : (annotationList direction typeIR nameIR eps)
-              `# tid_fresh*
+          : (annotationList direction typeIR nameIR eps) `# tid_fresh*
     -- Type_ok: p TC |- type : typeIR `# tid_fresh*
     -- if bound = $union_set<tid>($bound(p, TC), `{ tid_fresh* })
     -- Type_wf: bound |- typeIR
@@ -31,8 +30,8 @@ rulegroup Parameter_ok {
     -- Type_wf: bound |- typeIR
     ---- ;; check initializer
     -- Expr_ok: p TC |- expression_init : typedExpressionIR_init
-    -- if typeIR_init = $type_of_expression(typedExpressionIR_init)
-    -- if LCTK = $ctk_of_expression(typedExpressionIR_init)
+    -- if typeIR_init = $typeIR_of_typedExpressionIR(typedExpressionIR_init)
+    -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR_init)
     ---- ;; check that the initializer type is
     ---- ;; compatible with the parameter type
     ---- ;; while inserting implicit casts if necessary
@@ -40,7 +39,7 @@ rulegroup Parameter_ok {
         = $coerce_unary(typedExpressionIR_init, typeIR)
     -- if nameIR = $name(name)
     ---- ;; evaluate the initializer
-    -- Eval_static: p TC |- typedExpressionIR_init_cast ~> value_init
+    -- Expr_eval_lctk: p TC |- typedExpressionIR_init_cast ~> value_init
 
 }
 

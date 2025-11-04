@@ -1,0 +1,150 @@
+;;
+;; Types
+;;
+
+;;
+;;;; Base types
+;;
+
+;;
+;;;;;; Primitive types
+;;
+
+syntax primitiveTypeIR =
+  | VOID
+  | BOOL
+  | ERROR
+  | MATCH_KIND
+  | STRING
+
+;;
+;;;;;;; Numeric types
+;;
+
+syntax numberTypeIR =
+  | INT
+  | INT `< nat >
+  | BIT `< nat >
+  | VARBIT `< nat >
+
+syntax baseTypeIR = primitiveTypeIR | numberTypeIR
+
+;;
+;;;; Named types
+;;
+
+syntax typeIR
+syntax typeDefIR
+
+syntax nameTypeIR = `` tid
+
+syntax specializedTypeIR = typeDefIR `< typeIR* >
+
+syntax namedTypeIR =
+  | nameTypeIR
+  | specializedTypeIR
+
+;;
+;;;; Alias types
+;;
+
+syntax typedefTypeIR = TYPEDEF tid typeIR
+
+syntax newTypeIR = TYPE tid typeIR
+
+syntax aliasTypeIR =
+  | typedefTypeIR
+  | newTypeIR
+
+;;
+;;;; Data types
+;;
+
+syntax listTypeIR = LIST `< typeIR >
+syntax tupleTypeIR = TUPLE `< typeIR* >
+syntax headerStackTypeIR = typeIR `[ nat ]
+
+syntax fieldTypeIR = typeIR id `;
+
+syntax structTypeIR = STRUCT tid `{ fieldTypeIR* }
+syntax headerTypeIR = HEADER tid `{ fieldTypeIR* }
+syntax headerUnionTypeIR = HEADER_UNION tid `{ fieldTypeIR* }
+
+syntax valueFieldIR = id `= value `;
+
+syntax enumTypeIR =
+  | ENUM tid `{ id* }
+  | ENUM tid `< typeIR > `{ valueFieldIR* }
+
+syntax dataTypeIR =
+  | listTypeIR
+  | tupleTypeIR
+  | headerStackTypeIR
+  | structTypeIR
+  | headerTypeIR
+  | headerUnionTypeIR
+  | enumTypeIR
+
+;;
+;;;; Object types
+;;
+
+syntax parameterTypeIR
+syntax externMethodTypeDefIR
+
+syntax externMethodTypeDefIREnv = map<cid, externMethodTypeDefIR>
+
+syntax externObjectTypeIR = EXTERN tid externMethodTypeDefIREnv
+syntax parserObjectTypeIR = PARSER `( parameterTypeIR* )
+syntax controlObjectTypeIR = CONTROL `( parameterTypeIR* )
+syntax packageObjectTypeIR = PACKAGE `{ typeIR* }
+syntax tableObjectTypeIR = TABLE tid `{ typeIR }
+
+syntax objectTypeIR =
+  | externObjectTypeIR
+  | parserObjectTypeIR
+  | controlObjectTypeIR
+  | packageObjectTypeIR
+  | tableObjectTypeIR
+
+;;
+;;;; Synthesized types
+;;
+
+syntax defaultTypeIR = DEFAULT
+
+syntax invalidHeaderTypeIR = HEADER_INVALID
+
+syntax sequenceTypeIR =
+  | SEQ `< typeIR* >
+  | SEQ `< typeIR* `, `... >
+
+syntax recordTypeIR =
+  | RECORD `{ fieldTypeIR* }
+  | RECORD `{ fieldTypeIR* `, `... }
+
+syntax setTypeIR = SET `< typeIR* >
+
+syntax tableMetadataTypeIR =
+  | TABLE_ENUM tid `{ id* }
+  | TABLE_STRUCT tid `{ fieldTypeIR* }
+
+syntax synthesizedTypeIR =
+  | defaultTypeIR
+  | invalidHeaderTypeIR
+  | sequenceTypeIR
+  | recordTypeIR
+  | setTypeIR
+  | tableMetadataTypeIR
+
+;;
+;;;; Types
+;;
+
+syntax typeIR =
+  | baseTypeIR
+  | namedTypeIR
+  | aliasTypeIR
+  | dataTypeIR
+  | objectTypeIR
+  | synthesizedTypeIR

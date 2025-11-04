@@ -1,0 +1,320 @@
+;;
+;; Relations for type alpha-equivalence
+;;
+
+relation Type_alpha:
+  typeIR ~~ typeIR
+  hint(input %0 %1)
+  hint(prose_true %0 "and" %1 "are the same type")
+  hint(prose_false %0 "and" %1 "are not the same type")
+
+relation ParameterType_alpha:
+  parameterTypeIR ~~ parameterTypeIR
+  hint(input %0 %1)
+  hint(prose_true %0 "and" %1 "are the same type")
+  hint(prose_false %0 "and" %1 "are not the same type")
+
+relation CallableType_alpha:
+  callableTypeIR ~~ callableTypeIR
+  hint(input %0 %1)
+  hint(prose_true %0 "and" %1 "are the same type")
+  hint(prose_false %0 "and" %1 "are not the same type")
+
+relation CallableTypeDef_alpha:
+  callableTypeDefIR ~~ callableTypeDefIR
+  hint(input %0 %1)
+  hint(prose_true %0 "and" %1 "are the same type")
+  hint(prose_false %0 "and" %1 "are not the same type")
+
+;;
+;;;; Alpha-equivalence of types
+;;
+
+;;; Base types
+
+rule Type_alpha/baseTypeIR:
+  baseTypeIR ~~ baseTypeIR
+
+;;; Named types
+
+rule Type_alpha/nameTypeIR:
+  (`` tid) ~~  (`` tid)
+
+rulegroup Type_alpha/specializedTypeIR {
+
+  rule Type_alpha/nominal:
+    (typeDefIR_a `< typeIR_a* >) ~~ (typeDefIR_b `< typeIR_b* >)
+    -- if typeIR_a_spec = $specialize_typeDefIR(typeDefIR_a, typeIR_a*)
+    -- if typeIR_b_spec = $specialize_typeDefIR(typeDefIR_b, typeIR_b*)
+    -- Type_alpha: typeIR_a_spec ~~ typeIR_b_spec
+    ---- ;; for nominal types, the type arguments must also match
+    -- if $is_nominal_typeIR(typeIR_a_spec)
+          /\ $is_nominal_typeIR(typeIR_b_spec)
+    -- (Type_alpha: typeIR_a ~~ typeIR_b)*
+
+  rule Type_alpha/structural:
+    (typeDefIR_a `< typeIR_a* >) ~~ (typeDefIR_b `< typeIR_b* >)
+    -- if typeIR_a_spec = $specialize_typeDefIR(typeDefIR_a, typeIR_a*)
+    -- if typeIR_b_spec = $specialize_typeDefIR(typeDefIR_b, typeIR_b*)
+    -- Type_alpha: typeIR_a_spec ~~ typeIR_b_spec
+    ---- ;; for structural types, the type arguments do not need to match
+    -- if ~$is_nominal_typeIR(typeIR_a_spec)
+          /\ ~$is_nominal_typeIR(typeIR_b_spec)
+
+}
+
+;;; Alias types
+
+rulegroup Type_alpha/typedefTypeIR {
+
+  rule Type_alpha/left:
+    (TYPEDEF _ typeIR_a) ~~ typeIR_b
+    -- Type_alpha: typeIR_a ~~ typeIR_b
+
+  rule Type_alpha/right:
+    typeIR_a ~~ (TYPEDEF _ typeIR_b)
+    -- Type_alpha: typeIR_a ~~ typeIR_b
+
+}
+
+rule Type_alpha/newTypeIR:
+  (TYPE tid typeIR_a) ~~ (TYPE tid typeIR_b)
+  -- Type_alpha: typeIR_a ~~ typeIR_b
+
+;;; Data types
+
+rule Type_alpha/listTypeIR:
+  (LIST `< typeIR_a >) ~~ (LIST `< typeIR_b >)
+  -- Type_alpha: typeIR_a ~~ typeIR_b
+
+rule Type_alpha/tupleTypeIR:
+  (TUPLE `< typeIR_a* >) ~~ (TUPLE `< typeIR_b* >)
+  -- (Type_alpha: typeIR_a ~~ typeIR_b)*
+
+rule Type_alpha/headerStackTypeIR:
+  (typeIR_a `[ n_size ]) ~~ (typeIR_b `[ n_size ])
+  -- Type_alpha: typeIR_a ~~ typeIR_b
+
+rule Type_alpha/structTypeIR:
+  (STRUCT tid `{ (typeIR_field_a id_field `;)* })
+  ~~ (STRUCT tid `{ (typeIR_field_b id_field `;)* })
+  -- (Type_alpha: typeIR_field_a ~~ typeIR_field_b)*
+
+rule Type_alpha/headerTypeIR:
+  (HEADER tid `{ (typeIR_field_a id_field `;)* })
+  ~~ (HEADER tid `{ (typeIR_field_b id_field `;)* })
+  -- (Type_alpha: typeIR_field_a ~~ typeIR_field_b)*
+
+rule Type_alpha/headerUnionTypeIR:
+  (HEADER_UNION tid `{ (typeIR_field_a id_field `;)* })
+  ~~ (HEADER_UNION tid `{ (typeIR_field_b id_field `;)* })
+  -- (Type_alpha: typeIR_field_a ~~ typeIR_field_b)*
+
+rulegroup Type_alpha/enumTypeIR {
+
+  rule Type_alpha/non-serializable:
+    (ENUM tid `{ id_field* }) ~~ (ENUM tid `{ id_field* })
+
+  rule Type_alpha/serializable:
+    (ENUM tid `< typeIR_a > `{ (id_field `= value_field `;)* })
+    ~~ (ENUM tid `< typeIR_b > `{ (id_field `= value_field `;)* })
+    -- Type_alpha: typeIR_a ~~ typeIR_b
+
+}
+
+;;; Object types
+
+rule Type_alpha/externObjectTypeIR:
+  (EXTERN tid (`{ (cid_a `: externMethodTypeDefIR_a)* }))
+  ~~ (EXTERN tid (`{ (cid_b `: externMethodTypeDefIR_b)* }))
+  -- if $eq_set<cid>(`{ cid_a* }, `{ cid_b* })
+  -- if (externMethodTypeDefIR_a'
+        = $find_map<cid, externMethodTypeDefIR>(
+            `{ (cid_a `: externMethodTypeDefIR_a)* },
+            cid_a))*
+  -- if (externMethodTypeDefIR_b'
+        = $find_map<cid, externMethodTypeDefIR>(
+            `{ (cid_b `: externMethodTypeDefIR_b)* },
+            cid_a))*
+  -- (CallableTypeDef_alpha:
+      externMethodTypeDefIR_a' ~~ externMethodTypeDefIR_b')*
+
+rule Type_alpha/parserObjectTypeIR:
+  (PARSER `( parameterTypeIR_a* )) ~~ (PARSER `( parameterTypeIR_b* ))
+  -- (ParameterType_alpha: parameterTypeIR_a ~~ parameterTypeIR_b)*
+
+rule Type_alpha/controlObjectTypeIR:
+  (CONTROL `( parameterTypeIR_a* )) ~~ (CONTROL `( parameterTypeIR_b* ))
+  -- (ParameterType_alpha: parameterTypeIR_a ~~ parameterTypeIR_b)*
+
+rule Type_alpha/packetObjectTypeIR:
+  (PACKAGE `{ typeIR_a* }) ~~ (PACKAGE `{ typeIR_b* })
+  -- (Type_alpha: typeIR_a ~~ typeIR_b)*
+
+rule Type_alpha/tableObjectTypeIR:
+  (TABLE tid `{ typeIR_a }) ~~ (TABLE tid `{ typeIR_b })
+  -- Type_alpha: typeIR_a ~~ typeIR_b
+
+;;; Synthesized types
+
+rule Type_alpha/defaultTypeIR:
+  DEFAULT ~~ DEFAULT
+
+rule Type_alpha/invalidHeaderTypeIR:
+  HEADER_INVALID ~~ HEADER_INVALID
+
+rulegroup Type_alpha/sequenceTypeIR {
+
+  rule Type_alpha/non-default:
+    (SEQ `< typeIR_a* >) ~~ (SEQ `< typeIR_b* >)
+    -- (Type_alpha: typeIR_a ~~ typeIR_b)*
+
+  rule Type_alpha/default:
+    (SEQ `< typeIR_a* `, `... >) ~~ (SEQ `< typeIR_b* `, `... >)
+    -- (Type_alpha: typeIR_a ~~ typeIR_b)*
+
+}
+
+rulegroup Type_alpha/recordTypeIR {
+
+  rule Type_alpha/non-default:
+    (RECORD `{ (typeIR_field_a id_field `;)* })
+    ~~ (RECORD `{ (typeIR_field_b id_field `;)* })
+    -- (Type_alpha: typeIR_field_a ~~ typeIR_field_b)*
+
+  rule Type_alpha/default:
+    (RECORD `{ (typeIR_field_a id_field `;)* `, `... })
+    ~~ (RECORD `{ (typeIR_field_b id_field `;)* `, `... })
+    -- (Type_alpha: typeIR_field_a ~~ typeIR_field_b)*
+
+}
+
+rule Type_alpha/setTypeIR:
+  (SET `< typeIR_a >) ~~ (SET `< typeIR_b >)
+  -- Type_alpha: typeIR_a ~~ typeIR_b
+
+rulegroup Type_alpha/tableMetadataTypeIR {
+
+  rule Type_alpha/enum:
+    (TABLE_ENUM tid `{ id_field* }) ~~ (TABLE_ENUM tid `{ id_field* })
+
+  rule Type_alpha/struct:
+    (TABLE_STRUCT tid `{ (typeIR_field_a id_field `;)* })
+    ~~ (TABLE_STRUCT tid `{ (typeIR_field_b id_field `;)* })
+    -- (Type_alpha: typeIR_field_a ~~ typeIR_field_b)*
+
+}
+
+;;
+;;;; Alpha-equivalence of parameter types
+;;
+
+rule ParameterType_alpha:
+  (direction typeIR_a _ _) ~~ (direction typeIR_b _ _)
+  -- Type_alpha: typeIR_a ~~ typeIR_b
+
+;;
+;;;; Alpha-equivalence of callable types
+;;
+
+;;; Action types
+
+rule CallableType_alpha/actionTypeIR:
+  (ACTION `( parameterTypeIR_a* ))
+  ~~ (ACTION `( parameterTypeIR_b* ))
+  -- (ParameterType_alpha:
+        parameterTypeIR_a ~~ parameterTypeIR_b)*
+
+;;; Function types
+
+rule CallableType_alpha/definedFunctionTypeIR:
+  (FUNCTION `( parameterTypeIR_a* ) `: typeIR_a)
+  ~~ (FUNCTION `( parameterTypeIR_b* ) `: typeIR_b)
+  -- (ParameterType_alpha:
+        parameterTypeIR_a ~~ parameterTypeIR_b)*
+  -- Type_alpha: typeIR_a ~~ typeIR_b
+
+rule CallableType_alpha/externFunctionTypeIR:
+  (EXTERN_FUNCTION `( parameterTypeIR_a* ) `: typeIR_a)
+  ~~ (EXTERN_FUNCTION `( parameterTypeIR_b* ) `: typeIR_b)
+  -- (ParameterType_alpha:
+        parameterTypeIR_a ~~ parameterTypeIR_b)*
+  -- Type_alpha: typeIR_a ~~ typeIR_b
+
+;;; Method types
+
+rule CallableType_alpha/builtinMethodTypeIR:
+  (BUILTIN_METHOD `( parameterTypeIR_a* ) `: typeIR_a)
+  ~~ (BUILTIN_METHOD `( parameterTypeIR_b* ) `: typeIR_b)
+  -- (ParameterType_alpha:
+        parameterTypeIR_a ~~ parameterTypeIR_b)*
+  -- Type_alpha: typeIR_a ~~ typeIR_b
+
+rulegroup CallableType_alpha/externMethodTypeIR {
+
+  rule CallableType_alpha/non-abstract:
+    (EXTERN_METHOD `( parameterTypeIR_a* ) `: typeIR_a)
+    ~~ (EXTERN_METHOD `( parameterTypeIR_b* ) `: typeIR_b)
+    -- (ParameterType_alpha:
+          parameterTypeIR_a ~~ parameterTypeIR_b)*
+    -- Type_alpha: typeIR_a ~~ typeIR_b
+
+  rule CallableType_alpha/abstract:
+    (EXTERN_METHOD ABSTRACT `( parameterTypeIR_a* ) `: typeIR_a)
+    ~~ (EXTERN_METHOD ABSTRACT `( parameterTypeIR_b* ) `: typeIR_b)
+    -- (ParameterType_alpha:
+          parameterTypeIR_a ~~ parameterTypeIR_b)*
+    -- Type_alpha: typeIR_a ~~ typeIR_b
+
+}
+
+rule CallableType_alpha/parserApplyMethodTypeIR:
+  (PARSER_APPLY `( parameterTypeIR_a* ))
+  ~~ (PARSER_APPLY `( parameterTypeIR_b* ))
+  -- (ParameterType_alpha:
+        parameterTypeIR_a ~~ parameterTypeIR_b)*
+
+rule CallableType_alpha/controlApplyMethodTypeIR:
+  (CONTROL_APPLY `( parameterTypeIR_a* ))
+  ~~ (CONTROL_APPLY `( parameterTypeIR_b* ))
+  -- (ParameterType_alpha:
+        parameterTypeIR_a ~~ parameterTypeIR_b)*
+
+rule CallableType_alpha/tableApplyMethodTypeIR:
+  (TABLE_APPLY `: typeIR_a) ~~ (TABLE_APPLY `: typeIR_b)
+  -- Type_alpha: typeIR_a ~~ typeIR_b
+
+;;
+;;;; Alpha-equivalence of callable type definitions
+;;
+
+rule CallableTypeDef_alpha:
+  callableTypeDefIR_a ~~ callableTypeDefIR_b
+  ---- ;; retrieve type parameters
+  -- if (tid_tparam_expl_a*, tid_tparam_impl_a*)
+      = $tparams_of_callableTypeDefIR(callableTypeDefIR_a)
+  -- if (tid_tparam_expl_b*, tid_tparam_impl_b*)
+      = $tparams_of_callableTypeDefIR(callableTypeDefIR_b)
+  ---- ;; check type parameter arity
+  -- if |tid_tparam_expl_a*| = |tid_tparam_expl_b*|
+  -- if |tid_tparam_impl_a*| = |tid_tparam_impl_b*|
+  ---- ;; create fresh type variables
+  -- if tid_tparam_fresh*
+      = $fresh_tids(|tid_tparam_expl_a* ++ tid_tparam_impl_a*|)
+  ---- ;; substitute the left hand side
+  -- if tid_tparam_a* = tid_tparam_expl_a* ++ tid_tparam_impl_a*
+  -- if theta_a = `{ (tid_tparam_a `: (`` tid_tparam_fresh))* }
+  -- if callableTypeIR_a
+      = $callableTypeIR_of_callableTypeDefIR(callableTypeDefIR_a)
+  -- if callableTypeIR_a_subst
+      = $subst_callableTypeIR(theta_a, callableTypeIR_a)
+  ---- ;; substitute the right hand side
+  -- if tid_tparam_b* = tid_tparam_expl_b* ++ tid_tparam_impl_b*
+  -- if theta_b = `{ (tid_tparam_b `: (`` tid_tparam_fresh))* }
+  -- if callableTypeIR_b
+      = $callableTypeIR_of_callableTypeDefIR(callableTypeDefIR_b)
+  -- if callableTypeIR_b_subst
+      = $subst_callableTypeIR(theta_b, callableTypeIR_b)
+  ---- ;; compare the substituted definitions
+  -- CallableType_alpha:
+      callableTypeIR_a_subst ~~ callableTypeIR_b_subst

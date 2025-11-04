@@ -1,0 +1,124 @@
+;;
+;; Base type of a type definition
+;;
+
+dec $typeIR_of_typeDefIR(typeDefIR) : typeIR
+
+;;; Name type definitions
+
+def $typeIR_of_typeDefIR(nameTypeDefIR) = nameTypeDefIR
+
+;;; Alias type definitions
+
+def $typeIR_of_typeDefIR(aliasTypeDefIR) = aliasTypeDefIR
+
+;;; Data type definitions
+
+def $typeIR_of_typeDefIR(
+    STRUCT tid `< _ `, _ > `{ fieldTypeIR* }
+  )
+  = STRUCT tid `{ fieldTypeIR* }
+
+def $typeIR_of_typeDefIR(
+    HEADER tid `< _ `, _ > `{ fieldTypeIR* }
+  )
+  = HEADER tid `{ fieldTypeIR* }
+
+def $typeIR_of_typeDefIR(
+    HEADER_UNION tid `< _ `, _ > `{ fieldTypeIR* }
+  )
+  = HEADER_UNION tid `{ fieldTypeIR* }
+
+def $typeIR_of_typeDefIR(enumTypeDefIR) = enumTypeDefIR
+
+;;; Object type definitions
+
+def $typeIR_of_typeDefIR(
+    EXTERN tid `< _ `, _ > `{ (cid `: externMethodTypeDefIR)* }
+  )
+  = EXTERN tid `{ (cid `: externMethodTypeDefIR)* }
+
+def $typeIR_of_typeDefIR(PARSER `< _ `, _ > `( parameterTypeIR* ))
+  = PARSER `( parameterTypeIR* )
+
+def $typeIR_of_typeDefIR(CONTROL `< _ `, _ > `( parameterTypeIR* ))
+  = CONTROL `( parameterTypeIR* )
+
+def $typeIR_of_typeDefIR(PACKAGE `< _ `, _ > `{ typeIR* })
+  = PACKAGE `{ typeIR* }
+
+def $typeIR_of_typeDefIR(tableObjectTypeDefIR) = tableObjectTypeDefIR
+
+;;
+;; Type parameters of a type definition
+;;
+
+dec $tparams_of_typeDefIR(typeDefIR) : (tid* , tid*)
+
+;;; Name type definitions
+
+def $tparams_of_typeDefIR(nameTypeDefIR) = (eps, eps)
+
+;;; Alias type definitions
+
+def $tparams_of_typeDefIR(aliasTypeDefIR) = (eps, eps)
+
+;;; Data type definitions
+
+def $tparams_of_typeDefIR(
+    STRUCT _ `< tid_expl* `, tid_impl* > `{ _ }
+  )
+  = (tid_expl* , tid_impl*)
+
+def $tparams_of_typeDefIR(
+    HEADER _ `< tid_expl* `, tid_impl* > `{ _ }
+  )
+  = (tid_expl* , tid_impl*)
+
+def $tparams_of_typeDefIR(
+    HEADER_UNION _ `< tid_expl* `, tid_impl* > `{ _ }
+  )
+  = (tid_expl* , tid_impl*)
+
+def $tparams_of_typeDefIR(enumTypeDefIR) = (eps, eps)
+
+;;; Object type definitions
+
+def $tparams_of_typeDefIR(
+    EXTERN _ `< tid_expl* `, tid_impl* > `{ _ }
+  )
+  = (tid_expl* , tid_impl*)
+
+def $tparams_of_typeDefIR(
+    PARSER `< tid_expl* `, tid_impl* > `( _ )
+  )
+  = (tid_expl* , tid_impl*)
+
+def $tparams_of_typeDefIR(
+    CONTROL `< tid_expl* `, tid_impl* > `( _ )
+  )
+  = (tid_expl* , tid_impl*)
+
+def $tparams_of_typeDefIR(
+    PACKAGE `< tid_expl* `, tid_impl* > `{ _ }
+  )
+  = (tid_expl* , tid_impl*)
+
+def $tparams_of_typeDefIR(tableObjectTypeDefIR) = (eps, eps)
+
+;;
+;; Monomorphic or polymorphic type definition
+;;
+
+dec $is_monomorphic_typeDefIR(typeDefIR) : bool
+dec $is_polymorphic_typeDefIR(typeDefIR) : bool
+
+def $is_monomorphic_typeDefIR(nameTypeDefIR) = true
+def $is_monomorphic_typeDefIR(aliasTypeDefIR) = true
+def $is_monomorphic_typeDefIR(enumTypeDefIR) = true
+def $is_monomorphic_typeDefIR(tableObjectTypeDefIR) = true
+def $is_monomorphic_typeDefIR(typeDefIR) = false
+  -- otherwise
+
+def $is_polymorphic_typeDefIR(typeDefIR)
+  = ~$is_monomorphic_typeDefIR(typeDefIR)

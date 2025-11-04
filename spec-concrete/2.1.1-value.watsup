@@ -22,7 +22,7 @@ syntax primitiveValue =
 
 syntax numberValue =
   | numberLiteral
-  | nat V int `# nat
+  | nat `. nat V int
 
 syntax baseValue = primitiveValue | numberValue
 
@@ -32,9 +32,9 @@ syntax baseValue = primitiveValue | numberValue
 
 syntax value
 
-syntax listValue = `[ value* ]
-syntax tupleValue = `( value* )
-syntax headerStackValue = `[ value* `# `( nat; nat ) ]
+syntax listValue = LIST `[ value* ]
+syntax tupleValue = TUPLE `( value* )
+syntax headerStackValue = HEADER_STACK `[ value* `( nat; nat ) ]
 
 syntax fieldValue = value id `;
 
@@ -44,7 +44,7 @@ syntax headerUnionValue = HEADER_UNION tid `{ fieldValue* }
 
 syntax enumValue =
   | tid `. id
-  | tid `. id `# value
+  | tid `. id `( value )
 
 syntax dataValue =
   | listValue

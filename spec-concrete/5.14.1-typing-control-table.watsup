@@ -8,27 +8,27 @@ dec $compat_table_exact_optional_key(typeIR) : bool
 dec $compat'_table_exact_optional_key(typeIR) : bool
 
 def $compat_table_exact_optional_key(typeIR)
-  = $compat'_table_exact_optional_key($canon(typeIR))
+  = $compat'_table_exact_optional_key($canon_typeIR(typeIR))
 def $compat'_table_exact_optional_key(BOOL) = true
 def $compat'_table_exact_optional_key(ERROR) = true
 def $compat'_table_exact_optional_key(numberTypeIR) = true
 def $compat'_table_exact_optional_key(TYPE _ typeIR)
   = $compat_table_exact_optional_key(typeIR)
 def $compat'_table_exact_optional_key(ENUM _ `{ _ }) = true
-def $compat'_table_exact_optional_key(ENUM _ `# typeIR `{ _ })
+def $compat'_table_exact_optional_key(ENUM _ `< typeIR > `{ _ })
   = $compat_table_exact_optional_key(typeIR)
 
 dec $compat_table_lpm_ternary_range_key(typeIR) : bool
 dec $compat'_table_lpm_ternary_range_key(typeIR) : bool
 
 def $compat_table_lpm_ternary_range_key(typeIR)
-  = $compat'_table_lpm_ternary_range_key($canon(typeIR))
+  = $compat'_table_lpm_ternary_range_key($canon_typeIR(typeIR))
 def $compat'_table_lpm_ternary_range_key(INT) = true
 def $compat'_table_lpm_ternary_range_key(INT `< _ >) = true
 def $compat'_table_lpm_ternary_range_key(BIT `< _ >) = true
 def $compat'_table_lpm_ternary_range_key(TYPE _ typeIR)
   = $compat_table_lpm_ternary_range_key(typeIR)
-def $compat'_table_lpm_ternary_range_key(ENUM _ `# typeIR `{ _ })
+def $compat'_table_lpm_ternary_range_key(ENUM _ `< typeIR > `{ _ })
   = $compat_table_lpm_ternary_range_key(typeIR)
 
 dec $compat_table_key(nameIR, typeIR) : bool
@@ -47,12 +47,13 @@ rule TableKey_ok:
              : TBLC_2 tableKeyIR
   ---- ;; check expression
   -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
-  -- if typeIR = $type_of_expression(typedExpressionIR)
+  -- if typeIR = $typeIR_of_typedExpressionIR(typedExpressionIR)
   ---- ;; check that the expression can be embedded in a set
   -- Type_wf: $bound(LOCAL, TC) |- SET `< typeIR >
   ---- ;; check match kind
   -- if nameIR_matchkind = $name(name_matchkind)
-  -- if MATCH_KIND `. nameIR_matchkind = $find_value(LOCAL, TC, `` nameIR_matchkind)
+  -- if MATCH_KIND `. nameIR_matchkind
+      = $find_varType_value_t(LOCAL, TC, `` nameIR_matchkind)
   ---- ;; check compatibility with the match kind
   -- if $compat_table_key(nameIR_matchkind, typeIR)
   ---- ;; update table context
@@ -123,7 +124,7 @@ rule TableAction_ok/prefixedNonTypeName:
   ---- ;; check that the action exists
   -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
   -- if ACTION `( parameterTypeIR* )
-      = $find_routine_non_overloaded(LOCAL, TC, prefixedNameIR)
+      = $find_callableTypeDef_non_overloaded_t(LOCAL, TC, prefixedNameIR)
   ---- ;; check that the action reference is a valid data-plane call
   -- Call_action_partial_ok: TC |- parameterTypeIR* `@ eps
                                  : parameterTypeIR_data* `, parameterTypeIR_control*
@@ -141,7 +142,7 @@ rule TableAction_ok/prefixedNonTypeName-argumentList:
   ---- ;; check that the action exists
   -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
   -- if ACTION `( parameterTypeIR* )
-      = $find_routine_non_overloaded(LOCAL, TC, prefixedNameIR)
+      = $find_callableTypeDef_non_overloaded_t(LOCAL, TC, prefixedNameIR)
   ---- ;; check arguments
   -- if argument* = $flatten_argumentList(argumentList)
   -- (Argument_ok: LOCAL TC |- argument : argumentIR)*
@@ -249,8 +250,8 @@ rulegroup TableEntry_keyset_simple_ok/expression {
     -- if TBLC.MODE = NOPRILPM n
     ---- ;; check expression
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
-    -- if typeIR = $type_of_expression(typedExpressionIR)
-    -- if ctk = $ctk_of_expression(typedExpressionIR)
+    -- if typeIR = $typeIR_of_typedExpressionIR(typedExpressionIR)
+    -- if ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
     ---- ;; check compatibility with the key type
     -- Sub_impl: typeIR <: typeIR_key
     ---- ;; lift the expression to set type
@@ -265,8 +266,8 @@ rulegroup TableEntry_keyset_simple_ok/expression {
     -- if nameIR_matchkind =/= "lpm"
     ---- ;; check expression
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
-    -- if typeIR = $type_of_expression(typedExpressionIR)
-    -- if ctk = $ctk_of_expression(typedExpressionIR)
+    -- if typeIR = $typeIR_of_typedExpressionIR(typedExpressionIR)
+    -- if ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
     ---- ;; check compatibility with the key type
     -- Sub_impl: typeIR <: typeIR_key
     ---- ;; lift the expression to set type
@@ -299,14 +300,16 @@ rulegroup TableEntry_keyset_simple_ok/mask {
               def $compat_mask
             )
     ---- ;; fetch the type
-    -- if typeIR_reduced = $type_of_expression(typedExpressionIR_r_reduced)
-    -- if ctk_r_reduced = $ctk_of_expression(typedExpressionIR_r_reduced)
+    -- if typeIR_reduced
+        = $typeIR_of_typedExpressionIR(typedExpressionIR_r_reduced)
+    -- if ctk_r_reduced
+        = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
     ---- ;; check compatibility with the key type
     -- Sub_impl: typeIR_reduced <: typeIR_key
     ---- ;; statically evaluate the right hand side to get its width
     -- if ctk_r_reduced = LCTK
-    -- Eval_static: LOCAL TC |- typedExpressionIR_r_reduced ~> value_r
-    -- if i_r = $to_number(value_r)
+    -- Expr_eval_lctk: LOCAL TC |- typedExpressionIR_r_reduced ~> value_r
+    -- if i_r = $to_int(value_r)
     ---- ;; compute the table entry state
     -- if n_prefix = $tableEntry_lpm_prefix(n W $int_to_bitstr(n, i_r))
 
@@ -327,8 +330,10 @@ rulegroup TableEntry_keyset_simple_ok/mask {
               def $compat_mask
             )
     ---- ;; fetch the type
-    -- if typeIR_reduced = $type_of_expression(typedExpressionIR_r_reduced)
-    -- if ctk_r_reduced = $ctk_of_expression(typedExpressionIR_r_reduced)
+    -- if typeIR_reduced
+        = $typeIR_of_typedExpressionIR(typedExpressionIR_r_reduced)
+    -- if ctk_r_reduced
+        = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
     ---- ;; check compatibility with the key type
     -- Sub_impl: typeIR_reduced <: typeIR_key
 
@@ -353,8 +358,10 @@ rule TableEntry_keyset_simple_ok/range-range:
             def $compat_range
           )
   ---- ;; fetch the type
-  -- if typeIR_reduced = $type_of_expression(typedExpressionIR_r_reduced)
-  -- if ctk_r_reduced = $ctk_of_expression(typedExpressionIR_r_reduced)
+  -- if typeIR_reduced
+      = $typeIR_of_typedExpressionIR(typedExpressionIR_r_reduced)
+  -- if ctk_r_reduced
+      = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
   ---- ;; check compatibility with the key type
   -- Sub_impl: typeIR_reduced <: typeIR_key
 
@@ -693,7 +700,7 @@ rulegroup TableEntry_priority_ok/specified-number {
     ---- ;; if no priority has been specified yet
     -- if TBLC_0.PRIORITIES.VALUES = eps
     ---- ;; evaluate and initialize the priority
-    -- if n = $to_number(numberLiteral)
+    -- if n = $to_int(numberLiteral)
     -- if TBLC_1 = TBLC_0[ .PRIORITIES.INIT = true ]
     -- if TBLC_2 = $add_table_priority(TBLC_1, n)
 
@@ -707,7 +714,7 @@ rulegroup TableEntry_priority_ok/specified-number {
     -- if TBLC_0.PRIORITIES.VALUES =/= eps
     -- if TBLC_0.PRIORITIES.INIT
     ---- ;; evaluate and initialize the priority
-    -- if n = $to_number(numberLiteral)
+    -- if n = $to_int(numberLiteral)
     -- if TBLC_1 = $add_table_priority(TBLC_0, n)
 
 }
@@ -726,9 +733,9 @@ rulegroup TableEntry_priority_ok/specified-expression {
     -- if TBLC_0.PRIORITIES.VALUES = eps
     ---- ;; evaluate and initialize the priority
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
-    -- if LCTK = $ctk_of_expression(typedExpressionIR)
-    -- Eval_static: LOCAL TC |- typedExpressionIR ~> value
-    -- if n = $to_number(value)
+    -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR)
+    -- Expr_eval_lctk: LOCAL TC |- typedExpressionIR ~> value
+    -- if n = $to_int(value)
     -- if TBLC_1 = TBLC_0[ .PRIORITIES.INIT = true ]
     -- if TBLC_2 = $add_table_priority(TBLC_1, n)
 
@@ -743,9 +750,9 @@ rulegroup TableEntry_priority_ok/specified-expression {
     -- if TBLC_0.PRIORITIES.INIT
     ---- ;; evaluate and initialize the priority
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
-    -- if LCTK = $ctk_of_expression(typedExpressionIR)
-    -- Eval_static: LOCAL TC |- typedExpressionIR ~> value
-    -- if n = $to_number(value)
+    -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR)
+    -- Expr_eval_lctk: LOCAL TC |- typedExpressionIR ~> value
+    -- if n = $to_int(value)
     -- if TBLC_1 = $add_table_priority(TBLC_0, n)
   
 }
@@ -864,10 +871,10 @@ rulegroup TableProperty_ok/custom {
     -- if "size" = $tableCustomName(tableCustomName)
     ---- ;; check initializer
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
-    -- if typeIR = $type_of_expression(typedExpressionIR)
-    -- if $is_arbitrary_int_typeIR(typeIR)
-          \/ $is_fixed_int_typeIR(typeIR)
-          \/ $is_fixed_bit_typeIR(typeIR)
+    -- if typeIR = $typeIR_of_typedExpressionIR(typedExpressionIR)
+    -- if $is_arbitraryIntTypeIR($canon_typeIR(typeIR))
+          \/ $is_fixedIntTypeIR($canon_typeIR(typeIR))
+          \/ $is_fixedBitTypeIR($canon_typeIR(typeIR))
     ---- ;; create IR
     -- if constOptIR = $flatten_constOpt(constOpt)
     -- if tablePropertyIR
@@ -880,9 +887,10 @@ rulegroup TableProperty_ok/custom {
     -- if "largest_priority_wins" = $tableCustomName(tableCustomName)
     ---- ;; check initializer
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
-    -- if typeIR = $type_of_expression(typedExpressionIR)
-    -- if BOOL = $canon(typeIR)
-    -- Eval_static: LOCAL TC |- typedExpressionIR ~> B b_largest_priority_wins
+    -- if typeIR = $typeIR_of_typedExpressionIR(typedExpressionIR)
+    -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR)
+    -- if BOOL = $canon_typeIR(typeIR)
+    -- Expr_eval_lctk: LOCAL TC |- typedExpressionIR ~> B b_largest_priority_wins
     ---- ;; update table context
     -- if TBLC_1 = TBLC_0 [ .PRIORITIES.LARGEST_WINS = b_largest_priority_wins ]
     ---- ;; create IR
@@ -898,12 +906,13 @@ rulegroup TableProperty_ok/custom {
     -- if "priority_delta" = $tableCustomName(tableCustomName)
     ---- ;; check initializer
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
-    -- if typeIR = $type_of_expression(typedExpressionIR)
-    -- if $is_arbitrary_int_typeIR(typeIR)
-          \/ $is_fixed_int_typeIR(typeIR)
-          \/ $is_fixed_bit_typeIR(typeIR)
-    -- Eval_static: LOCAL TC |- typedExpressionIR ~> value
-    -- if n_delta = $to_number(value)
+    -- if typeIR = $typeIR_of_typedExpressionIR(typedExpressionIR)
+    -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR)
+    -- if $is_arbitraryIntTypeIR($canon_typeIR(typeIR))
+          \/ $is_fixedIntTypeIR($canon_typeIR(typeIR))
+          \/ $is_fixedBitTypeIR($canon_typeIR(typeIR))
+    -- Expr_eval_lctk: LOCAL TC |- typedExpressionIR ~> value
+    -- if n_delta = $to_int(value)
     -- if $(n_delta > 0)
     ---- ;; update table context
     -- if TBLC_1 = TBLC_0 [ .PRIORITIES.DELTA = n_delta ]
@@ -1059,7 +1068,7 @@ rule TableType_ok:
   -- if (varTypeIR_enum_field
         = `EMPTY typeIR_table_enum LCTK value_enum_field)*
   -- if TC_1
-      = $add_vars(
+      = $add_varTypes_t(
           BLOCK, TC_0,
           (tid_enum ++ "." ++ id_enum_field)*,
           varTypeIR_enum_field*
@@ -1072,4 +1081,4 @@ rule TableType_ok:
                (BOOL "miss" `;),
                (typeIR_table_enum "action_run" `;) ] }
   ---- ;; create table type
-  -- if typeIR_table = TABLE nameIR `# typeIR_table_struct
+  -- if typeIR_table = TABLE nameIR `{ typeIR_table_struct }
