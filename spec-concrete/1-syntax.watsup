@@ -1069,9 +1069,13 @@ syntax parserTypeDeclaration =
 ;;;;;; Parser declarations
 ;;
 
-syntax parserStatementList
+syntax parserStatement, parserStatementList
 
 syntax parserBlockStatement = annotationList `{ parserStatementList }
+
+syntax parserConditionalStatement =
+  | IF `( expression ) parserStatement
+  | IF `( expression ) parserStatement ELSE parserStatement
 
 syntax parserStatement =
   | constantDeclaration
@@ -1081,7 +1085,7 @@ syntax parserStatement =
   | callStatement
   | directApplicationStatement
   | parserBlockStatement
-  | conditionalStatement
+  | parserConditionalStatement
 
 syntax parserStatementList =
   | `EMPTY

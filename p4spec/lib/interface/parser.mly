@@ -1299,6 +1299,15 @@ parserBlockStatement:
     { [ NT al; Term "{"; NT sl; Term "}" ] #@ "parserBlockStatement" }
 ;
 
+parserConditionalStatement:
+	| IF L_PAREN c = expression R_PAREN t = parserStatement %prec THEN
+    { [ Term "IF"; Term "("; NT c; Term ")"; NT t ]
+      #@ "parserConditionalStatement" }
+	| IF L_PAREN c = expression R_PAREN t = parserStatement ELSE f = parserStatement
+    { [ Term "IF"; Term "("; NT c; Term ")"; NT t; Term "ELSE"; NT f ]
+      #@ "parserConditionalStatement" }
+;
+
 parserStatement:
   | s = constantDeclaration
   | s = variableDeclaration
@@ -1307,7 +1316,7 @@ parserStatement:
   | s = callStatement
   | s = directApplicationStatement
   | s = parserBlockStatement
-  | s = conditionalStatement
+  | s = parserConditionalStatement
     { s }
 ;
 

@@ -129,20 +129,24 @@ relation Block_eval:
 ;;;; Parser evaluation
 ;;
 
-syntax transitionResult =
-  | acceptTransitionResult
+syntax parserStatementResult =
+  | continueEmptyResult
   | rejectTransitionResult
-  | stateTransitionResult
 
 relation ParserStmt_eval:
   evalContext store |- parserStatementIR
-                     : evalContext store
+                     : evalContext store parserStatementResult
   hint(input %0 %1 %2)
 
 relation ParserStmts_eval:
   evalContext store |- parserStatementListIR
-                     : evalContext store
+                     : evalContext store parserStatementResult
   hint(input %0 %1 %2)
+
+syntax transitionResult =
+  | acceptTransitionResult
+  | rejectTransitionResult
+  | stateTransitionResult
 
 relation ParserTransition_eval:
   evalContext store |- transitionStatementIR 

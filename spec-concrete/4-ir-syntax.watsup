@@ -646,10 +646,14 @@ syntax parserTypeDeclarationIR =
 ;;;;;; Parser declarations
 ;;
 
-syntax parserStatementListIR
+syntax parserStatementIR, parserStatementListIR
 
 syntax parserBlockStatementIR =
   annotationList `{ parserStatementListIR }
+
+syntax parserConditionalStatementIR =
+  | IF `( typedExpressionIR ) parserStatementIR
+  | IF `( typedExpressionIR ) parserStatementIR ELSE parserStatementIR
 
 syntax parserStatementIR =
   | constantDeclarationIR
@@ -659,7 +663,7 @@ syntax parserStatementIR =
   | callStatementIR
   | directApplicationStatementIR
   | parserBlockStatementIR
-  | conditionalStatementIR
+  | parserConditionalStatementIR
 
 syntax parserStatementListIR = parserStatementIR*
 

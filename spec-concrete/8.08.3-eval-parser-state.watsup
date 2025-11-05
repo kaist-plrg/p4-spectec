@@ -2,17 +2,29 @@
 ;; Parser state evaluation
 ;;
 
-rule ParserState_eval:
-  EC_0 STO_0 |- annotationList STATE
-                  `{ parserStatementListIR transitionStatementIR }
-              : EC_2 STO_2 transitionResult
-  -- ParserStmts_eval:
-      EC_0 STO_0 |- parserStatementListIR
-                  : EC_1 STO_1
-  -- ParserTransition_eval:
-      EC_1 STO_1 |- transitionStatementIR
-                  : EC_2 STO_2 transitionResult
- 
+rulegroup ParserState_eval {
+
+  rule ParserState_eval/reject:
+    EC_0 STO_0 |- annotationList STATE
+                    `{ parserStatementListIR transitionStatementIR }
+                : EC_1 STO_1 REJECT
+    -- ParserStmts_eval:
+        EC_0 STO_0 |- parserStatementListIR
+                    : EC_1 STO_1 REJECT
+
+  rule ParserState_eval/cont:
+    EC_0 STO_0 |- annotationList STATE
+                    `{ parserStatementListIR transitionStatementIR }
+                : EC_2 STO_2 transitionResult
+    -- ParserStmts_eval:
+        EC_0 STO_0 |- parserStatementListIR
+                    : EC_1 STO_1 ``
+    -- ParserTransition_eval:
+        EC_1 STO_1 |- transitionStatementIR
+                    : EC_2 STO_2 transitionResult
+
+}
+   
 ;;
 ;; Parser state transition
 ;;
