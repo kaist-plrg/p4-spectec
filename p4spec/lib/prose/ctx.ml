@@ -1,13 +1,12 @@
 open Domain.Lib
 open Runtime_static.Envs
-module PEnv = Penv
 
 type cond_style = If | ElseIf | Else | Check
 type parent_def = None | Relation of RId.t
 
 type t = {
   (* prose hints *)
-  penv : PEnv.t;
+  hintdb : Hintdb.t;
   (* input hints *)
   ienv : IEnv.t;
   (* negation status, for HoldI, RuleI and CallE *)
@@ -20,11 +19,12 @@ type t = {
 
 (* Helper functions for context manipulation *)
 
-let create ?(penv = PEnv.empty) ?(ienv = IEnv.empty) () : t =
-  { penv; ienv; neg = false; cond_style = None; def = None }
+let create ?(hintdb = Hintdb.empty) ?(ienv = IEnv.empty) () : t =
+  { hintdb; ienv; neg = false; cond_style = None; def = None }
 
 let init spec_sl : t =
-  Collect.collect_spec spec_sl |> fun (penv, ienv) -> create ~penv ~ienv ()
+  let hintdb, ienv = Collect.collect_spec spec_sl in
+  create ~hintdb ~ienv ()
 
 let as_cond cond_style ctx = { ctx with cond_style = Some cond_style }
 let clear_cond ctx = { ctx with cond_style = None }

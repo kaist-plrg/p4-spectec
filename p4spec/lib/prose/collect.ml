@@ -4,76 +4,42 @@ open Util.Source
 open Sl.Ast
 open Domain.Lib
 open Runtime_static.Envs
-module PEnv = Penv
 
-let collect_rel_def (rid : RId.t) (penv : PEnv.t) hints : PEnv.t =
-  let open El.Ast in
+let collect_hints (defid : Hintdb.def_id) (hdb : Hintdb.t) hints : Hintdb.t =
   List.fold_left
-    (fun penv { hintid; hintexp } ->
+    (fun hdb El.Ast.{ hintid; hintexp } ->
       match hintid.it with
-      | "prose_in" ->
-          PEnv.
-            { penv with prose_in = Hintenv.add_rel rid hintexp penv.prose_in }
-      | "prose_out" ->
-          PEnv.
-            { penv with prose_out = Hintenv.add_rel rid hintexp penv.prose_out }
-      | "prose_true" ->
-          PEnv.
-            {
-              penv with
-              prose_true = Hintenv.add_rel rid hintexp penv.prose_true;
-            }
-      | "prose_false" ->
-          PEnv.
-            {
-              penv with
-              prose_false = Hintenv.add_rel rid hintexp penv.prose_false;
-            }
-      | _ -> penv)
-    penv hints
+      | "prose" | "prose_in" | "prose_out" | "prose_true" | "prose_false"
+      | "prose_fields" ->
+          Hintdb.add hintid.it defid hintexp hdb
+      | _ -> hdb)
+    hdb hints
 
-let collect_dec_def (fid : FId.t) (penv : PEnv.t) hints : PEnv.t =
-  let open El.Ast in
+let collect_typcases (tid : TId.t) (hdb : Hintdb.t) (typcases : typcase list) :
+    Hintdb.t =
   List.fold_left
-    (fun penv { hintid; hintexp } ->
-      match hintid.it with
-      | "prose_in" ->
-          PEnv.
-            { penv with prose_in = Hintenv.add_func fid hintexp penv.prose_in }
-      | "prose_out" ->
-          PEnv.
-            {
-              penv with
-              prose_out = Hintenv.add_func fid hintexp penv.prose_out;
-            }
-      | "prose_true" ->
-          PEnv.
-            {
-              penv with
-              prose_true = Hintenv.add_func fid hintexp penv.prose_true;
-            }
-      | "prose_false" ->
-          PEnv.
-            {
-              penv with
-              prose_false = Hintenv.add_func fid hintexp penv.prose_false;
-            }
-      | _ -> penv)
-    penv hints
+    (fun hdb (nottyp, hints) ->
+      let mixop = fst nottyp.it in
+      collect_hints (`Typ (tid, mixop)) hdb hints)
+    hdb typcases
 
 (* Collect hints into proseHintEnv *)
 
-let collect_def (penv : PEnv.t) (ienv : IEnv.t) (def : def) : PEnv.t * IEnv.t =
+let collect_defs (hdb : Hintdb.t) (ienv : IEnv.t) (def : def) :
+    Hintdb.t * IEnv.t =
   match def.it with
-  | TypD _ -> (penv, ienv)
+  | TypD (tid, _, deftyp, _) -> (
+      match deftyp.it with
+      | VariantT typcases -> (collect_typcases tid hdb typcases, ienv)
+      | _ -> (hdb, ienv))
   | ExternRelD (rid, (_, inputs), _, hints)
   | RelD (rid, (_, inputs), _, _, hints) ->
       let ienv = IEnv.add rid inputs ienv in
-      (collect_rel_def rid penv hints, ienv)
+      (collect_hints (`Rel rid) hdb hints, ienv)
   | BuiltinDecD (fid, _, _, _, hints) | DecD (fid, _, _, _, _, hints) ->
-      (collect_dec_def fid penv hints, ienv)
+      (collect_hints (`Func fid) hdb hints, ienv)
 
-let collect_spec (spec : spec) : PEnv.t * IEnv.t =
+let collect_spec (spec : spec) : Hintdb.t * IEnv.t =
   List.fold_left
-    (fun (penv, ienv) def -> collect_def penv ienv def)
-    (PEnv.empty, IEnv.empty) spec
+    (fun (hdb, ienv) def -> collect_defs hdb ienv def)
+    (Hintdb.empty, IEnv.empty) spec

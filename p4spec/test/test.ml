@@ -91,7 +91,7 @@ let prosify specdir = specdir |> structure |> Prose.Prosify.prosify_spec
 
 let prose_test specdir =
   let spec_pl = prosify specdir in
-  Prose.Pl.Print.prose_of_spec spec_pl |> print_endline
+  Prose.Pl.Print.render_spec spec_pl |> print_endline
 
 let prose_command =
   Core.Command.basic ~summary:"run prose test"

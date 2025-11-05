@@ -58,7 +58,7 @@ and exp' =
   | SubE of exp * typ (* exp `<:` typ *)
   | MatchE of exp * pattern (* exp `matches` pattern *)
   | TupleE of exp list (* `(` exp* `)` *)
-  | CaseE of notexp (* notexp *)
+  | CaseE of id * mixop * exp list * hintexp option
   | StrE of (atom * exp) list (* { expfield* } *)
   | OptE of exp option (* exp? *)
   | ListE of exp list (* `[` exp* `]` *)
@@ -110,6 +110,12 @@ and funcprose =
 
 and hintexp = El.Ast.exp
 
+and relcall =
+  (* prose hint, outputs, inputs *)
+  | Prose of hintexp * exp list * exp list
+  (* mixop, exps *)
+  | Mixop of mixop * exp list
+
 (* Type parameters *)
 
 type tparam = Il.Ast.tparam
@@ -119,13 +125,6 @@ type tparam = Il.Ast.tparam
 type branchtype = If | ElseIf | Else
 
 (* Relation renderer *)
-
-type relcall =
-  (* prose hint, outputs, inputs *)
-  | Prose of hintexp * exp list * exp list
-  (* mixop, exps *)
-  | Mixop of mixop * exp list
-
 type cond =
   | ExpCond of exp
   | RelCond of relcall * id
@@ -153,6 +152,7 @@ and instr' =
   | ResultI of hintexp option * exp list
   | ReturnI of exp
   | GroupI of id * exp list * instr list  (** Shorthand instructions **)
+  | DestructI of (exp * string) list * exp
   | CheckLetI of exp * exp
   | OptionGetI of exp * exp
 

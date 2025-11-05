@@ -105,7 +105,8 @@ let struct_clause_path ((prems, exp_output) : prem list * exp) :
 let rec struct_def (ienv : IEnv.t) (tdenv : TDEnv.t) (def : def) : Sl.Ast.def =
   let at = def.at in
   match def.it with
-  | TypD (id, tparams, deftyp) -> Sl.Ast.TypD (id, tparams, deftyp) $ at
+  | TypD (id, tparams, deftyp, hints) ->
+      Sl.Ast.TypD (id, tparams, deftyp, hints) $ at
   | ExternRelD (id, nottyp, inputs, hints) ->
       struct_extern_rel_def at id nottyp inputs hints
   | RelD (id, nottyp, inputs, rulegroups, hints) ->
@@ -156,7 +157,7 @@ and struct_defined_rel_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region)
   let exps_match_unified, prems_match_group =
     match rulegroups with
     | [] ->
-        let mixop, typs = nottyp.it in
+        let _, typs = nottyp.it in
         let typs_match = List.map (fun i -> List.nth typs i) inputs in
         let exps_match, _ =
           List.fold_left
@@ -221,7 +222,7 @@ and struct_defined_dec_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region)
 
 let load_def (ienv : IEnv.t) (tdenv : TDEnv.t) (def : def) : IEnv.t * TDEnv.t =
   match def.it with
-  | TypD (id, tparams, deftyp) ->
+  | TypD (id, tparams, deftyp, _hints) ->
       let typdef = (tparams, deftyp) in
       let tdenv = TDEnv.add id typdef tdenv in
       (ienv, tdenv)

@@ -1,5 +1,3 @@
-open Error
-
 (* Splicing an anchor *)
 
 let do_splice_anchor (module Splice : Splicer.Splice) (ctx : Ctx.t)

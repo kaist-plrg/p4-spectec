@@ -1212,7 +1212,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   let load_def (ctx : Ctx.t) (def : def) : Ctx.t =
     match def.it with
-    | TypD (id, tparams, deftyp) ->
+    | TypD (id, tparams, deftyp, _) ->
         let typdef = (tparams, deftyp) in
         Ctx.add_typdef Global ctx id typdef
     | ExternRelD (id, _, inputs, _) ->

@@ -189,8 +189,8 @@ type func = id * tparam list * arg list * typ * instr list * hint list
 
 type def = def' phrase
 and def' =
-  (* `syntax` id `<` list(tparam, `,`) `>` `=` deftyp *)
-  | TypD of id * tparam list * deftyp
+  (* `syntax` id `<` list(tparam, `,`) `>` `=` deftyp hint* *)
+  | TypD of id * tparam list * deftyp * hint list
   (* `extern` `relation` rel *)
   | ExternRelD of externrel
   (* `relation` rel *)
