@@ -5,6 +5,12 @@ type packet = string
 type rx = port * packet
 type tx = port * packet
 
+let string_of_rx ((port, packet) : rx) : string =
+  Printf.sprintf "(%d) %s" port packet
+
+let string_of_tx ((port, packet) : tx) : string =
+  Printf.sprintf "(%d) %s" port packet
+
 let compare_packet packet_out packet_expect : bool =
   let to_list s = List.init (String.length s) (String.get s) in
   let packet_out = to_list packet_out in
@@ -14,14 +20,6 @@ let compare_packet packet_out packet_expect : bool =
        (fun same o e -> same && (e = '*' || o = e))
        true packet_out packet_expect
 
-let compare_result (port_out, packet_out) (port_expect, packet_expect) : bool =
-  let pass =
-    port_out = port_expect && compare_packet packet_out packet_expect
-  in
-  if pass then
-    Format.printf "[PASS] Expected: %d %s / Got: %d %s\n" port_expect
-      packet_expect port_out packet_out
-  else
-    Format.printf "[FAIL] Expected: %d %s / Got: %d %s\n" port_expect
-      packet_expect port_out packet_out;
-  pass
+let compare_tx ((port_out, packet_out) : tx) ((port_expect, packet_expect) : tx)
+    : bool =
+  port_out = port_expect && compare_packet packet_out packet_expect

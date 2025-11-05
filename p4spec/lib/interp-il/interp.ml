@@ -1289,6 +1289,6 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
         do_eval_func ctx spec funcname targs values_input
       in
       Ctx.profile ctx;
-      Sim.Pass (value_output, SCov.empty)
+      (Sim.Pass (value_output, SCov.empty) : Sim.func_result)
     with Util.Error.InterpError (at, msg) -> Sim.Fail (at, msg, SCov.empty)
 end

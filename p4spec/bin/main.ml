@@ -1,4 +1,5 @@
 open Util.Error
+open Util.Source
 
 let version = "0.1"
 
@@ -170,12 +171,17 @@ let sim_command =
                Runtime_simulator.Simulator.SL spec_sl
          in
          let (module Runner) = Arch.Gen.gen arch in
-         Runner.run_stf_test spec_sim includes_p4 filename_p4 filename_stf
+         match
+           Runner.run_stf_test spec_sim includes_p4 filename_p4 filename_stf
+         with
+         | Pass -> Format.printf "passed\n"
+         | Fail (_, msg) -> Format.printf "failed: %s\n" msg
+         | IllFormed (_, msg) -> Format.printf "ill-formed: %s\n" msg
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
-       | ArchError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+       | StfError msg -> Format.printf "%s\n" (string_of_error no_region msg))
 
 let cover_dangling_command =
   Core.Command.basic ~summary:"measure dangling coverage of the P4 type system"

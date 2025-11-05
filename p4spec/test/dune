@@ -27,6 +27,8 @@
    (ignore-outputs
     (diff run_sl_inst_p4c.expected run_sl_inst_p4c.actual))
    (ignore-outputs
+    (diff sim_sl_v1model_p4c.expected sim_sl_v1model_p4c.actual))
+   (ignore-outputs
     (diff cover_dangling_p4c.expected cover_dangling_p4c.actual))
    (ignore-outputs
     (diff parser_pos_p4c.expected parser_pos_p4c.actual))
@@ -71,6 +73,15 @@
     (diff run_il_inst_p4c.expected run_il_inst_p4c.actual))
    (ignore-outputs
     (diff run_sl_inst_p4c.expected run_sl_inst_p4c.actual)))))
+
+;; P4 simulation tests
+
+(rule
+ (alias p4sim)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_sl_v1model_p4c.expected sim_sl_v1model_p4c.actual)))))
 
 ;; Testgen - dangling coverage tests
 
@@ -242,6 +253,28 @@
      ../../../../spec-concrete
      -rel
      Program_inst
+     -i
+     ../../../../p4c/p4include
+     -e
+     ../../../../excludes
+     -d
+     ../../../../p4c/testdata/p4_16_samples)))))
+
+(rule
+ (target sim_sl_v1model_p4c.actual)
+ (action
+  (with-stdout-to
+   sim_sl_v1model_p4c.actual
+   (with-stderr-to
+    sim_sl_v1model_p4c.err
+    (run
+     ./test.exe
+     sim
+     -sl
+     -arch
+     v1model
+     -s
+     ../../../../spec-concrete
      -i
      ../../../../p4c/p4include
      -e

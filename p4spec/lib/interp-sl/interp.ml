@@ -30,8 +30,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   let checkpoint () = Arch.checkpoint ()
 
-  let commit_or_rollback (sign : Sign.t) =
-    match sign with Cont -> Arch.rollback () | Res _ | Ret _ -> Arch.commit ()
+  let restore_on_fail (sign : Sign.t) =
+    match sign with Cont -> Arch.restore () | _ -> ()
+
+  let commit () = Arch.commit ()
 
   (* Assignments *)
 
@@ -801,7 +803,12 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and eval_call_exp (_note : typ') (ctx : Ctx.t) (id : id) (targs : targ list)
       (args : arg list) : value =
-    invoke_func ctx id targs args
+    let value_output =
+      match invoke_func ctx id targs args with
+      | Some value_output -> value_output
+      | None -> error id.at (F.asprintf "function %s was not matched" id.it)
+    in
+    value_output
 
   (* Iterated expression evaluation *)
 
@@ -951,8 +958,6 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   and eval_if_instr (ctx : Ctx.t) (exp_cond : exp) (iterexps : iterexp list)
       (instrs_then : instr list) (phantom_opt : phantom option) : Ctx.t * Sign.t
       =
-    (* Create an architecture checkpoint *)
-    checkpoint ();
     (* Evaluate the if condition and mark phantom *)
     let cond, value_cond = eval_if_cond_iter ctx exp_cond iterexps in
     let vid = value_cond.note.vid in
@@ -963,9 +968,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let ctx, sign =
       if cond then eval_instrs ctx Cont instrs_then else (ctx, Cont)
     in
-    (* If the nested instructions did not result/return, rollback;
-       otherwise, commit the architecture changes *)
-    commit_or_rollback sign;
+    (* If the nested instructions did not result/return, restore *)
+    restore_on_fail sign;
     (ctx, sign)
 
   (* Hold instruction evaluation *)
@@ -1034,8 +1038,6 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and eval_hold_instr (ctx : Ctx.t) (id : id) (notexp : notexp)
       (iterexps : iterexp list) (holdcase : holdcase) : Ctx.t * Sign.t =
-    (* Create an architecture checkpoint *)
-    checkpoint ();
     (* Copy the current coverage information *)
     let cover_backup = !(ctx.coverage) in
     (* Evaluate the hold condition *)
@@ -1062,9 +1064,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           | None -> ());
           if not cond then eval_instrs ctx Cont instrs_not_hold else (ctx, Cont)
     in
-    (* If the nested instructions did not result/return, rollback;
-       otherwise, commit the architecture changes *)
-    commit_or_rollback sign;
+    (* If the nested instructions did not result/return, restore *)
+    restore_on_fail sign;
     (ctx, sign)
 
   (* Case analysis instruction evaluation *)
@@ -1104,8 +1105,6 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and eval_case_instr (ctx : Ctx.t) (exp : exp) (cases : case list)
       (phantom_opt : phantom option) : Ctx.t * Sign.t =
-    (* Create an architecture checkpoint *)
-    checkpoint ();
     (* Evaluate the matching case and mark phantom *)
     let instrs_opt, value_cond = eval_cases ctx exp cases in
     let vid = value_cond.note.vid in
@@ -1118,9 +1117,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       | Some instrs -> eval_instrs ctx Cont instrs
       | None -> (ctx, Cont)
     in
-    (* If the nested instructions did not result/return, rollback;
-       otherwise, commit the architecture changes *)
-    commit_or_rollback sign;
+    (* If the nested instructions did not result/return, restore *)
+    restore_on_fail sign;
     (ctx, sign)
 
   (* Group instruction evaluation *)
@@ -1439,7 +1437,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and invoke_defined_rel (ctx : Ctx.t) (id : id) (exps_input : exp list)
       (instrs : instr list) (values_input : value list) : value list option =
-    let invoke_rel_def' () =
+    let invoke_defined_rel' () =
       let ctx_local = Ctx.localize_rule ctx id values_input in
       let ctx_local = assign_exps ctx_local exps_input values_input in
       let _ctx_local, sign = eval_instrs ctx_local Cont instrs in
@@ -1456,20 +1454,26 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           Some values_output
       | _ -> None
     in
+    let do_invoke_defined_rel' () =
+      checkpoint ();
+      let values_output_opt = invoke_defined_rel' () in
+      commit ();
+      values_output_opt
+    in
     if (not (Ctx.deriving ctx)) && Cache.is_cached_rule id.it then (
       let cache_result = Cache.Cache.find !rule_cache (id.it, values_input) in
       match cache_result with
       | Some values_output -> Some values_output
       | None ->
-          let* values_output = invoke_rel_def' () in
+          let* values_output = do_invoke_defined_rel' () in
           Cache.Cache.add !rule_cache (id.it, values_input) values_output;
           Some values_output)
-    else invoke_rel_def' ()
+    else do_invoke_defined_rel' ()
 
   (* Invoke a function *)
 
   and invoke_func (ctx : Ctx.t) (id : id) (targs : targ list) (args : arg list)
-      : value =
+      : value option =
     let targs =
       match targs with
       | [] -> []
@@ -1494,7 +1498,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     invoke_func' ctx id targs values_input
 
   and invoke_func' (ctx : Ctx.t) (id : id) (targs : targ list)
-      (values_input : value list) : value =
+      (values_input : value list) : value option =
     let func = Ctx.find_func Local ctx id in
     match func with
     | Func.Builtin -> invoke_builtin_func ctx id targs values_input
@@ -1502,17 +1506,17 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         invoke_defined_func ctx id tparams args_input instrs targs values_input
 
   and invoke_builtin_func (ctx : Ctx.t) (id : id) (targs : targ list)
-      (values_input : value list) : value =
+      (values_input : value list) : value option =
     let value_output = Builtin.invoke ctx id targs values_input in
     List.iteri
       (fun idx_arg value_input ->
         Ctx.add_edge ctx value_output value_input (Dep.Edges.Func (id, idx_arg)))
       values_input;
-    value_output
+    Some value_output
 
   and invoke_defined_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
       (args_input : arg list) (instrs : instr list) (targs : targ list)
-      (values_input : value list) : value =
+      (values_input : value list) : value option =
     let tdenv_local =
       check
         (List.length targs = List.length tparams)
@@ -1523,7 +1527,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         TDEnv.empty tparams targs
     in
     let ctx_local = Ctx.localize_func ctx id values_input tdenv_local in
-    let invoke_func_def'' () =
+    let invoke_defined_func' () =
       let ctx_local = assign_args ctx ctx_local args_input values_input in
       let _ctx_local, sign = eval_instrs ctx_local Cont instrs in
       match sign with
@@ -1533,18 +1537,24 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
               Ctx.add_edge ctx value_output value_input
                 (Dep.Edges.Func (id, idx_arg)))
             values_input;
-          value_output
-      | _ -> error id.at (F.asprintf "function %s was not matched" id.it)
+          Some value_output
+      | _ -> None
+    in
+    let do_invoke_defined_func' () =
+      checkpoint ();
+      let value_output = invoke_defined_func' () in
+      commit ();
+      value_output
     in
     if (not (Ctx.deriving ctx)) && Cache.is_cached_func id.it then (
       let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
       match cache_result with
-      | Some value_output -> value_output
+      | Some value_output -> Some value_output
       | None ->
-          let value_output = invoke_func_def'' () in
+          let* value_output = do_invoke_defined_func' () in
           Cache.Cache.add !func_cache (id.it, values_input) value_output;
-          value_output)
-    else invoke_func_def'' ()
+          Some value_output)
+    else do_invoke_defined_func' ()
 
   (* Load definitions into the context *)
 
@@ -1581,7 +1591,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   let do_eval_func (ctx : Ctx.t) (spec : spec) (funcname : string)
       (targs : targ list) (values_input : value list) : value =
     let ctx = load_spec ctx spec in
-    invoke_func' ctx (funcname $ no_region) targs values_input
+    match invoke_func' ctx (funcname $ no_region) targs values_input with
+    | Some value_output -> value_output
+    | None ->
+        error no_region (F.asprintf "function %s was not matched" funcname)
 
   let eval_program ~(derive : bool) (spec : spec) (relname : string)
       (includes_p4 : string list) (filename_p4 : string) : Sim.program_result =
