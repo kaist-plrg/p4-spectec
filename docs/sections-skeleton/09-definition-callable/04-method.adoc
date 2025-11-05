@@ -5,47 +5,19 @@
 The internal representation of methods and method types is as follows:
 
 ${syntax: methodTypeIR
-          method}
-
-[#sec-def-builtinMethodTypeIR]
-[#sec-def-builtinMethod]
-==== Built-in methods
-
-${syntax: builtinMethodTypeIR
-          builtinMethod}
-
-[#sec-sem-RoutineType_wf-builtinMethodTypeIR]
-===== Well-formnedness
-
-${rulegroup: RoutineType_wf/builtinMethodTypeIR}
-${ruleprose: RoutineType_wf/builtinMethodTypeIR}
+          methodDef}
 
 [#sec-def-externMethodTypeIR]
-[#sec-def-externMethod]
+[#sec-def-externMethodDef]
 ==== Extern methods
 
 Internally, extern methods are represented as follows:
 
 ${syntax: externMethodTypeIR
-          externMethod}
-
-===== Extern methods
+          externMethodDef}
 
 Typical extern object methods are built-in, and are implemented by the target
 architecture. P4 programmers can only call such methods.
-
-====== Type nesting
-
-${funcprose: nestable_externmethod}
-${funcprose: nestable'_externmethod}
-
-[#sec-sem-RoutineType_wf-externMethodTypeIR-non-abstract]
-====== Well-formedness
-
-${rulegroup: RoutineType_wf/externMethodTypeIR-non-abstract}
-${ruleprose: RoutineType_wf/externMethodTypeIR-non-abstract}
-
-===== Extern abstract methods
 
 Some types of extern objects may provide methods that can be implemented by the
 P4 programmers.  Such methods are described with the `abstract` keyword prior
@@ -68,18 +40,17 @@ of all the `abstract` methods (see <<sec-instantiating-abstract-methods>>).
 
 ====== Type nesting
 
-${funcprose: nestable_externabstractmethod}
-${funcprose: nestable'_externabstractmethod}
+${funcprose: nestable_externMethod}
+${funcprose: nestable'_externMethod}
 
-[#sec-sem-RoutineType_wf-externMethodTypeIR-abstract]
+[#sec-sem-CallableType_wf-externMethodTypeIR]
 ====== Well-formedness
 
-${rulegroup: RoutineType_wf/externMethodTypeIR-abstract}
-${ruleprose: RoutineType_wf/externMethodTypeIR-abstract}
+${rulegroup: CallableType_wf/externMethodTypeIR}
+${ruleprose: CallableType_wf/externMethodTypeIR}
 
 [#sec-def-parserApplyMethodTypeIR]
-[#sec-def-parserApplyMethod]
-
+[#sec-def-parserApplyMethodDef]
 ==== Parser apply methods
 
 P4 allows parsers to invoke the services of other parsers, similar to
@@ -106,21 +77,21 @@ rule is explained in <<sec-sem-Decl_ok-parserDeclaration>>. A parser apply
 method is represented internally as follows:
 
 ${syntax: parserApplyMethodTypeIR
-          parserApplyMethod}
+          parserApplyMethodDef}
 
 ===== Type nesting
 
-${funcprose: nestable_parserapplymethod}
-${funcprose: nestable'_parserapplymethod}
+${funcprose: nestable_parserApplyMethod}
+${funcprose: nestable'_parserApplyMethod}
 
-[#sec-sem-RoutineType_wf-parserApplyMethodTypeIR]
+[#sec-sem-CallableType_wf-parserApplyMethodTypeIR]
 ===== Well-formedness
 
-${rulegroup: RoutineType_wf/parserApplyMethodTypeIR}
-${ruleprose: RoutineType_wf/parserApplyMethodTypeIR}
+${rulegroup: CallableType_wf/parserApplyMethodTypeIR}
+${ruleprose: CallableType_wf/parserApplyMethodTypeIR}
 
 [#sec-def-controlApplyMethodTypeIR]
-[#sec-def-controlApplyMethod]
+[#sec-def-controlApplyMethodDef]
 ==== Control apply methods
 
 P4 allows controls to invoke the services of other controls, similar
@@ -146,21 +117,21 @@ rule is explained in <<sec-sem-Decl_ok-controlDelaration>>. Control apply
 methods are represented internally as follows:
 
 ${syntax: controlApplyMethodTypeIR
-          controlApplyMethod}
+          controlApplyMethodDef}
 
 ===== Type nesting
 
-${funcprose: nestable_controlapplymethod}
-${funcprose: nestable'_controlapplymethod}
+${funcprose: nestable_controlApplyMethod}
+${funcprose: nestable'_controlApplyMethod}
 
-[#sec-sem-RoutineType_wf-controlApplyMethodTypeIR]
+[#sec-sem-CallableType_wf-controlApplyMethodTypeIR]
 ===== Well-formedness
 
-${rulegroup: RoutineType_wf/controlApplyMethodTypeIR}
-${ruleprose: RoutineType_wf/controlApplyMethodTypeIR}
+${rulegroup: CallableType_wf/controlApplyMethodTypeIR}
+${ruleprose: CallableType_wf/controlApplyMethodTypeIR}
 
 [#sec-def-tableApplyMethodTypeIR]
-[#sec-def-tableApplyMethod]
+[#sec-def-tableApplyMethodDef]
 ==== Table apply methods
 
 A `table` can be invoked by calling its `apply` method. Calling an apply method
@@ -172,10 +143,10 @@ rule is explained in <<sec-sem-ControlLocalDecl_ok-tableDeclaration>>. The
 internal representation of a table apply method is as follows:
 
 ${syntax: tableApplyMethodTypeIR
-          tableApplyMethod}
+          tableApplyMethodDef}
 
-[#sec-sem-RoutineType_wf-tableApplyMethodTypeIR]
+[#sec-sem-CallableType_wf-tableApplyMethodTypeIR]
 ===== Well-formedness
 
-${rulegroup: RoutineType_wf/tableApplyMethodTypeIR}
-${ruleprose: RoutineType_wf/tableApplyMethodTypeIR}
+${rulegroup: CallableType_wf/tableApplyMethodTypeIR}
+${ruleprose: CallableType_wf/tableApplyMethodTypeIR}

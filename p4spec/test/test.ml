@@ -597,7 +597,9 @@ let run_parser_test stat includes_p4 excludes_p4 filename_p4 spec =
         }
     | TestParseRoundtripErr time_start ->
         let duration = stop time_start in
-        let log = Format.asprintf "Error roundtripping parser: %s" filename_p4 in
+        let log =
+          Format.asprintf "Error roundtripping parser: %s" filename_p4
+        in
         log |> print_endline;
         Format.eprintf "%s\n" log;
         Format.eprintf ">>> took %.6f seconds\n" duration;
