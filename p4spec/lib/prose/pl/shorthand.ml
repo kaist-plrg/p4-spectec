@@ -32,32 +32,29 @@ let option_get instrs =
   | _ -> None
 
 let replace_call_exp (ids_used : IdSet.t) exp =
-  let vars_extracted = ref Free.VarSet.empty in
-  let var_new = ref ("" $ no_region, Il.Ast.FuncT $ no_region, []) in
-  let transformer e (acc : iterexp list) =
-    match e.it with
+  let transformer exp =
+    match exp.it with
     | CallE (_funcprose, _targs, args) ->
-        vars_extracted := Free.Vars.free_args args;
         let exp_new, id_added =
-          Transform.fresh_exp_from_typ ids_used (e.note $ e.at)
+          Transform.fresh_exp_from_typ ids_used (exp.note $ exp.at)
         in
-        let var = (id_added, e.note $ e.at, []) in
-        var_new := var;
-        Some (exp_new, acc)
+        let var = (id_added, exp.note $ exp.at, []) in
+        let iter_state : Transform.iter_state =
+          {
+            vars_inner = Free.Vars.free_args args;
+            vars_outer = Free.VarSet.empty;
+            var_new = var;
+            iterexps = [];
+          }
+        in
+        Some (exp_new, iter_state)
     | _ -> None
   in
   (* No top-down information flow *)
-  let accumulator acc _e = acc in
   (* rewrite CallE to VarE, and collect enclosing iterexps *)
-  match
-    Transform.transform_first_with_acc transformer accumulator Fold.identity []
-      exp
-  with
-  | Some (exp, iterexps) ->
-      (* compute dimension of var_new *)
-      let _iters = iterexps |> List.rev |> List.map fst in
-      (* construct leading instruction enclosed in necessary iterexps *)
-      Some exp
+  match Transform.transform_first_with_iters transformer exp with
+  | Some (_exp, _iter_state) ->
+      failwith "not yet" (* compute dimension of var_new *)
   | None -> None
 
 let contains_call_exp exp =

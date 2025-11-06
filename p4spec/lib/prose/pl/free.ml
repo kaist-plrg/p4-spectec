@@ -14,7 +14,7 @@ module Ids = struct
 
   (* Collect free identifiers *)
 
-  let free : (t, t, t) folder =
+  let free_folder : (t, t, t) folder =
     {
       f_BoolE = (fun _ _ _ -> empty);
       f_NumE = (fun _ _ _ -> empty);
@@ -55,13 +55,13 @@ module Ids = struct
       f_DefA = (fun _ _ -> empty);
     }
 
-  let free_exp (exp : exp) : t = fold_exp free exp
-  let free_arg (arg : arg) : t = fold_arg free arg
+  let free_exp (exp : exp) : t = fold_exp free_folder exp
+  let free_arg (arg : arg) : t = fold_arg free_folder arg
 
   let free_args (args : arg list) : t =
-    fold_args free args |> List.fold_left ( + ) empty
+    fold_args free_folder args |> List.fold_left ( + ) empty
 
-  let free_path (path : path) : t = fold_path free path
+  let free_path (path : path) : t = fold_path free_folder path
 end
 
 module Var = struct
@@ -84,6 +84,8 @@ module Var = struct
     match compare_id id_a id_b with
     | 0 -> compare_iters iters_a iters_b
     | n -> n
+
+  let equal t1 t2 = compare t1 t2 = 0
 end
 
 module VarSet = struct
@@ -92,12 +94,13 @@ end
 
 module Vars = struct
   type t = VarSet.t
+  type key = Var.t
 
   let empty = VarSet.empty
   let singleton = VarSet.singleton
   let ( + ) = VarSet.union
 
-  let free : (t, t, t) folder =
+  let free_folder : (t, t, t) folder =
     {
       f_BoolE = (fun _ _ _ -> empty);
       f_NumE = (fun _ _ _ -> empty);
@@ -146,11 +149,11 @@ module Vars = struct
       f_DefA = (fun _ _ -> empty);
     }
 
-  let free_exp (exp : exp) : t = fold_exp free exp
-  let free_arg (arg : arg) : t = fold_arg free arg
+  let free_exp (exp : exp) : t = fold_exp free_folder exp
+  let free_arg (arg : arg) : t = fold_arg free_folder arg
 
   let free_args (args : arg list) : t =
-    fold_args free args |> List.fold_left ( + ) empty
+    fold_args free_folder args |> List.fold_left ( + ) empty
 
-  let free_path (path : path) : t = fold_path free path
+  let free_path (path : path) : t = fold_path free_folder path
 end

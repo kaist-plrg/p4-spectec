@@ -1,9 +1,10 @@
 open Ast
 open Domain.Lib
 open Util.Source
-open Fold
+module VarSet = Free.VarSet
 
 let ( let* ) = Option.bind
+let ( + ) = VarSet.union
 
 let rec choice = function
   | [] -> None
@@ -12,209 +13,387 @@ let rec choice = function
       | Some a -> Some a
       | None -> ( match choice fs with Some a -> Some a | None -> None))
 
-let transform_first_with_acc
-    (f_transform_opt : exp -> 'acc -> (exp * 'acc) option)
-    (f_fold_down : 'acc -> exp -> 'acc) (f_fold_up : (exp, arg, path) folder)
-    (acc : 'acc) (e : exp) : (exp * 'acc) option =
-  let rec walk_exp (acc : 'acc) (e : exp) : (exp * 'acc) option =
-    let try_root () = f_transform_opt e acc in
+type iter_state = {
+  vars_inner : VarSet.t;
+  var_new : VarSet.elt;
+  vars_outer : VarSet.t;
+  iterexps : iterexp list;
+}
+
+let transform_first_with_iters
+    (f_transform_opt : exp -> (exp * iter_state) option) (e : exp) :
+    (exp * iter_state) option =
+  let rec walk_exp (e : exp) : (exp * iter_state) option =
+    let try_root () = f_transform_opt e in
     let try_children () =
-      let acc = f_fold_down acc e in
       let { it; at; note } = e in
       match it with
       | BoolE _ | NumE _ | TextE _ | VarE _ -> None
-      | UnE (unop, optyp, e_1) ->
-          let* e_1', acc' = walk_exp acc e_1 in
-          Some (f_fold_up.f_UnE note at unop optyp e_1', acc')
-      | BinE (binop, optyp, e_1, e_2) ->
+      | UnE (unop, optyp, exp_inner) ->
+          let* exp_inner', iter_state = walk_exp exp_inner in
+          Some (UnE (unop, optyp, exp_inner') $$ (at, note), iter_state)
+      | BinE (binop, optyp, exp_l, exp_r) ->
           let try_left () =
-            let* e_1', acc' = walk_exp acc e_1 in
-            Some (f_fold_up.f_BinE note at binop optyp e_1' e_2, acc')
+            let* exp_l', iter_state = walk_exp exp_l in
+            let vars_r = Free.Vars.free_exp exp_r in
+            let iter_state =
+              { iter_state with vars_outer = iter_state.vars_outer + vars_r }
+            in
+            Some (BinE (binop, optyp, exp_l', exp_r) $$ (at, note), iter_state)
           in
           let try_right () =
-            let* e_2', acc' = walk_exp acc e_2 in
-            Some (f_fold_up.f_BinE note at binop optyp e_1 e_2', acc')
+            let* exp_r', iter_state = walk_exp exp_r in
+            let vars_l = Free.Vars.free_exp exp_l in
+            let iter_state =
+              { iter_state with vars_outer = iter_state.vars_outer + vars_l }
+            in
+            Some (BinE (binop, optyp, exp_l, exp_r') $$ (at, note), iter_state)
           in
           choice [ try_left; try_right ]
-      | CmpE (cmpop, optyp, e_1, e_2) ->
+      | CmpE (cmpop, optyp, exp_l, exp_r) ->
           let try_left () =
-            let* e_1', acc' = walk_exp acc e_1 in
-            Some (f_fold_up.f_CmpE note at cmpop optyp e_1' e_2, acc')
+            let* exp_l', iter_state = walk_exp exp_l in
+            let vars_r = Free.Vars.free_exp exp_r in
+            let iter_state =
+              { iter_state with vars_outer = iter_state.vars_outer + vars_r }
+            in
+            Some (CmpE (cmpop, optyp, exp_l', exp_r) $$ (at, note), iter_state)
           in
           let try_right () =
-            let* e_2', acc' = walk_exp acc e_2 in
-            Some (f_fold_up.f_CmpE note at cmpop optyp e_1 e_2', acc')
+            let* exp_r', iter_state = walk_exp exp_r in
+            let vars_l = Free.Vars.free_exp exp_l in
+            let iter_state =
+              { iter_state with vars_outer = iter_state.vars_outer + vars_l }
+            in
+            Some (CmpE (cmpop, optyp, exp_l, exp_r') $$ (at, note), iter_state)
           in
           choice [ try_left; try_right ]
-      | UpCastE (typ, e_1) ->
-          let* e_1', acc' = walk_exp acc e_1 in
-          Some (f_fold_up.f_UpCastE note at typ e_1', acc')
-      | DownCastE (typ, e_1) ->
-          let* e_1', acc' = walk_exp acc e_1 in
-          Some (f_fold_up.f_DownCastE note at typ e_1', acc')
-      | SubE (e_1, typ) ->
-          let* e_1', acc' = walk_exp acc e_1 in
-          Some (f_fold_up.f_SubE note at e_1' typ, acc')
-      | MatchE (e_1, pattern) ->
-          let* e_1', acc' = walk_exp acc e_1 in
-          Some (f_fold_up.f_MatchE note at e_1' pattern, acc')
+      | UpCastE (typ, exp_inner) ->
+          let* exp_inner', iter_state = walk_exp exp_inner in
+          Some (UpCastE (typ, exp_inner') $$ (at, note), iter_state)
+      | DownCastE (typ, exp_inner) ->
+          let* exp_inner', iter_state = walk_exp exp_inner in
+          Some (DownCastE (typ, exp_inner') $$ (at, note), iter_state)
+      | SubE (exp_inner, typ) ->
+          let* exp_inner', iter_state = walk_exp exp_inner in
+          Some (SubE (exp_inner', typ) $$ (at, note), iter_state)
+      | MatchE (exp_inner, pattern) ->
+          let* exp_inner', iter_state = walk_exp exp_inner in
+          Some (MatchE (exp_inner', pattern) $$ (at, note), iter_state)
       | TupleE exps ->
-          let* exps_new, acc' = walk_exps acc exps in
-          Some (f_fold_up.f_TupleE note at exps_new, acc')
+          let* exps', iter_state = walk_exps exps in
+          Some (TupleE exps' $$ (at, note), iter_state)
       | CaseE (id, mixop, exps, hint) ->
-          let* exps_new, acc' = walk_exps acc exps in
-          Some (f_fold_up.f_CaseE note at id mixop exps_new hint, acc')
+          let* exps', iter_state = walk_exps exps in
+          Some (CaseE (id, mixop, exps', hint) $$ (at, note), iter_state)
       | StrE fields ->
           let atoms, values = List.split fields in
-          let* values', acc' = walk_exps acc values in
-          Some (f_fold_up.f_StrE note at (List.combine atoms values'), acc')
-      | OptE (Some exp) ->
-          let* exp_new, acc' = walk_exp acc exp in
-          Some (f_fold_up.f_OptE note at (Some exp_new), acc')
+          let* values', iter_state = walk_exps values in
+          Some (StrE (List.combine atoms values') $$ (at, note), iter_state)
+      | OptE (Some exp_inner) ->
+          let* exp_inner', iter_state = walk_exp exp_inner in
+          Some (OptE (Some exp_inner') $$ (at, note), iter_state)
       | OptE None -> None
       | ListE exps ->
-          let* exps_new, acc' = walk_exps acc exps in
-          Some (f_fold_up.f_ListE note at exps_new, acc')
+          let* exps', iter_state = walk_exps exps in
+          Some (ListE exps' $$ (at, note), iter_state)
       | ConsE (exp_h, exp_t) ->
           let try_head () =
-            let* exp_h', acc' = walk_exp acc exp_h in
-            Some (f_fold_up.f_ConsE note at exp_h' exp_t, acc')
+            let* exp_h', iter_state = walk_exp exp_h in
+            let vars_t = Free.Vars.free_exp exp_t in
+            let iter_state =
+              { iter_state with vars_outer = iter_state.vars_outer + vars_t }
+            in
+            Some (ConsE (exp_h', exp_t) $$ (at, note), iter_state)
           in
           let try_tail () =
-            let* exp_t', acc' = walk_exp acc exp_t in
-            Some (f_fold_up.f_ConsE note at exp_h exp_t', acc')
+            let* exp_t', iter_state = walk_exp exp_t in
+            let vars_h = Free.Vars.free_exp exp_h in
+            let iter_state =
+              { iter_state with vars_outer = iter_state.vars_outer + vars_h }
+            in
+            Some (ConsE (exp_h, exp_t') $$ (at, note), iter_state)
           in
           choice [ try_head; try_tail ]
       | CatE (exp_l, exp_r) ->
           let try_left () =
-            let* exp_l', acc' = walk_exp acc exp_l in
-            Some (f_fold_up.f_CatE note at exp_l' exp_r, acc')
+            let* exp_l', iter_state = walk_exp exp_l in
+            let vars_r = Free.Vars.free_exp exp_r in
+            let iter_state =
+              { iter_state with vars_outer = iter_state.vars_outer + vars_r }
+            in
+            Some (CatE (exp_l', exp_r) $$ (at, note), iter_state)
           in
           let try_right () =
-            let* exp_r', acc' = walk_exp acc exp_r in
-            Some (f_fold_up.f_CatE note at exp_l exp_r', acc')
+            let* exp_r', iter_state = walk_exp exp_r in
+            let vars_l = Free.Vars.free_exp exp_l in
+            let iter_state =
+              { iter_state with vars_outer = iter_state.vars_outer + vars_l }
+            in
+            Some (CatE (exp_l, exp_r') $$ (at, note), iter_state)
           in
           choice [ try_left; try_right ]
       | MemE (exp_l, exp_r) ->
           let try_left () =
-            let* exp_l', acc' = walk_exp acc exp_l in
-            Some (f_fold_up.f_MemE note at exp_l' exp_r, acc')
+            let* exp_l', iter_state = walk_exp exp_l in
+            let vars_r = Free.Vars.free_exp exp_r in
+            let iter_state =
+              { iter_state with vars_outer = iter_state.vars_outer + vars_r }
+            in
+            Some (MemE (exp_l', exp_r) $$ (at, note), iter_state)
           in
           let try_right () =
-            let* exp_r', acc' = walk_exp acc exp_r in
-            Some (f_fold_up.f_MemE note at exp_l exp_r', acc')
+            let* exp_r', iter_state = walk_exp exp_r in
+            let vars_l = Free.Vars.free_exp exp_l in
+            let iter_state =
+              { iter_state with vars_outer = iter_state.vars_outer + vars_l }
+            in
+            Some (MemE (exp_l, exp_r') $$ (at, note), iter_state)
           in
           choice [ try_left; try_right ]
-      | LenE exp ->
-          let* exp', acc' = walk_exp acc exp in
-          Some (f_fold_up.f_LenE note at exp', acc')
-      | DotE (exp, atom) ->
-          let* exp', acc' = walk_exp acc exp in
-          Some (f_fold_up.f_DotE note at exp' atom, acc')
+      | LenE exp_inner ->
+          let* exp_inner', iter_state = walk_exp exp_inner in
+          Some (LenE exp_inner' $$ (at, note), iter_state)
+      | DotE (exp_inner, atom) ->
+          let* exp_inner', iter_state = walk_exp exp_inner in
+          Some (DotE (exp_inner', atom) $$ (at, note), iter_state)
       | IdxE (exp_b, exp_i) ->
           let try_base () =
-            let* exp_b', acc' = walk_exp acc exp_b in
-            Some (f_fold_up.f_IdxE note at exp_b' exp_i, acc')
+            let* exp_b', iter_state = walk_exp exp_b in
+            let vars_i = Free.Vars.free_exp exp_i in
+            let iter_state =
+              { iter_state with vars_outer = iter_state.vars_outer + vars_i }
+            in
+            Some (IdxE (exp_b', exp_i) $$ (at, note), iter_state)
           in
           let try_index () =
-            let* exp_i', acc' = walk_exp acc exp_i in
-            Some (f_fold_up.f_IdxE note at exp_b exp_i', acc')
+            let* exp_i', iter_state = walk_exp exp_i in
+            let vars_b = Free.Vars.free_exp exp_b in
+            let iter_state =
+              { iter_state with vars_outer = iter_state.vars_outer + vars_b }
+            in
+            Some (IdxE (exp_b, exp_i') $$ (at, note), iter_state)
           in
           choice [ try_base; try_index ]
       | SliceE (exp_b, exp_l, exp_h) ->
           let try_base () =
-            let* exp_b', acc' = walk_exp acc exp_b in
-            Some (f_fold_up.f_SliceE note at exp_b' exp_l exp_h, acc')
+            let* exp_b', iter_state = walk_exp exp_b in
+            let vars_l = Free.Vars.free_exp exp_l in
+            let vars_h = Free.Vars.free_exp exp_h in
+            let iter_state =
+              {
+                iter_state with
+                vars_outer = iter_state.vars_outer + vars_l + vars_h;
+              }
+            in
+            Some (SliceE (exp_b', exp_l, exp_h) $$ (at, note), iter_state)
           in
           let try_low () =
-            let* exp_l', acc' = walk_exp acc exp_l in
-            Some (f_fold_up.f_SliceE note at exp_b exp_l' exp_h, acc')
+            let* exp_l', iter_state = walk_exp exp_l in
+            let vars_b = Free.Vars.free_exp exp_b in
+            let vars_h = Free.Vars.free_exp exp_h in
+            let iter_state =
+              {
+                iter_state with
+                vars_outer = iter_state.vars_outer + vars_b + vars_h;
+              }
+            in
+            Some (SliceE (exp_b, exp_l', exp_h) $$ (at, note), iter_state)
           in
           let try_high () =
-            let* exp_h', acc' = walk_exp acc exp_h in
-            Some (f_fold_up.f_SliceE note at exp_b exp_l exp_h', acc')
+            let* exp_h', iter_state = walk_exp exp_h in
+            let vars_b = Free.Vars.free_exp exp_b in
+            let vars_l = Free.Vars.free_exp exp_l in
+            let iter_state =
+              {
+                iter_state with
+                vars_outer = iter_state.vars_outer + vars_b + vars_l;
+              }
+            in
+            Some (SliceE (exp_b, exp_l, exp_h') $$ (at, note), iter_state)
           in
           choice [ try_base; try_low; try_high ]
       | UpdE (exp_b, path, exp_f) ->
           let try_base () =
-            let* exp_b', acc' = walk_exp acc exp_b in
-            Some (f_fold_up.f_UpdE note at exp_b' path exp_f, acc')
+            let* exp_b', iter_state = walk_exp exp_b in
+            let vars_path = Free.Vars.free_path path in
+            let vars_f = Free.Vars.free_exp exp_f in
+            let iter_state =
+              {
+                iter_state with
+                vars_outer = iter_state.vars_outer + vars_path + vars_f;
+              }
+            in
+            Some (UpdE (exp_b', path, exp_f) $$ (at, note), iter_state)
           in
           let try_path () =
-            let* path', acc' = walk_path acc path in
-            Some (f_fold_up.f_UpdE note at exp_b path' exp_f, acc')
+            let* path', iter_state = walk_path path in
+            let vars_b = Free.Vars.free_exp exp_b in
+            let vars_f = Free.Vars.free_exp exp_f in
+            let iter_state =
+              {
+                iter_state with
+                vars_outer = iter_state.vars_outer + vars_b + vars_f;
+              }
+            in
+            Some (UpdE (exp_b, path', exp_f) $$ (at, note), iter_state)
           in
           let try_field () =
-            let* exp_f', acc' = walk_exp acc exp_f in
-            Some (f_fold_up.f_UpdE note at exp_b path exp_f', acc')
+            let* exp_f', iter_state = walk_exp exp_f in
+            let vars_b = Free.Vars.free_exp exp_b in
+            let vars_path = Free.Vars.free_path path in
+            let iter_state =
+              {
+                iter_state with
+                vars_outer = iter_state.vars_outer + vars_b + vars_path;
+              }
+            in
+            Some (UpdE (exp_b, path, exp_f') $$ (at, note), iter_state)
           in
           choice [ try_base; try_path; try_field ]
       | CallE (funcprose, targs, args) ->
-          let* args_new, acc' = walk_args acc args in
-          Some (f_fold_up.f_CallE note at funcprose targs args_new, acc')
-      | IterE (exp, iterexp) ->
-          let* exp_new, acc' = walk_exp acc exp in
-          Some (f_fold_up.f_IterE note at exp_new iterexp, acc')
+          let* args_new, iter_state = walk_args args in
+          Some (CallE (funcprose, targs, args_new) $$ (at, note), iter_state)
+      | IterE (exp_inner, (iter, itervars)) ->
+          let* exp_inner', iter_state = walk_exp exp_inner in
+          let { vars_inner; vars_outer; var_new; iterexps } = iter_state in
+          (* main algorithm : compare / replace / increment iterations *)
+          let vars_inner, var_new, iterexps, itervars =
+            VarSet.fold
+              (fun var_inner
+                   (vars_inner_acc, var_new_acc, iterexps_acc, itervars_acc) ->
+                if List.mem var_inner itervars then
+                  let itervars_upd =
+                    (* Used outside CallE *)
+                    if VarSet.mem var_inner vars_outer then
+                      var_new :: itervars_acc
+                    else
+                      var_new
+                      :: List.filter
+                           (fun v -> not (Free.Var.equal v var_inner))
+                           itervars_acc
+                  in
+                  let var_new_upd =
+                    let id, typ, iters = var_new_acc in
+                    (id, typ, iters @ [ iter ])
+                  in
+                  let vars_inner_upd =
+                    VarSet.map
+                      (fun v ->
+                        if Free.Var.equal v var_inner then
+                          let id, typ, iters = var_inner in
+                          (id, typ, iters @ [ iter ])
+                        else v)
+                      vars_inner_acc
+                  in
+                  let iterexp_new =
+                    ( iter,
+                      List.filter
+                        (fun v -> Free.Var.equal v var_inner)
+                        itervars_acc )
+                  in
+                  ( vars_inner_upd,
+                    var_new_upd,
+                    iterexps_acc @ [ iterexp_new ],
+                    itervars_upd )
+                else (vars_inner_acc, var_new_acc, iterexps_acc, itervars_acc))
+              vars_inner
+              (vars_inner, var_new, iterexps, itervars)
+          in
+          let iter_state = { vars_inner; vars_outer; var_new; iterexps } in
+          Some (IterE (exp_inner', (iter, itervars)) $$ (at, note), iter_state)
     in
     choice [ try_root; try_children ]
-  and walk_exps (acc : 'acc) (exps : exp list) : (exp list * 'acc) option =
+  and walk_exps (exps : exp list) : (exp list * iter_state) option =
     match exps with
     | [] -> None
     | exp :: exps -> (
-        match walk_exp acc exp with
-        | Some (exp_new, acc) -> Some (exp_new :: exps, acc)
+        match walk_exp exp with
+        | Some (exp', iter_state) -> Some (exp' :: exps, iter_state)
         | None ->
-            let* exps_new, acc' = walk_exps acc exps in
-            Some (exp :: exps_new, acc'))
-  and walk_arg (acc : 'acc) (arg : arg) : (arg * 'acc) option =
+            let* exps', iter_state = walk_exps exps in
+            Some (exp :: exps', iter_state))
+  and walk_arg (arg : arg) : (arg * iter_state) option =
     let { it; at; _ } = arg in
     match it with
-    | ExpA e ->
-        let* e_new, acc' = walk_exp acc e in
-        Some (f_fold_up.f_ExpA at e_new, acc')
+    | ExpA exp_inner ->
+        let* exp_inner', iter_state = walk_exp exp_inner in
+        Some (ExpA exp_inner' $ at, iter_state)
     | DefA _ -> None
-  and walk_args (acc : 'acc) (args : arg list) : (arg list * 'acc) option =
+  and walk_args (args : arg list) : (arg list * iter_state) option =
     match args with
     | [] -> None
     | arg :: args -> (
-        match walk_arg acc arg with
-        | Some (arg_new, acc) -> Some (arg_new :: args, acc)
+        match walk_arg arg with
+        | Some (arg', iter_state) -> Some (arg' :: args, iter_state)
         | None ->
-            let* args_new, acc' = walk_args acc args in
-            Some (arg :: args_new, acc'))
-  and walk_path (acc : 'acc) (path : path) : (path * 'acc) option =
+            let* args', iter_state = walk_args args in
+            Some (arg :: args', iter_state))
+  and walk_path (path : path) : (path * iter_state) option =
     let { it; at; note } = path in
     match it with
     | RootP -> None
     | IdxP (path_b, exp_i) ->
         let try_base () =
-          let* path_b', acc' = walk_path acc path_b in
-          Some (f_fold_up.f_IdxP note at path_b' exp_i, acc')
+          let* path_b', iter_state = walk_path path_b in
+          let vars_i = Free.Vars.free_exp exp_i in
+          let iter_state =
+            { iter_state with vars_outer = iter_state.vars_outer + vars_i }
+          in
+          Some (IdxP (path_b', exp_i) $$ (at, note), iter_state)
         in
         let try_index () =
-          let* exp_i', acc' = walk_exp acc exp_i in
-          Some (f_fold_up.f_IdxP note at path_b exp_i', acc')
+          let* exp_i', iter_state = walk_exp exp_i in
+          let vars_b = Free.Vars.free_path path_b in
+          let iter_state =
+            { iter_state with vars_outer = iter_state.vars_outer + vars_b }
+          in
+          Some (IdxP (path_b, exp_i') $$ (at, note), iter_state)
         in
         choice [ try_base; try_index ]
     | SliceP (path_b, exp_l, exp_h) ->
         let try_base () =
-          let* path_b', acc' = walk_path acc path_b in
-          Some (f_fold_up.f_SliceP note at path_b' exp_l exp_h, acc')
+          let* path_b', iter_state = walk_path path_b in
+          let vars_l = Free.Vars.free_exp exp_l in
+          let vars_h = Free.Vars.free_exp exp_h in
+          let iter_state =
+            {
+              iter_state with
+              vars_outer = iter_state.vars_outer + vars_l + vars_h;
+            }
+          in
+          Some (SliceP (path_b', exp_l, exp_h) $$ (at, note), iter_state)
         in
         let try_low () =
-          let* exp_l', acc' = walk_exp acc exp_l in
-          Some (f_fold_up.f_SliceP note at path_b exp_l' exp_h, acc')
+          let* exp_l', iter_state = walk_exp exp_l in
+          let vars_b = Free.Vars.free_path path_b in
+          let vars_h = Free.Vars.free_exp exp_h in
+          let iter_state =
+            {
+              iter_state with
+              vars_outer = iter_state.vars_outer + vars_b + vars_h;
+            }
+          in
+          Some (SliceP (path_b, exp_l', exp_h) $$ (at, note), iter_state)
         in
         let try_high () =
-          let* exp_h', acc' = walk_exp acc exp_h in
-          Some (f_fold_up.f_SliceP note at path_b exp_l exp_h', acc')
+          let* exp_h', iter_state = walk_exp exp_h in
+          let vars_b = Free.Vars.free_path path_b in
+          let vars_l = Free.Vars.free_exp exp_l in
+          let iter_state =
+            {
+              iter_state with
+              vars_outer = iter_state.vars_outer + vars_b + vars_l;
+            }
+          in
+          Some (SliceP (path_b, exp_l, exp_h') $$ (at, note), iter_state)
         in
         choice [ try_base; try_low; try_high ]
     | DotP (path_b, atom) ->
-        let* path_b', acc' = walk_path acc path_b in
-        Some (f_fold_up.f_DotP note at path_b' atom, acc')
+        let* path_b', iter_state = walk_path path_b in
+        Some (DotP (path_b', atom) $$ (at, note), iter_state)
   in
-  walk_exp acc e
+  walk_exp e
 
 let rec search_exp (cond : exp -> bool) (exp : exp) : bool =
   if cond exp then true
