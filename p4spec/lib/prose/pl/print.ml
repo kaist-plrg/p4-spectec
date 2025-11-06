@@ -303,7 +303,7 @@ let rec render_exp ctx exp : string =
             ^ render_args (ctx |> link |> code) args
             |> as_link ctx ~link:id.it |> as_code ctx)
   | IterE (exp, (_, [])) -> render_exp ctx exp
-  | IterE (({ it = VarE varid; _ } as exp), iterexp) ->
+  | IterE (({ it = VarE _; _ } as exp), iterexp) ->
       render_exp in_code exp ^ code_of_iterexp iterexp |> as_code ctx
   | IterE (exp, iterexp) ->
       "(" ^ render_exp in_code exp ^ ")" ^ code_of_iterexp iterexp
