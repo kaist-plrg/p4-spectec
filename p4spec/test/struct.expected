@@ -3084,7 +3084,39 @@ def $update_fieldValue(fieldValue*{fieldValue <- fieldValue*}, id, value)
 
       1. Return (value_field_h id_field_h ;) :: $update_fieldValue(fieldValue_t*{fieldValue_t <- fieldValue_t*}, id, value)
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:60.1-60.49
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:60.1-60.58
+def $update_headerStack(value*{value <- value*}, value_new, n_target_idx, n_size)
+
+1. Return $update_headerStack'(value*{value <- value*}, value_new, 0, n_target_idx, n_size)
+
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:61.1-61.64
+def $update_headerStack'(value*{value <- value*}, _value', _nat''', _nat'''', _nat''''')
+
+1. Case analysis on value*{value <- value*}
+
+  1. Case (% matches pattern [])
+
+    1. Return []
+
+  2. Case (% matches pattern _ :: _)
+
+    1. (Let value_h :: value_t*{value_t <- value_t*} be value*{value <- value*})
+
+    2. If ((_nat''' = _nat''''')), then
+
+      1. Return []
+
+    3. Case analysis on _nat''''
+
+      1. Case (% = _nat''')
+
+        1. Return _value' :: value_t*{value_t <- value_t*}
+
+      2. Case (% =/= _nat''')
+
+        1. Return value_h :: $update_headerStack'(value_t*{value_t <- value_t*}, _value', _nat'''', (_nat''' + 1), _nat''''')
+
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:86.1-86.49
 def $write_value_from_bits(value, b*{b <- b*})
 
 1. (Let (value_updated, bool*{bool <- bool*}) be $write_value_from_bits'(value, b*{b <- b*}))
@@ -3093,7 +3125,7 @@ def $write_value_from_bits(value, b*{b <- b*})
 
   1. Return value_updated
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:61.1-61.59
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:87.1-87.59
 def $write_value_from_bits'(value, bool'*{bool' <- bool'*})
 
 1. Case analysis on value
@@ -3174,7 +3206,7 @@ def $write_value_from_bits'(value, bool'*{bool' <- bool'*})
 
     3. Return (((header tid { true ; fieldValue_updated*{fieldValue_updated <- fieldValue_updated*} }) as value), b_rest*{b_rest <- b_rest*})
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:62.1-62.78
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:88.1-88.78
 def $write_value_fields_from_bits'(fieldValue*{fieldValue <- fieldValue*}, b*{b <- b*})
 
 1. Case analysis on fieldValue*{fieldValue <- fieldValue*}
@@ -3193,14 +3225,14 @@ def $write_value_fields_from_bits'(fieldValue*{fieldValue <- fieldValue*}, b*{b 
 
     4. Return (fieldValue_h_updated :: fieldValue_t_updated*{fieldValue_t_updated <- fieldValue_t_updated*}, b_rest*{b_rest <- b_rest*})
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:63.1-63.75
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:89.1-89.75
 def $write_value_field_from_bits'((value id ;), b*{b <- b*})
 
 1. (Let (value_updated, b_rest*{b_rest <- b_rest*}) be $write_value_from_bits'(value, b*{b <- b*}))
 
 2. Return ((value_updated id ;), b_rest*{b_rest <- b_rest*})
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:115.1-115.42
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:141.1-141.42
 def $write_bits_from_value(value)
 
 1. Case analysis on value
@@ -3246,6 +3278,12 @@ def $write_bits_from_value(value)
     2. If ((bool = true)), then
 
       1. Return $concat_<bool>($write_bits_from_value(value_field)*{value_field <- value_field*})
+
+  5. Case (% has type headerStackValue)
+
+    1. (Let (header_stack[ value_element*{value_element <- value_element*} ( _nat ; _nat' )]) be (value as headerStackValue))
+
+    2. Return $concat_<bool>($write_bits_from_value(value_element)*{value_element <- value_element*})
 
 ;; ../../../../spec-concrete/2.2.1-type.watsup:14.1-18.11
 syntax primitiveTypeIR = 
@@ -28028,19 +28066,35 @@ relation Lvalue_write: p EC_0 STO |- storageReference'' -> value : %
 
 2. If ((storageReference'' matches pattern `%.%`)), then
 
-  1. (Let (storageReference . nameIR) be storageReference'')
+  1. (Let (storageReference . text) be storageReference'')
 
-  2. Group storageReference-nameIR: p EC_0 STO |- (storageReference . nameIR) -> value : %
+  2. Group storageReference-nameIR: p EC_0 STO |- (storageReference . text) -> value : %
 
-    1. (Lvalue_read: p EC_0 STO |- storageReference : value_base)
+    1. If ((text = "next")), then
 
-    2. Case analysis on value_base
+      1. (Lvalue_read: p EC_0 STO |- storageReference : value_base)
+
+      2. If ((value_base has type headerStackValue)), then
+
+        1. (Let (header_stack[ value_element*{value_element <- value_element*} ( n_idx ; n_size )]) be (value_base as headerStackValue))
+
+        2. (Let value_element_update*{value_element_update <- value_element_update*} be $update_headerStack(value_element*{value_element <- value_element*}, value, n_idx, n_size))
+
+        3. (Let value_base_update be ((header_stack[ value_element_update*{value_element_update <- value_element_update*} ( (n_idx + 1) ; n_size )]) as value))
+
+        4. (Lvalue_write: p EC_0 STO |- storageReference -> value_base_update : EC_1)
+
+        5. Result in : % % % |- % -> % : EC_1
+
+    2. (Lvalue_read: p EC_0 STO |- storageReference : value_base)
+
+    3. Case analysis on value_base
 
       1. Case (% has type structValue)
 
         1. (Let (struct tid { fieldValue*{fieldValue <- fieldValue*} }) be (value_base as structValue))
 
-        2. (Let fieldValue_update*{fieldValue_update <- fieldValue_update*} be $update_fieldValue(fieldValue*{fieldValue <- fieldValue*}, nameIR, value))
+        2. (Let fieldValue_update*{fieldValue_update <- fieldValue_update*} be $update_fieldValue(fieldValue*{fieldValue <- fieldValue*}, text, value))
 
         3. (Let value_base_update be ((struct tid { fieldValue_update*{fieldValue_update <- fieldValue_update*} }) as value))
 
@@ -28052,7 +28106,7 @@ relation Lvalue_write: p EC_0 STO |- storageReference'' -> value : %
 
         1. (Let (header tid { b_valid ; fieldValue*{fieldValue <- fieldValue*} }) be (value_base as headerValue))
 
-        2. (Let fieldValue_update*{fieldValue_update <- fieldValue_update*} be $update_fieldValue(fieldValue*{fieldValue <- fieldValue*}, nameIR, value))
+        2. (Let fieldValue_update*{fieldValue_update <- fieldValue_update*} be $update_fieldValue(fieldValue*{fieldValue <- fieldValue*}, text, value))
 
         3. (Let value_base_update be ((header tid { b_valid ; fieldValue_update*{fieldValue_update <- fieldValue_update*} }) as value))
 

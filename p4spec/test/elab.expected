@@ -2908,18 +2908,49 @@ def $update_fieldValue(fieldValue*, id, value) : fieldValue* =
   -- let value_field_h id_field_h ; :: fieldValue_t*{fieldValue_t <- fieldValue_t*} = fieldValue*{fieldValue <- fieldValue*}
   -- otherwise
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:60.1-60.49
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:60.1-60.58
+def $update_headerStack(value*, value, nat, nat) : value* =
+
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:63.1-63.132
+  clause 0 : (value*{value <- value*}, value_new, n_target_idx, n_size) = $update_headerStack'(value*{value <- value*}, value_new, 0, n_target_idx, n_size)
+
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:61.1-61.64
+def $update_headerStack'(value*, value, nat, nat, nat) : value* =
+
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:65.1-65.48
+  clause 0 : (value*{value <- value*}, _value, _nat, _nat', _nat'') = []
+  -- if value*{value <- value*} matches []
+
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:66.1-70.31
+  clause 1 : (value*{value <- value*}, value_new, n_current_idx, n_target_idx, n_size) = []
+  -- if value*{value <- value*} matches _ :: _
+  -- let value_h :: value_t*{value_t <- value_t*} = value*{value <- value*}
+  -- if (n_current_idx = n_size)
+
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:71.1-75.37
+  clause 2 : (value*{value <- value*}, value_new, n_current_idx, n_target_idx, n_size) = value_new :: value_t*{value_t <- value_t*}
+  -- if value*{value <- value*} matches _ :: _
+  -- let value_h :: value_t*{value_t <- value_t*} = value*{value <- value*}
+  -- if (n_target_idx = n_current_idx)
+
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:76.1-80.39
+  clause 3 : (value*{value <- value*}, value_new, n_current_idx, n_target_idx, n_size) = value_h :: $update_headerStack'(value_t*{value_t <- value_t*}, value_new, n_target_idx, (n_current_idx + 1), n_size)
+  -- if value*{value <- value*} matches _ :: _
+  -- let value_h :: value_t*{value_t <- value_t*} = value*{value <- value*}
+  -- if (n_target_idx =/= n_current_idx)
+
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:86.1-86.49
 def $write_value_from_bits(value, bool*) : value =
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:65.1-67.43
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:91.1-93.43
   clause 0 : (value, b*{b <- b*}) = value_updated
   -- let (value_updated, bool*{bool <- bool*}) = $write_value_from_bits'(value, b*{b <- b*})
   -- if bool*{bool <- bool*} matches []
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:61.1-61.59
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:87.1-87.59
 def $write_value_from_bits'(value, bool*) : (value, bool*) =
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:69.1-69.62
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:95.1-95.62
   clause 0 : (value, bool*{bool <- bool*}) = (b b_h as value, b_t*{b_t <- b_t*})
   -- if value <: primitiveValue
   -- let primitiveValue = value as primitiveValue
@@ -2928,7 +2959,7 @@ def $write_value_from_bits'(value, bool*) : (value, bool*) =
   -- if bool*{bool <- bool*} matches _ :: _
   -- let b_h :: b_t*{b_t <- b_t*} = bool*{bool <- bool*}
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:70.1-75.59
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:96.1-101.59
   clause 1 : (value, b*{b <- b*}) = (w w i as value, b_t*{b_t <- b_t*})
   -- if value <: numberLiteral
   -- let numberLiteral = value as numberLiteral
@@ -2942,7 +2973,7 @@ def $write_value_from_bits'(value, bool*) : (value, bool*) =
   -- let b_t*{b_t <- b_t*} = b*{b <- b*}[w : n_t]
   -- let i = $int_to_bitstr(w as int, $bits_to_int_unsigned(b_h*{b_h <- b_h*}))
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:76.1-81.57
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:102.1-107.57
   clause 2 : (value, b*{b <- b*}) = (w s i as value, b_t*{b_t <- b_t*})
   -- if value <: numberLiteral
   -- let numberLiteral = value as numberLiteral
@@ -2956,73 +2987,78 @@ def $write_value_from_bits'(value, bool*) : (value, bool*) =
   -- let b_t*{b_t <- b_t*} = b*{b <- b*}[w : n_t]
   -- let i = $int_to_bitstr(w as int, $bits_to_int_signed(b_h*{b_h <- b_h*}))
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:100.1-104.56
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:126.1-130.56
   clause 3 : (value, b*{b <- b*}) = (struct tid { fieldValue_updated*{fieldValue_updated <- fieldValue_updated*} } as value, b_rest*{b_rest <- b_rest*})
   -- if value <: structValue
   -- let struct tid { fieldValue*{fieldValue <- fieldValue*} } = value as structValue
   -- let (fieldValue_updated*{fieldValue_updated <- fieldValue_updated*}, b_rest*{b_rest <- b_rest*}) = $write_value_fields_from_bits'(fieldValue*{fieldValue <- fieldValue*}, b*{b <- b*})
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:105.1-109.56
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:131.1-135.56
   clause 4 : (value, b*{b <- b*}) = (header tid { true ; fieldValue_updated*{fieldValue_updated <- fieldValue_updated*} } as value, b_rest*{b_rest <- b_rest*})
   -- if value <: headerValue
   -- let header tid { _bool ; fieldValue*{fieldValue <- fieldValue*} } = value as headerValue
   -- let (fieldValue_updated*{fieldValue_updated <- fieldValue_updated*}, b_rest*{b_rest <- b_rest*}) = $write_value_fields_from_bits'(fieldValue*{fieldValue <- fieldValue*}, b*{b <- b*})
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:62.1-62.78
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:88.1-88.78
 def $write_value_fields_from_bits'(fieldValue*, bool*) : (fieldValue*, bool*) =
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:83.1-83.56
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:109.1-109.56
   clause 0 : (fieldValue*{fieldValue <- fieldValue*}, b*{b <- b*}) = ([], b*{b <- b*})
   -- if fieldValue*{fieldValue <- fieldValue*} matches []
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:84.1-91.60
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:110.1-117.60
   clause 1 : (fieldValue*{fieldValue <- fieldValue*}, b*{b <- b*}) = (fieldValue_h_updated :: fieldValue_t_updated*{fieldValue_t_updated <- fieldValue_t_updated*}, b_rest*{b_rest <- b_rest*})
   -- if fieldValue*{fieldValue <- fieldValue*} matches _ :: _
   -- let fieldValue_h :: fieldValue_t*{fieldValue_t <- fieldValue_t*} = fieldValue*{fieldValue <- fieldValue*}
   -- let (fieldValue_h_updated, b_t*{b_t <- b_t*}) = $write_value_field_from_bits'(fieldValue_h, b*{b <- b*})
   -- let (fieldValue_t_updated*{fieldValue_t_updated <- fieldValue_t_updated*}, b_rest*{b_rest <- b_rest*}) = $write_value_fields_from_bits'(fieldValue_t*{fieldValue_t <- fieldValue_t*}, b_t*{b_t <- b_t*})
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:63.1-63.75
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:89.1-89.75
 def $write_value_field_from_bits'(fieldValue, bool*) : (fieldValue, bool*) =
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:93.1-98.43
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:119.1-124.43
   clause 0 : (value id ;, b*{b <- b*}) = (value_updated id ;, b_rest*{b_rest <- b_rest*})
   -- let (value_updated, b_rest*{b_rest <- b_rest*}) = $write_value_from_bits'(value, b*{b <- b*})
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:115.1-115.42
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:141.1-141.42
 def $write_bits_from_value(value) : bool* =
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:117.1-117.40
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:143.1-143.40
   clause 0 : (value) = [b]
   -- if value <: primitiveValue
   -- let primitiveValue = value as primitiveValue
   -- if primitiveValue matches `B%`
   -- let b b = primitiveValue
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:118.1-119.30
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:144.1-145.30
   clause 1 : (value) = $int_to_bits_signed(w, i)
   -- if value <: numberLiteral
   -- let numberLiteral = value as numberLiteral
   -- if numberLiteral matches `%S%`
   -- let w s i = numberLiteral
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:120.1-121.32
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:146.1-147.32
   clause 2 : (value) = $int_to_bits_unsigned(w, i)
   -- if value <: numberLiteral
   -- let numberLiteral = value as numberLiteral
   -- if numberLiteral matches `%W%`
   -- let w w i = numberLiteral
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:123.1-126.57
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:149.1-152.57
   clause 3 : (value) = $concat_<bool>($write_bits_from_value(value_field)*{value_field <- value_field*})
   -- if value <: structValue
   -- let struct _tid { value_field id_field ;*{id_field <- id_field*, value_field <- value_field*} } = value as structValue
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:127.1-130.57
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:153.1-156.57
   clause 4 : (value) = $concat_<bool>($write_bits_from_value(value_field)*{value_field <- value_field*})
   -- if value <: headerValue
   -- let header _tid { bool ; value_field id_field ;*{id_field <- id_field*, value_field <- value_field*} } = value as headerValue
   -- if (bool = true)
+
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:157.1-160.59
+  clause 5 : (value) = $concat_<bool>($write_bits_from_value(value_element)*{value_element <- value_element*})
+  -- if value <: headerStackValue
+  -- let header_stack[ value_element*{value_element <- value_element*} ( _nat ; _nat' )] = value as headerStackValue
 
 ;; ../../../../spec-concrete/2.2.1-type.watsup:14.1-18.11
 syntax primitiveTypeIR = 
@@ -26083,19 +26119,31 @@ relation Lvalue_write: cursor evalContext store |- storageReference -> value : e
     -- let EC_1 = $add_var_e(p_ref, EC_0, prefixedNameIR, value)
     -- output: % % % |- % -> % : EC_1
 
-  ;; ../../../../spec-concrete/8.05-eval-lvalue.watsup:113.1-145.2
+  ;; ../../../../spec-concrete/8.05-eval-lvalue.watsup:113.1-157.2
   rulegroup storageReference-nameIR
 
    match
 
-    (explicit) p EC_0 STO |- storageReference . nameIR -> value : %
+    (explicit) p EC_0 STO |- storageReference . text -> value : %
     (implicit) p EC_0 STO |- storageReference' -> value : %
     -- if storageReference' matches `%.%`
-    -- let storageReference . nameIR = storageReference'
+    -- let storageReference . text = storageReference'
 
    paths
 
+    rulepath stack
+    -- if (text = "next")
+    -- Lvalue_read: p EC_0 STO |- storageReference : value_base
+    -- let value' = value_base
+    -- if value' <: headerStackValue
+    -- let header_stack[ value_element*{value_element <- value_element*} ( n_idx ; n_size )] = value' as headerStackValue
+    -- let value_element_update*{value_element_update <- value_element_update*} = $update_headerStack(value_element*{value_element <- value_element*}, value, n_idx, n_size)
+    -- let value_base_update = header_stack[ value_element_update*{value_element_update <- value_element_update*} ( (n_idx + 1) ; n_size )] as value
+    -- Lvalue_write: p EC_0 STO |- storageReference -> value_base_update : EC_1
+    -- output: % % % |- % -> % : EC_1
+
     rulepath struct
+    -- let nameIR = text
     -- Lvalue_read: p EC_0 STO |- storageReference : value_base
     -- let value' = value_base
     -- if value' <: structValue
@@ -26106,6 +26154,7 @@ relation Lvalue_write: cursor evalContext store |- storageReference -> value : e
     -- output: % % % |- % -> % : EC_1
 
     rulepath header
+    -- let nameIR = text
     -- Lvalue_read: p EC_0 STO |- storageReference : value_base
     -- let value' = value_base
     -- if value' <: headerValue
