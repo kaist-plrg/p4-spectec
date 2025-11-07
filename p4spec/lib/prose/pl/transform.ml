@@ -18,6 +18,7 @@ type iter_state = {
   var_new : VarSet.elt;
   vars_outer : VarSet.t;
   iterexps : iterexp list;
+  exp_orig : exp;
 }
 
 let transform_first_with_iters
@@ -256,7 +257,7 @@ let transform_first_with_iters
           Some (CallE (funcprose, targs, args_new) $$ (at, note), iter_state)
       | IterE (exp_inner, (iter, itervars)) ->
           let* exp_inner', iter_state = walk_exp exp_inner in
-          let { vars_inner; vars_outer; var_new; iterexps } = iter_state in
+          let { vars_inner; vars_outer; var_new; iterexps; _ } = iter_state in
           (* main algorithm : compare / replace / increment iterations *)
           let vars_inner, var_new, iterexps, itervars =
             VarSet.fold
@@ -300,7 +301,7 @@ let transform_first_with_iters
               vars_inner
               (vars_inner, var_new, iterexps, itervars)
           in
-          let iter_state = { vars_inner; vars_outer; var_new; iterexps } in
+          let iter_state = { iter_state with vars_inner; var_new; iterexps } in
           Some (IterE (exp_inner', (iter, itervars)) $$ (at, note), iter_state)
     in
     choice [ try_root; try_children ]

@@ -1,6 +1,7 @@
 open Ast
 open Util.Source
 open Domain.Lib
+open Transform
 module F = Format
 
 type shorthand = instr list -> (instr list * instr list) option
@@ -31,7 +32,15 @@ let option_get instrs =
       Some ([ OptionGetI (exp_l, exp_call) $ at ], instrs_rest)
   | _ -> None
 
-let replace_call_exp (ids_used : IdSet.t) exp =
+(** Replaces first CallE (pre-order) in exp,
+
+    returns:
+
+    1) the new instruction to be prepended
+
+    2) the rewritten expression *)
+
+let replace_call_exp (ids_used : IdSet.t) exp : (instr * exp) option =
   let transformer exp =
     match exp.it with
     | CallE (_funcprose, _targs, args) ->
@@ -39,22 +48,46 @@ let replace_call_exp (ids_used : IdSet.t) exp =
           Transform.fresh_exp_from_typ ids_used (exp.note $ exp.at)
         in
         let var = (id_added, exp.note $ exp.at, []) in
-        let iter_state : Transform.iter_state =
+        let iter_state : iter_state =
           {
             vars_inner = Free.Vars.free_args args;
             vars_outer = Free.VarSet.empty;
             var_new = var;
             iterexps = [];
+            exp_orig = exp;
           }
         in
         Some (exp_new, iter_state)
     | _ -> None
   in
-  (* No top-down information flow *)
   (* rewrite CallE to VarE, and collect enclosing iterexps *)
   match Transform.transform_first_with_iters transformer exp with
-  | Some (_exp, _iter_state) ->
-      failwith "not yet" (* compute dimension of var_new *)
+  | Some (exp, iter_state) ->
+      let { var_new; iterexps; exp_orig; _ } = iter_state in
+      let id, typ, iters = var_new in
+      let exp_var = VarE id $$ (typ.at, typ.it) in
+      let instr_let = LetI (exp_var, exp_orig) $ no_region in
+      let iter_combined = List.combine iters iterexps in
+      let instr_iterated, _ =
+        List.fold_left
+          (fun (instr, var_new) (iter_new, iterexp) ->
+            (* itervars_out: each iteration layer of var_new *)
+            let itervars_out = [ var_new ] in
+            let var_new =
+              let id, typ, iters = var_new in
+              (id, typ, iters @ [ iter_new ])
+            in
+            (* itervars_in: each layer of iterexp *)
+            let iter_in, itervars_in = iterexp in
+            assert (iter_in = iter_new);
+            let instr =
+              ForEachI (itervars_out, instr, itervars_in) $ no_region
+            in
+            (instr, var_new))
+          (instr_let, (id, typ, []))
+          iter_combined
+      in
+      Some (instr_iterated, exp)
   | None -> None
 
 let contains_call_exp exp =
