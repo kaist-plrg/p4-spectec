@@ -36,7 +36,7 @@ syntax baseTypeIR = primitiveTypeIR | numberTypeIR
 syntax typeIR
 syntax typeDefIR
 
-syntax nameTypeIR = `` tid
+syntax nameTypeIR = `` tid hint(print %0)
 
 syntax specializedTypeIR = typeDefIR `< typeIR* >
 
@@ -48,9 +48,13 @@ syntax namedTypeIR =
 ;;;; Alias types
 ;;
 
-syntax typedefTypeIR = TYPEDEF tid typeIR
+syntax typedefTypeIR =
+  TYPEDEF tid typeIR
+  hint(print %1)
 
-syntax newTypeIR = TYPE tid typeIR
+syntax newTypeIR =
+  TYPE tid typeIR
+  hint(print %1)
 
 syntax aliasTypeIR =
   | typedefTypeIR
@@ -66,15 +70,21 @@ syntax headerStackTypeIR = typeIR `[ nat ]
 
 syntax fieldTypeIR = typeIR id `;
 
-syntax structTypeIR = STRUCT tid `{ fieldTypeIR* }
-syntax headerTypeIR = HEADER tid `{ fieldTypeIR* }
-syntax headerUnionTypeIR = HEADER_UNION tid `{ fieldTypeIR* }
+syntax structTypeIR =
+  STRUCT tid `{ fieldTypeIR* }
+  hint(print %1)
+syntax headerTypeIR =
+  HEADER tid `{ fieldTypeIR* }
+  hint(print %1)
+syntax headerUnionTypeIR =
+  HEADER_UNION tid `{ fieldTypeIR* }
+  hint(print %1)
 
 syntax valueFieldIR = id `= value `;
 
 syntax enumTypeIR =
-  | ENUM tid `{ id* }
-  | ENUM tid `< typeIR > `{ valueFieldIR* }
+  | ENUM tid `{ id* }                         hint(print %1)
+  | ENUM tid `< typeIR > `{ valueFieldIR* }   hint(print %1)
 
 syntax dataTypeIR =
   | listTypeIR
@@ -94,11 +104,19 @@ syntax externMethodTypeDefIR
 
 syntax externMethodTypeDefEnv = map<cid, externMethodTypeDefIR>
 
-syntax externObjectTypeIR = EXTERN tid externMethodTypeDefEnv
+syntax externObjectTypeIR =
+  EXTERN tid externMethodTypeDefEnv
+  hint(print %1)
+
 syntax parserObjectTypeIR = PARSER `( parameterTypeIR* )
+
 syntax controlObjectTypeIR = CONTROL `( parameterTypeIR* )
+
 syntax packageObjectTypeIR = PACKAGE `{ typeIR* }
-syntax tableObjectTypeIR = TABLE tid `{ typeIR }
+
+syntax tableObjectTypeIR =
+  TABLE tid `{ typeIR }
+  hint(print %1)
 
 syntax objectTypeIR =
   | externObjectTypeIR

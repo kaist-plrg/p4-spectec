@@ -80,7 +80,7 @@ rulegroup Expr_lvalue_ok/accessExpressionIR-memberAccessExpressionIR {
     p TC |- (typedExpressionIR_base `. nameIR) `# `( _ _ )
     -- Expr_lvalue_ok: p TC |- typedExpressionIR_base
     ---- ;; if the base expression is a header stack
-    -- if typeIR_base = $typeIR_of_typedExpressionIR(typedExpressionIR_base)
+    -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     -- if typeIR `[ _ ] = $canon_typeIR(typeIR_base)
     ---- ;; if accessing "next" or "last"
     -- if nameIR = "next" \/ nameIR = "last"
@@ -91,7 +91,7 @@ rulegroup Expr_lvalue_ok/accessExpressionIR-memberAccessExpressionIR {
   rule Expr_lvalue_ok/non-headerstack:
     p TC |- (typedExpressionIR_base `. nameIR) `# `( _ _ )
     -- Expr_lvalue_ok: p TC |- typedExpressionIR_base
-    -- if typeIR_base = $typeIR_of_typedExpressionIR(typedExpressionIR_base)
+    -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     ---- ;; if the base expression is not a header stack
     -- if ~$is_headerStackTypeIR($canon_typeIR(typeIR_base))
 
@@ -111,7 +111,7 @@ rule Call_convention_expr_ok/out-inout:
                 : typedExpressionIR_arg
   -- if direction = OUT \/ direction = INOUT
   ---- ;; may not insert implicit casts for direction out or inout
-  -- if typeIR_arg = $typeIR_of_typedExpressionIR(typedExpressionIR_arg)
+  -- if typeIR_arg = $type_of_typedExpressionIR(typedExpressionIR_arg)
   -- Type_alpha: typeIR_param ~~ typeIR_arg
   ---- ;; for copy-out, the expression must be a l-value
   -- Expr_lvalue_ok: p TC |- typedExpressionIR_arg
@@ -131,7 +131,7 @@ rulegroup Call_convention_expr_ok/empty {
     p TC NOACTION |- (`EMPTY typeIR_param _ _) `@ typedExpressionIR_arg
                    : typedExpressionIR_arg
     ---- ;; may not insert implicit casts for direction out or inout
-    -- if typeIR_arg = $typeIR_of_typedExpressionIR(typedExpressionIR_arg)
+    -- if typeIR_arg = $type_of_typedExpressionIR(typedExpressionIR_arg)
     -- if ctk_arg = $ctk_of_typedExpressionIR(typedExpressionIR_arg)
     -- Type_alpha: typeIR_param ~~ typeIR_arg
     ---- ;; the argument must be compile-time known

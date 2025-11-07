@@ -292,9 +292,9 @@ rule CallableTypeDef_alpha:
   callableTypeDefIR_a ~~ callableTypeDefIR_b
   ---- ;; retrieve type parameters
   -- if (tid_tparam_expl_a*, tid_tparam_impl_a*)
-      = $tparams_of_callableTypeDefIR(callableTypeDefIR_a)
+      = $type_parameters_of_callableTypeDefIR(callableTypeDefIR_a)
   -- if (tid_tparam_expl_b*, tid_tparam_impl_b*)
-      = $tparams_of_callableTypeDefIR(callableTypeDefIR_b)
+      = $type_parameters_of_callableTypeDefIR(callableTypeDefIR_b)
   ---- ;; check type parameter arity
   -- if |tid_tparam_expl_a*| = |tid_tparam_expl_b*|
   -- if |tid_tparam_impl_a*| = |tid_tparam_impl_b*|
@@ -305,14 +305,14 @@ rule CallableTypeDef_alpha:
   -- if tid_tparam_a* = tid_tparam_expl_a* ++ tid_tparam_impl_a*
   -- if theta_a = `{ (tid_tparam_a `: (`` tid_tparam_fresh))* }
   -- if callableTypeIR_a
-      = $callableTypeIR_of_callableTypeDefIR(callableTypeDefIR_a)
+      = $type_of_callableTypeDefIR(callableTypeDefIR_a)
   -- if callableTypeIR_a_subst
       = $subst_callableTypeIR(theta_a, callableTypeIR_a)
   ---- ;; substitute the right hand side
   -- if tid_tparam_b* = tid_tparam_expl_b* ++ tid_tparam_impl_b*
   -- if theta_b = `{ (tid_tparam_b `: (`` tid_tparam_fresh))* }
   -- if callableTypeIR_b
-      = $callableTypeIR_of_callableTypeDefIR(callableTypeDefIR_b)
+      = $type_of_callableTypeDefIR(callableTypeDefIR_b)
   -- if callableTypeIR_b_subst
       = $subst_callableTypeIR(theta_b, callableTypeIR_b)
   ---- ;; compare the substituted definitions

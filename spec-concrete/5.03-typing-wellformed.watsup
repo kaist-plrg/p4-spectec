@@ -492,9 +492,9 @@ rulegroup Type_wf/tableMetadataTypeIR {
 rule TypeDef_wf:
   bound |- typeDefIR
   -- if (tid_tparam_expl*, tid_tparam_impl*)
-      = $tparams_of_typeDefIR(typeDefIR)
+      = $type_parameters_of_typeDefIR(typeDefIR)
   -- if $distinct_<tid>(tid_tparam_expl* ++ tid_tparam_impl*)
-  -- if typeIR_base = $typeIR_of_typeDefIR(typeDefIR)
+  -- if typeIR_base = $type_of_typeDefIR(typeDefIR)
   -- if bound_inner
       = $union_set<tid>(bound, `{ tid_tparam_expl* ++ tid_tparam_impl* })
   -- Type_wf: bound_inner |- typeIR_base
@@ -719,10 +719,10 @@ rule CallableType_wf/tableApplyMethodTypeIR:
 rule CallableTypeDef_wf:
   bound |- callableTypeDefIR
   -- if (tid_tparam_expl*, tid_tparam_impl*)
-      = $tparams_of_callableTypeDefIR(callableTypeDefIR)
+      = $type_parameters_of_callableTypeDefIR(callableTypeDefIR)
   -- if $distinct_<tid>(tid_tparam_expl* ++ tid_tparam_impl*)
   -- if callableTypeIR_base
-      = $callableTypeIR_of_callableTypeDefIR(callableTypeDefIR)
+      = $type_of_callableTypeDefIR(callableTypeDefIR)
   -- if bound_inner
       = $union_set<tid>(bound, `{ tid_tparam_expl* ++ tid_tparam_impl* })
   -- CallableType_wf: bound_inner |- callableTypeIR_base

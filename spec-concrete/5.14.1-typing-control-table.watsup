@@ -47,7 +47,7 @@ rule TableKey_ok:
              : TBLC_2 tableKeyIR
   ---- ;; check expression
   -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
-  -- if typeIR = $typeIR_of_typedExpressionIR(typedExpressionIR)
+  -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
   ---- ;; check that the expression can be embedded in a set
   -- Type_wf: $bound(LOCAL, TC) |- SET `< typeIR >
   ---- ;; check match kind
@@ -250,7 +250,7 @@ rulegroup TableEntry_keyset_simple_ok/expression {
     -- if TBLC.MODE = NOPRILPM n
     ---- ;; check expression
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
-    -- if typeIR = $typeIR_of_typedExpressionIR(typedExpressionIR)
+    -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
     -- if ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
     ---- ;; check compatibility with the key type
     -- Sub_impl: typeIR <: typeIR_key
@@ -266,7 +266,7 @@ rulegroup TableEntry_keyset_simple_ok/expression {
     -- if nameIR_matchkind =/= "lpm"
     ---- ;; check expression
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
-    -- if typeIR = $typeIR_of_typedExpressionIR(typedExpressionIR)
+    -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
     -- if ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
     ---- ;; check compatibility with the key type
     -- Sub_impl: typeIR <: typeIR_key
@@ -301,7 +301,7 @@ rulegroup TableEntry_keyset_simple_ok/mask {
             )
     ---- ;; fetch the type
     -- if typeIR_reduced
-        = $typeIR_of_typedExpressionIR(typedExpressionIR_r_reduced)
+        = $type_of_typedExpressionIR(typedExpressionIR_r_reduced)
     -- if ctk_r_reduced
         = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
     ---- ;; check compatibility with the key type
@@ -331,7 +331,7 @@ rulegroup TableEntry_keyset_simple_ok/mask {
             )
     ---- ;; fetch the type
     -- if typeIR_reduced
-        = $typeIR_of_typedExpressionIR(typedExpressionIR_r_reduced)
+        = $type_of_typedExpressionIR(typedExpressionIR_r_reduced)
     -- if ctk_r_reduced
         = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
     ---- ;; check compatibility with the key type
@@ -359,7 +359,7 @@ rule TableEntry_keyset_simple_ok/range-range:
           )
   ---- ;; fetch the type
   -- if typeIR_reduced
-      = $typeIR_of_typedExpressionIR(typedExpressionIR_r_reduced)
+      = $type_of_typedExpressionIR(typedExpressionIR_r_reduced)
   -- if ctk_r_reduced
       = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
   ---- ;; check compatibility with the key type
@@ -871,7 +871,7 @@ rulegroup TableProperty_ok/custom {
     -- if "size" = $tableCustomName(tableCustomName)
     ---- ;; check initializer
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
-    -- if typeIR = $typeIR_of_typedExpressionIR(typedExpressionIR)
+    -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
     -- if $is_arbitraryIntTypeIR($canon_typeIR(typeIR))
           \/ $is_fixedIntTypeIR($canon_typeIR(typeIR))
           \/ $is_fixedBitTypeIR($canon_typeIR(typeIR))
@@ -887,7 +887,7 @@ rulegroup TableProperty_ok/custom {
     -- if "largest_priority_wins" = $tableCustomName(tableCustomName)
     ---- ;; check initializer
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
-    -- if typeIR = $typeIR_of_typedExpressionIR(typedExpressionIR)
+    -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
     -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR)
     -- if BOOL = $canon_typeIR(typeIR)
     -- Expr_eval_lctk: LOCAL TC |- typedExpressionIR ~> B b_largest_priority_wins
@@ -906,7 +906,7 @@ rulegroup TableProperty_ok/custom {
     -- if "priority_delta" = $tableCustomName(tableCustomName)
     ---- ;; check initializer
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
-    -- if typeIR = $typeIR_of_typedExpressionIR(typedExpressionIR)
+    -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
     -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR)
     -- if $is_arbitraryIntTypeIR($canon_typeIR(typeIR))
           \/ $is_fixedIntTypeIR($canon_typeIR(typeIR))

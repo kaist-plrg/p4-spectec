@@ -277,7 +277,7 @@ def $type_of_externMethodPrototypeIR(
       `( parameterIR* )) `;
   )
   = externMethodTypeDefIR
-  -- if (parameterTypeIR = $parameterTypeIR_of_parameterIR(parameterIR))*
+  -- if (parameterTypeIR = $type_of_parameterIR(parameterIR))*
   -- if externMethodTypeDefIR
       = EXTERN_METHOD `< typeParameterListIR_expl `, typeParameterListIR_impl >
           `( parameterTypeIR* ) `: typeIR_ret
@@ -287,7 +287,7 @@ def $type_of_externMethodPrototypeIR(
       `( parameterIR* )) `;
   )
   = externMethodTypeDefIR
-  -- if (parameterTypeIR = $parameterTypeIR_of_parameterIR(parameterIR))*
+  -- if (parameterTypeIR = $type_of_parameterIR(parameterIR))*
   -- if externMethodTypeDefIR
       = EXTERN_METHOD ABSTRACT
           `< typeParameterListIR_expl `, typeParameterListIR_impl >
@@ -539,7 +539,7 @@ rulegroup Decl_inst/typedefDeclarationIR-typedef {
     -- if typeDefIR
         = $find_typeDef_i(GLOBAL, IC_local, `. tid_newtype)
     -- if $is_monomorphic_typeDefIR(typeDefIR)
-    -- if typeIR = $typeIR_of_typeDefIR(typeDefIR)
+    -- if typeIR = $type_of_typeDefIR(typeDefIR)
     -- if aliasTypeDefIR = TYPEDEF nameIR typeIR
     -- if IC_1 = $add_typeDef_i(GLOBAL, IC_0, nameIR, aliasTypeDefIR)
 
@@ -558,7 +558,7 @@ rulegroup Decl_inst/typedefDeclarationIR-typedef {
     -- if typeDefIR
         = $find_typeDef_i(GLOBAL, IC_local, `. tid_newtype)
     -- if ~$is_monomorphic_typeDefIR(typeDefIR)
-    -- if (eps, eps) = $tparams_of_typeDefIR(typeDefIR)
+    -- if (eps, eps) = $type_parameters_of_typeDefIR(typeDefIR)
     -- if typeIR_spec = typeDefIR `< eps >
     -- if aliasTypeDefIR = TYPEDEF nameIR typeIR_spec
     -- if IC_1 = $add_typeDef_i(GLOBAL, IC_0, nameIR, aliasTypeDefIR)
@@ -586,7 +586,7 @@ rule Decl_inst/parserTypeDeclarationIR:
                        `( parameterIR* ) `;
                  : IC_1 STO eps
   ---- ;; bind parser type to typedef environment
-  -- if (parameterTypeIR = $parameterTypeIR_of_parameterIR(parameterIR))*
+  -- if (parameterTypeIR = $type_of_parameterIR(parameterIR))*
   -- if parserObjectTypeDefIR
       = PARSER `< typeParameterListIR `, typeParameterListIR_inferred >
           `( parameterTypeIR* )
@@ -604,7 +604,7 @@ rule Decl_inst/controlTypeDeclarationIR:
                        `( parameterIR* ) `;
                  : IC_1 STO eps
   ---- ;; bind control type to typedef environment
-  -- if (parameterTypeIR = $parameterTypeIR_of_parameterIR(parameterIR))*
+  -- if (parameterTypeIR = $type_of_parameterIR(parameterIR))*
   -- if controlObjectTypeDefIR
       = CONTROL `< typeParameterListIR `, typeParameterListIR_inferred >
           `( parameterTypeIR* )
@@ -660,7 +660,7 @@ rule Decls_inst/cons-some:
 rule Program_inst:
   |- p4program : IC_1.GLOBAL STO_1
   ---- ;; type check the program
-  -- Program_ok: |- p4program : _ (declarationIR* `;)
+  -- Program_ok: |- p4program : (declarationIR* `;)
   ---- ;; instantiate the declarations
   -- if IC_0 = $empty_instContext
   -- if STO_0 = $empty_store

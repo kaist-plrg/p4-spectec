@@ -2,109 +2,109 @@
 ;; Base type of a type definition
 ;;
 
-dec $typeIR_of_typeDefIR(typeDefIR) : typeIR
+dec $type_of_typeDefIR(typeDefIR) : typeIR
 
 ;;; Name type definitions
 
-def $typeIR_of_typeDefIR(nameTypeDefIR) = nameTypeDefIR
+def $type_of_typeDefIR(nameTypeDefIR) = nameTypeDefIR
 
 ;;; Alias type definitions
 
-def $typeIR_of_typeDefIR(aliasTypeDefIR) = aliasTypeDefIR
+def $type_of_typeDefIR(aliasTypeDefIR) = aliasTypeDefIR
 
 ;;; Data type definitions
 
-def $typeIR_of_typeDefIR(
+def $type_of_typeDefIR(
     STRUCT tid `< _ `, _ > `{ fieldTypeIR* }
   )
   = STRUCT tid `{ fieldTypeIR* }
 
-def $typeIR_of_typeDefIR(
+def $type_of_typeDefIR(
     HEADER tid `< _ `, _ > `{ fieldTypeIR* }
   )
   = HEADER tid `{ fieldTypeIR* }
 
-def $typeIR_of_typeDefIR(
+def $type_of_typeDefIR(
     HEADER_UNION tid `< _ `, _ > `{ fieldTypeIR* }
   )
   = HEADER_UNION tid `{ fieldTypeIR* }
 
-def $typeIR_of_typeDefIR(enumTypeDefIR) = enumTypeDefIR
+def $type_of_typeDefIR(enumTypeDefIR) = enumTypeDefIR
 
 ;;; Object type definitions
 
-def $typeIR_of_typeDefIR(
+def $type_of_typeDefIR(
     EXTERN tid `< _ `, _ > `{ (cid `: externMethodTypeDefIR)* }
   )
   = EXTERN tid `{ (cid `: externMethodTypeDefIR)* }
 
-def $typeIR_of_typeDefIR(PARSER `< _ `, _ > `( parameterTypeIR* ))
+def $type_of_typeDefIR(PARSER `< _ `, _ > `( parameterTypeIR* ))
   = PARSER `( parameterTypeIR* )
 
-def $typeIR_of_typeDefIR(CONTROL `< _ `, _ > `( parameterTypeIR* ))
+def $type_of_typeDefIR(CONTROL `< _ `, _ > `( parameterTypeIR* ))
   = CONTROL `( parameterTypeIR* )
 
-def $typeIR_of_typeDefIR(PACKAGE `< _ `, _ > `{ typeIR* })
+def $type_of_typeDefIR(PACKAGE `< _ `, _ > `{ typeIR* })
   = PACKAGE `{ typeIR* }
 
-def $typeIR_of_typeDefIR(tableObjectTypeDefIR) = tableObjectTypeDefIR
+def $type_of_typeDefIR(tableObjectTypeDefIR) = tableObjectTypeDefIR
 
 ;;
 ;; Type parameters of a type definition
 ;;
 
-dec $tparams_of_typeDefIR(typeDefIR) : (tid* , tid*)
+dec $type_parameters_of_typeDefIR(typeDefIR) : (tid* , tid*)
 
 ;;; Name type definitions
 
-def $tparams_of_typeDefIR(nameTypeDefIR) = (eps, eps)
+def $type_parameters_of_typeDefIR(nameTypeDefIR) = (eps, eps)
 
 ;;; Alias type definitions
 
-def $tparams_of_typeDefIR(aliasTypeDefIR) = (eps, eps)
+def $type_parameters_of_typeDefIR(aliasTypeDefIR) = (eps, eps)
 
 ;;; Data type definitions
 
-def $tparams_of_typeDefIR(
+def $type_parameters_of_typeDefIR(
     STRUCT _ `< tid_expl* `, tid_impl* > `{ _ }
   )
   = (tid_expl* , tid_impl*)
 
-def $tparams_of_typeDefIR(
+def $type_parameters_of_typeDefIR(
     HEADER _ `< tid_expl* `, tid_impl* > `{ _ }
   )
   = (tid_expl* , tid_impl*)
 
-def $tparams_of_typeDefIR(
+def $type_parameters_of_typeDefIR(
     HEADER_UNION _ `< tid_expl* `, tid_impl* > `{ _ }
   )
   = (tid_expl* , tid_impl*)
 
-def $tparams_of_typeDefIR(enumTypeDefIR) = (eps, eps)
+def $type_parameters_of_typeDefIR(enumTypeDefIR) = (eps, eps)
 
 ;;; Object type definitions
 
-def $tparams_of_typeDefIR(
+def $type_parameters_of_typeDefIR(
     EXTERN _ `< tid_expl* `, tid_impl* > `{ _ }
   )
   = (tid_expl* , tid_impl*)
 
-def $tparams_of_typeDefIR(
+def $type_parameters_of_typeDefIR(
     PARSER `< tid_expl* `, tid_impl* > `( _ )
   )
   = (tid_expl* , tid_impl*)
 
-def $tparams_of_typeDefIR(
+def $type_parameters_of_typeDefIR(
     CONTROL `< tid_expl* `, tid_impl* > `( _ )
   )
   = (tid_expl* , tid_impl*)
 
-def $tparams_of_typeDefIR(
+def $type_parameters_of_typeDefIR(
     PACKAGE `< tid_expl* `, tid_impl* > `{ _ }
   )
   = (tid_expl* , tid_impl*)
 
-def $tparams_of_typeDefIR(tableObjectTypeDefIR) = (eps, eps)
+def $type_parameters_of_typeDefIR(tableObjectTypeDefIR) = (eps, eps)
 
 ;;
 ;; Monomorphic or polymorphic type definition

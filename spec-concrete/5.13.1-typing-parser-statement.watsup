@@ -40,7 +40,7 @@ rule SelectCase_keyset_simple_ok/expression-set-alpha:
   TC typeIR_key |- expression : typedExpressionIR
   ---- ;; check keyset expression
   -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
-  -- if typeIR = $typeIR_of_typedExpressionIR(typedExpressionIR)
+  -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
   -- if SET `< typeIR_base > = $canon_typeIR(typeIR)
   ---- ;; if the keyset type equals the key type
   -- Type_alpha: typeIR_base ~~ typeIR_key
@@ -49,7 +49,7 @@ rule SelectCase_keyset_simple_ok/expression-set-subtype:
   TC typeIR_key |- expression : typedExpressionIR_cast
   ---- ;; check keyset expression
   -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
-  -- if typeIR = $typeIR_of_typedExpressionIR(typedExpressionIR)
+  -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
   -- if SET `< typeIR_base > = $canon_typeIR(typeIR)
   ---- ;; if the keyset type is a subtype of the key type
   -- Type_alpha:/ typeIR_base ~~ typeIR_key
@@ -63,7 +63,7 @@ rule SelectCase_keyset_simple_ok/expression-non-set:
   TC typeIR_key |- expression : typedExpressionIR_cast
   ---- ;; check keyset expression
   -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
-  -- if typeIR = $typeIR_of_typedExpressionIR(typedExpressionIR)
+  -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
   ---- ;; if the keyset type is not a set type
   -- if ~$is_setTypeIR($canon_typeIR(typeIR))
   ---- ;; if the keyset type is a subtype of the key type
@@ -104,7 +104,7 @@ rule SelectCase_keyset_simple_ok/mask:
           )
   ---- ;; fetch the type
   -- if typeIR_reduced
-      = $typeIR_of_typedExpressionIR(typedExpressionIR_l_reduced)
+      = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
   ---- ;; cast the expressions to the key type
   -- if typedExpressionIR_l_coerced
       = $coerce_unary(typedExpressionIR_l_reduced, typeIR_key)
@@ -142,9 +142,9 @@ rule SelectCase_keyset_simple_ok/range:
           )
   ---- ;; fetch the types of both sides
   -- if typeIR_reduced
-      = $typeIR_of_typedExpressionIR(typedExpressionIR_l_reduced)
+      = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
   -- if typeIR_reduced
-      = $typeIR_of_typedExpressionIR(typedExpressionIR_r_reduced)
+      = $type_of_typedExpressionIR(typedExpressionIR_r_reduced)
   ---- ;; cast the expressions to the key type
   -- if typedExpressionIR_l_coerced
       = $coerce_unary(typedExpressionIR_l_reduced, typeIR_key)
@@ -317,7 +317,7 @@ rule ParserTransition_ok/select:
   -- if expression_key* = $flatten_expressionList(expressionList_key)
   -- (Expr_ok: LOCAL TC_0 |- expression_key : typedExpressionIR_key)*
   -- if (typeIR_key
-      = $typeIR_of_typedExpressionIR(typedExpressionIR_key))*
+      = $type_of_typedExpressionIR(typedExpressionIR_key))*
   ---- ;; check that the keys form a valid set type
   -- (Type_wf: $bound(LOCAL, TC_0) |- SET `< typeIR_key >)*
   ---- ;; check select cases
@@ -447,7 +447,7 @@ rulegroup ParserStmt_ok/parserConditionalStatement {
     -- Expr_ok: LOCAL TC |- expression_cond : typedExpressionIR_cond
     ---- ;; fetch annotation
     ---- ;; the condition must be a boolean type
-    -- if typeIR_cond = $typeIR_of_typedExpressionIR(typedExpressionIR_cond)
+    -- if typeIR_cond = $type_of_typedExpressionIR(typedExpressionIR_cond)
     -- if BOOL = $canon_typeIR(typeIR_cond)
     ---- ;; check then statement
     -- ParserStmt_ok: TC |- parserStatement_then
@@ -462,7 +462,7 @@ rulegroup ParserStmt_ok/parserConditionalStatement {
     -- Expr_ok: LOCAL TC |- expression_cond : typedExpressionIR_cond
     ---- ;; fetch annotation
     ---- ;; the condition must be a boolean type
-    -- if typeIR_cond = $typeIR_of_typedExpressionIR(typedExpressionIR_cond)
+    -- if typeIR_cond = $type_of_typedExpressionIR(typedExpressionIR_cond)
     -- if BOOL = $canon_typeIR(typeIR_cond)
     ---- ;; check then and else statements
     -- ParserStmt_ok: TC |- parserStatement_then
