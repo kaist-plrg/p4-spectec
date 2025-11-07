@@ -41,18 +41,18 @@ let option_get instrs =
     2) the rewritten expression *)
 
 let replace_call_exp (ids_used : IdSet.t) exp : (instr * exp) option =
+  (* Transformer takes a CallE and rewrites it to exp_new, while initializing accumulated data *)
   let transformer exp =
     match exp.it with
     | CallE (_funcprose, _targs, args) ->
-        let exp_new, id_added =
+        let exp_new, var_new =
           Transform.fresh_exp_from_typ ids_used (exp.note $ exp.at)
         in
-        let var = (id_added, exp.note $ exp.at, []) in
         let iter_state : iter_state =
           {
             vars_inner = Free.Vars.free_args args;
             vars_outer = Free.VarSet.empty;
-            var_new = var;
+            var_new;
             iterexps = [];
             exp_orig = exp;
           }
@@ -60,14 +60,17 @@ let replace_call_exp (ids_used : IdSet.t) exp : (instr * exp) option =
         Some (exp_new, iter_state)
     | _ -> None
   in
-  (* rewrite CallE to VarE, and collect enclosing iterexps *)
+  (* Builds the new assignment instruction with the returned state *)
   match Transform.transform_first_with_iters transformer exp with
-  | Some (exp, iter_state) ->
+  | Some (exp_new, iter_state) ->
       let { var_new; iterexps; exp_orig; _ } = iter_state in
       let id, typ, iters = var_new in
-      let exp_var = VarE id $$ (typ.at, typ.it) in
-      let instr_let = LetI (exp_var, exp_orig) $ no_region in
-      let iter_combined = List.combine iters iterexps in
+      let instr_let = LetI (exp_new, exp_orig) $ no_region in
+      (* drops the original iterators in exp_new *)
+      let iters_enclosing =
+        List.drop (List.length iterexps - List.length iters) iters
+      in
+      let iter_combined = List.combine iters_enclosing iterexps in
       let instr_iterated, _ =
         List.fold_left
           (fun (instr, var_new) (iter_new, iterexp) ->

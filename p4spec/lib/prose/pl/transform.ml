@@ -439,10 +439,11 @@ let rec search_exp (cond : exp -> bool) (exp : exp) : bool =
 and search_arg (cond : exp -> bool) (arg : arg) : bool =
   match arg.it with ExpA e -> search_exp cond e | DefA _ -> false
 
-let fresh_exp_from_typ (ids : IdSet.t) (typ : Il.Ast.typ) : Ast.exp * Id.t =
+let fresh_exp_from_typ (ids : IdSet.t) (typ : Il.Ast.typ) : exp * itervar =
   let id_base, typ_base, iters =
     Elaborate.Fresh.fresh_var_from_typ ids typ.at typ
   in
+  let var_new = (id_base, typ_base, iters) in
   (* let ids = IdSet.add id_base ids in *)
   let exp_base = Ast.VarE id_base $$ (typ_base.at, typ_base.it) in
   let exp_match, _ =
@@ -455,4 +456,4 @@ let fresh_exp_from_typ (ids : IdSet.t) (typ : Il.Ast.typ) : Ast.exp * Id.t =
         (exp_match, iters @ [ iter ]))
       (exp_base, []) iters
   in
-  (exp_match, id_base)
+  (exp_match, var_new)
