@@ -51,20 +51,22 @@ let transform_list (f_transform_opt : 'a -> ('a * iter_state) option)
   Some (nodes_changed, iter_state)
 
 let transform_first_with_iters
-    (f_transform_opt : exp -> (exp * iter_state) option) (e : exp) :
+    (f_transform_opt : 'acc -> exp -> (exp * iter_state) option)
+    (f_update_acc : 'acc -> exp -> 'acc) (acc : 'acc) (e : exp) :
     (exp * iter_state) option =
-  let rec transform_exp (e : exp) : (exp * iter_state) option =
-    let try_root () = f_transform_opt e in
+  let rec transform_exp acc (e : exp) : (exp * iter_state) option =
+    let acc = f_update_acc acc e in
+    let try_root () = f_transform_opt acc e in
     let try_children () =
       let { it; at; note } = e in
       match it with
       | BoolE _ | NumE _ | TextE _ | VarE _ -> None
       | UnE (unop, optyp, exp_inner) ->
-          let* exp_inner', iter_state = transform_exp exp_inner in
+          let* exp_inner', iter_state = transform_exp acc exp_inner in
           Some (UnE (unop, optyp, exp_inner') $$ (at, note), iter_state)
       | BinE (binop, optyp, exp_l, exp_r) ->
           let try_left () =
-            let* exp_l', iter_state = transform_exp exp_l in
+            let* exp_l', iter_state = transform_exp acc exp_l in
             let vars_r = Free.Vars.free_exp exp_r in
             let iter_state =
               { iter_state with vars_outer = iter_state.vars_outer + vars_r }
@@ -72,7 +74,7 @@ let transform_first_with_iters
             Some (BinE (binop, optyp, exp_l', exp_r) $$ (at, note), iter_state)
           in
           let try_right () =
-            let* exp_r', iter_state = transform_exp exp_r in
+            let* exp_r', iter_state = transform_exp acc exp_r in
             let vars_l = Free.Vars.free_exp exp_l in
             let iter_state =
               { iter_state with vars_outer = iter_state.vars_outer + vars_l }
@@ -82,7 +84,7 @@ let transform_first_with_iters
           choice [ try_left; try_right ]
       | CmpE (cmpop, optyp, exp_l, exp_r) ->
           let try_left () =
-            let* exp_l', iter_state = transform_exp exp_l in
+            let* exp_l', iter_state = transform_exp acc exp_l in
             let vars_r = Free.Vars.free_exp exp_r in
             let iter_state =
               { iter_state with vars_outer = iter_state.vars_outer + vars_r }
@@ -90,7 +92,7 @@ let transform_first_with_iters
             Some (CmpE (cmpop, optyp, exp_l', exp_r) $$ (at, note), iter_state)
           in
           let try_right () =
-            let* exp_r', iter_state = transform_exp exp_r in
+            let* exp_r', iter_state = transform_exp acc exp_r in
             let vars_l = Free.Vars.free_exp exp_l in
             let iter_state =
               { iter_state with vars_outer = iter_state.vars_outer + vars_l }
@@ -99,37 +101,37 @@ let transform_first_with_iters
           in
           choice [ try_left; try_right ]
       | UpCastE (typ, exp_inner) ->
-          let* exp_inner', iter_state = transform_exp exp_inner in
+          let* exp_inner', iter_state = transform_exp acc exp_inner in
           Some (UpCastE (typ, exp_inner') $$ (at, note), iter_state)
       | DownCastE (typ, exp_inner) ->
-          let* exp_inner', iter_state = transform_exp exp_inner in
+          let* exp_inner', iter_state = transform_exp acc exp_inner in
           Some (DownCastE (typ, exp_inner') $$ (at, note), iter_state)
       | SubE (exp_inner, typ) ->
-          let* exp_inner', iter_state = transform_exp exp_inner in
+          let* exp_inner', iter_state = transform_exp acc exp_inner in
           Some (SubE (exp_inner', typ) $$ (at, note), iter_state)
       | MatchE (exp_inner, pattern) ->
-          let* exp_inner', iter_state = transform_exp exp_inner in
+          let* exp_inner', iter_state = transform_exp acc exp_inner in
           Some (MatchE (exp_inner', pattern) $$ (at, note), iter_state)
       | TupleE exps ->
-          let* exps', iter_state = transform_exps exps in
+          let* exps', iter_state = transform_exps acc exps in
           Some (TupleE exps' $$ (at, note), iter_state)
       | CaseE (id, mixop, exps, hint) ->
-          let* exps', iter_state = transform_exps exps in
+          let* exps', iter_state = transform_exps acc exps in
           Some (CaseE (id, mixop, exps', hint) $$ (at, note), iter_state)
       | StrE fields ->
           let atoms, values = List.split fields in
-          let* values', iter_state = transform_exps values in
+          let* values', iter_state = transform_exps acc values in
           Some (StrE (List.combine atoms values') $$ (at, note), iter_state)
       | OptE (Some exp_inner) ->
-          let* exp_inner', iter_state = transform_exp exp_inner in
+          let* exp_inner', iter_state = transform_exp acc exp_inner in
           Some (OptE (Some exp_inner') $$ (at, note), iter_state)
       | OptE None -> None
       | ListE exps ->
-          let* exps', iter_state = transform_exps exps in
+          let* exps', iter_state = transform_exps acc exps in
           Some (ListE exps' $$ (at, note), iter_state)
       | ConsE (exp_h, exp_t) ->
           let try_head () =
-            let* exp_h', iter_state = transform_exp exp_h in
+            let* exp_h', iter_state = transform_exp acc exp_h in
             let vars_t = Free.Vars.free_exp exp_t in
             let iter_state =
               { iter_state with vars_outer = iter_state.vars_outer + vars_t }
@@ -137,7 +139,7 @@ let transform_first_with_iters
             Some (ConsE (exp_h', exp_t) $$ (at, note), iter_state)
           in
           let try_tail () =
-            let* exp_t', iter_state = transform_exp exp_t in
+            let* exp_t', iter_state = transform_exp acc exp_t in
             let vars_h = Free.Vars.free_exp exp_h in
             let iter_state =
               { iter_state with vars_outer = iter_state.vars_outer + vars_h }
@@ -147,7 +149,7 @@ let transform_first_with_iters
           choice [ try_head; try_tail ]
       | CatE (exp_l, exp_r) ->
           let try_left () =
-            let* exp_l', iter_state = transform_exp exp_l in
+            let* exp_l', iter_state = transform_exp acc exp_l in
             let vars_r = Free.Vars.free_exp exp_r in
             let iter_state =
               { iter_state with vars_outer = iter_state.vars_outer + vars_r }
@@ -155,7 +157,7 @@ let transform_first_with_iters
             Some (CatE (exp_l', exp_r) $$ (at, note), iter_state)
           in
           let try_right () =
-            let* exp_r', iter_state = transform_exp exp_r in
+            let* exp_r', iter_state = transform_exp acc exp_r in
             let vars_l = Free.Vars.free_exp exp_l in
             let iter_state =
               { iter_state with vars_outer = iter_state.vars_outer + vars_l }
@@ -165,7 +167,7 @@ let transform_first_with_iters
           choice [ try_left; try_right ]
       | MemE (exp_l, exp_r) ->
           let try_left () =
-            let* exp_l', iter_state = transform_exp exp_l in
+            let* exp_l', iter_state = transform_exp acc exp_l in
             let vars_r = Free.Vars.free_exp exp_r in
             let iter_state =
               { iter_state with vars_outer = iter_state.vars_outer + vars_r }
@@ -173,7 +175,7 @@ let transform_first_with_iters
             Some (MemE (exp_l', exp_r) $$ (at, note), iter_state)
           in
           let try_right () =
-            let* exp_r', iter_state = transform_exp exp_r in
+            let* exp_r', iter_state = transform_exp acc exp_r in
             let vars_l = Free.Vars.free_exp exp_l in
             let iter_state =
               { iter_state with vars_outer = iter_state.vars_outer + vars_l }
@@ -182,14 +184,14 @@ let transform_first_with_iters
           in
           choice [ try_left; try_right ]
       | LenE exp_inner ->
-          let* exp_inner', iter_state = transform_exp exp_inner in
+          let* exp_inner', iter_state = transform_exp acc exp_inner in
           Some (LenE exp_inner' $$ (at, note), iter_state)
       | DotE (exp_inner, atom) ->
-          let* exp_inner', iter_state = transform_exp exp_inner in
+          let* exp_inner', iter_state = transform_exp acc exp_inner in
           Some (DotE (exp_inner', atom) $$ (at, note), iter_state)
       | IdxE (exp_b, exp_i) ->
           let try_base () =
-            let* exp_b', iter_state = transform_exp exp_b in
+            let* exp_b', iter_state = transform_exp acc exp_b in
             let vars_i = Free.Vars.free_exp exp_i in
             let iter_state =
               { iter_state with vars_outer = iter_state.vars_outer + vars_i }
@@ -197,7 +199,7 @@ let transform_first_with_iters
             Some (IdxE (exp_b', exp_i) $$ (at, note), iter_state)
           in
           let try_index () =
-            let* exp_i', iter_state = transform_exp exp_i in
+            let* exp_i', iter_state = transform_exp acc exp_i in
             let vars_b = Free.Vars.free_exp exp_b in
             let iter_state =
               { iter_state with vars_outer = iter_state.vars_outer + vars_b }
@@ -207,7 +209,7 @@ let transform_first_with_iters
           choice [ try_base; try_index ]
       | SliceE (exp_b, exp_l, exp_h) ->
           let try_base () =
-            let* exp_b', iter_state = transform_exp exp_b in
+            let* exp_b', iter_state = transform_exp acc exp_b in
             let vars_l = Free.Vars.free_exp exp_l in
             let vars_h = Free.Vars.free_exp exp_h in
             let iter_state =
@@ -219,7 +221,7 @@ let transform_first_with_iters
             Some (SliceE (exp_b', exp_l, exp_h) $$ (at, note), iter_state)
           in
           let try_low () =
-            let* exp_l', iter_state = transform_exp exp_l in
+            let* exp_l', iter_state = transform_exp acc exp_l in
             let vars_b = Free.Vars.free_exp exp_b in
             let vars_h = Free.Vars.free_exp exp_h in
             let iter_state =
@@ -231,7 +233,7 @@ let transform_first_with_iters
             Some (SliceE (exp_b, exp_l', exp_h) $$ (at, note), iter_state)
           in
           let try_high () =
-            let* exp_h', iter_state = transform_exp exp_h in
+            let* exp_h', iter_state = transform_exp acc exp_h in
             let vars_b = Free.Vars.free_exp exp_b in
             let vars_l = Free.Vars.free_exp exp_l in
             let iter_state =
@@ -245,7 +247,7 @@ let transform_first_with_iters
           choice [ try_base; try_low; try_high ]
       | UpdE (exp_b, path, exp_f) ->
           let try_base () =
-            let* exp_b', iter_state = transform_exp exp_b in
+            let* exp_b', iter_state = transform_exp acc exp_b in
             let vars_path = Free.Vars.free_path path in
             let vars_f = Free.Vars.free_exp exp_f in
             let iter_state =
@@ -257,7 +259,7 @@ let transform_first_with_iters
             Some (UpdE (exp_b', path, exp_f) $$ (at, note), iter_state)
           in
           let try_path () =
-            let* path', iter_state = transform_path path in
+            let* path', iter_state = transform_path acc path in
             let vars_b = Free.Vars.free_exp exp_b in
             let vars_f = Free.Vars.free_exp exp_f in
             let iter_state =
@@ -269,7 +271,7 @@ let transform_first_with_iters
             Some (UpdE (exp_b, path', exp_f) $$ (at, note), iter_state)
           in
           let try_field () =
-            let* exp_f', iter_state = transform_exp exp_f in
+            let* exp_f', iter_state = transform_exp acc exp_f in
             let vars_b = Free.Vars.free_exp exp_b in
             let vars_path = Free.Vars.free_path path in
             let iter_state =
@@ -282,10 +284,10 @@ let transform_first_with_iters
           in
           choice [ try_base; try_path; try_field ]
       | CallE (funcprose, targs, args) ->
-          let* args_new, iter_state = transform_args args in
+          let* args_new, iter_state = transform_args acc args in
           Some (CallE (funcprose, targs, args_new) $$ (at, note), iter_state)
       | IterE (exp_inner, (iter, itervars)) ->
-          let* exp_inner', iter_state = transform_exp exp_inner in
+          let* exp_inner', iter_state = transform_exp acc exp_inner in
           let { vars_inner; vars_outer; var_new; iterexps; _ } = iter_state in
           (* main algorithm : compare / replace / increment iterations *)
           let vars_inner, var_new, iterexps, itervars =
@@ -334,24 +336,24 @@ let transform_first_with_iters
           Some (IterE (exp_inner', (iter, itervars)) $$ (at, note), iter_state)
     in
     choice [ try_root; try_children ]
-  and transform_exps (exps : exp list) : (exp list * iter_state) option =
-    transform_list transform_exp Free.Vars.free_exp exps
-  and transform_arg (arg : arg) : (arg * iter_state) option =
+  and transform_exps acc (exps : exp list) : (exp list * iter_state) option =
+    transform_list (transform_exp acc) Free.Vars.free_exp exps
+  and transform_arg acc (arg : arg) : (arg * iter_state) option =
     let { it; at; _ } = arg in
     match it with
     | ExpA exp_inner ->
-        let* exp_inner', iter_state = transform_exp exp_inner in
+        let* exp_inner', iter_state = transform_exp acc exp_inner in
         Some (ExpA exp_inner' $ at, iter_state)
     | DefA _ -> None
-  and transform_args (args : arg list) : (arg list * iter_state) option =
-    transform_list transform_arg Free.Vars.free_arg args
-  and transform_path (path : path) : (path * iter_state) option =
+  and transform_args acc (args : arg list) : (arg list * iter_state) option =
+    transform_list (transform_arg acc) Free.Vars.free_arg args
+  and transform_path acc (path : path) : (path * iter_state) option =
     let { it; at; note } = path in
     match it with
     | RootP -> None
     | IdxP (path_b, exp_i) ->
         let try_base () =
-          let* path_b', iter_state = transform_path path_b in
+          let* path_b', iter_state = transform_path acc path_b in
           let vars_i = Free.Vars.free_exp exp_i in
           let iter_state =
             { iter_state with vars_outer = iter_state.vars_outer + vars_i }
@@ -359,7 +361,7 @@ let transform_first_with_iters
           Some (IdxP (path_b', exp_i) $$ (at, note), iter_state)
         in
         let try_index () =
-          let* exp_i', iter_state = transform_exp exp_i in
+          let* exp_i', iter_state = transform_exp acc exp_i in
           let vars_b = Free.Vars.free_path path_b in
           let iter_state =
             { iter_state with vars_outer = iter_state.vars_outer + vars_b }
@@ -369,7 +371,7 @@ let transform_first_with_iters
         choice [ try_base; try_index ]
     | SliceP (path_b, exp_l, exp_h) ->
         let try_base () =
-          let* path_b', iter_state = transform_path path_b in
+          let* path_b', iter_state = transform_path acc path_b in
           let vars_l = Free.Vars.free_exp exp_l in
           let vars_h = Free.Vars.free_exp exp_h in
           let iter_state =
@@ -381,7 +383,7 @@ let transform_first_with_iters
           Some (SliceP (path_b', exp_l, exp_h) $$ (at, note), iter_state)
         in
         let try_low () =
-          let* exp_l', iter_state = transform_exp exp_l in
+          let* exp_l', iter_state = transform_exp acc exp_l in
           let vars_b = Free.Vars.free_path path_b in
           let vars_h = Free.Vars.free_exp exp_h in
           let iter_state =
@@ -393,7 +395,7 @@ let transform_first_with_iters
           Some (SliceP (path_b, exp_l', exp_h) $$ (at, note), iter_state)
         in
         let try_high () =
-          let* exp_h', iter_state = transform_exp exp_h in
+          let* exp_h', iter_state = transform_exp acc exp_h in
           let vars_b = Free.Vars.free_path path_b in
           let vars_l = Free.Vars.free_exp exp_l in
           let iter_state =
@@ -406,10 +408,10 @@ let transform_first_with_iters
         in
         choice [ try_base; try_low; try_high ]
     | DotP (path_b, atom) ->
-        let* path_b', iter_state = transform_path path_b in
+        let* path_b', iter_state = transform_path acc path_b in
         Some (DotP (path_b', atom) $$ (at, note), iter_state)
   in
-  transform_exp e
+  transform_exp acc e
 
 let rec search_exp (cond : exp -> bool) (exp : exp) : bool =
   if cond exp then true
