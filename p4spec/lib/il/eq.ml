@@ -94,6 +94,7 @@ and eq_value ?(dbg = false) (value_a : value) (value_b : value) : bool =
     | OptV None, OptV None -> true
     | ListV values_a, ListV values_b -> eq_values ~dbg values_a values_b
     | FuncV id_a, FuncV id_b -> id_a = id_b
+    | ExternV json_a, ExternV json_b -> Yojson.Safe.equal json_a json_b
     | _ -> false
   in
   if dbg && not eq then

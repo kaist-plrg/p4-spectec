@@ -193,7 +193,7 @@ let rec shuffle_list' (value : value) : value =
   | ListV values ->
       let values_shuffled = Rand.shuffle values in
       ListV values_shuffled |> wrap_value typ
-  | FuncV _ -> value.it |> wrap_value typ
+  | FuncV _ | ExternV _ -> value.it |> wrap_value typ
 
 let shuffle_list (value : value) : value option =
   let value_shuffled = shuffle_list' value in
@@ -224,7 +224,7 @@ let rec duplicate_list' (value : value) : value =
           let values = value :: values in
           ListV values |> wrap_value typ
       | None -> value.it |> wrap_value typ)
-  | FuncV _ -> value.it |> wrap_value typ
+  | FuncV _ | ExternV _ -> value.it |> wrap_value typ
 
 let duplicate_list (value : value) : value option =
   let value_duplicated = duplicate_list' value in
@@ -254,7 +254,7 @@ let rec shrink_list' (value : value) : value =
       let size = Random.int (List.length values) in
       let values = Rand.random_sample size values in
       ListV values |> wrap_value typ
-  | FuncV _ -> value.it |> wrap_value typ
+  | FuncV _ | ExternV _ -> value.it |> wrap_value typ
 
 let shrink_list (value : value) : value option =
   let value_shrinked = shrink_list' value in
@@ -310,7 +310,7 @@ let mutate_walk (tdenv : TDEnv.t) (mixopenv : MixopEnv.t) (texts : value' list)
       key_max := key;
       path_best := List.rev path);
     match value.it with
-    | BoolV _ | NumV _ | TextV _ | OptV _ | FuncV _ -> ()
+    | BoolV _ | NumV _ | TextV _ | OptV _ | FuncV _ | ExternV _ -> ()
     | StructV valuefields ->
         List.iteri
           (fun idx (_, value) -> traverse (idx :: path) value (depth + 1))
@@ -333,7 +333,7 @@ let mutate_walk (tdenv : TDEnv.t) (mixopenv : MixopEnv.t) (texts : value' list)
         value |> Option.some
     | idx :: path, value -> (
         match value.it with
-        | BoolV _ | NumV _ | TextV _ | OptV _ | FuncV _ ->
+        | BoolV _ | NumV _ | TextV _ | OptV _ | FuncV _ | ExternV _ ->
             value.it |> wrap_value typ |> Option.some
         | StructV valuefields ->
             let atoms, values = List.split valuefields in

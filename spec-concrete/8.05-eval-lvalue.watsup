@@ -112,6 +112,17 @@ rule Lvalue_write/referenceExpressionIR:
 
 rulegroup Lvalue_write/storageReference-nameIR {
 
+  rule Lvalue_write/stack:
+    p EC_0 STO |- (storageReference `. "next") -> value : EC_1
+    ---- ;; read base value
+    -- Lvalue_read:
+        p EC_0 STO |- storageReference : value_base
+    -- if HEADER_STACK `[ value_element* `( n_idx; n_size ) ] = value_base
+    -- if value_element_update* = value_element* [ [n_idx] = value ]
+    -- if value_base_update = HEADER_STACK `[ value_element_update* `( $(n_idx + 1); n_size ) ]
+    -- Lvalue_write:
+        p EC_0 STO |- storageReference -> value_base_update : EC_1
+
   rule Lvalue_write/struct:
     p EC_0 STO |- (storageReference `. nameIR) -> value : EC_1
     ---- ;; read base value

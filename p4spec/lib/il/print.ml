@@ -132,6 +132,7 @@ and string_of_value ?(short = false) ?(level = 0) value =
               values))
         (indent level)
   | FuncV id -> string_of_defid id
+  | ExternV _ -> "extern"
 
 and string_of_notval ?(level = 0) notval =
   let mixop, values = notval in
