@@ -45,7 +45,7 @@ rulegroup Callee_eval/typedExpressionIR-nameIR-extern-method {
     -- Lvalue_read:
         p EC_1 STO_1 |- storageReference : (`! oid)
     ---- ;; if the value is an object reference to an extern
-    -- if EXTERN _ `< _ > `{ _ externMethodDefEnv } 
+    -- if EXTERN _ `< _ > `{ _ frame externMethodDefEnv } 
         = $find_map<oid, object>(STO_1, oid)
     ---- ;; find the method being called
     -- if (id_arg?)* = $ids_arguments(argumentListIR)
@@ -59,7 +59,8 @@ rulegroup Callee_eval/typedExpressionIR-nameIR-extern-method {
         = externMethodDef
     -- if externMethodCallee
         = EXTERN_METHOD oid `. nameIR `< typeParameterListIR >
-            `( parameterListIR `# id_default* ) blockStatementIR?
+            `( parameterListIR `# id_default* )
+            `{ frame `; blockStatementIR? }
 
 }
 
