@@ -446,6 +446,10 @@ let prosify_def (ctx : Ctx.t) (def : def) : Pl.Ast.def option =
       Some (Pl.Ast.ExternRelD (id, exps) $ def.at)
   | RelD (id, _, exps, instrs, _) ->
       let ctx = ctx |> in_rel id in
+      let free_ids =
+        IdSet.union (Sl.Free.free_exps exps) (Sl.Free.free_instrs instrs)
+      in
+      let ctx = ctx |> Ctx.with_free free_ids in
       let instrs = prosify_instrs ctx instrs in
       let exps = prosify_exps ctx exps in
       Some (Pl.Ast.RelD (id, exps, instrs) $ def.at)
