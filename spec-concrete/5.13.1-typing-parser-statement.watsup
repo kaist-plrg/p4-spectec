@@ -113,17 +113,6 @@ rule SelectCase_keyset_simple_ok/mask:
 
 ;;;;;; expression `.. expression
 
-dec $compat_range(typeIR, typeIR) : bool
-dec $compat'_range(typeIR, typeIR) : bool
-
-def $compat_range(typeIR_l, typeIR_r)
-  = $compat'_range($canon_typeIR(typeIR_l), $canon_typeIR(typeIR_r))
-def $compat'_range(INT, INT) = true
-def $compat'_range(INT `< w >, INT `< w >) = true
-def $compat'_range(BIT `< w >, BIT `< w >) = true
-def $compat'_range(typeIR_l, typeIR_r) = false
-  -- otherwise
-
 rule SelectCase_keyset_simple_ok/range:
   TC typeIR_key |- expression_l `.. expression_r
                 : typedExpressionIR_l_coerced `.. typedExpressionIR_r_coerced
