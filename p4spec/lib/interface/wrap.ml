@@ -137,6 +137,9 @@ let wrap_list_v (s : string) (vs : value list) : value =
 let wrap_list_v_typed (t : typ') (vs : value list) : value =
   ListV vs |> with_typ (wrap_iter_t List t)
 
+let wrap_extern_v (s : string) (json : Yojson.Safe.t) : value =
+  ExternV json |> with_typ (wrap_var_t s)
+
 let ( #@ ) (vs : symbol list) (s : string) : value =
   vs |> wrap_case_v |> with_typ (wrap_var_t s)
 

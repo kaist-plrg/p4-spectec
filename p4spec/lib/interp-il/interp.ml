@@ -24,18 +24,6 @@ let func_cache = ref (Cache.Cache.create ~size:10000)
 let rule_cache = ref (Cache.Cache.create ~size:10000)
 
 module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
-  (* Architecture transactions *)
-
-  let checkpoint () = Arch.checkpoint ()
-
-  let restore_on_fail attempt =
-    (match attempt with Fail _ -> Arch.restore () | _ -> ());
-    attempt
-
-  let commit_or_rollback attempt =
-    (match attempt with Ok _ -> Arch.commit () | Fail _ -> Arch.rollback ());
-    attempt
-
   (* Assignments *)
 
   (* Assigning a value to an expression *)
@@ -1038,15 +1026,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
                         |> nest id.at
                              (F.asprintf "application of rule %s/%s/%s failed"
                                 id.it id_rulegroup.it id_rulepath.it)
-                        |> restore_on_fail
                       in
                       attempt_rulepath))
       in
       choice attempt_rules
-    in
-    let do_attempt_rules () =
-      checkpoint ();
-      attempt_rules () |> commit_or_rollback
     in
     if Cache.is_cached_rule id.it then (
       let cache_result = Cache.Cache.find !rule_cache (id.it, values_input) in
@@ -1055,12 +1038,12 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
           let ctx = Ctx.trace_replace ctx subtraces in
           Ok (ctx, values_output)
       | None ->
-          let* ctx, values_output = do_attempt_rules () in
+          let* ctx, values_output = attempt_rules () in
           let subtraces = Trace.wipe_subtraces ctx.trace in
           Cache.Cache.add !rule_cache (id.it, values_input)
             (subtraces, values_output);
           Ok (ctx, values_output))
-    else do_attempt_rules ()
+    else attempt_rules ()
 
   (* Invoke a function *)
 
@@ -1111,9 +1094,18 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     let func = Ctx.find_func Local ctx id in
     (* Invoke the function *)
     match func with
+    | Func.Extern -> invoke_extern_func ctx id targs values_input
     | Func.Builtin -> invoke_builtin_func ctx id targs values_input
     | Func.Defined (tparams, clauses) ->
         invoke_defined_func ctx id tparams clauses targs values_input
+
+  and invoke_extern_func (ctx : Ctx.t) (id : id) (_targs : targ list)
+      (values_input : value list) : (Ctx.t * value) attempt =
+    match id.it with
+    | "init_externState" ->
+        let value_output = Arch.eval_extern_init values_input in
+        Ok (ctx, value_output)
+    | _ -> fail id.at (F.asprintf "unimplemented extern function %s" id.it)
 
   and invoke_builtin_func (ctx : Ctx.t) (id : id) (targs : targ list)
       (values_input : value list) : (Ctx.t * value) attempt =
@@ -1184,16 +1176,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
               |> nest id.at
                    (F.asprintf "application of clause %s%s failed" id.it
                       (Il.Print.string_of_args args_input))
-              |> restore_on_fail
             in
             attempt_clause)
           clauses
       in
       choice attempt_clauses'
-    in
-    let do_attempt_clauses () =
-      checkpoint ();
-      attempt_clauses () |> commit_or_rollback
     in
     if Cache.is_cached_func id.it then (
       let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
@@ -1202,12 +1189,12 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
           let ctx = Ctx.trace_replace ctx subtraces in
           Ok (ctx, value_output)
       | None ->
-          let* ctx, value_output = do_attempt_clauses () in
+          let* ctx, value_output = attempt_clauses () in
           let subtraces = Trace.wipe_subtraces ctx.trace in
           Cache.Cache.add !func_cache (id.it, values_input)
             (subtraces, value_output);
           Ok (ctx, value_output))
-    else do_attempt_clauses ()
+    else attempt_clauses ()
 
   (* Load definitions into the context *)
 
@@ -1225,6 +1212,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     | RelD (id, _, inputs, rulegroups, _) ->
         let rel = Rel.Defined (inputs, rulegroups) in
         Ctx.add_rel Global ctx id rel
+    | ExternDecD (id, _, _, _, _) ->
+        let func = Func.Extern in
+        Ctx.add_func Global ctx id func
     | BuiltinDecD (id, _, _, _, _) ->
         let func = Func.Builtin in
         Ctx.add_func Global ctx id func

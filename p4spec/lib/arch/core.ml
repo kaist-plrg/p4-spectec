@@ -1,10 +1,18 @@
 module Value = Runtime_dynamic.Value
 open Interface.Wrap
 open Interface.Unwrap
+open Error
 
 (* Bit manipulation *)
 
 type bits = bool Array.t
+
+let bits_to_yojson = Util.Json.array_to_yojson (fun b -> `Bool b)
+
+let bits_of_yojson =
+  Util.Json.array_of_yojson (function
+    | `Bool b -> Ok b
+    | _ -> Error "expected boolean")
 
 let string_to_bits str =
   let char_to_bits c =
@@ -48,9 +56,9 @@ let bits_to_string bits =
 (* Input packet *)
 
 module PacketIn = struct
-  (* Type and initializer *)
+  (* Type *)
 
-  type t = { bits : bits; idx : int; len : int }
+  type t = { bits : bits; idx : int; len : int } [@@deriving yojson]
 
   let pp fmt (pkt : t) = Format.fprintf fmt "%s" (bits_to_string pkt.bits)
 
@@ -58,11 +66,20 @@ module PacketIn = struct
     let bits = Array.sub pkt.bits pkt.idx (pkt.len - pkt.idx) in
     Format.fprintf fmt "%s" (bits_to_string bits)
 
+  (* Initializer *)
+
   let init (pkt : string) =
     let bits = string_to_bits pkt in
     { bits; idx = 0; len = Array.length bits }
 
-  (* Size *)
+  (* Serializer and deserializer *)
+
+  let serialize (pkt : t) : Yojson.Safe.t = to_yojson pkt
+
+  let deserialize (json : Yojson.Safe.t) : t =
+    match of_yojson json with
+    | Ok pkt -> pkt
+    | Error msg -> error_no_region ("error deserializing packet_in: " ^ msg)
 
   (* Parser *)
 
@@ -152,9 +169,14 @@ end
 (* Output packet *)
 
 module PacketOut = struct
-  type t = { bits : bits }
+  (* Type *)
+
+  type t = { bits : bits } [@@deriving yojson]
 
   let pp fmt pkt = Format.fprintf fmt "%s" (bits_to_string pkt.bits)
+
+  (* Initializer *)
+
   let init () = { bits = Array.make 0 false }
 
   (* Write @hdr into the output packet, advancing cursor.

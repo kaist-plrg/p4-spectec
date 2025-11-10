@@ -267,6 +267,7 @@ let render_def def =
   | RelD (id_rel, nottyp, hints) -> render_relation_def id_rel nottyp hints
   | RuleGroupD (id_rel, id_rulegroup, rules) ->
       render_rulegroup_def id_rel id_rulegroup rules
+  | ExternDecD _ -> ""
   | BuiltinDecD _ -> ""
   | DecD _ -> ""
   | DefD _ -> ""

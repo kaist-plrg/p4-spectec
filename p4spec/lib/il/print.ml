@@ -433,6 +433,9 @@ let rec string_of_def def =
       "relation " ^ string_of_relid relid ^ ": " ^ string_of_nottyp nottyp
       ^ "\n\n"
       ^ string_of_rulegroups nottyp inputs rulegroups
+  | ExternDecD (defid, tparams, params, typ, _) ->
+      "extern def " ^ string_of_defid defid ^ string_of_tparams tparams
+      ^ string_of_params params ^ " : " ^ string_of_typ typ
   | BuiltinDecD (defid, tparams, params, typ, _) ->
       "builtin def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : " ^ string_of_typ typ

@@ -213,6 +213,8 @@ and def' =
   | ExternRelD of id * nottyp * int list * hint list
   (* `relation` id `:` nottyp `hint(input` `%`int* `)` rulegroup* hint* *)
   | RelD of id * nottyp * int list * rulegroup list * hint list
+  (* `extern` `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ hint* *)
+  | ExternDecD of id * tparam list * param list * typ * hint list
   (* `builtin` `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ hint* *)
   | BuiltinDecD of id * tparam list * param list * typ * hint list
   (* `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ clause* hint* *)

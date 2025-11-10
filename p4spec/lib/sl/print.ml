@@ -372,6 +372,10 @@ and string_of_rel ?(verbose = false) rel =
 
 (* Functions *)
 
+let string_of_extern_func externfunc =
+  let defid, tparams, args_input, _typ, _hints = externfunc in
+  string_of_defid defid ^ string_of_tparams tparams ^ string_of_args args_input
+
 let string_of_builtin_func builtinfunc =
   let defid, tparams, args_input, _typ, _hints = builtinfunc in
   string_of_defid defid ^ string_of_tparams tparams ^ string_of_args args_input
@@ -394,6 +398,7 @@ let rec string_of_def ?(verbose = false) def =
       ^ string_of_deftyp deftyp
   | ExternRelD rel -> "extern relation " ^ string_of_extern_rel rel
   | RelD rel -> "relation " ^ string_of_rel ~verbose rel
+  | ExternDecD externfunc -> "extern def " ^ string_of_extern_func externfunc
   | BuiltinDecD builtinfunc ->
       "builtin def " ^ string_of_builtin_func builtinfunc
   | DecD func -> "def " ^ string_of_func ~verbose func

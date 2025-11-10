@@ -23845,37 +23845,37 @@ syntax functionCallee =
 syntax builtinMethodCallee = 
    | builtin_method storageReference . nameIR < typeArgumentListIR >( parameterListIR )
 
-;; ../../../../spec-concrete/6.2.2-callable-callee.watsup:38.3-39.50
+;; ../../../../spec-concrete/6.2.2-callable-callee.watsup:38.3-40.36
 syntax externMethodCallee = 
-   | extern_method oid . nameIR < typeParameterListIR >( parameterListIR # id* ) blockStatementIR?
+   | extern_method oid . nameIR < typeParameterListIR >( parameterListIR # id* ){ frame ; blockStatementIR? }
 
-;; ../../../../spec-concrete/6.2.2-callable-callee.watsup:42.3-43.59
+;; ../../../../spec-concrete/6.2.2-callable-callee.watsup:43.3-44.59
 syntax parserApplyMethodCallee = 
    | parser oid .apply( parameterListIR # id* ){ frame ; parserLocalDeclarationListIR ; stateEnv }
 
-;; ../../../../spec-concrete/6.2.2-callable-callee.watsup:46.3-47.81
+;; ../../../../spec-concrete/6.2.2-callable-callee.watsup:47.3-48.81
 syntax controlApplyMethodCallee = 
    | control oid .apply( parameterListIR # id* ){ frame ; controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR }
 
-;; ../../../../spec-concrete/6.2.2-callable-callee.watsup:50.3-50.55
+;; ../../../../spec-concrete/6.2.2-callable-callee.watsup:51.3-51.55
 syntax tableApplyMethodCallee = 
    | table oid .apply{ frame ; tableObjectProperty }
 
-;; ../../../../spec-concrete/6.2.2-callable-callee.watsup:53.1-57.27
+;; ../../../../spec-concrete/6.2.2-callable-callee.watsup:54.1-58.27
 syntax methodCallee = 
    | builtin_method storageReference . nameIR < typeArgumentListIR >( parameterListIR )
-   | extern_method oid . nameIR < typeParameterListIR >( parameterListIR # id* ) blockStatementIR?
+   | extern_method oid . nameIR < typeParameterListIR >( parameterListIR # id* ){ frame ; blockStatementIR? }
    | parser oid .apply( parameterListIR # id* ){ frame ; parserLocalDeclarationListIR ; stateEnv }
    | control oid .apply( parameterListIR # id* ){ frame ; controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR }
    | table oid .apply{ frame ; tableObjectProperty }
 
-;; ../../../../spec-concrete/6.2.2-callable-callee.watsup:59.17-59.61
+;; ../../../../spec-concrete/6.2.2-callable-callee.watsup:60.17-60.61
 syntax callee = 
    | action cursor . nameIR ( parameterListIR # id* ) blockStatementIR
    | function nameIR < typeParameterListIR >( parameterListIR # id* ) blockStatementIR
    | extern_function nameIR < typeParameterListIR >( parameterListIR # id* )
    | builtin_method storageReference . nameIR < typeArgumentListIR >( parameterListIR )
-   | extern_method oid . nameIR < typeParameterListIR >( parameterListIR # id* ) blockStatementIR?
+   | extern_method oid . nameIR < typeParameterListIR >( parameterListIR # id* ){ frame ; blockStatementIR? }
    | parser oid .apply( parameterListIR # id* ){ frame ; parserLocalDeclarationListIR ; stateEnv }
    | control oid .apply( parameterListIR # id* ){ frame ; controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR }
    | table oid .apply{ frame ; tableObjectProperty }
@@ -23912,38 +23912,44 @@ syntax constructorDef =
 syntax state = 
    | annotationList state{ parserStatementListIR transitionStatementIR }
 
-;; ../../../../spec-concrete/6.5.1-object.watsup:11.29-11.54
+;; ../../../../spec-concrete/6.5.1-object.watsup:12.1-12.26
+extern syntax externState
+
+;; ../../../../spec-concrete/6.5.1-object.watsup:13.29-13.54
 syntax externMethodDefEnv = map<cid, externMethodDef>
 
-;; ../../../../spec-concrete/6.5.1-object.watsup:13.23-13.74
-syntax externObject = 
-   | extern tid < theta >{ frame externMethodDefEnv }
+;; ../../../../spec-concrete/6.5.1-object.watsup:15.1-15.45
+extern def $init_externState
 
-;; ../../../../spec-concrete/6.5.1-object.watsup:22.3-25.18
+;; ../../../../spec-concrete/6.5.1-object.watsup:17.23-17.86
+syntax externObject = 
+   | extern tid < theta >{ externState frame externMethodDefEnv }
+
+;; ../../../../spec-concrete/6.5.1-object.watsup:26.3-29.18
 syntax parserObject = 
    | parser( parameterListIR ){ frame parserLocalDeclarationListIR stateEnv }
 
-;; ../../../../spec-concrete/6.5.1-object.watsup:34.23-34.42
+;; ../../../../spec-concrete/6.5.1-object.watsup:38.23-38.42
 syntax actionDefEnv = map<cid, actionDef>
 
-;; ../../../../spec-concrete/6.5.1-object.watsup:37.3-41.23
+;; ../../../../spec-concrete/6.5.1-object.watsup:41.3-45.23
 syntax controlObject = 
    | control( parameterListIR ){ frame controlLocalDeclarationListIR actionDefEnv controlBodyIR }
 
-;; ../../../../spec-concrete/6.5.1-object.watsup:49.24-49.53
+;; ../../../../spec-concrete/6.5.1-object.watsup:53.24-53.53
 syntax packageObject = 
    | package< theta >{ frame }
 
-;; ../../../../spec-concrete/6.5.1-object.watsup:57.3-61.37
+;; ../../../../spec-concrete/6.5.1-object.watsup:61.3-65.37
 syntax tableObjectProperty = {keys tableKeysPropertyIR, actions tableActionsPropertyIR, default_action tableDefaultActionPropertyIR, entries tableEntriesPropertyIR, customs tableCustomPropertyIR*}
 
-;; ../../../../spec-concrete/6.5.1-object.watsup:66.3-66.43
+;; ../../../../spec-concrete/6.5.1-object.watsup:70.3-70.43
 syntax tableObject = 
    | table tid { frame tableObjectProperty }
 
-;; ../../../../spec-concrete/6.5.1-object.watsup:69.1-73.16
+;; ../../../../spec-concrete/6.5.1-object.watsup:73.1-77.16
 syntax object = 
-   | extern tid < theta >{ frame externMethodDefEnv }
+   | extern tid < theta >{ externState frame externMethodDefEnv }
    | parser( parameterListIR ){ frame parserLocalDeclarationListIR stateEnv }
    | control( parameterListIR ){ frame controlLocalDeclarationListIR actionDefEnv controlBodyIR }
    | package< theta >{ frame }
@@ -23962,45 +23968,91 @@ def $is_externObject(object')
 
   1. Return false
 
-;; ../../../../spec-concrete/7.01-dynamic-env.watsup:6.16-6.30
+;; ../../../../spec-concrete/7.01.1-dynamic-env.watsup:6.16-6.30
 syntax frame = map<id, value>
 
-;; ../../../../spec-concrete/7.01-dynamic-env.watsup:8.1-8.25
+;; ../../../../spec-concrete/7.01.1-dynamic-env.watsup:8.1-8.25
 def $empty_frame
 
 1. Return $empty_map<id, value>
 
-;; ../../../../spec-concrete/7.01-dynamic-env.watsup:12.19-12.33
+;; ../../../../spec-concrete/7.01.1-dynamic-env.watsup:12.19-12.33
 syntax stateEnv = map<id, state>
 
-;; ../../../../spec-concrete/7.01-dynamic-env.watsup:14.1-14.33
+;; ../../../../spec-concrete/7.01.1-dynamic-env.watsup:14.1-14.33
 def $empty_stateEnv
 
 1. Return $empty_map<id, state>
 
-;; ../../../../spec-concrete/7.01-dynamic-env.watsup:18.25-18.46
+;; ../../../../spec-concrete/7.01.1-dynamic-env.watsup:18.25-18.46
 syntax callableDefEnv = map<cid, callableDef>
 
-;; ../../../../spec-concrete/7.01-dynamic-env.watsup:20.1-20.45
+;; ../../../../spec-concrete/7.01.1-dynamic-env.watsup:20.1-20.45
 def $empty_callableDefEnv
 
 1. Return $empty_map<cid, callableDef>
 
-;; ../../../../spec-concrete/7.01-dynamic-env.watsup:24.28-24.52
+;; ../../../../spec-concrete/7.01.1-dynamic-env.watsup:24.28-24.52
 syntax constructorDefEnv = map<cid, constructorDef>
 
-;; ../../../../spec-concrete/7.01-dynamic-env.watsup:26.1-26.51
+;; ../../../../spec-concrete/7.01.1-dynamic-env.watsup:26.1-26.51
 def $empty_constructorDefEnv
 
 1. Return $empty_map<cid, constructorDef>
 
-;; ../../../../spec-concrete/7.01-dynamic-env.watsup:30.16-30.32
+;; ../../../../spec-concrete/7.01.2-dynamic-store.watsup:6.16-6.32
 syntax store = map<oid, object>
 
-;; ../../../../spec-concrete/7.01-dynamic-env.watsup:34.1-34.25
+;; ../../../../spec-concrete/7.01.2-dynamic-store.watsup:10.1-10.25
 def $empty_store
 
 1. Return $empty_map<oid, object>
+
+;; ../../../../spec-concrete/7.01.2-dynamic-store.watsup:17.1-17.55
+def $find_store_externState(STO, oid)
+
+1. (Let object'?{object' <- object'?} be $find_map<oid, object>(STO, oid))
+
+2. If ((object'?{object' <- object'?} matches pattern (_))), then
+
+  1. (Let ?(object) be object'?{object' <- object'?})
+
+  2. If ((object has type externObject)), then
+
+    1. (Let externObject be (object as externObject))
+
+    2. (Let (extern _tid < _theta >{ externState _frame _externMethodDefEnv }) be externObject)
+
+    3. Return ?(externState)
+
+3. Otherwise
+
+  1. Return ?()
+
+;; ../../../../spec-concrete/7.01.2-dynamic-store.watsup:29.1-29.64
+def $update_store_externState(STO_0, oid, externState)
+
+1. (Let object'?{object' <- object'?} be $find_map<oid, object>(STO_0, oid))
+
+2. If ((object'?{object' <- object'?} matches pattern (_))), then
+
+  1. (Let ?(object) be object'?{object' <- object'?})
+
+  2. If ((object has type externObject)), then
+
+    1. (Let externObject be (object as externObject))
+
+    2. (Let (extern tid < theta >{ _externState frame externMethodDefEnv }) be externObject)
+
+    3. (Let externObject_update be (extern tid < theta >{ externState frame externMethodDefEnv }))
+
+    4. (Let STO_1 be $add_map<oid, object>(STO_0, oid, (externObject_update as object)))
+
+    5. Return ?(STO_1)
+
+3. Otherwise
+
+  1. Return ?()
 
 ;; ../../../../spec-concrete/7.02-inst-context.watsup:8.3-11.18
 syntax globalInstLayer = {constructor constructorDefEnv, type typeDefEnv, callable callableDefEnv, frame frame}
@@ -25644,7 +25696,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR : % % %
 
             4. If ((object has type externObject)), then
 
-              1. (Let (extern tid < theta >{ frame externMethodDefEnv }) be (object as externObject))
+              1. (Let (extern tid < theta >{ externState frame externMethodDefEnv }) be (object as externObject))
 
               2. (Let IC_decl be $empty_instContext[path = IC_0.path][global = IC_0.global])
 
@@ -25656,7 +25708,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR : % % %
 
               6. (Let externMethodDefEnv_merged be $merge_externMethodDefEnvs(externMethodDefEnv, IC_decl_post.block.callable))
 
-              7. (Let object_merged be ((extern tid < theta >{ frame_merged externMethodDefEnv_merged }) as object))
+              7. (Let object_merged be ((extern tid < theta >{ externState frame_merged externMethodDefEnv_merged }) as object))
 
               8. (Let oid be IC_0.path ++ [nameIR])
 
@@ -25690,7 +25742,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR : % % %
 
             4. If ((object has type externObject)), then
 
-              1. (Let (extern tid < theta >{ frame externMethodDefEnv }) be (object as externObject))
+              1. (Let (extern tid < theta >{ externState frame externMethodDefEnv }) be (object as externObject))
 
               2. (Let IC_decl be $empty_instContext[path = IC_0.path][global = IC_0.global])
 
@@ -25702,7 +25754,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR : % % %
 
               6. (Let externMethodDefEnv_merged be $merge_externMethodDefEnvs(externMethodDefEnv, IC_decl_post.block.callable))
 
-              7. (Let object_merged be ((extern tid < theta >{ frame_merged externMethodDefEnv_merged }) as object))
+              7. (Let object_merged be ((extern tid < theta >{ externState frame_merged externMethodDefEnv_merged }) as object))
 
               8. (Let oid be IC_0.path ++ [nameIR])
 
@@ -26219,9 +26271,11 @@ relation Constructor_inst: p IC STO_0 |- constructorDef < typeArgumentIR*{typeAr
 
         1. (Let externMethodDef be (callableDef as externMethodDef))*{callableDef <- callableDef*, externMethodDef <- externMethodDef*}
 
-        2. (Let object_extern be ((extern nameIR < IC_callee_4.block.type >{ IC_callee_4.block.frame ({ (cid : externMethodDef)*{cid <- cid*, externMethodDef <- externMethodDef*} }) }) as object))
+        2. (Let externState be $init_externState)
 
-        3. Result in : % % % |- % < % >( % # % ): STO_1 object_extern
+        3. (Let object_extern be ((extern nameIR < IC_callee_4.block.type >{ externState IC_callee_4.block.frame ({ (cid : externMethodDef)*{cid <- cid*, externMethodDef <- externMethodDef*} }) }) as object))
+
+        4. Result in : % % % |- % < % >( % # % ): STO_1 object_extern
 
   2. Case (% has type parserObjectConstructorDef)
 
@@ -28971,7 +29025,7 @@ relation Callee_eval: p EC' STO' |- callableTargetIR <_>( argumentListIR'' ): % 
 
                 2. If ((object has type externObject)), then
 
-                  1. (Let (extern _tid < _theta >{ _frame externMethodDefEnv }) be (object as externObject))
+                  1. (Let (extern _tid < _theta >{ _externState frame externMethodDefEnv }) be (object as externObject))
 
                   2. (Let id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*} be $ids_arguments(argumentListIR''))
 
@@ -28987,7 +29041,7 @@ relation Callee_eval: p EC' STO' |- callableTargetIR <_>( argumentListIR'' ): % 
 
                       2. If ((nameIR' = nameIR)), then
 
-                        1. (Let externMethodCallee be (extern_method oid . nameIR < typeParameterListIR >( parameterListIR # id_default*{id_default <- id_default*} ) blockStatementIR?{blockStatementIR <- blockStatementIR?}))
+                        1. (Let externMethodCallee be (extern_method oid . nameIR < typeParameterListIR >( parameterListIR # id_default*{id_default <- id_default*} ){ frame ; blockStatementIR?{blockStatementIR <- blockStatementIR?} }))
 
                         2. Result in : % % % |- % <_>( % ): EC_1 STO_1 ((` (externMethodCallee as callee)) as calleeResult)
 
@@ -29473,37 +29527,41 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR' >( argumentLis
 
   1. Case (% has type externMethodCallee)
 
-    1. (Let (extern_method oid . nameIR < typeParameterIR*{typeParameterIR <- typeParameterIR*} >( parameterIR*{parameterIR <- parameterIR*} # id_default*{id_default <- id_default*} ) blockStatementIR?{blockStatementIR <- blockStatementIR?}) be (callee as externMethodCallee))
+    1. (Let externMethodCallee be (callee as externMethodCallee))
 
-    2. If ((blockStatementIR?{blockStatementIR <- blockStatementIR?} matches pattern ())), then
+    2. Group externMethodCallee: p EC_0 STO_0 |- (externMethodCallee as callee) @< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} ): % % %
 
-      1. Group externMethodCallee: p EC_0 STO_0 |- ((extern_method oid . nameIR < typeParameterIR*{typeParameterIR <- typeParameterIR*} >( parameterIR*{parameterIR <- parameterIR*} # id_default*{id_default <- id_default*} ) ?()) as callee) @< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} ): % % %
+      1. (Let (extern_method oid . nameIR < typeParameterIR*{typeParameterIR <- typeParameterIR*} >( parameterIR*{parameterIR <- parameterIR*} # id_default*{id_default <- id_default*} ){ frame ; blockStatementIR?{blockStatementIR <- blockStatementIR?} }) be externMethodCallee)
+
+      2. If ((blockStatementIR?{blockStatementIR <- blockStatementIR?} matches pattern ())), then
 
         1. (Let EC_callee_0 be $inherit_e((global), EC_0))
 
-        2. (Let EC_callee_1 be EC_callee_0[local.type = ({ (typeParameterIR : typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} })])
+        2. (Let EC_callee_1 be EC_callee_0[block.frame = frame])
 
-        3. (Let (parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, value_default*{value_default <- value_default*}) be $align_params_with_args(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}))
+        3. (Let EC_callee_2 be EC_callee_1[local.type = ({ (typeParameterIR : typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} })])
 
-        4. (Copy_in: STO_0 p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_1 argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*} ~> STO_1 EC_1 @ EC_callee_2 # copyInListResult)
+        4. (Let (parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, value_default*{value_default <- value_default*}) be $align_params_with_args(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}))
 
-        5. If ((copyInListResult has type continueResult<storageReference?*>)), then
+        5. (Copy_in: STO_0 p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_2 argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*} ~> STO_1 EC_1 @ EC_callee_3 # copyInListResult)
+
+        6. If ((copyInListResult has type continueResult<storageReference?*>)), then
 
           1. (Let (` storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*}) be (copyInListResult as continueResult<storageReference?*>))
 
-          2. (Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} @ (local) EC_callee_2 value_default*{value_default <- value_default*} ~>@ EC_callee_3)
+          2. (Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} @ (local) EC_callee_3 value_default*{value_default <- value_default*} ~>@ EC_callee_4)
 
           3. (Let (_annotationList _direction _typeIR nameIR_param _constantInitializerOptIR) be parameterIR)*{_annotationList <- _annotationList*, _constantInitializerOptIR <- _constantInitializerOptIR*, _direction <- _direction*, _typeIR <- _typeIR*, nameIR_param <- nameIR_param*, parameterIR <- parameterIR*}
 
-          4. (ExternMethodCall_eval: EC_callee_3 STO_1 |- oid . nameIR ( nameIR_param*{nameIR_param <- nameIR_param*} ): EC_callee_4 STO_2 callResult)
+          4. (ExternMethodCall_eval: EC_callee_4 STO_1 |- oid . nameIR ( nameIR_param*{nameIR_param <- nameIR_param*} ): EC_callee_5 STO_2 callResult)
 
           5. If ((callResult has type returnResult)), then
 
             1. (Let returnResult be (callResult as returnResult))
 
-            2. (Let EC_2 be EC_1[global.frame = EC_callee_4.global.frame])
+            2. (Let EC_2 be EC_1[global.frame = EC_callee_5.global.frame])
 
-            3. (Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_4 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3)
+            3. (Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_5 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3)
 
             4. Result in : % % % |- % @< % >( % ): EC_3 STO_2 (returnResult as callResult)
 
@@ -29697,22 +29755,68 @@ relation V1Model_init: |- p4program : % %
 
   2. Result in : |- % : EC_0 STO_0
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:22.1-24.20
-relation V1Model_init_packet: EC_0 STO_0 |- % %
+;; ../../../../spec-concrete/9.A-v1model.watsup:22.1-24.23
+relation V1Model_init_packet_in: EC_0 STO_0 |- externState_packet_in : % %
 
-1. Group : EC_0 STO_0 |- % %
+1. Group : EC_0 STO_0 |- externState_packet_in : % %
 
   1. (Extern_init: EC_0 STO_0 |- "packet_in" : STO_1)
 
   2. (Let EC_1 be $add_var_e((global), EC_0, (` "packet_in"), ((! ["packet_in"]) as value)))
 
-  3. (Extern_init: EC_1 STO_1 |- "packet_out" : STO_2)
+  3. (Let object'?{object' <- object'?} be $find_map<oid, object>(STO_1, ["packet_in"]))
 
-  4. (Let EC_2 be $add_var_e((global), EC_1, (` "packet_out"), ((! ["packet_out"]) as value)))
+  4. If ((object'?{object' <- object'?} matches pattern (_))), then
 
-  5. (Let object'?{object' <- object'?} be $find_map<oid, object>(STO_2, ["main"]))
+    1. (Let ?(object) be object'?{object' <- object'?})
 
-  6. If ((object'?{object' <- object'?} matches pattern (_))), then
+    2. If ((object has type externObject)), then
+
+      1. (Let externObject_packet_in be (object as externObject))
+
+      2. (Let (extern tid < theta >{ _externState frame externMethodDefEnv }) be externObject_packet_in)
+
+      3. (Let externObject_packet_in_init be (extern tid < theta >{ externState_packet_in frame externMethodDefEnv }))
+
+      4. (Let STO_2 be $add_map<oid, object>(STO_1, ["packet_in"], (externObject_packet_in_init as object)))
+
+      5. Result in : % % |- % : EC_1 STO_2
+
+;; ../../../../spec-concrete/9.A-v1model.watsup:40.1-42.23
+relation V1Model_init_packet_out: EC_0 STO_0 |- externState_packet_out : % %
+
+1. Group : EC_0 STO_0 |- externState_packet_out : % %
+
+  1. (Extern_init: EC_0 STO_0 |- "packet_out" : STO_1)
+
+  2. (Let EC_1 be $add_var_e((global), EC_0, (` "packet_out"), ((! ["packet_out"]) as value)))
+
+  3. (Let object'?{object' <- object'?} be $find_map<oid, object>(STO_1, ["packet_out"]))
+
+  4. If ((object'?{object' <- object'?} matches pattern (_))), then
+
+    1. (Let ?(object) be object'?{object' <- object'?})
+
+    2. If ((object has type externObject)), then
+
+      1. (Let externObject_packet_out be (object as externObject))
+
+      2. (Let (extern tid < theta >{ _externState frame externMethodDefEnv }) be externObject_packet_out)
+
+      3. (Let externObject_packet_out_init be (extern tid < theta >{ externState_packet_out frame externMethodDefEnv }))
+
+      4. (Let STO_2 be $add_map<oid, object>(STO_1, ["packet_out"], (externObject_packet_out_init as object)))
+
+      5. Result in : % % |- % : EC_1 STO_2
+
+;; ../../../../spec-concrete/9.A-v1model.watsup:58.1-60.23
+relation V1Model_init_globals: EC_0 STO |- i_port : %
+
+1. Group : EC_0 STO |- i_port : %
+
+  1. (Let object'?{object' <- object'?} be $find_map<oid, object>(STO, ["main"]))
+
+  2. If ((object'?{object' <- object'?} matches pattern (_))), then
 
     1. (Let ?(object) be object'?{object' <- object'?})
 
@@ -29732,11 +29836,11 @@ relation V1Model_init_packet: EC_0 STO_0 |- % %
 
           1. (Let ?(typeIR_meta) be typeIR'?{typeIR' <- typeIR'?})
 
-          2. (Var_init: EC_2 |- typeIR_hdr "hdr" : EC_3)
+          2. (Var_init: EC_0 |- typeIR_hdr "hdr" : EC_1)
 
-          3. (Var_init: EC_3 |- typeIR_meta "meta" : EC_4)
+          3. (Var_init: EC_1 |- typeIR_meta "meta" : EC_2)
 
-          4. (Let typeDefIR?{typeDefIR <- typeDefIR?} be $find_typeDef_e((global), EC_4, (` "standard_metadata_t")))
+          4. (Let typeDefIR?{typeDefIR <- typeDefIR?} be $find_typeDef_e((global), EC_2, (` "standard_metadata_t")))
 
           5. If ((typeDefIR?{typeDefIR <- typeDefIR?} matches pattern (_))), then
 
@@ -29744,11 +29848,17 @@ relation V1Model_init_packet: EC_0 STO_0 |- % %
 
             2. (Let typeIR_std_meta be ((typeDefIR_standard_metadata < [] >) as typeIR))
 
-            3. (Var_init: EC_4 |- typeIR_std_meta "standard_metadata" : EC_5)
+            3. (Var_init: EC_2 |- typeIR_std_meta "standard_metadata" : EC_3)
 
-            4. Result in : % % |- EC_5 STO_2
+            4. (Let storageReference_port be (((` "standard_metadata") as storageReference) . "ingress_port"))
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:51.1-51.64
+            5. (Let value_port be ((9 w i_port) as value))
+
+            6. (Lvalue_write: (global) EC_3 STO |- storageReference_port -> value_port : EC_4)
+
+            7. Result in : % % |- % : EC_4
+
+;; ../../../../spec-concrete/9.A-v1model.watsup:86.1-86.64
 def $V1Model_setup_packet_in_argument(EC)
 
 1. (Let typeDefIR?{typeDefIR <- typeDefIR?} be $find_typeDef_e((global), EC, (` "packet_in")))
@@ -29763,7 +29873,7 @@ def $V1Model_setup_packet_in_argument(EC)
 
   4. Return argumentIR_packet_in
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:59.1-59.65
+;; ../../../../spec-concrete/9.A-v1model.watsup:94.1-94.65
 def $V1Model_setup_packet_out_argument(EC)
 
 1. (Let typeDefIR?{typeDefIR <- typeDefIR?} be $find_typeDef_e((global), EC, (` "packet_out")))
@@ -29778,7 +29888,7 @@ def $V1Model_setup_packet_out_argument(EC)
 
   4. Return argumentIR_packet_out
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:67.1-67.52
+;; ../../../../spec-concrete/9.A-v1model.watsup:102.1-102.52
 def $V1Model_setup_hdr_argument(STO)
 
 1. (Let object'?{object' <- object'?} be $find_map<oid, object>(STO, ["main"]))
@@ -29801,7 +29911,7 @@ def $V1Model_setup_hdr_argument(STO)
 
       3. Return argumentIR_hdr
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:75.1-75.53
+;; ../../../../spec-concrete/9.A-v1model.watsup:110.1-110.53
 def $V1Model_setup_meta_argument(STO)
 
 1. (Let object'?{object' <- object'?} be $find_map<oid, object>(STO, ["main"]))
@@ -29824,7 +29934,7 @@ def $V1Model_setup_meta_argument(STO)
 
       3. Return argumentIR_meta
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:83.1-83.72
+;; ../../../../spec-concrete/9.A-v1model.watsup:118.1-118.72
 def $V1Model_setup_standard_metadata_argument(EC)
 
 1. (Let typeDefIR?{typeDefIR <- typeDefIR?} be $find_typeDef_e((global), EC, (` "standard_metadata_t")))
@@ -29839,7 +29949,7 @@ def $V1Model_setup_standard_metadata_argument(EC)
 
   4. Return argumentIR_standard_metadata
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:92.1-92.71
+;; ../../../../spec-concrete/9.A-v1model.watsup:127.1-127.71
 def $V1Model_setup_main_callee(EC, STO)
 
 1. (Let typeDefIR?{typeDefIR <- typeDefIR?} be $find_typeDef_e((global), EC, (` "V1Switch")))
@@ -29876,7 +29986,7 @@ def $V1Model_setup_main_callee(EC, STO)
 
           4. Return typedExpressionIR_main
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:107.1-110.22
+;; ../../../../spec-concrete/9.A-v1model.watsup:142.1-145.22
 def $V1Model_setup_parser_callee(EC, STO, typedExpressionIR_main)
 
 1. (Let typeDefIR?{typeDefIR <- typeDefIR?} be $find_typeDef_e((global), EC, (` "Parser")))
@@ -29913,7 +30023,7 @@ def $V1Model_setup_parser_callee(EC, STO, typedExpressionIR_main)
 
           4. Return typedExpressionIR_parser
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:127.1-130.22
+;; ../../../../spec-concrete/9.A-v1model.watsup:162.1-165.22
 def $V1Model_setup_verify_callee(EC, STO, typedExpressionIR_main)
 
 1. (Let typeDefIR?{typeDefIR <- typeDefIR?} be $find_typeDef_e((global), EC, (` "VerifyChecksum")))
@@ -29950,7 +30060,7 @@ def $V1Model_setup_verify_callee(EC, STO, typedExpressionIR_main)
 
           4. Return typedExpressionIR_verify
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:148.1-151.22
+;; ../../../../spec-concrete/9.A-v1model.watsup:183.1-186.22
 def $V1Model_setup_ingress_callee(EC, STO, typedExpressionIR_main)
 
 1. (Let typeDefIR?{typeDefIR <- typeDefIR?} be $find_typeDef_e((global), EC, (` "Ingress")))
@@ -29987,7 +30097,7 @@ def $V1Model_setup_ingress_callee(EC, STO, typedExpressionIR_main)
 
           4. Return typedExpressionIR_ingress
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:169.1-172.22
+;; ../../../../spec-concrete/9.A-v1model.watsup:204.1-207.22
 def $V1Model_setup_egress_callee(EC, STO, typedExpressionIR_main)
 
 1. (Let typeDefIR?{typeDefIR <- typeDefIR?} be $find_typeDef_e((global), EC, (` "Egress")))
@@ -30024,7 +30134,7 @@ def $V1Model_setup_egress_callee(EC, STO, typedExpressionIR_main)
 
           4. Return typedExpressionIR_egress
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:190.1-193.22
+;; ../../../../spec-concrete/9.A-v1model.watsup:225.1-228.22
 def $V1Model_setup_check_callee(EC, STO, typedExpressionIR_main)
 
 1. (Let typeDefIR?{typeDefIR <- typeDefIR?} be $find_typeDef_e((global), EC, (` "ComputeChecksum")))
@@ -30061,7 +30171,7 @@ def $V1Model_setup_check_callee(EC, STO, typedExpressionIR_main)
 
           4. Return typedExpressionIR_check
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:211.1-214.22
+;; ../../../../spec-concrete/9.A-v1model.watsup:246.1-249.22
 def $V1Model_setup_deparse_callee(EC, STO, typedExpressionIR_main)
 
 1. (Let typeDefIR?{typeDefIR <- typeDefIR?} be $find_typeDef_e((global), EC, (` "Deparser")))
@@ -30092,7 +30202,7 @@ def $V1Model_setup_deparse_callee(EC, STO, typedExpressionIR_main)
 
         4. Return typedExpressionIR_deparse
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:235.1-237.20
+;; ../../../../spec-concrete/9.A-v1model.watsup:270.1-272.20
 relation V1Model_parser: EC_0 STO_0 |- % % %
 
 1. Group : EC_0 STO_0 |- % % %
@@ -30121,7 +30231,7 @@ relation V1Model_parser: EC_0 STO_0 |- % % %
 
     2. Result in : % % |- EC_1 STO_1 ((accept) as transitionResult)
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:267.1-269.20
+;; ../../../../spec-concrete/9.A-v1model.watsup:302.1-304.20
 relation V1Model_verify: EC_0 STO_0 |- % % %
 
 1. Group : EC_0 STO_0 |- % % %
@@ -30146,7 +30256,7 @@ relation V1Model_verify: EC_0 STO_0 |- % % %
 
     2. Result in : % % |- EC_1 STO_1 ((return ?()) as callResult)
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:293.1-295.20
+;; ../../../../spec-concrete/9.A-v1model.watsup:328.1-330.20
 relation V1Model_ingress: EC_0 STO_0 |- % % %
 
 1. Group : EC_0 STO_0 |- % % %
@@ -30173,7 +30283,7 @@ relation V1Model_ingress: EC_0 STO_0 |- % % %
 
     2. Result in : % % |- EC_1 STO_1 ((return ?()) as callResult)
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:322.1-324.20
+;; ../../../../spec-concrete/9.A-v1model.watsup:357.1-359.20
 relation V1Model_egress: EC_0 STO_0 |- % % %
 
 1. Group : EC_0 STO_0 |- % % %
@@ -30200,7 +30310,7 @@ relation V1Model_egress: EC_0 STO_0 |- % % %
 
     2. Result in : % % |- EC_1 STO_1 ((return ?()) as callResult)
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:351.1-353.20
+;; ../../../../spec-concrete/9.A-v1model.watsup:386.1-388.20
 relation V1Model_check: EC_0 STO_0 |- % % %
 
 1. Group : EC_0 STO_0 |- % % %
@@ -30225,7 +30335,7 @@ relation V1Model_check: EC_0 STO_0 |- % % %
 
     2. Result in : % % |- EC_1 STO_1 ((return ?()) as callResult)
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:377.1-379.20
+;; ../../../../spec-concrete/9.A-v1model.watsup:412.1-414.20
 relation V1Model_deparse: EC_0 STO_0 |- % % %
 
 1. Group : EC_0 STO_0 |- % % %

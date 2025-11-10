@@ -6355,13 +6355,13 @@ relation Decl_inst: `cursor'`, `IC~0~`, `STO'`, and `declarationIR`
    .... Let `(++_++, constructorDef, id~default~^{asterisk}^)` be `(cid, constructorDef, id*)^?^`.
    .... Let `IC~inner~` be `<<enter_path_i, $enter_path_i(IC~0~, nameIR)>>`.
    .... Let <<Constructor_inst, `GLOBAL IC~inner~ STO' |- constructorDef < typeArgumentListIR > ( argumentListIR # id~default~^{asterisk}^ ) : STO~1~ object`>>.
-   .... Else if let `EXTERN tid < theta > { frame externMethodDefEnv }` be `object`:
+   .... Else if let `EXTERN tid < theta > { externState frame externMethodDefEnv }` be `object`:
     ..... Let `IC~decl~` be `<<empty_instContext, $empty_instContext>>[PATH = IC~0~.PATH][GLOBAL = IC~0~.GLOBAL]`.
     ..... Let `objectDeclarationListIR` be `<<flatten_objectInitializerOptIR, $flatten_objectInitializerOptIR(objectInitializerOptIR)>>`.
     ..... Let <<Decls_inst, `BLOCK IC~decl~ STO~1~ |- objectDeclarationListIR : IC~decl_post~ STO~2~ ++_++^{asterisk}^`>>.
     ..... Let `frame~merged~` be `<<merge_frames, $merge_frames(frame, IC~decl_post~.BLOCK.FRAME)>>`.
     ..... Let `externMethodDefEnv~merged~` be `<<merge_externMethodDefEnvs, $merge_externMethodDefEnvs(externMethodDefEnv, IC~decl_post~.BLOCK.CALLABLE)>>`.
-    ..... Let `object~merged~` be `EXTERN tid < theta > { frame~merged~ externMethodDefEnv~merged~ }`.
+    ..... Let `object~merged~` be `EXTERN tid < theta > { externState frame~merged~ externMethodDefEnv~merged~ }`.
     ..... Let `oid` be `IC~0~.PATH ++ [nameIR]`.
     ..... Let `STO~3~` be `<<add_map, $add_map<oid, object>(STO~2~, oid, object~merged~)>>`.
     ..... Let `IC~1~` be `<<add_var_i, $add_var_i(GLOBAL, IC~0~, nameIR, ! oid)>>`.
@@ -6377,13 +6377,13 @@ relation Decl_inst: `cursor'`, `IC~0~`, `STO'`, and `declarationIR`
    .... Let `(++_++, constructorDef, id~default~^{asterisk}^)` be `(cid, constructorDef, id*)^?^`.
    .... Let `IC~inner~` be `<<enter_path_i, $enter_path_i(IC~0~, nameIR)>>`.
    .... Let <<Constructor_inst, `cursor' IC~inner~ STO' |- constructorDef < typeArgumentListIR > ( argumentListIR # id~default~^{asterisk}^ ) : STO~1~ object`>>.
-   .... Else if let `EXTERN tid < theta > { frame externMethodDefEnv }` be `object`:
+   .... Else if let `EXTERN tid < theta > { externState frame externMethodDefEnv }` be `object`:
     ..... Let `IC~decl~` be `<<empty_instContext, $empty_instContext>>[PATH = IC~0~.PATH][GLOBAL = IC~0~.GLOBAL]`.
     ..... Let `objectDeclarationListIR` be `<<flatten_objectInitializerOptIR, $flatten_objectInitializerOptIR(objectInitializerOptIR)>>`.
     ..... Let <<Decls_inst, `BLOCK IC~decl~ STO~1~ |- objectDeclarationListIR : IC~decl_post~ STO~2~ ++_++^{asterisk}^`>>.
     ..... Let `frame~merged~` be `<<merge_frames, $merge_frames(frame, IC~decl_post~.BLOCK.FRAME)>>`.
     ..... Let `externMethodDefEnv~merged~` be `<<merge_externMethodDefEnvs, $merge_externMethodDefEnvs(externMethodDefEnv, IC~decl_post~.BLOCK.CALLABLE)>>`.
-    ..... Let `object~merged~` be `EXTERN tid < theta > { frame~merged~ externMethodDefEnv~merged~ }`.
+    ..... Let `object~merged~` be `EXTERN tid < theta > { externState frame~merged~ externMethodDefEnv~merged~ }`.
     ..... Let `oid` be `IC~0~.PATH ++ [nameIR]`.
     ..... Let `STO~3~` be `<<add_map, $add_map<oid, object>(STO~2~, oid, object~merged~)>>`.
     ..... Let `IC~1~` be `<<add_var_i, $add_var_i(GLOBAL, IC~0~, nameIR, ! oid)>>`.
@@ -6758,7 +6758,8 @@ for each `constructorParameterIR~default~` in `constructorParameterIR~default~^{
 --
 +
 for each `callableDef` in `callableDef^{asterisk}^`
-  ... Let `object~extern~` be `EXTERN nameIR < IC~callee_4~.BLOCK.TYPE > { IC~callee_4~.BLOCK.FRAME { cid : externMethodDef^{asterisk}^ } }`.
+  ... Let `externState` be `<<init_externState, $init_externState>>`.
+  ... Let `object~extern~` be `EXTERN nameIR < IC~callee_4~.BLOCK.TYPE > { externState IC~callee_4~.BLOCK.FRAME { cid : externMethodDef^{asterisk}^ } }`.
   ... Result in `STO~1~` and `object~extern~`.
 . Else if let `PARSER ( parameterIR^{asterisk}^ ) ( constructorParameterIR^{asterisk}^ ) { parserLocalDeclarationIR^{asterisk}^ parserStateIR^{asterisk}^ }` be `constructorDef`:
  .. Check that `typeArgumentIR^{asterisk}^` is an empty list.
@@ -7716,7 +7717,7 @@ relation Callee_eval: `p`, `EC'`, `STO'`, `callableTargetIR`, and `argumentListI
    .... Check that `object'^?^` is Some value.
    .... Let `object` be `object'^?^`.
    .... Check that `object` has type `externObject`.
-   .... Let `EXTERN ++_++ < ++_++ > { ++_++ externMethodDefEnv }` be `object`.
+   .... Let `EXTERN ++_++ < ++_++ > { ++_++ frame externMethodDefEnv }` be `object`.
    .... Let `id~arg~^?^^{asterisk}^` be `<<ids_arguments, $ids_arguments(argumentListIR'')>>`.
    .... Let `(cid, externMethodDef, id*)^?^` be `<<find_overloaded, $find_overloaded<externMethodDef>(externMethodDefEnv, nameIR, id~arg~^?^^{asterisk}^)>>`.
    .... Check that `(cid, externMethodDef, id*)^?^` is Some value.
@@ -7724,7 +7725,7 @@ relation Callee_eval: `p`, `EC'`, `STO'`, `callableTargetIR`, and `argumentListI
    .... Check that `externMethodDef` matches pattern `EXTERN_METHOD % < % > ( % ) %`.
    .... Let `EXTERN_METHOD nameIR' < typeParameterListIR > ( parameterListIR ) blockStatementIR^?^` be `externMethodDef`.
    .... Check that `nameIR'` is equal to `nameIR`.
-   .... Let `externMethodCallee` be `EXTERN_METHOD oid . nameIR < typeParameterListIR > ( parameterListIR # id~default~^{asterisk}^ ) blockStatementIR^?^`.
+   .... Let `externMethodCallee` be `EXTERN_METHOD oid . nameIR < typeParameterListIR > ( parameterListIR # id~default~^{asterisk}^ ) { frame ; blockStatementIR^?^ }`.
    .... Result in `EC~1~`, `STO~1~`, and `externMethodCallee`.
  .. Check that `nameIR` is equal to `"apply"`.
  .. Group typedExpressionIR-nameIR-parser-apply-method:
@@ -7954,16 +7955,18 @@ relation Call_eval: `p`, `EC~0~`, `STO~0~`, `callee`, `typeArgumentListIR'`, and
  .. Let <<Copy_out, `STO~2~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_3~ storageReference^?^^{asterisk}^ ~> EC~3~`>>.
  .. Result in `EC~3~`, `STO~2~`, and `RETURN None`.
 . Let `argumentIR^{asterisk}^` be `argumentListIR'`.
-. If let `EXTERN_METHOD oid . nameIR < typeParameterIR^{asterisk}^ > ( parameterIR^{asterisk}^ # id~default~^{asterisk}^ ) blockStatementIR^?^` be `callee`:
- .. Check that `blockStatementIR^?^` is None.
+. If let `externMethodCallee` be `callee`:
  .. Group externMethodCallee:
+  ... Let `EXTERN_METHOD oid . nameIR < typeParameterIR^{asterisk}^ > ( parameterIR^{asterisk}^ # id~default~^{asterisk}^ ) { frame ; blockStatementIR^?^ }` be `externMethodCallee`.
+  ... Check that `blockStatementIR^?^` is None.
   ... Let `EC~callee_0~` be `<<inherit_e, $inherit_e(GLOBAL, EC~0~)>>`.
-  ... Let `EC~callee_1~` be `EC~callee_0~[LOCAL.TYPE = { typeParameterIR : typeArgumentIR^{asterisk}^ }]`.
+  ... Let `EC~callee_1~` be `EC~callee_0~[BLOCK.FRAME = frame]`.
+  ... Let `EC~callee_2~` be `EC~callee_1~[LOCAL.TYPE = { typeParameterIR : typeArgumentIR^{asterisk}^ }]`.
   ... Let `(parameterIR~aligned~^{asterisk}^, argumentIR~aligned~^{asterisk}^, parameterIR~default~^{asterisk}^, value~default~^{asterisk}^)` be `<<align_params_with_args, $align_params_with_args(parameterIR^{asterisk}^, argumentIR^{asterisk}^, id~default~^{asterisk}^)>>`.
-  ... Let <<Copy_in, `STO~0~ p EC~0~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_1~ argumentIR~aligned~^{asterisk}^ ~> STO~1~ EC~1~ @ EC~callee_2~ # copyInListResult`>>.
+  ... Let <<Copy_in, `STO~0~ p EC~0~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_2~ argumentIR~aligned~^{asterisk}^ ~> STO~1~ EC~1~ @ EC~callee_3~ # copyInListResult`>>.
   ... Check that `copyInListResult` has type `continueResult<storageReference?*>`.
   ... Let `storageReference^?^^{asterisk}^` be `copyInListResult`.
-  ... Let <<Copy_in_default, `parameterIR~default~^{asterisk}^ @ LOCAL EC~callee_2~ value~default~^{asterisk}^ ~> @ EC~callee_3~`>>.
+  ... Let <<Copy_in_default, `parameterIR~default~^{asterisk}^ @ LOCAL EC~callee_3~ value~default~^{asterisk}^ ~> @ EC~callee_4~`>>.
   ... Let `nameIR~param~^{asterisk}^` be the list of `nameIR~param~`, obtained by repeating:
 +
 --
@@ -7971,11 +7974,11 @@ relation Call_eval: `p`, `EC~0~`, `STO~0~`, `callee`, `typeArgumentListIR'`, and
 --
 +
 for each `parameterIR` in `parameterIR^{asterisk}^`
-  ... Let <<ExternMethodCall_eval, `EC~callee_3~ STO~1~ |- oid . nameIR ( nameIR~param~^{asterisk}^ ) : EC~callee_4~ STO~2~ callResult`>>.
+  ... Let <<ExternMethodCall_eval, `EC~callee_4~ STO~1~ |- oid . nameIR ( nameIR~param~^{asterisk}^ ) : EC~callee_5~ STO~2~ callResult`>>.
   ... Check that `callResult` has type `returnResult`.
   ... Let `returnResult` be `callResult`.
-  ... Let `EC~2~` be `EC~1~[GLOBAL.FRAME = EC~callee_4~.GLOBAL.FRAME]`.
-  ... Let <<Copy_out, `STO~2~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_4~ storageReference^?^^{asterisk}^ ~> EC~3~`>>.
+  ... Let `EC~2~` be `EC~1~[GLOBAL.FRAME = EC~callee_5~.GLOBAL.FRAME]`.
+  ... Let <<Copy_out, `STO~2~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_5~ storageReference^?^^{asterisk}^ ~> EC~3~`>>.
   ... Result in `EC~3~`, `STO~2~`, and `returnResult`.
 . Else if let `parserApplyMethodCallee` be `callee`:
  .. Group parserApplyMethodCallee:
@@ -8082,15 +8085,45 @@ relation V1Model_init: `p4program`
  .. Result in the resulting evaluation context `EC~0~` and store `STO~0~`.
 
 
-relation V1Model_init_packet: `EC~0~` and `STO~0~`
+relation V1Model_init_packet_in: `EC~0~`, `STO~0~`, and `externState~packet_in~`
 
 
 . Group :
  .. Let `STO~1~` be the result of <<Extern_init, instantiating extern `EC~0~` in the evaluation context `STO~0~` and store `"packet_in"`>>.
  .. Let `EC~1~` be `<<add_var_e, $add_var_e(GLOBAL, EC~0~, "packet_in", ! ["packet_in"])>>`.
- .. Let `STO~2~` be the result of <<Extern_init, instantiating extern `EC~1~` in the evaluation context `STO~1~` and store `"packet_out"`>>.
- .. Let `EC~2~` be `<<add_var_e, $add_var_e(GLOBAL, EC~1~, "packet_out", ! ["packet_out"])>>`.
- .. Let `object'^?^` be `<<find_map, $find_map<oid, object>(STO~2~, ["main"])>>`.
+ .. Let `object'^?^` be `<<find_map, $find_map<oid, object>(STO~1~, ["packet_in"])>>`.
+ .. Check that `object'^?^` is Some value.
+ .. Let `object` be `object'^?^`.
+ .. Check that `object` has type `externObject`.
+ .. Let `externObject~packet_in~` be `object`.
+ .. Let `EXTERN tid < theta > { ++_++ frame externMethodDefEnv }` be `externObject~packet_in~`.
+ .. Let `externObject~packet_in_init~` be `EXTERN tid < theta > { externState~packet_in~ frame externMethodDefEnv }`.
+ .. Let `STO~2~` be `<<add_map, $add_map<oid, object>(STO~1~, ["packet_in"], externObject~packet_in_init~)>>`.
+ .. Result in `EC~1~` and `STO~2~`.
+
+
+relation V1Model_init_packet_out: `EC~0~`, `STO~0~`, and `externState~packet_out~`
+
+
+. Group :
+ .. Let `STO~1~` be the result of <<Extern_init, instantiating extern `EC~0~` in the evaluation context `STO~0~` and store `"packet_out"`>>.
+ .. Let `EC~1~` be `<<add_var_e, $add_var_e(GLOBAL, EC~0~, "packet_out", ! ["packet_out"])>>`.
+ .. Let `object'^?^` be `<<find_map, $find_map<oid, object>(STO~1~, ["packet_out"])>>`.
+ .. Check that `object'^?^` is Some value.
+ .. Let `object` be `object'^?^`.
+ .. Check that `object` has type `externObject`.
+ .. Let `externObject~packet_out~` be `object`.
+ .. Let `EXTERN tid < theta > { ++_++ frame externMethodDefEnv }` be `externObject~packet_out~`.
+ .. Let `externObject~packet_out_init~` be `EXTERN tid < theta > { externState~packet_out~ frame externMethodDefEnv }`.
+ .. Let `STO~2~` be `<<add_map, $add_map<oid, object>(STO~1~, ["packet_out"], externObject~packet_out_init~)>>`.
+ .. Result in `EC~1~` and `STO~2~`.
+
+
+relation V1Model_init_globals: `EC~0~`, `STO`, and `i~port~`
+
+
+. Group :
+ .. Let `object'^?^` be `<<find_map, $find_map<oid, object>(STO, ["main"])>>`.
  .. Check that `object'^?^` is Some value.
  .. Let `object` be `object'^?^`.
  .. Check that `object` has type `packageObject`.
@@ -8101,14 +8134,17 @@ relation V1Model_init_packet: `EC~0~` and `STO~0~`
  .. Let `typeIR'^?^` be `<<find_map, $find_map<tid, typeIR>(theta, "M")>>`.
  .. Check that `typeIR'^?^` is Some value.
  .. Let `typeIR~meta~` be `typeIR'^?^`.
- .. Let `EC~3~` be the result of <<Var_init, instantiating global variable `"hdr"` of type `typeIR~hdr~` in the evaluation context `EC~2~`>>.
- .. Let `EC~4~` be the result of <<Var_init, instantiating global variable `"meta"` of type `typeIR~meta~` in the evaluation context `EC~3~`>>.
- .. Let `typeDefIR^?^` be `<<find_typeDef_e, $find_typeDef_e(GLOBAL, EC~4~, "standard_metadata_t")>>`.
+ .. Let `EC~1~` be the result of <<Var_init, instantiating global variable `"hdr"` of type `typeIR~hdr~` in the evaluation context `EC~0~`>>.
+ .. Let `EC~2~` be the result of <<Var_init, instantiating global variable `"meta"` of type `typeIR~meta~` in the evaluation context `EC~1~`>>.
+ .. Let `typeDefIR^?^` be `<<find_typeDef_e, $find_typeDef_e(GLOBAL, EC~2~, "standard_metadata_t")>>`.
  .. Check that `typeDefIR^?^` is Some value.
  .. Let `typeDefIR~standard_metadata~` be `typeDefIR^?^`.
  .. Let `typeIR~std_meta~` be `typeDefIR~standard_metadata~ < [ ] >`.
- .. Let `EC~5~` be the result of <<Var_init, instantiating global variable `"standard_metadata"` of type `typeIR~std_meta~` in the evaluation context `EC~4~`>>.
- .. Result in `EC~5~` and `STO~2~`.
+ .. Let `EC~3~` be the result of <<Var_init, instantiating global variable `"standard_metadata"` of type `typeIR~std_meta~` in the evaluation context `EC~2~`>>.
+ .. Let `storageReference~port~` be `"standard_metadata" . "ingress_port"`.
+ .. Let `value~port~` be `9 W i~port~`.
+ .. Let <<Lvalue_write, `GLOBAL EC~3~ STO |- storageReference~port~ -> value~port~ : EC~4~`>>.
+ .. Result in `EC~4~`.
 
 
 relation V1Model_parser: `EC~0~` and `STO~0~`

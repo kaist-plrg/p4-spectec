@@ -32,3 +32,8 @@ let unwrap_list_v (value : value) : value list =
   match value.it with
   | ListV values -> values
   | _ -> failwith "expected ListV value"
+
+let unwrap_extern_v (value : value) : Yojson.Safe.t =
+  match value.it with
+  | ExternV json -> json
+  | _ -> failwith "expected ExternV value"

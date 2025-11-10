@@ -178,6 +178,10 @@ type rel = id * (mixop * int list) * exp list * instr list * hint list
 (* Functions *)
 
 (* id `<` list(tparam, `,`) `>` list(param, `,`) `:` hint* *)
+type externfunc = id * tparam list * arg list * typ * hint list
+[@@deriving yojson]
+
+(* id `<` list(tparam, `,`) `>` list(param, `,`) `:` hint* *)
 type builtinfunc = id * tparam list * arg list * typ * hint list
 [@@deriving yojson]
 
@@ -197,6 +201,8 @@ and def' =
   | ExternRelD of externrel
   (* `relation` rel *)
   | RelD of rel
+  (* `extern `dec` externfunc *)
+  | ExternDecD of externfunc
   (* `builtin` `dec` builtinfunc *)
   | BuiltinDecD of builtinfunc
   (* `dec` func *)

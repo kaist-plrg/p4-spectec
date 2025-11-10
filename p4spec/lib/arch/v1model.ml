@@ -12,48 +12,6 @@ struct
   let spec : Sim.spec ref = ref Sim.Empty
   let init_spec (spec_ : Sim.spec) : unit = spec := spec_
 
-  (* Extern objects *)
-
-  module Externs = Map.Make (String)
-
-  type extern = PacketIn of Core.PacketIn.t | PacketOut of Core.PacketOut.t
-
-  let externs = ref Externs.empty
-
-  let get_pkt_in () =
-    match Externs.find "packet_in" !externs with
-    | PacketIn pkt_in -> pkt_in
-    | _ -> assert false
-
-  let get_pkt_out () =
-    match Externs.find "packet_out" !externs with
-    | PacketOut pkt_out -> pkt_out
-    | _ -> assert false
-
-  (* Transactions *)
-
-  type checkpoints = extern Externs.t list
-
-  let checkpoints : checkpoints ref = ref []
-  let checkpoint () : unit = checkpoints := !externs :: !checkpoints
-
-  let commit () : unit =
-    match !checkpoints with
-    | _ :: checkpoints_t -> checkpoints := checkpoints_t
-    | [] -> assert false
-
-  let restore () : unit =
-    match !checkpoints with
-    | checkpoint_h :: _ -> externs := checkpoint_h
-    | [] -> assert false
-
-  let rollback () : unit =
-    match !checkpoints with
-    | checkpoint_h :: checkpoints_t ->
-        externs := checkpoint_h;
-        checkpoints := checkpoints_t
-    | [] -> assert false
-
   (* Call entry points *)
 
   let call_rel (relname : string) (expect : int) (values_input : Value.t list) :
@@ -107,43 +65,89 @@ struct
     | Pass (value_output, _) -> value_output
     | Fail (at, msg, _) -> error at msg
 
+  (* Extern objects *)
+
+  type extern = PacketIn of Core.PacketIn.t | PacketOut of Core.PacketOut.t
+  [@@deriving yojson]
+
+  let get_extern (value_sto : Value.t) (value_oid : Value.t) : extern =
+    call_func "find_store_externState" [] [ value_sto; value_oid ]
+    |> unwrap_opt_v |> Option.get |> unwrap_extern_v |> extern_of_yojson
+    |> Result.get_ok
+
+  let get_packet_in (value_sto : Value.t) : Core.PacketIn.t =
+    let value_oid = wrap_list_v "id" [ wrap_text_v "packet_in" ] in
+    match get_extern value_sto value_oid with
+    | PacketIn packet_in -> packet_in
+    | _ -> failwith "expected PacketIn extern"
+
+  let get_packet_out (value_sto : Value.t) : Core.PacketOut.t =
+    let value_oid = wrap_list_v "id" [ wrap_text_v "packet_out" ] in
+    match get_extern value_sto value_oid with
+    | PacketOut packet_out -> packet_out
+    | _ -> failwith "expected PacketOut extern"
+
   (* Extern calls *)
+
+  let eval_extern_init (_values_input : Value.t list) : Value.t =
+    wrap_extern_v "externState" `Null
 
   let eval_extern_func_call (_values_input : Value.t list) : Value.t list =
     failwith "TODO"
 
   let eval_extern_method_call (values_input : Value.t list) : Value.t list =
-    let value_ctx, value_sto, value_oid, value_name, value_names_param =
+    let value_ctx, value_sto, value_oid, value_name_method, value_names_param =
       match values_input with
-      | [ value_ctx; value_sto; value_oid; value_name; value_names_param ] ->
-          (value_ctx, value_sto, value_oid, value_name, value_names_param)
-      | _ -> failwith "Unexpected number of arguments to extern method call"
+      | [
+       value_ctx; value_sto; value_oid; value_name_method; value_names_param;
+      ] ->
+          (value_ctx, value_sto, value_oid, value_name_method, value_names_param)
+      | _ -> failwith "unexpected number of arguments to extern method call"
     in
-    let oid =
-      value_oid |> unwrap_list_v |> List.map unwrap_text_v |> String.concat "."
-    in
-    let extern = Externs.find oid !externs in
-    let name = unwrap_text_v value_name in
+    let extern = get_extern value_sto value_oid in
+    let name_method = unwrap_text_v value_name_method in
     let names_param =
       value_names_param |> unwrap_list_v |> List.map unwrap_text_v
     in
-    match (extern, name, names_param) with
+    match (extern, name_method, names_param) with
     | PacketIn packet_in, "extract", [ "hdr" ] ->
         let packet_in, value_ctx, value_sto, value_callResult =
           Core.PacketIn.extract call_rel_one call_func value_ctx value_sto
             packet_in
         in
-        externs := Externs.add oid (PacketIn packet_in) !externs;
+        let packet_in = PacketIn packet_in in
+        let packet_in_state = extern_to_yojson packet_in in
+        let value_packet_in_state =
+          wrap_extern_v "externState" packet_in_state
+        in
+        let value_sto =
+          call_func "update_store_externState" []
+            [ value_sto; value_oid; value_packet_in_state ]
+          |> unwrap_opt_v |> Option.get
+        in
         [ value_ctx; value_sto; value_callResult ]
     | PacketOut packet_out, "emit", [ "hdr" ] ->
         let packet_out, value_ctx, value_sto, value_callResult =
           Core.PacketOut.emit call_func value_ctx value_sto packet_out
         in
-        externs := Externs.add oid (PacketOut packet_out) !externs;
+        let packet_out = PacketOut packet_out in
+        let packet_out_state = extern_to_yojson packet_out in
+        let value_packet_out_state =
+          wrap_extern_v "externState" packet_out_state
+        in
+        let value_sto =
+          call_func "update_store_externState" []
+            [ value_sto; value_oid; value_packet_out_state ]
+          |> unwrap_opt_v |> Option.get
+        in
         [ value_ctx; value_sto; value_callResult ]
     | _ ->
+        let oid =
+          value_oid |> unwrap_list_v |> List.map unwrap_text_v
+          |> String.concat "."
+        in
         failwith
-          ("Unsupported extern method call: " ^ oid ^ "." ^ name ^ "("
+          ("unsupported extern method call: " ^ oid ^ "." ^ name_method ^ "("
           ^ String.concat ", " names_param
           ^ ")")
 
@@ -170,32 +174,26 @@ struct
   let setup_rx (value_ctx : Value.t) (value_sto : Value.t) (rx : IO.rx) :
       Value.t * Value.t =
     let port_in, packet_in = rx in
-    (* Setup packet_in and packet_out externs *)
-    let value_ctx, value_sto =
-      call_rel_two "V1Model_init_packet" [ value_ctx; value_sto ]
-    in
+    (* Setup packet_in extern *)
     let packet_in = PacketIn (Core.PacketIn.init packet_in) in
-    externs := Externs.add "packet_in" packet_in !externs;
+    let packet_in_state = extern_to_yojson packet_in in
+    let value_packet_in_state = wrap_extern_v "externState" packet_in_state in
+    let value_ctx, value_sto =
+      call_rel_two "V1Model_init_packet_in"
+        [ value_ctx; value_sto; value_packet_in_state ]
+    in
+    (* Setup packet_out extern *)
     let packet_out = PacketOut (Core.PacketOut.init ()) in
-    externs := Externs.add "packet_out" packet_out !externs;
-    (* Setup ingress port *)
-    let value_cursor = [ Term "GLOBAL" ] #@ "cursor" in
-    let value_ref =
-      let value_ref_base =
-        let value_ref_name = wrap_text_v "standard_metadata" in
-        [ Term "`"; NT value_ref_name ] #@ "prefixedNameIR"
-      in
-      let value_field_name = wrap_text_v "ingress_port" in
-      [ NT value_ref_base; Term "."; NT value_field_name ] #@ "storageReference"
+    let packet_out_state = extern_to_yojson packet_out in
+    let value_packet_out_state = wrap_extern_v "externState" packet_out_state in
+    let value_ctx, value_sto =
+      call_rel_two "V1Model_init_packet_out"
+        [ value_ctx; value_sto; value_packet_out_state ]
     in
-    let value_field =
-      let value_width = wrap_num_v_nat 9 in
-      let value_bits = wrap_num_v_int port_in in
-      [ NT value_width; Term "W"; NT value_bits ] #@ "numberLiteral"
-    in
+    (* Setup global variables *)
+    let value_port = wrap_num_v_int port_in in
     let value_ctx =
-      call_rel_one "Lvalue_write"
-        [ value_cursor; value_ctx; value_sto; value_ref; value_field ]
+      call_rel_one "V1Model_init_globals" [ value_ctx; value_sto; value_port ]
     in
     (value_ctx, value_sto)
 
@@ -223,7 +221,7 @@ struct
       Value.t * Value.t * Value.t =
     call_rel_three "V1Model_deparse" [ value_ctx; value_sto ]
 
-  let resulting_port_packet (value_ctx : Value.t) (_value_sto : Value.t) :
+  let resulting_port_packet (value_ctx : Value.t) (value_sto : Value.t) :
       IO.tx option =
     (* Get egress port *)
     let value_cursor = [ Term "GLOBAL" ] #@ "cursor" in
@@ -236,9 +234,11 @@ struct
         [ value_cursor; value_ctx; value_prefixedNameIR ]
     in
     (* Get output packet *)
-    let header = get_pkt_out () |> Format.asprintf "%a" Core.PacketOut.pp in
+    let header =
+      get_packet_out value_sto |> Format.asprintf "%a" Core.PacketOut.pp
+    in
     let payload =
-      get_pkt_in () |> Format.asprintf "%a" Core.PacketIn.pp_payload
+      get_packet_in value_sto |> Format.asprintf "%a" Core.PacketIn.pp_payload
     in
     let packet = header ^ payload in
     Some (0, packet)

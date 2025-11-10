@@ -1452,6 +1452,8 @@ let rec elab_def (ctx : Ctx.t) (def : def) : Ctx.t * Il.Ast.def option =
   | RelD (id, nottyp, hints) -> elab_rel_def ctx at id nottyp hints |> wrap_some
   | RuleGroupD (id_rel, id_rulegroup, rules) ->
       elab_rulegroup_def ctx at id_rel id_rulegroup rules |> wrap_none
+  | ExternDecD (id, tparams, params, plaintyp, hints) ->
+      elab_extern_dec_def ctx at id tparams params plaintyp hints |> wrap_some
   | BuiltinDecD (id, tparams, params, plaintyp, hints) ->
       elab_builtin_dec_def ctx at id tparams params plaintyp hints |> wrap_some
   | DecD (id, tparams, params, plaintyp, hints) ->
@@ -1607,6 +1609,20 @@ and elab_rulegroup_def (ctx : Ctx.t) (at : region) (id_rel : id)
   Ctx.add_defined_rulegroup ctx id_rel rulegroup_il
 
 (* Elaboration of function declarations *)
+
+and elab_extern_dec_def (ctx : Ctx.t) (at : region) (id : id)
+    (tparams : tparam list) (params : param list) (plaintyp : plaintyp)
+    (hints : hint list) : Ctx.t * Il.Ast.def =
+  check
+    (List.map it tparams |> distinct ( = ))
+    id.at "type parameters are not distinct";
+  let ctx_local = ctx in
+  let ctx_local = Ctx.add_tparams ctx_local tparams in
+  let params_il = List.map (elab_param ctx_local) params in
+  let typ_il = elab_plaintyp ctx_local plaintyp in
+  let ctx = Ctx.add_extern_dec ctx id tparams params plaintyp in
+  let def_il = Il.Ast.ExternDecD (id, tparams, params_il, typ_il, hints) $ at in
+  (ctx, def_il)
 
 and elab_builtin_dec_def (ctx : Ctx.t) (at : region) (id : id)
     (tparams : tparam list) (params : param list) (plaintyp : plaintyp)

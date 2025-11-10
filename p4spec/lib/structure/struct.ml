@@ -113,6 +113,8 @@ let rec struct_def (ienv : IEnv.t) (tdenv : TDEnv.t) (def : def) : Sl.Ast.def =
       struct_extern_rel_def at id nottyp inputs hints
   | RelD (id, nottyp, inputs, rulegroups, hints) ->
       struct_defined_rel_def ienv tdenv at id nottyp inputs rulegroups hints
+  | ExternDecD (id, tparams, params, typ, hints) ->
+      struct_extern_dec_def at id tparams params typ hints
   | BuiltinDecD (id, tparams, params, typ, hints) ->
       struct_builtin_dec_def at id tparams params typ hints
   | DecD (id, tparams, _params, typ, clauses, hints) ->
@@ -186,6 +188,29 @@ and struct_defined_rel_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region)
   Sl.Ast.RelD (id_rel, (mixop, inputs), exps_match_unified, instrs, hints) $ at
 
 (* Structuring declaration definitions *)
+
+and struct_extern_dec_def (at : region) (id_dec : id) (tparams : tparam list)
+    (params : param list) (typ : typ) (hints : hint list) : Sl.Ast.def =
+  let args_input, _ =
+    List.fold_left
+      (fun (args_input, frees) param ->
+        let arg_input, frees =
+          match param.it with
+          | ExpP typ ->
+              let exp_input, frees =
+                Elaborate.Fresh.fresh_exp_from_typ frees typ
+              in
+              let arg_input = ExpA exp_input $ param.at in
+              (arg_input, frees)
+          | DefP (id_def, _, _, _) ->
+              let arg_input = DefA id_def $ param.at in
+              (arg_input, frees)
+        in
+        (args_input @ [ arg_input ], frees))
+      ([], IdSet.empty) params
+  in
+  let externfunc = (id_dec, tparams, args_input, typ, hints) in
+  Sl.Ast.ExternDecD externfunc $ at
 
 and struct_builtin_dec_def (at : region) (id_dec : id) (tparams : tparam list)
     (params : param list) (typ : typ) (hints : hint list) : Sl.Ast.def =

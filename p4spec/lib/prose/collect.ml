@@ -37,7 +37,9 @@ let collect_defs (hdb : Hintdb.t) (ienv : IEnv.t) (def : def) :
   | RelD (rid, (_, inputs), _, _, hints) ->
       let ienv = IEnv.add rid inputs ienv in
       (collect_hints (`Rel rid) hdb hints, ienv)
-  | BuiltinDecD (fid, _, _, _, hints) | DecD (fid, _, _, _, _, hints) ->
+  | ExternDecD (fid, _, _, _, hints)
+  | BuiltinDecD (fid, _, _, _, hints)
+  | DecD (fid, _, _, _, _, hints) ->
       (collect_hints (`Func fid) hdb hints, ienv)
 
 let collect_spec (spec : spec) : Hintdb.t * IEnv.t =
