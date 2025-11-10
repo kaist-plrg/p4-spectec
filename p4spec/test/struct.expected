@@ -7060,11 +7060,17 @@ def $bin_shr(value, value')
 
             3. If ((i_l' < (0 as int))), then
 
-              1. (Let i' be $shr_arith(i_l, i_r, ($pow2(w_l) - (1 as int))))
+              1. (Let int be (w_l - 1))
 
-              2. (Let i'' be $int_to_bitstr((w_l as int), i'))
+              2. If ((int has type nat)), then
 
-              3. Return ((w_l s i'') as value)
+                1. (Let w_l' be (int as nat))
+
+                2. (Let i' be $shr_arith(i_l, i_r, $pow2(w_l')))
+
+                3. (Let i'' be $int_to_bitstr((w_l as int), i'))
+
+                4. Return ((w_l s i'') as value)
 
             4. If ((i_l' >= (0 as int))), then
 
@@ -7082,11 +7088,17 @@ def $bin_shr(value, value')
 
             3. If ((i_l' < (0 as int))), then
 
-              1. (Let i' be $shr_arith(i_l, i_r, ($pow2(w_l) - (1 as int))))
+              1. (Let int be (w_l - 1))
 
-              2. (Let i'' be $int_to_bitstr((w_l as int), i'))
+              2. If ((int has type nat)), then
 
-              3. Return ((w_l s i'') as value)
+                1. (Let w_l' be (int as nat))
+
+                2. (Let i' be $shr_arith(i_l, i_r, $pow2(w_l')))
+
+                3. (Let i'' be $int_to_bitstr((w_l as int), i'))
+
+                4. Return ((w_l s i'') as value)
 
             4. If ((i_l' >= (0 as int))), then
 
@@ -7106,11 +7118,17 @@ def $bin_shr(value, value')
 
             4. If ((i_l' < (0 as int))), then
 
-              1. (Let i' be $shr_arith(i_l, i_r, ($pow2(w_l) - (1 as int))))
+              1. (Let int be (w_l - 1))
 
-              2. (Let i'' be $int_to_bitstr((w_l as int), i'))
+              2. If ((int has type nat)), then
 
-              3. Return ((w_l s i'') as value)
+                1. (Let w_l' be (int as nat))
+
+                2. (Let i' be $shr_arith(i_l, i_r, $pow2(w_l')))
+
+                3. (Let i'' be $int_to_bitstr((w_l as int), i'))
+
+                4. Return ((w_l s i'') as value)
 
             5. If ((i_l' >= (0 as int))), then
 
@@ -7120,7 +7138,7 @@ def $bin_shr(value, value')
 
               3. Return ((w_l s i'') as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:245.1-246.23
+;; ../../../../spec-concrete/3-numerics.watsup:248.1-249.23
 def $bin_le(value, value')
 
 1. If ((value has type numberLiteral)), then
@@ -7179,7 +7197,7 @@ def $bin_le(value, value')
 
             3. Return (i_l' <= i_r')
 
-;; ../../../../spec-concrete/3-numerics.watsup:258.1-259.23
+;; ../../../../spec-concrete/3-numerics.watsup:261.1-262.23
 def $bin_ge(value, value')
 
 1. If ((value has type numberLiteral)), then
@@ -7238,7 +7256,7 @@ def $bin_ge(value, value')
 
             3. Return (i_l' >= i_r')
 
-;; ../../../../spec-concrete/3-numerics.watsup:271.1-272.23
+;; ../../../../spec-concrete/3-numerics.watsup:274.1-275.23
 def $bin_lt(value, value')
 
 1. If ((value has type numberLiteral)), then
@@ -7297,7 +7315,7 @@ def $bin_lt(value, value')
 
             3. Return (i_l' < i_r')
 
-;; ../../../../spec-concrete/3-numerics.watsup:284.1-285.23
+;; ../../../../spec-concrete/3-numerics.watsup:287.1-288.23
 def $bin_gt(value, value')
 
 1. If ((value has type numberLiteral)), then
@@ -7356,7 +7374,7 @@ def $bin_gt(value, value')
 
             3. Return (i_l' > i_r')
 
-;; ../../../../spec-concrete/3-numerics.watsup:297.1-298.23
+;; ../../../../spec-concrete/3-numerics.watsup:300.1-301.23
 def $bin_eq(value, value')
 
 1. Case analysis on value
@@ -7541,7 +7559,7 @@ def $bin_eq(value, value')
 
         2. Return ((w_max_a = w_max_b) /\ (i_a = i_b))
 
-;; ../../../../spec-concrete/3-numerics.watsup:299.1-300.23
+;; ../../../../spec-concrete/3-numerics.watsup:302.1-303.23
 def $bin_eqs(value*{value <- value*}, value'*{value' <- value'*})
 
 1. Case analysis on value*{value <- value*}
@@ -7576,7 +7594,7 @@ def $bin_eqs(value*{value <- value*}, value'*{value' <- value'*})
 
       2. Return ($bin_eq(value_a_h, value_b_h) /\ $bin_eqs(value_a_t*{value_a_t <- value_a_t*}, value_b_t*{value_b_t <- value_b_t*}))
 
-;; ../../../../spec-concrete/3-numerics.watsup:301.1-302.23
+;; ../../../../spec-concrete/3-numerics.watsup:304.1-305.23
 def $bin_eqs_fields((value, id)*{(value, id) <- (value, id)*}, (value, id)'*{(value, id)' <- (value, id)'*})
 
 1. Case analysis on (value, id)*{(value, id) <- (value, id)*}
@@ -7611,12 +7629,12 @@ def $bin_eqs_fields((value, id)*{(value, id) <- (value, id)*}, (value, id)'*{(va
 
       2. Return (((id_a_h = id_b_h) /\ $bin_eq(value_a_h, value_b_h)) /\ $bin_eqs_fields((value_a_t, id_a_t)*{id_a_t <- id_a_t*, value_a_t <- value_a_t*}, (value_b_t, id_b_t)*{id_b_t <- id_b_t*, value_b_t <- value_b_t*}))
 
-;; ../../../../spec-concrete/3-numerics.watsup:378.1-379.23
+;; ../../../../spec-concrete/3-numerics.watsup:381.1-382.23
 def $bin_ne(value_l, value_r)
 
 1. Return ~$bin_eq(value_l, value_r)
 
-;; ../../../../spec-concrete/3-numerics.watsup:387.1-388.23
+;; ../../../../spec-concrete/3-numerics.watsup:390.1-391.23
 def $bin_band(value, value')
 
 1. If ((value has type numberLiteral)), then
@@ -7665,7 +7683,7 @@ def $bin_band(value, value')
 
             4. Return ((w s i') as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:401.1-402.23
+;; ../../../../spec-concrete/3-numerics.watsup:404.1-405.23
 def $bin_bxor(value, value')
 
 1. If ((value has type numberLiteral)), then
@@ -7714,7 +7732,7 @@ def $bin_bxor(value, value')
 
             4. Return ((w s i') as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:415.1-416.23
+;; ../../../../spec-concrete/3-numerics.watsup:418.1-419.23
 def $bin_bor(value, value')
 
 1. If ((value has type numberLiteral)), then
@@ -7763,7 +7781,7 @@ def $bin_bor(value, value')
 
             4. Return ((w s i') as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:429.1-430.23
+;; ../../../../spec-concrete/3-numerics.watsup:432.1-433.23
 def $bin_concat(value, value')
 
 1. If ((value has type numberLiteral)), then
@@ -7852,7 +7870,7 @@ def $bin_concat(value, value')
 
             7. Return ((w s i''') as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:459.1-460.23
+;; ../../../../spec-concrete/3-numerics.watsup:462.1-463.23
 def $bin_land(value, value')
 
 1. If ((value has type primitiveValue)), then
@@ -7873,7 +7891,7 @@ def $bin_land(value, value')
 
         2. Return ((b (b_l /\ b_r)) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:466.1-467.23
+;; ../../../../spec-concrete/3-numerics.watsup:469.1-470.23
 def $bin_lor(value, value')
 
 1. If ((value has type primitiveValue)), then
@@ -7894,7 +7912,7 @@ def $bin_lor(value, value')
 
         2. Return ((b (b_l \/ b_r)) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:475.1-477.40
+;; ../../../../spec-concrete/3-numerics.watsup:478.1-480.40
 def $cast_op(typeIR, value'')
 
 1. Case analysis on value''
@@ -8005,12 +8023,12 @@ def $cast_op(typeIR, value'')
 
         2. Return $cast_set_range(typeIR, value_l, value_u)
 
-;; ../../../../spec-concrete/3-numerics.watsup:479.1-480.49
+;; ../../../../spec-concrete/3-numerics.watsup:482.1-483.49
 def $default(typeIR)
 
 1. Return $default'($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/3-numerics.watsup:481.1-482.49
+;; ../../../../spec-concrete/3-numerics.watsup:484.1-485.49
 def $default'(typeIR'')
 
 1. Case analysis on typeIR''
@@ -8131,12 +8149,12 @@ def $default'(typeIR'')
 
           2. Return ((tid . id_zero . value_zero) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:486.1-487.23
+;; ../../../../spec-concrete/3-numerics.watsup:489.1-490.23
 def $cast_bool(typeIR, b)
 
 1. Return $cast_bool'($canon_typeIR(typeIR), b)
 
-;; ../../../../spec-concrete/3-numerics.watsup:488.1-489.23
+;; ../../../../spec-concrete/3-numerics.watsup:491.1-492.23
 def $cast_bool'(typeIR'', b')
 
 1. Case analysis on typeIR''
@@ -8173,12 +8191,12 @@ def $cast_bool'(typeIR'', b')
 
     2. Return $cast_bool(typeIR, b')
 
-;; ../../../../spec-concrete/3-numerics.watsup:502.1-503.23
+;; ../../../../spec-concrete/3-numerics.watsup:505.1-506.23
 def $cast_arbint(typeIR, i)
 
 1. Return $cast_arbint'($canon_typeIR(typeIR), i)
 
-;; ../../../../spec-concrete/3-numerics.watsup:504.1-505.23
+;; ../../../../spec-concrete/3-numerics.watsup:507.1-508.23
 def $cast_arbint'(typeIR''', i)
 
 1. Case analysis on typeIR'''
@@ -8229,12 +8247,12 @@ def $cast_arbint'(typeIR''', i)
 
       2. Return ((set{ $cast_arbint(typeIR, i) }) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:520.1-521.23
+;; ../../../../spec-concrete/3-numerics.watsup:523.1-524.23
 def $cast_fixbit(typeIR, w, i)
 
 1. Return $cast_fixbit'($canon_typeIR(typeIR), w, i)
 
-;; ../../../../spec-concrete/3-numerics.watsup:522.1-523.23
+;; ../../../../spec-concrete/3-numerics.watsup:525.1-526.23
 def $cast_fixbit'(typeIR''', w', i)
 
 1. Case analysis on typeIR'''
@@ -8289,12 +8307,12 @@ def $cast_fixbit'(typeIR''', w', i)
 
       2. Return ((set{ $cast_fixbit(typeIR, w', i) }) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:540.1-541.23
+;; ../../../../spec-concrete/3-numerics.watsup:543.1-544.23
 def $cast_fixint(typeIR, w, i)
 
 1. Return $cast_fixint'($canon_typeIR(typeIR), w, i)
 
-;; ../../../../spec-concrete/3-numerics.watsup:542.1-543.23
+;; ../../../../spec-concrete/3-numerics.watsup:545.1-546.23
 def $cast_fixint'(typeIR''', w', i)
 
 1. Case analysis on typeIR'''
@@ -8341,12 +8359,12 @@ def $cast_fixint'(typeIR''', w', i)
 
       2. Return ((set{ $cast_fixint(typeIR, w', i) }) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:559.1-560.23
+;; ../../../../spec-concrete/3-numerics.watsup:562.1-563.23
 def $cast_struct(typeIR, tid, (value_field, id_field)*{id_field <- id_field*, value_field <- value_field*})
 
 1. Return $cast_struct'($canon_typeIR(typeIR), tid, (value_field, id_field)*{id_field <- id_field*, value_field <- value_field*})
 
-;; ../../../../spec-concrete/3-numerics.watsup:561.1-562.23
+;; ../../../../spec-concrete/3-numerics.watsup:564.1-565.23
 def $cast_struct'(typeIR, tid', (value_field, id_field)*{id_field <- id_field*, value_field <- value_field*})
 
 1. If ((typeIR has type structTypeIR)), then
@@ -8357,12 +8375,12 @@ def $cast_struct'(typeIR, tid', (value_field, id_field)*{id_field <- id_field*, 
 
     1. Return ((struct tid { (value_field id_field ;)*{id_field <- id_field*, value_field <- value_field*} }) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:575.1-576.23
+;; ../../../../spec-concrete/3-numerics.watsup:578.1-579.23
 def $cast_header(typeIR, tid, b, (value_field, id_field)*{id_field <- id_field*, value_field <- value_field*})
 
 1. Return $cast_header'($canon_typeIR(typeIR), tid, b, (value_field, id_field)*{id_field <- id_field*, value_field <- value_field*})
 
-;; ../../../../spec-concrete/3-numerics.watsup:577.1-578.23
+;; ../../../../spec-concrete/3-numerics.watsup:580.1-581.23
 def $cast_header'(typeIR, tid', b, (value_field, id_field)*{id_field <- id_field*, value_field <- value_field*})
 
 1. If ((typeIR has type headerTypeIR)), then
@@ -8373,12 +8391,12 @@ def $cast_header'(typeIR, tid', b, (value_field, id_field)*{id_field <- id_field
 
     1. Return ((header tid { b ; (value_field id_field ;)*{id_field <- id_field*, value_field <- value_field*} }) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:595.1-596.23
+;; ../../../../spec-concrete/3-numerics.watsup:598.1-599.23
 def $cast_sequence(typeIR, value*{value <- value*})
 
 1. Return $cast_sequence'($canon_typeIR(typeIR), value*{value <- value*})
 
-;; ../../../../spec-concrete/3-numerics.watsup:597.1-598.23
+;; ../../../../spec-concrete/3-numerics.watsup:600.1-601.23
 def $cast_sequence'(typeIR'', value*{value <- value*})
 
 1. Case analysis on typeIR''
@@ -8421,12 +8439,12 @@ def $cast_sequence'(typeIR'', value*{value <- value*})
 
     3. Return ((header tid { true ; (value_cast id_field ;)*{id_field <- id_field*, value_cast <- value_cast*} }) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:628.1-629.23
+;; ../../../../spec-concrete/3-numerics.watsup:631.1-632.23
 def $cast_record(typeIR, (value, id)*{id <- id*, value <- value*})
 
 1. Return $cast_record'($canon_typeIR(typeIR), (value, id)*{id <- id*, value <- value*})
 
-;; ../../../../spec-concrete/3-numerics.watsup:630.1-631.23
+;; ../../../../spec-concrete/3-numerics.watsup:633.1-634.23
 def $cast_record'(typeIR, (value_field, id_field)*{id_field <- id_field*, value_field <- value_field*})
 
 1. Case analysis on typeIR
@@ -8459,12 +8477,12 @@ def $cast_record'(typeIR, (value_field, id_field)*{id_field <- id_field*, value_
 
       3. Return ((header tid { true ; (value_field_cast id_field ;)*{id_field <- id_field*, value_field_cast <- value_field_cast*} }) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:667.1-668.23
+;; ../../../../spec-concrete/3-numerics.watsup:670.1-671.23
 def $cast_set_singleton(typeIR, value)
 
 1. Return $cast_set_singleton'($canon_typeIR(typeIR), value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:669.1-670.23
+;; ../../../../spec-concrete/3-numerics.watsup:672.1-673.23
 def $cast_set_singleton'(typeIR'', value)
 
 1. If ((typeIR'' has type setTypeIR)), then
@@ -8477,12 +8495,12 @@ def $cast_set_singleton'(typeIR'', value)
 
     2. Return ((set{ $cast_op(typeIR, value) }) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:678.1-679.23
+;; ../../../../spec-concrete/3-numerics.watsup:681.1-682.23
 def $cast_set_mask(typeIR, value_b, value_m)
 
 1. Return $cast_set_mask'($canon_typeIR(typeIR), value_b, value_m)
 
-;; ../../../../spec-concrete/3-numerics.watsup:680.1-681.23
+;; ../../../../spec-concrete/3-numerics.watsup:683.1-684.23
 def $cast_set_mask'(typeIR'', value_b, value_m)
 
 1. If ((typeIR'' has type setTypeIR)), then
@@ -8499,12 +8517,12 @@ def $cast_set_mask'(typeIR'', value_b, value_m)
 
     4. Return ((set{ value_b_cast &&& value_m_cast }) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:691.1-692.23
+;; ../../../../spec-concrete/3-numerics.watsup:694.1-695.23
 def $cast_set_range(typeIR, value_l, value_u)
 
 1. Return $cast_set_range'($canon_typeIR(typeIR), value_l, value_u)
 
-;; ../../../../spec-concrete/3-numerics.watsup:693.1-694.23
+;; ../../../../spec-concrete/3-numerics.watsup:696.1-697.23
 def $cast_set_range'(typeIR'', value_l, value_u)
 
 1. If ((typeIR'' has type setTypeIR)), then
@@ -8521,7 +8539,7 @@ def $cast_set_range'(typeIR'', value_l, value_u)
 
     4. Return ((set{ value_l_cast .. value_u_cast }) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:759.1-760.23
+;; ../../../../spec-concrete/3-numerics.watsup:762.1-763.23
 def $bitacc_op(value_b, value_h, value_l)
 
 1. (Let i_b be $to_int(value_b))
@@ -8540,7 +8558,7 @@ def $bitacc_op(value_b, value_h, value_l)
 
   3. Return ((w w i) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:773.1-774.23
+;; ../../../../spec-concrete/3-numerics.watsup:776.1-777.23
 def $sizeof(typeIR, text)
 
 1. Case analysis on text
@@ -8561,17 +8579,17 @@ def $sizeof(typeIR, text)
 
     1. Return $sizeof_maxSizeInBytes(typeIR)
 
-;; ../../../../spec-concrete/3-numerics.watsup:776.1-777.23
+;; ../../../../spec-concrete/3-numerics.watsup:779.1-780.23
 def $sizeof_minSizeInBits(typeIR)
 
 1. Return ((d ($sizeof_minSizeInBits'(typeIR) as int)) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:778.1-779.23
+;; ../../../../spec-concrete/3-numerics.watsup:781.1-782.23
 def $sizeof_minSizeInBits'(typeIR)
 
 1. Return $sizeof_minSizeInBits''($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/3-numerics.watsup:780.1-781.23
+;; ../../../../spec-concrete/3-numerics.watsup:783.1-784.23
 def $sizeof_minSizeInBits''(typeIR'')
 
 1. Case analysis on typeIR''
@@ -8654,24 +8672,24 @@ def $sizeof_minSizeInBits''(typeIR'')
 
     2. Return $min($sizeof_minSizeInBits'(typeIR)*{typeIR <- typeIR*})
 
-;; ../../../../spec-concrete/3-numerics.watsup:783.1-784.23
+;; ../../../../spec-concrete/3-numerics.watsup:786.1-787.23
 def $sizeof_minSizeInBytes(typeIR)
 
 1. (Let n_size be $sizeof_minSizeInBits'(typeIR))
 
 2. Return ((d ((n_size / 8) as int)) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:786.1-787.23
+;; ../../../../spec-concrete/3-numerics.watsup:789.1-790.23
 def $sizeof_maxSizeInBits(typeIR)
 
 1. Return ((d ($sizeof_maxSizeInBits'(typeIR) as int)) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:788.1-789.23
+;; ../../../../spec-concrete/3-numerics.watsup:791.1-792.23
 def $sizeof_maxSizeInBits'(typeIR)
 
 1. Return $sizeof_maxSizeInBits''($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/3-numerics.watsup:790.1-791.23
+;; ../../../../spec-concrete/3-numerics.watsup:793.1-794.23
 def $sizeof_maxSizeInBits''(typeIR'')
 
 1. Case analysis on typeIR''
@@ -8754,7 +8772,7 @@ def $sizeof_maxSizeInBits''(typeIR'')
 
     2. Return $max($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
 
-;; ../../../../spec-concrete/3-numerics.watsup:793.1-794.23
+;; ../../../../spec-concrete/3-numerics.watsup:796.1-797.23
 def $sizeof_maxSizeInBytes(typeIR)
 
 1. (Let n_size be $sizeof_maxSizeInBits'(typeIR))
