@@ -30,7 +30,7 @@ let rewriter_call_e ids_used (call_e_count : call_e_count) (exp : exp) :
       match exp.it with
       | CallE (_, _, []) -> None
       | CallE (_funcprose, _targs, args) ->
-          let exp_new, var_new =
+          let exp_new, var_new, ids_used =
             Transform.fresh_exp_from_typ ids_used (exp.note $ exp.at)
           in
           let iter_state : iter_state =
@@ -41,6 +41,7 @@ let rewriter_call_e ids_used (call_e_count : call_e_count) (exp : exp) :
               iterexps = [];
               exp_orig = exp;
               exp_new;
+              ids_used;
             }
           in
           Some (exp_new, iter_state)
@@ -50,11 +51,11 @@ let rewriter_call_e ids_used (call_e_count : call_e_count) (exp : exp) :
 let transformer_call_e ids_used =
   Transform.transform_first_with_iters (rewriter_call_e ids_used) count_call_e
 
-let replace_call_exp (ids_used : IdSet.t) exp : (instr * exp) option =
+let replace_call_exp (ids_used : IdSet.t) exp : (instr * exp * IdSet.t) option =
   (* Builds the new assignment instruction with the returned state *)
   match transformer_call_e ids_used No exp with
   | Some (exp_new_full, iter_state) ->
-      let { var_new; iterexps; exp_orig; exp_new; _ } = iter_state in
+      let { var_new; iterexps; exp_orig; exp_new; ids_used; _ } = iter_state in
       let id, typ, iters = var_new in
       (* drops the original iterators in exp_new *)
       let iters_enclosing =
@@ -79,24 +80,29 @@ let replace_call_exp (ids_used : IdSet.t) exp : (instr * exp) option =
           iter_combined
       in
       let instr_let = LetI (exp_new, exp_orig, iterexps_instr) $ no_region in
-      Some (instr_let, exp_new_full)
+      Some (instr_let, exp_new_full, ids_used)
   | None -> None
 
 let expand_nested_calls ids_used instrs =
   match instrs with
   | { it = LetI (exp_l, exp_r, iterexps); at; _ } :: instrs_rest ->
-      let* instr_new, exp_r' = replace_call_exp ids_used exp_r in
-      Some ([ instr_new; LetI (exp_l, exp_r', iterexps) $ at ], instrs_rest)
+      let* instr_new, exp_r', ids = replace_call_exp ids_used exp_r in
+      Some (ids, [ instr_new; LetI (exp_l, exp_r', iterexps) $ at ], instrs_rest)
   | _ -> None
 
-type 'ctx expansion = 'ctx -> instr list -> (instr list * instr list) option
+type 'ctx expansion =
+  'ctx -> instr list -> ('ctx * instr list * instr list) option
 
 let rec expand_with_context (ctx : 'ctx) (expansion : 'ctx expansion)
-    (instrs : instr list) : instr list =
+    (instrs : instr list) : 'ctx * instr list =
   match instrs with
-  | [] -> []
+  | [] -> (ctx, [])
   | instr_h :: instrs_t -> (
       match expansion ctx instrs with
-      | Some (expanded_instrs, instrs_rest) ->
-          expanded_instrs @ expand_with_context ctx expansion instrs_rest
-      | None -> instr_h :: expand_with_context ctx expansion instrs_t)
+      | Some (ctx_upd, expanded_instrs, instrs_rest) ->
+          expand_with_context ctx_upd expansion (expanded_instrs @ instrs_rest)
+      | None ->
+          let ctx, instrs_t_expanded =
+            expand_with_context ctx expansion instrs_t
+          in
+          (ctx, instr_h :: instrs_t_expanded))

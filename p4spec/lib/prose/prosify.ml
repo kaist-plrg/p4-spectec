@@ -417,7 +417,7 @@ and prosify_instr ctx instr : Pl.Ast.instr list =
   | DebugI _ -> []
 
 and prosify_instrs ctx (instrs : instr list) : Pl.Ast.instr list =
-  let instrs =
+  let _, instrs =
     Expand.expand_with_context ctx.free_ids Expand.expand_nested_calls instrs
   in
   let num_if_instrs =

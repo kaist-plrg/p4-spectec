@@ -20,6 +20,7 @@ type iter_state = {
   iterexps : iterexp list;
   exp_orig : exp;
   exp_new : exp;
+  ids_used : IdSet.t;
 }
 
 let transform_list (f_transform_opt : 'a -> ('a * iter_state) option)
@@ -414,12 +415,12 @@ let transform_first_with_iters
   in
   transform_exp acc e
 
-let fresh_exp_from_typ (ids : IdSet.t) (typ : typ) : exp * var =
+let fresh_exp_from_typ (ids : IdSet.t) (typ : typ) : exp * var * IdSet.t =
   let id_base, typ_base, iters =
     Elaborate.Fresh.fresh_var_from_typ ids typ.at typ
   in
   let var_new = (id_base, typ_base, iters) in
-  (* let ids = IdSet.add id_base ids in *)
+  let ids = IdSet.add id_base ids in
   let exp_base = VarE id_base $$ (typ_base.at, typ_base.it) in
   let exp_match, _ =
     List.fold_left
@@ -431,4 +432,4 @@ let fresh_exp_from_typ (ids : IdSet.t) (typ : typ) : exp * var =
         (exp_match, iters @ [ iter ]))
       (exp_base, []) iters
   in
-  (exp_match, var_new)
+  (exp_match, var_new, ids)
