@@ -1,7 +1,5 @@
 open Ast
 open Util.Source
-open Domain.Lib
-open Transform
 module F = Format
 
 type shorthand = instr list -> (instr list * instr list) option
@@ -31,88 +29,6 @@ let option_get instrs =
     when Eq.eq_exp exp_opt exp_r ->
       Some ([ OptionGetI (exp_l, exp_call) $ at ], instrs_rest)
   | _ -> None
-
-(** Replaces first CallE (pre-order) in exp,
-
-    returns:
-
-    1) the new instruction to be prepended
-
-    2) the rewritten expression *)
-
-type call_e_count = Yes | No | SkipOne
-
-let count_call_e (seen_calls : call_e_count) e =
-  match e.it with
-  | CallE _ -> ( match seen_calls with No -> SkipOne | _ -> Yes)
-  | IterE _ -> seen_calls
-  | _ -> Yes
-
-(* Transformer takes a CallE and rewrites it to exp_new, while initializing accumulated data *)
-let rewriter_call_e ids_used (call_e_count : call_e_count) (exp : exp) :
-    (exp * iter_state) option =
-  match call_e_count with
-  | Yes -> (
-      match exp.it with
-      | CallE (_funcprose, _targs, args) ->
-          let exp_new, var_new =
-            Transform.fresh_exp_from_typ ids_used (exp.note $ exp.at)
-          in
-          let iter_state : iter_state =
-            {
-              vars_inner = Free.Vars.free_args args;
-              vars_outer = Free.VarSet.empty;
-              var_new;
-              iterexps = [];
-              exp_orig = exp;
-            }
-          in
-          Some (exp_new, iter_state)
-      | _ -> None)
-  | _ -> None
-
-let transformer_call_e ids_used =
-  Transform.transform_first_with_iters (rewriter_call_e ids_used) count_call_e
-
-let replace_call_exp (ids_used : IdSet.t) exp : (instr * exp) option =
-  (* Builds the new assignment instruction with the returned state *)
-  match transformer_call_e ids_used No exp with
-  | Some (exp_new, iter_state) ->
-      let { var_new; iterexps; exp_orig; _ } = iter_state in
-      let id, typ, iters = var_new in
-      let instr_let = LetI (exp_new, exp_orig) $ no_region in
-      (* drops the original iterators in exp_new *)
-      let iters_enclosing =
-        List.drop (List.length iterexps - List.length iters) iters
-      in
-      let iter_combined = List.combine iters_enclosing iterexps in
-      let instr_iterated, _ =
-        List.fold_left
-          (fun (instr, var_new) (iter_new, iterexp) ->
-            (* itervars_out: each iteration layer of var_new *)
-            let itervars_out = [ var_new ] in
-            let var_new =
-              let id, typ, iters = var_new in
-              (id, typ, iters @ [ iter_new ])
-            in
-            (* itervars_in: each layer of iterexp *)
-            let iter_in, itervars_in = iterexp in
-            assert (iter_in = iter_new);
-            let instr =
-              ForEachI (itervars_out, instr, itervars_in) $ no_region
-            in
-            (instr, var_new))
-          (instr_let, (id, typ, []))
-          iter_combined
-      in
-      Some (instr_iterated, exp)
-  | None -> None
-
-(* let expand_nested_calls ids_used instrs = *)
-(*   match instrs with *)
-(*   | { it = LetI (exp_l, exp_r); at; _ } :: instrs_rest *)
-(*     -> *)
-(*   | _ -> None *)
 
 let rec apply_shorthand (shorthand : shorthand) (instrs : instr list) :
     instr list =

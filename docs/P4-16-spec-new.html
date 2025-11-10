@@ -5566,7 +5566,13 @@ tupleValue
 <p>Let <code>typeIR<sub>arg</sub><sup>*</sup></code> and <code>tid<sub>fresh</sub><sup>*</sup></code> be the result of <a href="#TypeArguments_ok">typing <code>typeArgument<sup>*</sup></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>i<sub>idx</sub><sup>*</sup></code> be <code><a href="#init_">$init_(the length of typeIR<sub>arg</sub><sup>*</sup>)</a></code>.</p>
+<p>Let <code>nat<sup>*</sup></code> be <a href="#init_">the list of the first the length of <code>typeIR<sub>arg</sub><sup>*</sup></code> natural numbers</a>.</p>
+</li>
+<li>
+<p>Let <code>i<sub>idx</sub><sup>*</sup></code> be <code>nat<sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Let <code>text</code> be <code><a href="#int_to_text">$int_to_text(i<sub>idx</sub>)</a></code>.</p>
 </li>
 <li>
 <p>Let <code>tid<sub>tparam</sub><sup>*</sup></code> be the list of <code>tid<sub>tparam</sub></code>, obtained by repeating:</p>
@@ -5575,7 +5581,7 @@ tupleValue
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>tid<sub>tparam</sub></code> be <code>"T" &#43;&#43; <a href="#int_to_text">$int_to_text(i<sub>idx</sub>)</a></code>.</p>
+<p>Let <code>tid<sub>tparam</sub></code> be <code>"T" &#43;&#43; text</code>.</p>
 </li>
 </ul>
 </div>
@@ -8863,7 +8869,10 @@ rule Parameter_ok/initializer:
 <p>Let <code>typeIR</code> and <code>tid<sub>fresh</sub><sup>*</sup></code> be the result of <a href="#Type_ok">typing <code>type</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>bound</code> be <a href="#union_set">the union of the sets <code>$bound(p, TC)</code> and <code>{ tid<sub>fresh</sub><sup>*</sup> }</code></a>.</p>
+<p>Let <code>bound'</code> be <code><a href="#bound">$bound(p, TC)</a></code>.</p>
+</li>
+<li>
+<p>Let <code>bound</code> be <a href="#union_set">the union of the sets <code>bound'</code> and <code>{ tid<sub>fresh</sub><sup>*</sup> }</code></a>.</p>
 </li>
 <li>
 <p>Check that <a href="#Type_wf"><code>typeIR</code> is a well-formed type, assuming bound type ids <code>bound</code></a>.</p>
@@ -8885,7 +8894,10 @@ rule Parameter_ok/initializer:
 <p>Let <code>typeIR</code> and <code>tid<sub>fresh</sub><sup>*</sup></code> be the result of <a href="#Type_ok">typing <code>type</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>bound</code> be <a href="#union_set">the union of the sets <code>$bound(p, TC)</code> and <code>{ tid<sub>fresh</sub><sup>*</sup> }</code></a>.</p>
+<p>Let <code>bound'</code> be <code><a href="#bound">$bound(p, TC)</a></code>.</p>
+</li>
+<li>
+<p>Let <code>bound</code> be <a href="#union_set">the union of the sets <code>bound'</code> and <code>{ tid<sub>fresh</sub><sup>*</sup> }</code></a>.</p>
 </li>
 <li>
 <p>Check that <a href="#Type_wf"><code>typeIR</code> is a well-formed type, assuming bound type ids <code>bound</code></a>.</p>
@@ -15563,7 +15575,10 @@ rule Decl_ok/typedefDeclaration-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>derivedTypeDeclarationIR</code> be <code>declarationIR</code>.</p>
 </li>
 <li>
-<p>Let <code>{ tid'<sup>*</sup> }</code> be <a href="#diff_set">the difference of the sets the domain of the map <code>TC<sub>1</sub>.GLOBAL.TYPE</code> and the domain of the map <code>TC<sub>0</sub>.GLOBAL.TYPE</code></a>.</p>
+<p>Let <code>set&lt;tid&gt;</code> be <a href="#dom_map">the domain of the map <code>TC<sub>1</sub>.GLOBAL.TYPE</code></a>.</p>
+</li>
+<li>
+<p>Let <code>{ tid'<sup>*</sup> }</code> be <a href="#diff_set">the difference of the sets <code>set&lt;tid&gt;</code> and the domain of the map <code>TC<sub>0</sub>.GLOBAL.TYPE</code></a>.</p>
 </li>
 <li>
 <p>Check that <code>tid'<sup>*</sup></code> is a list of length 1.</p>
@@ -15707,7 +15722,10 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <p>Let <a href="#Decl_inst"><code>GLOBAL IC<sub>0</sub> &lt;&lt;empty_store, $empty_store</a> |- derivedTypeDeclarationIR =&#8658; IC<sub>local</sub> _ _<sup>?</sup></code>&gt;&gt;.</p>
 </li>
 <li>
-<p>Let <code>{ tid<sup>*</sup> }</code> be <a href="#diff_set">the difference of the sets the domain of the map <code>IC<sub>local</sub>.GLOBAL.TYPE</code> and the domain of the map <code>IC<sub>0</sub>.GLOBAL.TYPE</code></a>.</p>
+<p>Let <code>set&lt;tid&gt;</code> be <a href="#dom_map">the domain of the map <code>IC<sub>local</sub>.GLOBAL.TYPE</code></a>.</p>
+</li>
+<li>
+<p>Let <code>{ tid<sup>*</sup> }</code> be <a href="#diff_set">the difference of the sets <code>set&lt;tid&gt;</code> and the domain of the map <code>IC<sub>0</sub>.GLOBAL.TYPE</code></a>.</p>
 </li>
 <li>
 <p>Check that <code>tid<sup>*</sup></code> is a list of length 1.</p>
@@ -19778,7 +19796,10 @@ rule SwitchCase_table_ok/non-blockStatement:
 <p>Let <code>TABLE_ENUM tid<sub>table_enum</sub> { _<sup>*</sup> }</code> be <code>tableMetadataTypeIR</code>.</p>
 </li>
 <li>
-<p>Let <code>tid<sub>table</sub></code> be <a href="#strip_prefix">the text the text <code>tid<sub>table_enum</sub></code> with the suffix <code>")"</code> removed with the prefix <code>"action_list("</code> removed</a>.</p>
+<p>Let <code>text</code> be <a href="#strip_suffix">the text <code>tid<sub>table_enum</sub></code> with the suffix <code>")"</code> removed</a>.</p>
+</li>
+<li>
+<p>Let <code>tid<sub>table</sub></code> be <a href="#strip_prefix">the text <code>text</code> with the prefix <code>"action_list("</code> removed</a>.</p>
 </li>
 <li>
 <p>Let <code>switchCase<sup>*</sup></code> be <a href="#flatten_switchCaseList">the list of switch cases in <code>switchCaseList</code></a>.</p>

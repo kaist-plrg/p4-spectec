@@ -1,5 +1,5 @@
 open Domain.Lib
-open Ast
+open Il.Ast
 open Fold
 open Util.Source
 
@@ -28,7 +28,7 @@ module Ids = struct
       f_SubE = (fun _ _ set _ -> set);
       f_MatchE = (fun _ _ set _ -> set);
       f_TupleE = (fun _ _ sets -> sets |> List.fold_left ( + ) empty);
-      f_CaseE = (fun _ _ _ _ sets _ -> sets |> List.fold_left ( + ) empty);
+      f_CaseE = (fun _ _ _ sets -> sets |> List.fold_left ( + ) empty);
       f_StrE =
         (fun _ _ set_fields ->
           set_fields |> List.map snd |> List.fold_left ( + ) empty);
@@ -65,7 +65,7 @@ module Ids = struct
 end
 
 module Var = struct
-  type t = itervar
+  type t = var
 
   let to_string t = Il.Print.string_of_var t
 
@@ -114,7 +114,7 @@ module Vars = struct
       f_SubE = (fun _ _ set _ -> set);
       f_MatchE = (fun _ _ set _ -> set);
       f_TupleE = (fun _ _ sets -> sets |> List.fold_left ( + ) empty);
-      f_CaseE = (fun _ _ _ _ sets _ -> sets |> List.fold_left ( + ) empty);
+      f_CaseE = (fun _ _ _ sets -> sets |> List.fold_left ( + ) empty);
       f_StrE =
         (fun _ _ set_fields ->
           set_fields |> List.map snd |> List.fold_left ( + ) empty);

@@ -79,7 +79,7 @@ module PacketIn = struct
   let extract call_rel_one call_func (value_ctx : Value.t) (value_sto : Value.t)
       (pkt : t) : t * Value.t * Value.t * Value.t =
     (* Get "T" *)
-    let value_cursor = [ Term "LOCAL" ] #@ "cursor" in
+    let value_cursor = [ Term "LOCAL" ]#@"cursor" in
     let value_nameIR = wrap_text_v "T" in
     let value_typ =
       call_func "find_type_eval" [] [ value_cursor; value_ctx; value_nameIR ]
@@ -96,7 +96,7 @@ module PacketIn = struct
     let pkt, bits = parse pkt (Bigint.to_int_exn size) in
     let value_prefixedNameIR =
       let value_nameIR = wrap_text_v "hdr" in
-      [ Term "`"; NT value_nameIR ] #@ "prefixedNameIR"
+      [ Term "`"; NT value_nameIR ]#@"prefixedNameIR"
     in
     let value_hdr =
       call_func "find_value_eval" []
@@ -117,7 +117,7 @@ module PacketIn = struct
     (* Create call result *)
     let value_callResult =
       let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      [ Term "RETURN"; NT value_eps ]#@"returnResult"
     in
     (pkt, value_ctx, value_sto, value_callResult)
 
@@ -165,10 +165,10 @@ module PacketOut = struct
   let emit call_func (value_ctx : Value.t) (value_sto : Value.t) (pkt : t) :
       t * Value.t * Value.t * Value.t =
     (* Get "hdr" in context *)
-    let value_cursor = [ Term "LOCAL" ] #@ "cursor" in
+    let value_cursor = [ Term "LOCAL" ]#@"cursor" in
     let value_prefixedNameIR =
       let value_nameIR = wrap_text_v "hdr" in
-      [ Term "`"; NT value_nameIR ] #@ "prefixedNameIR"
+      [ Term "`"; NT value_nameIR ]#@"prefixedNameIR"
     in
     let value_hdr =
       call_func "find_value_eval" []
@@ -183,7 +183,7 @@ module PacketOut = struct
     (* Create call result *)
     let value_callResult =
       let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      [ Term "RETURN"; NT value_eps ]#@"returnResult"
     in
     (pkt, value_ctx, value_sto, value_callResult)
 end

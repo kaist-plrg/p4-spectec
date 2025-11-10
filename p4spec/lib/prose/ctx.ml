@@ -15,12 +15,21 @@ type t = {
   cond_style : cond_style option;
   (* current relation ID, for ResultI *)
   def : parent_def;
+  (* used identifiers *)
+  free_ids : IdSet.t;
 }
 
 (* Helper functions for context manipulation *)
 
 let create ?(hintdb = Hintdb.empty) ?(ienv = IEnv.empty) () : t =
-  { hintdb; ienv; neg = false; cond_style = None; def = None }
+  {
+    hintdb;
+    ienv;
+    neg = false;
+    cond_style = None;
+    def = None;
+    free_ids = IdSet.empty;
+  }
 
 let init spec_sl : t =
   let hintdb, ienv = Collect.collect_spec spec_sl in
@@ -31,6 +40,7 @@ let clear_cond ctx = { ctx with cond_style = None }
 let negate ctx = { ctx with neg = not ctx.neg }
 let as_bool b ctx = { ctx with neg = b }
 let in_rel r ctx = { ctx with def = Relation r }
+let with_free f ctx = { ctx with free_ids = f }
 
 let get_rel_id ctx =
   match ctx.def with Relation r -> r | None -> failwith "Not in relation"

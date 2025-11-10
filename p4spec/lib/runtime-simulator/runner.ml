@@ -86,7 +86,8 @@ module Make
       (stmts_stf : Stf.Ast.stmt list) : bool =
     let _, _, pass, queue_packet, queue_expect =
       List.fold_left
-        (fun (value_ctx, value_sto, pass, queue_packet, queue_expect) stmt_stf ->
+        (fun (value_ctx, value_sto, pass, queue_packet, queue_expect) stmt_stf
+           ->
           run_stf_stmt value_ctx value_sto pass queue_packet queue_expect
             stmt_stf)
         (value_ctx, value_sto, true, [], [])

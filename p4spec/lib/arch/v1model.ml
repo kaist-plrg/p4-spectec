@@ -179,19 +179,19 @@ struct
     let packet_out = PacketOut (Core.PacketOut.init ()) in
     externs := Externs.add "packet_out" packet_out !externs;
     (* Setup ingress port *)
-    let value_cursor = [ Term "GLOBAL" ] #@ "cursor" in
+    let value_cursor = [ Term "GLOBAL" ]#@"cursor" in
     let value_ref =
       let value_ref_base =
         let value_ref_name = wrap_text_v "standard_metadata" in
-        [ Term "`"; NT value_ref_name ] #@ "prefixedNameIR"
+        [ Term "`"; NT value_ref_name ]#@"prefixedNameIR"
       in
       let value_field_name = wrap_text_v "ingress_port" in
-      [ NT value_ref_base; Term "."; NT value_field_name ] #@ "storageReference"
+      [ NT value_ref_base; Term "."; NT value_field_name ]#@"storageReference"
     in
     let value_field =
       let value_width = wrap_num_v_nat 9 in
       let value_bits = wrap_num_v_int port_in in
-      [ NT value_width; Term "W"; NT value_bits ] #@ "numberLiteral"
+      [ NT value_width; Term "W"; NT value_bits ]#@"numberLiteral"
     in
     let value_ctx =
       call_rel_one "Lvalue_write"
@@ -226,10 +226,10 @@ struct
   let resulting_port_packet (value_ctx : Value.t) (_value_sto : Value.t) :
       IO.tx option =
     (* Get egress port *)
-    let value_cursor = [ Term "GLOBAL" ] #@ "cursor" in
+    let value_cursor = [ Term "GLOBAL" ]#@"cursor" in
     let value_prefixedNameIR =
       let value_nameIR = wrap_text_v "standard_metadata" in
-      [ Term "`"; NT value_nameIR ] #@ "prefixedNameIR"
+      [ Term "`"; NT value_nameIR ]#@"prefixedNameIR"
     in
     let _value_standard_metadata =
       call_func "find_value_eval" []

@@ -1,4 +1,4 @@
-open Ast
+open Il.Ast
 open Util.Source
 
 (* Fold logic: takes the results of sub-expressions and combines them into a new result *)
@@ -16,8 +16,7 @@ type ('a_exp, 'a_arg, 'a_path) folder = {
   f_SubE : typ' -> region -> 'a_exp -> typ -> 'a_exp;
   f_MatchE : typ' -> region -> 'a_exp -> pattern -> 'a_exp;
   f_TupleE : typ' -> region -> 'a_exp list -> 'a_exp;
-  f_CaseE :
-    typ' -> region -> id -> mixop -> 'a_exp list -> hintexp option -> 'a_exp;
+  f_CaseE : typ' -> region -> mixop -> 'a_exp list -> 'a_exp;
   f_StrE : typ' -> region -> (atom * 'a_exp) list -> 'a_exp;
   f_OptE : typ' -> region -> 'a_exp option -> 'a_exp;
   f_ListE : typ' -> region -> 'a_exp list -> 'a_exp;
@@ -29,7 +28,7 @@ type ('a_exp, 'a_arg, 'a_path) folder = {
   f_IdxE : typ' -> region -> 'a_exp -> 'a_exp -> 'a_exp;
   f_SliceE : typ' -> region -> 'a_exp -> 'a_exp -> 'a_exp -> 'a_exp;
   f_UpdE : typ' -> region -> 'a_exp -> 'a_path -> 'a_exp -> 'a_exp;
-  f_CallE : typ' -> region -> funcprose -> targ list -> 'a_arg list -> 'a_exp;
+  f_CallE : typ' -> region -> id -> targ list -> 'a_arg list -> 'a_exp;
   f_IterE : typ' -> region -> 'a_exp -> iterexp -> 'a_exp;
   f_RootP : typ' -> region -> 'a_path;
   f_IdxP : typ' -> region -> 'a_path -> 'a_exp -> 'a_path;
@@ -62,9 +61,7 @@ let identity : (exp, arg, path) folder =
     f_MatchE =
       (fun note at exp pattern -> { it = MatchE (exp, pattern); at; note });
     f_TupleE = (fun note at exps -> { it = TupleE exps; at; note });
-    f_CaseE =
-      (fun note at id mixop exps hint ->
-        { it = CaseE (id, mixop, exps, hint); at; note });
+    f_CaseE = (fun note at mixop exps -> { it = CaseE (mixop, exps); at; note });
     f_StrE = (fun note at expfields -> { it = StrE expfields; at; note });
     f_OptE = (fun note at exp_opt -> { it = OptE exp_opt; at; note });
     f_ListE = (fun note at exps -> { it = ListE exps; at; note });
@@ -129,9 +126,9 @@ let rec fold_exp (alg : ('a_exp, 'a_arg, 'a_path) folder) (e : exp) : 'a_exp =
   | TupleE exps ->
       let accs = List.map (fold_exp alg) exps in
       alg.f_TupleE note at accs
-  | CaseE (id, mixop, exps, hint) ->
+  | CaseE (mixop, exps) ->
       let accs = List.map (fold_exp alg) exps in
-      alg.f_CaseE note at id mixop accs hint
+      alg.f_CaseE note at mixop accs
   | StrE expfields ->
       let accs =
         List.map (fun (atom, exp) -> (atom, fold_exp alg exp)) expfields

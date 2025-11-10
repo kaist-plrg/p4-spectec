@@ -2,6 +2,7 @@
 
 open Sl.Ast
 open Util.Source
+open Domain.Lib
 open Ctx
 module HEnv = Hintenv
 module IEnv = Runtime_static.Envs.IEnv
@@ -416,6 +417,9 @@ and prosify_instr ctx instr : Pl.Ast.instr list =
   | DebugI _ -> []
 
 and prosify_instrs ctx (instrs : instr list) : Pl.Ast.instr list =
+  let instrs =
+    Expand.expand_with_context ctx.free_ids Expand.expand_nested_calls instrs
+  in
   let num_if_instrs =
     List.filter
       (fun instr ->
@@ -446,8 +450,6 @@ let prosify_def (ctx : Ctx.t) (def : def) : Pl.Ast.def option =
       let exps = prosify_exps ctx exps in
       Some (Pl.Ast.RelD (id, exps, instrs) $ def.at)
   | BuiltinDecD _ | DecD _ -> None
-(* let instrs = prosify_instrs ctx instrs in *)
-(* Some (Pl.Ast.DecD (id, tparams, args, instrs) $ def.at) *)
 
 let prosify_spec (spec : spec) : Pl.Ast.spec =
   let ctx = Ctx.init spec in
@@ -467,6 +469,10 @@ let prosify_rulegroup (ctx : Ctx.t) (id_rel : id) (mixop : mixop)
         Pl.Ast.Prose (hintexp, [], exps_in)
     | None -> Pl.Ast.Mixop (mixop, prosify_exps ctx exps_in)
   in
+  let free_ids =
+    IdSet.union (Sl.Free.free_exps exps_in) (Sl.Free.free_instrs instrs)
+  in
+  let ctx = ctx |> Ctx.with_free free_ids in
   let instrs = prosify_instrs ctx instrs in
   (relcall, id_rel, instrs)
 
@@ -487,6 +493,10 @@ let prosify_func (ctx : Ctx.t) (id_def : id) (tparams : tparam list)
         | Some prose_in -> Pl.Ast.InputProse (id_def, prose_in)
         | None -> Pl.Ast.Def id_def)
   in
+  let free_ids =
+    IdSet.union (Sl.Free.free_args args_input) (Sl.Free.free_instrs instrs)
+  in
   let args_input = prosify_args ctx args_input in
+  let ctx = ctx |> Ctx.with_free free_ids in
   let instrs = prosify_instrs ctx instrs in
   (funcprose, tparams, args_input, instrs)

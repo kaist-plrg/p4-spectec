@@ -1,4 +1,4 @@
-open Ast
+open Il.Ast
 open Domain.Lib
 open Util.Source
 module VarSet = Free.VarSet
@@ -19,6 +19,7 @@ type iter_state = {
   vars_outer : VarSet.t;
   iterexps : iterexp list;
   exp_orig : exp;
+  exp_new : exp;
 }
 
 let transform_list (f_transform_opt : 'a -> ('a * iter_state) option)
@@ -28,9 +29,11 @@ let transform_list (f_transform_opt : 'a -> ('a * iter_state) option)
     List.fold_left
       (fun (res_prev, vars_outer, nodes_changed) node ->
         match res_prev with
-        | Some (node_changed, _) ->
+        | Some _ ->
+            (* If transformation already succeeded, just update free *)
             let vars_outer = vars_outer + f_free node in
-            let nodes_changed = nodes_changed @ [ node_changed ] in
+            (* Pass node as-is *)
+            let nodes_changed = nodes_changed @ [ node ] in
             (res_prev, vars_outer, nodes_changed)
         | None -> (
             let res = f_transform_opt node in
@@ -115,9 +118,9 @@ let transform_first_with_iters
       | TupleE exps ->
           let* exps', iter_state = transform_exps acc exps in
           Some (TupleE exps' $$ (at, note), iter_state)
-      | CaseE (id, mixop, exps, hint) ->
+      | CaseE (mixop, exps) ->
           let* exps', iter_state = transform_exps acc exps in
-          Some (CaseE (id, mixop, exps', hint) $$ (at, note), iter_state)
+          Some (CaseE (mixop, exps') $$ (at, note), iter_state)
       | StrE fields ->
           let atoms, values = List.split fields in
           let* values', iter_state = transform_exps acc values in
@@ -286,24 +289,23 @@ let transform_first_with_iters
       | CallE (funcprose, targs, args) ->
           let* args_new, iter_state = transform_args acc args in
           Some (CallE (funcprose, targs, args_new) $$ (at, note), iter_state)
-      | IterE (exp_inner, (iter, itervars)) ->
+      | IterE (exp_inner, (iter, vars)) ->
           let* exp_inner', iter_state = transform_exp acc exp_inner in
           let { vars_inner; vars_outer; var_new; iterexps; _ } = iter_state in
           (* main algorithm : compare / replace / increment iterations *)
-          let vars_inner, var_new, iterexps, itervars =
+          let vars_inner, var_new, iterexps, vars =
             VarSet.fold
               (fun var_inner
-                   (vars_inner_acc, var_new_acc, iterexps_acc, itervars_acc) ->
-                if List.mem var_inner itervars then
-                  let itervars_upd =
+                   (vars_inner_acc, var_new_acc, iterexps_acc, vars_acc) ->
+                if List.mem var_inner vars then
+                  let vars_upd =
                     (* Used outside CallE *)
-                    if VarSet.mem var_inner vars_outer then
-                      var_new :: itervars_acc
+                    if VarSet.mem var_inner vars_outer then var_new :: vars_acc
                     else
                       var_new
                       :: List.filter
                            (fun v -> not (Free.Var.equal v var_inner))
-                           itervars_acc
+                           vars_acc
                   in
                   let var_new_upd =
                     let id, typ, iters = var_new_acc in
@@ -320,20 +322,19 @@ let transform_first_with_iters
                   in
                   let iterexp_new =
                     ( iter,
-                      List.filter
-                        (fun v -> Free.Var.equal v var_inner)
-                        itervars_acc )
+                      List.filter (fun v -> Free.Var.equal v var_inner) vars_acc
+                    )
                   in
                   ( vars_inner_upd,
                     var_new_upd,
                     iterexps_acc @ [ iterexp_new ],
-                    itervars_upd )
-                else (vars_inner_acc, var_new_acc, iterexps_acc, itervars_acc))
+                    vars_upd )
+                else (vars_inner_acc, var_new_acc, iterexps_acc, vars_acc))
               vars_inner
-              (vars_inner, var_new, iterexps, itervars)
+              (vars_inner, var_new, iterexps, vars)
           in
           let iter_state = { iter_state with vars_inner; var_new; iterexps } in
-          Some (IterE (exp_inner', (iter, itervars)) $$ (at, note), iter_state)
+          Some (IterE (exp_inner', (iter, vars)) $$ (at, note), iter_state)
     in
     choice [ try_root; try_children ]
   and transform_exps acc (exps : exp list) : (exp list * iter_state) option =
@@ -413,48 +414,20 @@ let transform_first_with_iters
   in
   transform_exp acc e
 
-let rec search_exp (cond : exp -> bool) (exp : exp) : bool =
-  if cond exp then true
-  else
-    match exp.it with
-    | BoolE _ | NumE _ | TextE _ | VarE _ -> false
-    | UnE (_, _, e) -> search_exp cond e
-    | BinE (_, _, e1, e2) | CmpE (_, _, e1, e2) ->
-        search_exp cond e1 || search_exp cond e2
-    | UpCastE (_, e1) | DownCastE (_, e1) | SubE (e1, _) | MatchE (e1, _) ->
-        search_exp cond e1
-    | TupleE es | CaseE (_, _, es, _) -> List.exists (search_exp cond) es
-    | StrE fields -> List.exists (fun (_, e) -> search_exp cond e) fields
-    | OptE (Some e) -> search_exp cond e
-    | OptE None -> false
-    | ListE es -> List.exists (search_exp cond) es
-    | ConsE (e1, e2) | CatE (e1, e2) | MemE (e1, e2) ->
-        search_exp cond e1 || search_exp cond e2
-    | LenE e | DotE (e, _) -> search_exp cond e
-    | IdxE (e1, e2) -> search_exp cond e1 || search_exp cond e2
-    | SliceE (e1, e2, e3) ->
-        search_exp cond e1 || search_exp cond e2 || search_exp cond e3
-    | UpdE (e1, _, e2) -> search_exp cond e1 || search_exp cond e2
-    | CallE (_, _, args) -> List.exists (search_arg cond) args
-    | IterE (e, _) -> search_exp cond e
-
-and search_arg (cond : exp -> bool) (arg : arg) : bool =
-  match arg.it with ExpA e -> search_exp cond e | DefA _ -> false
-
-let fresh_exp_from_typ (ids : IdSet.t) (typ : Il.Ast.typ) : exp * itervar =
+let fresh_exp_from_typ (ids : IdSet.t) (typ : typ) : exp * var =
   let id_base, typ_base, iters =
     Elaborate.Fresh.fresh_var_from_typ ids typ.at typ
   in
   let var_new = (id_base, typ_base, iters) in
   (* let ids = IdSet.add id_base ids in *)
-  let exp_base = Ast.VarE id_base $$ (typ_base.at, typ_base.it) in
+  let exp_base = VarE id_base $$ (typ_base.at, typ_base.it) in
   let exp_match, _ =
     List.fold_left
       (fun (exp_match, iters) iter ->
-        let typ = Il.Ast.IterT (exp_match.note $ exp_match.at, iter) in
+        let typ = IterT (exp_match.note $ exp_match.at, iter) in
         let var = (id_base, typ_base, iters) in
         let iterexp = (iter, [ var ]) in
-        let exp_match = Ast.IterE (exp_match, iterexp) $$ (exp_match.at, typ) in
+        let exp_match = IterE (exp_match, iterexp) $$ (exp_match.at, typ) in
         (exp_match, iters @ [ iter ]))
       (exp_base, []) iters
   in
