@@ -135,6 +135,12 @@ struct
         in
         externs := Externs.add oid (PacketIn packet_in) !externs;
         [ value_ctx; value_sto; value_callResult ]
+    | PacketIn packet_in, "advance", [ "sizeInBits" ] ->
+        let packet_in, value_ctx, value_sto, value_callResult =
+          Core.PacketIn.advance call_func value_ctx value_sto packet_in
+        in
+        externs := Externs.add oid (PacketIn packet_in) !externs;
+        [ value_ctx; value_sto; value_callResult ]
     | PacketOut packet_out, "emit", [ "hdr" ] ->
         let packet_out, value_ctx, value_sto, value_callResult =
           Core.PacketOut.emit call_func value_ctx value_sto packet_out
