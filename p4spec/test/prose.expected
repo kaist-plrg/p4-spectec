@@ -7234,16 +7234,24 @@ relation Lvalue_write: `p`, `EC~0~`, `STO`, `storageReference''`, and `value`
   ... Let `p~ref~` be `<<find_var_cursor_e, $find_var_cursor_e(p, EC~0~, prefixedNameIR)>>`.
   ... Let `EC~1~` be `<<add_var_e, $add_var_e(p~ref~, EC~0~, prefixedNameIR, value)>>`.
   ... Result in `EC~1~`.
-. Else if let `storageReference . nameIR` be `storageReference''`:
+. Else if let `storageReference . text` be `storageReference''`:
  .. Group storageReference-nameIR:
+  ... Check that `text` is equal to `"next"`.
+  ... Let <<Lvalue_read, `p EC~0~ STO |- storageReference : value~base~`>>.
+  ... Check that `value~base~` has type `headerStackValue`.
+  ... Let `HEADER_STACK [ value~element~^{asterisk}^ ( n~idx~ ; n~size~ ) ]` be `value~base~`.
+  ... Let `value~element_update~^{asterisk}^` be `value~element~^{asterisk}^[[n~idx~] = value]`.
+  ... Let `value~base_update~` be `HEADER_STACK [ value~element_update~^{asterisk}^ ( n~idx~ + 1 ; n~size~ ) ]`.
+  ... Let <<Lvalue_write, `p EC~0~ STO |- storageReference -> value~base_update~ : EC~1~`>>.
+  ... Result in `EC~1~`.
   ... Let <<Lvalue_read, `p EC~0~ STO |- storageReference : value~base~`>>.
   ... If let `STRUCT tid { fieldValue^{asterisk}^ }` be `value~base~`:
-   .... Let `fieldValue~update~^{asterisk}^` be `<<update_fieldValue, $update_fieldValue(fieldValue^{asterisk}^, nameIR, value)>>`.
+   .... Let `fieldValue~update~^{asterisk}^` be `<<update_fieldValue, $update_fieldValue(fieldValue^{asterisk}^, text, value)>>`.
    .... Let `value~base_update~` be `STRUCT tid { fieldValue~update~^{asterisk}^ }`.
    .... Let <<Lvalue_write, `p EC~0~ STO |- storageReference -> value~base_update~ : EC~1~`>>.
    .... Result in `EC~1~`.
   ... Else if let `HEADER tid { b~valid~ ; fieldValue^{asterisk}^ }` be `value~base~`:
-   .... Let `fieldValue~update~^{asterisk}^` be `<<update_fieldValue, $update_fieldValue(fieldValue^{asterisk}^, nameIR, value)>>`.
+   .... Let `fieldValue~update~^{asterisk}^` be `<<update_fieldValue, $update_fieldValue(fieldValue^{asterisk}^, text, value)>>`.
    .... Let `value~base_update~` be `HEADER tid { b~valid~ ; fieldValue~update~^{asterisk}^ }`.
    .... Let <<Lvalue_write, `p EC~0~ STO |- storageReference -> value~base_update~ : EC~1~`>>.
    .... Result in `EC~1~`.

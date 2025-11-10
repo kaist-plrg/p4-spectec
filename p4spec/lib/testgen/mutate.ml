@@ -63,9 +63,9 @@ and gen_from_typ' (depth : int) (tdenv : TDEnv.t) (texts : value' list)
   | VarT (tid, targs) -> (
       let td = TDEnv.find_opt tid tdenv in
       match td with
-      | Some (tparams, typdef) -> (
+      | Some (Defined (tparams, td)) -> (
           let theta = List.combine tparams targs |> TDEnv.of_list in
-          match typdef.it with
+          match td.it with
           | PlainT typ ->
               typ |> Typ.subst_typ theta |> gen_from_typ depth tdenv texts
           | StructT typfields ->
@@ -93,7 +93,7 @@ and gen_from_typ' (depth : int) (tdenv : TDEnv.t) (texts : value' list)
               List.map expand_nottyp' nottyps'
               |> List.filter Option.is_some |> List.map Option.get
               |> Rand.random_select |> wrap_value_opt typ.it)
-      | None -> None)
+      | _ -> None)
   | TupleT typs_inner ->
       let* values_inner = gen_from_typs depth tdenv texts typs_inner in
       TupleV values_inner |> Option.some |> wrap_value_opt typ.it

@@ -171,6 +171,8 @@ and rule' = id * id * exp * prem list
 
 type def = def' phrase
 and def' =
+  (* `extern` `syntax` id hint* *)
+  | ExternSynD of id * hint list
   (* `syntax` list(id `<` list(tparam, `,`) `>`, `,`) *)
   | SynD of (id * tparam list) list
   (* `syntax` id `<` list(tparam, `,`) `>` hint* `=` deftyp *)

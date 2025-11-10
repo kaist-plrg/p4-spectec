@@ -28,6 +28,7 @@ let collect_typcases (tid : TId.t) (hdb : Hintdb.t) (typcases : typcase list) :
 let collect_defs (hdb : Hintdb.t) (ienv : IEnv.t) (def : def) :
     Hintdb.t * IEnv.t =
   match def.it with
+  | ExternTypD _ -> (hdb, ienv)
   | TypD (tid, _, deftyp, _) -> (
       match deftyp.it with
       | VariantT typcases -> (collect_typcases tid hdb typcases, ienv)

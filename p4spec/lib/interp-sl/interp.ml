@@ -3,6 +3,7 @@ open Xl
 open Sl.Ast
 module InputHint = Runtime_static.Rel.InputHint
 module Typ = Runtime_dynamic.Typ
+module TypDef = Runtime_dynamic.Typdef
 module Value = Runtime_dynamic.Value
 module Rel = Runtime_dynamic_sl.Rel
 module Func = Runtime_dynamic_sl.Func
@@ -408,7 +409,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         | NumV (`Int _) -> value
         | _ -> assert false)
     | VarT (tid, targs) -> (
-        let tparams, deftyp = Ctx.find_typdef Local ctx tid in
+        let tparams, deftyp = Ctx.find_defined_typdef Local ctx tid in
         match deftyp.it with
         | PlainT typ ->
             let theta = List.combine tparams targs |> TIdMap.of_list in
@@ -453,7 +454,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
             value_res
         | _ -> assert false)
     | VarT (tid, targs) -> (
-        let tparams, deftyp = Ctx.find_typdef Local ctx tid in
+        let tparams, deftyp = Ctx.find_defined_typdef Local ctx tid in
         match deftyp.it with
         | PlainT typ ->
             let theta = List.combine tparams targs |> TIdMap.of_list in
@@ -490,7 +491,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         | NumV (`Int i) -> Bigint.(i >= zero)
         | _ -> assert false)
     | VarT (tid, targs) -> (
-        let tparams, deftyp = Ctx.find_typdef Local ctx tid in
+        let tparams, deftyp = Ctx.find_defined_typdef Local ctx tid in
         let theta = List.combine tparams targs |> TIdMap.of_list in
         match (deftyp.it, value.it) with
         | PlainT typ, _ ->
@@ -1486,9 +1487,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
             in
             TDEnv.fold
               (fun tid typdef theta ->
-                let tparams, deftyp = typdef in
-                match (tparams, deftyp.it) with
-                | [], Il.Ast.PlainT typ -> TIdMap.add tid typ theta
+                match typdef with
+                | TypDef.Defined ([], { it = Il.Ast.PlainT typ; _ }) ->
+                    TIdMap.add tid typ theta
                 | _ -> theta)
               tdenv_local TIdMap.empty
           in
@@ -1523,7 +1524,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         id.at "arity mismatch in type arguments";
       List.fold_left2
         (fun tdenv_local tparam targ ->
-          TDEnv.add tparam ([], Il.Ast.PlainT targ $ targ.at) tdenv_local)
+          let td = TypDef.Defined ([], Il.Ast.PlainT targ $ targ.at) in
+          TDEnv.add tparam td tdenv_local)
         TDEnv.empty tparams targs
     in
     let ctx_local = Ctx.localize_func ctx id values_input tdenv_local in
@@ -1560,9 +1562,12 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   let load_def (ctx : Ctx.t) (def : def) : Ctx.t =
     match def.it with
+    | ExternTypD (id, _) ->
+        let td = TypDef.Extern in
+        Ctx.add_typdef Global ctx id td
     | TypD (id, tparams, deftyp, _) ->
-        let typdef = (tparams, deftyp) in
-        Ctx.add_typdef Global ctx id typdef
+        let td = TypDef.Defined (tparams, deftyp) in
+        Ctx.add_typdef Global ctx id td
     | ExternRelD (id, (_, inputs), _, _) ->
         let rel = Rel.Extern inputs in
         Ctx.add_rel Global ctx id rel

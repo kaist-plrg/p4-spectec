@@ -1,5 +1,6 @@
 open Domain.Lib
 open Il.Ast
+module TypDef = Runtime_dynamic.Typdef
 module IEnv = Runtime_static.Envs.IEnv
 module TDEnv = Runtime_dynamic_sl.Envs.TDEnv
 open Util.Source
@@ -105,6 +106,7 @@ let struct_clause_path ((prems, exp_output) : prem list * exp) :
 let rec struct_def (ienv : IEnv.t) (tdenv : TDEnv.t) (def : def) : Sl.Ast.def =
   let at = def.at in
   match def.it with
+  | ExternTypD (id, hints) -> Sl.Ast.ExternTypD (id, hints) $ at
   | TypD (id, tparams, deftyp, hints) ->
       Sl.Ast.TypD (id, tparams, deftyp, hints) $ at
   | ExternRelD (id, nottyp, inputs, hints) ->
@@ -222,9 +224,13 @@ and struct_defined_dec_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region)
 
 let load_def (ienv : IEnv.t) (tdenv : TDEnv.t) (def : def) : IEnv.t * TDEnv.t =
   match def.it with
+  | ExternTypD (id, _hints) ->
+      let td = TypDef.Extern in
+      let tdenv = TDEnv.add id td tdenv in
+      (ienv, tdenv)
   | TypD (id, tparams, deftyp, _hints) ->
-      let typdef = (tparams, deftyp) in
-      let tdenv = TDEnv.add id typdef tdenv in
+      let td = TypDef.Defined (tparams, deftyp) in
+      let tdenv = TDEnv.add id td tdenv in
       (ienv, tdenv)
   | ExternRelD (id, _, inputs, _) | RelD (id, _, inputs, _, _) ->
       let ienv = IEnv.add id inputs ienv in

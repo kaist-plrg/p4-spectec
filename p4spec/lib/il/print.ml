@@ -422,6 +422,7 @@ let rec string_of_def def =
   ";; " ^ string_of_region def.at ^ "\n"
   ^
   match def.it with
+  | ExternTypD (id, _) -> "extern syntax " ^ string_of_typid id
   | TypD (typid, tparams, deftyp, _) ->
       "syntax " ^ string_of_typid typid ^ string_of_tparams tparams ^ " = "
       ^ string_of_deftyp deftyp

@@ -247,6 +247,7 @@ and string_of_rules rules = String.concat "\n" (List.map string_of_rule rules)
 
 let string_of_def def =
   match def.it with
+  | ExternSynD (typid, _hints) -> "extern syntax " ^ string_of_typid typid
   | SynD syns ->
       "syntax "
       ^ String.concat ", "

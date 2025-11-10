@@ -737,6 +737,8 @@ rules :
 def :
   | def_ NL2* { $1 @@@ $loc($1) }
 def_ :
+  | EXTERN SYNTAX varid hint*
+    { ExternSynD ($3, $4) }
   | SYNTAX comma_list(synid)
     {
       match $2 with

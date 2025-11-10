@@ -26083,19 +26083,31 @@ relation Lvalue_write: cursor evalContext store |- storageReference -> value : e
     -- let EC_1 = $add_var_e(p_ref, EC_0, prefixedNameIR, value)
     -- output: % % % |- % -> % : EC_1
 
-  ;; ../../../../spec-concrete/8.05-eval-lvalue.watsup:113.1-145.2
+  ;; ../../../../spec-concrete/8.05-eval-lvalue.watsup:113.1-156.2
   rulegroup storageReference-nameIR
 
    match
 
-    (explicit) p EC_0 STO |- storageReference . nameIR -> value : %
+    (explicit) p EC_0 STO |- storageReference . text -> value : %
     (implicit) p EC_0 STO |- storageReference' -> value : %
     -- if storageReference' matches `%.%`
-    -- let storageReference . nameIR = storageReference'
+    -- let storageReference . text = storageReference'
 
    paths
 
+    rulepath stack
+    -- if (text = "next")
+    -- Lvalue_read: p EC_0 STO |- storageReference : value_base
+    -- let value' = value_base
+    -- if value' <: headerStackValue
+    -- let header_stack[ value_element*{value_element <- value_element*} ( n_idx ; n_size )] = value' as headerStackValue
+    -- let value_element_update*{value_element_update <- value_element_update*} = value_element*{value_element <- value_element*}[[n_idx] = value]
+    -- let value_base_update = header_stack[ value_element_update*{value_element_update <- value_element_update*} ( (n_idx + 1) ; n_size )] as value
+    -- Lvalue_write: p EC_0 STO |- storageReference -> value_base_update : EC_1
+    -- output: % % % |- % -> % : EC_1
+
     rulepath struct
+    -- let nameIR = text
     -- Lvalue_read: p EC_0 STO |- storageReference : value_base
     -- let value' = value_base
     -- if value' <: structValue
@@ -26106,6 +26118,7 @@ relation Lvalue_write: cursor evalContext store |- storageReference -> value : e
     -- output: % % % |- % -> % : EC_1
 
     rulepath header
+    -- let nameIR = text
     -- Lvalue_read: p EC_0 STO |- storageReference : value_base
     -- let value' = value_base
     -- if value' <: headerValue

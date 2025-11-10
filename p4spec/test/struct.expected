@@ -28028,19 +28028,35 @@ relation Lvalue_write: p EC_0 STO |- storageReference'' -> value : %
 
 2. If ((storageReference'' matches pattern `%.%`)), then
 
-  1. (Let (storageReference . nameIR) be storageReference'')
+  1. (Let (storageReference . text) be storageReference'')
 
-  2. Group storageReference-nameIR: p EC_0 STO |- (storageReference . nameIR) -> value : %
+  2. Group storageReference-nameIR: p EC_0 STO |- (storageReference . text) -> value : %
 
-    1. (Lvalue_read: p EC_0 STO |- storageReference : value_base)
+    1. If ((text = "next")), then
 
-    2. Case analysis on value_base
+      1. (Lvalue_read: p EC_0 STO |- storageReference : value_base)
+
+      2. If ((value_base has type headerStackValue)), then
+
+        1. (Let (header_stack[ value_element*{value_element <- value_element*} ( n_idx ; n_size )]) be (value_base as headerStackValue))
+
+        2. (Let value_element_update*{value_element_update <- value_element_update*} be value_element*{value_element <- value_element*}[[n_idx] = value])
+
+        3. (Let value_base_update be ((header_stack[ value_element_update*{value_element_update <- value_element_update*} ( (n_idx + 1) ; n_size )]) as value))
+
+        4. (Lvalue_write: p EC_0 STO |- storageReference -> value_base_update : EC_1)
+
+        5. Result in : % % % |- % -> % : EC_1
+
+    2. (Lvalue_read: p EC_0 STO |- storageReference : value_base)
+
+    3. Case analysis on value_base
 
       1. Case (% has type structValue)
 
         1. (Let (struct tid { fieldValue*{fieldValue <- fieldValue*} }) be (value_base as structValue))
 
-        2. (Let fieldValue_update*{fieldValue_update <- fieldValue_update*} be $update_fieldValue(fieldValue*{fieldValue <- fieldValue*}, nameIR, value))
+        2. (Let fieldValue_update*{fieldValue_update <- fieldValue_update*} be $update_fieldValue(fieldValue*{fieldValue <- fieldValue*}, text, value))
 
         3. (Let value_base_update be ((struct tid { fieldValue_update*{fieldValue_update <- fieldValue_update*} }) as value))
 
@@ -28052,7 +28068,7 @@ relation Lvalue_write: p EC_0 STO |- storageReference'' -> value : %
 
         1. (Let (header tid { b_valid ; fieldValue*{fieldValue <- fieldValue*} }) be (value_base as headerValue))
 
-        2. (Let fieldValue_update*{fieldValue_update <- fieldValue_update*} be $update_fieldValue(fieldValue*{fieldValue <- fieldValue*}, nameIR, value))
+        2. (Let fieldValue_update*{fieldValue_update <- fieldValue_update*} be $update_fieldValue(fieldValue*{fieldValue <- fieldValue*}, text, value))
 
         3. (Let value_base_update be ((header tid { b_valid ; fieldValue_update*{fieldValue_update <- fieldValue_update*} }) as value))
 

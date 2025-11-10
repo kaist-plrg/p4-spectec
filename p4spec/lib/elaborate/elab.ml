@@ -1442,6 +1442,7 @@ let rec elab_def (ctx : Ctx.t) (def : def) : Ctx.t * Il.Ast.def option =
   let wrap_none ctx = (ctx, None) in
   let at = def.at in
   match def.it with
+  | ExternSynD (id, hints) -> elab_extern_syn_def ctx at id hints |> wrap_some
   | SynD syns -> elab_syn_def ctx syns |> wrap_none
   | TypD (id, tparams, deftyp, hints) ->
       elab_typ_def ctx id tparams deftyp hints |> wrap_some
@@ -1469,6 +1470,16 @@ and elab_defs (ctx : Ctx.t) (defs : def list) : Ctx.t * Il.Ast.def list =
     (ctx, []) defs
 
 (* Elaboration of type declarations *)
+
+and elab_extern_syn_def (ctx : Ctx.t) (at : region) (id : id)
+    (hints : hint list) : Ctx.t * Il.Ast.def =
+  check (valid_tid id) id.at "invalid type identifier";
+  let td = Typdef.Extern in
+  let ctx = Ctx.add_typdef ctx id td in
+  let plaintyp = VarT (id, []) $ id.at in
+  let ctx = Ctx.add_metavar ctx id plaintyp in
+  let def_il = Il.Ast.ExternTypD (id, hints) $ at in
+  (ctx, def_il)
 
 and elab_syn_def (ctx : Ctx.t) (syns : (id * tparam list) list) : Ctx.t =
   List.fold_left
@@ -1669,6 +1680,20 @@ and elab_def_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
 
 (* Elaboration of spec *)
 
+(* Populate type definitions *)
+
+let populate_typs (ctx : Ctx.t) : unit =
+  Envs.TDEnv.iter
+    (fun tid td ->
+      match td with
+      | Typdef.Defining tparams ->
+          error tid.at
+            (F.asprintf "type %s%s was not fully defined"
+               (Il.Print.string_of_typid tid)
+               (Il.Print.string_of_tparams tparams))
+      | _ -> ())
+    ctx.tdenv
+
 (* Populate rules to their respective relations *)
 
 let populate_rule (ctx : Ctx.t) (def_il : Il.Ast.def) : Il.Ast.def =
@@ -1718,4 +1743,5 @@ let populate_clauses (ctx : Ctx.t) (spec_il : Il.Ast.spec) : Il.Ast.spec =
 let elab_spec (spec : spec) : Il.Ast.spec =
   let ctx = Ctx.init () in
   let ctx, spec_il = elab_defs ctx spec in
+  populate_typs ctx;
   spec_il |> populate_rules ctx |> populate_clauses ctx
