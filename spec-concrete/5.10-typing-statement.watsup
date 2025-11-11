@@ -208,49 +208,79 @@ rulegroup Stmt_ok/conditionalStatement {
 ;;;;; syntax forUpdateStatement
 
 relation ForUpdateStatement_ok:
-  typingContext |- forUpdateStatement : forUpdateStatementIR
-  hint(input %0 %1)
-
-;;;;;; lvalue `( argumentList )
-
-
-;;;;;; lvalue `< typeArgumentList > `( argumentList )
-
+  typingContext nameIR |- forUpdateStatement : forUpdateStatementIR
+  hint(input %0 %1 %2)
 
 ;;;;;; lvalue assignop expression
 
-
-;;;;;; (TODO) Handle compound assignments
+rule ForUpdateStatement_ok/forUpdateStatement-assign-eq:
+  TC nameIR |- lvalue `= expression : typedLvalueIR `= typedExpressionIR
+  ---- ;; check lvalue
+  -- Lvalue_ok: LOCAL TC |- lvalue : typedLvalueIR
+  -- if (`` nameIR) `# `( _ ) = typedLvalueIR
+  ---- ;; check expression
+  -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
+  -- if (typedExpressionIR_l `+ typedExpressionIR_r) `# `( _ _ ) = typedExpressionIR
+  -- if (`` nameIR) `# `( _ _ ) = typedExpressionIR_l
+  -- if $ctk_of_typedExpressionIR(typedExpressionIR_r) = LCTK
+  -- Expr_eval_lctk: LOCAL TC |- typedExpressionIR_r ~> value
+  -- if $($to_int(value) > 0)
+  ---- ;; fetch annotations
+  -- if _ `# `( typeIR_l ) = typedLvalueIR
+  ---- ;; check type compatibility
+  ---- ;; while inserting implicit casts if necessary
+  -- if typedExpressionIR_cast = $coerce_unary(typedExpressionIR, typeIR_l)
 
 ;;;;; syntax forInitStatement
 
 relation ForInitStatement_ok:
-  typingContext |- forInitStatement : typingContext forInitStatementIR
+  typingContext |- forInitStatement : typingContext typingContext forInitStatementIR
   hint(input %0 %1)
 
 ;;;;;; annotationList type name initializerOpt
 
+rule ForInitStatement_ok/forInitStatement-variableDeclaration-initializer:
+  TC_0 |- annotationList type name (`= expression_init)
+        : TC_1 TC_2 (annotationList typeIR nameIR (`= typedExpressionIR_init_cast))
+  ---- ;; check type
+  -- Type_ok: LOCAL TC_0 |- type : typeIR `# eps
+  -- Type_wf: $bound(LOCAL, TC_0) |- typeIR
+  ---- ;; check that the type is assignable
+  -- if $is_assignable_typeIR(typeIR)
+  ---- ;; check expression
+  -- Expr_ok: LOCAL TC_0 |- expression_init : typedExpressionIR_init
+  ---- ;; check that the expression matches the type
+  ---- ;; while inserting implicit casts if necessary
+  -- if typedExpressionIR_init_cast
+      = $coerce_unary(typedExpressionIR_init, typeIR)
+  ---- ;; update the context
+  -- if nameIR = $name(name)
+  -- if TC_1 = $add_var_t(LOCAL, TC_0, nameIR, IN typeIR DYN eps)
+  ---- ;; context for forUpdateStatement
+  -- if TC_2 = $add_var_t(LOCAL, TC_0, nameIR, INOUT typeIR DYN eps)
 
-;;;;;; forUpdateStatement
-
-
-;;;;; syntax forInitStatementList
-
-relation ForInitStatements_ok:
-  typingContext |- forInitStatement* : typingContext forInitStatementIR*
-  hint(input %0 %1)
-
-rule ForInitStatements_ok/nil:
-  TC |- eps : TC eps
-
-rule ForInitStatements_ok/cons:
-  TC_0 |- forInitStatement_h :: forInitStatement_t*
-        : TC_2 (forInitStatementIR_h :: forInitStatementIR_t*)
-  -- ForInitStatement_ok: TC_0 |- forInitStatement_h
-                                : TC_1 forInitStatementIR_h
-  -- ForInitStatements_ok: TC_1 |- forInitStatement_t*
-                                : TC_2 forInitStatementIR_t*
-
+rule Stmt_ok/forStatement-condition:
+  LOCAL TC_0 f loopctxt |- annotationList FOR `( forInitStatementList `; 
+                            expression `; forUpdateStatementList ) statement
+                        : TC_4 f_post forStatementIR
+  -- if TC_1 = $enter_t(TC_0)
+  ---- ;; check init statements
+  -- if forInitStatement = $flatten_forInitStatementList(forInitStatementList)
+  -- ForInitStatement_ok: TC_1 |- forInitStatement : TC_2 TC_U forInitStatementIR
+  ---- ;; check condition expression
+  -- Expr_ok: LOCAL TC_2 |- expression : typedExpressionIR
+  -- if $type_of_typedExpressionIR(typedExpressionIR) = BOOL
+  ---- ;; check update statements
+  -- if _ _ nameIR _ = forInitStatementIR
+  -- if forUpdateStatement = $flatten_forUpdateStatementList(forUpdateStatementList)
+  -- ForUpdateStatement_ok: TC_U nameIR |- forUpdateStatement : forUpdateStatementIR
+  ---- ;; check loop body
+  -- Stmt_ok: LOCAL TC_2 f LOOP |- statement : TC_3 f_post statementIR
+  -- if TC_4 = $exit_t(TC_3)
+  ---- ;; create IR
+  -- if forStatementIR
+      = annotationList FOR `( forInitStatementIR `; typedExpressionIR `;
+          forUpdateStatementIR ) statementIR
 
 ;;;; annotationList FOR
 ;;;;  `( type name IN forCollectionExpression ) statement
