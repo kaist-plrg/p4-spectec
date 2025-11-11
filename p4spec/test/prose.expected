@@ -8007,17 +8007,28 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
   ... Let `EC~callee_1~` be `EC~callee_0~[BLOCK.FRAME = frame][BLOCK.CALLABLE = { (cid : actionDef)^{asterisk}^ }]`.
   ... Let `(parameterIR~aligned~^{asterisk}^, argumentIR~aligned~^{asterisk}^, parameterIR~default~^{asterisk}^, value~default~^{asterisk}^)` be `<<align_params_with_args, $align_params_with_args(parameterListIR, argumentListIR', id~default~^{asterisk}^)>>`.
   ... Let <<Copy_in, `STO~0~ p EC~0~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_1~ argumentIR~aligned~^{asterisk}^ ~> STO~1~ EC~1~ @ EC~callee_2~ # copyInListResult`>>.
-  ... Check that `copyInListResult` has type `continueResult<storageReference?*>`.
-  ... Let `(storageReference^?^)^{asterisk}^` be `copyInListResult`.
-  ... Let <<Copy_in_default, `parameterIR~default~^{asterisk}^ @ BLOCK EC~callee_2~ value~default~^{asterisk}^ ~> @ EC~callee_3~`>>.
-  ... Let <<ControlLocalDecls_eval, `EC~callee_3~ STO~1~ |- controlLocalDeclarationListIR : EC~callee_4~ STO~2~ declarationResult`>>.
-  ... Check that `declarationResult` has type `continueEmptyResult`.
-  ... Let `continueEmptyResult` be `declarationResult`.
-  ... Let <<ControlBody_eval, `EC~callee_4~ STO~2~ |- controlBodyIR : EC~callee_5~ STO~3~ controlBodyResult`>>.
-  ... Check that `controlBodyResult` is equal to `RETURN None`.
-  ... Let `EC~2~` be `EC~1~[GLOBAL.FRAME = EC~callee_5~.GLOBAL.FRAME]`.
-  ... Let <<Copy_out, `STO~3~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_5~ (storageReference^?^)^{asterisk}^ ~> EC~3~`>>.
-  ... Result in `EC~3~`, `STO~3~`, and `RETURN None`.
+  ... Else if let `(storageReference^?^)^{asterisk}^` be `copyInListResult`:
+   .... Let <<Copy_in_default, `parameterIR~default~^{asterisk}^ @ BLOCK EC~callee_2~ value~default~^{asterisk}^ ~> @ EC~callee_3~`>>.
+   .... Let <<ControlLocalDecls_eval, `EC~callee_3~ STO~1~ |- controlLocalDeclarationListIR : EC~callee_4~ STO~2~ declarationResult`>>.
+   .... Check that `declarationResult` has type `continueEmptyResult`.
+   .... Let `continueEmptyResult` be `declarationResult`.
+   .... Let <<ControlBody_eval, `EC~callee_4~ STO~2~ |- controlBodyIR : EC~callee_5~ STO~3~ controlBodyResult`>>.
+   .... Check that `controlBodyResult` is equal to `RETURN None`.
+   .... Let `EC~2~` be `EC~1~[GLOBAL.FRAME = EC~callee_5~.GLOBAL.FRAME]`.
+   .... Let <<Copy_out, `STO~3~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_5~ (storageReference^?^)^{asterisk}^ ~> EC~3~`>>.
+   .... Result in `EC~3~`, `STO~3~`, and `RETURN None`.
+  ... Let `EC~callee_1~` be `EC~callee_0~[BLOCK.FRAME = frame][BLOCK.CALLABLE = { (cid : actionDef)^{asterisk}^ }]`.
+  ... Else if let `(storageReference^?^)^{asterisk}^` be `copyInListResult`:
+   .... Let <<Copy_in_default, `parameterIR~default~^{asterisk}^ @ BLOCK EC~callee_2~ value~default~^{asterisk}^ ~> @ EC~callee_3~`>>.
+   .... Let <<ControlLocalDecls_eval, `EC~callee_3~ STO~1~ |- controlLocalDeclarationListIR : EC~callee_4~ STO~2~ declarationResult`>>.
+   .... Check that `declarationResult` has type `continueEmptyResult`.
+   .... Let `continueEmptyResult` be `declarationResult`.
+   .... Let <<ControlBody_eval, `EC~callee_4~ STO~2~ |- controlBodyIR : EC~callee_5~ STO~3~ controlBodyResult`>>.
+   .... Check that `controlBodyResult` has type `exitResult`.
+   .... Let `exitResult` be `controlBodyResult`.
+   .... Let `EC~2~` be `EC~1~[GLOBAL.FRAME = EC~callee_5~.GLOBAL.FRAME]`.
+   .... Let <<Copy_out, `STO~3~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_5~ (storageReference^?^)^{asterisk}^ ~> EC~3~`>>.
+   .... Result in `EC~3~`, `STO~3~`, and `EXIT`.
 . Else if let `tableApplyMethodCallee` be `callee`:
  .. Group tableApplyMethodCallee:
   ... Let `TABLE ++_++ . APPLY { frame ; TBL }` be `tableApplyMethodCallee`.
@@ -8162,9 +8173,11 @@ relation V1Model_ingress: `EC~0~` and `STO~0~`
  .. Let `typedExpressionIR~ig~` be `<<V1Model_setup_ingress_callee, $V1Model_setup_ingress_callee(EC~0~, STO~0~, typedExpressionIR~main~)>>`.
  .. Let `callableTargetIR` be `typedExpressionIR~ig~ . "apply"`.
  .. Let `EC~1~`, `STO~1~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `callableTargetIR < [ ] > ( argumentIR^{asterisk}^ ) ;`, under cursor `GLOBAL`, evaluation context `EC~0~`, and store `STO~0~`>>.
- .. Check that `statementResult` has type `continueEmptyResult`.
- .. Let `continueEmptyResult` be `statementResult`.
- .. Result in `EC~1~`, `STO~1~`, and `RETURN None`.
+ .. Else if let `continueEmptyResult` be `statementResult`:
+  ... Result in `EC~1~`, `STO~1~`, and `RETURN None`.
+ .. Let `EC~1~`, `STO~1~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `callableTargetIR < [ ] > ( argumentIR^{asterisk}^ ) ;`, under cursor `GLOBAL`, evaluation context `EC~0~`, and store `STO~0~`>>.
+ .. Else if let `exitResult` be `statementResult`:
+  ... Result in `EC~1~`, `STO~1~`, and `EXIT`.
 
 
 relation V1Model_egress: `EC~0~` and `STO~0~`

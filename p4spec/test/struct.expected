@@ -29639,6 +29639,32 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR' >( argumentLis
 
             3. Result in : % % % |- % @< % >( % ): EC_3 STO_3 ((return ?()) as callResult)
 
+      8. (Let EC_callee_1 be EC_callee_0[block.frame = frame][block.callable = ({ (cid : (actionDef as callableDef))*{actionDef <- actionDef*, cid <- cid*} })])
+
+      9. If ((copyInListResult has type continueResult<storageReference?*>)), then
+
+        1. (Let (` storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*}) be (copyInListResult as continueResult<storageReference?*>))
+
+        2. (Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} @ (block) EC_callee_2 value_default*{value_default <- value_default*} ~>@ EC_callee_3)
+
+        3. (ControlLocalDecls_eval: EC_callee_3 STO_1 |- controlLocalDeclarationListIR : EC_callee_4 STO_2 declarationResult)
+
+        4. If ((declarationResult has type continueEmptyResult)), then
+
+          1. (Let continueEmptyResult be (declarationResult as continueEmptyResult))
+
+          2. (ControlBody_eval: EC_callee_4 STO_2 |- controlBodyIR : EC_callee_5 STO_3 controlBodyResult)
+
+          3. If ((controlBodyResult has type exitResult)), then
+
+            1. (Let exitResult be (controlBodyResult as exitResult))
+
+            2. (Let EC_2 be EC_1[global.frame = EC_callee_5.global.frame])
+
+            3. (Copy_out: STO_3 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ (block) EC_callee_5 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3)
+
+            4. Result in : % % % |- % @< % >( % ): EC_3 STO_3 ((exit) as callResult)
+
   4. Case (% has type tableApplyMethodCallee)
 
     1. (Let tableApplyMethodCallee be (callee as tableApplyMethodCallee))
@@ -30229,7 +30255,15 @@ relation V1Model_ingress: EC_0 STO_0 |- % % %
 
     2. Result in : % % |- EC_1 STO_1 ((return ?()) as callResult)
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:322.1-324.20
+  10. (Stmt_eval: (global) EC_0 STO_0 |- ((callableTargetIR < [] >( argumentIR*{argumentIR <- argumentIR*} );) as statementIR) : EC_1 STO_1 statementResult)
+
+  11. If ((statementResult has type exitResult)), then
+
+    1. (Let exitResult be (statementResult as exitResult))
+
+    2. Result in : % % |- EC_1 STO_1 ((exit) as callResult)
+
+;; ../../../../spec-concrete/9.A-v1model.watsup:345.1-347.20
 relation V1Model_egress: EC_0 STO_0 |- % % %
 
 1. Group : EC_0 STO_0 |- % % %
@@ -30256,7 +30290,7 @@ relation V1Model_egress: EC_0 STO_0 |- % % %
 
     2. Result in : % % |- EC_1 STO_1 ((return ?()) as callResult)
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:351.1-353.20
+;; ../../../../spec-concrete/9.A-v1model.watsup:374.1-376.20
 relation V1Model_check: EC_0 STO_0 |- % % %
 
 1. Group : EC_0 STO_0 |- % % %
@@ -30281,7 +30315,7 @@ relation V1Model_check: EC_0 STO_0 |- % % %
 
     2. Result in : % % |- EC_1 STO_1 ((return ?()) as callResult)
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:377.1-379.20
+;; ../../../../spec-concrete/9.A-v1model.watsup:400.1-402.20
 relation V1Model_deparse: EC_0 STO_0 |- % % %
 
 1. Group : EC_0 STO_0 |- % % %

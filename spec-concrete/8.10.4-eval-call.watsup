@@ -186,48 +186,95 @@ rule Call_eval/parserApplyMethodCallee:
 
 ;;;; controlApplyMethodCallee
 
-rule Call_eval/controlApplyMethodCallee:
-  p EC_0 STO_0 |- controlApplyMethodCallee
-                  `@ `< typeArgumentListIR > `( argumentListIR )
-                : EC_3 STO_3 (RETURN eps)
-  ---- ;; unpack the control apply method callee
-  -- if CONTROL _ `. APPLY `( parameterListIR `# id_default* )
-          `{ frame `; controlLocalDeclarationListIR `;
-             actionDefEnv `; controlBodyIR }
-      = controlApplyMethodCallee
-  ---- ;; create the callee context
-  -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
-  -- if `{ (cid `: actionDef)* } = actionDefEnv
-  -- if EC_callee_1
-      = EC_callee_0[ .BLOCK.FRAME = frame ]
-                   [ .BLOCK.CALLABLE = `{ (cid `: actionDef)* } ]
-  ---- ;; align parameters with arguments
-  -- if (parameterIR_aligned*, argumentIR_aligned*,
-         parameterIR_default*, value_default*)
-      = $align_params_with_args(parameterListIR, argumentListIR, id_default*)
-  ---- ;; copy-in
-  -- Copy_in:
-      STO_0 p EC_0 parameterIR_aligned*
-         `@ BLOCK EC_callee_1 argumentIR_aligned*
-      ~> STO_1 EC_1 `@ EC_callee_2 `# (`` storageReference?*)
-  -- Copy_in_default:
-      parameterIR_default* `@ BLOCK EC_callee_2 value_default*
-      ~> `@ EC_callee_3
-  ---- ;; evaluate local declarations
-  -- ControlLocalDecls_eval:
-      EC_callee_3 STO_1 |- controlLocalDeclarationListIR
-                          : EC_callee_4 STO_2 ``
-  ---- ;; execute the control body
-  -- ControlBody_eval:
-      EC_callee_4 STO_2 |- controlBodyIR
-                         : EC_callee_5 STO_3 (RETURN eps)
-  ---- ;; propagate shared layer
-  -- if EC_2 = EC_1[ .GLOBAL.FRAME = EC_callee_5.GLOBAL.FRAME ]
-  ---- ;; copy-out
-  -- Copy_out:
-      STO_3 p EC_2 parameterIR_aligned*
-         `@ BLOCK EC_callee_5 storageReference?*
-      ~> EC_3
+rulegroup Call_eval/controlApplyMethodCallee {
+
+  rule Call_eval/controlApplyMethodCallee-cont:
+    p EC_0 STO_0 |- controlApplyMethodCallee
+                    `@ `< typeArgumentListIR > `( argumentListIR )
+                  : EC_3 STO_3 (RETURN eps)
+    ---- ;; unpack the control apply method callee
+    -- if CONTROL _ `. APPLY `( parameterListIR `# id_default* )
+            `{ frame `; controlLocalDeclarationListIR `;
+               actionDefEnv `; controlBodyIR }
+        = controlApplyMethodCallee
+    ---- ;; create the callee context
+    -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+    -- if `{ (cid `: actionDef)* } = actionDefEnv
+    -- if EC_callee_1
+        = EC_callee_0[ .BLOCK.FRAME = frame ]
+                     [ .BLOCK.CALLABLE = `{ (cid `: actionDef)* } ]
+    ---- ;; align parameters with arguments
+    -- if (parameterIR_aligned*, argumentIR_aligned*,
+           parameterIR_default*, value_default*)
+        = $align_params_with_args(parameterListIR, argumentListIR, id_default*)
+    ---- ;; copy-in
+    -- Copy_in:
+        STO_0 p EC_0 parameterIR_aligned*
+           `@ BLOCK EC_callee_1 argumentIR_aligned*
+        ~> STO_1 EC_1 `@ EC_callee_2 `# (`` storageReference?*)
+    -- Copy_in_default:
+        parameterIR_default* `@ BLOCK EC_callee_2 value_default*
+        ~> `@ EC_callee_3
+    ---- ;; evaluate local declarations
+    -- ControlLocalDecls_eval:
+        EC_callee_3 STO_1 |- controlLocalDeclarationListIR
+                            : EC_callee_4 STO_2 ``
+    ---- ;; execute the control body
+    -- ControlBody_eval:
+        EC_callee_4 STO_2 |- controlBodyIR
+                           : EC_callee_5 STO_3 (RETURN eps)
+    ---- ;; propagate shared layer
+    -- if EC_2 = EC_1[ .GLOBAL.FRAME = EC_callee_5.GLOBAL.FRAME ]
+    ---- ;; copy-out
+    -- Copy_out:
+        STO_3 p EC_2 parameterIR_aligned*
+           `@ BLOCK EC_callee_5 storageReference?*
+        ~> EC_3
+
+  rule Call_eval/controlApplyMethodCallee-cont-controlBodyIR-exit:
+    p EC_0 STO_0 |- controlApplyMethodCallee
+                    `@ `< typeArgumentListIR > `( argumentListIR )
+                  : EC_3 STO_3 EXIT
+    ---- ;; unpack the control apply method callee
+    -- if CONTROL _ `. APPLY `( parameterListIR `# id_default* )
+            `{ frame `; controlLocalDeclarationListIR `;
+               actionDefEnv `; controlBodyIR }
+        = controlApplyMethodCallee
+    ---- ;; create the callee context
+    -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+    -- if `{ (cid `: actionDef)* } = actionDefEnv
+    -- if EC_callee_1
+        = EC_callee_0[ .BLOCK.FRAME = frame ]
+                     [ .BLOCK.CALLABLE = `{ (cid `: actionDef)* } ]
+    ---- ;; align parameters with arguments
+    -- if (parameterIR_aligned*, argumentIR_aligned*,
+           parameterIR_default*, value_default*)
+        = $align_params_with_args(parameterListIR, argumentListIR, id_default*)
+    ---- ;; copy-in
+    -- Copy_in:
+        STO_0 p EC_0 parameterIR_aligned*
+           `@ BLOCK EC_callee_1 argumentIR_aligned*
+        ~> STO_1 EC_1 `@ EC_callee_2 `# (`` storageReference?*)
+    -- Copy_in_default:
+        parameterIR_default* `@ BLOCK EC_callee_2 value_default*
+        ~> `@ EC_callee_3
+    ---- ;; evaluate local declarations
+    -- ControlLocalDecls_eval:
+        EC_callee_3 STO_1 |- controlLocalDeclarationListIR
+                            : EC_callee_4 STO_2 ``
+    ---- ;; execute the control body
+    ---- ;; EXIT
+    -- ControlBody_eval:
+        EC_callee_4 STO_2 |- controlBodyIR
+                           : EC_callee_5 STO_3 EXIT
+    ---- ;; propagate shared layer
+    -- if EC_2 = EC_1[ .GLOBAL.FRAME = EC_callee_5.GLOBAL.FRAME ]
+    ---- ;; copy-out
+    -- Copy_out:
+        STO_3 p EC_2 parameterIR_aligned*
+           `@ BLOCK EC_callee_5 storageReference?*
+        ~> EC_3
+}
 
 ;;;; tableApplyMethodCallee
 

@@ -294,26 +294,49 @@ relation V1Model_ingress:
   evalContext store |- evalContext store callResult
   hint(input %0 %1)
 
-rule V1Model_ingress:
-  EC_0 STO_0 |- EC_1 STO_1 (RETURN eps)
-  ---- ;; prepare the arguments
-  -- if argumentIR_hdr
-      = $V1Model_setup_hdr_argument(STO_0)
-  -- if argumentIR_meta
-      = $V1Model_setup_meta_argument(STO_0)
-  -- if argumentIR_standard_metadata
-      = $V1Model_setup_standard_metadata_argument(EC_0)
-  -- if argumentIR*
-      = [ argumentIR_hdr, argumentIR_meta, argumentIR_standard_metadata ]
-  ---- ;; invoke the ingress object (main.ig)
-  -- if typedExpressionIR_main
-      = $V1Model_setup_main_callee(EC_0, STO_0)
-  -- if typedExpressionIR_ig
-      = $V1Model_setup_ingress_callee(EC_0, STO_0, typedExpressionIR_main)
-  -- if callableTargetIR = typedExpressionIR_ig `. "apply"
-  -- Stmt_eval:
-      GLOBAL EC_0 STO_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
-                         : EC_1 STO_1 ``
+rulegroup V1Model_ingress {
+  rule V1Model_ingress/cont:
+    EC_0 STO_0 |- EC_1 STO_1 (RETURN eps)
+    ---- ;; prepare the arguments
+    -- if argumentIR_hdr
+        = $V1Model_setup_hdr_argument(STO_0)
+    -- if argumentIR_meta
+        = $V1Model_setup_meta_argument(STO_0)
+    -- if argumentIR_standard_metadata
+        = $V1Model_setup_standard_metadata_argument(EC_0)
+    -- if argumentIR*
+        = [ argumentIR_hdr, argumentIR_meta, argumentIR_standard_metadata ]
+    ---- ;; invoke the ingress object (main.ig)
+    -- if typedExpressionIR_main
+        = $V1Model_setup_main_callee(EC_0, STO_0)
+    -- if typedExpressionIR_ig
+        = $V1Model_setup_ingress_callee(EC_0, STO_0, typedExpressionIR_main)
+    -- if callableTargetIR = typedExpressionIR_ig `. "apply"
+    -- Stmt_eval:
+        GLOBAL EC_0 STO_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+                           : EC_1 STO_1 ``
+
+  rule V1Model_ingress/exit:
+    EC_0 STO_0 |- EC_1 STO_1 EXIT
+    ---- ;; prepare the arguments
+    -- if argumentIR_hdr
+        = $V1Model_setup_hdr_argument(STO_0)
+    -- if argumentIR_meta
+        = $V1Model_setup_meta_argument(STO_0)
+    -- if argumentIR_standard_metadata
+        = $V1Model_setup_standard_metadata_argument(EC_0)
+    -- if argumentIR*
+        = [ argumentIR_hdr, argumentIR_meta, argumentIR_standard_metadata ]
+    ---- ;; invoke the ingress object (main.ig)
+    -- if typedExpressionIR_main
+        = $V1Model_setup_main_callee(EC_0, STO_0)
+    -- if typedExpressionIR_ig
+        = $V1Model_setup_ingress_callee(EC_0, STO_0, typedExpressionIR_main)
+    -- if callableTargetIR = typedExpressionIR_ig `. "apply"
+    -- Stmt_eval:
+        GLOBAL EC_0 STO_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+                           : EC_1 STO_1 EXIT
+}
 
 ;;
 ;; V1Model ingress invocation
