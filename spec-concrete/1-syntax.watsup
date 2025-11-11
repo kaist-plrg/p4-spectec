@@ -729,37 +729,11 @@ syntax conditionalStatement =
 
 syntax annotationListNonEmpty
 
-syntax forInitStatement =
-  | annotationList type name initializerOpt
-  | lvalue `( argumentList )
-  | lvalue `< typeArgumentList > `( argumentList )
-  | lvalue assignop expression
-
-syntax forInitStatementListNonEmpty =
-  | forInitStatement
-  | forInitStatementListNonEmpty `, forInitStatement
-
-syntax forInitStatementList =
-  | `EMPTY
-  | forInitStatementListNonEmpty
-
-syntax forUpdateStatement = forInitStatement
-
-syntax forUpdateStatementListNonEmpty =
-  | forUpdateStatement
-  | forUpdateStatementListNonEmpty `, forUpdateStatement
-
-syntax forUpdateStatementList =
-  | `EMPTY
-  | forUpdateStatementListNonEmpty
-
 syntax forCollectionExpression =
   | expression
   | expression `.. expression
 
 syntax forStatement =
-  | annotationList FOR
-      `( forInitStatementList `; expression `; forUpdateStatementList ) statement
   | annotationList FOR
       `( type name IN forCollectionExpression ) statement
   | annotationList FOR

@@ -379,28 +379,11 @@ syntax conditionalStatementIR =
 ;;;; For statements
 ;;
 
-syntax initializerOptIR
-
-syntax forInitStatementIR =
-  | annotationList typeIR nameIR initializerOptIR
-  | lvalueIR `( argumentListIR )
-  | lvalueIR `< typeArgumentListIR > `( argumentListIR )
-  | lvalueIR assignop expressionIR
-
-syntax forInitStatementListIR = forInitStatementIR*
-
-syntax forUpdateStatementIR = forInitStatementIR
-
-syntax forUpdateStatementListIR = forUpdateStatementIR*
-
 syntax forCollectionExpressionIR =
   | typedExpressionIR
   | typedExpressionIR `.. typedExpressionIR
 
 syntax forStatementIR =
-  | annotationList FOR
-      `( forInitStatementListIR `; typedExpressionIR `; forUpdateStatementListIR )
-      statementIR
   | annotationList FOR
       `( typeIR nameIR IN forCollectionExpressionIR )
       statementIR
