@@ -205,53 +205,6 @@ rulegroup Stmt_ok/conditionalStatement {
 ;;;; annotationList FOR
 ;;;;  `( forInitStatementList `; expression `; forUpdateStatementList ) statement
 
-;;;;; syntax forUpdateStatement
-
-relation ForUpdateStatement_ok:
-  typingContext |- forUpdateStatement : forUpdateStatementIR
-  hint(input %0 %1)
-
-;;;;;; lvalue `( argumentList )
-
-
-;;;;;; lvalue `< typeArgumentList > `( argumentList )
-
-
-;;;;;; lvalue assignop expression
-
-
-;;;;;; (TODO) Handle compound assignments
-
-;;;;; syntax forInitStatement
-
-relation ForInitStatement_ok:
-  typingContext |- forInitStatement : typingContext forInitStatementIR
-  hint(input %0 %1)
-
-;;;;;; annotationList type name initializerOpt
-
-
-;;;;;; forUpdateStatement
-
-
-;;;;; syntax forInitStatementList
-
-relation ForInitStatements_ok:
-  typingContext |- forInitStatement* : typingContext forInitStatementIR*
-  hint(input %0 %1)
-
-rule ForInitStatements_ok/nil:
-  TC |- eps : TC eps
-
-rule ForInitStatements_ok/cons:
-  TC_0 |- forInitStatement_h :: forInitStatement_t*
-        : TC_2 (forInitStatementIR_h :: forInitStatementIR_t*)
-  -- ForInitStatement_ok: TC_0 |- forInitStatement_h
-                                : TC_1 forInitStatementIR_h
-  -- ForInitStatements_ok: TC_1 |- forInitStatement_t*
-                                : TC_2 forInitStatementIR_t*
-
-
 ;;;; annotationList FOR
 ;;;;  `( type name IN forCollectionExpression ) statement
 

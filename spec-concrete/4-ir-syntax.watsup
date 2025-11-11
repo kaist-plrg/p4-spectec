@@ -381,17 +381,17 @@ syntax conditionalStatementIR =
 
 syntax initializerOptIR
 
-syntax forUpdateStatementIR = 
-  | callableTargetIR `< typeArgumentListIR > `( argumentListIR )
-  | typedLvalueIR assignop typedExpressionIR
-
-syntax forUpdateStatementListIR = forUpdateStatementIR*
-
 syntax forInitStatementIR =
   | annotationList typeIR nameIR initializerOptIR
-  | forUpdateStatementIR
+  | lvalueIR `( argumentListIR )
+  | lvalueIR `< typeArgumentListIR > `( argumentListIR )
+  | lvalueIR assignop expressionIR
 
 syntax forInitStatementListIR = forInitStatementIR*
+
+syntax forUpdateStatementIR = forInitStatementIR
+
+syntax forUpdateStatementListIR = forUpdateStatementIR*
 
 syntax forCollectionExpressionIR =
   | typedExpressionIR
