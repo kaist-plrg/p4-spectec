@@ -267,11 +267,14 @@ rule Stmt_ok/forStatement-condition:
   ---- ;; check init statements
   -- if forInitStatement = $flatten_forInitStatementList(forInitStatementList)
   -- ForInitStatement_ok: TC_1 |- forInitStatement : TC_2 TC_U forInitStatementIR
+  -- if _ _ nameIR _ = forInitStatementIR
   ---- ;; check condition expression
   -- Expr_ok: LOCAL TC_2 |- expression : typedExpressionIR
   -- if $type_of_typedExpressionIR(typedExpressionIR) = BOOL
+  -- if (typedExpressionIR_l binop typedExpressionIR_r) `# `( _ _ ) = typedExpressionIR
+  -- if (`` nameIR) `# `( _ _ ) = typedExpressionIR_l
+  -- if binop <- [ ``< , `<= ]
   ---- ;; check update statements
-  -- if _ _ nameIR _ = forInitStatementIR
   -- if forUpdateStatement = $flatten_forUpdateStatementList(forUpdateStatementList)
   -- ForUpdateStatement_ok: TC_U nameIR |- forUpdateStatement : forUpdateStatementIR
   ---- ;; check loop body
