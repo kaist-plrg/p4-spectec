@@ -219,7 +219,7 @@ rule ForCollectionExpression_ok/list:
   ---- ;; check expression
   -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
   ---- ;; check list type
-  -- if _ `# `( typeIR_list _ ) = typedExpressionIR
+  -- if typeIR_list = $type_of_typedExpressionIR(typedExpressionIR)
   -- if LIST `< typeIR_e > = $canon_typeIR(typeIR_list)
   -- Sub_impl: typeIR_e <: typeIR_var
 
@@ -228,7 +228,7 @@ rule ForCollectionExpression_ok/header-stack:
   ---- ;; check expression
   -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
   ---- ;; check header stack type
-  -- if _ `# `( typeIR_stack _ ) = typedExpressionIR
+  -- if typeIR_stack = $type_of_typedExpressionIR(typedExpressionIR)
   -- if typeIR_e `[ _ ] = $canon_typeIR(typeIR_stack)
   -- Type_alpha: typeIR_e ~~ typeIR_var
 
@@ -253,8 +253,8 @@ rule ForCollectionExpression_ok/range:
   -- if typedExpressionIR_l_coerced = $coerce_unary(typedExpressionIR_l, typeIR_var)
   -- if typedExpressionIR_r_coerced = $coerce_unary(typedExpressionIR_r, typeIR_var)
   ---- ;; fetch the types of both sides
-  -- if _ `# `( typeIR_l _ ) = typedExpressionIR_l_coerced
-  -- if _ `# `( typeIR_r _ ) = typedExpressionIR_r_coerced
+  -- if typeIR_l = $type_of_typedExpressionIR(typedExpressionIR_l_coerced)
+  -- if typeIR_r = $type_of_typedExpressionIR(typedExpressionIR_r_coerced)
   -- if $compat_range(typeIR_l, typeIR_r)
 
 rule Stmt_ok/forStatement-in-no-annotations:
@@ -272,7 +272,7 @@ rule Stmt_ok/forStatement-in-no-annotations:
   ---- ;; update the context
   -- if TC_1 = $enter_t(TC_0)
   -- if nameIR = $name(name)
-  -- if TC_2 = $add_var_t(LOCAL, TC_1, nameIR, INOUT typeIR DYN eps)
+  -- if TC_2 = $add_var_t(LOCAL, TC_1, nameIR, IN typeIR DYN eps)
   ---- ;; check loop body
   -- Stmt_ok: LOCAL TC_2 f LOOP |- statement : TC_3 f_post statementIR
   -- if TC_4 = $exit_t(TC_3)
