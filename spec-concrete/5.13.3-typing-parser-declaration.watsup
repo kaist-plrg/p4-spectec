@@ -36,7 +36,8 @@ rulegroup ParserLocalDecl_ok/variableDeclaration {
     -- if $is_assignable_typeIR(typeIR)
     ---- ;; update the context
     -- if nameIR = $name(name)
-    -- if TC_1 = $add_var(BLOCK, TC_0, nameIR, INOUT typeIR DYN eps)
+    -- if varTypeIR = INOUT typeIR DYN eps
+    -- if TC_1 = $add_var_t(BLOCK, TC_0, nameIR, varTypeIR)
     ---- ;; create IR
     -- if variableDeclarationIR
         = annotationList typeIR nameIR eps `;
@@ -57,7 +58,8 @@ rulegroup ParserLocalDecl_ok/variableDeclaration {
         = $coerce_unary(typedExpressionIR_init, typeIR)
     ---- ;; update the context
     -- if nameIR = $name(name)
-    -- if TC_1 = $add_var(BLOCK, TC_0, nameIR, INOUT typeIR DYN eps)
+    -- if varTypeIR = INOUT typeIR DYN eps
+    -- if TC_1 = $add_var_t(BLOCK, TC_0, nameIR, varTypeIR)
     ---- ;; create IR
     -- if variableDeclarationIR
         = annotationList typeIR nameIR (`= typedExpressionIR_init_cast) `;
@@ -78,10 +80,11 @@ rule ParserLocalDecl_ok/valueSetDeclaration:
   ---- ;; check expression
   -- Expr_ok: BLOCK TC_0 |- expression : typedExpressionIR
   ---- ;; check that the expression is compile-time known
-  -- if DYN =/= $ctk_of_expression(typedExpressionIR)
+  -- if DYN =/= $ctk_of_typedExpressionIR(typedExpressionIR)
   ---- ;; add the value set to the context
   -- if nameIR = $name(name)
-  -- if TC_1 = $add_var(BLOCK, TC_0, nameIR, `EMPTY (SET `< typeIR >) CTK eps)
+  -- if varTypeIR = `EMPTY (SET `< typeIR >) CTK eps
+  -- if TC_1 = $add_var_t(BLOCK, TC_0, nameIR, varTypeIR)
   ---- ;; create IR
   -- if valueSetDeclarationIR
       = annotationList VALUE_SET `< typeIR > `( typedExpressionIR ) nameIR `;

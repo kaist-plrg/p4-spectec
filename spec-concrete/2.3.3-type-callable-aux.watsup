@@ -1,0 +1,89 @@
+;;
+;; Base callable type of a callable type definition
+;;
+
+dec $type_of_callableTypeDefIR(callableTypeDefIR)
+  : callableTypeIR
+
+;;; Action type definitions
+
+def $type_of_callableTypeDefIR(actionTypeDefIR)
+  = actionTypeDefIR
+
+;;; Function type definitions
+
+def $type_of_callableTypeDefIR(
+    FUNCTION `< _ `, _ > `( parameterTypeIR* ) `: typeIR
+  )
+  = FUNCTION `( parameterTypeIR* ) `: typeIR
+
+def $type_of_callableTypeDefIR(
+    EXTERN_FUNCTION `< _ `, _ > `( parameterTypeIR* ) `: typeIR
+  )
+  = EXTERN_FUNCTION `( parameterTypeIR* ) `: typeIR
+
+;;; Method type definitions
+
+def $type_of_callableTypeDefIR(
+    EXTERN_METHOD `< _ `, _ > `( parameterTypeIR* ) `: typeIR
+  )
+  = EXTERN_METHOD `( parameterTypeIR* ) `: typeIR
+
+def $type_of_callableTypeDefIR(
+    EXTERN_METHOD ABSTRACT `< _ `, _ > `( parameterTypeIR* ) `: typeIR
+  )
+  = EXTERN_METHOD ABSTRACT `( parameterTypeIR* ) `: typeIR
+
+def $type_of_callableTypeDefIR(
+    parserApplyMethodTypeDefIR
+  )
+  = parserApplyMethodTypeDefIR
+
+def $type_of_callableTypeDefIR(
+    controlApplyMethodTypeDefIR
+  )
+  = controlApplyMethodTypeDefIR
+
+;;
+;; Type parameters of a callable type definition
+;;
+
+dec $type_parameters_of_callableTypeDefIR(callableTypeDefIR) : (tid*, tid*)
+
+;;; Action type definitions
+
+def $type_parameters_of_callableTypeDefIR(actionTypeDefIR) = (eps, eps)
+
+;;; Function type definitions
+
+def $type_parameters_of_callableTypeDefIR(
+    FUNCTION `< tid_expl* `, tid_impl* > `( _ ) `: _
+  )
+  = (tid_expl*, tid_impl*)
+
+def $type_parameters_of_callableTypeDefIR(
+    EXTERN_FUNCTION `< tid_expl* `, tid_impl* > `( _ ) `: _
+  )
+  = (tid_expl*, tid_impl*)
+
+;;; Method type definitions
+
+def $type_parameters_of_callableTypeDefIR(
+    EXTERN_METHOD `< tid_expl* `, tid_impl* > `( _ ) `: _
+  )
+  = (tid_expl*, tid_impl*)
+
+def $type_parameters_of_callableTypeDefIR(
+    EXTERN_METHOD ABSTRACT `< tid_expl* `, tid_impl* > `( _ ) `: _
+  )
+  = (tid_expl*, tid_impl*)
+
+def $type_parameters_of_callableTypeDefIR(
+    parserApplyMethodTypeDefIR
+  )
+  = (eps, eps)
+
+def $type_parameters_of_callableTypeDefIR(
+    controlApplyMethodTypeDefIR
+  )
+  = (eps, eps)

@@ -41,15 +41,30 @@ $ ./p4spectec elab spec-concrete/*.watsup
 
 ### To Run the P4-SpecTec Specification
 
-Currently, the P4-SpecTec specification defines the static semantics of P4.
-Given a P4 program, below command runs the typing rules of the P4 language.
-`RELNAME` may be `Program_ok` or `Program_inst`.
+Given a P4 program, below command runs a particular relation on it.
+`RELNAME` may be `Program_ok` (for typing) or `Program_inst` (for instantiation).
 
 ```shell
-$ ./p4spectec run-sl spec-concrete/*.watsup -rel [RELNAME] -i p4c/p4include -p [FILENAME].p4
+# To run the IL
+$ ./p4spectec run spec-concrete/*.watsup -rel [RELNAME] -i p4c/p4include -p [FILENAME].p4 -il
+# To run the SL
+$ ./p4spectec run spec-concrete/*.watsup -rel [RELNAME] -i p4c/p4include -p [FILENAME].p4 -sl
 ```
 
-### To Initiate a Fuzz Loop for Generating P4 Programs
+### To Run the P4-SpecTec Specification with an Architecture Simulator
+
+Given a P4 program and a target architecture, below command runs a packet processing simulation on it.
+The input/output packets are specified in STF format.
+Currently, we only support a limited subset of the V1Model architecture.
+
+```shell
+# To run the IL
+$ ./p4spectec sim spec-concrete/*.watsup -arch v1model -i p4c/p4include -p [FILENAME].p4 -stf [STF FILENAME].stf -il
+# To run the SL
+$ ./p4spectec sim spec-concrete/*.watsup -arch v1model -i p4c/p4include -p [FILENAME].p4 -stf [STF FILENAME].stf -sl
+```
+
+### To Initiate a Fuzz Loop for Generating (intentionally) Ill-typed P4 Programs
 
 ```shell
 $ ./p4spectec testgen spec-concrete/*.watsup -rel Program_ok -i p4c/p4include -seed [SEED DIR] -gen [GEN DIR] -fuel [NUM]
@@ -69,7 +84,7 @@ $ ./p4spectec testgen spec-concrete/*.watsup -rel Program_ok -i p4c/p4include -s
 
 At a high level, the fuzz loop will:
 
-### Debugging the Derivation
+### To Debug the Derivation
 
 To see what values are derived from a given P4 program and a phantom id, run:
 

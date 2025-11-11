@@ -27,8 +27,7 @@ syntax numberLiteral =
 ;; Strings
 ;;
 
-syntax stringLiteral = `" text `"
-                       hint(print `"#%#`")
+syntax stringLiteral = `" text `" hint(print `"#%#`")
 
 ;;
 ;; Names
@@ -373,19 +372,19 @@ syntax accessExpressionNonBrace =
 ;;
 
 syntax callTarget
-syntax routineTarget
+syntax callableTarget
 syntax realTypeArgumentList
 syntax argumentList
 syntax callTargetNonBrace
-syntax routineTargetNonBrace
+syntax callableTargetNonBrace
 
 syntax callExpression =
   | callTarget `( argumentList )
-  | routineTarget `< realTypeArgumentList > `( argumentList )
+  | callableTarget `< realTypeArgumentList > `( argumentList )
 
 syntax callExpressionNonBrace =
   | callTargetNonBrace `( argumentList )
-  | routineTargetNonBrace `< realTypeArgumentList > `( argumentList )
+  | callableTargetNonBrace `< realTypeArgumentList > `( argumentList )
 
 ;;
 ;;;; Parenthesized expressions
@@ -439,11 +438,11 @@ syntax dataElementExpression =
   | sequenceElementExpression
   | recordElementExpression
 
-syntax routineTarget = expression
+syntax callableTarget = expression
 syntax constructorTarget = namedType
 
 syntax callTarget =
-  | routineTarget
+  | callableTarget
   | constructorTarget
 
 ;;
@@ -465,10 +464,10 @@ syntax memberAccessBaseNonBrace =
   | prefixedTypeName
   | expressionNonBrace
 
-syntax routineTargetNonBrace = expressionNonBrace
+syntax callableTargetNonBrace = expressionNonBrace
 
 syntax callTargetNonBrace =
-  | routineTargetNonBrace
+  | callableTargetNonBrace
   | constructorTarget
 
 dec $expressionNonBrace_as_expression(expressionNonBrace) : expression
@@ -1069,9 +1068,13 @@ syntax parserTypeDeclaration =
 ;;;;;; Parser declarations
 ;;
 
-syntax parserStatementList
+syntax parserStatement, parserStatementList
 
 syntax parserBlockStatement = annotationList `{ parserStatementList }
+
+syntax parserConditionalStatement =
+  | IF `( expression ) parserStatement
+  | IF `( expression ) parserStatement ELSE parserStatement
 
 syntax parserStatement =
   | constantDeclaration
@@ -1081,7 +1084,7 @@ syntax parserStatement =
   | callStatement
   | directApplicationStatement
   | parserBlockStatement
-  | conditionalStatement
+  | parserConditionalStatement
 
 syntax parserStatementList =
   | `EMPTY

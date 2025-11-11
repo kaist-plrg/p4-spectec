@@ -57,7 +57,7 @@ def $fresh_tids(n) = $fresh_tid() :: $fresh_tids(n')
   -- if n' = $(n - 1)
 
 ;;
-;; Routine names
+;; Callable names
 ;;
 ;; A pair of function name and a list of parameter names,
 ;; with a boolean flag indicating whether the parameter has
@@ -65,14 +65,18 @@ def $fresh_tids(n) = $fresh_tid() :: $fresh_tids(n')
 ;;
 
 syntax pid = id `# bool
-syntax rid = id `( pid* )
+syntax cid = id `( pid* )
 
-dec $rid(name, parameterList) : rid
+dec $cid(name, parameterList) : cid
+dec $cid_(name, constructorParameterListOpt) : cid
 dec $pids(parameterList) : pid*
 dec $pid(parameter) : pid
 
-def $rid(name, parameterList)
+def $cid(name, parameterList)
   = $name(name) `( $pids(parameterList) )
+
+def $cid_(name, `EMPTY) = $name(name) `( eps )
+def $cid_(name, `( parameterList )) = $cid(name, parameterList)
 
 def $pids(`EMPTY) = eps
 def $pids(parameter) = $pid(parameter)
@@ -81,18 +85,6 @@ def $pids(nonEmptyParameterList `, parameter)
 
 def $pid(_ _ _ name `EMPTY) = $name(name) `# false
 def $pid(_ _ _ name initializer) = $name(name) `# true
-
-;;
-;; Constructor names
-;;
-
-syntax cid = rid
-
-dec $cid(name, constructorParameterListOpt) : cid
-
-def $cid(name, `EMPTY) = $name(name) `( eps )
-def $cid(name, `( parameterList ))
-  = $name(name) `( $pids(parameterList) )
 
 ;;
 ;; Object names (fully qualified paths)

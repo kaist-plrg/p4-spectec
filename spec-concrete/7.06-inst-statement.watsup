@@ -1,0 +1,221 @@
+;;
+;; Statement instantiation
+;;
+;; syntax statementIR
+;;
+
+;;; emptyStatementIR
+
+rule Stmt_inst/emptyStatementIR:
+  p IC STO |- emptyStatementIR : IC STO emptyStatementIR
+
+;;; assignmentStatementIR
+
+rule Stmt_inst/assignmentStatementIR:
+  p IC STO |- assignmentStatementIR : IC STO assignmentStatementIR
+
+;;; callStatementIR
+
+rule Stmt_inst/callStatementIR:
+  p IC STO |- callStatementIR : IC STO callStatementIR
+
+;;; directApplicationStatementIR
+;;; syntax directApplicationStatementIR =
+;;;   prefixedNameIR `. APPLY `( argumentListIR ) `;
+
+rule Stmt_inst/directApplicationStatementIR:
+  p IC STO_0 |- prefixedNameIR `. APPLY `( argumentListIR ) `;
+              : IC STO_2 blockStatementIR
+  ---- ;; find and instantiate constructor
+  -- if (_, constructorDef, _)
+      = $find_constructorDef_i(IC, prefixedNameIR, eps)
+  -- Constructor_inst:
+      p IC STO_0 |- constructorDef `< eps > `( eps `# eps ) : STO_1 object
+  ---- ;; assign new tid with random string appended
+  -- if tid_fresh = $fresh_tid()
+  -- if tid = $flatten_prefixedNameIR(prefixedNameIR)
+  -- if typeIR = `` tid
+  -- if nameIR = $concat_text([ tid, "_", tid_fresh])
+  ---- ;; add object to store
+  -- if oid = IC.PATH ++ nameIR
+  -- if STO_2 = $add_map<oid, object>(STO_1, oid, object)
+  ---- ;; replace with constant declaration and call statement
+  -- if constantDeclarationIR
+      = `EMPTY CONST typeIR nameIR (`= (`! oid)) `;
+  -- if callableTargetIR
+      = ((`` tid) `# `( typeIR CTK )) `. "apply"
+  -- if callStatementIR
+      = callableTargetIR `< eps > `( argumentListIR ) `;
+  -- if blockStatementIR
+      = `EMPTY `{ [ constantDeclarationIR, callStatementIR ] }
+
+;;; returnStatementIR
+
+rule Stmt_inst/returnStatementIR:
+  LOCAL IC STO |- returnStatementIR : IC STO returnStatementIR
+
+;;; exitStatementIR
+
+rule Stmt_inst/exitStatementIR:
+  p IC STO |- exitStatementIR : IC STO exitStatementIR
+
+;;; blockStatementIR
+;;; syntax blockStatementIR = annotationList `{ blockElementStatementListIR }
+
+rule Stmt_inst/blockStatementIR:
+  LOCAL IC_0 STO_0 |- annotationList `{ blockElementStatementListIR }
+                    : IC_1 STO_1
+                        (annotationList `{ blockElementStatementListIR_inst })
+  -- Block_inst:
+      IC_0 STO_0 |- annotationList `{ blockElementStatementListIR }
+                  : IC_1 STO_1 (_ `{ blockElementStatementListIR_inst })
+
+;;; conditionalStatementIR
+;;; syntax conditionalStatementIR
+
+;;;; IF `( typedExpressionIR ) statementIR
+;;;; IF `( typedExpressionIR ) statementIR ELSE statementIR
+
+rulegroup Stmt_inst/conditionalStatementIR {
+
+  rule Stmt_inst/non-else:
+    p IC STO_0 |- IF `( typedExpressionIR_cond ) statementIR_then
+                : IC STO_1 (IF `( typedExpressionIR_cond ) statementIR_then_inst)
+    -- Stmt_inst:
+        p IC STO_0 |- statementIR_then
+                    : IC_then STO_1 statementIR_then_inst
+
+  rule Stmt_inst/else:
+    p IC STO_0 |- IF `( typedExpressionIR_cond ) statementIR_then ELSE statementIR_else
+                : IC STO_2
+                    (IF `( typedExpressionIR_cond ) statementIR_then_inst
+                     ELSE statementIR_else_inst)
+    -- Stmt_inst:
+        p IC STO_0 |- statementIR_then
+                    : IC_then STO_1 statementIR_then_inst
+    -- Stmt_inst:
+        p IC STO_1 |- statementIR_else
+                    : IC_else STO_2 statementIR_else_inst
+
+}
+
+;;; forStatementIR
+
+;;; breakStatementIR
+
+;;; continueStatementIR
+
+;;; switchStatementIR
+;;; syntax switchStatementIR = SWITCH `( typedExpressionIR ) `{ switchCaseListIR }
+
+;;;; syntax switchCaseIR
+
+relation SwitchCase_inst:
+  cursor instContext store |- switchCaseIR
+                            : store switchCaseIR
+  hint(input %0 %1 %2 %3)
+
+;;;;; switchLabelIR `: blockStatementIR
+;;;;; switchLabelIR `:
+
+rulegroup SwitchCase_inst {
+
+  rule SwitchCase_inst/blockStatementIR:
+    p IC STO_0 |- switchLabelIR `: blockStatementIR
+                : STO_1 (switchLabelIR `: blockStatementIR_inst)
+    -- Stmt_inst: p IC STO_0 |- blockStatementIR
+                              : IC_switch STO_1 blockStatementIR_inst
+
+  rule SwitchCase_inst/non-blockStatementIR:
+    p IC STO |- switchLabelIR `:
+              : STO (switchLabelIR `:)
+
+}
+
+;;;; syntax switchCaseListIR
+
+relation SwitchCases_inst:
+  cursor instContext store |- switchCaseIR*
+                            : store switchCaseIR*
+  hint(input %0 %1 %2 %3)
+
+rule SwitchCases_inst/nil:
+  p IC STO |- eps : STO eps
+
+rule SwitchCases_inst/cons:
+  p IC STO_0 |- switchCaseIR_h :: switchCaseIR_t*
+              : STO_2 (switchCaseIR_h' :: switchCaseIR_t'*)
+  -- SwitchCase_inst: p IC STO_0 |- switchCaseIR_h
+                                  : STO_1 switchCaseIR_h'
+  -- SwitchCases_inst: p IC STO_1 |- switchCaseIR_t*
+                                   : STO_2 switchCaseIR_t'*
+
+rule Stmt_inst/switchStatementIR:
+  p IC STO_0 |- SWITCH `( typedExpressionIR ) `{ switchCaseListIR } 
+              : IC STO_1 (SWITCH `( typedExpressionIR ) `{ switchCaseListIR_inst })
+  ---- ;; instantiate switch cases
+  -- SwitchCases_inst: p IC STO_0 |- switchCaseListIR
+                                   : STO_1 switchCaseListIR_inst
+
+;;
+;; Block statement instantiation
+;;
+
+;;
+;; syntax blockElementStatementIR
+;;
+
+;;; constantDeclarationIR
+
+rule BlockElementStmt_inst/constantDeclarationIR:
+  IC_0 STO_0 |- constantDeclarationIR
+              : IC_1 STO_1 constantDeclarationIR_inst
+  -- Decl_inst: LOCAL IC_0 STO_0 |- constantDeclarationIR
+                                  : IC_1 STO_1 constantDeclarationIR_inst
+
+;;; variableDeclarationIR
+
+rule BlockElementStmt_inst/variableDeclarationIR:
+  IC STO |- variableDeclarationIR
+          : IC STO variableDeclarationIR
+
+;;; statementIR
+
+rule BlockElementStmt_inst/statementIR:
+  IC_0 STO_0 |- statementIR
+              : IC_1 STO_1 statementIR_inst
+  -- Stmt_inst: LOCAL IC_0 STO_0 |- statementIR
+                                  : IC_1 STO_1 statementIR_inst
+
+;;
+;; syntax blockElementStatementListIR
+;;
+
+rule BlockElementStmts_inst/nil:
+  IC STO |- eps : IC STO eps
+
+rule BlockElementStmts_inst/cons:
+  IC_0 STO_0 |- blockElementStatementIR_h :: blockElementStatementIR_t*
+            : IC_2 STO_2 (blockElementStatementIR_h_inst
+                          :: blockElementStatementIR_t_inst*)
+  -- BlockElementStmt_inst:
+      IC_0 STO_0 |- blockElementStatementIR_h
+                  : IC_1 STO_1 blockElementStatementIR_h_inst
+  -- BlockElementStmts_inst:
+      IC_1 STO_1 |- blockElementStatementIR_t*
+                  : IC_2 STO_2 blockElementStatementIR_t_inst*
+
+;;
+;; syntax blockStatmentIR
+;;
+
+;;; syntax blockStatmentIR = annotationList `{ blockElementStatementListIR }
+
+rule Block_inst:
+  IC_0 STO_0 |- annotationList `{ blockElementStatementListIR }
+              : IC_3 STO_1 (annotationList `{ blockElementStatementListIR_inst })
+  -- if IC_1 = $enter_i(IC_0)
+  -- BlockElementStmts_inst:
+      IC_1 STO_0 |- blockElementStatementListIR
+                  : IC_2 STO_1 blockElementStatementListIR_inst
+  -- if IC_3 = $exit_i(IC_2)

@@ -72,12 +72,10 @@ relation Lvalue_write:
 ;;
 
 syntax returnResult = RETURN value?
-syntax acceptTransitionResult = ACCEPT
 syntax rejectTransitionResult = REJECT
 
 syntax statementResult =
   | continueEmptyResult
-  | acceptTransitionResult
   | exitResult
   | rejectTransitionResult
   | returnResult
@@ -110,6 +108,7 @@ relation Block_eval:
 ;;;; Parser evaluation
 ;;
 
+syntax acceptTransitionResult = ACCEPT
 syntax stateTransitionResult = STATE id
 
 syntax transitionResult =
@@ -248,10 +247,9 @@ relation Copy_out:
   hint(input %0 %1 %2 %3 %4 %5 %6)
 
 syntax callResult =
-  | returnResult
-  | acceptTransitionResult
   | exitResult
   | rejectTransitionResult
+  | returnResult
 
 relation Call_eval:
   cursor evaluationContext store |- callee `@

@@ -32,7 +32,8 @@ rulegroup ControlLocalDecl_ok/variableDeclaration {
     -- if $is_assignable_typeIR(typeIR)
     ---- ;; update the context
     -- if nameIR = $name(name)
-    -- if TC_1 = $add_var(BLOCK, TC_0, nameIR, INOUT typeIR DYN eps)
+    -- if varTypeIR = INOUT typeIR DYN eps
+    -- if TC_1 = $add_var_t(BLOCK, TC_0, nameIR, varTypeIR)
     ---- ;; create IR
     -- if variableDeclarationIR
         = annotationList typeIR nameIR eps `;
@@ -53,7 +54,8 @@ rulegroup ControlLocalDecl_ok/variableDeclaration {
         = $coerce_unary(typedExpressionIR_init, typeIR)
     ---- ;; update the context
     -- if nameIR = $name(name)
-    -- if TC_1 = $add_var(BLOCK, TC_0, nameIR, INOUT typeIR DYN eps)
+    -- if varTypeIR = INOUT typeIR DYN eps
+    -- if TC_1 = $add_var_t(BLOCK, TC_0, nameIR, varTypeIR)
     ---- ;; create IR
     -- if variableDeclarationIR
         = annotationList typeIR nameIR (`= typedExpressionIR_init_cast) `;
@@ -81,7 +83,8 @@ rule ControlLocalDecl_ok/tableDeclaration:
   ---- ;; update the context with synthesized table
   -- if nameIR = $name(name)
   -- TableType_ok: TC_1 TBLC |- name : TC_2 typeIR_table
-  -- if TC_3 = $add_var(BLOCK, TC_2, nameIR, `EMPTY typeIR_table DYN eps)
+  -- if varTypeIR = `EMPTY typeIR_table DYN eps
+  -- if TC_3 = $add_var_t(BLOCK, TC_2, nameIR, varTypeIR)
   ---- ;; create IR
   -- if tableDeclarationIR
       = annotationList TABLE typeIR_table nameIR `{ tablePropertyIR* }

@@ -22,6 +22,11 @@ type func_result =
   | Pass of Value.t * SCov.Cover.t
   | Fail of region * string * SCov.Cover.t
 
+type stf_result =
+  | Pass
+  | Fail of region * string
+  | IllFormed of region * string
+
 module type ARCH = sig
   (* Transactions *)
 
@@ -88,7 +93,7 @@ module type DRIVER = sig
 
   (* Run a P4 program against the spec and a STF test *)
 
-  val run_stf_test : spec -> string list -> string -> string -> unit
+  val run_stf_test : spec -> string list -> string -> string -> stf_result
 
   (* Coverage *)
 

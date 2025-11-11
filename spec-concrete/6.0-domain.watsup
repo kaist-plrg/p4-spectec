@@ -1,21 +1,12 @@
 ;;
-;; Routine names
+;; Callable names
 ;;
 
-dec $rid_IR(nameIR, parameterListIR) : rid
+dec $cid_IR(nameIR, parameterListIR) : cid
 dec $pid_IR(parameterIR) : pid
 
-def $rid_IR(nameIR, parameterIR*)
+def $cid_IR(nameIR, parameterIR*)
   = nameIR `( $pid_IR(parameterIR)* )
 
 def $pid_IR(_ _ _ nameIR eps) = nameIR `# false
 def $pid_IR(_ _ _ nameIR constantInitializerIR) = nameIR `# true
-
-;;
-;; Constructor names
-;;
-
-dec $cid_IR(nameIR, constructorParameterListIR) : cid
-
-def $cid_IR(nameIR, constructorParameterListIR)
-  = $rid_IR(nameIR, constructorParameterListIR)

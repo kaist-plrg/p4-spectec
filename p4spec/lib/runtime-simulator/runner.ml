@@ -1,6 +1,8 @@
 module MCov = Runtime_testgen.Cov.Multiple
 open Io
 open Simulator
+open Error
+open Util.Source
 
 (* Functor to create a DRIVER from ARCH and INTERP implementations *)
 
@@ -33,85 +35,110 @@ module Make
 
   (* STF test runner *)
 
+  let on_tx_output (tx_opt : IO.tx option) (tx_output_queue : IO.tx list)
+      (tx_expect_queue : IO.tx list) : IO.tx list * IO.tx list =
+    match tx_opt with
+    (* Packet was transmitted *)
+    | Some tx -> (
+        match tx_expect_queue with
+        (* No expected packet (yet) *)
+        | [] ->
+            let tx_output_queue = tx_output_queue @ [ tx ] in
+            (tx_output_queue, tx_expect_queue)
+        (* There is an expected packet *)
+        | tx_expect :: tx_expect_queue when compare_tx tx tx_expect ->
+            (tx_output_queue, tx_expect_queue)
+        | tx_expect :: _ ->
+            error_stf
+              (Format.asprintf "expected %s but got %s" (string_of_tx tx_expect)
+                 (string_of_tx tx)))
+    (* Packet was dropped *)
+    | None -> (tx_output_queue, tx_expect_queue)
+
+  let on_tx_expect (tx_expect : IO.tx) (tx_output_queue : IO.tx list)
+      (tx_expect_queue : IO.tx list) : IO.tx list * IO.tx list =
+    match tx_output_queue with
+    (* No output packet (yet) *)
+    | [] ->
+        let tx_expect_queue = tx_expect_queue @ [ tx_expect ] in
+        (tx_output_queue, tx_expect_queue)
+    (* There is an output packet *)
+    | tx_output :: tx_output_queue when compare_tx tx_output tx_expect ->
+        (tx_output_queue, tx_expect_queue)
+    | tx_output :: _ ->
+        error_stf
+          (Format.asprintf "expected %s but got %s" (string_of_tx tx_expect)
+             (string_of_tx tx_output))
+
   let run_stf_stmt (value_ctx : Sl.Ast.value) (value_sto : Sl.Ast.value)
-      (pass : bool) (queue_packet : IO.tx list) (queue_expect : IO.tx list)
+      (tx_output_queue : IO.tx list) (tx_expect_queue : IO.tx list)
       (stmt_stf : Stf.Ast.stmt) :
-      Sl.Ast.value * Sl.Ast.value * bool * IO.tx list * IO.tx list =
+      Sl.Ast.value * Sl.Ast.value * IO.tx list * IO.tx list =
     match stmt_stf with
     (* Packet I/O *)
-    | Stf.Ast.Packet (port_in, packet_in) -> (
+    | Stf.Ast.Packet (port_in, packet_in) ->
         let port_in = int_of_string port_in in
         let packet_in = String.uppercase_ascii packet_in in
         let rx = (port_in, packet_in) in
-        let value_ctx, value_sto, tx_opt =
+        let value_ctx, value_sto, tx_output_opt =
           Arch.drive_pipe value_ctx value_sto rx
         in
-        match tx_opt with
-        | None -> (value_ctx, value_sto, pass, queue_packet, queue_expect)
-        | Some (port_out, packet_out) -> (
-            match queue_expect with
-            | [] ->
-                let queue_packet = queue_packet @ [ (port_out, packet_out) ] in
-                (value_ctx, value_sto, pass, queue_packet, queue_expect)
-            | (port_expect, packet_expect) :: queue_expect ->
-                let pass =
-                  compare_result (port_out, packet_out)
-                    (port_expect, packet_expect)
-                  && pass
-                in
-                (value_ctx, value_sto, pass, queue_packet, queue_expect)))
-    | Stf.Ast.Expect (port_expect, Some packet_expect) -> (
+        let tx_output_queue, tx_expect_queue =
+          on_tx_output tx_output_opt tx_output_queue tx_expect_queue
+        in
+        (value_ctx, value_sto, tx_output_queue, tx_expect_queue)
+    | Stf.Ast.Expect (port_expect, Some packet_expect) ->
         let port_expect = int_of_string port_expect in
         let packet_expect = String.uppercase_ascii packet_expect in
-        match queue_packet with
-        | [] ->
-            ( value_ctx,
-              value_sto,
-              pass,
-              queue_packet,
-              queue_expect @ [ (port_expect, packet_expect) ] )
-        | (port_out, packet_out) :: queue_packet ->
-            let pass =
-              compare_result (port_out, packet_out) (port_expect, packet_expect)
-              && pass
-            in
-            (value_ctx, value_sto, pass, queue_packet, queue_expect))
+        let tx_expect = (port_expect, packet_expect) in
+        let tx_output_queue, tx_expect_queue =
+          on_tx_expect tx_expect tx_output_queue tx_expect_queue
+        in
+        (value_ctx, value_sto, tx_output_queue, tx_expect_queue)
     (* Async *)
-    | Stf.Ast.Wait -> (value_ctx, value_sto, pass, queue_packet, queue_expect)
+    | Stf.Ast.Wait -> (value_ctx, value_sto, tx_output_queue, tx_expect_queue)
     | _ ->
-        Format.asprintf "not yet supported: %a" Stf.Print.print_stmt stmt_stf
-        |> failwith
+        error_stf
+          (Format.asprintf "not yet supported: %a" Stf.Print.print_stmt stmt_stf)
 
   let run_stf_stmts (value_ctx : Sl.Ast.value) (value_sto : Sl.Ast.value)
-      (stmts_stf : Stf.Ast.stmt list) : bool =
-    let _, _, pass, queue_packet, queue_expect =
+      (stmts_stf : Stf.Ast.stmt list) : unit =
+    let _, _, tx_output_queue, tx_expect_queue =
       List.fold_left
-        (fun (value_ctx, value_sto, pass, queue_packet, queue_expect) stmt_stf
-           ->
-          run_stf_stmt value_ctx value_sto pass queue_packet queue_expect
+        (fun (value_ctx, value_sto, tx_output_queue, tx_expect_queue) stmt_stf ->
+          run_stf_stmt value_ctx value_sto tx_output_queue tx_expect_queue
             stmt_stf)
-        (value_ctx, value_sto, true, [], [])
+        (value_ctx, value_sto, [], [])
         stmts_stf
     in
-    let pass = pass && queue_packet = [] && queue_expect = [] in
-    if queue_packet <> [] then (
-      Format.printf "[FAIL] Remaining packets to be matched:\n";
-      List.iteri
-        (fun idx (port, packet) -> Format.printf "(%d) %d %s\n" idx port packet)
-        queue_packet);
-    if queue_expect <> [] then (
-      Format.printf "[FAIL] Expected packets to be output:\n";
-      List.iteri
-        (fun idx (port, packet) -> Format.printf "(%d) %d %s\n" idx port packet)
-        queue_expect);
-    pass
+    match (tx_output_queue, tx_expect_queue) with
+    | [], [] -> ()
+    | tx_output_queue, tx_expect_queue ->
+        let msg_output =
+          if tx_output_queue <> [] then
+            Format.asprintf "[FAIL] Remaining packets to be matched:\n%s"
+              (tx_output_queue |> List.map string_of_tx |> String.concat "\n")
+          else ""
+        in
+        let msg_expect =
+          if tx_expect_queue <> [] then
+            Format.asprintf "[FAIL] Expected packets to be output:\n%s"
+              (tx_expect_queue |> List.map string_of_tx |> String.concat "\n")
+          else ""
+        in
+        error_stf (msg_output ^ msg_expect)
 
   let run_stf_test (spec : spec) (includes_p4 : string list)
-      (filename_p4 : string) (filename_stf : string) : unit =
-    let value_ctx, value_sto = Arch.init_pipe spec includes_p4 filename_p4 in
-    let stf_stmts = Stf.Parse.parse_file filename_stf in
-    let _ = run_stf_stmts value_ctx value_sto stf_stmts in
-    ()
+      (filename_p4 : string) (filename_stf : string) : stf_result =
+    try
+      let value_ctx, value_sto = Arch.init_pipe spec includes_p4 filename_p4 in
+      let stf_stmts = Stf.Parse.parse_file filename_stf in
+      run_stf_stmts value_ctx value_sto stf_stmts;
+      Pass
+    with
+    | Util.Error.ParseError (at, msg) -> IllFormed (at, msg)
+    | Util.Error.InterpError (at, msg) -> Fail (at, msg)
+    | Util.Error.StfError msg -> Fail (no_region, msg)
 
   (* Coverage runner *)
 

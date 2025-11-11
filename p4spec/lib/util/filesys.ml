@@ -33,6 +33,20 @@ let collect_excludes (paths_exclude : string list) =
   in
   List.concat_map collect_exclude filenames_exclude
 
+(* Readers *)
+
+let read_file (filename : string) : string =
+  let ic = open_in filename in
+  let buf = Buffer.create 1024 in
+  try
+    while true do
+      Buffer.add_string buf (input_line ic ^ "\n")
+    done;
+    raise End_of_file
+  with End_of_file ->
+    close_in ic;
+    Buffer.contents buf
+
 (* File and directory operations *)
 
 let base ~(suffix : string) (filename : string) : string =

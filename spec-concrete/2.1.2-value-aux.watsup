@@ -27,12 +27,12 @@ builtin dec $int_to_bits_signed(nat, int) : bits
 ;; Underlying raw integer of a numeric value
 ;;
 
-dec $to_number(value) : int
+dec $to_int(value) : int
 
-def $to_number(D i) = i
-def $to_number(w S i) = $bitstr_to_int(w, i)
-def $to_number(w W i) = i
-def $to_number(w V i `# _) = i
+def $to_int(D i) = i
+def $to_int(w S i) = $bitstr_to_int(w, i)
+def $to_int(w W i) = i
+def $to_int(_ `. _ V i) = i
 
 ;;
 ;; Update a field value
@@ -52,6 +52,32 @@ def $update_fieldValue(
   ) = (value_field_h id_field_h `;) ::
       $update_fieldValue(fieldValue_t*, id, value)
   -- otherwise
+
+
+;;;
+;;; Update a header stack by index
+;;;
+dec $update_headerStack(value*, value, nat, nat) : value*
+dec $update_headerStack'(value*, value, nat, nat, nat) : value*
+
+def $update_headerStack(value*, value_new, n_target_idx, n_size) = $update_headerStack'(value*, value_new, 0, n_target_idx, n_size)
+
+def $update_headerStack'(eps, _, _, _, _) = eps
+def $update_headerStack'(
+    value_h :: value_t*,
+    value_new, n_current_idx, n_target_idx, n_size
+  ) = eps
+  -- if n_current_idx = n_size
+def $update_headerStack'(
+    value_h :: value_t*,
+    value_new, n_current_idx, n_target_idx, n_size
+  ) = value_new :: value_t*
+  -- if n_target_idx = n_current_idx
+def $update_headerStack'(
+    value_h :: value_t*,
+    value_new, n_current_idx, n_target_idx, n_size
+  ) = value_h :: $update_headerStack'(value_t*, value_new, n_target_idx, $(n_current_idx + 1), n_size)
+  -- if n_target_idx =/= n_current_idx
 
 ;;
 ;; Write bits to a value
@@ -128,3 +154,7 @@ def $write_bits_from_value(
     HEADER _ `{ true `; (value_field id_field `;)* }
   )
   = $concat_<bool>($write_bits_from_value(value_field)*)
+def $write_bits_from_value(
+    HEADER_STACK `[ value_element* `( _; _ ) ]
+  )
+  = $concat_<bool>($write_bits_from_value(value_element)*)

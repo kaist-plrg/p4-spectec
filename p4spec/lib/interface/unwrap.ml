@@ -13,6 +13,11 @@ let unwrap_num_v (value : value) : Bigint.t =
 let unwrap_text_v (value : value) : string =
   match value.it with TextV s -> s | _ -> failwith "expected TextV value"
 
+let unwrap_case_v (value : value) : mixop * value list =
+  match value.it with
+  | CaseV (m, v) -> (m, v)
+  | _ -> failwith "expected CaseV value"
+
 let unwrap_tuple_v (value : value) : value list =
   match value.it with
   | TupleV values -> values

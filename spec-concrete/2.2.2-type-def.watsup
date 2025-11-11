@@ -1,0 +1,73 @@
+;;
+;; Type definitions
+;;
+
+;;
+;;;; Name type definitions (to represent type parameters)
+;;
+
+syntax nameTypeDefIR = nameTypeIR
+
+;;
+;;;; Alias type definitions
+;;
+
+syntax aliasTypeDefIR = aliasTypeIR
+
+;;
+;;;; Data type definitions
+;;
+
+syntax structTypeDefIR =
+  STRUCT tid `< tid* `, tid* > `{ fieldTypeIR* }
+  hint(print %1)
+syntax headerTypeDefIR =
+  HEADER tid `< tid* `, tid* > `{ fieldTypeIR* }
+  hint(print %1)
+syntax headerUnionTypeDefIR =
+  HEADER_UNION tid `< tid* `, tid* > `{ fieldTypeIR* }
+  hint(print %1)
+
+syntax enumTypeDefIR = enumTypeIR
+
+syntax dataTypeDefIR =
+  | structTypeDefIR
+  | headerTypeDefIR
+  | headerUnionTypeDefIR
+  | enumTypeDefIR
+
+;;
+;;;; Object type definitions
+;;
+
+syntax externObjectTypeDefIR =
+  EXTERN tid `< tid* `, tid* > externMethodTypeDefEnv
+  hint(print %1)
+
+syntax parserObjectTypeDefIR =
+  PARSER `< tid* `, tid* > `( parameterTypeIR* )
+
+syntax controlObjectTypeDefIR =
+  CONTROL `< tid* `, tid* > `( parameterTypeIR* )
+
+syntax packageObjectTypeDefIR =
+  PACKAGE `< tid* `, tid* > `{ typeIR* }
+
+syntax tableObjectTypeDefIR = tableObjectTypeIR
+
+syntax objectTypeDefIR =
+  | externObjectTypeDefIR
+  | parserObjectTypeDefIR
+  | controlObjectTypeDefIR
+  | packageObjectTypeDefIR
+  | tableObjectTypeDefIR
+
+;;
+;;;; Type definitions
+;;
+
+syntax typeDefIR =
+  | nameTypeDefIR
+  | aliasTypeDefIR
+  | dataTypeDefIR
+  | objectTypeDefIR

@@ -1,4 +1,5 @@
 open Util.Error
+open Util.Source
 
 let version = "0.1"
 
@@ -78,9 +79,8 @@ let struct_command =
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 
-let run_il_command =
-  Core.Command.basic
-    ~summary:"run semantics of a p4_16 spec based on backtracking IL"
+let run_command =
+  Core.Command.basic ~summary:"run semantics of a p4_16 spec"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map filenames_spec =
@@ -89,42 +89,29 @@ let run_il_command =
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and filename_p4 = flag "-p" (required string) ~doc:"p4 file of interest"
      and _debug = flag "-dbg" no_arg ~doc:"print debug traces"
-     and _profile = flag "-profile" no_arg ~doc:"profiling" in
+     and _profile = flag "-profile" no_arg ~doc:"profiling"
+     and mode =
+       Command.Param.choose_one
+         [
+           flag "il" no_arg ~doc:"run IL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b `IL);
+           flag "sl" no_arg ~doc:"run SL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b `SL);
+         ]
+         ~if_nothing_chosen:(Default_to `SL)
+     in
      fun () ->
        try
          let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
          let spec_il = Elaborate.Elab.elab_spec spec in
+         let spec_sim =
+           match mode with
+           | `IL -> Runtime_simulator.Simulator.IL spec_il
+           | `SL ->
+               let spec_sl = Structure.Struct.struct_spec spec_il in
+               Runtime_simulator.Simulator.SL spec_sl
+         in
          let (module Runner) = Arch.Gen.gen_placeholder () in
-         let spec_sim = Runtime_simulator.Simulator.IL spec_il in
-         match
-           Runner.run_program ~derive:false spec_sim relname includes_p4
-             filename_p4
-         with
-         | Pass _ -> Format.printf "passed\n"
-         | Fail (_, msg, _) -> Format.printf "failed: %s\n" msg
-         | IllFormed (_, msg, _) -> Format.printf "ill-formed: %s\n" msg
-       with
-       | CommandError msg -> Format.printf "%s\n" msg
-       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
-       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
-
-let run_sl_command =
-  Core.Command.basic
-    ~summary:"run semantics of a p4_16 spec based on non-backtracking SL"
-    (let open Core.Command.Let_syntax in
-     let open Core.Command.Param in
-     let%map filenames_spec =
-       anon (non_empty_sequence_as_list ("filename" %: string))
-     and relname = flag "-rel" (required string) ~doc:"relation to run"
-     and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
-     and filename_p4 = flag "-p" (required string) ~doc:"p4 file of interest" in
-     fun () ->
-       try
-         let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
-         let spec_il = Elaborate.Elab.elab_spec spec in
-         let spec_sl = Structure.Struct.struct_spec spec_il in
-         let (module Runner) = Arch.Gen.gen_placeholder () in
-         let spec_sim = Runtime_simulator.Simulator.SL spec_sl in
          match
            Runner.run_program ~derive:false spec_sim relname includes_p4
              filename_p4
@@ -170,11 +157,17 @@ let sim_command =
                Runtime_simulator.Simulator.SL spec_sl
          in
          let (module Runner) = Arch.Gen.gen arch in
-         Runner.run_stf_test spec_sim includes_p4 filename_p4 filename_stf
+         match
+           Runner.run_stf_test spec_sim includes_p4 filename_p4 filename_stf
+         with
+         | Pass -> Format.printf "passed\n"
+         | Fail (_, msg) -> Format.printf "failed: %s\n" msg
+         | IllFormed (_, msg) -> Format.printf "ill-formed: %s\n" msg
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
-       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
+       | StfError msg -> Format.printf "%s\n" (string_of_error no_region msg))
 
 let cover_dangling_command =
   Core.Command.basic ~summary:"measure dangling coverage of the P4 type system"
@@ -440,7 +433,7 @@ let parse_command =
            in
            Il.Eq.eq_value ~dbg:true parsed_p4_file parsed_p4_string
            |> (fun b ->
-           if b then "Roundtrip successful" else "Roundtrip failed")
+                if b then "Roundtrip successful" else "Roundtrip failed")
            |> print_endline
          else unparsed_p4_string |> print_endline
        with
@@ -522,8 +515,7 @@ let command =
       ("elab", elab_command);
       ("struct", struct_command);
       ("prose", prose_command);
-      ("run-il", run_il_command);
-      ("run-sl", run_sl_command);
+      ("run", run_command);
       ("sim", sim_command);
       ("cover-dangling", cover_dangling_command);
       ("testgen", run_testgen_command);

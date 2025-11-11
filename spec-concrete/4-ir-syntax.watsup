@@ -3,7 +3,7 @@
 ;;
 
 syntax prefixedNameIR =
-  | `` nameIR
+  | `` nameIR   hint(print %0)
   | `. nameIR
 
 dec $prefixedNonTypeName(prefixedNonTypeName) : prefixedNameIR
@@ -161,17 +161,17 @@ syntax typedLvalueIR
 syntax typeArgumentListIR
 syntax argumentListIR
 
-syntax routineTargetIR =
+syntax callableTargetIR =
   | referenceExpressionIR
   | typedExpressionIR `. nameIR
   | TYPE prefixedNameIR `. nameIR
-  | `( routineTargetIR )
+  | `( callableTargetIR )
 
 syntax constructorTargetIR = prefixedNameIR `< typeArgumentListIR >
 
 syntax callExpressionIR =
   | constructorTargetIR `( argumentListIR )
-  | routineTargetIR `< typeArgumentListIR > `( argumentListIR )
+  | callableTargetIR `< typeArgumentListIR > `( argumentListIR )
 
 ;;
 ;;;; Parenthesized expressions
@@ -202,18 +202,19 @@ syntax expressionNoteIR = `( typeIR ctk )
 
 syntax typedExpressionIR =
   expressionIR `# expressionNoteIR
+  hint(print %0)
   hint(prose %0 "annotated with" %1)
   hint(prose_fields ["expression", "note"])
 
 syntax typedExpressionListIR = typedExpressionIR*
 
-dec $type_of_expression(typedExpressionIR) : typeIR
-  hint(prose_in "the type of" %0)
-def $type_of_expression(_ `# `( typeIR _ )) = typeIR
+dec $type_of_typedExpressionIR(typedExpressionIR) : typeIR
+  hint(prose_in "the type of " %0)
+def $type_of_typedExpressionIR(_ `# `( typeIR _ )) = typeIR
 
-dec $ctk_of_expression(typedExpressionIR) : ctk
-  hint(prose_in "the compile-time known-ness of" %0)
-def $ctk_of_expression(_ `# `( _ ctk )) = ctk
+dec $ctk_of_typedExpressionIR(typedExpressionIR) : ctk
+  hint(prose_in "the compile-time known-ness of " %0)
+def $ctk_of_typedExpressionIR(_ `# `( _ ctk )) = ctk
 
 syntax memberAccessBaseIR =
   | TYPE prefixedNameIR
@@ -272,12 +273,13 @@ syntax lvalueIR =
 syntax lvalueNoteIR = `( typeIR )
 
 syntax typedLvalueIR = lvalueIR `# lvalueNoteIR
+  hint(print %0)
   hint(prose %0 "with note" %1)
   hint(prose_fields ["lvalue", "note"])
 
-dec $type_of_lvalue(typedLvalueIR) : typeIR
+dec $type_of_typedLvalueIR(typedLvalueIR) : typeIR
   hint(prose_in "the type of lvalue " %0)
-def $type_of_lvalue(_ `# `( typeIR )) = typeIR
+def $type_of_typedLvalueIR(_ `# `( typeIR )) = typeIR
 
 dec $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
   : typedLvalueIR?
@@ -331,7 +333,7 @@ syntax assignmentStatementIR =
 ;;
 
 syntax callStatementIR =
-  routineTargetIR `< typeArgumentListIR > `( argumentListIR ) `;
+  callableTargetIR `< typeArgumentListIR > `( argumentListIR ) `;
 
 ;;
 ;;;; Direct application statements
@@ -653,10 +655,14 @@ syntax parserTypeDeclarationIR =
 ;;;;;; Parser declarations
 ;;
 
-syntax parserStatementListIR
+syntax parserStatementIR, parserStatementListIR
 
 syntax parserBlockStatementIR =
   annotationList `{ parserStatementListIR }
+
+syntax parserConditionalStatementIR =
+  | IF `( typedExpressionIR ) parserStatementIR
+  | IF `( typedExpressionIR ) parserStatementIR ELSE parserStatementIR
 
 syntax parserStatementIR =
   | constantDeclarationIR
@@ -666,7 +672,7 @@ syntax parserStatementIR =
   | callStatementIR
   | directApplicationStatementIR
   | parserBlockStatementIR
-  | conditionalStatementIR
+  | parserConditionalStatementIR
 
 syntax parserStatementListIR = parserStatementIR*
 
@@ -773,6 +779,7 @@ syntax tablePropertyListIR = tablePropertyIR*
 
 syntax tableDeclarationIR =
   annotationList TABLE typeIR nameIR `{ tablePropertyListIR }
+  hint(print %0 TABLE %2 `{ %3 } )
 
 ;;
 ;;;;;; Control type declarations

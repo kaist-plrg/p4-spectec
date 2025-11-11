@@ -82,12 +82,12 @@ module PacketIn = struct
     let value_cursor = [ Term "LOCAL" ]#@"cursor" in
     let value_nameIR = wrap_text_v "T" in
     let value_typ =
-      call_func "find_type_eval" [] [ value_cursor; value_ctx; value_nameIR ]
+      call_func "find_type_e" [] [ value_cursor; value_ctx; value_nameIR ]
       |> unwrap_opt_v |> Option.get
     in
     (* Get size of "T" after canonicalization *)
     let value_typ_subst =
-      call_func "subst_type_eval" [] [ value_cursor; value_ctx; value_typ ]
+      call_func "subst_type_e" [] [ value_cursor; value_ctx; value_typ ]
     in
     let size =
       call_func "sizeof_maxSizeInBits'" [] [ value_typ_subst ] |> unwrap_num_v
@@ -99,7 +99,7 @@ module PacketIn = struct
       [ Term "`"; NT value_nameIR ]#@"prefixedNameIR"
     in
     let value_hdr =
-      call_func "find_value_eval" []
+      call_func "find_var_e" []
         [ value_cursor; value_ctx; value_prefixedNameIR ]
     in
     let value_bits =
@@ -140,8 +140,25 @@ module PacketIn = struct
   (* Advance the packet cursor by the specified number of bits.
 
      void advance(in bit<32> sizeInBits); *)
-  (* let advance (ctx : Ctx.t) pkt = *)
-
+  let advance call_func (value_ctx : Value.t) (value_sto : Value.t) (pkt : t) :
+      t * Value.t * Value.t * Value.t =
+    let value_cursor = [ Term "LOCAL" ]#@"cursor" in
+    let value_prefixedNameIR =
+      let value_nameIR = wrap_text_v "sizeInBits" in
+      [ Term "`"; NT value_nameIR ]#@"prefixedNameIR"
+    in
+    let value_sizeInBits =
+      call_func "find_var_e" []
+        [ value_cursor; value_ctx; value_prefixedNameIR ]
+    in
+    let _, values = value_sizeInBits |> unwrap_case_v in
+    let size = List.nth values 1 |> unwrap_num_v |> Bigint.to_int_exn in
+    let pkt = { pkt with idx = pkt.idx + size } in
+    let value_callResult =
+      let value_eps = wrap_opt_v "value" None in
+      [ Term "RETURN"; NT value_eps ]#@"returnResult"
+    in
+    (pkt, value_ctx, value_sto, value_callResult)
   (* @return packet length in bytes.  This method may be unavailable on
      some target architectures.
 
@@ -171,7 +188,7 @@ module PacketOut = struct
       [ Term "`"; NT value_nameIR ]#@"prefixedNameIR"
     in
     let value_hdr =
-      call_func "find_value_eval" []
+      call_func "find_var_e" []
         [ value_cursor; value_ctx; value_prefixedNameIR ]
     in
     (* Get bits of "hdr" *)
