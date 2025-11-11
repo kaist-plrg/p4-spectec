@@ -4,7 +4,7 @@ open Util.Source
 module VarSet = Free.VarSet
 
 let ( let* ) = Option.bind
-let ( + ) = VarSet.union
+let ( ++ ) = VarSet.union
 
 let rec choice = function
   | [] -> None
@@ -32,7 +32,7 @@ let transform_list (f_transform_opt : 'a -> ('a * iter_state) option)
         match res_prev with
         | Some _ ->
             (* If transformation already succeeded, just update free *)
-            let vars_outer = vars_outer + f_free node in
+            let vars_outer = vars_outer ++ f_free node in
             (* Pass node as-is *)
             let nodes_changed = nodes_changed @ [ node ] in
             (res_prev, vars_outer, nodes_changed)
@@ -43,14 +43,14 @@ let transform_list (f_transform_opt : 'a -> ('a * iter_state) option)
                 let nodes_changed = nodes_changed @ [ node_changed ] in
                 (res, vars_outer, nodes_changed)
             | None ->
-                let vars_outer = vars_outer + f_free node in
+                let vars_outer = vars_outer ++ f_free node in
                 let nodes_changed = nodes_changed @ [ node ] in
                 (res, vars_outer, nodes_changed)))
       (None, VarSet.empty, []) nodes
   in
   let* _, iter_state = res in
   let iter_state =
-    { iter_state with vars_outer = iter_state.vars_outer + vars_outer }
+    { iter_state with vars_outer = iter_state.vars_outer ++ vars_outer }
   in
   Some (nodes_changed, iter_state)
 
@@ -73,7 +73,7 @@ let transform_first_with_iters
             let* exp_l', iter_state = transform_exp acc exp_l in
             let vars_r = Free.Vars.free_exp exp_r in
             let iter_state =
-              { iter_state with vars_outer = iter_state.vars_outer + vars_r }
+              { iter_state with vars_outer = iter_state.vars_outer ++ vars_r }
             in
             Some (BinE (binop, optyp, exp_l', exp_r) $$ (at, note), iter_state)
           in
@@ -81,7 +81,7 @@ let transform_first_with_iters
             let* exp_r', iter_state = transform_exp acc exp_r in
             let vars_l = Free.Vars.free_exp exp_l in
             let iter_state =
-              { iter_state with vars_outer = iter_state.vars_outer + vars_l }
+              { iter_state with vars_outer = iter_state.vars_outer ++ vars_l }
             in
             Some (BinE (binop, optyp, exp_l, exp_r') $$ (at, note), iter_state)
           in
@@ -91,7 +91,7 @@ let transform_first_with_iters
             let* exp_l', iter_state = transform_exp acc exp_l in
             let vars_r = Free.Vars.free_exp exp_r in
             let iter_state =
-              { iter_state with vars_outer = iter_state.vars_outer + vars_r }
+              { iter_state with vars_outer = iter_state.vars_outer ++ vars_r }
             in
             Some (CmpE (cmpop, optyp, exp_l', exp_r) $$ (at, note), iter_state)
           in
@@ -99,7 +99,7 @@ let transform_first_with_iters
             let* exp_r', iter_state = transform_exp acc exp_r in
             let vars_l = Free.Vars.free_exp exp_l in
             let iter_state =
-              { iter_state with vars_outer = iter_state.vars_outer + vars_l }
+              { iter_state with vars_outer = iter_state.vars_outer ++ vars_l }
             in
             Some (CmpE (cmpop, optyp, exp_l, exp_r') $$ (at, note), iter_state)
           in
@@ -138,7 +138,7 @@ let transform_first_with_iters
             let* exp_h', iter_state = transform_exp acc exp_h in
             let vars_t = Free.Vars.free_exp exp_t in
             let iter_state =
-              { iter_state with vars_outer = iter_state.vars_outer + vars_t }
+              { iter_state with vars_outer = iter_state.vars_outer ++ vars_t }
             in
             Some (ConsE (exp_h', exp_t) $$ (at, note), iter_state)
           in
@@ -146,7 +146,7 @@ let transform_first_with_iters
             let* exp_t', iter_state = transform_exp acc exp_t in
             let vars_h = Free.Vars.free_exp exp_h in
             let iter_state =
-              { iter_state with vars_outer = iter_state.vars_outer + vars_h }
+              { iter_state with vars_outer = iter_state.vars_outer ++ vars_h }
             in
             Some (ConsE (exp_h, exp_t') $$ (at, note), iter_state)
           in
@@ -156,7 +156,7 @@ let transform_first_with_iters
             let* exp_l', iter_state = transform_exp acc exp_l in
             let vars_r = Free.Vars.free_exp exp_r in
             let iter_state =
-              { iter_state with vars_outer = iter_state.vars_outer + vars_r }
+              { iter_state with vars_outer = iter_state.vars_outer ++ vars_r }
             in
             Some (CatE (exp_l', exp_r) $$ (at, note), iter_state)
           in
@@ -164,7 +164,7 @@ let transform_first_with_iters
             let* exp_r', iter_state = transform_exp acc exp_r in
             let vars_l = Free.Vars.free_exp exp_l in
             let iter_state =
-              { iter_state with vars_outer = iter_state.vars_outer + vars_l }
+              { iter_state with vars_outer = iter_state.vars_outer ++ vars_l }
             in
             Some (CatE (exp_l, exp_r') $$ (at, note), iter_state)
           in
@@ -174,7 +174,7 @@ let transform_first_with_iters
             let* exp_l', iter_state = transform_exp acc exp_l in
             let vars_r = Free.Vars.free_exp exp_r in
             let iter_state =
-              { iter_state with vars_outer = iter_state.vars_outer + vars_r }
+              { iter_state with vars_outer = iter_state.vars_outer ++ vars_r }
             in
             Some (MemE (exp_l', exp_r) $$ (at, note), iter_state)
           in
@@ -182,7 +182,7 @@ let transform_first_with_iters
             let* exp_r', iter_state = transform_exp acc exp_r in
             let vars_l = Free.Vars.free_exp exp_l in
             let iter_state =
-              { iter_state with vars_outer = iter_state.vars_outer + vars_l }
+              { iter_state with vars_outer = iter_state.vars_outer ++ vars_l }
             in
             Some (MemE (exp_l, exp_r') $$ (at, note), iter_state)
           in
@@ -198,7 +198,7 @@ let transform_first_with_iters
             let* exp_b', iter_state = transform_exp acc exp_b in
             let vars_i = Free.Vars.free_exp exp_i in
             let iter_state =
-              { iter_state with vars_outer = iter_state.vars_outer + vars_i }
+              { iter_state with vars_outer = iter_state.vars_outer ++ vars_i }
             in
             Some (IdxE (exp_b', exp_i) $$ (at, note), iter_state)
           in
@@ -206,7 +206,7 @@ let transform_first_with_iters
             let* exp_i', iter_state = transform_exp acc exp_i in
             let vars_b = Free.Vars.free_exp exp_b in
             let iter_state =
-              { iter_state with vars_outer = iter_state.vars_outer + vars_b }
+              { iter_state with vars_outer = iter_state.vars_outer ++ vars_b }
             in
             Some (IdxE (exp_b, exp_i') $$ (at, note), iter_state)
           in
@@ -219,7 +219,7 @@ let transform_first_with_iters
             let iter_state =
               {
                 iter_state with
-                vars_outer = iter_state.vars_outer + vars_l + vars_h;
+                vars_outer = iter_state.vars_outer ++ vars_l ++ vars_h;
               }
             in
             Some (SliceE (exp_b', exp_l, exp_h) $$ (at, note), iter_state)
@@ -231,7 +231,7 @@ let transform_first_with_iters
             let iter_state =
               {
                 iter_state with
-                vars_outer = iter_state.vars_outer + vars_b + vars_h;
+                vars_outer = iter_state.vars_outer ++ vars_b ++ vars_h;
               }
             in
             Some (SliceE (exp_b, exp_l', exp_h) $$ (at, note), iter_state)
@@ -243,7 +243,7 @@ let transform_first_with_iters
             let iter_state =
               {
                 iter_state with
-                vars_outer = iter_state.vars_outer + vars_b + vars_l;
+                vars_outer = iter_state.vars_outer ++ vars_b ++ vars_l;
               }
             in
             Some (SliceE (exp_b, exp_l, exp_h') $$ (at, note), iter_state)
@@ -257,7 +257,7 @@ let transform_first_with_iters
             let iter_state =
               {
                 iter_state with
-                vars_outer = iter_state.vars_outer + vars_path + vars_f;
+                vars_outer = iter_state.vars_outer ++ vars_path ++ vars_f;
               }
             in
             Some (UpdE (exp_b', path, exp_f) $$ (at, note), iter_state)
@@ -269,7 +269,7 @@ let transform_first_with_iters
             let iter_state =
               {
                 iter_state with
-                vars_outer = iter_state.vars_outer + vars_b + vars_f;
+                vars_outer = iter_state.vars_outer ++ vars_b ++ vars_f;
               }
             in
             Some (UpdE (exp_b, path', exp_f) $$ (at, note), iter_state)
@@ -281,7 +281,7 @@ let transform_first_with_iters
             let iter_state =
               {
                 iter_state with
-                vars_outer = iter_state.vars_outer + vars_b + vars_path;
+                vars_outer = iter_state.vars_outer ++ vars_b ++ vars_path;
               }
             in
             Some (UpdE (exp_b, path, exp_f') $$ (at, note), iter_state)
@@ -358,7 +358,7 @@ let transform_first_with_iters
           let* path_b', iter_state = transform_path acc path_b in
           let vars_i = Free.Vars.free_exp exp_i in
           let iter_state =
-            { iter_state with vars_outer = iter_state.vars_outer + vars_i }
+            { iter_state with vars_outer = iter_state.vars_outer ++ vars_i }
           in
           Some (IdxP (path_b', exp_i) $$ (at, note), iter_state)
         in
@@ -366,7 +366,7 @@ let transform_first_with_iters
           let* exp_i', iter_state = transform_exp acc exp_i in
           let vars_b = Free.Vars.free_path path_b in
           let iter_state =
-            { iter_state with vars_outer = iter_state.vars_outer + vars_b }
+            { iter_state with vars_outer = iter_state.vars_outer ++ vars_b }
           in
           Some (IdxP (path_b, exp_i') $$ (at, note), iter_state)
         in
@@ -379,7 +379,7 @@ let transform_first_with_iters
           let iter_state =
             {
               iter_state with
-              vars_outer = iter_state.vars_outer + vars_l + vars_h;
+              vars_outer = iter_state.vars_outer ++ vars_l ++ vars_h;
             }
           in
           Some (SliceP (path_b', exp_l, exp_h) $$ (at, note), iter_state)
@@ -391,7 +391,7 @@ let transform_first_with_iters
           let iter_state =
             {
               iter_state with
-              vars_outer = iter_state.vars_outer + vars_b + vars_h;
+              vars_outer = iter_state.vars_outer ++ vars_b ++ vars_h;
             }
           in
           Some (SliceP (path_b, exp_l', exp_h) $$ (at, note), iter_state)
@@ -403,7 +403,7 @@ let transform_first_with_iters
           let iter_state =
             {
               iter_state with
-              vars_outer = iter_state.vars_outer + vars_b + vars_l;
+              vars_outer = iter_state.vars_outer ++ vars_b ++ vars_l;
             }
           in
           Some (SliceP (path_b, exp_l, exp_h') $$ (at, note), iter_state)

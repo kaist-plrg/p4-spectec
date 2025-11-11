@@ -4039,49 +4039,49 @@ def $is_polymorphic_typeDefIR(typeDefIR)
 
 1. Return ~$is_monomorphic_typeDefIR(typeDefIR)
 
-;; ../../../../spec-concrete/2.3.1-type-callable.watsup:9.26-9.52
+;; ../../../../spec-concrete/2.3.1-type-callable.watsup:9.26-10.68
 syntax parameterTypeIR = 
-   | direction typeIR id value?
+   | direction typeIR id value? hint(prose_fields ["direction", "type", "name", "default value"])
 
-;; ../../../../spec-concrete/2.3.1-type-callable.watsup:15.23-15.51
+;; ../../../../spec-concrete/2.3.1-type-callable.watsup:16.23-16.51
 syntax actionTypeIR = 
    | action( parameterTypeIR* )
 
-;; ../../../../spec-concrete/2.3.1-type-callable.watsup:21.32-21.72
+;; ../../../../spec-concrete/2.3.1-type-callable.watsup:22.32-22.72
 syntax definedFunctionTypeIR = 
    | function( parameterTypeIR* ): typeIR
 
-;; ../../../../spec-concrete/2.3.1-type-callable.watsup:23.31-23.78
+;; ../../../../spec-concrete/2.3.1-type-callable.watsup:24.31-24.78
 syntax externFunctionTypeIR = 
    | extern_function( parameterTypeIR* ): typeIR
 
-;; ../../../../spec-concrete/2.3.1-type-callable.watsup:26.1-27.25
+;; ../../../../spec-concrete/2.3.1-type-callable.watsup:27.1-28.25
 syntax functionTypeIR = 
    | function( parameterTypeIR* ): typeIR
    | extern_function( parameterTypeIR* ): typeIR
 
-;; ../../../../spec-concrete/2.3.1-type-callable.watsup:33.30-33.76
+;; ../../../../spec-concrete/2.3.1-type-callable.watsup:34.30-34.76
 syntax builtinMethodTypeIR = 
    | builtin_method( parameterTypeIR* ): typeIR
 
-;; ../../../../spec-concrete/2.3.1-type-callable.watsup:36.1-37.59
+;; ../../../../spec-concrete/2.3.1-type-callable.watsup:37.1-38.59
 syntax externMethodTypeIR = 
    | extern_method( parameterTypeIR* ): typeIR
    | extern_methodabstract( parameterTypeIR* ): typeIR
 
-;; ../../../../spec-concrete/2.3.1-type-callable.watsup:39.34-39.68
+;; ../../../../spec-concrete/2.3.1-type-callable.watsup:40.34-40.68
 syntax parserApplyMethodTypeIR = 
    | parser_apply( parameterTypeIR* )
 
-;; ../../../../spec-concrete/2.3.1-type-callable.watsup:41.35-41.70
+;; ../../../../spec-concrete/2.3.1-type-callable.watsup:42.35-42.70
 syntax controlApplyMethodTypeIR = 
    | control_apply( parameterTypeIR* )
 
-;; ../../../../spec-concrete/2.3.1-type-callable.watsup:43.33-43.54
+;; ../../../../spec-concrete/2.3.1-type-callable.watsup:44.33-44.54
 syntax tableApplyMethodTypeIR = 
    | table_apply: typeIR
 
-;; ../../../../spec-concrete/2.3.1-type-callable.watsup:46.1-50.27
+;; ../../../../spec-concrete/2.3.1-type-callable.watsup:47.1-51.27
 syntax methodTypeIR = 
    | builtin_method( parameterTypeIR* ): typeIR
    | extern_method( parameterTypeIR* ): typeIR
@@ -4090,7 +4090,7 @@ syntax methodTypeIR =
    | control_apply( parameterTypeIR* )
    | table_apply: typeIR
 
-;; ../../../../spec-concrete/2.3.1-type-callable.watsup:57.1-59.17
+;; ../../../../spec-concrete/2.3.1-type-callable.watsup:58.1-60.17
 syntax callableTypeIR = 
    | action( parameterTypeIR* )
    | function( parameterTypeIR* ): typeIR
@@ -9678,63 +9678,63 @@ def $join_flow(flow'', flow''')
 
   1. Return (cont)
 
-;; ../../../../spec-concrete/5.01-static-env.watsup:7.20-7.47
+;; ../../../../spec-concrete/5.01-static-env.watsup:7.20-8.87
 syntax varTypeIR = 
-   | direction typeIR ctk value?
+   | direction typeIR ctk value? hint(prose_fields ["direction", "type", "compile-time known-ness", "default value"])
 
-;; ../../../../spec-concrete/5.01-static-env.watsup:9.20-9.38
+;; ../../../../spec-concrete/5.01-static-env.watsup:10.20-10.38
 syntax typeFrame = map<id, varTypeIR>
 
-;; ../../../../spec-concrete/5.01-static-env.watsup:11.1-11.33
+;; ../../../../spec-concrete/5.01-static-env.watsup:12.1-12.33
 def $empty_typeFrame
 
 1. Return $empty_map<id, varTypeIR>
 
-;; ../../../../spec-concrete/5.01-static-env.watsup:16.21-16.40
+;; ../../../../spec-concrete/5.01-static-env.watsup:17.21-17.40
 syntax typeDefEnv = map<tid, typeDefIR>
 
-;; ../../../../spec-concrete/5.01-static-env.watsup:18.1-18.35
+;; ../../../../spec-concrete/5.01-static-env.watsup:19.1-19.35
 def $empty_typeDefEnv
 
 1. Return $empty_map<tid, typeDefIR>
 
-;; ../../../../spec-concrete/5.01-static-env.watsup:23.29-23.56
+;; ../../../../spec-concrete/5.01-static-env.watsup:24.29-24.56
 syntax callableTypeDefEnv = map<cid, callableTypeDefIR>
 
-;; ../../../../spec-concrete/5.01-static-env.watsup:25.1-25.51
+;; ../../../../spec-concrete/5.01-static-env.watsup:26.1-26.51
 def $empty_callableTypeDefEnv
 
 1. Return $empty_map<cid, callableTypeDefIR>
 
-;; ../../../../spec-concrete/5.01-static-env.watsup:30.32-30.62
+;; ../../../../spec-concrete/5.01-static-env.watsup:31.32-31.62
 syntax constructorTypeDefEnv = map<cid, constructorTypeDefIR>
 
-;; ../../../../spec-concrete/5.01-static-env.watsup:32.1-32.57
+;; ../../../../spec-concrete/5.01-static-env.watsup:33.1-33.57
 def $empty_constructorTypeDefEnv
 
 1. Return $empty_map<cid, constructorTypeDefIR>
 
-;; ../../../../spec-concrete/5.01-static-env.watsup:39.1-39.40
+;; ../../../../spec-concrete/5.01-static-env.watsup:40.1-40.40
 def $check_callable_name(id_l, id_r)
 
 1. Return (id_l = id_r)
 
-;; ../../../../spec-concrete/5.01-static-env.watsup:42.1-42.37
+;; ../../../../spec-concrete/5.01-static-env.watsup:43.1-43.37
 def $check_arity(id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*}, id_param*{id_param <- id_param*})
 
 1. Return (|id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*}| = |id_param*{id_param <- id_param*}|)
 
-;; ../../../../spec-concrete/5.01-static-env.watsup:45.1-45.42
+;; ../../../../spec-concrete/5.01-static-env.watsup:46.1-46.42
 def $check_arity_more(id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*}, id_param*{id_param <- id_param*})
 
 1. Return (|id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*}| > |id_param*{id_param <- id_param*}|)
 
-;; ../../../../spec-concrete/5.01-static-env.watsup:48.1-48.42
+;; ../../../../spec-concrete/5.01-static-env.watsup:49.1-49.42
 def $check_arity_less(id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*}, id_param*{id_param <- id_param*})
 
 1. Return (|id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*}| < |id_param*{id_param <- id_param*}|)
 
-;; ../../../../spec-concrete/5.01-static-env.watsup:51.1-51.44
+;; ../../../../spec-concrete/5.01-static-env.watsup:52.1-52.44
 def $get_missing_parameters(id*{id <- id*}, id_arg*{id_arg <- id_arg*})
 
 1. Case analysis on id*{id <- id*}
@@ -9755,7 +9755,7 @@ def $get_missing_parameters(id*{id <- id*}, id_arg*{id_arg <- id_arg*})
 
       1. Return $get_missing_parameters(id_param_t*{id_param_t <- id_param_t*}, id_arg*{id_arg <- id_arg*})
 
-;; ../../../../spec-concrete/5.01-static-env.watsup:69.1-69.61
+;; ../../../../spec-concrete/5.01-static-env.watsup:70.1-70.61
 def $find_match_named<V>(cid, V, id_arg*{id_arg <- id_arg*}, pid'*{pid' <- pid'*})
 
 1. (Let (id_param # bool_param) be pid')*{pid' <- pid'*, bool_param <- bool_param*, id_param <- id_param*}
@@ -9768,7 +9768,7 @@ def $find_match_named<V>(cid, V, id_arg*{id_arg <- id_arg*}, pid'*{pid' <- pid'*
 
   1. Return ?()
 
-;; ../../../../spec-concrete/5.01-static-env.watsup:79.1-79.69
+;; ../../../../spec-concrete/5.01-static-env.watsup:80.1-80.69
 def $find_match_named_default<V>(cid, V, id_arg*{id_arg <- id_arg*}, pid'*{pid' <- pid'*})
 
 1. (Let (id_param # bool_param) be pid')*{pid' <- pid'*, bool_param <- bool_param*, id_param <- id_param*}
@@ -9783,7 +9783,7 @@ def $find_match_named_default<V>(cid, V, id_arg*{id_arg <- id_arg*}, pid'*{pid' 
 
   1. Return ?()
 
-;; ../../../../spec-concrete/5.01-static-env.watsup:94.1-94.74
+;; ../../../../spec-concrete/5.01-static-env.watsup:95.1-95.74
 def $find_match_unnamed_default<V>(cid, V, id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*}, pid*{pid <- pid*})
 
 1. (Let (_pid*{_pid <- _pid*}, (id_default # bool)*{bool <- bool*, id_default <- id_default*}) be $partition_<pid>(pid*{pid <- pid*}, |id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*}|))
@@ -9796,7 +9796,7 @@ def $find_match_unnamed_default<V>(cid, V, id_arg?{id_arg <- id_arg?}*{id_arg? <
 
   1. Return ?()
 
-;; ../../../../spec-concrete/5.01-static-env.watsup:104.1-104.67
+;; ../../../../spec-concrete/5.01-static-env.watsup:105.1-105.67
 def $check_overloaded<V>(id_r, id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*}, id_arg''*{id_arg'' <- id_arg''*}, (id_r' ( pid_r''*{pid_r'' <- pid_r''*} )), V)
 
 1. If (~$check_callable_name(id_r, id_r')), then
@@ -9835,7 +9835,7 @@ def $check_overloaded<V>(id_r, id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*},
 
       1. Return $find_match_unnamed_default<V>((id_r' ( (id_param' # bool_param')*{bool_param' <- bool_param'*, id_param' <- id_param'*} )), V, id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*}, (id_param' # bool_param')*{bool_param' <- bool_param'*, id_param' <- id_param'*})
 
-;; ../../../../spec-concrete/5.01-static-env.watsup:175.1-175.69
+;; ../../../../spec-concrete/5.01-static-env.watsup:176.1-176.69
 def $find_overloadeds<V>(id_r, id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*}, id_arg'*{id_arg' <- id_arg'*}, cid''*{cid'' <- cid''*}, V''*{V'' <- V''*})
 
 1. Case analysis on cid''*{cid'' <- cid''*}
@@ -9866,7 +9866,7 @@ def $find_overloadeds<V>(id_r, id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*},
 
         2. Return (cid, V, id_default*{id_default <- id_default*}) :: $find_overloadeds<V>(id_r, id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*}, id_arg'*{id_arg' <- id_arg'*}, cid_t*{cid_t <- cid_t*}, V_t*{V_t <- V_t*})
 
-;; ../../../../spec-concrete/5.01-static-env.watsup:198.1-198.66
+;; ../../../../spec-concrete/5.01-static-env.watsup:199.1-199.66
 def $find_overloaded<V>(({ (cid : V)*{V <- V*, cid <- cid*} }), id_r, id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*})
 
 1. If ((|id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*}| > 0)), then
@@ -9903,7 +9903,7 @@ def $find_overloaded<V>(({ (cid : V)*{V <- V*, cid <- cid*} }), id_r, id_arg?{id
 
     2. Return ?((cid', V', id_default*{id_default <- id_default*}))
 
-;; ../../../../spec-concrete/5.01-static-env.watsup:238.1-238.50
+;; ../../../../spec-concrete/5.01-static-env.watsup:239.1-239.50
 def $find_non_overloaded<V>(({ (cid : V)*{V <- V*, cid <- cid*} }), id)
 
 1. (Let V''*{V'' <- V''*} be $find_non_overloaded'<V>(({ (cid : V)*{V <- V*, cid <- cid*} }), id))
@@ -9918,7 +9918,7 @@ def $find_non_overloaded<V>(({ (cid : V)*{V <- V*, cid <- cid*} }), id)
 
   1. Return ?()
 
-;; ../../../../spec-concrete/5.01-static-env.watsup:239.1-239.51
+;; ../../../../spec-concrete/5.01-static-env.watsup:240.1-240.51
 def $find_non_overloaded'<V>(set<pair<cid, V>>', id)
 
 1. If ((set<pair<cid, V>>' = ({ [] }))), then

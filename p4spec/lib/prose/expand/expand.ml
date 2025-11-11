@@ -51,6 +51,14 @@ let rewriter_call_e ids_used (call_e_count : call_e_count) (exp : exp) :
 let transformer_call_e ids_used =
   Transform.transform_first_with_iters (rewriter_call_e ids_used) count_call_e
 
+(* replacement for List.drop, added in OCaml 5.3 *)
+let drop (n : int) (l : 'a list) : 'a list =
+  let rec drop' (i : int) (l : 'a list) : 'a list =
+    match l with _x :: l when i < n -> drop' (i + 1) l | rest -> rest
+  in
+  if n < 0 then invalid_arg "List.drop";
+  drop' 0 l
+
 let replace_call_exp (ids_used : IdSet.t) exp : (instr * exp * IdSet.t) option =
   (* Builds the new assignment instruction with the returned state *)
   match transformer_call_e ids_used No exp with
@@ -59,7 +67,7 @@ let replace_call_exp (ids_used : IdSet.t) exp : (instr * exp * IdSet.t) option =
       let id, typ, iters = var_new in
       (* drops the original iterators in exp_new *)
       let iters_enclosing =
-        List.drop (List.length iters - List.length iterexps) iters
+        drop (List.length iters - List.length iterexps) iters
       in
       let iter_combined = List.combine iters_enclosing iterexps in
       let iterexps_instr, _ =
