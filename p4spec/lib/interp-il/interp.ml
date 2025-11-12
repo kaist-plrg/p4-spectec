@@ -215,11 +215,14 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     | IterE (exp, iterexp) -> eval_iter_exp note ctx exp iterexp
 
   and eval_exps (ctx : Ctx.t) (exps : exp list) : Ctx.t * value list =
-    List.fold_left
-      (fun (ctx, values) exp ->
-        let ctx, value = eval_exp ctx exp in
-        (ctx, values @ [ value ]))
-      (ctx, []) exps
+    let ctx, values_rev =
+      List.fold_left
+        (fun (ctx, values) exp ->
+          let ctx, value = eval_exp ctx exp in
+          (ctx, value :: values))
+        (ctx, []) exps
+    in
+    (ctx, List.rev values_rev)
 
   (* Boolean expression evaluation *)
 
@@ -370,13 +373,14 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     | TupleT typs -> (
         match value.it with
         | TupleV values ->
-            let values =
+            let values_rev =
               List.fold_left2
                 (fun values typ value ->
                   let value = upcast ctx typ value in
-                  values @ [ value ])
+                  value :: values)
                 [] typs values
             in
+            let values = List.rev values_rev in
             let value_res =
               let vid = Value.fresh () in
               let typ = typ.it in
@@ -418,13 +422,14 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     | TupleT typs -> (
         match value.it with
         | TupleV values ->
-            let values =
+            let values_rev =
               List.fold_left2
                 (fun values typ value ->
                   let value = downcast ctx typ value in
-                  values @ [ value ])
+                  value :: values)
                 [] typs values
             in
+            let values = List.rev values_rev in
             let value_res =
               let vid = Value.fresh () in
               let typ = typ.it in
@@ -764,7 +769,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
   and eval_iter_exp_list (note : typ') (ctx : Ctx.t) (exp : exp)
       (vars : var list) : Ctx.t * value =
     let+ ctxs_sub = Ctx.sub_list ctx vars in
-    let ctx, values =
+    let ctx, values_rev =
       List.fold_left
         (fun (ctx, values) ctx_sub ->
           let ctx_sub =
@@ -773,9 +778,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
           let ctx_sub, value = eval_exp ctx_sub exp in
           let ctx_sub = Ctx.trace_close ctx_sub in
           let ctx = Ctx.trace_commit ctx ctx_sub.trace in
-          (ctx, values @ [ value ]))
+          (ctx, value :: values))
         (ctx, []) ctxs_sub
     in
+    let values = List.rev values_rev in
     let value_res =
       let vid = Value.fresh () in
       let typ = note in
@@ -804,11 +810,14 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
         (ctx, value_res)
 
   and eval_args (ctx : Ctx.t) (args : arg list) : Ctx.t * value list =
-    List.fold_left
-      (fun (ctx, values) arg ->
-        let ctx, value = eval_arg ctx arg in
-        (ctx, values @ [ value ]))
-      (ctx, []) args
+    let ctx, values_rev =
+      List.fold_left
+        (fun (ctx, values) arg ->
+          let ctx, value = eval_arg ctx arg in
+          (ctx, value :: values))
+        (ctx, []) args
+    in
+    (ctx, List.rev values_rev)
 
   (* Premise evaluation *)
 
