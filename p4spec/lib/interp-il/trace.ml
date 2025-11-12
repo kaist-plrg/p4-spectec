@@ -215,13 +215,15 @@ and logs ?(tagger = Tagger.empty) ?(depth = 0) ?(verbose = false)
   match traces with
   | [] -> ""
   | _ ->
-      List.fold_left
-        (fun (idx, straces) trace ->
-          let idx = match trace with Prem _ -> idx + 1 | _ -> idx in
-          let strace = log ~tagger ~depth ~idx ~verbose trace in
-          (idx, straces @ [ strace ]))
-        (0, []) traces
-      |> snd |> String.concat "\n" |> Format.asprintf "%s\n"
+      let idx, straces_rev =
+        List.fold_left
+          (fun (idx, straces) trace ->
+            let idx = match trace with Prem _ -> idx + 1 | _ -> idx in
+            let strace = log ~tagger ~depth ~idx ~verbose trace in
+            (idx, strace :: straces))
+          (0, []) traces
+      in
+      List.rev straces_rev |> String.concat "\n" |> Format.asprintf "%s\n"
 
 (* Profiling *)
 

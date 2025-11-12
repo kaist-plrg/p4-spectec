@@ -319,7 +319,7 @@ let sub_list (ctx : t) (vars : var list) : t list attempt =
     |> transpose
   in
   (* For each batch of values, create a sub-context *)
-  let ctxs_sub =
+  let ctxs_sub_rev =
     List.fold_left
       (fun ctxs_sub value_batch ->
         let ctx_sub =
@@ -328,7 +328,8 @@ let sub_list (ctx : t) (vars : var list) : t list attempt =
               add_value ~shadow:true Local ctx_sub (id, iters) value)
             ctx vars value_batch
         in
-        ctxs_sub @ [ ctx_sub ])
+        ctx_sub :: ctxs_sub)
       [] values_batch
   in
+  let ctxs_sub = List.rev ctxs_sub_rev in
   Ok ctxs_sub

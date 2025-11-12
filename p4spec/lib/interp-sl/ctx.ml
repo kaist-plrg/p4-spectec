@@ -376,13 +376,16 @@ let sub_list (ctx : t) (vars : var list) : t list =
     |> transpose
   in
   (* For each batch of values, create a sub-context *)
-  List.fold_left
-    (fun ctxs_sub value_batch ->
-      let ctx_sub =
-        List.fold_left2
-          (fun ctx_sub (id, _typ, iters) value ->
-            add_value Local ctx_sub (id, iters) value)
-          ctx vars value_batch
-      in
-      ctxs_sub @ [ ctx_sub ])
-    [] values_batch
+  let ctxs_sub_rev =
+    List.fold_left
+      (fun ctxs_sub value_batch ->
+        let ctx_sub =
+          List.fold_left2
+            (fun ctx_sub (id, _typ, iters) value ->
+              add_value Local ctx_sub (id, iters) value)
+            ctx vars value_batch
+        in
+        ctx_sub :: ctxs_sub)
+      [] values_batch
+  in
+  List.rev ctxs_sub_rev
