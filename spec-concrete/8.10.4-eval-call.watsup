@@ -93,10 +93,75 @@ rule Call_eval/actionCallee:
 ;;; functionCallee
 ;;; syntax functionCallee
 
+;;;; definedFunctionCallee
+
+;;;; externFunctionCallee
+;;;; syntax externFunctionCallee =
+;;;;   EXTERN_FUNCTION nameIR
+;;;;     `< typeParameterListIR > `( parameterListIR `# id* )
+
+rule Call_eval/externFunctionCallee:
+  p EC_0 STO_0 |- externFunctionCallee
+                  `@ `< typeArgumentIR* > `( argumentIR* )
+                : EC_3 STO_2 returnResult
+  ---- ;; unpack the extern function callee
+  -- if EXTERN_FUNCTION nameIR
+          `< typeParameterIR* > `( parameterIR* `# id_default* )
+      = externFunctionCallee
+  ---- ;; create the callee context
+  -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+  ---- ;; bind type parameters and arguments in callee context
+  -- if EC_callee_1
+      = EC_callee_0[ .LOCAL.TYPE = `{ (typeParameterIR `: typeArgumentIR)* } ]
+  ---- ;; align parameters with arguments
+  -- if (parameterIR_aligned*, argumentIR_aligned*,
+         parameterIR_default*, value_default*)
+      = $align_params_with_args(parameterIR*, argumentIR*, id_default*)
+  ---- ;; copy-in
+  -- Copy_in:
+      STO_0 p EC_0 parameterIR_aligned*
+         `@ LOCAL EC_callee_1 argumentIR_aligned*
+      ~> STO_1 EC_1 `@ EC_callee_2 `# (`` storageReference?*)
+  -- Copy_in_default:
+      parameterIR_default* `@ LOCAL EC_callee_2 value_default*
+      ~> `@ EC_callee_3
+  ---- ;; evaluate function body
+  -- if (_ _ _ nameIR_param _ = parameterIR)*
+  -- ExternFunctionCall_eval:
+      EC_callee_3 STO_1 |- nameIR `( nameIR_param* )
+                         : EC_callee_4 STO_2 returnResult
+  ---- ;; propagate shared layer
+  -- if EC_2 = EC_1[ .GLOBAL.FRAME = EC_callee_4.GLOBAL.FRAME ]
+  ---- ;; copy-out
+  -- Copy_out:
+      STO_2 p EC_2 parameterIR_aligned*
+         `@ LOCAL EC_callee_4 storageReference?*
+      ~> EC_3
+
 ;;; methodCallee
 ;;; syntax methodCallee
 
 ;;;; builtinMethodCallee
+;;;; syntax builtinMethodCallee =
+;;;;   BUILTIN_METHOD storageReference `. nameIR
+;;;;     `< typeArgumentListIR > `( parameterListIR )
+
+rulegroup Call_eval/builtinMethodCallee {
+
+  rule Call_eval/header-isValid:
+    p EC STO |- builtinMethodCallee `@ `< eps > `( eps )
+              : EC STO returnResult
+    ---- ;; unpack the builtin method callee
+    -- if BUILTIN_METHOD storageReference `. "isValid"
+            `< eps > `( eps )
+        = builtinMethodCallee
+    ---- ;; read the value
+    -- Lvalue_read: 
+        p EC STO |- storageReference : headerValue
+    -- if HEADER _ `{ b_valid `; _ } = headerValue
+    -- if returnResult = RETURN (B b_valid)
+
+}
 
 ;;;; externMethodCallee
 ;;;; syntax externMethodCallee =

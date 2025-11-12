@@ -1,7 +1,7 @@
 module Value = Runtime_dynamic.Value
 open Interface.Wrap
 open Interface.Unwrap
-open Error
+open Unpack
 
 (* Bit manipulation *)
 
@@ -51,6 +51,31 @@ let bits_to_string bits =
   in
   loop 0 ""
 
+let bits_to_int_unsigned bits =
+  Array.fold_left
+    (fun i bit -> Bigint.((i lsl 1) + if bit then one else zero))
+    Bigint.zero bits
+
+let bits_to_int_signed bits =
+  let ssig = bits.(0) in
+  let int_unsigned = bits_to_int_unsigned bits in
+  if ssig then
+    let int_max =
+      let len = Array.length bits - 1 in
+      Bigint.(one lsl len)
+    in
+    Bigint.(int_unsigned - (int_max * (one + one)))
+  else int_unsigned
+
+let int_to_bits_unsigned value size =
+  Array.init size (fun i -> Bigint.(value land (one lsl i) > zero))
+  |> Array.to_list |> List.rev |> Array.of_list
+
+let int_to_bits_signed value size =
+  let mask = Bigint.((one lsl size) - one) in
+  let value = Bigint.(value land mask) in
+  int_to_bits_unsigned value size
+
 (* Core extern objects *)
 
 (* Input packet *)
@@ -68,68 +93,52 @@ module PacketIn = struct
 
   (* Initializer *)
 
-  let init (pkt : string) =
+  let init (pkt : string) : t =
     let bits = string_to_bits pkt in
     { bits; idx = 0; len = Array.length bits }
 
-  (* Serializer and deserializer *)
-
-  let serialize (pkt : t) : Yojson.Safe.t = to_yojson pkt
-
-  let deserialize (json : Yojson.Safe.t) : t =
-    match of_yojson json with
-    | Ok pkt -> pkt
-    | Error msg -> error_no_region ("error deserializing packet_in: " ^ msg)
-
   (* Parser *)
 
-  let parse (pkt : t) (size : int) =
+  let parse (pkt : t) (size : int) : t * bits =
     let bits = Array.sub pkt.bits pkt.idx size in
     let pkt = { pkt with idx = pkt.idx + size } in
     (pkt, bits)
+
+  (* Payload *)
+
+  let payload (pkt : t) : bits =
+    let bits = Array.sub pkt.bits pkt.idx (pkt.len - pkt.idx) in
+    bits
+
+  let payload_bytes (pkt : t) : Bigint.t Array.t =
+    let bits = payload pkt in
+    let len = Array.length bits in
+    let len = len / 8 in
+    Array.init len (fun i -> Array.sub bits (i * 8) 8 |> bits_to_int_unsigned)
 
   (* Read a header from the packet into a fixed-sized header @hdr and advance the cursor.
      May trigger error PacketTooShort or StackOutOfBounds.
      @T must be a fixed-size header type
 
      void extract<T>(out T hdr); *)
-  let extract call_rel_one call_func (value_ctx : Value.t) (value_sto : Value.t)
+  let extract call_rel call_func (value_ctx : Value.t) (value_sto : Value.t)
       (pkt : t) : t * Value.t * Value.t * Value.t =
     (* Get "T" *)
-    let value_cursor = [ Term "LOCAL" ] #@ "cursor" in
-    let value_nameIR = wrap_text_v "T" in
-    let value_typ =
-      call_func "find_type_e" [] [ value_cursor; value_ctx; value_nameIR ]
-      |> unwrap_opt_v |> Option.get
-    in
-    (* Get size of "T" after canonicalization *)
-    let value_typ_subst =
-      call_func "subst_type_e" [] [ value_cursor; value_ctx; value_typ ]
-    in
+    let value_typ = Spec.find_type_e_local call_func value_ctx "T" in
+    (* Get size of "T" *)
     let size =
-      call_func "sizeof_maxSizeInBits'" [] [ value_typ_subst ] |> unwrap_num_v
+      Spec.subst_type_e_local call_func value_ctx value_typ
+      |> Spec.sizeof_maxSizeInBits' call_func
     in
     (* Parse from packet *)
     let pkt, bits = parse pkt (Bigint.to_int_exn size) in
-    let value_prefixedNameIR =
-      let value_nameIR = wrap_text_v "hdr" in
-      [ Term "`"; NT value_nameIR ] #@ "prefixedNameIR"
-    in
-    let value_hdr =
-      call_func "find_var_e" []
-        [ value_cursor; value_ctx; value_prefixedNameIR ]
-    in
-    let value_bits =
-      Array.to_list bits |> List.map wrap_bool_v
-      |> wrap_list_v_typed Il.Ast.BoolT
-    in
-    let value_hdr =
-      call_func "write_value_from_bits" [] [ value_hdr; value_bits ]
-    in
+    (* Find "hdr" in context *)
+    let value_hdr = Spec.find_var_e_local call_func value_ctx "hdr" in
+    (* Write bits to "hdr" *)
+    let value_hdr = Spec.write_value_from_bits call_func value_hdr 0 bits in
     (* Update "hdr" in context *)
     let value_ctx =
-      call_rel_one "Lvalue_write"
-        [ value_cursor; value_ctx; value_sto; value_prefixedNameIR; value_hdr ]
+      Spec.lvalue_write_var_local call_rel value_ctx value_sto "hdr" value_hdr
     in
     (* Create call result *)
     let value_callResult =
@@ -145,14 +154,75 @@ module PacketIn = struct
 
      void extract<T>(out T variableSizeHeader,
                       in bit<32> variableFieldSizeInBits); *)
-  (* let extract_varsize (ctx : Ctx.t) pkt : Ctx.t * SSig.t * t = *)
+  let extract_varsize call_rel call_func (value_ctx : Value.t)
+      (value_sto : Value.t) (pkt : t) : t * Value.t * Value.t * Value.t =
+    (* Get "T" *)
+    let value_typ = Spec.find_type_e_local call_func value_ctx "T" in
+    (* Get size of "T" *)
+    let value_typ_subst =
+      Spec.subst_type_e_local call_func value_ctx value_typ
+    in
+    let size_min = Spec.sizeof_minSizeInBits' call_func value_typ_subst in
+    let _size_max = Spec.sizeof_maxSizeInBits' call_func value_typ_subst in
+    (* Get "variableFieldSizeInBits" in context *)
+    let value_variableFieldSizeInBits =
+      Spec.find_var_e_local call_func value_ctx "variableFieldSizeInBits"
+    in
+    let size_varsize =
+      value_variableFieldSizeInBits |> unwrap_case_v |> snd |> fun values ->
+      List.nth values 1 |> unwrap_num_v
+    in
+    (* Parse from packet *)
+    let size = Bigint.(size_min + size_varsize) in
+    let pkt, bits = parse pkt (Bigint.to_int_exn size) in
+    (* Get "variableSizeHeader" in context *)
+    let value_variableSizeHeader =
+      Spec.find_var_e_local call_func value_ctx "variableSizeHeader"
+    in
+    (* Write bits to "variableSizeHeader" *)
+    let value_variableSizeHeader =
+      Spec.write_value_from_bits call_func value_variableSizeHeader
+        (Bigint.to_int_exn size_varsize)
+        bits
+    in
+    (* Update "variableSizeHeader" in context *)
+    let value_ctx =
+      Spec.lvalue_write_var_local call_rel value_ctx value_sto
+        "variableSizeHeader" value_variableSizeHeader
+    in
+    (* Create call result *)
+    let value_callResult =
+      let value_eps = wrap_opt_v "value" None in
+      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+    in
+    (pkt, value_ctx, value_sto, value_callResult)
 
   (* Read bits from the packet without advancing the cursor.
      @returns: the bits read from the packet.
      T may be an arbitrary fixed-size type.
 
      T lookahead<T>(); *)
-  (* let lookahead (ctx : Ctx.t) pkt : SSig.t = *)
+  let lookahead call_func (value_ctx : Value.t) (value_sto : Value.t) (pkt : t)
+      : t * Value.t * Value.t * Value.t =
+    (* Get "T" *)
+    let value_typ = Spec.find_type_e_local call_func value_ctx "T" in
+    (* Get size of "T" *)
+    let size =
+      Spec.subst_type_e_local call_func value_ctx value_typ
+      |> Spec.sizeof_maxSizeInBits' call_func
+    in
+    (* Create a dummy "hdr" *)
+    let value_hdr = Spec.default call_func value_typ in
+    (* Parse from packet *)
+    let _pkt, bits = parse pkt (Bigint.to_int_exn size) in
+    (* Write bits to "hdr" *)
+    let value_hdr = Spec.write_value_from_bits call_func value_hdr 0 bits in
+    (* Create call result *)
+    let value_callResult =
+      let value_hdr = wrap_opt_v "value" (Some value_hdr) in
+      [ Term "RETURN"; NT value_hdr ] #@ "returnResult"
+    in
+    (pkt, value_ctx, value_sto, value_callResult)
 
   (* Advance the packet cursor by the specified number of bits.
 
@@ -209,3 +279,25 @@ module PacketOut = struct
     in
     (pkt, value_ctx, value_sto, value_callResult)
 end
+
+(* Core extern functions *)
+
+(* Check a predicate @check in the parser; if the predicate is true do nothing,
+   otherwise set the parser error to @toSignal, and transition to the `reject` state.
+
+   extern void verify(in bool check, in error toSignal); *)
+let verify call_func (value_ctx : Value.t) (value_sto : Value.t) :
+    Value.t * Value.t * Value.t =
+  (* Get "check" in context *)
+  let value_check = Spec.find_var_e_local call_func value_ctx "check" in
+  (* Get "toSignal" in context *)
+  let value_toSignal = Spec.find_var_e_local call_func value_ctx "toSignal" in
+  (* If check, return and otherwise reject *)
+  let check = value_check |> unpack_p4_bool in
+  let value_callResult =
+    if check then
+      let value_eps = wrap_opt_v "value" None in
+      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+    else [ Term "REJECT"; NT value_toSignal ] #@ "rejectTransitionResult"
+  in
+  (value_ctx, value_sto, value_callResult)

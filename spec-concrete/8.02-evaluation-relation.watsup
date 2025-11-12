@@ -18,7 +18,7 @@ syntax returnResult = RETURN value?
 ;;; Transitions
 
 syntax acceptTransitionResult = ACCEPT
-syntax rejectTransitionResult = REJECT
+syntax rejectTransitionResult = REJECT errorValue
 syntax stateTransitionResult = STATE id
 
 ;;
@@ -55,6 +55,15 @@ relation Expr_eval_lvalue:
   cursor evalContext store |- typedExpressionIR
                             : evalContext store storageReferenceResult
   hint(input %0 %1 %2 %3)
+
+syntax keysetExpressionResult =
+  | continueResult<setValue*>
+  | exitResult
+
+relation Expr_eval_keyset:
+  evalContext store |- keysetExpressionIR
+                     : evalContext store keysetExpressionResult
+  hint(input %0 %1 %2)
 
 ;;
 ;;;; Argument evaluation
@@ -273,6 +282,11 @@ relation Call_eval:
                                         `( argumentListIR )
                             : evalContext store callResult
   hint(input %0 %1 %2 %3 %4 %5)
+
+extern relation ExternFunctionCall_eval:
+  evalContext store |- nameIR `( nameIR* )
+                     : evalContext store callResult
+  hint(input %0 %1 %2 %3)
 
 extern relation ExternMethodCall_eval:
   evalContext store |- oid `. nameIR `( nameIR* )

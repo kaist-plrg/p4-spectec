@@ -1409,6 +1409,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       value list option =
     let values_output =
       match id.it with
+      | "ExternFunctionCall_eval" -> Arch.eval_extern_func_call values_input
       | "ExternMethodCall_eval" -> Arch.eval_extern_method_call values_input
       | _ -> error id.at (F.asprintf "unimplemented extern relation %s" id.it)
     in
