@@ -120,14 +120,15 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | IterE (exp, (List, vars)), ListV values ->
         (* Map over the value list elements,
            and assign each value to the iterated expression *)
-        let ctxs =
+        let ctxs_rev =
           List.fold_left
             (fun ctxs value ->
               let ctx = Ctx.localize_clear ctx in
               let ctx = assign_exp ctx exp value in
-              ctxs @ [ ctx ])
+              ctx :: ctxs)
             [] values
         in
+        let ctxs = List.rev ctxs_rev in
         (* Per iterated variable, collect its elementwise value,
            then make a sequence out of them *)
         List.fold_left

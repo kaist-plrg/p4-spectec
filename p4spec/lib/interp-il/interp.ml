@@ -92,16 +92,17 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     | IterE (exp, (List, vars)), ListV values ->
         (* Map over the value list elements,
            and assign each value to the iterated expression *)
-        let ctxs =
+        let ctxs_rev =
           List.fold_left
             (fun ctxs value ->
               let ctx =
                 { ctx with local = { ctx.local with venv = VEnv.empty } }
               in
               let ctx = assign_exp ctx exp value in
-              ctxs @ [ ctx ])
+              ctx :: ctxs)
             [] values
         in
+        let ctxs = List.rev ctxs_rev in
         (* Per iterated variable, collect its elementwise value,
            then make a sequence out of them *)
         List.fold_left
@@ -919,7 +920,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       (* Otherwise, evaluate the premise for each batch of bound values,
          and collect the resulting binding batches *)
       | _ ->
-          let* ctx, values_binding_batch =
+          let* ctx, values_binding_batch_rev =
             List.fold_left
               (fun ctx_values_binding_batch ctx_sub ->
                 let* ctx, values_binding_batch = ctx_values_binding_batch in
@@ -935,13 +936,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
                       Ctx.find_value Local ctx_sub (id_binding, iters_binding))
                     vars_binding
                 in
-                let values_binding_batch =
-                  values_binding_batch @ [ value_binding_batch ]
-                in
-                Ok (ctx, values_binding_batch))
+                Ok (ctx, value_binding_batch :: values_binding_batch))
               (Ok (ctx, []))
               ctxs_sub
           in
+          let values_binding_batch = List.rev values_binding_batch_rev in
           let* values_binding = values_binding_batch |> Ctx.transpose in
           Ok (ctx, values_binding)
     in
