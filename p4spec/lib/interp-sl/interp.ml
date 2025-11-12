@@ -1241,7 +1241,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       (* Otherwise, evaluate the premise for each batch of bound values,
          and collect the resulting binding batches *)
       | _ ->
-          let ctx, values_binding_batch =
+          let ctx, values_binding_batch_rev =
             List.fold_left
               (fun (ctx, values_binding_batch) ctx_sub ->
                 let ctx_sub = eval_let_iter' ctx_sub exp_l exp_r iterexps in
@@ -1251,12 +1251,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                       Ctx.find_value Local ctx_sub (id_binding, iters_binding))
                     vars_binding
                 in
-                let values_binding_batch =
-                  values_binding_batch @ [ value_binding_batch ]
-                in
-                (ctx, values_binding_batch))
+                (ctx, value_binding_batch :: values_binding_batch))
               (ctx, []) ctxs_sub
           in
+          let values_binding_batch = List.rev values_binding_batch_rev in
           let values_binding = values_binding_batch |> Ctx.transpose in
           (ctx, values_binding)
     in
@@ -1344,7 +1342,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       (* Otherwise, evaluate the premise for each batch of bound values,
          and collect the resulting binding batches *)
       | _ ->
-          let ctx, values_binding_batch =
+          let ctx, values_binding_batch_rev =
             List.fold_left
               (fun (ctx, values_binding_batch) ctx_sub ->
                 let ctx_sub = eval_rule_iter' ctx_sub id notexp iterexps in
@@ -1354,12 +1352,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                       Ctx.find_value Local ctx_sub (id_binding, iters_binding))
                     vars_binding
                 in
-                let values_binding_batch =
-                  values_binding_batch @ [ value_binding_batch ]
-                in
-                (ctx, values_binding_batch))
+                (ctx, value_binding_batch :: values_binding_batch))
               (ctx, []) ctxs_sub
           in
+          let values_binding_batch = List.rev values_binding_batch_rev in
           let values_binding = values_binding_batch |> Ctx.transpose in
           (ctx, values_binding)
     in
