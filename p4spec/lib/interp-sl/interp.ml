@@ -914,14 +914,16 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   and eval_if_cond_list (ctx : Ctx.t) (exp_cond : exp) (vars : var list)
       (iterexps : iterexp list) : bool * value list =
     let ctxs_sub = Ctx.sub_list ctx vars in
-    List.fold_left
-      (fun (cond, values_cond) ctx_sub ->
-        if not cond then (cond, values_cond)
-        else
-          let cond, value_cond = eval_if_cond_iter' ctx_sub exp_cond iterexps in
-          let values_cond = values_cond @ [ value_cond ] in
-          (cond, values_cond))
-      (true, []) ctxs_sub
+    let cond, values_cond_rev =
+      List.fold_left
+        (fun (cond, values_cond) ctx_sub ->
+          if not cond then (cond, values_cond)
+          else
+            let cond, value_cond = eval_if_cond_iter' ctx_sub exp_cond iterexps in
+            (cond, value_cond :: values_cond))
+        (true, []) ctxs_sub
+    in
+    (cond, List.rev values_cond_rev)
 
   and eval_if_cond_iter' (ctx : Ctx.t) (exp_cond : exp)
       (iterexps : iterexp list) : bool * value =
@@ -993,16 +995,18 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   and eval_hold_cond_list (ctx : Ctx.t) (id : id) (notexp : notexp)
       (vars : var list) (iterexps : iterexp list) : bool * value list =
     let ctxs_sub = Ctx.sub_list ctx vars in
-    List.fold_left
-      (fun (cond, values_cond) ctx_sub ->
-        if not cond then (cond, values_cond)
-        else
-          let cond, value_cond =
-            eval_hold_cond_iter' ctx_sub id notexp iterexps
-          in
-          let values_cond = values_cond @ [ value_cond ] in
-          (cond, values_cond))
-      (true, []) ctxs_sub
+    let cond, values_cond_rev =
+      List.fold_left
+        (fun (cond, values_cond) ctx_sub ->
+          if not cond then (cond, values_cond)
+          else
+            let cond, value_cond =
+              eval_hold_cond_iter' ctx_sub id notexp iterexps
+            in
+            (cond, value_cond :: values_cond))
+        (true, []) ctxs_sub
+    in
+    (cond, List.rev values_cond_rev)
 
   and eval_hold_cond_iter' (ctx : Ctx.t) (id : id) (notexp : notexp)
       (iterexps : iterexp list) : bool * value =
@@ -1072,29 +1076,31 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and eval_cases (ctx : Ctx.t) (exp : exp) (cases : case list) :
       instr list option * value =
-    cases
-    |> List.fold_left
-         (fun (block_match, values_cond) (guard, block) ->
-           match block_match with
-           | Some _ -> (block_match, values_cond)
-           | None ->
-               let exp_cond =
-                 match guard with
-                 | BoolG true -> exp.it
-                 | BoolG false -> Il.Ast.UnE (`NotOp, `BoolT, exp)
-                 | CmpG (cmpop, optyp, exp_r) ->
-                     Il.Ast.CmpE (cmpop, optyp, exp, exp_r)
-                 | SubG typ -> Il.Ast.SubE (exp, typ)
-                 | MatchG pattern -> Il.Ast.MatchE (exp, pattern)
-                 | MemG exp_s -> Il.Ast.MemE (exp, exp_s)
-               in
-               let exp_cond = exp_cond $$ (exp.at, Il.Ast.BoolT) in
-               let value_cond = eval_exp ctx exp_cond in
-               let values_cond = values_cond @ [ value_cond ] in
-               let cond = Value.get_bool value_cond in
-               if cond then (Some block, values_cond) else (None, values_cond))
-         (None, [])
-    |> fun (block_match, values_cond) ->
+    let block_match, values_cond_rev =
+      cases
+      |> List.fold_left
+           (fun (block_match, values_cond) (guard, block) ->
+             match block_match with
+             | Some _ -> (block_match, values_cond)
+             | None ->
+                 let exp_cond =
+                   match guard with
+                   | BoolG true -> exp.it
+                   | BoolG false -> Il.Ast.UnE (`NotOp, `BoolT, exp)
+                   | CmpG (cmpop, optyp, exp_r) ->
+                       Il.Ast.CmpE (cmpop, optyp, exp, exp_r)
+                   | SubG typ -> Il.Ast.SubE (exp, typ)
+                   | MatchG pattern -> Il.Ast.MatchE (exp, pattern)
+                   | MemG exp_s -> Il.Ast.MemE (exp, exp_s)
+                 in
+                 let exp_cond = exp_cond $$ (exp.at, Il.Ast.BoolT) in
+                 let value_cond = eval_exp ctx exp_cond in
+                 let cond = Value.get_bool value_cond in
+                 if cond then (Some block, value_cond :: values_cond) 
+                 else (None, value_cond :: values_cond))
+           (None, [])
+    in
+    let values_cond = List.rev values_cond_rev in
     let value_cond =
       let vid = Value.fresh () in
       let typ = Il.Ast.IterT (Il.Ast.BoolT $ no_region, Il.Ast.List) in
