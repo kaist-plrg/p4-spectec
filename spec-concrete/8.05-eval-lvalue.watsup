@@ -118,7 +118,9 @@ rulegroup Lvalue_write/storageReference-nameIR {
     -- Lvalue_read:
         p EC_0 STO |- storageReference : value_base
     -- if HEADER_STACK `[ value_element* `( n_idx; n_size ) ] = value_base
-    -- if value_element_update* = value_element* [ [n_idx] = value ]
+    ;; -- if value_element_update* = value_element* [ [n_idx] = value ]
+    -- if value_element_update*
+        = $update_headerStack(value_element*, value, n_idx, n_size)
     -- if value_base_update = HEADER_STACK `[ value_element_update* `( $(n_idx + 1); n_size ) ]
     -- Lvalue_write:
         p EC_0 STO |- storageReference -> value_base_update : EC_1

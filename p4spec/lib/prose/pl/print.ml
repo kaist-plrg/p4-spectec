@@ -17,7 +17,7 @@ let link context = { context with in_link = true }
 let adoc_mono s = "`" ^ s ^ "`"
 let adoc_subscript s = "~" ^ s ^ "~"
 let adoc_superscript s = "^" ^ s ^ "^"
-let adoc_bold s = "**" ^ s ^ "**"
+let adoc_bold s = "*" ^ s ^ "*"
 let adoc_indent level = String.make (level * 2) ' '
 let adoc_attach_block _level = "+\n"
 let adoc_open_block _level s = F.asprintf "--\n%s\n--" s
@@ -70,7 +70,6 @@ let string_of_relid = Sl.Print.string_of_relid
 let string_of_relpathid = Sl.Print.string_of_relpathid
 let string_of_defid = Sl.Print.string_of_defid
 let code_of_unop = Sl.Print.string_of_unop
-let code_of_binop = Sl.Print.string_of_binop
 
 let render_varid ctx varid =
   if String.starts_with ~prefix:"_" varid.it then "++_++" |> as_code ctx
@@ -156,6 +155,16 @@ let render_branchtype branchtype =
 
 (* Operators *)
 
+let render_binop ctx binop =
+  if ctx.in_code then Sl.Print.string_of_binop binop
+  else
+    match binop with
+    | `AndOp -> "and" |> adoc_bold
+    | `OrOp -> "or" |> adoc_bold
+    | `ImplOp -> "implies" |> adoc_bold
+    | `EquivOp -> "is equivalent to" |> adoc_bold
+    | _ -> Sl.Print.string_of_binop binop
+
 let render_cmpop ctx cmpop =
   if ctx.in_code then Sl.Print.string_of_cmpop cmpop
   else
@@ -184,12 +193,20 @@ let rec render_exp ctx exp : string =
       F.asprintf "%s does not have type %s"
         (render_exp_as_code ctx exp)
         (code_of_typ ctx typ)
+  | UnE (#Bool.unop, _, { it = MemE (exp_e, exp_s); _ }) ->
+      F.asprintf "%s is not in %s"
+        (render_exp_as_code ctx exp_e)
+        (render_exp_as_code ctx exp_s)
   | UnE (unop, _, exp) ->
       (* always print as code *)
       code_of_unop unop ^ render_exp in_code exp |> as_code ctx
-  | BinE (binop, _, exp_l, exp_r) ->
+  | BinE ((#Bool.binop as binop), _, exp_l, exp_r) ->
+      render_exp_as_code ctx exp_l
+      ^ " " ^ render_binop ctx binop ^ " "
+      ^ render_exp_as_code ctx exp_r
+  | BinE ((#Num.binop as binop), _, exp_l, exp_r) ->
       (* always print as code *)
-      render_exp in_code exp_l ^ " " ^ code_of_binop binop ^ " "
+      render_exp in_code exp_l ^ " " ^ render_binop in_code binop ^ " "
       ^ render_exp in_code exp_r
       |> as_code ctx
   | CmpE (cmpop, _, exp_l, exp_r) ->
@@ -235,11 +252,11 @@ let rec render_exp ctx exp : string =
   | ListE exps -> "[" ^ render_exps in_code ~sep:", " exps ^ "]" |> as_code ctx
   | ConsE (exp_h, exp_t) ->
       (* always print as code *)
-      render_exp in_code exp_h ^ " :: " ^ render_exp in_code exp_t
+      render_exp in_code exp_h ^ " {two-colons} " ^ render_exp in_code exp_t
       |> as_code ctx
   | CatE (exp_l, exp_r) ->
       (* always print as code *)
-      render_exp in_code exp_l ^ " ++ " ^ render_exp in_code exp_r
+      render_exp in_code exp_l ^ " {pp} " ^ render_exp in_code exp_r
       |> as_code ctx
   | MemE (exp_e, exp_s) ->
       render_exp ctx exp_e ^ " is in " ^ render_exp ctx exp_s
@@ -285,9 +302,12 @@ let rec render_exp ctx exp : string =
             string_of_defid id ^ string_of_targs targs
             ^ render_args (ctx |> link |> code) args
             |> as_link ctx ~link:id.it |> as_code ctx)
+  | IterE (exp, (_, [])) -> render_exp ctx exp
+  | IterE (({ it = VarE _; _ } as exp), iterexp) ->
+      render_exp in_code exp ^ code_of_iterexp iterexp |> as_code ctx
   | IterE (exp, iterexp) ->
-      if snd iterexp = [] then render_exp ctx exp
-      else render_exp in_code exp ^ code_of_iterexp iterexp |> as_code ctx
+      "(" ^ render_exp in_code exp ^ ")" ^ code_of_iterexp iterexp
+      |> as_code ctx
 
 (* if sep is None, use natural language list *)
 

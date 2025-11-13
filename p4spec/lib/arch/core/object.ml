@@ -121,6 +121,7 @@ module PacketIn = struct
      @T must be a fixed-size header type
 
      void extract<T>(out T hdr); *)
+
   let extract (value_ctx : Value.t) (value_sto : Value.t) (pkt : t) :
       t * Value.t * Value.t * Value.t =
     (* Get "T" *)
@@ -154,6 +155,7 @@ module PacketIn = struct
 
      void extract<T>(out T variableSizeHeader,
                       in bit<32> variableFieldSizeInBits); *)
+
   let extract_varsize (value_ctx : Value.t) (value_sto : Value.t) (pkt : t) :
       t * Value.t * Value.t * Value.t =
     (* Get "T" *)
@@ -200,6 +202,7 @@ module PacketIn = struct
      T may be an arbitrary fixed-size type.
 
      T lookahead<T>(); *)
+
   let lookahead (value_ctx : Value.t) (value_sto : Value.t) (pkt : t) :
       t * Value.t * Value.t * Value.t =
     (* Get "T" *)
@@ -225,7 +228,21 @@ module PacketIn = struct
   (* Advance the packet cursor by the specified number of bits.
 
      void advance(in bit<32> sizeInBits); *)
-  (* let advance (ctx : Ctx.t) pkt = *)
+
+  let advance (value_ctx : Value.t) (value_sto : Value.t) (pkt : t) :
+      t * Value.t * Value.t * Value.t =
+    (* Get "sizeInBits" in context *)
+    let value_sizeInBits = Spec.Func.find_var_e_local value_ctx "sizeInBits" in
+    let size =
+      value_sizeInBits |> unpack_p4_fixedBit |> snd |> Bigint.to_int_exn
+    in
+    (* Advance cursor *)
+    let pkt = { pkt with idx = pkt.idx + size } in
+    let value_callResult =
+      let value_eps = wrap_opt_v "value" None in
+      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+    in
+    (pkt, value_ctx, value_sto, value_callResult)
 
   (* @return packet length in bytes.  This method may be unavailable on
      some target architectures.
@@ -252,6 +269,7 @@ module PacketOut = struct
      containing fields with such types.
 
      void emit<T>(in T hdr); *)
+
   let emit (value_ctx : Value.t) (value_sto : Value.t) (pkt : t) :
       t * Value.t * Value.t * Value.t =
     (* Get "hdr" in context *)
