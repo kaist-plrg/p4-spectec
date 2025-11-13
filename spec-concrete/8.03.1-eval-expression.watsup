@@ -373,8 +373,7 @@ rulegroup Expr_eval/memberAccessExpressionIR-expression {
     -- Expr_eval:
         p EC_0 STO_0 |- typedExpressionIR_base
                       : EC_1 STO_1 (`` value_base)
-    ---- ;; (TODO) what to do for invalid headers?
-    -- if HEADER _ `{ true `; (value_field id_field `;)* } = value_base
+    -- if HEADER _ `{ _ `; (value_field id_field `;)* } = value_base
     -- if value_member
         = $assoc_<nameIR, value>(nameIR, (id_field, value_field)*)
     -- if expressionResult = `` value_member
@@ -451,12 +450,38 @@ rulegroup Expr_eval/sliceAccessExpressionIR {
 ;;;;; constructorTargetIR `( argumentListIR )
 ;;;;; constructor calls should have been handled during instantiation
 
-;;;;; (TODO) callableTargetIR `< typeArgumentListIR > `( argumentListIR )
-;;;;;; syntax callableTargetIR
-;;;;;;; referenceExpressionIR
-;;;;;;; typedExpressionIR `. nameIR
-;;;;;;; TYPE prefixedNameIR `. nameIR
-;;;;;;; `( callableTargetIR )
+;;;;; callableTargetIR `< typeArgumentListIR > `( argumentListIR )
+
+rulegroup Expr_eval/callExpressionIR {
+
+  rule Expr_eval/callee-exit:
+    p EC_0 STO_0 |- (callableTargetIR `< typeArgumentIR* > `( argumentIR* )) `# _
+                  : EC_1 STO_1 EXIT
+    -- Callee_eval:
+        p EC_0 STO_0 |- callableTargetIR `< `_ > `( argumentIR* )
+                      : EC_1 STO_1 EXIT
+
+  rule Expr_eval/callee-cont-call-exit:
+    p EC_0 STO_0 |- (callableTargetIR `< typeArgumentIR* > `( argumentIR* )) `# _
+                  : EC_2 STO_2 EXIT
+    -- Callee_eval:
+        p EC_0 STO_0 |- callableTargetIR `< `_ > `( argumentIR* )
+                      : EC_1 STO_1 (`` callee)
+    -- Call_eval:
+        p EC_1 STO_1 |- callee `@ `< typeArgumentIR* > `( argumentIR* )
+                      : EC_2 STO_2 EXIT
+
+  rule Expr_eval/callee-cont-call-return:
+    p EC_0 STO_0 |- (callableTargetIR `< typeArgumentIR* > `( argumentIR* )) `# _
+                  : EC_2 STO_2 (`` value)
+    -- Callee_eval:
+        p EC_0 STO_0 |- callableTargetIR `< `_ > `( argumentIR* )
+                      : EC_1 STO_1 (`` callee)
+    -- Call_eval:
+        p EC_1 STO_1 |- callee `@ `< typeArgumentIR* > `( argumentIR* )
+                      : EC_2 STO_2 (RETURN value)
+
+}
 
 ;;;; parenthesizedExpressionIR
 ;;;; syntax parenthesizedExpressionIR = `( typedExpressionIR )

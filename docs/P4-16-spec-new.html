@@ -661,7 +661,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <h1>P4<sub>16</sub> Language Specification : The P4 Language Consortium</h1>
 <div class="details">
 <span id="revnumber">version v1.2.5,</span>
-<span id="revdate">2025-11-05</span>
+<span id="revdate">2025-11-11</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Contents</div>
@@ -4786,7 +4786,7 @@ can be prefixed by a dot (<code>.</code>) to refer to the top-level namespace.</
     -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
     -- if typeDefIR = $find_typeDef_t(p, TC, prefixedNameIR)
     -- if $is_monomorphic_typeDefIR(typeDefIR)
-    -- if typeIR = $typeIR_of_typeDefIR(typeDefIR)
+    -- if typeIR = $type_of_typeDefIR(typeDefIR)
 
 rule Type_ok/prefixedTypeName/polymorphic:
    p TC |- prefixedTypeName : (typeDefIR `&lt;eps&gt;) # eps
@@ -4824,7 +4824,7 @@ rule Type_ok/prefixedTypeName/polymorphic:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>typeIR</code> be <code><a href="#typeIR_of_typeDefIR">$typeIR_of_typeDefIR(typeDefIR)</a></code>.</p>
+<p>Let <code>typeIR</code> be <code><a href="#type_of_typeDefIR">$type_of_typeDefIR(typeDefIR)</a></code>.</p>
 </li>
 <li>
 <p>Result in the type <code>typeIR</code> and set of fresh type variables <code>[ ]</code>.</p>
@@ -5842,7 +5842,7 @@ be obtained from named types, as illustrated in <a href="#sec-def-namedType">Sec
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Type_wf"><code>bound |- STRUCT _ { typeIR<sub>field</sub> id<sub>field</sub> ;<sup>*</sup> }</code></a></p>
+<p><a href="#Type_wf"><code>bound |- STRUCT _ { (typeIR<sub>field</sub> id<sub>field</sub> ;)<sup>*</sup> }</code></a></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -6113,7 +6113,7 @@ headers contained within <code>h1</code>, regardless of how deeply they are nest
 </div>
 </li>
 <li>
-<p>Else let <code>STRUCT _ { typeIR<sub>field</sub> _ ;<sup>*</sup> }</code> be <code>typeIR'</code>:</p>
+<p>Else let <code>STRUCT _ { (typeIR<sub>field</sub> _ ;)<sup>*</sup> }</code> be <code>typeIR'</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -6201,7 +6201,7 @@ headers contained within <code>h1</code>, regardless of how deeply they are nest
 </div>
 </li>
 <li>
-<p>Else let <code>STRUCT _ { typeIR<sub>field</sub> _ ;<sup>*</sup> }</code> be <code>typeIR'</code>:</p>
+<p>Else let <code>STRUCT _ { (typeIR<sub>field</sub> _ ;)<sup>*</sup> }</code> be <code>typeIR'</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -6241,7 +6241,7 @@ headers contained within <code>h1</code>, regardless of how deeply they are nest
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Type_wf"><code>bound |- HEADER _ { typeIR<sub>field</sub> id<sub>field</sub> ;<sup>*</sup> }</code></a></p>
+<p><a href="#Type_wf"><code>bound |- HEADER _ { (typeIR<sub>field</sub> id<sub>field</sub> ;)<sup>*</sup> }</code></a></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -6387,7 +6387,7 @@ types can be obtained from named types, as illustrated in
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Type_wf"><code>bound |- HEADER_UNION _ { typeIR<sub>field</sub> id<sub>field</sub> ;<sup>*</sup> }</code></a></p>
+<p><a href="#Type_wf"><code>bound |- HEADER_UNION _ { (typeIR<sub>field</sub> id<sub>field</sub> ;)<sup>*</sup> }</code></a></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -6647,7 +6647,7 @@ rule Type_wf/enumTypeIR/serializable:
 </div>
 </li>
 <li>
-<p>Else let <code>ENUM _ &lt; typeIR &gt; { id<sub>field</sub> = _ ;<sup>*</sup> }</code> be <code>enumTypeIR</code>:</p>
+<p>Else let <code>ENUM _ &lt; typeIR &gt; { (id<sub>field</sub> = _ ;)<sup>*</sup> }</code> be <code>enumTypeIR</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -6776,7 +6776,7 @@ object types can be obtained from named types, as illustrated in
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Type_wf"><code>bound |- EXTERN _ { _ : externMethodTypeDefIR<sup>*</sup> }</code></a></p>
+<p><a href="#Type_wf"><code>bound |- EXTERN _ { (_ : externMethodTypeDefIR)<sup>*</sup> }</code></a></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -7873,7 +7873,7 @@ rule Type_wf/recordTypeIR/default:
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>If let <code>RECORD { typeIR<sub>field</sub> id<sub>field</sub> ;<sup>*</sup> }</code> be <code>recordTypeIR</code>:</p>
+<p>If let <code>RECORD { (typeIR<sub>field</sub> id<sub>field</sub> ;)<sup>*</sup> }</code> be <code>recordTypeIR</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -7889,7 +7889,7 @@ rule Type_wf/recordTypeIR/default:
 </div>
 </li>
 <li>
-<p>Else let <code>RECORD { typeIR<sub>field</sub> id<sub>field</sub> ;<sup>*</sup> , &#8230;&#8203; }</code> be <code>recordTypeIR</code>:</p>
+<p>Else let <code>RECORD { (typeIR<sub>field</sub> id<sub>field</sub> ;)<sup>*</sup> , &#8230;&#8203; }</code> be <code>recordTypeIR</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -8534,7 +8534,7 @@ rule Parameter_ok/initializer:
     -- if bound = $union_set&lt;tid&gt;($bound(p, TC), `{tid_fresh*})
     -- Type_wf: bound |- typeIR
     -- Expr_ok: p TC |- expression_init : typedExpressionIR_init
-    -- if typeIR_init = $typeIR_of_typedExpressionIR(typedExpressionIR_init)
+    -- if typeIR_init = $type_of_typedExpressionIR(typedExpressionIR_init)
     -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR_init)
     -- if typedExpressionIR_init_cast = $coerce_unary(typedExpressionIR_init, typeIR)
     -- if nameIR = $name(name)
@@ -8561,7 +8561,10 @@ rule Parameter_ok/initializer:
 <p>Let <code>typeIR</code> and <code>tid<sub>fresh</sub><sup>*</sup></code> be the result of <a href="#Type_ok">typing <code>type</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>bound</code> be <a href="#union_set">the union of the sets <code>$bound(p, TC)</code> and <code>{ tid<sub>fresh</sub><sup>*</sup> }</code></a>.</p>
+<p>Let <code>bound'</code> be <code><a href="#bound">$bound(p, TC)</a></code>.</p>
+</li>
+<li>
+<p>Let <code>bound</code> be <a href="#union_set">the union of the sets <code>bound'</code> and <code>{ tid<sub>fresh</sub><sup>*</sup> }</code></a>.</p>
 </li>
 <li>
 <p>Check that <a href="#Type_wf"><code>typeIR</code> is a well-formed type, assuming bound type ids <code>bound</code></a>.</p>
@@ -8583,7 +8586,10 @@ rule Parameter_ok/initializer:
 <p>Let <code>typeIR</code> and <code>tid<sub>fresh</sub><sup>*</sup></code> be the result of <a href="#Type_ok">typing <code>type</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>bound</code> be <a href="#union_set">the union of the sets <code>$bound(p, TC)</code> and <code>{ tid<sub>fresh</sub><sup>*</sup> }</code></a>.</p>
+<p>Let <code>bound'</code> be <code><a href="#bound">$bound(p, TC)</a></code>.</p>
+</li>
+<li>
+<p>Let <code>bound</code> be <a href="#union_set">the union of the sets <code>bound'</code> and <code>{ tid<sub>fresh</sub><sup>*</sup> }</code></a>.</p>
 </li>
 <li>
 <p>Check that <a href="#Type_wf"><code>typeIR</code> is a well-formed type, assuming bound type ids <code>bound</code></a>.</p>
@@ -8592,7 +8598,7 @@ rule Parameter_ok/initializer:
 <p>Let <code>typedExpressionIR<sub>init</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>init</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>init</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>init</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>init</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>init</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code><a href="#ctk_of_typedExpressionIR">$ctk_of_typedExpressionIR(typedExpressionIR<sub>init</sub>)</a></code> matches pattern <code>LCTK</code>.</p>
@@ -8678,7 +8684,7 @@ rule ParameterType_wf/default:
 <p>Check that <a href="#Type_wf"><code>typeIR</code> is a well-formed type, assuming bound type ids <code>bound</code></a>.</p>
 </li>
 <li>
-<p>Check that `<a href="#is_stringTypeIR">$is_stringTypeIR($canon_typeIR(typeIR))</a> \/ <a href="#is_arbitraryIntTypeIR">$is_arbitraryIntTypeIR($canon_typeIR(typeIR))</a> \/ <a href="#is_objectTypeIR">$is_objectTypeIR($canon_typeIR(typeIR))</a> &#8658; direction = `.</p>
+<p>Check that <code><a href="#is_stringTypeIR">$is_stringTypeIR($canon_typeIR(typeIR))</a> \/ <a href="#is_arbitraryIntTypeIR">$is_arbitraryIntTypeIR($canon_typeIR(typeIR))</a> \/ <a href="#is_objectTypeIR">$is_objectTypeIR($canon_typeIR(typeIR))</a></code> <strong>implies</strong> `direction = `.</p>
 </li>
 <li>
 <p>The relation holds.</p>
@@ -8701,7 +8707,7 @@ rule ParameterType_wf/default:
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Check that `<a href="#is_stringTypeIR">$is_stringTypeIR($canon_typeIR(typeIR))</a> \/ <a href="#is_arbitraryIntTypeIR">$is_arbitraryIntTypeIR($canon_typeIR(typeIR))</a> \/ <a href="#is_objectTypeIR">$is_objectTypeIR($canon_typeIR(typeIR))</a> &#8658; direction = `.</p>
+<p>Check that <code><a href="#is_stringTypeIR">$is_stringTypeIR($canon_typeIR(typeIR))</a> \/ <a href="#is_arbitraryIntTypeIR">$is_arbitraryIntTypeIR($canon_typeIR(typeIR))</a> \/ <a href="#is_objectTypeIR">$is_objectTypeIR($canon_typeIR(typeIR))</a></code> <strong>implies</strong> `direction = `.</p>
 </li>
 <li>
 <p>The relation holds.</p>
@@ -8714,7 +8720,7 @@ rule ParameterType_wf/default:
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Check that `<a href="#is_stringTypeIR">$is_stringTypeIR($canon_typeIR(typeIR))</a> \/ <a href="#is_arbitraryIntTypeIR">$is_arbitraryIntTypeIR($canon_typeIR(typeIR))</a> \/ <a href="#is_objectTypeIR">$is_objectTypeIR($canon_typeIR(typeIR))</a> &#8658; direction = `.</p>
+<p>Check that <code><a href="#is_stringTypeIR">$is_stringTypeIR($canon_typeIR(typeIR))</a> \/ <a href="#is_arbitraryIntTypeIR">$is_arbitraryIntTypeIR($canon_typeIR(typeIR))</a> \/ <a href="#is_objectTypeIR">$is_objectTypeIR($canon_typeIR(typeIR))</a></code> <strong>implies</strong> `direction = `.</p>
 </li>
 <li>
 <p>The relation holds.</p>
@@ -8902,7 +8908,7 @@ represented as follows:</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>direction typeIR _ _<sup>?</sup></code> be <code>parameterTypeIR</code>.</p>
+<p>Let <code>direction</code> and <code>typeIR</code> be the direction and the type of <code>parameterTypeIR</code>.</p>
 </li>
 </ul>
 </div>
@@ -9068,7 +9074,7 @@ defined function types are represented as follows:</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>_ typeIR _ _<sup>?</sup></code> be <code>parameterTypeIR</code>.</p>
+<p>Let <code>typeIR</code> be the type of <code>parameterTypeIR</code>.</p>
 </li>
 </ul>
 </div>
@@ -9202,7 +9208,7 @@ extern function types are represented as follows:</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>_ typeIR _ _<sup>?</sup></code> be <code>parameterTypeIR</code>.</p>
+<p>Let <code>typeIR</code> be the type of <code>parameterTypeIR</code>.</p>
 </li>
 </ul>
 </div>
@@ -9378,7 +9384,7 @@ rule CallableType_wf/externMethodTypeIR/abstract:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>_ typeIR _ _<sup>?</sup></code> be <code>parameterTypeIR</code>.</p>
+<p>Let <code>typeIR</code> be the type of <code>parameterTypeIR</code>.</p>
 </li>
 </ul>
 </div>
@@ -9414,7 +9420,7 @@ rule CallableType_wf/externMethodTypeIR/abstract:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>_ typeIR _ _<sup>?</sup></code> be <code>parameterTypeIR</code>.</p>
+<p>Let <code>typeIR</code> be the type of <code>parameterTypeIR</code>.</p>
 </li>
 </ul>
 </div>
@@ -9553,7 +9559,7 @@ parserApplyMethodDef
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>_ typeIR _ _<sup>?</sup></code> be <code>parameterTypeIR</code>.</p>
+<p>Let <code>typeIR</code> be the type of <code>parameterTypeIR</code>.</p>
 </li>
 </ul>
 </div>
@@ -9682,7 +9688,7 @@ controlApplyMethodDef
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>_ typeIR _ _<sup>?</sup></code> be <code>parameterTypeIR</code>.</p>
+<p>Let <code>typeIR</code> be the type of <code>parameterTypeIR</code>.</p>
 </li>
 </ul>
 </div>
@@ -10087,10 +10093,10 @@ constructorTypeDefIR
 <p>Check that <code><a href="#definable_constructor">$definable_constructor(typeIR<sub>object</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Check that <a href="#distinct_">the elements of <code>tid<sub>tparam_expl</sub><sup>*</sup> ++ tid<sub>tparam_impl</sub><sup>*</sup></code> are distinct</a>.</p>
+<p>Check that <a href="#distinct_">the elements of <code>tid<sub>tparam_expl</sub><sup>*</sup> &#43;&#43; tid<sub>tparam_impl</sub><sup>*</sup></code> are distinct</a>.</p>
 </li>
 <li>
-<p>Let <code>bound<sub>inner</sub></code> be <a href="#union_set">the union of the sets <code>bound</code> and <code>{ tid<sub>tparam_expl</sub><sup>*</sup> ++ tid<sub>tparam_impl</sub><sup>*</sup> }</code></a>.</p>
+<p>Let <code>bound<sub>inner</sub></code> be <a href="#union_set">the union of the sets <code>bound</code> and <code>{ tid<sub>tparam_expl</sub><sup>*</sup> &#43;&#43; tid<sub>tparam_impl</sub><sup>*</sup> }</code></a>.</p>
 </li>
 <li>
 <p>Check that <a href="#ConstructorType_wf"><code>CONSTRUCTOR ( parameterTypeIR<sup>*</sup> ) : typeIR<sub>object</sub></code> is a well-formed type, assuming bound type ids <code>bound<sub>inner</sub></code></a>.</p>
@@ -10235,7 +10241,7 @@ constructors.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>_ typeIR _ _<sup>?</sup></code> be <code>parameterTypeIR</code>.</p>
+<p>Let <code>typeIR</code> be the type of <code>parameterTypeIR</code>.</p>
 </li>
 </ul>
 </div>
@@ -10429,7 +10435,7 @@ rule is explained in <a href="#sec-sem-Decl_ok-parserDeclaration">Section 11.8.1
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>_ typeIR _ _<sup>?</sup></code> be <code>parameterTypeIR</code>.</p>
+<p>Let <code>typeIR</code> be the type of <code>parameterTypeIR</code>.</p>
 </li>
 </ul>
 </div>
@@ -10617,7 +10623,7 @@ rule is explained in <a href="#sec-sem-Decl_ok-controlDeclaration">Section 11.9.
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>_ typeIR _ _<sup>?</sup></code> be <code>parameterTypeIR</code>.</p>
+<p>Let <code>typeIR</code> be the type of <code>parameterTypeIR</code>.</p>
 </li>
 </ul>
 </div>
@@ -10894,7 +10900,7 @@ with them.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>_ typeIR _ _<sup>?</sup></code> be <code>parameterTypeIR</code>.</p>
+<p>Let <code>typeIR</code> be the type of <code>parameterTypeIR</code>.</p>
 </li>
 </ul>
 </div>
@@ -11017,8 +11023,7 @@ following are all legal constant declarations:</p>
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Decl_ok">typing <code>annotationList CONST type name = expression<sub>value</sub> ;</code>, under cursor <code>p'</code> and typing context <code>TC<sub>0</sub></code>,
-* and the modified typing context</a> is defined as:</p>
+<p><a href="#Decl_ok">typing <code>annotationList CONST type name = expression<sub>value</sub> ;</code>, under cursor <code>p'</code> and typing context <code>TC<sub>0</sub></code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -11053,7 +11058,7 @@ following are all legal constant declarations:</p>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_var_t">$add_var_t(p', TC<sub>0</sub>, nameIR, typeIR LCTK value)</a></code>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t">the typing context <code>TC<sub>0</sub></code> with a mapping from <code>nameIR</code> to <code>typeIR LCTK value</code> added to the <code>p'</code> layer</a>.</p>
 </li>
 <li>
 <p>Let <code>constantDeclarationIR</code> be <code>annotationList CONST typeIR nameIR = value ;</code>.</p>
@@ -11236,8 +11241,7 @@ rule Decl_ok/instantiation-non-objectInitializer/specializedType:
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Decl_ok">typing <code>annotationList type ( argumentList ) name ;</code>, under cursor <code>p'</code> and typing context <code>TC<sub>0</sub></code>,
-* and the modified typing context</a> is defined as:</p>
+<p><a href="#Decl_ok">typing <code>annotationList type ( argumentList ) name ;</code>, under cursor <code>p'</code> and typing context <code>TC<sub>0</sub></code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -11278,7 +11282,7 @@ rule Decl_ok/instantiation-non-objectInitializer/specializedType:
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_var_t">$add_var_t(p', TC<sub>0</sub>, nameIR, typeIR<sub>object</sub> CTK None)</a></code>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t">the typing context <code>TC<sub>0</sub></code> with a mapping from <code>nameIR</code> to <code>typeIR<sub>object</sub> CTK None</code> added to the <code>p'</code> layer</a>.</p>
 </li>
 <li>
 <p>Let <code>instantiationIR</code> be <code>annotationList typeIR<sub>object</sub> prefixedNameIR &lt; typeArgumentIR<sub>inferred</sub><sup>*</sup> &gt; ( argumentIR<sup>*</sup> ) nameIR None ;</code>.</p>
@@ -11326,7 +11330,7 @@ rule Decl_ok/instantiation-non-objectInitializer/specializedType:
 <p>Let <a href="#ConstructorType_ok"><code>p' TC<sub>0</sub> |- prefixedNameIR &lt; typeArgumentIR<sup>*</sup> &gt; ( argumentIR<sup>*</sup> ) : constructorTypeIR &lt; # tid<sub>inserted</sub><sup>*</sup> &gt; ( # id<sub>default</sub><sup>*</sup> )</code></a>.</p>
 </li>
 <li>
-<p>Let <code>tid<sub>infer</sub><sup>*</sup></code> be <code>tid<sub>impl</sub><sup>*</sup> ++ tid<sub>inserted</sub><sup>*</sup></code>.</p>
+<p>Let <code>tid<sub>infer</sub><sup>*</sup></code> be <code>tid<sub>impl</sub><sup>*</sup> &#43;&#43; tid<sub>inserted</sub><sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Let <a href="#Inst_ok"><code>p' TC<sub>0</sub> NAMED |- constructorTypeIR &lt; typeArgumentIR<sup>*</sup> # tid<sub>infer</sub><sup>*</sup> &gt; ( argumentIR<sup>*</sup> # id<sub>default</sub><sup>*</sup> ) : typeIR<sub>object</sub> &lt; typeArgumentIR<sub>inferred</sub><sup>*</sup> &gt; ( argumentIR<sub>cast</sub><sup>*</sup> )</code></a>.</p>
@@ -11335,7 +11339,7 @@ rule Decl_ok/instantiation-non-objectInitializer/specializedType:
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_var_t">$add_var_t(p', TC<sub>0</sub>, nameIR, typeIR<sub>object</sub> CTK None)</a></code>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t">the typing context <code>TC<sub>0</sub></code> with a mapping from <code>nameIR</code> to <code>typeIR<sub>object</sub> CTK None</code> added to the <code>p'</code> layer</a>.</p>
 </li>
 <li>
 <p>Let <code>instantiationIR</code> be <code>annotationList typeIR<sub>object</sub> prefixedNameIR &lt; typeArgumentIR<sub>inferred</sub><sup>*</sup> &gt; ( argumentIR<sup>*</sup> ) nameIR None ;</code>.</p>
@@ -11416,7 +11420,7 @@ methods.</p>
     -- Type_ok: LOCAL TC_3 |- typeOrVoid : typeIR_ret # eps
     -- if parameter* = $flatten_parameterList(parameterList)
     -- Parameters_ok: LOCAL TC_3 |- parameter* : parameterIR* # tid_impl*
-    -- (if (parameterTypeIR = $parameterTypeIR_of_parameterIR(parameterIR)))*
+    -- (if (parameterTypeIR = $type_of_parameterIR(parameterIR)))*
     -- if TC_4 = $add_parameters_t(LOCAL, TC_3, parameterTypeIR*)
     -- if TC_5 = TC_4[LOCAL.KIND = (EXTERN_METHOD : typeIR_ret)]
     -- Block_ok: TC_5 CONT |- blockStatement : _ f blockStatementIR
@@ -11468,7 +11472,7 @@ methods.</p>
 </div>
 </li>
 <li>
-<p>Let <code>TC<sub>3</sub></code> be <code><a href="#add_typeDefs_t">$add_typeDefs_t(LOCAL, TC<sub>2</sub>, tid<sub>expl</sub><sup>*</sup>, tid<sub>expl</sub><sup>*</sup>)</a></code>.</p>
+<p>Let <code>TC<sub>3</sub></code> be <code><a href="#add_typeDefs_t">$add_typeDefs_t(LOCAL, TC<sub>2</sub>, tid<sub>expl</sub><sup>*</sup>, (tid<sub>expl</sub>)<sup>*</sup>)</a></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>ret</sub></code> and <code>tid<sup>*</sup></code> be the result of <a href="#Type_ok">typing <code>typeOrVoid</code>, under cursor <code>LOCAL</code> and typing context <code>TC<sub>3</sub></code></a>.</p>
@@ -11489,7 +11493,7 @@ methods.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>parameterTypeIR</code> be <a href="#parameterTypeIR_of_parameterIR">the type of  <code>parameterIR</code></a>.</p>
+<p>Let <code>parameterTypeIR</code> be <a href="#type_of_parameterIR">the type of  <code>parameterIR</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -11522,7 +11526,7 @@ methods.</p>
 <p>Check that <a href="#CallableTypeDef_wf"><code>externMethodTypeDefIR</code> is a well-formed type, assuming bound type ids <code>$bound(p, TC<sub>0</sub>)</code></a>.</p>
 </li>
 <li>
-<p>Let <code>externMethodTypeDefEnv<sub>init</sub></code> be <code><a href="#update_map">$update_map&lt;cid, externMethodTypeDefIR&gt;(externMethodTypeDefEnv, cid, externMethodTypeDefIR)</a></code>.</p>
+<p>Let <code>externMethodTypeDefEnv<sub>init</sub></code> be <a href="#update_map">the map <code>externMethodTypeDefEnv</code> with the value for key <code>cid</code> updated to <code>externMethodTypeDefIR</code></a>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
@@ -11550,7 +11554,7 @@ methods.</p>
 <p>Check that <a href="#CallableTypeDef_wf"><code>externMethodTypeDefIR</code> is a well-formed type, assuming bound type ids <code>$bound(p, TC<sub>0</sub>)</code></a>.</p>
 </li>
 <li>
-<p>Let <code>externMethodTypeDefEnv<sub>init</sub></code> be <code><a href="#update_map">$update_map&lt;cid, externMethodTypeDefIR&gt;(externMethodTypeDefEnv, cid, externMethodTypeDefIR)</a></code>.</p>
+<p>Let <code>externMethodTypeDefEnv<sub>init</sub></code> be <a href="#update_map">the map <code>externMethodTypeDefEnv</code> with the value for key <code>cid</code> updated to <code>externMethodTypeDefIR</code></a>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
@@ -11592,14 +11596,7 @@ methods.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>TC<sub>1</sub></code> and <code>declarationIR</code> be the result of &lt;&lt;Decl_ok, typing <code>instantiation</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code>,</p>
-<div class="ulist">
-<ul>
-<li>
-<p>and the modified typing context&gt;&gt;.</p>
-</li>
-</ul>
-</div>
+<p>Let <code>TC<sub>1</sub></code> and <code>declarationIR</code> be the result of <a href="#Decl_ok">typing <code>instantiation</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>declarationIR</code> has type <code>instantiationIR</code>.</p>
@@ -11620,7 +11617,7 @@ methods.</p>
 <p>Let <code>varTypeIR</code> be <code>varTypeIR'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeFrame<sub>init</sub></code> be <code><a href="#update_map">$update_map&lt;id, varTypeIR&gt;(typeFrame, nameIR, varTypeIR)</a></code>.</p>
+<p>Let <code>typeFrame<sub>init</sub></code> be <a href="#update_map">the map <code>typeFrame</code> with the value for key <code>nameIR</code> updated to <code>varTypeIR</code></a>.</p>
 </li>
 <li>
 <p>Result in <code>typeFrame<sub>init</sub></code>, <code>externMethodTypeDefEnv</code>, and <code>instantiationIR</code>.</p>
@@ -11690,8 +11687,7 @@ rule Decl_ok/instantiation-objectInitializer/specializedType:
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Decl_ok">typing <code>annotationList type ( argumentList ) name = { objectDeclarationList } ;</code>, under cursor <code>p'</code> and typing context <code>TC<sub>0</sub></code>,
-* and the modified typing context</a> is defined as:</p>
+<p><a href="#Decl_ok">typing <code>annotationList type ( argumentList ) name = { objectDeclarationList } ;</code>, under cursor <code>p'</code> and typing context <code>TC<sub>0</sub></code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -11747,7 +11743,7 @@ rule Decl_ok/instantiation-objectInitializer/specializedType:
 <p>Check that <code>tid'<sup>*</sup></code> is equal to <code>tid<sub>impl</sub><sup>*</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_var_t">$add_var_t(LOCAL, TC<sub>0</sub>, "this", typeIR<sub>object</sub> CTK None)</a></code>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t">the typing context <code>TC<sub>0</sub></code> with a mapping from <code>"this"</code> to <code>typeIR<sub>object</sub> CTK None</code> added to the <code>LOCAL</code> layer</a>.</p>
 </li>
 <li>
 <p>Let <code>objectDeclaration<sup>*</sup></code> be <a href="#flatten_objectDeclarationList">the list of object declarations in <code>objectDeclarationList</code></a>.</p>
@@ -11756,10 +11752,10 @@ rule Decl_ok/instantiation-objectInitializer/specializedType:
 <p>Let <a href="#Decls_object_ok"><code>p' TC<sub>1</sub> { [ ] } { [ ] } |- objectDeclaration<sup>*</sup> : typeFrame<sub>init</sub> externMethodTypeDefEnv<sub>init</sub> objectDeclarationIR<sup>*</sup></code></a>.</p>
 </li>
 <li>
-<p>Let <code>tid<sup>*</sup></code> be <code>tid<sub>expl</sub><sup>*</sup> ++ tid<sub>impl</sub><sup>*</sup></code>.</p>
+<p>Let <code>tid<sup>*</sup></code> be <code>tid<sub>expl</sub><sup>*</sup> &#43;&#43; tid<sub>impl</sub><sup>*</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>theta</code> be <code>{ tid : typeIR<sub>arg</sub><sup>*</sup> }</code>.</p>
+<p>Let <code>theta</code> be <code>{ (tid : typeIR<sub>arg</sub>)<sup>*</sup> }</code>.</p>
 </li>
 <li>
 <p>Let <code>externMethodTypeDefEnv<sub>init_subst</sub></code> be <code><a href="#subst_externMethodTypeDefEnv">$subst_externMethodTypeDefEnv(theta, externMethodTypeDefEnv<sub>extern</sub>, externMethodTypeDefEnv<sub>init</sub>)</a></code>.</p>
@@ -11777,7 +11773,7 @@ rule Decl_ok/instantiation-objectInitializer/specializedType:
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_var_t">$add_var_t(p', TC<sub>0</sub>, nameIR, typeIR<sub>object_init</sub> CTK None)</a></code>.</p>
+<p>Let <code>TC<sub>2</sub></code> be <a href="#add_var_t">the typing context <code>TC<sub>0</sub></code> with a mapping from <code>nameIR</code> to <code>typeIR<sub>object_init</sub> CTK None</code> added to the <code>p'</code> layer</a>.</p>
 </li>
 <li>
 <p>Let <code>instantiationIR</code> be <code>annotationList typeIR<sub>object_init</sub> prefixedNameIR &lt; typeArgumentIR<sub>inferred</sub><sup>*</sup> &gt; ( argumentIR<sup>*</sup> ) nameIR = { objectDeclarationIR<sup>*</sup> } ;</code>.</p>
@@ -11825,7 +11821,7 @@ rule Decl_ok/instantiation-objectInitializer/specializedType:
 <p>Let <a href="#ConstructorType_ok"><code>p' TC<sub>0</sub> |- prefixedNameIR &lt; typeArgumentIR<sup>*</sup> &gt; ( argumentIR<sup>*</sup> ) : constructorTypeIR &lt; # tid<sub>inserted</sub><sup>*</sup> &gt; ( # id<sub>default</sub><sup>*</sup> )</code></a>.</p>
 </li>
 <li>
-<p>Let <code>tid<sub>infer</sub><sup>*</sup></code> be <code>tid<sub>impl</sub><sup>*</sup> ++ tid<sub>inserted</sub><sup>*</sup></code>.</p>
+<p>Let <code>tid<sub>infer</sub><sup>*</sup></code> be <code>tid<sub>impl</sub><sup>*</sup> &#43;&#43; tid<sub>inserted</sub><sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Let <a href="#Inst_ok"><code>p' TC<sub>0</sub> NAMED |- constructorTypeIR &lt; typeArgumentIR<sup>*</sup> # tid<sub>infer</sub><sup>*</sup> &gt; ( argumentIR<sup>*</sup> # id<sub>default</sub><sup>*</sup> ) : typeIR<sub>object</sub> &lt; typeArgumentIR<sub>inferred</sub><sup>*</sup> &gt; ( argumentIR<sub>cast</sub><sup>*</sup> )</code></a>.</p>
@@ -11849,7 +11845,7 @@ rule Decl_ok/instantiation-objectInitializer/specializedType:
 <p>Check that <code>tid'<sup>*</sup></code> is equal to <code>tid<sub>impl</sub><sup>*</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_var_t">$add_var_t(LOCAL, TC<sub>0</sub>, "this", typeIR<sub>object</sub> CTK None)</a></code>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t">the typing context <code>TC<sub>0</sub></code> with a mapping from <code>"this"</code> to <code>typeIR<sub>object</sub> CTK None</code> added to the <code>LOCAL</code> layer</a>.</p>
 </li>
 <li>
 <p>Let <code>objectDeclaration<sup>*</sup></code> be <a href="#flatten_objectDeclarationList">the list of object declarations in <code>objectDeclarationList</code></a>.</p>
@@ -11858,10 +11854,10 @@ rule Decl_ok/instantiation-objectInitializer/specializedType:
 <p>Let <a href="#Decls_object_ok"><code>p' TC<sub>1</sub> { [ ] } { [ ] } |- objectDeclaration<sup>*</sup> : typeFrame<sub>init</sub> externMethodTypeDefEnv<sub>init</sub> objectDeclarationIR<sup>*</sup></code></a>.</p>
 </li>
 <li>
-<p>Let <code>tid<sup>*</sup></code> be <code>tid<sub>expl</sub><sup>*</sup> ++ tid<sub>impl</sub><sup>*</sup></code>.</p>
+<p>Let <code>tid<sup>*</sup></code> be <code>tid<sub>expl</sub><sup>*</sup> &#43;&#43; tid<sub>impl</sub><sup>*</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>theta</code> be <code>{ tid : typeIR<sub>arg</sub><sup>*</sup> }</code>.</p>
+<p>Let <code>theta</code> be <code>{ (tid : typeIR<sub>arg</sub>)<sup>*</sup> }</code>.</p>
 </li>
 <li>
 <p>Let <code>externMethodTypeDefEnv<sub>init_subst</sub></code> be <code><a href="#subst_externMethodTypeDefEnv">$subst_externMethodTypeDefEnv(theta, externMethodTypeDefEnv<sub>extern</sub>, externMethodTypeDefEnv<sub>init</sub>)</a></code>.</p>
@@ -11879,7 +11875,7 @@ rule Decl_ok/instantiation-objectInitializer/specializedType:
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_var_t">$add_var_t(p', TC<sub>0</sub>, nameIR, typeIR<sub>object_init</sub> CTK None)</a></code>.</p>
+<p>Let <code>TC<sub>2</sub></code> be <a href="#add_var_t">the typing context <code>TC<sub>0</sub></code> with a mapping from <code>nameIR</code> to <code>typeIR<sub>object_init</sub> CTK None</code> added to the <code>p'</code> layer</a>.</p>
 </li>
 <li>
 <p>Let <code>instantiationIR</code> be <code>annotationList typeIR<sub>object_init</sub> prefixedNameIR &lt; typeArgumentIR<sub>inferred</sub><sup>*</sup> &gt; ( argumentIR<sup>*</sup> ) nameIR = { objectDeclarationIR<sup>*</sup> } ;</code>.</p>
@@ -12012,7 +12008,7 @@ rule Decl_inst/instantiationIR/non-extern-non-global:
 <p>Let <code>object<sub>merged</sub></code> be <code>EXTERN tid &lt; theta &gt; { frame<sub>merged</sub> externMethodDefEnv<sub>merged</sub> }</code>.</p>
 </li>
 <li>
-<p>Let <code>oid</code> be <code>IC<sub>0</sub>.PATH ++ [nameIR]</code>.</p>
+<p>Let <code>oid</code> be <code>IC<sub>0</sub>.PATH &#43;&#43; [nameIR]</code>.</p>
 </li>
 <li>
 <p>Let <code>STO<sub>3</sub></code> be <code><a href="#add_map">$add_map&lt;oid, object&gt;(STO<sub>2</sub>, oid, object<sub>merged</sub>)</a></code>.</p>
@@ -12031,7 +12027,7 @@ rule Decl_inst/instantiationIR/non-extern-non-global:
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Let <code>oid</code> be <code>IC<sub>0</sub>.PATH ++ [nameIR]</code>.</p>
+<p>Let <code>oid</code> be <code>IC<sub>0</sub>.PATH &#43;&#43; [nameIR]</code>.</p>
 </li>
 <li>
 <p>Let <code>STO<sub>2</sub></code> be <code><a href="#add_map">$add_map&lt;oid, object&gt;(STO<sub>1</sub>, oid, object)</a></code>.</p>
@@ -12090,7 +12086,7 @@ rule Decl_inst/instantiationIR/non-extern-non-global:
 <p>Let <code>object<sub>merged</sub></code> be <code>EXTERN tid &lt; theta &gt; { frame<sub>merged</sub> externMethodDefEnv<sub>merged</sub> }</code>.</p>
 </li>
 <li>
-<p>Let <code>oid</code> be <code>IC<sub>0</sub>.PATH ++ [nameIR]</code>.</p>
+<p>Let <code>oid</code> be <code>IC<sub>0</sub>.PATH &#43;&#43; [nameIR]</code>.</p>
 </li>
 <li>
 <p>Let <code>STO<sub>3</sub></code> be <code><a href="#add_map">$add_map&lt;oid, object&gt;(STO<sub>2</sub>, oid, object<sub>merged</sub>)</a></code>.</p>
@@ -12112,7 +12108,7 @@ rule Decl_inst/instantiationIR/non-extern-non-global:
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Let <code>oid</code> be <code>IC<sub>0</sub>.PATH ++ [nameIR]</code>.</p>
+<p>Let <code>oid</code> be <code>IC<sub>0</sub>.PATH &#43;&#43; [nameIR]</code>.</p>
 </li>
 <li>
 <p>Let <code>STO<sub>2</sub></code> be <code><a href="#add_map">$add_map&lt;oid, object&gt;(STO<sub>1</sub>, oid, object)</a></code>.</p>
@@ -12172,7 +12168,7 @@ functionDeclarationIR
     -- Type_ok: LOCAL TC_1 |- typeOrVoid : typeIR_ret # eps
     -- if parameter* = $flatten_parameterList(parameterList)
     -- Parameters_ok: LOCAL TC_1 |- parameter* : parameterIR* # tid_impl*
-    -- (if (parameterTypeIR = $parameterTypeIR_of_parameterIR(parameterIR)))*
+    -- (if (parameterTypeIR = $type_of_parameterIR(parameterIR)))*
     -- if TC_2 = $add_parameters_t(LOCAL, TC_1, parameterTypeIR*)
     -- if TC_3 = TC_2[LOCAL.KIND = FUNCTION : typeIR_ret]
     -- Block_ok: TC_3 CONT |- blockStatement : _ f blockStatementIR
@@ -12193,8 +12189,7 @@ functionDeclarationIR
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Decl_ok">typing <code>annotationList typeOrVoid name typeParameterListOpt ( parameterList ) blockStatement</code>, under cursor <code>p'</code> and typing context <code>TC<sub>0</sub></code>,
-* and the modified typing context</a> is defined as:</p>
+<p><a href="#Decl_ok">typing <code>annotationList typeOrVoid name typeParameterListOpt ( parameterList ) blockStatement</code>, under cursor <code>p'</code> and typing context <code>TC<sub>0</sub></code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -12219,7 +12214,7 @@ functionDeclarationIR
 </div>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_typeDefs_t">$add_typeDefs_t(LOCAL, TC<sub>0</sub>, tid<sub>expl</sub><sup>*</sup>, tid<sub>expl</sub><sup>*</sup>)</a></code>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_typeDefs_t">$add_typeDefs_t(LOCAL, TC<sub>0</sub>, tid<sub>expl</sub><sup>*</sup>, (tid<sub>expl</sub>)<sup>*</sup>)</a></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>ret</sub></code> and <code>tid<sup>*</sup></code> be the result of <a href="#Type_ok">typing <code>typeOrVoid</code>, under cursor <code>LOCAL</code> and typing context <code>TC<sub>1</sub></code></a>.</p>
@@ -12240,7 +12235,7 @@ functionDeclarationIR
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>parameterTypeIR</code> be <a href="#parameterTypeIR_of_parameterIR">the type of  <code>parameterIR</code></a>.</p>
+<p>Let <code>parameterTypeIR</code> be <a href="#type_of_parameterIR">the type of  <code>parameterIR</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -12348,7 +12343,7 @@ functionDeclarationIR
 <p>Let <code>cid</code> be <code><a href="#cid_IR">$cid_IR(nameIR, parameterListIR)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>definedFunctionDef</code> be <code>FUNCTION nameIR &lt; typeParameterListIR ++ typeParameterListIR<sub>inferred</sub> &gt; ( parameterListIR ) blockStatementIR</code>.</p>
+<p>Let <code>definedFunctionDef</code> be <code>FUNCTION nameIR &lt; typeParameterListIR &#43;&#43; typeParameterListIR<sub>inferred</sub> &gt; ( parameterListIR ) blockStatementIR</code>.</p>
 </li>
 <li>
 <p>Let <code>IC<sub>1</sub></code> be <code><a href="#add_callableDef_overload_i">$add_callableDef_overload_i(cursor', IC<sub>0</sub>, cid, definedFunctionDef)</a></code>.</p>
@@ -12385,7 +12380,7 @@ actionDeclarationIR
     -- if TC_1 = TC_0[LOCAL.KIND = ACTION]
     -- if parameter* = $flatten_parameterList(parameterList)
     -- Parameters_ok: LOCAL TC_1 |- parameter* : parameterIR* # eps
-    -- (if (parameterTypeIR = $parameterTypeIR_of_parameterIR(parameterIR)))*
+    -- (if (parameterTypeIR = $type_of_parameterIR(parameterIR)))*
     -- if TC_2 = $add_parameters_t(LOCAL, TC_1, parameterTypeIR*)
     -- Block_ok: TC_2 CONT |- blockStatement : _ _ blockStatementIR
     -- if cid = $cid(name, parameterList)
@@ -12404,8 +12399,7 @@ actionDeclarationIR
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Decl_ok">typing <code>annotationList ACTION name ( parameterList ) blockStatement</code>, under cursor <code>p'</code> and typing context <code>TC<sub>0</sub></code>,
-* and the modified typing context</a> is defined as:</p>
+<p><a href="#Decl_ok">typing <code>annotationList ACTION name ( parameterList ) blockStatement</code>, under cursor <code>p'</code> and typing context <code>TC<sub>0</sub></code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -12428,7 +12422,7 @@ actionDeclarationIR
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>parameterTypeIR</code> be <a href="#parameterTypeIR_of_parameterIR">the type of  <code>parameterIR</code></a>.</p>
+<p>Let <code>parameterTypeIR</code> be <a href="#type_of_parameterIR">the type of  <code>parameterIR</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -12574,8 +12568,7 @@ described in <a href="#sec-error-exprs">[sec-error-exprs]</a>.</p>
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Decl_ok">typing <code>ERROR { nameList }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-* and the modified typing context</a> is defined as:</p>
+<p><a href="#Decl_ok">typing <code>ERROR { nameList }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -12609,7 +12602,7 @@ described in <a href="#sec-error-exprs">[sec-error-exprs]</a>.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>nameIR<sub>error</sub></code> be <code>"error." ++ nameIR</code>.</p>
+<p>Let <code>nameIR<sub>error</sub></code> be <code>"error." &#43;&#43; nameIR</code>.</p>
 </li>
 </ul>
 </div>
@@ -12654,7 +12647,7 @@ described in <a href="#sec-error-exprs">[sec-error-exprs]</a>.</p>
 </div>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_vars_t">$add_vars_t(GLOBAL, TC<sub>0</sub>, nameIR<sub>error</sub><sup>*</sup>, varTypeIR<sup>*</sup>)</a></code>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#add_vars_t">the typing context <code>TC<sub>0</sub></code> with mappings from each of <code>nameIR<sub>error</sub><sup>*</sup></code> to each of <code>varTypeIR<sup>*</sup></code> added to the <code>GLOBAL</code> layer</a>.</p>
 </li>
 <li>
 <p>Result in the modified typing context <code>TC<sub>1</sub></code> and the typed declaration <code>ERROR { nameIR<sup>*</sup> }</code>.</p>
@@ -12798,8 +12791,7 @@ cannot declare new match kinds.</p>
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Decl_ok">typing <code>MATCH_KIND { nameList _ }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-* and the modified typing context</a> is defined as:</p>
+<p><a href="#Decl_ok">typing <code>MATCH_KIND { nameList _ }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -12861,7 +12853,7 @@ cannot declare new match kinds.</p>
 </div>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_vars_t">$add_vars_t(GLOBAL, TC<sub>0</sub>, nameIR<sup>*</sup>, varTypeIR<sup>*</sup>)</a></code>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#add_vars_t">the typing context <code>TC<sub>0</sub></code> with mappings from each of <code>nameIR<sup>*</sup></code> to each of <code>varTypeIR<sup>*</sup></code> added to the <code>GLOBAL</code> layer</a>.</p>
 </li>
 <li>
 <p>Result in the modified typing context <code>TC<sub>1</sub></code> and the typed declaration <code>MATCH_KIND { nameIR<sup>*</sup> }</code>.</p>
@@ -12965,7 +12957,7 @@ externFunctionDeclarationIR
     -- if TC_2 = TC_1[LOCAL.KIND = EXTERN_FUNCTION : typeIR_ret]
     -- if parameter* = $flatten_parameterList(parameterList)
     -- Parameters_ok: LOCAL TC_2 |- parameter* : parameterIR* # tid_impl*
-    -- (if (parameterTypeIR = $parameterTypeIR_of_parameterIR(parameterIR)))*
+    -- (if (parameterTypeIR = $type_of_parameterIR(parameterIR)))*
     -- if TC_3 = $add_parameters_t(LOCAL, TC_2, parameterTypeIR*)
     -- if cid = $cid(name, parameterList)
     -- if externFunctionTypeDefIR = EXTERN_FUNCTION `&lt;tid_expl* , tid_impl*&gt; `(parameterTypeIR*) : typeIR_ret
@@ -12983,8 +12975,7 @@ externFunctionDeclarationIR
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Decl_ok">typing <code>annotationList EXTERN typeOrVoid name typeParameterListOpt ( parameterList ) ;</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-* and the modified typing context</a> is defined as:</p>
+<p><a href="#Decl_ok">typing <code>annotationList EXTERN typeOrVoid name typeParameterListOpt ( parameterList ) ;</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -13009,7 +13000,7 @@ externFunctionDeclarationIR
 </div>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_typeDefs_t">$add_typeDefs_t(LOCAL, TC<sub>0</sub>, tid<sub>expl</sub><sup>*</sup>, tid<sub>expl</sub><sup>*</sup>)</a></code>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_typeDefs_t">$add_typeDefs_t(LOCAL, TC<sub>0</sub>, tid<sub>expl</sub><sup>*</sup>, (tid<sub>expl</sub>)<sup>*</sup>)</a></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>ret</sub></code> and <code>tid<sup>*</sup></code> be the result of <a href="#Type_ok">typing <code>typeOrVoid</code>, under cursor <code>LOCAL</code> and typing context <code>TC<sub>1</sub></code></a>.</p>
@@ -13033,7 +13024,7 @@ externFunctionDeclarationIR
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>parameterTypeIR</code> be <a href="#parameterTypeIR_of_parameterIR">the type of  <code>parameterIR</code></a>.</p>
+<p>Let <code>parameterTypeIR</code> be <a href="#type_of_parameterIR">the type of  <code>parameterIR</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -13100,7 +13091,7 @@ externFunctionDeclarationIR
 <p>Let <code>cid</code> be <code><a href="#cid_IR">$cid_IR(nameIR, parameterListIR)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>externFunctionDef</code> be <code>EXTERN_FUNCTION nameIR &lt; typeParameterListIR ++ typeParameterListIR<sub>inferred</sub> &gt; ( parameterListIR )</code>.</p>
+<p>Let <code>externFunctionDef</code> be <code>EXTERN_FUNCTION nameIR &lt; typeParameterListIR &#43;&#43; typeParameterListIR<sub>inferred</sub> &gt; ( parameterListIR )</code>.</p>
 </li>
 <li>
 <p>Let <code>IC<sub>1</sub></code> be <code><a href="#add_callableDef_overload_i">$add_callableDef_overload_i(GLOBAL, IC<sub>0</sub>, cid, externFunctionDef)</a></code>.</p>
@@ -13161,8 +13152,7 @@ externObjectDeclarationIR
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Decl_ok">typing <code>annotationList EXTERN nonTypeName typeParameterListOpt { externConstructorOrMethodPrototypeList }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-* and the modified typing context</a> is defined as:</p>
+<p><a href="#Decl_ok">typing <code>annotationList EXTERN nonTypeName typeParameterListOpt { externConstructorOrMethodPrototypeList }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -13211,7 +13201,7 @@ externObjectDeclarationIR
 </div>
 </li>
 <li>
-<p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_typeDefs_t">$add_typeDefs_t(BLOCK, TC<sub>1</sub>, tid<sub>expl</sub><sup>*</sup>, tid<sub>expl</sub><sup>*</sup>)</a></code>.</p>
+<p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_typeDefs_t">$add_typeDefs_t(BLOCK, TC<sub>1</sub>, tid<sub>expl</sub><sup>*</sup>, (tid<sub>expl</sub>)<sup>*</sup>)</a></code>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>nonTypeName</code></a>.</p>
@@ -13220,7 +13210,7 @@ externObjectDeclarationIR
 <p>Let <code>TC<sub>3</sub></code> and <code>externMethodPrototypeIR<sup>*</sup></code> be the result of <a href="#ExternMethods_ok">typing <code>externMethodPrototype<sup>*</sup></code>, under typing context <code>TC<sub>2</sub></code> for an extern object <code>nameIR</code></a>.</p>
 </li>
 <li>
-<p>Let <code>{ cid : callableTypeDefIR<sup>*</sup> }</code> be <code>TC<sub>3</sub>.BLOCK.CALLABLE</code>.</p>
+<p>Let <code>{ (cid : callableTypeDefIR)<sup>*</sup> }</code> be <code>TC<sub>3</sub>.BLOCK.CALLABLE</code>.</p>
 </li>
 <li>
 <p>Check that <code>callableTypeDefIR</code> has type <code>externMethodTypeDefIR</code>, for all <code>callableTypeDefIR</code> in <code>callableTypeDefIR<sup>*</sup></code>.</p>
@@ -13243,7 +13233,7 @@ externObjectDeclarationIR
 </div>
 </li>
 <li>
-<p>Let <code>typeDefIR<sub>extern</sub></code> be <code>EXTERN nameIR &lt; tid<sub>expl</sub><sup>*</sup> , [ ] &gt; { cid : externMethodTypeDefIR<sup>*</sup> }</code>.</p>
+<p>Let <code>typeDefIR<sub>extern</sub></code> be <code>EXTERN nameIR &lt; tid<sub>expl</sub><sup>*</sup> , [ ] &gt; { (cid : externMethodTypeDefIR)<sup>*</sup> }</code>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>4</sub></code> be <code><a href="#add_typeDef_t">$add_typeDef_t(GLOBAL, TC<sub>0</sub>, nameIR, typeDefIR<sub>extern</sub>)</a></code>.</p>
@@ -13252,7 +13242,7 @@ externObjectDeclarationIR
 <p>Let <code>TC<sub>5</sub></code> be <code>TC<sub>4</sub>[BLOCK.KIND = EXTERN]</code>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>6</sub></code> be <code><a href="#add_typeDefs_t">$add_typeDefs_t(BLOCK, TC<sub>5</sub>, tid<sub>expl</sub><sup>*</sup>, tid<sub>expl</sub><sup>*</sup>)</a></code>.</p>
+<p>Let <code>TC<sub>6</sub></code> be <code><a href="#add_typeDefs_t">$add_typeDefs_t(BLOCK, TC<sub>5</sub>, tid<sub>expl</sub><sup>*</sup>, (tid<sub>expl</sub>)<sup>*</sup>)</a></code>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>7</sub></code> and <code>externConstructorPrototypeIR<sup>*</sup></code> be the result of <a href="#ExternConstructors_ok">typing <code>externConstructorPrototype<sup>*</sup></code>, under typing context <code>TC<sub>6</sub></code> for an extern object <code>nameIR</code></a>.</p>
@@ -13349,7 +13339,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 </div>
 </li>
 <li>
-<p>Let <code>externMethodTypeDefEnv</code> be <code>{ cid<sub>method</sub> : externMethodTypeDefIR<sup>*</sup> }</code>.</p>
+<p>Let <code>externMethodTypeDefEnv</code> be <code>{ (cid<sub>method</sub> : externMethodTypeDefIR)<sup>*</sup> }</code>.</p>
 </li>
 <li>
 <p>Let <code>externObjectTypeDefIR</code> be <code>EXTERN nameIR &lt; typeParameterListIR , [ ] &gt; externMethodTypeDefEnv</code>.</p>
@@ -13407,7 +13397,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 </div>
 </li>
 <li>
-<p>Let <code>externMethodTypeDefEnv</code> be <code>{ cid<sub>method</sub> : externMethodTypeDefIR<sup>*</sup> }</code>.</p>
+<p>Let <code>externMethodTypeDefEnv</code> be <code>{ (cid<sub>method</sub> : externMethodTypeDefIR)<sup>*</sup> }</code>.</p>
 </li>
 <li>
 <p>Let <code>externObjectTypeDefIR</code> be <code>EXTERN nameIR &lt; typeParameterListIR , [ ] &gt; externMethodTypeDefEnv</code>.</p>
@@ -13474,11 +13464,11 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
     -- if TC_1 = TC_0[BLOCK.KIND = PARSER]
     -- if constructorParameter* = $flatten_constructorParameterListOpt(constructorParameterListOpt)
     -- ConstructorParameters_ok: BLOCK TC_1 |- constructorParameter* : constructorParameterIR* # eps
-    -- (if (constructorParameterTypeIR = $constructorParameterTypeIR_of_constructorParameterIR(constructorParameterIR)))*
+    -- (if (constructorParameterTypeIR = $type_of_constructorParameterIR(constructorParameterIR)))*
     -- if TC_2 = $add_parameters_t(BLOCK, TC_1, constructorParameterTypeIR*)
     -- if parameter* = $flatten_parameterList(parameterList)
     -- Parameters_ok: BLOCK TC_2 |- parameter* : parameterIR* # eps
-    -- (if (parameterTypeIR = $parameterTypeIR_of_parameterIR(parameterIR)))*
+    -- (if (parameterTypeIR = $type_of_parameterIR(parameterIR)))*
     -- if TC_3 = $add_parameters_t(BLOCK, TC_2, parameterTypeIR*)
     -- if parserLocalDeclaration* = $flatten_parserLocalDeclarationList(parserLocalDeclarationList)
     -- ParserLocalDecls_ok: TC_3 |- parserLocalDeclaration* : TC_4 parserLocalDeclarationIR*
@@ -13505,8 +13495,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Decl_ok">typing <code>annotationList PARSER name ( parameterList ) constructorParameterListOpt { parserLocalDeclarationList parserStateList }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-* and the modified typing context</a> is defined as:</p>
+<p><a href="#Decl_ok">typing <code>annotationList PARSER name ( parameterList ) constructorParameterListOpt { parserLocalDeclarationList parserStateList }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -13529,7 +13518,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>constructorParameterTypeIR</code> be <a href="#constructorParameterTypeIR_of_constructorParameterIR">the type of  <code>constructorParameterIR</code></a>.</p>
+<p>Let <code>constructorParameterTypeIR</code> be <a href="#type_of_constructorParameterIR">the type of  <code>constructorParameterIR</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -13558,7 +13547,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>parameterTypeIR</code> be <a href="#parameterTypeIR_of_parameterIR">the type of  <code>parameterIR</code></a>.</p>
+<p>Let <code>parameterTypeIR</code> be <a href="#type_of_parameterIR">the type of  <code>parameterIR</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -13678,11 +13667,11 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
     -- if TC_1 = TC_0[BLOCK.KIND = CONTROL]
     -- if constructorParameter* = $flatten_constructorParameterListOpt(constructorParameterListOpt)
     -- ConstructorParameters_ok: BLOCK TC_1 |- constructorParameter* : constructorParameterIR* # eps
-    -- (if (constructorParameterTypeIR = $constructorParameterTypeIR_of_constructorParameterIR(constructorParameterIR)))*
+    -- (if (constructorParameterTypeIR = $type_of_constructorParameterIR(constructorParameterIR)))*
     -- if TC_2 = $add_parameters_t(BLOCK, TC_1, constructorParameterTypeIR*)
     -- if parameter* = $flatten_parameterList(parameterList)
     -- Parameters_ok: BLOCK TC_2 |- parameter* : parameterIR* # eps
-    -- (if (parameterTypeIR = $parameterTypeIR_of_parameterIR(parameterIR)))*
+    -- (if (parameterTypeIR = $type_of_parameterIR(parameterIR)))*
     -- if TC_3 = $add_parameters_t(BLOCK, TC_2, parameterTypeIR*)
     -- if controlLocalDeclaration* = $flatten_controlLocalDeclarationList(controlLocalDeclarationList)
     -- ControlLocalDecls_ok: TC_3 |- controlLocalDeclaration* : TC_4 controlLocalDeclarationIR*
@@ -13708,8 +13697,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Decl_ok">typing <code>annotationList CONTROL name ( parameterList ) constructorParameterListOpt { controlLocalDeclarationList APPLY controlBody }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-* and the modified typing context</a> is defined as:</p>
+<p><a href="#Decl_ok">typing <code>annotationList CONTROL name ( parameterList ) constructorParameterListOpt { controlLocalDeclarationList APPLY controlBody }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -13732,7 +13720,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>constructorParameterTypeIR</code> be <a href="#constructorParameterTypeIR_of_constructorParameterIR">the type of  <code>constructorParameterIR</code></a>.</p>
+<p>Let <code>constructorParameterTypeIR</code> be <a href="#type_of_constructorParameterIR">the type of  <code>constructorParameterIR</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -13761,7 +13749,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>parameterTypeIR</code> be <a href="#parameterTypeIR_of_parameterIR">the type of  <code>parameterIR</code></a>.</p>
+<p>Let <code>parameterTypeIR</code> be <a href="#type_of_parameterIR">the type of  <code>parameterIR</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -13959,8 +13947,7 @@ enumTypeDeclarationIR
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Decl_ok">typing <code>annotationList ENUM name { nameList<sub>field</sub> _ }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-* and the modified typing context</a> is defined as:</p>
+<p><a href="#Decl_ok">typing <code>annotationList ENUM name { nameList<sub>field</sub> _ }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -14003,7 +13990,7 @@ enumTypeDeclarationIR
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>id<sub>field</sub></code> be <code>nameIR  "."  nameIR<sub>field</sub></code>.</p>
+<p>Let <code>id<sub>field</sub></code> be <code>nameIR &#43;&#43; "." &#43;&#43; nameIR<sub>field</sub></code>.</p>
 </li>
 </ul>
 </div>
@@ -14048,7 +14035,7 @@ enumTypeDeclarationIR
 </div>
 </li>
 <li>
-<p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_vars_t">$add_vars_t(GLOBAL, TC<sub>1</sub>, id<sub>field</sub><sup>*</sup>, varTypeIR<sup>*</sup>)</a></code>.</p>
+<p>Let <code>TC<sub>2</sub></code> be <a href="#add_vars_t">the typing context <code>TC<sub>1</sub></code> with mappings from each of <code>id<sub>field</sub><sup>*</sup></code> to each of <code>varTypeIR<sup>*</sup></code> added to the <code>GLOBAL</code> layer</a>.</p>
 </li>
 <li>
 <p>Let <code>enumTypeDeclarationIR</code> be <code>annotationList ENUM nameIR { nameIR<sub>field</sub><sup>*</sup> }</code>.</p>
@@ -14094,7 +14081,7 @@ enumTypeDeclarationIR
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>nameIR<sub>enum_field</sub></code> be <code>nameIR  "."  nameIR<sub>field</sub></code>.</p>
+<p>Let <code>nameIR<sub>enum_field</sub></code> be <code>nameIR &#43;&#43; "." &#43;&#43; nameIR<sub>field</sub></code>.</p>
 </li>
 </ul>
 </div>
@@ -14202,7 +14189,7 @@ enumTypeDeclarationIR
 <p>Let <code>varTypeIR</code> be <code>enumTypeDefIR LCTK value<sub>enum</sub></code>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_var_t">$add_var_t(BLOCK, TC<sub>0</sub>, nameIR, varTypeIR)</a></code>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t">the typing context <code>TC<sub>0</sub></code> with a mapping from <code>nameIR</code> to <code>varTypeIR</code> added to the <code>BLOCK</code> layer</a>.</p>
 </li>
 <li>
 <p>Result in <code>TC<sub>1</sub></code>, <code>nameIR = typedExpressionIR<sub>cast</sub></code>, and <code>value</code>.</p>
@@ -14239,8 +14226,7 @@ enumTypeDeclarationIR
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Decl_ok">typing <code>annotationList ENUM type name { namedExpressionList<sub>field</sub> _ }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-* and the modified typing context</a> is defined as:</p>
+<p><a href="#Decl_ok">typing <code>annotationList ENUM type name { namedExpressionList<sub>field</sub> _ }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -14286,7 +14272,7 @@ enumTypeDeclarationIR
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>id<sub>field</sub></code> be <code>nameIR  "."  nameIR<sub>field</sub></code>.</p>
+<p>Let <code>id<sub>field</sub></code> be <code>nameIR &#43;&#43; "." &#43;&#43; nameIR<sub>field</sub></code>.</p>
 </li>
 </ul>
 </div>
@@ -14297,7 +14283,7 @@ enumTypeDeclarationIR
 </div>
 </li>
 <li>
-<p>Let <code>enumTypeDefIR</code> be <code>ENUM nameIR &lt; typeIR &gt; { nameIR<sub>field</sub> = value<sub>field</sub> ;<sup>*</sup> }</code>.</p>
+<p>Let <code>enumTypeDefIR</code> be <code>ENUM nameIR &lt; typeIR &gt; { (nameIR<sub>field</sub> = value<sub>field</sub> ;)<sup>*</sup> }</code>.</p>
 </li>
 <li>
 <p>Let <code>varTypeIR<sup>*</sup></code> be the list of <code>varTypeIR</code>, obtained by repeating:</p>
@@ -14317,7 +14303,7 @@ enumTypeDeclarationIR
 </div>
 </li>
 <li>
-<p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_vars_t">$add_vars_t(GLOBAL, TC<sub>0</sub>, id<sub>field</sub><sup>*</sup>, varTypeIR<sup>*</sup>)</a></code>.</p>
+<p>Let <code>TC<sub>2</sub></code> be <a href="#add_vars_t">the typing context <code>TC<sub>0</sub></code> with mappings from each of <code>id<sub>field</sub><sup>*</sup></code> to each of <code>varTypeIR<sup>*</sup></code> added to the <code>GLOBAL</code> layer</a>.</p>
 </li>
 <li>
 <p>Check that <a href="#TypeDef_wf"><code>enumTypeDefIR</code> is a well-formed type, assuming bound type ids <code>$bound(GLOBAL, TC<sub>0</sub>)</code></a>.</p>
@@ -14359,7 +14345,7 @@ enumTypeDeclarationIR
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Decl_inst"><code>GLOBAL IC<sub>0</sub> STO' |- annotationList ENUM typeIR nameIR { nameIR<sub>field</sub> = typedExpressionIR<sub>field</sub><sup>*</sup> } : % % %</code></a></p>
+<p><a href="#Decl_inst"><code>GLOBAL IC<sub>0</sub> STO' |- annotationList ENUM typeIR nameIR { (nameIR<sub>field</sub> = typedExpressionIR<sub>field</sub>)<sup>*</sup> } : % % %</code></a></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -14373,7 +14359,7 @@ enumTypeDeclarationIR
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>nameIR<sub>serenum_field</sub></code> be <code>nameIR  "."  nameIR<sub>field</sub></code>.</p>
+<p>Let <code>nameIR<sub>serenum_field</sub></code> be <code>nameIR &#43;&#43; "." &#43;&#43; nameIR<sub>field</sub></code>.</p>
 </li>
 </ul>
 </div>
@@ -14404,7 +14390,7 @@ enumTypeDeclarationIR
 <p>Let <code>IC<sub>1</sub></code> be <code><a href="#add_vars_i">$add_vars_i(GLOBAL, IC<sub>0</sub>, nameIR<sub>serenum_field</sub><sup>*</sup>, value<sub>serenum_field</sub><sup>*</sup>)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>enumTypeDefIR</code> be <code>ENUM nameIR &lt; typeIR &gt; { nameIR<sub>field</sub> = value<sub>field</sub> ;<sup>*</sup> }</code>.</p>
+<p>Let <code>enumTypeDefIR</code> be <code>ENUM nameIR &lt; typeIR &gt; { (nameIR<sub>field</sub> = value<sub>field</sub> ;)<sup>*</sup> }</code>.</p>
 </li>
 <li>
 <p>Let <code>IC<sub>2</sub></code> be <code><a href="#add_typeDef_i">$add_typeDef_i(GLOBAL, IC<sub>1</sub>, nameIR, enumTypeDefIR)</a></code>.</p>
@@ -14450,8 +14436,7 @@ enumTypeDeclarationIR
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Decl_ok">typing <code>annotationList STRUCT name typeParameterListOpt { typeFieldList }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-* and the modified typing context</a> is defined as:</p>
+<p><a href="#Decl_ok">typing <code>annotationList STRUCT name typeParameterListOpt { typeFieldList }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -14476,10 +14461,10 @@ enumTypeDeclarationIR
 </div>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_typeDefs_t">$add_typeDefs_t(BLOCK, TC<sub>0</sub>, tid<sub>expl</sub><sup>*</sup>, tid<sub>expl</sub><sup>*</sup>)</a></code>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_typeDefs_t">$add_typeDefs_t(BLOCK, TC<sub>0</sub>, tid<sub>expl</sub><sup>*</sup>, (tid<sub>expl</sub>)<sup>*</sup>)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>annotationList<sub>field</sub> type<sub>field</sub> name<sub>field</sub> ;<sup>*</sup></code> be <a href="#flatten_typeFieldList">the list of type fields in <code>typeFieldList</code></a>.</p>
+<p>Let <code>(annotationList<sub>field</sub> type<sub>field</sub> name<sub>field</sub> ;)<sup>*</sup></code> be <a href="#flatten_typeFieldList">the list of type fields in <code>typeFieldList</code></a>.</p>
 </li>
 <li>
 <p>Let <code>tid<sub>impl_field</sub><sup>*</sup><sup>*</sup></code> be the list of <code>tid<sub>impl_field</sub><sup>*</sup></code> and <code>typeIR<sub>field</sub><sup>*</sup></code> be the list of <code>typeIR<sub>field</sub></code>, obtained by repeating:</p>
@@ -14499,7 +14484,7 @@ enumTypeDeclarationIR
 </div>
 </li>
 <li>
-<p>Let <code>tid<sub>impl</sub><sup>*</sup></code> be <code><a href="#concat_">$concat_&lt;tid&gt;(tid<sub>impl_field</sub><sup>*</sup><sup>*</sup>)</a></code>.</p>
+<p>Let <code>tid<sub>impl</sub><sup>*</sup></code> be <code><a href="#concat_">$concat_&lt;tid&gt;((tid<sub>impl_field</sub><sup>*</sup>)<sup>*</sup>)</a></code>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
@@ -14522,7 +14507,7 @@ enumTypeDeclarationIR
 </div>
 </li>
 <li>
-<p>Let <code>structTypeDefIR</code> be <code>STRUCT nameIR &lt; tid<sub>expl</sub><sup>*</sup> , tid<sub>impl</sub><sup>*</sup> &gt; { typeIR<sub>field</sub> nameIR<sub>field</sub> ;<sup>*</sup> }</code>.</p>
+<p>Let <code>structTypeDefIR</code> be <code>STRUCT nameIR &lt; tid<sub>expl</sub><sup>*</sup> , tid<sub>impl</sub><sup>*</sup> &gt; { (typeIR<sub>field</sub> nameIR<sub>field</sub> ;)<sup>*</sup> }</code>.</p>
 </li>
 <li>
 <p>Check that <a href="#TypeDef_wf"><code>structTypeDefIR</code> is a well-formed type, assuming bound type ids <code>$bound(GLOBAL, TC<sub>0</sub>)</code></a>.</p>
@@ -14531,7 +14516,7 @@ enumTypeDeclarationIR
 <p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_typeDef_t">$add_typeDef_t(GLOBAL, TC<sub>0</sub>, nameIR, structTypeDefIR)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>structTypeDeclarationIR</code> be <code>annotationList STRUCT nameIR &lt; tid<sub>expl</sub><sup>*</sup> , tid<sub>impl</sub><sup>*</sup> &gt; { annotationList<sub>field</sub> typeIR<sub>field</sub> nameIR<sub>field</sub> ;<sup>*</sup> }</code>.</p>
+<p>Let <code>structTypeDeclarationIR</code> be <code>annotationList STRUCT nameIR &lt; tid<sub>expl</sub><sup>*</sup> , tid<sub>impl</sub><sup>*</sup> &gt; { (annotationList<sub>field</sub> typeIR<sub>field</sub> nameIR<sub>field</sub> ;)<sup>*</sup> }</code>.</p>
 </li>
 <li>
 <p>Result in the modified typing context <code>TC<sub>2</sub></code> and the typed declaration <code>structTypeDeclarationIR</code>.</p>
@@ -14583,7 +14568,7 @@ enumTypeDeclarationIR
 </div>
 </li>
 <li>
-<p>Let <code>structTypeDefIR</code> be <code>STRUCT nameIR &lt; typeParameterListIR , typeParameterListIR<sub>inferred</sub> &gt; { typeIR<sub>field</sub> nameIR<sub>field</sub> ;<sup>*</sup> }</code>.</p>
+<p>Let <code>structTypeDefIR</code> be <code>STRUCT nameIR &lt; typeParameterListIR , typeParameterListIR<sub>inferred</sub> &gt; { (typeIR<sub>field</sub> nameIR<sub>field</sub> ;)<sup>*</sup> }</code>.</p>
 </li>
 <li>
 <p>Let <code>IC<sub>1</sub></code> be <code><a href="#add_typeDef_i">$add_typeDef_i(GLOBAL, IC<sub>0</sub>, nameIR, structTypeDefIR)</a></code>.</p>
@@ -14628,8 +14613,7 @@ enumTypeDeclarationIR
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Decl_ok">typing <code>annotationList HEADER name typeParameterListOpt { typeFieldList }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-* and the modified typing context</a> is defined as:</p>
+<p><a href="#Decl_ok">typing <code>annotationList HEADER name typeParameterListOpt { typeFieldList }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -14654,10 +14638,10 @@ enumTypeDeclarationIR
 </div>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_typeDefs_t">$add_typeDefs_t(BLOCK, TC<sub>0</sub>, tid<sub>expl</sub><sup>*</sup>, tid<sub>expl</sub><sup>*</sup>)</a></code>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_typeDefs_t">$add_typeDefs_t(BLOCK, TC<sub>0</sub>, tid<sub>expl</sub><sup>*</sup>, (tid<sub>expl</sub>)<sup>*</sup>)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>annotationList<sub>f</sub> type<sub>f</sub> name<sub>f</sub> ;<sup>*</sup></code> be <a href="#flatten_typeFieldList">the list of type fields in <code>typeFieldList</code></a>.</p>
+<p>Let <code>(annotationList<sub>f</sub> type<sub>f</sub> name<sub>f</sub> ;)<sup>*</sup></code> be <a href="#flatten_typeFieldList">the list of type fields in <code>typeFieldList</code></a>.</p>
 </li>
 <li>
 <p>Let <code>tid<sub>impl_f</sub><sup>*</sup><sup>*</sup></code> be the list of <code>tid<sub>impl_f</sub><sup>*</sup></code> and <code>typeIR<sub>f</sub><sup>*</sup></code> be the list of <code>typeIR<sub>f</sub></code>, obtained by repeating:</p>
@@ -14677,7 +14661,7 @@ enumTypeDeclarationIR
 </div>
 </li>
 <li>
-<p>Let <code>tid<sub>impl</sub><sup>*</sup></code> be <code><a href="#concat_">$concat_&lt;tid&gt;(tid<sub>impl_f</sub><sup>*</sup><sup>*</sup>)</a></code>.</p>
+<p>Let <code>tid<sub>impl</sub><sup>*</sup></code> be <code><a href="#concat_">$concat_&lt;tid&gt;((tid<sub>impl_f</sub><sup>*</sup>)<sup>*</sup>)</a></code>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
@@ -14700,7 +14684,7 @@ enumTypeDeclarationIR
 </div>
 </li>
 <li>
-<p>Let <code>headerTypeDefIR</code> be <code>HEADER nameIR &lt; tid<sub>expl</sub><sup>*</sup> , tid<sub>impl</sub><sup>*</sup> &gt; { typeIR<sub>f</sub> nameIR<sub>f</sub> ;<sup>*</sup> }</code>.</p>
+<p>Let <code>headerTypeDefIR</code> be <code>HEADER nameIR &lt; tid<sub>expl</sub><sup>*</sup> , tid<sub>impl</sub><sup>*</sup> &gt; { (typeIR<sub>f</sub> nameIR<sub>f</sub> ;)<sup>*</sup> }</code>.</p>
 </li>
 <li>
 <p>Check that <a href="#TypeDef_wf"><code>headerTypeDefIR</code> is a well-formed type, assuming bound type ids <code>$bound(GLOBAL, TC<sub>0</sub>)</code></a>.</p>
@@ -14709,7 +14693,7 @@ enumTypeDeclarationIR
 <p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_typeDef_t">$add_typeDef_t(GLOBAL, TC<sub>0</sub>, nameIR, headerTypeDefIR)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>headerTypeDeclarationIR</code> be <code>annotationList HEADER nameIR &lt; tid<sub>expl</sub><sup>*</sup> , tid<sub>impl</sub><sup>*</sup> &gt; { annotationList<sub>f</sub> typeIR<sub>f</sub> nameIR<sub>f</sub> ;<sup>*</sup> }</code>.</p>
+<p>Let <code>headerTypeDeclarationIR</code> be <code>annotationList HEADER nameIR &lt; tid<sub>expl</sub><sup>*</sup> , tid<sub>impl</sub><sup>*</sup> &gt; { (annotationList<sub>f</sub> typeIR<sub>f</sub> nameIR<sub>f</sub> ;)<sup>*</sup> }</code>.</p>
 </li>
 <li>
 <p>Result in the modified typing context <code>TC<sub>2</sub></code> and the typed declaration <code>headerTypeDeclarationIR</code>.</p>
@@ -14761,7 +14745,7 @@ enumTypeDeclarationIR
 </div>
 </li>
 <li>
-<p>Let <code>headerTypeDefIR</code> be <code>HEADER nameIR &lt; typeParameterListIR , typeParameterListIR<sub>inferred</sub> &gt; { typeIR<sub>field</sub> nameIR<sub>field</sub> ;<sup>*</sup> }</code>.</p>
+<p>Let <code>headerTypeDefIR</code> be <code>HEADER nameIR &lt; typeParameterListIR , typeParameterListIR<sub>inferred</sub> &gt; { (typeIR<sub>field</sub> nameIR<sub>field</sub> ;)<sup>*</sup> }</code>.</p>
 </li>
 <li>
 <p>Let <code>IC<sub>1</sub></code> be <code><a href="#add_typeDef_i">$add_typeDef_i(GLOBAL, IC<sub>0</sub>, nameIR, headerTypeDefIR)</a></code>.</p>
@@ -14806,8 +14790,7 @@ enumTypeDeclarationIR
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Decl_ok">typing <code>annotationList HEADER_UNION name typeParameterListOpt { typeFieldList }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-* and the modified typing context</a> is defined as:</p>
+<p><a href="#Decl_ok">typing <code>annotationList HEADER_UNION name typeParameterListOpt { typeFieldList }</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -14832,10 +14815,10 @@ enumTypeDeclarationIR
 </div>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_typeDefs_t">$add_typeDefs_t(BLOCK, TC<sub>0</sub>, tid<sub>expl</sub><sup>*</sup>, tid<sub>expl</sub><sup>*</sup>)</a></code>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_typeDefs_t">$add_typeDefs_t(BLOCK, TC<sub>0</sub>, tid<sub>expl</sub><sup>*</sup>, (tid<sub>expl</sub>)<sup>*</sup>)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>annotationList<sub>f</sub> type<sub>f</sub> name<sub>f</sub> ;<sup>*</sup></code> be <a href="#flatten_typeFieldList">the list of type fields in <code>typeFieldList</code></a>.</p>
+<p>Let <code>(annotationList<sub>f</sub> type<sub>f</sub> name<sub>f</sub> ;)<sup>*</sup></code> be <a href="#flatten_typeFieldList">the list of type fields in <code>typeFieldList</code></a>.</p>
 </li>
 <li>
 <p>Let <code>tid<sub>impl_f</sub><sup>*</sup><sup>*</sup></code> be the list of <code>tid<sub>impl_f</sub><sup>*</sup></code> and <code>typeIR<sub>f</sub><sup>*</sup></code> be the list of <code>typeIR<sub>f</sub></code>, obtained by repeating:</p>
@@ -14855,7 +14838,7 @@ enumTypeDeclarationIR
 </div>
 </li>
 <li>
-<p>Let <code>tid<sub>impl</sub><sup>*</sup></code> be <code><a href="#concat_">$concat_&lt;tid&gt;(tid<sub>impl_f</sub><sup>*</sup><sup>*</sup>)</a></code>.</p>
+<p>Let <code>tid<sub>impl</sub><sup>*</sup></code> be <code><a href="#concat_">$concat_&lt;tid&gt;((tid<sub>impl_f</sub><sup>*</sup>)<sup>*</sup>)</a></code>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
@@ -14878,7 +14861,7 @@ enumTypeDeclarationIR
 </div>
 </li>
 <li>
-<p>Let <code>headerUnionTypeDefIR</code> be <code>HEADER_UNION nameIR &lt; tid<sub>expl</sub><sup>*</sup> , tid<sub>impl</sub><sup>*</sup> &gt; { typeIR<sub>f</sub> nameIR<sub>f</sub> ;<sup>*</sup> }</code>.</p>
+<p>Let <code>headerUnionTypeDefIR</code> be <code>HEADER_UNION nameIR &lt; tid<sub>expl</sub><sup>*</sup> , tid<sub>impl</sub><sup>*</sup> &gt; { (typeIR<sub>f</sub> nameIR<sub>f</sub> ;)<sup>*</sup> }</code>.</p>
 </li>
 <li>
 <p>Check that <a href="#TypeDef_wf"><code>headerUnionTypeDefIR</code> is a well-formed type, assuming bound type ids <code>$bound(GLOBAL, TC<sub>0</sub>)</code></a>.</p>
@@ -14887,7 +14870,7 @@ enumTypeDeclarationIR
 <p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_typeDef_t">$add_typeDef_t(GLOBAL, TC<sub>0</sub>, nameIR, headerUnionTypeDefIR)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>headerUnionTypeDeclarationIR</code> be <code>annotationList HEADER_UNION nameIR &lt; tid<sub>expl</sub><sup>*</sup> , tid<sub>impl</sub><sup>*</sup> &gt; { annotationList<sub>f</sub> typeIR<sub>f</sub> nameIR<sub>f</sub> ;<sup>*</sup> }</code>.</p>
+<p>Let <code>headerUnionTypeDeclarationIR</code> be <code>annotationList HEADER_UNION nameIR &lt; tid<sub>expl</sub><sup>*</sup> , tid<sub>impl</sub><sup>*</sup> &gt; { (annotationList<sub>f</sub> typeIR<sub>f</sub> nameIR<sub>f</sub> ;)<sup>*</sup> }</code>.</p>
 </li>
 <li>
 <p>Result in the modified typing context <code>TC<sub>2</sub></code> and the typed declaration <code>headerUnionTypeDeclarationIR</code>.</p>
@@ -14939,7 +14922,7 @@ enumTypeDeclarationIR
 </div>
 </li>
 <li>
-<p>Let <code>headerUnionTypeDefIR</code> be <code>HEADER_UNION nameIR &lt; typeParameterListIR , typeParameterListIR<sub>inferred</sub> &gt; { typeIR<sub>field</sub> nameIR<sub>field</sub> ;<sup>*</sup> }</code>.</p>
+<p>Let <code>headerUnionTypeDefIR</code> be <code>HEADER_UNION nameIR &lt; typeParameterListIR , typeParameterListIR<sub>inferred</sub> &gt; { (typeIR<sub>field</sub> nameIR<sub>field</sub> ;)<sup>*</sup> }</code>.</p>
 </li>
 <li>
 <p>Let <code>IC<sub>1</sub></code> be <code><a href="#add_typeDef_i">$add_typeDef_i(GLOBAL, IC<sub>0</sub>, nameIR, headerUnionTypeDefIR)</a></code>.</p>
@@ -15001,7 +14984,7 @@ rule Decl_ok/typedefDeclaration-typedef/derivedTypeDeclaration-mono:
     -- if `{tid} = $diff_set&lt;tid&gt;($dom_map&lt;tid, typeDefIR&gt;(TC_1.GLOBAL.TYPE), $dom_map&lt;tid, typeDefIR&gt;(TC_0.GLOBAL.TYPE))
     -- if typeDefIR = $find_typeDef_t(GLOBAL, TC_1, ` tid)
     -- if $is_monomorphic_typeDefIR(typeDefIR)
-    -- if typeIR = $typeIR_of_typeDefIR(typeDefIR)
+    -- if typeIR = $type_of_typeDefIR(typeDefIR)
     -- if nameIR = $name(name)
     -- if typedefTypeIR = TYPEDEF nameIR typeIR
     -- TypeDef_wf: $bound(GLOBAL, TC_0) |- typedefTypeIR
@@ -15014,7 +14997,7 @@ rule Decl_ok/typedefDeclaration-typedef/derivedTypeDeclaration-poly:
     -- if `{tid} = $diff_set&lt;tid&gt;($dom_map&lt;tid, typeDefIR&gt;(TC_1.GLOBAL.TYPE), $dom_map&lt;tid, typeDefIR&gt;(TC_0.GLOBAL.TYPE))
     -- if typeDefIR = $find_typeDef_t(GLOBAL, TC_1, ` tid)
     -- if ~$is_monomorphic_typeDefIR(typeDefIR)
-    -- if (eps, eps) = $tparams_of_typeDefIR(typeDefIR)
+    -- if (eps, eps) = $type_parameters_of_typeDefIR(typeDefIR)
     -- if nameIR = $name(name)
     -- if typedefTypeIR = TYPEDEF nameIR (typeDefIR `&lt;eps&gt;)
     -- TypeDef_wf: $bound(GLOBAL, TC_0) |- typedefTypeIR
@@ -15030,8 +15013,7 @@ rule Decl_ok/typedefDeclaration-typedef/derivedTypeDeclaration-poly:
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Decl_ok">typing <code>annotationList TYPEDEF typedef name ;</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-* and the modified typing context</a> is defined as:</p>
+<p><a href="#Decl_ok">typing <code>annotationList TYPEDEF typedef name ;</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -15074,14 +15056,7 @@ rule Decl_ok/typedefDeclaration-typedef/derivedTypeDeclaration-poly:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>TC<sub>1</sub></code> and <code>declarationIR</code> be the result of &lt;&lt;Decl_ok, typing <code>derivedTypeDeclaration</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,</p>
-<div class="ulist">
-<ul>
-<li>
-<p>and the modified typing context&gt;&gt;.</p>
-</li>
-</ul>
-</div>
+<p>Let <code>TC<sub>1</sub></code> and <code>declarationIR</code> be the result of <a href="#Decl_ok">typing <code>derivedTypeDeclaration</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>declarationIR</code> has type <code>derivedTypeDeclarationIR</code>.</p>
@@ -15090,7 +15065,13 @@ rule Decl_ok/typedefDeclaration-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>derivedTypeDeclarationIR</code> be <code>declarationIR</code>.</p>
 </li>
 <li>
-<p>Let <code>{ tid'<sup>*</sup> }</code> be <a href="#diff_set">the difference of the sets the domain of the map <code>TC<sub>1</sub>.GLOBAL.TYPE</code> and the domain of the map <code>TC<sub>0</sub>.GLOBAL.TYPE</code></a>.</p>
+<p>Let <code>set&lt;tid&gt;</code> be <a href="#dom_map">the domain of the map <code>TC<sub>1</sub>.GLOBAL.TYPE</code></a>.</p>
+</li>
+<li>
+<p>Let <code>set&lt;tid&gt;'</code> be <a href="#dom_map">the domain of the map <code>TC<sub>0</sub>.GLOBAL.TYPE</code></a>.</p>
+</li>
+<li>
+<p>Let <code>{ tid'<sup>*</sup> }</code> be <a href="#diff_set">the difference of the sets <code>set&lt;tid&gt;</code> and <code>set&lt;tid&gt;'</code></a>.</p>
 </li>
 <li>
 <p>Check that <code>tid'<sup>*</sup></code> is a list of length 1.</p>
@@ -15112,7 +15093,7 @@ rule Decl_ok/typedefDeclaration-typedef/derivedTypeDeclaration-poly:
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Let <code>typeIR</code> be <code><a href="#typeIR_of_typeDefIR">$typeIR_of_typeDefIR(typeDefIR)</a></code>.</p>
+<p>Let <code>typeIR</code> be <code><a href="#type_of_typeDefIR">$type_of_typeDefIR(typeDefIR)</a></code>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
@@ -15140,7 +15121,7 @@ rule Decl_ok/typedefDeclaration-typedef/derivedTypeDeclaration-poly:
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Check that (<code>[ ]</code>, <code>[ ]</code>) is equal to <code><a href="#tparams_of_typeDefIR">$tparams_of_typeDefIR(typeDefIR)</a></code>.</p>
+<p>Check that (<code>[ ]</code>, <code>[ ]</code>) is equal to <code><a href="#type_parameters_of_typeDefIR">$type_parameters_of_typeDefIR(typeDefIR)</a></code>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
@@ -15187,7 +15168,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclarationIR-monomorphic
     -- if `{tid_newtype} = $diff_set&lt;tid&gt;($dom_map&lt;tid, typeDefIR&gt;(IC_local.GLOBAL.TYPE), $dom_map&lt;tid, typeDefIR&gt;(IC_0.GLOBAL.TYPE))
     -- if typeDefIR = $find_typeDef_i(GLOBAL, IC_local, . tid_newtype)
     -- if $is_monomorphic_typeDefIR(typeDefIR)
-    -- if typeIR = $typeIR_of_typeDefIR(typeDefIR)
+    -- if typeIR = $type_of_typeDefIR(typeDefIR)
     -- if aliasTypeDefIR = TYPEDEF nameIR typeIR
     -- if IC_1 = $add_typeDef_i(GLOBAL, IC_0, nameIR, aliasTypeDefIR)
 
@@ -15197,7 +15178,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
     -- if `{tid_newtype} = $diff_set&lt;tid&gt;($dom_map&lt;tid, typeDefIR&gt;(IC_local.GLOBAL.TYPE), $dom_map&lt;tid, typeDefIR&gt;(IC_0.GLOBAL.TYPE))
     -- if typeDefIR = $find_typeDef_i(GLOBAL, IC_local, . tid_newtype)
     -- if ~$is_monomorphic_typeDefIR(typeDefIR)
-    -- if (eps, eps) = $tparams_of_typeDefIR(typeDefIR)
+    -- if (eps, eps) = $type_parameters_of_typeDefIR(typeDefIR)
     -- if typeIR_spec = typeDefIR `&lt;eps&gt;
     -- if aliasTypeDefIR = TYPEDEF nameIR typeIR_spec
     -- if IC_1 = $add_typeDef_i(GLOBAL, IC_0, nameIR, aliasTypeDefIR)</pre>
@@ -15239,7 +15220,13 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <p>Let <a href="#Decl_inst"><code>GLOBAL IC<sub>0</sub> &lt;&lt;empty_store, $empty_store</a> |- derivedTypeDeclarationIR : IC<sub>local</sub> _ _<sup>?</sup></code>&gt;&gt;.</p>
 </li>
 <li>
-<p>Let <code>{ tid<sup>*</sup> }</code> be <a href="#diff_set">the difference of the sets the domain of the map <code>IC<sub>local</sub>.GLOBAL.TYPE</code> and the domain of the map <code>IC<sub>0</sub>.GLOBAL.TYPE</code></a>.</p>
+<p>Let <code>set&lt;tid&gt;</code> be <a href="#dom_map">the domain of the map <code>IC<sub>local</sub>.GLOBAL.TYPE</code></a>.</p>
+</li>
+<li>
+<p>Let <code>set&lt;tid&gt;'</code> be <a href="#dom_map">the domain of the map <code>IC<sub>0</sub>.GLOBAL.TYPE</code></a>.</p>
+</li>
+<li>
+<p>Let <code>{ tid<sup>*</sup> }</code> be <a href="#diff_set">the difference of the sets <code>set&lt;tid&gt;</code> and <code>set&lt;tid&gt;'</code></a>.</p>
 </li>
 <li>
 <p>Check that <code>tid<sup>*</sup></code> is a list of length 1.</p>
@@ -15261,7 +15248,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Let <code>typeIR</code> be <code><a href="#typeIR_of_typeDefIR">$typeIR_of_typeDefIR(typeDefIR)</a></code>.</p>
+<p>Let <code>typeIR</code> be <code><a href="#type_of_typeDefIR">$type_of_typeDefIR(typeDefIR)</a></code>.</p>
 </li>
 <li>
 <p>Let <code>aliasTypeDefIR</code> be <code>TYPEDEF nameIR typeIR</code>.</p>
@@ -15280,7 +15267,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Check that (<code>[ ]</code>, <code>[ ]</code>) is equal to <code><a href="#tparams_of_typeDefIR">$tparams_of_typeDefIR(typeDefIR)</a></code>.</p>
+<p>Check that (<code>[ ]</code>, <code>[ ]</code>) is equal to <code><a href="#type_parameters_of_typeDefIR">$type_parameters_of_typeDefIR(typeDefIR)</a></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>spec</sub></code> be <code>typeDefIR &lt; [ ] &gt;</code>.</p>
@@ -15332,8 +15319,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Decl_ok">typing <code>annotationList TYPE type name ;</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-* and the modified typing context</a> is defined as:</p>
+<p><a href="#Decl_ok">typing <code>annotationList TYPE type name ;</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -15423,7 +15409,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
     -- if TC_2 = $add_typeDefs_t(BLOCK, TC_1, tid_expl*, (` tid_expl)*)
     -- if parameter* = $flatten_parameterList(parameterList)
     -- Parameters_ok: BLOCK TC_2 |- parameter* : parameterIR* # tid_impl*
-    -- (if (parameterTypeIR = $parameterTypeIR_of_parameterIR(parameterIR)))*
+    -- (if (parameterTypeIR = $type_of_parameterIR(parameterIR)))*
     -- if nameIR = $name(name)
     -- if parserObjectTypeDefIR = PARSER `&lt;tid_expl* , tid_impl*&gt; `(parameterTypeIR*)
     -- TypeDef_wf: $bound(GLOBAL, TC_0) |- parserObjectTypeDefIR
@@ -15439,8 +15425,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Decl_ok">typing <code>annotationList PARSER name typeParameterListOpt ( parameterList ) ;</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-* and the modified typing context</a> is defined as:</p>
+<p><a href="#Decl_ok">typing <code>annotationList PARSER name typeParameterListOpt ( parameterList ) ;</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -15468,7 +15453,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 </div>
 </li>
 <li>
-<p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_typeDefs_t">$add_typeDefs_t(BLOCK, TC<sub>1</sub>, tid<sub>expl</sub><sup>*</sup>, tid<sub>expl</sub><sup>*</sup>)</a></code>.</p>
+<p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_typeDefs_t">$add_typeDefs_t(BLOCK, TC<sub>1</sub>, tid<sub>expl</sub><sup>*</sup>, (tid<sub>expl</sub>)<sup>*</sup>)</a></code>.</p>
 </li>
 <li>
 <p>Let <code>parameter<sup>*</sup></code> be <a href="#flatten_parameterList">the list of parameters in <code>parameterList</code></a>.</p>
@@ -15483,7 +15468,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>parameterTypeIR</code> be <a href="#parameterTypeIR_of_parameterIR">the type of  <code>parameterIR</code></a>.</p>
+<p>Let <code>parameterTypeIR</code> be <a href="#type_of_parameterIR">the type of  <code>parameterIR</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -15524,7 +15509,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <div class="content">
 <pre>rule Decl_inst/parserTypeDeclarationIR:
    GLOBAL IC_0 STO |- annotationList PARSER nameIR `&lt;typeParameterListIR , typeParameterListIR_inferred&gt; `(parameterIR*) ; : IC_1 STO eps
-    -- (if (parameterTypeIR = $parameterTypeIR_of_parameterIR(parameterIR)))*
+    -- (if (parameterTypeIR = $type_of_parameterIR(parameterIR)))*
     -- if parserObjectTypeDefIR = PARSER `&lt;typeParameterListIR , typeParameterListIR_inferred&gt; `(parameterTypeIR*)
     -- if IC_1 = $add_typeDef_i(GLOBAL, IC_0, nameIR, parserObjectTypeDefIR)</pre>
 </div>
@@ -15548,7 +15533,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>parameterTypeIR</code> be <a href="#parameterTypeIR_of_parameterIR">the type of  <code>parameterIR</code></a>.</p>
+<p>Let <code>parameterTypeIR</code> be <a href="#type_of_parameterIR">the type of  <code>parameterIR</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -15588,7 +15573,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
     -- if TC_2 = $add_typeDefs_t(BLOCK, TC_1, tid_expl*, (` tid_expl)*)
     -- if parameter* = $flatten_parameterList(parameterList)
     -- Parameters_ok: BLOCK TC_2 |- parameter* : parameterIR* # tid_impl*
-    -- (if (parameterTypeIR = $parameterTypeIR_of_parameterIR(parameterIR)))*
+    -- (if (parameterTypeIR = $type_of_parameterIR(parameterIR)))*
     -- if nameIR = $name(name)
     -- if controlObjectTypeDefIR = CONTROL `&lt;tid_expl* , tid_impl*&gt; `(parameterTypeIR*)
     -- TypeDef_wf: $bound(GLOBAL, TC_0) |- controlObjectTypeDefIR
@@ -15604,8 +15589,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Decl_ok">typing <code>annotationList CONTROL name typeParameterListOpt ( parameterList ) ;</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-* and the modified typing context</a> is defined as:</p>
+<p><a href="#Decl_ok">typing <code>annotationList CONTROL name typeParameterListOpt ( parameterList ) ;</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -15633,7 +15617,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 </div>
 </li>
 <li>
-<p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_typeDefs_t">$add_typeDefs_t(BLOCK, TC<sub>1</sub>, tid<sub>expl</sub><sup>*</sup>, tid<sub>expl</sub><sup>*</sup>)</a></code>.</p>
+<p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_typeDefs_t">$add_typeDefs_t(BLOCK, TC<sub>1</sub>, tid<sub>expl</sub><sup>*</sup>, (tid<sub>expl</sub>)<sup>*</sup>)</a></code>.</p>
 </li>
 <li>
 <p>Let <code>parameter<sup>*</sup></code> be <a href="#flatten_parameterList">the list of parameters in <code>parameterList</code></a>.</p>
@@ -15648,7 +15632,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>parameterTypeIR</code> be <a href="#parameterTypeIR_of_parameterIR">the type of  <code>parameterIR</code></a>.</p>
+<p>Let <code>parameterTypeIR</code> be <a href="#type_of_parameterIR">the type of  <code>parameterIR</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -15688,7 +15672,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <div class="content">
 <pre>rule Decl_inst/controlTypeDeclarationIR:
    GLOBAL IC_0 STO |- annotationList CONTROL nameIR `&lt;typeParameterListIR , typeParameterListIR_inferred&gt; `(parameterIR*) ; : IC_1 STO eps
-    -- (if (parameterTypeIR = $parameterTypeIR_of_parameterIR(parameterIR)))*
+    -- (if (parameterTypeIR = $type_of_parameterIR(parameterIR)))*
     -- if controlObjectTypeDefIR = CONTROL `&lt;typeParameterListIR , typeParameterListIR_inferred&gt; `(parameterTypeIR*)
     -- if IC_1 = $add_typeDef_i(GLOBAL, IC_0, nameIR, controlObjectTypeDefIR)</pre>
 </div>
@@ -15712,7 +15696,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>parameterTypeIR</code> be <a href="#parameterTypeIR_of_parameterIR">the type of  <code>parameterIR</code></a>.</p>
+<p>Let <code>parameterTypeIR</code> be <a href="#type_of_parameterIR">the type of  <code>parameterIR</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -15752,7 +15736,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
     -- if TC_2 = $add_typeDefs_t(BLOCK, TC_1, tid_expl*, (` tid_expl)*)
     -- if constructorParameter* = $flatten_parameterList(parameterList)
     -- ConstructorParameters_ok: BLOCK TC_2 |- constructorParameter* : constructorParameterIR* # tid_impl*
-    -- (if (constructorParameterTypeIR = $constructorParameterTypeIR_of_constructorParameterIR(constructorParameterIR)))*
+    -- (if (constructorParameterTypeIR = $type_of_constructorParameterIR(constructorParameterIR)))*
     -- if nameIR = $name(name)
     -- (if (_ typeIR_package_inner _ _ = constructorParameterTypeIR))*
     -- if packageObjectTypeDefIR = PACKAGE `&lt;tid_expl* , tid_impl*&gt; `{typeIR_package_inner*}
@@ -15774,8 +15758,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Decl_ok">typing <code>annotationList PACKAGE name typeParameterListOpt ( parameterList ) ;</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>,
-* and the modified typing context</a> is defined as:</p>
+<p><a href="#Decl_ok">typing <code>annotationList PACKAGE name typeParameterListOpt ( parameterList ) ;</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -15803,7 +15786,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 </div>
 </li>
 <li>
-<p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_typeDefs_t">$add_typeDefs_t(BLOCK, TC<sub>1</sub>, tid<sub>expl</sub><sup>*</sup>, tid<sub>expl</sub><sup>*</sup>)</a></code>.</p>
+<p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_typeDefs_t">$add_typeDefs_t(BLOCK, TC<sub>1</sub>, tid<sub>expl</sub><sup>*</sup>, (tid<sub>expl</sub>)<sup>*</sup>)</a></code>.</p>
 </li>
 <li>
 <p>Let <code>constructorParameter<sup>*</sup></code> be <a href="#flatten_parameterList">the list of parameters in <code>parameterList</code></a>.</p>
@@ -15818,7 +15801,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>constructorParameterTypeIR</code> be <a href="#constructorParameterTypeIR_of_constructorParameterIR">the type of  <code>constructorParameterIR</code></a>.</p>
+<p>Let <code>constructorParameterTypeIR</code> be <a href="#type_of_constructorParameterIR">the type of  <code>constructorParameterIR</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -15838,7 +15821,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>_ typeIR<sub>package_inner</sub> _ _<sup>?</sup></code> be <code>constructorParameterTypeIR</code>.</p>
+<p>Let <code>typeIR<sub>package_inner</sub></code> be the type of <code>constructorParameterTypeIR</code>.</p>
 </li>
 </ul>
 </div>
@@ -15861,7 +15844,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>cid</code> be <code><a href="#cid_">$cid_(name, ( parameterList ))</a></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>package_spec</sub></code> be <code>packageObjectTypeDefIR &lt; tid<sub>expl</sub><sup>*</sup> ++ tid<sub>impl</sub><sup>*</sup> &gt;</code>.</p>
+<p>Let <code>typeIR<sub>package_spec</sub></code> be <code>packageObjectTypeDefIR &lt; (tid<sub>expl</sub>)<sup>*</sup> &#43;&#43; (tid<sub>impl</sub>)<sup>*</sup> &gt;</code>.</p>
 </li>
 <li>
 <p>Let <code>constructorTypeDefIR</code> be <code>CONSTRUCTOR &lt; tid<sub>expl</sub><sup>*</sup> , tid<sub>impl</sub><sup>*</sup> &gt; ( constructorParameterTypeIR<sup>*</sup> ) : typeIR<sub>package_spec</sub></code>.</p>
@@ -15917,7 +15900,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>_ _ typeIR _ _</code> be <code>parameterIR</code>.</p>
+<p>Let <code>typeIR</code> be the type of <code>parameterIR</code>.</p>
 </li>
 </ul>
 </div>
@@ -15937,7 +15920,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>cid</code> be <code><a href="#cid_IR">$cid_IR(nameIR, parameterIR<sup>*</sup>)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>constructorDef</code> be <code>PACKAGE &lt; typeParameterListIR ++ typeParameterListIR<sub>inferred</sub> &gt; ( parameterIR<sup>*</sup> )</code>.</p>
+<p>Let <code>constructorDef</code> be <code>PACKAGE &lt; typeParameterListIR &#43;&#43; typeParameterListIR<sub>inferred</sub> &gt; ( parameterIR<sup>*</sup> )</code>.</p>
 </li>
 <li>
 <p>Let <code>IC<sub>2</sub></code> be <code><a href="#add_constructorDef_i">$add_constructorDef_i(IC<sub>1</sub>, cid, constructorDef)</a></code>.</p>
@@ -16173,8 +16156,8 @@ for comparison operators, logical operators, concat, range, or mask operators.</
    p TC f |- lvalue = expression ; : TC f (typedLvalueIR = typedExpressionIR_cast ;)
     -- Lvalue_ok: p TC |- lvalue : typedLvalueIR
     -- Expr_ok: p TC |- expression : typedExpressionIR
-    -- if typeIR_l = $type_of_lvalue(typedLvalueIR)
-    -- if typeIR_r = $typeIR_of_typedExpressionIR(typedExpressionIR)
+    -- if typeIR_l = $type_of_typedLvalueIR(typedLvalueIR)
+    -- if typeIR_r = $type_of_typedExpressionIR(typedExpressionIR)
     -- if typedExpressionIR_cast = $coerce_unary(typedExpressionIR, typeIR_l)</pre>
 </div>
 </div>
@@ -16197,10 +16180,10 @@ for comparison operators, logical operators, concat, range, or mask operators.</
 <p>Let <code>typedExpressionIR</code> be the result of <a href="#Expr_ok">typing <code>expression</code>, under cursor <code>p'</code> and typing context <code>TC'</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>l</sub></code> be <a href="#type_of_lvalue">the type of lvalue  <code>typedLvalueIR</code></a>.</p>
+<p>Let <code>typeIR<sub>l</sub></code> be <a href="#type_of_typedLvalueIR">the type of lvalue  <code>typedLvalueIR</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>r</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR</code></a>.</p>
+<p>Let <code>typeIR<sub>r</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR</code></a>.</p>
 </li>
 <li>
 <p>Let <code>typedExpressionIR'<sup>?</sup></code> be <a href="#coerce_unary">implicitly cast  <code>typedExpressionIR</code>  to  <code>typeIR<sub>l</sub></code></a>.</p>
@@ -16374,7 +16357,7 @@ rule Lvalue_ok/memberAccess/headerUnionTypeIR:
 <p>Let <code>typedLvalueIR<sub>base</sub></code> be the result of <a href="#Lvalue_ok">typing <code>lvalue<sub>base</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>_ # ( typeIR<sub>base</sub> )</code> be <code>typedLvalueIR<sub>base</sub></code>.</p>
+<p>Let <code>( typeIR<sub>base</sub> )</code> be the note of <code>typedLvalueIR<sub>base</sub></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR'</code> be <a href="#canon_typeIR">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
@@ -16391,7 +16374,7 @@ rule Lvalue_ok/memberAccess/headerUnionTypeIR:
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>If <code>p = BLOCK /\ <a href="#is_parser_blockKind">$is_parser_blockKind(TC.BLOCK.KIND)</a></code>:</p>
+<p>If <code>p = BLOCK</code> <strong>and</strong> <code><a href="#is_parser_blockKind">$is_parser_blockKind(TC.BLOCK.KIND)</a></code>:</p>
 <div class="olist upperalpha">
 <ol class="upperalpha" type="A">
 <li>
@@ -16404,7 +16387,7 @@ rule Lvalue_ok/memberAccess/headerUnionTypeIR:
 </div>
 </li>
 <li>
-<p>Else if <code>p = LOCAL /\ <a href="#is_parser_state_localKind">$is_parser_state_localKind(TC.LOCAL.KIND)</a></code>:</p>
+<p>Else if <code>p = LOCAL</code> <strong>and</strong> <code><a href="#is_parser_state_localKind">$is_parser_state_localKind(TC.LOCAL.KIND)</a></code>:</p>
 <div class="olist upperalpha">
 <ol class="upperalpha" type="A">
 <li>
@@ -16424,7 +16407,7 @@ rule Lvalue_ok/memberAccess/headerUnionTypeIR:
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>If <code>p = BLOCK /\ <a href="#is_parser_blockKind">$is_parser_blockKind(TC.BLOCK.KIND)</a></code>:</p>
+<p>If <code>p = BLOCK</code> <strong>and</strong> <code><a href="#is_parser_blockKind">$is_parser_blockKind(TC.BLOCK.KIND)</a></code>:</p>
 <div class="olist upperalpha">
 <ol class="upperalpha" type="A">
 <li>
@@ -16437,7 +16420,7 @@ rule Lvalue_ok/memberAccess/headerUnionTypeIR:
 </div>
 </li>
 <li>
-<p>Else if <code>p = LOCAL /\ <a href="#is_parser_state_localKind">$is_parser_state_localKind(TC.LOCAL.KIND)</a></code>:</p>
+<p>Else if <code>p = LOCAL</code> <strong>and</strong> <code><a href="#is_parser_state_localKind">$is_parser_state_localKind(TC.LOCAL.KIND)</a></code>:</p>
 <div class="olist upperalpha">
 <ol class="upperalpha" type="A">
 <li>
@@ -16456,14 +16439,14 @@ rule Lvalue_ok/memberAccess/headerUnionTypeIR:
 </div>
 </li>
 <li>
-<p>Else if let <code>STRUCT _ { typeIR<sub>field</sub> nameIR<sub>field</sub> ;<sup>*</sup> }</code> be <code>typeIR'</code>:</p>
+<p>Else if let <code>STRUCT _ { (typeIR<sub>field</sub> nameIR<sub>field</sub> ;)<sup>*</sup> }</code> be <code>typeIR'</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>member</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR''<sup>?</sup></code> be <code><a href="#assoc_">$assoc_&lt;nameIR, typeIR&gt;(nameIR, (nameIR<sub>field</sub>, typeIR<sub>field</sub>)<sup>*</sup>)</a></code>.</p>
+<p>Let <code>typeIR''<sup>?</sup></code> be <code><a href="#assoc_">$assoc_&lt;nameIR, typeIR&gt;(nameIR, nameIR<sub>field</sub>, typeIR<sub>field</sub><sup>*</sup>)</a></code>.</p>
 </li>
 <li>
 <p>Check that <code>typeIR''<sup>?</sup></code> is Some value.</p>
@@ -16481,14 +16464,14 @@ rule Lvalue_ok/memberAccess/headerUnionTypeIR:
 </div>
 </li>
 <li>
-<p>Else if let <code>HEADER _ { typeIR<sub>field</sub> nameIR<sub>field</sub> ;<sup>*</sup> }</code> be <code>typeIR'</code>:</p>
+<p>Else if let <code>HEADER _ { (typeIR<sub>field</sub> nameIR<sub>field</sub> ;)<sup>*</sup> }</code> be <code>typeIR'</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>member</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR''<sup>?</sup></code> be <code><a href="#assoc_">$assoc_&lt;nameIR, typeIR&gt;(nameIR, (nameIR<sub>field</sub>, typeIR<sub>field</sub>)<sup>*</sup>)</a></code>.</p>
+<p>Let <code>typeIR''<sup>?</sup></code> be <code><a href="#assoc_">$assoc_&lt;nameIR, typeIR&gt;(nameIR, nameIR<sub>field</sub>, typeIR<sub>field</sub><sup>*</sup>)</a></code>.</p>
 </li>
 <li>
 <p>Check that <code>typeIR''<sup>?</sup></code> is Some value.</p>
@@ -16506,14 +16489,14 @@ rule Lvalue_ok/memberAccess/headerUnionTypeIR:
 </div>
 </li>
 <li>
-<p>Else if let <code>HEADER_UNION _ { typeIR<sub>field</sub> nameIR<sub>field</sub> ;<sup>*</sup> }</code> be <code>typeIR'</code>:</p>
+<p>Else if let <code>HEADER_UNION _ { (typeIR<sub>field</sub> nameIR<sub>field</sub> ;)<sup>*</sup> }</code> be <code>typeIR'</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>member</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR''<sup>?</sup></code> be <code><a href="#assoc_">$assoc_&lt;nameIR, typeIR&gt;(nameIR, (nameIR<sub>field</sub>, typeIR<sub>field</sub>)<sup>*</sup>)</a></code>.</p>
+<p>Let <code>typeIR''<sup>?</sup></code> be <code><a href="#assoc_">$assoc_&lt;nameIR, typeIR&gt;(nameIR, nameIR<sub>field</sub>, typeIR<sub>field</sub><sup>*</sup>)</a></code>.</p>
 </li>
 <li>
 <p>Check that <code>typeIR''<sup>?</sup></code> is Some value.</p>
@@ -16579,7 +16562,7 @@ rule Lvalue_ok/indexAccess/non-lctk:
 <p>Let <code>typedLvalueIR<sub>base</sub></code> be the result of <a href="#Lvalue_ok">typing <code>lvalue<sub>base</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>_ # ( typeIR<sub>base</sub> )</code> be <code>typedLvalueIR<sub>base</sub></code>.</p>
+<p>Let <code>( typeIR<sub>base</sub> )</code> be the note of <code>typedLvalueIR<sub>base</sub></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR'</code> be <a href="#canon_typeIR">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
@@ -16692,7 +16675,7 @@ rule Lvalue_ok/indexAccess/non-lctk:
 <p>Let <code>typedLvalueIR<sub>base</sub></code> be the result of <a href="#Lvalue_ok">typing <code>lvalue<sub>base</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>_ # ( typeIR<sub>base</sub> )</code> be <code>typedLvalueIR<sub>base</sub></code>.</p>
+<p>Let <code>( typeIR<sub>base</sub> )</code> be the note of <code>typedLvalueIR<sub>base</sub></code>.</p>
 </li>
 <li>
 <p>Check that <code><a href="#compat_bitslice_base">$compat_bitslice_base(typeIR<sub>base</sub>)</a></code>.</p>
@@ -16808,7 +16791,7 @@ rule Lvalue_ok/indexAccess/non-lctk:
 <p>Let <code>typedLvalueIR<sub>base</sub></code> be the result of <a href="#Lvalue_ok">typing <code>lvalue<sub>base</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>_ # ( typeIR<sub>base</sub> )</code> be <code>typedLvalueIR<sub>base</sub></code>.</p>
+<p>Let <code>( typeIR<sub>base</sub> )</code> be the note of <code>typedLvalueIR<sub>base</sub></code>.</p>
 </li>
 <li>
 <p>Let <code>typedLvalueIR</code> be <a href="#typedLvalueIR"><code>( typedLvalueIR<sub>base</sub> )</code> with note <code>( typeIR<sub>base</sub> )</code></a>.</p>
@@ -17010,7 +16993,7 @@ rule Stmt_ok/callStatement/callStatement-typeArgumentList:
 <p>Let <a href="#CallableType_ok"><code>p' TC' |- callableTargetIR &lt; typeArgumentIR<sup>*</sup> &gt; ( argumentIR<sup>*</sup> ) : callableTypeIR &lt; # tid<sub>inserted</sub><sup>*</sup> &gt; ( # id<sub>default</sub><sup>*</sup> )</code></a>.</p>
 </li>
 <li>
-<p>Let <code>tid<sub>infer</sub><sup>*</sup></code> be <code>tid<sub>impl</sub><sup>*</sup> ++ tid<sub>inserted</sub><sup>*</sup></code>.</p>
+<p>Let <code>tid<sub>infer</sub><sup>*</sup></code> be <code>tid<sub>impl</sub><sup>*</sup> &#43;&#43; tid<sub>inserted</sub><sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Let <a href="#Call_ok"><code>p' TC' |- callableTypeIR &lt; [ ] # tid<sub>infer</sub><sup>*</sup> &gt; ( argumentIR<sup>*</sup> # id<sub>default</sub><sup>*</sup> ) : typeIR<sub>ret</sub> &lt; typeArgumentIR<sub>inferred</sub><sup>*</sup> &gt; ( argumentIR<sub>cast</sub><sup>*</sup> )</code></a>.</p>
@@ -17138,7 +17121,7 @@ rule CallableTarget_ok/referenceExpression/this:
 <p>Let <code>prefixedNameIR</code> be <a href="#prefixedNonTypeName">the prefixed name of  <code>prefixedNonTypeName</code></a>.</p>
 </li>
 <li>
-<p>Check that <code>prefixedNameIR = "verify" \/ prefixedNameIR = . "verify" &#8658; p = BLOCK /\ <a href="#is_parser_blockKind">$is_parser_blockKind(TC.BLOCK.KIND)</a> \/ p = LOCAL /\ <a href="#is_parser_state_localKind">$is_parser_state_localKind(TC.LOCAL.KIND)</a></code>.</p>
+<p>Check that <code>prefixedNameIR = "verify" \/ prefixedNameIR = . "verify"</code> <strong>implies</strong> <code>p = BLOCK /\ <a href="#is_parser_blockKind">$is_parser_blockKind(TC.BLOCK.KIND)</a> \/ p = LOCAL /\ <a href="#is_parser_state_localKind">$is_parser_state_localKind(TC.LOCAL.KIND)</a></code>.</p>
 </li>
 <li>
 <p>Result in the typed callable target <code>prefixedNameIR</code>.</p>
@@ -17447,7 +17430,7 @@ invoked.</p>
 <p>Let <code>nameIR<sub>object</sub></code> be <code>"__direct_application"</code>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_var_t">$add_var_t(p', TC', nameIR<sub>object</sub>, typeIR<sub>object</sub> CTK None)</a></code>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t">the typing context <code>TC'</code> with a mapping from <code>nameIR<sub>object</sub></code> to <code>typeIR<sub>object</sub> CTK None</code> added to the <code>p'</code> layer</a>.</p>
 </li>
 <li>
 <p>Let <code>lvalue</code> be <code>nameIR<sub>object</sub> . "apply"</code>.</p>
@@ -17552,7 +17535,7 @@ invoked.</p>
 <p>Let <code>nameIR</code> be <a href="#concat_text">the concatenation of <code>[tid, "_", tid<sub>fresh</sub>]</code></a>.</p>
 </li>
 <li>
-<p>Let <code>oid</code> be <code>IC'.PATH ++ [nameIR]</code>.</p>
+<p>Let <code>oid</code> be <code>IC'.PATH &#43;&#43; [nameIR]</code>.</p>
 </li>
 <li>
 <p>Let <code>STO<sub>2</sub></code> be <code><a href="#add_map">$add_map&lt;oid, object&gt;(STO<sub>1</sub>, oid, object)</a></code>.</p>
@@ -17629,7 +17612,7 @@ still performed after the execution of the <code>return</code> statement.  See
 rule Stmt_ok/returnStatement/expression:
    LOCAL TC f |- RETURN expression ; : TC RET (RETURN typedExpressionIR_cast ;)
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
-    -- if typeIR = $typeIR_of_typedExpressionIR(typedExpressionIR)
+    -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
     -- if typeIR_ret = $find_local_return_type_t(TC)
     -- if typedExpressionIR_cast = $coerce_unary(typedExpressionIR, typeIR_ret)</pre>
 </div>
@@ -17680,7 +17663,7 @@ rule Stmt_ok/returnStatement/expression:
 <p>Let <code>typedExpressionIR</code> be the result of <a href="#Expr_ok">typing <code>expression</code>, under cursor <code>LOCAL</code> and typing context <code>TC'</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR</code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR</code></a>.</p>
+<p>Let <code>typeIR</code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR</code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR'<sup>?</sup></code> be <code><a href="#find_local_return_type_t">$find_local_return_type_t(TC')</a></code>.</p>
@@ -18067,14 +18050,7 @@ are only visible within the block.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>TC<sub>1</sub></code> and <code>declarationIR</code> be the result of &lt;&lt;Decl_ok, typing <code>constantDeclaration</code>, under cursor <code>LOCAL</code> and typing context <code>TC<sub>0</sub></code>,</p>
-<div class="ulist">
-<ul>
-<li>
-<p>and the modified typing context&gt;&gt;.</p>
-</li>
-</ul>
-</div>
+<p>Let <code>TC<sub>1</sub></code> and <code>declarationIR</code> be the result of <a href="#Decl_ok">typing <code>constantDeclaration</code>, under cursor <code>LOCAL</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>declarationIR</code> has type <code>constantDeclarationIR</code>.</p>
@@ -18158,7 +18134,7 @@ rule BlockElementStmt_ok/variableDeclaration/initializer:
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_var_t">$add_var_t(LOCAL, TC<sub>0</sub>, nameIR, INOUT typeIR DYN None)</a></code>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t">the typing context <code>TC<sub>0</sub></code> with a mapping from <code>nameIR</code> to <code>INOUT typeIR DYN None</code> added to the <code>LOCAL</code> layer</a>.</p>
 </li>
 <li>
 <p>Let <code>variableDeclarationIR</code> be <code>annotationList typeIR nameIR None ;</code>.</p>
@@ -18214,7 +18190,7 @@ rule BlockElementStmt_ok/variableDeclaration/initializer:
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_var_t">$add_var_t(LOCAL, TC<sub>0</sub>, nameIR, INOUT typeIR DYN None)</a></code>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t">the typing context <code>TC<sub>0</sub></code> with a mapping from <code>nameIR</code> to <code>INOUT typeIR DYN None</code> added to the <code>LOCAL</code> layer</a>.</p>
 </li>
 <li>
 <p>Let <code>variableDeclarationIR</code> be <code>annotationList typeIR nameIR = typedExpressionIR<sub>init_cast</sub> ;</code>.</p>
@@ -18472,14 +18448,14 @@ innermost <code>if</code> statement that does not have an <code>else</code> stat
 <pre>rule Stmt_ok/conditionalStatement/non-else:
    p TC f |- IF `(expression_cond) statement_then : TC f (IF `(typedExpressionIR_cond) statementIR_then)
     -- Expr_ok: p TC |- expression_cond : typedExpressionIR_cond
-    -- if typeIR_cond = $typeIR_of_typedExpressionIR(typedExpressionIR_cond)
+    -- if typeIR_cond = $type_of_typedExpressionIR(typedExpressionIR_cond)
     -- if BOOL = $canon_typeIR(typeIR_cond)
     -- Stmt_ok: p TC f |- statement_then : TC_then f_then statementIR_then
 
 rule Stmt_ok/conditionalStatement/else:
    p TC f |- IF `(expression_cond) statement_then ELSE statement_else : TC f_post (IF `(typedExpressionIR_cond) statementIR_then ELSE statementIR_else)
     -- Expr_ok: p TC |- expression_cond : typedExpressionIR_cond
-    -- if typeIR_cond = $typeIR_of_typedExpressionIR(typedExpressionIR_cond)
+    -- if typeIR_cond = $type_of_typedExpressionIR(typedExpressionIR_cond)
     -- if BOOL = $canon_typeIR(typeIR_cond)
     -- Stmt_ok: p TC f |- statement_then : TC_then f_then statementIR_then
     -- Stmt_ok: p TC f |- statement_else : TC_else f_else statementIR_else
@@ -18506,7 +18482,7 @@ rule Stmt_ok/conditionalStatement/else:
 <p>Let <code>typedExpressionIR<sub>cond</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>cond</sub></code>, under cursor <code>p'</code> and typing context <code>TC'</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>cond</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>cond</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>cond</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>cond</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>BOOL</code> is equal to <a href="#canon_typeIR">the canonicalized form of <code>typeIR<sub>cond</sub></code></a>.</p>
@@ -18541,7 +18517,7 @@ rule Stmt_ok/conditionalStatement/else:
 <p>Let <code>typedExpressionIR<sub>cond</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>cond</sub></code>, under cursor <code>p'</code> and typing context <code>TC'</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>cond</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>cond</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>cond</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>cond</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>BOOL</code> is equal to <a href="#canon_typeIR">the canonicalized form of <code>typeIR<sub>cond</sub></code></a>.</p>
@@ -19138,10 +19114,10 @@ rule SwitchLabel_table_ok/expressionNonBrace-prefixedNonTypeName:
 <p>Let <code>nameIR<sub>label</sub></code> be <code>prefixedNameIR</code>.</p>
 </li>
 <li>
-<p>Let <code>tid<sub>table_enum</sub></code> be <code>"action_list("  tid~table~  ")"</code>.</p>
+<p>Let <code>tid<sub>table_enum</sub></code> be <code>"action_list(" &#43;&#43; tid<sub>table</sub> &#43;&#43; ")"</code>.</p>
 </li>
 <li>
-<p>Let <code>id<sub>label</sub></code> be <code>tid<sub>table_enum</sub>  "."  nameIR<sub>label</sub></code>.</p>
+<p>Let <code>id<sub>label</sub></code> be <code>tid<sub>table_enum</sub> &#43;&#43; "." &#43;&#43; nameIR<sub>label</sub></code>.</p>
 </li>
 <li>
 <p>Let <code>varTypeIR<sup>?</sup></code> be <code><a href="#find_var_t">$find_var_t(LOCAL, TC, id<sub>label</sub>)</a></code>.</p>
@@ -19253,7 +19229,7 @@ rule SwitchCase_table_ok/non-blockStatement:
 <pre>rule Stmt_ok/switchStatement-table:
    LOCAL TC f |- SWITCH `(expression_switch) `{switchCaseList} : TC f_post switchStatementIR
     -- Expr_ok: LOCAL TC |- expression_switch : typedExpressionIR_switch
-    -- if typeIR_switch = $typeIR_of_typedExpressionIR(typedExpressionIR_switch)
+    -- if typeIR_switch = $type_of_typedExpressionIR(typedExpressionIR_switch)
     -- if TABLE_ENUM tid_table_enum `{_} = $canon_typeIR(typeIR_switch)
     -- if tid_table = $strip_prefix($strip_suffix(tid_table_enum, ")"), "action_list(")
     -- if switchCase* = $flatten_switchCaseList(switchCaseList)
@@ -19278,7 +19254,7 @@ rule SwitchCase_table_ok/non-blockStatement:
 <p>Let <code>typedExpressionIR<sub>switch</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>switch</sub></code>, under cursor <code>LOCAL</code> and typing context <code>TC'</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>switch</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>switch</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>switch</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>switch</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR</code> be <a href="#canon_typeIR">the canonicalized form of <code>typeIR<sub>switch</sub></code></a>.</p>
@@ -19296,7 +19272,10 @@ rule SwitchCase_table_ok/non-blockStatement:
 <p>Let <code>TABLE_ENUM tid<sub>table_enum</sub> { _<sup>*</sup> }</code> be <code>tableMetadataTypeIR</code>.</p>
 </li>
 <li>
-<p>Let <code>tid<sub>table</sub></code> be <code><a href="#strip_prefix">$strip_prefix($strip_suffix(tid<sub>table_enum</sub>, ")"), "action_list(")</a></code>.</p>
+<p>Let <code>text</code> be <a href="#strip_suffix">the text <code>tid<sub>table_enum</sub></code> with the suffix <code>")"</code> removed</a>.</p>
+</li>
+<li>
+<p>Let <code>tid<sub>table</sub></code> be <a href="#strip_prefix">the text <code>text</code> with the prefix <code>"action_list("</code> removed</a>.</p>
 </li>
 <li>
 <p>Let <code>switchCase<sup>*</sup></code> be <a href="#flatten_switchCaseList">the list of switch cases in <code>switchCaseList</code></a>.</p>
@@ -19533,7 +19512,7 @@ rule SwitchCase_general_ok/non-blockStatement:
 <pre>rule Stmt_ok/switchStatement-general:
    LOCAL TC f |- SWITCH `(expression_switch) `{switchCaseList} : TC f_post switchStatementIR
     -- Expr_ok: LOCAL TC |- expression_switch : typedExpressionIR_switch
-    -- if typeIR_switch = $typeIR_of_typedExpressionIR(typedExpressionIR_switch)
+    -- if typeIR_switch = $type_of_typedExpressionIR(typedExpressionIR_switch)
     -- if $compat_switch(typeIR_switch)
     -- if switchCase* = $flatten_switchCaseList(switchCaseList)
     -- SwitchCases_general_ok: TC f typeIR_switch |- switchCase* : f_post switchCaseIR* # switchLabel*
@@ -19557,7 +19536,7 @@ rule SwitchCase_general_ok/non-blockStatement:
 <p>Let <code>typedExpressionIR<sub>switch</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>switch</sub></code>, under cursor <code>LOCAL</code> and typing context <code>TC'</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>switch</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>switch</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>switch</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>switch</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code><a href="#compat_switch">$compat_switch(typeIR<sub>switch</sub>)</a></code>.</p>
@@ -20629,7 +20608,7 @@ unaryExpressionIR
    p TC |- ! expression : (! typedExpressionIR_reduced) # expressionNoteIR
     -- Expr_ok: p TC |- expression : typedExpressionIR
     -- if typedExpressionIR_reduced = $reduce_serenum_unary(typedExpressionIR, $compat_lnot)
-    -- if typeIR_reduced = $typeIR_of_typedExpressionIR(typedExpressionIR_reduced)
+    -- if typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_reduced)
     -- if ctk_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_reduced)
     -- if expressionNoteIR = `(typeIR_reduced ctk_reduced)</pre>
 </div>
@@ -20659,7 +20638,7 @@ unaryExpressionIR
 <p>Let <code>typedExpressionIR<sub>reduced</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
@@ -20687,7 +20666,7 @@ unaryExpressionIR
    p TC |- ~ expression : (~ typedExpressionIR_reduced) # expressionNoteIR
     -- Expr_ok: p TC |- expression : typedExpressionIR
     -- if typedExpressionIR_reduced = $reduce_serenum_unary(typedExpressionIR, $compat_bnot)
-    -- if typeIR_reduced = $typeIR_of_typedExpressionIR(typedExpressionIR_reduced)
+    -- if typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_reduced)
     -- if ctk_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_reduced)
     -- if expressionNoteIR = `(typeIR_reduced ctk_reduced)</pre>
 </div>
@@ -20717,7 +20696,7 @@ unaryExpressionIR
 <p>Let <code>typedExpressionIR<sub>reduced</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
@@ -20746,7 +20725,7 @@ unaryExpressionIR
     -- if unop = + \/ unop = -
     -- Expr_ok: p TC |- expression : typedExpressionIR
     -- if typedExpressionIR_reduced = $reduce_serenum_unary(typedExpressionIR, $compat_uplusminus)
-    -- if typeIR_reduced = $typeIR_of_typedExpressionIR(typedExpressionIR_reduced)
+    -- if typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_reduced)
     -- if ctk_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_reduced)
     -- if expressionNoteIR = `(typeIR_reduced ctk_reduced)</pre>
 </div>
@@ -20780,7 +20759,7 @@ unaryExpressionIR
 <p>Let <code>typedExpressionIR<sub>reduced</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
@@ -20811,7 +20790,7 @@ unaryExpressionIR
 <p>Let <code>typedExpressionIR<sub>reduced</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of  <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
@@ -20949,7 +20928,7 @@ binaryExpressionIR
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
     -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast) = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
     -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced) = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_plusminusmult)
-    -- if typeIR_reduced = $typeIR_of_typedExpressionIR(typedExpressionIR_l_reduced)
+    -- if typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- if ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- if ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
     -- if ctk_reduced = $join_ctk(ctk_l_reduced, ctk_r_reduced)
@@ -20996,7 +20975,7 @@ binaryExpressionIR
 <p>Let <code>(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
@@ -21033,7 +21012,7 @@ binaryExpressionIR
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
     -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast) = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
     -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced) = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_satplusminus)
-    -- if typeIR_reduced = $typeIR_of_typedExpressionIR(typedExpressionIR_l_reduced)
+    -- if typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- if ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- if ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
     -- if ctk_reduced = $join_ctk(ctk_l_reduced, ctk_r_reduced)
@@ -21080,7 +21059,7 @@ binaryExpressionIR
 <p>Let <code>(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
@@ -21117,7 +21096,7 @@ binaryExpressionIR
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
     -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast) = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
     -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced) = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_divmod)
-    -- if typeIR_reduced = $typeIR_of_typedExpressionIR(typedExpressionIR_l_reduced)
+    -- if typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- if ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- if ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
     -- if ctk_r_reduced = LCTK
@@ -21134,7 +21113,7 @@ rule Expr_ok/binaryExpression-divmod/rhs-non-lctk:
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
     -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast) = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
     -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced) = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_divmod)
-    -- if typeIR_reduced = $typeIR_of_typedExpressionIR(typedExpressionIR_l_reduced)
+    -- if typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- if ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- if ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
     -- if ctk_r_reduced =/= LCTK
@@ -21182,7 +21161,7 @@ rule Expr_ok/binaryExpression-divmod/rhs-non-lctk:
 <p>Let <code>(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
@@ -21256,9 +21235,9 @@ rule Expr_ok/binaryExpression-divmod/rhs-non-lctk:
     -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
     -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced) = $reduce_serenum_binary(typedExpressionIR_l, typedExpressionIR_r, $compat_shift)
-    -- if typeIR_l_reduced = $typeIR_of_typedExpressionIR(typedExpressionIR_l_reduced)
+    -- if typeIR_l_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- if ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
-    -- if typeIR_r_reduced = $typeIR_of_typedExpressionIR(typedExpressionIR_r_reduced)
+    -- if typeIR_r_reduced = $type_of_typedExpressionIR(typedExpressionIR_r_reduced)
     -- if ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
     -- if $is_fixedBitTypeIR(typeIR_r_reduced)
     -- if ctk_reduced = $join_ctk(ctk_l_reduced, ctk_r_reduced)
@@ -21270,9 +21249,9 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
     -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
     -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced) = $reduce_serenum_binary(typedExpressionIR_l, typedExpressionIR_r, $compat_shift)
-    -- if typeIR_l_reduced = $typeIR_of_typedExpressionIR(typedExpressionIR_l_reduced)
+    -- if typeIR_l_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- if ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
-    -- if typeIR_r_reduced = $typeIR_of_typedExpressionIR(typedExpressionIR_r_reduced)
+    -- if typeIR_r_reduced = $type_of_typedExpressionIR(typedExpressionIR_r_reduced)
     -- if ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
     -- if ctk_r_reduced = LCTK
     -- if $is_arbitraryIntTypeIR(typeIR_r_reduced) \/ $is_fixedIntTypeIR(typeIR_r_reduced)
@@ -21311,13 +21290,13 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Let <code>(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>l_reduced</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>l_reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>r_reduced</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>r_reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
@@ -21396,7 +21375,7 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
     -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
     -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast) = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
-    -- if typeIR_cast = $typeIR_of_typedExpressionIR(typedExpressionIR_l_cast)
+    -- if typeIR_cast = $type_of_typedExpressionIR(typedExpressionIR_l_cast)
     -- if ctk_l_cast = $ctk_of_typedExpressionIR(typedExpressionIR_l_cast)
     -- if ctk_r_cast = $ctk_of_typedExpressionIR(typedExpressionIR_r_cast)
     -- if $is_equalable_typeIR(typeIR_cast)
@@ -21435,7 +21414,7 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Let <code>(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>cast</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>l_cast</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>cast</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>l_cast</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>l_cast</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of  <code>typedExpressionIR<sub>l_cast</sub></code></a>.</p>
@@ -21475,7 +21454,7 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
     -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast) = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
     -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced) = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_compare)
-    -- if typeIR_reduced = $typeIR_of_typedExpressionIR(typedExpressionIR_l_reduced)
+    -- if typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- if ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- if ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
     -- if ctk_reduced = $join_ctk(ctk_l_reduced, ctk_r_reduced)
@@ -21522,7 +21501,7 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Let <code>(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
@@ -21559,7 +21538,7 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
     -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast) = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
     -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced) = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_bitwise)
-    -- if typeIR_reduced = $typeIR_of_typedExpressionIR(typedExpressionIR_l_reduced)
+    -- if typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- if ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- if ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
     -- if ctk_reduced = $join_ctk(ctk_l_reduced, ctk_r_reduced)
@@ -21606,7 +21585,7 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Let <code>(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
@@ -21641,9 +21620,9 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
     -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
     -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced) = $reduce_serenum_binary(typedExpressionIR_l, typedExpressionIR_r, $compat_concat)
-    -- if typeIR_l_reduced = $typeIR_of_typedExpressionIR(typedExpressionIR_l_reduced)
+    -- if typeIR_l_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- if ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
-    -- if typeIR_r_reduced = $typeIR_of_typedExpressionIR(typedExpressionIR_r_reduced)
+    -- if typeIR_r_reduced = $type_of_typedExpressionIR(typedExpressionIR_r_reduced)
     -- if ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
     -- if typeIR_reduced = $result_concat(typeIR_l_reduced, typeIR_r_reduced)
     -- if ctk_reduced = $join_ctk(ctk_l_reduced, ctk_r_reduced)
@@ -21678,13 +21657,13 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Let <code>(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>l_reduced</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>l_reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>r_reduced</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>r_reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of  <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
@@ -21727,7 +21706,7 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
     -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast) = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
     -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced) = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_logical)
-    -- if typeIR_reduced = $typeIR_of_typedExpressionIR(typedExpressionIR_l_reduced)
+    -- if typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- if ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- if ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
     -- if ctk_reduced = $join_ctk(ctk_l_reduced, ctk_r_reduced)
@@ -21774,7 +21753,7 @@ rule Expr_ok/binaryExpression-shift/rhs-non-fixbit:
 <p>Let <code>(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)'<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of  <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
@@ -21840,7 +21819,7 @@ rule Expr_eval_lctk/binaryExpressionIR/lor-false:
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Check that <code>~binop' is in [&amp;&amp;, ||]</code>.</p>
+<p>Check that <code>binop'</code> is not in <code>[&amp;&amp;, ||]</code>.</p>
 </li>
 <li>
 <p>Let <code>value<sub>l</sub></code> be the result of <a href="#Expr_eval_lctk">the local compile-time evaluation of <code>typedExpressionIR<sub>l</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
@@ -21965,7 +21944,7 @@ rule Expr_inst/binaryExpressionIR/lor-false:
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Check that <code>~binop' is in [&amp;&amp;, ||]</code>.</p>
+<p>Check that <code>binop'</code> is not in <code>[&amp;&amp;, ||]</code>.</p>
 </li>
 <li>
 <p>Let <a href="#Expr_inst"><code>p IC STO' |- typedExpressionIR<sub>l</sub> : STO<sub>1</sub> value<sub>l</sub></code></a>.</p>
@@ -22073,7 +22052,7 @@ ternaryExpressionIR
     -- Expr_ok: p TC |- expression_true : typedExpressionIR_true
     -- Expr_ok: p TC |- expression_false : typedExpressionIR_false
     -- if (typedExpressionIR_true_cast, typedExpressionIR_false_cast) = $coerce_binary(typedExpressionIR_true, typedExpressionIR_false)
-    -- if typeIR_cast = $typeIR_of_typedExpressionIR(typedExpressionIR_true_cast)
+    -- if typeIR_cast = $type_of_typedExpressionIR(typedExpressionIR_true_cast)
     -- if ctk_true_cast = $ctk_of_typedExpressionIR(typedExpressionIR_true_cast)
     -- if ctk_false_cast = $ctk_of_typedExpressionIR(typedExpressionIR_false_cast)
     -- if $is_arbitraryIntTypeIR(typeIR_cast) =&gt; (ctk_cond =/= DYN)
@@ -22124,7 +22103,7 @@ ternaryExpressionIR
 <p>Let <code>(typedExpressionIR<sub>true_cast</sub>, typedExpressionIR<sub>false_cast</sub>)</code> be <code>(typedExpressionIR, typedExpressionIR)<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>cast</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>true_cast</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>cast</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>true_cast</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>true_cast</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of  <code>typedExpressionIR<sub>true_cast</sub></code></a>.</p>
@@ -22133,7 +22112,7 @@ ternaryExpressionIR
 <p>Let <code>ctk<sub>false_cast</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of  <code>typedExpressionIR<sub>false_cast</sub></code></a>.</p>
 </li>
 <li>
-<p>Check that <code><a href="#is_arbitraryIntTypeIR">$is_arbitraryIntTypeIR(typeIR<sub>cast</sub>)</a> &#8658; ctk<sub>cond</sub> =/= DYN</code>.</p>
+<p>Check that <code><a href="#is_arbitraryIntTypeIR">$is_arbitraryIntTypeIR(typeIR<sub>cast</sub>)</a></code> <strong>implies</strong> <code>ctk<sub>cond</sub> =/= DYN</code>.</p>
 </li>
 <li>
 <p>Let <code>ctk</code> be <code><a href="#joins_ctk">$joins_ctk([ctk<sub>cond</sub>, ctk<sub>true_cast</sub>, ctk<sub>false_cast</sub>])</a></code>.</p>
@@ -22297,7 +22276,7 @@ castExpressionIR
     -- Type_ok: p TC |- type_t : typeIR_t # eps
     -- Type_wf: $bound(p, TC) |- typeIR_t
     -- Expr_ok: p TC |- expression : typedExpressionIR
-    -- if typeIR = $typeIR_of_typedExpressionIR(typedExpressionIR)
+    -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
     -- if ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
     -- Sub_expl: typeIR &lt;: typeIR_t
     -- if expressionNoteIR = `(typeIR_t ctk)</pre>
@@ -22328,7 +22307,7 @@ castExpressionIR
 <p>Let <code>typedExpressionIR</code> be the result of <a href="#Expr_ok">typing <code>expression</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR</code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR</code></a>.</p>
+<p>Let <code>typeIR</code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR</code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk</code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of  <code>typedExpressionIR</code></a>.</p>
@@ -22557,7 +22536,7 @@ dataExpressionIR
     -- if ~(... &lt;- expression_e*)
     -- if expression_e* = $flatten_expressionList(expressionList)
     -- (Expr_ok: p TC |- expression_e : typedExpressionIR_e)*
-    -- (if (typeIR_e = $typeIR_of_typedExpressionIR(typedExpressionIR_e)))*
+    -- (if (typeIR_e = $type_of_typedExpressionIR(typedExpressionIR_e)))*
     -- (if (ctk_e = $ctk_of_typedExpressionIR(typedExpressionIR_e)))*
     -- if typeIR = SEQ `&lt;typeIR_e*&gt;
     -- if ctk = $joins_ctk(ctk_e*)
@@ -22571,7 +22550,7 @@ rule Expr_ok/dataExpression-sequence/default:
     -- if expression_e_h* = $rev_&lt;expression&gt;(expression_e_h_rev*)
     -- if ~(... &lt;- expression_e_h*)
     -- (Expr_ok: p TC |- expression_e_h : typedExpressionIR_e_h)*
-    -- (if (typeIR_e_h = $typeIR_of_typedExpressionIR(typedExpressionIR_e_h)))*
+    -- (if (typeIR_e_h = $type_of_typedExpressionIR(typedExpressionIR_e_h)))*
     -- (if (ctk_e_h = $ctk_of_typedExpressionIR(typedExpressionIR_e_h)))*
     -- if typeIR = SEQ `&lt;typeIR_e_h* , ...&gt;
     -- if ctk = $joins_ctk(ctk_e_h*)
@@ -22594,7 +22573,7 @@ rule Expr_ok/dataExpression-sequence/default:
 <p>Let <code>expression<sub>e</sub><sup>*</sup></code> be <a href="#flatten_expressionList">the list of expressions in <code>expressionList</code></a>.</p>
 </li>
 <li>
-<p>If <code>~&#8230;&#8203; is in expression<sub>e</sub><sup>*</sup></code>:</p>
+<p>If <code>&#8230;&#8203;</code> is not in <code>expression<sub>e</sub><sup>*</sup></code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -22624,7 +22603,7 @@ rule Expr_ok/dataExpression-sequence/default:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>typeIR<sub>e</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>e</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>e</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>e</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -22689,7 +22668,7 @@ rule Expr_ok/dataExpression-sequence/default:
 <p>Let <code>expression<sub>e_h</sub><sup>*</sup></code> be <code><a href="#rev_">$rev_&lt;expression&gt;(expression<sub>e_h_rev</sub><sup>*</sup>)</a></code>.</p>
 </li>
 <li>
-<p>Check that <code>~&#8230;&#8203; is in expression<sub>e_h</sub><sup>*</sup></code>.</p>
+<p>Check that <code>&#8230;&#8203;</code> is not in <code>expression<sub>e_h</sub><sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typedExpressionIR<sub>e_h</sub><sup>*</sup></code> be the list of <code>typedExpressionIR<sub>e_h</sub></code>, obtained by repeating:</p>
@@ -22715,7 +22694,7 @@ rule Expr_ok/dataExpression-sequence/default:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>typeIR<sub>e_h</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>e_h</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>e_h</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>e_h</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -22926,7 +22905,7 @@ rule Expr_inst/dataExpressionIR-sequence/default:
    p TC |- `{(name_f = expression_f) _} : (RECORD `{(nameIR_f = typedExpressionIR_f)}) # expressionNoteIR
     -- if nameIR_f = $name(name_f)
     -- Expr_ok: p TC |- expression_f : typedExpressionIR_f
-    -- if typeIR_f = $typeIR_of_typedExpressionIR(typedExpressionIR_f)
+    -- if typeIR_f = $type_of_typedExpressionIR(typedExpressionIR_f)
     -- if ctk_f = $ctk_of_typedExpressionIR(typedExpressionIR_f)
     -- if typeIR = RECORD `{(typeIR_f nameIR_f ;)}
     -- if expressionNoteIR = `(typeIR ctk_f)
@@ -22935,7 +22914,7 @@ rule Expr_ok/dataExpression-record/single-default:
    p TC |- `{(name_f = expression_f , ...) _} : (RECORD `{(nameIR_f = typedExpressionIR_f) , ...}) # expressionNoteIR
     -- if nameIR_f = $name(name_f)
     -- Expr_ok: p TC |- expression_f : typedExpressionIR_f
-    -- if typeIR_f = $typeIR_of_typedExpressionIR(typedExpressionIR_f)
+    -- if typeIR_f = $type_of_typedExpressionIR(typedExpressionIR_f)
     -- if ctk_f = $ctk_of_typedExpressionIR(typedExpressionIR_f)
     -- if typeIR = RECORD `{(typeIR_f nameIR_f ;) , ...}
     -- if expressionNoteIR = `(typeIR ctk_f)
@@ -22947,7 +22926,7 @@ rule Expr_ok/dataExpression-record/multiple-non-default:
     -- (if (nameIR_f = $name(name_f)))*
     -- if expression_f* = expression_f_h :: expression_f_t*
     -- (Expr_ok: p TC |- expression_f : typedExpressionIR_f)*
-    -- (if (typeIR_f = $typeIR_of_typedExpressionIR(typedExpressionIR_f)))*
+    -- (if (typeIR_f = $type_of_typedExpressionIR(typedExpressionIR_f)))*
     -- (if (ctk_f = $ctk_of_typedExpressionIR(typedExpressionIR_f)))*
     -- if typeIR = RECORD `{(typeIR_f nameIR_f ;)*}
     -- if ctk = $joins_ctk(ctk_f*)
@@ -22960,7 +22939,7 @@ rule Expr_ok/dataExpression-record/multiple-default:
     -- (if (nameIR_f = $name(name_f)))*
     -- if expression_f* = expression_f_h :: expression_f_t*
     -- (Expr_ok: p TC |- expression_f : typedExpressionIR_f)*
-    -- (if (typeIR_f = $typeIR_of_typedExpressionIR(typedExpressionIR_f)))*
+    -- (if (typeIR_f = $type_of_typedExpressionIR(typedExpressionIR_f)))*
     -- (if (ctk_f = $ctk_of_typedExpressionIR(typedExpressionIR_f)))*
     -- if typeIR = RECORD `{(typeIR_f nameIR_f ;)* , ...}
     -- if ctk = $joins_ctk(ctk_f*)
@@ -22990,7 +22969,7 @@ rule Expr_ok/dataExpression-record/multiple-default:
 <p>Let <code>typedExpressionIR<sub>f</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>f</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>f</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>f</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>f</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>f</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>f</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of  <code>typedExpressionIR<sub>f</sub></code></a>.</p>
@@ -23018,7 +22997,7 @@ rule Expr_ok/dataExpression-record/multiple-default:
 <p>Let <code>typedExpressionIR<sub>f</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>f</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>f</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>f</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>f</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>f</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>f</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of  <code>typedExpressionIR<sub>f</sub></code></a>.</p>
@@ -23040,7 +23019,7 @@ rule Expr_ok/dataExpression-record/multiple-default:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>name<sub>f_t</sub> = expression<sub>f_t</sub><sup>*</sup></code> be <a href="#flatten_namedExpressionList">the list of named expressions in <code>namedExpressionList<sub>t</sub></code></a>.</p>
+<p>Let <code>(name<sub>f_t</sub> = expression<sub>f_t</sub>)<sup>*</sup></code> be <a href="#flatten_namedExpressionList">the list of named expressions in <code>namedExpressionList<sub>t</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>name<sub>f</sub><sup>*</sup></code> be <code>name<sub>f_h</sub> :: name<sub>f_t</sub><sup>*</sup></code>.</p>
@@ -23089,7 +23068,7 @@ rule Expr_ok/dataExpression-record/multiple-default:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>typeIR<sub>f</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>f</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>f</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>f</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -23117,7 +23096,7 @@ rule Expr_ok/dataExpression-record/multiple-default:
 </div>
 </li>
 <li>
-<p>Let <code>typeIR</code> be <code>RECORD { typeIR<sub>f</sub> nameIR<sub>f</sub> ;<sup>*</sup> }</code>.</p>
+<p>Let <code>typeIR</code> be <code>RECORD { (typeIR<sub>f</sub> nameIR<sub>f</sub> ;)<sup>*</sup> }</code>.</p>
 </li>
 <li>
 <p>Let <code>ctk</code> be <code><a href="#joins_ctk">$joins_ctk(ctk<sub>f</sub><sup>*</sup>)</a></code>.</p>
@@ -23126,7 +23105,7 @@ rule Expr_ok/dataExpression-record/multiple-default:
 <p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>ctk</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <a href="#typedExpressionIR"><code>RECORD { nameIR<sub>f</sub> = typedExpressionIR<sub>f</sub><sup>*</sup> }</code> annotated with <code>expressionNoteIR</code></a>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>RECORD { (nameIR<sub>f</sub> = typedExpressionIR<sub>f</sub>)<sup>*</sup> }</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -23136,7 +23115,7 @@ rule Expr_ok/dataExpression-record/multiple-default:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>name<sub>f_t</sub> = expression<sub>f_t</sub><sup>*</sup></code> be <a href="#flatten_namedExpressionList">the list of named expressions in <code>namedExpressionList<sub>t</sub></code></a>.</p>
+<p>Let <code>(name<sub>f_t</sub> = expression<sub>f_t</sub>)<sup>*</sup></code> be <a href="#flatten_namedExpressionList">the list of named expressions in <code>namedExpressionList<sub>t</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>name<sub>f</sub><sup>*</sup></code> be <code>name<sub>f_h</sub> :: name<sub>f_t</sub><sup>*</sup></code>.</p>
@@ -23185,7 +23164,7 @@ rule Expr_ok/dataExpression-record/multiple-default:
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>typeIR<sub>f</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>f</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>f</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>f</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -23213,7 +23192,7 @@ rule Expr_ok/dataExpression-record/multiple-default:
 </div>
 </li>
 <li>
-<p>Let <code>typeIR</code> be <code>RECORD { typeIR<sub>f</sub> nameIR<sub>f</sub> ;<sup>*</sup> , &#8230;&#8203; }</code>.</p>
+<p>Let <code>typeIR</code> be <code>RECORD { (typeIR<sub>f</sub> nameIR<sub>f</sub> ;)<sup>*</sup> , &#8230;&#8203; }</code>.</p>
 </li>
 <li>
 <p>Let <code>ctk</code> be <code><a href="#joins_ctk">$joins_ctk(ctk<sub>f</sub><sup>*</sup>)</a></code>.</p>
@@ -23222,7 +23201,7 @@ rule Expr_ok/dataExpression-record/multiple-default:
 <p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>ctk</code></a>.</p>
 </li>
 <li>
-<p>Result in the typed expression <a href="#typedExpressionIR"><code>RECORD { nameIR<sub>f</sub> = typedExpressionIR<sub>f</sub><sup>*</sup> , &#8230;&#8203; }</code> annotated with <code>expressionNoteIR</code></a>.</p>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>RECORD { (nameIR<sub>f</sub> = typedExpressionIR<sub>f</sub>)<sup>*</sup> , &#8230;&#8203; }</code> annotated with <code>expressionNoteIR</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -23259,7 +23238,7 @@ rule Expr_eval_lctk/dataExpressionIR-record/default:
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>If let <code>RECORD { nameIR = typedExpressionIR<sup>*</sup> }</code> be <code>dataExpressionIR</code>:</p>
+<p>If let <code>RECORD { (nameIR = typedExpressionIR)<sup>*</sup> }</code> be <code>dataExpressionIR</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -23280,13 +23259,13 @@ rule Expr_eval_lctk/dataExpressionIR-record/default:
 </div>
 </li>
 <li>
-<p>Result in <code>RECORD { value nameIR ;<sup>*</sup> }</code>.</p>
+<p>Result in <code>RECORD { (value nameIR ;)<sup>*</sup> }</code>.</p>
 </li>
 </ol>
 </div>
 </li>
 <li>
-<p>Else if let <code>RECORD { nameIR = typedExpressionIR<sup>*</sup> , &#8230;&#8203; }</code> be <code>dataExpressionIR</code>:</p>
+<p>Else if let <code>RECORD { (nameIR = typedExpressionIR)<sup>*</sup> , &#8230;&#8203; }</code> be <code>dataExpressionIR</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -23307,7 +23286,7 @@ rule Expr_eval_lctk/dataExpressionIR-record/default:
 </div>
 </li>
 <li>
-<p>Result in <code>RECORD { value nameIR ;<sup>*</sup> , &#8230;&#8203; }</code>.</p>
+<p>Result in <code>RECORD { (value nameIR ;)<sup>*</sup> , &#8230;&#8203; }</code>.</p>
 </li>
 </ol>
 </div>
@@ -23344,27 +23323,27 @@ rule Expr_inst/dataExpressionIR-record/default:
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>If let <code>RECORD { nameIR = typedExpressionIR<sup>*</sup> }</code> be <code>dataExpressionIR</code>:</p>
+<p>If let <code>RECORD { (nameIR = typedExpressionIR)<sup>*</sup> }</code> be <code>dataExpressionIR</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
 <p>Let <a href="#Exprs_inst"><code>p IC STO' |- typedExpressionIR<sup>*</sup> : STO<sub>1</sub> value<sup>*</sup></code></a>.</p>
 </li>
 <li>
-<p>Result in <code>STO<sub>1</sub></code> and <code>RECORD { value nameIR ;<sup>*</sup> }</code>.</p>
+<p>Result in <code>STO<sub>1</sub></code> and <code>RECORD { (value nameIR ;)<sup>*</sup> }</code>.</p>
 </li>
 </ol>
 </div>
 </li>
 <li>
-<p>Else if let <code>RECORD { nameIR = typedExpressionIR<sup>*</sup> , &#8230;&#8203; }</code> be <code>dataExpressionIR</code>:</p>
+<p>Else if let <code>RECORD { (nameIR = typedExpressionIR)<sup>*</sup> , &#8230;&#8203; }</code> be <code>dataExpressionIR</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
 <p>Let <a href="#Exprs_inst"><code>p IC STO' |- typedExpressionIR<sup>*</sup> : STO<sub>1</sub> value<sup>*</sup></code></a>.</p>
 </li>
 <li>
-<p>Result in <code>STO<sub>1</sub></code> and <code>RECORD { value nameIR ;<sup>*</sup> , &#8230;&#8203; }</code>.</p>
+<p>Result in <code>STO<sub>1</sub></code> and <code>RECORD { (value nameIR ;)<sup>*</sup> , &#8230;&#8203; }</code>.</p>
 </li>
 </ol>
 </div>
@@ -23437,7 +23416,7 @@ errorAccessExpressionIR
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>member</code></a>.</p>
 </li>
 <li>
-<p>Let <code>nameIR<sub>error</sub></code> be <code>"error." ++ nameIR</code>.</p>
+<p>Let <code>nameIR<sub>error</sub></code> be <code>"error." &#43;&#43; nameIR</code>.</p>
 </li>
 <li>
 <p>Check that <code>ERROR . nameIR</code> is equal to <code><a href="#find_var_value_t">$find_var_value_t(p, TC, nameIR<sub>error</sub>)</a></code>.</p>
@@ -23477,7 +23456,7 @@ errorAccessExpressionIR
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>nameIR<sub>error</sub></code> be <code>"error." ++ nameIR</code>.</p>
+<p>Let <code>nameIR<sub>error</sub></code> be <code>"error." &#43;&#43; nameIR</code>.</p>
 </li>
 <li>
 <p>Let <code>value<sub>error</sub></code> be <code><a href="#find_var_value_t">$find_var_value_t(p, TC, nameIR<sub>error</sub>)</a></code>.</p>
@@ -23514,7 +23493,7 @@ errorAccessExpressionIR
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>nameIR<sub>error</sub></code> be <code>"error." ++ nameIR</code>.</p>
+<p>Let <code>nameIR<sub>error</sub></code> be <code>"error." &#43;&#43; nameIR</code>.</p>
 </li>
 <li>
 <p>Let <code>value<sub>error</sub></code> be <code><a href="#find_var_i">$find_var_i(p, IC, nameIR<sub>error</sub>)</a></code>.</p>
@@ -23563,7 +23542,7 @@ memberAccessExpressionIR
     -- if prefixedNameIR_base = $prefixedTypeName(prefixedTypeName_base)
     -- if typeDefIR_base = $find_typeDef_t(p, TC, prefixedNameIR_base)
     -- if $is_monomorphic_typeDefIR(typeDefIR_base)
-    -- if typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base)
+    -- if typeIR_base = $type_of_typeDefIR(typeDefIR_base)
     -- if ENUM _ `{nameIR_field*} = $canon_typeIR(typeIR_base)
     -- if nameIR = $name(member)
     -- if nameIR &lt;- nameIR_field*
@@ -23574,7 +23553,7 @@ rule Expr_ok/memberAccessExpression-type/serenum:
     -- if prefixedNameIR_base = $prefixedTypeName(prefixedTypeName_base)
     -- if typeDefIR_base = $find_typeDef_t(p, TC, prefixedNameIR_base)
     -- if $is_monomorphic_typeDefIR(typeDefIR_base)
-    -- if typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base)
+    -- if typeIR_base = $type_of_typeDefIR(typeDefIR_base)
     -- if ENUM _ `&lt;_&gt; `{(nameIR_field = _ ;)*} = $canon_typeIR(typeIR_base)
     -- if nameIR = $name(member)
     -- if nameIR &lt;- nameIR_field*
@@ -23609,7 +23588,7 @@ rule Expr_ok/memberAccessExpression-type/serenum:
 <p>Check that <code><a href="#is_monomorphic_typeDefIR">$is_monomorphic_typeDefIR(typeDefIR<sub>base</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <code><a href="#typeIR_of_typeDefIR">$typeIR_of_typeDefIR(typeDefIR<sub>base</sub>)</a></code>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <code><a href="#type_of_typeDefIR">$type_of_typeDefIR(typeDefIR<sub>base</sub>)</a></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR</code> be <a href="#canon_typeIR">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
@@ -23640,7 +23619,7 @@ rule Expr_ok/memberAccessExpression-type/serenum:
 </div>
 </li>
 <li>
-<p>Else let <code>ENUM _ &lt; _ &gt; { nameIR<sub>field</sub> = _ ;<sup>*</sup> }</code> be <code>enumTypeIR</code>:</p>
+<p>Else let <code>ENUM _ &lt; _ &gt; { (nameIR<sub>field</sub> = _ ;)<sup>*</sup> }</code> be <code>enumTypeIR</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -23672,7 +23651,7 @@ rule Expr_ok/memberAccessExpression-type/serenum:
    p TC |- ((TYPE prefixedNameIR_base) . nameIR) # _ ~&gt; tid . nameIR
     -- if typeDefIR_base = $find_typeDef_t(p, TC, prefixedNameIR_base)
     -- if $is_monomorphic_typeDefIR(typeDefIR_base)
-    -- if typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base)
+    -- if typeIR_base = $type_of_typeDefIR(typeDefIR_base)
     -- if ENUM tid `{id_field*} = $canon_typeIR(typeIR_base)
     -- if nameIR &lt;- id_field*
 
@@ -23680,7 +23659,7 @@ rule Expr_eval_lctk/memberAccessExpressionIR-type/serenum:
    p TC |- ((TYPE prefixedNameIR_base) . nameIR) # _ ~&gt; tid . nameIR . value
     -- if typeDefIR_base = $find_typeDef_t(p, TC, prefixedNameIR_base)
     -- if $is_monomorphic_typeDefIR(typeDefIR_base)
-    -- if typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base)
+    -- if typeIR_base = $type_of_typeDefIR(typeDefIR_base)
     -- if ENUM tid `&lt;typeIR&gt; `{(id_field = value_field ;)*} = $canon_typeIR(typeIR_base)
     -- if value = $assoc_&lt;id, value&gt;(nameIR, (id_field, value_field)*)</pre>
 </div>
@@ -23710,7 +23689,7 @@ rule Expr_eval_lctk/memberAccessExpressionIR-type/serenum:
 <p>Check that <code><a href="#is_monomorphic_typeDefIR">$is_monomorphic_typeDefIR(typeDefIR<sub>base</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <code><a href="#typeIR_of_typeDefIR">$typeIR_of_typeDefIR(typeDefIR<sub>base</sub>)</a></code>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <code><a href="#type_of_typeDefIR">$type_of_typeDefIR(typeDefIR<sub>base</sub>)</a></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR'</code> be <a href="#canon_typeIR">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
@@ -23735,11 +23714,11 @@ rule Expr_eval_lctk/memberAccessExpressionIR-type/serenum:
 </div>
 </li>
 <li>
-<p>Else let <code>ENUM tid &lt; typeIR &gt; { id<sub>field</sub> = value<sub>field</sub> ;<sup>*</sup> }</code> be <code>enumTypeIR</code>:</p>
+<p>Else let <code>ENUM tid &lt; typeIR &gt; { (id<sub>field</sub> = value<sub>field</sub> ;)<sup>*</sup> }</code> be <code>enumTypeIR</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>value'<sup>?</sup></code> be <code><a href="#assoc_">$assoc_&lt;id, value&gt;(nameIR, (id<sub>field</sub>, value<sub>field</sub>)<sup>*</sup>)</a></code>.</p>
+<p>Let <code>value'<sup>?</sup></code> be <code><a href="#assoc_">$assoc_&lt;id, value&gt;(nameIR, id<sub>field</sub>, value<sub>field</sub><sup>*</sup>)</a></code>.</p>
 </li>
 <li>
 <p>Check that <code>value'<sup>?</sup></code> is Some value.</p>
@@ -23811,11 +23790,11 @@ rule Expr_inst/memberAccessExpressionIR-type/serenum:
 </div>
 </li>
 <li>
-<p>Else let <code>ENUM tid &lt; _ &gt; { id<sub>member</sub> = value<sub>member</sub> ;<sup>*</sup> }</code> be <code>enumTypeIR</code>:</p>
+<p>Else let <code>ENUM tid &lt; _ &gt; { (id<sub>member</sub> = value<sub>member</sub> ;)<sup>*</sup> }</code> be <code>enumTypeIR</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>value'<sup>?</sup></code> be <code><a href="#assoc_">$assoc_&lt;nameIR, value&gt;(nameIR, (id<sub>member</sub>, value<sub>member</sub>)<sup>*</sup>)</a></code>.</p>
+<p>Let <code>value'<sup>?</sup></code> be <code><a href="#assoc_">$assoc_&lt;nameIR, value&gt;(nameIR, id<sub>member</sub>, value<sub>member</sub><sup>*</sup>)</a></code>.</p>
 </li>
 <li>
 <p>Check that <code>value'<sup>?</sup></code> is Some value.</p>
@@ -23846,7 +23825,7 @@ rule Expr_inst/memberAccessExpressionIR-type/serenum:
    p TC |- expression_base . member : (typedExpressionIR_base . "size") # expressionNoteIR
     -- if "size" = $name(member)
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
-    -- if typeIR_base = $typeIR_of_typedExpressionIR(typedExpressionIR_base)
+    -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     -- if typeIR `[n_size] = $canon_typeIR(typeIR_base)
     -- if expressionNoteIR = `((BIT `&lt;32&gt;) LCTK)
 
@@ -23855,7 +23834,7 @@ rule Expr_ok/memberAccessExpression-expression/headerStack-lastIndex:
     -- if "lastIndex" = $name(member)
     -- if (p = BLOCK /\ $is_parser_blockKind(TC.BLOCK.KIND)) \/ (p = LOCAL /\ $is_parser_state_localKind(TC.LOCAL.KIND))
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
-    -- if typeIR_base = $typeIR_of_typedExpressionIR(typedExpressionIR_base)
+    -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     -- if typeIR `[n_size] = $canon_typeIR(typeIR_base)
     -- if expressionNoteIR = `((BIT `&lt;32&gt;) DYN)
 
@@ -23864,7 +23843,7 @@ rule Expr_ok/memberAccessExpression-expression/headerStack-last:
     -- if "last" = $name(member)
     -- if (p = BLOCK /\ $is_parser_blockKind(TC.BLOCK.KIND)) \/ (p = LOCAL /\ $is_parser_state_localKind(TC.LOCAL.KIND))
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
-    -- if typeIR_base = $typeIR_of_typedExpressionIR(typedExpressionIR_base)
+    -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     -- if typeIR `[n_size] = $canon_typeIR(typeIR_base)
     -- if expressionNoteIR = `(typeIR DYN)
 
@@ -23873,14 +23852,14 @@ rule Expr_ok/memberAccessExpression-expression/headerStack-next:
     -- if "next" = $name(member)
     -- if (p = BLOCK /\ $is_parser_blockKind(TC.BLOCK.KIND)) \/ (p = LOCAL /\ $is_parser_state_localKind(TC.LOCAL.KIND))
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
-    -- if typeIR_base = $typeIR_of_typedExpressionIR(typedExpressionIR_base)
+    -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     -- if typeIR `[n_size] = $canon_typeIR(typeIR_base)
     -- if expressionNoteIR = `(typeIR DYN)
 
 rule Expr_ok/memberAccessExpression-expression/struct:
    p TC |- expression_base . member : (typedExpressionIR_base . nameIR) # expressionNoteIR
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
-    -- if typeIR_base = $typeIR_of_typedExpressionIR(typedExpressionIR_base)
+    -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     -- if STRUCT _ `{(typeIR_f nameIR_f ;)*} = $canon_typeIR(typeIR_base)
     -- if nameIR = $name(member)
     -- if typeIR = $assoc_&lt;nameIR, typeIR&gt;(nameIR, (nameIR_f, typeIR_f)*)
@@ -23889,7 +23868,7 @@ rule Expr_ok/memberAccessExpression-expression/struct:
 rule Expr_ok/memberAccessExpression-expression/header:
    p TC |- expression_base . member : (typedExpressionIR_base . nameIR) # expressionNoteIR
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
-    -- if typeIR_base = $typeIR_of_typedExpressionIR(typedExpressionIR_base)
+    -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     -- if HEADER _ `{(typeIR_f nameIR_f ;)*} = $canon_typeIR(typeIR_base)
     -- if nameIR = $name(member)
     -- if typeIR = $assoc_&lt;nameIR, typeIR&gt;(nameIR, (nameIR_f, typeIR_f)*)
@@ -23898,7 +23877,7 @@ rule Expr_ok/memberAccessExpression-expression/header:
 rule Expr_ok/memberAccessExpression-expression/headerunion:
    p TC |- expression_base . member : (typedExpressionIR_base . nameIR) # expressionNoteIR
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
-    -- if typeIR_base = $typeIR_of_typedExpressionIR(typedExpressionIR_base)
+    -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     -- if HEADER_UNION _ `{(typeIR_f nameIR_f ;)*} = $canon_typeIR(typeIR_base)
     -- if nameIR = $name(member)
     -- if typeIR = $assoc_&lt;nameIR, typeIR&gt;(nameIR, (nameIR_f, typeIR_f)*)
@@ -23907,7 +23886,7 @@ rule Expr_ok/memberAccessExpression-expression/headerunion:
 rule Expr_ok/memberAccessExpression-expression/tablestruct:
    p TC |- expression_base . member : (typedExpressionIR_base . nameIR) # expressionNoteIR
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
-    -- if typeIR_base = $typeIR_of_typedExpressionIR(typedExpressionIR_base)
+    -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     -- if TABLE_STRUCT _ `{(typeIR_f nameIR_f ;)*} = $canon_typeIR(typeIR_base)
     -- if nameIR = $name(member)
     -- if typeIR = $assoc_&lt;nameIR, typeIR&gt;(nameIR, (nameIR_f, typeIR_f)*)
@@ -23934,7 +23913,7 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typedExpressionIR<sub>base</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>base</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR'</code> be <a href="#canon_typeIR">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
@@ -23959,14 +23938,14 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>If <code>p = BLOCK /\ <a href="#is_parser_blockKind">$is_parser_blockKind(TC.BLOCK.KIND)</a></code>:</p>
+<p>If <code>p = BLOCK</code> <strong>and</strong> <code><a href="#is_parser_blockKind">$is_parser_blockKind(TC.BLOCK.KIND)</a></code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
 <p>Let <code>typedExpressionIR<sub>base</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>base</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR'</code> be <a href="#canon_typeIR">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
@@ -23987,14 +23966,14 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 </div>
 </li>
 <li>
-<p>Else if <code>p = LOCAL /\ <a href="#is_parser_state_localKind">$is_parser_state_localKind(TC.LOCAL.KIND)</a></code>:</p>
+<p>Else if <code>p = LOCAL</code> <strong>and</strong> <code><a href="#is_parser_state_localKind">$is_parser_state_localKind(TC.LOCAL.KIND)</a></code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
 <p>Let <code>typedExpressionIR<sub>base</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>base</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR'</code> be <a href="#canon_typeIR">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
@@ -24022,14 +24001,14 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>If <code>p = BLOCK /\ <a href="#is_parser_blockKind">$is_parser_blockKind(TC.BLOCK.KIND)</a></code>:</p>
+<p>If <code>p = BLOCK</code> <strong>and</strong> <code><a href="#is_parser_blockKind">$is_parser_blockKind(TC.BLOCK.KIND)</a></code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
 <p>Let <code>typedExpressionIR<sub>base</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>base</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR'</code> be <a href="#canon_typeIR">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
@@ -24050,14 +24029,14 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 </div>
 </li>
 <li>
-<p>Else if <code>p = LOCAL /\ <a href="#is_parser_state_localKind">$is_parser_state_localKind(TC.LOCAL.KIND)</a></code>:</p>
+<p>Else if <code>p = LOCAL</code> <strong>and</strong> <code><a href="#is_parser_state_localKind">$is_parser_state_localKind(TC.LOCAL.KIND)</a></code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
 <p>Let <code>typedExpressionIR<sub>base</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>base</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR'</code> be <a href="#canon_typeIR">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
@@ -24085,14 +24064,14 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>If <code>p = BLOCK /\ <a href="#is_parser_blockKind">$is_parser_blockKind(TC.BLOCK.KIND)</a></code>:</p>
+<p>If <code>p = BLOCK</code> <strong>and</strong> <code><a href="#is_parser_blockKind">$is_parser_blockKind(TC.BLOCK.KIND)</a></code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
 <p>Let <code>typedExpressionIR<sub>base</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>base</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR'</code> be <a href="#canon_typeIR">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
@@ -24113,14 +24092,14 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 </div>
 </li>
 <li>
-<p>Else if <code>p = LOCAL /\ <a href="#is_parser_state_localKind">$is_parser_state_localKind(TC.LOCAL.KIND)</a></code>:</p>
+<p>Else if <code>p = LOCAL</code> <strong>and</strong> <code><a href="#is_parser_state_localKind">$is_parser_state_localKind(TC.LOCAL.KIND)</a></code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
 <p>Let <code>typedExpressionIR<sub>base</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>base</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR'</code> be <a href="#canon_typeIR">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
@@ -24147,20 +24126,20 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Let <code>typedExpressionIR<sub>base</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>base</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR'</code> be <a href="#canon_typeIR">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
-<p>If let <code>STRUCT _ { typeIR<sub>f</sub> nameIR<sub>f</sub> ;<sup>*</sup> }</code> be <code>typeIR'</code>:</p>
+<p>If let <code>STRUCT _ { (typeIR<sub>f</sub> nameIR<sub>f</sub> ;)<sup>*</sup> }</code> be <code>typeIR'</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>member</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR''<sup>?</sup></code> be <code><a href="#assoc_">$assoc_&lt;nameIR, typeIR&gt;(nameIR, (nameIR<sub>f</sub>, typeIR<sub>f</sub>)<sup>*</sup>)</a></code>.</p>
+<p>Let <code>typeIR''<sup>?</sup></code> be <code><a href="#assoc_">$assoc_&lt;nameIR, typeIR&gt;(nameIR, nameIR<sub>f</sub>, typeIR<sub>f</sub><sup>*</sup>)</a></code>.</p>
 </li>
 <li>
 <p>Check that <code>typeIR''<sup>?</sup></code> is Some value.</p>
@@ -24178,14 +24157,14 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 </div>
 </li>
 <li>
-<p>Else if let <code>HEADER _ { typeIR<sub>f</sub> nameIR<sub>f</sub> ;<sup>*</sup> }</code> be <code>typeIR'</code>:</p>
+<p>Else if let <code>HEADER _ { (typeIR<sub>f</sub> nameIR<sub>f</sub> ;)<sup>*</sup> }</code> be <code>typeIR'</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>member</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR''<sup>?</sup></code> be <code><a href="#assoc_">$assoc_&lt;nameIR, typeIR&gt;(nameIR, (nameIR<sub>f</sub>, typeIR<sub>f</sub>)<sup>*</sup>)</a></code>.</p>
+<p>Let <code>typeIR''<sup>?</sup></code> be <code><a href="#assoc_">$assoc_&lt;nameIR, typeIR&gt;(nameIR, nameIR<sub>f</sub>, typeIR<sub>f</sub><sup>*</sup>)</a></code>.</p>
 </li>
 <li>
 <p>Check that <code>typeIR''<sup>?</sup></code> is Some value.</p>
@@ -24203,14 +24182,14 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 </div>
 </li>
 <li>
-<p>Else if let <code>HEADER_UNION _ { typeIR<sub>f</sub> nameIR<sub>f</sub> ;<sup>*</sup> }</code> be <code>typeIR'</code>:</p>
+<p>Else if let <code>HEADER_UNION _ { (typeIR<sub>f</sub> nameIR<sub>f</sub> ;)<sup>*</sup> }</code> be <code>typeIR'</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>member</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR''<sup>?</sup></code> be <code><a href="#assoc_">$assoc_&lt;nameIR, typeIR&gt;(nameIR, (nameIR<sub>f</sub>, typeIR<sub>f</sub>)<sup>*</sup>)</a></code>.</p>
+<p>Let <code>typeIR''<sup>?</sup></code> be <code><a href="#assoc_">$assoc_&lt;nameIR, typeIR&gt;(nameIR, nameIR<sub>f</sub>, typeIR<sub>f</sub><sup>*</sup>)</a></code>.</p>
 </li>
 <li>
 <p>Check that <code>typeIR''<sup>?</sup></code> is Some value.</p>
@@ -24235,13 +24214,13 @@ rule Expr_ok/memberAccessExpression-expression/tablestruct:
 <p>Check that <code>tableMetadataTypeIR</code> matches pattern <code>TABLE_STRUCT % { % }</code>.</p>
 </li>
 <li>
-<p>Let <code>TABLE_STRUCT _ { typeIR<sub>f</sub> nameIR<sub>f</sub> ;<sup>*</sup> }</code> be <code>tableMetadataTypeIR</code>.</p>
+<p>Let <code>TABLE_STRUCT _ { (typeIR<sub>f</sub> nameIR<sub>f</sub> ;)<sup>*</sup> }</code> be <code>tableMetadataTypeIR</code>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>member</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR''<sup>?</sup></code> be <code><a href="#assoc_">$assoc_&lt;nameIR, typeIR&gt;(nameIR, (nameIR<sub>f</sub>, typeIR<sub>f</sub>)<sup>*</sup>)</a></code>.</p>
+<p>Let <code>typeIR''<sup>?</sup></code> be <code><a href="#assoc_">$assoc_&lt;nameIR, typeIR&gt;(nameIR, nameIR<sub>f</sub>, typeIR<sub>f</sub><sup>*</sup>)</a></code>.</p>
 </li>
 <li>
 <p>Check that <code>typeIR''<sup>?</sup></code> is Some value.</p>
@@ -24376,9 +24355,9 @@ indexAccessExpressionIR
    p TC |- expression_base `[expression_index] : (typedExpressionIR_base `[typedExpressionIR_index_reduced]) # expressionNoteIR
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
     -- Expr_ok: p TC |- expression_index : typedExpressionIR_index
-    -- if typeIR_base = $typeIR_of_typedExpressionIR(typedExpressionIR_base)
+    -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     -- if ctk_base = $ctk_of_typedExpressionIR(typedExpressionIR_base)
-    -- if typeIR_index = $typeIR_of_typedExpressionIR(typedExpressionIR_index)
+    -- if typeIR_index = $type_of_typedExpressionIR(typedExpressionIR_index)
     -- if ctk_index = $ctk_of_typedExpressionIR(typedExpressionIR_index)
     -- if typedExpressionIR_index_reduced = $reduce_serenum_unary(typedExpressionIR_index, $compat_array_index)
     -- if TUPLE `&lt;typeIR_e*&gt; = $canon_typeIR(typeIR_base)
@@ -24392,9 +24371,9 @@ rule Expr_ok/indexAccessExpression/headerStack-lctk:
    p TC |- expression_base `[expression_index] : (typedExpressionIR_base `[typedExpressionIR_index_reduced]) # expressionNoteIR
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
     -- Expr_ok: p TC |- expression_index : typedExpressionIR_index
-    -- if typeIR_base = $typeIR_of_typedExpressionIR(typedExpressionIR_base)
+    -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     -- if ctk_base = $ctk_of_typedExpressionIR(typedExpressionIR_base)
-    -- if typeIR_index = $typeIR_of_typedExpressionIR(typedExpressionIR_index)
+    -- if typeIR_index = $type_of_typedExpressionIR(typedExpressionIR_index)
     -- if ctk_index = $ctk_of_typedExpressionIR(typedExpressionIR_index)
     -- if typedExpressionIR_index_reduced = $reduce_serenum_unary(typedExpressionIR_index, $compat_array_index)
     -- if typeIR `[n_size] = $canon_typeIR(typeIR_base)
@@ -24408,9 +24387,9 @@ rule Expr_ok/indexAccessExpression/headerStack-non-lctk:
    p TC |- expression_base `[expression_index] : (typedExpressionIR_base `[typedExpressionIR_index_reduced]) # expressionNoteIR
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
     -- Expr_ok: p TC |- expression_index : typedExpressionIR_index
-    -- if typeIR_base = $typeIR_of_typedExpressionIR(typedExpressionIR_base)
+    -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     -- if ctk_base = $ctk_of_typedExpressionIR(typedExpressionIR_base)
-    -- if typeIR_index = $typeIR_of_typedExpressionIR(typedExpressionIR_index)
+    -- if typeIR_index = $type_of_typedExpressionIR(typedExpressionIR_index)
     -- if ctk_index = $ctk_of_typedExpressionIR(typedExpressionIR_index)
     -- if typedExpressionIR_index_reduced = $reduce_serenum_unary(typedExpressionIR_index, $compat_array_index)
     -- if typeIR `[n_size] = $canon_typeIR(typeIR_base)
@@ -24437,13 +24416,13 @@ rule Expr_ok/indexAccessExpression/headerStack-non-lctk:
 <p>Let <code>typedExpressionIR<sub>index</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>index</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>base</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of  <code>typedExpressionIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>index</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>index</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>index</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>index</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>index</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of  <code>typedExpressionIR<sub>index</sub></code></a>.</p>
@@ -24569,13 +24548,13 @@ sliceAccessExpressionIR
     -- Expr_ok: p TC |- expression_hi : typedExpressionIR_hi
     -- Expr_ok: p TC |- expression_lo : typedExpressionIR_lo
     -- if typedExpressionIR_base_reduced = $reduce_serenum_unary(typedExpressionIR_base, $compat_bitslice_base)
-    -- if typeIR_base_reduced = $typeIR_of_typedExpressionIR(typedExpressionIR_base_reduced)
+    -- if typeIR_base_reduced = $type_of_typedExpressionIR(typedExpressionIR_base_reduced)
     -- if ctk_base_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_base_reduced)
     -- if typedExpressionIR_hi_reduced = $reduce_serenum_unary(typedExpressionIR_hi, $compat_bitslice_index)
     -- if typedExpressionIR_lo_reduced = $reduce_serenum_unary(typedExpressionIR_lo, $compat_bitslice_index)
-    -- if typeIR_hi_reduced = $typeIR_of_typedExpressionIR(typedExpressionIR_hi_reduced)
+    -- if typeIR_hi_reduced = $type_of_typedExpressionIR(typedExpressionIR_hi_reduced)
     -- if ctk_hi_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_hi_reduced)
-    -- if typeIR_lo_reduced = $typeIR_of_typedExpressionIR(typedExpressionIR_lo_reduced)
+    -- if typeIR_lo_reduced = $type_of_typedExpressionIR(typedExpressionIR_lo_reduced)
     -- if ctk_lo_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_lo_reduced)
     -- if ctk_hi_reduced = LCTK
     -- Expr_eval_lctk: p TC |- typedExpressionIR_hi_reduced ~&gt; value_hi
@@ -24620,7 +24599,7 @@ sliceAccessExpressionIR
 <p>Let <code>typedExpressionIR<sub>base_reduced</sub></code> be <code>typedExpressionIR<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base_reduced</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>base_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>base_reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>base_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>base_reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of  <code>typedExpressionIR<sub>base_reduced</sub></code></a>.</p>
@@ -24644,13 +24623,13 @@ sliceAccessExpressionIR
 <p>Let <code>typedExpressionIR<sub>lo_reduced</sub></code> be <code>typedExpressionIR''<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>hi_reduced</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>hi_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>hi_reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>hi_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>hi_reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of  <code>typedExpressionIR<sub>hi_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>lo_reduced</sub></code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>lo_reduced</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>lo_reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR<sub>lo_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>lo_reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of  <code>typedExpressionIR<sub>lo_reduced</sub></code></a>.</p>
@@ -24975,7 +24954,7 @@ rule Expr_ok/callExpression-callable/typeArgumentList:
 <p>Let <a href="#CallableType_ok"><code>p TC |- callableTargetIR &lt; typeArgumentIR<sup>*</sup> &gt; ( argumentIR<sup>*</sup> ) : callableTypeIR &lt; # tid<sub>inserted</sub><sup>*</sup> &gt; ( # id<sub>default</sub><sup>*</sup> )</code></a>.</p>
 </li>
 <li>
-<p>Let <code>tid<sub>infer</sub><sup>*</sup></code> be <code>tid<sub>impl</sub><sup>*</sup> ++ tid<sub>inserted</sub><sup>*</sup></code>.</p>
+<p>Let <code>tid<sub>infer</sub><sup>*</sup></code> be <code>tid<sub>impl</sub><sup>*</sup> &#43;&#43; tid<sub>inserted</sub><sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Let <a href="#Call_ok"><code>p TC |- callableTypeIR &lt; typeArgumentIR<sup>*</sup> # tid<sub>infer</sub><sup>*</sup> &gt; ( argumentIR<sup>*</sup> # id<sub>default</sub><sup>*</sup> ) : typeIR<sub>ret</sub> &lt; typeArgumentIR<sub>inferred</sub><sup>*</sup> &gt; ( argumentIR<sub>cast</sub><sup>*</sup> )</code></a>.</p>
@@ -25017,15 +24996,15 @@ rule Expr_eval_lctk/callExpressionIR-builtin-size/type-monomorphic:
    p TC |- ((TYPE prefixedNameIR . nameIR) `&lt;eps&gt; `(eps)) # _ ~&gt; $sizeof(typeIR_base, nameIR)
     -- if typeDefIR_base = $find_typeDef_t(p, TC, prefixedNameIR)
     -- if $is_monomorphic_typeDefIR(typeDefIR_base)
-    -- if typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base)
+    -- if typeIR_base = $type_of_typeDefIR(typeDefIR_base)
     -- if nameIR &lt;- ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]
 
 rule Expr_eval_lctk/callExpressionIR-builtin-size/type-polymorphic:
    p TC |- ((TYPE prefixedNameIR . nameIR) `&lt;eps&gt; `(eps)) # _ ~&gt; $sizeof(typeIR_base, nameIR)
     -- if typeDefIR_base = $find_typeDef_t(p, TC, prefixedNameIR)
     -- if ~$is_monomorphic_typeDefIR(typeDefIR_base)
-    -- if (eps, eps) = $tparams_of_typeDefIR(typeDefIR_base)
-    -- if typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base)
+    -- if (eps, eps) = $type_parameters_of_typeDefIR(typeDefIR_base)
+    -- if typeIR_base = $type_of_typeDefIR(typeDefIR_base)
     -- if nameIR &lt;- ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]</pre>
 </div>
 </div>
@@ -25075,7 +25054,7 @@ rule Expr_eval_lctk/callExpressionIR-builtin-size/type-polymorphic:
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <code><a href="#typeIR_of_typeDefIR">$typeIR_of_typeDefIR(typeDefIR<sub>base</sub>)</a></code>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <code><a href="#type_of_typeDefIR">$type_of_typeDefIR(typeDefIR<sub>base</sub>)</a></code>.</p>
 </li>
 <li>
 <p>Check that <code>nameIR</code> is in <code>["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]</code>.</p>
@@ -25091,10 +25070,10 @@ rule Expr_eval_lctk/callExpressionIR-builtin-size/type-polymorphic:
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Check that (<code>[ ]</code>, <code>[ ]</code>) is equal to <code><a href="#tparams_of_typeDefIR">$tparams_of_typeDefIR(typeDefIR<sub>base</sub>)</a></code>.</p>
+<p>Check that (<code>[ ]</code>, <code>[ ]</code>) is equal to <code><a href="#type_parameters_of_typeDefIR">$type_parameters_of_typeDefIR(typeDefIR<sub>base</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <code><a href="#typeIR_of_typeDefIR">$typeIR_of_typeDefIR(typeDefIR<sub>base</sub>)</a></code>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <code><a href="#type_of_typeDefIR">$type_of_typeDefIR(typeDefIR<sub>base</sub>)</a></code>.</p>
 </li>
 <li>
 <p>Check that <code>nameIR</code> is in <code>["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]</code>.</p>
@@ -25127,15 +25106,15 @@ rule Expr_inst/callExpressionIR-builtin-size/type-monomorphic:
    p IC STO |- ((TYPE prefixedNameIR . nameIR) `&lt;eps&gt; `(eps)) # _ : STO $sizeof(typeIR_base, nameIR)
     -- if typeDefIR_base = $find_typeDef_i(p, IC, prefixedNameIR)
     -- if $is_monomorphic_typeDefIR(typeDefIR_base)
-    -- if typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base)
+    -- if typeIR_base = $type_of_typeDefIR(typeDefIR_base)
     -- if nameIR &lt;- ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]
 
 rule Expr_inst/callExpressionIR-builtin-size/type-polymorphic:
    p IC STO |- ((TYPE prefixedNameIR . nameIR) `&lt;eps&gt; `(eps)) # _ : STO $sizeof(typeIR_base, nameIR)
     -- if typeDefIR_base = $find_typeDef_i(p, IC, prefixedNameIR)
     -- if ~$is_monomorphic_typeDefIR(typeDefIR_base)
-    -- if (eps, eps) = $tparams_of_typeDefIR(typeDefIR_base)
-    -- if typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base)
+    -- if (eps, eps) = $type_parameters_of_typeDefIR(typeDefIR_base)
+    -- if typeIR_base = $type_of_typeDefIR(typeDefIR_base)
     -- if nameIR &lt;- ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]</pre>
 </div>
 </div>
@@ -25185,7 +25164,7 @@ rule Expr_inst/callExpressionIR-builtin-size/type-polymorphic:
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <code><a href="#typeIR_of_typeDefIR">$typeIR_of_typeDefIR(typeDefIR<sub>base</sub>)</a></code>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <code><a href="#type_of_typeDefIR">$type_of_typeDefIR(typeDefIR<sub>base</sub>)</a></code>.</p>
 </li>
 <li>
 <p>Check that <code>nameIR</code> is in <code>["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]</code>.</p>
@@ -25201,10 +25180,10 @@ rule Expr_inst/callExpressionIR-builtin-size/type-polymorphic:
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Check that (<code>[ ]</code>, <code>[ ]</code>) is equal to <code><a href="#tparams_of_typeDefIR">$tparams_of_typeDefIR(typeDefIR<sub>base</sub>)</a></code>.</p>
+<p>Check that (<code>[ ]</code>, <code>[ ]</code>) is equal to <code><a href="#type_parameters_of_typeDefIR">$type_parameters_of_typeDefIR(typeDefIR<sub>base</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <code><a href="#typeIR_of_typeDefIR">$typeIR_of_typeDefIR(typeDefIR<sub>base</sub>)</a></code>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <code><a href="#type_of_typeDefIR">$type_of_typeDefIR(typeDefIR<sub>base</sub>)</a></code>.</p>
 </li>
 <li>
 <p>Check that <code>nameIR</code> is in <code>["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]</code>.</p>
@@ -25354,7 +25333,7 @@ rule Expr_ok/callExpression-constructor/specializedType:
 <p>Let <a href="#ConstructorType_ok"><code>p TC |- prefixedNameIR &lt; typeArgumentIR<sup>*</sup> &gt; ( argumentIR<sup>*</sup> ) : constructorTypeIR &lt; # tid<sub>inserted</sub><sup>*</sup> &gt; ( # id<sub>default</sub><sup>*</sup> )</code></a>.</p>
 </li>
 <li>
-<p>Let <code>tid<sub>infer</sub><sup>*</sup></code> be <code>tid<sub>impl</sub><sup>*</sup> ++ tid<sub>inserted</sub><sup>*</sup></code>.</p>
+<p>Let <code>tid<sub>infer</sub><sup>*</sup></code> be <code>tid<sub>impl</sub><sup>*</sup> &#43;&#43; tid<sub>inserted</sub><sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Let <a href="#Inst_ok"><code>p TC ANON |- constructorTypeIR &lt; typeArgumentIR<sup>*</sup> # tid<sub>infer</sub><sup>*</sup> &gt; ( argumentIR<sup>*</sup> # id<sub>default</sub><sup>*</sup> ) : typeIR<sub>object</sub> &lt; typeArgumentIR<sub>inferred</sub><sup>*</sup> &gt; ( argumentIR<sub>cast</sub><sup>*</sup> )</code></a>.</p>
@@ -25507,7 +25486,7 @@ rule Expr_ok/callExpression-constructor/specializedType:
 <p>Let <a href="#ConstructorType_ok"><code>p TC |- prefixedNameIR &lt; typeArgumentIR<sup>*</sup> &gt; ( argumentIR<sup>*</sup> ) : constructorTypeIR &lt; # tid<sub>inserted</sub><sup>*</sup> &gt; ( # id<sub>default</sub><sup>*</sup> )</code></a>.</p>
 </li>
 <li>
-<p>Let <code>tid<sub>infer</sub><sup>*</sup></code> be <code>tid<sub>impl</sub><sup>*</sup> ++ tid<sub>inserted</sub><sup>*</sup></code>.</p>
+<p>Let <code>tid<sub>infer</sub><sup>*</sup></code> be <code>tid<sub>impl</sub><sup>*</sup> &#43;&#43; tid<sub>inserted</sub><sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Let <a href="#Inst_ok"><code>p TC ANON |- constructorTypeIR &lt; typeArgumentIR<sup>*</sup> # tid<sub>infer</sub><sup>*</sup> &gt; ( argumentIR<sup>*</sup> # id<sub>default</sub><sup>*</sup> ) : typeIR<sub>object</sub> &lt; typeArgumentIR<sub>inferred</sub><sup>*</sup> &gt; ( argumentIR<sub>cast</sub><sup>*</sup> )</code></a>.</p>
@@ -25624,7 +25603,7 @@ parenthesizedExpressionIR
 <pre>rule Expr_ok/parenthesizedExpression:
    p TC |- `(expression) : (`(typedExpressionIR)) # expressionNoteIR
     -- Expr_ok: p TC |- expression : typedExpressionIR
-    -- if typeIR = $typeIR_of_typedExpressionIR(typedExpressionIR)
+    -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
     -- if ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
     -- if expressionNoteIR = `(typeIR ctk)</pre>
 </div>
@@ -25645,7 +25624,7 @@ parenthesizedExpressionIR
 <p>Let <code>typedExpressionIR</code> be the result of <a href="#Expr_ok">typing <code>expression</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR</code> be <a href="#typeIR_of_typedExpressionIR">the type of  <code>typedExpressionIR</code></a>.</p>
+<p>Let <code>typeIR</code> be <a href="#type_of_typedExpressionIR">the type of  <code>typedExpressionIR</code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk</code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of  <code>typedExpressionIR</code></a>.</p>
@@ -27210,7 +27189,7 @@ in parsers and deparsers to access packet data.</p>
 <div id="footer">
 <div id="footer-text">
 Version v1.2.5<br>
-Last updated 2025-11-05 22:31:35 +0900
+Last updated 2025-11-11 11:31:59 +0900
 </div>
 </div>
 </body>

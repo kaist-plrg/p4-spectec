@@ -35,6 +35,7 @@ let rec compare (value_l : t) (value_r : t) =
     | OptV _ -> 6
     | ListV _ -> 7
     | FuncV _ -> 8
+    | ExternV _ -> 9
   in
   match (value_l.it, value_r.it) with
   | BoolV b_l, BoolV b_r -> Stdlib.compare b_l b_r
@@ -56,6 +57,8 @@ let rec compare (value_l : t) (value_r : t) =
       | None, Some _ -> -1
       | None, None -> 0)
   | ListV values_l, ListV values_r -> compares values_l values_r
+  | ExternV json_l, ExternV json_r ->
+      String.compare (Yojson.Safe.show json_l) (Yojson.Safe.show json_r)
   | _ -> Int.compare (tag value_l) (tag value_r)
 
 and compares (values_l : t list) (values_r : t list) : int =

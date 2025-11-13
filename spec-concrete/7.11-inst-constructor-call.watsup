@@ -189,9 +189,11 @@ rule Constructor_inst/externConstructorDef:
       IC_callee_3 |- externMethodPrototypeIR* : IC_callee_4
   ---- ;; create an extern object with the final callee context
   -- if `{ (cid `: externMethodDef)* } = IC_callee_4.BLOCK.CALLABLE
+  -- if externState = $init_externState()
   -- if object_extern
       = EXTERN nameIR `< IC_callee_4.BLOCK.TYPE >
-                      `{ IC_callee_4.BLOCK.FRAME
+                      `{ externState
+                         IC_callee_4.BLOCK.FRAME
                          `{ (cid `: externMethodDef)* } }
 
 ;;; parserObjectConstructorDef

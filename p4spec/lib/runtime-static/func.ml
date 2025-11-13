@@ -4,12 +4,18 @@ open El.Print
 (* Function *)
 
 type t =
+  | Extern of tparam list * param list * plaintyp
   | Builtin of tparam list * param list * plaintyp
   | Defined of tparam list * param list * plaintyp * Il.Ast.clause list
 
 let to_string = function
+  | Extern (tparams, params, plaintyp) ->
+      "extern def " ^ string_of_tparams tparams ^ string_of_params params
+      ^ " : "
+      ^ string_of_plaintyp plaintyp
   | Builtin (tparams, params, plaintyp) ->
-      "def " ^ string_of_tparams tparams ^ string_of_params params ^ " : "
+      "builtin def " ^ string_of_tparams tparams ^ string_of_params params
+      ^ " : "
       ^ string_of_plaintyp plaintyp
   | Defined (tparams, params, plaintyp, clauses) ->
       "def " ^ string_of_tparams tparams ^ string_of_params params ^ " : "

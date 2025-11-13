@@ -1,17 +1,192 @@
 ;;
+;; Table key evaluation
+;;
+
+syntax tableKeyValue = value `: nameIR
+
+syntax tableKeyResult =
+  | continueResult<tableKeyValue>
+  | exitResult
+
+relation TableKey_eval:
+  evalContext store |- tableKeyIR
+                     : evalContext store tableKeyResult
+  hint(input %0 %1 %2)
+
+rule TableKey_eval/exit:
+  EC_0 STO_0 |- typedExpressionIR `: nameIR _ `;
+              : EC_1 STO_1 EXIT
+  -- Expr_eval:
+      LOCAL EC_0 STO_0 |- typedExpressionIR
+                        : EC_1 STO_1 EXIT
+
+rule TableKey_eval/cont:
+  EC_0 STO_0 |- typedExpressionIR `: nameIR _ `;
+              : EC_1 STO_1 (`` tableKeyValue)
+  -- Expr_eval:
+      LOCAL EC_0 STO_0 |- typedExpressionIR
+                        : EC_1 STO_1 (`` value)
+  -- if tableKeyValue = value `: nameIR
+
+syntax tableKeysResult =
+  | continueResult<tableKeyValue*>
+  | exitResult
+
+relation TableKeys_eval:
+  evalContext store |- tableKeyListIR
+                     : evalContext store tableKeysResult
+  hint(input %0 %1 %2)
+
+rulegroup TableKeys_eval {
+
+  rule TableKeys_eval/nil:
+    EC STO |- eps : EC STO (`` eps)
+
+  rule TableKeys_eval/cons-head-exit:
+    EC_0 STO_0 |- tableKeyIR_h :: tableKeyIR_t*
+                : EC_1 STO_1 EXIT
+    -- TableKey_eval:
+        EC_0 STO_0 |- tableKeyIR_h : EC_1 STO_1 EXIT
+
+  rule TableKeys_eval/cons-head-cont-tail-exit:
+    EC_0 STO_0 |- tableKeyIR_h :: tableKeyIR_t*
+                : EC_2 STO_2 EXIT
+    -- TableKey_eval:
+        EC_0 STO_0 |- tableKeyIR_h : EC_1 STO_1 (`` tableKeyValue_h)
+    -- TableKeys_eval:
+        EC_1 STO_1 |- tableKeyIR_t* : EC_2 STO_2 EXIT
+
+  rule TableKeys_eval/cons-head-cont-tail-cont:
+    EC_0 STO_0 |- tableKeyIR_h :: tableKeyIR_t*
+                : EC_2 STO_2 (`` tableKeyValue*)
+    -- TableKey_eval:
+        EC_0 STO_0 |- tableKeyIR_h : EC_1 STO_1 (`` tableKeyValue_h)
+    -- TableKeys_eval:
+        EC_1 STO_1 |- tableKeyIR_t* : EC_2 STO_2 (`` tableKeyValue_t*)
+    -- if tableKeyValue* = tableKeyValue_h :: tableKeyValue_t*
+
+}
+
+;;
+;; Table match evaluation
+;;
+
+relation TableEntryPriority_eval:
+  evalContext store |- tableEntryPriorityIR? : nat?
+  hint(input %0 %1 %2)
+
+rule TableEntryPriority_eval:
+  EC STO |- eps : eps
+
+syntax tableMatch = nat? `: tableActionReferenceIR
+
+syntax tableMatchResult =
+  | continueResult<tableMatch?>
+  | exitResult
+
+relation TableMatch_eval:
+  evalContext store |- tableKeyValue* `@ tableEntryIR
+                     : evalContext store tableMatchResult
+  hint(input %0 %1 %2 %3)
+
+rulegroup TableMatch_eval {
+
+  rule TableMatch_eval/no-match:
+    EC_0 STO_0 |- tableKeyValue* `@ tableEntryIR
+                : EC_1 STO_1 (`` eps)
+    ---- ;; unpack table entry
+    -- if _ tableEntryPriorityIR?
+            keysetExpressionIR `: tableActionReferenceIR _ `;
+        = tableEntryIR
+    ---- ;; evaluate table entry priority
+    -- TableEntryPriority_eval:
+        EC_0 STO_0 |- tableEntryPriorityIR? : n_priority?
+    ---- ;; evaluate keyset expression
+    -- Expr_eval_keyset:
+        EC_0 STO_0 |- keysetExpressionIR
+                    : EC_1 STO_1 (`` setValue*)
+    ---- ;; perform match
+    -- if (value_key `: _ = tableKeyValue)*
+    -- if ~$match_keysets(setValue*, value_key*)
+
+  rule TableMatch_eval/match:
+    EC_0 STO_0 |- tableKeyValue* `@ tableEntryIR
+                : EC_1 STO_1 (`` tableMatch)
+    ---- ;; unpack table entry
+    -- if _ tableEntryPriorityIR?
+            keysetExpressionIR `: tableActionReferenceIR _ `;
+        = tableEntryIR
+    ---- ;; evaluate table entry priority
+    -- TableEntryPriority_eval:
+        EC_0 STO_0 |- tableEntryPriorityIR? : n_priority?
+    ---- ;; evaluate keyset expression
+    -- Expr_eval_keyset:
+        EC_0 STO_0 |- keysetExpressionIR
+                    : EC_1 STO_1 (`` setValue*)
+    ---- ;; perform match
+    -- if (value_key `: _ = tableKeyValue)*
+    -- if $match_keysets(setValue*, value_key*)
+    -- if tableMatch = n_priority? `: tableActionReferenceIR
+
+}
+
+syntax tableMatchesResult =
+  | continueResult<tableMatch*>
+  | exitResult
+
+relation TableMatches_eval:
+  evalContext store |- tableKeyValue* `@ tableEntryListIR
+                     : evalContext store tableMatchesResult
+  hint(input %0 %1 %2 %3)
+
+rulegroup TableMatches_eval {
+
+  rule TableMatches_eval/nil:
+    EC STO |- tableKeyValue* `@ eps
+            : EC STO (`` eps)
+
+  rule TableMatches_eval/cons-head-cont-tail-cont:
+    EC_0 STO_0 |- tableKeyValue* `@ (tableEntryIR_h :: tableEntryIR_t*)
+                : EC_2 STO_2 (`` tableMatch*)
+    -- TableMatch_eval:
+        EC_0 STO_0 |- tableKeyValue* `@ tableEntryIR_h
+                    : EC_1 STO_1 (`` tableMatch_h?)
+    -- TableMatches_eval:
+        EC_1 STO_1 |- tableKeyValue* `@ tableEntryIR_t*
+                    : EC_2 STO_2 (`` tableMatch_t*)
+    -- if tableMatch*
+        = $opt_as_seq_<tableMatch>(tableMatch_h?) ++ tableMatch_t*
+
+}
+
+;;
 ;; Match-action table evaluation
 ;;
-;;
-;; syntax tableObjectProperty
-;;
 
-;;; (TODO) for now, directly evaluate the default_action
+dec $select_action(tableObjectProperty, tableMatch*)
+  : tableActionReferenceIR
+
+def $select_action(TBL, eps) = tableActionReferenceIR
+  -- if _ _ DEFAULT_ACTION `= tableActionReferenceIR `;
+      = TBL.DEFAULT_ACTION
+def $select_action(TBL, tableMatch) = tableActionReferenceIR
+  -- if _ `: tableActionReferenceIR = tableMatch
 
 rule Table_eval:
-  EC_0 STO_0 |- TBL
-              : EC_1 STO_1 (RETURN eps)
-  -- if _ _ DEFAULT_ACTION `= (prefixedNameIR `( argumentListIR )) `;
-      = TBL.DEFAULT_ACTION
+  EC_0 STO_0 |- TBL : EC_3 STO_3 (RETURN eps)
+  ---- ;; evaluate table keys
+  -- if KEY `= `{ tableKeyListIR } = TBL.KEYS
+  -- TableKeys_eval:
+      EC_0 STO_0 |- tableKeyListIR : EC_1 STO_1 (`` tableKeyValue*)
+  ---- ;; perform match
+  -- if _ _ ENTRIES `= `{ tableEntryListIR } = TBL.ENTRIES
+  -- TableMatches_eval:
+      EC_1 STO_1 |- tableKeyValue* `@ tableEntryListIR
+                  : EC_2 STO_2 (`` tableMatch*)
+  ---- ;; select an action
+  -- if prefixedNameIR `( argumentListIR )
+      = $select_action(TBL, tableMatch*)
+  ---- ;; evaluate the action
   -- Stmt_eval:
-      LOCAL EC_0 STO_0 |- prefixedNameIR `< eps > `( argumentListIR ) `;
-                        : EC_1 STO_1 ``
+      LOCAL EC_2 STO_2 |- prefixedNameIR `< eps > `( argumentListIR ) `;
+                        : EC_3 STO_3 ``

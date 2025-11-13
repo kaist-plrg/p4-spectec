@@ -3,6 +3,7 @@ open Xl
 open Il.Ast
 module InputHint = Runtime_static.Rel.InputHint
 module Typ = Runtime_dynamic.Typ
+module TypDef = Runtime_dynamic.Typdef
 module Value = Runtime_dynamic.Value
 module Func = Runtime_dynamic_il.Func
 module Rel = Runtime_dynamic_il.Rel
@@ -23,18 +24,6 @@ let func_cache = ref (Cache.Cache.create ~size:10000)
 let rule_cache = ref (Cache.Cache.create ~size:10000)
 
 module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
-  (* Architecture transactions *)
-
-  let checkpoint () = Arch.checkpoint ()
-
-  let restore_on_fail attempt =
-    (match attempt with Fail _ -> Arch.restore () | _ -> ());
-    attempt
-
-  let commit_or_rollback attempt =
-    (match attempt with Ok _ -> Arch.commit () | Fail _ -> Arch.rollback ());
-    attempt
-
   (* Assignments *)
 
   (* Assigning a value to an expression *)
@@ -360,7 +349,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
         | NumV (`Int _) -> value
         | _ -> assert false)
     | VarT (tid, targs) -> (
-        let tparams, deftyp = Ctx.find_typdef Local ctx tid in
+        let tparams, deftyp = Ctx.find_defined_typdef Local ctx tid in
         let theta = List.combine tparams targs |> TIdMap.of_list in
         match deftyp.it with
         | PlainT typ ->
@@ -408,7 +397,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
             value_res
         | _ -> assert false)
     | VarT (tid, targs) -> (
-        let tparams, deftyp = Ctx.find_typdef Local ctx tid in
+        let tparams, deftyp = Ctx.find_defined_typdef Local ctx tid in
         let theta = List.combine tparams targs |> TIdMap.of_list in
         match deftyp.it with
         | PlainT typ ->
@@ -450,7 +439,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
         | NumV (`Int i) -> Bigint.(i >= zero)
         | _ -> assert false)
     | VarT (tid, targs) -> (
-        let tparams, deftyp = Ctx.find_typdef Local ctx tid in
+        let tparams, deftyp = Ctx.find_defined_typdef Local ctx tid in
         let theta = List.combine tparams targs |> TIdMap.of_list in
         match (deftyp.it, value.it) with
         | PlainT typ, _ ->
@@ -854,9 +843,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     let cond = Value.get_bool value_cond in
     if cond then Ok ctx
     else
-      fail exp_cond.at
+      let reason = Trace.guess_reason ctx.trace in
+      fail_with_reason exp_cond.at
         (F.asprintf "condition %s was not met"
            (Il.Print.string_of_exp exp_cond))
+        reason
 
   (* If-hold premise evaluation *)
 
@@ -995,6 +986,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
   and invoke_extern_rel (ctx : Ctx.t) (id : id) (values_input : value list) :
       (Ctx.t * value list) attempt =
     match id.it with
+    | "ExternFunctionCall_eval" ->
+        let values_output = Arch.eval_extern_func_call values_input in
+        Ok (ctx, values_output)
     | "ExternMethodCall_eval" ->
         let values_output = Arch.eval_extern_method_call values_input in
         Ok (ctx, values_output)
@@ -1037,15 +1031,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
                         |> nest id.at
                              (F.asprintf "application of rule %s/%s/%s failed"
                                 id.it id_rulegroup.it id_rulepath.it)
-                        |> restore_on_fail
                       in
                       attempt_rulepath))
       in
       choice attempt_rules
-    in
-    let do_attempt_rules () =
-      checkpoint ();
-      attempt_rules () |> commit_or_rollback
     in
     if Cache.is_cached_rule id.it then (
       let cache_result = Cache.Cache.find !rule_cache (id.it, values_input) in
@@ -1054,12 +1043,12 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
           let ctx = Ctx.trace_replace ctx subtraces in
           Ok (ctx, values_output)
       | None ->
-          let* ctx, values_output = do_attempt_rules () in
+          let* ctx, values_output = attempt_rules () in
           let subtraces = Trace.wipe_subtraces ctx.trace in
           Cache.Cache.add !rule_cache (id.it, values_input)
             (subtraces, values_output);
           Ok (ctx, values_output))
-    else do_attempt_rules ()
+    else attempt_rules ()
 
   (* Invoke a function *)
 
@@ -1091,9 +1080,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
           let theta =
             TDEnv.fold
               (fun tid typdef theta ->
-                let tparams, deftyp = typdef in
-                match (tparams, deftyp.it) with
-                | [], Il.Ast.PlainT typ -> TIdMap.add tid typ theta
+                match typdef with
+                | TypDef.Defined ([], { it = Il.Ast.PlainT typ; _ }) ->
+                    TIdMap.add tid typ theta
                 | _ -> theta)
               ctx.local.tdenv TIdMap.empty
           in
@@ -1110,9 +1099,18 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     let func = Ctx.find_func Local ctx id in
     (* Invoke the function *)
     match func with
+    | Func.Extern -> invoke_extern_func ctx id targs values_input
     | Func.Builtin -> invoke_builtin_func ctx id targs values_input
     | Func.Defined (tparams, clauses) ->
         invoke_defined_func ctx id tparams clauses targs values_input
+
+  and invoke_extern_func (ctx : Ctx.t) (id : id) (_targs : targ list)
+      (values_input : value list) : (Ctx.t * value) attempt =
+    match id.it with
+    | "init_externState" ->
+        let value_output = Arch.eval_extern_init values_input in
+        Ok (ctx, value_output)
+    | _ -> fail id.at (F.asprintf "unimplemented extern function %s" id.it)
 
   and invoke_builtin_func (ctx : Ctx.t) (id : id) (targs : targ list)
       (values_input : value list) : (Ctx.t * value) attempt =
@@ -1170,8 +1168,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
               let ctx_local =
                 List.fold_left2
                   (fun ctx_local tparam targ ->
-                    Ctx.add_typdef Local ctx_local tparam
-                      ([], PlainT targ $ targ.at))
+                    let td = TypDef.Defined ([], PlainT targ $ targ.at) in
+                    Ctx.add_typdef Local ctx_local tparam td)
                   ctx_local tparams targs
               in
               (* Try to match the clause *)
@@ -1183,16 +1181,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
               |> nest id.at
                    (F.asprintf "application of clause %s%s failed" id.it
                       (Il.Print.string_of_args args_input))
-              |> restore_on_fail
             in
             attempt_clause)
           clauses
       in
       choice attempt_clauses'
-    in
-    let do_attempt_clauses () =
-      checkpoint ();
-      attempt_clauses () |> commit_or_rollback
     in
     if Cache.is_cached_func id.it then (
       let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
@@ -1201,26 +1194,32 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
           let ctx = Ctx.trace_replace ctx subtraces in
           Ok (ctx, value_output)
       | None ->
-          let* ctx, value_output = do_attempt_clauses () in
+          let* ctx, value_output = attempt_clauses () in
           let subtraces = Trace.wipe_subtraces ctx.trace in
           Cache.Cache.add !func_cache (id.it, values_input)
             (subtraces, value_output);
           Ok (ctx, value_output))
-    else do_attempt_clauses ()
+    else attempt_clauses ()
 
   (* Load definitions into the context *)
 
   let load_def (ctx : Ctx.t) (def : def) : Ctx.t =
     match def.it with
+    | ExternTypD (id, _) ->
+        let td = TypDef.Extern in
+        Ctx.add_typdef Global ctx id td
     | TypD (id, tparams, deftyp, _) ->
-        let typdef = (tparams, deftyp) in
-        Ctx.add_typdef Global ctx id typdef
+        let td = TypDef.Defined (tparams, deftyp) in
+        Ctx.add_typdef Global ctx id td
     | ExternRelD (id, _, inputs, _) ->
         let rel = Rel.Extern inputs in
         Ctx.add_rel Global ctx id rel
     | RelD (id, _, inputs, rulegroups, _) ->
         let rel = Rel.Defined (inputs, rulegroups) in
         Ctx.add_rel Global ctx id rel
+    | ExternDecD (id, _, _, _, _) ->
+        let func = Func.Extern in
+        Ctx.add_func Global ctx id func
     | BuiltinDecD (id, _, _, _, _) ->
         let func = Func.Builtin in
         Ctx.add_func Global ctx id func

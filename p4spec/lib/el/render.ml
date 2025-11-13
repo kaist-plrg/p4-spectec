@@ -258,7 +258,7 @@ let render_rulegroup_def _id_rel id_rulegroup rules =
 
 let render_def def =
   match def.it with
-  | SynD _ -> ""
+  | ExternSynD _ | SynD _ -> ""
   | TypD (id_typ, tparams, deftyp, hints) ->
       render_type_def id_typ tparams deftyp hints
   | VarD _ -> ""
@@ -267,6 +267,7 @@ let render_def def =
   | RelD (id_rel, nottyp, hints) -> render_relation_def id_rel nottyp hints
   | RuleGroupD (id_rel, id_rulegroup, rules) ->
       render_rulegroup_def id_rel id_rulegroup rules
+  | ExternDecD _ -> ""
   | BuiltinDecD _ -> ""
   | DecD _ -> ""
   | DefD _ -> ""

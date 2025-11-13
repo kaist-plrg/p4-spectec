@@ -33,7 +33,9 @@ def $concat_text(eps) = ""
 def $concat_text(t_h :: t_t*) = t_h ++ $concat_text(t_t*)
 
 builtin dec $strip_prefix(text, text) : text
+  hint(prose_in "the text" %0 "with the prefix" %1 "removed")
 builtin dec $strip_suffix(text, text) : text
+  hint(prose_in "the text" %0 "with the suffix" %1 "removed")
 
 ;;
 ;; General option functions
@@ -139,6 +141,7 @@ builtin dec $add_map<K, V>(map<K, V>, K, V) : map<K, V>
 builtin dec $adds_map<K, V>(map<K, V>, K*, V*) : map<K, V>
 
 builtin dec $update_map<K, V>(map<K, V>, K, V) : map<K, V>
+  hint(prose_in "the map" %0 "with the value for key" %1 "updated to" %2)
 
 dec $extend_map<K, V>(map<K, V>, map<K, V>) : map<K, V>
 def $extend_map<K, V>(`{ (K_a `: V_a)* }, `{ (K_b `: V_b)* })

@@ -75,7 +75,6 @@ let struct_command =
          Format.printf "%s\n" (Sl.Print.string_of_spec spec_sl);
          ()
        with
-       | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 

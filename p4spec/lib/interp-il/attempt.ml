@@ -13,25 +13,12 @@ let ( let* ) (attempt : 'a attempt) (f : 'a -> 'b) : 'b =
   match attempt with Ok a -> f a | Fail _ as fail -> fail
 
 let error_with_failtraces (failtraces : failtrace list) =
-  let sfailtrace =
-    match failtraces with
-    | [] -> ""
-    | [ failtrace ] ->
-        let depth = depth failtrace in
-        let depth = max 0 (depth - 3) in
-        string_of_failtrace ~depth ~bullet:"-" failtrace
-    | failtraces ->
-        List.mapi
-          (fun idx failtrace ->
-            let depth = depth failtrace in
-            let depth = max 0 (depth - 3) in
-            string_of_failtrace ~depth
-              ~bullet:(string_of_int (idx + 1) ^ ".")
-              failtrace)
-          failtraces
-        |> String.concat ""
+  let msg =
+    match !Trace.mode with
+    | Trace.Full -> prettify_failtraces ~limit:false failtraces
+    | Trace.Concise -> prune_failtraces failtraces |> prettify_failtraces
   in
-  error no_region ("tracing backtrack logs:\n" ^ sfailtrace)
+  error no_region ("tracing backtrack logs:\n" ^ msg)
 
 let ( let+ ) (attempt : 'a attempt) (f : 'a -> 'b) : 'b =
   match attempt with Ok a -> f a | Fail traces -> error_with_failtraces traces

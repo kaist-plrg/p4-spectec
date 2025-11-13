@@ -19,30 +19,65 @@ rule V1Model_init:
 ;; V1Model packet setup
 ;;
 
-relation V1Model_init_packet:
-  evalContext store |- evalContext store
-  hint(input %0 %1)
+relation V1Model_init_packet_in:
+  evalContext store |- externState : evalContext store
+  hint(input %0 %1 %2)
 
-rule V1Model_init_packet:
-  EC_0 STO_0 |- EC_5 STO_2
-  ---- ;; initialize the packet_in and packet_out externs
+rule V1Model_init_packet_in:
+  EC_0 STO_0 |- externState_packet_in : EC_1 STO_2
+  ---- ;; initialize packet_in extern
   -- Extern_init: EC_0 STO_0 |- "packet_in" : STO_1
+  ---- ;; add packet_in to context
   -- if EC_1 = $add_var_e(GLOBAL, EC_0, `` "packet_in", `! "packet_in")
-  -- Extern_init: EC_1 STO_1 |- "packet_out" : STO_2
-  -- if EC_2 = $add_var_e(GLOBAL, EC_1, `` "packet_out", `! "packet_out")
-  ---- ;; initialize global variables
+  ---- ;; initialize packet_in state and update store
+  -- if externObject_packet_in = $find_map<oid, object>(STO_1, [ "packet_in" ])
+  -- if EXTERN tid `< theta > `{ _ frame externMethodDefEnv }
+      = externObject_packet_in
+  -- if externObject_packet_in_init
+      = EXTERN tid `< theta > `{ externState_packet_in frame externMethodDefEnv }
+  -- if STO_2 = $add_map<oid, object>(STO_1, [ "packet_in" ], externObject_packet_in_init)
+
+relation V1Model_init_packet_out:
+  evalContext store |- externState : evalContext store
+  hint(input %0 %1 %2)
+
+rule V1Model_init_packet_out:
+  EC_0 STO_0 |- externState_packet_out : EC_1 STO_2
+  ---- ;; initialize packet_out extern
+  -- Extern_init: EC_0 STO_0 |- "packet_out" : STO_1
+  ---- ;; add packet_out to context
+  -- if EC_1 = $add_var_e(GLOBAL, EC_0, `` "packet_out", `! "packet_out")
+  ---- ;; initialize packet_out state and update store
+  -- if externObject_packet_out = $find_map<oid, object>(STO_1, [ "packet_out" ])
+  -- if EXTERN tid `< theta > `{ _ frame externMethodDefEnv }
+      = externObject_packet_out
+  -- if externObject_packet_out_init
+      = EXTERN tid `< theta > `{ externState_packet_out frame externMethodDefEnv }
+  -- if STO_2 = $add_map<oid, object>(STO_1, [ "packet_out" ], externObject_packet_out_init)
+
+relation V1Model_init_globals:
+  evalContext store |- int : evalContext
+  hint(input %0 %1 %2)
+
+rule V1Model_init_globals:
+  EC_0 STO |- i_port : EC_4
   ---- ;; hdr and meta
   -- if PACKAGE `< theta > `{ _ }
-      = $find_map<oid, object>(STO_2, [ "main" ])
+      = $find_map<oid, object>(STO, [ "main" ])
   -- if typeIR_hdr = $find_map<tid, typeIR>(theta, "H")
   -- if typeIR_meta = $find_map<tid, typeIR>(theta, "M")
-  -- Var_init: EC_2 |- typeIR_hdr "hdr" : EC_3
-  -- Var_init: EC_3 |- typeIR_meta "meta" : EC_4
+  -- Var_init: EC_0 |- typeIR_hdr "hdr" : EC_1
+  -- Var_init: EC_1 |- typeIR_meta "meta" : EC_2
   ---- ;; standard_metadata
   -- if typeDefIR_standard_metadata
-      = $find_typeDef_e(GLOBAL, EC_4, `` "standard_metadata_t")
+      = $find_typeDef_e(GLOBAL, EC_2, `` "standard_metadata_t")
   -- if typeIR_std_meta = typeDefIR_standard_metadata `< eps >
-  -- Var_init: EC_4 |- typeIR_std_meta "standard_metadata" : EC_5
+  -- Var_init: EC_2 |- typeIR_std_meta "standard_metadata" : EC_3
+  ---- ;; setup port
+  -- if storageReference_port = (`` "standard_metadata") `. "ingress_port"
+  -- if value_port = 9 W i_port
+  -- Lvalue_write:
+      GLOBAL EC_3 STO |- storageReference_port -> value_port : EC_4
 
 ;;
 ;; Setup helpers
@@ -294,29 +329,52 @@ relation V1Model_ingress:
   evalContext store |- evalContext store callResult
   hint(input %0 %1)
 
-rule V1Model_ingress:
-  EC_0 STO_0 |- EC_1 STO_1 (RETURN eps)
-  ---- ;; prepare the arguments
-  -- if argumentIR_hdr
-      = $V1Model_setup_hdr_argument(STO_0)
-  -- if argumentIR_meta
-      = $V1Model_setup_meta_argument(STO_0)
-  -- if argumentIR_standard_metadata
-      = $V1Model_setup_standard_metadata_argument(EC_0)
-  -- if argumentIR*
-      = [ argumentIR_hdr, argumentIR_meta, argumentIR_standard_metadata ]
-  ---- ;; invoke the ingress object (main.ig)
-  -- if typedExpressionIR_main
-      = $V1Model_setup_main_callee(EC_0, STO_0)
-  -- if typedExpressionIR_ig
-      = $V1Model_setup_ingress_callee(EC_0, STO_0, typedExpressionIR_main)
-  -- if callableTargetIR = typedExpressionIR_ig `. "apply"
-  -- Stmt_eval:
-      GLOBAL EC_0 STO_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
-                         : EC_1 STO_1 ``
+rulegroup V1Model_ingress {
+  rule V1Model_ingress/cont:
+    EC_0 STO_0 |- EC_1 STO_1 (RETURN eps)
+    ---- ;; prepare the arguments
+    -- if argumentIR_hdr
+        = $V1Model_setup_hdr_argument(STO_0)
+    -- if argumentIR_meta
+        = $V1Model_setup_meta_argument(STO_0)
+    -- if argumentIR_standard_metadata
+        = $V1Model_setup_standard_metadata_argument(EC_0)
+    -- if argumentIR*
+        = [ argumentIR_hdr, argumentIR_meta, argumentIR_standard_metadata ]
+    ---- ;; invoke the ingress object (main.ig)
+    -- if typedExpressionIR_main
+        = $V1Model_setup_main_callee(EC_0, STO_0)
+    -- if typedExpressionIR_ig
+        = $V1Model_setup_ingress_callee(EC_0, STO_0, typedExpressionIR_main)
+    -- if callableTargetIR = typedExpressionIR_ig `. "apply"
+    -- Stmt_eval:
+        GLOBAL EC_0 STO_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+                           : EC_1 STO_1 ``
+
+  rule V1Model_ingress/exit:
+    EC_0 STO_0 |- EC_1 STO_1 EXIT
+    ---- ;; prepare the arguments
+    -- if argumentIR_hdr
+        = $V1Model_setup_hdr_argument(STO_0)
+    -- if argumentIR_meta
+        = $V1Model_setup_meta_argument(STO_0)
+    -- if argumentIR_standard_metadata
+        = $V1Model_setup_standard_metadata_argument(EC_0)
+    -- if argumentIR*
+        = [ argumentIR_hdr, argumentIR_meta, argumentIR_standard_metadata ]
+    ---- ;; invoke the ingress object (main.ig)
+    -- if typedExpressionIR_main
+        = $V1Model_setup_main_callee(EC_0, STO_0)
+    -- if typedExpressionIR_ig
+        = $V1Model_setup_ingress_callee(EC_0, STO_0, typedExpressionIR_main)
+    -- if callableTargetIR = typedExpressionIR_ig `. "apply"
+    -- Stmt_eval:
+        GLOBAL EC_0 STO_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+                           : EC_1 STO_1 EXIT
+}
 
 ;;
-;; V1Model ingress invocation
+;; V1Model egress invocation
 ;;
 
 relation V1Model_egress:

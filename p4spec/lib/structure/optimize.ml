@@ -522,15 +522,18 @@ let guard_as_exp (exp_target : exp) (guard : guard) : exp =
 let rec typ_as_variant (tdenv : TDEnv.t) (typ : typ) : mixop list option =
   match typ.it with
   | VarT (tid, _) -> (
-      let _, deftyp = TDEnv.find tid tdenv in
-      match deftyp.it with
-      | PlainT typ -> typ_as_variant tdenv typ
-      | VariantT typcases ->
-          let mixops =
-            typcases |> List.map fst |> List.map it |> List.map fst
-          in
-          Some mixops
-      | _ -> None)
+      let td = TDEnv.find tid tdenv in
+      match td with
+      | Extern -> None
+      | Defined (_, deftyp) -> (
+          match deftyp.it with
+          | PlainT typ -> typ_as_variant tdenv typ
+          | VariantT typcases ->
+              let mixops =
+                typcases |> List.map fst |> List.map it |> List.map fst
+              in
+              Some mixops
+          | _ -> None))
   | _ -> None
 
 (* Determine the overlapping guard of two conditions *)
@@ -1151,14 +1154,17 @@ and totalize_case_analysis' (tdenv : TDEnv.t) (instr : instr) : instr =
 let rec is_singleton_case (tdenv : TDEnv.t) (typ : typ) : bool =
   match typ.it with
   | VarT (tid, targs) -> (
-      let tparams, deftyp = TDEnv.find tid tdenv in
-      let theta = List.combine tparams targs |> TIdMap.of_list in
-      match deftyp.it with
-      | PlainT typ ->
-          let typ = Typ.subst_typ theta typ in
-          is_singleton_case tdenv typ
-      | VariantT typcases -> List.length typcases = 1
-      | _ -> false)
+      let td = TDEnv.find tid tdenv in
+      match td with
+      | Extern -> false
+      | Defined (tparams, deftyp) -> (
+          let theta = List.combine tparams targs |> TIdMap.of_list in
+          match deftyp.it with
+          | PlainT typ ->
+              let typ = Typ.subst_typ theta typ in
+              is_singleton_case tdenv typ
+          | VariantT typcases -> List.length typcases = 1
+          | _ -> false))
   | _ -> false
 
 let is_singleton_match (tdenv : TDEnv.t) (exp : exp) : bool =

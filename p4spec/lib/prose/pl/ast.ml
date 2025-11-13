@@ -26,8 +26,8 @@ type iter = Il.Ast.iter
 
 (* Variables *)
 
-type var = Il.Ast.var
-type itervars = var list
+type itervar = Il.Ast.var
+type itervars = itervar list
 
 (* Types *)
 
@@ -74,7 +74,7 @@ and exp' =
   | IterE of exp * iterexp (* exp iterexp *)
 
 and notexp = mixop * exp list
-and iterexp = iter * var list
+and iterexp = iter * itervar list
 
 (* Patterns *)
 and pattern = Il.Ast.pattern
@@ -151,7 +151,8 @@ and instr' =
   (* Result in %prose_out(%exps) *)
   | ResultI of hintexp option * exp list
   | ReturnI of exp
-  | GroupI of id * exp list * instr list  (** Shorthand instructions **)
+  | GroupI of id * exp list * instr list
+  (* Shorthand instructions *)
   | DestructI of (exp * string) list * exp
   | CheckLetI of exp * exp
   | OptionGetI of exp * exp
