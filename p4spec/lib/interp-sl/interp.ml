@@ -559,13 +559,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         (fun value_input ->
           Ctx.add_edge ctx value_res value_input Dep.Edges.Control)
         (Ctx.find_values_input Ctx.Local ctx);
-    value_res
+    Ok (ctx, value_res)
 
   (* Case expression evaluation *)
 
-  and eval_case_exp (note : typ') (ctx : Ctx.t) (notexp : notexp) : value =
+  and eval_case_exp (note : typ') (ctx : Ctx.t) (notexp : notexp) : (Ctx.t * value) attempt =
     let mixop, exps = notexp in
-    let values = eval_exps ctx exps in
+    let* ctx, values = eval_exps ctx exps in
     let value_res =
       let vid = Value.fresh () in
       let typ = note in
@@ -577,14 +577,14 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         (fun value_input ->
           Ctx.add_edge ctx value_res value_input Dep.Edges.Control)
         (Ctx.find_values_input Ctx.Local ctx);
-    value_res
+    Ok (ctx, value_res)
 
   (* Struct expression evaluation *)
 
   and eval_str_exp (note : typ') (ctx : Ctx.t) (fields : (atom * exp) list) :
-      value =
+      (Ctx.t * value) attempt =
     let atoms, exps = List.split fields in
-    let values = eval_exps ctx exps in
+    let* ctx, values = eval_exps ctx exps in
     let fields = List.combine atoms values in
     let value_res =
       let vid = Value.fresh () in
@@ -597,12 +597,18 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         (fun value_input ->
           Ctx.add_edge ctx value_res value_input Dep.Edges.Control)
         (Ctx.find_values_input Ctx.Local ctx);
-    value_res
+    Ok (ctx, value_res)
 
   (* Option expression evaluation *)
 
-  and eval_opt_exp (note : typ') (ctx : Ctx.t) (exp_opt : exp option) : value =
-    let value_opt = Option.map (eval_exp ctx) exp_opt in
+  and eval_opt_exp (note : typ') (ctx : Ctx.t) (exp_opt : exp option) : (Ctx.t * value) attempt =
+    let* ctx, value_opt =
+      match exp_opt with
+      | None -> Ok (ctx, None)
+      | Some exp ->
+          let* ctx, value = eval_exp ctx exp in
+          Ok (ctx, Some value)
+    in
     let value_res =
       let vid = Value.fresh () in
       let typ = note in
@@ -614,12 +620,12 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         (fun value_input ->
           Ctx.add_edge ctx value_res value_input Dep.Edges.Control)
         (Ctx.find_values_input Ctx.Local ctx);
-    value_res
+    Ok (ctx, value_res)
 
   (* List expression evaluation *)
 
-  and eval_list_exp (note : typ') (ctx : Ctx.t) (exps : exp list) : value =
-    let values = eval_exps ctx exps in
+  and eval_list_exp (note : typ') (ctx : Ctx.t) (exps : exp list) : (Ctx.t * value) attempt =
+    let* ctx, values = eval_exps ctx exps in
     let value_res =
       let vid = Value.fresh () in
       let typ = note in
@@ -631,14 +637,14 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         (fun value_input ->
           Ctx.add_edge ctx value_res value_input Dep.Edges.Control)
         (Ctx.find_values_input Ctx.Local ctx);
-    value_res
+    Ok (ctx, value_res)
 
   (* Cons expression evaluation *)
 
   and eval_cons_exp (note : typ') (ctx : Ctx.t) (exp_h : exp) (exp_t : exp) :
-      value =
-    let value_h = eval_exp ctx exp_h in
-    let value_t = eval_exp ctx exp_t in
+      (Ctx.t * value) attempt =
+    let* ctx, value_h = eval_exp ctx exp_h in
+    let* ctx, value_t = eval_exp ctx exp_t in
     let values_t = Value.get_list value_t in
     let value_res =
       let vid = Value.fresh () in
@@ -646,14 +652,14 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       Il.Ast.(ListV (value_h :: values_t) $$$ { vid; typ })
     in
     Ctx.add_node ctx value_res;
-    value_res
+    Ok (ctx, value_res)
 
   (* Concatenation expression evaluation *)
 
   and eval_cat_exp (note : typ') (ctx : Ctx.t) (at : region) (exp_l : exp)
-      (exp_r : exp) : value =
-    let value_l = eval_exp ctx exp_l in
-    let value_r = eval_exp ctx exp_r in
+      (exp_r : exp) : (Ctx.t * value) attempt =
+    let* ctx, value_l = eval_exp ctx exp_l in
+    let* ctx, value_r = eval_exp ctx exp_r in
     let value_res =
       match (value_l.it, value_r.it) with
       | TextV s_l, TextV s_r -> Il.Ast.TextV (s_l ^ s_r)
@@ -668,14 +674,14 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     Ctx.add_node ctx value_res;
     Ctx.add_edge ctx value_res value_l (Dep.Edges.Op CatOp);
     Ctx.add_edge ctx value_res value_r (Dep.Edges.Op CatOp);
-    value_res
+    Ok (ctx, value_res)
 
   (* Membership expression evaluation *)
 
   and eval_mem_exp (note : typ') (ctx : Ctx.t) (exp_e : exp) (exp_s : exp) :
-      value =
-    let value_e = eval_exp ctx exp_e in
-    let value_s = eval_exp ctx exp_s in
+      (Ctx.t * value) attempt =
+    let* ctx, value_e = eval_exp ctx exp_e in
+    let* ctx, value_s = eval_exp ctx exp_s in
     let values_s = Value.get_list value_s in
     let value_res =
       let vid = Value.fresh () in
@@ -685,12 +691,12 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     Ctx.add_node ctx value_res;
     Ctx.add_edge ctx value_res value_e (Dep.Edges.Op MemOp);
     Ctx.add_edge ctx value_res value_s (Dep.Edges.Op MemOp);
-    value_res
+    Ok (ctx, value_res)
 
   (* Length expression evaluation *)
 
-  and eval_len_exp (note : typ') (ctx : Ctx.t) (exp : exp) : value =
-    let value = eval_exp ctx exp in
+  and eval_len_exp (note : typ') (ctx : Ctx.t) (exp : exp) : (Ctx.t * value) attempt =
+    let* ctx, value = eval_exp ctx exp in
     let len = value |> Value.get_list |> List.length |> Bigint.of_int in
     let value_res =
       let vid = Value.fresh () in
