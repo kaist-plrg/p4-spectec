@@ -1,5 +1,5 @@
-open Interface.Wrap
 module Value = Runtime_dynamic.Value
+open Wrap
 
 (* Packs an IL value representing a P4 value from an OCaml type *)
 

@@ -1,7 +1,7 @@
 open Interface.Wrap
 open Interface.Unwrap
-open Pack
-open Unpack
+open Interface.Pack
+open Interface.Unpack
 module Value = Runtime_dynamic.Value
 module IO = Runtime_simulator.Io
 module Sim = Runtime_simulator.Simulator
@@ -43,7 +43,9 @@ struct
 
   (* Extern objects *)
 
-  type extern = PacketIn of Core.PacketIn.t | PacketOut of Core.PacketOut.t
+  type extern =
+    | PacketIn of Core.Object.PacketIn.t
+    | PacketOut of Core.Object.PacketOut.t
   [@@deriving yojson]
 
   let get_extern (value_sto : Value.t) (value_oid : Value.t) : extern =
@@ -51,13 +53,13 @@ struct
     |> unwrap_opt_v |> Option.get |> unwrap_extern_v |> extern_of_yojson
     |> Result.get_ok
 
-  let get_packet_in (value_sto : Value.t) : Core.PacketIn.t =
+  let get_packet_in (value_sto : Value.t) : Core.Object.PacketIn.t =
     let value_oid = wrap_list_v "id" [ wrap_text_v "packet_in" ] in
     match get_extern value_sto value_oid with
     | PacketIn packet_in -> packet_in
     | _ -> failwith "expected PacketIn extern"
 
-  let get_packet_out (value_sto : Value.t) : Core.PacketOut.t =
+  let get_packet_out (value_sto : Value.t) : Core.Object.PacketOut.t =
     let value_oid = wrap_list_v "id" [ wrap_text_v "packet_out" ] in
     match get_extern value_sto value_oid with
     | PacketOut packet_out -> packet_out
@@ -175,22 +177,24 @@ struct
   let do_verify_checksum ~(payload : bool) (value_ctx : Value.t)
       (value_sto : Value.t) : Value.t * Value.t * Value.t =
     (* Get "data" in context *)
-    let value_data = Spec.find_var_e_local call_func value_ctx "data" in
+    let value_data = Spec.Func.find_var_e_local call_func value_ctx "data" in
     let values = value_data |> unpack_p4_sequence in
     (* Get payload *)
     let values_payload =
       if payload then
         let packet_in = get_packet_in value_sto in
-        let payload_bytes = Core.PacketIn.payload_bytes packet_in in
+        let payload_bytes = Core.Object.PacketIn.payload_bytes packet_in in
         payload_bytes |> Array.to_list
         |> List.map (fun byte -> pack_p4_fixedBit (Bigint.of_int 8) byte)
       else []
     in
     (* Get "checksum" in context *)
-    let value_checksum = Spec.find_var_e_local call_func value_ctx "checksum" in
+    let value_checksum =
+      Spec.Func.find_var_e_local call_func value_ctx "checksum"
+    in
     let checksum_expect = value_checksum |> unpack_p4_fixedBit |> snd in
     (* Get "algo" in context *)
-    let value_algo = Spec.find_var_e_local call_func value_ctx "algo" in
+    let value_algo = Spec.Func.find_var_e_local call_func value_ctx "algo" in
     let id_enum, id_enum_field = value_algo |> unpack_p4_enum in
     (* Compute checksum *)
     let checksum_actual =
@@ -207,7 +211,7 @@ struct
         let value_checksum_error =
           pack_p4_fixedBit (Bigint.of_int 1) (Bigint.of_int 1)
         in
-        Spec.lvalue_write_dot_global call_rel value_ctx value_sto
+        Spec.Rel.lvalue_write_dot_global call_rel value_ctx value_sto
           "standard_metadata" "checksum_error" value_checksum_error
     in
     let value_callResult =
@@ -220,7 +224,7 @@ struct
       Value.t * Value.t * Value.t =
     (* Get "condition" in context *)
     let value_condition =
-      Spec.find_var_e_local call_func value_ctx "condition"
+      Spec.Func.find_var_e_local call_func value_ctx "condition"
     in
     let condition = value_condition |> unpack_p4_bool in
     if condition then do_verify_checksum ~payload:false value_ctx value_sto
@@ -235,7 +239,7 @@ struct
       Value.t * Value.t * Value.t =
     (* Get "condition" in context *)
     let value_condition =
-      Spec.find_var_e_local call_func value_ctx "condition"
+      Spec.Func.find_var_e_local call_func value_ctx "condition"
     in
     let condition = value_condition |> unpack_p4_bool in
     if condition then do_verify_checksum ~payload:true value_ctx value_sto
@@ -281,19 +285,19 @@ struct
   let do_update_checksum ~(payload : bool) (value_ctx : Value.t)
       (value_sto : Value.t) : Value.t * Value.t * Value.t =
     (* Get "data" in context *)
-    let value_data = Spec.find_var_e_local call_func value_ctx "data" in
+    let value_data = Spec.Func.find_var_e_local call_func value_ctx "data" in
     let values = value_data |> unpack_p4_sequence in
     (* Get payload *)
     let values_payload =
       if payload then
         let packet_in = get_packet_in value_sto in
-        let payload_bytes = Core.PacketIn.payload_bytes packet_in in
+        let payload_bytes = Core.Object.PacketIn.payload_bytes packet_in in
         payload_bytes |> Array.to_list
         |> List.map (fun byte -> pack_p4_fixedBit (Bigint.of_int 8) byte)
       else []
     in
     (* Get "algo" in context *)
-    let value_algo = Spec.find_var_e_local call_func value_ctx "algo" in
+    let value_algo = Spec.Func.find_var_e_local call_func value_ctx "algo" in
     let id_enum, id_enum_field = value_algo |> unpack_p4_enum in
     (* Compute checksum *)
     let checksum =
@@ -303,13 +307,15 @@ struct
       | _ -> assert false
     in
     (* Get "O" type in context *)
-    let value_typ_O = Spec.find_type_e_local call_func value_ctx "O" in
+    let value_typ_O = Spec.Func.find_type_e_local call_func value_ctx "O" in
     (* Cast "checksum" *)
     let value_checksum = pack_p4_arbitraryInt checksum in
-    let value_checksum = Spec.cast_op call_func value_typ_O value_checksum in
+    let value_checksum =
+      Spec.Func.cast_op call_func value_typ_O value_checksum
+    in
     (* Write to "checksum" in context *)
     let value_ctx =
-      Spec.lvalue_write_var_local call_rel value_ctx value_sto "checksum"
+      Spec.Rel.lvalue_write_var_local call_rel value_ctx value_sto "checksum"
         value_checksum
     in
     (* Return void *)
@@ -323,7 +329,8 @@ struct
       Value.t * Value.t * Value.t =
     (* Get "condition" in context *)
     let condition =
-      Spec.find_var_e_local call_func value_ctx "condition" |> unpack_p4_bool
+      Spec.Func.find_var_e_local call_func value_ctx "condition"
+      |> unpack_p4_bool
     in
     if condition then do_update_checksum ~payload:false value_ctx value_sto
     else
@@ -337,7 +344,8 @@ struct
       Value.t * Value.t * Value.t =
     (* Get "condition" in context *)
     let condition =
-      Spec.find_var_e_local call_func value_ctx "condition" |> unpack_p4_bool
+      Spec.Func.find_var_e_local call_func value_ctx "condition"
+      |> unpack_p4_bool
     in
     if condition then do_update_checksum ~payload:true value_ctx value_sto
     else
@@ -559,7 +567,7 @@ struct
     let value_ctx, value_sto, value_callResult =
       match (name_func, names_param) with
       | "verify", [ "check"; "toSignal" ] ->
-          Core.verify call_func value_ctx value_sto
+          Core.Func.verify call_func value_ctx value_sto
       | "verify_checksum", [ "condition"; "data"; "checksum"; "algo" ] ->
           verify_checksum value_ctx value_sto
       | ( "verify_checksum_with_payload",
@@ -596,7 +604,7 @@ struct
       match (extern, name_method, names_param) with
       | PacketIn packet_in, "extract", [ "hdr" ] ->
           let packet_in, value_ctx, value_sto, value_callResult =
-            Core.PacketIn.extract call_rel call_func value_ctx value_sto
+            Core.Object.PacketIn.extract call_rel call_func value_ctx value_sto
               packet_in
           in
           let packet_in = PacketIn packet_in in
@@ -605,20 +613,21 @@ struct
           "extract",
           [ "variableSizeHeader"; "variableFieldSizeInBits" ] ) ->
           let packet_in, value_ctx, value_sto, value_callResult =
-            Core.PacketIn.extract_varsize call_rel call_func value_ctx value_sto
-              packet_in
+            Core.Object.PacketIn.extract_varsize call_rel call_func value_ctx
+              value_sto packet_in
           in
           let packet_in = PacketIn packet_in in
           (packet_in, value_ctx, value_sto, value_callResult)
       | PacketIn packet_in, "lookahead", [] ->
           let packet_in, value_ctx, value_sto, value_callResult =
-            Core.PacketIn.lookahead call_func value_ctx value_sto packet_in
+            Core.Object.PacketIn.lookahead call_func value_ctx value_sto
+              packet_in
           in
           let packet_in = PacketIn packet_in in
           (packet_in, value_ctx, value_sto, value_callResult)
       | PacketOut packet_out, "emit", [ "hdr" ] ->
           let packet_out, value_ctx, value_sto, value_callResult =
-            Core.PacketOut.emit call_func value_ctx value_sto packet_out
+            Core.Object.PacketOut.emit call_func value_ctx value_sto packet_out
           in
           let packet_out = PacketOut packet_out in
           (packet_out, value_ctx, value_sto, value_callResult)
@@ -636,7 +645,8 @@ struct
       extern |> extern_to_yojson |> wrap_extern_v "externState"
     in
     let value_sto =
-      Spec.update_store_externState call_func value_sto value_oid value_extern
+      Spec.Func.update_store_externState call_func value_sto value_oid
+        value_extern
     in
     [ value_ctx; value_sto; value_callResult ]
 
@@ -664,65 +674,66 @@ struct
       Value.t * Value.t =
     let port_in, packet_in = rx in
     (* Setup packet_in extern *)
-    let packet_in = PacketIn (Core.PacketIn.init packet_in) in
+    let packet_in = PacketIn (Core.Object.PacketIn.init packet_in) in
     let packet_in_state = extern_to_yojson packet_in in
     let value_packet_in_state = wrap_extern_v "externState" packet_in_state in
     let value_ctx, value_sto =
-      Spec.v1model_init_packet_in call_rel value_ctx value_sto
+      Spec.Rel.v1model_init_packet_in call_rel value_ctx value_sto
         value_packet_in_state
     in
     (* Setup packet_out extern *)
-    let packet_out = PacketOut (Core.PacketOut.init ()) in
+    let packet_out = PacketOut (Core.Object.PacketOut.init ()) in
     let packet_out_state = extern_to_yojson packet_out in
     let value_packet_out_state = wrap_extern_v "externState" packet_out_state in
     let value_ctx, value_sto =
-      Spec.v1model_init_packet_out call_rel value_ctx value_sto
+      Spec.Rel.v1model_init_packet_out call_rel value_ctx value_sto
         value_packet_out_state
     in
     (* Setup global variables *)
     let value_ctx =
-      Spec.v1model_init_globals call_rel value_ctx value_sto port_in
+      Spec.Rel.v1model_init_globals call_rel value_ctx value_sto port_in
     in
     (value_ctx, value_sto)
 
   let drive_p (value_ctx : Value.t) (value_sto : Value.t) :
       Value.t * Value.t * Value.t =
-    Spec.v1model_parser call_rel value_ctx value_sto
+    Spec.Rel.v1model_parser call_rel value_ctx value_sto
 
   let drive_vr (value_ctx : Value.t) (value_sto : Value.t) :
       Value.t * Value.t * Value.t =
-    Spec.v1model_verify call_rel value_ctx value_sto
+    Spec.Rel.v1model_verify call_rel value_ctx value_sto
 
   let drive_ig (value_ctx : Value.t) (value_sto : Value.t) :
       Value.t * Value.t * Value.t =
-    Spec.v1model_ingress call_rel value_ctx value_sto
+    Spec.Rel.v1model_ingress call_rel value_ctx value_sto
 
   let drive_eg (value_ctx : Value.t) (value_sto : Value.t) :
       Value.t * Value.t * Value.t =
-    Spec.v1model_egress call_rel value_ctx value_sto
+    Spec.Rel.v1model_egress call_rel value_ctx value_sto
 
   let drive_ck (value_ctx : Value.t) (value_sto : Value.t) :
       Value.t * Value.t * Value.t =
-    Spec.v1model_check call_rel value_ctx value_sto
+    Spec.Rel.v1model_check call_rel value_ctx value_sto
 
   let drive_dep (value_ctx : Value.t) (value_sto : Value.t) :
       Value.t * Value.t * Value.t =
-    Spec.v1model_deparse call_rel value_ctx value_sto
+    Spec.Rel.v1model_deparse call_rel value_ctx value_sto
 
   let resulting_port_packet (value_ctx : Value.t) (value_sto : Value.t) :
       IO.tx option =
     (* Get egress port *)
     let port =
-      Spec.lvalue_read_dot_global call_rel
-        value_ctx value_sto "standard_metadata" "egress_spec"
+      Spec.Rel.lvalue_read_dot_global call_rel value_ctx value_sto
+        "standard_metadata" "egress_spec"
       |> unpack_p4_fixedBit |> snd |> Bigint.to_int_exn
     in
     (* Get output packet *)
     let header =
-      get_packet_out value_sto |> Format.asprintf "%a" Core.PacketOut.pp
+      get_packet_out value_sto |> Format.asprintf "%a" Core.Object.PacketOut.pp
     in
     let payload =
-      get_packet_in value_sto |> Format.asprintf "%a" Core.PacketIn.pp_payload
+      get_packet_in value_sto
+      |> Format.asprintf "%a" Core.Object.PacketIn.pp_payload
     in
     let packet = header ^ payload in
     (* Return port and packet *)

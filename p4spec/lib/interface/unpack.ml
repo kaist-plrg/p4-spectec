@@ -1,6 +1,6 @@
-open Interface.Flatten
-open Interface.Unwrap
 module Value = Runtime_dynamic.Value
+open Flatten
+open Unwrap
 
 (* Unpacks an IL value representing a P4 value into an OCaml type *)
 

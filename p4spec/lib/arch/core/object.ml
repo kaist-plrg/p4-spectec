@@ -1,7 +1,7 @@
 module Value = Runtime_dynamic.Value
 open Interface.Wrap
 open Interface.Unwrap
-open Unpack
+open Interface.Unpack
 
 (* Bit manipulation *)
 
@@ -124,21 +124,24 @@ module PacketIn = struct
   let extract call_rel call_func (value_ctx : Value.t) (value_sto : Value.t)
       (pkt : t) : t * Value.t * Value.t * Value.t =
     (* Get "T" *)
-    let value_typ = Spec.find_type_e_local call_func value_ctx "T" in
+    let value_typ = Spec.Func.find_type_e_local call_func value_ctx "T" in
     (* Get size of "T" *)
     let size =
-      Spec.subst_type_e_local call_func value_ctx value_typ
-      |> Spec.sizeof_maxSizeInBits' call_func
+      Spec.Func.subst_type_e_local call_func value_ctx value_typ
+      |> Spec.Func.sizeof_maxSizeInBits' call_func
     in
     (* Parse from packet *)
     let pkt, bits = parse pkt (Bigint.to_int_exn size) in
     (* Find "hdr" in context *)
-    let value_hdr = Spec.find_var_e_local call_func value_ctx "hdr" in
+    let value_hdr = Spec.Func.find_var_e_local call_func value_ctx "hdr" in
     (* Write bits to "hdr" *)
-    let value_hdr = Spec.write_value_from_bits call_func value_hdr 0 bits in
+    let value_hdr =
+      Spec.Func.write_value_from_bits call_func value_hdr 0 bits
+    in
     (* Update "hdr" in context *)
     let value_ctx =
-      Spec.lvalue_write_var_local call_rel value_ctx value_sto "hdr" value_hdr
+      Spec.Rel.lvalue_write_var_local call_rel value_ctx value_sto "hdr"
+        value_hdr
     in
     (* Create call result *)
     let value_callResult =
@@ -157,16 +160,16 @@ module PacketIn = struct
   let extract_varsize call_rel call_func (value_ctx : Value.t)
       (value_sto : Value.t) (pkt : t) : t * Value.t * Value.t * Value.t =
     (* Get "T" *)
-    let value_typ = Spec.find_type_e_local call_func value_ctx "T" in
+    let value_typ = Spec.Func.find_type_e_local call_func value_ctx "T" in
     (* Get size of "T" *)
     let value_typ_subst =
-      Spec.subst_type_e_local call_func value_ctx value_typ
+      Spec.Func.subst_type_e_local call_func value_ctx value_typ
     in
-    let size_min = Spec.sizeof_minSizeInBits' call_func value_typ_subst in
-    let _size_max = Spec.sizeof_maxSizeInBits' call_func value_typ_subst in
+    let size_min = Spec.Func.sizeof_minSizeInBits' call_func value_typ_subst in
+    let _size_max = Spec.Func.sizeof_maxSizeInBits' call_func value_typ_subst in
     (* Get "variableFieldSizeInBits" in context *)
     let value_variableFieldSizeInBits =
-      Spec.find_var_e_local call_func value_ctx "variableFieldSizeInBits"
+      Spec.Func.find_var_e_local call_func value_ctx "variableFieldSizeInBits"
     in
     let size_varsize =
       value_variableFieldSizeInBits |> unwrap_case_v |> snd |> fun values ->
@@ -177,17 +180,17 @@ module PacketIn = struct
     let pkt, bits = parse pkt (Bigint.to_int_exn size) in
     (* Get "variableSizeHeader" in context *)
     let value_variableSizeHeader =
-      Spec.find_var_e_local call_func value_ctx "variableSizeHeader"
+      Spec.Func.find_var_e_local call_func value_ctx "variableSizeHeader"
     in
     (* Write bits to "variableSizeHeader" *)
     let value_variableSizeHeader =
-      Spec.write_value_from_bits call_func value_variableSizeHeader
+      Spec.Func.write_value_from_bits call_func value_variableSizeHeader
         (Bigint.to_int_exn size_varsize)
         bits
     in
     (* Update "variableSizeHeader" in context *)
     let value_ctx =
-      Spec.lvalue_write_var_local call_rel value_ctx value_sto
+      Spec.Rel.lvalue_write_var_local call_rel value_ctx value_sto
         "variableSizeHeader" value_variableSizeHeader
     in
     (* Create call result *)
@@ -205,18 +208,20 @@ module PacketIn = struct
   let lookahead call_func (value_ctx : Value.t) (value_sto : Value.t) (pkt : t)
       : t * Value.t * Value.t * Value.t =
     (* Get "T" *)
-    let value_typ = Spec.find_type_e_local call_func value_ctx "T" in
+    let value_typ = Spec.Func.find_type_e_local call_func value_ctx "T" in
     (* Get size of "T" *)
     let size =
-      Spec.subst_type_e_local call_func value_ctx value_typ
-      |> Spec.sizeof_maxSizeInBits' call_func
+      Spec.Func.subst_type_e_local call_func value_ctx value_typ
+      |> Spec.Func.sizeof_maxSizeInBits' call_func
     in
     (* Create a dummy "hdr" *)
-    let value_hdr = Spec.default call_func value_typ in
+    let value_hdr = Spec.Func.default call_func value_typ in
     (* Parse from packet *)
     let _pkt, bits = parse pkt (Bigint.to_int_exn size) in
     (* Write bits to "hdr" *)
-    let value_hdr = Spec.write_value_from_bits call_func value_hdr 0 bits in
+    let value_hdr =
+      Spec.Func.write_value_from_bits call_func value_hdr 0 bits
+    in
     (* Create call result *)
     let value_callResult =
       let value_hdr = wrap_opt_v "value" (Some value_hdr) in
@@ -257,19 +262,11 @@ module PacketOut = struct
   let emit call_func (value_ctx : Value.t) (value_sto : Value.t) (pkt : t) :
       t * Value.t * Value.t * Value.t =
     (* Get "hdr" in context *)
-    let value_cursor = [ Term "LOCAL" ] #@ "cursor" in
-    let value_prefixedNameIR =
-      let value_nameIR = wrap_text_v "hdr" in
-      [ Term "`"; NT value_nameIR ] #@ "prefixedNameIR"
-    in
-    let value_hdr =
-      call_func "find_var_e" []
-        [ value_cursor; value_ctx; value_prefixedNameIR ]
-    in
+    let value_hdr = Spec.Func.find_var_e_local call_func value_ctx "hdr" in
     (* Get bits of "hdr" *)
-    let value_bits = call_func "write_bits_from_value" [] [ value_hdr ] in
     let bits =
-      unwrap_list_v value_bits |> List.map unwrap_bool_v |> Array.of_list
+      Spec.Func.write_bits_from_value call_func value_hdr
+      |> unwrap_list_v |> List.map unwrap_bool_v |> Array.of_list
     in
     let pkt = { bits = Array.append pkt.bits bits } in
     (* Create call result *)
@@ -279,25 +276,3 @@ module PacketOut = struct
     in
     (pkt, value_ctx, value_sto, value_callResult)
 end
-
-(* Core extern functions *)
-
-(* Check a predicate @check in the parser; if the predicate is true do nothing,
-   otherwise set the parser error to @toSignal, and transition to the `reject` state.
-
-   extern void verify(in bool check, in error toSignal); *)
-let verify call_func (value_ctx : Value.t) (value_sto : Value.t) :
-    Value.t * Value.t * Value.t =
-  (* Get "check" in context *)
-  let value_check = Spec.find_var_e_local call_func value_ctx "check" in
-  (* Get "toSignal" in context *)
-  let value_toSignal = Spec.find_var_e_local call_func value_ctx "toSignal" in
-  (* If check, return and otherwise reject *)
-  let check = value_check |> unpack_p4_bool in
-  let value_callResult =
-    if check then
-      let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
-    else [ Term "REJECT"; NT value_toSignal ] #@ "rejectTransitionResult"
-  in
-  (value_ctx, value_sto, value_callResult)
