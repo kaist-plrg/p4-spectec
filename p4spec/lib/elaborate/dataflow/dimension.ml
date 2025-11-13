@@ -20,8 +20,14 @@ let singleton id typ = VEnv.add id (typ, []) VEnv.empty
 
 let union (occurs_a : VEnv.t) (occurs_b : VEnv.t) : VEnv.t =
   VEnv.union
-    (fun _ (typ_a, iters_a) (typ_b, iters_b) ->
-      (* (TODO) Also check that types are equivalent *)
+    (fun id (typ_a, iters_a) (typ_b, iters_b) ->
+      if not (Il.Eq.eq_typ typ_a typ_b) then
+        error id.at
+          (Format.asprintf
+             "type mismatch for identifier `%s` in union: %s vs %s"
+             (Id.to_string id)
+             (Il.Print.string_of_typ typ_a)
+             (Il.Print.string_of_typ typ_b));
       if List.length iters_a < List.length iters_b then Some (typ_a, iters_a)
       else Some (typ_b, iters_b))
     occurs_a occurs_b
@@ -273,15 +279,20 @@ and annotate_prem (binds : VEnv.t) (bounds : VEnv.t) (prem : prem) :
       | [] -> error at "empty iteration"
       | _
         when List.for_all
-               (fun (id, typ, iters) ->
+               (fun ((id : id), (typ : typ), (iters : iter list)) ->
                  match VEnv.find_opt id binds with
                  | Some (typ_bind, iters_bind) ->
-                     Typ.sub (typ.it, iters) (typ_bind, iters_bind)
+                     Typ.sub (typ, iters) (typ_bind, iters_bind)
                  | None -> false)
                itervars ->
           error at
             ("cannot determine dimension of binding identifier(s) only: "
-            ^ String.concat ", " (List.map Il.Print.string_of_var itervars)
+            ^ String.concat ", "
+                (List.map
+                   (fun (id, _typ, iters) ->
+                     Id.to_string id
+                     ^ String.concat "" (List.map Il.Print.string_of_iter iters))
+                   itervars)
             ^ " "
             ^ Il.Print.string_of_prem prem)
       | _ ->
