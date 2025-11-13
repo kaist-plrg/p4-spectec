@@ -26,6 +26,30 @@ let func_cache = ref (Cache.Cache.create ~size:10000)
 let rule_cache = ref (Cache.Cache.create ~size:10000)
 
 module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
+  (* Helpers for tail-recursive list accumulation *)
+  
+  (* Fold with context and list accumulation *)
+  let fold_left_accum_ctx f init_ctx init_list xs =
+    let ctx, list_rev =
+      List.fold_left
+        (fun (ctx, acc) x ->
+          let ctx, item = f ctx x in
+          (ctx, item :: acc))
+        (init_ctx, init_list) xs
+    in
+    (ctx, List.rev list_rev)
+  
+  (* Fold with list accumulation only *)
+  let fold_left_accum f init xs =
+    let list_rev =
+      List.fold_left
+        (fun acc x ->
+          let item = f acc x in
+          item :: acc)
+        init xs
+    in
+    List.rev list_rev
+
   (* Architecture transactions *)
 
   let checkpoint () = Arch.checkpoint ()
@@ -1097,7 +1121,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                  let exp_cond = exp_cond $$ (exp.at, Il.Ast.BoolT) in
                  let value_cond = eval_exp ctx exp_cond in
                  let cond = Value.get_bool value_cond in
-                 if cond then (Some block, value_cond :: values_cond) 
+                 if cond then (Some block, value_cond :: values_cond)
                  else (None, value_cond :: values_cond))
            (None, [])
     in

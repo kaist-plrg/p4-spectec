@@ -23,6 +23,30 @@ let func_cache = ref (Cache.Cache.create ~size:10000)
 let rule_cache = ref (Cache.Cache.create ~size:10000)
 
 module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
+  (* Helpers for tail-recursive list accumulation *)
+  
+  (* Fold with context and list accumulation *)
+  let fold_left_accum_ctx f init_ctx init_list xs =
+    let ctx, list_rev =
+      List.fold_left
+        (fun (ctx, acc) x ->
+          let ctx, item = f ctx x in
+          (ctx, item :: acc))
+        (init_ctx, init_list) xs
+    in
+    (ctx, List.rev list_rev)
+  
+  (* Fold with list accumulation only *)
+  let fold_left_accum f init xs =
+    let list_rev =
+      List.fold_left
+        (fun acc x ->
+          let item = f acc x in
+          item :: acc)
+        init xs
+    in
+    List.rev list_rev
+
   (* Architecture transactions *)
 
   let checkpoint () = Arch.checkpoint ()
@@ -216,14 +240,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     | IterE (exp, iterexp) -> eval_iter_exp note ctx exp iterexp
 
   and eval_exps (ctx : Ctx.t) (exps : exp list) : Ctx.t * value list =
-    let ctx, values_rev =
-      List.fold_left
-        (fun (ctx, values) exp ->
-          let ctx, value = eval_exp ctx exp in
-          (ctx, value :: values))
-        (ctx, []) exps
-    in
-    (ctx, List.rev values_rev)
+    fold_left_accum_ctx eval_exp ctx [] exps
 
   (* Boolean expression evaluation *)
 
@@ -811,14 +828,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
         (ctx, value_res)
 
   and eval_args (ctx : Ctx.t) (args : arg list) : Ctx.t * value list =
-    let ctx, values_rev =
-      List.fold_left
-        (fun (ctx, values) arg ->
-          let ctx, value = eval_arg ctx arg in
-          (ctx, value :: values))
-        (ctx, []) args
-    in
-    (ctx, List.rev values_rev)
+    fold_left_accum_ctx eval_arg ctx [] args
 
   (* Premise evaluation *)
 
