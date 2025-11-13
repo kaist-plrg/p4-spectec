@@ -198,40 +198,48 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
      Note that structs are invariant in SpecTec, so we do not need to check for subtyping *)
 
-  let rec eval_exp (ctx : Ctx.t) (exp : exp) : value =
+  let rec eval_exp (ctx : Ctx.t) (exp : exp) : (Ctx.t * value) attempt =
     let at, note = (exp.at, exp.note) in
-    match exp.it with
-    | BoolE b -> eval_bool_exp note ctx b
-    | NumE n -> eval_num_exp note ctx n
-    | TextE s -> eval_text_exp note ctx s
-    | VarE id -> eval_var_exp note ctx id
-    | UnE (unop, optyp, exp) -> eval_un_exp note ctx unop optyp exp
-    | BinE (binop, optyp, exp_l, exp_r) ->
-        eval_bin_exp note ctx binop optyp exp_l exp_r
-    | CmpE (cmpop, optyp, exp_l, exp_r) ->
-        eval_cmp_exp note ctx cmpop optyp exp_l exp_r
-    | UpCastE (typ, exp) -> eval_upcast_exp note ctx typ exp
-    | DownCastE (typ, exp) -> eval_downcast_exp note ctx typ exp
-    | SubE (exp, typ) -> eval_sub_exp note ctx exp typ
-    | MatchE (exp, pattern) -> eval_match_exp note ctx exp pattern
-    | TupleE exps -> eval_tuple_exp note ctx exps
-    | CaseE notexp -> eval_case_exp note ctx notexp
-    | StrE fields -> eval_str_exp note ctx fields
-    | OptE exp_opt -> eval_opt_exp note ctx exp_opt
-    | ListE exps -> eval_list_exp note ctx exps
-    | ConsE (exp_h, exp_t) -> eval_cons_exp note ctx exp_h exp_t
-    | CatE (exp_l, exp_r) -> eval_cat_exp note ctx at exp_l exp_r
-    | MemE (exp_e, exp_s) -> eval_mem_exp note ctx exp_e exp_s
-    | LenE exp -> eval_len_exp note ctx exp
-    | DotE (exp_b, atom) -> eval_dot_exp note ctx exp_b atom
-    | IdxE (exp_b, exp_i) -> eval_idx_exp note ctx exp_b exp_i
-    | SliceE (exp_b, exp_l, exp_h) -> eval_slice_exp note ctx exp_b exp_l exp_h
-    | UpdE (exp_b, path, exp_f) -> eval_upd_exp note ctx exp_b path exp_f
-    | CallE (id, targs, args) -> eval_call_exp note ctx id targs args
-    | IterE (exp, iterexp) -> eval_iter_exp note ctx exp iterexp
+    let value =
+      match exp.it with
+      | BoolE b -> Ok (ctx, eval_bool_exp note ctx b)
+      | NumE n -> Ok (ctx, eval_num_exp note ctx n)
+      | TextE s -> Ok (ctx, eval_text_exp note ctx s)
+      | VarE id -> Ok (ctx, eval_var_exp note ctx id)
+      | UnE (unop, optyp, exp) -> Ok (ctx, eval_un_exp note ctx unop optyp exp)
+      | BinE (binop, optyp, exp_l, exp_r) ->
+          Ok (ctx, eval_bin_exp note ctx binop optyp exp_l exp_r)
+      | CmpE (cmpop, optyp, exp_l, exp_r) ->
+          Ok (ctx, eval_cmp_exp note ctx cmpop optyp exp_l exp_r)
+      | UpCastE (typ, exp) -> Ok (ctx, eval_upcast_exp note ctx typ exp)
+      | DownCastE (typ, exp) -> Ok (ctx, eval_downcast_exp note ctx typ exp)
+      | SubE (exp, typ) -> Ok (ctx, eval_sub_exp note ctx exp typ)
+      | MatchE (exp, pattern) -> Ok (ctx, eval_match_exp note ctx exp pattern)
+      | TupleE exps -> Ok (ctx, eval_tuple_exp note ctx exps)
+      | CaseE notexp -> Ok (ctx, eval_case_exp note ctx notexp)
+      | StrE fields -> Ok (ctx, eval_str_exp note ctx fields)
+      | OptE exp_opt -> Ok (ctx, eval_opt_exp note ctx exp_opt)
+      | ListE exps -> Ok (ctx, eval_list_exp note ctx exps)
+      | ConsE (exp_h, exp_t) -> Ok (ctx, eval_cons_exp note ctx exp_h exp_t)
+      | CatE (exp_l, exp_r) -> Ok (ctx, eval_cat_exp note ctx at exp_l exp_r)
+      | MemE (exp_e, exp_s) -> Ok (ctx, eval_mem_exp note ctx exp_e exp_s)
+      | LenE exp -> Ok (ctx, eval_len_exp note ctx exp)
+      | DotE (exp_b, atom) -> Ok (ctx, eval_dot_exp note ctx exp_b atom)
+      | IdxE (exp_b, exp_i) -> Ok (ctx, eval_idx_exp note ctx exp_b exp_i)
+      | SliceE (exp_b, exp_l, exp_h) -> Ok (ctx, eval_slice_exp note ctx exp_b exp_l exp_h)
+      | UpdE (exp_b, path, exp_f) -> Ok (ctx, eval_upd_exp note ctx exp_b path exp_f)
+      | CallE (id, targs, args) -> eval_call_exp note ctx id targs args
+      | IterE (exp, iterexp) -> Ok (ctx, eval_iter_exp note ctx exp iterexp)
+    in
+    value
 
-  and eval_exps (ctx : Ctx.t) (exps : exp list) : value list =
-    List.map (eval_exp ctx) exps
+  and eval_exps (ctx : Ctx.t) (exps : exp list) : (Ctx.t * value list) attempt =
+    List.fold_left
+      (fun ctx_values_acc exp ->
+        let* ctx, values_acc = ctx_values_acc in
+        let* ctx, value = eval_exp ctx exp in
+        Ok (ctx, values_acc @ [ value ]))
+      (Ok (ctx, [])) exps
 
   (* Boolean expression evaluation *)
 
@@ -791,9 +799,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Function call expression evaluation *)
 
   and eval_call_exp (_note : typ') (ctx : Ctx.t) (id : id) (targs : targ list)
-      (args : arg list) : value =
-    let+ _ctx, value_output = invoke_func ctx id targs args in
-    value_output
+      (args : arg list) : (Ctx.t * value) attempt =
+    let* ctx, value_output = invoke_func ctx id targs args in
+    Ok (ctx, value_output)
 
   (* Iterated expression evaluation *)
 
@@ -1274,15 +1282,16 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   (* Rule instruction evaluation *)
 
-  and eval_rule (ctx : Ctx.t) (id : id) (notexp : notexp) : Ctx.t =
+  and eval_rule (ctx : Ctx.t) (id : id) (notexp : notexp) : Ctx.t attempt =
     let exps_input, exps_output =
       let inputs = Ctx.find_rel_inputs Local ctx id in
       let _, exps = notexp in
       InputHint.split_exps_without_idx inputs exps
     in
     let values_input = eval_exps ctx exps_input in
-    let+ _ctx, values_output = invoke_rel ctx id values_input in
-    assign_exps ctx exps_output values_output
+    let* ctx, values_output = invoke_rel ctx id values_input in
+    let ctx = assign_exps ctx exps_output values_output in
+    Ok ctx
 
   and eval_rule_opt (_ctx : Ctx.t) (_id : id) (_notexp : notexp)
       (_vars : var list) (_iterexps : iterexp list) : Ctx.t =
