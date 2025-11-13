@@ -35,6 +35,20 @@ rule Callee_eval/referenceExpressionIR-externFunctionCallee:
       = EXTERN_FUNCTION nameIR `< typeParameterListIR >
           `( parameterListIR `# id_default* )
 
+;;;; Defined function call
+
+rule Callee_eval/referenceExpressionIR-definedFunctionCallee:
+  p EC STO |- referenceExpressionIR `< `_ > `( argumentListIR )
+            : EC STO (`` definedFunctionCallee)
+  ---- ;; find the function definition being called
+  -- if (p_ref, _, definedFunctionDef, id_default*)
+      = $find_callableDef_overloaded_e(p, EC, referenceExpressionIR, argumentListIR)
+  ---- ;; prepare the callee
+  -- if FUNCTION nameIR `< typeParameterListIR > `( parameterListIR ) blockStatementIR
+      = definedFunctionDef
+  -- if definedFunctionCallee
+      = FUNCTION nameIR `< typeParameterListIR > `( parameterListIR `# id_default* ) blockStatementIR
+
 ;;; typedExpressionIR `. nameIR
 
 ;;;; Builtin method call

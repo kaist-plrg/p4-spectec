@@ -131,10 +131,77 @@ rulegroup Call_eval/actionCallee {
 
 }
 
+syntax definedFunctionResult =
+  | exitResult
+  | returnResult
+
+relation DefinedFunctionBody_eval:
+  evalContext store |- blockStatementIR
+                     : evalContext store definedFunctionResult
+  hint(input %0 %1 %2)
+
+rulegroup DefinedFunctionBody_eval {
+
+  rule DefinedFunctionBody_eval/cont:
+    EC_0 STO_0 |- blockStatementIR
+                : EC_1 STO_1 (RETURN eps)
+    -- Block_eval:
+        EC_0 STO_0 |- blockStatementIR
+                    : EC_1 STO_1 ``
+
+  rule DefinedFunctionBody_eval/exit:
+    EC_0 STO_0 |- blockStatementIR
+                : EC_1 STO_1 EXIT
+    -- Block_eval:
+        EC_0 STO_0 |- blockStatementIR
+                    : EC_1 STO_1 EXIT
+
+  rule DefinedFunctionBody_eval/return-void:
+    EC_0 STO_0 |- blockStatementIR
+                : EC_1 STO_1 returnResult
+    -- Block_eval:
+        EC_0 STO_0 |- blockStatementIR
+                    : EC_1 STO_1 returnResult
+
+}
+
 ;;; functionCallee
 ;;; syntax functionCallee
-
 ;;;; definedFunctionCallee
+
+rule Call_eval/definedFunctionCallee:
+  p EC_0 STO_0 |- definedFunctionCallee
+                  `@ `< typeArgumentListIR > `( argumentListIR )
+                : EC_3 STO_2 definedFunctionResult
+  -- if FUNCTION nameIR `< typeParameterListIR >
+          `( parameterIR* `# id_default* ) blockStatementIR
+      = definedFunctionCallee
+  ---- ;; create the callee context
+  -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+  ---- ;; align parameters with arguments
+  -- if (parameterIR_aligned*, argumentIR_aligned*,
+         parameterIR_default*, value_default*)
+      = $align_params_with_args(parameterIR*, argumentListIR, id_default*)
+  ---- ;; copy-in
+  -- Copy_in:
+      STO_0 p EC_0 parameterIR_aligned*
+         `@ LOCAL EC_callee_0 argumentIR_aligned*
+      ~> STO_1 EC_1 `@ EC_callee_1 `# (`` storageReference?*)
+  -- Copy_in_default:
+      parameterIR_default* `@ LOCAL EC_callee_1 value_default*
+      ~> `@ EC_callee_2
+  ---- ;; evaluate function body
+  -- DefinedFunctionBody_eval:
+      EC_callee_2 STO_1 |- blockStatementIR
+                         : EC_callee_3 STO_2 definedFunctionResult
+  ---- ;; propagate shared layer
+  -- if EC_2
+      = EC_1[ .GLOBAL.FRAME = EC_callee_3.GLOBAL.FRAME ]
+  ---- ;; copy-out
+  -- Copy_out:
+      STO_2 p EC_2 parameterIR_aligned*
+         `@ LOCAL EC_callee_3 storageReference?*
+      ~> EC_3
 
 ;;;; externFunctionCallee
 ;;;; syntax externFunctionCallee =
