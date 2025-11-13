@@ -27,10 +27,6 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   let checkpoint () = Arch.checkpoint ()
 
-  let restore_on_fail_attempt attempt =
-    (match attempt with Fail _ -> Arch.restore () | _ -> ());
-    attempt
-
   let restore_on_fail_sign (sign : Sign.t) =
     match sign with Cont -> Arch.restore () | _ -> ()
 
@@ -1493,7 +1489,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let values_input = eval_args ctx args in
     invoke_func' ctx id targs values_input
     |> nest id.at
-         (F.asprintf "invocation of function %s was not matched"
+         (F.asprintf "invocation of function %s failed"
             id.it)
 
   and invoke_func' (ctx : Ctx.t) (id : id) (targs : targ list)

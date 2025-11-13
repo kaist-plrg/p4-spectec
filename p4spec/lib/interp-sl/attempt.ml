@@ -9,7 +9,7 @@ let check_fail (b : bool) (at : region) (msg : string) =
 
 (* Monadic interface *)
 
-let ( let* ) (attempt : 'a attempt) (f : 'a -> 'b) : 'b =
+let ( let* ) (attempt : 'a attempt) (f : 'a -> 'b attempt) : 'b attempt =
   match attempt with Ok a -> f a | Fail _ as fail -> fail
 
 let error_with_failtraces (failtraces : failtrace list) =
