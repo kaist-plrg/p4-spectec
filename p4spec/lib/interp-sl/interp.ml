@@ -1445,21 +1445,15 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           Ok values_output
       | _ -> fail_silent
     in
-    let do_invoke_defined_rel' () =
-      checkpoint ();
-      let values_output_opt = invoke_defined_rel' () in
-      commit_or_rollback values_output_opt;
-      values_output_opt
-    in
     if (not (Ctx.deriving ctx)) && Cache.is_cached_rule id.it then (
       let cache_result = Cache.Cache.find !rule_cache (id.it, values_input) in
       match cache_result with
       | Some values_output -> Ok values_output
       | None ->
-          let* values_output = do_invoke_defined_rel' () in
+          let* values_output = invoke_defined_rel' () in
           Cache.Cache.add !rule_cache (id.it, values_input) values_output;
           Ok values_output)
-    else do_invoke_defined_rel' ()
+    else invoke_defined_rel' ()
 
   (* Invoke a function *)
 
@@ -1552,21 +1546,15 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           Ok value_output
       | _ -> fail_silent
     in
-    let do_invoke_defined_func' () =
-      checkpoint ();
-      let value_output = invoke_defined_func' () in
-      commit_or_rollback value_output;
-      value_output
-    in
     if (not (Ctx.deriving ctx)) && Cache.is_cached_func id.it then (
       let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
       match cache_result with
       | Some value_output -> Ok value_output
       | None ->
-          let* value_output = do_invoke_defined_func' () in
+          let* value_output = invoke_defined_func' () in
           Cache.Cache.add !func_cache (id.it, values_input) value_output;
           Ok value_output)
-    else do_invoke_defined_func' ()
+    else invoke_defined_func' ()
 
   (* Load definitions into the context *)
 

@@ -5,16 +5,8 @@ open Util.Source
 (* Execution trace for SL interpreter - simplified version without timing *)
 
 type t =
-  | Rel of {
-      id_rel : id;
-      values_input : value list;
-      subtraces : t list;
-    }
-  | Func of {
-      id_func : id;
-      values_input : value list;
-      subtraces : t list;
-    }
+  | Rel of { id_rel : id; values_input : value list; subtraces : t list }
+  | Func of { id_func : id; values_input : value list; subtraces : t list }
   | Instr of { instr : instr; subtraces : t list }
   | Empty
 
@@ -26,8 +18,7 @@ let open_rel (id_rel : id) (values_input : value list) : t =
 let open_func (id_func : id) (values_input : value list) : t =
   Func { id_func; values_input; subtraces = [] }
 
-let open_instr (instr : instr) : t =
-  Instr { instr; subtraces = [] }
+let open_instr (instr : instr) : t = Instr { instr; subtraces = [] }
 
 (* Closers *)
 
@@ -72,7 +63,8 @@ let wipe_subtraces (trace : t) : t list =
 let replace_subtraces (trace : t) (subtraces : t list) : t =
   match trace with
   | Rel { id_rel; values_input; _ } -> Rel { id_rel; values_input; subtraces }
-  | Func { id_func; values_input; _ } -> Func { id_func; values_input; subtraces }
+  | Func { id_func; values_input; _ } ->
+      Func { id_func; values_input; subtraces }
   | Instr { instr; _ } -> Instr { instr; subtraces }
   | Empty -> Empty
 
@@ -101,9 +93,7 @@ let rec to_failtrace (trace : t) : Util.Attempt.failtrace list =
       [
         Util.Attempt.Failtrace
           ( instr.at,
-            Format.asprintf "instruction %s failed"
-              (String.sub (string_of_instr instr) 0
-                 (min 50 (String.length (string_of_instr instr)))),
+            Format.asprintf "instruction %s failed" (string_of_instr instr),
             subfailtraces );
       ]
   | Empty -> []

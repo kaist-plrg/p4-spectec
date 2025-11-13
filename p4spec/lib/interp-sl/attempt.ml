@@ -14,7 +14,8 @@ let ( let* ) (attempt : 'a attempt) (f : 'a -> 'b attempt) : 'b attempt =
 
 (* Nest with trace support *)
 
-let nest_with_trace (at : region) (msg : string) (trace : Trace.t) (attempt : 'a attempt) : 'a attempt =
+let nest_with_trace (at : region) (msg : string) (trace : Trace.t)
+    (attempt : 'a attempt) : 'a attempt =
   match attempt with
   | Ok a -> Ok a
   | Fail failtraces ->
