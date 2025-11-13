@@ -24,17 +24,6 @@ let func_cache = ref (Cache.Cache.create ~size:10000)
 let rule_cache = ref (Cache.Cache.create ~size:10000)
 
 module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
-  (* Architecture transactions *)
-
-  let checkpoint () = Arch.checkpoint ()
-
-  let restore_on_fail_sign (sign : Sign.t) =
-    match sign with Cont -> Arch.restore () | _ -> ()
-
-  let commit_or_rollback attempt =
-    (match attempt with Ok _ -> Arch.commit () | Fail _ -> Arch.rollback ());
-    attempt
-
   (* Assignments *)
 
   (* Assigning a value to an expression *)
@@ -960,20 +949,16 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     (match phantom_opt with
     | Some (pid, _) -> Ctx.cover ctx (not cond) pid vid
     | None -> ());
-    (* Evaluate the then branch if the condition holds *)
-    let ctx, sign =
-      if cond then eval_instrs ctx Cont instrs_then else (ctx, Cont)
-    in
-    (* If the nested instructions did not result/return, restore *)
-    restore_on_fail_sign sign;
-    (ctx, sign)
+    if cond then eval_instrs ctx Cont instrs_then else (ctx, Cont)
 
   (* Hold instruction evaluation *)
 
   and eval_hold_cond (ctx : Ctx.t) (id : id) (notexp : notexp) : bool * value =
     let _, exps_input = notexp in
     let values_input = eval_exps ctx exps_input in
-    let hold = match invoke_rel ctx id values_input with Ok _ -> true | Fail _ -> false in
+    let hold =
+      match invoke_rel ctx id values_input with Ok _ -> true | Fail _ -> false
+    in
     let value_res =
       let vid = Value.fresh () in
       let typ = Il.Ast.BoolT in
@@ -1041,28 +1026,23 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     (* Evaluate the hold case, and restore the coverage information
        if the expected behavior is the relation not holding *)
     let vid = value_cond.note.vid in
-    let ctx, sign =
-      match holdcase with
-      | BothH (instrs_hold, instrs_not_hold) ->
-          if cond then eval_instrs ctx Cont instrs_hold
-          else (
-            ctx.coverage := cover_backup;
-            eval_instrs ctx Cont instrs_not_hold)
-      | HoldH (instrs_hold, phantom_opt) ->
-          (match phantom_opt with
-          | Some (pid, _) -> Ctx.cover ctx (not cond) pid vid
-          | None -> ());
-          if cond then eval_instrs ctx Cont instrs_hold else (ctx, Cont)
-      | NotHoldH (instrs_not_hold, phantom_opt) ->
+    match holdcase with
+    | BothH (instrs_hold, instrs_not_hold) ->
+        if cond then eval_instrs ctx Cont instrs_hold
+        else (
           ctx.coverage := cover_backup;
-          (match phantom_opt with
-          | Some (pid, _) -> Ctx.cover ctx cond pid vid
-          | None -> ());
-          if not cond then eval_instrs ctx Cont instrs_not_hold else (ctx, Cont)
-    in
-    (* If the nested instructions did not result/return, restore *)
-    restore_on_fail_sign sign;
-    (ctx, sign)
+          eval_instrs ctx Cont instrs_not_hold)
+    | HoldH (instrs_hold, phantom_opt) ->
+        (match phantom_opt with
+        | Some (pid, _) -> Ctx.cover ctx (not cond) pid vid
+        | None -> ());
+        if cond then eval_instrs ctx Cont instrs_hold else (ctx, Cont)
+    | NotHoldH (instrs_not_hold, phantom_opt) ->
+        ctx.coverage := cover_backup;
+        (match phantom_opt with
+        | Some (pid, _) -> Ctx.cover ctx cond pid vid
+        | None -> ());
+        if not cond then eval_instrs ctx Cont instrs_not_hold else (ctx, Cont)
 
   (* Case analysis instruction evaluation *)
 
@@ -1108,14 +1088,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | Some (pid, _) -> Ctx.cover ctx (Option.is_none instrs_opt) pid vid
     | None -> ());
     (* Evaluate the matching case if any *)
-    let ctx, sign =
-      match instrs_opt with
-      | Some instrs -> eval_instrs ctx Cont instrs
-      | None -> (ctx, Cont)
-    in
-    (* If the nested instructions did not result/return, restore *)
-    restore_on_fail_sign sign;
-    (ctx, sign)
+    match instrs_opt with
+    | Some instrs -> eval_instrs ctx Cont instrs
+    | None -> (ctx, Cont)
 
   (* Group instruction evaluation *)
 
@@ -1458,21 +1433,15 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           Ok values_output
       | _ -> fail_silent
     in
-    let do_invoke_defined_rel' () =
-      checkpoint ();
-      let values_output_opt = invoke_defined_rel' () in
-      commit_or_rollback values_output_opt;
-      values_output_opt
-    in
     if (not (Ctx.deriving ctx)) && Cache.is_cached_rule id.it then (
       let cache_result = Cache.Cache.find !rule_cache (id.it, values_input) in
       match cache_result with
       | Some values_output -> Ok values_output
       | None ->
-          let* values_output = do_invoke_defined_rel' () in
+          let* values_output = invoke_defined_rel' () in
           Cache.Cache.add !rule_cache (id.it, values_input) values_output;
           Ok values_output)
-    else do_invoke_defined_rel' ()
+    else invoke_defined_rel' ()
 
   (* Invoke a function *)
 
@@ -1500,9 +1469,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     in
     let values_input = eval_args ctx args in
     invoke_func' ctx id targs values_input
-    |> nest id.at
-         (F.asprintf "invocation of function %s failed"
-            id.it)
+    |> nest id.at (F.asprintf "invocation of function %s failed" id.it)
 
   and invoke_func' (ctx : Ctx.t) (id : id) (targs : targ list)
       (values_input : value list) : value attempt =
@@ -1562,21 +1529,15 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           Ok value_output
       | _ -> fail_silent
     in
-    let do_invoke_defined_func' () =
-      checkpoint ();
-      let value_output = invoke_defined_func' () in
-      commit_or_rollback value_output;
-      value_output
-    in
     if (not (Ctx.deriving ctx)) && Cache.is_cached_func id.it then (
       let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
       match cache_result with
       | Some value_output -> Ok value_output
       | None ->
-          let* value_output = do_invoke_defined_func' () in
+          let* value_output = invoke_defined_func' () in
           Cache.Cache.add !func_cache (id.it, values_input) value_output;
           Ok value_output)
-    else do_invoke_defined_func' ()
+    else invoke_defined_func' ()
 
   (* Load definitions into the context *)
 
@@ -1618,7 +1579,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   let do_eval_func (ctx : Ctx.t) (spec : spec) (funcname : string)
       (targs : targ list) (values_input : value list) : value =
     let ctx = load_spec ctx spec in
-    let+ value_output = invoke_func' ctx (funcname $ no_region) targs values_input in
+    let+ value_output =
+      invoke_func' ctx (funcname $ no_region) targs values_input
+    in
     value_output
 
   let eval_program ~(derive : bool) (spec : spec) (relname : string)
