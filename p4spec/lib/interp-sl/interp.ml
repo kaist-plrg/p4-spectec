@@ -27,9 +27,12 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   let checkpoint () = Arch.checkpoint ()
 
-  let restore_on_fail attempt =
+  let restore_on_fail_attempt attempt =
     (match attempt with Fail _ -> Arch.restore () | _ -> ());
     attempt
+
+  let restore_on_fail_sign (sign : Sign.t) =
+    match sign with Cont -> Arch.restore () | _ -> ()
 
   let commit_or_rollback attempt =
     (match attempt with Ok _ -> Arch.commit () | Fail _ -> Arch.rollback ());
@@ -965,7 +968,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       if cond then eval_instrs ctx Cont instrs_then else (ctx, Cont)
     in
     (* If the nested instructions did not result/return, restore *)
-    restore_on_fail sign;
+    restore_on_fail_sign sign;
     (ctx, sign)
 
   (* Hold instruction evaluation *)
@@ -1061,7 +1064,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           if not cond then eval_instrs ctx Cont instrs_not_hold else (ctx, Cont)
     in
     (* If the nested instructions did not result/return, restore *)
-    restore_on_fail sign;
+    restore_on_fail_sign sign;
     (ctx, sign)
 
   (* Case analysis instruction evaluation *)
@@ -1114,7 +1117,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       | None -> (ctx, Cont)
     in
     (* If the nested instructions did not result/return, restore *)
-    restore_on_fail sign;
+    restore_on_fail_sign sign;
     (ctx, sign)
 
   (* Group instruction evaluation *)
