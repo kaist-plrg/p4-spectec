@@ -843,9 +843,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     let cond = Value.get_bool value_cond in
     if cond then Ok ctx
     else
-      fail exp_cond.at
+      let reason = Trace.guess_reason ctx.trace in
+      fail_with_reason exp_cond.at
         (F.asprintf "condition %s was not met"
            (Il.Print.string_of_exp exp_cond))
+        reason
 
   (* If-hold premise evaluation *)
 
