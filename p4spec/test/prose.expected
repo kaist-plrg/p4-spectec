@@ -7644,11 +7644,19 @@ relation Table_eval: `EC~0~`, `STO~0~`, and `TBL`
 
 
 . Group :
- .. Let `++_++ ++_++ DEFAULT_ACTION = prefixedNameIR ( argumentListIR ) ;` be `TBL.DEFAULT_ACTION`.
- .. Let `EC~1~`, `STO~1~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `prefixedNameIR < [ ] > ( argumentListIR ) ;`, under cursor `LOCAL`, evaluation context `EC~0~`, and store `STO~0~`>>.
+ .. Let `KEY = { tableKeyListIR }` be `TBL.KEYS`.
+ .. Let <<TableKeys_eval, `EC~0~ STO~0~ |- tableKeyListIR : EC~1~ STO~1~ tableKeysResult`>>.
+ .. Check that `tableKeysResult` has type `continueResult<tableKeyValue*>`.
+ .. Let `tableKeyValue^{asterisk}^` be `tableKeysResult`.
+ .. Let `++_++ ++_++ ENTRIES = { tableEntryListIR }` be `TBL.ENTRIES`.
+ .. Let <<TableMatches_eval, `EC~1~ STO~1~ |- tableKeyValue^{asterisk}^ @ tableEntryListIR : EC~2~ STO~2~ tableMatchesResult`>>.
+ .. Check that `tableMatchesResult` has type `continueResult<tableMatch*>`.
+ .. Let `tableMatch^{asterisk}^` be `tableMatchesResult`.
+ .. Let `prefixedNameIR ( argumentListIR )` be `<<select_action, $select_action(TBL, tableMatch^{asterisk}^)>>`.
+ .. Let `EC~3~`, `STO~3~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `prefixedNameIR < [ ] > ( argumentListIR ) ;`, under cursor `LOCAL`, evaluation context `EC~2~`, and store `STO~2~`>>.
  .. Check that `statementResult` has type `continueEmptyResult`.
  .. Let `continueEmptyResult` be `statementResult`.
- .. Result in `EC~1~`, `STO~1~`, and `RETURN None`.
+ .. Result in `EC~3~`, `STO~3~`, and `RETURN None`.
 
 
 relation ControlBody_eval: `EC~0~`, `STO~0~`, and `controlBodyIR`
@@ -8006,18 +8014,30 @@ relation Call_eval: `p`, `EC~0'~`, `STO~0'~`, `callee`, `typeArgumentListIR'`, a
 . Check that `typeArgumentIR^{asterisk}^` is an empty list.
 . Group actionCallee:
  .. Let `ACTION cursor . nameIR ( parameterIR^{asterisk}^ # id~default~^{asterisk}^ ) blockStatementIR` be `actionCallee`.
- .. Check that `cursor` matches pattern `BLOCK`.
- .. Let `EC~callee_0~` be `<<inherit_e, $inherit_e(BLOCK, EC~0'~)>>`.
- .. Let `(parameterIR~aligned~^{asterisk}^, argumentIR~aligned~^{asterisk}^, parameterIR~default~^{asterisk}^, value~default~^{asterisk}^)` be `<<align_params_with_args, $align_params_with_args(parameterIR^{asterisk}^, argumentListIR', id~default~^{asterisk}^)>>`.
- .. Let <<Copy_in, `STO~0'~ p EC~0'~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_0~ argumentIR~aligned~^{asterisk}^ ~> STO~1~ EC~1~ @ EC~callee_1~ # copyInListResult`>>.
- .. Check that `copyInListResult` has type `continueResult<storageReference?*>`.
- .. Let `storageReference^?^^{asterisk}^` be `copyInListResult`.
- .. Let <<Copy_in_default, `parameterIR~default~^{asterisk}^ @ LOCAL EC~callee_1~ value~default~^{asterisk}^ ~> @ EC~callee_2~`>>.
- .. Let <<ActionBody_eval, `EC~callee_2~ STO~1~ |- blockStatementIR : EC~callee_3~ STO~2~ actionResult`>>.
- .. Check that `actionResult` is equal to `RETURN None`.
- .. Let `EC~2~` be `EC~1~[GLOBAL.FRAME = EC~callee_3~.GLOBAL.FRAME][BLOCK.FRAME = EC~callee_3~.BLOCK.FRAME]`.
- .. Let <<Copy_out, `STO~2~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_3~ storageReference^?^^{asterisk}^ ~> EC~3~`>>.
- .. Result in `EC~3~`, `STO~2~`, and `RETURN None`.
+ .. If `cursor` matches pattern `GLOBAL`:
+  ... Let `EC~callee_0~` be `<<inherit_e, $inherit_e(GLOBAL, EC~0'~)>>`.
+  ... Let `(parameterIR~aligned~^{asterisk}^, argumentIR~aligned~^{asterisk}^, parameterIR~default~^{asterisk}^, value~default~^{asterisk}^)` be `<<align_params_with_args, $align_params_with_args(parameterIR^{asterisk}^, argumentListIR', id~default~^{asterisk}^)>>`.
+  ... Let <<Copy_in, `STO~0'~ p EC~0'~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_0~ argumentIR~aligned~^{asterisk}^ ~> STO~1~ EC~1~ @ EC~callee_1~ # copyInListResult`>>.
+  ... Check that `copyInListResult` has type `continueResult<storageReference?*>`.
+  ... Let `storageReference^?^^{asterisk}^` be `copyInListResult`.
+  ... Let <<Copy_in_default, `parameterIR~default~^{asterisk}^ @ LOCAL EC~callee_1~ value~default~^{asterisk}^ ~> @ EC~callee_2~`>>.
+  ... Let <<ActionBody_eval, `EC~callee_2~ STO~1~ |- blockStatementIR : EC~callee_3~ STO~2~ actionResult`>>.
+  ... Check that `actionResult` is equal to `RETURN None`.
+  ... Let `EC~2~` be `EC~1~[GLOBAL.FRAME = EC~callee_3~.GLOBAL.FRAME]`.
+  ... Let <<Copy_out, `STO~2~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_3~ storageReference^?^^{asterisk}^ ~> EC~3~`>>.
+  ... Result in `EC~3~`, `STO~2~`, and `RETURN None`.
+ .. Else if `cursor` matches pattern `BLOCK`:
+  ... Let `EC~callee_0~` be `<<inherit_e, $inherit_e(BLOCK, EC~0'~)>>`.
+  ... Let `(parameterIR~aligned~^{asterisk}^, argumentIR~aligned~^{asterisk}^, parameterIR~default~^{asterisk}^, value~default~^{asterisk}^)` be `<<align_params_with_args, $align_params_with_args(parameterIR^{asterisk}^, argumentListIR', id~default~^{asterisk}^)>>`.
+  ... Let <<Copy_in, `STO~0'~ p EC~0'~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_0~ argumentIR~aligned~^{asterisk}^ ~> STO~1~ EC~1~ @ EC~callee_1~ # copyInListResult`>>.
+  ... Check that `copyInListResult` has type `continueResult<storageReference?*>`.
+  ... Let `storageReference^?^^{asterisk}^` be `copyInListResult`.
+  ... Let <<Copy_in_default, `parameterIR~default~^{asterisk}^ @ LOCAL EC~callee_1~ value~default~^{asterisk}^ ~> @ EC~callee_2~`>>.
+  ... Let <<ActionBody_eval, `EC~callee_2~ STO~1~ |- blockStatementIR : EC~callee_3~ STO~2~ actionResult`>>.
+  ... Check that `actionResult` is equal to `RETURN None`.
+  ... Let `EC~2~` be `EC~1~[GLOBAL.FRAME = EC~callee_3~.GLOBAL.FRAME][BLOCK.FRAME = EC~callee_3~.BLOCK.FRAME]`.
+  ... Let <<Copy_out, `STO~2~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_3~ storageReference^?^^{asterisk}^ ~> EC~3~`>>.
+  ... Result in `EC~3~`, `STO~2~`, and `RETURN None`.
 . Let `argumentIR^{asterisk}^` be `argumentListIR'`.
 . If let `externFunctionCallee` be `callee`:
  .. Group externFunctionCallee:
@@ -8227,6 +8247,91 @@ relation SelectCases_match: `evalContext`, `store`, `value~key~^{asterisk}^`, an
   ... Else `nameIR^?^` is None:
    .... Let <<SelectCases_match, `EC~1~ STO~1~ value~key~^{asterisk}^ |- selectCaseIR~t~^{asterisk}^ : EC~2~ STO~2~ nameIR~state~^?^`>>.
    .... Result in `EC~2~`, `STO~2~`, and `nameIR~state~^?^`.
+
+
+relation TableKey_eval: `EC~0~`, `STO~0~`, and `typedExpressionIR : nameIR ++_++ ;`
+
+
+. Group exit:
+ .. Let `EC~1~`, `STO~1~`, and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR`, under cursor `LOCAL`, evaluation context `EC~0~`, and store `STO~0~`>>.
+ .. Check that `expressionResult` has type `exitResult`.
+ .. Let `exitResult` be `expressionResult`.
+ .. Result in `EC~1~`, `STO~1~`, and `EXIT`.
+. Group cont:
+ .. Let `EC~1~`, `STO~1~`, and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR`, under cursor `LOCAL`, evaluation context `EC~0~`, and store `STO~0~`>>.
+ .. Check that `expressionResult` has type `continueResult<value>`.
+ .. Let `value` be `expressionResult`.
+ .. Let `tableKeyValue` be `value : nameIR`.
+ .. Result in `EC~1~`, `STO~1~`, and `tableKeyValue`.
+
+
+relation TableKeys_eval: `evalContext`, `store`, and `tableKeyIR''^{asterisk}^`
+
+
+. Group :
+ .. If `tableKeyIR''^{asterisk}^` is equal to `[ ]`:
+  ... Result in `evalContext`, `store`, and `[ ]`.
+ .. Let `tableKeyIR'''^{asterisk}^` be `tableKeyIR''^{asterisk}^`.
+ .. Else if let `tableKeyIR~h~ :: tableKeyIR~t~^{asterisk}^` be `tableKeyIR'''^{asterisk}^`:
+  ... Let <<TableKey_eval, `evalContext store |- tableKeyIR~h~ : EC~1~ STO~1~ tableKeyResult`>>.
+  ... If let `exitResult` be `tableKeyResult`:
+   .... Result in `EC~1~`, `STO~1~`, and `EXIT`.
+  ... Else let `tableKeyValue~h~` be `tableKeyResult`:
+   .... Let <<TableKeys_eval, `EC~1~ STO~1~ |- tableKeyIR~t~^{asterisk}^ : EC~2~ STO~2~ tableKeysResult`>>.
+   .... If let `exitResult` be `tableKeysResult`:
+    ..... Result in `EC~2~`, `STO~2~`, and `EXIT`.
+   .... Else let `tableKeyValue~t~^{asterisk}^` be `tableKeysResult`:
+    ..... Let `tableKeyValue^{asterisk}^` be `tableKeyValue~h~ :: tableKeyValue~t~^{asterisk}^`.
+    ..... Result in `EC~2~`, `STO~2~`, and `tableKeyValue^{asterisk}^`.
+
+
+relation TableEntryPriority_eval: `EC`, `STO`, and `tableEntryPriorityIR^?^`
+
+
+. Check that `tableEntryPriorityIR^?^` is None.
+. Group :
+ .. Result in `None`.
+
+
+relation TableMatch_eval: `EC~0~`, `STO~0~`, `tableKeyValue^{asterisk}^`, and `tableEntryIR`
+
+
+. Group :
+ .. Let `++_++ tableEntryPriorityIR^?^ keysetExpressionIR : tableActionReferenceIR ++_++ ;` be `tableEntryIR`.
+ .. Let <<TableEntryPriority_eval, `EC~0~ STO~0~ |- tableEntryPriorityIR^?^ : n~priority~^?^`>>.
+ .. Let <<Expr_eval_keyset, `EC~0~ STO~0~ |- keysetExpressionIR : EC~1~ STO~1~ keysetExpressionResult`>>.
+ .. Check that `keysetExpressionResult` has type `continueResult<setValue*>`.
+ .. Let `setValue^{asterisk}^` be `keysetExpressionResult`.
+ .. Let `value~key~^{asterisk}^` be the list of `value~key~`, obtained by repeating:
++
+--
+    * Let `value~key~ : ++_++` be `tableKeyValue`.
+--
++
+for each `tableKeyValue` in `tableKeyValue^{asterisk}^`
+ .. If `~<<match_keysets, $match_keysets(setValue^{asterisk}^, value~key~^{asterisk}^)>>`:
+  ... Result in `EC~1~`, `STO~1~`, and `None`.
+ .. Else `<<match_keysets, $match_keysets(setValue^{asterisk}^, value~key~^{asterisk}^)>>`:
+  ... Let `tableMatch` be `n~priority~^?^ : tableActionReferenceIR`.
+  ... Result in `EC~1~`, `STO~1~`, and `tableMatch`.
+
+
+relation TableMatches_eval: `evalContext`, `store`, `tableKeyValue^{asterisk}^`, and `tableEntryIR^{asterisk}^`
+
+
+. Group :
+ .. If `tableEntryIR^{asterisk}^` is equal to `[ ]`:
+  ... Result in `evalContext`, `store`, and `[ ]`.
+ .. Let `tableEntryIR'^{asterisk}^` be `tableEntryIR^{asterisk}^`.
+ .. Else if let `tableEntryIR~h~ :: tableEntryIR~t~^{asterisk}^` be `tableEntryIR'^{asterisk}^`:
+  ... Let <<TableMatch_eval, `evalContext store |- tableKeyValue^{asterisk}^ @ tableEntryIR~h~ : EC~1~ STO~1~ tableMatchResult`>>.
+  ... Check that `tableMatchResult` has type `continueResult<tableMatch?>`.
+  ... Let `tableMatch~h~^?^` be `tableMatchResult`.
+  ... Let <<TableMatches_eval, `EC~1~ STO~1~ |- tableKeyValue^{asterisk}^ @ tableEntryIR~t~^{asterisk}^ : EC~2~ STO~2~ tableMatchesResult`>>.
+  ... Check that `tableMatchesResult` has type `continueResult<tableMatch*>`.
+  ... Let `tableMatch~t~^{asterisk}^` be `tableMatchesResult`.
+  ... Let `tableMatch^{asterisk}^` be `<<opt_as_seq_, $opt_as_seq_<tableMatch>(tableMatch~h~^?^)>> ++ tableMatch~t~^{asterisk}^`.
+  ... Result in `EC~2~`, `STO~2~`, and `tableMatch^{asterisk}^`.
 
 
 relation ActionBody_eval: `EC~0~`, `STO~0~`, and `blockStatementIR`

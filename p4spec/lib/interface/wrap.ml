@@ -99,11 +99,11 @@ type symbol = NT of value | Term of string
 
 let wrap_bool_v (b : bool) : value = BoolV b |> with_typ BoolT
 
-let wrap_num_v_nat (n : int) : value =
-  NumV (`Nat (Bigint.of_int n)) |> with_typ (NumT `NatT)
+let wrap_num_v_nat (n : Bigint.t) : value =
+  NumV (`Nat n) |> with_typ (NumT `NatT)
 
-let wrap_num_v_int (i : int) : value =
-  NumV (`Int (Bigint.of_int i)) |> with_typ (NumT `IntT)
+let wrap_num_v_int (i : Bigint.t) : value =
+  NumV (`Int i) |> with_typ (NumT `IntT)
 
 let wrap_text_v (s : string) : value = TextV s |> with_typ TextT
 

@@ -126,6 +126,8 @@ def $write_bits_from_value(w S i)
   = $int_to_bits_signed(w, i)
 def $write_bits_from_value(w W i)
   = $int_to_bits_unsigned(w, i)
+def $write_bits_from_value(_ `. w V i)
+  = $int_to_bits_unsigned(w, i)
 
 def $write_bits_from_value(
     STRUCT _ `{ (value_field id_field `;)* }
@@ -135,3 +137,4 @@ def $write_bits_from_value(
     HEADER _ `{ true `; (value_field id_field `;)* }
   )
   = $concat_<bool>($write_bits_from_value(value_field)*)
+def $write_bits_from_value(HEADER _ `{ false `; _ }) = eps

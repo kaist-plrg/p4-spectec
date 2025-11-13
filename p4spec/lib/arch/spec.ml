@@ -5,6 +5,31 @@ module Value = Runtime_dynamic.Value
 
 (* Helpers for invoking relations in the spec *)
 
+(* Lvalue_read *)
+
+let lvalue_read_dot call_rel (value_cursor : Value.t) (value_ctx : Value.t)
+    (value_sto : Value.t) (name : string) (member : string) : Value.t =
+  let value_prefixedNameIR =
+    let value_nameIR = wrap_text_v name in
+    [ Term "`"; NT value_nameIR ] #@ "prefixedNameIR"
+  in
+  let value_storageReference =
+    let value_memberIR = wrap_text_v member in
+    [ NT value_prefixedNameIR; Term "."; NT value_memberIR ]
+    #@ "storageReference"
+  in
+  match
+    call_rel "Lvalue_read"
+      [ value_cursor; value_ctx; value_sto; value_storageReference ]
+  with
+  | [ value_value ] -> value_value
+  | _ -> assert false
+
+let lvalue_read_dot_global call_rel (value_ctx : Value.t) (value_sto : Value.t)
+    (name : string) (member : string) : Value.t =
+  let value_cursor = [ Term "GLOBAL" ] #@ "cursor" in
+  lvalue_read_dot call_rel value_cursor value_ctx value_sto name member
+
 (* Lvalue_write *)
 
 let lvalue_write_var call_rel (value_cursor : Value.t) (value_ctx : Value.t)
@@ -80,7 +105,7 @@ let v1model_init_packet_out call_rel (value_ctx : Value.t) (value_sto : Value.t)
 
 let v1model_init_globals call_rel (value_ctx : Value.t) (value_sto : Value.t)
     (port : IO.port) : Value.t =
-  let value_port = port |> wrap_num_v_int in
+  let value_port = port |> Bigint.of_int |> wrap_num_v_int in
   match
     call_rel "V1Model_init_globals" [ value_ctx; value_sto; value_port ]
   with
@@ -137,7 +162,7 @@ let v1model_deparse call_rel (value_ctx : Value.t) (value_sto : Value.t) :
 
 let write_value_from_bits call_func (value_target : Value.t) (varsize : int)
     (bits : bool Array.t) : Value.t =
-  let value_varsize = varsize |> wrap_num_v_nat in
+  let value_varsize = varsize |> Bigint.of_int |> wrap_num_v_nat in
   let value_bits =
     bits |> Array.to_list |> List.map wrap_bool_v
     |> wrap_list_v_typed Il.Ast.BoolT
@@ -149,6 +174,11 @@ let write_value_from_bits call_func (value_target : Value.t) (varsize : int)
 
 let default call_func (value_typ : Value.t) : Value.t =
   call_func "default" [] [ value_typ ]
+
+(* cast_op *)
+
+let cast_op call_func (value_typ : Value.t) (value_value : Value.t) : Value.t =
+  call_func "cast_op" [] [ value_typ; value_value ]
 
 (* sizeof_min/maxSizeInBits *)
 

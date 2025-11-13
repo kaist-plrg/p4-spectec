@@ -3285,6 +3285,22 @@ def $write_bits_from_value(value)
 
       1. Return $concat_<bool>($write_bits_from_value(value_field)*{value_field <- value_field*})
 
+    3. (Let (header _tid { bool ; _fieldValue*{_fieldValue <- _fieldValue*} }) be (value as headerValue))
+
+    4. If ((bool = false)), then
+
+      1. Return []
+
+2. If ((value has type numberValue)), then
+
+  1. (Let numberValue be (value as numberValue))
+
+  2. If ((numberValue matches pattern `%.%V%`)), then
+
+    1. (Let (_nat . w v i) be numberValue)
+
+    2. Return $int_to_bits_unsigned(w, i)
+
 ;; ../../../../spec-concrete/2.2.1-type.watsup:14.1-18.11
 syntax primitiveTypeIR = 
    | void
@@ -28958,15 +28974,31 @@ relation Table_eval: EC_0 STO_0 |- TBL : % % %
 
 1. Group : EC_0 STO_0 |- TBL : % % %
 
-  1. (Let (_annotationList _constOptIR default_action= (prefixedNameIR ( argumentListIR )) ;) be TBL.default_action)
+  1. (Let (key={ tableKeyListIR }) be TBL.keys)
 
-  2. (Stmt_eval: (local) EC_0 STO_0 |- (((prefixedNameIR as callableTargetIR) < [] >( argumentListIR );) as statementIR) : EC_1 STO_1 statementResult)
+  2. (TableKeys_eval: EC_0 STO_0 |- tableKeyListIR : EC_1 STO_1 tableKeysResult)
 
-  3. If ((statementResult has type continueEmptyResult)), then
+  3. If ((tableKeysResult has type continueResult<tableKeyValue*>)), then
 
-    1. (Let continueEmptyResult be (statementResult as continueEmptyResult))
+    1. (Let (` tableKeyValue*{tableKeyValue <- tableKeyValue*}) be (tableKeysResult as continueResult<tableKeyValue*>))
 
-    2. Result in : % % |- % : EC_1 STO_1 ((return ?()) as tableResult)
+    2. (Let (_annotationList _constOptIR entries={ tableEntryListIR }) be TBL.entries)
+
+    3. (TableMatches_eval: EC_1 STO_1 |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryListIR : EC_2 STO_2 tableMatchesResult)
+
+    4. If ((tableMatchesResult has type continueResult<tableMatch*>)), then
+
+      1. (Let (` tableMatch*{tableMatch <- tableMatch*}) be (tableMatchesResult as continueResult<tableMatch*>))
+
+      2. (Let (prefixedNameIR ( argumentListIR )) be $select_action(TBL, tableMatch*{tableMatch <- tableMatch*}))
+
+      3. (Stmt_eval: (local) EC_2 STO_2 |- (((prefixedNameIR as callableTargetIR) < [] >( argumentListIR );) as statementIR) : EC_3 STO_3 statementResult)
+
+      4. If ((statementResult has type continueEmptyResult)), then
+
+        1. (Let continueEmptyResult be (statementResult as continueEmptyResult))
+
+        2. Result in : % % |- % : EC_3 STO_3 ((return ?()) as tableResult)
 
 ;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:199.1-200.17
 syntax controlBodyResult = 
@@ -29718,29 +29750,55 @@ relation Call_eval: p EC_0' STO_0' |- callee @< typeArgumentListIR' >( argumentL
 
       1. (Let (action cursor . nameIR ( parameterIR*{parameterIR <- parameterIR*} # id_default*{id_default <- id_default*} ) blockStatementIR) be actionCallee)
 
-      2. If ((cursor matches pattern `BLOCK`)), then
+      2. Case analysis on cursor
 
-        1. (Let EC_callee_0 be $inherit_e((block), EC_0'))
+        1. Case (% matches pattern `GLOBAL`)
 
-        2. (Let (parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, value_default*{value_default <- value_default*}) be $align_params_with_args(parameterIR*{parameterIR <- parameterIR*}, argumentListIR', id_default*{id_default <- id_default*}))
+          1. (Let EC_callee_0 be $inherit_e((global), EC_0'))
 
-        3. (Copy_in: STO_0' p EC_0' parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_0 argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*} ~> STO_1 EC_1 @ EC_callee_1 # copyInListResult)
+          2. (Let (parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, value_default*{value_default <- value_default*}) be $align_params_with_args(parameterIR*{parameterIR <- parameterIR*}, argumentListIR', id_default*{id_default <- id_default*}))
 
-        4. If ((copyInListResult has type continueResult<storageReference?*>)), then
+          3. (Copy_in: STO_0' p EC_0' parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_0 argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*} ~> STO_1 EC_1 @ EC_callee_1 # copyInListResult)
 
-          1. (Let (` storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*}) be (copyInListResult as continueResult<storageReference?*>))
+          4. If ((copyInListResult has type continueResult<storageReference?*>)), then
 
-          2. (Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} @ (local) EC_callee_1 value_default*{value_default <- value_default*} ~>@ EC_callee_2)
+            1. (Let (` storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*}) be (copyInListResult as continueResult<storageReference?*>))
 
-          3. (ActionBody_eval: EC_callee_2 STO_1 |- blockStatementIR : EC_callee_3 STO_2 actionResult)
+            2. (Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} @ (local) EC_callee_1 value_default*{value_default <- value_default*} ~>@ EC_callee_2)
 
-          4. If ((actionResult = ((return ?()) as actionResult))), then
+            3. (ActionBody_eval: EC_callee_2 STO_1 |- blockStatementIR : EC_callee_3 STO_2 actionResult)
 
-            1. (Let EC_2 be EC_1[global.frame = EC_callee_3.global.frame][block.frame = EC_callee_3.block.frame])
+            4. If ((actionResult = ((return ?()) as actionResult))), then
 
-            2. (Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_3 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3)
+              1. (Let EC_2 be EC_1[global.frame = EC_callee_3.global.frame])
 
-            3. Result in : % % % |- % @< % >( % ): EC_3 STO_2 ((return ?()) as callResult)
+              2. (Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_3 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3)
+
+              3. Result in : % % % |- % @< % >( % ): EC_3 STO_2 ((return ?()) as callResult)
+
+        2. Case (% matches pattern `BLOCK`)
+
+          1. (Let EC_callee_0 be $inherit_e((block), EC_0'))
+
+          2. (Let (parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, value_default*{value_default <- value_default*}) be $align_params_with_args(parameterIR*{parameterIR <- parameterIR*}, argumentListIR', id_default*{id_default <- id_default*}))
+
+          3. (Copy_in: STO_0' p EC_0' parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_0 argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*} ~> STO_1 EC_1 @ EC_callee_1 # copyInListResult)
+
+          4. If ((copyInListResult has type continueResult<storageReference?*>)), then
+
+            1. (Let (` storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*}) be (copyInListResult as continueResult<storageReference?*>))
+
+            2. (Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} @ (local) EC_callee_1 value_default*{value_default <- value_default*} ~>@ EC_callee_2)
+
+            3. (ActionBody_eval: EC_callee_2 STO_1 |- blockStatementIR : EC_callee_3 STO_2 actionResult)
+
+            4. If ((actionResult = ((return ?()) as actionResult))), then
+
+              1. (Let EC_2 be EC_1[global.frame = EC_callee_3.global.frame][block.frame = EC_callee_3.block.frame])
+
+              2. (Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_3 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3)
+
+              3. Result in : % % % |- % @< % >( % ): EC_3 STO_2 ((return ?()) as callResult)
 
 3. (Let argumentIR*{argumentIR <- argumentIR*} be argumentListIR')
 
@@ -30240,6 +30298,194 @@ relation SelectCases_match: evalContext store value_key*{value_key <- value_key*
         1. (SelectCases_match: EC_1 STO_1 value_key*{value_key <- value_key*} |- selectCaseIR_t*{selectCaseIR_t <- selectCaseIR_t*} : EC_2 STO_2 nameIR_state?{nameIR_state <- nameIR_state?})
 
         2. Result in : % % % |- % : EC_2 STO_2 nameIR_state?{nameIR_state <- nameIR_state?}
+
+;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:5.24-5.39
+syntax tableKeyValue = 
+   | value : nameIR
+
+;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:8.1-9.15
+syntax tableKeyResult = 
+   | ` tableKeyValue
+   | exit
+
+;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:11.1-14.23
+relation TableKey_eval: EC_0 STO_0 |- (typedExpressionIR : nameIR _annotationList ;) : % % %
+
+1. Group exit: EC_0 STO_0 |- (typedExpressionIR : nameIR _annotationList ;) : % % %
+
+  1. (Expr_eval: (local) EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult)
+
+  2. If ((expressionResult has type exitResult)), then
+
+    1. (Let exitResult be (expressionResult as exitResult))
+
+    2. Result in : % % |- % : EC_1 STO_1 ((exit) as tableKeyResult)
+
+2. Group cont: EC_0 STO_0 |- (typedExpressionIR : nameIR _annotationList ;) : % % %
+
+  1. (Expr_eval: (local) EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult)
+
+  2. If ((expressionResult has type continueResult<value>)), then
+
+    1. (Let (` value) be (expressionResult as continueResult<value>))
+
+    2. (Let tableKeyValue be (value : nameIR))
+
+    3. Result in : % % |- % : EC_1 STO_1 ((` tableKeyValue) as tableKeyResult)
+
+;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:32.1-33.15
+syntax tableKeysResult = 
+   | ` tableKeyValue*
+   | exit
+
+;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:35.1-38.23
+relation TableKeys_eval: evalContext store |- tableKeyIR''*{tableKeyIR'' <- tableKeyIR''*} : % % %
+
+1. Group : evalContext store |- tableKeyIR''*{tableKeyIR'' <- tableKeyIR''*} : % % %
+
+  1. If ((tableKeyIR''*{tableKeyIR'' <- tableKeyIR''*} = [])), then
+
+    1. Result in : % % |- % : evalContext store ((` []) as tableKeysResult)
+
+  2. (Let tableKeyIR'''*{tableKeyIR''' <- tableKeyIR'''*} be tableKeyIR''*{tableKeyIR'' <- tableKeyIR''*})
+
+  3. If ((tableKeyIR'''*{tableKeyIR''' <- tableKeyIR'''*} matches pattern _ :: _)), then
+
+    1. (Let tableKeyIR_h :: tableKeyIR_t*{tableKeyIR_t <- tableKeyIR_t*} be tableKeyIR'''*{tableKeyIR''' <- tableKeyIR'''*})
+
+    2. (TableKey_eval: evalContext store |- tableKeyIR_h : EC_1 STO_1 tableKeyResult)
+
+    3. Case analysis on tableKeyResult
+
+      1. Case (% has type exitResult)
+
+        1. (Let exitResult be (tableKeyResult as exitResult))
+
+        2. Result in : % % |- % : EC_1 STO_1 ((exit) as tableKeysResult)
+
+      2. Case (% has type continueResult<tableKeyValue>)
+
+        1. (Let (` tableKeyValue_h) be (tableKeyResult as continueResult<tableKeyValue>))
+
+        2. (TableKeys_eval: EC_1 STO_1 |- tableKeyIR_t*{tableKeyIR_t <- tableKeyIR_t*} : EC_2 STO_2 tableKeysResult)
+
+        3. Case analysis on tableKeysResult
+
+          1. Case (% has type exitResult)
+
+            1. (Let exitResult be (tableKeysResult as exitResult))
+
+            2. Result in : % % |- % : EC_2 STO_2 ((exit) as tableKeysResult)
+
+          2. Case (% has type continueResult<tableKeyValue*>)
+
+            1. (Let (` tableKeyValue_t*{tableKeyValue_t <- tableKeyValue_t*}) be (tableKeysResult as continueResult<tableKeyValue*>))
+
+            2. (Let tableKeyValue*{tableKeyValue <- tableKeyValue*} be tableKeyValue_h :: tableKeyValue_t*{tableKeyValue_t <- tableKeyValue_t*})
+
+            3. Result in : % % |- % : EC_2 STO_2 ((` tableKeyValue*{tableKeyValue <- tableKeyValue*}) as tableKeysResult)
+
+;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:74.1-76.23
+relation TableEntryPriority_eval: EC STO |- tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?} : %
+
+1. If ((tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?} matches pattern ())), then
+
+  1. Group : EC STO |- ?() : %
+
+    1. Result in : % % |- % : ?()
+
+;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:81.21-81.51
+syntax tableMatch = 
+   | nat? : tableActionReferenceIR
+
+;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:84.1-85.15
+syntax tableMatchResult = 
+   | ` tableMatch?
+   | exit
+
+;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:87.1-90.26
+relation TableMatch_eval: EC_0 STO_0 |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryIR : % % %
+
+1. Group : EC_0 STO_0 |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryIR : % % %
+
+  1. (Let (_constOptIR tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?} keysetExpressionIR : tableActionReferenceIR _annotationList ;) be tableEntryIR)
+
+  2. (TableEntryPriority_eval: EC_0 STO_0 |- tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?} : n_priority?{n_priority <- n_priority?})
+
+  3. (Expr_eval_keyset: EC_0 STO_0 |- keysetExpressionIR : EC_1 STO_1 keysetExpressionResult)
+
+  4. If ((keysetExpressionResult has type continueResult<setValue*>)), then
+
+    1. (Let (` setValue*{setValue <- setValue*}) be (keysetExpressionResult as continueResult<setValue*>))
+
+    2. (Let (value_key : _nameIR) be tableKeyValue)*{_nameIR <- _nameIR*, tableKeyValue <- tableKeyValue*, value_key <- value_key*}
+
+    3. Case analysis on $match_keysets(setValue*{setValue <- setValue*}, value_key*{value_key <- value_key*})
+
+      1. Case false
+
+        1. Result in : % % |- % @ % : EC_1 STO_1 ((` ?()) as tableMatchResult)
+
+      2. Case true
+
+        1. (Let tableMatch be (n_priority?{n_priority <- n_priority?} : tableActionReferenceIR))
+
+        2. Result in : % % |- % @ % : EC_1 STO_1 ((` ?(tableMatch)) as tableMatchResult)
+
+;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:134.1-135.15
+syntax tableMatchesResult = 
+   | ` tableMatch*
+   | exit
+
+;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:137.1-140.26
+relation TableMatches_eval: evalContext store |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryIR*{tableEntryIR <- tableEntryIR*} : % % %
+
+1. Group : evalContext store |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryIR*{tableEntryIR <- tableEntryIR*} : % % %
+
+  1. If ((tableEntryIR*{tableEntryIR <- tableEntryIR*} = [])), then
+
+    1. Result in : % % |- % @ % : evalContext store ((` []) as tableMatchesResult)
+
+  2. (Let tableEntryIR'*{tableEntryIR' <- tableEntryIR'*} be tableEntryIR*{tableEntryIR <- tableEntryIR*})
+
+  3. If ((tableEntryIR'*{tableEntryIR' <- tableEntryIR'*} matches pattern _ :: _)), then
+
+    1. (Let tableEntryIR_h :: tableEntryIR_t*{tableEntryIR_t <- tableEntryIR_t*} be tableEntryIR'*{tableEntryIR' <- tableEntryIR'*})
+
+    2. (TableMatch_eval: evalContext store |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryIR_h : EC_1 STO_1 tableMatchResult)
+
+    3. If ((tableMatchResult has type continueResult<tableMatch?>)), then
+
+      1. (Let (` tableMatch_h?{tableMatch_h <- tableMatch_h?}) be (tableMatchResult as continueResult<tableMatch?>))
+
+      2. (TableMatches_eval: EC_1 STO_1 |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryIR_t*{tableEntryIR_t <- tableEntryIR_t*} : EC_2 STO_2 tableMatchesResult)
+
+      3. If ((tableMatchesResult has type continueResult<tableMatch*>)), then
+
+        1. (Let (` tableMatch_t*{tableMatch_t <- tableMatch_t*}) be (tableMatchesResult as continueResult<tableMatch*>))
+
+        2. (Let tableMatch*{tableMatch <- tableMatch*} be $opt_as_seq_<tableMatch>(tableMatch_h?{tableMatch_h <- tableMatch_h?}) ++ tableMatch_t*{tableMatch_t <- tableMatch_t*})
+
+        3. Result in : % % |- % @ % : EC_2 STO_2 ((` tableMatch*{tableMatch <- tableMatch*}) as tableMatchesResult)
+
+;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:166.1-167.27
+def $select_action(TBL, tableMatch''*{tableMatch'' <- tableMatch''*})
+
+1. Case analysis on tableMatch''*{tableMatch'' <- tableMatch''*}
+
+  1. Case (% matches pattern [])
+
+    1. (Let (_annotationList _constOptIR default_action= tableActionReferenceIR ;) be TBL.default_action)
+
+    2. Return tableActionReferenceIR
+
+  2. Case (% matches pattern [ _/1 ])
+
+    1. (Let [tableMatch] be tableMatch''*{tableMatch'' <- tableMatch''*})
+
+    2. (Let (_nat?{_nat <- _nat?} : tableActionReferenceIR) be tableMatch)
+
+    3. Return tableActionReferenceIR
 
 ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:7.1-8.54
 def $align_params_with_args(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id*{id <- id*})

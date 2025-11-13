@@ -8,9 +8,14 @@ module Value = Runtime_dynamic.Value
 (* matchKindValue = MATCH_KIND `. id *)
 (* stringValue = stringLiteral *)
 (* D int *)
+
+let pack_p4_arbitraryInt (i : Bigint.t) : Value.t =
+  let value_i = i |> wrap_num_v_int in
+  [ Term "D"; NT value_i ] #@ "value"
+
 (* nat W int *)
 
-let pack_p4_fixedBit (width : int) (i : int) : Value.t =
+let pack_p4_fixedBit (width : Bigint.t) (i : Bigint.t) : Value.t =
   let value_width = width |> wrap_num_v_nat in
   let value_i = i |> wrap_num_v_int in
   [ NT value_width; Term "W"; NT value_i ] #@ "value"

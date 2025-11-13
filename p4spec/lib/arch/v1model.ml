@@ -183,7 +183,7 @@ struct
         let packet_in = get_packet_in value_sto in
         let payload_bytes = Core.PacketIn.payload_bytes packet_in in
         payload_bytes |> Array.to_list
-        |> List.map (fun byte -> pack_p4_fixedBit 8 (Bigint.to_int_exn byte))
+        |> List.map (fun byte -> pack_p4_fixedBit (Bigint.of_int 8) byte)
       else []
     in
     (* Get "checksum" in context *)
@@ -204,7 +204,9 @@ struct
     let value_ctx =
       if verified then value_ctx
       else
-        let value_checksum_error = pack_p4_fixedBit 1 1 in
+        let value_checksum_error =
+          pack_p4_fixedBit (Bigint.of_int 1) (Bigint.of_int 1)
+        in
         Spec.lvalue_write_dot_global call_rel value_ctx value_sto
           "standard_metadata" "checksum_error" value_checksum_error
     in
@@ -275,9 +277,75 @@ struct
 
      extern void update_checksum_with_payload<T, O>(in bool condition, in T data,
                                                     inout O checksum, HashAlgorithm algo); *)
-  let _update_checksum (_value_ctx : Value.t) (_value_sto : Value.t) :
-      Value.t * Value.t =
-    failwith "extern function update_checksum is not implemented"
+
+  let do_update_checksum ~(payload : bool) (value_ctx : Value.t)
+      (value_sto : Value.t) : Value.t * Value.t * Value.t =
+    (* Get "data" in context *)
+    let value_data = Spec.find_var_e_local call_func value_ctx "data" in
+    let values = value_data |> unpack_p4_sequence in
+    (* Get payload *)
+    let values_payload =
+      if payload then
+        let packet_in = get_packet_in value_sto in
+        let payload_bytes = Core.PacketIn.payload_bytes packet_in in
+        payload_bytes |> Array.to_list
+        |> List.map (fun byte -> pack_p4_fixedBit (Bigint.of_int 8) byte)
+      else []
+    in
+    (* Get "algo" in context *)
+    let value_algo = Spec.find_var_e_local call_func value_ctx "algo" in
+    let id_enum, id_enum_field = value_algo |> unpack_p4_enum in
+    (* Compute checksum *)
+    let checksum =
+      match (id_enum, id_enum_field) with
+      | "HashAlgorithm", algo ->
+          Hash.compute_checksum algo (values @ values_payload)
+      | _ -> assert false
+    in
+    (* Get "O" type in context *)
+    let value_typ_O = Spec.find_type_e_local call_func value_ctx "O" in
+    (* Cast "checksum" *)
+    let value_checksum = pack_p4_arbitraryInt checksum in
+    let value_checksum = Spec.cast_op call_func value_typ_O value_checksum in
+    (* Write to "checksum" in context *)
+    let value_ctx =
+      Spec.lvalue_write_var_local call_rel value_ctx value_sto "checksum"
+        value_checksum
+    in
+    (* Return void *)
+    let value_callResult =
+      let value_eps = wrap_opt_v "value" None in
+      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+    in
+    (value_ctx, value_sto, value_callResult)
+
+  let update_checksum (value_ctx : Value.t) (value_sto : Value.t) :
+      Value.t * Value.t * Value.t =
+    (* Get "condition" in context *)
+    let condition =
+      Spec.find_var_e_local call_func value_ctx "condition" |> unpack_p4_bool
+    in
+    if condition then do_update_checksum ~payload:false value_ctx value_sto
+    else
+      let value_callResult =
+        let value_eps = wrap_opt_v "value" None in
+        [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      in
+      (value_ctx, value_sto, value_callResult)
+
+  let update_checksum_with_payload (value_ctx : Value.t) (value_sto : Value.t) :
+      Value.t * Value.t * Value.t =
+    (* Get "condition" in context *)
+    let condition =
+      Spec.find_var_e_local call_func value_ctx "condition" |> unpack_p4_bool
+    in
+    if condition then do_update_checksum ~payload:true value_ctx value_sto
+    else
+      let value_callResult =
+        let value_eps = wrap_opt_v "value" None in
+        [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      in
+      (value_ctx, value_sto, value_callResult)
 
   (* clone is in most ways identical to the clone_preserving_field_list
      operation, with the only difference being that it never preserves
@@ -497,6 +565,11 @@ struct
       | ( "verify_checksum_with_payload",
           [ "condition"; "data"; "checksum"; "algo" ] ) ->
           verify_checksum_with_payload value_ctx value_sto
+      | "update_checksum", [ "condition"; "data"; "checksum"; "algo" ] ->
+          update_checksum value_ctx value_sto
+      | ( "update_checksum_with_payload",
+          [ "condition"; "data"; "checksum"; "algo" ] ) ->
+          update_checksum_with_payload value_ctx value_sto
       | _ ->
           failwith
             ("unsupported extern function call: " ^ name_func ^ "("
@@ -639,8 +712,10 @@ struct
   let resulting_port_packet (value_ctx : Value.t) (value_sto : Value.t) :
       IO.tx option =
     (* Get egress port *)
-    let _value_standard_metadata =
-      Spec.find_var_e_global call_func value_ctx "standard_metadata"
+    let port =
+      Spec.lvalue_read_dot_global call_rel
+        value_ctx value_sto "standard_metadata" "egress_spec"
+      |> unpack_p4_fixedBit |> snd |> Bigint.to_int_exn
     in
     (* Get output packet *)
     let header =
@@ -650,7 +725,9 @@ struct
       get_packet_in value_sto |> Format.asprintf "%a" Core.PacketIn.pp_payload
     in
     let packet = header ^ payload in
-    Some (0, packet)
+    (* Return port and packet *)
+    let tx = (port, packet) in
+    Some tx
 
   let drive_pipe (value_ctx : Value.t) (value_sto : Value.t) (rx : IO.rx) :
       Value.t * Value.t * IO.tx option =
