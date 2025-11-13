@@ -16,7 +16,8 @@ rulegroup ParserTransition_eval/nameIR {
 
   rule ParserTransition_eval/reject:
     EC STO |- TRANSITION ("reject" `;)
-            : EC STO REJECT
+            : EC STO (REJECT errorValue)
+    -- if errorValue = ERROR `. "NoError"
 
   rule ParserTransition_eval/state:
     EC STO |- TRANSITION (nameIR `;)
@@ -26,6 +27,87 @@ rulegroup ParserTransition_eval/nameIR {
 }
 
 ;;;; selectExpressionIR
+
+relation SelectCase_match:
+  evalContext store value* |- selectCaseIR
+                            : evalContext store nameIR?
+  hint(input %0 %1 %2 %3)
+
+rulegroup SelectCase_match {
+
+  rule SelectCase_match/no-match:
+    EC_0 STO_0 value_key* |- keysetExpressionIR `: nameIR `;
+                           : EC_1 STO_1 eps
+    ---- ;; evaluate keyset expression
+    -- Expr_eval_keyset:
+        EC_0 STO_0 |- keysetExpressionIR
+                    : EC_1 STO_1 (`` setValue*)
+    ---- ;; perform match
+    -- if ~$match_keysets(setValue*, value_key*)
+
+  rule SelectCase_match/match:
+    EC_0 STO_0 value_key* |- keysetExpressionIR `: nameIR `;
+                           : EC_1 STO_1 nameIR
+    ---- ;; evaluate keyset expression
+    -- Expr_eval_keyset:
+        EC_0 STO_0 |- keysetExpressionIR
+                    : EC_1 STO_1 (`` setValue*)
+    ---- ;; perform match
+    -- if $match_keysets(setValue*, value_key*)
+
+}
+
+relation SelectCases_match:
+  evalContext store value* |- selectCaseListIR
+                            : evalContext store nameIR?
+  hint(input %0 %1 %2 %3)
+
+rulegroup SelectCases_match {
+
+  rule SelectCases_match/nil:
+    EC STO value_key* |- eps : EC STO eps
+
+  rule SelectCases_match/cons-head-match:
+    EC_0 STO_0 value_key* |- selectCaseIR_h :: selectCaseIR_t*
+                           : EC_1 STO_1 nameIR_state
+    -- SelectCase_match:
+        EC_0 STO_0 value_key* |- selectCaseIR_h
+                               : EC_1 STO_1 nameIR_state
+
+  rule SelectCases_match/cons-head-no-match:
+    EC_0 STO_0 value_key* |- selectCaseIR_h :: selectCaseIR_t*
+                           : EC_2 STO_2 nameIR_state?
+    -- SelectCase_match:
+        EC_0 STO_0 value_key* |- selectCaseIR_h
+                               : EC_1 STO_1 eps
+    -- SelectCases_match:
+        EC_1 STO_1 value_key* |- selectCaseIR_t*
+                               : EC_2 STO_2 nameIR_state?
+
+}
+
+rulegroup ParserTransition_eval/selectExpressionIR {
+
+  rule ParserTransition_eval:
+    EC_0 STO_0 |- TRANSITION selectExpressionIR
+                : EC_3 STO_3 transitionResult
+    ---- ;; unpack the select expression
+    -- if SELECT `( typedExpressionIR_key ) `{ selectCaseListIR }
+        = selectExpressionIR
+    ---- ;; evaluate the key expressions
+    -- Exprs_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR_key
+                          : EC_1 STO_1 (`` value_key*)
+    ---- ;; find a matching select case
+    -- SelectCases_match:
+        EC_1 STO_1 value_key* |- selectCaseListIR
+                               : EC_2 STO_2 nameIR_state
+    ---- ;; do the transition
+    -- ParserTransition_eval:
+        EC_2 STO_2 |- TRANSITION (nameIR_state `;)
+                    : EC_3 STO_3 transitionResult
+
+}
 
 ;;
 ;; Parser statement evaluation
@@ -91,10 +173,10 @@ rulegroup ParserStmt_eval/callStatementIR {
 
   rule ParserStmt_eval/reject:
     EC_0 STO_0 |- callStatementIR
-                : EC_1 STO_1 REJECT 
+                : EC_1 STO_1 rejectTransitionResult
     -- Stmt_eval:
         LOCAL EC_0 STO_0 |- callStatementIR
-                          : EC_1 STO_1 REJECT
+                          : EC_1 STO_1 rejectTransitionResult
 
   rule ParserStmt_eval/cont:
     EC_0 STO_0 |- callStatementIR
@@ -174,9 +256,9 @@ rulegroup ParserStmts_eval {
 
   rule ParserStmts_eval/cons-head-reject:
     EC_0 STO_0 |- parserStatementIR_h :: parserStatementIR_t*
-                : EC_1 STO_1 REJECT
+                : EC_1 STO_1 rejectTransitionResult
     -- ParserStmt_eval:
-        EC_0 STO_0 |- parserStatementIR_h : EC_1 STO_1 REJECT
+        EC_0 STO_0 |- parserStatementIR_h : EC_1 STO_1 rejectTransitionResult
 
   rule ParserStmts_eval/cons-head-cont:
     EC_0 STO_0 |- parserStatementIR_h :: parserStatementIR_t*

@@ -3,6 +3,7 @@ open Xl
 open Sl.Ast
 module InputHint = Runtime_static.Rel.InputHint
 module Typ = Runtime_dynamic.Typ
+module TypDef = Runtime_dynamic.Typdef
 module Value = Runtime_dynamic.Value
 module Rel = Runtime_dynamic_sl.Rel
 module Func = Runtime_dynamic_sl.Func
@@ -23,17 +24,6 @@ let func_cache = ref (Cache.Cache.create ~size:10000)
 let rule_cache = ref (Cache.Cache.create ~size:10000)
 
 module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
-  (* Architecture transactions *)
-
-  let checkpoint () = Arch.checkpoint ()
-
-  let restore_on_fail_sign (sign : Sign.t) =
-    match sign with Cont -> Arch.restore () | _ -> ()
-
-  let commit_or_rollback attempt =
-    (match attempt with Ok _ -> Arch.commit () | Fail _ -> Arch.rollback ());
-    attempt
-
   (* Assignments *)
 
   (* Assigning a value to an expression *)
@@ -407,7 +397,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         | NumV (`Int _) -> value
         | _ -> assert false)
     | VarT (tid, targs) -> (
-        let tparams, deftyp = Ctx.find_typdef Local ctx tid in
+        let tparams, deftyp = Ctx.find_defined_typdef Local ctx tid in
         match deftyp.it with
         | PlainT typ ->
             let theta = List.combine tparams targs |> TIdMap.of_list in
@@ -452,7 +442,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
             value_res
         | _ -> assert false)
     | VarT (tid, targs) -> (
-        let tparams, deftyp = Ctx.find_typdef Local ctx tid in
+        let tparams, deftyp = Ctx.find_defined_typdef Local ctx tid in
         match deftyp.it with
         | PlainT typ ->
             let theta = List.combine tparams targs |> TIdMap.of_list in
@@ -489,7 +479,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         | NumV (`Int i) -> Bigint.(i >= zero)
         | _ -> assert false)
     | VarT (tid, targs) -> (
-        let tparams, deftyp = Ctx.find_typdef Local ctx tid in
+        let tparams, deftyp = Ctx.find_defined_typdef Local ctx tid in
         let theta = List.combine tparams targs |> TIdMap.of_list in
         match (deftyp.it, value.it) with
         | PlainT typ, _ ->
@@ -960,12 +950,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | Some (pid, _) -> Ctx.cover ctx (not cond) pid vid
     | None -> ());
     (* Evaluate the then branch if the condition holds *)
-    let ctx, sign =
-      if cond then eval_instrs ctx Cont instrs_then else (ctx, Cont)
-    in
-    (* If the nested instructions did not result/return, restore *)
-    restore_on_fail_sign sign;
-    (ctx, sign)
+    if cond then eval_instrs ctx Cont instrs_then else (ctx, Cont)
 
   (* Hold instruction evaluation *)
 
@@ -1040,28 +1025,23 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     (* Evaluate the hold case, and restore the coverage information
        if the expected behavior is the relation not holding *)
     let vid = value_cond.note.vid in
-    let ctx, sign =
-      match holdcase with
-      | BothH (instrs_hold, instrs_not_hold) ->
-          if cond then eval_instrs ctx Cont instrs_hold
-          else (
-            ctx.coverage := cover_backup;
-            eval_instrs ctx Cont instrs_not_hold)
-      | HoldH (instrs_hold, phantom_opt) ->
-          (match phantom_opt with
-          | Some (pid, _) -> Ctx.cover ctx (not cond) pid vid
-          | None -> ());
-          if cond then eval_instrs ctx Cont instrs_hold else (ctx, Cont)
-      | NotHoldH (instrs_not_hold, phantom_opt) ->
+    match holdcase with
+    | BothH (instrs_hold, instrs_not_hold) ->
+        if cond then eval_instrs ctx Cont instrs_hold
+        else (
           ctx.coverage := cover_backup;
-          (match phantom_opt with
-          | Some (pid, _) -> Ctx.cover ctx cond pid vid
-          | None -> ());
-          if not cond then eval_instrs ctx Cont instrs_not_hold else (ctx, Cont)
-    in
-    (* If the nested instructions did not result/return, restore *)
-    restore_on_fail_sign sign;
-    (ctx, sign)
+          eval_instrs ctx Cont instrs_not_hold)
+    | HoldH (instrs_hold, phantom_opt) ->
+        (match phantom_opt with
+        | Some (pid, _) -> Ctx.cover ctx (not cond) pid vid
+        | None -> ());
+        if cond then eval_instrs ctx Cont instrs_hold else (ctx, Cont)
+    | NotHoldH (instrs_not_hold, phantom_opt) ->
+        ctx.coverage := cover_backup;
+        (match phantom_opt with
+        | Some (pid, _) -> Ctx.cover ctx cond pid vid
+        | None -> ());
+        if not cond then eval_instrs ctx Cont instrs_not_hold else (ctx, Cont)
 
   (* Case analysis instruction evaluation *)
 
@@ -1107,14 +1087,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | Some (pid, _) -> Ctx.cover ctx (Option.is_none instrs_opt) pid vid
     | None -> ());
     (* Evaluate the matching case if any *)
-    let ctx, sign =
-      match instrs_opt with
-      | Some instrs -> eval_instrs ctx Cont instrs
-      | None -> (ctx, Cont)
-    in
-    (* If the nested instructions did not result/return, restore *)
-    restore_on_fail_sign sign;
-    (ctx, sign)
+    match instrs_opt with
+    | Some instrs -> eval_instrs ctx Cont instrs
+    | None -> (ctx, Cont)
 
   (* Group instruction evaluation *)
 
@@ -1421,11 +1396,22 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     |> nest id.at (F.asprintf "invocation of relation %s failed" id.it)
 
   and invoke_extern_rel (_ctx : Ctx.t) (id : id) (values_input : value list) :
-      value list attempt =
-    match id.it with
-    | "ExternMethodCall_eval" ->
-        Ok (Arch.eval_extern_method_call values_input)
-    | _ -> fail id.at (F.asprintf "unimplemented extern relation %s" id.it)
+      value list option =
+    let values_output =
+      match id.it with
+      | "ExternFunctionCall_eval" -> Arch.eval_extern_func_call values_input
+      | "ExternMethodCall_eval" -> Arch.eval_extern_method_call values_input
+      | _ -> error id.at (F.asprintf "unimplemented extern relation %s" id.it)
+    in
+    List.iteri
+      (fun idx_arg value_input ->
+        List.iter
+          (fun value_output ->
+            Ctx.add_edge _ctx value_output value_input
+              (Dep.Edges.Rel (id, idx_arg)))
+          values_output)
+      values_input;
+    Some values_output
 
   and invoke_defined_rel (ctx : Ctx.t) (id : id) (exps_input : exp list)
       (instrs : instr list) (values_input : value list) : value list attempt =
@@ -1446,21 +1432,15 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           Ok values_output
       | _ -> fail_silent
     in
-    let do_invoke_defined_rel' () =
-      checkpoint ();
-      let values_output_opt = invoke_defined_rel' () in
-      commit_or_rollback values_output_opt;
-      values_output_opt
-    in
     if (not (Ctx.deriving ctx)) && Cache.is_cached_rule id.it then (
       let cache_result = Cache.Cache.find !rule_cache (id.it, values_input) in
       match cache_result with
       | Some values_output -> Ok values_output
       | None ->
-          let* values_output = do_invoke_defined_rel' () in
+          let* values_output = invoke_defined_rel' () in
           Cache.Cache.add !rule_cache (id.it, values_input) values_output;
-          Ok values_output)
-    else do_invoke_defined_rel' ()
+          Some values_output)
+    else invoke_defined_rel' ()
 
   (* Invoke a function *)
 
@@ -1478,9 +1458,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
             in
             TDEnv.fold
               (fun tid typdef theta ->
-                let tparams, deftyp = typdef in
-                match (tparams, deftyp.it) with
-                | [], Il.Ast.PlainT typ -> TIdMap.add tid typ theta
+                match typdef with
+                | TypDef.Defined ([], { it = Il.Ast.PlainT typ; _ }) ->
+                    TIdMap.add tid typ theta
                 | _ -> theta)
               tdenv_local TIdMap.empty
           in
@@ -1496,9 +1476,23 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       (values_input : value list) : value attempt =
     let func = Ctx.find_func Local ctx id in
     match func with
+    | Func.Extern -> invoke_extern_func ctx id targs values_input
     | Func.Builtin -> invoke_builtin_func ctx id targs values_input
     | Func.Defined (tparams, args_input, instrs) ->
         invoke_defined_func ctx id tparams args_input instrs targs values_input
+
+  and invoke_extern_func (ctx : Ctx.t) (id : id) (_targs : targ list)
+      (values_input : value list) : value option =
+    let value_output =
+      match id.it with
+      | "init_externState" -> Arch.eval_extern_init values_input
+      | _ -> error id.at (F.asprintf "unimplemented extern function %s" id.it)
+    in
+    List.iteri
+      (fun idx_arg value_input ->
+        Ctx.add_edge ctx value_output value_input (Dep.Edges.Func (id, idx_arg)))
+      values_input;
+    Some value_output
 
   and invoke_builtin_func (ctx : Ctx.t) (id : id) (targs : targ list)
       (values_input : value list) : value attempt =
@@ -1518,7 +1512,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         id.at "arity mismatch in type arguments";
       List.fold_left2
         (fun tdenv_local tparam targ ->
-          TDEnv.add tparam ([], Il.Ast.PlainT targ $ targ.at) tdenv_local)
+          let td = TypDef.Defined ([], Il.Ast.PlainT targ $ targ.at) in
+          TDEnv.add tparam td tdenv_local)
         TDEnv.empty tparams targs
     in
     let ctx_local = Ctx.localize_func ctx id values_input tdenv_local in
@@ -1535,35 +1530,35 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           Ok value_output
       | _ -> fail_silent
     in
-    let do_invoke_defined_func' () =
-      checkpoint ();
-      let value_output = invoke_defined_func' () in
-      commit_or_rollback value_output;
-      value_output
-    in
     if (not (Ctx.deriving ctx)) && Cache.is_cached_func id.it then (
       let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
       match cache_result with
       | Some value_output -> Ok value_output
       | None ->
-          let* value_output = do_invoke_defined_func' () in
+          let* value_output = invoke_defined_func' () in
           Cache.Cache.add !func_cache (id.it, values_input) value_output;
-          Ok value_output)
-    else do_invoke_defined_func' ()
+          Some value_output)
+    else invoke_defined_func' ()
 
   (* Load definitions into the context *)
 
   let load_def (ctx : Ctx.t) (def : def) : Ctx.t =
     match def.it with
+    | ExternTypD (id, _) ->
+        let td = TypDef.Extern in
+        Ctx.add_typdef Global ctx id td
     | TypD (id, tparams, deftyp, _) ->
-        let typdef = (tparams, deftyp) in
-        Ctx.add_typdef Global ctx id typdef
+        let td = TypDef.Defined (tparams, deftyp) in
+        Ctx.add_typdef Global ctx id td
     | ExternRelD (id, (_, inputs), _, _) ->
         let rel = Rel.Extern inputs in
         Ctx.add_rel Global ctx id rel
     | RelD (id, (_, inputs), relmatch, relpaths, _) ->
         let rel = Rel.Defined (inputs, relmatch, relpaths) in
         Ctx.add_rel Global ctx id rel
+    | ExternDecD (id, _, _, _, _) ->
+        let func = Func.Extern in
+        Ctx.add_func Global ctx id func
     | BuiltinDecD (id, _, _, _, _) ->
         let func = Func.Builtin in
         Ctx.add_func Global ctx id func

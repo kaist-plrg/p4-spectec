@@ -149,7 +149,7 @@ let find_defined_dec_opt (ctx : t) (fid : FId.t) :
   Option.bind func_opt (function
     | Func.Defined (tparams, params, plaintyp, clauses) ->
         Some (tparams, params, plaintyp, clauses)
-    | Func.Builtin _ -> None)
+    | Func.Extern _ | Func.Builtin _ -> None)
 
 let find_defined_dec (ctx : t) (fid : FId.t) :
     tparam list * param list * plaintyp * Il.Ast.clause list =
@@ -165,6 +165,7 @@ let find_dec_signature_opt (ctx : t) (fid : FId.t) :
     (tparam list * param list * plaintyp) option =
   FEnv.find_opt fid ctx.fenv
   |> Option.map (function
+         | Func.Extern (tparams, params, plaintyp)
          | Func.Builtin (tparams, params, plaintyp)
          | Func.Defined (tparams, params, plaintyp, _)
          -> (tparams, params, plaintyp))
@@ -250,6 +251,13 @@ let add_defined_rulegroup (ctx : t) (rid : RId.t) (rulegroup : Il.Ast.rulegroup)
   { ctx with renv }
 
 (* Adders for definitions *)
+
+let add_extern_dec (ctx : t) (fid : FId.t) (tparams : tparam list)
+    (params : param list) (plaintyp : plaintyp) : t =
+  if bound_dec ctx fid then error_dup fid.at "function" fid.it;
+  let func = Func.Extern (tparams, params, plaintyp) in
+  let fenv = FEnv.add fid func ctx.fenv in
+  { ctx with fenv }
 
 let add_builtin_dec (ctx : t) (fid : FId.t) (tparams : tparam list)
     (params : param list) (plaintyp : plaintyp) : t =

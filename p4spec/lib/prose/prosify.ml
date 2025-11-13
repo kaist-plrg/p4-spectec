@@ -439,7 +439,7 @@ and prosify_instrs ctx (instrs : instr list) : Pl.Ast.instr list =
 
 let prosify_def (ctx : Ctx.t) (def : def) : Pl.Ast.def option =
   match def.it with
-  | TypD _ -> None
+  | ExternTypD _ | TypD _ -> None
   | ExternRelD (id, _, exps, _) ->
       let ctx = ctx |> in_rel id in
       let exps = prosify_exps ctx exps in
@@ -453,7 +453,9 @@ let prosify_def (ctx : Ctx.t) (def : def) : Pl.Ast.def option =
       let instrs = prosify_instrs ctx instrs in
       let exps = prosify_exps ctx exps in
       Some (Pl.Ast.RelD (id, exps, instrs) $ def.at)
-  | BuiltinDecD _ | DecD _ -> None
+  | ExternDecD _ | BuiltinDecD _ | DecD _ -> None
+(* let instrs = prosify_instrs ctx instrs in *)
+(* Some (Pl.Ast.DecD (id, tparams, args, instrs) $ def.at) *)
 
 let prosify_spec (spec : spec) : Pl.Ast.spec =
   let ctx = Ctx.init spec in

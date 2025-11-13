@@ -171,6 +171,8 @@ and rule' = id * id * exp * prem list
 
 type def = def' phrase
 and def' =
+  (* `extern` `syntax` id hint* *)
+  | ExternSynD of id * hint list
   (* `syntax` list(id `<` list(tparam, `,`) `>`, `,`) *)
   | SynD of (id * tparam list) list
   (* `syntax` id `<` list(tparam, `,`) `>` hint* `=` deftyp *)
@@ -183,6 +185,8 @@ and def' =
   | RelD of id * nottyp * hint list
   (* `rulegroup` id`/`id `:` `{` rule* `}` *)
   | RuleGroupD of id * id * rule list
+  (* `extern` `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` plaintyp hint* *)
+  | ExternDecD of id * tparam list * param list * plaintyp * hint list
   (* `builtin` `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` plaintyp hint* *)
   | BuiltinDecD of id * tparam list * param list * plaintyp * hint list
   (* `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` plaintyp hint* *)

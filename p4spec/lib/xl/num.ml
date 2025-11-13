@@ -3,12 +3,12 @@
 type t =
   [ `Nat of
     (Bigint.t
-    [@to_yojson Util.Bigint_json.to_yojson]
-    [@of_yojson Util.Bigint_json.of_yojson])
+    [@to_yojson Util.Json.bigint_to_yojson]
+    [@of_yojson Util.Json.bigint_of_yojson])
   | `Int of
     (Bigint.t
-    [@to_yojson Util.Bigint_json.to_yojson]
-    [@of_yojson Util.Bigint_json.of_yojson]) ]
+    [@to_yojson Util.Json.bigint_to_yojson]
+    [@of_yojson Util.Json.bigint_of_yojson]) ]
 [@@deriving yojson]
 
 type typ = [ `NatT | `IntT ] [@@deriving yojson]
