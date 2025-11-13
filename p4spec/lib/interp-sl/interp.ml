@@ -13,12 +13,9 @@ module Dep = Runtime_testgen.Dep
 module SCov = Runtime_testgen.Cov.Single
 module MCov = Runtime_testgen.Cov.Multiple
 open Error
+open Attempt
 module F = Format
 open Util.Source
-
-(* Option monad *)
-
-let ( let* ) = Option.bind
 
 (* Cache *)
 
@@ -30,10 +27,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   let checkpoint () = Arch.checkpoint ()
 
-  let restore_on_fail (sign : Sign.t) =
-    match sign with Cont -> Arch.restore () | _ -> ()
+  let restore_on_fail attempt =
+    (match attempt with Fail _ -> Arch.restore () | _ -> ());
+    attempt
 
-  let commit () = Arch.commit ()
+  let commit_or_rollback attempt =
+    (match attempt with Ok _ -> Arch.commit () | Fail _ -> Arch.rollback ());
+    attempt
 
   (* Assignments *)
 
@@ -803,11 +803,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and eval_call_exp (_note : typ') (ctx : Ctx.t) (id : id) (targs : targ list)
       (args : arg list) : value =
-    let value_output =
-      match invoke_func ctx id targs args with
-      | Some value_output -> value_output
-      | None -> error id.at (F.asprintf "function %s was not matched" id.it)
-    in
+    let+ value_output = invoke_func ctx id targs args in
     value_output
 
   (* Iterated expression evaluation *)
@@ -977,7 +973,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   and eval_hold_cond (ctx : Ctx.t) (id : id) (notexp : notexp) : bool * value =
     let _, exps_input = notexp in
     let values_input = eval_exps ctx exps_input in
-    let hold = invoke_rel ctx id values_input |> Option.is_some in
+    let hold = match invoke_rel ctx id values_input with Ok _ -> true | Fail _ -> false in
     let value_res =
       let vid = Value.fresh () in
       let typ = Il.Ast.BoolT in
@@ -1303,11 +1299,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       InputHint.split_exps_without_idx inputs exps
     in
     let values_input = eval_exps ctx exps_input in
-    let values_output =
-      match invoke_rel ctx id values_input with
-      | Some values_output -> values_output
-      | None -> error id.at (F.asprintf "relation %s was not matched" id.it)
-    in
+    let+ values_output = invoke_rel ctx id values_input in
     assign_exps ctx exps_output values_output
 
   and eval_rule_opt (_ctx : Ctx.t) (_id : id) (_notexp : notexp)
@@ -1421,22 +1413,23 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Invoke a relation *)
 
   and invoke_rel (ctx : Ctx.t) (id : id) (values_input : value list) :
-      value list option =
+      value list attempt =
     let rel = Ctx.find_rel Local ctx id in
-    match rel with
+    (match rel with
     | Rel.Extern _ -> invoke_extern_rel ctx id values_input
     | Rel.Defined (_, exps_input, instrs) ->
-        invoke_defined_rel ctx id exps_input instrs values_input
+        invoke_defined_rel ctx id exps_input instrs values_input)
+    |> nest id.at (F.asprintf "invocation of relation %s failed" id.it)
 
   and invoke_extern_rel (_ctx : Ctx.t) (id : id) (values_input : value list) :
-      value list option =
+      value list attempt =
     match id.it with
     | "ExternMethodCall_eval" ->
-        Some (Arch.eval_extern_method_call values_input)
-    | _ -> error id.at (F.asprintf "unimplemented extern relation %s" id.it)
+        Ok (Arch.eval_extern_method_call values_input)
+    | _ -> fail id.at (F.asprintf "unimplemented extern relation %s" id.it)
 
   and invoke_defined_rel (ctx : Ctx.t) (id : id) (exps_input : exp list)
-      (instrs : instr list) (values_input : value list) : value list option =
+      (instrs : instr list) (values_input : value list) : value list attempt =
     let invoke_defined_rel' () =
       let ctx_local = Ctx.localize_rule ctx id values_input in
       let ctx_local = assign_exps ctx_local exps_input values_input in
@@ -1451,29 +1444,29 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                     (Dep.Edges.Rel (id, idx_arg)))
                 values_output)
             values_input;
-          Some values_output
-      | _ -> None
+          Ok values_output
+      | _ -> fail_silent
     in
     let do_invoke_defined_rel' () =
       checkpoint ();
       let values_output_opt = invoke_defined_rel' () in
-      commit ();
+      commit_or_rollback values_output_opt;
       values_output_opt
     in
     if (not (Ctx.deriving ctx)) && Cache.is_cached_rule id.it then (
       let cache_result = Cache.Cache.find !rule_cache (id.it, values_input) in
       match cache_result with
-      | Some values_output -> Some values_output
+      | Some values_output -> Ok values_output
       | None ->
           let* values_output = do_invoke_defined_rel' () in
           Cache.Cache.add !rule_cache (id.it, values_input) values_output;
-          Some values_output)
+          Ok values_output)
     else do_invoke_defined_rel' ()
 
   (* Invoke a function *)
 
   and invoke_func (ctx : Ctx.t) (id : id) (targs : targ list) (args : arg list)
-      : value option =
+      : value attempt =
     let targs =
       match targs with
       | [] -> []
@@ -1496,9 +1489,12 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     in
     let values_input = eval_args ctx args in
     invoke_func' ctx id targs values_input
+    |> nest id.at
+         (F.asprintf "invocation of function %s was not matched"
+            id.it)
 
   and invoke_func' (ctx : Ctx.t) (id : id) (targs : targ list)
-      (values_input : value list) : value option =
+      (values_input : value list) : value attempt =
     let func = Ctx.find_func Local ctx id in
     match func with
     | Func.Builtin -> invoke_builtin_func ctx id targs values_input
@@ -1506,17 +1502,17 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         invoke_defined_func ctx id tparams args_input instrs targs values_input
 
   and invoke_builtin_func (ctx : Ctx.t) (id : id) (targs : targ list)
-      (values_input : value list) : value option =
+      (values_input : value list) : value attempt =
     let value_output = Builtin.invoke ctx id targs values_input in
     List.iteri
       (fun idx_arg value_input ->
         Ctx.add_edge ctx value_output value_input (Dep.Edges.Func (id, idx_arg)))
       values_input;
-    Some value_output
+    Ok value_output
 
   and invoke_defined_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
       (args_input : arg list) (instrs : instr list) (targs : targ list)
-      (values_input : value list) : value option =
+      (values_input : value list) : value attempt =
     let tdenv_local =
       check
         (List.length targs = List.length tparams)
@@ -1537,23 +1533,23 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
               Ctx.add_edge ctx value_output value_input
                 (Dep.Edges.Func (id, idx_arg)))
             values_input;
-          Some value_output
-      | _ -> None
+          Ok value_output
+      | _ -> fail_silent
     in
     let do_invoke_defined_func' () =
       checkpoint ();
       let value_output = invoke_defined_func' () in
-      commit ();
+      commit_or_rollback value_output;
       value_output
     in
     if (not (Ctx.deriving ctx)) && Cache.is_cached_func id.it then (
       let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
       match cache_result with
-      | Some value_output -> Some value_output
+      | Some value_output -> Ok value_output
       | None ->
           let* value_output = do_invoke_defined_func' () in
           Cache.Cache.add !func_cache (id.it, values_input) value_output;
-          Some value_output)
+          Ok value_output)
     else do_invoke_defined_func' ()
 
   (* Load definitions into the context *)
@@ -1584,17 +1580,14 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   let do_eval_rel (ctx : Ctx.t) (spec : spec) (relname : string)
       (values_input : value list) : value list =
     let ctx = load_spec ctx spec in
-    match invoke_rel ctx (relname $ no_region) values_input with
-    | Some values_output -> values_output
-    | None -> error no_region (F.asprintf "relation %s was not matched" relname)
+    let+ values_output = invoke_rel ctx (relname $ no_region) values_input in
+    values_output
 
   let do_eval_func (ctx : Ctx.t) (spec : spec) (funcname : string)
       (targs : targ list) (values_input : value list) : value =
     let ctx = load_spec ctx spec in
-    match invoke_func' ctx (funcname $ no_region) targs values_input with
-    | Some value_output -> value_output
-    | None ->
-        error no_region (F.asprintf "function %s was not matched" funcname)
+    let+ value_output = invoke_func' ctx (funcname $ no_region) targs values_input in
+    value_output
 
   let eval_program ~(derive : bool) (spec : spec) (relname : string)
       (includes_p4 : string list) (filename_p4 : string) : Sim.program_result =
