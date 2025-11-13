@@ -334,9 +334,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     Il.Ast.NumV (Num.bin binop num_l num_r)
 
   and eval_bin_exp (note : typ') (ctx : Ctx.t) (binop : binop) (_optyp : optyp)
-      (exp_l : exp) (exp_r : exp) : value =
-    let value_l = eval_exp ctx exp_l in
-    let value_r = eval_exp ctx exp_r in
+      (exp_l : exp) (exp_r : exp) : (Ctx.t * value) attempt =
+    let* ctx, value_l = eval_exp ctx exp_l in
+    let* ctx, value_r = eval_exp ctx exp_r in
     let value_res =
       match binop with
       | #Bool.binop as binop -> eval_bin_bool binop value_l value_r
@@ -350,7 +350,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     Ctx.add_node ctx value_res;
     Ctx.add_edge ctx value_res value_l (Dep.Edges.Op (BinOp binop));
     Ctx.add_edge ctx value_res value_r (Dep.Edges.Op (BinOp binop));
-    value_res
+    Ok (ctx, value_res)
 
   (* Comparison expression evaluation *)
 
@@ -366,9 +366,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     Il.Ast.BoolV (Num.cmp cmpop num_l num_r)
 
   and eval_cmp_exp (note : typ') (ctx : Ctx.t) (cmpop : cmpop) (_optyp : optyp)
-      (exp_l : exp) (exp_r : exp) : value =
-    let value_l = eval_exp ctx exp_l in
-    let value_r = eval_exp ctx exp_r in
+      (exp_l : exp) (exp_r : exp) : (Ctx.t * value) attempt =
+    let* ctx, value_l = eval_exp ctx exp_l in
+    let* ctx, value_r = eval_exp ctx exp_r in
     let value_res =
       match cmpop with
       | #Bool.cmpop as cmpop -> eval_cmp_bool cmpop value_l value_r
@@ -382,7 +382,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     Ctx.add_node ctx value_res;
     Ctx.add_edge ctx value_res value_l (Dep.Edges.Op (CmpOp cmpop));
     Ctx.add_edge ctx value_res value_r (Dep.Edges.Op (CmpOp cmpop));
-    value_res
+    Ok (ctx, value_res)
 
   (* Upcast expression evaluation *)
 
@@ -425,9 +425,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | _ -> value
 
   and eval_upcast_exp (_note : typ') (ctx : Ctx.t) (typ : typ) (exp : exp) :
-      value =
-    let value = eval_exp ctx exp in
-    upcast ctx typ value
+      (Ctx.t * value) attempt =
+    let* ctx, value = eval_exp ctx exp in
+    Ok (ctx, upcast ctx typ value)
 
   (* Downcast expression evaluation *)
 
@@ -470,9 +470,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | _ -> value
 
   and eval_downcast_exp (_note : typ') (ctx : Ctx.t) (typ : typ) (exp : exp) :
-      value =
-    let value = eval_exp ctx exp in
-    downcast ctx typ value
+      (Ctx.t * value) attempt =
+    let* ctx, value = eval_exp ctx exp in
+    Ok (ctx, downcast ctx typ value)
 
   (* Subtype check expression evaluation *)
 
@@ -505,8 +505,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         | _ -> false)
     | _ -> true
 
-  and eval_sub_exp (note : typ') (ctx : Ctx.t) (exp : exp) (typ : typ) : value =
-    let value = eval_exp ctx exp in
+  and eval_sub_exp (note : typ') (ctx : Ctx.t) (exp : exp) (typ : typ) : (Ctx.t * value) attempt =
+    let* ctx, value = eval_exp ctx exp in
     let sub = subtyp ctx typ value in
     let value_res =
       let vid = Value.fresh () in
@@ -515,13 +515,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     in
     Ctx.add_node ctx value_res;
     Ctx.add_edge ctx value_res value (Dep.Edges.Op (SubOp typ));
-    value_res
+    Ok (ctx, value_res)
 
   (* Pattern match check expression evaluation *)
 
   and eval_match_exp (note : typ') (ctx : Ctx.t) (exp : exp) (pattern : pattern)
-      : value =
-    let value = eval_exp ctx exp in
+      : (Ctx.t * value) attempt =
+    let* ctx, value = eval_exp ctx exp in
     let matches =
       match (pattern, value.it) with
       | CaseP mixop_p, CaseV (mixop_v, _) -> Mixop.eq mixop_p mixop_v
@@ -542,12 +542,12 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     in
     Ctx.add_node ctx value_res;
     Ctx.add_edge ctx value_res value (Dep.Edges.Op (MatchOp pattern));
-    value_res
+    Ok (ctx, value_res)
 
   (* Tuple expression evaluation *)
 
-  and eval_tuple_exp (note : typ') (ctx : Ctx.t) (exps : exp list) : value =
-    let values = eval_exps ctx exps in
+  and eval_tuple_exp (note : typ') (ctx : Ctx.t) (exps : exp list) : (Ctx.t * value) attempt =
+    let* ctx, values = eval_exps ctx exps in
     let value_res =
       let vid = Value.fresh () in
       let typ = note in
