@@ -71,6 +71,8 @@ type local =
     }
 
 type t = {
+  (* Execution trace *)
+  trace : Trace.t;
   (* Testing and coverage layers *)
   coverage : coverage;
   testing : testing;
@@ -295,31 +297,36 @@ let empty_end_to_end ~(derive : bool) (vdg : vdg) (cover : SCov.Cover.t ref) : t
   let testing = if derive then EndToEnd (`On vdg) else EndToEnd (`Off vdg) in
   let global = empty_global () in
   let local = empty_local () in
-  { coverage; testing; global; local }
+  let trace = Trace.Empty in
+  { trace; coverage; testing; global; local }
 
 let empty_partial (cover : SCov.Cover.t ref) : t =
   let coverage = cover in
   let testing = Partial in
   let global = empty_global () in
   let local = empty_local () in
-  { coverage; testing; global; local }
+  let trace = Trace.Empty in
+  { trace; coverage; testing; global; local }
 
 (* Constructing a local context *)
 
 let localize (ctx : t) : t =
   let local = empty_local () in
-  { ctx with local }
+  let trace = Trace.Empty in
+  { ctx with trace; local }
 
 let localize_rule (ctx : t) (rid : RId.t) (values_input : value list) : t =
   let local = Rel { rid; values_input; venv = VEnv.empty } in
-  { ctx with local }
+  let trace = Trace.Empty in
+  { ctx with trace; local }
 
 let localize_func (ctx : t) (fid : FId.t) (values_input : value list)
     (tdenv : TDEnv.t) : t =
   let local =
     Func { fid; values_input; tdenv; fenv = FEnv.empty; venv = VEnv.empty }
   in
-  { ctx with local }
+  let trace = Trace.Empty in
+  { ctx with trace; local }
 
 let localize_clear (ctx : t) : t =
   match ctx.local with
@@ -392,3 +399,29 @@ let sub_list (ctx : t) (vars : var list) : t list =
       in
       ctxs_sub @ [ ctx_sub ])
     [] values_batch
+
+(* Trace operations *)
+
+let trace_open_rel (ctx : t) (id_rel : id) (values_input : value list) : t =
+  let trace = Trace.open_rel id_rel values_input in
+  { ctx with trace }
+
+let trace_open_func (ctx : t) (id_func : id) (values_input : value list) : t =
+  let trace = Trace.open_func id_func values_input in
+  { ctx with trace }
+
+let trace_open_instr (ctx : t) (instr : instr) : t =
+  let trace = Trace.open_instr instr in
+  { ctx with trace }
+
+let trace_close (ctx : t) : t =
+  let trace = Trace.close ctx.trace in
+  { ctx with trace }
+
+let trace_commit (ctx : t) (trace : Trace.t) : t =
+  let trace = Trace.commit ctx.trace trace in
+  { ctx with trace }
+
+let trace_replace (ctx : t) (subtraces : Trace.t list) : t =
+  let trace = Trace.replace_subtraces ctx.trace subtraces in
+  { ctx with trace }

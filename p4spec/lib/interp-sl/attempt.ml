@@ -12,6 +12,15 @@ let check_fail (b : bool) (at : region) (msg : string) =
 let ( let* ) (attempt : 'a attempt) (f : 'a -> 'b attempt) : 'b attempt =
   match attempt with Ok a -> f a | Fail _ as fail -> fail
 
+(* Nest with trace support *)
+
+let nest_with_trace (at : region) (msg : string) (trace : Trace.t) (attempt : 'a attempt) : 'a attempt =
+  match attempt with
+  | Ok a -> Ok a
+  | Fail failtraces ->
+      let trace_failtraces = Trace.to_failtrace trace in
+      Fail [ Failtrace (at, msg, trace_failtraces @ failtraces) ]
+
 let error_with_failtraces (failtraces : failtrace list) =
   let sfailtrace =
     match failtraces with
