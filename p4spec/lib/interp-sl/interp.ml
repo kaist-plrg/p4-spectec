@@ -866,21 +866,26 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Instruction evaluation *)
 
   and eval_instr (ctx : Ctx.t) (instr : instr) : Ctx.t * Sign.t =
-    match instr.it with
-    | IfI (exp_cond, iterexps, instrs_then, phantom_opt) ->
-        eval_if_instr ctx exp_cond iterexps instrs_then phantom_opt
-    | HoldI (id, notexp, iterexps, holdcase) ->
-        eval_hold_instr ctx id notexp iterexps holdcase
-    | CaseI (exp, cases, phantom_opt) ->
-        eval_case_instr ctx exp cases phantom_opt
-    | OtherwiseI instr -> eval_instr ctx instr
-    | GroupI (id_group, exps_group, instrs_group) ->
-        eval_group_instr ctx id_group exps_group instrs_group
-    | LetI (exp_l, exp_r, iterexps) -> eval_let_instr ctx exp_l exp_r iterexps
-    | RuleI (id, notexp, iterexps) -> eval_rule_instr ctx id notexp iterexps
-    | ResultI exps -> eval_result_instr ctx exps
-    | ReturnI exp -> eval_return_instr ctx exp
-    | DebugI exp -> eval_debug_instr ctx exp
+    let ctx = Ctx.trace_open_instr ctx instr in
+    let ctx, sign =
+      match instr.it with
+      | IfI (exp_cond, iterexps, instrs_then, phantom_opt) ->
+          eval_if_instr ctx exp_cond iterexps instrs_then phantom_opt
+      | HoldI (id, notexp, iterexps, holdcase) ->
+          eval_hold_instr ctx id notexp iterexps holdcase
+      | CaseI (exp, cases, phantom_opt) ->
+          eval_case_instr ctx exp cases phantom_opt
+      | OtherwiseI instr -> eval_instr ctx instr
+      | GroupI (id_group, exps_group, instrs_group) ->
+          eval_group_instr ctx id_group exps_group instrs_group
+      | LetI (exp_l, exp_r, iterexps) -> eval_let_instr ctx exp_l exp_r iterexps
+      | RuleI (id, notexp, iterexps) -> eval_rule_instr ctx id notexp iterexps
+      | ResultI exps -> eval_result_instr ctx exps
+      | ReturnI exp -> eval_return_instr ctx exp
+      | DebugI exp -> eval_debug_instr ctx exp
+    in
+    let ctx = Ctx.trace_close ctx in
+    (ctx, sign)
 
   and eval_instrs (ctx : Ctx.t) (sign : Sign.t) (instrs : instr list) :
       Ctx.t * Sign.t =
@@ -1390,11 +1395,15 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   and invoke_rel (ctx : Ctx.t) (id : id) (values_input : value list) :
       value list attempt =
     let rel = Ctx.find_rel Local ctx id in
-    (match rel with
-    | Rel.Extern _ -> invoke_extern_rel ctx id values_input
-    | Rel.Defined (_, exps_input, instrs) ->
-        invoke_defined_rel ctx id exps_input instrs values_input)
-    |> nest id.at (F.asprintf "invocation of relation %s failed" id.it)
+    let result =
+      match rel with
+      | Rel.Extern _ -> invoke_extern_rel ctx id values_input
+      | Rel.Defined (_, exps_input, instrs) ->
+          invoke_defined_rel ctx id exps_input instrs values_input
+    in
+    nest_with_trace id.at
+      (F.asprintf "invocation of relation %s failed" id.it)
+      ctx.trace result
 
   and invoke_extern_rel (_ctx : Ctx.t) (id : id) (values_input : value list) :
       value list attempt =
@@ -1418,10 +1427,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       (instrs : instr list) (values_input : value list) : value list attempt =
     let invoke_defined_rel' () =
       let ctx_local = Ctx.localize_rule ctx id values_input in
+      let ctx_local = Ctx.trace_open_rel ctx_local id values_input in
       let ctx_local = assign_exps ctx_local exps_input values_input in
-      let _ctx_local, sign = eval_instrs ctx_local Cont instrs in
+      let ctx_local, sign = eval_instrs ctx_local Cont instrs in
       match sign with
       | Res values_output ->
+          let ctx_local = Ctx.trace_close ctx_local in
+          let _ctx = Ctx.trace_commit ctx ctx_local.trace in
           List.iteri
             (fun idx_arg value_input ->
               List.iter
@@ -1433,15 +1445,21 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           Ok values_output
       | _ -> fail_silent
     in
+    let do_invoke_defined_rel' () =
+      checkpoint ();
+      let values_output_opt = invoke_defined_rel' () in
+      commit_or_rollback values_output_opt;
+      values_output_opt
+    in
     if (not (Ctx.deriving ctx)) && Cache.is_cached_rule id.it then (
       let cache_result = Cache.Cache.find !rule_cache (id.it, values_input) in
       match cache_result with
       | Some values_output -> Ok values_output
       | None ->
-          let* values_output = invoke_defined_rel' () in
+          let* values_output = do_invoke_defined_rel' () in
           Cache.Cache.add !rule_cache (id.it, values_input) values_output;
           Ok values_output)
-    else invoke_defined_rel' ()
+    else do_invoke_defined_rel' ()
 
   (* Invoke a function *)
 
@@ -1468,8 +1486,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           List.map (Typ.subst_typ theta) targs
     in
     let values_input = eval_args ctx args in
-    invoke_func' ctx id targs values_input
-    |> nest id.at (F.asprintf "invocation of function %s failed" id.it)
+    let result = invoke_func' ctx id targs values_input in
+    nest_with_trace id.at
+      (F.asprintf "invocation of function %s failed" id.it)
+      ctx.trace result
 
   and invoke_func' (ctx : Ctx.t) (id : id) (targs : targ list)
       (values_input : value list) : value attempt =
@@ -1517,10 +1537,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     in
     let ctx_local = Ctx.localize_func ctx id values_input tdenv_local in
     let invoke_defined_func' () =
+      let ctx_local = Ctx.trace_open_func ctx_local id values_input in
       let ctx_local = assign_args ctx ctx_local args_input values_input in
-      let _ctx_local, sign = eval_instrs ctx_local Cont instrs in
+      let ctx_local, sign = eval_instrs ctx_local Cont instrs in
       match sign with
       | Ret value_output ->
+          let ctx_local = Ctx.trace_close ctx_local in
+          let _ctx = Ctx.trace_commit ctx ctx_local.trace in
           List.iteri
             (fun idx_arg value_input ->
               Ctx.add_edge ctx value_output value_input
@@ -1529,15 +1552,21 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           Ok value_output
       | _ -> fail_silent
     in
+    let do_invoke_defined_func' () =
+      checkpoint ();
+      let value_output = invoke_defined_func' () in
+      commit_or_rollback value_output;
+      value_output
+    in
     if (not (Ctx.deriving ctx)) && Cache.is_cached_func id.it then (
       let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
       match cache_result with
       | Some value_output -> Ok value_output
       | None ->
-          let* value_output = invoke_defined_func' () in
+          let* value_output = do_invoke_defined_func' () in
           Cache.Cache.add !func_cache (id.it, values_input) value_output;
           Ok value_output)
-    else invoke_defined_func' ()
+    else do_invoke_defined_func' ()
 
   (* Load definitions into the context *)
 
