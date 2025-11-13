@@ -1703,8 +1703,8 @@ let populate_typs (ctx : Ctx.t) : unit =
     (fun tid td ->
       match td with
       | Typdef.Defining tparams ->
-          error tid.at
-            (F.asprintf "type %s%s was not fully defined"
+          warn tid.at
+            (F.asprintf "type %s%s was declared but not defined"
                (Il.Print.string_of_typid tid)
                (Il.Print.string_of_tparams tparams))
       | _ -> ())

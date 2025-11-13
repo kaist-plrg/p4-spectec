@@ -6,14 +6,12 @@ open Interface.Unpack
    otherwise set the parser error to @toSignal, and transition to the `reject` state.
 
    extern void verify(in bool check, in error toSignal); *)
-let verify call_func (value_ctx : Value.t) (value_sto : Value.t) :
+let verify (value_ctx : Value.t) (value_sto : Value.t) :
     Value.t * Value.t * Value.t =
   (* Get "check" in context *)
-  let value_check = Spec.Func.find_var_e_local call_func value_ctx "check" in
+  let value_check = Spec.Func.find_var_e_local value_ctx "check" in
   (* Get "toSignal" in context *)
-  let value_toSignal =
-    Spec.Func.find_var_e_local call_func value_ctx "toSignal"
-  in
+  let value_toSignal = Spec.Func.find_var_e_local value_ctx "toSignal" in
   (* If check, return and otherwise reject *)
   let check = value_check |> unpack_p4_bool in
   let value_callResult =
