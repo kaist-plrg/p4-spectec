@@ -94,6 +94,7 @@ and eq_value ?(dbg = false) (value_a : value) (value_b : value) : bool =
     | OptV None, OptV None -> true
     | ListV values_a, ListV values_b -> eq_values ~dbg values_a values_b
     | FuncV id_a, FuncV id_b -> id_a = id_b
+    | ExternV json_a, ExternV json_b -> Yojson.Safe.equal json_a json_b
     | _ -> false
   in
   if dbg && not eq then
@@ -109,8 +110,10 @@ and eq_values ?(dbg = false) (values_a : value list) (values_b : value list) :
 
 (* Expressions *)
 
-and eq_exp (exp_a : exp) (exp_b : exp) : bool =
-  match (exp_a.it, exp_b.it) with
+and eq_exp (exp_a : exp) (exp_b : exp) : bool = eq_exp' exp_a.it exp_b.it
+
+and eq_exp' (exp_a' : exp') (exp_b' : exp') : bool =
+  match (exp_a', exp_b') with
   | BoolE b_a, BoolE b_b -> b_a = b_b
   | NumE n_a, NumE n_b -> Num.eq n_a n_b
   | TextE t_a, TextE t_b -> t_a = t_b

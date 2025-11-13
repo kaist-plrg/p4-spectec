@@ -1,5 +1,6 @@
 open Domain.Lib
 open Sl.Ast
+module TypDef = Runtime_dynamic.Typdef
 module TDEnv = Runtime_dynamic_sl.Envs.TDEnv
 module Mixops = Runtime_testgen.Mixops
 module MixopEnv = Runtime_testgen.Envs.MixopEnv
@@ -116,9 +117,12 @@ let load_mixops (mixopenv : MixopEnv.t) (def : def) : MixopEnv.t =
 
 let load_def (tdenv : TDEnv.t) (def : def) : TDEnv.t =
   match def.it with
+  | ExternTypD (id, _) ->
+      let td = TypDef.Extern in
+      TDEnv.add id td tdenv
   | TypD (id, tparams, deftyp, _) ->
-      let typdef = (tparams, deftyp) in
-      TDEnv.add id typdef tdenv
+      let td = TypDef.Defined (tparams, deftyp) in
+      TDEnv.add id td tdenv
   | _ -> tdenv
 
 (* Loader *)
