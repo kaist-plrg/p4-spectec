@@ -77,13 +77,13 @@ rulegroup Stmt_eval/callStatementIR {
 
   rule Stmt_eval/callee-cont-call-reject:
     p EC_0 STO_0 |- callableTargetIR `< typeArgumentIR* > `( argumentIR* ) `;
-                  : EC_2 STO_2 REJECT
+                  : EC_2 STO_2 rejectTransitionResult
     -- Callee_eval:
         p EC_0 STO_0 |- callableTargetIR `< `_ > `( argumentIR* )
                       : EC_1 STO_1 (`` callee)
     -- Call_eval:
         p EC_1 STO_1 |- callee `@ `< typeArgumentIR* > `( argumentIR* )
-                      : EC_2 STO_2 REJECT
+                      : EC_2 STO_2 rejectTransitionResult
 
   rule Stmt_eval/callee-cont-call-return:
     p EC_0 STO_0 |- callableTargetIR `< typeArgumentIR* > `( argumentIR* ) `;

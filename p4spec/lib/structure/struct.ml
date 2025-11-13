@@ -1,5 +1,6 @@
 open Domain.Lib
 open Il.Ast
+module TypDef = Runtime_dynamic.Typdef
 module IEnv = Runtime_static.Envs.IEnv
 module TDEnv = Runtime_dynamic_sl.Envs.TDEnv
 open Util.Source
@@ -105,12 +106,15 @@ let struct_clause_path ((prems, exp_output) : prem list * exp) :
 let rec struct_def (ienv : IEnv.t) (tdenv : TDEnv.t) (def : def) : Sl.Ast.def =
   let at = def.at in
   match def.it with
+  | ExternTypD (id, hints) -> Sl.Ast.ExternTypD (id, hints) $ at
   | TypD (id, tparams, deftyp, hints) ->
       Sl.Ast.TypD (id, tparams, deftyp, hints) $ at
   | ExternRelD (id, nottyp, inputs, hints) ->
       struct_extern_rel_def at id nottyp inputs hints
   | RelD (id, nottyp, inputs, rulegroups, hints) ->
       struct_defined_rel_def ienv tdenv at id nottyp inputs rulegroups hints
+  | ExternDecD (id, tparams, params, typ, hints) ->
+      struct_extern_dec_def at id tparams params typ hints
   | BuiltinDecD (id, tparams, params, typ, hints) ->
       struct_builtin_dec_def at id tparams params typ hints
   | DecD (id, tparams, _params, typ, clauses, hints) ->
@@ -185,6 +189,29 @@ and struct_defined_rel_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region)
 
 (* Structuring declaration definitions *)
 
+and struct_extern_dec_def (at : region) (id_dec : id) (tparams : tparam list)
+    (params : param list) (typ : typ) (hints : hint list) : Sl.Ast.def =
+  let args_input, _ =
+    List.fold_left
+      (fun (args_input, frees) param ->
+        let arg_input, frees =
+          match param.it with
+          | ExpP typ ->
+              let exp_input, frees =
+                Elaborate.Fresh.fresh_exp_from_typ frees typ
+              in
+              let arg_input = ExpA exp_input $ param.at in
+              (arg_input, frees)
+          | DefP (id_def, _, _, _) ->
+              let arg_input = DefA id_def $ param.at in
+              (arg_input, frees)
+        in
+        (args_input @ [ arg_input ], frees))
+      ([], IdSet.empty) params
+  in
+  let externfunc = (id_dec, tparams, args_input, typ, hints) in
+  Sl.Ast.ExternDecD externfunc $ at
+
 and struct_builtin_dec_def (at : region) (id_dec : id) (tparams : tparam list)
     (params : param list) (typ : typ) (hints : hint list) : Sl.Ast.def =
   let args_input, _ =
@@ -222,9 +249,13 @@ and struct_defined_dec_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region)
 
 let load_def (ienv : IEnv.t) (tdenv : TDEnv.t) (def : def) : IEnv.t * TDEnv.t =
   match def.it with
+  | ExternTypD (id, _hints) ->
+      let td = TypDef.Extern in
+      let tdenv = TDEnv.add id td tdenv in
+      (ienv, tdenv)
   | TypD (id, tparams, deftyp, _hints) ->
-      let typdef = (tparams, deftyp) in
-      let tdenv = TDEnv.add id typdef tdenv in
+      let td = TypDef.Defined (tparams, deftyp) in
+      let tdenv = TDEnv.add id td tdenv in
       (ienv, tdenv)
   | ExternRelD (id, _, inputs, _) | RelD (id, _, inputs, _, _) ->
       let ienv = IEnv.add id inputs ienv in

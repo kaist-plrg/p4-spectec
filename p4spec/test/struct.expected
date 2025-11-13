@@ -2858,21 +2858,36 @@ def $pid((_annotationList _direction _type name initializerOpt))
 ;; ../../../../spec-concrete/2.0-domain.watsup:93.14-93.17
 syntax oid = id*
 
-;; ../../../../spec-concrete/2.1.1-value.watsup:14.1-17.18
+;; ../../../../spec-concrete/2.1.1-value.watsup:13.20-13.26
+syntax boolValue = 
+   | b bool
+
+;; ../../../../spec-concrete/2.1.1-value.watsup:14.21-14.32
+syntax errorValue = 
+   | error. id
+
+;; ../../../../spec-concrete/2.1.1-value.watsup:15.25-15.41
+syntax matchKindValue = 
+   | match_kind. id
+
+;; ../../../../spec-concrete/2.1.1-value.watsup:16.22-16.35
+syntax stringValue = stringLiteral
+
+;; ../../../../spec-concrete/2.1.1-value.watsup:19.1-22.16
 syntax primitiveValue = 
    | b bool
    | error. id
    | match_kind. id
    | " text " hint(print "#%#")
 
-;; ../../../../spec-concrete/2.1.1-value.watsup:24.1-25.21
+;; ../../../../spec-concrete/2.1.1-value.watsup:29.1-30.21
 syntax numberValue = 
    | d int hint(print %)
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
    | nat . nat v int
 
-;; ../../../../spec-concrete/2.1.1-value.watsup:27.20-27.48
+;; ../../../../spec-concrete/2.1.1-value.watsup:32.20-32.48
 syntax baseValue = 
    | b bool
    | error. id
@@ -2883,40 +2898,40 @@ syntax baseValue =
    | nat s int hint(print %#S#%)
    | nat . nat v int
 
-;; ../../../../spec-concrete/2.1.1-value.watsup:35.20-35.36
+;; ../../../../spec-concrete/2.1.1-value.watsup:40.20-40.36
 syntax listValue = 
    | list[ value* ]
 
-;; ../../../../spec-concrete/2.1.1-value.watsup:36.21-36.38
+;; ../../../../spec-concrete/2.1.1-value.watsup:41.21-41.38
 syntax tupleValue = 
    | tuple( value* )
 
-;; ../../../../spec-concrete/2.1.1-value.watsup:37.27-37.65
+;; ../../../../spec-concrete/2.1.1-value.watsup:42.27-42.65
 syntax headerStackValue = 
    | header_stack[ value* ( nat ; nat )]
 
-;; ../../../../spec-concrete/2.1.1-value.watsup:39.21-39.32
+;; ../../../../spec-concrete/2.1.1-value.watsup:44.21-44.32
 syntax fieldValue = 
    | value id ;
 
-;; ../../../../spec-concrete/2.1.1-value.watsup:41.22-41.49
+;; ../../../../spec-concrete/2.1.1-value.watsup:46.22-46.49
 syntax structValue = 
    | struct tid { fieldValue* }
 
-;; ../../../../spec-concrete/2.1.1-value.watsup:42.22-42.57
+;; ../../../../spec-concrete/2.1.1-value.watsup:47.22-47.57
 syntax headerValue = 
    | header tid { bool ; fieldValue* }
 
-;; ../../../../spec-concrete/2.1.1-value.watsup:43.27-43.60
+;; ../../../../spec-concrete/2.1.1-value.watsup:48.27-48.60
 syntax headerUnionValue = 
    | header_union tid { fieldValue* }
 
-;; ../../../../spec-concrete/2.1.1-value.watsup:46.1-47.23
+;; ../../../../spec-concrete/2.1.1-value.watsup:51.1-52.23
 syntax enumValue = 
    | tid . id
    | tid . id . value
 
-;; ../../../../spec-concrete/2.1.1-value.watsup:50.1-56.14
+;; ../../../../spec-concrete/2.1.1-value.watsup:55.1-61.14
 syntax dataValue = 
    | list[ value* ]
    | tuple( value* )
@@ -2927,40 +2942,41 @@ syntax dataValue =
    | tid . id
    | tid . id . value
 
-;; ../../../../spec-concrete/2.1.1-value.watsup:62.31-62.37
+;; ../../../../spec-concrete/2.1.1-value.watsup:67.31-67.37
 syntax objectReferenceValue = 
    | ! oid
 
-;; ../../../../spec-concrete/2.1.1-value.watsup:68.23-68.30
+;; ../../../../spec-concrete/2.1.1-value.watsup:73.23-73.30
 syntax defaultValue = 
    | default
 
-;; ../../../../spec-concrete/2.1.1-value.watsup:70.29-70.33
+;; ../../../../spec-concrete/2.1.1-value.watsup:75.29-75.33
 syntax invalidHeaderValue = 
    | {#}
 
-;; ../../../../spec-concrete/2.1.1-value.watsup:73.1-74.28
+;; ../../../../spec-concrete/2.1.1-value.watsup:78.1-79.28
 syntax sequenceValue = 
    | seq( value* )
    | seq( value* ,...)
 
-;; ../../../../spec-concrete/2.1.1-value.watsup:77.1-78.36
+;; ../../../../spec-concrete/2.1.1-value.watsup:82.1-83.36
 syntax recordValue = 
    | record{ fieldValue* }
    | record{ fieldValue* ,...}
 
-;; ../../../../spec-concrete/2.1.1-value.watsup:81.1-83.29
+;; ../../../../spec-concrete/2.1.1-value.watsup:86.1-89.18
 syntax setValue = 
    | set{ value }
    | set{ value &&& value }
    | set{ value .. value }
+   | set{...}
 
-;; ../../../../spec-concrete/2.1.1-value.watsup:86.1-87.38
+;; ../../../../spec-concrete/2.1.1-value.watsup:92.1-93.38
 syntax tableMetadataValue = 
    | table_enum tid . id
    | table_struct tid { fieldValue* }
 
-;; ../../../../spec-concrete/2.1.1-value.watsup:90.1-95.23
+;; ../../../../spec-concrete/2.1.1-value.watsup:96.1-101.23
 syntax synthesizedValue = 
    | default
    | {#}
@@ -2971,10 +2987,11 @@ syntax synthesizedValue =
    | set{ value }
    | set{ value &&& value }
    | set{ value .. value }
+   | set{...}
    | table_enum tid . id
    | table_struct tid { fieldValue* }
 
-;; ../../../../spec-concrete/2.1.1-value.watsup:102.1-105.21
+;; ../../../../spec-concrete/2.1.1-value.watsup:108.1-111.21
 syntax value = 
    | b bool
    | error. id
@@ -3002,6 +3019,7 @@ syntax value =
    | set{ value }
    | set{ value &&& value }
    | set{ value .. value }
+   | set{...}
    | table_enum tid . id
    | table_struct tid { fieldValue* }
 
@@ -3116,33 +3134,29 @@ def $update_headerStack'(value*{value <- value*}, _value', _nat''', _nat'''', _n
 
         1. Return value_h :: $update_headerStack'(value_t*{value_t <- value_t*}, _value', _nat'''', (_nat''' + 1), _nat''''')
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:86.1-86.49
-def $write_value_from_bits(value, b*{b <- b*})
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:86.1-86.54
+def $write_value_from_bits(value, n_var, b*{b <- b*})
 
-1. (Let (value_updated, bool*{bool <- bool*}) be $write_value_from_bits'(value, b*{b <- b*}))
+1. (Let (value_updated, bool*{bool <- bool*}) be $write_value_from_bits'(value, n_var, b*{b <- b*}))
 
 2. If ((bool*{bool <- bool*} matches pattern [])), then
 
   1. Return value_updated
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:87.1-87.59
-def $write_value_from_bits'(value, bool'*{bool' <- bool'*})
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:87.1-87.64
+def $write_value_from_bits'(value, n_var', bool'*{bool' <- bool'*})
 
 1. Case analysis on value
 
-  1. Case (% has type primitiveValue)
+  1. Case (% has type boolValue)
 
-    1. (Let primitiveValue be (value as primitiveValue))
+    1. (Let (b _bool) be (value as boolValue))
 
-    2. If ((primitiveValue matches pattern `B%`)), then
+    2. If ((bool'*{bool' <- bool'*} matches pattern _ :: _)), then
 
-      1. (Let (b _bool) be primitiveValue)
+      1. (Let b_h :: b_t*{b_t <- b_t*} be bool'*{bool' <- bool'*})
 
-      2. If ((bool'*{bool' <- bool'*} matches pattern _ :: _)), then
-
-        1. (Let b_h :: b_t*{b_t <- b_t*} be bool'*{bool' <- bool'*})
-
-        2. Return (((b b_h) as value), b_t*{b_t <- b_t*})
+      2. Return (((b b_h) as value), b_t*{b_t <- b_t*})
 
   2. Case (% has type numberLiteral)
 
@@ -3194,7 +3208,7 @@ def $write_value_from_bits'(value, bool'*{bool' <- bool'*})
 
     1. (Let (struct tid { fieldValue*{fieldValue <- fieldValue*} }) be (value as structValue))
 
-    2. (Let (fieldValue_updated*{fieldValue_updated <- fieldValue_updated*}, b_rest*{b_rest <- b_rest*}) be $write_value_fields_from_bits'(fieldValue*{fieldValue <- fieldValue*}, bool'*{bool' <- bool'*}))
+    2. (Let (fieldValue_updated*{fieldValue_updated <- fieldValue_updated*}, b_rest*{b_rest <- b_rest*}) be $write_value_fields_from_bits'(fieldValue*{fieldValue <- fieldValue*}, n_var', bool'*{bool' <- bool'*}))
 
     3. Return (((struct tid { fieldValue_updated*{fieldValue_updated <- fieldValue_updated*} }) as value), b_rest*{b_rest <- b_rest*})
 
@@ -3202,12 +3216,40 @@ def $write_value_from_bits'(value, bool'*{bool' <- bool'*})
 
     1. (Let (header tid { _bool ; fieldValue*{fieldValue <- fieldValue*} }) be (value as headerValue))
 
-    2. (Let (fieldValue_updated*{fieldValue_updated <- fieldValue_updated*}, b_rest*{b_rest <- b_rest*}) be $write_value_fields_from_bits'(fieldValue*{fieldValue <- fieldValue*}, bool'*{bool' <- bool'*}))
+    2. (Let (fieldValue_updated*{fieldValue_updated <- fieldValue_updated*}, b_rest*{b_rest <- b_rest*}) be $write_value_fields_from_bits'(fieldValue*{fieldValue <- fieldValue*}, n_var', bool'*{bool' <- bool'*}))
 
     3. Return (((header tid { true ; fieldValue_updated*{fieldValue_updated <- fieldValue_updated*} }) as value), b_rest*{b_rest <- b_rest*})
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:88.1-88.78
-def $write_value_fields_from_bits'(fieldValue*{fieldValue <- fieldValue*}, b*{b <- b*})
+2. If ((value has type numberValue)), then
+
+  1. (Let numberValue be (value as numberValue))
+
+  2. If ((numberValue matches pattern `%.%V%`)), then
+
+    1. (Let (n_max . _nat v i) be numberValue)
+
+    2. If ((n_var' = 0)), then
+
+      1. Return (((n_max . 0 v i) as value), bool'*{bool' <- bool'*})
+
+    3. If ((|bool'*{bool' <- bool'*}| >= n_var')), then
+
+      1. (Let b_h*{b_h <- b_h*} be bool'*{bool' <- bool'*}[0 : n_var'])
+
+      2. (Let int be (|bool'*{bool' <- bool'*}| - n_var'))
+
+      3. If ((int has type nat)), then
+
+        1. (Let n_t be (int as nat))
+
+        2. (Let b_t*{b_t <- b_t*} be bool'*{bool' <- bool'*}[n_var' : n_t])
+
+        3. (Let i be $int_to_bitstr((n_var' as int), $bits_to_int_signed(b_h*{b_h <- b_h*})))
+
+        4. Return (((n_max . n_var' v i) as value), b_t*{b_t <- b_t*})
+
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:88.1-88.83
+def $write_value_fields_from_bits'(fieldValue*{fieldValue <- fieldValue*}, n_var, b*{b <- b*})
 
 1. Case analysis on fieldValue*{fieldValue <- fieldValue*}
 
@@ -3219,33 +3261,29 @@ def $write_value_fields_from_bits'(fieldValue*{fieldValue <- fieldValue*}, b*{b 
 
     1. (Let fieldValue_h :: fieldValue_t*{fieldValue_t <- fieldValue_t*} be fieldValue*{fieldValue <- fieldValue*})
 
-    2. (Let (fieldValue_h_updated, b_t*{b_t <- b_t*}) be $write_value_field_from_bits'(fieldValue_h, b*{b <- b*}))
+    2. (Let (fieldValue_h_updated, b_t*{b_t <- b_t*}) be $write_value_field_from_bits'(fieldValue_h, n_var, b*{b <- b*}))
 
-    3. (Let (fieldValue_t_updated*{fieldValue_t_updated <- fieldValue_t_updated*}, b_rest*{b_rest <- b_rest*}) be $write_value_fields_from_bits'(fieldValue_t*{fieldValue_t <- fieldValue_t*}, b_t*{b_t <- b_t*}))
+    3. (Let (fieldValue_t_updated*{fieldValue_t_updated <- fieldValue_t_updated*}, b_rest*{b_rest <- b_rest*}) be $write_value_fields_from_bits'(fieldValue_t*{fieldValue_t <- fieldValue_t*}, n_var, b_t*{b_t <- b_t*}))
 
     4. Return (fieldValue_h_updated :: fieldValue_t_updated*{fieldValue_t_updated <- fieldValue_t_updated*}, b_rest*{b_rest <- b_rest*})
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:89.1-89.75
-def $write_value_field_from_bits'((value id ;), b*{b <- b*})
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:89.1-89.80
+def $write_value_field_from_bits'((value id ;), n_var, b*{b <- b*})
 
-1. (Let (value_updated, b_rest*{b_rest <- b_rest*}) be $write_value_from_bits'(value, b*{b <- b*}))
+1. (Let (value_updated, b_rest*{b_rest <- b_rest*}) be $write_value_from_bits'(value, n_var, b*{b <- b*}))
 
 2. Return ((value_updated id ;), b_rest*{b_rest <- b_rest*})
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:141.1-141.42
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:148.1-148.42
 def $write_bits_from_value(value)
 
 1. Case analysis on value
 
-  1. Case (% has type primitiveValue)
+  1. Case (% has type boolValue)
 
-    1. (Let primitiveValue be (value as primitiveValue))
+    1. (Let (b b) be (value as boolValue))
 
-    2. If ((primitiveValue matches pattern `B%`)), then
-
-      1. (Let (b b) be primitiveValue)
-
-      2. Return [b]
+    2. Return [b]
 
   2. Case (% has type numberLiteral)
 
@@ -3265,13 +3303,19 @@ def $write_bits_from_value(value)
 
         2. Return $int_to_bits_unsigned(w, i)
 
-  3. Case (% has type structValue)
+  3. Case (% has type headerStackValue)
+
+    1. (Let (header_stack[ value_element*{value_element <- value_element*} ( _nat ; _nat' )]) be (value as headerStackValue))
+
+    2. Return $concat_<bool>($write_bits_from_value(value_element)*{value_element <- value_element*})
+
+  4. Case (% has type structValue)
 
     1. (Let (struct _tid { (value_field id_field ;)*{id_field <- id_field*, value_field <- value_field*} }) be (value as structValue))
 
     2. Return $concat_<bool>($write_bits_from_value(value_field)*{value_field <- value_field*})
 
-  4. Case (% has type headerValue)
+  5. Case (% has type headerValue)
 
     1. (Let (header _tid { bool ; (value_field id_field ;)*{id_field <- id_field*, value_field <- value_field*} }) be (value as headerValue))
 
@@ -3279,11 +3323,21 @@ def $write_bits_from_value(value)
 
       1. Return $concat_<bool>($write_bits_from_value(value_field)*{value_field <- value_field*})
 
-  5. Case (% has type headerStackValue)
+    3. (Let (header _tid { bool ; _fieldValue*{_fieldValue <- _fieldValue*} }) be (value as headerValue))
 
-    1. (Let (header_stack[ value_element*{value_element <- value_element*} ( _nat ; _nat' )]) be (value as headerStackValue))
+    4. If ((bool = false)), then
 
-    2. Return $concat_<bool>($write_bits_from_value(value_element)*{value_element <- value_element*})
+      1. Return []
+
+2. If ((value has type numberValue)), then
+
+  1. (Let numberValue be (value as numberValue))
+
+  2. If ((numberValue matches pattern `%.%V%`)), then
+
+    1. (Let (_nat . w v i) be numberValue)
+
+    2. Return $int_to_bits_unsigned(w, i)
 
 ;; ../../../../spec-concrete/2.2.1-type.watsup:14.1-18.11
 syntax primitiveTypeIR = 
@@ -6512,15 +6566,11 @@ def $un_bnot(value)
 ;; ../../../../spec-concrete/3-numerics.watsup:38.1-39.23
 def $un_lnot(value)
 
-1. If ((value has type primitiveValue)), then
+1. If ((value has type boolValue)), then
 
-  1. (Let primitiveValue be (value as primitiveValue))
+  1. (Let (b b) be (value as boolValue))
 
-  2. If ((primitiveValue matches pattern `B%`)), then
-
-    1. (Let (b b) be primitiveValue)
-
-    2. Return ((b ~b) as value)
+  2. Return ((b ~b) as value)
 
 ;; ../../../../spec-concrete/3-numerics.watsup:47.1-48.23
 def $un_plus(value)
@@ -6732,10 +6782,6 @@ def $bin_plus(value, value')
 
             6. Return ((w s i') as value)
 
-            7. (Let i' be $int_to_bitstr((w as int), (i_l' * i_r')))
-
-            8. Return ((w s i') as value)
-
 ;; ../../../../spec-concrete/3-numerics.watsup:96.1-97.23
 def $bin_satplus
 
@@ -6786,10 +6832,6 @@ def $bin_minus(value, value')
 
             4. Return ((w w i') as value)
 
-            5. (Let i' be $int_to_bitstr((w as int), (i_l' * i_r')))
-
-            6. Return ((w w i') as value)
-
 ;; ../../../../spec-concrete/3-numerics.watsup:120.1-121.23
 def $bin_satminus
 
@@ -6802,19 +6844,65 @@ def $bin_mul(value, value')
 
   1. (Let numberLiteral be (value as numberLiteral))
 
-  2. If ((numberLiteral matches pattern `D%`)), then
+  2. Case analysis on numberLiteral
 
-    1. (Let (d i_l) be numberLiteral)
+    1. Case (% matches pattern `D%`)
 
-    2. If ((value' has type numberLiteral)), then
+      1. (Let (d i_l) be numberLiteral)
 
-      1. (Let numberLiteral' be (value' as numberLiteral))
+      2. If ((value' has type numberLiteral)), then
 
-      2. If ((numberLiteral' matches pattern `D%`)), then
+        1. (Let numberLiteral' be (value' as numberLiteral))
 
-        1. (Let (d i_r) be numberLiteral')
+        2. If ((numberLiteral' matches pattern `D%`)), then
 
-        2. Return ((d (i_l * i_r)) as value)
+          1. (Let (d i_r) be numberLiteral')
+
+          2. Return ((d (i_l * i_r)) as value)
+
+    2. Case (% matches pattern `%W%`)
+
+      1. (Let (w w i_l) be numberLiteral)
+
+      2. If ((value' has type numberLiteral)), then
+
+        1. (Let numberLiteral' be (value' as numberLiteral))
+
+        2. If ((numberLiteral' matches pattern `%W%`)), then
+
+          1. (Let (w' w i_r) be numberLiteral')
+
+          2. If ((w = w')), then
+
+            1. (Let i_l' be $bitstr_to_int((w as int), i_l))
+
+            2. (Let i_r' be $bitstr_to_int((w as int), i_r))
+
+            3. (Let i' be $int_to_bitstr((w as int), (i_l' * i_r')))
+
+            4. Return ((w w i') as value)
+
+    3. Case (% matches pattern `%S%`)
+
+      1. (Let (w s i_l) be numberLiteral)
+
+      2. If ((value' has type numberLiteral)), then
+
+        1. (Let numberLiteral' be (value' as numberLiteral))
+
+        2. If ((numberLiteral' matches pattern `%S%`)), then
+
+          1. (Let (w' s i_r) be numberLiteral')
+
+          2. If ((w = w')), then
+
+            1. (Let i_l' be $bitstr_to_int((w as int), i_l))
+
+            2. (Let i_r' be $bitstr_to_int((w as int), i_r))
+
+            3. (Let i' be $int_to_bitstr((w as int), (i_l' * i_r')))
+
+            4. Return ((w s i') as value)
 
 ;; ../../../../spec-concrete/3-numerics.watsup:144.1-145.23
 def $bin_div(value, value')
@@ -7873,59 +7961,39 @@ def $bin_concat(value, value')
 ;; ../../../../spec-concrete/3-numerics.watsup:462.1-463.23
 def $bin_land(value, value')
 
-1. If ((value has type primitiveValue)), then
+1. If ((value has type boolValue)), then
 
-  1. (Let primitiveValue be (value as primitiveValue))
+  1. (Let (b b_l) be (value as boolValue))
 
-  2. If ((primitiveValue matches pattern `B%`)), then
+  2. If ((value' has type boolValue)), then
 
-    1. (Let (b b_l) be primitiveValue)
+    1. (Let (b b_r) be (value' as boolValue))
 
-    2. If ((value' has type primitiveValue)), then
-
-      1. (Let primitiveValue' be (value' as primitiveValue))
-
-      2. If ((primitiveValue' matches pattern `B%`)), then
-
-        1. (Let (b b_r) be primitiveValue')
-
-        2. Return ((b (b_l /\ b_r)) as value)
+    2. Return ((b (b_l /\ b_r)) as value)
 
 ;; ../../../../spec-concrete/3-numerics.watsup:469.1-470.23
 def $bin_lor(value, value')
 
-1. If ((value has type primitiveValue)), then
+1. If ((value has type boolValue)), then
 
-  1. (Let primitiveValue be (value as primitiveValue))
+  1. (Let (b b_l) be (value as boolValue))
 
-  2. If ((primitiveValue matches pattern `B%`)), then
+  2. If ((value' has type boolValue)), then
 
-    1. (Let (b b_l) be primitiveValue)
+    1. (Let (b b_r) be (value' as boolValue))
 
-    2. If ((value' has type primitiveValue)), then
-
-      1. (Let primitiveValue' be (value' as primitiveValue))
-
-      2. If ((primitiveValue' matches pattern `B%`)), then
-
-        1. (Let (b b_r) be primitiveValue')
-
-        2. Return ((b (b_l \/ b_r)) as value)
+    2. Return ((b (b_l \/ b_r)) as value)
 
 ;; ../../../../spec-concrete/3-numerics.watsup:478.1-480.40
 def $cast_op(typeIR, value'')
 
 1. Case analysis on value''
 
-  1. Case (% has type primitiveValue)
+  1. Case (% has type boolValue)
 
-    1. (Let primitiveValue be (value'' as primitiveValue))
+    1. (Let (b b) be (value'' as boolValue))
 
-    2. If ((primitiveValue matches pattern `B%`)), then
-
-      1. (Let (b b) be primitiveValue)
-
-      2. Return $cast_bool(typeIR, b)
+    2. Return $cast_bool(typeIR, b)
 
   2. Case (% has type numberLiteral)
 
@@ -9042,23 +9110,40 @@ syntax keysetExpressionIR =
    | _
    | ( simpleKeysetExpressionListIR )
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:246.25-246.31
+;; ../../../../spec-concrete/4-ir-syntax.watsup:242.1-244.63
+def $flatten_keysetExpressionIR(keysetExpressionIR)
+
+1. Case analysis on keysetExpressionIR
+
+  1. Case (% has type simpleKeysetExpressionIR)
+
+    1. (Let simpleKeysetExpressionIR be (keysetExpressionIR as simpleKeysetExpressionIR))
+
+    2. Return [simpleKeysetExpressionIR]
+
+  2. Case (% has type tupleKeysetExpressionIR)
+
+    1. (Let (( simpleKeysetExpressionListIR )) be (keysetExpressionIR as tupleKeysetExpressionIR))
+
+    2. Return simpleKeysetExpressionListIR
+
+;; ../../../../spec-concrete/4-ir-syntax.watsup:255.25-255.31
 syntax typeArgumentIR = typeIR
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:248.29-248.44
+;; ../../../../spec-concrete/4-ir-syntax.watsup:257.29-257.44
 syntax typeArgumentListIR = typeArgumentIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:255.1-258.7
+;; ../../../../spec-concrete/4-ir-syntax.watsup:264.1-267.7
 syntax argumentIR = 
    | expressionIR # expressionNoteIR hint(print %0) hint(prose %0 "annotated with" %1) hint(prose_fields ["expression", "note"])
    | nameIR = typedExpressionIR
    | nameIR =_
    | _
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:260.25-260.36
+;; ../../../../spec-concrete/4-ir-syntax.watsup:269.25-269.36
 syntax argumentListIR = argumentIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:267.1-271.23
+;; ../../../../spec-concrete/4-ir-syntax.watsup:276.1-280.23
 syntax lvalueIR = 
    | ` nameIR hint(print %0)
    | . nameIR
@@ -9067,20 +9152,20 @@ syntax lvalueIR =
    | typedLvalueIR [ typedExpressionIR : typedExpressionIR ]
    | ( typedLvalueIR )
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:273.23-273.34
+;; ../../../../spec-concrete/4-ir-syntax.watsup:282.23-282.34
 syntax lvalueNoteIR = 
    | ( typeIR )
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:275.24-278.40
+;; ../../../../spec-concrete/4-ir-syntax.watsup:284.24-287.40
 syntax typedLvalueIR = 
    | lvalueIR # lvalueNoteIR hint(print %0) hint(prose %0 "with note" %1) hint(prose_fields ["lvalue", "note"])
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:280.1-281.42
+;; ../../../../spec-concrete/4-ir-syntax.watsup:289.1-290.42
 def $type_of_typedLvalueIR((_lvalueIR # (( typeIR ))))
 
 1. Return typeIR
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:284.1-285.19
+;; ../../../../spec-concrete/4-ir-syntax.watsup:293.1-294.19
 def $typedExpressionIR_as_typedLvalueIR((expressionIR # (( typeIR _ctk ))))
 
 1. Case analysis on expressionIR
@@ -9143,89 +9228,89 @@ def $typedExpressionIR_as_typedLvalueIR((expressionIR # (( typeIR _ctk ))))
 
       2. Return ?(((( typedLvalueIR )) # (( typeIR ))))
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:322.27-322.41
+;; ../../../../spec-concrete/4-ir-syntax.watsup:331.27-331.41
 syntax emptyStatementIR = emptyStatement
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:329.3-329.46
+;; ../../../../spec-concrete/4-ir-syntax.watsup:338.3-338.46
 syntax assignmentStatementIR = 
    | typedLvalueIR assignop typedExpressionIR ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:336.3-336.66
+;; ../../../../spec-concrete/4-ir-syntax.watsup:345.3-345.66
 syntax callStatementIR = 
    | callableTargetIR < typeArgumentListIR >( argumentListIR );
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:343.3-343.49
+;; ../../../../spec-concrete/4-ir-syntax.watsup:352.3-352.49
 syntax directApplicationStatementIR = 
    | prefixedNameIR .apply( argumentListIR );
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:350.1-351.32
+;; ../../../../spec-concrete/4-ir-syntax.watsup:359.1-360.32
 syntax returnStatementIR = 
    | return;
    | return typedExpressionIR ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:357.26-357.39
+;; ../../../../spec-concrete/4-ir-syntax.watsup:366.26-366.39
 syntax exitStatementIR = exitStatement
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:366.3-366.50
+;; ../../../../spec-concrete/4-ir-syntax.watsup:375.3-375.50
 syntax blockStatementIR = 
    | annotationList { blockElementStatementListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:375.1-376.59
+;; ../../../../spec-concrete/4-ir-syntax.watsup:384.1-385.59
 syntax conditionalStatementIR = 
    | if( typedExpressionIR ) statementIR
    | if( typedExpressionIR ) statementIR else statementIR
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:385.1-388.35
+;; ../../../../spec-concrete/4-ir-syntax.watsup:394.1-397.35
 syntax forInitStatementIR = 
    | annotationList typeIR nameIR initializerOptIR
    | lvalueIR ( argumentListIR )
    | lvalueIR < typeArgumentListIR >( argumentListIR )
    | lvalueIR assignop expressionIR
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:390.33-390.52
+;; ../../../../spec-concrete/4-ir-syntax.watsup:399.33-399.52
 syntax forInitStatementListIR = forInitStatementIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:392.31-392.49
+;; ../../../../spec-concrete/4-ir-syntax.watsup:401.31-401.49
 syntax forUpdateStatementIR = forInitStatementIR
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:394.35-394.56
+;; ../../../../spec-concrete/4-ir-syntax.watsup:403.35-403.56
 syntax forUpdateStatementListIR = forUpdateStatementIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:397.1-398.44
+;; ../../../../spec-concrete/4-ir-syntax.watsup:406.1-407.44
 syntax forCollectionExpressionIR = 
    | expressionIR # expressionNoteIR hint(print %0) hint(prose %0 "annotated with" %1) hint(prose_fields ["expression", "note"])
    | typedExpressionIR .. typedExpressionIR
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:401.1-409.18
+;; ../../../../spec-concrete/4-ir-syntax.watsup:410.1-418.18
 syntax forStatementIR = 
    | annotationList for( forInitStatementListIR ; typedExpressionIR ; forUpdateStatementListIR ) statementIR
    | annotationList for( typeIR nameIR in forCollectionExpressionIR ) statementIR
    | annotationList for( annotationList typeIR nameIR in forCollectionExpressionIR ) statementIR
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:416.1-417.22
+;; ../../../../spec-concrete/4-ir-syntax.watsup:425.1-426.22
 syntax switchLabelIR = 
    | default
    | expressionIR # expressionNoteIR hint(print %0) hint(prose %0 "annotated with" %1) hint(prose_fields ["expression", "note"])
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:420.1-421.21
+;; ../../../../spec-concrete/4-ir-syntax.watsup:429.1-430.21
 syntax switchCaseIR = 
    | switchLabelIR : blockStatementIR
    | switchLabelIR :
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:423.27-423.40
+;; ../../../../spec-concrete/4-ir-syntax.watsup:432.27-432.40
 syntax switchCaseListIR = switchCaseIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:426.3-426.54
+;; ../../../../spec-concrete/4-ir-syntax.watsup:435.3-435.54
 syntax switchStatementIR = 
    | switch( typedExpressionIR ){ switchCaseListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:432.27-432.41
+;; ../../../../spec-concrete/4-ir-syntax.watsup:441.27-441.41
 syntax breakStatementIR = breakStatement
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:434.30-434.47
+;; ../../../../spec-concrete/4-ir-syntax.watsup:443.30-443.47
 syntax continueStatementIR = continueStatement
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:441.1-452.22
+;; ../../../../spec-concrete/4-ir-syntax.watsup:450.1-461.22
 syntax statementIR = 
    | ;
    | typedLvalueIR assignop typedExpressionIR ;
@@ -9244,22 +9329,22 @@ syntax statementIR =
    | continue;
    | switch( typedExpressionIR ){ switchCaseListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:463.3-463.62
+;; ../../../../spec-concrete/4-ir-syntax.watsup:472.3-472.62
 syntax constantDeclarationIR = 
    | annotationList const typeIR nameIR constantInitializerIR ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:465.24-465.44
+;; ../../../../spec-concrete/4-ir-syntax.watsup:474.24-474.44
 syntax initializerIR = 
    | = typedExpressionIR
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:467.27-467.41
+;; ../../../../spec-concrete/4-ir-syntax.watsup:476.27-476.41
 syntax initializerOptIR = initializerIR?
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:470.3-470.51
+;; ../../../../spec-concrete/4-ir-syntax.watsup:479.3-479.51
 syntax variableDeclarationIR = 
    | annotationList typeIR nameIR initializerOptIR ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:473.1-475.16
+;; ../../../../spec-concrete/4-ir-syntax.watsup:482.1-484.16
 syntax blockElementStatementIR = 
    | annotationList const typeIR nameIR constantInitializerIR ;
    | annotationList typeIR nameIR initializerOptIR ;
@@ -9280,41 +9365,41 @@ syntax blockElementStatementIR =
    | continue;
    | switch( typedExpressionIR ){ switchCaseListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:477.38-477.62
+;; ../../../../spec-concrete/4-ir-syntax.watsup:486.38-486.62
 syntax blockElementStatementListIR = blockElementStatementIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:484.3-485.73
+;; ../../../../spec-concrete/4-ir-syntax.watsup:493.3-494.73
 syntax functionPrototypeIR = 
    | typeIR nameIR < typeParameterListIR , typeParameterListIR >( parameterListIR )
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:488.3-488.54
+;; ../../../../spec-concrete/4-ir-syntax.watsup:497.3-497.54
 syntax functionDeclarationIR = 
    | annotationList functionPrototypeIR blockStatementIR
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:495.3-495.69
+;; ../../../../spec-concrete/4-ir-syntax.watsup:504.3-504.69
 syntax actionDeclarationIR = 
    | annotationList action nameIR ( parameterListIR ) blockStatementIR
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:503.30-503.61
+;; ../../../../spec-concrete/4-ir-syntax.watsup:512.30-512.61
 syntax objectInitializerIR = 
    | ={ objectDeclarationListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:505.33-505.53
+;; ../../../../spec-concrete/4-ir-syntax.watsup:514.33-514.53
 syntax objectInitializerOptIR = objectInitializerIR?
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:508.3-510.30
+;; ../../../../spec-concrete/4-ir-syntax.watsup:517.3-519.30
 syntax instantiationIR = 
    | annotationList typeIR prefixedNameIR < typeArgumentListIR >( argumentListIR ) nameIR objectInitializerOptIR ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:513.1-514.20
+;; ../../../../spec-concrete/4-ir-syntax.watsup:522.1-523.20
 syntax objectDeclarationIR = 
    | annotationList functionPrototypeIR blockStatementIR
    | annotationList typeIR prefixedNameIR < typeArgumentListIR >( argumentListIR ) nameIR objectInitializerOptIR ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:516.34-516.54
+;; ../../../../spec-concrete/4-ir-syntax.watsup:525.34-525.54
 syntax objectDeclarationListIR = objectDeclarationIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:518.1-519.28
+;; ../../../../spec-concrete/4-ir-syntax.watsup:527.1-528.28
 def $flatten_objectInitializerOptIR(objectInitializerOptIR')
 
 1. (Let objectInitializerIR?{objectInitializerIR <- objectInitializerIR?} be objectInitializerOptIR')
@@ -9329,39 +9414,39 @@ def $flatten_objectInitializerOptIR(objectInitializerOptIR')
 
   2. Return objectDeclarationListIR
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:529.29-529.50
+;; ../../../../spec-concrete/4-ir-syntax.watsup:538.29-538.50
 syntax errorDeclarationIR = 
    | error{ nameListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:535.33-535.59
+;; ../../../../spec-concrete/4-ir-syntax.watsup:544.33-544.59
 syntax matchKindDeclarationIR = 
    | match_kind{ nameListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:546.1-547.65
+;; ../../../../spec-concrete/4-ir-syntax.watsup:555.1-556.65
 syntax enumTypeDeclarationIR = 
    | annotationList enum nameIR { nameListIR }
    | annotationList enum typeIR nameIR { namedExpressionListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:553.22-553.53
+;; ../../../../spec-concrete/4-ir-syntax.watsup:562.22-562.53
 syntax typeFieldIR = 
    | annotationList typeIR nameIR ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:555.26-555.38
+;; ../../../../spec-concrete/4-ir-syntax.watsup:564.26-564.38
 syntax typeFieldListIR = typeFieldIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:558.3-559.73
+;; ../../../../spec-concrete/4-ir-syntax.watsup:567.3-568.73
 syntax structTypeDeclarationIR = 
    | annotationList struct nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:562.3-563.73
+;; ../../../../spec-concrete/4-ir-syntax.watsup:571.3-572.73
 syntax headerTypeDeclarationIR = 
    | annotationList header nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:566.3-567.73
+;; ../../../../spec-concrete/4-ir-syntax.watsup:575.3-576.73
 syntax headerUnionTypeDeclarationIR = 
    | annotationList header_union nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:570.1-573.33
+;; ../../../../spec-concrete/4-ir-syntax.watsup:579.1-582.33
 syntax derivedTypeDeclarationIR = 
    | annotationList enum nameIR { nameListIR }
    | annotationList enum typeIR nameIR { namedExpressionListIR }
@@ -9369,7 +9454,7 @@ syntax derivedTypeDeclarationIR =
    | annotationList header nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
    | annotationList header_union nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:580.1-581.29
+;; ../../../../spec-concrete/4-ir-syntax.watsup:589.1-590.29
 syntax typedefIR = 
    | void
    | bool
@@ -9412,77 +9497,77 @@ syntax typedefIR =
    | annotationList header nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
    | annotationList header_union nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:584.1-585.41
+;; ../../../../spec-concrete/4-ir-syntax.watsup:593.1-594.41
 syntax typedefDeclarationIR = 
    | annotationList typedef typedefIR nameIR ;
    | annotationList type typeIR nameIR ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:592.3-592.47
+;; ../../../../spec-concrete/4-ir-syntax.watsup:601.3-601.47
 syntax externFunctionDeclarationIR = 
    | annotationList extern functionPrototypeIR ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:595.3-595.76
+;; ../../../../spec-concrete/4-ir-syntax.watsup:604.3-604.76
 syntax externConstructorPrototypeIR = 
    | annotationList nameIR <, typeParameterListIR >( parameterListIR );
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:597.43-597.72
+;; ../../../../spec-concrete/4-ir-syntax.watsup:606.43-606.72
 syntax externConstructorPrototypeListIR = externConstructorPrototypeIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:600.1-601.51
+;; ../../../../spec-concrete/4-ir-syntax.watsup:609.1-610.51
 syntax externMethodPrototypeIR = 
    | annotationList functionPrototypeIR ;
    | annotationList abstract functionPrototypeIR ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:603.38-603.62
+;; ../../../../spec-concrete/4-ir-syntax.watsup:612.38-612.62
 syntax externMethodPrototypeListIR = externMethodPrototypeIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:606.3-608.37
+;; ../../../../spec-concrete/4-ir-syntax.watsup:615.3-617.37
 syntax externObjectDeclarationIR = 
    | annotationList extern nameIR < typeParameterListIR ,>{ externConstructorPrototypeListIR externMethodPrototypeListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:611.1-612.30
+;; ../../../../spec-concrete/4-ir-syntax.watsup:620.1-621.30
 syntax externDeclarationIR = 
    | annotationList extern functionPrototypeIR ;
    | annotationList extern nameIR < typeParameterListIR ,>{ externConstructorPrototypeListIR externMethodPrototypeListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:622.23-622.54
+;; ../../../../spec-concrete/4-ir-syntax.watsup:631.23-631.54
 syntax selectCaseIR = 
    | keysetExpressionIR : nameIR ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:624.27-624.40
+;; ../../../../spec-concrete/4-ir-syntax.watsup:633.27-633.40
 syntax selectCaseListIR = selectCaseIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:627.3-627.58
+;; ../../../../spec-concrete/4-ir-syntax.watsup:636.3-636.58
 syntax selectExpressionIR = 
    | select( typedExpressionListIR ){ selectCaseListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:634.1-635.23
+;; ../../../../spec-concrete/4-ir-syntax.watsup:643.1-644.23
 syntax stateExpressionIR = 
    | nameIR ;
    | select( typedExpressionListIR ){ selectCaseListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:637.32-637.60
+;; ../../../../spec-concrete/4-ir-syntax.watsup:646.32-646.60
 syntax transitionStatementIR = 
    | transition stateExpressionIR
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:644.3-644.72
+;; ../../../../spec-concrete/4-ir-syntax.watsup:653.3-653.72
 syntax valueSetDeclarationIR = 
    | annotationList value_set< typeIR >( typedExpressionIR ) nameIR ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:651.3-652.76
+;; ../../../../spec-concrete/4-ir-syntax.watsup:660.3-661.76
 syntax parserTypeDeclarationIR = 
    | annotationList parser nameIR < typeParameterListIR , typeParameterListIR >( parameterListIR );
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:661.3-661.44
+;; ../../../../spec-concrete/4-ir-syntax.watsup:670.3-670.44
 syntax parserBlockStatementIR = 
    | annotationList { parserStatementListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:664.1-665.71
+;; ../../../../spec-concrete/4-ir-syntax.watsup:673.1-674.71
 syntax parserConditionalStatementIR = 
    | if( typedExpressionIR ) parserStatementIR
    | if( typedExpressionIR ) parserStatementIR else parserStatementIR
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:668.1-675.33
+;; ../../../../spec-concrete/4-ir-syntax.watsup:677.1-684.33
 syntax parserStatementIR = 
    | annotationList const typeIR nameIR constantInitializerIR ;
    | annotationList typeIR nameIR initializerOptIR ;
@@ -9494,91 +9579,91 @@ syntax parserStatementIR =
    | if( typedExpressionIR ) parserStatementIR
    | if( typedExpressionIR ) parserStatementIR else parserStatementIR
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:677.32-677.50
+;; ../../../../spec-concrete/4-ir-syntax.watsup:686.32-686.50
 syntax parserStatementListIR = parserStatementIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:680.3-681.53
+;; ../../../../spec-concrete/4-ir-syntax.watsup:689.3-690.53
 syntax parserStateIR = 
    | annotationList state nameIR { parserStatementListIR transitionStatementIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:683.28-683.42
+;; ../../../../spec-concrete/4-ir-syntax.watsup:692.28-692.42
 syntax parserStateListIR = parserStateIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:686.1-689.26
+;; ../../../../spec-concrete/4-ir-syntax.watsup:695.1-698.26
 syntax parserLocalDeclarationIR = 
    | annotationList const typeIR nameIR constantInitializerIR ;
    | annotationList typeIR prefixedNameIR < typeArgumentListIR >( argumentListIR ) nameIR objectInitializerOptIR ;
    | annotationList typeIR nameIR initializerOptIR ;
    | annotationList value_set< typeIR >( typedExpressionIR ) nameIR ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:692.3-692.28
+;; ../../../../spec-concrete/4-ir-syntax.watsup:701.3-701.28
 syntax parserLocalDeclarationListIR = parserLocalDeclarationIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:695.3-698.56
+;; ../../../../spec-concrete/4-ir-syntax.watsup:704.3-707.56
 syntax parserDeclarationIR = 
    | annotationList parser nameIR < typeParameterListIR >( parameterListIR )( constructorParameterListIR ){ parserLocalDeclarationListIR parserStateListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:708.18-708.23
+;; ../../../../spec-concrete/4-ir-syntax.watsup:717.18-717.23
 syntax constIR = const
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:710.21-710.29
+;; ../../../../spec-concrete/4-ir-syntax.watsup:719.21-719.29
 syntax constOptIR = constIR?
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:716.21-716.66
+;; ../../../../spec-concrete/4-ir-syntax.watsup:725.21-725.66
 syntax tableKeyIR = 
    | typedExpressionIR : nameIR annotationList ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:718.25-718.36
+;; ../../../../spec-concrete/4-ir-syntax.watsup:727.25-727.36
 syntax tableKeyListIR = tableKeyIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:724.33-724.67
+;; ../../../../spec-concrete/4-ir-syntax.watsup:733.33-733.67
 syntax tableActionReferenceIR = 
    | prefixedNameIR ( argumentListIR )
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:726.24-726.64
+;; ../../../../spec-concrete/4-ir-syntax.watsup:735.24-735.64
 syntax tableActionIR = 
    | annotationList tableActionReferenceIR ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:728.28-728.42
+;; ../../../../spec-concrete/4-ir-syntax.watsup:737.28-737.42
 syntax tableActionListIR = tableActionIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:735.1-736.42
+;; ../../../../spec-concrete/4-ir-syntax.watsup:744.1-745.42
 syntax tableEntryPriorityIR = 
    | priority= numberLiteral :
    | priority=( typedExpressionIR ):
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:738.34-738.55
+;; ../../../../spec-concrete/4-ir-syntax.watsup:747.34-747.55
 syntax tableEntryPriorityOptIR = tableEntryPriorityIR?
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:741.3-742.67
+;; ../../../../spec-concrete/4-ir-syntax.watsup:750.3-751.67
 syntax tableEntryIR = 
    | constOptIR tableEntryPriorityOptIR keysetExpressionIR : tableActionReferenceIR annotationList ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:744.27-744.40
+;; ../../../../spec-concrete/4-ir-syntax.watsup:753.27-753.40
 syntax tableEntryListIR = tableEntryIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:756.30-756.56
+;; ../../../../spec-concrete/4-ir-syntax.watsup:765.30-765.56
 syntax tableKeysPropertyIR = 
    | key={ tableKeyListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:758.33-758.66
+;; ../../../../spec-concrete/4-ir-syntax.watsup:767.33-767.66
 syntax tableActionsPropertyIR = 
    | actions={ tableActionListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:761.3-761.72
+;; ../../../../spec-concrete/4-ir-syntax.watsup:770.3-770.72
 syntax tableDefaultActionPropertyIR = 
    | annotationList constOptIR default_action= tableActionReferenceIR ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:764.3-764.61
+;; ../../../../spec-concrete/4-ir-syntax.watsup:773.3-773.61
 syntax tableEntriesPropertyIR = 
    | annotationList constOptIR entries={ tableEntryListIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:768.1-769.75
+;; ../../../../spec-concrete/4-ir-syntax.watsup:777.1-778.75
 syntax tableCustomPropertyIR = 
    | annotationList constOptIR custom nameIR initializerIR ;
    | annotationList constOptIR custom_const nameIR constantInitializerIR ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:772.1-776.26
+;; ../../../../spec-concrete/4-ir-syntax.watsup:781.1-785.26
 syntax tablePropertyIR = 
    | key={ tableKeyListIR }
    | actions={ tableActionListIR }
@@ -9587,21 +9672,21 @@ syntax tablePropertyIR =
    | annotationList constOptIR custom nameIR initializerIR ;
    | annotationList constOptIR custom_const nameIR constantInitializerIR ;
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:778.30-778.46
+;; ../../../../spec-concrete/4-ir-syntax.watsup:787.30-787.46
 syntax tablePropertyListIR = tablePropertyIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:781.3-782.35
+;; ../../../../spec-concrete/4-ir-syntax.watsup:790.3-791.35
 syntax tableDeclarationIR = 
    | annotationList table typeIR nameIR { tablePropertyListIR } hint(print %0 TABLE %2 `{%3})
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:789.3-791.28
+;; ../../../../spec-concrete/4-ir-syntax.watsup:798.3-800.28
 syntax controlTypeDeclarationIR = 
    | annotationList control nameIR < typeParameterListIR , typeParameterListIR >( parameterListIR );
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:797.24-797.40
+;; ../../../../spec-concrete/4-ir-syntax.watsup:806.24-806.40
 syntax controlBodyIR = blockStatementIR
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:800.1-804.23
+;; ../../../../spec-concrete/4-ir-syntax.watsup:809.1-813.23
 syntax controlLocalDeclarationIR = 
    | annotationList const typeIR nameIR constantInitializerIR ;
    | annotationList typeIR prefixedNameIR < typeArgumentListIR >( argumentListIR ) nameIR objectInitializerOptIR ;
@@ -9609,18 +9694,18 @@ syntax controlLocalDeclarationIR =
    | annotationList action nameIR ( parameterListIR ) blockStatementIR
    | annotationList table typeIR nameIR { tablePropertyListIR } hint(print %0 TABLE %2 `{%3})
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:807.3-807.29
+;; ../../../../spec-concrete/4-ir-syntax.watsup:816.3-816.29
 syntax controlLocalDeclarationListIR = controlLocalDeclarationIR*
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:810.3-813.59
+;; ../../../../spec-concrete/4-ir-syntax.watsup:819.3-822.59
 syntax controlDeclarationIR = 
    | annotationList control nameIR < typeParameterListIR >( parameterListIR )( constructorParameterListIR ){ controlLocalDeclarationListIR apply controlBodyIR }
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:820.3-822.28
+;; ../../../../spec-concrete/4-ir-syntax.watsup:829.3-831.28
 syntax packageTypeDeclarationIR = 
    | annotationList package nameIR < typeParameterListIR , typeParameterListIR >( parameterListIR );
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:829.1-833.29
+;; ../../../../spec-concrete/4-ir-syntax.watsup:838.1-842.29
 syntax typeDeclarationIR = 
    | annotationList enum nameIR { nameListIR }
    | annotationList enum typeIR nameIR { namedExpressionListIR }
@@ -9633,7 +9718,7 @@ syntax typeDeclarationIR =
    | annotationList control nameIR < typeParameterListIR , typeParameterListIR >( parameterListIR );
    | annotationList package nameIR < typeParameterListIR , typeParameterListIR >( parameterListIR );
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:840.1-849.22
+;; ../../../../spec-concrete/4-ir-syntax.watsup:849.1-858.22
 syntax declarationIR = 
    | annotationList const typeIR nameIR constantInitializerIR ;
    | annotationList typeIR prefixedNameIR < typeArgumentListIR >( argumentListIR ) nameIR objectInitializerOptIR ;
@@ -9656,7 +9741,7 @@ syntax declarationIR =
    | annotationList control nameIR < typeParameterListIR , typeParameterListIR >( parameterListIR );
    | annotationList package nameIR < typeParameterListIR , typeParameterListIR >( parameterListIR );
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:855.22-855.39
+;; ../../../../spec-concrete/4-ir-syntax.watsup:864.22-864.39
 syntax p4programIR = 
    | declarationIR* ;
 
@@ -18399,21 +18484,17 @@ relation TableProperty_ok: TC TBLC_0' |- tableProperty : % %
 
             1. (Expr_eval_lctk: (local) TC |- typedExpressionIR ~> value')
 
-            2. If ((value' has type primitiveValue)), then
+            2. If ((value' has type boolValue)), then
 
-              1. (Let primitiveValue be (value' as primitiveValue))
+              1. (Let (b b_largest_priority_wins) be (value' as boolValue))
 
-              2. If ((primitiveValue matches pattern `B%`)), then
+              2. (Let TBLC_1 be TBLC_0'[priorities.largest_wins = b_largest_priority_wins])
 
-                1. (Let (b b_largest_priority_wins) be primitiveValue)
+              3. (Let constOptIR be $flatten_constOpt(constOpt))
 
-                2. (Let TBLC_1 be TBLC_0'[priorities.largest_wins = b_largest_priority_wins])
+              4. (Let tablePropertyIR be ((annotationList constOptIR custom_const "largest_priority_wins" (= ((b b_largest_priority_wins) as value)) ;) as tablePropertyIR))
 
-                3. (Let constOptIR be $flatten_constOpt(constOpt))
-
-                4. (Let tablePropertyIR be ((annotationList constOptIR custom_const "largest_priority_wins" (= ((b b_largest_priority_wins) as value)) ;) as tablePropertyIR))
-
-                5. Result in : % % |- % : TBLC_1 tablePropertyIR
+              5. Result in : % % |- % : TBLC_1 tablePropertyIR
 
       3. If (("priority_delta" = $tableCustomName(tableCustomName))), then
 
@@ -23901,37 +23982,37 @@ syntax functionCallee =
 syntax builtinMethodCallee = 
    | builtin_method storageReference . nameIR < typeArgumentListIR >( parameterListIR )
 
-;; ../../../../spec-concrete/6.2.2-callable-callee.watsup:38.3-39.50
+;; ../../../../spec-concrete/6.2.2-callable-callee.watsup:38.3-40.36
 syntax externMethodCallee = 
-   | extern_method oid . nameIR < typeParameterListIR >( parameterListIR # id* ) blockStatementIR?
+   | extern_method oid . nameIR < typeParameterListIR >( parameterListIR # id* ){ frame ; blockStatementIR? }
 
-;; ../../../../spec-concrete/6.2.2-callable-callee.watsup:42.3-43.59
+;; ../../../../spec-concrete/6.2.2-callable-callee.watsup:43.3-44.59
 syntax parserApplyMethodCallee = 
    | parser oid .apply( parameterListIR # id* ){ frame ; parserLocalDeclarationListIR ; stateEnv }
 
-;; ../../../../spec-concrete/6.2.2-callable-callee.watsup:46.3-47.81
+;; ../../../../spec-concrete/6.2.2-callable-callee.watsup:47.3-48.81
 syntax controlApplyMethodCallee = 
    | control oid .apply( parameterListIR # id* ){ frame ; controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR }
 
-;; ../../../../spec-concrete/6.2.2-callable-callee.watsup:50.3-50.55
+;; ../../../../spec-concrete/6.2.2-callable-callee.watsup:51.3-51.55
 syntax tableApplyMethodCallee = 
    | table oid .apply{ frame ; tableObjectProperty }
 
-;; ../../../../spec-concrete/6.2.2-callable-callee.watsup:53.1-57.27
+;; ../../../../spec-concrete/6.2.2-callable-callee.watsup:54.1-58.27
 syntax methodCallee = 
    | builtin_method storageReference . nameIR < typeArgumentListIR >( parameterListIR )
-   | extern_method oid . nameIR < typeParameterListIR >( parameterListIR # id* ) blockStatementIR?
+   | extern_method oid . nameIR < typeParameterListIR >( parameterListIR # id* ){ frame ; blockStatementIR? }
    | parser oid .apply( parameterListIR # id* ){ frame ; parserLocalDeclarationListIR ; stateEnv }
    | control oid .apply( parameterListIR # id* ){ frame ; controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR }
    | table oid .apply{ frame ; tableObjectProperty }
 
-;; ../../../../spec-concrete/6.2.2-callable-callee.watsup:59.17-59.61
+;; ../../../../spec-concrete/6.2.2-callable-callee.watsup:60.17-60.61
 syntax callee = 
    | action cursor . nameIR ( parameterListIR # id* ) blockStatementIR
    | function nameIR < typeParameterListIR >( parameterListIR # id* ) blockStatementIR
    | extern_function nameIR < typeParameterListIR >( parameterListIR # id* )
    | builtin_method storageReference . nameIR < typeArgumentListIR >( parameterListIR )
-   | extern_method oid . nameIR < typeParameterListIR >( parameterListIR # id* ) blockStatementIR?
+   | extern_method oid . nameIR < typeParameterListIR >( parameterListIR # id* ){ frame ; blockStatementIR? }
    | parser oid .apply( parameterListIR # id* ){ frame ; parserLocalDeclarationListIR ; stateEnv }
    | control oid .apply( parameterListIR # id* ){ frame ; controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR }
    | table oid .apply{ frame ; tableObjectProperty }
@@ -23968,38 +24049,44 @@ syntax constructorDef =
 syntax state = 
    | annotationList state{ parserStatementListIR transitionStatementIR }
 
-;; ../../../../spec-concrete/6.5.1-object.watsup:11.29-11.54
+;; ../../../../spec-concrete/6.5.1-object.watsup:12.1-12.26
+extern syntax externState
+
+;; ../../../../spec-concrete/6.5.1-object.watsup:13.29-13.54
 syntax externMethodDefEnv = map<cid, externMethodDef>
 
-;; ../../../../spec-concrete/6.5.1-object.watsup:13.23-13.74
-syntax externObject = 
-   | extern tid < theta >{ frame externMethodDefEnv }
+;; ../../../../spec-concrete/6.5.1-object.watsup:15.1-15.45
+extern def $init_externState
 
-;; ../../../../spec-concrete/6.5.1-object.watsup:22.3-25.18
+;; ../../../../spec-concrete/6.5.1-object.watsup:17.23-17.86
+syntax externObject = 
+   | extern tid < theta >{ externState frame externMethodDefEnv }
+
+;; ../../../../spec-concrete/6.5.1-object.watsup:26.3-29.18
 syntax parserObject = 
    | parser( parameterListIR ){ frame parserLocalDeclarationListIR stateEnv }
 
-;; ../../../../spec-concrete/6.5.1-object.watsup:34.23-34.42
+;; ../../../../spec-concrete/6.5.1-object.watsup:38.23-38.42
 syntax actionDefEnv = map<cid, actionDef>
 
-;; ../../../../spec-concrete/6.5.1-object.watsup:37.3-41.23
+;; ../../../../spec-concrete/6.5.1-object.watsup:41.3-45.23
 syntax controlObject = 
    | control( parameterListIR ){ frame controlLocalDeclarationListIR actionDefEnv controlBodyIR }
 
-;; ../../../../spec-concrete/6.5.1-object.watsup:49.24-49.53
+;; ../../../../spec-concrete/6.5.1-object.watsup:53.24-53.53
 syntax packageObject = 
    | package< theta >{ frame }
 
-;; ../../../../spec-concrete/6.5.1-object.watsup:57.3-61.37
+;; ../../../../spec-concrete/6.5.1-object.watsup:61.3-65.37
 syntax tableObjectProperty = {keys tableKeysPropertyIR, actions tableActionsPropertyIR, default_action tableDefaultActionPropertyIR, entries tableEntriesPropertyIR, customs tableCustomPropertyIR*}
 
-;; ../../../../spec-concrete/6.5.1-object.watsup:66.3-66.43
+;; ../../../../spec-concrete/6.5.1-object.watsup:70.3-70.43
 syntax tableObject = 
    | table tid { frame tableObjectProperty }
 
-;; ../../../../spec-concrete/6.5.1-object.watsup:69.1-73.16
+;; ../../../../spec-concrete/6.5.1-object.watsup:73.1-77.16
 syntax object = 
-   | extern tid < theta >{ frame externMethodDefEnv }
+   | extern tid < theta >{ externState frame externMethodDefEnv }
    | parser( parameterListIR ){ frame parserLocalDeclarationListIR stateEnv }
    | control( parameterListIR ){ frame controlLocalDeclarationListIR actionDefEnv controlBodyIR }
    | package< theta >{ frame }
@@ -24018,45 +24105,91 @@ def $is_externObject(object')
 
   1. Return false
 
-;; ../../../../spec-concrete/7.01-dynamic-env.watsup:6.16-6.30
+;; ../../../../spec-concrete/7.01.1-dynamic-env.watsup:6.16-6.30
 syntax frame = map<id, value>
 
-;; ../../../../spec-concrete/7.01-dynamic-env.watsup:8.1-8.25
+;; ../../../../spec-concrete/7.01.1-dynamic-env.watsup:8.1-8.25
 def $empty_frame
 
 1. Return $empty_map<id, value>
 
-;; ../../../../spec-concrete/7.01-dynamic-env.watsup:12.19-12.33
+;; ../../../../spec-concrete/7.01.1-dynamic-env.watsup:12.19-12.33
 syntax stateEnv = map<id, state>
 
-;; ../../../../spec-concrete/7.01-dynamic-env.watsup:14.1-14.33
+;; ../../../../spec-concrete/7.01.1-dynamic-env.watsup:14.1-14.33
 def $empty_stateEnv
 
 1. Return $empty_map<id, state>
 
-;; ../../../../spec-concrete/7.01-dynamic-env.watsup:18.25-18.46
+;; ../../../../spec-concrete/7.01.1-dynamic-env.watsup:18.25-18.46
 syntax callableDefEnv = map<cid, callableDef>
 
-;; ../../../../spec-concrete/7.01-dynamic-env.watsup:20.1-20.45
+;; ../../../../spec-concrete/7.01.1-dynamic-env.watsup:20.1-20.45
 def $empty_callableDefEnv
 
 1. Return $empty_map<cid, callableDef>
 
-;; ../../../../spec-concrete/7.01-dynamic-env.watsup:24.28-24.52
+;; ../../../../spec-concrete/7.01.1-dynamic-env.watsup:24.28-24.52
 syntax constructorDefEnv = map<cid, constructorDef>
 
-;; ../../../../spec-concrete/7.01-dynamic-env.watsup:26.1-26.51
+;; ../../../../spec-concrete/7.01.1-dynamic-env.watsup:26.1-26.51
 def $empty_constructorDefEnv
 
 1. Return $empty_map<cid, constructorDef>
 
-;; ../../../../spec-concrete/7.01-dynamic-env.watsup:30.16-30.32
+;; ../../../../spec-concrete/7.01.2-dynamic-store.watsup:6.16-6.32
 syntax store = map<oid, object>
 
-;; ../../../../spec-concrete/7.01-dynamic-env.watsup:34.1-34.25
+;; ../../../../spec-concrete/7.01.2-dynamic-store.watsup:10.1-10.25
 def $empty_store
 
 1. Return $empty_map<oid, object>
+
+;; ../../../../spec-concrete/7.01.2-dynamic-store.watsup:17.1-17.55
+def $find_store_externState(STO, oid)
+
+1. (Let object'?{object' <- object'?} be $find_map<oid, object>(STO, oid))
+
+2. If ((object'?{object' <- object'?} matches pattern (_))), then
+
+  1. (Let ?(object) be object'?{object' <- object'?})
+
+  2. If ((object has type externObject)), then
+
+    1. (Let externObject be (object as externObject))
+
+    2. (Let (extern _tid < _theta >{ externState _frame _externMethodDefEnv }) be externObject)
+
+    3. Return ?(externState)
+
+3. Otherwise
+
+  1. Return ?()
+
+;; ../../../../spec-concrete/7.01.2-dynamic-store.watsup:29.1-29.64
+def $update_store_externState(STO_0, oid, externState)
+
+1. (Let object'?{object' <- object'?} be $find_map<oid, object>(STO_0, oid))
+
+2. If ((object'?{object' <- object'?} matches pattern (_))), then
+
+  1. (Let ?(object) be object'?{object' <- object'?})
+
+  2. If ((object has type externObject)), then
+
+    1. (Let externObject be (object as externObject))
+
+    2. (Let (extern tid < theta >{ _externState frame externMethodDefEnv }) be externObject)
+
+    3. (Let externObject_update be (extern tid < theta >{ externState frame externMethodDefEnv }))
+
+    4. (Let STO_1 be $add_map<oid, object>(STO_0, oid, (externObject_update as object)))
+
+    5. Return ?(STO_1)
+
+3. Otherwise
+
+  1. Return ?()
 
 ;; ../../../../spec-concrete/7.02-inst-context.watsup:8.3-11.18
 syntax globalInstLayer = {constructor constructorDefEnv, type typeDefEnv, callable callableDefEnv, frame frame}
@@ -25700,7 +25833,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR : % % %
 
             4. If ((object has type externObject)), then
 
-              1. (Let (extern tid < theta >{ frame externMethodDefEnv }) be (object as externObject))
+              1. (Let (extern tid < theta >{ externState frame externMethodDefEnv }) be (object as externObject))
 
               2. (Let IC_decl be $empty_instContext[path = IC_0.path][global = IC_0.global])
 
@@ -25712,7 +25845,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR : % % %
 
               6. (Let externMethodDefEnv_merged be $merge_externMethodDefEnvs(externMethodDefEnv, IC_decl_post.block.callable))
 
-              7. (Let object_merged be ((extern tid < theta >{ frame_merged externMethodDefEnv_merged }) as object))
+              7. (Let object_merged be ((extern tid < theta >{ externState frame_merged externMethodDefEnv_merged }) as object))
 
               8. (Let oid be IC_0.path ++ [nameIR])
 
@@ -25746,7 +25879,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR : % % %
 
             4. If ((object has type externObject)), then
 
-              1. (Let (extern tid < theta >{ frame externMethodDefEnv }) be (object as externObject))
+              1. (Let (extern tid < theta >{ externState frame externMethodDefEnv }) be (object as externObject))
 
               2. (Let IC_decl be $empty_instContext[path = IC_0.path][global = IC_0.global])
 
@@ -25758,7 +25891,7 @@ relation Decl_inst: cursor' IC_0 STO' |- declarationIR : % % %
 
               6. (Let externMethodDefEnv_merged be $merge_externMethodDefEnvs(externMethodDefEnv, IC_decl_post.block.callable))
 
-              7. (Let object_merged be ((extern tid < theta >{ frame_merged externMethodDefEnv_merged }) as object))
+              7. (Let object_merged be ((extern tid < theta >{ externState frame_merged externMethodDefEnv_merged }) as object))
 
               8. (Let oid be IC_0.path ++ [nameIR])
 
@@ -26275,9 +26408,11 @@ relation Constructor_inst: p IC STO_0 |- constructorDef < typeArgumentIR*{typeAr
 
         1. (Let externMethodDef be (callableDef as externMethodDef))*{callableDef <- callableDef*, externMethodDef <- externMethodDef*}
 
-        2. (Let object_extern be ((extern nameIR < IC_callee_4.block.type >{ IC_callee_4.block.frame ({ (cid : externMethodDef)*{cid <- cid*, externMethodDef <- externMethodDef*} }) }) as object))
+        2. (Let externState be $init_externState)
 
-        3. Result in : % % % |- % < % >( % # % ): STO_1 object_extern
+        3. (Let object_extern be ((extern nameIR < IC_callee_4.block.type >{ externState IC_callee_4.block.frame ({ (cid : externMethodDef)*{cid <- cid*, externMethodDef <- externMethodDef*} }) }) as object))
+
+        4. Result in : % % % |- % < % >( % # % ): STO_1 object_extern
 
   2. Case (% has type parserObjectConstructorDef)
 
@@ -27069,9 +27204,15 @@ def $find_type_e(cursor, EC, nameIR)
 
   2. Case (% matches pattern `LOCAL`)
 
-    1. Return $find_map<tid, typeIR>(EC.local.type, nameIR)
+    1. (Let typeIR'?{typeIR' <- typeIR'?} be $find_map<tid, typeIR>(EC.local.type, nameIR))
 
-    2. If ((?() = $find_map<tid, typeIR>(EC.local.type, nameIR))), then
+    2. If ((typeIR'?{typeIR' <- typeIR'?} matches pattern (_))), then
+
+      1. (Let ?(typeIR) be typeIR'?{typeIR' <- typeIR'?})
+
+      2. Return ?(typeIR)
+
+    3. If ((?() = $find_map<tid, typeIR>(EC.local.type, nameIR))), then
 
       1. Return $find_type_e((block), EC, nameIR)
 
@@ -27235,9 +27376,9 @@ syntax returnResult =
 syntax acceptTransitionResult = 
    | accept
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:21.33-21.39
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:21.33-21.50
 syntax rejectTransitionResult = 
-   | reject
+   | reject errorValue
 
 ;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:22.32-22.40
 syntax stateTransitionResult = 
@@ -27715,19 +27856,17 @@ relation Expr_eval: p EC' STO' |- (expressionIR # _expressionNoteIR') : % % %
 
               2. Case (% has type headerValue)
 
-                1. (Let (header _tid { bool ; (value_field id_field ;)*{id_field <- id_field*, value_field <- value_field*} }) be (value_base as headerValue))
+                1. (Let (header _tid { _bool ; (value_field id_field ;)*{id_field <- id_field*, value_field <- value_field*} }) be (value_base as headerValue))
 
-                2. If ((bool = true)), then
+                2. (Let value'?{value' <- value'?} be $assoc_<nameIR, value>(nameIR', (id_field, value_field)*{id_field <- id_field*, value_field <- value_field*}))
 
-                  1. (Let value'?{value' <- value'?} be $assoc_<nameIR, value>(nameIR', (id_field, value_field)*{id_field <- id_field*, value_field <- value_field*}))
+                3. If ((value'?{value' <- value'?} matches pattern (_))), then
 
-                  2. If ((value'?{value' <- value'?} matches pattern (_))), then
+                  1. (Let ?(value_member) be value'?{value' <- value'?})
 
-                    1. (Let ?(value_member) be value'?{value' <- value'?})
+                  2. (Let expressionResult be ((` value_member) as expressionResult))
 
-                    2. (Let expressionResult be ((` value_member) as expressionResult))
-
-                    3. Result in : % % % |- % : EC_1 STO_1 expressionResult
+                  3. Result in : % % % |- % : EC_1 STO_1 expressionResult
 
               3. Case (% has type headerUnionValue)
 
@@ -27823,7 +27962,51 @@ relation Expr_eval: p EC' STO' |- (expressionIR # _expressionNoteIR') : % % %
 
           3. Result in : % % % |- % : EC_1 STO_1 expressionResult
 
-  4. Case (% has type parenthesizedExpressionIR)
+  4. Case (% has type callExpressionIR)
+
+    1. (Let callExpressionIR be (expressionIR as callExpressionIR))
+
+    2. If ((callExpressionIR matches pattern `%<%>(%)`)), then
+
+      1. (Let (callableTargetIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} )) be callExpressionIR)
+
+      2. Group callExpressionIR: p EC' STO' |- (((callableTargetIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} )) as expressionIR) # _expressionNoteIR') : % % %
+
+        1. (Callee_eval: p EC' STO' |- callableTargetIR <_>( argumentIR*{argumentIR <- argumentIR*} ): EC_1 STO_1 calleeResult)
+
+        2. Case analysis on calleeResult
+
+          1. Case (% has type exitResult)
+
+            1. (Let exitResult be (calleeResult as exitResult))
+
+            2. Result in : % % % |- % : EC_1 STO_1 ((exit) as expressionResult)
+
+          2. Case (% has type continueResult<callee>)
+
+            1. (Let (` callee) be (calleeResult as continueResult<callee>))
+
+            2. (Call_eval: p EC_1 STO_1 |- callee @< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} ): EC_2 STO_2 callResult)
+
+            3. Case analysis on callResult
+
+              1. Case (% has type exitResult)
+
+                1. (Let exitResult be (callResult as exitResult))
+
+                2. Result in : % % % |- % : EC_2 STO_2 ((exit) as expressionResult)
+
+              2. Case (% has type returnResult)
+
+                1. (Let (return value'?{value' <- value'?}) be (callResult as returnResult))
+
+                2. If ((value'?{value' <- value'?} matches pattern (_))), then
+
+                  1. (Let ?(value) be value'?{value' <- value'?})
+
+                  2. Result in : % % % |- % : EC_2 STO_2 ((` value) as expressionResult)
+
+  5. Case (% has type parenthesizedExpressionIR)
 
     1. (Let (( typedExpressionIR )) be (expressionIR as parenthesizedExpressionIR))
 
@@ -27893,7 +28076,23 @@ relation Expr_eval_lvalue: cursor evalContext store |- typedExpressionIR : % % %
 
 
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:63.1-66.26
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:60.1-61.15
+syntax keysetExpressionResult = 
+   | ` setValue*
+   | exit
+
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:63.1-66.23
+relation Expr_eval_keyset: EC_0 STO_0 |- keysetExpressionIR : % % %
+
+1. Group : EC_0 STO_0 |- keysetExpressionIR : % % %
+
+  1. (Let simpleKeysetExpressionListIR be $flatten_keysetExpressionIR(keysetExpressionIR))
+
+  2. (Exprs_eval_keyset_simple: EC_0 STO_0 |- simpleKeysetExpressionListIR : EC_1 STO_1 keysetExpressionResult)
+
+  3. Result in : % % |- % : EC_1 STO_1 keysetExpressionResult
+
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:72.1-75.26
 relation Argument_eval: p EC_0 STO_0 |- argumentIR : % % %
 
 1. If ((argumentIR has type typedExpressionIR)), then
@@ -27916,7 +28115,7 @@ relation Argument_eval: p EC_0 STO_0 |- argumentIR : % % %
 
     2. Result in : % % % |- % : EC_1 STO_1 expressionResult
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:68.1-71.26
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:77.1-80.26
 relation Argument_eval_lvalue: p EC_0' STO_0' |- argumentIR : % % %
 
 1. If ((argumentIR has type typedExpressionIR)), then
@@ -27959,7 +28158,7 @@ relation Argument_eval_lvalue: p EC_0' STO_0' |- argumentIR : % % %
 
       1. Result in : % % % |- % : EC_0' STO_0' ((` ?()) as storageReferenceResult)
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:77.1-80.26
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:86.1-89.26
 relation Lvalue_eval: p EC' STO' |- (lvalueIR # _lvalueNoteIR) : % % %
 
 1. If ((lvalueIR has type referenceExpressionIR)), then
@@ -27998,7 +28197,7 @@ relation Lvalue_eval: p EC' STO' |- (lvalueIR # _lvalueNoteIR) : % % %
 
           3. Result in : % % % |- % : EC_1 STO_1 storageReferenceResult
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:82.1-84.26
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:91.1-93.26
 relation Lvalue_read: p EC' STO |- storageReference'' : %
 
 1. If ((storageReference'' has type prefixedNameIR)), then
@@ -28067,7 +28266,7 @@ relation Lvalue_read: p EC' STO |- storageReference'' : %
 
           2. Result in : % % % |- % : value
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:86.1-89.29
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:95.1-98.29
 relation Lvalue_write: p EC_0 STO |- storageReference'' -> value : %
 
 1. If ((storageReference'' has type prefixedNameIR)), then
@@ -28132,20 +28331,20 @@ relation Lvalue_write: p EC_0 STO |- storageReference'' -> value : %
 
         5. Result in : % % % |- % -> % : EC_1
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:96.1-98.17
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:105.1-107.17
 syntax callResult = 
    | exit
-   | reject
+   | reject errorValue
    | return value?
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:101.1-102.15
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:110.1-111.15
 syntax statementResult = 
    | `
    | exit
-   | reject
+   | reject errorValue
    | return value?
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:104.1-111.55
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:113.1-120.55
 relation Stmt_eval: p' EC' STO' |- statementIR : % % %
 
 1. Case analysis on statementIR
@@ -28236,7 +28435,7 @@ relation Stmt_eval: p' EC' STO' |- statementIR : % % %
 
               1. (Let rejectTransitionResult be (callResult as rejectTransitionResult))
 
-              2. Result in : % % % |- % : EC_2 STO_2 ((reject) as statementResult)
+              2. Result in : % % % |- % : EC_2 STO_2 (rejectTransitionResult as statementResult)
 
             3. Case (% has type returnResult)
 
@@ -28350,7 +28549,7 @@ relation Stmt_eval: p' EC' STO' |- statementIR : % % %
 
               2. Result in : % % % |- % : EC_1 STO_1 ((return ?(value)) as statementResult)
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:113.1-116.23
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:122.1-125.23
 relation BlockElementStmt_eval: EC_0 STO_0 |- blockElementStatementIR : % % %
 
 1. Case analysis on blockElementStatementIR
@@ -28387,7 +28586,7 @@ relation BlockElementStmt_eval: EC_0 STO_0 |- blockElementStatementIR : % % %
 
       2. Result in : % % |- % : EC_1 STO_1 statementResult
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:118.1-121.23
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:127.1-130.23
 relation BlockElementStmts_eval: evalContext store |- blockElementStatementIR'*{blockElementStatementIR' <- blockElementStatementIR'*} : % % %
 
 1. Group : evalContext store |- blockElementStatementIR'*{blockElementStatementIR' <- blockElementStatementIR'*} : % % %
@@ -28420,7 +28619,7 @@ relation BlockElementStmts_eval: evalContext store |- blockElementStatementIR'*{
 
         3. Result in : % % |- % : EC_2 STO_2 statementResult
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:123.1-126.23
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:132.1-135.23
 relation Block_eval: EC_0 STO_0 |- (annotationList { blockElementStatementListIR }) : % % %
 
 1. Group : EC_0 STO_0 |- (annotationList { blockElementStatementListIR }) : % % %
@@ -28433,12 +28632,12 @@ relation Block_eval: EC_0 STO_0 |- (annotationList { blockElementStatementListIR
 
   4. Result in : % % |- % : EC_3 STO_1 statementResult
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:133.1-134.27
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:142.1-143.27
 syntax parserStatementResult = 
    | `
-   | reject
+   | reject errorValue
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:136.1-139.23
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:145.1-148.23
 relation ParserStmt_eval: EC_0' STO_0' |- parserStatementIR : % % %
 
 1. Case analysis on parserStatementIR
@@ -28529,7 +28728,7 @@ relation ParserStmt_eval: EC_0' STO_0' |- parserStatementIR : % % %
 
         1. (Let rejectTransitionResult be (statementResult as rejectTransitionResult))
 
-        2. Result in : % % |- % : EC_1 STO_1 ((reject) as parserStatementResult)
+        2. Result in : % % |- % : EC_1 STO_1 (rejectTransitionResult as parserStatementResult)
 
       3. (Stmt_eval: (local) EC_0' STO_0' |- (callStatementIR as statementIR) : EC_1 STO_1 statementResult)
 
@@ -28581,7 +28780,7 @@ relation ParserStmt_eval: EC_0' STO_0' |- parserStatementIR : % % %
 
             2. Result in : % % |- % : EC_else STO_else parserStatementResult
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:141.1-144.23
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:150.1-153.23
 relation ParserStmts_eval: evalContext store |- parserStatementIR'*{parserStatementIR' <- parserStatementIR'*} : % % %
 
 1. Group : evalContext store |- parserStatementIR'*{parserStatementIR' <- parserStatementIR'*} : % % %
@@ -28604,7 +28803,7 @@ relation ParserStmts_eval: evalContext store |- parserStatementIR'*{parserStatem
 
         1. (Let rejectTransitionResult be (parserStatementResult' as rejectTransitionResult))
 
-        2. Result in : % % |- % : EC_1 STO_1 ((reject) as parserStatementResult)
+        2. Result in : % % |- % : EC_1 STO_1 (rejectTransitionResult as parserStatementResult)
 
       2. Case (% has type continueEmptyResult)
 
@@ -28614,36 +28813,66 @@ relation ParserStmts_eval: evalContext store |- parserStatementIR'*{parserStatem
 
         3. Result in : % % |- % : EC_2 STO_2 parserStatementResult
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:147.1-149.26
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:156.1-158.26
 syntax transitionResult = 
    | accept
-   | reject
+   | reject errorValue
    | state id
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:151.1-154.23
-relation ParserTransition_eval: EC STO |- (transition stateExpressionIR) : % % %
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:160.1-163.23
+relation ParserTransition_eval: EC' STO' |- (transition stateExpressionIR) : % % %
 
 1. If ((stateExpressionIR matches pattern `%;`)), then
 
   1. (Let (text ;) be stateExpressionIR)
 
-  2. Group nameIR: EC STO |- (transition (text ;)) : % % %
+  2. Group nameIR: EC' STO' |- (transition (text ;)) : % % %
 
     1. Case analysis on text
 
       1. Case (% = "accept")
 
-        1. Result in : % % |- % : EC STO ((accept) as transitionResult)
+        1. Result in : % % |- % : EC' STO' ((accept) as transitionResult)
 
       2. Case (% = "reject")
 
-        1. Result in : % % |- % : EC STO ((reject) as transitionResult)
+        1. (Let errorValue be (error. "NoError"))
+
+        2. Result in : % % |- % : EC' STO' ((reject errorValue) as transitionResult)
 
     2. If (((text =/= "accept") /\ (text =/= "reject"))), then
 
-      1. Result in : % % |- % : EC STO ((state text) as transitionResult)
+      1. Result in : % % |- % : EC' STO' ((state text) as transitionResult)
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:156.1-159.23
+2. If ((stateExpressionIR has type selectExpressionIR)), then
+
+  1. (Let selectExpressionIR be (stateExpressionIR as selectExpressionIR))
+
+  2. Group selectExpressionIR: EC' STO' |- (transition (selectExpressionIR as stateExpressionIR)) : % % %
+
+    1. (Let (select( typedExpressionListIR ){ selectCaseListIR }) be selectExpressionIR)
+
+    2. If ((typedExpressionListIR matches pattern [ _/1 ])), then
+
+      1. (Let [typedExpressionIR_key] be typedExpressionListIR)
+
+      2. (Exprs_eval: (local) EC' STO' |- [typedExpressionIR_key] : EC_1 STO_1 expressionListResult)
+
+      3. If ((expressionListResult has type continueResult<value*>)), then
+
+        1. (Let (` value_key*{value_key <- value_key*}) be (expressionListResult as continueResult<value*>))
+
+        2. (SelectCases_match: EC_1 STO_1 value_key*{value_key <- value_key*} |- selectCaseListIR : EC_2 STO_2 nameIR?{nameIR <- nameIR?})
+
+        3. If ((nameIR?{nameIR <- nameIR?} matches pattern (_))), then
+
+          1. (Let ?(nameIR_state) be nameIR?{nameIR <- nameIR?})
+
+          2. (ParserTransition_eval: EC_2 STO_2 |- (transition (nameIR_state ;)) : EC_3 STO_3 transitionResult)
+
+          3. Result in : % % |- % : EC_3 STO_3 transitionResult
+
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:165.1-168.23
 relation ParserState_eval: EC_0 STO_0 |- (annotationList state{ parserStatementListIR transitionStatementIR }) : % % %
 
 1. Group : EC_0 STO_0 |- (annotationList state{ parserStatementListIR transitionStatementIR }) : % % %
@@ -28656,7 +28885,7 @@ relation ParserState_eval: EC_0 STO_0 |- (annotationList state{ parserStatementL
 
       1. (Let rejectTransitionResult be (parserStatementResult as rejectTransitionResult))
 
-      2. Result in : % % |- % : EC_1 STO_1 ((reject) as transitionResult)
+      2. Result in : % % |- % : EC_1 STO_1 (rejectTransitionResult as transitionResult)
 
     2. Case (% has type continueEmptyResult)
 
@@ -28666,7 +28895,7 @@ relation ParserState_eval: EC_0 STO_0 |- (annotationList state{ parserStatementL
 
       3. Result in : % % |- % : EC_2 STO_2 transitionResult
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:161.1-164.23
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:170.1-173.23
 relation ParserState_trans: EC_0 STO_0 |-transition nameIR : % % %
 
 1. Group accept: EC_0 STO_0 |-transition nameIR : % % %
@@ -28699,7 +28928,7 @@ relation ParserState_trans: EC_0 STO_0 |-transition nameIR : % % %
 
       1. (Let rejectTransitionResult be (transitionResult as rejectTransitionResult))
 
-      2. Result in : % % |-transition % : EC_1 STO_1 ((reject) as transitionResult)
+      2. Result in : % % |-transition % : EC_1 STO_1 (rejectTransitionResult as transitionResult)
 
 3. Group state: EC_0 STO_0 |-transition nameIR : % % %
 
@@ -28719,7 +28948,7 @@ relation ParserState_trans: EC_0 STO_0 |-transition nameIR : % % %
 
       3. Result in : % % |-transition % : EC_2 STO_2 transitionResult
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:166.1-169.23
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:175.1-178.23
 relation ParserLocalDecl_eval: EC_0 STO_0' |- parserLocalDeclarationIR : % %
 
 1. Case analysis on parserLocalDeclarationIR
@@ -28770,7 +28999,7 @@ relation ParserLocalDecl_eval: EC_0 STO_0' |- parserLocalDeclarationIR : % %
 
           3. Result in : % % |- % : EC_2 STO_1
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:171.1-174.23
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:180.1-183.23
 relation ParserLocalDecls_eval: evalContext store |- parserLocalDeclarationIR*{parserLocalDeclarationIR <- parserLocalDeclarationIR*} : % %
 
 1. Group : evalContext store |- parserLocalDeclarationIR*{parserLocalDeclarationIR <- parserLocalDeclarationIR*} : % %
@@ -28791,32 +29020,48 @@ relation ParserLocalDecls_eval: evalContext store |- parserLocalDeclarationIR*{p
 
     4. Result in : % % |- % : EC_2 STO_2
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:181.1-182.17
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:190.1-191.17
 syntax tableResult = 
    | exit
    | return value?
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:184.1-187.23
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:193.1-196.23
 relation Table_eval: EC_0 STO_0 |- TBL : % % %
 
 1. Group : EC_0 STO_0 |- TBL : % % %
 
-  1. (Let (_annotationList _constOptIR default_action= (prefixedNameIR ( argumentListIR )) ;) be TBL.default_action)
+  1. (Let (key={ tableKeyListIR }) be TBL.keys)
 
-  2. (Stmt_eval: (local) EC_0 STO_0 |- (((prefixedNameIR as callableTargetIR) < [] >( argumentListIR );) as statementIR) : EC_1 STO_1 statementResult)
+  2. (TableKeys_eval: EC_0 STO_0 |- tableKeyListIR : EC_1 STO_1 tableKeysResult)
 
-  3. If ((statementResult has type continueEmptyResult)), then
+  3. If ((tableKeysResult has type continueResult<tableKeyValue*>)), then
 
-    1. (Let continueEmptyResult be (statementResult as continueEmptyResult))
+    1. (Let (` tableKeyValue*{tableKeyValue <- tableKeyValue*}) be (tableKeysResult as continueResult<tableKeyValue*>))
 
-    2. Result in : % % |- % : EC_1 STO_1 ((return ?()) as tableResult)
+    2. (Let (_annotationList _constOptIR entries={ tableEntryListIR }) be TBL.entries)
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:190.1-191.17
+    3. (TableMatches_eval: EC_1 STO_1 |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryListIR : EC_2 STO_2 tableMatchesResult)
+
+    4. If ((tableMatchesResult has type continueResult<tableMatch*>)), then
+
+      1. (Let (` tableMatch*{tableMatch <- tableMatch*}) be (tableMatchesResult as continueResult<tableMatch*>))
+
+      2. (Let (prefixedNameIR ( argumentListIR )) be $select_action(TBL, tableMatch*{tableMatch <- tableMatch*}))
+
+      3. (Stmt_eval: (local) EC_2 STO_2 |- (((prefixedNameIR as callableTargetIR) < [] >( argumentListIR );) as statementIR) : EC_3 STO_3 statementResult)
+
+      4. If ((statementResult has type continueEmptyResult)), then
+
+        1. (Let continueEmptyResult be (statementResult as continueEmptyResult))
+
+        2. Result in : % % |- % : EC_3 STO_3 ((return ?()) as tableResult)
+
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:199.1-200.17
 syntax controlBodyResult = 
    | exit
    | return value?
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:193.1-196.23
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:202.1-205.23
 relation ControlBody_eval: EC_0 STO_0 |- controlBodyIR : % % %
 
 1. Group cont: EC_0 STO_0 |- controlBodyIR : % % %
@@ -28847,12 +29092,12 @@ relation ControlBody_eval: EC_0 STO_0 |- controlBodyIR : % % %
 
     1. Result in : % % |- % : EC_1 STO_1 ((return ?()) as controlBodyResult)
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:199.1-200.15
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:208.1-209.15
 syntax declarationResult = 
    | `
    | exit
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:202.1-205.23
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:211.1-214.23
 relation ControlLocalDecl_eval: EC_0 STO_0' |- controlLocalDeclarationIR : % % %
 
 1. Case analysis on controlLocalDeclarationIR
@@ -28907,7 +29152,7 @@ relation ControlLocalDecl_eval: EC_0 STO_0' |- controlLocalDeclarationIR : % % %
 
             3. Result in : % % |- % : EC_2 STO_1 ((`) as declarationResult)
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:207.1-210.23
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:216.1-219.23
 relation ControlLocalDecls_eval: evalContext store |- controlLocalDeclarationIR'*{controlLocalDeclarationIR' <- controlLocalDeclarationIR'*} : % % %
 
 1. Group : evalContext store |- controlLocalDeclarationIR'*{controlLocalDeclarationIR' <- controlLocalDeclarationIR'*} : % % %
@@ -28940,7 +29185,7 @@ relation ControlLocalDecls_eval: evalContext store |- controlLocalDeclarationIR'
 
         3. Result in : % % |- % : EC_2 STO_2 declarationResult
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:216.1-219.26
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:225.1-228.26
 relation Decl_eval: p EC_0 STO |- declarationIR : % % %
 
 1. If ((declarationIR has type constantDeclarationIR)), then
@@ -28953,12 +29198,12 @@ relation Decl_eval: p EC_0 STO |- declarationIR : % % %
 
     2. Result in : % % % |- % : EC_1 STO ((`) as declarationResult)
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:226.1-227.15
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:235.1-236.15
 syntax calleeResult = 
    | ` callee
    | exit
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:229.1-232.29
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:238.1-241.29
 relation Callee_eval: p EC' STO' |- callableTargetIR <_>( argumentListIR'' ): % % %
 
 1. If ((callableTargetIR has type referenceExpressionIR)), then
@@ -28983,11 +29228,73 @@ relation Callee_eval: p EC' STO' |- callableTargetIR <_>( argumentListIR'' ): % 
 
         4. Result in : % % % |- % <_>( % ): EC' STO' ((` (actionCallee as callee)) as calleeResult)
 
+  3. Group referenceExpressionIR-externFunctionCallee: p EC' STO' |- (referenceExpressionIR as callableTargetIR) <_>( argumentListIR'' ): % % %
+
+    1. (Let (cursor, cid, callableDef, id*)?{(cursor, cid, callableDef, id*) <- (cursor, cid, callableDef, id*)?} be $find_callableDef_overloaded_e(p, EC', referenceExpressionIR, argumentListIR''))
+
+    2. If (((cursor, cid, callableDef, id*)?{(cursor, cid, callableDef, id*) <- (cursor, cid, callableDef, id*)?} matches pattern (_))), then
+
+      1. (Let ?((_cursor, _cid, callableDef, id_default*{id_default <- id_default*})) be (cursor, cid, callableDef, id*)?{(cursor, cid, callableDef, id*) <- (cursor, cid, callableDef, id*)?})
+
+      2. If ((callableDef has type externFunctionDef)), then
+
+        1. (Let externFunctionDef be (callableDef as externFunctionDef))
+
+        2. (Let (extern_function nameIR < typeParameterListIR >( parameterListIR )) be externFunctionDef)
+
+        3. (Let externFunctionCallee be (extern_function nameIR < typeParameterListIR >( parameterListIR # id_default*{id_default <- id_default*} )))
+
+        4. Result in : % % % |- % <_>( % ): EC' STO' ((` (externFunctionCallee as callee)) as calleeResult)
+
 2. If ((callableTargetIR matches pattern `%.%`)), then
 
-  1. (Let (typedExpressionIR . nameIR) be callableTargetIR)
+  1. (Let (typedExpressionIR . nameIR') be callableTargetIR)
 
-  2. Group typedExpressionIR-nameIR-extern-method: p EC' STO' |- (typedExpressionIR . nameIR) <_>( argumentListIR'' ): % % %
+  2. Group typedExpressionIR-nameIR-builtinMethod: p EC' STO' |- (typedExpressionIR . nameIR') <_>( argumentListIR'' ): % % %
+
+    1. (Let typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR))
+
+    2. If ((typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} matches pattern (_))), then
+
+      1. (Let ?(typedLvalueIR) be typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?})
+
+      2. (Lvalue_eval: p EC' STO' |- typedLvalueIR : EC_1 STO_1 storageReferenceResult)
+
+      3. If ((storageReferenceResult has type exitResult)), then
+
+        1. (Let exitResult be (storageReferenceResult as exitResult))
+
+        2. Result in : % % % |- % <_>( % ): EC_1 STO_1 ((exit) as calleeResult)
+
+    3. If ((nameIR' = "isValid")), then
+
+      1. If ((argumentListIR'' = [])), then
+
+        1. If ((typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} matches pattern (_))), then
+
+          1. (Let ?(typedLvalueIR) be typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?})
+
+          2. (Lvalue_eval: p EC' STO' |- typedLvalueIR : EC_1 STO_1 storageReferenceResult)
+
+          3. If ((storageReferenceResult has type continueResult<storageReference?>)), then
+
+            1. (Let (` storageReference'?{storageReference' <- storageReference'?}) be (storageReferenceResult as continueResult<storageReference?>))
+
+            2. If ((storageReference'?{storageReference' <- storageReference'?} matches pattern (_))), then
+
+              1. (Let ?(storageReference) be storageReference'?{storageReference' <- storageReference'?})
+
+              2. (Lvalue_read: p EC_1 STO_1 |- storageReference : value)
+
+              3. If ((value has type headerValue)), then
+
+                1. (Let headerValue be (value as headerValue))
+
+                2. (Let builtinMethodCallee be (builtin_method storageReference . "isValid" < [] >( [] )))
+
+                3. Result in : % % % |- % <_>( % ): EC_1 STO_1 ((` (builtinMethodCallee as callee)) as calleeResult)
+
+  3. Group typedExpressionIR-nameIR-extern-method: p EC' STO' |- (typedExpressionIR . nameIR') <_>( argumentListIR'' ): % % %
 
     1. (Let typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR))
 
@@ -29027,11 +29334,11 @@ relation Callee_eval: p EC' STO' |- callableTargetIR <_>( argumentListIR'' ): % 
 
                 2. If ((object has type externObject)), then
 
-                  1. (Let (extern _tid < _theta >{ _frame externMethodDefEnv }) be (object as externObject))
+                  1. (Let (extern _tid < _theta >{ _externState frame externMethodDefEnv }) be (object as externObject))
 
                   2. (Let id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*} be $ids_arguments(argumentListIR''))
 
-                  3. (Let (cid, externMethodDef, id*)?{(cid, externMethodDef, id*) <- (cid, externMethodDef, id*)?} be $find_overloaded<externMethodDef>(externMethodDefEnv, nameIR, id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*}))
+                  3. (Let (cid, externMethodDef, id*)?{(cid, externMethodDef, id*) <- (cid, externMethodDef, id*)?} be $find_overloaded<externMethodDef>(externMethodDefEnv, nameIR', id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*}))
 
                   4. If (((cid, externMethodDef, id*)?{(cid, externMethodDef, id*) <- (cid, externMethodDef, id*)?} matches pattern (_))), then
 
@@ -29041,13 +29348,13 @@ relation Callee_eval: p EC' STO' |- callableTargetIR <_>( argumentListIR'' ): % 
 
                       1. (Let (extern_method nameIR' < typeParameterListIR >( parameterListIR ) blockStatementIR?{blockStatementIR <- blockStatementIR?}) be externMethodDef)
 
-                      2. If ((nameIR' = nameIR)), then
+                      2. If ((nameIR' = nameIR')), then
 
-                        1. (Let externMethodCallee be (extern_method oid . nameIR < typeParameterListIR >( parameterListIR # id_default*{id_default <- id_default*} ) blockStatementIR?{blockStatementIR <- blockStatementIR?}))
+                        1. (Let externMethodCallee be (extern_method oid . nameIR' < typeParameterListIR >( parameterListIR # id_default*{id_default <- id_default*} ){ frame ; blockStatementIR?{blockStatementIR <- blockStatementIR?} }))
 
                         2. Result in : % % % |- % <_>( % ): EC_1 STO_1 ((` (externMethodCallee as callee)) as calleeResult)
 
-  3. If ((nameIR = "apply")), then
+  4. If ((nameIR' = "apply")), then
 
     1. Group typedExpressionIR-nameIR-parser-apply-method: p EC' STO' |- (typedExpressionIR . "apply") <_>( argumentListIR'' ): % % %
 
@@ -29217,12 +29524,12 @@ relation Callee_eval: p EC' STO' |- callableTargetIR <_>( argumentListIR'' ): % 
 
                     3. Result in : % % % |- % <_>( % ): EC_1 STO_1 ((` (tableApplyMethodCallee as callee)) as calleeResult)
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:235.1-236.15
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:244.1-245.15
 syntax copyInResult = 
    | ` storageReference?
    | exit
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:238.1-242.35
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:247.1-251.35
 relation Copy_in_argument: STO_0 p_caller EC_caller_0 (_annotationList direction typeIR nameIR _constantInitializerOptIR) @ p_callee EC_callee_0 argumentIR ~> % % @ % # %
 
 1. Group directionless-in: STO_0 p_caller EC_caller_0 (_annotationList direction typeIR nameIR _constantInitializerOptIR) @ p_callee EC_callee_0 argumentIR ~> % % @ % # %
@@ -29325,12 +29632,12 @@ relation Copy_in_argument: STO_0 p_caller EC_caller_0 (_annotationList direction
 
           5. Result in : % % % % @ % % % ~> STO_1 EC_caller_1 @ EC_callee_1 # ((` storageReference?{storageReference <- storageReference?}) as copyInResult)
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:245.1-246.15
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:254.1-255.15
 syntax copyInListResult = 
    | ` storageReference?*
    | exit
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:248.1-252.35
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:257.1-261.35
 relation Copy_in: store p_caller evalContext parameterIR''*{parameterIR'' <- parameterIR''*} @ p_callee evalContext' argumentIR''*{argumentIR'' <- argumentIR''*} ~> % % @ % # %
 
 1. Group : store p_caller evalContext parameterIR''*{parameterIR'' <- parameterIR''*} @ p_callee evalContext' argumentIR''*{argumentIR'' <- argumentIR''*} ~> % % @ % # %
@@ -29389,7 +29696,7 @@ relation Copy_in: store p_caller evalContext parameterIR''*{parameterIR'' <- par
 
                 3. Result in : % % % % @ % % % ~> STO_2 EC_caller_2 @ EC_callee_2 # ((` storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*}) as copyInListResult)
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:254.1-257.26
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:263.1-266.26
 relation Copy_in_default: parameterIR*{parameterIR <- parameterIR*} @ p_callee EC_callee_0 value*{value <- value*} ~>@ %
 
 1. Group : parameterIR*{parameterIR <- parameterIR*} @ p_callee EC_callee_0 value*{value <- value*} ~>@ %
@@ -29400,7 +29707,7 @@ relation Copy_in_default: parameterIR*{parameterIR <- parameterIR*} @ p_callee E
 
   3. Result in : % @ % % % ~>@ EC_callee_1
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:259.1-263.35
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:268.1-272.35
 relation Copy_out_argument: STO p_caller EC_caller_0' (_annotationList direction typeIR nameIR _constantInitializerOptIR) @ p_callee EC_callee storageReference'''?{storageReference''' <- storageReference'''?} ~> %
 
 1. If ((storageReference'''?{storageReference''' <- storageReference'''?} matches pattern ())), then
@@ -29455,7 +29762,7 @@ relation Copy_out_argument: STO p_caller EC_caller_0' (_annotationList direction
 
         3. Result in : % % % % @ % % % ~> EC_caller_1
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:265.1-269.35
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:274.1-278.35
 relation Copy_out: STO p_caller evalContext parameterIR*{parameterIR <- parameterIR*} @ p_callee EC_callee storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> %
 
 1. Group : STO p_caller evalContext parameterIR*{parameterIR <- parameterIR*} @ p_callee EC_callee storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> %
@@ -29484,8 +29791,8 @@ relation Copy_out: STO p_caller evalContext parameterIR*{parameterIR <- paramete
 
       4. Result in : % % % % @ % % % ~> EC_caller_2
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:271.1-275.32
-relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR' >( argumentListIR' ): % % %
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:280.1-284.32
+relation Call_eval: p EC_0' STO_0' |- callee @< typeArgumentListIR' >( argumentListIR' ): % % %
 
 1. (Let typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} be typeArgumentListIR')
 
@@ -29495,89 +29802,185 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR' >( argumentLis
 
   2. If ((typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches pattern [])), then
 
-    1. Group actionCallee: p EC_0 STO_0 |- (actionCallee as callee) @< [] >( argumentListIR' ): % % %
+    1. Group actionCallee: p EC_0' STO_0' |- (actionCallee as callee) @< [] >( argumentListIR' ): % % %
 
       1. (Let (action cursor . nameIR ( parameterIR*{parameterIR <- parameterIR*} # id_default*{id_default <- id_default*} ) blockStatementIR) be actionCallee)
 
-      2. If ((cursor matches pattern `BLOCK`)), then
+      2. Case analysis on cursor
 
-        1. (Let EC_callee_0 be $inherit_e((block), EC_0))
+        1. Case (% matches pattern `GLOBAL`)
 
-        2. (Let (parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, value_default*{value_default <- value_default*}) be $align_params_with_args(parameterIR*{parameterIR <- parameterIR*}, argumentListIR', id_default*{id_default <- id_default*}))
+          1. (Let EC_callee_0 be $inherit_e((global), EC_0'))
 
-        3. (Copy_in: STO_0 p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_0 argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*} ~> STO_1 EC_1 @ EC_callee_1 # copyInListResult)
+          2. (Let (parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, value_default*{value_default <- value_default*}) be $align_params_with_args(parameterIR*{parameterIR <- parameterIR*}, argumentListIR', id_default*{id_default <- id_default*}))
 
-        4. If ((copyInListResult has type continueResult<storageReference?*>)), then
+          3. (Copy_in: STO_0' p EC_0' parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_0 argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*} ~> STO_1 EC_1 @ EC_callee_1 # copyInListResult)
 
-          1. (Let (` storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*}) be (copyInListResult as continueResult<storageReference?*>))
+          4. If ((copyInListResult has type continueResult<storageReference?*>)), then
 
-          2. (Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} @ (local) EC_callee_1 value_default*{value_default <- value_default*} ~>@ EC_callee_2)
+            1. (Let (` storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*}) be (copyInListResult as continueResult<storageReference?*>))
 
-          3. (ActionBody_eval: EC_callee_2 STO_1 |- blockStatementIR : EC_callee_3 STO_2 actionResult)
+            2. (Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} @ (local) EC_callee_1 value_default*{value_default <- value_default*} ~>@ EC_callee_2)
 
-          4. If ((actionResult = ((return ?()) as actionResult))), then
+            3. (ActionBody_eval: EC_callee_2 STO_1 |- blockStatementIR : EC_callee_3 STO_2 actionResult)
 
-            1. (Let EC_2 be EC_1[global.frame = EC_callee_3.global.frame][block.frame = EC_callee_3.block.frame])
+            4. If ((actionResult = ((return ?()) as actionResult))), then
 
-            2. (Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_3 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3)
+              1. (Let EC_2 be EC_1[global.frame = EC_callee_3.global.frame])
 
-            3. Result in : % % % |- % @< % >( % ): EC_3 STO_2 ((return ?()) as callResult)
+              2. (Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_3 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3)
+
+              3. Result in : % % % |- % @< % >( % ): EC_3 STO_2 ((return ?()) as callResult)
+
+        2. Case (% matches pattern `BLOCK`)
+
+          1. (Let EC_callee_0 be $inherit_e((block), EC_0'))
+
+          2. (Let (parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, value_default*{value_default <- value_default*}) be $align_params_with_args(parameterIR*{parameterIR <- parameterIR*}, argumentListIR', id_default*{id_default <- id_default*}))
+
+          3. (Copy_in: STO_0' p EC_0' parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_0 argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*} ~> STO_1 EC_1 @ EC_callee_1 # copyInListResult)
+
+          4. If ((copyInListResult has type continueResult<storageReference?*>)), then
+
+            1. (Let (` storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*}) be (copyInListResult as continueResult<storageReference?*>))
+
+            2. (Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} @ (local) EC_callee_1 value_default*{value_default <- value_default*} ~>@ EC_callee_2)
+
+            3. (ActionBody_eval: EC_callee_2 STO_1 |- blockStatementIR : EC_callee_3 STO_2 actionResult)
+
+            4. If ((actionResult = ((return ?()) as actionResult))), then
+
+              1. (Let EC_2 be EC_1[global.frame = EC_callee_3.global.frame][block.frame = EC_callee_3.block.frame])
+
+              2. (Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_3 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3)
+
+              3. Result in : % % % |- % @< % >( % ): EC_3 STO_2 ((return ?()) as callResult)
 
 3. (Let argumentIR*{argumentIR <- argumentIR*} be argumentListIR')
 
 4. Case analysis on callee
 
-  1. Case (% has type externMethodCallee)
+  1. Case (% has type externFunctionCallee)
 
-    1. (Let (extern_method oid . nameIR < typeParameterIR*{typeParameterIR <- typeParameterIR*} >( parameterIR*{parameterIR <- parameterIR*} # id_default*{id_default <- id_default*} ) blockStatementIR?{blockStatementIR <- blockStatementIR?}) be (callee as externMethodCallee))
+    1. (Let externFunctionCallee be (callee as externFunctionCallee))
 
-    2. If ((blockStatementIR?{blockStatementIR <- blockStatementIR?} matches pattern ())), then
+    2. Group externFunctionCallee: p EC_0' STO_0' |- (externFunctionCallee as callee) @< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} ): % % %
 
-      1. Group externMethodCallee: p EC_0 STO_0 |- ((extern_method oid . nameIR < typeParameterIR*{typeParameterIR <- typeParameterIR*} >( parameterIR*{parameterIR <- parameterIR*} # id_default*{id_default <- id_default*} ) ?()) as callee) @< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} ): % % %
+      1. (Let (extern_function nameIR < typeParameterIR*{typeParameterIR <- typeParameterIR*} >( parameterIR*{parameterIR <- parameterIR*} # id_default*{id_default <- id_default*} )) be externFunctionCallee)
 
-        1. (Let EC_callee_0 be $inherit_e((global), EC_0))
+      2. (Let EC_callee_0 be $inherit_e((global), EC_0'))
 
-        2. (Let EC_callee_1 be EC_callee_0[local.type = ({ (typeParameterIR : typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} })])
+      3. (Let EC_callee_1 be EC_callee_0[local.type = ({ (typeParameterIR : typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} })])
 
-        3. (Let (parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, value_default*{value_default <- value_default*}) be $align_params_with_args(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}))
+      4. (Let (parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, value_default*{value_default <- value_default*}) be $align_params_with_args(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}))
 
-        4. (Copy_in: STO_0 p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_1 argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*} ~> STO_1 EC_1 @ EC_callee_2 # copyInListResult)
+      5. (Copy_in: STO_0' p EC_0' parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_1 argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*} ~> STO_1 EC_1 @ EC_callee_2 # copyInListResult)
 
-        5. If ((copyInListResult has type continueResult<storageReference?*>)), then
+      6. If ((copyInListResult has type continueResult<storageReference?*>)), then
+
+        1. (Let (` storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*}) be (copyInListResult as continueResult<storageReference?*>))
+
+        2. (Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} @ (local) EC_callee_2 value_default*{value_default <- value_default*} ~>@ EC_callee_3)
+
+        3. (Let (_annotationList _direction _typeIR nameIR_param _constantInitializerOptIR) be parameterIR)*{_annotationList <- _annotationList*, _constantInitializerOptIR <- _constantInitializerOptIR*, _direction <- _direction*, _typeIR <- _typeIR*, nameIR_param <- nameIR_param*, parameterIR <- parameterIR*}
+
+        4. (ExternFunctionCall_eval: EC_callee_3 STO_1 |- nameIR ( nameIR_param*{nameIR_param <- nameIR_param*} ): EC_callee_4 STO_2 callResult)
+
+        5. If ((callResult has type returnResult)), then
+
+          1. (Let returnResult be (callResult as returnResult))
+
+          2. (Let EC_2 be EC_1[global.frame = EC_callee_4.global.frame])
+
+          3. (Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_4 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3)
+
+          4. Result in : % % % |- % @< % >( % ): EC_3 STO_2 (returnResult as callResult)
+
+  2. Case (% has type builtinMethodCallee)
+
+    1. (Let builtinMethodCallee be (callee as builtinMethodCallee))
+
+    2. If ((typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches pattern [])), then
+
+      1. If ((argumentIR*{argumentIR <- argumentIR*} matches pattern [])), then
+
+        1. Group builtinMethodCallee: p EC_0' STO_0' |- (builtinMethodCallee as callee) @< [] >( [] ): % % %
+
+          1. (Let (builtin_method storageReference . text < typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} >( parameterIR*{parameterIR <- parameterIR*} )) be builtinMethodCallee)
+
+          2. If ((text = "isValid")), then
+
+            1. If ((typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} matches pattern [])), then
+
+              1. If ((parameterIR*{parameterIR <- parameterIR*} matches pattern [])), then
+
+                1. (Lvalue_read: p EC_0' STO_0' |- storageReference : value)
+
+                2. If ((value has type headerValue)), then
+
+                  1. (Let headerValue be (value as headerValue))
+
+                  2. (Let (header _tid { b_valid ; _fieldValue*{_fieldValue <- _fieldValue*} }) be headerValue)
+
+                  3. (Let returnResult be (return ?(((b b_valid) as value))))
+
+                  4. Result in : % % % |- % @< % >( % ): EC_0' STO_0' (returnResult as callResult)
+
+  3. Case (% has type externMethodCallee)
+
+    1. (Let externMethodCallee be (callee as externMethodCallee))
+
+    2. Group externMethodCallee: p EC_0' STO_0' |- (externMethodCallee as callee) @< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} ): % % %
+
+      1. (Let (extern_method oid . nameIR < typeParameterIR*{typeParameterIR <- typeParameterIR*} >( parameterIR*{parameterIR <- parameterIR*} # id_default*{id_default <- id_default*} ){ frame ; blockStatementIR?{blockStatementIR <- blockStatementIR?} }) be externMethodCallee)
+
+      2. If ((blockStatementIR?{blockStatementIR <- blockStatementIR?} matches pattern ())), then
+
+        1. (Let EC_callee_0 be $inherit_e((global), EC_0'))
+
+        2. (Let EC_callee_1 be EC_callee_0[block.frame = frame])
+
+        3. (Let EC_callee_2 be EC_callee_1[local.type = ({ (typeParameterIR : typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} })])
+
+        4. (Let (parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, value_default*{value_default <- value_default*}) be $align_params_with_args(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}))
+
+        5. (Copy_in: STO_0' p EC_0' parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_2 argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*} ~> STO_1 EC_1 @ EC_callee_3 # copyInListResult)
+
+        6. If ((copyInListResult has type continueResult<storageReference?*>)), then
 
           1. (Let (` storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*}) be (copyInListResult as continueResult<storageReference?*>))
 
-          2. (Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} @ (local) EC_callee_2 value_default*{value_default <- value_default*} ~>@ EC_callee_3)
+          2. (Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} @ (local) EC_callee_3 value_default*{value_default <- value_default*} ~>@ EC_callee_4)
 
           3. (Let (_annotationList _direction _typeIR nameIR_param _constantInitializerOptIR) be parameterIR)*{_annotationList <- _annotationList*, _constantInitializerOptIR <- _constantInitializerOptIR*, _direction <- _direction*, _typeIR <- _typeIR*, nameIR_param <- nameIR_param*, parameterIR <- parameterIR*}
 
-          4. (ExternMethodCall_eval: EC_callee_3 STO_1 |- oid . nameIR ( nameIR_param*{nameIR_param <- nameIR_param*} ): EC_callee_4 STO_2 callResult)
+          4. (ExternMethodCall_eval: EC_callee_4 STO_1 |- oid . nameIR ( nameIR_param*{nameIR_param <- nameIR_param*} ): EC_callee_5 STO_2 callResult)
 
           5. If ((callResult has type returnResult)), then
 
             1. (Let returnResult be (callResult as returnResult))
 
-            2. (Let EC_2 be EC_1[global.frame = EC_callee_4.global.frame])
+            2. (Let EC_2 be EC_1[global.frame = EC_callee_5.global.frame])
 
-            3. (Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_4 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3)
+            3. (Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_5 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3)
 
             4. Result in : % % % |- % @< % >( % ): EC_3 STO_2 (returnResult as callResult)
 
-  2. Case (% has type parserApplyMethodCallee)
+  4. Case (% has type parserApplyMethodCallee)
 
     1. (Let parserApplyMethodCallee be (callee as parserApplyMethodCallee))
 
-    2. Group parserApplyMethodCallee: p EC_0 STO_0 |- (parserApplyMethodCallee as callee) @< typeArgumentListIR' >( argumentListIR' ): % % %
+    2. Group parserApplyMethodCallee: p EC_0' STO_0' |- (parserApplyMethodCallee as callee) @< typeArgumentListIR' >( argumentListIR' ): % % %
 
       1. (Let (parser _oid .apply( parameterListIR # id_default*{id_default <- id_default*} ){ frame ; parserLocalDeclarationListIR ; stateEnv }) be parserApplyMethodCallee)
 
-      2. (Let EC_callee_0 be $inherit_e((global), EC_0))
+      2. (Let EC_callee_0 be $inherit_e((global), EC_0'))
 
       3. (Let EC_callee_1 be EC_callee_0[block.frame = frame][block.state = stateEnv])
 
       4. (Let (parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, value_default*{value_default <- value_default*}) be $align_params_with_args(parameterListIR, argumentListIR', id_default*{id_default <- id_default*}))
 
-      5. (Copy_in: STO_0 p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ (block) EC_callee_1 argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*} ~> STO_1 EC_1 @ EC_callee_2 # copyInListResult)
+      5. (Copy_in: STO_0' p EC_0' parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ (block) EC_callee_1 argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*} ~> STO_1 EC_1 @ EC_callee_2 # copyInListResult)
 
       6. If ((copyInListResult has type continueResult<storageReference?*>)), then
 
@@ -29599,15 +30002,15 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR' >( argumentLis
 
           4. Result in : % % % |- % @< % >( % ): EC_3 STO_3 ((return ?()) as callResult)
 
-  3. Case (% has type controlApplyMethodCallee)
+  5. Case (% has type controlApplyMethodCallee)
 
     1. (Let controlApplyMethodCallee be (callee as controlApplyMethodCallee))
 
-    2. Group controlApplyMethodCallee: p EC_0 STO_0 |- (controlApplyMethodCallee as callee) @< typeArgumentListIR' >( argumentListIR' ): % % %
+    2. Group controlApplyMethodCallee: p EC_0' STO_0' |- (controlApplyMethodCallee as callee) @< typeArgumentListIR' >( argumentListIR' ): % % %
 
       1. (Let (control _oid .apply( parameterListIR # id_default*{id_default <- id_default*} ){ frame ; controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR }) be controlApplyMethodCallee)
 
-      2. (Let EC_callee_0 be $inherit_e((global), EC_0))
+      2. (Let EC_callee_0 be $inherit_e((global), EC_0'))
 
       3. (Let ({ (cid : actionDef)*{actionDef <- actionDef*, cid <- cid*} }) be actionDefEnv)
 
@@ -29615,7 +30018,7 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR' >( argumentLis
 
       5. (Let (parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, value_default*{value_default <- value_default*}) be $align_params_with_args(parameterListIR, argumentListIR', id_default*{id_default <- id_default*}))
 
-      6. (Copy_in: STO_0 p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ (block) EC_callee_1 argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*} ~> STO_1 EC_1 @ EC_callee_2 # copyInListResult)
+      6. (Copy_in: STO_0' p EC_0' parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ (block) EC_callee_1 argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*} ~> STO_1 EC_1 @ EC_callee_2 # copyInListResult)
 
       7. If ((copyInListResult has type continueResult<storageReference?*>)), then
 
@@ -29665,28 +30068,506 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR' >( argumentLis
 
             4. Result in : % % % |- % @< % >( % ): EC_3 STO_3 ((exit) as callResult)
 
-  4. Case (% has type tableApplyMethodCallee)
+  6. Case (% has type tableApplyMethodCallee)
 
     1. (Let tableApplyMethodCallee be (callee as tableApplyMethodCallee))
 
-    2. Group tableApplyMethodCallee: p EC_0 STO_0 |- (tableApplyMethodCallee as callee) @< typeArgumentListIR' >( argumentListIR' ): % % %
+    2. Group tableApplyMethodCallee: p EC_0' STO_0' |- (tableApplyMethodCallee as callee) @< typeArgumentListIR' >( argumentListIR' ): % % %
 
       1. (Let (table _oid .apply{ frame ; TBL }) be tableApplyMethodCallee)
 
-      2. (Let EC_callee_0 be $inherit_e((block), EC_0))
+      2. (Let EC_callee_0 be $inherit_e((block), EC_0'))
 
       3. (Let EC_callee_1 be EC_callee_0[local.frames = [frame]])
 
-      4. (Table_eval: EC_callee_1 STO_0 |- TBL : EC_callee_2 STO_1 tableResult)
+      4. (Table_eval: EC_callee_1 STO_0' |- TBL : EC_callee_2 STO_1 tableResult)
 
       5. If ((tableResult = ((return ?()) as tableResult))), then
 
-        1. (Let EC_1 be EC_0[block.frame = EC_callee_2.block.frame])
+        1. (Let EC_1 be EC_0'[block.frame = EC_callee_2.block.frame])
 
         2. Result in : % % % |- % @< % >( % ): EC_1 STO_1 ((return ?()) as callResult)
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:277.1-280.29
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:286.1-289.26
+extern relation ExternFunctionCall_eval: evalContext store |- nameIR ( nameIR'*{nameIR' <- nameIR'*} ): % % %
+
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:291.1-294.29
 extern relation ExternMethodCall_eval: evalContext store |- oid . nameIR ( nameIR'*{nameIR' <- nameIR'*} ): % % %
+
+;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:5.1-5.45
+def $match_keysets(setValue*{setValue <- setValue*}, value'*{value' <- value'*})
+
+1. Case analysis on setValue*{setValue <- setValue*}
+
+  1. Case (% matches pattern [])
+
+    1. If ((value'*{value' <- value'*} matches pattern [])), then
+
+      1. Return true
+
+  2. Case (% matches pattern _ :: _)
+
+    1. (Let setValue_h :: setValue_t*{setValue_t <- setValue_t*} be setValue*{setValue <- setValue*})
+
+    2. If ((value'*{value' <- value'*} matches pattern _ :: _)), then
+
+      1. (Let value_key_h :: value_key_t*{value_key_t <- value_key_t*} be value'*{value' <- value'*})
+
+      2. Case analysis on $match_keyset(setValue_h, value_key_h)
+
+        1. Case true
+
+          1. Return $match_keysets(setValue_t*{setValue_t <- setValue_t*}, value_key_t*{value_key_t <- value_key_t*})
+
+        2. Case false
+
+          1. Return false
+
+2. If ((setValue*{setValue <- setValue*} = [(set{...})])), then
+
+  1. Return true
+
+;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:6.1-6.42
+def $match_keyset(setValue, value_key)
+
+1. Case analysis on setValue
+
+  1. Case (% matches pattern `SET{...}`)
+
+    1. Return true
+
+  2. Case (% matches pattern `SET{%}`)
+
+    1. (Let (set{ value }) be setValue)
+
+    2. Return $bin_eq(value, value_key)
+
+  3. Case (% matches pattern `SET{%&&&%}`)
+
+    1. (Let (set{ value_base &&& value_mask }) be setValue)
+
+    2. Return $bin_eq($bin_band(value_base, value_mask), $bin_band(value_key, value_mask))
+
+  4. Case (% matches pattern `SET{%..%}`)
+
+    1. (Let (set{ value_base .. value_limit }) be setValue)
+
+    2. Return ($bin_le(value_base, value_key) /\ $bin_le(value_key, value_limit))
+
+;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:35.1-36.15
+syntax simpleKeysetExpressionResult = 
+   | ` setValue
+   | exit
+
+;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:38.1-41.23
+relation Expr_eval_keyset_simple: EC_0' STO_0' |- simpleKeysetExpressionIR : % % %
+
+1. If ((simpleKeysetExpressionIR has type typedExpressionIR)), then
+
+  1. (Let typedExpressionIR be (simpleKeysetExpressionIR as typedExpressionIR))
+
+  2. Group typedExpressionIR: EC_0' STO_0' |- (typedExpressionIR as simpleKeysetExpressionIR) : % % %
+
+    1. (Expr_eval: (local) EC_0' STO_0' |- typedExpressionIR : EC_1 STO_1 expressionResult)
+
+    2. Case analysis on expressionResult
+
+      1. Case (% has type exitResult)
+
+        1. (Let exitResult be (expressionResult as exitResult))
+
+        2. Result in : % % |- % : EC_1 STO_1 ((exit) as simpleKeysetExpressionResult)
+
+      2. Case (% has type continueResult<value>)
+
+        1. (Let (` value) be (expressionResult as continueResult<value>))
+
+        2. If ((value has type setValue)), then
+
+          1. (Let setValue be (value as setValue))
+
+          2. Result in : % % |- % : EC_1 STO_1 ((` setValue) as simpleKeysetExpressionResult)
+
+2. Case analysis on simpleKeysetExpressionIR
+
+  1. Case (% matches pattern `%&&&%`)
+
+    1. (Let (typedExpressionIR_l &&& typedExpressionIR_r) be simpleKeysetExpressionIR)
+
+    2. Group mask: EC_0' STO_0' |- (typedExpressionIR_l &&& typedExpressionIR_r) : % % %
+
+      1. (Expr_eval: (local) EC_0' STO_0' |- typedExpressionIR_l : EC_1 STO_1 expressionResult)
+
+      2. Case analysis on expressionResult
+
+        1. Case (% has type exitResult)
+
+          1. (Let exitResult be (expressionResult as exitResult))
+
+          2. Result in : % % |- % : EC_1 STO_1 ((exit) as simpleKeysetExpressionResult)
+
+        2. Case (% has type continueResult<value>)
+
+          1. (Let (` value_l) be (expressionResult as continueResult<value>))
+
+          2. (Expr_eval: (local) EC_1 STO_1 |- typedExpressionIR_r : EC_2 STO_2 expressionResult')
+
+          3. Case analysis on expressionResult'
+
+            1. Case (% has type exitResult)
+
+              1. (Let exitResult be (expressionResult' as exitResult))
+
+              2. Result in : % % |- % : EC_2 STO_2 ((exit) as simpleKeysetExpressionResult)
+
+            2. Case (% has type continueResult<value>)
+
+              1. (Let (` value_r) be (expressionResult' as continueResult<value>))
+
+              2. (Let setValue be (set{ value_l &&& value_r }))
+
+              3. Result in : % % |- % : EC_2 STO_2 ((` setValue) as simpleKeysetExpressionResult)
+
+  2. Case (% matches pattern `%..%`)
+
+    1. (Let (typedExpressionIR_l .. typedExpressionIR_r) be simpleKeysetExpressionIR)
+
+    2. Group range: EC_0' STO_0' |- (typedExpressionIR_l .. typedExpressionIR_r) : % % %
+
+      1. (Expr_eval: (local) EC_0' STO_0' |- typedExpressionIR_l : EC_1 STO_1 expressionResult)
+
+      2. Case analysis on expressionResult
+
+        1. Case (% has type exitResult)
+
+          1. (Let exitResult be (expressionResult as exitResult))
+
+          2. Result in : % % |- % : EC_1 STO_1 ((exit) as simpleKeysetExpressionResult)
+
+        2. Case (% has type continueResult<value>)
+
+          1. (Let (` value_l) be (expressionResult as continueResult<value>))
+
+          2. (Expr_eval: (local) EC_1 STO_1 |- typedExpressionIR_r : EC_2 STO_2 expressionResult')
+
+          3. Case analysis on expressionResult'
+
+            1. Case (% has type exitResult)
+
+              1. (Let exitResult be (expressionResult' as exitResult))
+
+              2. Result in : % % |- % : EC_2 STO_2 ((exit) as simpleKeysetExpressionResult)
+
+            2. Case (% has type continueResult<value>)
+
+              1. (Let (` value_r) be (expressionResult' as continueResult<value>))
+
+              2. (Let setValue be (set{ value_l .. value_r }))
+
+              3. Result in : % % |- % : EC_2 STO_2 ((` setValue) as simpleKeysetExpressionResult)
+
+3. Group default-any: EC_0' STO_0' |- simpleKeysetExpressionIR : % % %
+
+  1. Case analysis on simpleKeysetExpressionIR
+
+    1. Case (% matches pattern `DEFAULT`)
+
+      1. (Let setValue be (set{...}))
+
+      2. Result in : % % |- % : EC_0' STO_0' ((` setValue) as simpleKeysetExpressionResult)
+
+    2. Case (% matches pattern `_`)
+
+      1. (Let setValue be (set{...}))
+
+      2. Result in : % % |- % : EC_0' STO_0' ((` setValue) as simpleKeysetExpressionResult)
+
+;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:132.1-135.23
+relation Exprs_eval_keyset_simple: evalContext store |- simpleKeysetExpressionIR''*{simpleKeysetExpressionIR'' <- simpleKeysetExpressionIR''*} : % % %
+
+1. Group : evalContext store |- simpleKeysetExpressionIR''*{simpleKeysetExpressionIR'' <- simpleKeysetExpressionIR''*} : % % %
+
+  1. If ((simpleKeysetExpressionIR''*{simpleKeysetExpressionIR'' <- simpleKeysetExpressionIR''*} = [])), then
+
+    1. Result in : % % |- % : evalContext store ((` []) as keysetExpressionResult)
+
+  2. (Let simpleKeysetExpressionIR'''*{simpleKeysetExpressionIR''' <- simpleKeysetExpressionIR'''*} be simpleKeysetExpressionIR''*{simpleKeysetExpressionIR'' <- simpleKeysetExpressionIR''*})
+
+  3. If ((simpleKeysetExpressionIR'''*{simpleKeysetExpressionIR''' <- simpleKeysetExpressionIR'''*} matches pattern _ :: _)), then
+
+    1. (Let simpleKeysetExpressionIR_h :: simpleKeysetExpressionIR_t*{simpleKeysetExpressionIR_t <- simpleKeysetExpressionIR_t*} be simpleKeysetExpressionIR'''*{simpleKeysetExpressionIR''' <- simpleKeysetExpressionIR'''*})
+
+    2. (Expr_eval_keyset_simple: evalContext store |- simpleKeysetExpressionIR_h : EC_1 STO_1 simpleKeysetExpressionResult)
+
+    3. Case analysis on simpleKeysetExpressionResult
+
+      1. Case (% has type exitResult)
+
+        1. (Let exitResult be (simpleKeysetExpressionResult as exitResult))
+
+        2. Result in : % % |- % : EC_1 STO_1 ((exit) as keysetExpressionResult)
+
+      2. Case (% has type continueResult<setValue>)
+
+        1. (Let (` setValue_h) be (simpleKeysetExpressionResult as continueResult<setValue>))
+
+        2. (Exprs_eval_keyset_simple: EC_1 STO_1 |- simpleKeysetExpressionIR_t*{simpleKeysetExpressionIR_t <- simpleKeysetExpressionIR_t*} : EC_2 STO_2 keysetExpressionResult')
+
+        3. Case analysis on keysetExpressionResult'
+
+          1. Case (% has type exitResult)
+
+            1. (Let exitResult be (keysetExpressionResult' as exitResult))
+
+            2. Result in : % % |- % : EC_2 STO_2 ((exit) as keysetExpressionResult)
+
+          2. Case (% has type continueResult<setValue*>)
+
+            1. (Let (` setValue_t*{setValue_t <- setValue_t*}) be (keysetExpressionResult' as continueResult<setValue*>))
+
+            2. (Let keysetExpressionResult be ((` setValue_h :: setValue_t*{setValue_t <- setValue_t*}) as keysetExpressionResult))
+
+            3. Result in : % % |- % : EC_2 STO_2 keysetExpressionResult
+
+;; ../../../../spec-concrete/8.08.1-eval-parser-statement.watsup:31.1-34.26
+relation SelectCase_match: EC_0 STO_0 value_key*{value_key <- value_key*} |- (keysetExpressionIR : nameIR ;) : % % %
+
+1. Group : EC_0 STO_0 value_key*{value_key <- value_key*} |- (keysetExpressionIR : nameIR ;) : % % %
+
+  1. (Expr_eval_keyset: EC_0 STO_0 |- keysetExpressionIR : EC_1 STO_1 keysetExpressionResult)
+
+  2. If ((keysetExpressionResult has type continueResult<setValue*>)), then
+
+    1. (Let (` setValue*{setValue <- setValue*}) be (keysetExpressionResult as continueResult<setValue*>))
+
+    2. Case analysis on $match_keysets(setValue*{setValue <- setValue*}, value_key*{value_key <- value_key*})
+
+      1. Case false
+
+        1. Result in : % % % |- % : EC_1 STO_1 ?()
+
+      2. Case true
+
+        1. Result in : % % % |- % : EC_1 STO_1 ?(nameIR)
+
+;; ../../../../spec-concrete/8.08.1-eval-parser-statement.watsup:60.1-63.26
+relation SelectCases_match: evalContext store value_key*{value_key <- value_key*} |- selectCaseIR'*{selectCaseIR' <- selectCaseIR'*} : % % %
+
+1. Group : evalContext store value_key*{value_key <- value_key*} |- selectCaseIR'*{selectCaseIR' <- selectCaseIR'*} : % % %
+
+  1. If ((selectCaseIR'*{selectCaseIR' <- selectCaseIR'*} = [])), then
+
+    1. Result in : % % % |- % : evalContext store ?()
+
+  2. (Let selectCaseIR''*{selectCaseIR'' <- selectCaseIR''*} be selectCaseIR'*{selectCaseIR' <- selectCaseIR'*})
+
+  3. If ((selectCaseIR''*{selectCaseIR'' <- selectCaseIR''*} matches pattern _ :: _)), then
+
+    1. (Let selectCaseIR_h :: selectCaseIR_t*{selectCaseIR_t <- selectCaseIR_t*} be selectCaseIR''*{selectCaseIR'' <- selectCaseIR''*})
+
+    2. (SelectCase_match: evalContext store value_key*{value_key <- value_key*} |- selectCaseIR_h : EC_1 STO_1 nameIR?{nameIR <- nameIR?})
+
+    3. Case analysis on nameIR?{nameIR <- nameIR?}
+
+      1. Case (% matches pattern (_))
+
+        1. (Let ?(nameIR_state) be nameIR?{nameIR <- nameIR?})
+
+        2. Result in : % % % |- % : EC_1 STO_1 ?(nameIR_state)
+
+      2. Case (% matches pattern ())
+
+        1. (SelectCases_match: EC_1 STO_1 value_key*{value_key <- value_key*} |- selectCaseIR_t*{selectCaseIR_t <- selectCaseIR_t*} : EC_2 STO_2 nameIR_state?{nameIR_state <- nameIR_state?})
+
+        2. Result in : % % % |- % : EC_2 STO_2 nameIR_state?{nameIR_state <- nameIR_state?}
+
+;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:5.24-5.39
+syntax tableKeyValue = 
+   | value : nameIR
+
+;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:8.1-9.15
+syntax tableKeyResult = 
+   | ` tableKeyValue
+   | exit
+
+;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:11.1-14.23
+relation TableKey_eval: EC_0 STO_0 |- (typedExpressionIR : nameIR _annotationList ;) : % % %
+
+1. Group exit: EC_0 STO_0 |- (typedExpressionIR : nameIR _annotationList ;) : % % %
+
+  1. (Expr_eval: (local) EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult)
+
+  2. If ((expressionResult has type exitResult)), then
+
+    1. (Let exitResult be (expressionResult as exitResult))
+
+    2. Result in : % % |- % : EC_1 STO_1 ((exit) as tableKeyResult)
+
+2. Group cont: EC_0 STO_0 |- (typedExpressionIR : nameIR _annotationList ;) : % % %
+
+  1. (Expr_eval: (local) EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult)
+
+  2. If ((expressionResult has type continueResult<value>)), then
+
+    1. (Let (` value) be (expressionResult as continueResult<value>))
+
+    2. (Let tableKeyValue be (value : nameIR))
+
+    3. Result in : % % |- % : EC_1 STO_1 ((` tableKeyValue) as tableKeyResult)
+
+;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:32.1-33.15
+syntax tableKeysResult = 
+   | ` tableKeyValue*
+   | exit
+
+;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:35.1-38.23
+relation TableKeys_eval: evalContext store |- tableKeyIR''*{tableKeyIR'' <- tableKeyIR''*} : % % %
+
+1. Group : evalContext store |- tableKeyIR''*{tableKeyIR'' <- tableKeyIR''*} : % % %
+
+  1. If ((tableKeyIR''*{tableKeyIR'' <- tableKeyIR''*} = [])), then
+
+    1. Result in : % % |- % : evalContext store ((` []) as tableKeysResult)
+
+  2. (Let tableKeyIR'''*{tableKeyIR''' <- tableKeyIR'''*} be tableKeyIR''*{tableKeyIR'' <- tableKeyIR''*})
+
+  3. If ((tableKeyIR'''*{tableKeyIR''' <- tableKeyIR'''*} matches pattern _ :: _)), then
+
+    1. (Let tableKeyIR_h :: tableKeyIR_t*{tableKeyIR_t <- tableKeyIR_t*} be tableKeyIR'''*{tableKeyIR''' <- tableKeyIR'''*})
+
+    2. (TableKey_eval: evalContext store |- tableKeyIR_h : EC_1 STO_1 tableKeyResult)
+
+    3. Case analysis on tableKeyResult
+
+      1. Case (% has type exitResult)
+
+        1. (Let exitResult be (tableKeyResult as exitResult))
+
+        2. Result in : % % |- % : EC_1 STO_1 ((exit) as tableKeysResult)
+
+      2. Case (% has type continueResult<tableKeyValue>)
+
+        1. (Let (` tableKeyValue_h) be (tableKeyResult as continueResult<tableKeyValue>))
+
+        2. (TableKeys_eval: EC_1 STO_1 |- tableKeyIR_t*{tableKeyIR_t <- tableKeyIR_t*} : EC_2 STO_2 tableKeysResult)
+
+        3. Case analysis on tableKeysResult
+
+          1. Case (% has type exitResult)
+
+            1. (Let exitResult be (tableKeysResult as exitResult))
+
+            2. Result in : % % |- % : EC_2 STO_2 ((exit) as tableKeysResult)
+
+          2. Case (% has type continueResult<tableKeyValue*>)
+
+            1. (Let (` tableKeyValue_t*{tableKeyValue_t <- tableKeyValue_t*}) be (tableKeysResult as continueResult<tableKeyValue*>))
+
+            2. (Let tableKeyValue*{tableKeyValue <- tableKeyValue*} be tableKeyValue_h :: tableKeyValue_t*{tableKeyValue_t <- tableKeyValue_t*})
+
+            3. Result in : % % |- % : EC_2 STO_2 ((` tableKeyValue*{tableKeyValue <- tableKeyValue*}) as tableKeysResult)
+
+;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:74.1-76.23
+relation TableEntryPriority_eval: EC STO |- tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?} : %
+
+1. If ((tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?} matches pattern ())), then
+
+  1. Group : EC STO |- ?() : %
+
+    1. Result in : % % |- % : ?()
+
+;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:81.21-81.51
+syntax tableMatch = 
+   | nat? : tableActionReferenceIR
+
+;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:84.1-85.15
+syntax tableMatchResult = 
+   | ` tableMatch?
+   | exit
+
+;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:87.1-90.26
+relation TableMatch_eval: EC_0 STO_0 |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryIR : % % %
+
+1. Group : EC_0 STO_0 |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryIR : % % %
+
+  1. (Let (_constOptIR tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?} keysetExpressionIR : tableActionReferenceIR _annotationList ;) be tableEntryIR)
+
+  2. (TableEntryPriority_eval: EC_0 STO_0 |- tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?} : n_priority?{n_priority <- n_priority?})
+
+  3. (Expr_eval_keyset: EC_0 STO_0 |- keysetExpressionIR : EC_1 STO_1 keysetExpressionResult)
+
+  4. If ((keysetExpressionResult has type continueResult<setValue*>)), then
+
+    1. (Let (` setValue*{setValue <- setValue*}) be (keysetExpressionResult as continueResult<setValue*>))
+
+    2. (Let (value_key : _nameIR) be tableKeyValue)*{_nameIR <- _nameIR*, tableKeyValue <- tableKeyValue*, value_key <- value_key*}
+
+    3. Case analysis on $match_keysets(setValue*{setValue <- setValue*}, value_key*{value_key <- value_key*})
+
+      1. Case false
+
+        1. Result in : % % |- % @ % : EC_1 STO_1 ((` ?()) as tableMatchResult)
+
+      2. Case true
+
+        1. (Let tableMatch be (n_priority?{n_priority <- n_priority?} : tableActionReferenceIR))
+
+        2. Result in : % % |- % @ % : EC_1 STO_1 ((` ?(tableMatch)) as tableMatchResult)
+
+;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:134.1-135.15
+syntax tableMatchesResult = 
+   | ` tableMatch*
+   | exit
+
+;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:137.1-140.26
+relation TableMatches_eval: evalContext store |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryIR*{tableEntryIR <- tableEntryIR*} : % % %
+
+1. Group : evalContext store |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryIR*{tableEntryIR <- tableEntryIR*} : % % %
+
+  1. If ((tableEntryIR*{tableEntryIR <- tableEntryIR*} = [])), then
+
+    1. Result in : % % |- % @ % : evalContext store ((` []) as tableMatchesResult)
+
+  2. (Let tableEntryIR'*{tableEntryIR' <- tableEntryIR'*} be tableEntryIR*{tableEntryIR <- tableEntryIR*})
+
+  3. If ((tableEntryIR'*{tableEntryIR' <- tableEntryIR'*} matches pattern _ :: _)), then
+
+    1. (Let tableEntryIR_h :: tableEntryIR_t*{tableEntryIR_t <- tableEntryIR_t*} be tableEntryIR'*{tableEntryIR' <- tableEntryIR'*})
+
+    2. (TableMatch_eval: evalContext store |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryIR_h : EC_1 STO_1 tableMatchResult)
+
+    3. If ((tableMatchResult has type continueResult<tableMatch?>)), then
+
+      1. (Let (` tableMatch_h?{tableMatch_h <- tableMatch_h?}) be (tableMatchResult as continueResult<tableMatch?>))
+
+      2. (TableMatches_eval: EC_1 STO_1 |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryIR_t*{tableEntryIR_t <- tableEntryIR_t*} : EC_2 STO_2 tableMatchesResult)
+
+      3. If ((tableMatchesResult has type continueResult<tableMatch*>)), then
+
+        1. (Let (` tableMatch_t*{tableMatch_t <- tableMatch_t*}) be (tableMatchesResult as continueResult<tableMatch*>))
+
+        2. (Let tableMatch*{tableMatch <- tableMatch*} be $opt_as_seq_<tableMatch>(tableMatch_h?{tableMatch_h <- tableMatch_h?}) ++ tableMatch_t*{tableMatch_t <- tableMatch_t*})
+
+        3. Result in : % % |- % @ % : EC_2 STO_2 ((` tableMatch*{tableMatch <- tableMatch*}) as tableMatchesResult)
+
+;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:166.1-167.27
+def $select_action(TBL, tableMatch''*{tableMatch'' <- tableMatch''*})
+
+1. Case analysis on tableMatch''*{tableMatch'' <- tableMatch''*}
+
+  1. Case (% matches pattern [])
+
+    1. (Let (_annotationList _constOptIR default_action= tableActionReferenceIR ;) be TBL.default_action)
+
+    2. Return tableActionReferenceIR
+
+  2. Case (% matches pattern [ _/1 ])
+
+    1. (Let [tableMatch] be tableMatch''*{tableMatch'' <- tableMatch''*})
+
+    2. (Let (_nat?{_nat <- _nat?} : tableActionReferenceIR) be tableMatch)
+
+    3. Return tableActionReferenceIR
 
 ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:7.1-8.54
 def $align_params_with_args(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id*{id <- id*})
@@ -29779,22 +30660,68 @@ relation V1Model_init: |- p4program : % %
 
   2. Result in : |- % : EC_0 STO_0
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:22.1-24.20
-relation V1Model_init_packet: EC_0 STO_0 |- % %
+;; ../../../../spec-concrete/9.A-v1model.watsup:22.1-24.23
+relation V1Model_init_packet_in: EC_0 STO_0 |- externState_packet_in : % %
 
-1. Group : EC_0 STO_0 |- % %
+1. Group : EC_0 STO_0 |- externState_packet_in : % %
 
   1. (Extern_init: EC_0 STO_0 |- "packet_in" : STO_1)
 
   2. (Let EC_1 be $add_var_e((global), EC_0, (` "packet_in"), ((! ["packet_in"]) as value)))
 
-  3. (Extern_init: EC_1 STO_1 |- "packet_out" : STO_2)
+  3. (Let object'?{object' <- object'?} be $find_map<oid, object>(STO_1, ["packet_in"]))
 
-  4. (Let EC_2 be $add_var_e((global), EC_1, (` "packet_out"), ((! ["packet_out"]) as value)))
+  4. If ((object'?{object' <- object'?} matches pattern (_))), then
 
-  5. (Let object'?{object' <- object'?} be $find_map<oid, object>(STO_2, ["main"]))
+    1. (Let ?(object) be object'?{object' <- object'?})
 
-  6. If ((object'?{object' <- object'?} matches pattern (_))), then
+    2. If ((object has type externObject)), then
+
+      1. (Let externObject_packet_in be (object as externObject))
+
+      2. (Let (extern tid < theta >{ _externState frame externMethodDefEnv }) be externObject_packet_in)
+
+      3. (Let externObject_packet_in_init be (extern tid < theta >{ externState_packet_in frame externMethodDefEnv }))
+
+      4. (Let STO_2 be $add_map<oid, object>(STO_1, ["packet_in"], (externObject_packet_in_init as object)))
+
+      5. Result in : % % |- % : EC_1 STO_2
+
+;; ../../../../spec-concrete/9.A-v1model.watsup:40.1-42.23
+relation V1Model_init_packet_out: EC_0 STO_0 |- externState_packet_out : % %
+
+1. Group : EC_0 STO_0 |- externState_packet_out : % %
+
+  1. (Extern_init: EC_0 STO_0 |- "packet_out" : STO_1)
+
+  2. (Let EC_1 be $add_var_e((global), EC_0, (` "packet_out"), ((! ["packet_out"]) as value)))
+
+  3. (Let object'?{object' <- object'?} be $find_map<oid, object>(STO_1, ["packet_out"]))
+
+  4. If ((object'?{object' <- object'?} matches pattern (_))), then
+
+    1. (Let ?(object) be object'?{object' <- object'?})
+
+    2. If ((object has type externObject)), then
+
+      1. (Let externObject_packet_out be (object as externObject))
+
+      2. (Let (extern tid < theta >{ _externState frame externMethodDefEnv }) be externObject_packet_out)
+
+      3. (Let externObject_packet_out_init be (extern tid < theta >{ externState_packet_out frame externMethodDefEnv }))
+
+      4. (Let STO_2 be $add_map<oid, object>(STO_1, ["packet_out"], (externObject_packet_out_init as object)))
+
+      5. Result in : % % |- % : EC_1 STO_2
+
+;; ../../../../spec-concrete/9.A-v1model.watsup:58.1-60.23
+relation V1Model_init_globals: EC_0 STO |- i_port : %
+
+1. Group : EC_0 STO |- i_port : %
+
+  1. (Let object'?{object' <- object'?} be $find_map<oid, object>(STO, ["main"]))
+
+  2. If ((object'?{object' <- object'?} matches pattern (_))), then
 
     1. (Let ?(object) be object'?{object' <- object'?})
 
@@ -29814,11 +30741,11 @@ relation V1Model_init_packet: EC_0 STO_0 |- % %
 
           1. (Let ?(typeIR_meta) be typeIR'?{typeIR' <- typeIR'?})
 
-          2. (Var_init: EC_2 |- typeIR_hdr "hdr" : EC_3)
+          2. (Var_init: EC_0 |- typeIR_hdr "hdr" : EC_1)
 
-          3. (Var_init: EC_3 |- typeIR_meta "meta" : EC_4)
+          3. (Var_init: EC_1 |- typeIR_meta "meta" : EC_2)
 
-          4. (Let typeDefIR?{typeDefIR <- typeDefIR?} be $find_typeDef_e((global), EC_4, (` "standard_metadata_t")))
+          4. (Let typeDefIR?{typeDefIR <- typeDefIR?} be $find_typeDef_e((global), EC_2, (` "standard_metadata_t")))
 
           5. If ((typeDefIR?{typeDefIR <- typeDefIR?} matches pattern (_))), then
 
@@ -29826,11 +30753,17 @@ relation V1Model_init_packet: EC_0 STO_0 |- % %
 
             2. (Let typeIR_std_meta be ((typeDefIR_standard_metadata < [] >) as typeIR))
 
-            3. (Var_init: EC_4 |- typeIR_std_meta "standard_metadata" : EC_5)
+            3. (Var_init: EC_2 |- typeIR_std_meta "standard_metadata" : EC_3)
 
-            4. Result in : % % |- EC_5 STO_2
+            4. (Let storageReference_port be (((` "standard_metadata") as storageReference) . "ingress_port"))
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:51.1-51.64
+            5. (Let value_port be ((9 w i_port) as value))
+
+            6. (Lvalue_write: (global) EC_3 STO |- storageReference_port -> value_port : EC_4)
+
+            7. Result in : % % |- % : EC_4
+
+;; ../../../../spec-concrete/9.A-v1model.watsup:86.1-86.64
 def $V1Model_setup_packet_in_argument(EC)
 
 1. (Let typeDefIR?{typeDefIR <- typeDefIR?} be $find_typeDef_e((global), EC, (` "packet_in")))
@@ -29845,7 +30778,7 @@ def $V1Model_setup_packet_in_argument(EC)
 
   4. Return argumentIR_packet_in
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:59.1-59.65
+;; ../../../../spec-concrete/9.A-v1model.watsup:94.1-94.65
 def $V1Model_setup_packet_out_argument(EC)
 
 1. (Let typeDefIR?{typeDefIR <- typeDefIR?} be $find_typeDef_e((global), EC, (` "packet_out")))
@@ -29860,7 +30793,7 @@ def $V1Model_setup_packet_out_argument(EC)
 
   4. Return argumentIR_packet_out
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:67.1-67.52
+;; ../../../../spec-concrete/9.A-v1model.watsup:102.1-102.52
 def $V1Model_setup_hdr_argument(STO)
 
 1. (Let object'?{object' <- object'?} be $find_map<oid, object>(STO, ["main"]))
@@ -29883,7 +30816,7 @@ def $V1Model_setup_hdr_argument(STO)
 
       3. Return argumentIR_hdr
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:75.1-75.53
+;; ../../../../spec-concrete/9.A-v1model.watsup:110.1-110.53
 def $V1Model_setup_meta_argument(STO)
 
 1. (Let object'?{object' <- object'?} be $find_map<oid, object>(STO, ["main"]))
@@ -29906,7 +30839,7 @@ def $V1Model_setup_meta_argument(STO)
 
       3. Return argumentIR_meta
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:83.1-83.72
+;; ../../../../spec-concrete/9.A-v1model.watsup:118.1-118.72
 def $V1Model_setup_standard_metadata_argument(EC)
 
 1. (Let typeDefIR?{typeDefIR <- typeDefIR?} be $find_typeDef_e((global), EC, (` "standard_metadata_t")))
@@ -29921,7 +30854,7 @@ def $V1Model_setup_standard_metadata_argument(EC)
 
   4. Return argumentIR_standard_metadata
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:92.1-92.71
+;; ../../../../spec-concrete/9.A-v1model.watsup:127.1-127.71
 def $V1Model_setup_main_callee(EC, STO)
 
 1. (Let typeDefIR?{typeDefIR <- typeDefIR?} be $find_typeDef_e((global), EC, (` "V1Switch")))
@@ -29958,7 +30891,7 @@ def $V1Model_setup_main_callee(EC, STO)
 
           4. Return typedExpressionIR_main
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:107.1-110.22
+;; ../../../../spec-concrete/9.A-v1model.watsup:142.1-145.22
 def $V1Model_setup_parser_callee(EC, STO, typedExpressionIR_main)
 
 1. (Let typeDefIR?{typeDefIR <- typeDefIR?} be $find_typeDef_e((global), EC, (` "Parser")))
@@ -29995,7 +30928,7 @@ def $V1Model_setup_parser_callee(EC, STO, typedExpressionIR_main)
 
           4. Return typedExpressionIR_parser
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:127.1-130.22
+;; ../../../../spec-concrete/9.A-v1model.watsup:162.1-165.22
 def $V1Model_setup_verify_callee(EC, STO, typedExpressionIR_main)
 
 1. (Let typeDefIR?{typeDefIR <- typeDefIR?} be $find_typeDef_e((global), EC, (` "VerifyChecksum")))
@@ -30032,7 +30965,7 @@ def $V1Model_setup_verify_callee(EC, STO, typedExpressionIR_main)
 
           4. Return typedExpressionIR_verify
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:148.1-151.22
+;; ../../../../spec-concrete/9.A-v1model.watsup:183.1-186.22
 def $V1Model_setup_ingress_callee(EC, STO, typedExpressionIR_main)
 
 1. (Let typeDefIR?{typeDefIR <- typeDefIR?} be $find_typeDef_e((global), EC, (` "Ingress")))
@@ -30069,7 +31002,7 @@ def $V1Model_setup_ingress_callee(EC, STO, typedExpressionIR_main)
 
           4. Return typedExpressionIR_ingress
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:169.1-172.22
+;; ../../../../spec-concrete/9.A-v1model.watsup:204.1-207.22
 def $V1Model_setup_egress_callee(EC, STO, typedExpressionIR_main)
 
 1. (Let typeDefIR?{typeDefIR <- typeDefIR?} be $find_typeDef_e((global), EC, (` "Egress")))
@@ -30106,7 +31039,7 @@ def $V1Model_setup_egress_callee(EC, STO, typedExpressionIR_main)
 
           4. Return typedExpressionIR_egress
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:190.1-193.22
+;; ../../../../spec-concrete/9.A-v1model.watsup:225.1-228.22
 def $V1Model_setup_check_callee(EC, STO, typedExpressionIR_main)
 
 1. (Let typeDefIR?{typeDefIR <- typeDefIR?} be $find_typeDef_e((global), EC, (` "ComputeChecksum")))
@@ -30143,7 +31076,7 @@ def $V1Model_setup_check_callee(EC, STO, typedExpressionIR_main)
 
           4. Return typedExpressionIR_check
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:211.1-214.22
+;; ../../../../spec-concrete/9.A-v1model.watsup:246.1-249.22
 def $V1Model_setup_deparse_callee(EC, STO, typedExpressionIR_main)
 
 1. (Let typeDefIR?{typeDefIR <- typeDefIR?} be $find_typeDef_e((global), EC, (` "Deparser")))
@@ -30174,7 +31107,7 @@ def $V1Model_setup_deparse_callee(EC, STO, typedExpressionIR_main)
 
         4. Return typedExpressionIR_deparse
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:235.1-237.20
+;; ../../../../spec-concrete/9.A-v1model.watsup:270.1-272.20
 relation V1Model_parser: EC_0 STO_0 |- % % %
 
 1. Group : EC_0 STO_0 |- % % %
@@ -30203,7 +31136,7 @@ relation V1Model_parser: EC_0 STO_0 |- % % %
 
     2. Result in : % % |- EC_1 STO_1 ((accept) as transitionResult)
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:267.1-269.20
+;; ../../../../spec-concrete/9.A-v1model.watsup:302.1-304.20
 relation V1Model_verify: EC_0 STO_0 |- % % %
 
 1. Group : EC_0 STO_0 |- % % %
@@ -30228,7 +31161,7 @@ relation V1Model_verify: EC_0 STO_0 |- % % %
 
     2. Result in : % % |- EC_1 STO_1 ((return ?()) as callResult)
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:293.1-295.20
+;; ../../../../spec-concrete/9.A-v1model.watsup:328.1-330.20
 relation V1Model_ingress: EC_0 STO_0 |- % % %
 
 1. Group : EC_0 STO_0 |- % % %
@@ -30263,7 +31196,7 @@ relation V1Model_ingress: EC_0 STO_0 |- % % %
 
     2. Result in : % % |- EC_1 STO_1 ((exit) as callResult)
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:345.1-347.20
+;; ../../../../spec-concrete/9.A-v1model.watsup:380.1-382.20
 relation V1Model_egress: EC_0 STO_0 |- % % %
 
 1. Group : EC_0 STO_0 |- % % %
@@ -30290,7 +31223,7 @@ relation V1Model_egress: EC_0 STO_0 |- % % %
 
     2. Result in : % % |- EC_1 STO_1 ((return ?()) as callResult)
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:374.1-376.20
+;; ../../../../spec-concrete/9.A-v1model.watsup:409.1-411.20
 relation V1Model_check: EC_0 STO_0 |- % % %
 
 1. Group : EC_0 STO_0 |- % % %
@@ -30315,7 +31248,7 @@ relation V1Model_check: EC_0 STO_0 |- % % %
 
     2. Result in : % % |- EC_1 STO_1 ((return ?()) as callResult)
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:400.1-402.20
+;; ../../../../spec-concrete/9.A-v1model.watsup:435.1-437.20
 relation V1Model_deparse: EC_0 STO_0 |- % % %
 
 1. Group : EC_0 STO_0 |- % % %

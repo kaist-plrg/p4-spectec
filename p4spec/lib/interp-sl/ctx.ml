@@ -165,6 +165,12 @@ let find_typdef (cursor : cursor) (ctx : t) (tid : TId.t) : Typdef.t =
   | Some td -> td
   | None -> error_undef tid.at "type" tid.it
 
+let find_defined_typdef (cursor : cursor) (ctx : t) (tid : TId.t) :
+    tparam list * deftyp =
+  match find_typdef cursor ctx tid with
+  | Extern -> error_undef tid.at "defined type" tid.it
+  | Defined (tparams, deftyp) -> (tparams, deftyp)
+
 let bound_typdef (cursor : cursor) (ctx : t) (tid : TId.t) : bool =
   find_typdef_opt cursor ctx tid |> Option.is_some
 

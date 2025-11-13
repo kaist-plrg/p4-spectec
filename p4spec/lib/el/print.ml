@@ -247,6 +247,7 @@ and string_of_rules rules = String.concat "\n" (List.map string_of_rule rules)
 
 let string_of_def def =
   match def.it with
+  | ExternSynD (typid, _hints) -> "extern syntax " ^ string_of_typid typid
   | SynD syns ->
       "syntax "
       ^ String.concat ", "
@@ -267,6 +268,10 @@ let string_of_def def =
   | RuleGroupD (relid, groupid, rules) ->
       "rulegroup " ^ string_of_relid relid ^ string_of_ruleid groupid ^ ":\n  "
       ^ String.concat "\n  " (List.map string_of_rule rules)
+  | ExternDecD (defid, tparams, params, plaintyp, _hints) ->
+      "extern dec " ^ string_of_defid defid ^ string_of_tparams tparams
+      ^ string_of_params params ^ " : "
+      ^ string_of_plaintyp plaintyp
   | BuiltinDecD (defid, tparams, params, plaintyp, _hints) ->
       "builtin dec " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : "

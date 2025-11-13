@@ -132,6 +132,7 @@ and string_of_value ?(short = false) ?(level = 0) value =
               values))
         (indent level)
   | FuncV id -> string_of_defid id
+  | ExternV _ -> "extern"
 
 and string_of_notval ?(level = 0) notval =
   let mixop, values = notval in
@@ -421,6 +422,7 @@ let rec string_of_def def =
   ";; " ^ string_of_region def.at ^ "\n"
   ^
   match def.it with
+  | ExternTypD (id, _) -> "extern syntax " ^ string_of_typid id
   | TypD (typid, tparams, deftyp, _) ->
       "syntax " ^ string_of_typid typid ^ string_of_tparams tparams ^ " = "
       ^ string_of_deftyp deftyp
@@ -431,6 +433,9 @@ let rec string_of_def def =
       "relation " ^ string_of_relid relid ^ ": " ^ string_of_nottyp nottyp
       ^ "\n\n"
       ^ string_of_rulegroups nottyp inputs rulegroups
+  | ExternDecD (defid, tparams, params, typ, _) ->
+      "extern def " ^ string_of_defid defid ^ string_of_tparams tparams
+      ^ string_of_params params ^ " : " ^ string_of_typ typ
   | BuiltinDecD (defid, tparams, params, typ, _) ->
       "builtin def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : " ^ string_of_typ typ
