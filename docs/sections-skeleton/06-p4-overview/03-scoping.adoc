@@ -1,21 +1,52 @@
 [#sec-scoping]
+[#syn-cursor]
 === Scoping
-
-${syntax: cursor}
 
 Scopes are used to organize P4 programs into nested namespaces. There are three
 kinds of scopes in P4, from outermost to innermost: the top-level scope (global
-namespace), the scope within a `parser` or `control` declaration (block
+namespace), the scope within a `parser`, `control`, or `extern` declaration (block
 namespace), and the scope within a block statement (local namespace).
 
-Cursors are used to represent scopes while defining the semantic rules of P4.
+[source,p4]
+----
+// top-level (global) scope
+const bit<8> GLOBAL = 255;
 
-[#sec-scoping-dot-prefixed-name]
-==== Dot prefixed names
+control c() {
+  // block scope within a control
+  bit<8> block = GLOBAL;
+
+  apply {
+    // local scope
+    bit<8> local = block;
+  }
+}
+
+bit<8> f() {
+  // local scope
+  bit<8> local = GLOBAL;
+  return local;
+}
+----
+
+Cursors are used to track scopes while defining the semantic rules of P4.
+
+${syntax: cursor}
+
+NOTE: The division of global/block/local scopes and `cursor` is newly introduced.
+Maybe add more explanation here later. Also introduce a metavariable for `cursor`.
+
+[#sec-scoping-name-resolution]
+[#syn-prefixedNonTypeName]
+[#syn-prefixedTypeName]
+==== Name resolution
+
+P4 namespaces are organized in a hierarchical fashion.
 
 ${syntax: prefixedNonTypeName
           prefixedTypeName}
 
+// Section 6.9 in the P4-16 Language Specification
 Identifiers prefixed with a dot are always resolved in the top-level namespace.
 
 [source,p4]
@@ -30,15 +61,16 @@ control c() {
 }
 ----
 
-References to resolve an identifier are attempted inside-out, starting
-with the current scope and proceeding to all lexically enclosing
-scopes. The compiler may provide a warning if multiple resolutions are
-possible for the same name (name shadowing).
+// Section 6.9 in the P4-16 Language Specification
+References to resolve an identifier are attempted inside-out, starting with the
+current scope and proceeding to all lexically enclosing scopes. The compiler
+may provide a warning if multiple resolutions are possible for the same name
+(name shadowing).
 
 [source,p4]
 ----
 const bit<4> x = 1;
-control p() {
+control c() {
     const bit<8> x = 8;    // x declaration shadows global x
     const bit<4> y = .x;   // reference to top-level x
     const bit<8> z = x;    // reference to p's local x
@@ -46,10 +78,18 @@ control p() {
 }
 ----
 
+// Seciton 6.6.1 in the P4-16 Language Specification
+The order of declarations is important; with the exception of parser states,
+all uses of a symbol must follow the symbol's declaration. (This is a departure
+from P4~14~, which allows declarations in any order. This requirement
+significantly simplifies the implementation of compilers for P4, allowing
+compilers to use additional information about declared identifiers to resolve
+ambiguities.)
+
 [#sec-scoping-name-visibility]
 ==== Name visibility
 
-Identifiers defined in the top-level namespace are globally
-visible. Declarations within a `parser` or `control` are
-private and cannot be referred to from outside of the enclosing `parser`
-or `control`.
+// Section 6.10 in the P4-16 Language Specification
+Identifiers defined in the top-level namespace are globally visible.
+Declarations within a `parser` or `control` are private and cannot be referred
+to from outside of the enclosing `parser` or `control`.

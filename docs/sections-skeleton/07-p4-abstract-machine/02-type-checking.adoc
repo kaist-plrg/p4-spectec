@@ -1,12 +1,10 @@
-[#sec-abstract-machine-type-system]
-=== Type System
+[#sec-abstract-machine-type-checking]
+=== Type Checking
 
+// Section 7 in the P4-16 Language Specification
 P4~16~ is a statically-typed language. Programs that do not pass the type
 checker are considered invalid and rejected by the compiler. P4 provides a
 number of base types as well as type operators that construct derived types.
-Some values can be converted to a different type using casts. However, to make
-user intents clear, implicit casts are only allowed in a few circumstances and
-the range of casts available is intentionally restricted.
 
 [#sec-abstract-machine-p4-ir]
 ==== P4 Intermediate Representation
@@ -24,14 +22,11 @@ This makes it easy to relate P4~IR~ programs to their source P4~16~ programs.
 
 Take expressions as an example.
 
-${syntax: expression
-          expressionIR
-          expressionNoteIR
-          typedExpressionIR}
+${syntax: expression expressionIR expressionNoteIR typedExpressionIR}
 
-`typedExpressionIR` is an intermediate representation of `expression` that
-is annotated with type information, `expressionNoteIR`.
-Nevertheless, the structure of the grammar mostly stays the same.
+`typedExpressionIR` is an intermediate representation of `expression` that is
+annotated with type information, `expressionNoteIR`. Nevertheless, the
+structure of the grammar mostly stays the same.
 
 ${syntax: binaryExpression
           binaryExpressionIR}
@@ -39,13 +34,21 @@ ${syntax: binaryExpression
 `binaryExpressionIR` is an intermediate representation of `binaryExpression`.
 The only difference is that the operands are now of type `typedExpressionIR`.
 
+NOTE: Added explanation for P4~IR~. More explanation needed?
+
+==== Typing a P4 program
+
+${syntax: p4program p4programIR}
+
+For a well-typed P4~16~ program, `p4program`, a type checker produces a P4~IR~
+program, `p4programIR`:
+
+${ruleprose: Program_ok}
+
 [#sec-abstract-machine-typing-context]
 ==== Typing context
 
-${syntax: globalTypingLayer
-          blockTypingLayer
-          localTypingLayer
-          typingContext}
+${syntax: globalTypingLayer blockTypingLayer localTypingLayer typingContext}
 
 A typing context is used to keep track of the types of all named declarations
 in scope at a given program point. It consists of three layers:
@@ -54,38 +57,38 @@ in scope at a given program point. It consists of three layers:
   P4~16~ program.
 * A block typing layer, which contains all declarations in the current block
   scope.
-* A local typing layer, which contains all declarations in the current
-  control-flow scope.
+* A local typing layer, which contains all declarations in the current local
+  scope.
 
-Each layer contains multiple mappings from names to types.
+Each layer contains mappings from names to types.
 
-${syntax: varTypeIR
-          frame}
+${syntax: varTypeIR typeFrame}
 
-`frame` is a map from variable names to their types, `varTypeIR`. In addition
-to the type of the variable, `varTypeIR` also contains the direction of the
-variable, whether it is a compile-time constant, and whether it has an initial
-value.
+`typeFrame` is a map from variable names to their types, `varTypeIR`. In
+addition to the type of the variable, `varTypeIR` also contains the direction
+of the variable (`direction`), whether it is a compile-time constant (`ctk`),
+and whether it is associated with a compile-time known value (`value?`).
+
+The compile-time known-ness is discussed in <<sec-compile-time-known>>.
 
 Notice that `localTypingLayer` contains multiple `frame`s. This is because a
 local scope can be nested with block statements.
 
-${syntax: typeDefIR
-          typeDefEnv}
+${syntax: typeDefIR typeDefEnv}
 
-`typeDefEnv` is a map from type names to their definitions, `typeDefIR`.
+`typeDefEnv` is a map from type names to their type definitions, `typeDefIR`.
 `typeDefIR` is a type constructor, derived from user-defined type declarations.
 
-${syntax: callableTypeDefIR
-          callableTypeDefEnv}
+${syntax: callableTypeDefIR callableTypeDefEnv}
 
 Functions, methods, and actions can be defined in P4~16~. These are
-collectively called routines. `callableTypeDefEnv` is a map from callable names
-to their type definitions, `callableTypeDefIR`.
+collectively called callables. `callableTypeDefEnv` is a map from callable
+names to their type definitions, `callableTypeDefIR`.
 
-${syntax: constructorTypeDefIR
-          constructorTypeDefEnv}
+${syntax: constructorTypeDefIR constructorTypeDefEnv}
 
 Stateful objects can be defined in P4~16~, which are instantiated using
 constructors. `constructorTypeDefEnv` is a map from constructor names to their
 type definitions, `constructorTypeDefIR`.
+
+NOTE: Added explanation for the typing context. Is this the right place?
