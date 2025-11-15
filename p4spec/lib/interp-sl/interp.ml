@@ -113,12 +113,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         (* Map over the value list elements,
            and assign each value to the iterated expression *)
         let ctxs =
-          List.fold_left
-            (fun ctxs value ->
+          List.map
+            (fun value ->
               let ctx = Ctx.localize_clear ctx in
-              let ctx = assign_exp ctx exp value in
-              ctxs @ [ ctx ])
-            [] values
+              assign_exp ctx exp value)
+            values
         in
         (* Per iterated variable, collect its elementwise value,
            then make a sequence out of them *)
@@ -906,14 +905,20 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   and eval_if_cond_list (ctx : Ctx.t) (exp_cond : exp) (vars : var list)
       (iterexps : iterexp list) : bool * value list =
     let ctxs_sub = Ctx.sub_list ctx vars in
-    List.fold_left
-      (fun (cond, values_cond) ctx_sub ->
-        if not cond then (cond, values_cond)
-        else
-          let cond, value_cond = eval_if_cond_iter' ctx_sub exp_cond iterexps in
-          let values_cond = values_cond @ [ value_cond ] in
-          (cond, values_cond))
-      (true, []) ctxs_sub
+    let cond, values_cond_rev =
+      List.fold_left
+        (fun (cond, values_cond_rev) ctx_sub ->
+          if not cond then (cond, values_cond_rev)
+          else
+            let cond, value_cond =
+              eval_if_cond_iter' ctx_sub exp_cond iterexps
+            in
+            let values_cond_rev = value_cond :: values_cond_rev in
+            (cond, values_cond_rev))
+        (true, []) ctxs_sub
+    in
+    let values_cond = List.rev values_cond_rev in
+    (cond, values_cond)
 
   and eval_if_cond_iter' (ctx : Ctx.t) (exp_cond : exp)
       (iterexps : iterexp list) : bool * value =
@@ -980,16 +985,20 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   and eval_hold_cond_list (ctx : Ctx.t) (id : id) (notexp : notexp)
       (vars : var list) (iterexps : iterexp list) : bool * value list =
     let ctxs_sub = Ctx.sub_list ctx vars in
-    List.fold_left
-      (fun (cond, values_cond) ctx_sub ->
-        if not cond then (cond, values_cond)
-        else
-          let cond, value_cond =
-            eval_hold_cond_iter' ctx_sub id notexp iterexps
-          in
-          let values_cond = values_cond @ [ value_cond ] in
-          (cond, values_cond))
-      (true, []) ctxs_sub
+    let cond, values_cond_rev =
+      List.fold_left
+        (fun (cond, values_cond_rev) ctx_sub ->
+          if not cond then (cond, values_cond_rev)
+          else
+            let cond, value_cond =
+              eval_hold_cond_iter' ctx_sub id notexp iterexps
+            in
+            let values_cond_rev = value_cond :: values_cond_rev in
+            (cond, values_cond_rev))
+        (true, []) ctxs_sub
+    in
+    let values_cond = List.rev values_cond_rev in
+    (cond, values_cond)
 
   and eval_hold_cond_iter' (ctx : Ctx.t) (id : id) (notexp : notexp)
       (iterexps : iterexp list) : bool * value =
@@ -1054,29 +1063,31 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and eval_cases (ctx : Ctx.t) (exp : exp) (cases : case list) :
       instr list option * value =
-    cases
-    |> List.fold_left
-         (fun (block_match, values_cond) (guard, block) ->
-           match block_match with
-           | Some _ -> (block_match, values_cond)
-           | None ->
-               let exp_cond =
-                 match guard with
-                 | BoolG true -> exp.it
-                 | BoolG false -> Il.Ast.UnE (`NotOp, `BoolT, exp)
-                 | CmpG (cmpop, optyp, exp_r) ->
-                     Il.Ast.CmpE (cmpop, optyp, exp, exp_r)
-                 | SubG typ -> Il.Ast.SubE (exp, typ)
-                 | MatchG pattern -> Il.Ast.MatchE (exp, pattern)
-                 | MemG exp_s -> Il.Ast.MemE (exp, exp_s)
-               in
-               let exp_cond = exp_cond $$ (exp.at, Il.Ast.BoolT) in
-               let value_cond = eval_exp ctx exp_cond in
-               let values_cond = values_cond @ [ value_cond ] in
-               let cond = Value.get_bool value_cond in
-               if cond then (Some block, values_cond) else (None, values_cond))
-         (None, [])
-    |> fun (block_match, values_cond) ->
+    let block_match, values_cond_rev =
+      List.fold_left
+        (fun (block_match, values_cond_rev) (guard, block) ->
+          match block_match with
+          | Some _ -> (block_match, values_cond_rev)
+          | None ->
+              let exp_cond =
+                match guard with
+                | BoolG true -> exp.it
+                | BoolG false -> Il.Ast.UnE (`NotOp, `BoolT, exp)
+                | CmpG (cmpop, optyp, exp_r) ->
+                    Il.Ast.CmpE (cmpop, optyp, exp, exp_r)
+                | SubG typ -> Il.Ast.SubE (exp, typ)
+                | MatchG pattern -> Il.Ast.MatchE (exp, pattern)
+                | MemG exp_s -> Il.Ast.MemE (exp, exp_s)
+              in
+              let exp_cond = exp_cond $$ (exp.at, Il.Ast.BoolT) in
+              let value_cond = eval_exp ctx exp_cond in
+              let values_cond_rev = value_cond :: values_cond_rev in
+              let cond = Value.get_bool value_cond in
+              if cond then (Some block, values_cond_rev)
+              else (None, values_cond_rev))
+        (None, []) cases
+    in
+    let values_cond = List.rev values_cond_rev in
     let value_cond =
       let vid = Value.fresh () in
       let typ = Il.Ast.IterT (Il.Ast.BoolT $ no_region, Il.Ast.List) in
@@ -1199,36 +1210,25 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     in
     (* Create a subcontext for each batch of bound values *)
     let ctxs_sub = Ctx.sub_list ctx vars_bound in
-    let ctx, values_binding =
+    let values_binding =
       match ctxs_sub with
       (* If the bound variable supposed to guide the iteration is already empty,
          then the binding variables are also empty *)
-      | [] ->
-          let values_binding =
-            List.init (List.length vars_binding) (fun _ -> [])
-          in
-          (ctx, values_binding)
+      | [] -> List.init (List.length vars_binding) (fun _ -> [])
       (* Otherwise, evaluate the premise for each batch of bound values,
          and collect the resulting binding batches *)
       | _ ->
-          let ctx, values_binding_batch =
-            List.fold_left
-              (fun (ctx, values_binding_batch) ctx_sub ->
+          let values_binding_batch =
+            List.map
+              (fun ctx_sub ->
                 let ctx_sub = eval_let_iter' ctx_sub exp_l exp_r iterexps in
-                let value_binding_batch =
-                  List.map
-                    (fun (id_binding, _typ_binding, iters_binding) ->
-                      Ctx.find_value Local ctx_sub (id_binding, iters_binding))
-                    vars_binding
-                in
-                let values_binding_batch =
-                  values_binding_batch @ [ value_binding_batch ]
-                in
-                (ctx, values_binding_batch))
-              (ctx, []) ctxs_sub
+                List.map
+                  (fun (id_binding, _typ_binding, iters_binding) ->
+                    Ctx.find_value Local ctx_sub (id_binding, iters_binding))
+                  vars_binding)
+              ctxs_sub
           in
-          let values_binding = values_binding_batch |> Ctx.transpose in
-          (ctx, values_binding)
+          values_binding_batch |> Ctx.transpose
     in
     (* Finally, bind the resulting binding batches *)
     List.fold_left2
@@ -1302,36 +1302,25 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     in
     (* Create a subcontext for each batch of bound values *)
     let ctxs_sub = Ctx.sub_list ctx vars_bound in
-    let ctx, values_binding =
+    let values_binding =
       match ctxs_sub with
       (* If the bound variable supposed to guide the iteration is already empty,
          then the binding variables are also empty *)
-      | [] ->
-          let values_binding =
-            List.init (List.length vars_binding) (fun _ -> [])
-          in
-          (ctx, values_binding)
+      | [] -> List.init (List.length vars_binding) (fun _ -> [])
       (* Otherwise, evaluate the premise for each batch of bound values,
          and collect the resulting binding batches *)
       | _ ->
-          let ctx, values_binding_batch =
-            List.fold_left
-              (fun (ctx, values_binding_batch) ctx_sub ->
+          let values_binding_batch =
+            List.map
+              (fun ctx_sub ->
                 let ctx_sub = eval_rule_iter' ctx_sub id notexp iterexps in
-                let value_binding_batch =
-                  List.map
-                    (fun (id_binding, _typ_binding, iters_binding) ->
-                      Ctx.find_value Local ctx_sub (id_binding, iters_binding))
-                    vars_binding
-                in
-                let values_binding_batch =
-                  values_binding_batch @ [ value_binding_batch ]
-                in
-                (ctx, values_binding_batch))
-              (ctx, []) ctxs_sub
+                List.map
+                  (fun (id_binding, _typ_binding, iters_binding) ->
+                    Ctx.find_value Local ctx_sub (id_binding, iters_binding))
+                  vars_binding)
+              ctxs_sub
           in
-          let values_binding = values_binding_batch |> Ctx.transpose in
-          (ctx, values_binding)
+          values_binding_batch |> Ctx.transpose
     in
     (* Finally, bind the resulting binding batches *)
     List.fold_left2
