@@ -89,6 +89,11 @@ let get_num (value : t) =
 let get_text (value : t) =
   match value.it with TextV s -> s | _ -> failwith "get_text"
 
+(* Tuple *)
+
+let get_tuple (value : t) =
+  match value.it with TupleV values -> values | _ -> failwith "get_tuple"
+
 (* List *)
 
 let to_list (values : t list) = ListV values

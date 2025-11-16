@@ -864,46 +864,58 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   and eval_iter_exp_opt (note : typ') (ctx : Ctx.t) (exp : exp)
       (vars : var list) (k : value -> 'r) : 'r =
     let ctx_sub_opt = Ctx.sub_opt ctx vars in
-    let value_res =
-      match ctx_sub_opt with
-      | Some ctx_sub ->
-          let value = eval_exp ctx_sub exp Fun.id in
-          let vid = Value.fresh () in
-          let typ = note in
-          Il.Ast.(OptV (Some value) $$$ { vid; typ })
-      | None ->
-          let vid = Value.fresh () in
-          let typ = note in
-          Il.Ast.(OptV None $$$ { vid; typ })
-    in
-    Ctx.add_node ctx value_res;
-    List.iter
-      (fun (id, _typ, iters) ->
-        let value_sub = Ctx.find_value Local ctx (id, iters @ [ Il.Ast.Opt ]) in
-        Ctx.add_edge ctx value_res value_sub Dep.Edges.Iter)
-      vars;
-    k value_res
+    match ctx_sub_opt with
+    | Some ctx_sub ->
+        eval_exp ctx_sub exp (fun value ->
+            let value_res =
+              let vid = Value.fresh () in
+              let typ = note in
+              Il.Ast.(OptV (Some value) $$$ { vid; typ })
+            in
+            Ctx.add_node ctx value_res;
+            List.iter
+              (fun (id, _typ, iters) ->
+                let value_sub =
+                  Ctx.find_value Local ctx (id, iters @ [ Il.Ast.Opt ])
+                in
+                Ctx.add_edge ctx value_res value_sub Dep.Edges.Iter)
+              vars;
+            k value_res)
+    | None ->
+        let vid = Value.fresh () in
+        let typ = note in
+        let value_res = Il.Ast.(OptV None $$$ { vid; typ }) in
+        Ctx.add_node ctx value_res;
+        List.iter
+          (fun (id, _typ, iters) ->
+            let value_sub =
+              Ctx.find_value Local ctx (id, iters @ [ Il.Ast.Opt ])
+            in
+            Ctx.add_edge ctx value_res value_sub Dep.Edges.Iter)
+          vars;
+        k value_res
 
   and eval_iter_exp_list (note : typ') (ctx : Ctx.t) (exp : exp)
       (vars : var list) (k : value -> 'r) : 'r =
     let ctxs_sub = Ctx.sub_list ctx vars in
-    let values =
-      List.map (fun ctx_sub -> eval_exp ctx_sub exp Fun.id) ctxs_sub
+    let f_map ctx_sub k_map = eval_exp ctx_sub exp k_map in
+    let k_wrap values =
+      let value_res =
+        let vid = Value.fresh () in
+        let typ = note in
+        Il.Ast.(ListV values $$$ { vid; typ })
+      in
+      Ctx.add_node ctx value_res;
+      List.iter
+        (fun (id, _typ, iters) ->
+          let value_sub =
+            Ctx.find_value Local ctx (id, iters @ [ Il.Ast.List ])
+          in
+          Ctx.add_edge ctx value_res value_sub Dep.Edges.Iter)
+        vars;
+      k value_res
     in
-    let value_res =
-      let vid = Value.fresh () in
-      let typ = note in
-      Il.Ast.(ListV values $$$ { vid; typ })
-    in
-    Ctx.add_node ctx value_res;
-    List.iter
-      (fun (id, _typ, iters) ->
-        let value_sub =
-          Ctx.find_value Local ctx (id, iters @ [ Il.Ast.List ])
-        in
-        Ctx.add_edge ctx value_res value_sub Dep.Edges.Iter)
-      vars;
-    k value_res
+    map_cps f_map ctxs_sub k_wrap
 
   and eval_iter_exp (note : typ') (ctx : Ctx.t) (exp : exp) (iterexp : iterexp)
       (k : value -> 'r) : 'r =
@@ -1032,8 +1044,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       (k : bool * value -> 'r) : 'r =
     let _, exps_input = notexp in
     eval_exps ctx exps_input (fun values_input ->
-        invoke_rel ctx id values_input (fun values_output_opt ->
-            let hold = Option.is_some values_output_opt in
+        invoke_rel ctx id values_input (fun value_output_opt ->
+            let hold = Option.is_some value_output_opt in
             let value_res =
               let vid = Value.fresh () in
               let typ = Il.Ast.BoolT in
@@ -1362,7 +1374,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     in
     eval_exps ctx exps_input (fun values_input ->
         invoke_rel ctx id values_input (function
-          | Some values_output ->
+          | Some value_output ->
+              let values_output = Value.get_tuple value_output in
               let ctx = assign_exps ctx exps_output values_output in
               k ctx
           | None -> error id.at (F.asprintf "relation %s was not matched" id.it)))
@@ -1474,7 +1487,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Invoke a relation *)
 
   and invoke_rel (ctx : Ctx.t) (id : id) (values_input : value list)
-      (k : value list option -> 'r) : 'r =
+      (k : value option -> 'r) : 'r =
     let rel = Ctx.find_rel Local ctx id in
     match rel with
     | Rel.Extern _ -> invoke_extern_rel ctx id values_input k
@@ -1482,7 +1495,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         invoke_defined_rel ctx id exps_input instrs values_input k
 
   and invoke_extern_rel (_ctx : Ctx.t) (id : id) (values_input : value list)
-      (k : value list option -> 'r) : 'r =
+      (k : value option -> 'r) : 'r =
     let values_output =
       match id.it with
       | "ExternFunctionCall_eval" -> Arch.eval_extern_func_call values_input
@@ -1497,13 +1510,22 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
               (Dep.Edges.Rel (id, idx_arg)))
           values_output)
       values_input;
-    k (Some values_output)
+    let value_output =
+      let vid = Value.fresh () in
+      let typ =
+        Il.Ast.(
+          TupleT
+            (List.map (fun value -> value.note.typ $ no_region) values_output))
+      in
+      Il.Ast.(TupleV values_output $$$ { vid; typ })
+    in
+    k (Some value_output)
 
   and invoke_defined_rel (ctx : Ctx.t) (id : id) (exps_input : exp list)
-      (instrs : instr list) (values_input : value list)
-      (k : value list option -> 'r) : 'r =
+      (instrs : instr list) (values_input : value list) (k : value option -> 'r)
+      : 'r =
     (* Main invocation logic *)
-    let invoke_defined_rel' (k : value list option -> 'r) =
+    let invoke_defined_rel' (k : value option -> 'r) =
       let ctx_local = Ctx.localize_rule ctx id values_input in
       let ctx_local = assign_exps ctx_local exps_input values_input in
       eval_instrs ctx_local instrs (fun (_ctx_local, sign) ->
@@ -1517,19 +1539,43 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                         (Dep.Edges.Rel (id, idx_arg)))
                     values_output)
                 values_input;
-              k (Some values_output)
+              let value_output =
+                let vid = Value.fresh () in
+                let typ =
+                  Il.Ast.(
+                    TupleT
+                      (List.map
+                         (fun value -> value.note.typ $ no_region)
+                         values_output))
+                in
+                Il.Ast.(TupleV values_output $$$ { vid; typ })
+              in
+              k (Some value_output)
           | _ -> k None)
     in
     (* Cache lookup *)
     if (not (Ctx.deriving ctx)) && Cache.is_cached_rule id.it then
       let cache_result = Cache.Cache.find !rule_cache (id.it, values_input) in
       match cache_result with
-      | Some values_output -> k (Some values_output)
+      | Some values_output ->
+          let value_output =
+            let vid = Value.fresh () in
+            let typ =
+              Il.Ast.(
+                TupleT
+                  (List.map
+                     (fun value -> value.note.typ $ no_region)
+                     values_output))
+            in
+            Il.Ast.(TupleV values_output $$$ { vid; typ })
+          in
+          k (Some value_output)
       | None ->
           invoke_defined_rel' (function
-            | Some values_output ->
+            | Some value_output ->
+                let values_output = Value.get_tuple value_output in
                 Cache.Cache.add !rule_cache (id.it, values_input) values_output;
-                k (Some values_output)
+                k (Some value_output)
             | None -> k None)
     else invoke_defined_rel' k
 
@@ -1670,10 +1716,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       (values_input : value list) : value list =
     let ctx = load_spec ctx spec in
     invoke_rel ctx (relname $ no_region) values_input (function
-      | Some values_output -> List.hd values_output
+      | Some value_output -> value_output
       | None ->
           error no_region (F.asprintf "relation %s was not matched" relname))
-    |> fun value -> [ value ]
+    |> Value.get_tuple
 
   let do_eval_func (ctx : Ctx.t) (spec : spec) (funcname : string)
       (targs : targ list) (values_input : value list) : value =
