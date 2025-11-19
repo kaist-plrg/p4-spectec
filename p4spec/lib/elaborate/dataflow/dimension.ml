@@ -279,7 +279,7 @@ and annotate_prem (binds : VEnv.t) (bounds : VEnv.t) (prem : prem) :
       | [] -> error at "empty iteration"
       | _
         when List.for_all
-               (fun ((id : id), (typ : typ), (iters : iter list)) ->
+               (fun (id, typ, iters) ->
                  match VEnv.find_opt id binds with
                  | Some (typ_bind, iters_bind) ->
                      Typ.sub (typ, iters) (typ_bind, iters_bind)

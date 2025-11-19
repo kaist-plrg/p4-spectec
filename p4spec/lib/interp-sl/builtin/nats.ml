@@ -38,7 +38,8 @@ let max (ctx : Ctx.t) (at : region) (targs : targ list)
   let values =
     Extract.one at values_input |> Value.get_list |> List.map bigint_of_value
   in
-  let max = match values with
+  let max =
+    match values with
     | [] -> error at "max of empty list"
     | hd :: tl -> List.fold_left Bigint.max hd tl
   in
@@ -52,7 +53,8 @@ let min (ctx : Ctx.t) (at : region) (targs : targ list)
   let values =
     Extract.one at values_input |> Value.get_list |> List.map bigint_of_value
   in
-  let min = match values with
+  let min =
+    match values with
     | [] -> error at "min of empty list"
     | hd :: tl -> List.fold_left Bigint.min hd tl
   in
