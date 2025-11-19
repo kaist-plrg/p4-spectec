@@ -431,6 +431,27 @@ let p4_program_value_json_command =
        with ParseError (at, msg) ->
          Format.printf "ill-formed: %s\n" (string_of_error at msg))
 
+let unparse_json_value_command =
+  Core.Command.basic
+    ~summary:"parse a JSON value and unparse it back to P4 source code"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map filename_json = flag "-j" (required string) ~doc:"JSON file containing value" in
+     fun () ->
+       try
+         let json = Yojson.Safe.from_file filename_json in
+         let value_result = Sl.Ast.value_of_yojson json in
+         match value_result with
+         | Ok value ->
+             let p4_source = Format.asprintf "%a\n" Interface.Unparse.pp_program value in
+             print_string p4_source
+         | Error err ->
+             Format.printf "Error parsing JSON value: %s\n" err
+       with
+       | Sys_error msg -> Format.printf "File error: %s\n" msg
+       | Yojson.Json_error msg -> Format.printf "JSON parsing error: %s\n" msg
+       | e -> Format.printf "Unknown error: %s\n" (Printexc.to_string e))
+
 let command =
   Core.Command.group
     ~summary:"p4spec: a language design framework for the p4_16 language"
@@ -446,6 +467,7 @@ let command =
       ("parse", parse_command);
       ("json-ast", json_ast_command);
       ("p4-program-value-json", p4_program_value_json_command);
+      ("unparse-json-value", unparse_json_value_command);
     ]
 
 let () = Command_unix.run ~version command
