@@ -5,83 +5,76 @@
 ;;; Nominal
 
 dec $is_nominal_typeIR(typeIR) : bool
-dec $is_nominal_typeIR'(typeIR) : bool
+tbl dec $is_nominal_typeIR'(typeIR) : bool
 
 def $is_nominal_typeIR(typeIR)
   = $is_nominal_typeIR'($canon_typeIR(typeIR))
-def $is_nominal_typeIR'(newTypeIR) = true
-def $is_nominal_typeIR'(structTypeIR) = true
-def $is_nominal_typeIR'(headerTypeIR) = true
-def $is_nominal_typeIR'(headerUnionTypeIR) = true
-def $is_nominal_typeIR'(enumTypeIR) = true
-def $is_nominal_typeIR'(externObjectTypeIR) = true
-def $is_nominal_typeIR'(tableObjectTypeIR) = true
-def $is_nominal_typeIR'(typeIR) = false
-  -- otherwise
+tbl def $is_nominal_typeIR' =
+  | newTypeIR => true
+  | structTypeIR => true
+  | headerTypeIR => true
+  | headerUnionTypeIR => true
+  | enumTypeIR => true
+  | externObjectTypeIR => true
+  | tableObjectTypeIR => true
+  | _ => false
 
 ;; Default
 
 dec $is_defaultable_typeIR(typeIR) : bool
-dec $is_defaultable_typeIR'(typeIR) : bool
+tbl dec $is_defaultable_typeIR'(typeIR) : bool
 
 def $is_defaultable_typeIR(typeIR)
   = $is_defaultable_typeIR'($canon_typeIR(typeIR))
-def $is_defaultable_typeIR'(BOOL) = true
-def $is_defaultable_typeIR'(ERROR) = true
-def $is_defaultable_typeIR'(STRING) = true
-def $is_defaultable_typeIR'(numberTypeIR) = true
-def $is_defaultable_typeIR'(TYPE _ typeIR)
-  = $is_defaultable_typeIR(typeIR)
-def $is_defaultable_typeIR'(TUPLE `< typeIR* >) = true
-  -- if $is_defaultable_typeIR(typeIR)*
-def $is_defaultable_typeIR'(typeIR `[ _ ])
-  = $is_defaultable_typeIR(typeIR)
-def $is_defaultable_typeIR'(STRUCT _ `{ (typeIR _ `;)* }) = true
-  -- if $is_defaultable_typeIR(typeIR)*
-def $is_defaultable_typeIR'(HEADER _ `{ (typeIR _ `;)* }) = true
-  -- if $is_defaultable_typeIR(typeIR)*
-def $is_defaultable_typeIR'(HEADER_UNION _ `{ (typeIR _ `;)* }) = true
-  -- if $is_defaultable_typeIR(typeIR)*
-def $is_defaultable_typeIR'(ENUM _ `{ _ }) = true
-def $is_defaultable_typeIR'(ENUM _ `< typeIR > `{ _ })
-  = $is_defaultable_typeIR(typeIR)
-def $is_defaultable_typeIR'(typeIR) = false
-  -- otherwise
+tbl def $is_defaultable_typeIR' =
+  | BOOL => true
+  | ERROR => true
+  | STRING => true
+  | numberTypeIR => true
+  | TYPE _ typeIR => $is_defaultable_typeIR(typeIR)
+  | TUPLE `< typeIR* > => $is_defaultable_typeIR(typeIR)*
+  | typeIR `[ _ ] => $is_defaultable_typeIR(typeIR)
+  | STRUCT _ `{ (typeIR _ `;)* } => $is_defaultable_typeIR(typeIR)*
+  | HEADER _ `{ (typeIR _ `;)* } => $is_defaultable_typeIR(typeIR)*
+  | HEADER_UNION _ `{ (typeIR _ `;)* } => $is_defaultable_typeIR(typeIR)*
+  | ENUM _ `{ _ } => true
+  | ENUM _ `< typeIR > `{ _ } => $is_defaultable_typeIR(typeIR)
+  | _ => false
 
 ;; Equals
 
 dec $is_equalable_typeIR(typeIR) : bool
-dec $is_equalable_typeIR'(typeIR) : bool
+tbl dec $is_equalable_typeIR'(typeIR) : bool
 
 def $is_equalable_typeIR(typeIR)
   = $is_equalable_typeIR'($canon_typeIR(typeIR))
-def $is_equalable_typeIR'(VOID) = false
-def $is_equalable_typeIR'(`` tid) = false
-def $is_equalable_typeIR'(externObjectTypeIR) = false
-def $is_equalable_typeIR'(parserObjectTypeIR) = false
-def $is_equalable_typeIR'(controlObjectTypeIR) = false
-def $is_equalable_typeIR'(packageObjectTypeIR) = false
-def $is_equalable_typeIR'(tableObjectTypeIR) = false
-def $is_equalable_typeIR'(DEFAULT) = false
-def $is_equalable_typeIR'(SEQ `< _ `, `... >) = false
-def $is_equalable_typeIR'(RECORD `{ _ `, `... }) = false
-def $is_equalable_typeIR'(HEADER_INVALID) = false
-def $is_equalable_typeIR'(setTypeIR) = false
-def $is_equalable_typeIR'(tableMetadataTypeIR) = false
-def $is_equalable_typeIR'(typeIR) = true
-  -- otherwise
+tbl def $is_equalable_typeIR' =
+  | VOID => false
+  | `` tid => false
+  | externObjectTypeIR => false
+  | parserObjectTypeIR => false
+  | controlObjectTypeIR => false
+  | packageObjectTypeIR => false
+  | tableObjectTypeIR => false
+  | DEFAULT => false
+  | SEQ `< _ `, `... > => false
+  | RECORD `{ _ `, `... } => false
+  | HEADER_INVALID => false
+  | setTypeIR => false
+  | tableMetadataTypeIR => false
+  | _ => true
 
 ;; Assignable
 
 dec $is_assignable_typeIR(typeIR) : bool
-dec $is_assignable_typeIR'(typeIR) : bool
+tbl dec $is_assignable_typeIR'(typeIR) : bool
 
 def $is_assignable_typeIR(typeIR)
   = $is_assignable_typeIR'($canon_typeIR(typeIR))
-def $is_assignable_typeIR'(VOID) = false
-def $is_assignable_typeIR'(STRING) = false
-def $is_assignable_typeIR'(INT) = false
-def $is_assignable_typeIR'(objectTypeIR) = false
-def $is_assignable_typeIR'(synthesizedTypeIR) = false
-def $is_assignable_typeIR'(typeIR) = true
-  -- otherwise
+tbl def $is_assignable_typeIR' =
+  | VOID => false
+  | STRING => false
+  | INT => false
+  | objectTypeIR => false
+  | synthesizedTypeIR => false
+  | _ => true
