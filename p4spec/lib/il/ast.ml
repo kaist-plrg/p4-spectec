@@ -201,6 +201,10 @@ and clause' = arg list * exp * prem list
 
 and hint = El.Ast.hint
 
+(* Table rows *)
+type tblrow = tblrow' phrase
+and tblrow' = exp * prem list
+
 (* Definitions *)
 
 type def = def' phrase

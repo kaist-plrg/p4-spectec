@@ -382,6 +382,10 @@ and string_of_clauses clauses =
        (fun idx clause -> "\n\n" ^ indent 1 ^ string_of_clause idx clause)
        clauses)
 
+and string_of_tblrow tblrow =
+  let exp, prems = tblrow.it in
+  string_of_exp exp ^ string_of_prems ~level:1 prems
+
 (* Premises *)
 
 and string_of_prem prem =

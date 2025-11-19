@@ -710,10 +710,10 @@ prem_ :
 
 (* Matchecases *)
 
-match_list :
-  | bar matchcases = bar_list(match_case) { matchcases }
+tbl_body :
+  | bar tbl_rows = bar_list(tbl_row) { tbl_rows }
 
-match_case :
+tbl_row :
   | pattern = exp_seq DOUBLE_ARROW body = exp_bin { (pattern, body) }
 
 (* Hints *)
@@ -817,7 +817,7 @@ def_ :
     { DefD ($3, $5, [], $8, $9) }
   | DEF DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE_LPAREN comma_list(arg) RPAREN EQ exp prem_list exit_scope
     { DefD ($3, $5, $7, $10, $11) }
-  | TABLE DEF DOLLAR id = defid EQ body = match_list
+  | TABLE DEF DOLLAR id = defid EQ body = tbl_body
     { TableDefD (id, body) }
   (* Separator *)
   | NL3

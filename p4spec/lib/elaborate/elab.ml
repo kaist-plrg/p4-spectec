@@ -1145,7 +1145,7 @@ and elab_arg ?(as_def = false) (ctx : Ctx.t) (param : param) (arg : arg) :
         (F.asprintf
            "function argument does not match the declared function parameter %s"
            (Id.to_string id_p));
-      let ctx = Ctx.add_defined_dec ctx id_p tparams_p params_p plaintyp_p in
+      let ctx = Ctx.add_plain_dec ctx id_p tparams_p params_p plaintyp_p in
       let arg_il = Il.Ast.DefA id_a $ arg.at in
       (ctx, arg_il)
   | DefP (id_p, tparams_p, params_p, plaintyp_p), DefA id_a ->
@@ -1665,7 +1665,7 @@ and elab_dec_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
   let params_il = List.map (elab_param ctx_local) params in
   let typ_il = elab_plaintyp ctx_local plaintyp in
   let def_il = Il.Ast.DecD (id, tparams, params_il, typ_il, [], hints) $ at in
-  let ctx = Ctx.add_defined_dec ctx id tparams params plaintyp in
+  let ctx = Ctx.add_plain_dec ctx id tparams params plaintyp in
   (ctx, def_il)
 
 (* Elaboration of function definitions *)
@@ -1690,7 +1690,7 @@ and elab_table_def_def (ctx : Ctx.t) (_at : region) (_id : id)
 
 and elab_def_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
     (args : arg list) (exp : exp) (prems : prem list) : Ctx.t =
-  let tparams_expected, params, plaintyp, _ = Ctx.find_defined_dec ctx id in
+  let tparams_expected, params, plaintyp, _ = Ctx.find_plain_dec ctx id in
   check
     (List.length tparams = List.length tparams_expected
     && List.for_all2 ( = ) (List.map it tparams) (List.map it tparams_expected)
@@ -1710,7 +1710,7 @@ and elab_def_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
   let prems_il = sideconditions_il @ prems_il in
   let _ctx_local, exp_il = elab_def_output_with_bind ctx_local plaintyp exp in
   let clause_il = (args_il, exp_il, prems_il) $ at in
-  Ctx.add_defined_clause ctx id clause_il
+  Ctx.add_plain_clause ctx id clause_il
 
 (* Elaboration of spec *)
 
@@ -1756,7 +1756,7 @@ let populate_rules (ctx : Ctx.t) (spec_il : Il.Ast.spec) : Il.Ast.spec =
 let populate_clause (ctx : Ctx.t) (def_il : Il.Ast.def) : Il.Ast.def =
   match def_il.it with
   | Il.Ast.DecD (id, tparams_il, params_il, typ_il, [], hints) ->
-      let _, _, _, clauses_il = Ctx.find_defined_dec ctx id in
+      let _, _, _, clauses_il = Ctx.find_plain_dec ctx id in
       Il.Ast.DecD (id, tparams_il, params_il, typ_il, clauses_il, hints)
       $ def_il.at
   | Il.Ast.DecD _ -> error def_il.at "function was already populated"

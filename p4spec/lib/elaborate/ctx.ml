@@ -143,23 +143,36 @@ let bound_rulegroup (ctx : t) (rid : RId.t) (rulegroupid : Id.t) : bool =
 
 (* Finders for definitions *)
 
-let find_defined_dec_opt (ctx : t) (fid : FId.t) :
+let find_plain_dec_opt (ctx : t) (fid : FId.t) :
     (tparam list * param list * plaintyp * Il.Ast.clause list) option =
   let func_opt = FEnv.find_opt fid ctx.fenv in
   Option.bind func_opt (function
-    | Func.Defined (tparams, params, plaintyp, clauses) ->
+    | Func.Plain (tparams, params, plaintyp, clauses) ->
         Some (tparams, params, plaintyp, clauses)
     | Func.Table _ | Func.Extern _ | Func.Builtin _ -> None)
 
-let find_defined_dec (ctx : t) (fid : FId.t) :
+let find_plain_dec (ctx : t) (fid : FId.t) :
     tparam list * param list * plaintyp * Il.Ast.clause list =
-  match find_defined_dec_opt ctx fid with
+  match find_plain_dec_opt ctx fid with
   | Some (tparams, params, plaintyp, clauses) ->
       (tparams, params, plaintyp, clauses)
-  | None -> error_undef fid.at "defined function" fid.it
+  | None -> error_undef fid.at "plain function" fid.it
 
-let bound_defined_dec (ctx : t) (fid : FId.t) : bool =
-  find_defined_dec_opt ctx fid |> Option.is_some
+let bound_plain_dec (ctx : t) (fid : FId.t) : bool =
+  find_plain_dec_opt ctx fid |> Option.is_some
+
+let find_table_dec_opt (ctx : t) (fid : FId.t) :
+    (param list * plaintyp * Il.Ast.tblrow list) option =
+  let func_opt = FEnv.find_opt fid ctx.fenv in
+  Option.bind func_opt (function
+    | Func.Table (params, plaintyp, tblrows) -> Some (params, plaintyp, tblrows)
+    | Func.Plain _ | Func.Extern _ | Func.Builtin _ -> None)
+
+let find_table_dec (ctx : t) (fid : FId.t) :
+    param list * plaintyp * Il.Ast.tblrow list =
+  match find_table_dec_opt ctx fid with
+  | Some (params, plaintyp, clauses) -> (params, plaintyp, clauses)
+  | None -> error_undef fid.at "table function" fid.it
 
 let find_dec_signature_opt (ctx : t) (fid : FId.t) :
     (tparam list * param list * plaintyp) option =
@@ -167,9 +180,9 @@ let find_dec_signature_opt (ctx : t) (fid : FId.t) :
   |> Option.map (function
        | Func.Extern (tparams, params, plaintyp)
        | Func.Builtin (tparams, params, plaintyp)
-       | Func.Defined (tparams, params, plaintyp, _) ->
+       | Func.Plain (tparams, params, plaintyp, _) ->
            (tparams, params, plaintyp)
-       | Func.Table (params, plaintyp) -> ([], params, plaintyp))
+       | Func.Table (params, plaintyp, _) -> ([], params, plaintyp))
 
 let find_dec_signature (ctx : t) (fid : FId.t) :
     tparam list * param list * plaintyp =
@@ -270,22 +283,32 @@ let add_builtin_dec (ctx : t) (fid : FId.t) (tparams : tparam list)
 let add_table_dec (ctx : t) (fid : FId.t) (params : param list)
     (plaintyp : plaintyp) : t =
   if bound_dec ctx fid then error_dup fid.at "function" fid.it;
-  let func = Func.Table (params, plaintyp) in
+  let func = Func.Table (params, plaintyp, []) in
   let fenv = FEnv.add fid func ctx.fenv in
   { ctx with fenv }
 
-let add_defined_dec (ctx : t) (fid : FId.t) (tparams : tparam list)
+let add_plain_dec (ctx : t) (fid : FId.t) (tparams : tparam list)
     (params : param list) (plaintyp : plaintyp) : t =
   if bound_dec ctx fid then error_dup fid.at "function" fid.it;
-  let func = Func.Defined (tparams, params, plaintyp, []) in
+  let func = Func.Plain (tparams, params, plaintyp, []) in
   let fenv = FEnv.add fid func ctx.fenv in
   { ctx with fenv }
 
-let add_defined_clause (ctx : t) (fid : FId.t) (clause : Il.Ast.clause) : t =
-  if not (bound_defined_dec ctx fid) then
-    error_undef clause.at "function" fid.it;
-  let tparams, params, plaintyp, clauses = find_defined_dec ctx fid in
-  let func = Func.Defined (tparams, params, plaintyp, clauses @ [ clause ]) in
+let add_table_def (ctx : t) (fid : FId.t) (tblrows : Il.Ast.tblrow list) : t =
+  if not (bound_dec ctx fid) then
+    error_undef (List.hd tblrows).at "table function" fid.it;
+  let params, plaintyp, tblrows_found = find_table_dec ctx fid in
+  if List.length tblrows_found > 0 then
+    error_dup (List.hd tblrows_found).at "table function" fid.it;
+  let func = Func.Table (params, plaintyp, tblrows) in
+  let fenv = FEnv.add fid func ctx.fenv in
+  { ctx with fenv }
+
+let add_plain_clause (ctx : t) (fid : FId.t) (clause : Il.Ast.clause) : t =
+  if not (bound_plain_dec ctx fid) then
+    error_undef clause.at "plain function" fid.it;
+  let tparams, params, plaintyp, clauses = find_plain_dec ctx fid in
+  let func = Func.Plain (tparams, params, plaintyp, clauses @ [ clause ]) in
   let fenv = FEnv.add fid func ctx.fenv in
   { ctx with fenv }
 
