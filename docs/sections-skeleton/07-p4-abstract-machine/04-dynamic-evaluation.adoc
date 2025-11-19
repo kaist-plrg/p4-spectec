@@ -17,6 +17,7 @@ NOTE: Edited contents from Section 18.4.
 
 ==== Evaluating a P4 program
 
+// Added
 P4 program evaluation proceeds by invoking the objects in the global store.
 
 A call to a programmable block invokes the corresponding abstract machine:
@@ -29,6 +30,8 @@ NOTE: (TODO) Add splicer support for extern relations.
 
 ==== Evaluation context
 
+// Added
+[[evalContext]]
 ${syntax: globalEvalLayer blockEvalLayer localEvalLayer evalContext}
 
 An evaluation context is used to keep track of the types and compile-time
@@ -63,7 +66,7 @@ the `reject` or `accept` states has been reached.
 [source,p4pseudo]
 ----
 ParserModel {
-    error       parseError;
+    error parseError;
     onPacketArrival(packet p) {
         ParserModel.parseError = error.NoError;
         goto start;
@@ -78,7 +81,6 @@ may specify that such packets are passed to the next block after the parser,
 with intrinsic metadata indicating that the parser reached the `reject` state,
 along with the error recorded.
 
-[#sec-abstract-machine-dynamic-evaluation-match-action]
 ==== The Match-Action Pipeline Abstract Machine
 
 // Section 14.3 in the P4-16 Language Specification

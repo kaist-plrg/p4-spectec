@@ -661,7 +661,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <h1>P4<sub>16</sub> Language Specification : The P4 Language Consortium</h1>
 <div class="details">
 <span id="revnumber">version v1.2.5,</span>
-<span id="revdate">2025-11-13</span>
+<span id="revdate">2025-11-19</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Contents</div>
@@ -705,11 +705,11 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 </li>
 <li><a href="#sec-lexical-constructs">6.2. Lexical constructs</a>
 <ul class="sectlevel3">
-<li><a href="#syn-name">6.2.1. Identifiers</a></li>
+<li><a href="#sec-lexical-identifiers">6.2.1. Identifiers</a></li>
 <li><a href="#sec-lexical-literals">6.2.2. Literal constants</a>
 <ul class="sectlevel4">
 <li><a href="#syn-booleanLiteral">6.2.2.1. Boolean literals</a></li>
-<li><a href="#syn-numberLiteral">6.2.2.2. Integer literals</a></li>
+<li><a href="#syn-integerLiteral">6.2.2.2. Integer literals</a></li>
 <li><a href="#syn-stringLiteral">6.2.2.3. String literals</a></li>
 </ul>
 </li>
@@ -739,7 +739,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <ul class="sectlevel3">
 <li><a href="#sec-abstract-machine-p4-ir">7.2.1. P4 Intermediate Representation</a></li>
 <li><a href="#_typing_a_p4_program">7.2.2. Typing a P4 program</a></li>
-<li><a href="#sec-abstract-machine-typing-context">7.2.3. Typing context</a></li>
+<li><a href="#_typing_context">7.2.3. Typing context</a></li>
 </ul>
 </li>
 <li><a href="#sec-abstract-machine-instantiation">7.3. Instantiation</a>
@@ -768,7 +768,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <li><a href="#_evaluating_a_p4_program">7.4.1. Evaluating a P4 program</a></li>
 <li><a href="#_evaluation_context">7.4.2. Evaluation context</a></li>
 <li><a href="#sec-abstract-machine-dynamic-evaluation-parser">7.4.3. The Parser abstract machine</a></li>
-<li><a href="#sec-abstract-machine-dynamic-evaluation-match-action">7.4.4. The Match-Action Pipeline Abstract Machine</a></li>
+<li><a href="#_the_match_action_pipeline_abstract_machine">7.4.4. The Match-Action Pipeline Abstract Machine</a></li>
 <li><a href="#_concurrency_model">7.4.5. Concurrency model</a></li>
 </ul>
 </li>
@@ -776,43 +776,47 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 </li>
 <li><a href="#sec-p4-types-and-values">8. P4 types and values</a>
 <ul class="sectlevel2">
-<li><a href="#sec-def-baseValue">8.1. Base types and values</a>
+<li><a href="#_base_types_and_values">8.1. Base types and values</a>
 <ul class="sectlevel3">
-<li><a href="#sec-def-primitiveValue">8.1.1. Primitive types and values</a>
+<li><a href="#_primitive_types_and_values">8.1.1. Primitive types and values</a>
 <ul class="sectlevel4">
-<li><a href="#sec-sem-Type_ok-primitiveType">8.1.1.1. Type checking</a></li>
+<li><a href="#_the_void_type">8.1.1.1. The void type</a></li>
+<li><a href="#_booleans">8.1.1.2. Booleans</a></li>
+<li><a href="#_errors">8.1.1.3. Errors</a></li>
+<li><a href="#_match_kinds">8.1.1.4. Match kinds</a></li>
+<li><a href="#_strings">8.1.1.5. Strings</a></li>
+<li><a href="#_type_checking">8.1.1.6. Type checking</a></li>
 </ul>
 </li>
-<li><a href="#sec-def-numberValue">8.1.2. Number types and values</a>
+<li><a href="#_integer_types_and_values_signed_and_unsigned">8.1.2. Integer types and values (signed and unsigned)</a>
 <ul class="sectlevel4">
-<li><a href="#_design_goals">8.1.2.1. Design goals</a></li>
-<li><a href="#_portability">8.1.2.2. Portability</a></li>
-<li><a href="#_arbitrary_precision_integers">8.1.2.3. Arbitrary-precision integers</a>
+<li><a href="#_portability">8.1.2.1. Portability</a></li>
+<li><a href="#_arbitrary_precision_integers">8.1.2.2. Arbitrary-precision integers</a>
 <ul class="sectlevel5">
-<li><a href="#sec-sem-Type_ok-arbitraryInt">8.1.2.3.1. Type checking</a></li>
+<li><a href="#_type_checking_2">8.1.2.2.1. Type checking</a></li>
 </ul>
 </li>
-<li><a href="#_fixed_width_signed_integers">8.1.2.4. Fixed-width signed integers</a>
+<li><a href="#_fixed_width_signed_integers">8.1.2.3. Fixed-width signed integers</a>
 <ul class="sectlevel5">
-<li><a href="#sec-sem-Type_ok-fixedInt">8.1.2.4.1. Type checking</a></li>
+<li><a href="#_type_checking_3">8.1.2.3.1. Type checking</a></li>
 </ul>
 </li>
-<li><a href="#_fixed_width_unsigned_integers_bit_strings">8.1.2.5. Fixed-width unsigned integers (bit-strings)</a>
+<li><a href="#_fixed_width_unsigned_integers_bit_strings">8.1.2.4. Fixed-width unsigned integers (bit-strings)</a>
 <ul class="sectlevel5">
-<li><a href="#sec-sem-Type_ok-fixedBit">8.1.2.5.1. Type checking</a></li>
+<li><a href="#_type_checking_4">8.1.2.4.1. Type checking</a></li>
 </ul>
 </li>
-<li><a href="#_dynamically_sized_bit_strings">8.1.2.6. Dynamically-sized bit-strings</a>
+<li><a href="#_dynamically_sized_bit_strings">8.1.2.5. Dynamically-sized bit-strings</a>
 <ul class="sectlevel5">
-<li><a href="#sec-sem-Type_ok-varbit">8.1.2.6.1. Type checking</a></li>
+<li><a href="#_type_checking_5">8.1.2.5.1. Type checking</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#sec-sem-Type_wf/baseTypeIR">8.1.3. Well-formedness</a></li>
+<li><a href="#_well_formedness">8.1.3. Well-formedness</a></li>
 </ul>
 </li>
-<li><a href="#sec-def-namedType">8.2. Named types</a>
+<li><a href="#_named_types">8.2. Named types</a>
 <ul class="sectlevel3">
 <li><a href="#sec-def-typeDefIR">8.2.1. Type definitions (type constructors)</a></li>
 <li><a href="#sec-def-nameTypeIR">8.2.2. Prefixed type names</a>
@@ -829,146 +833,135 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 </li>
 </ul>
 </li>
-<li><a href="#sec-def-dataValue">8.3. Data types and values</a>
+<li><a href="#_data_types_and_values">8.3. Data types and values</a>
 <ul class="sectlevel3">
-<li><a href="#sec-def-listValue">8.3.1. List types and values</a>
+<li><a href="#_list_types_and_values">8.3.1. List types and values</a>
 <ul class="sectlevel4">
-<li><a href="#sec-sem-Type_ok-listType">8.3.1.1. Type checking</a></li>
-<li><a href="#_type_nesting">8.3.1.2. Type nesting</a></li>
-<li><a href="#sec-sem-Type_wf-listTypeIR">8.3.1.3. Well-formedness</a></li>
+<li><a href="#_type_checking_6">8.3.1.1. Type checking</a></li>
+<li><a href="#_well_formedness_2">8.3.1.2. Well-formedness</a></li>
 </ul>
 </li>
-<li><a href="#sec-def-tupleValue">8.3.2. Tuple types and values</a>
+<li><a href="#_tuple_types_and_values">8.3.2. Tuple types and values</a>
 <ul class="sectlevel4">
-<li><a href="#sec-sem-Type_ok-tupleType">8.3.2.1. Type checking</a></li>
-<li><a href="#_type_nesting_2">8.3.2.2. Type nesting</a></li>
-<li><a href="#sec-sem-Type_wf-tupleTypeIR">8.3.2.3. Well-formedness</a></li>
+<li><a href="#_type_checking_7">8.3.2.1. Type checking</a></li>
+<li><a href="#_well_formedness_3">8.3.2.2. Well-formedness</a></li>
 </ul>
 </li>
-<li><a href="#sec-def-headerStackValue">8.3.3. Header stack types and values</a>
+<li><a href="#_header_stack_types_and_values">8.3.3. Header stack types and values</a>
 <ul class="sectlevel4">
-<li><a href="#sec-sem-Type_ok-headerStackType">8.3.3.1. Type checking</a></li>
-<li><a href="#_type_nesting_3">8.3.3.2. Type nesting</a></li>
-<li><a href="#sec-sem-Type_wf-headerStackTypeIR">8.3.3.3. Well-formedness</a></li>
+<li><a href="#_type_checking_8">8.3.3.1. Type checking</a></li>
+<li><a href="#_well_formedness_4">8.3.3.2. Well-formedness</a></li>
 </ul>
 </li>
-<li><a href="#sec-def-structValue">8.3.4. Struct types and values</a>
+<li><a href="#_array_types_and_values">8.3.4. Array types and values</a></li>
+<li><a href="#_struct_types_and_values">8.3.5. Struct types and values</a>
 <ul class="sectlevel4">
-<li><a href="#_type_checking">8.3.4.1. Type checking</a></li>
-<li><a href="#_type_nesting_4">8.3.4.2. Type nesting</a></li>
-<li><a href="#sec-sem-Type_wf-structTypeIR">8.3.4.3. Well-formedness</a></li>
+<li><a href="#_type_checking_9">8.3.5.1. Type checking</a></li>
+<li><a href="#_well_formedness_5">8.3.5.2. Well-formedness</a></li>
 </ul>
 </li>
-<li><a href="#sec-def-headerValue">8.3.5. Header types and values</a>
+<li><a href="#_header_types_and_values">8.3.6. Header types and values</a>
 <ul class="sectlevel4">
-<li><a href="#_type_checking_2">8.3.5.1. Type checking</a></li>
-<li><a href="#_type_nesting_5">8.3.5.2. Type nesting</a></li>
-<li><a href="#sec-sem-Type_wf-headerTypeIR">8.3.5.3. Well-formedness</a></li>
+<li><a href="#_type_checking_10">8.3.6.1. Type checking</a></li>
+<li><a href="#_well_formedness_6">8.3.6.2. Well-formedness</a></li>
 </ul>
 </li>
-<li><a href="#sec-def-headerUnionValue">8.3.6. Header union types and values</a>
+<li><a href="#_header_union_types_and_values">8.3.7. Header union types and values</a>
 <ul class="sectlevel4">
-<li><a href="#_type_checking_3">8.3.6.1. Type checking</a></li>
-<li><a href="#_type_nesting_6">8.3.6.2. Type nesting</a></li>
-<li><a href="#sec-sem-Type_wf-headerUnionTypeIR">8.3.6.3. Well-formedness</a></li>
+<li><a href="#_type_checking_11">8.3.7.1. Type checking</a></li>
+<li><a href="#_well_formedness_7">8.3.7.2. Well-formedness</a></li>
 </ul>
 </li>
-<li><a href="#sec-def-enumValue">8.3.7. Enum types and values</a>
+<li><a href="#_enum_types_and_values">8.3.8. Enum types and values</a>
 <ul class="sectlevel4">
-<li><a href="#sec-def-enumTypeDeclaration-non-serializable">8.3.7.1. Enum type declaration without an underlying type</a>
-<ul class="sectlevel5">
-<li><a href="#_type_checking_4">8.3.7.1.1. Type checking</a></li>
-<li><a href="#_type_nesting_7">8.3.7.1.2. Type nesting</a></li>
-<li><a href="#sec-sem-Type_wf-enumTypeIR">8.3.7.1.3. Well-formedness</a></li>
+<li><a href="#_enum_type_declaration_without_an_underlying_type">8.3.8.1. Enum type declaration without an underlying type</a></li>
+<li><a href="#_enum_type_declaration_with_an_underlying_type">8.3.8.2. Enum type declaration with an underlying type</a></li>
+<li><a href="#_type_checking_12">8.3.8.3. Type checking</a></li>
+<li><a href="#_well_formedness_8">8.3.8.4. Well-formedness</a></li>
 </ul>
 </li>
 </ul>
 </li>
-</ul>
-</li>
-<li><a href="#sec-def-objectTypeIR">8.4. Object types and values</a>
+<li><a href="#_object_types_and_values">8.4. Object types and values</a>
 <ul class="sectlevel3">
-<li><a href="#sec-def-externObjectTypeIR">8.4.1. Extern object types</a>
+<li><a href="#_extern_object_types">8.4.1. Extern object types</a>
 <ul class="sectlevel4">
-<li><a href="#_type_checking_5">8.4.1.1. Type checking</a></li>
-<li><a href="#sec-sem-Type_wf-externObjectTypeIR">8.4.1.2. Well-formedness</a></li>
+<li><a href="#_type_checking_13">8.4.1.1. Type checking</a></li>
+<li><a href="#_well_formedness_9">8.4.1.2. Well-formedness</a></li>
 </ul>
 </li>
-<li><a href="#sec-def-parserObjectTypeIR">8.4.2. Parser object types</a>
+<li><a href="#_parser_object_types">8.4.2. Parser object types</a>
 <ul class="sectlevel4">
-<li><a href="#_type_checking_6">8.4.2.1. Type checking</a></li>
-<li><a href="#sec-sem-Type_wf-parserObjectTypeIR">8.4.2.2. Well-formedness</a></li>
+<li><a href="#_type_checking_14">8.4.2.1. Type checking</a></li>
+<li><a href="#_well_formedness_10">8.4.2.2. Well-formedness</a></li>
 </ul>
 </li>
-<li><a href="#sec-def-controlObjectTypeIR">8.4.3. Control object types</a>
+<li><a href="#_control_object_types">8.4.3. Control object types</a>
 <ul class="sectlevel4">
-<li><a href="#_type_checking_7">8.4.3.1. Type checking</a></li>
-<li><a href="#sec-sem-Type_wf-controlObjectTypeIR">8.4.3.2. Well-formedness</a></li>
+<li><a href="#_type_checking_15">8.4.3.1. Type checking</a></li>
+<li><a href="#_well_formedness_11">8.4.3.2. Well-formedness</a></li>
 </ul>
 </li>
-<li><a href="#sec-def-packageObjectTypeIR">8.4.4. Package object types</a>
+<li><a href="#_package_object_types">8.4.4. Package object types</a>
 <ul class="sectlevel4">
-<li><a href="#_type_checking_8">8.4.4.1. Type checking</a></li>
-<li><a href="#sec-sem-Type_wf-packageObjectTypeIR">8.4.4.2. Well-formedness</a></li>
+<li><a href="#_type_checking_16">8.4.4.1. Type checking</a></li>
+<li><a href="#_well_formedness_12">8.4.4.2. Well-formedness</a></li>
 </ul>
 </li>
-<li><a href="#sec-def-tableObjectTypeIR">8.4.5. Table object types</a>
+<li><a href="#_table_object_types">8.4.5. Table object types</a>
 <ul class="sectlevel4">
-<li><a href="#sec-sem-Type_wf-tableObjectTypeIR">8.4.5.1. Well-formedness</a></li>
+<li><a href="#_well_formedness_13">8.4.5.1. Well-formedness</a></li>
 </ul>
 </li>
-<li><a href="#sec-def-objectReferenceValue">8.4.6. Object reference values</a></li>
+<li><a href="#_object_reference_values">8.4.6. Object reference values</a></li>
 </ul>
 </li>
-<li><a href="#sec-def-aliasTypeIR">8.5. Alias types</a>
+<li><a href="#_alias_types">8.5. Alias types</a>
 <ul class="sectlevel3">
 <li><a href="#_typedef_declaration">8.5.1. <code>typedef</code> declaration</a>
 <ul class="sectlevel4">
-<li><a href="#_type_checking_9">8.5.1.1. Type checking</a></li>
-<li><a href="#_type_nesting_8">8.5.1.2. Type nesting</a></li>
-<li><a href="#sec-sem-Type_wf-typedefTypeIR">8.5.1.3. Well-formedness</a></li>
+<li><a href="#_type_checking_17">8.5.1.1. Type checking</a></li>
+<li><a href="#_well_formedness_14">8.5.1.2. Well-formedness</a></li>
 </ul>
 </li>
 <li><a href="#_type_declaration">8.5.2. <code>type</code> declaration</a>
 <ul class="sectlevel4">
-<li><a href="#_type_checking_10">8.5.2.1. Type checking</a></li>
-<li><a href="#_type_nesting_9">8.5.2.2. Type nesting</a></li>
-<li><a href="#sec-sem-Type_wf-newTypeIR">8.5.2.3. Well-formedness</a></li>
+<li><a href="#_type_checking_18">8.5.2.1. Type checking</a></li>
+<li><a href="#_well_formedness_15">8.5.2.2. Well-formedness</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#sec-def-synthesizedValue">8.6. Synthesized types and values</a>
+<li><a href="#_synthesized_types_and_values">8.6. Synthesized types and values</a>
 <ul class="sectlevel3">
-<li><a href="#sec-def-defaultValue">8.6.1. Default types and values</a>
+<li><a href="#_default_types_and_values">8.6.1. Default types and values</a>
 <ul class="sectlevel4">
-<li><a href="#sec-sem-Type_wf-defaultTypeIR">8.6.1.1. Well-formnedness</a></li>
+<li><a href="#_well_formnedness">8.6.1.1. Well-formnedness</a></li>
 </ul>
 </li>
-<li><a href="#sec-def-invalidHeaderValue">8.6.2. Invalid header types and values</a>
+<li><a href="#_invalid_header_types_and_values">8.6.2. Invalid header types and values</a>
 <ul class="sectlevel4">
-<li><a href="#sec-sem-Type_wf-invalidHeaderTypeIR">8.6.2.1. Well-formnedness</a></li>
+<li><a href="#_well_formnedness_2">8.6.2.1. Well-formnedness</a></li>
 </ul>
 </li>
-<li><a href="#sec-def-sequenceValue">8.6.3. Sequence types and values</a>
+<li><a href="#_sequence_types_and_values">8.6.3. Sequence types and values</a>
 <ul class="sectlevel4">
-<li><a href="#sec-sem-Type_wf-sequenceTypeIR">8.6.3.1. Well-formnedness</a></li>
+<li><a href="#_well_formnedness_3">8.6.3.1. Well-formnedness</a></li>
 </ul>
 </li>
-<li><a href="#sec-def-recordValue">8.6.4. Record types and values</a>
+<li><a href="#_record_types_and_values">8.6.4. Record types and values</a>
 <ul class="sectlevel4">
-<li><a href="#sec-sem-Type_wf-recordTypeIR">8.6.4.1. Well-formnedness</a></li>
+<li><a href="#_well_formnedness_4">8.6.4.1. Well-formnedness</a></li>
 </ul>
 </li>
-<li><a href="#sec-def-setValue">8.6.5. Set types and values</a>
+<li><a href="#_set_types_and_values">8.6.5. Set types and values</a>
 <ul class="sectlevel4">
-<li><a href="#_type_nesting_10">8.6.5.1. Type nesting</a></li>
-<li><a href="#sec-sem-Type_wf-setTypeIR">8.6.5.2. Well-formnedness</a></li>
+<li><a href="#_well_formnedness_5">8.6.5.1. Well-formnedness</a></li>
 </ul>
 </li>
-<li><a href="#sec-def-tableMetadataValue">8.6.6. Table metadata types and values</a>
+<li><a href="#_table_metadata_types_and_values">8.6.6. Table metadata types and values</a>
 <ul class="sectlevel4">
-<li><a href="#sec-sem-Type_wf-tableMetadataTypeIR">8.6.6.1. Well-formnedness</a></li>
+<li><a href="#_well_formnedness_6">8.6.6.1. Well-formnedness</a></li>
 </ul>
 </li>
 </ul>
@@ -986,7 +979,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 </li>
 <li><a href="#sec-def-actionDef">9.2. Actions</a>
 <ul class="sectlevel3">
-<li><a href="#_type_nesting_11">9.2.1. Type nesting</a></li>
+<li><a href="#_type_nesting">9.2.1. Type nesting</a></li>
 <li><a href="#sec-sem-CallableType_wf-actionTypeIR">9.2.2. Well-formedness</a></li>
 </ul>
 </li>
@@ -994,13 +987,13 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <ul class="sectlevel3">
 <li><a href="#sec-def-definedFunctionDef">9.3.1. User-defined functions</a>
 <ul class="sectlevel4">
-<li><a href="#_type_nesting_12">9.3.1.1. Type nesting</a></li>
+<li><a href="#_type_nesting_2">9.3.1.1. Type nesting</a></li>
 <li><a href="#sec-sem-CallableType_wf-definedFunctionTypeIR">9.3.1.2. Well-formedness</a></li>
 </ul>
 </li>
 <li><a href="#sec-def-externFunctionDef">9.3.2. Extern functions</a>
 <ul class="sectlevel4">
-<li><a href="#_type_nesting_13">9.3.2.1. Type nesting</a></li>
+<li><a href="#_type_nesting_3">9.3.2.1. Type nesting</a></li>
 <li><a href="#sec-sem-CallableType_wf-externFunctionTypeIR">9.3.2.2. Well-formedness</a></li>
 </ul>
 </li>
@@ -1010,19 +1003,19 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <ul class="sectlevel3">
 <li><a href="#sec-def-externMethodDef">9.4.1. Extern methods</a>
 <ul class="sectlevel5">
-<li><a href="#_type_nesting_14">9.4.1.1. Type nesting</a></li>
+<li><a href="#_type_nesting_4">9.4.1.1. Type nesting</a></li>
 <li><a href="#sec-sem-CallableType_wf-externMethodTypeIR">9.4.1.2. Well-formedness</a></li>
 </ul>
 </li>
 <li><a href="#sec-def-parserApplyMethodDef">9.4.2. Parser apply methods</a>
 <ul class="sectlevel4">
-<li><a href="#_type_nesting_15">9.4.2.1. Type nesting</a></li>
+<li><a href="#_type_nesting_5">9.4.2.1. Type nesting</a></li>
 <li><a href="#sec-sem-CallableType_wf-parserApplyMethodTypeIR">9.4.2.2. Well-formedness</a></li>
 </ul>
 </li>
 <li><a href="#sec-def-controlApplyMethodDef">9.4.3. Control apply methods</a>
 <ul class="sectlevel4">
-<li><a href="#_type_nesting_16">9.4.3.1. Type nesting</a></li>
+<li><a href="#_type_nesting_6">9.4.3.1. Type nesting</a></li>
 <li><a href="#sec-sem-CallableType_wf-controlApplyMethodTypeIR">9.4.3.2. Well-formedness</a></li>
 </ul>
 </li>
@@ -1045,26 +1038,26 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 </li>
 <li><a href="#sec-extern-object">10.3. Extern objects</a>
 <ul class="sectlevel3">
-<li><a href="#_type_nesting_17">10.3.1. Type nesting</a></li>
+<li><a href="#_type_nesting_7">10.3.1. Type nesting</a></li>
 <li><a href="#sec-sem-ConstructorType_wf-externObjectTypeIR">10.3.2. Well-formedness</a></li>
 </ul>
 </li>
 <li><a href="#sec-parser-object">10.4. Parser objects</a>
 <ul class="sectlevel4">
-<li><a href="#_type_nesting_18">10.4.1. Type nesting</a></li>
+<li><a href="#_type_nesting_8">10.4.1. Type nesting</a></li>
 <li><a href="#sec-sem-ConstructorType_wf-parserObjectTypeIR">10.4.2. Well-formedness</a></li>
 </ul>
 </li>
 <li><a href="#sec-control-object">10.5. Control objects</a>
 <ul class="sectlevel4">
-<li><a href="#_type_nesting_19">10.5.1. Type nesting</a></li>
+<li><a href="#_type_nesting_9">10.5.1. Type nesting</a></li>
 <li><a href="#sec-sem-ConstructorType_wf-controlObjectTypeIR">10.5.2. Well-formedness</a></li>
 </ul>
 </li>
 <li><a href="#sec-table-object">10.6. Table objects</a></li>
 <li><a href="#sec-package-object">10.7. Package objects</a>
 <ul class="sectlevel4">
-<li><a href="#_type_nesting_20">10.7.1. Type nesting</a></li>
+<li><a href="#_type_nesting_10">10.7.1. Type nesting</a></li>
 <li><a href="#sec-sem-ConstructorType_wf-packageObjectTypeIR">10.7.2. Well-formedness</a></li>
 </ul>
 </li>
@@ -3003,7 +2996,7 @@ keyword.</p>
 </ul>
 </div>
 <div class="sect3">
-<h4 id="syn-name">6.2.1. Identifiers</h4>
+<h4 id="sec-lexical-identifiers">6.2.1. Identifiers</h4>
 <div class="paragraph">
 <p>P4 identifiers may contain only letters, numbers, and the underscore character
 <code>_</code>, and must start with a letter or underscore. The special identifier
@@ -3011,7 +3004,7 @@ consisting of a single underscore <code>_</code> is reserved to indicate a "don&
 value; its type may vary depending on the context. Certain keywords (e.g.,
 <code>apply</code>) can be used as identifiers if the context makes it unambiguous.</p>
 </div>
-<div class="listingblock">
+<div id="name" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">identifier
    : `ID text
@@ -3059,10 +3052,10 @@ name
 </div>
 </div>
 <div class="sect4">
-<h5 id="syn-numberLiteral">6.2.2.2. Integer literals</h5>
-<div class="listingblock">
+<h5 id="syn-integerLiteral">6.2.2.2. Integer literals</h5>
+<div id="integerLiteral" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">numberLiteral
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">integerLiteral
    : D int
    | nat W int
    | nat S int
@@ -4059,22 +4052,28 @@ Added explanation for P4<sub>IR</sub>. More explanation needed?
 </div>
 <div class="sect3">
 <h4 id="_typing_a_p4_program">7.2.2. Typing a P4 program</h4>
+<div class="paragraph">
+<p>A P4<sub>16</sub> programs is a sequence of declarations:</p>
+</div>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">p4program
    : /* empty */
    | p4program declaration
    | p4program ;
-   ;
-
-p4programIR
-   : declarationIR* ;
    ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
 <p>For a well-typed P4<sub>16</sub> program, <code>p4program</code>, a type checker produces a P4<sub>IR</sub>
 program, <code>p4programIR</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">p4programIR
+   : declarationIR* ;
+   ;</code></pre>
+</div>
 </div>
 <div class="paragraph">
 <p><a href="#Program_ok">typing <code>p4program</code></a> is defined as:</p>
@@ -4104,8 +4103,8 @@ program, <code>p4programIR</code>:</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-abstract-machine-typing-context">7.2.3. Typing context</h4>
-<div class="listingblock">
+<h4 id="_typing_context">7.2.3. Typing context</h4>
+<div id="typingContext" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">globalTypingLayer = {CONSTRUCTOR constructorTypeDefEnv, TYPE typeDefEnv, CALLABLE callableTypeDefEnv, FRAME typeFrame}
 
@@ -4810,7 +4809,7 @@ instantiated to create a <code>store</code>, which maps <code>oid</code>s to <co
 </div>
 <div class="sect3">
 <h4 id="_instantiation_context">7.3.3. Instantiation context</h4>
-<div class="listingblock">
+<div id="instContext" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">globalInstLayer = {CONSTRUCTOR constructorDefEnv, TYPE typeDefEnv, CALLABLE callableDefEnv, FRAME frame}
 
@@ -4982,7 +4981,7 @@ Edited contents from Section 18.4.
 </div>
 <div class="sect3">
 <h4 id="_evaluation_context">7.4.2. Evaluation context</h4>
-<div class="listingblock">
+<div id="evalContext" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">globalEvalLayer = globalInstLayer
 
@@ -5048,7 +5047,7 @@ the <code>reject</code> or <code>accept</code> states has been reached.</p>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4pseudo">ParserModel {
-    error       parseError;
+    error parseError;
     onPacketArrival(packet p) {
         ParserModel.parseError = error.NoError;
         goto start;
@@ -5066,7 +5065,7 @@ along with the error recorded.</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-abstract-machine-dynamic-evaluation-match-action">7.4.4. The Match-Action Pipeline Abstract Machine</h4>
+<h4 id="_the_match_action_pipeline_abstract_machine">7.4.4. The Match-Action Pipeline Abstract Machine</h4>
 <div class="paragraph">
 <p>We can describe the computational model of a match-action pipeline, embodied by
 a control block: the body of the control block is executed, similarly to the
@@ -5197,14 +5196,14 @@ Added disclaimer about concurrency model.
 <h2 id="sec-p4-types-and-values">8. P4 types and values</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>P4<sub>16</sub> supports a variety of types and values. This section describes the basic
-types and values, as well as the more complex types and values that can be
-constructed from them.</p>
+<p>P4<sub>16</sub> is a statically-typed language. Programs that do not pass the type
+checker are considered invalid and rejected by the compiler. P4 provides a
+number of base types as well as type operators that construct derived types.</p>
 </div>
 <div class="paragraph">
 <p>The syntax for P4 types is as follows:</p>
 </div>
-<div class="listingblock">
+<div id="typeOrVoid" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">type
    : baseType
@@ -5222,9 +5221,9 @@ typeOrVoid
 </div>
 </div>
 <div class="paragraph">
-<p>These types are represented internally in P4<sub>IR</sub> as follows:</p>
+<p>These types are represented in P4<sub>IR</sub> as follows:</p>
 </div>
-<div class="listingblock">
+<div id="typeIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">typeIR
    : baseTypeIR
@@ -5246,7 +5245,7 @@ typeOrVoid
    cursor typingContext |- typeOrVoid : typeIR # tid*
    hint(input %0 %1 %2)
    hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
-   hint(prose_out "the type" %3 "and set of fresh type variables" %4)</pre>
+   hint(prose_out "the type" %3 "and a set of fresh type variables" %4)</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -5266,7 +5265,7 @@ nesting.</p>
 <p>The types represent the kinds of values that can be used in P4 programs. The
 runtime representation of P4 values is as follows:</p>
 </div>
-<div class="listingblock">
+<div id="value" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">value
    : baseValue
@@ -5277,11 +5276,11 @@ runtime representation of P4 values is as follows:</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-def-baseValue">8.1. Base types and values</h3>
+<h3 id="_base_types_and_values">8.1. Base types and values</h3>
 <div class="paragraph">
 <p>P4 supports the following built-in base types:</p>
 </div>
-<div class="listingblock">
+<div id="baseType" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">baseType
    : BOOL
@@ -5299,10 +5298,45 @@ runtime representation of P4 values is as follows:</p>
    ;</code></pre>
 </div>
 </div>
+<div class="ulist">
+<ul>
+<li>
+<p>The <code>void</code> type, which has no values and can be used only in a few
+restricted circumstances.</p>
+</li>
+<li>
+<p>The <code>error</code> type, which is used to convey errors in a
+target-independent, compiler-managed way.</p>
+</li>
+<li>
+<p>The <code>string</code> type, which can be used with compile-time known
+values of type string.</p>
+</li>
+<li>
+<p>The <code>match_kind</code> type, which is used for describing the implementation of
+table lookups,</p>
+</li>
+<li>
+<p><code>bool</code>, which represents Boolean values</p>
+</li>
+<li>
+<p><code>int</code>, which represents arbitrary-sized integer values</p>
+</li>
+<li>
+<p>Bit-strings of fixed width, denoted by <code>bit&lt;&gt;</code></p>
+</li>
+<li>
+<p>Fixed-width signed integers represented using two&#8217;s complement <code>int&lt;&gt;</code></p>
+</li>
+<li>
+<p>Bit-strings of dynamically-computed width with a fixed maximum width <code>varbit&lt;&gt;</code></p>
+</li>
+</ul>
+</div>
 <div class="paragraph">
 <p>In addition, P4 supports void types:</p>
 </div>
-<div class="listingblock">
+<div id="typeOrVoid" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">typeOrVoid
    : type
@@ -5312,25 +5346,25 @@ runtime representation of P4 values is as follows:</p>
 </div>
 </div>
 <div class="paragraph">
-<p>In P4<sub>IR</sub>, base types are subdivided into primitive types and number types.
-Values are subdivided into primitive and number values, accordingly.</p>
+<p>In P4<sub>IR</sub>, base types are subdivided into primitive types and integer types.
+Base values are subdivided into primitive and integer values, accordingly.</p>
 </div>
-<div class="listingblock">
+<div id="baseValue" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">baseTypeIR
    : primitiveTypeIR
-   | numberTypeIR
+   | integerTypeIR
    ;
 
 baseValue
    : primitiveValue
-   | numberValue
+   | integerValue
    ;</code></pre>
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-def-primitiveValue">8.1.1. Primitive types and values</h4>
-<div class="listingblock">
+<h4 id="_primitive_types_and_values">8.1.1. Primitive types and values</h4>
+<div id="primitiveValue" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">primitiveTypeIR
    : VOID
@@ -5348,31 +5382,132 @@ primitiveValue
    ;</code></pre>
 </div>
 </div>
-<div class="ulist">
-<ul>
-<li>
-<p>The <code>void</code> type, which has no values and can be used only in a few
-restricted circumstances. There is no value of type <code>void</code>.</p>
-</li>
-<li>
-<p><code>bool</code>, which represents Boolean values.</p>
-</li>
-<li>
-<p>The <code>error</code> type, which is used to convey errors in a
-target-independent, compiler-managed way.</p>
-</li>
-<li>
-<p>The <code>match_kind</code> type, which is used for describing the implementation of
-table lookups.</p>
-</li>
-<li>
-<p>The <code>string</code> type, which can be used with compile-time known
-values of type string.</p>
-</li>
-</ul>
+<div class="sect4">
+<h5 id="_the_void_type">8.1.1.1. The void type</h5>
+<div class="paragraph">
+<p>The void type is written <code>void</code>. It contains no values. It is not included in
+the production rule <code>baseType</code> as it can only appear in few restricted places
+in P4 programs.</p>
+</div>
 </div>
 <div class="sect4">
-<h5 id="sec-sem-Type_ok-primitiveType">8.1.1.1. Type checking</h5>
+<h5 id="_booleans">8.1.1.2. Booleans</h5>
+<div class="paragraph">
+<p>The Boolean type <code>bool</code> contains just two values, <code>false</code> and <code>true</code>. Boolean
+values are not integers or bit-strings.</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_errors">8.1.1.3. Errors</h5>
+<div class="paragraph">
+<p>The error type contains opaque distinct values that can be used to signal
+errors. It is written as <code>error</code>. New elements of the error type
+are defined with the syntax:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">errorDeclaration
+   : ERROR `{ nameList }
+   ;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>All elements of the <code>error</code> type are inserted into the <code>error</code> namespace,
+irrespective of the place where an error is defined. <code>error</code> is similar to an
+enumeration (<code>enum</code>) type in other languages. A program can contain multiple
+<code>error</code> declarations, which the compiler will merge together. It is an error to
+declare the same identifier multiple times.</p>
+</div>
+<div class="paragraph">
+<p>For example, the following declaration creates two elements of the <code>error</code>
+type (these errors are declared in the P4 core library):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #953800">error</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> ParseError<span style="color: #24292f;background-color: #f6f8fa">,</span> PacketTooShort <span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The underlying representation of errors is target-dependent.</p>
+</div>
+<div class="paragraph">
+<p>The semantics of an error declaration is described in <a href="#sec-errorDeclaration">Section 11.5</a>.</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_match_kinds">8.1.1.4. Match kinds</h5>
+<div class="paragraph">
+<p>The <code>match_kind</code> type is very similar to the <code>error</code> type and is used to
+declare a set of distinct names that may be used in a table&#8217;s key property
+(described in <a href="#sec-table-props">[sec-table-props]</a>). All identifiers are inserted into the
+top-level namespace. It is an error to declare the same <code>match_kind</code> identifier
+multiple times.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">matchKindDeclaration
+   : MATCH_KIND `{ nameList trailingCommaOpt }
+   ;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The P4 core library contains the following match_kind declaration:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #953800">match_kind</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+   exact<span style="color: #24292f;background-color: #f6f8fa">,</span>
+   ternary<span style="color: #24292f;background-color: #f6f8fa">,</span>
+   lpm
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Architectures may support additional <code>match_kind</code>s. The declaration of new
+<code>match_kind</code>s can only occur within model description files; P4 programmers
+cannot declare new match kinds.</p>
+</div>
+<div class="paragraph">
+<p>The semantics of a match kind declaration is described in
+<a href="#sec-matchKindDeclaration">Section 11.6</a>.</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_strings">8.1.1.5. Strings</h5>
+<div class="paragraph">
+<p>The type <code>string</code> represents strings. The values of type <code>string</code> are either
+string literals, or concatenations of multiple <code>string</code>-typed expression.</p>
+</div>
+<div class="paragraph">
+<p>One cannot declare variables with a <code>string</code> type. Parameters with type
+<code>string</code> can be only directionless (see Section <a href="#sec-calling-convention">[sec-calling-convention]</a>).
+P4 does not support string manipulation in the dataplane; the <code>string</code> type is
+only allowed for describing compile-time known values (i.e., string literals,
+as discussed in Section <a href="#sec-string-literals">[sec-string-literals]</a>). Even so, the string type is
+useful, for example, in giving the type signature for extern functions such as
+the following:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">extern</span> <span style="color: #953800">void</span> log<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #953800">string</span> message<span style="color: #24292f;background-color: #f6f8fa">);</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>As another example, the following annotation indicates that the specified name
+should be used for a given table in the generated control-plane API:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #0550ae">@name</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0a3069">"acl"</span><span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #cf222e">table</span> t1 <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_type_checking">8.1.1.6. Type checking</h5>
+<div class="paragraph">
+<p>The surface primitive type <code>primitiveType</code> is type checked as described
+below, producing <code>primitiveTypeIR</code>.</p>
+</div>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -5411,7 +5546,7 @@ rule Type_ok/primitiveType/string:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Result in the type <code>VOID</code> and set of fresh type variables <code>[ ]</code>.</p>
+<p>Result in the type <code>VOID</code> and a set of fresh type variables <code>[ ]</code>.</p>
 </li>
 </ol>
 </div>
@@ -5421,7 +5556,7 @@ rule Type_ok/primitiveType/string:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Result in the type <code>BOOL</code> and set of fresh type variables <code>[ ]</code>.</p>
+<p>Result in the type <code>BOOL</code> and a set of fresh type variables <code>[ ]</code>.</p>
 </li>
 </ol>
 </div>
@@ -5431,7 +5566,7 @@ rule Type_ok/primitiveType/string:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Result in the type <code>ERROR</code> and set of fresh type variables <code>[ ]</code>.</p>
+<p>Result in the type <code>ERROR</code> and a set of fresh type variables <code>[ ]</code>.</p>
 </li>
 </ol>
 </div>
@@ -5441,7 +5576,7 @@ rule Type_ok/primitiveType/string:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Result in the type <code>MATCH_KIND</code> and set of fresh type variables <code>[ ]</code>.</p>
+<p>Result in the type <code>MATCH_KIND</code> and a set of fresh type variables <code>[ ]</code>.</p>
 </li>
 </ol>
 </div>
@@ -5451,7 +5586,7 @@ rule Type_ok/primitiveType/string:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Result in the type <code>STRING</code> and set of fresh type variables <code>[ ]</code>.</p>
+<p>Result in the type <code>STRING</code> and a set of fresh type variables <code>[ ]</code>.</p>
 </li>
 </ol>
 </div>
@@ -5461,65 +5596,47 @@ rule Type_ok/primitiveType/string:
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-def-numberValue">8.1.2. Number types and values</h4>
-<div class="listingblock">
+<h4 id="_integer_types_and_values_signed_and_unsigned">8.1.2. Integer types and values (signed and unsigned)</h4>
+<div id="integerValue" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">numberTypeIR
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">integerTypeIR
    : INT
    | INT `&lt; nat &gt;
    | BIT `&lt; nat &gt;
    | VARBIT `&lt; nat &gt;
    ;
 
-numberLiteral
+integerLiteral
    : D int
    | nat W int
    | nat S int
    ;
 
-numberValue
-   : numberLiteral
+integerValue
+   : integerLiteral
    | nat . nat V int
    ;</code></pre>
 </div>
 </div>
-<div class="ulist">
-<ul>
-<li>
-<p><code>int</code>, which represents arbitrary-sized integer values.</p>
-</li>
-<li>
-<p>Fixed-width signed integers represented using two&#8217;s complement <code>int&lt;&gt;</code>.</p>
-</li>
-<li>
-<p>Bit-strings of fixed width, denoted by <code>bit&lt;&gt;</code>.</p>
-</li>
-<li>
-<p>Bit-strings of dynamically-computed width with a fixed maximum width <code>varbit&lt;&gt;</code>.</p>
-</li>
-</ul>
-</div>
-<div class="sect4">
-<h5 id="_design_goals">8.1.2.1. Design goals</h5>
 <div class="paragraph">
-<p>The typing rules for the integer types are chosen according to the following
-principles:</p>
+<p>P4 supports arbitrary-size integer values. The typing rules for the integer
+types are chosen according to the following principles:</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
 <p><strong>Inspired by C</strong>: Typing of integers is modeled after the
 well-defined parts of C, expanded to cope with arbitrary fixed-width
-integers. In particular, the type of the result of an expression
-only depends on the expression operands, and not on how the result
-of the expression is consumed.</p>
+integers. In particular, the type of the result of an expression only depends
+on the expression operands, and not on how the result of the expression is
+consumed.</p>
 </li>
 <li>
 <p><strong>No undefined behaviors</strong>: P4 attempts to avoid many of C&#8217;s
 behaviors, which include the size of an integer (int), the results produced
-on overflow, and the results produced for some input combinations
-(e.g., shifts with negative amounts, overflows on signed numbers,
-etc.). P4 computations on integer types have no undefined behaviors.</p>
+on overflow, and the results produced for some input combinations (e.g.,
+shifts with negative amounts, overflows on signed numbers, etc.). P4
+computations on integer types have no undefined behaviors.</p>
 </li>
 <li>
 <p><strong>Least surprise</strong>: The P4 typing rules are chosen to behave as
@@ -5527,26 +5644,24 @@ closely as possible to traditional well-behaved C programs.</p>
 </li>
 <li>
 <p><strong>Forbid rather than surprise</strong>: Rather than provide surprising or
-undefined results (e.g., in C comparisons between signed and
-unsigned integers), we have chosen to forbid expressions with
-ambiguous interpretations. For example, P4 does not allow binary
-operations that combine signed and unsigned integers.</p>
+undefined results (e.g., in C comparisons between signed and unsigned
+integers), we have chosen to forbid expressions with ambiguous
+interpretations. For example, P4 does not allow binary operations that
+combine signed and unsigned integers.</p>
 </li>
 </ul>
 </div>
 <div class="paragraph">
-<p>The priority of arithmetic operations is identical to C---e.g.,
-multiplication binds tighter than addition.</p>
-</div>
+<p>The priority of arithmetic operations is identical to C---e.g., multiplication
+binds tighter than addition.</p>
 </div>
 <div class="sect4">
-<h5 id="_portability">8.1.2.2. Portability</h5>
+<h5 id="_portability">8.1.2.1. Portability</h5>
 <div class="paragraph">
-<p>No P4 target can support all possible types and operations. For
-example, the type <code>bit&lt;23132312&gt;</code> is legal in P4, but
-it is highly unlikely to be supported on any target in practice. Hence,
-each target can impose restrictions on the types it can support. Such
-restrictions may include:</p>
+<p>No P4 target can support all possible types and operations. For example, the
+type <code>bit&lt;23132312&gt;</code> is legal in P4, but it is highly unlikely to be supported
+on any target in practice. Hence, each target can impose restrictions on the
+types it can support. Such restrictions may include:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -5559,8 +5674,7 @@ supported on widths which are an integral number of bytes).</p>
 </li>
 <li>
 <p>Constraints on some operands (e.g., some architectures may only
-support multiplications by small values, or shifts with small
-values).</p>
+support multiplications by small values, or shifts with small values).</p>
 </li>
 </ul>
 </div>
@@ -5574,7 +5688,7 @@ behavior should match this specification.</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_arbitrary_precision_integers">8.1.2.3. Arbitrary-precision integers</h5>
+<h5 id="_arbitrary_precision_integers">8.1.2.2. Arbitrary-precision integers</h5>
 <div class="paragraph">
 <p>The arbitrary-precision data type describes integers with an unlimited
 precision. This type is written as <code>int</code>.</p>
@@ -5586,9 +5700,8 @@ compiler will convert all int values that have a runtime component to
 fixed-width types, according to the rules described below.</p>
 </div>
 <div class="paragraph">
-<p>All operations that can be performed on arbitrary-precision integers are
-described in <a href="#sec-varint-ops">[sec-varint-ops]</a>.  The following example shows three constant
-definitions whose values are arbitrary-precision integers.</p>
+<p>The following example shows three constant definitions whose values are
+arbitrary-precision integers.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -5605,7 +5718,7 @@ compile-time known value as an argument for such a parameter.  See
 <a href="#sec-calling-convention">[sec-calling-convention]</a> for more details on directionless parameters.</p>
 </div>
 <div class="sect5">
-<h6 id="sec-sem-Type_ok-arbitraryInt">8.1.2.3.1. Type checking</h6>
+<h6 id="_type_checking_2">8.1.2.2.1. Type checking</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -5628,14 +5741,14 @@ compile-time known value as an argument for such a parameter.  See
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Result in the type <code>INT</code> and set of fresh type variables <code>[ ]</code>.</p>
+<p>Result in the type <code>INT</code> and a set of fresh type variables <code>[ ]</code>.</p>
 </li>
 </ol>
 </div>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_fixed_width_signed_integers">8.1.2.4. Fixed-width signed integers</h5>
+<h5 id="_fixed_width_signed_integers">8.1.2.3. Fixed-width signed integers</h5>
 <div class="paragraph">
 <p>Signed integers are represented using two&#8217;s complement. An integer with <code>W</code>
 bits is declared as: <code>int&lt;W&gt;</code>. <code>W</code> must be an expression that evaluates to a
@@ -5662,7 +5775,7 @@ arithmetic operations on certain sizes (e.g., 16-, 32-, and 64- bit values).</p>
 <p>A signed integer with width 1 can only have two legal values: 0 and -1.</p>
 </div>
 <div class="sect5">
-<h6 id="sec-sem-Type_ok-fixedInt">8.1.2.4.1. Type checking</h6>
+<h6 id="_type_checking_3">8.1.2.3.1. Type checking</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -5676,7 +5789,7 @@ rule Type_ok/fixedInt/expression:
     -- Expr_ok: p TC |- expression : typedExpressionIR
     -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR)
     -- Expr_eval_lctk: p TC |- typedExpressionIR ~&gt; value
-    -- if n = $to_int(value)</pre>
+    -- if n = $int_of_value(value)</pre>
 </div>
 </div>
 </div>
@@ -5702,7 +5815,7 @@ rule Type_ok/fixedInt/expression:
 <p>Let <code>n</code> be <code>int</code>.</p>
 </li>
 <li>
-<p>Result in the type <code>INT &lt; n &gt;</code> and set of fresh type variables <code>[ ]</code>.</p>
+<p>Result in the type <code>INT &lt; n &gt;</code> and a set of fresh type variables <code>[ ]</code>.</p>
 </li>
 </ol>
 </div>
@@ -5721,7 +5834,7 @@ rule Type_ok/fixedInt/expression:
 <p>Let <code>value</code> be the result of <a href="#Expr_eval_lctk">the local compile-time evaluation of <code>typedExpressionIR</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>int</code> be <code><a href="#to_int">$to_int(value)</a></code>.</p>
+<p>Let <code>int</code> be <a href="#int_of_value">the integer representation of  <code>value</code></a>.</p>
 </li>
 <li>
 <p>Check that <code>int</code> has type <code>nat</code>.</p>
@@ -5730,7 +5843,7 @@ rule Type_ok/fixedInt/expression:
 <p>Let <code>n</code> be <code>int</code>.</p>
 </li>
 <li>
-<p>Result in the type <code>INT &lt; n &gt;</code> and set of fresh type variables <code>[ ]</code>.</p>
+<p>Result in the type <code>INT &lt; n &gt;</code> and a set of fresh type variables <code>[ ]</code>.</p>
 </li>
 </ol>
 </div>
@@ -5740,12 +5853,12 @@ rule Type_ok/fixedInt/expression:
 </div>
 </div>
 <div class="sect4">
-<h5 id="_fixed_width_unsigned_integers_bit_strings">8.1.2.5. Fixed-width unsigned integers (bit-strings)</h5>
+<h5 id="_fixed_width_unsigned_integers_bit_strings">8.1.2.4. Fixed-width unsigned integers (bit-strings)</h5>
 <div class="paragraph">
 <p>An unsigned integer (which we also call a "bit-string") has an arbitrary width,
 expressed in bits. A bit-string of width <code>W</code> is declared as: <code>bit&lt;W&gt;</code>. <code>W</code> must
 be an expression that evaluates to a local compile-time known value (see
-<a href="#sec-compile-time-known">[sec-compile-time-known]</a>) that is a non-negative integer.  When using an
+<a href="#sec-compile-time-known">[sec-compile-time-known]</a>) that is a non-negative integer. When using an
 expression for the size, the expression must be parenthesized. Bitstrings with
 width 0 are allowed; they have no actual bits, and can only have the value 0.
 See <a href="#sec-uninitialized-values-and-writing-invalid-headers">[sec-uninitialized-values-and-writing-invalid-headers]</a> for additional
@@ -5776,7 +5889,7 @@ they may limit the maximum size, or they may only support some arithmetic
 operations on certain sizes (e.g., 16-, 32-, and 64- bit values).</p>
 </div>
 <div class="sect5">
-<h6 id="sec-sem-Type_ok-fixedBit">8.1.2.5.1. Type checking</h6>
+<h6 id="_type_checking_4">8.1.2.4.1. Type checking</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -5793,7 +5906,7 @@ rule Type_ok/fixedBit/expression:
     -- Expr_ok: p TC |- expression : typedExpressionIR
     -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR)
     -- Expr_eval_lctk: p TC |- typedExpressionIR ~&gt; value
-    -- if n = $to_int(value)</pre>
+    -- if n = $int_of_value(value)</pre>
 </div>
 </div>
 </div>
@@ -5813,7 +5926,7 @@ rule Type_ok/fixedBit/expression:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Result in the type <code>BIT &lt; 1 &gt;</code> and set of fresh type variables <code>[ ]</code>.</p>
+<p>Result in the type <code>BIT &lt; 1 &gt;</code> and a set of fresh type variables <code>[ ]</code>.</p>
 </li>
 </ol>
 </div>
@@ -5829,7 +5942,7 @@ rule Type_ok/fixedBit/expression:
 <p>Let <code>n</code> be <code>int</code>.</p>
 </li>
 <li>
-<p>Result in the type <code>BIT &lt; n &gt;</code> and set of fresh type variables <code>[ ]</code>.</p>
+<p>Result in the type <code>BIT &lt; n &gt;</code> and a set of fresh type variables <code>[ ]</code>.</p>
 </li>
 </ol>
 </div>
@@ -5848,7 +5961,7 @@ rule Type_ok/fixedBit/expression:
 <p>Let <code>value</code> be the result of <a href="#Expr_eval_lctk">the local compile-time evaluation of <code>typedExpressionIR</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>int</code> be <code><a href="#to_int">$to_int(value)</a></code>.</p>
+<p>Let <code>int</code> be <a href="#int_of_value">the integer representation of  <code>value</code></a>.</p>
 </li>
 <li>
 <p>Check that <code>int</code> has type <code>nat</code>.</p>
@@ -5857,7 +5970,7 @@ rule Type_ok/fixedBit/expression:
 <p>Let <code>n</code> be <code>int</code>.</p>
 </li>
 <li>
-<p>Result in the type <code>BIT &lt; n &gt;</code> and set of fresh type variables <code>[ ]</code>.</p>
+<p>Result in the type <code>BIT &lt; n &gt;</code> and a set of fresh type variables <code>[ ]</code>.</p>
 </li>
 </ol>
 </div>
@@ -5867,31 +5980,29 @@ rule Type_ok/fixedBit/expression:
 </div>
 </div>
 <div class="sect4">
-<h5 id="_dynamically_sized_bit_strings">8.1.2.6. Dynamically-sized bit-strings</h5>
+<h5 id="_dynamically_sized_bit_strings">8.1.2.5. Dynamically-sized bit-strings</h5>
 <div class="paragraph">
-<p>Some network protocols use fields whose size is only known at runtime
-(e.g., IPv4 options). To support restricted manipulations of such
-values, P4 provides a special bit-string type whose size is set at
-runtime, called a <code>varbit</code>.</p>
+<p>Some network protocols use fields whose size is only known at runtime (e.g.,
+IPv4 options). To support restricted manipulations of such values, P4 provides
+a special bit-string type whose size is set at runtime, called a <code>varbit</code>.</p>
 </div>
 <div class="paragraph">
-<p>The type <code>varbit&lt;W&gt;</code> denotes a bit-string with a width of at most <code>W</code>
-bits, where <code>W</code> is a local compile-time known value (see Section
-<a href="#sec-compile-time-known">[sec-compile-time-known]</a>) that is a non-negative integer.  For
-example, the type <code>varbit&lt;120&gt;</code> denotes the type of bit-string values
-that may have between 0 and 120 bits. Most operations that are
-applicable to fixed-size bit-strings (unsigned numbers) <strong>cannot</strong> be
-performed on dynamically sized bit-strings.  Note that <code>varbit&lt;W&gt;</code>
-type refers to both cases of <code>varbit&lt;W&gt;</code> and <code>varbit&lt;(expression)&gt;</code>
-where the width is a compile-time known value.</p>
+<p>The type <code>varbit&lt;W&gt;</code> denotes a bit-string with a width of at most <code>W</code> bits,
+where <code>W</code> is a local compile-time known value (see Section
+<a href="#sec-compile-time-known">[sec-compile-time-known]</a>) that is a non-negative integer. For example, the
+type <code>varbit&lt;120&gt;</code> denotes the type of bit-string values that may have between
+0 and 120 bits. Most operations that are applicable to fixed-size bit-strings
+(unsigned numbers) <strong>cannot</strong> be performed on dynamically sized bit-strings.
+Note that <code>varbit&lt;W&gt;</code> type refers to both cases of <code>varbit&lt;W&gt;</code> and
+<code>varbit&lt;(expression)&gt;</code> where the width is a compile-time known value.</p>
 </div>
 <div class="paragraph">
-<p>P4 architectures may impose additional constraints on varbit types:
-for example, they may limit the maximum size, or they may require <code>varbit</code>
-values to always contain an integer number of bytes at runtime.</p>
+<p>P4 architectures may impose additional constraints on varbit types: for
+example, they may limit the maximum size, or they may require <code>varbit</code> values
+to always contain an integer number of bytes at runtime.</p>
 </div>
 <div class="sect5">
-<h6 id="sec-sem-Type_ok-varbit">8.1.2.6.1. Type checking</h6>
+<h6 id="_type_checking_5">8.1.2.5.1. Type checking</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -5905,7 +6016,7 @@ rule Type_ok/variableBit/expression:
     -- Expr_ok: p TC |- expression : typedExpressionIR
     -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR)
     -- Expr_eval_lctk: p TC |- typedExpressionIR ~&gt; value
-    -- if n = $to_int(value)</pre>
+    -- if n = $int_of_value(value)</pre>
 </div>
 </div>
 </div>
@@ -5931,7 +6042,7 @@ rule Type_ok/variableBit/expression:
 <p>Let <code>n</code> be <code>int</code>.</p>
 </li>
 <li>
-<p>Result in the type <code>VARBIT &lt; n &gt;</code> and set of fresh type variables <code>[ ]</code>.</p>
+<p>Result in the type <code>VARBIT &lt; n &gt;</code> and a set of fresh type variables <code>[ ]</code>.</p>
 </li>
 </ol>
 </div>
@@ -5950,7 +6061,7 @@ rule Type_ok/variableBit/expression:
 <p>Let <code>value</code> be the result of <a href="#Expr_eval_lctk">the local compile-time evaluation of <code>typedExpressionIR</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>int</code> be <code><a href="#to_int">$to_int(value)</a></code>.</p>
+<p>Let <code>int</code> be <a href="#int_of_value">the integer representation of  <code>value</code></a>.</p>
 </li>
 <li>
 <p>Check that <code>int</code> has type <code>nat</code>.</p>
@@ -5959,7 +6070,7 @@ rule Type_ok/variableBit/expression:
 <p>Let <code>n</code> be <code>int</code>.</p>
 </li>
 <li>
-<p>Result in the type <code>VARBIT &lt; n &gt;</code> and set of fresh type variables <code>[ ]</code>.</p>
+<p>Result in the type <code>VARBIT &lt; n &gt;</code> and a set of fresh type variables <code>[ ]</code>.</p>
 </li>
 </ol>
 </div>
@@ -5970,7 +6081,10 @@ rule Type_ok/variableBit/expression:
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-sem-Type_wf/baseTypeIR">8.1.3. Well-formedness</h4>
+<h4 id="_well_formedness">8.1.3. Well-formedness</h4>
+<div class="paragraph">
+<p>The well-formedness rules for base types are as follows:</p>
+</div>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -6000,7 +6114,7 @@ rule Type_ok/variableBit/expression:
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-def-namedType">8.2. Named types</h3>
+<h3 id="_named_types">8.2. Named types</h3>
 <div class="paragraph">
 <p>Named types are types that reference another type by name. User-defined types
 can be introduced with their names. For example, the following declares a new
@@ -6156,7 +6270,7 @@ rule Type_ok/prefixedTypeName/polymorphic:
 <p>Let <code>typeIR</code> be <code><a href="#type_of_typeDefIR">$type_of_typeDefIR(typeDefIR)</a></code>.</p>
 </li>
 <li>
-<p>Result in the type <code>typeIR</code> and set of fresh type variables <code>[ ]</code>.</p>
+<p>Result in the type <code>typeIR</code> and a set of fresh type variables <code>[ ]</code>.</p>
 </li>
 </ol>
 </div>
@@ -6166,7 +6280,7 @@ rule Type_ok/prefixedTypeName/polymorphic:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Result in the type <code>typeDefIR &lt; [ ] &gt;</code> and set of fresh type variables <code>[ ]</code>.</p>
+<p>Result in the type <code>typeDefIR &lt; [ ] &gt;</code> and a set of fresh type variables <code>[ ]</code>.</p>
 </li>
 </ol>
 </div>
@@ -6358,7 +6472,7 @@ the <code>specializedTypeIR</code>).</p>
 <p>Let <code>typeIR<sub>arg</sub><sup>*</sup></code> and <code>tid<sub>fresh</sub><sup>*</sup></code> be the result of <a href="#TypeArguments_ok">typing <code>typeArgument<sup>*</sup></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Result in the type <code>typeDefIR &lt; typeIR<sub>arg</sub><sup>*</sup> &gt;</code> and set of fresh type variables <code>tid<sub>fresh</sub><sup>*</sup></code>.</p>
+<p>Result in the type <code>typeDefIR &lt; typeIR<sub>arg</sub><sup>*</sup> &gt;</code> and a set of fresh type variables <code>tid<sub>fresh</sub><sup>*</sup></code>.</p>
 </li>
 </ol>
 </div>
@@ -6403,19 +6517,8 @@ the <code>specializedTypeIR</code>).</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-def-dataValue">8.3. Data types and values</h3>
-<div class="listingblock">
-<div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">type
-   : baseType
-   | namedType
-   | headerStackType
-   | listType
-   | tupleType
-   ;</code></pre>
-</div>
-</div>
-<div class="listingblock">
+<h3 id="_data_types_and_values">8.3. Data types and values</h3>
+<div id="dataValue" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">dataTypeIR
    : listTypeIR
@@ -6438,18 +6541,22 @@ dataValue
    ;</code></pre>
 </div>
 </div>
-<div class="sect3">
-<h4 id="sec-def-listValue">8.3.1. List types and values</h4>
 <div class="paragraph">
-<p>A list holds zero or more values, where every element must have the same
-type. The type of a list where all elements have type <code>T</code> is written as</p>
+<p>Data types represent the types that aggregate other types, including lists,
+tuples, header stacks, structs, headers, header unions, and enums.</p>
+</div>
+<div class="sect3">
+<h4 id="_list_types_and_values">8.3.1. List types and values</h4>
+<div class="paragraph">
+<p>A list holds zero or more values, where every element must have the same type.
+The type of a list where all elements have type <code>T</code> is written as</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">list</span><span style="color: #0550ae">&lt;</span>T<span style="color: #0550ae">&gt;</span></code></pre>
 </div>
 </div>
-<div class="listingblock">
+<div id="listValue" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">listType
    : LIST `&lt; typeArgument &gt;
@@ -6465,7 +6572,7 @@ listValue
 </div>
 </div>
 <div class="sect4">
-<h5 id="sec-sem-Type_ok-listType">8.3.1.1. Type checking</h5>
+<h5 id="_type_checking_6">8.3.1.1. Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -6492,70 +6599,13 @@ listValue
 <p>Let <code>typeIR<sub>arg</sub></code> and <code>tid<sub>fresh</sub><sup>*</sup></code> be the result of <a href="#TypeArgument_ok">typing <code>typeArgument</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Result in the type <code>LIST &lt; typeIR<sub>arg</sub> &gt;</code> and set of fresh type variables <code>tid<sub>fresh</sub><sup>*</sup></code>.</p>
+<p>Result in the type <code>LIST &lt; typeIR<sub>arg</sub> &gt;</code> and a set of fresh type variables <code>tid<sub>fresh</sub><sup>*</sup></code>.</p>
 </li>
 </ol>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_type_nesting">8.3.1.2. Type nesting</h5>
-<div class="paragraph">
-<p><code>typeIR</code> can be nested in a list type</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon_typeIR">the canonicalized form of <code>typeIR</code></a>.</p>
-</li>
-<li>
-<p>Return <code><a href="#nestable'_list">$nestable'_list(typeIR<sub>canon</sub>)</a></code>.</p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p><code>typeIR'</code> can be nested in a list type</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>primitiveTypeIR</code> be <code>typeIR'</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>If <code>primitiveTypeIR</code> matches pattern <code>BOOL</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if <code>primitiveTypeIR</code> matches pattern <code>ERROR</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if <code>primitiveTypeIR</code> matches pattern <code>MATCH_KIND</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else <code>primitiveTypeIR</code> matches pattern <code>STRING</code>: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>numberTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>nameTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>newTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>dataTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Otherwise: return <code>false</code>.</p>
-</li>
-</ol>
-</div>
-</div>
-<div class="sect4">
-<h5 id="sec-sem-Type_wf-listTypeIR">8.3.1.3. Well-formedness</h5>
+<h5 id="_well_formedness_2">8.3.1.2. Well-formedness</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -6593,17 +6643,17 @@ listValue
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-def-tupleValue">8.3.2. Tuple types and values</h4>
+<h4 id="_tuple_types_and_values">8.3.2. Tuple types and values</h4>
 <div class="paragraph">
-<p>A tuple is similar to a <code>struct</code>, in that it holds multiple values.
-The type of tuples with <code>n</code> component types <code>T1</code>, &#8230;&#8203;, <code>Tn</code> is written as</p>
+<p>A tuple is similar to a <code>struct</code>, in that it holds multiple values. The type of
+tuples with <code>n</code> component types <code>T1</code>, &#8230;&#8203;, <code>Tn</code> is written as</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">tuple</span><span style="color: #0550ae">&lt;</span>T1<span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #6e7781">/* more fields omitted */</span><span style="color: #24292f;background-color: #f6f8fa">,</span> Tn<span style="color: #0550ae">&gt;</span></code></pre>
 </div>
 </div>
-<div class="listingblock">
+<div id="tupleValue" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tupleType
    : TUPLE `&lt; typeArgumentList &gt;
@@ -6619,7 +6669,7 @@ tupleValue
 </div>
 </div>
 <div class="sect4">
-<h5 id="sec-sem-Type_ok-tupleType">8.3.2.1. Type checking</h5>
+<h5 id="_type_checking_7">8.3.2.1. Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -6650,92 +6700,13 @@ tupleValue
 <p>Let <code>typeIR<sub>arg</sub><sup>*</sup></code> and <code>tid<sub>fresh</sub><sup>*</sup></code> be the result of <a href="#TypeArguments_ok">typing <code>typeArgument<sup>*</sup></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Result in the type <code>TUPLE &lt; typeIR<sub>arg</sub><sup>*</sup> &gt;</code> and set of fresh type variables <code>tid<sub>fresh</sub><sup>*</sup></code>.</p>
+<p>Result in the type <code>TUPLE &lt; typeIR<sub>arg</sub><sup>*</sup> &gt;</code> and a set of fresh type variables <code>tid<sub>fresh</sub><sup>*</sup></code>.</p>
 </li>
 </ol>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_type_nesting_2">8.3.2.2. Type nesting</h5>
-<div class="paragraph">
-<p><code>typeIR</code> can be nested in a tuple type</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon_typeIR">the canonicalized form of <code>typeIR</code></a>.</p>
-</li>
-<li>
-<p>Return <code><a href="#nestable'_tuple">$nestable'_tuple(typeIR<sub>canon</sub>)</a></code>.</p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p><code>typeIR'</code> can be nested in a tuple type</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>primitiveTypeIR</code> be <code>typeIR'</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>If <code>primitiveTypeIR</code> matches pattern <code>BOOL</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else <code>primitiveTypeIR</code> matches pattern <code>ERROR</code>: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>numberTypeIR</code> be <code>typeIR'</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>If let <code>BIT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>INT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>VARBIT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>nameTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>newTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>tupleTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>headerStackTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>structTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>headerTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>headerUnionTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>enumTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Otherwise: return <code>false</code>.</p>
-</li>
-</ol>
-</div>
-</div>
-<div class="sect4">
-<h5 id="sec-sem-Type_wf-tupleTypeIR">8.3.2.3. Well-formedness</h5>
+<h5 id="_well_formedness_3">8.3.2.2. Well-formedness</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -6773,12 +6744,12 @@ tupleValue
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-def-headerStackValue">8.3.3. Header stack types and values</h4>
+<h4 id="_header_stack_types_and_values">8.3.3. Header stack types and values</h4>
 <div class="paragraph">
-<p>A header stack represents an array of headers or header unions. A header
-stack type is defined as:</p>
+<p>A header stack represents an array of headers or header unions. A header stack
+type is defined as:</p>
 </div>
-<div class="listingblock">
+<div id="headerStackTypeIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">headerStackType
    : namedType `[ expression ]
@@ -6790,10 +6761,10 @@ headerStackTypeIR
 </div>
 </div>
 <div class="paragraph">
-<p>where <code>namedType</code> refers to a header or header union type. For a
-header stack <code>hs[n]</code>, the term <code>n</code> is the maximum defined size, and
-must be a local compile-time known value that is a positive
-integer. Nested header stacks are not supported.</p>
+<p>where <code>namedType</code> refers to a header or header union type. For a header stack
+<code>hs[n]</code>, the term <code>n</code> is the maximum defined size, and must be a local
+compile-time known value that is a positive integer. Nested header stacks are
+not supported.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -6825,7 +6796,7 @@ which may be valid.</p>
 <code>Mpls_h</code>.</p>
 </div>
 <div class="sect4">
-<h5 id="sec-sem-Type_ok-headerStackType">8.3.3.1. Type checking</h5>
+<h5 id="_type_checking_8">8.3.3.1. Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -6837,7 +6808,7 @@ which may be valid.</p>
     -- Expr_ok: p TC |- expression_size : typedExpressionIR_size
     -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR_size)
     -- Expr_eval_lctk: p TC |- typedExpressionIR_size ~&gt; value_size
-    -- if n_size = $to_int(value_size)
+    -- if n_size = $int_of_value(value_size)
 
 rule Type_ok/headerStackType/specializedType:
    p TC |- specializedType `[expression_size] : (typeIR_base `[n_size]) # tid_fresh*
@@ -6845,7 +6816,7 @@ rule Type_ok/headerStackType/specializedType:
     -- Expr_ok: p TC |- expression_size : typedExpressionIR_size
     -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR_size)
     -- Expr_eval_lctk: p TC |- typedExpressionIR_size ~&gt; value_size
-    -- if n_size = $to_int(value_size)</pre>
+    -- if n_size = $int_of_value(value_size)</pre>
 </div>
 </div>
 </div>
@@ -6880,7 +6851,7 @@ rule Type_ok/headerStackType/specializedType:
 <p>Let <code>value<sub>size</sub></code> be the result of <a href="#Expr_eval_lctk">the local compile-time evaluation of <code>typedExpressionIR<sub>size</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>int</code> be <code><a href="#to_int">$to_int(value<sub>size</sub>)</a></code>.</p>
+<p>Let <code>int</code> be <a href="#int_of_value">the integer representation of  <code>value<sub>size</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>int</code> has type <code>nat</code>.</p>
@@ -6889,7 +6860,7 @@ rule Type_ok/headerStackType/specializedType:
 <p>Let <code>n<sub>size</sub></code> be <code>int</code>.</p>
 </li>
 <li>
-<p>Result in the type <code>typeIR<sub>base</sub> [ n<sub>size</sub> ]</code> and set of fresh type variables <code>[ ]</code>.</p>
+<p>Result in the type <code>typeIR<sub>base</sub> [ n<sub>size</sub> ]</code> and a set of fresh type variables <code>[ ]</code>.</p>
 </li>
 </ol>
 </div>
@@ -6911,7 +6882,7 @@ rule Type_ok/headerStackType/specializedType:
 <p>Let <code>value<sub>size</sub></code> be the result of <a href="#Expr_eval_lctk">the local compile-time evaluation of <code>typedExpressionIR<sub>size</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>int</code> be <code><a href="#to_int">$to_int(value<sub>size</sub>)</a></code>.</p>
+<p>Let <code>int</code> be <a href="#int_of_value">the integer representation of  <code>value<sub>size</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>int</code> has type <code>nat</code>.</p>
@@ -6920,7 +6891,7 @@ rule Type_ok/headerStackType/specializedType:
 <p>Let <code>n<sub>size</sub></code> be <code>int</code>.</p>
 </li>
 <li>
-<p>Result in the type <code>typeIR<sub>base</sub> [ n<sub>size</sub> ]</code> and set of fresh type variables <code>tid<sub>fresh</sub><sup>*</sup></code>.</p>
+<p>Result in the type <code>typeIR<sub>base</sub> [ n<sub>size</sub> ]</code> and a set of fresh type variables <code>tid<sub>fresh</sub><sup>*</sup></code>.</p>
 </li>
 </ol>
 </div>
@@ -6929,42 +6900,7 @@ rule Type_ok/headerStackType/specializedType:
 </div>
 </div>
 <div class="sect4">
-<h5 id="_type_nesting_3">8.3.3.2. Type nesting</h5>
-<div class="paragraph">
-<p><code>typeIR</code> can be nested in a header stack type</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon_typeIR">the canonicalized form of <code>typeIR</code></a>.</p>
-</li>
-<li>
-<p>Return <code><a href="#nestable'_headerStack">$nestable'_headerStack(typeIR<sub>canon</sub>)</a></code>.</p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p><code>typeIR'</code> can be nested in a header stack type</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>nameTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>headerTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>headerUnionTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Otherwise: return <code>false</code>.</p>
-</li>
-</ol>
-</div>
-</div>
-<div class="sect4">
-<h5 id="sec-sem-Type_wf-headerStackTypeIR">8.3.3.3. Well-formedness</h5>
+<h5 id="_well_formedness_4">8.3.3.2. Well-formedness</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -7002,7 +6938,22 @@ rule Type_ok/headerStackType/specializedType:
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-def-structValue">8.3.4. Struct types and values</h4>
+<h4 id="_array_types_and_values">8.3.4. Array types and values</h4>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+This feature will be added to P4 v1.2.5.6. It is not modeled in P4-SpecTec yet.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_struct_types_and_values">8.3.5. Struct types and values</h4>
 <div class="paragraph">
 <p>P4 <code>struct</code> types are defined with the following syntax:</p>
 </div>
@@ -7037,10 +6988,10 @@ contains the headers recognized by a simple parser:</p>
 </div>
 <div class="paragraph">
 <p>Struct types can be used by referring to their names. Generic struct types can
-be used by specializing their type parameters with type arguments.
-Internally, struct types are represented as follows:</p>
+be used by specializing their type parameters with type arguments. Internally,
+struct types and values are represented as follows:</p>
 </div>
-<div class="listingblock">
+<div id="structValue" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">fieldTypeIR
    : typeIR id ;
@@ -7060,97 +7011,18 @@ structValue
 </div>
 </div>
 <div class="sect4">
-<h5 id="_type_checking">8.3.4.1. Type checking</h5>
+<h5 id="_type_checking_9">8.3.5.1. Type checking</h5>
 <div class="paragraph">
 <p>Struct types are introduced by <code>struct</code> declarations. Its typing rule is
 explained in <a href="#sec-sem-Decl_ok-structTypeDeclaration">Section 11.10.2.1</a>.</p>
 </div>
 <div class="paragraph">
 <p>Struct types are then used by referencing their names. Thus struct types can
-be obtained from named types, as illustrated in <a href="#sec-def-namedType">Section 8.2</a>.</p>
+be obtained from named types, as illustrated in <a href="#sec-def-namedType">[sec-def-namedType]</a>.</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_type_nesting_4">8.3.4.2. Type nesting</h5>
-<div class="paragraph">
-<p><code>typeIR</code> can be nested in a struct type</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon_typeIR">the canonicalized form of <code>typeIR</code></a>.</p>
-</li>
-<li>
-<p>Return <code><a href="#nestable'_struct">$nestable'_struct(typeIR<sub>canon</sub>)</a></code>.</p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p><code>typeIR'</code> can be nested in a struct type</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>primitiveTypeIR</code> be <code>typeIR'</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>If <code>primitiveTypeIR</code> matches pattern <code>BOOL</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else <code>primitiveTypeIR</code> matches pattern <code>ERROR</code>: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>numberTypeIR</code> be <code>typeIR'</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>If let <code>INT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>BIT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>VARBIT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>nameTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>newTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>tupleTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>headerStackTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>structTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>headerTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>headerUnionTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>enumTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Otherwise: return <code>false</code>.</p>
-</li>
-</ol>
-</div>
-</div>
-<div class="sect4">
-<h5 id="sec-sem-Type_wf-structTypeIR">8.3.4.3. Well-formedness</h5>
+<h5 id="_well_formedness_5">8.3.5.2. Well-formedness</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -7192,7 +7064,7 @@ be obtained from named types, as illustrated in <a href="#sec-def-namedType">Sec
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-def-headerValue">8.3.5. Header types and values</h4>
+<h4 id="_header_types_and_values">8.3.6. Header types and values</h4>
 <div class="paragraph">
 <p>The declaration of a <code>header</code> type is given by the following syntax:</p>
 </div>
@@ -7329,20 +7201,12 @@ separate parsing steps.</p>
 valid header field names.</p>
 </div>
 <div class="paragraph">
-<p>Internally, header types are represented as follows:</p>
+<p>Internally, header types and values are represented as follows:</p>
 </div>
-<div class="listingblock">
+<div id="headerValue" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">fieldTypeIR
-   : typeIR id ;
-   ;
-
-headerTypeIR
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">headerTypeIR
    : HEADER tid `{ fieldTypeIR* }
-   ;
-
-fieldValue
-   : value id ;
    ;
 
 headerValue
@@ -7351,205 +7215,18 @@ headerValue
 </div>
 </div>
 <div class="sect4">
-<h5 id="_type_checking_2">8.3.5.1. Type checking</h5>
+<h5 id="_type_checking_10">8.3.6.1. Type checking</h5>
 <div class="paragraph">
 <p>Header types are introduced by <code>header</code> declarations. Its typing rule is
 explained in <a href="#sec-sem-Decl_ok-headerTypeDeclaration">Section 11.10.3.1</a>.</p>
 </div>
 <div class="paragraph">
 <p>Header types are then used by referencing their names. Thus header types can
-be obtained from named types, as illustrated in <a href="#sec-def-namedType">Section 8.2</a>.</p>
+be obtained from named types, as illustrated in <a href="#sec-def-namedType">[sec-def-namedType]</a>.</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_type_nesting_5">8.3.5.2. Type nesting</h5>
-<div class="paragraph">
-<p>Note, nesting of headers is not supported. One reason is that it leads to
-complications in defining the behavior of arbitrary sequences of <code>setValid</code>,
-<code>setInvalid</code>, and <code>emit</code> operations. Consider an example where header <code>h1</code>
-contains header <code>h2</code> as a member, both currently valid. A program executes
-<code>h2.setInvalid()</code> followed by <code>packet.emit(h1)</code>. Should all fields of <code>h1</code> be
-emitted, but skipping <code>h2</code>? Similarly, should <code>h1.setInvalid()</code> invalidate all
-headers contained within <code>h1</code>, regardless of how deeply they are nested?</p>
-</div>
-<div class="paragraph">
-<p><code>typeIR</code> can be used in a header type</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon_typeIR">the canonicalized form of <code>typeIR</code></a>.</p>
-</li>
-<li>
-<p>Return <code><a href="#nestable'_header">$nestable'_header(typeIR<sub>canon</sub>)</a></code>.</p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p><code>typeIR'</code> can be used in a header type</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>primitiveTypeIR</code> be <code>typeIR'</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Check that <code>primitiveTypeIR</code> matches pattern <code>BOOL</code>.</p>
-</li>
-<li>
-<p>Return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>numberTypeIR</code> be <code>typeIR'</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>If let <code>INT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>BIT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>VARBIT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>nameTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>newTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>enumTypeIR</code> be <code>typeIR'</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Check that <code>enumTypeIR</code> matches pattern <code>ENUM % &lt; % &gt; { % }</code>.</p>
-</li>
-<li>
-<p>Let <code>ENUM _ &lt; _ &gt; { _<sup>*</sup> }</code> be <code>enumTypeIR</code>.</p>
-</li>
-<li>
-<p>Return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else let <code>STRUCT _ { (typeIR<sub>field</sub> _ ;)<sup>*</sup> }</code> be <code>typeIR'</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Check that <a href="#nestable_struct_in_header"><code>typeIR<sub>field</sub></code> can be used in a struct nested in a header type</a>, for all <code>typeIR<sub>field</sub></code> in <code>typeIR<sub>field</sub><sup>*</sup></code>.</p>
-</li>
-<li>
-<p>Return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Otherwise: return <code>false</code>.</p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p>A nested <code>struct</code> used as a field in a <code>header</code> must contain only <code>bit&lt;W&gt;</code>,
-<code>int&lt;W&gt;</code>, a serializable <code>enum</code>, or a <code>bool</code>.</p>
-</div>
-<div class="paragraph">
-<p><code>typeIR</code> can be used in a struct nested in a header type</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon_typeIR">the canonicalized form of <code>typeIR</code></a>.</p>
-</li>
-<li>
-<p>Return <code><a href="#nestable'_struct_in_header">$nestable'_struct_in_header(typeIR<sub>canon</sub>)</a></code>.</p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p><code>typeIR'</code> can be used in a struct nested in a header type</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>primitiveTypeIR</code> be <code>typeIR'</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Check that <code>primitiveTypeIR</code> matches pattern <code>BOOL</code>.</p>
-</li>
-<li>
-<p>Return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>numberTypeIR</code> be <code>typeIR'</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>If let <code>INT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>BIT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>nameTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>newTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>enumTypeIR</code> be <code>typeIR'</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Check that <code>enumTypeIR</code> matches pattern <code>ENUM % &lt; % &gt; { % }</code>.</p>
-</li>
-<li>
-<p>Let <code>ENUM _ &lt; _ &gt; { _<sup>*</sup> }</code> be <code>enumTypeIR</code>.</p>
-</li>
-<li>
-<p>Return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else let <code>STRUCT _ { (typeIR<sub>field</sub> _ ;)<sup>*</sup> }</code> be <code>typeIR'</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Check that <a href="#nestable_struct_in_header"><code>typeIR<sub>field</sub></code> can be used in a struct nested in a header type</a>, for all <code>typeIR<sub>field</sub></code> in <code>typeIR<sub>field</sub><sup>*</sup></code>.</p>
-</li>
-<li>
-<p>Return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Otherwise: return <code>false</code>.</p>
-</li>
-</ol>
-</div>
-</div>
-<div class="sect4">
-<h5 id="sec-sem-Type_wf-headerTypeIR">8.3.5.3. Well-formedness</h5>
+<h5 id="_well_formedness_6">8.3.6.2. Well-formedness</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -7591,7 +7268,7 @@ headers contained within <code>h1</code>, regardless of how deeply they are nest
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-def-headerUnionValue">8.3.6. Header union types and values</h4>
+<h4 id="_header_union_types_and_values">8.3.7. Header union types and values</h4>
 <div class="paragraph">
 <p>A header union represents an alternative containing at most one of several
 different headers. Header unions can be used to represent "options" in
@@ -7626,20 +7303,12 @@ headers:</p>
 <p>A header union is not considered a type with fixed length.</p>
 </div>
 <div class="paragraph">
-<p>Internally, header union types are represented as follows:</p>
+<p>Internally, header union types and values are represented as follows:</p>
 </div>
-<div class="listingblock">
+<div id="headerUnionValue" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">fieldTypeIR
-   : typeIR id ;
-   ;
-
-headerUnionTypeIR
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">headerUnionTypeIR
    : HEADER_UNION tid `{ fieldTypeIR* }
-   ;
-
-fieldValue
-   : value id ;
    ;
 
 headerUnionValue
@@ -7648,7 +7317,7 @@ headerUnionValue
 </div>
 </div>
 <div class="sect4">
-<h5 id="_type_checking_3">8.3.6.1. Type checking</h5>
+<h5 id="_type_checking_11">8.3.7.1. Type checking</h5>
 <div class="paragraph">
 <p>Header union types are introduced by <code>header_union</code> declarations. Its typing
 rule is explained in <a href="#sec-sem-Decl_ok-headerUnionTypeDeclaration">Section 11.10.4.1</a>.</p>
@@ -7656,46 +7325,11 @@ rule is explained in <a href="#sec-sem-Decl_ok-headerUnionTypeDeclaration">Secti
 <div class="paragraph">
 <p>Header union types are then used by referencing their names. Thus header union
 types can be obtained from named types, as illustrated in
-<a href="#sec-def-namedType">Section 8.2</a>.</p>
+<a href="#sec-def-namedType">[sec-def-namedType]</a>.</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_type_nesting_6">8.3.6.2. Type nesting</h5>
-<div class="paragraph">
-<p><code>typeIR</code> can be used in a header union type</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon_typeIR">the canonicalized form of <code>typeIR</code></a>.</p>
-</li>
-<li>
-<p>Return <code><a href="#nestable'_headerUnion">$nestable'_headerUnion(typeIR<sub>canon</sub>)</a></code>.</p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p><code>typeIR'</code> can be used in a header union type</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>nameTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>newTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>headerTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Otherwise: return <code>false</code>.</p>
-</li>
-</ol>
-</div>
-</div>
-<div class="sect4">
-<h5 id="sec-sem-Type_wf-headerUnionTypeIR">8.3.6.3. Well-formedness</h5>
+<h5 id="_well_formedness_7">8.3.7.2. Well-formedness</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -7737,7 +7371,7 @@ types can be obtained from named types, as illustrated in
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-def-enumValue">8.3.7. Enum types and values</h4>
+<h4 id="_enum_types_and_values">8.3.8. Enum types and values</h4>
 <div class="paragraph">
 <p>The declaration of an <code>enum</code> type is given by the following syntax:</p>
 </div>
@@ -7754,9 +7388,9 @@ types can be obtained from named types, as illustrated in
 underlying representation type is provided. The two forms are described below.</p>
 </div>
 <div class="paragraph">
-<p>Internally, enum types are represented as follows:</p>
+<p>Internally, enum types and values are represented as follows:</p>
 </div>
-<div class="listingblock">
+<div id="enumValue" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">valueFieldIR
    : id = value ;
@@ -7774,7 +7408,7 @@ enumValue
 </div>
 </div>
 <div class="sect4">
-<h5 id="sec-def-enumTypeDeclaration-non-serializable">8.3.7.1. Enum type declaration without an underlying type</h5>
+<h5 id="_enum_type_declaration_without_an_underlying_type">8.3.8.1. Enum type declaration without an underlying type</h5>
 <div class="paragraph">
 <p>For example, the declaration</p>
 </div>
@@ -7790,6 +7424,9 @@ scope for naming the created type along with its distinct elements. The
 underlying representation of the <code>Suits</code> enum is not specified, so their "size"
 in bits is not specified (it is target-specific).</p>
 </div>
+</div>
+<div class="sect4">
+<h5 id="_enum_type_declaration_with_an_underlying_type">8.3.8.2. Enum type declaration with an underlying type</h5>
 <div class="paragraph">
 <p>It is also possible to specify an <code>enum</code> with an underlying representation.
 These are sometimes called serializable <code>enum</code>s, because headers are allowed
@@ -7852,88 +7489,20 @@ representation range of the underlying type.</p>
 <p>Annotations, represented by the non-terminal <code>optAnnotations</code>, are described in
 <a href="#sec-annotations">[sec-annotations]</a>.</p>
 </div>
-<div class="sect5">
-<h6 id="_type_checking_4">8.3.7.1.1. Type checking</h6>
+</div>
+<div class="sect4">
+<h5 id="_type_checking_12">8.3.8.3. Type checking</h5>
 <div class="paragraph">
 <p>Enum types are introduced by <code>enum</code> declarations. Its typing rule is explained
 in <a href="#sec-sem-Decl_ok-enumTypeDeclaration">[sec-sem-Decl_ok-enumTypeDeclaration]</a>.</p>
 </div>
 <div class="paragraph">
 <p>Enum types are then used by referencing their names. Thus enum types can be
-obtained from named types, as illustrated in <a href="#sec-def-namedType">Section 8.2</a>.</p>
+obtained from named types, as illustrated in <a href="#sec-def-namedType">[sec-def-namedType]</a>.</p>
 </div>
 </div>
-<div class="sect5">
-<h6 id="_type_nesting_7">8.3.7.1.2. Type nesting</h6>
-<div class="paragraph">
-<p>The symbol <code>type</code> in the grammar must be one of the following types:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>an unsigned integer, i.e. <code>bit&lt;W&gt;</code> for some local compile-time known value <code>W</code>.</p>
-</li>
-<li>
-<p>a signed integer, i.e. <code>int&lt;W&gt;</code> for some local compile-time known value <code>W</code>.</p>
-</li>
-<li>
-<p>a type name declared via <code>typedef</code>, where the base type of that type is either
-one of the types listed above, or another <code>typedef</code> name that meets these conditions.</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p><code>typeIR</code> can be used in a serializable enum type</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon_typeIR">the canonicalized form of <code>typeIR</code></a>.</p>
-</li>
-<li>
-<p>Return <code><a href="#nestable'_enum_serializable">$nestable'_enum_serializable(typeIR<sub>canon</sub>)</a></code>.</p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p><code>typeIR''</code> can be used in a serializable enum type</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>numberTypeIR</code> be <code>typeIR''</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>If let <code>INT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>BIT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>nameTypeIR</code> be <code>typeIR''</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>TYPE _ typeIR</code> be <code>typeIR''</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Return <code><a href="#nestable_new_in_enum_serializable">$nestable_new_in_enum_serializable(typeIR)</a></code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Otherwise: return <code>false</code>.</p>
-</li>
-</ol>
-</div>
-</div>
-<div class="sect5">
-<h6 id="sec-sem-Type_wf-enumTypeIR">8.3.7.1.3. Well-formedness</h6>
+<div class="sect4">
+<h5 id="_well_formedness_8">8.3.8.4. Well-formedness</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -7999,10 +7568,9 @@ rule Type_wf/enumTypeIR/serializable:
 </div>
 </div>
 </div>
-</div>
 <div class="sect2">
-<h3 id="sec-def-objectTypeIR">8.4. Object types and values</h3>
-<div class="listingblock">
+<h3 id="_object_types_and_values">8.4. Object types and values</h3>
+<div id="objectReferenceValue" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">objectTypeIR
    : externObjectTypeIR
@@ -8010,18 +7578,27 @@ rule Type_wf/enumTypeIR/serializable:
    | controlObjectTypeIR
    | packageObjectTypeIR
    | tableObjectTypeIR
+   ;
+
+objectReferenceValue
+   : ! oid
    ;</code></pre>
 </div>
 </div>
+<div class="paragraph">
+<p>Stateful objects are represented using <code>objectTypeIR</code>. At runtime, these
+objects are passed along directionless parameters as references
+(<code>objectReferenceValue</code>).</p>
+</div>
 <div class="sect3">
-<h4 id="sec-def-externObjectTypeIR">8.4.1. Extern object types</h4>
+<h4 id="_extern_object_types">8.4.1. Extern object types</h4>
 <div class="paragraph">
 <p>An extern object declaration declares an object and all methods that can be
 invoked to perform computations and to alter the state of the object. Extern
 object declarations can also optionally declare constructor methods; these must
 have the same name as the enclosing <code>extern</code> type, no type parameters, and no
-return type. Extern declarations may only appear as allowed by the
-architecture model and may be specific to a target.</p>
+return type. Extern declarations may only appear as allowed by the architecture
+model and may be specific to a target.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -8066,7 +7643,7 @@ objects can be invoked on a packet:</p>
 <p>Extern object types can be referred to using their name. Internally, extern
 object types are represented as:</p>
 </div>
-<div class="listingblock">
+<div id="externObjectTypeIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externObjectTypeIR
    : EXTERN tid externMethodTypeDefEnv
@@ -8074,7 +7651,7 @@ object types are represented as:</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_type_checking_5">8.4.1.1. Type checking</h5>
+<h5 id="_type_checking_13">8.4.1.1. Type checking</h5>
 <div class="paragraph">
 <p>Extern object types are introduced by <code>extern</code> declarations. Its typing rule is
 explained in <a href="#sec-sem-Decl_ok-externObjectDeclaration">Section 11.7.2.1</a>.</p>
@@ -8082,11 +7659,11 @@ explained in <a href="#sec-sem-Decl_ok-externObjectDeclaration">Section 11.7.2.1
 <div class="paragraph">
 <p>Extern object types are then used by referencing their names. Thus extern
 object types can be obtained from named types, as illustrated in
-<a href="#sec-def-namedType">Section 8.2</a>.</p>
+<a href="#sec-def-namedType">[sec-def-namedType]</a>.</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="sec-sem-Type_wf-externObjectTypeIR">8.4.1.2. Well-formedness</h5>
+<h5 id="_well_formedness_9">8.4.1.2. Well-formedness</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -8120,7 +7697,7 @@ object types can be obtained from named types, as illustrated in
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-def-parserObjectTypeIR">8.4.2. Parser object types</h4>
+<h4 id="_parser_object_types">8.4.2. Parser object types</h4>
 <div class="paragraph">
 <p>A parser type declaration describes the signature of a parser. A parser should
 have at least one argument of type <code>packet_in</code>, representing the received
@@ -8152,15 +7729,15 @@ that is parameterized on a type variable <code>H</code>. That parser receives as
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">struct</span> Counters <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* Fields omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
 <span style="color: #cf222e">parser</span> P<span style="color: #0550ae">&lt;</span>H<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">packet_in</span> b<span style="color: #24292f;background-color: #f6f8fa">,</span>
-             <span style="color: #cf222e">out</span> H packetHeaders<span style="color: #24292f;background-color: #f6f8fa">,</span>
-             <span style="color: #cf222e">out</span> Counters counters<span style="color: #24292f;background-color: #f6f8fa">);</span></code></pre>
+            <span style="color: #cf222e">out</span> H packetHeaders<span style="color: #24292f;background-color: #f6f8fa">,</span>
+            <span style="color: #cf222e">out</span> Counters counters<span style="color: #24292f;background-color: #f6f8fa">);</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
 <p>Parser types can be referred to using their name and type arguments.
 Internally, parser types are represented as:</p>
 </div>
-<div class="listingblock">
+<div id="parserObjectTypeIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parserObjectTypeIR
    : PARSER `( parameterTypeIR* )
@@ -8168,7 +7745,7 @@ Internally, parser types are represented as:</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_type_checking_6">8.4.2.1. Type checking</h5>
+<h5 id="_type_checking_14">8.4.2.1. Type checking</h5>
 <div class="paragraph">
 <p>Parser object types are introduced by <code>parser</code> declarations. Its typing rule is
 explained in <a href="#sec-sem-Decl_ok-parserTypeDeclaration">Section 11.10.6.1</a>.</p>
@@ -8176,11 +7753,11 @@ explained in <a href="#sec-sem-Decl_ok-parserTypeDeclaration">Section 11.10.6.1<
 <div class="paragraph">
 <p>Parser object types are then used by referencing their names. Thus parser
 object types can be obtained from named types, as illustrated in
-<a href="#sec-def-namedType">Section 8.2</a>.</p>
+<a href="#sec-def-namedType">[sec-def-namedType]</a>.</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="sec-sem-Type_wf-parserObjectTypeIR">8.4.2.2. Well-formedness</h5>
+<h5 id="_well_formedness_10">8.4.2.2. Well-formedness</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -8214,7 +7791,7 @@ object types can be obtained from named types, as illustrated in
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-def-controlObjectTypeIR">8.4.3. Control object types</h4>
+<h4 id="_control_object_types">8.4.3. Control object types</h4>
 <div class="paragraph">
 <p>A control type declaration describes the signature of a control block.</p>
 </div>
@@ -8232,7 +7809,7 @@ object types can be obtained from named types, as illustrated in
 <p>Control types can be referred to using their name and type arguments.
 Internally, control types are represented as:</p>
 </div>
-<div class="listingblock">
+<div id="controlObjectTypeIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">controlObjectTypeIR
    : CONTROL `( parameterTypeIR* )
@@ -8240,7 +7817,7 @@ Internally, control types are represented as:</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_type_checking_7">8.4.3.1. Type checking</h5>
+<h5 id="_type_checking_15">8.4.3.1. Type checking</h5>
 <div class="paragraph">
 <p>Control object types are introduced by <code>control</code> declarations. Its typing rule is
 explained in <a href="#sec-sem-Decl_ok-controlTypeDeclaration">Section 11.10.7.1</a>.</p>
@@ -8248,11 +7825,11 @@ explained in <a href="#sec-sem-Decl_ok-controlTypeDeclaration">Section 11.10.7.1
 <div class="paragraph">
 <p>Control object types are then used by referencing their names. Thus control
 object types can be obtained from named types, as illustrated in
-<a href="#sec-def-namedType">Section 8.2</a>.</p>
+<a href="#sec-def-namedType">[sec-def-namedType]</a>.</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="sec-sem-Type_wf-controlObjectTypeIR">8.4.3.2. Well-formedness</h5>
+<h5 id="_well_formedness_11">8.4.3.2. Well-formedness</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -8286,7 +7863,7 @@ object types can be obtained from named types, as illustrated in
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-def-packageObjectTypeIR">8.4.4. Package object types</h4>
+<h4 id="_package_object_types">8.4.4. Package object types</h4>
 <div class="paragraph">
 <p>A package type describes the signature of a package.</p>
 </div>
@@ -8301,7 +7878,7 @@ object types can be obtained from named types, as illustrated in
 <p>Package types can be referred to using their name and type arguments.
 Internally, package types are represented as:</p>
 </div>
-<div class="listingblock">
+<div id="packageObjectTypeIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">packageObjectTypeIR
    : PACKAGE `{ typeIR* }
@@ -8309,7 +7886,7 @@ Internally, package types are represented as:</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_type_checking_8">8.4.4.1. Type checking</h5>
+<h5 id="_type_checking_16">8.4.4.1. Type checking</h5>
 <div class="paragraph">
 <p>Package object types are introduced by <code>package</code> declarations. Its typing rule is
 explained in <a href="#sec-sem-Decl_ok-packageTypeDeclaration">Section 11.10.8.1</a>.</p>
@@ -8317,11 +7894,11 @@ explained in <a href="#sec-sem-Decl_ok-packageTypeDeclaration">Section 11.10.8.1
 <div class="paragraph">
 <p>Package object types are then used by referencing their names. Thus package
 object types can be obtained from named types, as illustrated in
-<a href="#sec-def-namedType">Section 8.2</a>.</p>
+<a href="#sec-def-namedType">[sec-def-namedType]</a>.</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="sec-sem-Type_wf-packageObjectTypeIR">8.4.4.2. Well-formedness</h5>
+<h5 id="_well_formedness_12">8.4.4.2. Well-formedness</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -8355,7 +7932,7 @@ object types can be obtained from named types, as illustrated in
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-def-tableObjectTypeIR">8.4.5. Table object types</h4>
+<h4 id="_table_object_types">8.4.5. Table object types</h4>
 <div class="paragraph">
 <p>A <code>table</code> declaration introduces a table instance.</p>
 </div>
@@ -8369,7 +7946,7 @@ object types can be obtained from named types, as illustrated in
 <div class="paragraph">
 <p>Internally, table types are represented as:</p>
 </div>
-<div class="listingblock">
+<div id="tableObjectTypeIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tableObjectTypeIR
    : TABLE tid `{ typeIR }
@@ -8377,7 +7954,7 @@ object types can be obtained from named types, as illustrated in
 </div>
 </div>
 <div class="sect4">
-<h5 id="sec-sem-Type_wf-tableObjectTypeIR">8.4.5.1. Well-formedness</h5>
+<h5 id="_well_formedness_13">8.4.5.1. Well-formedness</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -8427,12 +8004,12 @@ object types can be obtained from named types, as illustrated in
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-def-objectReferenceValue">8.4.6. Object reference values</h4>
+<h4 id="_object_reference_values">8.4.6. Object reference values</h4>
 <div class="paragraph">
 <p>P4 objects are stateful, thus their values are references to the actual objects
 allocated in the global store.</p>
 </div>
-<div class="listingblock">
+<div id="objectReferenceValue" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">oid = id*
 
@@ -8447,11 +8024,11 @@ objectReferenceValue
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-def-aliasTypeIR">8.5. Alias types</h3>
+<h3 id="_alias_types">8.5. Alias types</h3>
 <div class="paragraph">
 <p>A <code>typedef</code> or <code>type</code> declaration can be used to give an alias to a type.</p>
 </div>
-<div class="listingblock">
+<div id="typedefDeclaration" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">typedef
    : type
@@ -8467,7 +8044,7 @@ typedefDeclaration
 <div class="paragraph">
 <p>Internally, the alias is represented as:</p>
 </div>
-<div class="listingblock">
+<div id="aliasTypeIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">aliasTypeIR
    : typedefTypeIR
@@ -8485,13 +8062,12 @@ typedefDeclaration
 </div>
 </div>
 <div class="paragraph">
-<p>The two types are treated as synonyms, and all operations that can be
-executed using the original type can be also executed using the newly created
-type.</p>
+<p>The two types are treated as synonyms, and all operations that can be executed
+using the original type can be also executed using the newly created type.</p>
 </div>
 <div class="paragraph">
-<p>If <code>typedef</code> is used with a generic type the type must be specialized with
-the suitable number of type arguments:</p>
+<p>If <code>typedef</code> is used with a generic type the type must be specialized with the
+suitable number of type arguments:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -8506,7 +8082,7 @@ the suitable number of type arguments:</p>
 <div class="paragraph">
 <p>Internally, the alias is represented as:</p>
 </div>
-<div class="listingblock">
+<div id="typedefTypeIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">typedefTypeIR
    : TYPEDEF tid typeIR
@@ -8514,72 +8090,18 @@ the suitable number of type arguments:</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_type_checking_9">8.5.1.1. Type checking</h5>
+<h5 id="_type_checking_17">8.5.1.1. Type checking</h5>
 <div class="paragraph">
 <p><code>typedef</code>s are introduced by <code>typedef</code> declarations. Its typing rule is
 explained in <a href="#sec-sem-Decl_ok-typedefDeclaration-typedef">Section 11.10.5.1.1</a>.</p>
 </div>
 <div class="paragraph">
 <p><code>typedef</code>s are then used by referencing their names. Thus <code>typedef</code> types can
-be obtained from named types, as illustrated in <a href="#sec-def-namedType">Section 8.2</a>.</p>
+be obtained from named types, as illustrated in <a href="#sec-def-namedType">[sec-def-namedType]</a>.</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_type_nesting_8">8.5.1.2. Type nesting</h5>
-<div class="paragraph">
-<p><code>typeIR</code> can be used in a typedef</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon_typeIR">the canonicalized form of <code>typeIR</code></a>.</p>
-</li>
-<li>
-<p>Return <code><a href="#nestable'_typedef">$nestable'_typedef(typeIR<sub>canon</sub>)</a></code>.</p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p><code>typeIR'</code> can be used in a typedef</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>primitiveTypeIR</code> be <code>typeIR'</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>If <code>primitiveTypeIR</code> matches pattern <code>BOOL</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if <code>primitiveTypeIR</code> matches pattern <code>ERROR</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else <code>primitiveTypeIR</code> matches pattern <code>STRING</code>: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>numberTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>nameTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>newTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>dataTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Otherwise: return <code>false</code>.</p>
-</li>
-</ol>
-</div>
-</div>
-<div class="sect4">
-<h5 id="sec-sem-Type_wf-typedefTypeIR">8.5.1.3. Well-formedness</h5>
+<h5 id="_well_formedness_14">8.5.1.2. Well-formedness</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -8619,8 +8141,7 @@ be obtained from named types, as illustrated in <a href="#sec-def-namedType">Sec
 <div class="sect3">
 <h4 id="_type_declaration">8.5.2. <code>type</code> declaration</h4>
 <div class="paragraph">
-<p>Similarly to <code>typedef</code>, the keyword <code>type</code> can be used to introduce a new
-type.</p>
+<p>Similarly to <code>typedef</code>, the keyword <code>type</code> can be used to introduce a new type.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -8630,20 +8151,19 @@ U32 x <span style="color: #0550ae">=</span> <span style="color: #24292f;backgrou
 </div>
 <div class="paragraph">
 <p>While similar to <code>typedef</code>, the <code>type</code> keyword introduces a new type which is
-not a synonym with the original type: values of the original type and the
-newly introduced type cannot be mixed in expressions.</p>
+not a synonym with the original type: values of the original type and the newly
+introduced type cannot be mixed in expressions.</p>
 </div>
 <div class="paragraph">
-<p>Currently the types that can be created by the <code>type</code> keyword are restricted
-to one of: <code>bit&lt;&gt;</code>, <code>int&lt;&gt;</code>, <code>bool</code>, or types defined using <code>type</code> from such
+<p>Currently the types that can be created by the <code>type</code> keyword are restricted to
+one of: <code>bit&lt;&gt;</code>, <code>int&lt;&gt;</code>, <code>bool</code>, or types defined using <code>type</code> from such
 types.</p>
 </div>
 <div class="paragraph">
 <p>One important use of such types is in describing P4 values that need to be
-exchanged with the control plane through communication channels (e.g.,
-through the control-plane API or through network packets sent to the control
-plane). For example, a P4 architecture may define a type for the switch
-ports:</p>
+exchanged with the control plane through communication channels (e.g., through
+the control-plane API or through network packets sent to the control plane).
+For example, a P4 architecture may define a type for the switch ports:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -8655,13 +8175,13 @@ ports:</p>
 expressions without casts.  Moreover, this declaration may enable special
 manipulation or such values by software that lies outside of the datapath
 (e.g., a target-specific toolchain could include software that automatically
-converts values of type <code>PortId_t</code> to a different representation when
-exchanged with the control-plane software).</p>
+converts values of type <code>PortId_t</code> to a different representation when exchanged
+with the control-plane software).</p>
 </div>
 <div class="paragraph">
 <p>Internally, the alias is represented as:</p>
 </div>
-<div class="listingblock">
+<div id="newTypeIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">newTypeIR
    : TYPE tid typeIR
@@ -8669,80 +8189,18 @@ exchanged with the control-plane software).</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_type_checking_10">8.5.2.1. Type checking</h5>
+<h5 id="_type_checking_18">8.5.2.1. Type checking</h5>
 <div class="paragraph">
 <p><code>type</code>s are introduced by <code>type</code> declarations. Its typing rule is
 explained in <a href="#sec-sem-Decl_ok-typedefDeclaration-newtype">Section 11.10.5.2.1</a>.</p>
 </div>
 <div class="paragraph">
 <p><code>type</code>s are then used by referencing their names. Thus <code>type</code> types can
-be obtained from named types, as illustrated in <a href="#sec-def-namedType">Section 8.2</a>.</p>
+be obtained from named types, as illustrated in <a href="#sec-def-namedType">[sec-def-namedType]</a>.</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_type_nesting_9">8.5.2.2. Type nesting</h5>
-<div class="paragraph">
-<p><code>type B &lt;name&gt;</code> is allowed for a type name <code>B</code> defined via <code>typedef X B</code> if
-<code>type X &lt;name&gt;</code> is allowed.</p>
-</div>
-<div class="paragraph">
-<p><code>typeIR</code> can be used in a new type</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon_typeIR">the canonicalized form of <code>typeIR</code></a>.</p>
-</li>
-<li>
-<p>Return <code><a href="#nestable'_new">$nestable'_new(typeIR<sub>canon</sub>)</a></code>.</p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p><code>typeIR'</code> can be used in a new type</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>primitiveTypeIR</code> be <code>typeIR'</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Check that <code>primitiveTypeIR</code> matches pattern <code>BOOL</code>.</p>
-</li>
-<li>
-<p>Return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>numberTypeIR</code> be <code>typeIR'</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>If let <code>BIT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>INT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>nameTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>newTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Otherwise: return <code>false</code>.</p>
-</li>
-</ol>
-</div>
-</div>
-<div class="sect4">
-<h5 id="sec-sem-Type_wf-newTypeIR">8.5.2.3. Well-formedness</h5>
+<h5 id="_well_formedness_15">8.5.2.2. Well-formedness</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -8781,23 +8239,47 @@ be obtained from named types, as illustrated in <a href="#sec-def-namedType">Sec
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-def-synthesizedValue">8.6. Synthesized types and values</h3>
+<h3 id="_synthesized_types_and_values">8.6. Synthesized types and values</h3>
 <div class="paragraph">
 <p>For the purposes of type-checking the P4 compiler can synthesize some type
 representations which cannot be directly expressed by users.</p>
 </div>
+<div class="paragraph">
+<p>These types and values are represented as:</p>
+</div>
+<div id="synthesizedValue" class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">synthesizedTypeIR
+   : defaultTypeIR
+   | invalidHeaderTypeIR
+   | sequenceTypeIR
+   | recordTypeIR
+   | setTypeIR
+   | tableMetadataTypeIR
+   ;
+
+synthesizedValue
+   : defaultValue
+   | invalidHeaderValue
+   | sequenceValue
+   | recordValue
+   | setValue
+   | tableMetadataValue
+   ;</code></pre>
+</div>
+</div>
 <div class="sect3">
-<h4 id="sec-def-defaultValue">8.6.1. Default types and values</h4>
+<h4 id="_default_types_and_values">8.6.1. Default types and values</h4>
+<div class="paragraph">
+<p>A left-value can be initialized automatically with a default value of the
+suitable type using:</p>
+</div>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">defaultExpression
    : ...
    ;</code></pre>
 </div>
-</div>
-<div class="paragraph">
-<p>A left-value can be initialized automatically with a default value of the
-suitable type using the syntax <code>...</code> (see <a href="#sec-default-values">[sec-default-values]</a>).</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -8824,7 +8306,7 @@ S s0 <span style="color: #0550ae">=</span> <span style="color: #0550ae">...</spa
 <div class="paragraph">
 <p>Internally, the type and value of <code>...</code> itself is represented as:</p>
 </div>
-<div class="listingblock">
+<div id="defaultValue" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">defaultTypeIR
    : DEFAULT
@@ -8835,8 +8317,21 @@ defaultValue
    ;</code></pre>
 </div>
 </div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+The default type and value is new. Because every expressions must have
+a type and value, we need to represent those of <code>...</code>.
+</td>
+</tr>
+</table>
+</div>
 <div class="sect4">
-<h5 id="sec-sem-Type_wf-defaultTypeIR">8.6.1.1. Well-formnedness</h5>
+<h5 id="_well_formnedness">8.6.1.1. Well-formnedness</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -8866,7 +8361,7 @@ defaultValue
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-def-invalidHeaderValue">8.6.2. Invalid header types and values</h4>
+<h4 id="_invalid_header_types_and_values">8.6.2. Invalid header types and values</h4>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">dataExpression
@@ -8900,7 +8395,7 @@ whitespace or any other characters between those shown.</p>
 <div class="paragraph">
 <p>Internally, the type and value of <code>{#}</code> itself is represented as:</p>
 </div>
-<div class="listingblock">
+<div id="invalidHeaderValue" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">invalidHeaderTypeIR
    : HEADER_INVALID
@@ -8911,8 +8406,21 @@ invalidHeaderValue
    ;</code></pre>
 </div>
 </div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+The invalid header type and value is new. Because every expressions
+must have a type and value, we need to represent those of <code>{#}</code>.
+</td>
+</tr>
+</table>
+</div>
 <div class="sect4">
-<h5 id="sec-sem-Type_wf-invalidHeaderTypeIR">8.6.2.1. Well-formnedness</h5>
+<h5 id="_well_formnedness_2">8.6.2.1. Well-formnedness</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -8942,15 +8450,7 @@ invalidHeaderValue
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-def-sequenceValue">8.6.3. Sequence types and values</h4>
-<div class="paragraph">
-<p>Sequences can be assigned to other tuples with the same type.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">tuple</span><span style="color: #0550ae">&lt;</span><span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #953800">bool</span><span style="color: #0550ae">&gt;</span> x <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #0550ae">10</span><span style="color: #24292f;background-color: #f6f8fa">,</span> false <span style="color: #24292f;background-color: #f6f8fa">};</span></code></pre>
-</div>
-</div>
+<h4 id="_sequence_types_and_values">8.6.3. Sequence types and values</h4>
 <div class="paragraph">
 <p>A sequence expression is written using curly braces, with each element
 separated by a comma:</p>
@@ -8976,8 +8476,16 @@ or <code>header</code>, and can also be passed as arguments to methods. Sequence
 nested.</p>
 </div>
 <div class="paragraph">
-<p>For example, the following program fragment uses a sequence expression to pass
-several header fields simultaneously to a learning provider:</p>
+<p>For instance, sequences can be assigned to other tuples with the same type:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">tuple</span><span style="color: #0550ae">&lt;</span><span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #953800">bool</span><span style="color: #0550ae">&gt;</span> x <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #0550ae">10</span><span style="color: #24292f;background-color: #f6f8fa">,</span> false <span style="color: #24292f;background-color: #f6f8fa">};</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The following program fragment uses a sequence expression to pass several
+header fields simultaneously to a learning provider:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -9013,9 +8521,10 @@ which it evaluates. Any field names not given a value explicitly will be given
 their default value (see <a href="#sec-initializing-with-default-values">[sec-initializing-with-default-values]</a>).</p>
 </div>
 <div class="paragraph">
-<p>The type of a sequence expression is a sequence type.</p>
+<p>The type of a sequence expression is a sequence type. Its value is a sequence
+value.</p>
 </div>
-<div class="listingblock">
+<div id="sequenceValue" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">sequenceTypeIR
    : SEQ `&lt; typeIR* &gt;
@@ -9028,8 +8537,25 @@ sequenceValue
    ;</code></pre>
 </div>
 </div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+The sequence type is newly introduced. In the current P4 language
+specification, sequence expressions are referred to as tuple expressions, and
+(somewhat confusingly and implicitly) has tuple type. However, this is
+problematic since tuples have limited casting rules that cannot be applied to
+several initialization scenarios. Thus, we introduce sequence types to
+represent the expression sequence within curly braces, apart from tuple types.
+</td>
+</tr>
+</table>
+</div>
 <div class="sect4">
-<h5 id="sec-sem-Type_wf-sequenceTypeIR">8.6.3.1. Well-formnedness</h5>
+<h5 id="_well_formnedness_3">8.6.3.1. Well-formnedness</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -9087,7 +8613,7 @@ rule Type_wf/sequenceTypeIR/default:
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-def-recordValue">8.6.4. Record types and values</h4>
+<h4 id="_record_types_and_values">8.6.4. Record types and values</h4>
 <div class="paragraph">
 <p>One can write record expressions that evaluate to a structure or header. The
 syntax of these expressions is given by:</p>
@@ -9113,8 +8639,8 @@ dataExpression
 </div>
 </div>
 <div class="paragraph">
-<p>The following example shows a structure-valued expression used in an
-equality comparison expression:</p>
+<p>The following example shows a structure-valued expression used in an equality
+comparison expression:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -9142,10 +8668,10 @@ a value for every member of the struct or header type to which it evaluates, by
 mentioning each field name exactly once.</p>
 </div>
 <div class="paragraph">
-<p>Record expressions that have <code>...</code> as their last element are
-allowed to give values to only a subset of the fields of the struct or
-header type to which it evaluates. Any field names not given a value
-explicitly will be given their default value (see <a href="#sec-initializing-with-default-values">[sec-initializing-with-default-values]</a>).</p>
+<p>Record expressions that have <code>...</code> as their last element are allowed to give
+values to only a subset of the fields of the struct or header type to which it
+evaluates. Any field names not given a value explicitly will be given their
+default value (see <a href="#sec-initializing-with-default-values">[sec-initializing-with-default-values]</a>).</p>
 </div>
 <div class="paragraph">
 <p>The order of the fields of the <code>struct</code> or <code>header</code> type does not need to match
@@ -9158,7 +8684,7 @@ structure-valued expression.</p>
 <div class="paragraph">
 <p>Internally, the type and value of a record expression is represented as:</p>
 </div>
-<div class="listingblock">
+<div id="recordValue" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">recordTypeIR
    : RECORD `{ fieldTypeIR* }
@@ -9171,8 +8697,22 @@ recordValue
    ;</code></pre>
 </div>
 </div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+The record type and value is new. Because every expressions must have
+a type and value, we need to represent those of <code>{ recordElementExpression
+optTrailingComma }</code>.
+</td>
+</tr>
+</table>
+</div>
 <div class="sect4">
-<h5 id="sec-sem-Type_wf-recordTypeIR">8.6.4.1. Well-formnedness</h5>
+<h5 id="_well_formnedness_4">8.6.4.1. Well-formnedness</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -9238,8 +8778,8 @@ rule Type_wf/recordTypeIR/default:
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-def-setValue">8.6.5. Set types and values</h4>
-<div class="listingblock">
+<h4 id="_set_types_and_values">8.6.5. Set types and values</h4>
+<div id="setTypeIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">setTypeIR
    : SET `&lt; typeIR* &gt;
@@ -9256,9 +8796,9 @@ types cannot be named or declared by P4 programmers, they are only synthesized
 by the compiler internally and used for type-checking.</p>
 </div>
 <div class="paragraph">
-<p>Set values are represented internally as:</p>
+<p>Set values are represented as:</p>
 </div>
-<div class="listingblock">
+<div id="setValue" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">setValue
    : SET `{ value }
@@ -9269,261 +8809,7 @@ by the compiler internally and used for type-checking.</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_type_nesting_10">8.6.5.1. Type nesting</h5>
-<div class="paragraph">
-<p><code>typeIR</code> can be used in a set type</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon_typeIR">the canonicalized form of <code>typeIR</code></a>.</p>
-</li>
-<li>
-<p>Return <code><a href="#nestable'_set">$nestable'_set(typeIR<sub>canon</sub>)</a></code>.</p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p><code>typeIR''</code> can be used in a set type</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>primitiveTypeIR</code> be <code>typeIR''</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>If <code>primitiveTypeIR</code> matches pattern <code>BOOL</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else <code>primitiveTypeIR</code> matches pattern <code>ERROR</code>: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>numberTypeIR</code> be <code>typeIR''</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>If let <code>INT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>BIT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>nameTypeIR</code> be <code>typeIR''</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>newTypeIR</code> be <code>typeIR''</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>TUPLE &lt; typeIR<sup>*</sup> &gt;</code> be <code>typeIR''</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Check that <a href="#nestable_tuple_in_set"><code>typeIR</code> can be used in a tuple nested in a set type</a>, for all <code>typeIR</code> in <code>typeIR<sup>*</sup></code>.</p>
-</li>
-<li>
-<p>Return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>enumTypeIR</code> be <code>typeIR''</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>sequenceTypeIR</code> be <code>typeIR''</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Check that <code>sequenceTypeIR</code> matches pattern <code>SEQ &lt; % &gt;</code>.</p>
-</li>
-<li>
-<p>Let <code>SEQ &lt; typeIR<sup>*</sup> &gt;</code> be <code>sequenceTypeIR</code>.</p>
-</li>
-<li>
-<p>Check that <a href="#nestable_sequence_in_set"><code>typeIR</code> can be used in a sequence nested in a set type</a>, for all <code>typeIR</code> in <code>typeIR<sup>*</sup></code>.</p>
-</li>
-<li>
-<p>Return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Otherwise: return <code>false</code>.</p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p><code>typeIR</code> can be used in a tuple nested in a set type</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon_typeIR">the canonicalized form of <code>typeIR</code></a>.</p>
-</li>
-<li>
-<p>Return <code><a href="#nestable'_tuple_in_set">$nestable'_tuple_in_set(typeIR<sub>canon</sub>)</a></code>.</p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p><code>typeIR''</code> can be used in a tuple nested in a set type</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>primitiveTypeIR</code> be <code>typeIR''</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Check that <code>primitiveTypeIR</code> matches pattern <code>BOOL</code>.</p>
-</li>
-<li>
-<p>Return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>numberTypeIR</code> be <code>typeIR''</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>If let <code>INT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>BIT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>nameTypeIR</code> be <code>typeIR''</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>newTypeIR</code> be <code>typeIR''</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>TUPLE &lt; typeIR<sup>*</sup> &gt;</code> be <code>typeIR''</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Check that <a href="#nestable_tuple_in_set"><code>typeIR</code> can be used in a tuple nested in a set type</a>, for all <code>typeIR</code> in <code>typeIR<sup>*</sup></code>.</p>
-</li>
-<li>
-<p>Return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else let <code>enumTypeIR</code> be <code>typeIR''</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Otherwise: return <code>false</code>.</p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p><code>typeIR</code> can be used in a sequence nested in a set type</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Let <code>typeIR<sub>canon</sub></code> be <a href="#canon_typeIR">the canonicalized form of <code>typeIR</code></a>.</p>
-</li>
-<li>
-<p>Return <code><a href="#nestable'_sequence_in_set">$nestable'_sequence_in_set(typeIR<sub>canon</sub>)</a></code>.</p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p><code>typeIR''</code> can be used in a sequence nested in a set type</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>primitiveTypeIR</code> be <code>typeIR''</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Check that <code>primitiveTypeIR</code> matches pattern <code>BOOL</code>.</p>
-</li>
-<li>
-<p>Return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>numberTypeIR</code> be <code>typeIR''</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>If let <code>INT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>BIT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>nameTypeIR</code> be <code>typeIR''</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>newTypeIR</code> be <code>typeIR''</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>TUPLE &lt; typeIR<sup>*</sup> &gt;</code> be <code>typeIR''</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Check that <a href="#nestable_sequence_in_set"><code>typeIR</code> can be used in a sequence nested in a set type</a>, for all <code>typeIR</code> in <code>typeIR<sup>*</sup></code>.</p>
-</li>
-<li>
-<p>Return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>enumTypeIR</code> be <code>typeIR''</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>sequenceTypeIR</code> be <code>typeIR''</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Check that <code>sequenceTypeIR</code> matches pattern <code>SEQ &lt; % &gt;</code>.</p>
-</li>
-<li>
-<p>Let <code>SEQ &lt; typeIR<sup>*</sup> &gt;</code> be <code>sequenceTypeIR</code>.</p>
-</li>
-<li>
-<p>Check that <a href="#nestable_sequence_in_set"><code>typeIR</code> can be used in a sequence nested in a set type</a>, for all <code>typeIR</code> in <code>typeIR<sup>*</sup></code>.</p>
-</li>
-<li>
-<p>Return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Otherwise: return <code>false</code>.</p>
-</li>
-</ol>
-</div>
-</div>
-<div class="sect4">
-<h5 id="sec-sem-Type_wf-setTypeIR">8.6.5.2. Well-formnedness</h5>
+<h5 id="_well_formnedness_5">8.6.5.1. Well-formnedness</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -9561,12 +8847,13 @@ by the compiler internally and used for type-checking.</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-def-tableMetadataValue">8.6.6. Table metadata types and values</h4>
+<h4 id="_table_metadata_types_and_values">8.6.6. Table metadata types and values</h4>
 <div class="paragraph">
-<p>Calling an apply method on a table instance returns a value with a table
-metadata <code>struct</code> type with three fields. This structure is synthesized by the
-compiler automatically. For each <code>table T</code>, the compiler synthesizes a table
-metadata <code>enum</code> and a <code>struct</code>, shown in pseudo-P4:</p>
+<p>A <code>table</code> can be invoked by calling its <code>apply</code> method. Calling an apply method
+on a table instance returns a value with a table metadata <code>struct</code> type with
+three fields. This structure is synthesized by the compiler automatically. For
+each <code>table T</code>, the compiler synthesizes a table metadata <code>enum</code> and a
+<code>struct</code>, shown in pseudo-P4:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -9615,7 +8902,7 @@ statement:</p>
 <div class="paragraph">
 <p>Internally, the type and value of table metadata is represented as:</p>
 </div>
-<div class="listingblock">
+<div id="tableMetadataValue" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tableMetadataTypeIR
    : TABLE_ENUM tid `{ id* }
@@ -9629,7 +8916,7 @@ tableMetadataValue
 </div>
 </div>
 <div class="sect4">
-<h5 id="sec-sem-Type_wf-tableMetadataTypeIR">8.6.6.1. Well-formnedness</h5>
+<h5 id="_well_formnedness_6">8.6.6.1. Well-formnedness</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -10157,7 +9444,7 @@ represented as follows:</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_type_nesting_11">9.2.1. Type nesting</h4>
+<h4 id="_type_nesting">9.2.1. Type nesting</h4>
 <div class="paragraph">
 <p><code>typeIR</code> can be used in an action type</p>
 </div>
@@ -10177,11 +9464,11 @@ represented as follows:</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>If let <code>numberTypeIR</code> be <code>typeIR'</code>:</p>
+<p>If let <code>integerTypeIR</code> be <code>typeIR'</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Check that <code>numberTypeIR</code> matches pattern <code>INT</code>.</p>
+<p>Check that <code>integerTypeIR</code> matches pattern <code>INT</code>.</p>
 </li>
 <li>
 <p>Return <code>false</code>.</p>
@@ -10336,7 +9623,7 @@ defined function types are represented as follows:</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_type_nesting_12">9.3.1.1. Type nesting</h5>
+<h5 id="_type_nesting_2">9.3.1.1. Type nesting</h5>
 <div class="paragraph">
 <p><code>typeIR</code> can be used in a defined function type</p>
 </div>
@@ -10464,7 +9751,7 @@ extern function types are represented as follows:</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_type_nesting_13">9.3.2.1. Type nesting</h5>
+<h5 id="_type_nesting_3">9.3.2.1. Type nesting</h5>
 <div class="paragraph">
 <p><code>typeIR</code> can be used in an extern function type</p>
 </div>
@@ -10629,7 +9916,7 @@ to the method definition.  Here is an example:</p>
 of all the <code>abstract</code> methods (see <a href="#sec-instantiating-abstract-methods">[sec-instantiating-abstract-methods]</a>).</p>
 </div>
 <div class="sect5">
-<h6 id="_type_nesting_14">9.4.1.1. Type nesting</h6>
+<h6 id="_type_nesting_4">9.4.1.1. Type nesting</h6>
 <div class="paragraph">
 <p><code>typeIR</code> can be used in an extern method type</p>
 </div>
@@ -10816,7 +10103,7 @@ parserApplyMethodDef
 </div>
 </div>
 <div class="sect4">
-<h5 id="_type_nesting_15">9.4.2.1. Type nesting</h5>
+<h5 id="_type_nesting_5">9.4.2.1. Type nesting</h5>
 <div class="paragraph">
 <p><code>typeIR</code> can be used in a parser apply method type</p>
 </div>
@@ -10948,7 +10235,7 @@ controlApplyMethodDef
 </div>
 </div>
 <div class="sect4">
-<h5 id="_type_nesting_16">9.4.3.1. Type nesting</h5>
+<h5 id="_type_nesting_6">9.4.3.1. Type nesting</h5>
 <div class="paragraph">
 <p><code>typeIR</code> can be used in a control apply method type</p>
 </div>
@@ -11487,7 +10774,7 @@ constructors.</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_type_nesting_17">10.3.1. Type nesting</h4>
+<h4 id="_type_nesting_7">10.3.1. Type nesting</h4>
 <div class="paragraph">
 <p><code>$nestable_constructor_extern(typeIR)</code></p>
 </div>
@@ -11684,7 +10971,7 @@ rule is explained in <a href="#sec-sem-Decl_ok-parserDeclaration">Section 11.8.1
 </div>
 </div>
 <div class="sect4">
-<h5 id="_type_nesting_18">10.4.1. Type nesting</h5>
+<h5 id="_type_nesting_8">10.4.1. Type nesting</h5>
 <div class="paragraph">
 <p><code>$nestable_constructor_parser(typeIR)</code></p>
 </div>
@@ -11872,7 +11159,7 @@ rule is explained in <a href="#sec-sem-Decl_ok-controlDeclaration">Section 11.9.
 </div>
 </div>
 <div class="sect4">
-<h5 id="_type_nesting_19">10.5.1. Type nesting</h5>
+<h5 id="_type_nesting_9">10.5.1. Type nesting</h5>
 <div class="paragraph">
 <p><code>$nestable_constructor_control(typeIR)</code></p>
 </div>
@@ -12155,7 +11442,7 @@ with them.</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_type_nesting_20">10.7.1. Type nesting</h5>
+<h5 id="_type_nesting_10">10.7.1. Type nesting</h5>
 <div class="paragraph">
 <p><code>$nestable_constructor_package(typeIR)</code></p>
 </div>
@@ -17860,7 +17147,7 @@ rule Lvalue_ok/memberAccess/headerUnionTypeIR:
     -- if typedExpressionIR_index_reduced = $reduce_serenum_unary(typedExpressionIR_index, $compat_array_index)
     -- if ctk_index = LCTK
     -- Expr_eval_lctk: p TC |- typedExpressionIR_index_reduced ~&gt; value_index
-    -- if n_index = $to_int(value_index)
+    -- if n_index = $int_of_value(value_index)
     -- if n_index &lt; n_size
     -- if typedLvalueIR = (typedLvalueIR_base `[typedExpressionIR_index_reduced]) # `(typeIR)
 
@@ -17926,7 +17213,7 @@ rule Lvalue_ok/indexAccess/non-lctk:
 <p>Let <code>value<sub>index</sub></code> be the result of <a href="#Expr_eval_lctk">the local compile-time evaluation of <code>typedExpressionIR<sub>index_reduced</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>int</code> be <code><a href="#to_int">$to_int(value<sub>index</sub>)</a></code>.</p>
+<p>Let <code>int</code> be <a href="#int_of_value">the integer representation of  <code>value<sub>index</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>int</code> has type <code>nat</code>.</p>
@@ -17979,10 +17266,10 @@ rule Lvalue_ok/indexAccess/non-lctk:
     -- if _ # `(typeIR_lo_reduced ctk_lo_reduced) = typedExpressionIR_lo_reduced
     -- if ctk_hi_reduced = LCTK
     -- Expr_eval_lctk: p TC |- typedExpressionIR_hi_reduced ~&gt; value_hi
-    -- if n_hi = $to_int(value_hi)
+    -- if n_hi = $int_of_value(value_hi)
     -- if ctk_lo_reduced = LCTK
     -- Expr_eval_lctk: p TC |- typedExpressionIR_lo_reduced ~&gt; value_lo
-    -- if n_lo = $to_int(value_lo)
+    -- if n_lo = $int_of_value(value_lo)
     -- if $is_valid_bitslice(typeIR_base, n_lo, n_hi)
     -- if n_slice = n_hi - n_lo + 1
     -- if typeIR = BIT `&lt;n_slice&gt;
@@ -18047,7 +17334,7 @@ rule Lvalue_ok/indexAccess/non-lctk:
 <p>Let <code>value<sub>hi</sub></code> be the result of <a href="#Expr_eval_lctk">the local compile-time evaluation of <code>typedExpressionIR<sub>hi_reduced</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>int</code> be <code><a href="#to_int">$to_int(value<sub>hi</sub>)</a></code>.</p>
+<p>Let <code>int</code> be <a href="#int_of_value">the integer representation of  <code>value<sub>hi</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>int</code> has type <code>nat</code>.</p>
@@ -18062,7 +17349,7 @@ rule Lvalue_ok/indexAccess/non-lctk:
 <p>Let <code>value<sub>lo</sub></code> be the result of <a href="#Expr_eval_lctk">the local compile-time evaluation of <code>typedExpressionIR<sub>lo_reduced</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>int'</code> be <code><a href="#to_int">$to_int(value<sub>lo</sub>)</a></code>.</p>
+<p>Let <code>int'</code> be <a href="#int_of_value">the integer representation of  <code>value<sub>lo</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>int'</code> has type <code>nat</code>.</p>
@@ -21059,7 +20346,7 @@ typedExpressionIR
    ;</code></pre>
 </div>
 </div>
-<h5 id="_type_checking_11" class="discrete">Type checking</h5>
+<h5 id="_type_checking_19" class="discrete">Type checking</h5>
 <div class="listingblock">
 <div class="content">
 <pre>relation Expr_ok:
@@ -21093,7 +20380,7 @@ typedExpressionIR
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">literalExpression
    : booleanLiteral
-   | numberLiteral
+   | integerLiteral
    | stringLiteral
    ;
 
@@ -21270,7 +20557,7 @@ rule Expr_inst/literalExpressionIR-boolean/false:
 <h4 id="sec-numeric-literal-expressions">13.1.2. Numeric literal expressions</h4>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">numberLiteral
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">integerLiteral
    : D int
    | nat W int
    | nat S int
@@ -21365,12 +20652,12 @@ rule Expr_ok/literalExpression-number/fixbit:
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Expr_ok">typing <code>numberLiteral</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
+<p><a href="#Expr_ok">typing <code>integerLiteral</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>If let <code>D i</code> be <code>numberLiteral</code>:</p>
+<p>If let <code>D i</code> be <code>integerLiteral</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -21383,7 +20670,7 @@ rule Expr_ok/literalExpression-number/fixbit:
 </div>
 </li>
 <li>
-<p>Else if let <code>n S i</code> be <code>numberLiteral</code>:</p>
+<p>Else if let <code>n S i</code> be <code>integerLiteral</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -21396,7 +20683,7 @@ rule Expr_ok/literalExpression-number/fixbit:
 </div>
 </li>
 <li>
-<p>Else let <code>n W i</code> be <code>numberLiteral</code>:</p>
+<p>Else let <code>n W i</code> be <code>integerLiteral</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -21436,12 +20723,12 @@ rule Expr_eval_lctk/literalExpressionIR-number/fixedInt:
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Expr_eval_lctk">the local compile-time evaluation of <code>numberLiteral</code> annotated with <code>_</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
+<p><a href="#Expr_eval_lctk">the local compile-time evaluation of <code>integerLiteral</code> annotated with <code>_</code>, under cursor <code>p</code> and typing context <code>TC</code></a> is defined as:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>If let <code>D i</code> be <code>numberLiteral</code>:</p>
+<p>If let <code>D i</code> be <code>integerLiteral</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -21451,7 +20738,7 @@ rule Expr_eval_lctk/literalExpressionIR-number/fixedInt:
 </div>
 </li>
 <li>
-<p>Else if let <code>n W i</code> be <code>numberLiteral</code>:</p>
+<p>Else if let <code>n W i</code> be <code>integerLiteral</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -21461,7 +20748,7 @@ rule Expr_eval_lctk/literalExpressionIR-number/fixedInt:
 </div>
 </li>
 <li>
-<p>Else let <code>n S i</code> be <code>numberLiteral</code>:</p>
+<p>Else let <code>n S i</code> be <code>integerLiteral</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -21498,12 +20785,12 @@ rule Expr_inst/literalExpressionIR-number/fixedInt:
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#Expr_inst"><code>p IC STO' |- numberLiteral # _ : % %</code></a></p>
+<p><a href="#Expr_inst"><code>p IC STO' |- integerLiteral # _ : % %</code></a></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>If let <code>D i</code> be <code>numberLiteral</code>:</p>
+<p>If let <code>D i</code> be <code>integerLiteral</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -21513,7 +20800,7 @@ rule Expr_inst/literalExpressionIR-number/fixedInt:
 </div>
 </li>
 <li>
-<p>Else if let <code>n W i</code> be <code>numberLiteral</code>:</p>
+<p>Else if let <code>n W i</code> be <code>integerLiteral</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -21523,7 +20810,7 @@ rule Expr_inst/literalExpressionIR-number/fixedInt:
 </div>
 </li>
 <li>
-<p>Else let <code>n S i</code> be <code>numberLiteral</code>:</p>
+<p>Else let <code>n S i</code> be <code>integerLiteral</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -22431,7 +21718,7 @@ binaryExpressionIR
     -- if ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
     -- if ctk_r_reduced = LCTK
     -- Expr_eval_lctk: p TC |- typedExpressionIR_r_reduced ~&gt; value_r
-    -- if n_r = $to_int(value_r)
+    -- if n_r = $int_of_value(value_r)
     -- if n_r &gt; 0
     -- if ctk_reduced = $join_ctk(ctk_l_reduced, ctk_r_reduced)
     -- if expressionNoteIR = `(typeIR_reduced ctk_reduced)
@@ -22507,7 +21794,7 @@ rule Expr_ok/binaryExpression-divmod/rhs-non-lctk:
 <p>Let <code>value<sub>r</sub></code> be the result of <a href="#Expr_eval_lctk">the local compile-time evaluation of <code>typedExpressionIR<sub>r_reduced</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>int</code> be <code><a href="#to_int">$to_int(value<sub>r</sub>)</a></code>.</p>
+<p>Let <code>int</code> be <a href="#int_of_value">the integer representation of  <code>value<sub>r</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>int</code> has type <code>nat</code>.</p>
@@ -25693,7 +24980,7 @@ indexAccessExpressionIR
     -- if TUPLE `&lt;typeIR_e*&gt; = $canon_typeIR(typeIR_base)
     -- if ctk_index = LCTK
     -- Expr_eval_lctk: p TC |- typedExpressionIR_index_reduced ~&gt; value_index
-    -- if n_index = $to_int(value_index)
+    -- if n_index = $int_of_value(value_index)
     -- if n_index &lt; |typeIR_e*|
     -- if expressionNoteIR = `(typeIR_e*[n_index] DYN)
 
@@ -25709,7 +24996,7 @@ rule Expr_ok/indexAccessExpression/headerStack-lctk:
     -- if typeIR `[n_size] = $canon_typeIR(typeIR_base)
     -- if ctk_index = LCTK
     -- Expr_eval_lctk: p TC |- typedExpressionIR_index_reduced ~&gt; value_index
-    -- if n_index = $to_int(value_index)
+    -- if n_index = $int_of_value(value_index)
     -- if n_index &lt; n_size
     -- if expressionNoteIR = `(typeIR DYN)
 
@@ -25780,7 +25067,7 @@ rule Expr_ok/indexAccessExpression/headerStack-non-lctk:
 <p>Let <code>value<sub>index</sub></code> be the result of <a href="#Expr_eval_lctk">the local compile-time evaluation of <code>typedExpressionIR<sub>index_reduced</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>int</code> be <code><a href="#to_int">$to_int(value<sub>index</sub>)</a></code>.</p>
+<p>Let <code>int</code> be <a href="#int_of_value">the integer representation of  <code>value<sub>index</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>int</code> has type <code>nat</code>.</p>
@@ -25812,7 +25099,7 @@ rule Expr_ok/indexAccessExpression/headerStack-non-lctk:
 <p>Let <code>value<sub>index</sub></code> be the result of <a href="#Expr_eval_lctk">the local compile-time evaluation of <code>typedExpressionIR<sub>index_reduced</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>int</code> be <code><a href="#to_int">$to_int(value<sub>index</sub>)</a></code>.</p>
+<p>Let <code>int</code> be <a href="#int_of_value">the integer representation of  <code>value<sub>index</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>int</code> has type <code>nat</code>.</p>
@@ -25888,10 +25175,10 @@ sliceAccessExpressionIR
     -- if ctk_lo_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_lo_reduced)
     -- if ctk_hi_reduced = LCTK
     -- Expr_eval_lctk: p TC |- typedExpressionIR_hi_reduced ~&gt; value_hi
-    -- if n_hi = $to_int(value_hi)
+    -- if n_hi = $int_of_value(value_hi)
     -- if ctk_lo_reduced = LCTK
     -- Expr_eval_lctk: p TC |- typedExpressionIR_lo_reduced ~&gt; value_lo
-    -- if n_lo = $to_int(value_lo)
+    -- if n_lo = $int_of_value(value_lo)
     -- if $is_valid_bitslice(typeIR_base_reduced, n_lo, n_hi)
     -- if n_slice = n_hi - n_lo + 1
     -- if typeIR = BIT `&lt;n_slice&gt;
@@ -25971,7 +25258,7 @@ sliceAccessExpressionIR
 <p>Let <code>value<sub>hi</sub></code> be the result of <a href="#Expr_eval_lctk">the local compile-time evaluation of <code>typedExpressionIR<sub>hi_reduced</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>int</code> be <code><a href="#to_int">$to_int(value<sub>hi</sub>)</a></code>.</p>
+<p>Let <code>int</code> be <a href="#int_of_value">the integer representation of  <code>value<sub>hi</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>int</code> has type <code>nat</code>.</p>
@@ -25986,7 +25273,7 @@ sliceAccessExpressionIR
 <p>Let <code>value<sub>lo</sub></code> be the result of <a href="#Expr_eval_lctk">the local compile-time evaluation of <code>typedExpressionIR<sub>lo_reduced</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>int'</code> be <code><a href="#to_int">$to_int(value<sub>lo</sub>)</a></code>.</p>
+<p>Let <code>int'</code> be <a href="#int_of_value">the integer representation of  <code>value<sub>lo</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>int'</code> has type <code>nat</code>.</p>
@@ -27529,7 +26816,7 @@ tableActionIR
    ;
 
 tableEntryPriority
-   : PRIORITY = numberLiteral :
+   : PRIORITY = integerLiteral :
    | PRIORITY = `( expression ) :
    ;
 
@@ -27544,7 +26831,7 @@ keysetExpressionIR
    ;
 
 tableEntryPriorityIR
-   : PRIORITY = numberLiteral :
+   : PRIORITY = integerLiteral :
    | PRIORITY = `( typedExpressionIR ) :
    ;
 
@@ -27703,7 +26990,7 @@ is not allowed:</p>
    | identifier
    | typeIdentifier
    | stringLiteral
-   | numberLiteral
+   | integerLiteral
    | &amp;&amp;&amp;
    | ..
    | &lt;&lt;
@@ -28519,7 +27806,7 @@ in parsers and deparsers to access packet data.</p>
 <div id="footer">
 <div id="footer-text">
 Version v1.2.5<br>
-Last updated 2025-11-13 16:32:53 +0900
+Last updated 2025-11-19 14:57:50 +0900
 </div>
 </div>
 </body>

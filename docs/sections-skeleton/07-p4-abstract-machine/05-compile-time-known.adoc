@@ -1,6 +1,7 @@
 [#sec-compile-time-known]
 === Compile-time known and local compile-time known values
 
+// Section 18.1 in the P4-16 Language Specification
 Certain expressions in a P4 program have the property that their value can be
 determined at compile time. Moreover, for some of these expressions, their
 value can be determined only using information in the current scope. We call
@@ -14,7 +15,7 @@ The following are local compile-time known values:
 - Identifiers declared in an `error`, `enum`, or `match_kind` declaration.
 - The `default` identifier.
 - The `size` field of a value with type header stack.
-- The `_` identifier when used as a `select` expression label
+- The `_` identifier when used as a `select` expression label.
 - The expression `{#}` representing an invalid header or header union value.
 - Instances constructed by instance declarations (Section [#sec-instantiations]) and constructor invocations.
 - Identifiers that represent declared types, actions, functions, tables, parsers, controls, or packages.
@@ -24,8 +25,13 @@ The following are local compile-time known values:
 - Legal casts applied to local compile-time known values.
 - Indexing a local compile-time known stack or tuple value with a local compile-time known index.
 - Accessing a field of a local compile-time known struct, header, or header union value.
-- The following expressions (`+`, `-`, `|+|`, `|-|`, `*`, `/ `, `%`, `!`, `&`, `|`, `^`, `&&`, `||`, `<< `, `>>`, `~`, `/`, `>`, `<`, `==`, `!=`, `<=`, `>=`, `++`, `[:]`, `?:`) when their operands are all local compile-time known values.
-- Expressions of the form `e.minSizeInBits()`, `e.minSizeInBytes()`, `e.maxSizeInBits()` and `e.maxSizeInBytes()` where the type of `e` is not generic.
+- The following expressions (`+`, `-`, `|+|`, `|-|`, `*`, `/ `, `%`, `!`, `&`,
+  `|`, `^`, `&&`, `||`, `<< `, `>>`, `~`, `/`, `>`, `<`, `==`, `!=`, `<=`,
+  `>=`, `++`, `[:]`, `?:`) when their operands are all local compile-time known
+  values.
+- Expressions of the form `e.minSizeInBits()`, `e.minSizeInBytes()`,
+  `e.maxSizeInBits()` and `e.maxSizeInBytes()` where the type of `e` is not
+  generic.
 
 The following are compile-time known values:
 
@@ -38,8 +44,13 @@ The following are compile-time known values:
 - Legal casts applied to compile-time known values.
 - Indexing a compile-time known stack or tuple value with a compile-time known index.
 - Accessing a field of a compile-time known struct, header, or header union value.
-- The following expressions (`+`, `-`, `|+|`, `|-|`, `*`, `/ `, `%`, `cast`, `!`, `&`, `|`, `^`, `&&`, `||`, `<< `, `>> `, `~`, `/`, `>`, `<`, `==`, `!=`, `<=`, `>=`, `++`, `[:]`, `?:`) when their operands are all compile-time known values.
-- Expressions of the form `e.minSizeInBits()`, `e.minSizeInBytes()`, `e.maxSizeInBits()` and `e.maxSizeInBytes()` where the the type of `e` is generic.
+- The following expressions (`+`, `-`, `|+|`, `|-|`, `*`, `/ `, `%`, `cast`,
+  `!`, `&`, `|`, `^`, `&&`, `||`, `<< `, `>> `, `~`, `/`, `>`, `<`, `==`, `!=`,
+  `<=`, `>=`, `++`, `[:]`, `?:`) when their operands are all compile-time known
+  values.
+- Expressions of the form `e.minSizeInBits()`, `e.minSizeInBytes()`,
+  `e.maxSizeInBits()` and `e.maxSizeInBytes()` where the the type of `e` is
+  generic.
 
 Intuitively, the main difference between _compile-time known values_ and _local
 compile-time known values_ is that the former also contains constructor
@@ -51,6 +62,15 @@ situation, it would be impossible to resolve `bit<e>` to a concrete type using
 purely local information---we would have to wait until the constructor was
 instantiated and the value of `e` known.
 
+// Added
 Local compile-time known values can be identified in the type checking phase.
 Compile-time known values can be identified after type checking, during the
-instantiation phase.
+instantiation phase. Once the constructor parameters are bound to actual
+arguments and type parameters are bound to actual types, compile-time known
+values can be evaluated to concrete values.
+
+`ctk` is a marker used in P4~IR~ to indicate whether an expression is local
+compile-time known, compile-time known, or neither.
+
+[[ctk]]
+${syntax: ctk}

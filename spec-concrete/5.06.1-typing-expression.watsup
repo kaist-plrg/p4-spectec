@@ -262,7 +262,7 @@ rulegroup Expr_ok/binaryExpression-divmod {
     ---- ;; check that the divisor is local compile-time known and is positive
     -- if ctk_r_reduced = LCTK
     -- Expr_eval_lctk: p TC |- typedExpressionIR_r_reduced ~> value_r
-    -- if n_r = $to_int(value_r)
+    -- if n_r = $int_of_value(value_r)
     -- if $(n_r > 0)
     ---- ;; create typed expression
     -- if ctk_reduced = $join_ctk(ctk_l_reduced, ctk_r_reduced)
@@ -970,7 +970,7 @@ rulegroup Expr_ok/indexAccessExpression {
     -- if TUPLE `< typeIR_e* > = $canon_typeIR(typeIR_base)
     -- if ctk_index = LCTK
     -- Expr_eval_lctk: p TC |- typedExpressionIR_index_reduced ~> value_index
-    -- if n_index = $to_int(value_index)
+    -- if n_index = $int_of_value(value_index)
     -- if $(n_index < |typeIR_e*|)
     ---- ;; create typed expression
     -- if expressionNoteIR = `( typeIR_e*[n_index] DYN )
@@ -999,7 +999,7 @@ rulegroup Expr_ok/indexAccessExpression {
     -- if typeIR `[ n_size ] = $canon_typeIR(typeIR_base)
     -- if ctk_index = LCTK
     -- Expr_eval_lctk: p TC |- typedExpressionIR_index_reduced ~> value_index
-    -- if n_index = $to_int(value_index)
+    -- if n_index = $int_of_value(value_index)
     -- if $(n_index < n_size)
     ---- ;; create typed expression
     -- if expressionNoteIR = `( typeIR DYN )
@@ -1112,10 +1112,10 @@ rule Expr_ok/sliceAccessExpression:
   ---- ;; check that the indices are local compile-time known
   -- if ctk_hi_reduced = LCTK
   -- Expr_eval_lctk: p TC |- typedExpressionIR_hi_reduced ~> value_hi
-  -- if n_hi = $to_int(value_hi)
+  -- if n_hi = $int_of_value(value_hi)
   -- if ctk_lo_reduced = LCTK
   -- Expr_eval_lctk: p TC |- typedExpressionIR_lo_reduced ~> value_lo
-  -- if n_lo = $to_int(value_lo)
+  -- if n_lo = $int_of_value(value_lo)
   ---- ;; check that the slice is valid
   -- if $is_valid_bitslice(typeIR_base_reduced, n_lo, n_hi)
   ---- ;; create typed expression

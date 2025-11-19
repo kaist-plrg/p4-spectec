@@ -110,7 +110,7 @@ rulegroup Lvalue_ok/indexAccess {
     ---- ;; if the index is local compile-time known, then it must be in range
     -- if ctk_index = LCTK
     -- Expr_eval_lctk: p TC |- typedExpressionIR_index_reduced ~> value_index
-    -- if n_index = $to_int(value_index)
+    -- if n_index = $int_of_value(value_index)
     -- if $(n_index < n_size)
     ---- ;; create typed lvalue
     -- if typedLvalueIR
@@ -175,10 +175,10 @@ rule Lvalue_ok/sliceAccess:
   ---- ;; check that the indices are local compile-time known
   -- if ctk_hi_reduced = LCTK
   -- Expr_eval_lctk: p TC |- typedExpressionIR_hi_reduced ~> value_hi
-  -- if n_hi = $to_int(value_hi)
+  -- if n_hi = $int_of_value(value_hi)
   -- if ctk_lo_reduced = LCTK
   -- Expr_eval_lctk: p TC |- typedExpressionIR_lo_reduced ~> value_lo
-  -- if n_lo = $to_int(value_lo)
+  -- if n_lo = $int_of_value(value_lo)
   ---- ;; check that the slice is valid
   -- if $is_valid_bitslice(typeIR_base, n_lo, n_hi)
   ---- ;; create typed lvalue
