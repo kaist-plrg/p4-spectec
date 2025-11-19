@@ -366,9 +366,8 @@ rule Type_wf/packageObjectTypeIR:
   -- (Type_wf: bound |- typeIR)*
 
 rule Type_wf/tableObjectTypeIR:
-  bound |- TABLE _ `{ typeIR }
-  -- if TABLE_STRUCT _ `{ _ } = $canon_typeIR(typeIR)
-  -- Type_wf: bound |- typeIR
+  bound |- TABLE _ `{ tableMetadataStructTypeIR }
+  -- Type_wf: bound |- tableMetadataStructTypeIR
 
 ;;; Synthesized types
 
@@ -481,7 +480,10 @@ rulegroup Type_wf/tableMetadataTypeIR {
     -- if $distinct_<id>(id*)
 
   rule Type_wf/struct:
-    bound |- TABLE_STRUCT _ `{ _ }
+    bound |- TABLE_STRUCT _ `{ HIT _ `;
+                               MISS _ `;
+                               ACTION_RUN tableMetadataEnumTypeIR `; }
+    -- Type_wf: bound |- tableMetadataEnumTypeIR
   
 }
 
@@ -710,7 +712,7 @@ rule CallableType_wf/controlApplyMethodTypeIR:
   -- if $nestable_controlApplyMethod(typeIR)*
 
 rule CallableType_wf/tableApplyMethodTypeIR:
-  bound |- TABLE_APPLY `: (TABLE_STRUCT _ `{ _ })
+  bound |- TABLE_APPLY `: tableMetadataStructTypeIR
 
 ;;
 ;;;; Well-formedness of callable type definitions

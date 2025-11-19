@@ -140,9 +140,7 @@ def $subst_typeIR'(theta, PACKAGE `{ typeIR* })
   = PACKAGE `{ typeIR_subst* }
   -- if (typeIR_subst = $subst_typeIR'(theta, typeIR))*
 
-def $subst_typeIR'(theta, TABLE tid `{ typeIR })
-  = TABLE tid `{ typeIR_subst }
-  -- if typeIR_subst = $subst_typeIR'(theta, typeIR)
+def $subst_typeIR'(theta, tableObjectTypeIR) = tableObjectTypeIR
 
 ;;; Synthesized types
 
@@ -174,14 +172,7 @@ def $subst_typeIR'(theta, SET `< typeIR* >)
   = SET `< typeIR_subst* >
   -- if (typeIR_subst = $subst_typeIR'(theta, typeIR))*
 
-def $subst_typeIR'(theta, TABLE_ENUM tid `{ id_field* })
-  = TABLE_ENUM tid `{ id_field* }
-
-def $subst_typeIR'(
-    theta, TABLE_STRUCT tid `{ (typeIR_field id_field `;)* }
-  )
-  = TABLE_STRUCT tid `{ (typeIR_field_subst id_field `;)* }
-  -- if (typeIR_field_subst = $subst_typeIR'(theta, typeIR_field))*
+def $subst_typeIR'(theta, tableMetadataTypeIR) = tableMetadataTypeIR
 
 ;;
 ;;;; Type definition substitutions
@@ -367,9 +358,8 @@ def $subst_callableTypeIR'(theta, CONTROL_APPLY `( parameterTypeIR* ))
   -- if (parameterTypeIR_subst
       = $subst_parameterTypeIR'(theta, parameterTypeIR))*
 
-def $subst_callableTypeIR'(theta, TABLE_APPLY `: typeIR)
-  = TABLE_APPLY `: typeIR_subst
-  -- if typeIR_subst = $subst_typeIR'(theta, typeIR)
+def $subst_callableTypeIR'(theta, tableApplyMethodTypeIR)
+  = tableApplyMethodTypeIR
 
 ;;
 ;;;; Callable type definition substitutions

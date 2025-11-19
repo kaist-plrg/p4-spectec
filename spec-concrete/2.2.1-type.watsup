@@ -6,20 +6,11 @@
 ;;;; Base types
 ;;
 
-;;
-;;;;;; Primitive types
-;;
-
-syntax primitiveTypeIR =
-  | VOID
-  | BOOL
-  | ERROR
-  | MATCH_KIND
-  | STRING
-
-;;
-;;;;;;; Integer types
-;;
+syntax voidTypeIR = VOID
+syntax boolTypeIR = BOOL
+syntax errorTypeIR = ERROR
+syntax matchKindTypeIR = MATCH_KIND
+syntax stringTypeIR = STRING
 
 syntax integerTypeIR =
   | INT
@@ -27,7 +18,13 @@ syntax integerTypeIR =
   | BIT `< nat >
   | VARBIT `< nat >
 
-syntax baseTypeIR = primitiveTypeIR | integerTypeIR
+syntax baseTypeIR =
+  | voidTypeIR
+  | boolTypeIR
+  | errorTypeIR
+  | matchKindTypeIR
+  | stringTypeIR
+  | integerTypeIR
 
 ;;
 ;;;; Named types
@@ -101,6 +98,7 @@ syntax dataTypeIR =
 
 syntax parameterTypeIR
 syntax externMethodTypeDefIR
+syntax tableMetadataStructTypeIR
 
 syntax externMethodTypeDefEnv = map<cid, externMethodTypeDefIR>
 
@@ -115,7 +113,7 @@ syntax controlObjectTypeIR = CONTROL `( parameterTypeIR* )
 syntax packageObjectTypeIR = PACKAGE `{ typeIR* }
 
 syntax tableObjectTypeIR =
-  TABLE tid `{ typeIR }
+  TABLE tid `{ tableMetadataStructTypeIR }
   hint(print %1)
 
 syntax objectTypeIR =
@@ -143,9 +141,17 @@ syntax recordTypeIR =
 
 syntax setTypeIR = SET `< typeIR* >
 
+syntax tableMetadataEnumTypeIR =
+  TABLE_ENUM tid `{ id* }
+
+syntax tableMetadataStructTypeIR =
+  TABLE_STRUCT tid `{ HIT boolTypeIR `;
+                      MISS boolTypeIR `;
+                      ACTION_RUN tableMetadataEnumTypeIR `; }
+
 syntax tableMetadataTypeIR =
-  | TABLE_ENUM tid `{ id* }
-  | TABLE_STRUCT tid `{ fieldTypeIR* }
+  | tableMetadataEnumTypeIR
+  | tableMetadataStructTypeIR
 
 syntax synthesizedTypeIR =
   | defaultTypeIR

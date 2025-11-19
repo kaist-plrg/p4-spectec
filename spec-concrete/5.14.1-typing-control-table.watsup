@@ -1062,11 +1062,11 @@ rule TableType_ok:
   -- if tid_enum = "action_list(" ++ nameIR ++ ")"
   -- if (prefixedNameIR_action, _, _)* = TBLC.ACTIONS
   -- if (id_enum_field = $flatten_prefixedNameIR(prefixedNameIR_action))*
-  -- if typeIR_table_enum = TABLE_ENUM tid_enum `{ id_enum_field* }
+  -- if tableMetadataEnumTypeIR = TABLE_ENUM tid_enum `{ id_enum_field* }
   ---- ;; add enum fields to context
   -- if (value_enum_field = TABLE_ENUM tid_enum `. id_enum_field)*
   -- if (varTypeIR_enum_field
-        = `EMPTY typeIR_table_enum LCTK value_enum_field)*
+        = `EMPTY tableMetadataEnumTypeIR LCTK value_enum_field)*
   -- if TC_1
       = $add_vars_t(
           BLOCK, TC_0,
@@ -1075,10 +1075,8 @@ rule TableType_ok:
         )
   ---- ;; create table struct type
   -- if tid_struct = "apply_result(" ++ nameIR ++ ")"
-  -- if typeIR_table_struct
+  -- if tableMetadataStructTypeIR
       = TABLE_STRUCT tid_struct
-          `{ [ (BOOL "hit" `;),
-               (BOOL "miss" `;),
-               (typeIR_table_enum "action_run" `;) ] }
+          `{ HIT BOOL `; MISS BOOL `; ACTION_RUN tableMetadataEnumTypeIR `; }
   ---- ;; create table type
-  -- if typeIR_table = TABLE nameIR `{ typeIR_table_struct }
+  -- if typeIR_table = TABLE nameIR `{ tableMetadataStructTypeIR }

@@ -25,27 +25,26 @@ In addition, P4 supports void types:
 [[typeOrVoid]]
 ${syntax: typeOrVoid}
 
-In P4~IR~, base types are subdivided into primitive types and integer types.
-Base values are subdivided into primitive and integer values, accordingly.
+In P4~IR~, base types are represented as:
 
 [[baseTypeIR]]
 [[baseValue]]
 ${syntax: baseTypeIR baseValue}
 
-==== Primitive types and values
-
-[[primitiveTypeIR]]
-[[primitiveValue]]
-${syntax: primitiveTypeIR primitiveValue}
-
-===== The void type
+==== The void type
 
 // Section 7.1.1 of the P4-16 Language Specification
 The void type is written `void`. It contains no values. It is not included in
 the production rule `baseType` as it can only appear in few restricted places
 in P4 programs.
 
-===== Booleans
+===== Type checking
+
+// Added
+${rulegroup: Type_ok/void}
+${ruleprose: Type_ok/void}
+
+==== Booleans
 
 // Section 7.1.4 of the P4-16 Language Specification
 The Boolean type `bool` contains just two values, `false` and `true`. Boolean
@@ -53,7 +52,13 @@ values are not integers or bit-strings.
 // Operations that can be performed on booleans are described in Section
 // <<sec-bool-exprs>>.
 
-===== Errors
+===== Type checking
+
+// Added
+${rulegroup: Type_ok/boolean}
+${ruleprose: Type_ok/boolean}
+
+==== Errors
 
 // Section 7.1.2 of the P4-16 Language Specification
 The error type contains opaque distinct values that can be used to signal
@@ -82,7 +87,13 @@ The underlying representation of errors is target-dependent.
 // Added
 The semantics of an error declaration is described in <<sec-errorDeclaration>>.
 
-===== Match kinds
+===== Type checking
+
+// Added
+${rulegroup: Type_ok/error}
+${ruleprose: Type_ok/error}
+
+==== Match kinds
 
 // Section 7.1.3 of the P4-16 Language Specification
 The `match_kind` type is very similar to the `error` type and is used to
@@ -114,7 +125,13 @@ cannot declare new match kinds.
 The semantics of a match kind declaration is described in
 <<sec-matchKindDeclaration>>.
 
-===== Strings
+===== Type checking
+
+// Added
+${rulegroup: Type_ok/matchKind}
+${ruleprose: Type_ok/matchKind}
+
+==== Strings
 
 // Section 7.1.5 of the P4-16 Language Specification
 The type `string` represents strings. The values of type `string` are either
@@ -146,11 +163,8 @@ should be used for a given table in the generated control-plane API:
 ===== Type checking
 
 // Added
-The surface primitive type `primitiveType` is type checked as described
-below, producing `primitiveTypeIR`.
-
-${rulegroup: Type_ok/primitiveType}
-${ruleprose: Type_ok/primitiveType}
+${rulegroup: Type_ok/string}
+${ruleprose: Type_ok/string}
 
 ==== Integer types and values (signed and unsigned)
 
