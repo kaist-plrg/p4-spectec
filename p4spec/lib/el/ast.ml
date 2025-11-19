@@ -189,8 +189,12 @@ and def' =
   | ExternDecD of id * tparam list * param list * plaintyp * hint list
   (* `builtin` `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` plaintyp hint* *)
   | BuiltinDecD of id * tparam list * param list * plaintyp * hint list
+  (* `tbl` `dec` id list(param, `,`) `:` plaintyp hint* *)
+  | TableDecD of id * param list * plaintyp * hint list
   (* `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` plaintyp hint* *)
   | DecD of id * tparam list * param list * plaintyp * hint list
+  (* `tbl` `def` id `=` list(`|` exp `=>` exp, nl) *)
+  | TableDefD of id * (exp * exp) list
   (* `def` id `<` list(tparam, `,`) `>` list(arg, `,`) `=` exp list(`--` prem, nl) *)
   | DefD of id * tparam list * arg list * exp * prem list
   | SepD

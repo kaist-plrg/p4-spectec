@@ -276,10 +276,19 @@ let string_of_def def =
       "builtin dec " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : "
       ^ string_of_plaintyp plaintyp
+  | TableDecD (defid, params, plaintyp, _hints) ->
+      "tbl dec " ^ string_of_defid defid ^ string_of_params params ^ " : "
+      ^ string_of_plaintyp plaintyp
   | DecD (defid, tparams, params, plaintyp, _hints) ->
       "dec " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : "
       ^ string_of_plaintyp plaintyp
+  | TableDefD (defid, matchcases) ->
+      let string_of_matchcase (exp_l, exp_r) =
+        string_of_exp exp_l ^ " => " ^ string_of_exp exp_r
+      in
+      "tbl def " ^ string_of_defid defid ^ " =\n  "
+      ^ String.concat "\n  | " (List.map string_of_matchcase matchcases)
   | DefD (defid, tparams, args, exp, prems) ->
       "def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_args args ^ " = " ^ string_of_exp exp ^ string_of_prems prems

@@ -75,7 +75,7 @@ let exit_scope () = vars := List.hd !scopes; scopes := List.tl !scopes
 %token EQ NEQ UP BAR
 
 %token LATEX BOOL NAT INT TEXT
-%token SYNTAX EXTERN RELATION RULEGROUP RULE VAR BUILTIN DEC DEF
+%token SYNTAX EXTERN TABLE RELATION RULEGROUP RULE VAR BUILTIN DEC DEF
 %token IF OTHERWISE DEBUG HINT_LPAREN EPS
 %token<bool> BOOLLIT
 %token<Bigint.t> NATLIT HEXLIT
@@ -118,12 +118,10 @@ check_atom :
 (* Lists *)
 
 %inline bar :
-  | BAR {}
-  | NL_BAR {}
+  | BAR | NL_BAR {}
 
 %inline comma :
-  | COMMA {}
-  | COMMA_NL {}
+  | COMMA | COMMA_NL {}
 
 comma_list(X) :
   | (* empty *) { [] }
@@ -710,6 +708,14 @@ prem_ :
     }
   | DEBUG exp { DebugPr $2 }
 
+(* Matchecases *)
+
+match_list :
+  | bar matchcases = bar_list(match_case) { matchcases }
+
+match_case :
+  | pattern = exp_seq DOUBLE_ARROW body = exp_bin { (pattern, body) }
+
 (* Hints *)
 
 hint :
@@ -788,6 +794,11 @@ def_ :
     { BuiltinDecD ($4, $6, [], $9, $10) }
   | BUILTIN DEC DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE_LPAREN comma_list(param) RPAREN COLON plaintyp hint* exit_scope
     { BuiltinDecD ($4, $6, $8, $11, $12) }
+  (* Table function declaration *)
+  | TABLE DEC DOLLAR id = defid COLON typ_ret = plaintyp hints = hint*
+    { TableDecD (id, [], typ_ret, hints) }
+  | TABLE DEC DOLLAR id = defid_lparen params = comma_list(param) RPAREN COLON typ_ret = plaintyp hints = hint*
+    { TableDecD (id, params, typ_ret, hints) }
   (* Function declaration *)
   | DEC DOLLAR defid COLON plaintyp hint*
     { DecD ($3, [], [], $5, $6) }
@@ -806,6 +817,8 @@ def_ :
     { DefD ($3, $5, [], $8, $9) }
   | DEF DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE_LPAREN comma_list(arg) RPAREN EQ exp prem_list exit_scope
     { DefD ($3, $5, $7, $10, $11) }
+  | TABLE DEF DOLLAR id = defid EQ body = match_list
+    { TableDefD (id, body) }
   (* Separator *)
   | NL3
     { SepD }

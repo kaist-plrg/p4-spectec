@@ -280,6 +280,7 @@ and token = parse
   | "text" { TEXT }
   | "syntax" { SYNTAX }
   | "extern" { EXTERN }
+  | "tbl" { TABLE }
   | "relation" { RELATION }
   | "rulegroup" { RULEGROUP }
   | "rule" { RULE }

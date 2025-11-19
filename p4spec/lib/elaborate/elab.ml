@@ -379,7 +379,8 @@ and infer_binop (ctx : Ctx.t) (at : region) (binop : binop)
   in
   List.fold_left
     (fun binop_infer
-         (optyp_il, plaintyp_l_expect, plaintyp_r_expect, plaintyp_res_expect) ->
+         (optyp_il, plaintyp_l_expect, plaintyp_r_expect, plaintyp_res_expect)
+       ->
       match binop_infer with
       | Ok _ -> binop_infer
       | _ -> (
@@ -1456,8 +1457,12 @@ let rec elab_def (ctx : Ctx.t) (def : def) : Ctx.t * Il.Ast.def option =
       elab_extern_dec_def ctx at id tparams params plaintyp hints |> wrap_some
   | BuiltinDecD (id, tparams, params, plaintyp, hints) ->
       elab_builtin_dec_def ctx at id tparams params plaintyp hints |> wrap_some
+  | TableDecD (id, params, list_typ, hints) ->
+      elab_table_dec_def ctx at id params list_typ hints |> wrap_some
   | DecD (id, tparams, params, plaintyp, hints) ->
       elab_dec_def ctx at id tparams params plaintyp hints |> wrap_some
+  | TableDefD (id, matchcases) ->
+      elab_table_def_def ctx at id matchcases |> wrap_none
   | DefD (id, tparams, args, exp, prems) ->
       elab_def_def ctx at id tparams args exp prems |> wrap_none
   | SepD -> ctx |> wrap_none
@@ -1640,6 +1645,15 @@ and elab_builtin_dec_def (ctx : Ctx.t) (at : region) (id : id)
   in
   (ctx, def_il)
 
+and elab_table_dec_def (ctx : Ctx.t) (at : region) (id : id)
+    (params : param list) (plaintyp : plaintyp) (hints : hint list) :
+    Ctx.t * Il.Ast.def =
+  let params_il = List.map (elab_param ctx) params in
+  let typ_il = elab_plaintyp ctx plaintyp in
+  let ctx = Ctx.add_table_dec ctx id params plaintyp in
+  let def_il = Il.Ast.DecD (id, [], params_il, typ_il, [], hints) $ at in
+  (ctx, def_il)
+
 and elab_dec_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
     (params : param list) (plaintyp : plaintyp) (hints : hint list) :
     Ctx.t * Il.Ast.def =
@@ -1669,6 +1683,10 @@ and elab_def_output_with_bind (ctx : Ctx.t) (plaintyp : plaintyp) (exp : exp) :
   let+ ctx, exp_il = elab_exp ctx plaintyp exp in
   let exp_il = Dataflow.Analysis.analyze_exp_as_bound ctx exp_il in
   (ctx, exp_il)
+
+and elab_table_def_def (ctx : Ctx.t) (_at : region) (_id : id)
+    (_matchcases : (exp * exp) list) : Ctx.t =
+  ctx
 
 and elab_def_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
     (args : arg list) (exp : exp) (prems : prem list) : Ctx.t =

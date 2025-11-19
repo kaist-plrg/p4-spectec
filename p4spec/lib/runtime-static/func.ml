@@ -6,6 +6,7 @@ open El.Print
 type t =
   | Extern of tparam list * param list * plaintyp
   | Builtin of tparam list * param list * plaintyp
+  | Table of param list * plaintyp
   | Defined of tparam list * param list * plaintyp * Il.Ast.clause list
 
 let to_string = function
@@ -16,6 +17,9 @@ let to_string = function
   | Builtin (tparams, params, plaintyp) ->
       "builtin def " ^ string_of_tparams tparams ^ string_of_params params
       ^ " : "
+      ^ string_of_plaintyp plaintyp
+  | Table (params, plaintyp) ->
+      "table def " ^ string_of_params params ^ " : "
       ^ string_of_plaintyp plaintyp
   | Defined (tparams, params, plaintyp, clauses) ->
       "def " ^ string_of_tparams tparams ^ string_of_params params ^ " : "

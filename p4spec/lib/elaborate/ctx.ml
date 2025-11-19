@@ -149,7 +149,7 @@ let find_defined_dec_opt (ctx : t) (fid : FId.t) :
   Option.bind func_opt (function
     | Func.Defined (tparams, params, plaintyp, clauses) ->
         Some (tparams, params, plaintyp, clauses)
-    | Func.Extern _ | Func.Builtin _ -> None)
+    | Func.Table _ | Func.Extern _ | Func.Builtin _ -> None)
 
 let find_defined_dec (ctx : t) (fid : FId.t) :
     tparam list * param list * plaintyp * Il.Ast.clause list =
@@ -165,10 +165,11 @@ let find_dec_signature_opt (ctx : t) (fid : FId.t) :
     (tparam list * param list * plaintyp) option =
   FEnv.find_opt fid ctx.fenv
   |> Option.map (function
-         | Func.Extern (tparams, params, plaintyp)
-         | Func.Builtin (tparams, params, plaintyp)
-         | Func.Defined (tparams, params, plaintyp, _)
-         -> (tparams, params, plaintyp))
+       | Func.Extern (tparams, params, plaintyp)
+       | Func.Builtin (tparams, params, plaintyp)
+       | Func.Defined (tparams, params, plaintyp, _) ->
+           (tparams, params, plaintyp)
+       | Func.Table (params, plaintyp) -> ([], params, plaintyp))
 
 let find_dec_signature (ctx : t) (fid : FId.t) :
     tparam list * param list * plaintyp =
@@ -263,6 +264,13 @@ let add_builtin_dec (ctx : t) (fid : FId.t) (tparams : tparam list)
     (params : param list) (plaintyp : plaintyp) : t =
   if bound_dec ctx fid then error_dup fid.at "function" fid.it;
   let func = Func.Builtin (tparams, params, plaintyp) in
+  let fenv = FEnv.add fid func ctx.fenv in
+  { ctx with fenv }
+
+let add_table_dec (ctx : t) (fid : FId.t) (params : param list)
+    (plaintyp : plaintyp) : t =
+  if bound_dec ctx fid then error_dup fid.at "function" fid.it;
+  let func = Func.Table (params, plaintyp) in
   let fenv = FEnv.add fid func ctx.fenv in
   { ctx with fenv }
 
