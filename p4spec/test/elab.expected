@@ -26622,7 +26622,49 @@ relation BlockElementStmt_eval: evalContext store |- blockElementStatementIR : e
     -- if (continueEmptyResult = `)
     -- output: % % |- % : EC_1 STO_1 ` as statementResult
 
-  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:250.1-255.53
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:248.1-277.2
+  rulegroup variableDeclarationIR
+
+   match
+
+    (explicit) EC_0 store |- annotationList typeIR nameIR initializerIR'?{initializerIR' <- initializerIR'?} ; as blockElementStatementIR : % % %
+    (implicit) EC_0 store |- blockElementStatementIR : % % %
+    -- if blockElementStatementIR <: variableDeclarationIR
+    -- let annotationList typeIR nameIR initializerIR'?{initializerIR' <- initializerIR'?} ; = blockElementStatementIR as variableDeclarationIR
+
+   paths
+
+    rulepath non-initializer
+    -- let STO = store
+    -- if (initializerIR'?{initializerIR' <- initializerIR'?} = ?())
+    -- let typeIR_subst = $subst_type_e(local, EC_0, typeIR)
+    -- let value_init = $default(typeIR)
+    -- let EC_1 = $add_var_e(local, EC_0, ` nameIR, value_init)
+    -- output: % % |- % : EC_1 STO ` as statementResult
+
+    rulepath initializer-exit
+    -- let STO_0 = store
+    -- let initializerOptIR = initializerIR'?{initializerIR' <- initializerIR'?}
+    -- if initializerOptIR matches (_)
+    -- let ?(= typedExpressionIR_init) = initializerOptIR
+    -- Expr_eval: local EC_0 STO_0 |- typedExpressionIR_init : EC_1 STO_1 expressionResult
+    -- if expressionResult <: exitResult
+    -- let exitResult = expressionResult as exitResult
+    -- if (exitResult = exit)
+    -- output: % % |- % : EC_1 STO_1 exit as statementResult
+
+    rulepath initializer-cont
+    -- let STO_0 = store
+    -- let initializerOptIR = initializerIR'?{initializerIR' <- initializerIR'?}
+    -- if initializerOptIR matches (_)
+    -- let ?(= typedExpressionIR_init) = initializerOptIR
+    -- Expr_eval: local EC_0 STO_0 |- typedExpressionIR_init : EC_1 STO_1 expressionResult
+    -- if expressionResult <: continueResult<value>
+    -- let ` value_init = expressionResult as continueResult<value>
+    -- let EC_2 = $add_var_e(local, EC_1, ` nameIR, value_init)
+    -- output: % % |- % : EC_2 STO_1 ` as statementResult
+
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:281.1-286.53
   rulegroup statementIR
 
    match
@@ -26641,7 +26683,7 @@ relation BlockElementStmt_eval: evalContext store |- blockElementStatementIR : e
 ;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:127.1-130.23
 relation BlockElementStmts_eval: evalContext store |- blockElementStatementListIR : evalContext store statementResult
 
-  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:261.1-290.2
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:292.1-321.2
   rulegroup 
 
    match
@@ -26696,7 +26738,7 @@ relation BlockElementStmts_eval: evalContext store |- blockElementStatementListI
 ;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:132.1-135.23
 relation Block_eval: evalContext store |- blockStatementIR : evalContext store statementResult
 
-  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:296.1-303.29
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:327.1-334.29
   rulegroup 
 
    match

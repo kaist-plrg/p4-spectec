@@ -7424,20 +7424,35 @@ relation Stmt_eval: `p'`, `EC'`, `STO'`, and `statementIR`
 * and the instantiated statement `RETURN value`.
 
 
-relation BlockElementStmt_eval: `EC~0~`, `STO~0~`, and `blockElementStatementIR`
+relation BlockElementStmt_eval: `EC~0~`, `STO~0'~`, and `blockElementStatementIR`
 
 
 . If let `constantDeclarationIR` be `blockElementStatementIR`:
  .. Group constantDeclarationIR:
-  ... Let <<Decl_eval, `LOCAL EC~0~ STO~0~ |- constantDeclarationIR : EC~1~ STO~1~ declarationResult`>>.
+  ... Let <<Decl_eval, `LOCAL EC~0~ STO~0'~ |- constantDeclarationIR : EC~1~ STO~1~ declarationResult`>>.
   ... Else if let `exitResult` be `declarationResult`:
    .... Result in `EC~1~`, `STO~1~`, and `EXIT`.
-  ... Let <<Decl_eval, `LOCAL EC~0~ STO~0~ |- constantDeclarationIR : EC~1~ STO~1~ declarationResult`>>.
+  ... Let <<Decl_eval, `LOCAL EC~0~ STO~0'~ |- constantDeclarationIR : EC~1~ STO~1~ declarationResult`>>.
   ... Else if let `continueEmptyResult` be `declarationResult`:
    .... Result in `EC~1~`, `STO~1~`, and ``.
-. Else if let `statementIR` be `blockElementStatementIR`:
+. Else if let `annotationList typeIR nameIR initializerIR'^?^ ;` be `blockElementStatementIR`:
+ .. Group variableDeclarationIR:
+  ... If `initializerIR'^?^` is equal to `None`:
+   .... Let `typeIR~subst~` be `<<subst_type_e, $subst_type_e(LOCAL, EC~0~, typeIR)>>`.
+   .... Let `value~init~` be <<default, the default value for type `typeIR`>>.
+   .... Let `EC~1~` be `<<add_var_e, $add_var_e(LOCAL, EC~0~, nameIR, value~init~)>>`.
+   .... Result in `EC~1~`, `STO~0'~`, and ``.
+  ... Let `initializerOptIR` be `initializerIR'^?^`.
+  ... Else if let `= typedExpressionIR~init~` be `initializerOptIR`:
+   .... Let `EC~1~`, `STO~1~`, and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR~init~`, under cursor `LOCAL`, evaluation context `EC~0~`, and store `STO~0'~`>>.
+   .... If let `exitResult` be `expressionResult`:
+    ..... Result in `EC~1~`, `STO~1~`, and `EXIT`.
+   .... Else let `value~init~` be `expressionResult`:
+    ..... Let `EC~2~` be `<<add_var_e, $add_var_e(LOCAL, EC~1~, nameIR, value~init~)>>`.
+    ..... Result in `EC~2~`, `STO~1~`, and ``.
+. Else let `statementIR` be `blockElementStatementIR`:
  .. Group statementIR:
-  ... Let `EC~1~`, `STO~1~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `statementIR`, under cursor `LOCAL`, evaluation context `EC~0~`, and store `STO~0~`>>.
+  ... Let `EC~1~`, `STO~1~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `statementIR`, under cursor `LOCAL`, evaluation context `EC~0~`, and store `STO~0'~`>>.
   ... Result in `EC~1~`, `STO~1~`, and `statementResult`.
 
 

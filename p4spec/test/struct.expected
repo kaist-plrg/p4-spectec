@@ -28550,7 +28550,7 @@ relation Stmt_eval: p' EC' STO' |- statementIR : % % %
               2. Result in : % % % |- % : EC_1 STO_1 ((return ?(value)) as statementResult)
 
 ;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:122.1-125.23
-relation BlockElementStmt_eval: EC_0 STO_0 |- blockElementStatementIR : % % %
+relation BlockElementStmt_eval: EC_0 STO_0' |- blockElementStatementIR : % % %
 
 1. Case analysis on blockElementStatementIR
 
@@ -28558,9 +28558,9 @@ relation BlockElementStmt_eval: EC_0 STO_0 |- blockElementStatementIR : % % %
 
     1. (Let constantDeclarationIR be (blockElementStatementIR as constantDeclarationIR))
 
-    2. Group constantDeclarationIR: EC_0 STO_0 |- (constantDeclarationIR as blockElementStatementIR) : % % %
+    2. Group constantDeclarationIR: EC_0 STO_0' |- (constantDeclarationIR as blockElementStatementIR) : % % %
 
-      1. (Decl_eval: (local) EC_0 STO_0 |- (constantDeclarationIR as declarationIR) : EC_1 STO_1 declarationResult)
+      1. (Decl_eval: (local) EC_0 STO_0' |- (constantDeclarationIR as declarationIR) : EC_1 STO_1 declarationResult)
 
       2. If ((declarationResult has type exitResult)), then
 
@@ -28568,7 +28568,7 @@ relation BlockElementStmt_eval: EC_0 STO_0 |- blockElementStatementIR : % % %
 
         2. Result in : % % |- % : EC_1 STO_1 ((exit) as statementResult)
 
-      3. (Decl_eval: (local) EC_0 STO_0 |- (constantDeclarationIR as declarationIR) : EC_1 STO_1 declarationResult)
+      3. (Decl_eval: (local) EC_0 STO_0' |- (constantDeclarationIR as declarationIR) : EC_1 STO_1 declarationResult)
 
       4. If ((declarationResult has type continueEmptyResult)), then
 
@@ -28576,13 +28576,53 @@ relation BlockElementStmt_eval: EC_0 STO_0 |- blockElementStatementIR : % % %
 
         2. Result in : % % |- % : EC_1 STO_1 ((`) as statementResult)
 
-  2. Case (% has type statementIR)
+  2. Case (% has type variableDeclarationIR)
+
+    1. (Let (annotationList typeIR nameIR initializerIR'?{initializerIR' <- initializerIR'?} ;) be (blockElementStatementIR as variableDeclarationIR))
+
+    2. Group variableDeclarationIR: EC_0 STO_0' |- ((annotationList typeIR nameIR initializerIR'?{initializerIR' <- initializerIR'?} ;) as blockElementStatementIR) : % % %
+
+      1. If ((initializerIR'?{initializerIR' <- initializerIR'?} = ?())), then
+
+        1. (Let typeIR_subst be $subst_type_e((local), EC_0, typeIR))
+
+        2. (Let value_init be $default(typeIR))
+
+        3. (Let EC_1 be $add_var_e((local), EC_0, (` nameIR), value_init))
+
+        4. Result in : % % |- % : EC_1 STO_0' ((`) as statementResult)
+
+      2. (Let initializerOptIR be initializerIR'?{initializerIR' <- initializerIR'?})
+
+      3. If ((initializerOptIR matches pattern (_))), then
+
+        1. (Let ?((= typedExpressionIR_init)) be initializerOptIR)
+
+        2. (Expr_eval: (local) EC_0 STO_0' |- typedExpressionIR_init : EC_1 STO_1 expressionResult)
+
+        3. Case analysis on expressionResult
+
+          1. Case (% has type exitResult)
+
+            1. (Let exitResult be (expressionResult as exitResult))
+
+            2. Result in : % % |- % : EC_1 STO_1 ((exit) as statementResult)
+
+          2. Case (% has type continueResult<value>)
+
+            1. (Let (` value_init) be (expressionResult as continueResult<value>))
+
+            2. (Let EC_2 be $add_var_e((local), EC_1, (` nameIR), value_init))
+
+            3. Result in : % % |- % : EC_2 STO_1 ((`) as statementResult)
+
+  3. Case (% has type statementIR)
 
     1. (Let statementIR be (blockElementStatementIR as statementIR))
 
-    2. Group statementIR: EC_0 STO_0 |- (statementIR as blockElementStatementIR) : % % %
+    2. Group statementIR: EC_0 STO_0' |- (statementIR as blockElementStatementIR) : % % %
 
-      1. (Stmt_eval: (local) EC_0 STO_0 |- statementIR : EC_1 STO_1 statementResult)
+      1. (Stmt_eval: (local) EC_0 STO_0' |- statementIR : EC_1 STO_1 statementResult)
 
       2. Result in : % % |- % : EC_1 STO_1 statementResult
 
