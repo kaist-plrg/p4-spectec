@@ -139,8 +139,37 @@ struct
 
      extern void hash<O, T, D, M>(out O result, in HashAlgorithm algo,
                                   in T base, in D data, in M max); *)
-  let _hash (_value_ctx : Value.t) (_value_sto : Value.t) : Value.t * Value.t =
-    failwith "extern function hash is not implemented"
+  let hash (value_ctx : Value.t) (value_sto : Value.t) :
+      Value.t * Value.t * Value.t =
+    let base =
+      Spec.Func.find_var_e_local value_ctx "base" |> unpack_p4_fixedBit |> snd
+    in
+    let max =
+      Spec.Func.find_var_e_local value_ctx "max" |> unpack_p4_fixedBit |> snd
+    in
+    let values =
+      Spec.Func.find_var_e_local value_ctx "data" |> unpack_p4_sequence
+    in
+    let id_enum, id_enum_field =
+      Spec.Func.find_var_e_local value_ctx "algo" |> unpack_p4_enum
+    in
+    let result =
+      match (id_enum, id_enum_field) with
+      | "HashAlgorithm", algo ->
+          Hash.compute_checksum algo values |> Hash.adjust base max
+      | _ -> assert false
+    in
+    let value_typ_O = Spec.Func.find_type_e_local value_ctx "O" in
+    let value_result = pack_p4_arbitraryInt result in
+    let result = Spec.Func.cast_op value_typ_O value_result in
+    let value_ctx =
+      Spec.Rel.lvalue_write_var_local value_ctx value_sto "result" result
+    in
+    let value_callResult =
+      let value_eps = wrap_opt_v "value" None in
+      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+    in
+    (value_ctx, value_sto, value_callResult)
 
   (* Verifies the checksum of the supplied data.  If this method detects
      that a checksum of the data is not correct, then the value of the
@@ -571,6 +600,8 @@ struct
       | ( "update_checksum_with_payload",
           [ "condition"; "data"; "checksum"; "algo" ] ) ->
           update_checksum_with_payload value_ctx value_sto
+      | "hash", [ "result"; "algo"; "base"; "data"; "max" ] ->
+          hash value_ctx value_sto
       | _ ->
           failwith
             ("unsupported extern function call: " ^ name_func ^ "("
