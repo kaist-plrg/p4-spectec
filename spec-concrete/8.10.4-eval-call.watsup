@@ -92,7 +92,44 @@ rulegroup Call_eval/actionCallee {
            `@ LOCAL EC_callee_3 storageReference?*
         ~> EC_3
 
-  rule Call_eval/block:
+  rule Call_eval/block-exit:
+    p EC_0 STO_0 |- actionCallee
+                    `@ `< eps > `( argumentListIR )
+                  : EC_3 STO_2 EXIT
+    ---- ;; unpack the action callee
+    ---- ;; if the action is in a block
+    -- if ACTION BLOCK `. nameIR
+            `( parameterIR* `# id_default* ) blockStatementIR
+        = actionCallee
+    ---- ;; create the callee context
+    -- if EC_callee_0 = $inherit_e(BLOCK, EC_0)
+    ---- ;; align parameters with arguments
+    -- if (parameterIR_aligned*, argumentIR_aligned*,
+           parameterIR_default*, value_default*)
+        = $align_params_with_args(parameterIR*, argumentListIR, id_default*)
+    ---- ;; copy-in
+    -- Copy_in:
+        STO_0 p EC_0 parameterIR_aligned*
+           `@ LOCAL EC_callee_0 argumentIR_aligned*
+        ~> STO_1 EC_1 `@ EC_callee_1 `# (`` storageReference?*)
+    -- Copy_in_default:
+        parameterIR_default* `@ LOCAL EC_callee_1 value_default*
+        ~> `@ EC_callee_2
+    ---- ;; evaluate action body
+    -- ActionBody_eval:
+        EC_callee_2 STO_1 |- blockStatementIR
+                           : EC_callee_3 STO_2 EXIT
+    ---- ;; propagate shared layer
+    -- if EC_2
+        = EC_1[ .GLOBAL.FRAME = EC_callee_3.GLOBAL.FRAME ]
+              [ .BLOCK.FRAME = EC_callee_3.BLOCK.FRAME ]
+    ---- ;; copy-out
+    -- Copy_out:
+        STO_2 p EC_2 parameterIR_aligned*
+           `@ LOCAL EC_callee_3 storageReference?*
+        ~> EC_3
+
+  rule Call_eval/block-cont:
     p EC_0 STO_0 |- actionCallee
                     `@ `< eps > `( argumentListIR )
                   : EC_3 STO_2 (RETURN eps)

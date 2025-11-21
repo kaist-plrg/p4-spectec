@@ -29914,7 +29914,17 @@ relation Call_eval: p EC_0' STO_0' |- callee @< typeArgumentListIR' >( argumentL
 
               3. (ActionBody_eval: EC_callee_2 STO_1 |- blockStatementIR : EC_callee_3 STO_2 actionResult)
 
-              4. If ((actionResult = ((return ?()) as actionResult))), then
+              4. If ((actionResult has type exitResult)), then
+
+                1. (Let exitResult be (actionResult as exitResult))
+
+                2. (Let EC_2 be EC_1[global.frame = EC_callee_3.global.frame][block.frame = EC_callee_3.block.frame])
+
+                3. (Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_3 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3)
+
+                4. Result in : % % % |- % @< % >( % ): EC_3 STO_2 ((exit) as callResult)
+
+              5. If ((actionResult = ((return ?()) as actionResult))), then
 
                 1. (Let EC_2 be EC_1[global.frame = EC_callee_3.global.frame][block.frame = EC_callee_3.block.frame])
 
@@ -30698,12 +30708,12 @@ relation ActionBody_eval: EC_0 STO_0 |- blockStatementIR : % % %
 
     1. Result in : % % |- % : EC_1 STO_1 ((return ?()) as actionResult)
 
-;; ../../../../spec-concrete/8.10.4-eval-call.watsup:135.1-136.17
+;; ../../../../spec-concrete/8.10.4-eval-call.watsup:172.1-173.17
 syntax definedFunctionResult = 
    | exit
    | return value?
 
-;; ../../../../spec-concrete/8.10.4-eval-call.watsup:138.1-141.23
+;; ../../../../spec-concrete/8.10.4-eval-call.watsup:175.1-178.23
 relation DefinedFunctionBody_eval: EC_0 STO_0 |- blockStatementIR : % % %
 
 1. Group : EC_0 STO_0 |- blockStatementIR : % % %

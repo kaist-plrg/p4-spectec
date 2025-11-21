@@ -8071,10 +8071,14 @@ relation Call_eval: `p`, `EC~0'~`, `STO~0'~`, `callee`, `typeArgumentListIR'`, a
    .... Let `(storageReference^?^)^{asterisk}^` be `copyInListResult`.
    .... Let <<Copy_in_default, `parameterIR~default~^{asterisk}^ @ LOCAL EC~callee_1~ value~default~^{asterisk}^ ~> @ EC~callee_2~`>>.
    .... Let <<ActionBody_eval, `EC~callee_2~ STO~1~ |- blockStatementIR : EC~callee_3~ STO~2~ actionResult`>>.
-   .... Check that `actionResult` is equal to `RETURN None`.
-   .... Let `EC~2~` be `EC~1~[GLOBAL.FRAME = EC~callee_3~.GLOBAL.FRAME][BLOCK.FRAME = EC~callee_3~.BLOCK.FRAME]`.
-   .... Let <<Copy_out, `STO~2~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_3~ (storageReference^?^)^{asterisk}^ ~> EC~3~`>>.
-   .... Result in the resulting evaluation context `EC~3~`, store `STO~2~`, and call result `RETURN None`.
+   .... Else if let `exitResult` be `actionResult`:
+    ..... Let `EC~2~` be `EC~1~[GLOBAL.FRAME = EC~callee_3~.GLOBAL.FRAME][BLOCK.FRAME = EC~callee_3~.BLOCK.FRAME]`.
+    ..... Let <<Copy_out, `STO~2~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_3~ (storageReference^?^)^{asterisk}^ ~> EC~3~`>>.
+    ..... Result in the resulting evaluation context `EC~3~`, store `STO~2~`, and call result `EXIT`.
+   .... Else if `actionResult` is equal to `RETURN None`:
+    ..... Let `EC~2~` be `EC~1~[GLOBAL.FRAME = EC~callee_3~.GLOBAL.FRAME][BLOCK.FRAME = EC~callee_3~.BLOCK.FRAME]`.
+    ..... Let <<Copy_out, `STO~2~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_3~ (storageReference^?^)^{asterisk}^ ~> EC~3~`>>.
+    ..... Result in the resulting evaluation context `EC~3~`, store `STO~2~`, and call result `RETURN None`.
 . Else if let `definedFunctionCallee` be `callee`:
  .. Group definedFunctionCallee:
   ... Let `FUNCTION nameIR < typeParameterListIR > ( parameterIR^{asterisk}^ # id~default~^{asterisk}^ ) blockStatementIR` be `definedFunctionCallee`.
