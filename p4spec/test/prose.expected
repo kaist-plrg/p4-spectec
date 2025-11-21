@@ -8100,11 +8100,9 @@ relation Call_eval: `p`, `EC~0'~`, `STO~0'~`, `callee`, `typeArgumentListIR'`, a
 +
 for each `parameterIR` in `parameterIR^{asterisk}^`
   ... Let `EC~callee_4~`, `STO~2~`, and `callResult` be the result of <<ExternFunctionCall_eval, calling an extern function `STO~1~``nameIR` , under evaluation context `EC~callee_3~`, and store `nameIR~param~^{asterisk}^`>>.
-  ... Check that `callResult` has type `returnResult`.
-  ... Let `returnResult` be `callResult`.
   ... Let `EC~2~` be `EC~1~[GLOBAL.FRAME = EC~callee_4~.GLOBAL.FRAME]`.
   ... Let <<Copy_out, `STO~2~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_4~ (storageReference^?^)^{asterisk}^ ~> EC~3~`>>.
-  ... Result in the resulting evaluation context `EC~3~`, store `STO~2~`, and call result `returnResult`.
+  ... Result in the resulting evaluation context `EC~3~`, store `STO~2~`, and call result `callResult`.
 . Else if let `builtinMethodCallee` be `callee`:
  .. Check that `typeArgumentIR^{asterisk}^` is an empty list.
  .. Check that `argumentIR^{asterisk}^` is an empty list.
@@ -8151,16 +8149,25 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
   ... Let `EC~callee_1~` be `EC~callee_0~[BLOCK.FRAME = frame][BLOCK.STATE = stateEnv]`.
   ... Let `(parameterIR~aligned~^{asterisk}^, argumentIR~aligned~^{asterisk}^, parameterIR~default~^{asterisk}^, value~default~^{asterisk}^)` be `<<align_params_with_args, $align_params_with_args(parameterListIR, argumentListIR', id~default~^{asterisk}^)>>`.
   ... Let <<Copy_in, `STO~0'~ p EC~0'~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_1~ argumentIR~aligned~^{asterisk}^ ~> STO~1~ EC~1~ @ EC~callee_2~ # copyInListResult`>>.
-  ... Check that `copyInListResult` has type `continueResult<storageReference?*>`.
-  ... Let `(storageReference^?^)^{asterisk}^` be `copyInListResult`.
-  ... Let <<Copy_in_default, `parameterIR~default~^{asterisk}^ @ BLOCK EC~callee_2~ value~default~^{asterisk}^ ~> @ EC~callee_3~`>>.
-  ... Let <<ParserLocalDecls_eval, `EC~callee_3~ STO~1~ |- parserLocalDeclarationListIR : EC~callee_4~ STO~2~`>>.
-  ... Let <<ParserState_trans, `EC~callee_4~ STO~2~ |- TRANSITION "start" : EC~callee_5~ STO~3~ transitionResult`>>.
-  ... Check that `transitionResult` has type `acceptTransitionResult`.
-  ... Let `acceptTransitionResult` be `transitionResult`.
-  ... Let `EC~2~` be `EC~1~[GLOBAL.FRAME = EC~callee_5~.GLOBAL.FRAME]`.
-  ... Let <<Copy_out, `STO~3~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_5~ (storageReference^?^)^{asterisk}^ ~> EC~3~`>>.
-  ... Result in the resulting evaluation context `EC~3~`, store `STO~3~`, and call result `RETURN None`.
+  ... Else if let `(storageReference^?^)^{asterisk}^` be `copyInListResult`:
+   .... Let <<Copy_in_default, `parameterIR~default~^{asterisk}^ @ BLOCK EC~callee_2~ value~default~^{asterisk}^ ~> @ EC~callee_3~`>>.
+   .... Let <<ParserLocalDecls_eval, `EC~callee_3~ STO~1~ |- parserLocalDeclarationListIR : EC~callee_4~ STO~2~`>>.
+   .... Let <<ParserState_trans, `EC~callee_4~ STO~2~ |- TRANSITION "start" : EC~callee_5~ STO~3~ transitionResult`>>.
+   .... Check that `transitionResult` has type `acceptTransitionResult`.
+   .... Let `acceptTransitionResult` be `transitionResult`.
+   .... Let `EC~2~` be `EC~1~[GLOBAL.FRAME = EC~callee_5~.GLOBAL.FRAME]`.
+   .... Let <<Copy_out, `STO~3~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_5~ (storageReference^?^)^{asterisk}^ ~> EC~3~`>>.
+   .... Result in the resulting evaluation context `EC~3~`, store `STO~3~`, and call result `RETURN None`.
+  ... Let `EC~callee_1~` be `EC~callee_0~[BLOCK.FRAME = frame][BLOCK.STATE = stateEnv]`.
+  ... Else if let `(storageReference^?^)^{asterisk}^` be `copyInListResult`:
+   .... Let <<Copy_in_default, `parameterIR~default~^{asterisk}^ @ BLOCK EC~callee_2~ value~default~^{asterisk}^ ~> @ EC~callee_3~`>>.
+   .... Let <<ParserLocalDecls_eval, `EC~callee_3~ STO~1~ |- parserLocalDeclarationListIR : EC~callee_4~ STO~2~`>>.
+   .... Let <<ParserState_trans, `EC~callee_4~ STO~2~ |- TRANSITION "start" : EC~callee_5~ STO~3~ transitionResult`>>.
+   .... Check that `transitionResult` has type `rejectTransitionResult`.
+   .... Let `rejectTransitionResult` be `transitionResult`.
+   .... Let `EC~2~` be `EC~1~[GLOBAL.FRAME = EC~callee_5~.GLOBAL.FRAME]`.
+   .... Let <<Copy_out, `STO~3~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_5~ (storageReference^?^)^{asterisk}^ ~> EC~3~`>>.
+   .... Result in the resulting evaluation context `EC~3~`, store `STO~3~`, and call result `rejectTransitionResult`.
 . Else if let `controlApplyMethodCallee` be `callee`:
  .. Group controlApplyMethodCallee:
   ... Let `CONTROL ++_++ . APPLY ( parameterListIR # id~default~^{asterisk}^ ) { frame ; controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR }` be `controlApplyMethodCallee`.
@@ -8532,9 +8539,11 @@ relation V1Model_parser: `EC~0~` and `STO~0~`
  .. Let `typedExpressionIR~p~` be `<<V1Model_setup_parser_callee, $V1Model_setup_parser_callee(EC~0~, STO~0~, typedExpressionIR~main~)>>`.
  .. Let `callableTargetIR` be `typedExpressionIR~p~ . "apply"`.
  .. Let `EC~1~`, `STO~1~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `callableTargetIR < [ ] > ( argumentIR^{asterisk}^ ) ;`, under cursor `GLOBAL`, evaluation context `EC~0~`, and store `STO~0~`>>.
- .. Check that `statementResult` has type `continueEmptyResult`.
- .. Let `continueEmptyResult` be `statementResult`.
- .. Result in `EC~1~`, `STO~1~`, and `ACCEPT`.
+ .. Else if let `continueEmptyResult` be `statementResult`:
+  ... Result in `EC~1~`, `STO~1~`, and `ACCEPT`.
+ .. Let `EC~1~`, `STO~1~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `callableTargetIR < [ ] > ( argumentIR^{asterisk}^ ) ;`, under cursor `GLOBAL`, evaluation context `EC~0~`, and store `STO~0~`>>.
+ .. Else if let `rejectTransitionResult` be `statementResult`:
+  ... Result in `EC~1~`, `STO~1~`, and `rejectTransitionResult`.
 
 
 relation V1Model_verify: `EC~0~` and `STO~0~`

@@ -96,6 +96,27 @@ def $bin_op(`+, value_l, value_r) = $bin_plus(value_l, value_r)
 dec $bin_satplus(value, value) : value 
   hint(testgen_ignore)
 
+def $bin_satplus(w W i_l, w W i_r) = w W i'''
+  -- if i_l' = $bitstr_to_int(w, i_l)
+  -- if i_r' = $bitstr_to_int(w, i_r)
+  -- if i' = $(i_l' + i_r')
+  -- if i'' = $min_int([ i', $($pow2(w) - 1) ])
+  -- if i''' = $int_to_bitstr(w, i'')
+def $bin_satplus(w S i_l, w S i_r) = w S i'''
+  -- if i_l' = $bitstr_to_int(w, i_l)
+  -- if i_r' = $bitstr_to_int(w, i_r)
+  -- if i' = $(i_l' + i_r')
+  -- if $(i' > 0)
+  -- if i'' = $min_int([ i', $($pow2(w) - 1) ])
+  -- if i''' = $int_to_bitstr(w, i'')
+def $bin_satplus(w S i_l, w S i_r) = w S i'''
+  -- if i_l' = $bitstr_to_int(w, i_l)
+  -- if i_r' = $bitstr_to_int(w, i_r)
+  -- if i' = $(i_l' + i_r')
+  -- if $(i' <= 0)
+  -- if i'' = $max_int([ i', $(-$pow2(w)) ])
+  -- if i''' = $int_to_bitstr(w, i'')
+
 def $bin_op(`|+|, value_l, value_r) = $bin_satplus(value_l, value_r)
 
 ;;; Binary minus
@@ -119,6 +140,32 @@ def $bin_op(`-, value_l, value_r) = $bin_minus(value_l, value_r)
 
 dec $bin_satminus(value, value) : value
   hint(testgen_ignore)
+
+def $bin_satminus(w W i_l, w W i_r) = w W i''
+  -- if i_l' = $bitstr_to_int(w, i_l)
+  -- if i_r' = $bitstr_to_int(w, i_r)
+  -- if i' = $(i_l' - i_r')
+  -- if $(i' > 0)
+  -- if i'' = $int_to_bitstr(w, i')
+def $bin_satminus(w W i_l, w W i_r) = w W 0
+  -- if i_l' = $bitstr_to_int(w, i_l)
+  -- if i_r' = $bitstr_to_int(w, i_r)
+  -- if i' = $(i_l' - i_r')
+  -- if $(i' <= 0)
+def $bin_satminus(w S i_l, w S i_r) = w S i'''
+  -- if i_l' = $bitstr_to_int(w, i_l)
+  -- if i_r' = $bitstr_to_int(w, i_r)
+  -- if i' = $(i_l' - i_r')
+  -- if $(i' > 0)
+  -- if i'' = $min_int([ i', $($pow2(w) - 1) ])
+  -- if i''' = $int_to_bitstr(w, i'')
+def $bin_satminus(w S i_l, w S i_r) = w S i'''
+  -- if i_l' = $bitstr_to_int(w, i_l)
+  -- if i_r' = $bitstr_to_int(w, i_r)
+  -- if i' = $(i_l' - i_r')
+  -- if $(i' <= 0)
+  -- if i'' = $max_int([ i', $(-$pow2(w)) ])
+  -- if i''' = $int_to_bitstr(w, i'')
 
 def $bin_op(`|-|, value_l, value_r) = $bin_satminus(value_l, value_r)
 
@@ -810,11 +857,11 @@ def $sizeof_minSizeInBits''(BIT `< w >) = w
 def $sizeof_minSizeInBits''(VARBIT `< _ >) = 0
 def $sizeof_minSizeInBits''(TYPE _ typeIR) = $sizeof_minSizeInBits'(typeIR)
 def $sizeof_minSizeInBits''(ENUM _ `< typeIR > `{ _ }) = $sizeof_minSizeInBits'(typeIR)
-def $sizeof_minSizeInBits''(TUPLE `< typeIR* >) = $sum($sizeof_minSizeInBits'(typeIR)*)
+def $sizeof_minSizeInBits''(TUPLE `< typeIR* >) = $sum_nat($sizeof_minSizeInBits'(typeIR)*)
 def $sizeof_minSizeInBits''(typeIR `[ n_size ]) = $($sizeof_minSizeInBits'(typeIR) * n_size)
-def $sizeof_minSizeInBits''(STRUCT _ `{ (typeIR _ `;)* }) = $sum($sizeof_minSizeInBits'(typeIR)*)
-def $sizeof_minSizeInBits''(HEADER _ `{ (typeIR _ `;)* }) = $sum($sizeof_minSizeInBits'(typeIR)*)
-def $sizeof_minSizeInBits''(HEADER_UNION _ `{ (typeIR _ `;)* }) = $min($sizeof_minSizeInBits'(typeIR)*)
+def $sizeof_minSizeInBits''(STRUCT _ `{ (typeIR _ `;)* }) = $sum_nat($sizeof_minSizeInBits'(typeIR)*)
+def $sizeof_minSizeInBits''(HEADER _ `{ (typeIR _ `;)* }) = $sum_nat($sizeof_minSizeInBits'(typeIR)*)
+def $sizeof_minSizeInBits''(HEADER_UNION _ `{ (typeIR _ `;)* }) = $min_nat($sizeof_minSizeInBits'(typeIR)*)
 
 def $sizeof(typeIR, "minSizeInBits") = $sizeof_minSizeInBits(typeIR)
 
@@ -836,11 +883,11 @@ def $sizeof_maxSizeInBits''(BIT `< w >) = w
 def $sizeof_maxSizeInBits''(VARBIT `< w >) = w
 def $sizeof_maxSizeInBits''(TYPE _ typeIR) = $sizeof_maxSizeInBits'(typeIR)
 def $sizeof_maxSizeInBits''(ENUM _ `< typeIR > `{ _ }) = $sizeof_maxSizeInBits'(typeIR)
-def $sizeof_maxSizeInBits''(TUPLE `< typeIR* >) = $sum($sizeof_maxSizeInBits'(typeIR)*)
+def $sizeof_maxSizeInBits''(TUPLE `< typeIR* >) = $sum_nat($sizeof_maxSizeInBits'(typeIR)*)
 def $sizeof_maxSizeInBits''(typeIR `[ n_size ]) = $($sizeof_maxSizeInBits'(typeIR) * n_size)
-def $sizeof_maxSizeInBits''(STRUCT _ `{ (typeIR _ `;)* }) = $sum($sizeof_maxSizeInBits'(typeIR)*)
-def $sizeof_maxSizeInBits''(HEADER _ `{ (typeIR _ `;)* }) = $sum($sizeof_maxSizeInBits'(typeIR)*)
-def $sizeof_maxSizeInBits''(HEADER_UNION _ `{ (typeIR _ `;)* }) = $max($sizeof_maxSizeInBits'(typeIR)*)
+def $sizeof_maxSizeInBits''(STRUCT _ `{ (typeIR _ `;)* }) = $sum_nat($sizeof_maxSizeInBits'(typeIR)*)
+def $sizeof_maxSizeInBits''(HEADER _ `{ (typeIR _ `;)* }) = $sum_nat($sizeof_maxSizeInBits'(typeIR)*)
+def $sizeof_maxSizeInBits''(HEADER_UNION _ `{ (typeIR _ `;)* }) = $max_nat($sizeof_maxSizeInBits'(typeIR)*)
 
 def $sizeof(typeIR, "maxSizeInBits") = $sizeof_maxSizeInBits(typeIR)
 

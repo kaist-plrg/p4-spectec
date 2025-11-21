@@ -18,9 +18,9 @@ let value_of_bigint (ctx : Ctx.t) (i : Bigint.t) : value =
   Ctx.add_node ctx value;
   value
 
-(* dec $sum(nat* ) : nat *)
+(* dec $sum_nat(nat* ) : nat *)
 
-let sum (ctx : Ctx.t) (at : region) (targs : targ list)
+let sum_nat (ctx : Ctx.t) (at : region) (targs : targ list)
     (values_input : value list) : value =
   Extract.zero at targs;
   let values =
@@ -29,9 +29,9 @@ let sum (ctx : Ctx.t) (at : region) (targs : targ list)
   let sum = List.fold_left Bigint.( + ) Bigint.zero values in
   value_of_bigint ctx sum
 
-(* dec $max(nat* ) : nat *)
+(* dec $max_nat(nat* ) : nat *)
 
-let max (ctx : Ctx.t) (at : region) (targs : targ list)
+let max_nat (ctx : Ctx.t) (at : region) (targs : targ list)
     (values_input : value list) : value =
   Extract.zero at targs;
   let values =
@@ -40,9 +40,9 @@ let max (ctx : Ctx.t) (at : region) (targs : targ list)
   let max = List.fold_left Bigint.max Bigint.zero values in
   value_of_bigint ctx max
 
-(* dec $min(nat* ) : nat *)
+(* dec $min_nat(nat* ) : nat *)
 
-let min (ctx : Ctx.t) (at : region) (targs : targ list)
+let min_nat (ctx : Ctx.t) (at : region) (targs : targ list)
     (values_input : value list) : value =
   Extract.zero at targs;
   let values =

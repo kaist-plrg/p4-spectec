@@ -271,29 +271,57 @@ relation V1Model_parser:
   evalContext store |- evalContext store transitionResult
   hint(input %0 %1)
 
-rule V1Model_parser:
-  EC_0 STO_0 |- EC_1 STO_1 ACCEPT
-  ---- ;; prepare the arguments
-  -- if argumentIR_packet_in
-      = $V1Model_setup_packet_in_argument(EC_0)
-  -- if argumentIR_hdr
-      = $V1Model_setup_hdr_argument(STO_0)
-  -- if argumentIR_meta
-      = $V1Model_setup_meta_argument(STO_0)
-  -- if argumentIR_standard_metadata
-      = $V1Model_setup_standard_metadata_argument(EC_0)
-  -- if argumentIR*
-      = [ argumentIR_packet_in, argumentIR_hdr,
-          argumentIR_meta, argumentIR_standard_metadata ]
-  ---- ;; invoke the parser object (main.p)
-  -- if typedExpressionIR_main
-      = $V1Model_setup_main_callee(EC_0, STO_0)
-  -- if typedExpressionIR_p
-      = $V1Model_setup_parser_callee(EC_0, STO_0, typedExpressionIR_main)
-  -- if callableTargetIR = typedExpressionIR_p `. "apply"
-  -- Stmt_eval:
-      GLOBAL EC_0 STO_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
-                         : EC_1 STO_1 ``
+rulegroup V1Model_parser {
+
+  rule V1Model_parser/cont:
+    EC_0 STO_0 |- EC_1 STO_1 ACCEPT
+    ---- ;; prepare the arguments
+    -- if argumentIR_packet_in
+        = $V1Model_setup_packet_in_argument(EC_0)
+    -- if argumentIR_hdr
+        = $V1Model_setup_hdr_argument(STO_0)
+    -- if argumentIR_meta
+        = $V1Model_setup_meta_argument(STO_0)
+    -- if argumentIR_standard_metadata
+        = $V1Model_setup_standard_metadata_argument(EC_0)
+    -- if argumentIR*
+        = [ argumentIR_packet_in, argumentIR_hdr,
+            argumentIR_meta, argumentIR_standard_metadata ]
+    ---- ;; invoke the parser object (main.p)
+    -- if typedExpressionIR_main
+        = $V1Model_setup_main_callee(EC_0, STO_0)
+    -- if typedExpressionIR_p
+        = $V1Model_setup_parser_callee(EC_0, STO_0, typedExpressionIR_main)
+    -- if callableTargetIR = typedExpressionIR_p `. "apply"
+    -- Stmt_eval:
+        GLOBAL EC_0 STO_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+                           : EC_1 STO_1 ``
+
+  rule V1Model_parser/reject:
+    EC_0 STO_0 |- EC_1 STO_1 rejectTransitionResult
+    ---- ;; prepare the arguments
+    -- if argumentIR_packet_in
+        = $V1Model_setup_packet_in_argument(EC_0)
+    -- if argumentIR_hdr
+        = $V1Model_setup_hdr_argument(STO_0)
+    -- if argumentIR_meta
+        = $V1Model_setup_meta_argument(STO_0)
+    -- if argumentIR_standard_metadata
+        = $V1Model_setup_standard_metadata_argument(EC_0)
+    -- if argumentIR*
+        = [ argumentIR_packet_in, argumentIR_hdr,
+            argumentIR_meta, argumentIR_standard_metadata ]
+    ---- ;; invoke the parser object (main.p)
+    -- if typedExpressionIR_main
+        = $V1Model_setup_main_callee(EC_0, STO_0)
+    -- if typedExpressionIR_p
+        = $V1Model_setup_parser_callee(EC_0, STO_0, typedExpressionIR_main)
+    -- if callableTargetIR = typedExpressionIR_p `. "apply"
+    -- Stmt_eval:
+        GLOBAL EC_0 STO_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+                           : EC_1 STO_1 rejectTransitionResult
+
+}
 
 ;;
 ;; V1Model verify invocation

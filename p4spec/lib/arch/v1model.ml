@@ -2,6 +2,7 @@ open Interface.Wrap
 open Interface.Unwrap
 open Interface.Pack
 open Interface.Unpack
+open Interface.Flatten
 module Value = Runtime_dynamic.Value
 module IO = Runtime_simulator.Io
 module Sim = Runtime_simulator.Simulator
@@ -720,9 +721,19 @@ struct
     let value_ctx = Spec.Rel.v1model_init_globals value_ctx value_sto port_in in
     (value_ctx, value_sto)
 
-  let drive_p (value_ctx : Value.t) (value_sto : Value.t) :
-      Value.t * Value.t * Value.t =
-    Spec.Rel.v1model_parser value_ctx value_sto
+  let drive_p (value_ctx : Value.t) (value_sto : Value.t) : Value.t * Value.t =
+    let value_ctx, value_sto, value_parser_result =
+      Spec.Rel.v1model_parser value_ctx value_sto
+    in
+    let value_ctx =
+      match flatten_case_v_opt value_parser_result with
+      | Some (_, [ [ "REJECT" ]; [] ], [ value_error ]) ->
+          Spec.Rel.lvalue_write_dot_global value_ctx value_sto
+            "standard_metadata" "parser_error" value_error
+      | Some _ -> value_ctx
+      | None -> assert false
+    in
+    (value_ctx, value_sto)
 
   let drive_vr (value_ctx : Value.t) (value_sto : Value.t) :
       Value.t * Value.t * Value.t =
@@ -765,14 +776,12 @@ struct
     let tx = (port, packet) in
     Some tx
 
-  let drive_pipe (value_ctx : Value.t) (value_sto : Value.t) (rx : IO.rx) :
-      Value.t * Value.t * IO.tx option =
+  let drive_pipe_pre (value_ctx : Value.t) (value_sto : Value.t) (rx : IO.rx) :
+      Value.t * Value.t * bool =
     (* Setup port and packet *)
     let value_ctx, value_sto = setup_rx value_ctx value_sto rx in
     (* Parser block *)
-    let value_ctx, value_sto, _value_parser_result =
-      drive_p value_ctx value_sto
-    in
+    let value_ctx, value_sto = drive_p value_ctx value_sto in
     (* Verify block *)
     let value_ctx, value_sto, _value_verify_result =
       drive_vr value_ctx value_sto
@@ -781,6 +790,21 @@ struct
     let value_ctx, value_sto, _value_verify_result =
       drive_ig value_ctx value_sto
     in
+    (* Check if packet should be dropped *)
+    let drop =
+      let value_egress_spec =
+        Spec.Rel.lvalue_read_dot_global value_ctx value_sto "standard_metadata"
+          "egress_spec"
+      in
+      let width_egress_spec, int_egress_spec =
+        unpack_p4_fixedBit value_egress_spec
+      in
+      Bigint.(width_egress_spec = of_int 9 && int_egress_spec = of_int 511)
+    in
+    (value_ctx, value_sto, drop)
+
+  let drive_pipe_post (value_ctx : Value.t) (value_sto : Value.t) :
+      Value.t * Value.t * IO.tx option =
     (* Egress block *)
     let value_ctx, value_sto, _value_verify_result =
       drive_eg value_ctx value_sto
@@ -796,4 +820,10 @@ struct
     (* Get resulting port and packet *)
     let result_opt = resulting_port_packet value_ctx value_sto in
     (value_ctx, value_sto, result_opt)
+
+  let drive_pipe (value_ctx : Value.t) (value_sto : Value.t) (rx : IO.rx) :
+      Value.t * Value.t * IO.tx option =
+    let value_ctx, value_sto, drop = drive_pipe_pre value_ctx value_sto rx in
+    if drop then (value_ctx, value_sto, None)
+    else drive_pipe_post value_ctx value_sto
 end

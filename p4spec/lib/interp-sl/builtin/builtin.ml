@@ -13,8 +13,13 @@ module Funcs = Map.Make (String)
 let funcs =
   Funcs.empty
   (* Nats *)
-  |> Funcs.add "sum" Nats.sum
-  |> Funcs.add "max" Nats.max |> Funcs.add "min" Nats.min
+  |> Funcs.add "sum_nat" Nats.sum_nat
+  |> Funcs.add "max_nat" Nats.max_nat
+  |> Funcs.add "min_nat" Nats.min_nat
+  (* Ints *)
+  |> Funcs.add "sum_int" Ints.sum_int
+  |> Funcs.add "max_int" Ints.max_int
+  |> Funcs.add "min_int" Ints.min_int
   (* Texts *)
   |> Funcs.add "int_to_text" Texts.int_to_text
   |> Funcs.add "strip_prefix" Texts.strip_prefix
