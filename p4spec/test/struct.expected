@@ -16525,9 +16525,13 @@ relation Stmt_ok: p' TC' f' |- statement : % % %
 
       2. Group blockStatement: (local) TC' f' |- (blockStatement as statement) : % % %
 
-        1. (Block_ok: TC' f' |- blockStatement : TC_1 f_1 blockStatementIR)
+        1. (Let TC_1 be $enter_t(TC'))
 
-        2. Result in : % % % |- % : TC_1 f_1 (blockStatementIR as statementIR)
+        2. (Block_ok: TC_1 f' |- blockStatement : TC_2 f_1 blockStatementIR)
+
+        3. (Let TC_3 be $exit_t(TC_2))
+
+        4. Result in : % % % |- % : TC_3 f_1 (blockStatementIR as statementIR)
 
     3. Case (% has type switchStatement)
 
@@ -16686,15 +16690,11 @@ relation Block_ok: TC_0 f |- (annotationList { blockElementStatementList }) : % 
 
   1. (Let blockElementStatement*{blockElementStatement <- blockElementStatement*} be $flatten_blockElementStatementList(blockElementStatementList))
 
-  2. (Let TC_1 be $enter_t(TC_0))
+  2. (BlockElementStmts_ok: TC_0 f |- blockElementStatement*{blockElementStatement <- blockElementStatement*} : TC_1 f_post blockElementStatementIR*{blockElementStatementIR <- blockElementStatementIR*})
 
-  3. (BlockElementStmts_ok: TC_1 f |- blockElementStatement*{blockElementStatement <- blockElementStatement*} : TC_2 f_post blockElementStatementIR*{blockElementStatementIR <- blockElementStatementIR*})
+  3. (Let blockStatementIR be (annotationList { blockElementStatementIR*{blockElementStatementIR <- blockElementStatementIR*} }))
 
-  4. (Let TC_3 be $exit_t(TC_2))
-
-  5. (Let blockStatementIR be (annotationList { blockElementStatementIR*{blockElementStatementIR <- blockElementStatementIR*} }))
-
-  6. Result in : % % |- % : TC_3 f_post blockStatementIR
+  4. Result in : % % |- % : TC_1 f_post blockStatementIR
 
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:131.1-135.74
 relation Parameter_ok: p TC |- (annotationList direction type name initializerOpt) : % # %
@@ -21511,7 +21511,7 @@ def $compat'_direct_application(typeIR)
 
   1. Return false
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:215.1-217.26
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:217.1-219.26
 relation SwitchLabel_table_ok: TC tid_table bool |- switchLabel : %
 
 1. Group : TC tid_table bool |- switchLabel : %
@@ -21552,7 +21552,7 @@ relation SwitchLabel_table_ok: TC tid_table bool |- switchLabel : %
 
             2. Result in : % % % |- % : (typedExpressionIR_label as switchLabelIR)
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:246.1-248.29
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:248.1-250.29
 relation SwitchCase_table_ok: TC f tid_table b_last |- switchCase : % % # %
 
 1. Group : TC f tid_table b_last |- switchCase : % % # %
@@ -21581,7 +21581,7 @@ relation SwitchCase_table_ok: TC f tid_table b_last |- switchCase : % % # %
 
       4. Result in : % % % % |- % : f switchCaseIR # switchLabel
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:277.1-279.26
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:279.1-281.26
 relation SwitchCases_table_ok: TC f tid_table |- switchCase*{switchCase <- switchCase*} : % % # %
 
 1. Case analysis on switchCase*{switchCase <- switchCase*}
@@ -21606,7 +21606,7 @@ relation SwitchCases_table_ok: TC f tid_table |- switchCase*{switchCase <- switc
 
       4. Result in : % % % |- % : f_t switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} # switchLabel_h :: switchLabel_t*{switchLabel_t <- switchLabel_t*}
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:316.1-318.26
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:318.1-320.26
 relation SwitchLabel_general_ok: TC typeIR bool |- switchLabel : %
 
 1. Group : TC typeIR bool |- switchLabel : %
@@ -21637,7 +21637,7 @@ relation SwitchLabel_general_ok: TC typeIR bool |- switchLabel : %
 
         1. Result in : % % % |- % : (typedExpressionIR_label_cast as switchLabelIR)
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:342.1-344.29
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:344.1-346.29
 relation SwitchCase_general_ok: TC f typeIR_switch b_last |- switchCase : % % # %
 
 1. Group : TC f typeIR_switch b_last |- switchCase : % % # %
@@ -21666,7 +21666,7 @@ relation SwitchCase_general_ok: TC f typeIR_switch b_last |- switchCase : % % # 
 
       4. Result in : % % % % |- % : f switchCaseIR # switchLabel
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:373.1-375.26
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:375.1-377.26
 relation SwitchCases_general_ok: TC f typeIR_switch |- switchCase*{switchCase <- switchCase*} : % % # %
 
 1. Case analysis on switchCase*{switchCase <- switchCase*}
@@ -21691,12 +21691,12 @@ relation SwitchCases_general_ok: TC f typeIR_switch |- switchCase*{switchCase <-
 
       4. Result in : % % % |- % : f_t switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} # switchLabel_h :: switchLabel_t*{switchLabel_t <- switchLabel_t*}
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:390.1-390.34
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:392.1-392.34
 def $compat_switch(typeIR)
 
 1. Return $compat'_switch($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:391.1-391.35
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:393.1-393.35
 def $compat'_switch(typeIR)
 
 1. Case analysis on typeIR
@@ -25061,9 +25061,13 @@ relation Stmt_inst: p' IC' STO' |- statementIR : % % %
 
       2. Group blockStatementIR: (local) IC' STO' |- ((annotationList { blockElementStatementListIR }) as statementIR) : % % %
 
-        1. (Block_inst: IC' STO' |- (annotationList { blockElementStatementListIR }) : IC_1 STO_1 (_annotationList { blockElementStatementListIR_inst }))
+        1. (Let IC_1 be $enter_i(IC'))
 
-        2. Result in : % % % |- % : IC_1 STO_1 ((annotationList { blockElementStatementListIR_inst }) as statementIR)
+        2. (Block_inst: IC_1 STO' |- (annotationList { blockElementStatementListIR }) : IC_2 STO_1 (_annotationList { blockElementStatementListIR_inst }))
+
+        3. (Let IC_3 be $exit_i(IC_2))
+
+        4. Result in : % % % |- % : IC_3 STO_1 ((annotationList { blockElementStatementListIR_inst }) as statementIR)
 
 ;; ../../../../spec-concrete/7.03-inst-relation.watsup:34.1-37.23
 relation BlockElementStmt_inst: IC_0' STO_0' |- blockElementStatementIR : % % %
@@ -25138,13 +25142,9 @@ relation Block_inst: IC_0 STO_0 |- (annotationList { blockElementStatementListIR
 
 1. Group : IC_0 STO_0 |- (annotationList { blockElementStatementListIR }) : % % %
 
-  1. (Let IC_1 be $enter_i(IC_0))
+  1. (BlockElementStmts_inst: IC_0 STO_0 |- blockElementStatementListIR : IC_1 STO_1 blockElementStatementListIR_inst)
 
-  2. (BlockElementStmts_inst: IC_1 STO_0 |- blockElementStatementListIR : IC_2 STO_1 blockElementStatementListIR_inst)
-
-  3. (Let IC_3 be $exit_i(IC_2))
-
-  4. Result in : % % |- % : IC_3 STO_1 (annotationList { blockElementStatementListIR_inst })
+  2. Result in : % % |- % : IC_1 STO_1 (annotationList { blockElementStatementListIR_inst })
 
 ;; ../../../../spec-concrete/7.03-inst-relation.watsup:53.1-55.20
 relation ExternMethod_inst: IC_0 |- externMethodPrototypeIR : %
@@ -26456,7 +26456,7 @@ relation Constructor_inst: p IC STO_0 |- constructorDef < typeArgumentIR*{typeAr
 
               3. Result in : % % % |- % < % >( % # % ): STO_1 object_table
 
-;; ../../../../spec-concrete/7.06-inst-statement.watsup:113.1-116.26
+;; ../../../../spec-concrete/7.06-inst-statement.watsup:115.1-118.26
 relation SwitchCase_inst: p IC store |- switchCaseIR : % %
 
 1. Group : p IC store |- switchCaseIR : % %
@@ -26481,7 +26481,7 @@ relation SwitchCase_inst: p IC store |- switchCaseIR : % %
 
       2. Result in : % % % |- % : store (switchLabelIR :)
 
-;; ../../../../spec-concrete/7.06-inst-statement.watsup:137.1-140.26
+;; ../../../../spec-concrete/7.06-inst-statement.watsup:139.1-142.26
 relation SwitchCases_inst: p IC STO' |- switchCaseIR*{switchCaseIR <- switchCaseIR*} : % %
 
 1. Case analysis on switchCaseIR*{switchCaseIR <- switchCaseIR*}
@@ -28375,9 +28375,13 @@ relation Stmt_eval: p' EC' STO' |- statementIR : % % %
 
     2. Group blockStatement: p' EC' STO' |- (blockStatementIR as statementIR) : % % %
 
-      1. (Block_eval: EC' STO' |- blockStatementIR : EC_1 STO_1 statementResult)
+      1. (Let EC_1 be $enter_e(EC'))
 
-      2. Result in : % % % |- % : EC_1 STO_1 statementResult
+      2. (Block_eval: EC_1 STO' |- blockStatementIR : EC_2 STO_1 statementResult)
+
+      3. (Let EC_3 be $exit_e(EC_2))
+
+      4. Result in : % % % |- % : EC_3 STO_1 statementResult
 
   6. Case (% has type conditionalStatementIR)
 
@@ -28588,13 +28592,9 @@ relation Block_eval: EC_0 STO_0 |- (annotationList { blockElementStatementListIR
 
 1. Group : EC_0 STO_0 |- (annotationList { blockElementStatementListIR }) : % % %
 
-  1. (Let EC_1 be $enter_e(EC_0))
+  1. (BlockElementStmts_eval: EC_0 STO_0 |- blockElementStatementListIR : EC_1 STO_1 statementResult)
 
-  2. (BlockElementStmts_eval: EC_1 STO_0 |- blockElementStatementListIR : EC_2 STO_1 statementResult)
-
-  3. (Let EC_3 be $exit_e(EC_2))
-
-  4. Result in : % % |- % : EC_3 STO_1 statementResult
+  2. Result in : % % |- % : EC_1 STO_1 statementResult
 
 ;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:142.1-143.27
 syntax parserStatementResult = 
@@ -29816,6 +29816,16 @@ relation Call_eval: p EC_0' STO_0' |- callee @< typeArgumentListIR' >( argumentL
 
                 3. Result in : % % % |- % @< % >( % ): EC_3 STO_2 ((return ?()) as callResult)
 
+              5. If ((actionResult has type exitResult)), then
+
+                1. (Let exitResult be (actionResult as exitResult))
+
+                2. (Let EC_2 be EC_1[global.frame = EC_callee_3.global.frame])
+
+                3. (Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_3 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3)
+
+                4. Result in : % % % |- % @< % >( % ): EC_3 STO_2 ((exit) as callResult)
+
           2. Case (% matches pattern `BLOCK`)
 
             1. (Let EC_callee_0 be $inherit_e((block), EC_0'))
@@ -29832,7 +29842,15 @@ relation Call_eval: p EC_0' STO_0' |- callee @< typeArgumentListIR' >( argumentL
 
               3. (ActionBody_eval: EC_callee_2 STO_1 |- blockStatementIR : EC_callee_3 STO_2 actionResult)
 
-              4. If ((actionResult has type exitResult)), then
+              4. If ((actionResult = ((return ?()) as actionResult))), then
+
+                1. (Let EC_2 be EC_1[global.frame = EC_callee_3.global.frame][block.frame = EC_callee_3.block.frame])
+
+                2. (Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_3 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3)
+
+                3. Result in : % % % |- % @< % >( % ): EC_3 STO_2 ((return ?()) as callResult)
+
+              5. If ((actionResult has type exitResult)), then
 
                 1. (Let exitResult be (actionResult as exitResult))
 
@@ -29840,15 +29858,7 @@ relation Call_eval: p EC_0' STO_0' |- callee @< typeArgumentListIR' >( argumentL
 
                 3. (Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_3 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3)
 
-                4. Result in : % % % |- % @< % >( % ): EC_3 STO_2 ((exit) as callResult)
-
-              5. If ((actionResult = ((return ?()) as actionResult))), then
-
-                1. (Let EC_2 be EC_1[global.frame = EC_callee_3.global.frame][block.frame = EC_callee_3.block.frame])
-
-                2. (Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_3 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3)
-
-                3. Result in : % % % |- % @< % >( % ): EC_3 STO_2 ((return ?()) as callResult)
+                4. Result in : % % % |- % @< % >( % ): EC_3 STO_2 ((return ?()) as callResult)
 
   2. Case (% has type definedFunctionCallee)
 
@@ -30626,12 +30636,12 @@ relation ActionBody_eval: EC_0 STO_0 |- blockStatementIR : % % %
 
     1. Result in : % % |- % : EC_1 STO_1 ((return ?()) as actionResult)
 
-;; ../../../../spec-concrete/8.10.4-eval-call.watsup:172.1-173.17
+;; ../../../../spec-concrete/8.10.4-eval-call.watsup:207.1-208.17
 syntax definedFunctionResult = 
    | exit
    | return value?
 
-;; ../../../../spec-concrete/8.10.4-eval-call.watsup:175.1-178.23
+;; ../../../../spec-concrete/8.10.4-eval-call.watsup:210.1-213.23
 relation DefinedFunctionBody_eval: EC_0 STO_0 |- blockStatementIR : % % %
 
 1. Group : EC_0 STO_0 |- blockStatementIR : % % %

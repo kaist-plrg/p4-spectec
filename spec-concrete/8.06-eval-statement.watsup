@@ -138,10 +138,12 @@ rule Stmt_eval/exitStatement:
 
 rule Stmt_eval/blockStatement:
   p EC_0 STO_0 |- blockStatementIR
-                : EC_1 STO_1 statementResult
+                : EC_3 STO_1 statementResult
+  -- if EC_1 = $enter_e(EC_0)
   -- Block_eval:
-      EC_0 STO_0 |- blockStatementIR
-                  : EC_1 STO_1 statementResult
+      EC_1 STO_0 |- blockStatementIR
+                  : EC_2 STO_1 statementResult
+  -- if EC_3 = $exit_e(EC_2)
 
 ;;; conditionalStatementIR
 ;;; syntax conditionalStatementIR
@@ -326,9 +328,7 @@ rulegroup BlockElementStmts_eval {
 
 rule Block_eval:
   EC_0 STO_0 |- annotationList `{ blockElementStatementListIR }
-              : EC_3 STO_1 statementResult
-  -- if EC_1 = $enter_e(EC_0)
+              : EC_1 STO_1 statementResult
   -- BlockElementStmts_eval:
-      EC_1 STO_0 |- blockElementStatementListIR
-                  : EC_2 STO_1 statementResult
-  -- if EC_3 = $exit_e(EC_2)
+      EC_0 STO_0 |- blockElementStatementListIR
+                  : EC_1 STO_1 statementResult

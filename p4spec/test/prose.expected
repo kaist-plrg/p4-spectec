@@ -2635,9 +2635,11 @@ for each `argument` in `argument^{asterisk}^`
 * and the typed statement `RETURN typedExpressionIR~cast~ ;`.
 . Else if let `blockStatement` be `statement`:
  .. Group blockStatement:
-  ... Let `TC~1~`, `f~1~`, and `blockStatementIR` be the result of <<Block_ok, typing `blockStatement`, under typing context `TC'` and abstract control flow `f'`>>.
+  ... Let `TC~1~` be `<<enter_t, $enter_t(TC')>>`.
+  ... Let `TC~2~`, `f~1~`, and `blockStatementIR` be the result of <<Block_ok, typing `blockStatement`, under typing context `TC~1~` and abstract control flow `f'`>>.
+  ... Let `TC~3~` be `<<exit_t, $exit_t(TC~2~)>>`.
   ... Result in 
-* the typing context `TC~1~`,
+* the typing context `TC~3~`,
 * the abstract control flow `f~1~`,
 * and the typed statement `blockStatementIR`.
 . Else if let `SWITCH ( expression~switch~ ) { switchCaseList }` be `statement`:
@@ -2746,12 +2748,10 @@ relation Block_ok: `TC~0~`, `f`, and `annotationList { blockElementStatementList
 
 . Group :
  .. Let `blockElementStatement^{asterisk}^` be <<flatten_blockElementStatementList, the list of block element statements in `blockElementStatementList`>>.
- .. Let `TC~1~` be `<<enter_t, $enter_t(TC~0~)>>`.
- .. Let `TC~2~`, `f~post~`, and `blockElementStatementIR^{asterisk}^` be the result of <<BlockElementStmts_ok, typing `blockElementStatement^{asterisk}^`, under typing context `TC~1~` and abstract control flow `f`>>.
- .. Let `TC~3~` be `<<exit_t, $exit_t(TC~2~)>>`.
+ .. Let `TC~1~`, `f~post~`, and `blockElementStatementIR^{asterisk}^` be the result of <<BlockElementStmts_ok, typing `blockElementStatement^{asterisk}^`, under typing context `TC~0~` and abstract control flow `f`>>.
  .. Let `blockStatementIR` be `annotationList { blockElementStatementIR^{asterisk}^ }`.
  .. Result in 
-* the typing context `TC~3~`,
+* the typing context `TC~1~`,
 * the abstract control flow `f~post~`,
 * and the typed block statement `blockStatementIR`.
 
@@ -5992,9 +5992,11 @@ relation Stmt_inst: `p'`, `IC'`, `STO'`, and `statementIR`
 * and the instantiated statement `returnStatementIR`.
 . Else if let `annotationList { blockElementStatementListIR }` be `statementIR`:
  .. Group blockStatementIR:
-  ... Let <<Block_inst, `IC' STO' |- annotationList { blockElementStatementListIR } : IC~1~ STO~1~ ++_++ { blockElementStatementListIR~inst~ }`>>.
+  ... Let `IC~1~` be `<<enter_i, $enter_i(IC')>>`.
+  ... Let <<Block_inst, `IC~1~ STO' |- annotationList { blockElementStatementListIR } : IC~2~ STO~1~ ++_++ { blockElementStatementListIR~inst~ }`>>.
+  ... Let `IC~3~` be `<<exit_i, $exit_i(IC~2~)>>`.
   ... Result in 
-* the instantiation context `IC~1~`,
+* the instantiation context `IC~3~`,
 * the updated store `STO~1~`,
 * and the instantiated statement `annotationList { blockElementStatementListIR~inst~ }`.
 
@@ -6038,10 +6040,8 @@ relation Block_inst: `IC~0~`, `STO~0~`, and `annotationList { blockElementStatem
 
 
 . Group :
- .. Let `IC~1~` be `<<enter_i, $enter_i(IC~0~)>>`.
- .. Let <<BlockElementStmts_inst, `IC~1~ STO~0~ |- blockElementStatementListIR : IC~2~ STO~1~ blockElementStatementListIR~inst~`>>.
- .. Let `IC~3~` be `<<exit_i, $exit_i(IC~2~)>>`.
- .. Result in `IC~3~`, `STO~1~`, and `annotationList { blockElementStatementListIR~inst~ }`.
+ .. Let <<BlockElementStmts_inst, `IC~0~ STO~0~ |- blockElementStatementListIR : IC~1~ STO~1~ blockElementStatementListIR~inst~`>>.
+ .. Result in `IC~1~`, `STO~1~`, and `annotationList { blockElementStatementListIR~inst~ }`.
 
 
 relation ExternMethod_inst: `IC~0~` and `externMethodPrototypeIR`
@@ -7342,9 +7342,11 @@ relation Stmt_eval: `p'`, `EC'`, `STO'`, and `statementIR`
 * and the instantiated statement `EXIT`.
 . Else if let `blockStatementIR` be `statementIR`:
  .. Group blockStatement:
-  ... Let <<Block_eval, `EC' STO' |- blockStatementIR : EC~1~ STO~1~ statementResult`>>.
+  ... Let `EC~1~` be `<<enter_e, $enter_e(EC')>>`.
+  ... Let <<Block_eval, `EC~1~ STO' |- blockStatementIR : EC~2~ STO~1~ statementResult`>>.
+  ... Let `EC~3~` be `<<exit_e, $exit_e(EC~2~)>>`.
   ... Result in 
-* the evaluation context `EC~1~`,
+* the evaluation context `EC~3~`,
 * the updated store `STO~1~`,
 * and the instantiated statement `statementResult`.
 . Else if let `conditionalStatementIR` be `statementIR`:
@@ -7463,10 +7465,8 @@ relation Block_eval: `EC~0~`, `STO~0~`, and `annotationList { blockElementStatem
 
 
 . Group :
- .. Let `EC~1~` be `<<enter_e, $enter_e(EC~0~)>>`.
- .. Let <<BlockElementStmts_eval, `EC~1~ STO~0~ |- blockElementStatementListIR : EC~2~ STO~1~ statementResult`>>.
- .. Let `EC~3~` be `<<exit_e, $exit_e(EC~2~)>>`.
- .. Result in `EC~3~`, `STO~1~`, and `statementResult`.
+ .. Let <<BlockElementStmts_eval, `EC~0~ STO~0~ |- blockElementStatementListIR : EC~1~ STO~1~ statementResult`>>.
+ .. Result in `EC~1~`, `STO~1~`, and `statementResult`.
 
 
 relation ParserStmt_eval: `EC~0'~`, `STO~0'~`, and `parserStatementIR`
@@ -8044,10 +8044,14 @@ relation Call_eval: `p`, `EC~0'~`, `STO~0'~`, `callee`, `typeArgumentListIR'`, a
    .... Let `(storageReference^?^)^{asterisk}^` be `copyInListResult`.
    .... Let <<Copy_in_default, `parameterIR~default~^{asterisk}^ @ LOCAL EC~callee_1~ value~default~^{asterisk}^ ~> @ EC~callee_2~`>>.
    .... Let <<ActionBody_eval, `EC~callee_2~ STO~1~ |- blockStatementIR : EC~callee_3~ STO~2~ actionResult`>>.
-   .... Check that `actionResult` is equal to `RETURN None`.
-   .... Let `EC~2~` be `EC~1~[GLOBAL.FRAME = EC~callee_3~.GLOBAL.FRAME]`.
-   .... Let <<Copy_out, `STO~2~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_3~ (storageReference^?^)^{asterisk}^ ~> EC~3~`>>.
-   .... Result in the resulting evaluation context `EC~3~`, store `STO~2~`, and call result `RETURN None`.
+   .... Else if `actionResult` is equal to `RETURN None`:
+    ..... Let `EC~2~` be `EC~1~[GLOBAL.FRAME = EC~callee_3~.GLOBAL.FRAME]`.
+    ..... Let <<Copy_out, `STO~2~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_3~ (storageReference^?^)^{asterisk}^ ~> EC~3~`>>.
+    ..... Result in the resulting evaluation context `EC~3~`, store `STO~2~`, and call result `RETURN None`.
+   .... Else if let `exitResult` be `actionResult`:
+    ..... Let `EC~2~` be `EC~1~[GLOBAL.FRAME = EC~callee_3~.GLOBAL.FRAME]`.
+    ..... Let <<Copy_out, `STO~2~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_3~ (storageReference^?^)^{asterisk}^ ~> EC~3~`>>.
+    ..... Result in the resulting evaluation context `EC~3~`, store `STO~2~`, and call result `EXIT`.
   ... Else if `cursor` matches pattern `BLOCK`:
    .... Let `EC~callee_0~` be `<<inherit_e, $inherit_e(BLOCK, EC~0'~)>>`.
    .... Let `(parameterIR~aligned~^{asterisk}^, argumentIR~aligned~^{asterisk}^, parameterIR~default~^{asterisk}^, value~default~^{asterisk}^)` be `<<align_params_with_args, $align_params_with_args(parameterIR^{asterisk}^, argumentListIR', id~default~^{asterisk}^)>>`.
@@ -8056,11 +8060,11 @@ relation Call_eval: `p`, `EC~0'~`, `STO~0'~`, `callee`, `typeArgumentListIR'`, a
    .... Let `(storageReference^?^)^{asterisk}^` be `copyInListResult`.
    .... Let <<Copy_in_default, `parameterIR~default~^{asterisk}^ @ LOCAL EC~callee_1~ value~default~^{asterisk}^ ~> @ EC~callee_2~`>>.
    .... Let <<ActionBody_eval, `EC~callee_2~ STO~1~ |- blockStatementIR : EC~callee_3~ STO~2~ actionResult`>>.
-   .... Else if let `exitResult` be `actionResult`:
+   .... Else if `actionResult` is equal to `RETURN None`:
     ..... Let `EC~2~` be `EC~1~[GLOBAL.FRAME = EC~callee_3~.GLOBAL.FRAME][BLOCK.FRAME = EC~callee_3~.BLOCK.FRAME]`.
     ..... Let <<Copy_out, `STO~2~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_3~ (storageReference^?^)^{asterisk}^ ~> EC~3~`>>.
-    ..... Result in the resulting evaluation context `EC~3~`, store `STO~2~`, and call result `EXIT`.
-   .... Else if `actionResult` is equal to `RETURN None`:
+    ..... Result in the resulting evaluation context `EC~3~`, store `STO~2~`, and call result `RETURN None`.
+   .... Else if let `exitResult` be `actionResult`:
     ..... Let `EC~2~` be `EC~1~[GLOBAL.FRAME = EC~callee_3~.GLOBAL.FRAME][BLOCK.FRAME = EC~callee_3~.BLOCK.FRAME]`.
     ..... Let <<Copy_out, `STO~2~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_3~ (storageReference^?^)^{asterisk}^ ~> EC~3~`>>.
     ..... Result in the resulting evaluation context `EC~3~`, store `STO~2~`, and call result `RETURN None`.

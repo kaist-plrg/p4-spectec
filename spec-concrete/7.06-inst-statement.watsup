@@ -64,11 +64,13 @@ rule Stmt_inst/exitStatementIR:
 
 rule Stmt_inst/blockStatementIR:
   LOCAL IC_0 STO_0 |- annotationList `{ blockElementStatementListIR }
-                    : IC_1 STO_1
+                    : IC_3 STO_1
                         (annotationList `{ blockElementStatementListIR_inst })
+  -- if IC_1 = $enter_i(IC_0)
   -- Block_inst:
-      IC_0 STO_0 |- annotationList `{ blockElementStatementListIR }
-                  : IC_1 STO_1 (_ `{ blockElementStatementListIR_inst })
+      IC_1 STO_0 |- annotationList `{ blockElementStatementListIR }
+                  : IC_2 STO_1 (_ `{ blockElementStatementListIR_inst })
+  -- if IC_3 = $exit_i(IC_2)
 
 ;;; conditionalStatementIR
 ;;; syntax conditionalStatementIR
@@ -213,9 +215,7 @@ rule BlockElementStmts_inst/cons:
 
 rule Block_inst:
   IC_0 STO_0 |- annotationList `{ blockElementStatementListIR }
-              : IC_3 STO_1 (annotationList `{ blockElementStatementListIR_inst })
-  -- if IC_1 = $enter_i(IC_0)
+              : IC_1 STO_1 (annotationList `{ blockElementStatementListIR_inst })
   -- BlockElementStmts_inst:
-      IC_1 STO_0 |- blockElementStatementListIR
-                  : IC_2 STO_1 blockElementStatementListIR_inst
-  -- if IC_3 = $exit_i(IC_2)
+      IC_0 STO_0 |- blockElementStatementListIR
+                  : IC_1 STO_1 blockElementStatementListIR_inst

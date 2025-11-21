@@ -15046,7 +15046,7 @@ relation Stmt_ok: cursor typingContext flow |- statement : typingContext flow st
     rulepath exitStatement
     -- output: % % % |- % : TC f exit; as statementIR
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:160.1-163.53
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:160.1-165.29
   rulegroup blockStatement
 
    match
@@ -15060,10 +15060,12 @@ relation Stmt_ok: cursor typingContext flow |- statement : typingContext flow st
    paths
 
     rulepath blockStatement
-    -- Block_ok: TC_0 f_0 |- blockStatement : TC_1 f_1 blockStatementIR
-    -- output: % % % |- % : TC_1 f_1 blockStatementIR as statementIR
+    -- let TC_1 = $enter_t(TC_0)
+    -- Block_ok: TC_1 f_0 |- blockStatement : TC_2 f_1 blockStatementIR
+    -- let TC_3 = $exit_t(TC_2)
+    -- output: % % % |- % : TC_3 f_1 blockStatementIR as statementIR
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:171.1-200.2
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:173.1-202.2
   rulegroup conditionalStatement
 
    match
@@ -15097,7 +15099,7 @@ relation Stmt_ok: cursor typingContext flow |- statement : typingContext flow st
     -- let f_post = $join_flow(f_then, f_else)
     -- output: % % % |- % : TC f_post if( typedExpressionIR_cond ) statementIR_then else statementIR_else as statementIR
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:293.1-310.64
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:295.1-312.64
   rulegroup switchStatement-table
 
    match
@@ -15123,7 +15125,7 @@ relation Stmt_ok: cursor typingContext flow |- statement : typingContext flow st
     -- let switchStatementIR = switch( typedExpressionIR_switch ){ switchCaseIR*{switchCaseIR <- switchCaseIR*} }
     -- output: % % % |- % : TC f_post switchStatementIR as statementIR
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:402.1-418.64
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:404.1-420.64
   rulegroup switchStatement-general
 
    match
@@ -15149,7 +15151,7 @@ relation Stmt_ok: cursor typingContext flow |- statement : typingContext flow st
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:105.1-110.124
 relation BlockElementStmt_ok: typingContext flow |- blockElementStatement : typingContext flow blockElementStatementIR
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:426.1-428.77
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:428.1-430.77
   rulegroup constantDeclaration
 
    match
@@ -15167,7 +15169,7 @@ relation BlockElementStmt_ok: typingContext flow |- blockElementStatement : typi
     -- let constantDeclarationIR = declarationIR as constantDeclarationIR
     -- output: % % |- % : TC_1 f constantDeclarationIR as blockElementStatementIR
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:434.1-472.2
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:436.1-474.2
   rulegroup variableDeclaration
 
    match
@@ -15207,7 +15209,7 @@ relation BlockElementStmt_ok: typingContext flow |- blockElementStatement : typi
     -- let variableDeclarationIR = annotationList typeIR nameIR ?(= typedExpressionIR_init_cast) ;
     -- output: % % |- % : TC_1 f variableDeclarationIR as blockElementStatementIR
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:476.1-478.66
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:478.1-480.66
   rulegroup statement
 
    match
@@ -15226,7 +15228,7 @@ relation BlockElementStmt_ok: typingContext flow |- blockElementStatement : typi
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:112.1-117.125
 relation BlockElementStmts_ok: typingContext flow |- blockElementStatement* : typingContext flow blockElementStatementIR*
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:484.1-485.25
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:486.1-487.25
   rulegroup nil
 
    match
@@ -15240,7 +15242,7 @@ relation BlockElementStmts_ok: typingContext flow |- blockElementStatement* : ty
     rulepath nil
     -- output: % % |- % : TC f []
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:487.1-493.75
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:489.1-495.75
   rulegroup cons
 
    match
@@ -15260,7 +15262,7 @@ relation BlockElementStmts_ok: typingContext flow |- blockElementStatement* : ty
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:119.1-124.116
 relation Block_ok: typingContext flow |- blockStatement : typingContext flow blockStatementIR
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:501.1-512.72
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:503.1-512.72
   rulegroup 
 
    match
@@ -15272,11 +15274,9 @@ relation Block_ok: typingContext flow |- blockStatement : typingContext flow blo
 
     rulepath 
     -- let blockElementStatement*{blockElementStatement <- blockElementStatement*} = $flatten_blockElementStatementList(blockElementStatementList)
-    -- let TC_1 = $enter_t(TC_0)
-    -- BlockElementStmts_ok: TC_1 f |- blockElementStatement*{blockElementStatement <- blockElementStatement*} : TC_2 f_post blockElementStatementIR*{blockElementStatementIR <- blockElementStatementIR*}
-    -- let TC_3 = $exit_t(TC_2)
+    -- BlockElementStmts_ok: TC_0 f |- blockElementStatement*{blockElementStatement <- blockElementStatement*} : TC_1 f_post blockElementStatementIR*{blockElementStatementIR <- blockElementStatementIR*}
     -- let blockStatementIR = annotationList { blockElementStatementIR*{blockElementStatementIR <- blockElementStatementIR*} }
-    -- output: % % |- % : TC_3 f_post blockStatementIR
+    -- output: % % |- % : TC_1 f_post blockStatementIR
 
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:131.1-135.74
 relation Parameter_ok: cursor typingContext |- parameter : parameterIR # tid*
@@ -19636,10 +19636,10 @@ def $compat'_direct_application(typeIR) : bool =
   clause 2 : (typeIR) = false
   -- otherwise
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:215.1-217.26
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:217.1-219.26
 relation SwitchLabel_table_ok: typingContext tid bool |- switchLabel : switchLabelIR
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:223.1-242.2
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:225.1-244.2
   rulegroup 
 
    match
@@ -19673,10 +19673,10 @@ relation SwitchLabel_table_ok: typingContext tid bool |- switchLabel : switchLab
     -- let typedExpressionIR_label = ` nameIR_label as expressionIR # ( typeIR_label ctk_label )
     -- output: % % % |- % : typedExpressionIR_label as switchLabelIR
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:246.1-248.29
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:248.1-250.29
 relation SwitchCase_table_ok: typingContext flow tid bool |- switchCase : flow switchCaseIR # switchLabel
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:253.1-273.2
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:255.1-275.2
   rulegroup 
 
    match
@@ -19703,10 +19703,10 @@ relation SwitchCase_table_ok: typingContext flow tid bool |- switchCase : flow s
     -- let switchCaseIR = switchLabelIR :
     -- output: % % % % |- % : f switchCaseIR # switchLabel
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:277.1-279.26
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:279.1-281.26
 relation SwitchCases_table_ok: typingContext flow tid |- switchCase* : flow switchCaseListIR # switchLabel*
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:281.1-282.39
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:283.1-284.39
   rulegroup nil
 
    match
@@ -19720,7 +19720,7 @@ relation SwitchCases_table_ok: typingContext flow tid |- switchCase* : flow swit
     rulepath nil
     -- output: % % % |- % : f [] # []
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:284.1-291.80
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:286.1-293.80
   rulegroup cons
 
    match
@@ -19738,10 +19738,10 @@ relation SwitchCases_table_ok: typingContext flow tid |- switchCase* : flow swit
     -- SwitchCases_table_ok: TC f_h tid_table |- switchCase_t*{switchCase_t <- switchCase_t*} : f_t switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} # switchLabel_t*{switchLabel_t <- switchLabel_t*}
     -- output: % % % |- % : f_t switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} # switchLabel_h :: switchLabel_t*{switchLabel_t <- switchLabel_t*}
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:316.1-318.26
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:318.1-320.26
 relation SwitchLabel_general_ok: typingContext typeIR bool |- switchLabel : switchLabelIR
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:323.1-338.2
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:325.1-340.2
   rulegroup 
 
    match
@@ -19772,10 +19772,10 @@ relation SwitchLabel_general_ok: typingContext typeIR bool |- switchLabel : swit
     -- if ctk matches `LCTK`
     -- output: % % % |- % : typedExpressionIR_label_cast as switchLabelIR
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:342.1-344.29
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:344.1-346.29
 relation SwitchCase_general_ok: typingContext flow typeIR bool |- switchCase : flow switchCaseIR # switchLabel
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:349.1-369.2
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:351.1-371.2
   rulegroup 
 
    match
@@ -19802,10 +19802,10 @@ relation SwitchCase_general_ok: typingContext flow typeIR bool |- switchCase : f
     -- let switchCaseIR = switchLabelIR :
     -- output: % % % % |- % : f switchCaseIR # switchLabel
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:373.1-375.26
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:375.1-377.26
 relation SwitchCases_general_ok: typingContext flow typeIR |- switchCase* : flow switchCaseListIR # switchLabel*
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:377.1-378.43
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:379.1-380.43
   rulegroup nil
 
    match
@@ -19819,7 +19819,7 @@ relation SwitchCases_general_ok: typingContext flow typeIR |- switchCase* : flow
     rulepath nil
     -- output: % % % |- % : f [] # []
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:380.1-388.84
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:382.1-390.84
   rulegroup cons
 
    match
@@ -19837,41 +19837,41 @@ relation SwitchCases_general_ok: typingContext flow typeIR |- switchCase* : flow
     -- SwitchCases_general_ok: TC f_h typeIR_switch |- switchCase_t*{switchCase_t <- switchCase_t*} : f_t switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} # switchLabel_t*{switchLabel_t <- switchLabel_t*}
     -- output: % % % |- % : f_t switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} # switchLabel_h :: switchLabel_t*{switchLabel_t <- switchLabel_t*}
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:390.1-390.34
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:392.1-392.34
 def $compat_switch(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:393.1-394.43
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:395.1-396.43
   clause 0 : (typeIR) = $compat'_switch($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:391.1-391.35
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:393.1-393.35
 def $compat'_switch(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:395.1-395.34
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:397.1-397.34
   clause 0 : (typeIR) = true
   -- if typeIR <: errorTypeIR
   -- let errorTypeIR = typeIR as errorTypeIR
   -- if (errorTypeIR = error)
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:396.1-396.39
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:398.1-398.39
   clause 1 : (typeIR) = true
   -- if typeIR <: integerTypeIR
   -- let integerTypeIR = typeIR as integerTypeIR
   -- if integerTypeIR matches `INT<%>`
   -- let int< _nat > = integerTypeIR
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:397.1-397.39
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:399.1-399.39
   clause 2 : (typeIR) = true
   -- if typeIR <: integerTypeIR
   -- let integerTypeIR = typeIR as integerTypeIR
   -- if integerTypeIR matches `BIT<%>`
   -- let bit< _nat > = integerTypeIR
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:398.1-398.39
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:400.1-400.39
   clause 3 : (typeIR) = true
   -- if typeIR <: enumTypeIR
   -- let enumTypeIR = typeIR as enumTypeIR
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:399.1-400.15
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:401.1-402.15
   clause 4 : (typeIR) = false
   -- otherwise
 
@@ -22939,7 +22939,7 @@ relation Stmt_inst: cursor instContext store |- statementIR : instContext store 
     rulepath exitStatementIR
     -- output: % % % |- % : IC STO exitStatementIR as statementIR
 
-  ;; ../../../../spec-concrete/7.06-inst-statement.watsup:65.1-71.73
+  ;; ../../../../spec-concrete/7.06-inst-statement.watsup:65.1-73.29
   rulegroup blockStatementIR
 
    match
@@ -22953,10 +22953,12 @@ relation Stmt_inst: cursor instContext store |- statementIR : instContext store 
    paths
 
     rulepath blockStatementIR
-    -- Block_inst: IC_0 STO_0 |- annotationList { blockElementStatementListIR } : IC_1 STO_1 _annotationList { blockElementStatementListIR_inst }
-    -- output: % % % |- % : IC_1 STO_1 annotationList { blockElementStatementListIR_inst } as statementIR
+    -- let IC_1 = $enter_i(IC_0)
+    -- Block_inst: IC_1 STO_0 |- annotationList { blockElementStatementListIR } : IC_2 STO_1 _annotationList { blockElementStatementListIR_inst }
+    -- let IC_3 = $exit_i(IC_2)
+    -- output: % % % |- % : IC_3 STO_1 annotationList { blockElementStatementListIR_inst } as statementIR
 
-  ;; ../../../../spec-concrete/7.06-inst-statement.watsup:79.1-100.2
+  ;; ../../../../spec-concrete/7.06-inst-statement.watsup:81.1-102.2
   rulegroup conditionalStatementIR
 
    match
@@ -22983,7 +22985,7 @@ relation Stmt_inst: cursor instContext store |- statementIR : instContext store 
     -- Stmt_inst: p IC STO_1 |- statementIR_else : IC_else STO_2 statementIR_else_inst
     -- output: % % % |- % : IC STO_2 if( typedExpressionIR_cond ) statementIR_then_inst else statementIR_else_inst as statementIR
 
-  ;; ../../../../spec-concrete/7.06-inst-statement.watsup:153.1-158.65
+  ;; ../../../../spec-concrete/7.06-inst-statement.watsup:155.1-160.65
   rulegroup switchStatementIR
 
    match
@@ -23002,7 +23004,7 @@ relation Stmt_inst: cursor instContext store |- statementIR : instContext store 
 ;; ../../../../spec-concrete/7.03-inst-relation.watsup:34.1-37.23
 relation BlockElementStmt_inst: instContext store |- blockElementStatementIR : instContext store blockElementStatementIR?
 
-  ;; ../../../../spec-concrete/7.06-inst-statement.watsup:170.1-174.74
+  ;; ../../../../spec-concrete/7.06-inst-statement.watsup:172.1-176.74
   rulegroup constantDeclarationIR
 
    match
@@ -23022,7 +23024,7 @@ relation BlockElementStmt_inst: instContext store |- blockElementStatementIR : i
     -- let constantDeclarationIR_inst = declarationIR as constantDeclarationIR
     -- output: % % |- % : IC_1 STO_1 ?(constantDeclarationIR_inst as blockElementStatementIR)
 
-  ;; ../../../../spec-concrete/7.06-inst-statement.watsup:178.1-180.41
+  ;; ../../../../spec-concrete/7.06-inst-statement.watsup:180.1-182.41
   rulegroup variableDeclarationIR
 
    match
@@ -23037,7 +23039,7 @@ relation BlockElementStmt_inst: instContext store |- blockElementStatementIR : i
     rulepath variableDeclarationIR
     -- output: % % |- % : IC STO ?(variableDeclarationIR as blockElementStatementIR)
 
-  ;; ../../../../spec-concrete/7.06-inst-statement.watsup:184.1-188.64
+  ;; ../../../../spec-concrete/7.06-inst-statement.watsup:186.1-190.64
   rulegroup statementIR
 
    match
@@ -23056,7 +23058,7 @@ relation BlockElementStmt_inst: instContext store |- blockElementStatementIR : i
 ;; ../../../../spec-concrete/7.03-inst-relation.watsup:39.1-42.23
 relation BlockElementStmts_inst: instContext store |- blockElementStatementIR* : instContext store blockElementStatementIR*
 
-  ;; ../../../../spec-concrete/7.06-inst-statement.watsup:194.1-195.29
+  ;; ../../../../spec-concrete/7.06-inst-statement.watsup:196.1-197.29
   rulegroup nil
 
    match
@@ -23070,7 +23072,7 @@ relation BlockElementStmts_inst: instContext store |- blockElementStatementIR* :
     rulepath nil
     -- output: % % |- % : IC STO []
 
-  ;; ../../../../spec-concrete/7.06-inst-statement.watsup:197.1-206.63
+  ;; ../../../../spec-concrete/7.06-inst-statement.watsup:199.1-208.63
   rulegroup cons
 
    match
@@ -23092,7 +23094,7 @@ relation BlockElementStmts_inst: instContext store |- blockElementStatementIR* :
 ;; ../../../../spec-concrete/7.03-inst-relation.watsup:44.1-47.23
 relation Block_inst: instContext store |- blockStatementIR : instContext store blockStatementIR
 
-  ;; ../../../../spec-concrete/7.06-inst-statement.watsup:214.1-221.29
+  ;; ../../../../spec-concrete/7.06-inst-statement.watsup:216.1-221.64
   rulegroup 
 
    match
@@ -23103,10 +23105,8 @@ relation Block_inst: instContext store |- blockStatementIR : instContext store b
    paths
 
     rulepath 
-    -- let IC_1 = $enter_i(IC_0)
-    -- BlockElementStmts_inst: IC_1 STO_0 |- blockElementStatementListIR : IC_2 STO_1 blockElementStatementListIR_inst
-    -- let IC_3 = $exit_i(IC_2)
-    -- output: % % |- % : IC_3 STO_1 annotationList { blockElementStatementListIR_inst }
+    -- BlockElementStmts_inst: IC_0 STO_0 |- blockElementStatementListIR : IC_1 STO_1 blockElementStatementListIR_inst
+    -- output: % % |- % : IC_1 STO_1 annotationList { blockElementStatementListIR_inst }
 
 ;; ../../../../spec-concrete/7.03-inst-relation.watsup:53.1-55.20
 relation ExternMethod_inst: instContext |- externMethodPrototypeIR : instContext
@@ -24619,10 +24619,10 @@ relation Constructor_inst: cursor instContext store |- constructorDef < typeArgu
     -- let object_table = table nameIR { frame TBL } as object
     -- output: % % % |- % < % >( % # % ): STO_1 object_table
 
-;; ../../../../spec-concrete/7.06-inst-statement.watsup:113.1-116.26
+;; ../../../../spec-concrete/7.06-inst-statement.watsup:115.1-118.26
 relation SwitchCase_inst: cursor instContext store |- switchCaseIR : store switchCaseIR
 
-  ;; ../../../../spec-concrete/7.06-inst-statement.watsup:121.1-133.2
+  ;; ../../../../spec-concrete/7.06-inst-statement.watsup:123.1-135.2
   rulegroup 
 
    match
@@ -24649,10 +24649,10 @@ relation SwitchCase_inst: cursor instContext store |- switchCaseIR : store switc
     -- let switchLabelIR : = switchCaseIR'
     -- output: % % % |- % : STO switchLabelIR :
 
-;; ../../../../spec-concrete/7.06-inst-statement.watsup:137.1-140.26
+;; ../../../../spec-concrete/7.06-inst-statement.watsup:139.1-142.26
 relation SwitchCases_inst: cursor instContext store |- switchCaseIR* : store switchCaseIR*
 
-  ;; ../../../../spec-concrete/7.06-inst-statement.watsup:142.1-143.28
+  ;; ../../../../spec-concrete/7.06-inst-statement.watsup:144.1-145.28
   rulegroup nil
 
    match
@@ -24666,7 +24666,7 @@ relation SwitchCases_inst: cursor instContext store |- switchCaseIR* : store swi
     rulepath nil
     -- output: % % % |- % : STO []
 
-  ;; ../../../../spec-concrete/7.06-inst-statement.watsup:145.1-151.60
+  ;; ../../../../spec-concrete/7.06-inst-statement.watsup:147.1-153.60
   rulegroup cons
 
    match
@@ -26550,7 +26550,7 @@ relation Stmt_eval: cursor evalContext store |- statementIR : evalContext store 
     rulepath exitStatement
     -- output: % % % |- % : EC STO exit as statementResult
 
-  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:139.1-144.47
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:139.1-146.29
   rulegroup blockStatement
 
    match
@@ -26563,10 +26563,12 @@ relation Stmt_eval: cursor evalContext store |- statementIR : evalContext store 
    paths
 
     rulepath blockStatement
-    -- Block_eval: EC_0 STO_0 |- blockStatementIR : EC_1 STO_1 statementResult
-    -- output: % % % |- % : EC_1 STO_1 statementResult
+    -- let EC_1 = $enter_e(EC_0)
+    -- Block_eval: EC_1 STO_0 |- blockStatementIR : EC_2 STO_1 statementResult
+    -- let EC_3 = $exit_e(EC_2)
+    -- output: % % % |- % : EC_3 STO_1 statementResult
 
-  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:152.1-208.2
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:154.1-210.2
   rulegroup conditionalStatementIR
 
    match
@@ -26636,7 +26638,7 @@ relation Stmt_eval: cursor evalContext store |- statementIR : evalContext store 
 ;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:122.1-125.23
 relation BlockElementStmt_eval: evalContext store |- blockElementStatementIR : evalContext store statementResult
 
-  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:228.1-244.2
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:230.1-246.2
   rulegroup constantDeclarationIR
 
    match
@@ -26662,7 +26664,7 @@ relation BlockElementStmt_eval: evalContext store |- blockElementStatementIR : e
     -- if (continueEmptyResult = `)
     -- output: % % |- % : EC_1 STO_1 ` as statementResult
 
-  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:248.1-277.2
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:250.1-279.2
   rulegroup variableDeclarationIR
 
    match
@@ -26704,7 +26706,7 @@ relation BlockElementStmt_eval: evalContext store |- blockElementStatementIR : e
     -- let EC_2 = $add_var_e(local, EC_1, ` nameIR, value_init)
     -- output: % % |- % : EC_2 STO_1 ` as statementResult
 
-  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:281.1-286.53
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:283.1-288.53
   rulegroup statementIR
 
    match
@@ -26723,7 +26725,7 @@ relation BlockElementStmt_eval: evalContext store |- blockElementStatementIR : e
 ;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:127.1-130.23
 relation BlockElementStmts_eval: evalContext store |- blockElementStatementListIR : evalContext store statementResult
 
-  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:292.1-321.2
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:294.1-323.2
   rulegroup 
 
    match
@@ -26778,7 +26780,7 @@ relation BlockElementStmts_eval: evalContext store |- blockElementStatementListI
 ;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:132.1-135.23
 relation Block_eval: evalContext store |- blockStatementIR : evalContext store statementResult
 
-  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:327.1-334.29
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:329.1-334.47
   rulegroup 
 
    match
@@ -26789,10 +26791,8 @@ relation Block_eval: evalContext store |- blockStatementIR : evalContext store s
    paths
 
     rulepath 
-    -- let EC_1 = $enter_e(EC_0)
-    -- BlockElementStmts_eval: EC_1 STO_0 |- blockElementStatementListIR : EC_2 STO_1 statementResult
-    -- let EC_3 = $exit_e(EC_2)
-    -- output: % % |- % : EC_3 STO_1 statementResult
+    -- BlockElementStmts_eval: EC_0 STO_0 |- blockElementStatementListIR : EC_1 STO_1 statementResult
+    -- output: % % |- % : EC_1 STO_1 statementResult
 
 ;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:142.1-143.27
 syntax parserStatementResult = 
@@ -28031,7 +28031,7 @@ relation Copy_out: store cursor evalContext parameterListIR @ cursor evalContext
 ;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:280.1-286.92
 relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( argumentListIR ): evalContext store callResult
 
-  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:57.1-169.2
+  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:57.1-204.2
   rulegroup actionCallee
 
    match
@@ -28044,7 +28044,7 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
 
    paths
 
-    rulepath global
+    rulepath global-return
     -- let action cursor . nameIR ( parameterIR*{parameterIR <- parameterIR*} # id_default*{id_default <- id_default*} ) blockStatementIR = actionCallee
     -- if cursor matches `GLOBAL`
     -- let EC_callee_0 = $inherit_e(global, EC_0)
@@ -28056,6 +28056,38 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- ActionBody_eval: EC_callee_2 STO_1 |- blockStatementIR : EC_callee_3 STO_2 actionResult
     -- if (actionResult = return ?() as actionResult)
     -- let EC_2 = EC_1[global.frame = EC_callee_3.global.frame]
+    -- Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_3 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
+    -- output: % % % |- % @< % >( % ): EC_3 STO_2 return ?() as callResult
+
+    rulepath global-exit
+    -- let action cursor . nameIR ( parameterIR*{parameterIR <- parameterIR*} # id_default*{id_default <- id_default*} ) blockStatementIR = actionCallee
+    -- if cursor matches `GLOBAL`
+    -- let EC_callee_0 = $inherit_e(global, EC_0)
+    -- let (parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, value_default*{value_default <- value_default*}) = $align_params_with_args(parameterIR*{parameterIR <- parameterIR*}, argumentListIR, id_default*{id_default <- id_default*})
+    -- Copy_in: STO_0 p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_0 argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*} ~> STO_1 EC_1 @ EC_callee_1 # copyInListResult
+    -- if copyInListResult <: continueResult<storageReference?*>
+    -- let ` storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} = copyInListResult as continueResult<storageReference?*>
+    -- Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} @ local EC_callee_1 value_default*{value_default <- value_default*} ~>@ EC_callee_2
+    -- ActionBody_eval: EC_callee_2 STO_1 |- blockStatementIR : EC_callee_3 STO_2 actionResult
+    -- if actionResult <: exitResult
+    -- let exitResult = actionResult as exitResult
+    -- if (exitResult = exit)
+    -- let EC_2 = EC_1[global.frame = EC_callee_3.global.frame]
+    -- Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_3 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
+    -- output: % % % |- % @< % >( % ): EC_3 STO_2 exit as callResult
+
+    rulepath block-return
+    -- let action cursor . nameIR ( parameterIR*{parameterIR <- parameterIR*} # id_default*{id_default <- id_default*} ) blockStatementIR = actionCallee
+    -- if cursor matches `BLOCK`
+    -- let EC_callee_0 = $inherit_e(block, EC_0)
+    -- let (parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, value_default*{value_default <- value_default*}) = $align_params_with_args(parameterIR*{parameterIR <- parameterIR*}, argumentListIR, id_default*{id_default <- id_default*})
+    -- Copy_in: STO_0 p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_0 argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*} ~> STO_1 EC_1 @ EC_callee_1 # copyInListResult
+    -- if copyInListResult <: continueResult<storageReference?*>
+    -- let ` storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} = copyInListResult as continueResult<storageReference?*>
+    -- Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} @ local EC_callee_1 value_default*{value_default <- value_default*} ~>@ EC_callee_2
+    -- ActionBody_eval: EC_callee_2 STO_1 |- blockStatementIR : EC_callee_3 STO_2 actionResult
+    -- if (actionResult = return ?() as actionResult)
+    -- let EC_2 = EC_1[global.frame = EC_callee_3.global.frame][block.frame = EC_callee_3.block.frame]
     -- Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_3 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
     -- output: % % % |- % @< % >( % ): EC_3 STO_2 return ?() as callResult
 
@@ -28074,24 +28106,9 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- if (exitResult = exit)
     -- let EC_2 = EC_1[global.frame = EC_callee_3.global.frame][block.frame = EC_callee_3.block.frame]
     -- Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_3 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
-    -- output: % % % |- % @< % >( % ): EC_3 STO_2 exit as callResult
-
-    rulepath block-cont
-    -- let action cursor . nameIR ( parameterIR*{parameterIR <- parameterIR*} # id_default*{id_default <- id_default*} ) blockStatementIR = actionCallee
-    -- if cursor matches `BLOCK`
-    -- let EC_callee_0 = $inherit_e(block, EC_0)
-    -- let (parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, value_default*{value_default <- value_default*}) = $align_params_with_args(parameterIR*{parameterIR <- parameterIR*}, argumentListIR, id_default*{id_default <- id_default*})
-    -- Copy_in: STO_0 p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_0 argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*} ~> STO_1 EC_1 @ EC_callee_1 # copyInListResult
-    -- if copyInListResult <: continueResult<storageReference?*>
-    -- let ` storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} = copyInListResult as continueResult<storageReference?*>
-    -- Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} @ local EC_callee_1 value_default*{value_default <- value_default*} ~>@ EC_callee_2
-    -- ActionBody_eval: EC_callee_2 STO_1 |- blockStatementIR : EC_callee_3 STO_2 actionResult
-    -- if (actionResult = return ?() as actionResult)
-    -- let EC_2 = EC_1[global.frame = EC_callee_3.global.frame][block.frame = EC_callee_3.block.frame]
-    -- Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_3 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
     -- output: % % % |- % @< % >( % ): EC_3 STO_2 return ?() as callResult
 
-  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:209.1-241.14
+  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:244.1-276.14
   rulegroup definedFunctionCallee
 
    match
@@ -28116,7 +28133,7 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_3 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
     -- output: % % % |- % @< % >( % ): EC_3 STO_2 definedFunctionResult as callResult
 
-  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:248.1-284.14
+  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:283.1-319.14
   rulegroup externFunctionCallee
 
    match
@@ -28145,7 +28162,7 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_4 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
     -- output: % % % |- % @< % >( % ): EC_3 STO_2 returnResult as callResult
 
-  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:294.1-309.2
+  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:329.1-344.2
   rulegroup builtinMethodCallee
 
    match
@@ -28171,7 +28188,7 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- let returnResult = return ?(b b_valid as value)
     -- output: % % % |- % @< % >( % ): EC STO returnResult as callResult
 
-  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:316.1-358.2
+  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:351.1-393.2
   rulegroup externMethodCallee
 
    match
@@ -28202,7 +28219,7 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_5 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
     -- output: % % % |- % @< % >( % ): EC_3 STO_2 returnResult as callResult
 
-  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:362.1-400.14
+  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:397.1-435.14
   rulegroup parserApplyMethodCallee
 
    match
@@ -28232,7 +28249,7 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- Copy_out: STO_3 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ block EC_callee_5 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
     -- output: % % % |- % @< % >( % ): EC_3 STO_3 return ?() as callResult
 
-  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:404.1-492.2
+  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:439.1-527.2
   rulegroup controlApplyMethodCallee
 
    match
@@ -28286,7 +28303,7 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- Copy_out: STO_3 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ block EC_callee_5 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
     -- output: % % % |- % @< % >( % ): EC_3 STO_3 exit as callResult
 
-  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:496.1-511.62
+  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:531.1-546.62
   rulegroup tableApplyMethodCallee
 
    match
@@ -28888,15 +28905,15 @@ relation ActionBody_eval: evalContext store |- blockStatementIR : evalContext st
     -- if (statementResult = return ?() as statementResult)
     -- output: % % |- % : EC_1 STO_1 return ?() as actionResult
 
-;; ../../../../spec-concrete/8.10.4-eval-call.watsup:172.1-173.17
+;; ../../../../spec-concrete/8.10.4-eval-call.watsup:207.1-208.17
 syntax definedFunctionResult = 
    | exit
    | return value?
 
-;; ../../../../spec-concrete/8.10.4-eval-call.watsup:175.1-178.23
+;; ../../../../spec-concrete/8.10.4-eval-call.watsup:210.1-213.23
 relation DefinedFunctionBody_eval: evalContext store |- blockStatementIR : evalContext store definedFunctionResult
 
-  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:180.1-203.2
+  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:215.1-238.2
   rulegroup 
 
    match
