@@ -7836,12 +7836,13 @@ relation Callee_eval: `p`, `EC'`, `STO'`, `callableTargetIR`, and `argumentListI
 . Else if let `typedExpressionIR . nameIR'` be `callableTargetIR`:
  .. Group typedExpressionIR-nameIR-builtinMethod:
   ... Let `typedLvalueIR'^?^` be `<<typedExpressionIR_as_typedLvalueIR, $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)>>`.
-  ... Else if let `typedLvalueIR` be `typedLvalueIR'^?^`:
-   .... Let <<Lvalue_eval, `p EC' STO' |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult`>>.
-   .... Check that `storageReferenceResult` has type `exitResult`.
-   .... Let `exitResult` be `storageReferenceResult`.
-   .... Result in `EC~1~`, `STO~1~`, and `EXIT`.
-  ... Else if `nameIR'` is equal to `"isValid"`:
+  ... Check that `typedLvalueIR'^?^` is Some value.
+  ... Let `typedLvalueIR` be `typedLvalueIR'^?^`.
+  ... Let <<Lvalue_eval, `p EC' STO' |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult`>>.
+  ... Check that `storageReferenceResult` has type `exitResult`.
+  ... Let `exitResult` be `storageReferenceResult`.
+  ... Result in `EC~1~`, `STO~1~`, and `EXIT`.
+  ... If `nameIR'` is equal to `"isValid"`:
    .... Check that `argumentListIR''` is equal to `[ ]`.
    .... Check that `typedLvalueIR'^?^` is Some value.
    .... Let `typedLvalueIR` be `typedLvalueIR'^?^`.
@@ -7854,6 +7855,34 @@ relation Callee_eval: `p`, `EC'`, `STO'`, `callableTargetIR`, and `argumentListI
    .... Check that `value` has type `headerValue`.
    .... Let `headerValue` be `value`.
    .... Let `builtinMethodCallee` be `BUILTIN_METHOD storageReference . "isValid" < [ ] > ( [ ] )`.
+   .... Result in `EC~1~`, `STO~1~`, and `builtinMethodCallee`.
+  ... Else if `nameIR'` is equal to `"setValid"`:
+   .... Check that `argumentListIR''` is equal to `[ ]`.
+   .... Check that `typedLvalueIR'^?^` is Some value.
+   .... Let `typedLvalueIR` be `typedLvalueIR'^?^`.
+   .... Let <<Lvalue_eval, `p EC' STO' |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult`>>.
+   .... Check that `storageReferenceResult` has type `continueResult<storageReference?>`.
+   .... Let `storageReference'^?^` be `storageReferenceResult`.
+   .... Check that `storageReference'^?^` is Some value.
+   .... Let `storageReference` be `storageReference'^?^`.
+   .... Let <<Lvalue_read, `p EC~1~ STO~1~ |- storageReference : value`>>.
+   .... Check that `value` has type `headerValue`.
+   .... Let `headerValue` be `value`.
+   .... Let `builtinMethodCallee` be `BUILTIN_METHOD storageReference . "setValid" < [ ] > ( [ ] )`.
+   .... Result in `EC~1~`, `STO~1~`, and `builtinMethodCallee`.
+  ... Else if `nameIR'` is equal to `"setInvalid"`:
+   .... Check that `argumentListIR''` is equal to `[ ]`.
+   .... Check that `typedLvalueIR'^?^` is Some value.
+   .... Let `typedLvalueIR` be `typedLvalueIR'^?^`.
+   .... Let <<Lvalue_eval, `p EC' STO' |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult`>>.
+   .... Check that `storageReferenceResult` has type `continueResult<storageReference?>`.
+   .... Let `storageReference'^?^` be `storageReferenceResult`.
+   .... Check that `storageReference'^?^` is Some value.
+   .... Let `storageReference` be `storageReference'^?^`.
+   .... Let <<Lvalue_read, `p EC~1~ STO~1~ |- storageReference : value`>>.
+   .... Check that `value` has type `headerValue`.
+   .... Let `headerValue` be `value`.
+   .... Let `builtinMethodCallee` be `BUILTIN_METHOD storageReference . "setInvalid" < [ ] > ( [ ] )`.
    .... Result in `EC~1~`, `STO~1~`, and `builtinMethodCallee`.
  .. Group typedExpressionIR-nameIR-extern-method:
   ... Let `typedLvalueIR'^?^` be `<<typedExpressionIR_as_typedLvalueIR, $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)>>`.
@@ -8168,15 +8197,37 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
  .. Check that `argumentIR^{asterisk}^` is an empty list.
  .. Group builtinMethodCallee:
   ... Let `BUILTIN_METHOD storageReference . text < typeArgumentIR'^{asterisk}^ > ( parameterIR^{asterisk}^ )` be `builtinMethodCallee`.
-  ... Check that `text` is equal to `"isValid"`.
-  ... Check that `typeArgumentIR'^{asterisk}^` is an empty list.
-  ... Check that `parameterIR^{asterisk}^` is an empty list.
-  ... Let <<Lvalue_read, `p EC~0'~ STO~0'~ |- storageReference : value`>>.
-  ... Check that `value` has type `headerValue`.
-  ... Let `headerValue` be `value`.
-  ... Let `HEADER ++_++ { b~valid~ ; ++_++^{asterisk}^ }` be `headerValue`.
-  ... Let `returnResult` be `RETURN B b~valid~`.
-  ... Result in the resulting evaluation context `EC~0'~`, store `STO~0'~`, and call result `returnResult`.
+  ... If `text` is equal to `"isValid"`:
+   .... Check that `typeArgumentIR'^{asterisk}^` is an empty list.
+   .... Check that `parameterIR^{asterisk}^` is an empty list.
+   .... Let <<Lvalue_read, `p EC~0'~ STO~0'~ |- storageReference : value'`>>.
+   .... Check that `value'` has type `headerValue`.
+   .... Let `headerValue` be `value'`.
+   .... Let `HEADER ++_++ { b~valid~ ; ++_++^{asterisk}^ }` be `headerValue`.
+   .... Let `returnResult` be `RETURN B b~valid~`.
+   .... Result in the resulting evaluation context `EC~0'~`, store `STO~0'~`, and call result `returnResult`.
+  ... Else if `text` is equal to `"setValid"`:
+   .... Check that `typeArgumentIR'^{asterisk}^` is an empty list.
+   .... Check that `parameterIR^{asterisk}^` is an empty list.
+   .... Let <<Lvalue_read, `p EC~0'~ STO~0'~ |- storageReference : value'`>>.
+   .... Check that `value'` has type `headerValue`.
+   .... Let `headerValue` be `value'`.
+   .... Let `HEADER tid { ++_++ ; fieldValue^{asterisk}^ }` be `headerValue`.
+   .... Let `value` be `HEADER tid { true ; fieldValue^{asterisk}^ }`.
+   .... Let <<Lvalue_write, `p EC~0'~ STO~0'~ |- storageReference -> value : EC~1~`>>.
+   .... Let `returnResult` be `RETURN None`.
+   .... Result in the resulting evaluation context `EC~1~`, store `STO~0'~`, and call result `returnResult`.
+  ... Else if `text` is equal to `"setInvalid"`:
+   .... Check that `typeArgumentIR'^{asterisk}^` is an empty list.
+   .... Check that `parameterIR^{asterisk}^` is an empty list.
+   .... Let <<Lvalue_read, `p EC~0'~ STO~0'~ |- storageReference : value'`>>.
+   .... Check that `value'` has type `headerValue`.
+   .... Let `headerValue` be `value'`.
+   .... Let `HEADER tid { ++_++ ; fieldValue^{asterisk}^ }` be `headerValue`.
+   .... Let `value` be `HEADER tid { false ; fieldValue^{asterisk}^ }`.
+   .... Let <<Lvalue_write, `p EC~0'~ STO~0'~ |- storageReference -> value : EC~1~`>>.
+   .... Let `returnResult` be `RETURN None`.
+   .... Result in the resulting evaluation context `EC~1~`, store `STO~0'~`, and call result `returnResult`.
 . Else if let `externMethodCallee` be `callee`:
  .. Group externMethodCallee:
   ... Let `EXTERN_METHOD oid . nameIR < typeParameterIR^{asterisk}^ > ( parameterIR^{asterisk}^ # id~default~^{asterisk}^ ) { frame ; blockStatementIR^?^ }` be `externMethodCallee`.

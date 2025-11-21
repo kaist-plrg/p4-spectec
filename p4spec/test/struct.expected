@@ -29533,33 +29533,91 @@ relation Callee_eval: p EC' STO' |- callableTargetIR <_>( argumentListIR'' ): % 
 
         2. Result in : % % % |- % <_>( % ): EC_1 STO_1 ((exit) as calleeResult)
 
-    3. If ((nameIR' = "isValid")), then
+    3. Case analysis on nameIR'
 
-      1. If ((argumentListIR'' = [])), then
+      1. Case (% = "isValid")
 
-        1. If ((typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} matches pattern (_))), then
+        1. If ((argumentListIR'' = [])), then
 
-          1. (Let ?(typedLvalueIR) be typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?})
+          1. If ((typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} matches pattern (_))), then
 
-          2. (Lvalue_eval: p EC' STO' |- typedLvalueIR : EC_1 STO_1 storageReferenceResult)
+            1. (Let ?(typedLvalueIR) be typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?})
 
-          3. If ((storageReferenceResult has type continueResult<storageReference?>)), then
+            2. (Lvalue_eval: p EC' STO' |- typedLvalueIR : EC_1 STO_1 storageReferenceResult)
 
-            1. (Let (` storageReference'?{storageReference' <- storageReference'?}) be (storageReferenceResult as continueResult<storageReference?>))
+            3. If ((storageReferenceResult has type continueResult<storageReference?>)), then
 
-            2. If ((storageReference'?{storageReference' <- storageReference'?} matches pattern (_))), then
+              1. (Let (` storageReference'?{storageReference' <- storageReference'?}) be (storageReferenceResult as continueResult<storageReference?>))
 
-              1. (Let ?(storageReference) be storageReference'?{storageReference' <- storageReference'?})
+              2. If ((storageReference'?{storageReference' <- storageReference'?} matches pattern (_))), then
 
-              2. (Lvalue_read: p EC_1 STO_1 |- storageReference : value)
+                1. (Let ?(storageReference) be storageReference'?{storageReference' <- storageReference'?})
 
-              3. If ((value has type headerValue)), then
+                2. (Lvalue_read: p EC_1 STO_1 |- storageReference : value)
 
-                1. (Let headerValue be (value as headerValue))
+                3. If ((value has type headerValue)), then
 
-                2. (Let builtinMethodCallee be (builtin_method storageReference . "isValid" < [] >( [] )))
+                  1. (Let headerValue be (value as headerValue))
 
-                3. Result in : % % % |- % <_>( % ): EC_1 STO_1 ((` (builtinMethodCallee as callee)) as calleeResult)
+                  2. (Let builtinMethodCallee be (builtin_method storageReference . "isValid" < [] >( [] )))
+
+                  3. Result in : % % % |- % <_>( % ): EC_1 STO_1 ((` (builtinMethodCallee as callee)) as calleeResult)
+
+      2. Case (% = "setValid")
+
+        1. If ((argumentListIR'' = [])), then
+
+          1. If ((typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} matches pattern (_))), then
+
+            1. (Let ?(typedLvalueIR) be typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?})
+
+            2. (Lvalue_eval: p EC' STO' |- typedLvalueIR : EC_1 STO_1 storageReferenceResult)
+
+            3. If ((storageReferenceResult has type continueResult<storageReference?>)), then
+
+              1. (Let (` storageReference'?{storageReference' <- storageReference'?}) be (storageReferenceResult as continueResult<storageReference?>))
+
+              2. If ((storageReference'?{storageReference' <- storageReference'?} matches pattern (_))), then
+
+                1. (Let ?(storageReference) be storageReference'?{storageReference' <- storageReference'?})
+
+                2. (Lvalue_read: p EC_1 STO_1 |- storageReference : value)
+
+                3. If ((value has type headerValue)), then
+
+                  1. (Let headerValue be (value as headerValue))
+
+                  2. (Let builtinMethodCallee be (builtin_method storageReference . "setValid" < [] >( [] )))
+
+                  3. Result in : % % % |- % <_>( % ): EC_1 STO_1 ((` (builtinMethodCallee as callee)) as calleeResult)
+
+      3. Case (% = "setInvalid")
+
+        1. If ((argumentListIR'' = [])), then
+
+          1. If ((typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} matches pattern (_))), then
+
+            1. (Let ?(typedLvalueIR) be typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?})
+
+            2. (Lvalue_eval: p EC' STO' |- typedLvalueIR : EC_1 STO_1 storageReferenceResult)
+
+            3. If ((storageReferenceResult has type continueResult<storageReference?>)), then
+
+              1. (Let (` storageReference'?{storageReference' <- storageReference'?}) be (storageReferenceResult as continueResult<storageReference?>))
+
+              2. If ((storageReference'?{storageReference' <- storageReference'?} matches pattern (_))), then
+
+                1. (Let ?(storageReference) be storageReference'?{storageReference' <- storageReference'?})
+
+                2. (Lvalue_read: p EC_1 STO_1 |- storageReference : value)
+
+                3. If ((value has type headerValue)), then
+
+                  1. (Let headerValue be (value as headerValue))
+
+                  2. (Let builtinMethodCallee be (builtin_method storageReference . "setInvalid" < [] >( [] )))
+
+                  3. Result in : % % % |- % <_>( % ): EC_1 STO_1 ((` (builtinMethodCallee as callee)) as calleeResult)
 
   3. Group typedExpressionIR-nameIR-extern-method: p EC' STO' |- (typedExpressionIR . nameIR') <_>( argumentListIR'' ): % % %
 
@@ -30221,23 +30279,69 @@ relation Call_eval: p EC_0' STO_0' |- callee @< typeArgumentListIR' >( argumentL
 
           1. (Let (builtin_method storageReference . text < typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} >( parameterIR*{parameterIR <- parameterIR*} )) be builtinMethodCallee)
 
-          2. If ((text = "isValid")), then
+          2. Case analysis on text
 
-            1. If ((typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} matches pattern [])), then
+            1. Case (% = "isValid")
 
-              1. If ((parameterIR*{parameterIR <- parameterIR*} matches pattern [])), then
+              1. If ((typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} matches pattern [])), then
 
-                1. (Lvalue_read: p EC_0' STO_0' |- storageReference : value)
+                1. If ((parameterIR*{parameterIR <- parameterIR*} matches pattern [])), then
 
-                2. If ((value has type headerValue)), then
+                  1. (Lvalue_read: p EC_0' STO_0' |- storageReference : value')
 
-                  1. (Let headerValue be (value as headerValue))
+                  2. If ((value' has type headerValue)), then
 
-                  2. (Let (header _tid { b_valid ; _fieldValue*{_fieldValue <- _fieldValue*} }) be headerValue)
+                    1. (Let headerValue be (value' as headerValue))
 
-                  3. (Let returnResult be (return ?(((b b_valid) as value))))
+                    2. (Let (header _tid { b_valid ; _fieldValue*{_fieldValue <- _fieldValue*} }) be headerValue)
 
-                  4. Result in : % % % |- % @< % >( % ): EC_0' STO_0' (returnResult as callResult)
+                    3. (Let returnResult be (return ?(((b b_valid) as value))))
+
+                    4. Result in : % % % |- % @< % >( % ): EC_0' STO_0' (returnResult as callResult)
+
+            2. Case (% = "setValid")
+
+              1. If ((typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} matches pattern [])), then
+
+                1. If ((parameterIR*{parameterIR <- parameterIR*} matches pattern [])), then
+
+                  1. (Lvalue_read: p EC_0' STO_0' |- storageReference : value')
+
+                  2. If ((value' has type headerValue)), then
+
+                    1. (Let headerValue be (value' as headerValue))
+
+                    2. (Let (header tid { _bool ; fieldValue*{fieldValue <- fieldValue*} }) be headerValue)
+
+                    3. (Let value be ((header tid { true ; fieldValue*{fieldValue <- fieldValue*} }) as value))
+
+                    4. (Lvalue_write: p EC_0' STO_0' |- storageReference -> value : EC_1)
+
+                    5. (Let returnResult be (return ?()))
+
+                    6. Result in : % % % |- % @< % >( % ): EC_1 STO_0' (returnResult as callResult)
+
+            3. Case (% = "setInvalid")
+
+              1. If ((typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} matches pattern [])), then
+
+                1. If ((parameterIR*{parameterIR <- parameterIR*} matches pattern [])), then
+
+                  1. (Lvalue_read: p EC_0' STO_0' |- storageReference : value')
+
+                  2. If ((value' has type headerValue)), then
+
+                    1. (Let headerValue be (value' as headerValue))
+
+                    2. (Let (header tid { _bool ; fieldValue*{fieldValue <- fieldValue*} }) be headerValue)
+
+                    3. (Let value be ((header tid { false ; fieldValue*{fieldValue <- fieldValue*} }) as value))
+
+                    4. (Lvalue_write: p EC_0' STO_0' |- storageReference -> value : EC_1)
+
+                    5. (Let returnResult be (return ?()))
+
+                    6. Result in : % % % |- % @< % >( % ): EC_1 STO_0' (returnResult as callResult)
 
   3. Case (% has type externMethodCallee)
 

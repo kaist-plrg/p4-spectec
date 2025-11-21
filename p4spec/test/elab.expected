@@ -26493,7 +26493,7 @@ relation Lvalue_read: cursor evalContext store |- storageReference : value
     -- let ?(value) = value''?{value'' <- value''?}
     -- output: % % % |- % : value
 
-  ;; ../../../../spec-concrete/8.05-eval-lvalue.watsup:132.1-155.2
+  ;; ../../../../spec-concrete/8.05-eval-lvalue.watsup:132.1-154.2
   rulegroup storageReference-indexAccess
 
    match
@@ -26535,7 +26535,7 @@ relation Lvalue_read: cursor evalContext store |- storageReference : value
 ;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:95.1-98.29
 relation Lvalue_write: cursor evalContext store |- storageReference -> value : evalContext
 
-  ;; ../../../../spec-concrete/8.05-eval-lvalue.watsup:166.1-169.62
+  ;; ../../../../spec-concrete/8.05-eval-lvalue.watsup:165.1-168.62
   rulegroup referenceExpressionIR
 
    match
@@ -26552,7 +26552,7 @@ relation Lvalue_write: cursor evalContext store |- storageReference -> value : e
     -- let EC_1 = $add_var_e(p_ref, EC_0, prefixedNameIR, value)
     -- output: % % % |- % -> % : EC_1
 
-  ;; ../../../../spec-concrete/8.05-eval-lvalue.watsup:173.1-218.2
+  ;; ../../../../spec-concrete/8.05-eval-lvalue.watsup:172.1-217.2
   rulegroup storageReference-nameIR
 
    match
@@ -26597,7 +26597,7 @@ relation Lvalue_write: cursor evalContext store |- storageReference -> value : e
     -- Lvalue_write: p EC_0 STO |- storageReference -> value_base_update : EC_1
     -- output: % % % |- % -> % : EC_1
 
-  ;; ../../../../spec-concrete/8.05-eval-lvalue.watsup:220.1-243.2
+  ;; ../../../../spec-concrete/8.05-eval-lvalue.watsup:219.1-242.2
   rulegroup storageReference-indexAccess
 
    match
@@ -27795,7 +27795,7 @@ relation Callee_eval: cursor evalContext store |- callableTargetIR <_>( argument
     -- let definedFunctionCallee = function nameIR < typeParameterListIR >( parameterListIR # id_default*{id_default <- id_default*} ) blockStatementIR
     -- output: % % % |- % <_>( % ): EC STO ` definedFunctionCallee as callee as calleeResult
 
-  ;; ../../../../spec-concrete/8.10.1-eval-call-callee.watsup:56.1-83.2
+  ;; ../../../../spec-concrete/8.10.1-eval-call-callee.watsup:56.1-115.2
   rulegroup typedExpressionIR-nameIR-builtinMethod
 
    match
@@ -27836,7 +27836,41 @@ relation Callee_eval: cursor evalContext store |- callableTargetIR <_>( argument
     -- let builtinMethodCallee = builtin_method storageReference . "isValid" < [] >( [] )
     -- output: % % % |- % <_>( % ): EC_1 STO_1 ` builtinMethodCallee as callee as calleeResult
 
-  ;; ../../../../spec-concrete/8.10.1-eval-call-callee.watsup:87.1-128.2
+    rulepath header-setValid
+    -- if (nameIR' = "setValid")
+    -- if (argumentListIR' = [])
+    -- let typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
+    -- if typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} matches (_)
+    -- let ?(typedLvalueIR) = typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?}
+    -- Lvalue_eval: p EC_0 STO_0 |- typedLvalueIR : EC_1 STO_1 storageReferenceResult
+    -- if storageReferenceResult <: continueResult<storageReference?>
+    -- let ` storageReference'?{storageReference' <- storageReference'?} = storageReferenceResult as continueResult<storageReference?>
+    -- if storageReference'?{storageReference' <- storageReference'?} matches (_)
+    -- let ?(storageReference) = storageReference'?{storageReference' <- storageReference'?}
+    -- Lvalue_read: p EC_1 STO_1 |- storageReference : value
+    -- if value <: headerValue
+    -- let headerValue = value as headerValue
+    -- let builtinMethodCallee = builtin_method storageReference . "setValid" < [] >( [] )
+    -- output: % % % |- % <_>( % ): EC_1 STO_1 ` builtinMethodCallee as callee as calleeResult
+
+    rulepath header-setInvalid
+    -- if (nameIR' = "setInvalid")
+    -- if (argumentListIR' = [])
+    -- let typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
+    -- if typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} matches (_)
+    -- let ?(typedLvalueIR) = typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?}
+    -- Lvalue_eval: p EC_0 STO_0 |- typedLvalueIR : EC_1 STO_1 storageReferenceResult
+    -- if storageReferenceResult <: continueResult<storageReference?>
+    -- let ` storageReference'?{storageReference' <- storageReference'?} = storageReferenceResult as continueResult<storageReference?>
+    -- if storageReference'?{storageReference' <- storageReference'?} matches (_)
+    -- let ?(storageReference) = storageReference'?{storageReference' <- storageReference'?}
+    -- Lvalue_read: p EC_1 STO_1 |- storageReference : value
+    -- if value <: headerValue
+    -- let headerValue = value as headerValue
+    -- let builtinMethodCallee = builtin_method storageReference . "setInvalid" < [] >( [] )
+    -- output: % % % |- % <_>( % ): EC_1 STO_1 ` builtinMethodCallee as callee as calleeResult
+
+  ;; ../../../../spec-concrete/8.10.1-eval-call-callee.watsup:119.1-160.2
   rulegroup typedExpressionIR-nameIR-extern-method
 
    match
@@ -27886,7 +27920,7 @@ relation Callee_eval: cursor evalContext store |- callableTargetIR <_>( argument
     -- let externMethodCallee = extern_method oid . nameIR < typeParameterListIR >( parameterListIR # id_default*{id_default <- id_default*} ){ frame ; blockStatementIR?{blockStatementIR <- blockStatementIR?} }
     -- output: % % % |- % <_>( % ): EC_1 STO_1 ` externMethodCallee as callee as calleeResult
 
-  ;; ../../../../spec-concrete/8.10.1-eval-call-callee.watsup:132.1-176.2
+  ;; ../../../../spec-concrete/8.10.1-eval-call-callee.watsup:164.1-208.2
   rulegroup typedExpressionIR-nameIR-parser-apply-method
 
    match
@@ -27935,7 +27969,7 @@ relation Callee_eval: cursor evalContext store |- callableTargetIR <_>( argument
     -- let parserApplyMethodCallee = parser oid .apply( parameterListIR # id_default*{id_default <- id_default*} ){ frame ; parserLocalDeclarationListIR ; stateEnv }
     -- output: % % % |- % <_>( % ): EC_1 STO_1 ` parserApplyMethodCallee as callee as calleeResult
 
-  ;; ../../../../spec-concrete/8.10.1-eval-call-callee.watsup:180.1-225.2
+  ;; ../../../../spec-concrete/8.10.1-eval-call-callee.watsup:212.1-257.2
   rulegroup typedExpressionIR-nameIR-control-apply-method
 
    match
@@ -27984,7 +28018,7 @@ relation Callee_eval: cursor evalContext store |- callableTargetIR <_>( argument
     -- let controlApplyMethodCallee = control oid .apply( parameterListIR # id_default*{id_default <- id_default*} ){ frame ; controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR }
     -- output: % % % |- % <_>( % ): EC_1 STO_1 ` controlApplyMethodCallee as callee as calleeResult
 
-  ;; ../../../../spec-concrete/8.10.1-eval-call-callee.watsup:229.1-259.2
+  ;; ../../../../spec-concrete/8.10.1-eval-call-callee.watsup:261.1-291.2
   rulegroup typedExpressionIR-nameIR-table-apply-method
 
    match
@@ -28425,13 +28459,13 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_4 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
     -- output: % % % |- % @< % >( % ): EC_3 STO_2 callResult
 
-  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:329.1-344.2
+  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:329.1-378.2
   rulegroup builtinMethodCallee
 
    match
 
-    (explicit) p EC STO |- builtinMethodCallee as callee @< [] >( [] ): % % %
-    (implicit) p EC STO |- callee @< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} ): % % %
+    (explicit) p evalContext STO |- builtinMethodCallee as callee @< [] >( [] ): % % %
+    (implicit) p evalContext STO |- callee @< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} ): % % %
     -- if callee <: builtinMethodCallee
     -- let builtinMethodCallee = callee as builtinMethodCallee
     -- if typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches []
@@ -28440,18 +28474,49 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
    paths
 
     rulepath header-isValid
+    -- let EC = evalContext
     -- let builtin_method storageReference . text < typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} >( parameterIR*{parameterIR <- parameterIR*} ) = builtinMethodCallee
     -- if (text = "isValid")
     -- if typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} matches []
     -- if parameterIR*{parameterIR <- parameterIR*} matches []
-    -- Lvalue_read: p EC STO |- storageReference : value
-    -- if value <: headerValue
-    -- let headerValue = value as headerValue
+    -- Lvalue_read: p EC STO |- storageReference : value'
+    -- if value' <: headerValue
+    -- let headerValue = value' as headerValue
     -- let header _tid { b_valid ; _fieldValue*{_fieldValue <- _fieldValue*} } = headerValue
     -- let returnResult = return ?(b b_valid as value)
     -- output: % % % |- % @< % >( % ): EC STO returnResult as callResult
 
-  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:351.1-393.2
+    rulepath header-setValid
+    -- let EC_0 = evalContext
+    -- let builtin_method storageReference . text < typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} >( parameterIR*{parameterIR <- parameterIR*} ) = builtinMethodCallee
+    -- if (text = "setValid")
+    -- if typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} matches []
+    -- if parameterIR*{parameterIR <- parameterIR*} matches []
+    -- Lvalue_read: p EC_0 STO |- storageReference : value'
+    -- if value' <: headerValue
+    -- let headerValue = value' as headerValue
+    -- let header tid { _bool ; fieldValue*{fieldValue <- fieldValue*} } = headerValue
+    -- let value = header tid { true ; fieldValue*{fieldValue <- fieldValue*} } as value
+    -- Lvalue_write: p EC_0 STO |- storageReference -> value : EC_1
+    -- let returnResult = return ?()
+    -- output: % % % |- % @< % >( % ): EC_1 STO returnResult as callResult
+
+    rulepath header-setInvalid
+    -- let EC_0 = evalContext
+    -- let builtin_method storageReference . text < typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} >( parameterIR*{parameterIR <- parameterIR*} ) = builtinMethodCallee
+    -- if (text = "setInvalid")
+    -- if typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} matches []
+    -- if parameterIR*{parameterIR <- parameterIR*} matches []
+    -- Lvalue_read: p EC_0 STO |- storageReference : value'
+    -- if value' <: headerValue
+    -- let headerValue = value' as headerValue
+    -- let header tid { _bool ; fieldValue*{fieldValue <- fieldValue*} } = headerValue
+    -- let value = header tid { false ; fieldValue*{fieldValue <- fieldValue*} } as value
+    -- Lvalue_write: p EC_0 STO |- storageReference -> value : EC_1
+    -- let returnResult = return ?()
+    -- output: % % % |- % @< % >( % ): EC_1 STO returnResult as callResult
+
+  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:385.1-427.2
   rulegroup externMethodCallee
 
    match
@@ -28482,7 +28547,7 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_5 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
     -- output: % % % |- % @< % >( % ): EC_3 STO_2 returnResult as callResult
 
-  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:397.1-479.2
+  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:431.1-513.2
   rulegroup parserApplyMethodCallee
 
    match
@@ -28529,7 +28594,7 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- Copy_out: STO_3 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ block EC_callee_5 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
     -- output: % % % |- % @< % >( % ): EC_3 STO_3 rejectTransitionResult as callResult
 
-  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:483.1-571.2
+  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:517.1-605.2
   rulegroup controlApplyMethodCallee
 
    match
@@ -28583,7 +28648,7 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- Copy_out: STO_3 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ block EC_callee_5 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
     -- output: % % % |- % @< % >( % ): EC_3 STO_3 exit as callResult
 
-  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:575.1-590.62
+  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:609.1-624.62
   rulegroup tableApplyMethodCallee
 
    match

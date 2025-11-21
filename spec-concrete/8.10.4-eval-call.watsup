@@ -341,6 +341,40 @@ rulegroup Call_eval/builtinMethodCallee {
     -- if HEADER _ `{ b_valid `; _ } = headerValue
     -- if returnResult = RETURN (B b_valid)
 
+  rule Call_eval/header-setValid:
+    p EC_0 STO |- builtinMethodCallee `@ `< eps > `( eps )
+              : EC_1 STO returnResult
+    ---- ;; unpack the builtin method callee
+    -- if BUILTIN_METHOD storageReference `. "setValid"
+            `< eps > `( eps )
+        = builtinMethodCallee
+    ---- ;; read the value
+    -- Lvalue_read: 
+        p EC_0 STO |- storageReference : headerValue
+    -- if HEADER tid `{ _ `; fieldValue* } = headerValue
+    -- if value = HEADER tid `{ true `; fieldValue* }
+    -- Lvalue_write:
+        p EC_0 STO |- storageReference -> value
+                      : EC_1
+    -- if returnResult = RETURN eps
+
+  rule Call_eval/header-setInvalid:
+    p EC_0 STO |- builtinMethodCallee `@ `< eps > `( eps )
+              : EC_1 STO returnResult
+    ---- ;; unpack the builtin method callee
+    -- if BUILTIN_METHOD storageReference `. "setInvalid"
+            `< eps > `( eps )
+        = builtinMethodCallee
+    ---- ;; read the value
+    -- Lvalue_read: 
+        p EC_0 STO |- storageReference : headerValue
+    -- if HEADER tid `{ _ `; fieldValue* } = headerValue
+    -- if value = HEADER tid `{ false `; fieldValue* }
+    -- Lvalue_write:
+        p EC_0 STO |- storageReference -> value
+                      : EC_1
+    -- if returnResult = RETURN eps
+
 }
 
 ;;;; externMethodCallee
