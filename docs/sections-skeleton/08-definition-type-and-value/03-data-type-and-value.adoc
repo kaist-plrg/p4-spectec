@@ -129,10 +129,17 @@ P4 `struct` types are defined with the following syntax:
 
 ${syntax: typeField structTypeDeclaration}
 
-This declaration introduces a new struct type constructor with the specified
+// Modified Section 7.2.6 of the P4-16 Language Specification
+This declaration introduces a new struct type definition with the specified
 name in the current scope. Field names have to be distinct. An empty struct
-(with no fields) is legal. For example, the structure `Parsed_headers` below
-contains the headers recognized by a simple parser:
+(with no fields) is legal.
+
+[[structTypeDefIR]]
+${syntax: structTypeDefIR}
+
+// Section 7.2.6 of the P4-16 Language Specification
+For example, the structure `Parsed_headers` below contains the headers
+recognized by a simple parser:
 
 [source,p4]
 ----
@@ -162,7 +169,7 @@ Struct types are introduced by `struct` declarations. Its typing rule is
 explained in <<sec-sem-Decl_ok-structTypeDeclaration>>.
 
 Struct types are then used by referencing their names. Thus struct types can
-be obtained from named types, as illustrated in <<sec-def-namedType>>.
+be obtained from named types, as illustrated in <<sec-named-types>>.
 
 ===== Well-formedness
 
@@ -185,14 +192,20 @@ is used inside a P4 header, all implementations encode the `bool` as a one bit
 long field, with the value `1` representing `true` and `0` representing
 `false`. Field names have to be distinct.
 
+// Modified section 7.2.2 of the P4-16 Language Specification
 A header declaration introduces a new identifier in the current scope; the type
-can be referred to using this identifier. A header is similar to a `struct` in
-C, containing all the specified fields. However, in addition, a header also
-contains a hidden Boolean "validity" field. When the "validity" bit is `true`
-we say that the "header is valid". When a local variable with a header type is
-declared, its "validity" bit is automatically set to `false`. The "validity"
-bit can be manipulated by using the header methods `isValid()`, `setValid()`,
-and `setInvalid()`.
+definition can be referred to using this identifier.
+
+[[headerTypeDefIR]]
+${syntax: headerTypeDefIR}
+
+// Section 7.2.2 of the P4-16 Language Specification
+A header is similar to a `struct` in C, containing all the specified fields.
+However, in addition, a header also contains a hidden Boolean "validity" field.
+When the "validity" bit is `true` we say that the "header is valid". When a
+local variable with a header type is declared, its "validity" bit is
+automatically set to `false`. The "validity" bit can be manipulated by using
+the header methods `isValid()`, `setValid()`, and `setInvalid()`.
 
 Header types may be empty:
 
@@ -301,7 +314,7 @@ Header types are introduced by `header` declarations. Its typing rule is
 explained in <<sec-sem-Decl_ok-headerTypeDeclaration>>.
 
 Header types are then used by referencing their names. Thus header types can
-be obtained from named types, as illustrated in <<sec-def-namedType>>.
+be obtained from named types, as illustrated in <<sec-named-types>>.
 
 ===== Well-formedness
 
@@ -321,10 +334,16 @@ A header union is defined as:
 
 ${syntax: typeField headerUnionTypeDeclaration}
 
-This declaration introduces a new type with the specified name in the current
-scope. Each element of the list of fields used to declare a header union must
-be of header type. An empty list of fields is legal. Field names have to be
-distinct.
+// Modified Section 7.2.5 of the P4-16 Language Specification
+This declaration introduces a new type definition with the specified name in
+the current scope.
+
+[[headerUnionTypeDefIR]]
+${syntax: headerUnionTypeDefIR}
+
+// Section 7.2.5 of the P4-16 Language Specification
+Each element of the list of fields used to declare a header union must be of
+header type. An empty list of fields is legal. Field names have to be distinct.
 
 As an example, the type `Ip_h` below represents the union of an IPv4 and IPv6
 headers:
@@ -345,7 +364,7 @@ rule is explained in <<sec-sem-Decl_ok-headerUnionTypeDeclaration>>.
 
 Header union types are then used by referencing their names. Thus header union
 types can be obtained from named types, as illustrated in
-<<sec-def-namedType>>.
+<<sec-named-types>>.
 
 ===== Well-formedness
 
@@ -362,6 +381,11 @@ ${syntax: enumTypeDeclaration}
 
 Enums can be declared in two different ways, depending on whether or not an
 underlying representation type is provided. The two forms are described below.
+
+Enums cannot be parameterized over type parameters, thus is always monomorphic.
+
+[[enumTypeDefIR]]
+${syntax: enumTypeDefIR}
 
 // Added
 Internally, enum types and values are represented as follows:
@@ -448,7 +472,7 @@ Enum types are introduced by `enum` declarations. Its typing rule is explained
 in <<sec-sem-Decl_ok-enumTypeDeclaration>>.
 
 Enum types are then used by referencing their names. Thus enum types can be
-obtained from named types, as illustrated in <<sec-def-namedType>>.
+obtained from named types, as illustrated in <<sec-named-types>>.
 
 ===== Well-formedness
 
