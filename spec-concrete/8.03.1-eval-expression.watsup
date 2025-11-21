@@ -415,6 +415,16 @@ rulegroup Expr_eval/indexAccessExpressionIR {
     -- if n_index = $int_of_value(value_index)
     -- if expressionResult = `` value_elem*[n_index]
 
+  rule Expr_eval/headerStack:
+    p EC_0 STO_0 |- (typedExpressionIR_base `[ typedExpressionIR_index ]) `# _
+                  : EC_1 STO_1 expressionResult
+    -- Exprs_eval:
+        p EC_0 STO_0 |- [ typedExpressionIR_base, typedExpressionIR_index ]
+                      : EC_1 STO_1 (`` ([ value_base, value_index ]))
+    -- if HEADER_STACK `[ value_elem* `( _; _ ) ] = value_base
+    -- if n_index = $int_of_value(value_index)
+    -- if expressionResult = `` value_elem*[n_index]
+
 }
 
 ;;;;; sliceAccessExpressionIR

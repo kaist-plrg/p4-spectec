@@ -3104,12 +3104,12 @@ def $update_fieldValue(fieldValue*{fieldValue <- fieldValue*}, id, value)
 
       1. Return (value_field_h id_field_h ;) :: $update_fieldValue(fieldValue_t*{fieldValue_t <- fieldValue_t*}, id, value)
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:61.1-61.58
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:62.1-62.58
 def $update_headerStack(value*{value <- value*}, value_new, n_target_idx, n_size)
 
 1. Return $update_headerStack'(value*{value <- value*}, value_new, 0, n_target_idx, n_size)
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:62.1-62.64
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:63.1-63.64
 def $update_headerStack'(value*{value <- value*}, _value', _nat''', _nat'''', _nat''''')
 
 1. Case analysis on value*{value <- value*}
@@ -3136,7 +3136,7 @@ def $update_headerStack'(value*{value <- value*}, _value', _nat''', _nat'''', _n
 
         1. Return value_h :: $update_headerStack'(value_t*{value_t <- value_t*}, _value', _nat'''', (_nat''' + 1), _nat''''')
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:87.1-87.54
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:88.1-88.54
 def $write_value_from_bits(value, n_var, b*{b <- b*})
 
 1. (Let (value_updated, bool*{bool <- bool*}) be $write_value_from_bits'(value, n_var, b*{b <- b*}))
@@ -3145,7 +3145,7 @@ def $write_value_from_bits(value, n_var, b*{b <- b*})
 
   1. Return value_updated
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:88.1-88.64
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:89.1-89.64
 def $write_value_from_bits'(value, n_var', bool'*{bool' <- bool'*})
 
 1. Case analysis on value
@@ -3250,7 +3250,7 @@ def $write_value_from_bits'(value, n_var', bool'*{bool' <- bool'*})
 
         4. Return (((n_max . n_var' v i) as value), b_t*{b_t <- b_t*})
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:89.1-89.83
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:90.1-90.83
 def $write_value_fields_from_bits'(fieldValue*{fieldValue <- fieldValue*}, n_var, b*{b <- b*})
 
 1. Case analysis on fieldValue*{fieldValue <- fieldValue*}
@@ -3269,14 +3269,14 @@ def $write_value_fields_from_bits'(fieldValue*{fieldValue <- fieldValue*}, n_var
 
     4. Return (fieldValue_h_updated :: fieldValue_t_updated*{fieldValue_t_updated <- fieldValue_t_updated*}, b_rest*{b_rest <- b_rest*})
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:90.1-90.80
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:91.1-91.80
 def $write_value_field_from_bits'((value id ;), n_var, b*{b <- b*})
 
 1. (Let (value_updated, b_rest*{b_rest <- b_rest*}) be $write_value_from_bits'(value, n_var, b*{b <- b*}))
 
 2. Return ((value_updated id ;), b_rest*{b_rest <- b_rest*})
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:149.1-149.42
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:150.1-150.42
 def $write_bits_from_value(value)
 
 1. Case analysis on value
@@ -27997,6 +27997,30 @@ relation Expr_eval: p EC' STO' |- (expressionIR # _expressionNoteIR') : % % %
 
               3. Result in : % % % |- % : EC_1 STO_1 expressionResult
 
+      5. (Exprs_eval: p EC' STO' |- [typedExpressionIR_base, typedExpressionIR_index] : EC_1 STO_1 expressionListResult)
+
+      6. If ((expressionListResult has type continueResult<value*>)), then
+
+        1. (Let (` value*{value <- value*}) be (expressionListResult as continueResult<value*>))
+
+        2. If ((value*{value <- value*} matches pattern [ _/2 ])), then
+
+          1. (Let [value_base, value_index] be value*{value <- value*})
+
+          2. If ((value_base has type headerStackValue)), then
+
+            1. (Let (header_stack[ value_elem*{value_elem <- value_elem*} ( _nat ; _nat' )]) be (value_base as headerStackValue))
+
+            2. (Let int be $int_of_value(value_index))
+
+            3. If ((int has type nat)), then
+
+              1. (Let n_index be (int as nat))
+
+              2. (Let expressionResult be ((` value_elem*{value_elem <- value_elem*}[n_index]) as expressionResult))
+
+              3. Result in : % % % |- % : EC_1 STO_1 expressionResult
+
   3. Case (% has type sliceAccessExpressionIR)
 
     1. (Let (typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ]) be (expressionIR as sliceAccessExpressionIR))
@@ -28232,33 +28256,77 @@ relation Lvalue_eval: p EC' STO' |- (lvalueIR # _lvalueNoteIR) : % % %
 
     1. Result in : % % % |- % : EC' STO' ((` ?((referenceExpressionIR as storageReference))) as storageReferenceResult)
 
-2. If ((lvalueIR matches pattern `%.%`)), then
+2. Case analysis on lvalueIR
 
-  1. (Let (typedLvalueIR . nameIR) be lvalueIR)
+  1. Case (% matches pattern `%.%`)
 
-  2. Group typedLvalueIR-nameIR: p EC' STO' |- ((typedLvalueIR . nameIR) # _lvalueNoteIR) : % % %
+    1. (Let (typedLvalueIR . nameIR) be lvalueIR)
 
-    1. (Lvalue_eval: p EC' STO' |- typedLvalueIR : EC_1 STO_1 storageReferenceResult')
+    2. Group typedLvalueIR-nameIR: p EC' STO' |- ((typedLvalueIR . nameIR) # _lvalueNoteIR) : % % %
 
-    2. Case analysis on storageReferenceResult'
+      1. (Lvalue_eval: p EC' STO' |- typedLvalueIR : EC_1 STO_1 storageReferenceResult')
 
-      1. Case (% has type exitResult)
+      2. Case analysis on storageReferenceResult'
 
-        1. (Let exitResult be (storageReferenceResult' as exitResult))
+        1. Case (% has type exitResult)
 
-        2. Result in : % % % |- % : EC_1 STO_1 ((exit) as storageReferenceResult)
+          1. (Let exitResult be (storageReferenceResult' as exitResult))
 
-      2. Case (% has type continueResult<storageReference?>)
+          2. Result in : % % % |- % : EC_1 STO_1 ((exit) as storageReferenceResult)
 
-        1. (Let (` storageReference'?{storageReference' <- storageReference'?}) be (storageReferenceResult' as continueResult<storageReference?>))
+        2. Case (% has type continueResult<storageReference?>)
 
-        2. If ((storageReference'?{storageReference' <- storageReference'?} matches pattern (_))), then
+          1. (Let (` storageReference'?{storageReference' <- storageReference'?}) be (storageReferenceResult' as continueResult<storageReference?>))
 
-          1. (Let ?(storageReference) be storageReference'?{storageReference' <- storageReference'?})
+          2. If ((storageReference'?{storageReference' <- storageReference'?} matches pattern (_))), then
 
-          2. (Let storageReferenceResult be ((` ?((storageReference . nameIR))) as storageReferenceResult))
+            1. (Let ?(storageReference) be storageReference'?{storageReference' <- storageReference'?})
 
-          3. Result in : % % % |- % : EC_1 STO_1 storageReferenceResult
+            2. (Let storageReferenceResult be ((` ?((storageReference . nameIR))) as storageReferenceResult))
+
+            3. Result in : % % % |- % : EC_1 STO_1 storageReferenceResult
+
+  2. Case (% matches pattern `%[%]`)
+
+    1. (Let (typedLvalueIR [ typedExpressionIR ]) be lvalueIR)
+
+    2. Group typedLvalueIR-indexAccess: p EC' STO' |- ((typedLvalueIR [ typedExpressionIR ]) # _lvalueNoteIR) : % % %
+
+      1. (Lvalue_eval: p EC' STO' |- typedLvalueIR : EC_1 STO_1 storageReferenceResult')
+
+      2. Case analysis on storageReferenceResult'
+
+        1. Case (% has type exitResult)
+
+          1. (Let exitResult be (storageReferenceResult' as exitResult))
+
+          2. Result in : % % % |- % : EC_1 STO_1 ((exit) as storageReferenceResult)
+
+        2. Case (% has type continueResult<storageReference?>)
+
+          1. (Let (` storageReference'?{storageReference' <- storageReference'?}) be (storageReferenceResult' as continueResult<storageReference?>))
+
+          2. If ((storageReference'?{storageReference' <- storageReference'?} matches pattern (_))), then
+
+            1. (Let ?(storageReference) be storageReference'?{storageReference' <- storageReference'?})
+
+            2. (Expr_eval: p EC_1 STO_1 |- typedExpressionIR : EC_2 STO_2 expressionResult)
+
+            3. Case analysis on expressionResult
+
+              1. Case (% has type exitResult)
+
+                1. (Let exitResult be (expressionResult as exitResult))
+
+                2. Result in : % % % |- % : EC_2 STO_2 ((exit) as storageReferenceResult)
+
+              2. Case (% has type continueResult<value>)
+
+                1. (Let (` value) be (expressionResult as continueResult<value>))
+
+                2. (Let storageReferenceResult be ((` ?((storageReference [ value ]))) as storageReferenceResult))
+
+                3. Result in : % % % |- % : EC_2 STO_2 storageReferenceResult
 
 ;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:91.1-93.26
 relation Lvalue_read: p EC' STO |- storageReference'' : %
@@ -28273,61 +28341,99 @@ relation Lvalue_read: p EC' STO |- storageReference'' : %
 
     2. Result in : % % % |- % : value
 
-2. If ((storageReference'' matches pattern `%.%`)), then
+2. Case analysis on storageReference''
 
-  1. (Let (storageReference . nameIR) be storageReference'')
+  1. Case (% matches pattern `%.%`)
 
-  2. Group storageReference-nameIR: p EC' STO |- (storageReference . nameIR) : %
+    1. (Let (storageReference . nameIR) be storageReference'')
 
-    1. (Lvalue_read: p EC' STO |- storageReference : value_base)
+    2. Group storageReference-nameIR: p EC' STO |- (storageReference . nameIR) : %
 
-    2. Case analysis on value_base
+      1. (Lvalue_read: p EC' STO |- storageReference : value_base)
 
-      1. Case (% has type objectReferenceValue)
+      2. Case analysis on value_base
 
-        1. (Let (! oid) be (value_base as objectReferenceValue))
+        1. Case (% has type objectReferenceValue)
 
-        2. (Let object'?{object' <- object'?} be $find_map<oid, object>(STO, oid))
+          1. (Let (! oid) be (value_base as objectReferenceValue))
 
-        3. If ((object'?{object' <- object'?} matches pattern (_))), then
+          2. (Let object'?{object' <- object'?} be $find_map<oid, object>(STO, oid))
 
-          1. (Let ?(object) be object'?{object' <- object'?})
+          3. If ((object'?{object' <- object'?} matches pattern (_))), then
 
-          2. If ((object has type packageObject)), then
+            1. (Let ?(object) be object'?{object' <- object'?})
 
-            1. (Let (package< _theta >{ frame }) be (object as packageObject))
+            2. If ((object has type packageObject)), then
 
-            2. (Let value''?{value'' <- value''?} be $find_map<nameIR, value>(frame, nameIR))
+              1. (Let (package< _theta >{ frame }) be (object as packageObject))
 
-            3. If ((value''?{value'' <- value''?} matches pattern (_))), then
+              2. (Let value''?{value'' <- value''?} be $find_map<nameIR, value>(frame, nameIR))
 
-              1. (Let ?(value) be value''?{value'' <- value''?})
+              3. If ((value''?{value'' <- value''?} matches pattern (_))), then
 
-              2. Result in : % % % |- % : value
+                1. (Let ?(value) be value''?{value'' <- value''?})
 
-      2. Case (% has type structValue)
+                2. Result in : % % % |- % : value
 
-        1. (Let (struct tid { (value_field id_field ;)*{id_field <- id_field*, value_field <- value_field*} }) be (value_base as structValue))
+        2. Case (% has type structValue)
 
-        2. (Let value''?{value'' <- value''?} be $assoc_<id, value>(nameIR, (id_field, value_field)*{id_field <- id_field*, value_field <- value_field*}))
+          1. (Let (struct tid { (value_field id_field ;)*{id_field <- id_field*, value_field <- value_field*} }) be (value_base as structValue))
 
-        3. If ((value''?{value'' <- value''?} matches pattern (_))), then
+          2. (Let value''?{value'' <- value''?} be $assoc_<id, value>(nameIR, (id_field, value_field)*{id_field <- id_field*, value_field <- value_field*}))
 
-          1. (Let ?(value) be value''?{value'' <- value''?})
+          3. If ((value''?{value'' <- value''?} matches pattern (_))), then
 
-          2. Result in : % % % |- % : value
+            1. (Let ?(value) be value''?{value'' <- value''?})
 
-      3. Case (% has type headerValue)
+            2. Result in : % % % |- % : value
 
-        1. (Let (header tid { _bool ; (value_field id_field ;)*{id_field <- id_field*, value_field <- value_field*} }) be (value_base as headerValue))
+        3. Case (% has type headerValue)
 
-        2. (Let value''?{value'' <- value''?} be $assoc_<id, value>(nameIR, (id_field, value_field)*{id_field <- id_field*, value_field <- value_field*}))
+          1. (Let (header tid { _bool ; (value_field id_field ;)*{id_field <- id_field*, value_field <- value_field*} }) be (value_base as headerValue))
 
-        3. If ((value''?{value'' <- value''?} matches pattern (_))), then
+          2. (Let value''?{value'' <- value''?} be $assoc_<id, value>(nameIR, (id_field, value_field)*{id_field <- id_field*, value_field <- value_field*}))
 
-          1. (Let ?(value) be value''?{value'' <- value''?})
+          3. If ((value''?{value'' <- value''?} matches pattern (_))), then
 
-          2. Result in : % % % |- % : value
+            1. (Let ?(value) be value''?{value'' <- value''?})
+
+            2. Result in : % % % |- % : value
+
+  2. Case (% matches pattern `%[%]`)
+
+    1. (Let (storageReference [ value_index ]) be storageReference'')
+
+    2. Group storageReference-indexAccess: p EC' STO |- (storageReference [ value_index ]) : %
+
+      1. (Lvalue_read: p EC' STO |- storageReference : value_base)
+
+      2. If ((value_base has type headerStackValue)), then
+
+        1. (Let (header_stack[ value_element*{value_element <- value_element*} ( _nat ; n_size )]) be (value_base as headerStackValue))
+
+        2. (Let int be $int_of_value(value_index))
+
+        3. If ((int has type nat)), then
+
+          1. (Let n_idx be (int as nat))
+
+          2. If ((n_idx >= n_size)), then
+
+            1. (Let value'' be value_element*{value_element <- value_element*}[0])
+
+            2. If ((value'' has type headerValue)), then
+
+              1. (Let (header tid { b_valid ; fieldValue*{fieldValue <- fieldValue*} }) be (value'' as headerValue))
+
+              2. (Let value be ((header tid { false ; fieldValue*{fieldValue <- fieldValue*} }) as value))
+
+              3. Result in : % % % |- % : value
+
+          3. If ((n_idx < n_size)), then
+
+            1. (Let value be value_element*{value_element <- value_element*}[n_idx])
+
+            2. Result in : % % % |- % : value
 
 ;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:95.1-98.29
 relation Lvalue_write: p EC_0 STO |- storageReference'' -> value : %
@@ -28344,55 +28450,89 @@ relation Lvalue_write: p EC_0 STO |- storageReference'' -> value : %
 
     3. Result in : % % % |- % -> % : EC_1
 
-2. If ((storageReference'' matches pattern `%.%`)), then
+2. Case analysis on storageReference''
 
-  1. (Let (storageReference . text) be storageReference'')
+  1. Case (% matches pattern `%.%`)
 
-  2. Group storageReference-nameIR: p EC_0 STO |- (storageReference . text) -> value : %
+    1. (Let (storageReference . text) be storageReference'')
 
-    1. If ((text = "next")), then
+    2. Group storageReference-nameIR: p EC_0 STO |- (storageReference . text) -> value : %
+
+      1. If ((text = "next")), then
+
+        1. (Lvalue_read: p EC_0 STO |- storageReference : value_base)
+
+        2. If ((value_base has type headerStackValue)), then
+
+          1. (Let (header_stack[ value_element*{value_element <- value_element*} ( n_idx ; n_size )]) be (value_base as headerStackValue))
+
+          2. (Let value_element_update*{value_element_update <- value_element_update*} be $update_headerStack(value_element*{value_element <- value_element*}, value, n_idx, n_size))
+
+          3. (Let value_base_update be ((header_stack[ value_element_update*{value_element_update <- value_element_update*} ( (n_idx + 1) ; n_size )]) as value))
+
+          4. (Lvalue_write: p EC_0 STO |- storageReference -> value_base_update : EC_1)
+
+          5. Result in : % % % |- % -> % : EC_1
+
+      2. (Lvalue_read: p EC_0 STO |- storageReference : value_base)
+
+      3. Case analysis on value_base
+
+        1. Case (% has type structValue)
+
+          1. (Let (struct tid { fieldValue*{fieldValue <- fieldValue*} }) be (value_base as structValue))
+
+          2. (Let fieldValue_update*{fieldValue_update <- fieldValue_update*} be $update_fieldValue(fieldValue*{fieldValue <- fieldValue*}, text, value))
+
+          3. (Let value_base_update be ((struct tid { fieldValue_update*{fieldValue_update <- fieldValue_update*} }) as value))
+
+          4. (Lvalue_write: p EC_0 STO |- storageReference -> value_base_update : EC_1)
+
+          5. Result in : % % % |- % -> % : EC_1
+
+        2. Case (% has type headerValue)
+
+          1. (Let (header tid { b_valid ; fieldValue*{fieldValue <- fieldValue*} }) be (value_base as headerValue))
+
+          2. (Let fieldValue_update*{fieldValue_update <- fieldValue_update*} be $update_fieldValue(fieldValue*{fieldValue <- fieldValue*}, text, value))
+
+          3. (Let value_base_update be ((header tid { b_valid ; fieldValue_update*{fieldValue_update <- fieldValue_update*} }) as value))
+
+          4. (Lvalue_write: p EC_0 STO |- storageReference -> value_base_update : EC_1)
+
+          5. Result in : % % % |- % -> % : EC_1
+
+  2. Case (% matches pattern `%[%]`)
+
+    1. (Let (storageReference [ value_index ]) be storageReference'')
+
+    2. Group storageReference-indexAccess: p EC_0 STO |- (storageReference [ value_index ]) -> value : %
 
       1. (Lvalue_read: p EC_0 STO |- storageReference : value_base)
 
       2. If ((value_base has type headerStackValue)), then
 
-        1. (Let (header_stack[ value_element*{value_element <- value_element*} ( n_idx ; n_size )]) be (value_base as headerStackValue))
+        1. (Let (header_stack[ value_element*{value_element <- value_element*} ( _nat ; n_size )]) be (value_base as headerStackValue))
 
-        2. (Let value_element_update*{value_element_update <- value_element_update*} be $update_headerStack(value_element*{value_element <- value_element*}, value, n_idx, n_size))
+        2. (Let int be $int_of_value(value_index))
 
-        3. (Let value_base_update be ((header_stack[ value_element_update*{value_element_update <- value_element_update*} ( (n_idx + 1) ; n_size )]) as value))
+        3. If ((int has type nat)), then
 
-        4. (Lvalue_write: p EC_0 STO |- storageReference -> value_base_update : EC_1)
+          1. (Let n_idx be (int as nat))
 
-        5. Result in : % % % |- % -> % : EC_1
+          2. If ((n_idx >= n_size)), then
 
-    2. (Lvalue_read: p EC_0 STO |- storageReference : value_base)
+            1. Result in : % % % |- % -> % : EC_0
 
-    3. Case analysis on value_base
+          3. If ((n_idx < n_size)), then
 
-      1. Case (% has type structValue)
+            1. (Let value_element_update*{value_element_update <- value_element_update*} be $update_headerStack(value_element*{value_element <- value_element*}, value, n_idx, n_size))
 
-        1. (Let (struct tid { fieldValue*{fieldValue <- fieldValue*} }) be (value_base as structValue))
+            2. (Let value_base_update be ((header_stack[ value_element*{value_element <- value_element*} ( _nat ; n_size )]) as value))
 
-        2. (Let fieldValue_update*{fieldValue_update <- fieldValue_update*} be $update_fieldValue(fieldValue*{fieldValue <- fieldValue*}, text, value))
+            3. (Lvalue_write: p EC_0 STO |- storageReference -> value_base_update : EC_1)
 
-        3. (Let value_base_update be ((struct tid { fieldValue_update*{fieldValue_update <- fieldValue_update*} }) as value))
-
-        4. (Lvalue_write: p EC_0 STO |- storageReference -> value_base_update : EC_1)
-
-        5. Result in : % % % |- % -> % : EC_1
-
-      2. Case (% has type headerValue)
-
-        1. (Let (header tid { b_valid ; fieldValue*{fieldValue <- fieldValue*} }) be (value_base as headerValue))
-
-        2. (Let fieldValue_update*{fieldValue_update <- fieldValue_update*} be $update_fieldValue(fieldValue*{fieldValue <- fieldValue*}, text, value))
-
-        3. (Let value_base_update be ((header tid { b_valid ; fieldValue_update*{fieldValue_update <- fieldValue_update*} }) as value))
-
-        4. (Lvalue_write: p EC_0 STO |- storageReference -> value_base_update : EC_1)
-
-        5. Result in : % % % |- % -> % : EC_1
+            4. Result in : % % % |- % -> % : EC_1
 
 ;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:105.1-107.17
 syntax callResult = 

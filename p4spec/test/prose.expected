@@ -7093,6 +7093,17 @@ relation Expr_eval: `p`, `EC'`, `STO'`, and <<typedExpressionIR, `expressionIR` 
    .... Let `n~index~` be `int`.
    .... Let `expressionResult` be `value~elem~^{asterisk}^[n~index~]`.
    .... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
+  ... Let `EC~1~`, `STO~1~`, and `expressionListResult` be the result of <<Exprs_eval, evaluating `[typedExpressionIR~base~, typedExpressionIR~index~]`, under cursor `p`, evaluation context `EC'`, and store `STO'`>>.
+  ... Else if let `value^{asterisk}^` be `expressionListResult`:
+   .... Check that `value^{asterisk}^` is a list of length 2.
+   .... Let `[value~base~, value~index~]` be `value^{asterisk}^`.
+   .... Check that `value~base~` has type `headerStackValue`.
+   .... Let `HEADER_STACK [ value~elem~^{asterisk}^ ( ++_++ ; ++_++ ) ]` be `value~base~`.
+   .... Let `int` be <<int_of_value, the integer representation of  `value~index~`>>.
+   .... Check that `int` has type `nat`.
+   .... Let `n~index~` be `int`.
+   .... Let `expressionResult` be `value~elem~^{asterisk}^[n~index~]`.
+   .... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
 . Else if let `typedExpressionIR~base~ [ typedExpressionIR~hi~ : typedExpressionIR~lo~ ]` be `expressionIR`:
  .. Group sliceAccessExpressionIR:
   ... Let `EC~1~`, `STO~1~`, and `expressionListResult` be the result of <<Exprs_eval, evaluating `[typedExpressionIR~base~, typedExpressionIR~hi~, typedExpressionIR~lo~]`, under cursor `p`, evaluation context `EC'`, and store `STO'`>>.
@@ -7198,10 +7209,11 @@ relation Argument_eval_lvalue: `p`, `EC~0'~`, `STO~0'~`, and `argumentIR`
 relation Lvalue_eval: `p`, `EC'`, `STO'`, and <<typedLvalueIR, `lvalueIR` with note `++_++`>>
 
 
-. If let `referenceExpressionIR` be `lvalueIR`:
- .. Group referenceExpressionIR:
-  ... Result in `EC'`, `STO'`, and `referenceExpressionIR`.
-. Else if let `typedLvalueIR . nameIR` be `lvalueIR`:
+. Check that `lvalueIR` has type `referenceExpressionIR`.
+. Let `referenceExpressionIR` be `lvalueIR`.
+. Group referenceExpressionIR:
+ .. Result in `EC'`, `STO'`, and `referenceExpressionIR`.
+. If let `typedLvalueIR . nameIR` be `lvalueIR`:
  .. Group typedLvalueIR-nameIR:
   ... Let <<Lvalue_eval, `p EC' STO' |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult'`>>.
   ... If let `exitResult` be `storageReferenceResult'`:
@@ -7211,16 +7223,31 @@ relation Lvalue_eval: `p`, `EC'`, `STO'`, and <<typedLvalueIR, `lvalueIR` with n
    .... Let `storageReference` be `storageReference'^?^`.
    .... Let `storageReferenceResult` be `storageReference . nameIR`.
    .... Result in `EC~1~`, `STO~1~`, and `storageReferenceResult`.
+. Else if let `typedLvalueIR [ typedExpressionIR ]` be `lvalueIR`:
+ .. Group typedLvalueIR-indexAccess:
+  ... Let <<Lvalue_eval, `p EC' STO' |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult'`>>.
+  ... If let `exitResult` be `storageReferenceResult'`:
+   .... Result in `EC~1~`, `STO~1~`, and `EXIT`.
+  ... Else let `storageReference'^?^` be `storageReferenceResult'`:
+   .... Check that `storageReference'^?^` is Some value.
+   .... Let `storageReference` be `storageReference'^?^`.
+   .... Let `EC~2~`, `STO~2~`, and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR`, under cursor `p`, evaluation context `EC~1~`, and store `STO~1~`>>.
+   .... If let `exitResult` be `expressionResult`:
+    ..... Result in `EC~2~`, `STO~2~`, and `EXIT`.
+   .... Else let `value` be `expressionResult`:
+    ..... Let `storageReferenceResult` be `storageReference [ value ]`.
+    ..... Result in `EC~2~`, `STO~2~`, and `storageReferenceResult`.
 
 
 relation Lvalue_read: `p`, `EC'`, `STO`, and `storageReference''`
 
 
-. If let `prefixedNameIR` be `storageReference''`:
- .. Group referenceExpressionIR:
-  ... Let `value` be `<<find_var_e, $find_var_e(p, EC', prefixedNameIR)>>`.
-  ... Result in `value`.
-. Else if let `storageReference . nameIR` be `storageReference''`:
+. Check that `storageReference''` has type `prefixedNameIR`.
+. Let `prefixedNameIR` be `storageReference''`.
+. Group referenceExpressionIR:
+ .. Let `value` be `<<find_var_e, $find_var_e(p, EC', prefixedNameIR)>>`.
+ .. Result in `value`.
+. If let `storageReference . nameIR` be `storageReference''`:
  .. Group storageReference-nameIR:
   ... Let <<Lvalue_read, `p EC' STO |- storageReference : value~base~`>>.
   ... If let `! oid` be `value~base~`:
@@ -7243,17 +7270,35 @@ relation Lvalue_read: `p`, `EC'`, `STO`, and `storageReference''`
    .... Check that `value''^?^` is Some value.
    .... Let `value` be `value''^?^`.
    .... Result in `value`.
+. Else if let `storageReference [ value~index~ ]` be `storageReference''`:
+ .. Group storageReference-indexAccess:
+  ... Let <<Lvalue_read, `p EC' STO |- storageReference : value~base~`>>.
+  ... Check that `value~base~` has type `headerStackValue`.
+  ... Let `HEADER_STACK [ value~element~^{asterisk}^ ( ++_++ ; n~size~ ) ]` be `value~base~`.
+  ... Let `int` be <<int_of_value, the integer representation of  `value~index~`>>.
+  ... Check that `int` has type `nat`.
+  ... Let `n~idx~` be `int`.
+  ... Else if `n~idx~` is greater than or equal to `n~size~`:
+   .... Let `value''` be `value~element~^{asterisk}^[0]`.
+   .... Check that `value''` has type `headerValue`.
+   .... Let `HEADER tid { b~valid~ ; fieldValue^{asterisk}^ }` be `value''`.
+   .... Let `value` be `HEADER tid { false ; fieldValue^{asterisk}^ }`.
+   .... Result in `value`.
+  ... Else if `n~idx~` is less than `n~size~`:
+   .... Let `value` be `value~element~^{asterisk}^[n~idx~]`.
+   .... Result in `value`.
 
 
 relation Lvalue_write: `p`, `EC~0~`, `STO`, `storageReference''`, and `value`
 
 
-. If let `prefixedNameIR` be `storageReference''`:
- .. Group referenceExpressionIR:
-  ... Let `p~ref~` be `<<find_var_cursor_e, $find_var_cursor_e(p, EC~0~, prefixedNameIR)>>`.
-  ... Let `EC~1~` be `<<add_var_e, $add_var_e(p~ref~, EC~0~, prefixedNameIR, value)>>`.
-  ... Result in `EC~1~`.
-. Else if let `storageReference . text` be `storageReference''`:
+. Check that `storageReference''` has type `prefixedNameIR`.
+. Let `prefixedNameIR` be `storageReference''`.
+. Group referenceExpressionIR:
+ .. Let `p~ref~` be `<<find_var_cursor_e, $find_var_cursor_e(p, EC~0~, prefixedNameIR)>>`.
+ .. Let `EC~1~` be `<<add_var_e, $add_var_e(p~ref~, EC~0~, prefixedNameIR, value)>>`.
+ .. Result in `EC~1~`.
+. If let `storageReference . text` be `storageReference''`:
  .. Group storageReference-nameIR:
   ... Check that `text` is equal to `"next"`.
   ... Let <<Lvalue_read, `p EC~0~ STO |- storageReference : value~base~`>>.
@@ -7272,6 +7317,21 @@ relation Lvalue_write: `p`, `EC~0~`, `STO`, `storageReference''`, and `value`
   ... Else if let `HEADER tid { b~valid~ ; fieldValue^{asterisk}^ }` be `value~base~`:
    .... Let `fieldValue~update~^{asterisk}^` be `<<update_fieldValue, $update_fieldValue(fieldValue^{asterisk}^, text, value)>>`.
    .... Let `value~base_update~` be `HEADER tid { b~valid~ ; fieldValue~update~^{asterisk}^ }`.
+   .... Let <<Lvalue_write, `p EC~0~ STO |- storageReference -> value~base_update~ : EC~1~`>>.
+   .... Result in `EC~1~`.
+. Else if let `storageReference [ value~index~ ]` be `storageReference''`:
+ .. Group storageReference-indexAccess:
+  ... Let <<Lvalue_read, `p EC~0~ STO |- storageReference : value~base~`>>.
+  ... Check that `value~base~` has type `headerStackValue`.
+  ... Let `HEADER_STACK [ value~element~^{asterisk}^ ( ++_++ ; n~size~ ) ]` be `value~base~`.
+  ... Let `int` be <<int_of_value, the integer representation of  `value~index~`>>.
+  ... Check that `int` has type `nat`.
+  ... Let `n~idx~` be `int`.
+  ... Else if `n~idx~` is greater than or equal to `n~size~`:
+   .... Result in `EC~0~`.
+  ... Else if `n~idx~` is less than `n~size~`:
+   .... Let `value~element_update~^{asterisk}^` be `<<update_headerStack, $update_headerStack(value~element~^{asterisk}^, value, n~idx~, n~size~)>>`.
+   .... Let `value~base_update~` be `HEADER_STACK [ value~element~^{asterisk}^ ( ++_++ ; n~size~ ) ]`.
    .... Let <<Lvalue_write, `p EC~0~ STO |- storageReference -> value~base_update~ : EC~1~`>>.
    .... Result in `EC~1~`.
 
