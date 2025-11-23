@@ -131,7 +131,7 @@ rulegroup Lvalue_read/storageReference-nameIR {
 
 rulegroup Lvalue_read/storageReference-indexAccess {
 
-  rule Lvalue_read/overflow:
+  rule Lvalue_read/out-of-bounds:
     p EC_0 STO |- storageReference `[ value_index ] : value
     -- Lvalue_read:
         p EC_0 STO |- storageReference : value_base
@@ -142,7 +142,7 @@ rulegroup Lvalue_read/storageReference-indexAccess {
     -- if HEADER tid `{ b_valid `; fieldValue* } = value_element*[ 0 ]
     -- if value = HEADER tid `{ false `; fieldValue* }
 
-  rule Lvalue_read/safe:
+  rule Lvalue_read/in-bounds:
     p EC_0 STO |- storageReference `[ value_index ] : value
     -- Lvalue_read:
         p EC_0 STO |- storageReference : value_base
@@ -164,8 +164,7 @@ rulegroup Lvalue_read/storageReference-indexAccess {
 
 rule Lvalue_write/referenceExpressionIR:
   p EC_0 STO |- prefixedNameIR -> value : EC_1
-  -- if p_ref = $find_var_cursor_e(p, EC_0, prefixedNameIR)
-  -- if EC_1 = $add_var_e(p_ref, EC_0, prefixedNameIR, value)
+  -- if EC_1 = $update_var_e(p, EC_0, prefixedNameIR, value)
 
 ;;; storageReference `. nameIR
 

@@ -27105,7 +27105,86 @@ def $add_vars_e(p, EC, prefixedNameIR*{prefixedNameIR <- prefixedNameIR*}, value
 
       4. Return EC''
 
-;; ../../../../spec-concrete/8.01-eval-context.watsup:95.1-95.61
+;; ../../../../spec-concrete/8.01-eval-context.watsup:93.1-93.76
+def $update_var_e(p', EC, prefixedNameIR, value)
+
+1. If ((prefixedNameIR matches pattern `.%`)), then
+
+  1. (Let (. id) be prefixedNameIR)
+
+  2. (Let frame be $update_map<id, value>(EC.global.frame, id, value))
+
+  3. Return EC[global.frame = frame]
+
+2. Case analysis on p'
+
+  1. Case (% matches pattern `GLOBAL`)
+
+    1. If ((prefixedNameIR matches pattern ``%`)), then
+
+      1. (Let (` id) be prefixedNameIR)
+
+      2. (Let frame be EC.global.frame)
+
+      3. If ($in_set<id>(id, $dom_map<id, value>(frame))), then
+
+        1. (Let frame' be $update_map<id, value>(frame, id, value))
+
+        2. Return EC[global.frame = frame']
+
+  2. Case (% matches pattern `BLOCK`)
+
+    1. If ((prefixedNameIR matches pattern ``%`)), then
+
+      1. (Let (` id) be prefixedNameIR)
+
+      2. (Let frame be EC.block.frame)
+
+      3. Case analysis on $in_set<id>(id, $dom_map<id, value>(frame))
+
+        1. Case true
+
+          1. (Let frame' be $update_map<id, value>(frame, id, value))
+
+          2. Return EC[block.frame = frame']
+
+        2. Case false
+
+          1. Return $update_var_e((global), EC, (` id), value)
+
+  3. Case (% matches pattern `LOCAL`)
+
+    1. If ((prefixedNameIR matches pattern ``%`)), then
+
+      1. (Let (` id) be prefixedNameIR)
+
+      2. If (([] = EC.local.frames)), then
+
+        1. Return $update_var_e((block), EC, (` id), value)
+
+      3. (Let frame*{frame <- frame*} be EC.local.frames)
+
+      4. If ((frame*{frame <- frame*} matches pattern _ :: _)), then
+
+        1. (Let frame_h :: frame_t*{frame_t <- frame_t*} be frame*{frame <- frame*})
+
+        2. Case analysis on $in_set<id>(id, $dom_map<id, value>(frame_h))
+
+          1. Case true
+
+            1. (Let frame_h' be $update_map<id, value>(frame_h, id, value))
+
+            2. Return EC[local.frames = frame_h' :: frame_t*{frame_t <- frame_t*}]
+
+          2. Case false
+
+            1. (Let EC_pop be EC[local.frames = frame_t*{frame_t <- frame_t*}])
+
+            2. (Let EC_pop' be $update_var_e((local), EC_pop, (` id), value))
+
+            3. Return EC_pop'[local.frames = frame_h :: EC_pop'.local.frames]
+
+;; ../../../../spec-concrete/8.01-eval-context.watsup:130.1-130.61
 def $find_var_e(p', EC, prefixedNameIR)
 
 1. If ((prefixedNameIR matches pattern `.%`)), then
@@ -27172,7 +27251,7 @@ def $find_var_e(p', EC, prefixedNameIR)
 
         1. Return $find_var_e((block), EC, (` id))
 
-;; ../../../../spec-concrete/8.01-eval-context.watsup:112.1-112.69
+;; ../../../../spec-concrete/8.01-eval-context.watsup:147.1-147.69
 def $find_var_cursor_e(p', EC, prefixedNameIR)
 
 1. If ((prefixedNameIR matches pattern `.%`)), then
@@ -27239,7 +27318,7 @@ def $find_var_cursor_e(p', EC, prefixedNameIR)
 
         1. Return $find_var_cursor_e((block), EC, (` id))
 
-;; ../../../../spec-concrete/8.01-eval-context.watsup:131.1-131.70
+;; ../../../../spec-concrete/8.01-eval-context.watsup:166.1-166.70
 def $find_typeDef_e(_cursor, EC, prefixedNameIR)
 
 1. Case analysis on prefixedNameIR
@@ -27256,7 +27335,7 @@ def $find_typeDef_e(_cursor, EC, prefixedNameIR)
 
     2. Return $find_map<tid, typeDefIR>(EC.global.type, nameIR)
 
-;; ../../../../spec-concrete/8.01-eval-context.watsup:140.1-140.56
+;; ../../../../spec-concrete/8.01-eval-context.watsup:175.1-175.56
 def $find_type_e(cursor, EC, nameIR)
 
 1. Case analysis on cursor
@@ -27279,7 +27358,7 @@ def $find_type_e(cursor, EC, nameIR)
 
       1. Return $find_type_e((block), EC, nameIR)
 
-;; ../../../../spec-concrete/8.01-eval-context.watsup:152.1-153.37
+;; ../../../../spec-concrete/8.01-eval-context.watsup:187.1-188.37
 def $find_callableDef_overloaded_e(cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*})
 
 1. Case analysis on cursor
@@ -27352,7 +27431,7 @@ def $find_callableDef_overloaded_e(cursor, EC, prefixedNameIR, argumentIR*{argum
 
       2. Return $find_callableDef_overloaded_e((block), EC, (` id), argumentIR*{argumentIR <- argumentIR*})
 
-;; ../../../../spec-concrete/8.01-eval-context.watsup:190.1-191.32
+;; ../../../../spec-concrete/8.01-eval-context.watsup:225.1-226.32
 def $find_constructorDef_e(EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*})
 
 1. Case analysis on prefixedNameIR
@@ -27373,7 +27452,7 @@ def $find_constructorDef_e(EC, prefixedNameIR, argumentIR*{argumentIR <- argumen
 
     3. Return $find_overloaded<constructorDef>(EC.global.constructor, id, id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*})
 
-;; ../../../../spec-concrete/8.01-eval-context.watsup:202.1-202.56
+;; ../../../../spec-concrete/8.01-eval-context.watsup:237.1-237.56
 def $find_state_e(cursor, EC, nameIR)
 
 1. Case analysis on cursor
@@ -27390,7 +27469,7 @@ def $find_state_e(cursor, EC, nameIR)
 
     1. Return $find_map<nameIR, state>(EC.block.state, nameIR)
 
-;; ../../../../spec-concrete/8.01-eval-context.watsup:214.1-214.56
+;; ../../../../spec-concrete/8.01-eval-context.watsup:249.1-249.56
 def $subst_type_e(cursor, EC, typeIR)
 
 1. Case analysis on cursor
@@ -28444,11 +28523,9 @@ relation Lvalue_write: p EC_0 STO |- storageReference'' -> value : %
 
   2. Group referenceExpressionIR: p EC_0 STO |- (prefixedNameIR as storageReference) -> value : %
 
-    1. (Let p_ref be $find_var_cursor_e(p, EC_0, prefixedNameIR))
+    1. (Let EC_1 be $update_var_e(p, EC_0, prefixedNameIR, value))
 
-    2. (Let EC_1 be $add_var_e(p_ref, EC_0, prefixedNameIR, value))
-
-    3. Result in : % % % |- % -> % : EC_1
+    2. Result in : % % % |- % -> % : EC_1
 
 2. Case analysis on storageReference''
 
@@ -31675,7 +31752,7 @@ relation V1Model_ingress: EC_0 STO_0 |- % % %
 
     2. Result in : % % |- EC_1 STO_1 ((exit) as callResult)
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:408.1-410.20
+;; ../../../../spec-concrete/9.A-v1model.watsup:409.1-411.20
 relation V1Model_egress: EC_0 STO_0 |- % % %
 
 1. Group : EC_0 STO_0 |- % % %
@@ -31702,7 +31779,7 @@ relation V1Model_egress: EC_0 STO_0 |- % % %
 
     2. Result in : % % |- EC_1 STO_1 ((return ?()) as callResult)
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:437.1-439.20
+;; ../../../../spec-concrete/9.A-v1model.watsup:438.1-440.20
 relation V1Model_check: EC_0 STO_0 |- % % %
 
 1. Group : EC_0 STO_0 |- % % %
@@ -31727,7 +31804,7 @@ relation V1Model_check: EC_0 STO_0 |- % % %
 
     2. Result in : % % |- EC_1 STO_1 ((return ?()) as callResult)
 
-;; ../../../../spec-concrete/9.A-v1model.watsup:463.1-465.20
+;; ../../../../spec-concrete/9.A-v1model.watsup:464.1-466.20
 relation V1Model_deparse: EC_0 STO_0 |- % % %
 
 1. Group : EC_0 STO_0 |- % % %
