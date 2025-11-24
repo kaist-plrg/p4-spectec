@@ -30450,15 +30450,11 @@ relation Call_eval: p EC_0' STO_0' |- callee @< typeArgumentListIR' >( argumentL
 
           4. (ExternMethodCall_eval: EC_callee_4 STO_1 |- oid . nameIR ( nameIR_param*{nameIR_param <- nameIR_param*} ): EC_callee_5 STO_2 callResult)
 
-          5. If ((callResult has type returnResult)), then
+          5. (Let EC_2 be EC_1[global.frame = EC_callee_5.global.frame])
 
-            1. (Let returnResult be (callResult as returnResult))
+          6. (Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_5 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3)
 
-            2. (Let EC_2 be EC_1[global.frame = EC_callee_5.global.frame])
-
-            3. (Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_5 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3)
-
-            4. Result in : % % % |- % @< % >( % ): EC_3 STO_2 (returnResult as callResult)
+          7. Result in : % % % |- % @< % >( % ): EC_3 STO_2 callResult
 
   4. Case (% has type parserApplyMethodCallee)
 

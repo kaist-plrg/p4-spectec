@@ -387,7 +387,7 @@ rulegroup Call_eval/externMethodCallee {
   rule Call_eval/non-abstract-return:
     p EC_0 STO_0 |- externMethodCallee
                     `@ `< typeArgumentIR* > `( argumentIR* )
-                  : EC_3 STO_2 returnResult
+                  : EC_3 STO_2 callResult
     ---- ;; unpack the extern method callee
     ---- ;; if the extern method is non-abstract
     -- if EXTERN_METHOD oid `. nameIR `< typeParameterIR* >
@@ -415,7 +415,7 @@ rulegroup Call_eval/externMethodCallee {
     -- if (_ _ _ nameIR_param _ = parameterIR)*
     -- ExternMethodCall_eval:
         EC_callee_4 STO_1 |- oid `. nameIR `( nameIR_param* )
-                           : EC_callee_5 STO_2 returnResult
+                           : EC_callee_5 STO_2 callResult
     ---- ;; propagate shared layer
     -- if EC_2 = EC_1[ .GLOBAL.FRAME = EC_callee_5.GLOBAL.FRAME ]
     ---- ;; copy-out
