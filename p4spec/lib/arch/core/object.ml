@@ -135,7 +135,7 @@ module PacketIn = struct
       let value_callResult =
         let value_err =
           wrap_case_v
-            [ Term "ERROR"; Term "`."; NT (wrap_text_v "PacketTooShort") ]
+            [ Term "ERROR"; Term "."; NT (wrap_text_v "PacketTooShort") ]
           |> with_typ (wrap_var_t "errorValue")
         in
         [ Term "REJECT"; NT value_err ] #@ "rejectTransitionResult"
