@@ -1651,7 +1651,7 @@ and elab_table_dec_def (ctx : Ctx.t) (at : region) (id : id)
   let params_il = List.map (elab_param ctx) params in
   let typ_il = elab_plaintyp ctx plaintyp in
   let ctx = Ctx.add_table_dec ctx id params plaintyp in
-  let def_il = Il.Ast.DecD (id, [], params_il, typ_il, [], hints) $ at in
+  let def_il = Il.Ast.TableDecD (id, params_il, typ_il, [], hints) $ at in
   (ctx, def_il)
 
 and elab_dec_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
@@ -1684,9 +1684,45 @@ and elab_def_output_with_bind (ctx : Ctx.t) (plaintyp : plaintyp) (exp : exp) :
   let exp_il = Dataflow.Analysis.analyze_exp_as_bound ctx exp_il in
   (ctx, exp_il)
 
-and elab_table_def_def (ctx : Ctx.t) (_at : region) (_id : id)
-    (_matchcases : (exp * exp) list) : Ctx.t =
-  ctx
+and elab_table_def_def (ctx : Ctx.t) (at : region) (id : id)
+    (tblrows : (exp * exp) list) : Ctx.t =
+  let params, plaintyp, _ = Ctx.find_table_dec ctx id in
+  let elab_tblrow (ctx : Ctx.t) (tblrow : exp * exp) : Il.Ast.tblrow =
+    let exp_pat, exp_body = tblrow in
+    let args =
+      match exp_pat.it with
+      | TupleE exps -> List.map (fun exp -> ExpA exp $ exp.at) exps
+      | _ -> [ ExpA exp_pat $ exp_pat.at ]
+    in
+    let ctx_local = { ctx with frees = IdSet.empty } in
+    let ctx_local =
+      let def = DefD (id, [], args, exp_body, []) $ exp_body.at in
+      El.Free.free_id_def def |> Ctx.add_frees ctx_local
+    in
+    let ctx_local, _args_il, sideconditions_il =
+      elab_def_input_with_bind ctx_local exp_pat.at params args
+    in
+    let allowed_premise prem =
+      match prem.it with
+      | Il.Ast.IfPr { it = Il.Ast.SubE (_, _); _ } -> true
+      | Il.Ast.IfPr { it = Il.Ast.MatchE (_, _); _ } -> true
+      | Il.Ast.IfPr { it = Il.Ast.CmpE (`EqOp, _, _, { it = CaseE _; _ }); _ }
+      | Il.Ast.IfPr { it = Il.Ast.CmpE (`EqOp, _, { it = CaseE _; _ }, _); _ }
+        ->
+          true
+      | Il.Ast.LetPr _ -> true
+      | _ -> false
+    in
+    check
+      (List.for_all allowed_premise sideconditions_il)
+      exp_pat.at "table row patterns cannot contain sideconditions";
+    let _ctx_local, exp_il =
+      elab_def_output_with_bind ctx_local plaintyp exp_body
+    in
+    (exp_il, sideconditions_il) $ at
+  in
+  let tblrows_il = List.map (elab_tblrow ctx) tblrows in
+  Ctx.add_table_def ctx id tblrows_il
 
 and elab_def_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
     (args : arg list) (exp : exp) (prems : prem list) : Ctx.t =
@@ -1759,6 +1795,10 @@ let populate_clause (ctx : Ctx.t) (def_il : Il.Ast.def) : Il.Ast.def =
       let _, _, _, clauses_il = Ctx.find_plain_dec ctx id in
       Il.Ast.DecD (id, tparams_il, params_il, typ_il, clauses_il, hints)
       $ def_il.at
+  | Il.Ast.TableDecD (id, params_il, typ_il, [], hints) ->
+      let _, _, tblrows_il = Ctx.find_table_dec ctx id in
+      Il.Ast.TableDecD (id, params_il, typ_il, tblrows_il, hints) $ def_il.at
+  | Il.Ast.TableDecD _ -> error def_il.at "table was already populated"
   | Il.Ast.DecD _ -> error def_il.at "function was already populated"
   | _ -> def_il
 

@@ -171,7 +171,7 @@ let find_table_dec_opt (ctx : t) (fid : FId.t) :
 let find_table_dec (ctx : t) (fid : FId.t) :
     param list * plaintyp * Il.Ast.tblrow list =
   match find_table_dec_opt ctx fid with
-  | Some (params, plaintyp, clauses) -> (params, plaintyp, clauses)
+  | Some (params, plaintyp, tblrows) -> (params, plaintyp, tblrows)
   | None -> error_undef fid.at "table function" fid.it
 
 let find_dec_signature_opt (ctx : t) (fid : FId.t) :

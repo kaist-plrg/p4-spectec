@@ -386,6 +386,14 @@ and string_of_tblrow tblrow =
   let exp, prems = tblrow.it in
   string_of_exp exp ^ string_of_prems ~level:1 prems
 
+and string_of_tblrows tblrows =
+  String.concat ""
+    (List.mapi
+       (fun idx tblrow ->
+         "\n" ^ indent 1 ^ "row " ^ string_of_int idx ^ " : "
+         ^ string_of_tblrow tblrow)
+       tblrows)
+
 (* Premises *)
 
 and string_of_prem prem =
@@ -443,6 +451,9 @@ let rec string_of_def def =
   | BuiltinDecD (defid, tparams, params, typ, _) ->
       "builtin def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : " ^ string_of_typ typ
+  | TableDecD (defid, params, typ, tblrows, _) ->
+      "tbl def " ^ string_of_defid defid ^ string_of_params params ^ " : "
+      ^ string_of_typ typ ^ " =" ^ string_of_tblrows tblrows
   | DecD (defid, tparams, params, typ, clauses, _) ->
       "def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : " ^ string_of_typ typ ^ " ="

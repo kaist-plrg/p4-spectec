@@ -221,6 +221,8 @@ and def' =
   | ExternDecD of id * tparam list * param list * typ * hint list
   (* `builtin` `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ hint* *)
   | BuiltinDecD of id * tparam list * param list * typ * hint list
+  (* `tbl` `dec` id list(param, `,`) `:` typ hint* *)
+  | TableDecD of id * param list * typ * tblrow list * hint list
   (* `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ clause* hint* *)
   | DecD of id * tparam list * param list * typ * clause list * hint list
 

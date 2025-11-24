@@ -159,9 +159,9 @@ def $compat_plusminusmult(typeIR_l, typeIR_r)
   = $compat'_plusminusmult($canon_typeIR(typeIR_l), $canon_typeIR(typeIR_r))
 tbl def $compat'_plusminusmult =
   | (INT, INT) => true
-  | (INT `< w >, INT `< w >) => true
-  | (BIT `< w >, BIT `< w >) => true
-  | _ => false
+  | (INT `< w_l >, INT `< w_r >) => $(w_l = w_r)
+  | (BIT `< w_l >, BIT `< w_r >) => $(w_l = w_r)
+  | (_, _) => false
 
 rule Expr_ok/binaryExpression-plusminusmult:
   p TC |- expression_l binop expression_r
@@ -196,9 +196,9 @@ tbl dec $compat'_satplusminus(typeIR, typeIR) : bool
 def $compat_satplusminus(typeIR_l, typeIR_r)
   = $compat'_satplusminus($canon_typeIR(typeIR_l), $canon_typeIR(typeIR_r))
 tbl def $compat'_satplusminus =
-  | (INT `< w >, INT `< w >) => true
-  | (BIT `< w >, BIT `< w >) => true
-  | _ => false
+  | (INT `< w_l >, INT `< w_r >) => $(w_l = w_r)
+  | (BIT `< w_l >, BIT `< w_r >) => $(w_l = w_r)
+  | (_, _) => false
 
 rule Expr_ok/binaryExpression-satplusminus:
   p TC |- expression_l binop expression_r

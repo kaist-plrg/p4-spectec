@@ -117,6 +117,7 @@ let rec struct_def (ienv : IEnv.t) (tdenv : TDEnv.t) (def : def) : Sl.Ast.def =
       struct_extern_dec_def at id tparams params typ hints
   | BuiltinDecD (id, tparams, params, typ, hints) ->
       struct_builtin_dec_def at id tparams params typ hints
+  | TableDecD _ -> failwith "TODO: struct_table_dec_def"
   | DecD (id, tparams, _params, typ, clauses, hints) ->
       struct_defined_dec_def ienv tdenv at id tparams typ clauses hints
 
