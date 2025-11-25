@@ -2973,12 +2973,20 @@ syntax setValue =
    | set{ value .. value }
    | set{...}
 
-;; ../../../../spec-concrete/2.1.1-value.watsup:83.1-84.38
+;; ../../../../spec-concrete/2.1.1-value.watsup:82.33-82.53
+syntax tableMetadataEnumValue = 
+   | table_enum tid . id
+
+;; ../../../../spec-concrete/2.1.1-value.watsup:85.3-87.61
+syntax tableMetadataStructValue = 
+   | table_struct tid {hit boolValue ;miss boolValue ;action_run tableMetadataEnumValue ;}
+
+;; ../../../../spec-concrete/2.1.1-value.watsup:90.1-91.29
 syntax tableMetadataValue = 
    | table_enum tid . id
-   | table_struct tid { fieldValue* }
+   | table_struct tid {hit boolValue ;miss boolValue ;action_run tableMetadataEnumValue ;}
 
-;; ../../../../spec-concrete/2.1.1-value.watsup:87.1-92.23
+;; ../../../../spec-concrete/2.1.1-value.watsup:94.1-99.23
 syntax synthesizedValue = 
    | default
    | {#}
@@ -2991,9 +2999,9 @@ syntax synthesizedValue =
    | set{ value .. value }
    | set{...}
    | table_enum tid . id
-   | table_struct tid { fieldValue* }
+   | table_struct tid {hit boolValue ;miss boolValue ;action_run tableMetadataEnumValue ;}
 
-;; ../../../../spec-concrete/2.1.1-value.watsup:99.1-102.21
+;; ../../../../spec-concrete/2.1.1-value.watsup:106.1-109.21
 syntax value = 
    | b bool
    | error. id
@@ -3023,7 +3031,7 @@ syntax value =
    | set{ value .. value }
    | set{...}
    | table_enum tid . id
-   | table_struct tid { fieldValue* }
+   | table_struct tid {hit boolValue ;miss boolValue ;action_run tableMetadataEnumValue ;}
 
 ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:5.1-5.43
 builtin def $bitstr_to_int(int, int')
@@ -8198,6 +8206,16 @@ def $cast_op(typeIR, value'')
 
         2. Return $cast_set_range(typeIR, value_l, value_u)
 
+2. If ((value'' has type integerValue)), then
+
+  1. (Let integerValue be (value'' as integerValue))
+
+  2. If ((integerValue matches pattern `%.%V%`)), then
+
+    1. (Let (w_max . w v i) be integerValue)
+
+    2. Return $cast_varbit(typeIR, w_max, w, i)
+
 ;; ../../../../spec-concrete/3-numerics.watsup:532.1-533.49
 def $default(typeIR)
 
@@ -8529,11 +8547,31 @@ def $cast_fixint'(typeIR''', w', i)
       2. Return ((set{ $cast_fixint(typeIR, w', i) }) as value)
 
 ;; ../../../../spec-concrete/3-numerics.watsup:612.1-613.23
+def $cast_varbit(typeIR, w_max, w, i)
+
+1. Return $cast_varbit'($canon_typeIR(typeIR), w_max, w, i)
+
+;; ../../../../spec-concrete/3-numerics.watsup:614.1-615.23
+def $cast_varbit'(typeIR, w_max', w, i)
+
+1. If ((typeIR has type integerTypeIR)), then
+
+  1. (Let integerTypeIR be (typeIR as integerTypeIR))
+
+  2. If ((integerTypeIR matches pattern `VARBIT<%>`)), then
+
+    1. (Let (varbit< w_max >) be integerTypeIR)
+
+    2. If ((w_max = w_max')), then
+
+      1. Return ((w_max . w v i) as value)
+
+;; ../../../../spec-concrete/3-numerics.watsup:625.1-626.23
 def $cast_struct(typeIR, tid, (value_field, id_field)*{id_field <- id_field*, value_field <- value_field*})
 
 1. Return $cast_struct'($canon_typeIR(typeIR), tid, (value_field, id_field)*{id_field <- id_field*, value_field <- value_field*})
 
-;; ../../../../spec-concrete/3-numerics.watsup:614.1-615.23
+;; ../../../../spec-concrete/3-numerics.watsup:627.1-628.23
 def $cast_struct'(typeIR, tid', (value_field, id_field)*{id_field <- id_field*, value_field <- value_field*})
 
 1. If ((typeIR has type structTypeIR)), then
@@ -8544,12 +8582,12 @@ def $cast_struct'(typeIR, tid', (value_field, id_field)*{id_field <- id_field*, 
 
     1. Return ((struct tid { (value_field id_field ;)*{id_field <- id_field*, value_field <- value_field*} }) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:628.1-629.23
+;; ../../../../spec-concrete/3-numerics.watsup:641.1-642.23
 def $cast_header(typeIR, tid, b, (value_field, id_field)*{id_field <- id_field*, value_field <- value_field*})
 
 1. Return $cast_header'($canon_typeIR(typeIR), tid, b, (value_field, id_field)*{id_field <- id_field*, value_field <- value_field*})
 
-;; ../../../../spec-concrete/3-numerics.watsup:630.1-631.23
+;; ../../../../spec-concrete/3-numerics.watsup:643.1-644.23
 def $cast_header'(typeIR, tid', b, (value_field, id_field)*{id_field <- id_field*, value_field <- value_field*})
 
 1. If ((typeIR has type headerTypeIR)), then
@@ -8560,12 +8598,12 @@ def $cast_header'(typeIR, tid', b, (value_field, id_field)*{id_field <- id_field
 
     1. Return ((header tid { b ; (value_field id_field ;)*{id_field <- id_field*, value_field <- value_field*} }) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:648.1-649.23
+;; ../../../../spec-concrete/3-numerics.watsup:661.1-662.23
 def $cast_sequence(typeIR, value*{value <- value*})
 
 1. Return $cast_sequence'($canon_typeIR(typeIR), value*{value <- value*})
 
-;; ../../../../spec-concrete/3-numerics.watsup:650.1-651.23
+;; ../../../../spec-concrete/3-numerics.watsup:663.1-664.23
 def $cast_sequence'(typeIR'', value*{value <- value*})
 
 1. Case analysis on typeIR''
@@ -8608,12 +8646,12 @@ def $cast_sequence'(typeIR'', value*{value <- value*})
 
     3. Return ((header tid { true ; (value_cast id_field ;)*{id_field <- id_field*, value_cast <- value_cast*} }) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:681.1-682.23
+;; ../../../../spec-concrete/3-numerics.watsup:694.1-695.23
 def $cast_record(typeIR, (value, id)*{id <- id*, value <- value*})
 
 1. Return $cast_record'($canon_typeIR(typeIR), (value, id)*{id <- id*, value <- value*})
 
-;; ../../../../spec-concrete/3-numerics.watsup:683.1-684.23
+;; ../../../../spec-concrete/3-numerics.watsup:696.1-697.23
 def $cast_record'(typeIR, (value_field, id_field)*{id_field <- id_field*, value_field <- value_field*})
 
 1. Case analysis on typeIR
@@ -8646,12 +8684,12 @@ def $cast_record'(typeIR, (value_field, id_field)*{id_field <- id_field*, value_
 
       3. Return ((header tid { true ; (value_field_cast id_field ;)*{id_field <- id_field*, value_field_cast <- value_field_cast*} }) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:720.1-721.23
+;; ../../../../spec-concrete/3-numerics.watsup:733.1-734.23
 def $cast_set_singleton(typeIR, value)
 
 1. Return $cast_set_singleton'($canon_typeIR(typeIR), value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:722.1-723.23
+;; ../../../../spec-concrete/3-numerics.watsup:735.1-736.23
 def $cast_set_singleton'(typeIR'', value)
 
 1. If ((typeIR'' has type setTypeIR)), then
@@ -8664,12 +8702,12 @@ def $cast_set_singleton'(typeIR'', value)
 
     2. Return ((set{ $cast_op(typeIR, value) }) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:731.1-732.23
+;; ../../../../spec-concrete/3-numerics.watsup:744.1-745.23
 def $cast_set_mask(typeIR, value_b, value_m)
 
 1. Return $cast_set_mask'($canon_typeIR(typeIR), value_b, value_m)
 
-;; ../../../../spec-concrete/3-numerics.watsup:733.1-734.23
+;; ../../../../spec-concrete/3-numerics.watsup:746.1-747.23
 def $cast_set_mask'(typeIR'', value_b, value_m)
 
 1. If ((typeIR'' has type setTypeIR)), then
@@ -8686,12 +8724,12 @@ def $cast_set_mask'(typeIR'', value_b, value_m)
 
     4. Return ((set{ value_b_cast &&& value_m_cast }) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:744.1-745.23
+;; ../../../../spec-concrete/3-numerics.watsup:757.1-758.23
 def $cast_set_range(typeIR, value_l, value_u)
 
 1. Return $cast_set_range'($canon_typeIR(typeIR), value_l, value_u)
 
-;; ../../../../spec-concrete/3-numerics.watsup:746.1-747.23
+;; ../../../../spec-concrete/3-numerics.watsup:759.1-760.23
 def $cast_set_range'(typeIR'', value_l, value_u)
 
 1. If ((typeIR'' has type setTypeIR)), then
@@ -8708,7 +8746,7 @@ def $cast_set_range'(typeIR'', value_l, value_u)
 
     4. Return ((set{ value_l_cast .. value_u_cast }) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:812.1-813.23
+;; ../../../../spec-concrete/3-numerics.watsup:825.1-826.23
 def $bitacc_op(value_b, value_h, value_l)
 
 1. (Let i_b be $int_of_value(value_b))
@@ -8727,7 +8765,7 @@ def $bitacc_op(value_b, value_h, value_l)
 
   3. Return ((w w i) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:826.1-827.23
+;; ../../../../spec-concrete/3-numerics.watsup:839.1-840.23
 def $sizeof(typeIR, text)
 
 1. Case analysis on text
@@ -8748,17 +8786,17 @@ def $sizeof(typeIR, text)
 
     1. Return $sizeof_maxSizeInBytes(typeIR)
 
-;; ../../../../spec-concrete/3-numerics.watsup:829.1-830.23
+;; ../../../../spec-concrete/3-numerics.watsup:842.1-843.23
 def $sizeof_minSizeInBits(typeIR)
 
 1. Return ((d ($sizeof_minSizeInBits'(typeIR) as int)) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:831.1-832.23
+;; ../../../../spec-concrete/3-numerics.watsup:844.1-845.23
 def $sizeof_minSizeInBits'(typeIR)
 
 1. Return $sizeof_minSizeInBits''($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/3-numerics.watsup:833.1-834.23
+;; ../../../../spec-concrete/3-numerics.watsup:846.1-847.23
 def $sizeof_minSizeInBits''(typeIR'')
 
 1. Case analysis on typeIR''
@@ -8839,24 +8877,24 @@ def $sizeof_minSizeInBits''(typeIR'')
 
     2. Return $min_nat($sizeof_minSizeInBits'(typeIR)*{typeIR <- typeIR*})
 
-;; ../../../../spec-concrete/3-numerics.watsup:836.1-837.23
+;; ../../../../spec-concrete/3-numerics.watsup:849.1-850.23
 def $sizeof_minSizeInBytes(typeIR)
 
 1. (Let n_size be $sizeof_minSizeInBits'(typeIR))
 
 2. Return ((d ((n_size / 8) as int)) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:839.1-840.23
+;; ../../../../spec-concrete/3-numerics.watsup:852.1-853.23
 def $sizeof_maxSizeInBits(typeIR)
 
 1. Return ((d ($sizeof_maxSizeInBits'(typeIR) as int)) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:841.1-842.23
+;; ../../../../spec-concrete/3-numerics.watsup:854.1-855.23
 def $sizeof_maxSizeInBits'(typeIR)
 
 1. Return $sizeof_maxSizeInBits''($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/3-numerics.watsup:843.1-844.23
+;; ../../../../spec-concrete/3-numerics.watsup:856.1-857.23
 def $sizeof_maxSizeInBits''(typeIR'')
 
 1. Case analysis on typeIR''
@@ -8937,7 +8975,7 @@ def $sizeof_maxSizeInBits''(typeIR'')
 
     2. Return $max_nat($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
 
-;; ../../../../spec-concrete/3-numerics.watsup:846.1-847.23
+;; ../../../../spec-concrete/3-numerics.watsup:859.1-860.23
 def $sizeof_maxSizeInBytes(typeIR)
 
 1. (Let n_size be $sizeof_maxSizeInBits'(typeIR))
@@ -27992,23 +28030,17 @@ relation Expr_eval: p EC' STO' |- (expressionIR # _expressionNoteIR') : % % %
 
                   3. Result in : % % % |- % : EC' STO' expressionResult
 
-2. (Let (( typeIR_base _ctk )) be _expressionNoteIR')
-
-3. Case analysis on expressionIR
-
-  1. Case (% has type memberAccessExpressionIR)
-
-    1. (Let (memberAccessBaseIR . nameIR') be (expressionIR as memberAccessExpressionIR))
-
-    2. If ((memberAccessBaseIR has type typedExpressionIR)), then
+    3. If ((memberAccessBaseIR has type typedExpressionIR)), then
 
       1. (Let typedExpressionIR_base be (memberAccessBaseIR as typedExpressionIR))
 
-      2. Group memberAccessExpressionIR-expression: p EC' STO' |- ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR') as expressionIR) # (( typeIR_base _ctk ))) : % % %
+      2. Group memberAccessExpressionIR-expression: p EC' STO' |- ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # _expressionNoteIR') : % % %
 
-        1. (Expr_eval: p EC' STO' |- typedExpressionIR_base : EC_1 STO_1 expressionResult')
+        1. (Let (( typeIR_base _ctk )) be _expressionNoteIR')
 
-        2. Case analysis on expressionResult'
+        2. (Expr_eval: p EC' STO' |- typedExpressionIR_base : EC_1 STO_1 expressionResult')
+
+        3. Case analysis on expressionResult'
 
           1. Case (% has type exitResult)
 
@@ -28026,7 +28058,7 @@ relation Expr_eval: p EC' STO' |- (expressionIR # _expressionNoteIR') : % % %
 
                 1. (Let (struct _tid { (value_field id_field ;)*{id_field <- id_field*, value_field <- value_field*} }) be (value_base as structValue))
 
-                2. (Let value'?{value' <- value'?} be $assoc_<nameIR, value>(nameIR', (id_field, value_field)*{id_field <- id_field*, value_field <- value_field*}))
+                2. (Let value'?{value' <- value'?} be $assoc_<nameIR, value>(nameIR, (id_field, value_field)*{id_field <- id_field*, value_field <- value_field*}))
 
                 3. If ((value'?{value' <- value'?} matches pattern (_))), then
 
@@ -28040,7 +28072,7 @@ relation Expr_eval: p EC' STO' |- (expressionIR # _expressionNoteIR') : % % %
 
                 1. (Let (header _tid { _bool ; (value_field id_field ;)*{id_field <- id_field*, value_field <- value_field*} }) be (value_base as headerValue))
 
-                2. (Let value'?{value' <- value'?} be $assoc_<nameIR, value>(nameIR', (id_field, value_field)*{id_field <- id_field*, value_field <- value_field*}))
+                2. (Let value'?{value' <- value'?} be $assoc_<nameIR, value>(nameIR, (id_field, value_field)*{id_field <- id_field*, value_field <- value_field*}))
 
                 3. If ((value'?{value' <- value'?} matches pattern (_))), then
 
@@ -28054,7 +28086,7 @@ relation Expr_eval: p EC' STO' |- (expressionIR # _expressionNoteIR') : % % %
 
                 1. (Let (header_union _tid { (value_field id_field ;)*{id_field <- id_field*, value_field <- value_field*} }) be (value_base as headerUnionValue))
 
-                2. (Let value'?{value' <- value'?} be $assoc_<nameIR, value>(nameIR', (id_field, value_field)*{id_field <- id_field*, value_field <- value_field*}))
+                2. (Let value'?{value' <- value'?} be $assoc_<nameIR, value>(nameIR, (id_field, value_field)*{id_field <- id_field*, value_field <- value_field*}))
 
                 3. If ((value'?{value' <- value'?} matches pattern (_))), then
 
@@ -28064,7 +28096,7 @@ relation Expr_eval: p EC' STO' |- (expressionIR # _expressionNoteIR') : % % %
 
                   3. Result in : % % % |- % : EC_1 STO_1 expressionResult
 
-        3. Case analysis on nameIR'
+        4. Case analysis on nameIR
 
           1. Case (% = "size")
 
@@ -28102,7 +28134,49 @@ relation Expr_eval: p EC' STO' |- (expressionIR # _expressionNoteIR') : % % %
 
                   4. Result in : % % % |- % : EC_1 STO_1 expressionResult
 
-  2. Case (% has type indexAccessExpressionIR)
+          3. Case (% = "hit")
+
+            1. If ((expressionResult' has type continueResult<value>)), then
+
+              1. (Let (` value_base) be (expressionResult' as continueResult<value>))
+
+              2. If ((value_base has type tableMetadataStructValue)), then
+
+                1. (Let (table_struct _tid {hit boolValue_hit ;miss _boolValue ;action_run _tableMetadataEnumValue ;}) be (value_base as tableMetadataStructValue))
+
+                2. (Let expressionResult be ((` (boolValue_hit as value)) as expressionResult))
+
+                3. Result in : % % % |- % : EC_1 STO_1 expressionResult
+
+          4. Case (% = "miss")
+
+            1. If ((expressionResult' has type continueResult<value>)), then
+
+              1. (Let (` value_base) be (expressionResult' as continueResult<value>))
+
+              2. If ((value_base has type tableMetadataStructValue)), then
+
+                1. (Let (table_struct _tid {hit _boolValue ;miss boolValue_miss ;action_run _tableMetadataEnumValue ;}) be (value_base as tableMetadataStructValue))
+
+                2. (Let expressionResult be ((` (boolValue_miss as value)) as expressionResult))
+
+                3. Result in : % % % |- % : EC_1 STO_1 expressionResult
+
+          5. Case (% = "action_run")
+
+            1. If ((expressionResult' has type continueResult<value>)), then
+
+              1. (Let (` value_base) be (expressionResult' as continueResult<value>))
+
+              2. If ((value_base has type tableMetadataStructValue)), then
+
+                1. (Let (table_struct _tid {hit _boolValue ;miss _boolValue' ;action_run tableMetadataEnumValue ;}) be (value_base as tableMetadataStructValue))
+
+                2. (Let expressionResult be ((` (tableMetadataEnumValue as value)) as expressionResult))
+
+                3. Result in : % % % |- % : EC_1 STO_1 expressionResult
+
+  13. Case (% has type indexAccessExpressionIR)
 
     1. (Let (typedExpressionIR_base [ typedExpressionIR_index ]) be (expressionIR as indexAccessExpressionIR))
 
@@ -28164,7 +28238,7 @@ relation Expr_eval: p EC' STO' |- (expressionIR # _expressionNoteIR') : % % %
 
               3. Result in : % % % |- % : EC_1 STO_1 expressionResult
 
-  3. Case (% has type sliceAccessExpressionIR)
+  14. Case (% has type sliceAccessExpressionIR)
 
     1. (Let (typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ]) be (expressionIR as sliceAccessExpressionIR))
 
@@ -28192,7 +28266,7 @@ relation Expr_eval: p EC' STO' |- (expressionIR # _expressionNoteIR') : % % %
 
           3. Result in : % % % |- % : EC_1 STO_1 expressionResult
 
-  4. Case (% has type callExpressionIR)
+  15. Case (% has type callExpressionIR)
 
     1. (Let callExpressionIR be (expressionIR as callExpressionIR))
 
@@ -28236,7 +28310,7 @@ relation Expr_eval: p EC' STO' |- (expressionIR # _expressionNoteIR') : % % %
 
                   2. Result in : % % % |- % : EC_2 STO_2 ((` value) as expressionResult)
 
-  5. Case (% has type parenthesizedExpressionIR)
+  16. Case (% has type parenthesizedExpressionIR)
 
     1. (Let (( typedExpressionIR )) be (expressionIR as parenthesizedExpressionIR))
 
@@ -29415,10 +29489,10 @@ syntax tableResult =
    | exit
    | return value?
 
-;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:193.1-196.23
-relation Table_eval: EC_0 STO_0 |- TBL : % % %
+;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:193.1-196.26
+relation Table_eval: EC_0 STO_0 |- tid TBL : % % %
 
-1. Group : EC_0 STO_0 |- TBL : % % %
+1. Group : EC_0 STO_0 |- tid TBL : % % %
 
   1. (Let (key={ tableKeyListIR }) be TBL.keys)
 
@@ -29444,7 +29518,15 @@ relation Table_eval: EC_0 STO_0 |- TBL : % % %
 
         1. (Let continueEmptyResult be (statementResult as continueEmptyResult))
 
-        2. Result in : % % |- % : EC_3 STO_3 ((return ?()) as tableResult)
+        2. (Let b_hit be ~(tableMatch*{tableMatch <- tableMatch*} = []))
+
+        3. (Let b_miss be ~b_hit)
+
+        4. (Let tableMetadataEnumValue be (table_enum "action_list(" ++ tid ++ ")" . $flatten_prefixedNameIR(prefixedNameIR)))
+
+        5. (Let tableMetadataStructValue be (table_struct "apply_result(" ++ tid ++ ")" {hit (b b_hit) ;miss (b b_miss) ;action_run tableMetadataEnumValue ;}))
+
+        6. Result in : % % |- % % : EC_3 STO_3 ((return ?((tableMetadataStructValue as value))) as tableResult)
 
 ;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:199.1-200.17
 syntax controlBodyResult = 
@@ -30650,19 +30732,27 @@ relation Call_eval: p EC_0' STO_0' |- callee @< typeArgumentListIR' >( argumentL
 
     2. Group tableApplyMethodCallee: p EC_0' STO_0' |- (tableApplyMethodCallee as callee) @< typeArgumentListIR' >( argumentListIR' ): % % %
 
-      1. (Let (table _oid .apply{ frame ; TBL }) be tableApplyMethodCallee)
+      1. (Let (table oid .apply{ frame ; TBL }) be tableApplyMethodCallee)
 
       2. (Let EC_callee_0 be $inherit_e((block), EC_0'))
 
       3. (Let EC_callee_1 be EC_callee_0[local.frames = [frame]])
 
-      4. (Table_eval: EC_callee_1 STO_0' |- TBL : EC_callee_2 STO_1 tableResult)
+      4. (Let tid'*{tid' <- tid'*} be $rev_<id>(oid))
 
-      5. If ((tableResult = ((return ?()) as tableResult))), then
+      5. If ((tid'*{tid' <- tid'*} matches pattern _ :: _)), then
 
-        1. (Let EC_1 be EC_0'[block.frame = EC_callee_2.block.frame])
+        1. (Let tid :: _tid*{_tid <- _tid*} be tid'*{tid' <- tid'*})
 
-        2. Result in : % % % |- % @< % >( % ): EC_1 STO_1 ((return ?()) as callResult)
+        2. (Table_eval: EC_callee_1 STO_0' |- tid TBL : EC_callee_2 STO_1 tableResult)
+
+        3. If ((tableResult has type returnResult)), then
+
+          1. (Let returnResult be (tableResult as returnResult))
+
+          2. (Let EC_1 be EC_0'[block.frame = EC_callee_2.block.frame])
+
+          3. Result in : % % % |- % @< % >( % ): EC_1 STO_1 (returnResult as callResult)
 
 ;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:288.1-294.92
 extern relation ExternFunctionCall_eval: evalContext store |- nameIR ( nameIR'*{nameIR' <- nameIR'*} ): % % %

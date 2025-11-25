@@ -7031,68 +7031,86 @@ relation Expr_eval: `p`, `EC'`, `STO'`, and <<typedExpressionIR, `expressionIR` 
   ... Let `expressionResult` be `value~error~`.
   ... Result in the resulting evaluation context `EC'`, store `STO'` and expression result `expressionResult`.
 . Else if let `memberAccessBaseIR . nameIR` be `expressionIR`:
- .. Check that `memberAccessBaseIR` matches pattern `TYPE %`.
- .. Let `TYPE prefixedNameIR` be `memberAccessBaseIR`.
- .. Group memberAccessExpressionIR-type:
-  ... Let `typeDefIR'^?^` be `<<find_typeDef_e, $find_typeDef_e(p, EC', prefixedNameIR)>>`.
-  ... Check that `typeDefIR'^?^` is Some value.
-  ... Let `typeDefIR` be `typeDefIR'^?^`.
-  ... Check that `typeDefIR` has type `enumTypeIR`.
-  ... Let `enumTypeIR` be `typeDefIR`.
-  ... If let `ENUM tid { ++_++^{asterisk}^ }` be `enumTypeIR`:
-   .... Let `expressionResult` be `tid . nameIR`.
-   .... Result in the resulting evaluation context `EC'`, store `STO'` and expression result `expressionResult`.
-  ... Else let `ENUM tid < ++_++ > { (id~member~ = value~member~ ;)^{asterisk}^ }` be `enumTypeIR`:
-   .... Let `value'^?^` be `<<assoc_, $assoc_<nameIR, value>(nameIR, ((id~member~, value~member~))^{asterisk}^)>>`.
-   .... Check that `value'^?^` is Some value.
-   .... Let `value` be `value'^?^`.
-   .... Let `expressionResult` be `tid . nameIR . value`.
-   .... Result in the resulting evaluation context `EC'`, store `STO'` and expression result `expressionResult`.
-. Let `typeIR~base~` be the type of `++_++`.
-. If let `memberAccessBaseIR . nameIR'` be `expressionIR`:
- .. Check that `memberAccessBaseIR` has type `typedExpressionIR`.
- .. Let `typedExpressionIR~base~` be `memberAccessBaseIR`.
- .. Group memberAccessExpressionIR-expression:
-  ... Let `EC~1~`, `STO~1~`, and `expressionResult'` be the result of <<Expr_eval, evaluating `typedExpressionIR~base~`, under cursor `p`, evaluation context `EC'`, and store `STO'`>>.
-  ... If let `exitResult` be `expressionResult'`:
-   .... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `EXIT`.
-  ... Else let `value~base~` be `expressionResult'`:
-   .... If let `STRUCT ++_++ { (value~field~ id~field~ ;)^{asterisk}^ }` be `value~base~`:
-    ..... Let `value'^?^` be `<<assoc_, $assoc_<nameIR, value>(nameIR', ((id~field~, value~field~))^{asterisk}^)>>`.
+ .. Else if let `TYPE prefixedNameIR` be `memberAccessBaseIR`:
+  ... Group memberAccessExpressionIR-type:
+   .... Let `typeDefIR'^?^` be `<<find_typeDef_e, $find_typeDef_e(p, EC', prefixedNameIR)>>`.
+   .... Check that `typeDefIR'^?^` is Some value.
+   .... Let `typeDefIR` be `typeDefIR'^?^`.
+   .... Check that `typeDefIR` has type `enumTypeIR`.
+   .... Let `enumTypeIR` be `typeDefIR`.
+   .... If let `ENUM tid { ++_++^{asterisk}^ }` be `enumTypeIR`:
+    ..... Let `expressionResult` be `tid . nameIR`.
+    ..... Result in the resulting evaluation context `EC'`, store `STO'` and expression result `expressionResult`.
+   .... Else let `ENUM tid < ++_++ > { (id~member~ = value~member~ ;)^{asterisk}^ }` be `enumTypeIR`:
+    ..... Let `value'^?^` be `<<assoc_, $assoc_<nameIR, value>(nameIR, ((id~member~, value~member~))^{asterisk}^)>>`.
     ..... Check that `value'^?^` is Some value.
-    ..... Let `value~member~` be `value'^?^`.
-    ..... Let `expressionResult` be `value~member~`.
+    ..... Let `value` be `value'^?^`.
+    ..... Let `expressionResult` be `tid . nameIR . value`.
+    ..... Result in the resulting evaluation context `EC'`, store `STO'` and expression result `expressionResult`.
+ .. Else if let `typedExpressionIR~base~` be `memberAccessBaseIR`:
+  ... Group memberAccessExpressionIR-expression:
+   .... Let `typeIR~base~` be the type of `++_++`.
+   .... Let `EC~1~`, `STO~1~`, and `expressionResult'` be the result of <<Expr_eval, evaluating `typedExpressionIR~base~`, under cursor `p`, evaluation context `EC'`, and store `STO'`>>.
+   .... If let `exitResult` be `expressionResult'`:
+    ..... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `EXIT`.
+   .... Else let `value~base~` be `expressionResult'`:
+    ..... If let `STRUCT ++_++ { (value~field~ id~field~ ;)^{asterisk}^ }` be `value~base~`:
+     ...... Let `value'^?^` be `<<assoc_, $assoc_<nameIR, value>(nameIR, ((id~field~, value~field~))^{asterisk}^)>>`.
+     ...... Check that `value'^?^` is Some value.
+     ...... Let `value~member~` be `value'^?^`.
+     ...... Let `expressionResult` be `value~member~`.
+     ...... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
+    ..... Else if let `HEADER ++_++ { ++_++ ; (value~field~ id~field~ ;)^{asterisk}^ }` be `value~base~`:
+     ...... Let `value'^?^` be `<<assoc_, $assoc_<nameIR, value>(nameIR, ((id~field~, value~field~))^{asterisk}^)>>`.
+     ...... Check that `value'^?^` is Some value.
+     ...... Let `value~member~` be `value'^?^`.
+     ...... Let `expressionResult` be `value~member~`.
+     ...... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
+    ..... Else if let `HEADER_UNION ++_++ { (value~field~ id~field~ ;)^{asterisk}^ }` be `value~base~`:
+     ...... Let `value'^?^` be `<<assoc_, $assoc_<nameIR, value>(nameIR, ((id~field~, value~field~))^{asterisk}^)>>`.
+     ...... Check that `value'^?^` is Some value.
+     ...... Let `value~member~` be `value'^?^`.
+     ...... Let `expressionResult` be `value~member~`.
+     ...... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
+   .... If `nameIR` is equal to `"size"`:
+    ..... Check that `expressionResult'` has type `continueResult<value>`.
+    ..... Let `value~base~` be `expressionResult'`.
+    ..... Check that `value~base~` has type `headerStackValue`.
+    ..... Let `HEADER_STACK [ ++_++^{asterisk}^ ( ++_++ ; n~size~ ) ]` be `value~base~`.
+    ..... Let `expressionResult` be `D n~size~`.
     ..... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
-   .... Else if let `HEADER ++_++ { ++_++ ; (value~field~ id~field~ ;)^{asterisk}^ }` be `value~base~`:
-    ..... Let `value'^?^` be `<<assoc_, $assoc_<nameIR, value>(nameIR', ((id~field~, value~field~))^{asterisk}^)>>`.
-    ..... Check that `value'^?^` is Some value.
-    ..... Let `value~member~` be `value'^?^`.
-    ..... Let `expressionResult` be `value~member~`.
+   .... Else if `nameIR` is equal to `"last"`:
+    ..... Check that `expressionResult'` has type `continueResult<value>`.
+    ..... Let `value~base~` be `expressionResult'`.
+    ..... Check that `value~base~` has type `headerStackValue`.
+    ..... Let `HEADER_STACK [ value~elem~^{asterisk}^ ( n~idx~ ; ++_++ ) ]` be `value~base~`.
+    ..... Let `int` be `n~idx~ - 1`.
+    ..... Check that `int` has type `nat`.
+    ..... Let `n~idx_last~` be `int`.
+    ..... Let `value~last~` be `value~elem~^{asterisk}^[n~idx_last~]`.
+    ..... Let `expressionResult` be `value~last~`.
     ..... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
-   .... Else if let `HEADER_UNION ++_++ { (value~field~ id~field~ ;)^{asterisk}^ }` be `value~base~`:
-    ..... Let `value'^?^` be `<<assoc_, $assoc_<nameIR, value>(nameIR', ((id~field~, value~field~))^{asterisk}^)>>`.
-    ..... Check that `value'^?^` is Some value.
-    ..... Let `value~member~` be `value'^?^`.
-    ..... Let `expressionResult` be `value~member~`.
+   .... Else if `nameIR` is equal to `"hit"`:
+    ..... Check that `expressionResult'` has type `continueResult<value>`.
+    ..... Let `value~base~` be `expressionResult'`.
+    ..... Check that `value~base~` has type `tableMetadataStructValue`.
+    ..... Let `TABLE_STRUCT ++_++ { HIT boolValue~hit~ ; MISS ++_++ ; ACTION_RUN ++_++ ; }` be `value~base~`.
+    ..... Let `expressionResult` be `boolValue~hit~`.
     ..... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
-  ... If `nameIR'` is equal to `"size"`:
-   .... Check that `expressionResult'` has type `continueResult<value>`.
-   .... Let `value~base~` be `expressionResult'`.
-   .... Check that `value~base~` has type `headerStackValue`.
-   .... Let `HEADER_STACK [ ++_++^{asterisk}^ ( ++_++ ; n~size~ ) ]` be `value~base~`.
-   .... Let `expressionResult` be `D n~size~`.
-   .... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
-  ... Else if `nameIR'` is equal to `"last"`:
-   .... Check that `expressionResult'` has type `continueResult<value>`.
-   .... Let `value~base~` be `expressionResult'`.
-   .... Check that `value~base~` has type `headerStackValue`.
-   .... Let `HEADER_STACK [ value~elem~^{asterisk}^ ( n~idx~ ; ++_++ ) ]` be `value~base~`.
-   .... Let `int` be `n~idx~ - 1`.
-   .... Check that `int` has type `nat`.
-   .... Let `n~idx_last~` be `int`.
-   .... Let `value~last~` be `value~elem~^{asterisk}^[n~idx_last~]`.
-   .... Let `expressionResult` be `value~last~`.
-   .... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
+   .... Else if `nameIR` is equal to `"miss"`:
+    ..... Check that `expressionResult'` has type `continueResult<value>`.
+    ..... Let `value~base~` be `expressionResult'`.
+    ..... Check that `value~base~` has type `tableMetadataStructValue`.
+    ..... Let `TABLE_STRUCT ++_++ { HIT ++_++ ; MISS boolValue~miss~ ; ACTION_RUN ++_++ ; }` be `value~base~`.
+    ..... Let `expressionResult` be `boolValue~miss~`.
+    ..... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
+   .... Else if `nameIR` is equal to `"action_run"`:
+    ..... Check that `expressionResult'` has type `continueResult<value>`.
+    ..... Let `value~base~` be `expressionResult'`.
+    ..... Check that `value~base~` has type `tableMetadataStructValue`.
+    ..... Let `TABLE_STRUCT ++_++ { HIT ++_++ ; MISS ++_++ ; ACTION_RUN tableMetadataEnumValue ; }` be `value~base~`.
+    ..... Let `expressionResult` be `tableMetadataEnumValue`.
+    ..... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
 . Else if let `typedExpressionIR~base~ [ typedExpressionIR~index~ ]` be `expressionIR`:
  .. Group indexAccessExpressionIR:
   ... Let `EC~1~`, `STO~1~`, and `expressionListResult` be the result of <<Exprs_eval, evaluating `[typedExpressionIR~base~, typedExpressionIR~index~]`, under cursor `p`, evaluation context `EC'`, and store `STO'`>>.
@@ -7147,7 +7165,7 @@ relation Expr_eval: `p`, `EC'`, `STO'`, and <<typedExpressionIR, `expressionIR` 
     ..... Check that `value'^?^` is Some value.
     ..... Let `value` be `value'^?^`.
     ..... Result in the resulting evaluation context `EC~2~`, store `STO~2~` and expression result `value`.
-. Else if let `( typedExpressionIR )` be `expressionIR`:
+. Else let `( typedExpressionIR )` be `expressionIR`:
  .. Group parenthesizedExpressionIR:
   ... Let `EC~1~`, `STO~1~`, and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR`, under cursor `p`, evaluation context `EC'`, and store `STO'`>>.
   ... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
@@ -7729,7 +7747,7 @@ relation ParserLocalDecls_eval: `evalContext`, `store`, and `parserLocalDeclarat
   ... Result in `EC~2~` and `STO~2~`.
 
 
-relation Table_eval: `EC~0~`, `STO~0~`, and `TBL`
+relation Table_eval: `EC~0~`, `STO~0~`, `tid`, and `TBL`
 
 
 . Group :
@@ -7745,7 +7763,12 @@ relation Table_eval: `EC~0~`, `STO~0~`, and `TBL`
  .. Let `EC~3~`, `STO~3~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `prefixedNameIR < [ ] > ( argumentListIR ) ;`, under cursor `LOCAL`, evaluation context `EC~2~`, and store `STO~2~`>>.
  .. Check that `statementResult` has type `continueEmptyResult`.
  .. Let `continueEmptyResult` be `statementResult`.
- .. Result in `EC~3~`, `STO~3~`, and `RETURN None`.
+ .. Let `b~hit~` be `~tableMatch^{asterisk}^ = [ ]`.
+ .. Let `b~miss~` be `~b~hit~`.
+ .. Let `nameIR` be <<flatten_prefixedNameIR, the string form of  `prefixedNameIR`>>.
+ .. Let `tableMetadataEnumValue` be `TABLE_ENUM "action_list(" {pp} tid {pp} ")" . nameIR`.
+ .. Let `tableMetadataStructValue` be `TABLE_STRUCT "apply_result(" {pp} tid {pp} ")" { HIT B b~hit~ ; MISS B b~miss~ ; ACTION_RUN tableMetadataEnumValue ; }`.
+ .. Result in `EC~3~`, `STO~3~`, and `RETURN tableMetadataStructValue`.
 
 
 relation ControlBody_eval: `EC~0~`, `STO~0~`, and `controlBodyIR`
@@ -8324,13 +8347,17 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
    .... Result in the resulting evaluation context `EC~3~`, store `STO~3~`, and call result `EXIT`.
 . Else if let `tableApplyMethodCallee` be `callee`:
  .. Group tableApplyMethodCallee:
-  ... Let `TABLE ++_++ . APPLY { frame ; TBL }` be `tableApplyMethodCallee`.
+  ... Let `TABLE oid . APPLY { frame ; TBL }` be `tableApplyMethodCallee`.
   ... Let `EC~callee_0~` be `<<inherit_e, $inherit_e(BLOCK, EC~0'~)>>`.
   ... Let `EC~callee_1~` be `EC~callee_0~[LOCAL.FRAMES = [frame]]`.
-  ... Let <<Table_eval, `EC~callee_1~ STO~0'~ |- TBL : EC~callee_2~ STO~1~ tableResult`>>.
-  ... Check that `tableResult` is equal to `RETURN None`.
+  ... Let `tid'^{asterisk}^` be `<<rev_, $rev_<id>(oid)>>`.
+  ... Check that `tid'^{asterisk}^` is a non-empty list.
+  ... Let `tid {two-colons} ++_++^{asterisk}^` be `tid'^{asterisk}^`.
+  ... Let <<Table_eval, `EC~callee_1~ STO~0'~ |- tid TBL : EC~callee_2~ STO~1~ tableResult`>>.
+  ... Check that `tableResult` has type `returnResult`.
+  ... Let `returnResult` be `tableResult`.
   ... Let `EC~1~` be `EC~0'~[BLOCK.FRAME = EC~callee_2~.BLOCK.FRAME]`.
-  ... Result in the resulting evaluation context `EC~1~`, store `STO~1~`, and call result `RETURN None`.
+  ... Result in the resulting evaluation context `EC~1~`, store `STO~1~`, and call result `returnResult`.
 
 
 relation ExternFunctionCall_eval: `evalContext`, `store`, `nameIR`, and `nameIR'^{asterisk}^`

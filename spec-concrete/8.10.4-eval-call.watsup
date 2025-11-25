@@ -609,16 +609,17 @@ rulegroup Call_eval/controlApplyMethodCallee {
 rule Call_eval/tableApplyMethodCallee:
   p EC_0 STO_0 |- tableApplyMethodCallee
                   `@ `< typeArgumentListIR > `( argumentListIR )
-                : EC_1 STO_1 (RETURN eps)
+                : EC_1 STO_1 returnResult
   ---- ;; unpack the table apply method callee
-  -- if TABLE _ `. APPLY `{ frame `; TBL }
+  -- if TABLE oid `. APPLY `{ frame `; TBL }
       = tableApplyMethodCallee
   ---- ;; create the callee context
   -- if EC_callee_0 = $inherit_e(BLOCK, EC_0)
   -- if EC_callee_1 = EC_callee_0[ .LOCAL.FRAMES = [ frame ] ]
   ---- ;; evaluate match-action
+  -- if tid :: _ = $rev_<id>(oid)
   -- Table_eval:
-      EC_callee_1 STO_0 |- TBL
-                         : EC_callee_2 STO_1 (RETURN eps)
+      EC_callee_1 STO_0 |- tid TBL
+                         : EC_callee_2 STO_1 returnResult
   ---- ;; propagate shared layers
   -- if EC_1 = EC_0[ .BLOCK.FRAME = EC_callee_2.BLOCK.FRAME ]
