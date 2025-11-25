@@ -460,16 +460,20 @@ relation ParameterType_wf: `bound` and `direction typeIR ++_++ value'^?^`
 . Group :
  .. If `value'^?^` is equal to `None`:
   ... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `bound`>>.
-  ... Check that `<<is_stringTypeIR, $is_stringTypeIR($canon_typeIR(typeIR))>> \/ <<is_arbitraryIntTypeIR, $is_arbitraryIntTypeIR($canon_typeIR(typeIR))>> \/ <<is_objectTypeIR, $is_objectTypeIR($canon_typeIR(typeIR))>>` *implies* `direction = `.
+  ... Let `typeIR~canon~` be <<canon_typeIR, the canonicalized form of `typeIR`>>.
+  ... Check that `~<<is_synthesizedTypeIR, $is_synthesizedTypeIR(typeIR~canon~)>>`.
+  ... Check that `<<is_stringTypeIR, $is_stringTypeIR(typeIR~canon~)>> \/ <<is_arbitraryIntTypeIR, $is_arbitraryIntTypeIR(typeIR~canon~)>> \/ <<is_objectTypeIR, $is_objectTypeIR(typeIR~canon~)>>` *implies* `direction = `.
   ... The relation holds.
  .. Let `value''^?^` be `value'^?^`.
  .. Else if let `value` be `value''^?^`:
   ... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `bound`>>.
+  ... Let `typeIR~canon~` be <<canon_typeIR, the canonicalized form of `typeIR`>>.
+  ... Check that `~<<is_synthesizedTypeIR, $is_synthesizedTypeIR(typeIR~canon~)>>`.
   ... If `direction` matches pattern `IN`:
-   .... Check that `<<is_stringTypeIR, $is_stringTypeIR($canon_typeIR(typeIR))>> \/ <<is_arbitraryIntTypeIR, $is_arbitraryIntTypeIR($canon_typeIR(typeIR))>> \/ <<is_objectTypeIR, $is_objectTypeIR($canon_typeIR(typeIR))>>` *implies* `direction = `.
+   .... Check that `<<is_stringTypeIR, $is_stringTypeIR(typeIR~canon~)>> \/ <<is_arbitraryIntTypeIR, $is_arbitraryIntTypeIR(typeIR~canon~)>> \/ <<is_objectTypeIR, $is_objectTypeIR(typeIR~canon~)>>` *implies* `direction = `.
    .... The relation holds.
   ... Else if `direction` matches pattern ``EMPTY`:
-   .... Check that `<<is_stringTypeIR, $is_stringTypeIR($canon_typeIR(typeIR))>> \/ <<is_arbitraryIntTypeIR, $is_arbitraryIntTypeIR($canon_typeIR(typeIR))>> \/ <<is_objectTypeIR, $is_objectTypeIR($canon_typeIR(typeIR))>>` *implies* `direction = `.
+   .... Check that `<<is_stringTypeIR, $is_stringTypeIR(typeIR~canon~)>> \/ <<is_arbitraryIntTypeIR, $is_arbitraryIntTypeIR(typeIR~canon~)>> \/ <<is_objectTypeIR, $is_objectTypeIR(typeIR~canon~)>>` *implies* `direction = `.
    .... The relation holds.
 
 
@@ -609,6 +613,7 @@ relation ConstructorParameterType_wf: `bound` and `direction typeIR ++_++ ++_++^
 . Check that `direction` matches pattern ``EMPTY`.
 . Group :
  .. Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `bound`>>.
+ .. Check that `~<<is_synthesizedTypeIR, $is_synthesizedTypeIR($canon_typeIR(typeIR))>>`.
  .. The relation holds.
 
 

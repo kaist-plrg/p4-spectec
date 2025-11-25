@@ -149,7 +149,7 @@ struct
       Spec.Func.find_var_e_local value_ctx "max" |> unpack_p4_fixedBit |> snd
     in
     let values =
-      Spec.Func.find_var_e_local value_ctx "data" |> unpack_p4_sequence
+      Spec.Func.find_var_e_local value_ctx "data" |> unpack_p4_tuple
     in
     let id_enum, id_enum_field =
       Spec.Func.find_var_e_local value_ctx "algo" |> unpack_p4_enum
@@ -211,7 +211,7 @@ struct
       (value_sto : Value.t) : Value.t * Value.t * Value.t =
     (* Get "data" in context *)
     let value_data = Spec.Func.find_var_e_local value_ctx "data" in
-    let values = value_data |> unpack_p4_sequence in
+    let values = value_data |> unpack_p4_tuple in
     (* Get payload *)
     let values_payload =
       if payload then
@@ -313,7 +313,7 @@ struct
       (value_sto : Value.t) : Value.t * Value.t * Value.t =
     (* Get "data" in context *)
     let value_data = Spec.Func.find_var_e_local value_ctx "data" in
-    let values = value_data |> unpack_p4_sequence in
+    let values = value_data |> unpack_p4_tuple in
     (* Get payload *)
     let values_payload =
       if payload then

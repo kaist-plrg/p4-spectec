@@ -607,6 +607,19 @@ def $cast_fixint'(SET `< typeIR >, w, i) = SET `{ $cast_fixint(typeIR, w, i) }
 
 def $cast_op(typeIR, w S i) = $cast_fixint(typeIR, w, i)
 
+;;; Cast from variable-length unsigned integer
+
+dec $cast_varbit(typeIR, nat, nat, int) : value
+  hint(testgen_ignore)
+dec $cast_varbit'(typeIR, nat, nat, int) : value
+  hint(testgen_ignore)
+
+def $cast_varbit(typeIR, w_max, w, i)
+  = $cast_varbit'($canon_typeIR(typeIR), w_max, w, i)
+def $cast_varbit'(VARBIT `< w_max >, w_max, w, i) = w_max `. w V i
+
+def $cast_op(typeIR, w_max `. w V i) = $cast_varbit(typeIR, w_max, w, i)
+
 ;;; Cast from struct
 
 dec $cast_struct(typeIR, tid, (value, id)*) : value

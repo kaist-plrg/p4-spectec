@@ -11607,9 +11607,13 @@ relation ParameterType_wf: bound |- (direction typeIR _id value'?{value' <- valu
 
     1. If (Type_wf: bound |- typeIR) holds, then
 
-      1. If (((($is_stringTypeIR($canon_typeIR(typeIR)) \/ $is_arbitraryIntTypeIR($canon_typeIR(typeIR))) \/ $is_objectTypeIR($canon_typeIR(typeIR))) => (direction = ()))), then
+      1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
-        1. The relation holds
+      2. If (~$is_synthesizedTypeIR(typeIR_canon)), then
+
+        1. If (((($is_stringTypeIR(typeIR_canon) \/ $is_arbitraryIntTypeIR(typeIR_canon)) \/ $is_objectTypeIR(typeIR_canon)) => (direction = ()))), then
+
+          1. The relation holds
 
   2. (Let value''?{value'' <- value''?} be value'?{value' <- value'?})
 
@@ -11619,19 +11623,23 @@ relation ParameterType_wf: bound |- (direction typeIR _id value'?{value' <- valu
 
     2. If (Type_wf: bound |- typeIR) holds, then
 
-      1. Case analysis on direction
+      1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
-        1. Case (% matches pattern `IN`)
+      2. If (~$is_synthesizedTypeIR(typeIR_canon)), then
 
-          1. If (((($is_stringTypeIR($canon_typeIR(typeIR)) \/ $is_arbitraryIntTypeIR($canon_typeIR(typeIR))) \/ $is_objectTypeIR($canon_typeIR(typeIR))) => (direction = ()))), then
+        1. Case analysis on direction
 
-            1. The relation holds
+          1. Case (% matches pattern `IN`)
 
-        2. Case (% matches pattern ``EMPTY`)
+            1. If (((($is_stringTypeIR(typeIR_canon) \/ $is_arbitraryIntTypeIR(typeIR_canon)) \/ $is_objectTypeIR(typeIR_canon)) => (direction = ()))), then
 
-          1. If (((($is_stringTypeIR($canon_typeIR(typeIR)) \/ $is_arbitraryIntTypeIR($canon_typeIR(typeIR))) \/ $is_objectTypeIR($canon_typeIR(typeIR))) => (direction = ()))), then
+              1. The relation holds
 
-            1. The relation holds
+          2. Case (% matches pattern ``EMPTY`)
+
+            1. If (((($is_stringTypeIR(typeIR_canon) \/ $is_arbitraryIntTypeIR(typeIR_canon)) \/ $is_objectTypeIR(typeIR_canon)) => (direction = ()))), then
+
+              1. The relation holds
 
 ;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:20.1-23.74
 relation ParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}
@@ -11809,7 +11817,9 @@ relation ConstructorParameterType_wf: bound |- (direction typeIR _id _value?{_va
 
     1. If (Type_wf: bound |- typeIR) holds, then
 
-      1. The relation holds
+      1. If (~$is_synthesizedTypeIR($canon_typeIR(typeIR))), then
+
+        1. The relation holds
 
 ;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:40.1-43.74
 relation ConstructorParameterTypes_wf: bound |- parameterTypeIR*{parameterTypeIR <- parameterTypeIR*}
@@ -12822,12 +12832,12 @@ def $nestable'_sequence_in_set(typeIR'')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:541.1-543.85
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:545.1-547.85
 def $directionless_trailing(direction*{direction <- direction*})
 
 1. Return $directionless_trailing'(true, $rev_<direction>(direction*{direction <- direction*}))
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:544.1-544.54
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:548.1-548.54
 def $directionless_trailing'(_bool', direction''*{direction'' <- direction''*})
 
 1. Case analysis on direction''*{direction'' <- direction''*}
@@ -12866,14 +12876,14 @@ def $directionless_trailing'(_bool', direction''*{direction'' <- direction''*})
 
         1. Return false
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:557.1-559.58
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:561.1-563.58
 def $nestable_action(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_action(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:560.1-562.58
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:564.1-566.58
 def $nestable'_action(typeIR')
 
 1. Case analysis on typeIR'
@@ -12902,14 +12912,14 @@ def $nestable'_action(typeIR')
 
   1. Return true
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:581.1-583.67
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:585.1-587.67
 def $nestable_definedFunction(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_definedFunction(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:584.1-586.67
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:588.1-590.67
 def $nestable'_definedFunction(typeIR')
 
 1. Case analysis on typeIR'
@@ -12930,14 +12940,14 @@ def $nestable'_definedFunction(typeIR')
 
   1. Return true
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:603.1-605.67
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:607.1-609.67
 def $nestable_externFunction(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_externFunction(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:606.1-608.67
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:610.1-612.67
 def $nestable'_externFunction(typeIR')
 
 1. Case analysis on typeIR'
@@ -12970,14 +12980,14 @@ def $nestable'_externFunction(typeIR')
 
   1. Return true
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:634.1-636.65
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:638.1-640.65
 def $nestable_externMethod(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_externMethod(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:637.1-639.65
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:641.1-643.65
 def $nestable'_externMethod(typeIR')
 
 1. Case analysis on typeIR'
@@ -13010,14 +13020,14 @@ def $nestable'_externMethod(typeIR')
 
   1. Return true
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:669.1-671.70
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:673.1-675.70
 def $nestable_parserApplyMethod(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_parserApplyMethod(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:672.1-674.70
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:676.1-678.70
 def $nestable'_parserApplyMethod(typeIR')
 
 1. Case analysis on typeIR'
@@ -13050,14 +13060,14 @@ def $nestable'_parserApplyMethod(typeIR')
 
   1. Return true
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:692.1-694.71
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:696.1-698.71
 def $nestable_controlApplyMethod(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_controlApplyMethod(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:695.1-697.71
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:699.1-701.71
 def $nestable'_controlApplyMethod(typeIR')
 
 1. Case analysis on typeIR'
@@ -13084,12 +13094,12 @@ def $nestable'_controlApplyMethod(typeIR')
 
   1. Return true
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:750.1-750.48
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:755.1-755.48
 def $nestable_constructor_extern(typeIR)
 
 1. Return $nestable'_constructor_extern($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:751.1-751.49
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:756.1-756.49
 def $nestable'_constructor_extern(typeIR')
 
 1. Case analysis on typeIR'
@@ -13122,12 +13132,12 @@ def $nestable'_constructor_extern(typeIR')
 
   1. Return true
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:770.1-770.48
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:775.1-775.48
 def $nestable_constructor_parser(typeIR)
 
 1. Return $nestable'_constructor_parser($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:771.1-771.49
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:776.1-776.49
 def $nestable'_constructor_parser(typeIR')
 
 1. Case analysis on typeIR'
@@ -13154,12 +13164,12 @@ def $nestable'_constructor_parser(typeIR')
 
   1. Return true
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:789.1-789.49
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:794.1-794.49
 def $nestable_constructor_control(typeIR)
 
 1. Return $nestable'_constructor_control($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:790.1-790.50
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:795.1-795.50
 def $nestable'_constructor_control(typeIR')
 
 1. Case analysis on typeIR'
@@ -13186,12 +13196,12 @@ def $nestable'_constructor_control(typeIR')
 
   1. Return true
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:808.1-808.49
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:813.1-813.49
 def $nestable_constructor_package(typeIR)
 
 1. Return $nestable'_constructor_package($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:809.1-809.50
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:814.1-814.50
 def $nestable'_constructor_package(typeIR')
 
 1. If ((typeIR' has type tableObjectTypeIR)), then
@@ -13204,12 +13214,12 @@ def $nestable'_constructor_package(typeIR')
 
   1. Return true
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:829.1-829.42
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:834.1-834.42
 def $definable_constructor(typeIR)
 
 1. Return $definable'_constructor($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:830.1-830.43
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:835.1-835.43
 def $definable'_constructor(typeIR')
 
 1. Case analysis on typeIR'
@@ -23263,7 +23273,9 @@ def $infer(tid_infer*{tid_infer <- tid_infer*}, parameterTypeIR*{parameterTypeIR
 
 4. (Let inference be $resolve_constraint(constraint_inferred))
 
-5. Return inference
+5. (Let inference_resolved be $resolve_inference(inference))
+
+6. Return inference_resolved
 
 ;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:21.1-21.66
 def $infer'(constraint, parameterTypeIR, argumentIR)
@@ -23300,7 +23312,35 @@ def $infer'(constraint, parameterTypeIR, argumentIR)
 
     1. Return constraint
 
-;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:23.1-23.68
+;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:23.1-23.46
+def $resolve_inference(({ (tid : typeIR)*{tid <- tid*, typeIR <- typeIR*} }))
+
+1. (Let typeIR_resolved be $resolve_inference'(typeIR))*{typeIR <- typeIR*, typeIR_resolved <- typeIR_resolved*}
+
+2. Return ({ (tid : typeIR_resolved)*{tid <- tid*, typeIR_resolved <- typeIR_resolved*} })
+
+;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:24.1-24.41
+def $resolve_inference'(typeIR)
+
+1. (Let typeIR' be $canon_typeIR(typeIR))
+
+2. If ((typeIR' has type sequenceTypeIR)), then
+
+  1. (Let sequenceTypeIR be (typeIR' as sequenceTypeIR))
+
+  2. If ((sequenceTypeIR matches pattern `SEQ<%>`)), then
+
+    1. (Let (seq< typeIR_arg*{typeIR_arg <- typeIR_arg*} >) be sequenceTypeIR)
+
+    2. (Let typeIR_resolved be ((tuple< typeIR_arg*{typeIR_arg <- typeIR_arg*} >) as typeIR))
+
+    3. Return typeIR_resolved
+
+3. Otherwise
+
+  1. Return typeIR
+
+;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:26.1-26.68
 def $gen_constraint_typeIR(constraint', typeIR'', typeIR_arg')
 
 1. Case analysis on typeIR''
@@ -23497,14 +23537,14 @@ def $gen_constraint_typeIR(constraint', typeIR'', typeIR_arg')
 
   1. Return constraint'
 
-;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:24.1-24.71
+;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:27.1-27.71
 def $gen_constraint_typeIRs(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
 
 1. (Let constraint_pair be $gen_constraint_typeIR(constraint, typeIR_param, typeIR_arg))*{constraint_pair <- constraint_pair*, typeIR_arg <- typeIR_arg*, typeIR_param <- typeIR_param*}
 
 2. Return $merge_constraints(constraint, constraint_pair*{constraint_pair <- constraint_pair*})
 
-;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:25.1-28.15
+;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:28.1-31.15
 def $gen_constraint_callableTypeDefIR(constraint_0, callableTypeDefIR, callableTypeDefIR')
 
 1. If ((callableTypeDefIR has type externMethodTypeDefIR)), then
@@ -23561,14 +23601,14 @@ def $gen_constraint_callableTypeDefIR(constraint_0, callableTypeDefIR, callableT
 
             3. Return constraint_2
 
-;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:29.1-32.15
+;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:32.1-35.15
 def $gen_constraint_callableTypeDefIRs(constraint, callableTypeDefIR_param*{callableTypeDefIR_param <- callableTypeDefIR_param*}, callableTypeDefIR_arg*{callableTypeDefIR_arg <- callableTypeDefIR_arg*})
 
 1. (Let constraint_pair be $gen_constraint_callableTypeDefIR(constraint, callableTypeDefIR_param, callableTypeDefIR_arg))*{callableTypeDefIR_arg <- callableTypeDefIR_arg*, callableTypeDefIR_param <- callableTypeDefIR_param*, constraint_pair <- constraint_pair*}
 
 2. Return $merge_constraints(constraint, constraint_pair*{constraint_pair <- constraint_pair*})
 
-;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:34.1-34.59
+;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:37.1-37.59
 def $merge_constraint(constraint_pre, constraint_post)
 
 1. (Let ({ tid_pre*{tid_pre <- tid_pre*} }) be $dom_map<tid, infer>(constraint_pre))
@@ -23579,7 +23619,7 @@ def $merge_constraint(constraint_pre, constraint_post)
 
   1. Return $merge_constraint'(constraint_pre, constraint_post, tid_pre*{tid_pre <- tid_pre*}, ({ [] }))
 
-;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:35.1-35.78
+;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:38.1-38.78
 def $merge_constraint'(constraint_pre, constraint_post, tid*{tid <- tid*}, constraint)
 
 1. Case analysis on tid*{tid <- tid*}
@@ -23654,7 +23694,7 @@ def $merge_constraint'(constraint_pre, constraint_post, tid*{tid <- tid*}, const
 
                 2. Return $merge_constraint'(constraint_pre, constraint_post, tid_t*{tid_t <- tid_t*}, constraint_updated)
 
-;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:36.1-36.61
+;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:39.1-39.61
 def $merge_constraints(constraint_pre', constraint*{constraint <- constraint*})
 
 1. Case analysis on constraint*{constraint <- constraint*}
@@ -23673,7 +23713,7 @@ def $merge_constraints(constraint_pre', constraint*{constraint <- constraint*})
 
     4. Return constraint_pre_2
 
-;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:38.1-38.48
+;; ../../../../spec-concrete/5.15.2-typing-call-inference.watsup:41.1-41.48
 def $resolve_constraint(({ (tid : infer)*{infer <- infer*, tid <- tid*} }))
 
 1. If ((infer matches pattern `KNOWNAS%`))*{infer <- infer*}, then

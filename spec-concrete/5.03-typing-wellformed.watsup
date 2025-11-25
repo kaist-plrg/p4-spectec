@@ -510,18 +510,22 @@ rulegroup ParameterType_wf {
   rule ParameterType_wf/non-default:
     bound |- direction typeIR _ eps
     -- Type_wf: bound |- typeIR
-    -- if ($is_stringTypeIR($canon_typeIR(typeIR))
-          \/ $is_arbitraryIntTypeIR($canon_typeIR(typeIR))
-          \/ $is_objectTypeIR($canon_typeIR(typeIR)))
+    -- if typeIR_canon = $canon_typeIR(typeIR)
+    -- if ~$is_synthesizedTypeIR(typeIR_canon)
+    -- if ($is_stringTypeIR(typeIR_canon)
+          \/ $is_arbitraryIntTypeIR(typeIR_canon)
+          \/ $is_objectTypeIR(typeIR_canon))
           => direction = `EMPTY
 
   rule ParameterType_wf/default:
     bound |- direction typeIR _ value
     -- Type_wf: bound |- typeIR
+    -- if typeIR_canon = $canon_typeIR(typeIR)
+    -- if ~$is_synthesizedTypeIR(typeIR_canon)
     -- if direction = IN \/ direction = `EMPTY
-    -- if ($is_stringTypeIR($canon_typeIR(typeIR))
-          \/ $is_arbitraryIntTypeIR($canon_typeIR(typeIR))
-          \/ $is_objectTypeIR($canon_typeIR(typeIR)))
+    -- if ($is_stringTypeIR(typeIR_canon)
+          \/ $is_arbitraryIntTypeIR(typeIR_canon)
+          \/ $is_objectTypeIR(typeIR_canon))
           => direction = `EMPTY
 
 }
@@ -736,6 +740,7 @@ rule CallableTypeDef_wf:
 rule ConstructorParameterType_wf:
   bound |- `EMPTY typeIR _ _
   -- Type_wf: bound |- typeIR
+  -- if ~$is_synthesizedTypeIR($canon_typeIR(typeIR))
 
 rule ConstructorParameterTypes_wf:
   bound |- parameterTypeIR*
