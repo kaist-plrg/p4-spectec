@@ -170,6 +170,19 @@ rule Lvalue_write/referenceExpressionIR:
 
 rulegroup Lvalue_write/storageReference-nameIR {
 
+  rule Lvalue_write/union:
+    p EC_0 STO |- (storageReference `. nameIR) -> value : EC_1
+    ---- ;; read base value
+    -- Lvalue_read:
+        p EC_0 STO |- storageReference : value_base
+    -- if HEADER_UNION tid `{ fieldValue* } = value_base
+    -- if fieldValue_update*
+        = $update_fieldValue(fieldValue*, nameIR, value)
+    -- if value_base_update
+        = HEADER_UNION tid `{ fieldValue_update* }
+    -- Lvalue_write:
+        p EC_0 STO |- storageReference -> value_base_update : EC_1
+
   rule Lvalue_write/stack:
     p EC_0 STO |- (storageReference `. "next") -> value : EC_1
     ---- ;; read base value

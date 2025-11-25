@@ -90,7 +90,7 @@ dec $write_value_from_bits'(value, nat, bool*) : (value, bool*)
 dec $write_value_fields_from_bits'(fieldValue*, nat, bool*) : (fieldValue*, bool*)
 dec $write_value_field_from_bits'(fieldValue, nat, bool*) : (fieldValue, bool*)
 
-def $write_value_from_bits(value, n_var, b*)  = value_updated
+def $write_value_from_bits(value, n_var, b*) = value_updated
   -- if (value_updated, eps)
       = $write_value_from_bits'(value, n_var, b*)
 
@@ -170,3 +170,7 @@ def $write_bits_from_value(
   )
   = $concat_<bool>($write_bits_from_value(value_field)*)
 def $write_bits_from_value(HEADER _ `{ false `; _ }) = eps
+def $write_bits_from_value(
+    HEADER_UNION _ `{ (value id `;)* }
+  )
+  = $concat_<bool>($write_bits_from_value(value)*)

@@ -7331,27 +7331,31 @@ relation Lvalue_write: `p`, `EC~0~`, `STO`, `storageReference''`, and `value`
 . Group referenceExpressionIR:
  .. Let `EC~1~` be `<<update_var_e, $update_var_e(p, EC~0~, prefixedNameIR, value)>>`.
  .. Result in `EC~1~`.
-. If let `storageReference . text` be `storageReference''`:
+. If let `storageReference . nameIR'` be `storageReference''`:
  .. Group storageReference-nameIR:
-  ... Check that `text` is equal to `"next"`.
   ... Let <<Lvalue_read, `p EC~0~ STO |- storageReference : value~base~`>>.
+  ... If let `HEADER_UNION tid { fieldValue^{asterisk}^ }` be `value~base~`:
+   .... Let `fieldValue~update~^{asterisk}^` be `<<update_fieldValue, $update_fieldValue(fieldValue^{asterisk}^, nameIR', value)>>`.
+   .... Let `value~base_update~` be `HEADER_UNION tid { fieldValue~update~^{asterisk}^ }`.
+   .... Let <<Lvalue_write, `p EC~0~ STO |- storageReference -> value~base_update~ : EC~1~`>>.
+   .... Result in `EC~1~`.
+  ... Else if let `STRUCT tid { fieldValue^{asterisk}^ }` be `value~base~`:
+   .... Let `fieldValue~update~^{asterisk}^` be `<<update_fieldValue, $update_fieldValue(fieldValue^{asterisk}^, nameIR', value)>>`.
+   .... Let `value~base_update~` be `STRUCT tid { fieldValue~update~^{asterisk}^ }`.
+   .... Let <<Lvalue_write, `p EC~0~ STO |- storageReference -> value~base_update~ : EC~1~`>>.
+   .... Result in `EC~1~`.
+  ... Else if let `HEADER tid { b~valid~ ; fieldValue^{asterisk}^ }` be `value~base~`:
+   .... Let `fieldValue~update~^{asterisk}^` be `<<update_fieldValue, $update_fieldValue(fieldValue^{asterisk}^, nameIR', value)>>`.
+   .... Let `value~base_update~` be `HEADER tid { b~valid~ ; fieldValue~update~^{asterisk}^ }`.
+   .... Let <<Lvalue_write, `p EC~0~ STO |- storageReference -> value~base_update~ : EC~1~`>>.
+   .... Result in `EC~1~`.
+  ... Check that `nameIR'` is equal to `"next"`.
   ... Check that `value~base~` has type `headerStackValue`.
   ... Let `HEADER_STACK [ value~element~^{asterisk}^ ( n~idx~ ; n~size~ ) ]` be `value~base~`.
   ... Let `value~element_update~^{asterisk}^` be `<<update_headerStack, $update_headerStack(value~element~^{asterisk}^, value, n~idx~, n~size~)>>`.
   ... Let `value~base_update~` be `HEADER_STACK [ value~element_update~^{asterisk}^ ( n~idx~ + 1 ; n~size~ ) ]`.
   ... Let <<Lvalue_write, `p EC~0~ STO |- storageReference -> value~base_update~ : EC~1~`>>.
   ... Result in `EC~1~`.
-  ... Let <<Lvalue_read, `p EC~0~ STO |- storageReference : value~base~`>>.
-  ... If let `STRUCT tid { fieldValue^{asterisk}^ }` be `value~base~`:
-   .... Let `fieldValue~update~^{asterisk}^` be `<<update_fieldValue, $update_fieldValue(fieldValue^{asterisk}^, text, value)>>`.
-   .... Let `value~base_update~` be `STRUCT tid { fieldValue~update~^{asterisk}^ }`.
-   .... Let <<Lvalue_write, `p EC~0~ STO |- storageReference -> value~base_update~ : EC~1~`>>.
-   .... Result in `EC~1~`.
-  ... Else if let `HEADER tid { b~valid~ ; fieldValue^{asterisk}^ }` be `value~base~`:
-   .... Let `fieldValue~update~^{asterisk}^` be `<<update_fieldValue, $update_fieldValue(fieldValue^{asterisk}^, text, value)>>`.
-   .... Let `value~base_update~` be `HEADER tid { b~valid~ ; fieldValue~update~^{asterisk}^ }`.
-   .... Let <<Lvalue_write, `p EC~0~ STO |- storageReference -> value~base_update~ : EC~1~`>>.
-   .... Result in `EC~1~`.
 . Else if let `storageReference [ value~index~ ]` be `storageReference''`:
  .. Group storageReference-indexAccess:
   ... Let <<Lvalue_read, `p EC~0~ STO |- storageReference : value~base~`>>.
@@ -7482,15 +7486,27 @@ relation Stmt_eval: `p'`, `EC'`, `STO'`, and `statementIR`
 * the updated store `STO~else~`,
 * and the instantiated statement `statementResult`.
 . Check that `p'` matches pattern `LOCAL`.
-. Check that `statementIR` has type `returnStatementIR`.
-. Let `returnStatementIR` be `statementIR`.
-. Group returnStatementIR:
- .. If `returnStatementIR` matches pattern `RETURN ;`:
-  ... Result in 
+. If let `returnStatementIR` be `statementIR`:
+ .. Group returnStatementIR:
+  ... If `returnStatementIR` matches pattern `RETURN ;`:
+   .... Result in 
 * the evaluation context `EC'`,
 * the updated store `STO'`,
 * and the instantiated statement `RETURN None`.
- .. Else let `RETURN typedExpressionIR ;` be `returnStatementIR`:
+  ... Else let `RETURN typedExpressionIR ;` be `returnStatementIR`:
+   .... Let `EC~1~`, `STO~1~`, and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR`, under cursor `LOCAL`, evaluation context `EC'`, and store `STO'`>>.
+   .... If let `exitResult` be `expressionResult`:
+    ..... Result in 
+* the evaluation context `EC~1~`,
+* the updated store `STO~1~`,
+* and the instantiated statement `EXIT`.
+   .... Else let `value` be `expressionResult`:
+    ..... Result in 
+* the evaluation context `EC~1~`,
+* the updated store `STO~1~`,
+* and the instantiated statement `RETURN value`.
+. Else if let `SWITCH ( typedExpressionIR ) { switchCaseIR^{asterisk}^ }` be `statementIR`:
+ .. Group switchStatementIR-table:
   ... Let `EC~1~`, `STO~1~`, and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR`, under cursor `LOCAL`, evaluation context `EC'`, and store `STO'`>>.
   ... If let `exitResult` be `expressionResult`:
    .... Result in 
@@ -7498,10 +7514,20 @@ relation Stmt_eval: `p'`, `EC'`, `STO'`, and `statementIR`
 * the updated store `STO~1~`,
 * and the instantiated statement `EXIT`.
   ... Else let `value` be `expressionResult`:
-   .... Result in 
+   .... Check that `value` has type `tableMetadataEnumValue`.
+   .... Let `TABLE_ENUM ++_++ . id~enum~` be `value`.
+   .... Let <<SwitchCases_table_eval, `id~enum~ |- switchCaseIR^{asterisk}^ : blockStatementIR'^?^`>>.
+   .... If let `blockStatementIR` be `blockStatementIR'^?^`:
+    ..... Let `EC~2~`, `STO~2~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `blockStatementIR`, under cursor `LOCAL`, evaluation context `EC~1~`, and store `STO~1~`>>.
+    ..... Result in 
+* the evaluation context `EC~2~`,
+* the updated store `STO~2~`,
+* and the instantiated statement `statementResult`.
+   .... Else `blockStatementIR'^?^` is None:
+    ..... Result in 
 * the evaluation context `EC~1~`,
 * the updated store `STO~1~`,
-* and the instantiated statement `RETURN value`.
+* and the instantiated statement ``.
 
 
 relation BlockElementStmt_eval: `EC~0~`, `STO~0'~`, and `blockElementStatementIR`
@@ -8430,6 +8456,33 @@ relation Exprs_eval_keyset_simple: `evalContext`, `store`, and `simpleKeysetExpr
    .... Else let `setValue~t~^{asterisk}^` be `keysetExpressionResult'`:
     ..... Let `keysetExpressionResult` be `setValue~h~ {two-colons} setValue~t~^{asterisk}^`.
     ..... Result in `EC~2~`, `STO~2~`, and `keysetExpressionResult`.
+
+
+relation SwitchCases_table_eval: `id` and `switchCaseIR'''^{asterisk}^`
+
+
+. Group :
+ .. If `switchCaseIR'''^{asterisk}^` is equal to `[ ]`:
+  ... Result in `None`.
+ .. Let `switchCaseIR''''^{asterisk}^` be `switchCaseIR'''^{asterisk}^`.
+ .. Else if let `switchCaseIR~h~ {two-colons} switchCaseIR~t~^{asterisk}^` be `switchCaseIR''''^{asterisk}^`:
+  ... If let `switchLabelIR~h~ : blockStatementIR~h~` be `switchCaseIR~h~`:
+   .... If `<<match_switchLabelIR_table, $match_switchLabelIR_table(id, switchLabelIR~h~)>>`:
+    ..... Result in `blockStatementIR~h~`.
+   .... Else `~<<match_switchLabelIR_table, $match_switchLabelIR_table(id, switchLabelIR~h~)>>`:
+    ..... Let <<SwitchCases_table_eval, `id |- switchCaseIR~t~^{asterisk}^ : blockStatementIR^?^`>>.
+    ..... Result in `blockStatementIR^?^`.
+  ... Else let `switchLabelIR~h~ :` be `switchCaseIR~h~`:
+   .... If `<<match_switchLabelIR_table, $match_switchLabelIR_table(id, switchLabelIR~h~)>>`:
+    ..... Let `switchCaseIR'''''''^{asterisk}^` be `<<filter_, $filter_<switchCaseIR>(switchCaseIR~t~^{asterisk}^, $is_non_fallthrough_switchCaseIR)>>`.
+    ..... Check that `switchCaseIR'''''''^{asterisk}^` is a non-empty list.
+    ..... Let `switchCaseIR'''''' {two-colons} ++_++^{asterisk}^` be `switchCaseIR'''''''^{asterisk}^`.
+    ..... Check that `switchCaseIR''''''` matches pattern `% : %`.
+    ..... Let `++_++ : blockStatementIR` be `switchCaseIR''''''`.
+    ..... Result in `blockStatementIR`.
+   .... Else `~<<match_switchLabelIR_table, $match_switchLabelIR_table(id, switchLabelIR~h~)>>`:
+    ..... Let <<SwitchCases_table_eval, `id |- switchCaseIR~t~^{asterisk}^ : blockStatementIR^?^`>>.
+    ..... Result in `blockStatementIR^?^`.
 
 
 relation SelectCase_match: `EC~0~`, `STO~0~`, `value~key~^{asterisk}^`, and `keysetExpressionIR : nameIR ;`

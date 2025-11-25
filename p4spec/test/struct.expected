@@ -3285,19 +3285,19 @@ def $write_value_field_from_bits'((value id ;), n_var, b*{b <- b*})
 2. Return ((value_updated id ;), b_rest*{b_rest <- b_rest*})
 
 ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:150.1-150.42
-def $write_bits_from_value(value)
+def $write_bits_from_value(value'')
 
-1. Case analysis on value
+1. Case analysis on value''
 
   1. Case (% has type boolValue)
 
-    1. (Let (b b) be (value as boolValue))
+    1. (Let (b b) be (value'' as boolValue))
 
     2. Return [b]
 
   2. Case (% has type integerLiteral)
 
-    1. (Let integerLiteral be (value as integerLiteral))
+    1. (Let integerLiteral be (value'' as integerLiteral))
 
     2. Case analysis on integerLiteral
 
@@ -3315,33 +3315,39 @@ def $write_bits_from_value(value)
 
   3. Case (% has type headerStackValue)
 
-    1. (Let (header_stack[ value_element*{value_element <- value_element*} ( _nat ; _nat' )]) be (value as headerStackValue))
+    1. (Let (header_stack[ value_element*{value_element <- value_element*} ( _nat ; _nat' )]) be (value'' as headerStackValue))
 
     2. Return $concat_<bool>($write_bits_from_value(value_element)*{value_element <- value_element*})
 
   4. Case (% has type structValue)
 
-    1. (Let (struct _tid { (value_field id_field ;)*{id_field <- id_field*, value_field <- value_field*} }) be (value as structValue))
+    1. (Let (struct _tid { (value_field id_field ;)*{id_field <- id_field*, value_field <- value_field*} }) be (value'' as structValue))
 
     2. Return $concat_<bool>($write_bits_from_value(value_field)*{value_field <- value_field*})
 
   5. Case (% has type headerValue)
 
-    1. (Let (header _tid { bool ; (value_field id_field ;)*{id_field <- id_field*, value_field <- value_field*} }) be (value as headerValue))
+    1. (Let (header _tid { bool ; (value_field id_field ;)*{id_field <- id_field*, value_field <- value_field*} }) be (value'' as headerValue))
 
     2. If ((bool = true)), then
 
       1. Return $concat_<bool>($write_bits_from_value(value_field)*{value_field <- value_field*})
 
-    3. (Let (header _tid { bool ; _fieldValue*{_fieldValue <- _fieldValue*} }) be (value as headerValue))
+    3. (Let (header _tid { bool ; _fieldValue*{_fieldValue <- _fieldValue*} }) be (value'' as headerValue))
 
     4. If ((bool = false)), then
 
       1. Return []
 
-2. If ((value has type integerValue)), then
+  6. Case (% has type headerUnionValue)
 
-  1. (Let integerValue be (value as integerValue))
+    1. (Let (header_union _tid { (value id ;)*{id <- id*, value <- value*} }) be (value'' as headerUnionValue))
+
+    2. Return $concat_<bool>($write_bits_from_value(value)*{value <- value*})
+
+2. If ((value'' has type integerValue)), then
+
+  1. (Let integerValue be (value'' as integerValue))
 
   2. If ((integerValue matches pattern `%.%V%`)), then
 
@@ -28674,35 +28680,31 @@ relation Lvalue_write: p EC_0 STO |- storageReference'' -> value : %
 
   1. Case (% matches pattern `%.%`)
 
-    1. (Let (storageReference . text) be storageReference'')
+    1. (Let (storageReference . nameIR') be storageReference'')
 
-    2. Group storageReference-nameIR: p EC_0 STO |- (storageReference . text) -> value : %
+    2. Group storageReference-nameIR: p EC_0 STO |- (storageReference . nameIR') -> value : %
 
-      1. If ((text = "next")), then
+      1. (Lvalue_read: p EC_0 STO |- storageReference : value_base)
 
-        1. (Lvalue_read: p EC_0 STO |- storageReference : value_base)
+      2. Case analysis on value_base
 
-        2. If ((value_base has type headerStackValue)), then
+        1. Case (% has type headerUnionValue)
 
-          1. (Let (header_stack[ value_element*{value_element <- value_element*} ( n_idx ; n_size )]) be (value_base as headerStackValue))
+          1. (Let (header_union tid { fieldValue*{fieldValue <- fieldValue*} }) be (value_base as headerUnionValue))
 
-          2. (Let value_element_update*{value_element_update <- value_element_update*} be $update_headerStack(value_element*{value_element <- value_element*}, value, n_idx, n_size))
+          2. (Let fieldValue_update*{fieldValue_update <- fieldValue_update*} be $update_fieldValue(fieldValue*{fieldValue <- fieldValue*}, nameIR', value))
 
-          3. (Let value_base_update be ((header_stack[ value_element_update*{value_element_update <- value_element_update*} ( (n_idx + 1) ; n_size )]) as value))
+          3. (Let value_base_update be ((header_union tid { fieldValue_update*{fieldValue_update <- fieldValue_update*} }) as value))
 
           4. (Lvalue_write: p EC_0 STO |- storageReference -> value_base_update : EC_1)
 
           5. Result in : % % % |- % -> % : EC_1
 
-      2. (Lvalue_read: p EC_0 STO |- storageReference : value_base)
-
-      3. Case analysis on value_base
-
-        1. Case (% has type structValue)
+        2. Case (% has type structValue)
 
           1. (Let (struct tid { fieldValue*{fieldValue <- fieldValue*} }) be (value_base as structValue))
 
-          2. (Let fieldValue_update*{fieldValue_update <- fieldValue_update*} be $update_fieldValue(fieldValue*{fieldValue <- fieldValue*}, text, value))
+          2. (Let fieldValue_update*{fieldValue_update <- fieldValue_update*} be $update_fieldValue(fieldValue*{fieldValue <- fieldValue*}, nameIR', value))
 
           3. (Let value_base_update be ((struct tid { fieldValue_update*{fieldValue_update <- fieldValue_update*} }) as value))
 
@@ -28710,13 +28712,27 @@ relation Lvalue_write: p EC_0 STO |- storageReference'' -> value : %
 
           5. Result in : % % % |- % -> % : EC_1
 
-        2. Case (% has type headerValue)
+        3. Case (% has type headerValue)
 
           1. (Let (header tid { b_valid ; fieldValue*{fieldValue <- fieldValue*} }) be (value_base as headerValue))
 
-          2. (Let fieldValue_update*{fieldValue_update <- fieldValue_update*} be $update_fieldValue(fieldValue*{fieldValue <- fieldValue*}, text, value))
+          2. (Let fieldValue_update*{fieldValue_update <- fieldValue_update*} be $update_fieldValue(fieldValue*{fieldValue <- fieldValue*}, nameIR', value))
 
           3. (Let value_base_update be ((header tid { b_valid ; fieldValue_update*{fieldValue_update <- fieldValue_update*} }) as value))
+
+          4. (Lvalue_write: p EC_0 STO |- storageReference -> value_base_update : EC_1)
+
+          5. Result in : % % % |- % -> % : EC_1
+
+      3. If ((nameIR' = "next")), then
+
+        1. If ((value_base has type headerStackValue)), then
+
+          1. (Let (header_stack[ value_element*{value_element <- value_element*} ( n_idx ; n_size )]) be (value_base as headerStackValue))
+
+          2. (Let value_element_update*{value_element_update <- value_element_update*} be $update_headerStack(value_element*{value_element <- value_element*}, value, n_idx, n_size))
+
+          3. (Let value_base_update be ((header_stack[ value_element_update*{value_element_update <- value_element_update*} ( (n_idx + 1) ; n_size )]) as value))
 
           4. (Lvalue_write: p EC_0 STO |- storageReference -> value_base_update : EC_1)
 
@@ -28944,37 +28960,79 @@ relation Stmt_eval: p' EC' STO' |- statementIR : % % %
 
 2. If ((p' matches pattern `LOCAL`)), then
 
-  1. If ((statementIR has type returnStatementIR)), then
+  1. Case analysis on statementIR
 
-    1. (Let returnStatementIR be (statementIR as returnStatementIR))
+    1. Case (% has type returnStatementIR)
 
-    2. Group returnStatementIR: (local) EC' STO' |- (returnStatementIR as statementIR) : % % %
+      1. (Let returnStatementIR be (statementIR as returnStatementIR))
 
-      1. Case analysis on returnStatementIR
+      2. Group returnStatementIR: (local) EC' STO' |- (returnStatementIR as statementIR) : % % %
 
-        1. Case (% matches pattern `RETURN;`)
+        1. Case analysis on returnStatementIR
 
-          1. Result in : % % % |- % : EC' STO' ((return ?()) as statementResult)
+          1. Case (% matches pattern `RETURN;`)
 
-        2. Case (% matches pattern `RETURN%;`)
+            1. Result in : % % % |- % : EC' STO' ((return ?()) as statementResult)
 
-          1. (Let (return typedExpressionIR ;) be returnStatementIR)
+          2. Case (% matches pattern `RETURN%;`)
 
-          2. (Expr_eval: (local) EC' STO' |- typedExpressionIR : EC_1 STO_1 expressionResult)
+            1. (Let (return typedExpressionIR ;) be returnStatementIR)
 
-          3. Case analysis on expressionResult
+            2. (Expr_eval: (local) EC' STO' |- typedExpressionIR : EC_1 STO_1 expressionResult)
 
-            1. Case (% has type exitResult)
+            3. Case analysis on expressionResult
 
-              1. (Let exitResult be (expressionResult as exitResult))
+              1. Case (% has type exitResult)
 
-              2. Result in : % % % |- % : EC_1 STO_1 ((exit) as statementResult)
+                1. (Let exitResult be (expressionResult as exitResult))
 
-            2. Case (% has type continueResult<value>)
+                2. Result in : % % % |- % : EC_1 STO_1 ((exit) as statementResult)
 
-              1. (Let (` value) be (expressionResult as continueResult<value>))
+              2. Case (% has type continueResult<value>)
 
-              2. Result in : % % % |- % : EC_1 STO_1 ((return ?(value)) as statementResult)
+                1. (Let (` value) be (expressionResult as continueResult<value>))
+
+                2. Result in : % % % |- % : EC_1 STO_1 ((return ?(value)) as statementResult)
+
+    2. Case (% has type switchStatementIR)
+
+      1. (Let (switch( typedExpressionIR ){ switchCaseIR*{switchCaseIR <- switchCaseIR*} }) be (statementIR as switchStatementIR))
+
+      2. Group switchStatementIR-table: (local) EC' STO' |- ((switch( typedExpressionIR ){ switchCaseIR*{switchCaseIR <- switchCaseIR*} }) as statementIR) : % % %
+
+        1. (Expr_eval: (local) EC' STO' |- typedExpressionIR : EC_1 STO_1 expressionResult)
+
+        2. Case analysis on expressionResult
+
+          1. Case (% has type exitResult)
+
+            1. (Let exitResult be (expressionResult as exitResult))
+
+            2. Result in : % % % |- % : EC_1 STO_1 ((exit) as statementResult)
+
+          2. Case (% has type continueResult<value>)
+
+            1. (Let (` value) be (expressionResult as continueResult<value>))
+
+            2. If ((value has type tableMetadataEnumValue)), then
+
+              1. (Let (table_enum _tid . id_enum) be (value as tableMetadataEnumValue))
+
+              2. (SwitchCases_table_eval: id_enum |- switchCaseIR*{switchCaseIR <- switchCaseIR*} : blockStatementIR'?{blockStatementIR' <- blockStatementIR'?})
+
+              3. Case analysis on blockStatementIR'?{blockStatementIR' <- blockStatementIR'?}
+
+                1. Case (% matches pattern (_))
+
+                  1. (Let ?(blockStatementIR) be blockStatementIR'?{blockStatementIR' <- blockStatementIR'?})
+
+                  2. (Stmt_eval: (local) EC_1 STO_1 |- (blockStatementIR as statementIR) : EC_2 STO_2 statementResult)
+
+                  3. Result in : % % % |- % : EC_2 STO_2 statementResult
+
+                2. Case (% matches pattern ())
+
+                  1. Result in : % % % |- % : EC_1 STO_1 ((`) as statementResult)
 
 ;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:122.1-125.23
 relation BlockElementStmt_eval: EC_0 STO_0' |- blockElementStatementIR : % % %
@@ -30999,6 +31057,109 @@ relation Exprs_eval_keyset_simple: evalContext store |- simpleKeysetExpressionIR
             2. (Let keysetExpressionResult be ((` setValue_h :: setValue_t*{setValue_t <- setValue_t*}) as keysetExpressionResult))
 
             3. Result in : % % |- % : EC_2 STO_2 keysetExpressionResult
+
+;; ../../../../spec-concrete/8.06-eval-statement.watsup:228.1-228.57
+def $match_switchLabelIR_table(id, switchLabelIR')
+
+1. If ((switchLabelIR' matches pattern `DEFAULT`)), then
+
+  1. Return true
+
+2. If ((switchLabelIR' has type typedExpressionIR)), then
+
+  1. (Let (expressionIR # _expressionNoteIR) be (switchLabelIR' as typedExpressionIR))
+
+  2. If ((expressionIR has type prefixedNameIR)), then
+
+    1. (Let prefixedNameIR be (expressionIR as prefixedNameIR))
+
+    2. If ((prefixedNameIR matches pattern ``%`)), then
+
+      1. (Let (` id') be prefixedNameIR)
+
+      2. If ((id = id')), then
+
+        1. Return true
+
+3. Otherwise
+
+  1. Return false
+
+;; ../../../../spec-concrete/8.06-eval-statement.watsup:238.1-240.20
+relation SwitchCases_table_eval: id |- switchCaseIR'''*{switchCaseIR''' <- switchCaseIR'''*} : %
+
+1. Group : id |- switchCaseIR'''*{switchCaseIR''' <- switchCaseIR'''*} : %
+
+  1. If ((switchCaseIR'''*{switchCaseIR''' <- switchCaseIR'''*} = [])), then
+
+    1. Result in : % |- % : ?()
+
+  2. (Let switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} be switchCaseIR'''*{switchCaseIR''' <- switchCaseIR'''*})
+
+  3. If ((switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} matches pattern _ :: _)), then
+
+    1. (Let switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} be switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*})
+
+    2. Case analysis on switchCaseIR_h
+
+      1. Case (% matches pattern `%:%`)
+
+        1. (Let (switchLabelIR_h : blockStatementIR_h) be switchCaseIR_h)
+
+        2. Case analysis on $match_switchLabelIR_table(id, switchLabelIR_h)
+
+          1. Case true
+
+            1. Result in : % |- % : ?(blockStatementIR_h)
+
+          2. Case false
+
+            1. (SwitchCases_table_eval: id |- switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} : blockStatementIR?{blockStatementIR <- blockStatementIR?})
+
+            2. Result in : % |- % : blockStatementIR?{blockStatementIR <- blockStatementIR?}
+
+      2. Case (% matches pattern `%:`)
+
+        1. (Let (switchLabelIR_h :) be switchCaseIR_h)
+
+        2. Case analysis on $match_switchLabelIR_table(id, switchLabelIR_h)
+
+          1. Case true
+
+            1. (Let switchCaseIR'''''''*{switchCaseIR''''''' <- switchCaseIR'''''''*} be $filter_<switchCaseIR>(switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*}, $is_non_fallthrough_switchCaseIR))
+
+            2. If ((switchCaseIR'''''''*{switchCaseIR''''''' <- switchCaseIR'''''''*} matches pattern _ :: _)), then
+
+              1. (Let switchCaseIR'''''' :: _switchCaseIR*{_switchCaseIR <- _switchCaseIR*} be switchCaseIR'''''''*{switchCaseIR''''''' <- switchCaseIR'''''''*})
+
+              2. If ((switchCaseIR'''''' matches pattern `%:%`)), then
+
+                1. (Let (_switchLabelIR : blockStatementIR) be switchCaseIR'''''')
+
+                2. Result in : % |- % : ?(blockStatementIR)
+
+          2. Case false
+
+            1. (SwitchCases_table_eval: id |- switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} : blockStatementIR?{blockStatementIR <- blockStatementIR?})
+
+            2. Result in : % |- % : blockStatementIR?{blockStatementIR <- blockStatementIR?}
+
+;; ../../../../spec-concrete/8.06-eval-statement.watsup:242.1-242.58
+def $is_non_fallthrough_switchCaseIR(switchCaseIR)
+
+1. Case analysis on switchCaseIR
+
+  1. Case (% matches pattern `%:%`)
+
+    1. (Let (switchLabelIR : blockStatementIR) be switchCaseIR)
+
+    2. Return true
+
+  2. Case (% matches pattern `%:`)
+
+    1. (Let (switchLabelIR :) be switchCaseIR)
+
+    2. Return false
 
 ;; ../../../../spec-concrete/8.08.1-eval-parser-statement.watsup:31.1-34.26
 relation SelectCase_match: EC_0 STO_0 value_key*{value_key <- value_key*} |- (keysetExpressionIR : nameIR ;) : % % %

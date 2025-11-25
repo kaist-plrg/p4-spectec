@@ -3119,6 +3119,11 @@ def $write_bits_from_value(value) : bool* =
   -- let header _tid { bool ; _fieldValue*{_fieldValue <- _fieldValue*} } = value as headerValue
   -- if (bool = false)
 
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:173.1-176.51
+  clause 8 : (value') = $concat_<bool>($write_bits_from_value(value)*{value <- value*})
+  -- if value' <: headerUnionValue
+  -- let header_union _tid { value id ;*{id <- id*, value <- value*} } = value' as headerUnionValue
+
 ;; ../../../../spec-concrete/2.2.1-type.watsup:9.21-9.25
 syntax voidTypeIR = 
    | void
@@ -26739,20 +26744,31 @@ relation Lvalue_write: cursor evalContext store |- storageReference -> value : e
     -- let EC_1 = $update_var_e(p, EC_0, prefixedNameIR, value)
     -- output: % % % |- % -> % : EC_1
 
-  ;; ../../../../spec-concrete/8.05-eval-lvalue.watsup:171.1-216.2
+  ;; ../../../../spec-concrete/8.05-eval-lvalue.watsup:171.1-229.2
   rulegroup storageReference-nameIR
 
    match
 
-    (explicit) p EC_0 STO |- storageReference . text -> value : %
+    (explicit) p EC_0 STO |- storageReference . nameIR' -> value : %
     (implicit) p EC_0 STO |- storageReference' -> value : %
     -- if storageReference' matches `%.%`
-    -- let storageReference . text = storageReference'
+    -- let storageReference . nameIR' = storageReference'
 
    paths
 
+    rulepath union
+    -- let nameIR = nameIR'
+    -- Lvalue_read: p EC_0 STO |- storageReference : value_base
+    -- let value' = value_base
+    -- if value' <: headerUnionValue
+    -- let header_union tid { fieldValue*{fieldValue <- fieldValue*} } = value' as headerUnionValue
+    -- let fieldValue_update*{fieldValue_update <- fieldValue_update*} = $update_fieldValue(fieldValue*{fieldValue <- fieldValue*}, nameIR, value)
+    -- let value_base_update = header_union tid { fieldValue_update*{fieldValue_update <- fieldValue_update*} } as value
+    -- Lvalue_write: p EC_0 STO |- storageReference -> value_base_update : EC_1
+    -- output: % % % |- % -> % : EC_1
+
     rulepath stack
-    -- if (text = "next")
+    -- if (nameIR' = "next")
     -- Lvalue_read: p EC_0 STO |- storageReference : value_base
     -- let value' = value_base
     -- if value' <: headerStackValue
@@ -26763,7 +26779,7 @@ relation Lvalue_write: cursor evalContext store |- storageReference -> value : e
     -- output: % % % |- % -> % : EC_1
 
     rulepath struct
-    -- let nameIR = text
+    -- let nameIR = nameIR'
     -- Lvalue_read: p EC_0 STO |- storageReference : value_base
     -- let value' = value_base
     -- if value' <: structValue
@@ -26774,7 +26790,7 @@ relation Lvalue_write: cursor evalContext store |- storageReference -> value : e
     -- output: % % % |- % -> % : EC_1
 
     rulepath header
-    -- let nameIR = text
+    -- let nameIR = nameIR'
     -- Lvalue_read: p EC_0 STO |- storageReference : value_base
     -- let value' = value_base
     -- if value' <: headerValue
@@ -26784,7 +26800,7 @@ relation Lvalue_write: cursor evalContext store |- storageReference -> value : e
     -- Lvalue_write: p EC_0 STO |- storageReference -> value_base_update : EC_1
     -- output: % % % |- % -> % : EC_1
 
-  ;; ../../../../spec-concrete/8.05-eval-lvalue.watsup:218.1-241.2
+  ;; ../../../../spec-concrete/8.05-eval-lvalue.watsup:231.1-254.2
   rulegroup storageReference-indexAccess
 
    match
@@ -27087,10 +27103,54 @@ relation Stmt_eval: cursor evalContext store |- statementIR : evalContext store 
     -- Stmt_eval: p EC_cond STO_cond |- statementIR_else : EC_else STO_else statementResult
     -- output: % % % |- % : EC_else STO_else statementResult
 
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:288.1-324.2
+  rulegroup switchStatementIR-table
+
+   match
+
+    (explicit) local EC_0 STO_0 |- switch( typedExpressionIR ){ switchCaseIR*{switchCaseIR <- switchCaseIR*} } as statementIR : % % %
+    (implicit) cursor EC_0 STO_0 |- statementIR : % % %
+    -- if cursor matches `LOCAL`
+    -- if statementIR <: switchStatementIR
+    -- let switch( typedExpressionIR ){ switchCaseIR*{switchCaseIR <- switchCaseIR*} } = statementIR as switchStatementIR
+
+   paths
+
+    rulepath target-exit
+    -- Expr_eval: local EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult
+    -- if expressionResult <: exitResult
+    -- let exitResult = expressionResult as exitResult
+    -- if (exitResult = exit)
+    -- output: % % % |- % : EC_1 STO_1 exit as statementResult
+
+    rulepath target-cont-match
+    -- Expr_eval: local EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult
+    -- if expressionResult <: continueResult<value>
+    -- let ` value = expressionResult as continueResult<value>
+    -- let value' = value
+    -- if value' <: tableMetadataEnumValue
+    -- let table_enum _tid . id_enum = value' as tableMetadataEnumValue
+    -- SwitchCases_table_eval: id_enum |- switchCaseIR*{switchCaseIR <- switchCaseIR*} : blockStatementIR'?{blockStatementIR' <- blockStatementIR'?}
+    -- if blockStatementIR'?{blockStatementIR' <- blockStatementIR'?} matches (_)
+    -- let ?(blockStatementIR) = blockStatementIR'?{blockStatementIR' <- blockStatementIR'?}
+    -- Stmt_eval: local EC_1 STO_1 |- blockStatementIR as statementIR : EC_2 STO_2 statementResult
+    -- output: % % % |- % : EC_2 STO_2 statementResult
+
+    rulepath target-cont-no-match
+    -- Expr_eval: local EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult
+    -- if expressionResult <: continueResult<value>
+    -- let ` value = expressionResult as continueResult<value>
+    -- let value' = value
+    -- if value' <: tableMetadataEnumValue
+    -- let table_enum _tid . id_enum = value' as tableMetadataEnumValue
+    -- SwitchCases_table_eval: id_enum |- switchCaseIR*{switchCaseIR <- switchCaseIR*} : blockStatementIR'?{blockStatementIR' <- blockStatementIR'?}
+    -- if blockStatementIR'?{blockStatementIR' <- blockStatementIR'?} matches ()
+    -- output: % % % |- % : EC_1 STO_1 ` as statementResult
+
 ;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:122.1-125.23
 relation BlockElementStmt_eval: evalContext store |- blockElementStatementIR : evalContext store statementResult
 
-  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:230.1-246.2
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:335.1-351.2
   rulegroup constantDeclarationIR
 
    match
@@ -27116,7 +27176,7 @@ relation BlockElementStmt_eval: evalContext store |- blockElementStatementIR : e
     -- if (continueEmptyResult = `)
     -- output: % % |- % : EC_1 STO_1 ` as statementResult
 
-  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:250.1-279.2
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:355.1-384.2
   rulegroup variableDeclarationIR
 
    match
@@ -27158,7 +27218,7 @@ relation BlockElementStmt_eval: evalContext store |- blockElementStatementIR : e
     -- let EC_2 = $add_var_e(local, EC_1, ` nameIR, value_init)
     -- output: % % |- % : EC_2 STO_1 ` as statementResult
 
-  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:283.1-288.53
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:388.1-393.53
   rulegroup statementIR
 
    match
@@ -27177,7 +27237,7 @@ relation BlockElementStmt_eval: evalContext store |- blockElementStatementIR : e
 ;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:127.1-130.23
 relation BlockElementStmts_eval: evalContext store |- blockElementStatementListIR : evalContext store statementResult
 
-  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:294.1-323.2
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:399.1-428.2
   rulegroup 
 
    match
@@ -27232,7 +27292,7 @@ relation BlockElementStmts_eval: evalContext store |- blockElementStatementListI
 ;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:132.1-135.23
 relation Block_eval: evalContext store |- blockStatementIR : evalContext store statementResult
 
-  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:329.1-334.47
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:434.1-439.47
   rulegroup 
 
    match
@@ -28783,7 +28843,7 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- Copy_out: STO_3 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ block EC_callee_5 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
     -- output: % % % |- % @< % >( % ): EC_3 STO_3 rejectTransitionResult as callResult
 
-  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:517.1-605.2
+  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:517.1-604.2
   rulegroup controlApplyMethodCallee
 
    match
@@ -28837,7 +28897,7 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- Copy_out: STO_3 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ block EC_callee_5 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
     -- output: % % % |- % @< % >( % ): EC_3 STO_3 exit as callResult
 
-  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:609.1-625.62
+  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:608.1-624.62
   rulegroup tableApplyMethodCallee
 
    match
@@ -29106,6 +29166,104 @@ relation Exprs_eval_keyset_simple: evalContext store |- simpleKeysetExpressionLi
     -- let ` setValue_t*{setValue_t <- setValue_t*} = keysetExpressionResult' as continueResult<setValue*>
     -- let keysetExpressionResult = ` setValue_h :: setValue_t*{setValue_t <- setValue_t*} as keysetExpressionResult
     -- output: % % |- % : EC_2 STO_2 keysetExpressionResult
+
+;; ../../../../spec-concrete/8.06-eval-statement.watsup:228.1-228.57
+def $match_switchLabelIR_table(id, switchLabelIR) : bool =
+
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:229.1-229.51
+  clause 0 : (id, switchLabelIR) = true
+  -- if switchLabelIR matches `DEFAULT`
+
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:230.1-230.56
+  clause 1 : (id, switchLabelIR) = true
+  -- if switchLabelIR <: typedExpressionIR
+  -- let expressionIR # _expressionNoteIR = switchLabelIR as typedExpressionIR
+  -- if expressionIR <: prefixedNameIR
+  -- let prefixedNameIR = expressionIR as prefixedNameIR
+  -- if prefixedNameIR matches ``%`
+  -- let ` id' = prefixedNameIR
+  -- if (id = id')
+
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:231.1-232.15
+  clause 2 : (id, _switchLabelIR) = false
+  -- otherwise
+
+;; ../../../../spec-concrete/8.06-eval-statement.watsup:238.1-240.20
+relation SwitchCases_table_eval: id |- switchCaseListIR : blockStatementIR?
+
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:246.1-286.2
+  rulegroup 
+
+   match
+
+    (explicit) id |- switchCaseIR'''*{switchCaseIR''' <- switchCaseIR'''*} : %
+    (implicit) id |- switchCaseIR'''*{switchCaseIR''' <- switchCaseIR'''*} : %
+
+   paths
+
+    rulepath nil
+    -- if (switchCaseIR'''*{switchCaseIR''' <- switchCaseIR'''*} = [])
+    -- output: % |- % : ?()
+
+    rulepath cons-non-fallthrough-match
+    -- let switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} = switchCaseIR'''*{switchCaseIR''' <- switchCaseIR'''*}
+    -- if switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} matches _ :: _
+    -- let switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} = switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*}
+    -- let switchCaseIR''''' = switchCaseIR_h
+    -- if switchCaseIR''''' matches `%:%`
+    -- let switchLabelIR_h : blockStatementIR_h = switchCaseIR'''''
+    -- if $match_switchLabelIR_table(id, switchLabelIR_h)
+    -- output: % |- % : ?(blockStatementIR_h)
+
+    rulepath cons-non-fallthrough-no-match
+    -- let switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} = switchCaseIR'''*{switchCaseIR''' <- switchCaseIR'''*}
+    -- if switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} matches _ :: _
+    -- let switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} = switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*}
+    -- let switchCaseIR''''' = switchCaseIR_h
+    -- if switchCaseIR''''' matches `%:%`
+    -- let switchLabelIR_h : blockStatementIR_h = switchCaseIR'''''
+    -- if ~$match_switchLabelIR_table(id, switchLabelIR_h)
+    -- SwitchCases_table_eval: id |- switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} : blockStatementIR?{blockStatementIR <- blockStatementIR?}
+    -- output: % |- % : blockStatementIR?{blockStatementIR <- blockStatementIR?}
+
+    rulepath cons-fallthrough-match
+    -- let switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} = switchCaseIR'''*{switchCaseIR''' <- switchCaseIR'''*}
+    -- if switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} matches _ :: _
+    -- let switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} = switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*}
+    -- let switchCaseIR''''' = switchCaseIR_h
+    -- if switchCaseIR''''' matches `%:`
+    -- let switchLabelIR_h : = switchCaseIR'''''
+    -- if $match_switchLabelIR_table(id, switchLabelIR_h)
+    -- let switchCaseIR'''''''*{switchCaseIR''''''' <- switchCaseIR'''''''*} = $filter_<switchCaseIR>(switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*}, $is_non_fallthrough_switchCaseIR)
+    -- if switchCaseIR'''''''*{switchCaseIR''''''' <- switchCaseIR'''''''*} matches _ :: _
+    -- let switchCaseIR'''''' :: _switchCaseIR*{_switchCaseIR <- _switchCaseIR*} = switchCaseIR'''''''*{switchCaseIR''''''' <- switchCaseIR'''''''*}
+    -- if switchCaseIR'''''' matches `%:%`
+    -- let _switchLabelIR : blockStatementIR = switchCaseIR''''''
+    -- output: % |- % : ?(blockStatementIR)
+
+    rulepath cons-fallthrough-no-match
+    -- let switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} = switchCaseIR'''*{switchCaseIR''' <- switchCaseIR'''*}
+    -- if switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} matches _ :: _
+    -- let switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} = switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*}
+    -- let switchCaseIR''''' = switchCaseIR_h
+    -- if switchCaseIR''''' matches `%:`
+    -- let switchLabelIR_h : = switchCaseIR'''''
+    -- if ~$match_switchLabelIR_table(id, switchLabelIR_h)
+    -- SwitchCases_table_eval: id |- switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} : blockStatementIR?{blockStatementIR <- blockStatementIR?}
+    -- output: % |- % : blockStatementIR?{blockStatementIR <- blockStatementIR?}
+
+;; ../../../../spec-concrete/8.06-eval-statement.watsup:242.1-242.58
+def $is_non_fallthrough_switchCaseIR(switchCaseIR) : bool =
+
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:243.1-243.79
+  clause 0 : (switchCaseIR) = true
+  -- if switchCaseIR matches `%:%`
+  -- let switchLabelIR : blockStatementIR = switchCaseIR
+
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:244.1-244.64
+  clause 1 : (switchCaseIR) = false
+  -- if switchCaseIR matches `%:`
+  -- let switchLabelIR : = switchCaseIR
 
 ;; ../../../../spec-concrete/8.08.1-eval-parser-statement.watsup:31.1-34.26
 relation SelectCase_match: evalContext store value* |- selectCaseIR : evalContext store nameIR?
