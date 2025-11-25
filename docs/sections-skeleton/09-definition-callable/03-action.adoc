@@ -1,12 +1,10 @@
-[#sec-def-actionDeclaration]
-[#sec-def-actionTypeIR]
-[#sec-def-actionDef]
 === Actions
 
-.Actions contain code and data.The code is in the P4 program, while the data is provided in the table entries, typically populated by the control plane. Other parameters are bound by the data plane.
+.Actions contain code and data. The code is in the P4 program, while the data is provided in the table entries, typically populated by the control plane. Other parameters are bound by the data plane.
 [#fig-actions]
 image::actions.png[width=400,align="center"]
 
+// Section 14.1 of the P4-16 Language Specification
 Actions are code fragments that can read and write the data being processed.
 Actions may contain data values that can be written by the control plane and
 read by the data plane. Actions are the main construct by which the control
@@ -41,6 +39,7 @@ No `table`, `control`, or `parser` applications can appear within actions.
 Some targets may impose additional restrictions on action bodies---e.g., only
 allowing straight-line code, with no conditional statements or expressions.
 
+// Section 14.1.1 of the P4-16 Language Specification
 Actions can be executed in two ways:
 
 - Implicitly: by tables during match-action processing.
@@ -50,22 +49,25 @@ Actions can be executed in two ways:
   directionless parameters behave like `in` parameters.
 
 Actions are introduced by `action` declarations. Its typing rule is explained
-in <<sec-sem-Decl_ok-actionDeclaration>>. After type checking, action types are
-represented as follows:
+in <<sec-sem-Decl_ok-actionDeclaration>>. It introduces an action type
+definition:
 
+[[actionTypeDefIR]]
+${syntax: actionTypeDefIR}
+
+Because actions cannot be generic, the action type is the same as the action
+type definition:
+
+[[actionTypeIR]]
 ${syntax: actionTypeIR}
 
 The runtime representation of an action is as follows:
 
+[[actionDef]]
 ${syntax: actionDef}
 
-==== Type nesting
-
-${funcprose: nestable_action}
-${funcprose: nestable'_action}
-
-[#sec-sem-CallableType_wf-actionTypeIR]
 ==== Well-formedness
 
+// Added
 ${rulegroup: CallableType_wf/actionTypeIR}
 ${ruleprose: CallableType_wf/actionTypeIR}
