@@ -215,8 +215,113 @@ rulegroup Stmt_eval/conditionalStatementIR {
 
 ;;; (TODO) continueStatement
 
-;;; (TODO) switchStatement
-;;; syntax switchStatement = SWITCH `( expression ) `{ switchCaseList }
+;;; switchStatementIR
+;;; syntax switchStatementIR =
+;;;   SWITCH `( typedExpressionIR ) `{ switchCaseListIR }
+
+;;;; Switch on table apply method result
+
+;;;;; syntax switchLabelIR
+;;;;;; DEFAULT
+;;;;;; typedExpressionIR
+
+dec $match_switchLabelIR_table(id, switchLabelIR) : bool
+def $match_switchLabelIR_table(id, DEFAULT) = true
+def $match_switchLabelIR_table(id, (`` id) `# _) = true
+def $match_switchLabelIR_table(id, _) = false
+  -- otherwise
+
+;;;;; syntax switchCaseListIR
+;;;;;; switchLabelIR `: blockStatementIR
+;;;;;; switchLabelIR `: 
+
+relation SwitchCases_table_eval:
+  id |- switchCaseListIR : blockStatementIR?
+  hint(input %0 %1)
+
+dec $is_non_fallthrough_switchCaseIR(switchCaseIR) : bool
+def $is_non_fallthrough_switchCaseIR(switchLabelIR `: blockStatementIR) = true
+def $is_non_fallthrough_switchCaseIR(switchLabelIR `: ) = false
+
+rulegroup SwitchCases_table_eval {
+
+  rule SwitchCases_table_eval/nil:
+    id |- eps : eps
+
+  rule SwitchCases_table_eval/cons-non-fallthrough-match:
+    id |- switchCaseIR_h :: switchCaseIR_t* : blockStatementIR_h
+    ---- ;; if not fallthrough
+    -- if switchLabelIR_h `: blockStatementIR_h = switchCaseIR_h
+    ---- ;; if match
+    -- if $match_switchLabelIR_table(id, switchLabelIR_h)
+
+  rule SwitchCases_table_eval/cons-non-fallthrough-no-match:
+    id |- switchCaseIR_h :: switchCaseIR_t* : blockStatementIR
+    ---- ;; if not fallthrough
+    -- if switchLabelIR_h `: blockStatementIR_h = switchCaseIR_h
+    ---- ;; if no match
+    -- if ~$match_switchLabelIR_table(id, switchLabelIR_h)
+    -- SwitchCases_table_eval:
+        id |- switchCaseIR_t* : blockStatementIR
+
+  rule SwitchCases_table_eval/cons-fallthrough-match:
+    id |- switchCaseIR_h :: switchCaseIR_t* : blockStatementIR
+    ---- ;; if fallthrough
+    -- if switchLabelIR_h `: = switchCaseIR_h
+    ---- ;; if match
+    -- if $match_switchLabelIR_table(id, switchLabelIR_h)
+    ---- ;; take the closest non-fallthrough case
+    -- if (_ `: blockStatementIR) :: _
+        = $filter_<switchCaseIR>(switchCaseIR_t*, def $is_non_fallthrough_switchCaseIR)
+
+  rule SwitchCases_table_eval/cons-fallthrough-no-match:
+    id |- switchCaseIR_h :: switchCaseIR_t* : blockStatementIR
+    ---- ;; if fallthrough
+    -- if switchLabelIR_h `: = switchCaseIR_h
+    ---- ;; if no match
+    -- if ~$match_switchLabelIR_table(id, switchLabelIR_h)
+    -- SwitchCases_table_eval:
+        id |- switchCaseIR_t* : blockStatementIR
+
+}
+
+rulegroup Stmt_eval/switchStatementIR-table {
+
+  rule Stmt_eval/target-exit:
+    LOCAL EC_0 STO_0 |- SWITCH `( typedExpressionIR ) `{ switchCaseIR* }
+                      : EC_1 STO_1 EXIT
+    ---- ;; evaluate switch target
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 EXIT
+
+  rule Stmt_eval/target-cont-match:
+    LOCAL EC_0 STO_0 |- SWITCH `( typedExpressionIR ) `{ switchCaseIR* }
+                      : EC_2 STO_2 statementResult
+    ---- ;; evaluate switch target
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` value)
+    ---- ;; if switch on table apply result
+    -- if TABLE_ENUM _ `. id_enum = value
+    ---- ;; find matching case
+    -- SwitchCases_table_eval:
+        id_enum |- switchCaseIR* : blockStatementIR
+    ---- ;; evaluate matching case
+    -- Stmt_eval:
+        LOCAL EC_1 STO_1 |- blockStatementIR : EC_2 STO_2 statementResult
+
+  rule Stmt_eval/target-cont-no-match:
+    LOCAL EC_0 STO_0 |- SWITCH `( typedExpressionIR ) `{ switchCaseIR* }
+                      : EC_1 STO_1 ``
+    ---- ;; evaluate switch target
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` value)
+    ---- ;; if switch on table apply result
+    -- if TABLE_ENUM _ `. id_enum = value
+    ---- ;; find matching case
+    -- SwitchCases_table_eval:
+        id_enum |- switchCaseIR* : eps
+
+}
 
 ;;
 ;; Block statement instantiation
