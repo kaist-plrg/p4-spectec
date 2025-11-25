@@ -256,13 +256,13 @@ rulegroup SwitchCases_table_eval {
     -- if $match_switchLabelIR_table(id, switchLabelIR_h)
 
   rule SwitchCases_table_eval/cons-non-fallthrough-no-match:
-    id |- switchCaseIR_h :: switchCaseIR_t* : blockStatementIR
+    id |- switchCaseIR_h :: switchCaseIR_t* : blockStatementIR?
     ---- ;; if not fallthrough
     -- if switchLabelIR_h `: blockStatementIR_h = switchCaseIR_h
     ---- ;; if no match
     -- if ~$match_switchLabelIR_table(id, switchLabelIR_h)
     -- SwitchCases_table_eval:
-        id |- switchCaseIR_t* : blockStatementIR
+        id |- switchCaseIR_t* : blockStatementIR?
 
   rule SwitchCases_table_eval/cons-fallthrough-match:
     id |- switchCaseIR_h :: switchCaseIR_t* : blockStatementIR
@@ -275,13 +275,13 @@ rulegroup SwitchCases_table_eval {
         = $filter_<switchCaseIR>(switchCaseIR_t*, def $is_non_fallthrough_switchCaseIR)
 
   rule SwitchCases_table_eval/cons-fallthrough-no-match:
-    id |- switchCaseIR_h :: switchCaseIR_t* : blockStatementIR
+    id |- switchCaseIR_h :: switchCaseIR_t* : blockStatementIR?
     ---- ;; if fallthrough
     -- if switchLabelIR_h `: = switchCaseIR_h
     ---- ;; if no match
     -- if ~$match_switchLabelIR_table(id, switchLabelIR_h)
     -- SwitchCases_table_eval:
-        id |- switchCaseIR_t* : blockStatementIR
+        id |- switchCaseIR_t* : blockStatementIR?
 
 }
 
