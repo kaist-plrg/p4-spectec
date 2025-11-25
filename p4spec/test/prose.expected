@@ -7070,13 +7070,24 @@ relation Expr_eval: `p`, `EC'`, `STO'`, and <<typedExpressionIR, `expressionIR` 
     ..... Let `value~member~` be `value'^?^`.
     ..... Let `expressionResult` be `value~member~`.
     ..... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
-  ... Check that `nameIR'` is equal to `"size"`.
-  ... Check that `expressionResult'` has type `continueResult<value>`.
-  ... Let `value~base~` be `expressionResult'`.
-  ... Check that `value~base~` has type `headerStackValue`.
-  ... Let `HEADER_STACK [ ++_++^{asterisk}^ ( ++_++ ; n~size~ ) ]` be `value~base~`.
-  ... Let `expressionResult` be `D n~size~`.
-  ... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
+  ... If `nameIR'` is equal to `"size"`:
+   .... Check that `expressionResult'` has type `continueResult<value>`.
+   .... Let `value~base~` be `expressionResult'`.
+   .... Check that `value~base~` has type `headerStackValue`.
+   .... Let `HEADER_STACK [ ++_++^{asterisk}^ ( ++_++ ; n~size~ ) ]` be `value~base~`.
+   .... Let `expressionResult` be `D n~size~`.
+   .... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
+  ... Else if `nameIR'` is equal to `"last"`:
+   .... Check that `expressionResult'` has type `continueResult<value>`.
+   .... Let `value~base~` be `expressionResult'`.
+   .... Check that `value~base~` has type `headerStackValue`.
+   .... Let `HEADER_STACK [ value~elem~^{asterisk}^ ( n~idx~ ; ++_++ ) ]` be `value~base~`.
+   .... Let `int` be `n~idx~ - 1`.
+   .... Check that `int` has type `nat`.
+   .... Let `n~idx_last~` be `int`.
+   .... Let `value~last~` be `value~elem~^{asterisk}^[n~idx_last~]`.
+   .... Let `expressionResult` be `value~last~`.
+   .... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
 . Else if let `typedExpressionIR~base~ [ typedExpressionIR~index~ ]` be `expressionIR`:
  .. Group indexAccessExpressionIR:
   ... Let `EC~1~`, `STO~1~`, and `expressionListResult` be the result of <<Exprs_eval, evaluating `[typedExpressionIR~base~, typedExpressionIR~index~]`, under cursor `p`, evaluation context `EC'`, and store `STO'`>>.

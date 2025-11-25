@@ -356,6 +356,17 @@ rulegroup Expr_eval/memberAccessExpressionIR-expression {
     -- if HEADER_STACK `[ _ `( _; n_size ) ] = value_base
     -- if expressionResult = `` (D n_size)
 
+  rule Expr_eval/stack-last:
+    p EC_0 STO_0 |- (typedExpressionIR_base `. "last") `# `( typeIR_base _ )
+                  : EC_1 STO_1 expressionResult
+    -- Expr_eval:
+        p EC_0 STO_0 |- typedExpressionIR_base
+                      : EC_1 STO_1 (`` value_base) 
+    -- if HEADER_STACK `[ value_elem* `( n_idx; _ ) ] = value_base
+    -- if n_idx_last = $(n_idx - 1)
+    -- if value_last = value_elem* [ n_idx_last ]
+    -- if expressionResult = `` value_last
+
   rule Expr_eval/struct:
     p EC_0 STO_0 |- (typedExpressionIR_base `. nameIR) `# `( typeIR_base _ )
                   : EC_1 STO_1 expressionResult

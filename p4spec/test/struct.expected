@@ -28024,19 +28024,43 @@ relation Expr_eval: p EC' STO' |- (expressionIR # _expressionNoteIR') : % % %
 
                   3. Result in : % % % |- % : EC_1 STO_1 expressionResult
 
-        3. If ((nameIR' = "size")), then
+        3. Case analysis on nameIR'
 
-          1. If ((expressionResult' has type continueResult<value>)), then
+          1. Case (% = "size")
 
-            1. (Let (` value_base) be (expressionResult' as continueResult<value>))
+            1. If ((expressionResult' has type continueResult<value>)), then
 
-            2. If ((value_base has type headerStackValue)), then
+              1. (Let (` value_base) be (expressionResult' as continueResult<value>))
 
-              1. (Let (header_stack[ _value*{_value <- _value*} ( _nat ; n_size )]) be (value_base as headerStackValue))
+              2. If ((value_base has type headerStackValue)), then
 
-              2. (Let expressionResult be ((` ((d (n_size as int)) as value)) as expressionResult))
+                1. (Let (header_stack[ _value*{_value <- _value*} ( _nat ; n_size )]) be (value_base as headerStackValue))
 
-              3. Result in : % % % |- % : EC_1 STO_1 expressionResult
+                2. (Let expressionResult be ((` ((d (n_size as int)) as value)) as expressionResult))
+
+                3. Result in : % % % |- % : EC_1 STO_1 expressionResult
+
+          2. Case (% = "last")
+
+            1. If ((expressionResult' has type continueResult<value>)), then
+
+              1. (Let (` value_base) be (expressionResult' as continueResult<value>))
+
+              2. If ((value_base has type headerStackValue)), then
+
+                1. (Let (header_stack[ value_elem*{value_elem <- value_elem*} ( n_idx ; _nat )]) be (value_base as headerStackValue))
+
+                2. (Let int be (n_idx - 1))
+
+                3. If ((int has type nat)), then
+
+                  1. (Let n_idx_last be (int as nat))
+
+                  2. (Let value_last be value_elem*{value_elem <- value_elem*}[n_idx_last])
+
+                  3. (Let expressionResult be ((` value_last) as expressionResult))
+
+                  4. Result in : % % % |- % : EC_1 STO_1 expressionResult
 
   2. Case (% has type indexAccessExpressionIR)
 
