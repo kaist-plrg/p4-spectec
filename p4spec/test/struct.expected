@@ -3112,12 +3112,41 @@ def $update_fieldValue(fieldValue*{fieldValue <- fieldValue*}, id, value)
 
       1. Return (value_field_h id_field_h ;) :: $update_fieldValue(fieldValue_t*{fieldValue_t <- fieldValue_t*}, id, value)
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:62.1-62.58
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:61.1-61.55
+def $update_headerUnion(fieldValue''*{fieldValue'' <- fieldValue''*}, id)
+
+1. Case analysis on fieldValue''*{fieldValue'' <- fieldValue''*}
+
+  1. Case (% matches pattern [])
+
+    1. Return []
+
+  2. Case (% matches pattern _ :: _)
+
+    1. (Let (value_field_h id_field_h ;) :: fieldValue_t*{fieldValue_t <- fieldValue_t*} be fieldValue''*{fieldValue'' <- fieldValue''*})
+
+    2. Case analysis on id_field_h
+
+      1. Case (% = id)
+
+        1. Return (value_field_h id_field_h ;) :: fieldValue_t*{fieldValue_t <- fieldValue_t*}
+
+      2. Case (% =/= id)
+
+        1. If ((value_field_h has type headerValue)), then
+
+          1. (Let (header tid { _bool ; fieldValue*{fieldValue <- fieldValue*} }) be (value_field_h as headerValue))
+
+          2. (Let value_field_h_update be ((header tid { false ; fieldValue*{fieldValue <- fieldValue*} }) as value))
+
+          3. Return (value_field_h_update id_field_h ;) :: fieldValue_t*{fieldValue_t <- fieldValue_t*}
+
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:81.1-81.58
 def $update_headerStack(value*{value <- value*}, value_new, n_target_idx, n_size)
 
 1. Return $update_headerStack'(value*{value <- value*}, value_new, 0, n_target_idx, n_size)
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:63.1-63.64
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:82.1-82.64
 def $update_headerStack'(value*{value <- value*}, _value', _nat''', _nat'''', _nat''''')
 
 1. Case analysis on value*{value <- value*}
@@ -3144,7 +3173,7 @@ def $update_headerStack'(value*{value <- value*}, _value', _nat''', _nat'''', _n
 
         1. Return value_h :: $update_headerStack'(value_t*{value_t <- value_t*}, _value', (_nat''' + 1), _nat'''', _nat''''')
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:88.1-88.54
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:107.1-107.54
 def $write_value_from_bits(value, n_var, b*{b <- b*})
 
 1. (Let (value_updated, bool*{bool <- bool*}) be $write_value_from_bits'(value, n_var, b*{b <- b*}))
@@ -3153,7 +3182,7 @@ def $write_value_from_bits(value, n_var, b*{b <- b*})
 
   1. Return value_updated
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:89.1-89.64
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:108.1-108.64
 def $write_value_from_bits'(value, n_var', bool'*{bool' <- bool'*})
 
 1. Case analysis on value
@@ -3258,7 +3287,7 @@ def $write_value_from_bits'(value, n_var', bool'*{bool' <- bool'*})
 
         4. Return (((n_max . n_var' v i) as value), b_t*{b_t <- b_t*})
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:90.1-90.83
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:109.1-109.83
 def $write_value_fields_from_bits'(fieldValue*{fieldValue <- fieldValue*}, n_var, b*{b <- b*})
 
 1. Case analysis on fieldValue*{fieldValue <- fieldValue*}
@@ -3277,14 +3306,14 @@ def $write_value_fields_from_bits'(fieldValue*{fieldValue <- fieldValue*}, n_var
 
     4. Return (fieldValue_h_updated :: fieldValue_t_updated*{fieldValue_t_updated <- fieldValue_t_updated*}, b_rest*{b_rest <- b_rest*})
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:91.1-91.80
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:110.1-110.80
 def $write_value_field_from_bits'((value id ;), n_var, b*{b <- b*})
 
 1. (Let (value_updated, b_rest*{b_rest <- b_rest*}) be $write_value_from_bits'(value, n_var, b*{b <- b*}))
 
 2. Return ((value_updated id ;), b_rest*{b_rest <- b_rest*})
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:150.1-150.42
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:169.1-169.42
 def $write_bits_from_value(value'')
 
 1. Case analysis on value''
@@ -28603,7 +28632,19 @@ relation Lvalue_read: p EC' STO |- storageReference'' : %
 
                 2. Result in : % % % |- % : value
 
-        2. Case (% has type structValue)
+        2. Case (% has type headerUnionValue)
+
+          1. (Let (header_union _tid { (value_field id_field ;)*{id_field <- id_field*, value_field <- value_field*} }) be (value_base as headerUnionValue))
+
+          2. (Let value''?{value'' <- value''?} be $assoc_<id, value>(nameIR, (id_field, value_field)*{id_field <- id_field*, value_field <- value_field*}))
+
+          3. If ((value''?{value'' <- value''?} matches pattern (_))), then
+
+            1. (Let ?(value) be value''?{value'' <- value''?})
+
+            2. Result in : % % % |- % : value
+
+        3. Case (% has type structValue)
 
           1. (Let (struct tid { (value_field id_field ;)*{id_field <- id_field*, value_field <- value_field*} }) be (value_base as structValue))
 
@@ -28615,7 +28656,7 @@ relation Lvalue_read: p EC' STO |- storageReference'' : %
 
             2. Result in : % % % |- % : value
 
-        3. Case (% has type headerValue)
+        4. Case (% has type headerValue)
 
           1. (Let (header tid { _bool ; (value_field id_field ;)*{id_field <- id_field*, value_field <- value_field*} }) be (value_base as headerValue))
 
@@ -28692,13 +28733,45 @@ relation Lvalue_write: p EC_0 STO |- storageReference'' -> value : %
 
           1. (Let (header_union tid { fieldValue*{fieldValue <- fieldValue*} }) be (value_base as headerUnionValue))
 
-          2. (Let fieldValue_update*{fieldValue_update <- fieldValue_update*} be $update_fieldValue(fieldValue*{fieldValue <- fieldValue*}, nameIR', value))
+          2. (Let (value_field id_field ;)*{id_field <- id_field*, value_field <- value_field*} be fieldValue*{fieldValue <- fieldValue*})
 
-          3. (Let value_base_update be ((header_union tid { fieldValue_update*{fieldValue_update <- fieldValue_update*} }) as value))
+          3. (Let value''?{value'' <- value''?} be $assoc_<nameIR, value>(nameIR', (id_field, value_field)*{id_field <- id_field*, value_field <- value_field*}))
 
-          4. (Lvalue_write: p EC_0 STO |- storageReference -> value_base_update : EC_1)
+          4. If ((value''?{value'' <- value''?} matches pattern (_))), then
 
-          5. Result in : % % % |- % -> % : EC_1
+            1. (Let ?(value_old) be value''?{value'' <- value''?})
+
+            2. If ((value_old has type headerValue)), then
+
+              1. (Let (header _tid { b_valid_old ; _fieldValue*{_fieldValue <- _fieldValue*} }) be (value_old as headerValue))
+
+              2. (Let fieldValue_update*{fieldValue_update <- fieldValue_update*} be $update_fieldValue(fieldValue*{fieldValue <- fieldValue*}, nameIR', value))
+
+              3. If ((value has type headerValue)), then
+
+                1. (Let (header _tid' { b_valid_new ; _fieldValue'*{_fieldValue' <- _fieldValue'*} }) be (value as headerValue))
+
+                2. (Let b_toggled be ((~b_valid_old /\ b_valid_new) \/ (b_valid_old /\ ~b_valid_new)))
+
+                3. Case analysis on b_toggled
+
+                  1. Case false
+
+                    1. (Let value_base_update be ((header_union tid { fieldValue_update*{fieldValue_update <- fieldValue_update*} }) as value))
+
+                    2. (Lvalue_write: p EC_0 STO |- storageReference -> value_base_update : EC_1)
+
+                    3. Result in : % % % |- % -> % : EC_1
+
+                  2. Case true
+
+                    1. (Let fieldValue_update'*{fieldValue_update' <- fieldValue_update'*} be $update_headerUnion(fieldValue_update*{fieldValue_update <- fieldValue_update*}, nameIR'))
+
+                    2. (Let value_base_update be ((header_union tid { fieldValue_update'*{fieldValue_update' <- fieldValue_update'*} }) as value))
+
+                    3. (Lvalue_write: p EC_0 STO |- storageReference -> value_base_update : EC_1)
+
+                    4. Result in : % % % |- % -> % : EC_1
 
         2. Case (% has type structValue)
 

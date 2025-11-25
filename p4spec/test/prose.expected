@@ -7294,6 +7294,11 @@ relation Lvalue_read: `p`, `EC'`, `STO`, and `storageReference''`
    .... Check that `value''^?^` is Some value.
    .... Let `value` be `value''^?^`.
    .... Result in `value`.
+  ... Else if let `HEADER_UNION ++_++ { (value~field~ id~field~ ;)^{asterisk}^ }` be `value~base~`:
+   .... Let `value''^?^` be `<<assoc_, $assoc_<id, value>(nameIR, ((id~field~, value~field~))^{asterisk}^)>>`.
+   .... Check that `value''^?^` is Some value.
+   .... Let `value` be `value''^?^`.
+   .... Result in `value`.
   ... Else if let `STRUCT tid { (value~field~ id~field~ ;)^{asterisk}^ }` be `value~base~`:
    .... Let `value''^?^` be `<<assoc_, $assoc_<id, value>(nameIR, ((id~field~, value~field~))^{asterisk}^)>>`.
    .... Check that `value''^?^` is Some value.
@@ -7335,10 +7340,25 @@ relation Lvalue_write: `p`, `EC~0~`, `STO`, `storageReference''`, and `value`
  .. Group storageReference-nameIR:
   ... Let <<Lvalue_read, `p EC~0~ STO |- storageReference : value~base~`>>.
   ... If let `HEADER_UNION tid { fieldValue^{asterisk}^ }` be `value~base~`:
+   .... Let `(value~field~ id~field~ ;)^{asterisk}^` be `fieldValue^{asterisk}^`.
+   .... Let `value''^?^` be `<<assoc_, $assoc_<nameIR, value>(nameIR', ((id~field~, value~field~))^{asterisk}^)>>`.
+   .... Check that `value''^?^` is Some value.
+   .... Let `value~old~` be `value''^?^`.
+   .... Check that `value~old~` has type `headerValue`.
+   .... Let `HEADER ++_++ { b~valid_old~ ; ++_++^{asterisk}^ }` be `value~old~`.
    .... Let `fieldValue~update~^{asterisk}^` be `<<update_fieldValue, $update_fieldValue(fieldValue^{asterisk}^, nameIR', value)>>`.
-   .... Let `value~base_update~` be `HEADER_UNION tid { fieldValue~update~^{asterisk}^ }`.
-   .... Let <<Lvalue_write, `p EC~0~ STO |- storageReference -> value~base_update~ : EC~1~`>>.
-   .... Result in `EC~1~`.
+   .... Check that `value` has type `headerValue`.
+   .... Let `HEADER ++_++ { b~valid_new~ ; ++_++^{asterisk}^ }` be `value`.
+   .... Let `b~toggled~` be `~b~valid_old~ /\ b~valid_new~` *or* `b~valid_old~ /\ ~b~valid_new~`.
+   .... If `~b~toggled~`:
+    ..... Let `value~base_update~` be `HEADER_UNION tid { fieldValue~update~^{asterisk}^ }`.
+    ..... Let <<Lvalue_write, `p EC~0~ STO |- storageReference -> value~base_update~ : EC~1~`>>.
+    ..... Result in `EC~1~`.
+   .... Else `b~toggled~`:
+    ..... Let `fieldValue~update'~^{asterisk}^` be `<<update_headerUnion, $update_headerUnion(fieldValue~update~^{asterisk}^, nameIR')>>`.
+    ..... Let `value~base_update~` be `HEADER_UNION tid { fieldValue~update'~^{asterisk}^ }`.
+    ..... Let <<Lvalue_write, `p EC~0~ STO |- storageReference -> value~base_update~ : EC~1~`>>.
+    ..... Result in `EC~1~`.
   ... Else if let `STRUCT tid { fieldValue^{asterisk}^ }` be `value~base~`:
    .... Let `fieldValue~update~^{asterisk}^` be `<<update_fieldValue, $update_fieldValue(fieldValue^{asterisk}^, nameIR', value)>>`.
    .... Let `value~base_update~` be `STRUCT tid { fieldValue~update~^{asterisk}^ }`.

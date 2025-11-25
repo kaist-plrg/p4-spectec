@@ -103,6 +103,17 @@ rulegroup Lvalue_read/storageReference-nameIR {
     -- if value
         = $find_map<nameIR, value>(frame, nameIR)
 
+  rule Lvalue_read/union:
+    p EC_0 STO |- storageReference `. nameIR : value
+    ---- ;; read base value
+    -- Lvalue_read:
+        p EC_0 STO |- storageReference : value_base
+    ---- ;; if the base value is a struct
+    -- if HEADER_UNION _ `{ (value_field id_field `;)* } = value_base
+    ---- ;; look up the field in the struct
+    -- if value
+        = $assoc_<id, value>(nameIR, (id_field, value_field)*)
+
   rule Lvalue_read/struct:
     p EC_0 STO |- storageReference `. nameIR : value
     ---- ;; read base value
@@ -170,16 +181,51 @@ rule Lvalue_write/referenceExpressionIR:
 
 rulegroup Lvalue_write/storageReference-nameIR {
 
-  rule Lvalue_write/union:
+  rule Lvalue_write/union-keep-valid-header:
     p EC_0 STO |- (storageReference `. nameIR) -> value : EC_1
     ---- ;; read base value
     -- Lvalue_read:
         p EC_0 STO |- storageReference : value_base
     -- if HEADER_UNION tid `{ fieldValue* } = value_base
+    ----
+    -- if (value_field id_field `;)* = fieldValue*
+    -- if value_old = $assoc_<nameIR, value>(nameIR, (id_field, value_field)*)
+    -- if HEADER _ `{ b_valid_old `; _ } = value_old
+    ----
     -- if fieldValue_update*
         = $update_fieldValue(fieldValue*, nameIR, value)
+    ----
+    -- if HEADER _ `{ b_valid_new `; _ } = value
+    -- if b_toggled
+        = ((~b_valid_old /\ b_valid_new) \/ (b_valid_old /\ ~b_valid_new))
+    -- if ~b_toggled
     -- if value_base_update
         = HEADER_UNION tid `{ fieldValue_update* }
+    -- Lvalue_write:
+        p EC_0 STO |- storageReference -> value_base_update : EC_1
+
+  rule Lvalue_write/union-replace-valid-header:
+    p EC_0 STO |- (storageReference `. nameIR) -> value : EC_1
+    ---- ;; read base value
+    -- Lvalue_read:
+        p EC_0 STO |- storageReference : value_base
+    -- if HEADER_UNION tid `{ fieldValue* } = value_base
+    ----
+    -- if (value_field id_field `;)* = fieldValue*
+    -- if value_old = $assoc_<nameIR, value>(nameIR, (id_field, value_field)*)
+    -- if HEADER _ `{ b_valid_old `; _ } = value_old
+    ----
+    -- if fieldValue_update*
+        = $update_fieldValue(fieldValue*, nameIR, value)
+    ----
+    -- if HEADER _ `{ b_valid_new `; _ } = value
+    -- if b_toggled
+        = ((~b_valid_old /\ b_valid_new) \/ (b_valid_old /\ ~b_valid_new))
+    -- if b_toggled
+    -- if fieldValue_update'*
+        = $update_headerUnion(fieldValue_update*, nameIR)
+    -- if value_base_update
+        = HEADER_UNION tid `{ fieldValue_update'* }
     -- Lvalue_write:
         p EC_0 STO |- storageReference -> value_base_update : EC_1
 
