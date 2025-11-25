@@ -328,6 +328,21 @@ rule Call_eval/externFunctionCallee:
 
 rulegroup Call_eval/builtinMethodCallee {
 
+  rule Call_eval/headerUnion-isValid:
+    p EC STO |- builtinMethodCallee `@ `< eps > `( eps )
+              : EC STO returnResult
+    ---- ;; unpack the builtin method callee
+    -- if BUILTIN_METHOD storageReference `. "isValid"
+            `< eps > `( eps )
+        = builtinMethodCallee
+    ---- ;; read the value
+    -- Lvalue_read: 
+        p EC STO |- storageReference : headerUnionValue
+    -- if HEADER_UNION tid `{ fieldValue* } = headerUnionValue
+    -- if fieldValue_valid* = $filter_<fieldValue>(fieldValue*, def $is_header_valid)
+    -- if b_valid = (fieldValue_valid* = eps)
+    -- if returnResult = RETURN (B b_valid)
+
   rule Call_eval/header-isValid:
     p EC STO |- builtinMethodCallee `@ `< eps > `( eps )
               : EC STO returnResult

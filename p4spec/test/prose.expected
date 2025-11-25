@@ -7935,9 +7935,6 @@ relation Callee_eval: `p`, `EC'`, `STO'`, `callableTargetIR`, and `argumentListI
    .... Let `storageReference'^?^` be `storageReferenceResult`.
    .... Check that `storageReference'^?^` is Some value.
    .... Let `storageReference` be `storageReference'^?^`.
-   .... Let <<Lvalue_read, `p EC~1~ STO~1~ |- storageReference : value`>>.
-   .... Check that `value` has type `headerValue`.
-   .... Let `headerValue` be `value`.
    .... Let `builtinMethodCallee` be `BUILTIN_METHOD storageReference . "isValid" < [ ] > ( [ ] )`.
    .... Result in `EC~1~`, `STO~1~`, and `builtinMethodCallee`.
   ... Else if `nameIR'` is equal to `"setValid"`:
@@ -7949,9 +7946,6 @@ relation Callee_eval: `p`, `EC'`, `STO'`, `callableTargetIR`, and `argumentListI
    .... Let `storageReference'^?^` be `storageReferenceResult`.
    .... Check that `storageReference'^?^` is Some value.
    .... Let `storageReference` be `storageReference'^?^`.
-   .... Let <<Lvalue_read, `p EC~1~ STO~1~ |- storageReference : value`>>.
-   .... Check that `value` has type `headerValue`.
-   .... Let `headerValue` be `value`.
    .... Let `builtinMethodCallee` be `BUILTIN_METHOD storageReference . "setValid" < [ ] > ( [ ] )`.
    .... Result in `EC~1~`, `STO~1~`, and `builtinMethodCallee`.
   ... Else if `nameIR'` is equal to `"setInvalid"`:
@@ -7963,9 +7957,6 @@ relation Callee_eval: `p`, `EC'`, `STO'`, `callableTargetIR`, and `argumentListI
    .... Let `storageReference'^?^` be `storageReferenceResult`.
    .... Check that `storageReference'^?^` is Some value.
    .... Let `storageReference` be `storageReference'^?^`.
-   .... Let <<Lvalue_read, `p EC~1~ STO~1~ |- storageReference : value`>>.
-   .... Check that `value` has type `headerValue`.
-   .... Let `headerValue` be `value`.
    .... Let `builtinMethodCallee` be `BUILTIN_METHOD storageReference . "setInvalid" < [ ] > ( [ ] )`.
    .... Result in `EC~1~`, `STO~1~`, and `builtinMethodCallee`.
  .. Group typedExpressionIR-nameIR-extern-method:
@@ -8285,11 +8276,16 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
    .... Check that `typeArgumentIR'^{asterisk}^` is an empty list.
    .... Check that `parameterIR^{asterisk}^` is an empty list.
    .... Let <<Lvalue_read, `p EC~0'~ STO~0'~ |- storageReference : value'`>>.
-   .... Check that `value'` has type `headerValue`.
-   .... Let `headerValue` be `value'`.
-   .... Let `HEADER ++_++ { b~valid~ ; ++_++^{asterisk}^ }` be `headerValue`.
-   .... Let `returnResult` be `RETURN B b~valid~`.
-   .... Result in the resulting evaluation context `EC~0'~`, store `STO~0'~`, and call result `returnResult`.
+   .... If let `headerUnionValue` be `value'`:
+    ..... Let `HEADER_UNION tid { fieldValue^{asterisk}^ }` be `headerUnionValue`.
+    ..... Let `fieldValue~valid~^{asterisk}^` be `<<filter_, $filter_<fieldValue>(fieldValue^{asterisk}^, $is_header_valid)>>`.
+    ..... Let `b~valid~` be `fieldValue~valid~^{asterisk}^` is equal to `[ ]`.
+    ..... Let `returnResult` be `RETURN B b~valid~`.
+    ..... Result in the resulting evaluation context `EC~0'~`, store `STO~0'~`, and call result `returnResult`.
+   .... Else if let `headerValue` be `value'`:
+    ..... Let `HEADER ++_++ { b~valid~ ; ++_++^{asterisk}^ }` be `headerValue`.
+    ..... Let `returnResult` be `RETURN B b~valid~`.
+    ..... Result in the resulting evaluation context `EC~0'~`, store `STO~0'~`, and call result `returnResult`.
   ... Else if `text` is equal to `"setValid"`:
    .... Check that `typeArgumentIR'^{asterisk}^` is an empty list.
    .... Check that `parameterIR^{asterisk}^` is an empty list.

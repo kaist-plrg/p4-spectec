@@ -3112,7 +3112,18 @@ def $update_fieldValue(fieldValue*{fieldValue <- fieldValue*}, id, value)
 
       1. Return (value_field_h id_field_h ;) :: $update_fieldValue(fieldValue_t*{fieldValue_t <- fieldValue_t*}, id, value)
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:61.1-61.55
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:57.1-57.40
+def $is_header_valid((value id ;))
+
+1. If ((value has type headerValue)), then
+
+  1. (Let headerValue be (value as headerValue))
+
+  2. (Let (header _tid { b_valid ; _fieldValue*{_fieldValue <- _fieldValue*} }) be headerValue)
+
+  3. Return b_valid
+
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:66.1-66.55
 def $update_headerUnion(fieldValue''*{fieldValue'' <- fieldValue''*}, id)
 
 1. Case analysis on fieldValue''*{fieldValue'' <- fieldValue''*}
@@ -3141,12 +3152,12 @@ def $update_headerUnion(fieldValue''*{fieldValue'' <- fieldValue''*}, id)
 
           3. Return (value_field_h_update id_field_h ;) :: fieldValue_t*{fieldValue_t <- fieldValue_t*}
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:81.1-81.58
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:86.1-86.58
 def $update_headerStack(value*{value <- value*}, value_new, n_target_idx, n_size)
 
 1. Return $update_headerStack'(value*{value <- value*}, value_new, 0, n_target_idx, n_size)
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:82.1-82.64
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:87.1-87.64
 def $update_headerStack'(value*{value <- value*}, _value', _nat''', _nat'''', _nat''''')
 
 1. Case analysis on value*{value <- value*}
@@ -3173,7 +3184,7 @@ def $update_headerStack'(value*{value <- value*}, _value', _nat''', _nat'''', _n
 
         1. Return value_h :: $update_headerStack'(value_t*{value_t <- value_t*}, _value', (_nat''' + 1), _nat'''', _nat''''')
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:107.1-107.54
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:112.1-112.54
 def $write_value_from_bits(value, n_var, b*{b <- b*})
 
 1. (Let (value_updated, bool*{bool <- bool*}) be $write_value_from_bits'(value, n_var, b*{b <- b*}))
@@ -3182,7 +3193,7 @@ def $write_value_from_bits(value, n_var, b*{b <- b*})
 
   1. Return value_updated
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:108.1-108.64
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:113.1-113.64
 def $write_value_from_bits'(value, n_var', bool'*{bool' <- bool'*})
 
 1. Case analysis on value
@@ -3287,7 +3298,7 @@ def $write_value_from_bits'(value, n_var', bool'*{bool' <- bool'*})
 
         4. Return (((n_max . n_var' v i) as value), b_t*{b_t <- b_t*})
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:109.1-109.83
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:114.1-114.83
 def $write_value_fields_from_bits'(fieldValue*{fieldValue <- fieldValue*}, n_var, b*{b <- b*})
 
 1. Case analysis on fieldValue*{fieldValue <- fieldValue*}
@@ -3306,14 +3317,14 @@ def $write_value_fields_from_bits'(fieldValue*{fieldValue <- fieldValue*}, n_var
 
     4. Return (fieldValue_h_updated :: fieldValue_t_updated*{fieldValue_t_updated <- fieldValue_t_updated*}, b_rest*{b_rest <- b_rest*})
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:110.1-110.80
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:115.1-115.80
 def $write_value_field_from_bits'((value id ;), n_var, b*{b <- b*})
 
 1. (Let (value_updated, b_rest*{b_rest <- b_rest*}) be $write_value_from_bits'(value, n_var, b*{b <- b*}))
 
 2. Return ((value_updated id ;), b_rest*{b_rest <- b_rest*})
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:169.1-169.42
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:174.1-174.42
 def $write_bits_from_value(value'')
 
 1. Case analysis on value''
@@ -29912,15 +29923,9 @@ relation Callee_eval: p EC' STO' |- callableTargetIR <_>( argumentListIR'' ): % 
 
                 1. (Let ?(storageReference) be storageReference'?{storageReference' <- storageReference'?})
 
-                2. (Lvalue_read: p EC_1 STO_1 |- storageReference : value)
+                2. (Let builtinMethodCallee be (builtin_method storageReference . "isValid" < [] >( [] )))
 
-                3. If ((value has type headerValue)), then
-
-                  1. (Let headerValue be (value as headerValue))
-
-                  2. (Let builtinMethodCallee be (builtin_method storageReference . "isValid" < [] >( [] )))
-
-                  3. Result in : % % % |- % <_>( % ): EC_1 STO_1 ((` (builtinMethodCallee as callee)) as calleeResult)
+                3. Result in : % % % |- % <_>( % ): EC_1 STO_1 ((` (builtinMethodCallee as callee)) as calleeResult)
 
       2. Case (% = "setValid")
 
@@ -29940,15 +29945,9 @@ relation Callee_eval: p EC' STO' |- callableTargetIR <_>( argumentListIR'' ): % 
 
                 1. (Let ?(storageReference) be storageReference'?{storageReference' <- storageReference'?})
 
-                2. (Lvalue_read: p EC_1 STO_1 |- storageReference : value)
+                2. (Let builtinMethodCallee be (builtin_method storageReference . "setValid" < [] >( [] )))
 
-                3. If ((value has type headerValue)), then
-
-                  1. (Let headerValue be (value as headerValue))
-
-                  2. (Let builtinMethodCallee be (builtin_method storageReference . "setValid" < [] >( [] )))
-
-                  3. Result in : % % % |- % <_>( % ): EC_1 STO_1 ((` (builtinMethodCallee as callee)) as calleeResult)
+                3. Result in : % % % |- % <_>( % ): EC_1 STO_1 ((` (builtinMethodCallee as callee)) as calleeResult)
 
       3. Case (% = "setInvalid")
 
@@ -29968,15 +29967,9 @@ relation Callee_eval: p EC' STO' |- callableTargetIR <_>( argumentListIR'' ): % 
 
                 1. (Let ?(storageReference) be storageReference'?{storageReference' <- storageReference'?})
 
-                2. (Lvalue_read: p EC_1 STO_1 |- storageReference : value)
+                2. (Let builtinMethodCallee be (builtin_method storageReference . "setInvalid" < [] >( [] )))
 
-                3. If ((value has type headerValue)), then
-
-                  1. (Let headerValue be (value as headerValue))
-
-                  2. (Let builtinMethodCallee be (builtin_method storageReference . "setInvalid" < [] >( [] )))
-
-                  3. Result in : % % % |- % <_>( % ): EC_1 STO_1 ((` (builtinMethodCallee as callee)) as calleeResult)
+                3. Result in : % % % |- % <_>( % ): EC_1 STO_1 ((` (builtinMethodCallee as callee)) as calleeResult)
 
   3. Group typedExpressionIR-nameIR-extern-method: p EC' STO' |- (typedExpressionIR . nameIR') <_>( argumentListIR'' ): % % %
 
@@ -30648,15 +30641,31 @@ relation Call_eval: p EC_0' STO_0' |- callee @< typeArgumentListIR' >( argumentL
 
                   1. (Lvalue_read: p EC_0' STO_0' |- storageReference : value')
 
-                  2. If ((value' has type headerValue)), then
+                  2. Case analysis on value'
 
-                    1. (Let headerValue be (value' as headerValue))
+                    1. Case (% has type headerUnionValue)
 
-                    2. (Let (header _tid { b_valid ; _fieldValue*{_fieldValue <- _fieldValue*} }) be headerValue)
+                      1. (Let headerUnionValue be (value' as headerUnionValue))
 
-                    3. (Let returnResult be (return ?(((b b_valid) as value))))
+                      2. (Let (header_union tid { fieldValue*{fieldValue <- fieldValue*} }) be headerUnionValue)
 
-                    4. Result in : % % % |- % @< % >( % ): EC_0' STO_0' (returnResult as callResult)
+                      3. (Let fieldValue_valid*{fieldValue_valid <- fieldValue_valid*} be $filter_<fieldValue>(fieldValue*{fieldValue <- fieldValue*}, $is_header_valid))
+
+                      4. (Let b_valid be (fieldValue_valid*{fieldValue_valid <- fieldValue_valid*} = []))
+
+                      5. (Let returnResult be (return ?(((b b_valid) as value))))
+
+                      6. Result in : % % % |- % @< % >( % ): EC_0' STO_0' (returnResult as callResult)
+
+                    2. Case (% has type headerValue)
+
+                      1. (Let headerValue be (value' as headerValue))
+
+                      2. (Let (header _tid { b_valid ; _fieldValue*{_fieldValue <- _fieldValue*} }) be headerValue)
+
+                      3. (Let returnResult be (return ?(((b b_valid) as value))))
+
+                      4. Result in : % % % |- % @< % >( % ): EC_0' STO_0' (returnResult as callResult)
 
             2. Case (% = "setValid")
 

@@ -2936,20 +2936,29 @@ def $update_fieldValue(fieldValue*, id, value) : fieldValue* =
   -- let value_field_h id_field_h ; :: fieldValue_t*{fieldValue_t <- fieldValue_t*} = fieldValue*{fieldValue <- fieldValue*}
   -- otherwise
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:61.1-61.55
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:57.1-57.40
+def $is_header_valid(fieldValue) : bool =
+
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:59.1-60.49
+  clause 0 : (value id ;) = b_valid
+  -- if value <: headerValue
+  -- let headerValue = value as headerValue
+  -- let header _tid { b_valid ; _fieldValue*{_fieldValue <- _fieldValue*} } = headerValue
+
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:66.1-66.55
 def $update_headerUnion(fieldValue*, id) : fieldValue* =
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:63.1-63.39
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:68.1-68.39
   clause 0 : (fieldValue*{fieldValue <- fieldValue*}, id) = []
   -- if fieldValue*{fieldValue <- fieldValue*} matches []
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:64.1-68.24
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:69.1-73.24
   clause 1 : (fieldValue*{fieldValue <- fieldValue*}, id) = value_field_h id_field_h ; :: fieldValue_t*{fieldValue_t <- fieldValue_t*}
   -- if fieldValue*{fieldValue <- fieldValue*} matches _ :: _
   -- let value_field_h id_field_h ; :: fieldValue_t*{fieldValue_t <- fieldValue_t*} = fieldValue*{fieldValue <- fieldValue*}
   -- if (id_field_h = id)
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:69.1-75.68
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:74.1-80.68
   clause 2 : (fieldValue'*{fieldValue' <- fieldValue'*}, id) = value_field_h_update id_field_h ; :: fieldValue_t*{fieldValue_t <- fieldValue_t*}
   -- if fieldValue'*{fieldValue' <- fieldValue'*} matches _ :: _
   -- let value_field_h id_field_h ; :: fieldValue_t*{fieldValue_t <- fieldValue_t*} = fieldValue'*{fieldValue' <- fieldValue'*}
@@ -2959,56 +2968,56 @@ def $update_headerUnion(fieldValue*, id) : fieldValue* =
   -- let header tid { _bool ; fieldValue*{fieldValue <- fieldValue*} } = value as headerValue
   -- let value_field_h_update = header tid { false ; fieldValue*{fieldValue <- fieldValue*} } as value
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:81.1-81.58
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:86.1-86.58
 def $update_headerStack(value*, value, nat, nat) : value* =
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:84.1-84.132
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:89.1-89.132
   clause 0 : (value*{value <- value*}, value_new, n_target_idx, n_size) = $update_headerStack'(value*{value <- value*}, value_new, 0, n_target_idx, n_size)
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:82.1-82.64
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:87.1-87.64
 def $update_headerStack'(value*, value, nat, nat, nat) : value* =
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:86.1-86.48
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:91.1-91.48
   clause 0 : (value*{value <- value*}, _value, _nat, _nat', _nat'') = []
   -- if value*{value <- value*} matches []
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:87.1-91.31
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:92.1-96.31
   clause 1 : (value*{value <- value*}, value_new, n_current_idx, n_target_idx, n_size) = []
   -- if value*{value <- value*} matches _ :: _
   -- let value_h :: value_t*{value_t <- value_t*} = value*{value <- value*}
   -- if (n_current_idx = n_size)
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:92.1-96.37
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:97.1-101.37
   clause 2 : (value*{value <- value*}, value_new, n_current_idx, n_target_idx, n_size) = value_new :: value_t*{value_t <- value_t*}
   -- if value*{value <- value*} matches _ :: _
   -- let value_h :: value_t*{value_t <- value_t*} = value*{value <- value*}
   -- if (n_target_idx = n_current_idx)
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:97.1-101.39
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:102.1-106.39
   clause 3 : (value*{value <- value*}, value_new, n_current_idx, n_target_idx, n_size) = value_h :: $update_headerStack'(value_t*{value_t <- value_t*}, value_new, (n_current_idx + 1), n_target_idx, n_size)
   -- if value*{value <- value*} matches _ :: _
   -- let value_h :: value_t*{value_t <- value_t*} = value*{value <- value*}
   -- if (n_target_idx =/= n_current_idx)
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:107.1-107.54
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:112.1-112.54
 def $write_value_from_bits(value, nat, bool*) : value =
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:112.1-114.50
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:117.1-119.50
   clause 0 : (value, n_var, b*{b <- b*}) = value_updated
   -- let (value_updated, bool*{bool <- bool*}) = $write_value_from_bits'(value, n_var, b*{b <- b*})
   -- if bool*{bool <- bool*} matches []
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:108.1-108.64
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:113.1-113.64
 def $write_value_from_bits'(value, nat, bool*) : (value, bool*) =
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:116.1-116.69
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:121.1-121.69
   clause 0 : (value, n_var, bool*{bool <- bool*}) = (b b_h as value, b_t*{b_t <- b_t*})
   -- if value <: boolValue
   -- let b _bool = value as boolValue
   -- if bool*{bool <- bool*} matches _ :: _
   -- let b_h :: b_t*{b_t <- b_t*} = bool*{bool <- bool*}
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:117.1-122.59
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:122.1-127.59
   clause 1 : (value, n_var, b*{b <- b*}) = (w w i as value, b_t*{b_t <- b_t*})
   -- if value <: integerLiteral
   -- let integerLiteral = value as integerLiteral
@@ -3022,7 +3031,7 @@ def $write_value_from_bits'(value, nat, bool*) : (value, bool*) =
   -- let b_t*{b_t <- b_t*} = b*{b <- b*}[w : n_t]
   -- let i = $int_to_bitstr(w as int, $bits_to_int_unsigned(b_h*{b_h <- b_h*}))
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:123.1-128.57
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:128.1-133.57
   clause 2 : (value, n_var, b*{b <- b*}) = (w s i as value, b_t*{b_t <- b_t*})
   -- if value <: integerLiteral
   -- let integerLiteral = value as integerLiteral
@@ -3036,7 +3045,7 @@ def $write_value_from_bits'(value, nat, bool*) : (value, bool*) =
   -- let b_t*{b_t <- b_t*} = b*{b <- b*}[w : n_t]
   -- let i = $int_to_bitstr(w as int, $bits_to_int_signed(b_h*{b_h <- b_h*}))
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:129.1-129.74
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:134.1-134.74
   clause 3 : (value, nat, b*{b <- b*}) = (n_max . 0 v i as value, b*{b <- b*})
   -- if value <: integerValue
   -- let integerValue = value as integerValue
@@ -3044,7 +3053,7 @@ def $write_value_from_bits'(value, nat, bool*) : (value, bool*) =
   -- let n_max . _nat v i = integerValue
   -- if (nat = 0)
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:130.1-135.61
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:135.1-140.61
   clause 4 : (value, n_var, b*{b <- b*}) = (n_max . n_var v i as value, b_t*{b_t <- b_t*})
   -- if value <: integerValue
   -- let integerValue = value as integerValue
@@ -3058,91 +3067,91 @@ def $write_value_from_bits'(value, nat, bool*) : (value, bool*) =
   -- let b_t*{b_t <- b_t*} = b*{b <- b*}[n_var : n_t]
   -- let i = $int_to_bitstr(n_var as int, $bits_to_int_signed(b_h*{b_h <- b_h*}))
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:154.1-158.63
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:159.1-163.63
   clause 5 : (value, n_var, b*{b <- b*}) = (struct tid { fieldValue_updated*{fieldValue_updated <- fieldValue_updated*} } as value, b_rest*{b_rest <- b_rest*})
   -- if value <: structValue
   -- let struct tid { fieldValue*{fieldValue <- fieldValue*} } = value as structValue
   -- let (fieldValue_updated*{fieldValue_updated <- fieldValue_updated*}, b_rest*{b_rest <- b_rest*}) = $write_value_fields_from_bits'(fieldValue*{fieldValue <- fieldValue*}, n_var, b*{b <- b*})
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:159.1-163.63
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:164.1-168.63
   clause 6 : (value, n_var, b*{b <- b*}) = (header tid { true ; fieldValue_updated*{fieldValue_updated <- fieldValue_updated*} } as value, b_rest*{b_rest <- b_rest*})
   -- if value <: headerValue
   -- let header tid { _bool ; fieldValue*{fieldValue <- fieldValue*} } = value as headerValue
   -- let (fieldValue_updated*{fieldValue_updated <- fieldValue_updated*}, b_rest*{b_rest <- b_rest*}) = $write_value_fields_from_bits'(fieldValue*{fieldValue <- fieldValue*}, n_var, b*{b <- b*})
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:109.1-109.83
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:114.1-114.83
 def $write_value_fields_from_bits'(fieldValue*, nat, bool*) : (fieldValue*, bool*) =
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:137.1-137.63
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:142.1-142.63
   clause 0 : (fieldValue*{fieldValue <- fieldValue*}, n_var, b*{b <- b*}) = ([], b*{b <- b*})
   -- if fieldValue*{fieldValue <- fieldValue*} matches []
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:138.1-145.67
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:143.1-150.67
   clause 1 : (fieldValue*{fieldValue <- fieldValue*}, n_var, b*{b <- b*}) = (fieldValue_h_updated :: fieldValue_t_updated*{fieldValue_t_updated <- fieldValue_t_updated*}, b_rest*{b_rest <- b_rest*})
   -- if fieldValue*{fieldValue <- fieldValue*} matches _ :: _
   -- let fieldValue_h :: fieldValue_t*{fieldValue_t <- fieldValue_t*} = fieldValue*{fieldValue <- fieldValue*}
   -- let (fieldValue_h_updated, b_t*{b_t <- b_t*}) = $write_value_field_from_bits'(fieldValue_h, n_var, b*{b <- b*})
   -- let (fieldValue_t_updated*{fieldValue_t_updated <- fieldValue_t_updated*}, b_rest*{b_rest <- b_rest*}) = $write_value_fields_from_bits'(fieldValue_t*{fieldValue_t <- fieldValue_t*}, n_var, b_t*{b_t <- b_t*})
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:110.1-110.80
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:115.1-115.80
 def $write_value_field_from_bits'(fieldValue, nat, bool*) : (fieldValue, bool*) =
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:147.1-152.50
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:152.1-157.50
   clause 0 : (value id ;, n_var, b*{b <- b*}) = (value_updated id ;, b_rest*{b_rest <- b_rest*})
   -- let (value_updated, b_rest*{b_rest <- b_rest*}) = $write_value_from_bits'(value, n_var, b*{b <- b*})
 
-;; ../../../../spec-concrete/2.1.2-value-aux.watsup:169.1-169.42
+;; ../../../../spec-concrete/2.1.2-value-aux.watsup:174.1-174.42
 def $write_bits_from_value(value) : bool* =
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:171.1-171.40
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:176.1-176.40
   clause 0 : (value) = [b]
   -- if value <: boolValue
   -- let b b = value as boolValue
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:172.1-173.30
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:177.1-178.30
   clause 1 : (value) = $int_to_bits_signed(w, i)
   -- if value <: integerLiteral
   -- let integerLiteral = value as integerLiteral
   -- if integerLiteral matches `%S%`
   -- let w s i = integerLiteral
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:174.1-175.32
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:179.1-180.32
   clause 2 : (value) = $int_to_bits_unsigned(w, i)
   -- if value <: integerLiteral
   -- let integerLiteral = value as integerLiteral
   -- if integerLiteral matches `%W%`
   -- let w w i = integerLiteral
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:176.1-177.32
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:181.1-182.32
   clause 3 : (value) = $int_to_bits_unsigned(w, i)
   -- if value <: integerValue
   -- let integerValue = value as integerValue
   -- if integerValue matches `%.%V%`
   -- let _nat . w v i = integerValue
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:179.1-182.59
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:184.1-187.59
   clause 4 : (value) = $concat_<bool>($write_bits_from_value(value_element)*{value_element <- value_element*})
   -- if value <: headerStackValue
   -- let header_stack[ value_element*{value_element <- value_element*} ( _nat ; _nat' )] = value as headerStackValue
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:183.1-186.57
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:188.1-191.57
   clause 5 : (value) = $concat_<bool>($write_bits_from_value(value_field)*{value_field <- value_field*})
   -- if value <: structValue
   -- let struct _tid { value_field id_field ;*{id_field <- id_field*, value_field <- value_field*} } = value as structValue
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:187.1-190.57
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:192.1-195.57
   clause 6 : (value) = $concat_<bool>($write_bits_from_value(value_field)*{value_field <- value_field*})
   -- if value <: headerValue
   -- let header _tid { bool ; value_field id_field ;*{id_field <- id_field*, value_field <- value_field*} } = value as headerValue
   -- if (bool = true)
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:191.1-191.59
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:196.1-196.59
   clause 7 : (value) = []
   -- if value <: headerValue
   -- let header _tid { bool ; _fieldValue*{_fieldValue <- _fieldValue*} } = value as headerValue
   -- if (bool = false)
 
-  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:192.1-195.51
+  ;; ../../../../spec-concrete/2.1.2-value-aux.watsup:197.1-200.51
   clause 8 : (value') = $concat_<bool>($write_bits_from_value(value)*{value <- value*})
   -- if value' <: headerUnionValue
   -- let header_union _tid { value id ;*{id <- id*, value <- value*} } = value' as headerUnionValue
@@ -28115,7 +28124,7 @@ relation Callee_eval: cursor evalContext store |- callableTargetIR <_>( argument
     -- let definedFunctionCallee = function nameIR < typeParameterListIR >( parameterListIR # id_default*{id_default <- id_default*} ) blockStatementIR
     -- output: % % % |- % <_>( % ): EC STO ` definedFunctionCallee as callee as calleeResult
 
-  ;; ../../../../spec-concrete/8.10.1-eval-call-callee.watsup:56.1-115.2
+  ;; ../../../../spec-concrete/8.10.1-eval-call-callee.watsup:56.1-106.2
   rulegroup typedExpressionIR-nameIR-builtinMethod
 
    match
@@ -28150,9 +28159,6 @@ relation Callee_eval: cursor evalContext store |- callableTargetIR <_>( argument
     -- let ` storageReference'?{storageReference' <- storageReference'?} = storageReferenceResult as continueResult<storageReference?>
     -- if storageReference'?{storageReference' <- storageReference'?} matches (_)
     -- let ?(storageReference) = storageReference'?{storageReference' <- storageReference'?}
-    -- Lvalue_read: p EC_1 STO_1 |- storageReference : value
-    -- if value <: headerValue
-    -- let headerValue = value as headerValue
     -- let builtinMethodCallee = builtin_method storageReference . "isValid" < [] >( [] )
     -- output: % % % |- % <_>( % ): EC_1 STO_1 ` builtinMethodCallee as callee as calleeResult
 
@@ -28167,9 +28173,6 @@ relation Callee_eval: cursor evalContext store |- callableTargetIR <_>( argument
     -- let ` storageReference'?{storageReference' <- storageReference'?} = storageReferenceResult as continueResult<storageReference?>
     -- if storageReference'?{storageReference' <- storageReference'?} matches (_)
     -- let ?(storageReference) = storageReference'?{storageReference' <- storageReference'?}
-    -- Lvalue_read: p EC_1 STO_1 |- storageReference : value
-    -- if value <: headerValue
-    -- let headerValue = value as headerValue
     -- let builtinMethodCallee = builtin_method storageReference . "setValid" < [] >( [] )
     -- output: % % % |- % <_>( % ): EC_1 STO_1 ` builtinMethodCallee as callee as calleeResult
 
@@ -28184,13 +28187,10 @@ relation Callee_eval: cursor evalContext store |- callableTargetIR <_>( argument
     -- let ` storageReference'?{storageReference' <- storageReference'?} = storageReferenceResult as continueResult<storageReference?>
     -- if storageReference'?{storageReference' <- storageReference'?} matches (_)
     -- let ?(storageReference) = storageReference'?{storageReference' <- storageReference'?}
-    -- Lvalue_read: p EC_1 STO_1 |- storageReference : value
-    -- if value <: headerValue
-    -- let headerValue = value as headerValue
     -- let builtinMethodCallee = builtin_method storageReference . "setInvalid" < [] >( [] )
     -- output: % % % |- % <_>( % ): EC_1 STO_1 ` builtinMethodCallee as callee as calleeResult
 
-  ;; ../../../../spec-concrete/8.10.1-eval-call-callee.watsup:119.1-160.2
+  ;; ../../../../spec-concrete/8.10.1-eval-call-callee.watsup:110.1-151.2
   rulegroup typedExpressionIR-nameIR-extern-method
 
    match
@@ -28240,7 +28240,7 @@ relation Callee_eval: cursor evalContext store |- callableTargetIR <_>( argument
     -- let externMethodCallee = extern_method oid . nameIR < typeParameterListIR >( parameterListIR # id_default*{id_default <- id_default*} ){ frame ; blockStatementIR?{blockStatementIR <- blockStatementIR?} }
     -- output: % % % |- % <_>( % ): EC_1 STO_1 ` externMethodCallee as callee as calleeResult
 
-  ;; ../../../../spec-concrete/8.10.1-eval-call-callee.watsup:164.1-208.2
+  ;; ../../../../spec-concrete/8.10.1-eval-call-callee.watsup:155.1-199.2
   rulegroup typedExpressionIR-nameIR-parser-apply-method
 
    match
@@ -28289,7 +28289,7 @@ relation Callee_eval: cursor evalContext store |- callableTargetIR <_>( argument
     -- let parserApplyMethodCallee = parser oid .apply( parameterListIR # id_default*{id_default <- id_default*} ){ frame ; parserLocalDeclarationListIR ; stateEnv }
     -- output: % % % |- % <_>( % ): EC_1 STO_1 ` parserApplyMethodCallee as callee as calleeResult
 
-  ;; ../../../../spec-concrete/8.10.1-eval-call-callee.watsup:212.1-257.2
+  ;; ../../../../spec-concrete/8.10.1-eval-call-callee.watsup:203.1-248.2
   rulegroup typedExpressionIR-nameIR-control-apply-method
 
    match
@@ -28338,7 +28338,7 @@ relation Callee_eval: cursor evalContext store |- callableTargetIR <_>( argument
     -- let controlApplyMethodCallee = control oid .apply( parameterListIR # id_default*{id_default <- id_default*} ){ frame ; controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR }
     -- output: % % % |- % <_>( % ): EC_1 STO_1 ` controlApplyMethodCallee as callee as calleeResult
 
-  ;; ../../../../spec-concrete/8.10.1-eval-call-callee.watsup:261.1-291.2
+  ;; ../../../../spec-concrete/8.10.1-eval-call-callee.watsup:252.1-282.2
   rulegroup typedExpressionIR-nameIR-table-apply-method
 
    match
@@ -28779,7 +28779,7 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_4 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
     -- output: % % % |- % @< % >( % ): EC_3 STO_2 callResult
 
-  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:329.1-378.2
+  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:329.1-393.2
   rulegroup builtinMethodCallee
 
    match
@@ -28792,6 +28792,21 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- if argumentIR*{argumentIR <- argumentIR*} matches []
 
    paths
+
+    rulepath headerUnion-isValid
+    -- let EC = evalContext
+    -- let builtin_method storageReference . text < typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} >( parameterIR*{parameterIR <- parameterIR*} ) = builtinMethodCallee
+    -- if (text = "isValid")
+    -- if typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} matches []
+    -- if parameterIR*{parameterIR <- parameterIR*} matches []
+    -- Lvalue_read: p EC STO |- storageReference : value'
+    -- if value' <: headerUnionValue
+    -- let headerUnionValue = value' as headerUnionValue
+    -- let header_union tid { fieldValue*{fieldValue <- fieldValue*} } = headerUnionValue
+    -- let fieldValue_valid*{fieldValue_valid <- fieldValue_valid*} = $filter_<fieldValue>(fieldValue*{fieldValue <- fieldValue*}, $is_header_valid)
+    -- let b_valid = (fieldValue_valid*{fieldValue_valid <- fieldValue_valid*} = [])
+    -- let returnResult = return ?(b b_valid as value)
+    -- output: % % % |- % @< % >( % ): EC STO returnResult as callResult
 
     rulepath header-isValid
     -- let EC = evalContext
@@ -28836,7 +28851,7 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- let returnResult = return ?()
     -- output: % % % |- % @< % >( % ): EC_1 STO returnResult as callResult
 
-  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:385.1-427.2
+  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:400.1-442.2
   rulegroup externMethodCallee
 
    match
@@ -28865,7 +28880,7 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_5 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
     -- output: % % % |- % @< % >( % ): EC_3 STO_2 callResult
 
-  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:431.1-513.2
+  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:446.1-528.2
   rulegroup parserApplyMethodCallee
 
    match
@@ -28912,7 +28927,7 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- Copy_out: STO_3 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ block EC_callee_5 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
     -- output: % % % |- % @< % >( % ): EC_3 STO_3 rejectTransitionResult as callResult
 
-  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:517.1-604.2
+  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:532.1-619.2
   rulegroup controlApplyMethodCallee
 
    match
@@ -28966,7 +28981,7 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- Copy_out: STO_3 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ block EC_callee_5 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
     -- output: % % % |- % @< % >( % ): EC_3 STO_3 exit as callResult
 
-  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:608.1-624.62
+  ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:623.1-639.62
   rulegroup tableApplyMethodCallee
 
    match
