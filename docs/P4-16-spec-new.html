@@ -834,16 +834,17 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <li><a href="#sec-named-types">8.2. Named types</a>
 <ul class="sectlevel3">
 <li><a href="#_type_definitions_type_constructors">8.2.1. Type definitions (type constructors)</a></li>
-<li><a href="#_prefixed_type_names">8.2.2. Prefixed type names</a>
+<li><a href="#_type_resoultion">8.2.2. Type resoultion</a></li>
+<li><a href="#_prefixed_type_names">8.2.3. Prefixed type names</a>
 <ul class="sectlevel4">
-<li><a href="#_type_checking_10">8.2.2.1. Type checking</a></li>
+<li><a href="#_type_checking_10">8.2.3.1. Type checking</a></li>
 </ul>
 </li>
-<li><a href="#_specialized_types">8.2.3. Specialized types</a>
+<li><a href="#_specialized_types">8.2.4. Specialized types</a>
 <ul class="sectlevel4">
-<li><a href="#_type_specialization">8.2.3.1. Type specialization</a></li>
-<li><a href="#_type_checking_11">8.2.3.2. Type checking</a></li>
-<li><a href="#_well_formedness_2">8.2.3.3. Well-formedness</a></li>
+<li><a href="#sec-type-specialization">8.2.4.1. Type specialization</a></li>
+<li><a href="#_type_checking_11">8.2.4.2. Type checking</a></li>
+<li><a href="#_well_formedness_2">8.2.4.3. Well-formedness</a></li>
 </ul>
 </li>
 </ul>
@@ -5316,10 +5317,6 @@ runtime representation of P4 values is as follows:</p>
 <div class="ulist">
 <ul>
 <li>
-<p>The <code>void</code> type, which has no values and can be used only in a few
-restricted circumstances.</p>
-</li>
-<li>
 <p>The <code>error</code> type, which is used to convey errors in a
 target-independent, compiler-managed way.</p>
 </li>
@@ -5360,10 +5357,18 @@ table lookups,</p>
    ;</code></pre>
 </div>
 </div>
+<div class="ulist">
+<ul>
+<li>
+<p>The <code>void</code> type, which has no values and can be used only in a few
+restricted circumstances.</p>
+</li>
+</ul>
+</div>
 <div class="paragraph">
 <p>In P4<sub>IR</sub>, base types are represented as:</p>
 </div>
-<div id="baseValue" class="listingblock">
+<div id="baseTypeIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">baseTypeIR
    : voidTypeIR
@@ -5372,9 +5377,15 @@ table lookups,</p>
    | matchKindTypeIR
    | stringTypeIR
    | integerTypeIR
-   ;
-
-baseValue
+   ;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The base values corresponding to the base types are:</p>
+</div>
+<div id="baseValue" class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">baseValue
    : boolValue
    | errorValue
    | matchKindValue
@@ -5383,12 +5394,25 @@ baseValue
    ;</code></pre>
 </div>
 </div>
+<div class="paragraph">
+<p>The following sections describe each of these base types in more detail.</p>
+</div>
 <div class="sect3">
 <h4 id="_the_void_type">8.1.1. The void type</h4>
+<div id="voidTypeIR" class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">voidTypeIR
+   : VOID
+   ;</code></pre>
+</div>
+</div>
 <div class="paragraph">
 <p>The void type is written <code>void</code>. It contains no values. It is not included in
 the production rule <code>baseType</code> as it can only appear in few restricted places
 in P4 programs.</p>
+</div>
+<div class="paragraph">
+<p>There is no value of type <code>void</code>.</p>
 </div>
 <div class="sect4">
 <h5 id="_type_checking">8.1.1.1. Type checking</h5>
@@ -5422,6 +5446,17 @@ in P4 programs.</p>
 </div>
 <div class="sect3">
 <h4 id="_booleans">8.1.2. Booleans</h4>
+<div id="boolValue" class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">boolTypeIR
+   : BOOL
+   ;
+
+boolValue
+   : B bool
+   ;</code></pre>
+</div>
+</div>
 <div class="paragraph">
 <p>The Boolean type <code>bool</code> contains just two values, <code>false</code> and <code>true</code>. Boolean
 values are not integers or bit-strings.</p>
@@ -5458,6 +5493,17 @@ values are not integers or bit-strings.</p>
 </div>
 <div class="sect3">
 <h4 id="_errors">8.1.3. Errors</h4>
+<div id="errorValue" class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">errorTypeIR
+   : ERROR
+   ;
+
+errorValue
+   : ERROR . id
+   ;</code></pre>
+</div>
+</div>
 <div class="paragraph">
 <p>The error type contains opaque distinct values that can be used to signal
 errors. It is written as <code>error</code>. New elements of the error type
@@ -5524,6 +5570,17 @@ type (these errors are declared in the P4 core library):</p>
 </div>
 <div class="sect3">
 <h4 id="_match_kinds">8.1.4. Match kinds</h4>
+<div id="matchKindValue" class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">matchKindTypeIR
+   : MATCH_KIND
+   ;
+
+matchKindValue
+   : MATCH_KIND . id
+   ;</code></pre>
+</div>
+</div>
 <div class="paragraph">
 <p>The <code>match_kind</code> type is very similar to the <code>error</code> type and is used to
 declare a set of distinct names that may be used in a table&#8217;s key property
@@ -5591,6 +5648,15 @@ cannot declare new match kinds.</p>
 </div>
 <div class="sect3">
 <h4 id="_strings">8.1.5. Strings</h4>
+<div id="stringValue" class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">stringTypeIR
+   : STRING
+   ;
+
+stringValue = stringLiteral</code></pre>
+</div>
+</div>
 <div class="paragraph">
 <p>The type <code>string</code> represents strings. The values of type <code>string</code> are either
 string literals, or concatenations of multiple <code>string</code>-typed expression.</p>
@@ -6186,10 +6252,6 @@ namedType
 </div>
 </div>
 <div class="paragraph">
-<p>User-defined types can be introduced with their names. For example, the following
-declares a new struct type <code>S0</code>:</p>
-</div>
-<div class="paragraph">
 <p>Named types are types that reference another type by name. User-defined types
 can be introduced with their names. For example, the following declares a new
 struct type <code>S0</code>:</p>
@@ -6212,7 +6274,7 @@ type of the following example:</p>
 </div>
 </div>
 <div class="paragraph">
-<p>Here, <code>S</code> is a named type that refers to the struct type defined earlier.</p>
+<p>Here, <code>S</code> is a named type (<code>typeName</code>) that refers to the struct type defined earlier.</p>
 </div>
 <div class="paragraph">
 <p>Types such as struct, header, and header union types can be generic. In order
@@ -6323,8 +6385,10 @@ structTypeDeclaration
 </div>
 </div>
 <div class="paragraph">
-<p>Type definitions can be polymorphic, or can only be monomorphic, depending on
-their kind. Below table summarizes which kinds of type definitions can be
+<p>Some type definitions like struct and header type definitions can be
+polymorphic, meaning they can have type variables as parameters. On the other
+hand, type definitions such as enum and type alias definitions can only be
+monomorphic. Below table summarizes which kinds of type definitions can be
 polymorphic:</p>
 </div>
 <div class="admonitionblock note">
@@ -6341,7 +6405,79 @@ Add a table for $is_monomorphic_typeDefIR here.
 </div>
 </div>
 <div class="sect3">
-<h4 id="_prefixed_type_names">8.2.2. Prefixed type names</h4>
+<h4 id="_type_resoultion">8.2.2. Type resoultion</h4>
+<div class="paragraph">
+<p>Notice that P4 has struct types, but the surface syntax does not have an
+explicit construct for struct types. Instead, struct types are always
+referenced by name.</p>
+</div>
+<div class="paragraph">
+<p>To easily handle named types in P4<sub>IR</sub>, the internal representation of types
+contain representations for the referred types.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">structTypeIR
+   : STRUCT tid `{ fieldTypeIR* }
+   ;
+
+dataTypeIR
+   : listTypeIR
+   | tupleTypeIR
+   | headerStackTypeIR
+   | structTypeIR
+   | headerTypeIR
+   | headerUnionTypeIR
+   | enumTypeIR
+   ;
+
+typeIR
+   : baseTypeIR
+   | namedTypeIR
+   | aliasTypeIR
+   | dataTypeIR
+   | objectTypeIR
+   | synthesizedTypeIR
+   ;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For example, a struct type is represented as <code>structTypeIR</code> in P4<sub>IR</sub>.</p>
+</div>
+<div class="paragraph">
+<p>Thus, after type checking, a named type in P4<sub>16</sub> is resolved to its referred
+type in P4<sub>IR</sub>. For named types referring to monomorphic type definitions, the
+resolved type is simply the type defined by the type definition.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">enum</span> <span style="color: #953800">E_t</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> A<span style="color: #24292f;background-color: #f6f8fa">,</span> B<span style="color: #24292f;background-color: #f6f8fa">,</span> C<span style="color: #24292f;background-color: #f6f8fa">;</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #953800">void</span> f<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #953800">E_t</span> e<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{}</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In the above example, the named type <code>E_t</code> is resolved to the enum type
+<code>enumTypeIR</code>. For named types referring to polymorphic type definitions, the
+resolved type is a specialized type, <code>specializedTypeIR</code>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">struct</span> S<span style="color: #0550ae">&lt;</span>T<span style="color: #0550ae">&gt;</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> T t<span style="color: #24292f;background-color: #f6f8fa">;</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #953800">void</span> f<span style="color: #24292f;background-color: #f6f8fa">(</span>S<span style="color: #0550ae">&lt;</span><span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;&gt;</span> s<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{}</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In the above example, the named type <code>S&lt;bit&lt;32&gt;&gt;</code> is resolved to a
+<code>specializedTypeIR</code>, where it specializes a <code>structTypeDefIR</code> with the type
+argument <code>bit&lt;32&gt;</code>. This can be further resolved to its underlying type
+<code>structTypeIR</code> with specialization, discussed in <a href="#sec-type-specialization">Section 8.2.4.1</a>.</p>
+</div>
+<div class="paragraph">
+<p>Following sections discuss name resolution for named types in detail.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_prefixed_type_names">8.2.3. Prefixed type names</h4>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">prefixedTypeName
@@ -6356,12 +6492,11 @@ polymorphic type definition without type arguments. The names can be prefixed
 by a dot (<code>.</code>) to refer to the top-level namespace.</p>
 </div>
 <div class="paragraph">
-<p>On type checking, the referenced type definition is looked up by name. After
-type checking, P4<sub>IR</sub> represents <code>prefixedTypeName</code> as its resolved type,
-<code>namedTypeIR</code>. If the referenced type definition is monomorphic, then the
-resolved type is simply the type defined by the type definition. If the
-referenced type definition is polymorphic (but without type arguments), then
-the resolved type is a specialized type with no type arguments.</p>
+<p>On type checking, the referenced type definition is looked up by name. If the
+referenced type definition is monomorphic, then the resolved type is simply the
+type defined by the type definition. If the referenced type definition is
+polymorphic (but without type arguments), then the resolved type is a
+specialized type with no type arguments.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -6372,7 +6507,7 @@ the resolved type is a specialized type with no type arguments.</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_type_checking_10">8.2.2.1. Type checking</h5>
+<h5 id="_type_checking_10">8.2.3.1. Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -6389,7 +6524,8 @@ rule Type_ok/prefixedTypeName/polymorphic:
    p TC |- prefixedTypeName : (typeDefIR `&lt;eps&gt;) # eps
     -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
     -- if typeDefIR = $find_typeDef_t(p, TC, prefixedNameIR)
-    -- if ~$is_monomorphic_typeDefIR(typeDefIR)</pre>
+    -- if ~$is_monomorphic_typeDefIR(typeDefIR)
+    -- if (eps, eps) = $type_parameters_of_typeDefIR(typeDefIR)</pre>
 </div>
 </div>
 </div>
@@ -6434,6 +6570,9 @@ rule Type_ok/prefixedTypeName/polymorphic:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
+<p>Check that (<code>[ ]</code>, <code>[ ]</code>) is equal to <code><a href="#type_parameters_of_typeDefIR">$type_parameters_of_typeDefIR(typeDefIR)</a></code>.</p>
+</li>
+<li>
 <p>Result in the type <code>typeDefIR &lt; [ ] &gt;</code> and a set of fresh type variables <code>[ ]</code>.</p>
 </li>
 </ol>
@@ -6444,12 +6583,25 @@ rule Type_ok/prefixedTypeName/polymorphic:
 </div>
 </div>
 <div class="sect3">
-<h4 id="_specialized_types">8.2.3. Specialized types</h4>
+<h4 id="_specialized_types">8.2.4. Specialized types</h4>
 <div class="paragraph">
 <p>A generic type may be specialized by specifying arguments for its type
 variables. In cases where the compiler can infer type arguments, type
 specialization is not necessary. When a type is specialized, all its type
 variables must be bound.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+P4-SpecTec currently does <strong>not</strong> infer type arguments for type
+specialization, where it only performs inference for function and method calls.
+</td>
+</tr>
+</table>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -6500,7 +6652,7 @@ specialized with the <code>bit&lt;32&gt;</code> bound to the <code>T</code> type
 resolved to the type definition it refers to (<code>typeDefIR</code>).</p>
 </div>
 <div class="sect4">
-<h5 id="_type_specialization">8.2.3.1. Type specialization</h5>
+<h5 id="sec-type-specialization">8.2.4.1. Type specialization</h5>
 <div class="paragraph">
 <p><code>$specialize_typeDefIR(typeDefIR<sub>base</sub>, typeIR<sub>arg</sub><sup>*</sup>)</code></p>
 </div>
@@ -6531,7 +6683,7 @@ resolved to the type definition it refers to (<code>typeDefIR</code>).</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_type_checking_11">8.2.3.2. Type checking</h5>
+<h5 id="_type_checking_11">8.2.4.2. Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -6586,7 +6738,7 @@ resolved to the type definition it refers to (<code>typeDefIR</code>).</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_well_formedness_2">8.2.3.3. Well-formedness</h5>
+<h5 id="_well_formedness_2">8.2.4.3. Well-formedness</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -18783,8 +18935,10 @@ are only visible within the block.</p>
 <div class="listingblock">
 <div class="content">
 <pre>rule Stmt_ok/blockStatement:
-   LOCAL TC_0 f_0 |- blockStatement : TC_1 f_1 blockStatementIR
-    -- Block_ok: TC_0 f_0 |- blockStatement : TC_1 f_1 blockStatementIR</pre>
+   LOCAL TC_0 f_0 |- blockStatement : TC_3 f_1 blockStatementIR
+    -- if TC_1 = $enter_t(TC_0)
+    -- Block_ok: TC_1 f_0 |- blockStatement : TC_2 f_1 blockStatementIR
+    -- if TC_3 = $exit_t(TC_2)</pre>
 </div>
 </div>
 </div>
@@ -18800,14 +18954,20 @@ are only visible within the block.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>TC<sub>1</sub></code>, <code>f<sub>1</sub></code>, and <code>blockStatementIR</code> be the result of <a href="#Block_ok">typing <code>blockStatement</code>, under typing context <code>TC'</code> and abstract control flow <code>f'</code></a>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <code><a href="#enter_t">$enter_t(TC')</a></code>.</p>
+</li>
+<li>
+<p>Let <code>TC<sub>2</sub></code>, <code>f<sub>1</sub></code>, and <code>blockStatementIR</code> be the result of <a href="#Block_ok">typing <code>blockStatement</code>, under typing context <code>TC<sub>1</sub></code> and abstract control flow <code>f'</code></a>.</p>
+</li>
+<li>
+<p>Let <code>TC<sub>3</sub></code> be <code><a href="#exit_t">$exit_t(TC<sub>2</sub>)</a></code>.</p>
 </li>
 <li>
 <p>Result in</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the typing context <code>TC<sub>1</sub></code>,</p>
+<p>the typing context <code>TC<sub>3</sub></code>,</p>
 </li>
 <li>
 <p>the abstract control flow <code>f<sub>1</sub></code>,</p>
@@ -19070,8 +19230,10 @@ rule BlockElementStmt_ok/variableDeclaration/initializer:
 <div class="listingblock">
 <div class="content">
 <pre>rule Stmt_inst/blockStatementIR:
-   LOCAL IC_0 STO_0 |- annotationList `{blockElementStatementListIR} : IC_1 STO_1 (annotationList `{blockElementStatementListIR_inst})
-    -- Block_inst: IC_0 STO_0 |- annotationList `{blockElementStatementListIR} : IC_1 STO_1 (_ `{blockElementStatementListIR_inst})</pre>
+   LOCAL IC_0 STO_0 |- annotationList `{blockElementStatementListIR} : IC_3 STO_1 (annotationList `{blockElementStatementListIR_inst})
+    -- if IC_1 = $enter_i(IC_0)
+    -- Block_inst: IC_1 STO_0 |- annotationList `{blockElementStatementListIR} : IC_2 STO_1 (_ `{blockElementStatementListIR_inst})
+    -- if IC_3 = $exit_i(IC_2)</pre>
 </div>
 </div>
 </div>
@@ -19087,14 +19249,20 @@ rule BlockElementStmt_ok/variableDeclaration/initializer:
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <a href="#Block_inst"><code>IC' STO' |- annotationList { blockElementStatementListIR } : IC<sub>1</sub> STO<sub>1</sub> _ { blockElementStatementListIR<sub>inst</sub> }</code></a>.</p>
+<p>Let <code>IC<sub>1</sub></code> be <code><a href="#enter_i">$enter_i(IC')</a></code>.</p>
+</li>
+<li>
+<p>Let <a href="#Block_inst"><code>IC<sub>1</sub> STO' |- annotationList { blockElementStatementListIR } : IC<sub>2</sub> STO<sub>1</sub> _ { blockElementStatementListIR<sub>inst</sub> }</code></a>.</p>
+</li>
+<li>
+<p>Let <code>IC<sub>3</sub></code> be <code><a href="#exit_i">$exit_i(IC<sub>2</sub>)</a></code>.</p>
 </li>
 <li>
 <p>Result in</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the instantiation context <code>IC<sub>1</sub></code>,</p>
+<p>the instantiation context <code>IC<sub>3</sub></code>,</p>
 </li>
 <li>
 <p>the updated store <code>STO<sub>1</sub></code>,</p>
