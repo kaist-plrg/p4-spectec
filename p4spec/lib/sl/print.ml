@@ -231,6 +231,39 @@ and string_of_guard guard =
 
 (* Instructions *)
 
+and string_of_instr_short instr =
+  match instr.it with
+  | IfI (exp_cond, iterexps, _, _) ->
+      Format.asprintf "If (%s)%s" (string_of_exp exp_cond)
+        (string_of_iterexps iterexps)
+  | HoldI (id, notexp, iterexps, holdcase) -> (
+      match holdcase with
+      | BothH _ | HoldH _ ->
+          Format.asprintf "If (%s: %s)%s holds" (string_of_relid id)
+            (string_of_notexp notexp)
+            (string_of_iterexps iterexps)
+      | NotHoldH _ ->
+          Format.asprintf "If (%s: %s)%s does not hold" (string_of_relid id)
+            (string_of_notexp notexp)
+            (string_of_iterexps iterexps))
+  | CaseI (exp, _, _) ->
+      Format.asprintf "Case analysis on %s" (string_of_exp exp)
+  | OtherwiseI _ -> "Otherwise"
+  | GroupI (id_group, _, _) ->
+      Format.asprintf "Group %s" (string_of_relid id_group)
+  | LetI (exp_l, exp_r, iterexps) ->
+      Format.asprintf "(Let %s be %s)%s" (string_of_exp exp_l)
+        (string_of_exp exp_r)
+        (string_of_iterexps iterexps)
+  | RuleI (id_rel, notexp, iterexps) ->
+      Format.asprintf "(%s: %s)%s" (string_of_relid id_rel)
+        (string_of_notexp notexp)
+        (string_of_iterexps iterexps)
+  | ResultI [] -> "The relation holds"
+  | ResultI exps -> Format.asprintf "Result in %s" (string_of_exps ", " exps)
+  | ReturnI exp -> Format.asprintf "Return %s" (string_of_exp exp)
+  | DebugI exp -> Format.asprintf "Debug: %s" (string_of_exp exp)
+
 and string_of_instr ?(verbose = false) ?(signature = None) ?(level = 0)
     ?(index = 0) instr =
   let indent = String.make (level * 2) ' ' in

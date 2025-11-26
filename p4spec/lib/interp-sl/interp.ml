@@ -224,9 +224,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   let rec eval_exp (ctx : Ctx.t) (exp : exp) : value attempt =
     eval_exp' ctx exp
-    |> nest exp.at
-         (F.asprintf "while evaluating expression %s"
-            (Sl.Print.string_of_exp exp))
+    |> nest exp.at (F.asprintf "%s failed" (Sl.Print.string_of_exp exp))
 
   and eval_exp' (ctx : Ctx.t) (exp : exp) : value attempt =
     let at, note = (exp.at, exp.note) in
@@ -956,7 +954,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Argument evaluation *)
 
   and eval_arg (ctx : Ctx.t) (arg : arg) : value attempt =
-    eval_arg' ctx arg |> nest arg.at "while evaluating argument"
+    eval_arg' ctx arg
+    |> nest arg.at (F.asprintf "%s failed" (Sl.Print.string_of_arg arg))
 
   and eval_arg' (ctx : Ctx.t) (arg : arg) : value attempt =
     match arg.it with
@@ -985,7 +984,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Instruction evaluation *)
 
   and eval_instr (ctx : Ctx.t) (instr : instr) : (Ctx.t * Sign.t) attempt =
-    eval_instr' ctx instr |> nest instr.at "while evaluating instruction"
+    eval_instr' ctx instr
+    |> nest instr.at
+         (F.asprintf "%s failed" (Sl.Print.string_of_instr_short instr))
 
   and eval_instr' (ctx : Ctx.t) (instr : instr) : (Ctx.t * Sign.t) attempt =
     match instr.it with
@@ -1246,7 +1247,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     match sign_group with
     | Cont -> Ok (ctx, Sign.Cont)
     | Res values_output -> Ok (ctx_group, Sign.Res values_output)
-    | Ret _ -> error id_group.at "cannot return from try instruction"
+    | Ret _ -> fail id_group.at "cannot return from try instruction"
 
   (* Let instruction evaluation *)
 
@@ -1550,7 +1551,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   and invoke_rel (ctx : Ctx.t) (id : id) (values_input : value list) :
       value list attempt =
     invoke_rel' ctx id values_input
-    |> nest id.at (F.asprintf "while invoking relation %s" id.it)
+    |> nest id.at (F.asprintf "relation %s failed" id.it)
 
   and invoke_rel' (ctx : Ctx.t) (id : id) (values_input : value list) :
       value list attempt =
@@ -1616,12 +1617,12 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   and invoke_func (ctx : Ctx.t) (id : id) (targs : targ list) (args : arg list)
       : value attempt =
     invoke_func' ctx id targs args
-    |> nest id.at (F.asprintf "while invoking function %s" id.it)
+    |> nest id.at (F.asprintf "function %s failed" id.it)
 
   and invoke_func_with_values (ctx : Ctx.t) (id : id) (targs : targ list)
       (values_input : value list) : value attempt =
     invoke_func'' ctx id targs values_input
-    |> nest id.at (F.asprintf "while invoking function %s" id.it)
+    |> nest id.at (F.asprintf "function %s failed" id.it)
 
   and invoke_func' (ctx : Ctx.t) (id : id) (targs : targ list) (args : arg list)
       : value attempt =
