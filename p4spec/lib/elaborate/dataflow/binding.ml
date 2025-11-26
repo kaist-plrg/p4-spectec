@@ -97,6 +97,41 @@ let analyze_args_as_bind (dctx : Dctx.t) (args : arg list) :
   let prems = prems_partial @ sideconditions_multi in
   (dctx, venv, args, prems)
 
+let analyze_args_as_bind_shallow (dctx : Dctx.t) (args : arg list) :
+    Dctx.t * VEnv.t * arg list * prem list =
+  let binds = Shallowbind.collect_args dctx args in
+  let venv = BEnv.flatten binds in
+  let dctx, renv_multi, args =
+    let renv_multi = Multibind.REnv.init binds in
+    Multibind.rename_args dctx renv_multi args
+  in
+  let venv = update_venv_multi venv renv_multi in
+  let sideconditions_multi = Multibind.gen_sideconditions binds renv_multi in
+  check
+    (List.is_empty sideconditions_multi)
+    (List.hd args).at
+    (Format.asprintf
+       "shallow binding should not generate sideconditions, but got: %s"
+       (List.map Il.Print.string_of_prem sideconditions_multi
+       |> String.concat ", "));
+  let dctx, renv_partial, args =
+    Partialbind.rename_args dctx (VEnv.dom venv) Partialbind.REnv.empty args
+  in
+  let venv = update_venv_partial venv renv_partial in
+  let prems_partial = Partialbind.gen_prems dctx renv_partial in
+  let prems = prems_partial in
+  (dctx, venv, args, prems)
+
+let analyze_arg_as_bound_shallow (dctx : Dctx.t) (arg : arg) : unit =
+  let binds = Shallowbind.collect_arg dctx arg in
+  if not (BEnv.is_empty binds) then
+    error arg.at
+      (Format.asprintf "argument has free variable(s): %s"
+         (BEnv.to_string binds))
+
+let analyze_args_as_bound_shallow (dctx : Dctx.t) (args : arg list) : unit =
+  List.iter (analyze_arg_as_bound_shallow dctx) args
+
 (* Premise binding analysis *)
 
 let rec analyze_prem (dctx : Dctx.t) (prem : prem) :

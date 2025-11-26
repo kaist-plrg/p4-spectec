@@ -1101,6 +1101,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     match func with
     | Func.Extern -> invoke_extern_func ctx id targs values_input
     | Func.Builtin -> invoke_builtin_func ctx id targs values_input
+    | Func.Table (params, tblrows) ->
+        invoke_table_func ctx id params tblrows values_input
     | Func.Defined (tparams, clauses) ->
         invoke_defined_func ctx id tparams clauses targs values_input
 
@@ -1138,6 +1140,12 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     else
       let* ctx, value_output = invoke_func_builtin' () in
       Ok (ctx, value_output)
+
+  and invoke_table_func (ctx : Ctx.t) (id : id) (params : param list)
+      (tblrows : tblrow list) (values_input : value list) :
+      (Ctx.t * value) attempt =
+    (ctx, id, params, tblrows, values_input) |> ignore;
+    failwith "TODO: invoke_table_func"
 
   and invoke_defined_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
       (clauses : clause list) (targs : targ list) (values_input : value list) :
@@ -1223,7 +1231,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     | BuiltinDecD (id, _, _, _, _) ->
         let func = Func.Builtin in
         Ctx.add_func Global ctx id func
-    | TableDecD _ -> failwith "TODO: load_def TableDecD"
+    | TableDecD (id, params, _, tblrows, _) ->
+        let func = Func.Table (params, tblrows) in
+        Ctx.add_func Global ctx id func
     | DecD (id, tparams, _, _, clauses, _) ->
         let func = Func.Defined (tparams, clauses) in
         Ctx.add_func Global ctx id func

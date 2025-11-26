@@ -1684,10 +1684,27 @@ and elab_def_output_with_bind (ctx : Ctx.t) (plaintyp : plaintyp) (exp : exp) :
   let exp_il = Dataflow.Analysis.analyze_exp_as_bound ctx exp_il in
   (ctx, exp_il)
 
-and elab_table_def_def (ctx : Ctx.t) (at : region) (id : id)
+and elab_tblrow_explicit_input (ctx : Ctx.t) (at : region) (params : param list)
+    (args : arg list) : Il.Ast.arg list =
+  let _ctx, args_il = elab_args ~as_def:true at ctx params args in
+  args_il
+(* TODO : analysis for wildcard *)
+(* Dataflow.Analysis.analyze_args_as_bound_shallow ctx args_il *)
+
+and elab_tblrow_input_with_bind (ctx : Ctx.t) (at : region)
+    (params : param list) (args : arg list) :
+    Ctx.t * Il.Ast.arg list * Il.Ast.prem list =
+  let ctx, args_il = elab_args ~as_def:true at ctx params args in
+  let ctx, args_il, sideconditions_il =
+    Dataflow.Analysis.analyze_args_as_bind_shallow ctx args_il
+  in
+  (ctx, args_il, sideconditions_il)
+
+and elab_table_def_def (ctx : Ctx.t) (_at : region) (id : id)
     (tblrows : (exp * exp) list) : Ctx.t =
   let params, plaintyp, _ = Ctx.find_table_dec ctx id in
-  let elab_tblrow (ctx : Ctx.t) (tblrow : exp * exp) : Il.Ast.tblrow =
+
+  let elab_tblrows (ctx : Ctx.t) (tblrow : exp * exp) : Il.Ast.tblrow =
     let exp_pat, exp_body = tblrow in
     let args =
       match exp_pat.it with
@@ -1699,29 +1716,21 @@ and elab_table_def_def (ctx : Ctx.t) (at : region) (id : id)
       let def = DefD (id, [], args, exp_body, []) $ exp_body.at in
       El.Free.free_id_def def |> Ctx.add_frees ctx_local
     in
-    let ctx_local, _args_il, sideconditions_il =
-      elab_def_input_with_bind ctx_local exp_pat.at params args
+    let ctx_local, args_il_impl, sideconditions_il =
+      elab_tblrow_input_with_bind ctx_local exp_pat.at params args
     in
-    let allowed_premise prem =
-      match prem.it with
-      | Il.Ast.IfPr { it = Il.Ast.SubE (_, _); _ } -> true
-      | Il.Ast.IfPr { it = Il.Ast.MatchE (_, _); _ } -> true
-      | Il.Ast.IfPr { it = Il.Ast.CmpE (`EqOp, _, _, { it = CaseE _; _ }); _ }
-      | Il.Ast.IfPr { it = Il.Ast.CmpE (`EqOp, _, { it = CaseE _; _ }, _); _ }
-        ->
-          true
-      | Il.Ast.LetPr _ -> true
-      | _ -> false
+    let args_il_expl =
+      elab_tblrow_explicit_input ctx_local exp_pat.at params args
     in
-    check
-      (List.for_all allowed_premise sideconditions_il)
-      exp_pat.at "table row patterns cannot contain sideconditions";
     let _ctx_local, exp_il =
       elab_def_output_with_bind ctx_local plaintyp exp_body
     in
-    (exp_il, sideconditions_il) $ at
+    let tblrow_il =
+      (args_il_expl, args_il_impl, exp_il, sideconditions_il) $ exp_body.at
+    in
+    tblrow_il
   in
-  let tblrows_il = List.map (elab_tblrow ctx) tblrows in
+  let tblrows_il = List.map (elab_tblrows ctx) tblrows in
   Ctx.add_table_def ctx id tblrows_il
 
 and elab_def_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
