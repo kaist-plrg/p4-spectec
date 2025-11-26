@@ -3484,7 +3484,7 @@ relation TableEntry_priority_ok: `TC`, `tableContext'`, `TBLS`, and `tableEntryP
   ... Else if let `NOPRILPM n` be `matchMode`:
    .... Check that `TBLS` matches pattern `LPM %`.
    .... Let `LPM n~prefix~` be `TBLS`.
-   .... Result in the updated table context `tableContext'` and the typed table entry priority `None`.
+   .... Result in the updated table context `tableContext'` and the typed table entry priority `PRIORITY = D n~prefix~ :`.
   ... If `tableContext'.MODE` matches pattern `PRI`:
    .... If `tableContext'.PRIORITIES.VALUES` is equal to `[ ]`:
     ..... If `tableContext'.PRIORITIES.LARGEST_WINS`:
@@ -5603,15 +5603,16 @@ relation TableEntry_keyset_simple_ok: `TC`, `TBLC`, (`typeIR~key~`, `text`), and
    .... Let `NOPRILPM n` be `matchMode`.
    .... Let `typedExpressionIR~l~` be the result of <<Expr_ok, typing `expression~l~`, under cursor `LOCAL` and typing context `TC`>>.
    .... Let `typedExpressionIR~r~` be the result of <<Expr_ok, typing `expression~r~`, under cursor `LOCAL` and typing context `TC`>>.
-   .... Let `(typedExpressionIR, typedExpressionIR)^?^` be <<coerce_binary, implicitly cast  `typedExpressionIR~l~`  and  `typedExpressionIR~r~`  to equal types>>.
+   .... Let `typedExpressionIR^?^` be <<coerce_unary, implicitly cast  `typedExpressionIR~l~`  to  `typeIR~key~`>>.
+   .... Check that `typedExpressionIR^?^` is Some value.
+   .... Let `typedExpressionIR~l_cast~` be `typedExpressionIR^?^`.
+   .... Let `typedExpressionIR'^?^` be <<coerce_unary, implicitly cast  `typedExpressionIR~r~`  to  `typeIR~key~`>>.
+   .... Check that `typedExpressionIR'^?^` is Some value.
+   .... Let `typedExpressionIR~r_cast~` be `typedExpressionIR'^?^`.
+   .... Let `(typedExpressionIR, typedExpressionIR)^?^` be `<<reduce_serenum_binary, $reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_mask)>>`.
    .... Check that `(typedExpressionIR, typedExpressionIR)^?^` is Some value.
-   .... Let `(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~)` be `(typedExpressionIR, typedExpressionIR)^?^`.
-   .... Let `(typedExpressionIR, typedExpressionIR)'^?^` be `<<reduce_serenum_binary, $reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_mask)>>`.
-   .... Check that `(typedExpressionIR, typedExpressionIR)'^?^` is Some value.
-   .... Let `(typedExpressionIR~l_reduced~, typedExpressionIR~r_reduced~)` be `(typedExpressionIR, typedExpressionIR)'^?^`.
-   .... Let `typeIR~reduced~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~r_reduced~`>>.
+   .... Let `(typedExpressionIR~l_reduced~, typedExpressionIR~r_reduced~)` be `(typedExpressionIR, typedExpressionIR)^?^`.
    .... Let `ctk~r_reduced~` be <<ctk_of_typedExpressionIR, the compile-time known-ness of  `typedExpressionIR~r_reduced~`>>.
-   .... Check that <<Sub_impl, `typeIR~reduced~` can be implicitly cast to `typeIR~key~`>>.
    .... Check that `ctk~r_reduced~` matches pattern `LCTK`.
    .... Let `value~r~` be the result of <<Expr_eval_lctk, the local compile-time evaluation of `typedExpressionIR~r_reduced~`, under cursor `LOCAL` and typing context `TC`>>.
    .... Let `i~r~` be <<int_of_value, the integer representation of  `value~r~`>>.
@@ -5621,15 +5622,15 @@ relation TableEntry_keyset_simple_ok: `TC`, `TBLC`, (`typeIR~key~`, `text`), and
   ... Else if `text` is equal to `"ternary"`:
    .... Let `typedExpressionIR~l~` be the result of <<Expr_ok, typing `expression~l~`, under cursor `LOCAL` and typing context `TC`>>.
    .... Let `typedExpressionIR~r~` be the result of <<Expr_ok, typing `expression~r~`, under cursor `LOCAL` and typing context `TC`>>.
-   .... Let `(typedExpressionIR, typedExpressionIR)^?^` be <<coerce_binary, implicitly cast  `typedExpressionIR~l~`  and  `typedExpressionIR~r~`  to equal types>>.
+   .... Let `typedExpressionIR^?^` be <<coerce_unary, implicitly cast  `typedExpressionIR~l~`  to  `typeIR~key~`>>.
+   .... Check that `typedExpressionIR^?^` is Some value.
+   .... Let `typedExpressionIR~l_cast~` be `typedExpressionIR^?^`.
+   .... Let `typedExpressionIR'^?^` be <<coerce_unary, implicitly cast  `typedExpressionIR~r~`  to  `typeIR~key~`>>.
+   .... Check that `typedExpressionIR'^?^` is Some value.
+   .... Let `typedExpressionIR~r_cast~` be `typedExpressionIR'^?^`.
+   .... Let `(typedExpressionIR, typedExpressionIR)^?^` be `<<reduce_serenum_binary, $reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_mask)>>`.
    .... Check that `(typedExpressionIR, typedExpressionIR)^?^` is Some value.
-   .... Let `(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~)` be `(typedExpressionIR, typedExpressionIR)^?^`.
-   .... Let `(typedExpressionIR, typedExpressionIR)'^?^` be `<<reduce_serenum_binary, $reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_mask)>>`.
-   .... Check that `(typedExpressionIR, typedExpressionIR)'^?^` is Some value.
-   .... Let `(typedExpressionIR~l_reduced~, typedExpressionIR~r_reduced~)` be `(typedExpressionIR, typedExpressionIR)'^?^`.
-   .... Let `typeIR~reduced~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~r_reduced~`>>.
-   .... Let `ctk~r_reduced~` be <<ctk_of_typedExpressionIR, the compile-time known-ness of  `typedExpressionIR~r_reduced~`>>.
-   .... Check that <<Sub_impl, `typeIR~reduced~` can be implicitly cast to `typeIR~key~`>>.
+   .... Let `(typedExpressionIR~l_reduced~, typedExpressionIR~r_reduced~)` be `(typedExpressionIR, typedExpressionIR)^?^`.
    .... Result in `NOLPM` and `typedExpressionIR~l_reduced~ &&& typedExpressionIR~r_reduced~`.
 . Else if `simpleKeysetExpression` matches pattern `DEFAULT`:
  .. Group default:
@@ -5657,15 +5658,15 @@ relation TableEntry_keyset_simple_ok: `TC`, `TBLC`, (`typeIR~key~`, `text`), and
  .. Group range-range:
   ... Let `typedExpressionIR~l~` be the result of <<Expr_ok, typing `expression~l~`, under cursor `LOCAL` and typing context `TC`>>.
   ... Let `typedExpressionIR~r~` be the result of <<Expr_ok, typing `expression~r~`, under cursor `LOCAL` and typing context `TC`>>.
-  ... Let `(typedExpressionIR, typedExpressionIR)^?^` be <<coerce_binary, implicitly cast  `typedExpressionIR~l~`  and  `typedExpressionIR~r~`  to equal types>>.
+  ... Let `typedExpressionIR^?^` be <<coerce_unary, implicitly cast  `typedExpressionIR~l~`  to  `typeIR~key~`>>.
+  ... Check that `typedExpressionIR^?^` is Some value.
+  ... Let `typedExpressionIR~l_cast~` be `typedExpressionIR^?^`.
+  ... Let `typedExpressionIR'^?^` be <<coerce_unary, implicitly cast  `typedExpressionIR~r~`  to  `typeIR~key~`>>.
+  ... Check that `typedExpressionIR'^?^` is Some value.
+  ... Let `typedExpressionIR~r_cast~` be `typedExpressionIR'^?^`.
+  ... Let `(typedExpressionIR, typedExpressionIR)^?^` be `<<reduce_serenum_binary, $reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_range)>>`.
   ... Check that `(typedExpressionIR, typedExpressionIR)^?^` is Some value.
-  ... Let `(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~)` be `(typedExpressionIR, typedExpressionIR)^?^`.
-  ... Let `(typedExpressionIR, typedExpressionIR)'^?^` be `<<reduce_serenum_binary, $reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_range)>>`.
-  ... Check that `(typedExpressionIR, typedExpressionIR)'^?^` is Some value.
-  ... Let `(typedExpressionIR~l_reduced~, typedExpressionIR~r_reduced~)` be `(typedExpressionIR, typedExpressionIR)'^?^`.
-  ... Let `typeIR~reduced~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~r_reduced~`>>.
-  ... Let `ctk~r_reduced~` be <<ctk_of_typedExpressionIR, the compile-time known-ness of  `typedExpressionIR~r_reduced~`>>.
-  ... Check that <<Sub_impl, `typeIR~reduced~` can be implicitly cast to `typeIR~key~`>>.
+  ... Let `(typedExpressionIR~l_reduced~, typedExpressionIR~r_reduced~)` be `(typedExpressionIR, typedExpressionIR)^?^`.
   ... Result in `NOLPM` and `typedExpressionIR~l_reduced~ .. typedExpressionIR~r_reduced~`.
 
 
@@ -8566,12 +8567,20 @@ relation TableKeys_eval: `evalContext`, `store`, and `tableKeyIR''^{asterisk}^`
     ..... Result in `EC~2~`, `STO~2~`, and `tableKeyValue^{asterisk}^`.
 
 
-relation TableEntryPriority_eval: `EC`, `STO`, and `tableEntryPriorityIR^?^`
+relation TableEntryPriority_eval: `EC`, `STO`, and `tableEntryPriorityIR''^?^`
 
 
-. Check that `tableEntryPriorityIR^?^` is None.
-. Group :
- .. Result in `None`.
+. If `tableEntryPriorityIR''^?^` is None:
+ .. Group none:
+  ... Result in `None`.
+. Else let `tableEntryPriorityIR` be `tableEntryPriorityIR''^?^`:
+ .. Check that `tableEntryPriorityIR` matches pattern `PRIORITY = % :`.
+ .. Let `PRIORITY = integerLiteral :` be `tableEntryPriorityIR`.
+ .. Group integerLiteral:
+  ... Let `int` be <<int_of_value, the integer representation of  `integerLiteral`>>.
+  ... Check that `int` has type `nat`.
+  ... Let `n` be `int`.
+  ... Result in `n`.
 
 
 relation TableMatch_eval: `EC~0~`, `STO~0~`, `tableKeyValue^{asterisk}^`, and `tableEntryIR`

@@ -75,8 +75,18 @@ relation TableEntryPriority_eval:
   evalContext store |- tableEntryPriorityIR? : nat?
   hint(input %0 %1 %2)
 
-rule TableEntryPriority_eval:
+;;; syntax tableEntryPriorityIR =
+
+rule TableEntryPriority_eval/none:
   EC STO |- eps : eps
+
+;;;; PRIORITY `= integerLiteral `: 
+
+rule TableEntryPriority_eval/integerLiteral:
+  EC STO |- PRIORITY `= integerLiteral `: : n
+  -- if n = $int_of_value(integerLiteral)
+
+;;;; PRIORITY `= `( typedExpressionIR ) `:
 
 syntax tableMatch = nat? `: tableActionReferenceIR
 
@@ -163,6 +173,27 @@ rulegroup TableMatches_eval {
 ;; Match-action table evaluation
 ;;
 
+dec $is_largest_priority_wins(tableCustomPropertyIR) : bool
+dec $largest_priority_wins(tableObjectProperty) : bool
+
+def $is_largest_priority_wins(
+    _ _ CUSTOM_CONST "largest_priority_wins" _ `;
+  )
+  = true
+def $is_largest_priority_wins(_) = false
+  -- otherwise
+
+def $largest_priority_wins(TBL) = b
+  -- if tableCustomPropertyIR* = TBL.CUSTOMS
+  -- if _ _ CUSTOM_CONST _ (`= (B b)) `;
+      = $filter_<tableCustomPropertyIR>(
+          tableCustomPropertyIR*, def $is_largest_priority_wins)
+def $largest_priority_wins(TBL) = true
+  -- if tableCustomPropertyIR* = TBL.CUSTOMS
+  -- if eps
+      = $filter_<tableCustomPropertyIR>(
+          tableCustomPropertyIR*, def $is_largest_priority_wins)
+
 dec $select_action(tableObjectProperty, tableMatch*)
   : tableActionReferenceIR
 
@@ -171,6 +202,27 @@ def $select_action(TBL, eps) = tableActionReferenceIR
       = TBL.DEFAULT_ACTION
 def $select_action(TBL, tableMatch) = tableActionReferenceIR
   -- if _ `: tableActionReferenceIR = tableMatch
+def $select_action(TBL, tableMatch*) = tableActionReferenceIR_h
+  -- if $(|tableMatch*| > 1)
+  ---- ;; all priorities should be defined for tie-breaking
+  -- if (n_priority `: tableActionReferenceIR = tableMatch)*
+  ---- ;; sort by ascending priority
+  -- if (n_priority_sorted, tableActionReferenceIR_sorted)*
+      = $sort_<tableActionReferenceIR>((n_priority, tableActionReferenceIR)*)
+  ---- ;; check largets_priority_wins
+  -- if $largest_priority_wins(TBL)
+  -- if tableActionReferenceIR_h :: _
+      = $rev_<tableActionReferenceIR>(tableActionReferenceIR_sorted*)
+def $select_action(TBL, tableMatch*) = tableActionReferenceIR_h
+  -- if $(|tableMatch*| > 1)
+  ---- ;; all priorities should be defined for tie-breaking
+  -- if (n_priority `: tableActionReferenceIR = tableMatch)*
+  ---- ;; sort by ascending priority
+  -- if (n_priority_sorted, tableActionReferenceIR_sorted)*
+      = $sort_<tableActionReferenceIR>((n_priority, tableActionReferenceIR)*)
+  ---- ;; check largets_priority_wins
+  -- if ~$largest_priority_wins(TBL)
+  -- if tableActionReferenceIR_h :: _ = tableActionReferenceIR_sorted*
 
 rule Table_eval:
   EC_0 STO_0 |- tid TBL : EC_3 STO_3 (RETURN tableMetadataStructValue)

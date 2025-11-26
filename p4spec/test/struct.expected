@@ -128,74 +128,77 @@ def $filter_<X>(X*{X <- X*}, $cond)
 ;; ../../../../spec-concrete/0-aux.watsup:91.1-91.43
 builtin def $assoc_<X, Y>(X, (X, Y)*{(X, Y) <- (X, Y)*})
 
-;; ../../../../spec-concrete/0-aux.watsup:93.1-95.60
+;; ../../../../spec-concrete/0-aux.watsup:93.1-93.45
+builtin def $sort_<X>((nat, X)*{(nat, X) <- (nat, X)*})
+
+;; ../../../../spec-concrete/0-aux.watsup:95.1-97.60
 builtin def $distinct_<K>(K*{K <- K*})
 
-;; ../../../../spec-concrete/0-aux.watsup:101.17-101.24
+;; ../../../../spec-concrete/0-aux.watsup:103.17-103.24
 syntax set<K> = 
    | { K* }
 
-;; ../../../../spec-concrete/0-aux.watsup:103.1-103.27
+;; ../../../../spec-concrete/0-aux.watsup:105.1-105.27
 def $empty_set<K>
 
 1. Return ({ [] })
 
-;; ../../../../spec-concrete/0-aux.watsup:106.1-107.52
+;; ../../../../spec-concrete/0-aux.watsup:108.1-109.52
 def $in_set<K>(K, ({ K_e*{K_e <- K_e*} }))
 
 1. Return K is in K_e*{K_e <- K_e*}
 
-;; ../../../../spec-concrete/0-aux.watsup:110.1-111.60
+;; ../../../../spec-concrete/0-aux.watsup:112.1-113.60
 builtin def $intersect_set<K>(set<K>, set<K>')
 
-;; ../../../../spec-concrete/0-aux.watsup:113.1-114.53
+;; ../../../../spec-concrete/0-aux.watsup:115.1-116.53
 builtin def $union_set<K>(set<K>, set<K>')
 
-;; ../../../../spec-concrete/0-aux.watsup:116.1-117.44
+;; ../../../../spec-concrete/0-aux.watsup:118.1-119.44
 builtin def $unions_set<K>(set<K>*{set<K> <- set<K>*})
 
-;; ../../../../spec-concrete/0-aux.watsup:119.1-120.58
+;; ../../../../spec-concrete/0-aux.watsup:121.1-122.58
 builtin def $diff_set<K>(set<K>, set<K>')
 
-;; ../../../../spec-concrete/0-aux.watsup:122.1-124.47
+;; ../../../../spec-concrete/0-aux.watsup:124.1-126.47
 builtin def $sub_set<K>(set<K>, set<K>')
 
-;; ../../../../spec-concrete/0-aux.watsup:126.1-128.44
+;; ../../../../spec-concrete/0-aux.watsup:128.1-130.44
 builtin def $eq_set<K>(set<K>, set<K>')
 
-;; ../../../../spec-concrete/0-aux.watsup:134.21-134.27
+;; ../../../../spec-concrete/0-aux.watsup:136.21-136.27
 syntax pair<K, V> = 
    | K : V
 
-;; ../../../../spec-concrete/0-aux.watsup:136.20-136.35
+;; ../../../../spec-concrete/0-aux.watsup:138.20-138.35
 syntax map<K, V> = set<pair<K, V>>
 
-;; ../../../../spec-concrete/0-aux.watsup:138.1-138.33
+;; ../../../../spec-concrete/0-aux.watsup:140.1-140.33
 def $empty_map<K, V>
 
 1. Return ({ [] })
 
-;; ../../../../spec-concrete/0-aux.watsup:141.1-142.44
+;; ../../../../spec-concrete/0-aux.watsup:143.1-144.44
 def $dom_map<K, V>(({ (K : V)*{K <- K*, V <- V*} }))
 
 1. Return ({ K*{K <- K*} })
 
-;; ../../../../spec-concrete/0-aux.watsup:145.1-145.47
+;; ../../../../spec-concrete/0-aux.watsup:147.1-147.47
 builtin def $find_map<K, V>(map<K, V>, K)
 
-;; ../../../../spec-concrete/0-aux.watsup:147.1-147.49
+;; ../../../../spec-concrete/0-aux.watsup:149.1-149.49
 builtin def $find_maps<K, V>(map<K, V>*{map<K, V> <- map<K, V>*}, K)
 
-;; ../../../../spec-concrete/0-aux.watsup:149.1-149.56
+;; ../../../../spec-concrete/0-aux.watsup:151.1-151.56
 builtin def $add_map<K, V>(map<K, V>, K, V)
 
-;; ../../../../spec-concrete/0-aux.watsup:151.1-151.59
+;; ../../../../spec-concrete/0-aux.watsup:153.1-153.59
 builtin def $adds_map<K, V>(map<K, V>, K*{K <- K*}, V*{V <- V*})
 
-;; ../../../../spec-concrete/0-aux.watsup:153.1-154.74
+;; ../../../../spec-concrete/0-aux.watsup:155.1-156.74
 builtin def $update_map<K, V>(map<K, V>, K, V)
 
-;; ../../../../spec-concrete/0-aux.watsup:156.1-156.56
+;; ../../../../spec-concrete/0-aux.watsup:158.1-158.56
 def $extend_map<K, V>(({ (K_a : V_a)*{K_a <- K_a*, V_a <- V_a*} }), ({ (K_b : V_b)*{K_b <- K_b*, V_b <- V_b*} }))
 
 1. (Let ({ (K_c : V_c)*{K_c <- K_c*, V_c <- V_c*} }) be $adds_map<K, V>(({ (K_a : V_a)*{K_a <- K_a*, V_a <- V_a*} }), K_b*{K_b <- K_b*}, V_b*{V_b <- V_b*}))
@@ -18171,7 +18174,7 @@ relation TableEntry_priority_ok: TC tableContext' TBLS |- tableEntryPriority''?{
 
           1. (Let (lpm n_prefix) be TBLS)
 
-          2. Result in : % % % |- % : tableContext' ?()
+          2. Result in : % % % |- % : tableContext' ?((priority= (d (n_prefix as int)) :))
 
       4. Case analysis on tableContext'.mode
 
@@ -22932,25 +22935,27 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key, text) @ simpleKeys
 
             3. (Expr_ok: (local) TC |- expression_r : typedExpressionIR_r)
 
-            4. (Let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} be $coerce_binary(typedExpressionIR_l, typedExpressionIR_r))
+            4. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $coerce_unary(typedExpressionIR_l, typeIR_key))
 
-            5. If (((typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches pattern (_))), then
+            5. If ((typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches pattern (_))), then
 
-              1. (Let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) be (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?})
+              1. (Let ?(typedExpressionIR_l_cast) be typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
-              2. (Let (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} be $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_mask))
+              2. (Let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} be $coerce_unary(typedExpressionIR_r, typeIR_key))
 
-              3. If (((typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} matches pattern (_))), then
+              3. If ((typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches pattern (_))), then
 
-                1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?})
+                1. (Let ?(typedExpressionIR_r_cast) be typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-                2. (Let typeIR_reduced be $type_of_typedExpressionIR(typedExpressionIR_r_reduced))
+                2. (Let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} be $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_mask))
 
-                3. (Let ctk_r_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced))
+                3. If (((typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches pattern (_))), then
 
-                4. If (Sub_impl: typeIR_reduced <: typeIR_key) holds, then
+                  1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?})
 
-                  1. If ((ctk_r_reduced matches pattern `LCTK`)), then
+                  2. (Let ctk_r_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced))
+
+                  3. If ((ctk_r_reduced matches pattern `LCTK`)), then
 
                     1. (Expr_eval_lctk: (local) TC |- typedExpressionIR_r_reduced ~> value_r)
 
@@ -22966,25 +22971,25 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key, text) @ simpleKeys
 
           2. (Expr_ok: (local) TC |- expression_r : typedExpressionIR_r)
 
-          3. (Let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} be $coerce_binary(typedExpressionIR_l, typedExpressionIR_r))
+          3. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $coerce_unary(typedExpressionIR_l, typeIR_key))
 
-          4. If (((typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches pattern (_))), then
+          4. If ((typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches pattern (_))), then
 
-            1. (Let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) be (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?})
+            1. (Let ?(typedExpressionIR_l_cast) be typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
-            2. (Let (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} be $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_mask))
+            2. (Let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} be $coerce_unary(typedExpressionIR_r, typeIR_key))
 
-            3. If (((typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} matches pattern (_))), then
+            3. If ((typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches pattern (_))), then
 
-              1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?})
+              1. (Let ?(typedExpressionIR_r_cast) be typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-              2. (Let typeIR_reduced be $type_of_typedExpressionIR(typedExpressionIR_r_reduced))
+              2. (Let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} be $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_mask))
 
-              3. (Let ctk_r_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced))
+              3. If (((typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches pattern (_))), then
 
-              4. If (Sub_impl: typeIR_reduced <: typeIR_key) holds, then
+                1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?})
 
-                1. Result in : % % |- % @ % : (nolpm) (typedExpressionIR_l_reduced &&& typedExpressionIR_r_reduced)
+                2. Result in : % % |- % @ % : (nolpm) (typedExpressionIR_l_reduced &&& typedExpressionIR_r_reduced)
 
   2. Case (% matches pattern `DEFAULT`)
 
@@ -23042,27 +23047,27 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key, text) @ simpleKeys
 
       2. (Expr_ok: (local) TC |- expression_r : typedExpressionIR_r)
 
-      3. (Let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} be $coerce_binary(typedExpressionIR_l, typedExpressionIR_r))
+      3. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $coerce_unary(typedExpressionIR_l, typeIR_key))
 
-      4. If (((typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches pattern (_))), then
+      4. If ((typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches pattern (_))), then
 
-        1. (Let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) be (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?})
+        1. (Let ?(typedExpressionIR_l_cast) be typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
-        2. (Let (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} be $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_range))
+        2. (Let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} be $coerce_unary(typedExpressionIR_r, typeIR_key))
 
-        3. If (((typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} matches pattern (_))), then
+        3. If ((typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches pattern (_))), then
 
-          1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?})
+          1. (Let ?(typedExpressionIR_r_cast) be typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-          2. (Let typeIR_reduced be $type_of_typedExpressionIR(typedExpressionIR_r_reduced))
+          2. (Let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} be $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_range))
 
-          3. (Let ctk_r_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced))
+          3. If (((typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches pattern (_))), then
 
-          4. If (Sub_impl: typeIR_reduced <: typeIR_key) holds, then
+            1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?})
 
-            1. Result in : % % |- % @ % : (nolpm) (typedExpressionIR_l_reduced .. typedExpressionIR_r_reduced)
+            2. Result in : % % |- % @ % : (nolpm) (typedExpressionIR_l_reduced .. typedExpressionIR_r_reduced)
 
-;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:408.1-411.29
+;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:396.1-399.29
 relation TableEntry_keysets_simple_ok: TC TBLC TBLS' |- matchKey*{matchKey <- matchKey*} @ simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*} : % %
 
 1. Case analysis on matchKey*{matchKey <- matchKey*}
@@ -23093,7 +23098,7 @@ relation TableEntry_keysets_simple_ok: TC TBLC TBLS' |- matchKey*{matchKey <- ma
 
         4. Result in : % % % |- % @ % : TBLS_3 simpleKeysetExpressionIR_h :: simpleKeysetExpressionIR_t*{simpleKeysetExpressionIR_t <- simpleKeysetExpressionIR_t*}
 
-;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:963.1-963.48
+;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:951.1-951.48
 def $is_tableKeysProperty(tableProperty')
 
 1. If ((tableProperty' matches pattern `KEY={%}`)), then
@@ -23106,7 +23111,7 @@ def $is_tableKeysProperty(tableProperty')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:968.1-968.51
+;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:956.1-956.51
 def $is_tableActionsProperty(tableProperty')
 
 1. If ((tableProperty' matches pattern `ACTIONS={%}`)), then
@@ -23119,7 +23124,7 @@ def $is_tableActionsProperty(tableProperty')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:973.1-973.57
+;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:961.1-961.57
 def $is_tableDefaultActionProperty(tableProperty')
 
 1. If ((tableProperty' matches pattern `%%%%;`)), then
@@ -23134,7 +23139,7 @@ def $is_tableDefaultActionProperty(tableProperty')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:979.1-982.39
+;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:967.1-970.39
 def $insert_NoAction_tablePropertyIR(TBLC', tablePropertyIR*{tablePropertyIR <- tablePropertyIR*})
 
 1. Case analysis on tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}
@@ -31382,24 +31387,44 @@ relation TableKeys_eval: evalContext store |- tableKeyIR''*{tableKeyIR'' <- tabl
             3. Result in : % % |- % : EC_2 STO_2 ((` tableKeyValue*{tableKeyValue <- tableKeyValue*}) as tableKeysResult)
 
 ;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:74.1-76.23
-relation TableEntryPriority_eval: EC STO |- tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?} : %
+relation TableEntryPriority_eval: EC STO |- tableEntryPriorityIR''?{tableEntryPriorityIR'' <- tableEntryPriorityIR''?} : %
 
-1. If ((tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?} matches pattern ())), then
+1. Case analysis on tableEntryPriorityIR''?{tableEntryPriorityIR'' <- tableEntryPriorityIR''?}
 
-  1. Group : EC STO |- ?() : %
+  1. Case (% matches pattern ())
 
-    1. Result in : % % |- % : ?()
+    1. Group none: EC STO |- ?() : %
 
-;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:81.21-81.51
+      1. Result in : % % |- % : ?()
+
+  2. Case (% matches pattern (_))
+
+    1. (Let ?(tableEntryPriorityIR) be tableEntryPriorityIR''?{tableEntryPriorityIR'' <- tableEntryPriorityIR''?})
+
+    2. If ((tableEntryPriorityIR matches pattern `PRIORITY=%:`)), then
+
+      1. (Let (priority= integerLiteral :) be tableEntryPriorityIR)
+
+      2. Group integerLiteral: EC STO |- ?((priority= integerLiteral :)) : %
+
+        1. (Let int be $int_of_value((integerLiteral as value)))
+
+        2. If ((int has type nat)), then
+
+          1. (Let n be (int as nat))
+
+          2. Result in : % % |- % : ?(n)
+
+;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:91.21-91.51
 syntax tableMatch = 
    | nat? : tableActionReferenceIR
 
-;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:84.1-85.15
+;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:94.1-95.15
 syntax tableMatchResult = 
    | ` tableMatch?
    | exit
 
-;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:87.1-90.26
+;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:97.1-100.26
 relation TableMatch_eval: EC_0 STO_0 |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryIR : % % %
 
 1. Group : EC_0 STO_0 |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryIR : % % %
@@ -31428,12 +31453,12 @@ relation TableMatch_eval: EC_0 STO_0 |- tableKeyValue*{tableKeyValue <- tableKey
 
         2. Result in : % % |- % @ % : EC_1 STO_1 ((` ?(tableMatch)) as tableMatchResult)
 
-;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:134.1-135.15
+;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:144.1-145.15
 syntax tableMatchesResult = 
    | ` tableMatch*
    | exit
 
-;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:137.1-140.26
+;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:147.1-150.26
 relation TableMatches_eval: evalContext store |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryIR*{tableEntryIR <- tableEntryIR*} : % % %
 
 1. Group : evalContext store |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryIR*{tableEntryIR <- tableEntryIR*} : % % %
@@ -31464,7 +31489,47 @@ relation TableMatches_eval: evalContext store |- tableKeyValue*{tableKeyValue <-
 
         3. Result in : % % |- % @ % : EC_2 STO_2 ((` tableMatch*{tableMatch <- tableMatch*}) as tableMatchesResult)
 
-;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:166.1-167.27
+;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:176.1-176.60
+def $is_largest_priority_wins(tableCustomPropertyIR')
+
+1. If ((tableCustomPropertyIR' matches pattern `%%CUSTOM_CONST%%;`)), then
+
+  1. (Let (_annotationList _constOptIR custom_const text _constantInitializerIR ;) be tableCustomPropertyIR')
+
+  2. If ((text = "largest_priority_wins")), then
+
+    1. Return true
+
+2. Otherwise
+
+  1. Return false
+
+;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:177.1-177.55
+def $largest_priority_wins(TBL)
+
+1. (Let tableCustomPropertyIR*{tableCustomPropertyIR <- tableCustomPropertyIR*} be TBL.customs)
+
+2. (Let tableCustomPropertyIR''*{tableCustomPropertyIR'' <- tableCustomPropertyIR''*} be $filter_<tableCustomPropertyIR>(tableCustomPropertyIR*{tableCustomPropertyIR <- tableCustomPropertyIR*}, $is_largest_priority_wins))
+
+3. If ((tableCustomPropertyIR''*{tableCustomPropertyIR'' <- tableCustomPropertyIR''*} matches pattern [ _/1 ])), then
+
+  1. (Let [tableCustomPropertyIR'] be tableCustomPropertyIR''*{tableCustomPropertyIR'' <- tableCustomPropertyIR''*})
+
+  2. If ((tableCustomPropertyIR' matches pattern `%%CUSTOM_CONST%%;`)), then
+
+    1. (Let (_annotationList _constOptIR custom_const _nameIR (= value) ;) be tableCustomPropertyIR')
+
+    2. If ((value has type boolValue)), then
+
+      1. (Let (b b) be (value as boolValue))
+
+      2. Return b
+
+4. If (([] = $filter_<tableCustomPropertyIR>(tableCustomPropertyIR*{tableCustomPropertyIR <- tableCustomPropertyIR*}, $is_largest_priority_wins))), then
+
+  1. Return true
+
+;; ../../../../spec-concrete/8.09.1-eval-control-table.watsup:197.1-198.27
 def $select_action(TBL, tableMatch''*{tableMatch'' <- tableMatch''*})
 
 1. Case analysis on tableMatch''*{tableMatch'' <- tableMatch''*}
@@ -31482,6 +31547,38 @@ def $select_action(TBL, tableMatch''*{tableMatch'' <- tableMatch''*})
     2. (Let (_nat?{_nat <- _nat?} : tableActionReferenceIR) be tableMatch)
 
     3. Return tableActionReferenceIR
+
+2. If ((|tableMatch''*{tableMatch'' <- tableMatch''*}| > 1)), then
+
+  1. (Let (nat?{nat <- nat?} : tableActionReferenceIR) be tableMatch'')*{nat? <- nat?*, tableActionReferenceIR <- tableActionReferenceIR*, tableMatch'' <- tableMatch''*}
+
+  2. If ((nat?{nat <- nat?} matches pattern (_)))*{nat? <- nat?*}, then
+
+    1. (Let ?(n_priority) be nat?{nat <- nat?})*{n_priority <- n_priority*, nat? <- nat?*}
+
+    2. (Let (n_priority_sorted, tableActionReferenceIR_sorted)*{n_priority_sorted <- n_priority_sorted*, tableActionReferenceIR_sorted <- tableActionReferenceIR_sorted*} be $sort_<tableActionReferenceIR>((n_priority, tableActionReferenceIR)*{n_priority <- n_priority*, tableActionReferenceIR <- tableActionReferenceIR*}))
+
+    3. Case analysis on $largest_priority_wins(TBL)
+
+      1. Case true
+
+        1. (Let tableActionReferenceIR'*{tableActionReferenceIR' <- tableActionReferenceIR'*} be $rev_<tableActionReferenceIR>(tableActionReferenceIR_sorted*{tableActionReferenceIR_sorted <- tableActionReferenceIR_sorted*}))
+
+        2. If ((tableActionReferenceIR'*{tableActionReferenceIR' <- tableActionReferenceIR'*} matches pattern _ :: _)), then
+
+          1. (Let tableActionReferenceIR_h :: _tableActionReferenceIR*{_tableActionReferenceIR <- _tableActionReferenceIR*} be tableActionReferenceIR'*{tableActionReferenceIR' <- tableActionReferenceIR'*})
+
+          2. Return tableActionReferenceIR_h
+
+      2. Case false
+
+        1. (Let tableActionReferenceIR'*{tableActionReferenceIR' <- tableActionReferenceIR'*} be tableActionReferenceIR_sorted*{tableActionReferenceIR_sorted <- tableActionReferenceIR_sorted*})
+
+        2. If ((tableActionReferenceIR'*{tableActionReferenceIR' <- tableActionReferenceIR'*} matches pattern _ :: _)), then
+
+          1. (Let tableActionReferenceIR_h :: _tableActionReferenceIR*{_tableActionReferenceIR <- _tableActionReferenceIR*} be tableActionReferenceIR'*{tableActionReferenceIR' <- tableActionReferenceIR'*})
+
+          2. Return tableActionReferenceIR_h
 
 ;; ../../../../spec-concrete/8.10.4-eval-call.watsup:7.1-8.54
 def $align_params_with_args(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id*{id <- id*})

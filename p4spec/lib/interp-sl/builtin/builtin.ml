@@ -30,6 +30,7 @@ let funcs =
   |> Funcs.add "distinct_" Lists.distinct_
   |> Funcs.add "partition_" Lists.partition_
   |> Funcs.add "assoc_" Lists.assoc_
+  |> Funcs.add "sort_" Lists.sort_
   (* Sets *)
   |> Funcs.add "intersect_set" Sets.intersect_set
   |> Funcs.add "union_set" Sets.union_set

@@ -107,3 +107,34 @@ let assoc_ (at : region) (targs : targ list) (values_input : value list) : value
     OptV value_opt $$$ { vid; typ }
   in
   value
+
+(* dec $sort_<X>((nat, X)* ) : (nat, X)* *)
+
+let sort_ (at : region) (targs : targ list) (values_input : value list) : value
+    =
+  let _typ_value = Extract.one at targs in
+  let value_list = Extract.one at values_input in
+  let values =
+    Value.get_list value_list
+    |> List.map (fun value ->
+           match value.it with
+           | TupleV [ value_key; value_value ] ->
+               let n_key = Value.get_num value_key |> Num.to_int in
+               (n_key, (value_key, value_value, value.note))
+           | _ -> assert false)
+  in
+  let values =
+    List.sort (fun (n_a, _) (n_b, _) -> Bigint.compare n_a n_b) values
+  in
+  let values =
+    List.map
+      (fun (_, (value_key, value_value, note)) ->
+        TupleV [ value_key; value_value ] $$$ note)
+      values
+  in
+  let value =
+    let vid = Value.fresh () in
+    let typ = value_list.note.typ in
+    ListV values $$$ { vid; typ }
+  in
+  value
