@@ -729,7 +729,8 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <li><a href="#_justification">6.5.1. Justification</a></li>
 </ul>
 </li>
-<li><a href="#sec-naming-conventions">6.6. Naming conventions</a></li>
+<li><a href="#_overloading">6.6. Overloading</a></li>
+<li><a href="#sec-naming-conventions">6.7. Naming conventions</a></li>
 </ul>
 </li>
 <li><a href="#sec-p4-abstract-machine">7. The P4 Abstract Machine</a>
@@ -737,7 +738,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <li><a href="#sec-abstract-machine-preprocessing">7.1. Preprocessing</a></li>
 <li><a href="#sec-abstract-machine-type-checking">7.2. Type Checking</a>
 <ul class="sectlevel3">
-<li><a href="#sec-abstract-machine-p4-ir">7.2.1. P4 Intermediate Representation</a></li>
+<li><a href="#_p4_intermediate_representation">7.2.1. P4 Intermediate Representation</a></li>
 <li><a href="#_typing_a_p4_program">7.2.2. Typing a P4 program</a></li>
 <li><a href="#_typing_context">7.2.3. Typing context</a></li>
 </ul>
@@ -3318,7 +3319,34 @@ as in the following example:</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-naming-conventions">6.6. Naming conventions</h3>
+<h3 id="_overloading">6.6. Overloading</h3>
+<div class="paragraph">
+<p>Functions, methods, and constructors are the only P4 constructs that support
+overloading: there can exist multiple methods with the same name in the same
+scope. When overloading is used, the compiler must be able to disambiguate at
+compile-time which method or function is being called, either by the number of
+arguments or by the names of the arguments, when calls are specifying argument
+names. Argument type information is not used in disambiguating calls.</p>
+</div>
+<div class="paragraph">
+<p>Notice that overloading of abstract methods, parsers, controls, or packages is
+not allowed:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">parser</span> p<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">packet_in</span> p<span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #cf222e">out</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> value<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+  <span style="color: #0550ae">...</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
+
+<span style="color: #6e7781">// The following will cause an error about a duplicate declaration
+//parser p(packet_in p, out Headers headers) {
+//   ...
+//}</span></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="sec-naming-conventions">6.7. Naming conventions</h3>
 <div class="paragraph">
 <p>P4 provides a rich assortment of types. Base types include bit-strings,
 numbers, and errors. There are also built-in types for representing constructs
@@ -3389,7 +3417,7 @@ addition to checking the types, the type system also converts an input P4
 program into an intermediate representation (P4<sub>IR</sub>). P4<sub>IR</sub> is an extension of the
 surface syntax of P4, e.g., the types of all expressions are made explicit,
 implicit type casts are inserted, and omitted type arguments are inferred.
-P4<sub>IR</sub> is described in <a href="#sec-abstract-machine-p4-ir">Section 7.2.1</a>.</p>
+P4<sub>IR</sub> is described in <a href="#sec-abstract-machine-p4-ir">[sec-abstract-machine-p4-ir]</a>.</p>
 </div>
 <div class="paragraph">
 <p>The instantiation stage is described in <a href="#sec-abstract-machine-instantiation">Section 7.3</a>.
@@ -3491,7 +3519,7 @@ checker are considered invalid and rejected by the compiler. P4 provides a
 number of base types as well as type operators that construct derived types.</p>
 </div>
 <div class="sect3">
-<h4 id="sec-abstract-machine-p4-ir">7.2.1. P4 Intermediate Representation</h4>
+<h4 id="_p4_intermediate_representation">7.2.1. P4 Intermediate Representation</h4>
 <div class="paragraph">
 <p>P4<sub>IR</sub> is an intermediate representation for P4 programs. P4<sub>IR</sub> extends the
 surface syntax of P4<sub>16</sub> with additional information obtained during type
@@ -3592,7 +3620,7 @@ Added explanation for P4<sub>IR</sub>. More explanation needed?
 <div class="sect3">
 <h4 id="_typing_a_p4_program">7.2.2. Typing a P4 program</h4>
 <div class="paragraph">
-<p>A P4<sub>16</sub> programs is a sequence of declarations:</p>
+<p>A P4<sub>16</sub> program is a sequence of declarations:</p>
 </div>
 <div class="listingblock">
 <div class="content">
