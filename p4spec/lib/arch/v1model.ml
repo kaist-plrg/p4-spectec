@@ -112,16 +112,34 @@ struct
   (* mark_to_drop(standard_metadata) is a primitive action that modifies
      standard_metadata.egress_spec to an implementation-specific special
      value that in some cases causes the packet to be dropped at the end
-     of ingress or egress processing.  It also asssigs 0 to
-     standard_metadata.mcast_grp.  Either of those metadata fields may
+     of ingress or egress processing. It also asssigs 0 to
+     standard_metadata.mcast_grp. Either of those metadata fields may
      be changed by executing later P4 code, after calling
      mark_to_drop(), and this can change the resulting behavior of the
      packet to do something other than drop.
 
      extern void mark_to_drop(inout standard_metadata_t standard_metadata); *)
-  let _mark_to_drop (_value_ctx : Value.t) (_value_sto : Value.t) :
-      Value.t * Value.t =
-    failwith "extern function mark_to_drop is not implemented"
+  let mark_to_drop (value_ctx : Value.t) (value_sto : Value.t) :
+      Value.t * Value.t * Value.t =
+    let value_egress_spec =
+      pack_p4_fixedBit (Bigint.of_int 9) (Bigint.of_int 511)
+    in
+    let value_ctx =
+      Spec.Rel.lvalue_write_dot_local value_ctx value_sto "standard_metadata"
+        "egress_spec" value_egress_spec
+    in
+    let value_mcast_grp =
+      pack_p4_fixedBit (Bigint.of_int 16) (Bigint.of_int 0)
+    in
+    let value_ctx =
+      Spec.Rel.lvalue_write_dot_local value_ctx value_sto "standard_metadata"
+        "mcast_grp" value_mcast_grp
+    in
+    let value_callResult =
+      let value_eps = wrap_opt_v "value" None in
+      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+    in
+    (value_ctx, value_sto, value_callResult)
 
   (* Calculate a hash function of the value specified by the data
      parameter.  The value written to the out parameter named result
@@ -591,6 +609,8 @@ struct
       match (name_func, names_param) with
       | "verify", [ "check"; "toSignal" ] ->
           Core.Func.verify value_ctx value_sto
+      | "mark_to_drop", [ "standard_metadata" ] ->
+          mark_to_drop value_ctx value_sto
       | "verify_checksum", [ "condition"; "data"; "checksum"; "algo" ] ->
           verify_checksum value_ctx value_sto
       | ( "verify_checksum_with_payload",
