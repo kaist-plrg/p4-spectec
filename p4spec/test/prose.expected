@@ -7115,10 +7115,9 @@ relation Expr_eval: `p`, `EC`, `STO`, and <<typedExpressionIR, `expressionIR` an
 . Else if let `typedExpressionIR~base~ [ typedExpressionIR~index~ ]` be `expressionIR`:
  .. Group indexAccessExpressionIR:
   ... Let `EC~1~`, `STO~1~`, and `expressionListResult` be the result of <<Exprs_eval, evaluating `[typedExpressionIR~base~, typedExpressionIR~index~]`, under cursor `p`, evaluation context `EC`, and store `STO`>>.
-  ... Else if let `exitResult` be `expressionListResult`:
+  ... If let `exitResult` be `expressionListResult`:
    .... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `EXIT`.
-  ... Let `EC~1~`, `STO~1~`, and `expressionListResult` be the result of <<Exprs_eval, evaluating `[typedExpressionIR~base~, typedExpressionIR~index~]`, under cursor `p`, evaluation context `EC`, and store `STO`>>.
-  ... Else if let `value^{asterisk}^` be `expressionListResult`:
+  ... Else let `value^{asterisk}^` be `expressionListResult`:
    .... Check that `value^{asterisk}^` is a list of length 2.
    .... Let `[value~base~, value~index~]` be `value^{asterisk}^`.
    .... Check that `value~base~` has type `tupleValue`.
@@ -7129,23 +7128,23 @@ relation Expr_eval: `p`, `EC`, `STO`, and <<typedExpressionIR, `expressionIR` an
    .... Let `expressionResult` be `value~elem~^{asterisk}^[n~index~]`.
    .... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
   ... Let `EC~1~`, `STO~1~`, and `expressionListResult` be the result of <<Exprs_eval, evaluating `[typedExpressionIR~base~, typedExpressionIR~index~]`, under cursor `p`, evaluation context `EC`, and store `STO`>>.
-  ... Else if let `value^{asterisk}^` be `expressionListResult`:
-   .... Check that `value^{asterisk}^` is a list of length 2.
-   .... Let `[value~base~, value~index~]` be `value^{asterisk}^`.
-   .... Check that `value~base~` has type `headerStackValue`.
-   .... Let `HEADER_STACK [ value~elem~^{asterisk}^ ( ++_++ ; ++_++ ) ]` be `value~base~`.
-   .... Let `int` be <<int_of_value, the integer representation of  `value~index~`>>.
-   .... Check that `int` has type `nat`.
-   .... Let `n~index~` be `int`.
-   .... Let `expressionResult` be `value~elem~^{asterisk}^[n~index~]`.
-   .... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
+  ... Check that `expressionListResult` has type `continueResult<value*>`.
+  ... Let `value^{asterisk}^` be `expressionListResult`.
+  ... Check that `value^{asterisk}^` is a list of length 2.
+  ... Let `[value~base~, value~index~]` be `value^{asterisk}^`.
+  ... Check that `value~base~` has type `headerStackValue`.
+  ... Let `HEADER_STACK [ value~elem~^{asterisk}^ ( ++_++ ; ++_++ ) ]` be `value~base~`.
+  ... Let `int` be <<int_of_value, the integer representation of  `value~index~`>>.
+  ... Check that `int` has type `nat`.
+  ... Let `n~index~` be `int`.
+  ... Let `expressionResult` be `value~elem~^{asterisk}^[n~index~]`.
+  ... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
 . Else if let `typedExpressionIR~base~ [ typedExpressionIR~hi~ : typedExpressionIR~lo~ ]` be `expressionIR`:
  .. Group sliceAccessExpressionIR:
   ... Let `EC~1~`, `STO~1~`, and `expressionListResult` be the result of <<Exprs_eval, evaluating `[typedExpressionIR~base~, typedExpressionIR~hi~, typedExpressionIR~lo~]`, under cursor `p`, evaluation context `EC`, and store `STO`>>.
-  ... Else if let `exitResult` be `expressionListResult`:
+  ... If let `exitResult` be `expressionListResult`:
    .... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `EXIT`.
-  ... Let `EC~1~`, `STO~1~`, and `expressionListResult` be the result of <<Exprs_eval, evaluating `[typedExpressionIR~base~, typedExpressionIR~hi~, typedExpressionIR~lo~]`, under cursor `p`, evaluation context `EC`, and store `STO`>>.
-  ... Else if let `value^{asterisk}^` be `expressionListResult`:
+  ... Else let `value^{asterisk}^` be `expressionListResult`:
    .... Check that `value^{asterisk}^` is a list of length 3.
    .... Let `[value~base~, value~hi~, value~lo~]` be `value^{asterisk}^`.
    .... Let `value''` be `<<bitacc_op, $bitacc_op(value~base~, value~hi~, value~lo~)>>`.
@@ -7557,10 +7556,9 @@ relation BlockElementStmt_eval: `EC~0~`, `STO~0~`, and `blockElementStatementIR`
 . If let `constantDeclarationIR` be `blockElementStatementIR`:
  .. Group constantDeclarationIR:
   ... Let <<Decl_eval, `LOCAL EC~0~ STO~0~ |- constantDeclarationIR : EC~1~ STO~1~ declarationResult`>>.
-  ... Else if let `exitResult` be `declarationResult`:
+  ... If let `exitResult` be `declarationResult`:
    .... Result in `EC~1~`, `STO~1~`, and `EXIT`.
-  ... Let <<Decl_eval, `LOCAL EC~0~ STO~0~ |- constantDeclarationIR : EC~1~ STO~1~ declarationResult`>>.
-  ... Else if let `continueEmptyResult` be `declarationResult`:
+  ... Else let `continueEmptyResult` be `declarationResult`:
    .... Result in `EC~1~`, `STO~1~`, and ``.
 . Else if let `annotationList typeIR nameIR initializerIR'^?^ ;` be `blockElementStatementIR`:
  .. Group variableDeclarationIR:
@@ -7647,9 +7645,8 @@ relation ParserStmt_eval: `EC~0~`, `STO~0~`, and `parserStatementIR`
 . Else if let `callStatementIR` be `parserStatementIR`:
  .. Group callStatementIR:
   ... Let `EC~1~`, `STO~1~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `callStatementIR`, under cursor `LOCAL`, evaluation context `EC~0~`, and store `STO~0~`>>.
-  ... Else if let `rejectTransitionResult` be `statementResult`:
+  ... If let `rejectTransitionResult` be `statementResult`:
    .... Result in `EC~1~`, `STO~1~`, and `rejectTransitionResult`.
-  ... Let `EC~1~`, `STO~1~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `callStatementIR`, under cursor `LOCAL`, evaluation context `EC~0~`, and store `STO~0~`>>.
   ... Else if let `continueEmptyResult` be `statementResult`:
    .... Result in `EC~1~`, `STO~1~`, and ``.
 . Else if let `parserConditionalStatementIR` be `parserStatementIR`:
@@ -8768,9 +8765,8 @@ relation V1Model_parser: `EC~0~` and `STO~0~`
  .. Let `typedExpressionIR~p~` be `<<V1Model_setup_parser_callee, $V1Model_setup_parser_callee(EC~0~, STO~0~, typedExpressionIR~main~)>>`.
  .. Let `callableTargetIR` be `typedExpressionIR~p~ . "apply"`.
  .. Let `EC~1~`, `STO~1~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `callableTargetIR < [ ] > ( argumentIR^{asterisk}^ ) ;`, under cursor `GLOBAL`, evaluation context `EC~0~`, and store `STO~0~`>>.
- .. Else if let `continueEmptyResult` be `statementResult`:
+ .. If let `continueEmptyResult` be `statementResult`:
   ... Result in `EC~1~`, `STO~1~`, and `ACCEPT`.
- .. Let `EC~1~`, `STO~1~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `callableTargetIR < [ ] > ( argumentIR^{asterisk}^ ) ;`, under cursor `GLOBAL`, evaluation context `EC~0~`, and store `STO~0~`>>.
  .. Else if let `rejectTransitionResult` be `statementResult`:
   ... Result in `EC~1~`, `STO~1~`, and `rejectTransitionResult`.
 
@@ -8803,9 +8799,8 @@ relation V1Model_ingress: `EC~0~` and `STO~0~`
  .. Let `typedExpressionIR~ig~` be `<<V1Model_setup_ingress_callee, $V1Model_setup_ingress_callee(EC~0~, STO~0~, typedExpressionIR~main~)>>`.
  .. Let `callableTargetIR` be `typedExpressionIR~ig~ . "apply"`.
  .. Let `EC~1~`, `STO~1~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `callableTargetIR < [ ] > ( argumentIR^{asterisk}^ ) ;`, under cursor `GLOBAL`, evaluation context `EC~0~`, and store `STO~0~`>>.
- .. Else if let `continueEmptyResult` be `statementResult`:
+ .. If let `continueEmptyResult` be `statementResult`:
   ... Result in `EC~1~`, `STO~1~`, and `RETURN None`.
- .. Let `EC~1~`, `STO~1~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `callableTargetIR < [ ] > ( argumentIR^{asterisk}^ ) ;`, under cursor `GLOBAL`, evaluation context `EC~0~`, and store `STO~0~`>>.
  .. Else if let `exitResult` be `statementResult`:
   ... Result in `EC~1~`, `STO~1~`, and `EXIT`.
 

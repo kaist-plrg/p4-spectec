@@ -28240,39 +28240,39 @@ relation Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
       1. (Exprs_eval: p EC STO |- [typedExpressionIR_base, typedExpressionIR_index] : EC_1 STO_1 expressionListResult)
 
-      2. If ((expressionListResult has type exitResult)), then
+      2. Case analysis on expressionListResult
 
-        1. (Let exitResult be (expressionListResult as exitResult))
+        1. Case (% has type exitResult)
 
-        2. Result in : % % % |- % : EC_1 STO_1 ((exit) as expressionResult)
+          1. (Let exitResult be (expressionListResult as exitResult))
+
+          2. Result in : % % % |- % : EC_1 STO_1 ((exit) as expressionResult)
+
+        2. Case (% has type continueResult<value*>)
+
+          1. (Let (` value*{value <- value*}) be (expressionListResult as continueResult<value*>))
+
+          2. If ((value*{value <- value*} matches pattern [ _/2 ])), then
+
+            1. (Let [value_base, value_index] be value*{value <- value*})
+
+            2. If ((value_base has type tupleValue)), then
+
+              1. (Let (tuple( value_elem*{value_elem <- value_elem*} )) be (value_base as tupleValue))
+
+              2. (Let int be $int_of_value(value_index))
+
+              3. If ((int has type nat)), then
+
+                1. (Let n_index be (int as nat))
+
+                2. (Let expressionResult be ((` value_elem*{value_elem <- value_elem*}[n_index]) as expressionResult))
+
+                3. Result in : % % % |- % : EC_1 STO_1 expressionResult
 
       3. (Exprs_eval: p EC STO |- [typedExpressionIR_base, typedExpressionIR_index] : EC_1 STO_1 expressionListResult)
 
       4. If ((expressionListResult has type continueResult<value*>)), then
-
-        1. (Let (` value*{value <- value*}) be (expressionListResult as continueResult<value*>))
-
-        2. If ((value*{value <- value*} matches pattern [ _/2 ])), then
-
-          1. (Let [value_base, value_index] be value*{value <- value*})
-
-          2. If ((value_base has type tupleValue)), then
-
-            1. (Let (tuple( value_elem*{value_elem <- value_elem*} )) be (value_base as tupleValue))
-
-            2. (Let int be $int_of_value(value_index))
-
-            3. If ((int has type nat)), then
-
-              1. (Let n_index be (int as nat))
-
-              2. (Let expressionResult be ((` value_elem*{value_elem <- value_elem*}[n_index]) as expressionResult))
-
-              3. Result in : % % % |- % : EC_1 STO_1 expressionResult
-
-      5. (Exprs_eval: p EC STO |- [typedExpressionIR_base, typedExpressionIR_index] : EC_1 STO_1 expressionListResult)
-
-      6. If ((expressionListResult has type continueResult<value*>)), then
 
         1. (Let (` value*{value <- value*}) be (expressionListResult as continueResult<value*>))
 
@@ -28302,25 +28302,25 @@ relation Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
       1. (Exprs_eval: p EC STO |- [typedExpressionIR_base, typedExpressionIR_hi, typedExpressionIR_lo] : EC_1 STO_1 expressionListResult)
 
-      2. If ((expressionListResult has type exitResult)), then
+      2. Case analysis on expressionListResult
 
-        1. (Let exitResult be (expressionListResult as exitResult))
+        1. Case (% has type exitResult)
 
-        2. Result in : % % % |- % : EC_1 STO_1 ((exit) as expressionResult)
+          1. (Let exitResult be (expressionListResult as exitResult))
 
-      3. (Exprs_eval: p EC STO |- [typedExpressionIR_base, typedExpressionIR_hi, typedExpressionIR_lo] : EC_1 STO_1 expressionListResult)
+          2. Result in : % % % |- % : EC_1 STO_1 ((exit) as expressionResult)
 
-      4. If ((expressionListResult has type continueResult<value*>)), then
+        2. Case (% has type continueResult<value*>)
 
-        1. (Let (` value*{value <- value*}) be (expressionListResult as continueResult<value*>))
+          1. (Let (` value*{value <- value*}) be (expressionListResult as continueResult<value*>))
 
-        2. If ((value*{value <- value*} matches pattern [ _/3 ])), then
+          2. If ((value*{value <- value*} matches pattern [ _/3 ])), then
 
-          1. (Let [value_base, value_hi, value_lo] be value*{value <- value*})
+            1. (Let [value_base, value_hi, value_lo] be value*{value <- value*})
 
-          2. (Let expressionResult be ((` $bitacc_op(value_base, value_hi, value_lo)) as expressionResult))
+            2. (Let expressionResult be ((` $bitacc_op(value_base, value_hi, value_lo)) as expressionResult))
 
-          3. Result in : % % % |- % : EC_1 STO_1 expressionResult
+            3. Result in : % % % |- % : EC_1 STO_1 expressionResult
 
   15. Case (% has type callExpressionIR)
 
@@ -29136,19 +29136,19 @@ relation BlockElementStmt_eval: EC_0 STO_0 |- blockElementStatementIR : % % %
 
       1. (Decl_eval: (local) EC_0 STO_0 |- (constantDeclarationIR as declarationIR) : EC_1 STO_1 declarationResult)
 
-      2. If ((declarationResult has type exitResult)), then
+      2. Case analysis on declarationResult
 
-        1. (Let exitResult be (declarationResult as exitResult))
+        1. Case (% has type exitResult)
 
-        2. Result in : % % |- % : EC_1 STO_1 ((exit) as statementResult)
+          1. (Let exitResult be (declarationResult as exitResult))
 
-      3. (Decl_eval: (local) EC_0 STO_0 |- (constantDeclarationIR as declarationIR) : EC_1 STO_1 declarationResult)
+          2. Result in : % % |- % : EC_1 STO_1 ((exit) as statementResult)
 
-      4. If ((declarationResult has type continueEmptyResult)), then
+        2. Case (% has type continueEmptyResult)
 
-        1. (Let continueEmptyResult be (declarationResult as continueEmptyResult))
+          1. (Let continueEmptyResult be (declarationResult as continueEmptyResult))
 
-        2. Result in : % % |- % : EC_1 STO_1 ((`) as statementResult)
+          2. Result in : % % |- % : EC_1 STO_1 ((`) as statementResult)
 
   2. Case (% has type variableDeclarationIR)
 
@@ -29340,19 +29340,19 @@ relation ParserStmt_eval: EC_0 STO_0 |- parserStatementIR : % % %
 
       1. (Stmt_eval: (local) EC_0 STO_0 |- (callStatementIR as statementIR) : EC_1 STO_1 statementResult)
 
-      2. If ((statementResult has type rejectTransitionResult)), then
+      2. Case analysis on statementResult
 
-        1. (Let rejectTransitionResult be (statementResult as rejectTransitionResult))
+        1. Case (% has type rejectTransitionResult)
 
-        2. Result in : % % |- % : EC_1 STO_1 (rejectTransitionResult as parserStatementResult)
+          1. (Let rejectTransitionResult be (statementResult as rejectTransitionResult))
 
-      3. (Stmt_eval: (local) EC_0 STO_0 |- (callStatementIR as statementIR) : EC_1 STO_1 statementResult)
+          2. Result in : % % |- % : EC_1 STO_1 (rejectTransitionResult as parserStatementResult)
 
-      4. If ((statementResult has type continueEmptyResult)), then
+        2. Case (% has type continueEmptyResult)
 
-        1. (Let continueEmptyResult be (statementResult as continueEmptyResult))
+          1. (Let continueEmptyResult be (statementResult as continueEmptyResult))
 
-        2. Result in : % % |- % : EC_1 STO_1 ((`) as parserStatementResult)
+          2. Result in : % % |- % : EC_1 STO_1 ((`) as parserStatementResult)
 
   6. Case (% has type parserConditionalStatementIR)
 
@@ -32173,19 +32173,19 @@ relation V1Model_parser: EC_0 STO_0 |- % % %
 
   9. (Stmt_eval: (global) EC_0 STO_0 |- ((callableTargetIR < [] >( argumentIR*{argumentIR <- argumentIR*} );) as statementIR) : EC_1 STO_1 statementResult)
 
-  10. If ((statementResult has type continueEmptyResult)), then
+  10. Case analysis on statementResult
 
-    1. (Let continueEmptyResult be (statementResult as continueEmptyResult))
+    1. Case (% has type continueEmptyResult)
 
-    2. Result in : % % |- EC_1 STO_1 ((accept) as transitionResult)
+      1. (Let continueEmptyResult be (statementResult as continueEmptyResult))
 
-  11. (Stmt_eval: (global) EC_0 STO_0 |- ((callableTargetIR < [] >( argumentIR*{argumentIR <- argumentIR*} );) as statementIR) : EC_1 STO_1 statementResult)
+      2. Result in : % % |- EC_1 STO_1 ((accept) as transitionResult)
 
-  12. If ((statementResult has type rejectTransitionResult)), then
+    2. Case (% has type rejectTransitionResult)
 
-    1. (Let rejectTransitionResult be (statementResult as rejectTransitionResult))
+      1. (Let rejectTransitionResult be (statementResult as rejectTransitionResult))
 
-    2. Result in : % % |- EC_1 STO_1 (rejectTransitionResult as transitionResult)
+      2. Result in : % % |- EC_1 STO_1 (rejectTransitionResult as transitionResult)
 
 ;; ../../../../spec-concrete/9.A-v1model.watsup:330.1-332.20
 relation V1Model_verify: EC_0 STO_0 |- % % %
@@ -32233,19 +32233,19 @@ relation V1Model_ingress: EC_0 STO_0 |- % % %
 
   8. (Stmt_eval: (global) EC_0 STO_0 |- ((callableTargetIR < [] >( argumentIR*{argumentIR <- argumentIR*} );) as statementIR) : EC_1 STO_1 statementResult)
 
-  9. If ((statementResult has type continueEmptyResult)), then
+  9. Case analysis on statementResult
 
-    1. (Let continueEmptyResult be (statementResult as continueEmptyResult))
+    1. Case (% has type continueEmptyResult)
 
-    2. Result in : % % |- EC_1 STO_1 ((return ?()) as callResult)
+      1. (Let continueEmptyResult be (statementResult as continueEmptyResult))
 
-  10. (Stmt_eval: (global) EC_0 STO_0 |- ((callableTargetIR < [] >( argumentIR*{argumentIR <- argumentIR*} );) as statementIR) : EC_1 STO_1 statementResult)
+      2. Result in : % % |- EC_1 STO_1 ((return ?()) as callResult)
 
-  11. If ((statementResult has type exitResult)), then
+    2. Case (% has type exitResult)
 
-    1. (Let exitResult be (statementResult as exitResult))
+      1. (Let exitResult be (statementResult as exitResult))
 
-    2. Result in : % % |- EC_1 STO_1 ((exit) as callResult)
+      2. Result in : % % |- EC_1 STO_1 ((exit) as callResult)
 
 ;; ../../../../spec-concrete/9.A-v1model.watsup:409.1-411.20
 relation V1Model_egress: EC_0 STO_0 |- % % %

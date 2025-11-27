@@ -471,15 +471,6 @@ let rec remove_redundant_bindings (ienv : IEnv.t) (instrs : instr list) :
 
 (* [5] Condition analysis and case analysis insertion *)
 
-let rec merge_block (instrs_a : instr list) (instrs_b : instr list) : instr list
-    =
-  match (instrs_a, instrs_b) with
-  | instr_a :: instrs_a, instr_b :: instrs_b when Ol.Eq.eq_instr instr_a instr_b
-    ->
-      let instrs = merge_block instrs_a instrs_b in
-      instr_a :: instrs
-  | _ -> instrs_a @ instrs_b
-
 (* Syntactic analysis of conditions
 
    Note that this is best-effort analysis,
@@ -702,7 +693,7 @@ let rec merge_identical_if (tdenv : TDEnv.t) (at : region)
   merge_identical_if' tdenv exp_cond_target iterexps_target [] instrs
   |> Option.map (fun (instrs_then, instrs_leftover) ->
          let instr =
-           let instrs_then = merge_block instrs_then_target instrs_then in
+           let instrs_then = Merge.merge_block instrs_then_target instrs_then in
            IfI (exp_cond_target, iterexps_target, instrs_then) $ at
          in
          instr :: instrs_leftover)
@@ -784,8 +775,10 @@ let rec merge_identical_hold (at : region) (id_target : id)
         && Sl.Eq.eq_exps exps exps_target
         && Sl.Eq.eq_iterexps iterexps iterexps_target
       then
-        let instrs_hold = merge_block instrs_hold_target instrs_hold in
-        let instrs_nothold = merge_block instrs_nothold_target instrs_nothold in
+        let instrs_hold = Merge.merge_block instrs_hold_target instrs_hold in
+        let instrs_nothold =
+          Merge.merge_block instrs_nothold_target instrs_nothold
+        in
         let instr_h =
           HoldI (id, notexp, iterexps, instrs_hold, instrs_nothold) $ at
         in
@@ -879,7 +872,7 @@ and merge_if_case' (tdenv : TDEnv.t) (exp : exp) (cases : case list)
       let overlap_guard = overlap_guard tdenv exp guard_target guard_h in
       match overlap_guard with
       | Identical ->
-          let instrs_h = merge_block instrs_then_target instrs_h in
+          let instrs_h = Merge.merge_block instrs_then_target instrs_h in
           let case_h = (guard_h, instrs_h) in
           Some (case_h :: cases_t)
       | Disjoint _ | Partition _ ->
@@ -924,7 +917,7 @@ and merge_case_if' (tdenv : TDEnv.t) (exp_target : exp)
       let overlap_guard = overlap_guard tdenv exp_target guard_target_h guard in
       match overlap_guard with
       | Identical ->
-          let instrs_target_h = merge_block instrs_target_h instrs in
+          let instrs_target_h = Merge.merge_block instrs_target_h instrs in
           let case_target_h = (guard_target_h, instrs_target_h) in
           Some (case_target_h :: cases_target_t)
       | Disjoint _ | Partition _ ->
