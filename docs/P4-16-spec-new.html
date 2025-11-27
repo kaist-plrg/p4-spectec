@@ -661,7 +661,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <h1>P4<sub>16</sub> Language Specification : The P4 Language Consortium</h1>
 <div class="details">
 <span id="revnumber">version v1.2.5,</span>
-<span id="revdate">2025-11-13</span>
+<span id="revdate">2025-11-11</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Contents</div>
@@ -6513,46 +6513,58 @@ listValue
 </ol>
 </div>
 <div class="paragraph">
-<p><code>typeIR'</code> can be nested in a list type</p>
+<p>table $nestable'_list:</p>
 </div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>primitiveTypeIR</code> be <code>typeIR'</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>If <code>primitiveTypeIR</code> matches pattern <code>BOOL</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if <code>primitiveTypeIR</code> matches pattern <code>ERROR</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if <code>primitiveTypeIR</code> matches pattern <code>MATCH_KIND</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else <code>primitiveTypeIR</code> matches pattern <code>STRING</code>: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>numberTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>nameTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>newTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>dataTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Otherwise: return <code>false</code>.</p>
-</li>
-</ol>
-</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">(<code>typeIR'</code>)</th>
+<th class="tableblock halign-left valign-top"><code>bool</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(BOOL)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(ERROR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(MATCH_KIND)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(STRING)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(numberTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(nameTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(newTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(dataTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(_)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="sect4">
 <h5 id="sec-sem-Type_wf-listTypeIR">8.3.1.3. Well-formedness</h5>
@@ -6671,68 +6683,78 @@ tupleValue
 </ol>
 </div>
 <div class="paragraph">
-<p><code>typeIR'</code> can be nested in a tuple type</p>
+<p>table $nestable'_tuple:</p>
 </div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>primitiveTypeIR</code> be <code>typeIR'</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>If <code>primitiveTypeIR</code> matches pattern <code>BOOL</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else <code>primitiveTypeIR</code> matches pattern <code>ERROR</code>: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>numberTypeIR</code> be <code>typeIR'</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>If let <code>BIT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>INT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>VARBIT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>nameTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>newTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>tupleTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>headerStackTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>structTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>headerTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>headerUnionTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>enumTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Otherwise: return <code>false</code>.</p>
-</li>
-</ol>
-</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">(<code>typeIR'</code>)</th>
+<th class="tableblock halign-left valign-top"><code>bool</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(BOOL)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(ERROR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(BIT &lt; _ &gt;)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(INT &lt; _ &gt;)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(VARBIT &lt; _ &gt;)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(nameTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(newTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(tupleTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(headerStackTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(structTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(headerTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(headerUnionTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(enumTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(_)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="sect4">
 <h5 id="sec-sem-Type_wf-tupleTypeIR">8.3.2.3. Well-formedness</h5>
@@ -6944,24 +6966,38 @@ rule Type_ok/headerStackType/specializedType:
 </ol>
 </div>
 <div class="paragraph">
-<p><code>typeIR'</code> can be nested in a header stack type</p>
+<p>table $nestable'_headerStack:</p>
 </div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>nameTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>headerTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>headerUnionTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Otherwise: return <code>false</code>.</p>
-</li>
-</ol>
-</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">(<code>typeIR'</code>)</th>
+<th class="tableblock halign-left valign-top"><code>bool</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(nameTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(headerTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(headerUnionTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(_)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="sect4">
 <h5 id="sec-sem-Type_wf-headerStackTypeIR">8.3.3.3. Well-formedness</h5>
@@ -7086,65 +7122,12 @@ be obtained from named types, as illustrated in <a href="#sec-def-namedType">Sec
 </ol>
 </div>
 <div class="paragraph">
-<p><code>typeIR'</code> can be nested in a struct type</p>
+<p><code>typeIR</code> can be nested in a struct type</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>If let <code>primitiveTypeIR</code> be <code>typeIR'</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>If <code>primitiveTypeIR</code> matches pattern <code>BOOL</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else <code>primitiveTypeIR</code> matches pattern <code>ERROR</code>: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>numberTypeIR</code> be <code>typeIR'</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>If let <code>INT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>BIT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>VARBIT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>nameTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>newTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>tupleTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>headerStackTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>structTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>headerTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>headerUnionTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>enumTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Otherwise: return <code>false</code>.</p>
+<p>Return <code><a href="#nestable'_tuple">$nestable'_tuple(typeIR)</a></code>.</p>
 </li>
 </ol>
 </div>
@@ -7386,79 +7369,58 @@ headers contained within <code>h1</code>, regardless of how deeply they are nest
 </ol>
 </div>
 <div class="paragraph">
-<p><code>typeIR'</code> can be used in a header type</p>
+<p>table $nestable'_header:</p>
 </div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>primitiveTypeIR</code> be <code>typeIR'</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Check that <code>primitiveTypeIR</code> matches pattern <code>BOOL</code>.</p>
-</li>
-<li>
-<p>Return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>numberTypeIR</code> be <code>typeIR'</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>If let <code>INT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>BIT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>VARBIT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>nameTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>newTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>enumTypeIR</code> be <code>typeIR'</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Check that <code>enumTypeIR</code> matches pattern <code>ENUM % &lt; % &gt; { % }</code>.</p>
-</li>
-<li>
-<p>Let <code>ENUM _ &lt; _ &gt; { _<sup>*</sup> }</code> be <code>enumTypeIR</code>.</p>
-</li>
-<li>
-<p>Return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else let <code>STRUCT _ { (typeIR<sub>field</sub> _ ;)<sup>*</sup> }</code> be <code>typeIR'</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Check that <a href="#nestable_struct_in_header"><code>typeIR<sub>field</sub></code> can be used in a struct nested in a header type</a>, for all <code>typeIR<sub>field</sub></code> in <code>typeIR<sub>field</sub><sup>*</sup></code>.</p>
-</li>
-<li>
-<p>Return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Otherwise: return <code>false</code>.</p>
-</li>
-</ol>
-</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">(<code>typeIR'</code>)</th>
+<th class="tableblock halign-left valign-top"><code>bool</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(BOOL)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(INT &lt; _ &gt;)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(BIT &lt; _ &gt;)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(VARBIT &lt; _ &gt;)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(nameTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(newTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(ENUM _ &lt; _ &gt; { _ })</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(STRUCT _ { typeIR<sub>field</sub> _ ; })</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#forall_">$forall_$nestable_struct_in_header(typeIR<sub>field</sub><sup>*</sup>)</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(_)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+</tbody>
+</table>
 <div class="paragraph">
 <p>A nested <code>struct</code> used as a field in a <code>header</code> must contain only <code>bit&lt;W&gt;</code>,
 <code>int&lt;W&gt;</code>, a serializable <code>enum</code>, or a <code>bool</code>.</p>
@@ -7477,76 +7439,54 @@ headers contained within <code>h1</code>, regardless of how deeply they are nest
 </ol>
 </div>
 <div class="paragraph">
-<p><code>typeIR'</code> can be used in a struct nested in a header type</p>
+<p>table $nestable'_struct_in_header:</p>
 </div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>primitiveTypeIR</code> be <code>typeIR'</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Check that <code>primitiveTypeIR</code> matches pattern <code>BOOL</code>.</p>
-</li>
-<li>
-<p>Return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>numberTypeIR</code> be <code>typeIR'</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>If let <code>INT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>BIT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>nameTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>newTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>enumTypeIR</code> be <code>typeIR'</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Check that <code>enumTypeIR</code> matches pattern <code>ENUM % &lt; % &gt; { % }</code>.</p>
-</li>
-<li>
-<p>Let <code>ENUM _ &lt; _ &gt; { _<sup>*</sup> }</code> be <code>enumTypeIR</code>.</p>
-</li>
-<li>
-<p>Return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else let <code>STRUCT _ { (typeIR<sub>field</sub> _ ;)<sup>*</sup> }</code> be <code>typeIR'</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Check that <a href="#nestable_struct_in_header"><code>typeIR<sub>field</sub></code> can be used in a struct nested in a header type</a>, for all <code>typeIR<sub>field</sub></code> in <code>typeIR<sub>field</sub><sup>*</sup></code>.</p>
-</li>
-<li>
-<p>Return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Otherwise: return <code>false</code>.</p>
-</li>
-</ol>
-</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">(<code>typeIR'</code>)</th>
+<th class="tableblock halign-left valign-top"><code>bool</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(BOOL)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(INT &lt; _ &gt;)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(BIT &lt; _ &gt;)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(nameTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(newTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(ENUM _ &lt; _ &gt; { _ })</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(STRUCT _ { typeIR<sub>field</sub> _ ; })</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#forall_">$forall_$nestable_struct_in_header(typeIR<sub>field</sub><sup>*</sup>)</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(_)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="sect4">
 <h5 id="sec-sem-Type_wf-headerTypeIR">8.3.5.3. Well-formedness</h5>
@@ -7675,24 +7615,38 @@ types can be obtained from named types, as illustrated in
 </ol>
 </div>
 <div class="paragraph">
-<p><code>typeIR'</code> can be used in a header union type</p>
+<p>table $nestable'_headerUnion:</p>
 </div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>nameTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>newTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>headerTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Otherwise: return <code>false</code>.</p>
-</li>
-</ol>
-</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">(<code>typeIR'</code>)</th>
+<th class="tableblock halign-left valign-top"><code>bool</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(nameTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(newTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(headerTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(_)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="sect4">
 <h5 id="sec-sem-Type_wf-headerUnionTypeIR">8.3.6.3. Well-formedness</h5>
@@ -7896,41 +7850,42 @@ one of the types listed above, or another <code>typedef</code> name that meets t
 </ol>
 </div>
 <div class="paragraph">
-<p><code>typeIR''</code> can be used in a serializable enum type</p>
+<p>table $nestable'_enum_serializable:</p>
 </div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>numberTypeIR</code> be <code>typeIR''</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>If let <code>INT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>BIT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>nameTypeIR</code> be <code>typeIR''</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>TYPE _ typeIR</code> be <code>typeIR''</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Return <code><a href="#nestable_new_in_enum_serializable">$nestable_new_in_enum_serializable(typeIR)</a></code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Otherwise: return <code>false</code>.</p>
-</li>
-</ol>
-</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">(<code>typeIR''</code>)</th>
+<th class="tableblock halign-left valign-top"><code>bool</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(INT &lt; _ &gt;)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(BIT &lt; _ &gt;)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(nameTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(TYPE _ typeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#nestable_new_in_enum_serializable">$nestable_new_in_enum_serializable(typeIR)</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(_)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="sect5">
 <h6 id="sec-sem-Type_wf-enumTypeIR">8.3.7.1.3. Well-formedness</h6>
@@ -8540,43 +8495,54 @@ be obtained from named types, as illustrated in <a href="#sec-def-namedType">Sec
 </ol>
 </div>
 <div class="paragraph">
-<p><code>typeIR'</code> can be used in a typedef</p>
+<p>table $nestable'_typedef:</p>
 </div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>primitiveTypeIR</code> be <code>typeIR'</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>If <code>primitiveTypeIR</code> matches pattern <code>BOOL</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if <code>primitiveTypeIR</code> matches pattern <code>ERROR</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else <code>primitiveTypeIR</code> matches pattern <code>STRING</code>: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>numberTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>nameTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>newTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>dataTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Otherwise: return <code>false</code>.</p>
-</li>
-</ol>
-</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">(<code>typeIR'</code>)</th>
+<th class="tableblock halign-left valign-top"><code>bool</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(BOOL)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(ERROR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(STRING)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(numberTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(nameTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(newTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(dataTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(_)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="sect4">
 <h5 id="sec-sem-Type_wf-typedefTypeIR">8.5.1.3. Well-formedness</h5>
@@ -8699,47 +8665,46 @@ be obtained from named types, as illustrated in <a href="#sec-def-namedType">Sec
 </ol>
 </div>
 <div class="paragraph">
-<p><code>typeIR'</code> can be used in a new type</p>
+<p>table $nestable'_new:</p>
 </div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>primitiveTypeIR</code> be <code>typeIR'</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Check that <code>primitiveTypeIR</code> matches pattern <code>BOOL</code>.</p>
-</li>
-<li>
-<p>Return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>numberTypeIR</code> be <code>typeIR'</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>If let <code>BIT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>INT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>nameTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>newTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Otherwise: return <code>false</code>.</p>
-</li>
-</ol>
-</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">(<code>typeIR'</code>)</th>
+<th class="tableblock halign-left valign-top"><code>bool</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(BOOL)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(BIT &lt; _ &gt;)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(INT &lt; _ &gt;)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(nameTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(newTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(_)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="sect4">
 <h5 id="sec-sem-Type_wf-newTypeIR">8.5.2.3. Well-formedness</h5>
@@ -9284,82 +9249,62 @@ by the compiler internally and used for type-checking.</p>
 </ol>
 </div>
 <div class="paragraph">
-<p><code>typeIR''</code> can be used in a set type</p>
+<p>table $nestable'_set:</p>
 </div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>primitiveTypeIR</code> be <code>typeIR''</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>If <code>primitiveTypeIR</code> matches pattern <code>BOOL</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else <code>primitiveTypeIR</code> matches pattern <code>ERROR</code>: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>numberTypeIR</code> be <code>typeIR''</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>If let <code>INT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>BIT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>nameTypeIR</code> be <code>typeIR''</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>newTypeIR</code> be <code>typeIR''</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>TUPLE &lt; typeIR<sup>*</sup> &gt;</code> be <code>typeIR''</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Check that <a href="#nestable_tuple_in_set"><code>typeIR</code> can be used in a tuple nested in a set type</a>, for all <code>typeIR</code> in <code>typeIR<sup>*</sup></code>.</p>
-</li>
-<li>
-<p>Return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>enumTypeIR</code> be <code>typeIR''</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>sequenceTypeIR</code> be <code>typeIR''</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Check that <code>sequenceTypeIR</code> matches pattern <code>SEQ &lt; % &gt;</code>.</p>
-</li>
-<li>
-<p>Let <code>SEQ &lt; typeIR<sup>*</sup> &gt;</code> be <code>sequenceTypeIR</code>.</p>
-</li>
-<li>
-<p>Check that <a href="#nestable_sequence_in_set"><code>typeIR</code> can be used in a sequence nested in a set type</a>, for all <code>typeIR</code> in <code>typeIR<sup>*</sup></code>.</p>
-</li>
-<li>
-<p>Return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Otherwise: return <code>false</code>.</p>
-</li>
-</ol>
-</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">(<code>typeIR''</code>)</th>
+<th class="tableblock halign-left valign-top"><code>bool</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(BOOL)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(ERROR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(INT &lt; _ &gt;)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(BIT &lt; _ &gt;)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(nameTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(newTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(TUPLE &lt; typeIR &gt;)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#forall_">$forall_$nestable_tuple_in_set(typeIR<sup>*</sup>)</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(enumTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(SEQ &lt; typeIR &gt;)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#forall_">$forall_$nestable_sequence_in_set(typeIR<sup>*</sup>)</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(_)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+</tbody>
+</table>
 <div class="paragraph">
 <p><code>typeIR</code> can be used in a tuple nested in a set type</p>
 </div>
@@ -9374,63 +9319,54 @@ by the compiler internally and used for type-checking.</p>
 </ol>
 </div>
 <div class="paragraph">
-<p><code>typeIR''</code> can be used in a tuple nested in a set type</p>
+<p>table $nestable'_tuple_in_set:</p>
 </div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>primitiveTypeIR</code> be <code>typeIR''</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Check that <code>primitiveTypeIR</code> matches pattern <code>BOOL</code>.</p>
-</li>
-<li>
-<p>Return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>numberTypeIR</code> be <code>typeIR''</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>If let <code>INT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>BIT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>nameTypeIR</code> be <code>typeIR''</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>newTypeIR</code> be <code>typeIR''</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>TUPLE &lt; typeIR<sup>*</sup> &gt;</code> be <code>typeIR''</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Check that <a href="#nestable_tuple_in_set"><code>typeIR</code> can be used in a tuple nested in a set type</a>, for all <code>typeIR</code> in <code>typeIR<sup>*</sup></code>.</p>
-</li>
-<li>
-<p>Return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else let <code>enumTypeIR</code> be <code>typeIR''</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Otherwise: return <code>false</code>.</p>
-</li>
-</ol>
-</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">(<code>typeIR''</code>)</th>
+<th class="tableblock halign-left valign-top"><code>bool</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(BOOL)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(INT &lt; _ &gt;)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(BIT &lt; _ &gt;)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(nameTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(newTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(TUPLE &lt; typeIR &gt;)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#forall_">$forall_$nestable_tuple_in_set(typeIR<sup>*</sup>)</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(enumTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(_)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+</tbody>
+</table>
 <div class="paragraph">
 <p><code>typeIR</code> can be used in a sequence nested in a set type</p>
 </div>
@@ -9445,82 +9381,58 @@ by the compiler internally and used for type-checking.</p>
 </ol>
 </div>
 <div class="paragraph">
-<p><code>typeIR''</code> can be used in a sequence nested in a set type</p>
+<p>table $nestable'_sequence_in_set:</p>
 </div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>primitiveTypeIR</code> be <code>typeIR''</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Check that <code>primitiveTypeIR</code> matches pattern <code>BOOL</code>.</p>
-</li>
-<li>
-<p>Return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>numberTypeIR</code> be <code>typeIR''</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>If let <code>INT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>BIT &lt; _ &gt;</code> be <code>numberTypeIR</code>: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>nameTypeIR</code> be <code>typeIR''</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>newTypeIR</code> be <code>typeIR''</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>TUPLE &lt; typeIR<sup>*</sup> &gt;</code> be <code>typeIR''</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Check that <a href="#nestable_sequence_in_set"><code>typeIR</code> can be used in a sequence nested in a set type</a>, for all <code>typeIR</code> in <code>typeIR<sup>*</sup></code>.</p>
-</li>
-<li>
-<p>Return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>enumTypeIR</code> be <code>typeIR''</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>sequenceTypeIR</code> be <code>typeIR''</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Check that <code>sequenceTypeIR</code> matches pattern <code>SEQ &lt; % &gt;</code>.</p>
-</li>
-<li>
-<p>Let <code>SEQ &lt; typeIR<sup>*</sup> &gt;</code> be <code>sequenceTypeIR</code>.</p>
-</li>
-<li>
-<p>Check that <a href="#nestable_sequence_in_set"><code>typeIR</code> can be used in a sequence nested in a set type</a>, for all <code>typeIR</code> in <code>typeIR<sup>*</sup></code>.</p>
-</li>
-<li>
-<p>Return <code>true</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Otherwise: return <code>false</code>.</p>
-</li>
-</ol>
-</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">(<code>typeIR''</code>)</th>
+<th class="tableblock halign-left valign-top"><code>bool</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(BOOL)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(INT &lt; _ &gt;)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(BIT &lt; _ &gt;)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(nameTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(newTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(TUPLE &lt; typeIR &gt;)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#forall_">$forall_$nestable_sequence_in_set(typeIR<sup>*</sup>)</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(enumTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(SEQ &lt; typeIR &gt;)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#forall_">$forall_$nestable_sequence_in_set(typeIR<sup>*</sup>)</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(_)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="sect4">
 <h5 id="sec-sem-Type_wf-setTypeIR">8.6.5.2. Well-formnedness</h5>
@@ -10172,34 +10084,38 @@ represented as follows:</p>
 </ol>
 </div>
 <div class="paragraph">
-<p><code>typeIR'</code> can be used in an action type</p>
+<p>table $nestable'_action:</p>
 </div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>numberTypeIR</code> be <code>typeIR'</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Check that <code>numberTypeIR</code> matches pattern <code>INT</code>.</p>
-</li>
-<li>
-<p>Return <code>false</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>objectTypeIR</code> be <code>typeIR'</code>: return <code>false</code>.</p>
-</li>
-<li>
-<p>Else let <code>synthesizedTypeIR</code> be <code>typeIR'</code>: return <code>false</code>.</p>
-</li>
-<li>
-<p>Otherwise: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">(<code>typeIR'</code>)</th>
+<th class="tableblock halign-left valign-top"><code>bool</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(INT)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(objectTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(synthesizedTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(_)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="sect3">
 <h4 id="sec-sem-CallableType_wf-actionTypeIR">9.2.2. Well-formedness</h4>
@@ -10351,21 +10267,34 @@ defined function types are represented as follows:</p>
 </ol>
 </div>
 <div class="paragraph">
-<p><code>typeIR'</code> can be used in a defined function type</p>
+<p>table $nestable'_definedFunction:</p>
 </div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>objectTypeIR</code> be <code>typeIR'</code>: return <code>false</code>.</p>
-</li>
-<li>
-<p>Else let <code>synthesizedTypeIR</code> be <code>typeIR'</code>: return <code>false</code>.</p>
-</li>
-<li>
-<p>Otherwise: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">(<code>typeIR'</code>)</th>
+<th class="tableblock halign-left valign-top"><code>bool</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(objectTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(synthesizedTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(_)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="sect4">
 <h5 id="sec-sem-CallableType_wf-definedFunctionTypeIR">9.3.1.2. Well-formedness</h5>
@@ -10479,27 +10408,42 @@ extern function types are represented as follows:</p>
 </ol>
 </div>
 <div class="paragraph">
-<p><code>typeIR'</code> can be used in an extern function type</p>
+<p>table $nestable'_externFunction:</p>
 </div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>parserObjectTypeIR</code> be <code>typeIR'</code>: return <code>false</code>.</p>
-</li>
-<li>
-<p>Else if let <code>controlObjectTypeIR</code> be <code>typeIR'</code>: return <code>false</code>.</p>
-</li>
-<li>
-<p>Else if let <code>packageObjectTypeIR</code> be <code>typeIR'</code>: return <code>false</code>.</p>
-</li>
-<li>
-<p>Else let <code>tableObjectTypeIR</code> be <code>typeIR'</code>: return <code>false</code>.</p>
-</li>
-<li>
-<p>Otherwise: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">(<code>typeIR'</code>)</th>
+<th class="tableblock halign-left valign-top"><code>bool</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(parserObjectTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(controlObjectTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(packageObjectTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(tableObjectTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(_)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="sect4">
 <h5 id="sec-sem-CallableType_wf-externFunctionTypeIR">9.3.2.2. Well-formedness</h5>
@@ -10644,27 +10588,42 @@ of all the <code>abstract</code> methods (see <a href="#sec-instantiating-abstra
 </ol>
 </div>
 <div class="paragraph">
-<p><code>typeIR'</code> can be used in an extern method type</p>
+<p>table $nestable'_externMethod:</p>
 </div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>parserObjectTypeIR</code> be <code>typeIR'</code>: return <code>false</code>.</p>
-</li>
-<li>
-<p>Else if let <code>controlObjectTypeIR</code> be <code>typeIR'</code>: return <code>false</code>.</p>
-</li>
-<li>
-<p>Else if let <code>packageObjectTypeIR</code> be <code>typeIR'</code>: return <code>false</code>.</p>
-</li>
-<li>
-<p>Else let <code>tableObjectTypeIR</code> be <code>typeIR'</code>: return <code>false</code>.</p>
-</li>
-<li>
-<p>Otherwise: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">(<code>typeIR'</code>)</th>
+<th class="tableblock halign-left valign-top"><code>bool</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(parserObjectTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(controlObjectTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(packageObjectTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(tableObjectTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(_)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="sect5">
 <h6 id="sec-sem-CallableType_wf-externMethodTypeIR">9.4.1.2. Well-formedness</h6>
@@ -10831,27 +10790,42 @@ parserApplyMethodDef
 </ol>
 </div>
 <div class="paragraph">
-<p><code>typeIR'</code> can be used in a parser apply method type</p>
+<p>table $nestable'_parserApplyMethod:</p>
 </div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>parserObjectTypeIR</code> be <code>typeIR'</code>: return <code>false</code>.</p>
-</li>
-<li>
-<p>Else if let <code>controlObjectTypeIR</code> be <code>typeIR'</code>: return <code>false</code>.</p>
-</li>
-<li>
-<p>Else if let <code>packageObjectTypeIR</code> be <code>typeIR'</code>: return <code>false</code>.</p>
-</li>
-<li>
-<p>Else let <code>tableObjectTypeIR</code> be <code>typeIR'</code>: return <code>false</code>.</p>
-</li>
-<li>
-<p>Otherwise: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">(<code>typeIR'</code>)</th>
+<th class="tableblock halign-left valign-top"><code>bool</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(parserObjectTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(controlObjectTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(packageObjectTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(tableObjectTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(_)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="sect4">
 <h5 id="sec-sem-CallableType_wf-parserApplyMethodTypeIR">9.4.2.2. Well-formedness</h5>
@@ -10963,24 +10937,38 @@ controlApplyMethodDef
 </ol>
 </div>
 <div class="paragraph">
-<p><code>typeIR'</code> can be used in a control apply method type</p>
+<p>table $nestable'_controlApplyMethod:</p>
 </div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>parserObjectTypeIR</code> be <code>typeIR'</code>: return <code>false</code>.</p>
-</li>
-<li>
-<p>Else if let <code>packageObjectTypeIR</code> be <code>typeIR'</code>: return <code>false</code>.</p>
-</li>
-<li>
-<p>Else let <code>tableObjectTypeIR</code> be <code>typeIR'</code>: return <code>false</code>.</p>
-</li>
-<li>
-<p>Otherwise: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">(<code>typeIR'</code>)</th>
+<th class="tableblock halign-left valign-top"><code>bool</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(parserObjectTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(packageObjectTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(tableObjectTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(_)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="sect4">
 <h5 id="sec-sem-CallableType_wf-controlApplyMethodTypeIR">9.4.3.2. Well-formedness</h5>
@@ -11371,27 +11359,42 @@ constructorTypeDefIR
 </ol>
 </div>
 <div class="paragraph">
-<p><code>$definable'_constructor(typeIR')</code></p>
+<p>table $definable'_constructor:</p>
 </div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>externObjectTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>parserObjectTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else if let <code>controlObjectTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Else let <code>packageObjectTypeIR</code> be <code>typeIR'</code>: return <code>true</code>.</p>
-</li>
-<li>
-<p>Otherwise: return <code>false</code>.</p>
-</li>
-</ol>
-</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">(<code>typeIR'</code>)</th>
+<th class="tableblock halign-left valign-top"><code>bool</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(externObjectTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(parserObjectTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(controlObjectTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(packageObjectTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(_)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+</tbody>
+</table>
 <div class="sect3">
 <h4 id="sec-sem-ConstructorTypeDef_wf">10.2.1. Well-formedness</h4>
 <details>
@@ -11499,27 +11502,42 @@ constructors.</p>
 </ol>
 </div>
 <div class="paragraph">
-<p><code>$nestable'_constructor_extern(typeIR')</code></p>
+<p>table $nestable'_constructor_extern:</p>
 </div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>parserObjectTypeIR</code> be <code>typeIR'</code>: return <code>false</code>.</p>
-</li>
-<li>
-<p>Else if let <code>controlObjectTypeIR</code> be <code>typeIR'</code>: return <code>false</code>.</p>
-</li>
-<li>
-<p>Else if let <code>packageObjectTypeIR</code> be <code>typeIR'</code>: return <code>false</code>.</p>
-</li>
-<li>
-<p>Else let <code>tableObjectTypeIR</code> be <code>typeIR'</code>: return <code>false</code>.</p>
-</li>
-<li>
-<p>Otherwise: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">(<code>typeIR'</code>)</th>
+<th class="tableblock halign-left valign-top"><code>bool</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(parserObjectTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(controlObjectTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(packageObjectTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(tableObjectTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(_)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="sect3">
 <h4 id="sec-sem-ConstructorType_wf-externObjectTypeIR">10.3.2. Well-formedness</h4>
@@ -11696,24 +11714,38 @@ rule is explained in <a href="#sec-sem-Decl_ok-parserDeclaration">Section 11.8.1
 </ol>
 </div>
 <div class="paragraph">
-<p><code>$nestable'_constructor_parser(typeIR')</code></p>
+<p>table $nestable'_constructor_parser:</p>
 </div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>controlObjectTypeIR</code> be <code>typeIR'</code>: return <code>false</code>.</p>
-</li>
-<li>
-<p>Else if let <code>packageObjectTypeIR</code> be <code>typeIR'</code>: return <code>false</code>.</p>
-</li>
-<li>
-<p>Else let <code>tableObjectTypeIR</code> be <code>typeIR'</code>: return <code>false</code>.</p>
-</li>
-<li>
-<p>Otherwise: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">(<code>typeIR'</code>)</th>
+<th class="tableblock halign-left valign-top"><code>bool</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(controlObjectTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(packageObjectTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(tableObjectTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(_)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="sect3">
 <h4 id="sec-sem-ConstructorType_wf-parserObjectTypeIR">10.4.2. Well-formedness</h4>
@@ -11884,24 +11916,38 @@ rule is explained in <a href="#sec-sem-Decl_ok-controlDeclaration">Section 11.9.
 </ol>
 </div>
 <div class="paragraph">
-<p><code>$nestable'_constructor_control(typeIR')</code></p>
+<p>table $nestable'_constructor_control:</p>
 </div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>parserObjectTypeIR</code> be <code>typeIR'</code>: return <code>false</code>.</p>
-</li>
-<li>
-<p>Else if let <code>packageObjectTypeIR</code> be <code>typeIR'</code>: return <code>false</code>.</p>
-</li>
-<li>
-<p>Else let <code>tableObjectTypeIR</code> be <code>typeIR'</code>: return <code>false</code>.</p>
-</li>
-<li>
-<p>Otherwise: return <code>true</code>.</p>
-</li>
-</ol>
-</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">(<code>typeIR'</code>)</th>
+<th class="tableblock halign-left valign-top"><code>bool</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(parserObjectTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(packageObjectTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(tableObjectTypeIR)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(_)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="sect3">
 <h4 id="sec-sem-ConstructorType_wf-controlObjectTypeIR">10.5.2. Well-formedness</h4>
@@ -28519,7 +28565,7 @@ in parsers and deparsers to access packet data.</p>
 <div id="footer">
 <div id="footer-text">
 Version v1.2.5<br>
-Last updated 2025-11-13 16:32:53 +0900
+Last updated 2025-11-11 11:31:59 +0900
 </div>
 </div>
 </body>
