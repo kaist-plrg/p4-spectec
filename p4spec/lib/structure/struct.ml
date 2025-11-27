@@ -117,7 +117,8 @@ let rec struct_def (ienv : IEnv.t) (tdenv : TDEnv.t) (def : def) : Sl.Ast.def =
       struct_extern_dec_def at id tparams params typ hints
   | BuiltinDecD (id, tparams, params, typ, hints) ->
       struct_builtin_dec_def at id tparams params typ hints
-  | TableDecD _ -> failwith "TODO: struct_table_dec_def"
+  | TableDecD (id, _params, typ, tblrows, hints) ->
+      struct_table_dec_def ienv tdenv at id tblrows typ hints
   | DecD (id, tparams, _params, typ, clauses, hints) ->
       struct_defined_dec_def ienv tdenv at id tparams typ clauses hints
 
@@ -235,6 +236,34 @@ and struct_builtin_dec_def (at : region) (id_dec : id) (tparams : tparam list)
   in
   let builtinfunc = (id_dec, tparams, args_input, typ, hints) in
   Sl.Ast.BuiltinDecD builtinfunc $ at
+
+and struct_tablerow_path tblrow_path : Ol.Ast.instr list =
+  let prems_path, exp_res = tblrow_path in
+  let at = exp_res.at in
+  let instr_ret = Ol.Ast.ResultI [ exp_res ] $ at in
+  struct_prems prems_path instr_ret
+
+and struct_table_dec_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region)
+    (id_dec : id) (tblrows : tblrow list) (typ : typ) (hints : hint list) :
+    Sl.Ast.def =
+  let tblsigs, tblrow_bodies =
+    List.map
+      (fun tblrow ->
+        let tblsig, args, exp_res, prems = tblrow.it in
+        (tblsig, (args, exp_res, prems) $ tblrow.at))
+      tblrows
+    |> List.split
+  in
+  let args_input, paths = Antiunify.antiunify_tablerows tblrow_bodies in
+  let instrs_rows =
+    List.map struct_tablerow_path paths
+    |> List.map (Optimize.optimize ienv tdenv)
+    |> List.map (Instrument.instrument tdenv)
+  in
+  let tablefunc =
+    (id_dec, args_input, typ, List.combine tblsigs instrs_rows, hints)
+  in
+  Sl.Ast.TableDecD tablefunc $ at
 
 and struct_defined_dec_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region)
     (id_dec : id) (tparams : tparam list) (typ : typ) (clauses : clause list)

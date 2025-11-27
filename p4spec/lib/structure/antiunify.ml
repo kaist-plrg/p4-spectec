@@ -274,3 +274,6 @@ let antiunify_clauses (clauses : clause list) :
   in
   let paths = List.combine prems_group exp_output_group in
   (args_input_template, paths)
+
+let antiunify_tablerows tblrow_bodies : arg list * (prem list * exp) list =
+  antiunify_clauses tblrow_bodies

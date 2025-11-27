@@ -454,6 +454,7 @@ let prosify_def (ctx : Ctx.t) (def : def) : Pl.Ast.def option =
       let exps = prosify_exps ctx exps in
       Some (Pl.Ast.RelD (id, exps, instrs) $ def.at)
   | ExternDecD _ | BuiltinDecD _ | DecD _ -> None
+  | TableDecD _ -> failwith "unimplemented"
 (* let instrs = prosify_instrs ctx instrs in *)
 (* Some (Pl.Ast.DecD (id, tparams, args, instrs) $ def.at) *)
 

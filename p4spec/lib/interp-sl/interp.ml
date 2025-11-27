@@ -1558,6 +1558,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | BuiltinDecD (id, _, _, _, _) ->
         let func = Func.Builtin in
         Ctx.add_func Global ctx id func
+    | TableDecD _ -> failwith "(TODO) load table definition"
     | DecD (id, tparams, args_input, _typ, instrs, _) ->
         let func = Func.Defined (tparams, args_input, instrs) in
         Ctx.add_func Global ctx id func

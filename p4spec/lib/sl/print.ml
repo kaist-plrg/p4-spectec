@@ -380,6 +380,11 @@ let string_of_builtin_func builtinfunc =
   let defid, tparams, args_input, _typ, _hints = builtinfunc in
   string_of_defid defid ^ string_of_tparams tparams ^ string_of_args args_input
 
+let string_of_tablerow (tablerow : tablerow) =
+  let tablesig, instrs = tablerow in
+  Format.asprintf "\n  Row %s:\n\n%s" (string_of_args tablesig)
+    (string_of_instrs ~level:2 instrs)
+
 let string_of_func ?(verbose = false) func =
   let defid, tparams, args_input, _typ, instrs, _hints = func in
   string_of_defid defid ^ string_of_tparams tparams ^ string_of_args args_input
@@ -401,6 +406,10 @@ let rec string_of_def ?(verbose = false) def =
   | ExternDecD externfunc -> "extern def " ^ string_of_extern_func externfunc
   | BuiltinDecD builtinfunc ->
       "builtin def " ^ string_of_builtin_func builtinfunc
+  | TableDecD (defid, args_input, _typ, tablerows, _hints) ->
+      "table def " ^ string_of_defid defid ^ string_of_args args_input ^ " =\n"
+      ^ String.concat "\n"
+          (List.map (fun clause -> string_of_tablerow clause) tablerows)
   | DecD func -> "def " ^ string_of_func ~verbose func
 
 and string_of_defs ?(verbose = false) defs =

@@ -185,6 +185,14 @@ type externfunc = id * tparam list * arg list * typ * hint list
 type builtinfunc = id * tparam list * arg list * typ * hint list
 [@@deriving yojson]
 
+(* exp* -> instr* *)
+type tablerow = arg list * instr list
+[@@deriving yojson]
+
+(* id list(arg, `,`) `:` instr* hint* *)
+type tablefunc = id * arg list * typ * tablerow list * hint list
+[@@deriving yojson]
+
 (* id `<` list(tparam, `,`) `>` list(param, `,`) `:` instr* hint* *)
 type func = id * tparam list * arg list * typ * instr list * hint list
 [@@deriving yojson]
@@ -205,6 +213,8 @@ and def' =
   | ExternDecD of externfunc
   (* `builtin` `dec` builtinfunc *)
   | BuiltinDecD of builtinfunc
+  (* `tbl` `dec` tablefunc *)
+  | TableDecD of tablefunc
   (* `dec` func *)
   | DecD of func
 [@@deriving yojson]
