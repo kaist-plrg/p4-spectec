@@ -1,5 +1,4 @@
 open Sl.Ast
-open Error
 open Util.Source
 
 (* Initializer *)
@@ -66,7 +65,7 @@ let funcs =
 let invoke (ctx : Ctx.t) (id : id) (targs : targ list) (args : value list) :
     value =
   let func = Funcs.find_opt id.it funcs in
-  check (Option.is_some func) id.at
+  Backtrace.check (Option.is_some func) id.at
     (Format.asprintf "implementation for builtin %s is missing" id.it);
   let func = Option.get func in
   func ctx id.at targs args
