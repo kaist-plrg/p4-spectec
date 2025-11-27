@@ -1,5 +1,4 @@
 open Source
-open Print
 
 (* Backtracking *)
 
@@ -37,48 +36,58 @@ let nest at note msg attempt =
 
 (* Error with backfailtraces *)
 
-let rec string_of_failtrace ?(level = 0) ~(limit : int) ~(bullet : string)
-    (failtrace : 'note failtrace) : string =
-  let (Failtrace (region, msg, _note, subfailtraces)) = failtrace in
-  let smsg =
+let rec string_of_failtrace ?(indent = "") ?(level = 0) ~(last : bool)
+    ~(limit : int) ~(bullet : string) (failtrace : 'note failtrace) : string =
+  let (Failtrace (region, msg, _note, failtraces_sub)) = failtrace in
+  let root = level = limit in
+  let sfailtrace =
     if level < limit then ""
     else
-      Format.asprintf "%s%s because %s (%s)\n"
-        (indent (level - limit))
-        bullet msg (string_of_region region)
+      let prefix = if root then "" else if last then "└── " else "├── " in
+      let indent_prefix = if root then "" else String.make 4 ' ' in
+      Format.asprintf "%s%s%s%s%s\n" indent prefix
+        (if region = no_region then ""
+         else string_of_region region ^ "\n" ^ indent ^ indent_prefix)
+        bullet msg
   in
-  Format.asprintf "%s%s" smsg
-    (string_of_failtraces ~level:(level + 1) ~limit subfailtraces)
+  let indent =
+    if level < limit then indent
+    else if root then indent
+    else if last then indent ^ "    "
+    else indent ^ "│   "
+  in
+  Format.asprintf "%s%s" sfailtrace
+    (string_of_failtraces ~indent ~level:(level + 1) ~limit failtraces_sub)
 
-and string_of_failtraces ?(level = 0) ~(limit : int) (failtraces : 'note failtrace list) :
-    string =
+and string_of_failtraces ?(indent = "") ?(level = 0) ~(limit : int)
+    (failtraces : 'note failtrace list) : string =
   match failtraces with
   | [] -> ""
-  | [ failtrace ] -> string_of_failtrace ~level ~limit ~bullet:"-" failtrace
+  | [ failtrace ] ->
+      string_of_failtrace ~indent ~level ~last:true ~limit ~bullet:"" failtrace
   | failtraces ->
       List.mapi
         (fun idx failtrace ->
-          string_of_failtrace ~level ~limit
-            ~bullet:(string_of_int (idx + 1) ^ ".")
-            failtrace)
+          let last = idx = List.length failtraces - 1 in
+          let bullet = string_of_int (idx + 1) ^ ". " in
+          string_of_failtrace ~indent ~level ~last ~limit ~bullet failtrace)
         failtraces
       |> String.concat ""
 
-and string_of_failtraces_short (failtraces : 'note failtrace list) :
-    string =
+and string_of_failtraces_short (failtraces : 'note failtrace list) : string =
   match failtraces with
   | [] -> ""
   | [ failtrace ] ->
       let depth = depth_of failtrace in
       let limit = max 0 (depth - 10) in
-      string_of_failtrace ~limit ~bullet:"-" failtrace
+      string_of_failtrace ~last:true ~limit ~bullet:"" failtrace
   | failtraces ->
       List.mapi
         (fun idx failtrace ->
           let depth = depth_of failtrace in
           let limit = max 0 (depth - 10) in
-          string_of_failtrace ~limit
-            ~bullet:(string_of_int (idx + 1) ^ ".")
-            failtrace)
+          let last = idx = List.length failtraces - 1 in
+          let bullet = string_of_int (idx + 1) ^ ". " in
+          string_of_failtrace ~last ~limit ~bullet failtrace)
         failtraces
       |> String.concat ""
