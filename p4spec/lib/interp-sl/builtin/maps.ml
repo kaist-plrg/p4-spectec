@@ -2,7 +2,6 @@ open Xl
 open Il.Ast
 module Value = Runtime_dynamic.Value
 module Dep = Runtime_testgen.Dep
-open Error
 open Util.Source
 
 (* Value map *)
@@ -20,7 +19,7 @@ let map_of_value (value : value) : map =
       ->
         (value_key, value_value)
     | _ ->
-        error no_region
+        Backtrace.error no_region
           (Format.asprintf "expected a pair, but got %s" (Value.to_string value))
   in
   match value.it with
@@ -33,7 +32,7 @@ let map_of_value (value : value) : map =
              VMap.add value_key value_value map)
            VMap.empty
   | _ ->
-      error no_region
+      Backtrace.error no_region
         (Format.asprintf "expected a map, but got %s" (Value.to_string value))
 
 let value_of_map (ctx : Ctx.t) (typ_key : typ) (typ_value : typ) (map : map) :
