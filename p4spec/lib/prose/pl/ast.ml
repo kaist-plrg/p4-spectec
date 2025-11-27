@@ -157,12 +157,16 @@ and instr' =
   | CheckLetI of exp * exp
   | OptionGetI of exp * exp
 
+type tablerow = tablerow' phrase
+and tablerow' = arg list * instr list * exp
+
 type def = def' phrase
 
 and def' =
   | ExternRelD of id * exp list
   | RelD of id * exp list * instr list
   | BuiltinDecD of id * tparam list * arg list * typ
+  | TableDecD of id * arg list * typ * tablerow list
   | DecD of id * tparam list * arg list * typ * instr list
 
 type spec = def list

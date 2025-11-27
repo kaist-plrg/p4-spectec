@@ -28,7 +28,8 @@ and try_splice_anchors (ctx : Ctx.t) (source : Source.t) (buffer : Buffer.t) =
     || try_splice_anchor (module Splicer.Relation) ctx source result
     || try_splice_anchor (module Splicer.RuleGroup) ctx source result
     || try_splice_anchor (module Splicer.RuleProse) ctx source result
-    || try_splice_anchor (module Splicer.FuncProse) ctx source result);
+    || try_splice_anchor (module Splicer.FuncProse) ctx source result
+    || try_splice_anchor (module Splicer.Table) ctx source result);
   if !result <> "" then (
     Buffer.add_string buffer !result;
     true)

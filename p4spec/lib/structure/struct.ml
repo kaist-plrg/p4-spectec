@@ -240,7 +240,7 @@ and struct_builtin_dec_def (at : region) (id_dec : id) (tparams : tparam list)
 and struct_tablerow_path tblrow_path : Ol.Ast.instr list =
   let prems_path, exp_res = tblrow_path in
   let at = exp_res.at in
-  let instr_ret = Ol.Ast.ResultI [ exp_res ] $ at in
+  let instr_ret = Ol.Ast.ReturnI exp_res $ at in
   struct_prems prems_path instr_ret
 
 and struct_table_dec_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region)
@@ -260,8 +260,15 @@ and struct_table_dec_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region)
     |> List.map (Optimize.optimize ienv tdenv)
     |> List.map (Instrument.instrument tdenv)
   in
+  let exps_res = paths |> List.split |> snd in
+  let rec combine3 l1 l2 l3 =
+    match (l1, l2, l3) with
+    | [], [], [] -> []
+    | x :: xs, y :: ys, z :: zs -> (x, y, z) :: combine3 xs ys zs
+    | _ -> invalid_arg "combine3: lists must have the same length"
+  in
   let tablefunc =
-    (id_dec, args_input, typ, List.combine tblsigs instrs_rows, hints)
+    (id_dec, args_input, typ, combine3 tblsigs instrs_rows exps_res, hints)
   in
   Sl.Ast.TableDecD tablefunc $ at
 

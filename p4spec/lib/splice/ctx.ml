@@ -8,6 +8,7 @@ module RelationMap = Map.Make (Kinds.RelationId)
 module RuleGroupMap = Map.Make (Kinds.RuleGroupId)
 module RuleProseMap = Map.Make (Kinds.RuleProseId)
 module FuncProseMap = Map.Make (Kinds.FuncProseId)
+module TableMap = Map.Make (Kinds.TableId)
 
 type t = {
   prose_ctx : Prose.Ctx.t;
@@ -16,6 +17,7 @@ type t = {
   mutable rulegroup : Kinds.rulegroup RuleGroupMap.t;
   mutable ruleprose : Kinds.ruleprose RuleProseMap.t;
   mutable funcprose : Kinds.funcprose FuncProseMap.t;
+  mutable tables : Kinds.table TableMap.t;
 }
 
 (* Initialization *)
@@ -71,6 +73,9 @@ let init_sl_def (ctx : t) (def_sl : Sl.Ast.def) : unit =
   | DecD (id_func, tparams, args_input, typ, instrs, _) ->
       let funcprose = (tparams, args_input, typ, instrs) in
       ctx.funcprose <- FuncProseMap.add id_func.it funcprose ctx.funcprose
+  | TableDecD (id_table, args, typ, tablerows, _) ->
+      let table = (args, typ, tablerows) in
+      ctx.tables <- TableMap.add id_table.it table ctx.tables
   | _ -> ()
 
 let init_sl (ctx : t) (spec_sl : Sl.Ast.spec) : unit =
@@ -86,6 +91,7 @@ let init (spec_el : El.Ast.spec) (spec_sl : Sl.Ast.spec) : t =
       rulegroup = RuleGroupMap.empty;
       ruleprose = RuleProseMap.empty;
       funcprose = FuncProseMap.empty;
+      tables = TableMap.empty;
     }
   in
   init_el ctx spec_el;
@@ -124,3 +130,8 @@ let find_funcprose (ctx : t) (id : Kinds.FuncProseId.t) : Kinds.funcprose =
   match FuncProseMap.find_opt id ctx.funcprose with
   | Some funcprose -> funcprose
   | None -> error no_region ("funcprose " ^ id ^ " was not found")
+
+let find_table (ctx : t) (id : Kinds.TableId.t) : Kinds.table =
+  match TableMap.find_opt id ctx.tables with
+  | Some table -> table
+  | None -> error no_region ("table " ^ id ^ " was not found")

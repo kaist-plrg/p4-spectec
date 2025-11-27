@@ -34,3 +34,9 @@ module FuncProseId = String
 
 type funcprose =
   Sl.Ast.tparam list * Sl.Ast.arg list * Sl.Ast.typ * Sl.Ast.instr list
+
+(* Table *)
+
+module TableId = String
+
+type table = Sl.Ast.arg list * Sl.Ast.typ * Sl.Ast.tablerow list

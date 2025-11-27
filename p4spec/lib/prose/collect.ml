@@ -41,7 +41,8 @@ let collect_defs (hdb : Hintdb.t) (ienv : IEnv.t) (def : def) :
   | BuiltinDecD (fid, _, _, _, hints)
   | DecD (fid, _, _, _, _, hints) ->
       (collect_hints (`Func fid) hdb hints, ienv)
-  | TableDecD _ -> failwith "unimplemented"
+  (* TODO: collect table hints *)
+  | TableDecD _ -> (hdb, ienv)
 
 let collect_spec (spec : spec) : Hintdb.t * IEnv.t =
   List.fold_left

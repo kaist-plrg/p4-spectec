@@ -437,6 +437,19 @@ and prosify_instrs ctx (instrs : instr list) : Pl.Ast.instr list =
       instrs
     |> List.concat
 
+let prosify_table ctx id args typ tablerows =
+  let args = prosify_args ctx args in
+  let tablerows_pl =
+    List.map
+      (fun (args, instrs, exp_res) ->
+        let args = prosify_args ctx args in
+        let instrs = prosify_instrs ctx instrs in
+        let exp_res = prosify_exp ctx exp_res in
+        (args, instrs, exp_res) $ exp_res.at)
+      tablerows
+  in
+  (id, args, typ, tablerows_pl)
+
 let prosify_def (ctx : Ctx.t) (def : def) : Pl.Ast.def option =
   match def.it with
   | ExternTypD _ | TypD _ -> None
@@ -454,9 +467,11 @@ let prosify_def (ctx : Ctx.t) (def : def) : Pl.Ast.def option =
       let exps = prosify_exps ctx exps in
       Some (Pl.Ast.RelD (id, exps, instrs) $ def.at)
   | ExternDecD _ | BuiltinDecD _ | DecD _ -> None
-  | TableDecD _ -> failwith "unimplemented"
-(* let instrs = prosify_instrs ctx instrs in *)
-(* Some (Pl.Ast.DecD (id, tparams, args, instrs) $ def.at) *)
+  | TableDecD (id, args, typ, tablerows, _) ->
+      let id, args, typ, tablerows_pl =
+        prosify_table ctx id args typ tablerows
+      in
+      Some (Pl.Ast.TableDecD (id, args, typ, tablerows_pl) $ def.at)
 
 let prosify_spec (spec : spec) : Pl.Ast.spec =
   let ctx = Ctx.init spec in
