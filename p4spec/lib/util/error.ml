@@ -3,6 +3,7 @@ open Source
 exception ParseError of region * string
 exception UnparseError of string
 exception ElabError of region * string
+exception BuiltinError of region * string
 exception InterpError of region * string
 exception ArchError of region * string
 exception StfError of string
@@ -29,6 +30,11 @@ let error_unparse (msg : string) = raise (UnparseError msg)
 
 let error_elab (at : region) (msg : string) = raise (ElabError (at, msg))
 let warn_elab (at : region) (msg : string) = warn at "elab" msg
+
+(* Builtin errors *)
+
+let error_builtin (at : region) (msg : string) = raise (BuiltinError (at, msg))
+let warn_builtin (at : region) (msg : string) = warn at "builtin" msg
 
 (* Interpreter errors *)
 

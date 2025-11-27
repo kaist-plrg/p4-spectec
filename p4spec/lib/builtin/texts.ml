@@ -1,12 +1,11 @@
 open Xl
 open Il.Ast
 module Value = Runtime_dynamic.Value
-module Dep = Runtime_testgen.Dep
 open Util.Source
 
 (* dec $int_to_text(int) : text *)
 
-let int_to_text (ctx : Ctx.t) (at : region) (targs : targ list)
+let int_to_text (add : value -> unit) (at : region) (targs : targ list)
     (values_input : value list) : value =
   Extract.zero at targs;
   let num = Extract.one at values_input |> Value.get_num in
@@ -15,12 +14,12 @@ let int_to_text (ctx : Ctx.t) (at : region) (targs : targ list)
     let typ = Il.Ast.TextT in
     TextV (Num.string_of_num num) $$$ { vid; typ }
   in
-  Ctx.add_node ctx value;
+  add value;
   value
 
 (* dec $strip_prefix(text, text) : text *)
 
-let strip_prefix (ctx : Ctx.t) (at : region) (targs : targ list)
+let strip_prefix (add : value -> unit) (at : region) (targs : targ list)
     (values_input : value list) : value =
   Extract.zero at targs;
   let value_text, value_prefix = Extract.two at values_input in
@@ -36,12 +35,12 @@ let strip_prefix (ctx : Ctx.t) (at : region) (targs : targ list)
     let typ = Il.Ast.TextT in
     TextV text $$$ { vid; typ }
   in
-  Ctx.add_node ctx value;
+  add value;
   value
 
 (* dec $strip_suffix(text, text) : text *)
 
-let strip_suffix (ctx : Ctx.t) (at : region) (targs : targ list)
+let strip_suffix (add : value -> unit) (at : region) (targs : targ list)
     (values_input : value list) : value =
   Extract.zero at targs;
   let value_text, value_suffix = Extract.two at values_input in
@@ -54,5 +53,5 @@ let strip_suffix (ctx : Ctx.t) (at : region) (targs : targ list)
     let typ = Il.Ast.TextT in
     TextV text $$$ { vid; typ }
   in
-  Ctx.add_node ctx value;
+  add value;
   value

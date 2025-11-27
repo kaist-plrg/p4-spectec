@@ -1129,7 +1129,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     let invoke_func_builtin' () =
       let ctx_local = Ctx.localize ctx in
       let ctx_local = Ctx.trace_open_dec ctx_local id 0 values_input in
-      let value_output = Builtin.invoke id targs values_input in
+      let value_output =
+        try Builtin.Call.invoke (fun _ -> ()) id targs values_input
+        with Util.Error.BuiltinError (at, msg) -> error at msg
+      in
       let ctx_local = Ctx.trace_close ctx_local in
       let ctx = Ctx.trace_commit ctx ctx_local.trace in
       Ok (ctx, value_output)
@@ -1256,7 +1259,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   let eval_program (spec : spec) (relname : string) (includes_p4 : string list)
       (filename_p4 : string) : Sim.program_result =
-    Builtin.init ();
+    Builtin.Call.init ();
     Value.refresh ();
     Cache.Cache.clear !func_cache;
     Cache.Cache.clear !rule_cache;
@@ -1276,7 +1279,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   let eval_rel (spec : spec) (relname : string) (values_input : value list) :
       Sim.rel_result =
-    Builtin.init ();
+    Builtin.Call.init ();
     Value.refresh ();
     Cache.Cache.clear !func_cache;
     Cache.Cache.clear !rule_cache;
@@ -1289,7 +1292,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   let eval_func (spec : spec) (funcname : string) (targs : targ list)
       (values_input : value list) : Sim.func_result =
-    Builtin.init ();
+    Builtin.Call.init ();
     Value.refresh ();
     Cache.Cache.clear !func_cache;
     Cache.Cache.clear !rule_cache;

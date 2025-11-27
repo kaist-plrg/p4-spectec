@@ -5,7 +5,8 @@ open Util.Source
 
 (* dec $rev_<X>(X* ) : X* *)
 
-let rev_ (at : region) (targs : targ list) (values_input : value list) : value =
+let rev_ (add : value -> unit) (at : region) (targs : targ list)
+    (values_input : value list) : value =
   let typ = Extract.one at targs in
   let values = Extract.one at values_input |> Value.get_list in
   let value =
@@ -13,12 +14,13 @@ let rev_ (at : region) (targs : targ list) (values_input : value list) : value =
     let typ = Il.Ast.IterT (typ, Il.Ast.List) in
     ListV (List.rev values) $$$ { vid; typ }
   in
+  add value;
   value
 
 (* dec $concat_<X>((X* )* ) : X* *)
 
-let concat_ (at : region) (targs : targ list) (values_input : value list) :
-    value =
+let concat_ (add : value -> unit) (at : region) (targs : targ list)
+    (values_input : value list) : value =
   let typ = Extract.one at targs in
   let values =
     Extract.one at values_input
@@ -30,12 +32,13 @@ let concat_ (at : region) (targs : targ list) (values_input : value list) :
     let typ = Il.Ast.IterT (typ, Il.Ast.List) in
     ListV values $$$ { vid; typ }
   in
+  add value;
   value
 
 (* dec $distinct_<K>(K* ) : bool *)
 
-let distinct_ (at : region) (targs : targ list) (values_input : value list) :
-    value =
+let distinct_ (add : value -> unit) (at : region) (targs : targ list)
+    (values_input : value list) : value =
   let _typ = Extract.one at targs in
   let values = Extract.one at values_input |> Value.get_list in
   let set = Sets.VSet.of_list values in
@@ -44,12 +47,13 @@ let distinct_ (at : region) (targs : targ list) (values_input : value list) :
     let typ = Il.Ast.BoolT in
     BoolV (Sets.VSet.cardinal set = List.length values) $$$ { vid; typ }
   in
+  add value;
   value
 
 (* dec $partition_<X>(X*, nat) : (X*, X* ) *)
 
-let partition_ (at : region) (targs : targ list) (values_input : value list) :
-    value =
+let partition_ (add : value -> unit) (at : region) (targs : targ list)
+    (values_input : value list) : value =
   let typ = Extract.one at targs in
   let value_list, value_len = Extract.two at values_input in
   let values = Value.get_list value_list in
@@ -64,11 +68,13 @@ let partition_ (at : region) (targs : targ list) (values_input : value list) :
     let typ = Il.Ast.IterT (typ, Il.Ast.List) in
     ListV (List.map snd values_left) $$$ { vid; typ }
   in
+  add value_left;
   let value_right =
     let vid = Value.fresh () in
     let typ = Il.Ast.IterT (typ, Il.Ast.List) in
     ListV (List.map snd values_right) $$$ { vid; typ }
   in
+  add value_right;
   let value =
     let vid = Value.fresh () in
     let typ =
@@ -77,12 +83,13 @@ let partition_ (at : region) (targs : targ list) (values_input : value list) :
     in
     TupleV [ value_left; value_right ] $$$ { vid; typ }
   in
+  add value;
   value
 
 (* dec $assoc_<X, Y>(X, (X, Y)* ) : Y? *)
 
-let assoc_ (at : region) (targs : targ list) (values_input : value list) : value
-    =
+let assoc_ (add : value -> unit) (at : region) (targs : targ list)
+    (values_input : value list) : value =
   let _typ_key, typ_value = Extract.two at targs in
   let value, value_list = Extract.two at values_input in
   let values =
@@ -106,12 +113,13 @@ let assoc_ (at : region) (targs : targ list) (values_input : value list) : value
     let typ = Il.Ast.IterT (typ_value, Il.Ast.Opt) in
     OptV value_opt $$$ { vid; typ }
   in
+  add value;
   value
 
 (* dec $sort_<X>((nat, X)* ) : (nat, X)* *)
 
-let sort_ (at : region) (targs : targ list) (values_input : value list) : value
-    =
+let sort_ (add : value -> unit) (at : region) (targs : targ list)
+    (values_input : value list) : value =
   let _typ_value = Extract.one at targs in
   let value_list = Extract.one at values_input in
   let values =
@@ -137,4 +145,5 @@ let sort_ (at : region) (targs : targ list) (values_input : value list) : value
     let typ = value_list.note.typ in
     ListV values $$$ { vid; typ }
   in
+  add value;
   value

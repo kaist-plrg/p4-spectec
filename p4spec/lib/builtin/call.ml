@@ -63,9 +63,10 @@ let funcs =
   |> Funcs.add "bor" Numerics.bor
   |> Funcs.add "bitacc" Numerics.bitacc
 
-let invoke (id : id) (targs : targ list) (args : value list) : value =
+let invoke (add : value -> unit) (id : id) (targs : targ list)
+    (args : value list) : value =
   let func = Funcs.find_opt id.it funcs in
   check (Option.is_some func) id.at
     (Format.asprintf "implementation for builtin %s is missing" id.it);
   let func = Option.get func in
-  func id.at targs args
+  func add id.at targs args

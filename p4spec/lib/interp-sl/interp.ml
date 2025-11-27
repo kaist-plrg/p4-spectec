@@ -1542,7 +1542,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and invoke_builtin_func (ctx : Ctx.t) (id : id) (targs : targ list)
       (values_input : value list) : value =
-    let value_output = Builtin.invoke ctx id targs values_input in
+    let value_output =
+      try
+        Builtin.Call.invoke
+          (fun value -> Ctx.add_node ctx value)
+          id targs values_input
+      with Util.Error.BuiltinError (at, msg) -> back at msg
+    in
     List.iteri
       (fun idx_arg value_input ->
         Ctx.add_edge ctx value_output value_input (Dep.Edges.Func (id, idx_arg)))
@@ -1643,7 +1649,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   let eval_program ~(derive : bool) (spec : spec) (relname : string)
       (includes_p4 : string list) (filename_p4 : string) : Sim.program_result =
-    Builtin.init ();
+    Builtin.Call.init ();
     Value.refresh ();
     Cache.Cache.clear !func_cache;
     Cache.Cache.clear !rule_cache;
@@ -1662,7 +1668,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   let eval_rel (spec : spec) (relname : string) (values_input : value list) :
       Sim.rel_result =
-    Builtin.init ();
+    Builtin.Call.init ();
     Value.refresh ();
     Cache.Cache.clear !func_cache;
     Cache.Cache.clear !rule_cache;
@@ -1677,7 +1683,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   let eval_func (spec : spec) (funcname : string) (targs : targ list)
       (values_input : value list) : Sim.func_result =
-    Builtin.init ();
+    Builtin.Call.init ();
     Value.refresh ();
     Cache.Cache.clear !func_cache;
     Cache.Cache.clear !rule_cache;

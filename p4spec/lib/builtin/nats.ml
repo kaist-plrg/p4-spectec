@@ -1,7 +1,6 @@
 open Xl
 open Il.Ast
 module Value = Runtime_dynamic.Value
-module Dep = Runtime_testgen.Dep
 open Util.Source
 
 (* Conversion between meta-numerics and OCaml numerics *)
@@ -9,44 +8,44 @@ open Util.Source
 let bigint_of_value (value : value) : Bigint.t =
   value |> Value.get_num |> Num.to_int
 
-let value_of_bigint (ctx : Ctx.t) (i : Bigint.t) : value =
+let value_of_bigint (add : value -> unit) (i : Bigint.t) : value =
   let value =
     let vid = Value.fresh () in
-    let typ = Il.Ast.NumT `IntT in
-    NumV (`Int i) $$$ { vid; typ }
+    let typ = Il.Ast.NumT `NatT in
+    NumV (`Nat i) $$$ { vid; typ }
   in
-  Ctx.add_node ctx value;
+  add value;
   value
 
-(* dec $sum_int(nat* ) : nat *)
+(* dec $sum_nat(nat* ) : nat *)
 
-let sum_int (ctx : Ctx.t) (at : region) (targs : targ list)
+let sum_nat (add : value -> unit) (at : region) (targs : targ list)
     (values_input : value list) : value =
   Extract.zero at targs;
   let values =
     Extract.one at values_input |> Value.get_list |> List.map bigint_of_value
   in
   let sum = List.fold_left Bigint.( + ) Bigint.zero values in
-  value_of_bigint ctx sum
+  value_of_bigint add sum
 
-(* dec $max_int(nat* ) : nat *)
+(* dec $max_nat(nat* ) : nat *)
 
-let max_int (ctx : Ctx.t) (at : region) (targs : targ list)
+let max_nat (add : value -> unit) (at : region) (targs : targ list)
     (values_input : value list) : value =
   Extract.zero at targs;
   let values =
     Extract.one at values_input |> Value.get_list |> List.map bigint_of_value
   in
   let max = List.fold_left Bigint.max Bigint.zero values in
-  value_of_bigint ctx max
+  value_of_bigint add max
 
-(* dec $min_int(nat* ) : nat *)
+(* dec $min_nat(nat* ) : nat *)
 
-let min_int (ctx : Ctx.t) (at : region) (targs : targ list)
+let min_nat (add : value -> unit) (at : region) (targs : targ list)
     (values_input : value list) : value =
   Extract.zero at targs;
   let values =
     Extract.one at values_input |> Value.get_list |> List.map bigint_of_value
   in
   let min = List.fold_left Bigint.min Bigint.zero values in
-  value_of_bigint ctx min
+  value_of_bigint add min
