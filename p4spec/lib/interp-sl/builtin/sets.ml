@@ -2,6 +2,7 @@ open Xl
 open Il.Ast
 module Value = Runtime_dynamic.Value
 module Dep = Runtime_testgen.Dep
+open Util.Backtrace
 open Util.Source
 
 (* Value set *)
@@ -20,7 +21,7 @@ let set_of_value (value : value) : set =
       let values_element = Value.get_list value_elements in
       VSet.of_list values_element
   | _ ->
-      Backtrace.error no_region
+      back no_region
         (Format.asprintf "expected a set, but got %s" (Value.to_string value))
 
 let value_of_set (ctx : Ctx.t) (typ_key : typ) (set : set) : value =

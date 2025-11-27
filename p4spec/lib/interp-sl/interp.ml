@@ -15,6 +15,7 @@ module SCov = Runtime_testgen.Cov.Single
 module MCov = Runtime_testgen.Cov.Multiple
 open Error
 module F = Format
+open Util.Backtrace
 open Util.Source
 
 (* Cache *)
@@ -130,7 +131,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
             Ctx.add_value Local ctx (id, iters @ [ Il.Ast.List ]) value_sub)
           ctx vars
     | _ ->
-        Backtrace.error exp.at
+        back exp.at
           (F.asprintf "match failed %s <- %s"
              (Sl.Print.string_of_exp exp)
              (Sl.Print.string_of_value ~short:true value))
@@ -156,7 +157,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and assign_args (ctx_caller : Ctx.t) (ctx_callee : Ctx.t) (args : arg list)
       (values : value list) : Ctx.t =
-    Backtrace.check
+    check_back
       (List.length args = List.length values)
       (over_region (List.map at args))
       (F.asprintf
@@ -175,7 +176,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         let func = Ctx.find_func Local ctx_caller id_f in
         Ctx.add_func Local ctx_callee id func
     | _ ->
-        Backtrace.error id.at
+        back id.at
           (F.asprintf "cannot assign a value %s to a definition %s"
              (Sl.Print.string_of_value ~short:true value)
              id.it)
@@ -196,8 +197,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   let rec eval_exp (ctx : Ctx.t) (exp : exp) : value =
     try eval_exp' ctx exp
-    with Backtrace.Error traces ->
-      Backtrace.error_nest exp.at
+    with Backtrace traces ->
+      back_nest exp.at
         (F.asprintf "%s failed" (Sl.Print.string_of_exp exp))
         traces
 
@@ -386,7 +387,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and upcast (ctx : Ctx.t) (typ : typ) (value : value) : value =
     let error_backtrace_upcast () =
-      Backtrace.error typ.at
+      back typ.at
         (F.asprintf "cannot upcast value %s to type %s"
            (Sl.Print.string_of_value ~short:true value)
            (Sl.Print.string_of_typ typ))
@@ -437,7 +438,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and downcast (ctx : Ctx.t) (typ : typ) (value : value) : value =
     let error_backtrace_downcast () =
-      Backtrace.error typ.at
+      back typ.at
         (F.asprintf "cannot downcast value %s to type %s"
            (Sl.Print.string_of_value ~short:true value)
            (Sl.Print.string_of_typ typ))
@@ -669,7 +670,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       | TextV s_l, TextV s_r -> Il.Ast.TextV (s_l ^ s_r)
       | ListV values_l, ListV values_r -> Il.Ast.ListV (values_l @ values_r)
       | _ ->
-          Backtrace.error at
+          back at
             (F.asprintf
                "concatenation expects either two texts or two lists, but got \
                 %s and %s"
@@ -739,7 +740,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let values = Value.get_list value_b in
     let idx = value_i |> Value.get_num |> Num.to_int |> Bigint.to_int_exn in
     if idx < 0 || idx >= List.length values then
-      Backtrace.error exp_i.at
+      back exp_i.at
         (F.asprintf "index %d out of bounds [0, %d)" idx (List.length values))
     else List.nth values idx
 
@@ -780,7 +781,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         fields
         |> List.map (fun (atom, value) -> (atom.it, value))
         |> List.assoc atom.it
-    | _ -> Backtrace.error no_region "(TODO: eval_access_path)"
+    | _ -> back no_region "(TODO: eval_access_path)"
 
   and eval_update_path (ctx : Ctx.t) (value_b : value) (path : path)
       (value_n : value) : value =
@@ -803,7 +804,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         in
         Ctx.add_node ctx value;
         eval_update_path ctx value_b path value
-    | _ -> Backtrace.error no_region "(TODO eval_update_path)"
+    | _ -> back no_region "(TODO eval_update_path)"
 
   and eval_upd_exp (_note : typ') (ctx : Ctx.t) (exp_b : exp) (path : path)
       (exp_f : exp) : value =
@@ -872,8 +873,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and eval_arg (ctx : Ctx.t) (arg : arg) : value =
     try eval_arg' ctx arg
-    with Backtrace.Error traces ->
-      Backtrace.error_nest arg.at
+    with Backtrace traces ->
+      back_nest arg.at
         (F.asprintf "%s failed" (Sl.Print.string_of_arg arg))
         traces
 
@@ -896,8 +897,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and eval_instr (ctx : Ctx.t) (instr : instr) : Ctx.t * Sign.t =
     try eval_instr' ctx instr
-    with Backtrace.Error traces ->
-      Backtrace.error_nest instr.at
+    with Backtrace traces ->
+      back_nest instr.at
         (F.asprintf "%s failed" (Sl.Print.string_of_instr_short instr))
         traces
 
@@ -957,7 +958,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | iterexp_h :: iterexps_t -> (
         let iter_h, vars_h = iterexp_h in
         match iter_h with
-        | Opt -> Backtrace.error no_region "(TODO)"
+        | Opt -> back no_region "(TODO)"
         | List ->
             let cond, values_cond =
               eval_if_cond_list ctx exp_cond vars_h iterexps_t
@@ -1003,7 +1004,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       try
         let _ = invoke_rel ctx id values_input in
         true
-      with Backtrace.Error _ -> false
+      with Backtrace _ -> false
     in
     let value_res =
       let vid = Value.fresh () in
@@ -1042,7 +1043,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | iterexp_h :: iterexps_t -> (
         let iter_h, vars_h = iterexp_h in
         match iter_h with
-        | Opt -> Backtrace.error no_region "(TODO)"
+        | Opt -> back no_region "(TODO)"
         | List ->
             let cond, values_cond =
               eval_hold_cond_list ctx id notexp vars_h iterexps_t
@@ -1152,7 +1153,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     match sign_group with
     | Cont -> (ctx, Sign.Cont)
     | Res values_output -> (ctx_group, Sign.Res values_output)
-    | Ret _ -> Backtrace.error id_group.at "cannot return from try instruction"
+    | Ret _ -> back id_group.at "cannot return from try instruction"
 
   (* Let instruction evaluation *)
 
@@ -1320,7 +1321,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and eval_rule_opt (_ctx : Ctx.t) (_id : id) (_notexp : notexp)
       (_vars : var list) (_iterexps : iterexp list) : Ctx.t =
-    Backtrace.error no_region "(TODO) eval_rule_opt"
+    back no_region "(TODO) eval_rule_opt"
 
   and eval_rule_list (ctx : Ctx.t) (id : id) (notexp : notexp) (vars : var list)
       (iterexps : iterexp list) : Ctx.t =
@@ -1420,8 +1421,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   and invoke_rel (ctx : Ctx.t) (id : id) (values_input : value list) :
       value list =
     try invoke_rel' ctx id values_input
-    with Backtrace.Error traces ->
-      Backtrace.error_nest id.at (F.asprintf "relation %s failed" id.it) traces
+    with Backtrace traces ->
+      back_nest id.at (F.asprintf "relation %s failed" id.it) traces
 
   and invoke_rel' (ctx : Ctx.t) (id : id) (values_input : value list) :
       value list =
@@ -1437,9 +1438,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       match id.it with
       | "ExternFunctionCall_eval" -> Arch.eval_extern_func_call values_input
       | "ExternMethodCall_eval" -> Arch.eval_extern_method_call values_input
-      | _ ->
-          Backtrace.error id.at
-            (F.asprintf "unimplemented extern relation %s" id.it)
+      | _ -> back id.at (F.asprintf "unimplemented extern relation %s" id.it)
     in
     List.iteri
       (fun idx_arg value_input ->
@@ -1468,7 +1467,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                 values_output)
             values_input;
           values_output
-      | _ -> Backtrace.error id.at "relation did not produce results"
+      | _ -> back id.at "relation did not produce results"
     in
     if (not (Ctx.deriving ctx)) && Cache.is_cached_rule id.it then (
       let cache_result = Cache.Cache.find !rule_cache (id.it, values_input) in
@@ -1485,14 +1484,14 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   and invoke_func (ctx : Ctx.t) (id : id) (targs : targ list) (args : arg list)
       : value =
     try invoke_func' ctx id targs args
-    with Backtrace.Error traces ->
-      Backtrace.error_nest id.at (F.asprintf "function %s failed" id.it) traces
+    with Backtrace traces ->
+      back_nest id.at (F.asprintf "function %s failed" id.it) traces
 
   and invoke_func_with_values (ctx : Ctx.t) (id : id) (targs : targ list)
       (values_input : value list) : value =
     try invoke_func'' ctx id targs values_input
-    with Backtrace.Error traces ->
-      Backtrace.error_nest id.at (F.asprintf "function %s failed" id.it) traces
+    with Backtrace traces ->
+      back_nest id.at (F.asprintf "function %s failed" id.it) traces
 
   and invoke_func' (ctx : Ctx.t) (id : id) (targs : targ list) (args : arg list)
       : value =
@@ -1533,9 +1532,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let value_output =
       match id.it with
       | "init_externState" -> Arch.eval_extern_init values_input
-      | _ ->
-          Backtrace.error id.at
-            (F.asprintf "unimplemented extern function %s" id.it)
+      | _ -> back id.at (F.asprintf "unimplemented extern function %s" id.it)
     in
     List.iteri
       (fun idx_arg value_input ->
@@ -1577,7 +1574,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                 (Dep.Edges.Func (id, idx_arg)))
             values_input;
           value_output
-      | _ -> Backtrace.error id.at "function did not return a value"
+      | _ -> back id.at "function did not return a value"
     in
     if (not (Ctx.deriving ctx)) && Cache.is_cached_func id.it then (
       let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
@@ -1626,8 +1623,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     try
       let values_ouput = invoke_rel ctx (relname $ no_region) values_input in
       values_ouput
-    with Backtrace.Error traces ->
-      let failtraces = Backtrace.failtraces traces in
+    with Backtrace traces ->
+      let failtraces = back_failtraces traces in
       let msg = Util.Attempt.string_of_failtraces_short failtraces in
       error no_region msg
 
@@ -1639,8 +1636,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         invoke_func_with_values ctx (funcname $ no_region) targs values_input
       in
       value_output
-    with Backtrace.Error traces ->
-      let failtraces = Backtrace.failtraces traces in
+    with Backtrace traces ->
+      let failtraces = back_failtraces traces in
       let msg = Util.Attempt.string_of_failtraces_short failtraces in
       error no_region msg
 

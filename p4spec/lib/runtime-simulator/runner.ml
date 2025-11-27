@@ -138,6 +138,7 @@ module Make
     with
     | Util.Error.ParseError (at, msg) -> IllFormed (at, msg)
     | Util.Error.InterpError (at, msg) -> Fail (at, msg)
+    | Util.Error.ArchError (at, msg) -> Fail (at, msg)
     | Util.Error.StfError msg -> Fail (no_region, msg)
 
   (* Coverage runner *)
