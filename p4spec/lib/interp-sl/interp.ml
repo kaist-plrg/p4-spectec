@@ -28,7 +28,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   (* Assigning a value to an expression *)
 
-  let rec assign_exp (ctx : Ctx.t) (exp : exp) (value : value) : Ctx.t attempt =
+  let rec assign_exp (ctx : Ctx.t) (exp : exp) (value : value) :
+      Ctx.t attempt_unit =
     let note = value.note.typ in
     match (exp.it, value.it) with
     | VarE id, _ ->
@@ -145,13 +146,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         in
         Ok ctx
     | _ ->
-        fail exp.at
+        fail_unit exp.at
           (F.asprintf "match failed %s <- %s"
              (Sl.Print.string_of_exp exp)
              (Sl.Print.string_of_value ~short:true value))
 
   and assign_exps (ctx : Ctx.t) (exps : exp list) (values : value list) :
-      Ctx.t attempt =
+      Ctx.t attempt_unit =
     let* _ =
       check_fail
         (List.length exps = List.length values)
@@ -170,13 +171,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Assigning a value to an argument *)
 
   and assign_arg (ctx_caller : Ctx.t) (ctx_callee : Ctx.t) (arg : arg)
-      (value : value) : Ctx.t attempt =
+      (value : value) : Ctx.t attempt_unit =
     match arg.it with
     | ExpA exp -> assign_arg_exp ctx_callee exp value
     | DefA id -> assign_arg_def ctx_caller ctx_callee id value
 
   and assign_args (ctx_caller : Ctx.t) (ctx_callee : Ctx.t) (args : arg list)
-      (values : value list) : Ctx.t attempt =
+      (values : value list) : Ctx.t attempt_unit =
     let* _ =
       check_fail
         (List.length args = List.length values)
@@ -192,18 +193,19 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         assign_arg ctx_caller ctx_callee arg value)
       (Ok ctx_callee) args values
 
-  and assign_arg_exp (ctx : Ctx.t) (exp : exp) (value : value) : Ctx.t attempt =
+  and assign_arg_exp (ctx : Ctx.t) (exp : exp) (value : value) :
+      Ctx.t attempt_unit =
     assign_exp ctx exp value
 
   and assign_arg_def (ctx_caller : Ctx.t) (ctx_callee : Ctx.t) (id : id)
-      (value : value) : Ctx.t attempt =
+      (value : value) : Ctx.t attempt_unit =
     match value.it with
     | FuncV id_f ->
         let func = Ctx.find_func Local ctx_caller id_f in
         let ctx = Ctx.add_func Local ctx_callee id func in
         Ok ctx
     | _ ->
-        fail id.at
+        fail_unit id.at
           (F.asprintf "cannot assign a value %s to a definition %s"
              (Sl.Print.string_of_value ~short:true value)
              id.it)
@@ -222,11 +224,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
      Note that structs are invariant in SpecTec, so we do not need to check for subtyping *)
 
-  let rec eval_exp (ctx : Ctx.t) (exp : exp) : value attempt =
+  let rec eval_exp (ctx : Ctx.t) (exp : exp) : value attempt_unit =
     eval_exp' ctx exp
-    |> nest exp.at (F.asprintf "%s failed" (Sl.Print.string_of_exp exp))
+    |> nest_unit exp.at (F.asprintf "%s failed" (Sl.Print.string_of_exp exp))
 
-  and eval_exp' (ctx : Ctx.t) (exp : exp) : value attempt =
+  and eval_exp' (ctx : Ctx.t) (exp : exp) : value attempt_unit =
     let at, note = (exp.at, exp.note) in
     match exp.it with
     | BoolE b -> eval_bool_exp note ctx b
@@ -258,7 +260,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | CallE (id, targs, args) -> eval_call_exp note ctx id targs args
     | IterE (exp, iterexp) -> eval_iter_exp note ctx exp iterexp
 
-  and eval_exps (ctx : Ctx.t) (exps : exp list) : value list attempt =
+  and eval_exps (ctx : Ctx.t) (exps : exp list) : value list attempt_unit =
     let* values_rev =
       List.fold_left
         (fun attempt exp ->
@@ -272,7 +274,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   (* Boolean expression evaluation *)
 
-  and eval_bool_exp (note : typ') (ctx : Ctx.t) (b : bool) : value attempt =
+  and eval_bool_exp (note : typ') (ctx : Ctx.t) (b : bool) : value attempt_unit
+      =
     let value_res =
       let vid = Value.fresh () in
       let typ = note in
@@ -287,7 +290,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   (* Numeric expression evaluation *)
 
-  and eval_num_exp (note : typ') (ctx : Ctx.t) (n : Num.t) : value attempt =
+  and eval_num_exp (note : typ') (ctx : Ctx.t) (n : Num.t) : value attempt_unit
+      =
     let value_res =
       let vid = Value.fresh () in
       let typ = note in
@@ -302,7 +306,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   (* Text expression evaluation *)
 
-  and eval_text_exp (note : typ') (ctx : Ctx.t) (s : string) : value attempt =
+  and eval_text_exp (note : typ') (ctx : Ctx.t) (s : string) :
+      value attempt_unit =
     let value_res =
       let vid = Value.fresh () in
       let typ = note in
@@ -317,7 +322,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   (* Variable expression evaluation *)
 
-  and eval_var_exp (_note : typ') (ctx : Ctx.t) (id : id) : value attempt =
+  and eval_var_exp (_note : typ') (ctx : Ctx.t) (id : id) : value attempt_unit =
     let value = Ctx.find_value Local ctx (id, []) in
     Ok value
 
@@ -332,7 +337,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     Il.Ast.NumV num
 
   and eval_un_exp (note : typ') (ctx : Ctx.t) (unop : unop) (_optyp : optyp)
-      (exp : exp) : value attempt =
+      (exp : exp) : value attempt_unit =
     let* value = eval_exp ctx exp in
     let value_res =
       match unop with
@@ -367,7 +372,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     Il.Ast.NumV (Num.bin binop num_l num_r)
 
   and eval_bin_exp (note : typ') (ctx : Ctx.t) (binop : binop) (_optyp : optyp)
-      (exp_l : exp) (exp_r : exp) : value attempt =
+      (exp_l : exp) (exp_r : exp) : value attempt_unit =
     let* value_l = eval_exp ctx exp_l in
     let* value_r = eval_exp ctx exp_r in
     let value_res =
@@ -399,7 +404,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     Il.Ast.BoolV (Num.cmp cmpop num_l num_r)
 
   and eval_cmp_exp (note : typ') (ctx : Ctx.t) (cmpop : cmpop) (_optyp : optyp)
-      (exp_l : exp) (exp_r : exp) : value attempt =
+      (exp_l : exp) (exp_r : exp) : value attempt_unit =
     let* value_l = eval_exp ctx exp_l in
     let* value_r = eval_exp ctx exp_r in
     let value_res =
@@ -419,9 +424,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   (* Upcast expression evaluation *)
 
-  and upcast (ctx : Ctx.t) (typ : typ) (value : value) : value attempt =
+  and upcast (ctx : Ctx.t) (typ : typ) (value : value) : value attempt_unit =
     let fail_upcast () =
-      fail typ.at
+      fail_unit typ.at
         (F.asprintf "cannot upcast value %s to type %s"
            (Sl.Print.string_of_value ~short:true value)
            (Sl.Print.string_of_typ typ))
@@ -472,15 +477,15 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | _ -> Ok value
 
   and eval_upcast_exp (_note : typ') (ctx : Ctx.t) (typ : typ) (exp : exp) :
-      value attempt =
+      value attempt_unit =
     let* value = eval_exp ctx exp in
     upcast ctx typ value
 
   (* Downcast expression evaluation *)
 
-  and downcast (ctx : Ctx.t) (typ : typ) (value : value) : value attempt =
+  and downcast (ctx : Ctx.t) (typ : typ) (value : value) : value attempt_unit =
     let fail_downcast () =
-      fail typ.at
+      fail_unit typ.at
         (F.asprintf "cannot downcast value %s to type %s"
            (Sl.Print.string_of_value ~short:true value)
            (Sl.Print.string_of_typ typ))
@@ -531,7 +536,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | _ -> Ok value
 
   and eval_downcast_exp (_note : typ') (ctx : Ctx.t) (typ : typ) (exp : exp) :
-      value attempt =
+      value attempt_unit =
     let* value = eval_exp ctx exp in
     downcast ctx typ value
 
@@ -567,7 +572,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | _ -> true
 
   and eval_sub_exp (note : typ') (ctx : Ctx.t) (exp : exp) (typ : typ) :
-      value attempt =
+      value attempt_unit =
     let* value = eval_exp ctx exp in
     let sub = subtyp ctx typ value in
     let value_res =
@@ -582,7 +587,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Pattern match check expression evaluation *)
 
   and eval_match_exp (note : typ') (ctx : Ctx.t) (exp : exp) (pattern : pattern)
-      : value attempt =
+      : value attempt_unit =
     let* value = eval_exp ctx exp in
     let matches =
       match (pattern, value.it) with
@@ -609,7 +614,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Tuple expression evaluation *)
 
   and eval_tuple_exp (note : typ') (ctx : Ctx.t) (exps : exp list) :
-      value attempt =
+      value attempt_unit =
     let* values = eval_exps ctx exps in
     let value_res =
       let vid = Value.fresh () in
@@ -627,7 +632,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Case expression evaluation *)
 
   and eval_case_exp (note : typ') (ctx : Ctx.t) (notexp : notexp) :
-      value attempt =
+      value attempt_unit =
     let mixop, exps = notexp in
     let* values = eval_exps ctx exps in
     let value_res =
@@ -646,7 +651,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Struct expression evaluation *)
 
   and eval_str_exp (note : typ') (ctx : Ctx.t) (fields : (atom * exp) list) :
-      value attempt =
+      value attempt_unit =
     let atoms, exps = List.split fields in
     let* values = eval_exps ctx exps in
     let fields = List.combine atoms values in
@@ -666,7 +671,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Option expression evaluation *)
 
   and eval_opt_exp (note : typ') (ctx : Ctx.t) (exp_opt : exp option) :
-      value attempt =
+      value attempt_unit =
     let* value_opt =
       match exp_opt with
       | Some exp ->
@@ -690,7 +695,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* List expression evaluation *)
 
   and eval_list_exp (note : typ') (ctx : Ctx.t) (exps : exp list) :
-      value attempt =
+      value attempt_unit =
     let* values = eval_exps ctx exps in
     let value_res =
       let vid = Value.fresh () in
@@ -708,7 +713,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Cons expression evaluation *)
 
   and eval_cons_exp (note : typ') (ctx : Ctx.t) (exp_h : exp) (exp_t : exp) :
-      value attempt =
+      value attempt_unit =
     let* value_h = eval_exp ctx exp_h in
     let* value_t = eval_exp ctx exp_t in
     let values_t = Value.get_list value_t in
@@ -723,7 +728,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Concatenation expression evaluation *)
 
   and eval_cat_exp (note : typ') (ctx : Ctx.t) (at : region) (exp_l : exp)
-      (exp_r : exp) : value attempt =
+      (exp_r : exp) : value attempt_unit =
     let* value_l = eval_exp ctx exp_l in
     let* value_r = eval_exp ctx exp_r in
     let* value_res =
@@ -735,7 +740,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           let value_res = Il.Ast.ListV (values_l @ values_r) in
           Ok value_res
       | _ ->
-          fail at
+          fail_unit at
             (F.asprintf
                "concatenation expects either two texts or two lists, but got \
                 %s and %s"
@@ -755,7 +760,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Membership expression evaluation *)
 
   and eval_mem_exp (note : typ') (ctx : Ctx.t) (exp_e : exp) (exp_s : exp) :
-      value attempt =
+      value attempt_unit =
     let* value_e = eval_exp ctx exp_e in
     let* value_s = eval_exp ctx exp_s in
     let values_s = Value.get_list value_s in
@@ -771,7 +776,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   (* Length expression evaluation *)
 
-  and eval_len_exp (note : typ') (ctx : Ctx.t) (exp : exp) : value attempt =
+  and eval_len_exp (note : typ') (ctx : Ctx.t) (exp : exp) : value attempt_unit
+      =
     let* value = eval_exp ctx exp in
     let len = value |> Value.get_list |> List.length |> Bigint.of_int in
     let value_res =
@@ -786,7 +792,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Dot expression evaluation *)
 
   and eval_dot_exp (_note : typ') (ctx : Ctx.t) (exp_b : exp) (atom : atom) :
-      value attempt =
+      value attempt_unit =
     let* value_b = eval_exp ctx exp_b in
     let fields = Value.get_struct value_b in
     let value_res =
@@ -799,13 +805,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Index expression evaluation *)
 
   and eval_idx_exp (_note : typ') (ctx : Ctx.t) (exp_b : exp) (exp_i : exp) :
-      value attempt =
+      value attempt_unit =
     let* value_b = eval_exp ctx exp_b in
     let* value_i = eval_exp ctx exp_i in
     let values = Value.get_list value_b in
     let idx = value_i |> Value.get_num |> Num.to_int |> Bigint.to_int_exn in
     if idx < 0 || idx >= List.length values then
-      fail exp_i.at
+      fail_unit exp_i.at
         (F.asprintf "index %d out of bounds [0, %d)" idx (List.length values))
     else
       let value_res = List.nth values idx in
@@ -814,7 +820,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Slice expression evaluation *)
 
   and eval_slice_exp (note : typ') (ctx : Ctx.t) (exp_b : exp) (exp_i : exp)
-      (exp_n : exp) : value attempt =
+      (exp_n : exp) : value attempt_unit =
     let* value_b = eval_exp ctx exp_b in
     let values = Value.get_list value_b in
     let* value_i = eval_exp ctx exp_i in
@@ -874,7 +880,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | _ -> failwith "(TODO eval_update_path)"
 
   and eval_upd_exp (_note : typ') (ctx : Ctx.t) (exp_b : exp) (path : path)
-      (exp_f : exp) : value attempt =
+      (exp_f : exp) : value attempt_unit =
     let* value_b = eval_exp ctx exp_b in
     let* value_f = eval_exp ctx exp_f in
     let value = eval_update_path ctx value_b path value_f in
@@ -883,13 +889,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Function call expression evaluation *)
 
   and eval_call_exp (_note : typ') (ctx : Ctx.t) (id : id) (targs : targ list)
-      (args : arg list) : value attempt =
+      (args : arg list) : value attempt_unit =
     invoke_func ctx id targs args
 
   (* Iterated expression evaluation *)
 
   and eval_iter_exp_opt (note : typ') (ctx : Ctx.t) (exp : exp)
-      (vars : var list) : value attempt =
+      (vars : var list) : value attempt_unit =
     let ctx_sub_opt = Ctx.sub_opt ctx vars in
     let* value_res =
       match ctx_sub_opt with
@@ -918,7 +924,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     Ok value_res
 
   and eval_iter_exp_list (note : typ') (ctx : Ctx.t) (exp : exp)
-      (vars : var list) : value attempt =
+      (vars : var list) : value attempt_unit =
     let ctxs_sub = Ctx.sub_list ctx vars in
     let* values_rev =
       List.fold_left
@@ -945,7 +951,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     Ok value_res
 
   and eval_iter_exp (note : typ') (ctx : Ctx.t) (exp : exp) (iterexp : iterexp)
-      : value attempt =
+      : value attempt_unit =
     let iter, vars = iterexp in
     match iter with
     | Opt -> eval_iter_exp_opt note ctx exp vars
@@ -953,11 +959,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   (* Argument evaluation *)
 
-  and eval_arg (ctx : Ctx.t) (arg : arg) : value attempt =
+  and eval_arg (ctx : Ctx.t) (arg : arg) : value attempt_unit =
     eval_arg' ctx arg
-    |> nest arg.at (F.asprintf "%s failed" (Sl.Print.string_of_arg arg))
+    |> nest_unit arg.at (F.asprintf "%s failed" (Sl.Print.string_of_arg arg))
 
-  and eval_arg' (ctx : Ctx.t) (arg : arg) : value attempt =
+  and eval_arg' (ctx : Ctx.t) (arg : arg) : value attempt_unit =
     match arg.it with
     | ExpA exp -> eval_exp ctx exp
     | DefA id ->
@@ -969,7 +975,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         Ctx.add_node ctx value_res;
         Ok value_res
 
-  and eval_args (ctx : Ctx.t) (args : arg list) : value list attempt =
+  and eval_args (ctx : Ctx.t) (args : arg list) : value list attempt_unit =
     let* values_rev =
       List.fold_left
         (fun attempt arg ->
@@ -983,12 +989,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   (* Instruction evaluation *)
 
-  and eval_instr (ctx : Ctx.t) (instr : instr) : (Ctx.t * Sign.t) attempt =
+  and eval_instr (ctx : Ctx.t) (instr : instr) : (Ctx.t * Sign.t) attempt_unit =
     eval_instr' ctx instr
-    |> nest instr.at
+    |> nest_unit instr.at
          (F.asprintf "%s failed" (Sl.Print.string_of_instr_short instr))
 
-  and eval_instr' (ctx : Ctx.t) (instr : instr) : (Ctx.t * Sign.t) attempt =
+  and eval_instr' (ctx : Ctx.t) (instr : instr) : (Ctx.t * Sign.t) attempt_unit
+      =
     match instr.it with
     | IfI (exp_cond, iterexps, instrs_then, phantom_opt) ->
         eval_if_instr ctx exp_cond iterexps instrs_then phantom_opt
@@ -1006,7 +1013,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | DebugI exp -> eval_debug_instr ctx exp
 
   and eval_instrs (ctx : Ctx.t) (sign : Sign.t) (instrs : instr list) :
-      (Ctx.t * Sign.t) attempt =
+      (Ctx.t * Sign.t) attempt_unit =
     List.fold_left
       (fun attempt instr ->
         let* ctx, sign = attempt in
@@ -1016,13 +1023,14 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   (* If instruction evaluation *)
 
-  and eval_if_cond (ctx : Ctx.t) (exp_cond : exp) : (bool * value) attempt =
+  and eval_if_cond (ctx : Ctx.t) (exp_cond : exp) : (bool * value) attempt_unit
+      =
     let* value_cond = eval_exp ctx exp_cond in
     let cond = Value.get_bool value_cond in
     Ok (cond, value_cond)
 
   and eval_if_cond_list (ctx : Ctx.t) (exp_cond : exp) (vars : var list)
-      (iterexps : iterexp list) : (bool * value list) attempt =
+      (iterexps : iterexp list) : (bool * value list) attempt_unit =
     let ctxs_sub = Ctx.sub_list ctx vars in
     let* cond, values_cond_rev =
       List.fold_left
@@ -1042,7 +1050,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     Ok (cond, values_cond)
 
   and eval_if_cond_iter' (ctx : Ctx.t) (exp_cond : exp)
-      (iterexps : iterexp list) : (bool * value) attempt =
+      (iterexps : iterexp list) : (bool * value) attempt_unit =
     match iterexps with
     | [] -> eval_if_cond ctx exp_cond
     | iterexp_h :: iterexps_t -> (
@@ -1069,13 +1077,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
             Ok (cond, value_cond))
 
   and eval_if_cond_iter (ctx : Ctx.t) (exp_cond : exp) (iterexps : iterexp list)
-      : (bool * value) attempt =
+      : (bool * value) attempt_unit =
     let iterexps = List.rev iterexps in
     eval_if_cond_iter' ctx exp_cond iterexps
 
   and eval_if_instr (ctx : Ctx.t) (exp_cond : exp) (iterexps : iterexp list)
       (instrs_then : instr list) (phantom_opt : phantom option) :
-      (Ctx.t * Sign.t) attempt =
+      (Ctx.t * Sign.t) attempt_unit =
     (* Evaluate the if condition and mark phantom *)
     let* cond, value_cond = eval_if_cond_iter ctx exp_cond iterexps in
     let vid = value_cond.note.vid in
@@ -1088,7 +1096,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Hold instruction evaluation *)
 
   and eval_hold_cond (ctx : Ctx.t) (id : id) (notexp : notexp) :
-      (bool * value) attempt =
+      (bool * value) attempt_unit =
     let _, exps_input = notexp in
     let* values_input = eval_exps ctx exps_input in
     let hold =
@@ -1107,8 +1115,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     Ok (hold, value_res)
 
   and eval_hold_cond_list (ctx : Ctx.t) (id : id) (notexp : notexp)
-      (vars : var list) (iterexps : iterexp list) : (bool * value list) attempt
-      =
+      (vars : var list) (iterexps : iterexp list) :
+      (bool * value list) attempt_unit =
     let ctxs_sub = Ctx.sub_list ctx vars in
     let* cond, values_cond_rev =
       List.fold_left
@@ -1128,7 +1136,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     Ok (cond, values_cond)
 
   and eval_hold_cond_iter' (ctx : Ctx.t) (id : id) (notexp : notexp)
-      (iterexps : iterexp list) : (bool * value) attempt =
+      (iterexps : iterexp list) : (bool * value) attempt_unit =
     match iterexps with
     | [] -> eval_hold_cond ctx id notexp
     | iterexp_h :: iterexps_t -> (
@@ -1155,13 +1163,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
             Ok (cond, value_cond))
 
   and eval_hold_cond_iter (ctx : Ctx.t) (id : id) (notexp : notexp)
-      (iterexps : iterexp list) : (bool * value) attempt =
+      (iterexps : iterexp list) : (bool * value) attempt_unit =
     let iterexps = List.rev iterexps in
     eval_hold_cond_iter' ctx id notexp iterexps
 
   and eval_hold_instr (ctx : Ctx.t) (id : id) (notexp : notexp)
-      (iterexps : iterexp list) (holdcase : holdcase) : (Ctx.t * Sign.t) attempt
-      =
+      (iterexps : iterexp list) (holdcase : holdcase) :
+      (Ctx.t * Sign.t) attempt_unit =
     (* Copy the current coverage information *)
     let cover_backup = !(ctx.coverage) in
     (* Evaluate the hold condition *)
@@ -1190,7 +1198,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Case analysis instruction evaluation *)
 
   and eval_cases (ctx : Ctx.t) (exp : exp) (cases : case list) :
-      (instr list option * value) attempt =
+      (instr list option * value) attempt_unit =
     let* block_match, values_cond_rev =
       List.fold_left
         (fun attempt (guard, block) ->
@@ -1227,7 +1235,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     Ok (block_match, value_cond)
 
   and eval_case_instr (ctx : Ctx.t) (exp : exp) (cases : case list)
-      (phantom_opt : phantom option) : (Ctx.t * Sign.t) attempt =
+      (phantom_opt : phantom option) : (Ctx.t * Sign.t) attempt_unit =
     (* Evaluate the matching case and mark phantom *)
     let* instrs_opt, value_cond = eval_cases ctx exp cases in
     let vid = value_cond.note.vid in
@@ -1242,21 +1250,21 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Group instruction evaluation *)
 
   and eval_group_instr (ctx : Ctx.t) (id_group : id) (_exps_group : exp list)
-      (instrs_group : instr list) : (Ctx.t * Sign.t) attempt =
+      (instrs_group : instr list) : (Ctx.t * Sign.t) attempt_unit =
     let* ctx_group, sign_group = eval_instrs ctx Cont instrs_group in
     match sign_group with
     | Cont -> Ok (ctx, Sign.Cont)
     | Res values_output -> Ok (ctx_group, Sign.Res values_output)
-    | Ret _ -> fail id_group.at "cannot return from try instruction"
+    | Ret _ -> fail_unit id_group.at "cannot return from try instruction"
 
   (* Let instruction evaluation *)
 
-  and eval_let (ctx : Ctx.t) (exp_l : exp) (exp_r : exp) : Ctx.t attempt =
+  and eval_let (ctx : Ctx.t) (exp_l : exp) (exp_r : exp) : Ctx.t attempt_unit =
     let* value = eval_exp ctx exp_r in
     assign_exp ctx exp_l value
 
   and eval_let_opt (ctx : Ctx.t) (exp_l : exp) (exp_r : exp) (vars : var list)
-      (iterexps : iterexp list) : Ctx.t attempt =
+      (iterexps : iterexp list) : Ctx.t attempt_unit =
     (* Discriminate between bound and binding variables *)
     let vars_bound, vars_binding =
       List.partition
@@ -1333,7 +1341,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     Ok ctx
 
   and eval_let_list (ctx : Ctx.t) (exp_l : exp) (exp_r : exp) (vars : var list)
-      (iterexps : iterexp list) : Ctx.t attempt =
+      (iterexps : iterexp list) : Ctx.t attempt_unit =
     (* Discriminate between bound and binding variables *)
     let vars_bound, vars_binding =
       List.partition
@@ -1401,7 +1409,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     Ok ctx
 
   and eval_let_iter' (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
-      (iterexps : iterexp list) : Ctx.t attempt =
+      (iterexps : iterexp list) : Ctx.t attempt_unit =
     match iterexps with
     | [] -> eval_let ctx exp_l exp_r
     | iterexp_h :: iterexps_t -> (
@@ -1411,18 +1419,18 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         | List -> eval_let_list ctx exp_l exp_r vars_h iterexps_t)
 
   and eval_let_iter (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
-      (iterexps : iterexp list) : Ctx.t attempt =
+      (iterexps : iterexp list) : Ctx.t attempt_unit =
     let iterexps = List.rev iterexps in
     eval_let_iter' ctx exp_l exp_r iterexps
 
   and eval_let_instr (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
-      (iterexps : iterexp list) : (Ctx.t * Sign.t) attempt =
+      (iterexps : iterexp list) : (Ctx.t * Sign.t) attempt_unit =
     let* ctx = eval_let_iter ctx exp_l exp_r iterexps in
     Ok (ctx, Sign.Cont)
 
   (* Rule instruction evaluation *)
 
-  and eval_rule (ctx : Ctx.t) (id : id) (notexp : notexp) : Ctx.t attempt =
+  and eval_rule (ctx : Ctx.t) (id : id) (notexp : notexp) : Ctx.t attempt_unit =
     let exps_input, exps_output =
       let inputs = Ctx.find_rel_inputs Local ctx id in
       let _, exps = notexp in
@@ -1433,11 +1441,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     assign_exps ctx exps_output values_output
 
   and eval_rule_opt (_ctx : Ctx.t) (_id : id) (_notexp : notexp)
-      (_vars : var list) (_iterexps : iterexp list) : Ctx.t attempt =
+      (_vars : var list) (_iterexps : iterexp list) : Ctx.t attempt_unit =
     failwith "(TODO) eval_rule_opt"
 
   and eval_rule_list (ctx : Ctx.t) (id : id) (notexp : notexp) (vars : var list)
-      (iterexps : iterexp list) : Ctx.t attempt =
+      (iterexps : iterexp list) : Ctx.t attempt_unit =
     (* Discriminate between bound and binding variables *)
     let vars_bound, vars_binding =
       List.partition
@@ -1505,7 +1513,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     Ok ctx
 
   and eval_rule_iter' (ctx : Ctx.t) (id : id) (notexp : notexp)
-      (iterexps : iterexp list) : Ctx.t attempt =
+      (iterexps : iterexp list) : Ctx.t attempt_unit =
     match iterexps with
     | [] -> eval_rule ctx id notexp
     | iterexp_h :: iterexps_t -> (
@@ -1515,31 +1523,33 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         | List -> eval_rule_list ctx id notexp vars_h iterexps_t)
 
   and eval_rule_iter (ctx : Ctx.t) (id : id) (notexp : notexp)
-      (iterexps : iterexp list) : Ctx.t attempt =
+      (iterexps : iterexp list) : Ctx.t attempt_unit =
     let iterexps = List.rev iterexps in
     eval_rule_iter' ctx id notexp iterexps
 
   and eval_rule_instr (ctx : Ctx.t) (id : id) (notexp : notexp)
-      (iterexps : iterexp list) : (Ctx.t * Sign.t) attempt =
+      (iterexps : iterexp list) : (Ctx.t * Sign.t) attempt_unit =
     let* ctx = eval_rule_iter ctx id notexp iterexps in
     Ok (ctx, Sign.Cont)
 
   (* Result instruction evaluation *)
 
   and eval_result_instr (ctx : Ctx.t) (exps : exp list) :
-      (Ctx.t * Sign.t) attempt =
+      (Ctx.t * Sign.t) attempt_unit =
     let* values = eval_exps ctx exps in
     Ok (ctx, Sign.Res values)
 
   (* Return instruction evaluation *)
 
-  and eval_return_instr (ctx : Ctx.t) (exp : exp) : (Ctx.t * Sign.t) attempt =
+  and eval_return_instr (ctx : Ctx.t) (exp : exp) :
+      (Ctx.t * Sign.t) attempt_unit =
     let* value = eval_exp ctx exp in
     Ok (ctx, Sign.Ret value)
 
   (* Debug instruction evaluation *)
 
-  and eval_debug_instr (ctx : Ctx.t) (exp : exp) : (Ctx.t * Sign.t) attempt =
+  and eval_debug_instr (ctx : Ctx.t) (exp : exp) : (Ctx.t * Sign.t) attempt_unit
+      =
     let* value = eval_exp ctx exp in
     print_endline
     @@ F.sprintf "%s: %s" (string_of_region exp.at) (Il.Print.string_of_exp exp);
@@ -1549,12 +1559,12 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Invoke a relation *)
 
   and invoke_rel (ctx : Ctx.t) (id : id) (values_input : value list) :
-      value list attempt =
+      value list attempt_unit =
     invoke_rel' ctx id values_input
-    |> nest id.at (F.asprintf "relation %s failed" id.it)
+    |> nest_unit id.at (F.asprintf "relation %s failed" id.it)
 
   and invoke_rel' (ctx : Ctx.t) (id : id) (values_input : value list) :
-      value list attempt =
+      value list attempt_unit =
     let rel = Ctx.find_rel Local ctx id in
     match rel with
     | Rel.Extern _ -> invoke_extern_rel ctx id values_input
@@ -1562,7 +1572,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         invoke_defined_rel ctx id exps_input instrs values_input
 
   and invoke_extern_rel (_ctx : Ctx.t) (id : id) (values_input : value list) :
-      value list attempt =
+      value list attempt_unit =
     let* values_output =
       match id.it with
       | "ExternFunctionCall_eval" ->
@@ -1571,7 +1581,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       | "ExternMethodCall_eval" ->
           let values_output = Arch.eval_extern_method_call values_input in
           Ok values_output
-      | _ -> fail id.at (F.asprintf "unimplemented extern relation %s" id.it)
+      | _ ->
+          fail_unit id.at (F.asprintf "unimplemented extern relation %s" id.it)
     in
     List.iteri
       (fun idx_arg value_input ->
@@ -1584,7 +1595,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     Ok values_output
 
   and invoke_defined_rel (ctx : Ctx.t) (id : id) (exps_input : exp list)
-      (instrs : instr list) (values_input : value list) : value list attempt =
+      (instrs : instr list) (values_input : value list) :
+      value list attempt_unit =
     let invoke_defined_rel' () =
       let ctx_local = Ctx.localize_rule ctx id values_input in
       let* ctx_local = assign_exps ctx_local exps_input values_input in
@@ -1600,7 +1612,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                 values_output)
             values_input;
           Ok values_output
-      | _ -> fail id.at "relation did not produce results"
+      | _ -> fail_unit id.at "relation did not produce results"
     in
     if (not (Ctx.deriving ctx)) && Cache.is_cached_rule id.it then (
       let cache_result = Cache.Cache.find !rule_cache (id.it, values_input) in
@@ -1615,17 +1627,17 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Invoke a function *)
 
   and invoke_func (ctx : Ctx.t) (id : id) (targs : targ list) (args : arg list)
-      : value attempt =
+      : value attempt_unit =
     invoke_func' ctx id targs args
-    |> nest id.at (F.asprintf "function %s failed" id.it)
+    |> nest_unit id.at (F.asprintf "function %s failed" id.it)
 
   and invoke_func_with_values (ctx : Ctx.t) (id : id) (targs : targ list)
-      (values_input : value list) : value attempt =
+      (values_input : value list) : value attempt_unit =
     invoke_func'' ctx id targs values_input
-    |> nest id.at (F.asprintf "function %s failed" id.it)
+    |> nest_unit id.at (F.asprintf "function %s failed" id.it)
 
   and invoke_func' (ctx : Ctx.t) (id : id) (targs : targ list) (args : arg list)
-      : value attempt =
+      : value attempt_unit =
     let targs =
       match targs with
       | [] -> []
@@ -1650,7 +1662,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     invoke_func'' ctx id targs values_input
 
   and invoke_func'' (ctx : Ctx.t) (id : id) (targs : targ list)
-      (values_input : value list) : value attempt =
+      (values_input : value list) : value attempt_unit =
     let func = Ctx.find_func Local ctx id in
     match func with
     | Func.Extern -> invoke_extern_func ctx id targs values_input
@@ -1659,13 +1671,14 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         invoke_defined_func ctx id tparams args_input instrs targs values_input
 
   and invoke_extern_func (ctx : Ctx.t) (id : id) (_targs : targ list)
-      (values_input : value list) : value attempt =
+      (values_input : value list) : value attempt_unit =
     let* value_output =
       match id.it with
       | "init_externState" ->
           let value_output = Arch.eval_extern_init values_input in
           Ok value_output
-      | _ -> fail id.at (F.asprintf "unimplemented extern function %s" id.it)
+      | _ ->
+          fail_unit id.at (F.asprintf "unimplemented extern function %s" id.it)
     in
     List.iteri
       (fun idx_arg value_input ->
@@ -1674,7 +1687,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     Ok value_output
 
   and invoke_builtin_func (ctx : Ctx.t) (id : id) (targs : targ list)
-      (values_input : value list) : value attempt =
+      (values_input : value list) : value attempt_unit =
     let value_output = Builtin.invoke ctx id targs values_input in
     List.iteri
       (fun idx_arg value_input ->
@@ -1684,7 +1697,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and invoke_defined_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
       (args_input : arg list) (instrs : instr list) (targs : targ list)
-      (values_input : value list) : value attempt =
+      (values_input : value list) : value attempt_unit =
     let tdenv_local =
       check
         (List.length targs = List.length tparams)
@@ -1707,7 +1720,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                 (Dep.Edges.Func (id, idx_arg)))
             values_input;
           Ok value_output
-      | _ -> fail id.at "function did not return a value"
+      | _ -> fail_unit id.at "function did not return a value"
     in
     if (not (Ctx.deriving ctx)) && Cache.is_cached_func id.it then (
       let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in

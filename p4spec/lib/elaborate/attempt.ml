@@ -2,31 +2,28 @@ include Util.Attempt
 open Error
 open Util.Source
 
+(* Types *)
+
+type failtrace_unit = unit failtrace
+type 'a attempt_unit = ('a, unit) attempt
+
+(* Fail *)
+
+let fail_unit (at : region) (msg : string) : 'a attempt_unit = fail at () msg
+let fail_unit_silent : 'a attempt_unit = fail no_region () ""
+
+let nest_unit (at : region) (msg : string) (attempt : 'a attempt_unit) :
+    'a attempt_unit =
+  nest at () msg attempt
+
 (* Monadic interface *)
 
-let ( let* ) (attempt : 'a attempt) (f : 'a -> 'b) : 'b =
+let ( let* ) (attempt : 'a attempt_unit) (f : 'a -> 'b) : 'b =
   match attempt with Ok a -> f a | Fail _ as fail -> fail
 
-let error_with_failtraces (failtraces : failtrace list) =
-  let sfailtrace =
-    match failtraces with
-    | [] -> ""
-    | [ failtrace ] ->
-        let depth = depth failtrace in
-        let depth_limit = max 0 (depth - 10) in
-        string_of_failtrace ~depth_limit ~bullet:"-" failtrace
-    | failtraces ->
-        List.mapi
-          (fun idx failtrace ->
-            let depth = depth failtrace in
-            let depth_limit = max 0 (depth - 10) in
-            string_of_failtrace ~depth_limit
-              ~bullet:(string_of_int (idx + 1) ^ ".")
-              failtrace)
-          failtraces
-        |> String.concat ""
-  in
-  error no_region ("tracing backtrack logs:\n" ^ sfailtrace)
-
-let ( let+ ) (attempt : 'a attempt) (f : 'a -> 'b) : 'b =
-  match attempt with Ok a -> f a | Fail traces -> error_with_failtraces traces
+let ( let+ ) (attempt : 'a attempt_unit) (f : 'a -> 'b) : 'b =
+  match attempt with
+  | Ok a -> f a
+  | Fail failtraces ->
+      error no_region
+        ("tracing backtrack logs:\n" ^ string_of_failtraces_short failtraces)
