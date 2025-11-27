@@ -65,21 +65,6 @@ and free_arg (arg : arg) : t =
 and free_args (args : arg list) : t =
   args |> List.map free_arg |> List.fold_left ( + ) empty
 
-(* (* Branching instructions *) *)
-(* | IfI of exp * iterexp list * instr list * phantom option *)
-(* | HoldI of id * notexp * iterexp list * holdcase *)
-(* | CaseI of exp * case list * phantom option  *)
-(* | OtherwiseI of instr *)
-(* (* Aggregate instructions *) *)
-(* | GroupI of id * exp list * instr list *)
-(* (* Binding instructions *) *)
-(* | LetI of exp * exp * iterexp list *)
-(* | RuleI of id * notexp * iterexp list *)
-(* (* Result/Return instructions *) *)
-(* | ResultI of exp list *)
-(* | ReturnI of exp *)
-(* (* Debugging instructions *) *)
-(* | DebugI of exp *)
 let rec free_cases (cases : case list) : t =
   cases
   |> List.map (fun (guard, instrs) -> free_guard guard + free_instrs instrs)
@@ -106,11 +91,3 @@ and free_instr (instr : instr) : t =
 
 and free_instrs (instrs : instr list) : t =
   instrs |> List.map free_instr |> List.fold_left ( + ) empty
-
-(* (* Definitions *) *)
-(**)
-(* let free_def (def : def) : t = *)
-(*   match def.it with *)
-(*   | RelD (_, _, _, rulegroups, _) -> free_rulegroups rulegroups *)
-(*   | DecD (_, _, _, _, clauses, _) -> free_clauses clauses *)
-(*   | _ -> empty *)
