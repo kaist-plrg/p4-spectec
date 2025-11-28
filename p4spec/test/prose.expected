@@ -2558,7 +2558,7 @@ for each `argument` in `argument^{asterisk}^`
 for each `argument` in `argument^{asterisk}^`
    .... Let <<CallableType_ok, `p TC |- callableTargetIR < typeArgumentIR^{asterisk}^ > ( argumentIR^{asterisk}^ ) : callableTypeIR < # tid~inserted~^{asterisk}^ > ( # id~default~^{asterisk}^ )`>>.
    .... Let `tid~infer~^{asterisk}^` be `tid~impl~^{asterisk}^ {pp} tid~inserted~^{asterisk}^`.
-   .... Let <<Call_ok, `p TC |- callableTypeIR < [ ] # tid~infer~^{asterisk}^ > ( argumentIR^{asterisk}^ # id~default~^{asterisk}^ ) : typeIR~ret~ < typeArgumentIR~inferred~^{asterisk}^ > ( argumentIR~cast~^{asterisk}^ )`>>.
+   .... Let <<Call_ok, `p TC |- callableTypeIR < typeArgumentIR^{asterisk}^ # tid~infer~^{asterisk}^ > ( argumentIR^{asterisk}^ # id~default~^{asterisk}^ ) : typeIR~ret~ < typeArgumentIR~inferred~^{asterisk}^ > ( argumentIR~cast~^{asterisk}^ )`>>.
    .... Let `callStatementIR` be `callableTargetIR < typeArgumentIR~inferred~^{asterisk}^ > ( argumentIR~cast~^{asterisk}^ ) ;`.
    .... Result in 
 * the typing context `TC`,
@@ -5954,7 +5954,7 @@ relation Stmt_inst: `p`, `IC`, `STO`, and `statementIR`
   ... Let `oid` be `IC.PATH {pp} [nameIR]`.
   ... Let `STO~2~` be `<<add_map, $add_map<oid, object>(STO~1~, oid, object)>>`.
   ... Let `constantDeclarationIR` be `CONST typeIR nameIR = ! oid ;`.
-  ... Let `callableTargetIR` be `tid # ( typeIR CTK ) . "apply"`.
+  ... Let `callableTargetIR` be `nameIR # ( typeIR CTK ) . "apply"`.
   ... Let `callStatementIR` be `callableTargetIR < [ ] > ( argumentListIR ) ;`.
   ... Let `blockStatementIR` be `{ [constantDeclarationIR, callStatementIR] }`.
   ... Result in 
@@ -6755,7 +6755,29 @@ for each `constructorParameterIR~default~` in `constructorParameterIR~default~^{
 --
 +
 for each `callableDef` in `callableDef^{asterisk}^`
-  ... Let `externState` be `<<init_externState, $init_externState>>`.
+  ... Let `id~cparam~^{asterisk}^` be the list of `id~cparam~`, obtained by repeating:
++
+--
+      * Let `id~cparam~` be the name of `constructorParameterIR`.
+--
++
+for each `constructorParameterIR` in `constructorParameterIR^{asterisk}^`
+  ... Let `value^?^^{asterisk}^` be the list of `value^?^`, obtained by repeating:
++
+--
+      * Let `value^?^` be `<<find_map, $find_map<id, value>(IC~callee_4~.BLOCK.FRAME, id~cparam~)>>`.
+--
++
+for each `id~cparam~` in `id~cparam~^{asterisk}^`
+  ... Check that `value^?^` is Some value, for all `value^?^` in `value^?^^{asterisk}^`.
+  ... Let `value~cparam~^{asterisk}^` be the list of `value~cparam~`, obtained by repeating:
++
+--
+      * Let `value~cparam~` be `value^?^`.
+--
++
+for each `value^?^` in `value^?^^{asterisk}^`
+  ... Let `externState` be `<<init_externState, $init_externState(nameIR, typeArgumentIR^{asterisk}^, value~cparam~^{asterisk}^)>>`.
   ... Let `object~extern~` be `EXTERN nameIR < IC~callee_4~.BLOCK.TYPE > { externState IC~callee_4~.BLOCK.FRAME { (cid : externMethodDef)^{asterisk}^ } }`.
   ... Result in `STO~1~` and `object~extern~`.
 . Else if let `PARSER ( parameterIR^{asterisk}^ ) ( constructorParameterIR^{asterisk}^ ) { parserLocalDeclarationIR^{asterisk}^ parserStateIR^{asterisk}^ }` be `constructorDef`:
@@ -7236,6 +7258,7 @@ relation Argument_eval_lvalue: `p`, `EC~0~`, `STO~0~`, and `argumentIR`
 . Else if let `nameIR = _` be `argumentIR`:
  .. Group nameIR-dontcare:
   ... Result in `EC~0~`, `STO~0~`, and `None`.
+. Else if `argumentIR` matches pattern `_`:
  .. Group dontcare:
   ... Result in `EC~0~`, `STO~0~`, and `None`.
 

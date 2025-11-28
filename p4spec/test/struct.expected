@@ -16628,7 +16628,7 @@ relation Stmt_ok: p TC f |- statement : % % %
 
           8. (Let tid_infer*{tid_infer <- tid_infer*} be tid_impl*{tid_impl <- tid_impl*} ++ tid_inserted*{tid_inserted <- tid_inserted*})
 
-          9. (Call_ok: p TC |- callableTypeIR < [] # tid_infer*{tid_infer <- tid_infer*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): typeIR_ret < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} ))
+          9. (Call_ok: p TC |- callableTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # tid_infer*{tid_infer <- tid_infer*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): typeIR_ret < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} ))
 
           10. (Let callStatementIR be (callableTargetIR < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} );))
 
@@ -24252,8 +24252,8 @@ extern syntax externState
 ;; ../../../../spec-concrete/6.5.1-object.watsup:13.29-13.54
 syntax externMethodDefEnv = map<cid, externMethodDef>
 
-;; ../../../../spec-concrete/6.5.1-object.watsup:15.1-15.45
-extern def $init_externState
+;; ../../../../spec-concrete/6.5.1-object.watsup:15.1-15.68
+extern def $init_externState(nameIR, typeIR*{typeIR <- typeIR*}, value*{value <- value*})
 
 ;; ../../../../spec-concrete/6.5.1-object.watsup:17.23-17.86
 syntax externObject = 
@@ -25270,7 +25270,7 @@ relation Stmt_inst: p IC STO |- statementIR : % % %
 
         9. (Let constantDeclarationIR be (() const typeIR nameIR (= ((! oid) as value)) ;))
 
-        10. (Let callableTargetIR be ((((` tid) as expressionIR) # (( typeIR (ctk) ))) . "apply"))
+        10. (Let callableTargetIR be ((((` nameIR) as expressionIR) # (( typeIR (ctk) ))) . "apply"))
 
         11. (Let callStatementIR be (callableTargetIR < [] >( argumentListIR );))
 
@@ -26605,11 +26605,19 @@ relation Constructor_inst: p IC STO_0 |- constructorDef < typeArgumentIR*{typeAr
 
         1. (Let externMethodDef be (callableDef as externMethodDef))*{callableDef <- callableDef*, externMethodDef <- externMethodDef*}
 
-        2. (Let externState be $init_externState)
+        2. (Let (_annotationList'' _direction'' _typeIR'' id_cparam _constantInitializerOptIR'') be constructorParameterIR)*{_annotationList'' <- _annotationList''*, _constantInitializerOptIR'' <- _constantInitializerOptIR''*, _direction'' <- _direction''*, _typeIR'' <- _typeIR''*, constructorParameterIR <- constructorParameterIR*, id_cparam <- id_cparam*}
 
-        3. (Let object_extern be ((extern nameIR < IC_callee_4.block.type >{ externState IC_callee_4.block.frame ({ (cid : externMethodDef)*{cid <- cid*, externMethodDef <- externMethodDef*} }) }) as object))
+        3. (Let value?{value <- value?} be $find_map<id, value>(IC_callee_4.block.frame, id_cparam))*{id_cparam <- id_cparam*, value? <- value?*}
 
-        4. Result in : % % % |- % < % >( % # % ): STO_1 object_extern
+        4. If ((value?{value <- value?} matches pattern (_)))*{value? <- value?*}, then
+
+          1. (Let ?(value_cparam) be value?{value <- value?})*{value? <- value?*, value_cparam <- value_cparam*}
+
+          2. (Let externState be $init_externState(nameIR, typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}, value_cparam*{value_cparam <- value_cparam*}))
+
+          3. (Let object_extern be ((extern nameIR < IC_callee_4.block.type >{ externState IC_callee_4.block.frame ({ (cid : externMethodDef)*{cid <- cid*, externMethodDef <- externMethodDef*} }) }) as object))
+
+          4. Result in : % % % |- % < % >( % # % ): STO_1 object_extern
 
   2. Case (% has type parserObjectConstructorDef)
 
@@ -28514,7 +28522,9 @@ relation Argument_eval_lvalue: p EC_0 STO_0 |- argumentIR : % % %
 
       1. Result in : % % % |- % : EC_0 STO_0 ((` ?()) as storageReferenceResult)
 
-    3. Group dontcare: p EC_0 STO_0 |- (nameIR =_) : % % %
+  3. Case (% matches pattern `_`)
+
+    1. Group dontcare: p EC_0 STO_0 |- (_) : % % %
 
       1. Result in : % % % |- % : EC_0 STO_0 ((` ?()) as storageReferenceResult)
 

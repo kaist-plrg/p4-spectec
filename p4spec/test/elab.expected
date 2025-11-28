@@ -15174,7 +15174,7 @@ relation Stmt_ok: cursor typingContext flow |- statement : typingContext flow st
     -- (Argument_ok: p TC |- argument : argumentIR)*{argument <- argument*, argumentIR <- argumentIR*}
     -- CallableType_ok: p TC |- callableTargetIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} ): callableTypeIR <# tid_inserted*{tid_inserted <- tid_inserted*} >(# id_default*{id_default <- id_default*} )
     -- let tid_infer*{tid_infer <- tid_infer*} = tid_impl*{tid_impl <- tid_impl*} ++ tid_inserted*{tid_inserted <- tid_inserted*}
-    -- Call_ok: p TC |- callableTypeIR < [] # tid_infer*{tid_infer <- tid_infer*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): typeIR_ret < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
+    -- Call_ok: p TC |- callableTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # tid_infer*{tid_infer <- tid_infer*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): typeIR_ret < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
     -- let callStatementIR = callableTargetIR < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} );
     -- output: % % % |- % : TC f callStatementIR as statementIR
 
@@ -22113,8 +22113,8 @@ extern syntax externState
 ;; ../../../../spec-concrete/6.5.1-object.watsup:13.29-13.54
 syntax externMethodDefEnv = map<cid, externMethodDef>
 
-;; ../../../../spec-concrete/6.5.1-object.watsup:15.1-15.45
-extern def $init_externState : externState
+;; ../../../../spec-concrete/6.5.1-object.watsup:15.1-15.68
+extern def $init_externState(nameIR, typeIR*, value*) : externState
 
 ;; ../../../../spec-concrete/6.5.1-object.watsup:17.23-17.86
 syntax externObject = 
@@ -23141,7 +23141,7 @@ relation Stmt_inst: cursor instContext store |- statementIR : instContext store 
     -- let oid = IC.path ++ [nameIR]
     -- let STO_2 = $add_map<oid, object>(STO_1, oid, object)
     -- let constantDeclarationIR = const typeIR nameIR = ! oid as value ;
-    -- let callableTargetIR = ` tid as expressionIR # ( typeIR ctk ) . "apply"
+    -- let callableTargetIR = ` nameIR as expressionIR # ( typeIR ctk ) . "apply"
     -- let callStatementIR = callableTargetIR < [] >( argumentListIR );
     -- let blockStatementIR = { [constantDeclarationIR as blockElementStatementIR, callStatementIR as blockElementStatementIR] }
     -- output: % % % |- % : IC STO_2 blockStatementIR as statementIR
@@ -24722,7 +24722,7 @@ relation Bind_args: cursor instContext | cursor instContext store |- id* argumen
 ;; ../../../../spec-concrete/7.03-inst-relation.watsup:168.1-173.35
 relation Constructor_inst: cursor instContext store |- constructorDef < typeArgumentListIR >( argumentListIR # id* ): store object
 
-  ;; ../../../../spec-concrete/7.11-inst-constructor-call.watsup:162.1-197.58
+  ;; ../../../../spec-concrete/7.11-inst-constructor-call.watsup:162.1-200.58
   rulegroup externConstructorDef
 
    match
@@ -24747,11 +24747,15 @@ relation Constructor_inst: cursor instContext store |- constructorDef < typeArgu
     -- let { cid : callableDef*{callableDef <- callableDef*, cid <- cid*} } = IC_callee_4.block.callable
     -- (if callableDef <: externMethodDef)*{callableDef <- callableDef*}
     -- (let externMethodDef = callableDef as externMethodDef)*{callableDef <- callableDef*, externMethodDef <- externMethodDef*}
-    -- let externState = $init_externState
+    -- (let _annotationList'' _direction'' _typeIR'' id_cparam _constantInitializerOptIR'' = constructorParameterIR)*{_annotationList'' <- _annotationList''*, _constantInitializerOptIR'' <- _constantInitializerOptIR''*, _direction'' <- _direction''*, _typeIR'' <- _typeIR''*, constructorParameterIR <- constructorParameterIR*, id_cparam <- id_cparam*}
+    -- (let value?{value <- value?} = $find_map<id, value>(IC_callee_4.block.frame, id_cparam))*{id_cparam <- id_cparam*, value? <- value?*}
+    -- (if value?{value <- value?} matches (_))*{value? <- value?*}
+    -- (let ?(value_cparam) = value?{value <- value?})*{value? <- value?*, value_cparam <- value_cparam*}
+    -- let externState = $init_externState(nameIR, typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}, value_cparam*{value_cparam <- value_cparam*})
     -- let object_extern = extern nameIR < IC_callee_4.block.type >{ externState IC_callee_4.block.frame { cid : externMethodDef*{cid <- cid*, externMethodDef <- externMethodDef*} } } as object
     -- output: % % % |- % < % >( % # % ): STO_1 object_extern
 
-  ;; ../../../../spec-concrete/7.11-inst-constructor-call.watsup:205.1-239.59
+  ;; ../../../../spec-concrete/7.11-inst-constructor-call.watsup:208.1-242.59
   rulegroup parserConstructorDef
 
    match
@@ -24777,7 +24781,7 @@ relation Constructor_inst: cursor instContext store |- constructorDef < typeArgu
     -- let object_parser = parser( parameterIR*{parameterIR <- parameterIR*} ){ IC_callee_2.block.frame parserLocalDeclarationIR_inst*{parserLocalDeclarationIR_inst <- parserLocalDeclarationIR_inst*} IC_state.block.state } as object
     -- output: % % % |- % < % >( % # % ): STO_3 object_parser
 
-  ;; ../../../../spec-concrete/7.11-inst-constructor-call.watsup:247.1-284.54
+  ;; ../../../../spec-concrete/7.11-inst-constructor-call.watsup:250.1-287.54
   rulegroup controlConstructorDef
 
    match
@@ -24806,7 +24810,7 @@ relation Constructor_inst: cursor instContext store |- constructorDef < typeArgu
     -- let object_control = control( parameterIR*{parameterIR <- parameterIR*} ){ IC_callee_2.block.frame controlLocalDeclarationIR'*{controlLocalDeclarationIR' <- controlLocalDeclarationIR'*} { cid : actionDef*{actionDef <- actionDef*, cid <- cid*} } controlBodyIR' } as object
     -- output: % % % |- % < % >( % # % ): STO_3 object_control
 
-  ;; ../../../../spec-concrete/7.11-inst-constructor-call.watsup:290.1-316.73
+  ;; ../../../../spec-concrete/7.11-inst-constructor-call.watsup:293.1-319.73
   rulegroup packageConstructorDef
 
    match
@@ -24830,7 +24834,7 @@ relation Constructor_inst: cursor instContext store |- constructorDef < typeArgu
     -- let object_package = package< IC_callee_3.block.type >{ IC_callee_3.block.frame } as object
     -- output: % % % |- % < % >( % # % ): STO_1 object_package
 
-  ;; ../../../../spec-concrete/7.11-inst-constructor-call.watsup:322.1-338.51
+  ;; ../../../../spec-concrete/7.11-inst-constructor-call.watsup:325.1-341.51
   rulegroup tableConstructorDef
 
    match
@@ -26537,7 +26541,7 @@ relation Argument_eval_lvalue: cursor evalContext store |- argumentIR : evalCont
     -- Expr_eval_lvalue: p EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 storageReferenceResult
     -- output: % % % |- % : EC_1 STO_1 storageReferenceResult
 
-  ;; ../../../../spec-concrete/8.04-eval-argument.watsup:55.1-57.30
+  ;; ../../../../spec-concrete/8.04-eval-argument.watsup:55.1-56.45
   rulegroup nameIR-dontcare
 
    match
@@ -26552,15 +26556,14 @@ relation Argument_eval_lvalue: cursor evalContext store |- argumentIR : evalCont
     rulepath nameIR-dontcare
     -- output: % % % |- % : EC STO ` ?() as storageReferenceResult
 
-  ;; ../../../../spec-concrete/8.04-eval-argument.watsup:61.1-63.30
+  ;; ../../../../spec-concrete/8.04-eval-argument.watsup:60.1-61.35
   rulegroup dontcare
 
    match
 
-    (explicit) p EC STO |- nameIR =_ : % % %
+    (explicit) p EC STO |- _ : % % %
     (implicit) p EC STO |- argumentIR : % % %
-    -- if argumentIR matches `%=_`
-    -- let nameIR =_ = argumentIR
+    -- if argumentIR matches `_`
 
    paths
 

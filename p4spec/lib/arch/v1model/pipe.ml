@@ -51,6 +51,7 @@ struct
   type extern =
     | PacketIn of Core.Object.PacketIn.t
     | PacketOut of Core.Object.PacketOut.t
+    | Counter of Object.Counter.t
   [@@deriving yojson]
 
   let get_extern (value_sto : Value.t) (value_oid : Value.t) : extern =
@@ -591,8 +592,20 @@ struct
 
   (* Extern calls *)
 
-  let eval_extern_init (_values_input : Value.t list) : Value.t =
-    wrap_extern_v "externState" `Null
+  let eval_extern_init (values_input : Value.t list) : Value.t =
+    let value_name_extern, value_type_args, value_args =
+      match values_input with
+      | [ value_name; value_type_args; value_args ] ->
+          (value_name, value_type_args, value_args)
+      | _ -> failwith "unexpected number of arguments to extern init"
+    in
+    let name_extern = unwrap_text_v value_name_extern in
+    match name_extern with
+    | "counter" ->
+        let counter = Object.Counter.init value_type_args value_args in
+        let counter = Counter counter in
+        counter |> extern_to_yojson |> wrap_extern_v "externState"
+    | _ -> wrap_extern_v "externState" `Null
 
   let eval_extern_func_call (values_input : Value.t list) : Value.t list =
     let value_ctx, value_sto, value_name_func, value_names_param =
@@ -679,6 +692,14 @@ struct
           in
           let packet_out = PacketOut packet_out in
           (packet_out, value_ctx, value_sto, value_callResult)
+      | Counter counter, "count", [ "index" ] ->
+          let packet_in = get_packet_in value_sto in
+          let len = packet_in.len in
+          let counter, value_ctx, value_sto, value_callResult =
+            Object.Counter.count value_ctx value_sto len counter
+          in
+          let counter = Counter counter in
+          (counter, value_ctx, value_sto, value_callResult)
       | _ ->
           let oid =
             value_oid |> unwrap_list_v |> List.map unwrap_text_v
