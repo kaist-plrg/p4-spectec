@@ -53,10 +53,9 @@ let analyze_args_as_bind_shallow (ctx : Ctx.t) (args : arg list) :
   in
   (ctx, args, sideconditions)
 
-(* TODO: special-case underscore? *)
 let analyze_arg_as_bound_shallow (ctx : Ctx.t) (arg : arg) : arg =
-  (* let dctx = Dctx.init ctx in *)
-  (* Binding.analyze_arg_as_bound_shallow dctx arg; *)
+  let dctx = Dctx.init ctx in
+  Binding.analyze_arg_as_bound_shallow dctx arg;
   Dimension.analyze_arg ctx.venv arg
 
 let analyze_args_as_bound_shallow (ctx : Ctx.t) (args : arg list) : arg list =
