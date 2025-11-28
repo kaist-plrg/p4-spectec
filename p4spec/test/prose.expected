@@ -7739,10 +7739,8 @@ relation ParserTransition_eval: `EC`, `STO`, and `TRANSITION stateExpressionIR`
   ... Result in `EC`, `STO`, and `STATE text`.
 . Else if let `selectExpressionIR` be `stateExpressionIR`:
  .. Group selectExpressionIR:
-  ... Let `SELECT ( typedExpressionListIR ) { selectCaseListIR }` be `selectExpressionIR`.
-  ... Check that `typedExpressionListIR` is a list of length 1.
-  ... Let `[typedExpressionIR~key~]` be `typedExpressionListIR`.
-  ... Let `EC~1~`, `STO~1~`, and `expressionListResult` be the result of <<Exprs_eval, evaluating `[typedExpressionIR~key~]`, under cursor `LOCAL`, evaluation context `EC`, and store `STO`>>.
+  ... Let `SELECT ( typedExpressionIR~key~^{asterisk}^ ) { selectCaseListIR }` be `selectExpressionIR`.
+  ... Let `EC~1~`, `STO~1~`, and `expressionListResult` be the result of <<Exprs_eval, evaluating `typedExpressionIR~key~^{asterisk}^`, under cursor `LOCAL`, evaluation context `EC`, and store `STO`>>.
   ... Check that `expressionListResult` has type `continueResult<value*>`.
   ... Let `value~key~^{asterisk}^` be `expressionListResult`.
   ... Let <<SelectCases_match, `EC~1~ STO~1~ value~key~^{asterisk}^ |- selectCaseListIR : EC~2~ STO~2~ nameIR^?^`>>.

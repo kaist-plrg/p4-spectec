@@ -26453,7 +26453,7 @@ syntax keysetExpressionResult =
 ;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:63.1-66.23
 relation Expr_eval_keyset: evalContext store |- keysetExpressionIR : evalContext store keysetExpressionResult
 
-  ;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:178.1-187.54
+  ;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:180.1-189.54
   rulegroup 
 
    match
@@ -27685,10 +27685,8 @@ relation ParserTransition_eval: evalContext store |- transitionStatementIR : eva
    paths
 
     rulepath 
-    -- let select( typedExpressionListIR ){ selectCaseListIR } = selectExpressionIR
-    -- if typedExpressionListIR matches [ _/1 ]
-    -- let [typedExpressionIR_key] = typedExpressionListIR
-    -- Exprs_eval: local EC_0 STO_0 |- [typedExpressionIR_key] : EC_1 STO_1 expressionListResult
+    -- let select( typedExpressionIR_key*{typedExpressionIR_key <- typedExpressionIR_key*} ){ selectCaseListIR } = selectExpressionIR
+    -- Exprs_eval: local EC_0 STO_0 |- typedExpressionIR_key*{typedExpressionIR_key <- typedExpressionIR_key*} : EC_1 STO_1 expressionListResult
     -- if expressionListResult <: continueResult<value*>
     -- let ` value_key*{value_key <- value_key*} = expressionListResult as continueResult<value*>
     -- SelectCases_match: EC_1 STO_1 value_key*{value_key <- value_key*} |- selectCaseListIR : EC_2 STO_2 nameIR?{nameIR <- nameIR?}
@@ -29066,16 +29064,24 @@ def $match_keysets(setValue*, value*) : bool =
   clause 1 : (setValue*{setValue <- setValue*}, value_key*{value_key <- value_key*}) = true
   -- if (setValue*{setValue <- setValue*} = [set{...}])
 
-  ;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:10.1-12.47
-  clause 2 : (setValue*{setValue <- setValue*}, value*{value <- value*}) = $match_keysets(setValue_t*{setValue_t <- setValue_t*}, value_key_t*{value_key_t <- value_key_t*})
+  ;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:10.1-11.35
+  clause 2 : (setValue'*{setValue' <- setValue'*}, value*{value <- value*}) = $match_keyset(setValue, value_key)
+  -- if setValue'*{setValue' <- setValue'*} matches [ _/1 ]
+  -- let [setValue] = setValue'*{setValue' <- setValue'*}
+  -- if value*{value <- value*} matches [ _/1 ]
+  -- let [value_key] = value*{value <- value*}
+  -- if (setValue =/= set{...})
+
+  ;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:12.1-14.47
+  clause 3 : (setValue*{setValue <- setValue*}, value*{value <- value*}) = $match_keysets(setValue_t*{setValue_t <- setValue_t*}, value_key_t*{value_key_t <- value_key_t*})
   -- if setValue*{setValue <- setValue*} matches _ :: _
   -- let setValue_h :: setValue_t*{setValue_t <- setValue_t*} = setValue*{setValue <- setValue*}
   -- if value*{value <- value*} matches _ :: _
   -- let value_key_h :: value_key_t*{value_key_t <- value_key_t*} = value*{value <- value*}
   -- if $match_keyset(setValue_h, value_key_h)
 
-  ;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:13.1-15.48
-  clause 3 : (setValue*{setValue <- setValue*}, value*{value <- value*}) = false
+  ;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:15.1-17.48
+  clause 4 : (setValue*{setValue <- setValue*}, value*{value <- value*}) = false
   -- if setValue*{setValue <- setValue*} matches _ :: _
   -- let setValue_h :: setValue_t*{setValue_t <- setValue_t*} = setValue*{setValue <- setValue*}
   -- if value*{value <- value*} matches _ :: _
@@ -29085,34 +29091,34 @@ def $match_keysets(setValue*, value*) : bool =
 ;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:6.1-6.42
 def $match_keyset(setValue, value) : bool =
 
-  ;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:17.1-17.51
+  ;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:19.1-19.51
   clause 0 : (setValue, value_key) = true
   -- if setValue matches `SET{...}`
 
-  ;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:18.1-18.73
+  ;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:20.1-20.73
   clause 1 : (setValue, value_key) = $bin_eq(value, value_key)
   -- if setValue matches `SET{%}`
   -- let set{ value } = setValue
 
-  ;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:19.1-23.6
+  ;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:21.1-25.6
   clause 2 : (setValue, value_key) = $bin_eq($bin_band(value_base, value_mask), $bin_band(value_key, value_mask))
   -- if setValue matches `SET{%&&&%}`
   -- let set{ value_base &&& value_mask } = setValue
 
-  ;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:24.1-26.39
+  ;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:26.1-28.39
   clause 3 : (setValue, value_key) = ($bin_le(value_base, value_key) /\ $bin_le(value_key, value_limit))
   -- if setValue matches `SET{%..%}`
   -- let set{ value_base .. value_limit } = setValue
 
-;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:35.1-36.15
+;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:37.1-38.15
 syntax simpleKeysetExpressionResult = 
    | ` setValue
    | exit
 
-;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:38.1-41.23
+;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:40.1-43.23
 relation Expr_eval_keyset_simple: evalContext store |- simpleKeysetExpressionIR : evalContext store simpleKeysetExpressionResult
 
-  ;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:45.1-59.2
+  ;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:47.1-61.2
   rulegroup typedExpressionIR
 
    match
@@ -29139,7 +29145,7 @@ relation Expr_eval_keyset_simple: evalContext store |- simpleKeysetExpressionIR 
     -- let setValue = value as setValue
     -- output: % % |- % : EC_1 STO_1 ` setValue as simpleKeysetExpressionResult
 
-  ;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:63.1-88.2
+  ;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:65.1-90.2
   rulegroup mask
 
    match
@@ -29178,7 +29184,7 @@ relation Expr_eval_keyset_simple: evalContext store |- simpleKeysetExpressionIR 
     -- let setValue = set{ value_l &&& value_r }
     -- output: % % |- % : EC_2 STO_2 ` setValue as simpleKeysetExpressionResult
 
-  ;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:92.1-117.2
+  ;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:94.1-119.2
   rulegroup range
 
    match
@@ -29217,7 +29223,7 @@ relation Expr_eval_keyset_simple: evalContext store |- simpleKeysetExpressionIR 
     -- let setValue = set{ value_l .. value_r }
     -- output: % % |- % : EC_2 STO_2 ` setValue as simpleKeysetExpressionResult
 
-  ;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:121.1-124.33
+  ;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:123.1-126.33
   rulegroup default-any
 
    match
@@ -29232,10 +29238,10 @@ relation Expr_eval_keyset_simple: evalContext store |- simpleKeysetExpressionIR 
     -- let setValue = set{...}
     -- output: % % |- % : EC STO ` setValue as simpleKeysetExpressionResult
 
-;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:132.1-135.23
+;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:134.1-137.23
 relation Exprs_eval_keyset_simple: evalContext store |- simpleKeysetExpressionListIR : evalContext store keysetExpressionResult
 
-  ;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:137.1-170.2
+  ;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:139.1-172.2
   rulegroup 
 
    match

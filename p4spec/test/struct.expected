@@ -29504,27 +29504,23 @@ relation ParserTransition_eval: EC STO |- (transition stateExpressionIR) : % % %
 
   2. Group selectExpressionIR: EC STO |- (transition (selectExpressionIR as stateExpressionIR)) : % % %
 
-    1. (Let (select( typedExpressionListIR ){ selectCaseListIR }) be selectExpressionIR)
+    1. (Let (select( typedExpressionIR_key*{typedExpressionIR_key <- typedExpressionIR_key*} ){ selectCaseListIR }) be selectExpressionIR)
 
-    2. If ((typedExpressionListIR matches pattern [ _/1 ])), then
+    2. (Exprs_eval: (local) EC STO |- typedExpressionIR_key*{typedExpressionIR_key <- typedExpressionIR_key*} : EC_1 STO_1 expressionListResult)
 
-      1. (Let [typedExpressionIR_key] be typedExpressionListIR)
+    3. If ((expressionListResult has type continueResult<value*>)), then
 
-      2. (Exprs_eval: (local) EC STO |- [typedExpressionIR_key] : EC_1 STO_1 expressionListResult)
+      1. (Let (` value_key*{value_key <- value_key*}) be (expressionListResult as continueResult<value*>))
 
-      3. If ((expressionListResult has type continueResult<value*>)), then
+      2. (SelectCases_match: EC_1 STO_1 value_key*{value_key <- value_key*} |- selectCaseListIR : EC_2 STO_2 nameIR?{nameIR <- nameIR?})
 
-        1. (Let (` value_key*{value_key <- value_key*}) be (expressionListResult as continueResult<value*>))
+      3. If ((nameIR?{nameIR <- nameIR?} matches pattern (_))), then
 
-        2. (SelectCases_match: EC_1 STO_1 value_key*{value_key <- value_key*} |- selectCaseListIR : EC_2 STO_2 nameIR?{nameIR <- nameIR?})
+        1. (Let ?(nameIR_state) be nameIR?{nameIR <- nameIR?})
 
-        3. If ((nameIR?{nameIR <- nameIR?} matches pattern (_))), then
+        2. (ParserTransition_eval: EC_2 STO_2 |- (transition (nameIR_state ;)) : EC_3 STO_3 transitionResult)
 
-          1. (Let ?(nameIR_state) be nameIR?{nameIR <- nameIR?})
-
-          2. (ParserTransition_eval: EC_2 STO_2 |- (transition (nameIR_state ;)) : EC_3 STO_3 transitionResult)
-
-          3. Result in : % % |- % : EC_3 STO_3 transitionResult
+        3. Result in : % % |- % : EC_3 STO_3 transitionResult
 
 ;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:165.1-168.23
 relation ParserState_eval: EC_0 STO_0 |- (annotationList state{ parserStatementListIR transitionStatementIR }) : % % %
@@ -30949,9 +30945,9 @@ extern relation ExternFunctionCall_eval: evalContext store |- nameIR ( nameIR'*{
 extern relation ExternMethodCall_eval: evalContext store |- oid . nameIR ( nameIR'*{nameIR' <- nameIR'*} ): % % %
 
 ;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:5.1-5.45
-def $match_keysets(setValue*{setValue <- setValue*}, value*{value <- value*})
+def $match_keysets(setValue'*{setValue' <- setValue'*}, value*{value <- value*})
 
-1. Case analysis on setValue*{setValue <- setValue*}
+1. Case analysis on setValue'*{setValue' <- setValue'*}
 
   1. Case (% matches pattern [])
 
@@ -30959,9 +30955,21 @@ def $match_keysets(setValue*{setValue <- setValue*}, value*{value <- value*})
 
       1. Return true
 
-  2. Case (% matches pattern _ :: _)
+  2. Case (% matches pattern [ _/1 ])
 
-    1. (Let setValue_h :: setValue_t*{setValue_t <- setValue_t*} be setValue*{setValue <- setValue*})
+    1. (Let [setValue] be setValue'*{setValue' <- setValue'*})
+
+    2. If ((value*{value <- value*} matches pattern [ _/1 ])), then
+
+      1. (Let [value_key] be value*{value <- value*})
+
+      2. If (~(setValue matches pattern `SET{...}`)), then
+
+        1. Return $match_keyset(setValue, value_key)
+
+  3. Case (% matches pattern _ :: _)
+
+    1. (Let setValue_h :: setValue_t*{setValue_t <- setValue_t*} be setValue'*{setValue' <- setValue'*})
 
     2. If ((value*{value <- value*} matches pattern _ :: _)), then
 
@@ -30977,7 +30985,7 @@ def $match_keysets(setValue*{setValue <- setValue*}, value*{value <- value*})
 
           1. Return false
 
-2. If ((setValue*{setValue <- setValue*} = [(set{...})])), then
+2. If ((setValue'*{setValue' <- setValue'*} = [(set{...})])), then
 
   1. Return true
 
@@ -31008,12 +31016,12 @@ def $match_keyset(setValue, value_key)
 
     2. Return ($bin_le(value_base, value_key) /\ $bin_le(value_key, value_limit))
 
-;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:35.1-36.15
+;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:37.1-38.15
 syntax simpleKeysetExpressionResult = 
    | ` setValue
    | exit
 
-;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:38.1-41.23
+;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:40.1-43.23
 relation Expr_eval_keyset_simple: EC_0 STO_0 |- simpleKeysetExpressionIR : % % %
 
 1. If ((simpleKeysetExpressionIR has type typedExpressionIR)), then
@@ -31136,7 +31144,7 @@ relation Expr_eval_keyset_simple: EC_0 STO_0 |- simpleKeysetExpressionIR : % % %
 
       2. Result in : % % |- % : EC_0 STO_0 ((` setValue) as simpleKeysetExpressionResult)
 
-;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:132.1-135.23
+;; ../../../../spec-concrete/8.03.2-eval-keyset-expression.watsup:134.1-137.23
 relation Exprs_eval_keyset_simple: evalContext store |- simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} : % % %
 
 1. Group : evalContext store |- simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} : % % %
