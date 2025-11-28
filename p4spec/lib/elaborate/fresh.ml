@@ -51,32 +51,35 @@ and name_of_tuple_typs (typs : Il.Ast.typ list) : string =
 (* Number duplicate names to distinguish them.
    e.g., ["a"; "b"; "a"] -> ["a_1"; "b"; "a_2"] *)
 and number_duplicates (names : string list) : string list =
+  let module StringSet = Set.Make(String) in
+  let module StringMap = Map.Make(String) in
   (* Count occurrences of each name *)
   let counts =
     List.fold_left
       (fun acc name ->
-        let count = try List.assoc name acc with Not_found -> 0 in
-        (name, count + 1) :: List.remove_assoc name acc)
-      [] names
+        let count = StringMap.find_opt name acc |> Option.value ~default:0 in
+        StringMap.add name (count + 1) acc)
+      StringMap.empty names
   in
   (* Only number names that appear more than once *)
   let needs_numbering =
-    List.filter (fun (_, count) -> count > 1) counts
-    |> List.map fst
+    StringMap.fold
+      (fun name count acc -> if count > 1 then StringSet.add name acc else acc)
+      counts StringSet.empty
   in
-  (* Number the duplicates *)
+  (* Number the duplicates, using cons and reversing at the end for O(n) complexity *)
   let _, result =
     List.fold_left
       (fun (counters, acc) name ->
-        if List.mem name needs_numbering then
-          let idx = try List.assoc name counters with Not_found -> 1 in
-          let counters = (name, idx + 1) :: List.remove_assoc name counters in
-          (counters, acc @ [name ^ "_" ^ string_of_int idx])
+        if StringSet.mem name needs_numbering then
+          let idx = StringMap.find_opt name counters |> Option.value ~default:1 in
+          let counters = StringMap.add name (idx + 1) counters in
+          (counters, (name ^ "_" ^ string_of_int idx) :: acc)
         else
-          (counters, acc @ [name]))
-      ([], []) names
+          (counters, name :: acc))
+      (StringMap.empty, []) names
   in
-  result
+  List.rev result
 
 let rec fresh_from_typ (at : region) (typ : Il.Ast.typ) :
     Id.t * Il.Ast.typ * Il.Ast.iter list =
