@@ -39,12 +39,18 @@ let nest at note msg attempt =
 let rec string_of_failtrace ?(indent = "") ?(level = 0) ~(last : bool)
     ~(limit : int) ~(bullet : string) (failtrace : 'note failtrace) : string =
   let (Failtrace (region, msg, _note, failtraces_sub)) = failtrace in
-  let root = level = limit in
+  let root = level = 0 in
+  let root_limit = level = limit in
   let sfailtrace =
-    if level < limit then ""
+    if root then
+      Format.asprintf "%s%s%s%s\n" indent
+        (if region = no_region then ""
+         else string_of_region region ^ "\n" ^ indent)
+        bullet msg
+    else if level < limit then ""
     else
-      let prefix = if root then "" else if last then "└── " else "├── " in
-      let indent_prefix = if root then "" else String.make 4 ' ' in
+      let prefix = if root_limit then "" else if last then "└── " else "├── " in
+      let indent_prefix = if root_limit then "" else String.make 4 ' ' in
       Format.asprintf "%s%s%s%s%s\n" indent prefix
         (if region = no_region then ""
          else string_of_region region ^ "\n" ^ indent ^ indent_prefix)
@@ -52,12 +58,16 @@ let rec string_of_failtrace ?(indent = "") ?(level = 0) ~(last : bool)
   in
   let indent =
     if level < limit then indent
-    else if root then indent
+    else if root_limit then indent
     else if last then indent ^ "    "
     else indent ^ "│   "
   in
-  Format.asprintf "%s%s" sfailtrace
-    (string_of_failtraces ~indent ~level:(level + 1) ~limit failtraces_sub)
+  if root then
+    Format.asprintf "%s│ ··· omitting %d traces ···\n%s" sfailtrace (limit - 1)
+      (string_of_failtraces ~indent ~level:(level + 1) ~limit failtraces_sub)
+  else
+    Format.asprintf "%s%s" sfailtrace
+      (string_of_failtraces ~indent ~level:(level + 1) ~limit failtraces_sub)
 
 and string_of_failtraces ?(indent = "") ?(level = 0) ~(limit : int)
     (failtraces : 'note failtrace list) : string =
