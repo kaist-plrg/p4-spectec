@@ -78,14 +78,14 @@ module Counter = struct
                    updated.
 
      void count(in bit<32> index); *)
-  let count (value_ctx : Value.t) (value_sto : Value.t) (len : int)
-      (counter : t) : t * Value.t * Value.t * Value.t =
+  let count (value_ctx : Value.t) (value_sto : Value.t)
+      (packet_in : Core.Object.PacketIn.t) (counter : t) :
+      t * Value.t * Value.t * Value.t =
     (* Get "index" *)
     let value_index = Spec.Func.find_var_e_local value_ctx "index" in
     let _, index = unpack_p4_fixedBit value_index in
     let index_target = Bigint.to_int_exn index in
     (* Update counter *)
-    let len = Bigint.of_int len in
     let counter =
       match counter with
       | Packets counts ->
@@ -97,6 +97,7 @@ module Counter = struct
           in
           Packets counts
       | Bytes counts ->
+          let len = packet_in.len |> Bigint.of_int in
           let counts =
             List.mapi
               (fun index count ->
@@ -105,6 +106,7 @@ module Counter = struct
           in
           Bytes counts
       | PacketsAndBytes counts ->
+          let len = packet_in.len |> Bigint.of_int in
           let counts =
             List.mapi
               (fun index (count_packets, count_bytes) ->
