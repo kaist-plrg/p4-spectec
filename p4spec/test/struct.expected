@@ -29133,6 +29133,34 @@ relation Stmt_eval: p EC STO |- statementIR : % % %
 
                   1. Result in : % % % |- % : EC_1 STO_1 ((`) as statementResult)
 
+      3. Group switchStatementIR-general: (local) EC STO |- ((switch( typedExpressionIR ){ switchCaseIR*{switchCaseIR <- switchCaseIR*} }) as statementIR) : % % %
+
+        1. (Expr_eval: (local) EC STO |- typedExpressionIR : EC_1 STO_1 expressionResult)
+
+        2. If ((expressionResult has type continueResult<value>)), then
+
+          1. (Let (` value) be (expressionResult as continueResult<value>))
+
+          2. (SwitchCases_general_eval: (local) EC STO value |- switchCaseIR*{switchCaseIR <- switchCaseIR*} : EC STO blockStatementIR'?{blockStatementIR' <- blockStatementIR'?})
+
+          3. If ((EC = EC_1)), then
+
+            1. If ((STO = STO_1)), then
+
+              1. Case analysis on blockStatementIR'?{blockStatementIR' <- blockStatementIR'?}
+
+                1. Case (% matches pattern (_))
+
+                  1. (Let ?(blockStatementIR) be blockStatementIR'?{blockStatementIR' <- blockStatementIR'?})
+
+                  2. (Stmt_eval: (local) EC_1 STO_1 |- (blockStatementIR as statementIR) : EC_2 STO_2 statementResult)
+
+                  3. Result in : % % % |- % : EC_2 STO_2 statementResult
+
+                2. Case (% matches pattern ())
+
+                  1. Result in : % % % |- % : EC_1 STO_1 ((`) as statementResult)
+
 ;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:122.1-125.23
 relation BlockElementStmt_eval: EC_0 STO_0 |- blockElementStatementIR : % % %
 
@@ -31257,6 +31285,179 @@ def $is_non_fallthrough_switchCaseIR(switchCaseIR)
     1. (Let (switchLabelIR :) be switchCaseIR)
 
     2. Return false
+
+;; ../../../../spec-concrete/8.06-eval-statement.watsup:288.1-290.26
+relation SwitchLabelIR_general_eval: cursor EC_0 STO_0 |- switchLabelIR : % % %
+
+1. If ((cursor matches pattern `LOCAL`)), then
+
+  1. Group : (local) EC_0 STO_0 |- switchLabelIR : % % %
+
+    1. If ((switchLabelIR matches pattern `DEFAULT`)), then
+
+      1. Result in : % % % |- % : EC_0 STO_0 ((` ((default) as value)) as expressionResult)
+
+    2. If ((switchLabelIR has type typedExpressionIR)), then
+
+      1. (Let typedExpressionIR be (switchLabelIR as typedExpressionIR))
+
+      2. (Expr_eval: (local) EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult)
+
+      3. Case analysis on expressionResult
+
+        1. Case (% has type exitResult)
+
+          1. (Let exitResult be (expressionResult as exitResult))
+
+          2. Result in : % % % |- % : EC_1 STO_1 ((exit) as expressionResult)
+
+        2. Case (% has type continueResult<value>)
+
+          1. (Let (` value) be (expressionResult as continueResult<value>))
+
+          2. Result in : % % % |- % : EC_1 STO_1 ((` value) as expressionResult)
+
+;; ../../../../spec-concrete/8.06-eval-statement.watsup:309.1-309.54
+def $match_switchLabelIR_general(value, value')
+
+1. If ((value' has type defaultValue)), then
+
+  1. (Let defaultValue be (value' as defaultValue))
+
+  2. Return true
+
+2. Case analysis on value
+
+  1. Case (% has type integerLiteral)
+
+    1. (Let integerLiteral be (value as integerLiteral))
+
+    2. Case analysis on integerLiteral
+
+      1. Case (% matches pattern `%W%`)
+
+        1. (Let (w_a w i_a) be integerLiteral)
+
+        2. If ((value' has type integerLiteral)), then
+
+          1. (Let integerLiteral' be (value' as integerLiteral))
+
+          2. If ((integerLiteral' matches pattern `%W%`)), then
+
+            1. (Let (w_b w i_b) be integerLiteral')
+
+            2. Return ((w_a = w_b) /\ (i_a = i_b))
+
+      2. Case (% matches pattern `%S%`)
+
+        1. (Let (w_a s i_a) be integerLiteral)
+
+        2. If ((value' has type integerLiteral)), then
+
+          1. (Let integerLiteral' be (value' as integerLiteral))
+
+          2. If ((integerLiteral' matches pattern `%W%`)), then
+
+            1. (Let (w_b w i_b) be integerLiteral')
+
+            2. Return ((w_a = w_b) /\ (i_a = i_b))
+
+  2. Case (% has type enumValue)
+
+    1. (Let enumValue_a be (value as enumValue))
+
+    2. If ((value' has type enumValue)), then
+
+      1. (Let enumValue_b be (value' as enumValue))
+
+      2. Return $bin_eq((enumValue_a as value), (enumValue_b as value))
+
+  3. Case (% has type errorValue)
+
+    1. (Let errorValue_a be (value as errorValue))
+
+    2. If ((value' has type errorValue)), then
+
+      1. (Let errorValue_b be (value' as errorValue))
+
+      2. Return $bin_eq((errorValue_a as value), (errorValue_b as value))
+
+3. Otherwise
+
+  1. Return false
+
+;; ../../../../spec-concrete/8.06-eval-statement.watsup:318.1-320.29
+relation SwitchCases_general_eval: cursor EC_0 STO_0 value |- switchCaseIR*{switchCaseIR <- switchCaseIR*} : % % %
+
+1. If ((cursor matches pattern `LOCAL`)), then
+
+  1. Group : (local) EC_0 STO_0 value |- switchCaseIR*{switchCaseIR <- switchCaseIR*} : % % %
+
+    1. If ((switchCaseIR*{switchCaseIR <- switchCaseIR*} = [])), then
+
+      1. Result in : % % % % |- % : EC_0 STO_0 ?()
+
+    2. (Let switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} be switchCaseIR*{switchCaseIR <- switchCaseIR*})
+
+    3. If ((switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} matches pattern _ :: _)), then
+
+      1. (Let switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} be switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*})
+
+      2. Case analysis on switchCaseIR_h
+
+        1. Case (% matches pattern `%:%`)
+
+          1. (Let (switchLabelIR_h : blockStatementIR_h) be switchCaseIR_h)
+
+          2. (SwitchLabelIR_general_eval: (local) EC_0 STO_0 |- switchLabelIR_h : EC_1 STO_1 expressionResult)
+
+          3. If ((expressionResult has type continueResult<value>)), then
+
+            1. (Let (` value_label) be (expressionResult as continueResult<value>))
+
+            2. Case analysis on $match_switchLabelIR_general(value, value_label)
+
+              1. Case true
+
+                1. Result in : % % % % |- % : EC_1 STO_1 ?(blockStatementIR_h)
+
+              2. Case false
+
+                1. (SwitchCases_general_eval: (local) EC_1 STO_1 value |- switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} : EC_2 STO_2 blockStatementIR?{blockStatementIR <- blockStatementIR?})
+
+                2. Result in : % % % % |- % : EC_2 STO_2 ?(blockStatementIR_h)
+
+        2. Case (% matches pattern `%:`)
+
+          1. (Let (switchLabelIR_h :) be switchCaseIR_h)
+
+          2. (SwitchLabelIR_general_eval: (local) EC_0 STO_0 |- switchLabelIR_h : EC_1 STO_1 expressionResult)
+
+          3. If ((expressionResult has type continueResult<value>)), then
+
+            1. (Let (` value_label) be (expressionResult as continueResult<value>))
+
+            2. Case analysis on $match_switchLabelIR_general(value, value_label)
+
+              1. Case true
+
+                1. (Let switchCaseIR'''''''*{switchCaseIR''''''' <- switchCaseIR'''''''*} be $filter_<switchCaseIR>(switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*}, $is_non_fallthrough_switchCaseIR))
+
+                2. If ((switchCaseIR'''''''*{switchCaseIR''''''' <- switchCaseIR'''''''*} matches pattern _ :: _)), then
+
+                  1. (Let switchCaseIR'''''' :: _switchCaseIR*{_switchCaseIR <- _switchCaseIR*} be switchCaseIR'''''''*{switchCaseIR''''''' <- switchCaseIR'''''''*})
+
+                  2. If ((switchCaseIR'''''' matches pattern `%:%`)), then
+
+                    1. (Let (_switchLabelIR : blockStatementIR) be switchCaseIR'''''')
+
+                    2. Result in : % % % % |- % : EC_1 STO_1 ?(blockStatementIR)
+
+              2. Case false
+
+                1. (SwitchCases_general_eval: (local) EC_1 STO_1 value |- switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} : EC_2 STO_2 blockStatementIR?{blockStatementIR <- blockStatementIR?})
+
+                2. Result in : % % % % |- % : EC_2 STO_2 blockStatementIR?{blockStatementIR <- blockStatementIR?}
 
 ;; ../../../../spec-concrete/8.08.1-eval-parser-statement.watsup:31.1-34.26
 relation SelectCase_match: EC_0 STO_0 value_key*{value_key <- value_key*} |- (keysetExpressionIR : nameIR ;) : % % %

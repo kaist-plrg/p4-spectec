@@ -27188,7 +27188,7 @@ relation Stmt_eval: cursor evalContext store |- statementIR : evalContext store 
     -- Stmt_eval: p EC_cond STO_cond |- statementIR_else : EC_else STO_else statementResult
     -- output: % % % |- % : EC_else STO_else statementResult
 
-  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:288.1-324.2
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:372.1-408.2
   rulegroup switchStatementIR-table
 
    match
@@ -27232,10 +27232,45 @@ relation Stmt_eval: cursor evalContext store |- statementIR : evalContext store 
     -- if blockStatementIR'?{blockStatementIR' <- blockStatementIR'?} matches ()
     -- output: % % % |- % : EC_1 STO_1 ` as statementResult
 
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:410.1-437.2
+  rulegroup switchStatementIR-general
+
+   match
+
+    (explicit) local EC_0 STO_0 |- switch( typedExpressionIR ){ switchCaseIR*{switchCaseIR <- switchCaseIR*} } as statementIR : % % %
+    (implicit) cursor EC_0 STO_0 |- statementIR : % % %
+    -- if cursor matches `LOCAL`
+    -- if statementIR <: switchStatementIR
+    -- let switch( typedExpressionIR ){ switchCaseIR*{switchCaseIR <- switchCaseIR*} } = statementIR as switchStatementIR
+
+   paths
+
+    rulepath target-cont-match
+    -- Expr_eval: local EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult
+    -- if expressionResult <: continueResult<value>
+    -- let ` value = expressionResult as continueResult<value>
+    -- SwitchCases_general_eval: local EC_0 STO_0 value |- switchCaseIR*{switchCaseIR <- switchCaseIR*} : evalContext store blockStatementIR'?{blockStatementIR' <- blockStatementIR'?}
+    -- if (evalContext = EC_1)
+    -- if (store = STO_1)
+    -- if blockStatementIR'?{blockStatementIR' <- blockStatementIR'?} matches (_)
+    -- let ?(blockStatementIR) = blockStatementIR'?{blockStatementIR' <- blockStatementIR'?}
+    -- Stmt_eval: local EC_1 STO_1 |- blockStatementIR as statementIR : EC_2 STO_2 statementResult
+    -- output: % % % |- % : EC_2 STO_2 statementResult
+
+    rulepath target-cont-no-match
+    -- Expr_eval: local EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult
+    -- if expressionResult <: continueResult<value>
+    -- let ` value = expressionResult as continueResult<value>
+    -- SwitchCases_general_eval: local EC_0 STO_0 value |- switchCaseIR*{switchCaseIR <- switchCaseIR*} : evalContext store blockStatementIR'?{blockStatementIR' <- blockStatementIR'?}
+    -- if (evalContext = EC_1)
+    -- if (store = STO_1)
+    -- if blockStatementIR'?{blockStatementIR' <- blockStatementIR'?} matches ()
+    -- output: % % % |- % : EC_1 STO_1 ` as statementResult
+
 ;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:122.1-125.23
 relation BlockElementStmt_eval: evalContext store |- blockElementStatementIR : evalContext store statementResult
 
-  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:335.1-351.2
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:448.1-464.2
   rulegroup constantDeclarationIR
 
    match
@@ -27261,7 +27296,7 @@ relation BlockElementStmt_eval: evalContext store |- blockElementStatementIR : e
     -- if (continueEmptyResult = `)
     -- output: % % |- % : EC_1 STO_1 ` as statementResult
 
-  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:355.1-384.2
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:468.1-497.2
   rulegroup variableDeclarationIR
 
    match
@@ -27303,7 +27338,7 @@ relation BlockElementStmt_eval: evalContext store |- blockElementStatementIR : e
     -- let EC_2 = $add_var_e(local, EC_1, ` nameIR, value_init)
     -- output: % % |- % : EC_2 STO_1 ` as statementResult
 
-  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:388.1-393.53
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:501.1-506.53
   rulegroup statementIR
 
    match
@@ -27322,7 +27357,7 @@ relation BlockElementStmt_eval: evalContext store |- blockElementStatementIR : e
 ;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:127.1-130.23
 relation BlockElementStmts_eval: evalContext store |- blockElementStatementListIR : evalContext store statementResult
 
-  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:399.1-428.2
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:512.1-541.2
   rulegroup 
 
    match
@@ -27377,7 +27412,7 @@ relation BlockElementStmts_eval: evalContext store |- blockElementStatementListI
 ;; ../../../../spec-concrete/8.02-evaluation-relation.watsup:132.1-135.23
 relation Block_eval: evalContext store |- blockStatementIR : evalContext store statementResult
 
-  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:434.1-439.47
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:547.1-552.47
   rulegroup 
 
    match
@@ -29355,6 +29390,169 @@ def $is_non_fallthrough_switchCaseIR(switchCaseIR) : bool =
   clause 1 : (switchCaseIR) = false
   -- if switchCaseIR matches `%:`
   -- let switchLabelIR : = switchCaseIR
+
+;; ../../../../spec-concrete/8.06-eval-statement.watsup:288.1-290.26
+relation SwitchLabelIR_general_eval: cursor evalContext store |- switchLabelIR : evalContext store expressionResult
+
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:292.1-307.2
+  rulegroup 
+
+   match
+
+    (explicit) local EC_0 STO_0 |- switchLabelIR : % % %
+    (implicit) cursor EC_0 STO_0 |- switchLabelIR : % % %
+    -- if cursor matches `LOCAL`
+
+   paths
+
+    rulepath default
+    -- if (switchLabelIR = default)
+    -- output: % % % |- % : EC_0 STO_0 ` default as value as expressionResult
+
+    rulepath typedExpressionIR-exit
+    -- let switchLabelIR' = switchLabelIR
+    -- if switchLabelIR' <: typedExpressionIR
+    -- let typedExpressionIR = switchLabelIR' as typedExpressionIR
+    -- Expr_eval: local EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult
+    -- if expressionResult <: exitResult
+    -- let exitResult = expressionResult as exitResult
+    -- if (exitResult = exit)
+    -- output: % % % |- % : EC_1 STO_1 exit as expressionResult
+
+    rulepath typedExpressionIR-cont
+    -- let switchLabelIR' = switchLabelIR
+    -- if switchLabelIR' <: typedExpressionIR
+    -- let typedExpressionIR = switchLabelIR' as typedExpressionIR
+    -- Expr_eval: local EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult
+    -- if expressionResult <: continueResult<value>
+    -- let ` value = expressionResult as continueResult<value>
+    -- output: % % % |- % : EC_1 STO_1 ` value as expressionResult
+
+;; ../../../../spec-concrete/8.06-eval-statement.watsup:309.1-309.54
+def $match_switchLabelIR_general(value, value) : bool =
+
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:310.1-310.56
+  clause 0 : (value, value') = true
+  -- if value' <: defaultValue
+  -- let defaultValue = value' as defaultValue
+  -- if (defaultValue = default)
+
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:311.1-311.84
+  clause 1 : (value, value') = ((w_a = w_b) /\ (i_a = i_b))
+  -- if value <: integerLiteral
+  -- let integerLiteral = value as integerLiteral
+  -- if integerLiteral matches `%W%`
+  -- let w_a w i_a = integerLiteral
+  -- if value' <: integerLiteral
+  -- let integerLiteral' = value' as integerLiteral
+  -- if integerLiteral' matches `%W%`
+  -- let w_b w i_b = integerLiteral'
+
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:312.1-312.84
+  clause 2 : (value, value') = ((w_a = w_b) /\ (i_a = i_b))
+  -- if value <: integerLiteral
+  -- let integerLiteral = value as integerLiteral
+  -- if integerLiteral matches `%S%`
+  -- let w_a s i_a = integerLiteral
+  -- if value' <: integerLiteral
+  -- let integerLiteral' = value' as integerLiteral
+  -- if integerLiteral' matches `%W%`
+  -- let w_b w i_b = integerLiteral'
+
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:313.1-313.95
+  clause 3 : (value, value') = $bin_eq(enumValue_a as value, enumValue_b as value)
+  -- if value <: enumValue
+  -- let enumValue_a = value as enumValue
+  -- if value' <: enumValue
+  -- let enumValue_b = value' as enumValue
+
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:314.1-314.99
+  clause 4 : (value, value') = $bin_eq(errorValue_a as value, errorValue_b as value)
+  -- if value <: errorValue
+  -- let errorValue_a = value as errorValue
+  -- if value' <: errorValue
+  -- let errorValue_b = value' as errorValue
+
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:315.1-316.15
+  clause 5 : (value, _value) = false
+  -- otherwise
+
+;; ../../../../spec-concrete/8.06-eval-statement.watsup:318.1-320.29
+relation SwitchCases_general_eval: cursor evalContext store value |- switchCaseListIR : evalContext store blockStatementIR?
+
+  ;; ../../../../spec-concrete/8.06-eval-statement.watsup:322.1-370.2
+  rulegroup 
+
+   match
+
+    (explicit) local EC_0 STO_0 value |- switchCaseIR'''*{switchCaseIR''' <- switchCaseIR'''*} : % % %
+    (implicit) cursor EC_0 STO_0 value |- switchCaseIR'''*{switchCaseIR''' <- switchCaseIR'''*} : % % %
+    -- if cursor matches `LOCAL`
+
+   paths
+
+    rulepath nil
+    -- if (switchCaseIR'''*{switchCaseIR''' <- switchCaseIR'''*} = [])
+    -- output: % % % % |- % : EC_0 STO_0 ?()
+
+    rulepath cons-non-fallthrough-match
+    -- let switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} = switchCaseIR'''*{switchCaseIR''' <- switchCaseIR'''*}
+    -- if switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} matches _ :: _
+    -- let switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} = switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*}
+    -- let switchCaseIR''''' = switchCaseIR_h
+    -- if switchCaseIR''''' matches `%:%`
+    -- let switchLabelIR_h : blockStatementIR_h = switchCaseIR'''''
+    -- SwitchLabelIR_general_eval: local EC_0 STO_0 |- switchLabelIR_h : EC_1 STO_1 expressionResult
+    -- if expressionResult <: continueResult<value>
+    -- let ` value_label = expressionResult as continueResult<value>
+    -- if $match_switchLabelIR_general(value, value_label)
+    -- output: % % % % |- % : EC_1 STO_1 ?(blockStatementIR_h)
+
+    rulepath cons-non-fallthrough-no-match
+    -- let switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} = switchCaseIR'''*{switchCaseIR''' <- switchCaseIR'''*}
+    -- if switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} matches _ :: _
+    -- let switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} = switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*}
+    -- let switchCaseIR''''' = switchCaseIR_h
+    -- if switchCaseIR''''' matches `%:%`
+    -- let switchLabelIR_h : blockStatementIR_h = switchCaseIR'''''
+    -- SwitchLabelIR_general_eval: local EC_0 STO_0 |- switchLabelIR_h : EC_1 STO_1 expressionResult
+    -- if expressionResult <: continueResult<value>
+    -- let ` value_label = expressionResult as continueResult<value>
+    -- if ~$match_switchLabelIR_general(value, value_label)
+    -- SwitchCases_general_eval: local EC_1 STO_1 value |- switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} : EC_2 STO_2 blockStatementIR?{blockStatementIR <- blockStatementIR?}
+    -- output: % % % % |- % : EC_2 STO_2 ?(blockStatementIR_h)
+
+    rulepath cons-fallthrough-match
+    -- let switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} = switchCaseIR'''*{switchCaseIR''' <- switchCaseIR'''*}
+    -- if switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} matches _ :: _
+    -- let switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} = switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*}
+    -- let switchCaseIR''''' = switchCaseIR_h
+    -- if switchCaseIR''''' matches `%:`
+    -- let switchLabelIR_h : = switchCaseIR'''''
+    -- SwitchLabelIR_general_eval: local EC_0 STO_0 |- switchLabelIR_h : EC_1 STO_1 expressionResult
+    -- if expressionResult <: continueResult<value>
+    -- let ` value_label = expressionResult as continueResult<value>
+    -- if $match_switchLabelIR_general(value, value_label)
+    -- let switchCaseIR'''''''*{switchCaseIR''''''' <- switchCaseIR'''''''*} = $filter_<switchCaseIR>(switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*}, $is_non_fallthrough_switchCaseIR)
+    -- if switchCaseIR'''''''*{switchCaseIR''''''' <- switchCaseIR'''''''*} matches _ :: _
+    -- let switchCaseIR'''''' :: _switchCaseIR*{_switchCaseIR <- _switchCaseIR*} = switchCaseIR'''''''*{switchCaseIR''''''' <- switchCaseIR'''''''*}
+    -- if switchCaseIR'''''' matches `%:%`
+    -- let _switchLabelIR : blockStatementIR = switchCaseIR''''''
+    -- output: % % % % |- % : EC_1 STO_1 ?(blockStatementIR)
+
+    rulepath cons-fallthrough-no-match
+    -- let switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} = switchCaseIR'''*{switchCaseIR''' <- switchCaseIR'''*}
+    -- if switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} matches _ :: _
+    -- let switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} = switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*}
+    -- let switchCaseIR''''' = switchCaseIR_h
+    -- if switchCaseIR''''' matches `%:`
+    -- let switchLabelIR_h : = switchCaseIR'''''
+    -- SwitchLabelIR_general_eval: local EC_0 STO_0 |- switchLabelIR_h : EC_1 STO_1 expressionResult
+    -- if expressionResult <: continueResult<value>
+    -- let ` value_label = expressionResult as continueResult<value>
+    -- if ~$match_switchLabelIR_general(value, value_label)
+    -- SwitchCases_general_eval: local EC_1 STO_1 value |- switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} : EC_2 STO_2 blockStatementIR?{blockStatementIR <- blockStatementIR?}
+    -- output: % % % % |- % : EC_2 STO_2 blockStatementIR?{blockStatementIR <- blockStatementIR?}
 
 ;; ../../../../spec-concrete/8.08.1-eval-parser-statement.watsup:31.1-34.26
 relation SelectCase_match: evalContext store value* |- selectCaseIR : evalContext store nameIR?

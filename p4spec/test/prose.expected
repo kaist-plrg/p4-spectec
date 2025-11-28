@@ -7571,6 +7571,24 @@ relation Stmt_eval: `p`, `EC`, `STO`, and `statementIR`
 * the evaluation context `EC~1~`,
 * the updated store `STO~1~`,
 * and the instantiated statement ``.
+ .. Group switchStatementIR-general:
+  ... Let `EC~1~`, `STO~1~`, and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR`, under cursor `LOCAL`, evaluation context `EC`, and store `STO`>>.
+  ... Check that `expressionResult` has type `continueResult<value>`.
+  ... Let `value` be `expressionResult`.
+  ... Let <<SwitchCases_general_eval, `LOCAL EC STO value |- switchCaseIR^{asterisk}^ : EC STO blockStatementIR'^?^`>>.
+  ... Check that `EC` is equal to `EC~1~`.
+  ... Check that `STO` is equal to `STO~1~`.
+  ... If let `blockStatementIR` be `blockStatementIR'^?^`:
+   .... Let `EC~2~`, `STO~2~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `blockStatementIR`, under cursor `LOCAL`, evaluation context `EC~1~`, and store `STO~1~`>>.
+   .... Result in 
+* the evaluation context `EC~2~`,
+* the updated store `STO~2~`,
+* and the instantiated statement `statementResult`.
+  ... Else `blockStatementIR'^?^` is None:
+   .... Result in 
+* the evaluation context `EC~1~`,
+* the updated store `STO~1~`,
+* and the instantiated statement ``.
 
 
 relation BlockElementStmt_eval: `EC~0~`, `STO~0~`, and `blockElementStatementIR`
@@ -8520,6 +8538,55 @@ relation SwitchCases_table_eval: `id` and `switchCaseIR^{asterisk}^`
    .... Else `~<<match_switchLabelIR_table, $match_switchLabelIR_table(id, switchLabelIR~h~)>>`:
     ..... Let <<SwitchCases_table_eval, `id |- switchCaseIR~t~^{asterisk}^ : blockStatementIR^?^`>>.
     ..... Result in `blockStatementIR^?^`.
+
+
+relation SwitchLabelIR_general_eval: `cursor`, `EC~0~`, `STO~0~`, and `switchLabelIR`
+
+
+. Check that `cursor` matches pattern `LOCAL`.
+. Group :
+ .. If `switchLabelIR` matches pattern `DEFAULT`:
+  ... Result in `EC~0~`, `STO~0~`, and `DEFAULT`.
+ .. Else if let `typedExpressionIR` be `switchLabelIR`:
+  ... Let `EC~1~`, `STO~1~`, and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR`, under cursor `LOCAL`, evaluation context `EC~0~`, and store `STO~0~`>>.
+  ... If let `exitResult` be `expressionResult`:
+   .... Result in `EC~1~`, `STO~1~`, and `EXIT`.
+  ... Else let `value` be `expressionResult`:
+   .... Result in `EC~1~`, `STO~1~`, and `value`.
+
+
+relation SwitchCases_general_eval: `cursor`, `EC~0~`, `STO~0~`, `value`, and `switchCaseIR^{asterisk}^`
+
+
+. Check that `cursor` matches pattern `LOCAL`.
+. Group :
+ .. If `switchCaseIR^{asterisk}^` is equal to `[ ]`:
+  ... Result in `EC~0~`, `STO~0~`, and `None`.
+ .. Let `switchCaseIR''''^{asterisk}^` be `switchCaseIR^{asterisk}^`.
+ .. Else if let `switchCaseIR~h~ {two-colons} switchCaseIR~t~^{asterisk}^` be `switchCaseIR''''^{asterisk}^`:
+  ... If let `switchLabelIR~h~ : blockStatementIR~h~` be `switchCaseIR~h~`:
+   .... Let <<SwitchLabelIR_general_eval, `LOCAL EC~0~ STO~0~ |- switchLabelIR~h~ : EC~1~ STO~1~ expressionResult`>>.
+   .... Check that `expressionResult` has type `continueResult<value>`.
+   .... Let `value~label~` be `expressionResult`.
+   .... If `<<match_switchLabelIR_general, $match_switchLabelIR_general(value, value~label~)>>`:
+    ..... Result in `EC~1~`, `STO~1~`, and `blockStatementIR~h~`.
+   .... Else `~<<match_switchLabelIR_general, $match_switchLabelIR_general(value, value~label~)>>`:
+    ..... Let <<SwitchCases_general_eval, `LOCAL EC~1~ STO~1~ value |- switchCaseIR~t~^{asterisk}^ : EC~2~ STO~2~ blockStatementIR^?^`>>.
+    ..... Result in `EC~2~`, `STO~2~`, and `blockStatementIR~h~`.
+  ... Else let `switchLabelIR~h~ :` be `switchCaseIR~h~`:
+   .... Let <<SwitchLabelIR_general_eval, `LOCAL EC~0~ STO~0~ |- switchLabelIR~h~ : EC~1~ STO~1~ expressionResult`>>.
+   .... Check that `expressionResult` has type `continueResult<value>`.
+   .... Let `value~label~` be `expressionResult`.
+   .... If `<<match_switchLabelIR_general, $match_switchLabelIR_general(value, value~label~)>>`:
+    ..... Let `switchCaseIR'''''''^{asterisk}^` be `<<filter_, $filter_<switchCaseIR>(switchCaseIR~t~^{asterisk}^, $is_non_fallthrough_switchCaseIR)>>`.
+    ..... Check that `switchCaseIR'''''''^{asterisk}^` is a non-empty list.
+    ..... Let `switchCaseIR'''''' {two-colons} ++_++^{asterisk}^` be `switchCaseIR'''''''^{asterisk}^`.
+    ..... Check that `switchCaseIR''''''` matches pattern `% : %`.
+    ..... Let `++_++ : blockStatementIR` be `switchCaseIR''''''`.
+    ..... Result in `EC~1~`, `STO~1~`, and `blockStatementIR`.
+   .... Else `~<<match_switchLabelIR_general, $match_switchLabelIR_general(value, value~label~)>>`:
+    ..... Let <<SwitchCases_general_eval, `LOCAL EC~1~ STO~1~ value |- switchCaseIR~t~^{asterisk}^ : EC~2~ STO~2~ blockStatementIR^?^`>>.
+    ..... Result in `EC~2~`, `STO~2~`, and `blockStatementIR^?^`.
 
 
 relation SelectCase_match: `EC~0~`, `STO~0~`, `value~key~^{asterisk}^`, and `keysetExpressionIR : nameIR ;`
