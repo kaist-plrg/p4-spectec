@@ -11024,7 +11024,7 @@ def $find_constructorDef_overloaded_t(TC, prefixedNameIR, (argumentIR)*{argument
 
     3. Return $find_overloaded<constructorTypeDefIR>(TC.global.constructor, id, ((id_arg)?{id_arg <- id_arg?})*{id_arg? <- id_arg?*})
 
-;; ../../../../spec-concrete/5.02.1-typing-context.watsup:443.1-443.55
+;; ../../../../spec-concrete/5.02.1-typing-context.watsup:443.1-444.50
 def $find_local_return_type_t(TC)
 
 1. (Let localKind be TC.local.kind)
@@ -20931,7 +20931,7 @@ def $reduce_serenum_binary(typedExpressionIR_l, typedExpressionIR_r, $check)
 
   1. Return ?()
 
-;; ../../../../spec-concrete/5.05.2-typing-subtyping.watsup:490.1-491.49
+;; ../../../../spec-concrete/5.05.2-typing-subtyping.watsup:490.1-491.44
 def $coerce_unary(typedExpressionIR, typeIR_to)
 
 1. (Let (_expressionIR # (( typeIR _ctk ))) be typedExpressionIR)
@@ -20948,7 +20948,7 @@ def $coerce_unary(typedExpressionIR, typeIR_to)
 
     2. Return ?(typedExpressionIR_cast)
 
-;; ../../../../spec-concrete/5.05.2-typing-subtyping.watsup:506.1-508.68
+;; ../../../../spec-concrete/5.05.2-typing-subtyping.watsup:506.1-508.62
 def $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
 
 1. (Let (_expressionIR # (( typeIR_l _ctk ))) be typedExpressionIR_l)
@@ -29133,7 +29133,7 @@ relation Stmt_eval: p EC STO |- statementIR : % % %
 
                   1. Result in : % % % |- % : EC_1 STO_1 ((`) as statementResult)
 
-      3. Group switchStatementIR-general: (local) EC STO |- ((switch( typedExpressionIR ){ switchCaseIR*{switchCaseIR <- switchCaseIR*} }) as statementIR) : % % %
+      3. Group switchStatementIR-general: (local) EC STO |- ((switch( typedExpressionIR ){ (switchCaseIR)*{switchCaseIR <- switchCaseIR*} }) as statementIR) : % % %
 
         1. (Expr_eval: (local) EC STO |- typedExpressionIR : EC_1 STO_1 expressionResult)
 
@@ -29141,17 +29141,17 @@ relation Stmt_eval: p EC STO |- statementIR : % % %
 
           1. (Let (` value) be (expressionResult as continueResult<value>))
 
-          2. (SwitchCases_general_eval: (local) EC STO value |- switchCaseIR*{switchCaseIR <- switchCaseIR*} : EC STO blockStatementIR'?{blockStatementIR' <- blockStatementIR'?})
+          2. (SwitchCases_general_eval: (local) EC STO value |- (switchCaseIR)*{switchCaseIR <- switchCaseIR*} : EC STO (blockStatementIR')?{blockStatementIR' <- blockStatementIR'?})
 
           3. If ((EC = EC_1)), then
 
             1. If ((STO = STO_1)), then
 
-              1. Case analysis on blockStatementIR'?{blockStatementIR' <- blockStatementIR'?}
+              1. Case analysis on (blockStatementIR')?{blockStatementIR' <- blockStatementIR'?}
 
                 1. Case (% matches pattern (_))
 
-                  1. (Let ?(blockStatementIR) be blockStatementIR'?{blockStatementIR' <- blockStatementIR'?})
+                  1. (Let ?(blockStatementIR) be (blockStatementIR')?{blockStatementIR' <- blockStatementIR'?})
 
                   2. (Stmt_eval: (local) EC_1 STO_1 |- (blockStatementIR as statementIR) : EC_2 STO_2 statementResult)
 
@@ -31395,21 +31395,21 @@ def $match_switchLabelIR_general(value, value')
   1. Return false
 
 ;; ../../../../spec-concrete/8.06-eval-statement.watsup:318.1-320.29
-relation SwitchCases_general_eval: cursor EC_0 STO_0 value |- switchCaseIR*{switchCaseIR <- switchCaseIR*} : % % %
+relation SwitchCases_general_eval: cursor EC_0 STO_0 value |- (switchCaseIR)*{switchCaseIR <- switchCaseIR*} : % % %
 
 1. If ((cursor matches pattern `LOCAL`)), then
 
-  1. Group : (local) EC_0 STO_0 value |- switchCaseIR*{switchCaseIR <- switchCaseIR*} : % % %
+  1. Group : (local) EC_0 STO_0 value |- (switchCaseIR)*{switchCaseIR <- switchCaseIR*} : % % %
 
-    1. If ((switchCaseIR*{switchCaseIR <- switchCaseIR*} = [])), then
+    1. If (((switchCaseIR)*{switchCaseIR <- switchCaseIR*} = [])), then
 
       1. Result in : % % % % |- % : EC_0 STO_0 ?()
 
-    2. (Let switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} be switchCaseIR*{switchCaseIR <- switchCaseIR*})
+    2. (Let (switchCaseIR'''')*{switchCaseIR'''' <- switchCaseIR''''*} be (switchCaseIR)*{switchCaseIR <- switchCaseIR*})
 
-    3. If ((switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} matches pattern _ :: _)), then
+    3. If (((switchCaseIR'''')*{switchCaseIR'''' <- switchCaseIR''''*} matches pattern _ :: _)), then
 
-      1. (Let switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} be switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*})
+      1. (Let switchCaseIR_h :: (switchCaseIR_t)*{switchCaseIR_t <- switchCaseIR_t*} be (switchCaseIR'''')*{switchCaseIR'''' <- switchCaseIR''''*})
 
       2. Case analysis on switchCaseIR_h
 
@@ -31431,7 +31431,7 @@ relation SwitchCases_general_eval: cursor EC_0 STO_0 value |- switchCaseIR*{swit
 
               2. Case false
 
-                1. (SwitchCases_general_eval: (local) EC_1 STO_1 value |- switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} : EC_2 STO_2 blockStatementIR?{blockStatementIR <- blockStatementIR?})
+                1. (SwitchCases_general_eval: (local) EC_1 STO_1 value |- (switchCaseIR_t)*{switchCaseIR_t <- switchCaseIR_t*} : EC_2 STO_2 (blockStatementIR)?{blockStatementIR <- blockStatementIR?})
 
                 2. Result in : % % % % |- % : EC_2 STO_2 ?(blockStatementIR_h)
 
@@ -31449,11 +31449,11 @@ relation SwitchCases_general_eval: cursor EC_0 STO_0 value |- switchCaseIR*{swit
 
               1. Case true
 
-                1. (Let switchCaseIR'''''''*{switchCaseIR''''''' <- switchCaseIR'''''''*} be $filter_<switchCaseIR>(switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*}, $is_non_fallthrough_switchCaseIR))
+                1. (Let (switchCaseIR''''''')*{switchCaseIR''''''' <- switchCaseIR'''''''*} be $filter_<switchCaseIR>((switchCaseIR_t)*{switchCaseIR_t <- switchCaseIR_t*}, $is_non_fallthrough_switchCaseIR))
 
-                2. If ((switchCaseIR'''''''*{switchCaseIR''''''' <- switchCaseIR'''''''*} matches pattern _ :: _)), then
+                2. If (((switchCaseIR''''''')*{switchCaseIR''''''' <- switchCaseIR'''''''*} matches pattern _ :: _)), then
 
-                  1. (Let switchCaseIR'''''' :: _switchCaseIR*{_switchCaseIR <- _switchCaseIR*} be switchCaseIR'''''''*{switchCaseIR''''''' <- switchCaseIR'''''''*})
+                  1. (Let switchCaseIR'''''' :: (_switchCaseIR)*{_switchCaseIR <- _switchCaseIR*} be (switchCaseIR''''''')*{switchCaseIR''''''' <- switchCaseIR'''''''*})
 
                   2. If ((switchCaseIR'''''' matches pattern `%:%`)), then
 
@@ -31463,9 +31463,9 @@ relation SwitchCases_general_eval: cursor EC_0 STO_0 value |- switchCaseIR*{swit
 
               2. Case false
 
-                1. (SwitchCases_general_eval: (local) EC_1 STO_1 value |- switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} : EC_2 STO_2 blockStatementIR?{blockStatementIR <- blockStatementIR?})
+                1. (SwitchCases_general_eval: (local) EC_1 STO_1 value |- (switchCaseIR_t)*{switchCaseIR_t <- switchCaseIR_t*} : EC_2 STO_2 (blockStatementIR)?{blockStatementIR <- blockStatementIR?})
 
-                2. Result in : % % % % |- % : EC_2 STO_2 blockStatementIR?{blockStatementIR <- blockStatementIR?}
+                2. Result in : % % % % |- % : EC_2 STO_2 (blockStatementIR)?{blockStatementIR <- blockStatementIR?}
 
 ;; ../../../../spec-concrete/8.08.1-eval-parser-statement.watsup:31.1-34.26
 relation SelectCase_match: EC_0 STO_0 (value_key)*{value_key <- value_key*} |- (keysetExpressionIR : nameIR ;) : % % %

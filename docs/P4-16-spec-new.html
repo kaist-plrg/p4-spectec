@@ -851,6 +851,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 </ul>
 </li>
 <li><a href="#_canonicalization">8.7. Canonicalization</a></li>
+<li><a href="#_subtyping">8.8. Subtyping</a></li>
 </ul>
 </li>
 <li><a href="#_p4_callables">9. P4 callables</a>
@@ -3772,6 +3773,89 @@ constructorTypeDefEnv = map&lt;cid, constructorTypeDefIR&gt;</code></pre>
 <p>Stateful objects can be defined in P4<sub>16</sub>, which are instantiated using
 constructors. <code>constructorTypeDefEnv</code> is a map from constructor names to their
 type definitions, <code>constructorTypeDefIR</code>.</p>
+</div>
+<div class="paragraph">
+<p>(Under construction)</p>
+</div>
+<div id="find_local_return_type_t" class="paragraph">
+<p>The expected return type in <code>TC</code></p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>localKind</code> be <code>TC.LOCAL.KIND</code>.</p>
+</li>
+<li>
+<p>If let <code>FUNCTION : typeIR<sub>ret</sub></code> be <code>localKind</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Return <code>typeIR<sub>ret</sub></code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>EXTERN_FUNCTION : typeIR<sub>ret</sub></code> be <code>localKind</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Return <code>typeIR<sub>ret</sub></code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>EXTERN_METHOD : typeIR<sub>ret</sub></code> be <code>localKind</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Return <code>typeIR<sub>ret</sub></code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else let <code>EXTERN_METHOD ABSTRACT : typeIR<sub>ret</sub></code> be <code>localKind</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Return <code>typeIR<sub>ret</sub></code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If <code>TC.LOCAL.KIND</code> matches pattern <code>ACTION</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Return <code>VOID</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else <code>TC.LOCAL.KIND</code> matches pattern <code>CONTROL_APPLY_METHOD</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Return <code>VOID</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Otherwise:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Return <code>None</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
 </div>
 <div class="admonitionblock note">
 <table>
@@ -8821,7 +8905,7 @@ type checking, type equivalence, and other type-based analyses.</p>
 typedefs until a type is fully expanded.</p>
 </div>
 <div id="canon_typeIR" class="paragraph">
-<p>the canonicalized form of <code>typeIR'</code></p>
+<p>The canonicalized form of <code>typeIR'</code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -8854,6 +8938,45 @@ typedefs until a type is fully expanded.</p>
 <ol class="loweralpha" type="a">
 <li>
 <p>Return <code>typeIR'</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_subtyping">8.8. Subtyping</h3>
+<div id="coerce_unary" class="paragraph">
+<p><code>typedExpressionIR</code> implicitly cast to <code>typeIR<sub>to</sub></code></p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>_</code></a> be the note of <code>typedExpressionIR</code>.</p>
+</li>
+<li>
+<p>If <a href="#Type_alpha"><code>typeIR</code> and <code>typeIR<sub>to</sub></code> are the same type</a>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Return <code>typedExpressionIR</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else <a href="#Type_alpha"><code>typeIR</code> and <code>typeIR<sub>to</sub></code> are not the same type</a>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Check that <a href="#Sub_impl"><code>typeIR</code> can be implicitly cast to <code>typeIR<sub>to</sub></code></a>.</p>
+</li>
+<li>
+<p>Let <code>typedExpressionIR<sub>cast</sub></code> be <a href="#typedExpressionIR"><code>( typeIR<sub>to</sub> ) typedExpressionIR</code> annotated with type <code>typeIR<sub>to</sub></code> and compile-time known-ness <code>_</code></a>.</p>
+</li>
+<li>
+<p>Return <code>typedExpressionIR<sub>cast</sub></code>.</p>
 </li>
 </ol>
 </div>
@@ -20098,7 +20221,7 @@ typedExpressionIR
 </div>
 </div>
 <h5 id="_type_checking_26" class="discrete">Type checking</h5>
-<div class="listingblock">
+<div id="Expr_ok" class="listingblock">
 <div class="content">
 <pre>relation Expr_ok:
    cursor typingContext |- expression : typedExpressionIR
@@ -20106,6 +20229,16 @@ typedExpressionIR
    hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
    hint(prose_out "the typed expression" %3)</pre>
 </div>
+</div>
+<div id="type_of_typedExpressionIR" class="paragraph">
+<p>The type of  <a href="#typedExpressionIR"><code>_</code> annotated with type <code>typeIR</code> and compile-time known-ness <code>_</code></a></p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Return <code>typeIR</code>.</p>
+</li>
+</ol>
 </div>
 <h5 id="_local_compile_time_evaluation" class="discrete">Local compile-time evaluation</h5>
 <div class="listingblock">

@@ -350,9 +350,10 @@ and code_of_relinput ctx notexp =
   let notexp = (mixop, exps) in
   code_of_notexp ctx notexp
 
-and render_hintexp ctx (exps : exp list) (hintexp : El.Ast.exp) : string =
+and render_hintexp ?(caps = false) ctx (exps : exp list) (hintexp : El.Ast.exp)
+    : string =
   let _, str = render_hintexp' ctx exps hintexp 0 in
-  str
+  if caps then capitalize_first str else str
 
 and render_hintexp' ctx (exps : exp list) (hintexp : El.Ast.exp) (cursor : int)
     : int * string =
@@ -430,8 +431,7 @@ let render_relcall (relcall : relcall) rid : string =
 let render_reldef (relcall : relcall) rid : string =
   match relcall with
   | Prose (hintexp, [], exps_in) ->
-      (render_hintexp in_link exps_in hintexp
-      |> capitalize_first
+      (render_hintexp ~caps:true in_link exps_in hintexp
       |> as_link in_prose ~link:(string_of_relid rid))
       ^ " is defined as:"
   | Prose _ -> assert false
@@ -572,8 +572,9 @@ let render_funcdef (funcprose : funcprose) (tparams : tparam list)
   in
   match funcprose with
   | BoolProse (_id, prose_true, _prose_false) ->
-      render_hintexp in_prose exps_input prose_true
-  | InputProse (_id, prose_in) -> render_hintexp in_prose exps_input prose_in
+      render_hintexp ~caps:true in_prose exps_input prose_true
+  | InputProse (_id, prose_in) ->
+      render_hintexp ~caps:true in_prose exps_input prose_in
   | Def id ->
       string_of_defid id ^ string_of_tparams tparams ^ render_args in_code args
       |> as_code in_prose
