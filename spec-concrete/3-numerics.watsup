@@ -96,25 +96,24 @@ def $bin_op(`+, value_l, value_r) = $bin_plus(value_l, value_r)
 dec $bin_satplus(value, value) : value 
   hint(testgen_ignore)
 
-def $bin_satplus(w W i_l, w W i_r) = w W i'''
-  -- if i_l' = $bitstr_to_int(w, i_l)
-  -- if i_r' = $bitstr_to_int(w, i_r)
-  -- if i' = $(i_l' + i_r')
-  -- if i'' = $min_int([ i', $($pow2(w) - 1) ])
-  -- if i''' = $int_to_bitstr(w, i'')
+def $bin_satplus(w W i_l, w W i_r) = w W i'
+  -- if i = $(i_l + i_r)
+  -- if i' = $min_int([ i, $($pow2(w) - 1) ])
 def $bin_satplus(w S i_l, w S i_r) = w S i'''
   -- if i_l' = $bitstr_to_int(w, i_l)
   -- if i_r' = $bitstr_to_int(w, i_r)
   -- if i' = $(i_l' + i_r')
   -- if $(i' > 0)
-  -- if i'' = $min_int([ i', $($pow2(w) - 1) ])
+  -- if w' = $(w - 1)
+  -- if i'' = $min_int([ i', $($pow2(w') - 1) ])
   -- if i''' = $int_to_bitstr(w, i'')
 def $bin_satplus(w S i_l, w S i_r) = w S i'''
   -- if i_l' = $bitstr_to_int(w, i_l)
   -- if i_r' = $bitstr_to_int(w, i_r)
   -- if i' = $(i_l' + i_r')
   -- if $(i' <= 0)
-  -- if i'' = $max_int([ i', $(-$pow2(w)) ])
+  -- if w' = $(w - 1)
+  -- if i'' = $max_int([ i', $(-$pow2(w')) ])
   -- if i''' = $int_to_bitstr(w, i'')
 
 def $bin_op(`|+|, value_l, value_r) = $bin_satplus(value_l, value_r)
@@ -141,30 +140,27 @@ def $bin_op(`-, value_l, value_r) = $bin_minus(value_l, value_r)
 dec $bin_satminus(value, value) : value
   hint(testgen_ignore)
 
-def $bin_satminus(w W i_l, w W i_r) = w W i''
-  -- if i_l' = $bitstr_to_int(w, i_l)
-  -- if i_r' = $bitstr_to_int(w, i_r)
-  -- if i' = $(i_l' - i_r')
-  -- if $(i' > 0)
-  -- if i'' = $int_to_bitstr(w, i')
+def $bin_satminus(w W i_l, w W i_r) = w W i
+  -- if i = $(i_l - i_r)
+  -- if $(i > 0)
 def $bin_satminus(w W i_l, w W i_r) = w W 0
-  -- if i_l' = $bitstr_to_int(w, i_l)
-  -- if i_r' = $bitstr_to_int(w, i_r)
-  -- if i' = $(i_l' - i_r')
-  -- if $(i' <= 0)
+  -- if i = $(i_l - i_r)
+  -- if $(i <= 0)
 def $bin_satminus(w S i_l, w S i_r) = w S i'''
   -- if i_l' = $bitstr_to_int(w, i_l)
   -- if i_r' = $bitstr_to_int(w, i_r)
   -- if i' = $(i_l' - i_r')
   -- if $(i' > 0)
-  -- if i'' = $min_int([ i', $($pow2(w) - 1) ])
+  -- if w' = $(w - 1)
+  -- if i'' = $min_int([ i', $($pow2(w') - 1) ])
   -- if i''' = $int_to_bitstr(w, i'')
 def $bin_satminus(w S i_l, w S i_r) = w S i'''
   -- if i_l' = $bitstr_to_int(w, i_l)
   -- if i_r' = $bitstr_to_int(w, i_r)
   -- if i' = $(i_l' - i_r')
   -- if $(i' <= 0)
-  -- if i'' = $max_int([ i', $(-$pow2(w)) ])
+  -- if w' = $(w - 1)
+  -- if i'' = $max_int([ i', $(-$pow2(w')) ])
   -- if i''' = $int_to_bitstr(w, i'')
 
 def $bin_op(`|-|, value_l, value_r) = $bin_satminus(value_l, value_r)

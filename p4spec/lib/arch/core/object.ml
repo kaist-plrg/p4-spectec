@@ -221,8 +221,7 @@ module PacketIn = struct
     (* Get size of "T" *)
     let size =
       Spec.Func.subst_type_e_local value_ctx value_typ
-      |> Spec.Func.sizeof_maxSizeInBits'
-      |> Bigint.to_int_exn
+      |> Spec.Func.sizeof_maxSizeInBits' |> Bigint.to_int_exn
     in
     (* Create a dummy "hdr" *)
     let value_hdr = Spec.Func.default value_typ in

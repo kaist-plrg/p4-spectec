@@ -36,7 +36,11 @@ let max_nat (add : value -> unit) (at : region) (targs : targ list)
   let values =
     Extract.one at values_input |> Value.get_list |> List.map bigint_of_value
   in
-  let max = List.fold_left Bigint.max Bigint.zero values in
+  let max =
+    match values with
+    | [] -> Bigint.zero
+    | value_h :: values_t -> List.fold_left Bigint.max value_h values_t
+  in
   value_of_bigint add max
 
 (* dec $min_nat(nat* ) : nat *)
@@ -47,5 +51,9 @@ let min_nat (add : value -> unit) (at : region) (targs : targ list)
   let values =
     Extract.one at values_input |> Value.get_list |> List.map bigint_of_value
   in
-  let min = List.fold_left Bigint.min Bigint.zero values in
+  let min =
+    match values with
+    | [] -> Bigint.zero
+    | value_h :: values_t -> List.fold_left Bigint.min value_h values_t
+  in
   value_of_bigint add min

@@ -28,7 +28,7 @@ let sum_int (add : value -> unit) (at : region) (targs : targ list)
   let sum = List.fold_left Bigint.( + ) Bigint.zero values in
   value_of_bigint add sum
 
-(* dec $max_int(nat* ) : nat *)
+(* dec $max_int(int* ) : int *)
 
 let max_int (add : value -> unit) (at : region) (targs : targ list)
     (values_input : value list) : value =
@@ -36,10 +36,14 @@ let max_int (add : value -> unit) (at : region) (targs : targ list)
   let values =
     Extract.one at values_input |> Value.get_list |> List.map bigint_of_value
   in
-  let max = List.fold_left Bigint.max Bigint.zero values in
+  let max =
+    match values with
+    | [] -> Bigint.zero
+    | value_h :: values_t -> List.fold_left Bigint.max value_h values_t
+  in
   value_of_bigint add max
 
-(* dec $min_int(nat* ) : nat *)
+(* dec $min_int(int* ) : int *)
 
 let min_int (add : value -> unit) (at : region) (targs : targ list)
     (values_input : value list) : value =
@@ -47,5 +51,9 @@ let min_int (add : value -> unit) (at : region) (targs : targ list)
   let values =
     Extract.one at values_input |> Value.get_list |> List.map bigint_of_value
   in
-  let min = List.fold_left Bigint.min Bigint.zero values in
+  let min =
+    match values with
+    | [] -> Bigint.zero
+    | value_h :: values_t -> List.fold_left Bigint.min value_h values_t
+  in
   value_of_bigint add min

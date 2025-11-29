@@ -7304,7 +7304,7 @@ relation Lvalue_read: `p`, `EC`, `STO`, and `storageReference'`
 . Group referenceExpressionIR:
  .. Let `value` be `<<find_var_e, $find_var_e(p, EC, prefixedNameIR)>>`.
  .. Result in `value`.
-. If let `storageReference . nameIR` be `storageReference'`:
+. If let `storageReference . nameIR'` be `storageReference'`:
  .. Group storageReference-nameIR:
   ... Let <<Lvalue_read, `p EC STO |- storageReference : value~base~`>>.
   ... If let `! oid` be `value~base~`:
@@ -7313,25 +7313,31 @@ relation Lvalue_read: `p`, `EC`, `STO`, and `storageReference'`
    .... Let `object` be `object'^?^`.
    .... Check that `object` has type `packageObject`.
    .... Let `PACKAGE < ++_++ > { frame }` be `object`.
-   .... Let `value''^?^` be `<<find_map, $find_map<nameIR, value>(frame, nameIR)>>`.
-   .... Check that `value''^?^` is Some value.
-   .... Let `value` be `value''^?^`.
-   .... Result in `value`.
-  ... Else if let `HEADER_UNION ++_++ { (value~field~ id~field~ ;)^{asterisk}^ }` be `value~base~`:
-   .... Let `value''^?^` be `<<assoc_, $assoc_<id, value>(nameIR, ((id~field~, value~field~))^{asterisk}^)>>`.
+   .... Let `value''^?^` be `<<find_map, $find_map<nameIR, value>(frame, nameIR')>>`.
    .... Check that `value''^?^` is Some value.
    .... Let `value` be `value''^?^`.
    .... Result in `value`.
   ... Else if let `STRUCT tid { (value~field~ id~field~ ;)^{asterisk}^ }` be `value~base~`:
-   .... Let `value''^?^` be `<<assoc_, $assoc_<id, value>(nameIR, ((id~field~, value~field~))^{asterisk}^)>>`.
+   .... Let `value''^?^` be `<<assoc_, $assoc_<id, value>(nameIR', ((id~field~, value~field~))^{asterisk}^)>>`.
    .... Check that `value''^?^` is Some value.
    .... Let `value` be `value''^?^`.
    .... Result in `value`.
   ... Else if let `HEADER tid { ++_++ ; (value~field~ id~field~ ;)^{asterisk}^ }` be `value~base~`:
-   .... Let `value''^?^` be `<<assoc_, $assoc_<id, value>(nameIR, ((id~field~, value~field~))^{asterisk}^)>>`.
+   .... Let `value''^?^` be `<<assoc_, $assoc_<id, value>(nameIR', ((id~field~, value~field~))^{asterisk}^)>>`.
    .... Check that `value''^?^` is Some value.
    .... Let `value` be `value''^?^`.
    .... Result in `value`.
+  ... Else if let `HEADER_UNION ++_++ { (value~field~ id~field~ ;)^{asterisk}^ }` be `value~base~`:
+   .... Let `value''^?^` be `<<assoc_, $assoc_<id, value>(nameIR', ((id~field~, value~field~))^{asterisk}^)>>`.
+   .... Check that `value''^?^` is Some value.
+   .... Let `value` be `value''^?^`.
+   .... Result in `value`.
+  ... Check that `nameIR'` is equal to `"next"`.
+  ... Check that `value~base~` has type `headerStackValue`.
+  ... Let `HEADER_STACK [ value~element~^{asterisk}^ ( n~idx~ ; n~size~ ) ]` be `value~base~`.
+  ... Check that `n~idx~` is less than `n~size~`.
+  ... Let `value` be `value~element~^{asterisk}^[n~idx~]`.
+  ... Result in `value`.
 . Else if let `storageReference [ value~index~ ]` be `storageReference'`:
  .. Group storageReference-indexAccess:
   ... Let <<Lvalue_read, `p EC STO |- storageReference : value~base~`>>.
@@ -7340,14 +7346,14 @@ relation Lvalue_read: `p`, `EC`, `STO`, and `storageReference'`
   ... Let `int` be <<int_of_value, the integer representation of  `value~index~`>>.
   ... Check that `int` has type `nat`.
   ... Let `n~idx~` be `int`.
+  ... Else if `n~idx~` is less than `n~size~`:
+   .... Let `value` be `value~element~^{asterisk}^[n~idx~]`.
+   .... Result in `value`.
   ... Else if `n~idx~` is greater than or equal to `n~size~`:
    .... Let `value''` be `value~element~^{asterisk}^[0]`.
    .... Check that `value''` has type `headerValue`.
    .... Let `HEADER tid { b~valid~ ; fieldValue^{asterisk}^ }` be `value''`.
    .... Let `value` be `HEADER tid { false ; fieldValue^{asterisk}^ }`.
-   .... Result in `value`.
-  ... Else if `n~idx~` is less than `n~size~`:
-   .... Let `value` be `value~element~^{asterisk}^[n~idx~]`.
    .... Result in `value`.
 
 
@@ -7359,17 +7365,35 @@ relation Lvalue_write: `p`, `EC~0~`, `STO`, `storageReference'`, and `value`
 . Group referenceExpressionIR:
  .. Let `EC~1~` be `<<update_var_e, $update_var_e(p, EC~0~, prefixedNameIR, value)>>`.
  .. Result in `EC~1~`.
-. If let `storageReference . nameIR'` be `storageReference'`:
+. If let `storageReference . text` be `storageReference'`:
  .. Group storageReference-nameIR:
+  ... Check that `text` is equal to `"next"`.
   ... Let <<Lvalue_read, `p EC~0~ STO |- storageReference : value~base~`>>.
-  ... If let `HEADER_UNION tid { fieldValue^{asterisk}^ }` be `value~base~`:
+  ... Check that `value~base~` has type `headerStackValue`.
+  ... Let `HEADER_STACK [ value~element~^{asterisk}^ ( n~idx~ ; n~size~ ) ]` be `value~base~`.
+  ... Let `value~element_update~^{asterisk}^` be `<<update_headerStack, $update_headerStack(value~element~^{asterisk}^, value, n~idx~, n~size~)>>`.
+  ... Let `value~base_update~` be `HEADER_STACK [ value~element_update~^{asterisk}^ ( n~idx~ + 1 ; n~size~ ) ]`.
+  ... Let <<Lvalue_write, `p EC~0~ STO |- storageReference -> value~base_update~ : EC~1~`>>.
+  ... Result in `EC~1~`.
+  ... Let <<Lvalue_read, `p EC~0~ STO |- storageReference : value~base~`>>.
+  ... If let `STRUCT tid { fieldValue^{asterisk}^ }` be `value~base~`:
+   .... Let `fieldValue~update~^{asterisk}^` be `<<update_fieldValue, $update_fieldValue(fieldValue^{asterisk}^, text, value)>>`.
+   .... Let `value~base_update~` be `STRUCT tid { fieldValue~update~^{asterisk}^ }`.
+   .... Let <<Lvalue_write, `p EC~0~ STO |- storageReference -> value~base_update~ : EC~1~`>>.
+   .... Result in `EC~1~`.
+  ... Else if let `HEADER tid { b~valid~ ; fieldValue^{asterisk}^ }` be `value~base~`:
+   .... Let `fieldValue~update~^{asterisk}^` be `<<update_fieldValue, $update_fieldValue(fieldValue^{asterisk}^, text, value)>>`.
+   .... Let `value~base_update~` be `HEADER tid { b~valid~ ; fieldValue~update~^{asterisk}^ }`.
+   .... Let <<Lvalue_write, `p EC~0~ STO |- storageReference -> value~base_update~ : EC~1~`>>.
+   .... Result in `EC~1~`.
+  ... Else if let `HEADER_UNION tid { fieldValue^{asterisk}^ }` be `value~base~`:
    .... Let `(value~field~ id~field~ ;)^{asterisk}^` be `fieldValue^{asterisk}^`.
-   .... Let `value''^?^` be `<<assoc_, $assoc_<nameIR, value>(nameIR', ((id~field~, value~field~))^{asterisk}^)>>`.
+   .... Let `value''^?^` be `<<assoc_, $assoc_<nameIR, value>(text, ((id~field~, value~field~))^{asterisk}^)>>`.
    .... Check that `value''^?^` is Some value.
    .... Let `value~old~` be `value''^?^`.
    .... Check that `value~old~` has type `headerValue`.
    .... Let `HEADER ++_++ { b~valid_old~ ; ++_++^{asterisk}^ }` be `value~old~`.
-   .... Let `fieldValue~update~^{asterisk}^` be `<<update_fieldValue, $update_fieldValue(fieldValue^{asterisk}^, nameIR', value)>>`.
+   .... Let `fieldValue~update~^{asterisk}^` be `<<update_fieldValue, $update_fieldValue(fieldValue^{asterisk}^, text, value)>>`.
    .... Check that `value` has type `headerValue`.
    .... Let `HEADER ++_++ { b~valid_new~ ; ++_++^{asterisk}^ }` be `value`.
    .... Let `b~toggled~` be `~b~valid_old~ /\ b~valid_new~` *or* `b~valid_old~ /\ ~b~valid_new~`.
@@ -7378,42 +7402,25 @@ relation Lvalue_write: `p`, `EC~0~`, `STO`, `storageReference'`, and `value`
     ..... Let <<Lvalue_write, `p EC~0~ STO |- storageReference -> value~base_update~ : EC~1~`>>.
     ..... Result in `EC~1~`.
    .... Else `b~toggled~`:
-    ..... Let `fieldValue~update'~^{asterisk}^` be `<<update_headerUnion, $update_headerUnion(fieldValue~update~^{asterisk}^, nameIR')>>`.
+    ..... Let `fieldValue~update'~^{asterisk}^` be `<<update_headerUnion, $update_headerUnion(fieldValue~update~^{asterisk}^, text)>>`.
     ..... Let `value~base_update~` be `HEADER_UNION tid { fieldValue~update'~^{asterisk}^ }`.
     ..... Let <<Lvalue_write, `p EC~0~ STO |- storageReference -> value~base_update~ : EC~1~`>>.
     ..... Result in `EC~1~`.
-  ... Else if let `STRUCT tid { fieldValue^{asterisk}^ }` be `value~base~`:
-   .... Let `fieldValue~update~^{asterisk}^` be `<<update_fieldValue, $update_fieldValue(fieldValue^{asterisk}^, nameIR', value)>>`.
-   .... Let `value~base_update~` be `STRUCT tid { fieldValue~update~^{asterisk}^ }`.
-   .... Let <<Lvalue_write, `p EC~0~ STO |- storageReference -> value~base_update~ : EC~1~`>>.
-   .... Result in `EC~1~`.
-  ... Else if let `HEADER tid { b~valid~ ; fieldValue^{asterisk}^ }` be `value~base~`:
-   .... Let `fieldValue~update~^{asterisk}^` be `<<update_fieldValue, $update_fieldValue(fieldValue^{asterisk}^, nameIR', value)>>`.
-   .... Let `value~base_update~` be `HEADER tid { b~valid~ ; fieldValue~update~^{asterisk}^ }`.
-   .... Let <<Lvalue_write, `p EC~0~ STO |- storageReference -> value~base_update~ : EC~1~`>>.
-   .... Result in `EC~1~`.
-  ... Check that `nameIR'` is equal to `"next"`.
-  ... Check that `value~base~` has type `headerStackValue`.
-  ... Let `HEADER_STACK [ value~element~^{asterisk}^ ( n~idx~ ; n~size~ ) ]` be `value~base~`.
-  ... Let `value~element_update~^{asterisk}^` be `<<update_headerStack, $update_headerStack(value~element~^{asterisk}^, value, n~idx~, n~size~)>>`.
-  ... Let `value~base_update~` be `HEADER_STACK [ value~element_update~^{asterisk}^ ( n~idx~ + 1 ; n~size~ ) ]`.
-  ... Let <<Lvalue_write, `p EC~0~ STO |- storageReference -> value~base_update~ : EC~1~`>>.
-  ... Result in `EC~1~`.
 . Else if let `storageReference [ value~index~ ]` be `storageReference'`:
  .. Group storageReference-indexAccess:
   ... Let <<Lvalue_read, `p EC~0~ STO |- storageReference : value~base~`>>.
   ... Check that `value~base~` has type `headerStackValue`.
-  ... Let `HEADER_STACK [ value~element~^{asterisk}^ ( ++_++ ; n~size~ ) ]` be `value~base~`.
+  ... Let `HEADER_STACK [ value~element~^{asterisk}^ ( n~base_idx~ ; n~size~ ) ]` be `value~base~`.
   ... Let `int` be <<int_of_value, the integer representation of  `value~index~`>>.
   ... Check that `int` has type `nat`.
   ... Let `n~idx~` be `int`.
-  ... Else if `n~idx~` is greater than or equal to `n~size~`:
-   .... Result in `EC~0~`.
   ... Else if `n~idx~` is less than `n~size~`:
    .... Let `value~element_update~^{asterisk}^` be `<<update_headerStack, $update_headerStack(value~element~^{asterisk}^, value, n~idx~, n~size~)>>`.
-   .... Let `value~base_update~` be `HEADER_STACK [ value~element_update~^{asterisk}^ ( ++_++ ; n~size~ ) ]`.
+   .... Let `value~base_update~` be `HEADER_STACK [ value~element_update~^{asterisk}^ ( n~base_idx~ ; n~size~ ) ]`.
    .... Let <<Lvalue_write, `p EC~0~ STO |- storageReference -> value~base_update~ : EC~1~`>>.
    .... Result in `EC~1~`.
+  ... Else if `n~idx~` is greater than or equal to `n~size~`:
+   .... Result in `EC~0~`.
 
 
 relation Stmt_eval: `p`, `EC`, `STO`, and `statementIR`
