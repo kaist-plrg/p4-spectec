@@ -46,7 +46,22 @@ def $opt_as_seq_<X>(X''?{X'' <- X''?})
 
     2. Return [X]
 
-;; ../../../../spec-concrete/0-aux.watsup:52.1-53.62
+;; ../../../../spec-concrete/0-aux.watsup:52.1-53.40
+def $forall_(bool*{bool <- bool*})
+
+1. Case analysis on bool*{bool <- bool*}
+
+  1. Case (% matches pattern [])
+
+    1. Return true
+
+  2. Case (% matches pattern _ :: _)
+
+    1. (Let b_h :: b_t*{b_t <- b_t*} be bool*{bool <- bool*})
+
+    2. Return (b_h /\ $forall_(b_t*{b_t <- b_t*}))
+
+;; ../../../../spec-concrete/0-aux.watsup:57.1-58.62
 def $init_(nat')
 
 1. Case analysis on nat'
@@ -65,7 +80,7 @@ def $init_(nat')
 
       2. Return n' :: $init_(n')
 
-;; ../../../../spec-concrete/0-aux.watsup:59.1-60.47
+;; ../../../../spec-concrete/0-aux.watsup:64.1-65.47
 def $repeat_<X>(X, nat')
 
 1. Case analysis on nat'
@@ -84,16 +99,16 @@ def $repeat_<X>(X, nat')
 
       2. Return [X] ++ $repeat_<X>(X, n')
 
-;; ../../../../spec-concrete/0-aux.watsup:66.1-66.30
+;; ../../../../spec-concrete/0-aux.watsup:71.1-71.30
 builtin def $rev_<X>(X*{X <- X*})
 
-;; ../../../../spec-concrete/0-aux.watsup:68.1-68.36
+;; ../../../../spec-concrete/0-aux.watsup:73.1-73.36
 builtin def $concat_<X>(X*{X <- X*}*{X* <- X**})
 
-;; ../../../../spec-concrete/0-aux.watsup:70.1-70.47
+;; ../../../../spec-concrete/0-aux.watsup:75.1-75.47
 builtin def $partition_<X>(X*{X <- X*}, nat)
 
-;; ../../../../spec-concrete/0-aux.watsup:72.1-72.46
+;; ../../../../spec-concrete/0-aux.watsup:77.1-77.46
 def $filter_<X>(X*{X <- X*}, $cond)
 
 1. Case analysis on X*{X <- X*}
@@ -116,77 +131,77 @@ def $filter_<X>(X*{X <- X*}, $cond)
 
         1. Return $filter_<X>(X_t*{X_t <- X_t*}, $cond)
 
-;; ../../../../spec-concrete/0-aux.watsup:81.1-81.43
+;; ../../../../spec-concrete/0-aux.watsup:86.1-86.43
 builtin def $assoc_<X, Y>(X, (X, Y)*{(X, Y) <- (X, Y)*})
 
-;; ../../../../spec-concrete/0-aux.watsup:83.1-85.60
+;; ../../../../spec-concrete/0-aux.watsup:88.1-90.60
 builtin def $distinct_<K>(K*{K <- K*})
 
-;; ../../../../spec-concrete/0-aux.watsup:91.17-91.24
+;; ../../../../spec-concrete/0-aux.watsup:96.17-96.24
 syntax set<K> = 
    | { K* }
 
-;; ../../../../spec-concrete/0-aux.watsup:93.1-93.27
+;; ../../../../spec-concrete/0-aux.watsup:98.1-98.27
 def $empty_set<K>
 
 1. Return ({ [] })
 
-;; ../../../../spec-concrete/0-aux.watsup:96.1-97.52
+;; ../../../../spec-concrete/0-aux.watsup:101.1-102.52
 def $in_set<K>(K, ({ K_e*{K_e <- K_e*} }))
 
 1. Return K is in K_e*{K_e <- K_e*}
 
-;; ../../../../spec-concrete/0-aux.watsup:100.1-101.60
+;; ../../../../spec-concrete/0-aux.watsup:105.1-106.60
 builtin def $intersect_set<K>(set<K>, set<K>')
 
-;; ../../../../spec-concrete/0-aux.watsup:103.1-104.53
+;; ../../../../spec-concrete/0-aux.watsup:108.1-109.53
 builtin def $union_set<K>(set<K>, set<K>')
 
-;; ../../../../spec-concrete/0-aux.watsup:106.1-107.44
+;; ../../../../spec-concrete/0-aux.watsup:111.1-112.44
 builtin def $unions_set<K>(set<K>*{set<K> <- set<K>*})
 
-;; ../../../../spec-concrete/0-aux.watsup:109.1-110.58
+;; ../../../../spec-concrete/0-aux.watsup:114.1-115.58
 builtin def $diff_set<K>(set<K>, set<K>')
 
-;; ../../../../spec-concrete/0-aux.watsup:112.1-114.47
+;; ../../../../spec-concrete/0-aux.watsup:117.1-119.47
 builtin def $sub_set<K>(set<K>, set<K>')
 
-;; ../../../../spec-concrete/0-aux.watsup:116.1-118.44
+;; ../../../../spec-concrete/0-aux.watsup:121.1-123.44
 builtin def $eq_set<K>(set<K>, set<K>')
 
-;; ../../../../spec-concrete/0-aux.watsup:124.21-124.27
+;; ../../../../spec-concrete/0-aux.watsup:129.21-129.27
 syntax pair<K, V> = 
    | K : V
 
-;; ../../../../spec-concrete/0-aux.watsup:126.20-126.35
+;; ../../../../spec-concrete/0-aux.watsup:131.20-131.35
 syntax map<K, V> = set<pair<K, V>>
 
-;; ../../../../spec-concrete/0-aux.watsup:128.1-128.33
+;; ../../../../spec-concrete/0-aux.watsup:133.1-133.33
 def $empty_map<K, V>
 
 1. Return ({ [] })
 
-;; ../../../../spec-concrete/0-aux.watsup:131.1-132.44
+;; ../../../../spec-concrete/0-aux.watsup:136.1-137.44
 def $dom_map<K, V>(({ (K : V)*{K <- K*, V <- V*} }))
 
 1. Return ({ K*{K <- K*} })
 
-;; ../../../../spec-concrete/0-aux.watsup:135.1-135.47
+;; ../../../../spec-concrete/0-aux.watsup:140.1-140.47
 builtin def $find_map<K, V>(map<K, V>, K)
 
-;; ../../../../spec-concrete/0-aux.watsup:137.1-137.49
+;; ../../../../spec-concrete/0-aux.watsup:142.1-142.49
 builtin def $find_maps<K, V>(map<K, V>*{map<K, V> <- map<K, V>*}, K)
 
-;; ../../../../spec-concrete/0-aux.watsup:139.1-139.56
+;; ../../../../spec-concrete/0-aux.watsup:144.1-144.56
 builtin def $add_map<K, V>(map<K, V>, K, V)
 
-;; ../../../../spec-concrete/0-aux.watsup:141.1-141.59
+;; ../../../../spec-concrete/0-aux.watsup:146.1-146.59
 builtin def $adds_map<K, V>(map<K, V>, K*{K <- K*}, V*{V <- V*})
 
-;; ../../../../spec-concrete/0-aux.watsup:143.1-144.74
+;; ../../../../spec-concrete/0-aux.watsup:148.1-149.74
 builtin def $update_map<K, V>(map<K, V>, K, V)
 
-;; ../../../../spec-concrete/0-aux.watsup:146.1-146.56
+;; ../../../../spec-concrete/0-aux.watsup:151.1-151.56
 def $extend_map<K, V>(({ (K_a : V_a)*{K_a <- K_a*, V_a <- V_a*} }), ({ (K_b : V_b)*{K_b <- K_b*, V_b <- V_b*} }))
 
 1. (Let ({ (K_c : V_c)*{K_c <- K_c*, V_c <- V_c*} }) be $adds_map<K, V>(({ (K_a : V_a)*{K_a <- K_a*, V_a <- V_a*} }), K_b*{K_b <- K_b*}, V_b*{V_b <- V_b*}))
@@ -5455,306 +5470,374 @@ def $is_nominal_typeIR(typeIR)
 
 1. Return $is_nominal_typeIR'($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/2.6-type-aux-property.watsup:8.1-8.39
-def $is_nominal_typeIR'(typeIR)
+;; ../../../../spec-concrete/2.6-type-aux-property.watsup:8.1-8.43
+table def $is_nominal_typeIR'(typeIR') =
 
-1. Case analysis on typeIR
+  Row : (newTypeIR as typeIR) -> true:
 
-  1. Case (% has type newTypeIR)
+    1. If ((typeIR' has type newTypeIR)), then
 
-    1. (Let newTypeIR be (typeIR as newTypeIR))
+      1. (Let newTypeIR be (typeIR' as newTypeIR))
 
-    2. Return true
+      2. Return true
 
-  2. Case (% has type structTypeIR)
+  Row : (structTypeIR as typeIR) -> true:
 
-    1. (Let structTypeIR be (typeIR as structTypeIR))
+    1. If ((typeIR' has type structTypeIR)), then
 
-    2. Return true
+      1. (Let structTypeIR be (typeIR' as structTypeIR))
 
-  3. Case (% has type headerTypeIR)
+      2. Return true
 
-    1. (Let headerTypeIR be (typeIR as headerTypeIR))
+  Row : (headerTypeIR as typeIR) -> true:
 
-    2. Return true
+    1. If ((typeIR' has type headerTypeIR)), then
 
-  4. Case (% has type headerUnionTypeIR)
+      1. (Let headerTypeIR be (typeIR' as headerTypeIR))
 
-    1. (Let headerUnionTypeIR be (typeIR as headerUnionTypeIR))
+      2. Return true
 
-    2. Return true
+  Row : (headerUnionTypeIR as typeIR) -> true:
 
-  5. Case (% has type enumTypeIR)
+    1. If ((typeIR' has type headerUnionTypeIR)), then
 
-    1. (Let enumTypeIR be (typeIR as enumTypeIR))
+      1. (Let headerUnionTypeIR be (typeIR' as headerUnionTypeIR))
 
-    2. Return true
+      2. Return true
 
-  6. Case (% has type externObjectTypeIR)
+  Row : (enumTypeIR as typeIR) -> true:
 
-    1. (Let externObjectTypeIR be (typeIR as externObjectTypeIR))
+    1. If ((typeIR' has type enumTypeIR)), then
 
-    2. Return true
+      1. (Let enumTypeIR be (typeIR' as enumTypeIR))
 
-  7. Case (% has type tableObjectTypeIR)
+      2. Return true
 
-    1. (Let tableObjectTypeIR be (typeIR as tableObjectTypeIR))
+  Row : (externObjectTypeIR as typeIR) -> true:
 
-    2. Return true
+    1. If ((typeIR' has type externObjectTypeIR)), then
 
-2. Otherwise
+      1. (Let externObjectTypeIR be (typeIR' as externObjectTypeIR))
 
-  1. Return false
+      2. Return true
+
+  Row : (tableObjectTypeIR as typeIR) -> true:
+
+    1. If ((typeIR' has type tableObjectTypeIR)), then
+
+      1. (Let tableObjectTypeIR be (typeIR' as tableObjectTypeIR))
+
+      2. Return true
+
+  Row : _typeIR -> false:
+
+    1. Return false
 
 ;; ../../../../spec-concrete/2.6-type-aux-property.watsup:24.1-24.42
 def $is_defaultable_typeIR(typeIR)
 
 1. Return $is_defaultable_typeIR'($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/2.6-type-aux-property.watsup:25.1-25.43
-def $is_defaultable_typeIR'(typeIR'')
+;; ../../../../spec-concrete/2.6-type-aux-property.watsup:25.1-25.47
+table def $is_defaultable_typeIR'(typeIR'') =
 
-1. Case analysis on typeIR''
+  Row : ((bool) as typeIR) -> true:
 
-  1. Case (% has type primitiveTypeIR)
+    1. If ((typeIR'' has type primitiveTypeIR)), then
 
-    1. (Let primitiveTypeIR be (typeIR'' as primitiveTypeIR))
+      1. (Let primitiveTypeIR be (typeIR'' as primitiveTypeIR))
 
-    2. Case analysis on primitiveTypeIR
-
-      1. Case (% matches pattern `BOOL`)
+      2. If ((primitiveTypeIR matches pattern `BOOL`)), then
 
         1. Return true
 
-      2. Case (% matches pattern `ERROR`)
+  Row : ((error) as typeIR) -> true:
+
+    1. If ((typeIR'' has type primitiveTypeIR)), then
+
+      1. (Let primitiveTypeIR be (typeIR'' as primitiveTypeIR))
+
+      2. If ((primitiveTypeIR matches pattern `ERROR`)), then
 
         1. Return true
 
-      3. Case (% matches pattern `STRING`)
+  Row : ((string) as typeIR) -> true:
+
+    1. If ((typeIR'' has type primitiveTypeIR)), then
+
+      1. (Let primitiveTypeIR be (typeIR'' as primitiveTypeIR))
+
+      2. If ((primitiveTypeIR matches pattern `STRING`)), then
 
         1. Return true
 
-  2. Case (% has type numberTypeIR)
+  Row : (numberTypeIR as typeIR) -> true:
 
-    1. (Let numberTypeIR be (typeIR'' as numberTypeIR))
+    1. If ((typeIR'' has type numberTypeIR)), then
 
-    2. Return true
+      1. (Let numberTypeIR be (typeIR'' as numberTypeIR))
 
-  3. Case (% has type newTypeIR)
+      2. Return true
 
-    1. (Let (type _tid typeIR) be (typeIR'' as newTypeIR))
+  Row : ((type _tid typeIR) as typeIR) -> $is_defaultable_typeIR(typeIR):
 
-    2. Return $is_defaultable_typeIR(typeIR)
+    1. If ((typeIR'' has type newTypeIR)), then
 
-  4. Case (% has type tupleTypeIR)
+      1. (Let (type _tid typeIR) be (typeIR'' as newTypeIR))
 
-    1. (Let (tuple< typeIR*{typeIR <- typeIR*} >) be (typeIR'' as tupleTypeIR))
+      2. Return $is_defaultable_typeIR(typeIR)
 
-    2. If ($is_defaultable_typeIR(typeIR))*{typeIR <- typeIR*}, then
+  Row : ((tuple< typeIR*{typeIR <- typeIR*} >) as typeIR) -> $forall_($is_defaultable_typeIR(typeIR)*{typeIR <- typeIR*}):
 
-      1. Return true
+    1. If ((typeIR'' has type tupleTypeIR)), then
 
-  5. Case (% has type headerStackTypeIR)
+      1. (Let (tuple< typeIR*{typeIR <- typeIR*} >) be (typeIR'' as tupleTypeIR))
 
-    1. (Let (typeIR [ _nat ]) be (typeIR'' as headerStackTypeIR))
+      2. Return $forall_($is_defaultable_typeIR(typeIR)*{typeIR <- typeIR*})
 
-    2. Return $is_defaultable_typeIR(typeIR)
+  Row : ((typeIR [ _nat ]) as typeIR) -> $is_defaultable_typeIR(typeIR):
 
-  6. Case (% has type structTypeIR)
+    1. If ((typeIR'' has type headerStackTypeIR)), then
 
-    1. (Let (struct _tid { (typeIR _id ;)*{_id <- _id*, typeIR <- typeIR*} }) be (typeIR'' as structTypeIR))
+      1. (Let (typeIR [ _nat ]) be (typeIR'' as headerStackTypeIR))
 
-    2. If ($is_defaultable_typeIR(typeIR))*{typeIR <- typeIR*}, then
+      2. Return $is_defaultable_typeIR(typeIR)
 
-      1. Return true
+  Row : ((struct _tid { (typeIR _id ;)*{_id <- _id*, typeIR <- typeIR*} }) as typeIR) -> $forall_($is_defaultable_typeIR(typeIR)*{typeIR <- typeIR*}):
 
-  7. Case (% has type headerTypeIR)
+    1. If ((typeIR'' has type structTypeIR)), then
 
-    1. (Let (header _tid { (typeIR _id ;)*{_id <- _id*, typeIR <- typeIR*} }) be (typeIR'' as headerTypeIR))
+      1. (Let (struct _tid { (typeIR _id ;)*{_id <- _id*, typeIR <- typeIR*} }) be (typeIR'' as structTypeIR))
 
-    2. If ($is_defaultable_typeIR(typeIR))*{typeIR <- typeIR*}, then
+      2. Return $forall_($is_defaultable_typeIR(typeIR)*{typeIR <- typeIR*})
 
-      1. Return true
+  Row : ((header _tid { (typeIR _id ;)*{_id <- _id*, typeIR <- typeIR*} }) as typeIR) -> $forall_($is_defaultable_typeIR(typeIR)*{typeIR <- typeIR*}):
 
-  8. Case (% has type headerUnionTypeIR)
+    1. If ((typeIR'' has type headerTypeIR)), then
 
-    1. (Let (header_union _tid { (typeIR _id ;)*{_id <- _id*, typeIR <- typeIR*} }) be (typeIR'' as headerUnionTypeIR))
+      1. (Let (header _tid { (typeIR _id ;)*{_id <- _id*, typeIR <- typeIR*} }) be (typeIR'' as headerTypeIR))
 
-    2. If ($is_defaultable_typeIR(typeIR))*{typeIR <- typeIR*}, then
+      2. Return $forall_($is_defaultable_typeIR(typeIR)*{typeIR <- typeIR*})
 
-      1. Return true
+  Row : ((header_union _tid { (typeIR _id ;)*{_id <- _id*, typeIR <- typeIR*} }) as typeIR) -> $forall_($is_defaultable_typeIR(typeIR)*{typeIR <- typeIR*}):
 
-  9. Case (% has type enumTypeIR)
+    1. If ((typeIR'' has type headerUnionTypeIR)), then
 
-    1. (Let enumTypeIR be (typeIR'' as enumTypeIR))
+      1. (Let (header_union _tid { (typeIR _id ;)*{_id <- _id*, typeIR <- typeIR*} }) be (typeIR'' as headerUnionTypeIR))
 
-    2. Case analysis on enumTypeIR
+      2. Return $forall_($is_defaultable_typeIR(typeIR)*{typeIR <- typeIR*})
 
-      1. Case (% matches pattern `ENUM%{%}`)
+  Row : ((enum _tid { _id*{_id <- _id*} }) as typeIR) -> true:
+
+    1. If ((typeIR'' has type enumTypeIR)), then
+
+      1. (Let enumTypeIR be (typeIR'' as enumTypeIR))
+
+      2. If ((enumTypeIR matches pattern `ENUM%{%}`)), then
 
         1. (Let (enum _tid { _id*{_id <- _id*} }) be enumTypeIR)
 
         2. Return true
 
-      2. Case (% matches pattern `ENUM%<%>{%}`)
+  Row : ((enum _tid < typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} }) as typeIR) -> $is_defaultable_typeIR(typeIR):
+
+    1. If ((typeIR'' has type enumTypeIR)), then
+
+      1. (Let enumTypeIR be (typeIR'' as enumTypeIR))
+
+      2. If ((enumTypeIR matches pattern `ENUM%<%>{%}`)), then
 
         1. (Let (enum _tid < typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} }) be enumTypeIR)
 
         2. Return $is_defaultable_typeIR(typeIR)
 
-2. Otherwise
+  Row : _typeIR -> false:
 
-  1. Return false
+    1. Return false
 
-;; ../../../../spec-concrete/2.6-type-aux-property.watsup:53.1-53.40
+;; ../../../../spec-concrete/2.6-type-aux-property.watsup:46.1-46.40
 def $is_equalable_typeIR(typeIR)
 
 1. Return $is_equalable_typeIR'($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/2.6-type-aux-property.watsup:54.1-54.41
-def $is_equalable_typeIR'(typeIR)
+;; ../../../../spec-concrete/2.6-type-aux-property.watsup:47.1-47.45
+table def $is_equalable_typeIR'(typeIR') =
 
-1. Case analysis on typeIR
+  Row : ((void) as typeIR) -> false:
 
-  1. Case (% has type primitiveTypeIR)
+    1. If ((typeIR' has type primitiveTypeIR)), then
 
-    1. (Let primitiveTypeIR be (typeIR as primitiveTypeIR))
+      1. (Let primitiveTypeIR be (typeIR' as primitiveTypeIR))
 
-    2. If ((primitiveTypeIR matches pattern `VOID`)), then
+      2. If ((primitiveTypeIR matches pattern `VOID`)), then
 
-      1. Return false
+        1. Return false
 
-  2. Case (% has type nameTypeIR)
+  Row : ((` tid) as typeIR) -> false:
 
-    1. (Let (` tid) be (typeIR as nameTypeIR))
+    1. If ((typeIR' has type nameTypeIR)), then
 
-    2. Return false
-
-  3. Case (% has type externObjectTypeIR)
-
-    1. (Let externObjectTypeIR be (typeIR as externObjectTypeIR))
-
-    2. Return false
-
-  4. Case (% has type parserObjectTypeIR)
-
-    1. (Let parserObjectTypeIR be (typeIR as parserObjectTypeIR))
-
-    2. Return false
-
-  5. Case (% has type controlObjectTypeIR)
-
-    1. (Let controlObjectTypeIR be (typeIR as controlObjectTypeIR))
-
-    2. Return false
-
-  6. Case (% has type packageObjectTypeIR)
-
-    1. (Let packageObjectTypeIR be (typeIR as packageObjectTypeIR))
-
-    2. Return false
-
-  7. Case (% has type tableObjectTypeIR)
-
-    1. (Let tableObjectTypeIR be (typeIR as tableObjectTypeIR))
-
-    2. Return false
-
-  8. Case (% has type defaultTypeIR)
-
-    1. (Let defaultTypeIR be (typeIR as defaultTypeIR))
-
-    2. Return false
-
-  9. Case (% has type sequenceTypeIR)
-
-    1. (Let sequenceTypeIR be (typeIR as sequenceTypeIR))
-
-    2. If ((sequenceTypeIR matches pattern `SEQ<%,...>`)), then
-
-      1. (Let (seq< _typeIR*{_typeIR <- _typeIR*} ,...>) be sequenceTypeIR)
+      1. (Let (` tid) be (typeIR' as nameTypeIR))
 
       2. Return false
 
-  10. Case (% has type recordTypeIR)
+  Row : (externObjectTypeIR as typeIR) -> false:
 
-    1. (Let recordTypeIR be (typeIR as recordTypeIR))
+    1. If ((typeIR' has type externObjectTypeIR)), then
 
-    2. If ((recordTypeIR matches pattern `RECORD{%,...}`)), then
-
-      1. (Let (record{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} ,...}) be recordTypeIR)
+      1. (Let externObjectTypeIR be (typeIR' as externObjectTypeIR))
 
       2. Return false
 
-  11. Case (% has type invalidHeaderTypeIR)
+  Row : (parserObjectTypeIR as typeIR) -> false:
 
-    1. (Let invalidHeaderTypeIR be (typeIR as invalidHeaderTypeIR))
+    1. If ((typeIR' has type parserObjectTypeIR)), then
 
-    2. Return false
+      1. (Let parserObjectTypeIR be (typeIR' as parserObjectTypeIR))
 
-  12. Case (% has type setTypeIR)
+      2. Return false
 
-    1. (Let setTypeIR be (typeIR as setTypeIR))
+  Row : (controlObjectTypeIR as typeIR) -> false:
 
-    2. Return false
+    1. If ((typeIR' has type controlObjectTypeIR)), then
 
-  13. Case (% has type tableMetadataTypeIR)
+      1. (Let controlObjectTypeIR be (typeIR' as controlObjectTypeIR))
 
-    1. (Let tableMetadataTypeIR be (typeIR as tableMetadataTypeIR))
+      2. Return false
 
-    2. Return false
+  Row : (packageObjectTypeIR as typeIR) -> false:
 
-2. Otherwise
+    1. If ((typeIR' has type packageObjectTypeIR)), then
 
-  1. Return true
+      1. (Let packageObjectTypeIR be (typeIR' as packageObjectTypeIR))
 
-;; ../../../../spec-concrete/2.6-type-aux-property.watsup:76.1-76.41
+      2. Return false
+
+  Row : (tableObjectTypeIR as typeIR) -> false:
+
+    1. If ((typeIR' has type tableObjectTypeIR)), then
+
+      1. (Let tableObjectTypeIR be (typeIR' as tableObjectTypeIR))
+
+      2. Return false
+
+  Row : ((default) as typeIR) -> false:
+
+    1. If ((typeIR' has type defaultTypeIR)), then
+
+      1. (Let defaultTypeIR be (typeIR' as defaultTypeIR))
+
+      2. Return false
+
+  Row : ((seq< _typeIR*{_typeIR <- _typeIR*} ,...>) as typeIR) -> false:
+
+    1. If ((typeIR' has type sequenceTypeIR)), then
+
+      1. (Let sequenceTypeIR be (typeIR' as sequenceTypeIR))
+
+      2. If ((sequenceTypeIR matches pattern `SEQ<%,...>`)), then
+
+        1. (Let (seq< _typeIR*{_typeIR <- _typeIR*} ,...>) be sequenceTypeIR)
+
+        2. Return false
+
+  Row : ((record{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} ,...}) as typeIR) -> false:
+
+    1. If ((typeIR' has type recordTypeIR)), then
+
+      1. (Let recordTypeIR be (typeIR' as recordTypeIR))
+
+      2. If ((recordTypeIR matches pattern `RECORD{%,...}`)), then
+
+        1. (Let (record{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} ,...}) be recordTypeIR)
+
+        2. Return false
+
+  Row : ((header_invalid) as typeIR) -> false:
+
+    1. If ((typeIR' has type invalidHeaderTypeIR)), then
+
+      1. (Let invalidHeaderTypeIR be (typeIR' as invalidHeaderTypeIR))
+
+      2. Return false
+
+  Row : (setTypeIR as typeIR) -> false:
+
+    1. If ((typeIR' has type setTypeIR)), then
+
+      1. (Let setTypeIR be (typeIR' as setTypeIR))
+
+      2. Return false
+
+  Row : (tableMetadataTypeIR as typeIR) -> false:
+
+    1. If ((typeIR' has type tableMetadataTypeIR)), then
+
+      1. (Let tableMetadataTypeIR be (typeIR' as tableMetadataTypeIR))
+
+      2. Return false
+
+  Row : _typeIR -> true:
+
+    1. Return true
+
+;; ../../../../spec-concrete/2.6-type-aux-property.watsup:69.1-69.41
 def $is_assignable_typeIR(typeIR)
 
 1. Return $is_assignable_typeIR'($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/2.6-type-aux-property.watsup:77.1-77.42
-def $is_assignable_typeIR'(typeIR)
+;; ../../../../spec-concrete/2.6-type-aux-property.watsup:70.1-70.46
+table def $is_assignable_typeIR'(typeIR') =
 
-1. Case analysis on typeIR
+  Row : ((void) as typeIR) -> false:
 
-  1. Case (% has type primitiveTypeIR)
+    1. If ((typeIR' has type primitiveTypeIR)), then
 
-    1. (Let primitiveTypeIR be (typeIR as primitiveTypeIR))
+      1. (Let primitiveTypeIR be (typeIR' as primitiveTypeIR))
 
-    2. Case analysis on primitiveTypeIR
-
-      1. Case (% matches pattern `VOID`)
+      2. If ((primitiveTypeIR matches pattern `VOID`)), then
 
         1. Return false
 
-      2. Case (% matches pattern `STRING`)
+  Row : ((string) as typeIR) -> false:
+
+    1. If ((typeIR' has type primitiveTypeIR)), then
+
+      1. (Let primitiveTypeIR be (typeIR' as primitiveTypeIR))
+
+      2. If ((primitiveTypeIR matches pattern `STRING`)), then
 
         1. Return false
 
-  2. Case (% has type numberTypeIR)
+  Row : ((int) as typeIR) -> false:
 
-    1. (Let numberTypeIR be (typeIR as numberTypeIR))
+    1. If ((typeIR' has type numberTypeIR)), then
 
-    2. If ((numberTypeIR matches pattern `INT`)), then
+      1. (Let numberTypeIR be (typeIR' as numberTypeIR))
 
-      1. Return false
+      2. If ((numberTypeIR matches pattern `INT`)), then
 
-  3. Case (% has type objectTypeIR)
+        1. Return false
 
-    1. (Let objectTypeIR be (typeIR as objectTypeIR))
+  Row : (objectTypeIR as typeIR) -> false:
 
-    2. Return false
+    1. If ((typeIR' has type objectTypeIR)), then
 
-  4. Case (% has type synthesizedTypeIR)
+      1. (Let objectTypeIR be (typeIR' as objectTypeIR))
 
-    1. (Let synthesizedTypeIR be (typeIR as synthesizedTypeIR))
+      2. Return false
 
-    2. Return false
+  Row : (synthesizedTypeIR as typeIR) -> false:
 
-2. Otherwise
+    1. If ((typeIR' has type synthesizedTypeIR)), then
 
-  1. Return true
+      1. (Let synthesizedTypeIR be (typeIR' as synthesizedTypeIR))
+
+      2. Return false
+
+  Row : _typeIR -> true:
+
+    1. Return true
 
 ;; ../../../../spec-concrete/2.7-type-alpha.watsup:5.1-9.56
 relation Type_alpha: typeIR'''' ~~ typeIR'''''
@@ -11845,55 +11928,73 @@ def $nestable_typedef(typeIR)
 2. Return $nestable'_typedef(typeIR_canon)
 
 ;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:80.1-82.53
-def $nestable'_typedef(typeIR')
+table def $nestable'_typedef(typeIR') =
 
-1. Case analysis on typeIR'
+  Row : ((bool) as typeIR) -> true:
 
-  1. Case (% has type primitiveTypeIR)
+    1. If ((typeIR' has type primitiveTypeIR)), then
 
-    1. (Let primitiveTypeIR be (typeIR' as primitiveTypeIR))
+      1. (Let primitiveTypeIR be (typeIR' as primitiveTypeIR))
 
-    2. Case analysis on primitiveTypeIR
-
-      1. Case (% matches pattern `BOOL`)
+      2. If ((primitiveTypeIR matches pattern `BOOL`)), then
 
         1. Return true
 
-      2. Case (% matches pattern `ERROR`)
+  Row : ((error) as typeIR) -> true:
+
+    1. If ((typeIR' has type primitiveTypeIR)), then
+
+      1. (Let primitiveTypeIR be (typeIR' as primitiveTypeIR))
+
+      2. If ((primitiveTypeIR matches pattern `ERROR`)), then
 
         1. Return true
 
-      3. Case (% matches pattern `STRING`)
+  Row : ((string) as typeIR) -> true:
+
+    1. If ((typeIR' has type primitiveTypeIR)), then
+
+      1. (Let primitiveTypeIR be (typeIR' as primitiveTypeIR))
+
+      2. If ((primitiveTypeIR matches pattern `STRING`)), then
 
         1. Return true
 
-  2. Case (% has type numberTypeIR)
+  Row : (numberTypeIR as typeIR) -> true:
 
-    1. (Let numberTypeIR be (typeIR' as numberTypeIR))
+    1. If ((typeIR' has type numberTypeIR)), then
 
-    2. Return true
+      1. (Let numberTypeIR be (typeIR' as numberTypeIR))
 
-  3. Case (% has type nameTypeIR)
+      2. Return true
 
-    1. (Let nameTypeIR be (typeIR' as nameTypeIR))
+  Row : (nameTypeIR as typeIR) -> true:
 
-    2. Return true
+    1. If ((typeIR' has type nameTypeIR)), then
 
-  4. Case (% has type newTypeIR)
+      1. (Let nameTypeIR be (typeIR' as nameTypeIR))
 
-    1. (Let newTypeIR be (typeIR' as newTypeIR))
+      2. Return true
 
-    2. Return true
+  Row : (newTypeIR as typeIR) -> true:
 
-  5. Case (% has type dataTypeIR)
+    1. If ((typeIR' has type newTypeIR)), then
 
-    1. (Let dataTypeIR be (typeIR' as dataTypeIR))
+      1. (Let newTypeIR be (typeIR' as newTypeIR))
 
-    2. Return true
+      2. Return true
 
-2. Otherwise
+  Row : (dataTypeIR as typeIR) -> true:
 
-  1. Return false
+    1. If ((typeIR' has type dataTypeIR)), then
+
+      1. (Let dataTypeIR be (typeIR' as dataTypeIR))
+
+      2. Return true
+
+  Row : _typeIR -> false:
+
+    1. Return false
 
 ;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:101.1-103.54
 def $nestable_new(typeIR)
@@ -11903,51 +12004,61 @@ def $nestable_new(typeIR)
 2. Return $nestable'_new(typeIR_canon)
 
 ;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:104.1-106.54
-def $nestable'_new(typeIR')
+table def $nestable'_new(typeIR') =
 
-1. Case analysis on typeIR'
+  Row : ((bool) as typeIR) -> true:
 
-  1. Case (% has type primitiveTypeIR)
+    1. If ((typeIR' has type primitiveTypeIR)), then
 
-    1. (Let primitiveTypeIR be (typeIR' as primitiveTypeIR))
+      1. (Let primitiveTypeIR be (typeIR' as primitiveTypeIR))
 
-    2. If ((primitiveTypeIR matches pattern `BOOL`)), then
+      2. If ((primitiveTypeIR matches pattern `BOOL`)), then
 
-      1. Return true
+        1. Return true
 
-  2. Case (% has type numberTypeIR)
+  Row : ((bit< _nat >) as typeIR) -> true:
 
-    1. (Let numberTypeIR be (typeIR' as numberTypeIR))
+    1. If ((typeIR' has type numberTypeIR)), then
 
-    2. Case analysis on numberTypeIR
+      1. (Let numberTypeIR be (typeIR' as numberTypeIR))
 
-      1. Case (% matches pattern `BIT<%>`)
+      2. If ((numberTypeIR matches pattern `BIT<%>`)), then
 
         1. (Let (bit< _nat >) be numberTypeIR)
 
         2. Return true
 
-      2. Case (% matches pattern `INT<%>`)
+  Row : ((int< _nat >) as typeIR) -> true:
+
+    1. If ((typeIR' has type numberTypeIR)), then
+
+      1. (Let numberTypeIR be (typeIR' as numberTypeIR))
+
+      2. If ((numberTypeIR matches pattern `INT<%>`)), then
 
         1. (Let (int< _nat >) be numberTypeIR)
 
         2. Return true
 
-  3. Case (% has type nameTypeIR)
+  Row : (nameTypeIR as typeIR) -> true:
 
-    1. (Let nameTypeIR be (typeIR' as nameTypeIR))
+    1. If ((typeIR' has type nameTypeIR)), then
 
-    2. Return true
+      1. (Let nameTypeIR be (typeIR' as nameTypeIR))
 
-  4. Case (% has type newTypeIR)
+      2. Return true
 
-    1. (Let newTypeIR be (typeIR' as newTypeIR))
+  Row : (newTypeIR as typeIR) -> true:
 
-    2. Return true
+    1. If ((typeIR' has type newTypeIR)), then
 
-2. Otherwise
+      1. (Let newTypeIR be (typeIR' as newTypeIR))
 
-  1. Return false
+      2. Return true
+
+  Row : _typeIR -> false:
+
+    1. Return false
 
 ;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:125.1-127.57
 def $nestable_list(typeIR)
@@ -11957,59 +12068,83 @@ def $nestable_list(typeIR)
 2. Return $nestable'_list(typeIR_canon)
 
 ;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:128.1-130.57
-def $nestable'_list(typeIR')
+table def $nestable'_list(typeIR') =
 
-1. Case analysis on typeIR'
+  Row : ((bool) as typeIR) -> true:
 
-  1. Case (% has type primitiveTypeIR)
+    1. If ((typeIR' has type primitiveTypeIR)), then
 
-    1. (Let primitiveTypeIR be (typeIR' as primitiveTypeIR))
+      1. (Let primitiveTypeIR be (typeIR' as primitiveTypeIR))
 
-    2. Case analysis on primitiveTypeIR
-
-      1. Case (% matches pattern `BOOL`)
+      2. If ((primitiveTypeIR matches pattern `BOOL`)), then
 
         1. Return true
 
-      2. Case (% matches pattern `ERROR`)
+  Row : ((error) as typeIR) -> true:
+
+    1. If ((typeIR' has type primitiveTypeIR)), then
+
+      1. (Let primitiveTypeIR be (typeIR' as primitiveTypeIR))
+
+      2. If ((primitiveTypeIR matches pattern `ERROR`)), then
 
         1. Return true
 
-      3. Case (% matches pattern `MATCH_KIND`)
+  Row : ((match_kind) as typeIR) -> true:
+
+    1. If ((typeIR' has type primitiveTypeIR)), then
+
+      1. (Let primitiveTypeIR be (typeIR' as primitiveTypeIR))
+
+      2. If ((primitiveTypeIR matches pattern `MATCH_KIND`)), then
 
         1. Return true
 
-      4. Case (% matches pattern `STRING`)
+  Row : ((string) as typeIR) -> true:
+
+    1. If ((typeIR' has type primitiveTypeIR)), then
+
+      1. (Let primitiveTypeIR be (typeIR' as primitiveTypeIR))
+
+      2. If ((primitiveTypeIR matches pattern `STRING`)), then
 
         1. Return true
 
-  2. Case (% has type numberTypeIR)
+  Row : (numberTypeIR as typeIR) -> true:
 
-    1. (Let numberTypeIR be (typeIR' as numberTypeIR))
+    1. If ((typeIR' has type numberTypeIR)), then
 
-    2. Return true
+      1. (Let numberTypeIR be (typeIR' as numberTypeIR))
 
-  3. Case (% has type nameTypeIR)
+      2. Return true
 
-    1. (Let nameTypeIR be (typeIR' as nameTypeIR))
+  Row : (nameTypeIR as typeIR) -> true:
 
-    2. Return true
+    1. If ((typeIR' has type nameTypeIR)), then
 
-  4. Case (% has type newTypeIR)
+      1. (Let nameTypeIR be (typeIR' as nameTypeIR))
 
-    1. (Let newTypeIR be (typeIR' as newTypeIR))
+      2. Return true
 
-    2. Return true
+  Row : (newTypeIR as typeIR) -> true:
 
-  5. Case (% has type dataTypeIR)
+    1. If ((typeIR' has type newTypeIR)), then
 
-    1. (Let dataTypeIR be (typeIR' as dataTypeIR))
+      1. (Let newTypeIR be (typeIR' as newTypeIR))
 
-    2. Return true
+      2. Return true
 
-2. Otherwise
+  Row : (dataTypeIR as typeIR) -> true:
 
-  1. Return false
+    1. If ((typeIR' has type dataTypeIR)), then
+
+      1. (Let dataTypeIR be (typeIR' as dataTypeIR))
+
+      2. Return true
+
+  Row : _typeIR -> false:
+
+    1. Return false
 
 ;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:150.1-152.58
 def $nestable_tuple(typeIR)
@@ -12019,99 +12154,131 @@ def $nestable_tuple(typeIR)
 2. Return $nestable'_tuple(typeIR_canon)
 
 ;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:153.1-155.58
-def $nestable'_tuple(typeIR')
+table def $nestable'_tuple(typeIR') =
 
-1. Case analysis on typeIR'
+  Row : ((bool) as typeIR) -> true:
 
-  1. Case (% has type primitiveTypeIR)
+    1. If ((typeIR' has type primitiveTypeIR)), then
 
-    1. (Let primitiveTypeIR be (typeIR' as primitiveTypeIR))
+      1. (Let primitiveTypeIR be (typeIR' as primitiveTypeIR))
 
-    2. Case analysis on primitiveTypeIR
-
-      1. Case (% matches pattern `BOOL`)
+      2. If ((primitiveTypeIR matches pattern `BOOL`)), then
 
         1. Return true
 
-      2. Case (% matches pattern `ERROR`)
+  Row : ((error) as typeIR) -> true:
+
+    1. If ((typeIR' has type primitiveTypeIR)), then
+
+      1. (Let primitiveTypeIR be (typeIR' as primitiveTypeIR))
+
+      2. If ((primitiveTypeIR matches pattern `ERROR`)), then
 
         1. Return true
 
-  2. Case (% has type numberTypeIR)
+  Row : ((bit< _nat >) as typeIR) -> true:
 
-    1. (Let numberTypeIR be (typeIR' as numberTypeIR))
+    1. If ((typeIR' has type numberTypeIR)), then
 
-    2. Case analysis on numberTypeIR
+      1. (Let numberTypeIR be (typeIR' as numberTypeIR))
 
-      1. Case (% matches pattern `BIT<%>`)
+      2. If ((numberTypeIR matches pattern `BIT<%>`)), then
 
         1. (Let (bit< _nat >) be numberTypeIR)
 
         2. Return true
 
-      2. Case (% matches pattern `INT<%>`)
+  Row : ((int< _nat >) as typeIR) -> true:
+
+    1. If ((typeIR' has type numberTypeIR)), then
+
+      1. (Let numberTypeIR be (typeIR' as numberTypeIR))
+
+      2. If ((numberTypeIR matches pattern `INT<%>`)), then
 
         1. (Let (int< _nat >) be numberTypeIR)
 
         2. Return true
 
-      3. Case (% matches pattern `VARBIT<%>`)
+  Row : ((varbit< _nat >) as typeIR) -> true:
+
+    1. If ((typeIR' has type numberTypeIR)), then
+
+      1. (Let numberTypeIR be (typeIR' as numberTypeIR))
+
+      2. If ((numberTypeIR matches pattern `VARBIT<%>`)), then
 
         1. (Let (varbit< _nat >) be numberTypeIR)
 
         2. Return true
 
-  3. Case (% has type nameTypeIR)
+  Row : (nameTypeIR as typeIR) -> true:
 
-    1. (Let nameTypeIR be (typeIR' as nameTypeIR))
+    1. If ((typeIR' has type nameTypeIR)), then
 
-    2. Return true
+      1. (Let nameTypeIR be (typeIR' as nameTypeIR))
 
-  4. Case (% has type newTypeIR)
+      2. Return true
 
-    1. (Let newTypeIR be (typeIR' as newTypeIR))
+  Row : (newTypeIR as typeIR) -> true:
 
-    2. Return true
+    1. If ((typeIR' has type newTypeIR)), then
 
-  5. Case (% has type tupleTypeIR)
+      1. (Let newTypeIR be (typeIR' as newTypeIR))
 
-    1. (Let tupleTypeIR be (typeIR' as tupleTypeIR))
+      2. Return true
 
-    2. Return true
+  Row : (tupleTypeIR as typeIR) -> true:
 
-  6. Case (% has type headerStackTypeIR)
+    1. If ((typeIR' has type tupleTypeIR)), then
 
-    1. (Let headerStackTypeIR be (typeIR' as headerStackTypeIR))
+      1. (Let tupleTypeIR be (typeIR' as tupleTypeIR))
 
-    2. Return true
+      2. Return true
 
-  7. Case (% has type structTypeIR)
+  Row : (headerStackTypeIR as typeIR) -> true:
 
-    1. (Let structTypeIR be (typeIR' as structTypeIR))
+    1. If ((typeIR' has type headerStackTypeIR)), then
 
-    2. Return true
+      1. (Let headerStackTypeIR be (typeIR' as headerStackTypeIR))
 
-  8. Case (% has type headerTypeIR)
+      2. Return true
 
-    1. (Let headerTypeIR be (typeIR' as headerTypeIR))
+  Row : (structTypeIR as typeIR) -> true:
 
-    2. Return true
+    1. If ((typeIR' has type structTypeIR)), then
 
-  9. Case (% has type headerUnionTypeIR)
+      1. (Let structTypeIR be (typeIR' as structTypeIR))
 
-    1. (Let headerUnionTypeIR be (typeIR' as headerUnionTypeIR))
+      2. Return true
 
-    2. Return true
+  Row : (headerTypeIR as typeIR) -> true:
 
-  10. Case (% has type enumTypeIR)
+    1. If ((typeIR' has type headerTypeIR)), then
 
-    1. (Let enumTypeIR be (typeIR' as enumTypeIR))
+      1. (Let headerTypeIR be (typeIR' as headerTypeIR))
 
-    2. Return true
+      2. Return true
 
-2. Otherwise
+  Row : (headerUnionTypeIR as typeIR) -> true:
 
-  1. Return false
+    1. If ((typeIR' has type headerUnionTypeIR)), then
+
+      1. (Let headerUnionTypeIR be (typeIR' as headerUnionTypeIR))
+
+      2. Return true
+
+  Row : (enumTypeIR as typeIR) -> true:
+
+    1. If ((typeIR' has type enumTypeIR)), then
+
+      1. (Let enumTypeIR be (typeIR' as enumTypeIR))
+
+      2. Return true
+
+  Row : _typeIR -> false:
+
+    1. Return false
 
 ;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:180.1-182.65
 def $nestable_headerStack(typeIR)
@@ -12121,650 +12288,654 @@ def $nestable_headerStack(typeIR)
 2. Return $nestable'_headerStack(typeIR_canon)
 
 ;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:183.1-185.65
-def $nestable'_headerStack(typeIR')
+table def $nestable'_headerStack(typeIR') =
 
-1. Case analysis on typeIR'
+  Row : (nameTypeIR as typeIR) -> true:
 
-  1. Case (% has type nameTypeIR)
+    1. If ((typeIR' has type nameTypeIR)), then
 
-    1. (Let nameTypeIR be (typeIR' as nameTypeIR))
+      1. (Let nameTypeIR be (typeIR' as nameTypeIR))
 
-    2. Return true
+      2. Return true
 
-  2. Case (% has type headerTypeIR)
+  Row : (headerTypeIR as typeIR) -> true:
 
-    1. (Let headerTypeIR be (typeIR' as headerTypeIR))
+    1. If ((typeIR' has type headerTypeIR)), then
 
-    2. Return true
+      1. (Let headerTypeIR be (typeIR' as headerTypeIR))
 
-  3. Case (% has type headerUnionTypeIR)
+      2. Return true
 
-    1. (Let headerUnionTypeIR be (typeIR' as headerUnionTypeIR))
+  Row : (headerUnionTypeIR as typeIR) -> true:
 
-    2. Return true
+    1. If ((typeIR' has type headerUnionTypeIR)), then
 
-2. Otherwise
+      1. (Let headerUnionTypeIR be (typeIR' as headerUnionTypeIR))
 
-  1. Return false
+      2. Return true
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:201.1-203.59
+  Row : _typeIR -> false:
+
+    1. Return false
+
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:202.1-204.59
 def $nestable_struct(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_struct(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:204.1-206.59
-def $nestable'_struct(typeIR')
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:205.1-207.59
+def $nestable'_struct(typeIR)
 
-1. Case analysis on typeIR'
+1. Return $nestable'_tuple(typeIR)
 
-  1. Case (% has type primitiveTypeIR)
-
-    1. (Let primitiveTypeIR be (typeIR' as primitiveTypeIR))
-
-    2. Case analysis on primitiveTypeIR
-
-      1. Case (% matches pattern `BOOL`)
-
-        1. Return true
-
-      2. Case (% matches pattern `ERROR`)
-
-        1. Return true
-
-  2. Case (% has type numberTypeIR)
-
-    1. (Let numberTypeIR be (typeIR' as numberTypeIR))
-
-    2. Case analysis on numberTypeIR
-
-      1. Case (% matches pattern `INT<%>`)
-
-        1. (Let (int< _nat >) be numberTypeIR)
-
-        2. Return true
-
-      2. Case (% matches pattern `BIT<%>`)
-
-        1. (Let (bit< _nat >) be numberTypeIR)
-
-        2. Return true
-
-      3. Case (% matches pattern `VARBIT<%>`)
-
-        1. (Let (varbit< _nat >) be numberTypeIR)
-
-        2. Return true
-
-  3. Case (% has type nameTypeIR)
-
-    1. (Let nameTypeIR be (typeIR' as nameTypeIR))
-
-    2. Return true
-
-  4. Case (% has type newTypeIR)
-
-    1. (Let newTypeIR be (typeIR' as newTypeIR))
-
-    2. Return true
-
-  5. Case (% has type tupleTypeIR)
-
-    1. (Let tupleTypeIR be (typeIR' as tupleTypeIR))
-
-    2. Return true
-
-  6. Case (% has type headerStackTypeIR)
-
-    1. (Let headerStackTypeIR be (typeIR' as headerStackTypeIR))
-
-    2. Return true
-
-  7. Case (% has type structTypeIR)
-
-    1. (Let structTypeIR be (typeIR' as structTypeIR))
-
-    2. Return true
-
-  8. Case (% has type headerTypeIR)
-
-    1. (Let headerTypeIR be (typeIR' as headerTypeIR))
-
-    2. Return true
-
-  9. Case (% has type headerUnionTypeIR)
-
-    1. (Let headerUnionTypeIR be (typeIR' as headerUnionTypeIR))
-
-    2. Return true
-
-  10. Case (% has type enumTypeIR)
-
-    1. (Let enumTypeIR be (typeIR' as enumTypeIR))
-
-    2. Return true
-
-2. Otherwise
-
-  1. Return false
-
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:232.1-234.57
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:219.1-221.57
 def $nestable_header(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_header(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:235.1-237.57
-def $nestable'_header(typeIR')
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:222.1-224.57
+table def $nestable'_header(typeIR') =
 
-1. Case analysis on typeIR'
+  Row : ((bool) as typeIR) -> true:
 
-  1. Case (% has type primitiveTypeIR)
+    1. If ((typeIR' has type primitiveTypeIR)), then
 
-    1. (Let primitiveTypeIR be (typeIR' as primitiveTypeIR))
+      1. (Let primitiveTypeIR be (typeIR' as primitiveTypeIR))
 
-    2. If ((primitiveTypeIR matches pattern `BOOL`)), then
+      2. If ((primitiveTypeIR matches pattern `BOOL`)), then
 
-      1. Return true
+        1. Return true
 
-  2. Case (% has type numberTypeIR)
+  Row : ((int< _nat >) as typeIR) -> true:
 
-    1. (Let numberTypeIR be (typeIR' as numberTypeIR))
+    1. If ((typeIR' has type numberTypeIR)), then
 
-    2. Case analysis on numberTypeIR
+      1. (Let numberTypeIR be (typeIR' as numberTypeIR))
 
-      1. Case (% matches pattern `INT<%>`)
+      2. If ((numberTypeIR matches pattern `INT<%>`)), then
 
         1. (Let (int< _nat >) be numberTypeIR)
 
         2. Return true
 
-      2. Case (% matches pattern `BIT<%>`)
+  Row : ((bit< _nat >) as typeIR) -> true:
+
+    1. If ((typeIR' has type numberTypeIR)), then
+
+      1. (Let numberTypeIR be (typeIR' as numberTypeIR))
+
+      2. If ((numberTypeIR matches pattern `BIT<%>`)), then
 
         1. (Let (bit< _nat >) be numberTypeIR)
 
         2. Return true
 
-      3. Case (% matches pattern `VARBIT<%>`)
+  Row : ((varbit< _nat >) as typeIR) -> true:
+
+    1. If ((typeIR' has type numberTypeIR)), then
+
+      1. (Let numberTypeIR be (typeIR' as numberTypeIR))
+
+      2. If ((numberTypeIR matches pattern `VARBIT<%>`)), then
 
         1. (Let (varbit< _nat >) be numberTypeIR)
 
         2. Return true
 
-  3. Case (% has type nameTypeIR)
+  Row : (nameTypeIR as typeIR) -> true:
 
-    1. (Let nameTypeIR be (typeIR' as nameTypeIR))
+    1. If ((typeIR' has type nameTypeIR)), then
 
-    2. Return true
-
-  4. Case (% has type newTypeIR)
-
-    1. (Let newTypeIR be (typeIR' as newTypeIR))
-
-    2. Return true
-
-  5. Case (% has type enumTypeIR)
-
-    1. (Let enumTypeIR be (typeIR' as enumTypeIR))
-
-    2. If ((enumTypeIR matches pattern `ENUM%<%>{%}`)), then
-
-      1. (Let (enum _tid < _typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} }) be enumTypeIR)
+      1. (Let nameTypeIR be (typeIR' as nameTypeIR))
 
       2. Return true
 
-  6. Case (% has type structTypeIR)
+  Row : (newTypeIR as typeIR) -> true:
 
-    1. (Let (struct _tid { (typeIR_field _id ;)*{_id <- _id*, typeIR_field <- typeIR_field*} }) be (typeIR' as structTypeIR))
+    1. If ((typeIR' has type newTypeIR)), then
 
-    2. If ($nestable_struct_in_header(typeIR_field))*{typeIR_field <- typeIR_field*}, then
+      1. (Let newTypeIR be (typeIR' as newTypeIR))
 
-      1. Return true
+      2. Return true
 
-2. Otherwise
+  Row : ((enum _tid < _typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} }) as typeIR) -> true:
 
-  1. Return false
+    1. If ((typeIR' has type enumTypeIR)), then
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:238.1-240.76
+      1. (Let enumTypeIR be (typeIR' as enumTypeIR))
+
+      2. If ((enumTypeIR matches pattern `ENUM%<%>{%}`)), then
+
+        1. (Let (enum _tid < _typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} }) be enumTypeIR)
+
+        2. Return true
+
+  Row : ((struct _tid { (typeIR_field _id ;)*{_id <- _id*, typeIR_field <- typeIR_field*} }) as typeIR) -> $forall_($nestable_struct_in_header(typeIR_field)*{typeIR_field <- typeIR_field*}):
+
+    1. If ((typeIR' has type structTypeIR)), then
+
+      1. (Let (struct _tid { (typeIR_field _id ;)*{_id <- _id*, typeIR_field <- typeIR_field*} }) be (typeIR' as structTypeIR))
+
+      2. Return $forall_($nestable_struct_in_header(typeIR_field)*{typeIR_field <- typeIR_field*})
+
+  Row : _typeIR -> false:
+
+    1. Return false
+
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:225.1-227.76
 def $nestable_struct_in_header(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_struct_in_header(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:241.1-243.76
-def $nestable'_struct_in_header(typeIR')
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:228.1-230.76
+table def $nestable'_struct_in_header(typeIR') =
 
-1. Case analysis on typeIR'
+  Row : ((bool) as typeIR) -> true:
 
-  1. Case (% has type primitiveTypeIR)
+    1. If ((typeIR' has type primitiveTypeIR)), then
 
-    1. (Let primitiveTypeIR be (typeIR' as primitiveTypeIR))
+      1. (Let primitiveTypeIR be (typeIR' as primitiveTypeIR))
 
-    2. If ((primitiveTypeIR matches pattern `BOOL`)), then
+      2. If ((primitiveTypeIR matches pattern `BOOL`)), then
 
-      1. Return true
+        1. Return true
 
-  2. Case (% has type numberTypeIR)
+  Row : ((int< _nat >) as typeIR) -> true:
 
-    1. (Let numberTypeIR be (typeIR' as numberTypeIR))
+    1. If ((typeIR' has type numberTypeIR)), then
 
-    2. Case analysis on numberTypeIR
+      1. (Let numberTypeIR be (typeIR' as numberTypeIR))
 
-      1. Case (% matches pattern `INT<%>`)
+      2. If ((numberTypeIR matches pattern `INT<%>`)), then
 
         1. (Let (int< _nat >) be numberTypeIR)
 
         2. Return true
 
-      2. Case (% matches pattern `BIT<%>`)
+  Row : ((bit< _nat >) as typeIR) -> true:
+
+    1. If ((typeIR' has type numberTypeIR)), then
+
+      1. (Let numberTypeIR be (typeIR' as numberTypeIR))
+
+      2. If ((numberTypeIR matches pattern `BIT<%>`)), then
 
         1. (Let (bit< _nat >) be numberTypeIR)
 
         2. Return true
 
-  3. Case (% has type nameTypeIR)
+  Row : (nameTypeIR as typeIR) -> true:
 
-    1. (Let nameTypeIR be (typeIR' as nameTypeIR))
+    1. If ((typeIR' has type nameTypeIR)), then
 
-    2. Return true
-
-  4. Case (% has type newTypeIR)
-
-    1. (Let newTypeIR be (typeIR' as newTypeIR))
-
-    2. Return true
-
-  5. Case (% has type enumTypeIR)
-
-    1. (Let enumTypeIR be (typeIR' as enumTypeIR))
-
-    2. If ((enumTypeIR matches pattern `ENUM%<%>{%}`)), then
-
-      1. (Let (enum _tid < _typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} }) be enumTypeIR)
+      1. (Let nameTypeIR be (typeIR' as nameTypeIR))
 
       2. Return true
 
-  6. Case (% has type structTypeIR)
+  Row : (newTypeIR as typeIR) -> true:
 
-    1. (Let (struct _tid { (typeIR_field _id ;)*{_id <- _id*, typeIR_field <- typeIR_field*} }) be (typeIR' as structTypeIR))
+    1. If ((typeIR' has type newTypeIR)), then
 
-    2. If ($nestable_struct_in_header(typeIR_field))*{typeIR_field <- typeIR_field*}, then
+      1. (Let newTypeIR be (typeIR' as newTypeIR))
 
-      1. Return true
+      2. Return true
 
-2. Otherwise
+  Row : ((enum _tid < _typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} }) as typeIR) -> true:
 
-  1. Return false
+    1. If ((typeIR' has type enumTypeIR)), then
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:280.1-282.63
+      1. (Let enumTypeIR be (typeIR' as enumTypeIR))
+
+      2. If ((enumTypeIR matches pattern `ENUM%<%>{%}`)), then
+
+        1. (Let (enum _tid < _typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} }) be enumTypeIR)
+
+        2. Return true
+
+  Row : ((struct _tid { (typeIR_field _id ;)*{_id <- _id*, typeIR_field <- typeIR_field*} }) as typeIR) -> $forall_($nestable_struct_in_header(typeIR_field)*{typeIR_field <- typeIR_field*}):
+
+    1. If ((typeIR' has type structTypeIR)), then
+
+      1. (Let (struct _tid { (typeIR_field _id ;)*{_id <- _id*, typeIR_field <- typeIR_field*} }) be (typeIR' as structTypeIR))
+
+      2. Return $forall_($nestable_struct_in_header(typeIR_field)*{typeIR_field <- typeIR_field*})
+
+  Row : _typeIR -> false:
+
+    1. Return false
+
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:267.1-269.63
 def $nestable_headerUnion(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_headerUnion(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:283.1-285.63
-def $nestable'_headerUnion(typeIR')
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:270.1-272.63
+table def $nestable'_headerUnion(typeIR') =
 
-1. Case analysis on typeIR'
+  Row : (nameTypeIR as typeIR) -> true:
 
-  1. Case (% has type nameTypeIR)
+    1. If ((typeIR' has type nameTypeIR)), then
 
-    1. (Let nameTypeIR be (typeIR' as nameTypeIR))
+      1. (Let nameTypeIR be (typeIR' as nameTypeIR))
 
-    2. Return true
+      2. Return true
 
-  2. Case (% has type newTypeIR)
+  Row : (newTypeIR as typeIR) -> true:
 
-    1. (Let newTypeIR be (typeIR' as newTypeIR))
+    1. If ((typeIR' has type newTypeIR)), then
 
-    2. Return true
+      1. (Let newTypeIR be (typeIR' as newTypeIR))
 
-  3. Case (% has type headerTypeIR)
+      2. Return true
 
-    1. (Let headerTypeIR be (typeIR' as headerTypeIR))
+  Row : (headerTypeIR as typeIR) -> true:
 
-    2. Return true
+    1. If ((typeIR' has type headerTypeIR)), then
 
-2. Otherwise
+      1. (Let headerTypeIR be (typeIR' as headerTypeIR))
 
-  1. Return false
+      2. Return true
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:302.1-304.68
+  Row : _typeIR -> false:
+
+    1. Return false
+
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:289.1-291.68
 def $nestable_enum_serializable(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_enum_serializable(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:305.1-307.68
-def $nestable'_enum_serializable(typeIR'')
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:292.1-294.68
+table def $nestable'_enum_serializable(typeIR'') =
 
-1. Case analysis on typeIR''
+  Row : ((int< _nat >) as typeIR) -> true:
 
-  1. Case (% has type numberTypeIR)
+    1. If ((typeIR'' has type numberTypeIR)), then
 
-    1. (Let numberTypeIR be (typeIR'' as numberTypeIR))
+      1. (Let numberTypeIR be (typeIR'' as numberTypeIR))
 
-    2. Case analysis on numberTypeIR
-
-      1. Case (% matches pattern `INT<%>`)
+      2. If ((numberTypeIR matches pattern `INT<%>`)), then
 
         1. (Let (int< _nat >) be numberTypeIR)
 
         2. Return true
 
-      2. Case (% matches pattern `BIT<%>`)
+  Row : ((bit< _nat >) as typeIR) -> true:
+
+    1. If ((typeIR'' has type numberTypeIR)), then
+
+      1. (Let numberTypeIR be (typeIR'' as numberTypeIR))
+
+      2. If ((numberTypeIR matches pattern `BIT<%>`)), then
 
         1. (Let (bit< _nat >) be numberTypeIR)
 
         2. Return true
 
-  2. Case (% has type nameTypeIR)
+  Row : (nameTypeIR as typeIR) -> true:
 
-    1. (Let nameTypeIR be (typeIR'' as nameTypeIR))
+    1. If ((typeIR'' has type nameTypeIR)), then
 
-    2. Return true
+      1. (Let nameTypeIR be (typeIR'' as nameTypeIR))
 
-  3. Case (% has type newTypeIR)
+      2. Return true
 
-    1. (Let (type _tid typeIR) be (typeIR'' as newTypeIR))
+  Row : ((type _tid typeIR) as typeIR) -> $nestable_new_in_enum_serializable(typeIR):
 
-    2. Return $nestable_new_in_enum_serializable(typeIR)
+    1. If ((typeIR'' has type newTypeIR)), then
 
-2. Otherwise
+      1. (Let (type _tid typeIR) be (typeIR'' as newTypeIR))
 
-  1. Return false
+      2. Return $nestable_new_in_enum_serializable(typeIR)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:308.1-310.89
+  Row : _typeIR -> false:
+
+    1. Return false
+
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:295.1-297.89
 def $nestable_new_in_enum_serializable(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_new_in_enum_serializable(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:311.1-313.89
-def $nestable'_new_in_enum_serializable(typeIR')
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:298.1-300.89
+table def $nestable'_new_in_enum_serializable(typeIR') =
 
-1. Case analysis on typeIR'
+  Row : ((int< _nat >) as typeIR) -> true:
 
-  1. Case (% has type numberTypeIR)
+    1. If ((typeIR' has type numberTypeIR)), then
 
-    1. (Let numberTypeIR be (typeIR' as numberTypeIR))
+      1. (Let numberTypeIR be (typeIR' as numberTypeIR))
 
-    2. Case analysis on numberTypeIR
-
-      1. Case (% matches pattern `INT<%>`)
+      2. If ((numberTypeIR matches pattern `INT<%>`)), then
 
         1. (Let (int< _nat >) be numberTypeIR)
 
         2. Return true
 
-      2. Case (% matches pattern `BIT<%>`)
+  Row : ((bit< _nat >) as typeIR) -> true:
+
+    1. If ((typeIR' has type numberTypeIR)), then
+
+      1. (Let numberTypeIR be (typeIR' as numberTypeIR))
+
+      2. If ((numberTypeIR matches pattern `BIT<%>`)), then
 
         1. (Let (bit< _nat >) be numberTypeIR)
 
         2. Return true
 
-  2. Case (% has type nameTypeIR)
+  Row : (nameTypeIR as typeIR) -> true:
 
-    1. (Let nameTypeIR be (typeIR' as nameTypeIR))
+    1. If ((typeIR' has type nameTypeIR)), then
 
-    2. Return true
+      1. (Let nameTypeIR be (typeIR' as nameTypeIR))
 
-  3. Case (% has type newTypeIR)
+      2. Return true
 
-    1. (Let newTypeIR be (typeIR' as newTypeIR))
+  Row : (newTypeIR as typeIR) -> true:
 
-    2. Return true
+    1. If ((typeIR' has type newTypeIR)), then
 
-2. Otherwise
+      1. (Let newTypeIR be (typeIR' as newTypeIR))
 
-  1. Return false
+      2. Return true
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:407.1-409.54
+  Row : _typeIR -> false:
+
+    1. Return false
+
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:393.1-395.54
 def $nestable_set(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_set(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:410.1-412.54
-def $nestable'_set(typeIR'')
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:396.1-398.54
+table def $nestable'_set(typeIR'') =
 
-1. Case analysis on typeIR''
+  Row : ((bool) as typeIR) -> true:
 
-  1. Case (% has type primitiveTypeIR)
+    1. If ((typeIR'' has type primitiveTypeIR)), then
 
-    1. (Let primitiveTypeIR be (typeIR'' as primitiveTypeIR))
+      1. (Let primitiveTypeIR be (typeIR'' as primitiveTypeIR))
 
-    2. Case analysis on primitiveTypeIR
-
-      1. Case (% matches pattern `BOOL`)
+      2. If ((primitiveTypeIR matches pattern `BOOL`)), then
 
         1. Return true
 
-      2. Case (% matches pattern `ERROR`)
+  Row : ((error) as typeIR) -> true:
+
+    1. If ((typeIR'' has type primitiveTypeIR)), then
+
+      1. (Let primitiveTypeIR be (typeIR'' as primitiveTypeIR))
+
+      2. If ((primitiveTypeIR matches pattern `ERROR`)), then
 
         1. Return true
 
-  2. Case (% has type numberTypeIR)
+  Row : ((int< _nat >) as typeIR) -> true:
 
-    1. (Let numberTypeIR be (typeIR'' as numberTypeIR))
+    1. If ((typeIR'' has type numberTypeIR)), then
 
-    2. Case analysis on numberTypeIR
+      1. (Let numberTypeIR be (typeIR'' as numberTypeIR))
 
-      1. Case (% matches pattern `INT<%>`)
+      2. If ((numberTypeIR matches pattern `INT<%>`)), then
 
         1. (Let (int< _nat >) be numberTypeIR)
 
         2. Return true
 
-      2. Case (% matches pattern `BIT<%>`)
+  Row : ((bit< _nat >) as typeIR) -> true:
+
+    1. If ((typeIR'' has type numberTypeIR)), then
+
+      1. (Let numberTypeIR be (typeIR'' as numberTypeIR))
+
+      2. If ((numberTypeIR matches pattern `BIT<%>`)), then
 
         1. (Let (bit< _nat >) be numberTypeIR)
 
         2. Return true
 
-  3. Case (% has type nameTypeIR)
+  Row : (nameTypeIR as typeIR) -> true:
 
-    1. (Let nameTypeIR be (typeIR'' as nameTypeIR))
+    1. If ((typeIR'' has type nameTypeIR)), then
 
-    2. Return true
+      1. (Let nameTypeIR be (typeIR'' as nameTypeIR))
 
-  4. Case (% has type newTypeIR)
+      2. Return true
 
-    1. (Let newTypeIR be (typeIR'' as newTypeIR))
+  Row : (newTypeIR as typeIR) -> true:
 
-    2. Return true
+    1. If ((typeIR'' has type newTypeIR)), then
 
-  5. Case (% has type tupleTypeIR)
+      1. (Let newTypeIR be (typeIR'' as newTypeIR))
 
-    1. (Let (tuple< typeIR*{typeIR <- typeIR*} >) be (typeIR'' as tupleTypeIR))
+      2. Return true
 
-    2. If ($nestable_tuple_in_set(typeIR))*{typeIR <- typeIR*}, then
+  Row : ((tuple< typeIR*{typeIR <- typeIR*} >) as typeIR) -> $forall_($nestable_tuple_in_set(typeIR)*{typeIR <- typeIR*}):
 
-      1. Return true
+    1. If ((typeIR'' has type tupleTypeIR)), then
 
-  6. Case (% has type enumTypeIR)
+      1. (Let (tuple< typeIR*{typeIR <- typeIR*} >) be (typeIR'' as tupleTypeIR))
 
-    1. (Let enumTypeIR be (typeIR'' as enumTypeIR))
+      2. Return $forall_($nestable_tuple_in_set(typeIR)*{typeIR <- typeIR*})
 
-    2. Return true
+  Row : (enumTypeIR as typeIR) -> true:
 
-  7. Case (% has type sequenceTypeIR)
+    1. If ((typeIR'' has type enumTypeIR)), then
 
-    1. (Let sequenceTypeIR be (typeIR'' as sequenceTypeIR))
+      1. (Let enumTypeIR be (typeIR'' as enumTypeIR))
 
-    2. If ((sequenceTypeIR matches pattern `SEQ<%>`)), then
+      2. Return true
 
-      1. (Let (seq< typeIR*{typeIR <- typeIR*} >) be sequenceTypeIR)
+  Row : ((seq< typeIR*{typeIR <- typeIR*} >) as typeIR) -> $forall_($nestable_sequence_in_set(typeIR)*{typeIR <- typeIR*}):
 
-      2. If ($nestable_sequence_in_set(typeIR))*{typeIR <- typeIR*}, then
+    1. If ((typeIR'' has type sequenceTypeIR)), then
 
-        1. Return true
+      1. (Let sequenceTypeIR be (typeIR'' as sequenceTypeIR))
 
-2. Otherwise
+      2. If ((sequenceTypeIR matches pattern `SEQ<%>`)), then
 
-  1. Return false
+        1. (Let (seq< typeIR*{typeIR <- typeIR*} >) be sequenceTypeIR)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:413.1-415.72
+        2. Return $forall_($nestable_sequence_in_set(typeIR)*{typeIR <- typeIR*})
+
+  Row : _typeIR -> false:
+
+    1. Return false
+
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:399.1-401.72
 def $nestable_tuple_in_set(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_tuple_in_set(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:416.1-418.72
-def $nestable'_tuple_in_set(typeIR'')
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:402.1-404.72
+table def $nestable'_tuple_in_set(typeIR'') =
 
-1. Case analysis on typeIR''
+  Row : ((bool) as typeIR) -> true:
 
-  1. Case (% has type primitiveTypeIR)
+    1. If ((typeIR'' has type primitiveTypeIR)), then
 
-    1. (Let primitiveTypeIR be (typeIR'' as primitiveTypeIR))
+      1. (Let primitiveTypeIR be (typeIR'' as primitiveTypeIR))
 
-    2. If ((primitiveTypeIR matches pattern `BOOL`)), then
+      2. If ((primitiveTypeIR matches pattern `BOOL`)), then
 
-      1. Return true
+        1. Return true
 
-  2. Case (% has type numberTypeIR)
+  Row : ((int< _nat >) as typeIR) -> true:
 
-    1. (Let numberTypeIR be (typeIR'' as numberTypeIR))
+    1. If ((typeIR'' has type numberTypeIR)), then
 
-    2. Case analysis on numberTypeIR
+      1. (Let numberTypeIR be (typeIR'' as numberTypeIR))
 
-      1. Case (% matches pattern `INT<%>`)
+      2. If ((numberTypeIR matches pattern `INT<%>`)), then
 
         1. (Let (int< _nat >) be numberTypeIR)
 
         2. Return true
 
-      2. Case (% matches pattern `BIT<%>`)
+  Row : ((bit< _nat >) as typeIR) -> true:
+
+    1. If ((typeIR'' has type numberTypeIR)), then
+
+      1. (Let numberTypeIR be (typeIR'' as numberTypeIR))
+
+      2. If ((numberTypeIR matches pattern `BIT<%>`)), then
 
         1. (Let (bit< _nat >) be numberTypeIR)
 
         2. Return true
 
-  3. Case (% has type nameTypeIR)
+  Row : (nameTypeIR as typeIR) -> true:
 
-    1. (Let nameTypeIR be (typeIR'' as nameTypeIR))
+    1. If ((typeIR'' has type nameTypeIR)), then
 
-    2. Return true
+      1. (Let nameTypeIR be (typeIR'' as nameTypeIR))
 
-  4. Case (% has type newTypeIR)
+      2. Return true
 
-    1. (Let newTypeIR be (typeIR'' as newTypeIR))
+  Row : (newTypeIR as typeIR) -> true:
 
-    2. Return true
+    1. If ((typeIR'' has type newTypeIR)), then
 
-  5. Case (% has type tupleTypeIR)
+      1. (Let newTypeIR be (typeIR'' as newTypeIR))
 
-    1. (Let (tuple< typeIR*{typeIR <- typeIR*} >) be (typeIR'' as tupleTypeIR))
+      2. Return true
 
-    2. If ($nestable_tuple_in_set(typeIR))*{typeIR <- typeIR*}, then
+  Row : ((tuple< typeIR*{typeIR <- typeIR*} >) as typeIR) -> $forall_($nestable_tuple_in_set(typeIR)*{typeIR <- typeIR*}):
 
-      1. Return true
+    1. If ((typeIR'' has type tupleTypeIR)), then
 
-  6. Case (% has type enumTypeIR)
+      1. (Let (tuple< typeIR*{typeIR <- typeIR*} >) be (typeIR'' as tupleTypeIR))
 
-    1. (Let enumTypeIR be (typeIR'' as enumTypeIR))
+      2. Return $forall_($nestable_tuple_in_set(typeIR)*{typeIR <- typeIR*})
 
-    2. Return true
+  Row : (enumTypeIR as typeIR) -> true:
 
-2. Otherwise
+    1. If ((typeIR'' has type enumTypeIR)), then
 
-  1. Return false
+      1. (Let enumTypeIR be (typeIR'' as enumTypeIR))
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:419.1-421.75
+      2. Return true
+
+  Row : _typeIR -> false:
+
+    1. Return false
+
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:405.1-407.75
 def $nestable_sequence_in_set(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_sequence_in_set(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:422.1-424.75
-def $nestable'_sequence_in_set(typeIR'')
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:408.1-410.75
+table def $nestable'_sequence_in_set(typeIR'') =
 
-1. Case analysis on typeIR''
+  Row : ((bool) as typeIR) -> true:
 
-  1. Case (% has type primitiveTypeIR)
+    1. If ((typeIR'' has type primitiveTypeIR)), then
 
-    1. (Let primitiveTypeIR be (typeIR'' as primitiveTypeIR))
+      1. (Let primitiveTypeIR be (typeIR'' as primitiveTypeIR))
 
-    2. If ((primitiveTypeIR matches pattern `BOOL`)), then
+      2. If ((primitiveTypeIR matches pattern `BOOL`)), then
 
-      1. Return true
+        1. Return true
 
-  2. Case (% has type numberTypeIR)
+  Row : ((int< _nat >) as typeIR) -> true:
 
-    1. (Let numberTypeIR be (typeIR'' as numberTypeIR))
+    1. If ((typeIR'' has type numberTypeIR)), then
 
-    2. Case analysis on numberTypeIR
+      1. (Let numberTypeIR be (typeIR'' as numberTypeIR))
 
-      1. Case (% matches pattern `INT<%>`)
+      2. If ((numberTypeIR matches pattern `INT<%>`)), then
 
         1. (Let (int< _nat >) be numberTypeIR)
 
         2. Return true
 
-      2. Case (% matches pattern `BIT<%>`)
+  Row : ((bit< _nat >) as typeIR) -> true:
+
+    1. If ((typeIR'' has type numberTypeIR)), then
+
+      1. (Let numberTypeIR be (typeIR'' as numberTypeIR))
+
+      2. If ((numberTypeIR matches pattern `BIT<%>`)), then
 
         1. (Let (bit< _nat >) be numberTypeIR)
 
         2. Return true
 
-  3. Case (% has type nameTypeIR)
+  Row : (nameTypeIR as typeIR) -> true:
 
-    1. (Let nameTypeIR be (typeIR'' as nameTypeIR))
+    1. If ((typeIR'' has type nameTypeIR)), then
 
-    2. Return true
+      1. (Let nameTypeIR be (typeIR'' as nameTypeIR))
 
-  4. Case (% has type newTypeIR)
+      2. Return true
 
-    1. (Let newTypeIR be (typeIR'' as newTypeIR))
+  Row : (newTypeIR as typeIR) -> true:
 
-    2. Return true
+    1. If ((typeIR'' has type newTypeIR)), then
 
-  5. Case (% has type tupleTypeIR)
+      1. (Let newTypeIR be (typeIR'' as newTypeIR))
 
-    1. (Let (tuple< typeIR*{typeIR <- typeIR*} >) be (typeIR'' as tupleTypeIR))
+      2. Return true
 
-    2. If ($nestable_sequence_in_set(typeIR))*{typeIR <- typeIR*}, then
+  Row : ((tuple< typeIR*{typeIR <- typeIR*} >) as typeIR) -> $forall_($nestable_sequence_in_set(typeIR)*{typeIR <- typeIR*}):
 
-      1. Return true
+    1. If ((typeIR'' has type tupleTypeIR)), then
 
-  6. Case (% has type enumTypeIR)
+      1. (Let (tuple< typeIR*{typeIR <- typeIR*} >) be (typeIR'' as tupleTypeIR))
 
-    1. (Let enumTypeIR be (typeIR'' as enumTypeIR))
+      2. Return $forall_($nestable_sequence_in_set(typeIR)*{typeIR <- typeIR*})
 
-    2. Return true
+  Row : (enumTypeIR as typeIR) -> true:
 
-  7. Case (% has type sequenceTypeIR)
+    1. If ((typeIR'' has type enumTypeIR)), then
 
-    1. (Let sequenceTypeIR be (typeIR'' as sequenceTypeIR))
+      1. (Let enumTypeIR be (typeIR'' as enumTypeIR))
 
-    2. If ((sequenceTypeIR matches pattern `SEQ<%>`)), then
+      2. Return true
 
-      1. (Let (seq< typeIR*{typeIR <- typeIR*} >) be sequenceTypeIR)
+  Row : ((seq< typeIR*{typeIR <- typeIR*} >) as typeIR) -> $forall_($nestable_sequence_in_set(typeIR)*{typeIR <- typeIR*}):
 
-      2. If ($nestable_sequence_in_set(typeIR))*{typeIR <- typeIR*}, then
+    1. If ((typeIR'' has type sequenceTypeIR)), then
 
-        1. Return true
+      1. (Let sequenceTypeIR be (typeIR'' as sequenceTypeIR))
 
-2. Otherwise
+      2. If ((sequenceTypeIR matches pattern `SEQ<%>`)), then
 
-  1. Return false
+        1. (Let (seq< typeIR*{typeIR <- typeIR*} >) be sequenceTypeIR)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:539.1-541.85
+        2. Return $forall_($nestable_sequence_in_set(typeIR)*{typeIR <- typeIR*})
+
+  Row : _typeIR -> false:
+
+    1. Return false
+
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:520.1-522.85
 def $directionless_trailing(direction*{direction <- direction*})
 
 1. Return $directionless_trailing'(true, $rev_<direction>(direction*{direction <- direction*}))
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:542.1-542.54
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:523.1-523.54
 def $directionless_trailing'(_bool', direction''*{direction'' <- direction''*})
 
 1. Case analysis on direction''*{direction'' <- direction''*}
@@ -12803,332 +12974,374 @@ def $directionless_trailing'(_bool', direction''*{direction'' <- direction''*})
 
         1. Return false
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:555.1-557.58
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:536.1-538.58
 def $nestable_action(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_action(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:558.1-560.58
-def $nestable'_action(typeIR')
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:539.1-541.58
+table def $nestable'_action(typeIR') =
 
-1. Case analysis on typeIR'
+  Row : ((int) as typeIR) -> false:
 
-  1. Case (% has type numberTypeIR)
+    1. If ((typeIR' has type numberTypeIR)), then
 
-    1. (Let numberTypeIR be (typeIR' as numberTypeIR))
+      1. (Let numberTypeIR be (typeIR' as numberTypeIR))
 
-    2. If ((numberTypeIR matches pattern `INT`)), then
+      2. If ((numberTypeIR matches pattern `INT`)), then
 
-      1. Return false
+        1. Return false
 
-  2. Case (% has type objectTypeIR)
+  Row : (objectTypeIR as typeIR) -> false:
 
-    1. (Let objectTypeIR be (typeIR' as objectTypeIR))
+    1. If ((typeIR' has type objectTypeIR)), then
 
-    2. Return false
+      1. (Let objectTypeIR be (typeIR' as objectTypeIR))
 
-  3. Case (% has type synthesizedTypeIR)
+      2. Return false
 
-    1. (Let synthesizedTypeIR be (typeIR' as synthesizedTypeIR))
+  Row : (synthesizedTypeIR as typeIR) -> false:
 
-    2. Return false
+    1. If ((typeIR' has type synthesizedTypeIR)), then
 
-2. Otherwise
+      1. (Let synthesizedTypeIR be (typeIR' as synthesizedTypeIR))
 
-  1. Return true
+      2. Return false
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:579.1-581.67
+  Row : _typeIR -> true:
+
+    1. Return true
+
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:560.1-562.67
 def $nestable_definedFunction(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_definedFunction(typeIR_canon)
 
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:563.1-565.67
+table def $nestable'_definedFunction(typeIR') =
+
+  Row : (objectTypeIR as typeIR) -> false:
+
+    1. If ((typeIR' has type objectTypeIR)), then
+
+      1. (Let objectTypeIR be (typeIR' as objectTypeIR))
+
+      2. Return false
+
+  Row : (synthesizedTypeIR as typeIR) -> false:
+
+    1. If ((typeIR' has type synthesizedTypeIR)), then
+
+      1. (Let synthesizedTypeIR be (typeIR' as synthesizedTypeIR))
+
+      2. Return false
+
+  Row : _typeIR -> true:
+
+    1. Return true
+
 ;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:582.1-584.67
-def $nestable'_definedFunction(typeIR')
-
-1. Case analysis on typeIR'
-
-  1. Case (% has type objectTypeIR)
-
-    1. (Let objectTypeIR be (typeIR' as objectTypeIR))
-
-    2. Return false
-
-  2. Case (% has type synthesizedTypeIR)
-
-    1. (Let synthesizedTypeIR be (typeIR' as synthesizedTypeIR))
-
-    2. Return false
-
-2. Otherwise
-
-  1. Return true
-
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:601.1-603.67
 def $nestable_externFunction(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_externFunction(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:604.1-606.67
-def $nestable'_externFunction(typeIR')
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:585.1-587.67
+table def $nestable'_externFunction(typeIR') =
 
-1. Case analysis on typeIR'
+  Row : (parserObjectTypeIR as typeIR) -> false:
 
-  1. Case (% has type parserObjectTypeIR)
+    1. If ((typeIR' has type parserObjectTypeIR)), then
 
-    1. (Let parserObjectTypeIR be (typeIR' as parserObjectTypeIR))
+      1. (Let parserObjectTypeIR be (typeIR' as parserObjectTypeIR))
 
-    2. Return false
+      2. Return false
 
-  2. Case (% has type controlObjectTypeIR)
+  Row : (controlObjectTypeIR as typeIR) -> false:
 
-    1. (Let controlObjectTypeIR be (typeIR' as controlObjectTypeIR))
+    1. If ((typeIR' has type controlObjectTypeIR)), then
 
-    2. Return false
+      1. (Let controlObjectTypeIR be (typeIR' as controlObjectTypeIR))
 
-  3. Case (% has type packageObjectTypeIR)
+      2. Return false
 
-    1. (Let packageObjectTypeIR be (typeIR' as packageObjectTypeIR))
+  Row : (packageObjectTypeIR as typeIR) -> false:
 
-    2. Return false
+    1. If ((typeIR' has type packageObjectTypeIR)), then
 
-  4. Case (% has type tableObjectTypeIR)
+      1. (Let packageObjectTypeIR be (typeIR' as packageObjectTypeIR))
 
-    1. (Let tableObjectTypeIR be (typeIR' as tableObjectTypeIR))
+      2. Return false
 
-    2. Return false
+  Row : (tableObjectTypeIR as typeIR) -> false:
 
-2. Otherwise
+    1. If ((typeIR' has type tableObjectTypeIR)), then
 
-  1. Return true
+      1. (Let tableObjectTypeIR be (typeIR' as tableObjectTypeIR))
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:632.1-634.65
+      2. Return false
+
+  Row : _typeIR -> true:
+
+    1. Return true
+
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:613.1-615.65
 def $nestable_externMethod(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_externMethod(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:635.1-637.65
-def $nestable'_externMethod(typeIR')
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:616.1-618.65
+table def $nestable'_externMethod(typeIR') =
 
-1. Case analysis on typeIR'
+  Row : (parserObjectTypeIR as typeIR) -> false:
 
-  1. Case (% has type parserObjectTypeIR)
+    1. If ((typeIR' has type parserObjectTypeIR)), then
 
-    1. (Let parserObjectTypeIR be (typeIR' as parserObjectTypeIR))
+      1. (Let parserObjectTypeIR be (typeIR' as parserObjectTypeIR))
 
-    2. Return false
+      2. Return false
 
-  2. Case (% has type controlObjectTypeIR)
+  Row : (controlObjectTypeIR as typeIR) -> false:
 
-    1. (Let controlObjectTypeIR be (typeIR' as controlObjectTypeIR))
+    1. If ((typeIR' has type controlObjectTypeIR)), then
 
-    2. Return false
+      1. (Let controlObjectTypeIR be (typeIR' as controlObjectTypeIR))
 
-  3. Case (% has type packageObjectTypeIR)
+      2. Return false
 
-    1. (Let packageObjectTypeIR be (typeIR' as packageObjectTypeIR))
+  Row : (packageObjectTypeIR as typeIR) -> false:
 
-    2. Return false
+    1. If ((typeIR' has type packageObjectTypeIR)), then
 
-  4. Case (% has type tableObjectTypeIR)
+      1. (Let packageObjectTypeIR be (typeIR' as packageObjectTypeIR))
 
-    1. (Let tableObjectTypeIR be (typeIR' as tableObjectTypeIR))
+      2. Return false
 
-    2. Return false
+  Row : (tableObjectTypeIR as typeIR) -> false:
 
-2. Otherwise
+    1. If ((typeIR' has type tableObjectTypeIR)), then
 
-  1. Return true
+      1. (Let tableObjectTypeIR be (typeIR' as tableObjectTypeIR))
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:667.1-669.70
+      2. Return false
+
+  Row : _typeIR -> true:
+
+    1. Return true
+
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:648.1-650.70
 def $nestable_parserApplyMethod(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_parserApplyMethod(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:670.1-672.70
-def $nestable'_parserApplyMethod(typeIR')
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:651.1-653.70
+table def $nestable'_parserApplyMethod(typeIR') =
 
-1. Case analysis on typeIR'
+  Row : (parserObjectTypeIR as typeIR) -> false:
 
-  1. Case (% has type parserObjectTypeIR)
+    1. If ((typeIR' has type parserObjectTypeIR)), then
 
-    1. (Let parserObjectTypeIR be (typeIR' as parserObjectTypeIR))
+      1. (Let parserObjectTypeIR be (typeIR' as parserObjectTypeIR))
 
-    2. Return false
+      2. Return false
 
-  2. Case (% has type controlObjectTypeIR)
+  Row : (controlObjectTypeIR as typeIR) -> false:
 
-    1. (Let controlObjectTypeIR be (typeIR' as controlObjectTypeIR))
+    1. If ((typeIR' has type controlObjectTypeIR)), then
 
-    2. Return false
+      1. (Let controlObjectTypeIR be (typeIR' as controlObjectTypeIR))
 
-  3. Case (% has type packageObjectTypeIR)
+      2. Return false
 
-    1. (Let packageObjectTypeIR be (typeIR' as packageObjectTypeIR))
+  Row : (packageObjectTypeIR as typeIR) -> false:
 
-    2. Return false
+    1. If ((typeIR' has type packageObjectTypeIR)), then
 
-  4. Case (% has type tableObjectTypeIR)
+      1. (Let packageObjectTypeIR be (typeIR' as packageObjectTypeIR))
 
-    1. (Let tableObjectTypeIR be (typeIR' as tableObjectTypeIR))
+      2. Return false
 
-    2. Return false
+  Row : (tableObjectTypeIR as typeIR) -> false:
 
-2. Otherwise
+    1. If ((typeIR' has type tableObjectTypeIR)), then
 
-  1. Return true
+      1. (Let tableObjectTypeIR be (typeIR' as tableObjectTypeIR))
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:690.1-692.71
+      2. Return false
+
+  Row : _typeIR -> true:
+
+    1. Return true
+
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:671.1-673.71
 def $nestable_controlApplyMethod(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_controlApplyMethod(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:693.1-695.71
-def $nestable'_controlApplyMethod(typeIR')
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:674.1-676.71
+table def $nestable'_controlApplyMethod(typeIR') =
 
-1. Case analysis on typeIR'
+  Row : (parserObjectTypeIR as typeIR) -> false:
 
-  1. Case (% has type parserObjectTypeIR)
+    1. If ((typeIR' has type parserObjectTypeIR)), then
 
-    1. (Let parserObjectTypeIR be (typeIR' as parserObjectTypeIR))
+      1. (Let parserObjectTypeIR be (typeIR' as parserObjectTypeIR))
 
-    2. Return false
+      2. Return false
 
-  2. Case (% has type packageObjectTypeIR)
+  Row : (packageObjectTypeIR as typeIR) -> false:
 
-    1. (Let packageObjectTypeIR be (typeIR' as packageObjectTypeIR))
+    1. If ((typeIR' has type packageObjectTypeIR)), then
 
-    2. Return false
+      1. (Let packageObjectTypeIR be (typeIR' as packageObjectTypeIR))
 
-  3. Case (% has type tableObjectTypeIR)
+      2. Return false
 
-    1. (Let tableObjectTypeIR be (typeIR' as tableObjectTypeIR))
+  Row : (tableObjectTypeIR as typeIR) -> false:
 
-    2. Return false
+    1. If ((typeIR' has type tableObjectTypeIR)), then
 
-2. Otherwise
+      1. (Let tableObjectTypeIR be (typeIR' as tableObjectTypeIR))
 
-  1. Return true
+      2. Return false
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:748.1-748.48
+  Row : _typeIR -> true:
+
+    1. Return true
+
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:729.1-729.48
 def $nestable_constructor_extern(typeIR)
 
 1. Return $nestable'_constructor_extern($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:749.1-749.49
-def $nestable'_constructor_extern(typeIR')
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:730.1-730.53
+table def $nestable'_constructor_extern(typeIR') =
 
-1. Case analysis on typeIR'
+  Row : (parserObjectTypeIR as typeIR) -> false:
 
-  1. Case (% has type parserObjectTypeIR)
+    1. If ((typeIR' has type parserObjectTypeIR)), then
 
-    1. (Let parserObjectTypeIR be (typeIR' as parserObjectTypeIR))
+      1. (Let parserObjectTypeIR be (typeIR' as parserObjectTypeIR))
 
-    2. Return false
+      2. Return false
 
-  2. Case (% has type controlObjectTypeIR)
+  Row : (controlObjectTypeIR as typeIR) -> false:
 
-    1. (Let controlObjectTypeIR be (typeIR' as controlObjectTypeIR))
+    1. If ((typeIR' has type controlObjectTypeIR)), then
 
-    2. Return false
+      1. (Let controlObjectTypeIR be (typeIR' as controlObjectTypeIR))
 
-  3. Case (% has type packageObjectTypeIR)
+      2. Return false
 
-    1. (Let packageObjectTypeIR be (typeIR' as packageObjectTypeIR))
+  Row : (packageObjectTypeIR as typeIR) -> false:
 
-    2. Return false
+    1. If ((typeIR' has type packageObjectTypeIR)), then
 
-  4. Case (% has type tableObjectTypeIR)
+      1. (Let packageObjectTypeIR be (typeIR' as packageObjectTypeIR))
 
-    1. (Let tableObjectTypeIR be (typeIR' as tableObjectTypeIR))
+      2. Return false
 
-    2. Return false
+  Row : (tableObjectTypeIR as typeIR) -> false:
 
-2. Otherwise
+    1. If ((typeIR' has type tableObjectTypeIR)), then
 
-  1. Return true
+      1. (Let tableObjectTypeIR be (typeIR' as tableObjectTypeIR))
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:768.1-768.48
+      2. Return false
+
+  Row : _typeIR -> true:
+
+    1. Return true
+
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:749.1-749.48
 def $nestable_constructor_parser(typeIR)
 
 1. Return $nestable'_constructor_parser($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:769.1-769.49
-def $nestable'_constructor_parser(typeIR')
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:750.1-750.53
+table def $nestable'_constructor_parser(typeIR') =
 
-1. Case analysis on typeIR'
+  Row : (controlObjectTypeIR as typeIR) -> false:
 
-  1. Case (% has type controlObjectTypeIR)
+    1. If ((typeIR' has type controlObjectTypeIR)), then
 
-    1. (Let controlObjectTypeIR be (typeIR' as controlObjectTypeIR))
+      1. (Let controlObjectTypeIR be (typeIR' as controlObjectTypeIR))
 
-    2. Return false
+      2. Return false
 
-  2. Case (% has type packageObjectTypeIR)
+  Row : (packageObjectTypeIR as typeIR) -> false:
 
-    1. (Let packageObjectTypeIR be (typeIR' as packageObjectTypeIR))
+    1. If ((typeIR' has type packageObjectTypeIR)), then
 
-    2. Return false
+      1. (Let packageObjectTypeIR be (typeIR' as packageObjectTypeIR))
 
-  3. Case (% has type tableObjectTypeIR)
+      2. Return false
 
-    1. (Let tableObjectTypeIR be (typeIR' as tableObjectTypeIR))
+  Row : (tableObjectTypeIR as typeIR) -> false:
 
-    2. Return false
+    1. If ((typeIR' has type tableObjectTypeIR)), then
 
-2. Otherwise
+      1. (Let tableObjectTypeIR be (typeIR' as tableObjectTypeIR))
 
-  1. Return true
+      2. Return false
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:787.1-787.49
+  Row : _typeIR -> true:
+
+    1. Return true
+
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:768.1-768.49
 def $nestable_constructor_control(typeIR)
 
 1. Return $nestable'_constructor_control($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:788.1-788.50
-def $nestable'_constructor_control(typeIR')
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:769.1-769.54
+table def $nestable'_constructor_control(typeIR') =
 
-1. Case analysis on typeIR'
+  Row : (parserObjectTypeIR as typeIR) -> false:
 
-  1. Case (% has type parserObjectTypeIR)
+    1. If ((typeIR' has type parserObjectTypeIR)), then
 
-    1. (Let parserObjectTypeIR be (typeIR' as parserObjectTypeIR))
+      1. (Let parserObjectTypeIR be (typeIR' as parserObjectTypeIR))
 
-    2. Return false
+      2. Return false
 
-  2. Case (% has type packageObjectTypeIR)
+  Row : (packageObjectTypeIR as typeIR) -> false:
 
-    1. (Let packageObjectTypeIR be (typeIR' as packageObjectTypeIR))
+    1. If ((typeIR' has type packageObjectTypeIR)), then
 
-    2. Return false
+      1. (Let packageObjectTypeIR be (typeIR' as packageObjectTypeIR))
 
-  3. Case (% has type tableObjectTypeIR)
+      2. Return false
 
-    1. (Let tableObjectTypeIR be (typeIR' as tableObjectTypeIR))
+  Row : (tableObjectTypeIR as typeIR) -> false:
 
-    2. Return false
+    1. If ((typeIR' has type tableObjectTypeIR)), then
 
-2. Otherwise
+      1. (Let tableObjectTypeIR be (typeIR' as tableObjectTypeIR))
 
-  1. Return true
+      2. Return false
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:806.1-806.49
+  Row : _typeIR -> true:
+
+    1. Return true
+
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:787.1-787.49
 def $nestable_constructor_package(typeIR)
 
 1. Return $nestable'_constructor_package($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:807.1-807.50
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:788.1-788.50
 def $nestable'_constructor_package(typeIR')
 
 1. If ((typeIR' has type tableObjectTypeIR)), then
@@ -13141,43 +13354,49 @@ def $nestable'_constructor_package(typeIR')
 
   1. Return true
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:827.1-827.42
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:808.1-808.42
 def $definable_constructor(typeIR)
 
 1. Return $definable'_constructor($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:828.1-828.43
-def $definable'_constructor(typeIR')
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:809.1-809.47
+table def $definable'_constructor(typeIR') =
 
-1. Case analysis on typeIR'
+  Row : (externObjectTypeIR as typeIR) -> true:
 
-  1. Case (% has type externObjectTypeIR)
+    1. If ((typeIR' has type externObjectTypeIR)), then
 
-    1. (Let externObjectTypeIR be (typeIR' as externObjectTypeIR))
+      1. (Let externObjectTypeIR be (typeIR' as externObjectTypeIR))
 
-    2. Return true
+      2. Return true
 
-  2. Case (% has type parserObjectTypeIR)
+  Row : (parserObjectTypeIR as typeIR) -> true:
 
-    1. (Let parserObjectTypeIR be (typeIR' as parserObjectTypeIR))
+    1. If ((typeIR' has type parserObjectTypeIR)), then
 
-    2. Return true
+      1. (Let parserObjectTypeIR be (typeIR' as parserObjectTypeIR))
 
-  3. Case (% has type controlObjectTypeIR)
+      2. Return true
 
-    1. (Let controlObjectTypeIR be (typeIR' as controlObjectTypeIR))
+  Row : (controlObjectTypeIR as typeIR) -> true:
 
-    2. Return true
+    1. If ((typeIR' has type controlObjectTypeIR)), then
 
-  4. Case (% has type packageObjectTypeIR)
+      1. (Let controlObjectTypeIR be (typeIR' as controlObjectTypeIR))
 
-    1. (Let packageObjectTypeIR be (typeIR' as packageObjectTypeIR))
+      2. Return true
 
-    2. Return true
+  Row : (packageObjectTypeIR as typeIR) -> true:
 
-2. Otherwise
+    1. If ((typeIR' has type packageObjectTypeIR)), then
 
-  1. Return false
+      1. (Let packageObjectTypeIR be (typeIR' as packageObjectTypeIR))
+
+      2. Return true
+
+  Row : _typeIR -> false:
+
+    1. Return false
 
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:6.1-10.103
 relation Expr_eval_lctk: p TC |- (expressionIR # _expressionNoteIR') ~> %
@@ -20809,194 +21028,224 @@ def $compat_lnot(typeIR)
 
 1. Return $compat'_lnot($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:81.1-81.33
-def $compat'_lnot(typeIR)
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:81.1-81.37
+table def $compat'_lnot(typeIR') =
 
-1. If ((typeIR has type primitiveTypeIR)), then
+  Row : ((bool) as typeIR) -> true:
 
-  1. (Let primitiveTypeIR be (typeIR as primitiveTypeIR))
+    1. If ((typeIR' has type primitiveTypeIR)), then
 
-  2. If ((primitiveTypeIR matches pattern `BOOL`)), then
+      1. (Let primitiveTypeIR be (typeIR' as primitiveTypeIR))
 
-    1. Return true
+      2. If ((primitiveTypeIR matches pattern `BOOL`)), then
 
-2. Otherwise
+        1. Return true
 
-  1. Return false
+  Row : _typeIR -> false:
+
+    1. Return false
 
 ;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:103.1-103.32
 def $compat_bnot(typeIR)
 
 1. Return $compat'_bnot($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:104.1-104.33
-def $compat'_bnot(typeIR)
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:104.1-104.37
+table def $compat'_bnot(typeIR') =
 
-1. If ((typeIR has type numberTypeIR)), then
+  Row : ((int< _nat >) as typeIR) -> true:
 
-  1. (Let numberTypeIR be (typeIR as numberTypeIR))
+    1. If ((typeIR' has type numberTypeIR)), then
 
-  2. Case analysis on numberTypeIR
+      1. (Let numberTypeIR be (typeIR' as numberTypeIR))
 
-    1. Case (% matches pattern `INT<%>`)
+      2. If ((numberTypeIR matches pattern `INT<%>`)), then
 
-      1. (Let (int< _nat >) be numberTypeIR)
+        1. (Let (int< _nat >) be numberTypeIR)
 
-      2. Return true
+        2. Return true
 
-    2. Case (% matches pattern `BIT<%>`)
+  Row : ((bit< _nat >) as typeIR) -> true:
 
-      1. (Let (bit< _nat >) be numberTypeIR)
+    1. If ((typeIR' has type numberTypeIR)), then
 
-      2. Return true
+      1. (Let numberTypeIR be (typeIR' as numberTypeIR))
 
-2. Otherwise
+      2. If ((numberTypeIR matches pattern `BIT<%>`)), then
 
-  1. Return false
+        1. (Let (bit< _nat >) be numberTypeIR)
+
+        2. Return true
+
+  Row : _typeIR -> false:
+
+    1. Return false
 
 ;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:127.1-127.38
 def $compat_uplusminus(typeIR)
 
 1. Return $compat'_uplusminus($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:128.1-128.39
-def $compat'_uplusminus(typeIR)
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:128.1-128.43
+table def $compat'_uplusminus(typeIR') =
 
-1. If ((typeIR has type numberTypeIR)), then
+  Row : ((int) as typeIR) -> true:
 
-  1. (Let numberTypeIR be (typeIR as numberTypeIR))
+    1. If ((typeIR' has type numberTypeIR)), then
 
-  2. Case analysis on numberTypeIR
+      1. (Let numberTypeIR be (typeIR' as numberTypeIR))
 
-    1. Case (% matches pattern `INT`)
+      2. If ((numberTypeIR matches pattern `INT`)), then
 
-      1. Return true
+        1. Return true
 
-    2. Case (% matches pattern `INT<%>`)
+  Row : ((int< _nat >) as typeIR) -> true:
 
-      1. (Let (int< _nat >) be numberTypeIR)
+    1. If ((typeIR' has type numberTypeIR)), then
 
-      2. Return true
+      1. (Let numberTypeIR be (typeIR' as numberTypeIR))
 
-    3. Case (% matches pattern `BIT<%>`)
+      2. If ((numberTypeIR matches pattern `INT<%>`)), then
 
-      1. (Let (bit< _nat >) be numberTypeIR)
+        1. (Let (int< _nat >) be numberTypeIR)
 
-      2. Return true
+        2. Return true
 
-2. Otherwise
+  Row : ((bit< _nat >) as typeIR) -> true:
 
-  1. Return false
+    1. If ((typeIR' has type numberTypeIR)), then
+
+      1. (Let numberTypeIR be (typeIR' as numberTypeIR))
+
+      2. If ((numberTypeIR matches pattern `BIT<%>`)), then
+
+        1. (Let (bit< _nat >) be numberTypeIR)
+
+        2. Return true
+
+  Row : _typeIR -> false:
+
+    1. Return false
 
 ;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:155.1-155.49
 def $compat_plusminusmult(typeIR_l, typeIR_r)
 
 1. Return $compat'_plusminusmult($canon_typeIR(typeIR_l), $canon_typeIR(typeIR_r))
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:156.1-156.50
-def $compat'_plusminusmult(typeIR'', typeIR''')
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:156.1-156.54
+table def $compat'_plusminusmult(typeIR'', typeIR''') =
 
-1. If ((typeIR'' has type numberTypeIR)), then
+  Row : ((int) as typeIR), ((int) as typeIR) -> true:
 
-  1. (Let numberTypeIR be (typeIR'' as numberTypeIR))
+    1. If ((typeIR'' has type numberTypeIR)), then
 
-  2. Case analysis on numberTypeIR
+      1. (Let numberTypeIR be (typeIR'' as numberTypeIR))
 
-    1. Case (% matches pattern `INT`)
+      2. If ((numberTypeIR matches pattern `INT`)), then
 
-      1. If ((typeIR''' has type numberTypeIR)), then
+        1. If ((typeIR''' has type numberTypeIR)), then
 
-        1. (Let numberTypeIR' be (typeIR''' as numberTypeIR))
+          1. (Let numberTypeIR' be (typeIR''' as numberTypeIR))
 
-        2. If ((numberTypeIR' matches pattern `INT`)), then
-
-          1. Return true
-
-    2. Case (% matches pattern `INT<%>`)
-
-      1. (Let (int< w >) be numberTypeIR)
-
-      2. If ((typeIR''' has type numberTypeIR)), then
-
-        1. (Let numberTypeIR' be (typeIR''' as numberTypeIR))
-
-        2. If ((numberTypeIR' matches pattern `INT<%>`)), then
-
-          1. (Let (int< w' >) be numberTypeIR')
-
-          2. If ((w = w')), then
+          2. If ((numberTypeIR' matches pattern `INT`)), then
 
             1. Return true
 
-    3. Case (% matches pattern `BIT<%>`)
+  Row : ((int< w_l >) as typeIR), ((int< w_r >) as typeIR) -> (w_l = w_r):
 
-      1. (Let (bit< w >) be numberTypeIR)
+    1. If ((typeIR'' has type numberTypeIR)), then
 
-      2. If ((typeIR''' has type numberTypeIR)), then
+      1. (Let numberTypeIR be (typeIR'' as numberTypeIR))
 
-        1. (Let numberTypeIR' be (typeIR''' as numberTypeIR))
+      2. If ((numberTypeIR matches pattern `INT<%>`)), then
 
-        2. If ((numberTypeIR' matches pattern `BIT<%>`)), then
+        1. (Let (int< w_l >) be numberTypeIR)
 
-          1. (Let (bit< w' >) be numberTypeIR')
+        2. If ((typeIR''' has type numberTypeIR)), then
 
-          2. If ((w = w')), then
+          1. (Let numberTypeIR' be (typeIR''' as numberTypeIR))
 
-            1. Return true
+          2. If ((numberTypeIR' matches pattern `INT<%>`)), then
 
-2. Otherwise
+            1. (Let (int< w_r >) be numberTypeIR')
 
-  1. Return false
+            2. Return (w_l = w_r)
+
+  Row : ((bit< w_l >) as typeIR), ((bit< w_r >) as typeIR) -> (w_l = w_r):
+
+    1. If ((typeIR'' has type numberTypeIR)), then
+
+      1. (Let numberTypeIR be (typeIR'' as numberTypeIR))
+
+      2. If ((numberTypeIR matches pattern `BIT<%>`)), then
+
+        1. (Let (bit< w_l >) be numberTypeIR)
+
+        2. If ((typeIR''' has type numberTypeIR)), then
+
+          1. (Let numberTypeIR' be (typeIR''' as numberTypeIR))
+
+          2. If ((numberTypeIR' matches pattern `BIT<%>`)), then
+
+            1. (Let (bit< w_r >) be numberTypeIR')
+
+            2. Return (w_l = w_r)
+
+  Row : _typeIR, _typeIR' -> false:
+
+    1. Return false
 
 ;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:193.1-193.48
 def $compat_satplusminus(typeIR_l, typeIR_r)
 
 1. Return $compat'_satplusminus($canon_typeIR(typeIR_l), $canon_typeIR(typeIR_r))
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:194.1-194.49
-def $compat'_satplusminus(typeIR'', typeIR''')
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:194.1-194.53
+table def $compat'_satplusminus(typeIR'', typeIR''') =
 
-1. If ((typeIR'' has type numberTypeIR)), then
+  Row : ((int< w_l >) as typeIR), ((int< w_r >) as typeIR) -> (w_l = w_r):
 
-  1. (Let numberTypeIR be (typeIR'' as numberTypeIR))
+    1. If ((typeIR'' has type numberTypeIR)), then
 
-  2. Case analysis on numberTypeIR
+      1. (Let numberTypeIR be (typeIR'' as numberTypeIR))
 
-    1. Case (% matches pattern `INT<%>`)
+      2. If ((numberTypeIR matches pattern `INT<%>`)), then
 
-      1. (Let (int< w >) be numberTypeIR)
+        1. (Let (int< w_l >) be numberTypeIR)
 
-      2. If ((typeIR''' has type numberTypeIR)), then
+        2. If ((typeIR''' has type numberTypeIR)), then
 
-        1. (Let numberTypeIR' be (typeIR''' as numberTypeIR))
+          1. (Let numberTypeIR' be (typeIR''' as numberTypeIR))
 
-        2. If ((numberTypeIR' matches pattern `INT<%>`)), then
+          2. If ((numberTypeIR' matches pattern `INT<%>`)), then
 
-          1. (Let (int< w' >) be numberTypeIR')
+            1. (Let (int< w_r >) be numberTypeIR')
 
-          2. If ((w = w')), then
+            2. Return (w_l = w_r)
 
-            1. Return true
+  Row : ((bit< w_l >) as typeIR), ((bit< w_r >) as typeIR) -> (w_l = w_r):
 
-    2. Case (% matches pattern `BIT<%>`)
+    1. If ((typeIR'' has type numberTypeIR)), then
 
-      1. (Let (bit< w >) be numberTypeIR)
+      1. (Let numberTypeIR be (typeIR'' as numberTypeIR))
 
-      2. If ((typeIR''' has type numberTypeIR)), then
+      2. If ((numberTypeIR matches pattern `BIT<%>`)), then
 
-        1. (Let numberTypeIR' be (typeIR''' as numberTypeIR))
+        1. (Let (bit< w_l >) be numberTypeIR)
 
-        2. If ((numberTypeIR' matches pattern `BIT<%>`)), then
+        2. If ((typeIR''' has type numberTypeIR)), then
 
-          1. (Let (bit< w' >) be numberTypeIR')
+          1. (Let numberTypeIR' be (typeIR''' as numberTypeIR))
 
-          2. If ((w = w')), then
+          2. If ((numberTypeIR' matches pattern `BIT<%>`)), then
 
-            1. Return true
+            1. (Let (bit< w_r >) be numberTypeIR')
 
-2. Otherwise
+            2. Return (w_l = w_r)
 
-  1. Return false
+  Row : _typeIR, _typeIR' -> false:
+
+    1. Return false
 
 ;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:230.1-230.42
 def $compat_divmod(typeIR_l, typeIR_r)

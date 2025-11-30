@@ -6,7 +6,7 @@ type t =
   | Extern
   | Builtin
   | Defined of tparam list * clause list
-  | Table of param list * tblrow list
+  | Table of param list * tablerow list
 
 let to_string = function
   | Extern -> "extern function"

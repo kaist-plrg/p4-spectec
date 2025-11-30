@@ -1101,7 +1101,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     match func with
     | Func.Extern -> invoke_extern_func ctx id targs values_input
     | Func.Builtin -> invoke_builtin_func ctx id targs values_input
-    | Func.Table (_, tblrows) -> invoke_table_func ctx id tblrows values_input
+    | Func.Table (_, tablerows) ->
+        invoke_table_func ctx id tablerows values_input
     | Func.Defined (tparams, clauses) ->
         invoke_defined_func ctx id tparams clauses targs values_input
 
@@ -1141,16 +1142,16 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       Ok (ctx, value_output)
 
   and match_table_row (ctx_caller : Ctx.t) (ctx_callee : Ctx.t)
-      (tblrow : tblrow) (values_input : value list) :
+      (tablerow : tablerow) (values_input : value list) :
       Ctx.t * arg list * prem list * exp =
-    let _, args_input, exp_output, prems = tblrow.it in
+    let _, args_input, exp_output, prems = tablerow.it in
     check
       (List.length args_input = List.length values_input)
-      tblrow.at "arity mismatch while matching table row";
+      tablerow.at "arity mismatch while matching table row";
     let ctx = assign_args ctx_caller ctx_callee args_input values_input in
     (ctx, args_input, prems, exp_output)
 
-  and invoke_table_func (ctx : Ctx.t) (id : id) (tblrows : tblrow list)
+  and invoke_table_func (ctx : Ctx.t) (id : id) (tablerows : tablerow list)
       (values_input : value list) : (Ctx.t * value) attempt =
     let attempt_rows () =
       let attempt_row' (ctx_local : Ctx.t) (prems : prem list)
@@ -1163,7 +1164,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       in
       let attempt_rows =
         List.mapi
-          (fun idx_row tblrow ->
+          (fun idx_row tablerow ->
             let attempt_row () : (Ctx.t * value) attempt =
               (* Create a subtrace for the table row *)
               let ctx_local = Ctx.localize ctx in
@@ -1172,7 +1173,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
               in
               (* Try to match the table row *)
               let ctx_local, args_input, prems, exp_output =
-                match_table_row ctx ctx_local tblrow values_input
+                match_table_row ctx ctx_local tablerow values_input
               in
               (* Try evaluating the row *)
               attempt_row' ctx_local prems exp_output
@@ -1181,7 +1182,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
                       (Il.Print.string_of_args args_input))
             in
             attempt_row)
-          tblrows
+          tablerows
       in
       choice attempt_rows
     in
@@ -1283,8 +1284,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     | BuiltinDecD (id, _, _, _, _) ->
         let func = Func.Builtin in
         Ctx.add_func Global ctx id func
-    | TableDecD (id, params, _, tblrows, _) ->
-        let func = Func.Table (params, tblrows) in
+    | TableDecD (id, params, _, tablerows, _) ->
+        let func = Func.Table (params, tablerows) in
         Ctx.add_func Global ctx id func
     | DecD (id, tparams, _, _, clauses, _) ->
         let func = Func.Defined (tparams, clauses) in

@@ -202,8 +202,8 @@ and clause' = arg list * exp * prem list
 and hint = El.Ast.hint
 
 (* Table rows *)
-type tblrow = tblrow' phrase
-and tblrow' = exp list * arg list * exp * prem list
+type tablerow = tablerow' phrase
+and tablerow' = exp list * arg list * exp * prem list
 
 (* Definitions *)
 
@@ -221,8 +221,8 @@ and def' =
   | ExternDecD of id * tparam list * param list * typ * hint list
   (* `builtin` `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ hint* *)
   | BuiltinDecD of id * tparam list * param list * typ * hint list
-  (* `tbl` `dec` id list(param, `,`) `:` typ hint* *)
-  | TableDecD of id * param list * typ * tblrow list * hint list
+  (* `table` `dec` id list(param, `,`) `:` typ hint* *)
+  | TableDecD of id * param list * typ * tablerow list * hint list
   (* `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ clause* hint* *)
   | DecD of id * tparam list * param list * typ * clause list * hint list
 

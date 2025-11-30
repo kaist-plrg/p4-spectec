@@ -332,12 +332,12 @@ and string_of_ruleoutput nottyp inputs exps_output =
       "-- output: " ^ string_of_notexp notexp
 
 and string_of_rulematch nottyp inputs rulematch =
-  let exps_input_expl, exps_input_impl, prems_input_impl = rulematch in
-  indent 2 ^ "(explicit) "
-  ^ string_of_ruleinput nottyp inputs exps_input_expl
-  ^ "\n" ^ indent 2 ^ "(implicit) "
-  ^ string_of_ruleinput nottyp inputs exps_input_impl
-  ^ string_of_prems ~level:2 prems_input_impl
+  let exps_signature, exps_input, prems = rulematch in
+  indent 2 ^ "(signature) "
+  ^ string_of_ruleinput nottyp inputs exps_signature
+  ^ "\n" ^ indent 2
+  ^ string_of_ruleinput nottyp inputs exps_input
+  ^ string_of_prems ~level:2 prems
 
 and string_of_rulepath nottyp inputs rulepath =
   let rulepathid, prems, exps_output = rulepath in
@@ -382,20 +382,20 @@ and string_of_clauses clauses =
        (fun idx clause -> "\n\n" ^ indent 1 ^ string_of_clause idx clause)
        clauses)
 
-and string_of_tblrow tblrow =
-  let exps_sig, args, exp, prems = tblrow.it in
-  "\n    (signature) "
-  ^ string_of_exps ", " exps_sig
-  ^ "\n" ^ "    " ^ string_of_args args ^ " -> " ^ string_of_exp exp
+and string_of_tablerow tablerow =
+  let exps_signature, args, exp, prems = tablerow.it in
+  "\n" ^ indent 2 ^ "(signature) "
+  ^ string_of_exps ", " exps_signature
+  ^ "\n" ^ indent 2 ^ string_of_args args ^ " -> " ^ string_of_exp exp
   ^ string_of_prems ~level:2 prems
 
-and string_of_tblrows tblrows =
+and string_of_tablerows tablerows =
   String.concat ""
     (List.mapi
-       (fun idx tblrow ->
-         "\n" ^ indent 1 ^ "row " ^ string_of_int idx ^ " : "
-         ^ string_of_tblrow tblrow)
-       tblrows)
+       (fun idx tablerow ->
+         "\n" ^ indent 1 ^ "row " ^ string_of_int idx ^ " :"
+         ^ string_of_tablerow tablerow)
+       tablerows)
 
 (* Premises *)
 
@@ -454,9 +454,10 @@ let rec string_of_def def =
   | BuiltinDecD (defid, tparams, params, typ, _) ->
       "builtin def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : " ^ string_of_typ typ
-  | TableDecD (defid, params, typ, tblrows, _) ->
-      "tbl def " ^ string_of_defid defid ^ string_of_params params ^ " : "
-      ^ string_of_typ typ ^ " =" ^ string_of_tblrows tblrows
+  | TableDecD (defid, params, typ, tablerows, _) ->
+      "table def " ^ string_of_defid defid ^ string_of_params params ^ " : "
+      ^ string_of_typ typ ^ " ="
+      ^ string_of_tablerows tablerows
   | DecD (defid, tparams, params, typ, clauses, _) ->
       "def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : " ^ string_of_typ typ ^ " ="

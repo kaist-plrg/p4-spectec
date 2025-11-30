@@ -1301,7 +1301,7 @@ let rec elab_rule_input_with_bind (ctx : Ctx.t) (exps_il : Il.Ast.exp list) :
     Ctx.t * Il.Ast.exp list * Il.Ast.prem list =
   Dataflow.Analysis.analyze_exps_as_bind ctx exps_il
 
-and elab_rule_input_sig (ctx : Ctx.t) (exps_il : Il.Ast.exp list) :
+and elab_rule_signature (ctx : Ctx.t) (exps_il : Il.Ast.exp list) :
     Il.Ast.exp list =
   Dataflow.Analysis.analyze_exps_as_bound ctx exps_il
 
@@ -1327,8 +1327,8 @@ and elab_rulematch (ctx : Ctx.t) (ctxs_local : Ctx.t list)
   let ctx_local_unified, exps_il_input_unified_match, prems_il_match =
     elab_rule_input_with_bind ctx_local_unified exps_il_input_unified
   in
-  let exps_il_input_unified_implicit =
-    elab_rule_input_sig ctx_local_unified exps_il_input_unified
+  let exps_il_unified_signature =
+    elab_rule_signature ctx_local_unified exps_il_input_unified
   in
   let ctxs_local =
     List.map
@@ -1351,7 +1351,7 @@ and elab_rulematch (ctx : Ctx.t) (ctxs_local : Ctx.t list)
     |> List.split
   in
   let rulematch_il =
-    (exps_il_input_unified_implicit, exps_il_input_unified_match, prems_il_match)
+    (exps_il_unified_signature, exps_il_input_unified_match, prems_il_match)
   in
   (ctxs_local, rulematch_il, prems_il_unified_group)
 
@@ -1687,11 +1687,11 @@ and elab_def_output_with_bind (ctx : Ctx.t) (plaintyp : plaintyp) (exp : exp) :
 
 (* Elaboration of table rows *)
 
-and elab_tblrow_input_sig (ctx : Ctx.t) (args_il : Il.Ast.arg list) :
+and elab_tablerow_input_signature (ctx : Ctx.t) (args_il : Il.Ast.arg list) :
     Il.Ast.arg list =
   Dataflow.Analysis.analyze_args_as_bound_shallow ctx args_il
 
-and elab_tblrow_input_with_bind (ctx : Ctx.t) (args_il : Il.Ast.arg list) :
+and elab_tablerow_input_with_bind (ctx : Ctx.t) (args_il : Il.Ast.arg list) :
     Ctx.t * Il.Ast.arg list * Il.Ast.prem list =
   let ctx, args_il, sideconditions_il =
     Dataflow.Analysis.analyze_args_as_bind_shallow ctx args_il
@@ -1735,14 +1735,14 @@ and covered_patterns (ctx : Ctx.t) (exp : Il.Ast.exp) : Pattern.PatternSet.t =
         (Format.asprintf "covered_patterns: unsupported expression %s"
            (Il.Print.string_of_exp exp))
 
-and match_check_tblrows (ctx : Ctx.t) (at : region)
-    (tblrows : Il.Ast.tblrow list) (arg_typs : Il.Ast.typ list) : unit =
+and match_check_tablerows (ctx : Ctx.t) (at : region)
+    (tablerows : Il.Ast.tablerow list) (arg_typs : Il.Ast.typ list) : unit =
   (* splits the last element if it is all wildcards (a "closer") *)
-  let split_last_wildcard tblrows =
-    let rec split_last_wildcard' tblrows_rev = function
-      | [] -> (None, tblrows)
-      | [ tblrow ] ->
-          let exps, _, _, _ = tblrow.it in
+  let split_last_wildcard tablerows =
+    let rec split_last_wildcard' tablerows_rev = function
+      | [] -> (None, tablerows)
+      | [ tablerow ] ->
+          let exps, _, _, _ = tablerow.it in
           if
             List.for_all
               (fun exp ->
@@ -1751,25 +1751,23 @@ and match_check_tblrows (ctx : Ctx.t) (at : region)
                     true
                 | _ -> false)
               exps
-          then (Some tblrow, List.rev tblrows_rev)
-          else (None, tblrows)
+          then (Some tablerow, List.rev tablerows_rev)
+          else (None, tablerows)
           (* No match: Return None and original list *)
-      | tblrow_h :: tblrows_t ->
-          split_last_wildcard' (tblrow_h :: tblrows_rev) tblrows_t
+      | tablerow_h :: tablerows_t ->
+          split_last_wildcard' (tablerow_h :: tablerows_rev) tablerows_t
     in
-    split_last_wildcard' [] tblrows
+    split_last_wildcard' [] tablerows
   in
-
-  let closer_opt, tblrows = split_last_wildcard tblrows in
+  let closer_opt, tablerows = split_last_wildcard tablerows in
 
   let tuple_patterns_table : Pattern.tuple_pattern list =
     List.map
-      (fun tblrow ->
-        let exps, _, _, _ = tblrow.it in
+      (fun tablerow ->
+        let exps, _, _, _ = tablerow.it in
         List.map (covered_patterns ctx) exps)
-      tblrows
+      tablerows
   in
-
   let overlap_opt = Pattern.find_overlap tuple_patterns_table in
   Format.asprintf "table rows have overlapping patterns: %s"
     (match overlap_opt with
@@ -1779,14 +1777,12 @@ and match_check_tblrows (ctx : Ctx.t) (at : region)
         ^ Pattern.tuple_pattern_to_string pat_r
     | None -> "")
   |> check (Option.is_none overlap_opt) at;
-
   let tuple_pattern_args =
     List.map (fun typ -> expand_var_t ctx typ.at typ.it) arg_typs
   in
   let missing_regions =
     Pattern.find_missing tuple_patterns_table tuple_pattern_args
   in
-
   Format.asprintf
     "table rows do not cover all patterns: \n  Total: %s\n  Missing: %s"
     (Pattern.tuple_pattern_to_string tuple_pattern_args)
@@ -1795,10 +1791,10 @@ and match_check_tblrows (ctx : Ctx.t) (at : region)
   |> check (Option.is_some closer_opt || missing_regions = []) at
 
 and elab_table_def_def (ctx : Ctx.t) (at : region) (id : id)
-    (tblrows : (exp * exp) list) : Ctx.t =
+    (tablerows : (exp * exp) list) : Ctx.t =
   let params, plaintyp, _ = Ctx.find_table_dec ctx id in
-  let elab_tblrows (ctx : Ctx.t) (tblrow : exp * exp) : Il.Ast.tblrow =
-    let exp_pat, exp_body = tblrow in
+  let elab_tablerows (ctx : Ctx.t) (tablerow : exp * exp) : Il.Ast.tablerow =
+    let exp_pat, exp_body = tablerow in
     let exps_in =
       match exp_pat.it with TupleE exps -> exps | _ -> [ exp_pat ]
     in
@@ -1811,9 +1807,9 @@ and elab_table_def_def (ctx : Ctx.t) (at : region) (id : id)
       Il.Free.free_args args_il |> Ctx.add_frees ctx_local
     in
     let ctx_local, args_il_input, sideconditions_il =
-      elab_tblrow_input_with_bind ctx_local args_il
+      elab_tablerow_input_with_bind ctx_local args_il
     in
-    let args_il_sig = elab_tblrow_input_sig ctx_local args_il in
+    let args_il_sig = elab_tablerow_input_signature ctx_local args_il in
     let exps_il_sig =
       List.map
         (fun arg_il ->
@@ -1825,12 +1821,12 @@ and elab_table_def_def (ctx : Ctx.t) (at : region) (id : id)
     let _ctx_local, exp_il =
       elab_def_output_with_bind ctx_local plaintyp exp_body
     in
-    let tblrow_il =
+    let tablerow_il =
       (exps_il_sig, args_il_input, exp_il, sideconditions_il) $ exp_body.at
     in
-    tblrow_il
+    tablerow_il
   in
-  let tblrows_il = List.map (elab_tblrows ctx) tblrows in
+  let tablerows_il = List.map (elab_tablerows ctx) tablerows in
   let argtyps_il =
     params
     |> List.map (elab_param ctx)
@@ -1839,8 +1835,8 @@ and elab_table_def_def (ctx : Ctx.t) (at : region) (id : id)
            | Il.Ast.ExpP typ_il -> typ_il
            | _ -> failwith "DefP not allowed in tables")
   in
-  match_check_tblrows ctx at tblrows_il argtyps_il;
-  Ctx.add_table_def ctx id tblrows_il
+  match_check_tablerows ctx at tablerows_il argtyps_il;
+  Ctx.add_table_def ctx id tablerows_il
 
 and elab_def_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
     (args : arg list) (exp : exp) (prems : prem list) : Ctx.t =
@@ -1914,8 +1910,8 @@ let populate_clause (ctx : Ctx.t) (def_il : Il.Ast.def) : Il.Ast.def =
       Il.Ast.DecD (id, tparams_il, params_il, typ_il, clauses_il, hints)
       $ def_il.at
   | Il.Ast.TableDecD (id, params_il, typ_il, [], hints) ->
-      let _, _, tblrows_il = Ctx.find_table_dec ctx id in
-      Il.Ast.TableDecD (id, params_il, typ_il, tblrows_il, hints) $ def_il.at
+      let _, _, tablerows_il = Ctx.find_table_dec ctx id in
+      Il.Ast.TableDecD (id, params_il, typ_il, tablerows_il, hints) $ def_il.at
   | Il.Ast.TableDecD _ -> error def_il.at "table was already populated"
   | Il.Ast.DecD _ -> error def_il.at "function was already populated"
   | _ -> def_il

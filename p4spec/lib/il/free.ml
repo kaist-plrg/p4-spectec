@@ -84,9 +84,8 @@ and free_prems (prems : prem list) : t =
 (* Rules *)
 
 let free_rulematch (rulematch : rulematch) : t =
-  let exps_input_expl, exps_input_impl, prems_input_impl = rulematch in
-  free_exps exps_input_expl + free_exps exps_input_impl
-  + free_prems prems_input_impl
+  let exps_signature, exps_input, prems = rulematch in
+  free_exps exps_signature + free_exps exps_input + free_prems prems
 
 let free_rulepath (rulepath : rulepath) : t =
   let _, prems, exps_output = rulepath in
