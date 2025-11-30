@@ -383,9 +383,10 @@ and string_of_clauses clauses =
        clauses)
 
 and string_of_tblrow tblrow =
-  let args_sig, args, exp, prems = tblrow.it in
-  "\n    (signature) " ^ string_of_args args_sig ^ "\n" ^ "    "
-  ^ string_of_args args ^ " -> " ^ string_of_exp exp
+  let exps_sig, args, exp, prems = tblrow.it in
+  "\n    (signature) "
+  ^ string_of_exps ", " exps_sig
+  ^ "\n" ^ "    " ^ string_of_args args ^ " -> " ^ string_of_exp exp
   ^ string_of_prems ~level:2 prems
 
 and string_of_tblrows tblrows =

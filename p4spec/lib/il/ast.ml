@@ -203,7 +203,7 @@ and hint = El.Ast.hint
 
 (* Table rows *)
 type tblrow = tblrow' phrase
-and tblrow' = arg list * arg list * exp * prem list
+and tblrow' = exp list * arg list * exp * prem list
 
 (* Definitions *)
 

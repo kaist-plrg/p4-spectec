@@ -1650,6 +1650,7 @@ and elab_table_dec_def (ctx : Ctx.t) (at : region) (id : id)
     Ctx.t * Il.Ast.def =
   let params_il = List.map (elab_param ctx) params in
   let typ_il = elab_plaintyp ctx plaintyp in
+  check (typ_il.it = BoolT) typ_il.at "table declaration must have boolean type";
   let ctx = Ctx.add_table_dec ctx id params plaintyp in
   let def_il = Il.Ast.TableDecD (id, params_il, typ_il, [], hints) $ at in
   (ctx, def_il)
@@ -1684,6 +1685,8 @@ and elab_def_output_with_bind (ctx : Ctx.t) (plaintyp : plaintyp) (exp : exp) :
   let exp_il = Dataflow.Analysis.analyze_exp_as_bound ctx exp_il in
   (ctx, exp_il)
 
+(* Elaboration of table rows *)
+
 and elab_tblrow_input_sig (ctx : Ctx.t) (args_il : Il.Ast.arg list) :
     Il.Ast.arg list =
   Dataflow.Analysis.analyze_args_as_bound_shallow ctx args_il
@@ -1711,19 +1714,28 @@ and elab_table_def_def (ctx : Ctx.t) (at : region) (id : id)
       let ctx_local = El.Free.free_id_def def |> Ctx.add_frees ctx_local in
       Il.Free.free_args args_il |> Ctx.add_frees ctx_local
     in
-    let ctx_local, args_il_impl, sideconditions_il =
+    let ctx_local, args_il_input, sideconditions_il =
       elab_tblrow_input_with_bind ctx_local args_il
     in
-    let args_il_expl = elab_tblrow_input_sig ctx_local args_il in
+    let args_il_sig = elab_tblrow_input_sig ctx_local args_il in
+    let exps_il_sig =
+      List.map
+        (fun arg_il ->
+          match arg_il.it with
+          | Il.Ast.ExpA exp -> exp
+          | _ -> failwith "DefA not allowed in tables")
+        args_il_sig
+    in
     let _ctx_local, exp_il =
       elab_def_output_with_bind ctx_local plaintyp exp_body
     in
     let tblrow_il =
-      (args_il_expl, args_il_impl, exp_il, sideconditions_il) $ exp_body.at
+      (exps_il_sig, args_il_input, exp_il, sideconditions_il) $ exp_body.at
     in
     tblrow_il
   in
   let tblrows_il = List.map (elab_tblrows ctx) tblrows in
+  (* mutex_tblrows tblrows_il at; *)
   Ctx.add_table_def ctx id tblrows_il
 
 and elab_def_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)

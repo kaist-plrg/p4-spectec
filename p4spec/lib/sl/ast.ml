@@ -185,8 +185,8 @@ type externfunc = id * tparam list * arg list * typ * hint list
 type builtinfunc = id * tparam list * arg list * typ * hint list
 [@@deriving yojson]
 
-(* exp* -> instr* *)
-type tablerow = arg list * instr list * exp
+(* arg* -> instr* *)
+type tablerow = exp list * instr list * exp
 [@@deriving yojson]
 
 (* id list(arg, `,`) `:` instr* hint* *)

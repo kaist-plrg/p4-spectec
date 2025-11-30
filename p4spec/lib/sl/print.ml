@@ -382,7 +382,8 @@ let string_of_builtin_func builtinfunc =
 
 let string_of_tablerow (tablerow : tablerow) =
   let tablesig, instrs, exp_res = tablerow in
-  Format.asprintf "\n  Row : %s -> %s:\n\n%s" (string_of_args tablesig)
+  Format.asprintf "\n  Row : %s -> %s:\n\n%s"
+    (string_of_exps ", " tablesig)
     (string_of_exp exp_res)
     (string_of_instrs ~level:2 instrs)
 

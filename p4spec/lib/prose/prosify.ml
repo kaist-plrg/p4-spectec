@@ -441,11 +441,11 @@ let prosify_table ctx id args typ tablerows =
   let args = prosify_args ctx args in
   let tablerows_pl =
     List.map
-      (fun (args, instrs, exp_res) ->
-        let args = prosify_args ctx args in
+      (fun (exps_sig, instrs, exp_res) ->
+        let exps_sig = prosify_exps ctx exps_sig in
         let instrs = prosify_instrs ctx instrs in
         let exp_res = prosify_exp ctx exp_res in
-        (args, instrs, exp_res) $ exp_res.at)
+        (exps_sig, instrs, exp_res) $ exp_res.at)
       tablerows
   in
   (id, args, typ, tablerows_pl)
