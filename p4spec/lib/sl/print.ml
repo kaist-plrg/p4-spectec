@@ -29,6 +29,15 @@ let string_of_mixop mixop = Il.Print.string_of_mixop mixop
 (* Iterators *)
 
 let string_of_iter iter = Il.Print.string_of_iter iter
+let string_of_iterexp iterexp = Il.Print.string_of_iterexp iterexp
+let string_of_iterexps iterexps = Il.Print.string_of_iterexps iterexps
+
+let string_of_iterated string_of_item item iterexps =
+  match iterexps with
+  | [] -> string_of_item item
+  | _ ->
+      Format.asprintf "(%s)%s" (string_of_item item)
+        (string_of_iterexps iterexps)
 
 (* Variables *)
 
@@ -85,7 +94,7 @@ let rec string_of_exp exp =
   | Il.Ast.MatchE (exp, pattern) ->
       "(" ^ string_of_exp exp ^ " matches pattern " ^ string_of_pattern pattern
       ^ ")"
-  | Il.Ast.TupleE es -> "(" ^ string_of_exps ", " es ^ ")"
+  | Il.Ast.TupleE exps -> "(" ^ string_of_exps ", " exps ^ ")"
   | Il.Ast.CaseE notexp -> "(" ^ string_of_notexp notexp ^ ")"
   | Il.Ast.StrE expfields ->
       "{"
@@ -115,7 +124,8 @@ let rec string_of_exp exp =
       ^ string_of_exp exp_f ^ "]"
   | Il.Ast.CallE (defid, targs, args) ->
       string_of_defid defid ^ string_of_targs targs ^ string_of_args args
-  | Il.Ast.IterE (exp, iterexp) -> string_of_exp exp ^ string_of_iterexp iterexp
+  | Il.Ast.IterE (exp, iterexp) ->
+      string_of_iterated string_of_exp exp [ iterexp ]
 
 and string_of_exps sep exps = String.concat sep (List.map string_of_exp exps)
 
@@ -127,9 +137,6 @@ and string_of_notexp notexp =
       else idx / 2 |> List.nth exps |> string_of_exp)
   |> List.filter_map (fun str -> if str = "" then None else Some str)
   |> String.concat " "
-
-and string_of_iterexp iterexp = Il.Print.string_of_iterexp iterexp
-and string_of_iterexps iterexps = Il.Print.string_of_iterexps iterexps
 
 (* Patterns *)
 
@@ -230,6 +237,49 @@ and string_of_guard guard =
   | MemG exp -> "(% is in " ^ string_of_exp exp ^ ")"
 
 (* Instructions *)
+
+and string_of_instr_short instr =
+  match instr.it with
+  | IfI (exp_cond, iterexps, _, _) ->
+      Format.asprintf "If %s"
+        (string_of_iterated string_of_exp exp_cond iterexps)
+  | HoldI (id, notexp, iterexps, holdcase) -> (
+      match holdcase with
+      | BothH _ | HoldH _ ->
+          Format.asprintf "If %s holds"
+            (string_of_iterated
+               (fun (id, notexp) ->
+                 Format.asprintf "%s: %s" (string_of_relid id)
+                   (string_of_notexp notexp))
+               (id, notexp) iterexps)
+      | NotHoldH _ ->
+          Format.asprintf "If %s does not hold"
+            (string_of_iterated
+               (fun (id, notexp) ->
+                 Format.asprintf "%s: %s" (string_of_relid id)
+                   (string_of_notexp notexp))
+               (id, notexp) iterexps))
+  | CaseI (exp, _, _) ->
+      Format.asprintf "Case analysis on %s" (string_of_exp exp)
+  | OtherwiseI _ -> "Otherwise"
+  | GroupI (id_group, _, _) ->
+      Format.asprintf "Group %s" (string_of_relid id_group)
+  | LetI (exp_l, exp_r, iterexps) ->
+      string_of_iterated
+        (fun (exp_l, exp_r) ->
+          Format.asprintf "Let %s be %s" (string_of_exp exp_l)
+            (string_of_exp exp_r))
+        (exp_l, exp_r) iterexps
+  | RuleI (id_rel, notexp, iterexps) ->
+      string_of_iterated
+        (fun (id_rel, notexp) ->
+          Format.asprintf "%s: %s" (string_of_relid id_rel)
+            (string_of_notexp notexp))
+        (id_rel, notexp) iterexps
+  | ResultI [] -> "The relation holds"
+  | ResultI exps -> Format.asprintf "Result in %s" (string_of_exps ", " exps)
+  | ReturnI exp -> Format.asprintf "Return %s" (string_of_exp exp)
+  | DebugI exp -> Format.asprintf "Debug: %s" (string_of_exp exp)
 
 and string_of_instr ?(verbose = false) ?(signature = None) ?(level = 0)
     ?(index = 0) instr =

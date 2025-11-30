@@ -103,16 +103,14 @@ rulegroup Lvalue_read/storageReference-nameIR {
     -- if value
         = $find_map<nameIR, value>(frame, nameIR)
 
-  rule Lvalue_read/union:
-    p EC_0 STO |- storageReference `. nameIR : value
+  rule Lvalue_read/stack-next:
+    p EC_0 STO |- storageReference `. "next" : value
     ---- ;; read base value
     -- Lvalue_read:
         p EC_0 STO |- storageReference : value_base
-    ---- ;; if the base value is a struct
-    -- if HEADER_UNION _ `{ (value_field id_field `;)* } = value_base
-    ---- ;; look up the field in the struct
-    -- if value
-        = $assoc_<id, value>(nameIR, (id_field, value_field)*)
+    -- if HEADER_STACK `[ value_element* `( n_idx; n_size ) ] = value_base
+    -- if $(n_idx < n_size)
+    -- if value = value_element*[ n_idx ]
 
   rule Lvalue_read/struct:
     p EC_0 STO |- storageReference `. nameIR : value
@@ -136,13 +134,33 @@ rulegroup Lvalue_read/storageReference-nameIR {
     -- if value
         = $assoc_<id, value>(nameIR, (id_field, value_field)*)
 
+  rule Lvalue_read/header-union:
+    p EC_0 STO |- storageReference `. nameIR : value
+    ---- ;; read base value
+    -- Lvalue_read:
+        p EC_0 STO |- storageReference : value_base
+    ---- ;; if the base value is a struct
+    -- if HEADER_UNION _ `{ (value_field id_field `;)* } = value_base
+    ---- ;; look up the field in the struct
+    -- if value
+        = $assoc_<id, value>(nameIR, (id_field, value_field)*)
+
 }
 
 ;;; storageReference `[ value ]
 
 rulegroup Lvalue_read/storageReference-indexAccess {
 
-  rule Lvalue_read/out-of-bounds:
+  rule Lvalue_read/stack-in-bounds:
+    p EC_0 STO |- storageReference `[ value_index ] : value
+    -- Lvalue_read:
+        p EC_0 STO |- storageReference : value_base
+    -- if HEADER_STACK `[ value_element* `( _; n_size ) ] = value_base
+    -- if n_idx = $int_of_value(value_index)
+    -- if $(n_idx < n_size)
+    -- if value = value_element*[ n_idx ]
+
+  rule Lvalue_read/stack-out-of-bounds:
     p EC_0 STO |- storageReference `[ value_index ] : value
     -- Lvalue_read:
         p EC_0 STO |- storageReference : value_base
@@ -152,15 +170,6 @@ rulegroup Lvalue_read/storageReference-indexAccess {
     -- if $(n_idx >= n_size)
     -- if HEADER tid `{ b_valid `; fieldValue* } = value_element*[ 0 ]
     -- if value = HEADER tid `{ false `; fieldValue* }
-
-  rule Lvalue_read/in-bounds:
-    p EC_0 STO |- storageReference `[ value_index ] : value
-    -- Lvalue_read:
-        p EC_0 STO |- storageReference : value_base
-    -- if HEADER_STACK `[ value_element* `( _; n_size ) ] = value_base
-    -- if n_idx = $int_of_value(value_index)
-    -- if $(n_idx < n_size)
-    -- if value = value_element*[ n_idx ]
 
 }
 
@@ -181,55 +190,7 @@ rule Lvalue_write/referenceExpressionIR:
 
 rulegroup Lvalue_write/storageReference-nameIR {
 
-  rule Lvalue_write/union-keep-valid-header:
-    p EC_0 STO |- (storageReference `. nameIR) -> value : EC_1
-    ---- ;; read base value
-    -- Lvalue_read:
-        p EC_0 STO |- storageReference : value_base
-    -- if HEADER_UNION tid `{ fieldValue* } = value_base
-    ----
-    -- if (value_field id_field `;)* = fieldValue*
-    -- if value_old = $assoc_<nameIR, value>(nameIR, (id_field, value_field)*)
-    -- if HEADER _ `{ b_valid_old `; _ } = value_old
-    ----
-    -- if fieldValue_update*
-        = $update_fieldValue(fieldValue*, nameIR, value)
-    ----
-    -- if HEADER _ `{ b_valid_new `; _ } = value
-    -- if b_toggled
-        = ((~b_valid_old /\ b_valid_new) \/ (b_valid_old /\ ~b_valid_new))
-    -- if ~b_toggled
-    -- if value_base_update
-        = HEADER_UNION tid `{ fieldValue_update* }
-    -- Lvalue_write:
-        p EC_0 STO |- storageReference -> value_base_update : EC_1
-
-  rule Lvalue_write/union-replace-valid-header:
-    p EC_0 STO |- (storageReference `. nameIR) -> value : EC_1
-    ---- ;; read base value
-    -- Lvalue_read:
-        p EC_0 STO |- storageReference : value_base
-    -- if HEADER_UNION tid `{ fieldValue* } = value_base
-    ----
-    -- if (value_field id_field `;)* = fieldValue*
-    -- if value_old = $assoc_<nameIR, value>(nameIR, (id_field, value_field)*)
-    -- if HEADER _ `{ b_valid_old `; _ } = value_old
-    ----
-    -- if fieldValue_update*
-        = $update_fieldValue(fieldValue*, nameIR, value)
-    ----
-    -- if HEADER _ `{ b_valid_new `; _ } = value
-    -- if b_toggled
-        = ((~b_valid_old /\ b_valid_new) \/ (b_valid_old /\ ~b_valid_new))
-    -- if b_toggled
-    -- if fieldValue_update'*
-        = $update_headerUnion(fieldValue_update*, nameIR)
-    -- if value_base_update
-        = HEADER_UNION tid `{ fieldValue_update'* }
-    -- Lvalue_write:
-        p EC_0 STO |- storageReference -> value_base_update : EC_1
-
-  rule Lvalue_write/stack:
+  rule Lvalue_write/stack-next:
     p EC_0 STO |- (storageReference `. "next") -> value : EC_1
     ---- ;; read base value
     -- Lvalue_read:
@@ -272,19 +233,59 @@ rulegroup Lvalue_write/storageReference-nameIR {
     -- Lvalue_write:
         p EC_0 STO |- storageReference -> value_base_update : EC_1
 
+  rule Lvalue_write/header-union-keep-valid-header:
+    p EC_0 STO |- (storageReference `. nameIR) -> value : EC_1
+    ---- ;; read base value
+    -- Lvalue_read:
+        p EC_0 STO |- storageReference : value_base
+    -- if HEADER_UNION tid `{ fieldValue* } = value_base
+    ----
+    -- if (value_field id_field `;)* = fieldValue*
+    -- if value_old = $assoc_<nameIR, value>(nameIR, (id_field, value_field)*)
+    -- if HEADER _ `{ b_valid_old `; _ } = value_old
+    ----
+    -- if fieldValue_update*
+        = $update_fieldValue(fieldValue*, nameIR, value)
+    ----
+    -- if HEADER _ `{ b_valid_new `; _ } = value
+    -- if b_toggled
+        = ((~b_valid_old /\ b_valid_new) \/ (b_valid_old /\ ~b_valid_new))
+    -- if ~b_toggled
+    -- if value_base_update
+        = HEADER_UNION tid `{ fieldValue_update* }
+    -- Lvalue_write:
+        p EC_0 STO |- storageReference -> value_base_update : EC_1
+
+  rule Lvalue_write/header-union-replace-valid-header:
+    p EC_0 STO |- (storageReference `. nameIR) -> value : EC_1
+    ---- ;; read base value
+    -- Lvalue_read:
+        p EC_0 STO |- storageReference : value_base
+    -- if HEADER_UNION tid `{ fieldValue* } = value_base
+    ----
+    -- if (value_field id_field `;)* = fieldValue*
+    -- if value_old = $assoc_<nameIR, value>(nameIR, (id_field, value_field)*)
+    -- if HEADER _ `{ b_valid_old `; _ } = value_old
+    ----
+    -- if fieldValue_update*
+        = $update_fieldValue(fieldValue*, nameIR, value)
+    ----
+    -- if HEADER _ `{ b_valid_new `; _ } = value
+    -- if b_toggled
+        = ((~b_valid_old /\ b_valid_new) \/ (b_valid_old /\ ~b_valid_new))
+    -- if b_toggled
+    -- if fieldValue_update'*
+        = $update_headerUnion(fieldValue_update*, nameIR)
+    -- if value_base_update
+        = HEADER_UNION tid `{ fieldValue_update'* }
+    -- Lvalue_write:
+        p EC_0 STO |- storageReference -> value_base_update : EC_1
+
 }
 
 rulegroup Lvalue_write/storageReference-indexAccess {
 
-  rule Lvalue_write/overflow:
-    p EC_0 STO |- (storageReference `[ value_index ]) -> value : EC_0
-    -- Lvalue_read:
-        p EC_0 STO |- storageReference : value_base
-    -- if HEADER_STACK `[ value_element* `( _; n_size ) ] = value_base
-    -- if n_idx = $int_of_value(value_index)
-    -- if $(n_idx >= n_size)
-
-  rule Lvalue_write/safe:
+  rule Lvalue_write/stack-in-bounds:
     p EC_0 STO |- (storageReference `[ value_index ]) -> value : EC_1
     -- Lvalue_read:
         p EC_0 STO |- storageReference : value_base
@@ -296,5 +297,13 @@ rulegroup Lvalue_write/storageReference-indexAccess {
     -- if value_base_update = HEADER_STACK `[ value_element_update* `( n_base_idx; n_size ) ]
     -- Lvalue_write:
         p EC_0 STO |- storageReference -> value_base_update : EC_1
+
+  rule Lvalue_write/stack-out-of-bounds:
+    p EC_0 STO |- (storageReference `[ value_index ]) -> value : EC_0
+    -- Lvalue_read:
+        p EC_0 STO |- storageReference : value_base
+    -- if HEADER_STACK `[ value_element* `( _; n_size ) ] = value_base
+    -- if n_idx = $int_of_value(value_index)
+    -- if $(n_idx >= n_size)
 
 }

@@ -221,20 +221,31 @@ module PacketIn = struct
     (* Get size of "T" *)
     let size =
       Spec.Func.subst_type_e_local value_ctx value_typ
-      |> Spec.Func.sizeof_maxSizeInBits'
+      |> Spec.Func.sizeof_maxSizeInBits' |> Bigint.to_int_exn
     in
     (* Create a dummy "hdr" *)
     let value_hdr = Spec.Func.default value_typ in
-    (* Parse from packet *)
-    let _pkt, bits = parse pkt (Bigint.to_int_exn size) in
-    (* Write bits to "hdr" *)
-    let value_hdr = Spec.Func.write_value_from_bits value_hdr 0 bits in
-    (* Create call result *)
-    let value_callResult =
-      let value_hdr = wrap_opt_v "value" (Some value_hdr) in
-      [ Term "RETURN"; NT value_hdr ] #@ "returnResult"
-    in
-    (pkt, value_ctx, value_sto, value_callResult)
+    if pkt.idx + size > pkt.len then
+      let value_callResult =
+        let value_err =
+          wrap_case_v
+            [ Term "ERROR"; Term "."; NT (wrap_text_v "PacketTooShort") ]
+          |> with_typ (wrap_var_t "errorValue")
+        in
+        [ Term "REJECT"; NT value_err ] #@ "rejectTransitionResult"
+      in
+      (pkt, value_ctx, value_sto, value_callResult)
+    else
+      (* Parse from packet *)
+      let _pkt, bits = parse pkt size in
+      (* Write bits to "hdr" *)
+      let value_hdr = Spec.Func.write_value_from_bits value_hdr 0 bits in
+      (* Create call result *)
+      let value_callResult =
+        let value_hdr = wrap_opt_v "value" (Some value_hdr) in
+        [ Term "RETURN"; NT value_hdr ] #@ "returnResult"
+      in
+      (pkt, value_ctx, value_sto, value_callResult)
 
   (* Advance the packet cursor by the specified number of bits.
 

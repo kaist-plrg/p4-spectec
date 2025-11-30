@@ -275,7 +275,8 @@ let localize (ctx : t) : t =
 (* Transpose a matrix of values, as a list of value batches
    that are to be each fed into an iterated expression *)
 
-let transpose (value_matrix : value list list) : value list list attempt =
+let transpose (value_matrix : value list list) : value list list attempt_reason
+    =
   match value_matrix with
   | [] -> Ok []
   | rows ->
@@ -293,7 +294,7 @@ let transpose (value_matrix : value list list) : value list list attempt =
       in
       Ok value_matrix
 
-let sub_opt (ctx : t) (vars : var list) : t option attempt =
+let sub_opt (ctx : t) (vars : var list) : t option attempt_reason =
   (* First collect the values that are to be iterated over *)
   let values =
     List.map
@@ -312,9 +313,11 @@ let sub_opt (ctx : t) (vars : var list) : t option attempt =
     in
     Ok (Some ctx_sub)
   else if List.for_all Option.is_none values then Ok None
-  else fail no_region "mismatch in optionality of iterated variables"
+  else
+    fail_without_reason no_region
+      "mismatch in optionality of iterated variables"
 
-let sub_list (ctx : t) (vars : var list) : t list attempt =
+let sub_list (ctx : t) (vars : var list) : t list attempt_reason =
   (* First break the values that are to be iterated over,
      into a batch of values *)
   let* values_batch =

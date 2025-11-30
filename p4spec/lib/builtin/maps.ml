@@ -35,7 +35,8 @@ let map_of_value (value : value) : map =
       error no_region
         (Format.asprintf "expected a map, but got %s" (Value.to_string value))
 
-let value_of_map (typ_key : typ) (typ_value : typ) (map : map) : value =
+let value_of_map (add : value -> unit) (typ_key : typ) (typ_value : typ)
+    (map : map) : value =
   let value_of_tuple ((value_key, value_value) : value * value) : value =
     let value =
       let vid = Value.fresh () in
@@ -43,6 +44,7 @@ let value_of_map (typ_key : typ) (typ_value : typ) (map : map) : value =
       CaseV ([ []; [ Atom.Colon $ no_region ]; [] ], [ value_key; value_value ])
       $$$ { vid; typ }
     in
+    add value;
     value
   in
   let value_pairs =
@@ -54,6 +56,7 @@ let value_of_map (typ_key : typ) (typ_value : typ) (map : map) : value =
     in
     ListV (VMap.bindings map |> List.map value_of_tuple) $$$ { vid; typ }
   in
+  add value_pairs;
   let value =
     let vid = Value.fresh () in
     let typ = Il.Ast.VarT ("map" $ no_region, [ typ_key; typ_value ]) in
@@ -62,14 +65,15 @@ let value_of_map (typ_key : typ) (typ_value : typ) (map : map) : value =
         [ value_pairs ] )
     $$$ { vid; typ }
   in
+  add value;
   value
 
 (* Built-in implementations *)
 
 (* dec $find_map<K, V>(map<K, V>, K) : V? *)
 
-let find_map (at : region) (targs : targ list) (values_input : value list) :
-    value =
+let find_map (add : value -> unit) (at : region) (targs : targ list)
+    (values_input : value list) : value =
   let _typ_key, typ_value = Extract.two at targs in
   let value_map, value_key = Extract.two at values_input in
   let map = map_of_value value_map in
@@ -79,12 +83,13 @@ let find_map (at : region) (targs : targ list) (values_input : value list) :
     let typ = Il.Ast.IterT (typ_value, Il.Ast.Opt) in
     OptV value_opt $$$ { vid; typ }
   in
+  add value;
   value
 
 (* dec $find_maps<K, V>(map<K, V>*, K) : V? *)
 
-let find_maps (at : region) (targs : targ list) (values_input : value list) :
-    value =
+let find_maps (add : value -> unit) (at : region) (targs : targ list)
+    (values_input : value list) : value =
   let _typ_key, typ_value = Extract.two at targs in
   let value_maps, value_key = Extract.two at values_input in
   let maps = value_maps |> Value.get_list |> List.map map_of_value in
@@ -101,22 +106,23 @@ let find_maps (at : region) (targs : targ list) (values_input : value list) :
     let typ = Il.Ast.IterT (typ_value, Il.Ast.Opt) in
     OptV value_opt $$$ { vid; typ }
   in
+  add value;
   value
 
 (* dec $add_map<K, V>(map<K, V>, K, V) : map<K, V> *)
 
-let add_map (at : region) (targs : targ list) (values_input : value list) :
-    value =
+let add_map (add : value -> unit) (at : region) (targs : targ list)
+    (values_input : value list) : value =
   let typ_key, typ_value = Extract.two at targs in
   let value_map, value_key, value_value = Extract.three at values_input in
   map_of_value value_map
   |> VMap.add value_key value_value
-  |> value_of_map typ_key typ_value
+  |> value_of_map add typ_key typ_value
 
 (* dec $adds_map<K, V>(map<K, V>, K*, V* ) : map<K, V> *)
 
-let adds_map (at : region) (targs : targ list) (values_input : value list) :
-    value =
+let adds_map (add : value -> unit) (at : region) (targs : targ list)
+    (values_input : value list) : value =
   let typ_key, typ_value = Extract.two at targs in
   let value_map, value_keys, value_values = Extract.three at values_input in
   let map = map_of_value value_map in
@@ -125,14 +131,14 @@ let adds_map (at : region) (targs : targ list) (values_input : value list) :
   List.fold_left2
     (fun map value_key value_value -> VMap.add value_key value_value map)
     map values_key values_value
-  |> value_of_map typ_key typ_value
+  |> value_of_map add typ_key typ_value
 
 (* dec $update_map<K, V>(map<K, V>, K, V) : map<K, V> *)
 
-let update_map (at : region) (targs : targ list) (values_input : value list) :
-    value =
+let update_map (add : value -> unit) (at : region) (targs : targ list)
+    (values_input : value list) : value =
   let typ_key, typ_value = Extract.two at targs in
   let value_map, value_key, value_value = Extract.three at values_input in
   map_of_value value_map
   |> VMap.add value_key value_value
-  |> value_of_map typ_key typ_value
+  |> value_of_map add typ_key typ_value

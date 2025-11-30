@@ -86,7 +86,7 @@ let struct_rule_group (prems_match : prem list) (id_rulegroup : id)
       (fun (_, prems_path, exps_output) ->
         struct_rule_paths prems_path exps_output)
       rulepaths
-    |> List.concat
+    |> Merge.merge_blocks
   in
   let instr_group =
     Ol.Ast.GroupI (id_rulegroup, exps_signature, instrs_path) $ id_rulegroup.at
@@ -183,11 +183,13 @@ and struct_defined_rel_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region)
         struct_rule_group prems_match id_rulegroup exps_match_signature
           rulepaths)
       prems_match_group rulegroups
-    |> List.concat
+    |> Merge.merge_blocks
   in
-  let instrs =
-    instrs |> Optimize.optimize ienv tdenv |> Instrument.instrument tdenv
+  let instrs = Optimize.optimize ienv tdenv instrs in
+  let exps_match_unified, instrs =
+    Pretty.pretty_rel exps_match_unified instrs
   in
+  let instrs = Instrument.instrument tdenv instrs in
   Sl.Ast.RelD (id_rel, (mixop, inputs), exps_match_unified, instrs, hints) $ at
 
 (* Structuring declaration definitions *)
@@ -277,8 +279,9 @@ and struct_defined_dec_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region)
     (id_dec : id) (tparams : tparam list) (typ : typ) (clauses : clause list)
     (hints : hint list) : Sl.Ast.def =
   let args_input, paths = Antiunify.antiunify_clauses clauses in
-  let instrs = List.concat_map struct_clause_path paths in
+  let instrs = paths |> List.map struct_clause_path |> Merge.merge_blocks in
   let instrs = Optimize.optimize ienv tdenv instrs in
+  let args_input, instrs = Pretty.pretty_func args_input instrs in
   let instrs = Instrument.instrument tdenv instrs in
   let func = (id_dec, tparams, args_input, typ, instrs, hints) in
   Sl.Ast.DecD func $ at

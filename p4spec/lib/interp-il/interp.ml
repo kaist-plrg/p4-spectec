@@ -801,11 +801,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   (* Premise evaluation *)
 
-  and eval_prem (ctx : Ctx.t) (prem : prem) : Ctx.t attempt =
+  and eval_prem (ctx : Ctx.t) (prem : prem) : Ctx.t attempt_reason =
     let ctx = Ctx.trace_extend ctx prem in
     eval_prem' ctx prem
 
-  and eval_prem' (ctx : Ctx.t) (prem : prem) : Ctx.t attempt =
+  and eval_prem' (ctx : Ctx.t) (prem : prem) : Ctx.t attempt_reason =
     match prem.it with
     | RulePr (id, notexp) -> eval_rule_prem ctx id notexp
     | IfPr exp_cond -> eval_if_prem ctx exp_cond
@@ -816,7 +816,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     | IterPr (prem, iterexp) -> eval_iter_prem ctx prem iterexp
     | DebugPr exp -> eval_debug_prem ctx exp
 
-  and eval_prems (ctx : Ctx.t) (prems : prem list) : Ctx.t attempt =
+  and eval_prems (ctx : Ctx.t) (prems : prem list) : Ctx.t attempt_reason =
     List.fold_left
       (fun ctx prem ->
         let* ctx = ctx in
@@ -825,7 +825,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   (* Rule premise evaluation *)
 
-  and eval_rule_prem (ctx : Ctx.t) (id : id) (notexp : notexp) : Ctx.t attempt =
+  and eval_rule_prem (ctx : Ctx.t) (id : id) (notexp : notexp) :
+      Ctx.t attempt_reason =
     let exps_input, exps_output =
       let inputs = Ctx.find_rel_inputs Local ctx id in
       let _, exps = notexp in
@@ -838,12 +839,12 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   (* If premise evaluation *)
 
-  and eval_if_prem (ctx : Ctx.t) (exp_cond : exp) : Ctx.t attempt =
+  and eval_if_prem (ctx : Ctx.t) (exp_cond : exp) : Ctx.t attempt_reason =
     let ctx, value_cond = eval_exp ctx exp_cond in
     let cond = Value.get_bool value_cond in
     if cond then Ok ctx
     else
-      let reason = Trace.guess_reason ctx.trace in
+      let reason = Reason.guess ctx.trace in
       fail_with_reason exp_cond.at
         (F.asprintf "condition %s was not met"
            (Il.Print.string_of_exp exp_cond))
@@ -852,26 +853,31 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
   (* If-hold premise evaluation *)
 
   and eval_if_hold_prem (ctx : Ctx.t) (id : id) (notexp : notexp) :
-      Ctx.t attempt =
+      Ctx.t attempt_reason =
     let _, exps_input = notexp in
     let ctx, values_input = eval_exps ctx exps_input in
     match invoke_rel ctx id values_input with
     | Ok _ -> Ok ctx
-    | Fail _ -> fail id.at (F.asprintf "condition hold %s was not met" id.it)
+    | Fail _ ->
+        fail_without_reason id.at
+          (F.asprintf "condition hold %s was not met" id.it)
 
   (* If-not-hold premise evaluation *)
 
   and eval_if_not_hold_prem (ctx : Ctx.t) (id : id) (notexp : notexp) :
-      Ctx.t attempt =
+      Ctx.t attempt_reason =
     let _, exps_input = notexp in
     let ctx, values_input = eval_exps ctx exps_input in
     match invoke_rel ctx id values_input with
-    | Ok _ -> fail id.at (F.asprintf "condition not-hold %s was not met" id.it)
+    | Ok _ ->
+        fail_without_reason id.at
+          (F.asprintf "condition not-hold %s was not met" id.it)
     | Fail _ -> Ok ctx
 
   (* Let premise evaluation *)
 
-  and eval_let_prem (ctx : Ctx.t) (exp_l : exp) (exp_r : exp) : Ctx.t attempt =
+  and eval_let_prem (ctx : Ctx.t) (exp_l : exp) (exp_r : exp) :
+      Ctx.t attempt_reason =
     let ctx, value = eval_exp ctx exp_r in
     let ctx = assign_exp ctx exp_l value in
     Ok ctx
@@ -879,7 +885,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
   (* Iterated premise evaluation *)
 
   and eval_iter_prem_list (ctx : Ctx.t) (prem : prem) (vars : var list) :
-      Ctx.t attempt =
+      Ctx.t attempt_reason =
     (* Discriminate between bound and binding variables *)
     let vars_bound, vars_binding =
       List.partition
@@ -944,7 +950,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     Ok ctx
 
   and eval_iter_prem (ctx : Ctx.t) (prem : prem) (iterexp : iterexp) :
-      Ctx.t attempt =
+      Ctx.t attempt_reason =
     let iter, vars = iterexp in
     match iter with
     | Opt -> error prem.at "(TODO) eval_iter_prem"
@@ -952,7 +958,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   (* Debug premise evaluation *)
 
-  and eval_debug_prem (ctx : Ctx.t) (exp : exp) : Ctx.t attempt =
+  and eval_debug_prem (ctx : Ctx.t) (exp : exp) : Ctx.t attempt_reason =
     let ctx, value = eval_exp ctx exp in
     print_endline
     @@ F.sprintf "%s: %s" (string_of_region exp.at) (Pp.string_of_exp exp);
@@ -971,12 +977,12 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     (ctx, prems_input)
 
   and invoke_rel (ctx : Ctx.t) (id : id) (values_input : value list) :
-      (Ctx.t * value list) attempt =
+      (Ctx.t * value list) attempt_reason =
     invoke_rel' ctx id values_input
     |> nest id.at (F.asprintf "invocation of relation %s failed" id.it)
 
   and invoke_rel' (ctx : Ctx.t) (id : id) (values_input : value list) :
-      (Ctx.t * value list) attempt =
+      (Ctx.t * value list) attempt_reason =
     let rel = Ctx.find_rel Local ctx id in
     match rel with
     | Rel.Extern _ -> invoke_extern_rel ctx id values_input
@@ -984,7 +990,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
         invoke_defined_rel ctx id rulegroups values_input
 
   and invoke_extern_rel (ctx : Ctx.t) (id : id) (values_input : value list) :
-      (Ctx.t * value list) attempt =
+      (Ctx.t * value list) attempt_reason =
     match id.it with
     | "ExternFunctionCall_eval" ->
         let values_output = Arch.eval_extern_func_call values_input in
@@ -992,14 +998,16 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     | "ExternMethodCall_eval" ->
         let values_output = Arch.eval_extern_method_call values_input in
         Ok (ctx, values_output)
-    | _ -> fail id.at (F.asprintf "unimplemented extern relation %s" id.it)
+    | _ ->
+        fail_without_reason id.at
+          (F.asprintf "unimplemented extern relation %s" id.it)
 
   and invoke_defined_rel (ctx : Ctx.t) (id : id) (rulegroups : rulegroup list)
-      (values_input : value list) : (Ctx.t * value list) attempt =
+      (values_input : value list) : (Ctx.t * value list) attempt_reason =
     (* Apply the first matching rule *)
     let attempt_rules () =
       let attempt_rulepath' (ctx_local : Ctx.t) (prems : prem list)
-          (exps_output : exp list) : (Ctx.t * value list) attempt =
+          (exps_output : exp list) : (Ctx.t * value list) attempt_reason =
         let* ctx_local = eval_prems ctx_local prems in
         let ctx_local, values_output = eval_exps ctx_local exps_output in
         let ctx_local = Ctx.trace_close ctx_local in
@@ -1013,7 +1021,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
                rulepaths
                |> List.map (fun rulepath ->
                       let id_rulepath, prems, exps_output = rulepath in
-                      let attempt_rulepath () : (Ctx.t * value list) attempt =
+                      let attempt_rulepath () :
+                          (Ctx.t * value list) attempt_reason =
                         (* Create a subtrace for the rule path *)
                         let ctx_local = Ctx.localize ctx in
                         let ctx_local =
@@ -1062,7 +1071,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     (ctx, args_input, prems, exp_output)
 
   and invoke_func (ctx : Ctx.t) (id : id) (targs : targ list) (args : arg list)
-      : (Ctx.t * value) attempt =
+      : (Ctx.t * value) attempt_reason =
     invoke_func' ctx id targs args
     |> nest id.at
          (F.asprintf "invocation of function %s%s%s failed"
@@ -1071,7 +1080,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
             (Il.Print.string_of_args args))
 
   and invoke_func' (ctx : Ctx.t) (id : id) (targs : targ list) (args : arg list)
-      : (Ctx.t * value) attempt =
+      : (Ctx.t * value) attempt_reason =
     (* Evaluate type arguments *)
     let targs =
       match targs with
@@ -1094,7 +1103,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     invoke_func'' ctx id targs values_input
 
   and invoke_func'' (ctx : Ctx.t) (id : id) (targs : targ list)
-      (values_input : value list) : (Ctx.t * value) attempt =
+      (values_input : value list) : (Ctx.t * value) attempt_reason =
     (* Find the function *)
     let func = Ctx.find_func Local ctx id in
     (* Invoke the function *)
@@ -1107,20 +1116,25 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
         invoke_defined_func ctx id tparams clauses targs values_input
 
   and invoke_extern_func (ctx : Ctx.t) (id : id) (_targs : targ list)
-      (values_input : value list) : (Ctx.t * value) attempt =
+      (values_input : value list) : (Ctx.t * value) attempt_reason =
     match id.it with
     | "init_externState" ->
         let value_output = Arch.eval_extern_init values_input in
         Ok (ctx, value_output)
-    | _ -> fail id.at (F.asprintf "unimplemented extern function %s" id.it)
+    | _ ->
+        fail_without_reason id.at
+          (F.asprintf "unimplemented extern function %s" id.it)
 
   and invoke_builtin_func (ctx : Ctx.t) (id : id) (targs : targ list)
-      (values_input : value list) : (Ctx.t * value) attempt =
+      (values_input : value list) : (Ctx.t * value) attempt_reason =
     (* Invoke builtin function *)
     let invoke_func_builtin' () =
       let ctx_local = Ctx.localize ctx in
       let ctx_local = Ctx.trace_open_dec ctx_local id 0 values_input in
-      let value_output = Builtin.invoke id targs values_input in
+      let value_output =
+        try Builtin.Call.invoke (fun _ -> ()) id targs values_input
+        with Util.Error.BuiltinError (at, msg) -> error at msg
+      in
       let ctx_local = Ctx.trace_close ctx_local in
       let ctx = Ctx.trace_commit ctx ctx_local.trace in
       Ok (ctx, value_output)
@@ -1152,10 +1166,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     (ctx, args_input, prems, exp_output)
 
   and invoke_table_func (ctx : Ctx.t) (id : id) (tablerows : tablerow list)
-      (values_input : value list) : (Ctx.t * value) attempt =
+      (values_input : value list) : (Ctx.t * value) attempt_reason =
     let attempt_rows () =
       let attempt_row' (ctx_local : Ctx.t) (prems : prem list)
-          (exp_output : exp) : (Ctx.t * value) attempt =
+          (exp_output : exp) : (Ctx.t * value) attempt_reason =
         let* ctx_local = eval_prems ctx_local prems in
         let ctx_local, value_output = eval_exp ctx_local exp_output in
         let ctx_local = Ctx.trace_close ctx_local in
@@ -1165,7 +1179,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       let attempt_rows =
         List.mapi
           (fun idx_row tablerow ->
-            let attempt_row () : (Ctx.t * value) attempt =
+            let attempt_row () : (Ctx.t * value) attempt_reason =
               (* Create a subtrace for the table row *)
               let ctx_local = Ctx.localize ctx in
               let ctx_local =
@@ -1202,11 +1216,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   and invoke_defined_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
       (clauses : clause list) (targs : targ list) (values_input : value list) :
-      (Ctx.t * value) attempt =
+      (Ctx.t * value) attempt_reason =
     (* Apply the first matching clause *)
     let attempt_clauses () =
       let attempt_clause'' (ctx_local : Ctx.t) (prems : prem list)
-          (exp_output : exp) : (Ctx.t * value) attempt =
+          (exp_output : exp) : (Ctx.t * value) attempt_reason =
         let* ctx_local = eval_prems ctx_local prems in
         let ctx_local, value_output = eval_exp ctx_local exp_output in
         let ctx_local = Ctx.trace_close ctx_local in
@@ -1216,7 +1230,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       let attempt_clauses' =
         List.mapi
           (fun idx_clause clause ->
-            let attempt_clause () : (Ctx.t * value) attempt =
+            let attempt_clause () : (Ctx.t * value) attempt_reason =
               (* Create a subtrace for the clause *)
               let ctx_local = Ctx.localize ctx in
               let ctx_local =
@@ -1297,19 +1311,19 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
   (* Entry points for evaluation *)
 
   let do_eval_rel (ctx : Ctx.t) (spec : spec) (relname : string)
-      (values_input : value list) : (Ctx.t * value list) attempt =
+      (values_input : value list) : (Ctx.t * value list) attempt_reason =
     let ctx = load_spec ctx spec in
     invoke_rel ctx (relname $ no_region) values_input
 
   let do_eval_func (ctx : Ctx.t) (spec : spec) (funcname : string)
-      (targs : targ list) (values_input : value list) : (Ctx.t * value) attempt
-      =
+      (targs : targ list) (values_input : value list) :
+      (Ctx.t * value) attempt_reason =
     let ctx = load_spec ctx spec in
     invoke_func'' ctx (funcname $ no_region) targs values_input
 
   let eval_program (spec : spec) (relname : string) (includes_p4 : string list)
       (filename_p4 : string) : Sim.program_result =
-    Builtin.init ();
+    Builtin.Call.init ();
     Value.refresh ();
     Cache.Cache.clear !func_cache;
     Cache.Cache.clear !rule_cache;
@@ -1329,7 +1343,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   let eval_rel (spec : spec) (relname : string) (values_input : value list) :
       Sim.rel_result =
-    Builtin.init ();
+    Builtin.Call.init ();
     Value.refresh ();
     Cache.Cache.clear !func_cache;
     Cache.Cache.clear !rule_cache;
@@ -1342,7 +1356,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   let eval_func (spec : spec) (funcname : string) (targs : targ list)
       (values_input : value list) : Sim.func_result =
-    Builtin.init ();
+    Builtin.Call.init ();
     Value.refresh ();
     Cache.Cache.clear !func_cache;
     Cache.Cache.clear !rule_cache;

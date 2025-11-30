@@ -8,43 +8,52 @@ open Util.Source
 let bigint_of_value (value : value) : Bigint.t =
   value |> Value.get_num |> Num.to_int
 
-let value_of_bigint (i : Bigint.t) : value =
+let value_of_bigint (add : value -> unit) (i : Bigint.t) : value =
   let value =
     let vid = Value.fresh () in
     let typ = Il.Ast.NumT `NatT in
     NumV (`Nat i) $$$ { vid; typ }
   in
+  add value;
   value
 
 (* dec $sum_nat(nat* ) : nat *)
 
-let sum_nat (at : region) (targs : targ list) (values_input : value list) :
-    value =
+let sum_nat (add : value -> unit) (at : region) (targs : targ list)
+    (values_input : value list) : value =
   Extract.zero at targs;
   let values =
     Extract.one at values_input |> Value.get_list |> List.map bigint_of_value
   in
   let sum = List.fold_left Bigint.( + ) Bigint.zero values in
-  value_of_bigint sum
+  value_of_bigint add sum
 
 (* dec $max_nat(nat* ) : nat *)
 
-let max_nat (at : region) (targs : targ list) (values_input : value list) :
-    value =
+let max_nat (add : value -> unit) (at : region) (targs : targ list)
+    (values_input : value list) : value =
   Extract.zero at targs;
   let values =
     Extract.one at values_input |> Value.get_list |> List.map bigint_of_value
   in
-  let max = List.fold_left Bigint.max Bigint.zero values in
-  value_of_bigint max
+  let max =
+    match values with
+    | [] -> Bigint.zero
+    | value_h :: values_t -> List.fold_left Bigint.max value_h values_t
+  in
+  value_of_bigint add max
 
 (* dec $min_nat(nat* ) : nat *)
 
-let min_nat (at : region) (targs : targ list) (values_input : value list) :
-    value =
+let min_nat (add : value -> unit) (at : region) (targs : targ list)
+    (values_input : value list) : value =
   Extract.zero at targs;
   let values =
     Extract.one at values_input |> Value.get_list |> List.map bigint_of_value
   in
-  let min = List.fold_left Bigint.min Bigint.zero values in
-  value_of_bigint min
+  let min =
+    match values with
+    | [] -> Bigint.zero
+    | value_h :: values_t -> List.fold_left Bigint.min value_h values_t
+  in
+  value_of_bigint add min
