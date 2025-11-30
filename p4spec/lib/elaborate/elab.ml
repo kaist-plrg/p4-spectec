@@ -1698,6 +1698,102 @@ and elab_tblrow_input_with_bind (ctx : Ctx.t) (args_il : Il.Ast.arg list) :
   in
   (ctx, args_il, sideconditions_il)
 
+(* Get IL notation type from VarT *)
+
+and expand_var_t (ctx : Ctx.t) (at : region) (var_t : Il.Ast.typ') :
+    Pattern.PatternSet.t =
+  match var_t with
+  | VarT (vid, _) -> (
+      match Ctx.find_typdef_opt ctx vid with
+      | Some (Defined (_, `Variant typcases_el)) ->
+          let nottyps_el =
+            typcases_el |> List.split |> fst |> List.split |> fst
+          in
+          let nottyps_il =
+            List.map
+              (fun nottyp_el -> elab_nottyp ctx (El.Ast.NotationT nottyp_el))
+              nottyps_el
+          in
+          nottyps_il |> Pattern.PatternSet.of_list
+      | _ ->
+          error at ("Unknown variant type id: " ^ Il.Print.string_of_typid vid))
+  | _ -> error at "Expected variable type"
+
+(* Patterns covered by a single match expression *)
+
+and covered_patterns (ctx : Ctx.t) (exp : Il.Ast.exp) : Pattern.PatternSet.t =
+  match exp.it with
+  | UpCastE (_, { it = VarE _; note; at }) ->
+      let var_t = note in
+      expand_var_t ctx at var_t
+  | UpCastE (_, { it = CaseE notexp; at; _ }) ->
+      let mixop, exps = notexp in
+      [ (mixop, List.map (fun exp -> exp.note $ exp.at) exps) $ at ]
+      |> Pattern.PatternSet.of_list
+  | _ ->
+      failwith
+        (Format.asprintf "covered_patterns: unsupported expression %s"
+           (Il.Print.string_of_exp exp))
+
+and match_check_tblrows (ctx : Ctx.t) (at : region)
+    (tblrows : Il.Ast.tblrow list) (arg_typs : Il.Ast.typ list) : unit =
+  (* splits the last element if it is all wildcards (a "closer") *)
+  let split_last_wildcard tblrows =
+    let rec split_last_wildcard' tblrows_rev = function
+      | [] -> (None, tblrows)
+      | [ tblrow ] ->
+          let exps, _, _, _ = tblrow.it in
+          if
+            List.for_all
+              (fun exp ->
+                match exp.it with
+                | Il.Ast.VarE vid when String.starts_with ~prefix:"_" vid.it ->
+                    true
+                | _ -> false)
+              exps
+          then (Some tblrow, List.rev tblrows_rev)
+          else (None, tblrows)
+          (* No match: Return None and original list *)
+      | tblrow_h :: tblrows_t ->
+          split_last_wildcard' (tblrow_h :: tblrows_rev) tblrows_t
+    in
+    split_last_wildcard' [] tblrows
+  in
+
+  let closer_opt, tblrows = split_last_wildcard tblrows in
+
+  let tuple_patterns_table : Pattern.tuple_pattern list =
+    List.map
+      (fun tblrow ->
+        let exps, _, _, _ = tblrow.it in
+        List.map (covered_patterns ctx) exps)
+      tblrows
+  in
+
+  let overlap_opt = Pattern.find_overlap tuple_patterns_table in
+  Format.asprintf "table rows have overlapping patterns: %s"
+    (match overlap_opt with
+    | Some (pat_l, pat_r) ->
+        Pattern.tuple_pattern_to_string pat_l
+        ^ " and "
+        ^ Pattern.tuple_pattern_to_string pat_r
+    | None -> "")
+  |> check (Option.is_none overlap_opt) at;
+
+  let tuple_pattern_args =
+    List.map (fun typ -> expand_var_t ctx typ.at typ.it) arg_typs
+  in
+  let missing_regions =
+    Pattern.find_missing tuple_patterns_table tuple_pattern_args
+  in
+
+  Format.asprintf
+    "table rows do not cover all patterns: \n  Total: %s\n  Missing: %s"
+    (Pattern.tuple_pattern_to_string tuple_pattern_args)
+    (String.concat ", "
+       (List.map Pattern.tuple_pattern_to_string missing_regions))
+  |> check (Option.is_some closer_opt || missing_regions = []) at
+
 and elab_table_def_def (ctx : Ctx.t) (at : region) (id : id)
     (tblrows : (exp * exp) list) : Ctx.t =
   let params, plaintyp, _ = Ctx.find_table_dec ctx id in
@@ -1735,7 +1831,15 @@ and elab_table_def_def (ctx : Ctx.t) (at : region) (id : id)
     tblrow_il
   in
   let tblrows_il = List.map (elab_tblrows ctx) tblrows in
-  (* mutex_tblrows tblrows_il at; *)
+  let argtyps_il =
+    params
+    |> List.map (elab_param ctx)
+    |> List.map (fun param ->
+           match param.it with
+           | Il.Ast.ExpP typ_il -> typ_il
+           | _ -> failwith "DefP not allowed in tables")
+  in
+  match_check_tblrows ctx at tblrows_il argtyps_il;
   Ctx.add_table_def ctx id tblrows_il
 
 and elab_def_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)

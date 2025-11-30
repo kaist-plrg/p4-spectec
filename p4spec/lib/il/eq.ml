@@ -73,6 +73,11 @@ and eq_typ (typ_a : typ) (typ_b : typ) : bool =
 and eq_typs (typs_a : typ list) (typs_b : typ list) : bool =
   List.length typs_a = List.length typs_b && List.for_all2 eq_typ typs_a typs_b
 
+and eq_nottyp (nottyp_a : nottyp) (nottyp_b : nottyp) : bool =
+  let mixop_a, typs_a = nottyp_a.it in
+  let mixop_b, typs_b = nottyp_b.it in
+  eq_mixop mixop_a mixop_b && eq_typs typs_a typs_b
+
 (* Values *)
 
 and eq_value ?(dbg = false) (value_a : value) (value_b : value) : bool =
