@@ -1,6 +1,7 @@
 open Xl
 open Il.Ast
 module Value = Runtime_dynamic.Value
+module Dep = Runtime_testgen.Dep
 open Util.Source
 
 (* Conversion between meta-numerics and OCaml numerics *)
@@ -8,43 +9,44 @@ open Util.Source
 let bigint_of_value (value : value) : Bigint.t =
   value |> Value.get_num |> Num.to_int
 
-let value_of_bigint (i : Bigint.t) : value =
+let value_of_bigint (ctx : Ctx.t) (i : Bigint.t) : value =
   let value =
     let vid = Value.fresh () in
-    let typ = Il.Ast.NumT `NatT in
-    NumV (`Nat i) $$$ { vid; typ }
+    let typ = Il.Ast.NumT `IntT in
+    NumV (`Int i) $$$ { vid; typ }
   in
+  Ctx.add_node ctx value;
   value
 
-(* dec $sum_nat(nat* ) : nat *)
+(* dec $sum_int(nat* ) : nat *)
 
-let sum_nat (at : region) (targs : targ list) (values_input : value list) :
-    value =
+let sum_int (ctx : Ctx.t) (at : region) (targs : targ list)
+    (values_input : value list) : value =
   Extract.zero at targs;
   let values =
     Extract.one at values_input |> Value.get_list |> List.map bigint_of_value
   in
   let sum = List.fold_left Bigint.( + ) Bigint.zero values in
-  value_of_bigint sum
+  value_of_bigint ctx sum
 
-(* dec $max_nat(nat* ) : nat *)
+(* dec $max_int(nat* ) : nat *)
 
-let max_nat (at : region) (targs : targ list) (values_input : value list) :
-    value =
+let max_int (ctx : Ctx.t) (at : region) (targs : targ list)
+    (values_input : value list) : value =
   Extract.zero at targs;
   let values =
     Extract.one at values_input |> Value.get_list |> List.map bigint_of_value
   in
   let max = List.fold_left Bigint.max Bigint.zero values in
-  value_of_bigint max
+  value_of_bigint ctx max
 
-(* dec $min_nat(nat* ) : nat *)
+(* dec $min_int(nat* ) : nat *)
 
-let min_nat (at : region) (targs : targ list) (values_input : value list) :
-    value =
+let min_int (ctx : Ctx.t) (at : region) (targs : targ list)
+    (values_input : value list) : value =
   Extract.zero at targs;
   let values =
     Extract.one at values_input |> Value.get_list |> List.map bigint_of_value
   in
   let min = List.fold_left Bigint.min Bigint.zero values in
-  value_of_bigint min
+  value_of_bigint ctx min

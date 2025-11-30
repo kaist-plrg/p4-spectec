@@ -1,17 +1,20 @@
-[#sec-def-aliasTypeIR]
 === Alias types
 
+// Added
 A `typedef` or `type` declaration can be used to give an alias to a type.
 
-${syntax: typedef
-          typedefDeclaration}
+[[typedef]]
+[[typedefDeclaration]]
+${syntax: typedef typedefDeclaration}
 
 Internally, the alias is represented as:
 
+[[aliasTypeIR]]
 ${syntax: aliasTypeIR}
 
 ==== `typedef` declaration
 
+// Section 7.5 of the P4-16 Language Specification
 [source,p4]
 ----
 typedef bit<32> u32;
@@ -19,12 +22,11 @@ typedef struct Point { int<32> x; int<32> y; } Pt;
 typedef Empty_h[32] HeaderStack;
 ----
 
-The two types are treated as synonyms, and all operations that can be
-executed using the original type can be also executed using the newly created
-type.
+The two types are treated as synonyms, and all operations that can be executed
+using the original type can be also executed using the newly created type.
 
-If `typedef` is used with a generic type the type must be specialized with
-the suitable number of type arguments:
+If `typedef` is used with a generic type the type must be specialized with the
+suitable number of type arguments:
 
 [source,p4]
 ----
@@ -36,33 +38,33 @@ struct S<T> {
 typedef S<bit<32>> X;  // -- legal
 ----
 
+// Added
 Internally, the alias is represented as:
 
+[[typedefTypeIR]]
 ${syntax: typedefTypeIR}
 
+[discrete]
 ===== Type checking
 
+// Added
 ``typedef``s are introduced by `typedef` declarations. Its typing rule is
 explained in <<sec-sem-Decl_ok-typedefDeclaration-typedef>>.
 
 ``typedef``s are then used by referencing their names. Thus `typedef` types can
 be obtained from named types, as illustrated in <<sec-def-namedType>>.
 
-===== Type nesting
-
-${funcprose: nestable_typedef}
-${table: nestable'_typedef}
-
-[#sec-sem-Type_wf-typedefTypeIR]
+[discrete]
 ===== Well-formedness
 
+// Added
 ${rulegroup: Type_wf/typedefTypeIR}
 ${ruleprose: Type_wf/typedefTypeIR}
 
 ==== `type` declaration
 
-Similarly to `typedef`, the keyword `type` can be used to introduce a new
-type.
+// Section 7.6 of the P4-16 Language Specification
+Similarly to `typedef`, the keyword `type` can be used to introduce a new type.
 
 [source,p4]
 ----
@@ -71,18 +73,17 @@ U32 x = (U32)0;
 ----
 
 While similar to `typedef`, the `type` keyword introduces a new type which is
-not a synonym with the original type: values of the original type and the
-newly introduced type cannot be mixed in expressions.
+not a synonym with the original type: values of the original type and the newly
+introduced type cannot be mixed in expressions.
 
-Currently the types that can be created by the `type` keyword are restricted
-to one of: `bit<>`, `int<>`, `bool`, or types defined using `type` from such
+Currently the types that can be created by the `type` keyword are restricted to
+one of: `bit<>`, `int<>`, `bool`, or types defined using `type` from such
 types.
 
 One important use of such types is in describing P4 values that need to be
-exchanged with the control plane through communication channels (e.g.,
-through the control-plane API or through network packets sent to the control
-plane). For example, a P4 architecture may define a type for the switch
-ports:
+exchanged with the control plane through communication channels (e.g., through
+the control-plane API or through network packets sent to the control plane).
+For example, a P4 architecture may define a type for the switch ports:
 
 [source,p4]
 ----
@@ -93,31 +94,28 @@ This declaration will prevent `PortId_t` values from being used in arithmetic
 expressions without casts.  Moreover, this declaration may enable special
 manipulation or such values by software that lies outside of the datapath
 (e.g., a target-specific toolchain could include software that automatically
-converts values of type `PortId_t` to a different representation when
-exchanged with the control-plane software).
+converts values of type `PortId_t` to a different representation when exchanged
+with the control-plane software).
 
+// Added
 Internally, the alias is represented as:
 
+[[newTypeIR]]
 ${syntax: newTypeIR}
 
+[discrete]
 ===== Type checking
 
+// Added
 ``type``s are introduced by `type` declarations. Its typing rule is
 explained in <<sec-sem-Decl_ok-typedefDeclaration-newtype>>.
 
 ``type``s are then used by referencing their names. Thus `type` types can
 be obtained from named types, as illustrated in <<sec-def-namedType>>.
 
-===== Type nesting
-
-`type B <name>` is allowed for a type name `B` defined via `typedef X B` if
-`type X <name>` is allowed.
-
-${funcprose: nestable_new}
-${table: nestable'_new}
-
-[#sec-sem-Type_wf-newTypeIR]
+[discrete]
 ===== Well-formedness
 
+// Added
 ${rulegroup: Type_wf/newTypeIR}
 ${ruleprose: Type_wf/newTypeIR}

@@ -87,7 +87,7 @@ tbl def $nestable'_typedef =
   | BOOL => true
   | ERROR => true
   | STRING => true
-  | numberTypeIR => true
+  | integerTypeIR => true
   | nameTypeIR => true
   | newTypeIR => true
   | dataTypeIR => true
@@ -136,7 +136,7 @@ tbl def $nestable'_list =
   | ERROR => true
   | MATCH_KIND => true
   | STRING => true
-  | numberTypeIR => true
+  | integerTypeIR => true
   | nameTypeIR => true
   | newTypeIR => true
   | dataTypeIR => true
@@ -352,9 +352,8 @@ rule Type_wf/packageObjectTypeIR:
   -- (Type_wf: bound |- typeIR)*
 
 rule Type_wf/tableObjectTypeIR:
-  bound |- TABLE _ `{ typeIR }
-  -- if TABLE_STRUCT _ `{ _ } = $canon_typeIR(typeIR)
-  -- Type_wf: bound |- typeIR
+  bound |- TABLE _ `{ tableMetadataStructTypeIR }
+  -- Type_wf: bound |- tableMetadataStructTypeIR
 
 ;;; Synthesized types
 
@@ -462,7 +461,10 @@ rulegroup Type_wf/tableMetadataTypeIR {
     -- if $distinct_<id>(id*)
 
   rule Type_wf/struct:
-    bound |- TABLE_STRUCT _ `{ _ }
+    bound |- TABLE_STRUCT _ `{ HIT _ `;
+                               MISS _ `;
+                               ACTION_RUN tableMetadataEnumTypeIR `; }
+    -- Type_wf: bound |- tableMetadataEnumTypeIR
   
 }
 
@@ -489,18 +491,22 @@ rulegroup ParameterType_wf {
   rule ParameterType_wf/non-default:
     bound |- direction typeIR _ eps
     -- Type_wf: bound |- typeIR
-    -- if ($is_stringTypeIR($canon_typeIR(typeIR))
-          \/ $is_arbitraryIntTypeIR($canon_typeIR(typeIR))
-          \/ $is_objectTypeIR($canon_typeIR(typeIR)))
+    -- if typeIR_canon = $canon_typeIR(typeIR)
+    -- if ~$is_synthesizedTypeIR(typeIR_canon)
+    -- if ($is_stringTypeIR(typeIR_canon)
+          \/ $is_arbitraryIntTypeIR(typeIR_canon)
+          \/ $is_objectTypeIR(typeIR_canon))
           => direction = `EMPTY
 
   rule ParameterType_wf/default:
     bound |- direction typeIR _ value
     -- Type_wf: bound |- typeIR
+    -- if typeIR_canon = $canon_typeIR(typeIR)
+    -- if ~$is_synthesizedTypeIR(typeIR_canon)
     -- if direction = IN \/ direction = `EMPTY
-    -- if ($is_stringTypeIR($canon_typeIR(typeIR))
-          \/ $is_arbitraryIntTypeIR($canon_typeIR(typeIR))
-          \/ $is_objectTypeIR($canon_typeIR(typeIR)))
+    -- if ($is_stringTypeIR(typeIR_canon)
+          \/ $is_arbitraryIntTypeIR(typeIR_canon)
+          \/ $is_objectTypeIR(typeIR_canon))
           => direction = `EMPTY
 
 }
@@ -691,7 +697,7 @@ rule CallableType_wf/controlApplyMethodTypeIR:
   -- if $nestable_controlApplyMethod(typeIR)*
 
 rule CallableType_wf/tableApplyMethodTypeIR:
-  bound |- TABLE_APPLY `: (TABLE_STRUCT _ `{ _ })
+  bound |- TABLE_APPLY `: tableMetadataStructTypeIR
 
 ;;
 ;;;; Well-formedness of callable type definitions
@@ -715,6 +721,7 @@ rule CallableTypeDef_wf:
 rule ConstructorParameterType_wf:
   bound |- `EMPTY typeIR _ _
   -- Type_wf: bound |- typeIR
+  -- if ~$is_synthesizedTypeIR($canon_typeIR(typeIR))
 
 rule ConstructorParameterTypes_wf:
   bound |- parameterTypeIR*

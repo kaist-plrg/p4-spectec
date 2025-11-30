@@ -1,23 +1,26 @@
-[#sec-def-objectTypeIR]
 === Object types and values
 
-${syntax: objectTypeIR}
+// Added
+[[objectTypeIR]]
+[[objectReferenceValue]]
+${syntax: objectTypeIR objectReferenceValue}
 
-[#sec-def-externObjectDeclaration]
-[#sec-def-externObjectTypeIR]
+Stateful objects are represented using `objectTypeIR`. At runtime, these
+objects are passed along directionless parameters as references
+(`objectReferenceValue`).
+
 ==== Extern object types
 
+// Section 7.2.11.2 of the P4-16 Language Specification
 An extern object declaration declares an object and all methods that can be
 invoked to perform computations and to alter the state of the object. Extern
 object declarations can also optionally declare constructor methods; these must
 have the same name as the enclosing `extern` type, no type parameters, and no
-return type. Extern declarations may only appear as allowed by the
-architecture model and may be specific to a target.
+return type. Extern declarations may only appear as allowed by the architecture
+model and may be specific to a target.
 
-${syntax: externConstructorPrototype
-          externMethodPrototype
-          externConstructorOrMethodPrototype
-          externObjectDeclaration}
+${syntax: externConstructorPrototype externMethodPrototype
+          externConstructorOrMethodPrototype externObjectDeclaration}
 
 For example, the P4 core library introduces two extern objects `packet_in` and
 `packet_out` used for manipulating packets (see <<sec-packet-data-extraction>>
@@ -36,30 +39,40 @@ control d(packet_out b, in Hdr h) {
 }
 ----
 
+// Added
+An extern object declaration introduces a new extern object type definition.
+
+[[externObjectTypeDefIR]]
+${syntax: externObjectTypeDefIR}
+
+// Added
 Extern object types can be referred to using their name. Internally, extern
 object types are represented as:
 
+[[externObjectTypeIR]]
 ${syntax: externObjectTypeIR}
 
+[discrete]
 ===== Type checking
 
+// Added
 Extern object types are introduced by `extern` declarations. Its typing rule is
 explained in <<sec-sem-Decl_ok-externObjectDeclaration>>.
 
 Extern object types are then used by referencing their names. Thus extern
 object types can be obtained from named types, as illustrated in
-<<sec-def-namedType>>.
+<<sec-named-types>>.
 
-[#sec-sem-Type_wf-externObjectTypeIR]
+[discrete]
 ===== Well-formedness
 
+// Added
 ${rulegroup: Type_wf/externObjectTypeIR}
 ${ruleprose: Type_wf/externObjectTypeIR}
 
-[#sec-def-parserTypeDeclaration]
-[#sec-def-parserObjectTypeIR]
 ==== Parser object types
 
+// Section 7.2.13.1 of the P4-16 Language Specification
 A parser type declaration describes the signature of a parser. A parser should
 have at least one argument of type `packet_in`, representing the received
 packet that is processed.
@@ -77,113 +90,147 @@ that is parameterized on a type variable `H`. That parser receives as input a
 ----
 struct Counters { /* Fields omitted */ }
 parser P<H>(packet_in b,
-             out H packetHeaders,
-             out Counters counters);
+            out H packetHeaders,
+            out Counters counters);
 ----
 
+// Added
+A parser type declaration introduces a new parser object type definition.
+
+[[parserObjectTypeDefIR]]
+${syntax: parserObjectTypeDefIR}
+
+// Added
 Parser types can be referred to using their name and type arguments.
 Internally, parser types are represented as:
 
+[[parserObjectTypeIR]]
 ${syntax: parserObjectTypeIR}
 
+[discrete]
 ===== Type checking
 
+// Added
 Parser object types are introduced by `parser` declarations. Its typing rule is
 explained in <<sec-sem-Decl_ok-parserTypeDeclaration>>.
 
 Parser object types are then used by referencing their names. Thus parser
 object types can be obtained from named types, as illustrated in
-<<sec-def-namedType>>.
+<<sec-named-types>>.
 
-[#sec-sem-Type_wf-parserObjectTypeIR]
+[discrete]
 ===== Well-formedness
 
+// Added
 ${rulegroup: Type_wf/parserObjectTypeIR}
 ${ruleprose: Type_wf/parserObjectTypeIR}
 
-[#sec-def-controlTypeDeclaration]
-[#sec-def-controlObjectTypeIR]
 ==== Control object types
 
+// Section 7.2.13.2 of the P4-16 Language Specification
 A control type declaration describes the signature of a control block.
 
 ${syntax: controlTypeDeclaration}
 
 Control type declarations are similar to parser type declarations.
 
+// Added
+A control type declaration introduces a new control object type definition.
+
+[[controlObjectTypeDefIR]]
+${syntax: controlObjectTypeDefIR}
+
+// Added
 Control types can be referred to using their name and type arguments.
 Internally, control types are represented as:
 
+[[controlObjectTypeIR]]
 ${syntax: controlObjectTypeIR}
 
+[discrete]
 ===== Type checking
 
+// Added
 Control object types are introduced by `control` declarations. Its typing rule is
 explained in <<sec-sem-Decl_ok-controlTypeDeclaration>>.
 
 Control object types are then used by referencing their names. Thus control
 object types can be obtained from named types, as illustrated in
-<<sec-def-namedType>>.
+<<sec-named-types>>.
 
-[#sec-sem-Type_wf-controlObjectTypeIR]
+[discrete]
 ===== Well-formedness
 
+// Added
 ${rulegroup: Type_wf/controlObjectTypeIR}
 ${ruleprose: Type_wf/controlObjectTypeIR}
 
-[#sec-def-packageTypeDeclaration]
-[#sec-def-packageObjectTypeIR]
 ==== Package object types
 
+// Section 7.2.14 of the P4-16 Language Specification
 A package type describes the signature of a package.
 
 ${syntax: packageTypeDeclaration}
 
+// Added
+This introduces a new package object type definition.
+
+[[packageObjectTypeDefIR]]
+${syntax: packageObjectTypeDefIR}
+
+// Added
 Package types can be referred to using their name and type arguments.
 Internally, package types are represented as:
 
+[[packageObjectTypeIR]]
 ${syntax: packageObjectTypeIR}
 
+[discrete]
 ===== Type checking
 
+// Added
 Package object types are introduced by `package` declarations. Its typing rule is
 explained in <<sec-sem-Decl_ok-packageTypeDeclaration>>.
 
 Package object types are then used by referencing their names. Thus package
 object types can be obtained from named types, as illustrated in
-<<sec-def-namedType>>.
+<<sec-named-types>>.
 
-[#sec-sem-Type_wf-packageObjectTypeIR]
+[discrete]
 ===== Well-formedness
 
+// Added
 ${rulegroup: Type_wf/packageObjectTypeIR}
 ${ruleprose: Type_wf/packageObjectTypeIR}
 
-[#sec-def-tableDeclaration]
-[#sec-def-tableObjectTypeIR]
 ==== Table object types
 
-A `table` declaration introduces a table instance.
+// Modified Section 14.2 of the P4-16 Language Specification
+A `table` declaration introduces a table instance and a table type definition.
 
-${syntax: tableDeclaration}
+${syntax: tableDeclaration tableObjectTypeDefIR}
 
+NOTE: Add a forward reference to the table metadata types.
+
+// Added
 Internally, table types are represented as:
 
+[[tableObjectTypeIR]]
 ${syntax: tableObjectTypeIR}
 
-[#sec-sem-Type_wf-tableObjectTypeIR]
+[discrete]
 ===== Well-formedness
 
+// Added
 ${rulegroup: Type_wf/tableObjectTypeIR}
 ${ruleprose: Type_wf/tableObjectTypeIR}
 
-[#sec-def-objectReferenceValue]
 ==== Object reference values
 
 P4 objects are stateful, thus their values are references to the actual objects
 allocated in the global store.
 
-${syntax: oid
-          objectReferenceValue}
+[[objectReferenceValue]]
+${syntax: oid objectReferenceValue}
 
 Objects are referred to by their fully-qualified names from the top-level scope.

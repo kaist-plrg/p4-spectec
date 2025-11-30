@@ -2,6 +2,7 @@ open Interface.Wrap
 open Interface.Unwrap
 open Interface.Pack
 open Interface.Unpack
+open Interface.Flatten
 module Value = Runtime_dynamic.Value
 module IO = Runtime_simulator.Io
 module Sim = Runtime_simulator.Simulator
@@ -111,16 +112,34 @@ struct
   (* mark_to_drop(standard_metadata) is a primitive action that modifies
      standard_metadata.egress_spec to an implementation-specific special
      value that in some cases causes the packet to be dropped at the end
-     of ingress or egress processing.  It also asssigs 0 to
-     standard_metadata.mcast_grp.  Either of those metadata fields may
+     of ingress or egress processing. It also asssigs 0 to
+     standard_metadata.mcast_grp. Either of those metadata fields may
      be changed by executing later P4 code, after calling
      mark_to_drop(), and this can change the resulting behavior of the
      packet to do something other than drop.
 
      extern void mark_to_drop(inout standard_metadata_t standard_metadata); *)
-  let _mark_to_drop (_value_ctx : Value.t) (_value_sto : Value.t) :
-      Value.t * Value.t =
-    failwith "extern function mark_to_drop is not implemented"
+  let mark_to_drop (value_ctx : Value.t) (value_sto : Value.t) :
+      Value.t * Value.t * Value.t =
+    let value_egress_spec =
+      pack_p4_fixedBit (Bigint.of_int 9) (Bigint.of_int 511)
+    in
+    let value_ctx =
+      Spec.Rel.lvalue_write_dot_local value_ctx value_sto "standard_metadata"
+        "egress_spec" value_egress_spec
+    in
+    let value_mcast_grp =
+      pack_p4_fixedBit (Bigint.of_int 16) (Bigint.of_int 0)
+    in
+    let value_ctx =
+      Spec.Rel.lvalue_write_dot_local value_ctx value_sto "standard_metadata"
+        "mcast_grp" value_mcast_grp
+    in
+    let value_callResult =
+      let value_eps = wrap_opt_v "value" None in
+      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+    in
+    (value_ctx, value_sto, value_callResult)
 
   (* Calculate a hash function of the value specified by the data
      parameter.  The value written to the out parameter named result
@@ -139,8 +158,37 @@ struct
 
      extern void hash<O, T, D, M>(out O result, in HashAlgorithm algo,
                                   in T base, in D data, in M max); *)
-  let _hash (_value_ctx : Value.t) (_value_sto : Value.t) : Value.t * Value.t =
-    failwith "extern function hash is not implemented"
+  let hash (value_ctx : Value.t) (value_sto : Value.t) :
+      Value.t * Value.t * Value.t =
+    let base =
+      Spec.Func.find_var_e_local value_ctx "base" |> unpack_p4_fixedBit |> snd
+    in
+    let max =
+      Spec.Func.find_var_e_local value_ctx "max" |> unpack_p4_fixedBit |> snd
+    in
+    let values =
+      Spec.Func.find_var_e_local value_ctx "data" |> unpack_p4_tuple
+    in
+    let id_enum, id_enum_field =
+      Spec.Func.find_var_e_local value_ctx "algo" |> unpack_p4_enum
+    in
+    let result =
+      match (id_enum, id_enum_field) with
+      | "HashAlgorithm", algo ->
+          Hash.compute_checksum algo values |> Hash.adjust base max
+      | _ -> assert false
+    in
+    let value_typ_O = Spec.Func.find_type_e_local value_ctx "O" in
+    let value_result = pack_p4_arbitraryInt result in
+    let result = Spec.Func.cast_op value_typ_O value_result in
+    let value_ctx =
+      Spec.Rel.lvalue_write_var_local value_ctx value_sto "result" result
+    in
+    let value_callResult =
+      let value_eps = wrap_opt_v "value" None in
+      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+    in
+    (value_ctx, value_sto, value_callResult)
 
   (* Verifies the checksum of the supplied data.  If this method detects
      that a checksum of the data is not correct, then the value of the
@@ -181,7 +229,7 @@ struct
       (value_sto : Value.t) : Value.t * Value.t * Value.t =
     (* Get "data" in context *)
     let value_data = Spec.Func.find_var_e_local value_ctx "data" in
-    let values = value_data |> unpack_p4_sequence in
+    let values = value_data |> unpack_p4_tuple in
     (* Get payload *)
     let values_payload =
       if payload then
@@ -283,7 +331,7 @@ struct
       (value_sto : Value.t) : Value.t * Value.t * Value.t =
     (* Get "data" in context *)
     let value_data = Spec.Func.find_var_e_local value_ctx "data" in
-    let values = value_data |> unpack_p4_sequence in
+    let values = value_data |> unpack_p4_tuple in
     (* Get payload *)
     let values_payload =
       if payload then
@@ -561,6 +609,8 @@ struct
       match (name_func, names_param) with
       | "verify", [ "check"; "toSignal" ] ->
           Core.Func.verify value_ctx value_sto
+      | "mark_to_drop", [ "standard_metadata" ] ->
+          mark_to_drop value_ctx value_sto
       | "verify_checksum", [ "condition"; "data"; "checksum"; "algo" ] ->
           verify_checksum value_ctx value_sto
       | ( "verify_checksum_with_payload",
@@ -571,6 +621,8 @@ struct
       | ( "update_checksum_with_payload",
           [ "condition"; "data"; "checksum"; "algo" ] ) ->
           update_checksum_with_payload value_ctx value_sto
+      | "hash", [ "result"; "algo"; "base"; "data"; "max" ] ->
+          hash value_ctx value_sto
       | _ ->
           failwith
             ("unsupported extern function call: " ^ name_func ^ "("
@@ -689,9 +741,19 @@ struct
     let value_ctx = Spec.Rel.v1model_init_globals value_ctx value_sto port_in in
     (value_ctx, value_sto)
 
-  let drive_p (value_ctx : Value.t) (value_sto : Value.t) :
-      Value.t * Value.t * Value.t =
-    Spec.Rel.v1model_parser value_ctx value_sto
+  let drive_p (value_ctx : Value.t) (value_sto : Value.t) : Value.t * Value.t =
+    let value_ctx, value_sto, value_parser_result =
+      Spec.Rel.v1model_parser value_ctx value_sto
+    in
+    let value_ctx =
+      match flatten_case_v_opt value_parser_result with
+      | Some (_, [ [ "REJECT" ]; [] ], [ value_error ]) ->
+          Spec.Rel.lvalue_write_dot_global value_ctx value_sto
+            "standard_metadata" "parser_error" value_error
+      | Some _ -> value_ctx
+      | None -> assert false
+    in
+    (value_ctx, value_sto)
 
   let drive_vr (value_ctx : Value.t) (value_sto : Value.t) :
       Value.t * Value.t * Value.t =
@@ -734,14 +796,12 @@ struct
     let tx = (port, packet) in
     Some tx
 
-  let drive_pipe (value_ctx : Value.t) (value_sto : Value.t) (rx : IO.rx) :
-      Value.t * Value.t * IO.tx option =
+  let drive_pipe_pre (value_ctx : Value.t) (value_sto : Value.t) (rx : IO.rx) :
+      Value.t * Value.t * bool =
     (* Setup port and packet *)
     let value_ctx, value_sto = setup_rx value_ctx value_sto rx in
     (* Parser block *)
-    let value_ctx, value_sto, _value_parser_result =
-      drive_p value_ctx value_sto
-    in
+    let value_ctx, value_sto = drive_p value_ctx value_sto in
     (* Verify block *)
     let value_ctx, value_sto, _value_verify_result =
       drive_vr value_ctx value_sto
@@ -750,6 +810,21 @@ struct
     let value_ctx, value_sto, _value_verify_result =
       drive_ig value_ctx value_sto
     in
+    (* Check if packet should be dropped *)
+    let drop =
+      let value_egress_spec =
+        Spec.Rel.lvalue_read_dot_global value_ctx value_sto "standard_metadata"
+          "egress_spec"
+      in
+      let width_egress_spec, int_egress_spec =
+        unpack_p4_fixedBit value_egress_spec
+      in
+      Bigint.(width_egress_spec = of_int 9 && int_egress_spec = of_int 511)
+    in
+    (value_ctx, value_sto, drop)
+
+  let drive_pipe_post (value_ctx : Value.t) (value_sto : Value.t) :
+      Value.t * Value.t * IO.tx option =
     (* Egress block *)
     let value_ctx, value_sto, _value_verify_result =
       drive_eg value_ctx value_sto
@@ -765,4 +840,10 @@ struct
     (* Get resulting port and packet *)
     let result_opt = resulting_port_packet value_ctx value_sto in
     (value_ctx, value_sto, result_opt)
+
+  let drive_pipe (value_ctx : Value.t) (value_sto : Value.t) (rx : IO.rx) :
+      Value.t * Value.t * IO.tx option =
+    let value_ctx, value_sto, drop = drive_pipe_pre value_ctx value_sto rx in
+    if drop then (value_ctx, value_sto, None)
+    else drive_pipe_post value_ctx value_sto
 end

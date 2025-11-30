@@ -228,9 +228,9 @@ rule CallableType_ok/typedExpressionIR-nameIR-table-apply-method:
         : tableApplyMethodTypeIR `< `# eps > `( `# eps )
   ---- ;; if the base type is a table
   -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
-  -- if TABLE _ `{ typeIR_table } = $canon_typeIR(typeIR_base)
+  -- if TABLE _ `{ tableMetadataStructTypeIR } = $canon_typeIR(typeIR_base)
   ---- ;; create method type
-  -- if tableApplyMethodTypeIR = TABLE_APPLY `: typeIR_table
+  -- if tableApplyMethodTypeIR = TABLE_APPLY `: tableMetadataStructTypeIR
 
 ;;; TYPE prefixedNameIR `. nameIR
 
@@ -564,7 +564,7 @@ def $callable_tableApplyMethod(LOCAL, TC)
     \/ $is_table_apply_method_localKind(TC.LOCAL.KIND)
 
 rule Call_ok/tableApplyMethodTypeIR:
-  p TC |- (TABLE_APPLY `: typeIR_table) `< eps `# eps > `( eps `# eps )
-        : typeIR_table `< eps > `( eps )
+  p TC |- (TABLE_APPLY `: tableMetadataStructTypeIR) `< eps `# eps > `( eps `# eps )
+        : tableMetadataStructTypeIR `< eps > `( eps )
   ---- ;; check call site
   -- if $callable_tableApplyMethod(p, TC)

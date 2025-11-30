@@ -6,30 +6,30 @@
 ;;;; baseType
 ;;;; syntax baseType
 
-;;; VOID
+;;;;; VOID
+
+rule Type_ok/void:
+  p TC |- VOID : VOID `# eps
+
 ;;;;; BOOL
+
+rule Type_ok/boolean:
+  p TC |- BOOL : BOOL `# eps
+
 ;;;;; ERROR
+
+rule Type_ok/error:
+  p TC |- ERROR : ERROR `# eps
+
 ;;;;; MATCH_KIND
+
+rule Type_ok/matchKind:
+  p TC |- MATCH_KIND : MATCH_KIND `# eps
+
 ;;;;; STRING
 
-rulegroup Type_ok/primitiveType {
-
-  rule Type_ok/void:
-    p TC |- VOID : VOID `# eps
-
-  rule Type_ok/boolean:
-    p TC |- BOOL : BOOL `# eps
-
-  rule Type_ok/error:
-    p TC |- ERROR : ERROR `# eps
-
-  rule Type_ok/matchkind:
-    p TC |- MATCH_KIND : MATCH_KIND `# eps
-
-  rule Type_ok/string:
-    p TC |- STRING : STRING `# eps
-
-}
+rule Type_ok/string:
+  p TC |- STRING : STRING `# eps
 
 ;;;;; INT
 
@@ -49,7 +49,7 @@ rulegroup Type_ok/fixedInt {
     -- Expr_ok: p TC |- expression : typedExpressionIR
     -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR)
     -- Expr_eval_lctk: p TC |- typedExpressionIR ~> value
-    -- if n = $to_int(value)
+    -- if n = $int_of_value(value)
 
 }
 
@@ -70,7 +70,7 @@ rulegroup Type_ok/fixedBit {
     -- Expr_ok: p TC |- expression : typedExpressionIR
     -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR)
     -- Expr_eval_lctk: p TC |- typedExpressionIR ~> value
-    -- if n = $to_int(value)
+    -- if n = $int_of_value(value)
 
 }
 
@@ -87,7 +87,7 @@ rulegroup Type_ok/variableBit {
     -- Expr_ok: p TC |- expression : typedExpressionIR
     -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR)
     -- Expr_eval_lctk: p TC |- typedExpressionIR ~> value
-    -- if n = $to_int(value)
+    -- if n = $int_of_value(value)
 
 }
 
@@ -110,6 +110,7 @@ rulegroup Type_ok/prefixedTypeName {
     -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
     -- if typeDefIR = $find_typeDef_t(p, TC, prefixedNameIR)
     -- if ~$is_monomorphic_typeDefIR(typeDefIR)
+    -- if (eps, eps) = $type_parameters_of_typeDefIR(typeDefIR)
 
 }
 
@@ -143,7 +144,7 @@ rulegroup Type_ok/headerStackType {
     -- Expr_ok: p TC |- expression_size : typedExpressionIR_size
     -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR_size)
     -- Expr_eval_lctk: p TC |- typedExpressionIR_size ~> value_size
-    -- if n_size = $to_int(value_size)
+    -- if n_size = $int_of_value(value_size)
 
   rule Type_ok/specializedType:
     p TC |- specializedType `[ expression_size ]
@@ -154,7 +155,7 @@ rulegroup Type_ok/headerStackType {
     -- Expr_ok: p TC |- expression_size : typedExpressionIR_size
     -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR_size)
     -- Expr_eval_lctk: p TC |- typedExpressionIR_size ~> value_size
-    -- if n_size = $to_int(value_size)
+    -- if n_size = $int_of_value(value_size)
 
 }
 

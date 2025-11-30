@@ -73,12 +73,35 @@ rulegroup Callee_eval/typedExpressionIR-nameIR-builtinMethod {
     -- Lvalue_eval:
         p EC_0 STO_0 |- typedLvalueIR
                       : EC_1 STO_1 (`` storageReference)
-    ---- ;; read value of storage reference
-    -- Lvalue_read:
-        p EC_1 STO_1 |- storageReference : headerValue
     ---- ;; prepare the callee
     -- if builtinMethodCallee
         = BUILTIN_METHOD storageReference `. "isValid" `< eps > `( eps )
+
+  rule Callee_eval/header-setValid:
+    p EC_0 STO_0 |- (typedExpressionIR `. "setValid") `< `_ > `( eps )
+                  : EC_1 STO_1 (`` builtinMethodCallee)
+    ---- ;; get storage reference of expression base
+    -- if typedLvalueIR
+        = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
+    -- Lvalue_eval:
+        p EC_0 STO_0 |- typedLvalueIR
+                      : EC_1 STO_1 (`` storageReference)
+    ---- ;; prepare the callee
+    -- if builtinMethodCallee
+        = BUILTIN_METHOD storageReference `. "setValid" `< eps > `( eps )
+
+  rule Callee_eval/header-setInvalid:
+    p EC_0 STO_0 |- (typedExpressionIR `. "setInvalid") `< `_ > `( eps )
+                  : EC_1 STO_1 (`` builtinMethodCallee)
+    ---- ;; get storage reference of expression base
+    -- if typedLvalueIR
+        = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
+    -- Lvalue_eval:
+        p EC_0 STO_0 |- typedLvalueIR
+                      : EC_1 STO_1 (`` storageReference)
+    ---- ;; prepare the callee
+    -- if builtinMethodCallee
+        = BUILTIN_METHOD storageReference `. "setInvalid" `< eps > `( eps )
 
 }
 

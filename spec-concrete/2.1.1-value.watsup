@@ -6,30 +6,21 @@
 ;;;; Base values
 ;;
 
-;;
-;;;; Primitive values
-;;
-
 syntax boolValue = B bool
 syntax errorValue = ERROR `. id
 syntax matchKindValue = MATCH_KIND `. id
 syntax stringValue = stringLiteral
 
-syntax primitiveValue =
+syntax integerValue =
+  | integerLiteral
+  | nat `. nat V int
+
+syntax baseValue =
   | boolValue
   | errorValue
   | matchKindValue
   | stringValue
-
-;;
-;;;; Numeric values
-;;
-
-syntax numberValue =
-  | numberLiteral
-  | nat `. nat V int
-
-syntax baseValue = primitiveValue | numberValue
+  | integerValue
 
 ;;
 ;;;; Data values
@@ -88,9 +79,16 @@ syntax setValue =
   | SET `{ value `.. value }
   | SET `{ `... }
 
+syntax tableMetadataEnumValue = TABLE_ENUM tid `. id
+
+syntax tableMetadataStructValue =
+  TABLE_STRUCT tid `{ HIT boolValue `;
+                      MISS boolValue `;
+                      ACTION_RUN tableMetadataEnumValue `; }
+
 syntax tableMetadataValue =
-  | TABLE_ENUM tid `. id
-  | TABLE_STRUCT tid `{ fieldValue* }
+  | tableMetadataEnumValue
+  | tableMetadataStructValue
 
 syntax synthesizedValue =
   | defaultValue

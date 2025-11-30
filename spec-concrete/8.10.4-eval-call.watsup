@@ -56,7 +56,7 @@ rulegroup ActionBody_eval {
 
 rulegroup Call_eval/actionCallee {
 
-  rule Call_eval/global:
+  rule Call_eval/global-return:
     p EC_0 STO_0 |- actionCallee
                     `@ `< eps > `( argumentListIR )
                   : EC_3 STO_2 (RETURN eps)
@@ -92,7 +92,42 @@ rulegroup Call_eval/actionCallee {
            `@ LOCAL EC_callee_3 storageReference?*
         ~> EC_3
 
-  rule Call_eval/block:
+  rule Call_eval/global-exit:
+    p EC_0 STO_0 |- actionCallee
+                    `@ `< eps > `( argumentListIR )
+                  : EC_3 STO_2 EXIT
+    ---- ;; if the action is in the top-level scope
+    -- if ACTION GLOBAL `. nameIR
+            `( parameterIR* `# id_default* ) blockStatementIR
+        = actionCallee
+    ---- ;; create the callee context
+    -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+    ---- ;; align parameters with arguments
+    -- if (parameterIR_aligned*, argumentIR_aligned*,
+           parameterIR_default*, value_default*)
+        = $align_params_with_args(parameterIR*, argumentListIR, id_default*)
+    ---- ;; copy-in
+    -- Copy_in:
+        STO_0 p EC_0 parameterIR_aligned*
+           `@ LOCAL EC_callee_0 argumentIR_aligned*
+        ~> STO_1 EC_1 `@ EC_callee_1 `# (`` storageReference?*)
+    -- Copy_in_default:
+        parameterIR_default* `@ LOCAL EC_callee_1 value_default*
+        ~> `@ EC_callee_2
+    ---- ;; evaluate action body
+    -- ActionBody_eval:
+        EC_callee_2 STO_1 |- blockStatementIR
+                           : EC_callee_3 STO_2 EXIT
+    ---- ;; propagate shared layer
+    -- if EC_2
+        = EC_1[ .GLOBAL.FRAME = EC_callee_3.GLOBAL.FRAME ]
+    ---- ;; copy-out
+    -- Copy_out:
+        STO_2 p EC_2 parameterIR_aligned*
+           `@ LOCAL EC_callee_3 storageReference?*
+        ~> EC_3
+
+  rule Call_eval/block-return:
     p EC_0 STO_0 |- actionCallee
                     `@ `< eps > `( argumentListIR )
                   : EC_3 STO_2 (RETURN eps)
@@ -119,6 +154,43 @@ rulegroup Call_eval/actionCallee {
     -- ActionBody_eval:
         EC_callee_2 STO_1 |- blockStatementIR
                            : EC_callee_3 STO_2 (RETURN eps)
+    ---- ;; propagate shared layer
+    -- if EC_2
+        = EC_1[ .GLOBAL.FRAME = EC_callee_3.GLOBAL.FRAME ]
+              [ .BLOCK.FRAME = EC_callee_3.BLOCK.FRAME ]
+    ---- ;; copy-out
+    -- Copy_out:
+        STO_2 p EC_2 parameterIR_aligned*
+           `@ LOCAL EC_callee_3 storageReference?*
+        ~> EC_3
+
+  rule Call_eval/block-exit:
+    p EC_0 STO_0 |- actionCallee
+                    `@ `< eps > `( argumentListIR )
+                  : EC_3 STO_2 (RETURN eps)
+    ---- ;; unpack the action callee
+    ---- ;; if the action is in a block
+    -- if ACTION BLOCK `. nameIR
+            `( parameterIR* `# id_default* ) blockStatementIR
+        = actionCallee
+    ---- ;; create the callee context
+    -- if EC_callee_0 = $inherit_e(BLOCK, EC_0)
+    ---- ;; align parameters with arguments
+    -- if (parameterIR_aligned*, argumentIR_aligned*,
+           parameterIR_default*, value_default*)
+        = $align_params_with_args(parameterIR*, argumentListIR, id_default*)
+    ---- ;; copy-in
+    -- Copy_in:
+        STO_0 p EC_0 parameterIR_aligned*
+           `@ LOCAL EC_callee_0 argumentIR_aligned*
+        ~> STO_1 EC_1 `@ EC_callee_1 `# (`` storageReference?*)
+    -- Copy_in_default:
+        parameterIR_default* `@ LOCAL EC_callee_1 value_default*
+        ~> `@ EC_callee_2
+    ---- ;; evaluate action body
+    -- ActionBody_eval:
+        EC_callee_2 STO_1 |- blockStatementIR
+                           : EC_callee_3 STO_2 EXIT
     ---- ;; propagate shared layer
     -- if EC_2
         = EC_1[ .GLOBAL.FRAME = EC_callee_3.GLOBAL.FRAME ]
@@ -211,7 +283,7 @@ rule Call_eval/definedFunctionCallee:
 rule Call_eval/externFunctionCallee:
   p EC_0 STO_0 |- externFunctionCallee
                   `@ `< typeArgumentIR* > `( argumentIR* )
-                : EC_3 STO_2 returnResult
+                : EC_3 STO_2 callResult
   ---- ;; unpack the extern function callee
   -- if EXTERN_FUNCTION nameIR
           `< typeParameterIR* > `( parameterIR* `# id_default* )
@@ -237,7 +309,7 @@ rule Call_eval/externFunctionCallee:
   -- if (_ _ _ nameIR_param _ = parameterIR)*
   -- ExternFunctionCall_eval:
       EC_callee_3 STO_1 |- nameIR `( nameIR_param* )
-                         : EC_callee_4 STO_2 returnResult
+                         : EC_callee_4 STO_2 callResult
   ---- ;; propagate shared layer
   -- if EC_2 = EC_1[ .GLOBAL.FRAME = EC_callee_4.GLOBAL.FRAME ]
   ---- ;; copy-out
@@ -256,6 +328,21 @@ rule Call_eval/externFunctionCallee:
 
 rulegroup Call_eval/builtinMethodCallee {
 
+  rule Call_eval/headerUnion-isValid:
+    p EC STO |- builtinMethodCallee `@ `< eps > `( eps )
+              : EC STO returnResult
+    ---- ;; unpack the builtin method callee
+    -- if BUILTIN_METHOD storageReference `. "isValid"
+            `< eps > `( eps )
+        = builtinMethodCallee
+    ---- ;; read the value
+    -- Lvalue_read: 
+        p EC STO |- storageReference : headerUnionValue
+    -- if HEADER_UNION tid `{ fieldValue* } = headerUnionValue
+    -- if fieldValue_valid* = $filter_<fieldValue>(fieldValue*, def $is_header_valid)
+    -- if b_valid = (fieldValue_valid* = eps)
+    -- if returnResult = RETURN (B b_valid)
+
   rule Call_eval/header-isValid:
     p EC STO |- builtinMethodCallee `@ `< eps > `( eps )
               : EC STO returnResult
@@ -269,6 +356,40 @@ rulegroup Call_eval/builtinMethodCallee {
     -- if HEADER _ `{ b_valid `; _ } = headerValue
     -- if returnResult = RETURN (B b_valid)
 
+  rule Call_eval/header-setValid:
+    p EC_0 STO |- builtinMethodCallee `@ `< eps > `( eps )
+              : EC_1 STO returnResult
+    ---- ;; unpack the builtin method callee
+    -- if BUILTIN_METHOD storageReference `. "setValid"
+            `< eps > `( eps )
+        = builtinMethodCallee
+    ---- ;; read the value
+    -- Lvalue_read: 
+        p EC_0 STO |- storageReference : headerValue
+    -- if HEADER tid `{ _ `; fieldValue* } = headerValue
+    -- if value = HEADER tid `{ true `; fieldValue* }
+    -- Lvalue_write:
+        p EC_0 STO |- storageReference -> value
+                      : EC_1
+    -- if returnResult = RETURN eps
+
+  rule Call_eval/header-setInvalid:
+    p EC_0 STO |- builtinMethodCallee `@ `< eps > `( eps )
+              : EC_1 STO returnResult
+    ---- ;; unpack the builtin method callee
+    -- if BUILTIN_METHOD storageReference `. "setInvalid"
+            `< eps > `( eps )
+        = builtinMethodCallee
+    ---- ;; read the value
+    -- Lvalue_read: 
+        p EC_0 STO |- storageReference : headerValue
+    -- if HEADER tid `{ _ `; fieldValue* } = headerValue
+    -- if value = HEADER tid `{ false `; fieldValue* }
+    -- Lvalue_write:
+        p EC_0 STO |- storageReference -> value
+                      : EC_1
+    -- if returnResult = RETURN eps
+
 }
 
 ;;;; externMethodCallee
@@ -281,7 +402,7 @@ rulegroup Call_eval/externMethodCallee {
   rule Call_eval/non-abstract-return:
     p EC_0 STO_0 |- externMethodCallee
                     `@ `< typeArgumentIR* > `( argumentIR* )
-                  : EC_3 STO_2 returnResult
+                  : EC_3 STO_2 callResult
     ---- ;; unpack the extern method callee
     ---- ;; if the extern method is non-abstract
     -- if EXTERN_METHOD oid `. nameIR `< typeParameterIR* >
@@ -309,7 +430,7 @@ rulegroup Call_eval/externMethodCallee {
     -- if (_ _ _ nameIR_param _ = parameterIR)*
     -- ExternMethodCall_eval:
         EC_callee_4 STO_1 |- oid `. nameIR `( nameIR_param* )
-                           : EC_callee_5 STO_2 returnResult
+                           : EC_callee_5 STO_2 callResult
     ---- ;; propagate shared layer
     -- if EC_2 = EC_1[ .GLOBAL.FRAME = EC_callee_5.GLOBAL.FRAME ]
     ---- ;; copy-out
@@ -322,45 +443,89 @@ rulegroup Call_eval/externMethodCallee {
 
 ;;;; parserApplyMethodCallee
 
-rule Call_eval/parserApplyMethodCallee:
-  p EC_0 STO_0 |- parserApplyMethodCallee
-                  `@ `< typeArgumentListIR > `( argumentListIR )
-                : EC_3 STO_3 (RETURN eps)
-  ---- ;; unpack the parser apply method callee
-  -- if PARSER _ `. APPLY `( parameterListIR `# id_default* )
-          `{ frame `; parserLocalDeclarationListIR `; stateEnv }
-      = parserApplyMethodCallee
-  ---- ;; create the callee context
-  -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
-  -- if EC_callee_1
-      = EC_callee_0[ .BLOCK.FRAME = frame ][ .BLOCK.STATE = stateEnv ]
-  ---- ;; align parameters with arguments
-  -- if (parameterIR_aligned*, argumentIR_aligned*,
-         parameterIR_default*, value_default*)
-      = $align_params_with_args(parameterListIR, argumentListIR, id_default*)
-  ---- ;; copy-in
-  -- Copy_in:
-      STO_0 p EC_0 parameterIR_aligned*
-         `@ BLOCK EC_callee_1 argumentIR_aligned*
-      ~> STO_1 EC_1 `@ EC_callee_2 `# (`` storageReference?*)
-  -- Copy_in_default:
-      parameterIR_default* `@ BLOCK EC_callee_2 value_default*
-      ~> `@ EC_callee_3
-  ---- ;; evaluate local declarations
-  -- ParserLocalDecls_eval:
-      EC_callee_3 STO_1 |- parserLocalDeclarationListIR
-                          : EC_callee_4 STO_2
-  ---- ;; execute the parser state machine
-  -- ParserState_trans:
-      EC_callee_4 STO_2 |- TRANSITION "start"
-                         : EC_callee_5 STO_3 ACCEPT
-  ---- ;; propagate shared layer
-  -- if EC_2 = EC_1[ .GLOBAL.FRAME = EC_callee_5.GLOBAL.FRAME ]
-  ---- ;; copy-out
-  -- Copy_out:
-      STO_3 p EC_2 parameterIR_aligned*
-         `@ BLOCK EC_callee_5 storageReference?*
-      ~> EC_3
+rulegroup Call_eval/parserApplyMethodCallee {
+
+  rule Call_eval/accept:
+    p EC_0 STO_0 |- parserApplyMethodCallee
+                    `@ `< typeArgumentListIR > `( argumentListIR )
+                  : EC_3 STO_3 (RETURN eps)
+    ---- ;; unpack the parser apply method callee
+    -- if PARSER _ `. APPLY `( parameterListIR `# id_default* )
+            `{ frame `; parserLocalDeclarationListIR `; stateEnv }
+        = parserApplyMethodCallee
+    ---- ;; create the callee context
+    -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+    -- if EC_callee_1
+        = EC_callee_0[ .BLOCK.FRAME = frame ][ .BLOCK.STATE = stateEnv ]
+    ---- ;; align parameters with arguments
+    -- if (parameterIR_aligned*, argumentIR_aligned*,
+           parameterIR_default*, value_default*)
+        = $align_params_with_args(parameterListIR, argumentListIR, id_default*)
+    ---- ;; copy-in
+    -- Copy_in:
+        STO_0 p EC_0 parameterIR_aligned*
+           `@ BLOCK EC_callee_1 argumentIR_aligned*
+        ~> STO_1 EC_1 `@ EC_callee_2 `# (`` storageReference?*)
+    -- Copy_in_default:
+        parameterIR_default* `@ BLOCK EC_callee_2 value_default*
+        ~> `@ EC_callee_3
+    ---- ;; evaluate local declarations
+    -- ParserLocalDecls_eval:
+        EC_callee_3 STO_1 |- parserLocalDeclarationListIR
+                            : EC_callee_4 STO_2
+    ---- ;; execute the parser state machine
+    -- ParserState_trans:
+        EC_callee_4 STO_2 |- TRANSITION "start"
+                           : EC_callee_5 STO_3 ACCEPT
+    ---- ;; propagate shared layer
+    -- if EC_2 = EC_1[ .GLOBAL.FRAME = EC_callee_5.GLOBAL.FRAME ]
+    ---- ;; copy-out
+    -- Copy_out:
+        STO_3 p EC_2 parameterIR_aligned*
+           `@ BLOCK EC_callee_5 storageReference?*
+        ~> EC_3
+
+  rule Call_eval/reject:
+    p EC_0 STO_0 |- parserApplyMethodCallee
+                    `@ `< typeArgumentListIR > `( argumentListIR )
+                  : EC_3 STO_3 rejectTransitionResult
+    ---- ;; unpack the parser apply method callee
+    -- if PARSER _ `. APPLY `( parameterListIR `# id_default* )
+            `{ frame `; parserLocalDeclarationListIR `; stateEnv }
+        = parserApplyMethodCallee
+    ---- ;; create the callee context
+    -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+    -- if EC_callee_1
+        = EC_callee_0[ .BLOCK.FRAME = frame ][ .BLOCK.STATE = stateEnv ]
+    ---- ;; align parameters with arguments
+    -- if (parameterIR_aligned*, argumentIR_aligned*,
+           parameterIR_default*, value_default*)
+        = $align_params_with_args(parameterListIR, argumentListIR, id_default*)
+    ---- ;; copy-in
+    -- Copy_in:
+        STO_0 p EC_0 parameterIR_aligned*
+           `@ BLOCK EC_callee_1 argumentIR_aligned*
+        ~> STO_1 EC_1 `@ EC_callee_2 `# (`` storageReference?*)
+    -- Copy_in_default:
+        parameterIR_default* `@ BLOCK EC_callee_2 value_default*
+        ~> `@ EC_callee_3
+    ---- ;; evaluate local declarations
+    -- ParserLocalDecls_eval:
+        EC_callee_3 STO_1 |- parserLocalDeclarationListIR
+                            : EC_callee_4 STO_2
+    ---- ;; execute the parser state machine
+    -- ParserState_trans:
+        EC_callee_4 STO_2 |- TRANSITION "start"
+                           : EC_callee_5 STO_3 rejectTransitionResult
+    ---- ;; propagate shared layer
+    -- if EC_2 = EC_1[ .GLOBAL.FRAME = EC_callee_5.GLOBAL.FRAME ]
+    ---- ;; copy-out
+    -- Copy_out:
+        STO_3 p EC_2 parameterIR_aligned*
+           `@ BLOCK EC_callee_5 storageReference?*
+        ~> EC_3
+
+}
 
 ;;;; controlApplyMethodCallee
 
@@ -441,7 +606,6 @@ rulegroup Call_eval/controlApplyMethodCallee {
         EC_callee_3 STO_1 |- controlLocalDeclarationListIR
                             : EC_callee_4 STO_2 ``
     ---- ;; execute the control body
-    ---- ;; EXIT
     -- ControlBody_eval:
         EC_callee_4 STO_2 |- controlBodyIR
                            : EC_callee_5 STO_3 EXIT
@@ -459,16 +623,17 @@ rulegroup Call_eval/controlApplyMethodCallee {
 rule Call_eval/tableApplyMethodCallee:
   p EC_0 STO_0 |- tableApplyMethodCallee
                   `@ `< typeArgumentListIR > `( argumentListIR )
-                : EC_1 STO_1 (RETURN eps)
+                : EC_1 STO_1 returnResult
   ---- ;; unpack the table apply method callee
-  -- if TABLE _ `. APPLY `{ frame `; TBL }
+  -- if TABLE oid `. APPLY `{ frame `; TBL }
       = tableApplyMethodCallee
   ---- ;; create the callee context
   -- if EC_callee_0 = $inherit_e(BLOCK, EC_0)
   -- if EC_callee_1 = EC_callee_0[ .LOCAL.FRAMES = [ frame ] ]
   ---- ;; evaluate match-action
+  -- if tid :: _ = $rev_<id>(oid)
   -- Table_eval:
-      EC_callee_1 STO_0 |- TBL
-                         : EC_callee_2 STO_1 (RETURN eps)
+      EC_callee_1 STO_0 |- tid TBL
+                         : EC_callee_2 STO_1 returnResult
   ---- ;; propagate shared layers
   -- if EC_1 = EC_0[ .BLOCK.FRAME = EC_callee_2.BLOCK.FRAME ]

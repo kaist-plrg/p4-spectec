@@ -356,6 +356,17 @@ rulegroup Expr_eval/memberAccessExpressionIR-expression {
     -- if HEADER_STACK `[ _ `( _; n_size ) ] = value_base
     -- if expressionResult = `` (D n_size)
 
+  rule Expr_eval/stack-last:
+    p EC_0 STO_0 |- (typedExpressionIR_base `. "last") `# `( typeIR_base _ )
+                  : EC_1 STO_1 expressionResult
+    -- Expr_eval:
+        p EC_0 STO_0 |- typedExpressionIR_base
+                      : EC_1 STO_1 (`` value_base) 
+    -- if HEADER_STACK `[ value_elem* `( n_idx; _ ) ] = value_base
+    -- if n_idx_last = $(n_idx - 1)
+    -- if value_last = value_elem* [ n_idx_last ]
+    -- if expressionResult = `` value_last
+
   rule Expr_eval/struct:
     p EC_0 STO_0 |- (typedExpressionIR_base `. nameIR) `# `( typeIR_base _ )
                   : EC_1 STO_1 expressionResult
@@ -389,12 +400,41 @@ rulegroup Expr_eval/memberAccessExpressionIR-expression {
         = $assoc_<nameIR, value>(nameIR, (id_field, value_field)*)
     -- if expressionResult = `` value_member
 
+  rule Expr_eval/tableMetadataStructValue-hit:
+    p EC_0 STO_0 |- (typedExpressionIR_base `. "hit") `# _
+                  : EC_1 STO_1 expressionResult
+    -- Expr_eval:
+        p EC_0 STO_0 |- typedExpressionIR_base
+                      : EC_1 STO_1 (`` value_base)
+    -- if TABLE_STRUCT _ `{ HIT boolValue_hit `; MISS _ `; ACTION_RUN _ `; }
+        = value_base
+    -- if expressionResult = `` boolValue_hit
+
+  rule Expr_eval/tableMetadataStructValue-miss:
+    p EC_0 STO_0 |- (typedExpressionIR_base `. "miss") `# _
+                  : EC_1 STO_1 expressionResult
+    -- Expr_eval:
+        p EC_0 STO_0 |- typedExpressionIR_base
+                      : EC_1 STO_1 (`` value_base)
+    -- if TABLE_STRUCT _ `{ HIT _ `; MISS boolValue_miss `; ACTION_RUN _ `; }
+        = value_base
+    -- if expressionResult = `` boolValue_miss
+
+  rule Expr_eval/tableMetadataStructValue-action_run:
+    p EC_0 STO_0 |- (typedExpressionIR_base `. "action_run") `# _
+                  : EC_1 STO_1 expressionResult
+    -- Expr_eval:
+        p EC_0 STO_0 |- typedExpressionIR_base
+                      : EC_1 STO_1 (`` value_base)
+    -- if TABLE_STRUCT _ `{ HIT _ `; MISS _ `; ACTION_RUN tableMetadataEnumValue `; }
+        = value_base
+    -- if expressionResult = `` tableMetadataEnumValue
+
 }
 
 ;;;;; indexAccessExpressionIR
 ;;;;; syntax indexAccessExpressionIR =
 ;;;;; typedExpressionIR `[ typedExpressionIR ]
-;;;;; (TODO) handle header stack accesses
 
 rulegroup Expr_eval/indexAccessExpressionIR {
   
@@ -412,7 +452,17 @@ rulegroup Expr_eval/indexAccessExpressionIR {
         p EC_0 STO_0 |- [ typedExpressionIR_base, typedExpressionIR_index ]
                       : EC_1 STO_1 (`` ([ value_base, value_index ]))
     -- if TUPLE `( value_elem* ) = value_base
-    -- if n_index = $to_int(value_index)
+    -- if n_index = $int_of_value(value_index)
+    -- if expressionResult = `` value_elem*[n_index]
+
+  rule Expr_eval/headerStack:
+    p EC_0 STO_0 |- (typedExpressionIR_base `[ typedExpressionIR_index ]) `# _
+                  : EC_1 STO_1 expressionResult
+    -- Exprs_eval:
+        p EC_0 STO_0 |- [ typedExpressionIR_base, typedExpressionIR_index ]
+                      : EC_1 STO_1 (`` ([ value_base, value_index ]))
+    -- if HEADER_STACK `[ value_elem* `( _; _ ) ] = value_base
+    -- if n_index = $int_of_value(value_index)
     -- if expressionResult = `` value_elem*[n_index]
 
 }

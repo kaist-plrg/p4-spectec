@@ -88,7 +88,7 @@
 %type <Il.Ast.value>
   (* Aux *) int externName declarationList
   (* Misc *) trailingCommaOpt (* Booleans *) booleanLiteral
-  (* Numbers *) numberLiteral (* Strings *) stringLiteral
+  (* Integers *) integerLiteral (* Strings *) stringLiteral
   (* Names *)
   identifier typeIdentifier nonTypeName prefixedNonTypeName typeName prefixedTypeName tableCustomName name nameList member
   (* Directions *) direction
@@ -235,10 +235,10 @@ trailingCommaOpt:
   | TRUE { [ Term "TRUE" ] #@ "booleanLiteral" }
   | FALSE { [ Term "FALSE" ] #@ "booleanLiteral" }
 
-(* Numbers *)
-numberLiteral:
+(* Integers *)
+integerLiteral:
 	| int = int
-    { [ Term "D"; NT int ] #@ "numberLiteral" }
+    { [ Term "D"; NT int ] #@ "integerLiteral" }
 (* Processed by lexer *)
 	| number = NUMBER
     { fst number }
@@ -462,7 +462,7 @@ namedExpressionList:
 (* >> Literal expressions *)
 %inline literalExpression:
   | bool = booleanLiteral { bool }
-	| num = numberLiteral { num }
+	| int = integerLiteral { int }
 	| str = stringLiteral { str }
 ;
 
@@ -1400,8 +1400,8 @@ tableActionList:
 
 (* >>>>>> Table entry property *)
 tableEntryPriority:
-  | PRIORITY ASSIGN num = numberLiteral COLON
-    { [ Term "PRIORITY"; Term "="; NT num; Term ":" ] #@ "tableEntryPriority" }
+  | PRIORITY ASSIGN int = integerLiteral COLON
+    { [ Term "PRIORITY"; Term "="; NT int; Term ":" ] #@ "tableEntryPriority" }
   | PRIORITY ASSIGN L_PAREN e = expression R_PAREN COLON
     { [ Term "PRIORITY"; Term "="; Term "("; NT e; Term ")"; Term ":" ] #@ "tableEntryPriority" }
 ;
@@ -1630,8 +1630,8 @@ annotationToken:
     { tid }
 	| str = stringLiteral
     { str }
-	| num = numberLiteral
-    { num }
+	| int = integerLiteral
+    { int }
 	| MASK
     { [ Term "&&&" ] #@ "annotationToken" }
   (* TODO: missing DOTS "..." in spec *)

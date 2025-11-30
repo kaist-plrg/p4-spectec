@@ -11,7 +11,7 @@ def $compat_table_exact_optional_key(typeIR)
   = $compat'_table_exact_optional_key($canon_typeIR(typeIR))
 def $compat'_table_exact_optional_key(BOOL) = true
 def $compat'_table_exact_optional_key(ERROR) = true
-def $compat'_table_exact_optional_key(numberTypeIR) = true
+def $compat'_table_exact_optional_key(integerTypeIR) = true
 def $compat'_table_exact_optional_key(TYPE _ typeIR)
   = $compat_table_exact_optional_key(typeIR)
 def $compat'_table_exact_optional_key(ENUM _ `{ _ }) = true
@@ -291,8 +291,10 @@ rulegroup TableEntry_keyset_simple_ok/mask {
     -- Expr_ok: LOCAL TC |- expression_r : typedExpressionIR_r
     ---- ;; check that the types are compatible
     ---- ;; while inserting implicit casts if necessary
-    -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast)
-          = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+    -- if typedExpressionIR_l_cast
+        = $coerce_unary(typedExpressionIR_l, typeIR_key)
+    -- if typedExpressionIR_r_cast
+        = $coerce_unary(typedExpressionIR_r, typeIR_key)
     -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
           = $reduce_serenum_binary(
               typedExpressionIR_l_cast,
@@ -300,16 +302,12 @@ rulegroup TableEntry_keyset_simple_ok/mask {
               def $compat_mask
             )
     ---- ;; fetch the type
-    -- if typeIR_reduced
-        = $type_of_typedExpressionIR(typedExpressionIR_r_reduced)
     -- if ctk_r_reduced
         = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
-    ---- ;; check compatibility with the key type
-    -- Sub_impl: typeIR_reduced <: typeIR_key
     ---- ;; statically evaluate the right hand side to get its width
     -- if ctk_r_reduced = LCTK
     -- Expr_eval_lctk: LOCAL TC |- typedExpressionIR_r_reduced ~> value_r
-    -- if i_r = $to_int(value_r)
+    -- if i_r = $int_of_value(value_r)
     ---- ;; compute the table entry state
     -- if n_prefix = $tableEntry_lpm_prefix(n W $int_to_bitstr(n, i_r))
 
@@ -321,21 +319,16 @@ rulegroup TableEntry_keyset_simple_ok/mask {
     -- Expr_ok: LOCAL TC |- expression_r : typedExpressionIR_r
     ---- ;; check that the types are compatible
     ---- ;; while inserting implicit casts if necessary
-    -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast)
-          = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+    -- if typedExpressionIR_l_cast
+        = $coerce_unary(typedExpressionIR_l, typeIR_key)
+    -- if typedExpressionIR_r_cast
+        = $coerce_unary(typedExpressionIR_r, typeIR_key)
     -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
           = $reduce_serenum_binary(
               typedExpressionIR_l_cast,
               typedExpressionIR_r_cast,
               def $compat_mask
             )
-    ---- ;; fetch the type
-    -- if typeIR_reduced
-        = $type_of_typedExpressionIR(typedExpressionIR_r_reduced)
-    -- if ctk_r_reduced
-        = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
-    ---- ;; check compatibility with the key type
-    -- Sub_impl: typeIR_reduced <: typeIR_key
 
 }
 
@@ -349,21 +342,16 @@ rule TableEntry_keyset_simple_ok/range-range:
   -- Expr_ok: LOCAL TC |- expression_r : typedExpressionIR_r
   ---- ;; check that the types are compatible
   ---- ;; while inserting implicit casts if necessary
-  -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast)
-        = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+  -- if typedExpressionIR_l_cast
+      = $coerce_unary(typedExpressionIR_l, typeIR_key)
+  -- if typedExpressionIR_r_cast
+      = $coerce_unary(typedExpressionIR_r, typeIR_key)
   -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
         = $reduce_serenum_binary(
             typedExpressionIR_l_cast,
             typedExpressionIR_r_cast,
             def $compat_range
           )
-  ---- ;; fetch the type
-  -- if typeIR_reduced
-      = $type_of_typedExpressionIR(typedExpressionIR_r_reduced)
-  -- if ctk_r_reduced
-      = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
-  ---- ;; check compatibility with the key type
-  -- Sub_impl: typeIR_reduced <: typeIR_key
 
 ;;;;;; DEFAULT
 
@@ -628,7 +616,7 @@ rulegroup TableEntry_priority_ok/non-specified {
     -- if TBLC.MODE = NOPRI
 
   rule TableEntry_priority_ok/noprilpm:
-    TC TBLC TBLS |- eps : TBLC eps
+    TC TBLC TBLS |- eps : TBLC (PRIORITY `= (D n_prefix) `:)
     -- if TBLC.MODE = NOPRILPM n
     -- if TBLS = LPM n_prefix
 
@@ -692,21 +680,21 @@ rulegroup TableEntry_priority_ok/non-specified {
 rulegroup TableEntry_priority_ok/specified-number {
 
   rule TableEntry_priority_ok/pri-prilpm-number-init:
-    TC TBLC_0 TBLS |- PRIORITY `= numberLiteral `:
-                    : TBLC_2 (PRIORITY `= numberLiteral `:)
+    TC TBLC_0 TBLS |- PRIORITY `= integerLiteral `:
+                    : TBLC_2 (PRIORITY `= integerLiteral `:)
     ---- ;; check match mode
     -- if TBLC_0.MODE = PRI \/ TBLC_0.MODE = PRILPM
     -- if ~TBLC_0.ENTRIES.CONST
     ---- ;; if no priority has been specified yet
     -- if TBLC_0.PRIORITIES.VALUES = eps
     ---- ;; evaluate and initialize the priority
-    -- if n = $to_int(numberLiteral)
+    -- if n = $int_of_value(integerLiteral)
     -- if TBLC_1 = TBLC_0[ .PRIORITIES.INIT = true ]
     -- if TBLC_2 = $add_table_priority(TBLC_1, n)
 
   rule TableEntry_priority_ok/pri-prilpm-number-non-init:
-    TC TBLC_0 TBLS |- PRIORITY `= numberLiteral `:
-                    : TBLC_1 (PRIORITY `= numberLiteral `:)
+    TC TBLC_0 TBLS |- PRIORITY `= integerLiteral `:
+                    : TBLC_1 (PRIORITY `= integerLiteral `:)
     ---- ;; check match mode
     -- if TBLC_0.MODE = PRI \/ TBLC_0.MODE = PRILPM
     -- if ~TBLC_0.ENTRIES.CONST
@@ -714,7 +702,7 @@ rulegroup TableEntry_priority_ok/specified-number {
     -- if TBLC_0.PRIORITIES.VALUES =/= eps
     -- if TBLC_0.PRIORITIES.INIT
     ---- ;; evaluate and initialize the priority
-    -- if n = $to_int(numberLiteral)
+    -- if n = $int_of_value(integerLiteral)
     -- if TBLC_1 = $add_table_priority(TBLC_0, n)
 
 }
@@ -735,7 +723,7 @@ rulegroup TableEntry_priority_ok/specified-expression {
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
     -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR)
     -- Expr_eval_lctk: LOCAL TC |- typedExpressionIR ~> value
-    -- if n = $to_int(value)
+    -- if n = $int_of_value(value)
     -- if TBLC_1 = TBLC_0[ .PRIORITIES.INIT = true ]
     -- if TBLC_2 = $add_table_priority(TBLC_1, n)
 
@@ -752,7 +740,7 @@ rulegroup TableEntry_priority_ok/specified-expression {
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
     -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR)
     -- Expr_eval_lctk: LOCAL TC |- typedExpressionIR ~> value
-    -- if n = $to_int(value)
+    -- if n = $int_of_value(value)
     -- if TBLC_1 = $add_table_priority(TBLC_0, n)
   
 }
@@ -912,7 +900,7 @@ rulegroup TableProperty_ok/custom {
           \/ $is_fixedIntTypeIR($canon_typeIR(typeIR))
           \/ $is_fixedBitTypeIR($canon_typeIR(typeIR))
     -- Expr_eval_lctk: LOCAL TC |- typedExpressionIR ~> value
-    -- if n_delta = $to_int(value)
+    -- if n_delta = $int_of_value(value)
     -- if $(n_delta > 0)
     ---- ;; update table context
     -- if TBLC_1 = TBLC_0 [ .PRIORITIES.DELTA = n_delta ]
@@ -1062,11 +1050,11 @@ rule TableType_ok:
   -- if tid_enum = "action_list(" ++ nameIR ++ ")"
   -- if (prefixedNameIR_action, _, _)* = TBLC.ACTIONS
   -- if (id_enum_field = $flatten_prefixedNameIR(prefixedNameIR_action))*
-  -- if typeIR_table_enum = TABLE_ENUM tid_enum `{ id_enum_field* }
+  -- if tableMetadataEnumTypeIR = TABLE_ENUM tid_enum `{ id_enum_field* }
   ---- ;; add enum fields to context
   -- if (value_enum_field = TABLE_ENUM tid_enum `. id_enum_field)*
   -- if (varTypeIR_enum_field
-        = `EMPTY typeIR_table_enum LCTK value_enum_field)*
+        = `EMPTY tableMetadataEnumTypeIR LCTK value_enum_field)*
   -- if TC_1
       = $add_vars_t(
           BLOCK, TC_0,
@@ -1075,10 +1063,8 @@ rule TableType_ok:
         )
   ---- ;; create table struct type
   -- if tid_struct = "apply_result(" ++ nameIR ++ ")"
-  -- if typeIR_table_struct
+  -- if tableMetadataStructTypeIR
       = TABLE_STRUCT tid_struct
-          `{ [ (BOOL "hit" `;),
-               (BOOL "miss" `;),
-               (typeIR_table_enum "action_run" `;) ] }
+          `{ HIT BOOL `; MISS BOOL `; ACTION_RUN tableMetadataEnumTypeIR `; }
   ---- ;; create table type
-  -- if typeIR_table = TABLE nameIR `{ typeIR_table_struct }
+  -- if typeIR_table = TABLE nameIR `{ tableMetadataStructTypeIR }

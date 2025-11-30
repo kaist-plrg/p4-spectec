@@ -1,19 +1,23 @@
-[#sec-def-synthesizedTypeIR]
-[#sec-def-synthesizedValue]
 === Synthesized types and values
 
+// Section 7.2.10 of the P4-16 Language Specification
 For the purposes of type-checking the P4 compiler can synthesize some type
 representations which cannot be directly expressed by users.
 
-[#sec-def-defaultExpression]
-[#sec-def-defaultTypeIR]
-[#sec-def-defaultValue]
+// Added
+These types and values are represented as:
+
+[[synthesizedTypeIR]]
+[[synthesizedValue]]
+${syntax: synthesizedTypeIR synthesizedValue}
+
 ==== Default types and values
 
-${syntax: defaultExpression}
-
+// Section 8.28 of the P4-16 Language Specification
 A left-value can be initialized automatically with a default value of the
-suitable type using the syntax `+...+` (see <<sec-default-values>>).
+suitable type using:
+
+${syntax: defaultExpression}
 
 [source,p4]
 ----
@@ -37,24 +41,29 @@ N0 n0 = ...;  // initialize n0 with the default value 0
 N1 n1 = ...;  // initialize n1 with the default value N1.A
 ----
 
+// Added
 Internally, the type and value of `+...+` itself is represented as:
 
-${syntax: defaultTypeIR
-          defaultValue}
+[[defaultTypeIR]]
+[[defaultValue]]
+${syntax: defaultTypeIR defaultValue}
 
-[#sec-sem-Type_wf-defaultTypeIR]
+NOTE: The default type and value is new. Because every expressions must have
+a type and value, we need to represent those of `+...+`.
+
+[discrete]
 ===== Well-formnedness
 
+// Added
 ${rulegroup: Type_wf/defaultTypeIR}
 ${ruleprose: Type_wf/defaultTypeIR}
 
-[#sec-def-dataExpression]
-[#sec-def-invalidHeaderTypeIR]
-[#sec-def-invalidHeaderValue]
 ==== Invalid header types and values
 
+// Added
 ${syntax: dataExpression}
 
+// Section 8.18 of the P4-16 Language Specification
 The expression `+{#}+` represents an invalid header of some type, but it can be
 any header or header union type. A P4 compiler may require an explicit cast on
 this expression in cases where it cannot determine the particular header or
@@ -74,42 +83,44 @@ directive, since it cannot be the first character on a line when it
 occurs in the single lexical token `+{#}+`, which may not have
 whitespace or any other characters between those shown.
 
+// Added
 Internally, the type and value of `+{#}+` itself is represented as:
 
-${syntax: invalidHeaderTypeIR
-          invalidHeaderValue}
+[[invalidHeaderTypeIR]]
+[[invalidHeaderValue]]
+${syntax: invalidHeaderTypeIR invalidHeaderValue}
 
-[#sec-sem-Type_wf-invalidHeaderTypeIR]
+NOTE: The invalid header type and value is new. Because every expressions
+must have a type and value, we need to represent those of `+{#}+`.
+
+[discrete]
 ===== Well-formnedness
 
+// Added
 ${rulegroup: Type_wf/invalidHeaderTypeIR}
 ${ruleprose: Type_wf/invalidHeaderTypeIR}
 
-[#sec-def-sequenceElementExpression]
-[#sec-def-sequenceTypeIR]
-[#sec-def-sequenceValue]
 ==== Sequence types and values
 
-Sequences can be assigned to other tuples with the same type.
+// Section 8.13 of the P4-16 Language Specification
+A sequence expression is written using curly braces, with each element
+separated by a comma:
+
+${syntax: sequenceElementExpression dataElementExpression dataExpression}
+
+Sequence expressions can be assigned to expressions of type `tuple`, `struct`
+or `header`, and can also be passed as arguments to methods. Sequences may be
+nested.
+
+For instance, sequences can be assigned to other tuples with the same type:
 
 [source,p4]
 ----
 tuple<bit<32>, bool> x = { 10, false };
 ----
 
-A sequence expression is written using curly braces, with each element
-separated by a comma:
-
-${syntax: sequenceElementExpression
-          dataElementExpression
-          dataExpression}
-
-Sequence expressions can be assigned to expressions of type `tuple`, `struct`
-or `header`, and can also be passed as arguments to methods. Sequences may be
-nested.
-
-For example, the following program fragment uses a sequence expression to pass
-several header fields simultaneously to a learning provider:
+The following program fragment uses a sequence expression to pass several
+header fields simultaneously to a learning provider:
 
 [source,p4]
 ----
@@ -142,31 +153,36 @@ give values to only a subset of the fields of the struct or header type to
 which it evaluates. Any field names not given a value explicitly will be given
 their default value (see <<sec-initializing-with-default-values>>).
 
-The type of a sequence expression is a sequence type.
+The type of a sequence expression is a sequence type. Its value is a sequence
+value.
 
-${syntax: sequenceTypeIR
-          sequenceValue}
+[[sequenceTypeIR]]
+[[sequenceValue]]
+${syntax: sequenceTypeIR sequenceValue}
 
-[#sec-sem-Type_wf-sequenceTypeIR]
+NOTE: The sequence type is newly introduced. In the current P4 language
+specification, sequence expressions are referred to as tuple expressions, and
+(somewhat confusingly and implicitly) has tuple type. However, this is
+problematic since tuples have limited casting rules that cannot be applied to
+several initialization scenarios. Thus, we introduce sequence types to
+represent the expression sequence within curly braces, apart from tuple types.
+
+[discrete]
 ===== Well-formnedness
 
 ${rulegroup: Type_wf/sequenceTypeIR}
 ${ruleprose: Type_wf/sequenceTypeIR}
 
-[#sec-def-recordElementExpression]
-[#sec-def-recordTypeIR]
-[#sec-def-recordValue]
 ==== Record types and values
 
+// Section 8.14 of the P4-16 Language Specification
 One can write record expressions that evaluate to a structure or header. The
 syntax of these expressions is given by:
 
-${syntax: recordElementExpression
-          dataElementExpression
-          dataExpression}
+${syntax: recordElementExpression dataElementExpression dataExpression}
 
-The following example shows a structure-valued expression used in an
-equality comparison expression:
+The following example shows a structure-valued expression used in an equality
+comparison expression:
 
 [source,p4]
 ----
@@ -191,10 +207,10 @@ Record expressions that do not have `+...+` as their last element must provide
 a value for every member of the struct or header type to which it evaluates, by
 mentioning each field name exactly once.
 
-Record expressions that have `+...+` as their last element are
-allowed to give values to only a subset of the fields of the struct or
-header type to which it evaluates. Any field names not given a value
-explicitly will be given their default value (see <<sec-initializing-with-default-values>>).
+Record expressions that have `+...+` as their last element are allowed to give
+values to only a subset of the fields of the struct or header type to which it
+evaluates. Any field names not given a value explicitly will be given their
+default value (see <<sec-initializing-with-default-values>>).
 
 The order of the fields of the `struct` or `header` type does not need to match
 the order of the values of the structure-valued expression.
@@ -202,23 +218,31 @@ the order of the values of the structure-valued expression.
 It is a compile-time error if a field name appears more than once in the same
 structure-valued expression.
 
+// Added
 Internally, the type and value of a record expression is represented as:
 
-${syntax: recordTypeIR
-          recordValue}
+[[recordTypeIR]]
+[[recordValue]]
+${syntax: recordTypeIR recordValue}
 
-[#sec-sem-Type_wf-recordTypeIR]
+NOTE: The record type and value is new. Because every expressions must have
+a type and value, we need to represent those of `{ recordElementExpression
+optTrailingComma }`.
+
+[discrete]
 ===== Well-formnedness
 
+// Added
 ${rulegroup: Type_wf/recordTypeIR}
 ${ruleprose: Type_wf/recordTypeIR}
 
-[#sec-def-setTypeIR]
-[#sec-def-setValue]
 ==== Set types and values
 
+// Added
+[[setTypeIR]]
 ${syntax: setTypeIR}
 
+// Section 7.2.10.1 of the P4-16 Language Specification
 The set type describes _sets_ of values of some type `T`. Set types can only
 appear in restricted contexts in P4 programs. For example, the range expression
 `8w5 .. 8w8` describes a set containing the 8-bit numbers 5, 6, 7, and 8, so
@@ -227,35 +251,27 @@ its type is `set<bit<8>>;`. This expression can be used as a label in a
 types cannot be named or declared by P4 programmers, they are only synthesized
 by the compiler internally and used for type-checking.
 
-Set values are represented internally as:
+// Added
+Set values are represented as:
 
+[[setValue]]
 ${syntax: setValue}
 
-===== Type nesting
-
-${funcprose: nestable_set}
-${table: nestable'_set}
-
-${funcprose: nestable_tuple_in_set}
-${table: nestable'_tuple_in_set}
-
-${funcprose: nestable_sequence_in_set}
-${table: nestable'_sequence_in_set}
-
-[#sec-sem-Type_wf-setTypeIR]
+[discrete]
 ===== Well-formnedness
 
+// Added
 ${rulegroup: Type_wf/setTypeIR}
 ${ruleprose: Type_wf/setTypeIR}
 
-[#sec-def-tableMetadataTypeIR]
-[#sec-def-tableMetadataValue]
 ==== Table metadata types and values
 
-Calling an apply method on a table instance returns a value with a table
-metadata `struct` type with three fields. This structure is synthesized by the
-compiler automatically. For each `table T`, the compiler synthesizes a table
-metadata `enum` and a `struct`, shown in pseudo-P4:
+// Section 14.2.2 of the P4-16 Language Specification
+A `table` can be invoked by calling its `apply` method. Calling an apply method
+on a table instance returns a value with a table metadata `struct` type with
+three fields. This structure is synthesized by the compiler automatically. For
+each `table T`, the compiler synthesizes a table metadata `enum` and a
+`struct`, shown in pseudo-P4:
 
 [source,p4pseudo]
 ----
@@ -301,11 +317,13 @@ switch (dmac.apply().action_run) {
 
 Internally, the type and value of table metadata is represented as:
 
-${syntax: tableMetadataTypeIR
-          tableMetadataValue}
+[[tableMetadataTypeIR]]
+[[tableMetadataValue]]
+${syntax: tableMetadataTypeIR tableMetadataValue}
 
-[#sec-sem-Type_wf-tableMetadataTypeIR]
+[discrete]
 ===== Well-formnedness
 
+// Added
 ${rulegroup: Type_wf/tableMetadataTypeIR}
 ${ruleprose: Type_wf/tableMetadataTypeIR}

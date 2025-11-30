@@ -11,14 +11,14 @@ let bigint_of_value (value : value) : Bigint.t =
 let value_of_bigint (i : Bigint.t) : value =
   let value =
     let vid = Value.fresh () in
-    let typ = Il.Ast.NumT `NatT in
-    NumV (`Nat i) $$$ { vid; typ }
+    let typ = Il.Ast.NumT `IntT in
+    NumV (`Int i) $$$ { vid; typ }
   in
   value
 
-(* dec $sum_nat(nat* ) : nat *)
+(* dec $sum_int(int* ) : int *)
 
-let sum_nat (at : region) (targs : targ list) (values_input : value list) :
+let sum_int (at : region) (targs : targ list) (values_input : value list) :
     value =
   Extract.zero at targs;
   let values =
@@ -27,9 +27,9 @@ let sum_nat (at : region) (targs : targ list) (values_input : value list) :
   let sum = List.fold_left Bigint.( + ) Bigint.zero values in
   value_of_bigint sum
 
-(* dec $max_nat(nat* ) : nat *)
+(* dec $max_int(int* ) : int *)
 
-let max_nat (at : region) (targs : targ list) (values_input : value list) :
+let max_int (at : region) (targs : targ list) (values_input : value list) :
     value =
   Extract.zero at targs;
   let values =
@@ -38,9 +38,9 @@ let max_nat (at : region) (targs : targ list) (values_input : value list) :
   let max = List.fold_left Bigint.max Bigint.zero values in
   value_of_bigint max
 
-(* dec $min_nat(nat* ) : nat *)
+(* dec $min_int(int* ) : int *)
 
-let min_nat (at : region) (targs : targ list) (values_input : value list) :
+let min_int (at : region) (targs : targ list) (values_input : value list) :
     value =
   Extract.zero at targs;
   let values =

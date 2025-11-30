@@ -158,9 +158,11 @@ rule Stmt_ok/exitStatement:
 ;;; blockStatement
 
 rule Stmt_ok/blockStatement:
-  LOCAL TC_0 f_0 |- blockStatement : TC_1 f_1 blockStatementIR
-  -- Block_ok: TC_0 f_0 |- blockStatement
-                         : TC_1 f_1 blockStatementIR
+  LOCAL TC_0 f_0 |- blockStatement : TC_3 f_1 blockStatementIR
+  -- if TC_1 = $enter_t(TC_0)
+  -- Block_ok: TC_1 f_0 |- blockStatement
+                         : TC_2 f_1 blockStatementIR
+  -- if TC_3 = $exit_t(TC_2)
 
 ;;; conditionalStatement
 ;;; syntax conditionalStatement
@@ -500,13 +502,11 @@ rule BlockElementStmts_ok/cons:
 
 rule Block_ok:
   TC_0 f |- annotationList `{ blockElementStatementList }
-          : TC_3 f_post blockStatementIR
+          : TC_1 f_post blockStatementIR
   ---- ;; check block element statements in nested context
   -- if blockElementStatement*
       = $flatten_blockElementStatementList(blockElementStatementList)
-  -- if TC_1 = $enter_t(TC_0)
-  -- BlockElementStmts_ok: TC_1 f |- blockElementStatement*
-                                   : TC_2 f_post blockElementStatementIR*
-  -- if TC_3 = $exit_t(TC_2)
+  -- BlockElementStmts_ok: TC_0 f |- blockElementStatement*
+                                   : TC_1 f_post blockElementStatementIR*
   ---- ;; create IR
   -- if blockStatementIR = annotationList `{ blockElementStatementIR* }

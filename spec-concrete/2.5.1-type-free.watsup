@@ -75,7 +75,7 @@ def $free_typeIR(CONTROL `( parameterTypeIR* ))
 def $free_typeIR(PACKAGE `{ typeIR* })
   = $unions_set<tid>($free_typeIR(typeIR)*)
 
-def $free_typeIR(TABLE _ `{ typeIR }) = $free_typeIR(typeIR)
+def $free_typeIR(TABLE _ `{ _ }) = `{ eps }
 
 ;;; Synthesized types
 
@@ -98,9 +98,7 @@ def $free_typeIR(RECORD `{ (typeIR _ `;)* `, `... })
 def $free_typeIR(SET `< typeIR* >)
   = $unions_set<tid>($free_typeIR(typeIR)*)
 
-def $free_typeIR(TABLE_ENUM _ `{ _ }) = `{ eps }
-
-def $free_typeIR(TABLE_STRUCT _ `{ _ }) = `{ eps }
+def $free_typeIR(tableMetadataTypeIR) = `{ eps }
 
 ;;
 ;;;; Free type variables in type definitions
@@ -185,8 +183,7 @@ def $free_callableTypeIR(CONTROL_APPLY `( parameterTypeIR* ))
   -- if bound_params
       = $unions_set<tid>($free_parameterTypeIR(parameterTypeIR)*)
 
-def $free_callableTypeIR(TABLE_APPLY `: typeIR)
-  = $free_typeIR(typeIR)
+def $free_callableTypeIR(TABLE_APPLY `: _) = `{ eps }
 
 ;;
 ;;;; Free type variables in callable type definitions

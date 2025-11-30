@@ -27,12 +27,13 @@ builtin dec $int_to_bits_signed(nat, int) : bits
 ;; Underlying raw integer of a numeric value
 ;;
 
-dec $to_int(value) : int
+dec $int_of_value(value) : int
+  hint(prose_in "the integer representation of " %0)
 
-def $to_int(D i) = i
-def $to_int(w S i) = $bitstr_to_int(w, i)
-def $to_int(w W i) = i
-def $to_int(_ `. _ V i) = i
+def $int_of_value(D i) = i
+def $int_of_value(w S i) = $bitstr_to_int(w, i)
+def $int_of_value(w W i) = i
+def $int_of_value(_ `. _ V i) = i
 
 ;;
 ;; Update a field value
@@ -53,10 +54,35 @@ def $update_fieldValue(
       $update_fieldValue(fieldValue_t*, id, value)
   -- otherwise
 
+dec $is_header_valid(fieldValue) : bool
+
+def $is_header_valid(headerValue id `;) = b_valid
+  -- if HEADER _ `{ b_valid `; _ } = headerValue
+
+;;;
+;;; Update a header union
+;;;
+
+dec $update_headerUnion(fieldValue*, id) : fieldValue*
+
+def $update_headerUnion(eps, id) = eps
+def $update_headerUnion(
+    (value_field_h id_field_h `;) :: fieldValue_t*,
+    id
+  ) = (value_field_h id_field_h `;) :: fieldValue_t*
+  -- if id_field_h = id
+def $update_headerUnion(
+    (value_field_h id_field_h `;) :: fieldValue_t*,
+    id
+  ) = (value_field_h_update id_field_h `;) :: fieldValue_t*
+  -- if id_field_h =/= id
+  -- if HEADER tid `{ _ `; fieldValue* } = value_field_h
+  -- if value_field_h_update = HEADER tid `{ false `; fieldValue* }
 
 ;;;
 ;;; Update a header stack by index
 ;;;
+
 dec $update_headerStack(value*, value, nat, nat) : value*
 dec $update_headerStack'(value*, value, nat, nat, nat) : value*
 
@@ -76,7 +102,7 @@ def $update_headerStack'(
 def $update_headerStack'(
     value_h :: value_t*,
     value_new, n_current_idx, n_target_idx, n_size
-  ) = value_h :: $update_headerStack'(value_t*, value_new, n_target_idx, $(n_current_idx + 1), n_size)
+  ) = value_h :: $update_headerStack'(value_t*, value_new, $(n_current_idx + 1), n_target_idx, n_size)
   -- if n_target_idx =/= n_current_idx
 
 ;;
@@ -88,7 +114,7 @@ dec $write_value_from_bits'(value, nat, bool*) : (value, bool*)
 dec $write_value_fields_from_bits'(fieldValue*, nat, bool*) : (fieldValue*, bool*)
 dec $write_value_field_from_bits'(fieldValue, nat, bool*) : (fieldValue, bool*)
 
-def $write_value_from_bits(value, n_var, b*)  = value_updated
+def $write_value_from_bits(value, n_var, b*) = value_updated
   -- if (value_updated, eps)
       = $write_value_from_bits'(value, n_var, b*)
 
@@ -168,3 +194,7 @@ def $write_bits_from_value(
   )
   = $concat_<bool>($write_bits_from_value(value_field)*)
 def $write_bits_from_value(HEADER _ `{ false `; _ }) = eps
+def $write_bits_from_value(
+    HEADER_UNION _ `{ (value id `;)* }
+  )
+  = $concat_<bool>($write_bits_from_value(value)*)

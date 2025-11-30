@@ -152,8 +152,7 @@ rule Type_alpha/packetObjectTypeIR:
   -- (Type_alpha: typeIR_a ~~ typeIR_b)*
 
 rule Type_alpha/tableObjectTypeIR:
-  (TABLE tid `{ typeIR_a }) ~~ (TABLE tid `{ typeIR_b })
-  -- Type_alpha: typeIR_a ~~ typeIR_b
+  tableObjectTypeIR ~~ tableObjectTypeIR
 
 ;;; Synthesized types
 
@@ -193,17 +192,8 @@ rule Type_alpha/setTypeIR:
   (SET `< typeIR_a >) ~~ (SET `< typeIR_b >)
   -- Type_alpha: typeIR_a ~~ typeIR_b
 
-rulegroup Type_alpha/tableMetadataTypeIR {
-
-  rule Type_alpha/enum:
-    (TABLE_ENUM tid `{ id_field* }) ~~ (TABLE_ENUM tid `{ id_field* })
-
-  rule Type_alpha/struct:
-    (TABLE_STRUCT tid `{ (typeIR_field_a id_field `;)* })
-    ~~ (TABLE_STRUCT tid `{ (typeIR_field_b id_field `;)* })
-    -- (Type_alpha: typeIR_field_a ~~ typeIR_field_b)*
-
-}
+rule Type_alpha/tableMetadataTypeIR:
+  tableMetadataTypeIR ~~ tableMetadataTypeIR
 
 ;;
 ;;;; Alpha-equivalence of parameter types
@@ -281,8 +271,7 @@ rule CallableType_alpha/controlApplyMethodTypeIR:
         parameterTypeIR_a ~~ parameterTypeIR_b)*
 
 rule CallableType_alpha/tableApplyMethodTypeIR:
-  (TABLE_APPLY `: typeIR_a) ~~ (TABLE_APPLY `: typeIR_b)
-  -- Type_alpha: typeIR_a ~~ typeIR_b
+  tableApplyMethodTypeIR ~~ tableApplyMethodTypeIR
 
 ;;
 ;;;; Alpha-equivalence of callable type definitions

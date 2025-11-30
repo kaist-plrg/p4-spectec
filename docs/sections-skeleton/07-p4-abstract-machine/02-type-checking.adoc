@@ -6,9 +6,9 @@ P4~16~ is a statically-typed language. Programs that do not pass the type
 checker are considered invalid and rejected by the compiler. P4 provides a
 number of base types as well as type operators that construct derived types.
 
-[#sec-abstract-machine-p4-ir]
 ==== P4 Intermediate Representation
 
+// Added
 P4~IR~ is an intermediate representation for P4 programs. P4~IR~ extends the
 surface syntax of P4~16~ with additional information obtained during type
 checking. They include:
@@ -28,8 +28,7 @@ ${syntax: expression expressionIR expressionNoteIR typedExpressionIR}
 annotated with type information, `expressionNoteIR`. Nevertheless, the
 structure of the grammar mostly stays the same.
 
-${syntax: binaryExpression
-          binaryExpressionIR}
+${syntax: binaryExpression binaryExpressionIR}
 
 `binaryExpressionIR` is an intermediate representation of `binaryExpression`.
 The only difference is that the operands are now of type `typedExpressionIR`.
@@ -38,16 +37,22 @@ NOTE: Added explanation for P4~IR~. More explanation needed?
 
 ==== Typing a P4 program
 
-${syntax: p4program p4programIR}
+// Added
+A P4~16~ program is a sequence of declarations:
+
+${syntax: p4program}
 
 For a well-typed P4~16~ program, `p4program`, a type checker produces a P4~IR~
 program, `p4programIR`:
 
+${syntax: p4programIR}
+
 ${ruleprose: Program_ok}
 
-[#sec-abstract-machine-typing-context]
 ==== Typing context
 
+// Added
+[[typingContext]]
 ${syntax: globalTypingLayer blockTypingLayer localTypingLayer typingContext}
 
 A typing context is used to keep track of the types of all named declarations

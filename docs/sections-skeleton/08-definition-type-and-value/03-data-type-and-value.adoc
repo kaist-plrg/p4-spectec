@@ -1,98 +1,96 @@
-[#sec-def-dataTypeIR]
-[#sec-def-dataValue]
 === Data types and values
 
-${syntax: type}
+// Added
+[[dataTypeIR]]
+[[dataValue]]
+${syntax: dataTypeIR dataValue}
 
-${syntax: dataTypeIR
-          dataValue}
+Data types represent the types that aggregate other types, including lists,
+tuples, header stacks, structs, headers, header unions, and enums.
 
-[#sec-def-listType]
-[#sec-def-listTypeIR]
-[#sec-def-listValue]
 ==== List types and values
 
-A list holds zero or more values, where every element must have the same
-type. The type of a list where all elements have type `T` is written as
+// Section 7.2.8 of the P4-16 Language Specification
+A list holds zero or more values, where every element must have the same type.
+The type of a list where all elements have type `T` is written as
 
 [source,p4]
 ----
 list<T>
 ----
 
-${syntax: listType
-          listTypeIR
-          listValue}
+// Added
+[[listType]]
+[[listTypeIR]]
+[[listValue]]
+${syntax: listType listTypeIR listValue}
 
-[#sec-sem-Type_ok-listType]
+[discrete]
 ===== Type checking
 
+// Added
 ${rulegroup: Type_ok/listType}
 ${ruleprose: Type_ok/listType}
 
-===== Type nesting
-
-${funcprose: nestable_list}
-${table: nestable'_list}
-
-[#sec-sem-Type_wf-listTypeIR]
+[discrete]
 ===== Well-formedness
 
+// Added
 ${rulegroup: Type_wf/listTypeIR}
 ${ruleprose: Type_wf/listTypeIR}
 
-[#sec-def-tupleType]
-[#sec-def-tupleTypeIR]
-[#sec-def-tupleValue]
 ==== Tuple types and values
 
-A tuple is similar to a `struct`, in that it holds multiple values.
-The type of tuples with `n` component types `T1`, ..., `Tn` is written as
+// Section 7.2.7 of the P4-16 Language Specification
+A tuple is similar to a `struct`, in that it holds multiple values. The type of
+tuples with `n` component types `T1`, ..., `Tn` is written as
 
 [source,p4]
 ----
 tuple<T1, /* more fields omitted */, Tn>
 ----
 
-${syntax: tupleType
-          tupleTypeIR
-          tupleValue}
+// Added
+[[tupleType]]
+[[tupleTypeIR]]
+[[tupleValue]]
+${syntax: tupleType tupleTypeIR tupleValue}
 
-[#sec-sem-Type_ok-tupleType]
+[discrete]
 ===== Type checking
 
+// Added
 ${rulegroup: Type_ok/tupleType}
 ${ruleprose: Type_ok/tupleType}
 
-===== Type nesting
-
-${funcprose: nestable_tuple}
-${table: nestable'_tuple}
-
-[#sec-sem-Type_wf-tupleTypeIR]
+[discrete]
 ===== Well-formedness
 
+// Added
 ${rulegroup: Type_wf/tupleTypeIR}
 ${ruleprose: Type_wf/tupleTypeIR}
 
-[#sec-def-headerStackType]
-[#sec-def-headerStackTypeIR]
-[#sec-def-headerStackValue]
 ==== Header stack types and values
 
-A header stack represents an array of headers or header unions. A header
-stack type is defined as:
+// Section 7.2.4 of the P4-16 Language Specification
+A header stack represents an array of headers or header unions. A header stack
+type is defined as:
 
-${syntax: headerStackType
-          headerStackTypeIR}
+// Added
+[[headerStackType]]
+[[headerStackTypeIR]]
+${syntax: headerStackType headerStackTypeIR}
 
-where `namedType` refers to a header or header union type. For a
-header stack `hs[n]`, the term `n` is the maximum defined size, and
-must be a local compile-time known value that is a positive
-integer. Nested header stacks are not supported.
+// Section 7.2.4 of the P4-16 Language Specification
+where `namedType` refers to a header or header union type. For a header stack
+`hs[n]`, the term `n` is the maximum defined size, and must be a local
+compile-time known value that is a positive integer. Nested header stacks are
+not supported.
 
+// Added
 ${syntax: headerStackValue}
 
+// Section 7.2.4 of the P4-16 Language Specification
 At runtime a stack contains `n` values with type `namedType`, only some of
 which may be valid.
 
@@ -112,37 +110,42 @@ Mpls_h[10] mpls;
 introduce a header stack called `mpls` containing ten entries, each of type
 `Mpls_h`.
 
-[#sec-sem-Type_ok-headerStackType]
+[discrete]
 ===== Type checking
 
+// Added
 ${rulegroup: Type_ok/headerStackType}
 ${ruleprose: Type_ok/headerStackType}
 
-===== Type nesting
-
-${funcprose: nestable_headerStack}
-${table: nestable'_headerStack}
-
-[#sec-sem-Type_wf-headerStackTypeIR]
+[discrete]
 ===== Well-formedness
 
+// Added
 ${rulegroup: Type_wf/headerStackTypeIR}
 ${ruleprose: Type_wf/headerStackTypeIR}
 
-[#sec-def-structTypeDeclaration]
-[#sec-def-structTypeIR]
-[#sec-def-structValue]
+==== Array types and values
+
+NOTE: This feature will be added to P4 v1.2.5.6. It is not modeled in P4-SpecTec yet.
+
 ==== Struct types and values
 
+// Section 7.2.6 of the P4-16 Language Specification
 P4 `struct` types are defined with the following syntax:
 
-${syntax: typeField
-          structTypeDeclaration}
+${syntax: typeField structTypeDeclaration}
 
-This declaration introduces a new struct type constructor with the specified
+// Modified Section 7.2.6 of the P4-16 Language Specification
+This declaration introduces a new struct type definition with the specified
 name in the current scope. Field names have to be distinct. An empty struct
-(with no fields) is legal. For example, the structure `Parsed_headers` below
-contains the headers recognized by a simple parser:
+(with no fields) is legal.
+
+[[structTypeDefIR]]
+${syntax: structTypeDefIR}
+
+// Section 7.2.6 of the P4-16 Language Specification
+For example, the structure `Parsed_headers` below contains the headers
+recognized by a simple parser:
 
 [source,p4]
 ----
@@ -156,43 +159,38 @@ struct Parsed_headers {
 }
 ----
 
+// Added
 Struct types can be used by referring to their names. Generic struct types can
-be used by specializing their type parameters with type arguments.
-Internally, struct types are represented as follows:
+be used by specializing their type parameters with type arguments. Internally,
+struct types and values are represented as follows:
 
-${syntax: fieldTypeIR
-          structTypeIR
-          fieldValue
-          structValue}
+[[structTypeIR]]
+[[structValue]]
+${syntax: fieldTypeIR structTypeIR fieldValue structValue}
 
+[discrete]
 ===== Type checking
 
+// Added
 Struct types are introduced by `struct` declarations. Its typing rule is
 explained in <<sec-sem-Decl_ok-structTypeDeclaration>>.
 
 Struct types are then used by referencing their names. Thus struct types can
-be obtained from named types, as illustrated in <<sec-def-namedType>>.
+be obtained from named types, as illustrated in <<sec-named-types>>.
 
-===== Type nesting
-
-${funcprose: nestable_struct}
-${funcprose: nestable'_struct}
-
-[#sec-sem-Type_wf-structTypeIR]
+[discrete]
 ===== Well-formedness
 
+// Added
 ${rulegroup: Type_wf/structTypeIR}
 ${ruleprose: Type_wf/structTypeIR}
 
-[#sec-def-headerTypeDeclaration]
-[#sec-def-headerTypeIR]
-[#sec-def-headerValue]
 ==== Header types and values
 
+// Section 7.2.2 of the P4-16 Language Specification
 The declaration of a `header` type is given by the following syntax:
 
-${syntax: typeField
-          headerTypeDeclaration}
+${syntax: typeField headerTypeDeclaration}
 
 where each `type` is restricted to a bit-string type (fixed or variable), a
 fixed-width signed integer type, a boolean type, or a struct that itself
@@ -202,14 +200,20 @@ is used inside a P4 header, all implementations encode the `bool` as a one bit
 long field, with the value `1` representing `true` and `0` representing
 `false`. Field names have to be distinct.
 
+// Modified section 7.2.2 of the P4-16 Language Specification
 A header declaration introduces a new identifier in the current scope; the type
-can be referred to using this identifier. A header is similar to a `struct` in
-C, containing all the specified fields. However, in addition, a header also
-contains a hidden Boolean "validity" field. When the "validity" bit is `true`
-we say that the "header is valid". When a local variable with a header type is
-declared, its "validity" bit is automatically set to `false`. The "validity"
-bit can be manipulated by using the header methods `isValid()`, `setValid()`,
-and `setInvalid()`.
+definition can be referred to using this identifier.
+
+[[headerTypeDefIR]]
+${syntax: headerTypeDefIR}
+
+// Section 7.2.2 of the P4-16 Language Specification
+A header is similar to a `struct` in C, containing all the specified fields.
+However, in addition, a header also contains a hidden Boolean "validity" field.
+When the "validity" bit is `true` we say that the "header is valid". When a
+local variable with a header type is declared, its "validity" bit is
+automatically set to `false`. The "validity" bit can be manipulated by using
+the header methods `isValid()`, `setValid()`, and `setInvalid()`.
 
 Header types may be empty:
 
@@ -304,51 +308,33 @@ separate parsing steps.
 Notice that the names `isValid`, `setValid`, `minSizeInBits`, etc. are all
 valid header field names.
 
-Internally, header types are represented as follows:
+// Added
+Internally, header types and values are represented as follows:
 
-${syntax: fieldTypeIR
-          headerTypeIR
-          fieldValue
-          headerValue}
+[[headerTypeIR]]
+[[headerValue]]
+${syntax: headerTypeIR headerValue}
 
+[discrete]
 ===== Type checking
 
+// Added
 Header types are introduced by `header` declarations. Its typing rule is
 explained in <<sec-sem-Decl_ok-headerTypeDeclaration>>.
 
 Header types are then used by referencing their names. Thus header types can
-be obtained from named types, as illustrated in <<sec-def-namedType>>.
+be obtained from named types, as illustrated in <<sec-named-types>>.
 
-===== Type nesting
-
-Note, nesting of headers is not supported. One reason is that it leads to
-complications in defining the behavior of arbitrary sequences of `setValid`,
-`setInvalid`, and `emit` operations. Consider an example where header `h1`
-contains header `h2` as a member, both currently valid. A program executes
-`h2.setInvalid()` followed by `packet.emit(h1)`. Should all fields of `h1` be
-emitted, but skipping `h2`? Similarly, should `h1.setInvalid()` invalidate all
-headers contained within `h1`, regardless of how deeply they are nested?
-
-${funcprose: nestable_header}
-${table: nestable'_header}
-
-A nested `struct` used as a field in a `header` must contain only `bit<W>`,
-`int<W>`, a serializable `enum`, or a `bool`.
-
-${funcprose: nestable_struct_in_header}
-${table: nestable'_struct_in_header}
-
-[#sec-sem-Type_wf-headerTypeIR]
+[discrete]
 ===== Well-formedness
 
+// Added
 ${rulegroup: Type_wf/headerTypeIR}
 ${ruleprose: Type_wf/headerTypeIR}
 
-[#sec-def-headerUnionTypeDeclaration]
-[#sec-def-headerUnionTypeIR]
-[#sec-def-headerUnionValue]
 ==== Header union types and values
 
+// Section 7.2.5 of the P4-16 Language Specification
 A header union represents an alternative containing at most one of several
 different headers. Header unions can be used to represent "options" in
 protocols like TCP and IP. They also provide hints to P4 compilers that only
@@ -356,51 +342,51 @@ one alternative will be present, allowing them to conserve storage resources.
 
 A header union is defined as:
 
-${syntax: typeField
-          headerUnionTypeDeclaration}
+${syntax: typeField headerUnionTypeDeclaration}
 
-This declaration introduces a new type with the specified name in the current
-scope. Each element of the list of fields used to declare a header union must
-be of header type. An empty list of fields is legal. Field names have to be
-distinct.
+// Modified Section 7.2.5 of the P4-16 Language Specification
+This declaration introduces a new type definition with the specified name in
+the current scope.
+
+[[headerUnionTypeDefIR]]
+${syntax: headerUnionTypeDefIR}
+
+// Section 7.2.5 of the P4-16 Language Specification
+Each element of the list of fields used to declare a header union must be of
+header type. An empty list of fields is legal. Field names have to be distinct.
 
 As an example, the type `Ip_h` below represents the union of an IPv4 and IPv6
 headers:
 
 A header union is not considered a type with fixed length.
 
-Internally, header union types are represented as follows:
+Internally, header union types and values are represented as follows:
 
-${syntax: fieldTypeIR
-          headerUnionTypeIR
-          fieldValue
-          headerUnionValue}
+[[headerUnionTypeIR]]
+[[headerUnionValue]]
+${syntax: headerUnionTypeIR headerUnionValue}
 
+[discrete]
 ===== Type checking
 
+// Added
 Header union types are introduced by `header_union` declarations. Its typing
 rule is explained in <<sec-sem-Decl_ok-headerUnionTypeDeclaration>>.
 
 Header union types are then used by referencing their names. Thus header union
 types can be obtained from named types, as illustrated in
-<<sec-def-namedType>>.
+<<sec-named-types>>.
 
-===== Type nesting
-
-${funcprose: nestable_headerUnion}
-${table: nestable'_headerUnion}
-
-[#sec-sem-Type_wf-headerUnionTypeIR]
+[discrete]
 ===== Well-formedness
 
+// Added
 ${rulegroup: Type_wf/headerUnionTypeIR}
 ${ruleprose: Type_wf/headerUnionTypeIR}
 
-[#sec-def-enumTypeDeclaration]
-[#sec-def-enumTypeIR]
-[#sec-def-enumValue]
 ==== Enum types and values
 
+// Section 7.2.1 of the P4-16 Language Specification
 The declaration of an `enum` type is given by the following syntax:
 
 ${syntax: enumTypeDeclaration}
@@ -408,13 +394,18 @@ ${syntax: enumTypeDeclaration}
 Enums can be declared in two different ways, depending on whether or not an
 underlying representation type is provided. The two forms are described below.
 
-Internally, enum types are represented as follows:
+Enums cannot be parameterized over type parameters, thus is always monomorphic.
 
-${syntax: valueFieldIR
-          enumTypeIR
-          enumValue}
+[[enumTypeDefIR]]
+${syntax: enumTypeDefIR}
 
-[#sec-def-enumTypeDeclaration-non-serializable]
+// Added
+Internally, enum types and values are represented as follows:
+
+[[enumTypeIR]]
+[[enumValue]]
+${syntax: valueFieldIR enumTypeIR enumValue}
+
 ===== Enum type declaration without an underlying type
 
 For example, the declaration
@@ -429,6 +420,8 @@ introduces a new enumeration type, which contains four elements---e.g.,
 scope for naming the created type along with its distinct elements. The
 underlying representation of the `Suits` enum is not specified, so their "size"
 in bits is not specified (it is target-specific).
+
+===== Enum type declaration with an underlying type
 
 It is also possible to specify an `enum` with an underlying representation.
 These are sometimes called serializable ``enum``s, because headers are allowed
@@ -484,28 +477,19 @@ The `initializer` expression must be a local compile-time known value.
 Annotations, represented by the non-terminal `optAnnotations`, are described in
 <<sec-annotations>>.
 
-====== Type checking
+[discrete]
+===== Type checking
 
+// Added
 Enum types are introduced by `enum` declarations. Its typing rule is explained
 in <<sec-sem-Decl_ok-enumTypeDeclaration>>.
 
 Enum types are then used by referencing their names. Thus enum types can be
-obtained from named types, as illustrated in <<sec-def-namedType>>.
+obtained from named types, as illustrated in <<sec-named-types>>.
 
-====== Type nesting
+[discrete]
+===== Well-formedness
 
-The symbol `type` in the grammar must be one of the following types:
-
-* an unsigned integer, i.e. `bit<W>` for some local compile-time known value `W`.
-* a signed integer, i.e. `int<W>` for some local compile-time known value `W`.
-* a type name declared via `typedef`, where the base type of that type is either
-one of the types listed above, or another `typedef` name that meets these conditions.
-
-${funcprose: nestable_enum_serializable}
-${table: nestable'_enum_serializable}
-
-[#sec-sem-Type_wf-enumTypeIR]
-====== Well-formedness
-
+// Added
 ${rulegroup: Type_wf/enumTypeIR}
 ${ruleprose: Type_wf/enumTypeIR}

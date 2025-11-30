@@ -129,24 +129,35 @@ module PacketIn = struct
     (* Get size of "T" *)
     let size =
       Spec.Func.subst_type_e_local value_ctx value_typ
-      |> Spec.Func.sizeof_maxSizeInBits'
+      |> Spec.Func.sizeof_maxSizeInBits' |> Bigint.to_int_exn
     in
-    (* Parse from packet *)
-    let pkt, bits = parse pkt (Bigint.to_int_exn size) in
-    (* Find "hdr" in context *)
-    let value_hdr = Spec.Func.find_var_e_local value_ctx "hdr" in
-    (* Write bits to "hdr" *)
-    let value_hdr = Spec.Func.write_value_from_bits value_hdr 0 bits in
-    (* Update "hdr" in context *)
-    let value_ctx =
-      Spec.Rel.lvalue_write_var_local value_ctx value_sto "hdr" value_hdr
-    in
-    (* Create call result *)
-    let value_callResult =
-      let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
-    in
-    (pkt, value_ctx, value_sto, value_callResult)
+    if pkt.idx + size > pkt.len then
+      let value_callResult =
+        let value_err =
+          wrap_case_v
+            [ Term "ERROR"; Term "."; NT (wrap_text_v "PacketTooShort") ]
+          |> with_typ (wrap_var_t "errorValue")
+        in
+        [ Term "REJECT"; NT value_err ] #@ "rejectTransitionResult"
+      in
+      (pkt, value_ctx, value_sto, value_callResult)
+    else
+      (* Parse from packet *)
+      let pkt, bits = parse pkt size in
+      (* Find "hdr" in context *)
+      let value_hdr = Spec.Func.find_var_e_local value_ctx "hdr" in
+      (* Write bits to "hdr" *)
+      let value_hdr = Spec.Func.write_value_from_bits value_hdr 0 bits in
+      (* Update "hdr" in context *)
+      let value_ctx =
+        Spec.Rel.lvalue_write_var_local value_ctx value_sto "hdr" value_hdr
+      in
+      (* Create call result *)
+      let value_callResult =
+        let value_eps = wrap_opt_v "value" None in
+        [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      in
+      (pkt, value_ctx, value_sto, value_callResult)
 
   (* Read bits from the packet into a variable-sized header @variableSizeHeader
      and advance the cursor.

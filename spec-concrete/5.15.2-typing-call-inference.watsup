@@ -20,6 +20,9 @@ syntax inference = map<tid, typeIR>
 dec $infer(tid*, parameterTypeIR*, argumentIR*) : inference
 dec $infer'(constraint, parameterTypeIR, argumentIR) : constraint
 
+dec $resolve_inference(inference) : inference
+dec $resolve_inference'(typeIR) : typeIR
+
 dec $gen_constraint_typeIR(constraint, typeIR, typeIR) : constraint
 dec $gen_constraint_typeIRs(constraint, typeIR*, typeIR*) : constraint
 dec $gen_constraint_callableTypeDefIR(
@@ -41,8 +44,7 @@ dec $resolve_constraint(constraint) : inference
 ;;;; Type inference
 ;;
 
-def $infer(tid_infer*, parameterTypeIR*, argumentIR*)
-  = inference
+def $infer(tid_infer*, parameterTypeIR*, argumentIR*) = inference_resolved
   ---- ;; create constraints
   -- if constraint_init = $empty_constraint(tid_infer*)
   -- if (constraint_pair
@@ -50,6 +52,8 @@ def $infer(tid_infer*, parameterTypeIR*, argumentIR*)
   ---- ;; merge and resolve generated constraints
   -- if constraint_inferred = $merge_constraints(constraint_init, constraint_pair*)
   -- if inference = $resolve_constraint(constraint_inferred)
+  ---- ;; resolve synthesized types
+  -- if inference_resolved = $resolve_inference(inference)
 
 def $infer'(constraint, parameterTypeIR, typedExpressionIR)
   = $gen_constraint_typeIR(constraint, typeIR_param, typeIR_arg)
@@ -64,6 +68,20 @@ def $infer'(constraint, parameterTypeIR, nameIR `= typedExpressionIR)
 def $infer'(constraint, parameterTypeIR, nameIR `= `_) = constraint
 
 def $infer'(constraint, parameterTypeIR, `_) = constraint
+
+
+;;
+;;;; Synthesized type resolution
+;;
+
+def $resolve_inference(`{ (tid `: typeIR)* }) = `{ (tid `: typeIR_resolved)* }
+  -- if (typeIR_resolved = $resolve_inference'(typeIR))*
+
+def $resolve_inference'(typeIR) = typeIR_resolved
+  -- if SEQ `< typeIR_arg* > = $canon_typeIR(typeIR)
+  -- if typeIR_resolved = TUPLE `< typeIR_arg* >
+def $resolve_inference'(typeIR) = typeIR
+  -- otherwise
 
 ;;
 ;;;; Constraint generation
