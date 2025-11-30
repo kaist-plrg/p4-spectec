@@ -1112,8 +1112,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     | Func.Builtin -> invoke_builtin_func ctx id targs values_input
     | Func.Table (_, tablerows) ->
         invoke_table_func ctx id tablerows values_input
-    | Func.Defined (tparams, clauses) ->
-        invoke_defined_func ctx id tparams clauses targs values_input
+    | Func.Plain (tparams, clauses) ->
+        invoke_plain_func ctx id tparams clauses targs values_input
 
   and invoke_extern_func (ctx : Ctx.t) (id : id) (_targs : targ list)
       (values_input : value list) : (Ctx.t * value) attempt_reason =
@@ -1214,7 +1214,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
           Ok (ctx, value_output))
     else attempt_rows ()
 
-  and invoke_defined_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
+  and invoke_plain_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
       (clauses : clause list) (targs : targ list) (values_input : value list) :
       (Ctx.t * value) attempt_reason =
     (* Apply the first matching clause *)
@@ -1302,7 +1302,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
         let func = Func.Table (params, tablerows) in
         Ctx.add_func Global ctx id func
     | DecD (id, tparams, _, _, clauses, _) ->
-        let func = Func.Defined (tparams, clauses) in
+        let func = Func.Plain (tparams, clauses) in
         Ctx.add_func Global ctx id func
 
   let load_spec (ctx : Ctx.t) (spec : spec) : Ctx.t =

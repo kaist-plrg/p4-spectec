@@ -271,7 +271,7 @@ and struct_table_dec_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region)
     | _ -> invalid_arg "combine3: lists must have the same length"
   in
   let tablefunc =
-    (id_dec, args_input, typ, combine3 tablesigs instrs_rows exps_res, hints)
+    (id_dec, args_input, typ, combine3 tablesigs exps_res instrs_rows, hints)
   in
   Sl.Ast.TableDecD tablefunc $ at
 

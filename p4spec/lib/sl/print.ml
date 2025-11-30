@@ -431,7 +431,7 @@ let string_of_builtin_func builtinfunc =
   string_of_defid defid ^ string_of_tparams tparams ^ string_of_args args_input
 
 let string_of_tablerow (tablerow : tablerow) =
-  let tablesig, instrs, exp_res = tablerow in
+  let tablesig, exp_res, instrs = tablerow in
   Format.asprintf "\n  Row : %s -> %s:\n\n%s"
     (string_of_exps ", " tablesig)
     (string_of_exp exp_res)

@@ -186,7 +186,7 @@ type builtinfunc = id * tparam list * arg list * typ * hint list
 [@@deriving yojson]
 
 (* arg* -> instr* *)
-type tablerow = exp list * instr list * exp
+type tablerow = exp list * exp * instr list
 [@@deriving yojson]
 
 (* id list(arg, `,`) `:` instr* hint* *)
