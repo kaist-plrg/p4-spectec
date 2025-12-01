@@ -6170,7 +6170,7 @@ rule Type_ok/prefixedTypeName/polymorphic:
 <p>Let <code>prefixedNameIR</code> be <a href="#prefixedTypeName">the prefixed name of  <code>prefixedTypeName</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeDefIR'<sup>?</sup></code> be <code><a href="#find_typeDef_t">$find_typeDef_t(p, TC, prefixedNameIR)</a></code>.</p>
+<p>Let <code>typeDefIR'<sup>?</sup></code> be <a href="#find_typeDef_t">the type definition of <code>prefixedNameIR</code> in the <code>p</code> layer of <code>TC</code></a>.</p>
 </li>
 <li>
 <p>Check that <code>typeDefIR'<sup>?</sup></code> is Some value.</p>
@@ -6183,7 +6183,7 @@ rule Type_ok/prefixedTypeName/polymorphic:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>typeIR</code> be <code><a href="#type_of_typeDefIR">$type_of_typeDefIR(typeDefIR)</a></code>.</p>
+<p>Let <code>typeIR</code> be <a href="#type_of_typeDefIR">the underlying type of <code>typeDefIR</code></a>.</p>
 </li>
 <li>
 <p>Result in the type <code>typeIR</code> and a set of fresh type variables <code>[ ]</code>.</p>
@@ -6196,7 +6196,7 @@ rule Type_ok/prefixedTypeName/polymorphic:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Check that (<code>[ ]</code>, <code>[ ]</code>) is equal to <code><a href="#type_parameters_of_typeDefIR">$type_parameters_of_typeDefIR(typeDefIR)</a></code>.</p>
+<p>Check that (<code>[ ]</code>, <code>[ ]</code>) is equal to <a href="#type_parameters_of_typeDefIR">the type parameters of <code>typeDefIR</code></a>.</p>
 </li>
 <li>
 <p>Result in the type <code>typeDefIR &lt; [ ] &gt;</code> and a set of fresh type variables <code>[ ]</code>.</p>
@@ -6279,12 +6279,12 @@ resolved to the type definition it refers to (<code>typeDefIR</code>).</p>
 <div class="sect4">
 <h5 id="sec-type-specialization">8.2.4.1. Type specialization</h5>
 <div class="paragraph">
-<p><code>$specialize_typeDefIR(typeDefIR<sub>base</sub>, typeIR<sub>arg</sub><sup>*</sup>)</code></p>
+<p><code>typeDefIR<sub>base</sub></code> specialized by <code>typeIR<sub>arg</sub><sup>*</sup></code></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>(tid<sub>tparam_expl</sub><sup>*</sup>, tid<sub>tparam_impl</sub><sup>*</sup>)</code> be <code><a href="#type_parameters_of_typeDefIR">$type_parameters_of_typeDefIR(typeDefIR<sub>base</sub>)</a></code>.</p>
+<p>Let <code>(tid<sub>tparam_expl</sub><sup>*</sup>, tid<sub>tparam_impl</sub><sup>*</sup>)</code> be <a href="#type_parameters_of_typeDefIR">the type parameters of <code>typeDefIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>tid<sub>tparam</sub><sup>*</sup></code> be <code>tid<sub>tparam_expl</sub><sup>*</sup> &#43;&#43; tid<sub>tparam_impl</sub><sup>*</sup></code>.</p>
@@ -6296,10 +6296,10 @@ resolved to the type definition it refers to (<code>typeDefIR</code>).</p>
 <p>Let <code>theta</code> be <code>{ (tid<sub>tparam</sub> : typeIR<sub>arg</sub>)<sup>*</sup> }</code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <code><a href="#type_of_typeDefIR">$type_of_typeDefIR(typeDefIR<sub>base</sub>)</a></code>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_typeDefIR">the underlying type of <code>typeDefIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>spec</sub></code> be <code><a href="#subst_typeIR">$subst_typeIR(theta, typeIR<sub>base</sub>)</a></code>.</p>
+<p>Let <code>typeIR<sub>spec</sub></code> be <a href="#subst_typeIR"><code>theta</code> substituted by <code>typeIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Return <code>typeIR<sub>spec</sub></code>.</p>
@@ -6337,7 +6337,7 @@ resolved to the type definition it refers to (<code>typeDefIR</code>).</p>
 <p>Let <code>prefixedNameIR</code> be <a href="#prefixedTypeName">the prefixed name of  <code>prefixedTypeName</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeDefIR'<sup>?</sup></code> be <code><a href="#find_typeDef_t">$find_typeDef_t(p, TC, prefixedNameIR)</a></code>.</p>
+<p>Let <code>typeDefIR'<sup>?</sup></code> be <a href="#find_typeDef_t">the type definition of <code>prefixedNameIR</code> in the <code>p</code> layer of <code>TC</code></a>.</p>
 </li>
 <li>
 <p>Check that <code>typeDefIR'<sup>?</sup></code> is Some value.</p>
@@ -6384,7 +6384,7 @@ resolved to the type definition it refers to (<code>typeDefIR</code>).</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>typeIR<sub>spec</sub></code> be <code><a href="#specialize_typeDefIR">$specialize_typeDefIR(typeDefIR<sub>base</sub>, typeIR<sub>arg</sub><sup>*</sup>)</a></code>.</p>
+<p>Let <code>typeIR<sub>spec</sub></code> be <a href="#specialize_typeDefIR"><code>typeDefIR<sub>base</sub></code> specialized by <code>typeIR<sub>arg</sub><sup>*</sup></code></a>.</p>
 </li>
 <li>
 <p>Check that <a href="#Type_wf"><code>typeIR<sub>spec</sub></code> is a well-formed type, assuming bound type ids <code>bound</code></a>.</p>
@@ -8914,7 +8914,7 @@ typedefs until a type is fully expanded.</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>typeIR</code> be <code><a href="#specialize_typeDefIR">$specialize_typeDefIR(typeDefIR<sub>base</sub>, typeIR<sub>arg</sub><sup>*</sup>)</a></code>.</p>
+<p>Let <code>typeIR</code> be <a href="#specialize_typeDefIR"><code>typeDefIR<sub>base</sub></code> specialized by <code>typeIR<sub>arg</sub><sup>*</sup></code></a>.</p>
 </li>
 <li>
 <p>Return <code><a href="#canon_typeIR">$canon_typeIR(typeIR)</a></code>.</p>
@@ -11654,7 +11654,7 @@ following are all legal constant declarations:</p>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t">the typing context <code>TC<sub>0</sub></code> with a mapping from <code>nameIR</code> to <code>typeIR LCTK value</code> added to the <code>p</code> layer</a>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t"><code>TC<sub>0</sub></code> with a mapping from <code>nameIR</code> to <code>typeIR LCTK value</code> added to the <code>p</code> layer</a>.</p>
 </li>
 <li>
 <p>Let <code>constantDeclarationIR</code> be <code>annotationList CONST typeIR nameIR = value ;</code>.</p>
@@ -11875,7 +11875,7 @@ rule Decl_ok/instantiation-non-objectInitializer/specializedType:
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t">the typing context <code>TC<sub>0</sub></code> with a mapping from <code>nameIR</code> to <code>typeIR<sub>object</sub> CTK None</code> added to the <code>p</code> layer</a>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t"><code>TC<sub>0</sub></code> with a mapping from <code>nameIR</code> to <code>typeIR<sub>object</sub> CTK None</code> added to the <code>p</code> layer</a>.</p>
 </li>
 <li>
 <p>Let <code>instantiationIR</code> be <code>annotationList typeIR<sub>object</sub> prefixedNameIR &lt; typeArgumentIR<sub>inferred</sub><sup>*</sup> &gt; ( argumentIR<sup>*</sup> ) nameIR None ;</code>.</p>
@@ -11932,7 +11932,7 @@ rule Decl_ok/instantiation-non-objectInitializer/specializedType:
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t">the typing context <code>TC<sub>0</sub></code> with a mapping from <code>nameIR</code> to <code>typeIR<sub>object</sub> CTK None</code> added to the <code>p</code> layer</a>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t"><code>TC<sub>0</sub></code> with a mapping from <code>nameIR</code> to <code>typeIR<sub>object</sub> CTK None</code> added to the <code>p</code> layer</a>.</p>
 </li>
 <li>
 <p>Let <code>instantiationIR</code> be <code>annotationList typeIR<sub>object</sub> prefixedNameIR &lt; typeArgumentIR<sub>inferred</sub><sup>*</sup> &gt; ( argumentIR<sup>*</sup> ) nameIR None ;</code>.</p>
@@ -12200,7 +12200,7 @@ methods.</p>
 <p>Let <code>_ _ _ &lt; _ &gt; ( _ ) nameIR _ ;</code> be <code>instantiationIR</code>.</p>
 </li>
 <li>
-<p>Let <code>varTypeIR'<sup>?</sup></code> be <code><a href="#find_var_t">$find_var_t(p, TC<sub>1</sub>, nameIR)</a></code>.</p>
+<p>Let <code>varTypeIR'<sup>?</sup></code> be <a href="#find_var_t">the type of variable <code>nameIR</code> in the <code>p</code> layer of <code>TC<sub>1</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>varTypeIR'<sup>?</sup></code> is Some value.</p>
@@ -12335,7 +12335,7 @@ rule Decl_ok/instantiation-objectInitializer/specializedType:
 <p>Check that <code>tid'<sup>*</sup></code> is equal to <code>tid<sub>impl</sub><sup>*</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t">the typing context <code>TC<sub>0</sub></code> with a mapping from <code>"this"</code> to <code>typeIR<sub>object</sub> CTK None</code> added to the <code>LOCAL</code> layer</a>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t"><code>TC<sub>0</sub></code> with a mapping from <code>"this"</code> to <code>typeIR<sub>object</sub> CTK None</code> added to the <code>LOCAL</code> layer</a>.</p>
 </li>
 <li>
 <p>Let <code>objectDeclaration<sup>*</sup></code> be <a href="#flatten_objectDeclarationList">the list of object declarations in <code>objectDeclarationList</code></a>.</p>
@@ -12365,7 +12365,7 @@ rule Decl_ok/instantiation-objectInitializer/specializedType:
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>2</sub></code> be <a href="#add_var_t">the typing context <code>TC<sub>0</sub></code> with a mapping from <code>nameIR</code> to <code>typeIR<sub>object_init</sub> CTK None</code> added to the <code>p</code> layer</a>.</p>
+<p>Let <code>TC<sub>2</sub></code> be <a href="#add_var_t"><code>TC<sub>0</sub></code> with a mapping from <code>nameIR</code> to <code>typeIR<sub>object_init</sub> CTK None</code> added to the <code>p</code> layer</a>.</p>
 </li>
 <li>
 <p>Let <code>instantiationIR</code> be <code>annotationList typeIR<sub>object_init</sub> prefixedNameIR &lt; typeArgumentIR<sub>inferred</sub><sup>*</sup> &gt; ( argumentIR<sup>*</sup> ) nameIR = { objectDeclarationIR<sup>*</sup> } ;</code>.</p>
@@ -12437,7 +12437,7 @@ rule Decl_ok/instantiation-objectInitializer/specializedType:
 <p>Check that <code>tid'<sup>*</sup></code> is equal to <code>tid<sub>impl</sub><sup>*</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t">the typing context <code>TC<sub>0</sub></code> with a mapping from <code>"this"</code> to <code>typeIR<sub>object</sub> CTK None</code> added to the <code>LOCAL</code> layer</a>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t"><code>TC<sub>0</sub></code> with a mapping from <code>"this"</code> to <code>typeIR<sub>object</sub> CTK None</code> added to the <code>LOCAL</code> layer</a>.</p>
 </li>
 <li>
 <p>Let <code>objectDeclaration<sup>*</sup></code> be <a href="#flatten_objectDeclarationList">the list of object declarations in <code>objectDeclarationList</code></a>.</p>
@@ -12467,7 +12467,7 @@ rule Decl_ok/instantiation-objectInitializer/specializedType:
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>2</sub></code> be <a href="#add_var_t">the typing context <code>TC<sub>0</sub></code> with a mapping from <code>nameIR</code> to <code>typeIR<sub>object_init</sub> CTK None</code> added to the <code>p</code> layer</a>.</p>
+<p>Let <code>TC<sub>2</sub></code> be <a href="#add_var_t"><code>TC<sub>0</sub></code> with a mapping from <code>nameIR</code> to <code>typeIR<sub>object_init</sub> CTK None</code> added to the <code>p</code> layer</a>.</p>
 </li>
 <li>
 <p>Let <code>instantiationIR</code> be <code>annotationList typeIR<sub>object_init</sub> prefixedNameIR &lt; typeArgumentIR<sub>inferred</sub><sup>*</sup> &gt; ( argumentIR<sup>*</sup> ) nameIR = { objectDeclarationIR<sup>*</sup> } ;</code>.</p>
@@ -13227,7 +13227,7 @@ described in <a href="#sec-error-exprs">[sec-error-exprs]</a>.</p>
 </div>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <a href="#add_vars_t">the typing context <code>TC<sub>0</sub></code> with mappings from each of <code>nameIR<sub>error</sub><sup>*</sup></code> to each of <code>varTypeIR<sup>*</sup></code> added to the <code>GLOBAL</code> layer</a>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#add_vars_t"><code>TC<sub>0</sub></code> with mappings from each of <code>nameIR<sub>error</sub><sup>*</sup></code> to each of <code>varTypeIR<sup>*</sup></code> added to the <code>GLOBAL</code> layer</a>.</p>
 </li>
 <li>
 <p>Result in the modified typing context <code>TC<sub>1</sub></code> and the typed declaration <code>ERROR { nameIR<sup>*</sup> }</code>.</p>
@@ -13429,7 +13429,7 @@ cannot declare new match kinds.</p>
 </div>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <a href="#add_vars_t">the typing context <code>TC<sub>0</sub></code> with mappings from each of <code>nameIR<sup>*</sup></code> to each of <code>varTypeIR<sup>*</sup></code> added to the <code>GLOBAL</code> layer</a>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#add_vars_t"><code>TC<sub>0</sub></code> with mappings from each of <code>nameIR<sup>*</sup></code> to each of <code>varTypeIR<sup>*</sup></code> added to the <code>GLOBAL</code> layer</a>.</p>
 </li>
 <li>
 <p>Result in the modified typing context <code>TC<sub>1</sub></code> and the typed declaration <code>MATCH_KIND { nameIR<sup>*</sup> }</code>.</p>
@@ -14591,7 +14591,7 @@ enumTypeDeclarationIR
 </div>
 </li>
 <li>
-<p>Let <code>TC<sub>2</sub></code> be <a href="#add_vars_t">the typing context <code>TC<sub>1</sub></code> with mappings from each of <code>id<sub>field</sub><sup>*</sup></code> to each of <code>varTypeIR<sup>*</sup></code> added to the <code>GLOBAL</code> layer</a>.</p>
+<p>Let <code>TC<sub>2</sub></code> be <a href="#add_vars_t"><code>TC<sub>1</sub></code> with mappings from each of <code>id<sub>field</sub><sup>*</sup></code> to each of <code>varTypeIR<sup>*</sup></code> added to the <code>GLOBAL</code> layer</a>.</p>
 </li>
 <li>
 <p>Let <code>enumTypeDeclarationIR</code> be <code>annotationList ENUM nameIR { nameIR<sub>field</sub><sup>*</sup> }</code>.</p>
@@ -14741,7 +14741,7 @@ enumTypeDeclarationIR
 <p>Let <code>varTypeIR</code> be <code>enumTypeDefIR LCTK value<sub>enum</sub></code>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t">the typing context <code>TC<sub>0</sub></code> with a mapping from <code>nameIR</code> to <code>varTypeIR</code> added to the <code>BLOCK</code> layer</a>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t"><code>TC<sub>0</sub></code> with a mapping from <code>nameIR</code> to <code>varTypeIR</code> added to the <code>BLOCK</code> layer</a>.</p>
 </li>
 <li>
 <p>Result in <code>TC<sub>1</sub></code>, <code>nameIR = typedExpressionIR<sub>cast</sub></code>, and <code>value</code>.</p>
@@ -14855,7 +14855,7 @@ enumTypeDeclarationIR
 </div>
 </li>
 <li>
-<p>Let <code>TC<sub>2</sub></code> be <a href="#add_vars_t">the typing context <code>TC<sub>0</sub></code> with mappings from each of <code>id<sub>field</sub><sup>*</sup></code> to each of <code>varTypeIR<sup>*</sup></code> added to the <code>GLOBAL</code> layer</a>.</p>
+<p>Let <code>TC<sub>2</sub></code> be <a href="#add_vars_t"><code>TC<sub>0</sub></code> with mappings from each of <code>id<sub>field</sub><sup>*</sup></code> to each of <code>varTypeIR<sup>*</sup></code> added to the <code>GLOBAL</code> layer</a>.</p>
 </li>
 <li>
 <p>Check that <a href="#TypeDef_wf"><code>enumTypeDefIR</code> is a well-formed type, assuming bound type ids <code>$bound(GLOBAL, TC<sub>0</sub>)</code></a>.</p>
@@ -15616,7 +15616,7 @@ rule Decl_ok/typedefDeclaration-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>[tid]</code> be <code>tid'<sup>*</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>typeDefIR'<sup>?</sup></code> be <code><a href="#find_typeDef_t">$find_typeDef_t(GLOBAL, TC<sub>1</sub>, tid)</a></code>.</p>
+<p>Let <code>typeDefIR'<sup>?</sup></code> be <a href="#find_typeDef_t">the type definition of <code>tid</code> in the <code>GLOBAL</code> layer of <code>TC<sub>1</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>typeDefIR'<sup>?</sup></code> is Some value.</p>
@@ -15629,7 +15629,7 @@ rule Decl_ok/typedefDeclaration-typedef/derivedTypeDeclaration-poly:
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Let <code>typeIR</code> be <code><a href="#type_of_typeDefIR">$type_of_typeDefIR(typeDefIR)</a></code>.</p>
+<p>Let <code>typeIR</code> be <a href="#type_of_typeDefIR">the underlying type of <code>typeDefIR</code></a>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
@@ -15657,7 +15657,7 @@ rule Decl_ok/typedefDeclaration-typedef/derivedTypeDeclaration-poly:
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Check that (<code>[ ]</code>, <code>[ ]</code>) is equal to <code><a href="#type_parameters_of_typeDefIR">$type_parameters_of_typeDefIR(typeDefIR)</a></code>.</p>
+<p>Check that (<code>[ ]</code>, <code>[ ]</code>) is equal to <a href="#type_parameters_of_typeDefIR">the type parameters of <code>typeDefIR</code></a>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
@@ -15782,7 +15782,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Let <code>typeIR</code> be <code><a href="#type_of_typeDefIR">$type_of_typeDefIR(typeDefIR)</a></code>.</p>
+<p>Let <code>typeIR</code> be <a href="#type_of_typeDefIR">the underlying type of <code>typeDefIR</code></a>.</p>
 </li>
 <li>
 <p>Let <code>aliasTypeDefIR</code> be <code>TYPEDEF nameIR typeIR</code>.</p>
@@ -15801,7 +15801,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Check that (<code>[ ]</code>, <code>[ ]</code>) is equal to <code><a href="#type_parameters_of_typeDefIR">$type_parameters_of_typeDefIR(typeDefIR)</a></code>.</p>
+<p>Check that (<code>[ ]</code>, <code>[ ]</code>) is equal to <a href="#type_parameters_of_typeDefIR">the type parameters of <code>typeDefIR</code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>spec</sub></code> be <code>typeDefIR &lt; [ ] &gt;</code>.</p>
@@ -16776,7 +16776,7 @@ for comparison operators, logical operators, concat, range, or mask operators.</
 <p>Let <code>prefixedNameIR</code> be <a href="#prefixedNonTypeName">the prefixed name of  <code>prefixedNonTypeName</code></a>.</p>
 </li>
 <li>
-<p>Let <code>varTypeIR<sup>?</sup></code> be <code><a href="#find_var_t">$find_var_t(p, TC, prefixedNameIR)</a></code>.</p>
+<p>Let <code>varTypeIR<sup>?</sup></code> be <a href="#find_var_t">the type of variable <code>prefixedNameIR</code> in the <code>p</code> layer of <code>TC</code></a>.</p>
 </li>
 <li>
 <p>Check that <code>varTypeIR<sup>?</sup></code> is Some value.</p>
@@ -17936,7 +17936,7 @@ invoked.</p>
 <p>Let <code>nameIR<sub>object</sub></code> be <code>"__direct_application"</code>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t">the typing context <code>TC</code> with a mapping from <code>nameIR<sub>object</sub></code> to <code>typeIR<sub>object</sub> CTK None</code> added to the <code>p</code> layer</a>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t"><code>TC</code> with a mapping from <code>nameIR<sub>object</sub></code> to <code>typeIR<sub>object</sub> CTK None</code> added to the <code>p</code> layer</a>.</p>
 </li>
 <li>
 <p>Let <code>lvalue</code> be <code>nameIR<sub>object</sub> . "apply"</code>.</p>
@@ -18636,7 +18636,7 @@ rule BlockElementStmt_ok/variableDeclaration/initializer:
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t">the typing context <code>TC<sub>0</sub></code> with a mapping from <code>nameIR</code> to <code>INOUT typeIR DYN None</code> added to the <code>LOCAL</code> layer</a>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t"><code>TC<sub>0</sub></code> with a mapping from <code>nameIR</code> to <code>INOUT typeIR DYN None</code> added to the <code>LOCAL</code> layer</a>.</p>
 </li>
 <li>
 <p>Let <code>variableDeclarationIR</code> be <code>annotationList typeIR nameIR None ;</code>.</p>
@@ -18692,7 +18692,7 @@ rule BlockElementStmt_ok/variableDeclaration/initializer:
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t">the typing context <code>TC<sub>0</sub></code> with a mapping from <code>nameIR</code> to <code>INOUT typeIR DYN None</code> added to the <code>LOCAL</code> layer</a>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t"><code>TC<sub>0</sub></code> with a mapping from <code>nameIR</code> to <code>INOUT typeIR DYN None</code> added to the <code>LOCAL</code> layer</a>.</p>
 </li>
 <li>
 <p>Let <code>variableDeclarationIR</code> be <code>annotationList typeIR nameIR = typedExpressionIR<sub>init_cast</sub> ;</code>.</p>
@@ -19620,7 +19620,7 @@ rule SwitchLabel_table_ok/expressionNonBrace-prefixedNonTypeName:
 <p>Let <code>id<sub>label</sub></code> be <code>tid<sub>table_enum</sub> &#43;&#43; "." &#43;&#43; nameIR<sub>label</sub></code>.</p>
 </li>
 <li>
-<p>Let <code>varTypeIR<sup>?</sup></code> be <code><a href="#find_var_t">$find_var_t(LOCAL, TC, id<sub>label</sub>)</a></code>.</p>
+<p>Let <code>varTypeIR<sup>?</sup></code> be <a href="#find_var_t">the type of variable <code>id<sub>label</sub></code> in the <code>LOCAL</code> layer of <code>TC</code></a>.</p>
 </li>
 <li>
 <p>Check that <code>varTypeIR<sup>?</sup></code> is Some value.</p>
@@ -20842,7 +20842,7 @@ rule Expr_ok/referenceExpression/this:
 <p>Let <code>prefixedNameIR</code> be <a href="#prefixedNonTypeName">the prefixed name of  <code>prefixedNonTypeName</code></a>.</p>
 </li>
 <li>
-<p>Let <code>varTypeIR<sup>?</sup></code> be <code><a href="#find_var_t">$find_var_t(p, TC, prefixedNameIR)</a></code>.</p>
+<p>Let <code>varTypeIR<sup>?</sup></code> be <a href="#find_var_t">the type of variable <code>prefixedNameIR</code> in the <code>p</code> layer of <code>TC</code></a>.</p>
 </li>
 <li>
 <p>Check that <code>varTypeIR<sup>?</sup></code> is Some value.</p>
@@ -20867,7 +20867,7 @@ rule Expr_ok/referenceExpression/this:
 <p>Let <code>prefixedNameIR</code> be <code>"this"</code>.</p>
 </li>
 <li>
-<p>Let <code>varTypeIR<sup>?</sup></code> be <code><a href="#find_var_t">$find_var_t(p, TC, prefixedNameIR)</a></code>.</p>
+<p>Let <code>varTypeIR<sup>?</sup></code> be <a href="#find_var_t">the type of variable <code>prefixedNameIR</code> in the <code>p</code> layer of <code>TC</code></a>.</p>
 </li>
 <li>
 <p>Check that <code>varTypeIR<sup>?</sup></code> is Some value.</p>
@@ -20910,7 +20910,7 @@ rule Expr_ok/referenceExpression/this:
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>value</code> be <code><a href="#find_var_value_t">$find_var_value_t(p, TC, prefixedNameIR)</a></code>.</p>
+<p>Let <code>value</code> be <a href="#find_var_value_t">the value of variable <code>prefixedNameIR</code> in the <code>p</code> layer of <code>TC</code></a>.</p>
 </li>
 <li>
 <p>Result in <code>value</code>.</p>
@@ -23824,7 +23824,7 @@ errorAccessExpressionIR
 <p>Let <code>nameIR<sub>error</sub></code> be <code>"error." &#43;&#43; nameIR</code>.</p>
 </li>
 <li>
-<p>Check that <code>ERROR . nameIR</code> is equal to <code><a href="#find_var_value_t">$find_var_value_t(p, TC, nameIR<sub>error</sub>)</a></code>.</p>
+<p>Check that <code>ERROR . nameIR</code> is equal to <a href="#find_var_value_t">the value of variable <code>nameIR<sub>error</sub></code> in the <code>p</code> layer of <code>TC</code></a>.</p>
 </li>
 <li>
 <p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>ERROR</code> and compile-time known-ness <code>LCTK</code></a>.</p>
@@ -23862,7 +23862,7 @@ errorAccessExpressionIR
 <p>Let <code>nameIR<sub>error</sub></code> be <code>"error." &#43;&#43; nameIR</code>.</p>
 </li>
 <li>
-<p>Let <code>value<sub>error</sub></code> be <code><a href="#find_var_value_t">$find_var_value_t(p, TC, nameIR<sub>error</sub>)</a></code>.</p>
+<p>Let <code>value<sub>error</sub></code> be <a href="#find_var_value_t">the value of variable <code>nameIR<sub>error</sub></code> in the <code>p</code> layer of <code>TC</code></a>.</p>
 </li>
 <li>
 <p>Result in <code>value<sub>error</sub></code>.</p>
@@ -23975,7 +23975,7 @@ rule Expr_ok/memberAccessExpression-type/serenum:
 <p>Let <code>prefixedNameIR<sub>base</sub></code> be <a href="#prefixedTypeName">the prefixed name of  <code>prefixedTypeName<sub>base</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeDefIR<sup>?</sup></code> be <code><a href="#find_typeDef_t">$find_typeDef_t(p, TC, prefixedNameIR<sub>base</sub>)</a></code>.</p>
+<p>Let <code>typeDefIR<sup>?</sup></code> be <a href="#find_typeDef_t">the type definition of <code>prefixedNameIR<sub>base</sub></code> in the <code>p</code> layer of <code>TC</code></a>.</p>
 </li>
 <li>
 <p>Check that <code>typeDefIR<sup>?</sup></code> is Some value.</p>
@@ -23987,7 +23987,7 @@ rule Expr_ok/memberAccessExpression-type/serenum:
 <p>Check that <code><a href="#is_monomorphic_typeDefIR">$is_monomorphic_typeDefIR(typeDefIR<sub>base</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <code><a href="#type_of_typeDefIR">$type_of_typeDefIR(typeDefIR<sub>base</sub>)</a></code>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_typeDefIR">the underlying type of <code>typeDefIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR</code> be <a href="#canon_typeIR">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
@@ -24074,7 +24074,7 @@ rule Expr_eval_lctk/memberAccessExpressionIR-type/serenum:
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>typeDefIR<sup>?</sup></code> be <code><a href="#find_typeDef_t">$find_typeDef_t(p, TC, prefixedNameIR<sub>base</sub>)</a></code>.</p>
+<p>Let <code>typeDefIR<sup>?</sup></code> be <a href="#find_typeDef_t">the type definition of <code>prefixedNameIR<sub>base</sub></code> in the <code>p</code> layer of <code>TC</code></a>.</p>
 </li>
 <li>
 <p>Check that <code>typeDefIR<sup>?</sup></code> is Some value.</p>
@@ -24086,7 +24086,7 @@ rule Expr_eval_lctk/memberAccessExpressionIR-type/serenum:
 <p>Check that <code><a href="#is_monomorphic_typeDefIR">$is_monomorphic_typeDefIR(typeDefIR<sub>base</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <code><a href="#type_of_typeDefIR">$type_of_typeDefIR(typeDefIR<sub>base</sub>)</a></code>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_typeDefIR">the underlying type of <code>typeDefIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR'</code> be <a href="#canon_typeIR">the canonicalized form of <code>typeIR<sub>base</sub></code></a>.</p>
@@ -25454,7 +25454,7 @@ rule Expr_eval_lctk/callExpressionIR-builtin-size/type-polymorphic:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>typeDefIR<sup>?</sup></code> be <code><a href="#find_typeDef_t">$find_typeDef_t(p, TC, prefixedNameIR)</a></code>.</p>
+<p>Let <code>typeDefIR<sup>?</sup></code> be <a href="#find_typeDef_t">the type definition of <code>prefixedNameIR</code> in the <code>p</code> layer of <code>TC</code></a>.</p>
 </li>
 <li>
 <p>Check that <code>typeDefIR<sup>?</sup></code> is Some value.</p>
@@ -25467,7 +25467,7 @@ rule Expr_eval_lctk/callExpressionIR-builtin-size/type-polymorphic:
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <code><a href="#type_of_typeDefIR">$type_of_typeDefIR(typeDefIR<sub>base</sub>)</a></code>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_typeDefIR">the underlying type of <code>typeDefIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>nameIR</code> is in <code>["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]</code>.</p>
@@ -25483,10 +25483,10 @@ rule Expr_eval_lctk/callExpressionIR-builtin-size/type-polymorphic:
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Check that (<code>[ ]</code>, <code>[ ]</code>) is equal to <code><a href="#type_parameters_of_typeDefIR">$type_parameters_of_typeDefIR(typeDefIR<sub>base</sub>)</a></code>.</p>
+<p>Check that (<code>[ ]</code>, <code>[ ]</code>) is equal to <a href="#type_parameters_of_typeDefIR">the type parameters of <code>typeDefIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <code><a href="#type_of_typeDefIR">$type_of_typeDefIR(typeDefIR<sub>base</sub>)</a></code>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_typeDefIR">the underlying type of <code>typeDefIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>nameIR</code> is in <code>["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]</code>.</p>
@@ -25575,7 +25575,7 @@ rule Expr_inst/callExpressionIR-builtin-size/type-polymorphic:
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <code><a href="#type_of_typeDefIR">$type_of_typeDefIR(typeDefIR<sub>base</sub>)</a></code>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_typeDefIR">the underlying type of <code>typeDefIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>nameIR</code> is in <code>["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]</code>.</p>
@@ -25591,10 +25591,10 @@ rule Expr_inst/callExpressionIR-builtin-size/type-polymorphic:
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Check that (<code>[ ]</code>, <code>[ ]</code>) is equal to <code><a href="#type_parameters_of_typeDefIR">$type_parameters_of_typeDefIR(typeDefIR<sub>base</sub>)</a></code>.</p>
+<p>Check that (<code>[ ]</code>, <code>[ ]</code>) is equal to <a href="#type_parameters_of_typeDefIR">the type parameters of <code>typeDefIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>base</sub></code> be <code><a href="#type_of_typeDefIR">$type_of_typeDefIR(typeDefIR<sub>base</sub>)</a></code>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_typeDefIR">the underlying type of <code>typeDefIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>nameIR</code> is in <code>["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]</code>.</p>

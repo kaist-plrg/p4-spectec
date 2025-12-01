@@ -2,6 +2,7 @@ module Value = Runtime_dynamic.Value
 open Interface.Wrap
 open Interface.Pack
 open Interface.Unpack
+open Error
 
 (* Generate a random number in the range lo..hi, inclusive, and write
    it to the result parameter.  The value written to result is not
@@ -11,7 +12,7 @@ open Interface.Unpack
 
    extern void random<T>(out T result, in T lo, in T hi); *)
 let _random (_value_ctx : Value.t) (_value_sto : Value.t) : Value.t * Value.t =
-  failwith "extern function random is not implemented"
+  error_no_region "extern function random is not implemented"
 
 (* Calling digest causes a message containing the values specified in
    the data parameter to be sent to the control plane software.  It is
@@ -37,7 +38,7 @@ let _random (_value_ctx : Value.t) (_value_sto : Value.t) : Value.t * Value.t =
 
    extern void digest<T>(in bit<32> receiver, in T data); *)
 let _digest (_value_ctx : Value.t) (_value_sto : Value.t) : Value.t * Value.t =
-  failwith "extern function digest is not implemented"
+  error_no_region "extern function digest is not implemented"
 
 (* mark_to_drop(standard_metadata) is a primitive action that modifies
    standard_metadata.egress_spec to an implementation-specific special
@@ -332,7 +333,7 @@ let update_checksum_with_payload (value_ctx : Value.t) (value_sto : Value.t)
 
    extern void clone(in CloneType type, in bit<32> session); *)
 let _clone (_value_ctx : Value.t) (_value_sto : Value.t) : Value.t * Value.t =
-  failwith "extern function clone is not implemented"
+  error_no_region "extern function clone is not implemented"
 
 (* Calling resubmit_preserving_field_list during execution of the
    ingress control will cause the packet to be resubmitted, i.e. it
@@ -370,7 +371,8 @@ let _clone (_value_ctx : Value.t) (_value_sto : Value.t) : Value.t * Value.t =
    extern void resubmit_preserving_field_list(bit<8> index); *)
 let _resubmit_preserving_field_list (_value_ctx : Value.t)
     (_value_sto : Value.t) : Value.t * Value.t =
-  failwith "extern function resubmit_preserving_field_list is not implemented"
+  error_no_region
+    "extern function resubmit_preserving_field_list is not implemented"
 
 (* Calling recirculate_preserving_field_list during execution of the
    egress control will cause the packet to be recirculated, i.e. it
@@ -396,7 +398,7 @@ let _resubmit_preserving_field_list (_value_ctx : Value.t)
    extern void recirculate_preserving_field_list(bit<8> index); *)
 let _recirculate_preserving_field_list (_value_ctx : Value.t)
     (_value_sto : Value.t) : Value.t * Value.t =
-  failwith
+  error_no_region
     "extern function recirculate_preserving_field_list is not implemented"
 
 (* Calling clone_preserving_field_list during execution of the ingress
@@ -436,11 +438,12 @@ let _recirculate_preserving_field_list (_value_ctx : Value.t)
                                            in bit<32> session, bit<8> index); *)
 let _clone_preserving_field_list (_value_ctx : Value.t) (_value_sto : Value.t) :
     Value.t * Value.t =
-  failwith "extern function clone_preserving_field_list is not implemented"
+  error_no_region
+    "extern function clone_preserving_field_list is not implemented"
 
 let _truncate (_value_ctx : Value.t) (_value_sto : Value.t) : Value.t * Value.t
     =
-  failwith "extern function truncate is not implemented"
+  error_no_region "extern function truncate is not implemented"
 
 (* Calling assert when the argument is true has no effect, except any
    effect that might occur due to evaluation of the argument (but see
@@ -467,7 +470,7 @@ let _truncate (_value_ctx : Value.t) (_value_sto : Value.t) : Value.t * Value.t
 
    extern void assert(in bool check); *)
 let _assert_ (_value_ctx : Value.t) (_value_sto : Value.t) : Value.t * Value.t =
-  failwith "extern function assert is not implemented"
+  error_no_region "extern function assert is not implemented"
 
 (* For the purposes of compiling and executing P4 programs on a target
    device, assert and assume are identical, including the use of the
@@ -503,7 +506,7 @@ let _assert_ (_value_ctx : Value.t) (_value_sto : Value.t) : Value.t * Value.t =
 
    extern void assume(in bool check); *)
 let _assume (_value_ctx : Value.t) (_value_sto : Value.t) : Value.t * Value.t =
-  failwith "extern function assume is not implemented"
+  error_no_region "extern function assume is not implemented"
 
 (* Log user defined messages
    Example: log_msg("User defined message");
@@ -512,4 +515,4 @@ let _assume (_value_ctx : Value.t) (_value_sto : Value.t) : Value.t * Value.t =
    extern void log_msg(string msg);
    extern void log_msg<T>(string msg, in T data); *)
 let _log_msg (_value_ctx : Value.t) (_value_sto : Value.t) : Value.t * Value.t =
-  failwith "extern function log_msg is not implemented"
+  error_no_region "extern function log_msg is not implemented"

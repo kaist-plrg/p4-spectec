@@ -61,13 +61,13 @@ struct
     let value_oid = wrap_list_v "id" [ wrap_text_v "packet_in" ] in
     match get_extern value_sto value_oid with
     | PacketIn packet_in -> packet_in
-    | _ -> failwith "expected PacketIn extern"
+    | _ -> error_no_region "packet_in extern not found"
 
   let get_packet_out (value_sto : Value.t) : Core.Object.PacketOut.t =
     let value_oid = wrap_list_v "id" [ wrap_text_v "packet_out" ] in
     match get_extern value_sto value_oid with
     | PacketOut packet_out -> packet_out
-    | _ -> failwith "expected PacketOut extern"
+    | _ -> error_no_region "packet_out extern not found"
 
   (* Extern functions *)
 
@@ -78,7 +78,7 @@ struct
       match values_input with
       | [ value_name; value_type_args; value_args ] ->
           (value_name, value_type_args, value_args)
-      | _ -> failwith "unexpected number of arguments to extern init"
+      | _ -> error_no_region "unexpected number of arguments to extern init"
     in
     let name_extern = unwrap_text_v value_name_extern in
     match name_extern with
@@ -93,7 +93,9 @@ struct
       match values_input with
       | [ value_ctx; value_sto; value_name_func; value_names_param ] ->
           (value_ctx, value_sto, value_name_func, value_names_param)
-      | _ -> failwith "unexpected number of arguments to extern function call"
+      | _ ->
+          error_no_region
+            "unexpected number of arguments to extern function call"
     in
     let name_func = unwrap_text_v value_name_func in
     let names_param =
@@ -120,7 +122,7 @@ struct
       | "hash", [ "result"; "algo"; "base"; "data"; "max" ] ->
           Func.hash value_ctx value_sto
       | _ ->
-          failwith
+          error_no_region
             ("unsupported extern function call: " ^ name_func ^ "("
             ^ String.concat ", " names_param
             ^ ")")
@@ -134,7 +136,8 @@ struct
        value_ctx; value_sto; value_oid; value_name_method; value_names_param;
       ] ->
           (value_ctx, value_sto, value_oid, value_name_method, value_names_param)
-      | _ -> failwith "unexpected number of arguments to extern method call"
+      | _ ->
+          error_no_region "unexpected number of arguments to extern method call"
     in
     let extern = get_extern value_sto value_oid in
     let name_method = unwrap_text_v value_name_method in
@@ -187,7 +190,7 @@ struct
             value_oid |> unwrap_list_v |> List.map unwrap_text_v
             |> String.concat "."
           in
-          failwith
+          error_no_region
             ("unsupported extern method call: " ^ oid ^ "." ^ name_method ^ "("
             ^ String.concat ", " names_param
             ^ ")")
@@ -218,7 +221,7 @@ struct
     in
     match result with
     | Pass ([ value_ctx; value_sto ], _, _, _) -> (value_ctx, value_sto)
-    | _ -> failwith "Unexpected return from V1Model_init"
+    | _ -> error_no_region "unexpected return from V1Model_init"
 
   (* Pipeline driver *)
 
