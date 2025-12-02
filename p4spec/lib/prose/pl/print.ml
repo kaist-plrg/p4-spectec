@@ -529,8 +529,9 @@ let rec render_instr ?(level = 0) ?(unordered = false) (instr : instr) : string
         (render_exp_as_code in_prose exp_l)
         (render_exp in_prose exp_r)
   | OptionGetI (exp_l, exp_r) ->
-      F.asprintf "%sLet!~option~ %s be %s." bullet
+      F.asprintf "%sLet %s be %s %s." bullet
         (render_exp_as_code in_prose exp_l)
+        (adoc_link ~link:"option_get" "*!*")
         (render_exp in_prose exp_r)
 
 and render_instrs ?(level = 0) instrs =
