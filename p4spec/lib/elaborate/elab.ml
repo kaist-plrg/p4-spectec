@@ -1466,12 +1466,12 @@ let rec elab_def (ctx : Ctx.t) (def : def) : Ctx.t * Il.Ast.def option =
       elab_builtin_dec_def ctx at id tparams params plaintyp hints |> wrap_some
   | TableDecD (id, params, list_typ, hints) ->
       elab_table_dec_def ctx at id params list_typ hints |> wrap_some
-  | DecD (id, tparams, params, plaintyp, hints) ->
-      elab_dec_def ctx at id tparams params plaintyp hints |> wrap_some
+  | PlainDecD (id, tparams, params, plaintyp, hints) ->
+      elab_plain_dec_def ctx at id tparams params plaintyp hints |> wrap_some
   | TableDefD (id, matchcases) ->
       elab_table_def_def ctx at id matchcases |> wrap_none
-  | DefD (id, tparams, args, exp, prems) ->
-      elab_def_def ctx at id tparams args exp prems |> wrap_none
+  | PlainDefD (id, tparams, args, exp, prems) ->
+      elab_plain_def ctx at id tparams args exp prems |> wrap_none
   | SepD -> ctx |> wrap_none
 
 and elab_defs (ctx : Ctx.t) (defs : def list) : Ctx.t * Il.Ast.def list =
@@ -1662,9 +1662,9 @@ and elab_table_dec_def (ctx : Ctx.t) (at : region) (id : id)
   let def_il = Il.Ast.TableDecD (id, params_il, typ_il, [], hints) $ at in
   (ctx, def_il)
 
-and elab_dec_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
-    (params : param list) (plaintyp : plaintyp) (hints : hint list) :
-    Ctx.t * Il.Ast.def =
+and elab_plain_dec_def (ctx : Ctx.t) (at : region) (id : id)
+    (tparams : tparam list) (params : param list) (plaintyp : plaintyp)
+    (hints : hint list) : Ctx.t * Il.Ast.def =
   check
     (List.map it tparams |> distinct ( = ))
     id.at "type parameters are not distinct";
@@ -1672,7 +1672,9 @@ and elab_dec_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
   let ctx_local = Ctx.add_tparams ctx_local tparams in
   let params_il = List.map (elab_param ctx_local) params in
   let typ_il = elab_plaintyp ctx_local plaintyp in
-  let def_il = Il.Ast.DecD (id, tparams, params_il, typ_il, [], hints) $ at in
+  let def_il =
+    Il.Ast.PlainDecD (id, tparams, params_il, typ_il, [], hints) $ at
+  in
   let ctx = Ctx.add_plain_dec ctx id tparams params plaintyp in
   (ctx, def_il)
 
@@ -1809,7 +1811,7 @@ and elab_table_def_def (ctx : Ctx.t) (at : region) (id : id)
     let ctx, args_il = elab_args ~as_def:true at ctx params args in
     let ctx_local = { ctx with frees = IdSet.empty } in
     let ctx_local =
-      let def = DefD (id, [], [], exp_body, []) $ exp_body.at in
+      let def = PlainDefD (id, [], [], exp_body, []) $ exp_body.at in
       let ctx_local = El.Free.free_id_def def |> Ctx.add_frees ctx_local in
       Il.Free.free_args args_il |> Ctx.add_frees ctx_local
     in
@@ -1845,7 +1847,7 @@ and elab_table_def_def (ctx : Ctx.t) (at : region) (id : id)
   match_check_tablerows ctx at tablerows_il argtyps_il;
   Ctx.add_table_def ctx id tablerows_il
 
-and elab_def_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
+and elab_plain_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
     (args : arg list) (exp : exp) (prems : prem list) : Ctx.t =
   let tparams_expected, params, plaintyp, _ = Ctx.find_plain_dec ctx id in
   check
@@ -1856,7 +1858,7 @@ and elab_def_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
   check (List.length params = List.length args) at "arguments do not match";
   let ctx_local = { ctx with frees = IdSet.empty } in
   let ctx_local =
-    let def = DefD (id, tparams, args, exp, prems) $ at in
+    let def = PlainDefD (id, tparams, args, exp, prems) $ at in
     El.Free.free_id_def def |> Ctx.add_frees ctx_local
   in
   let ctx_local = Ctx.add_tparams ctx_local tparams in
@@ -1912,15 +1914,15 @@ let populate_rules (ctx : Ctx.t) (spec_il : Il.Ast.spec) : Il.Ast.spec =
 
 let populate_clause (ctx : Ctx.t) (def_il : Il.Ast.def) : Il.Ast.def =
   match def_il.it with
-  | Il.Ast.DecD (id, tparams_il, params_il, typ_il, [], hints) ->
-      let _, _, _, clauses_il = Ctx.find_plain_dec ctx id in
-      Il.Ast.DecD (id, tparams_il, params_il, typ_il, clauses_il, hints)
-      $ def_il.at
   | Il.Ast.TableDecD (id, params_il, typ_il, [], hints) ->
       let _, _, tablerows_il = Ctx.find_table_dec ctx id in
       Il.Ast.TableDecD (id, params_il, typ_il, tablerows_il, hints) $ def_il.at
+  | Il.Ast.PlainDecD (id, tparams_il, params_il, typ_il, [], hints) ->
+      let _, _, _, clauses_il = Ctx.find_plain_dec ctx id in
+      Il.Ast.PlainDecD (id, tparams_il, params_il, typ_il, clauses_il, hints)
+      $ def_il.at
   | Il.Ast.TableDecD _ -> error def_il.at "table was already populated"
-  | Il.Ast.DecD _ -> error def_il.at "function was already populated"
+  | Il.Ast.PlainDecD _ -> error def_il.at "function was already populated"
   | _ -> def_il
 
 let populate_clauses (ctx : Ctx.t) (spec_il : Il.Ast.spec) : Il.Ast.spec =
@@ -1928,7 +1930,7 @@ let populate_clauses (ctx : Ctx.t) (spec_il : Il.Ast.spec) : Il.Ast.spec =
   List.iter
     (fun def_il ->
       match def_il.it with
-      | Il.Ast.DecD (id, _, _, _, [], _) ->
+      | Il.Ast.PlainDecD (id, _, _, _, [], _) ->
           warn def_il.at
             (F.asprintf "function %s has no clauses defined" (Id.to_string id))
       | _ -> ())

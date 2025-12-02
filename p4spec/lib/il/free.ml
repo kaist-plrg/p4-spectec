@@ -110,10 +110,20 @@ let free_clause (clause : clause) : t =
 let free_clauses (clauses : clause list) : t =
   clauses |> List.map free_clause |> List.fold_left ( + ) empty
 
+(* Table rows *)
+
+let free_tablerow (tablerow : tablerow) : t =
+  let _exps_sig, args, exp, prems = tablerow.it in
+  free_args args + free_exp exp + free_prems prems
+
+let free_tablerows (tablerows : tablerow list) : t =
+  tablerows |> List.map free_tablerow |> List.fold_left ( + ) empty
+
 (* Definitions *)
 
 let free_def (def : def) : t =
   match def.it with
   | RelD (_, _, _, rulegroups, _) -> free_rulegroups rulegroups
-  | DecD (_, _, _, _, clauses, _) -> free_clauses clauses
+  | TableDecD (_, _, _, tablerows, _) -> free_tablerows tablerows
+  | PlainDecD (_, _, _, _, clauses, _) -> free_clauses clauses
   | _ -> empty

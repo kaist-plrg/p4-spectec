@@ -554,9 +554,9 @@ let render_table defid args typ (tablerows : tablerow list) =
   let rows =
     tablerows
     |> List.map (fun tablerow ->
-           let exps_sig, _instrs, exp_res = tablerow.it in
-           let row_input = render_exps in_code exps_sig in
+           let exps_sig, exp_res, _instrs = tablerow.it in
            let row_output = render_exp in_code exp_res in
+           let row_input = render_exps in_code exps_sig in
            "| " ^ row_input ^ " | " ^ row_output)
     |> String.concat "\n"
   in

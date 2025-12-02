@@ -459,10 +459,10 @@ let rec string_of_def ?(verbose = false) def =
   | BuiltinDecD builtinfunc ->
       "builtin def " ^ string_of_builtin_func builtinfunc
   | TableDecD (defid, args_input, _typ, tablerows, _hints) ->
-      "table def " ^ string_of_defid defid ^ string_of_args args_input ^ " =\n"
+      "tbl def " ^ string_of_defid defid ^ string_of_args args_input ^ " =\n"
       ^ String.concat "\n"
           (List.map (fun clause -> string_of_tablerow clause) tablerows)
-  | DecD func -> "def " ^ string_of_func ~verbose func
+  | PlainDecD func -> "def " ^ string_of_func ~verbose func
 
 and string_of_defs ?(verbose = false) defs =
   String.concat "\n\n" (List.map (string_of_def ~verbose) defs)

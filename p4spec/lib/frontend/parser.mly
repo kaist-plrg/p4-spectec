@@ -801,24 +801,25 @@ def_ :
     { TableDecD (id, params, typ_ret, hints) }
   (* Function declaration *)
   | DEC DOLLAR defid COLON plaintyp hint*
-    { DecD ($3, [], [], $5, $6) }
+    { PlainDecD ($3, [], [], $5, $6) }
   | DEC DOLLAR defid_lparen enter_scope comma_list(param) RPAREN COLON plaintyp hint* exit_scope
-    { DecD ($3, [], $5, $8, $9) }
+    { PlainDecD ($3, [], $5, $8, $9) }
   | DEC DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE COLON plaintyp hint* exit_scope
-    { DecD ($3, $5, [], $8, $9) }
+    { PlainDecD ($3, $5, [], $8, $9) }
   | DEC DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE_LPAREN comma_list(param) RPAREN COLON plaintyp hint* exit_scope
-    { DecD ($3, $5, $7, $10, $11) }
-  (* Function clause declaration *)
-  | DEF DOLLAR defid EQ exp prem_list
-    { DefD ($3, [], [], $5, $6) }
-  | DEF DOLLAR defid_lparen enter_scope comma_list(arg) RPAREN EQ exp prem_list exit_scope
-    { DefD ($3, [], $5, $8, $9) }
-  | DEF DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE EQ exp prem_list exit_scope
-    { DefD ($3, $5, [], $8, $9) }
-  | DEF DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE_LPAREN comma_list(arg) RPAREN EQ exp prem_list exit_scope
-    { DefD ($3, $5, $7, $10, $11) }
+    { PlainDecD ($3, $5, $7, $10, $11) }
+  (* Table function body definition *)
   | TABLE DEF DOLLAR id = defid EQ body = tbl_body
     { TableDefD (id, body) }
+  (* Function clause declaration *)
+  | DEF DOLLAR defid EQ exp prem_list
+    { PlainDefD ($3, [], [], $5, $6) }
+  | DEF DOLLAR defid_lparen enter_scope comma_list(arg) RPAREN EQ exp prem_list exit_scope
+    { PlainDefD ($3, [], $5, $8, $9) }
+  | DEF DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE EQ exp prem_list exit_scope
+    { PlainDefD ($3, $5, [], $8, $9) }
+  | DEF DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE_LPAREN comma_list(arg) RPAREN EQ exp prem_list exit_scope
+    { PlainDefD ($3, $5, $7, $10, $11) }
   (* Separator *)
   | NL3
     { SepD }

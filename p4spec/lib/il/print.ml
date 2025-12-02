@@ -455,10 +455,10 @@ let rec string_of_def def =
       "builtin def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : " ^ string_of_typ typ
   | TableDecD (defid, params, typ, tablerows, _) ->
-      "table def " ^ string_of_defid defid ^ string_of_params params ^ " : "
+      "tbl def " ^ string_of_defid defid ^ string_of_params params ^ " : "
       ^ string_of_typ typ ^ " ="
       ^ string_of_tablerows tablerows
-  | DecD (defid, tparams, params, typ, clauses, _) ->
+  | PlainDecD (defid, tparams, params, typ, clauses, _) ->
       "def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : " ^ string_of_typ typ ^ " ="
       ^ string_of_clauses clauses

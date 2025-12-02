@@ -1301,7 +1301,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     | TableDecD (id, params, _, tablerows, _) ->
         let func = Func.Table (params, tablerows) in
         Ctx.add_func Global ctx id func
-    | DecD (id, tparams, _, _, clauses, _) ->
+    | PlainDecD (id, tparams, _, _, clauses, _) ->
         let func = Func.Plain (tparams, clauses) in
         Ctx.add_func Global ctx id func
 

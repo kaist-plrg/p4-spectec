@@ -127,7 +127,7 @@ let free_rules (rules : rule list) : IdSet.t =
 let free_id_def (def : def) : IdSet.t =
   match def.it with
   | RuleGroupD (_, _, rules) -> free_rules rules
-  | DefD (_, _, args, exp, prems) ->
+  | PlainDefD (_, _, args, exp, prems) ->
       free_id_args args
       |> IdSet.union (free_id_exp exp)
       |> IdSet.union (free_id_prems prems)

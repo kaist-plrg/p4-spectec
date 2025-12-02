@@ -224,7 +224,7 @@ and def' =
   (* `table` `dec` id list(param, `,`) `:` typ hint* *)
   | TableDecD of id * param list * typ * tablerow list * hint list
   (* `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ clause* hint* *)
-  | DecD of id * tparam list * param list * typ * clause list * hint list
+  | PlainDecD of id * tparam list * param list * typ * clause list * hint list
 
 (* Spec *)
 

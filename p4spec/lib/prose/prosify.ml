@@ -443,9 +443,9 @@ let prosify_table ctx id args typ tablerows =
     List.map
       (fun (exps_sig, exp_res, instrs) ->
         let exps_sig = prosify_exps ctx exps_sig in
-        let instrs = prosify_instrs ctx instrs in
         let exp_res = prosify_exp ctx exp_res in
-        (exps_sig, instrs, exp_res) $ exp_res.at)
+        let instrs = prosify_instrs ctx instrs in
+        (exps_sig, exp_res, instrs) $ exp_res.at)
       tablerows
   in
   (id, args, typ, tablerows_pl)
@@ -466,7 +466,7 @@ let prosify_def (ctx : Ctx.t) (def : def) : Pl.Ast.def option =
       let instrs = prosify_instrs ctx instrs in
       let exps = prosify_exps ctx exps in
       Some (Pl.Ast.RelD (id, exps, instrs) $ def.at)
-  | ExternDecD _ | BuiltinDecD _ | DecD _ -> None
+  | ExternDecD _ | BuiltinDecD _ | PlainDecD _ -> None
   | TableDecD (id, args, typ, tablerows, _) ->
       let id, args, typ, tablerows_pl =
         prosify_table ctx id args typ tablerows

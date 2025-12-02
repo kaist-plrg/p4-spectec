@@ -91,15 +91,31 @@ module Cover = struct
   and init_instrs (cover : t) (id : id) (instrs : instr list) : t =
     List.fold_left (fun cover instr -> init_instr cover id instr) cover instrs
 
+  let init_tablerow (cover : t) (id : id) (tablerow : tablerow) : t =
+    let _, _, instrs = tablerow in
+    init_instrs cover id instrs
+
+  let init_tablerows (cover : t) (id : id) (tablerows : tablerow list) : t =
+    List.fold_left
+      (fun cover tablerow -> init_tablerow cover id tablerow)
+      cover tablerows
+
   let init_def (cover : t) (def : def) : t =
     match def.it with
-    | RelD (id, _, _, instrs, hints) | DecD (id, _, _, _, instrs, hints) ->
+    | RelD (id, _, _, instrs, hints) | PlainDecD (id, _, _, _, instrs, hints) ->
         if
           List.exists
             (fun (hint : hint) -> hint.hintid.it = "testgen_ignore")
             hints
         then cover
         else init_instrs cover id instrs
+    | TableDecD (id, _, _, tablerows, hints) ->
+        if
+          List.exists
+            (fun (hint : hint) -> hint.hintid.it = "testgen_ignore")
+            hints
+        then cover
+        else init_tablerows cover id tablerows
     | _ -> cover
 
   let init_spec (spec : spec) : t = List.fold_left init_def empty spec

@@ -158,7 +158,7 @@ and instr' =
   | OptionGetI of exp * exp
 
 type tablerow = tablerow' phrase
-and tablerow' = exp list * instr list * exp
+and tablerow' = exp list * exp * instr list
 
 type def = def' phrase
 

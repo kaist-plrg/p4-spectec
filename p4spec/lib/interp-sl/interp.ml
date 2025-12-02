@@ -1576,13 +1576,18 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                     (fun (nottyp, _) ->
                       Il.Eq.eq_mixop mixop_v (nottyp.it |> fst))
                     typcases
-              | _ -> failwith "BUG: invalid signature")
-          | _ -> failwith "BUG: invalid signature")
+              | _ ->
+                  error tid.at
+                    "BUG: table signature should be of a Defined type")
+          | _ -> error exp_sig.at "BUG: table signature should have VarT type")
       | ( UpCastE (_, { it = CaseE (mixop_e, _); _ }),
           { it = CaseV (mixop_v, _); _ } ) ->
           Il.Eq.eq_mixop mixop_e mixop_v
       | VarE vid, _ when String.starts_with ~prefix:"_" vid.it -> true
-      | _ -> failwith "BUG: invalid signature"
+      | _ ->
+          error exp_sig.at
+            "BUG: table signature should be either an UpCastE or a wildcard \
+             VarE"
     in
     let tablerow_match =
       try
@@ -1592,11 +1597,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
             && List.for_all2 fits_signature exps_sig values_input)
           tablerows
       with Not_found ->
-        failwith
-          (F.asprintf
-             "BUG: incomplete table function %s: no matching row for %d \
-              input(s)"
-             id.it (List.length values_input))
+        F.asprintf
+          "BUG: incomplete table function %s should not pass elaborator" id.it
+        |> error id.at
     in
     let _, _, instrs = tablerow_match in
     let ctx_local = assign_args ctx ctx_local args values_input in
@@ -1609,7 +1612,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
               (Dep.Edges.Func (id, idx_arg)))
           values_input;
         value_output
-    | _ -> failwith "BUG: table functions should not fail"
+    | _ -> error id.at (F.asprintf "BUG: table functions %s failed" id.it)
 
   and invoke_plain_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
       (args_input : arg list) (instrs : instr list) (targs : targ list)
@@ -1673,7 +1676,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | TableDecD (id, args_input, _typ, tablerows, _) ->
         let func = Func.Table (args_input, tablerows) in
         Ctx.add_func Global ctx id func
-    | DecD (id, tparams, args_input, _typ, instrs, _) ->
+    | PlainDecD (id, tparams, args_input, _typ, instrs, _) ->
         let func = Func.Plain (tparams, args_input, instrs) in
         Ctx.add_func Global ctx id func
 

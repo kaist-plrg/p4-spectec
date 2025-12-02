@@ -279,7 +279,7 @@ let string_of_def def =
   | TableDecD (defid, params, plaintyp, _hints) ->
       "tbl dec " ^ string_of_defid defid ^ string_of_params params ^ " : "
       ^ string_of_plaintyp plaintyp
-  | DecD (defid, tparams, params, plaintyp, _hints) ->
+  | PlainDecD (defid, tparams, params, plaintyp, _hints) ->
       "dec " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : "
       ^ string_of_plaintyp plaintyp
@@ -289,7 +289,7 @@ let string_of_def def =
       in
       "tbl def " ^ string_of_defid defid ^ " =\n  "
       ^ String.concat "\n  | " (List.map string_of_matchcase matchcases)
-  | DefD (defid, tparams, args, exp, prems) ->
+  | PlainDefD (defid, tparams, args, exp, prems) ->
       "def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_args args ^ " = " ^ string_of_exp exp ^ string_of_prems prems
   | SepD -> "\n\n"
