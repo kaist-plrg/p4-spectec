@@ -71,8 +71,12 @@ rule ParserStmt_inst/directApplicationStatementIR:
   -- if STO_2 = $add_map<oid, object>(STO_1, oid, object)
   ---- ;; replace with constant declaration and call statement
   -- if typeIR = `` tid
+  -- if typedExpressionIR_inst
+      = ((prefixedNameIR `< eps >) `( eps )) `# `( VOID CTK )
+  -- if constantInitializerIR
+      = `= (`! oid) `( typedExpressionIR_inst )
   -- if constantDeclarationIR
-      = `EMPTY CONST typeIR nameIR (`= (`! oid)) `;
+      = `EMPTY CONST typeIR nameIR constantInitializerIR `;
   -- if callableTargetIR
       = ((`` tid) `# `( typeIR CTK )) `. "apply"
   -- if callStatementIR

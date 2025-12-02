@@ -40,8 +40,12 @@ rule Stmt_inst/directApplicationStatementIR:
   -- if oid = IC.PATH ++ nameIR
   -- if STO_2 = $add_map<oid, object>(STO_1, oid, object)
   ---- ;; replace with constant declaration and call statement
+  -- if typedExpressionIR_inst
+      = ((prefixedNameIR `< eps >) `( eps )) `# `( VOID CTK )
+  -- if constantInitializerIR
+      = `= (`! oid) `( typedExpressionIR_inst )
   -- if constantDeclarationIR
-      = `EMPTY CONST typeIR nameIR (`= (`! oid)) `;
+      = `EMPTY CONST typeIR nameIR constantInitializerIR `;
   -- if callableTargetIR
       = ((`` nameIR) `# `( typeIR CTK )) `. "apply"
   -- if callStatementIR

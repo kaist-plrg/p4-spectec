@@ -209,20 +209,20 @@ syntax annotationList, initializerOpt
 syntax parameter =
   annotationList direction type name initializerOpt
 
-syntax nonEmptyParameterList =
+syntax parameterListNonEmpty =
   | parameter
-  | nonEmptyParameterList `, parameter
+  | parameterListNonEmpty `, parameter
 
 syntax parameterList =
   | `EMPTY
-  | nonEmptyParameterList
+  | parameterListNonEmpty
 
 dec $flatten_parameterList(parameterList) : parameter*
   hint(prose_in "the list of parameters in" %0)
 def $flatten_parameterList(`EMPTY) = eps
 def $flatten_parameterList(parameter) = parameter
-def $flatten_parameterList(nonEmptyParameterList `, parameter)
-  = $flatten_parameterList(nonEmptyParameterList) ++ [ parameter ]
+def $flatten_parameterList(parameterListNonEmpty `, parameter)
+  = $flatten_parameterList(parameterListNonEmpty) ++ [ parameter ]
 
 ;;
 ;; Constructor parameters
@@ -1065,7 +1065,7 @@ syntax parserTypeDeclaration =
   annotationList PARSER name typeParameterListOpt `( parameterList ) `;
 
 ;;
-;;;;;; Parser declarations
+;;;;;; Parser statements and declarations
 ;;
 
 syntax parserStatement, parserStatementList

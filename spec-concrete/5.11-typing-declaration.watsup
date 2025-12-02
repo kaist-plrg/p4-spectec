@@ -26,7 +26,7 @@ rule Decl_ok/constantDeclaration:
   -- if TC_1 = $add_var_t(p, TC_0, nameIR, `EMPTY typeIR LCTK value)
   ---- ;; create IR
   -- if constantDeclarationIR
-      = annotationList CONST typeIR nameIR (`= value) `;
+      = annotationList CONST typeIR nameIR (`= value `( typedExpressionIR_value_cast )) `;
 
 ;;; instantiation
 ;;; syntax instantiation
@@ -566,7 +566,8 @@ rule Decl_ok/parserDeclaration:
   -- CallableTypeDef_wf: $bound(GLOBAL, TC_0) |- callableTypeDefIR
   ---- ;; create parser object constructor and add to context
   -- if cid = $cid_(name, constructorParameterListOpt)
-  -- if parserObjectTypeDefIR = PARSER `< eps `, eps > `( parameterTypeIR* )
+  -- if nameIR = $name(name)
+  -- if parserObjectTypeDefIR = PARSER nameIR `< eps `, eps > `( parameterTypeIR* )
   -- if typeIR_parser_spec = parserObjectTypeDefIR `< eps >
   -- if constructorTypeDefIR
       = CONSTRUCTOR `< eps `, eps >
@@ -574,7 +575,6 @@ rule Decl_ok/parserDeclaration:
   -- ConstructorTypeDef_wf: $bound(GLOBAL, TC_0) |- constructorTypeDefIR
   -- if TC_6 = $add_constructorDef_t(TC_0, cid, constructorTypeDefIR)
   ---- ;; create IR
-  -- if nameIR = $name(name)
   -- if parserDeclarationIR
       = annotationList PARSER nameIR `< eps >
           `( parameterIR* ) `( constructorParameterIR* )
@@ -620,7 +620,8 @@ rule Decl_ok/controlDeclaration:
   -- CallableTypeDef_wf: $bound(GLOBAL, TC_0) |- callableTypeDefIR
   ---- ;; create control object constructor and add to context
   -- if cid = $cid_(name, constructorParameterListOpt)
-  -- if controlObjectTypeDefIR = CONTROL `< eps `, eps > `( parameterTypeIR* )
+  -- if nameIR = $name(name)
+  -- if controlObjectTypeDefIR = CONTROL nameIR `< eps `, eps > `( parameterTypeIR* )
   -- if typeIR_control_spec = controlObjectTypeDefIR `< eps >
   -- if constructorTypeDefIR
       = CONSTRUCTOR `< eps `, eps >
@@ -628,7 +629,6 @@ rule Decl_ok/controlDeclaration:
   -- ConstructorTypeDef_wf: $bound(GLOBAL, TC_0) |- constructorTypeDefIR
   -- if TC_6 = $add_constructorDef_t(TC_0, cid, constructorTypeDefIR)
   ---- ;; create IR
-  -- if nameIR = $name(name)
   -- if controlDeclarationIR
       = annotationList CONTROL nameIR `< eps >
         `( parameterIR* ) `( constructorParameterIR* )
@@ -932,7 +932,7 @@ rule Decl_ok/parserTypeDeclaration:
   ---- ;; update the context with parser type
   -- if nameIR = $name(name)
   -- if parserObjectTypeDefIR
-      = PARSER `< tid_expl* `, tid_impl* > `( parameterTypeIR* )
+      = PARSER nameIR `< tid_expl* `, tid_impl* > `( parameterTypeIR* )
   -- TypeDef_wf: $bound(GLOBAL, TC_0) |- parserObjectTypeDefIR
   -- if TC_3 = $add_typeDef_t(GLOBAL, TC_0, nameIR, parserObjectTypeDefIR)
   ---- ;; create IR
@@ -959,7 +959,7 @@ rule Decl_ok/controlTypeDeclaration:
   ---- ;; update the context with control type
   -- if nameIR = $name(name)
   -- if controlObjectTypeDefIR
-      = CONTROL `< tid_expl* `, tid_impl* > `( parameterTypeIR* )
+      = CONTROL nameIR `< tid_expl* `, tid_impl* > `( parameterTypeIR* )
   -- TypeDef_wf: $bound(GLOBAL, TC_0) |- controlObjectTypeDefIR
   -- if TC_3 = $add_typeDef_t(GLOBAL, TC_0, nameIR, controlObjectTypeDefIR)
   ---- ;; create IR
@@ -989,7 +989,7 @@ rule Decl_ok/packageTypeDeclaration:
   -- if nameIR = $name(name)
   -- if (_ typeIR_package_inner _ _ = constructorParameterTypeIR)*
   -- if packageObjectTypeDefIR
-      = PACKAGE `< tid_expl* `, tid_impl* > `{ typeIR_package_inner* }
+      = PACKAGE nameIR `< tid_expl* `, tid_impl* > `{ typeIR_package_inner* }
   -- TypeDef_wf: $bound(GLOBAL, TC_0) |- packageObjectTypeDefIR
   -- if TC_3 = $add_typeDef_t(GLOBAL, TC_0, nameIR, packageObjectTypeDefIR)
   ---- ;; update the context with package constructor
@@ -1024,7 +1024,8 @@ rule Decls_ok/cons:
 ;;
 
 rule Program_ok:
-  |- p4program : (declarationIR* `;)
+  |- p4program : (declarationIR* `;) p4program_lift
   -- if declaration* = $flatten_p4program(p4program)
   -- if TC_0 = $empty_typingContext
   -- Decls_ok: GLOBAL TC_0 |- declaration* : TC_1 declarationIR*
+  -- if p4program_lift = $lift_p4programIR(declarationIR* `;)

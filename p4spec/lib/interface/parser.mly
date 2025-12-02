@@ -95,7 +95,7 @@
   (* Types *)
   baseType specializedType namedType headerStackType listType tupleType typeRef typeOrVoid
   (* Type parameters *) typeParameter typeParameterList typeParameterListOpt
-  (* Parameters *) parameter nonEmptyParameterList parameterList 
+  (* Parameters *) parameter parameterListNonEmpty parameterList 
   (* Constructor parameters *) constructorParameterListOpt
   (* Expression key-value pairs *) namedExpression namedExpressionList
   (* Expressions *)
@@ -430,15 +430,15 @@ parameter:
       [ NT al; NT dir; NT t; NT n; NT i ] #@ "parameter" }
 ;
 
-nonEmptyParameterList:
+parameterListNonEmpty:
 	| p = parameter { p }
-	| ps = nonEmptyParameterList COMMA p = parameter
-    { [ NT ps; Term ","; NT p ] #@ "nonEmptyParameterList" }
+	| ps = parameterListNonEmpty COMMA p = parameter
+    { [ NT ps; Term ","; NT p ] #@ "parameterListNonEmpty" }
 ;
 
 parameterList:
 	| (* empty *) { [ Term "`EMPTY" ] #@ "parameterList" }
-	| ps = nonEmptyParameterList { ps }
+	| ps = parameterListNonEmpty { ps }
 ;
 
 (* Constructor parameters *)

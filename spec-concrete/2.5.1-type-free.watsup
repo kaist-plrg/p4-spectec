@@ -62,17 +62,17 @@ def $free_typeIR(ENUM _ `< typeIR > `{ _ }) = $free_typeIR(typeIR)
 def $free_typeIR(EXTERN _ `{ (_ `: externMethodTypeDefIR)* })
   = $unions_set<tid>($free_callableTypeDefIR(externMethodTypeDefIR)*)
 
-def $free_typeIR(PARSER `( parameterTypeIR* ))
+def $free_typeIR(PARSER _ `( parameterTypeIR* ))
   = bound_params
   -- if bound_params
       = $unions_set<tid>($free_parameterTypeIR(parameterTypeIR)*)
 
-def $free_typeIR(CONTROL `( parameterTypeIR* ))
+def $free_typeIR(CONTROL _ `( parameterTypeIR* ))
   = bound_params
   -- if bound_params
       = $unions_set<tid>($free_parameterTypeIR(parameterTypeIR)*)
 
-def $free_typeIR(PACKAGE `{ typeIR* })
+def $free_typeIR(PACKAGE _ `{ typeIR* })
   = $unions_set<tid>($free_typeIR(typeIR)*)
 
 def $free_typeIR(TABLE _ `{ _ }) = `{ eps }
