@@ -401,6 +401,7 @@ and string_of_prem prem =
   | IterPr (prem, iterexp) ->
       "(" ^ string_of_prem prem ^ ")" ^ string_of_iterexp iterexp
   | DebugPr exp -> "debug " ^ string_of_exp exp
+  | PrintPr exp -> "print " ^ string_of_exp exp
 
 and string_of_prems ?(level = 0) prems =
   let indent = indent level in

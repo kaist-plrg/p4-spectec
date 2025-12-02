@@ -135,11 +135,11 @@ let load_spec (tdenv : TDEnv.t) (mixopenv : MixopEnv.t) (spec : spec) :
 
 (* Constructor *)
 
-let init_specenv (spec_il : Il.Ast.spec) (spec : spec) (relname : string)
-    (includes_p4 : string list) : specenv =
+let init_specenv (spec : spec) (relname : string) (includes_p4 : string list) :
+    specenv =
   let runner = Arch.Gen.gen_placeholder () in
   let printer value_program =
-    Format.asprintf "%a\n" (Interface.Unparse.pp_program spec_il) value_program
+    Format.asprintf "%a\n" (Interface.Unparse.pp_program_sl spec) value_program
   in
   let tdenv, mixopenv = load_spec TDEnv.empty MixopEnv.empty spec in
   { runner; printer; spec; relname; tdenv; mixopenv; includes_p4 }

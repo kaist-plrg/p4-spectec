@@ -183,6 +183,7 @@ and prem' =
   | LetPr of exp * exp             (* `let` exp `=` exp *)
   | IterPr of prem * iterexp       (* prem iterexp *)
   | DebugPr of exp                 (* `debug` exp *)
+  | PrintPr of exp                 (* `print` exp *)
 
 (* Rules *)
 

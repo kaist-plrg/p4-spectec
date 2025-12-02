@@ -435,7 +435,7 @@ let parse_string time_start filename program_dump =
 let parse_roundtrip time_start includes filename spec =
   let program = parse_file time_start includes filename in
   let program_dump =
-    Format.asprintf "%a\n" (Interface.Unparse.pp_program spec) program
+    Format.asprintf "%a\n" (Interface.Unparse.pp_program_il spec) program
   in
   let program_roundtrip = parse_string time_start filename program_dump in
   if not (Il.Eq.eq_value ~dbg:true program program_roundtrip) then

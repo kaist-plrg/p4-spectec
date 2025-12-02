@@ -109,6 +109,7 @@ let rec free_id_prem (prem : prem) : IdSet.t =
   | ElsePr -> IdSet.empty
   | IterPr (prem, _) -> free_id_prem prem
   | DebugPr exp -> free_id_exp exp
+  | PrintPr exp -> free_id_exp exp
 
 and free_id_prems (prems : prem list) : IdSet.t =
   prems |> List.map free_id_prem |> List.fold_left IdSet.union IdSet.empty

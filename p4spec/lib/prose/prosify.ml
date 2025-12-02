@@ -414,7 +414,7 @@ and prosify_instr ctx instr : Pl.Ast.instr list =
   | ReturnI exp ->
       let exp = prosify_exp ctx exp in
       [ Pl.Ast.ReturnI exp $ instr.at ]
-  | DebugI _ -> []
+  | DebugI _ | PrintI _ -> []
 
 and prosify_instrs ctx (instrs : instr list) : Pl.Ast.instr list =
   let _, instrs =

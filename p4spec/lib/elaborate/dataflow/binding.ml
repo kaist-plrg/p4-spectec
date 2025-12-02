@@ -116,6 +116,7 @@ let rec analyze_prem (dctx : Dctx.t) (prem : prem) :
            (Il.Print.string_of_iterexp iterexp))
   | IterPr (prem, (iter, [])) -> analyze_iter_prem dctx prem.at prem iter
   | DebugPr exp -> analyze_debug_prem dctx prem.at exp
+  | PrintPr exp -> analyze_print_prem dctx prem.at exp
 
 and analyze_rule_prem (dctx : Dctx.t) (at : region) (id : id) (notexp : notexp)
     : Dctx.t * VEnv.t * prem * prem list =
@@ -211,4 +212,10 @@ and analyze_debug_prem (dctx : Dctx.t) (at : region) (exp : exp) :
     Dctx.t * VEnv.t * prem * prem list =
   analyze_exp_as_bound dctx exp;
   let prem = DebugPr exp $ at in
+  (dctx, VEnv.empty, prem, [])
+
+and analyze_print_prem (dctx : Dctx.t) (at : region) (exp : exp) :
+    Dctx.t * VEnv.t * prem * prem list =
+  analyze_exp_as_bound dctx exp;
+  let prem = PrintPr exp $ at in
   (dctx, VEnv.empty, prem, [])

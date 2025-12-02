@@ -280,6 +280,7 @@ and string_of_instr_short instr =
   | ResultI exps -> Format.asprintf "Result in %s" (string_of_exps ", " exps)
   | ReturnI exp -> Format.asprintf "Return %s" (string_of_exp exp)
   | DebugI exp -> Format.asprintf "Debug: %s" (string_of_exp exp)
+  | PrintI exp -> Format.asprintf "Print %s" (string_of_exp exp)
 
 and string_of_instr ?(verbose = false) ?(signature = None) ?(level = 0)
     ?(index = 0) instr =
@@ -367,6 +368,7 @@ and string_of_instr ?(verbose = false) ?(signature = None) ?(level = 0)
         | None -> string_of_exps ", " exps)
   | ReturnI exp -> Format.asprintf "%sReturn %s" order (string_of_exp exp)
   | DebugI exp -> Format.asprintf "%sDebug: %s" order (string_of_exp exp)
+  | PrintI exp -> Format.asprintf "%sPrint %s" order (string_of_exp exp)
 
 and string_of_instrs ?(verbose = false) ?(signature = None) ?(level = 0) instrs
     =

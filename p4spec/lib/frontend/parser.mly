@@ -76,7 +76,7 @@ let exit_scope () = vars := List.hd !scopes; scopes := List.tl !scopes
 
 %token LATEX BOOL NAT INT TEXT
 %token SYNTAX EXTERN RELATION RULEGROUP RULE VAR BUILTIN DEC DEF
-%token IF OTHERWISE DEBUG HINT_LPAREN EPS
+%token IF OTHERWISE DEBUG PRINT HINT_LPAREN EPS
 %token<bool> BOOLLIT
 %token<Bigint.t> NATLIT HEXLIT
 %token<string> TEXTLIT
@@ -188,7 +188,9 @@ defid : id { $1 @@@ $sloc }
 defid_lparen : id_lparen { $1 @@@ $sloc }
 defid_langle : id_langle { $1 @@@ $sloc }
 
-hintid : id { $1 }
+hintid :
+  | id { $1 }
+  | PRINT { "print" }
 
 synid :
   | varid { ($1, []) }
@@ -709,6 +711,7 @@ prem_ :
       iterate $2
     }
   | DEBUG exp { DebugPr $2 }
+  | PRINT exp { PrintPr $2 }
 
 (* Hints *)
 

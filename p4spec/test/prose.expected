@@ -19,8 +19,8 @@ relation Type_alpha: `typeIR'` and `typeIR'''`
  .. Check that `typeIR'''` has type `specializedTypeIR`.
  .. Let `typeDefIR~b~ < typeIR~b~^{asterisk}^ >` be `typeIR'''`.
  .. Group specializedTypeIR:
-  ... Let `typeIR~a_spec~` be `<<specialize_typeDefIR, $specialize_typeDefIR(typeDefIR~a~, typeIR~a~^{asterisk}^)>>`.
-  ... Let `typeIR~b_spec~` be `<<specialize_typeDefIR, $specialize_typeDefIR(typeDefIR~b~, typeIR~b~^{asterisk}^)>>`.
+  ... Let `typeIR~a_spec~` be <<specialize_typeDefIR, `typeDefIR~a~` specialized by `typeIR~a~^{asterisk}^`>>.
+  ... Let `typeIR~b_spec~` be <<specialize_typeDefIR, `typeDefIR~b~` specialized by `typeIR~b~^{asterisk}^`>>.
   ... Check that <<Type_alpha, `typeIR~a_spec~` and `typeIR~b_spec~` are the same type>>.
   ... If `<<is_nominal_typeIR, $is_nominal_typeIR(typeIR~a_spec~)>>` *and* `<<is_nominal_typeIR, $is_nominal_typeIR(typeIR~b_spec~)>>`:
    .... Check that <<Type_alpha, `typeIR~a~` and `typeIR~b~` are the same type>>, for all `typeIR~a~` in `typeIR~a~^{asterisk}^` and `typeIR~b~` in `typeIR~b~^{asterisk}^`.
@@ -136,21 +136,21 @@ for each `cid~a~` in `cid~a~^{asterisk}^`
 for each `externMethodTypeDefIR'^?^` in `externMethodTypeDefIR'^?^^{asterisk}^`
   ... Check that <<CallableTypeDef_alpha, `externMethodTypeDefIR~a'~` and `externMethodTypeDefIR~b'~` are the same type>>, for all `externMethodTypeDefIR~a'~` in `externMethodTypeDefIR~a'~^{asterisk}^` and `externMethodTypeDefIR~b'~` in `externMethodTypeDefIR~b'~^{asterisk}^`.
   ... The relation holds.
-. Else if let `PARSER ( parameterTypeIR~a~^{asterisk}^ )` be `typeIR'`:
+. Else if let `PARSER ++_++ ( parameterTypeIR~a~^{asterisk}^ )` be `typeIR'`:
  .. Check that `typeIR'''` has type `parserObjectTypeIR`.
- .. Let `PARSER ( parameterTypeIR~b~^{asterisk}^ )` be `typeIR'''`.
+ .. Let `PARSER ++_++ ( parameterTypeIR~b~^{asterisk}^ )` be `typeIR'''`.
  .. Group parserObjectTypeIR:
   ... Check that <<ParameterType_alpha, `parameterTypeIR~a~` and `parameterTypeIR~b~` are the same type>>, for all `parameterTypeIR~a~` in `parameterTypeIR~a~^{asterisk}^` and `parameterTypeIR~b~` in `parameterTypeIR~b~^{asterisk}^`.
   ... The relation holds.
-. Else if let `CONTROL ( parameterTypeIR~a~^{asterisk}^ )` be `typeIR'`:
+. Else if let `CONTROL ++_++ ( parameterTypeIR~a~^{asterisk}^ )` be `typeIR'`:
  .. Check that `typeIR'''` has type `controlObjectTypeIR`.
- .. Let `CONTROL ( parameterTypeIR~b~^{asterisk}^ )` be `typeIR'''`.
+ .. Let `CONTROL ++_++ ( parameterTypeIR~b~^{asterisk}^ )` be `typeIR'''`.
  .. Group controlObjectTypeIR:
   ... Check that <<ParameterType_alpha, `parameterTypeIR~a~` and `parameterTypeIR~b~` are the same type>>, for all `parameterTypeIR~a~` in `parameterTypeIR~a~^{asterisk}^` and `parameterTypeIR~b~` in `parameterTypeIR~b~^{asterisk}^`.
   ... The relation holds.
-. Else if let `PACKAGE { typeIR~a~^{asterisk}^ }` be `typeIR'`:
+. Else if let `PACKAGE ++_++ { typeIR~a~^{asterisk}^ }` be `typeIR'`:
  .. Check that `typeIR'''` has type `packageObjectTypeIR`.
- .. Let `PACKAGE { typeIR~b~^{asterisk}^ }` be `typeIR'''`.
+ .. Let `PACKAGE ++_++ { typeIR~b~^{asterisk}^ }` be `typeIR'''`.
  .. Group packetObjectTypeIR:
   ... Check that <<Type_alpha, `typeIR~a~` and `typeIR~b~` are the same type>>, for all `typeIR~a~` in `typeIR~a~^{asterisk}^` and `typeIR~b~` in `typeIR~b~^{asterisk}^`.
   ... The relation holds.
@@ -326,7 +326,7 @@ relation Type_wf: `bound` and `typeIR''`
   ... The relation holds.
 . Else if let `typeDefIR~base~ < typeIR~arg~^{asterisk}^ >` be `typeIR''`:
  .. Group specializedTypeIR:
-  ... Let `typeIR~spec~` be `<<specialize_typeDefIR, $specialize_typeDefIR(typeDefIR~base~, typeIR~arg~^{asterisk}^)>>`.
+  ... Let `typeIR~spec~` be <<specialize_typeDefIR, `typeDefIR~base~` specialized by `typeIR~arg~^{asterisk}^`>>.
   ... Check that <<Type_wf, `typeIR~spec~` is a well-formed type, assuming bound type ids `bound`>>.
   ... The relation holds.
 . Else if let `TYPEDEF ++_++ typeIR` be `typeIR''`:
@@ -386,15 +386,15 @@ relation Type_wf: `bound` and `typeIR''`
  .. Group externObjectTypeIR:
   ... Check that <<CallableTypeDef_wf, `externMethodTypeDefIR` is a well-formed type, assuming bound type ids `bound`>>, for all `externMethodTypeDefIR` in `externMethodTypeDefIR^{asterisk}^`.
   ... The relation holds.
-. Else if let `PARSER ( parameterTypeIR^{asterisk}^ )` be `typeIR''`:
+. Else if let `PARSER ++_++ ( parameterTypeIR^{asterisk}^ )` be `typeIR''`:
  .. Group parserObjectTypeIR:
   ... Check that <<ParameterTypes_wf, `parameterTypeIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
   ... The relation holds.
-. Else if let `CONTROL ( parameterTypeIR^{asterisk}^ )` be `typeIR''`:
+. Else if let `CONTROL ++_++ ( parameterTypeIR^{asterisk}^ )` be `typeIR''`:
  .. Group controlObjectTypeIR:
   ... Check that <<ParameterTypes_wf, `parameterTypeIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
   ... The relation holds.
-. Else if let `PACKAGE { typeIR^{asterisk}^ }` be `typeIR''`:
+. Else if let `PACKAGE ++_++ { typeIR^{asterisk}^ }` be `typeIR''`:
  .. Group packageObjectTypeIR:
   ... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `bound`>>, for all `typeIR` in `typeIR^{asterisk}^`.
   ... The relation holds.
@@ -446,9 +446,9 @@ relation TypeDef_wf: `bound` and `typeDefIR`
 
 
 . Group :
- .. Let `(tid~tparam_expl~^{asterisk}^, tid~tparam_impl~^{asterisk}^)` be `<<type_parameters_of_typeDefIR, $type_parameters_of_typeDefIR(typeDefIR)>>`.
+ .. Let `(tid~tparam_expl~^{asterisk}^, tid~tparam_impl~^{asterisk}^)` be <<type_parameters_of_typeDefIR, the type parameters of `typeDefIR`>>.
  .. Check that <<distinct_, the elements of `tid~tparam_expl~^{asterisk}^ {pp} tid~tparam_impl~^{asterisk}^` are distinct>>.
- .. Let `typeIR~base~` be `<<type_of_typeDefIR, $type_of_typeDefIR(typeDefIR)>>`.
+ .. Let `typeIR~base~` be <<type_of_typeDefIR, the underlying type of `typeDefIR`>>.
  .. Let `bound~inner~` be <<union_set, the union of the sets `bound` and `{ tid~tparam_expl~^{asterisk}^ {pp} tid~tparam_impl~^{asterisk}^ }`>>.
  .. Check that <<Type_wf, `typeIR~base~` is a well-formed type, assuming bound type ids `bound~inner~`>>.
  .. The relation holds.
@@ -731,7 +731,7 @@ relation Expr_eval_lctk: `p`, `TC`, and <<typedExpressionIR, `expressionIR` anno
   ... Result in `" text "`.
 . Else if let `prefixedNameIR` be `expressionIR`:
  .. Group referenceExpressionIR:
-  ... Let `value` be `<<find_var_value_t, $find_var_value_t(p, TC, prefixedNameIR)>>`.
+  ... Let `value` be <<find_var_value_t, the value of variable `prefixedNameIR` in the `p` layer of `TC`>>.
   ... Result in `value`.
 . Else if let `defaultExpression` be `expressionIR`:
  .. Group defaultExpressionIR:
@@ -820,16 +820,16 @@ for each `typedExpressionIR` in `typedExpressionIR^{asterisk}^`
 . Else if let `ERROR . nameIR` be `expressionIR`:
  .. Group errorAccessExpressionIR:
   ... Let `nameIR~error~` be `"error." {pp} nameIR`.
-  ... Let `value~error~` be `<<find_var_value_t, $find_var_value_t(p, TC, nameIR~error~)>>`.
+  ... Let `value~error~` be <<find_var_value_t, the value of variable `nameIR~error~` in the `p` layer of `TC`>>.
   ... Result in `value~error~`.
 . Else if let `memberAccessBaseIR . nameIR` be `expressionIR`:
  .. Else if let `TYPE prefixedNameIR~base~` be `memberAccessBaseIR`:
   ... Group memberAccessExpressionIR-type:
-   .... Let `typeDefIR^?^` be `<<find_typeDef_t, $find_typeDef_t(p, TC, prefixedNameIR~base~)>>`.
+   .... Let `typeDefIR^?^` be <<find_typeDef_t, the type definition of `prefixedNameIR~base~` in the `p` layer of `TC`>>.
    .... Check that `typeDefIR^?^` is Some value.
    .... Let `typeDefIR~base~` be `typeDefIR^?^`.
    .... Check that `<<is_monomorphic_typeDefIR, $is_monomorphic_typeDefIR(typeDefIR~base~)>>`.
-   .... Let `typeIR~base~` be `<<type_of_typeDefIR, $type_of_typeDefIR(typeDefIR~base~)>>`.
+   .... Let `typeIR~base~` be <<type_of_typeDefIR, the underlying type of `typeDefIR~base~`>>.
    .... Let `typeIR'` be <<canon_typeIR, the canonicalized form of `typeIR~base~`>>.
    .... Check that `typeIR'` has type `enumTypeIR`.
    .... Let `enumTypeIR` be `typeIR'`.
@@ -866,16 +866,16 @@ for each `typedExpressionIR` in `typedExpressionIR^{asterisk}^`
     ..... Check that `nameIR` is in `["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]`.
     ..... Result in `<<sizeof, $sizeof(typeIR~base~, nameIR)>>`.
    .... Else if let `TYPE prefixedNameIR . nameIR` be `callableTargetIR`:
-    ..... Let `typeDefIR^?^` be `<<find_typeDef_t, $find_typeDef_t(p, TC, prefixedNameIR)>>`.
+    ..... Let `typeDefIR^?^` be <<find_typeDef_t, the type definition of `prefixedNameIR` in the `p` layer of `TC`>>.
     ..... Check that `typeDefIR^?^` is Some value.
     ..... Let `typeDefIR~base~` be `typeDefIR^?^`.
     ..... If `<<is_monomorphic_typeDefIR, $is_monomorphic_typeDefIR(typeDefIR~base~)>>`:
-     ...... Let `typeIR~base~` be `<<type_of_typeDefIR, $type_of_typeDefIR(typeDefIR~base~)>>`.
+     ...... Let `typeIR~base~` be <<type_of_typeDefIR, the underlying type of `typeDefIR~base~`>>.
      ...... Check that `nameIR` is in `["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]`.
      ...... Result in `<<sizeof, $sizeof(typeIR~base~, nameIR)>>`.
     ..... Else `~<<is_monomorphic_typeDefIR, $is_monomorphic_typeDefIR(typeDefIR~base~)>>`:
-     ...... Check that (`[ ]`, `[ ]`) is equal to `<<type_parameters_of_typeDefIR, $type_parameters_of_typeDefIR(typeDefIR~base~)>>`.
-     ...... Let `typeIR~base~` be `<<type_of_typeDefIR, $type_of_typeDefIR(typeDefIR~base~)>>`.
+     ...... Check that (`[ ]`, `[ ]`) is equal to <<type_parameters_of_typeDefIR, the type parameters of `typeDefIR~base~`>>.
+     ...... Let `typeIR~base~` be <<type_of_typeDefIR, the underlying type of `typeDefIR~base~`>>.
      ...... Check that `nameIR` is in `["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]`.
      ...... Result in `<<sizeof, $sizeof(typeIR~base~, nameIR)>>`.
  .. Else if let `( callableTargetIR )` be `callableTargetIR`:
@@ -954,19 +954,19 @@ relation Type_ok: `p`, `TC`, and `typeOrVoid`
 . Else if let `prefixedTypeName` be `typeOrVoid`:
  .. Group prefixedTypeName:
   ... Let `prefixedNameIR` be <<prefixedTypeName, the prefixed name of  `prefixedTypeName`>>.
-  ... Let `typeDefIR'^?^` be `<<find_typeDef_t, $find_typeDef_t(p, TC, prefixedNameIR)>>`.
+  ... Let `typeDefIR'^?^` be <<find_typeDef_t, the type definition of `prefixedNameIR` in the `p` layer of `TC`>>.
   ... Check that `typeDefIR'^?^` is Some value.
   ... Let `typeDefIR` be `typeDefIR'^?^`.
   ... If `<<is_monomorphic_typeDefIR, $is_monomorphic_typeDefIR(typeDefIR)>>`:
-   .... Let `typeIR` be `<<type_of_typeDefIR, $type_of_typeDefIR(typeDefIR)>>`.
+   .... Let `typeIR` be <<type_of_typeDefIR, the underlying type of `typeDefIR`>>.
    .... Result in the type `typeIR` and a set of fresh type variables `[ ]`.
   ... Else `~<<is_monomorphic_typeDefIR, $is_monomorphic_typeDefIR(typeDefIR)>>`:
-   .... Check that (`[ ]`, `[ ]`) is equal to `<<type_parameters_of_typeDefIR, $type_parameters_of_typeDefIR(typeDefIR)>>`.
+   .... Check that (`[ ]`, `[ ]`) is equal to <<type_parameters_of_typeDefIR, the type parameters of `typeDefIR`>>.
    .... Result in the type `typeDefIR < [ ] >` and a set of fresh type variables `[ ]`.
 . Else if let `prefixedTypeName < typeArgumentList >` be `typeOrVoid`:
  .. Group specializedType:
   ... Let `prefixedNameIR` be <<prefixedTypeName, the prefixed name of  `prefixedTypeName`>>.
-  ... Let `typeDefIR'^?^` be `<<find_typeDef_t, $find_typeDef_t(p, TC, prefixedNameIR)>>`.
+  ... Let `typeDefIR'^?^` be <<find_typeDef_t, the type definition of `prefixedNameIR` in the `p` layer of `TC`>>.
   ... Check that `typeDefIR'^?^` is Some value.
   ... Let `typeDefIR` be `typeDefIR'^?^`.
   ... Check that `<<is_polymorphic_typeDefIR, $is_polymorphic_typeDefIR(typeDefIR)>>`.
@@ -1669,14 +1669,14 @@ relation Expr_ok: `p`, `TC`, and `expression'''`
 . Group referenceExpression:
  .. If let `prefixedNonTypeName` be `expression'''`:
   ... Let `prefixedNameIR` be <<prefixedNonTypeName, the prefixed name of  `prefixedNonTypeName`>>.
-  ... Let `varTypeIR^?^` be `<<find_var_t, $find_var_t(p, TC, prefixedNameIR)>>`.
+  ... Let `varTypeIR^?^` be <<find_var_t, the type of variable `prefixedNameIR` in the `p` layer of `TC`>>.
   ... Check that `varTypeIR^?^` is Some value.
   ... Let `++_++ typeIR ctk ++_++^?^` be `varTypeIR^?^`.
   ... Let `expressionNoteIR` be <<expressionNoteIR, type `typeIR` and compile-time known-ness `ctk`>>.
   ... Result in the typed expression <<typedExpressionIR, `prefixedNameIR` annotated with `expressionNoteIR`>>.
  .. Else if `expression'''` is equal to `THIS`:
   ... Let `prefixedNameIR` be `"this"`.
-  ... Let `varTypeIR^?^` be `<<find_var_t, $find_var_t(p, TC, prefixedNameIR)>>`.
+  ... Let `varTypeIR^?^` be <<find_var_t, the type of variable `prefixedNameIR` in the `p` layer of `TC`>>.
   ... Check that `varTypeIR^?^` is Some value.
   ... Let `++_++ typeIR ctk ++_++^?^` be `varTypeIR^?^`.
   ... Let `expressionNoteIR` be <<expressionNoteIR, type `typeIR` and compile-time known-ness `ctk`>>.
@@ -2079,18 +2079,18 @@ for each `typedExpressionIR~f~` in `typedExpressionIR~f~^{asterisk}^`
  .. Group errorAccessExpression:
   ... Let `nameIR` be <<name, the name of `member`>>.
   ... Let `nameIR~error~` be `"error." {pp} nameIR`.
-  ... Check that `ERROR . nameIR` is equal to `<<find_var_value_t, $find_var_value_t(p, TC, nameIR~error~)>>`.
+  ... Check that `ERROR . nameIR` is equal to <<find_var_value_t, the value of variable `nameIR~error~` in the `p` layer of `TC`>>.
   ... Let `expressionNoteIR` be <<expressionNoteIR, type `ERROR` and compile-time known-ness `LCTK`>>.
   ... Result in the typed expression <<typedExpressionIR, `ERROR . nameIR` annotated with `expressionNoteIR`>>.
 . Else if let `memberAccessBase . member` be `expression'''`:
  .. If let `prefixedTypeName~base~` be `memberAccessBase`:
   ... Group memberAccessExpression-type:
    .... Let `prefixedNameIR~base~` be <<prefixedTypeName, the prefixed name of  `prefixedTypeName~base~`>>.
-   .... Let `typeDefIR^?^` be `<<find_typeDef_t, $find_typeDef_t(p, TC, prefixedNameIR~base~)>>`.
+   .... Let `typeDefIR^?^` be <<find_typeDef_t, the type definition of `prefixedNameIR~base~` in the `p` layer of `TC`>>.
    .... Check that `typeDefIR^?^` is Some value.
    .... Let `typeDefIR~base~` be `typeDefIR^?^`.
    .... Check that `<<is_monomorphic_typeDefIR, $is_monomorphic_typeDefIR(typeDefIR~base~)>>`.
-   .... Let `typeIR~base~` be `<<type_of_typeDefIR, $type_of_typeDefIR(typeDefIR~base~)>>`.
+   .... Let `typeIR~base~` be <<type_of_typeDefIR, the underlying type of `typeDefIR~base~`>>.
    .... Let `typeIR` be <<canon_typeIR, the canonicalized form of `typeIR~base~`>>.
    .... Check that `typeIR` has type `enumTypeIR`.
    .... Let `enumTypeIR` be `typeIR`.
@@ -2388,7 +2388,7 @@ relation Lvalue_ok: `p`, `TC`, and `lvalue`
 . Let `prefixedNonTypeName` be `lvalue`.
 . Group referenceExpression-prefixedNonTypeName:
  .. Let `prefixedNameIR` be <<prefixedNonTypeName, the prefixed name of  `prefixedNonTypeName`>>.
- .. Let `varTypeIR^?^` be `<<find_var_t, $find_var_t(p, TC, prefixedNameIR)>>`.
+ .. Let `varTypeIR^?^` be <<find_var_t, the type of variable `prefixedNameIR` in the `p` layer of `TC`>>.
  .. Check that `varTypeIR^?^` is Some value.
  .. Let `direction typeIR ctk value^?^` be `varTypeIR^?^`.
  .. Check that `ctk` matches pattern `DYN`.
@@ -2575,7 +2575,7 @@ for each `argument` in `argument^{asterisk}^`
   ... Check that `argumentIR^{asterisk}^` is an empty list.
   ... Check that `<<compat_direct_application, $compat_direct_application(typeIR~object~)>>`.
   ... Let `nameIR~object~` be `"__direct_application"`.
-  ... Let `TC~1~` be <<add_var_t, the typing context `TC` with a mapping from `nameIR~object~` to `typeIR~object~ CTK None` added to the `p` layer>>.
+  ... Let `TC~1~` be <<add_var_t, `TC` with a mapping from `nameIR~object~` to `typeIR~object~ CTK None` added to the `p` layer>>.
   ... Let `lvalue` be `nameIR~object~ . "apply"`.
   ... Let `++_++`, `++_++`, and `statementIR` be the result of <<Stmt_ok, typing `lvalue ( argumentList ) ;`, under cursor `p`, typing context `TC~1~`, and abstract control flow `f`>>.
   ... Check that `statementIR` has type `callStatementIR`.
@@ -2698,7 +2698,7 @@ relation BlockElementStmt_ok: `TC~0~`, `f`, and `blockElementStatement`
    .... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `$bound(LOCAL, TC~0~)`>>.
    .... Check that `<<is_assignable_typeIR, $is_assignable_typeIR(typeIR)>>`.
    .... Let `nameIR` be <<name, the name of `name`>>.
-   .... Let `TC~1~` be <<add_var_t, the typing context `TC~0~` with a mapping from `nameIR` to `INOUT typeIR DYN None` added to the `LOCAL` layer>>.
+   .... Let `TC~1~` be <<add_var_t, `TC~0~` with a mapping from `nameIR` to `INOUT typeIR DYN None` added to the `LOCAL` layer>>.
    .... Let `variableDeclarationIR` be `annotationList typeIR nameIR None ;`.
    .... Result in 
 * the typing context `TC~1~`,
@@ -2714,7 +2714,7 @@ relation BlockElementStmt_ok: `TC~0~`, `f`, and `blockElementStatement`
    .... Check that `typedExpressionIR^?^` is Some value.
    .... Let `typedExpressionIR~init_cast~` be `typedExpressionIR^?^`.
    .... Let `nameIR` be <<name, the name of `name`>>.
-   .... Let `TC~1~` be <<add_var_t, the typing context `TC~0~` with a mapping from `nameIR` to `INOUT typeIR DYN None` added to the `LOCAL` layer>>.
+   .... Let `TC~1~` be <<add_var_t, `TC~0~` with a mapping from `nameIR` to `INOUT typeIR DYN None` added to the `LOCAL` layer>>.
    .... Let `variableDeclarationIR` be `annotationList typeIR nameIR = typedExpressionIR~init_cast~ ;`.
    .... Result in 
 * the typing context `TC~1~`,
@@ -2785,7 +2785,7 @@ relation Parameter_ok: `p`, `TC`, and `annotationList direction type name initia
   ... Let `typedExpressionIR~init_cast~` be `typedExpressionIR^?^`.
   ... Let `nameIR` be <<name, the name of `name`>>.
   ... Let `value~init~` be the result of <<Expr_eval_lctk, the local compile-time evaluation of `typedExpressionIR~init_cast~`, under cursor `p` and typing context `TC`>>.
-  ... Result in the parameter `annotationList direction typeIR nameIR = value~init~` and set of fresh type variables `tid~fresh~^{asterisk}^`.
+  ... Result in the parameter `annotationList direction typeIR nameIR = value~init~ ( typedExpressionIR~init_cast~ )` and set of fresh type variables `tid~fresh~^{asterisk}^`.
 
 
 relation Parameters_ok: `p`, `TC`, and `parameter^{asterisk}^`
@@ -2914,10 +2914,10 @@ relation ExternConstructor_ok: `TC~0~`, `tid~extern~`, and `annotationList typeI
 --
 +
 for each `constructorParameterIR` in `constructorParameterIR^{asterisk}^`
- .. Let `typeDefIR^?^` be `<<find_typeDef_t, $find_typeDef_t(GLOBAL, TC~0~, tid~extern~)>>`.
+ .. Let `typeDefIR^?^` be <<find_typeDef_t, the type definition of `tid~extern~` in the `GLOBAL` layer of `TC~0~`>>.
  .. Check that `typeDefIR^?^` is Some value.
  .. Let `typeDefIR~extern~` be `typeDefIR^?^`.
- .. Let `(tid~expl~^{asterisk}^, tid^{asterisk}^)` be `<<type_parameters_of_typeDefIR, $type_parameters_of_typeDefIR(typeDefIR~extern~)>>`.
+ .. Let `(tid~expl~^{asterisk}^, tid^{asterisk}^)` be <<type_parameters_of_typeDefIR, the type parameters of `typeDefIR~extern~`>>.
  .. Check that `tid^{asterisk}^` is an empty list.
  .. Let `cid` be `<<cid_, $cid_(typeIdentifier, ( parameterList ))>>`.
  .. Let `typeIR~extern_spec~` be `typeDefIR~extern~ < (tid~expl~)^{asterisk}^ >`.
@@ -3001,7 +3001,7 @@ relation ParserStmt_ok: `TC~0~` and `parserStatement'`
    .... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `$bound(LOCAL, TC~0~)`>>.
    .... Check that `<<is_assignable_typeIR, $is_assignable_typeIR(typeIR)>>`.
    .... Let `nameIR` be <<name, the name of `name`>>.
-   .... Let `TC~1~` be <<add_var_t, the typing context `TC~0~` with a mapping from `nameIR` to `INOUT typeIR DYN None` added to the `LOCAL` layer>>.
+   .... Let `TC~1~` be <<add_var_t, `TC~0~` with a mapping from `nameIR` to `INOUT typeIR DYN None` added to the `LOCAL` layer>>.
    .... Let `variableDeclarationIR` be `annotationList typeIR nameIR None ;`.
    .... Result in the updated typing context `TC~1~` and the typed parser statement `variableDeclarationIR`.
   ... Else if let `= expression~init~` be `initializerOpt`:
@@ -3014,7 +3014,7 @@ relation ParserStmt_ok: `TC~0~` and `parserStatement'`
    .... Check that `typedExpressionIR^?^` is Some value.
    .... Let `typedExpressionIR~init_cast~` be `typedExpressionIR^?^`.
    .... Let `nameIR` be <<name, the name of `name`>>.
-   .... Let `TC~1~` be <<add_var_t, the typing context `TC~0~` with a mapping from `nameIR` to `INOUT typeIR DYN None` added to the `LOCAL` layer>>.
+   .... Let `TC~1~` be <<add_var_t, `TC~0~` with a mapping from `nameIR` to `INOUT typeIR DYN None` added to the `LOCAL` layer>>.
    .... Let `variableDeclarationIR` be `annotationList typeIR nameIR = typedExpressionIR~init_cast~ ;`.
    .... Result in the updated typing context `TC~1~` and the typed parser statement `variableDeclarationIR`.
 . Else if let `emptyStatement` be `parserStatement'`:
@@ -3154,7 +3154,7 @@ relation ParserLocalDecl_ok: `TC~0~` and `parserLocalDeclaration`
    .... Check that `<<is_assignable_typeIR, $is_assignable_typeIR(typeIR)>>`.
    .... Let `nameIR` be <<name, the name of `name`>>.
    .... Let `varTypeIR` be `INOUT typeIR DYN None`.
-   .... Let `TC~1~` be <<add_var_t, the typing context `TC~0~` with a mapping from `nameIR` to `varTypeIR` added to the `BLOCK` layer>>.
+   .... Let `TC~1~` be <<add_var_t, `TC~0~` with a mapping from `nameIR` to `varTypeIR` added to the `BLOCK` layer>>.
    .... Let `variableDeclarationIR` be `annotationList typeIR nameIR None ;`.
    .... Result in the updated typing context `TC~1~` and the typed parser local declaration `variableDeclarationIR`.
   ... Else if let `= expression~init~` be `initializerOpt`:
@@ -3168,7 +3168,7 @@ relation ParserLocalDecl_ok: `TC~0~` and `parserLocalDeclaration`
    .... Let `typedExpressionIR~init_cast~` be `typedExpressionIR^?^`.
    .... Let `nameIR` be <<name, the name of `name`>>.
    .... Let `varTypeIR` be `INOUT typeIR DYN None`.
-   .... Let `TC~1~` be <<add_var_t, the typing context `TC~0~` with a mapping from `nameIR` to `varTypeIR` added to the `BLOCK` layer>>.
+   .... Let `TC~1~` be <<add_var_t, `TC~0~` with a mapping from `nameIR` to `varTypeIR` added to the `BLOCK` layer>>.
    .... Let `variableDeclarationIR` be `annotationList typeIR nameIR = typedExpressionIR~init_cast~ ;`.
    .... Result in the updated typing context `TC~1~` and the typed parser local declaration `variableDeclarationIR`.
 . Else let `annotationList VALUE_SET < valueSetType > ( expression ) name ;` be `parserLocalDeclaration`:
@@ -3180,7 +3180,7 @@ relation ParserLocalDecl_ok: `TC~0~` and `parserLocalDeclaration`
   ... Check that `<<ctk_of_typedExpressionIR, $ctk_of_typedExpressionIR(typedExpressionIR)>>` does not match pattern `DYN`.
   ... Let `nameIR` be <<name, the name of `name`>>.
   ... Let `varTypeIR` be `SET < [typeIR] > CTK None`.
-  ... Let `TC~1~` be <<add_var_t, the typing context `TC~0~` with a mapping from `nameIR` to `varTypeIR` added to the `BLOCK` layer>>.
+  ... Let `TC~1~` be <<add_var_t, `TC~0~` with a mapping from `nameIR` to `varTypeIR` added to the `BLOCK` layer>>.
   ... Let `valueSetDeclarationIR` be `annotationList VALUE_SET < typeIR > ( typedExpressionIR ) nameIR ;`.
   ... Result in the updated typing context `TC~1~` and the typed parser local declaration `valueSetDeclarationIR`.
 
@@ -3206,7 +3206,7 @@ relation TableKey_ok: `TC`, `TBLC~0~`, and `expression : name~matchkind~ annotat
  .. Let `typeIR` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR`>>.
  .. Check that <<Type_wf, `SET < [typeIR] >` is a well-formed type, assuming bound type ids `$bound(LOCAL, TC)`>>.
  .. Let `nameIR~matchkind~` be <<name, the name of `name~matchkind~`>>.
- .. Check that `MATCH_KIND . nameIR~matchkind~` is equal to `<<find_var_value_t, $find_var_value_t(LOCAL, TC, nameIR~matchkind~)>>`.
+ .. Check that `MATCH_KIND . nameIR~matchkind~` is equal to <<find_var_value_t, the value of variable `nameIR~matchkind~` in the `LOCAL` layer of `TC`>>.
  .. Check that `<<compat_table_key, $compat_table_key(nameIR~matchkind~, typeIR)>>`.
  .. Let `TBLC~1~` be `<<update_mode, $update_mode(TBLC~0~, nameIR~matchkind~, typeIR)>>`.
  .. Let `TBLC~2~` be `<<add_key, $add_key(TBLC~1~, nameIR~matchkind~, typeIR)>>`.
@@ -3243,7 +3243,7 @@ relation TableAction_ok: `TC`, `TBLC~0~`, and `annotationList tableActionReferen
 . If let `prefixedNonTypeName` be `tableActionReference`:
  .. Group prefixedNonTypeName:
   ... Let `prefixedNameIR` be <<prefixedNonTypeName, the prefixed name of  `prefixedNonTypeName`>>.
-  ... Let `callableTypeDefIR'^?^` be `<<find_callableDef_non_overloaded_t, $find_callableDef_non_overloaded_t(LOCAL, TC, prefixedNameIR)>>`.
+  ... Let `callableTypeDefIR'^?^` be <<find_callableDef_non_overloaded_t, the non-overloaded callable definition of `prefixedNameIR` in the `LOCAL` layer of `TC`>>.
   ... Check that `callableTypeDefIR'^?^` is Some value.
   ... Let `callableTypeDefIR` be `callableTypeDefIR'^?^`.
   ... Check that `callableTypeDefIR` has type `actionTypeIR`.
@@ -3256,7 +3256,7 @@ relation TableAction_ok: `TC`, `TBLC~0~`, and `annotationList tableActionReferen
 . Else if let `prefixedNonTypeName ( argumentList )` be `tableActionReference`:
  .. Group prefixedNonTypeName-argumentList:
   ... Let `prefixedNameIR` be <<prefixedNonTypeName, the prefixed name of  `prefixedNonTypeName`>>.
-  ... Let `callableTypeDefIR'^?^` be `<<find_callableDef_non_overloaded_t, $find_callableDef_non_overloaded_t(LOCAL, TC, prefixedNameIR)>>`.
+  ... Let `callableTypeDefIR'^?^` be <<find_callableDef_non_overloaded_t, the non-overloaded callable definition of `prefixedNameIR` in the `LOCAL` layer of `TC`>>.
   ... Check that `callableTypeDefIR'^?^` is Some value.
   ... Let `callableTypeDefIR` be `callableTypeDefIR'^?^`.
   ... Check that `callableTypeDefIR` has type `actionTypeIR`.
@@ -3704,52 +3704,6 @@ relation TableProperty_ok: `TC`, `TBLC~0~`, and `tableProperty`
     ..... Let `constOptIR` be <<flatten_constOpt, the optional const qualifier in `constOpt`>>.
     ..... Let `tablePropertyIR` be `annotationList constOptIR CUSTOM "size" = typedExpressionIR ;`.
     ..... Result in the updated table context `TBLC~0~` and the typed table property `tablePropertyIR`.
-  ... Else if `"largest_priority_wins"` is equal to <<tableCustomName, the name of `tableCustomName`>>:
-   .... Let `typedExpressionIR` be the result of <<Expr_ok, typing `expression`, under cursor `LOCAL` and typing context `TC`>>.
-   .... Let `typeIR` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR`>>.
-   .... Check that `<<ctk_of_typedExpressionIR, $ctk_of_typedExpressionIR(typedExpressionIR)>>` matches pattern `LCTK`.
-   .... Check that `BOOL` is equal to <<canon_typeIR, the canonicalized form of `typeIR`>>.
-   .... Let `value'` be the result of <<Expr_eval_lctk, the local compile-time evaluation of `typedExpressionIR`, under cursor `LOCAL` and typing context `TC`>>.
-   .... Check that `value'` has type `boolValue`.
-   .... Let `B b~largest_priority_wins~` be `value'`.
-   .... Let `TBLC~1~` be `TBLC~0~[PRIORITIES.LARGEST_WINS = b~largest_priority_wins~]`.
-   .... Let `constOptIR` be <<flatten_constOpt, the optional const qualifier in `constOpt`>>.
-   .... Let `tablePropertyIR` be `annotationList constOptIR CUSTOM_CONST "largest_priority_wins" = B b~largest_priority_wins~ ;`.
-   .... Result in the updated table context `TBLC~1~` and the typed table property `tablePropertyIR`.
-  ... Else if `"priority_delta"` is equal to <<tableCustomName, the name of `tableCustomName`>>:
-   .... Let `typedExpressionIR` be the result of <<Expr_ok, typing `expression`, under cursor `LOCAL` and typing context `TC`>>.
-   .... Let `typeIR` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR`>>.
-   .... Check that `<<ctk_of_typedExpressionIR, $ctk_of_typedExpressionIR(typedExpressionIR)>>` matches pattern `LCTK`.
-   .... If `<<is_arbitraryIntTypeIR, $is_arbitraryIntTypeIR($canon_typeIR(typeIR))>>`:
-    ..... Let `value` be the result of <<Expr_eval_lctk, the local compile-time evaluation of `typedExpressionIR`, under cursor `LOCAL` and typing context `TC`>>.
-    ..... Let `int` be <<int_of_value, the integer representation of  `value`>>.
-    ..... Check that `int` has type `nat`.
-    ..... Let `n~delta~` be `int`.
-    ..... Check that `n~delta~` is greater than `0`.
-    ..... Let `TBLC~1~` be `TBLC~0~[PRIORITIES.DELTA = n~delta~]`.
-    ..... Let `constOptIR` be <<flatten_constOpt, the optional const qualifier in `constOpt`>>.
-    ..... Let `tablePropertyIR` be `annotationList constOptIR CUSTOM_CONST "priority_delta" = D n~delta~ ;`.
-    ..... Result in the updated table context `TBLC~1~` and the typed table property `tablePropertyIR`.
-   .... Else if `<<is_fixedIntTypeIR, $is_fixedIntTypeIR($canon_typeIR(typeIR))>>`:
-    ..... Let `value` be the result of <<Expr_eval_lctk, the local compile-time evaluation of `typedExpressionIR`, under cursor `LOCAL` and typing context `TC`>>.
-    ..... Let `int` be <<int_of_value, the integer representation of  `value`>>.
-    ..... Check that `int` has type `nat`.
-    ..... Let `n~delta~` be `int`.
-    ..... Check that `n~delta~` is greater than `0`.
-    ..... Let `TBLC~1~` be `TBLC~0~[PRIORITIES.DELTA = n~delta~]`.
-    ..... Let `constOptIR` be <<flatten_constOpt, the optional const qualifier in `constOpt`>>.
-    ..... Let `tablePropertyIR` be `annotationList constOptIR CUSTOM_CONST "priority_delta" = D n~delta~ ;`.
-    ..... Result in the updated table context `TBLC~1~` and the typed table property `tablePropertyIR`.
-   .... Else if `<<is_fixedBitTypeIR, $is_fixedBitTypeIR($canon_typeIR(typeIR))>>`:
-    ..... Let `value` be the result of <<Expr_eval_lctk, the local compile-time evaluation of `typedExpressionIR`, under cursor `LOCAL` and typing context `TC`>>.
-    ..... Let `int` be <<int_of_value, the integer representation of  `value`>>.
-    ..... Check that `int` has type `nat`.
-    ..... Let `n~delta~` be `int`.
-    ..... Check that `n~delta~` is greater than `0`.
-    ..... Let `TBLC~1~` be `TBLC~0~[PRIORITIES.DELTA = n~delta~]`.
-    ..... Let `constOptIR` be <<flatten_constOpt, the optional const qualifier in `constOpt`>>.
-    ..... Let `tablePropertyIR` be `annotationList constOptIR CUSTOM_CONST "priority_delta" = D n~delta~ ;`.
-    ..... Result in the updated table context `TBLC~1~` and the typed table property `tablePropertyIR`.
   ... Let `nameIR` be <<tableCustomName, the name of `tableCustomName`>>.
   ... Else if `nameIR =/= "size" /\ nameIR =/= "largest_priority_wins"` *and* `nameIR =/= "priority_delta"`:
    .... Let `typedExpressionIR` be the result of <<Expr_ok, typing `expression`, under cursor `LOCAL` and typing context `TC`>>.
@@ -3818,7 +3772,7 @@ for each `id~enum_field~` in `id~enum_field~^{asterisk}^`
 --
 +
 for each `value~enum_field~` in `value~enum_field~^{asterisk}^`
- .. Let `TC~1~` be <<add_vars_t, the typing context `TC~0~` with mappings from each of `(tid~enum~ {pp} "." {pp} id~enum_field~)^{asterisk}^` to each of `varTypeIR~enum_field~^{asterisk}^` added to the `BLOCK` layer>>.
+ .. Let `TC~1~` be <<add_vars_t, `TC~0~` with mappings from each of `(tid~enum~ {pp} "." {pp} id~enum_field~)^{asterisk}^` to each of `varTypeIR~enum_field~^{asterisk}^` added to the `BLOCK` layer>>.
  .. Let `tid~struct~` be `"apply_result(" {pp} nameIR {pp} ")"`.
  .. Let `tableMetadataStructTypeIR` be `TABLE_STRUCT tid~struct~ { HIT BOOL ; MISS BOOL ; ACTION_RUN tableMetadataEnumTypeIR ; }`.
  .. Let `typeIR~table~` be `TABLE nameIR { tableMetadataStructTypeIR }`.
@@ -3849,7 +3803,7 @@ relation ControlLocalDecl_ok: `TC~0~` and `controlLocalDeclaration`
    .... Check that `<<is_assignable_typeIR, $is_assignable_typeIR(typeIR)>>`.
    .... Let `nameIR` be <<name, the name of `name`>>.
    .... Let `varTypeIR` be `INOUT typeIR DYN None`.
-   .... Let `TC~1~` be <<add_var_t, the typing context `TC~0~` with a mapping from `nameIR` to `varTypeIR` added to the `BLOCK` layer>>.
+   .... Let `TC~1~` be <<add_var_t, `TC~0~` with a mapping from `nameIR` to `varTypeIR` added to the `BLOCK` layer>>.
    .... Let `variableDeclarationIR` be `annotationList typeIR nameIR None ;`.
    .... Result in the updated typing context `TC~1~` and the typed control local declaration `variableDeclarationIR`.
   ... Else if let `= expression~init~` be `initializerOpt`:
@@ -3863,7 +3817,7 @@ relation ControlLocalDecl_ok: `TC~0~` and `controlLocalDeclaration`
    .... Let `typedExpressionIR~init_cast~` be `typedExpressionIR^?^`.
    .... Let `nameIR` be <<name, the name of `name`>>.
    .... Let `varTypeIR` be `INOUT typeIR DYN None`.
-   .... Let `TC~1~` be <<add_var_t, the typing context `TC~0~` with a mapping from `nameIR` to `varTypeIR` added to the `BLOCK` layer>>.
+   .... Let `TC~1~` be <<add_var_t, `TC~0~` with a mapping from `nameIR` to `varTypeIR` added to the `BLOCK` layer>>.
    .... Let `variableDeclarationIR` be `annotationList typeIR nameIR = typedExpressionIR~init_cast~ ;`.
    .... Result in the updated typing context `TC~1~` and the typed control local declaration `variableDeclarationIR`.
 . Else if let `actionDeclaration` be `controlLocalDeclaration`:
@@ -3880,7 +3834,7 @@ relation ControlLocalDecl_ok: `TC~0~` and `controlLocalDeclaration`
   ... Let `nameIR` be <<name, the name of `name`>>.
   ... Let `TC~2~` and `typeIR~table~` be the result of <<TableType_ok, typing `name`, under typing context `TC~1~` and table context `TBLC`>>.
   ... Let `varTypeIR` be `typeIR~table~ DYN None`.
-  ... Let `TC~3~` be <<add_var_t, the typing context `TC~2~` with a mapping from `nameIR` to `varTypeIR` added to the `BLOCK` layer>>.
+  ... Let `TC~3~` be <<add_var_t, `TC~2~` with a mapping from `nameIR` to `varTypeIR` added to the `BLOCK` layer>>.
   ... Let `tableDeclarationIR` be `annotationList TABLE typeIR~table~ nameIR { tablePropertyIR^{asterisk}^ }`.
   ... Result in the updated typing context `TC~3~` and the typed control local declaration `tableDeclarationIR`.
 
@@ -3913,8 +3867,8 @@ relation Decl_ok: `p`, `TC~0~`, and `declaration`
   ... Let `typedExpressionIR~value_cast~` be `typedExpressionIR^?^`.
   ... Let `value` be the result of <<Expr_eval_lctk, the local compile-time evaluation of `typedExpressionIR~value_cast~`, under cursor `p` and typing context `TC~0~`>>.
   ... Let `nameIR` be <<name, the name of `name`>>.
-  ... Let `TC~1~` be <<add_var_t, the typing context `TC~0~` with a mapping from `nameIR` to `typeIR LCTK value` added to the `p` layer>>.
-  ... Let `constantDeclarationIR` be `annotationList CONST typeIR nameIR = value ;`.
+  ... Let `TC~1~` be <<add_var_t, `TC~0~` with a mapping from `nameIR` to `typeIR LCTK value` added to the `p` layer>>.
+  ... Let `constantDeclarationIR` be `annotationList CONST typeIR nameIR = value ( typedExpressionIR~value_cast~ ) ;`.
   ... Result in the modified typing context `TC~1~` and the typed declaration `constantDeclarationIR`.
 . Else if let `instantiation` be `declaration`:
  .. If let `annotationList type ( argumentList ) name ;` be `instantiation`:
@@ -3932,7 +3886,7 @@ for each `argument` in `argument^{asterisk}^`
     ..... Let <<ConstructorType_ok, `p TC~0~ |- prefixedNameIR < [ ] > ( argumentIR^{asterisk}^ ) : constructorTypeIR < # tid~impl~^{asterisk}^ > ( # id~default~^{asterisk}^ )`>>.
     ..... Let <<Inst_ok, `p TC~0~ NAMED |- constructorTypeIR < [ ] # tid~impl~^{asterisk}^ > ( argumentIR^{asterisk}^ # id~default~^{asterisk}^ ) : typeIR~object~ < typeArgumentIR~inferred~^{asterisk}^ > ( argumentIR~cast~^{asterisk}^ )`>>.
     ..... Let `nameIR` be <<name, the name of `name`>>.
-    ..... Let `TC~1~` be <<add_var_t, the typing context `TC~0~` with a mapping from `nameIR` to `typeIR~object~ CTK None` added to the `p` layer>>.
+    ..... Let `TC~1~` be <<add_var_t, `TC~0~` with a mapping from `nameIR` to `typeIR~object~ CTK None` added to the `p` layer>>.
     ..... Let `instantiationIR` be `annotationList typeIR~object~ prefixedNameIR < typeArgumentIR~inferred~^{asterisk}^ > ( argumentIR^{asterisk}^ ) nameIR None ;`.
     ..... Result in the modified typing context `TC~1~` and the typed declaration `instantiationIR`.
    .... Else if let `prefixedTypeName < typeArgumentList >` be `type`:
@@ -3951,7 +3905,7 @@ for each `argument` in `argument^{asterisk}^`
     ..... Let `tid~infer~^{asterisk}^` be `tid~impl~^{asterisk}^ {pp} tid~inserted~^{asterisk}^`.
     ..... Let <<Inst_ok, `p TC~0~ NAMED |- constructorTypeIR < typeArgumentIR^{asterisk}^ # tid~infer~^{asterisk}^ > ( argumentIR^{asterisk}^ # id~default~^{asterisk}^ ) : typeIR~object~ < typeArgumentIR~inferred~^{asterisk}^ > ( argumentIR~cast~^{asterisk}^ )`>>.
     ..... Let `nameIR` be <<name, the name of `name`>>.
-    ..... Let `TC~1~` be <<add_var_t, the typing context `TC~0~` with a mapping from `nameIR` to `typeIR~object~ CTK None` added to the `p` layer>>.
+    ..... Let `TC~1~` be <<add_var_t, `TC~0~` with a mapping from `nameIR` to `typeIR~object~ CTK None` added to the `p` layer>>.
     ..... Let `instantiationIR` be `annotationList typeIR~object~ prefixedNameIR < typeArgumentIR~inferred~^{asterisk}^ > ( argumentIR^{asterisk}^ ) nameIR None ;`.
     ..... Result in the modified typing context `TC~1~` and the typed declaration `instantiationIR`.
  .. Else let `annotationList type ( argumentList ) name = { objectDeclarationList } ;` be `instantiation`:
@@ -3974,7 +3928,7 @@ for each `argument` in `argument^{asterisk}^`
     ..... Check that `typeDefIR~object~` has type `externObjectTypeDefIR`.
     ..... Let `EXTERN tid~extern~ < tid~expl~^{asterisk}^ , tid'^{asterisk}^ > externMethodTypeDefEnv~extern~` be `typeDefIR~object~`.
     ..... Check that `tid'^{asterisk}^` is equal to `tid~impl~^{asterisk}^`.
-    ..... Let `TC~1~` be <<add_var_t, the typing context `TC~0~` with a mapping from `"this"` to `typeIR~object~ CTK None` added to the `LOCAL` layer>>.
+    ..... Let `TC~1~` be <<add_var_t, `TC~0~` with a mapping from `"this"` to `typeIR~object~ CTK None` added to the `LOCAL` layer>>.
     ..... Let `objectDeclaration^{asterisk}^` be <<flatten_objectDeclarationList, the list of object declarations in `objectDeclarationList`>>.
     ..... Let <<Decls_object_ok, `p TC~1~ { [ ] } { [ ] } |- objectDeclaration^{asterisk}^ : typeFrame~init~ externMethodTypeDefEnv~init~ objectDeclarationIR^{asterisk}^`>>.
     ..... Let `tid^{asterisk}^` be `tid~expl~^{asterisk}^ {pp} tid~impl~^{asterisk}^`.
@@ -3984,7 +3938,7 @@ for each `argument` in `argument^{asterisk}^`
     ..... Let `typeIR~object_init~` be `typeDefIR~object_init~ < typeIR~arg~^{asterisk}^ >`.
     ..... Check that `<<is_concrete_extern_object, $is_concrete_extern_object(typeIR~object_init~)>>`.
     ..... Let `nameIR` be <<name, the name of `name`>>.
-    ..... Let `TC~2~` be <<add_var_t, the typing context `TC~0~` with a mapping from `nameIR` to `typeIR~object_init~ CTK None` added to the `p` layer>>.
+    ..... Let `TC~2~` be <<add_var_t, `TC~0~` with a mapping from `nameIR` to `typeIR~object_init~ CTK None` added to the `p` layer>>.
     ..... Let `instantiationIR` be `annotationList typeIR~object_init~ prefixedNameIR < typeArgumentIR~inferred~^{asterisk}^ > ( argumentIR^{asterisk}^ ) nameIR = { objectDeclarationIR^{asterisk}^ } ;`.
     ..... Result in the modified typing context `TC~2~` and the typed declaration `instantiationIR`.
    .... Else if let `prefixedTypeName < typeArgumentList >` be `type`:
@@ -4008,7 +3962,7 @@ for each `argument` in `argument^{asterisk}^`
     ..... Check that `typeDefIR~object~` has type `externObjectTypeDefIR`.
     ..... Let `EXTERN tid~extern~ < tid~expl~^{asterisk}^ , tid'^{asterisk}^ > externMethodTypeDefEnv~extern~` be `typeDefIR~object~`.
     ..... Check that `tid'^{asterisk}^` is equal to `tid~impl~^{asterisk}^`.
-    ..... Let `TC~1~` be <<add_var_t, the typing context `TC~0~` with a mapping from `"this"` to `typeIR~object~ CTK None` added to the `LOCAL` layer>>.
+    ..... Let `TC~1~` be <<add_var_t, `TC~0~` with a mapping from `"this"` to `typeIR~object~ CTK None` added to the `LOCAL` layer>>.
     ..... Let `objectDeclaration^{asterisk}^` be <<flatten_objectDeclarationList, the list of object declarations in `objectDeclarationList`>>.
     ..... Let <<Decls_object_ok, `p TC~1~ { [ ] } { [ ] } |- objectDeclaration^{asterisk}^ : typeFrame~init~ externMethodTypeDefEnv~init~ objectDeclarationIR^{asterisk}^`>>.
     ..... Let `tid^{asterisk}^` be `tid~expl~^{asterisk}^ {pp} tid~impl~^{asterisk}^`.
@@ -4018,7 +3972,7 @@ for each `argument` in `argument^{asterisk}^`
     ..... Let `typeIR~object_init~` be `typeDefIR~object_init~ < typeIR~arg~^{asterisk}^ >`.
     ..... Check that `<<is_concrete_extern_object, $is_concrete_extern_object(typeIR~object_init~)>>`.
     ..... Let `nameIR` be <<name, the name of `name`>>.
-    ..... Let `TC~2~` be <<add_var_t, the typing context `TC~0~` with a mapping from `nameIR` to `typeIR~object_init~ CTK None` added to the `p` layer>>.
+    ..... Let `TC~2~` be <<add_var_t, `TC~0~` with a mapping from `nameIR` to `typeIR~object_init~ CTK None` added to the `p` layer>>.
     ..... Let `instantiationIR` be `annotationList typeIR~object_init~ prefixedNameIR < typeArgumentIR~inferred~^{asterisk}^ > ( argumentIR^{asterisk}^ ) nameIR = { objectDeclarationIR^{asterisk}^ } ;`.
     ..... Result in the modified typing context `TC~2~` and the typed declaration `instantiationIR`.
 . Else if let `annotationList typeOrVoid name typeParameterListOpt ( parameterList ) blockStatement` be `declaration`:
@@ -4117,7 +4071,7 @@ for each `nameIR` in `nameIR^{asterisk}^`
 --
 +
 for each `value~error~` in `value~error~^{asterisk}^`
-  ... Let `TC~1~` be <<add_vars_t, the typing context `TC~0~` with mappings from each of `nameIR~error~^{asterisk}^` to each of `varTypeIR^{asterisk}^` added to the `GLOBAL` layer>>.
+  ... Let `TC~1~` be <<add_vars_t, `TC~0~` with mappings from each of `nameIR~error~^{asterisk}^` to each of `varTypeIR^{asterisk}^` added to the `GLOBAL` layer>>.
   ... Result in the modified typing context `TC~1~` and the typed declaration `ERROR { nameIR^{asterisk}^ }`.
 . Else if let `MATCH_KIND { nameList ++_++ }` be `declaration`:
  .. Group matchKindDeclaration:
@@ -4144,7 +4098,7 @@ for each `nameIR` in `nameIR^{asterisk}^`
 --
 +
 for each `value~match_kind~` in `value~match_kind~^{asterisk}^`
-  ... Let `TC~1~` be <<add_vars_t, the typing context `TC~0~` with mappings from each of `nameIR^{asterisk}^` to each of `varTypeIR^{asterisk}^` added to the `GLOBAL` layer>>.
+  ... Let `TC~1~` be <<add_vars_t, `TC~0~` with mappings from each of `nameIR^{asterisk}^` to each of `varTypeIR^{asterisk}^` added to the `GLOBAL` layer>>.
   ... Result in the modified typing context `TC~1~` and the typed declaration `MATCH_KIND { nameIR^{asterisk}^ }`.
 . Else if let `annotationList EXTERN typeOrVoid name typeParameterListOpt ( parameterList ) ;` be `declaration`:
  .. Group externFunctionDeclaration:
@@ -4249,12 +4203,12 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
   ... Let `callableTypeDefIR` be `PARSER_APPLY ( parameterTypeIR^{asterisk}^ )`.
   ... Check that <<CallableTypeDef_wf, `callableTypeDefIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
   ... Let `cid` be `<<cid_, $cid_(name, constructorParameterListOpt)>>`.
-  ... Let `parserObjectTypeDefIR` be `PARSER < [ ] , [ ] > ( parameterTypeIR^{asterisk}^ )`.
+  ... Let `nameIR` be <<name, the name of `name`>>.
+  ... Let `parserObjectTypeDefIR` be `PARSER nameIR < [ ] , [ ] > ( parameterTypeIR^{asterisk}^ )`.
   ... Let `typeIR~parser_spec~` be `parserObjectTypeDefIR < [ ] >`.
   ... Let `constructorTypeDefIR` be `CONSTRUCTOR < [ ] , [ ] > ( constructorParameterTypeIR^{asterisk}^ ) : typeIR~parser_spec~`.
   ... Check that <<ConstructorTypeDef_wf, `constructorTypeDefIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
   ... Let `TC~6~` be `<<add_constructorDef_t, $add_constructorDef_t(TC~0~, cid, constructorTypeDefIR)>>`.
-  ... Let `nameIR` be <<name, the name of `name`>>.
   ... Let `parserDeclarationIR` be `annotationList PARSER nameIR < [ ] > ( parameterIR^{asterisk}^ ) ( constructorParameterIR^{asterisk}^ ) { parserLocalDeclarationIR^{asterisk}^ parserStateIR^{asterisk}^ }`.
   ... Result in the modified typing context `TC~6~` and the typed declaration `parserDeclarationIR`.
 . Else if let `annotationList CONTROL name typeParameterListOpt ( parameterList ) constructorParameterListOpt { controlLocalDeclarationList APPLY controlBody }` be `declaration`:
@@ -4290,12 +4244,12 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
   ... Let `callableTypeDefIR` be `CONTROL_APPLY ( parameterTypeIR^{asterisk}^ )`.
   ... Check that <<CallableTypeDef_wf, `callableTypeDefIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
   ... Let `cid` be `<<cid_, $cid_(name, constructorParameterListOpt)>>`.
-  ... Let `controlObjectTypeDefIR` be `CONTROL < [ ] , [ ] > ( parameterTypeIR^{asterisk}^ )`.
+  ... Let `nameIR` be <<name, the name of `name`>>.
+  ... Let `controlObjectTypeDefIR` be `CONTROL nameIR < [ ] , [ ] > ( parameterTypeIR^{asterisk}^ )`.
   ... Let `typeIR~control_spec~` be `controlObjectTypeDefIR < [ ] >`.
   ... Let `constructorTypeDefIR` be `CONSTRUCTOR < [ ] , [ ] > ( constructorParameterTypeIR^{asterisk}^ ) : typeIR~control_spec~`.
   ... Check that <<ConstructorTypeDef_wf, `constructorTypeDefIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
   ... Let `TC~6~` be `<<add_constructorDef_t, $add_constructorDef_t(TC~0~, cid, constructorTypeDefIR)>>`.
-  ... Let `nameIR` be <<name, the name of `name`>>.
   ... Let `controlDeclarationIR` be `annotationList CONTROL nameIR < [ ] > ( parameterIR^{asterisk}^ ) ( constructorParameterIR^{asterisk}^ ) { controlLocalDeclarationIR^{asterisk}^ APPLY controlBodyIR }`.
   ... Result in the modified typing context `TC~6~` and the typed declaration `controlDeclarationIR`.
 . Else if let `enumTypeDeclaration` be `declaration`:
@@ -4334,7 +4288,7 @@ for each `nameIR~field~` in `nameIR~field~^{asterisk}^`
 --
 +
 for each `value~field~` in `value~field~^{asterisk}^`
-   .... Let `TC~2~` be <<add_vars_t, the typing context `TC~1~` with mappings from each of `id~field~^{asterisk}^` to each of `varTypeIR^{asterisk}^` added to the `GLOBAL` layer>>.
+   .... Let `TC~2~` be <<add_vars_t, `TC~1~` with mappings from each of `id~field~^{asterisk}^` to each of `varTypeIR^{asterisk}^` added to the `GLOBAL` layer>>.
    .... Let `enumTypeDeclarationIR` be `annotationList ENUM nameIR { nameIR~field~^{asterisk}^ }`.
    .... Result in the modified typing context `TC~2~` and the typed declaration `enumTypeDeclarationIR`.
  .. Else let `annotationList ENUM type name { namedExpressionList~field~ ++_++ }` be `enumTypeDeclaration`:
@@ -4367,7 +4321,7 @@ for each `nameIR~field~` in `nameIR~field~^{asterisk}^`
 --
 +
 for each `value~field~` in `value~field~^{asterisk}^`
-   .... Let `TC~2~` be <<add_vars_t, the typing context `TC~0~` with mappings from each of `id~field~^{asterisk}^` to each of `varTypeIR^{asterisk}^` added to the `GLOBAL` layer>>.
+   .... Let `TC~2~` be <<add_vars_t, `TC~0~` with mappings from each of `id~field~^{asterisk}^` to each of `varTypeIR^{asterisk}^` added to the `GLOBAL` layer>>.
    .... Check that <<TypeDef_wf, `enumTypeDefIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
    .... Let `TC~3~` be `<<add_typeDef_t, $add_typeDef_t(GLOBAL, TC~2~, nameIR, enumTypeDefIR)>>`.
    .... Let `enumTypeDeclarationIR` be `annotationList ENUM typeIR nameIR { namedExpressionIR~field~^{asterisk}^ }`.
@@ -4493,11 +4447,11 @@ for each `name~f~` in `name~f~^{asterisk}^`
     ..... Let `{ tid'^{asterisk}^ }` be <<diff_set, the difference of the sets `set<tid>` and `set<tid>'`>>.
     ..... Check that `tid'^{asterisk}^` is a list of length 1.
     ..... Let `[tid]` be `tid'^{asterisk}^`.
-    ..... Let `typeDefIR'^?^` be `<<find_typeDef_t, $find_typeDef_t(GLOBAL, TC~1~, tid)>>`.
+    ..... Let `typeDefIR'^?^` be <<find_typeDef_t, the type definition of `tid` in the `GLOBAL` layer of `TC~1~`>>.
     ..... Check that `typeDefIR'^?^` is Some value.
     ..... Let `typeDefIR` be `typeDefIR'^?^`.
     ..... If `<<is_monomorphic_typeDefIR, $is_monomorphic_typeDefIR(typeDefIR)>>`:
-     ...... Let `typeIR` be `<<type_of_typeDefIR, $type_of_typeDefIR(typeDefIR)>>`.
+     ...... Let `typeIR` be <<type_of_typeDefIR, the underlying type of `typeDefIR`>>.
      ...... Let `nameIR` be <<name, the name of `name`>>.
      ...... Let `typedefTypeIR` be `TYPEDEF nameIR typeIR`.
      ...... Check that <<TypeDef_wf, `typedefTypeIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
@@ -4505,7 +4459,7 @@ for each `name~f~` in `name~f~^{asterisk}^`
      ...... Let `typedefDeclarationIR` be `annotationList TYPEDEF derivedTypeDeclarationIR nameIR ;`.
      ...... Result in the modified typing context `TC~1~` and the typed declaration `typedefDeclarationIR`.
     ..... Else `~<<is_monomorphic_typeDefIR, $is_monomorphic_typeDefIR(typeDefIR)>>`:
-     ...... Check that (`[ ]`, `[ ]`) is equal to `<<type_parameters_of_typeDefIR, $type_parameters_of_typeDefIR(typeDefIR)>>`.
+     ...... Check that (`[ ]`, `[ ]`) is equal to <<type_parameters_of_typeDefIR, the type parameters of `typeDefIR`>>.
      ...... Let `nameIR` be <<name, the name of `name`>>.
      ...... Let `typedefTypeIR` be `TYPEDEF nameIR typeDefIR < [ ] >`.
      ...... Check that <<TypeDef_wf, `typedefTypeIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
@@ -4545,7 +4499,7 @@ for each `typeParameter` in `typeParameter^{asterisk}^`
 +
 for each `parameterIR` in `parameterIR^{asterisk}^`
   ... Let `nameIR` be <<name, the name of `name`>>.
-  ... Let `parserObjectTypeDefIR` be `PARSER < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterTypeIR^{asterisk}^ )`.
+  ... Let `parserObjectTypeDefIR` be `PARSER nameIR < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterTypeIR^{asterisk}^ )`.
   ... Check that <<TypeDef_wf, `parserObjectTypeDefIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
   ... Let `TC~3~` be `<<add_typeDef_t, $add_typeDef_t(GLOBAL, TC~0~, nameIR, parserObjectTypeDefIR)>>`.
   ... Let `parserTypeDeclarationIR` be `annotationList PARSER nameIR < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) ;`.
@@ -4572,7 +4526,7 @@ for each `typeParameter` in `typeParameter^{asterisk}^`
 +
 for each `parameterIR` in `parameterIR^{asterisk}^`
   ... Let `nameIR` be <<name, the name of `name`>>.
-  ... Let `controlObjectTypeDefIR` be `CONTROL < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterTypeIR^{asterisk}^ )`.
+  ... Let `controlObjectTypeDefIR` be `CONTROL nameIR < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterTypeIR^{asterisk}^ )`.
   ... Check that <<TypeDef_wf, `controlObjectTypeDefIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
   ... Let `TC~3~` be `<<add_typeDef_t, $add_typeDef_t(GLOBAL, TC~0~, nameIR, controlObjectTypeDefIR)>>`.
   ... Let `controlTypeDeclarationIR` be `annotationList CONTROL nameIR < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) ;`.
@@ -4606,7 +4560,7 @@ for each `constructorParameterIR` in `constructorParameterIR^{asterisk}^`
 --
 +
 for each `constructorParameterTypeIR` in `constructorParameterTypeIR^{asterisk}^`
-  ... Let `packageObjectTypeDefIR` be `PACKAGE < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > { typeIR~package_inner~^{asterisk}^ }`.
+  ... Let `packageObjectTypeDefIR` be `PACKAGE nameIR < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > { typeIR~package_inner~^{asterisk}^ }`.
   ... Check that <<TypeDef_wf, `packageObjectTypeDefIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
   ... Let `TC~3~` be `<<add_typeDef_t, $add_typeDef_t(GLOBAL, TC~0~, nameIR, packageObjectTypeDefIR)>>`.
   ... Let `cid` be `<<cid_, $cid_(name, ( parameterList ))>>`.
@@ -4641,6 +4595,15 @@ relation Program_ok: `p4program`
  .. Let `TC~1~` and `declarationIR^{asterisk}^` be the result of <<Decls_ok, typing `declaration^{asterisk}^`, under cursor `GLOBAL` and typing context `TC~0~`,
 * and the modified typing context>>.
  .. Result in the typed P4 program `declarationIR^{asterisk}^ ;`.
+
+
+relation Program_ok_lift: `p4program`
+
+
+. Group :
+ .. Let `p4programIR` be the result of <<Program_ok, typing `p4program`>>.
+ .. Let `p4program~lift~` be `<<lift_p4programIR, $lift_p4programIR(p4programIR)>>`.
+ .. The relation holds.
 
 
 relation Call_convention_expr_ok: `p`, `TC`, `actctxt`, `direction typeIR~param~ ++_++ ++_++^?^`, and `typedExpressionIR~arg~`
@@ -4760,7 +4723,7 @@ relation CallableType_ok: `p`, `TC`, `callableTargetIR'`, `typeArgumentIR'^{aste
 . Let `prefixedNameIR` be `callableTargetIR'`.
 . Group referenceExpressionIR:
  .. If `typeArgumentIR'^{asterisk}^` is equal to `[ ]`:
-  ... Let `(cid, callableTypeDefIR, id*)'^?^` be `<<find_callableDef_overloaded_t, $find_callableDef_overloaded_t(p, TC, prefixedNameIR, argumentIR'^{asterisk}^)>>`.
+  ... Let `(cid, callableTypeDefIR, id*)'^?^` be <<find_callableDef_overloaded_t, the overloaded callable definition of `prefixedNameIR`( `argumentIR'^{asterisk}^` ) in the `p` layer of `TC`>>.
   ... Check that `(cid, callableTypeDefIR, id*)'^?^` is Some value.
   ... Let `(cid, callableTypeDefIR, id*)` be `(cid, callableTypeDefIR, id*)'^?^`.
   ... Check that `(cid, callableTypeDefIR, id*)` has type `(cid, actionTypeIR, id*)`.
@@ -4768,7 +4731,7 @@ relation CallableType_ok: `p`, `TC`, `callableTargetIR'`, `typeArgumentIR'^{aste
   ... Check that <<CallableType_wf, `actionTypeIR` is a well-formed type, assuming bound type ids `$bound(p, TC)`>>.
   ... Result in `actionTypeIR`, `[ ]`, and `id~default~^{asterisk}^`.
  .. Let `typeArgumentIR^{asterisk}^` be `typeArgumentIR'^{asterisk}^`.
- .. Let `(cid, callableTypeDefIR, id*)'^?^` be `<<find_callableDef_overloaded_t, $find_callableDef_overloaded_t(p, TC, prefixedNameIR, argumentIR'^{asterisk}^)>>`.
+ .. Let `(cid, callableTypeDefIR, id*)'^?^` be <<find_callableDef_overloaded_t, the overloaded callable definition of `prefixedNameIR`( `argumentIR'^{asterisk}^` ) in the `p` layer of `TC`>>.
  .. Else if let `(cid, callableTypeDefIR, id*)` be `(cid, callableTypeDefIR, id*)'^?^`:
   ... Check that `(cid, callableTypeDefIR, id*)` has type `(cid, functionTypeDefIR, id*)`.
   ... Let `(cid, functionTypeDefIR, id~default~^{asterisk}^)` be `(cid, callableTypeDefIR, id*)`.
@@ -4842,7 +4805,7 @@ relation CallableType_ok: `p`, `TC`, `callableTargetIR'`, `typeArgumentIR'^{aste
    .... Let `typeIR~base~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~base~`>>.
    .... Let `typeIR` be <<canon_typeIR, the canonicalized form of `typeIR~base~`>>.
    .... Check that `typeIR` has type `parserObjectTypeIR`.
-   .... Let `PARSER ( parameterTypeIR^{asterisk}^ )` be `typeIR`.
+   .... Let `PARSER ++_++ ( parameterTypeIR^{asterisk}^ )` be `typeIR`.
    .... Let `parserApplyMethodTypeIR` be `PARSER_APPLY ( parameterTypeIR^{asterisk}^ )`.
    .... Let `id~param~^{asterisk}^` be the list of `id~param~` and `value~param~^?^^{asterisk}^` be the list of `value~param~^?^`, obtained by repeating:
 +
@@ -4869,7 +4832,7 @@ for each `id~param~` in `id~param~^{asterisk}^` and `value~param~^?^` in `value~
    .... Let `typeIR~base~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~base~`>>.
    .... Let `typeIR` be <<canon_typeIR, the canonicalized form of `typeIR~base~`>>.
    .... Check that `typeIR` has type `controlObjectTypeIR`.
-   .... Let `CONTROL ( parameterTypeIR^{asterisk}^ )` be `typeIR`.
+   .... Let `CONTROL ++_++ ( parameterTypeIR^{asterisk}^ )` be `typeIR`.
    .... Let `controlApplyMethodTypeIR` be `CONTROL_APPLY ( parameterTypeIR^{asterisk}^ )`.
    .... Let `id~param~^{asterisk}^` be the list of `id~param~` and `value~param~^?^^{asterisk}^` be the list of `value~param~^?^`, obtained by repeating:
 +
@@ -4948,7 +4911,7 @@ for each `typeIR^?^` in `typeIR^?^^{asterisk}^`
 --
 +
 for each `parameterTypeIR~aligned~` in `parameterTypeIR~aligned~^{asterisk}^`
-  ... Let `typeIR~ret_inferred~` be `<<subst_typeIR, $subst_typeIR(inference, typeIR~ret~)>>`.
+  ... Let `typeIR~ret_inferred~` be <<subst_typeIR, `inference` substituted by `typeIR~ret~`>>.
   ... Let `functionTypeIR~inferred~` be `FUNCTION ( parameterTypeIR~aligned_inferred~^{asterisk}^ ) : typeIR~ret_inferred~`.
   ... Check that <<CallableType_wf, `functionTypeIR~inferred~` is a well-formed type, assuming bound type ids `$bound(p, TC)`>>.
   ... Check that `<<callable_definedFunction, $callable_definedFunction(p, TC)>>`.
@@ -4983,7 +4946,7 @@ for each `typeIR^?^` in `typeIR^?^^{asterisk}^`
 --
 +
 for each `parameterTypeIR~aligned~` in `parameterTypeIR~aligned~^{asterisk}^`
-  ... Let `typeIR~ret_inferred~` be `<<subst_typeIR, $subst_typeIR(inference, typeIR~ret~)>>`.
+  ... Let `typeIR~ret_inferred~` be <<subst_typeIR, `inference` substituted by `typeIR~ret~`>>.
   ... Let `functionTypeIR~inferred~` be `EXTERN_FUNCTION ( parameterTypeIR~aligned_inferred~^{asterisk}^ ) : typeIR~ret_inferred~`.
   ... Check that <<CallableType_wf, `functionTypeIR~inferred~` is a well-formed type, assuming bound type ids `$bound(p, TC)`>>.
   ... Check that `<<callable_externFunction, $callable_externFunction(p, TC)>>`.
@@ -5028,7 +4991,7 @@ for each `typeIR^?^` in `typeIR^?^^{asterisk}^`
 --
 +
 for each `parameterTypeIR~aligned~` in `parameterTypeIR~aligned~^{asterisk}^`
-   .... Let `typeIR~ret_inferred~` be `<<subst_typeIR, $subst_typeIR(inference, typeIR~ret~)>>`.
+   .... Let `typeIR~ret_inferred~` be <<subst_typeIR, `inference` substituted by `typeIR~ret~`>>.
    .... Let `externMethodTypeIR~inferred~` be `EXTERN_METHOD ( parameterTypeIR~aligned_inferred~^{asterisk}^ ) : typeIR~ret_inferred~`.
    .... Check that <<CallableType_wf, `externMethodTypeIR~inferred~` is a well-formed type, assuming bound type ids `$bound(p, TC)`>>.
    .... Check that `<<callable_externMethod, $callable_externMethod(p, TC)>>`.
@@ -5063,7 +5026,7 @@ for each `typeIR^?^` in `typeIR^?^^{asterisk}^`
 --
 +
 for each `parameterTypeIR~aligned~` in `parameterTypeIR~aligned~^{asterisk}^`
-   .... Let `typeIR~ret_inferred~` be `<<subst_typeIR, $subst_typeIR(inference, typeIR~ret~)>>`.
+   .... Let `typeIR~ret_inferred~` be <<subst_typeIR, `inference` substituted by `typeIR~ret~`>>.
    .... Let `externMethodTypeIR~inferred~` be `EXTERN_METHOD ABSTRACT ( parameterTypeIR~aligned_inferred~^{asterisk}^ ) : typeIR~ret_inferred~`.
    .... Check that <<CallableType_wf, `externMethodTypeIR~inferred~` is a well-formed type, assuming bound type ids `$bound(p, TC)`>>.
    .... Check that `<<callable_externAbstractMethod, $callable_externAbstractMethod(p, TC)>>`.
@@ -5121,7 +5084,7 @@ relation Inst_ok: `cursor`, `TC`, `instctxt`, `constructorTypeIR`, `typeArgument
  .. Let `CONSTRUCTOR ( parameterTypeIR^{asterisk}^ ) : typeIR~object~` be `constructorTypeIR`.
  .. Let `typeIR` be <<canon_typeIR, the canonicalized form of `typeIR~object~`>>.
  .. Check that `typeIR` has type `packageObjectTypeIR`.
- .. Let `PACKAGE { ++_++^{asterisk}^ }` be `typeIR`.
+ .. Let `PACKAGE ++_++ { ++_++^{asterisk}^ }` be `typeIR`.
  .. Let `parameterTypeIR~non_default~^{asterisk}^` be `<<filter_default_parameterTypeIRs, $filter_default_parameterTypeIRs(parameterTypeIR^{asterisk}^, id~default~^{asterisk}^)>>`.
  .. Check that the length of `parameterTypeIR~non_default~^{asterisk}^` is equal to the length of `argumentIR^{asterisk}^`.
  .. Let `parameterTypeIR~aligned~^{asterisk}^` be `<<align_parameterTypeIRs, $align_parameterTypeIRs(parameterTypeIR~non_default~^{asterisk}^, argumentIR^{asterisk}^)>>`.
@@ -5149,7 +5112,7 @@ for each `typeIR'^?^` in `typeIR'^?^^{asterisk}^`
 --
 +
 for each `parameterTypeIR~aligned~` in `parameterTypeIR~aligned~^{asterisk}^`
- .. Let `typeIR~object_inferred~` be `<<subst_typeIR, $subst_typeIR(inference, typeIR~object~)>>`.
+ .. Let `typeIR~object_inferred~` be <<subst_typeIR, `inference` substituted by `typeIR~object~`>>.
  .. Let `constructorTypeIR~inferred~` be `CONSTRUCTOR ( parameterTypeIR~aligned_inferred~^{asterisk}^ ) : typeIR~object_inferred~`.
  .. Check that <<ConstructorType_wf, `constructorTypeIR~inferred~` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC)`>>.
  .. Check that `<<instantiable, $instantiable(GLOBAL, TC, instctxt, typeIR~object_inferred~)>>`.
@@ -5185,7 +5148,7 @@ for each `typeIR^?^` in `typeIR^?^^{asterisk}^`
 --
 +
 for each `parameterTypeIR~aligned~` in `parameterTypeIR~aligned~^{asterisk}^`
- .. Let `typeIR~object_inferred~` be `<<subst_typeIR, $subst_typeIR(inference, typeIR~object~)>>`.
+ .. Let `typeIR~object_inferred~` be <<subst_typeIR, `inference` substituted by `typeIR~object~`>>.
  .. Let `constructorTypeIR~inferred~` be `CONSTRUCTOR ( parameterTypeIR~aligned_inferred~^{asterisk}^ ) : typeIR~object_inferred~`.
  .. Check that <<ConstructorType_wf, `constructorTypeIR~inferred~` is a well-formed type, assuming bound type ids `$bound(cursor, TC)`>>.
  .. Check that `<<instantiable, $instantiable(cursor, TC, instctxt, typeIR~object_inferred~)>>`.
@@ -5206,7 +5169,7 @@ relation SwitchLabel_table_ok: `TC`, `tid~table~`, `bool`, and `switchLabel`
   ... Let `nameIR~label~` be `prefixedNameIR`.
   ... Let `tid~table_enum~` be `"action_list(" {pp} tid~table~ {pp} ")"`.
   ... Let `id~label~` be `tid~table_enum~ {pp} "." {pp} nameIR~label~`.
-  ... Let `varTypeIR^?^` be `<<find_var_t, $find_var_t(LOCAL, TC, id~label~)>>`.
+  ... Let `varTypeIR^?^` be <<find_var_t, the type of variable `id~label~` in the `LOCAL` layer of `TC`>>.
   ... Check that `varTypeIR^?^` is Some value.
   ... Let `++_++ typeIR~label~ ctk~label~ value^?^` be `varTypeIR^?^`.
   ... Check that `value^?^` is Some value.
@@ -5344,7 +5307,7 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
   ... Check that `declarationIR` has type `instantiationIR`.
   ... Let `instantiationIR` be `declarationIR`.
   ... Let `++_++ ++_++ ++_++ < ++_++ > ( ++_++ ) nameIR ++_++ ;` be `instantiationIR`.
-  ... Let `varTypeIR'^?^` be `<<find_var_t, $find_var_t(p, TC~1~, nameIR)>>`.
+  ... Let `varTypeIR'^?^` be <<find_var_t, the type of variable `nameIR` in the `p` layer of `TC~1~`>>.
   ... Check that `varTypeIR'^?^` is Some value.
   ... Let `varTypeIR` be `varTypeIR'^?^`.
   ... Let `typeFrame~init~` be <<update_map, the map `typeFrame` with the value for key `nameIR` updated to `varTypeIR`>>.
@@ -5378,7 +5341,7 @@ relation Enum_serializable_field_ok: `TC~0~`, `nameIR~enum~`, `typeIR`, and `nam
  .. Let `enumTypeDefIR` be `ENUM nameIR~enum~ < typeIR > { [ ] }`.
  .. Let `value~enum~` be `nameIR~enum~ . nameIR . value`.
  .. Let `varTypeIR` be `enumTypeDefIR LCTK value~enum~`.
- .. Let `TC~1~` be <<add_var_t, the typing context `TC~0~` with a mapping from `nameIR` to `varTypeIR` added to the `BLOCK` layer>>.
+ .. Let `TC~1~` be <<add_var_t, `TC~0~` with a mapping from `nameIR` to `varTypeIR` added to the `BLOCK` layer>>.
  .. Result in `TC~1~`, `nameIR = typedExpressionIR~cast~`, and `value`.
 
 
@@ -5692,7 +5655,7 @@ relation Expr_lvalue_ok: `p`, `TC`, and <<typedExpressionIR, `expressionIR` anno
 
 . If let `prefixedNameIR` be `expressionIR`:
  .. Group referenceExpressionIR:
-  ... Let `varTypeIR^?^` be `<<find_var_t, $find_var_t(p, TC, prefixedNameIR)>>`.
+  ... Let `varTypeIR^?^` be <<find_var_t, the type of variable `prefixedNameIR` in the `p` layer of `TC`>>.
   ... Check that `varTypeIR^?^` is Some value.
   ... Let `direction ++_++ ctk ++_++^?^` be `varTypeIR^?^`.
   ... Check that `ctk` matches pattern `DYN`.
@@ -5875,12 +5838,12 @@ relation Expr_inst: `p`, `IC`, `STO`, and <<typedExpressionIR, `expressionIR` an
      ...... Check that `typeDefIR^?^` is Some value.
      ...... Let `typeDefIR~base~` be `typeDefIR^?^`.
      ...... If `<<is_monomorphic_typeDefIR, $is_monomorphic_typeDefIR(typeDefIR~base~)>>`:
-      ....... Let `typeIR~base~` be `<<type_of_typeDefIR, $type_of_typeDefIR(typeDefIR~base~)>>`.
+      ....... Let `typeIR~base~` be <<type_of_typeDefIR, the underlying type of `typeDefIR~base~`>>.
       ....... Check that `nameIR` is in `["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]`.
       ....... Result in `STO` and `<<sizeof, $sizeof(typeIR~base~, nameIR)>>`.
      ...... Else `~<<is_monomorphic_typeDefIR, $is_monomorphic_typeDefIR(typeDefIR~base~)>>`:
-      ....... Check that (`[ ]`, `[ ]`) is equal to `<<type_parameters_of_typeDefIR, $type_parameters_of_typeDefIR(typeDefIR~base~)>>`.
-      ....... Let `typeIR~base~` be `<<type_of_typeDefIR, $type_of_typeDefIR(typeDefIR~base~)>>`.
+      ....... Check that (`[ ]`, `[ ]`) is equal to <<type_parameters_of_typeDefIR, the type parameters of `typeDefIR~base~`>>.
+      ....... Let `typeIR~base~` be <<type_of_typeDefIR, the underlying type of `typeDefIR~base~`>>.
       ....... Check that `nameIR` is in `["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]`.
       ....... Result in `STO` and `<<sizeof, $sizeof(typeIR~base~, nameIR)>>`.
   ... Let `callableTargetIR' < typeArgumentListIR > ( argumentListIR )` be `callExpressionIR`.
@@ -5953,7 +5916,9 @@ relation Stmt_inst: `p`, `IC`, `STO`, and `statementIR`
   ... Let `nameIR` be <<concat_text, the concatenation of `[tid, "_", tid~fresh~]`>>.
   ... Let `oid` be `IC.PATH {pp} [nameIR]`.
   ... Let `STO~2~` be `<<add_map, $add_map<oid, object>(STO~1~, oid, object)>>`.
-  ... Let `constantDeclarationIR` be `CONST typeIR nameIR = ! oid ;`.
+  ... Let `typedExpressionIR~inst~` be <<typedExpressionIR, `prefixedNameIR < [ ] > ( [ ] )` annotated with type `VOID` and compile-time known-ness `CTK`>>.
+  ... Let `constantInitializerIR` be `= ! oid ( typedExpressionIR~inst~ )`.
+  ... Let `constantDeclarationIR` be `CONST typeIR nameIR constantInitializerIR ;`.
   ... Let `callableTargetIR` be `nameIR # ( typeIR CTK ) . "apply"`.
   ... Let `callStatementIR` be `callableTargetIR < [ ] > ( argumentListIR ) ;`.
   ... Let `blockStatementIR` be `{ [constantDeclarationIR, callStatementIR] }`.
@@ -6129,7 +6094,9 @@ relation ParserStmt_inst: `IC~0~`, `STO~0~`, and `parserStatementIR`
   ... Let `oid` be `IC~0~.PATH {pp} [nameIR]`.
   ... Let `STO~2~` be `<<add_map, $add_map<oid, object>(STO~1~, oid, object)>>`.
   ... Let `typeIR` be `tid`.
-  ... Let `constantDeclarationIR` be `CONST typeIR nameIR = ! oid ;`.
+  ... Let `typedExpressionIR~inst~` be <<typedExpressionIR, `prefixedNameIR < [ ] > ( [ ] )` annotated with type `VOID` and compile-time known-ness `CTK`>>.
+  ... Let `constantInitializerIR` be `= ! oid ( typedExpressionIR~inst~ )`.
+  ... Let `constantDeclarationIR` be `CONST typeIR nameIR constantInitializerIR ;`.
   ... Let `callableTargetIR` be `tid # ( typeIR CTK ) . "apply"`.
   ... Let `callStatementIR` be `callableTargetIR < [ ] > ( argumentListIR ) ;`.
   ... Let `parserBlockStatementIR` be `{ [constantDeclarationIR, callStatementIR] }`.
@@ -6242,14 +6209,10 @@ relation TableProperty_inst: `IC`, `STO`, and `tablePropertyIR`
  .. Group custom-default-action:
   ... Result in `STO` and `annotationList constOptIR DEFAULT_ACTION = tableActionReferenceIR ;`.
 . Else let `tableCustomPropertyIR` be `tablePropertyIR`:
- .. If let `annotationList constOptIR CUSTOM nameIR = typedExpressionIR ;` be `tableCustomPropertyIR`:
-  ... Group custom:
-   .... Let `IC~inner~` be `<<enter_path_i, $enter_path_i(IC, nameIR)>>`.
-   .... Let <<Expr_inst, `LOCAL IC~inner~ STO |- typedExpressionIR : STO~1~ value`>>.
-   .... Result in `STO~1~` and `annotationList constOptIR CUSTOM_CONST nameIR = value ;`.
- .. Else let `annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR ;` be `tableCustomPropertyIR`:
-  ... Group custom-const:
-   .... Result in `STO` and `annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR ;`.
+ .. Check that `tableCustomPropertyIR` matches pattern `%  % CUSTOM_CONST %  % ;`.
+ .. Let `annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR ;` be `tableCustomPropertyIR`.
+ .. Group custom-const:
+  ... Result in `STO` and `annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR ;`.
 
 
 relation TableProperties_inst: `IC`, `STO`, and `tablePropertyIR^{asterisk}^`
@@ -6299,7 +6262,9 @@ relation ControlLocalDecl_inst: `IC~0~`, `STO~0~`, and `controlLocalDeclarationI
   ... Let `oid` be `IC~0~.PATH {pp} [nameIR]`.
   ... Let `STO~2~` be `<<add_map, $add_map<oid, object>(STO~1~, oid, object~table~)>>`.
   ... Let `IC~1~` be `<<add_var_i, $add_var_i(BLOCK, IC~0~, nameIR, ! oid)>>`.
-  ... Let `constantDeclarationIR` be `CONST typeIR nameIR = ! oid ;`.
+  ... Let `typedExpressionIR~inst~` be <<typedExpressionIR, `nameIR < [ ] > ( [ ] )` annotated with type `VOID` and compile-time known-ness `CTK`>>.
+  ... Let `constantInitializerIR` be `= ! oid ( typedExpressionIR~inst~ )`.
+  ... Let `constantDeclarationIR` be `CONST typeIR nameIR constantInitializerIR ;`.
   ... Result in `IC~1~`, `STO~2~`, and `constantDeclarationIR`.
 
 
@@ -6326,14 +6291,14 @@ relation ControlLocalDecls_inst: `IC`, `STO`, and `controlLocalDeclarationIR^{as
 relation Decl_inst: `cursor`, `IC~0~`, `STO`, and `declarationIR`
 
 
-. If let `annotationList CONST typeIR nameIR = value ;` be `declarationIR`:
+. If let `annotationList CONST typeIR nameIR = value ( typedExpressionIR' ) ;` be `declarationIR`:
  .. Group constantDeclarationIR:
   ... If `cursor` matches pattern `GLOBAL`:
    .... Let `IC~1~` be `<<add_var_i, $add_var_i(GLOBAL, IC~0~, nameIR, value)>>`.
    .... Result in `IC~1~`, `STO`, and `None`.
   ... Else `cursor` does not match pattern `GLOBAL`:
    .... Let `IC~1~` be `<<add_var_i, $add_var_i(cursor, IC~0~, nameIR, value)>>`.
-   .... Let `constantDeclarationIR` be `annotationList CONST typeIR nameIR = value ;`.
+   .... Let `constantDeclarationIR` be `annotationList CONST typeIR nameIR = value ( typedExpressionIR' ) ;`.
    .... Result in `IC~1~`, `STO`, and `constantDeclarationIR`.
 . Else if let `annotationList typeIR prefixedNameIR < typeArgumentListIR > ( argumentListIR ) nameIR objectInitializerOptIR ;` be `declarationIR`:
  .. Group instantiationIR:
@@ -6375,13 +6340,17 @@ relation Decl_inst: `cursor`, `IC~0~`, `STO`, and `declarationIR`
     ..... Let `oid` be `IC~0~.PATH {pp} [nameIR]`.
     ..... Let `STO~3~` be `<<add_map, $add_map<oid, object>(STO~2~, oid, object~merged~)>>`.
     ..... Let `IC~1~` be `<<add_var_i, $add_var_i(GLOBAL, IC~0~, nameIR, ! oid)>>`.
-    ..... Let `constantDeclarationIR` be `CONST typeIR nameIR = ! oid ;`.
+    ..... Let `typedExpressionIR~init~` be <<typedExpressionIR, `prefixedNameIR < typeArgumentListIR > ( argumentListIR )` annotated with type `VOID` and compile-time known-ness `CTK`>>.
+    ..... Let `constantInitializerIR` be `= ! oid ( typedExpressionIR~init~ )`.
+    ..... Let `constantDeclarationIR` be `CONST typeIR nameIR constantInitializerIR ;`.
     ..... Result in `IC~1~`, `STO~3~`, and `constantDeclarationIR`.
    .... Else if `~<<is_externObject, $is_externObject(object)>>`:
     ..... Let `oid` be `IC~0~.PATH {pp} [nameIR]`.
     ..... Let `STO~2~` be `<<add_map, $add_map<oid, object>(STO~1~, oid, object)>>`.
     ..... Let `IC~1~` be `<<add_var_i, $add_var_i(cursor, IC~0~, nameIR, ! oid)>>`.
-    ..... Let `constantDeclarationIR` be `CONST typeIR nameIR = ! oid ;`.
+    ..... Let `typedExpressionIR~init~` be <<typedExpressionIR, `prefixedNameIR < typeArgumentListIR > ( argumentListIR )` annotated with type `VOID` and compile-time known-ness `CTK`>>.
+    ..... Let `constantInitializerIR` be `= ! oid ( typedExpressionIR~init~ )`.
+    ..... Let `constantDeclarationIR` be `CONST typeIR nameIR constantInitializerIR ;`.
     ..... Result in `IC~1~`, `STO~2~`, and `constantDeclarationIR`.
 . Else if let `annotationList typeIR nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterListIR ) blockStatementIR` be `declarationIR`:
  .. Group functionDeclarationIR:
@@ -6599,12 +6568,12 @@ for each `typeFieldIR` in `typeFieldIR^{asterisk}^`
     ..... Check that `typeDefIR'^?^` is Some value.
     ..... Let `typeDefIR` be `typeDefIR'^?^`.
     ..... If `<<is_monomorphic_typeDefIR, $is_monomorphic_typeDefIR(typeDefIR)>>`:
-     ...... Let `typeIR` be `<<type_of_typeDefIR, $type_of_typeDefIR(typeDefIR)>>`.
+     ...... Let `typeIR` be <<type_of_typeDefIR, the underlying type of `typeDefIR`>>.
      ...... Let `aliasTypeDefIR` be `TYPEDEF nameIR typeIR`.
      ...... Let `IC~1~` be `<<add_typeDef_i, $add_typeDef_i(GLOBAL, IC~0~, nameIR, aliasTypeDefIR)>>`.
      ...... Result in `IC~1~`, `STO`, and `None`.
     ..... Else `~<<is_monomorphic_typeDefIR, $is_monomorphic_typeDefIR(typeDefIR)>>`:
-     ...... Check that (`[ ]`, `[ ]`) is equal to `<<type_parameters_of_typeDefIR, $type_parameters_of_typeDefIR(typeDefIR)>>`.
+     ...... Check that (`[ ]`, `[ ]`) is equal to <<type_parameters_of_typeDefIR, the type parameters of `typeDefIR`>>.
      ...... Let `typeIR~spec~` be `typeDefIR < [ ] >`.
      ...... Let `aliasTypeDefIR` be `TYPEDEF nameIR typeIR~spec~`.
      ...... Let `IC~1~` be `<<add_typeDef_i, $add_typeDef_i(GLOBAL, IC~0~, nameIR, aliasTypeDefIR)>>`.
@@ -6623,7 +6592,7 @@ for each `typeFieldIR` in `typeFieldIR^{asterisk}^`
 --
 +
 for each `parameterIR` in `parameterIR^{asterisk}^`
-  ... Let `parserObjectTypeDefIR` be `PARSER < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterTypeIR^{asterisk}^ )`.
+  ... Let `parserObjectTypeDefIR` be `PARSER nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterTypeIR^{asterisk}^ )`.
   ... Let `IC~1~` be `<<add_typeDef_i, $add_typeDef_i(GLOBAL, IC~0~, nameIR, parserObjectTypeDefIR)>>`.
   ... Result in `IC~1~`, `STO`, and `None`.
 . Else if let `annotationList CONTROL nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR^{asterisk}^ ) ;` be `declarationIR`:
@@ -6635,7 +6604,7 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
 --
 +
 for each `parameterIR` in `parameterIR^{asterisk}^`
-  ... Let `controlObjectTypeDefIR` be `CONTROL < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterTypeIR^{asterisk}^ )`.
+  ... Let `controlObjectTypeDefIR` be `CONTROL nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterTypeIR^{asterisk}^ )`.
   ... Let `IC~1~` be `<<add_typeDef_i, $add_typeDef_i(GLOBAL, IC~0~, nameIR, controlObjectTypeDefIR)>>`.
   ... Result in `IC~1~`, `STO`, and `None`.
 . Else if let `annotationList PACKAGE nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR^{asterisk}^ ) ;` be `declarationIR`:
@@ -6647,7 +6616,7 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
 --
 +
 for each `parameterIR` in `parameterIR^{asterisk}^`
-  ... Let `packageObjectTypeDefIR` be `PACKAGE < typeParameterListIR , typeParameterListIR~inferred~ > { typeIR^{asterisk}^ }`.
+  ... Let `packageObjectTypeDefIR` be `PACKAGE nameIR < typeParameterListIR , typeParameterListIR~inferred~ > { typeIR^{asterisk}^ }`.
   ... Let `IC~1~` be `<<add_typeDef_i, $add_typeDef_i(GLOBAL, IC~0~, nameIR, packageObjectTypeDefIR)>>`.
   ... Let `cid` be `<<cid_IR, $cid_IR(nameIR, parameterIR^{asterisk}^)>>`.
   ... Let `constructorDef` be `PACKAGE < typeParameterListIR {pp} typeParameterListIR~inferred~ > ( parameterIR^{asterisk}^ )`.
@@ -7924,7 +7893,7 @@ relation Decl_eval: `p`, `EC~0~`, `STO`, and `declarationIR`
 
 
 . Check that `declarationIR` has type `constantDeclarationIR`.
-. Let `annotationList CONST typeIR nameIR = value ;` be `declarationIR`.
+. Let `annotationList CONST typeIR nameIR = value ( ++_++ ) ;` be `declarationIR`.
 . Group constantDeclarationIR:
  .. Let `EC~1~` be `<<add_var_e, $add_var_e(p, EC~0~, nameIR, value)>>`.
  .. Result in `EC~1~`, `STO`, and ``.

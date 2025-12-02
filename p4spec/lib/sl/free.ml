@@ -88,6 +88,7 @@ and free_instr (instr : instr) : t =
   | ResultI exps -> free_exps exps
   | ReturnI exp -> free_exp exp
   | DebugI exp -> free_exp exp
+  | PrintI exp -> free_exp exp
 
 and free_instrs (instrs : instr list) : t =
   instrs |> List.map free_instr |> List.fold_left ( + ) empty

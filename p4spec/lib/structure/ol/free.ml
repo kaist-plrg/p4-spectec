@@ -25,6 +25,7 @@ let rec free_instr (instr : instr) : t =
   | ResultI exps -> Sl.Free.free_exps exps
   | ReturnI exp -> Sl.Free.free_exp exp
   | DebugI exp -> Sl.Free.free_exp exp
+  | PrintI exp -> Sl.Free.free_exp exp
 
 and free_instrs (instrs : instr list) : t =
   instrs |> List.map free_instr |> List.fold_left ( + ) empty

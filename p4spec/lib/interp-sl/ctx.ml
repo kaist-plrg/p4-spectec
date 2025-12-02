@@ -74,6 +74,8 @@ type t = {
   (* Testing and coverage layers *)
   coverage : coverage;
   testing : testing;
+  (* Printer *)
+  printer : Value.t -> string;
   (* Global layer *)
   global : global;
   (* Local layer *)
@@ -286,20 +288,26 @@ let empty_global () : global =
 
 let empty_local () : local = Empty
 
-let empty_end_to_end ~(derive : bool) (vdg : vdg) (cover : SCov.Cover.t ref) : t
-    =
+let empty_end_to_end ~(derive : bool) (spec : spec) (vdg : vdg)
+    (cover : SCov.Cover.t ref) : t =
   let coverage = cover in
   let testing = if derive then EndToEnd (`On vdg) else EndToEnd (`Off vdg) in
+  let printer value_program =
+    Format.asprintf "%a\n" (Interface.Unparse.pp_program_sl spec) value_program
+  in
   let global = empty_global () in
   let local = empty_local () in
-  { coverage; testing; global; local }
+  { coverage; testing; printer; global; local }
 
-let empty_partial (cover : SCov.Cover.t ref) : t =
+let empty_partial (spec : spec) (cover : SCov.Cover.t ref) : t =
   let coverage = cover in
   let testing = Partial in
+  let printer value_program =
+    Format.asprintf "%a\n" (Interface.Unparse.pp_program_sl spec) value_program
+  in
   let global = empty_global () in
   let local = empty_local () in
-  { coverage; testing; global; local }
+  { coverage; testing; printer; global; local }
 
 (* Constructing a local context *)
 

@@ -65,6 +65,7 @@ and string_of_instr ?(level = 0) ?(index = 0) instr =
       Format.asprintf "%sResult in %s" order (string_of_exps ", " exps)
   | ReturnI exp -> Format.asprintf "%sReturn %s" order (string_of_exp exp)
   | DebugI exp -> Format.asprintf "%sDebug: %s" order (string_of_exp exp)
+  | PrintI exp -> Format.asprintf "%sPrint: %s" order (string_of_exp exp)
 
 and string_of_instrs ?(level = 0) instrs =
   instrs

@@ -918,6 +918,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | ResultI exps -> eval_result_instr ctx exps
     | ReturnI exp -> eval_return_instr ctx exp
     | DebugI exp -> eval_debug_instr ctx exp
+    | PrintI exp -> eval_print_instr ctx exp
 
   and eval_instrs (ctx : Ctx.t) (sign : Sign.t) (instrs : instr list) :
       Ctx.t * Sign.t =
@@ -1416,6 +1417,15 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     print_endline @@ Il.Print.string_of_value value;
     (ctx, Sign.Cont)
 
+  (* Print instruction evaluation *)
+
+  and eval_print_instr (ctx : Ctx.t) (exp : exp) : Ctx.t * Sign.t =
+    let value = eval_exp ctx exp in
+    print_endline
+    @@ F.sprintf "%s: %s" (string_of_region exp.at) (Il.Print.string_of_exp exp);
+    print_endline @@ ctx.printer value;
+    (ctx, Sign.Cont)
+
   (* Invoke a relation *)
 
   and invoke_rel (ctx : Ctx.t) (id : id) (values_input : value list) :
@@ -1658,7 +1668,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       let value_program = Interface.Parse.parse_file includes_p4 filename_p4 in
       let graph = Dep.Graph.assemble_graph value_program in
       let vdg = Ctx.{ graph; vid_program = value_program.note.vid } in
-      let ctx = Ctx.empty_end_to_end ~derive vdg cover in
+      let ctx = Ctx.empty_end_to_end ~derive spec vdg cover in
       let values_output = do_eval_rel ctx spec relname [ value_program ] in
       Sim.Pass (values_output, graph, value_program.note.vid, !(ctx.coverage))
     with
@@ -1673,7 +1683,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     Cache.Cache.clear !func_cache;
     Cache.Cache.clear !rule_cache;
     let cover = ref (SCov.init spec) in
-    let ctx = Ctx.empty_partial cover in
+    let ctx = Ctx.empty_partial spec cover in
     try
       let values_output = do_eval_rel ctx spec relname values_input in
       Sim.Pass (values_output, !(ctx.coverage))
@@ -1688,7 +1698,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     Cache.Cache.clear !func_cache;
     Cache.Cache.clear !rule_cache;
     let cover = ref (SCov.init spec) in
-    let ctx = Ctx.empty_partial cover in
+    let ctx = Ctx.empty_partial spec cover in
     try
       let value_output = do_eval_func ctx spec funcname targs values_input in
       Sim.Pass (value_output, !(ctx.coverage))

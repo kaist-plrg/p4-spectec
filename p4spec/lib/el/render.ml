@@ -213,6 +213,7 @@ and render_prem prem =
       render_prem prem ^ render_iter iter
   | IterPr (prem, iter) -> "(" ^ render_prem prem ^ ")" ^ render_iter iter
   | DebugPr exp -> "debug " ^ render_exp exp
+  | PrintPr exp -> "print " ^ render_exp exp
 
 and render_prems prems =
   String.concat "" (List.map (fun prem -> "\n    -- " ^ render_prem prem) prems)

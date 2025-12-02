@@ -269,7 +269,7 @@ let run_testgen_command =
          let covermode =
            if strict then Testgen.Modes.Strict else Testgen.Modes.Relaxed
          in
-         Testgen.Gen.fuzzer fuel spec_il spec_sl relname includes_p4 dirname_gen
+         Testgen.Gen.fuzzer fuel spec_sl relname includes_p4 dirname_gen
            name_campaign randseed logmode bootmode mutationmode covermode
        with
        | CommandError msg -> Format.printf "%s\n" msg
@@ -424,7 +424,7 @@ let parse_command =
          in
          let unparsed_p4_string =
            Format.asprintf "%a\n"
-             (Interface.Unparse.pp_program spec_il)
+             (Interface.Unparse.pp_program_il spec_il)
              parsed_p4_file
          in
          if roundtrip then

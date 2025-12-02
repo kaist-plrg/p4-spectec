@@ -56,6 +56,11 @@ test-p4type:
 	opam switch 5.1.0
 	cd p4spec && opam exec -- dune build @p4type --profile=release && echo OK || (echo "####>" Failure running dune build @p4type. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
 
+test-p4lift:
+	echo "#### Running (dune build @p4lift)"
+	opam switch 5.1.0
+	cd p4spec && opam exec -- dune build @p4lift --profile=release && echo OK || (echo "####>" Failure running dune build @p4lift. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
+
 test-p4inst:
 	echo "#### Running (dune build @p4inst)"
 	opam switch 5.1.0

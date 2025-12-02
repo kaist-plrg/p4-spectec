@@ -1024,8 +1024,13 @@ rule Decls_ok/cons:
 ;;
 
 rule Program_ok:
-  |- p4program : (declarationIR* `;) p4program_lift
+  |- p4program : (declarationIR* `;)
   -- if declaration* = $flatten_p4program(p4program)
   -- if TC_0 = $empty_typingContext
   -- Decls_ok: GLOBAL TC_0 |- declaration* : TC_1 declarationIR*
-  -- if p4program_lift = $lift_p4programIR(declarationIR* `;)
+
+rule Program_ok_lift:
+  |- p4program
+  -- Program_ok: |- p4program : p4programIR
+  -- if p4program_lift = $lift_p4programIR(p4programIR)
+  -- print p4program_lift

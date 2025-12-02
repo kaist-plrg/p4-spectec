@@ -554,12 +554,11 @@ let rec fuzz_loop (fuel : int) (config : Config.t) : Config.t =
 
 (* Entry point to main fuzzing loop *)
 
-let fuzzer_init (spec_il : Il.Ast.spec) (spec : spec) (relname : string)
-    (includes_p4 : string list) (dirname_gen : string)
-    (name_campaign : string option) (randseed : int option)
-    (logmode : Modes.logmode) (bootmode : Modes.bootmode)
-    (mutationmode : Modes.mutationmode) (covermode : Modes.covermode) : Config.t
-    =
+let fuzzer_init (spec : spec) (relname : string) (includes_p4 : string list)
+    (dirname_gen : string) (name_campaign : string option)
+    (randseed : int option) (logmode : Modes.logmode)
+    (bootmode : Modes.bootmode) (mutationmode : Modes.mutationmode)
+    (covermode : Modes.covermode) : Config.t =
   (* Name the campaign *)
   let name_campaign =
     match name_campaign with
@@ -596,7 +595,7 @@ let fuzzer_init (spec_il : Il.Ast.spec) (spec : spec) (relname : string)
   (* Create a spec environment *)
   "Loading type definitions from the spec file"
   |> Logger.log modes.logmode log_init;
-  let specenv = Config.init_specenv spec_il spec relname includes_p4 in
+  let specenv = Config.init_specenv spec relname includes_p4 in
   (* Create a seed *)
   "Booting initial coverage" |> Logger.log modes.logmode log_init;
   let cover_seed =
@@ -631,15 +630,15 @@ let fuzzer_init (spec_il : Il.Ast.spec) (spec : spec) (relname : string)
   let config = Config.init randseed modes specenv storage seed in
   config
 
-let fuzzer (fuel : int) (spec_il : Il.Ast.spec) (spec : spec) (relname : string)
+let fuzzer (fuel : int) (spec : spec) (relname : string)
     (includes_p4 : string list) (dirname_gen : string)
     (name_campaign : string option) (randseed : int option)
     (logmode : Modes.logmode) (bootmode : Modes.bootmode)
     (mutationmode : Modes.mutationmode) (covermode : Modes.covermode) : unit =
   (* Initialize the fuzzing configuration *)
   let config =
-    fuzzer_init spec_il spec relname includes_p4 dirname_gen name_campaign
-      randseed logmode bootmode mutationmode covermode
+    fuzzer_init spec relname includes_p4 dirname_gen name_campaign randseed
+      logmode bootmode mutationmode covermode
   in
   (* Call the main fuzzing loop *)
   let config = fuzz_loop fuel config in

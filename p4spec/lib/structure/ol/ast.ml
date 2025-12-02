@@ -17,6 +17,7 @@ and instr' =
   | ResultI of exp list
   | ReturnI of exp
   | DebugI of exp
+  | PrintI of exp
 
 and case = guard * instr list
 

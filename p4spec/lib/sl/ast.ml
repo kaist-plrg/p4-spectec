@@ -158,6 +158,7 @@ and instr' =
   | ReturnI of exp
   (* Debugging instructions *)
   | DebugI of exp
+  | PrintI of exp
 [@@deriving yojson]
 
 (* Hints *)

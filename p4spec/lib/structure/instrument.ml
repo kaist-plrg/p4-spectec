@@ -178,6 +178,7 @@ and insert_phantom' (tdenv : TDEnv.t) (pathconds : pathcond list)
   | ResultI exps -> Sl.Ast.ResultI exps $ at
   | ReturnI exp -> Sl.Ast.ReturnI exp $ at
   | DebugI exp -> Sl.Ast.DebugI exp $ at
+  | PrintI exp -> Sl.Ast.PrintI exp $ at
 
 (* Nop pass *)
 
@@ -230,6 +231,7 @@ and insert_nothing' (instr : instr) : Sl.Ast.instr =
   | ResultI exps -> Sl.Ast.ResultI exps $ at
   | ReturnI exp -> Sl.Ast.ReturnI exp $ at
   | DebugI exp -> Sl.Ast.DebugI exp $ at
+  | PrintI exp -> Sl.Ast.PrintI exp $ at
 
 (* Instrumentation *)
 

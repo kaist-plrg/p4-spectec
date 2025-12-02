@@ -815,6 +815,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     | LetPr (exp_l, exp_r) -> eval_let_prem ctx exp_l exp_r
     | IterPr (prem, iterexp) -> eval_iter_prem ctx prem iterexp
     | DebugPr exp -> eval_debug_prem ctx exp
+    | PrintPr exp -> eval_print_prem ctx exp
 
   and eval_prems (ctx : Ctx.t) (prems : prem list) : Ctx.t attempt_reason =
     List.fold_left
@@ -963,6 +964,15 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     print_endline
     @@ F.sprintf "%s: %s" (string_of_region exp.at) (Pp.string_of_exp exp);
     print_endline @@ Pp.string_of_value value;
+    Ok ctx
+
+  (* Print premise evaluation *)
+
+  and eval_print_prem (ctx : Ctx.t) (exp : exp) : Ctx.t attempt_reason =
+    let ctx, value = eval_exp ctx exp in
+    print_endline
+    @@ F.sprintf "%s: %s" (string_of_region exp.at) (Pp.string_of_exp exp);
+    print_endline @@ ctx.printer value;
     Ok ctx
 
   (* Invoke a relation *)
@@ -1266,7 +1276,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     try
       let value_program = Interface.Parse.parse_file includes_p4 filename_p4 in
       let graph = Dep.Graph.assemble_graph value_program in
-      let ctx = Ctx.empty ~debug:false ~profile:false in
+      let ctx = Ctx.empty ~debug:false ~profile:false spec in
       let+ ctx, values_output =
         do_eval_rel ctx spec relname [ value_program ]
       in
@@ -1284,7 +1294,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     Cache.Cache.clear !func_cache;
     Cache.Cache.clear !rule_cache;
     try
-      let ctx = Ctx.empty ~debug:false ~profile:false in
+      let ctx = Ctx.empty ~debug:false ~profile:false spec in
       let+ ctx, values_output = do_eval_rel ctx spec relname values_input in
       Ctx.profile ctx;
       (Sim.Pass (values_output, SCov.empty) : Sim.rel_result)
@@ -1297,7 +1307,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     Cache.Cache.clear !func_cache;
     Cache.Cache.clear !rule_cache;
     try
-      let ctx = Ctx.empty ~debug:false ~profile:false in
+      let ctx = Ctx.empty ~debug:false ~profile:false spec in
       let+ ctx, value_output =
         do_eval_func ctx spec funcname targs values_input
       in
