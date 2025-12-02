@@ -1698,9 +1698,9 @@ and elab_def_output_with_bind (ctx : Ctx.t) (plaintyp : plaintyp) (exp : exp) :
 
 (* Get IL notation type from VarT *)
 
-and expand_var_t (ctx : Ctx.t) (at : region) (var_t : Il.Ast.typ') :
+and patterns_covered_by_typ (ctx : Ctx.t) (at : region) (typ : Il.Ast.typ') :
     Pattern.PatternSet.t =
-  match var_t with
+  match typ with
   | VarT (vid, _) -> (
       match Ctx.find_typdef_opt ctx vid with
       | Some (Defined (_, `Variant typcases_el)) ->
@@ -1719,17 +1719,18 @@ and expand_var_t (ctx : Ctx.t) (at : region) (var_t : Il.Ast.typ') :
 
 (* Patterns covered by a single match expression *)
 
-and covered_patterns (ctx : Ctx.t) (exp : Il.Ast.exp) : Pattern.PatternSet.t =
+and patterns_covered_by_exp (ctx : Ctx.t) (exp : Il.Ast.exp) :
+    Pattern.PatternSet.t =
   match exp.it with
   | UpCastE (_, { it = VarE _; note; at }) ->
       let var_t = note in
-      expand_var_t ctx at var_t
+      patterns_covered_by_typ ctx at var_t
   | UpCastE (_, { it = CaseE notexp; at; _ }) ->
       let mixop, exps = notexp in
       [ (mixop, List.map (fun exp -> exp.note $ exp.at) exps) $ at ]
       |> Pattern.PatternSet.of_list
   | _ ->
-      failwith
+      error exp.at
         (Format.asprintf "covered_patterns: unsupported expression %s"
            (Il.Print.string_of_exp exp))
 
@@ -1759,11 +1760,12 @@ and check_valid_match_tablerows (ctx : Ctx.t) (at : region)
   in
   let closer_opt, tablerows = split_last_wildcard tablerows in
 
+  (* Exclusiveness check *)
   let tuple_patterns_table : Pattern.tuple_pattern list =
     List.map
       (fun tablerow ->
         let exps, _, _, _ = tablerow.it in
-        List.map (covered_patterns ctx) exps)
+        List.map (patterns_covered_by_exp ctx) exps)
       tablerows
   in
   let overlap_opt = Pattern.find_overlap tuple_patterns_table in
@@ -1775,8 +1777,9 @@ and check_valid_match_tablerows (ctx : Ctx.t) (at : region)
         ^ Pattern.tuple_pattern_to_string pat_r
     | None -> "")
   |> check (Option.is_none overlap_opt) at;
+  (* Exhaustiveness check *)
   let tuple_pattern_args =
-    List.map (fun typ -> expand_var_t ctx typ.at typ.it) arg_typs
+    List.map (fun typ -> patterns_covered_by_typ ctx typ.at typ.it) arg_typs
   in
   let missing_regions =
     Pattern.find_missing tuple_patterns_table tuple_pattern_args
