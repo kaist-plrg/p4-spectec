@@ -99,7 +99,12 @@ let analyze_args_as_bind (dctx : Dctx.t) (args : arg list) :
 
 let analyze_args_as_bind_shallow (dctx : Dctx.t) (args : arg list) :
     Dctx.t * VEnv.t * arg list * prem list =
-  let binds = Shallowbind.collect_args dctx args in
+  check
+    (Shallowbind.check_shallow_args args)
+    (List.hd args).at
+    (Format.asprintf "bindings are not shallow: %s"
+       (Il.Print.string_of_args args));
+  let binds = Collectbind.collect_args dctx args in
   let venv = BEnv.flatten binds in
   let dctx, renv_multi, args =
     let renv_multi = Multibind.REnv.init binds in
@@ -123,7 +128,12 @@ let analyze_args_as_bind_shallow (dctx : Dctx.t) (args : arg list) :
   (dctx, venv, args, prems)
 
 let analyze_arg_as_bound_shallow (dctx : Dctx.t) (arg : arg) : unit =
-  let binds = Shallowbind.collect_arg dctx arg in
+  check
+    (Shallowbind.check_shallow_arg arg)
+    arg.at
+    (Format.asprintf "bindings are not shallow: %s"
+       (Il.Print.string_of_arg arg));
+  let binds = Collectbind.collect_arg dctx arg in
   if not (BEnv.is_empty binds) then
     error arg.at
       (Format.asprintf "argument has free variable(s): %s"

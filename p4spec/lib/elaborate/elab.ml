@@ -1694,18 +1694,7 @@ and elab_def_output_with_bind (ctx : Ctx.t) (plaintyp : plaintyp) (exp : exp) :
   let exp_il = Dataflow.Analysis.analyze_exp_as_bound ctx exp_il in
   (ctx, exp_il)
 
-(* Elaboration of table rows *)
-
-and elab_tablerow_input_signature (ctx : Ctx.t) (args_il : Il.Ast.arg list) :
-    Il.Ast.arg list =
-  Dataflow.Analysis.analyze_args_as_bound_shallow ctx args_il
-
-and elab_tablerow_input_with_bind (ctx : Ctx.t) (args_il : Il.Ast.arg list) :
-    Ctx.t * Il.Ast.arg list * Il.Ast.prem list =
-  let ctx, args_il, sideconditions_il =
-    Dataflow.Analysis.analyze_args_as_bind_shallow ctx args_il
-  in
-  (ctx, args_il, sideconditions_il)
+(* Elaboration of table function definitions *)
 
 (* Get IL notation type from VarT *)
 
@@ -1744,7 +1733,7 @@ and covered_patterns (ctx : Ctx.t) (exp : Il.Ast.exp) : Pattern.PatternSet.t =
         (Format.asprintf "covered_patterns: unsupported expression %s"
            (Il.Print.string_of_exp exp))
 
-and match_check_tablerows (ctx : Ctx.t) (at : region)
+and check_valid_match_tablerows (ctx : Ctx.t) (at : region)
     (tablerows : Il.Ast.tablerow list) (arg_typs : Il.Ast.typ list) : unit =
   (* splits the last element if it is all wildcards (a "closer") *)
   let split_last_wildcard tablerows =
@@ -1808,6 +1797,7 @@ and elab_table_def_def (ctx : Ctx.t) (at : region) (id : id)
       match exp_pat.it with TupleE exps -> exps | _ -> [ exp_pat ]
     in
     let args = List.map (fun exp -> ExpA exp $ exp.at) exps_in in
+    check (List.length params = List.length args) at "arguments do not match";
     let ctx, args_il = elab_args ~as_def:true at ctx params args in
     let ctx_local = { ctx with frees = IdSet.empty } in
     let ctx_local =
@@ -1816,15 +1806,17 @@ and elab_table_def_def (ctx : Ctx.t) (at : region) (id : id)
       Il.Free.free_args args_il |> Ctx.add_frees ctx_local
     in
     let ctx_local, args_il_input, sideconditions_il =
-      elab_tablerow_input_with_bind ctx_local args_il
+      Dataflow.Analysis.analyze_args_as_bind_shallow ctx_local args_il
     in
-    let args_il_sig = elab_tablerow_input_signature ctx_local args_il in
+    let args_il_sig =
+      Dataflow.Analysis.analyze_args_as_bound_shallow ctx_local args_il
+    in
     let exps_il_sig =
       List.map
         (fun arg_il ->
           match arg_il.it with
           | Il.Ast.ExpA exp -> exp
-          | _ -> failwith "DefA not allowed in tables")
+          | _ -> error arg_il.at "DefA not allowed in tables")
         args_il_sig
     in
     let _ctx_local, exp_il =
@@ -1842,9 +1834,9 @@ and elab_table_def_def (ctx : Ctx.t) (at : region) (id : id)
     |> List.map (fun param ->
            match param.it with
            | Il.Ast.ExpP typ_il -> typ_il
-           | _ -> failwith "DefP not allowed in tables")
+           | _ -> error param.at "DefP not allowed in tables")
   in
-  match_check_tablerows ctx at tablerows_il argtyps_il;
+  check_valid_match_tablerows ctx at tablerows_il argtyps_il;
   Ctx.add_table_def ctx id tablerows_il
 
 and elab_plain_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
