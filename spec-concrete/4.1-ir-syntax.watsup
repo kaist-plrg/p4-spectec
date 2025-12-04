@@ -756,7 +756,10 @@ syntax tableEntryListIR = tableEntryIR*
 ;;;;;;;; Table custom property
 ;;
 
-syntax tableCustomPropertyIR
+syntax tableCustomPropertyIR =
+  ;; (TODO) Consider extending syntax value in syntax expressionIR
+  | annotationList constOptIR CUSTOM nameIR initializerIR `;
+  | annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR `;
 
 ;;
 ;;;;;;;; Table properties
@@ -771,11 +774,6 @@ syntax tableDefaultActionPropertyIR =
 
 syntax tableEntriesPropertyIR =
   annotationList constOptIR ENTRIES `= `{ tableEntryListIR }
-
-syntax tableCustomPropertyIR =
-  ;; (TODO) Consider extending syntax value in syntax expressionIR
-  | annotationList constOptIR CUSTOM nameIR initializerIR `;
-  | annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR `;
 
 syntax tablePropertyIR =
   | tableKeysPropertyIR
