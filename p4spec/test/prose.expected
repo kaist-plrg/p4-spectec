@@ -19,8 +19,8 @@ relation Type_alpha: `typeIR'` and `typeIR'''`
  .. Check that `typeIR'''` has type `specializedTypeIR`.
  .. Let `typeDefIR~b~ < typeIR~b~^{asterisk}^ >` be `typeIR'''`.
  .. Group specializedTypeIR:
-  ... Let `typeIR~a_spec~` be `<<specialize_typeDefIR, $specialize_typeDefIR(typeDefIR~a~, typeIR~a~^{asterisk}^)>>`.
-  ... Let `typeIR~b_spec~` be `<<specialize_typeDefIR, $specialize_typeDefIR(typeDefIR~b~, typeIR~b~^{asterisk}^)>>`.
+  ... Let `typeIR~a_spec~` be <<specialize_typeDefIR, `typeDefIR~a~` specialized by `typeIR~a~^{asterisk}^`>>.
+  ... Let `typeIR~b_spec~` be <<specialize_typeDefIR, `typeDefIR~b~` specialized by `typeIR~b~^{asterisk}^`>>.
   ... Check that <<Type_alpha, `typeIR~a_spec~` and `typeIR~b_spec~` are the same type>>.
   ... If `<<is_nominal_typeIR, $is_nominal_typeIR(typeIR~a_spec~)>>` *and* `<<is_nominal_typeIR, $is_nominal_typeIR(typeIR~b_spec~)>>`:
    .... Check that <<Type_alpha, `typeIR~a~` and `typeIR~b~` are the same type>>, for all `typeIR~a~` in `typeIR~a~^{asterisk}^` and `typeIR~b~` in `typeIR~b~^{asterisk}^`.
@@ -326,7 +326,7 @@ relation Type_wf: `bound` and `typeIR''`
   ... The relation holds.
 . Else if let `typeDefIR~base~ < typeIR~arg~^{asterisk}^ >` be `typeIR''`:
  .. Group specializedTypeIR:
-  ... Let `typeIR~spec~` be `<<specialize_typeDefIR, $specialize_typeDefIR(typeDefIR~base~, typeIR~arg~^{asterisk}^)>>`.
+  ... Let `typeIR~spec~` be <<specialize_typeDefIR, `typeDefIR~base~` specialized by `typeIR~arg~^{asterisk}^`>>.
   ... Check that <<Type_wf, `typeIR~spec~` is a well-formed type, assuming bound type ids `bound`>>.
   ... The relation holds.
 . Else if let `TYPEDEF ++_++ typeIR` be `typeIR''`:
@@ -446,9 +446,9 @@ relation TypeDef_wf: `bound` and `typeDefIR`
 
 
 . Group :
- .. Let `(tid~tparam_expl~^{asterisk}^, tid~tparam_impl~^{asterisk}^)` be `<<type_parameters_of_typeDefIR, $type_parameters_of_typeDefIR(typeDefIR)>>`.
+ .. Let `(tid~tparam_expl~^{asterisk}^, tid~tparam_impl~^{asterisk}^)` be <<type_parameters_of_typeDefIR, the type parameters of `typeDefIR`>>.
  .. Check that <<distinct_, the elements of `tid~tparam_expl~^{asterisk}^ {pp} tid~tparam_impl~^{asterisk}^` are distinct>>.
- .. Let `typeIR~base~` be `<<type_of_typeDefIR, $type_of_typeDefIR(typeDefIR)>>`.
+ .. Let `typeIR~base~` be <<type_of_typeDefIR, the underlying type of `typeDefIR`>>.
  .. Let `bound~inner~` be <<union_set, the union of the sets `bound` and `{ tid~tparam_expl~^{asterisk}^ {pp} tid~tparam_impl~^{asterisk}^ }`>>.
  .. Check that <<Type_wf, `typeIR~base~` is a well-formed type, assuming bound type ids `bound~inner~`>>.
  .. The relation holds.
@@ -731,7 +731,7 @@ relation Expr_eval_lctk: `p`, `TC`, and <<typedExpressionIR, `expressionIR` anno
   ... Result in `" text "`.
 . Else if let `prefixedNameIR` be `expressionIR`:
  .. Group referenceExpressionIR:
-  ... Let `value` be `<<find_var_value_t, $find_var_value_t(p, TC, prefixedNameIR)>>`.
+  ... Let `value` be <<find_var_value_t, the value of variable `prefixedNameIR` in the `p` layer of `TC`>>.
   ... Result in `value`.
 . Else if let `defaultExpression` be `expressionIR`:
  .. Group defaultExpressionIR:
@@ -820,16 +820,14 @@ for each `typedExpressionIR` in `typedExpressionIR^{asterisk}^`
 . Else if let `ERROR . nameIR` be `expressionIR`:
  .. Group errorAccessExpressionIR:
   ... Let `nameIR~error~` be `"error." {pp} nameIR`.
-  ... Let `value~error~` be `<<find_var_value_t, $find_var_value_t(p, TC, nameIR~error~)>>`.
+  ... Let `value~error~` be <<find_var_value_t, the value of variable `nameIR~error~` in the `p` layer of `TC`>>.
   ... Result in `value~error~`.
 . Else if let `memberAccessBaseIR . nameIR` be `expressionIR`:
  .. Else if let `TYPE prefixedNameIR~base~` be `memberAccessBaseIR`:
   ... Group memberAccessExpressionIR-type:
-   .... Let `typeDefIR^?^` be `<<find_typeDef_t, $find_typeDef_t(p, TC, prefixedNameIR~base~)>>`.
-   .... Check that `typeDefIR^?^` is Some value.
-   .... Let `typeDefIR~base~` be `typeDefIR^?^`.
+   .... Let `typeDefIR~base~` be <<option_get, *!*>> <<find_typeDef_t, the type definition of `prefixedNameIR~base~` in the `p` layer of `TC`>>.
    .... Check that `<<is_monomorphic_typeDefIR, $is_monomorphic_typeDefIR(typeDefIR~base~)>>`.
-   .... Let `typeIR~base~` be `<<type_of_typeDefIR, $type_of_typeDefIR(typeDefIR~base~)>>`.
+   .... Let `typeIR~base~` be <<type_of_typeDefIR, the underlying type of `typeDefIR~base~`>>.
    .... Let `typeIR'` be <<canon_typeIR, the canonicalized form of `typeIR~base~`>>.
    .... Check that `typeIR'` has type `enumTypeIR`.
    .... Let `enumTypeIR` be `typeIR'`.
@@ -837,9 +835,7 @@ for each `typedExpressionIR` in `typedExpressionIR^{asterisk}^`
     ..... Check that `nameIR` is in `id~field~^{asterisk}^`.
     ..... Result in `tid . nameIR`.
    .... Else let `ENUM tid < typeIR > { (id~field~ = value~field~ ;)^{asterisk}^ }` be `enumTypeIR`:
-    ..... Let `value'^?^` be `<<assoc_, $assoc_<id, value>(nameIR, ((id~field~, value~field~))^{asterisk}^)>>`.
-    ..... Check that `value'^?^` is Some value.
-    ..... Let `value` be `value'^?^`.
+    ..... Let `value` be <<option_get, *!*>> `<<assoc_, $assoc_<id, value>(nameIR, ((id~field~, value~field~))^{asterisk}^)>>`.
     ..... Result in `tid . nameIR . value`.
  .. Else if let `typedExpressionIR~base~` be `memberAccessBaseIR`:
   ... Check that `nameIR` is equal to `"size"`.
@@ -866,16 +862,14 @@ for each `typedExpressionIR` in `typedExpressionIR^{asterisk}^`
     ..... Check that `nameIR` is in `["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]`.
     ..... Result in `<<sizeof, $sizeof(typeIR~base~, nameIR)>>`.
    .... Else if let `TYPE prefixedNameIR . nameIR` be `callableTargetIR`:
-    ..... Let `typeDefIR^?^` be `<<find_typeDef_t, $find_typeDef_t(p, TC, prefixedNameIR)>>`.
-    ..... Check that `typeDefIR^?^` is Some value.
-    ..... Let `typeDefIR~base~` be `typeDefIR^?^`.
+    ..... Let `typeDefIR~base~` be <<option_get, *!*>> <<find_typeDef_t, the type definition of `prefixedNameIR` in the `p` layer of `TC`>>.
     ..... If `<<is_monomorphic_typeDefIR, $is_monomorphic_typeDefIR(typeDefIR~base~)>>`:
-     ...... Let `typeIR~base~` be `<<type_of_typeDefIR, $type_of_typeDefIR(typeDefIR~base~)>>`.
+     ...... Let `typeIR~base~` be <<type_of_typeDefIR, the underlying type of `typeDefIR~base~`>>.
      ...... Check that `nameIR` is in `["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]`.
      ...... Result in `<<sizeof, $sizeof(typeIR~base~, nameIR)>>`.
     ..... Else `~<<is_monomorphic_typeDefIR, $is_monomorphic_typeDefIR(typeDefIR~base~)>>`:
-     ...... Check that (`[ ]`, `[ ]`) is equal to `<<type_parameters_of_typeDefIR, $type_parameters_of_typeDefIR(typeDefIR~base~)>>`.
-     ...... Let `typeIR~base~` be `<<type_of_typeDefIR, $type_of_typeDefIR(typeDefIR~base~)>>`.
+     ...... Check that (`[ ]`, `[ ]`) is equal to <<type_parameters_of_typeDefIR, the type parameters of `typeDefIR~base~`>>.
+     ...... Let `typeIR~base~` be <<type_of_typeDefIR, the underlying type of `typeDefIR~base~`>>.
      ...... Check that `nameIR` is in `["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]`.
      ...... Result in `<<sizeof, $sizeof(typeIR~base~, nameIR)>>`.
  .. Else if let `( callableTargetIR )` be `callableTargetIR`:
@@ -954,21 +948,17 @@ relation Type_ok: `p`, `TC`, and `typeOrVoid`
 . Else if let `prefixedTypeName` be `typeOrVoid`:
  .. Group prefixedTypeName:
   ... Let `prefixedNameIR` be <<prefixedTypeName, the prefixed name of  `prefixedTypeName`>>.
-  ... Let `typeDefIR'^?^` be `<<find_typeDef_t, $find_typeDef_t(p, TC, prefixedNameIR)>>`.
-  ... Check that `typeDefIR'^?^` is Some value.
-  ... Let `typeDefIR` be `typeDefIR'^?^`.
+  ... Let `typeDefIR` be <<option_get, *!*>> <<find_typeDef_t, the type definition of `prefixedNameIR` in the `p` layer of `TC`>>.
   ... If `<<is_monomorphic_typeDefIR, $is_monomorphic_typeDefIR(typeDefIR)>>`:
-   .... Let `typeIR` be `<<type_of_typeDefIR, $type_of_typeDefIR(typeDefIR)>>`.
+   .... Let `typeIR` be <<type_of_typeDefIR, the underlying type of `typeDefIR`>>.
    .... Result in the type `typeIR` and a set of fresh type variables `[ ]`.
   ... Else `~<<is_monomorphic_typeDefIR, $is_monomorphic_typeDefIR(typeDefIR)>>`:
-   .... Check that (`[ ]`, `[ ]`) is equal to `<<type_parameters_of_typeDefIR, $type_parameters_of_typeDefIR(typeDefIR)>>`.
+   .... Check that (`[ ]`, `[ ]`) is equal to <<type_parameters_of_typeDefIR, the type parameters of `typeDefIR`>>.
    .... Result in the type `typeDefIR < [ ] >` and a set of fresh type variables `[ ]`.
 . Else if let `prefixedTypeName < typeArgumentList >` be `typeOrVoid`:
  .. Group specializedType:
   ... Let `prefixedNameIR` be <<prefixedTypeName, the prefixed name of  `prefixedTypeName`>>.
-  ... Let `typeDefIR'^?^` be `<<find_typeDef_t, $find_typeDef_t(p, TC, prefixedNameIR)>>`.
-  ... Check that `typeDefIR'^?^` is Some value.
-  ... Let `typeDefIR` be `typeDefIR'^?^`.
+  ... Let `typeDefIR` be <<option_get, *!*>> <<find_typeDef_t, the type definition of `prefixedNameIR` in the `p` layer of `TC`>>.
   ... Check that `<<is_polymorphic_typeDefIR, $is_polymorphic_typeDefIR(typeDefIR)>>`.
   ... Let `typeArgument^{asterisk}^` be <<flatten_typeArgumentList, the list of type arguments in `typeArgumentList`>>.
   ... Let `typeIR~arg~^{asterisk}^` and `tid~fresh~^{asterisk}^` be the result of <<TypeArguments_ok, typing `typeArgument^{asterisk}^`, under cursor `p` and typing context `TC`>>.
@@ -1669,16 +1659,12 @@ relation Expr_ok: `p`, `TC`, and `expression'''`
 . Group referenceExpression:
  .. If let `prefixedNonTypeName` be `expression'''`:
   ... Let `prefixedNameIR` be <<prefixedNonTypeName, the prefixed name of  `prefixedNonTypeName`>>.
-  ... Let `varTypeIR^?^` be `<<find_var_t, $find_var_t(p, TC, prefixedNameIR)>>`.
-  ... Check that `varTypeIR^?^` is Some value.
-  ... Let `++_++ typeIR ctk ++_++^?^` be `varTypeIR^?^`.
+  ... Let `++_++ typeIR ctk ++_++^?^` be <<option_get, *!*>> <<find_var_t, the type of variable `prefixedNameIR` in the `p` layer of `TC`>>.
   ... Let `expressionNoteIR` be <<expressionNoteIR, type `typeIR` and compile-time known-ness `ctk`>>.
   ... Result in the typed expression <<typedExpressionIR, `prefixedNameIR` annotated with `expressionNoteIR`>>.
  .. Else if `expression'''` is equal to `THIS`:
   ... Let `prefixedNameIR` be `"this"`.
-  ... Let `varTypeIR^?^` be `<<find_var_t, $find_var_t(p, TC, prefixedNameIR)>>`.
-  ... Check that `varTypeIR^?^` is Some value.
-  ... Let `++_++ typeIR ctk ++_++^?^` be `varTypeIR^?^`.
+  ... Let `++_++ typeIR ctk ++_++^?^` be <<option_get, *!*>> <<find_var_t, the type of variable `prefixedNameIR` in the `p` layer of `TC`>>.
   ... Let `expressionNoteIR` be <<expressionNoteIR, type `typeIR` and compile-time known-ness `ctk`>>.
   ... Result in the typed expression <<typedExpressionIR, `prefixedNameIR` annotated with `expressionNoteIR`>>.
 . If let `defaultExpression` be `expression'''`:
@@ -1689,9 +1675,7 @@ relation Expr_ok: `p`, `TC`, and `expression'''`
  .. If `unop` matches pattern `!`:
   ... Group unaryExpression-lnot:
    .... Let `typedExpressionIR` be the result of <<Expr_ok, typing `expression`, under cursor `p` and typing context `TC`>>.
-   .... Let `typedExpressionIR'^?^` be `<<reduce_serenum_unary, $reduce_serenum_unary(typedExpressionIR, $compat_lnot)>>`.
-   .... Check that `typedExpressionIR'^?^` is Some value.
-   .... Let `typedExpressionIR~reduced~` be `typedExpressionIR'^?^`.
+   .... Let `typedExpressionIR~reduced~` be <<option_get, *!*>> `<<reduce_serenum_unary, $reduce_serenum_unary(typedExpressionIR, $compat_lnot)>>`.
    .... Let `typeIR~reduced~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~reduced~`>>.
    .... Let `ctk~reduced~` be <<ctk_of_typedExpressionIR, the compile-time known-ness of  `typedExpressionIR~reduced~`>>.
    .... Let `expressionNoteIR` be <<expressionNoteIR, type `typeIR~reduced~` and compile-time known-ness `ctk~reduced~`>>.
@@ -1699,9 +1683,7 @@ relation Expr_ok: `p`, `TC`, and `expression'''`
  .. Else if `unop` matches pattern `~`:
   ... Group unaryExpression-bnot:
    .... Let `typedExpressionIR` be the result of <<Expr_ok, typing `expression`, under cursor `p` and typing context `TC`>>.
-   .... Let `typedExpressionIR'^?^` be `<<reduce_serenum_unary, $reduce_serenum_unary(typedExpressionIR, $compat_bnot)>>`.
-   .... Check that `typedExpressionIR'^?^` is Some value.
-   .... Let `typedExpressionIR~reduced~` be `typedExpressionIR'^?^`.
+   .... Let `typedExpressionIR~reduced~` be <<option_get, *!*>> `<<reduce_serenum_unary, $reduce_serenum_unary(typedExpressionIR, $compat_bnot)>>`.
    .... Let `typeIR~reduced~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~reduced~`>>.
    .... Let `ctk~reduced~` be <<ctk_of_typedExpressionIR, the compile-time known-ness of  `typedExpressionIR~reduced~`>>.
    .... Let `expressionNoteIR` be <<expressionNoteIR, type `typeIR~reduced~` and compile-time known-ness `ctk~reduced~`>>.
@@ -1709,18 +1691,14 @@ relation Expr_ok: `p`, `TC`, and `expression'''`
  .. Group unaryExpression-uplusminus:
   ... If `unop` matches pattern `+`:
    .... Let `typedExpressionIR` be the result of <<Expr_ok, typing `expression`, under cursor `p` and typing context `TC`>>.
-   .... Let `typedExpressionIR'^?^` be `<<reduce_serenum_unary, $reduce_serenum_unary(typedExpressionIR, $compat_uplusminus)>>`.
-   .... Check that `typedExpressionIR'^?^` is Some value.
-   .... Let `typedExpressionIR~reduced~` be `typedExpressionIR'^?^`.
+   .... Let `typedExpressionIR~reduced~` be <<option_get, *!*>> `<<reduce_serenum_unary, $reduce_serenum_unary(typedExpressionIR, $compat_uplusminus)>>`.
    .... Let `typeIR~reduced~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~reduced~`>>.
    .... Let `ctk~reduced~` be <<ctk_of_typedExpressionIR, the compile-time known-ness of  `typedExpressionIR~reduced~`>>.
    .... Let `expressionNoteIR` be <<expressionNoteIR, type `typeIR~reduced~` and compile-time known-ness `ctk~reduced~`>>.
    .... Result in the typed expression <<typedExpressionIR, `unop typedExpressionIR~reduced~` annotated with `expressionNoteIR`>>.
   ... Else if `unop` matches pattern `-`:
    .... Let `typedExpressionIR` be the result of <<Expr_ok, typing `expression`, under cursor `p` and typing context `TC`>>.
-   .... Let `typedExpressionIR'^?^` be `<<reduce_serenum_unary, $reduce_serenum_unary(typedExpressionIR, $compat_uplusminus)>>`.
-   .... Check that `typedExpressionIR'^?^` is Some value.
-   .... Let `typedExpressionIR~reduced~` be `typedExpressionIR'^?^`.
+   .... Let `typedExpressionIR~reduced~` be <<option_get, *!*>> `<<reduce_serenum_unary, $reduce_serenum_unary(typedExpressionIR, $compat_uplusminus)>>`.
    .... Let `typeIR~reduced~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~reduced~`>>.
    .... Let `ctk~reduced~` be <<ctk_of_typedExpressionIR, the compile-time known-ness of  `typedExpressionIR~reduced~`>>.
    .... Let `expressionNoteIR` be <<expressionNoteIR, type `typeIR~reduced~` and compile-time known-ness `ctk~reduced~`>>.
@@ -1730,12 +1708,8 @@ relation Expr_ok: `p`, `TC`, and `expression'''`
   ... Check that `binop` is in `[+, -, *]`.
   ... Let `typedExpressionIR~l~` be the result of <<Expr_ok, typing `expression~l~`, under cursor `p` and typing context `TC`>>.
   ... Let `typedExpressionIR~r~` be the result of <<Expr_ok, typing `expression~r~`, under cursor `p` and typing context `TC`>>.
-  ... Let `(typedExpressionIR, typedExpressionIR)^?^` be <<coerce_binary, `typedExpressionIR~l~` and `typedExpressionIR~r~` implicitly cast to equal types>>.
-  ... Check that `(typedExpressionIR, typedExpressionIR)^?^` is Some value.
-  ... Let `(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~)` be `(typedExpressionIR, typedExpressionIR)^?^`.
-  ... Let `(typedExpressionIR, typedExpressionIR)'^?^` be `<<reduce_serenum_binary, $reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_plusminusmult)>>`.
-  ... Check that `(typedExpressionIR, typedExpressionIR)'^?^` is Some value.
-  ... Let `(typedExpressionIR~l_reduced~, typedExpressionIR~r_reduced~)` be `(typedExpressionIR, typedExpressionIR)'^?^`.
+  ... Let `(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~)` be <<option_get, *!*>> <<coerce_binary, `typedExpressionIR~l~` and `typedExpressionIR~r~` implicitly cast to equal types>>.
+  ... Let `(typedExpressionIR~l_reduced~, typedExpressionIR~r_reduced~)` be <<option_get, *!*>> `<<reduce_serenum_binary, $reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_plusminusmult)>>`.
   ... Let `typeIR~reduced~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~l_reduced~`>>.
   ... Let `ctk~l_reduced~` be <<ctk_of_typedExpressionIR, the compile-time known-ness of  `typedExpressionIR~l_reduced~`>>.
   ... Let `ctk~r_reduced~` be <<ctk_of_typedExpressionIR, the compile-time known-ness of  `typedExpressionIR~r_reduced~`>>.
@@ -1746,12 +1720,8 @@ relation Expr_ok: `p`, `TC`, and `expression'''`
   ... Check that `binop` is in `[|+|, |-|]`.
   ... Let `typedExpressionIR~l~` be the result of <<Expr_ok, typing `expression~l~`, under cursor `p` and typing context `TC`>>.
   ... Let `typedExpressionIR~r~` be the result of <<Expr_ok, typing `expression~r~`, under cursor `p` and typing context `TC`>>.
-  ... Let `(typedExpressionIR, typedExpressionIR)^?^` be <<coerce_binary, `typedExpressionIR~l~` and `typedExpressionIR~r~` implicitly cast to equal types>>.
-  ... Check that `(typedExpressionIR, typedExpressionIR)^?^` is Some value.
-  ... Let `(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~)` be `(typedExpressionIR, typedExpressionIR)^?^`.
-  ... Let `(typedExpressionIR, typedExpressionIR)'^?^` be `<<reduce_serenum_binary, $reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_satplusminus)>>`.
-  ... Check that `(typedExpressionIR, typedExpressionIR)'^?^` is Some value.
-  ... Let `(typedExpressionIR~l_reduced~, typedExpressionIR~r_reduced~)` be `(typedExpressionIR, typedExpressionIR)'^?^`.
+  ... Let `(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~)` be <<option_get, *!*>> <<coerce_binary, `typedExpressionIR~l~` and `typedExpressionIR~r~` implicitly cast to equal types>>.
+  ... Let `(typedExpressionIR~l_reduced~, typedExpressionIR~r_reduced~)` be <<option_get, *!*>> `<<reduce_serenum_binary, $reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_satplusminus)>>`.
   ... Let `typeIR~reduced~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~l_reduced~`>>.
   ... Let `ctk~l_reduced~` be <<ctk_of_typedExpressionIR, the compile-time known-ness of  `typedExpressionIR~l_reduced~`>>.
   ... Let `ctk~r_reduced~` be <<ctk_of_typedExpressionIR, the compile-time known-ness of  `typedExpressionIR~r_reduced~`>>.
@@ -1762,12 +1732,8 @@ relation Expr_ok: `p`, `TC`, and `expression'''`
   ... Check that `binop` is in `[/, %]`.
   ... Let `typedExpressionIR~l~` be the result of <<Expr_ok, typing `expression~l~`, under cursor `p` and typing context `TC`>>.
   ... Let `typedExpressionIR~r~` be the result of <<Expr_ok, typing `expression~r~`, under cursor `p` and typing context `TC`>>.
-  ... Let `(typedExpressionIR, typedExpressionIR)^?^` be <<coerce_binary, `typedExpressionIR~l~` and `typedExpressionIR~r~` implicitly cast to equal types>>.
-  ... Check that `(typedExpressionIR, typedExpressionIR)^?^` is Some value.
-  ... Let `(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~)` be `(typedExpressionIR, typedExpressionIR)^?^`.
-  ... Let `(typedExpressionIR, typedExpressionIR)'^?^` be `<<reduce_serenum_binary, $reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_divmod)>>`.
-  ... Check that `(typedExpressionIR, typedExpressionIR)'^?^` is Some value.
-  ... Let `(typedExpressionIR~l_reduced~, typedExpressionIR~r_reduced~)` be `(typedExpressionIR, typedExpressionIR)'^?^`.
+  ... Let `(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~)` be <<option_get, *!*>> <<coerce_binary, `typedExpressionIR~l~` and `typedExpressionIR~r~` implicitly cast to equal types>>.
+  ... Let `(typedExpressionIR~l_reduced~, typedExpressionIR~r_reduced~)` be <<option_get, *!*>> `<<reduce_serenum_binary, $reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_divmod)>>`.
   ... Let `typeIR~reduced~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~l_reduced~`>>.
   ... Let `ctk~l_reduced~` be <<ctk_of_typedExpressionIR, the compile-time known-ness of  `typedExpressionIR~l_reduced~`>>.
   ... Let `ctk~r_reduced~` be <<ctk_of_typedExpressionIR, the compile-time known-ness of  `typedExpressionIR~r_reduced~`>>.
@@ -1788,9 +1754,7 @@ relation Expr_ok: `p`, `TC`, and `expression'''`
   ... Check that `binop` is in `[<<, >>]`.
   ... Let `typedExpressionIR~l~` be the result of <<Expr_ok, typing `expression~l~`, under cursor `p` and typing context `TC`>>.
   ... Let `typedExpressionIR~r~` be the result of <<Expr_ok, typing `expression~r~`, under cursor `p` and typing context `TC`>>.
-  ... Let `(typedExpressionIR, typedExpressionIR)^?^` be `<<reduce_serenum_binary, $reduce_serenum_binary(typedExpressionIR~l~, typedExpressionIR~r~, $compat_shift)>>`.
-  ... Check that `(typedExpressionIR, typedExpressionIR)^?^` is Some value.
-  ... Let `(typedExpressionIR~l_reduced~, typedExpressionIR~r_reduced~)` be `(typedExpressionIR, typedExpressionIR)^?^`.
+  ... Let `(typedExpressionIR~l_reduced~, typedExpressionIR~r_reduced~)` be <<option_get, *!*>> `<<reduce_serenum_binary, $reduce_serenum_binary(typedExpressionIR~l~, typedExpressionIR~r~, $compat_shift)>>`.
   ... Let `typeIR~l_reduced~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~l_reduced~`>>.
   ... Let `ctk~l_reduced~` be <<ctk_of_typedExpressionIR, the compile-time known-ness of  `typedExpressionIR~l_reduced~`>>.
   ... Let `typeIR~r_reduced~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~r_reduced~`>>.
@@ -1812,9 +1776,7 @@ relation Expr_ok: `p`, `TC`, and `expression'''`
   ... Check that `binop` is in `[==, !=]`.
   ... Let `typedExpressionIR~l~` be the result of <<Expr_ok, typing `expression~l~`, under cursor `p` and typing context `TC`>>.
   ... Let `typedExpressionIR~r~` be the result of <<Expr_ok, typing `expression~r~`, under cursor `p` and typing context `TC`>>.
-  ... Let `(typedExpressionIR, typedExpressionIR)^?^` be <<coerce_binary, `typedExpressionIR~l~` and `typedExpressionIR~r~` implicitly cast to equal types>>.
-  ... Check that `(typedExpressionIR, typedExpressionIR)^?^` is Some value.
-  ... Let `(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~)` be `(typedExpressionIR, typedExpressionIR)^?^`.
+  ... Let `(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~)` be <<option_get, *!*>> <<coerce_binary, `typedExpressionIR~l~` and `typedExpressionIR~r~` implicitly cast to equal types>>.
   ... Let `typeIR~cast~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~l_cast~`>>.
   ... Let `ctk~l_cast~` be <<ctk_of_typedExpressionIR, the compile-time known-ness of  `typedExpressionIR~l_cast~`>>.
   ... Let `ctk~r_cast~` be <<ctk_of_typedExpressionIR, the compile-time known-ness of  `typedExpressionIR~r_cast~`>>.
@@ -1826,12 +1788,8 @@ relation Expr_ok: `p`, `TC`, and `expression'''`
   ... Check that `binop` is in `[<=, >=, <, >]`.
   ... Let `typedExpressionIR~l~` be the result of <<Expr_ok, typing `expression~l~`, under cursor `p` and typing context `TC`>>.
   ... Let `typedExpressionIR~r~` be the result of <<Expr_ok, typing `expression~r~`, under cursor `p` and typing context `TC`>>.
-  ... Let `(typedExpressionIR, typedExpressionIR)^?^` be <<coerce_binary, `typedExpressionIR~l~` and `typedExpressionIR~r~` implicitly cast to equal types>>.
-  ... Check that `(typedExpressionIR, typedExpressionIR)^?^` is Some value.
-  ... Let `(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~)` be `(typedExpressionIR, typedExpressionIR)^?^`.
-  ... Let `(typedExpressionIR, typedExpressionIR)'^?^` be `<<reduce_serenum_binary, $reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_compare)>>`.
-  ... Check that `(typedExpressionIR, typedExpressionIR)'^?^` is Some value.
-  ... Let `(typedExpressionIR~l_reduced~, typedExpressionIR~r_reduced~)` be `(typedExpressionIR, typedExpressionIR)'^?^`.
+  ... Let `(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~)` be <<option_get, *!*>> <<coerce_binary, `typedExpressionIR~l~` and `typedExpressionIR~r~` implicitly cast to equal types>>.
+  ... Let `(typedExpressionIR~l_reduced~, typedExpressionIR~r_reduced~)` be <<option_get, *!*>> `<<reduce_serenum_binary, $reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_compare)>>`.
   ... Let `typeIR~reduced~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~l_reduced~`>>.
   ... Let `ctk~l_reduced~` be <<ctk_of_typedExpressionIR, the compile-time known-ness of  `typedExpressionIR~l_reduced~`>>.
   ... Let `ctk~r_reduced~` be <<ctk_of_typedExpressionIR, the compile-time known-ness of  `typedExpressionIR~r_reduced~`>>.
@@ -1842,12 +1800,8 @@ relation Expr_ok: `p`, `TC`, and `expression'''`
   ... Check that `binop` is in `[&, ^, |]`.
   ... Let `typedExpressionIR~l~` be the result of <<Expr_ok, typing `expression~l~`, under cursor `p` and typing context `TC`>>.
   ... Let `typedExpressionIR~r~` be the result of <<Expr_ok, typing `expression~r~`, under cursor `p` and typing context `TC`>>.
-  ... Let `(typedExpressionIR, typedExpressionIR)^?^` be <<coerce_binary, `typedExpressionIR~l~` and `typedExpressionIR~r~` implicitly cast to equal types>>.
-  ... Check that `(typedExpressionIR, typedExpressionIR)^?^` is Some value.
-  ... Let `(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~)` be `(typedExpressionIR, typedExpressionIR)^?^`.
-  ... Let `(typedExpressionIR, typedExpressionIR)'^?^` be `<<reduce_serenum_binary, $reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_bitwise)>>`.
-  ... Check that `(typedExpressionIR, typedExpressionIR)'^?^` is Some value.
-  ... Let `(typedExpressionIR~l_reduced~, typedExpressionIR~r_reduced~)` be `(typedExpressionIR, typedExpressionIR)'^?^`.
+  ... Let `(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~)` be <<option_get, *!*>> <<coerce_binary, `typedExpressionIR~l~` and `typedExpressionIR~r~` implicitly cast to equal types>>.
+  ... Let `(typedExpressionIR~l_reduced~, typedExpressionIR~r_reduced~)` be <<option_get, *!*>> `<<reduce_serenum_binary, $reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_bitwise)>>`.
   ... Let `typeIR~reduced~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~l_reduced~`>>.
   ... Let `ctk~l_reduced~` be <<ctk_of_typedExpressionIR, the compile-time known-ness of  `typedExpressionIR~l_reduced~`>>.
   ... Let `ctk~r_reduced~` be <<ctk_of_typedExpressionIR, the compile-time known-ness of  `typedExpressionIR~r_reduced~`>>.
@@ -1858,16 +1812,12 @@ relation Expr_ok: `p`, `TC`, and `expression'''`
  .. Group binaryExpression-concat:
   ... Let `typedExpressionIR~l~` be the result of <<Expr_ok, typing `expression~l~`, under cursor `p` and typing context `TC`>>.
   ... Let `typedExpressionIR~r~` be the result of <<Expr_ok, typing `expression~r~`, under cursor `p` and typing context `TC`>>.
-  ... Let `(typedExpressionIR, typedExpressionIR)^?^` be `<<reduce_serenum_binary, $reduce_serenum_binary(typedExpressionIR~l~, typedExpressionIR~r~, $compat_concat)>>`.
-  ... Check that `(typedExpressionIR, typedExpressionIR)^?^` is Some value.
-  ... Let `(typedExpressionIR~l_reduced~, typedExpressionIR~r_reduced~)` be `(typedExpressionIR, typedExpressionIR)^?^`.
+  ... Let `(typedExpressionIR~l_reduced~, typedExpressionIR~r_reduced~)` be <<option_get, *!*>> `<<reduce_serenum_binary, $reduce_serenum_binary(typedExpressionIR~l~, typedExpressionIR~r~, $compat_concat)>>`.
   ... Let `typeIR~l_reduced~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~l_reduced~`>>.
   ... Let `ctk~l_reduced~` be <<ctk_of_typedExpressionIR, the compile-time known-ness of  `typedExpressionIR~l_reduced~`>>.
   ... Let `typeIR~r_reduced~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~r_reduced~`>>.
   ... Let `ctk~r_reduced~` be <<ctk_of_typedExpressionIR, the compile-time known-ness of  `typedExpressionIR~r_reduced~`>>.
-  ... Let `typeIR^?^` be `<<result_concat, $result_concat(typeIR~l_reduced~, typeIR~r_reduced~)>>`.
-  ... Check that `typeIR^?^` is Some value.
-  ... Let `typeIR~reduced~` be `typeIR^?^`.
+  ... Let `typeIR~reduced~` be <<option_get, *!*>> `<<result_concat, $result_concat(typeIR~l_reduced~, typeIR~r_reduced~)>>`.
   ... Let `ctk~reduced~` be `<<join_ctk, $join_ctk(ctk~l_reduced~, ctk~r_reduced~)>>`.
   ... Let `expressionNoteIR` be <<expressionNoteIR, type `typeIR~reduced~` and compile-time known-ness `ctk~reduced~`>>.
   ... Result in the typed expression <<typedExpressionIR, `typedExpressionIR~l_reduced~ ++ typedExpressionIR~r_reduced~` annotated with `expressionNoteIR`>>.
@@ -1875,12 +1825,8 @@ relation Expr_ok: `p`, `TC`, and `expression'''`
   ... Check that `binop` is in `[&&, ||]`.
   ... Let `typedExpressionIR~l~` be the result of <<Expr_ok, typing `expression~l~`, under cursor `p` and typing context `TC`>>.
   ... Let `typedExpressionIR~r~` be the result of <<Expr_ok, typing `expression~r~`, under cursor `p` and typing context `TC`>>.
-  ... Let `(typedExpressionIR, typedExpressionIR)^?^` be <<coerce_binary, `typedExpressionIR~l~` and `typedExpressionIR~r~` implicitly cast to equal types>>.
-  ... Check that `(typedExpressionIR, typedExpressionIR)^?^` is Some value.
-  ... Let `(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~)` be `(typedExpressionIR, typedExpressionIR)^?^`.
-  ... Let `(typedExpressionIR, typedExpressionIR)'^?^` be `<<reduce_serenum_binary, $reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_logical)>>`.
-  ... Check that `(typedExpressionIR, typedExpressionIR)'^?^` is Some value.
-  ... Let `(typedExpressionIR~l_reduced~, typedExpressionIR~r_reduced~)` be `(typedExpressionIR, typedExpressionIR)'^?^`.
+  ... Let `(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~)` be <<option_get, *!*>> <<coerce_binary, `typedExpressionIR~l~` and `typedExpressionIR~r~` implicitly cast to equal types>>.
+  ... Let `(typedExpressionIR~l_reduced~, typedExpressionIR~r_reduced~)` be <<option_get, *!*>> `<<reduce_serenum_binary, $reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_logical)>>`.
   ... Let `typeIR~reduced~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~l_reduced~`>>.
   ... Let `ctk~l_reduced~` be <<ctk_of_typedExpressionIR, the compile-time known-ness of  `typedExpressionIR~l_reduced~`>>.
   ... Let `ctk~r_reduced~` be <<ctk_of_typedExpressionIR, the compile-time known-ness of  `typedExpressionIR~r_reduced~`>>.
@@ -1895,9 +1841,7 @@ relation Expr_ok: `p`, `TC`, and `expression'''`
   ... Let `boolTypeIR` be `typeIR`.
   ... Let `typedExpressionIR~true~` be the result of <<Expr_ok, typing `expression~true~`, under cursor `p` and typing context `TC`>>.
   ... Let `typedExpressionIR~false~` be the result of <<Expr_ok, typing `expression~false~`, under cursor `p` and typing context `TC`>>.
-  ... Let `(typedExpressionIR, typedExpressionIR)^?^` be <<coerce_binary, `typedExpressionIR~true~` and `typedExpressionIR~false~` implicitly cast to equal types>>.
-  ... Check that `(typedExpressionIR, typedExpressionIR)^?^` is Some value.
-  ... Let `(typedExpressionIR~true_cast~, typedExpressionIR~false_cast~)` be `(typedExpressionIR, typedExpressionIR)^?^`.
+  ... Let `(typedExpressionIR~true_cast~, typedExpressionIR~false_cast~)` be <<option_get, *!*>> <<coerce_binary, `typedExpressionIR~true~` and `typedExpressionIR~false~` implicitly cast to equal types>>.
   ... Let `typeIR~cast~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~true_cast~`>>.
   ... Let `ctk~true_cast~` be <<ctk_of_typedExpressionIR, the compile-time known-ness of  `typedExpressionIR~true_cast~`>>.
   ... Let `ctk~false_cast~` be <<ctk_of_typedExpressionIR, the compile-time known-ness of  `typedExpressionIR~false_cast~`>>.
@@ -2079,18 +2023,16 @@ for each `typedExpressionIR~f~` in `typedExpressionIR~f~^{asterisk}^`
  .. Group errorAccessExpression:
   ... Let `nameIR` be <<name, the name of `member`>>.
   ... Let `nameIR~error~` be `"error." {pp} nameIR`.
-  ... Check that `ERROR . nameIR` is equal to `<<find_var_value_t, $find_var_value_t(p, TC, nameIR~error~)>>`.
+  ... Check that `ERROR . nameIR` is equal to <<find_var_value_t, the value of variable `nameIR~error~` in the `p` layer of `TC`>>.
   ... Let `expressionNoteIR` be <<expressionNoteIR, type `ERROR` and compile-time known-ness `LCTK`>>.
   ... Result in the typed expression <<typedExpressionIR, `ERROR . nameIR` annotated with `expressionNoteIR`>>.
 . Else if let `memberAccessBase . member` be `expression'''`:
  .. If let `prefixedTypeName~base~` be `memberAccessBase`:
   ... Group memberAccessExpression-type:
    .... Let `prefixedNameIR~base~` be <<prefixedTypeName, the prefixed name of  `prefixedTypeName~base~`>>.
-   .... Let `typeDefIR^?^` be `<<find_typeDef_t, $find_typeDef_t(p, TC, prefixedNameIR~base~)>>`.
-   .... Check that `typeDefIR^?^` is Some value.
-   .... Let `typeDefIR~base~` be `typeDefIR^?^`.
+   .... Let `typeDefIR~base~` be <<option_get, *!*>> <<find_typeDef_t, the type definition of `prefixedNameIR~base~` in the `p` layer of `TC`>>.
    .... Check that `<<is_monomorphic_typeDefIR, $is_monomorphic_typeDefIR(typeDefIR~base~)>>`.
-   .... Let `typeIR~base~` be `<<type_of_typeDefIR, $type_of_typeDefIR(typeDefIR~base~)>>`.
+   .... Let `typeIR~base~` be <<type_of_typeDefIR, the underlying type of `typeDefIR~base~`>>.
    .... Let `typeIR` be <<canon_typeIR, the canonicalized form of `typeIR~base~`>>.
    .... Check that `typeIR` has type `enumTypeIR`.
    .... Let `enumTypeIR` be `typeIR`.
@@ -2170,23 +2112,17 @@ for each `typedExpressionIR~f~` in `typedExpressionIR~f~^{asterisk}^`
    .... Let `typeIR'` be <<canon_typeIR, the canonicalized form of `typeIR~base~`>>.
    .... If let `STRUCT ++_++ { (typeIR~f~ nameIR~f~ ;)^{asterisk}^ }` be `typeIR'`:
     ..... Let `nameIR` be <<name, the name of `member`>>.
-    ..... Let `typeIR''^?^` be `<<assoc_, $assoc_<nameIR, typeIR>(nameIR, ((nameIR~f~, typeIR~f~))^{asterisk}^)>>`.
-    ..... Check that `typeIR''^?^` is Some value.
-    ..... Let `typeIR` be `typeIR''^?^`.
+    ..... Let `typeIR` be <<option_get, *!*>> `<<assoc_, $assoc_<nameIR, typeIR>(nameIR, ((nameIR~f~, typeIR~f~))^{asterisk}^)>>`.
     ..... Let `expressionNoteIR` be <<expressionNoteIR, type `typeIR` and compile-time known-ness `DYN`>>.
     ..... Result in the typed expression <<typedExpressionIR, `typedExpressionIR~base~ . nameIR` annotated with `expressionNoteIR`>>.
    .... Else if let `HEADER ++_++ { (typeIR~f~ nameIR~f~ ;)^{asterisk}^ }` be `typeIR'`:
     ..... Let `nameIR` be <<name, the name of `member`>>.
-    ..... Let `typeIR''^?^` be `<<assoc_, $assoc_<nameIR, typeIR>(nameIR, ((nameIR~f~, typeIR~f~))^{asterisk}^)>>`.
-    ..... Check that `typeIR''^?^` is Some value.
-    ..... Let `typeIR` be `typeIR''^?^`.
+    ..... Let `typeIR` be <<option_get, *!*>> `<<assoc_, $assoc_<nameIR, typeIR>(nameIR, ((nameIR~f~, typeIR~f~))^{asterisk}^)>>`.
     ..... Let `expressionNoteIR` be <<expressionNoteIR, type `typeIR` and compile-time known-ness `DYN`>>.
     ..... Result in the typed expression <<typedExpressionIR, `typedExpressionIR~base~ . nameIR` annotated with `expressionNoteIR`>>.
    .... Else if let `HEADER_UNION ++_++ { (typeIR~f~ nameIR~f~ ;)^{asterisk}^ }` be `typeIR'`:
     ..... Let `nameIR` be <<name, the name of `member`>>.
-    ..... Let `typeIR''^?^` be `<<assoc_, $assoc_<nameIR, typeIR>(nameIR, ((nameIR~f~, typeIR~f~))^{asterisk}^)>>`.
-    ..... Check that `typeIR''^?^` is Some value.
-    ..... Let `typeIR` be `typeIR''^?^`.
+    ..... Let `typeIR` be <<option_get, *!*>> `<<assoc_, $assoc_<nameIR, typeIR>(nameIR, ((nameIR~f~, typeIR~f~))^{asterisk}^)>>`.
     ..... Let `expressionNoteIR` be <<expressionNoteIR, type `typeIR` and compile-time known-ness `DYN`>>.
     ..... Result in the typed expression <<typedExpressionIR, `typedExpressionIR~base~ . nameIR` annotated with `expressionNoteIR`>>.
    .... Else if let `TABLE_STRUCT ++_++ { HIT boolTypeIR ; MISS ++_++ ; ACTION_RUN ++_++ ; }` be `typeIR'`:
@@ -2208,9 +2144,7 @@ for each `typedExpressionIR~f~` in `typedExpressionIR~f~^{asterisk}^`
   ... Let `ctk~base~` be <<ctk_of_typedExpressionIR, the compile-time known-ness of  `typedExpressionIR~base~`>>.
   ... Let `typeIR~index~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~index~`>>.
   ... Let `ctk~index~` be <<ctk_of_typedExpressionIR, the compile-time known-ness of  `typedExpressionIR~index~`>>.
-  ... Let `typedExpressionIR^?^` be `<<reduce_serenum_unary, $reduce_serenum_unary(typedExpressionIR~index~, $compat_array_index)>>`.
-  ... Check that `typedExpressionIR^?^` is Some value.
-  ... Let `typedExpressionIR~index_reduced~` be `typedExpressionIR^?^`.
+  ... Let `typedExpressionIR~index_reduced~` be <<option_get, *!*>> `<<reduce_serenum_unary, $reduce_serenum_unary(typedExpressionIR~index~, $compat_array_index)>>`.
   ... Let `typeIR'` be <<canon_typeIR, the canonicalized form of `typeIR~base~`>>.
   ... If let `TUPLE < typeIR~e~^{asterisk}^ >` be `typeIR'`:
    .... Check that `ctk~index~` matches pattern `LCTK`.
@@ -2238,17 +2172,11 @@ for each `typedExpressionIR~f~` in `typedExpressionIR~f~^{asterisk}^`
   ... Let `typedExpressionIR~base~` be the result of <<Expr_ok, typing `expression~base~`, under cursor `p` and typing context `TC`>>.
   ... Let `typedExpressionIR~hi~` be the result of <<Expr_ok, typing `expression~hi~`, under cursor `p` and typing context `TC`>>.
   ... Let `typedExpressionIR~lo~` be the result of <<Expr_ok, typing `expression~lo~`, under cursor `p` and typing context `TC`>>.
-  ... Let `typedExpressionIR^?^` be `<<reduce_serenum_unary, $reduce_serenum_unary(typedExpressionIR~base~, $compat_bitslice_base)>>`.
-  ... Check that `typedExpressionIR^?^` is Some value.
-  ... Let `typedExpressionIR~base_reduced~` be `typedExpressionIR^?^`.
+  ... Let `typedExpressionIR~base_reduced~` be <<option_get, *!*>> `<<reduce_serenum_unary, $reduce_serenum_unary(typedExpressionIR~base~, $compat_bitslice_base)>>`.
   ... Let `typeIR~base_reduced~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~base_reduced~`>>.
   ... Let `ctk~base_reduced~` be <<ctk_of_typedExpressionIR, the compile-time known-ness of  `typedExpressionIR~base_reduced~`>>.
-  ... Let `typedExpressionIR'^?^` be `<<reduce_serenum_unary, $reduce_serenum_unary(typedExpressionIR~hi~, $compat_bitslice_index)>>`.
-  ... Check that `typedExpressionIR'^?^` is Some value.
-  ... Let `typedExpressionIR~hi_reduced~` be `typedExpressionIR'^?^`.
-  ... Let `typedExpressionIR''^?^` be `<<reduce_serenum_unary, $reduce_serenum_unary(typedExpressionIR~lo~, $compat_bitslice_index)>>`.
-  ... Check that `typedExpressionIR''^?^` is Some value.
-  ... Let `typedExpressionIR~lo_reduced~` be `typedExpressionIR''^?^`.
+  ... Let `typedExpressionIR~hi_reduced~` be <<option_get, *!*>> `<<reduce_serenum_unary, $reduce_serenum_unary(typedExpressionIR~hi~, $compat_bitslice_index)>>`.
+  ... Let `typedExpressionIR~lo_reduced~` be <<option_get, *!*>> `<<reduce_serenum_unary, $reduce_serenum_unary(typedExpressionIR~lo~, $compat_bitslice_index)>>`.
   ... Let `typeIR~hi_reduced~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~hi_reduced~`>>.
   ... Let `ctk~hi_reduced~` be <<ctk_of_typedExpressionIR, the compile-time known-ness of  `typedExpressionIR~hi_reduced~`>>.
   ... Let `typeIR~lo_reduced~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~lo_reduced~`>>.
@@ -2388,9 +2316,7 @@ relation Lvalue_ok: `p`, `TC`, and `lvalue`
 . Let `prefixedNonTypeName` be `lvalue`.
 . Group referenceExpression-prefixedNonTypeName:
  .. Let `prefixedNameIR` be <<prefixedNonTypeName, the prefixed name of  `prefixedNonTypeName`>>.
- .. Let `varTypeIR^?^` be `<<find_var_t, $find_var_t(p, TC, prefixedNameIR)>>`.
- .. Check that `varTypeIR^?^` is Some value.
- .. Let `direction typeIR ctk value^?^` be `varTypeIR^?^`.
+ .. Let `direction typeIR ctk value^?^` be <<option_get, *!*>> <<find_var_t, the type of variable `prefixedNameIR` in the `p` layer of `TC`>>.
  .. Check that `ctk` matches pattern `DYN`.
  .. Check that `value^?^` is None.
  .. If `direction` matches pattern `OUT`:
@@ -2420,23 +2346,17 @@ relation Lvalue_ok: `p`, `TC`, and `lvalue`
      ...... Result in the typed lvalue `typedLvalueIR`.
   ... Else if let `STRUCT ++_++ { (typeIR~field~ nameIR~field~ ;)^{asterisk}^ }` be `typeIR'`:
    .... Let `nameIR` be <<name, the name of `member`>>.
-   .... Let `typeIR''^?^` be `<<assoc_, $assoc_<nameIR, typeIR>(nameIR, ((nameIR~field~, typeIR~field~))^{asterisk}^)>>`.
-   .... Check that `typeIR''^?^` is Some value.
-   .... Let `typeIR` be `typeIR''^?^`.
+   .... Let `typeIR` be <<option_get, *!*>> `<<assoc_, $assoc_<nameIR, typeIR>(nameIR, ((nameIR~field~, typeIR~field~))^{asterisk}^)>>`.
    .... Let `typedLvalueIR` be <<typedLvalueIR, `typedLvalueIR~base~ . nameIR` with note `( typeIR )`>>.
    .... Result in the typed lvalue `typedLvalueIR`.
   ... Else if let `HEADER ++_++ { (typeIR~field~ nameIR~field~ ;)^{asterisk}^ }` be `typeIR'`:
    .... Let `nameIR` be <<name, the name of `member`>>.
-   .... Let `typeIR''^?^` be `<<assoc_, $assoc_<nameIR, typeIR>(nameIR, ((nameIR~field~, typeIR~field~))^{asterisk}^)>>`.
-   .... Check that `typeIR''^?^` is Some value.
-   .... Let `typeIR` be `typeIR''^?^`.
+   .... Let `typeIR` be <<option_get, *!*>> `<<assoc_, $assoc_<nameIR, typeIR>(nameIR, ((nameIR~field~, typeIR~field~))^{asterisk}^)>>`.
    .... Let `typedLvalueIR` be <<typedLvalueIR, `typedLvalueIR~base~ . nameIR` with note `( typeIR )`>>.
    .... Result in the typed lvalue `typedLvalueIR`.
   ... Else if let `HEADER_UNION ++_++ { (typeIR~field~ nameIR~field~ ;)^{asterisk}^ }` be `typeIR'`:
    .... Let `nameIR` be <<name, the name of `member`>>.
-   .... Let `typeIR''^?^` be `<<assoc_, $assoc_<nameIR, typeIR>(nameIR, ((nameIR~field~, typeIR~field~))^{asterisk}^)>>`.
-   .... Check that `typeIR''^?^` is Some value.
-   .... Let `typeIR` be `typeIR''^?^`.
+   .... Let `typeIR` be <<option_get, *!*>> `<<assoc_, $assoc_<nameIR, typeIR>(nameIR, ((nameIR~field~, typeIR~field~))^{asterisk}^)>>`.
    .... Let `typedLvalueIR` be <<typedLvalueIR, `typedLvalueIR~base~ . nameIR` with note `( typeIR )`>>.
    .... Result in the typed lvalue `typedLvalueIR`.
 . Else if let `lvalue~base~ [ expression~index~ ]` be `lvalue`:
@@ -2448,9 +2368,7 @@ relation Lvalue_ok: `p`, `TC`, and `lvalue`
   ... Let `typeIR [ n~size~ ]` be `typeIR'`.
   ... Let `typedExpressionIR~index~` be the result of <<Expr_ok, typing `expression~index~`, under cursor `p` and typing context `TC`>>.
   ... Let <<expressionNoteIR, type `typeIR~index~` and compile-time known-ness `ctk~index~`>> be the note of `typedExpressionIR~index~`.
-  ... Let `typedExpressionIR^?^` be `<<reduce_serenum_unary, $reduce_serenum_unary(typedExpressionIR~index~, $compat_array_index)>>`.
-  ... Check that `typedExpressionIR^?^` is Some value.
-  ... Let `typedExpressionIR~index_reduced~` be `typedExpressionIR^?^`.
+  ... Let `typedExpressionIR~index_reduced~` be <<option_get, *!*>> `<<reduce_serenum_unary, $reduce_serenum_unary(typedExpressionIR~index~, $compat_array_index)>>`.
   ... If `ctk~index~` matches pattern `LCTK`:
    .... Let `value~index~` be the result of <<Expr_eval_lctk, the local compile-time evaluation of `typedExpressionIR~index_reduced~`, under cursor `p` and typing context `TC`>>.
    .... Let `int` be <<int_of_value, the integer representation of  `value~index~`>>.
@@ -2469,12 +2387,8 @@ relation Lvalue_ok: `p`, `TC`, and `lvalue`
   ... Check that `<<compat_bitslice_base, $compat_bitslice_base(typeIR~base~)>>`.
   ... Let `typedExpressionIR~hi~` be the result of <<Expr_ok, typing `expression~hi~`, under cursor `p` and typing context `TC`>>.
   ... Let `typedExpressionIR~lo~` be the result of <<Expr_ok, typing `expression~lo~`, under cursor `p` and typing context `TC`>>.
-  ... Let `typedExpressionIR^?^` be `<<reduce_serenum_unary, $reduce_serenum_unary(typedExpressionIR~hi~, $compat_bitslice_index)>>`.
-  ... Check that `typedExpressionIR^?^` is Some value.
-  ... Let `typedExpressionIR~hi_reduced~` be `typedExpressionIR^?^`.
-  ... Let `typedExpressionIR'^?^` be `<<reduce_serenum_unary, $reduce_serenum_unary(typedExpressionIR~lo~, $compat_bitslice_index)>>`.
-  ... Check that `typedExpressionIR'^?^` is Some value.
-  ... Let `typedExpressionIR~lo_reduced~` be `typedExpressionIR'^?^`.
+  ... Let `typedExpressionIR~hi_reduced~` be <<option_get, *!*>> `<<reduce_serenum_unary, $reduce_serenum_unary(typedExpressionIR~hi~, $compat_bitslice_index)>>`.
+  ... Let `typedExpressionIR~lo_reduced~` be <<option_get, *!*>> `<<reduce_serenum_unary, $reduce_serenum_unary(typedExpressionIR~lo~, $compat_bitslice_index)>>`.
   ... Let <<expressionNoteIR, type `typeIR~hi_reduced~` and compile-time known-ness `ctk~hi_reduced~`>> be the note of `typedExpressionIR~hi_reduced~`.
   ... Let <<expressionNoteIR, type `typeIR~lo_reduced~` and compile-time known-ness `ctk~lo_reduced~`>> be the note of `typedExpressionIR~lo_reduced~`.
   ... Check that `ctk~hi_reduced~` matches pattern `LCTK`.
@@ -2518,9 +2432,7 @@ relation Stmt_ok: `p`, `TC`, `f`, and `statement`
   ... Let `typedExpressionIR` be the result of <<Expr_ok, typing `expression`, under cursor `p` and typing context `TC`>>.
   ... Let `typeIR~l~` be <<type_of_typedLvalueIR, the type of lvalue  `typedLvalueIR`>>.
   ... Let `typeIR~r~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR`>>.
-  ... Let `typedExpressionIR'^?^` be <<coerce_unary, `typedExpressionIR` implicitly cast to `typeIR~l~`>>.
-  ... Check that `typedExpressionIR'^?^` is Some value.
-  ... Let `typedExpressionIR~cast~` be `typedExpressionIR'^?^`.
+  ... Let `typedExpressionIR~cast~` be <<option_get, *!*>> <<coerce_unary, `typedExpressionIR` implicitly cast to `typeIR~l~`>>.
   ... Result in 
 * the typing context `TC`,
 * the abstract control flow `f`,
@@ -2575,7 +2487,7 @@ for each `argument` in `argument^{asterisk}^`
   ... Check that `argumentIR^{asterisk}^` is an empty list.
   ... Check that `<<compat_direct_application, $compat_direct_application(typeIR~object~)>>`.
   ... Let `nameIR~object~` be `"__direct_application"`.
-  ... Let `TC~1~` be <<add_var_t, the typing context `TC` with a mapping from `nameIR~object~` to `typeIR~object~ CTK None` added to the `p` layer>>.
+  ... Let `TC~1~` be <<add_var_t, `TC` with a mapping from `nameIR~object~` to `typeIR~object~ CTK None` added to the `p` layer>>.
   ... Let `lvalue` be `nameIR~object~ . "apply"`.
   ... Let `++_++`, `++_++`, and `statementIR` be the result of <<Stmt_ok, typing `lvalue ( argumentList ) ;`, under cursor `p`, typing context `TC~1~`, and abstract control flow `f`>>.
   ... Check that `statementIR` has type `callStatementIR`.
@@ -2628,12 +2540,8 @@ for each `argument` in `argument^{asterisk}^`
   ... Else let `RETURN expression ;` be `returnStatement`:
    .... Let `typedExpressionIR` be the result of <<Expr_ok, typing `expression`, under cursor `LOCAL` and typing context `TC`>>.
    .... Let `typeIR` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR`>>.
-   .... Let `typeIR'^?^` be <<find_local_return_type_t, the expected return type in `TC`>>.
-   .... Check that `typeIR'^?^` is Some value.
-   .... Let `typeIR~ret~` be `typeIR'^?^`.
-   .... Let `typedExpressionIR'^?^` be <<coerce_unary, `typedExpressionIR` implicitly cast to `typeIR~ret~`>>.
-   .... Check that `typedExpressionIR'^?^` is Some value.
-   .... Let `typedExpressionIR~cast~` be `typedExpressionIR'^?^`.
+   .... Let `typeIR~ret~` be <<option_get, *!*>> <<find_local_return_type_t, the expected return type in `TC`>>.
+   .... Let `typedExpressionIR~cast~` be <<option_get, *!*>> <<coerce_unary, `typedExpressionIR` implicitly cast to `typeIR~ret~`>>.
    .... Result in 
 * the typing context `TC`,
 * the abstract control flow `RET`,
@@ -2698,7 +2606,7 @@ relation BlockElementStmt_ok: `TC~0~`, `f`, and `blockElementStatement`
    .... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `$bound(LOCAL, TC~0~)`>>.
    .... Check that `<<is_assignable_typeIR, $is_assignable_typeIR(typeIR)>>`.
    .... Let `nameIR` be <<name, the name of `name`>>.
-   .... Let `TC~1~` be <<add_var_t, the typing context `TC~0~` with a mapping from `nameIR` to `INOUT typeIR DYN None` added to the `LOCAL` layer>>.
+   .... Let `TC~1~` be <<add_var_t, `TC~0~` with a mapping from `nameIR` to `INOUT typeIR DYN None` added to the `LOCAL` layer>>.
    .... Let `variableDeclarationIR` be `annotationList typeIR nameIR None ;`.
    .... Result in 
 * the typing context `TC~1~`,
@@ -2710,11 +2618,9 @@ relation BlockElementStmt_ok: `TC~0~`, `f`, and `blockElementStatement`
    .... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `$bound(LOCAL, TC~0~)`>>.
    .... Check that `<<is_assignable_typeIR, $is_assignable_typeIR(typeIR)>>`.
    .... Let `typedExpressionIR~init~` be the result of <<Expr_ok, typing `expression~init~`, under cursor `LOCAL` and typing context `TC~0~`>>.
-   .... Let `typedExpressionIR^?^` be <<coerce_unary, `typedExpressionIR~init~` implicitly cast to `typeIR`>>.
-   .... Check that `typedExpressionIR^?^` is Some value.
-   .... Let `typedExpressionIR~init_cast~` be `typedExpressionIR^?^`.
+   .... Let `typedExpressionIR~init_cast~` be <<option_get, *!*>> <<coerce_unary, `typedExpressionIR~init~` implicitly cast to `typeIR`>>.
    .... Let `nameIR` be <<name, the name of `name`>>.
-   .... Let `TC~1~` be <<add_var_t, the typing context `TC~0~` with a mapping from `nameIR` to `INOUT typeIR DYN None` added to the `LOCAL` layer>>.
+   .... Let `TC~1~` be <<add_var_t, `TC~0~` with a mapping from `nameIR` to `INOUT typeIR DYN None` added to the `LOCAL` layer>>.
    .... Let `variableDeclarationIR` be `annotationList typeIR nameIR = typedExpressionIR~init_cast~ ;`.
    .... Result in 
 * the typing context `TC~1~`,
@@ -2780,9 +2686,7 @@ relation Parameter_ok: `p`, `TC`, and `annotationList direction type name initia
   ... Let `typedExpressionIR~init~` be the result of <<Expr_ok, typing `expression~init~`, under cursor `p` and typing context `TC`>>.
   ... Let `typeIR~init~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~init~`>>.
   ... Check that `<<ctk_of_typedExpressionIR, $ctk_of_typedExpressionIR(typedExpressionIR~init~)>>` matches pattern `LCTK`.
-  ... Let `typedExpressionIR^?^` be <<coerce_unary, `typedExpressionIR~init~` implicitly cast to `typeIR`>>.
-  ... Check that `typedExpressionIR^?^` is Some value.
-  ... Let `typedExpressionIR~init_cast~` be `typedExpressionIR^?^`.
+  ... Let `typedExpressionIR~init_cast~` be <<option_get, *!*>> <<coerce_unary, `typedExpressionIR~init~` implicitly cast to `typeIR`>>.
   ... Let `nameIR` be <<name, the name of `name`>>.
   ... Let `value~init~` be the result of <<Expr_eval_lctk, the local compile-time evaluation of `typedExpressionIR~init_cast~`, under cursor `p` and typing context `TC`>>.
   ... Result in the parameter `annotationList direction typeIR nameIR = value~init~` and set of fresh type variables `tid~fresh~^{asterisk}^`.
@@ -2914,10 +2818,8 @@ relation ExternConstructor_ok: `TC~0~`, `tid~extern~`, and `annotationList typeI
 --
 +
 for each `constructorParameterIR` in `constructorParameterIR^{asterisk}^`
- .. Let `typeDefIR^?^` be `<<find_typeDef_t, $find_typeDef_t(GLOBAL, TC~0~, tid~extern~)>>`.
- .. Check that `typeDefIR^?^` is Some value.
- .. Let `typeDefIR~extern~` be `typeDefIR^?^`.
- .. Let `(tid~expl~^{asterisk}^, tid^{asterisk}^)` be `<<type_parameters_of_typeDefIR, $type_parameters_of_typeDefIR(typeDefIR~extern~)>>`.
+ .. Let `typeDefIR~extern~` be <<option_get, *!*>> <<find_typeDef_t, the type definition of `tid~extern~` in the `GLOBAL` layer of `TC~0~`>>.
+ .. Let `(tid~expl~^{asterisk}^, tid^{asterisk}^)` be <<type_parameters_of_typeDefIR, the type parameters of `typeDefIR~extern~`>>.
  .. Check that `tid^{asterisk}^` is an empty list.
  .. Let `cid` be `<<cid_, $cid_(typeIdentifier, ( parameterList ))>>`.
  .. Let `typeIR~extern_spec~` be `typeDefIR~extern~ < (tid~expl~)^{asterisk}^ >`.
@@ -3001,7 +2903,7 @@ relation ParserStmt_ok: `TC~0~` and `parserStatement'`
    .... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `$bound(LOCAL, TC~0~)`>>.
    .... Check that `<<is_assignable_typeIR, $is_assignable_typeIR(typeIR)>>`.
    .... Let `nameIR` be <<name, the name of `name`>>.
-   .... Let `TC~1~` be <<add_var_t, the typing context `TC~0~` with a mapping from `nameIR` to `INOUT typeIR DYN None` added to the `LOCAL` layer>>.
+   .... Let `TC~1~` be <<add_var_t, `TC~0~` with a mapping from `nameIR` to `INOUT typeIR DYN None` added to the `LOCAL` layer>>.
    .... Let `variableDeclarationIR` be `annotationList typeIR nameIR None ;`.
    .... Result in the updated typing context `TC~1~` and the typed parser statement `variableDeclarationIR`.
   ... Else if let `= expression~init~` be `initializerOpt`:
@@ -3010,11 +2912,9 @@ relation ParserStmt_ok: `TC~0~` and `parserStatement'`
    .... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `$bound(LOCAL, TC~0~)`>>.
    .... Check that `<<is_assignable_typeIR, $is_assignable_typeIR(typeIR)>>`.
    .... Let `typedExpressionIR~init~` be the result of <<Expr_ok, typing `expression~init~`, under cursor `LOCAL` and typing context `TC~0~`>>.
-   .... Let `typedExpressionIR^?^` be <<coerce_unary, `typedExpressionIR~init~` implicitly cast to `typeIR`>>.
-   .... Check that `typedExpressionIR^?^` is Some value.
-   .... Let `typedExpressionIR~init_cast~` be `typedExpressionIR^?^`.
+   .... Let `typedExpressionIR~init_cast~` be <<option_get, *!*>> <<coerce_unary, `typedExpressionIR~init~` implicitly cast to `typeIR`>>.
    .... Let `nameIR` be <<name, the name of `name`>>.
-   .... Let `TC~1~` be <<add_var_t, the typing context `TC~0~` with a mapping from `nameIR` to `INOUT typeIR DYN None` added to the `LOCAL` layer>>.
+   .... Let `TC~1~` be <<add_var_t, `TC~0~` with a mapping from `nameIR` to `INOUT typeIR DYN None` added to the `LOCAL` layer>>.
    .... Let `variableDeclarationIR` be `annotationList typeIR nameIR = typedExpressionIR~init_cast~ ;`.
    .... Result in the updated typing context `TC~1~` and the typed parser statement `variableDeclarationIR`.
 . Else if let `emptyStatement` be `parserStatement'`:
@@ -3154,7 +3054,7 @@ relation ParserLocalDecl_ok: `TC~0~` and `parserLocalDeclaration`
    .... Check that `<<is_assignable_typeIR, $is_assignable_typeIR(typeIR)>>`.
    .... Let `nameIR` be <<name, the name of `name`>>.
    .... Let `varTypeIR` be `INOUT typeIR DYN None`.
-   .... Let `TC~1~` be <<add_var_t, the typing context `TC~0~` with a mapping from `nameIR` to `varTypeIR` added to the `BLOCK` layer>>.
+   .... Let `TC~1~` be <<add_var_t, `TC~0~` with a mapping from `nameIR` to `varTypeIR` added to the `BLOCK` layer>>.
    .... Let `variableDeclarationIR` be `annotationList typeIR nameIR None ;`.
    .... Result in the updated typing context `TC~1~` and the typed parser local declaration `variableDeclarationIR`.
   ... Else if let `= expression~init~` be `initializerOpt`:
@@ -3163,12 +3063,10 @@ relation ParserLocalDecl_ok: `TC~0~` and `parserLocalDeclaration`
    .... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `$bound(BLOCK, TC~0~)`>>.
    .... Check that `<<is_assignable_typeIR, $is_assignable_typeIR(typeIR)>>`.
    .... Let `typedExpressionIR~init~` be the result of <<Expr_ok, typing `expression~init~`, under cursor `BLOCK` and typing context `TC~0~`>>.
-   .... Let `typedExpressionIR^?^` be <<coerce_unary, `typedExpressionIR~init~` implicitly cast to `typeIR`>>.
-   .... Check that `typedExpressionIR^?^` is Some value.
-   .... Let `typedExpressionIR~init_cast~` be `typedExpressionIR^?^`.
+   .... Let `typedExpressionIR~init_cast~` be <<option_get, *!*>> <<coerce_unary, `typedExpressionIR~init~` implicitly cast to `typeIR`>>.
    .... Let `nameIR` be <<name, the name of `name`>>.
    .... Let `varTypeIR` be `INOUT typeIR DYN None`.
-   .... Let `TC~1~` be <<add_var_t, the typing context `TC~0~` with a mapping from `nameIR` to `varTypeIR` added to the `BLOCK` layer>>.
+   .... Let `TC~1~` be <<add_var_t, `TC~0~` with a mapping from `nameIR` to `varTypeIR` added to the `BLOCK` layer>>.
    .... Let `variableDeclarationIR` be `annotationList typeIR nameIR = typedExpressionIR~init_cast~ ;`.
    .... Result in the updated typing context `TC~1~` and the typed parser local declaration `variableDeclarationIR`.
 . Else let `annotationList VALUE_SET < valueSetType > ( expression ) name ;` be `parserLocalDeclaration`:
@@ -3180,7 +3078,7 @@ relation ParserLocalDecl_ok: `TC~0~` and `parserLocalDeclaration`
   ... Check that `<<ctk_of_typedExpressionIR, $ctk_of_typedExpressionIR(typedExpressionIR)>>` does not match pattern `DYN`.
   ... Let `nameIR` be <<name, the name of `name`>>.
   ... Let `varTypeIR` be `SET < [typeIR] > CTK None`.
-  ... Let `TC~1~` be <<add_var_t, the typing context `TC~0~` with a mapping from `nameIR` to `varTypeIR` added to the `BLOCK` layer>>.
+  ... Let `TC~1~` be <<add_var_t, `TC~0~` with a mapping from `nameIR` to `varTypeIR` added to the `BLOCK` layer>>.
   ... Let `valueSetDeclarationIR` be `annotationList VALUE_SET < typeIR > ( typedExpressionIR ) nameIR ;`.
   ... Result in the updated typing context `TC~1~` and the typed parser local declaration `valueSetDeclarationIR`.
 
@@ -3206,7 +3104,7 @@ relation TableKey_ok: `TC`, `TBLC~0~`, and `expression : name~matchkind~ annotat
  .. Let `typeIR` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR`>>.
  .. Check that <<Type_wf, `SET < [typeIR] >` is a well-formed type, assuming bound type ids `$bound(LOCAL, TC)`>>.
  .. Let `nameIR~matchkind~` be <<name, the name of `name~matchkind~`>>.
- .. Check that `MATCH_KIND . nameIR~matchkind~` is equal to `<<find_var_value_t, $find_var_value_t(LOCAL, TC, nameIR~matchkind~)>>`.
+ .. Check that `MATCH_KIND . nameIR~matchkind~` is equal to <<find_var_value_t, the value of variable `nameIR~matchkind~` in the `LOCAL` layer of `TC`>>.
  .. Check that `<<compat_table_key, $compat_table_key(nameIR~matchkind~, typeIR)>>`.
  .. Let `TBLC~1~` be `<<update_mode, $update_mode(TBLC~0~, nameIR~matchkind~, typeIR)>>`.
  .. Let `TBLC~2~` be `<<add_key, $add_key(TBLC~1~, nameIR~matchkind~, typeIR)>>`.
@@ -3243,9 +3141,7 @@ relation TableAction_ok: `TC`, `TBLC~0~`, and `annotationList tableActionReferen
 . If let `prefixedNonTypeName` be `tableActionReference`:
  .. Group prefixedNonTypeName:
   ... Let `prefixedNameIR` be <<prefixedNonTypeName, the prefixed name of  `prefixedNonTypeName`>>.
-  ... Let `callableTypeDefIR'^?^` be `<<find_callableDef_non_overloaded_t, $find_callableDef_non_overloaded_t(LOCAL, TC, prefixedNameIR)>>`.
-  ... Check that `callableTypeDefIR'^?^` is Some value.
-  ... Let `callableTypeDefIR` be `callableTypeDefIR'^?^`.
+  ... Let `callableTypeDefIR` be <<option_get, *!*>> <<find_callableDef_non_overloaded_t, the non-overloaded callable definition of `prefixedNameIR` in the `LOCAL` layer of `TC`>>.
   ... Check that `callableTypeDefIR` has type `actionTypeIR`.
   ... Let `ACTION ( parameterTypeIR^{asterisk}^ )` be `callableTypeDefIR`.
   ... Let `parameterTypeIR~data~^{asterisk}^`, `parameterTypeIR~control~^{asterisk}^`, and `argumentIR^{asterisk}^` be the result of <<Call_action_partial_ok, typing `[ ]`, under typing context `TC`>>.
@@ -3256,9 +3152,7 @@ relation TableAction_ok: `TC`, `TBLC~0~`, and `annotationList tableActionReferen
 . Else if let `prefixedNonTypeName ( argumentList )` be `tableActionReference`:
  .. Group prefixedNonTypeName-argumentList:
   ... Let `prefixedNameIR` be <<prefixedNonTypeName, the prefixed name of  `prefixedNonTypeName`>>.
-  ... Let `callableTypeDefIR'^?^` be `<<find_callableDef_non_overloaded_t, $find_callableDef_non_overloaded_t(LOCAL, TC, prefixedNameIR)>>`.
-  ... Check that `callableTypeDefIR'^?^` is Some value.
-  ... Let `callableTypeDefIR` be `callableTypeDefIR'^?^`.
+  ... Let `callableTypeDefIR` be <<option_get, *!*>> <<find_callableDef_non_overloaded_t, the non-overloaded callable definition of `prefixedNameIR` in the `LOCAL` layer of `TC`>>.
   ... Check that `callableTypeDefIR` has type `actionTypeIR`.
   ... Let `ACTION ( parameterTypeIR^{asterisk}^ )` be `callableTypeDefIR`.
   ... Let `argument^{asterisk}^` be <<flatten_argumentList, the list of arguments in `argumentList`>>.
@@ -3312,9 +3206,7 @@ relation TableDefaultAction_ok: `TC`, `TBLC`, and `= expression`
  .. Let `prefixedNonTypeName` be `callTarget`.
  .. Group prefixedNonTypeName-argumentList:
   ... Let `prefixedNameIR` be <<prefixedNonTypeName, the prefixed name of  `prefixedNonTypeName`>>.
-  ... Let `(parameterTypeIR*, argumentListIR)^?^` be `<<find_action, $find_action(TBLC, prefixedNameIR)>>`.
-  ... Check that `(parameterTypeIR*, argumentListIR)^?^` is Some value.
-  ... Let `(parameterTypeIR~action~^{asterisk}^, argumentIR~action~^{asterisk}^)` be `(parameterTypeIR*, argumentListIR)^?^`.
+  ... Let `(parameterTypeIR~action~^{asterisk}^, argumentIR~action~^{asterisk}^)` be <<option_get, *!*>> `<<find_action, $find_action(TBLC, prefixedNameIR)>>`.
   ... Let `argument^{asterisk}^` be <<flatten_argumentList, the list of arguments in `argumentList`>>.
   ... Let `argumentIR^{asterisk}^` be the list of `argumentIR`, obtained by repeating:
 +
@@ -3455,9 +3347,7 @@ relation TableEntry_action_ok: `TC`, `TBLC`, and `tableActionReference`
 . Else if let `prefixedNonTypeName ( argumentList )` be `tableActionReference`:
  .. Group prefixedNonTypeName-argumentList:
   ... Let `prefixedNameIR` be <<prefixedNonTypeName, the prefixed name of  `prefixedNonTypeName`>>.
-  ... Let `(parameterTypeIR*, argumentListIR)^?^` be `<<find_action, $find_action(TBLC, prefixedNameIR)>>`.
-  ... Check that `(parameterTypeIR*, argumentListIR)^?^` is Some value.
-  ... Let `(parameterTypeIR~action~^{asterisk}^, argumentIR~action~^{asterisk}^)` be `(parameterTypeIR*, argumentListIR)^?^`.
+  ... Let `(parameterTypeIR~action~^{asterisk}^, argumentIR~action~^{asterisk}^)` be <<option_get, *!*>> `<<find_action, $find_action(TBLC, prefixedNameIR)>>`.
   ... Let `argument^{asterisk}^` be <<flatten_argumentList, the list of arguments in `argumentList`>>.
   ... Let `argumentIR^{asterisk}^` be the list of `argumentIR`, obtained by repeating:
 +
@@ -3818,7 +3708,7 @@ for each `id~enum_field~` in `id~enum_field~^{asterisk}^`
 --
 +
 for each `value~enum_field~` in `value~enum_field~^{asterisk}^`
- .. Let `TC~1~` be <<add_vars_t, the typing context `TC~0~` with mappings from each of `(tid~enum~ {pp} "." {pp} id~enum_field~)^{asterisk}^` to each of `varTypeIR~enum_field~^{asterisk}^` added to the `BLOCK` layer>>.
+ .. Let `TC~1~` be <<add_vars_t, `TC~0~` with mappings from each of `(tid~enum~ {pp} "." {pp} id~enum_field~)^{asterisk}^` to each of `varTypeIR~enum_field~^{asterisk}^` added to the `BLOCK` layer>>.
  .. Let `tid~struct~` be `"apply_result(" {pp} nameIR {pp} ")"`.
  .. Let `tableMetadataStructTypeIR` be `TABLE_STRUCT tid~struct~ { HIT BOOL ; MISS BOOL ; ACTION_RUN tableMetadataEnumTypeIR ; }`.
  .. Let `typeIR~table~` be `TABLE nameIR { tableMetadataStructTypeIR }`.
@@ -3849,7 +3739,7 @@ relation ControlLocalDecl_ok: `TC~0~` and `controlLocalDeclaration`
    .... Check that `<<is_assignable_typeIR, $is_assignable_typeIR(typeIR)>>`.
    .... Let `nameIR` be <<name, the name of `name`>>.
    .... Let `varTypeIR` be `INOUT typeIR DYN None`.
-   .... Let `TC~1~` be <<add_var_t, the typing context `TC~0~` with a mapping from `nameIR` to `varTypeIR` added to the `BLOCK` layer>>.
+   .... Let `TC~1~` be <<add_var_t, `TC~0~` with a mapping from `nameIR` to `varTypeIR` added to the `BLOCK` layer>>.
    .... Let `variableDeclarationIR` be `annotationList typeIR nameIR None ;`.
    .... Result in the updated typing context `TC~1~` and the typed control local declaration `variableDeclarationIR`.
   ... Else if let `= expression~init~` be `initializerOpt`:
@@ -3858,12 +3748,10 @@ relation ControlLocalDecl_ok: `TC~0~` and `controlLocalDeclaration`
    .... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `$bound(BLOCK, TC~0~)`>>.
    .... Check that `<<is_assignable_typeIR, $is_assignable_typeIR(typeIR)>>`.
    .... Let `typedExpressionIR~init~` be the result of <<Expr_ok, typing `expression~init~`, under cursor `BLOCK` and typing context `TC~0~`>>.
-   .... Let `typedExpressionIR^?^` be <<coerce_unary, `typedExpressionIR~init~` implicitly cast to `typeIR`>>.
-   .... Check that `typedExpressionIR^?^` is Some value.
-   .... Let `typedExpressionIR~init_cast~` be `typedExpressionIR^?^`.
+   .... Let `typedExpressionIR~init_cast~` be <<option_get, *!*>> <<coerce_unary, `typedExpressionIR~init~` implicitly cast to `typeIR`>>.
    .... Let `nameIR` be <<name, the name of `name`>>.
    .... Let `varTypeIR` be `INOUT typeIR DYN None`.
-   .... Let `TC~1~` be <<add_var_t, the typing context `TC~0~` with a mapping from `nameIR` to `varTypeIR` added to the `BLOCK` layer>>.
+   .... Let `TC~1~` be <<add_var_t, `TC~0~` with a mapping from `nameIR` to `varTypeIR` added to the `BLOCK` layer>>.
    .... Let `variableDeclarationIR` be `annotationList typeIR nameIR = typedExpressionIR~init_cast~ ;`.
    .... Result in the updated typing context `TC~1~` and the typed control local declaration `variableDeclarationIR`.
 . Else if let `actionDeclaration` be `controlLocalDeclaration`:
@@ -3880,7 +3768,7 @@ relation ControlLocalDecl_ok: `TC~0~` and `controlLocalDeclaration`
   ... Let `nameIR` be <<name, the name of `name`>>.
   ... Let `TC~2~` and `typeIR~table~` be the result of <<TableType_ok, typing `name`, under typing context `TC~1~` and table context `TBLC`>>.
   ... Let `varTypeIR` be `typeIR~table~ DYN None`.
-  ... Let `TC~3~` be <<add_var_t, the typing context `TC~2~` with a mapping from `nameIR` to `varTypeIR` added to the `BLOCK` layer>>.
+  ... Let `TC~3~` be <<add_var_t, `TC~2~` with a mapping from `nameIR` to `varTypeIR` added to the `BLOCK` layer>>.
   ... Let `tableDeclarationIR` be `annotationList TABLE typeIR~table~ nameIR { tablePropertyIR^{asterisk}^ }`.
   ... Result in the updated typing context `TC~3~` and the typed control local declaration `tableDeclarationIR`.
 
@@ -3908,12 +3796,10 @@ relation Decl_ok: `p`, `TC~0~`, and `declaration`
   ... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `$bound(p, TC~0~)`>>.
   ... Let `typedExpressionIR~value~` be the result of <<Expr_ok, typing `expression~value~`, under cursor `p` and typing context `TC~0~`>>.
   ... Check that `<<ctk_of_typedExpressionIR, $ctk_of_typedExpressionIR(typedExpressionIR~value~)>>` matches pattern `LCTK`.
-  ... Let `typedExpressionIR^?^` be <<coerce_unary, `typedExpressionIR~value~` implicitly cast to `typeIR`>>.
-  ... Check that `typedExpressionIR^?^` is Some value.
-  ... Let `typedExpressionIR~value_cast~` be `typedExpressionIR^?^`.
+  ... Let `typedExpressionIR~value_cast~` be <<option_get, *!*>> <<coerce_unary, `typedExpressionIR~value~` implicitly cast to `typeIR`>>.
   ... Let `value` be the result of <<Expr_eval_lctk, the local compile-time evaluation of `typedExpressionIR~value_cast~`, under cursor `p` and typing context `TC~0~`>>.
   ... Let `nameIR` be <<name, the name of `name`>>.
-  ... Let `TC~1~` be <<add_var_t, the typing context `TC~0~` with a mapping from `nameIR` to `typeIR LCTK value` added to the `p` layer>>.
+  ... Let `TC~1~` be <<add_var_t, `TC~0~` with a mapping from `nameIR` to `typeIR LCTK value` added to the `p` layer>>.
   ... Let `constantDeclarationIR` be `annotationList CONST typeIR nameIR = value ;`.
   ... Result in the modified typing context `TC~1~` and the typed declaration `constantDeclarationIR`.
 . Else if let `instantiation` be `declaration`:
@@ -3932,7 +3818,7 @@ for each `argument` in `argument^{asterisk}^`
     ..... Let <<ConstructorType_ok, `p TC~0~ |- prefixedNameIR < [ ] > ( argumentIR^{asterisk}^ ) : constructorTypeIR < # tid~impl~^{asterisk}^ > ( # id~default~^{asterisk}^ )`>>.
     ..... Let <<Inst_ok, `p TC~0~ NAMED |- constructorTypeIR < [ ] # tid~impl~^{asterisk}^ > ( argumentIR^{asterisk}^ # id~default~^{asterisk}^ ) : typeIR~object~ < typeArgumentIR~inferred~^{asterisk}^ > ( argumentIR~cast~^{asterisk}^ )`>>.
     ..... Let `nameIR` be <<name, the name of `name`>>.
-    ..... Let `TC~1~` be <<add_var_t, the typing context `TC~0~` with a mapping from `nameIR` to `typeIR~object~ CTK None` added to the `p` layer>>.
+    ..... Let `TC~1~` be <<add_var_t, `TC~0~` with a mapping from `nameIR` to `typeIR~object~ CTK None` added to the `p` layer>>.
     ..... Let `instantiationIR` be `annotationList typeIR~object~ prefixedNameIR < typeArgumentIR~inferred~^{asterisk}^ > ( argumentIR^{asterisk}^ ) nameIR None ;`.
     ..... Result in the modified typing context `TC~1~` and the typed declaration `instantiationIR`.
    .... Else if let `prefixedTypeName < typeArgumentList >` be `type`:
@@ -3951,7 +3837,7 @@ for each `argument` in `argument^{asterisk}^`
     ..... Let `tid~infer~^{asterisk}^` be `tid~impl~^{asterisk}^ {pp} tid~inserted~^{asterisk}^`.
     ..... Let <<Inst_ok, `p TC~0~ NAMED |- constructorTypeIR < typeArgumentIR^{asterisk}^ # tid~infer~^{asterisk}^ > ( argumentIR^{asterisk}^ # id~default~^{asterisk}^ ) : typeIR~object~ < typeArgumentIR~inferred~^{asterisk}^ > ( argumentIR~cast~^{asterisk}^ )`>>.
     ..... Let `nameIR` be <<name, the name of `name`>>.
-    ..... Let `TC~1~` be <<add_var_t, the typing context `TC~0~` with a mapping from `nameIR` to `typeIR~object~ CTK None` added to the `p` layer>>.
+    ..... Let `TC~1~` be <<add_var_t, `TC~0~` with a mapping from `nameIR` to `typeIR~object~ CTK None` added to the `p` layer>>.
     ..... Let `instantiationIR` be `annotationList typeIR~object~ prefixedNameIR < typeArgumentIR~inferred~^{asterisk}^ > ( argumentIR^{asterisk}^ ) nameIR None ;`.
     ..... Result in the modified typing context `TC~1~` and the typed declaration `instantiationIR`.
  .. Else let `annotationList type ( argumentList ) name = { objectDeclarationList } ;` be `instantiation`:
@@ -3974,7 +3860,7 @@ for each `argument` in `argument^{asterisk}^`
     ..... Check that `typeDefIR~object~` has type `externObjectTypeDefIR`.
     ..... Let `EXTERN tid~extern~ < tid~expl~^{asterisk}^ , tid'^{asterisk}^ > externMethodTypeDefEnv~extern~` be `typeDefIR~object~`.
     ..... Check that `tid'^{asterisk}^` is equal to `tid~impl~^{asterisk}^`.
-    ..... Let `TC~1~` be <<add_var_t, the typing context `TC~0~` with a mapping from `"this"` to `typeIR~object~ CTK None` added to the `LOCAL` layer>>.
+    ..... Let `TC~1~` be <<add_var_t, `TC~0~` with a mapping from `"this"` to `typeIR~object~ CTK None` added to the `LOCAL` layer>>.
     ..... Let `objectDeclaration^{asterisk}^` be <<flatten_objectDeclarationList, the list of object declarations in `objectDeclarationList`>>.
     ..... Let <<Decls_object_ok, `p TC~1~ { [ ] } { [ ] } |- objectDeclaration^{asterisk}^ : typeFrame~init~ externMethodTypeDefEnv~init~ objectDeclarationIR^{asterisk}^`>>.
     ..... Let `tid^{asterisk}^` be `tid~expl~^{asterisk}^ {pp} tid~impl~^{asterisk}^`.
@@ -3984,7 +3870,7 @@ for each `argument` in `argument^{asterisk}^`
     ..... Let `typeIR~object_init~` be `typeDefIR~object_init~ < typeIR~arg~^{asterisk}^ >`.
     ..... Check that `<<is_concrete_extern_object, $is_concrete_extern_object(typeIR~object_init~)>>`.
     ..... Let `nameIR` be <<name, the name of `name`>>.
-    ..... Let `TC~2~` be <<add_var_t, the typing context `TC~0~` with a mapping from `nameIR` to `typeIR~object_init~ CTK None` added to the `p` layer>>.
+    ..... Let `TC~2~` be <<add_var_t, `TC~0~` with a mapping from `nameIR` to `typeIR~object_init~ CTK None` added to the `p` layer>>.
     ..... Let `instantiationIR` be `annotationList typeIR~object_init~ prefixedNameIR < typeArgumentIR~inferred~^{asterisk}^ > ( argumentIR^{asterisk}^ ) nameIR = { objectDeclarationIR^{asterisk}^ } ;`.
     ..... Result in the modified typing context `TC~2~` and the typed declaration `instantiationIR`.
    .... Else if let `prefixedTypeName < typeArgumentList >` be `type`:
@@ -4008,7 +3894,7 @@ for each `argument` in `argument^{asterisk}^`
     ..... Check that `typeDefIR~object~` has type `externObjectTypeDefIR`.
     ..... Let `EXTERN tid~extern~ < tid~expl~^{asterisk}^ , tid'^{asterisk}^ > externMethodTypeDefEnv~extern~` be `typeDefIR~object~`.
     ..... Check that `tid'^{asterisk}^` is equal to `tid~impl~^{asterisk}^`.
-    ..... Let `TC~1~` be <<add_var_t, the typing context `TC~0~` with a mapping from `"this"` to `typeIR~object~ CTK None` added to the `LOCAL` layer>>.
+    ..... Let `TC~1~` be <<add_var_t, `TC~0~` with a mapping from `"this"` to `typeIR~object~ CTK None` added to the `LOCAL` layer>>.
     ..... Let `objectDeclaration^{asterisk}^` be <<flatten_objectDeclarationList, the list of object declarations in `objectDeclarationList`>>.
     ..... Let <<Decls_object_ok, `p TC~1~ { [ ] } { [ ] } |- objectDeclaration^{asterisk}^ : typeFrame~init~ externMethodTypeDefEnv~init~ objectDeclarationIR^{asterisk}^`>>.
     ..... Let `tid^{asterisk}^` be `tid~expl~^{asterisk}^ {pp} tid~impl~^{asterisk}^`.
@@ -4018,7 +3904,7 @@ for each `argument` in `argument^{asterisk}^`
     ..... Let `typeIR~object_init~` be `typeDefIR~object_init~ < typeIR~arg~^{asterisk}^ >`.
     ..... Check that `<<is_concrete_extern_object, $is_concrete_extern_object(typeIR~object_init~)>>`.
     ..... Let `nameIR` be <<name, the name of `name`>>.
-    ..... Let `TC~2~` be <<add_var_t, the typing context `TC~0~` with a mapping from `nameIR` to `typeIR~object_init~ CTK None` added to the `p` layer>>.
+    ..... Let `TC~2~` be <<add_var_t, `TC~0~` with a mapping from `nameIR` to `typeIR~object_init~ CTK None` added to the `p` layer>>.
     ..... Let `instantiationIR` be `annotationList typeIR~object_init~ prefixedNameIR < typeArgumentIR~inferred~^{asterisk}^ > ( argumentIR^{asterisk}^ ) nameIR = { objectDeclarationIR^{asterisk}^ } ;`.
     ..... Result in the modified typing context `TC~2~` and the typed declaration `instantiationIR`.
 . Else if let `annotationList typeOrVoid name typeParameterListOpt ( parameterList ) blockStatement` be `declaration`:
@@ -4117,7 +4003,7 @@ for each `nameIR` in `nameIR^{asterisk}^`
 --
 +
 for each `value~error~` in `value~error~^{asterisk}^`
-  ... Let `TC~1~` be <<add_vars_t, the typing context `TC~0~` with mappings from each of `nameIR~error~^{asterisk}^` to each of `varTypeIR^{asterisk}^` added to the `GLOBAL` layer>>.
+  ... Let `TC~1~` be <<add_vars_t, `TC~0~` with mappings from each of `nameIR~error~^{asterisk}^` to each of `varTypeIR^{asterisk}^` added to the `GLOBAL` layer>>.
   ... Result in the modified typing context `TC~1~` and the typed declaration `ERROR { nameIR^{asterisk}^ }`.
 . Else if let `MATCH_KIND { nameList ++_++ }` be `declaration`:
  .. Group matchKindDeclaration:
@@ -4144,7 +4030,7 @@ for each `nameIR` in `nameIR^{asterisk}^`
 --
 +
 for each `value~match_kind~` in `value~match_kind~^{asterisk}^`
-  ... Let `TC~1~` be <<add_vars_t, the typing context `TC~0~` with mappings from each of `nameIR^{asterisk}^` to each of `varTypeIR^{asterisk}^` added to the `GLOBAL` layer>>.
+  ... Let `TC~1~` be <<add_vars_t, `TC~0~` with mappings from each of `nameIR^{asterisk}^` to each of `varTypeIR^{asterisk}^` added to the `GLOBAL` layer>>.
   ... Result in the modified typing context `TC~1~` and the typed declaration `MATCH_KIND { nameIR^{asterisk}^ }`.
 . Else if let `annotationList EXTERN typeOrVoid name typeParameterListOpt ( parameterList ) ;` be `declaration`:
  .. Group externFunctionDeclaration:
@@ -4334,7 +4220,7 @@ for each `nameIR~field~` in `nameIR~field~^{asterisk}^`
 --
 +
 for each `value~field~` in `value~field~^{asterisk}^`
-   .... Let `TC~2~` be <<add_vars_t, the typing context `TC~1~` with mappings from each of `id~field~^{asterisk}^` to each of `varTypeIR^{asterisk}^` added to the `GLOBAL` layer>>.
+   .... Let `TC~2~` be <<add_vars_t, `TC~1~` with mappings from each of `id~field~^{asterisk}^` to each of `varTypeIR^{asterisk}^` added to the `GLOBAL` layer>>.
    .... Let `enumTypeDeclarationIR` be `annotationList ENUM nameIR { nameIR~field~^{asterisk}^ }`.
    .... Result in the modified typing context `TC~2~` and the typed declaration `enumTypeDeclarationIR`.
  .. Else let `annotationList ENUM type name { namedExpressionList~field~ ++_++ }` be `enumTypeDeclaration`:
@@ -4367,7 +4253,7 @@ for each `nameIR~field~` in `nameIR~field~^{asterisk}^`
 --
 +
 for each `value~field~` in `value~field~^{asterisk}^`
-   .... Let `TC~2~` be <<add_vars_t, the typing context `TC~0~` with mappings from each of `id~field~^{asterisk}^` to each of `varTypeIR^{asterisk}^` added to the `GLOBAL` layer>>.
+   .... Let `TC~2~` be <<add_vars_t, `TC~0~` with mappings from each of `id~field~^{asterisk}^` to each of `varTypeIR^{asterisk}^` added to the `GLOBAL` layer>>.
    .... Check that <<TypeDef_wf, `enumTypeDefIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
    .... Let `TC~3~` be `<<add_typeDef_t, $add_typeDef_t(GLOBAL, TC~2~, nameIR, enumTypeDefIR)>>`.
    .... Let `enumTypeDeclarationIR` be `annotationList ENUM typeIR nameIR { namedExpressionIR~field~^{asterisk}^ }`.
@@ -4493,11 +4379,9 @@ for each `name~f~` in `name~f~^{asterisk}^`
     ..... Let `{ tid'^{asterisk}^ }` be <<diff_set, the difference of the sets `set<tid>` and `set<tid>'`>>.
     ..... Check that `tid'^{asterisk}^` is a list of length 1.
     ..... Let `[tid]` be `tid'^{asterisk}^`.
-    ..... Let `typeDefIR'^?^` be `<<find_typeDef_t, $find_typeDef_t(GLOBAL, TC~1~, tid)>>`.
-    ..... Check that `typeDefIR'^?^` is Some value.
-    ..... Let `typeDefIR` be `typeDefIR'^?^`.
+    ..... Let `typeDefIR` be <<option_get, *!*>> <<find_typeDef_t, the type definition of `tid` in the `GLOBAL` layer of `TC~1~`>>.
     ..... If `<<is_monomorphic_typeDefIR, $is_monomorphic_typeDefIR(typeDefIR)>>`:
-     ...... Let `typeIR` be `<<type_of_typeDefIR, $type_of_typeDefIR(typeDefIR)>>`.
+     ...... Let `typeIR` be <<type_of_typeDefIR, the underlying type of `typeDefIR`>>.
      ...... Let `nameIR` be <<name, the name of `name`>>.
      ...... Let `typedefTypeIR` be `TYPEDEF nameIR typeIR`.
      ...... Check that <<TypeDef_wf, `typedefTypeIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
@@ -4505,7 +4389,7 @@ for each `name~f~` in `name~f~^{asterisk}^`
      ...... Let `typedefDeclarationIR` be `annotationList TYPEDEF derivedTypeDeclarationIR nameIR ;`.
      ...... Result in the modified typing context `TC~1~` and the typed declaration `typedefDeclarationIR`.
     ..... Else `~<<is_monomorphic_typeDefIR, $is_monomorphic_typeDefIR(typeDefIR)>>`:
-     ...... Check that (`[ ]`, `[ ]`) is equal to `<<type_parameters_of_typeDefIR, $type_parameters_of_typeDefIR(typeDefIR)>>`.
+     ...... Check that (`[ ]`, `[ ]`) is equal to <<type_parameters_of_typeDefIR, the type parameters of `typeDefIR`>>.
      ...... Let `nameIR` be <<name, the name of `name`>>.
      ...... Let `typedefTypeIR` be `TYPEDEF nameIR typeDefIR < [ ] >`.
      ...... Check that <<TypeDef_wf, `typedefTypeIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
@@ -4648,9 +4532,7 @@ relation Call_convention_expr_ok: `p`, `TC`, `actctxt`, `direction typeIR~param~
 
 . If `direction` matches pattern `IN`:
  .. Group in:
-  ... Let `typedExpressionIR^?^` be <<coerce_unary, `typedExpressionIR~arg~` implicitly cast to `typeIR~param~`>>.
-  ... Check that `typedExpressionIR^?^` is Some value.
-  ... Let `typedExpressionIR~arg_cast~` be `typedExpressionIR^?^`.
+  ... Let `typedExpressionIR~arg_cast~` be <<option_get, *!*>> <<coerce_unary, `typedExpressionIR~arg~` implicitly cast to `typeIR~param~`>>.
   ... Result in `typedExpressionIR~arg_cast~`.
 . Group out-inout:
  .. If `direction` matches pattern `OUT`:
@@ -4666,9 +4548,7 @@ relation Call_convention_expr_ok: `p`, `TC`, `actctxt`, `direction typeIR~param~
 . Else if `direction` matches pattern ``EMPTY`:
  .. Group empty:
   ... If `actctxt` matches pattern `ACTION`:
-   .... Let `typedExpressionIR^?^` be <<coerce_unary, `typedExpressionIR~arg~` implicitly cast to `typeIR~param~`>>.
-   .... Check that `typedExpressionIR^?^` is Some value.
-   .... Let `typedExpressionIR~arg_cast~` be `typedExpressionIR^?^`.
+   .... Let `typedExpressionIR~arg_cast~` be <<option_get, *!*>> <<coerce_unary, `typedExpressionIR~arg~` implicitly cast to `typeIR~param~`>>.
    .... Result in `typedExpressionIR~arg_cast~`.
   ... Else `actctxt` matches pattern `NOACTION`:
    .... Let `typeIR~arg~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~arg~`>>.
@@ -4760,15 +4640,13 @@ relation CallableType_ok: `p`, `TC`, `callableTargetIR'`, `typeArgumentIR'^{aste
 . Let `prefixedNameIR` be `callableTargetIR'`.
 . Group referenceExpressionIR:
  .. If `typeArgumentIR'^{asterisk}^` is equal to `[ ]`:
-  ... Let `(cid, callableTypeDefIR, id*)'^?^` be `<<find_callableDef_overloaded_t, $find_callableDef_overloaded_t(p, TC, prefixedNameIR, argumentIR'^{asterisk}^)>>`.
-  ... Check that `(cid, callableTypeDefIR, id*)'^?^` is Some value.
-  ... Let `(cid, callableTypeDefIR, id*)` be `(cid, callableTypeDefIR, id*)'^?^`.
+  ... Let `(cid, callableTypeDefIR, id*)` be <<option_get, *!*>> <<find_callableDef_overloaded_t, the overloaded callable definition of `prefixedNameIR`( `argumentIR'^{asterisk}^` ) in the `p` layer of `TC`>>.
   ... Check that `(cid, callableTypeDefIR, id*)` has type `(cid, actionTypeIR, id*)`.
   ... Let `(cid, actionTypeIR, id~default~^{asterisk}^)` be `(cid, callableTypeDefIR, id*)`.
   ... Check that <<CallableType_wf, `actionTypeIR` is a well-formed type, assuming bound type ids `$bound(p, TC)`>>.
   ... Result in `actionTypeIR`, `[ ]`, and `id~default~^{asterisk}^`.
  .. Let `typeArgumentIR^{asterisk}^` be `typeArgumentIR'^{asterisk}^`.
- .. Let `(cid, callableTypeDefIR, id*)'^?^` be `<<find_callableDef_overloaded_t, $find_callableDef_overloaded_t(p, TC, prefixedNameIR, argumentIR'^{asterisk}^)>>`.
+ .. Let `(cid, callableTypeDefIR, id*)'^?^` be <<find_callableDef_overloaded_t, the overloaded callable definition of `prefixedNameIR`( `argumentIR'^{asterisk}^` ) in the `p` layer of `TC`>>.
  .. Else if let `(cid, callableTypeDefIR, id*)` be `(cid, callableTypeDefIR, id*)'^?^`:
   ... Check that `(cid, callableTypeDefIR, id*)` has type `(cid, functionTypeDefIR, id*)`.
   ... Let `(cid, functionTypeDefIR, id~default~^{asterisk}^)` be `(cid, callableTypeDefIR, id*)`.
@@ -4826,9 +4704,7 @@ relation CallableType_ok: `p`, `TC`, `callableTargetIR'`, `typeArgumentIR'^{aste
   ... Check that `typeIR` has type `externObjectTypeIR`.
   ... Let `EXTERN ++_++ { (cid~extern~ : externMethodTypeDefIR~extern~)^{asterisk}^ }` be `typeIR`.
   ... Let `(id~arg~^?^)^{asterisk}^` be `<<ids_arguments, $ids_arguments(argumentIR'^{asterisk}^)>>`.
-  ... Let `(cid, externMethodTypeDefIR, id*)^?^` be `<<find_overloaded, $find_overloaded<externMethodTypeDefIR>({ (cid~extern~ : externMethodTypeDefIR~extern~)^{asterisk}^ }, nameIR, (id~arg~^?^)^{asterisk}^)>>`.
-  ... Check that `(cid, externMethodTypeDefIR, id*)^?^` is Some value.
-  ... Let `(++_++, externMethodTypeDefIR, id~default~^{asterisk}^)` be `(cid, externMethodTypeDefIR, id*)^?^`.
+  ... Let `(++_++, externMethodTypeDefIR, id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_overloaded, $find_overloaded<externMethodTypeDefIR>({ (cid~extern~ : externMethodTypeDefIR~extern~)^{asterisk}^ }, nameIR, (id~arg~^?^)^{asterisk}^)>>`.
   ... Let `(callableTypeIR, tid*)` be `<<specialize_callableTypeDefIR, $specialize_callableTypeDefIR(externMethodTypeDefIR, typeArgumentIR'^{asterisk}^)>>`.
   ... Check that `(callableTypeIR, tid*)` has type `(externMethodTypeIR, tid*)`.
   ... Let `(externMethodTypeIR, tid~impl~^{asterisk}^)` be `(callableTypeIR, tid*)`.
@@ -4860,9 +4736,7 @@ for each `parameterTypeIR` in `parameterTypeIR^{asterisk}^`
 for each `id~param~` in `id~param~^{asterisk}^` and `value~param~^?^` in `value~param~^?^^{asterisk}^`
    .... Let `cid` be `"apply" ( pid^{asterisk}^ )`.
    .... Let `(id~arg~^?^)^{asterisk}^` be `<<ids_arguments, $ids_arguments(argumentIR'^{asterisk}^)>>`.
-   .... Let `(cid, parserApplyMethodTypeIR, id*)^?^` be `<<find_overloaded, $find_overloaded<parserApplyMethodTypeIR>({ [cid : parserApplyMethodTypeIR] }, "apply", (id~arg~^?^)^{asterisk}^)>>`.
-   .... Check that `(cid, parserApplyMethodTypeIR, id*)^?^` is Some value.
-   .... Let `(++_++, parserApplyMethodTypeIR', id~default~^{asterisk}^)` be `(cid, parserApplyMethodTypeIR, id*)^?^`.
+   .... Let `(++_++, parserApplyMethodTypeIR', id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_overloaded, $find_overloaded<parserApplyMethodTypeIR>({ [cid : parserApplyMethodTypeIR] }, "apply", (id~arg~^?^)^{asterisk}^)>>`.
    .... Check that `parserApplyMethodTypeIR'` is equal to `parserApplyMethodTypeIR`.
    .... Result in `parserApplyMethodTypeIR`, `[ ]`, and `id~default~^{asterisk}^`.
   ... Group typedExpressionIR-nameIR-control-apply-method:
@@ -4887,9 +4761,7 @@ for each `parameterTypeIR` in `parameterTypeIR^{asterisk}^`
 for each `id~param~` in `id~param~^{asterisk}^` and `value~param~^?^` in `value~param~^?^^{asterisk}^`
    .... Let `cid` be `"apply" ( pid^{asterisk}^ )`.
    .... Let `(id~arg~^?^)^{asterisk}^` be `<<ids_arguments, $ids_arguments(argumentIR'^{asterisk}^)>>`.
-   .... Let `(cid, controlApplyMethodTypeDefIR, id*)^?^` be `<<find_overloaded, $find_overloaded<controlApplyMethodTypeDefIR>({ [cid : controlApplyMethodTypeIR] }, "apply", (id~arg~^?^)^{asterisk}^)>>`.
-   .... Check that `(cid, controlApplyMethodTypeDefIR, id*)^?^` is Some value.
-   .... Let `(++_++, controlApplyMethodTypeIR', id~default~^{asterisk}^)` be `(cid, controlApplyMethodTypeDefIR, id*)^?^`.
+   .... Let `(++_++, controlApplyMethodTypeIR', id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_overloaded, $find_overloaded<controlApplyMethodTypeDefIR>({ [cid : controlApplyMethodTypeIR] }, "apply", (id~arg~^?^)^{asterisk}^)>>`.
    .... Check that `controlApplyMethodTypeIR'` is equal to `controlApplyMethodTypeIR`.
    .... Result in `controlApplyMethodTypeIR`, `[ ]`, and `id~default~^{asterisk}^`.
   ... Check that `argumentIR'^{asterisk}^` is an empty list.
@@ -4948,7 +4820,7 @@ for each `typeIR^?^` in `typeIR^?^^{asterisk}^`
 --
 +
 for each `parameterTypeIR~aligned~` in `parameterTypeIR~aligned~^{asterisk}^`
-  ... Let `typeIR~ret_inferred~` be `<<subst_typeIR, $subst_typeIR(inference, typeIR~ret~)>>`.
+  ... Let `typeIR~ret_inferred~` be <<subst_typeIR, `inference` substituted by `typeIR~ret~`>>.
   ... Let `functionTypeIR~inferred~` be `FUNCTION ( parameterTypeIR~aligned_inferred~^{asterisk}^ ) : typeIR~ret_inferred~`.
   ... Check that <<CallableType_wf, `functionTypeIR~inferred~` is a well-formed type, assuming bound type ids `$bound(p, TC)`>>.
   ... Check that `<<callable_definedFunction, $callable_definedFunction(p, TC)>>`.
@@ -4983,7 +4855,7 @@ for each `typeIR^?^` in `typeIR^?^^{asterisk}^`
 --
 +
 for each `parameterTypeIR~aligned~` in `parameterTypeIR~aligned~^{asterisk}^`
-  ... Let `typeIR~ret_inferred~` be `<<subst_typeIR, $subst_typeIR(inference, typeIR~ret~)>>`.
+  ... Let `typeIR~ret_inferred~` be <<subst_typeIR, `inference` substituted by `typeIR~ret~`>>.
   ... Let `functionTypeIR~inferred~` be `EXTERN_FUNCTION ( parameterTypeIR~aligned_inferred~^{asterisk}^ ) : typeIR~ret_inferred~`.
   ... Check that <<CallableType_wf, `functionTypeIR~inferred~` is a well-formed type, assuming bound type ids `$bound(p, TC)`>>.
   ... Check that `<<callable_externFunction, $callable_externFunction(p, TC)>>`.
@@ -5028,7 +4900,7 @@ for each `typeIR^?^` in `typeIR^?^^{asterisk}^`
 --
 +
 for each `parameterTypeIR~aligned~` in `parameterTypeIR~aligned~^{asterisk}^`
-   .... Let `typeIR~ret_inferred~` be `<<subst_typeIR, $subst_typeIR(inference, typeIR~ret~)>>`.
+   .... Let `typeIR~ret_inferred~` be <<subst_typeIR, `inference` substituted by `typeIR~ret~`>>.
    .... Let `externMethodTypeIR~inferred~` be `EXTERN_METHOD ( parameterTypeIR~aligned_inferred~^{asterisk}^ ) : typeIR~ret_inferred~`.
    .... Check that <<CallableType_wf, `externMethodTypeIR~inferred~` is a well-formed type, assuming bound type ids `$bound(p, TC)`>>.
    .... Check that `<<callable_externMethod, $callable_externMethod(p, TC)>>`.
@@ -5063,7 +4935,7 @@ for each `typeIR^?^` in `typeIR^?^^{asterisk}^`
 --
 +
 for each `parameterTypeIR~aligned~` in `parameterTypeIR~aligned~^{asterisk}^`
-   .... Let `typeIR~ret_inferred~` be `<<subst_typeIR, $subst_typeIR(inference, typeIR~ret~)>>`.
+   .... Let `typeIR~ret_inferred~` be <<subst_typeIR, `inference` substituted by `typeIR~ret~`>>.
    .... Let `externMethodTypeIR~inferred~` be `EXTERN_METHOD ABSTRACT ( parameterTypeIR~aligned_inferred~^{asterisk}^ ) : typeIR~ret_inferred~`.
    .... Check that <<CallableType_wf, `externMethodTypeIR~inferred~` is a well-formed type, assuming bound type ids `$bound(p, TC)`>>.
    .... Check that `<<callable_externAbstractMethod, $callable_externAbstractMethod(p, TC)>>`.
@@ -5103,9 +4975,7 @@ relation ConstructorType_ok: `p`, `TC`, `prefixedNameIR`, `typeArgumentIR^{aster
 
 
 . Group :
- .. Let `(cid, constructorTypeDefIR, id*)^?^` be `<<find_constructorDef_overloaded_t, $find_constructorDef_overloaded_t(TC, prefixedNameIR, argumentIR^{asterisk}^)>>`.
- .. Check that `(cid, constructorTypeDefIR, id*)^?^` is Some value.
- .. Let `(cid, constructorTypeDefIR, id~default~^{asterisk}^)` be `(cid, constructorTypeDefIR, id*)^?^`.
+ .. Let `(cid, constructorTypeDefIR, id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_constructorDef_overloaded_t, $find_constructorDef_overloaded_t(TC, prefixedNameIR, argumentIR^{asterisk}^)>>`.
  .. Let `(constructorTypeIR, tid~impl~^{asterisk}^)` be `<<specialize_constructorTypeDefIR, $specialize_constructorTypeDefIR(constructorTypeDefIR, typeArgumentIR^{asterisk}^)>>`.
  .. Let `bound'` be `<<bound, $bound(p, TC)>>`.
  .. Let `bound` be <<union_set, the union of the sets `bound'` and `{ tid~impl~^{asterisk}^ }`>>.
@@ -5149,7 +5019,7 @@ for each `typeIR'^?^` in `typeIR'^?^^{asterisk}^`
 --
 +
 for each `parameterTypeIR~aligned~` in `parameterTypeIR~aligned~^{asterisk}^`
- .. Let `typeIR~object_inferred~` be `<<subst_typeIR, $subst_typeIR(inference, typeIR~object~)>>`.
+ .. Let `typeIR~object_inferred~` be <<subst_typeIR, `inference` substituted by `typeIR~object~`>>.
  .. Let `constructorTypeIR~inferred~` be `CONSTRUCTOR ( parameterTypeIR~aligned_inferred~^{asterisk}^ ) : typeIR~object_inferred~`.
  .. Check that <<ConstructorType_wf, `constructorTypeIR~inferred~` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC)`>>.
  .. Check that `<<instantiable, $instantiable(GLOBAL, TC, instctxt, typeIR~object_inferred~)>>`.
@@ -5185,7 +5055,7 @@ for each `typeIR^?^` in `typeIR^?^^{asterisk}^`
 --
 +
 for each `parameterTypeIR~aligned~` in `parameterTypeIR~aligned~^{asterisk}^`
- .. Let `typeIR~object_inferred~` be `<<subst_typeIR, $subst_typeIR(inference, typeIR~object~)>>`.
+ .. Let `typeIR~object_inferred~` be <<subst_typeIR, `inference` substituted by `typeIR~object~`>>.
  .. Let `constructorTypeIR~inferred~` be `CONSTRUCTOR ( parameterTypeIR~aligned_inferred~^{asterisk}^ ) : typeIR~object_inferred~`.
  .. Check that <<ConstructorType_wf, `constructorTypeIR~inferred~` is a well-formed type, assuming bound type ids `$bound(cursor, TC)`>>.
  .. Check that `<<instantiable, $instantiable(cursor, TC, instctxt, typeIR~object_inferred~)>>`.
@@ -5206,9 +5076,7 @@ relation SwitchLabel_table_ok: `TC`, `tid~table~`, `bool`, and `switchLabel`
   ... Let `nameIR~label~` be `prefixedNameIR`.
   ... Let `tid~table_enum~` be `"action_list(" {pp} tid~table~ {pp} ")"`.
   ... Let `id~label~` be `tid~table_enum~ {pp} "." {pp} nameIR~label~`.
-  ... Let `varTypeIR^?^` be `<<find_var_t, $find_var_t(LOCAL, TC, id~label~)>>`.
-  ... Check that `varTypeIR^?^` is Some value.
-  ... Let `++_++ typeIR~label~ ctk~label~ value^?^` be `varTypeIR^?^`.
+  ... Let `++_++ typeIR~label~ ctk~label~ value^?^` be <<option_get, *!*>> <<find_var_t, the type of variable `id~label~` in the `LOCAL` layer of `TC`>>.
   ... Check that `value^?^` is Some value.
   ... Let `value~label~` be `value^?^`.
   ... Check that `value~label~` is equal to `TABLE_ENUM tid~table_enum~ . nameIR~label~`.
@@ -5255,9 +5123,7 @@ relation SwitchLabel_general_ok: `TC`, `typeIR`, `bool`, and `switchLabel`
  .. Else if let `expressionNonBrace~label~` be `switchLabel`:
   ... Let `expression~label~` be <<expressionNonBrace_as_expression, the expression corresponding to `expressionNonBrace~label~`>>.
   ... Let `typedExpressionIR~label~` be the result of <<Expr_ok, typing `expression~label~`, under cursor `LOCAL` and typing context `TC`>>.
-  ... Let `typedExpressionIR^?^` be <<coerce_unary, `typedExpressionIR~label~` implicitly cast to `typeIR`>>.
-  ... Check that `typedExpressionIR^?^` is Some value.
-  ... Let `typedExpressionIR~label_cast~` be `typedExpressionIR^?^`.
+  ... Let `typedExpressionIR~label_cast~` be <<option_get, *!*>> <<coerce_unary, `typedExpressionIR~label~` implicitly cast to `typeIR`>>.
   ... Let <<expressionNoteIR, type `++_++` and compile-time known-ness `ctk`>> be the note of `typedExpressionIR~label_cast~`.
   ... Check that `ctk` matches pattern `LCTK`.
   ... Result in `typedExpressionIR~label_cast~`.
@@ -5344,9 +5210,7 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
   ... Check that `declarationIR` has type `instantiationIR`.
   ... Let `instantiationIR` be `declarationIR`.
   ... Let `++_++ ++_++ ++_++ < ++_++ > ( ++_++ ) nameIR ++_++ ;` be `instantiationIR`.
-  ... Let `varTypeIR'^?^` be `<<find_var_t, $find_var_t(p, TC~1~, nameIR)>>`.
-  ... Check that `varTypeIR'^?^` is Some value.
-  ... Let `varTypeIR` be `varTypeIR'^?^`.
+  ... Let `varTypeIR` be <<option_get, *!*>> <<find_var_t, the type of variable `nameIR` in the `p` layer of `TC~1~`>>.
   ... Let `typeFrame~init~` be <<update_map, the map `typeFrame` with the value for key `nameIR` updated to `varTypeIR`>>.
   ... Result in `typeFrame~init~`, `externMethodTypeDefEnv`, and `instantiationIR`.
 
@@ -5369,16 +5233,14 @@ relation Enum_serializable_field_ok: `TC~0~`, `nameIR~enum~`, `typeIR`, and `nam
 
 . Group :
  .. Let `typedExpressionIR` be the result of <<Expr_ok, typing `expression`, under cursor `BLOCK` and typing context `TC~0~`>>.
- .. Let `typedExpressionIR'^?^` be <<coerce_unary, `typedExpressionIR` implicitly cast to `typeIR`>>.
- .. Check that `typedExpressionIR'^?^` is Some value.
- .. Let `typedExpressionIR~cast~` be `typedExpressionIR'^?^`.
+ .. Let `typedExpressionIR~cast~` be <<option_get, *!*>> <<coerce_unary, `typedExpressionIR` implicitly cast to `typeIR`>>.
  .. Check that `<<ctk_of_typedExpressionIR, $ctk_of_typedExpressionIR(typedExpressionIR~cast~)>>` matches pattern `LCTK`.
  .. Let `value` be the result of <<Expr_eval_lctk, the local compile-time evaluation of `typedExpressionIR~cast~`, under cursor `BLOCK` and typing context `TC~0~`>>.
  .. Let `nameIR` be <<name, the name of `name`>>.
  .. Let `enumTypeDefIR` be `ENUM nameIR~enum~ < typeIR > { [ ] }`.
  .. Let `value~enum~` be `nameIR~enum~ . nameIR . value`.
  .. Let `varTypeIR` be `enumTypeDefIR LCTK value~enum~`.
- .. Let `TC~1~` be <<add_var_t, the typing context `TC~0~` with a mapping from `nameIR` to `varTypeIR` added to the `BLOCK` layer>>.
+ .. Let `TC~1~` be <<add_var_t, `TC~0~` with a mapping from `nameIR` to `varTypeIR` added to the `BLOCK` layer>>.
  .. Result in `TC~1~`, `nameIR = typedExpressionIR~cast~`, and `value`.
 
 
@@ -5437,38 +5299,22 @@ relation SelectCase_keyset_simple_ok: `TC`, `typeIR~key~`, and `simpleKeysetExpr
  .. Group mask:
   ... Let `typedExpressionIR~l~` be the result of <<Expr_ok, typing `expression~l~`, under cursor `LOCAL` and typing context `TC`>>.
   ... Let `typedExpressionIR~r~` be the result of <<Expr_ok, typing `expression~r~`, under cursor `LOCAL` and typing context `TC`>>.
-  ... Let `(typedExpressionIR, typedExpressionIR)^?^` be <<coerce_binary, `typedExpressionIR~l~` and `typedExpressionIR~r~` implicitly cast to equal types>>.
-  ... Check that `(typedExpressionIR, typedExpressionIR)^?^` is Some value.
-  ... Let `(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~)` be `(typedExpressionIR, typedExpressionIR)^?^`.
-  ... Let `(typedExpressionIR, typedExpressionIR)'^?^` be `<<reduce_serenum_binary, $reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_mask)>>`.
-  ... Check that `(typedExpressionIR, typedExpressionIR)'^?^` is Some value.
-  ... Let `(typedExpressionIR~l_reduced~, typedExpressionIR~r_reduced~)` be `(typedExpressionIR, typedExpressionIR)'^?^`.
+  ... Let `(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~)` be <<option_get, *!*>> <<coerce_binary, `typedExpressionIR~l~` and `typedExpressionIR~r~` implicitly cast to equal types>>.
+  ... Let `(typedExpressionIR~l_reduced~, typedExpressionIR~r_reduced~)` be <<option_get, *!*>> `<<reduce_serenum_binary, $reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_mask)>>`.
   ... Let `typeIR~reduced~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~l_reduced~`>>.
-  ... Let `typedExpressionIR^?^` be <<coerce_unary, `typedExpressionIR~l_reduced~` implicitly cast to `typeIR~key~`>>.
-  ... Check that `typedExpressionIR^?^` is Some value.
-  ... Let `typedExpressionIR~l_coerced~` be `typedExpressionIR^?^`.
-  ... Let `typedExpressionIR'^?^` be <<coerce_unary, `typedExpressionIR~r_reduced~` implicitly cast to `typeIR~key~`>>.
-  ... Check that `typedExpressionIR'^?^` is Some value.
-  ... Let `typedExpressionIR~r_coerced~` be `typedExpressionIR'^?^`.
+  ... Let `typedExpressionIR~l_coerced~` be <<option_get, *!*>> <<coerce_unary, `typedExpressionIR~l_reduced~` implicitly cast to `typeIR~key~`>>.
+  ... Let `typedExpressionIR~r_coerced~` be <<option_get, *!*>> <<coerce_unary, `typedExpressionIR~r_reduced~` implicitly cast to `typeIR~key~`>>.
   ... Result in `typedExpressionIR~l_coerced~ &&& typedExpressionIR~r_coerced~`.
 . Else if let `expression~l~ .. expression~r~` be `simpleKeysetExpression`:
  .. Group range:
   ... Let `typedExpressionIR~l~` be the result of <<Expr_ok, typing `expression~l~`, under cursor `LOCAL` and typing context `TC`>>.
   ... Let `typedExpressionIR~r~` be the result of <<Expr_ok, typing `expression~r~`, under cursor `LOCAL` and typing context `TC`>>.
-  ... Let `(typedExpressionIR, typedExpressionIR)^?^` be <<coerce_binary, `typedExpressionIR~l~` and `typedExpressionIR~r~` implicitly cast to equal types>>.
-  ... Check that `(typedExpressionIR, typedExpressionIR)^?^` is Some value.
-  ... Let `(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~)` be `(typedExpressionIR, typedExpressionIR)^?^`.
-  ... Let `(typedExpressionIR, typedExpressionIR)'^?^` be `<<reduce_serenum_binary, $reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_range)>>`.
-  ... Check that `(typedExpressionIR, typedExpressionIR)'^?^` is Some value.
-  ... Let `(typedExpressionIR~l_reduced~, typedExpressionIR~r_reduced~)` be `(typedExpressionIR, typedExpressionIR)'^?^`.
+  ... Let `(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~)` be <<option_get, *!*>> <<coerce_binary, `typedExpressionIR~l~` and `typedExpressionIR~r~` implicitly cast to equal types>>.
+  ... Let `(typedExpressionIR~l_reduced~, typedExpressionIR~r_reduced~)` be <<option_get, *!*>> `<<reduce_serenum_binary, $reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_range)>>`.
   ... Let `typeIR~reduced~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~l_reduced~`>>.
   ... Check that `typeIR~reduced~` is equal to <<type_of_typedExpressionIR, the type of  `typedExpressionIR~r_reduced~`>>.
-  ... Let `typedExpressionIR^?^` be <<coerce_unary, `typedExpressionIR~l_reduced~` implicitly cast to `typeIR~key~`>>.
-  ... Check that `typedExpressionIR^?^` is Some value.
-  ... Let `typedExpressionIR~l_coerced~` be `typedExpressionIR^?^`.
-  ... Let `typedExpressionIR'^?^` be <<coerce_unary, `typedExpressionIR~r_reduced~` implicitly cast to `typeIR~key~`>>.
-  ... Check that `typedExpressionIR'^?^` is Some value.
-  ... Let `typedExpressionIR~r_coerced~` be `typedExpressionIR'^?^`.
+  ... Let `typedExpressionIR~l_coerced~` be <<option_get, *!*>> <<coerce_unary, `typedExpressionIR~l_reduced~` implicitly cast to `typeIR~key~`>>.
+  ... Let `typedExpressionIR~r_coerced~` be <<option_get, *!*>> <<coerce_unary, `typedExpressionIR~r_reduced~` implicitly cast to `typeIR~key~`>>.
   ... Result in `typedExpressionIR~l_coerced~ .. typedExpressionIR~r_coerced~`.
 . Else if `simpleKeysetExpression` matches pattern `DEFAULT`:
  .. Group default:
@@ -5603,15 +5449,9 @@ relation TableEntry_keyset_simple_ok: `TC`, `TBLC`, (`typeIR~key~`, `text`), and
    .... Let `NOPRILPM n` be `matchMode`.
    .... Let `typedExpressionIR~l~` be the result of <<Expr_ok, typing `expression~l~`, under cursor `LOCAL` and typing context `TC`>>.
    .... Let `typedExpressionIR~r~` be the result of <<Expr_ok, typing `expression~r~`, under cursor `LOCAL` and typing context `TC`>>.
-   .... Let `typedExpressionIR^?^` be <<coerce_unary, `typedExpressionIR~l~` implicitly cast to `typeIR~key~`>>.
-   .... Check that `typedExpressionIR^?^` is Some value.
-   .... Let `typedExpressionIR~l_cast~` be `typedExpressionIR^?^`.
-   .... Let `typedExpressionIR'^?^` be <<coerce_unary, `typedExpressionIR~r~` implicitly cast to `typeIR~key~`>>.
-   .... Check that `typedExpressionIR'^?^` is Some value.
-   .... Let `typedExpressionIR~r_cast~` be `typedExpressionIR'^?^`.
-   .... Let `(typedExpressionIR, typedExpressionIR)^?^` be `<<reduce_serenum_binary, $reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_mask)>>`.
-   .... Check that `(typedExpressionIR, typedExpressionIR)^?^` is Some value.
-   .... Let `(typedExpressionIR~l_reduced~, typedExpressionIR~r_reduced~)` be `(typedExpressionIR, typedExpressionIR)^?^`.
+   .... Let `typedExpressionIR~l_cast~` be <<option_get, *!*>> <<coerce_unary, `typedExpressionIR~l~` implicitly cast to `typeIR~key~`>>.
+   .... Let `typedExpressionIR~r_cast~` be <<option_get, *!*>> <<coerce_unary, `typedExpressionIR~r~` implicitly cast to `typeIR~key~`>>.
+   .... Let `(typedExpressionIR~l_reduced~, typedExpressionIR~r_reduced~)` be <<option_get, *!*>> `<<reduce_serenum_binary, $reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_mask)>>`.
    .... Let `ctk~r_reduced~` be <<ctk_of_typedExpressionIR, the compile-time known-ness of  `typedExpressionIR~r_reduced~`>>.
    .... Check that `ctk~r_reduced~` matches pattern `LCTK`.
    .... Let `value~r~` be the result of <<Expr_eval_lctk, the local compile-time evaluation of `typedExpressionIR~r_reduced~`, under cursor `LOCAL` and typing context `TC`>>.
@@ -5622,15 +5462,9 @@ relation TableEntry_keyset_simple_ok: `TC`, `TBLC`, (`typeIR~key~`, `text`), and
   ... Else if `text` is equal to `"ternary"`:
    .... Let `typedExpressionIR~l~` be the result of <<Expr_ok, typing `expression~l~`, under cursor `LOCAL` and typing context `TC`>>.
    .... Let `typedExpressionIR~r~` be the result of <<Expr_ok, typing `expression~r~`, under cursor `LOCAL` and typing context `TC`>>.
-   .... Let `typedExpressionIR^?^` be <<coerce_unary, `typedExpressionIR~l~` implicitly cast to `typeIR~key~`>>.
-   .... Check that `typedExpressionIR^?^` is Some value.
-   .... Let `typedExpressionIR~l_cast~` be `typedExpressionIR^?^`.
-   .... Let `typedExpressionIR'^?^` be <<coerce_unary, `typedExpressionIR~r~` implicitly cast to `typeIR~key~`>>.
-   .... Check that `typedExpressionIR'^?^` is Some value.
-   .... Let `typedExpressionIR~r_cast~` be `typedExpressionIR'^?^`.
-   .... Let `(typedExpressionIR, typedExpressionIR)^?^` be `<<reduce_serenum_binary, $reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_mask)>>`.
-   .... Check that `(typedExpressionIR, typedExpressionIR)^?^` is Some value.
-   .... Let `(typedExpressionIR~l_reduced~, typedExpressionIR~r_reduced~)` be `(typedExpressionIR, typedExpressionIR)^?^`.
+   .... Let `typedExpressionIR~l_cast~` be <<option_get, *!*>> <<coerce_unary, `typedExpressionIR~l~` implicitly cast to `typeIR~key~`>>.
+   .... Let `typedExpressionIR~r_cast~` be <<option_get, *!*>> <<coerce_unary, `typedExpressionIR~r~` implicitly cast to `typeIR~key~`>>.
+   .... Let `(typedExpressionIR~l_reduced~, typedExpressionIR~r_reduced~)` be <<option_get, *!*>> `<<reduce_serenum_binary, $reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_mask)>>`.
    .... Result in `NOLPM` and `typedExpressionIR~l_reduced~ &&& typedExpressionIR~r_reduced~`.
 . Else if `simpleKeysetExpression` matches pattern `DEFAULT`:
  .. Group default:
@@ -5658,15 +5492,9 @@ relation TableEntry_keyset_simple_ok: `TC`, `TBLC`, (`typeIR~key~`, `text`), and
  .. Group range-range:
   ... Let `typedExpressionIR~l~` be the result of <<Expr_ok, typing `expression~l~`, under cursor `LOCAL` and typing context `TC`>>.
   ... Let `typedExpressionIR~r~` be the result of <<Expr_ok, typing `expression~r~`, under cursor `LOCAL` and typing context `TC`>>.
-  ... Let `typedExpressionIR^?^` be <<coerce_unary, `typedExpressionIR~l~` implicitly cast to `typeIR~key~`>>.
-  ... Check that `typedExpressionIR^?^` is Some value.
-  ... Let `typedExpressionIR~l_cast~` be `typedExpressionIR^?^`.
-  ... Let `typedExpressionIR'^?^` be <<coerce_unary, `typedExpressionIR~r~` implicitly cast to `typeIR~key~`>>.
-  ... Check that `typedExpressionIR'^?^` is Some value.
-  ... Let `typedExpressionIR~r_cast~` be `typedExpressionIR'^?^`.
-  ... Let `(typedExpressionIR, typedExpressionIR)^?^` be `<<reduce_serenum_binary, $reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_range)>>`.
-  ... Check that `(typedExpressionIR, typedExpressionIR)^?^` is Some value.
-  ... Let `(typedExpressionIR~l_reduced~, typedExpressionIR~r_reduced~)` be `(typedExpressionIR, typedExpressionIR)^?^`.
+  ... Let `typedExpressionIR~l_cast~` be <<option_get, *!*>> <<coerce_unary, `typedExpressionIR~l~` implicitly cast to `typeIR~key~`>>.
+  ... Let `typedExpressionIR~r_cast~` be <<option_get, *!*>> <<coerce_unary, `typedExpressionIR~r~` implicitly cast to `typeIR~key~`>>.
+  ... Let `(typedExpressionIR~l_reduced~, typedExpressionIR~r_reduced~)` be <<option_get, *!*>> `<<reduce_serenum_binary, $reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r_cast~, $compat_range)>>`.
   ... Result in `NOLPM` and `typedExpressionIR~l_reduced~ .. typedExpressionIR~r_reduced~`.
 
 
@@ -5692,9 +5520,7 @@ relation Expr_lvalue_ok: `p`, `TC`, and <<typedExpressionIR, `expressionIR` anno
 
 . If let `prefixedNameIR` be `expressionIR`:
  .. Group referenceExpressionIR:
-  ... Let `varTypeIR^?^` be `<<find_var_t, $find_var_t(p, TC, prefixedNameIR)>>`.
-  ... Check that `varTypeIR^?^` is Some value.
-  ... Let `direction ++_++ ctk ++_++^?^` be `varTypeIR^?^`.
+  ... Let `direction ++_++ ctk ++_++^?^` be <<option_get, *!*>> <<find_var_t, the type of variable `prefixedNameIR` in the `p` layer of `TC`>>.
   ... Check that `ctk` matches pattern `DYN`.
   ... If `direction` matches pattern `OUT`:
    .... The relation holds.
@@ -5822,17 +5648,13 @@ relation Expr_inst: `p`, `IC`, `STO`, and <<typedExpressionIR, `expressionIR` an
  .. Check that `memberAccessBaseIR` matches pattern `TYPE %`.
  .. Let `TYPE prefixedNameIR` be `memberAccessBaseIR`.
  .. Group memberAccessExpressionIR-type:
-  ... Let `typeDefIR'^?^` be `<<find_typeDef_i, $find_typeDef_i(p, IC, prefixedNameIR)>>`.
-  ... Check that `typeDefIR'^?^` is Some value.
-  ... Let `typeDefIR` be `typeDefIR'^?^`.
+  ... Let `typeDefIR` be <<option_get, *!*>> `<<find_typeDef_i, $find_typeDef_i(p, IC, prefixedNameIR)>>`.
   ... Check that `typeDefIR` has type `enumTypeIR`.
   ... Let `enumTypeIR` be `typeDefIR`.
   ... If let `ENUM tid { ++_++^{asterisk}^ }` be `enumTypeIR`:
    .... Result in `STO` and `tid . nameIR`.
   ... Else let `ENUM tid < ++_++ > { (id~member~ = value~member~ ;)^{asterisk}^ }` be `enumTypeIR`:
-   .... Let `value'^?^` be `<<assoc_, $assoc_<nameIR, value>(nameIR, ((id~member~, value~member~))^{asterisk}^)>>`.
-   .... Check that `value'^?^` is Some value.
-   .... Let `value` be `value'^?^`.
+   .... Let `value` be <<option_get, *!*>> `<<assoc_, $assoc_<nameIR, value>(nameIR, ((id~member~, value~member~))^{asterisk}^)>>`.
    .... Result in `STO` and `tid . nameIR . value`.
 . Let `typeIR~base~` be the type of `++_++`.
 . If let `memberAccessBaseIR . text` be `expressionIR`:
@@ -5855,9 +5677,7 @@ relation Expr_inst: `p`, `IC`, `STO`, and <<typedExpressionIR, `expressionIR` an
 . Else if let `callExpressionIR` be `expressionIR`:
  .. If let `prefixedNameIR < typeArgumentListIR > ( argumentListIR )` be `callExpressionIR`:
   ... Group callExpressionIR-constructor:
-   .... Let `(cid, constructorDef, id*)^?^` be `<<find_constructorDef_i, $find_constructorDef_i(IC, prefixedNameIR, argumentListIR)>>`.
-   .... Check that `(cid, constructorDef, id*)^?^` is Some value.
-   .... Let `(++_++, constructorDef, id~default~^{asterisk}^)` be `(cid, constructorDef, id*)^?^`.
+   .... Let `(++_++, constructorDef, id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_constructorDef_i, $find_constructorDef_i(IC, prefixedNameIR, argumentListIR)>>`.
    .... Let <<Constructor_inst, `p IC STO |- constructorDef < typeArgumentListIR > ( argumentListIR # id~default~^{asterisk}^ ) : STO~1~ object`>>.
    .... Let `STO~2~` be `<<add_map, $add_map<oid, object>(STO~1~, IC.PATH, object)>>`.
    .... Let `value~ref~` be `! IC.PATH`.
@@ -5871,16 +5691,14 @@ relation Expr_inst: `p`, `IC`, `STO`, and <<typedExpressionIR, `expressionIR` an
      ...... Check that `nameIR` is in `["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]`.
      ...... Result in `STO` and `<<sizeof, $sizeof(typeIR~base~, nameIR)>>`.
     ..... Else if let `TYPE prefixedNameIR . nameIR` be `callableTargetIR`:
-     ...... Let `typeDefIR^?^` be `<<find_typeDef_i, $find_typeDef_i(p, IC, prefixedNameIR)>>`.
-     ...... Check that `typeDefIR^?^` is Some value.
-     ...... Let `typeDefIR~base~` be `typeDefIR^?^`.
+     ...... Let `typeDefIR~base~` be <<option_get, *!*>> `<<find_typeDef_i, $find_typeDef_i(p, IC, prefixedNameIR)>>`.
      ...... If `<<is_monomorphic_typeDefIR, $is_monomorphic_typeDefIR(typeDefIR~base~)>>`:
-      ....... Let `typeIR~base~` be `<<type_of_typeDefIR, $type_of_typeDefIR(typeDefIR~base~)>>`.
+      ....... Let `typeIR~base~` be <<type_of_typeDefIR, the underlying type of `typeDefIR~base~`>>.
       ....... Check that `nameIR` is in `["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]`.
       ....... Result in `STO` and `<<sizeof, $sizeof(typeIR~base~, nameIR)>>`.
      ...... Else `~<<is_monomorphic_typeDefIR, $is_monomorphic_typeDefIR(typeDefIR~base~)>>`:
-      ....... Check that (`[ ]`, `[ ]`) is equal to `<<type_parameters_of_typeDefIR, $type_parameters_of_typeDefIR(typeDefIR~base~)>>`.
-      ....... Let `typeIR~base~` be `<<type_of_typeDefIR, $type_of_typeDefIR(typeDefIR~base~)>>`.
+      ....... Check that (`[ ]`, `[ ]`) is equal to <<type_parameters_of_typeDefIR, the type parameters of `typeDefIR~base~`>>.
+      ....... Let `typeIR~base~` be <<type_of_typeDefIR, the underlying type of `typeDefIR~base~`>>.
       ....... Check that `nameIR` is in `["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]`.
       ....... Result in `STO` and `<<sizeof, $sizeof(typeIR~base~, nameIR)>>`.
   ... Let `callableTargetIR' < typeArgumentListIR > ( argumentListIR )` be `callExpressionIR`.
@@ -5943,9 +5761,7 @@ relation Stmt_inst: `p`, `IC`, `STO`, and `statementIR`
 * and the instantiated statement `callStatementIR`.
 . Else if let `prefixedNameIR . APPLY ( argumentListIR ) ;` be `statementIR`:
  .. Group directApplicationStatementIR:
-  ... Let `(cid, constructorDef, id*)^?^` be `<<find_constructorDef_i, $find_constructorDef_i(IC, prefixedNameIR, [ ])>>`.
-  ... Check that `(cid, constructorDef, id*)^?^` is Some value.
-  ... Let `(++_++, constructorDef, ++_++^{asterisk}^)` be `(cid, constructorDef, id*)^?^`.
+  ... Let `(++_++, constructorDef, ++_++^{asterisk}^)` be <<option_get, *!*>> `<<find_constructorDef_i, $find_constructorDef_i(IC, prefixedNameIR, [ ])>>`.
   ... Let <<Constructor_inst, `p IC STO |- constructorDef < [ ] > ( [ ] # [ ] ) : STO~1~ object`>>.
   ... Let `tid~fresh~` be <<fresh_tid, a fresh type variable>>.
   ... Let `tid` be <<flatten_prefixedNameIR, the string form of  `prefixedNameIR`>>.
@@ -6119,9 +5935,7 @@ relation ParserStmt_inst: `IC~0~`, `STO~0~`, and `parserStatementIR`
   ... Result in `IC~1~`, `STO~1~`, and `callStatementIR~inst~`.
 . Else if let `prefixedNameIR . APPLY ( argumentListIR ) ;` be `parserStatementIR`:
  .. Group directApplicationStatementIR:
-  ... Let `(cid, constructorDef, id*)^?^` be `<<find_constructorDef_i, $find_constructorDef_i(IC~0~, prefixedNameIR, [ ])>>`.
-  ... Check that `(cid, constructorDef, id*)^?^` is Some value.
-  ... Let `(++_++, constructorDef, ++_++^{asterisk}^)` be `(cid, constructorDef, id*)^?^`.
+  ... Let `(++_++, constructorDef, ++_++^{asterisk}^)` be <<option_get, *!*>> `<<find_constructorDef_i, $find_constructorDef_i(IC~0~, prefixedNameIR, [ ])>>`.
   ... Let <<Constructor_inst, `LOCAL IC~0~ STO~0~ |- constructorDef < [ ] > ( [ ] # [ ] ) : STO~1~ object`>>.
   ... Let `tid` be <<flatten_prefixedNameIR, the string form of  `prefixedNameIR`>>.
   ... Let `tid~fresh~` be <<fresh_tid, a fresh type variable>>.
@@ -6338,9 +6152,7 @@ relation Decl_inst: `cursor`, `IC~0~`, `STO`, and `declarationIR`
 . Else if let `annotationList typeIR prefixedNameIR < typeArgumentListIR > ( argumentListIR ) nameIR objectInitializerOptIR ;` be `declarationIR`:
  .. Group instantiationIR:
   ... If `cursor` matches pattern `GLOBAL`:
-   .... Let `(cid, constructorDef, id*)^?^` be `<<find_constructorDef_i, $find_constructorDef_i(IC~0~, prefixedNameIR, argumentListIR)>>`.
-   .... Check that `(cid, constructorDef, id*)^?^` is Some value.
-   .... Let `(++_++, constructorDef, id~default~^{asterisk}^)` be `(cid, constructorDef, id*)^?^`.
+   .... Let `(++_++, constructorDef, id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_constructorDef_i, $find_constructorDef_i(IC~0~, prefixedNameIR, argumentListIR)>>`.
    .... Let `IC~inner~` be `<<enter_path_i, $enter_path_i(IC~0~, nameIR)>>`.
    .... Let <<Constructor_inst, `GLOBAL IC~inner~ STO |- constructorDef < typeArgumentListIR > ( argumentListIR # id~default~^{asterisk}^ ) : STO~1~ object`>>.
    .... Else if let `EXTERN tid < theta > { externState frame externMethodDefEnv }` be `object`:
@@ -6360,9 +6172,7 @@ relation Decl_inst: `cursor`, `IC~0~`, `STO`, and `declarationIR`
     ..... Let `IC~1~` be `<<add_var_i, $add_var_i(GLOBAL, IC~0~, nameIR, ! oid)>>`.
     ..... Result in `IC~1~`, `STO~2~`, and `None`.
   ... Else `cursor` does not match pattern `GLOBAL`:
-   .... Let `(cid, constructorDef, id*)^?^` be `<<find_constructorDef_i, $find_constructorDef_i(IC~0~, prefixedNameIR, argumentListIR)>>`.
-   .... Check that `(cid, constructorDef, id*)^?^` is Some value.
-   .... Let `(++_++, constructorDef, id~default~^{asterisk}^)` be `(cid, constructorDef, id*)^?^`.
+   .... Let `(++_++, constructorDef, id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_constructorDef_i, $find_constructorDef_i(IC~0~, prefixedNameIR, argumentListIR)>>`.
    .... Let `IC~inner~` be `<<enter_path_i, $enter_path_i(IC~0~, nameIR)>>`.
    .... Let <<Constructor_inst, `cursor IC~inner~ STO |- constructorDef < typeArgumentListIR > ( argumentListIR # id~default~^{asterisk}^ ) : STO~1~ object`>>.
    .... Else if let `EXTERN tid < theta > { externState frame externMethodDefEnv }` be `object`:
@@ -6595,16 +6405,14 @@ for each `typeFieldIR` in `typeFieldIR^{asterisk}^`
     ..... Let `{ tid^{asterisk}^ }` be <<diff_set, the difference of the sets `set<tid>` and `set<tid>'`>>.
     ..... Check that `tid^{asterisk}^` is a list of length 1.
     ..... Let `[tid~newtype~]` be `tid^{asterisk}^`.
-    ..... Let `typeDefIR'^?^` be `<<find_typeDef_i, $find_typeDef_i(GLOBAL, IC~local~, . tid~newtype~)>>`.
-    ..... Check that `typeDefIR'^?^` is Some value.
-    ..... Let `typeDefIR` be `typeDefIR'^?^`.
+    ..... Let `typeDefIR` be <<option_get, *!*>> `<<find_typeDef_i, $find_typeDef_i(GLOBAL, IC~local~, . tid~newtype~)>>`.
     ..... If `<<is_monomorphic_typeDefIR, $is_monomorphic_typeDefIR(typeDefIR)>>`:
-     ...... Let `typeIR` be `<<type_of_typeDefIR, $type_of_typeDefIR(typeDefIR)>>`.
+     ...... Let `typeIR` be <<type_of_typeDefIR, the underlying type of `typeDefIR`>>.
      ...... Let `aliasTypeDefIR` be `TYPEDEF nameIR typeIR`.
      ...... Let `IC~1~` be `<<add_typeDef_i, $add_typeDef_i(GLOBAL, IC~0~, nameIR, aliasTypeDefIR)>>`.
      ...... Result in `IC~1~`, `STO`, and `None`.
     ..... Else `~<<is_monomorphic_typeDefIR, $is_monomorphic_typeDefIR(typeDefIR)>>`:
-     ...... Check that (`[ ]`, `[ ]`) is equal to `<<type_parameters_of_typeDefIR, $type_parameters_of_typeDefIR(typeDefIR)>>`.
+     ...... Check that (`[ ]`, `[ ]`) is equal to <<type_parameters_of_typeDefIR, the type parameters of `typeDefIR`>>.
      ...... Let `typeIR~spec~` be `typeDefIR < [ ] >`.
      ...... Let `aliasTypeDefIR` be `TYPEDEF nameIR typeIR~spec~`.
      ...... Let `IC~1~` be `<<add_typeDef_i, $add_typeDef_i(GLOBAL, IC~0~, nameIR, aliasTypeDefIR)>>`.
@@ -7056,18 +6864,14 @@ relation Expr_eval: `p`, `EC`, `STO`, and <<typedExpressionIR, `expressionIR` an
 . Else if let `memberAccessBaseIR . nameIR` be `expressionIR`:
  .. Else if let `TYPE prefixedNameIR` be `memberAccessBaseIR`:
   ... Group memberAccessExpressionIR-type:
-   .... Let `typeDefIR'^?^` be `<<find_typeDef_e, $find_typeDef_e(p, EC, prefixedNameIR)>>`.
-   .... Check that `typeDefIR'^?^` is Some value.
-   .... Let `typeDefIR` be `typeDefIR'^?^`.
+   .... Let `typeDefIR` be <<option_get, *!*>> `<<find_typeDef_e, $find_typeDef_e(p, EC, prefixedNameIR)>>`.
    .... Check that `typeDefIR` has type `enumTypeIR`.
    .... Let `enumTypeIR` be `typeDefIR`.
    .... If let `ENUM tid { ++_++^{asterisk}^ }` be `enumTypeIR`:
     ..... Let `expressionResult` be `tid . nameIR`.
     ..... Result in the resulting evaluation context `EC`, store `STO` and expression result `expressionResult`.
    .... Else let `ENUM tid < ++_++ > { (id~member~ = value~member~ ;)^{asterisk}^ }` be `enumTypeIR`:
-    ..... Let `value'^?^` be `<<assoc_, $assoc_<nameIR, value>(nameIR, ((id~member~, value~member~))^{asterisk}^)>>`.
-    ..... Check that `value'^?^` is Some value.
-    ..... Let `value` be `value'^?^`.
+    ..... Let `value` be <<option_get, *!*>> `<<assoc_, $assoc_<nameIR, value>(nameIR, ((id~member~, value~member~))^{asterisk}^)>>`.
     ..... Let `expressionResult` be `tid . nameIR . value`.
     ..... Result in the resulting evaluation context `EC`, store `STO` and expression result `expressionResult`.
  .. Else if let `typedExpressionIR~base~` be `memberAccessBaseIR`:
@@ -7078,21 +6882,15 @@ relation Expr_eval: `p`, `EC`, `STO`, and <<typedExpressionIR, `expressionIR` an
     ..... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `EXIT`.
    .... Else let `value~base~` be `expressionResult'`:
     ..... If let `STRUCT ++_++ { (value~field~ id~field~ ;)^{asterisk}^ }` be `value~base~`:
-     ...... Let `value'^?^` be `<<assoc_, $assoc_<nameIR, value>(nameIR, ((id~field~, value~field~))^{asterisk}^)>>`.
-     ...... Check that `value'^?^` is Some value.
-     ...... Let `value~member~` be `value'^?^`.
+     ...... Let `value~member~` be <<option_get, *!*>> `<<assoc_, $assoc_<nameIR, value>(nameIR, ((id~field~, value~field~))^{asterisk}^)>>`.
      ...... Let `expressionResult` be `value~member~`.
      ...... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
     ..... Else if let `HEADER ++_++ { ++_++ ; (value~field~ id~field~ ;)^{asterisk}^ }` be `value~base~`:
-     ...... Let `value'^?^` be `<<assoc_, $assoc_<nameIR, value>(nameIR, ((id~field~, value~field~))^{asterisk}^)>>`.
-     ...... Check that `value'^?^` is Some value.
-     ...... Let `value~member~` be `value'^?^`.
+     ...... Let `value~member~` be <<option_get, *!*>> `<<assoc_, $assoc_<nameIR, value>(nameIR, ((id~field~, value~field~))^{asterisk}^)>>`.
      ...... Let `expressionResult` be `value~member~`.
      ...... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
     ..... Else if let `HEADER_UNION ++_++ { (value~field~ id~field~ ;)^{asterisk}^ }` be `value~base~`:
-     ...... Let `value'^?^` be `<<assoc_, $assoc_<nameIR, value>(nameIR, ((id~field~, value~field~))^{asterisk}^)>>`.
-     ...... Check that `value'^?^` is Some value.
-     ...... Let `value~member~` be `value'^?^`.
+     ...... Let `value~member~` be <<option_get, *!*>> `<<assoc_, $assoc_<nameIR, value>(nameIR, ((id~field~, value~field~))^{asterisk}^)>>`.
      ...... Let `expressionResult` be `value~member~`.
      ...... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
    .... If `nameIR` is equal to `"size"`:
@@ -7246,9 +7044,7 @@ relation Argument_eval_lvalue: `p`, `EC~0~`, `STO~0~`, and `argumentIR`
 . Check that `argumentIR` has type `typedExpressionIR`.
 . Let `typedExpressionIR` be `argumentIR`.
 . Group typedExpressionIR:
- .. Let `typedLvalueIR'^?^` be `<<typedExpressionIR_as_typedLvalueIR, $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)>>`.
- .. Check that `typedLvalueIR'^?^` is Some value.
- .. Let `typedLvalueIR` be `typedLvalueIR'^?^`.
+ .. Let `typedLvalueIR` be <<option_get, *!*>> `<<typedExpressionIR_as_typedLvalueIR, $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)>>`.
  .. Let <<Lvalue_eval, `p EC~0~ STO~0~ |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult`>>.
  .. Result in `EC~1~`, `STO~1~`, and `storageReferenceResult`.
 . If let `nameIR = typedExpressionIR` be `argumentIR`:
@@ -7294,6 +7090,20 @@ relation Lvalue_eval: `p`, `EC`, `STO`, and <<typedLvalueIR, `lvalueIR` with not
    .... Else let `value` be `expressionResult`:
     ..... Let `storageReferenceResult` be `storageReference [ value ]`.
     ..... Result in `EC~2~`, `STO~2~`, and `storageReferenceResult`.
+. Else if let `typedLvalueIR [ typedExpressionIR~hi~ : typedExpressionIR~lo~ ]` be `lvalueIR`:
+ .. Group typedLvalueIR-sliceAccess:
+  ... Let <<Lvalue_eval, `p EC STO |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult'`>>.
+  ... Check that `storageReferenceResult'` has type `continueResult<storageReference?>`.
+  ... Let `storageReference'^?^` be `storageReferenceResult'`.
+  ... Check that `storageReference'^?^` is Some value.
+  ... Let `storageReference` be `storageReference'^?^`.
+  ... Let `EC~2~`, `STO~2~`, and `expressionListResult` be the result of <<Exprs_eval, evaluating `[typedExpressionIR~hi~, typedExpressionIR~lo~]`, under cursor `p`, evaluation context `EC~1~`, and store `STO~1~`>>.
+  ... Check that `expressionListResult` has type `continueResult<value*>`.
+  ... Let `value^{asterisk}^` be `expressionListResult`.
+  ... Check that `value^{asterisk}^` is a list of length 2.
+  ... Let `[value~hi~, value~lo~]` be `value^{asterisk}^`.
+  ... Let `storageReferenceResult` be `storageReference [ value~hi~ : value~lo~ ]`.
+  ... Result in `EC~1~`, `STO~1~`, and `storageReferenceResult`.
 
 
 relation Lvalue_read: `p`, `EC`, `STO`, and `storageReference'`
@@ -7308,29 +7118,19 @@ relation Lvalue_read: `p`, `EC`, `STO`, and `storageReference'`
  .. Group storageReference-nameIR:
   ... Let <<Lvalue_read, `p EC STO |- storageReference : value~base~`>>.
   ... If let `! oid` be `value~base~`:
-   .... Let `object'^?^` be `<<find_map, $find_map<oid, object>(STO, oid)>>`.
-   .... Check that `object'^?^` is Some value.
-   .... Let `object` be `object'^?^`.
+   .... Let `object` be <<option_get, *!*>> `<<find_map, $find_map<oid, object>(STO, oid)>>`.
    .... Check that `object` has type `packageObject`.
    .... Let `PACKAGE < ++_++ > { frame }` be `object`.
-   .... Let `value''^?^` be `<<find_map, $find_map<nameIR, value>(frame, nameIR')>>`.
-   .... Check that `value''^?^` is Some value.
-   .... Let `value` be `value''^?^`.
+   .... Let `value` be <<option_get, *!*>> `<<find_map, $find_map<nameIR, value>(frame, nameIR')>>`.
    .... Result in `value`.
   ... Else if let `STRUCT tid { (value~field~ id~field~ ;)^{asterisk}^ }` be `value~base~`:
-   .... Let `value''^?^` be `<<assoc_, $assoc_<id, value>(nameIR', ((id~field~, value~field~))^{asterisk}^)>>`.
-   .... Check that `value''^?^` is Some value.
-   .... Let `value` be `value''^?^`.
+   .... Let `value` be <<option_get, *!*>> `<<assoc_, $assoc_<id, value>(nameIR', ((id~field~, value~field~))^{asterisk}^)>>`.
    .... Result in `value`.
   ... Else if let `HEADER tid { ++_++ ; (value~field~ id~field~ ;)^{asterisk}^ }` be `value~base~`:
-   .... Let `value''^?^` be `<<assoc_, $assoc_<id, value>(nameIR', ((id~field~, value~field~))^{asterisk}^)>>`.
-   .... Check that `value''^?^` is Some value.
-   .... Let `value` be `value''^?^`.
+   .... Let `value` be <<option_get, *!*>> `<<assoc_, $assoc_<id, value>(nameIR', ((id~field~, value~field~))^{asterisk}^)>>`.
    .... Result in `value`.
   ... Else if let `HEADER_UNION ++_++ { (value~field~ id~field~ ;)^{asterisk}^ }` be `value~base~`:
-   .... Let `value''^?^` be `<<assoc_, $assoc_<id, value>(nameIR', ((id~field~, value~field~))^{asterisk}^)>>`.
-   .... Check that `value''^?^` is Some value.
-   .... Let `value` be `value''^?^`.
+   .... Let `value` be <<option_get, *!*>> `<<assoc_, $assoc_<id, value>(nameIR', ((id~field~, value~field~))^{asterisk}^)>>`.
    .... Result in `value`.
   ... Check that `nameIR'` is equal to `"next"`.
   ... Check that `value~base~` has type `headerStackValue`.
@@ -7355,6 +7155,11 @@ relation Lvalue_read: `p`, `EC`, `STO`, and `storageReference'`
    .... Let `HEADER tid { b~valid~ ; fieldValue^{asterisk}^ }` be `value''`.
    .... Let `value` be `HEADER tid { false ; fieldValue^{asterisk}^ }`.
    .... Result in `value`.
+. Else if let `storageReference [ value~hi~ : value~lo~ ]` be `storageReference'`:
+ .. Group sliceAccess:
+  ... Let <<Lvalue_read, `p EC STO |- storageReference : value~base~`>>.
+  ... Let `value` be `<<bitacc_op, $bitacc_op(value~base~, value~hi~, value~lo~)>>`.
+  ... Result in `value`.
 
 
 relation Lvalue_write: `p`, `EC~0~`, `STO`, `storageReference'`, and `value`
@@ -7388,9 +7193,7 @@ relation Lvalue_write: `p`, `EC~0~`, `STO`, `storageReference'`, and `value`
    .... Result in `EC~1~`.
   ... Else if let `HEADER_UNION tid { fieldValue^{asterisk}^ }` be `value~base~`:
    .... Let `(value~field~ id~field~ ;)^{asterisk}^` be `fieldValue^{asterisk}^`.
-   .... Let `value''^?^` be `<<assoc_, $assoc_<nameIR, value>(text, ((id~field~, value~field~))^{asterisk}^)>>`.
-   .... Check that `value''^?^` is Some value.
-   .... Let `value~old~` be `value''^?^`.
+   .... Let `value~old~` be <<option_get, *!*>> `<<assoc_, $assoc_<nameIR, value>(text, ((id~field~, value~field~))^{asterisk}^)>>`.
    .... Check that `value~old~` has type `headerValue`.
    .... Let `HEADER ++_++ { b~valid_old~ ; ++_++^{asterisk}^ }` be `value~old~`.
    .... Let `fieldValue~update~^{asterisk}^` be `<<update_fieldValue, $update_fieldValue(fieldValue^{asterisk}^, text, value)>>`.
@@ -7421,6 +7224,12 @@ relation Lvalue_write: `p`, `EC~0~`, `STO`, `storageReference'`, and `value`
    .... Result in `EC~1~`.
   ... Else if `n~idx~` is greater than or equal to `n~size~`:
    .... Result in `EC~0~`.
+. Else if let `storageReference [ value~hi~ : value~lo~ ]` be `storageReference'`:
+ .. Group sliceAccess:
+  ... Let <<Lvalue_read, `p EC~0~ STO |- storageReference : value~base~`>>.
+  ... Let `value~base_update~` be `<<bitacc_replace_op, $bitacc_replace_op(value~base~, value~hi~, value~lo~, value)>>`.
+  ... Let <<Lvalue_write, `p EC~0~ STO |- storageReference -> value~base_update~ : EC~1~`>>.
+  ... Result in `EC~1~`.
 
 
 relation Stmt_eval: `p`, `EC`, `STO`, and `statementIR`
@@ -7773,25 +7582,19 @@ relation ParserState_trans: `EC~0~`, `STO~0~`, and `nameIR`
 
 
 . Group accept:
- .. Let `state'^?^` be `<<find_state_e, $find_state_e(LOCAL, EC~0~, nameIR)>>`.
- .. Check that `state'^?^` is Some value.
- .. Let `state` be `state'^?^`.
+ .. Let `state` be <<option_get, *!*>> `<<find_state_e, $find_state_e(LOCAL, EC~0~, nameIR)>>`.
  .. Let <<ParserState_eval, `EC~0~ STO~0~ |- state : EC~1~ STO~1~ transitionResult`>>.
  .. Check that `transitionResult` has type `acceptTransitionResult`.
  .. Let `acceptTransitionResult` be `transitionResult`.
  .. Result in `EC~1~`, `STO~1~`, and `ACCEPT`.
 . Group reject:
- .. Let `state'^?^` be `<<find_state_e, $find_state_e(LOCAL, EC~0~, nameIR)>>`.
- .. Check that `state'^?^` is Some value.
- .. Let `state` be `state'^?^`.
+ .. Let `state` be <<option_get, *!*>> `<<find_state_e, $find_state_e(LOCAL, EC~0~, nameIR)>>`.
  .. Let <<ParserState_eval, `EC~0~ STO~0~ |- state : EC~1~ STO~1~ transitionResult`>>.
  .. Check that `transitionResult` has type `rejectTransitionResult`.
  .. Let `rejectTransitionResult` be `transitionResult`.
  .. Result in `EC~1~`, `STO~1~`, and `rejectTransitionResult`.
 . Group state:
- .. Let `state'^?^` be `<<find_state_e, $find_state_e(LOCAL, EC~0~, nameIR)>>`.
- .. Check that `state'^?^` is Some value.
- .. Let `state` be `state'^?^`.
+ .. Let `state` be <<option_get, *!*>> `<<find_state_e, $find_state_e(LOCAL, EC~0~, nameIR)>>`.
  .. Let <<ParserState_eval, `EC~0~ STO~0~ |- state : EC~1~ STO~1~ transitionResult'`>>.
  .. Check that `transitionResult'` has type `stateTransitionResult`.
  .. Let `STATE nameIR~next~` be `transitionResult'`.
@@ -7935,27 +7738,21 @@ relation Callee_eval: `p`, `EC`, `STO`, `callableTargetIR`, and `argumentListIR`
 
 . If let `referenceExpressionIR` be `callableTargetIR`:
  .. Group referenceExpressionIR-action:
-  ... Let `(cursor, cid, callableDef, id*)^?^` be `<<find_callableDef_overloaded_e, $find_callableDef_overloaded_e(p, EC, referenceExpressionIR, argumentListIR)>>`.
-  ... Check that `(cursor, cid, callableDef, id*)^?^` is Some value.
-  ... Let `(p~ref~, ++_++, callableDef, id~default~^{asterisk}^)` be `(cursor, cid, callableDef, id*)^?^`.
+  ... Let `(p~ref~, ++_++, callableDef, id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_callableDef_overloaded_e, $find_callableDef_overloaded_e(p, EC, referenceExpressionIR, argumentListIR)>>`.
   ... Check that `callableDef` has type `actionDef`.
   ... Let `actionDef` be `callableDef`.
   ... Let `ACTION nameIR ( parameterListIR ) blockStatementIR` be `actionDef`.
   ... Let `actionCallee` be `ACTION p~ref~ . nameIR ( parameterListIR # id~default~^{asterisk}^ ) blockStatementIR`.
   ... Result in `EC`, `STO`, and `actionCallee`.
  .. Group referenceExpressionIR-externFunctionCallee:
-  ... Let `(cursor, cid, callableDef, id*)^?^` be `<<find_callableDef_overloaded_e, $find_callableDef_overloaded_e(p, EC, referenceExpressionIR, argumentListIR)>>`.
-  ... Check that `(cursor, cid, callableDef, id*)^?^` is Some value.
-  ... Let `(++_++, ++_++, callableDef, id~default~^{asterisk}^)` be `(cursor, cid, callableDef, id*)^?^`.
+  ... Let `(++_++, ++_++, callableDef, id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_callableDef_overloaded_e, $find_callableDef_overloaded_e(p, EC, referenceExpressionIR, argumentListIR)>>`.
   ... Check that `callableDef` has type `externFunctionDef`.
   ... Let `externFunctionDef` be `callableDef`.
   ... Let `EXTERN_FUNCTION nameIR < typeParameterListIR > ( parameterListIR )` be `externFunctionDef`.
   ... Let `externFunctionCallee` be `EXTERN_FUNCTION nameIR < typeParameterListIR > ( parameterListIR # id~default~^{asterisk}^ )`.
   ... Result in `EC`, `STO`, and `externFunctionCallee`.
  .. Group referenceExpressionIR-definedFunctionCallee:
-  ... Let `(cursor, cid, callableDef, id*)^?^` be `<<find_callableDef_overloaded_e, $find_callableDef_overloaded_e(p, EC, referenceExpressionIR, argumentListIR)>>`.
-  ... Check that `(cursor, cid, callableDef, id*)^?^` is Some value.
-  ... Let `(p~ref~, ++_++, callableDef, id~default~^{asterisk}^)` be `(cursor, cid, callableDef, id*)^?^`.
+  ... Let `(p~ref~, ++_++, callableDef, id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_callableDef_overloaded_e, $find_callableDef_overloaded_e(p, EC, referenceExpressionIR, argumentListIR)>>`.
   ... Check that `callableDef` has type `definedFunctionDef`.
   ... Let `definedFunctionDef` be `callableDef`.
   ... Let `FUNCTION nameIR < typeParameterListIR > ( parameterListIR ) blockStatementIR` be `definedFunctionDef`.
@@ -7963,9 +7760,7 @@ relation Callee_eval: `p`, `EC`, `STO`, `callableTargetIR`, and `argumentListIR`
   ... Result in `EC`, `STO`, and `definedFunctionCallee`.
 . Else if let `typedExpressionIR . nameIR'` be `callableTargetIR`:
  .. Group typedExpressionIR-nameIR-builtinMethod:
-  ... Let `typedLvalueIR'^?^` be `<<typedExpressionIR_as_typedLvalueIR, $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)>>`.
-  ... Check that `typedLvalueIR'^?^` is Some value.
-  ... Let `typedLvalueIR` be `typedLvalueIR'^?^`.
+  ... Let `typedLvalueIR` be <<option_get, *!*>> `<<typedExpressionIR_as_typedLvalueIR, $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)>>`.
   ... Let <<Lvalue_eval, `p EC STO |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult`>>.
   ... Check that `storageReferenceResult` has type `exitResult`.
   ... Let `exitResult` be `storageReferenceResult`.
@@ -8004,9 +7799,7 @@ relation Callee_eval: `p`, `EC`, `STO`, `callableTargetIR`, and `argumentListIR`
    .... Let `builtinMethodCallee` be `BUILTIN_METHOD storageReference . "setInvalid" < [ ] > ( [ ] )`.
    .... Result in `EC~1~`, `STO~1~`, and `builtinMethodCallee`.
  .. Group typedExpressionIR-nameIR-extern-method:
-  ... Let `typedLvalueIR'^?^` be `<<typedExpressionIR_as_typedLvalueIR, $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)>>`.
-  ... Check that `typedLvalueIR'^?^` is Some value.
-  ... Let `typedLvalueIR` be `typedLvalueIR'^?^`.
+  ... Let `typedLvalueIR` be <<option_get, *!*>> `<<typedExpressionIR_as_typedLvalueIR, $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)>>`.
   ... Let <<Lvalue_eval, `p EC STO |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult`>>.
   ... If let `exitResult` be `storageReferenceResult`:
    .... Result in `EC~1~`, `STO~1~`, and `EXIT`.
@@ -8016,15 +7809,11 @@ relation Callee_eval: `p`, `EC`, `STO`, `callableTargetIR`, and `argumentListIR`
    .... Let <<Lvalue_read, `p EC~1~ STO~1~ |- storageReference : value`>>.
    .... Check that `value` has type `objectReferenceValue`.
    .... Let `! oid` be `value`.
-   .... Let `object'^?^` be `<<find_map, $find_map<oid, object>(STO~1~, oid)>>`.
-   .... Check that `object'^?^` is Some value.
-   .... Let `object` be `object'^?^`.
+   .... Let `object` be <<option_get, *!*>> `<<find_map, $find_map<oid, object>(STO~1~, oid)>>`.
    .... Check that `object` has type `externObject`.
    .... Let `EXTERN ++_++ < ++_++ > { ++_++ frame externMethodDefEnv }` be `object`.
    .... Let `(id~arg~^?^)^{asterisk}^` be `<<ids_arguments, $ids_arguments(argumentListIR)>>`.
-   .... Let `(cid, externMethodDef, id*)^?^` be `<<find_overloaded, $find_overloaded<externMethodDef>(externMethodDefEnv, nameIR', (id~arg~^?^)^{asterisk}^)>>`.
-   .... Check that `(cid, externMethodDef, id*)^?^` is Some value.
-   .... Let `(++_++, externMethodDef, id~default~^{asterisk}^)` be `(cid, externMethodDef, id*)^?^`.
+   .... Let `(++_++, externMethodDef, id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_overloaded, $find_overloaded<externMethodDef>(externMethodDefEnv, nameIR', (id~arg~^?^)^{asterisk}^)>>`.
    .... Check that `externMethodDef` matches pattern `EXTERN_METHOD % < % > ( % ) %`.
    .... Let `EXTERN_METHOD nameIR' < typeParameterListIR > ( parameterListIR ) blockStatementIR^?^` be `externMethodDef`.
    .... Check that `nameIR'` is equal to `nameIR'`.
@@ -8032,9 +7821,7 @@ relation Callee_eval: `p`, `EC`, `STO`, `callableTargetIR`, and `argumentListIR`
    .... Result in `EC~1~`, `STO~1~`, and `externMethodCallee`.
  .. Check that `nameIR'` is equal to `"apply"`.
  .. Group typedExpressionIR-nameIR-parser-apply-method:
-  ... Let `typedLvalueIR'^?^` be `<<typedExpressionIR_as_typedLvalueIR, $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)>>`.
-  ... Check that `typedLvalueIR'^?^` is Some value.
-  ... Let `typedLvalueIR` be `typedLvalueIR'^?^`.
+  ... Let `typedLvalueIR` be <<option_get, *!*>> `<<typedExpressionIR_as_typedLvalueIR, $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)>>`.
   ... Let <<Lvalue_eval, `p EC STO |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult`>>.
   ... If let `exitResult` be `storageReferenceResult`:
    .... Result in `EC~1~`, `STO~1~`, and `EXIT`.
@@ -8044,23 +7831,17 @@ relation Callee_eval: `p`, `EC`, `STO`, `callableTargetIR`, and `argumentListIR`
    .... Let <<Lvalue_read, `p EC~1~ STO~1~ |- storageReference : value`>>.
    .... Check that `value` has type `objectReferenceValue`.
    .... Let `! oid` be `value`.
-   .... Let `object'^?^` be `<<find_map, $find_map<oid, object>(STO~1~, oid)>>`.
-   .... Check that `object'^?^` is Some value.
-   .... Let `object` be `object'^?^`.
+   .... Let `object` be <<option_get, *!*>> `<<find_map, $find_map<oid, object>(STO~1~, oid)>>`.
    .... Check that `object` has type `parserObject`.
    .... Let `PARSER ( parameterListIR ) { frame parserLocalDeclarationListIR stateEnv }` be `object`.
    .... Let `cid` be `<<cid_IR, $cid_IR("apply", parameterListIR)>>`.
    .... Let `parserApplyMethodDef` be `PARSER_APPLY ( parameterListIR ) { parserLocalDeclarationListIR ; stateEnv }`.
    .... Let `(id~arg~^?^)^{asterisk}^` be `<<ids_arguments, $ids_arguments(argumentListIR)>>`.
-   .... Let `(cid, parserApplyMethodDef, id*)^?^` be `<<find_overloaded, $find_overloaded<parserApplyMethodDef>({ [cid : parserApplyMethodDef] }, "apply", (id~arg~^?^)^{asterisk}^)>>`.
-   .... Check that `(cid, parserApplyMethodDef, id*)^?^` is Some value.
-   .... Let `(++_++, ++_++, id~default~^{asterisk}^)` be `(cid, parserApplyMethodDef, id*)^?^`.
+   .... Let `(++_++, ++_++, id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_overloaded, $find_overloaded<parserApplyMethodDef>({ [cid : parserApplyMethodDef] }, "apply", (id~arg~^?^)^{asterisk}^)>>`.
    .... Let `parserApplyMethodCallee` be `PARSER oid . APPLY ( parameterListIR # id~default~^{asterisk}^ ) { frame ; parserLocalDeclarationListIR ; stateEnv }`.
    .... Result in `EC~1~`, `STO~1~`, and `parserApplyMethodCallee`.
  .. Group typedExpressionIR-nameIR-control-apply-method:
-  ... Let `typedLvalueIR'^?^` be `<<typedExpressionIR_as_typedLvalueIR, $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)>>`.
-  ... Check that `typedLvalueIR'^?^` is Some value.
-  ... Let `typedLvalueIR` be `typedLvalueIR'^?^`.
+  ... Let `typedLvalueIR` be <<option_get, *!*>> `<<typedExpressionIR_as_typedLvalueIR, $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)>>`.
   ... Let <<Lvalue_eval, `p EC STO |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult`>>.
   ... If let `exitResult` be `storageReferenceResult`:
    .... Result in `EC~1~`, `STO~1~`, and `EXIT`.
@@ -8070,17 +7851,13 @@ relation Callee_eval: `p`, `EC`, `STO`, `callableTargetIR`, and `argumentListIR`
    .... Let <<Lvalue_read, `p EC~1~ STO~1~ |- storageReference : value`>>.
    .... Check that `value` has type `objectReferenceValue`.
    .... Let `! oid` be `value`.
-   .... Let `object'^?^` be `<<find_map, $find_map<oid, object>(STO~1~, oid)>>`.
-   .... Check that `object'^?^` is Some value.
-   .... Let `object` be `object'^?^`.
+   .... Let `object` be <<option_get, *!*>> `<<find_map, $find_map<oid, object>(STO~1~, oid)>>`.
    .... Check that `object` has type `controlObject`.
    .... Let `CONTROL ( parameterListIR ) { frame controlLocalDeclarationListIR actionDefEnv controlBodyIR }` be `object`.
    .... Let `cid` be `<<cid_IR, $cid_IR("apply", parameterListIR)>>`.
    .... Let `controlApplyMethodDef` be `CONTROL_APPLY ( parameterListIR ) { controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR }`.
    .... Let `(id~arg~^?^)^{asterisk}^` be `<<ids_arguments, $ids_arguments(argumentListIR)>>`.
-   .... Let `(cid, controlApplyMethodDef, id*)^?^` be `<<find_overloaded, $find_overloaded<controlApplyMethodDef>({ [cid : controlApplyMethodDef] }, "apply", (id~arg~^?^)^{asterisk}^)>>`.
-   .... Check that `(cid, controlApplyMethodDef, id*)^?^` is Some value.
-   .... Let `(++_++, ++_++, id~default~^{asterisk}^)` be `(cid, controlApplyMethodDef, id*)^?^`.
+   .... Let `(++_++, ++_++, id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_overloaded, $find_overloaded<controlApplyMethodDef>({ [cid : controlApplyMethodDef] }, "apply", (id~arg~^?^)^{asterisk}^)>>`.
    .... Let `controlApplyMethodCallee` be `CONTROL oid . APPLY ( parameterListIR # id~default~^{asterisk}^ ) { frame ; controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR }`.
    .... Result in `EC~1~`, `STO~1~`, and `controlApplyMethodCallee`.
  .. Group typedExpressionIR-nameIR-table-apply-method:
@@ -8101,9 +7878,7 @@ relation Callee_eval: `p`, `EC`, `STO`, `callableTargetIR`, and `argumentListIR`
    .... Let <<Lvalue_read, `p EC~1~ STO~1~ |- storageReference : value`>>.
    .... Check that `value` has type `objectReferenceValue`.
    .... Let `! oid` be `value`.
-   .... Let `object'^?^` be `<<find_map, $find_map<oid, object>(STO~1~, oid)>>`.
-   .... Check that `object'^?^` is Some value.
-   .... Let `object` be `object'^?^`.
+   .... Let `object` be <<option_get, *!*>> `<<find_map, $find_map<oid, object>(STO~1~, oid)>>`.
    .... Check that `object` has type `tableObject`.
    .... Let `TABLE tid { frame TBL }` be `object`.
    .... Let `tableApplyMethodCallee` be `TABLE oid . APPLY { frame ; TBL }`.
@@ -8757,9 +8532,7 @@ relation Extern_init: `EC`, `STO~0~`, and `nameIR`
 
 . Group :
  .. Let `IC` be {PATH `[ ]`, GLOBAL `EC.GLOBAL`, BLOCK `EC.BLOCK`, LOCAL `EC.LOCAL`}.
- .. Let `(cid, constructorDef, id*)^?^` be `<<find_constructorDef_i, $find_constructorDef_i(IC, nameIR, [ ])>>`.
- .. Check that `(cid, constructorDef, id*)^?^` is Some value.
- .. Let `(++_++, constructorDef, ++_++^{asterisk}^)` be `(cid, constructorDef, id*)^?^`.
+ .. Let `(++_++, constructorDef, ++_++^{asterisk}^)` be <<option_get, *!*>> `<<find_constructorDef_i, $find_constructorDef_i(IC, nameIR, [ ])>>`.
  .. Let <<Constructor_inst, `GLOBAL IC STO~0~ |- constructorDef < [ ] > ( [ ] # [ ] ) : STO~1~ object`>>.
  .. Let `oid~object~` be `[nameIR]`.
  .. Let `STO~2~` be `<<add_map, $add_map<oid, object>(STO~1~, oid~object~, object)>>`.
@@ -8791,9 +8564,7 @@ relation V1Model_init_packet_in: `EC~0~`, `STO~0~`, and `externState~packet_in~`
 . Group :
  .. Let `STO~1~` be the result of <<Extern_init, instantiating extern `EC~0~` in the evaluation context `STO~0~` and store `"packet_in"`>>.
  .. Let `EC~1~` be `<<add_var_e, $add_var_e(GLOBAL, EC~0~, "packet_in", ! ["packet_in"])>>`.
- .. Let `object'^?^` be `<<find_map, $find_map<oid, object>(STO~1~, ["packet_in"])>>`.
- .. Check that `object'^?^` is Some value.
- .. Let `object` be `object'^?^`.
+ .. Let `object` be <<option_get, *!*>> `<<find_map, $find_map<oid, object>(STO~1~, ["packet_in"])>>`.
  .. Check that `object` has type `externObject`.
  .. Let `externObject~packet_in~` be `object`.
  .. Let `EXTERN tid < theta > { ++_++ frame externMethodDefEnv }` be `externObject~packet_in~`.
@@ -8808,9 +8579,7 @@ relation V1Model_init_packet_out: `EC~0~`, `STO~0~`, and `externState~packet_out
 . Group :
  .. Let `STO~1~` be the result of <<Extern_init, instantiating extern `EC~0~` in the evaluation context `STO~0~` and store `"packet_out"`>>.
  .. Let `EC~1~` be `<<add_var_e, $add_var_e(GLOBAL, EC~0~, "packet_out", ! ["packet_out"])>>`.
- .. Let `object'^?^` be `<<find_map, $find_map<oid, object>(STO~1~, ["packet_out"])>>`.
- .. Check that `object'^?^` is Some value.
- .. Let `object` be `object'^?^`.
+ .. Let `object` be <<option_get, *!*>> `<<find_map, $find_map<oid, object>(STO~1~, ["packet_out"])>>`.
  .. Check that `object` has type `externObject`.
  .. Let `externObject~packet_out~` be `object`.
  .. Let `EXTERN tid < theta > { ++_++ frame externMethodDefEnv }` be `externObject~packet_out~`.
@@ -8823,22 +8592,14 @@ relation V1Model_init_globals: `EC~0~`, `STO`, and `i~port~`
 
 
 . Group :
- .. Let `object'^?^` be `<<find_map, $find_map<oid, object>(STO, ["main"])>>`.
- .. Check that `object'^?^` is Some value.
- .. Let `object` be `object'^?^`.
+ .. Let `object` be <<option_get, *!*>> `<<find_map, $find_map<oid, object>(STO, ["main"])>>`.
  .. Check that `object` has type `packageObject`.
  .. Let `PACKAGE < theta > { ++_++ }` be `object`.
- .. Let `typeIR^?^` be `<<find_map, $find_map<tid, typeIR>(theta, "H")>>`.
- .. Check that `typeIR^?^` is Some value.
- .. Let `typeIR~hdr~` be `typeIR^?^`.
- .. Let `typeIR'^?^` be `<<find_map, $find_map<tid, typeIR>(theta, "M")>>`.
- .. Check that `typeIR'^?^` is Some value.
- .. Let `typeIR~meta~` be `typeIR'^?^`.
+ .. Let `typeIR~hdr~` be <<option_get, *!*>> `<<find_map, $find_map<tid, typeIR>(theta, "H")>>`.
+ .. Let `typeIR~meta~` be <<option_get, *!*>> `<<find_map, $find_map<tid, typeIR>(theta, "M")>>`.
  .. Let `EC~1~` be the result of <<Var_init, instantiating global variable `"hdr"` of type `typeIR~hdr~` in the evaluation context `EC~0~`>>.
  .. Let `EC~2~` be the result of <<Var_init, instantiating global variable `"meta"` of type `typeIR~meta~` in the evaluation context `EC~1~`>>.
- .. Let `typeDefIR^?^` be `<<find_typeDef_e, $find_typeDef_e(GLOBAL, EC~2~, "standard_metadata_t")>>`.
- .. Check that `typeDefIR^?^` is Some value.
- .. Let `typeDefIR~standard_metadata~` be `typeDefIR^?^`.
+ .. Let `typeDefIR~standard_metadata~` be <<option_get, *!*>> `<<find_typeDef_e, $find_typeDef_e(GLOBAL, EC~2~, "standard_metadata_t")>>`.
  .. Let `typeIR~std_meta~` be `typeDefIR~standard_metadata~ < [ ] >`.
  .. Let `EC~3~` be the result of <<Var_init, instantiating global variable `"standard_metadata"` of type `typeIR~std_meta~` in the evaluation context `EC~2~`>>.
  .. Let `storageReference~port~` be `"standard_metadata" . "ingress_port"`.

@@ -62,6 +62,7 @@ let funcs =
   |> Funcs.add "bxor" Numerics.bxor
   |> Funcs.add "bor" Numerics.bor
   |> Funcs.add "bitacc" Numerics.bitacc
+  |> Funcs.add "bitacc_replace" Numerics.bitacc_replace
 
 let invoke (add : value -> unit) (id : id) (targs : targ list)
     (args : value list) : value =

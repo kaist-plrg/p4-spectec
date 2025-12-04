@@ -14,6 +14,7 @@ builtin dec $bxor(int, int) : int
 builtin dec $bor(int, int) : int
 
 builtin dec $bitacc(int, int, int) : int
+builtin dec $bitacc_replace(int, int, int, int) : int
 
 ;;
 ;; Unary operations
@@ -827,6 +828,20 @@ def $bitacc_op(value_b, value_h, value_l) = w W i
   -- if i_l = $int_of_value(value_l)
   -- if w = $(i_h + 1 - i_l)
   -- if i = $bitacc(i_b, i_h, i_l)
+
+;;
+;; Bitstring access replace
+;;
+
+dec $bitacc_replace_op(value, value, value, value) : value
+  hint(testgen_ignore)
+
+def $bitacc_replace_op(value_b, value_h, value_l, value_r) = w W i
+  -- if w W i_b = value_b
+  -- if i_h = $int_of_value(value_h)
+  -- if i_l = $int_of_value(value_l)
+  -- if _ W i_r = value_r
+  -- if i = $bitacc_replace(i_b, i_h, i_l, i_r)
 
 ;;
 ;; Size

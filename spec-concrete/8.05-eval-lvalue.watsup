@@ -71,6 +71,23 @@ rulegroup Lvalue_eval/typedLvalueIR-indexAccess {
 
 ;;;; typedLvalueIR `[ typedExpressionIR `: typedExpressionIR ]
 
+
+rulegroup Lvalue_eval/typedLvalueIR-sliceAccess {
+
+  rule Lvalue_eval/cont:
+    p EC_0 STO_0 |- (typedLvalueIR `[ typedExpressionIR_hi `: typedExpressionIR_lo ]) `# _
+                  : EC_1 STO_1 storageReferenceResult
+    -- Lvalue_eval:
+        p EC_0 STO_0 |- typedLvalueIR
+                      : EC_1 STO_1 (`` storageReference)
+    -- Exprs_eval:
+        p EC_1 STO_1 |- [ typedExpressionIR_hi, typedExpressionIR_lo ]
+                      : EC_2 STO_2 (`` ([ value_hi, value_lo ]))
+    -- if storageReferenceResult
+        = `` (storageReference `[ value_hi `: value_lo ])
+
+}
+
 ;;;; `( typedLvalueIR )
 
 ;;
@@ -172,6 +189,14 @@ rulegroup Lvalue_read/storageReference-indexAccess {
     -- if value = HEADER tid `{ false `; fieldValue* }
 
 }
+
+;;; storageReference `[ value `: value ]
+
+rule Lvalue_read/sliceAccess:
+  p EC_0 STO |- (storageReference `[ value_hi `: value_lo ]) : value
+  -- Lvalue_read:
+      p EC_0 STO |- storageReference : value_base
+  -- if value = $bitacc_op(value_base, value_hi, value_lo)
 
 ;;
 ;; L-value write to storage reference
@@ -307,3 +332,13 @@ rulegroup Lvalue_write/storageReference-indexAccess {
     -- if $(n_idx >= n_size)
 
 }
+
+rule Lvalue_write/sliceAccess:
+  p EC_0 STO |- (storageReference `[ value_hi `: value_lo ]) -> value : EC_1
+  -- Lvalue_read:
+      p EC_0 STO |- storageReference : value_base
+  -- if value_base_update = $bitacc_replace_op(value_base, value_hi, value_lo, value)
+  -- Lvalue_write:
+      p EC_0 STO |- storageReference -> value_base_update : EC_1
+
+
