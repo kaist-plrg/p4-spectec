@@ -69,12 +69,12 @@ def $update_headerUnion(eps, id) = eps
 def $update_headerUnion(
     (value_field_h id_field_h `;) :: fieldValue_t*,
     id
-  ) = (value_field_h id_field_h `;) :: fieldValue_t*
+  ) = (value_field_h id_field_h `;) :: $update_headerUnion(fieldValue_t*, id)
   -- if id_field_h = id
 def $update_headerUnion(
     (value_field_h id_field_h `;) :: fieldValue_t*,
     id
-  ) = (value_field_h_update id_field_h `;) :: fieldValue_t*
+  ) = (value_field_h_update id_field_h `;) :: $update_headerUnion(fieldValue_t*, id)
   -- if id_field_h =/= id
   -- if HEADER tid `{ _ `; fieldValue* } = value_field_h
   -- if value_field_h_update = HEADER tid `{ false `; fieldValue* }
