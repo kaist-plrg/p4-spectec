@@ -476,13 +476,11 @@ def $expressionNonBrace_as_expression(literalExpression) = literalExpression
 def $expressionNonBrace_as_expression(referenceExpression) = referenceExpression
 def $expressionNonBrace_as_expression(unaryExpression) = unaryExpression
 def $expressionNonBrace_as_expression(
-    expressionNonBrace_l binop expression_r
-  )
+    expressionNonBrace_l binop expression_r)
   = expression_l binop expression_r
   -- if expression_l = $expressionNonBrace_as_expression(expressionNonBrace_l)
 def $expressionNonBrace_as_expression(
-    expressionNonBrace_cond `? expression_true `: expression_false
-  )
+    expressionNonBrace_cond `? expression_true `: expression_false)
   = expression_cond `? expression_true `: expression_false
   -- if expression_cond = $expressionNonBrace_as_expression(expressionNonBrace_cond)
 def $expressionNonBrace_as_expression(castExpression) = castExpression
@@ -493,30 +491,66 @@ def $expressionNonBrace_as_expression(expressionNonBrace_base `. member)
   = expression_base `. member
   -- if expression_base = $expressionNonBrace_as_expression(expressionNonBrace_base)
 def $expressionNonBrace_as_expression(
-    expressionNonBrace_base `[ expression_index ]
-  )
+    expressionNonBrace_base `[ expression_index ])
   = expression_base `[ expression_index ]
   -- if expression_base = $expressionNonBrace_as_expression(expressionNonBrace_base)
 def $expressionNonBrace_as_expression(
-    expressionNonBrace_base `[ expression_hi `: expression_lo ]
-  )
+    expressionNonBrace_base `[ expression_hi `: expression_lo ])
   = expression_base `[ expression_hi `: expression_lo ]
   -- if expression_base = $expressionNonBrace_as_expression(expressionNonBrace_base)
 def $expressionNonBrace_as_expression(
-    expressionNonBrace `( argumentList )
-  )
+    expressionNonBrace `( argumentList ))
   = expression `( argumentList )
   -- if expression = $expressionNonBrace_as_expression(expressionNonBrace)
 def $expressionNonBrace_as_expression(
-    constructorTarget `( argumentList )
-  )
+    constructorTarget `( argumentList ))
   = constructorTarget `( argumentList )
 def $expressionNonBrace_as_expression(
-    expressionNonBrace `< realTypeArgumentList > `( argumentList )
-  )
+    expressionNonBrace `< realTypeArgumentList > `( argumentList ))
   = expression `< realTypeArgumentList > `( argumentList )
   -- if expression = $expressionNonBrace_as_expression(expressionNonBrace)
 def $expressionNonBrace_as_expression(parenthesizedExpression) = parenthesizedExpression
+
+dec $expression_as_expressionNonBrace(expression) : expressionNonBrace
+  hint(prose_in "the non-brace expression corresponding to" %0)
+def $expression_as_expressionNonBrace(literalExpression) = literalExpression
+def $expression_as_expressionNonBrace(referenceExpression) = referenceExpression
+def $expression_as_expressionNonBrace(unaryExpression) = unaryExpression
+def $expression_as_expressionNonBrace(
+    expression_l binop expression_r)
+  = expressionNonBrace_l binop expression_r
+  -- if expressionNonBrace_l = $expression_as_expressionNonBrace(expression_l)
+def $expression_as_expressionNonBrace(
+    expression_cond `? expression_true `: expression_false)
+  = expressionNonBrace_cond `? expression_true `: expression_false
+  -- if expressionNonBrace_cond = $expression_as_expressionNonBrace(expression_cond)
+def $expression_as_expressionNonBrace(castExpression) = castExpression 
+def $expression_as_expressionNonBrace(errorAccessExpression) = errorAccessExpression
+def $expression_as_expressionNonBrace(prefixedTypeName `. member)
+  = prefixedTypeName `. member
+def $expression_as_expressionNonBrace(expression_base `. member)
+  = expressionNonBrace_base `. member
+  -- if expressionNonBrace_base = $expression_as_expressionNonBrace(expression_base)
+def $expression_as_expressionNonBrace(
+    expression_base `[ expression_index ])
+  = expressionNonBrace_base `[ expression_index ]
+  -- if expressionNonBrace_base = $expression_as_expressionNonBrace(expression_base)
+def $expression_as_expressionNonBrace(
+    expression_base `[ expression_hi `: expression_lo ])
+  = expressionNonBrace_base `[ expression_hi `: expression_lo ]
+  -- if expressionNonBrace_base = $expression_as_expressionNonBrace(expression_base)
+def $expression_as_expressionNonBrace(
+    expression `( argumentList ))
+  = expressionNonBrace `( argumentList )
+  -- if expressionNonBrace = $expression_as_expressionNonBrace(expression)
+def $expression_as_expressionNonBrace(
+    constructorTarget `( argumentList ))
+  = constructorTarget `( argumentList )
+def $expression_as_expressionNonBrace(
+    expression `< realTypeArgumentList > `( argumentList ))
+  = expressionNonBrace `< realTypeArgumentList > `( argumentList )
+  -- if expressionNonBrace = $expression_as_expressionNonBrace(expression)
+def $expression_as_expressionNonBrace(parenthesizedExpression) = parenthesizedExpression
 
 ;;
 ;; Keyset expressions
