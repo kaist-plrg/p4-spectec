@@ -1557,46 +1557,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       values_input;
     value_output
 
-  and match_tablerow (ctx : Ctx.t) (exp_signature : Il.Ast.exp)
-      (value_input : Il.Ast.value) : bool =
-    match (exp_signature.it, value_input.it) with
-    | UpCastE (_, { it = VarE _; note; _ }), CaseV (mixop_v, _) -> (
-        match note with
-        | VarT (tid, _) -> (
-            let typdef = Ctx.find_typdef Local ctx tid in
-            match typdef with
-            | Defined (_, { it = VariantT typcases; _ }) ->
-                List.exists
-                  (fun (nottyp, _) -> Il.Eq.eq_mixop mixop_v (nottyp.it |> fst))
-                  typcases
-            | _ -> back tid.at "table signature should be of a defined type")
-        | _ -> back exp_signature.at "table signature should have variable type"
-        )
-    | UpCastE (_, { it = CaseE (mixop_e, _); _ }), CaseV (mixop_v, _) ->
-        Il.Eq.eq_mixop mixop_e mixop_v
-    | VarE vid, _ when String.starts_with ~prefix:"_" vid.it -> true
-    | _ ->
-        back exp_signature.at
-          "table signature should be either an upcast or a wildcard variable"
-
   and invoke_table_func (ctx : Ctx.t) (id : id) (args : arg list)
       (tablerows : tablerow list) (values_input : value list) : value =
     let ctx_local = Ctx.localize_func ctx id values_input ctx.global.tdenv in
-    let tablerow_match =
-      try
-        List.find
-          (fun (exps_signature, _, _) ->
-            List.length exps_signature = List.length values_input
-            && List.for_all2 (match_tablerow ctx_local) exps_signature
-                 values_input)
-          tablerows
-      with Not_found ->
-        back id.at
-          (F.asprintf "incomplete table function %s should not pass elaborator"
-             id.it)
-    in
-    let _, _, instrs = tablerow_match in
     let ctx_local = assign_args ctx ctx_local args values_input in
+    let instrs = List.concat_map (fun (_, _, instrs) -> instrs) tablerows in
     let _ctx_local, sign = eval_instrs ctx_local Cont instrs in
     match sign with
     | Ret value_output ->
