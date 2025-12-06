@@ -1,5 +1,4 @@
 open Il.Ast
-open Error
 open Util.Source
 
 (* Check that binding patterns are shallow

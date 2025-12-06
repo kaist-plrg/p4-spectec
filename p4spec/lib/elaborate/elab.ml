@@ -1655,6 +1655,12 @@ and elab_table_dec_def (ctx : Ctx.t) (at : region) (id : id)
     (params : param list) (plaintyp : plaintyp) (hints : hint list) :
     Ctx.t * Il.Ast.def =
   let params_il = List.map (elab_param ctx) params in
+  check
+    (List.for_all
+       (fun (param_il : Il.Ast.param) ->
+         match param_il.it with ExpP _ -> true | DefP _ -> false)
+       params_il)
+    at "table cannot have function parameters";
   let typ_il = elab_plaintyp ctx plaintyp in
   check (typ_il.it = BoolT) typ_il.at "table must return a boolean type";
   let ctx = Ctx.add_table_dec ctx id params plaintyp in
@@ -1713,9 +1719,7 @@ and elab_tablerow (ctx : Ctx.t) (at : region) (id : id) (params : param list)
   let exps_il_signature =
     List.map
       (fun arg_il ->
-        match arg_il.it with
-        | Il.Ast.ExpA exp_il -> exp_il
-        | _ -> error arg_il.at "function parameter is not allowed in tables")
+        match arg_il.it with Il.Ast.ExpA exp_il -> exp_il | _ -> assert false)
       args_il_signature
   in
   let _ctx_local, exp_il =
@@ -1826,8 +1830,7 @@ and elab_tablerows (ctx : Ctx.t) (at : region) (id : id) (params : param list)
     |> List.map (fun param_il ->
            match param_il.it with
            | Il.Ast.ExpP typ_il -> typ_il
-           | _ ->
-               error param_il.at "function parameter is not allowed in tables")
+           | _ -> assert false)
   in
   check_valid_match_tablerows ctx at typs_il_match tablerows_il;
   tablerows_il

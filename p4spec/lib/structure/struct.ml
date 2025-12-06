@@ -101,6 +101,14 @@ let struct_clause_path ((prems, exp_output) : prem list * exp) :
   let instr_ret = Ol.Ast.ReturnI exp_output $ at in
   struct_prems prems instr_ret
 
+(* Structuring table rows *)
+
+let struct_tablerow_path ((prems, exp_output) : prem list * exp) :
+    Ol.Ast.instr list =
+  let at = exp_output.at in
+  let instr_ret = Ol.Ast.ReturnI exp_output $ at in
+  struct_prems prems instr_ret
+
 (* Structuring definitions *)
 
 let rec struct_def (ienv : IEnv.t) (tdenv : TDEnv.t) (def : def) : Sl.Ast.def =
@@ -240,39 +248,33 @@ and struct_builtin_dec_def (at : region) (id_dec : id) (tparams : tparam list)
   let builtinfunc = (id_dec, tparams, args_input, typ, hints) in
   Sl.Ast.BuiltinDecD builtinfunc $ at
 
-and struct_tablerow_path tablerow_path : Ol.Ast.instr list =
-  let prems_path, exp_res = tablerow_path in
-  let at = exp_res.at in
-  let instr_ret = Ol.Ast.ReturnI exp_res $ at in
-  struct_prems prems_path instr_ret
-
 and struct_table_dec_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region)
     (id_dec : id) (tablerows : tablerow list) (typ : typ) (hints : hint list) :
     Sl.Ast.def =
-  let tablesigs, tablerow_bodies =
-    List.map
-      (fun tablerow ->
-        let tablesig, args, exp_res, prems = tablerow.it in
-        (tablesig, (args, exp_res, prems) $ tablerow.at))
-      tablerows
+  let exps_signature_group, clauses =
+    tablerows
+    |> List.map (fun tablerow ->
+           let exps_signature, args, exp_output, prems = tablerow.it in
+           let clause = (args, exp_output, prems) $ tablerow.at in
+           (exps_signature, clause))
     |> List.split
   in
-  let args_input, paths = Antiunify.antiunify_tablerows tablerow_bodies in
-  let instrs_rows =
-    List.map struct_tablerow_path paths
+  let args_input, paths = Antiunify.antiunify_clauses clauses in
+  let instrs_tablerows_group =
+    paths
+    |> List.map struct_tablerow_path
     |> List.map (Optimize.optimize ienv tdenv)
     |> List.map (Instrument.instrument tdenv)
   in
-  let exps_res = paths |> List.split |> snd in
-  let rec combine3 l1 l2 l3 =
-    match (l1, l2, l3) with
-    | [], [], [] -> []
-    | x :: xs, y :: ys, z :: zs -> (x, y, z) :: combine3 xs ys zs
-    | _ -> invalid_arg "combine3: lists must have the same length"
+  let exp_output_group = paths |> List.split |> snd in
+  let tablerows =
+    List.combine exps_signature_group exp_output_group
+    |> List.map2
+         (fun instrs_tablerows (exps_signature, exp_output) ->
+           (exps_signature, exp_output, instrs_tablerows))
+         instrs_tablerows_group
   in
-  let tablefunc =
-    (id_dec, args_input, typ, combine3 tablesigs exps_res instrs_rows, hints)
-  in
+  let tablefunc = (id_dec, args_input, typ, tablerows, hints) in
   Sl.Ast.TableDecD tablefunc $ at
 
 and struct_func_dec_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region)
