@@ -11,7 +11,7 @@ type shorthand = instr list -> (instr list * instr list) option
    - Check exp_r matches pat;
    - Let exp_l = exp_r ;
 
-   Or, 
+   Or,
 
    - Check exp_r <: typ;
    - Let exp_l = exp_r as typ;
