@@ -1726,7 +1726,7 @@ and elab_tablerow (ctx : Ctx.t) (at : region) (id : id) (params : param list)
   in
   tablerow_il
 
-and patterns_covered_by_typ (ctx : Ctx.t) (typ_il : Il.Ast.typ) :
+and pattern_set_covered_by_typ (ctx : Ctx.t) (typ_il : Il.Ast.typ) :
     Pattern.PatternSet.t =
   match typ_il.it with
   | VarT (vid, _) -> (
@@ -1744,11 +1744,11 @@ and patterns_covered_by_typ (ctx : Ctx.t) (typ_il : Il.Ast.typ) :
             ("unknown variant type id: " ^ Il.Print.string_of_typid vid))
   | _ -> error typ_il.at "expected variable type"
 
-and patterns_covered_by_exp (ctx : Ctx.t) (exp_il : Il.Ast.exp) :
+and pattern_set_covered_by_exp (ctx : Ctx.t) (exp_il : Il.Ast.exp) :
     Pattern.PatternSet.t =
   match exp_il.it with
   | UpCastE (_, { it = VarE _; note; at }) ->
-      patterns_covered_by_typ ctx (note $ at)
+      pattern_set_covered_by_typ ctx (note $ at)
   | UpCastE (_, { it = CaseE notexp_il; at; _ }) ->
       let mixop, exps_il = notexp_il in
       [ (mixop, List.map (fun exp_il -> exp_il.note $ exp_il.at) exps_il) $ at ]
@@ -1783,32 +1783,37 @@ and check_valid_match_tablerows (ctx : Ctx.t) (at : region)
   in
   let closer_opt, tablerows_il = split_last_wildcard_tablerows tablerows_il in
   (* Check that table rows have exclusive patterns *)
-  let patterns_tablerows =
+  let pattern_sets_tablerows =
     List.map
       (fun tablerow_il ->
         let exps_il_signature, _, _, _ = tablerow_il.it in
-        List.map (patterns_covered_by_exp ctx) exps_il_signature)
+        List.map (pattern_set_covered_by_exp ctx) exps_il_signature)
       tablerows_il
   in
-  let pattern_overlap_opt = Pattern.find_overlap patterns_tablerows in
+  let pattern_set_overlap_opt = Pattern.find_overlap pattern_sets_tablerows in
   check
-    (Option.is_none pattern_overlap_opt)
+    (Option.is_none pattern_set_overlap_opt)
     at
     (Format.asprintf "table rows have overlapping patterns: %s"
-       (match pattern_overlap_opt with
-       | Some (pattern_l, pattern_r) ->
-           Pattern.to_string pattern_l ^ " and " ^ Pattern.to_string pattern_r
+       (match pattern_set_overlap_opt with
+       | Some (pattern_sets_l, pattern_sets_r) ->
+           Pattern.PatternSets.to_string pattern_sets_l
+           ^ " and "
+           ^ Pattern.PatternSets.to_string pattern_sets_r
        | None -> ""));
   (* Check that table rows are exhaustive *)
-  let patterns_total = List.map (patterns_covered_by_typ ctx) typs_il_match in
-  let patterns_missing =
-    Pattern.find_missing patterns_total patterns_tablerows
+  let pattern_sets_total =
+    List.map (pattern_set_covered_by_typ ctx) typs_il_match
+  in
+  let pattern_sets_group_missing =
+    Pattern.find_missing pattern_sets_total pattern_sets_tablerows
   in
   check
-    (Option.is_some closer_opt || patterns_missing = [])
+    (Option.is_some closer_opt || pattern_sets_group_missing = [])
     at
     (Format.asprintf "table rows are missing patterns: %s"
-       (String.concat ", " (List.map Pattern.to_string patterns_missing)))
+       (String.concat ", "
+          (List.map Pattern.PatternSets.to_string pattern_sets_group_missing)))
 
 and elab_tablerows (ctx : Ctx.t) (at : region) (id : id) (params : param list)
     (plaintyp : plaintyp) (tablerows : tablerow list) : Il.Ast.tablerow list =

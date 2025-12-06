@@ -18,79 +18,97 @@ module Nottyp = struct
       List.compare compare typs_a typs_b
 end
 
-module PatternSet = Set.Make (Nottyp)
+module PatternSet = struct
+  include Set.Make (Nottyp)
+
+  let to_string (pattern_set : t) : string =
+    "{"
+    ^ (elements pattern_set
+      |> List.map Il.Print.string_of_nottyp
+      |> String.concat " | ")
+    ^ "}"
+end
+
+module PatternSets = struct
+  type t = PatternSet.t list
+
+  let to_string (pattern_sets : t) : string =
+    "("
+    ^ (pattern_sets |> List.map PatternSet.to_string |> String.concat ", ")
+    ^ ")"
+end
 
 (* Stringifier *)
 
-let to_string (patterns : PatternSet.t list) : string =
-  let spatterns =
-    List.map
-      (fun pattern ->
-        "{"
-        ^ String.concat "|"
-            (pattern |> PatternSet.elements
-            |> List.map Il.Print.string_of_nottyp)
-        ^ "}")
-      patterns
-    |> String.concat ", "
-  in
-  "(" ^ spatterns ^ ")"
-
 (* Exclusiveness check *)
 
-let has_overlap (patterns_a : PatternSet.t list)
-    (patterns_b : PatternSet.t list) : bool =
-  try
-    List.for_all2
-      (fun pattern_a pattern_b ->
-        PatternSet.inter pattern_a pattern_b |> PatternSet.is_empty |> not)
-      patterns_a patterns_b
-  with Invalid_argument _ ->
-    failwith "Pattern.has_overlap: patterns have different lengths"
+let has_overlap (pattern_sets_a : PatternSets.t)
+    (pattern_sets_b : PatternSets.t) : bool =
+  List.for_all2
+    (fun pattern_set_a pattern_set_b ->
+      PatternSet.inter pattern_set_a pattern_set_b |> PatternSet.is_empty |> not)
+    pattern_sets_a pattern_sets_b
 
-let find_overlap (patterns : PatternSet.t list list) :
-    (PatternSet.t list * PatternSet.t list) option =
+let find_overlap (pattern_sets_group : PatternSets.t list) :
+    (PatternSets.t * PatternSets.t) option =
   let rec find_overlap' = function
     | [] -> None
-    | pattern_h :: patterns_t -> (
-        match List.find_opt (has_overlap pattern_h) patterns_t with
-        | Some pattern_conflict -> Some (pattern_h, pattern_conflict)
-        | None -> find_overlap' patterns_t)
+    | pattern_sets_h :: pattern_sets_group_t -> (
+        match
+          List.find_opt (has_overlap pattern_sets_h) pattern_sets_group_t
+        with
+        | Some pattern_sets_conflict ->
+            Some (pattern_sets_h, pattern_sets_conflict)
+        | None -> find_overlap' pattern_sets_group_t)
   in
-  find_overlap' patterns
+  find_overlap' pattern_sets_group
 
 (* Exhaustiveness check *)
 
-let subtract (patterns_total : PatternSet.t list) (patterns : PatternSet.t list)
-    : PatternSet.t list list =
-  if not (has_overlap patterns_total patterns) then [ patterns_total ]
+let subtract (pattern_sets_total : PatternSets.t) (pattern_sets : PatternSets.t)
+    : PatternSets.t list =
+  if not (has_overlap pattern_sets_total pattern_sets) then
+    [ pattern_sets_total ]
   else
     (* F × F' − W × W' =  (F - W) × F'  U  (F ∩ W) × (F' - W') *)
-    let rec subtract' (from_rest : PatternSet.t list)
-        (what_rest : PatternSet.t list) (prefix : PatternSet.t list) :
-        PatternSet.t list list =
-      match (from_rest, what_rest) with
-      | [], [] -> [] (* subtraction complete *)
-      | from_cur :: from_next, what_cur :: what_next ->
-          let f_minus_w = PatternSet.diff from_cur what_cur in
-          let f_and_w = PatternSet.inter from_cur what_cur in
+    let rec subtract' (pattern_sets_from : PatternSets.t)
+        (pattern_sets : PatternSets.t) (pattern_sets_prefix : PatternSets.t) :
+        PatternSets.t list =
+      match (pattern_sets_from, pattern_sets) with
+      | [], [] -> []
+      | ( pattern_set_from_h :: pattern_sets_from_t,
+          pattern_set_h :: pattern_sets_t ) ->
+          let pattern_set_diff =
+            PatternSet.diff pattern_set_from_h pattern_set_h
+          in
+          let pattern_set_inter =
+            PatternSet.inter pattern_set_from_h pattern_set_h
+          in
           (* (F - W) × F' *)
-          let fragment =
-            if PatternSet.is_empty f_minus_w then []
-            else [ List.rev (f_minus_w :: prefix) @ from_next ]
+          let pattern_sets_group_fragment =
+            if PatternSet.is_empty pattern_set_diff then []
+            else
+              [
+                List.rev (pattern_set_diff :: pattern_sets_prefix)
+                @ pattern_sets_from_t;
+              ]
           in
           (* (F ∩ W) × (F' - W) *)
-          if PatternSet.is_empty f_and_w then fragment
-          else fragment @ subtract' from_next what_next (f_and_w :: prefix)
-      | _ -> failwith "Pattern.subtract: tuple patterns have different lengths"
+          if PatternSet.is_empty pattern_set_inter then
+            pattern_sets_group_fragment
+          else
+            pattern_sets_group_fragment
+            @ subtract' pattern_sets_from_t pattern_sets_t
+                (pattern_set_inter :: pattern_sets_prefix)
+      | _ -> assert false
     in
-    subtract' patterns_total patterns []
+    subtract' pattern_sets_total pattern_sets []
 
-let find_missing (patterns_total : PatternSet.t list)
-    (patterns : PatternSet.t list list) : PatternSet.t list list =
+let find_missing (pattern_sets_total : PatternSets.t)
+    (pattern_sets_group : PatternSets.t list) : PatternSets.t list =
   List.fold_left
-    (fun patterns_total pattern ->
+    (fun pattern_sets_total pattern_sets ->
       List.concat_map
-        (fun patterns_total -> subtract patterns_total pattern)
-        patterns_total)
-    [ patterns_total ] patterns
+        (fun pattern_sets_total -> subtract pattern_sets_total pattern_sets)
+        pattern_sets_total)
+    [ pattern_sets_total ] pattern_sets_group
