@@ -2,6 +2,7 @@ module Value = Runtime_dynamic.Value
 open Interface.Wrap
 open Interface.Unwrap
 open Interface.Unpack
+open Error
 
 (* Extern objects *)
 
@@ -53,7 +54,11 @@ module Counter = struct
     let value_size, value_type =
       match values_arg with
       | [ value_size; value_type ] -> (value_size, value_type)
-      | _ -> assert false
+      | _ ->
+          error_no_region
+            (Format.asprintf
+               "counter constructor expects 2 arguments, but %d were given"
+               (List.length values_arg))
     in
     let _, size = unpack_p4_fixedBit value_size in
     let size = Bigint.to_int_exn size in
@@ -64,7 +69,10 @@ module Counter = struct
     | "CounterType", "bytes" -> Bytes (List.init size (fun _ -> Bigint.zero))
     | "CounterType", "packets_and_bytes" ->
         PacketsAndBytes (List.init size (fun _ -> (Bigint.zero, Bigint.zero)))
-    | _ -> assert false
+    | _ ->
+        error_no_region
+          (Format.asprintf "invalid CounterType enum value: %s.%s" id_enum
+             id_type)
 
   (* count() causes the counter state with the specified index to be
       read, modified, and written back, atomically relative to the

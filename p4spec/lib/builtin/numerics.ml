@@ -251,3 +251,28 @@ let bitacc (add : value -> unit) (at : region) (targs : targ list)
   let rawint_h = bigint_of_value value_h in
   let rawint_l = bigint_of_value value_l in
   bitacc' rawint_b rawint_h rawint_l |> value_of_bigint add
+
+(* dec $bitacc_replace(int, int, int, int) : int *)
+
+let bitacc_replace' (b : Bigint.t) (m : Bigint.t) (l : Bigint.t) (r : Bigint.t) : Bigint.t =
+  let r = Bigint.(r lsl to_int_exn l) in
+  let mask_hi =
+    let mask_hi = pow2' Bigint.(m + one) in
+    Bigint.(mask_hi - one)
+  in
+  let mask_lo =
+    let mask_lo = pow2' l in
+    Bigint.(mask_lo - one)
+  in
+  let mask = Bigint.(lnot (mask_hi lxor mask_lo)) in
+  Bigint.(b land mask lxor r)
+
+let bitacc_replace (add : value -> unit) (at : region) (targs : targ list)
+    (values_input : value list) : value =
+  Extract.zero at targs;
+  let value_b, value_h, value_l, value_rhs = Extract.four at values_input in
+  let rawint_b = bigint_of_value value_b in
+  let rawint_h = bigint_of_value value_h in
+  let rawint_l = bigint_of_value value_l in
+  let rawint_rhs = bigint_of_value value_rhs in
+  bitacc_replace' rawint_b rawint_h rawint_l rawint_rhs |> value_of_bigint add
