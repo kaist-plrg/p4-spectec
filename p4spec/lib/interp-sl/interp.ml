@@ -1526,8 +1526,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | Func.Builtin -> invoke_builtin_func ctx id targs values_input
     | Func.Table (args, tablerows) ->
         invoke_table_func ctx id args tablerows values_input
-    | Func.Plain (tparams, args_input, instrs) ->
-        invoke_plain_func ctx id tparams args_input instrs targs values_input
+    | Func.Defined (tparams, args_input, instrs) ->
+        invoke_defined_func ctx id tparams args_input instrs targs values_input
 
   and invoke_extern_func (ctx : Ctx.t) (id : id) (_targs : targ list)
       (values_input : value list) : value =
@@ -1557,49 +1557,43 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       values_input;
     value_output
 
+  and match_tablerow (ctx : Ctx.t) (exp_signature : Il.Ast.exp)
+      (value_input : Il.Ast.value) : bool =
+    match (exp_signature.it, value_input.it) with
+    | UpCastE (_, { it = VarE _; note; _ }), CaseV (mixop_v, _) -> (
+        match note with
+        | VarT (tid, _) -> (
+            let typdef = Ctx.find_typdef Local ctx tid in
+            match typdef with
+            | Defined (_, { it = VariantT typcases; _ }) ->
+                List.exists
+                  (fun (nottyp, _) -> Il.Eq.eq_mixop mixop_v (nottyp.it |> fst))
+                  typcases
+            | _ -> back tid.at "table signature should be of a defined type")
+        | _ -> back exp_signature.at "table signature should have variable type"
+        )
+    | UpCastE (_, { it = CaseE (mixop_e, _); _ }), CaseV (mixop_v, _) ->
+        Il.Eq.eq_mixop mixop_e mixop_v
+    | VarE vid, _ when String.starts_with ~prefix:"_" vid.it -> true
+    | _ ->
+        back exp_signature.at
+          "table signature should be either an upcast or a wildcard variable"
+
   and invoke_table_func (ctx : Ctx.t) (id : id) (args : arg list)
       (tablerows : tablerow list) (values_input : value list) : value =
     let ctx_local = Ctx.localize_func ctx id values_input ctx.global.tdenv in
-    let fits_signature exp_sig value_input =
-      let open Il.Ast in
-      match (exp_sig.it, value_input) with
-      | UpCastE (_, { it = VarE _; note; _ }), { it = CaseV (mixop_v, _); _ }
-        -> (
-          match note with
-          | VarT (tid, _) -> (
-              let typdef =
-                Ctx.find_typdef_opt Local ctx_local tid |> Option.get
-              in
-              match typdef with
-              | Defined (_, { it = VariantT typcases; _ }) ->
-                  List.exists
-                    (fun (nottyp, _) ->
-                      Il.Eq.eq_mixop mixop_v (nottyp.it |> fst))
-                    typcases
-              | _ ->
-                  error tid.at
-                    "BUG: table signature should be of a Defined type")
-          | _ -> error exp_sig.at "BUG: table signature should have VarT type")
-      | ( UpCastE (_, { it = CaseE (mixop_e, _); _ }),
-          { it = CaseV (mixop_v, _); _ } ) ->
-          Il.Eq.eq_mixop mixop_e mixop_v
-      | VarE vid, _ when String.starts_with ~prefix:"_" vid.it -> true
-      | _ ->
-          error exp_sig.at
-            "BUG: table signature should be either an UpCastE or a wildcard \
-             VarE"
-    in
     let tablerow_match =
       try
         List.find
-          (fun (exps_sig, _, _) ->
-            List.length exps_sig = List.length values_input
-            && List.for_all2 fits_signature exps_sig values_input)
+          (fun (exps_signature, _, _) ->
+            List.length exps_signature = List.length values_input
+            && List.for_all2 (match_tablerow ctx_local) exps_signature
+                 values_input)
           tablerows
       with Not_found ->
-        F.asprintf
-          "BUG: incomplete table function %s should not pass elaborator" id.it
-        |> error id.at
+        back id.at
+          (F.asprintf "incomplete table function %s should not pass elaborator"
+             id.it)
     in
     let _, _, instrs = tablerow_match in
     let ctx_local = assign_args ctx ctx_local args values_input in
@@ -1612,9 +1606,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
               (Dep.Edges.Func (id, idx_arg)))
           values_input;
         value_output
-    | _ -> error id.at (F.asprintf "BUG: table functions %s failed" id.it)
+    | _ -> back id.at "table did not return a value"
 
-  and invoke_plain_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
+  and invoke_defined_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
       (args_input : arg list) (instrs : instr list) (targs : targ list)
       (values_input : value list) : value =
     let tdenv_local =
@@ -1628,7 +1622,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         TDEnv.empty tparams targs
     in
     let ctx_local = Ctx.localize_func ctx id values_input tdenv_local in
-    let invoke_plain_func' () =
+    let invoke_defined_func' () =
       let ctx_local = assign_args ctx ctx_local args_input values_input in
       let _ctx_local, sign = eval_instrs ctx_local Cont instrs in
       match sign with
@@ -1646,10 +1640,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       match cache_result with
       | Some value_output -> value_output
       | None ->
-          let value_output = invoke_plain_func' () in
+          let value_output = invoke_defined_func' () in
           Cache.Cache.add !func_cache (id.it, values_input) value_output;
           value_output)
-    else invoke_plain_func' ()
+    else invoke_defined_func' ()
 
   (* Load definitions into the context *)
 
@@ -1676,8 +1670,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | TableDecD (id, args_input, _typ, tablerows, _) ->
         let func = Func.Table (args_input, tablerows) in
         Ctx.add_func Global ctx id func
-    | PlainDecD (id, tparams, args_input, _typ, instrs, _) ->
-        let func = Func.Plain (tparams, args_input, instrs) in
+    | FuncDecD (id, tparams, args_input, _typ, instrs, _) ->
+        let func = Func.Defined (tparams, args_input, instrs) in
         Ctx.add_func Global ctx id func
 
   let load_spec (ctx : Ctx.t) (spec : spec) : Ctx.t =

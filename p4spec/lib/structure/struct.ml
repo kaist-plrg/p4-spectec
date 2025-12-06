@@ -119,8 +119,8 @@ let rec struct_def (ienv : IEnv.t) (tdenv : TDEnv.t) (def : def) : Sl.Ast.def =
       struct_builtin_dec_def at id tparams params typ hints
   | TableDecD (id, _params, typ, tablerows, hints) ->
       struct_table_dec_def ienv tdenv at id tablerows typ hints
-  | PlainDecD (id, tparams, _params, typ, clauses, hints) ->
-      struct_plain_dec_def ienv tdenv at id tparams typ clauses hints
+  | FuncDecD (id, tparams, _params, typ, clauses, hints) ->
+      struct_func_dec_def ienv tdenv at id tparams typ clauses hints
 
 (* Structuring relation definitions *)
 
@@ -275,7 +275,7 @@ and struct_table_dec_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region)
   in
   Sl.Ast.TableDecD tablefunc $ at
 
-and struct_plain_dec_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region)
+and struct_func_dec_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region)
     (id_dec : id) (tparams : tparam list) (typ : typ) (clauses : clause list)
     (hints : hint list) : Sl.Ast.def =
   let args_input, paths = Antiunify.antiunify_clauses clauses in
@@ -284,7 +284,7 @@ and struct_plain_dec_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region)
   let args_input, instrs = Pretty.pretty_func args_input instrs in
   let instrs = Instrument.instrument tdenv instrs in
   let func = (id_dec, tparams, args_input, typ, instrs, hints) in
-  Sl.Ast.PlainDecD func $ at
+  Sl.Ast.FuncDecD func $ at
 
 (* Load type definitions *)
 

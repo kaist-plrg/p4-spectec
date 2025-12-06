@@ -194,7 +194,7 @@ type tablefunc = id * arg list * typ * tablerow list * hint list
 [@@deriving yojson]
 
 (* id `<` list(tparam, `,`) `>` list(param, `,`) `:` instr* hint* *)
-type plainfunc = id * tparam list * arg list * typ * instr list * hint list
+type definedfunc = id * tparam list * arg list * typ * instr list * hint list
 [@@deriving yojson]
 
 (* Definitions *)
@@ -216,7 +216,7 @@ and def' =
   (* `tbl` `dec` tablefunc *)
   | TableDecD of tablefunc
   (* `dec` func *)
-  | PlainDecD of plainfunc
+  | FuncDecD of definedfunc
 [@@deriving yojson]
 
 (* Spec *)

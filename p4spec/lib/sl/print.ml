@@ -437,8 +437,11 @@ let string_of_tablerow (tablerow : tablerow) =
     (string_of_exp exp_res)
     (string_of_instrs ~level:2 instrs)
 
-let string_of_func ?(verbose = false) func =
-  let defid, tparams, args_input, _typ, instrs, _hints = func in
+let string_of_tablerows tablerows =
+  String.concat "\n" (List.map string_of_tablerow tablerows)
+
+let string_of_definedfunc ?(verbose = false) definedfunc =
+  let defid, tparams, args_input, _typ, instrs, _hints = definedfunc in
   string_of_defid defid ^ string_of_tparams tparams ^ string_of_args args_input
   ^ "\n\n"
   ^ string_of_instrs ~verbose instrs
@@ -460,9 +463,8 @@ let rec string_of_def ?(verbose = false) def =
       "builtin def " ^ string_of_builtin_func builtinfunc
   | TableDecD (defid, args_input, _typ, tablerows, _hints) ->
       "tbl def " ^ string_of_defid defid ^ string_of_args args_input ^ " =\n"
-      ^ String.concat "\n"
-          (List.map (fun clause -> string_of_tablerow clause) tablerows)
-  | PlainDecD func -> "def " ^ string_of_func ~verbose func
+      ^ string_of_tablerows tablerows
+  | FuncDecD definedfunc -> "def " ^ string_of_definedfunc ~verbose definedfunc
 
 and string_of_defs ?(verbose = false) defs =
   String.concat "\n\n" (List.map (string_of_def ~verbose) defs)

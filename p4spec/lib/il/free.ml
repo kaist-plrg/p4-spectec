@@ -113,7 +113,7 @@ let free_clauses (clauses : clause list) : t =
 (* Table rows *)
 
 let free_tablerow (tablerow : tablerow) : t =
-  let _exps_sig, args, exp, prems = tablerow.it in
+  let _exps_signature, args, exp, prems = tablerow.it in
   free_args args + free_exp exp + free_prems prems
 
 let free_tablerows (tablerows : tablerow list) : t =
@@ -125,5 +125,5 @@ let free_def (def : def) : t =
   match def.it with
   | RelD (_, _, _, rulegroups, _) -> free_rulegroups rulegroups
   | TableDecD (_, _, _, tablerows, _) -> free_tablerows tablerows
-  | PlainDecD (_, _, _, _, clauses, _) -> free_clauses clauses
+  | FuncDecD (_, _, _, _, clauses, _) -> free_clauses clauses
   | _ -> empty

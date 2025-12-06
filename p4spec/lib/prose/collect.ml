@@ -41,7 +41,7 @@ let collect_defs (hdb : Hintdb.t) (ienv : IEnv.t) (def : def) :
   | BuiltinDecD (fid, _, _, _, hints)
   | TableDecD (fid, _, _, _, hints)
   (* TODO: separate table/plain function namespace in hintenv*)
-  | PlainDecD (fid, _, _, _, _, hints) ->
+  | FuncDecD (fid, _, _, _, _, hints) ->
       (collect_hints (`Func fid) hdb hints, ienv)
 
 let collect_spec (spec : spec) : Hintdb.t * IEnv.t =

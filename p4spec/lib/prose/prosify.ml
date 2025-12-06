@@ -466,12 +466,13 @@ let prosify_def (ctx : Ctx.t) (def : def) : Pl.Ast.def option =
       let instrs = prosify_instrs ctx instrs in
       let exps = prosify_exps ctx exps in
       Some (Pl.Ast.RelD (id, exps, instrs) $ def.at)
-  | ExternDecD _ | BuiltinDecD _ | PlainDecD _ -> None
+  | ExternDecD _ | BuiltinDecD _ -> None
   | TableDecD (id, args, typ, tablerows, _) ->
       let id, args, typ, tablerows_pl =
         prosify_table ctx id args typ tablerows
       in
       Some (Pl.Ast.TableDecD (id, args, typ, tablerows_pl) $ def.at)
+  | FuncDecD _ -> None
 
 let prosify_spec (spec : spec) : Pl.Ast.spec =
   let ctx = Ctx.init spec in

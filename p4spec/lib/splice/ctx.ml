@@ -73,7 +73,7 @@ let init_sl_def (ctx : t) (def_sl : Sl.Ast.def) : unit =
   | TableDecD (id_table, args, typ, tablerows, _) ->
       let table = (args, typ, tablerows) in
       ctx.tables <- TableMap.add id_table.it table ctx.tables
-  | PlainDecD (id_func, tparams, args_input, typ, instrs, _) ->
+  | FuncDecD (id_func, tparams, args_input, typ, instrs, _) ->
       let funcprose = (tparams, args_input, typ, instrs) in
       ctx.funcprose <- FuncProseMap.add id_func.it funcprose ctx.funcprose
   | _ -> ()

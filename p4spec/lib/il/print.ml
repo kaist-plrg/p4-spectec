@@ -297,6 +297,31 @@ and string_of_targs targs =
   | [] -> ""
   | targs -> "<" ^ String.concat ", " (List.map string_of_targ targs) ^ ">"
 
+(* Premises *)
+
+and string_of_prem prem =
+  match prem.it with
+  | RulePr (id, notexp) -> string_of_relid id ^ ": " ^ string_of_notexp notexp
+  | IfPr exp -> "if " ^ string_of_exp exp
+  | IfHoldPr (id, notexp) ->
+      "if " ^ string_of_relid id ^ ": " ^ string_of_notexp notexp ^ " holds"
+  | IfNotHoldPr (id, notexp) ->
+      "if " ^ string_of_relid id ^ ": " ^ string_of_notexp notexp
+      ^ " does not hold"
+  | ElsePr -> "otherwise"
+  | LetPr (exp_l, exp_r) ->
+      "let " ^ string_of_exp exp_l ^ " = " ^ string_of_exp exp_r
+  | IterPr (({ it = IterPr _; _ } as prem), iterexp) ->
+      string_of_prem prem ^ string_of_iterexp iterexp
+  | IterPr (prem, iterexp) ->
+      "(" ^ string_of_prem prem ^ ")" ^ string_of_iterexp iterexp
+  | DebugPr exp -> "debug " ^ string_of_exp exp
+
+and string_of_prems ?(level = 0) prems =
+  let indent = indent level in
+  String.concat ""
+    (List.map (fun prem -> "\n" ^ indent ^ "-- " ^ string_of_prem prem) prems)
+
 (* Rules *)
 
 and string_of_ruleinput nottyp inputs exps_input =
@@ -382,6 +407,8 @@ and string_of_clauses clauses =
        (fun idx clause -> "\n\n" ^ indent 1 ^ string_of_clause idx clause)
        clauses)
 
+(* Table rows *)
+
 and string_of_tablerow tablerow =
   let exps_signature, args, exp, prems = tablerow.it in
   "\n" ^ indent 2 ^ "(signature) "
@@ -396,31 +423,6 @@ and string_of_tablerows tablerows =
          "\n" ^ indent 1 ^ "row " ^ string_of_int idx ^ " :"
          ^ string_of_tablerow tablerow)
        tablerows)
-
-(* Premises *)
-
-and string_of_prem prem =
-  match prem.it with
-  | RulePr (id, notexp) -> string_of_relid id ^ ": " ^ string_of_notexp notexp
-  | IfPr exp -> "if " ^ string_of_exp exp
-  | IfHoldPr (id, notexp) ->
-      "if " ^ string_of_relid id ^ ": " ^ string_of_notexp notexp ^ " holds"
-  | IfNotHoldPr (id, notexp) ->
-      "if " ^ string_of_relid id ^ ": " ^ string_of_notexp notexp
-      ^ " does not hold"
-  | ElsePr -> "otherwise"
-  | LetPr (exp_l, exp_r) ->
-      "let " ^ string_of_exp exp_l ^ " = " ^ string_of_exp exp_r
-  | IterPr (({ it = IterPr _; _ } as prem), iterexp) ->
-      string_of_prem prem ^ string_of_iterexp iterexp
-  | IterPr (prem, iterexp) ->
-      "(" ^ string_of_prem prem ^ ")" ^ string_of_iterexp iterexp
-  | DebugPr exp -> "debug " ^ string_of_exp exp
-
-and string_of_prems ?(level = 0) prems =
-  let indent = indent level in
-  String.concat ""
-    (List.map (fun prem -> "\n" ^ indent ^ "-- " ^ string_of_prem prem) prems)
 
 (* Hints *)
 
@@ -458,7 +460,7 @@ let rec string_of_def def =
       "tbl def " ^ string_of_defid defid ^ string_of_params params ^ " : "
       ^ string_of_typ typ ^ " ="
       ^ string_of_tablerows tablerows
-  | PlainDecD (defid, tparams, params, typ, clauses, _) ->
+  | FuncDecD (defid, tparams, params, typ, clauses, _) ->
       "def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : " ^ string_of_typ typ ^ " ="
       ^ string_of_clauses clauses

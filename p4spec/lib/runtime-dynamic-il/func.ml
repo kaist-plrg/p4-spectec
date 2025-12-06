@@ -5,11 +5,11 @@ open Il.Ast
 type t =
   | Extern
   | Builtin
-  | Plain of tparam list * clause list
   | Table of param list * tablerow list
+  | Defined of tparam list * clause list
 
 let to_string = function
   | Extern -> "extern function"
   | Builtin -> "builtin function"
   | Table _ -> "table function"
-  | Plain _ -> "plain function"
+  | Defined _ -> "defined function"

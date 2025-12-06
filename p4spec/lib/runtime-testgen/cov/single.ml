@@ -100,7 +100,7 @@ module Cover = struct
 
   let init_def (cover : t) (def : def) : t =
     match def.it with
-    | RelD (id, _, _, instrs, hints) | PlainDecD (id, _, _, _, instrs, hints) ->
+    | RelD (id, _, _, instrs, hints) | FuncDecD (id, _, _, _, instrs, hints) ->
         if
           List.exists
             (fun (hint : hint) -> hint.hintid.it = "testgen_ignore")

@@ -710,11 +710,13 @@ prem_ :
 
 (* Matchecases *)
 
-tbl_body :
-  | bar tbl_rows = bar_list(tbl_row) { tbl_rows }
+table_body :
+  | bar tablerows = bar_list(tablerow) { tablerows }
 
-tbl_row :
-  | pattern = exp_seq DOUBLE_ARROW body = exp_bin { (pattern, body) }
+tablerow :
+  | pattern = exp_seq DOUBLE_ARROW body = exp_bin
+    { let region = over_region [ pattern.at; body.at ] in
+      (pattern, body) $ region }
 
 (* Hints *)
 
@@ -801,25 +803,25 @@ def_ :
     { TableDecD (id, params, typ_ret, hints) }
   (* Function declaration *)
   | DEC DOLLAR defid COLON plaintyp hint*
-    { PlainDecD ($3, [], [], $5, $6) }
+    { FuncDecD ($3, [], [], $5, $6) }
   | DEC DOLLAR defid_lparen enter_scope comma_list(param) RPAREN COLON plaintyp hint* exit_scope
-    { PlainDecD ($3, [], $5, $8, $9) }
+    { FuncDecD ($3, [], $5, $8, $9) }
   | DEC DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE COLON plaintyp hint* exit_scope
-    { PlainDecD ($3, $5, [], $8, $9) }
+    { FuncDecD ($3, $5, [], $8, $9) }
   | DEC DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE_LPAREN comma_list(param) RPAREN COLON plaintyp hint* exit_scope
-    { PlainDecD ($3, $5, $7, $10, $11) }
+    { FuncDecD ($3, $5, $7, $10, $11) }
   (* Table function body definition *)
-  | TABLE DEF DOLLAR id = defid EQ body = tbl_body
+  | TABLE DEF DOLLAR id = defid EQ body = table_body
     { TableDefD (id, body) }
   (* Function clause declaration *)
   | DEF DOLLAR defid EQ exp prem_list
-    { PlainDefD ($3, [], [], $5, $6) }
+    { FuncDefD ($3, [], [], $5, $6) }
   | DEF DOLLAR defid_lparen enter_scope comma_list(arg) RPAREN EQ exp prem_list exit_scope
-    { PlainDefD ($3, [], $5, $8, $9) }
+    { FuncDefD ($3, [], $5, $8, $9) }
   | DEF DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE EQ exp prem_list exit_scope
-    { PlainDefD ($3, $5, [], $8, $9) }
+    { FuncDefD ($3, $5, [], $8, $9) }
   | DEF DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE_LPAREN comma_list(arg) RPAREN EQ exp prem_list exit_scope
-    { PlainDefD ($3, $5, $7, $10, $11) }
+    { FuncDefD ($3, $5, $7, $10, $11) }
   (* Separator *)
   | NL3
     { SepD }
