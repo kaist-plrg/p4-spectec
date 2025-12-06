@@ -1,5 +1,82 @@
 
 
+table $is_nominal_typeIR':
+[cols="2", options="header"]
+|===
+| (`typeIR'`) | `bool`
+
+| newTypeIR | true
+| structTypeIR | true
+| headerTypeIR | true
+| headerUnionTypeIR | true
+| enumTypeIR | true
+| externObjectTypeIR | true
+| tableObjectTypeIR | true
+| ++_++ | false
+
+|===
+
+
+table $is_defaultable_typeIR':
+[cols="2", options="header"]
+|===
+| (`typeIR''`) | `bool`
+
+| BOOL | true
+| ERROR | true
+| STRING | true
+| integerTypeIR | true
+| TYPE ++_++ typeIR | <<is_defaultable_typeIR, $is_defaultable_typeIR(typeIR)>>
+| TUPLE < typeIR^{asterisk}^ > | <<forall_, $forall_(($is_defaultable_typeIR(typeIR))^{asterisk}^)>>
+| typeIR [ ++_++ ] | <<is_defaultable_typeIR, $is_defaultable_typeIR(typeIR)>>
+| STRUCT ++_++ { (typeIR ++_++ ;)^{asterisk}^ } | <<forall_, $forall_(($is_defaultable_typeIR(typeIR))^{asterisk}^)>>
+| HEADER ++_++ { (typeIR ++_++ ;)^{asterisk}^ } | <<forall_, $forall_(($is_defaultable_typeIR(typeIR))^{asterisk}^)>>
+| HEADER_UNION ++_++ { (typeIR ++_++ ;)^{asterisk}^ } | <<forall_, $forall_(($is_defaultable_typeIR(typeIR))^{asterisk}^)>>
+| ENUM ++_++ { ++_++^{asterisk}^ } | true
+| ENUM ++_++ < typeIR > { ++_++^{asterisk}^ } | <<is_defaultable_typeIR, $is_defaultable_typeIR(typeIR)>>
+| ++_++ | false
+
+|===
+
+
+table $is_equalable_typeIR':
+[cols="2", options="header"]
+|===
+| (`typeIR'`) | `bool`
+
+| VOID | false
+| tid | false
+| externObjectTypeIR | false
+| parserObjectTypeIR | false
+| controlObjectTypeIR | false
+| packageObjectTypeIR | false
+| tableObjectTypeIR | false
+| DEFAULT | false
+| SEQ < ++_++^{asterisk}^ , ... > | false
+| RECORD { ++_++^{asterisk}^ , ... } | false
+| HEADER_INVALID | false
+| setTypeIR | false
+| tableMetadataTypeIR | false
+| ++_++ | true
+
+|===
+
+
+table $is_assignable_typeIR':
+[cols="2", options="header"]
+|===
+| (`typeIR'`) | `bool`
+
+| VOID | false
+| STRING | false
+| INT | false
+| objectTypeIR | false
+| synthesizedTypeIR | false
+| ++_++ | true
+
+|===
+
+
 relation Type_alpha: `typeIR'` and `typeIR'''`
 
 
@@ -707,6 +784,356 @@ relation ConstructorTypeDef_wf: `bound` and `CONSTRUCTOR < tid~tparam_expl~^{ast
  .. Let `bound~inner~` be <<union_set, the union of the sets `bound` and `{ tid~tparam_expl~^{asterisk}^ {pp} tid~tparam_impl~^{asterisk}^ }`>>.
  .. Check that <<ConstructorType_wf, `CONSTRUCTOR ( parameterTypeIR^{asterisk}^ ) : typeIR~object~` is a well-formed type, assuming bound type ids `bound~inner~`>>.
  .. The relation holds.
+
+
+table $nestable'_typedef:
+[cols="2", options="header"]
+|===
+| (`typeIR'`) | `bool`
+
+| BOOL | true
+| ERROR | true
+| STRING | true
+| integerTypeIR | true
+| nameTypeIR | true
+| newTypeIR | true
+| dataTypeIR | true
+| ++_++ | false
+
+|===
+
+
+table $nestable'_new:
+[cols="2", options="header"]
+|===
+| (`typeIR'`) | `bool`
+
+| BOOL | true
+| BIT < ++_++ > | true
+| INT < ++_++ > | true
+| nameTypeIR | true
+| newTypeIR | true
+| ++_++ | false
+
+|===
+
+
+table $nestable'_list:
+[cols="2", options="header"]
+|===
+| (`typeIR'`) | `bool`
+
+| BOOL | true
+| ERROR | true
+| MATCH_KIND | true
+| STRING | true
+| integerTypeIR | true
+| nameTypeIR | true
+| newTypeIR | true
+| dataTypeIR | true
+| ++_++ | false
+
+|===
+
+
+table $nestable'_tuple:
+[cols="2", options="header"]
+|===
+| (`typeIR'`) | `bool`
+
+| BOOL | true
+| ERROR | true
+| BIT < ++_++ > | true
+| INT < ++_++ > | true
+| VARBIT < ++_++ > | true
+| nameTypeIR | true
+| newTypeIR | true
+| tupleTypeIR | true
+| headerStackTypeIR | true
+| structTypeIR | true
+| headerTypeIR | true
+| headerUnionTypeIR | true
+| enumTypeIR | true
+| ++_++ | false
+
+|===
+
+
+table $nestable'_headerStack:
+[cols="2", options="header"]
+|===
+| (`typeIR'`) | `bool`
+
+| nameTypeIR | true
+| headerTypeIR | true
+| headerUnionTypeIR | true
+| ++_++ | false
+
+|===
+
+
+table $nestable'_header:
+[cols="2", options="header"]
+|===
+| (`typeIR'`) | `bool`
+
+| BOOL | true
+| INT < ++_++ > | true
+| BIT < ++_++ > | true
+| VARBIT < ++_++ > | true
+| nameTypeIR | true
+| newTypeIR | true
+| ENUM ++_++ < ++_++ > { ++_++^{asterisk}^ } | true
+| STRUCT ++_++ { (typeIR~field~ ++_++ ;)^{asterisk}^ } | <<forall_, $forall_(($nestable_struct_in_header(typeIR~field~))^{asterisk}^)>>
+| ++_++ | false
+
+|===
+
+
+table $nestable'_struct_in_header:
+[cols="2", options="header"]
+|===
+| (`typeIR'`) | `bool`
+
+| BOOL | true
+| INT < ++_++ > | true
+| BIT < ++_++ > | true
+| nameTypeIR | true
+| newTypeIR | true
+| ENUM ++_++ < ++_++ > { ++_++^{asterisk}^ } | true
+| STRUCT ++_++ { (typeIR~field~ ++_++ ;)^{asterisk}^ } | <<forall_, $forall_(($nestable_struct_in_header(typeIR~field~))^{asterisk}^)>>
+| ++_++ | false
+
+|===
+
+
+table $nestable'_headerUnion:
+[cols="2", options="header"]
+|===
+| (`typeIR'`) | `bool`
+
+| nameTypeIR | true
+| newTypeIR | true
+| headerTypeIR | true
+| ++_++ | false
+
+|===
+
+
+table $nestable'_enum_serializable:
+[cols="2", options="header"]
+|===
+| (`typeIR''`) | `bool`
+
+| INT < ++_++ > | true
+| BIT < ++_++ > | true
+| nameTypeIR | true
+| TYPE ++_++ typeIR | <<nestable_new_in_enum_serializable, $nestable_new_in_enum_serializable(typeIR)>>
+| ++_++ | false
+
+|===
+
+
+table $nestable'_new_in_enum_serializable:
+[cols="2", options="header"]
+|===
+| (`typeIR'`) | `bool`
+
+| INT < ++_++ > | true
+| BIT < ++_++ > | true
+| nameTypeIR | true
+| newTypeIR | true
+| ++_++ | false
+
+|===
+
+
+table $nestable'_set:
+[cols="2", options="header"]
+|===
+| (`typeIR''`) | `bool`
+
+| BOOL | true
+| ERROR | true
+| INT < ++_++ > | true
+| BIT < ++_++ > | true
+| nameTypeIR | true
+| newTypeIR | true
+| TUPLE < typeIR^{asterisk}^ > | <<forall_, $forall_(($nestable_tuple_in_set(typeIR))^{asterisk}^)>>
+| enumTypeIR | true
+| SEQ < typeIR^{asterisk}^ > | <<forall_, $forall_(($nestable_sequence_in_set(typeIR))^{asterisk}^)>>
+| ++_++ | false
+
+|===
+
+
+table $nestable'_tuple_in_set:
+[cols="2", options="header"]
+|===
+| (`typeIR''`) | `bool`
+
+| BOOL | true
+| INT < ++_++ > | true
+| BIT < ++_++ > | true
+| nameTypeIR | true
+| newTypeIR | true
+| TUPLE < typeIR^{asterisk}^ > | <<forall_, $forall_(($nestable_tuple_in_set(typeIR))^{asterisk}^)>>
+| enumTypeIR | true
+| ++_++ | false
+
+|===
+
+
+table $nestable'_sequence_in_set:
+[cols="2", options="header"]
+|===
+| (`typeIR''`) | `bool`
+
+| BOOL | true
+| INT < ++_++ > | true
+| BIT < ++_++ > | true
+| nameTypeIR | true
+| newTypeIR | true
+| TUPLE < typeIR^{asterisk}^ > | <<forall_, $forall_(($nestable_sequence_in_set(typeIR))^{asterisk}^)>>
+| enumTypeIR | true
+| SEQ < typeIR^{asterisk}^ > | <<forall_, $forall_(($nestable_sequence_in_set(typeIR))^{asterisk}^)>>
+| ++_++ | false
+
+|===
+
+
+table $nestable'_action:
+[cols="2", options="header"]
+|===
+| (`typeIR'`) | `bool`
+
+| INT | false
+| objectTypeIR | false
+| synthesizedTypeIR | false
+| ++_++ | true
+
+|===
+
+
+table $nestable'_definedFunction:
+[cols="2", options="header"]
+|===
+| (`typeIR'`) | `bool`
+
+| objectTypeIR | false
+| synthesizedTypeIR | false
+| ++_++ | true
+
+|===
+
+
+table $nestable'_externFunction:
+[cols="2", options="header"]
+|===
+| (`typeIR'`) | `bool`
+
+| parserObjectTypeIR | false
+| controlObjectTypeIR | false
+| packageObjectTypeIR | false
+| tableObjectTypeIR | false
+| ++_++ | true
+
+|===
+
+
+table $nestable'_externMethod:
+[cols="2", options="header"]
+|===
+| (`typeIR'`) | `bool`
+
+| parserObjectTypeIR | false
+| controlObjectTypeIR | false
+| packageObjectTypeIR | false
+| tableObjectTypeIR | false
+| ++_++ | true
+
+|===
+
+
+table $nestable'_parserApplyMethod:
+[cols="2", options="header"]
+|===
+| (`typeIR'`) | `bool`
+
+| parserObjectTypeIR | false
+| controlObjectTypeIR | false
+| packageObjectTypeIR | false
+| tableObjectTypeIR | false
+| ++_++ | true
+
+|===
+
+
+table $nestable'_controlApplyMethod:
+[cols="2", options="header"]
+|===
+| (`typeIR'`) | `bool`
+
+| parserObjectTypeIR | false
+| packageObjectTypeIR | false
+| tableObjectTypeIR | false
+| ++_++ | true
+
+|===
+
+
+table $nestable'_constructor_extern:
+[cols="2", options="header"]
+|===
+| (`typeIR'`) | `bool`
+
+| parserObjectTypeIR | false
+| controlObjectTypeIR | false
+| packageObjectTypeIR | false
+| tableObjectTypeIR | false
+| ++_++ | true
+
+|===
+
+
+table $nestable'_constructor_parser:
+[cols="2", options="header"]
+|===
+| (`typeIR'`) | `bool`
+
+| controlObjectTypeIR | false
+| packageObjectTypeIR | false
+| tableObjectTypeIR | false
+| ++_++ | true
+
+|===
+
+
+table $nestable'_constructor_control:
+[cols="2", options="header"]
+|===
+| (`typeIR'`) | `bool`
+
+| parserObjectTypeIR | false
+| packageObjectTypeIR | false
+| tableObjectTypeIR | false
+| ++_++ | true
+
+|===
+
+
+table $definable'_constructor:
+[cols="2", options="header"]
+|===
+| (`typeIR'`) | `bool`
+
+| externObjectTypeIR | true
+| parserObjectTypeIR | true
+| controlObjectTypeIR | true
+| packageObjectTypeIR | true
+| ++_++ | false
+
+|===
 
 
 relation Expr_eval_lctk: `p`, `TC`, and <<typedExpressionIR, `expressionIR` annotated with `++_++`>>
@@ -5061,6 +5488,67 @@ for each `parameterTypeIR~aligned~` in `parameterTypeIR~aligned~^{asterisk}^`
  .. Check that `<<instantiable, $instantiable(cursor, TC, instctxt, typeIR~object_inferred~)>>`.
  .. Let `argumentIR~cast~^{asterisk}^` be the result of <<Call_convention_ok, checking the calling convention of `argumentIR^{asterisk}^` applied to parameter types `parameterTypeIR~aligned_inferred~^{asterisk}^`, under cursor `cursor`, typing context `TC`, and action context `NOACTION`>>.
  .. Result in `typeIR~object_inferred~`, `typeArgumentIR~inferred~^{asterisk}^`, and `argumentIR~cast~^{asterisk}^`.
+
+
+table $compat'_lnot:
+[cols="2", options="header"]
+|===
+| (`typeIR'`) | `bool`
+
+| BOOL | true
+| ++_++ | false
+
+|===
+
+
+table $compat'_bnot:
+[cols="2", options="header"]
+|===
+| (`typeIR'`) | `bool`
+
+| INT < ++_++ > | true
+| BIT < ++_++ > | true
+| ++_++ | false
+
+|===
+
+
+table $compat'_uplusminus:
+[cols="2", options="header"]
+|===
+| (`typeIR'`) | `bool`
+
+| INT | true
+| INT < ++_++ > | true
+| BIT < ++_++ > | true
+| ++_++ | false
+
+|===
+
+
+table $compat'_plusminusmult:
+[cols="3", options="header"]
+|===
+| (`typeIR''`, `typeIR'''`) | `bool`
+
+| INT, INT | true
+| INT < w~l~ >, INT < w~r~ > | w~l~ = w~r~
+| BIT < w~l~ >, BIT < w~r~ > | w~l~ = w~r~
+| ++_++, ++_++ | false
+
+|===
+
+
+table $compat'_satplusminus:
+[cols="3", options="header"]
+|===
+| (`typeIR''`, `typeIR'''`) | `bool`
+
+| INT < w~l~ >, INT < w~r~ > | w~l~ = w~r~
+| BIT < w~l~ >, BIT < w~r~ > | w~l~ = w~r~
+| ++_++, ++_++ | false
+
+|===
 
 
 relation SwitchLabel_table_ok: `TC`, `tid~table~`, `bool`, and `switchLabel`

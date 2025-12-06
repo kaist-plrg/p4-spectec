@@ -1524,6 +1524,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     match func with
     | Func.Extern -> invoke_extern_func ctx id targs values_input
     | Func.Builtin -> invoke_builtin_func ctx id targs values_input
+    | Func.Table (args, tablerows) ->
+        invoke_table_func ctx id args tablerows values_input
     | Func.Defined (tparams, args_input, instrs) ->
         invoke_defined_func ctx id tparams args_input instrs targs values_input
 
@@ -1554,6 +1556,22 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         Ctx.add_edge ctx value_output value_input (Dep.Edges.Func (id, idx_arg)))
       values_input;
     value_output
+
+  and invoke_table_func (ctx : Ctx.t) (id : id) (args : arg list)
+      (tablerows : tablerow list) (values_input : value list) : value =
+    let ctx_local = Ctx.localize_func ctx id values_input ctx.global.tdenv in
+    let ctx_local = assign_args ctx ctx_local args values_input in
+    let instrs = List.concat_map (fun (_, _, instrs) -> instrs) tablerows in
+    let _ctx_local, sign = eval_instrs ctx_local Cont instrs in
+    match sign with
+    | Ret value_output ->
+        List.iteri
+          (fun idx_arg value_input ->
+            Ctx.add_edge ctx value_output value_input
+              (Dep.Edges.Func (id, idx_arg)))
+          values_input;
+        value_output
+    | _ -> back id.at "table did not return a value"
 
   and invoke_defined_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
       (args_input : arg list) (instrs : instr list) (targs : targ list)
@@ -1614,7 +1632,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | BuiltinDecD (id, _, _, _, _) ->
         let func = Func.Builtin in
         Ctx.add_func Global ctx id func
-    | DecD (id, tparams, args_input, _typ, instrs, _) ->
+    | TableDecD (id, args_input, _typ, tablerows, _) ->
+        let func = Func.Table (args_input, tablerows) in
+        Ctx.add_func Global ctx id func
+    | FuncDecD (id, tparams, args_input, _typ, instrs, _) ->
         let func = Func.Defined (tparams, args_input, instrs) in
         Ctx.add_func Global ctx id func
 

@@ -197,6 +197,11 @@ and rulegroup' = id * rulematch * rulepath list
 and clause = clause' phrase
 and clause' = arg list * exp * prem list
 
+(* Table rows *)
+
+and tablerow = tablerow' phrase
+and tablerow' = exp list * arg list * exp * prem list
+
 (* Hints *)
 
 and hint = El.Ast.hint
@@ -217,8 +222,10 @@ and def' =
   | ExternDecD of id * tparam list * param list * typ * hint list
   (* `builtin` `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ hint* *)
   | BuiltinDecD of id * tparam list * param list * typ * hint list
+  (* `table` `dec` id list(param, `,`) `:` typ hint* *)
+  | TableDecD of id * param list * typ * tablerow list * hint list
   (* `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ clause* hint* *)
-  | DecD of id * tparam list * param list * typ * clause list * hint list
+  | FuncDecD of id * tparam list * param list * typ * clause list * hint list
 
 (* Spec *)
 

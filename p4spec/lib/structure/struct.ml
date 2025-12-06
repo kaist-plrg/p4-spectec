@@ -62,15 +62,15 @@ and struct_prems' (prems_internalized : (prem * iterexp list) list)
 (* Structuring rules *)
 
 let struct_rule_matches (frees : IdSet.t)
-    (exps_match_impl_group : exp list list) (prems_match_group : prem list list)
-    : exp list * prem list list =
-  let exps_match_unified, prems_match_unified_group =
-    Antiunify.antiunify_rule_match_group frees exps_match_impl_group
+    (exps_match_input_group : exp list list)
+    (prems_match_group : prem list list) : exp list * prem list list =
+  let exps_match_input_unified, prems_match_unified_group =
+    Antiunify.antiunify_rule_match_group frees exps_match_input_group
   in
   let prems_match_group =
     List.map2 ( @ ) prems_match_unified_group prems_match_group
   in
-  (exps_match_unified, prems_match_group)
+  (exps_match_input_unified, prems_match_group)
 
 let struct_rule_paths (prems_path : prem list) (exps_output : exp list) :
     Ol.Ast.instr list =
@@ -79,7 +79,7 @@ let struct_rule_paths (prems_path : prem list) (exps_output : exp list) :
   struct_prems prems_path instr_res
 
 let struct_rule_group (prems_match : prem list) (id_rulegroup : id)
-    (exps_match_expl : exp list) (rulepaths : rulepath list) : Ol.Ast.instr list
+    (exps_signature : exp list) (rulepaths : rulepath list) : Ol.Ast.instr list
     =
   let instrs_path =
     List.map
@@ -89,13 +89,21 @@ let struct_rule_group (prems_match : prem list) (id_rulegroup : id)
     |> Merge.merge_blocks
   in
   let instr_group =
-    Ol.Ast.GroupI (id_rulegroup, exps_match_expl, instrs_path) $ id_rulegroup.at
+    Ol.Ast.GroupI (id_rulegroup, exps_signature, instrs_path) $ id_rulegroup.at
   in
   struct_prems prems_match instr_group
 
 (* Structuring clauses *)
 
 let struct_clause_path ((prems, exp_output) : prem list * exp) :
+    Ol.Ast.instr list =
+  let at = exp_output.at in
+  let instr_ret = Ol.Ast.ReturnI exp_output $ at in
+  struct_prems prems instr_ret
+
+(* Structuring table rows *)
+
+let struct_tablerow_path ((prems, exp_output) : prem list * exp) :
     Ol.Ast.instr list =
   let at = exp_output.at in
   let instr_ret = Ol.Ast.ReturnI exp_output $ at in
@@ -117,8 +125,10 @@ let rec struct_def (ienv : IEnv.t) (tdenv : TDEnv.t) (def : def) : Sl.Ast.def =
       struct_extern_dec_def at id tparams params typ hints
   | BuiltinDecD (id, tparams, params, typ, hints) ->
       struct_builtin_dec_def at id tparams params typ hints
-  | DecD (id, tparams, _params, typ, clauses, hints) ->
-      struct_defined_dec_def ienv tdenv at id tparams typ clauses hints
+  | TableDecD (id, _params, typ, tablerows, hints) ->
+      struct_table_dec_def ienv tdenv at id tablerows typ hints
+  | FuncDecD (id, tparams, _params, typ, clauses, hints) ->
+      struct_func_dec_def ienv tdenv at id tparams typ clauses hints
 
 (* Structuring relation definitions *)
 
@@ -143,19 +153,19 @@ and struct_defined_rel_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region)
     (rulegroups : rulegroup list) (hints : hint list) : Sl.Ast.def =
   let mixop, _ = nottyp.it in
   let frees = Il.Free.free_rulegroups rulegroups in
-  let rulegroups, exps_match_impl_group, prems_match_group =
+  let rulegroups, exps_match_group, prems_match_group =
     List.fold_left
-      (fun (rulegroups, exps_match_impl_group, prems_match_group) rulegroup ->
+      (fun (rulegroups, exps_match_input_group, prems_match_group) rulegroup ->
         let id_rulegroup, rulematch, rulepaths = rulegroup.it in
-        let exps_match_expl, exps_match_impl, prems_match = rulematch in
+        let exps_match_signature, exps_match_input, prems_match = rulematch in
         let rulegroups =
-          rulegroups @ [ (id_rulegroup, exps_match_expl, rulepaths) ]
+          rulegroups @ [ (id_rulegroup, exps_match_signature, rulepaths) ]
         in
-        let exps_match_impl_group =
-          exps_match_impl_group @ [ exps_match_impl ]
+        let exps_match_input_group =
+          exps_match_input_group @ [ exps_match_input ]
         in
         let prems_match_group = prems_match_group @ [ prems_match ] in
-        (rulegroups, exps_match_impl_group, prems_match_group))
+        (rulegroups, exps_match_input_group, prems_match_group))
       ([], [], []) rulegroups
   in
   let exps_match_unified, prems_match_group =
@@ -173,12 +183,13 @@ and struct_defined_rel_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region)
             ([], IdSet.empty) typs_match
         in
         (exps_match, [])
-    | _ -> struct_rule_matches frees exps_match_impl_group prems_match_group
+    | _ -> struct_rule_matches frees exps_match_group prems_match_group
   in
   let instrs =
     List.map2
-      (fun prems_match (id_rulegroup, exps_match_expl, rulepaths) ->
-        struct_rule_group prems_match id_rulegroup exps_match_expl rulepaths)
+      (fun prems_match (id_rulegroup, exps_match_signature, rulepaths) ->
+        struct_rule_group prems_match id_rulegroup exps_match_signature
+          rulepaths)
       prems_match_group rulegroups
     |> Merge.merge_blocks
   in
@@ -237,7 +248,36 @@ and struct_builtin_dec_def (at : region) (id_dec : id) (tparams : tparam list)
   let builtinfunc = (id_dec, tparams, args_input, typ, hints) in
   Sl.Ast.BuiltinDecD builtinfunc $ at
 
-and struct_defined_dec_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region)
+and struct_table_dec_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region)
+    (id_dec : id) (tablerows : tablerow list) (typ : typ) (hints : hint list) :
+    Sl.Ast.def =
+  let exps_signature_group, clauses =
+    tablerows
+    |> List.map (fun tablerow ->
+           let exps_signature, args, exp_output, prems = tablerow.it in
+           let clause = (args, exp_output, prems) $ tablerow.at in
+           (exps_signature, clause))
+    |> List.split
+  in
+  let args_input, paths = Antiunify.antiunify_clauses clauses in
+  let instrs_tablerows_group =
+    paths
+    |> List.map struct_tablerow_path
+    |> List.map (Optimize.optimize ienv tdenv)
+    |> List.map (Instrument.instrument tdenv)
+  in
+  let exp_output_group = paths |> List.split |> snd in
+  let tablerows =
+    List.combine exps_signature_group exp_output_group
+    |> List.map2
+         (fun instrs_tablerows (exps_signature, exp_output) ->
+           (exps_signature, exp_output, instrs_tablerows))
+         instrs_tablerows_group
+  in
+  let tablefunc = (id_dec, args_input, typ, tablerows, hints) in
+  Sl.Ast.TableDecD tablefunc $ at
+
+and struct_func_dec_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region)
     (id_dec : id) (tparams : tparam list) (typ : typ) (clauses : clause list)
     (hints : hint list) : Sl.Ast.def =
   let args_input, paths = Antiunify.antiunify_clauses clauses in
@@ -246,7 +286,7 @@ and struct_defined_dec_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region)
   let args_input, instrs = Pretty.pretty_func args_input instrs in
   let instrs = Instrument.instrument tdenv instrs in
   let func = (id_dec, tparams, args_input, typ, instrs, hints) in
-  Sl.Ast.DecD func $ at
+  Sl.Ast.FuncDecD func $ at
 
 (* Load type definitions *)
 

@@ -78,12 +78,12 @@ rule Expr_ok/defaultExpression:
 ;;;; `!
 
 dec $compat_lnot(typeIR) : bool
-dec $compat'_lnot(typeIR) : bool
+tbl dec $compat'_lnot(typeIR) : bool
 
 def $compat_lnot(typeIR) = $compat'_lnot($canon_typeIR(typeIR))
-def $compat'_lnot(BOOL) = true
-def $compat'_lnot(typeIR) = false
-  --otherwise
+tbl def $compat'_lnot =
+  | BOOL => true
+  | _ => false
 
 rule Expr_ok/unaryExpression-lnot:
   p TC |- `! expression : (`! typedExpressionIR_reduced) `# expressionNoteIR
@@ -101,13 +101,13 @@ rule Expr_ok/unaryExpression-lnot:
 ;;;; `~
 
 dec $compat_bnot(typeIR) : bool
-dec $compat'_bnot(typeIR) : bool
+tbl dec $compat'_bnot(typeIR) : bool
 
 def $compat_bnot(typeIR) = $compat'_bnot($canon_typeIR(typeIR))
-def $compat'_bnot(INT `< _ >) = true
-def $compat'_bnot(BIT `< _ >) = true
-def $compat'_bnot(typeIR) = false
-  -- otherwise
+tbl def $compat'_bnot =
+  | INT `< _ > => true
+  | BIT `< _ > => true
+  | _ => false
 
 rule Expr_ok/unaryExpression-bnot:
   p TC |- `~ expression : (`~ typedExpressionIR_reduced) `# expressionNoteIR
@@ -125,14 +125,14 @@ rule Expr_ok/unaryExpression-bnot:
 ;;;; `+ | `-
 
 dec $compat_uplusminus(typeIR) : bool
-dec $compat'_uplusminus(typeIR) : bool
+tbl dec $compat'_uplusminus(typeIR) : bool
 
 def $compat_uplusminus(typeIR) = $compat'_uplusminus($canon_typeIR(typeIR))
-def $compat'_uplusminus(INT) = true
-def $compat'_uplusminus(INT `< _ >) = true
-def $compat'_uplusminus(BIT `< _ >) = true
-def $compat'_uplusminus(typeIR) = false
-  -- otherwise
+tbl def $compat'_uplusminus =
+  | INT => true
+  | INT `< _ > => true
+  | BIT `< _ > => true
+  | _ => false
 
 rule Expr_ok/unaryExpression-uplusminus:
   p TC |- unop expression : (unop typedExpressionIR_reduced) `# expressionNoteIR
@@ -153,15 +153,15 @@ rule Expr_ok/unaryExpression-uplusminus:
 ;;;; `+ | `- | `*
 
 dec $compat_plusminusmult(typeIR, typeIR) : bool
-dec $compat'_plusminusmult(typeIR, typeIR) : bool
+tbl dec $compat'_plusminusmult(typeIR, typeIR) : bool
 
 def $compat_plusminusmult(typeIR_l, typeIR_r)
   = $compat'_plusminusmult($canon_typeIR(typeIR_l), $canon_typeIR(typeIR_r))
-def $compat'_plusminusmult(INT, INT) = true
-def $compat'_plusminusmult(INT `< w >, INT `< w >) = true
-def $compat'_plusminusmult(BIT `< w >, BIT `< w >) = true
-def $compat'_plusminusmult(typeIR_l, typeIR_r) = false
-  -- otherwise
+tbl def $compat'_plusminusmult =
+  | (INT, INT) => true
+  | (INT `< w_l >, INT `< w_r >) => $(w_l = w_r)
+  | (BIT `< w_l >, BIT `< w_r >) => $(w_l = w_r)
+  | (_, _) => false
 
 rule Expr_ok/binaryExpression-plusminusmult:
   p TC |- expression_l binop expression_r
@@ -191,14 +191,14 @@ rule Expr_ok/binaryExpression-plusminusmult:
 ;;;; `|+| | `|-|
 
 dec $compat_satplusminus(typeIR, typeIR) : bool
-dec $compat'_satplusminus(typeIR, typeIR) : bool
+tbl dec $compat'_satplusminus(typeIR, typeIR) : bool
 
 def $compat_satplusminus(typeIR_l, typeIR_r)
   = $compat'_satplusminus($canon_typeIR(typeIR_l), $canon_typeIR(typeIR_r))
-def $compat'_satplusminus(INT `< w >, INT `< w >) = true
-def $compat'_satplusminus(BIT `< w >, BIT `< w >) = true
-def $compat'_satplusminus(typeIR_l, typeIR_r) = false
-  -- otherwise
+tbl def $compat'_satplusminus =
+  | (INT `< w_l >, INT `< w_r >) => $(w_l = w_r)
+  | (BIT `< w_l >, BIT `< w_r >) => $(w_l = w_r)
+  | (_, _) => false
 
 rule Expr_ok/binaryExpression-satplusminus:
   p TC |- expression_l binop expression_r

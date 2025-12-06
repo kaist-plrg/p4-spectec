@@ -332,6 +332,9 @@ let analyze_exp (bounds : VEnv.t) (exp : exp) : exp =
 let analyze_exps (bounds : VEnv.t) (exps : exp list) : exp list =
   analyze annotate_exps bounds exps
 
+let analyze_arg (bounds : VEnv.t) (arg : arg) : arg =
+  analyze annotate_arg bounds arg
+
 let analyze_args (bounds : VEnv.t) (args : arg list) : arg list =
   analyze annotate_args bounds args
 

@@ -631,7 +631,7 @@ and infer_tuple_exp (ctx : Ctx.t) (exps : exp list) :
 
 and infer_call_exp (ctx : Ctx.t) (at : region) (id : id) (targs : targ list)
     (args : arg list) : (Ctx.t * Il.Ast.exp' * plaintyp') attempt_unit =
-  let tparams, params, plaintyp = Ctx.find_dec_signature ctx id in
+  let tparams, params, plaintyp = Ctx.find_func_signature ctx id in
   check
     (List.length targs = List.length tparams)
     id.at "type arguments do not match";
@@ -1151,11 +1151,13 @@ and elab_arg ?(as_def = false) (ctx : Ctx.t) (param : param) (arg : arg) :
         (F.asprintf
            "function argument does not match the declared function parameter %s"
            (Id.to_string id_p));
-      let ctx = Ctx.add_defined_dec ctx id_p tparams_p params_p plaintyp_p in
+      let ctx =
+        Ctx.add_defined_func_dec ctx id_p tparams_p params_p plaintyp_p
+      in
       let arg_il = Il.Ast.DefA id_a $ arg.at in
       (ctx, arg_il)
   | DefP (id_p, tparams_p, params_p, plaintyp_p), DefA id_a ->
-      let tparams_a, params_a, plaintyp_a = Ctx.find_dec_signature ctx id_a in
+      let tparams_a, params_a, plaintyp_a = Ctx.find_func_signature ctx id_a in
       check
         (Types.Equiv.equiv_functyp ctx.tdenv arg.at tparams_p params_p
            plaintyp_p tparams_a params_a plaintyp_a)
@@ -1307,7 +1309,7 @@ let rec elab_rule_input_with_bind (ctx : Ctx.t) (exps_il : Il.Ast.exp list) :
     Ctx.t * Il.Ast.exp list * Il.Ast.prem list =
   Dataflow.Analysis.analyze_exps_as_bind ctx exps_il
 
-and elab_rule_implicit_input (ctx : Ctx.t) (exps_il : Il.Ast.exp list) :
+and elab_rule_signature (ctx : Ctx.t) (exps_il : Il.Ast.exp list) :
     Il.Ast.exp list =
   Dataflow.Analysis.analyze_exps_as_bound ctx exps_il
 
@@ -1333,8 +1335,8 @@ and elab_rulematch (ctx : Ctx.t) (ctxs_local : Ctx.t list)
   let ctx_local_unified, exps_il_input_unified_match, prems_il_match =
     elab_rule_input_with_bind ctx_local_unified exps_il_input_unified
   in
-  let exps_il_input_unified_implicit =
-    elab_rule_implicit_input ctx_local_unified exps_il_input_unified
+  let exps_il_unified_signature =
+    elab_rule_signature ctx_local_unified exps_il_input_unified
   in
   let ctxs_local =
     List.map
@@ -1357,7 +1359,7 @@ and elab_rulematch (ctx : Ctx.t) (ctxs_local : Ctx.t list)
     |> List.split
   in
   let rulematch_il =
-    (exps_il_input_unified_implicit, exps_il_input_unified_match, prems_il_match)
+    (exps_il_unified_signature, exps_il_input_unified_match, prems_il_match)
   in
   (ctxs_local, rulematch_il, prems_il_unified_group)
 
@@ -1463,10 +1465,14 @@ let rec elab_def (ctx : Ctx.t) (def : def) : Ctx.t * Il.Ast.def option =
       elab_extern_dec_def ctx at id tparams params plaintyp hints |> wrap_some
   | BuiltinDecD (id, tparams, params, plaintyp, hints) ->
       elab_builtin_dec_def ctx at id tparams params plaintyp hints |> wrap_some
-  | DecD (id, tparams, params, plaintyp, hints) ->
-      elab_dec_def ctx at id tparams params plaintyp hints |> wrap_some
-  | DefD (id, tparams, args, exp, prems) ->
-      elab_def_def ctx at id tparams args exp prems |> wrap_none
+  | TableDecD (id, params, list_typ, hints) ->
+      elab_table_dec_def ctx at id params list_typ hints |> wrap_some
+  | FuncDecD (id, tparams, params, plaintyp, hints) ->
+      elab_func_dec_def ctx at id tparams params plaintyp hints |> wrap_some
+  | TableDefD (id, tablerows) ->
+      elab_table_def_def ctx at id tablerows |> wrap_none
+  | FuncDefD (id, tparams, args, exp, prems) ->
+      elab_func_def ctx at id tparams args exp prems |> wrap_none
   | SepD -> ctx |> wrap_none
 
 and elab_defs (ctx : Ctx.t) (defs : def list) : Ctx.t * Il.Ast.def list =
@@ -1627,7 +1633,7 @@ and elab_extern_dec_def (ctx : Ctx.t) (at : region) (id : id)
   let ctx_local = Ctx.add_tparams ctx_local tparams in
   let params_il = List.map (elab_param ctx_local) params in
   let typ_il = elab_plaintyp ctx_local plaintyp in
-  let ctx = Ctx.add_extern_dec ctx id tparams params plaintyp in
+  let ctx = Ctx.add_extern_func_dec ctx id tparams params plaintyp in
   let def_il = Il.Ast.ExternDecD (id, tparams, params_il, typ_il, hints) $ at in
   (ctx, def_il)
 
@@ -1641,15 +1647,31 @@ and elab_builtin_dec_def (ctx : Ctx.t) (at : region) (id : id)
   let ctx_local = Ctx.add_tparams ctx_local tparams in
   let params_il = List.map (elab_param ctx_local) params in
   let typ_il = elab_plaintyp ctx_local plaintyp in
-  let ctx = Ctx.add_builtin_dec ctx id tparams params plaintyp in
+  let ctx = Ctx.add_builtin_func_dec ctx id tparams params plaintyp in
   let def_il =
     Il.Ast.BuiltinDecD (id, tparams, params_il, typ_il, hints) $ at
   in
   (ctx, def_il)
 
-and elab_dec_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
+and elab_table_dec_def (ctx : Ctx.t) (at : region) (id : id)
     (params : param list) (plaintyp : plaintyp) (hints : hint list) :
     Ctx.t * Il.Ast.def =
+  let params_il = List.map (elab_param ctx) params in
+  check
+    (List.for_all
+       (fun (param_il : Il.Ast.param) ->
+         match param_il.it with ExpP _ -> true | DefP _ -> false)
+       params_il)
+    at "table cannot have function parameters";
+  let typ_il = elab_plaintyp ctx plaintyp in
+  check (typ_il.it = BoolT) typ_il.at "table must return a boolean type";
+  let ctx = Ctx.add_table_func_dec ctx id params plaintyp in
+  let def_il = Il.Ast.TableDecD (id, params_il, typ_il, [], hints) $ at in
+  (ctx, def_il)
+
+and elab_func_dec_def (ctx : Ctx.t) (at : region) (id : id)
+    (tparams : tparam list) (params : param list) (plaintyp : plaintyp)
+    (hints : hint list) : Ctx.t * Il.Ast.def =
   check
     (List.map it tparams |> distinct ( = ))
     id.at "type parameters are not distinct";
@@ -1657,9 +1679,169 @@ and elab_dec_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
   let ctx_local = Ctx.add_tparams ctx_local tparams in
   let params_il = List.map (elab_param ctx_local) params in
   let typ_il = elab_plaintyp ctx_local plaintyp in
-  let def_il = Il.Ast.DecD (id, tparams, params_il, typ_il, [], hints) $ at in
-  let ctx = Ctx.add_defined_dec ctx id tparams params plaintyp in
+  let def_il =
+    Il.Ast.FuncDecD (id, tparams, params_il, typ_il, [], hints) $ at
+  in
+  let ctx = Ctx.add_defined_func_dec ctx id tparams params plaintyp in
   (ctx, def_il)
+
+(* Elaboration of table function definitions *)
+
+and elab_tablerow_input_with_bind (ctx : Ctx.t) (args_il : Il.Ast.arg list) :
+    Ctx.t * Il.Ast.arg list * Il.Ast.prem list =
+  Dataflow.Analysis.analyze_args_as_bind_shallow ctx args_il
+
+and elab_tablerow_signature (ctx : Ctx.t) (args_il : Il.Ast.arg list) :
+    Il.Ast.arg list =
+  Dataflow.Analysis.analyze_args_as_bound_shallow ctx args_il
+
+and elab_tablerow_output_with_bind (ctx : Ctx.t) (plaintyp : plaintyp)
+    (exp : exp) : Ctx.t * Il.Ast.exp =
+  let+ ctx, exp_il = elab_exp ctx plaintyp exp in
+  let exp_il = Dataflow.Analysis.analyze_exp_as_bound ctx exp_il in
+  (ctx, exp_il)
+
+and elab_tablerow (ctx : Ctx.t) (at : region) (id : id) (params : param list)
+    (plaintyp : plaintyp) (tablerow : tablerow) : Il.Ast.tablerow =
+  let exp_pattern, exp_body = tablerow.it in
+  let exps =
+    match exp_pattern.it with TupleE exps -> exps | _ -> [ exp_pattern ]
+  in
+  let args = List.map (fun exp -> ExpA exp $ exp.at) exps in
+  let ctx_local = { ctx with frees = IdSet.empty } in
+  let ctx_local =
+    let def = TableDefD (id, [ tablerow ]) $ at in
+    El.Free.free_id_def def |> Ctx.add_frees ctx_local
+  in
+  let ctx_local, args_il = elab_args ~as_def:true at ctx_local params args in
+  let ctx_local, args_il_input, sideconditions_il =
+    elab_tablerow_input_with_bind ctx_local args_il
+  in
+  let args_il_signature = elab_tablerow_signature ctx_local args_il in
+  let exps_il_signature =
+    List.map
+      (fun arg_il ->
+        match arg_il.it with Il.Ast.ExpA exp_il -> exp_il | _ -> assert false)
+      args_il_signature
+  in
+  let _ctx_local, exp_il =
+    elab_tablerow_output_with_bind ctx_local plaintyp exp_body
+  in
+  let tablerow_il =
+    (exps_il_signature, args_il_input, exp_il, sideconditions_il) $ tablerow.at
+  in
+  tablerow_il
+
+and pattern_set_covered_by_typ (ctx : Ctx.t) (typ_il : Il.Ast.typ) :
+    Pattern.PatternSet.t =
+  match typ_il.it with
+  | VarT (vid, _) -> (
+      match Ctx.find_typdef_opt ctx vid with
+      | Some (Defined (_, `Variant typcases)) ->
+          let nottyps = typcases |> List.split |> fst |> List.split |> fst in
+          let nottyps_il =
+            List.map
+              (fun nottyp -> elab_nottyp ctx (El.Ast.NotationT nottyp))
+              nottyps
+          in
+          nottyps_il |> Pattern.PatternSet.of_list
+      | _ ->
+          error typ_il.at
+            ("unknown variant type id: " ^ Il.Print.string_of_typid vid))
+  | _ -> error typ_il.at "expected variable type"
+
+and pattern_set_covered_by_exp (ctx : Ctx.t) (exp_il : Il.Ast.exp) :
+    Pattern.PatternSet.t =
+  match exp_il.it with
+  | UpCastE (_, { it = VarE _; note; at }) ->
+      pattern_set_covered_by_typ ctx (note $ at)
+  | UpCastE (_, { it = CaseE notexp_il; at; _ }) ->
+      let mixop, exps_il = notexp_il in
+      [ (mixop, List.map (fun exp_il -> exp_il.note $ exp_il.at) exps_il) $ at ]
+      |> Pattern.PatternSet.of_list
+  | _ -> assert false
+
+and check_valid_match_tablerows (ctx : Ctx.t) (at : region)
+    (typs_il_match : Il.Ast.typ list) (tablerows_il : Il.Ast.tablerow list) :
+    unit =
+  (* Split the last wildcard row (a "closer") if it exists *)
+  let split_last_wildcard_tablerows tablerows_il =
+    let rec split_last_wildcard_tablerows' tablerows_il_rev = function
+      | [] -> (None, tablerows_il)
+      | [ tablerow_il ] ->
+          let exps_il_signature, _, _, _ = tablerow_il.it in
+          if
+            List.for_all
+              (fun exp_il_signature ->
+                match exp_il_signature.it with
+                | Il.Ast.VarE vid when String.starts_with ~prefix:"_" vid.it ->
+                    true
+                | _ -> false)
+              exps_il_signature
+          then (Some tablerow_il, List.rev tablerows_il_rev)
+          else (None, tablerows_il)
+      | tablerow_il_h :: tablerows_il_t ->
+          split_last_wildcard_tablerows'
+            (tablerow_il_h :: tablerows_il_rev)
+            tablerows_il_t
+    in
+    split_last_wildcard_tablerows' [] tablerows_il
+  in
+  let closer_opt, tablerows_il = split_last_wildcard_tablerows tablerows_il in
+  (* Check that table rows have exclusive patterns *)
+  let pattern_sets_tablerows =
+    List.map
+      (fun tablerow_il ->
+        let exps_il_signature, _, _, _ = tablerow_il.it in
+        List.map (pattern_set_covered_by_exp ctx) exps_il_signature)
+      tablerows_il
+  in
+  let pattern_set_overlap_opt = Pattern.find_overlap pattern_sets_tablerows in
+  check
+    (Option.is_none pattern_set_overlap_opt)
+    at
+    (Format.asprintf "table rows have overlapping patterns: %s"
+       (match pattern_set_overlap_opt with
+       | Some (pattern_sets_l, pattern_sets_r) ->
+           Pattern.PatternSets.to_string pattern_sets_l
+           ^ " and "
+           ^ Pattern.PatternSets.to_string pattern_sets_r
+       | None -> ""));
+  (* Check that table rows are exhaustive *)
+  let pattern_sets_total =
+    List.map (pattern_set_covered_by_typ ctx) typs_il_match
+  in
+  let pattern_sets_group_missing =
+    Pattern.find_missing pattern_sets_total pattern_sets_tablerows
+  in
+  check
+    (Option.is_some closer_opt || pattern_sets_group_missing = [])
+    at
+    (Format.asprintf "table rows are missing patterns: %s"
+       (String.concat ", "
+          (List.map Pattern.PatternSets.to_string pattern_sets_group_missing)))
+
+and elab_tablerows (ctx : Ctx.t) (at : region) (id : id) (params : param list)
+    (plaintyp : plaintyp) (tablerows : tablerow list) : Il.Ast.tablerow list =
+  let tablerows_il =
+    List.map (elab_tablerow ctx at id params plaintyp) tablerows
+  in
+  let typs_il_match =
+    params
+    |> List.map (elab_param ctx)
+    |> List.map (fun param_il ->
+           match param_il.it with
+           | Il.Ast.ExpP typ_il -> typ_il
+           | _ -> assert false)
+  in
+  check_valid_match_tablerows ctx at typs_il_match tablerows_il;
+  tablerows_il
+
+and elab_table_def_def (ctx : Ctx.t) (at : region) (id : id)
+    (tablerows : tablerow list) : Ctx.t =
+  let params, plaintyp, _ = Ctx.find_table_func ctx id in
+  let tablerows_il = elab_tablerows ctx at id params plaintyp tablerows in
+  Ctx.add_table_func_tablerows ctx id tablerows_il
 
 (* Elaboration of function definitions *)
 
@@ -1677,9 +1859,9 @@ and elab_def_output_with_bind (ctx : Ctx.t) (plaintyp : plaintyp) (exp : exp) :
   let exp_il = Dataflow.Analysis.analyze_exp_as_bound ctx exp_il in
   (ctx, exp_il)
 
-and elab_def_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
+and elab_func_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
     (args : arg list) (exp : exp) (prems : prem list) : Ctx.t =
-  let tparams_expected, params, plaintyp, _ = Ctx.find_defined_dec ctx id in
+  let tparams_expected, params, plaintyp, _ = Ctx.find_defined_func ctx id in
   check
     (List.length tparams = List.length tparams_expected
     && List.for_all2 ( = ) (List.map it tparams) (List.map it tparams_expected)
@@ -1688,7 +1870,7 @@ and elab_def_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
   check (List.length params = List.length args) at "arguments do not match";
   let ctx_local = { ctx with frees = IdSet.empty } in
   let ctx_local =
-    let def = DefD (id, tparams, args, exp, prems) $ at in
+    let def = FuncDefD (id, tparams, args, exp, prems) $ at in
     El.Free.free_id_def def |> Ctx.add_frees ctx_local
   in
   let ctx_local = Ctx.add_tparams ctx_local tparams in
@@ -1699,7 +1881,7 @@ and elab_def_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
   let prems_il = sideconditions_il @ prems_il in
   let _ctx_local, exp_il = elab_def_output_with_bind ctx_local plaintyp exp in
   let clause_il = (args_il, exp_il, prems_il) $ at in
-  Ctx.add_defined_clause ctx id clause_il
+  Ctx.add_defined_func_clause ctx id clause_il
 
 (* Elaboration of spec *)
 
@@ -1744,11 +1926,15 @@ let populate_rules (ctx : Ctx.t) (spec_il : Il.Ast.spec) : Il.Ast.spec =
 
 let populate_clause (ctx : Ctx.t) (def_il : Il.Ast.def) : Il.Ast.def =
   match def_il.it with
-  | Il.Ast.DecD (id, tparams_il, params_il, typ_il, [], hints) ->
-      let _, _, _, clauses_il = Ctx.find_defined_dec ctx id in
-      Il.Ast.DecD (id, tparams_il, params_il, typ_il, clauses_il, hints)
+  | Il.Ast.TableDecD (id, params_il, typ_il, [], hints) ->
+      let _, _, tablerows_il = Ctx.find_table_func ctx id in
+      Il.Ast.TableDecD (id, params_il, typ_il, tablerows_il, hints) $ def_il.at
+  | Il.Ast.FuncDecD (id, tparams_il, params_il, typ_il, [], hints) ->
+      let _, _, _, clauses_il = Ctx.find_defined_func ctx id in
+      Il.Ast.FuncDecD (id, tparams_il, params_il, typ_il, clauses_il, hints)
       $ def_il.at
-  | Il.Ast.DecD _ -> error def_il.at "function was already populated"
+  | Il.Ast.TableDecD _ -> error def_il.at "table was already populated"
+  | Il.Ast.FuncDecD _ -> error def_il.at "function was already populated"
   | _ -> def_il
 
 let populate_clauses (ctx : Ctx.t) (spec_il : Il.Ast.spec) : Il.Ast.spec =
@@ -1756,7 +1942,10 @@ let populate_clauses (ctx : Ctx.t) (spec_il : Il.Ast.spec) : Il.Ast.spec =
   List.iter
     (fun def_il ->
       match def_il.it with
-      | Il.Ast.DecD (id, _, _, _, [], _) ->
+      | Il.Ast.TableDecD (id, _, _, [], _) ->
+          warn def_il.at
+            (F.asprintf "table %s has no rows defined" (Id.to_string id))
+      | Il.Ast.FuncDecD (id, _, _, _, [], _) ->
           warn def_il.at
             (F.asprintf "function %s has no clauses defined" (Id.to_string id))
       | _ -> ())

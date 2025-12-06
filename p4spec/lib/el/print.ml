@@ -243,6 +243,15 @@ and string_of_rule rule =
 
 and string_of_rules rules = String.concat "\n" (List.map string_of_rule rules)
 
+(* Tables *)
+
+and string_of_tablerow tablerow =
+  let exp_pattern, exp_body = tablerow.it in
+  string_of_exp exp_pattern ^ " => " ^ string_of_exp exp_body
+
+and string_of_tablerows tablerows =
+  String.concat "\n  | " (List.map string_of_tablerow tablerows)
+
 (* Definitions *)
 
 let string_of_def def =
@@ -276,11 +285,17 @@ let string_of_def def =
       "builtin dec " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : "
       ^ string_of_plaintyp plaintyp
-  | DecD (defid, tparams, params, plaintyp, _hints) ->
+  | TableDecD (defid, params, plaintyp, _hints) ->
+      "tbl dec " ^ string_of_defid defid ^ string_of_params params ^ " : "
+      ^ string_of_plaintyp plaintyp
+  | FuncDecD (defid, tparams, params, plaintyp, _hints) ->
       "dec " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : "
       ^ string_of_plaintyp plaintyp
-  | DefD (defid, tparams, args, exp, prems) ->
+  | TableDefD (defid, tablerows) ->
+      "tbl def " ^ string_of_defid defid ^ " =\n  "
+      ^ string_of_tablerows tablerows
+  | FuncDefD (defid, tparams, args, exp, prems) ->
       "def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_args args ^ " = " ^ string_of_exp exp ^ string_of_prems prems
   | SepD -> "\n\n"

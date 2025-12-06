@@ -542,6 +542,28 @@ and render_instrs ?(level = 0) instrs =
   | instrs ->
       "\n" ^ (List.map (render_instr ~level) instrs |> String.concat "\n")
 
+let render_table defid args typ (tablerows : tablerow list) =
+  let meta =
+    "[cols=\""
+    ^ string_of_int (List.length args + 1)
+    ^ "\", options=\"header\"]\n"
+  in
+  let header =
+    "|===" ^ "\n" ^ "| " ^ render_args in_prose args ^ " | "
+    ^ code_of_typ in_prose typ ^ "\n\n"
+  in
+  let rows =
+    tablerows
+    |> List.map (fun tablerow ->
+           let exps_sig, exp_res, _instrs = tablerow.it in
+           let row_output = render_exp in_code exp_res in
+           let row_input = render_exps in_code exps_sig in
+           "| " ^ row_input ^ " | " ^ row_output)
+    |> String.concat "\n"
+  in
+  let footer = "\n\n|===" in
+  "\n\ntable " ^ string_of_defid defid ^ ":\n" ^ meta ^ header ^ rows ^ footer
+
 let render_def (def : def) : string =
   match def.it with
   | ExternRelD (relid, exps_input) ->
@@ -552,6 +574,8 @@ let render_def (def : def) : string =
       ^ render_exps in_prose exps_input
       ^ "\n\n" ^ render_instrs instrs
   | BuiltinDecD _ | DecD _ -> ""
+  | TableDecD (defid, args, typ, tablerows) ->
+      render_table defid args typ tablerows
 
 let render_defs defs = List.map render_def defs |> String.concat "\n"
 

@@ -144,3 +144,31 @@ module FuncProse : Splice = struct
       keys values
     |> String.concat "\n\n"
 end
+
+(* Table Splicer *)
+
+module Table : Splice = struct
+  type key = Kinds.TableId.t
+  type value = Kinds.table
+
+  let name = "table"
+  let prefix = None
+  let suffix = Some "\n"
+
+  let parse_keys (source : Source.t) : key list =
+    [ Parser.parse_table_id source ]
+
+  let find_values (ctx : Ctx.t) (keys : key list) : value list =
+    List.map (Ctx.find_table ctx) keys
+
+  let render (ctx : Ctx.t) (keys : key list) (values : value list) : string =
+    List.map2
+      (fun (id_def : key) ((args, typ, tablerows) : value) ->
+        let id, args, typ, tablerows_pl =
+          Prose.Prosify.prosify_table ctx.prose_ctx (id_def $ no_region) args
+            typ tablerows
+        in
+        Prose.Pl.Print.render_table id args typ tablerows_pl)
+      keys values
+    |> String.concat "\n\n"
+end

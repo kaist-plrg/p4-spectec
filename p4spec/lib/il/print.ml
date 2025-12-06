@@ -297,6 +297,31 @@ and string_of_targs targs =
   | [] -> ""
   | targs -> "<" ^ String.concat ", " (List.map string_of_targ targs) ^ ">"
 
+(* Premises *)
+
+and string_of_prem prem =
+  match prem.it with
+  | RulePr (id, notexp) -> string_of_relid id ^ ": " ^ string_of_notexp notexp
+  | IfPr exp -> "if " ^ string_of_exp exp
+  | IfHoldPr (id, notexp) ->
+      "if " ^ string_of_relid id ^ ": " ^ string_of_notexp notexp ^ " holds"
+  | IfNotHoldPr (id, notexp) ->
+      "if " ^ string_of_relid id ^ ": " ^ string_of_notexp notexp
+      ^ " does not hold"
+  | ElsePr -> "otherwise"
+  | LetPr (exp_l, exp_r) ->
+      "let " ^ string_of_exp exp_l ^ " = " ^ string_of_exp exp_r
+  | IterPr (({ it = IterPr _; _ } as prem), iterexp) ->
+      string_of_prem prem ^ string_of_iterexp iterexp
+  | IterPr (prem, iterexp) ->
+      "(" ^ string_of_prem prem ^ ")" ^ string_of_iterexp iterexp
+  | DebugPr exp -> "debug " ^ string_of_exp exp
+
+and string_of_prems ?(level = 0) prems =
+  let indent = indent level in
+  String.concat ""
+    (List.map (fun prem -> "\n" ^ indent ^ "-- " ^ string_of_prem prem) prems)
+
 (* Rules *)
 
 and string_of_ruleinput nottyp inputs exps_input =
@@ -332,12 +357,12 @@ and string_of_ruleoutput nottyp inputs exps_output =
       "-- output: " ^ string_of_notexp notexp
 
 and string_of_rulematch nottyp inputs rulematch =
-  let exps_input_expl, exps_input_impl, prems_input_impl = rulematch in
-  indent 2 ^ "(explicit) "
-  ^ string_of_ruleinput nottyp inputs exps_input_expl
-  ^ "\n" ^ indent 2 ^ "(implicit) "
-  ^ string_of_ruleinput nottyp inputs exps_input_impl
-  ^ string_of_prems ~level:2 prems_input_impl
+  let exps_signature, exps_input, prems = rulematch in
+  indent 2 ^ "(signature) "
+  ^ string_of_ruleinput nottyp inputs exps_signature
+  ^ "\n" ^ indent 2
+  ^ string_of_ruleinput nottyp inputs exps_input
+  ^ string_of_prems ~level:2 prems
 
 and string_of_rulepath nottyp inputs rulepath =
   let rulepathid, prems, exps_output = rulepath in
@@ -382,30 +407,22 @@ and string_of_clauses clauses =
        (fun idx clause -> "\n\n" ^ indent 1 ^ string_of_clause idx clause)
        clauses)
 
-(* Premises *)
+(* Table rows *)
 
-and string_of_prem prem =
-  match prem.it with
-  | RulePr (id, notexp) -> string_of_relid id ^ ": " ^ string_of_notexp notexp
-  | IfPr exp -> "if " ^ string_of_exp exp
-  | IfHoldPr (id, notexp) ->
-      "if " ^ string_of_relid id ^ ": " ^ string_of_notexp notexp ^ " holds"
-  | IfNotHoldPr (id, notexp) ->
-      "if " ^ string_of_relid id ^ ": " ^ string_of_notexp notexp
-      ^ " does not hold"
-  | ElsePr -> "otherwise"
-  | LetPr (exp_l, exp_r) ->
-      "let " ^ string_of_exp exp_l ^ " = " ^ string_of_exp exp_r
-  | IterPr (({ it = IterPr _; _ } as prem), iterexp) ->
-      string_of_prem prem ^ string_of_iterexp iterexp
-  | IterPr (prem, iterexp) ->
-      "(" ^ string_of_prem prem ^ ")" ^ string_of_iterexp iterexp
-  | DebugPr exp -> "debug " ^ string_of_exp exp
+and string_of_tablerow tablerow =
+  let exps_signature, args, exp, prems = tablerow.it in
+  "\n" ^ indent 2 ^ "(signature) "
+  ^ string_of_exps ", " exps_signature
+  ^ "\n" ^ indent 2 ^ string_of_args args ^ " -> " ^ string_of_exp exp
+  ^ string_of_prems ~level:2 prems
 
-and string_of_prems ?(level = 0) prems =
-  let indent = indent level in
+and string_of_tablerows tablerows =
   String.concat ""
-    (List.map (fun prem -> "\n" ^ indent ^ "-- " ^ string_of_prem prem) prems)
+    (List.mapi
+       (fun idx tablerow ->
+         "\n" ^ indent 1 ^ "row " ^ string_of_int idx ^ " :"
+         ^ string_of_tablerow tablerow)
+       tablerows)
 
 (* Hints *)
 
@@ -439,7 +456,11 @@ let rec string_of_def def =
   | BuiltinDecD (defid, tparams, params, typ, _) ->
       "builtin def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : " ^ string_of_typ typ
-  | DecD (defid, tparams, params, typ, clauses, _) ->
+  | TableDecD (defid, params, typ, tablerows, _) ->
+      "tbl def " ^ string_of_defid defid ^ string_of_params params ^ " : "
+      ^ string_of_typ typ ^ " ="
+      ^ string_of_tablerows tablerows
+  | FuncDecD (defid, tparams, params, typ, clauses, _) ->
       "def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : " ^ string_of_typ typ ^ " ="
       ^ string_of_clauses clauses

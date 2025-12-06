@@ -84,9 +84,8 @@ and free_prems (prems : prem list) : t =
 (* Rules *)
 
 let free_rulematch (rulematch : rulematch) : t =
-  let exps_input_expl, exps_input_impl, prems_input_impl = rulematch in
-  free_exps exps_input_expl + free_exps exps_input_impl
-  + free_prems prems_input_impl
+  let exps_signature, exps_input, prems = rulematch in
+  free_exps exps_signature + free_exps exps_input + free_prems prems
 
 let free_rulepath (rulepath : rulepath) : t =
   let _, prems, exps_output = rulepath in
@@ -111,10 +110,20 @@ let free_clause (clause : clause) : t =
 let free_clauses (clauses : clause list) : t =
   clauses |> List.map free_clause |> List.fold_left ( + ) empty
 
+(* Table rows *)
+
+let free_tablerow (tablerow : tablerow) : t =
+  let _exps_signature, args, exp, prems = tablerow.it in
+  free_args args + free_exp exp + free_prems prems
+
+let free_tablerows (tablerows : tablerow list) : t =
+  tablerows |> List.map free_tablerow |> List.fold_left ( + ) empty
+
 (* Definitions *)
 
 let free_def (def : def) : t =
   match def.it with
   | RelD (_, _, _, rulegroups, _) -> free_rulegroups rulegroups
-  | DecD (_, _, _, _, clauses, _) -> free_clauses clauses
+  | TableDecD (_, _, _, tablerows, _) -> free_tablerows tablerows
+  | FuncDecD (_, _, _, _, clauses, _) -> free_clauses clauses
   | _ -> empty

@@ -254,7 +254,8 @@ let bitacc (add : value -> unit) (at : region) (targs : targ list)
 
 (* dec $bitacc_replace(int, int, int, int) : int *)
 
-let bitacc_replace' (b : Bigint.t) (m : Bigint.t) (l : Bigint.t) (r : Bigint.t) : Bigint.t =
+let bitacc_replace' (b : Bigint.t) (m : Bigint.t) (l : Bigint.t) (r : Bigint.t)
+    : Bigint.t =
   let r = Bigint.(r lsl to_int_exn l) in
   let mask_hi =
     let mask_hi = pow2' Bigint.(m + one) in

@@ -84,3 +84,10 @@ let parse_funcprose_id (source : Source.t) : Kinds.FuncProseId.t =
   parse_space source;
   let _ = parse_string source "}" in
   id_funcprose
+
+let parse_table_id (source : Source.t) : Kinds.TableId.t =
+  parse_space source;
+  let id_table = parse_id source in
+  parse_space source;
+  let _ = parse_string source "}" in
+  id_table

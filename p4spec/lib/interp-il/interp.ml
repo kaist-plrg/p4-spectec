@@ -1061,15 +1061,6 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   (* Invoke a function *)
 
-  and match_clause (ctx_caller : Ctx.t) (ctx_callee : Ctx.t) (clause : clause)
-      (values_input : value list) : Ctx.t * arg list * prem list * exp =
-    let args_input, exp_output, prems = clause.it in
-    check
-      (List.length args_input = List.length values_input)
-      clause.at "arity mismatch while matching clause";
-    let ctx = assign_args ctx_caller ctx_callee args_input values_input in
-    (ctx, args_input, prems, exp_output)
-
   and invoke_func (ctx : Ctx.t) (id : id) (targs : targ list) (args : arg list)
       : (Ctx.t * value) attempt_reason =
     invoke_func' ctx id targs args
@@ -1110,6 +1101,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     match func with
     | Func.Extern -> invoke_extern_func ctx id targs values_input
     | Func.Builtin -> invoke_builtin_func ctx id targs values_input
+    | Func.Table (_, tablerows) ->
+        invoke_table_func ctx id tablerows values_input
     | Func.Defined (tparams, clauses) ->
         invoke_defined_func ctx id tparams clauses targs values_input
 
@@ -1152,6 +1145,74 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     else
       let* ctx, value_output = invoke_func_builtin' () in
       Ok (ctx, value_output)
+
+  and match_tablerow (ctx_caller : Ctx.t) (ctx_callee : Ctx.t)
+      (tablerow : tablerow) (values_input : value list) :
+      Ctx.t * arg list * prem list * exp =
+    let _, args_input, exp_output, prems = tablerow.it in
+    check
+      (List.length args_input = List.length values_input)
+      tablerow.at "arity mismatch while matching table row";
+    let ctx = assign_args ctx_caller ctx_callee args_input values_input in
+    (ctx, args_input, prems, exp_output)
+
+  and invoke_table_func (ctx : Ctx.t) (id : id) (tablerows : tablerow list)
+      (values_input : value list) : (Ctx.t * value) attempt_reason =
+    let attempt_tablerows () =
+      let attempt_tablerow' (ctx_local : Ctx.t) (prems : prem list)
+          (exp_output : exp) : (Ctx.t * value) attempt_reason =
+        let* ctx_local = eval_prems ctx_local prems in
+        let ctx_local, value_output = eval_exp ctx_local exp_output in
+        let ctx_local = Ctx.trace_close ctx_local in
+        let ctx = Ctx.trace_commit ctx ctx_local.trace in
+        Ok (ctx, value_output)
+      in
+      let attempt_tablerows' =
+        List.mapi
+          (fun idx_row tablerow ->
+            let attempt_tablerow () : (Ctx.t * value) attempt_reason =
+              (* Create a subtrace for the table row *)
+              let ctx_local = Ctx.localize ctx in
+              let ctx_local =
+                Ctx.trace_open_dec ctx_local id idx_row values_input
+              in
+              (* Try to match the table row *)
+              let ctx_local, args_input, prems, exp_output =
+                match_tablerow ctx ctx_local tablerow values_input
+              in
+              (* Try evaluating the row *)
+              attempt_tablerow' ctx_local prems exp_output
+              |> nest id.at
+                   (F.asprintf "application of table row %s%s failed" id.it
+                      (Il.Print.string_of_args args_input))
+            in
+            attempt_tablerow)
+          tablerows
+      in
+      choice attempt_tablerows'
+    in
+    if Cache.is_cached_func id.it then (
+      let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
+      match cache_result with
+      | Some (subtraces, value_output) ->
+          let ctx = Ctx.trace_replace ctx subtraces in
+          Ok (ctx, value_output)
+      | None ->
+          let* ctx, value_output = attempt_tablerows () in
+          let subtraces = Trace.wipe_subtraces ctx.trace in
+          Cache.Cache.add !func_cache (id.it, values_input)
+            (subtraces, value_output);
+          Ok (ctx, value_output))
+    else attempt_tablerows ()
+
+  and match_clause (ctx_caller : Ctx.t) (ctx_callee : Ctx.t) (clause : clause)
+      (values_input : value list) : Ctx.t * arg list * prem list * exp =
+    let args_input, exp_output, prems = clause.it in
+    check
+      (List.length args_input = List.length values_input)
+      clause.at "arity mismatch while matching clause";
+    let ctx = assign_args ctx_caller ctx_callee args_input values_input in
+    (ctx, args_input, prems, exp_output)
 
   and invoke_defined_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
       (clauses : clause list) (targs : targ list) (values_input : value list) :
@@ -1237,7 +1298,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     | BuiltinDecD (id, _, _, _, _) ->
         let func = Func.Builtin in
         Ctx.add_func Global ctx id func
-    | DecD (id, tparams, _, _, clauses, _) ->
+    | TableDecD (id, params, _, tablerows, _) ->
+        let func = Func.Table (params, tablerows) in
+        Ctx.add_func Global ctx id func
+    | FuncDecD (id, tparams, _, _, clauses, _) ->
         let func = Func.Defined (tparams, clauses) in
         Ctx.add_func Global ctx id func
 
