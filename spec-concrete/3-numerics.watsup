@@ -29,8 +29,9 @@ dec $un_op(unop, value) : value
 dec $un_bnot(value) : value
   hint(testgen_ignore)
 
-def $un_bnot(w W i) = w W i'
+def $un_bnot(w W i) = w W i''
   -- if i' = $bneg(i)
+  -- if i'' = $ite<int>($(i' >= 0), i', $($pow2(w) + i'))
 
 def $un_op(`~, value) = $un_bnot(value)
 
@@ -141,12 +142,9 @@ def $bin_op(`-, value_l, value_r) = $bin_minus(value_l, value_r)
 dec $bin_satminus(value, value) : value
   hint(testgen_ignore)
 
-def $bin_satminus(w W i_l, w W i_r) = w W i
+def $bin_satminus(w W i_l, w W i_r) = w W i'
   -- if i = $(i_l - i_r)
-  -- if $(i > 0)
-def $bin_satminus(w W i_l, w W i_r) = w W 0
-  -- if i = $(i_l - i_r)
-  -- if $(i <= 0)
+  -- if i' = $ite<int>($(i >= 0), i, 0)
 def $bin_satminus(w S i_l, w S i_r) = w S i'''
   -- if i_l' = $bitstr_to_int(w, i_l)
   -- if i_r' = $bitstr_to_int(w, i_r)

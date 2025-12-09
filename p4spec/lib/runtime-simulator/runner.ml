@@ -47,6 +47,7 @@ module Make
             (tx_output_queue, tx_expect_queue)
         (* There is an expected packet *)
         | tx_expect :: tx_expect_queue when compare_tx tx tx_expect ->
+            Format.printf "[PASS] Transmitted %s\n" (string_of_tx tx_expect);
             (tx_output_queue, tx_expect_queue)
         | tx_expect :: _ ->
             error_stf
@@ -64,6 +65,7 @@ module Make
         (tx_output_queue, tx_expect_queue)
     (* There is an output packet *)
     | tx_output :: tx_output_queue when compare_tx tx_output tx_expect ->
+        Format.printf "[PASS] Transmitted %s\n" (string_of_tx tx_output);
         (tx_output_queue, tx_expect_queue)
     | tx_output :: _ ->
         error_stf

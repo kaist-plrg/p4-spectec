@@ -26,6 +26,12 @@ let write_value_from_bits (value_target : Value.t) (varsize : int)
 let write_bits_from_value (value_source : Value.t) : Value.t =
   !call "write_bits_from_value" [] [ value_source ]
 
+(* bitacc_op *)
+
+let bitacc_op (value_base : Value.t) (value_hi : Value.t) (value_lo : Value.t) :
+    Value.t =
+  !call "bitacc_op" [] [ value_base; value_hi; value_lo ]
+
 (* default *)
 
 let default (value_typ : Value.t) : Value.t = !call "default" [] [ value_typ ]

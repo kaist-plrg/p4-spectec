@@ -1,6 +1,7 @@
 module Value = Runtime_dynamic.Value
 open Interface.Wrap
 open Interface.Unwrap
+open Interface.Pack
 open Interface.Unpack
 
 (* Bit manipulation *)
@@ -173,40 +174,80 @@ module PacketIn = struct
     let value_typ = Spec.Func.find_type_e_local value_ctx "T" in
     (* Get size of "T" *)
     let value_typ_subst = Spec.Func.subst_type_e_local value_ctx value_typ in
-    let size_min = Spec.Func.sizeof_minSizeInBits' value_typ_subst in
-    let _size_max = Spec.Func.sizeof_maxSizeInBits' value_typ_subst in
+    let size_min =
+      Spec.Func.sizeof_minSizeInBits' value_typ_subst |> Bigint.to_int_exn
+    in
+    let size_max =
+      Spec.Func.sizeof_maxSizeInBits' value_typ_subst |> Bigint.to_int_exn
+    in
     (* Get "variableFieldSizeInBits" in context *)
     let value_variableFieldSizeInBits =
       Spec.Func.find_var_e_local value_ctx "variableFieldSizeInBits"
     in
+    let alignment =
+      Spec.Func.bitacc_op value_variableFieldSizeInBits
+        (pack_p4_arbitraryInt (Bigint.of_int 2))
+        (pack_p4_arbitraryInt (Bigint.of_int 0))
+      |> unpack_p4_fixedBit |> snd |> Bigint.to_int_exn
+    in
     let size_varsize =
       value_variableFieldSizeInBits |> unwrap_case_v |> snd |> fun values ->
-      List.nth values 1 |> unwrap_num_v
+      List.nth values 1 |> unwrap_num_v |> Bigint.to_int_exn
     in
-    (* Parse from packet *)
-    let size = Bigint.(size_min + size_varsize) in
-    let pkt, bits = parse pkt (Bigint.to_int_exn size) in
-    (* Get "variableSizeHeader" in context *)
-    let value_variableSizeHeader =
-      Spec.Func.find_var_e_local value_ctx "variableSizeHeader"
-    in
-    (* Write bits to "variableSizeHeader" *)
-    let value_variableSizeHeader =
-      Spec.Func.write_value_from_bits value_variableSizeHeader
-        (Bigint.to_int_exn size_varsize)
-        bits
-    in
-    (* Update "variableSizeHeader" in context *)
-    let value_ctx =
-      Spec.Rel.lvalue_write_var_local value_ctx value_sto "variableSizeHeader"
-        value_variableSizeHeader
-    in
-    (* Create call result *)
-    let value_callResult =
-      let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
-    in
-    (pkt, value_ctx, value_sto, value_callResult)
+    let size = size_min + size_varsize in
+    if alignment <> 0 then
+      let value_callResult =
+        let value_err =
+          wrap_case_v
+            [ Term "ERROR"; Term "."; NT (wrap_text_v "ParserInvalidArgument") ]
+          |> with_typ (wrap_var_t "errorValue")
+        in
+        [ Term "REJECT"; NT value_err ] #@ "rejectTransitionResult"
+      in
+      (pkt, value_ctx, value_sto, value_callResult)
+    else if pkt.idx + size > pkt.len then
+      let value_callResult =
+        let value_err =
+          wrap_case_v
+            [ Term "ERROR"; Term "."; NT (wrap_text_v "PacketTooShort") ]
+          |> with_typ (wrap_var_t "errorValue")
+        in
+        [ Term "REJECT"; NT value_err ] #@ "rejectTransitionResult"
+      in
+      (pkt, value_ctx, value_sto, value_callResult)
+    else if size > size_max then
+      let value_callResult =
+        let value_err =
+          wrap_case_v
+            [ Term "ERROR"; Term "."; NT (wrap_text_v "HeaderTooShort") ]
+          |> with_typ (wrap_var_t "errorValue")
+        in
+        [ Term "REJECT"; NT value_err ] #@ "rejectTransitionResult"
+      in
+      (pkt, value_ctx, value_sto, value_callResult)
+    else
+      (* Parse from packet *)
+      let pkt, bits = parse pkt size in
+      (* Get "variableSizeHeader" in context *)
+      let value_variableSizeHeader =
+        Spec.Func.find_var_e_local value_ctx "variableSizeHeader"
+      in
+      (* Write bits to "variableSizeHeader" *)
+      let value_variableSizeHeader =
+        Spec.Func.write_value_from_bits value_variableSizeHeader size_varsize
+          bits
+      in
+      (* Update "variableSizeHeader" in context *)
+      let value_ctx =
+        Spec.Rel.lvalue_write_var_local value_ctx value_sto "variableSizeHeader"
+          value_variableSizeHeader
+      in
+      (* Create call result *)
+      let value_callResult =
+        let value_eps = wrap_opt_v "value" None in
+        [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      in
+      (pkt, value_ctx, value_sto, value_callResult)
 
   (* Read bits from the packet without advancing the cursor.
      @returns: the bits read from the packet.
