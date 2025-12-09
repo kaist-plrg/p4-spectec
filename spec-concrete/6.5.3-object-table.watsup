@@ -22,33 +22,35 @@ def $tableObject_create_entry_priority(n_priority)
 
 ;;; Table entry keyset creation
 
-dec $interface_of_tableKeyIR(tableKeyIR) : (nameIR, nameIR)
+dec $interface_of_tableKeyIR(tableKeyIR) : (nameIR, nameIR, typeIR)
 
 def $interface_of_tableKeyIR(
     typedExpressionIR `: nameIR_matchKind annotationList `;)
-  = (nameIR_key, nameIR_matchKind)
+  = (nameIR_key, nameIR_matchKind, typeIR)
   -- if nameIR_key
       = $strip_all_whitespace(
           $print_<typedExpressionIR>(typedExpressionIR))
+  -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
 
 dec $tableObject_create_entry_keysets(
-    (nameIR, nameIR)*,
+    (nameIR, nameIR, typeIR)*,
     tableKeysetInterface)
   : simpleKeysetExpressionIR*
 
 def $tableObject_create_entry_keysets(eps, _) = eps
 def $tableObject_create_entry_keysets(
-    (nameIR_key_h, nameIR_matchKind_h) :: (nameIR_key_t, nameIR_matchKind_t)*,
+    (nameIR_key_h, nameIR_matchKind_h, typeIR_h)
+      :: (nameIR_key_t, nameIR_matchKind_t, typeIR_t)*,
     tableKeyInterface*)
   = simpleKeysetExpressionIR_h
       :: $tableObject_create_entry_keysets(
-          (nameIR_key_t, nameIR_matchKind_t)*,
+          (nameIR_key_t, nameIR_matchKind_t, typeIR_t)*,
           tableKeyInterface*)
   -- if nameIR_matchKind_h = "exact"
   -- if text_key_value = $assoc_<nameIR, text>(nameIR_key_h, tableKeyInterface*)
   -- if i_key_value = $text_to_int(text_key_value)
   -- if typedExpressionIR_h = (D i_key_value) `# `( INT DYN )
-  -- if typeIR_set = SET `< INT >
+  -- if typeIR_set = SET `< typeIR_h >
   -- if simpleKeysetExpressionIR_h
       = (`( typeIR_set ) typedExpressionIR_h ) `# `( typeIR_set DYN )
 
@@ -62,14 +64,14 @@ def $tableObject_create_entry_keyset(
     tableKeyInterface*)
   = `( simpleKeysetExpressionIR* )
   ---- ;; fetch table key interfaces
-  -- if ((nameIR_key, nameIR_matchKind)
+  -- if ((nameIR_key, nameIR_matchKind, typeIR)
       = $interface_of_tableKeyIR(tableKeyIR))*
   -- if ((nameIR_key_update, text_key_value_update) = tableKeyInterface)*
   ---- ;; check that updates specify all keys
   -- if $eq_set<nameIR>(`{ nameIR_key* }, `{ nameIR_key_update* })
   -- if simpleKeysetExpressionIR*
       = $tableObject_create_entry_keysets(
-          (nameIR_key, nameIR_matchKind)*, tableKeyInterface*)
+          (nameIR_key, nameIR_matchKind, typeIR)*, tableKeyInterface*)
 
 ;;; Table entry action creation
 
@@ -77,6 +79,30 @@ dec $tableObject_create_entry_action(
     tableActionsPropertyIR,
     tableActionInterface)
   : tableActionReferenceIR
+
+def $tableObject_create_entry_action(
+    ACTIONS `= `{ tableActionIR* },
+    (nameIR_action_update, tableActionArgumentInterface_update*))
+  = (`` nameIR_action_update) `( argumentIR* )
+  ---- ;; fetch table action interfaces
+  -- if (_ (prefixedNameIR `( argumentIR_data* ))
+          `# `( _ `, parameterIR_control* ) `; = tableActionIR)*
+  ---- ;; find the control plane parameters for the action
+  -- if (nameIR_action = $flatten_prefixedNameIR(prefixedNameIR))*
+  -- if (argumentIR_data_update*, parameterIR_control_update*)
+      = $assoc_<nameIR, (argumentIR*, parameterIR*)>(
+          nameIR_action_update,
+          (nameIR_action, (argumentIR_data*, parameterIR_control*))*)
+  ---- ;; align action arguments with control plane parameters
+  -- if (_ _ typeIR_param nameIR_param _ = parameterIR_control_update)*
+  -- if theta = `{ (nameIR_param `: typeIR_param)* }
+  -- if ((nameIR_arg, i_arg) = tableActionArgumentInterface_update)*
+  -- if (typeIR_arg = $find_map<nameIR, typeIR>(theta, nameIR_arg))*
+  ---- ;; cast arguments to parameter types
+  -- if (typedExpressionIR_arg = (D i_arg) `# `( INT DYN ))*
+  -- if (typedExpressionIR_arg_cast
+      = $coerce_unary(typedExpressionIR_arg, typeIR_arg))*
+  -- if argumentIR* = argumentIR_data_update* ++ typedExpressionIR_arg_cast*
 
 ;;; Table entry creation
 
@@ -92,13 +118,22 @@ def $tableObject_add_entry(
     tableEntryPriorityInterface,
     tableKeysetInterface,
     tableActionInterface)
-  = TABLE tid `{ frame TBL }
+  = TABLE tid `{ frame TBL_updated }
+  ---- ;; create a table entry from the interface
   -- if tableEntryPriorityOptIR
       = $tableObject_create_entry_priority(tableEntryPriorityInterface)
   -- if keysetExpressionIR
       = $tableObject_create_entry_keyset(TBL.KEYS, tableKeysetInterface)
   -- if tableActionReferenceIR
       = $tableObject_create_entry_action(TBL.ACTIONS, tableActionInterface)
-  -- if tableEntryIR
+  -- if tableEntryIR_update
       = eps tableEntryPriorityOptIR
           keysetExpressionIR `: tableActionReferenceIR `EMPTY `;
+  ---- ;; update the table
+  -- if annotationList constOptIR ENTRIES `= `{ tableEntryIR* }
+      = TBL.ENTRIES
+  -- if tableEntriesPropertyIR_updated
+      = annotationList constOptIR ENTRIES
+          `= `{ tableEntryIR* ++ [ tableEntryIR_update ] }
+  -- if TBL_updated
+      = TBL[ .ENTRIES = tableEntriesPropertyIR_updated ]

@@ -63,7 +63,7 @@ let tableObject_add_entry (value_tableObject : Value.t)
       value_tableActionInterface;
     ]
 
-(* find_store_qualified/unqualified *)
+(* find/update_store_qualified/unqualified *)
 
 let find_store_qualified (value_sto : Value.t) (value_oid : Value.t) : Value.t =
   !call "find_store_qualified" [] [ value_sto; value_oid ]
@@ -73,6 +73,14 @@ let find_store_unqualified (value_sto : Value.t) (value_id : Value.t) : Value.t
     =
   !call "find_store_unqualified" [] [ value_sto; value_id ]
   |> unwrap_opt_v |> Option.get
+
+let update_store_qualified (value_sto : Value.t) (value_oid : Value.t)
+    (value_object : Value.t) : Value.t =
+  !call "update_store_qualified" [] [ value_sto; value_oid; value_object ]
+
+let update_store_unqualified (value_sto : Value.t) (value_id : Value.t)
+    (value_object : Value.t) : Value.t =
+  !call "update_store_unqualified" [] [ value_sto; value_id; value_object ]
 
 (* find/update_store_externState *)
 

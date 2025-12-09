@@ -214,9 +214,18 @@ struct
         Spec.Func.find_store_unqualified value_sto value_tableName_unqualified
     | _ -> Spec.Func.find_store_qualified value_sto value_tableName
 
-  let update_table (_value_sto : Value.t) (_value_tableName : Value.t)
-      (_value_tableObject : Value.t) : Value.t =
-    error_no_region "update_table: not implemented"
+  let update_table (value_sto : Value.t) (value_tableName : Value.t)
+      (value_tableObject : Value.t) : Value.t =
+    let table_name = unwrap_text_v value_tableName in
+    match String.split_on_char '.' table_name with
+    | [] -> assert false
+    | [ table_name_unqualified ] ->
+        let value_tableName_unqualified = wrap_text_v table_name_unqualified in
+        Spec.Func.update_store_unqualified value_sto value_tableName_unqualified
+          value_tableObject
+    | _ ->
+        Spec.Func.update_store_qualified value_sto value_tableName
+          value_tableObject
 
   let table_add_entry (value_sto : Value.t) (value_tableName : Value.t)
       (value_tableEntryPriorityInterface : Value.t)

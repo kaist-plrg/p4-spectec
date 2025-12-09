@@ -23,7 +23,6 @@ def $find_store_qualified(store, oid)
   = $find_map<oid, object>(store, oid)
 
 def $is_some_object(object?) = $is_some_<object>(object?)
-
 def $find_store_unqualified(`{ (oid `: object)* }, id) = object_id_found
   -- if (object_id?
       = $ite<object?>($oid_ends_with(oid, id), object, eps))*
@@ -45,6 +44,22 @@ def $find_store_externState(STO, oid) = eps
 ;;
 ;; Updater
 ;;
+
+dec $update_store_qualified(store, oid, object) : store
+dec $update_store_unqualified(store, id, object) : store
+dec $is_some_oid(oid?) : bool
+
+def $update_store_qualified(STO_0, oid, object) = STO_1
+  -- if eps =/= $find_store_qualified(STO_0, oid)
+  -- if STO_1 = $add_map<oid, object>(STO_0, oid, object)
+
+def $is_some_oid(oid?) = $is_some_<oid>(oid?)
+def $update_store_unqualified(STO_0, id, object) = STO_1
+  -- if `{ (oid `: _)* } = STO_0
+  -- if (oid_id?
+      = $ite<oid?>($oid_ends_with(oid, id), oid, eps))*
+  -- if oid_found = $filter_<oid?>(oid_id?*, def $is_some_oid)
+  -- if STO_1 = $add_map<oid, object>(STO_0, oid_found, object)
 
 ;;; Updater for extern state
 

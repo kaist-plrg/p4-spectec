@@ -3553,7 +3553,7 @@ relation TableAction_ok: `TC`, `TBLC~0~`, and `annotationList tableActionReferen
   ... Let `parameterIR~data~^{asterisk}^`, `parameterIR~control~^{asterisk}^`, and `argumentIR^{asterisk}^` be the result of <<Call_action_partial_ok, typing `[ ]`, under typing context `TC`>>.
   ... Check that `argumentIR^{asterisk}^` is an empty list.
   ... Let `TBLC~1~` be `<<add_action, $add_action(TBLC~0~, prefixedNameIR, parameterIR^{asterisk}^, [ ])>>`.
-  ... Let `tableActionIR` be `annotationList prefixedNameIR ( [ ] ) ;`.
+  ... Let `tableActionIR` be `annotationList prefixedNameIR ( [ ] ) # ( parameterIR~data~^{asterisk}^ , parameterIR~control~^{asterisk}^ ) ;`.
   ... Result in the updated table context `TBLC~1~` and the typed table action `tableActionIR`.
 . Else if let `prefixedNonTypeName ( argumentList )` be `tableActionReference`:
  .. Group prefixedNonTypeName-argumentList:
@@ -3571,7 +3571,7 @@ relation TableAction_ok: `TC`, `TBLC~0~`, and `annotationList tableActionReferen
 for each `argument` in `argument^{asterisk}^`
   ... Let `parameterIR~data~^{asterisk}^`, `parameterIR~control~^{asterisk}^`, and `argumentIR~cast~^{asterisk}^` be the result of <<Call_action_partial_ok, typing `argumentIR^{asterisk}^`, under typing context `TC`>>.
   ... Let `TBLC~1~` be `<<add_action, $add_action(TBLC~0~, prefixedNameIR, parameterIR^{asterisk}^, argumentIR~cast~^{asterisk}^)>>`.
-  ... Let `tableActionIR` be `annotationList prefixedNameIR ( argumentIR~cast~^{asterisk}^ ) ;`.
+  ... Let `tableActionIR` be `annotationList prefixedNameIR ( argumentIR~cast~^{asterisk}^ ) # ( parameterIR~data~^{asterisk}^ , parameterIR~control~^{asterisk}^ ) ;`.
   ... Result in the updated table context `TBLC~1~` and the typed table action `tableActionIR`.
 
 
