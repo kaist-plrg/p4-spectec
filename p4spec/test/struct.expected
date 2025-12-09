@@ -2701,13 +2701,36 @@ syntax annotationList =
    | @ name [ structuredAnnotationBody ]
    | annotationListNonEmpty annotation
 
-;; ../../../../spec-concrete/1-syntax.watsup:1360.1-1362.17
+;; ../../../../spec-concrete/1-syntax.watsup:1355.1-1356.49
+def $flatten_annotationList(annotationList)
+
+1. If ((annotationList matches pattern ``EMPTY`)), then
+
+  1. Return []
+
+2. If ((annotationList has type annotation)), then
+
+  1. (Let annotation be (annotationList as annotation))
+
+  2. Return [annotation]
+
+3. If ((annotationList has type annotationListNonEmpty)), then
+
+  1. (Let annotationListNonEmpty' be (annotationList as annotationListNonEmpty))
+
+  2. If ((annotationListNonEmpty' matches pattern `%%`)), then
+
+    1. (Let (annotationListNonEmpty annotation) be annotationListNonEmpty')
+
+    2. Return $flatten_annotationList((annotationListNonEmpty as annotationList)) ++ [annotation]
+
+;; ../../../../spec-concrete/1-syntax.watsup:1367.1-1369.17
 syntax p4program = 
    | 
    | p4program declaration
    | p4program ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:1364.1-1365.50
+;; ../../../../spec-concrete/1-syntax.watsup:1371.1-1372.50
 def $flatten_p4program(p4program')
 
 1. Case analysis on p4program'
@@ -24627,16 +24650,74 @@ def $tableObject_create_entry_priority(tableEntryPriorityInterface)
 
     2. Return ?((priority= (d (n_priority as int)) :))
 
-;; ../../../../spec-concrete/6.5.3-object-table.watsup:25.1-25.68
+;; ../../../../spec-concrete/6.5.3-object-table.watsup:25.1-25.61
+def $name_annotation_of_tableKeyIR(annotationList)
+
+1. (Let (annotation)*{annotation <- annotation*} be $flatten_annotationList(annotationList))
+
+2. (Let (nameIR_name)?{nameIR_name <- nameIR_name?} be $name_annotation_of_tableKeyIR'(annotation))*{annotation <- annotation*, nameIR_name? <- nameIR_name?*}
+
+3. (Let ((nameIR')?{nameIR' <- nameIR'?})*{nameIR'? <- nameIR'?*} be ((nameIR_name)?{nameIR_name <- nameIR_name?})*{nameIR_name? <- nameIR_name?*})
+
+4. If ((((nameIR')?{nameIR' <- nameIR'?})*{nameIR'? <- nameIR'?*} matches pattern [ _/1 ])), then
+
+  1. (Let [(nameIR)?{nameIR <- nameIR?}] be ((nameIR')?{nameIR' <- nameIR'?})*{nameIR'? <- nameIR'?*})
+
+  2. If (((nameIR)?{nameIR <- nameIR?} matches pattern (_))), then
+
+    1. (Let ?(nameIR_name_found) be (nameIR)?{nameIR <- nameIR?})
+
+    2. Return ?(nameIR_name_found)
+
+5. Otherwise
+
+  1. Return ?()
+
+;; ../../../../spec-concrete/6.5.3-object-table.watsup:26.1-26.58
+def $name_annotation_of_tableKeyIR'(annotation)
+
+1. If ((annotation matches pattern `@%(%)`)), then
+
+  1. (Let (@ name ( annotationBody )) be annotation)
+
+  2. If (("name" = $name(name))), then
+
+    1. If ((annotationBody matches pattern `%%`)), then
+
+      1. (Let (annotationBody' annotationToken) be annotationBody)
+
+      2. If ((annotationBody' matches pattern ``EMPTY`)), then
+
+        1. (Let nameIR_name be $print_<annotationToken>(annotationToken))
+
+        2. Return ?($strip_prefix($strip_suffix(nameIR_name, "\""), "\""))
+
+2. Otherwise
+
+  1. Return ?()
+
+;; ../../../../spec-concrete/6.5.3-object-table.watsup:43.1-43.68
 def $interface_of_tableKeyIR((typedExpressionIR : nameIR_matchKind annotationList ;))
 
-1. (Let nameIR_key be $strip_all_whitespace($print_<typedExpressionIR>(typedExpressionIR)))
+1. (Let (nameIR)?{nameIR <- nameIR?} be $name_annotation_of_tableKeyIR(annotationList))
 
-2. (Let typeIR be $type_of_typedExpressionIR(typedExpressionIR))
+2. If (((nameIR)?{nameIR <- nameIR?} matches pattern (_))), then
 
-3. Return (nameIR_key, nameIR_matchKind, typeIR)
+  1. (Let ?(nameIR_key) be (nameIR)?{nameIR <- nameIR?})
 
-;; ../../../../spec-concrete/6.5.3-object-table.watsup:35.1-38.30
+  2. (Let typeIR be $type_of_typedExpressionIR(typedExpressionIR))
+
+  3. Return (nameIR_key, nameIR_matchKind, typeIR)
+
+3. If ((?() = $name_annotation_of_tableKeyIR(annotationList))), then
+
+  1. (Let nameIR_key be $strip_all_whitespace($print_<typedExpressionIR>(typedExpressionIR)))
+
+  2. (Let typeIR be $type_of_typedExpressionIR(typedExpressionIR))
+
+  3. Return (nameIR_key, nameIR_matchKind, typeIR)
+
+;; ../../../../spec-concrete/6.5.3-object-table.watsup:61.1-64.30
 def $tableObject_create_entry_keysets(((nameIR, nameIR, typeIR))*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*}, _tableKeysetInterface)
 
 1. If ((((nameIR, nameIR, typeIR))*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*} matches pattern [])), then
@@ -24667,7 +24748,7 @@ def $tableObject_create_entry_keysets(((nameIR, nameIR, typeIR))*{(nameIR, nameI
 
       6. Return simpleKeysetExpressionIR_h :: $tableObject_create_entry_keysets(((nameIR_key_t, nameIR_matchKind_t, typeIR_t))*{nameIR_key_t <- nameIR_key_t*, nameIR_matchKind_t <- nameIR_matchKind_t*, typeIR_t <- typeIR_t*}, (tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*})
 
-;; ../../../../spec-concrete/6.5.3-object-table.watsup:57.1-60.23
+;; ../../../../spec-concrete/6.5.3-object-table.watsup:84.1-87.23
 def $tableObject_create_entry_keyset((key={ (tableKeyIR)*{tableKeyIR <- tableKeyIR*} }), (tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*})
 
 1. (Let (nameIR_key, nameIR_matchKind, typeIR) be $interface_of_tableKeyIR(tableKeyIR))*{nameIR_key <- nameIR_key*, nameIR_matchKind <- nameIR_matchKind*, tableKeyIR <- tableKeyIR*, typeIR <- typeIR*}
@@ -24680,7 +24761,7 @@ def $tableObject_create_entry_keyset((key={ (tableKeyIR)*{tableKeyIR <- tableKey
 
   2. Return ((( (simpleKeysetExpressionIR)*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} )) as keysetExpressionIR)
 
-;; ../../../../spec-concrete/6.5.3-object-table.watsup:78.1-81.27
+;; ../../../../spec-concrete/6.5.3-object-table.watsup:105.1-108.27
 def $tableObject_create_entry_action((actions={ (tableActionIR)*{tableActionIR <- tableActionIR*} }), (nameIR_action_update, (tableActionArgumentInterface_update)*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*}))
 
 1. (Let (_annotationList (prefixedNameIR ( (argumentIR_data)*{argumentIR_data <- argumentIR_data*} )) #( _parameterListIR , (parameterIR_control)*{parameterIR_control <- parameterIR_control*} );) be tableActionIR)*{_annotationList <- _annotationList*, _parameterListIR <- _parameterListIR*, argumentIR_data* <- argumentIR_data**, parameterIR_control* <- parameterIR_control**, prefixedNameIR <- prefixedNameIR*, tableActionIR <- tableActionIR*}
@@ -24717,7 +24798,7 @@ def $tableObject_create_entry_action((actions={ (tableActionIR)*{tableActionIR <
 
       3. Return ((` nameIR_action_update) ( (argumentIR)*{argumentIR <- argumentIR*} ))
 
-;; ../../../../spec-concrete/6.5.3-object-table.watsup:109.1-114.16
+;; ../../../../spec-concrete/6.5.3-object-table.watsup:136.1-141.16
 def $tableObject_add_entry((table tid { frame TBL }), tableEntryPriorityInterface, tableKeysetInterface, tableActionInterface)
 
 1. (Let tableEntryPriorityOptIR be $tableObject_create_entry_priority(tableEntryPriorityInterface))

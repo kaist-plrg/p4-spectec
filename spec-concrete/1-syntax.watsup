@@ -1352,6 +1352,13 @@ syntax annotationList =
   | `EMPTY
   | annotationListNonEmpty
 
+dec $flatten_annotationList(annotationList) : annotation*
+  hint(prose_in "the list of annotations in" %0)
+def $flatten_annotationList(`EMPTY) = eps
+def $flatten_annotationList(annotation) = annotation
+def $flatten_annotationList(annotationListNonEmpty annotation) =
+  $flatten_annotationList(annotationListNonEmpty) ++ [ annotation ]
+
 ;;
 ;; P4 program
 ;;
