@@ -4,7 +4,7 @@
 
 syntax matchKey = (typeIR, id)
 
-syntax matchAction = (prefixedNameIR, parameterTypeIR*, argumentListIR)
+syntax matchAction = (prefixedNameIR, parameterIR*, argumentListIR)
 
 syntax matchPriority =
   { VALUES nat*,
@@ -81,11 +81,11 @@ def $add_key(TBLC, id, typeIR)
 
 ;;; Adder for actions
 
-dec $add_action(tableContext, prefixedNameIR, parameterTypeIR*, argumentListIR) : tableContext
+dec $add_action(tableContext, prefixedNameIR, parameterIR*, argumentListIR) : tableContext
 
-def $add_action(TBLC, prefixedNameIR, parameterTypeIR*, argumentListIR)
+def $add_action(TBLC, prefixedNameIR, parameterIR*, argumentListIR)
   = TBLC[ .ACTIONS = TBLC.ACTIONS ++ [ matchAction ] ]
-  -- if matchAction = (prefixedNameIR, parameterTypeIR*, argumentListIR)
+  -- if matchAction = (prefixedNameIR, parameterIR*, argumentListIR)
 
 ;;; Adder for table entry priorities
 
@@ -135,16 +135,16 @@ def $update_mode'(TBLC, _, _) = TBLC
 
 ;;; Finder for actions
 
-dec $find_action(tableContext, prefixedNameIR) : (parameterTypeIR*, argumentListIR)?
-dec $find_action'(matchAction*, prefixedNameIR) : (parameterTypeIR*, argumentListIR)?
+dec $find_action(tableContext, prefixedNameIR) : (parameterIR*, argumentListIR)?
+dec $find_action'(matchAction*, prefixedNameIR) : (parameterIR*, argumentListIR)?
 
 def $find_action(TBLC, prefixedNameIR) = $find_action'(TBLC.ACTIONS, prefixedNameIR)
 
 def $find_action'(eps, prefixedNameIR) = eps
 
 def $find_action'(matchAction_h :: matchAction_t*, prefixedNameIR)
-  = (parameterTypeIR*, argumentListIR)
-  -- if (prefixedNameIR, parameterTypeIR*, argumentListIR) = matchAction_h
+  = (parameterIR*, argumentListIR)
+  -- if (prefixedNameIR, parameterIR*, argumentListIR) = matchAction_h
 
 def $find_action'(matchAction_h :: matchAction_t*, prefixedNameIR)
   = $find_action'(matchAction_t*, prefixedNameIR)

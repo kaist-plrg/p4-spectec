@@ -203,38 +203,38 @@ def $add_vars_t(p, TC, id_h :: id_t*, varTypeIR_h :: varTypeIR_t*) = TC''
 
 ;;; Adder for parameters
 
-dec $add_parameter_t(cursor, typingContext, parameterTypeIR) : typingContext
-dec $add_parameters_t(cursor, typingContext, parameterTypeIR*) : typingContext
+dec $add_parameter_t(cursor, typingContext, parameterIR) : typingContext
+dec $add_parameters_t(cursor, typingContext, parameterIR*) : typingContext
 
-def $add_parameter_t(cursor, TC, `EMPTY typeIR id value?) = TC'
+def $add_parameter_t(cursor, TC, _ `EMPTY typeIR id (`= value)?) = TC'
   -- if varTypeIR = `EMPTY typeIR CTK value?
   -- if TC' = $add_var_t(cursor, TC, id, varTypeIR)
-def $add_parameter_t(cursor, TC, direction typeIR id value?) = TC'
+def $add_parameter_t(cursor, TC, _ direction typeIR id (`= value)?) = TC'
   -- if direction =/= `EMPTY
   -- if varTypeIR = direction typeIR DYN value?
   -- if TC' = $add_var_t(cursor, TC, id, varTypeIR)
 
 def $add_parameters_t(cursor, TC, eps) = TC
-def $add_parameters_t(cursor, TC, parameterTypeIR_h :: parameterTypeIR_t*) = TC''
-  -- if TC' = $add_parameter_t(cursor, TC, parameterTypeIR_h)
-  -- if TC'' = $add_parameters_t(cursor, TC', parameterTypeIR_t*)
+def $add_parameters_t(cursor, TC, parameterIR_h :: parameterIR_t*) = TC''
+  -- if TC' = $add_parameter_t(cursor, TC, parameterIR_h)
+  -- if TC'' = $add_parameters_t(cursor, TC', parameterIR_t*)
 
 ;;; Adder for constructor parameters
 
-dec $add_constructorParameter_t(typingContext, parameterTypeIR) : typingContext
-dec $add_constructorParameters_t(typingContext, parameterTypeIR*) : typingContext
+dec $add_constructorParameter_t(typingContext, parameterIR) : typingContext
+dec $add_constructorParameters_t(typingContext, parameterIR*) : typingContext
 
-def $add_constructorParameter_t(TC, direction typeIR id eps) = TC'
+def $add_constructorParameter_t(TC, _ direction typeIR id eps) = TC'
   -- if varTypeIR = direction typeIR CTK eps
   -- if TC' = $add_var_t(BLOCK, TC, id, varTypeIR)
-def $add_constructorParameter_t(TC, direction typeIR id value) = TC'
+def $add_constructorParameter_t(TC, _ direction typeIR id (`= value)) = TC'
   -- if varTypeIR = direction typeIR CTK value
   -- if TC' = $add_var_t(BLOCK, TC, id, varTypeIR)
 
 def $add_constructorParameters_t(TC, eps) = TC
-def $add_constructorParameters_t(TC, parameterTypeIR_h :: parameterTypeIR_t*) = TC''
-  -- if TC' = $add_constructorParameter_t(TC, parameterTypeIR_h)
-  -- if TC'' = $add_constructorParameters_t(TC', parameterTypeIR_t*)
+def $add_constructorParameters_t(TC, parameterIR_h :: parameterIR_t*) = TC''
+  -- if TC' = $add_constructorParameter_t(TC, parameterIR_h)
+  -- if TC'' = $add_constructorParameters_t(TC', parameterIR_t*)
 
 ;;; Adder for types
 

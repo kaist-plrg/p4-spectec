@@ -83,34 +83,34 @@ rule TableKeys_ok/cons:
 ;; syntax tableAction
 ;;
 
-dec $split_dataplane_parameters(parameterTypeIR*)
-  : (parameterTypeIR*, parameterTypeIR*)
+dec $split_dataplane_parameters(parameterIR*)
+  : (parameterIR*, parameterIR*)
 
 def $split_dataplane_parameters(eps) = (eps, eps)
-def $split_dataplane_parameters(parameterTypeIR_h :: parameterTypeIR_t*)
-  = (parameterTypeIR_data*, parameterTypeIR_h :: parameterTypeIR_control*)
-  -- if `EMPTY _ _ _ = parameterTypeIR_h
-  -- if (parameterTypeIR_data*, parameterTypeIR_control*)
-      = $split_dataplane_parameters(parameterTypeIR_t*)
-def $split_dataplane_parameters(parameterTypeIR_h :: parameterTypeIR_t*)
-  = (parameterTypeIR_h :: parameterTypeIR_data*, parameterTypeIR_control*)
-  -- if direction _ _ _ = parameterTypeIR_h
+def $split_dataplane_parameters(parameterIR_h :: parameterIR_t*)
+  = (parameterIR_data*, parameterIR_h :: parameterIR_control*)
+  -- if _ `EMPTY _ _ _ = parameterIR_h
+  -- if (parameterIR_data*, parameterIR_control*)
+      = $split_dataplane_parameters(parameterIR_t*)
+def $split_dataplane_parameters(parameterIR_h :: parameterIR_t*)
+  = (parameterIR_h :: parameterIR_data*, parameterIR_control*)
+  -- if _ direction _ _ _ = parameterIR_h
   -- if direction =/= `EMPTY
-  -- if (parameterTypeIR_data*, parameterTypeIR_control*)
-      = $split_dataplane_parameters(parameterTypeIR_t*)
+  -- if (parameterIR_data*, parameterIR_control*)
+      = $split_dataplane_parameters(parameterIR_t*)
 
 rule Call_action_partial_ok:
-  TC |- parameterTypeIR* `@ argumentIR*
-      : parameterTypeIR_data* `, parameterTypeIR_control*
+  TC |- parameterIR* `@ argumentIR*
+      : parameterIR_data* `, parameterIR_control*
         `@ argumentIR_cast*
   ---- ;; split parameters into data- and control-planes
-  -- if (parameterTypeIR_data*, parameterTypeIR_control*)
-      = $split_dataplane_parameters(parameterTypeIR*)
+  -- if (parameterIR_data*, parameterIR_control*)
+      = $split_dataplane_parameters(parameterIR*)
   ---- ;; check arity 
-  -- if $(|parameterTypeIR_data*| = |argumentIR*|)
+  -- if $(|parameterIR_data*| = |argumentIR*|)
   ---- ;; check calling convention on dataplane parameters
   -- Call_convention_ok:
-      LOCAL TC ACTION |- parameterTypeIR_data* `@ argumentIR*
+      LOCAL TC ACTION |- parameterIR_data* `@ argumentIR*
                        : argumentIR_cast*
 
 ;;; syntax tableAction = annotationList tableActionReference `;
@@ -123,14 +123,14 @@ rule TableAction_ok/prefixedNonTypeName:
              : TBLC_1 tableActionIR
   ---- ;; check that the action exists
   -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
-  -- if ACTION `( parameterTypeIR* )
+  -- if ACTION `( parameterIR* )
       = $find_callableDef_non_overloaded_t(LOCAL, TC, prefixedNameIR)
   ---- ;; check that the action reference is a valid data-plane call
-  -- Call_action_partial_ok: TC |- parameterTypeIR* `@ eps
-                                 : parameterTypeIR_data* `, parameterTypeIR_control*
+  -- Call_action_partial_ok: TC |- parameterIR* `@ eps
+                                 : parameterIR_data* `, parameterIR_control*
                                    `@ eps
   ---- ;; update the table context with the action
-  -- if TBLC_1 = $add_action(TBLC_0, prefixedNameIR, parameterTypeIR*, eps)
+  -- if TBLC_1 = $add_action(TBLC_0, prefixedNameIR, parameterIR*, eps)
   ---- ;; create IR
   -- if tableActionIR = annotationList (prefixedNameIR `( eps )) `;
 
@@ -141,17 +141,17 @@ rule TableAction_ok/prefixedNonTypeName-argumentList:
              : TBLC_1 tableActionIR
   ---- ;; check that the action exists
   -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
-  -- if ACTION `( parameterTypeIR* )
+  -- if ACTION `( parameterIR* )
       = $find_callableDef_non_overloaded_t(LOCAL, TC, prefixedNameIR)
   ---- ;; check arguments
   -- if argument* = $flatten_argumentList(argumentList)
   -- (Argument_ok: LOCAL TC |- argument : argumentIR)*
   ---- ;; check that the action reference is a valid data-plane call
-  -- Call_action_partial_ok: TC |- parameterTypeIR* `@ argumentIR*
-                                 : parameterTypeIR_data* `, parameterTypeIR_control*
+  -- Call_action_partial_ok: TC |- parameterIR* `@ argumentIR*
+                                 : parameterIR_data* `, parameterIR_control*
                                    `@ argumentIR_cast*
   ---- ;; update the table context with the action
-  -- if TBLC_1 = $add_action(TBLC_0, prefixedNameIR, parameterTypeIR*, argumentIR_cast*)
+  -- if TBLC_1 = $add_action(TBLC_0, prefixedNameIR, parameterIR*, argumentIR_cast*)
   ---- ;; create IR
   -- if tableActionIR = annotationList (prefixedNameIR `( argumentIR_cast* )) `;
 
@@ -177,15 +177,15 @@ rule TableActions_ok/cons:
 ;;
 
 rule Call_action_default_ok:
-  TC |- parameterTypeIR* `@ argumentIR*
-      : parameterTypeIR_data* `, parameterTypeIR_control*
+  TC |- parameterIR* `@ argumentIR*
+      : parameterIR_data* `, parameterIR_control*
         `@ argumentIR_cast*
   ---- ;; split parameters into data- and control-planes
-  -- if (parameterTypeIR_data*, parameterTypeIR_control*)
-      = $split_dataplane_parameters(parameterTypeIR*)
+  -- if (parameterIR_data*, parameterIR_control*)
+      = $split_dataplane_parameters(parameterIR*)
   ---- ;; check calling convention
   -- Call_convention_ok:
-      LOCAL TC ACTION |- parameterTypeIR* `@ argumentIR*
+      LOCAL TC ACTION |- parameterIR* `@ argumentIR*
                        : argumentIR_cast*
 
 ;;; prefixedNonTypeName
@@ -204,22 +204,22 @@ rule TableDefaultAction_ok/prefixedNonTypeName-argumentList:
            : prefixedNameIR `( argumentIR_cast* )
   ---- ;; find matching action
   -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
-  -- if (parameterTypeIR_action*, argumentIR_action*)
+  -- if (parameterIR_action*, argumentIR_action*)
       = $find_action(TBLC, prefixedNameIR)
   ---- ;; check arguments
   -- if argument* = $flatten_argumentList(argumentList)
   -- (Argument_ok: LOCAL TC |- argument : argumentIR)*
   ---- ;; check calling convention
   -- Call_action_default_ok:
-      TC |- parameterTypeIR_action* `@ argumentIR*
-          : parameterTypeIR_action_data* `, parameterTypeIR_action_control*
+      TC |- parameterIR_action* `@ argumentIR*
+          : parameterIR_action_data* `, parameterIR_action_control*
             `@ argumentIR_cast*
   ---- ;; arguments must be syntatcially equivalent to
   ---- ;; dataplane arguments specified in the actions list property
   -- if argumentIR_action_data*
-      = argumentIR_action*[0 : |parameterTypeIR_action_data*|] 
+      = argumentIR_action*[0 : |parameterIR_action_data*|] 
   -- if argumentIR_cast_data*
-      = argumentIR_cast*[0 : |parameterTypeIR_action_data*|]
+      = argumentIR_cast*[0 : |parameterIR_action_data*|]
   -- if (argumentIR_action_data = argumentIR_cast_data)*
 
 ;;
@@ -583,22 +583,22 @@ rule TableEntry_action_ok/prefixedNonTypeName-argumentList:
            : prefixedNameIR `( argumentIR_cast* )
   ---- ;; find matching action
   -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
-  -- if (parameterTypeIR_action*, argumentIR_action*)
+  -- if (parameterIR_action*, argumentIR_action*)
       = $find_action(TBLC, prefixedNameIR)
   ---- ;; check arguments
   -- if argument* = $flatten_argumentList(argumentList)
   -- (Argument_ok: LOCAL TC |- argument : argumentIR)*
   ---- ;; check calling convention
   -- Call_action_default_ok:
-      TC |- parameterTypeIR_action* `@ argumentIR*
-          : parameterTypeIR_action_data* `, parameterTypeIR_action_control*
+      TC |- parameterIR_action* `@ argumentIR*
+          : parameterIR_action_data* `, parameterIR_action_control*
             `@ argumentIR_cast*
   ---- ;; arguments must be syntatcially equivalent to
   ---- ;; dataplane arguments specified in the actions list property
   -- if argumentIR_action_data*
-      = argumentIR_action*[0 : |parameterTypeIR_action_data*|] 
+      = argumentIR_action*[0 : |parameterIR_action_data*|] 
   -- if argumentIR_cast_data*
-      = argumentIR_cast*[0 : |parameterTypeIR_action_data*|]
+      = argumentIR_cast*[0 : |parameterIR_action_data*|]
   -- if (argumentIR_action_data = argumentIR_cast_data)*
 
 ;;

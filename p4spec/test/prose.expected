@@ -213,17 +213,17 @@ for each `cid~a~` in `cid~a~^{asterisk}^`
 for each `externMethodTypeDefIR'^?^` in `externMethodTypeDefIR'^?^^{asterisk}^`
   ... Check that <<CallableTypeDef_alpha, `externMethodTypeDefIR~a'~` and `externMethodTypeDefIR~b'~` are the same type>>, for all `externMethodTypeDefIR~a'~` in `externMethodTypeDefIR~a'~^{asterisk}^` and `externMethodTypeDefIR~b'~` in `externMethodTypeDefIR~b'~^{asterisk}^`.
   ... The relation holds.
-. Else if let `PARSER ( parameterTypeIR~a~^{asterisk}^ )` be `typeIR'`:
+. Else if let `PARSER ( parameterIR~a~^{asterisk}^ )` be `typeIR'`:
  .. Check that `typeIR'''` has type `parserObjectTypeIR`.
- .. Let `PARSER ( parameterTypeIR~b~^{asterisk}^ )` be `typeIR'''`.
+ .. Let `PARSER ( parameterIR~b~^{asterisk}^ )` be `typeIR'''`.
  .. Group parserObjectTypeIR:
-  ... Check that <<ParameterType_alpha, `parameterTypeIR~a~` and `parameterTypeIR~b~` are the same type>>, for all `parameterTypeIR~a~` in `parameterTypeIR~a~^{asterisk}^` and `parameterTypeIR~b~` in `parameterTypeIR~b~^{asterisk}^`.
+  ... Check that <<ParameterType_alpha, `parameterIR~a~` and `parameterIR~b~` are the same type>>, for all `parameterIR~a~` in `parameterIR~a~^{asterisk}^` and `parameterIR~b~` in `parameterIR~b~^{asterisk}^`.
   ... The relation holds.
-. Else if let `CONTROL ( parameterTypeIR~a~^{asterisk}^ )` be `typeIR'`:
+. Else if let `CONTROL ( parameterIR~a~^{asterisk}^ )` be `typeIR'`:
  .. Check that `typeIR'''` has type `controlObjectTypeIR`.
- .. Let `CONTROL ( parameterTypeIR~b~^{asterisk}^ )` be `typeIR'''`.
+ .. Let `CONTROL ( parameterIR~b~^{asterisk}^ )` be `typeIR'''`.
  .. Group controlObjectTypeIR:
-  ... Check that <<ParameterType_alpha, `parameterTypeIR~a~` and `parameterTypeIR~b~` are the same type>>, for all `parameterTypeIR~a~` in `parameterTypeIR~a~^{asterisk}^` and `parameterTypeIR~b~` in `parameterTypeIR~b~^{asterisk}^`.
+  ... Check that <<ParameterType_alpha, `parameterIR~a~` and `parameterIR~b~` are the same type>>, for all `parameterIR~a~` in `parameterIR~a~^{asterisk}^` and `parameterIR~b~` in `parameterIR~b~^{asterisk}^`.
   ... The relation holds.
 . Else if let `PACKAGE { typeIR~a~^{asterisk}^ }` be `typeIR'`:
  .. Check that `typeIR'''` has type `packageObjectTypeIR`.
@@ -295,7 +295,7 @@ for each `externMethodTypeDefIR'^?^` in `externMethodTypeDefIR'^?^^{asterisk}^`
   ... The relation holds.
 
 
-relation ParameterType_alpha: `direction typeIR~a~ ++_++ ++_++^?^` and `direction' typeIR~b~ ++_++ ++_++^?^`
+relation ParameterType_alpha: `++_++ direction typeIR~a~ ++_++ ++_++` and `++_++ direction' typeIR~b~ ++_++ ++_++`
 
 
 . Check that `direction` is equal to `direction'`.
@@ -307,60 +307,60 @@ relation ParameterType_alpha: `direction typeIR~a~ ++_++ ++_++^?^` and `directio
 relation CallableType_alpha: `callableTypeIR` and `callableTypeIR'`
 
 
-. If let `ACTION ( parameterTypeIR~a~^{asterisk}^ )` be `callableTypeIR`:
+. If let `ACTION ( parameterIR~a~^{asterisk}^ )` be `callableTypeIR`:
  .. Check that `callableTypeIR'` has type `actionTypeIR`.
- .. Let `ACTION ( parameterTypeIR~b~^{asterisk}^ )` be `callableTypeIR'`.
+ .. Let `ACTION ( parameterIR~b~^{asterisk}^ )` be `callableTypeIR'`.
  .. Group actionTypeIR:
-  ... Check that <<ParameterType_alpha, `parameterTypeIR~a~` and `parameterTypeIR~b~` are the same type>>, for all `parameterTypeIR~a~` in `parameterTypeIR~a~^{asterisk}^` and `parameterTypeIR~b~` in `parameterTypeIR~b~^{asterisk}^`.
+  ... Check that <<ParameterType_alpha, `parameterIR~a~` and `parameterIR~b~` are the same type>>, for all `parameterIR~a~` in `parameterIR~a~^{asterisk}^` and `parameterIR~b~` in `parameterIR~b~^{asterisk}^`.
   ... The relation holds.
-. Else if let `FUNCTION ( parameterTypeIR~a~^{asterisk}^ ) : typeIR~a~` be `callableTypeIR`:
+. Else if let `FUNCTION ( parameterIR~a~^{asterisk}^ ) : typeIR~a~` be `callableTypeIR`:
  .. Check that `callableTypeIR'` has type `definedFunctionTypeIR`.
- .. Let `FUNCTION ( parameterTypeIR~b~^{asterisk}^ ) : typeIR~b~` be `callableTypeIR'`.
+ .. Let `FUNCTION ( parameterIR~b~^{asterisk}^ ) : typeIR~b~` be `callableTypeIR'`.
  .. Group definedFunctionTypeIR:
-  ... Check that <<ParameterType_alpha, `parameterTypeIR~a~` and `parameterTypeIR~b~` are the same type>>, for all `parameterTypeIR~a~` in `parameterTypeIR~a~^{asterisk}^` and `parameterTypeIR~b~` in `parameterTypeIR~b~^{asterisk}^`.
+  ... Check that <<ParameterType_alpha, `parameterIR~a~` and `parameterIR~b~` are the same type>>, for all `parameterIR~a~` in `parameterIR~a~^{asterisk}^` and `parameterIR~b~` in `parameterIR~b~^{asterisk}^`.
   ... Check that <<Type_alpha, `typeIR~a~` and `typeIR~b~` are the same type>>.
   ... The relation holds.
-. Else if let `EXTERN_FUNCTION ( parameterTypeIR~a~^{asterisk}^ ) : typeIR~a~` be `callableTypeIR`:
+. Else if let `EXTERN_FUNCTION ( parameterIR~a~^{asterisk}^ ) : typeIR~a~` be `callableTypeIR`:
  .. Check that `callableTypeIR'` has type `externFunctionTypeIR`.
- .. Let `EXTERN_FUNCTION ( parameterTypeIR~b~^{asterisk}^ ) : typeIR~b~` be `callableTypeIR'`.
+ .. Let `EXTERN_FUNCTION ( parameterIR~b~^{asterisk}^ ) : typeIR~b~` be `callableTypeIR'`.
  .. Group externFunctionTypeIR:
-  ... Check that <<ParameterType_alpha, `parameterTypeIR~a~` and `parameterTypeIR~b~` are the same type>>, for all `parameterTypeIR~a~` in `parameterTypeIR~a~^{asterisk}^` and `parameterTypeIR~b~` in `parameterTypeIR~b~^{asterisk}^`.
+  ... Check that <<ParameterType_alpha, `parameterIR~a~` and `parameterIR~b~` are the same type>>, for all `parameterIR~a~` in `parameterIR~a~^{asterisk}^` and `parameterIR~b~` in `parameterIR~b~^{asterisk}^`.
   ... Check that <<Type_alpha, `typeIR~a~` and `typeIR~b~` are the same type>>.
   ... The relation holds.
-. Else if let `BUILTIN_METHOD ( parameterTypeIR~a~^{asterisk}^ ) : typeIR~a~` be `callableTypeIR`:
+. Else if let `BUILTIN_METHOD ( parameterIR~a~^{asterisk}^ ) : typeIR~a~` be `callableTypeIR`:
  .. Check that `callableTypeIR'` has type `builtinMethodTypeIR`.
- .. Let `BUILTIN_METHOD ( parameterTypeIR~b~^{asterisk}^ ) : typeIR~b~` be `callableTypeIR'`.
+ .. Let `BUILTIN_METHOD ( parameterIR~b~^{asterisk}^ ) : typeIR~b~` be `callableTypeIR'`.
  .. Group builtinMethodTypeIR:
-  ... Check that <<ParameterType_alpha, `parameterTypeIR~a~` and `parameterTypeIR~b~` are the same type>>, for all `parameterTypeIR~a~` in `parameterTypeIR~a~^{asterisk}^` and `parameterTypeIR~b~` in `parameterTypeIR~b~^{asterisk}^`.
+  ... Check that <<ParameterType_alpha, `parameterIR~a~` and `parameterIR~b~` are the same type>>, for all `parameterIR~a~` in `parameterIR~a~^{asterisk}^` and `parameterIR~b~` in `parameterIR~b~^{asterisk}^`.
   ... Check that <<Type_alpha, `typeIR~a~` and `typeIR~b~` are the same type>>.
   ... The relation holds.
 . Else if let `externMethodTypeIR` be `callableTypeIR`:
  .. Check that `callableTypeIR'` has type `externMethodTypeIR`.
  .. Let `externMethodTypeIR'` be `callableTypeIR'`.
  .. Group externMethodTypeIR:
-  ... If let `EXTERN_METHOD ( parameterTypeIR~a~^{asterisk}^ ) : typeIR~a~` be `externMethodTypeIR`:
+  ... If let `EXTERN_METHOD ( parameterIR~a~^{asterisk}^ ) : typeIR~a~` be `externMethodTypeIR`:
    .... Check that `externMethodTypeIR'` matches pattern `EXTERN_METHOD ( % ) : %`.
-   .... Let `EXTERN_METHOD ( parameterTypeIR~b~^{asterisk}^ ) : typeIR~b~` be `externMethodTypeIR'`.
-   .... Check that <<ParameterType_alpha, `parameterTypeIR~a~` and `parameterTypeIR~b~` are the same type>>, for all `parameterTypeIR~a~` in `parameterTypeIR~a~^{asterisk}^` and `parameterTypeIR~b~` in `parameterTypeIR~b~^{asterisk}^`.
+   .... Let `EXTERN_METHOD ( parameterIR~b~^{asterisk}^ ) : typeIR~b~` be `externMethodTypeIR'`.
+   .... Check that <<ParameterType_alpha, `parameterIR~a~` and `parameterIR~b~` are the same type>>, for all `parameterIR~a~` in `parameterIR~a~^{asterisk}^` and `parameterIR~b~` in `parameterIR~b~^{asterisk}^`.
    .... Check that <<Type_alpha, `typeIR~a~` and `typeIR~b~` are the same type>>.
    .... The relation holds.
-  ... Else let `EXTERN_METHOD ABSTRACT ( parameterTypeIR~a~^{asterisk}^ ) : typeIR~a~` be `externMethodTypeIR`:
+  ... Else let `EXTERN_METHOD ABSTRACT ( parameterIR~a~^{asterisk}^ ) : typeIR~a~` be `externMethodTypeIR`:
    .... Check that `externMethodTypeIR'` matches pattern `EXTERN_METHOD ABSTRACT ( % ) : %`.
-   .... Let `EXTERN_METHOD ABSTRACT ( parameterTypeIR~b~^{asterisk}^ ) : typeIR~b~` be `externMethodTypeIR'`.
-   .... Check that <<ParameterType_alpha, `parameterTypeIR~a~` and `parameterTypeIR~b~` are the same type>>, for all `parameterTypeIR~a~` in `parameterTypeIR~a~^{asterisk}^` and `parameterTypeIR~b~` in `parameterTypeIR~b~^{asterisk}^`.
+   .... Let `EXTERN_METHOD ABSTRACT ( parameterIR~b~^{asterisk}^ ) : typeIR~b~` be `externMethodTypeIR'`.
+   .... Check that <<ParameterType_alpha, `parameterIR~a~` and `parameterIR~b~` are the same type>>, for all `parameterIR~a~` in `parameterIR~a~^{asterisk}^` and `parameterIR~b~` in `parameterIR~b~^{asterisk}^`.
    .... Check that <<Type_alpha, `typeIR~a~` and `typeIR~b~` are the same type>>.
    .... The relation holds.
-. Else if let `PARSER_APPLY ( parameterTypeIR~a~^{asterisk}^ )` be `callableTypeIR`:
+. Else if let `PARSER_APPLY ( parameterIR~a~^{asterisk}^ )` be `callableTypeIR`:
  .. Check that `callableTypeIR'` has type `parserApplyMethodTypeIR`.
- .. Let `PARSER_APPLY ( parameterTypeIR~b~^{asterisk}^ )` be `callableTypeIR'`.
+ .. Let `PARSER_APPLY ( parameterIR~b~^{asterisk}^ )` be `callableTypeIR'`.
  .. Group parserApplyMethodTypeIR:
-  ... Check that <<ParameterType_alpha, `parameterTypeIR~a~` and `parameterTypeIR~b~` are the same type>>, for all `parameterTypeIR~a~` in `parameterTypeIR~a~^{asterisk}^` and `parameterTypeIR~b~` in `parameterTypeIR~b~^{asterisk}^`.
+  ... Check that <<ParameterType_alpha, `parameterIR~a~` and `parameterIR~b~` are the same type>>, for all `parameterIR~a~` in `parameterIR~a~^{asterisk}^` and `parameterIR~b~` in `parameterIR~b~^{asterisk}^`.
   ... The relation holds.
-. Else if let `CONTROL_APPLY ( parameterTypeIR~a~^{asterisk}^ )` be `callableTypeIR`:
+. Else if let `CONTROL_APPLY ( parameterIR~a~^{asterisk}^ )` be `callableTypeIR`:
  .. Check that `callableTypeIR'` has type `controlApplyMethodTypeIR`.
- .. Let `CONTROL_APPLY ( parameterTypeIR~b~^{asterisk}^ )` be `callableTypeIR'`.
+ .. Let `CONTROL_APPLY ( parameterIR~b~^{asterisk}^ )` be `callableTypeIR'`.
  .. Group controlApplyMethodTypeIR:
-  ... Check that <<ParameterType_alpha, `parameterTypeIR~a~` and `parameterTypeIR~b~` are the same type>>, for all `parameterTypeIR~a~` in `parameterTypeIR~a~^{asterisk}^` and `parameterTypeIR~b~` in `parameterTypeIR~b~^{asterisk}^`.
+  ... Check that <<ParameterType_alpha, `parameterIR~a~` and `parameterIR~b~` are the same type>>, for all `parameterIR~a~` in `parameterIR~a~^{asterisk}^` and `parameterIR~b~` in `parameterIR~b~^{asterisk}^`.
   ... The relation holds.
 . Else let `tableApplyMethodTypeIR` be `callableTypeIR`:
  .. Check that `callableTypeIR'` has type `tableApplyMethodTypeIR`.
@@ -463,13 +463,13 @@ relation Type_wf: `bound` and `typeIR''`
  .. Group externObjectTypeIR:
   ... Check that <<CallableTypeDef_wf, `externMethodTypeDefIR` is a well-formed type, assuming bound type ids `bound`>>, for all `externMethodTypeDefIR` in `externMethodTypeDefIR^{asterisk}^`.
   ... The relation holds.
-. Else if let `PARSER ( parameterTypeIR^{asterisk}^ )` be `typeIR''`:
+. Else if let `PARSER ( parameterIR^{asterisk}^ )` be `typeIR''`:
  .. Group parserObjectTypeIR:
-  ... Check that <<ParameterTypes_wf, `parameterTypeIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
+  ... Check that <<ParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
   ... The relation holds.
-. Else if let `CONTROL ( parameterTypeIR^{asterisk}^ )` be `typeIR''`:
+. Else if let `CONTROL ( parameterIR^{asterisk}^ )` be `typeIR''`:
  .. Group controlObjectTypeIR:
-  ... Check that <<ParameterTypes_wf, `parameterTypeIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
+  ... Check that <<ParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
   ... The relation holds.
 . Else if let `PACKAGE { typeIR^{asterisk}^ }` be `typeIR''`:
  .. Group packageObjectTypeIR:
@@ -531,18 +531,18 @@ relation TypeDef_wf: `bound` and `typeDefIR`
  .. The relation holds.
 
 
-relation ParameterType_wf: `bound` and `direction typeIR ++_++ value'^?^`
+relation ParameterType_wf: `bound` and `++_++ direction typeIR ++_++ constantInitializerIR^?^`
 
 
 . Group :
- .. If `value'^?^` is equal to `None`:
+ .. If `constantInitializerIR^?^` is equal to `None`:
   ... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `bound`>>.
   ... Let `typeIR~canon~` be <<canon_typeIR, the canonicalized form of `typeIR`>>.
   ... Check that `~<<is_synthesizedTypeIR, $is_synthesizedTypeIR(typeIR~canon~)>>`.
   ... Check that `<<is_stringTypeIR, $is_stringTypeIR(typeIR~canon~)>> \/ <<is_arbitraryIntTypeIR, $is_arbitraryIntTypeIR(typeIR~canon~)>> \/ <<is_objectTypeIR, $is_objectTypeIR(typeIR~canon~)>>` *implies* `direction = `.
   ... The relation holds.
- .. Let `value''^?^` be `value'^?^`.
- .. Else if let `value` be `value''^?^`:
+ .. Let `constantInitializerOptIR` be `constantInitializerIR^?^`.
+ .. Else if let `= value` be `constantInitializerOptIR`:
   ... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `bound`>>.
   ... Let `typeIR~canon~` be <<canon_typeIR, the canonicalized form of `typeIR`>>.
   ... Check that `~<<is_synthesizedTypeIR, $is_synthesizedTypeIR(typeIR~canon~)>>`.
@@ -554,117 +554,117 @@ relation ParameterType_wf: `bound` and `direction typeIR ++_++ value'^?^`
    .... The relation holds.
 
 
-relation ParameterTypes_wf: `bound` and `parameterTypeIR^{asterisk}^`
+relation ParameterTypes_wf: `bound` and `parameterIR^{asterisk}^`
 
 
 . Group :
- .. Let `id^{asterisk}^` be the list of `id`, obtained by repeating:
+ .. Let `nameIR^{asterisk}^` be the list of `nameIR`, obtained by repeating:
 +
 --
-    * Let `id` be the name of `parameterTypeIR`.
+    * Let `nameIR` be the name of `parameterIR`.
 --
 +
-for each `parameterTypeIR` in `parameterTypeIR^{asterisk}^`
- .. Check that <<distinct_, the elements of `id^{asterisk}^` are distinct>>.
- .. Check that <<ParameterType_wf, `parameterTypeIR` is a well-formed type, assuming bound type ids `bound`>>, for all `parameterTypeIR` in `parameterTypeIR^{asterisk}^`.
+for each `parameterIR` in `parameterIR^{asterisk}^`
+ .. Check that <<distinct_, the elements of `nameIR^{asterisk}^` are distinct>>.
+ .. Check that <<ParameterType_wf, `parameterIR` is a well-formed type, assuming bound type ids `bound`>>, for all `parameterIR` in `parameterIR^{asterisk}^`.
  .. The relation holds.
 
 
 relation CallableType_wf: `bound` and `callableTypeIR`
 
 
-. If let `ACTION ( parameterTypeIR^{asterisk}^ )` be `callableTypeIR`:
+. If let `ACTION ( parameterIR^{asterisk}^ )` be `callableTypeIR`:
  .. Group actionTypeIR:
-  ... Check that <<ParameterTypes_wf, `parameterTypeIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
+  ... Check that <<ParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
   ... Let `direction^{asterisk}^` be the list of `direction` and `typeIR^{asterisk}^` be the list of `typeIR`, obtained by repeating:
 +
 --
-      * Let `direction` and `typeIR` be the direction and the type of `parameterTypeIR`.
+      * Let `direction` and `typeIR` be the direction and the type of `parameterIR`.
 --
 +
-for each `parameterTypeIR` in `parameterTypeIR^{asterisk}^`
+for each `parameterIR` in `parameterIR^{asterisk}^`
   ... Check that <<directionless_trailing, directionless parameters in `direction^{asterisk}^` only appear at the end>>.
   ... Check that <<nestable_action, `typeIR` can be used in an action type>>, for all `typeIR` in `typeIR^{asterisk}^`.
   ... The relation holds.
-. Else if let `FUNCTION ( parameterTypeIR^{asterisk}^ ) : typeIR~ret~` be `callableTypeIR`:
+. Else if let `FUNCTION ( parameterIR^{asterisk}^ ) : typeIR~ret~` be `callableTypeIR`:
  .. Group definedFunctionTypeIR:
-  ... Check that <<ParameterTypes_wf, `parameterTypeIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
+  ... Check that <<ParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
   ... Let `typeIR^{asterisk}^` be the list of `typeIR`, obtained by repeating:
 +
 --
-      * Let `typeIR` be the type of `parameterTypeIR`.
+      * Let `typeIR` be the type of `parameterIR`.
 --
 +
-for each `parameterTypeIR` in `parameterTypeIR^{asterisk}^`
+for each `parameterIR` in `parameterIR^{asterisk}^`
   ... Check that <<nestable_definedFunction, `typeIR` can be used in a defined function type>>, for all `typeIR` in `typeIR^{asterisk}^`.
   ... Check that <<Type_wf, `typeIR~ret~` is a well-formed type, assuming bound type ids `bound`>>.
   ... The relation holds.
-. Else if let `EXTERN_FUNCTION ( parameterTypeIR^{asterisk}^ ) : typeIR~ret~` be `callableTypeIR`:
+. Else if let `EXTERN_FUNCTION ( parameterIR^{asterisk}^ ) : typeIR~ret~` be `callableTypeIR`:
  .. Group externFunctionTypeIR:
-  ... Check that <<ParameterTypes_wf, `parameterTypeIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
+  ... Check that <<ParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
   ... Let `typeIR^{asterisk}^` be the list of `typeIR`, obtained by repeating:
 +
 --
-      * Let `typeIR` be the type of `parameterTypeIR`.
+      * Let `typeIR` be the type of `parameterIR`.
 --
 +
-for each `parameterTypeIR` in `parameterTypeIR^{asterisk}^`
+for each `parameterIR` in `parameterIR^{asterisk}^`
   ... Check that <<nestable_externFunction, `typeIR` can be used in an extern function type>>, for all `typeIR` in `typeIR^{asterisk}^`.
   ... Check that <<Type_wf, `typeIR~ret~` is a well-formed type, assuming bound type ids `bound`>>.
   ... The relation holds.
-. Else if let `BUILTIN_METHOD ( parameterTypeIR^{asterisk}^ ) : typeIR~ret~` be `callableTypeIR`:
+. Else if let `BUILTIN_METHOD ( parameterIR^{asterisk}^ ) : typeIR~ret~` be `callableTypeIR`:
  .. Group builtinMethodTypeIR:
-  ... Check that <<ParameterTypes_wf, `parameterTypeIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
+  ... Check that <<ParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
   ... Check that <<Type_wf, `typeIR~ret~` is a well-formed type, assuming bound type ids `bound`>>.
   ... The relation holds.
 . Else if let `externMethodTypeIR` be `callableTypeIR`:
  .. Group externMethodTypeIR:
-  ... If let `EXTERN_METHOD ( parameterTypeIR^{asterisk}^ ) : typeIR~ret~` be `externMethodTypeIR`:
-   .... Check that <<ParameterTypes_wf, `parameterTypeIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
+  ... If let `EXTERN_METHOD ( parameterIR^{asterisk}^ ) : typeIR~ret~` be `externMethodTypeIR`:
+   .... Check that <<ParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
    .... Let `typeIR^{asterisk}^` be the list of `typeIR`, obtained by repeating:
 +
 --
-        * Let `typeIR` be the type of `parameterTypeIR`.
+        * Let `typeIR` be the type of `parameterIR`.
 --
 +
-for each `parameterTypeIR` in `parameterTypeIR^{asterisk}^`
+for each `parameterIR` in `parameterIR^{asterisk}^`
    .... Check that <<nestable_externMethod, `typeIR` can be used in an extern method type>>, for all `typeIR` in `typeIR^{asterisk}^`.
    .... Check that <<Type_wf, `typeIR~ret~` is a well-formed type, assuming bound type ids `bound`>>.
    .... The relation holds.
-  ... Else let `EXTERN_METHOD ABSTRACT ( parameterTypeIR^{asterisk}^ ) : typeIR~ret~` be `externMethodTypeIR`:
-   .... Check that <<ParameterTypes_wf, `parameterTypeIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
+  ... Else let `EXTERN_METHOD ABSTRACT ( parameterIR^{asterisk}^ ) : typeIR~ret~` be `externMethodTypeIR`:
+   .... Check that <<ParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
    .... Let `typeIR^{asterisk}^` be the list of `typeIR`, obtained by repeating:
 +
 --
-        * Let `typeIR` be the type of `parameterTypeIR`.
+        * Let `typeIR` be the type of `parameterIR`.
 --
 +
-for each `parameterTypeIR` in `parameterTypeIR^{asterisk}^`
+for each `parameterIR` in `parameterIR^{asterisk}^`
    .... Check that <<nestable_externMethod, `typeIR` can be used in an extern method type>>, for all `typeIR` in `typeIR^{asterisk}^`.
    .... Check that <<Type_wf, `typeIR~ret~` is a well-formed type, assuming bound type ids `bound`>>.
    .... The relation holds.
-. Else if let `PARSER_APPLY ( parameterTypeIR^{asterisk}^ )` be `callableTypeIR`:
+. Else if let `PARSER_APPLY ( parameterIR^{asterisk}^ )` be `callableTypeIR`:
  .. Group parserApplyMethodTypeIR:
-  ... Check that <<ParameterTypes_wf, `parameterTypeIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
+  ... Check that <<ParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
   ... Let `typeIR^{asterisk}^` be the list of `typeIR`, obtained by repeating:
 +
 --
-      * Let `typeIR` be the type of `parameterTypeIR`.
+      * Let `typeIR` be the type of `parameterIR`.
 --
 +
-for each `parameterTypeIR` in `parameterTypeIR^{asterisk}^`
+for each `parameterIR` in `parameterIR^{asterisk}^`
   ... Check that <<nestable_parserApplyMethod, `typeIR` can be used in a parser apply method type>>, for all `typeIR` in `typeIR^{asterisk}^`.
   ... The relation holds.
-. Else if let `CONTROL_APPLY ( parameterTypeIR^{asterisk}^ )` be `callableTypeIR`:
+. Else if let `CONTROL_APPLY ( parameterIR^{asterisk}^ )` be `callableTypeIR`:
  .. Group controlApplyMethodTypeIR:
-  ... Check that <<ParameterTypes_wf, `parameterTypeIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
+  ... Check that <<ParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
   ... Let `typeIR^{asterisk}^` be the list of `typeIR`, obtained by repeating:
 +
 --
-      * Let `typeIR` be the type of `parameterTypeIR`.
+      * Let `typeIR` be the type of `parameterIR`.
 --
 +
-for each `parameterTypeIR` in `parameterTypeIR^{asterisk}^`
+for each `parameterIR` in `parameterIR^{asterisk}^`
   ... Check that <<nestable_controlApplyMethod, `typeIR` can be used in a control apply method type>>, for all `typeIR` in `typeIR^{asterisk}^`.
   ... The relation holds.
 . Else let `TABLE_APPLY : tableMetadataStructTypeIR` be `callableTypeIR`:
@@ -684,7 +684,7 @@ relation CallableTypeDef_wf: `bound` and `callableTypeDefIR`
  .. The relation holds.
 
 
-relation ConstructorParameterType_wf: `bound` and `direction typeIR ++_++ ++_++^?^`
+relation ConstructorParameterType_wf: `bound` and `++_++ direction typeIR ++_++ ++_++`
 
 
 . Check that `direction` matches pattern ``EMPTY`.
@@ -694,27 +694,27 @@ relation ConstructorParameterType_wf: `bound` and `direction typeIR ++_++ ++_++^
  .. The relation holds.
 
 
-relation ConstructorParameterTypes_wf: `bound` and `parameterTypeIR^{asterisk}^`
+relation ConstructorParameterTypes_wf: `bound` and `parameterIR^{asterisk}^`
 
 
 . Group :
- .. Let `id^{asterisk}^` be the list of `id`, obtained by repeating:
+ .. Let `nameIR^{asterisk}^` be the list of `nameIR`, obtained by repeating:
 +
 --
-    * Let `id` be the name of `parameterTypeIR`.
+    * Let `nameIR` be the name of `parameterIR`.
 --
 +
-for each `parameterTypeIR` in `parameterTypeIR^{asterisk}^`
- .. Check that <<distinct_, the elements of `id^{asterisk}^` are distinct>>.
- .. Check that <<ConstructorParameterType_wf, `parameterTypeIR` is a well-formed type, assuming bound type ids `bound`>>, for all `parameterTypeIR` in `parameterTypeIR^{asterisk}^`.
+for each `parameterIR` in `parameterIR^{asterisk}^`
+ .. Check that <<distinct_, the elements of `nameIR^{asterisk}^` are distinct>>.
+ .. Check that <<ConstructorParameterType_wf, `parameterIR` is a well-formed type, assuming bound type ids `bound`>>, for all `parameterIR` in `parameterIR^{asterisk}^`.
  .. The relation holds.
 
 
-relation ConstructorType_wf: `bound` and `CONSTRUCTOR ( parameterTypeIR^{asterisk}^ ) : typeIR~object~`
+relation ConstructorType_wf: `bound` and `CONSTRUCTOR ( parameterIR^{asterisk}^ ) : typeIR~object~`
 
 
 . Group externObjectTypeIR:
- .. Check that <<ConstructorParameterTypes_wf, `parameterTypeIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
+ .. Check that <<ConstructorParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
  .. Check that <<Type_wf, `typeIR~object~` is a well-formed type, assuming bound type ids `bound`>>.
  .. Let `typeIR'` be <<canon_typeIR, the canonicalized form of `typeIR~object~`>>.
  .. Check that `typeIR'` has type `externObjectTypeIR`.
@@ -722,14 +722,14 @@ relation ConstructorType_wf: `bound` and `CONSTRUCTOR ( parameterTypeIR^{asteris
  .. Let `typeIR^{asterisk}^` be the list of `typeIR`, obtained by repeating:
 +
 --
-    * Let `typeIR` be the type of `parameterTypeIR`.
+    * Let `typeIR` be the type of `parameterIR`.
 --
 +
-for each `parameterTypeIR` in `parameterTypeIR^{asterisk}^`
+for each `parameterIR` in `parameterIR^{asterisk}^`
  .. Check that `<<nestable_constructor_extern, $nestable_constructor_extern(typeIR)>>`, for all `typeIR` in `typeIR^{asterisk}^`.
  .. The relation holds.
 . Group parserObjectTypeIR:
- .. Check that <<ConstructorParameterTypes_wf, `parameterTypeIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
+ .. Check that <<ConstructorParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
  .. Check that <<Type_wf, `typeIR~object~` is a well-formed type, assuming bound type ids `bound`>>.
  .. Let `typeIR'` be <<canon_typeIR, the canonicalized form of `typeIR~object~`>>.
  .. Check that `typeIR'` has type `parserObjectTypeIR`.
@@ -737,14 +737,14 @@ for each `parameterTypeIR` in `parameterTypeIR^{asterisk}^`
  .. Let `typeIR^{asterisk}^` be the list of `typeIR`, obtained by repeating:
 +
 --
-    * Let `typeIR` be the type of `parameterTypeIR`.
+    * Let `typeIR` be the type of `parameterIR`.
 --
 +
-for each `parameterTypeIR` in `parameterTypeIR^{asterisk}^`
+for each `parameterIR` in `parameterIR^{asterisk}^`
  .. Check that `<<nestable_constructor_parser, $nestable_constructor_parser(typeIR)>>`, for all `typeIR` in `typeIR^{asterisk}^`.
  .. The relation holds.
 . Group controlObjectTypeIR:
- .. Check that <<ConstructorParameterTypes_wf, `parameterTypeIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
+ .. Check that <<ConstructorParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
  .. Check that <<Type_wf, `typeIR~object~` is a well-formed type, assuming bound type ids `bound`>>.
  .. Let `typeIR'` be <<canon_typeIR, the canonicalized form of `typeIR~object~`>>.
  .. Check that `typeIR'` has type `controlObjectTypeIR`.
@@ -752,14 +752,14 @@ for each `parameterTypeIR` in `parameterTypeIR^{asterisk}^`
  .. Let `typeIR^{asterisk}^` be the list of `typeIR`, obtained by repeating:
 +
 --
-    * Let `typeIR` be the type of `parameterTypeIR`.
+    * Let `typeIR` be the type of `parameterIR`.
 --
 +
-for each `parameterTypeIR` in `parameterTypeIR^{asterisk}^`
+for each `parameterIR` in `parameterIR^{asterisk}^`
  .. Check that `<<nestable_constructor_control, $nestable_constructor_control(typeIR)>>`, for all `typeIR` in `typeIR^{asterisk}^`.
  .. The relation holds.
 . Group packageObjectTypeIR:
- .. Check that <<ConstructorParameterTypes_wf, `parameterTypeIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
+ .. Check that <<ConstructorParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
  .. Check that <<Type_wf, `typeIR~object~` is a well-formed type, assuming bound type ids `bound`>>.
  .. Let `typeIR'` be <<canon_typeIR, the canonicalized form of `typeIR~object~`>>.
  .. Check that `typeIR'` has type `packageObjectTypeIR`.
@@ -767,22 +767,22 @@ for each `parameterTypeIR` in `parameterTypeIR^{asterisk}^`
  .. Let `typeIR^{asterisk}^` be the list of `typeIR`, obtained by repeating:
 +
 --
-    * Let `typeIR` be the type of `parameterTypeIR`.
+    * Let `typeIR` be the type of `parameterIR`.
 --
 +
-for each `parameterTypeIR` in `parameterTypeIR^{asterisk}^`
+for each `parameterIR` in `parameterIR^{asterisk}^`
  .. Check that `<<nestable_constructor_package, $nestable_constructor_package(typeIR)>>`, for all `typeIR` in `typeIR^{asterisk}^`.
  .. The relation holds.
 
 
-relation ConstructorTypeDef_wf: `bound` and `CONSTRUCTOR < tid~tparam_expl~^{asterisk}^ , tid~tparam_impl~^{asterisk}^ > ( parameterTypeIR^{asterisk}^ ) : typeIR~object~`
+relation ConstructorTypeDef_wf: `bound` and `CONSTRUCTOR < tid~tparam_expl~^{asterisk}^ , tid~tparam_impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) : typeIR~object~`
 
 
 . Group :
  .. Check that `<<definable_constructor, $definable_constructor(typeIR~object~)>>`.
  .. Check that <<distinct_, the elements of `tid~tparam_expl~^{asterisk}^ {pp} tid~tparam_impl~^{asterisk}^` are distinct>>.
  .. Let `bound~inner~` be <<union_set, the union of the sets `bound` and `{ tid~tparam_expl~^{asterisk}^ {pp} tid~tparam_impl~^{asterisk}^ }`>>.
- .. Check that <<ConstructorType_wf, `CONSTRUCTOR ( parameterTypeIR^{asterisk}^ ) : typeIR~object~` is a well-formed type, assuming bound type ids `bound~inner~`>>.
+ .. Check that <<ConstructorType_wf, `CONSTRUCTOR ( parameterIR^{asterisk}^ ) : typeIR~object~` is a well-formed type, assuming bound type ids `bound~inner~`>>.
  .. The relation holds.
 
 
@@ -3169,16 +3169,9 @@ for each `typeParameter` in `typeParameter^{asterisk}^`
   ... Let `TC~2~` be `TC~1~[LOCAL.KIND = EXTERN_METHOD : typeIR~ret~]`.
   ... Let `parameter^{asterisk}^` be <<flatten_parameterList, the list of parameters in `parameterList`>>.
   ... Let `parameterIR^{asterisk}^` and `tid~impl~^{asterisk}^` be the result of <<Parameters_ok, typing `parameter^{asterisk}^`, under cursor `LOCAL` and typing context `TC~2~`>>.
-  ... Let `parameterTypeIR^{asterisk}^` be the list of `parameterTypeIR`, obtained by repeating:
-+
---
-      * Let `parameterTypeIR` be <<type_of_parameterIR, the type of  `parameterIR`>>.
---
-+
-for each `parameterIR` in `parameterIR^{asterisk}^`
-  ... Let `TC~3~` be `<<add_parameters_t, $add_parameters_t(LOCAL, TC~2~, parameterTypeIR^{asterisk}^)>>`.
+  ... Let `TC~3~` be `<<add_parameters_t, $add_parameters_t(LOCAL, TC~2~, parameterIR^{asterisk}^)>>`.
   ... Let `cid` be `<<cid, $cid(name, parameterList)>>`.
-  ... Let `externMethodTypeDefIR` be `EXTERN_METHOD < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterTypeIR^{asterisk}^ ) : typeIR~ret~`.
+  ... Let `externMethodTypeDefIR` be `EXTERN_METHOD < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) : typeIR~ret~`.
   ... Check that <<CallableTypeDef_wf, `externMethodTypeDefIR` is a well-formed type, assuming bound type ids `$bound(BLOCK, TC~0~)`>>.
   ... Let `TC~4~` be `<<add_callableDef_overload_t, $add_callableDef_overload_t(BLOCK, TC~0~, cid, externMethodTypeDefIR)>>`.
   ... Let `externMethodPrototypeIR` be `annotationList typeIR~ret~ nameIR < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) ;`.
@@ -3201,16 +3194,9 @@ for each `typeParameter` in `typeParameter^{asterisk}^`
   ... Let `TC~2~` be `TC~1~[LOCAL.KIND = EXTERN_METHOD ABSTRACT : typeIR~ret~]`.
   ... Let `parameter^{asterisk}^` be <<flatten_parameterList, the list of parameters in `parameterList`>>.
   ... Let `parameterIR^{asterisk}^` and `tid~impl~^{asterisk}^` be the result of <<Parameters_ok, typing `parameter^{asterisk}^`, under cursor `LOCAL` and typing context `TC~2~`>>.
-  ... Let `parameterTypeIR^{asterisk}^` be the list of `parameterTypeIR`, obtained by repeating:
-+
---
-      * Let `parameterTypeIR` be <<type_of_parameterIR, the type of  `parameterIR`>>.
---
-+
-for each `parameterIR` in `parameterIR^{asterisk}^`
-  ... Let `TC~3~` be `<<add_parameters_t, $add_parameters_t(LOCAL, TC~2~, parameterTypeIR^{asterisk}^)>>`.
+  ... Let `TC~3~` be `<<add_parameters_t, $add_parameters_t(LOCAL, TC~2~, parameterIR^{asterisk}^)>>`.
   ... Let `cid` be `<<cid, $cid(name, parameterList)>>`.
-  ... Let `externMethodTypeDefIR` be `EXTERN_METHOD ABSTRACT < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterTypeIR^{asterisk}^ ) : typeIR~ret~`.
+  ... Let `externMethodTypeDefIR` be `EXTERN_METHOD ABSTRACT < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) : typeIR~ret~`.
   ... Check that <<CallableTypeDef_wf, `externMethodTypeDefIR` is a well-formed type, assuming bound type ids `$bound(BLOCK, TC~0~)`>>.
   ... Let `TC~4~` be `<<add_callableDef_overload_t, $add_callableDef_overload_t(BLOCK, TC~0~, cid, externMethodTypeDefIR)>>`.
   ... Let `externMethodPrototypeIR` be `annotationList ABSTRACT typeIR~ret~ nameIR < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) ;`.
@@ -3238,19 +3224,12 @@ relation ExternConstructor_ok: `TC~0~`, `tid~extern~`, and `annotationList typeI
  .. Check that `nameIR` is equal to `tid~extern~`.
  .. Let `constructorParameter^{asterisk}^` be <<flatten_parameterList, the list of parameters in `parameterList`>>.
  .. Let `constructorParameterIR^{asterisk}^` and `tid~impl~^{asterisk}^` be the result of <<ConstructorParameters_ok, typing `constructorParameter^{asterisk}^`, under cursor `BLOCK` and typing context `TC~0~`>>.
- .. Let `constructorParameterTypeIR^{asterisk}^` be the list of `constructorParameterTypeIR`, obtained by repeating:
-+
---
-    * Let `constructorParameterTypeIR` be <<type_of_constructorParameterIR, the type of  `constructorParameterIR`>>.
---
-+
-for each `constructorParameterIR` in `constructorParameterIR^{asterisk}^`
  .. Let `typeDefIR~extern~` be <<option_get, *!*>> <<find_typeDef_t, the type definition of `tid~extern~` in the `GLOBAL` layer of `TC~0~`>>.
  .. Let `(tid~expl~^{asterisk}^, tid^{asterisk}^)` be <<type_parameters_of_typeDefIR, the type parameters of `typeDefIR~extern~`>>.
  .. Check that `tid^{asterisk}^` is an empty list.
  .. Let `cid` be `<<cid_, $cid_(typeIdentifier, ( parameterList ))>>`.
  .. Let `typeIR~extern_spec~` be `typeDefIR~extern~ < (tid~expl~)^{asterisk}^ >`.
- .. Let `constructorTypeDefIR` be `CONSTRUCTOR < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( constructorParameterTypeIR^{asterisk}^ ) : typeIR~extern_spec~`.
+ .. Let `constructorTypeDefIR` be `CONSTRUCTOR < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( constructorParameterIR^{asterisk}^ ) : typeIR~extern_spec~`.
  .. Check that <<ConstructorTypeDef_wf, `constructorTypeDefIR` is a well-formed type, assuming bound type ids `$bound(BLOCK, TC~0~)`>>.
  .. Let `TC~1~` be `<<add_constructorDef_t, $add_constructorDef_t(TC~0~, cid, constructorTypeDefIR)>>`.
  .. Let `externConstructorPrototypeIR` be `annotationList nameIR < , tid~impl~^{asterisk}^ > ( constructorParameterIR^{asterisk}^ ) ;`.
@@ -3552,14 +3531,14 @@ relation TableKeys_ok: `TC`, `TBLC`, and `tableKey^{asterisk}^`
   ... Result in the updated table context `TBLC~2~` and the typed table keys `tableKeyIR~h~ {two-colons} tableKeyIR~t~^{asterisk}^`.
 
 
-relation Call_action_partial_ok: `TC`, `parameterTypeIR^{asterisk}^`, and `argumentIR^{asterisk}^`
+relation Call_action_partial_ok: `TC`, `parameterIR^{asterisk}^`, and `argumentIR^{asterisk}^`
 
 
 . Group :
- .. Let `(parameterTypeIR~data~^{asterisk}^, parameterTypeIR~control~^{asterisk}^)` be `<<split_dataplane_parameters, $split_dataplane_parameters(parameterTypeIR^{asterisk}^)>>`.
- .. Check that the length of `parameterTypeIR~data~^{asterisk}^` is equal to the length of `argumentIR^{asterisk}^`.
- .. Let `argumentIR~cast~^{asterisk}^` be the result of <<Call_convention_ok, checking the calling convention of `argumentIR^{asterisk}^` applied to parameter types `parameterTypeIR~data~^{asterisk}^`, under cursor `LOCAL`, typing context `TC`, and action context `ACTION`>>.
- .. Result in the typed argument list `parameterTypeIR~data~^{asterisk}^`.
+ .. Let `(parameterIR~data~^{asterisk}^, parameterIR~control~^{asterisk}^)` be `<<split_dataplane_parameters, $split_dataplane_parameters(parameterIR^{asterisk}^)>>`.
+ .. Check that the length of `parameterIR~data~^{asterisk}^` is equal to the length of `argumentIR^{asterisk}^`.
+ .. Let `argumentIR~cast~^{asterisk}^` be the result of <<Call_convention_ok, checking the calling convention of `argumentIR^{asterisk}^` applied to parameter types `parameterIR~data~^{asterisk}^`, under cursor `LOCAL`, typing context `TC`, and action context `ACTION`>>.
+ .. Result in the typed argument list `parameterIR~data~^{asterisk}^`.
 
 
 relation TableAction_ok: `TC`, `TBLC~0~`, and `annotationList tableActionReference ;`
@@ -3570,10 +3549,10 @@ relation TableAction_ok: `TC`, `TBLC~0~`, and `annotationList tableActionReferen
   ... Let `prefixedNameIR` be <<prefixedNonTypeName, the prefixed name of  `prefixedNonTypeName`>>.
   ... Let `callableTypeDefIR` be <<option_get, *!*>> <<find_callableDef_non_overloaded_t, the non-overloaded callable definition of `prefixedNameIR` in the `LOCAL` layer of `TC`>>.
   ... Check that `callableTypeDefIR` has type `actionTypeIR`.
-  ... Let `ACTION ( parameterTypeIR^{asterisk}^ )` be `callableTypeDefIR`.
-  ... Let `parameterTypeIR~data~^{asterisk}^`, `parameterTypeIR~control~^{asterisk}^`, and `argumentIR^{asterisk}^` be the result of <<Call_action_partial_ok, typing `[ ]`, under typing context `TC`>>.
+  ... Let `ACTION ( parameterIR^{asterisk}^ )` be `callableTypeDefIR`.
+  ... Let `parameterIR~data~^{asterisk}^`, `parameterIR~control~^{asterisk}^`, and `argumentIR^{asterisk}^` be the result of <<Call_action_partial_ok, typing `[ ]`, under typing context `TC`>>.
   ... Check that `argumentIR^{asterisk}^` is an empty list.
-  ... Let `TBLC~1~` be `<<add_action, $add_action(TBLC~0~, prefixedNameIR, parameterTypeIR^{asterisk}^, [ ])>>`.
+  ... Let `TBLC~1~` be `<<add_action, $add_action(TBLC~0~, prefixedNameIR, parameterIR^{asterisk}^, [ ])>>`.
   ... Let `tableActionIR` be `annotationList prefixedNameIR ( [ ] ) ;`.
   ... Result in the updated table context `TBLC~1~` and the typed table action `tableActionIR`.
 . Else if let `prefixedNonTypeName ( argumentList )` be `tableActionReference`:
@@ -3581,7 +3560,7 @@ relation TableAction_ok: `TC`, `TBLC~0~`, and `annotationList tableActionReferen
   ... Let `prefixedNameIR` be <<prefixedNonTypeName, the prefixed name of  `prefixedNonTypeName`>>.
   ... Let `callableTypeDefIR` be <<option_get, *!*>> <<find_callableDef_non_overloaded_t, the non-overloaded callable definition of `prefixedNameIR` in the `LOCAL` layer of `TC`>>.
   ... Check that `callableTypeDefIR` has type `actionTypeIR`.
-  ... Let `ACTION ( parameterTypeIR^{asterisk}^ )` be `callableTypeDefIR`.
+  ... Let `ACTION ( parameterIR^{asterisk}^ )` be `callableTypeDefIR`.
   ... Let `argument^{asterisk}^` be <<flatten_argumentList, the list of arguments in `argumentList`>>.
   ... Let `argumentIR^{asterisk}^` be the list of `argumentIR`, obtained by repeating:
 +
@@ -3590,8 +3569,8 @@ relation TableAction_ok: `TC`, `TBLC~0~`, and `annotationList tableActionReferen
 --
 +
 for each `argument` in `argument^{asterisk}^`
-  ... Let `parameterTypeIR~data~^{asterisk}^`, `parameterTypeIR~control~^{asterisk}^`, and `argumentIR~cast~^{asterisk}^` be the result of <<Call_action_partial_ok, typing `argumentIR^{asterisk}^`, under typing context `TC`>>.
-  ... Let `TBLC~1~` be `<<add_action, $add_action(TBLC~0~, prefixedNameIR, parameterTypeIR^{asterisk}^, argumentIR~cast~^{asterisk}^)>>`.
+  ... Let `parameterIR~data~^{asterisk}^`, `parameterIR~control~^{asterisk}^`, and `argumentIR~cast~^{asterisk}^` be the result of <<Call_action_partial_ok, typing `argumentIR^{asterisk}^`, under typing context `TC`>>.
+  ... Let `TBLC~1~` be `<<add_action, $add_action(TBLC~0~, prefixedNameIR, parameterIR^{asterisk}^, argumentIR~cast~^{asterisk}^)>>`.
   ... Let `tableActionIR` be `annotationList prefixedNameIR ( argumentIR~cast~^{asterisk}^ ) ;`.
   ... Result in the updated table context `TBLC~1~` and the typed table action `tableActionIR`.
 
@@ -3609,13 +3588,13 @@ relation TableActions_ok: `TC`, `TBLC`, and `tableAction^{asterisk}^`
   ... Result in the updated table context `TBLC~2~` and the typed table actions `tableActionIR~h~ {two-colons} tableActionIR~t~^{asterisk}^`.
 
 
-relation Call_action_default_ok: `TC`, `parameterTypeIR^{asterisk}^`, and `argumentIR^{asterisk}^`
+relation Call_action_default_ok: `TC`, `parameterIR^{asterisk}^`, and `argumentIR^{asterisk}^`
 
 
 . Group :
- .. Let `(parameterTypeIR~data~^{asterisk}^, parameterTypeIR~control~^{asterisk}^)` be `<<split_dataplane_parameters, $split_dataplane_parameters(parameterTypeIR^{asterisk}^)>>`.
- .. Let `argumentIR~cast~^{asterisk}^` be the result of <<Call_convention_ok, checking the calling convention of `argumentIR^{asterisk}^` applied to parameter types `parameterTypeIR^{asterisk}^`, under cursor `LOCAL`, typing context `TC`, and action context `ACTION`>>.
- .. Result in the typed argument list `parameterTypeIR~data~^{asterisk}^`.
+ .. Let `(parameterIR~data~^{asterisk}^, parameterIR~control~^{asterisk}^)` be `<<split_dataplane_parameters, $split_dataplane_parameters(parameterIR^{asterisk}^)>>`.
+ .. Let `argumentIR~cast~^{asterisk}^` be the result of <<Call_convention_ok, checking the calling convention of `argumentIR^{asterisk}^` applied to parameter types `parameterIR^{asterisk}^`, under cursor `LOCAL`, typing context `TC`, and action context `ACTION`>>.
+ .. Result in the typed argument list `parameterIR~data~^{asterisk}^`.
 
 
 relation TableDefaultAction_ok: `TC`, `TBLC`, and `= expression`
@@ -3633,7 +3612,7 @@ relation TableDefaultAction_ok: `TC`, `TBLC`, and `= expression`
  .. Let `prefixedNonTypeName` be `callTarget`.
  .. Group prefixedNonTypeName-argumentList:
   ... Let `prefixedNameIR` be <<prefixedNonTypeName, the prefixed name of  `prefixedNonTypeName`>>.
-  ... Let `(parameterTypeIR~action~^{asterisk}^, argumentIR~action~^{asterisk}^)` be <<option_get, *!*>> `<<find_action, $find_action(TBLC, prefixedNameIR)>>`.
+  ... Let `(parameterIR~action~^{asterisk}^, argumentIR~action~^{asterisk}^)` be <<option_get, *!*>> `<<find_action, $find_action(TBLC, prefixedNameIR)>>`.
   ... Let `argument^{asterisk}^` be <<flatten_argumentList, the list of arguments in `argumentList`>>.
   ... Let `argumentIR^{asterisk}^` be the list of `argumentIR`, obtained by repeating:
 +
@@ -3642,9 +3621,9 @@ relation TableDefaultAction_ok: `TC`, `TBLC`, and `= expression`
 --
 +
 for each `argument` in `argument^{asterisk}^`
-  ... Let `parameterTypeIR~action_data~^{asterisk}^`, `parameterTypeIR~action_control~^{asterisk}^`, and `argumentIR~cast~^{asterisk}^` be the result of <<Call_action_default_ok, typing `argumentIR^{asterisk}^`, under typing context `TC`>>.
-  ... Let `argumentIR~action_data~^{asterisk}^` be `argumentIR~action~^{asterisk}^[0 : the length of parameterTypeIR~action_data~^{asterisk}^]`.
-  ... Let `argumentIR~cast_data~^{asterisk}^` be `argumentIR~cast~^{asterisk}^[0 : the length of parameterTypeIR~action_data~^{asterisk}^]`.
+  ... Let `parameterIR~action_data~^{asterisk}^`, `parameterIR~action_control~^{asterisk}^`, and `argumentIR~cast~^{asterisk}^` be the result of <<Call_action_default_ok, typing `argumentIR^{asterisk}^`, under typing context `TC`>>.
+  ... Let `argumentIR~action_data~^{asterisk}^` be `argumentIR~action~^{asterisk}^[0 : the length of parameterIR~action_data~^{asterisk}^]`.
+  ... Let `argumentIR~cast_data~^{asterisk}^` be `argumentIR~cast~^{asterisk}^[0 : the length of parameterIR~action_data~^{asterisk}^]`.
   ... Check that `argumentIR~action_data~` is equal to `argumentIR~cast_data~`, for all `argumentIR~action_data~` in `argumentIR~action_data~^{asterisk}^` and `argumentIR~cast_data~` in `argumentIR~cast_data~^{asterisk}^`.
   ... Result in the typed default action `prefixedNameIR ( argumentIR~cast~^{asterisk}^ )`.
 
@@ -3774,7 +3753,7 @@ relation TableEntry_action_ok: `TC`, `TBLC`, and `tableActionReference`
 . Else if let `prefixedNonTypeName ( argumentList )` be `tableActionReference`:
  .. Group prefixedNonTypeName-argumentList:
   ... Let `prefixedNameIR` be <<prefixedNonTypeName, the prefixed name of  `prefixedNonTypeName`>>.
-  ... Let `(parameterTypeIR~action~^{asterisk}^, argumentIR~action~^{asterisk}^)` be <<option_get, *!*>> `<<find_action, $find_action(TBLC, prefixedNameIR)>>`.
+  ... Let `(parameterIR~action~^{asterisk}^, argumentIR~action~^{asterisk}^)` be <<option_get, *!*>> `<<find_action, $find_action(TBLC, prefixedNameIR)>>`.
   ... Let `argument^{asterisk}^` be <<flatten_argumentList, the list of arguments in `argumentList`>>.
   ... Let `argumentIR^{asterisk}^` be the list of `argumentIR`, obtained by repeating:
 +
@@ -3783,9 +3762,9 @@ relation TableEntry_action_ok: `TC`, `TBLC`, and `tableActionReference`
 --
 +
 for each `argument` in `argument^{asterisk}^`
-  ... Let `parameterTypeIR~action_data~^{asterisk}^`, `parameterTypeIR~action_control~^{asterisk}^`, and `argumentIR~cast~^{asterisk}^` be the result of <<Call_action_default_ok, typing `argumentIR^{asterisk}^`, under typing context `TC`>>.
-  ... Let `argumentIR~action_data~^{asterisk}^` be `argumentIR~action~^{asterisk}^[0 : the length of parameterTypeIR~action_data~^{asterisk}^]`.
-  ... Let `argumentIR~cast_data~^{asterisk}^` be `argumentIR~cast~^{asterisk}^[0 : the length of parameterTypeIR~action_data~^{asterisk}^]`.
+  ... Let `parameterIR~action_data~^{asterisk}^`, `parameterIR~action_control~^{asterisk}^`, and `argumentIR~cast~^{asterisk}^` be the result of <<Call_action_default_ok, typing `argumentIR^{asterisk}^`, under typing context `TC`>>.
+  ... Let `argumentIR~action_data~^{asterisk}^` be `argumentIR~action~^{asterisk}^[0 : the length of parameterIR~action_data~^{asterisk}^]`.
+  ... Let `argumentIR~cast_data~^{asterisk}^` be `argumentIR~cast~^{asterisk}^[0 : the length of parameterIR~action_data~^{asterisk}^]`.
   ... Check that `argumentIR~action_data~` is equal to `argumentIR~cast_data~`, for all `argumentIR~action_data~` in `argumentIR~action_data~^{asterisk}^` and `argumentIR~cast_data~` in `argumentIR~cast_data~^{asterisk}^`.
   ... Result in the typed table action reference `prefixedNameIR ( argumentIR~cast~^{asterisk}^ )`.
 
@@ -4349,19 +4328,12 @@ for each `typeParameter` in `typeParameter^{asterisk}^`
   ... Check that `tid^{asterisk}^` is an empty list.
   ... Let `parameter^{asterisk}^` be <<flatten_parameterList, the list of parameters in `parameterList`>>.
   ... Let `parameterIR^{asterisk}^` and `tid~impl~^{asterisk}^` be the result of <<Parameters_ok, typing `parameter^{asterisk}^`, under cursor `LOCAL` and typing context `TC~1~`>>.
-  ... Let `parameterTypeIR^{asterisk}^` be the list of `parameterTypeIR`, obtained by repeating:
-+
---
-      * Let `parameterTypeIR` be <<type_of_parameterIR, the type of  `parameterIR`>>.
---
-+
-for each `parameterIR` in `parameterIR^{asterisk}^`
-  ... Let `TC~2~` be `<<add_parameters_t, $add_parameters_t(LOCAL, TC~1~, parameterTypeIR^{asterisk}^)>>`.
+  ... Let `TC~2~` be `<<add_parameters_t, $add_parameters_t(LOCAL, TC~1~, parameterIR^{asterisk}^)>>`.
   ... Let `TC~3~` be `TC~2~[LOCAL.KIND = FUNCTION : typeIR~ret~]`.
   ... Let `++_++`, `f`, and `blockStatementIR` be the result of <<Block_ok, typing `blockStatement`, under typing context `TC~3~` and abstract control flow `CONT`>>.
   ... Else if `f` matches pattern `RET`:
    .... Let `cid` be `<<cid, $cid(name, parameterList)>>`.
-   .... Let `definedFunctionTypeDefIR` be `FUNCTION < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterTypeIR^{asterisk}^ ) : typeIR~ret~`.
+   .... Let `definedFunctionTypeDefIR` be `FUNCTION < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) : typeIR~ret~`.
    .... Check that <<CallableTypeDef_wf, `definedFunctionTypeDefIR` is a well-formed type, assuming bound type ids `$bound(p, TC~0~)`>>.
    .... Let `TC~4~` be `<<add_callableDef_overload_t, $add_callableDef_overload_t(p, TC~0~, cid, definedFunctionTypeDefIR)>>`.
    .... Let `nameIR` be <<name, the name of `name`>>.
@@ -4369,7 +4341,7 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
    .... Result in the modified typing context `TC~4~` and the typed declaration `functionDeclarationIR`.
   ... Else if `typeIR~ret~` is equal to `VOID`:
    .... Let `cid` be `<<cid, $cid(name, parameterList)>>`.
-   .... Let `definedFunctionTypeDefIR` be `FUNCTION < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterTypeIR^{asterisk}^ ) : typeIR~ret~`.
+   .... Let `definedFunctionTypeDefIR` be `FUNCTION < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) : typeIR~ret~`.
    .... Check that <<CallableTypeDef_wf, `definedFunctionTypeDefIR` is a well-formed type, assuming bound type ids `$bound(p, TC~0~)`>>.
    .... Let `TC~4~` be `<<add_callableDef_overload_t, $add_callableDef_overload_t(p, TC~0~, cid, definedFunctionTypeDefIR)>>`.
    .... Let `nameIR` be <<name, the name of `name`>>.
@@ -4381,17 +4353,10 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
   ... Let `parameter^{asterisk}^` be <<flatten_parameterList, the list of parameters in `parameterList`>>.
   ... Let `parameterIR^{asterisk}^` and `tid^{asterisk}^` be the result of <<Parameters_ok, typing `parameter^{asterisk}^`, under cursor `LOCAL` and typing context `TC~1~`>>.
   ... Check that `tid^{asterisk}^` is an empty list.
-  ... Let `parameterTypeIR^{asterisk}^` be the list of `parameterTypeIR`, obtained by repeating:
-+
---
-      * Let `parameterTypeIR` be <<type_of_parameterIR, the type of  `parameterIR`>>.
---
-+
-for each `parameterIR` in `parameterIR^{asterisk}^`
-  ... Let `TC~2~` be `<<add_parameters_t, $add_parameters_t(LOCAL, TC~1~, parameterTypeIR^{asterisk}^)>>`.
+  ... Let `TC~2~` be `<<add_parameters_t, $add_parameters_t(LOCAL, TC~1~, parameterIR^{asterisk}^)>>`.
   ... Let `++_++`, `++_++`, and `blockStatementIR` be the result of <<Block_ok, typing `blockStatement`, under typing context `TC~2~` and abstract control flow `CONT`>>.
   ... Let `cid` be `<<cid, $cid(name, parameterList)>>`.
-  ... Let `actionTypeDefIR` be `ACTION ( parameterTypeIR^{asterisk}^ )`.
+  ... Let `actionTypeDefIR` be `ACTION ( parameterIR^{asterisk}^ )`.
   ... Check that <<CallableTypeDef_wf, `actionTypeDefIR` is a well-formed type, assuming bound type ids `$bound(p, TC~0~)`>>.
   ... Let `TC~3~` be `<<add_callableDef_non_overload_t, $add_callableDef_non_overload_t(p, TC~0~, cid, actionTypeDefIR)>>`.
   ... Let `nameIR` be <<name, the name of `name`>>.
@@ -4475,16 +4440,9 @@ for each `typeParameter` in `typeParameter^{asterisk}^`
   ... Let `TC~2~` be `TC~1~[LOCAL.KIND = EXTERN_FUNCTION : typeIR~ret~]`.
   ... Let `parameter^{asterisk}^` be <<flatten_parameterList, the list of parameters in `parameterList`>>.
   ... Let `parameterIR^{asterisk}^` and `tid~impl~^{asterisk}^` be the result of <<Parameters_ok, typing `parameter^{asterisk}^`, under cursor `LOCAL` and typing context `TC~2~`>>.
-  ... Let `parameterTypeIR^{asterisk}^` be the list of `parameterTypeIR`, obtained by repeating:
-+
---
-      * Let `parameterTypeIR` be <<type_of_parameterIR, the type of  `parameterIR`>>.
---
-+
-for each `parameterIR` in `parameterIR^{asterisk}^`
-  ... Let `TC~3~` be `<<add_parameters_t, $add_parameters_t(LOCAL, TC~2~, parameterTypeIR^{asterisk}^)>>`.
+  ... Let `TC~3~` be `<<add_parameters_t, $add_parameters_t(LOCAL, TC~2~, parameterIR^{asterisk}^)>>`.
   ... Let `cid` be `<<cid, $cid(name, parameterList)>>`.
-  ... Let `externFunctionTypeDefIR` be `EXTERN_FUNCTION < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterTypeIR^{asterisk}^ ) : typeIR~ret~`.
+  ... Let `externFunctionTypeDefIR` be `EXTERN_FUNCTION < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) : typeIR~ret~`.
   ... Check that <<CallableTypeDef_wf, `externFunctionTypeDefIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
   ... Let `TC~4~` be `<<add_callableDef_overload_t, $add_callableDef_overload_t(GLOBAL, TC~0~, cid, externFunctionTypeDefIR)>>`.
   ... Let `nameIR` be <<name, the name of `name`>>.
@@ -4535,36 +4493,22 @@ for each `callableTypeDefIR` in `callableTypeDefIR^{asterisk}^`
   ... Let `constructorParameter^{asterisk}^` be <<flatten_constructorParameterListOpt, the list of constructor parameters in `constructorParameterListOpt`>>.
   ... Let `constructorParameterIR^{asterisk}^` and `tid^{asterisk}^` be the result of <<ConstructorParameters_ok, typing `constructorParameter^{asterisk}^`, under cursor `BLOCK` and typing context `TC~1~`>>.
   ... Check that `tid^{asterisk}^` is an empty list.
-  ... Let `constructorParameterTypeIR^{asterisk}^` be the list of `constructorParameterTypeIR`, obtained by repeating:
-+
---
-      * Let `constructorParameterTypeIR` be <<type_of_constructorParameterIR, the type of  `constructorParameterIR`>>.
---
-+
-for each `constructorParameterIR` in `constructorParameterIR^{asterisk}^`
-  ... Let `TC~2~` be `<<add_parameters_t, $add_parameters_t(BLOCK, TC~1~, constructorParameterTypeIR^{asterisk}^)>>`.
+  ... Let `TC~2~` be `<<add_parameters_t, $add_parameters_t(BLOCK, TC~1~, constructorParameterIR^{asterisk}^)>>`.
   ... Let `parameter^{asterisk}^` be <<flatten_parameterList, the list of parameters in `parameterList`>>.
   ... Let `parameterIR^{asterisk}^` and `tid'^{asterisk}^` be the result of <<Parameters_ok, typing `parameter^{asterisk}^`, under cursor `BLOCK` and typing context `TC~2~`>>.
   ... Check that `tid'^{asterisk}^` is an empty list.
-  ... Let `parameterTypeIR^{asterisk}^` be the list of `parameterTypeIR`, obtained by repeating:
-+
---
-      * Let `parameterTypeIR` be <<type_of_parameterIR, the type of  `parameterIR`>>.
---
-+
-for each `parameterIR` in `parameterIR^{asterisk}^`
-  ... Let `TC~3~` be `<<add_parameters_t, $add_parameters_t(BLOCK, TC~2~, parameterTypeIR^{asterisk}^)>>`.
+  ... Let `TC~3~` be `<<add_parameters_t, $add_parameters_t(BLOCK, TC~2~, parameterIR^{asterisk}^)>>`.
   ... Let `parserLocalDeclaration^{asterisk}^` be <<flatten_parserLocalDeclarationList, the list of parser local declarations in `parserLocalDeclarationList`>>.
   ... Let `TC~4~` and `parserLocalDeclarationIR^{asterisk}^` be the result of <<ParserLocalDecls_ok, typing `parserLocalDeclaration^{asterisk}^`, under typing context `TC~3~`>>.
   ... Let `TC~5~` be `TC~4~[LOCAL.KIND = PARSER_STATE]`.
   ... Let `parserState^{asterisk}^` be <<flatten_parserStateList, the list of parser states in `parserStateList`>>.
   ... Let `parserStateIR^{asterisk}^` be the result of <<ParserStates_ok, typing `parserState^{asterisk}^`, under typing context `TC~5~`>>.
-  ... Let `callableTypeDefIR` be `PARSER_APPLY ( parameterTypeIR^{asterisk}^ )`.
+  ... Let `callableTypeDefIR` be `PARSER_APPLY ( parameterIR^{asterisk}^ )`.
   ... Check that <<CallableTypeDef_wf, `callableTypeDefIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
   ... Let `cid` be `<<cid_, $cid_(name, constructorParameterListOpt)>>`.
-  ... Let `parserObjectTypeDefIR` be `PARSER < [ ] , [ ] > ( parameterTypeIR^{asterisk}^ )`.
+  ... Let `parserObjectTypeDefIR` be `PARSER < [ ] , [ ] > ( parameterIR^{asterisk}^ )`.
   ... Let `typeIR~parser_spec~` be `parserObjectTypeDefIR < [ ] >`.
-  ... Let `constructorTypeDefIR` be `CONSTRUCTOR < [ ] , [ ] > ( constructorParameterTypeIR^{asterisk}^ ) : typeIR~parser_spec~`.
+  ... Let `constructorTypeDefIR` be `CONSTRUCTOR < [ ] , [ ] > ( constructorParameterIR^{asterisk}^ ) : typeIR~parser_spec~`.
   ... Check that <<ConstructorTypeDef_wf, `constructorTypeDefIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
   ... Let `TC~6~` be `<<add_constructorDef_t, $add_constructorDef_t(TC~0~, cid, constructorTypeDefIR)>>`.
   ... Let `nameIR` be <<name, the name of `name`>>.
@@ -4577,35 +4521,21 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
   ... Let `constructorParameter^{asterisk}^` be <<flatten_constructorParameterListOpt, the list of constructor parameters in `constructorParameterListOpt`>>.
   ... Let `constructorParameterIR^{asterisk}^` and `tid^{asterisk}^` be the result of <<ConstructorParameters_ok, typing `constructorParameter^{asterisk}^`, under cursor `BLOCK` and typing context `TC~1~`>>.
   ... Check that `tid^{asterisk}^` is an empty list.
-  ... Let `constructorParameterTypeIR^{asterisk}^` be the list of `constructorParameterTypeIR`, obtained by repeating:
-+
---
-      * Let `constructorParameterTypeIR` be <<type_of_constructorParameterIR, the type of  `constructorParameterIR`>>.
---
-+
-for each `constructorParameterIR` in `constructorParameterIR^{asterisk}^`
-  ... Let `TC~2~` be `<<add_parameters_t, $add_parameters_t(BLOCK, TC~1~, constructorParameterTypeIR^{asterisk}^)>>`.
+  ... Let `TC~2~` be `<<add_parameters_t, $add_parameters_t(BLOCK, TC~1~, constructorParameterIR^{asterisk}^)>>`.
   ... Let `parameter^{asterisk}^` be <<flatten_parameterList, the list of parameters in `parameterList`>>.
   ... Let `parameterIR^{asterisk}^` and `tid'^{asterisk}^` be the result of <<Parameters_ok, typing `parameter^{asterisk}^`, under cursor `BLOCK` and typing context `TC~2~`>>.
   ... Check that `tid'^{asterisk}^` is an empty list.
-  ... Let `parameterTypeIR^{asterisk}^` be the list of `parameterTypeIR`, obtained by repeating:
-+
---
-      * Let `parameterTypeIR` be <<type_of_parameterIR, the type of  `parameterIR`>>.
---
-+
-for each `parameterIR` in `parameterIR^{asterisk}^`
-  ... Let `TC~3~` be `<<add_parameters_t, $add_parameters_t(BLOCK, TC~2~, parameterTypeIR^{asterisk}^)>>`.
+  ... Let `TC~3~` be `<<add_parameters_t, $add_parameters_t(BLOCK, TC~2~, parameterIR^{asterisk}^)>>`.
   ... Let `controlLocalDeclaration^{asterisk}^` be <<flatten_controlLocalDeclarationList, the list of control local declarations in `controlLocalDeclarationList`>>.
   ... Let `TC~4~` and `controlLocalDeclarationIR^{asterisk}^` be the result of <<ControlLocalDecls_ok, typing `controlLocalDeclaration^{asterisk}^`, under typing context `TC~3~`>>.
   ... Let `TC~5~` be `TC~4~[LOCAL.KIND = CONTROL_APPLY_METHOD]`.
   ... Let `++_++`, `++_++`, and `controlBodyIR` be the result of <<Block_ok, typing `controlBody`, under typing context `TC~5~` and abstract control flow `CONT`>>.
-  ... Let `callableTypeDefIR` be `CONTROL_APPLY ( parameterTypeIR^{asterisk}^ )`.
+  ... Let `callableTypeDefIR` be `CONTROL_APPLY ( parameterIR^{asterisk}^ )`.
   ... Check that <<CallableTypeDef_wf, `callableTypeDefIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
   ... Let `cid` be `<<cid_, $cid_(name, constructorParameterListOpt)>>`.
-  ... Let `controlObjectTypeDefIR` be `CONTROL < [ ] , [ ] > ( parameterTypeIR^{asterisk}^ )`.
+  ... Let `controlObjectTypeDefIR` be `CONTROL < [ ] , [ ] > ( parameterIR^{asterisk}^ )`.
   ... Let `typeIR~control_spec~` be `controlObjectTypeDefIR < [ ] >`.
-  ... Let `constructorTypeDefIR` be `CONSTRUCTOR < [ ] , [ ] > ( constructorParameterTypeIR^{asterisk}^ ) : typeIR~control_spec~`.
+  ... Let `constructorTypeDefIR` be `CONSTRUCTOR < [ ] , [ ] > ( constructorParameterIR^{asterisk}^ ) : typeIR~control_spec~`.
   ... Check that <<ConstructorTypeDef_wf, `constructorTypeDefIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
   ... Let `TC~6~` be `<<add_constructorDef_t, $add_constructorDef_t(TC~0~, cid, constructorTypeDefIR)>>`.
   ... Let `nameIR` be <<name, the name of `name`>>.
@@ -4848,15 +4778,8 @@ for each `typeParameter` in `typeParameter^{asterisk}^`
   ... Let `TC~2~` be `<<add_typeDefs_t, $add_typeDefs_t(BLOCK, TC~1~, tid~expl~^{asterisk}^, (tid~expl~)^{asterisk}^)>>`.
   ... Let `parameter^{asterisk}^` be <<flatten_parameterList, the list of parameters in `parameterList`>>.
   ... Let `parameterIR^{asterisk}^` and `tid~impl~^{asterisk}^` be the result of <<Parameters_ok, typing `parameter^{asterisk}^`, under cursor `BLOCK` and typing context `TC~2~`>>.
-  ... Let `parameterTypeIR^{asterisk}^` be the list of `parameterTypeIR`, obtained by repeating:
-+
---
-      * Let `parameterTypeIR` be <<type_of_parameterIR, the type of  `parameterIR`>>.
---
-+
-for each `parameterIR` in `parameterIR^{asterisk}^`
   ... Let `nameIR` be <<name, the name of `name`>>.
-  ... Let `parserObjectTypeDefIR` be `PARSER < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterTypeIR^{asterisk}^ )`.
+  ... Let `parserObjectTypeDefIR` be `PARSER < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ )`.
   ... Check that <<TypeDef_wf, `parserObjectTypeDefIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
   ... Let `TC~3~` be `<<add_typeDef_t, $add_typeDef_t(GLOBAL, TC~0~, nameIR, parserObjectTypeDefIR)>>`.
   ... Let `parserTypeDeclarationIR` be `annotationList PARSER nameIR < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) ;`.
@@ -4875,15 +4798,8 @@ for each `typeParameter` in `typeParameter^{asterisk}^`
   ... Let `TC~2~` be `<<add_typeDefs_t, $add_typeDefs_t(BLOCK, TC~1~, tid~expl~^{asterisk}^, (tid~expl~)^{asterisk}^)>>`.
   ... Let `parameter^{asterisk}^` be <<flatten_parameterList, the list of parameters in `parameterList`>>.
   ... Let `parameterIR^{asterisk}^` and `tid~impl~^{asterisk}^` be the result of <<Parameters_ok, typing `parameter^{asterisk}^`, under cursor `BLOCK` and typing context `TC~2~`>>.
-  ... Let `parameterTypeIR^{asterisk}^` be the list of `parameterTypeIR`, obtained by repeating:
-+
---
-      * Let `parameterTypeIR` be <<type_of_parameterIR, the type of  `parameterIR`>>.
---
-+
-for each `parameterIR` in `parameterIR^{asterisk}^`
   ... Let `nameIR` be <<name, the name of `name`>>.
-  ... Let `controlObjectTypeDefIR` be `CONTROL < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterTypeIR^{asterisk}^ )`.
+  ... Let `controlObjectTypeDefIR` be `CONTROL < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ )`.
   ... Check that <<TypeDef_wf, `controlObjectTypeDefIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
   ... Let `TC~3~` be `<<add_typeDef_t, $add_typeDef_t(GLOBAL, TC~0~, nameIR, controlObjectTypeDefIR)>>`.
   ... Let `controlTypeDeclarationIR` be `annotationList CONTROL nameIR < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) ;`.
@@ -4902,27 +4818,20 @@ for each `typeParameter` in `typeParameter^{asterisk}^`
   ... Let `TC~2~` be `<<add_typeDefs_t, $add_typeDefs_t(BLOCK, TC~1~, tid~expl~^{asterisk}^, (tid~expl~)^{asterisk}^)>>`.
   ... Let `constructorParameter^{asterisk}^` be <<flatten_parameterList, the list of parameters in `parameterList`>>.
   ... Let `constructorParameterIR^{asterisk}^` and `tid~impl~^{asterisk}^` be the result of <<ConstructorParameters_ok, typing `constructorParameter^{asterisk}^`, under cursor `BLOCK` and typing context `TC~2~`>>.
-  ... Let `constructorParameterTypeIR^{asterisk}^` be the list of `constructorParameterTypeIR`, obtained by repeating:
-+
---
-      * Let `constructorParameterTypeIR` be <<type_of_constructorParameterIR, the type of  `constructorParameterIR`>>.
---
-+
-for each `constructorParameterIR` in `constructorParameterIR^{asterisk}^`
   ... Let `nameIR` be <<name, the name of `name`>>.
   ... Let `typeIR~package_inner~^{asterisk}^` be the list of `typeIR~package_inner~`, obtained by repeating:
 +
 --
-      * Let `typeIR~package_inner~` be the type of `constructorParameterTypeIR`.
+      * Let `typeIR~package_inner~` be the type of `constructorParameterIR`.
 --
 +
-for each `constructorParameterTypeIR` in `constructorParameterTypeIR^{asterisk}^`
+for each `constructorParameterIR` in `constructorParameterIR^{asterisk}^`
   ... Let `packageObjectTypeDefIR` be `PACKAGE < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > { typeIR~package_inner~^{asterisk}^ }`.
   ... Check that <<TypeDef_wf, `packageObjectTypeDefIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
   ... Let `TC~3~` be `<<add_typeDef_t, $add_typeDef_t(GLOBAL, TC~0~, nameIR, packageObjectTypeDefIR)>>`.
   ... Let `cid` be `<<cid_, $cid_(name, ( parameterList ))>>`.
   ... Let `typeIR~package_spec~` be `packageObjectTypeDefIR < (tid~expl~)^{asterisk}^ {pp} (tid~impl~)^{asterisk}^ >`.
-  ... Let `constructorTypeDefIR` be `CONSTRUCTOR < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( constructorParameterTypeIR^{asterisk}^ ) : typeIR~package_spec~`.
+  ... Let `constructorTypeDefIR` be `CONSTRUCTOR < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( constructorParameterIR^{asterisk}^ ) : typeIR~package_spec~`.
   ... Check that <<ConstructorTypeDef_wf, `constructorTypeDefIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
   ... Let `TC~4~` be `<<add_constructorDef_t, $add_constructorDef_t(TC~3~, cid, constructorTypeDefIR)>>`.
   ... Let `packageTypeDeclarationIR` be `annotationList PACKAGE nameIR < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( constructorParameterIR^{asterisk}^ ) ;`.
@@ -4954,7 +4863,7 @@ relation Program_ok: `p4program`
  .. Result in the typed P4 program `declarationIR^{asterisk}^ ;`.
 
 
-relation Call_convention_expr_ok: `p`, `TC`, `actctxt`, `direction typeIR~param~ ++_++ ++_++^?^`, and `typedExpressionIR~arg~`
+relation Call_convention_expr_ok: `p`, `TC`, `actctxt`, `++_++ direction typeIR~param~ ++_++ ++_++`, and `typedExpressionIR~arg~`
 
 
 . If `direction` matches pattern `IN`:
@@ -4985,43 +4894,43 @@ relation Call_convention_expr_ok: `p`, `TC`, `actctxt`, `direction typeIR~param~
    .... Result in `typedExpressionIR~arg~`.
 
 
-relation Call_convention_argument_ok: `p`, `TC`, `actctxt`, `parameterTypeIR`, and `argumentIR`
+relation Call_convention_argument_ok: `p`, `TC`, `actctxt`, `parameterIR`, and `argumentIR`
 
 
 . Check that `argumentIR` has type `typedExpressionIR`.
 . Let `typedExpressionIR` be `argumentIR`.
 . Group typedExpression:
- .. Let `typedExpressionIR~cast~` be the result of <<Call_convention_expr_ok, checking the calling convention of `typedExpressionIR` applied to parameter type `parameterTypeIR`, under cursor `p`, typing context `TC`, and action context `actctxt`>>.
+ .. Let `typedExpressionIR~cast~` be the result of <<Call_convention_expr_ok, checking the calling convention of `typedExpressionIR` applied to parameter type `parameterIR`, under cursor `p`, typing context `TC`, and action context `actctxt`>>.
  .. Result in `typedExpressionIR~cast~`.
 . If let `nameIR = typedExpressionIR` be `argumentIR`:
  .. Group nameIR-typedExpression:
-  ... Let `typedExpressionIR~cast~` be the result of <<Call_convention_expr_ok, checking the calling convention of `typedExpressionIR` applied to parameter type `parameterTypeIR`, under cursor `p`, typing context `TC`, and action context `actctxt`>>.
+  ... Let `typedExpressionIR~cast~` be the result of <<Call_convention_expr_ok, checking the calling convention of `typedExpressionIR` applied to parameter type `parameterIR`, under cursor `p`, typing context `TC`, and action context `actctxt`>>.
   ... Result in `nameIR = typedExpressionIR~cast~`.
 . Else if let `nameIR = _` be `argumentIR`:
  .. Group nameIR-dontcare:
-  ... Let `direction` be the direction of `parameterTypeIR`.
+  ... Let `direction` be the direction of `parameterIR`.
   ... Check that `direction` matches pattern `OUT`.
   ... Result in `nameIR = _`.
 . Else if `argumentIR` matches pattern `_`:
  .. Group dontcare:
-  ... Let `direction` be the direction of `parameterTypeIR`.
+  ... Let `direction` be the direction of `parameterIR`.
   ... Check that `direction` matches pattern `OUT`.
   ... Result in `_`.
 
 
-relation Call_convention_ok: `p`, `TC`, `actctxt`, `parameterTypeIR^{asterisk}^`, and `argumentIR^{asterisk}^`
+relation Call_convention_ok: `p`, `TC`, `actctxt`, `parameterIR^{asterisk}^`, and `argumentIR^{asterisk}^`
 
 
-. If `parameterTypeIR^{asterisk}^` is an empty list:
+. If `parameterIR^{asterisk}^` is an empty list:
  .. Check that `argumentIR^{asterisk}^` is an empty list.
  .. Group nil:
   ... Result in `[ ]`.
-. Else let `parameterTypeIR~h~ {two-colons} parameterTypeIR~t~^{asterisk}^` be `parameterTypeIR^{asterisk}^`:
+. Else let `parameterIR~h~ {two-colons} parameterIR~t~^{asterisk}^` be `parameterIR^{asterisk}^`:
  .. Check that `argumentIR^{asterisk}^` is a non-empty list.
  .. Let `argumentIR~h~ {two-colons} argumentIR~t~^{asterisk}^` be `argumentIR^{asterisk}^`.
  .. Group cons:
-  ... Let `argumentIR~h_cast~` be the result of <<Call_convention_argument_ok, checking the calling convention of `argumentIR~h~` applied to parameter type `parameterTypeIR~h~`, under cursor `p`, typing context `TC`, and action context `actctxt`>>.
-  ... Let `argumentIR~t_cast~^{asterisk}^` be the result of <<Call_convention_ok, checking the calling convention of `argumentIR~t~^{asterisk}^` applied to parameter types `parameterTypeIR~t~^{asterisk}^`, under cursor `p`, typing context `TC`, and action context `actctxt`>>.
+  ... Let `argumentIR~h_cast~` be the result of <<Call_convention_argument_ok, checking the calling convention of `argumentIR~h~` applied to parameter type `parameterIR~h~`, under cursor `p`, typing context `TC`, and action context `actctxt`>>.
+  ... Let `argumentIR~t_cast~^{asterisk}^` be the result of <<Call_convention_ok, checking the calling convention of `argumentIR~t~^{asterisk}^` applied to parameter types `parameterIR~t~^{asterisk}^`, under cursor `p`, typing context `TC`, and action context `actctxt`>>.
   ... Result in `argumentIR~h_cast~ {two-colons} argumentIR~t_cast~^{asterisk}^`.
 
 
@@ -5122,8 +5031,8 @@ relation CallableType_ok: `p`, `TC`, `callableTargetIR'`, `typeArgumentIR'^{aste
     ..... Let `typeIR'` be <<canon_typeIR, the canonicalized form of `typeIR~base~`>>.
     ..... Check that `typeIR'` has type `headerStackTypeIR`.
     ..... Let `typeIR [ ++_++ ]` be `typeIR'`.
-    ..... Let `parameterTypeIR` be `INT "count" None`.
-    ..... Let `methodTypeIR` be `BUILTIN_METHOD ( [parameterTypeIR] ) : INT`.
+    ..... Let `parameterIR` be `INT "count" None`.
+    ..... Let `methodTypeIR` be `BUILTIN_METHOD ( [parameterIR] ) : INT`.
     ..... Result in `methodTypeIR`, `[ ]`, and `[ ]`.
  .. Group typedExpressionIR-nameIR-extern-method:
   ... Let `typeIR~base~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~base~`>>.
@@ -5145,15 +5054,15 @@ relation CallableType_ok: `p`, `TC`, `callableTargetIR'`, `typeArgumentIR'^{aste
    .... Let `typeIR~base~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~base~`>>.
    .... Let `typeIR` be <<canon_typeIR, the canonicalized form of `typeIR~base~`>>.
    .... Check that `typeIR` has type `parserObjectTypeIR`.
-   .... Let `PARSER ( parameterTypeIR^{asterisk}^ )` be `typeIR`.
-   .... Let `parserApplyMethodTypeIR` be `PARSER_APPLY ( parameterTypeIR^{asterisk}^ )`.
+   .... Let `PARSER ( parameterIR^{asterisk}^ )` be `typeIR`.
+   .... Let `parserApplyMethodTypeIR` be `PARSER_APPLY ( parameterIR^{asterisk}^ )`.
    .... Let `id~param~^{asterisk}^` be the list of `id~param~` and `value~param~^?^^{asterisk}^` be the list of `value~param~^?^`, obtained by repeating:
 +
 --
-        * Let `id~param~` and `value~param~^?^` be the name and the default value of `parameterTypeIR`.
+        * Let `id~param~` and `(= value~param~)^?^` be the name and the default initializer of `parameterIR`.
 --
 +
-for each `parameterTypeIR` in `parameterTypeIR^{asterisk}^`
+for each `parameterIR` in `parameterIR^{asterisk}^`
    .... Let `pid^{asterisk}^` be the list of `pid`, obtained by repeating:
 +
 --
@@ -5170,15 +5079,15 @@ for each `id~param~` in `id~param~^{asterisk}^` and `value~param~^?^` in `value~
    .... Let `typeIR~base~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~base~`>>.
    .... Let `typeIR` be <<canon_typeIR, the canonicalized form of `typeIR~base~`>>.
    .... Check that `typeIR` has type `controlObjectTypeIR`.
-   .... Let `CONTROL ( parameterTypeIR^{asterisk}^ )` be `typeIR`.
-   .... Let `controlApplyMethodTypeIR` be `CONTROL_APPLY ( parameterTypeIR^{asterisk}^ )`.
+   .... Let `CONTROL ( parameterIR^{asterisk}^ )` be `typeIR`.
+   .... Let `controlApplyMethodTypeIR` be `CONTROL_APPLY ( parameterIR^{asterisk}^ )`.
    .... Let `id~param~^{asterisk}^` be the list of `id~param~` and `value~param~^?^^{asterisk}^` be the list of `value~param~^?^`, obtained by repeating:
 +
 --
-        * Let `id~param~` and `value~param~^?^` be the name and the default value of `parameterTypeIR`.
+        * Let `id~param~` and `(= value~param~)^?^` be the name and the default initializer of `parameterIR`.
 --
 +
-for each `parameterTypeIR` in `parameterTypeIR^{asterisk}^`
+for each `parameterIR` in `parameterIR^{asterisk}^`
    .... Let `pid^{asterisk}^` be the list of `pid`, obtained by repeating:
 +
 --
@@ -5208,22 +5117,22 @@ for each `id~param~` in `id~param~^{asterisk}^` and `value~param~^?^` in `value~
 relation Call_ok: `p`, `TC`, `callableTypeIR`, `typeArgumentIR^{asterisk}^`, `tid^{asterisk}^`, `argumentIR^{asterisk}^`, and `id~default~^{asterisk}^`
 
 
-. If let `ACTION ( parameterTypeIR^{asterisk}^ )` be `callableTypeIR`:
+. If let `ACTION ( parameterIR^{asterisk}^ )` be `callableTypeIR`:
  .. Check that `typeArgumentIR^{asterisk}^` is an empty list.
  .. Check that `tid^{asterisk}^` is an empty list.
  .. Group action:
-  ... Let `parameterTypeIR~non_default~^{asterisk}^` be `<<filter_default_parameterTypeIRs, $filter_default_parameterTypeIRs(parameterTypeIR^{asterisk}^, id~default~^{asterisk}^)>>`.
-  ... Check that the length of `parameterTypeIR~non_default~^{asterisk}^` is equal to the length of `argumentIR^{asterisk}^`.
-  ... Let `parameterTypeIR~aligned~^{asterisk}^` be `<<align_parameterTypeIRs, $align_parameterTypeIRs(parameterTypeIR~non_default~^{asterisk}^, argumentIR^{asterisk}^)>>`.
+  ... Let `parameterIR~non_default~^{asterisk}^` be `<<filter_default_parameterIRs, $filter_default_parameterIRs(parameterIR^{asterisk}^, id~default~^{asterisk}^)>>`.
+  ... Check that the length of `parameterIR~non_default~^{asterisk}^` is equal to the length of `argumentIR^{asterisk}^`.
+  ... Let `parameterIR~aligned~^{asterisk}^` be `<<align_parameterIRs, $align_parameterIRs(parameterIR~non_default~^{asterisk}^, argumentIR^{asterisk}^)>>`.
   ... Check that `<<callable_action, $callable_action(p, TC)>>`.
-  ... Let `argumentIR~cast~^{asterisk}^` be the result of <<Call_convention_ok, checking the calling convention of `argumentIR^{asterisk}^` applied to parameter types `parameterTypeIR~aligned~^{asterisk}^`, under cursor `p`, typing context `TC`, and action context `ACTION`>>.
+  ... Let `argumentIR~cast~^{asterisk}^` be the result of <<Call_convention_ok, checking the calling convention of `argumentIR^{asterisk}^` applied to parameter types `parameterIR~aligned~^{asterisk}^`, under cursor `p`, typing context `TC`, and action context `ACTION`>>.
   ... Result in `VOID`, `[ ]`, and `argumentIR~cast~^{asterisk}^`.
-. Else if let `FUNCTION ( parameterTypeIR^{asterisk}^ ) : typeIR~ret~` be `callableTypeIR`:
+. Else if let `FUNCTION ( parameterIR^{asterisk}^ ) : typeIR~ret~` be `callableTypeIR`:
  .. Group definedFunctionTypeIR:
-  ... Let `parameterTypeIR~non_default~^{asterisk}^` be `<<filter_default_parameterTypeIRs, $filter_default_parameterTypeIRs(parameterTypeIR^{asterisk}^, id~default~^{asterisk}^)>>`.
-  ... Check that the length of `parameterTypeIR~non_default~^{asterisk}^` is equal to the length of `argumentIR^{asterisk}^`.
-  ... Let `parameterTypeIR~aligned~^{asterisk}^` be `<<align_parameterTypeIRs, $align_parameterTypeIRs(parameterTypeIR~non_default~^{asterisk}^, argumentIR^{asterisk}^)>>`.
-  ... Let `inference` be `<<infer, $infer(tid^{asterisk}^, parameterTypeIR~aligned~^{asterisk}^, argumentIR^{asterisk}^)>>`.
+  ... Let `parameterIR~non_default~^{asterisk}^` be `<<filter_default_parameterIRs, $filter_default_parameterIRs(parameterIR^{asterisk}^, id~default~^{asterisk}^)>>`.
+  ... Check that the length of `parameterIR~non_default~^{asterisk}^` is equal to the length of `argumentIR^{asterisk}^`.
+  ... Let `parameterIR~aligned~^{asterisk}^` be `<<align_parameterIRs, $align_parameterIRs(parameterIR~non_default~^{asterisk}^, argumentIR^{asterisk}^)>>`.
+  ... Let `inference` be `<<infer, $infer(tid^{asterisk}^, parameterIR~aligned~^{asterisk}^, argumentIR^{asterisk}^)>>`.
   ... Let `typeIR^?^^{asterisk}^` be the list of `typeIR^?^`, obtained by repeating:
 +
 --
@@ -5240,25 +5149,25 @@ for each `tid` in `tid^{asterisk}^`
 +
 for each `typeIR^?^` in `typeIR^?^^{asterisk}^`
   ... Let `typeArgumentIR~inferred~^{asterisk}^` be `typeArgumentIR^{asterisk}^ {pp} typeIR~inferred~^{asterisk}^`.
-  ... Let `parameterTypeIR~aligned_inferred~^{asterisk}^` be the list of `parameterTypeIR~aligned_inferred~`, obtained by repeating:
+  ... Let `parameterIR~aligned_inferred~^{asterisk}^` be the list of `parameterIR~aligned_inferred~`, obtained by repeating:
 +
 --
-      * Let `parameterTypeIR~aligned_inferred~` be `<<subst_parameterTypeIR, $subst_parameterTypeIR(inference, parameterTypeIR~aligned~)>>`.
+      * Let `parameterIR~aligned_inferred~` be `<<subst_parameterIR, $subst_parameterIR(inference, parameterIR~aligned~)>>`.
 --
 +
-for each `parameterTypeIR~aligned~` in `parameterTypeIR~aligned~^{asterisk}^`
+for each `parameterIR~aligned~` in `parameterIR~aligned~^{asterisk}^`
   ... Let `typeIR~ret_inferred~` be <<subst_typeIR, `inference` substituted by `typeIR~ret~`>>.
-  ... Let `functionTypeIR~inferred~` be `FUNCTION ( parameterTypeIR~aligned_inferred~^{asterisk}^ ) : typeIR~ret_inferred~`.
+  ... Let `functionTypeIR~inferred~` be `FUNCTION ( parameterIR~aligned_inferred~^{asterisk}^ ) : typeIR~ret_inferred~`.
   ... Check that <<CallableType_wf, `functionTypeIR~inferred~` is a well-formed type, assuming bound type ids `$bound(p, TC)`>>.
   ... Check that `<<callable_definedFunction, $callable_definedFunction(p, TC)>>`.
-  ... Let `argumentIR~cast~^{asterisk}^` be the result of <<Call_convention_ok, checking the calling convention of `argumentIR^{asterisk}^` applied to parameter types `parameterTypeIR~aligned_inferred~^{asterisk}^`, under cursor `p`, typing context `TC`, and action context `NOACTION`>>.
+  ... Let `argumentIR~cast~^{asterisk}^` be the result of <<Call_convention_ok, checking the calling convention of `argumentIR^{asterisk}^` applied to parameter types `parameterIR~aligned_inferred~^{asterisk}^`, under cursor `p`, typing context `TC`, and action context `NOACTION`>>.
   ... Result in `typeIR~ret_inferred~`, `typeArgumentIR~inferred~^{asterisk}^`, and `argumentIR~cast~^{asterisk}^`.
-. Else if let `EXTERN_FUNCTION ( parameterTypeIR^{asterisk}^ ) : typeIR~ret~` be `callableTypeIR`:
+. Else if let `EXTERN_FUNCTION ( parameterIR^{asterisk}^ ) : typeIR~ret~` be `callableTypeIR`:
  .. Group externFunctionTypeIR:
-  ... Let `parameterTypeIR~non_default~^{asterisk}^` be `<<filter_default_parameterTypeIRs, $filter_default_parameterTypeIRs(parameterTypeIR^{asterisk}^, id~default~^{asterisk}^)>>`.
-  ... Check that the length of `parameterTypeIR~non_default~^{asterisk}^` is equal to the length of `argumentIR^{asterisk}^`.
-  ... Let `parameterTypeIR~aligned~^{asterisk}^` be `<<align_parameterTypeIRs, $align_parameterTypeIRs(parameterTypeIR~non_default~^{asterisk}^, argumentIR^{asterisk}^)>>`.
-  ... Let `inference` be `<<infer, $infer(tid^{asterisk}^, parameterTypeIR~aligned~^{asterisk}^, argumentIR^{asterisk}^)>>`.
+  ... Let `parameterIR~non_default~^{asterisk}^` be `<<filter_default_parameterIRs, $filter_default_parameterIRs(parameterIR^{asterisk}^, id~default~^{asterisk}^)>>`.
+  ... Check that the length of `parameterIR~non_default~^{asterisk}^` is equal to the length of `argumentIR^{asterisk}^`.
+  ... Let `parameterIR~aligned~^{asterisk}^` be `<<align_parameterIRs, $align_parameterIRs(parameterIR~non_default~^{asterisk}^, argumentIR^{asterisk}^)>>`.
+  ... Let `inference` be `<<infer, $infer(tid^{asterisk}^, parameterIR~aligned~^{asterisk}^, argumentIR^{asterisk}^)>>`.
   ... Let `typeIR^?^^{asterisk}^` be the list of `typeIR^?^`, obtained by repeating:
 +
 --
@@ -5275,35 +5184,35 @@ for each `tid` in `tid^{asterisk}^`
 +
 for each `typeIR^?^` in `typeIR^?^^{asterisk}^`
   ... Let `typeArgumentIR~inferred~^{asterisk}^` be `typeArgumentIR^{asterisk}^ {pp} typeIR~inferred~^{asterisk}^`.
-  ... Let `parameterTypeIR~aligned_inferred~^{asterisk}^` be the list of `parameterTypeIR~aligned_inferred~`, obtained by repeating:
+  ... Let `parameterIR~aligned_inferred~^{asterisk}^` be the list of `parameterIR~aligned_inferred~`, obtained by repeating:
 +
 --
-      * Let `parameterTypeIR~aligned_inferred~` be `<<subst_parameterTypeIR, $subst_parameterTypeIR(inference, parameterTypeIR~aligned~)>>`.
+      * Let `parameterIR~aligned_inferred~` be `<<subst_parameterIR, $subst_parameterIR(inference, parameterIR~aligned~)>>`.
 --
 +
-for each `parameterTypeIR~aligned~` in `parameterTypeIR~aligned~^{asterisk}^`
+for each `parameterIR~aligned~` in `parameterIR~aligned~^{asterisk}^`
   ... Let `typeIR~ret_inferred~` be <<subst_typeIR, `inference` substituted by `typeIR~ret~`>>.
-  ... Let `functionTypeIR~inferred~` be `EXTERN_FUNCTION ( parameterTypeIR~aligned_inferred~^{asterisk}^ ) : typeIR~ret_inferred~`.
+  ... Let `functionTypeIR~inferred~` be `EXTERN_FUNCTION ( parameterIR~aligned_inferred~^{asterisk}^ ) : typeIR~ret_inferred~`.
   ... Check that <<CallableType_wf, `functionTypeIR~inferred~` is a well-formed type, assuming bound type ids `$bound(p, TC)`>>.
   ... Check that `<<callable_externFunction, $callable_externFunction(p, TC)>>`.
-  ... Let `argumentIR~cast~^{asterisk}^` be the result of <<Call_convention_ok, checking the calling convention of `argumentIR^{asterisk}^` applied to parameter types `parameterTypeIR~aligned_inferred~^{asterisk}^`, under cursor `p`, typing context `TC`, and action context `NOACTION`>>.
+  ... Let `argumentIR~cast~^{asterisk}^` be the result of <<Call_convention_ok, checking the calling convention of `argumentIR^{asterisk}^` applied to parameter types `parameterIR~aligned_inferred~^{asterisk}^`, under cursor `p`, typing context `TC`, and action context `NOACTION`>>.
   ... Result in `typeIR~ret_inferred~`, `typeArgumentIR~inferred~^{asterisk}^`, and `argumentIR~cast~^{asterisk}^`.
-. Else if let `BUILTIN_METHOD ( parameterTypeIR^{asterisk}^ ) : typeIR~ret~` be `callableTypeIR`:
+. Else if let `BUILTIN_METHOD ( parameterIR^{asterisk}^ ) : typeIR~ret~` be `callableTypeIR`:
  .. Check that `tid^{asterisk}^` is an empty list.
  .. Group builtinMethodTypeIR:
-  ... Let `parameterTypeIR~non_default~^{asterisk}^` be `<<filter_default_parameterTypeIRs, $filter_default_parameterTypeIRs(parameterTypeIR^{asterisk}^, id~default~^{asterisk}^)>>`.
-  ... Check that the length of `parameterTypeIR~non_default~^{asterisk}^` is equal to the length of `argumentIR^{asterisk}^`.
-  ... Let `parameterTypeIR~aligned~^{asterisk}^` be `<<align_parameterTypeIRs, $align_parameterTypeIRs(parameterTypeIR~non_default~^{asterisk}^, argumentIR^{asterisk}^)>>`.
+  ... Let `parameterIR~non_default~^{asterisk}^` be `<<filter_default_parameterIRs, $filter_default_parameterIRs(parameterIR^{asterisk}^, id~default~^{asterisk}^)>>`.
+  ... Check that the length of `parameterIR~non_default~^{asterisk}^` is equal to the length of `argumentIR^{asterisk}^`.
+  ... Let `parameterIR~aligned~^{asterisk}^` be `<<align_parameterIRs, $align_parameterIRs(parameterIR~non_default~^{asterisk}^, argumentIR^{asterisk}^)>>`.
   ... Check that `<<callable_builtinMethod, $callable_builtinMethod(p, TC)>>`.
-  ... Let `argumentIR~cast~^{asterisk}^` be the result of <<Call_convention_ok, checking the calling convention of `argumentIR^{asterisk}^` applied to parameter types `parameterTypeIR~aligned~^{asterisk}^`, under cursor `p`, typing context `TC`, and action context `NOACTION`>>.
+  ... Let `argumentIR~cast~^{asterisk}^` be the result of <<Call_convention_ok, checking the calling convention of `argumentIR^{asterisk}^` applied to parameter types `parameterIR~aligned~^{asterisk}^`, under cursor `p`, typing context `TC`, and action context `NOACTION`>>.
   ... Result in `typeIR~ret~`, `typeArgumentIR^{asterisk}^`, and `argumentIR~cast~^{asterisk}^`.
 . Else if let `externMethodTypeIR` be `callableTypeIR`:
- .. If let `EXTERN_METHOD ( parameterTypeIR^{asterisk}^ ) : typeIR~ret~` be `externMethodTypeIR`:
+ .. If let `EXTERN_METHOD ( parameterIR^{asterisk}^ ) : typeIR~ret~` be `externMethodTypeIR`:
   ... Group externMethodTypeIR-non-abstract:
-   .... Let `parameterTypeIR~non_default~^{asterisk}^` be `<<filter_default_parameterTypeIRs, $filter_default_parameterTypeIRs(parameterTypeIR^{asterisk}^, id~default~^{asterisk}^)>>`.
-   .... Check that the length of `parameterTypeIR~non_default~^{asterisk}^` is equal to the length of `argumentIR^{asterisk}^`.
-   .... Let `parameterTypeIR~aligned~^{asterisk}^` be `<<align_parameterTypeIRs, $align_parameterTypeIRs(parameterTypeIR~non_default~^{asterisk}^, argumentIR^{asterisk}^)>>`.
-   .... Let `inference` be `<<infer, $infer(tid^{asterisk}^, parameterTypeIR~aligned~^{asterisk}^, argumentIR^{asterisk}^)>>`.
+   .... Let `parameterIR~non_default~^{asterisk}^` be `<<filter_default_parameterIRs, $filter_default_parameterIRs(parameterIR^{asterisk}^, id~default~^{asterisk}^)>>`.
+   .... Check that the length of `parameterIR~non_default~^{asterisk}^` is equal to the length of `argumentIR^{asterisk}^`.
+   .... Let `parameterIR~aligned~^{asterisk}^` be `<<align_parameterIRs, $align_parameterIRs(parameterIR~non_default~^{asterisk}^, argumentIR^{asterisk}^)>>`.
+   .... Let `inference` be `<<infer, $infer(tid^{asterisk}^, parameterIR~aligned~^{asterisk}^, argumentIR^{asterisk}^)>>`.
    .... Let `typeIR^?^^{asterisk}^` be the list of `typeIR^?^`, obtained by repeating:
 +
 --
@@ -5320,25 +5229,25 @@ for each `tid` in `tid^{asterisk}^`
 +
 for each `typeIR^?^` in `typeIR^?^^{asterisk}^`
    .... Let `typeArgumentIR~inferred~^{asterisk}^` be `typeArgumentIR^{asterisk}^ {pp} typeIR~inferred~^{asterisk}^`.
-   .... Let `parameterTypeIR~aligned_inferred~^{asterisk}^` be the list of `parameterTypeIR~aligned_inferred~`, obtained by repeating:
+   .... Let `parameterIR~aligned_inferred~^{asterisk}^` be the list of `parameterIR~aligned_inferred~`, obtained by repeating:
 +
 --
-        * Let `parameterTypeIR~aligned_inferred~` be `<<subst_parameterTypeIR, $subst_parameterTypeIR(inference, parameterTypeIR~aligned~)>>`.
+        * Let `parameterIR~aligned_inferred~` be `<<subst_parameterIR, $subst_parameterIR(inference, parameterIR~aligned~)>>`.
 --
 +
-for each `parameterTypeIR~aligned~` in `parameterTypeIR~aligned~^{asterisk}^`
+for each `parameterIR~aligned~` in `parameterIR~aligned~^{asterisk}^`
    .... Let `typeIR~ret_inferred~` be <<subst_typeIR, `inference` substituted by `typeIR~ret~`>>.
-   .... Let `externMethodTypeIR~inferred~` be `EXTERN_METHOD ( parameterTypeIR~aligned_inferred~^{asterisk}^ ) : typeIR~ret_inferred~`.
+   .... Let `externMethodTypeIR~inferred~` be `EXTERN_METHOD ( parameterIR~aligned_inferred~^{asterisk}^ ) : typeIR~ret_inferred~`.
    .... Check that <<CallableType_wf, `externMethodTypeIR~inferred~` is a well-formed type, assuming bound type ids `$bound(p, TC)`>>.
    .... Check that `<<callable_externMethod, $callable_externMethod(p, TC)>>`.
-   .... Let `argumentIR~cast~^{asterisk}^` be the result of <<Call_convention_ok, checking the calling convention of `argumentIR^{asterisk}^` applied to parameter types `parameterTypeIR~aligned_inferred~^{asterisk}^`, under cursor `p`, typing context `TC`, and action context `NOACTION`>>.
+   .... Let `argumentIR~cast~^{asterisk}^` be the result of <<Call_convention_ok, checking the calling convention of `argumentIR^{asterisk}^` applied to parameter types `parameterIR~aligned_inferred~^{asterisk}^`, under cursor `p`, typing context `TC`, and action context `NOACTION`>>.
    .... Result in `typeIR~ret_inferred~`, `typeArgumentIR~inferred~^{asterisk}^`, and `argumentIR~cast~^{asterisk}^`.
- .. Else let `EXTERN_METHOD ABSTRACT ( parameterTypeIR^{asterisk}^ ) : typeIR~ret~` be `externMethodTypeIR`:
+ .. Else let `EXTERN_METHOD ABSTRACT ( parameterIR^{asterisk}^ ) : typeIR~ret~` be `externMethodTypeIR`:
   ... Group externMethodTypeIR-abstract:
-   .... Let `parameterTypeIR~non_default~^{asterisk}^` be `<<filter_default_parameterTypeIRs, $filter_default_parameterTypeIRs(parameterTypeIR^{asterisk}^, id~default~^{asterisk}^)>>`.
-   .... Check that the length of `parameterTypeIR~non_default~^{asterisk}^` is equal to the length of `argumentIR^{asterisk}^`.
-   .... Let `parameterTypeIR~aligned~^{asterisk}^` be `<<align_parameterTypeIRs, $align_parameterTypeIRs(parameterTypeIR~non_default~^{asterisk}^, argumentIR^{asterisk}^)>>`.
-   .... Let `inference` be `<<infer, $infer(tid^{asterisk}^, parameterTypeIR~aligned~^{asterisk}^, argumentIR^{asterisk}^)>>`.
+   .... Let `parameterIR~non_default~^{asterisk}^` be `<<filter_default_parameterIRs, $filter_default_parameterIRs(parameterIR^{asterisk}^, id~default~^{asterisk}^)>>`.
+   .... Check that the length of `parameterIR~non_default~^{asterisk}^` is equal to the length of `argumentIR^{asterisk}^`.
+   .... Let `parameterIR~aligned~^{asterisk}^` be `<<align_parameterIRs, $align_parameterIRs(parameterIR~non_default~^{asterisk}^, argumentIR^{asterisk}^)>>`.
+   .... Let `inference` be `<<infer, $infer(tid^{asterisk}^, parameterIR~aligned~^{asterisk}^, argumentIR^{asterisk}^)>>`.
    .... Let `typeIR^?^^{asterisk}^` be the list of `typeIR^?^`, obtained by repeating:
 +
 --
@@ -5355,38 +5264,38 @@ for each `tid` in `tid^{asterisk}^`
 +
 for each `typeIR^?^` in `typeIR^?^^{asterisk}^`
    .... Let `typeArgumentIR~inferred~^{asterisk}^` be `typeArgumentIR^{asterisk}^ {pp} typeIR~inferred~^{asterisk}^`.
-   .... Let `parameterTypeIR~aligned_inferred~^{asterisk}^` be the list of `parameterTypeIR~aligned_inferred~`, obtained by repeating:
+   .... Let `parameterIR~aligned_inferred~^{asterisk}^` be the list of `parameterIR~aligned_inferred~`, obtained by repeating:
 +
 --
-        * Let `parameterTypeIR~aligned_inferred~` be `<<subst_parameterTypeIR, $subst_parameterTypeIR(inference, parameterTypeIR~aligned~)>>`.
+        * Let `parameterIR~aligned_inferred~` be `<<subst_parameterIR, $subst_parameterIR(inference, parameterIR~aligned~)>>`.
 --
 +
-for each `parameterTypeIR~aligned~` in `parameterTypeIR~aligned~^{asterisk}^`
+for each `parameterIR~aligned~` in `parameterIR~aligned~^{asterisk}^`
    .... Let `typeIR~ret_inferred~` be <<subst_typeIR, `inference` substituted by `typeIR~ret~`>>.
-   .... Let `externMethodTypeIR~inferred~` be `EXTERN_METHOD ABSTRACT ( parameterTypeIR~aligned_inferred~^{asterisk}^ ) : typeIR~ret_inferred~`.
+   .... Let `externMethodTypeIR~inferred~` be `EXTERN_METHOD ABSTRACT ( parameterIR~aligned_inferred~^{asterisk}^ ) : typeIR~ret_inferred~`.
    .... Check that <<CallableType_wf, `externMethodTypeIR~inferred~` is a well-formed type, assuming bound type ids `$bound(p, TC)`>>.
    .... Check that `<<callable_externAbstractMethod, $callable_externAbstractMethod(p, TC)>>`.
-   .... Let `argumentIR~cast~^{asterisk}^` be the result of <<Call_convention_ok, checking the calling convention of `argumentIR^{asterisk}^` applied to parameter types `parameterTypeIR~aligned_inferred~^{asterisk}^`, under cursor `p`, typing context `TC`, and action context `NOACTION`>>.
+   .... Let `argumentIR~cast~^{asterisk}^` be the result of <<Call_convention_ok, checking the calling convention of `argumentIR^{asterisk}^` applied to parameter types `parameterIR~aligned_inferred~^{asterisk}^`, under cursor `p`, typing context `TC`, and action context `NOACTION`>>.
    .... Result in `typeIR~ret_inferred~`, `typeArgumentIR~inferred~^{asterisk}^`, and `argumentIR~cast~^{asterisk}^`.
-. Else if let `PARSER_APPLY ( parameterTypeIR^{asterisk}^ )` be `callableTypeIR`:
+. Else if let `PARSER_APPLY ( parameterIR^{asterisk}^ )` be `callableTypeIR`:
  .. Check that `typeArgumentIR^{asterisk}^` is an empty list.
  .. Check that `tid^{asterisk}^` is an empty list.
  .. Group parserApplyMethodTypeIR:
-  ... Let `parameterTypeIR~non_default~^{asterisk}^` be `<<filter_default_parameterTypeIRs, $filter_default_parameterTypeIRs(parameterTypeIR^{asterisk}^, id~default~^{asterisk}^)>>`.
-  ... Check that the length of `parameterTypeIR~non_default~^{asterisk}^` is equal to the length of `argumentIR^{asterisk}^`.
-  ... Let `parameterTypeIR~aligned~^{asterisk}^` be `<<align_parameterTypeIRs, $align_parameterTypeIRs(parameterTypeIR~non_default~^{asterisk}^, argumentIR^{asterisk}^)>>`.
+  ... Let `parameterIR~non_default~^{asterisk}^` be `<<filter_default_parameterIRs, $filter_default_parameterIRs(parameterIR^{asterisk}^, id~default~^{asterisk}^)>>`.
+  ... Check that the length of `parameterIR~non_default~^{asterisk}^` is equal to the length of `argumentIR^{asterisk}^`.
+  ... Let `parameterIR~aligned~^{asterisk}^` be `<<align_parameterIRs, $align_parameterIRs(parameterIR~non_default~^{asterisk}^, argumentIR^{asterisk}^)>>`.
   ... Check that `<<callable_parserApplyMethod, $callable_parserApplyMethod(p, TC)>>`.
-  ... Let `argumentIR~cast~^{asterisk}^` be the result of <<Call_convention_ok, checking the calling convention of `argumentIR^{asterisk}^` applied to parameter types `parameterTypeIR~aligned~^{asterisk}^`, under cursor `p`, typing context `TC`, and action context `NOACTION`>>.
+  ... Let `argumentIR~cast~^{asterisk}^` be the result of <<Call_convention_ok, checking the calling convention of `argumentIR^{asterisk}^` applied to parameter types `parameterIR~aligned~^{asterisk}^`, under cursor `p`, typing context `TC`, and action context `NOACTION`>>.
   ... Result in `VOID`, `[ ]`, and `argumentIR~cast~^{asterisk}^`.
-. Else if let `CONTROL_APPLY ( parameterTypeIR^{asterisk}^ )` be `callableTypeIR`:
+. Else if let `CONTROL_APPLY ( parameterIR^{asterisk}^ )` be `callableTypeIR`:
  .. Check that `typeArgumentIR^{asterisk}^` is an empty list.
  .. Check that `tid^{asterisk}^` is an empty list.
  .. Group controlApplyMethodTypeIR:
-  ... Let `parameterTypeIR~non_default~^{asterisk}^` be `<<filter_default_parameterTypeIRs, $filter_default_parameterTypeIRs(parameterTypeIR^{asterisk}^, id~default~^{asterisk}^)>>`.
-  ... Check that the length of `parameterTypeIR~non_default~^{asterisk}^` is equal to the length of `argumentIR^{asterisk}^`.
-  ... Let `parameterTypeIR~aligned~^{asterisk}^` be `<<align_parameterTypeIRs, $align_parameterTypeIRs(parameterTypeIR~non_default~^{asterisk}^, argumentIR^{asterisk}^)>>`.
+  ... Let `parameterIR~non_default~^{asterisk}^` be `<<filter_default_parameterIRs, $filter_default_parameterIRs(parameterIR^{asterisk}^, id~default~^{asterisk}^)>>`.
+  ... Check that the length of `parameterIR~non_default~^{asterisk}^` is equal to the length of `argumentIR^{asterisk}^`.
+  ... Let `parameterIR~aligned~^{asterisk}^` be `<<align_parameterIRs, $align_parameterIRs(parameterIR~non_default~^{asterisk}^, argumentIR^{asterisk}^)>>`.
   ... Check that `<<callable_controlApplyMethod, $callable_controlApplyMethod(p, TC)>>`.
-  ... Let `argumentIR~cast~^{asterisk}^` be the result of <<Call_convention_ok, checking the calling convention of `argumentIR^{asterisk}^` applied to parameter types `parameterTypeIR~aligned~^{asterisk}^`, under cursor `p`, typing context `TC`, and action context `NOACTION`>>.
+  ... Let `argumentIR~cast~^{asterisk}^` be the result of <<Call_convention_ok, checking the calling convention of `argumentIR^{asterisk}^` applied to parameter types `parameterIR~aligned~^{asterisk}^`, under cursor `p`, typing context `TC`, and action context `NOACTION`>>.
   ... Result in `VOID`, `[ ]`, and `argumentIR~cast~^{asterisk}^`.
 . Else let `TABLE_APPLY : tableMetadataStructTypeIR` be `callableTypeIR`:
  .. Check that `typeArgumentIR^{asterisk}^` is an empty list.
@@ -5415,14 +5324,14 @@ relation Inst_ok: `cursor`, `TC`, `instctxt`, `constructorTypeIR`, `typeArgument
 
 . Check that `cursor` matches pattern `GLOBAL`.
 . Group package:
- .. Let `CONSTRUCTOR ( parameterTypeIR^{asterisk}^ ) : typeIR~object~` be `constructorTypeIR`.
+ .. Let `CONSTRUCTOR ( parameterIR^{asterisk}^ ) : typeIR~object~` be `constructorTypeIR`.
  .. Let `typeIR` be <<canon_typeIR, the canonicalized form of `typeIR~object~`>>.
  .. Check that `typeIR` has type `packageObjectTypeIR`.
  .. Let `PACKAGE { ++_++^{asterisk}^ }` be `typeIR`.
- .. Let `parameterTypeIR~non_default~^{asterisk}^` be `<<filter_default_parameterTypeIRs, $filter_default_parameterTypeIRs(parameterTypeIR^{asterisk}^, id~default~^{asterisk}^)>>`.
- .. Check that the length of `parameterTypeIR~non_default~^{asterisk}^` is equal to the length of `argumentIR^{asterisk}^`.
- .. Let `parameterTypeIR~aligned~^{asterisk}^` be `<<align_parameterTypeIRs, $align_parameterTypeIRs(parameterTypeIR~non_default~^{asterisk}^, argumentIR^{asterisk}^)>>`.
- .. Let `inference` be `<<infer, $infer(tid~infer~^{asterisk}^, parameterTypeIR~aligned~^{asterisk}^, argumentIR^{asterisk}^)>>`.
+ .. Let `parameterIR~non_default~^{asterisk}^` be `<<filter_default_parameterIRs, $filter_default_parameterIRs(parameterIR^{asterisk}^, id~default~^{asterisk}^)>>`.
+ .. Check that the length of `parameterIR~non_default~^{asterisk}^` is equal to the length of `argumentIR^{asterisk}^`.
+ .. Let `parameterIR~aligned~^{asterisk}^` be `<<align_parameterIRs, $align_parameterIRs(parameterIR~non_default~^{asterisk}^, argumentIR^{asterisk}^)>>`.
+ .. Let `inference` be `<<infer, $infer(tid~infer~^{asterisk}^, parameterIR~aligned~^{asterisk}^, argumentIR^{asterisk}^)>>`.
  .. Let `typeIR'^?^^{asterisk}^` be the list of `typeIR'^?^`, obtained by repeating:
 +
 --
@@ -5439,26 +5348,26 @@ for each `tid~infer~` in `tid~infer~^{asterisk}^`
 +
 for each `typeIR'^?^` in `typeIR'^?^^{asterisk}^`
  .. Let `typeArgumentIR~inferred~^{asterisk}^` be `typeArgumentIR^{asterisk}^ {pp} typeIR~inferred~^{asterisk}^`.
- .. Let `parameterTypeIR~aligned_inferred~^{asterisk}^` be the list of `parameterTypeIR~aligned_inferred~`, obtained by repeating:
+ .. Let `parameterIR~aligned_inferred~^{asterisk}^` be the list of `parameterIR~aligned_inferred~`, obtained by repeating:
 +
 --
-    * Let `parameterTypeIR~aligned_inferred~` be `<<subst_parameterTypeIR, $subst_parameterTypeIR(inference, parameterTypeIR~aligned~)>>`.
+    * Let `parameterIR~aligned_inferred~` be `<<subst_parameterIR, $subst_parameterIR(inference, parameterIR~aligned~)>>`.
 --
 +
-for each `parameterTypeIR~aligned~` in `parameterTypeIR~aligned~^{asterisk}^`
+for each `parameterIR~aligned~` in `parameterIR~aligned~^{asterisk}^`
  .. Let `typeIR~object_inferred~` be <<subst_typeIR, `inference` substituted by `typeIR~object~`>>.
- .. Let `constructorTypeIR~inferred~` be `CONSTRUCTOR ( parameterTypeIR~aligned_inferred~^{asterisk}^ ) : typeIR~object_inferred~`.
+ .. Let `constructorTypeIR~inferred~` be `CONSTRUCTOR ( parameterIR~aligned_inferred~^{asterisk}^ ) : typeIR~object_inferred~`.
  .. Check that <<ConstructorType_wf, `constructorTypeIR~inferred~` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC)`>>.
  .. Check that `<<instantiable, $instantiable(GLOBAL, TC, instctxt, typeIR~object_inferred~)>>`.
- .. Let `argumentIR~cast~^{asterisk}^` be the result of <<Call_convention_ok, checking the calling convention of `argumentIR^{asterisk}^` applied to parameter types `parameterTypeIR~aligned_inferred~^{asterisk}^`, under cursor `BLOCK`, typing context `TC`, and action context `NOACTION`>>.
+ .. Let `argumentIR~cast~^{asterisk}^` be the result of <<Call_convention_ok, checking the calling convention of `argumentIR^{asterisk}^` applied to parameter types `parameterIR~aligned_inferred~^{asterisk}^`, under cursor `BLOCK`, typing context `TC`, and action context `NOACTION`>>.
  .. Result in `typeIR~object_inferred~`, `typeArgumentIR~inferred~^{asterisk}^`, and `argumentIR~cast~^{asterisk}^`.
 . Group non-package:
- .. Let `CONSTRUCTOR ( parameterTypeIR^{asterisk}^ ) : typeIR~object~` be `constructorTypeIR`.
+ .. Let `CONSTRUCTOR ( parameterIR^{asterisk}^ ) : typeIR~object~` be `constructorTypeIR`.
  .. Check that `~<<is_packageObjectTypeIR, $is_packageObjectTypeIR($canon_typeIR(typeIR~object~))>>`.
- .. Let `parameterTypeIR~non_default~^{asterisk}^` be `<<filter_default_parameterTypeIRs, $filter_default_parameterTypeIRs(parameterTypeIR^{asterisk}^, id~default~^{asterisk}^)>>`.
- .. Check that the length of `parameterTypeIR~non_default~^{asterisk}^` is equal to the length of `argumentIR^{asterisk}^`.
- .. Let `parameterTypeIR~aligned~^{asterisk}^` be `<<align_parameterTypeIRs, $align_parameterTypeIRs(parameterTypeIR~non_default~^{asterisk}^, argumentIR^{asterisk}^)>>`.
- .. Let `inference` be `<<infer, $infer(tid~infer~^{asterisk}^, parameterTypeIR~aligned~^{asterisk}^, argumentIR^{asterisk}^)>>`.
+ .. Let `parameterIR~non_default~^{asterisk}^` be `<<filter_default_parameterIRs, $filter_default_parameterIRs(parameterIR^{asterisk}^, id~default~^{asterisk}^)>>`.
+ .. Check that the length of `parameterIR~non_default~^{asterisk}^` is equal to the length of `argumentIR^{asterisk}^`.
+ .. Let `parameterIR~aligned~^{asterisk}^` be `<<align_parameterIRs, $align_parameterIRs(parameterIR~non_default~^{asterisk}^, argumentIR^{asterisk}^)>>`.
+ .. Let `inference` be `<<infer, $infer(tid~infer~^{asterisk}^, parameterIR~aligned~^{asterisk}^, argumentIR^{asterisk}^)>>`.
  .. Let `typeIR^?^^{asterisk}^` be the list of `typeIR^?^`, obtained by repeating:
 +
 --
@@ -5475,18 +5384,18 @@ for each `tid~infer~` in `tid~infer~^{asterisk}^`
 +
 for each `typeIR^?^` in `typeIR^?^^{asterisk}^`
  .. Let `typeArgumentIR~inferred~^{asterisk}^` be `typeArgumentIR^{asterisk}^ {pp} typeIR~inferred~^{asterisk}^`.
- .. Let `parameterTypeIR~aligned_inferred~^{asterisk}^` be the list of `parameterTypeIR~aligned_inferred~`, obtained by repeating:
+ .. Let `parameterIR~aligned_inferred~^{asterisk}^` be the list of `parameterIR~aligned_inferred~`, obtained by repeating:
 +
 --
-    * Let `parameterTypeIR~aligned_inferred~` be `<<subst_parameterTypeIR, $subst_parameterTypeIR(inference, parameterTypeIR~aligned~)>>`.
+    * Let `parameterIR~aligned_inferred~` be `<<subst_parameterIR, $subst_parameterIR(inference, parameterIR~aligned~)>>`.
 --
 +
-for each `parameterTypeIR~aligned~` in `parameterTypeIR~aligned~^{asterisk}^`
+for each `parameterIR~aligned~` in `parameterIR~aligned~^{asterisk}^`
  .. Let `typeIR~object_inferred~` be <<subst_typeIR, `inference` substituted by `typeIR~object~`>>.
- .. Let `constructorTypeIR~inferred~` be `CONSTRUCTOR ( parameterTypeIR~aligned_inferred~^{asterisk}^ ) : typeIR~object_inferred~`.
+ .. Let `constructorTypeIR~inferred~` be `CONSTRUCTOR ( parameterIR~aligned_inferred~^{asterisk}^ ) : typeIR~object_inferred~`.
  .. Check that <<ConstructorType_wf, `constructorTypeIR~inferred~` is a well-formed type, assuming bound type ids `$bound(cursor, TC)`>>.
  .. Check that `<<instantiable, $instantiable(cursor, TC, instctxt, typeIR~object_inferred~)>>`.
- .. Let `argumentIR~cast~^{asterisk}^` be the result of <<Call_convention_ok, checking the calling convention of `argumentIR^{asterisk}^` applied to parameter types `parameterTypeIR~aligned_inferred~^{asterisk}^`, under cursor `cursor`, typing context `TC`, and action context `NOACTION`>>.
+ .. Let `argumentIR~cast~^{asterisk}^` be the result of <<Call_convention_ok, checking the calling convention of `argumentIR^{asterisk}^` applied to parameter types `parameterIR~aligned_inferred~^{asterisk}^`, under cursor `cursor`, typing context `TC`, and action context `NOACTION`>>.
  .. Result in `typeIR~object_inferred~`, `typeArgumentIR~inferred~^{asterisk}^`, and `argumentIR~cast~^{asterisk}^`.
 
 
@@ -5666,19 +5575,12 @@ for each `typeParameter` in `typeParameter^{asterisk}^`
   ... Check that `tid^{asterisk}^` is an empty list.
   ... Let `parameter^{asterisk}^` be <<flatten_parameterList, the list of parameters in `parameterList`>>.
   ... Let `parameterIR^{asterisk}^` and `tid~impl~^{asterisk}^` be the result of <<Parameters_ok, typing `parameter^{asterisk}^`, under cursor `LOCAL` and typing context `TC~3~`>>.
-  ... Let `parameterTypeIR^{asterisk}^` be the list of `parameterTypeIR`, obtained by repeating:
-+
---
-      * Let `parameterTypeIR` be <<type_of_parameterIR, the type of  `parameterIR`>>.
---
-+
-for each `parameterIR` in `parameterIR^{asterisk}^`
-  ... Let `TC~4~` be `<<add_parameters_t, $add_parameters_t(LOCAL, TC~3~, parameterTypeIR^{asterisk}^)>>`.
+  ... Let `TC~4~` be `<<add_parameters_t, $add_parameters_t(LOCAL, TC~3~, parameterIR^{asterisk}^)>>`.
   ... Let `TC~5~` be `TC~4~[LOCAL.KIND = EXTERN_METHOD : typeIR~ret~]`.
   ... Let `++_++`, `f`, and `blockStatementIR` be the result of <<Block_ok, typing `blockStatement`, under typing context `TC~5~` and abstract control flow `CONT`>>.
   ... Else if `f` matches pattern `RET`:
    .... Let `cid` be `<<cid, $cid(name, parameterList)>>`.
-   .... Let `externMethodTypeDefIR` be `EXTERN_METHOD < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterTypeIR^{asterisk}^ ) : typeIR~ret~`.
+   .... Let `externMethodTypeDefIR` be `EXTERN_METHOD < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) : typeIR~ret~`.
    .... Check that <<CallableTypeDef_wf, `externMethodTypeDefIR` is a well-formed type, assuming bound type ids `$bound(p, TC~0~)`>>.
    .... Let `externMethodTypeDefEnv~init~` be <<update_map, the map `externMethodTypeDefEnv` with the value for key `cid` updated to `externMethodTypeDefIR`>>.
    .... Let `nameIR` be <<name, the name of `name`>>.
@@ -5686,7 +5588,7 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
    .... Result in `typeFrame`, `externMethodTypeDefEnv~init~`, and `functionDeclarationIR`.
   ... Else if `typeIR~ret~` is equal to `VOID`:
    .... Let `cid` be `<<cid, $cid(name, parameterList)>>`.
-   .... Let `externMethodTypeDefIR` be `EXTERN_METHOD < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterTypeIR^{asterisk}^ ) : typeIR~ret~`.
+   .... Let `externMethodTypeDefIR` be `EXTERN_METHOD < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) : typeIR~ret~`.
    .... Check that <<CallableTypeDef_wf, `externMethodTypeDefIR` is a well-formed type, assuming bound type ids `$bound(p, TC~0~)`>>.
    .... Let `externMethodTypeDefEnv~init~` be <<update_map, the map `externMethodTypeDefEnv` with the value for key `cid` updated to `externMethodTypeDefIR`>>.
    .... Let `nameIR` be <<name, the name of `name`>>.
@@ -6912,26 +6814,12 @@ for each `typeFieldIR` in `typeFieldIR^{asterisk}^`
    .... Result in `IC~1~`, `STO`, and `None`.
 . Else if let `annotationList PARSER nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR^{asterisk}^ ) ;` be `declarationIR`:
  .. Group parserTypeDeclarationIR:
-  ... Let `parameterTypeIR^{asterisk}^` be the list of `parameterTypeIR`, obtained by repeating:
-+
---
-      * Let `parameterTypeIR` be <<type_of_parameterIR, the type of  `parameterIR`>>.
---
-+
-for each `parameterIR` in `parameterIR^{asterisk}^`
-  ... Let `parserObjectTypeDefIR` be `PARSER < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterTypeIR^{asterisk}^ )`.
+  ... Let `parserObjectTypeDefIR` be `PARSER < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR^{asterisk}^ )`.
   ... Let `IC~1~` be `<<add_typeDef_i, $add_typeDef_i(GLOBAL, IC~0~, nameIR, parserObjectTypeDefIR)>>`.
   ... Result in `IC~1~`, `STO`, and `None`.
 . Else if let `annotationList CONTROL nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR^{asterisk}^ ) ;` be `declarationIR`:
  .. Group controlTypeDeclarationIR:
-  ... Let `parameterTypeIR^{asterisk}^` be the list of `parameterTypeIR`, obtained by repeating:
-+
---
-      * Let `parameterTypeIR` be <<type_of_parameterIR, the type of  `parameterIR`>>.
---
-+
-for each `parameterIR` in `parameterIR^{asterisk}^`
-  ... Let `controlObjectTypeDefIR` be `CONTROL < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterTypeIR^{asterisk}^ )`.
+  ... Let `controlObjectTypeDefIR` be `CONTROL < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR^{asterisk}^ )`.
   ... Let `IC~1~` be `<<add_typeDef_i, $add_typeDef_i(GLOBAL, IC~0~, nameIR, controlObjectTypeDefIR)>>`.
   ... Result in `IC~1~`, `STO`, and `None`.
 . Else if let `annotationList PACKAGE nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR^{asterisk}^ ) ;` be `declarationIR`:
@@ -7755,6 +7643,7 @@ relation Stmt_eval: `p`, `EC`, `STO`, and `statementIR`
 * and the instantiated statement ``.
 . Else if let `callableTargetIR < typeArgumentIR^{asterisk}^ > ( argumentIR^{asterisk}^ ) ;` be `statementIR`:
  .. Group callStatementIR:
+  ... Let `callStatementIR` be `callableTargetIR < typeArgumentIR^{asterisk}^ > ( argumentIR^{asterisk}^ ) ;`.
   ... Let <<Callee_eval, `p EC STO |- callableTargetIR < _ > ( argumentIR^{asterisk}^ ) : EC~1~ STO~1~ calleeResult`>>.
   ... If let `exitResult` be `calleeResult`:
    .... Result in 
@@ -8253,7 +8142,33 @@ relation Callee_eval: `p`, `EC`, `STO`, `callableTargetIR`, and `argumentListIR`
   ... Check that `storageReferenceResult` has type `exitResult`.
   ... Let `exitResult` be `storageReferenceResult`.
   ... Result in `EC~1~`, `STO~1~`, and `EXIT`.
-  ... If `nameIR'` is equal to `"isValid"`:
+  ... If `nameIR'` is equal to `"push_front"`:
+   .... Check that `argumentListIR` is a list of length 1.
+   .... Let `[argumentIR]` be `argumentListIR`.
+   .... Check that `typedLvalueIR'^?^` is Some value.
+   .... Let `typedLvalueIR` be `typedLvalueIR'^?^`.
+   .... Let <<Lvalue_eval, `p EC STO |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult`>>.
+   .... Check that `storageReferenceResult` has type `continueResult<storageReference?>`.
+   .... Let `storageReference'^?^` be `storageReferenceResult`.
+   .... Check that `storageReference'^?^` is Some value.
+   .... Let `storageReference` be `storageReference'^?^`.
+   .... Let `parameterIR` be `INT "count" None`.
+   .... Let `builtinMethodCallee` be `BUILTIN_METHOD storageReference . "push_front" < [ ] > ( [parameterIR] )`.
+   .... Result in `EC~1~`, `STO~1~`, and `builtinMethodCallee`.
+  ... Else if `nameIR'` is equal to `"pop_front"`:
+   .... Check that `argumentListIR` is a list of length 1.
+   .... Let `[argumentIR]` be `argumentListIR`.
+   .... Check that `typedLvalueIR'^?^` is Some value.
+   .... Let `typedLvalueIR` be `typedLvalueIR'^?^`.
+   .... Let <<Lvalue_eval, `p EC STO |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult`>>.
+   .... Check that `storageReferenceResult` has type `continueResult<storageReference?>`.
+   .... Let `storageReference'^?^` be `storageReferenceResult`.
+   .... Check that `storageReference'^?^` is Some value.
+   .... Let `storageReference` be `storageReference'^?^`.
+   .... Let `parameterIR` be `INT "count" None`.
+   .... Let `builtinMethodCallee` be `BUILTIN_METHOD storageReference . "pop_front" < [ ] > ( [parameterIR] )`.
+   .... Result in `EC~1~`, `STO~1~`, and `builtinMethodCallee`.
+  ... Else if `nameIR'` is equal to `"isValid"`:
    .... Check that `argumentListIR` is equal to `[ ]`.
    .... Check that `typedLvalueIR'^?^` is Some value.
    .... Let `typedLvalueIR` be `typedLvalueIR'^?^`.
@@ -8576,45 +8491,110 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
   ... Result in the resulting evaluation context `EC~3~`, store `STO~2~`, and call result `callResult`.
 . Else if let `builtinMethodCallee` be `callee`:
  .. Check that `typeArgumentIR^{asterisk}^` is an empty list.
- .. Check that `argumentIR^{asterisk}^` is an empty list.
  .. Group builtinMethodCallee:
-  ... Let `BUILTIN_METHOD storageReference . text < typeArgumentIR'^{asterisk}^ > ( parameterIR^{asterisk}^ )` be `builtinMethodCallee`.
-  ... If `text` is equal to `"isValid"`:
-   .... Check that `typeArgumentIR'^{asterisk}^` is an empty list.
-   .... Check that `parameterIR^{asterisk}^` is an empty list.
-   .... Let <<Lvalue_read, `p EC~0~ STO~0~ |- storageReference : value'`>>.
-   .... If let `headerUnionValue` be `value'`:
-    ..... Let `HEADER_UNION tid { fieldValue^{asterisk}^ }` be `headerUnionValue`.
-    ..... Let `fieldValue~valid~^{asterisk}^` be `<<filter_, $filter_<fieldValue>(fieldValue^{asterisk}^, $is_header_valid)>>`.
-    ..... Let `b~valid~` be `fieldValue~valid~^{asterisk}^` is equal to `[ ]`.
-    ..... Let `returnResult` be `RETURN B b~valid~`.
-    ..... Result in the resulting evaluation context `EC~0~`, store `STO~0~`, and call result `returnResult`.
-   .... Else if let `headerValue` be `value'`:
-    ..... Let `HEADER ++_++ { b~valid~ ; ++_++^{asterisk}^ }` be `headerValue`.
-    ..... Let `returnResult` be `RETURN B b~valid~`.
-    ..... Result in the resulting evaluation context `EC~0~`, store `STO~0~`, and call result `returnResult`.
-  ... Else if `text` is equal to `"setValid"`:
-   .... Check that `typeArgumentIR'^{asterisk}^` is an empty list.
-   .... Check that `parameterIR^{asterisk}^` is an empty list.
-   .... Let <<Lvalue_read, `p EC~0~ STO~0~ |- storageReference : value'`>>.
-   .... Check that `value'` has type `headerValue`.
-   .... Let `headerValue` be `value'`.
-   .... Let `HEADER tid { ++_++ ; fieldValue^{asterisk}^ }` be `headerValue`.
-   .... Let `value` be `HEADER tid { true ; fieldValue^{asterisk}^ }`.
-   .... Let <<Lvalue_write, `p EC~0~ STO~0~ |- storageReference -> value : EC~1~`>>.
-   .... Let `returnResult` be `RETURN None`.
-   .... Result in the resulting evaluation context `EC~1~`, store `STO~0~`, and call result `returnResult`.
-  ... Else if `text` is equal to `"setInvalid"`:
-   .... Check that `typeArgumentIR'^{asterisk}^` is an empty list.
-   .... Check that `parameterIR^{asterisk}^` is an empty list.
-   .... Let <<Lvalue_read, `p EC~0~ STO~0~ |- storageReference : value'`>>.
-   .... Check that `value'` has type `headerValue`.
-   .... Let `headerValue` be `value'`.
-   .... Let `HEADER tid { ++_++ ; fieldValue^{asterisk}^ }` be `headerValue`.
-   .... Let `value` be `HEADER tid { false ; fieldValue^{asterisk}^ }`.
-   .... Let <<Lvalue_write, `p EC~0~ STO~0~ |- storageReference -> value : EC~1~`>>.
-   .... Let `returnResult` be `RETURN None`.
-   .... Result in the resulting evaluation context `EC~1~`, store `STO~0~`, and call result `returnResult`.
+  ... If let `[argumentIR]` be `argumentListIR`:
+   .... Let `BUILTIN_METHOD storageReference . text < typeArgumentIR'^{asterisk}^ > ( parameterListIR )` be `builtinMethodCallee`.
+   .... If `text` is equal to `"push_front"`:
+    ..... Check that `typeArgumentIR'^{asterisk}^` is an empty list.
+    ..... Check that `parameterListIR` is a list of length 1.
+    ..... Let `[parameterIR]` be `parameterListIR`.
+    ..... Let <<Lvalue_read, `p EC~0~ STO~0~ |- storageReference : value'`>>.
+    ..... Check that `value'` has type `headerStackValue`.
+    ..... Let `headerStackValue` be `value'`.
+    ..... Let `HEADER_STACK [ value~element~^{asterisk}^ ( n~idx~ ; n~size~ ) ]` be `headerStackValue`.
+    ..... Let <<Argument_eval, `p EC~0~ STO~0~ |- argumentIR : EC~1~ STO~1~ expressionResult`>>.
+    ..... If let `exitResult` be `expressionResult`:
+     ...... Result in the resulting evaluation context `EC~1~`, store `STO~1~`, and call result `EXIT`.
+    ..... Else let `value~count~` be `expressionResult`:
+     ...... Let `int` be <<int_of_value, the integer representation of  `value~count~`>>.
+     ...... Check that `int` has type `nat`.
+     ...... Let `n~count~` be `int`.
+     ...... Let `value~front~^{asterisk}^` be `value~element~^{asterisk}^[0 : n~count~]`.
+     ...... Let `value~front_invalidated~^{asterisk}^` be the list of `value~front_invalidated~`, obtained by repeating:
++
+--
+            * Let `value~front_invalidated~` be `<<invalidate_value, $invalidate_value(value~front~)>>`.
+--
++
+for each `value~front~` in `value~front~^{asterisk}^`
+     ...... Let `int'` be `<<max_int, $max_int([0, n~size~ - n~count~])>>`.
+     ...... Check that `int'` has type `nat`.
+     ...... Let `n~back~` be `int'`.
+     ...... Let `value~back~^{asterisk}^` be `value~element~^{asterisk}^[0 : n~back~]`.
+     ...... Let `value~element_updated~^{asterisk}^` be `value~front_invalidated~^{asterisk}^ {pp} value~back~^{asterisk}^`.
+     ...... Let `n~idx_updated~` be `<<min_nat, $min_nat([n~size~, n~idx~ + n~count~])>>`.
+     ...... Let `headerStackValue~updated~` be `HEADER_STACK [ value~element_updated~^{asterisk}^ ( n~idx_updated~ ; n~size~ ) ]`.
+     ...... Let <<Lvalue_write, `p EC~1~ STO~1~ |- storageReference -> headerStackValue~updated~ : EC~2~`>>.
+     ...... Result in the resulting evaluation context `EC~2~`, store `STO~1~`, and call result `RETURN None`.
+   .... Else if `text` is equal to `"pop_front"`:
+    ..... Check that `typeArgumentIR'^{asterisk}^` is an empty list.
+    ..... Check that `parameterListIR` is a list of length 1.
+    ..... Let `[parameterIR]` be `parameterListIR`.
+    ..... Let <<Lvalue_read, `p EC~0~ STO~0~ |- storageReference : value'`>>.
+    ..... Check that `value'` has type `headerStackValue`.
+    ..... Let `headerStackValue` be `value'`.
+    ..... Let `HEADER_STACK [ value~element~^{asterisk}^ ( n~idx~ ; n~size~ ) ]` be `headerStackValue`.
+    ..... Let <<Argument_eval, `p EC~0~ STO~0~ |- argumentIR : EC~1~ STO~1~ expressionResult`>>.
+    ..... If let `exitResult` be `expressionResult`:
+     ...... Result in the resulting evaluation context `EC~1~`, store `STO~1~`, and call result `EXIT`.
+    ..... Else let `value~count~` be `expressionResult`:
+     ...... Let `int` be <<int_of_value, the integer representation of  `value~count~`>>.
+     ...... Check that `int` has type `nat`.
+     ...... Let `n~count~` be `int`.
+     ...... Let `int'` be `<<max_int, $max_int([0, n~size~ - n~count~])>>`.
+     ...... Check that `int'` has type `nat`.
+     ...... Let `n~front~` be `int'`.
+     ...... Let `value~front~^{asterisk}^` be `value~element~^{asterisk}^[n~count~ : n~front~]`.
+     ...... Let `value~back~^{asterisk}^` be `value~element~^{asterisk}^[0 : n~count~]`.
+     ...... Let `value~back_invalidated~^{asterisk}^` be the list of `value~back_invalidated~`, obtained by repeating:
++
+--
+            * Let `value~back_invalidated~` be `<<invalidate_value, $invalidate_value(value~back~)>>`.
+--
++
+for each `value~back~` in `value~back~^{asterisk}^`
+     ...... Let `value~element_updated~^{asterisk}^` be `value~front~^{asterisk}^ {pp} value~back_invalidated~^{asterisk}^`.
+     ...... Let `headerStackValue~updated~` be `HEADER_STACK [ value~element_updated~^{asterisk}^ ( n~front~ ; n~size~ ) ]`.
+     ...... Let <<Lvalue_write, `p EC~1~ STO~1~ |- storageReference -> headerStackValue~updated~ : EC~2~`>>.
+     ...... Result in the resulting evaluation context `EC~2~`, store `STO~1~`, and call result `RETURN None`.
+  ... Else if `argumentListIR` is equal to `[ ]`:
+   .... Let `BUILTIN_METHOD storageReference . text < typeArgumentIR'^{asterisk}^ > ( parameterIR'^{asterisk}^ )` be `builtinMethodCallee`.
+   .... If `text` is equal to `"isValid"`:
+    ..... Check that `typeArgumentIR'^{asterisk}^` is an empty list.
+    ..... Check that `parameterIR'^{asterisk}^` is an empty list.
+    ..... Let <<Lvalue_read, `p EC~0~ STO~0~ |- storageReference : value'`>>.
+    ..... If let `headerValue` be `value'`:
+     ...... Let `HEADER ++_++ { b~valid~ ; ++_++^{asterisk}^ }` be `headerValue`.
+     ...... Let `returnResult` be `RETURN B b~valid~`.
+     ...... Result in the resulting evaluation context `EC~0~`, store `STO~0~`, and call result `returnResult`.
+    ..... Else if let `headerUnionValue` be `value'`:
+     ...... Let `HEADER_UNION tid { fieldValue^{asterisk}^ }` be `headerUnionValue`.
+     ...... Let `fieldValue~valid~^{asterisk}^` be `<<filter_, $filter_<fieldValue>(fieldValue^{asterisk}^, $isValid_fieldValue)>>`.
+     ...... Let `b~valid~` be `fieldValue~valid~^{asterisk}^` is equal to `[ ]`.
+     ...... Let `returnResult` be `RETURN B b~valid~`.
+     ...... Result in the resulting evaluation context `EC~0~`, store `STO~0~`, and call result `returnResult`.
+   .... Else if `text` is equal to `"setValid"`:
+    ..... Check that `typeArgumentIR'^{asterisk}^` is an empty list.
+    ..... Check that `parameterIR'^{asterisk}^` is an empty list.
+    ..... Let <<Lvalue_read, `p EC~0~ STO~0~ |- storageReference : value'`>>.
+    ..... Check that `value'` has type `headerValue`.
+    ..... Let `headerValue` be `value'`.
+    ..... Let `HEADER tid { ++_++ ; fieldValue^{asterisk}^ }` be `headerValue`.
+    ..... Let `value` be `HEADER tid { true ; fieldValue^{asterisk}^ }`.
+    ..... Let <<Lvalue_write, `p EC~0~ STO~0~ |- storageReference -> value : EC~1~`>>.
+    ..... Let `returnResult` be `RETURN None`.
+    ..... Result in the resulting evaluation context `EC~1~`, store `STO~0~`, and call result `returnResult`.
+   .... Else if `text` is equal to `"setInvalid"`:
+    ..... Check that `typeArgumentIR'^{asterisk}^` is an empty list.
+    ..... Check that `parameterIR'^{asterisk}^` is an empty list.
+    ..... Let <<Lvalue_read, `p EC~0~ STO~0~ |- storageReference : value'`>>.
+    ..... Check that `value'` has type `headerValue`.
+    ..... Let `headerValue` be `value'`.
+    ..... Let `HEADER tid { ++_++ ; fieldValue^{asterisk}^ }` be `headerValue`.
+    ..... Let `value` be `HEADER tid { false ; fieldValue^{asterisk}^ }`.
+    ..... Let <<Lvalue_write, `p EC~0~ STO~0~ |- storageReference -> value : EC~1~`>>.
+    ..... Let `returnResult` be `RETURN None`.
+    ..... Result in the resulting evaluation context `EC~1~`, store `STO~0~`, and call result `returnResult`.
 . Else if let `externMethodCallee` be `callee`:
  .. Group externMethodCallee:
   ... Let `EXTERN_METHOD oid . nameIR < typeParameterIR^{asterisk}^ > ( parameterIR^{asterisk}^ # id~default~^{asterisk}^ ) { frame ; blockStatementIR^?^ }` be `externMethodCallee`.
@@ -9143,10 +9123,10 @@ relation V1Model_ingress: `EC~0~` and `STO~0~`
  .. Let `typedExpressionIR~ig~` be `<<V1Model_setup_ingress_callee, $V1Model_setup_ingress_callee(EC~0~, STO~0~, typedExpressionIR~main~)>>`.
  .. Let `callableTargetIR` be `typedExpressionIR~ig~ . "apply"`.
  .. Let `EC~1~`, `STO~1~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `callableTargetIR < [ ] > ( argumentIR^{asterisk}^ ) ;`, under cursor `GLOBAL`, evaluation context `EC~0~`, and store `STO~0~`>>.
- .. If let `continueEmptyResult` be `statementResult`:
-  ... Result in `EC~1~`, `STO~1~`, and `RETURN None`.
- .. Else if let `exitResult` be `statementResult`:
+ .. If let `exitResult` be `statementResult`:
   ... Result in `EC~1~`, `STO~1~`, and `EXIT`.
+ .. Else if let `continueEmptyResult` be `statementResult`:
+  ... Result in `EC~1~`, `STO~1~`, and `RETURN None`.
 
 
 relation V1Model_egress: `EC~0~` and `STO~0~`

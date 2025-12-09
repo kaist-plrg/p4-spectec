@@ -4,48 +4,48 @@
 
 ;;; Filtering out default parameters
 
-dec $filter_default_parameterTypeIRs(parameterTypeIR*, id*) : parameterTypeIR*
+dec $filter_default_parameterIRs(parameterIR*, id*) : parameterIR*
 
-def $filter_default_parameterTypeIRs(eps, id_default*) = eps
-def $filter_default_parameterTypeIRs(
-    parameterTypeIR_h :: parameterTypeIR_t*,
+def $filter_default_parameterIRs(eps, id_default*) = eps
+def $filter_default_parameterIRs(
+    parameterIR_h :: parameterIR_t*,
     id_default*
   )
-  = $filter_default_parameterTypeIRs(parameterTypeIR_t*, id_default*)
-  -- if _ _ id_h _ = parameterTypeIR_h
-  -- if id_h <- id_default*
-def $filter_default_parameterTypeIRs(
-    parameterTypeIR_h :: parameterTypeIR_t*,
+  = $filter_default_parameterIRs(parameterIR_t*, id_default*)
+  -- if _ _ _ nameIR_h _ = parameterIR_h
+  -- if nameIR_h <- id_default*
+def $filter_default_parameterIRs(
+    parameterIR_h :: parameterIR_t*,
     id_default*
   )
-  = parameterTypeIR_h
-    :: $filter_default_parameterTypeIRs(parameterTypeIR_t*, id_default*)
+  = parameterIR_h
+    :: $filter_default_parameterIRs(parameterIR_t*, id_default*)
   -- otherwise
 
 ;;; Aligning parameters if the arguments are named
 
-dec $align_parameterTypeIRs(parameterTypeIR*, argumentIR*)
-  : parameterTypeIR*
-dec $align_parameterTypeIRs'(
-    map<id, parameterTypeIR>, parameterTypeIR, argumentIR
-  ): parameterTypeIR?
+dec $align_parameterIRs(parameterIR*, argumentIR*)
+  : parameterIR*
+dec $align_parameterIRs'(
+    map<id, parameterIR>, parameterIR, argumentIR
+  ): parameterIR?
 
-def $align_parameterTypeIRs(parameterTypeIR*, argumentIR*)
-  = parameterTypeIR_aligned*
-  -- if (_ _ id _ = parameterTypeIR)*
-  -- (if parameterTypeIR_aligned
-       = $align_parameterTypeIRs'(
-          `{ (id `: parameterTypeIR)* }, parameterTypeIR, argumentIR
+def $align_parameterIRs(parameterIR*, argumentIR*)
+  = parameterIR_aligned*
+  -- if (_ _ _ nameIR _ = parameterIR)*
+  -- (if parameterIR_aligned
+       = $align_parameterIRs'(
+          `{ (nameIR `: parameterIR)* }, parameterIR, argumentIR
          ))*
 
-def $align_parameterTypeIRs'(_, parameterTypeIR, typedExpressionIR)
-  = parameterTypeIR
-def $align_parameterTypeIRs'(`{ (id_param `: parameterTypeIR)* }, _, nameIR `= _)
-  = $find_map<id, parameterTypeIR>(`{ (id_param `: parameterTypeIR)* }, nameIR)
-def $align_parameterTypeIRs'(`{ (id_param `: parameterTypeIR)* }, _, nameIR `= `_)
-  = $find_map<id, parameterTypeIR>(`{ (id_param `: parameterTypeIR)* }, nameIR)
-def $align_parameterTypeIRs'(_, parameterTypeIR, `_)
-  = parameterTypeIR
+def $align_parameterIRs'(_, parameterIR, typedExpressionIR)
+  = parameterIR
+def $align_parameterIRs'(`{ (id_param `: parameterIR)* }, _, nameIR `= _)
+  = $find_map<id, parameterIR>(`{ (id_param `: parameterIR)* }, nameIR)
+def $align_parameterIRs'(`{ (id_param `: parameterIR)* }, _, nameIR `= `_)
+  = $find_map<id, parameterIR>(`{ (id_param `: parameterIR)* }, nameIR)
+def $align_parameterIRs'(_, parameterIR, `_)
+  = parameterIR
 
 ;;
 ;; Calling convention (single argument)
@@ -56,7 +56,7 @@ def $align_parameterTypeIRs'(_, parameterTypeIR, `_)
 ;;; IN
 
 rule Call_convention_expr_ok/in:
-  p TC actctxt |- (IN typeIR_param _ _) `@ typedExpressionIR_arg
+  p TC actctxt |- (_ IN typeIR_param _ _) `@ typedExpressionIR_arg
                 : typedExpressionIR_arg_cast
   ---- ;; may insert implicit casts for direction in
   -- if typedExpressionIR_arg_cast
@@ -107,7 +107,7 @@ rule Expr_lvalue_ok/accessExpressionIR-indexAccessExpressionIR-bitslice:
   -- Expr_lvalue_ok: p TC |- typedExpressionIR_base
 
 rule Call_convention_expr_ok/out-inout:
-  p TC actctxt |- (direction typeIR_param _ _) `@ typedExpressionIR_arg
+  p TC actctxt |- (_ direction typeIR_param _ _) `@ typedExpressionIR_arg
                 : typedExpressionIR_arg
   -- if direction = OUT \/ direction = INOUT
   ---- ;; may not insert implicit casts for direction out or inout
@@ -121,14 +121,14 @@ rule Call_convention_expr_ok/out-inout:
 rulegroup Call_convention_expr_ok/empty {
 
   rule Call_convention_expr_ok/action:
-    p TC ACTION |- (`EMPTY typeIR_param _ _) `@ typedExpressionIR_arg
+    p TC ACTION |- (_ `EMPTY typeIR_param _ _) `@ typedExpressionIR_arg
                  : typedExpressionIR_arg_cast
      ---- ;; may insert implicit casts for directionless action argument
     -- if typedExpressionIR_arg_cast
         = $coerce_unary(typedExpressionIR_arg, typeIR_param) 
     
   rule Call_convention_expr_ok/non-action:
-    p TC NOACTION |- (`EMPTY typeIR_param _ _) `@ typedExpressionIR_arg
+    p TC NOACTION |- (_ `EMPTY typeIR_param _ _) `@ typedExpressionIR_arg
                    : typedExpressionIR_arg
     ---- ;; may not insert implicit casts for direction out or inout
     -- if typeIR_arg = $type_of_typedExpressionIR(typedExpressionIR_arg)
@@ -144,33 +144,33 @@ rulegroup Call_convention_expr_ok/empty {
 ;;; typedExpressionIR
 
 rule Call_convention_argument_ok/typedExpression:
-  p TC actctxt |- parameterTypeIR `@ typedExpressionIR
+  p TC actctxt |- parameterIR `@ typedExpressionIR
                 : typedExpressionIR_cast
   -- Call_convention_expr_ok:
-      p TC actctxt |- parameterTypeIR `@ typedExpressionIR
+      p TC actctxt |- parameterIR `@ typedExpressionIR
                     : typedExpressionIR_cast
 
 ;;; nameIR `= typedExpressionIR
 
 rule Call_convention_argument_ok/nameIR-typedExpression:
-  p TC actctxt |- parameterTypeIR `@ (nameIR `= typedExpressionIR)
+  p TC actctxt |- parameterIR `@ (nameIR `= typedExpressionIR)
                 : (nameIR `= typedExpressionIR_cast)
   -- Call_convention_expr_ok:
-      p TC actctxt |- parameterTypeIR `@ typedExpressionIR
+      p TC actctxt |- parameterIR `@ typedExpressionIR
                     : typedExpressionIR_cast
 
 ;;; nameIR `= `_
 
 rule Call_convention_argument_ok/nameIR-dontcare:
-  p TC actctxt |- parameterTypeIR `@ (nameIR `= `_)
+  p TC actctxt |- parameterIR `@ (nameIR `= `_)
                 : (nameIR `= `_)
-  -- if OUT _ _ _ = parameterTypeIR
+  -- if _ OUT _ _ _ = parameterIR
 
 ;;; `_
 
 rule Call_convention_argument_ok/dontcare:
-  p TC actctxt |- parameterTypeIR `@ `_ : `_
-  -- if OUT _ _ _ = parameterTypeIR
+  p TC actctxt |- parameterIR `@ `_ : `_
+  -- if _ OUT _ _ _ = parameterIR
 
 ;;
 ;; Calling convention (multiple arguments)
@@ -180,12 +180,12 @@ rule Call_convention_ok/nil:
   p TC actctxt |- eps `@ eps : eps
 
 rule Call_convention_ok/cons:
-  p TC actctxt |- (parameterTypeIR_h :: parameterTypeIR_t*)
+  p TC actctxt |- (parameterIR_h :: parameterIR_t*)
                     `@ (argumentIR_h :: argumentIR_t*)
                 : (argumentIR_h_cast :: argumentIR_t_cast*)
   -- Call_convention_argument_ok:
-      p TC actctxt |- parameterTypeIR_h `@ argumentIR_h
+      p TC actctxt |- parameterIR_h `@ argumentIR_h
                     : argumentIR_h_cast
   -- Call_convention_ok:
-      p TC actctxt |- parameterTypeIR_t* `@ argumentIR_t*
+      p TC actctxt |- parameterIR_t* `@ argumentIR_t*
                     : argumentIR_t_cast*

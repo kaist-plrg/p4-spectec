@@ -9,7 +9,7 @@ relation Type_alpha:
   hint(prose_false %0 "and" %1 "are not the same type")
 
 relation ParameterType_alpha:
-  parameterTypeIR ~~ parameterTypeIR
+  parameterIR ~~ parameterIR
   hint(input %0 %1)
   hint(prose_true %0 "and" %1 "are the same type")
   hint(prose_false %0 "and" %1 "are not the same type")
@@ -140,12 +140,12 @@ rule Type_alpha/externObjectTypeIR:
       externMethodTypeDefIR_a' ~~ externMethodTypeDefIR_b')*
 
 rule Type_alpha/parserObjectTypeIR:
-  (PARSER `( parameterTypeIR_a* )) ~~ (PARSER `( parameterTypeIR_b* ))
-  -- (ParameterType_alpha: parameterTypeIR_a ~~ parameterTypeIR_b)*
+  (PARSER `( parameterIR_a* )) ~~ (PARSER `( parameterIR_b* ))
+  -- (ParameterType_alpha: parameterIR_a ~~ parameterIR_b)*
 
 rule Type_alpha/controlObjectTypeIR:
-  (CONTROL `( parameterTypeIR_a* )) ~~ (CONTROL `( parameterTypeIR_b* ))
-  -- (ParameterType_alpha: parameterTypeIR_a ~~ parameterTypeIR_b)*
+  (CONTROL `( parameterIR_a* )) ~~ (CONTROL `( parameterIR_b* ))
+  -- (ParameterType_alpha: parameterIR_a ~~ parameterIR_b)*
 
 rule Type_alpha/packetObjectTypeIR:
   (PACKAGE `{ typeIR_a* }) ~~ (PACKAGE `{ typeIR_b* })
@@ -200,7 +200,7 @@ rule Type_alpha/tableMetadataTypeIR:
 ;;
 
 rule ParameterType_alpha:
-  (direction typeIR_a _ _) ~~ (direction typeIR_b _ _)
+  (_ direction typeIR_a _ _) ~~ (_ direction typeIR_b _ _)
   -- Type_alpha: typeIR_a ~~ typeIR_b
 
 ;;
@@ -210,65 +210,65 @@ rule ParameterType_alpha:
 ;;; Action types
 
 rule CallableType_alpha/actionTypeIR:
-  (ACTION `( parameterTypeIR_a* ))
-  ~~ (ACTION `( parameterTypeIR_b* ))
+  (ACTION `( parameterIR_a* ))
+  ~~ (ACTION `( parameterIR_b* ))
   -- (ParameterType_alpha:
-        parameterTypeIR_a ~~ parameterTypeIR_b)*
+        parameterIR_a ~~ parameterIR_b)*
 
 ;;; Function types
 
 rule CallableType_alpha/definedFunctionTypeIR:
-  (FUNCTION `( parameterTypeIR_a* ) `: typeIR_a)
-  ~~ (FUNCTION `( parameterTypeIR_b* ) `: typeIR_b)
+  (FUNCTION `( parameterIR_a* ) `: typeIR_a)
+  ~~ (FUNCTION `( parameterIR_b* ) `: typeIR_b)
   -- (ParameterType_alpha:
-        parameterTypeIR_a ~~ parameterTypeIR_b)*
+        parameterIR_a ~~ parameterIR_b)*
   -- Type_alpha: typeIR_a ~~ typeIR_b
 
 rule CallableType_alpha/externFunctionTypeIR:
-  (EXTERN_FUNCTION `( parameterTypeIR_a* ) `: typeIR_a)
-  ~~ (EXTERN_FUNCTION `( parameterTypeIR_b* ) `: typeIR_b)
+  (EXTERN_FUNCTION `( parameterIR_a* ) `: typeIR_a)
+  ~~ (EXTERN_FUNCTION `( parameterIR_b* ) `: typeIR_b)
   -- (ParameterType_alpha:
-        parameterTypeIR_a ~~ parameterTypeIR_b)*
+        parameterIR_a ~~ parameterIR_b)*
   -- Type_alpha: typeIR_a ~~ typeIR_b
 
 ;;; Method types
 
 rule CallableType_alpha/builtinMethodTypeIR:
-  (BUILTIN_METHOD `( parameterTypeIR_a* ) `: typeIR_a)
-  ~~ (BUILTIN_METHOD `( parameterTypeIR_b* ) `: typeIR_b)
+  (BUILTIN_METHOD `( parameterIR_a* ) `: typeIR_a)
+  ~~ (BUILTIN_METHOD `( parameterIR_b* ) `: typeIR_b)
   -- (ParameterType_alpha:
-        parameterTypeIR_a ~~ parameterTypeIR_b)*
+        parameterIR_a ~~ parameterIR_b)*
   -- Type_alpha: typeIR_a ~~ typeIR_b
 
 rulegroup CallableType_alpha/externMethodTypeIR {
 
   rule CallableType_alpha/non-abstract:
-    (EXTERN_METHOD `( parameterTypeIR_a* ) `: typeIR_a)
-    ~~ (EXTERN_METHOD `( parameterTypeIR_b* ) `: typeIR_b)
+    (EXTERN_METHOD `( parameterIR_a* ) `: typeIR_a)
+    ~~ (EXTERN_METHOD `( parameterIR_b* ) `: typeIR_b)
     -- (ParameterType_alpha:
-          parameterTypeIR_a ~~ parameterTypeIR_b)*
+          parameterIR_a ~~ parameterIR_b)*
     -- Type_alpha: typeIR_a ~~ typeIR_b
 
   rule CallableType_alpha/abstract:
-    (EXTERN_METHOD ABSTRACT `( parameterTypeIR_a* ) `: typeIR_a)
-    ~~ (EXTERN_METHOD ABSTRACT `( parameterTypeIR_b* ) `: typeIR_b)
+    (EXTERN_METHOD ABSTRACT `( parameterIR_a* ) `: typeIR_a)
+    ~~ (EXTERN_METHOD ABSTRACT `( parameterIR_b* ) `: typeIR_b)
     -- (ParameterType_alpha:
-          parameterTypeIR_a ~~ parameterTypeIR_b)*
+          parameterIR_a ~~ parameterIR_b)*
     -- Type_alpha: typeIR_a ~~ typeIR_b
 
 }
 
 rule CallableType_alpha/parserApplyMethodTypeIR:
-  (PARSER_APPLY `( parameterTypeIR_a* ))
-  ~~ (PARSER_APPLY `( parameterTypeIR_b* ))
+  (PARSER_APPLY `( parameterIR_a* ))
+  ~~ (PARSER_APPLY `( parameterIR_b* ))
   -- (ParameterType_alpha:
-        parameterTypeIR_a ~~ parameterTypeIR_b)*
+        parameterIR_a ~~ parameterIR_b)*
 
 rule CallableType_alpha/controlApplyMethodTypeIR:
-  (CONTROL_APPLY `( parameterTypeIR_a* ))
-  ~~ (CONTROL_APPLY `( parameterTypeIR_b* ))
+  (CONTROL_APPLY `( parameterIR_a* ))
+  ~~ (CONTROL_APPLY `( parameterIR_b* ))
   -- (ParameterType_alpha:
-        parameterTypeIR_a ~~ parameterTypeIR_b)*
+        parameterIR_a ~~ parameterIR_b)*
 
 rule CallableType_alpha/tableApplyMethodTypeIR:
   tableApplyMethodTypeIR ~~ tableApplyMethodTypeIR

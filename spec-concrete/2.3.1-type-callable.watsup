@@ -6,22 +6,26 @@
 ;;;; Parameter types
 ;;
 
-syntax parameterTypeIR = direction typeIR id value?
-  hint(prose_fields ["direction", "type", "name", "default value"])
+syntax constantInitializerIR = `= value
+syntax constantInitializerOptIR = constantInitializerIR?
+
+syntax parameterIR =
+  annotationList direction typeIR nameIR constantInitializerOptIR
+  hint(prose_fields ["annotations", "direction", "type", "name", "default initializer"])
 
 ;;
 ;;;; Action types
 ;;
 
-syntax actionTypeIR = ACTION `( parameterTypeIR* )
+syntax actionTypeIR = ACTION `( parameterIR* )
 
 ;;
 ;;;; Function types
 ;;
 
-syntax definedFunctionTypeIR = FUNCTION `( parameterTypeIR* ) `: typeIR
+syntax definedFunctionTypeIR = FUNCTION `( parameterIR* ) `: typeIR
 
-syntax externFunctionTypeIR = EXTERN_FUNCTION `( parameterTypeIR* ) `: typeIR
+syntax externFunctionTypeIR = EXTERN_FUNCTION `( parameterIR* ) `: typeIR
 
 syntax functionTypeIR =
   | definedFunctionTypeIR
@@ -31,15 +35,15 @@ syntax functionTypeIR =
 ;;;; Method types
 ;;
 
-syntax builtinMethodTypeIR = BUILTIN_METHOD `( parameterTypeIR* ) `: typeIR
+syntax builtinMethodTypeIR = BUILTIN_METHOD `( parameterIR* ) `: typeIR
 
 syntax externMethodTypeIR =
-  | EXTERN_METHOD `( parameterTypeIR* ) `: typeIR
-  | EXTERN_METHOD ABSTRACT `( parameterTypeIR* ) `: typeIR
+  | EXTERN_METHOD `( parameterIR* ) `: typeIR
+  | EXTERN_METHOD ABSTRACT `( parameterIR* ) `: typeIR
 
-syntax parserApplyMethodTypeIR = PARSER_APPLY `( parameterTypeIR* )
+syntax parserApplyMethodTypeIR = PARSER_APPLY `( parameterIR* )
 
-syntax controlApplyMethodTypeIR = CONTROL_APPLY `( parameterTypeIR* )
+syntax controlApplyMethodTypeIR = CONTROL_APPLY `( parameterIR* )
 
 syntax tableApplyMethodTypeIR = TABLE_APPLY `: tableMetadataStructTypeIR
 

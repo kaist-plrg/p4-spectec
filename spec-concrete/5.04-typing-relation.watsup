@@ -251,8 +251,8 @@ relation TableKeys_ok:
   hint(prose_out "the updated table context" %3 "and the typed table keys" %4)
 
 relation Call_action_partial_ok:
-  typingContext |- parameterTypeIR* `@ argumentListIR
-                 : parameterTypeIR* `, parameterTypeIR* `@ argumentListIR
+  typingContext |- parameterIR* `@ argumentListIR
+                 : parameterIR* `, parameterIR* `@ argumentListIR
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under typing context" %0)
   hint(prose_out "the typed argument list" %3)
@@ -270,8 +270,8 @@ relation TableActions_ok:
   hint(prose_out "the updated table context" %3 "and the typed table actions" %4)
 
 relation Call_action_default_ok:
-  typingContext |- parameterTypeIR* `@ argumentListIR
-                 : parameterTypeIR* `, parameterTypeIR* `@ argumentListIR
+  typingContext |- parameterIR* `@ argumentListIR
+                 : parameterIR* `, parameterIR* `@ argumentListIR
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under typing context" %0)
   hint(prose_out "the typed argument list" %3)
@@ -386,21 +386,21 @@ relation Program_ok:
 syntax actctxt = ACTION | NOACTION
 
 relation Call_convention_expr_ok:
-  cursor typingContext actctxt |- parameterTypeIR `@ typedExpressionIR
+  cursor typingContext actctxt |- parameterIR `@ typedExpressionIR
                                 : typedExpressionIR
   hint(input %0 %1 %2 %3 %4)
   hint(prose_in "checking the calling convention of" %4 "applied to parameter type" %3
              #", under cursor" %0#", typing context" %1 #", and action context" %2)
 
 relation Call_convention_argument_ok:
-  cursor typingContext actctxt |- parameterTypeIR `@ argumentIR
+  cursor typingContext actctxt |- parameterIR `@ argumentIR
                                 : argumentIR
   hint(input %0 %1 %2 %3 %4)
   hint(prose_in "checking the calling convention of" %4 "applied to parameter type" %3
              #", under cursor" %0#", typing context" %1 #", and action context" %2)
 
 relation Call_convention_ok:
-  cursor typingContext actctxt |- parameterTypeIR* `@ argumentListIR
+  cursor typingContext actctxt |- parameterIR* `@ argumentListIR
                                 : argumentListIR
   hint(input %0 %1 %2 %3 %4)
   hint(prose_in "checking the calling convention of" %4 "applied to parameter types" %3

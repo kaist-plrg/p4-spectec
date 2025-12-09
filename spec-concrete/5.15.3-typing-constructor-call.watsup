@@ -82,35 +82,35 @@ rule Inst_ok/package:
                       : typeIR_object_inferred `< typeArgumentIR_inferred* >
                                                `( argumentIR_cast* )
   ---- ;; if the constructor is for a package object
-  -- if CONSTRUCTOR `( parameterTypeIR* ) `: typeIR_object
+  -- if CONSTRUCTOR `( parameterIR* ) `: typeIR_object
       = constructorTypeIR
   -- if PACKAGE `{ _ } = $canon_typeIR(typeIR_object)
   ---- ;; filter default arguments
-  -- if parameterTypeIR_non_default*
-      = $filter_default_parameterTypeIRs(parameterTypeIR*, id_default*)
+  -- if parameterIR_non_default*
+      = $filter_default_parameterIRs(parameterIR*, id_default*)
   ---- ;; check arity
-  -- if $(|parameterTypeIR_non_default*| = |argumentIR*|)
+  -- if $(|parameterIR_non_default*| = |argumentIR*|)
   ---- ;; align parameters and arguments if named
-  -- if parameterTypeIR_aligned*
-      = $align_parameterTypeIRs(parameterTypeIR_non_default*, argumentIR*)
+  -- if parameterIR_aligned*
+      = $align_parameterIRs(parameterIR_non_default*, argumentIR*)
   ---- ;; perform type inference
-  -- if inference = $infer(tid_infer*, parameterTypeIR_aligned*, argumentIR*)
+  -- if inference = $infer(tid_infer*, parameterIR_aligned*, argumentIR*)
   -- if (typeIR_inferred = $find_map<tid, typeIR>(inference, tid_infer))*
   -- if typeArgumentIR_inferred* = typeArgumentIR* ++ typeIR_inferred*
   ---- ;; substitute inferred types
-  -- if (parameterTypeIR_aligned_inferred
-      = $subst_parameterTypeIR(inference, parameterTypeIR_aligned))*
+  -- if (parameterIR_aligned_inferred
+      = $subst_parameterIR(inference, parameterIR_aligned))*
   -- if typeIR_object_inferred
       = $subst_typeIR(inference, typeIR_object)
   ---- ;; check that the substituted constructor is still well-formed
   -- if constructorTypeIR_inferred
-      = CONSTRUCTOR `( parameterTypeIR_aligned_inferred* ) `: typeIR_object_inferred
+      = CONSTRUCTOR `( parameterIR_aligned_inferred* ) `: typeIR_object_inferred
   -- ConstructorType_wf: $bound(GLOBAL, TC) |- constructorTypeIR_inferred
   ---- ;; check instantiation site
   -- if $instantiable(GLOBAL, TC, instctxt, typeIR_object_inferred)
   ---- ;; check call convention
   -- Call_convention_ok:
-      BLOCK TC NOACTION |- parameterTypeIR_aligned_inferred* `@ argumentIR*
+      BLOCK TC NOACTION |- parameterIR_aligned_inferred* `@ argumentIR*
                          : argumentIR_cast*
 
 ;;; Instantiation of a non-package
@@ -121,33 +121,33 @@ rule Inst_ok/non-package:
                  : typeIR_object_inferred `< typeArgumentIR_inferred* >
                                           `( argumentIR_cast* )
   ---- ;; if the constructor is not for a package object
-  -- if CONSTRUCTOR `( parameterTypeIR* ) `: typeIR_object
+  -- if CONSTRUCTOR `( parameterIR* ) `: typeIR_object
       = constructorTypeIR
   -- if ~$is_packageObjectTypeIR($canon_typeIR(typeIR_object))
   ---- ;; filter default arguments
-  -- if parameterTypeIR_non_default*
-      = $filter_default_parameterTypeIRs(parameterTypeIR*, id_default*)
+  -- if parameterIR_non_default*
+      = $filter_default_parameterIRs(parameterIR*, id_default*)
   ---- ;; check arity
-  -- if $(|parameterTypeIR_non_default*| = |argumentIR*|)
+  -- if $(|parameterIR_non_default*| = |argumentIR*|)
   ---- ;; align parameters and arguments if named
-  -- if parameterTypeIR_aligned*
-      = $align_parameterTypeIRs(parameterTypeIR_non_default*, argumentIR*)
+  -- if parameterIR_aligned*
+      = $align_parameterIRs(parameterIR_non_default*, argumentIR*)
   ---- ;; perform type inference
-  -- if inference = $infer(tid_infer*, parameterTypeIR_aligned*, argumentIR*)
+  -- if inference = $infer(tid_infer*, parameterIR_aligned*, argumentIR*)
   -- if (typeIR_inferred = $find_map<tid, typeIR>(inference, tid_infer))*
   -- if typeArgumentIR_inferred* = typeArgumentIR* ++ typeIR_inferred*
   ---- ;; substitute inferred types
-  -- if (parameterTypeIR_aligned_inferred
-      = $subst_parameterTypeIR(inference, parameterTypeIR_aligned))*
+  -- if (parameterIR_aligned_inferred
+      = $subst_parameterIR(inference, parameterIR_aligned))*
   -- if typeIR_object_inferred
       = $subst_typeIR(inference, typeIR_object)
   ---- ;; check that the substituted constructor is still well-formed
   -- if constructorTypeIR_inferred
-      = CONSTRUCTOR `( parameterTypeIR_aligned_inferred* ) `: typeIR_object_inferred
+      = CONSTRUCTOR `( parameterIR_aligned_inferred* ) `: typeIR_object_inferred
   -- ConstructorType_wf: $bound(p, TC) |- constructorTypeIR_inferred
   ---- ;; check instantiation site
   -- if $instantiable(p, TC, instctxt, typeIR_object_inferred)
   ---- ;; check call convention
   -- Call_convention_ok:
-      p TC NOACTION |- parameterTypeIR_aligned_inferred* `@ argumentIR*
+      p TC NOACTION |- parameterIR_aligned_inferred* `@ argumentIR*
                      : argumentIR_cast*

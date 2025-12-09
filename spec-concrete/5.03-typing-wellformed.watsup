@@ -13,12 +13,12 @@ relation TypeDef_wf:
   hint(prose_true %1 "is a well-formed type, assuming bound type ids" %0)
 
 relation ParameterType_wf:
-  bound |- parameterTypeIR
+  bound |- parameterIR
   hint(input %0 %1)
   hint(prose_true %1 "is a well-formed type, assuming bound type ids" %0)
 
 relation ParameterTypes_wf:
-  bound |- parameterTypeIR*
+  bound |- parameterIR*
   hint(input %0 %1)
   hint(prose_true %1 "is a well-formed type, assuming bound type ids" %0)
 
@@ -33,12 +33,12 @@ relation CallableTypeDef_wf:
   hint(prose_true %1 "is a well-formed type, assuming bound type ids" %0)
 
 relation ConstructorParameterType_wf:
-  bound |- parameterTypeIR
+  bound |- parameterIR
   hint(input %0 %1)
   hint(prose_true %1 "is a well-formed type, assuming bound type ids" %0)
 
 relation ConstructorParameterTypes_wf:
-  bound |- parameterTypeIR*
+  bound |- parameterIR*
   hint(input %0 %1)
   hint(prose_true %1 "is a well-formed type, assuming bound type ids" %0)
 
@@ -340,12 +340,12 @@ rule Type_wf/externObjectTypeIR:
   -- (CallableTypeDef_wf: bound |- externMethodTypeDefIR)*
 
 rule Type_wf/parserObjectTypeIR:
-  bound |- PARSER `( parameterTypeIR* )
-  -- ParameterTypes_wf: bound |- parameterTypeIR*
+  bound |- PARSER `( parameterIR* )
+  -- ParameterTypes_wf: bound |- parameterIR*
 
 rule Type_wf/controlObjectTypeIR:
-  bound |- CONTROL `( parameterTypeIR* )
-  -- ParameterTypes_wf: bound |- parameterTypeIR*
+  bound |- CONTROL `( parameterIR* )
+  -- ParameterTypes_wf: bound |- parameterIR*
 
 rule Type_wf/packageObjectTypeIR:
   bound |- PACKAGE `{ typeIR* }
@@ -489,7 +489,7 @@ rule TypeDef_wf:
 rulegroup ParameterType_wf {
 
   rule ParameterType_wf/non-default:
-    bound |- direction typeIR _ eps
+    bound |- _ direction typeIR _ eps
     -- Type_wf: bound |- typeIR
     -- if typeIR_canon = $canon_typeIR(typeIR)
     -- if ~$is_synthesizedTypeIR(typeIR_canon)
@@ -499,7 +499,7 @@ rulegroup ParameterType_wf {
           => direction = `EMPTY
 
   rule ParameterType_wf/default:
-    bound |- direction typeIR _ value
+    bound |- _ direction typeIR _ (`= value)
     -- Type_wf: bound |- typeIR
     -- if typeIR_canon = $canon_typeIR(typeIR)
     -- if ~$is_synthesizedTypeIR(typeIR_canon)
@@ -512,10 +512,10 @@ rulegroup ParameterType_wf {
 }
 
 rule ParameterTypes_wf:
-  bound |- parameterTypeIR*
-  -- if (_ _ id _ = parameterTypeIR)*
-  -- if $distinct_<id>(id*)
-  -- (ParameterType_wf: bound |- parameterTypeIR)*
+  bound |- parameterIR*
+  -- if (_ _ _ nameIR _ = parameterIR)*
+  -- if $distinct_<nameIR>(nameIR*)
+  -- (ParameterType_wf: bound |- parameterIR)*
 
 ;;
 ;;;; Well-formedness of callable types
@@ -555,9 +555,9 @@ tbl def $nestable'_action =
   | _ => true
 
 rule CallableType_wf/actionTypeIR:
-  bound |- ACTION `( parameterTypeIR* )
-  -- ParameterTypes_wf: bound |- parameterTypeIR*
-  -- if (direction typeIR _ _ = parameterTypeIR)*
+  bound |- ACTION `( parameterIR* )
+  -- ParameterTypes_wf: bound |- parameterIR*
+  -- if (_ direction typeIR _ _ = parameterIR)*
   -- if $directionless_trailing(direction*)
   -- if $nestable_action(typeIR)*
 
@@ -579,9 +579,9 @@ tbl def $nestable'_definedFunction =
   | _ => true
 
 rule CallableType_wf/definedFunctionTypeIR:
-  bound |- FUNCTION `( parameterTypeIR* ) `: typeIR_ret
-  -- ParameterTypes_wf: bound |- parameterTypeIR*
-  -- if (_ typeIR _ _ = parameterTypeIR)* 
+  bound |- FUNCTION `( parameterIR* ) `: typeIR_ret
+  -- ParameterTypes_wf: bound |- parameterIR*
+  -- if (_ _ typeIR _ _ = parameterIR)* 
   -- if $nestable_definedFunction(typeIR)*
   -- Type_wf: bound |- typeIR_ret
 
@@ -603,17 +603,17 @@ tbl def $nestable'_externFunction =
   | _ => true
 
 rule CallableType_wf/externFunctionTypeIR:
-  bound |- EXTERN_FUNCTION `( parameterTypeIR* ) `: typeIR_ret
-  -- ParameterTypes_wf: bound |- parameterTypeIR*
-  -- if (_ typeIR _ _ = parameterTypeIR)* 
+  bound |- EXTERN_FUNCTION `( parameterIR* ) `: typeIR_ret
+  -- ParameterTypes_wf: bound |- parameterIR*
+  -- if (_ _ typeIR _ _ = parameterIR)* 
   -- if $nestable_externFunction(typeIR)*
   -- Type_wf: bound |- typeIR_ret
 
 ;;; Method types
 
 rule CallableType_wf/builtinMethodTypeIR:
-  bound |- BUILTIN_METHOD `( parameterTypeIR* ) `: typeIR_ret
-  -- ParameterTypes_wf: bound |- parameterTypeIR*
+  bound |- BUILTIN_METHOD `( parameterIR* ) `: typeIR_ret
+  -- ParameterTypes_wf: bound |- parameterIR*
   -- Type_wf: bound |- typeIR_ret
 
 dec $nestable_externMethod(typeIR) : bool
@@ -636,16 +636,16 @@ tbl def $nestable'_externMethod =
 rulegroup CallableType_wf/externMethodTypeIR {
 
   rule CallableType_wf/non-abstract:
-    bound |- EXTERN_METHOD `( parameterTypeIR* ) `: typeIR_ret
-    -- ParameterTypes_wf: bound |- parameterTypeIR*
-    -- if (_ typeIR _ _ = parameterTypeIR)* 
+    bound |- EXTERN_METHOD `( parameterIR* ) `: typeIR_ret
+    -- ParameterTypes_wf: bound |- parameterIR*
+    -- if (_ _ typeIR _ _ = parameterIR)* 
     -- if $nestable_externMethod(typeIR)*
     -- Type_wf: bound |- typeIR_ret
 
   rule CallableType_wf/abstract:
-    bound |- EXTERN_METHOD ABSTRACT `( parameterTypeIR* ) `: typeIR_ret
-    -- ParameterTypes_wf: bound |- parameterTypeIR*
-    -- if (_ typeIR _ _ = parameterTypeIR)* 
+    bound |- EXTERN_METHOD ABSTRACT `( parameterIR* ) `: typeIR_ret
+    -- ParameterTypes_wf: bound |- parameterIR*
+    -- if (_ _ typeIR _ _ = parameterIR)* 
     -- if $nestable_externMethod(typeIR)*
     -- Type_wf: bound |- typeIR_ret
 
@@ -669,9 +669,9 @@ tbl def $nestable'_parserApplyMethod =
   | _ => true
 
 rule CallableType_wf/parserApplyMethodTypeIR:
-  bound |- PARSER_APPLY `( parameterTypeIR* )
-  -- ParameterTypes_wf: bound |- parameterTypeIR*
-  -- if (_ typeIR _ _ = parameterTypeIR)* 
+  bound |- PARSER_APPLY `( parameterIR* )
+  -- ParameterTypes_wf: bound |- parameterIR*
+  -- if (_ _ typeIR _ _ = parameterIR)* 
   -- if $nestable_parserApplyMethod(typeIR)*
 
 dec $nestable_controlApplyMethod(typeIR) : bool
@@ -691,9 +691,9 @@ tbl def $nestable'_controlApplyMethod =
   | _ => true
 
 rule CallableType_wf/controlApplyMethodTypeIR:
-  bound |- CONTROL_APPLY `( parameterTypeIR* )
-  -- ParameterTypes_wf: bound |- parameterTypeIR*
-  -- if (_ typeIR _ _ = parameterTypeIR)* 
+  bound |- CONTROL_APPLY `( parameterIR* )
+  -- ParameterTypes_wf: bound |- parameterIR*
+  -- if (_ _ typeIR _ _ = parameterIR)* 
   -- if $nestable_controlApplyMethod(typeIR)*
 
 rule CallableType_wf/tableApplyMethodTypeIR:
@@ -719,15 +719,15 @@ rule CallableTypeDef_wf:
 ;;
 
 rule ConstructorParameterType_wf:
-  bound |- `EMPTY typeIR _ _
+  bound |- _ `EMPTY typeIR _ _
   -- Type_wf: bound |- typeIR
   -- if ~$is_synthesizedTypeIR($canon_typeIR(typeIR))
 
 rule ConstructorParameterTypes_wf:
-  bound |- parameterTypeIR*
-  -- if (_ _ id _ = parameterTypeIR)*
-  -- if $distinct_<id>(id*)
-  -- (ConstructorParameterType_wf: bound |- parameterTypeIR)*
+  bound |- parameterIR*
+  -- if (_ _ _ nameIR _ = parameterIR)*
+  -- if $distinct_<nameIR>(nameIR*)
+  -- (ConstructorParameterType_wf: bound |- parameterIR)*
 
 ;;
 ;;;; Well-formedness of constructor types
@@ -746,11 +746,11 @@ tbl def $nestable'_constructor_extern =
   | _ => true
 
 rule ConstructorType_wf/externObjectTypeIR:
-  bound |- CONSTRUCTOR `( parameterTypeIR* ) `: typeIR_object
-  -- ConstructorParameterTypes_wf: bound |- parameterTypeIR*
+  bound |- CONSTRUCTOR `( parameterIR* ) `: typeIR_object
+  -- ConstructorParameterTypes_wf: bound |- parameterIR*
   -- Type_wf: bound |- typeIR_object
   -- if externObjectTypeIR = $canon_typeIR(typeIR_object)
-  -- if (_ typeIR _ _ = parameterTypeIR)*
+  -- if (_ _ typeIR _ _ = parameterIR)*
   -- if $nestable_constructor_extern(typeIR)*
 
 dec $nestable_constructor_parser(typeIR) : bool
@@ -765,11 +765,11 @@ tbl def $nestable'_constructor_parser =
   | _ => true
 
 rule ConstructorType_wf/parserObjectTypeIR:
-  bound |- CONSTRUCTOR `( parameterTypeIR* ) `: typeIR_object
-  -- ConstructorParameterTypes_wf: bound |- parameterTypeIR*
+  bound |- CONSTRUCTOR `( parameterIR* ) `: typeIR_object
+  -- ConstructorParameterTypes_wf: bound |- parameterIR*
   -- Type_wf: bound |- typeIR_object
   -- if parserObjectTypeIR = $canon_typeIR(typeIR_object)
-  -- if (_ typeIR _ _ = parameterTypeIR)*
+  -- if (_ _ typeIR _ _ = parameterIR)*
   -- if $nestable_constructor_parser(typeIR)*
 
 dec $nestable_constructor_control(typeIR) : bool
@@ -784,11 +784,11 @@ tbl def $nestable'_constructor_control =
   | _ => true
 
 rule ConstructorType_wf/controlObjectTypeIR:
-  bound |- CONSTRUCTOR `( parameterTypeIR* ) `: typeIR_object
-  -- ConstructorParameterTypes_wf: bound |- parameterTypeIR*
+  bound |- CONSTRUCTOR `( parameterIR* ) `: typeIR_object
+  -- ConstructorParameterTypes_wf: bound |- parameterIR*
   -- Type_wf: bound |- typeIR_object
   -- if controlObjectTypeIR = $canon_typeIR(typeIR_object)
-  -- if (_ typeIR _ _ = parameterTypeIR)*
+  -- if (_ _ typeIR _ _ = parameterIR)*
   -- if $nestable_constructor_control(typeIR)*
 
 dec $nestable_constructor_package(typeIR) : bool
@@ -801,11 +801,11 @@ def $nestable'_constructor_package(_) = true
   -- otherwise
 
 rule ConstructorType_wf/packageObjectTypeIR:
-  bound |- CONSTRUCTOR `( parameterTypeIR* ) `: typeIR_object
-  -- ConstructorParameterTypes_wf: bound |- parameterTypeIR*
+  bound |- CONSTRUCTOR `( parameterIR* ) `: typeIR_object
+  -- ConstructorParameterTypes_wf: bound |- parameterIR*
   -- Type_wf: bound |- typeIR_object
   -- if packageObjectTypeIR = $canon_typeIR(typeIR_object)
-  -- if (_ typeIR _ _ = parameterTypeIR)*
+  -- if (_ _ typeIR _ _ = parameterIR)*
   -- if $nestable_constructor_package(typeIR)*
 
 ;;
@@ -826,10 +826,10 @@ tbl def $definable'_constructor =
 
 rule ConstructorTypeDef_wf:
   bound |- CONSTRUCTOR `< tid_tparam_expl* `, tid_tparam_impl* >
-            `( parameterTypeIR* ) `: typeIR_object
+            `( parameterIR* ) `: typeIR_object
   -- if $definable_constructor(typeIR_object)
   -- if $distinct_<tid>(tid_tparam_expl* ++ tid_tparam_impl*)
   -- if bound_inner
       = $union_set<tid>(bound, `{ tid_tparam_expl* ++ tid_tparam_impl* })
   -- ConstructorType_wf:
-      bound_inner |- CONSTRUCTOR `( parameterTypeIR* ) `: typeIR_object
+      bound_inner |- CONSTRUCTOR `( parameterIR* ) `: typeIR_object
