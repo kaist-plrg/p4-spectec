@@ -326,22 +326,104 @@ rule Call_eval/externFunctionCallee:
 ;;;;   BUILTIN_METHOD storageReference `. nameIR
 ;;;;     `< typeArgumentListIR > `( parameterListIR )
 
+dec $isValid_fieldValue(fieldValue) : bool
+def $isValid_fieldValue(value id `;) = $isValid_header(value)
+
 rulegroup Call_eval/builtinMethodCallee {
 
-  rule Call_eval/headerUnion-isValid:
-    p EC STO |- builtinMethodCallee `@ `< eps > `( eps )
-              : EC STO returnResult
+  rule Call_eval/header-stack-push_front-exit:
+    p EC_0 STO_0 |- builtinMethodCallee `@ `< eps > `( argumentIR )
+                  : EC_1 STO_1 EXIT
     ---- ;; unpack the builtin method callee
-    -- if BUILTIN_METHOD storageReference `. "isValid"
-            `< eps > `( eps )
+    -- if BUILTIN_METHOD storageReference `. "push_front"
+            `< eps > `( parameterIR )
         = builtinMethodCallee
     ---- ;; read the value
     -- Lvalue_read: 
-        p EC STO |- storageReference : headerUnionValue
-    -- if HEADER_UNION tid `{ fieldValue* } = headerUnionValue
-    -- if fieldValue_valid* = $filter_<fieldValue>(fieldValue*, def $is_header_valid)
-    -- if b_valid = (fieldValue_valid* = eps)
-    -- if returnResult = RETURN (B b_valid)
+        p EC_0 STO_0 |- storageReference : headerStackValue
+    -- if HEADER_STACK `[ value_element* `(n_idx; n_size) ]
+        = headerStackValue
+    ---- ;; evaluate argument
+    -- Argument_eval:
+        p EC_0 STO_0 |- argumentIR : EC_1 STO_1 EXIT
+
+  rule Call_eval/header-stack-push_front-cont:
+    p EC_0 STO_0 |- builtinMethodCallee `@ `< eps > `( argumentIR )
+                  : EC_2 STO_1 (RETURN eps)
+    ---- ;; unpack the builtin method callee
+    -- if BUILTIN_METHOD storageReference `. "push_front"
+            `< eps > `( parameterIR )
+        = builtinMethodCallee
+    ---- ;; read the value
+    -- Lvalue_read: 
+        p EC_0 STO_0 |- storageReference : headerStackValue
+    -- if HEADER_STACK `[ value_element* `(n_idx; n_size) ]
+        = headerStackValue
+    ---- ;; evaluate argument
+    -- Argument_eval:
+        p EC_0 STO_0 |- argumentIR
+                      : EC_1 STO_1 (`` value_count)
+    -- if n_count = $int_of_value(value_count)
+    ---- ;; push front operation
+    -- if value_front* = value_element*[0 : n_count]
+    -- if (value_front_invalidated = $invalidate_value(value_front))*
+    -- if n_back = $max_int([ 0, $(n_size - n_count) ])
+    -- if value_back* = value_element*[0 : n_back]
+    -- if value_element_updated* = value_front_invalidated* ++ value_back*
+    -- if n_idx_updated = $min_nat([ n_size, $(n_idx + n_count) ])
+    -- if headerStackValue_updated
+        = HEADER_STACK `[ value_element_updated* `(n_idx_updated; n_size) ]
+    ---- ;; write back the updated header stack
+    -- Lvalue_write:
+        p EC_1 STO_1 |- storageReference -> headerStackValue_updated
+                      : EC_2
+
+  rule Call_eval/header-stack-pop_front-exit:
+    p EC_0 STO_0 |- builtinMethodCallee `@ `< eps > `( argumentIR )
+                  : EC_1 STO_1 EXIT
+    ---- ;; unpack the builtin method callee
+    -- if BUILTIN_METHOD storageReference `. "pop_front"
+            `< eps > `( parameterIR )
+        = builtinMethodCallee
+    ---- ;; read the value
+    -- Lvalue_read: 
+        p EC_0 STO_0 |- storageReference : headerStackValue
+    -- if HEADER_STACK `[ value_element* `(n_idx; n_size) ]
+        = headerStackValue
+    ---- ;; evaluate argument
+    -- Argument_eval:
+        p EC_0 STO_0 |- argumentIR : EC_1 STO_1 EXIT
+
+  rule Call_eval/header-stack-pop_front-cont:
+    p EC_0 STO_0 |- builtinMethodCallee `@ `< eps > `( argumentIR )
+                  : EC_2 STO_1 (RETURN eps)
+    ---- ;; unpack the builtin method callee
+    -- if BUILTIN_METHOD storageReference `. "pop_front"
+            `< eps > `( parameterIR )
+        = builtinMethodCallee
+    ---- ;; read the value
+    -- Lvalue_read: 
+        p EC_0 STO_0 |- storageReference : headerStackValue
+    -- if HEADER_STACK `[ value_element* `(n_idx; n_size) ]
+        = headerStackValue
+    ---- ;; evaluate argument
+    -- Argument_eval:
+        p EC_0 STO_0 |- argumentIR
+                      : EC_1 STO_1 (`` value_count)
+    -- if n_count = $int_of_value(value_count)
+    ---- ;; pop front operation
+    -- if n_front = $max_int([ 0, $(n_size - n_count) ])
+    -- if value_front* = value_element*[n_count : n_front]
+    -- if value_back* = value_element*[0 : n_count]
+    -- if (value_back_invalidated = $invalidate_value(value_back))*
+    -- if value_element_updated* = value_front* ++ value_back_invalidated*
+    -- if n_idx_updated = n_front
+    -- if headerStackValue_updated
+        = HEADER_STACK `[ value_element_updated* `(n_idx_updated; n_size) ]
+    ---- ;; write back the updated header stack
+    -- Lvalue_write:
+        p EC_1 STO_1 |- storageReference -> headerStackValue_updated
+                      : EC_2
 
   rule Call_eval/header-isValid:
     p EC STO |- builtinMethodCallee `@ `< eps > `( eps )
@@ -354,6 +436,21 @@ rulegroup Call_eval/builtinMethodCallee {
     -- Lvalue_read: 
         p EC STO |- storageReference : headerValue
     -- if HEADER _ `{ b_valid `; _ } = headerValue
+    -- if returnResult = RETURN (B b_valid)
+
+  rule Call_eval/header-union-isValid:
+    p EC STO |- builtinMethodCallee `@ `< eps > `( eps )
+              : EC STO returnResult
+    ---- ;; unpack the builtin method callee
+    -- if BUILTIN_METHOD storageReference `. "isValid"
+            `< eps > `( eps )
+        = builtinMethodCallee
+    ---- ;; read the value
+    -- Lvalue_read: 
+        p EC STO |- storageReference : headerUnionValue
+    -- if HEADER_UNION tid `{ fieldValue* } = headerUnionValue
+    -- if fieldValue_valid* = $filter_<fieldValue>(fieldValue*, def $isValid_fieldValue)
+    -- if b_valid = (fieldValue_valid* = eps)
     -- if returnResult = RETURN (B b_valid)
 
   rule Call_eval/header-setValid:

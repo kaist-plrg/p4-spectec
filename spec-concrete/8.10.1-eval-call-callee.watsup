@@ -64,6 +64,34 @@ rulegroup Callee_eval/typedExpressionIR-nameIR-builtinMethod {
     -- Lvalue_eval:
         p EC_0 STO_0 |- typedLvalueIR : EC_1 STO_1 EXIT
 
+  rule Callee_eval/header-stack-push_front:
+    p EC_0 STO_0 |- (typedExpressionIR `. "push_front") `< `_ > `( argumentIR )
+                  : EC_1 STO_1 (`` builtinMethodCallee)
+    ---- ;; get storage reference of expression base
+    -- if typedLvalueIR
+        = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
+    -- Lvalue_eval:
+        p EC_0 STO_0 |- typedLvalueIR
+                      : EC_1 STO_1 (`` storageReference)
+    ---- ;; prepare the callee
+    -- if parameterIR = `EMPTY `EMPTY INT "count" eps
+    -- if builtinMethodCallee
+        = BUILTIN_METHOD storageReference `. "push_front" `< eps > `( parameterIR )
+
+  rule Callee_eval/header-stack-pop_front:
+    p EC_0 STO_0 |- (typedExpressionIR `. "pop_front") `< `_ > `( argumentIR )
+                  : EC_1 STO_1 (`` builtinMethodCallee)
+    ---- ;; get storage reference of expression base
+    -- if typedLvalueIR
+        = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
+    -- Lvalue_eval:
+        p EC_0 STO_0 |- typedLvalueIR
+                      : EC_1 STO_1 (`` storageReference)
+    ---- ;; prepare the callee
+    -- if parameterIR = `EMPTY `EMPTY INT "count" eps
+    -- if builtinMethodCallee
+        = BUILTIN_METHOD storageReference `. "pop_front" `< eps > `( parameterIR )
+
   rule Callee_eval/header-isValid:
     p EC_0 STO_0 |- (typedExpressionIR `. "isValid") `< `_ > `( eps )
                   : EC_1 STO_1 (`` builtinMethodCallee)
