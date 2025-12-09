@@ -4,7 +4,9 @@ open Util.Source
 
 (* Initializer *)
 
-let init () : unit = Fresh.ctr := 0
+let init (printer : value -> string) : unit =
+  Fresh.ctr := 0;
+  Print.printer := printer
 
 (* Builtin calls *)
 
@@ -12,6 +14,8 @@ module Funcs = Map.Make (String)
 
 let funcs =
   Funcs.empty
+  (* Printing *)
+  |> Funcs.add "print_" Print.print
   (* Nats *)
   |> Funcs.add "sum_nat" Nats.sum_nat
   |> Funcs.add "max_nat" Nats.max_nat
@@ -21,9 +25,11 @@ let funcs =
   |> Funcs.add "max_int" Ints.max_int
   |> Funcs.add "min_int" Ints.min_int
   (* Texts *)
+  |> Funcs.add "text_to_int" Texts.text_to_int
   |> Funcs.add "int_to_text" Texts.int_to_text
   |> Funcs.add "strip_prefix" Texts.strip_prefix
   |> Funcs.add "strip_suffix" Texts.strip_suffix
+  |> Funcs.add "strip_all_whitespace" Texts.strip_all_whitespace
   (* Lists *)
   |> Funcs.add "rev_" Lists.rev_
   |> Funcs.add "concat_" Lists.concat_

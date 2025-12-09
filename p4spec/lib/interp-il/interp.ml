@@ -1310,6 +1310,15 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   (* Entry points for evaluation *)
 
+  let do_init (spec : spec) : unit =
+    let printer value =
+      Format.asprintf "%a" (Interface.Unparse.pp_program_il spec) value
+    in
+    Builtin.Call.init printer;
+    Value.refresh ();
+    Cache.Cache.clear !func_cache;
+    Cache.Cache.clear !rule_cache
+
   let do_eval_rel (ctx : Ctx.t) (spec : spec) (relname : string)
       (values_input : value list) : (Ctx.t * value list) attempt_reason =
     let ctx = load_spec ctx spec in
@@ -1323,10 +1332,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   let eval_program (spec : spec) (relname : string) (includes_p4 : string list)
       (filename_p4 : string) : Sim.program_result =
-    Builtin.Call.init ();
-    Value.refresh ();
-    Cache.Cache.clear !func_cache;
-    Cache.Cache.clear !rule_cache;
+    do_init spec;
     try
       let value_program = Interface.Parse.parse_file includes_p4 filename_p4 in
       let graph = Dep.Graph.assemble_graph value_program in
@@ -1343,10 +1349,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   let eval_rel (spec : spec) (relname : string) (values_input : value list) :
       Sim.rel_result =
-    Builtin.Call.init ();
-    Value.refresh ();
-    Cache.Cache.clear !func_cache;
-    Cache.Cache.clear !rule_cache;
+    do_init spec;
     try
       let ctx = Ctx.empty ~debug:false ~profile:false in
       let+ ctx, values_output = do_eval_rel ctx spec relname values_input in
@@ -1356,10 +1359,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   let eval_func (spec : spec) (funcname : string) (targs : targ list)
       (values_input : value list) : Sim.func_result =
-    Builtin.Call.init ();
-    Value.refresh ();
-    Cache.Cache.clear !func_cache;
-    Cache.Cache.clear !rule_cache;
+    do_init spec;
     try
       let ctx = Ctx.empty ~debug:false ~profile:false in
       let+ ctx, value_output =

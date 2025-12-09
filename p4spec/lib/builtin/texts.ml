@@ -3,6 +3,21 @@ open Il.Ast
 module Value = Runtime_dynamic.Value
 open Util.Source
 
+(* dec $text_to_int(text) : int *)
+
+let text_to_int (add : value -> unit) (at : region) (targs : targ list)
+    (values_input : value list) : value =
+  Extract.zero at targs;
+  let text = Extract.one at values_input |> Value.get_text in
+  let i = text |> int_of_string |> Bigint.of_int in
+  let value =
+    let vid = Value.fresh () in
+    let typ = Il.Ast.NumT `IntT in
+    NumV (`Int i) $$$ { vid; typ }
+  in
+  add value;
+  value
+
 (* dec $int_to_text(int) : text *)
 
 let int_to_text (add : value -> unit) (at : region) (targs : targ list)
@@ -48,6 +63,23 @@ let strip_suffix (add : value -> unit) (at : region) (targs : targ list)
   let suffix = Value.get_text value_suffix in
   assert (String.ends_with ~suffix text);
   let text = String.sub text 0 (String.length text - String.length suffix) in
+  let value =
+    let vid = Value.fresh () in
+    let typ = Il.Ast.TextT in
+    TextV text $$$ { vid; typ }
+  in
+  add value;
+  value
+
+(* dec $strip_all_whitespace(text) : text *)
+
+let strip_all_whitespace (add : value -> unit) (at : region) (targs : targ list)
+    (values_input : value list) : value =
+  Extract.zero at targs;
+  let value = Extract.one at values_input in
+  let text =
+    value |> Value.get_text |> String.split_on_char ' ' |> String.concat ""
+  in
   let value =
     let vid = Value.fresh () in
     let typ = Il.Ast.TextT in

@@ -1644,6 +1644,15 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   (* Entry points for evaluation *)
 
+  let do_init (spec : spec) : unit =
+    let printer value =
+      Format.asprintf "%a" (Interface.Unparse.pp_program_sl spec) value
+    in
+    Builtin.Call.init printer;
+    Value.refresh ();
+    Cache.Cache.clear !func_cache;
+    Cache.Cache.clear !rule_cache
+
   let do_eval_rel (ctx : Ctx.t) (spec : spec) (relname : string)
       (values_input : value list) : value list =
     let ctx = load_spec ctx spec in
@@ -1670,10 +1679,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   let eval_program ~(derive : bool) (spec : spec) (relname : string)
       (includes_p4 : string list) (filename_p4 : string) : Sim.program_result =
-    Builtin.Call.init ();
-    Value.refresh ();
-    Cache.Cache.clear !func_cache;
-    Cache.Cache.clear !rule_cache;
+    do_init spec;
     let cover = ref (SCov.init spec) in
     try
       let value_program = Interface.Parse.parse_file includes_p4 filename_p4 in
@@ -1689,10 +1695,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   let eval_rel (spec : spec) (relname : string) (values_input : value list) :
       Sim.rel_result =
-    Builtin.Call.init ();
-    Value.refresh ();
-    Cache.Cache.clear !func_cache;
-    Cache.Cache.clear !rule_cache;
+    do_init spec;
     let cover = ref (SCov.init spec) in
     let ctx = Ctx.empty_partial cover in
     try
@@ -1704,10 +1707,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   let eval_func (spec : spec) (funcname : string) (targs : targ list)
       (values_input : value list) : Sim.func_result =
-    Builtin.Call.init ();
-    Value.refresh ();
-    Cache.Cache.clear !func_cache;
-    Cache.Cache.clear !rule_cache;
+    do_init spec;
     let cover = ref (SCov.init spec) in
     let ctx = Ctx.empty_partial cover in
     try

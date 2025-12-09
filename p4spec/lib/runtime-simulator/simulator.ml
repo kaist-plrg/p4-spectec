@@ -34,6 +34,21 @@ module type ARCH = sig
   val eval_extern_func_call : Value.t list -> Value.t list
   val eval_extern_method_call : Value.t list -> Value.t list
 
+  (* Match-action table interface *)
+
+  val table_add_entry :
+    Value.t ->
+    (* store *)
+    Value.t ->
+    (* table name *)
+    Value.t ->
+    (* table entry priority *)
+    Value.t ->
+    (* table entry keysets *)
+    Value.t ->
+    (* table entry action *)
+    Value.t (* store *)
+
   (* Pipeline evaluation *)
 
   val init_pipe : spec -> string list -> string -> Value.t * Value.t

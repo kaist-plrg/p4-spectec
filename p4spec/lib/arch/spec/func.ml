@@ -49,6 +49,31 @@ let sizeof_minSizeInBits' (value_typ : Value.t) : Bigint.t =
 let sizeof_maxSizeInBits' (value_typ : Value.t) : Bigint.t =
   !call "sizeof_maxSizeInBits'" [] [ value_typ ] |> unwrap_num_v
 
+(* tableObject_add_entry *)
+
+let tableObject_add_entry (value_tableObject : Value.t)
+    (value_tableEntryPriorityInterface : Value.t)
+    (value_tableKeysetInterface : Value.t)
+    (value_tableActionInterface : Value.t) : Value.t =
+  !call "tableObject_add_entry" []
+    [
+      value_tableObject;
+      value_tableEntryPriorityInterface;
+      value_tableKeysetInterface;
+      value_tableActionInterface;
+    ]
+
+(* find_store_qualified/unqualified *)
+
+let find_store_qualified (value_sto : Value.t) (value_oid : Value.t) : Value.t =
+  !call "find_store_qualified" [] [ value_sto; value_oid ]
+  |> unwrap_opt_v |> Option.get
+
+let find_store_unqualified (value_sto : Value.t) (value_id : Value.t) : Value.t
+    =
+  !call "find_store_unqualified" [] [ value_sto; value_id ]
+  |> unwrap_opt_v |> Option.get
+
 (* find/update_store_externState *)
 
 let find_store_externState (value_sto : Value.t) (value_oid : Value.t) : Value.t

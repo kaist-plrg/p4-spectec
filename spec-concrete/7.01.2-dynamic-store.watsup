@@ -15,6 +15,25 @@ def $empty_store = $empty_map<oid, object>
 ;; Finder
 ;;
 
+dec $find_store_qualified(store, oid) : object?
+dec $find_store_unqualified(store, id) : object?
+dec $is_some_object(object?) : bool
+
+def $find_store_qualified(store, oid)
+  = $find_map<oid, object>(store, oid)
+
+def $is_some_object(object?) = $is_some_<object>(object?)
+
+def $find_store_unqualified(`{ (oid `: object)* }, id) = object_id_found
+  -- if (object_id?
+      = $ite<object?>($oid_ends_with(oid, id), object, eps))*
+  -- if object_id_found
+      = $filter_<object?>(object_id?*, def $is_some_object)
+def $find_store_unqualified(`{ (oid `: object)* }, id) = eps 
+  -- otherwise
+
+;;; Finder for extern state
+
 dec $find_store_externState(store, oid) : externState?
 
 def $find_store_externState(STO, oid) = externState
@@ -26,6 +45,8 @@ def $find_store_externState(STO, oid) = eps
 ;;
 ;; Updater
 ;;
+
+;;; Updater for extern state
 
 dec $update_store_externState(store, oid, externState) : store?
 

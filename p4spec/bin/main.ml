@@ -424,7 +424,7 @@ let parse_command =
          in
          let unparsed_p4_string =
            Format.asprintf "%a\n"
-             (Interface.Unparse.pp_program spec_il)
+             (Interface.Unparse.pp_program_il spec_il)
              parsed_p4_file
          in
          if roundtrip then

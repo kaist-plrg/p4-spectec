@@ -128,6 +128,12 @@ let wrap_case_v (vs : symbol list) : value' =
   in
   CaseV (mixop, values)
 
+let wrap_tuple_v (s : string) (vs : value list) : value =
+  TupleV vs |> with_typ (wrap_var_t s)
+
+let wrap_opt_v_typed (t : typ') (v : value option) : value =
+  OptV v |> with_typ (wrap_iter_t Opt t)
+
 let wrap_opt_v (s : string) (v : value option) : value =
   OptV v |> with_typ (wrap_iter_t Opt (wrap_var_t s))
 

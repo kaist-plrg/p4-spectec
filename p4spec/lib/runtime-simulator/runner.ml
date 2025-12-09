@@ -2,6 +2,7 @@ module MCov = Runtime_testgen.Cov.Multiple
 open Io
 open Simulator
 open Error
+open Interface.Wrap
 open Util.Source
 
 (* Functor to create a DRIVER from ARCH and INTERP implementations *)
@@ -95,6 +96,62 @@ module Make
         let tx_expect = (port_expect, packet_expect) in
         let tx_output_queue, tx_expect_queue =
           on_tx_expect tx_expect tx_output_queue tx_expect_queue
+        in
+        (value_ctx, value_sto, tx_output_queue, tx_expect_queue)
+    (* Match-action table updates *)
+    | Stf.Ast.Add
+        ( table_name,
+          table_entry_priority_opt,
+          table_entry_keys,
+          table_entry_action,
+          _ ) ->
+        (* Encode name *)
+        let value_tableName = wrap_text_v table_name in
+        (* Encode priority *)
+        let value_tableEntryPriorityInterface =
+          table_entry_priority_opt
+          |> Option.map (fun table_entry_priority ->
+                 table_entry_priority |> Bigint.of_int |> wrap_num_v_int)
+          |> wrap_opt_v_typed (Il.Ast.NumT `IntT)
+        in
+        (* Encode keys *)
+        let value_tableKeysetInterface =
+          table_entry_keys
+          |> List.map (fun (table_entry_key : Stf.Ast.mtch) ->
+                 let table_key_name, table_key_value = table_entry_key in
+                 let value_table_key_name = wrap_text_v table_key_name in
+                 let value_table_key_value =
+                   match table_key_value with
+                   | Num number -> wrap_text_v number
+                   | Slash _ ->
+                       error_stf "slash notation for table keys not supported"
+                 in
+                 wrap_tuple_v "tableKeyInterface"
+                   [ value_table_key_name; value_table_key_value ])
+          |> wrap_list_v "tableKeyInterface"
+        in
+        (* Encode action *)
+        let value_tableActionInterface =
+          let table_action_name, table_action_args = table_entry_action in
+          let value_table_action_name = wrap_text_v table_action_name in
+          let value_tableActionArgumentInterfaces =
+            table_action_args
+            |> List.map (fun (name, number) ->
+                   let value_name = wrap_text_v name in
+                   let value_number =
+                     number |> int_of_string |> Bigint.of_int |> wrap_num_v_int
+                   in
+                   wrap_tuple_v "tableActionArgumentInterface"
+                     [ value_name; value_number ])
+            |> wrap_list_v "tableActionArgumentInterface"
+          in
+          wrap_tuple_v "tableActionInterface"
+            [ value_table_action_name; value_tableActionArgumentInterfaces ]
+        in
+        let value_sto =
+          Arch.table_add_entry value_sto value_tableName
+            value_tableEntryPriorityInterface value_tableKeysetInterface
+            value_tableActionInterface
         in
         (value_ctx, value_sto, tx_output_queue, tx_expect_queue)
     (* Async *)

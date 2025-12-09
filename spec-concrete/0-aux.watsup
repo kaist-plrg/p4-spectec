@@ -12,11 +12,18 @@ var w : nat
 var t : text
 
 ;;
+;; Pretty-printer
+;;
+
+builtin dec $print_<X>(X) : text
+  hint(prose_in %0 "as text")
+
+;;
 ;; General bool functions
 ;;
 
 dec $ite<X>(bool, X, X) : X
-  hint(prose_in "if" %0 "then" %1 "else" %2)
+  hint(prose_in %1 "if" %0 "otherwise" %2)
 def $ite<X>(true, X_t, X_f) = X_t
 def $ite<X>(false, X_t, X_f) = X_f
 
@@ -44,6 +51,7 @@ builtin dec $min_int(int*) : int
 ;; General text functions
 ;;
 
+builtin dec $text_to_int(text) : int
 builtin dec $int_to_text(int) : text
 
 dec $concat_text(text*) : text
@@ -55,10 +63,16 @@ builtin dec $strip_prefix(text, text) : text
   hint(prose_in "the text" %0 "with the prefix" %1 "removed")
 builtin dec $strip_suffix(text, text) : text
   hint(prose_in "the text" %0 "with the suffix" %1 "removed")
+builtin dec $strip_all_whitespace(text) : text
+  hint(prose_in "the text" %0 "with all whitespace removed")
 
 ;;
 ;; General option functions
 ;;
+
+dec $is_some_<X>(X?) : bool
+def $is_some_<X>(eps) = false
+def $is_some_<X>(X) = true
 
 dec $opt_as_seq_<X>(X?) : X*
 def $opt_as_seq_<X>(eps) = eps
