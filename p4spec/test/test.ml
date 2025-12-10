@@ -1,4 +1,5 @@
 module Sim = Runtime_simulator.Simulator
+module Strings = Util.Strings
 module Filesys = Util.Filesys
 open Util.Error
 open Util.Source
@@ -301,12 +302,6 @@ let run_sim_test stat arch spec_sim includes_p4 excludes_p4 filename_p4
           fail_run = stat.fail_run + 1;
         }
 
-let contains_substring substr str =
-  try
-    let _ = Str.search_forward (Str.regexp substr) str 0 in
-    true
-  with Not_found -> false
-
 let run_sim_test_driver mode arch specdir includes_p4 excludes_p4 testdir_p4 =
   let spec_sim =
     match mode with
@@ -327,7 +322,9 @@ let run_sim_test_driver mode arch specdir includes_p4 excludes_p4 testdir_p4 =
       (fun filename_p4 ->
         let contents = Filesys.read_file filename_p4 in
         match arch with
-        | "v1model" -> contains_substring "include <v1model.p4>" contents
+        | "v1model" ->
+            Strings.contains_substring "#include <v1model.p4>" contents
+            || Strings.contains_substring "#include \"v1model.p4\"" contents
         | _ -> false)
       filenames_p4
   in

@@ -5,41 +5,6 @@ let version = "0.1"
 
 exception CommandError of string
 
-(* File collector *)
-
-let rec collect_files ~(suffix : string) dir =
-  let files = Sys_unix.readdir dir in
-  Array.sort String.compare files;
-  Array.fold_left
-    (fun files file ->
-      let filename = dir ^ "/" ^ file in
-      if Sys_unix.is_directory_exn filename && file <> "include" then
-        files @ collect_files ~suffix filename
-      else if String.ends_with ~suffix filename then files @ [ filename ]
-      else files)
-    [] files
-
-(* Exclude collector *)
-
-let collect_exclude filename_exclude =
-  let ic = open_in filename_exclude in
-  let rec parse_lines excludes =
-    try
-      let exclude = input_line ic in
-      if String.starts_with ~prefix:"#" exclude then parse_lines excludes
-      else parse_lines (exclude :: excludes)
-    with End_of_file -> excludes
-  in
-  let excludes = parse_lines [] in
-  close_in ic;
-  excludes
-
-let collect_excludes (paths_exclude : string list) =
-  let filenames_exclude =
-    List.concat_map (collect_files ~suffix:".exclude") paths_exclude
-  in
-  List.concat_map collect_exclude filenames_exclude
-
 (* Commands *)
 
 let elab_command =
@@ -188,9 +153,11 @@ let cover_dangling_command =
          let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
-         let excludes_p4 = collect_excludes excludes_p4 in
+         let excludes_p4 = Util.Filesys.collect_excludes excludes_p4 in
          let filenames_p4 =
-           List.concat_map (collect_files ~suffix:".p4") dirnames_p4
+           List.concat_map
+             (Util.Filesys.collect_files ~suffix:".p4")
+             dirnames_p4
          in
          let filenames_p4 =
            List.filter
