@@ -302,7 +302,8 @@ let run_sim_test stat arch spec_sim includes_p4 excludes_p4 filename_p4
           fail_run = stat.fail_run + 1;
         }
 
-let run_sim_test_driver mode arch specdir includes_p4 excludes_p4 testdir_p4 =
+let run_sim_test_driver mode arch specdir includes_p4 excludes_p4 testdir
+    patchdir =
   let spec_sim =
     match mode with
     | `IL ->
@@ -316,7 +317,7 @@ let run_sim_test_driver mode arch specdir includes_p4 excludes_p4 testdir_p4 =
     excludes_p4 |> Filesys.collect_excludes
     |> List.map (fun exclude_p4 -> "../../../../" ^ exclude_p4)
   in
-  let filenames_p4 = Filesys.collect_files ~suffix:".p4" testdir_p4 in
+  let filenames_p4 = Filesys.collect_files ~suffix:".p4" testdir in
   let filenames_p4 =
     List.filter
       (fun filename_p4 ->
@@ -328,7 +329,15 @@ let run_sim_test_driver mode arch specdir includes_p4 excludes_p4 testdir_p4 =
         | _ -> false)
       filenames_p4
   in
-  let filenames_stf = Filesys.collect_files ~suffix:".stf" testdir_p4 in
+  let filenames_p4_patch = Filesys.collect_files ~suffix:".p4" patchdir in
+  let filenames_p4 =
+    Filesys.patch ~suffix:".p4" filenames_p4 filenames_p4_patch
+  in
+  let filenames_stf = Filesys.collect_files ~suffix:".stf" testdir in
+  let filenames_stf_patch = Filesys.collect_files ~suffix:".stf" patchdir in
+  let filenames_stf =
+    Filesys.patch ~suffix:".stf" filenames_stf filenames_stf_patch
+  in
   let filenames_test =
     List.filter_map
       (fun filename_p4 ->
@@ -370,8 +379,8 @@ let run_sim_command =
      let%map specdir = flag "-s" (required string) ~doc:"p4 spec directory"
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and excludes_p4 = flag "-e" (listed string) ~doc:"p4 test exclude paths"
-     and testdir_p4 =
-       flag "-d" (required string) ~doc:"p4 and stf test directory"
+     and testdir = flag "-d" (required string) ~doc:"p4 and stf test directory"
+     and patchdir = flag "-p" (required string) ~doc:"p4 patch directory"
      and arch = flag "-arch" (required string) ~doc:"architecture name"
      and mode =
        Command.Param.choose_one
@@ -384,7 +393,8 @@ let run_sim_command =
          ~if_nothing_chosen:(Default_to `SL)
      in
      fun () ->
-       run_sim_test_driver mode arch specdir includes_p4 excludes_p4 testdir_p4)
+       run_sim_test_driver mode arch specdir includes_p4 excludes_p4 testdir
+         patchdir)
 
 (* Dangling coverage test *)
 
