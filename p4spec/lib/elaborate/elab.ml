@@ -39,6 +39,12 @@ let elab_iter (iter : iter) : Il.Ast.iter =
 
 (* Type destructuring *)
 
+let as_text_plaintyp (ctx : Ctx.t) (plaintyp : plaintyp) : unit attempt_unit =
+  let plaintyp = Plaintyp.expand_plaintyp ctx.tdenv plaintyp in
+  match plaintyp.it with
+  | TextT -> Ok ()
+  | _ -> fail_unit plaintyp.at "cannot destruct type as text"
+
 let as_iter_plaintyp (ctx : Ctx.t) (plaintyp : plaintyp) :
     (plaintyp * iter) attempt_unit =
   let plaintyp = Plaintyp.expand_plaintyp ctx.tdenv plaintyp in
@@ -536,22 +542,41 @@ and infer_cat_exp (ctx : Ctx.t) (exp_l : exp) (exp_r : exp) :
 
 and infer_idx_exp (ctx : Ctx.t) (exp_b : exp) (exp_i : exp) :
     (Ctx.t * Il.Ast.exp' * plaintyp') attempt_unit =
-  let* ctx, exp_il_b, plaintyp_b = infer_exp ctx exp_b in
-  let* plaintyp = as_list_plaintyp ctx plaintyp_b in
-  let* ctx, exp_il_i = elab_exp ctx (NumT `NatT $ exp_i.at) exp_i in
-  let exp_il = Il.Ast.IdxE (exp_il_b, exp_il_i) in
-  Ok (ctx, exp_il, plaintyp.it)
+  choice
+    [
+      (fun () ->
+        let* ctx, exp_il_b, plaintyp_b = infer_exp ctx exp_b in
+        let* plaintyp = as_list_plaintyp ctx plaintyp_b in
+        let* ctx, exp_il_i = elab_exp ctx (NumT `NatT $ exp_i.at) exp_i in
+        let exp_il = Il.Ast.IdxE (exp_il_b, exp_il_i) in
+        Ok (ctx, exp_il, plaintyp.it));
+      (fun () ->
+        let* ctx, exp_il_b = elab_exp ctx (TextT $ exp_b.at) exp_b in
+        let* ctx, exp_il_i = elab_exp ctx (NumT `NatT $ exp_i.at) exp_i in
+        let exp_il = Il.Ast.IdxE (exp_il_b, exp_il_i) in
+        Ok (ctx, exp_il, TextT));
+    ]
 
 (* Inference of slice expressions *)
 
 and infer_slice_exp (ctx : Ctx.t) (exp_b : exp) (exp_l : exp) (exp_h : exp) :
     (Ctx.t * Il.Ast.exp' * plaintyp') attempt_unit =
-  let* ctx, exp_il_b, plaintyp_b = infer_exp ctx exp_b in
-  let* _ = as_list_plaintyp ctx plaintyp_b in
-  let* ctx, exp_il_l = elab_exp ctx (NumT `NatT $ exp_l.at) exp_l in
-  let* ctx, exp_il_h = elab_exp ctx (NumT `NatT $ exp_h.at) exp_h in
-  let exp_il = Il.Ast.SliceE (exp_il_b, exp_il_l, exp_il_h) in
-  Ok (ctx, exp_il, plaintyp_b.it)
+  choice
+    [
+      (fun () ->
+        let* ctx, exp_il_b, plaintyp_b = infer_exp ctx exp_b in
+        let* _ = as_list_plaintyp ctx plaintyp_b in
+        let* ctx, exp_il_l = elab_exp ctx (NumT `NatT $ exp_l.at) exp_l in
+        let* ctx, exp_il_h = elab_exp ctx (NumT `NatT $ exp_h.at) exp_h in
+        let exp_il = Il.Ast.SliceE (exp_il_b, exp_il_l, exp_il_h) in
+        Ok (ctx, exp_il, plaintyp_b.it));
+      (fun () ->
+        let* ctx, exp_il_b = elab_exp ctx (TextT $ exp_b.at) exp_b in
+        let* ctx, exp_il_l = elab_exp ctx (NumT `NatT $ exp_l.at) exp_l in
+        let* ctx, exp_il_h = elab_exp ctx (NumT `NatT $ exp_h.at) exp_h in
+        let exp_il = Il.Ast.SliceE (exp_il_b, exp_il_l, exp_il_h) in
+        Ok (ctx, exp_il, TextT));
+    ]
 
 (* Inference of member expressions *)
 
@@ -606,11 +631,20 @@ and infer_upd_exp (ctx : Ctx.t) (exp_b : exp) (path : path) (exp_f : exp) :
 
 and infer_len_exp (ctx : Ctx.t) (exp : exp) :
     (Ctx.t * Il.Ast.exp' * plaintyp') attempt_unit =
-  let* ctx, exp_il, plaintyp = infer_exp ctx exp in
-  let* _plaintyp = as_list_plaintyp ctx plaintyp in
-  let exp_il = Il.Ast.LenE exp_il in
-  let plaintyp = NumT `NatT in
-  Ok (ctx, exp_il, plaintyp)
+  choice
+    [
+      (fun () ->
+        let* ctx, exp_il, plaintyp = infer_exp ctx exp in
+        let* _ = as_list_plaintyp ctx plaintyp in
+        let exp_il = Il.Ast.LenE exp_il in
+        let plaintyp = NumT `NatT in
+        Ok (ctx, exp_il, plaintyp));
+      (fun () ->
+        let* ctx, exp_il = elab_exp ctx (TextT $ exp.at) exp in
+        let exp_il = Il.Ast.LenE exp_il in
+        let plaintyp = NumT `NatT in
+        Ok (ctx, exp_il, plaintyp));
+    ]
 
 (* Inference of parenthesized expressions *)
 
@@ -1080,23 +1114,44 @@ and elab_root_path (ctx : Ctx.t) (plaintyp_expect : plaintyp) :
 
 and elab_idx_path (ctx : Ctx.t) (plaintyp_expect : plaintyp) (path : path)
     (exp : exp) : (Ctx.t * Il.Ast.path' * plaintyp') attempt_unit =
-  let* ctx, path_il, plaintyp = elab_path ctx plaintyp_expect path in
-  let* ctx, exp_il = elab_exp ctx (NumT `NatT $ exp.at) exp in
-  let path_il = Il.Ast.IdxP (path_il, exp_il) in
-  let* plaintyp = as_list_plaintyp ctx plaintyp in
-  Ok (ctx, path_il, plaintyp.it)
+  choice
+    [
+      (fun () ->
+        let* ctx, path_il, plaintyp = elab_path ctx plaintyp_expect path in
+        let* ctx, exp_il = elab_exp ctx (NumT `NatT $ exp.at) exp in
+        let path_il = Il.Ast.IdxP (path_il, exp_il) in
+        let* plaintyp = as_list_plaintyp ctx plaintyp in
+        Ok (ctx, path_il, plaintyp.it));
+      (fun () ->
+        let* ctx, path_il, plaintyp = elab_path ctx plaintyp_expect path in
+        let* ctx, exp_il = elab_exp ctx (NumT `NatT $ exp.at) exp in
+        let path_il = Il.Ast.IdxP (path_il, exp_il) in
+        let* _ = as_text_plaintyp ctx plaintyp in
+        Ok (ctx, path_il, plaintyp.it));
+    ]
 
 (* Elaboration of slice paths *)
 
 and elab_slice_path (ctx : Ctx.t) (plaintyp_expect : plaintyp) (path : path)
     (exp_l : exp) (exp_h : exp) :
     (Ctx.t * Il.Ast.path' * plaintyp') attempt_unit =
-  let* ctx, path_il, plaintyp = elab_path ctx plaintyp_expect path in
-  let* ctx, exp_il_l = elab_exp ctx (NumT `NatT $ exp_l.at) exp_l in
-  let* ctx, exp_il_h = elab_exp ctx (NumT `NatT $ exp_h.at) exp_h in
-  let path_il = Il.Ast.SliceP (path_il, exp_il_l, exp_il_h) in
-  let* _ = as_list_plaintyp ctx plaintyp in
-  Ok (ctx, path_il, plaintyp.it)
+  choice
+    [
+      (fun () ->
+        let* ctx, path_il, plaintyp = elab_path ctx plaintyp_expect path in
+        let* ctx, exp_il_l = elab_exp ctx (NumT `NatT $ exp_l.at) exp_l in
+        let* ctx, exp_il_h = elab_exp ctx (NumT `NatT $ exp_h.at) exp_h in
+        let path_il = Il.Ast.SliceP (path_il, exp_il_l, exp_il_h) in
+        let* _ = as_list_plaintyp ctx plaintyp in
+        Ok (ctx, path_il, plaintyp.it));
+      (fun () ->
+        let* ctx, path_il, plaintyp = elab_path ctx plaintyp_expect path in
+        let* ctx, exp_il_l = elab_exp ctx (NumT `NatT $ exp_l.at) exp_l in
+        let* ctx, exp_il_h = elab_exp ctx (NumT `NatT $ exp_h.at) exp_h in
+        let path_il = Il.Ast.SliceP (path_il, exp_il_l, exp_il_h) in
+        let* _ = as_text_plaintyp ctx plaintyp in
+        Ok (ctx, path_il, plaintyp.it));
+    ]
 
 (* Elaboration of dot paths *)
 

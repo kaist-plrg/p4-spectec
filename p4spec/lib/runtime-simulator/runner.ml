@@ -119,6 +119,9 @@ module Make
           table_entry_keys
           |> List.map (fun (table_entry_key : Stf.Ast.mtch) ->
                  let table_key_name, table_key_value = table_entry_key in
+                 let table_key_name =
+                   Stf.Print.convert_dollar_to_brackets table_key_name
+                 in
                  let value_table_key_name = wrap_text_v table_key_name in
                  let value_table_key_value =
                    match table_key_value with

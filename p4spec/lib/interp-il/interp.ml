@@ -617,7 +617,16 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   and eval_len_exp (note : typ') (ctx : Ctx.t) (exp : exp) : Ctx.t * value =
     let ctx, value = eval_exp ctx exp in
-    let len = value |> Value.get_list |> List.length |> Bigint.of_int in
+    let len =
+      match value.it with
+      | TextV s -> s |> String.length |> Bigint.of_int
+      | ListV values -> values |> List.length |> Bigint.of_int
+      | _ ->
+          error exp.at
+            (F.asprintf
+               "length operation expects either a text or a list, but got %s"
+               (Il.Print.string_of_value ~short:true value))
+    in
     let value_res =
       let vid = Value.fresh () in
       let typ = note in
@@ -644,9 +653,27 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       Ctx.t * value =
     let ctx, value_b = eval_exp ctx exp_b in
     let ctx, value_i = eval_exp ctx exp_i in
-    let values = Value.get_list value_b in
     let idx = value_i |> Value.get_num |> Num.to_int |> Bigint.to_int_exn in
-    let value_res = List.nth values idx in
+    let value_res =
+      match value_b.it with
+      | TextV s when idx < 0 || idx >= String.length s ->
+          error exp_i.at
+            (F.asprintf "index %d out of bounds [0, %d)" idx (String.length s))
+      | TextV s ->
+          let s = String.get s idx |> String.make 1 in
+          let vid = Value.fresh () in
+          let typ = Il.Ast.TextT in
+          TextV s $$$ { vid; typ }
+      | ListV values when idx < 0 || idx >= List.length values ->
+          error exp_i.at
+            (F.asprintf "index %d out of bounds [0, %d)" idx
+               (List.length values))
+      | ListV values -> List.nth values idx
+      | _ ->
+          error exp_b.at
+            (F.asprintf "indexing expects either a text or a list, but got %s"
+               (Il.Print.string_of_value ~short:true value_b))
+    in
     (ctx, value_res)
 
   (* Slice expression evaluation *)
@@ -654,45 +681,259 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
   and eval_slice_exp (note : typ') (ctx : Ctx.t) (exp_b : exp) (exp_i : exp)
       (exp_n : exp) : Ctx.t * value =
     let ctx, value_b = eval_exp ctx exp_b in
-    let values = Value.get_list value_b in
     let ctx, value_i = eval_exp ctx exp_i in
     let idx_l = value_i |> Value.get_num |> Num.to_int |> Bigint.to_int_exn in
     let ctx, value_n = eval_exp ctx exp_n in
     let idx_n = value_n |> Value.get_num |> Num.to_int |> Bigint.to_int_exn in
     let idx_h = idx_l + idx_n in
-    let values_slice =
-      List.mapi
-        (fun idx value ->
-          if idx_l <= idx && idx < idx_h then Some value else None)
-        values
-      |> List.filter_map Fun.id
-    in
     let value_res =
-      let vid = Value.fresh () in
-      let typ = note in
-      ListV values_slice $$$ { vid; typ }
+      match value_b.it with
+      | TextV s when idx_l < 0 || idx_h > String.length s ->
+          error exp_i.at
+            (F.asprintf "slice [%d, %d) out of bounds [0, %d)" idx_l idx_h
+               (String.length s))
+      | TextV s ->
+          let s_slice = String.sub s idx_l (idx_h - idx_l) in
+          let vid = Value.fresh () in
+          let typ = Il.Ast.TextT in
+          TextV s_slice $$$ { vid; typ }
+      | ListV values when idx_l < 0 || idx_h > List.length values ->
+          error exp_n.at
+            (F.asprintf "slice [%d, %d) out of bounds [0, %d)" idx_l idx_h
+               (List.length values))
+      | ListV values ->
+          let values_slice =
+            List.mapi
+              (fun idx value ->
+                if idx_l <= idx && idx < idx_h then Some value else None)
+              values
+            |> List.filter_map Fun.id
+          in
+          let vid = Value.fresh () in
+          let typ = note in
+          ListV values_slice $$$ { vid; typ }
+      | _ ->
+          error exp_b.at
+            (F.asprintf "slicing expects either a text or a list, but got %s"
+               (Il.Print.string_of_value ~short:true value_b))
     in
     (ctx, value_res)
 
   (* Update expression evaluation *)
 
-  and eval_access_path (value_b : value) (path : path) : value =
+  and eval_access_path (ctx : Ctx.t) (value_b : value) (path : path) :
+      Ctx.t * value =
     match path.it with
-    | RootP -> value_b
+    | RootP -> (ctx, value_b)
+    | IdxP (path, exp_i) -> (
+        let ctx, value = eval_access_path ctx value_b path in
+        let ctx, value_i = eval_exp ctx exp_i in
+        let idx = value_i |> Value.get_num |> Num.to_int |> Bigint.to_int_exn in
+        match value.it with
+        | TextV s when idx < 0 || idx >= String.length s ->
+            error exp_i.at
+              (F.asprintf "index %d out of bounds [0, %d)" idx (String.length s))
+        | TextV s ->
+            let s = String.get s idx |> String.make 1 in
+            let value_res =
+              let vid = Value.fresh () in
+              let typ = Il.Ast.TextT in
+              Il.Ast.(TextV s $$$ { vid; typ })
+            in
+            (ctx, value_res)
+        | ListV values when idx < 0 || idx >= List.length values ->
+            error exp_i.at
+              (F.asprintf "index %d out of bounds [0, %d)" idx
+                 (List.length values))
+        | ListV values ->
+            let value_res = List.nth values idx in
+            (ctx, value_res)
+        | _ ->
+            error path.at
+              (F.asprintf "indexing expects either a text or a list, but got %s"
+                 (Il.Print.string_of_value ~short:true value)))
+    | SliceP (path, exp_i, exp_n) -> (
+        let ctx, value = eval_access_path ctx value_b path in
+        let ctx, value_i = eval_exp ctx exp_i in
+        let idx_l =
+          value_i |> Value.get_num |> Num.to_int |> Bigint.to_int_exn
+        in
+        let ctx, value_n = eval_exp ctx exp_n in
+        let idx_n =
+          value_n |> Value.get_num |> Num.to_int |> Bigint.to_int_exn
+        in
+        let idx_h = idx_l + idx_n in
+        match value.it with
+        | TextV s when idx_l < 0 || idx_h > String.length s ->
+            error exp_n.at
+              (F.asprintf "slice [%d, %d) out of bounds [0, %d)" idx_l idx_h
+                 (String.length s))
+        | TextV s ->
+            let s_slice = String.sub s idx_l (idx_h - idx_l) in
+            let value_res =
+              let vid = Value.fresh () in
+              let typ = Il.Ast.TextT in
+              Il.Ast.(TextV s_slice $$$ { vid; typ })
+            in
+            (ctx, value_res)
+        | ListV values when idx_l < 0 || idx_h > List.length values ->
+            error exp_n.at
+              (F.asprintf "slice [%d, %d) out of bounds [0, %d)" idx_l idx_h
+                 (List.length values))
+        | ListV values ->
+            let values_slice =
+              List.mapi
+                (fun idx value ->
+                  if idx_l <= idx && idx < idx_h then Some value else None)
+                values
+              |> List.filter_map Fun.id
+            in
+            let value_res =
+              let vid = Value.fresh () in
+              let typ = path.note in
+              Il.Ast.(ListV values_slice $$$ { vid; typ })
+            in
+            (ctx, value_res)
+        | _ ->
+            error path.at
+              (F.asprintf "slicing expects either a text or a list, but got %s"
+                 (Il.Print.string_of_value ~short:true value)))
     | DotP (path, atom) ->
-        let value = eval_access_path value_b path in
+        let ctx, value = eval_access_path ctx value_b path in
         let fields = value |> Value.get_struct in
-        fields
-        |> List.map (fun (atom, value) -> (atom.it, value))
-        |> List.assoc atom.it
-    | _ -> failwith "(TODO) access_path"
+        let value =
+          fields
+          |> List.map (fun (atom, value) -> (atom.it, value))
+          |> List.assoc atom.it
+        in
+        (ctx, value)
 
-  and eval_update_path (value_b : value) (path : path) (value_n : value) : value
-      =
+  and eval_update_path (ctx : Ctx.t) (value_b : value) (path : path)
+      (value_n : value) : Ctx.t * value =
     match path.it with
-    | RootP -> value_n
+    | RootP -> (ctx, value_n)
+    | IdxP (path, exp_i) -> (
+        let ctx, value = eval_access_path ctx value_b path in
+        let ctx, value_i = eval_exp ctx exp_i in
+        let idx_target =
+          value_i |> Value.get_num |> Num.to_int |> Bigint.to_int_exn
+        in
+        match value.it with
+        | TextV s when idx_target < 0 || idx_target >= String.length s ->
+            error exp_i.at
+              (F.asprintf "index %d out of bounds [0, %d)" idx_target
+                 (String.length s))
+        | TextV s ->
+            let s_n = Value.get_text value_n in
+            if String.length s_n <> 1 then
+              error exp_i.at
+                (F.asprintf
+                   "updating a character requires a single-character text, but \
+                    got %s"
+                   (Sl.Print.string_of_value ~short:true value_n))
+            else
+              let s_updated =
+                String.sub s 0 idx_target ^ s_n
+                ^ String.sub s (idx_target + 1)
+                    (String.length s - idx_target - 1)
+              in
+              let value =
+                let vid = Value.fresh () in
+                let typ = Il.Ast.TextT in
+                Il.Ast.(TextV s_updated $$$ { vid; typ })
+              in
+              eval_update_path ctx value_b path value
+        | ListV values when idx_target < 0 || idx_target >= List.length values
+          ->
+            error exp_i.at
+              (F.asprintf "index %d out of bounds [0, %d)" idx_target
+                 (List.length values))
+        | ListV values ->
+            let values_updated =
+              List.mapi
+                (fun idx value -> if idx = idx_target then value_n else value)
+                values
+            in
+            let value =
+              let vid = Value.fresh () in
+              let typ = path.note in
+              Il.Ast.(ListV values_updated $$$ { vid; typ })
+            in
+            eval_update_path ctx value_b path value
+        | _ ->
+            error path.at
+              (F.asprintf "indexing expects either a text or a list, but got %s"
+                 (Sl.Print.string_of_value ~short:true value)))
+    | SliceP (path, exp_i, exp_n) -> (
+        let ctx, value = eval_access_path ctx value_b path in
+        let ctx, value_i = eval_exp ctx exp_i in
+        let idx_l =
+          value_i |> Value.get_num |> Num.to_int |> Bigint.to_int_exn
+        in
+        let ctx, value_n = eval_exp ctx exp_n in
+        let idx_n =
+          value_n |> Value.get_num |> Num.to_int |> Bigint.to_int_exn
+        in
+        let idx_h = idx_l + idx_n in
+        match value.it with
+        | TextV s when idx_l < 0 || idx_h > String.length s ->
+            error exp_n.at
+              (F.asprintf "slice [%d, %d) out of bounds [0, %d)" idx_l idx_h
+                 (String.length s))
+        | TextV s ->
+            let s_n = Value.get_text value_n in
+            if String.length s_n <> idx_n then
+              error exp_n.at
+                (F.asprintf
+                   "updating a slice of length %d requires a text of length \
+                    %d, but got %s"
+                   idx_n (String.length s_n)
+                   (Il.Print.string_of_value ~short:true value_n))
+            else
+              let s_updated =
+                String.sub s 0 idx_l ^ s_n
+                ^ String.sub s idx_h (String.length s - idx_h)
+              in
+              let value =
+                let vid = Value.fresh () in
+                let typ = Il.Ast.TextT in
+                Il.Ast.(TextV s_updated $$$ { vid; typ })
+              in
+              eval_update_path ctx value_b path value
+        | ListV values when idx_l < 0 || idx_h > List.length values ->
+            error exp_n.at
+              (F.asprintf "slice [%d, %d) out of bounds [0, %d)" idx_l idx_h
+                 (List.length values))
+        | ListV values ->
+            let values_n = Value.get_list value_n in
+            if List.length values_n <> idx_n then
+              error exp_n.at
+                (F.asprintf
+                   "updating a slice of length %d requires a list of length \
+                    %d, but got %s"
+                   idx_n (List.length values_n)
+                   (Il.Print.string_of_value ~short:true value_n))
+            else
+              let values_updated =
+                List.mapi
+                  (fun idx value ->
+                    if idx_l <= idx && idx < idx_h then
+                      List.nth values_n (idx - idx_l)
+                    else value)
+                  values
+              in
+              let value =
+                let vid = Value.fresh () in
+                let typ = path.note in
+                Il.Ast.(ListV values_updated $$$ { vid; typ })
+              in
+              eval_update_path ctx value_b path value
+        | _ ->
+            error path.at
+              (F.asprintf "slicing expects either a text or a list, but got %s"
+                 (Il.Print.string_of_value ~short:true value)))
     | DotP (path, atom) ->
-        let value = eval_access_path value_b path in
+        let ctx, value = eval_access_path ctx value_b path in
         let fields = value |> Value.get_struct in
         let fields =
           List.map
@@ -706,14 +947,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
           let typ = path.note in
           StructV fields $$$ { vid; typ }
         in
-        eval_update_path value_b path value
-    | _ -> failwith "(TODO) update"
+        eval_update_path ctx value_b path value
 
   and eval_upd_exp (_note : typ') (ctx : Ctx.t) (exp_b : exp) (path : path)
       (exp_f : exp) : Ctx.t * value =
     let ctx, value_b = eval_exp ctx exp_b in
     let ctx, value_f = eval_exp ctx exp_f in
-    let value_res = eval_update_path value_b path value_f in
+    let ctx, value_res = eval_update_path ctx value_b path value_f in
     (ctx, value_res)
 
   (* Function call expression evaluation *)
