@@ -6,54 +6,59 @@
 ;;;; Base types
 ;;
 
-;;
-;;;;;; Primitive types
-;;
+syntax voidTypeIR = VOID
+syntax boolTypeIR = BOOL
+syntax errorTypeIR = ERROR
+syntax matchKindTypeIR = MATCH_KIND
+syntax stringTypeIR = STRING
 
-syntax primitiveTypeIR =
-  | VOID
-  | BOOL
-  | ERROR
-  | MATCH_KIND
-  | STRING
-
-;;
-;;;;;;; Numeric types
-;;
-
-syntax numberTypeIR =
+syntax integerTypeIR =
   | INT
   | INT `< nat >
   | BIT `< nat >
   | VARBIT `< nat >
 
-syntax baseTypeIR = primitiveTypeIR | numberTypeIR
+syntax baseTypeIR =
+  | voidTypeIR
+  | boolTypeIR
+  | errorTypeIR
+  | matchKindTypeIR
+  | stringTypeIR
+  | integerTypeIR
 
 ;;
 ;;;; Named types
 ;;
 
 syntax typeIR
-syntax polyTypeDefIR
+syntax typeDefIR
+
+syntax nameTypeIR = `` tid hint(print %0)
+
+syntax specializedTypeIR = typeDefIR `< typeIR* >
 
 syntax namedTypeIR =
-  | TID tid
-  | polyTypeDefIR `< typeIR* >
+  | nameTypeIR
+  | specializedTypeIR
 
 ;;
-;;;; Defined types
+;;;; Alias types
 ;;
 
-;;
-;;;;;; Alias types
-;;
+syntax typedefTypeIR =
+  TYPEDEF tid typeIR
+  hint(print %1)
+
+syntax newTypeIR =
+  TYPE tid typeIR
+  hint(print %1)
 
 syntax aliasTypeIR =
-  | TYPEDEF tid typeIR
-  | TYPE tid typeIR
+  | typedefTypeIR
+  | newTypeIR
 
 ;;
-;;;;;; Data types
+;;;; Data types
 ;;
 
 syntax listTypeIR = LIST `< typeIR >
@@ -62,15 +67,21 @@ syntax headerStackTypeIR = typeIR `[ nat ]
 
 syntax fieldTypeIR = typeIR id `;
 
-syntax structTypeIR = STRUCT tid `{ fieldTypeIR* }
-syntax headerTypeIR = HEADER tid `{ fieldTypeIR* }
-syntax headerUnionTypeIR = HEADER_UNION tid `{ fieldTypeIR* }
+syntax structTypeIR =
+  STRUCT tid `{ fieldTypeIR* }
+  hint(print %1)
+syntax headerTypeIR =
+  HEADER tid `{ fieldTypeIR* }
+  hint(print %1)
+syntax headerUnionTypeIR =
+  HEADER_UNION tid `{ fieldTypeIR* }
+  hint(print %1)
 
 syntax valueFieldIR = id `= value `;
 
 syntax enumTypeIR =
-  | ENUM tid `{ id* }
-  | ENUM tid `# typeIR `{ valueFieldIR* }
+  | ENUM tid `{ id* }                         hint(print %1)
+  | ENUM tid `< typeIR > `{ valueFieldIR* }   hint(print %1)
 
 syntax dataTypeIR =
   | listTypeIR
@@ -82,18 +93,28 @@ syntax dataTypeIR =
   | enumTypeIR
 
 ;;
-;;;;;; Object types
+;;;; Object types
 ;;
 
-syntax parameterTypeIR
-syntax routineTypeDefIR
+syntax parameterIR
+syntax externMethodTypeDefIR
+syntax tableMetadataStructTypeIR
+
+syntax externMethodTypeDefEnv = map<cid, externMethodTypeDefIR>
 
 syntax externObjectTypeIR =
-  EXTERN tid map<rid, routineTypeDefIR>
-syntax parserObjectTypeIR = PARSER `( parameterTypeIR* )
-syntax controlObjectTypeIR = CONTROL `( parameterTypeIR* )
-syntax packageObjectTypeIR = PACKAGE `< typeIR* >
-syntax tableObjectTypeIR = TABLE tid `# typeIR
+  EXTERN tid externMethodTypeDefEnv
+  hint(print %1)
+
+syntax parserObjectTypeIR = PARSER `( parameterIR* )
+
+syntax controlObjectTypeIR = CONTROL `( parameterIR* )
+
+syntax packageObjectTypeIR = PACKAGE `{ typeIR* }
+
+syntax tableObjectTypeIR =
+  TABLE tid `{ tableMetadataStructTypeIR }
+  hint(print %1)
 
 syntax objectTypeIR =
   | externObjectTypeIR
@@ -101,11 +122,6 @@ syntax objectTypeIR =
   | controlObjectTypeIR
   | packageObjectTypeIR
   | tableObjectTypeIR
-
-syntax definedTypeIR =
-  | aliasTypeIR
-  | dataTypeIR
-  | objectTypeIR
 
 ;;
 ;;;; Synthesized types
@@ -125,9 +141,17 @@ syntax recordTypeIR =
 
 syntax setTypeIR = SET `< typeIR* >
 
-syntax tableTypeIR =
-  | TABLE_ENUM tid `{ id* }
-  | TABLE_STRUCT tid `{ fieldTypeIR* }
+syntax tableMetadataEnumTypeIR =
+  TABLE_ENUM tid `{ id* }
+
+syntax tableMetadataStructTypeIR =
+  TABLE_STRUCT tid `{ HIT boolTypeIR `;
+                      MISS boolTypeIR `;
+                      ACTION_RUN tableMetadataEnumTypeIR `; }
+
+syntax tableMetadataTypeIR =
+  | tableMetadataEnumTypeIR
+  | tableMetadataStructTypeIR
 
 syntax synthesizedTypeIR =
   | defaultTypeIR
@@ -135,7 +159,7 @@ syntax synthesizedTypeIR =
   | sequenceTypeIR
   | recordTypeIR
   | setTypeIR
-  | tableTypeIR
+  | tableMetadataTypeIR
 
 ;;
 ;;;; Types
@@ -144,74 +168,7 @@ syntax synthesizedTypeIR =
 syntax typeIR =
   | baseTypeIR
   | namedTypeIR
-  | definedTypeIR
+  | aliasTypeIR
+  | dataTypeIR
+  | objectTypeIR
   | synthesizedTypeIR
-
-;;
-;; Type definitions
-;;
-
-syntax monoTypeDefIR = typeIR
-
-syntax polyTypeDefIR = typeIR `< tid* `, tid* >
-
-syntax typeDefIR = monoTypeDefIR | polyTypeDefIR
-
-;;
-;;;; Parameter types
-;;
-
-syntax parameterTypeIR = direction typeIR id value?
-
-;;
-;; Routine types
-;;
-
-syntax functionTypeIR =
-  | BUILTIN_FUNCTION `( parameterTypeIR* ) `-> typeIR
-  | FUNCTION `( parameterTypeIR* ) `-> typeIR
-  | EXTERN_FUNCTION `( parameterTypeIR* ) `-> typeIR
-  | ACTION `( parameterTypeIR* )
-
-syntax methodTypeIR =
-  | BUILTIN_METHOD `( parameterTypeIR* ) `-> typeIR
-  | EXTERN_METHOD `( parameterTypeIR* ) `-> typeIR
-  | EXTERN_METHOD ABSTRACT `( parameterTypeIR* ) `-> typeIR
-  | PARSER_APPLY `( parameterTypeIR* )
-  | CONTROL_APPLY `( parameterTypeIR* )
-  | TABLE_APPLY `-> typeIR
-
-syntax routineTypeIR =
-  | functionTypeIR
-  | methodTypeIR
-
-;;
-;; Routine type definitions
-;;
-
-syntax monoRoutineTypeDefIR = routineTypeIR
-
-syntax polyRoutineTypeDefIR = routineTypeIR `< tid* `, tid* >
-
-syntax routineTypeDefIR =
-  | monoRoutineTypeDefIR
-  | polyRoutineTypeDefIR
-
-;;
-;;;; Constructor parameter types
-;;
-
-syntax constructorParameterTypeIR = parameterTypeIR
-
-;;
-;; Constructor types
-;;
-
-syntax constructorTypeIR =
-  CONSTRUCTOR `( constructorParameterTypeIR* ) `-> typeIR
-
-;;
-;; Constructor type definitions
-;;
-
-syntax constructorTypeDefIR = constructorTypeIR `< tid* `, tid* >

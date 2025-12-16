@@ -1,0 +1,52 @@
+[appendix]
+[#sec-grammar]
+== P4 grammar
+
+This is the grammar of P4~16~ written using the YACC/bison
+language. Absent from this grammar is the precedence of various
+operations.
+
+The grammar is actually ambiguous, so the lexer and the parser must
+collaborate for parsing the language. In particular, the lexer must be
+able to distinguish two kinds of identifiers:
+
+- Type names previously introduced (`TYPE_IDENTIFIER` tokens)
+- Regular identifiers (`IDENTIFIER` token)
+
+The parser has to use a symbol table to indicate to the lexer how to
+parse subsequent appearances of identifiers. For example, given the
+following program fragment:
+
+[source,p4]
+----
+typedef bit<4> t;
+struct s { /* body omitted */}
+t x;
+parser p(bit<8> b) { /* body omitted */ }
+----
+
+The lexer has to return the following terminal kinds:
+
+[source,p4]
+----
+t - TYPE_IDENTIFIER
+s - TYPE_IDENTIFIER
+x - IDENTIFIER
+p - TYPE_IDENTIFIER
+b - IDENTIFIER
+----
+
+This grammar has been heavily influenced by limitations of the Bison
+parser generator tool.
+
+The `STRING_LITERAL` token corresponds to a string literal
+enclosed within double quotes, as described in <<sec-string-literals>>.
+
+All other terminals are uppercase spellings of the corresponding
+keywords. For example, `RETURN` is the terminal returned by the
+lexer when parsing the keyword return.
+
+[source,bison]
+----
+include::../../grammar.trimmed.adoc[]
+----

@@ -5,31 +5,32 @@ open Util.Source
 
 (* Numbers *)
 
-type num = Num.t
+type num = Num.t [@@deriving yojson]
 
 (* Texts *)
 
-type text = string
+type text = string [@@deriving yojson]
 
 (* Identifiers *)
 
-type id = id' phrase
-and id' = string
+type id = id' phrase [@@deriving yojson]
+and id' = string [@@deriving yojson]
 
 (* Atoms *)
 
-type atom = atom' phrase
-and atom' = Atom.t
+type atom = atom' phrase [@@deriving yojson]
+and atom' = Atom.t [@@deriving yojson]
 
 (* Mixfix operators *)
 
-type mixop = Mixop.t
+type mixop = Mixop.t [@@deriving yojson]
 
 (* Iterators *)
 
 type iter =
   | Opt       (* `?` *)
   | List      (* `*` *)
+[@@deriving yojson]
 
 (* Variables *)
 
@@ -46,9 +47,12 @@ and typ' =
   | TupleT of typ list      (* `(` list(typ, `,`) `)` *)
   | IterT of typ * iter     (* typ iter *)
   | FuncT                   (* `func` *)
+[@@deriving yojson]
 
 and nottyp = nottyp' phrase
+[@@deriving yojson]
 and nottyp' = mixop * typ list
+[@@deriving yojson]
 
 and deftyp = deftyp' phrase
 and deftyp' =
@@ -62,7 +66,7 @@ and typcase = nottyp * hint list
 (* Values *)
 
 and vid = int
-and vnote = { vid : vid; typ : typ' }
+and vnote = { vid : vid; typ : typ' } [@@deriving yojson]
 
 and value = (value', vnote) note
 and value' =
@@ -75,13 +79,17 @@ and value' =
   | OptV of value option
   | ListV of value list
   | FuncV of id
+  | ExternV of Yojson.Safe.t
+[@@deriving yojson]
 
 and valuefield = atom * value
+[@@deriving yojson]
 and valuecase = mixop * value list
+[@@deriving yojson]
 
 (* Operators *)
 
-and numop = [ `DecOp | `HexOp ]
+and numop = [ `DecOp | `HexOp ] [@@deriving yojson]
 and unop = [ Bool.unop | Num.unop ]
 and binop = [ Bool.binop | Num.binop ]
 and cmpop = [ Bool.cmpop | Num.cmpop ]
@@ -116,7 +124,6 @@ and exp' =
   | SliceE of exp * exp * exp             (* exp `[` exp `:` exp `]` *)
   | UpdE of exp * path * exp              (* exp `[` path `=` exp `]` *)
   | CallE of id * targ list * arg list    (* $id`<` targ* `>``(` arg* `)` *)
-  | HoldE of id * notexp                  (* id `:` notexp `holds` *)
   | IterE of exp * iterexp                (* exp iterexp *)
 
 and notexp = mixop * exp list
@@ -161,18 +168,8 @@ and arg' =
 
 (* Type arguments *)
 
-and targ = targ' phrase
-and targ' = typ'
-
-(* Rules *)
-
-and rule = rule' phrase
-and rule' = id * notexp * prem list
-
-(* Clauses *)
-
-and clause = clause' phrase
-and clause' = arg list * exp * prem list
+and targ = targ' phrase [@@deriving yojson]
+and targ' = typ' [@@deriving yojson]
 
 (* Premises *)
 
@@ -180,25 +177,55 @@ and prem = prem' phrase
 and prem' =
   | RulePr of id * notexp          (* id `:` notexp *)
   | IfPr of exp                    (* `if` exp *)
+  | IfHoldPr of id * notexp        (* `if` id `:` notexp `holds` *)
+  | IfNotHoldPr of id * notexp     (* `if` id `:` notexp `does not hold` *)
   | ElsePr                         (* `otherwise` *)
   | LetPr of exp * exp             (* `let` exp `=` exp *)
   | IterPr of prem * iterexp       (* prem iterexp *)
   | DebugPr of exp                 (* `debug` exp *)
 
+(* Rules *)
+
+and rulematch = exp list * exp list * prem list
+and rulepath = id * prem list * exp list
+
+and rulegroup = rulegroup' phrase
+and rulegroup' = id * rulematch * rulepath list
+
+(* Clauses *)
+
+and clause = clause' phrase
+and clause' = arg list * exp * prem list
+
+(* Table rows *)
+
+and tablerow = tablerow' phrase
+and tablerow' = exp list * arg list * exp * prem list
+
 (* Hints *)
 
-and hint = { hintid : id; hintexp : El.Ast.exp }
+and hint = El.Ast.hint
 
 (* Definitions *)
 
 type def = def' phrase
 and def' =
-  (* `syntax` id `<` list(tparam, `,`) `>` `=` deftyp *)
-  | TypD of id * tparam list * deftyp
-  (* `relation` id `:` nottyp `hint(input` `%`int* `)` rule* *)
-  | RelD of id * nottyp * int list * rule list
-  (* `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ clause* *)
-  | DecD of id * tparam list * param list * typ * clause list
+  (* `extern` `syntax` id hint* *)
+  | ExternTypD of id * hint list
+  (* `syntax` id `<` list(tparam, `,`) `>` `=` deftyp hint* *)
+  | TypD of id * tparam list * deftyp * hint list
+  (* `extern` `relation` id `:` nottyp `hint(input` `%`int* `)` hint* *)
+  | ExternRelD of id * nottyp * int list * hint list
+  (* `relation` id `:` nottyp `hint(input` `%`int* `)` rulegroup* hint* *)
+  | RelD of id * nottyp * int list * rulegroup list * hint list
+  (* `extern` `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ hint* *)
+  | ExternDecD of id * tparam list * param list * typ * hint list
+  (* `builtin` `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ hint* *)
+  | BuiltinDecD of id * tparam list * param list * typ * hint list
+  (* `table` `dec` id list(param, `,`) `:` typ hint* *)
+  | TableDecD of id * param list * typ * tablerow list * hint list
+  (* `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ clause* hint* *)
+  | FuncDecD of id * tparam list * param list * typ * clause list * hint list
 
 (* Spec *)
 

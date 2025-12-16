@@ -1,0 +1,1218 @@
+// tag::p4program[]
+p4program
+    : /* empty */
+    | p4program declaration
+    | p4program ";"  /* empty declaration */
+    ;
+// end::p4program[]
+
+// tag::declaration[]
+declaration
+    : constantDeclaration
+    | externDeclaration
+    | actionDeclaration
+    | parserDeclaration
+    | typeDeclaration
+    | controlDeclaration
+    | instantiation
+    | errorDeclaration
+    | matchKindDeclaration
+    | functionDeclaration
+    ;
+// end::declaration[]
+
+// tag::nonTypeName[]
+nonTypeName
+    : IDENTIFIER
+    | APPLY
+    | KEY
+    | ACTIONS
+    | STATE
+    | ENTRIES
+    | TYPE
+    | PRIORITY
+    ;
+// end::nonTypeName[]
+
+// tag::name[]
+name
+    : nonTypeName
+    | LIST
+    | TYPE_IDENTIFIER
+    ;
+// end::name[]
+
+// tag::nonTableKwName[]
+nonTableKwName
+   : IDENTIFIER
+   | TYPE_IDENTIFIER
+   | APPLY
+   | STATE
+   | TYPE
+   | PRIORITY
+   ;
+// end::nonTableKwName[]
+
+// tag::optCONST[]
+optCONST
+    : /* empty */
+    | CONST
+    ;
+// end::optCONST[]
+
+// tag::optAnnotations[]
+optAnnotations
+    : /* empty */
+    | annotations
+    ;
+// end::optAnnotations[]
+
+// tag::annotations[]
+annotations
+    : annotation
+    | annotations annotation
+    ;
+// end::annotations[]
+
+// tag::annotation[]
+annotation
+    : "@" name
+    | "@" name "(" annotationBody ")"
+    | "@" name "[" structuredAnnotationBody "]"
+    ;
+// end::annotation[]
+
+// tag::structuredAnnotationBody[]
+structuredAnnotationBody
+    : expressionList optTrailingComma
+    | kvList optTrailingComma
+    ;
+// end::structuredAnnotationBody[]
+
+// tag::annotationBody[]
+annotationBody
+    : /* empty */
+    | annotationBody "(" annotationBody ")"
+    | annotationBody annotationToken
+    ;
+// end::annotationBody[]
+
+annotationToken
+    : UNEXPECTED_TOKEN
+    | ABSTRACT
+    | ACTION
+    | ACTIONS
+    | APPLY
+    | BOOL
+    | BIT
+    | BREAK
+    | CONST
+    | CONTINUE
+    | CONTROL
+    | DEFAULT
+    | ELSE
+    | ENTRIES
+    | ENUM
+    | ERROR
+    | EXIT
+    | EXTERN
+    | FALSE
+    | FOR
+    | HEADER
+    | HEADER_UNION
+    | IF
+    | IN
+    | INOUT
+    | INT
+    | KEY
+    | MATCH_KIND
+    | TYPE
+    | OUT
+    | PARSER
+    | PACKAGE
+    | PRAGMA
+    | RETURN
+    | SELECT
+    | STATE
+    | STRING
+    | STRUCT
+    | SWITCH
+    | TABLE
+    | THIS
+    | TRANSITION
+    | TRUE
+    | TUPLE
+    | TYPEDEF
+    | VARBIT
+    | VALUESET
+    | LIST
+    | VOID
+    | "_"
+    | IDENTIFIER
+    | TYPE_IDENTIFIER
+    | STRING_LITERAL
+    | INTEGER
+    | "&&&"
+    | ".."
+    | "<<"
+    | "&&"
+    | "||"
+    | "=="
+    | "!="
+    | ">="
+    | "<="
+    | "++"
+    | "+"
+    | "|+|"
+    | "-"
+    | "|-|"
+    | "*"
+    | "/"
+    | "%"
+    | "|"
+    | "&"
+    | "^"
+    | "~"
+    | "["
+    | "]"
+    | "{"
+    | "}"
+    | "<"
+    | ">"
+    | "!"
+    | ":"
+    | ","
+    | "?"
+    | "."
+    | "="
+    | ";"
+    | "@"
+    ;
+
+// tag::kvList[]
+kvList
+    : kvPair
+    | kvList "," kvPair
+    ;
+// end::kvList[]
+
+// tag::kvPair[]
+kvPair
+    : name "=" expression
+    ;
+// end::kvPair[]
+
+// tag::parameterList[]
+parameterList
+    : /* empty */
+    | nonEmptyParameterList
+    ;
+// end::parameterList[]
+
+// tag::nonEmptyParameterList[]
+nonEmptyParameterList
+    : parameter
+    | nonEmptyParameterList "," parameter
+    ;
+// end::nonEmptyParameterList[]
+
+// tag::parameter[]
+parameter
+    : optAnnotations direction typeRef name
+    | optAnnotations direction typeRef name "=" expression
+    ;
+// end::parameter[]
+
+// tag::direction[]
+direction
+    : IN
+    | OUT
+    | INOUT
+    | /* empty */
+    ;
+// end::direction[]
+
+// tag::packageTypeDeclaration[]
+packageTypeDeclaration
+    : optAnnotations PACKAGE name optTypeParameters
+      "(" parameterList ")"
+    ;
+// end::packageTypeDeclaration[]
+
+instantiation
+    : annotations typeRef "(" argumentList ")" name ";"
+    | typeRef "(" argumentList ")" name ";"
+    | annotations typeRef "(" argumentList ")" name "=" objInitializer ";"
+    | typeRef "(" argumentList ")" name "=" objInitializer ";"
+    ;
+
+// tag::objInitializer[]
+objInitializer
+    : "{" objDeclarations "}"
+    ;
+// end::objInitializer[]
+
+// tag::objDeclarations[]
+objDeclarations
+    : /* empty */
+    | objDeclarations objDeclaration
+    ;
+// end::objDeclarations[]
+
+// tag::objDeclaration[]
+objDeclaration
+    : functionDeclaration
+    | instantiation
+    ;
+// end::objDeclaration[]
+
+// tag::optConstructorParameters[]
+optConstructorParameters
+    : /* empty */
+    | "(" parameterList ")"
+    ;
+// end::optConstructorParameters[]
+
+dotPrefix
+    : "."
+    ;
+
+/**************************** PARSER ******************************/
+
+// tag::parserDeclaration[]
+parserDeclaration
+    : parserTypeDeclaration optConstructorParameters
+      "{" parserLocalElements parserStates "}"
+    ;
+// end::parserDeclaration[]
+
+// tag::parserLocalElements[]
+parserLocalElements
+    : /* empty */
+    | parserLocalElements parserLocalElement
+    ;
+// end::parserLocalElements[]
+
+// tag::parserLocalElement[]
+parserLocalElement
+    : constantDeclaration
+    | instantiation
+    | variableDeclaration
+    | valueSetDeclaration
+    ;
+// end::parserLocalElement[]
+
+// tag::parserTypeDeclaration[]
+parserTypeDeclaration
+    : optAnnotations PARSER name optTypeParameters
+      "(" parameterList ")"
+    ;
+// end::parserTypeDeclaration[]
+
+// tag::parserStates[]
+parserStates
+    : parserState
+    | parserStates parserState
+    ;
+// end::parserStates[]
+
+// tag::parserState[]
+parserState
+    : optAnnotations STATE name
+      "{" parserStatements transitionStatement "}"
+    ;
+// end::parserState[]
+
+// tag::parserStatements[]
+parserStatements
+    : /* empty */
+    | parserStatements parserStatement
+    ;
+// end::parserStatements[]
+
+// tag::parserStatement[]
+parserStatement
+    : assignmentOrMethodCallStatement
+    | directApplication
+    | emptyStatement
+    | variableDeclaration
+    | constantDeclaration
+    | parserBlockStatement
+    | conditionalStatement
+    ;
+// end::parserStatement[]
+
+// tag::parserBlockStatement[]
+parserBlockStatement
+    : optAnnotations "{" parserStatements "}"
+    ;
+// end::parserBlockStatement[]
+
+// tag::transitionStatement[]
+transitionStatement
+    : /* empty */
+    | TRANSITION stateExpression
+    ;
+// end::transitionStatement[]
+
+// tag::stateExpression[]
+stateExpression
+    : name ";"
+    | selectExpression
+    ;
+// end::stateExpression[]
+
+// tag::selectExpression[]
+selectExpression
+    : SELECT "(" expressionList ")" "{" selectCaseList "}"
+    ;
+// end::selectExpression[]
+
+// tag::selectCaseList[]
+selectCaseList
+    : /* empty */
+    | selectCaseList selectCase
+    ;
+// end::selectCaseList[]
+
+// tag::selectCase[]
+selectCase
+    : keysetExpression ":" name ";"
+    ;
+// end::selectCase[]
+
+// tag::keysetExpression[]
+keysetExpression
+    : tupleKeysetExpression
+    | simpleKeysetExpression
+    ;
+// end::keysetExpression[]
+
+// tag::tupleKeysetExpression[]
+tupleKeysetExpression
+    : "(" simpleKeysetExpression "," simpleExpressionList ")"
+    | "(" reducedSimpleKeysetExpression ")"
+    ;
+// end::tupleKeysetExpression[]
+
+// tag::optTrailingComma[]
+optTrailingComma
+    : /* empty */
+    | ","
+    ;
+// end::optTrailingComma[]
+
+// tag::simpleExpressionList[]
+simpleExpressionList
+    : simpleKeysetExpression
+    | simpleExpressionList "," simpleKeysetExpression
+    ;
+// end::simpleExpressionList[]
+
+// tag::reducedSimpleKeysetExpression[]
+reducedSimpleKeysetExpression
+    : expression "&&&" expression
+    | expression ".." expression
+    | DEFAULT
+    | "_"
+    ;
+// end::reducedSimpleKeysetExpression[]
+
+// tag::simpleKeysetExpression[]
+simpleKeysetExpression
+    : expression
+    | expression "&&&" expression
+    | expression ".." expression
+    | DEFAULT
+    | "_"
+    ;
+// end::simpleKeysetExpression[]
+
+// tag::valueSetDeclaration[]
+valueSetDeclaration
+  : optAnnotations
+      VALUESET "<" baseType ">" "(" expression ")" name ";"
+  | optAnnotations
+      VALUESET "<" tupleType ">" "(" expression ")" name ";"
+  | optAnnotations
+      VALUESET "<" typeName ">" "(" expression ")" name ";"
+  ;
+// end::valueSetDeclaration[]
+
+/*************************** CONTROL ************************/
+
+// tag::controlDeclaration[]
+controlDeclaration
+    : controlTypeDeclaration optConstructorParameters
+      /* controlTypeDeclaration cannot contain type parameters */
+      "{" controlLocalDeclarations APPLY controlBody "}"
+    ;
+// end::controlDeclaration[]
+
+// tag::controlTypeDeclaration[]
+controlTypeDeclaration
+    : optAnnotations CONTROL name optTypeParameters
+      "(" parameterList ")"
+    ;
+// end::controlTypeDeclaration[]
+
+// tag::controlLocalDeclarations[]
+controlLocalDeclarations
+    : /* empty */
+    | controlLocalDeclarations controlLocalDeclaration
+    ;
+// end::controlLocalDeclarations[]
+
+// tag::controlLocalDeclaration[]
+controlLocalDeclaration
+    : constantDeclaration
+    | actionDeclaration
+    | tableDeclaration
+    | instantiation
+    | variableDeclaration
+    ;
+// end::controlLocalDeclaration[]
+
+// tag::controlBody[]
+controlBody
+    : blockStatement
+    ;
+// end::controlBody[]
+
+/*************************** EXTERN *************************/
+
+// tag::externDeclaration[]
+externDeclaration
+    : optAnnotations EXTERN nonTypeName optTypeParameters "{" methodPrototypes "}"
+    | optAnnotations EXTERN functionPrototype ";"
+    ;
+// end::externDeclaration[]
+
+// tag::methodPrototypes[]
+methodPrototypes
+    : /* empty */
+    | methodPrototypes methodPrototype
+    ;
+// end::methodPrototypes[]
+
+// tag::functionPrototype[]
+functionPrototype
+    : typeOrVoid name optTypeParameters "(" parameterList ")"
+    ;
+// end::functionPrototype[]
+
+// tag::methodPrototype[]
+methodPrototype
+    : optAnnotations functionPrototype ";"
+    | optAnnotations ABSTRACT functionPrototype ";"
+    | optAnnotations TYPE_IDENTIFIER "(" parameterList ")" ";"
+    ;
+// end::methodPrototype[]
+
+/************************** TYPES ****************************/
+
+// tag::typeRef[]
+typeRef
+    : baseType
+    | typeName
+    | specializedType
+    | headerStackType
+    | p4listType
+    | tupleType
+    ;
+// end::typeRef[]
+
+// tag::namedType[]
+namedType
+    : typeName
+    | specializedType
+    ;
+// end::namedType[]
+
+// tag::prefixedType[]
+prefixedType
+    : TYPE_IDENTIFIER
+    | dotPrefix TYPE_IDENTIFIER
+    ;
+// end::prefixedType[]
+
+// tag::typeName[]
+typeName
+    : prefixedType
+    ;
+// end::typeName[]
+
+// tag::p4listType[]
+p4listType
+    : LIST "<" typeArg ">"
+    ;
+// end::p4listType[]
+
+// tag::tupleType[]
+tupleType
+    : TUPLE "<" typeArgumentList ">"
+    ;
+// end::tupleType[]
+
+// tag::headerStackType[]
+headerStackType
+    : typeName "[" expression "]"
+    | specializedType "[" expression "]"
+    ;
+// end::headerStackType[]
+
+// tag::specializedType[]
+specializedType
+    : typeName "<" typeArgumentList ">"
+    ;
+// end::specializedType[]
+
+// tag::baseType[]
+baseType
+    : BOOL
+    | MATCH_KIND
+    | ERROR
+    | BIT
+    | STRING
+    | INT
+    | BIT "<" INTEGER ">"
+    | INT "<" INTEGER ">"
+    | VARBIT "<" INTEGER ">"
+    | BIT "<" "(" expression ")" ">"
+    | INT "<" "(" expression ")" ">"
+    | VARBIT "<" "(" expression ")" ">"
+    ;
+// end::baseType[]
+
+// tag::typeOrVoid[]
+typeOrVoid
+    : typeRef
+    | VOID
+    | IDENTIFIER     // may be a type variable
+    ;
+// end::typeOrVoid[]
+
+// tag::optTypeParameters[]
+optTypeParameters
+    : /* empty */
+    | typeParameters
+    ;
+// end::optTypeParameters[]
+
+// tag::typeParameters[]
+typeParameters
+    : "<" typeParameterList ">"
+    ;
+// end::typeParameters[]
+
+// tag::typeParameterList[]
+typeParameterList
+    : name
+    | typeParameterList "," name
+    ;
+// end::typeParameterList[]
+
+// tag::typeArg[]
+typeArg
+    : typeRef
+    | nonTypeName
+    | VOID
+    | "_"
+    ;
+// end::typeArg[]
+
+// tag::typeArgumentList[]
+typeArgumentList
+    : /* empty */
+    | typeArg
+    | typeArgumentList "," typeArg
+    ;
+// end::typeArgumentList[]
+
+// tag::realTypeArg[]
+realTypeArg
+    : typeRef
+    | VOID
+    | "_"
+    ;
+// end::realTypeArg[]
+
+// tag::realTypeArgumentList[]
+realTypeArgumentList
+    : realTypeArg
+    | realTypeArgumentList "," typeArg
+    ;
+// end::realTypeArgumentList[]
+
+// tag::typeDeclaration[]
+typeDeclaration
+    : derivedTypeDeclaration
+    | typedefDeclaration ";"
+    | parserTypeDeclaration ";"
+    | controlTypeDeclaration ";"
+    | packageTypeDeclaration ";"
+    ;
+// end::typeDeclaration[]
+
+// tag::derivedTypeDeclaration[]
+derivedTypeDeclaration
+    : headerTypeDeclaration
+    | headerUnionDeclaration
+    | structTypeDeclaration
+    | enumDeclaration
+    ;
+// end::derivedTypeDeclaration[]
+
+// tag::headerTypeDeclaration[]
+headerTypeDeclaration
+    : optAnnotations HEADER name optTypeParameters "{" structFieldList "}"
+    ;
+// end::headerTypeDeclaration[]
+
+// tag::structTypeDeclaration[]
+structTypeDeclaration
+    : optAnnotations STRUCT name optTypeParameters "{" structFieldList "}"
+    ;
+// end::structTypeDeclaration[]
+
+// tag::headerUnionDeclaration[]
+headerUnionDeclaration
+    : optAnnotations HEADER_UNION name optTypeParameters "{" structFieldList "}"
+    ;
+// end::headerUnionDeclaration[]
+
+// tag::structFieldList[]
+structFieldList
+    : /* empty */
+    | structFieldList structField
+    ;
+// end::structFieldList[]
+
+// tag::structField[]
+structField
+    : optAnnotations typeRef name ";"
+    ;
+// end::structField[]
+
+// tag::enumDeclaration[]
+enumDeclaration
+    : optAnnotations ENUM name "{" identifierList optTrailingComma "}"
+    | optAnnotations ENUM typeRef name "{"
+      specifiedIdentifierList optTrailingComma "}"
+    ;
+// end::enumDeclaration[]
+
+// tag::specifiedIdentifierList[]
+specifiedIdentifierList
+    : specifiedIdentifier
+    | specifiedIdentifierList "," specifiedIdentifier
+    ;
+// end::specifiedIdentifierList[]
+
+// tag::specifiedIdentifier[]
+specifiedIdentifier
+    : name "=" initializer
+    ;
+// end::specifiedIdentifier[]
+
+// tag::errorDeclaration[]
+errorDeclaration
+    : ERROR "{" identifierList "}"
+    ;
+// end::errorDeclaration[]
+
+// tag::matchKindDeclaration[]
+matchKindDeclaration
+    : MATCH_KIND "{" identifierList optTrailingComma "}"
+    ;
+// end::matchKindDeclaration[]
+
+// tag::identifierList[]
+identifierList
+    : name
+    | identifierList "," name
+    ;
+// end::identifierList[]
+
+typedefDeclaration
+    : optAnnotations TYPEDEF typeRef name
+    | optAnnotations TYPEDEF derivedTypeDeclaration name
+    | optAnnotations TYPE typeRef name
+    ;
+
+/*************************** STATEMENTS *************************/
+
+// tag::assignmentOrMethodCallStatement[]
+assignmentOrMethodCallStatement
+    : assignmentOrMethodCallStatementWithoutSemicolon ";"
+    ;
+// end::assignmentOrMethodCallStatement[]
+
+// tag::assignmentOrMethodCallStatementWithoutSemicolon[]
+assignmentOrMethodCallStatementWithoutSemicolon
+    : lvalue "(" argumentList ")"
+    | lvalue "<" typeArgumentList ">" "(" argumentList ")"
+    | lvalue "="  expression
+    | lvalue "*=" expression
+    | lvalue "/=" expression
+    | lvalue "%=" expression
+    | lvalue "+=" expression
+    | lvalue "-=" expression
+    | lvalue "|+|=" expression
+    | lvalue "|-|=" expression
+    | lvalue "<<=" expression
+    | lvalue ">>=" expression
+    | lvalue "&=" expression
+    | lvalue "|=" expression
+    | lvalue "^=" expression
+    ;
+// end::assignmentOrMethodCallStatementWithoutSemicolon[]
+
+// tag::emptyStatement[]
+emptyStatement
+    : ";"
+    ;
+// end::emptyStatement[]
+
+// tag::exitStatement[]
+exitStatement
+    : EXIT ";"
+    ;
+// end::exitStatement[]
+
+// tag::returnStatement[]
+returnStatement
+    : RETURN ";"
+    | RETURN expression ";"
+    ;
+// end::returnStatement[]
+
+// tag::conditionalStatement[]
+conditionalStatement
+    : IF "(" expression ")" statement
+    | IF "(" expression ")" statement ELSE statement
+    ;
+// end::conditionalStatement[]
+
+// tag::breakStatement[]
+breakStatement
+    : BREAK ";"
+    ;
+// end::breakStatement[]
+
+// tag::continueStatement[]
+continueStatement
+    : CONTINUE ";"
+    ;
+// end::continueStatement[]
+
+// To support direct invocation of a control or parser without instantiation
+// tag::directApplication[]
+directApplication
+    : typeName "." APPLY "(" argumentList ")" ";"
+    | specializedType "." APPLY "(" argumentList ")" ";"
+    ;
+// end::directApplication[]
+
+statement
+    : assignmentOrMethodCallStatement
+    | directApplication
+    | conditionalStatement
+    | emptyStatement
+    | blockStatement
+    | returnStatement
+    | breakStatement
+    | continueStatement
+    | exitStatement
+    | switchStatement
+    | forStatement
+    ;
+
+// tag::blockStatement[]
+blockStatement
+    : optAnnotations "{" statOrDeclList "}"
+    ;
+// end::blockStatement[]
+
+// tag::statOrDeclList[]
+statOrDeclList
+    : /* empty */
+    | statOrDeclList statementOrDeclaration
+    ;
+// end::statOrDeclList[]
+
+// tag::switchStatement[]
+switchStatement
+    : SWITCH "(" expression ")" "{" switchCases "}"
+    ;
+// end::switchStatement[]
+
+// tag::switchCases[]
+switchCases
+    : /* empty */
+    | switchCases switchCase
+    ;
+// end::switchCases[]
+
+// tag::switchCase[]
+switchCase
+    : switchLabel ":" blockStatement
+    | switchLabel ":"  // fall-through
+    ;
+// end::switchCase[]
+
+// tag::switchLabel[]
+switchLabel
+    : DEFAULT
+    | nonBraceExpression
+    ;
+// end::switchLabel[]
+
+// tag::statementOrDeclaration[]
+statementOrDeclaration
+    : variableDeclaration
+    | constantDeclaration
+    | statement
+    ;
+// end::statementOrDeclaration[]
+
+// tag::forStatement[]
+forStatement
+    : optAnnotations FOR "(" forInitStatements ";" expression ";"
+      forUpdateStatements ")" statement
+    | optAnnotations FOR "(" typeRef name IN forCollectionExpr ")" statement
+    | optAnnotations FOR "(" annotations typeRef name IN forCollectionExpr ")" statement
+    ;
+// end::forStatement[]
+
+// tag::forInitStatements[]
+forInitStatements
+    : /* empty */
+    | forInitStatementsNonEmpty
+    ;
+// end::forInitStatements[]
+
+// tag::forInitStatementsNonEmpty[]
+forInitStatementsNonEmpty
+    : declOrAssignmentOrMethodCallStatement
+    | forInitStatementsNonEmpty "," declOrAssignmentOrMethodCallStatement
+    ;
+// end::forInitStatementsNonEmpty[]
+
+// tag::declOrAssignmentOrMethodCallStatement[]
+declOrAssignmentOrMethodCallStatement
+    : variableDeclarationWithoutSemicolon
+    | assignmentOrMethodCallStatementWithoutSemicolon
+    ;
+// end::declOrAssignmentOrMethodCallStatement[]
+
+// tag::forUpdateStatements[]
+forUpdateStatements
+    : /* empty */
+    | forUpdateStatementsNonEmpty
+    ;
+// end::forUpdateStatements[]
+
+// tag::forUpdateStatementsNonEmpty[]
+forUpdateStatementsNonEmpty
+    : assignmentOrMethodCallStatementWithoutSemicolon
+    | forUpdateStatementsNonEmpty "," assignmentOrMethodCallStatementWithoutSemicolon
+    ;
+// end::forUpdateStatementsNonEmpty[]
+
+// tag::forCollectionExpr[]
+forCollectionExpr
+    : expression
+    | expression ".." expression
+    ;
+// end::forCollectionExpr[]
+
+/************************* TABLE *********************************/
+
+// tag::tableDeclaration[]
+tableDeclaration
+    : optAnnotations TABLE name "{" tablePropertyList "}"
+    ;
+// end::tableDeclaration[]
+
+// tag::tablePropertyList[]
+tablePropertyList
+    : tableProperty
+    | tablePropertyList tableProperty
+    ;
+// end::tablePropertyList[]
+
+tableProperty
+    : KEY "=" "{" keyElementList "}"
+    | ACTIONS "=" "{" actionList "}"
+    | optAnnotations optCONST ENTRIES "=" "{" entriesList "}"
+    | optAnnotations optCONST nonTableKwName "=" initializer ";"
+    ;
+
+// tag::keyElementList[]
+keyElementList
+    : /* empty */
+    | keyElementList keyElement
+    ;
+// end::keyElementList[]
+
+// tag::keyElement[]
+keyElement
+    : expression ":" name optAnnotations ";"
+    ;
+// end::keyElement[]
+
+// tag::actionList[]
+actionList
+    : /* empty */
+    | actionList optAnnotations actionRef ";"
+    ;
+// end::actionList[]
+
+// tag::actionRef[]
+actionRef
+    : prefixedNonTypeName
+    | prefixedNonTypeName "(" argumentList ")"
+    ;
+// end::actionRef[]
+
+// tag::entry[]
+entry
+    : optCONST entryPriority keysetExpression ':' actionRef optAnnotations ';'
+    | optCONST keysetExpression ':' actionRef optAnnotations ';'
+    ;
+// end::entry[]
+
+// tag::entryPriority[]
+entryPriority
+ : PRIORITY '=' INTEGER ":"
+ | PRIORITY '=' '(' expression ')' ":"
+ ;
+// end::entryPriority[]
+
+// tag::entriesList[]
+entriesList
+    : /* empty */
+    | entriesList entry
+    ;
+// end::entriesList[]
+
+/************************* ACTION ********************************/
+
+// tag::actionDeclaration[]
+actionDeclaration
+    : optAnnotations ACTION name "(" parameterList ")" blockStatement
+    ;
+// end::actionDeclaration[]
+
+/************************* VARIABLES *****************************/
+
+// tag::variableDeclaration[]
+variableDeclaration
+    : variableDeclarationWithoutSemicolon ";"
+    ;
+
+variableDeclarationWithoutSemicolon
+    : annotations typeRef name optInitializer
+    | typeRef name optInitializer
+    ;
+// end::variableDeclaration[]
+
+// tag::constantDeclaration[]
+constantDeclaration
+    : optAnnotations CONST typeRef name "=" initializer ";"
+    ;
+// end::constantDeclaration[]
+
+// tag::optInitializer[]
+optInitializer
+    : /* empty */
+    | "=" initializer
+    ;
+// end::optInitializer[]
+
+// tag::initializer[]
+initializer
+    : expression
+    ;
+// end::initializer[]
+
+/**************** Expressions ****************/
+
+// tag::functionDeclaration[]
+functionDeclaration
+    : annotations functionPrototype blockStatement
+    | functionPrototype blockStatement
+    ;
+// end::functionDeclaration[]
+
+// tag::argumentList[]
+argumentList
+    : /* empty */
+    | nonEmptyArgList
+    ;
+// end::argumentList[]
+
+// tag::nonEmptyArgList[]
+nonEmptyArgList
+    : argument
+    | nonEmptyArgList "," argument
+    ;
+// end::nonEmptyArgList[]
+
+// tag::argument[]
+argument
+    : expression  /* positional argument */
+    | name "=" expression  /* named argument */
+    | "_"
+    | name "=" "_"
+    ;
+// end::argument[]
+
+// tag::expressionList[]
+expressionList
+    : /* empty */
+    | expression
+    | expressionList "," expression
+    ;
+// end::expressionList[]
+
+// tag::member[]
+member
+    : name
+    ;
+// end::member[]
+
+// tag::prefixedNonTypeName[]
+prefixedNonTypeName
+    : nonTypeName
+    | dotPrefix nonTypeName
+    ;
+// end::prefixedNonTypeName[]
+
+// tag::lvalue[]
+lvalue
+    : prefixedNonTypeName
+    | THIS
+    | lvalue "." member
+    | lvalue "[" expression "]"
+    | lvalue "[" expression ":" expression "]"
+    | "(" lvalue ")"
+    ;
+// end::lvalue[]
+
+%left ","
+%nonassoc "?"
+%nonassoc ":"
+%left "||"
+%left "&&"
+%left "==" "!="
+%left "<" ">" "<=" ">="
+%left "|"
+%left "^"
+%left "&"
+%left "<<" ">>"
+%left "++" "+" "-" "|+|" "|-|"
+%left "*" "/" "%"
+%right PREFIX
+%nonassoc "]" "(" "["
+%left "."
+
+// Additional precedences need to be specified
+
+expression
+    : INTEGER
+    | DOTS
+    | STRING_LITERAL
+    | TRUE
+    | FALSE
+    | THIS
+    | prefixedNonTypeName
+    | expression "[" expression "]"
+    | expression "[" expression ":" expression "]"
+    | "{" expressionList optTrailingComma "}"
+    | "{#}"
+    | "{" kvList optTrailingComma "}"
+    | "{" kvList "," DOTS optTrailingComma "}"
+    | "(" expression ")"
+    | "!" expression %prec PREFIX
+    | "~" expression %prec PREFIX
+    | "-" expression %prec PREFIX
+    | "+" expression %prec PREFIX
+    | typeName "." member
+    | ERROR "." member
+    | expression "." member
+    | expression "*" expression
+    | expression "/" expression
+    | expression "%" expression
+    | expression "+" expression
+    | expression "-" expression
+    | expression "|+|" expression
+    | expression "|-|" expression
+    | expression "<<" expression
+    | expression ">>" expression
+    | expression "<=" expression
+    | expression ">=" expression
+    | expression "<" expression
+    | expression ">" expression
+    | expression "!=" expression
+    | expression "==" expression
+    | expression "&" expression
+    | expression "^" expression
+    | expression "|" expression
+    | expression "++" expression
+    | expression "&&" expression
+    | expression "||" expression
+    | expression "?" expression ":" expression
+    | expression "<" realTypeArgumentList ">" "(" argumentList ")"
+    | expression "(" argumentList ")"
+    | namedType "(" argumentList ")"
+    | "(" typeRef ")" expression
+    ;
+
+// tag::nonBraceExpression[]
+nonBraceExpression
+    : INTEGER
+    | STRING_LITERAL
+    | TRUE
+    | FALSE
+    | THIS
+    | prefixedNonTypeName
+    | nonBraceExpression "[" expression "]"
+    | nonBraceExpression "[" expression ":" expression "]"
+    | "(" expression ")"
+    | "!" expression %prec PREFIX
+    | "~" expression %prec PREFIX
+    | "-" expression %prec PREFIX
+    | "+" expression %prec PREFIX
+    | typeName "." member
+    | ERROR "." member
+    | nonBraceExpression "." member
+    | nonBraceExpression "*" expression
+    | nonBraceExpression "/" expression
+    | nonBraceExpression "%" expression
+    | nonBraceExpression "+" expression
+    | nonBraceExpression "-" expression
+    | nonBraceExpression "|+|" expression
+    | nonBraceExpression "|-|" expression
+    | nonBraceExpression "<<" expression
+    | nonBraceExpression ">>" expression
+    | nonBraceExpression "<=" expression
+    | nonBraceExpression ">=" expression
+    | nonBraceExpression "<" expression
+    | nonBraceExpression ">" expression
+    | nonBraceExpression "!=" expression
+    | nonBraceExpression "==" expression
+    | nonBraceExpression "&" expression
+    | nonBraceExpression "^" expression
+    | nonBraceExpression "|" expression
+    | nonBraceExpression "++" expression
+    | nonBraceExpression "&&" expression
+    | nonBraceExpression "||" expression
+    | nonBraceExpression "?" expression ":" expression
+    | nonBraceExpression "<" realTypeArgumentList ">" "(" argumentList ")"
+    | nonBraceExpression "(" argumentList ")"
+    | namedType "(" argumentList ")"
+    | "(" typeRef ")" expression
+    ;
+// end::nonBraceExpression[]

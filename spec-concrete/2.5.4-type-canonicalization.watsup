@@ -1,0 +1,16 @@
+;;
+;; Canonicalization
+;;
+;; Recursive specialization and typedef unrolling
+;;
+
+dec $canon_typeIR(typeIR) : typeIR
+  hint(prose_in "the canonicalized form of" %0)
+
+def $canon_typeIR(typeDefIR_base `< typeIR_arg* >) = $canon_typeIR(typeIR)
+  -- if typeIR = $specialize_typeDefIR(typeDefIR_base, typeIR_arg*)
+
+def $canon_typeIR(TYPEDEF _ typeIR) = $canon_typeIR(typeIR)
+
+def $canon_typeIR(typeIR) = typeIR
+  -- otherwise

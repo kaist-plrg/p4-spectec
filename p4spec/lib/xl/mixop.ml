@@ -2,7 +2,7 @@ open Util.Source
 
 (* Mixop is a generalized case constructor *)
 
-type t = Atom.t phrase list list
+type t = Atom.t phrase list list [@@deriving yojson]
 
 let compare mixop_a mixop_b =
   let mixop_a = List.map (List.map it) mixop_a in
@@ -32,6 +32,16 @@ let string_of_mixop mixop =
     String.concat "%"
       (List.map
          (fun atoms -> String.concat "" (List.map Atom.string_of_atom atoms))
+         mixop)
+  in
+  "`" ^ smixop ^ "`"
+
+let render_mixop mixop =
+  let mixop = List.map (List.map it) mixop in
+  let smixop =
+    String.concat "%"
+      (List.map
+         (fun atoms -> String.concat "" (List.map Atom.render_atom atoms))
          mixop)
   in
   "`" ^ smixop ^ "`"

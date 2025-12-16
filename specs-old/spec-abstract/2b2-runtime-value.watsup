@@ -1,0 +1,42 @@
+;;
+;; Value
+;;
+
+syntax setval
+
+syntax val =
+  ;; Base values
+  | ErrV member
+  | MatchKindV member
+  | StrV text
+  | BoolV bool
+  | IntV int
+  | FIntV width bitstr
+  | FBitV width bitstr
+  | VBitV width width bitstr
+  ;; Derived values
+  | EnumFieldV id member
+  | SEnumFieldV id member val
+  | ListV val*
+  | TupleV val*
+  | StackV val* int int
+  | StructV id (member, val)*
+  | HeaderV id bool (member, val)*
+  | UnionV id (member, val)*
+  ;; Derived object reference values
+  | RefV oid
+  ;; Synthesized values
+  | TableEnumFieldV id member
+  | TableStructV id (member, val)*
+  | SeqV val*
+  | SeqDefaultV val*
+  | RecordV (member, val)*
+  | RecordDefaultV (member, val)*
+  | DefaultV
+  | InvalidV
+  | SetV setval
+
+syntax setval =
+  | SingletonSet val
+  | MaskSet val val
+  | RangeSet val val

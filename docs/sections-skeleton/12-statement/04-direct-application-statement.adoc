@@ -1,0 +1,85 @@
+[#sec-directApplicationStatement]
+=== Direct application statements
+
+${syntax: directApplicationStatement
+          directApplicationStatementIR}
+
+Controls and parsers are often instantiated exactly once.  As a light
+syntactic sugar, control and parser declarations with no constructor
+parameters may be applied directly, as if they were an instance.  This
+has the effect of creating and applying a local instance of that type.
+
+[source,p4]
+----
+control Callee(/* parameters omitted */) { /* body omitted */ }
+
+control Caller(/* parameters omitted */)(/* parameters omitted */) {
+    apply {
+        Callee.apply(/* arguments omitted */); // Callee is treated as an instance
+    }
+}
+----
+
+The definition of `Caller` is equivalent to the following.
+
+[source,p4]
+----
+control Caller(/* parameters omitted */)(/* parameters omitted */) {
+    @name("Callee") Callee() Callee_inst; // local instance of Callee
+    apply {
+        Callee_inst.apply(/* arguments omitted */);         // Callee_inst is applied
+    }
+}
+----
+
+This feature is intended to streamline the common case where a type is
+instantiated exactly once.
+
+The second production in the grammar allows direct calls for generic
+controls or parsers:
+
+[source,p4]
+----
+control Callee<T>(/* parameters omitted */) { /* body omitted */ }
+
+control Caller(/* parameters omitted */)(/* parameters omitted */) {
+    apply {
+        // Callee<bit<32>> is treated as an instance
+        Callee<bit<32>>.apply(/* arguments omitted */);
+    }
+}
+----
+
+For completeness, the behavior of directly invoking the same type more
+than once is defined as follows.
+
+- Direct type invocation in different scopes will result in different
+  local instances with different fully-qualified control names.
+- In the same scope, direct type invocation will result in a different
+  local instance per invocation---however, instances of the same type
+  will share the same global name, via the `@name` annotation.  If
+  the type contains controllable entities, then invoking it directly
+  more than once in the same scope is illegal, because it will produce
+  multiple controllable entities with the same fully-qualified control
+  name.
+
+See <<sec-name-annotations>> for details of `@name`
+annotations.
+
+No direct invocation is possible for controls or parsers that require
+constructor arguments.  These need to be instantiated before they are
+invoked.
+
+[[sem-type-check-directApplicationStatement]]
+[discrete]
+==== Type checking
+
+${rulegroup: Stmt_ok/directApplicationStatement}
+${ruleprose: Stmt_ok/directApplicationStatement}
+
+[[sem-compile-time-eval-directApplicationStatement]]
+[discrete]
+==== Compile-time evaluation
+
+${rulegroup: Stmt_inst/directApplicationStatementIR}
+${ruleprose: Stmt_inst/directApplicationStatementIR}

@@ -1,0 +1,197 @@
+=== Methods 
+
+// Added
+Objects in P4 can have methods associated with them. Specifically, `extern`
+objects have methods declared in their definitions. `parser`, `control`, and
+`table` objects have built-in `apply` methods.
+
+Further, P4 allows built-in methods for certain types, such as `isValid()`
+and `setValid()` methods for header types.
+
+The internal representation of methods is defined as follows:
+
+[[methodTypeDefIR]]
+[[methodTypeIR]]
+[[methodDef]]
+${syntax: methodTypeDefIR methodTypeIR methodDef}
+
+==== Extern methods
+
+// Modified Section 7.2.11.2 of the P4-16 Language Specification
+An extern object declaration declares an object and all methods that
+can be invoked to perform computations and to alter the state of the
+object.
+
+For example, the P4 core library introduces two extern objects `packet_in`
+and `packet_out` used for manipulating packets (see
+<<sec-packet-data-extraction>> and <<sec-deparse>>). Here is an example
+showing how the methods of these objects can be invoked on a packet:
+
+[source,p4]
+----
+extern packet_out {
+    void emit<T>(in T hdr);
+}
+control d(packet_out b, in Hdr h) {
+    apply {
+        b.emit(h.ipv4);       // write ipv4 header into output packet
+    }                         // by calling emit method
+}
+----
+
+Internally, extern methods are represented as follows:
+
+[[externMethodTypeDefIR]]
+[[externMethodTypeIR]]
+[[externMethodDef]]
+${syntax: externMethodTypeDefIR externMethodTypeIR externMethodDef}
+
+// Modified Section 7.2.11.2.1 of the P4-16 Language Specification
+Typical extern object methods are implemented by the target architecture. P4
+programmers can only call such methods.
+
+Some types of extern objects may provide methods that can be implemented by
+the P4 programmers. Such methods are described with the `abstract` keyword
+prior to the method definition. Here is an example:
+
+[source,p4]
+----
+extern Balancer {
+    Balancer();
+    // get the number of active flows
+    bit<32> getFlowCount();
+    // return port index used for load-balancing
+    // @param address: IPv4 source address of flow
+    abstract bit<4> on_new_flow(in bit<32> address);
+}
+----
+
+When such an object is instantiated the user has to supply an implementation
+of all the `abstract` methods (see <<sec-instantiating-abstract-methods>>).
+
+[discrete]
+====== Well-formedness
+
+${rulegroup: CallableType_wf/externMethodTypeIR}
+${ruleprose: CallableType_wf/externMethodTypeIR}
+
+==== Parser apply methods
+
+// Section 13.10 of the P4-16 Language Specification
+P4 allows parsers to invoke the services of other parsers, similar to
+subroutines. To invoke the services of another parser, the sub-parser must be
+first instantiated; the services of an instance are invoked by calling it using
+its `apply` method.
+
+The following example shows a sub-parser invocation:
+
+[source,p4]
+----
+parser callee(packet_in packet, out IPv4 ipv4) { /* body omitted */ }
+parser caller(packet_in packet, out Headers h) {
+     callee() subparser;  // instance of callee
+     state subroutine {
+          subparser.apply(packet, h.ipv4);  // invoke sub-parser
+          transition accept;  // accept if sub-parser ends in accept state
+     }
+}
+----
+
+// Added
+A parser apply method type definition is implicitly introduced by a ``parser``
+declaration. Its typing rule is explained in
+<<sec-sem-Decl_ok-parserDeclaration>>. A parser declaration may not be generic.
+Thus, the parser apply method type definition does not have type parameters,
+and is same as the parser apply method type. A parser apply method is
+represented internally as follows:
+
+[[parserApplyMethodTypeDefIR]]
+[[parserApplyMethodTypeIR]]
+[[parserApplyMethodDef]]
+${syntax: parserApplyMethodTypeDefIR parserApplyMethodTypeIR parserApplyMethodDef}
+
+[discrete]
+===== Well-formedness
+
+// Added
+${rulegroup: CallableType_wf/parserApplyMethodTypeIR}
+${ruleprose: CallableType_wf/parserApplyMethodTypeIR}
+
+==== Control apply methods
+
+// Section 14.4 of the P4-16 Language Specification
+P4 allows controls to invoke the services of other controls, similar to
+subroutines. To invoke the services of another control, it must be first
+instantiated; the services of an instance are invoked by calling it using its
+`apply` method.
+
+The following example shows a control invocation:
+
+[source,p4]
+----
+control Callee(inout IPv4 ipv4) { /* body omitted */ }
+control Caller(inout Headers h) {
+     Callee() instance;  // instance of callee
+     apply {
+          instance.apply(h.ipv4);  // invoke control
+     }
+}
+----
+
+// Added
+A control apply method type definition is implicitly introduced by a ``control``
+declaration. Its typing rule is explained in
+<<sec-sem-Decl_ok-controlDeclaration>>. A control declaration may not be generic.
+Thus, the control apply method type definition does not have type parameters,
+and is same as the control apply method type. A control apply method is
+represented internally as follows:
+
+[[controlApplyMethodTypeDefIR]]
+[[controlApplyMethodTypeIR]]
+[[controlApplyMethodDef]]
+${syntax: controlApplyMethodTypeDefIR controlApplyMethodTypeIR controlApplyMethodDef}
+
+[discrete]
+===== Well-formedness
+
+${rulegroup: CallableType_wf/controlApplyMethodTypeIR}
+${ruleprose: CallableType_wf/controlApplyMethodTypeIR}
+
+==== Table apply methods
+
+// Section 14.2.2 of the P4-16 Language Specification
+A `table` can be invoked by calling its `apply` method. Calling an apply method
+on a table instance returns a synthesized table metadata structure, explained
+in <<sec-def-tableMetadataTypeIR>>.
+
+// Added
+A table apply method definition is introduced by a ``table`` declaration. Its typing
+rule is explained in <<sec-sem-ControlLocalDecl_ok-tableDeclaration>>.
+As with parser and controls, a table declaration may not be generic.
+Thus, the table apply method type definition does not have type parameters,
+and is same as the table apply method type. A table apply method is
+represented internally as follows:
+
+[[tableApplyMethodTypeDefIR]]
+[[tableApplyMethodTypeIR]]
+[[tableApplyMethodDef]]
+${syntax: tableApplyMethodTypeDefIR tableApplyMethodTypeIR tableApplyMethodDef}
+
+[discrete]
+===== Well-formedness
+
+// Added
+${rulegroup: CallableType_wf/tableApplyMethodTypeIR}
+${ruleprose: CallableType_wf/tableApplyMethodTypeIR}
+
+==== Built-in methods
+
+// Added
+Built-in methods are methods associated with certain types defined by the P4
+language. Thus, they do not have method type definitions, and only have method
+types. The internal representations are:
+
+[[builtinMethodTypeIR]]
+${syntax: builtinMethodTypeIR}
+
+NOTE: Refine builtin methods to concretely show which builtins are offered.

@@ -1,0 +1,232 @@
+[#sec-named-types]
+=== Named types
+
+// Added
+[[prefixedTypeName]]
+[[specializedType]]
+[[namedType]]
+${syntax: prefixedTypeName specializedType namedType}
+
+Named types are types that reference another type by name. User-defined types
+can be introduced with their names. For example, the following declares a new
+struct type `S0`:
+
+[source,p4]
+----
+struct S0 {
+    bit<32> x;
+    bit<32> y;
+}
+----
+
+This type can then be referenced by its name, as can be seen in the parameter
+type of the following example:
+
+[source,p4]
+----
+void f(S s) {}
+----
+
+Here, `S` is a named type (`typeName`) that refers to the struct type defined earlier.
+
+// Section 7.2.12 of the P4-16 Language Specification
+Types such as struct, header, and header union types can be generic. In order
+to use such a generic type it must be specialized with appropriate type
+arguments. For example,
+
+[source,p4]
+----
+// generic structure type
+struct S<T> {
+    T field;
+    bool valid;
+}
+
+struct G<T> {
+    S<T> s;
+}
+
+// specialize S by replacing 'T' with 'bit<32>'
+const S<bit<32>> s = { field = 32w0, valid = false };
+// Specialize G by replacing 'T' with 'bit<32>'
+const G<bit<32>> g = { s = { field = 0, valid = false } };
+
+// generic header type
+header H<T> {
+    T field;
+}
+
+// Specialize H by replacing 'T' with 'bit<8>'
+const H<bit<8>> h = { field = 1 };
+// Header stack produced from a specialization of a generic header type
+H<bit<8>>[10] stack;
+
+// Generic header union
+header_union HU<T> {
+    H<bit<32>> h32;
+    H<bit<8>>  h8;
+    H<T>       ht;
+}
+
+// Header union with a type obtained by specializing a generic header union type
+HU<bit> hu;
+----
+
+[#sec-type-definitions]
+==== Type definitions (type constructors)
+
+// Added
+${syntax: typeDeclaration}
+
+`typeDeclaration` introduces a user-defined type definition. These can be
+referenced by name. Generic type definitions can be specialized with type
+arguments to produce a type instance.
+
+The internal representation of type definitions is as follows:
+
+[[typeDefIR]]
+${syntax: nameTypeDefIR aliasTypeDefIR dataTypeDefIR objectTypeDefIR typeDefIR}
+
+For example, `structTypeDeclaration` introduces a struct type definition,
+`structTypeDefIR`:
+
+${syntax: structTypeDefIR structTypeDeclaration}
+
+Some type definitions like struct and header type definitions can be
+polymorphic, meaning they can have type variables as parameters. On the other
+hand, type definitions such as enum and type alias definitions can only be
+monomorphic. Below table summarizes which kinds of type definitions can be
+polymorphic:
+
+NOTE: Add a table for $is_monomorphic_typeDefIR here.
+
+NOTE: Add explainer on explicit and implicit type parameters for type definitions here.
+
+==== Type resoultion
+
+// Added
+Notice that P4 has struct types, but the surface syntax does not have an
+explicit construct for struct types. Instead, struct types are always
+referenced by name.
+
+To easily handle named types in P4~IR~, the internal representation of types
+contain representations for the referred types.
+
+${syntax: structTypeIR dataTypeIR typeIR}
+
+For example, a struct type is represented as `structTypeIR` in P4~IR~.
+
+Thus, after type checking, a named type in P4~16~ is resolved to its referred
+type in P4~IR~. For named types referring to monomorphic type definitions, the
+resolved type is simply the type defined by the type definition.
+
+[source,p4]
+----
+enum E_t { A, B, C; }
+void f(E_t e) {}
+----
+
+In the above example, the named type `E_t` is resolved to the enum type
+`enumTypeIR`. For named types referring to polymorphic type definitions, the
+resolved type is a specialized type, `specializedTypeIR`.
+
+[source,p4]
+----
+struct S<T> { T t; }
+void f(S<bit<32>> s) {}
+----
+
+In the above example, the named type `S<bit<32>>` is resolved to a
+`specializedTypeIR`, where it specializes a `structTypeDefIR` with the type
+argument `bit<32>`. This can be further resolved to its underlying type
+`structTypeIR` with specialization, discussed in <<sec-type-specialization>>.
+
+Following sections discuss name resolution for named types in detail.
+
+==== Prefixed type names
+
+// Added
+${syntax: prefixedTypeName}
+
+A `prefixedTypeName` may refer to either a monomorphic type definition or a
+polymorphic type definition without type arguments. The names can be prefixed
+by a dot (`.`) to refer to the top-level namespace.
+
+On type checking, the referenced type definition is looked up by name. If the
+referenced type definition is monomorphic, then the resolved type is simply the
+type defined by the type definition. If the referenced type definition is
+polymorphic (but without type arguments), then the resolved type is a
+specialized type with no type arguments.
+
+${syntax: namedTypeIR}
+
+[discrete]
+===== Type checking
+
+// Added
+${rulegroup: Type_ok/prefixedTypeName}
+${ruleprose: Type_ok/prefixedTypeName}
+
+==== Specialized types
+
+// Section 7.2.12 of the P4-16 Language Specification
+A generic type may be specialized by specifying arguments for its type
+variables. In cases where the compiler can infer type arguments, type
+specialization is not necessary. When a type is specialized, all its type
+variables must be bound.
+
+NOTE: P4-SpecTec currently does *not* infer type arguments for type
+specialization, where it only performs inference for function and method calls.
+
+${syntax: specializedType}
+
+For example, the following extern declaration describes a generic block of
+registers, where the type of the elements stored in each register is an
+arbitrary `T`.
+
+[source,p4]
+----
+extern Register<T> {
+    Register(bit<32> size);
+    T read(bit<32> index);
+    void write(bit<32> index, T value);
+}
+----
+
+The type `T` has to be specified when instantiating a set of registers, by
+specializing the Register type:
+
+[source,p4]
+----
+Register<bit<32>>(128) registerBank;
+----
+
+The instantiation of `registerBank` is made using the `Register` type
+specialized with the `bit<32>` bound to the `T` type argument.
+
+Internally, specialized types are represented as follows:
+
+${syntax: specializedTypeIR}
+
+Notice that `prefixedTypeName` in the `specializedType` syntax above is
+resolved to the type definition it refers to (`typeDefIR`).
+
+[[sec-type-specialization]]
+===== Type specialization
+
+// Added
+${funcprose: specialize_typeDefIR}
+
+[discrete]
+===== Type checking
+
+// Added
+${rulegroup: Type_ok/specializedType}
+${ruleprose: Type_ok/specializedType}
+
+[discrete]
+===== Well-formedness
+
+// Added
+${rulegroup: Type_wf/specializedTypeIR}
+${ruleprose: Type_wf/specializedTypeIR}

@@ -1,0 +1,76 @@
+;;
+;; Store
+;;
+
+;; Map from object identifiers to objects
+syntax store = map<oid, object>
+
+var STO : store
+
+dec $empty_store : store
+  hint(prose_in "an empty store")
+def $empty_store = $empty_map<oid, object>
+
+;;
+;; Finder
+;;
+
+dec $find_store_qualified(store, oid) : object?
+dec $find_store_unqualified(store, id) : object?
+dec $is_some_object(object?) : bool
+
+def $find_store_qualified(store, oid)
+  = $find_map<oid, object>(store, oid)
+
+def $is_some_object(object?) = $is_some_<object>(object?)
+def $find_store_unqualified(`{ (oid `: object)* }, id) = object_id_found
+  -- if (object_id?
+      = $ite<object?>($oid_ends_with(oid, id), object, eps))*
+  -- if object_id_found
+      = $filter_<object?>(object_id?*, def $is_some_object)
+def $find_store_unqualified(`{ (oid `: object)* }, id) = eps 
+  -- otherwise
+
+;;; Finder for extern state
+
+dec $find_store_externState(store, oid) : externState?
+
+def $find_store_externState(STO, oid) = externState
+  -- if externObject = $find_map<oid, object>(STO, oid)
+  -- if EXTERN _ `< _ > `{ externState _ _ } = externObject
+def $find_store_externState(STO, oid) = eps
+  -- otherwise
+
+;;
+;; Updater
+;;
+
+dec $update_store_qualified(store, oid, object) : store
+dec $update_store_unqualified(store, id, object) : store
+dec $is_some_oid(oid?) : bool
+
+def $update_store_qualified(STO_0, oid, object) = STO_1
+  -- if eps =/= $find_store_qualified(STO_0, oid)
+  -- if STO_1 = $add_map<oid, object>(STO_0, oid, object)
+
+def $is_some_oid(oid?) = $is_some_<oid>(oid?)
+def $update_store_unqualified(STO_0, id, object) = STO_1
+  -- if `{ (oid `: _)* } = STO_0
+  -- if (oid_id?
+      = $ite<oid?>($oid_ends_with(oid, id), oid, eps))*
+  -- if oid_found = $filter_<oid?>(oid_id?*, def $is_some_oid)
+  -- if STO_1 = $add_map<oid, object>(STO_0, oid_found, object)
+
+;;; Updater for extern state
+
+dec $update_store_externState(store, oid, externState) : store?
+
+def $update_store_externState(STO_0, oid, externState) = STO_1
+  -- if externObject = $find_map<oid, object>(STO_0, oid)
+  -- if EXTERN tid `< theta > `{ _ frame externMethodDefEnv }
+      = externObject
+  -- if externObject_update
+      = EXTERN tid `< theta > `{ externState frame externMethodDefEnv }
+  -- if STO_1 = $add_map<oid, object>(STO_0, oid, externObject_update)
+def $update_store_externState(STO_0, oid, externState) = eps
+  -- otherwise

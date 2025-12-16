@@ -113,13 +113,31 @@ let rec free_id_prem (prem : prem) : IdSet.t =
 and free_id_prems (prems : prem list) : IdSet.t =
   prems |> List.map free_id_prem |> List.fold_left IdSet.union IdSet.empty
 
+(* Rules *)
+
+let free_rule (rule : rule) : IdSet.t =
+  let _, _, exp, prems = rule.it in
+  free_id_exp exp |> IdSet.union (free_id_prems prems)
+
+let free_rules (rules : rule list) : IdSet.t =
+  rules |> List.map free_rule |> List.fold_left IdSet.union IdSet.empty
+
+(* Tables *)
+
+let free_tablerow (tablerow : tablerow) : IdSet.t =
+  let exp_pattern, exp_body = tablerow.it in
+  free_id_exp exp_pattern |> IdSet.union (free_id_exp exp_body)
+
+let free_tablerows (tablerows : tablerow list) : IdSet.t =
+  tablerows |> List.map free_tablerow |> List.fold_left IdSet.union IdSet.empty
+
 (* Definitions *)
 
 let free_id_def (def : def) : IdSet.t =
   match def.it with
-  | RuleD (_, _, exp, prems) ->
-      free_id_exp exp |> IdSet.union (free_id_prems prems)
-  | DefD (_, _, args, exp, prems) ->
+  | RuleGroupD (_, _, rules) -> free_rules rules
+  | TableDefD (_, tablerows) -> free_tablerows tablerows
+  | FuncDefD (_, _, args, exp, prems) ->
       free_id_args args
       |> IdSet.union (free_id_exp exp)
       |> IdSet.union (free_id_prems prems)

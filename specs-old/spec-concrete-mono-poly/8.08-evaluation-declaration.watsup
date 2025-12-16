@@ -1,0 +1,14 @@
+;;
+;; Declaration evaluation
+;;
+;; syntax declarationIR
+;;
+
+;;; constantDeclarationIR
+;;; syntax constantDeclarationIR =
+;;;   annotationList CONST typeIR nameIR initializerIR `;
+
+rule Decl_eval/constantDeclarationIR:
+  p EC_0 STO |- annotationList CONST typeIR nameIR (`= value) `;
+              : EC_1 STO CONT
+  -- if EC_1 = $add_value_eval(p, EC_0, `` nameIR, value)

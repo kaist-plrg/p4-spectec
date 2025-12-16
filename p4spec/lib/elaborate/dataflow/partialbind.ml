@@ -27,20 +27,7 @@ and is_singleton_case' (dctx : Dctx.t) (plaintyp : El.Ast.plaintyp) : bool =
 
 (* Rename for an expression *)
 
-module To = struct
-  type t = id * typ * iter list
-
-  let as_exp ((id, typ, iters) : t) =
-    List.fold_left
-      (fun exp iter ->
-        let typ =
-          let typ = exp.note $ exp.at in
-          IterT (typ, iter)
-        in
-        IterE (exp, (iter, [])) $$ (exp.at, typ))
-      (VarE id $$ (id.at, typ.it))
-      iters
-end
+module To = Var
 
 module From = struct
   type t =
@@ -177,7 +164,7 @@ let gen_prems (dctx : Dctx.t) (renv : REnv.t) : prem list =
 
 let rename_exp_bind_match (dctx : Dctx.t) (renv : REnv.t) (pattern : pattern)
     (exp_from : exp) : Dctx.t * REnv.t * exp =
-  let to_ = Fresh.fresh_from_exp dctx.frees exp_from in
+  let to_ = Fresh.fresh_var_from_exp dctx.frees exp_from in
   let dctx =
     let id_rename, _, _ = to_ in
     Dctx.add_free dctx id_rename
@@ -189,7 +176,7 @@ let rename_exp_bind_match (dctx : Dctx.t) (renv : REnv.t) (pattern : pattern)
 
 let rename_exp_bind_sub (dctx : Dctx.t) (renv : REnv.t) (typ_sub : typ)
     (exp_sub : exp) (exp_from : exp) : Dctx.t * REnv.t * exp =
-  let to_ = Fresh.fresh_from_exp dctx.frees exp_from in
+  let to_ = Fresh.fresh_var_from_exp dctx.frees exp_from in
   let dctx =
     let id_rename, _, _ = to_ in
     Dctx.add_free dctx id_rename
@@ -199,17 +186,26 @@ let rename_exp_bind_sub (dctx : Dctx.t) (renv : REnv.t) (typ_sub : typ)
   let exp = To.as_exp to_ in
   (dctx, renv, exp)
 
+let check_upcast_terminal (exp : exp) : bool =
+  match exp.it with
+  | UpCastE (_, { it = CaseE (_, []); _ }) -> true
+  | _ -> false
+
 let rec rename_exp (dctx : Dctx.t) (binds : IdSet.t) (renv : REnv.t) (exp : exp)
     : Dctx.t * REnv.t * exp =
   let frees = Il.Free.free_exp exp in
-  (* If the expression contains no bindings, rename it *)
-  if IdSet.inter binds frees |> IdSet.is_empty then
-    rename_exp_bound dctx renv exp
+  (* If the expression contains no bindings, rename it
+     Yet, skip upcast on terminals to enforce case-analysis,
+     which helps with the later structuring phase
+     e.g., patterns like let typ = (VoidT as typ) *)
+  if
+    IdSet.inter binds frees |> IdSet.is_empty && not (check_upcast_terminal exp)
+  then rename_exp_bound dctx renv exp
   else rename_exp_bind dctx binds renv exp
 
 and rename_exp_bound (dctx : Dctx.t) (renv : REnv.t) (exp : exp) :
     Dctx.t * REnv.t * exp =
-  let to_ = Fresh.fresh_from_exp dctx.frees exp in
+  let to_ = Fresh.fresh_var_from_exp dctx.frees exp in
   let dctx =
     let id_rename, _, _ = to_ in
     Dctx.add_free dctx id_rename
