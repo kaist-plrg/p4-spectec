@@ -1750,14 +1750,54 @@ syntax conditionalStatement =
    | if( expression ) statement
    | if( expression ) statement else statement
 
-;; ../../../../spec-concrete/1-syntax.watsup:750.1-753.31
+;; ../../../../spec-concrete/1-syntax.watsup:750.1-752.31
+syntax forUpdateStatement = 
+   | lvalue ( argumentList )
+   | lvalue < typeArgumentList >( argumentList )
+   | lvalue assignop expression
+
+;; ../../../../spec-concrete/1-syntax.watsup:755.1-756.57
+syntax forUpdateStatementListNonEmpty = 
+   | lvalue ( argumentList )
+   | lvalue < typeArgumentList >( argumentList )
+   | lvalue assignop expression
+   | forUpdateStatementListNonEmpty , forUpdateStatement
+
+;; ../../../../spec-concrete/1-syntax.watsup:759.1-760.35
+syntax forUpdateStatementList = 
+   | 
+   | lvalue ( argumentList )
+   | lvalue < typeArgumentList >( argumentList )
+   | lvalue assignop expression
+   | forUpdateStatementListNonEmpty , forUpdateStatement
+
+;; ../../../../spec-concrete/1-syntax.watsup:762.1-762.82
+def $flatten_forUpdateStatementList(forUpdateStatementList) : forUpdateStatement* =
+
+  ;; ../../../../spec-concrete/1-syntax.watsup:763.1-763.50
+  clause 0 : (forUpdateStatementList) = []
+  -- if forUpdateStatementList matches ``EMPTY`
+
+  ;; ../../../../spec-concrete/1-syntax.watsup:764.1-764.77
+  clause 1 : (forUpdateStatementList) = [forUpdateStatement]
+  -- if forUpdateStatementList <: forUpdateStatement
+  -- let forUpdateStatement = forUpdateStatementList as forUpdateStatement
+
+  ;; ../../../../spec-concrete/1-syntax.watsup:765.1-766.94
+  clause 2 : (forUpdateStatementList) = $flatten_forUpdateStatementList(forUpdateStatementListNonEmpty as forUpdateStatementList) ++ [forUpdateStatement]
+  -- if forUpdateStatementList <: forUpdateStatementListNonEmpty
+  -- let forUpdateStatementListNonEmpty' = forUpdateStatementList as forUpdateStatementListNonEmpty
+  -- if forUpdateStatementListNonEmpty' matches `%,%`
+  -- let forUpdateStatementListNonEmpty , forUpdateStatement = forUpdateStatementListNonEmpty'
+
+;; ../../../../spec-concrete/1-syntax.watsup:769.1-770.23
 syntax forInitStatement = 
    | annotationList type name initializerOpt
    | lvalue ( argumentList )
    | lvalue < typeArgumentList >( argumentList )
    | lvalue assignop expression
 
-;; ../../../../spec-concrete/1-syntax.watsup:756.1-757.53
+;; ../../../../spec-concrete/1-syntax.watsup:773.1-774.53
 syntax forInitStatementListNonEmpty = 
    | annotationList type name initializerOpt
    | lvalue ( argumentList )
@@ -1765,7 +1805,7 @@ syntax forInitStatementListNonEmpty =
    | lvalue assignop expression
    | forInitStatementListNonEmpty , forInitStatement
 
-;; ../../../../spec-concrete/1-syntax.watsup:760.1-761.33
+;; ../../../../spec-concrete/1-syntax.watsup:777.1-778.33
 syntax forInitStatementList = 
    | 
    | annotationList type name initializerOpt
@@ -1774,27 +1814,26 @@ syntax forInitStatementList =
    | lvalue assignop expression
    | forInitStatementListNonEmpty , forInitStatement
 
-;; ../../../../spec-concrete/1-syntax.watsup:763.29-763.45
-syntax forUpdateStatement = forInitStatement
+;; ../../../../spec-concrete/1-syntax.watsup:780.1-780.76
+def $flatten_forInitStatementList(forInitStatementList) : forInitStatement* =
 
-;; ../../../../spec-concrete/1-syntax.watsup:766.1-767.57
-syntax forUpdateStatementListNonEmpty = 
-   | annotationList type name initializerOpt
-   | lvalue ( argumentList )
-   | lvalue < typeArgumentList >( argumentList )
-   | lvalue assignop expression
-   | forUpdateStatementListNonEmpty , forUpdateStatement
+  ;; ../../../../spec-concrete/1-syntax.watsup:781.1-781.48
+  clause 0 : (forInitStatementList) = []
+  -- if forInitStatementList matches ``EMPTY`
 
-;; ../../../../spec-concrete/1-syntax.watsup:770.1-771.35
-syntax forUpdateStatementList = 
-   | 
-   | annotationList type name initializerOpt
-   | lvalue ( argumentList )
-   | lvalue < typeArgumentList >( argumentList )
-   | lvalue assignop expression
-   | forUpdateStatementListNonEmpty , forUpdateStatement
+  ;; ../../../../spec-concrete/1-syntax.watsup:782.1-782.71
+  clause 1 : (forInitStatementList) = [forInitStatement]
+  -- if forInitStatementList <: forInitStatement
+  -- let forInitStatement = forInitStatementList as forInitStatement
 
-;; ../../../../spec-concrete/1-syntax.watsup:774.1-775.30
+  ;; ../../../../spec-concrete/1-syntax.watsup:783.1-784.88
+  clause 2 : (forInitStatementList) = $flatten_forInitStatementList(forInitStatementListNonEmpty as forInitStatementList) ++ [forInitStatement]
+  -- if forInitStatementList <: forInitStatementListNonEmpty
+  -- let forInitStatementListNonEmpty' = forInitStatementList as forInitStatementListNonEmpty
+  -- if forInitStatementListNonEmpty' matches `%,%`
+  -- let forInitStatementListNonEmpty , forInitStatement = forInitStatementListNonEmpty'
+
+;; ../../../../spec-concrete/1-syntax.watsup:787.1-788.30
 syntax forCollectionExpression = 
    | true
    | false
@@ -1828,13 +1867,13 @@ syntax forCollectionExpression =
    | ( expression )
    | expression .. expression
 
-;; ../../../../spec-concrete/1-syntax.watsup:778.1-783.81
+;; ../../../../spec-concrete/1-syntax.watsup:791.1-796.81
 syntax forStatement = 
    | annotationList for( forInitStatementList ; expression ; forUpdateStatementList ) statement
    | annotationList for( type name in forCollectionExpression ) statement
    | annotationList for( annotationListNonEmpty type name in forCollectionExpression ) statement
 
-;; ../../../../spec-concrete/1-syntax.watsup:790.1-791.23
+;; ../../../../spec-concrete/1-syntax.watsup:803.1-804.23
 syntax switchLabel = 
    | default
    | true
@@ -1865,41 +1904,41 @@ syntax switchLabel =
    | callableTargetNonBrace < realTypeArgumentList >( argumentList )
    | ( expression )
 
-;; ../../../../spec-concrete/1-syntax.watsup:794.1-795.19
+;; ../../../../spec-concrete/1-syntax.watsup:807.1-808.19
 syntax switchCase = 
    | switchLabel : blockStatement
    | switchLabel :
 
-;; ../../../../spec-concrete/1-syntax.watsup:798.1-799.30
+;; ../../../../spec-concrete/1-syntax.watsup:811.1-812.30
 syntax switchCaseList = 
    | 
    | switchCaseList switchCase
 
-;; ../../../../spec-concrete/1-syntax.watsup:801.1-802.50
+;; ../../../../spec-concrete/1-syntax.watsup:814.1-815.50
 def $flatten_switchCaseList(switchCaseList) : switchCase* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:803.1-803.42
+  ;; ../../../../spec-concrete/1-syntax.watsup:816.1-816.42
   clause 0 : (switchCaseList) = []
   -- if switchCaseList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:804.1-805.62
+  ;; ../../../../spec-concrete/1-syntax.watsup:817.1-818.62
   clause 1 : (switchCaseList') = $flatten_switchCaseList(switchCaseList) ++ [switchCase]
   -- if switchCaseList' matches `%%`
   -- let switchCaseList switchCase = switchCaseList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:807.26-807.68
+;; ../../../../spec-concrete/1-syntax.watsup:820.26-820.68
 syntax switchStatement = 
    | switch( expression ){ switchCaseList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:813.25-813.33
+;; ../../../../spec-concrete/1-syntax.watsup:826.25-826.33
 syntax breakStatement = 
    | break;
 
-;; ../../../../spec-concrete/1-syntax.watsup:815.28-815.39
+;; ../../../../spec-concrete/1-syntax.watsup:828.28-828.39
 syntax continueStatement = 
    | continue;
 
-;; ../../../../spec-concrete/1-syntax.watsup:822.1-833.20
+;; ../../../../spec-concrete/1-syntax.watsup:835.1-846.20
 syntax statement = 
    | ;
    | lvalue assignop expression ;
@@ -1919,24 +1958,24 @@ syntax statement =
    | continue;
    | switch( expression ){ switchCaseList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:843.22-843.35
+;; ../../../../spec-concrete/1-syntax.watsup:856.22-856.35
 syntax initializer = 
    | = expression
 
-;; ../../../../spec-concrete/1-syntax.watsup:846.3-846.48
+;; ../../../../spec-concrete/1-syntax.watsup:859.3-859.48
 syntax constantDeclaration = 
    | annotationList const type name initializer ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:849.1-850.16
+;; ../../../../spec-concrete/1-syntax.watsup:862.1-863.16
 syntax initializerOpt = 
    | 
    | = expression
 
-;; ../../../../spec-concrete/1-syntax.watsup:853.3-853.45
+;; ../../../../spec-concrete/1-syntax.watsup:866.3-866.45
 syntax variableDeclaration = 
    | annotationList type name initializerOpt ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:856.1-858.14
+;; ../../../../spec-concrete/1-syntax.watsup:869.1-871.14
 syntax blockElementStatement = 
    | annotationList const type name initializer ;
    | annotationList type name initializerOpt ;
@@ -1958,114 +1997,114 @@ syntax blockElementStatement =
    | continue;
    | switch( expression ){ switchCaseList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:861.1-862.52
+;; ../../../../spec-concrete/1-syntax.watsup:874.1-875.52
 syntax blockElementStatementList = 
    | 
    | blockElementStatementList blockElementStatement
 
-;; ../../../../spec-concrete/1-syntax.watsup:864.1-866.62
+;; ../../../../spec-concrete/1-syntax.watsup:877.1-879.62
 def $flatten_blockElementStatementList(blockElementStatementList) : blockElementStatement* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:867.1-867.53
+  ;; ../../../../spec-concrete/1-syntax.watsup:880.1-880.53
   clause 0 : (blockElementStatementList) = []
   -- if blockElementStatementList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:868.1-872.30
+  ;; ../../../../spec-concrete/1-syntax.watsup:881.1-885.30
   clause 1 : (blockElementStatementList') = $flatten_blockElementStatementList(blockElementStatementList) ++ [blockElementStatement]
   -- if blockElementStatementList' matches `%%`
   -- let blockElementStatementList blockElementStatement = blockElementStatementList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:879.3-879.58
+;; ../../../../spec-concrete/1-syntax.watsup:892.3-892.58
 syntax functionPrototype = 
    | typeOrVoid name typeParameterListOpt ( parameterList )
 
-;; ../../../../spec-concrete/1-syntax.watsup:882.3-882.50
+;; ../../../../spec-concrete/1-syntax.watsup:895.3-895.50
 syntax functionDeclaration = 
    | annotationList functionPrototype blockStatement
 
-;; ../../../../spec-concrete/1-syntax.watsup:889.3-889.63
+;; ../../../../spec-concrete/1-syntax.watsup:902.3-902.63
 syntax actionDeclaration = 
    | annotationList action name ( parameterList ) blockStatement
 
-;; ../../../../spec-concrete/1-syntax.watsup:897.28-897.57
+;; ../../../../spec-concrete/1-syntax.watsup:910.28-910.57
 syntax objectInitializer = 
    | ={ objectDeclarationList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:901.1-902.68
+;; ../../../../spec-concrete/1-syntax.watsup:914.1-915.68
 syntax instantiation = 
    | annotationList type ( argumentList ) name ;
    | annotationList type ( argumentList ) name objectInitializer ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:905.1-906.18
+;; ../../../../spec-concrete/1-syntax.watsup:918.1-919.18
 syntax objectDeclaration = 
    | annotationList functionPrototype blockStatement
    | annotationList type ( argumentList ) name ;
    | annotationList type ( argumentList ) name objectInitializer ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:909.1-910.44
+;; ../../../../spec-concrete/1-syntax.watsup:922.1-923.44
 syntax objectDeclarationList = 
    | 
    | objectDeclarationList objectDeclaration
 
-;; ../../../../spec-concrete/1-syntax.watsup:912.1-913.57
+;; ../../../../spec-concrete/1-syntax.watsup:925.1-926.57
 def $flatten_objectDeclarationList(objectDeclarationList) : objectDeclaration* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:914.1-914.49
+  ;; ../../../../spec-concrete/1-syntax.watsup:927.1-927.49
   clause 0 : (objectDeclarationList) = []
   -- if objectDeclarationList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:915.1-919.29
+  ;; ../../../../spec-concrete/1-syntax.watsup:928.1-932.29
   clause 1 : (objectDeclarationList') = $flatten_objectDeclarationList(objectDeclarationList) ++ [objectDeclaration]
   -- if objectDeclarationList' matches `%%`
   -- let objectDeclarationList objectDeclaration = objectDeclarationList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:925.27-925.46
+;; ../../../../spec-concrete/1-syntax.watsup:938.27-938.46
 syntax errorDeclaration = 
    | error{ nameList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:931.31-931.72
+;; ../../../../spec-concrete/1-syntax.watsup:944.31-944.72
 syntax matchKindDeclaration = 
    | match_kind{ nameList trailingCommaOpt }
 
-;; ../../../../spec-concrete/1-syntax.watsup:942.1-943.76
+;; ../../../../spec-concrete/1-syntax.watsup:955.1-956.76
 syntax enumTypeDeclaration = 
    | annotationList enum name { nameList trailingCommaOpt }
    | annotationList enum type name { namedExpressionList trailingCommaOpt }
 
-;; ../../../../spec-concrete/1-syntax.watsup:949.20-949.47
+;; ../../../../spec-concrete/1-syntax.watsup:962.20-962.47
 syntax typeField = 
    | annotationList type name ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:952.1-953.28
+;; ../../../../spec-concrete/1-syntax.watsup:965.1-966.28
 syntax typeFieldList = 
    | 
    | typeFieldList typeField
 
-;; ../../../../spec-concrete/1-syntax.watsup:955.1-956.49
+;; ../../../../spec-concrete/1-syntax.watsup:968.1-969.49
 def $flatten_typeFieldList(typeFieldList) : typeField* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:957.1-957.41
+  ;; ../../../../spec-concrete/1-syntax.watsup:970.1-970.41
   clause 0 : (typeFieldList) = []
   -- if typeFieldList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:958.1-959.59
+  ;; ../../../../spec-concrete/1-syntax.watsup:971.1-972.59
   clause 1 : (typeFieldList') = $flatten_typeFieldList(typeFieldList) ++ [typeField]
   -- if typeFieldList' matches `%%`
   -- let typeFieldList typeField = typeFieldList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:962.3-962.69
+;; ../../../../spec-concrete/1-syntax.watsup:975.3-975.69
 syntax structTypeDeclaration = 
    | annotationList struct name typeParameterListOpt { typeFieldList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:965.3-965.69
+;; ../../../../spec-concrete/1-syntax.watsup:978.3-978.69
 syntax headerTypeDeclaration = 
    | annotationList header name typeParameterListOpt { typeFieldList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:968.3-968.75
+;; ../../../../spec-concrete/1-syntax.watsup:981.3-981.75
 syntax headerUnionTypeDeclaration = 
    | annotationList header_union name typeParameterListOpt { typeFieldList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:971.1-974.31
+;; ../../../../spec-concrete/1-syntax.watsup:984.1-987.31
 syntax derivedTypeDeclaration = 
    | annotationList enum name { nameList trailingCommaOpt }
    | annotationList enum type name { namedExpressionList trailingCommaOpt }
@@ -2073,7 +2112,7 @@ syntax derivedTypeDeclaration =
    | annotationList header name typeParameterListOpt { typeFieldList }
    | annotationList header_union name typeParameterListOpt { typeFieldList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:981.1-982.27
+;; ../../../../spec-concrete/1-syntax.watsup:994.1-995.27
 syntax typedef = 
    | bool
    | error
@@ -2099,92 +2138,92 @@ syntax typedef =
    | annotationList header name typeParameterListOpt { typeFieldList }
    | annotationList header_union name typeParameterListOpt { typeFieldList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:985.1-986.37
+;; ../../../../spec-concrete/1-syntax.watsup:998.1-999.37
 syntax typedefDeclaration = 
    | annotationList typedef typedef name ;
    | annotationList type type name ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:993.3-993.45
+;; ../../../../spec-concrete/1-syntax.watsup:1006.3-1006.45
 syntax externFunctionDeclaration = 
    | annotationList extern functionPrototype ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:996.1-996.56
+;; ../../../../spec-concrete/1-syntax.watsup:1009.1-1009.56
 syntax externConstructorPrototype = 
    | annotationList typeIdentifier ( parameterList );
 
-;; ../../../../spec-concrete/1-syntax.watsup:999.1-1000.49
+;; ../../../../spec-concrete/1-syntax.watsup:1012.1-1013.49
 syntax externMethodPrototype = 
    | annotationList functionPrototype ;
    | annotationList abstract functionPrototype ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:1003.1-1004.26
+;; ../../../../spec-concrete/1-syntax.watsup:1016.1-1017.26
 syntax externConstructorOrMethodPrototype = 
    | annotationList typeIdentifier ( parameterList );
    | annotationList functionPrototype ;
    | annotationList abstract functionPrototype ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:1007.1-1008.78
+;; ../../../../spec-concrete/1-syntax.watsup:1020.1-1021.78
 syntax externConstructorOrMethodPrototypeList = 
    | 
    | externConstructorOrMethodPrototypeList externConstructorOrMethodPrototype
 
-;; ../../../../spec-concrete/1-syntax.watsup:1010.1-1013.77
+;; ../../../../spec-concrete/1-syntax.watsup:1023.1-1026.77
 def $flatten_externConstructorOrMethodPrototypeList(externConstructorOrMethodPrototypeList) : externConstructorOrMethodPrototype* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1014.1-1014.66
+  ;; ../../../../spec-concrete/1-syntax.watsup:1027.1-1027.66
   clause 0 : (externConstructorOrMethodPrototypeList) = []
   -- if externConstructorOrMethodPrototypeList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1015.1-1021.48
+  ;; ../../../../spec-concrete/1-syntax.watsup:1028.1-1034.48
   clause 1 : (externConstructorOrMethodPrototypeList') = $flatten_externConstructorOrMethodPrototypeList(externConstructorOrMethodPrototypeList) ++ [externConstructorOrMethodPrototype]
   -- if externConstructorOrMethodPrototypeList' matches `%%`
   -- let externConstructorOrMethodPrototypeList externConstructorOrMethodPrototype = externConstructorOrMethodPrototypeList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:1024.3-1025.69
+;; ../../../../spec-concrete/1-syntax.watsup:1037.3-1038.69
 syntax externObjectDeclaration = 
    | annotationList extern nonTypeName typeParameterListOpt { externConstructorOrMethodPrototypeList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:1028.1-1029.28
+;; ../../../../spec-concrete/1-syntax.watsup:1041.1-1042.28
 syntax externDeclaration = 
    | annotationList extern functionPrototype ;
    | annotationList extern nonTypeName typeParameterListOpt { externConstructorOrMethodPrototypeList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:1039.21-1039.48
+;; ../../../../spec-concrete/1-syntax.watsup:1052.21-1052.48
 syntax selectCase = 
    | keysetExpression : name ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:1042.1-1043.30
+;; ../../../../spec-concrete/1-syntax.watsup:1055.1-1056.30
 syntax selectCaseList = 
    | 
    | selectCaseList selectCase
 
-;; ../../../../spec-concrete/1-syntax.watsup:1045.1-1046.50
+;; ../../../../spec-concrete/1-syntax.watsup:1058.1-1059.50
 def $flatten_selectCaseList(selectCaseList) : selectCase* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1047.1-1047.42
+  ;; ../../../../spec-concrete/1-syntax.watsup:1060.1-1060.42
   clause 0 : (selectCaseList) = []
   -- if selectCaseList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1048.1-1049.62
+  ;; ../../../../spec-concrete/1-syntax.watsup:1061.1-1062.62
   clause 1 : (selectCaseList') = $flatten_selectCaseList(selectCaseList) ++ [selectCase]
   -- if selectCaseList' matches `%%`
   -- let selectCaseList selectCase = selectCaseList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:1051.27-1051.73
+;; ../../../../spec-concrete/1-syntax.watsup:1064.27-1064.73
 syntax selectExpression = 
    | select( expressionList ){ selectCaseList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:1058.1-1059.21
+;; ../../../../spec-concrete/1-syntax.watsup:1071.1-1072.21
 syntax stateExpression = 
    | name ;
    | select( expressionList ){ selectCaseList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:1062.1-1063.31
+;; ../../../../spec-concrete/1-syntax.watsup:1075.1-1076.31
 syntax transitionStatement = 
    | 
    | transition stateExpression
 
-;; ../../../../spec-concrete/1-syntax.watsup:1070.1-1072.21
+;; ../../../../spec-concrete/1-syntax.watsup:1083.1-1085.21
 syntax valueSetType = 
    | bool
    | error
@@ -2202,24 +2241,24 @@ syntax valueSetType =
    | text
    | . typeName
 
-;; ../../../../spec-concrete/1-syntax.watsup:1075.3-1075.69
+;; ../../../../spec-concrete/1-syntax.watsup:1088.3-1088.69
 syntax valueSetDeclaration = 
    | annotationList value_set< valueSetType >( expression ) name ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:1082.3-1082.72
+;; ../../../../spec-concrete/1-syntax.watsup:1095.3-1095.72
 syntax parserTypeDeclaration = 
    | annotationList parser name typeParameterListOpt ( parameterList );
 
-;; ../../../../spec-concrete/1-syntax.watsup:1090.31-1090.70
+;; ../../../../spec-concrete/1-syntax.watsup:1103.31-1103.70
 syntax parserBlockStatement = 
    | annotationList { parserStatementList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:1093.1-1094.60
+;; ../../../../spec-concrete/1-syntax.watsup:1106.1-1107.60
 syntax parserConditionalStatement = 
    | if( expression ) parserStatement
    | if( expression ) parserStatement else parserStatement
 
-;; ../../../../spec-concrete/1-syntax.watsup:1097.1-1104.31
+;; ../../../../spec-concrete/1-syntax.watsup:1110.1-1117.31
 syntax parserStatement = 
    | annotationList const type name initializer ;
    | annotationList type name initializerOpt ;
@@ -2232,46 +2271,46 @@ syntax parserStatement =
    | if( expression ) parserStatement
    | if( expression ) parserStatement else parserStatement
 
-;; ../../../../spec-concrete/1-syntax.watsup:1107.1-1108.40
+;; ../../../../spec-concrete/1-syntax.watsup:1120.1-1121.40
 syntax parserStatementList = 
    | 
    | parserStatementList parserStatement
 
-;; ../../../../spec-concrete/1-syntax.watsup:1110.1-1111.55
+;; ../../../../spec-concrete/1-syntax.watsup:1123.1-1124.55
 def $flatten_parserStatementList(parserStatementList) : parserStatement* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1112.1-1112.47
+  ;; ../../../../spec-concrete/1-syntax.watsup:1125.1-1125.47
   clause 0 : (parserStatementList) = []
   -- if parserStatementList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1113.1-1114.77
+  ;; ../../../../spec-concrete/1-syntax.watsup:1126.1-1127.77
   clause 1 : (parserStatementList') = $flatten_parserStatementList(parserStatementList) ++ [parserStatement]
   -- if parserStatementList' matches `%%`
   -- let parserStatementList parserStatement = parserStatementList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:1117.3-1117.73
+;; ../../../../spec-concrete/1-syntax.watsup:1130.3-1130.73
 syntax parserState = 
    | annotationList state name { parserStatementList transitionStatement }
 
-;; ../../../../spec-concrete/1-syntax.watsup:1120.1-1121.32
+;; ../../../../spec-concrete/1-syntax.watsup:1133.1-1134.32
 syntax parserStateList = 
    | annotationList state name { parserStatementList transitionStatement }
    | parserStateList parserState
 
-;; ../../../../spec-concrete/1-syntax.watsup:1123.1-1124.51
+;; ../../../../spec-concrete/1-syntax.watsup:1136.1-1137.51
 def $flatten_parserStateList(parserStateList) : parserState* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1125.1-1125.56
+  ;; ../../../../spec-concrete/1-syntax.watsup:1138.1-1138.56
   clause 0 : (parserStateList) = [parserState]
   -- if parserStateList <: parserState
   -- let parserState = parserStateList as parserState
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1126.1-1127.65
+  ;; ../../../../spec-concrete/1-syntax.watsup:1139.1-1140.65
   clause 1 : (parserStateList') = $flatten_parserStateList(parserStateList) ++ [parserState]
   -- if parserStateList' matches `%%`
   -- let parserStateList parserState = parserStateList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:1130.1-1133.24
+;; ../../../../spec-concrete/1-syntax.watsup:1143.1-1146.24
 syntax parserLocalDeclaration = 
    | annotationList const type name initializer ;
    | annotationList type ( argumentList ) name ;
@@ -2279,70 +2318,70 @@ syntax parserLocalDeclaration =
    | annotationList type name initializerOpt ;
    | annotationList value_set< valueSetType >( expression ) name ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:1136.1-1137.54
+;; ../../../../spec-concrete/1-syntax.watsup:1149.1-1150.54
 syntax parserLocalDeclarationList = 
    | 
    | parserLocalDeclarationList parserLocalDeclaration
 
-;; ../../../../spec-concrete/1-syntax.watsup:1139.1-1141.63
+;; ../../../../spec-concrete/1-syntax.watsup:1152.1-1154.63
 def $flatten_parserLocalDeclarationList(parserLocalDeclarationList) : parserLocalDeclaration* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1142.1-1142.54
+  ;; ../../../../spec-concrete/1-syntax.watsup:1155.1-1155.54
   clause 0 : (parserLocalDeclarationList) = []
   -- if parserLocalDeclarationList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1143.1-1147.34
+  ;; ../../../../spec-concrete/1-syntax.watsup:1156.1-1160.34
   clause 1 : (parserLocalDeclarationList') = $flatten_parserLocalDeclarationList(parserLocalDeclarationList) ++ [parserLocalDeclaration]
   -- if parserLocalDeclarationList' matches `%%`
   -- let parserLocalDeclarationList parserLocalDeclaration = parserLocalDeclarationList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:1150.3-1152.52
+;; ../../../../spec-concrete/1-syntax.watsup:1163.3-1165.52
 syntax parserDeclaration = 
    | annotationList parser name typeParameterListOpt ( parameterList ) constructorParameterListOpt { parserLocalDeclarationList parserStateList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:1162.16-1162.21
+;; ../../../../spec-concrete/1-syntax.watsup:1175.16-1175.21
 syntax const = 
    | const
 
-;; ../../../../spec-concrete/1-syntax.watsup:1165.1-1166.10
+;; ../../../../spec-concrete/1-syntax.watsup:1178.1-1179.10
 syntax constOpt = 
    | 
    | const
 
-;; ../../../../spec-concrete/1-syntax.watsup:1168.1-1169.54
+;; ../../../../spec-concrete/1-syntax.watsup:1181.1-1182.54
 def $flatten_constOpt(constOpt) : const? =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1170.1-1170.36
+  ;; ../../../../spec-concrete/1-syntax.watsup:1183.1-1183.36
   clause 0 : (constOpt) = ?()
   -- if constOpt matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1171.1-1171.37
+  ;; ../../../../spec-concrete/1-syntax.watsup:1184.1-1184.37
   clause 1 : (constOpt) = ?(const)
   -- if constOpt <: const
   -- let const = constOpt as const
 
-;; ../../../../spec-concrete/1-syntax.watsup:1177.19-1177.55
+;; ../../../../spec-concrete/1-syntax.watsup:1190.19-1190.55
 syntax tableKey = 
    | expression : name annotationList ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:1180.1-1181.26
+;; ../../../../spec-concrete/1-syntax.watsup:1193.1-1194.26
 syntax tableKeyList = 
    | 
    | tableKeyList tableKey
 
-;; ../../../../spec-concrete/1-syntax.watsup:1183.1-1184.48
+;; ../../../../spec-concrete/1-syntax.watsup:1196.1-1197.48
 def $flatten_tableKeyList(tableKeyList) : tableKey* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1185.1-1185.40
+  ;; ../../../../spec-concrete/1-syntax.watsup:1198.1-1198.40
   clause 0 : (tableKeyList) = []
   -- if tableKeyList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1186.1-1187.56
+  ;; ../../../../spec-concrete/1-syntax.watsup:1199.1-1200.56
   clause 1 : (tableKeyList') = $flatten_tableKeyList(tableKeyList) ++ [tableKey]
   -- if tableKeyList' matches `%%`
   -- let tableKeyList tableKey = tableKeyList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:1194.1-1195.42
+;; ../../../../spec-concrete/1-syntax.watsup:1207.1-1208.42
 syntax tableActionReference = 
    | text
    | apply
@@ -2355,90 +2394,90 @@ syntax tableActionReference =
    | . nonTypeName
    | prefixedNonTypeName ( argumentList )
 
-;; ../../../../spec-concrete/1-syntax.watsup:1197.22-1197.60
+;; ../../../../spec-concrete/1-syntax.watsup:1210.22-1210.60
 syntax tableAction = 
    | annotationList tableActionReference ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:1200.1-1201.32
+;; ../../../../spec-concrete/1-syntax.watsup:1213.1-1214.32
 syntax tableActionList = 
    | 
    | tableActionList tableAction
 
-;; ../../../../spec-concrete/1-syntax.watsup:1203.1-1204.51
+;; ../../../../spec-concrete/1-syntax.watsup:1216.1-1217.51
 def $flatten_tableActionList(tableActionList) : tableAction* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1205.1-1205.43
+  ;; ../../../../spec-concrete/1-syntax.watsup:1218.1-1218.43
   clause 0 : (tableActionList) = []
   -- if tableActionList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1206.1-1207.63
+  ;; ../../../../spec-concrete/1-syntax.watsup:1219.1-1220.63
   clause 1 : (tableActionList') = $flatten_tableActionList(tableActionList) ++ [tableAction]
   -- if tableActionList' matches `%%`
   -- let tableActionList tableAction = tableActionList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:1214.1-1215.35
+;; ../../../../spec-concrete/1-syntax.watsup:1227.1-1228.35
 syntax tableEntryPriority = 
    | priority= integerLiteral :
    | priority=( expression ):
 
-;; ../../../../spec-concrete/1-syntax.watsup:1218.1-1219.72
+;; ../../../../spec-concrete/1-syntax.watsup:1231.1-1232.72
 syntax tableEntry = 
    | constOpt tableEntryPriority keysetExpression : tableActionReference annotationList ;
    | constOpt keysetExpression : tableActionReference annotationList ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:1222.1-1223.30
+;; ../../../../spec-concrete/1-syntax.watsup:1235.1-1236.30
 syntax tableEntryList = 
    | 
    | tableEntryList tableEntry
 
-;; ../../../../spec-concrete/1-syntax.watsup:1225.1-1226.51
+;; ../../../../spec-concrete/1-syntax.watsup:1238.1-1239.51
 def $flatten_tableEntryList(tableEntryList) : tableEntry* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1227.1-1227.42
+  ;; ../../../../spec-concrete/1-syntax.watsup:1240.1-1240.42
   clause 0 : (tableEntryList) = []
   -- if tableEntryList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1228.1-1229.62
+  ;; ../../../../spec-concrete/1-syntax.watsup:1241.1-1242.62
   clause 1 : (tableEntryList') = $flatten_tableEntryList(tableEntryList) ++ [tableEntry]
   -- if tableEntryList' matches `%%`
   -- let tableEntryList tableEntry = tableEntryList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:1236.1-1239.59
+;; ../../../../spec-concrete/1-syntax.watsup:1249.1-1252.59
 syntax tableProperty = 
    | key={ tableKeyList }
    | actions={ tableActionList }
    | annotationList constOpt entries={ tableEntryList }
    | annotationList constOpt tableCustomName initializer ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:1242.1-1243.36
+;; ../../../../spec-concrete/1-syntax.watsup:1255.1-1256.36
 syntax tablePropertyList = 
    | 
    | tablePropertyList tableProperty
 
-;; ../../../../spec-concrete/1-syntax.watsup:1245.1-1246.54
+;; ../../../../spec-concrete/1-syntax.watsup:1258.1-1259.54
 def $flatten_tablePropertyList(tablePropertyList) : tableProperty* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1247.1-1247.45
+  ;; ../../../../spec-concrete/1-syntax.watsup:1260.1-1260.45
   clause 0 : (tablePropertyList) = []
   -- if tablePropertyList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1248.1-1249.69
+  ;; ../../../../spec-concrete/1-syntax.watsup:1261.1-1262.69
   clause 1 : (tablePropertyList') = $flatten_tablePropertyList(tablePropertyList) ++ [tableProperty]
   -- if tablePropertyList' matches `%%`
   -- let tablePropertyList tableProperty = tablePropertyList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:1252.3-1252.51
+;; ../../../../spec-concrete/1-syntax.watsup:1265.3-1265.51
 syntax tableDeclaration = 
    | annotationList table name { tablePropertyList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:1259.3-1259.73
+;; ../../../../spec-concrete/1-syntax.watsup:1272.3-1272.73
 syntax controlTypeDeclaration = 
    | annotationList control name typeParameterListOpt ( parameterList );
 
-;; ../../../../spec-concrete/1-syntax.watsup:1265.22-1265.36
+;; ../../../../spec-concrete/1-syntax.watsup:1278.22-1278.36
 syntax controlBody = blockStatement
 
-;; ../../../../spec-concrete/1-syntax.watsup:1268.1-1272.21
+;; ../../../../spec-concrete/1-syntax.watsup:1281.1-1285.21
 syntax controlLocalDeclaration = 
    | annotationList const type name initializer ;
    | annotationList type ( argumentList ) name ;
@@ -2447,32 +2486,32 @@ syntax controlLocalDeclaration =
    | annotationList action name ( parameterList ) blockStatement
    | annotationList table name { tablePropertyList }
 
-;; ../../../../spec-concrete/1-syntax.watsup:1275.1-1276.56
+;; ../../../../spec-concrete/1-syntax.watsup:1288.1-1289.56
 syntax controlLocalDeclarationList = 
    | 
    | controlLocalDeclarationList controlLocalDeclaration
 
-;; ../../../../spec-concrete/1-syntax.watsup:1278.1-1280.64
+;; ../../../../spec-concrete/1-syntax.watsup:1291.1-1293.64
 def $flatten_controlLocalDeclarationList(controlLocalDeclarationList) : controlLocalDeclaration* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1281.1-1281.55
+  ;; ../../../../spec-concrete/1-syntax.watsup:1294.1-1294.55
   clause 0 : (controlLocalDeclarationList) = []
   -- if controlLocalDeclarationList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1282.1-1286.32
+  ;; ../../../../spec-concrete/1-syntax.watsup:1295.1-1299.32
   clause 1 : (controlLocalDeclarationList') = $flatten_controlLocalDeclarationList(controlLocalDeclarationList) ++ [controlLocalDeclaration]
   -- if controlLocalDeclarationList' matches `%%`
   -- let controlLocalDeclarationList controlLocalDeclaration = controlLocalDeclarationList'
 
-;; ../../../../spec-concrete/1-syntax.watsup:1289.3-1291.55
+;; ../../../../spec-concrete/1-syntax.watsup:1302.3-1304.55
 syntax controlDeclaration = 
    | annotationList control name typeParameterListOpt ( parameterList ) constructorParameterListOpt { controlLocalDeclarationList apply controlBody }
 
-;; ../../../../spec-concrete/1-syntax.watsup:1298.3-1298.73
+;; ../../../../spec-concrete/1-syntax.watsup:1311.3-1311.73
 syntax packageTypeDeclaration = 
    | annotationList package name typeParameterListOpt ( parameterList );
 
-;; ../../../../spec-concrete/1-syntax.watsup:1305.1-1309.27
+;; ../../../../spec-concrete/1-syntax.watsup:1318.1-1322.27
 syntax typeDeclaration = 
    | annotationList enum name { nameList trailingCommaOpt }
    | annotationList enum type name { namedExpressionList trailingCommaOpt }
@@ -2485,7 +2524,7 @@ syntax typeDeclaration =
    | annotationList control name typeParameterListOpt ( parameterList );
    | annotationList package name typeParameterListOpt ( parameterList );
 
-;; ../../../../spec-concrete/1-syntax.watsup:1316.1-1325.20
+;; ../../../../spec-concrete/1-syntax.watsup:1329.1-1338.20
 syntax declaration = 
    | annotationList const type name initializer ;
    | annotationList type ( argumentList ) name ;
@@ -2509,7 +2548,7 @@ syntax declaration =
    | annotationList control name typeParameterListOpt ( parameterList );
    | annotationList package name typeParameterListOpt ( parameterList );
 
-;; ../../../../spec-concrete/1-syntax.watsup:1332.1-1349.27
+;; ../../../../spec-concrete/1-syntax.watsup:1345.1-1362.27
 syntax annotationToken = 
    | unexpected_token
    | abstract
@@ -2603,30 +2642,30 @@ syntax annotationToken =
    | ;
    | @
 
-;; ../../../../spec-concrete/1-syntax.watsup:1352.1-1354.35
+;; ../../../../spec-concrete/1-syntax.watsup:1365.1-1367.35
 syntax annotationBody = 
    | 
    | annotationBody ( annotationBody )
    | annotationBody annotationToken
 
-;; ../../../../spec-concrete/1-syntax.watsup:1357.3-1357.41
+;; ../../../../spec-concrete/1-syntax.watsup:1370.3-1370.41
 syntax structuredAnnotationBody = 
    | dataElementExpression trailingCommaOpt
 
-;; ../../../../spec-concrete/1-syntax.watsup:1360.1-1362.42
+;; ../../../../spec-concrete/1-syntax.watsup:1373.1-1375.42
 syntax annotation = 
    | @ name
    | @ name ( annotationBody )
    | @ name [ structuredAnnotationBody ]
 
-;; ../../../../spec-concrete/1-syntax.watsup:1365.1-1366.38
+;; ../../../../spec-concrete/1-syntax.watsup:1378.1-1379.38
 syntax annotationListNonEmpty = 
    | @ name
    | @ name ( annotationBody )
    | @ name [ structuredAnnotationBody ]
    | annotationListNonEmpty annotation
 
-;; ../../../../spec-concrete/1-syntax.watsup:1369.1-1370.27
+;; ../../../../spec-concrete/1-syntax.watsup:1382.1-1383.27
 syntax annotationList = 
    | 
    | @ name
@@ -2634,44 +2673,44 @@ syntax annotationList =
    | @ name [ structuredAnnotationBody ]
    | annotationListNonEmpty annotation
 
-;; ../../../../spec-concrete/1-syntax.watsup:1372.1-1373.49
+;; ../../../../spec-concrete/1-syntax.watsup:1385.1-1386.49
 def $flatten_annotationList(annotationList) : annotation* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1374.1-1374.42
+  ;; ../../../../spec-concrete/1-syntax.watsup:1387.1-1387.42
   clause 0 : (annotationList) = []
   -- if annotationList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1375.1-1375.53
+  ;; ../../../../spec-concrete/1-syntax.watsup:1388.1-1388.53
   clause 1 : (annotationList) = [annotation]
   -- if annotationList <: annotation
   -- let annotation = annotationList as annotation
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1376.1-1377.68
+  ;; ../../../../spec-concrete/1-syntax.watsup:1389.1-1390.68
   clause 2 : (annotationList) = $flatten_annotationList(annotationListNonEmpty as annotationList) ++ [annotation]
   -- if annotationList <: annotationListNonEmpty
   -- let annotationListNonEmpty' = annotationList as annotationListNonEmpty
   -- if annotationListNonEmpty' matches `%%`
   -- let annotationListNonEmpty annotation = annotationListNonEmpty'
 
-;; ../../../../spec-concrete/1-syntax.watsup:1384.1-1386.17
+;; ../../../../spec-concrete/1-syntax.watsup:1397.1-1399.17
 syntax p4program = 
    | 
    | p4program declaration
    | p4program ;
 
-;; ../../../../spec-concrete/1-syntax.watsup:1388.1-1389.50
+;; ../../../../spec-concrete/1-syntax.watsup:1401.1-1402.50
 def $flatten_p4program(p4program) : declaration* =
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1390.1-1390.37
+  ;; ../../../../spec-concrete/1-syntax.watsup:1403.1-1403.37
   clause 0 : (p4program) = []
   -- if p4program matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1391.1-1392.53
+  ;; ../../../../spec-concrete/1-syntax.watsup:1404.1-1405.53
   clause 1 : (p4program') = $flatten_p4program(p4program) ++ [declaration]
   -- if p4program' matches `%%`
   -- let p4program declaration = p4program'
 
-  ;; ../../../../spec-concrete/1-syntax.watsup:1393.1-1394.34
+  ;; ../../../../spec-concrete/1-syntax.watsup:1406.1-1407.34
   clause 2 : (p4program') = $flatten_p4program(p4program)
   -- if p4program' matches `%;`
   -- let p4program ; = p4program'
@@ -8610,21 +8649,22 @@ syntax conditionalStatementIR =
    | if( typedExpressionIR ) statementIR
    | if( typedExpressionIR ) statementIR else statementIR
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:388.1-391.35
+;; ../../../../spec-concrete/4-ir-syntax.watsup:388.1-389.45
+syntax forUpdateStatementIR = 
+   | callableTargetIR < typeArgumentListIR >( argumentListIR )
+   | typedLvalueIR assignop typedExpressionIR
+
+;; ../../../../spec-concrete/4-ir-syntax.watsup:391.35-391.56
+syntax forUpdateStatementListIR = forUpdateStatementIR*
+
+;; ../../../../spec-concrete/4-ir-syntax.watsup:394.1-395.25
 syntax forInitStatementIR = 
    | annotationList typeIR nameIR initializerOptIR
-   | lvalueIR ( argumentListIR )
-   | lvalueIR < typeArgumentListIR >( argumentListIR )
-   | lvalueIR assignop expressionIR
+   | callableTargetIR < typeArgumentListIR >( argumentListIR )
+   | typedLvalueIR assignop typedExpressionIR
 
-;; ../../../../spec-concrete/4-ir-syntax.watsup:393.33-393.52
+;; ../../../../spec-concrete/4-ir-syntax.watsup:397.33-397.52
 syntax forInitStatementListIR = forInitStatementIR*
-
-;; ../../../../spec-concrete/4-ir-syntax.watsup:395.31-395.49
-syntax forUpdateStatementIR = forInitStatementIR
-
-;; ../../../../spec-concrete/4-ir-syntax.watsup:397.35-397.56
-syntax forUpdateStatementListIR = forUpdateStatementIR*
 
 ;; ../../../../spec-concrete/4-ir-syntax.watsup:400.1-401.44
 syntax forCollectionExpressionIR = 
@@ -15301,16 +15341,21 @@ relation Lvalue_ok: cursor typingContext |- lvalue : typedLvalueIR
     -- let typedLvalueIR = ( typedLvalueIR_base ) # ( typeIR_base )
     -- output: % % |- % : typedLvalueIR
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:99.1-103.110
-relation Stmt_ok: cursor typingContext flow |- statement : typingContext flow statementIR
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:99.19-99.32
+syntax loopctxt = 
+   | loop
+   | noloop
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:10.1-11.25
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:103.1-112.44
+relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContext flow statementIR
+
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:10.1-11.27
   rulegroup emptyStatement
 
    match
 
-    (signature) p TC f |- ; as statement : % % %
-    p TC f |- statement : % % %
+    (signature) p TC f l |- ; as statement : % % %
+    p TC f l |- statement : % % %
     -- if statement <: emptyStatement
     -- let emptyStatement = statement as emptyStatement
     -- if (emptyStatement = ;)
@@ -15318,15 +15363,15 @@ relation Stmt_ok: cursor typingContext flow |- statement : typingContext flow st
    paths
 
     rulepath emptyStatement
-    -- output: % % % |- % : TC f ; as statementIR
+    -- output: % % % % |- % : TC f ; as statementIR
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:21.1-56.2
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:20.1-55.2
   rulegroup asssignmentStatement
 
    match
 
-    (signature) p TC f |- lvalue assignop' expression ; as statement : % % %
-    p TC f |- statement : % % %
+    (signature) p TC f l |- lvalue assignop' expression ; as statement : % % %
+    p TC f l |- statement : % % %
     -- if statement <: assignmentStatement
     -- let lvalue assignop' expression ; = statement as assignmentStatement
 
@@ -15341,7 +15386,7 @@ relation Stmt_ok: cursor typingContext flow |- statement : typingContext flow st
     -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $coerce_unary(typedExpressionIR, typeIR_l)
     -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
     -- let ?(typedExpressionIR_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
-    -- output: % % % |- % : TC f typedLvalueIR = typedExpressionIR_cast ; as statementIR
+    -- output: % % % % |- % : TC f typedLvalueIR = typedExpressionIR_cast ; as statementIR
 
     rulepath compound
     -- let assignop = assignop'
@@ -15360,15 +15405,15 @@ relation Stmt_ok: cursor typingContext flow |- statement : typingContext flow st
     -- if expressionIR <: binaryExpressionIR
     -- let _typedExpressionIR binop'' typedExpressionIR_cast = expressionIR as binaryExpressionIR
     -- if (binop'' = binop)
-    -- output: % % % |- % : TC f typedLvalueIR assignop typedExpressionIR_cast ; as statementIR
+    -- output: % % % % |- % : TC f typedLvalueIR assignop typedExpressionIR_cast ; as statementIR
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:64.1-108.2
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:63.1-107.2
   rulegroup callStatement
 
    match
 
-    (signature) p TC f |- callStatement as statement : % % %
-    p TC f |- statement : % % %
+    (signature) p TC f l |- callStatement as statement : % % %
+    p TC f l |- statement : % % %
     -- if statement <: callStatement
     -- let callStatement = statement as callStatement
 
@@ -15384,7 +15429,7 @@ relation Stmt_ok: cursor typingContext flow |- statement : typingContext flow st
     -- CallableType_ok: p TC |- callableTargetIR < [] >( argumentIR*{argumentIR <- argumentIR*} ): callableTypeIR <# tid_impl*{tid_impl <- tid_impl*} >(# id_default*{id_default <- id_default*} )
     -- Call_ok: p TC |- callableTypeIR < [] # tid_impl*{tid_impl <- tid_impl*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): typeIR_ret < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
     -- let callStatementIR = callableTargetIR < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} );
-    -- output: % % % |- % : TC f callStatementIR as statementIR
+    -- output: % % % % |- % : TC f callStatementIR as statementIR
 
     rulepath callStatement-typeArgumentList
     -- let callStatement' = callStatement
@@ -15399,21 +15444,21 @@ relation Stmt_ok: cursor typingContext flow |- statement : typingContext flow st
     -- let tid_infer*{tid_infer <- tid_infer*} = tid_impl*{tid_impl <- tid_impl*} ++ tid_inserted*{tid_inserted <- tid_inserted*}
     -- Call_ok: p TC |- callableTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # tid_infer*{tid_infer <- tid_infer*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): typeIR_ret < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
     -- let callStatementIR = callableTargetIR < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} );
-    -- output: % % % |- % : TC f callStatementIR as statementIR
+    -- output: % % % % |- % : TC f callStatementIR as statementIR
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:123.1-143.57
-  rulegroup directApplicationStatement
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:122.1-142.57
+  rulegroup directApplicationStatement-prefixedTypeName
 
    match
 
-    (signature) p TC_0 f |- namedType .apply( argumentList ); as statement : % % %
-    p TC_0 f |- statement : % % %
+    (signature) p TC_0 f l |- namedType .apply( argumentList ); as statement : % % %
+    p TC_0 f l |- statement : % % %
     -- if statement <: directApplicationStatement
     -- let namedType .apply( argumentList ); = statement as directApplicationStatement
 
    paths
 
-    rulepath directApplicationStatement
+    rulepath directApplicationStatement-prefixedTypeName
     -- Expr_ok: p TC_0 |- namedType as callTarget ( ) as expression : expressionIR # ( typeIR_object _ctk )
     -- if expressionIR <: callExpressionIR
     -- let callExpressionIR = expressionIR as callExpressionIR
@@ -15425,22 +15470,22 @@ relation Stmt_ok: cursor typingContext flow |- statement : typingContext flow st
     -- let nameIR_object = "__direct_application"
     -- let TC_1 = $add_var_t(p, TC_0, nameIR_object, typeIR_object ctk ?())
     -- let lvalue = nameIR_object as lvalue . "apply" as member
-    -- Stmt_ok: p TC_1 f |- lvalue ( argumentList ); as statement : _typingContext _flow statementIR
+    -- Stmt_ok: p TC_1 f l |- lvalue ( argumentList ); as statement : _typingContext _flow statementIR
     -- if statementIR <: callStatementIR
     -- let callStatementIR = statementIR as callStatementIR
     -- let callableTargetIR < typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} ); = callStatementIR
     -- if (callableTargetIR = ` nameIR_object as expressionIR # ( typeIR_object ctk ) . "apply")
     -- if typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} matches []
     -- let directApplicationStatementIR = prefixedNameIR .apply( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} );
-    -- output: % % % |- % : TC_0 f directApplicationStatementIR as statementIR
+    -- output: % % % % |- % : TC_0 f directApplicationStatementIR as statementIR
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:151.1-172.2
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:150.1-171.2
   rulegroup returnStatement
 
    match
 
-    (signature) local TC f |- returnStatement as statement : % % %
-    cursor TC f |- statement : % % %
+    (signature) local TC f l |- returnStatement as statement : % % %
+    cursor TC f l |- statement : % % %
     -- if cursor matches `LOCAL`
     -- if statement <: returnStatement
     -- let returnStatement = statement as returnStatement
@@ -15450,7 +15495,7 @@ relation Stmt_ok: cursor typingContext flow |- statement : typingContext flow st
     rulepath non-expression
     -- if (returnStatement = return;)
     -- if (?(void as typeIR) = $find_local_return_type_t(TC))
-    -- output: % % % |- % : TC ret return; as statementIR
+    -- output: % % % % |- % : TC ret return; as statementIR
 
     rulepath expression
     -- let returnStatement' = returnStatement
@@ -15464,15 +15509,15 @@ relation Stmt_ok: cursor typingContext flow |- statement : typingContext flow st
     -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $coerce_unary(typedExpressionIR, typeIR_ret)
     -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
     -- let ?(typedExpressionIR_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
-    -- output: % % % |- % : TC ret return typedExpressionIR_cast ; as statementIR
+    -- output: % % % % |- % : TC ret return typedExpressionIR_cast ; as statementIR
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:177.1-178.37
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:176.1-177.39
   rulegroup exitStatement
 
    match
 
-    (signature) p TC f |- exit; as statement : % % %
-    p TC f |- statement : % % %
+    (signature) p TC f l |- exit; as statement : % % %
+    p TC f l |- statement : % % %
     -- if statement <: exitStatement
     -- let exitStatement = statement as exitStatement
     -- if (exitStatement = exit;)
@@ -15480,15 +15525,15 @@ relation Stmt_ok: cursor typingContext flow |- statement : typingContext flow st
    paths
 
     rulepath exitStatement
-    -- output: % % % |- % : TC f exit; as statementIR
+    -- output: % % % % |- % : TC f exit; as statementIR
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:182.1-187.29
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:181.1-187.29
   rulegroup blockStatement
 
    match
 
-    (signature) local TC_0 f_0 |- blockStatement as statement : % % %
-    cursor TC_0 f_0 |- statement : % % %
+    (signature) local TC_0 f_0 l |- blockStatement as statement : % % %
+    cursor TC_0 f_0 l |- statement : % % %
     -- if cursor matches `LOCAL`
     -- if statement <: blockStatement
     -- let blockStatement = statement as blockStatement
@@ -15497,17 +15542,17 @@ relation Stmt_ok: cursor typingContext flow |- statement : typingContext flow st
 
     rulepath blockStatement
     -- let TC_1 = $enter_t(TC_0)
-    -- Block_ok: TC_1 f_0 |- blockStatement : TC_2 f_1 blockStatementIR
+    -- Block_ok: TC_1 f_0 l |- blockStatement : TC_2 f_1 blockStatementIR
     -- let TC_3 = $exit_t(TC_2)
-    -- output: % % % |- % : TC_3 f_1 blockStatementIR as statementIR
+    -- output: % % % % |- % : TC_3 f_1 blockStatementIR as statementIR
 
   ;; ../../../../spec-concrete/5.10-typing-statement.watsup:195.1-224.2
   rulegroup conditionalStatement
 
    match
 
-    (signature) p TC f |- conditionalStatement as statement : % % %
-    p TC f |- statement : % % %
+    (signature) p TC f l |- conditionalStatement as statement : % % %
+    p TC f l |- statement : % % %
     -- if statement <: conditionalStatement
     -- let conditionalStatement = statement as conditionalStatement
 
@@ -15520,8 +15565,8 @@ relation Stmt_ok: cursor typingContext flow |- statement : typingContext flow st
     -- Expr_ok: p TC |- expression_cond : typedExpressionIR_cond
     -- let typeIR_cond = $type_of_typedExpressionIR(typedExpressionIR_cond)
     -- if (bool as typeIR = $canon_typeIR(typeIR_cond))
-    -- Stmt_ok: p TC f |- statement_then : TC_then f_then statementIR_then
-    -- output: % % % |- % : TC f if( typedExpressionIR_cond ) statementIR_then as statementIR
+    -- Stmt_ok: p TC f l |- statement_then : TC_then f_then statementIR_then
+    -- output: % % % % |- % : TC f if( typedExpressionIR_cond ) statementIR_then as statementIR
 
     rulepath else
     -- let conditionalStatement' = conditionalStatement
@@ -15530,18 +15575,120 @@ relation Stmt_ok: cursor typingContext flow |- statement : typingContext flow st
     -- Expr_ok: p TC |- expression_cond : typedExpressionIR_cond
     -- let typeIR_cond = $type_of_typedExpressionIR(typedExpressionIR_cond)
     -- if (bool as typeIR = $canon_typeIR(typeIR_cond))
-    -- Stmt_ok: p TC f |- statement_then : TC_then f_then statementIR_then
-    -- Stmt_ok: p TC f |- statement_else : TC_else f_else statementIR_else
+    -- Stmt_ok: p TC f l |- statement_then : TC_then f_then statementIR_then
+    -- Stmt_ok: p TC f l |- statement_else : TC_else f_else statementIR_else
     -- let f_post = $join_flow(f_then, f_else)
-    -- output: % % % |- % : TC f_post if( typedExpressionIR_cond ) statementIR_then else statementIR_else as statementIR
+    -- output: % % % % |- % : TC f_post if( typedExpressionIR_cond ) statementIR_then else statementIR_else as statementIR
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:317.1-334.64
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:337.1-363.46
+  rulegroup forStatement-three-clause
+
+   match
+
+    (signature) local TC_0 f l |- annotationList for( forInitStatementList ; expression ; forUpdateStatementList ) statement as statement : % % %
+    cursor TC_0 f l |- statement' : % % %
+    -- if cursor matches `LOCAL`
+    -- if statement' <: forStatement
+    -- let forStatement = statement' as forStatement
+    -- if forStatement matches `%FOR(%;%;%)%`
+    -- let annotationList for( forInitStatementList ; expression ; forUpdateStatementList ) statement = forStatement
+
+   paths
+
+    rulepath forStatement-three-clause
+    -- let TC_1 = $enter_t(TC_0)
+    -- let forInitStatement*{forInitStatement <- forInitStatement*} = $flatten_forInitStatementList(forInitStatementList)
+    -- ForInitStmts_ok: TC_1 |- forInitStatement*{forInitStatement <- forInitStatement*} : TC_2 forInitStatementIR*{forInitStatementIR <- forInitStatementIR*}
+    -- Expr_ok: local TC_2 |- expression : typedExpressionIR
+    -- let _expressionIR # ( typeIR _ctk ) = typedExpressionIR
+    -- if (bool as typeIR = $canon_typeIR(typeIR))
+    -- let forUpdateStatement*{forUpdateStatement <- forUpdateStatement*} = $flatten_forUpdateStatementList(forUpdateStatementList)
+    -- (ForUpdateStmt_ok: TC_2 |- forUpdateStatement : forUpdateStatementIR)*{forUpdateStatement <- forUpdateStatement*, forUpdateStatementIR <- forUpdateStatementIR*}
+    -- Stmt_ok: local TC_2 f loop |- statement : TC_3 f_post statementIR
+    -- let TC_4 = $exit_t(TC_3)
+    -- let forStatementIR = annotationList for( forInitStatementIR*{forInitStatementIR <- forInitStatementIR*} ; typedExpressionIR ; forUpdateStatementIR*{forUpdateStatementIR <- forUpdateStatementIR*} ) statementIR
+    -- output: % % % % |- % : TC_0 f_post forStatementIR as statementIR
+
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:424.1-460.2
+  rulegroup forStatement-in
+
+   match
+
+    (signature) local TC_0 f l |- forStatement as statement : % % %
+    cursor TC_0 f l |- statement' : % % %
+    -- if cursor matches `LOCAL`
+    -- if statement' <: forStatement
+    -- let forStatement = statement' as forStatement
+
+   paths
+
+    rulepath no-annotations
+    -- let forStatement' = forStatement
+    -- if forStatement' matches `%FOR(%%IN%)%`
+    -- let annotationList for( type name in forCollectionExpression ) statement = forStatement'
+    -- Type_ok: local TC_0 |- type as typeOrVoid : typeIR # tid*{tid <- tid*}
+    -- if tid*{tid <- tid*} matches []
+    -- if Type_wf: $bound(local, TC_0) |- typeIR holds
+    -- if $is_assignable_typeIR(typeIR)
+    -- ForCollectionExpr_ok: TC_0 typeIR |- forCollectionExpression : forCollectionExpressionIR
+    -- let TC_1 = $enter_t(TC_0)
+    -- let nameIR = $name(name)
+    -- let TC_2 = $add_var_t(local, TC_1, nameIR, inout typeIR dyn ?())
+    -- Stmt_ok: local TC_2 f loop |- statement : TC_3 f_post statementIR
+    -- let TC_4 = $exit_t(TC_3)
+    -- let forStatementIR = annotationList for( typeIR nameIR in forCollectionExpressionIR ) statementIR
+    -- output: % % % % |- % : TC_0 f_post forStatementIR as statementIR
+
+    rulepath annotations
+    -- let forStatement' = forStatement
+    -- if forStatement' matches `%FOR(%%%IN%)%`
+    -- let annotationList for( annotationListNonEmpty type name in forCollectionExpression ) statement = forStatement'
+    -- Stmt_ok: local TC_0 f l |- annotationList for( type name in forCollectionExpression ) statement as statement : TC_1 f_post statementIR'
+    -- if statementIR' <: forStatementIR
+    -- let forStatementIR = statementIR' as forStatementIR
+    -- output: % % % % |- % : TC_0 f_post forStatementIR as statementIR
+
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:465.1-466.58
+  rulegroup break
+
+   match
+
+    (signature) local TC f loop |- breakStatement as statement : % % %
+    cursor TC f loopctxt |- statement : % % %
+    -- if cursor matches `LOCAL`
+    -- if loopctxt matches `LOOP`
+    -- if statement <: breakStatement
+    -- let breakStatement = statement as breakStatement
+
+   paths
+
+    rulepath break
+    -- output: % % % % |- % : TC f breakStatement as statementIR
+
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:471.1-472.64
+  rulegroup continue
+
+   match
+
+    (signature) local TC f loop |- continueStatement as statement : % % %
+    cursor TC f loopctxt |- statement : % % %
+    -- if cursor matches `LOCAL`
+    -- if loopctxt matches `LOOP`
+    -- if statement <: continueStatement
+    -- let continueStatement = statement as continueStatement
+
+   paths
+
+    rulepath continue
+    -- output: % % % % |- % : TC f continueStatement as statementIR
+
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:560.1-577.64
   rulegroup switchStatement-table
 
    match
 
-    (signature) local TC f |- switch( expression_switch ){ switchCaseList } as statement : % % %
-    cursor TC f |- statement : % % %
+    (signature) local TC f l |- switch( expression_switch ){ switchCaseList } as statement : % % %
+    cursor TC f l |- statement : % % %
     -- if cursor matches `LOCAL`
     -- if statement <: switchStatement
     -- let switch( expression_switch ){ switchCaseList } = statement as switchStatement
@@ -15556,18 +15703,18 @@ relation Stmt_ok: cursor typingContext flow |- statement : typingContext flow st
     -- let table_enum tid_table_enum { _id*{_id <- _id*} } = typeIR as tableMetadataEnumTypeIR
     -- let tid_table = $strip_prefix($strip_suffix(tid_table_enum, ")"), "action_list(")
     -- let switchCase*{switchCase <- switchCase*} = $flatten_switchCaseList(switchCaseList)
-    -- SwitchCases_table_ok: TC f tid_table |- switchCase*{switchCase <- switchCase*} : f_post switchCaseIR*{switchCaseIR <- switchCaseIR*} # switchLabel*{switchLabel <- switchLabel*}
+    -- SwitchCases_table_ok: TC f l tid_table |- switchCase*{switchCase <- switchCase*} : f_post switchCaseIR*{switchCaseIR <- switchCaseIR*} # switchLabel*{switchLabel <- switchLabel*}
     -- if $distinct_<switchLabel>(switchLabel*{switchLabel <- switchLabel*})
     -- let switchStatementIR = switch( typedExpressionIR_switch ){ switchCaseIR*{switchCaseIR <- switchCaseIR*} }
-    -- output: % % % |- % : TC f_post switchStatementIR as statementIR
+    -- output: % % % % |- % : TC f_post switchStatementIR as statementIR
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:426.1-442.64
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:673.1-689.64
   rulegroup switchStatement-general
 
    match
 
-    (signature) local TC f |- switch( expression_switch ){ switchCaseList } as statement : % % %
-    cursor TC f |- statement : % % %
+    (signature) local TC f l |- switch( expression_switch ){ switchCaseList } as statement : % % %
+    cursor TC f l |- statement : % % %
     -- if cursor matches `LOCAL`
     -- if statement <: switchStatement
     -- let switch( expression_switch ){ switchCaseList } = statement as switchStatement
@@ -15579,21 +15726,21 @@ relation Stmt_ok: cursor typingContext flow |- statement : typingContext flow st
     -- let typeIR_switch = $type_of_typedExpressionIR(typedExpressionIR_switch)
     -- if $compat_switch(typeIR_switch)
     -- let switchCase*{switchCase <- switchCase*} = $flatten_switchCaseList(switchCaseList)
-    -- SwitchCases_general_ok: TC f typeIR_switch |- switchCase*{switchCase <- switchCase*} : f_post switchCaseIR*{switchCaseIR <- switchCaseIR*} # switchLabel*{switchLabel <- switchLabel*}
+    -- SwitchCases_general_ok: TC f l typeIR_switch |- switchCase*{switchCase <- switchCase*} : f_post switchCaseIR*{switchCaseIR <- switchCaseIR*} # switchLabel*{switchLabel <- switchLabel*}
     -- if $distinct_<switchLabel>(switchLabel*{switchLabel <- switchLabel*})
     -- let switchStatementIR = switch( typedExpressionIR_switch ){ switchCaseIR*{switchCaseIR <- switchCaseIR*} }
-    -- output: % % % |- % : TC f_post switchStatementIR as statementIR
+    -- output: % % % % |- % : TC f_post switchStatementIR as statementIR
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:105.1-110.124
-relation BlockElementStmt_ok: typingContext flow |- blockElementStatement : typingContext flow blockElementStatementIR
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:114.1-123.58
+relation BlockElementStmt_ok: typingContext flow loopctxt |- blockElementStatement : typingContext flow blockElementStatementIR
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:450.1-452.77
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:697.1-699.77
   rulegroup constantDeclaration
 
    match
 
-    (signature) TC_0 f |- constantDeclaration as blockElementStatement : % % %
-    TC_0 f |- blockElementStatement : % % %
+    (signature) TC_0 f l |- constantDeclaration as blockElementStatement : % % %
+    TC_0 f l |- blockElementStatement : % % %
     -- if blockElementStatement <: constantDeclaration
     -- let constantDeclaration = blockElementStatement as constantDeclaration
 
@@ -15603,15 +15750,15 @@ relation BlockElementStmt_ok: typingContext flow |- blockElementStatement : typi
     -- Decl_ok: local TC_0 |- constantDeclaration as declaration : TC_1 declarationIR
     -- if declarationIR <: constantDeclarationIR
     -- let constantDeclarationIR = declarationIR as constantDeclarationIR
-    -- output: % % |- % : TC_1 f constantDeclarationIR as blockElementStatementIR
+    -- output: % % % |- % : TC_1 f constantDeclarationIR as blockElementStatementIR
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:458.1-496.2
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:705.1-743.2
   rulegroup variableDeclaration
 
    match
 
-    (signature) TC_0 f |- annotationList type name initializerOpt ; as blockElementStatement : % % %
-    TC_0 f |- blockElementStatement : % % %
+    (signature) TC_0 f l |- annotationList type name initializerOpt ; as blockElementStatement : % % %
+    TC_0 f l |- blockElementStatement : % % %
     -- if blockElementStatement <: variableDeclaration
     -- let annotationList type name initializerOpt ; = blockElementStatement as variableDeclaration
 
@@ -15626,7 +15773,7 @@ relation BlockElementStmt_ok: typingContext flow |- blockElementStatement : typi
     -- let nameIR = $name(name)
     -- let TC_1 = $add_var_t(local, TC_0, nameIR, inout typeIR dyn ?())
     -- let variableDeclarationIR = annotationList typeIR nameIR ?() ;
-    -- output: % % |- % : TC_1 f variableDeclarationIR as blockElementStatementIR
+    -- output: % % % |- % : TC_1 f variableDeclarationIR as blockElementStatementIR
 
     rulepath initializer
     -- let initializerOpt' = initializerOpt
@@ -15643,78 +15790,78 @@ relation BlockElementStmt_ok: typingContext flow |- blockElementStatement : typi
     -- let nameIR = $name(name)
     -- let TC_1 = $add_var_t(local, TC_0, nameIR, inout typeIR dyn ?())
     -- let variableDeclarationIR = annotationList typeIR nameIR ?(= typedExpressionIR_init_cast) ;
-    -- output: % % |- % : TC_1 f variableDeclarationIR as blockElementStatementIR
+    -- output: % % % |- % : TC_1 f variableDeclarationIR as blockElementStatementIR
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:500.1-502.66
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:747.1-749.68
   rulegroup statement
 
    match
 
-    (signature) TC_0 f |- statement as blockElementStatement : % % %
-    TC_0 f |- blockElementStatement : % % %
+    (signature) TC_0 f l |- statement as blockElementStatement : % % %
+    TC_0 f l |- blockElementStatement : % % %
     -- if blockElementStatement <: statement
     -- let statement = blockElementStatement as statement
 
    paths
 
     rulepath statement
-    -- Stmt_ok: local TC_0 f |- statement : TC_1 f_post statementIR
-    -- output: % % |- % : TC_1 f_post statementIR as blockElementStatementIR
+    -- Stmt_ok: local TC_0 f l |- statement : TC_1 f_post statementIR
+    -- output: % % % |- % : TC_1 f_post statementIR as blockElementStatementIR
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:112.1-117.125
-relation BlockElementStmts_ok: typingContext flow |- blockElementStatement* : typingContext flow blockElementStatementIR*
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:125.1-134.59
+relation BlockElementStmts_ok: typingContext flow loopctxt |- blockElementStatement* : typingContext flow blockElementStatementIR*
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:508.1-509.25
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:755.1-756.27
   rulegroup nil
 
    match
 
-    (signature) TC f |- [] : % % %
-    TC f |- blockElementStatement*{blockElementStatement <- blockElementStatement*} : % % %
+    (signature) TC f l |- [] : % % %
+    TC f l |- blockElementStatement*{blockElementStatement <- blockElementStatement*} : % % %
     -- if blockElementStatement*{blockElementStatement <- blockElementStatement*} matches []
 
    paths
 
     rulepath nil
-    -- output: % % |- % : TC f []
+    -- output: % % % |- % : TC f []
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:511.1-517.75
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:758.1-764.84
   rulegroup cons
 
    match
 
-    (signature) TC_0 f_0 |- blockElementStatement_h :: blockElementStatement_t*{blockElementStatement_t <- blockElementStatement_t*} : % % %
-    TC_0 f_0 |- blockElementStatement*{blockElementStatement <- blockElementStatement*} : % % %
+    (signature) TC_0 f_0 l |- blockElementStatement_h :: blockElementStatement_t*{blockElementStatement_t <- blockElementStatement_t*} : % % %
+    TC_0 f_0 l |- blockElementStatement*{blockElementStatement <- blockElementStatement*} : % % %
     -- if blockElementStatement*{blockElementStatement <- blockElementStatement*} matches _ :: _
     -- let blockElementStatement_h :: blockElementStatement_t*{blockElementStatement_t <- blockElementStatement_t*} = blockElementStatement*{blockElementStatement <- blockElementStatement*}
 
    paths
 
     rulepath cons
-    -- BlockElementStmt_ok: TC_0 f_0 |- blockElementStatement_h : TC_1 f_1 blockElementStatementIR_h
-    -- BlockElementStmts_ok: TC_1 f_1 |- blockElementStatement_t*{blockElementStatement_t <- blockElementStatement_t*} : TC_2 f_2 blockElementStatementIR_t*{blockElementStatementIR_t <- blockElementStatementIR_t*}
-    -- output: % % |- % : TC_2 f_2 blockElementStatementIR_h :: blockElementStatementIR_t*{blockElementStatementIR_t <- blockElementStatementIR_t*}
+    -- BlockElementStmt_ok: TC_0 f_0 l |- blockElementStatement_h : TC_1 f_1 blockElementStatementIR_h
+    -- BlockElementStmts_ok: TC_1 f_1 l |- blockElementStatement_t*{blockElementStatement_t <- blockElementStatement_t*} : TC_2 f_2 blockElementStatementIR_t*{blockElementStatementIR_t <- blockElementStatementIR_t*}
+    -- output: % % % |- % : TC_2 f_2 blockElementStatementIR_h :: blockElementStatementIR_t*{blockElementStatementIR_t <- blockElementStatementIR_t*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:119.1-124.116
-relation Block_ok: typingContext flow |- blockStatement : typingContext flow blockStatementIR
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:136.1-145.50
+relation Block_ok: typingContext flow loopctxt |- blockStatement : typingContext flow blockStatementIR
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:525.1-534.72
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:772.1-781.72
   rulegroup 
 
    match
 
-    (signature) TC_0 f |- annotationList { blockElementStatementList } : % % %
-    TC_0 f |- annotationList { blockElementStatementList } : % % %
+    (signature) TC_0 f l |- annotationList { blockElementStatementList } : % % %
+    TC_0 f l |- annotationList { blockElementStatementList } : % % %
 
    paths
 
     rulepath 
     -- let blockElementStatement*{blockElementStatement <- blockElementStatement*} = $flatten_blockElementStatementList(blockElementStatementList)
-    -- BlockElementStmts_ok: TC_0 f |- blockElementStatement*{blockElementStatement <- blockElementStatement*} : TC_1 f_post blockElementStatementIR*{blockElementStatementIR <- blockElementStatementIR*}
+    -- BlockElementStmts_ok: TC_0 f l |- blockElementStatement*{blockElementStatement <- blockElementStatement*} : TC_1 f_post blockElementStatementIR*{blockElementStatementIR <- blockElementStatementIR*}
     -- let blockStatementIR = annotationList { blockElementStatementIR*{blockElementStatementIR <- blockElementStatementIR*} }
-    -- output: % % |- % : TC_1 f_post blockStatementIR
+    -- output: % % % |- % : TC_1 f_post blockStatementIR
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:131.1-135.74
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:152.1-156.74
 relation Parameter_ok: cursor typingContext |- parameter : parameterIR # tid*
 
   ;; ../../../../spec-concrete/5.09-typing-parameter.watsup:13.1-44.2
@@ -15752,7 +15899,7 @@ relation Parameter_ok: cursor typingContext |- parameter : parameterIR # tid*
     -- Expr_eval_lctk: p TC |- typedExpressionIR_init_cast ~> value_init
     -- output: % % |- % : annotationList direction typeIR nameIR ?(= value_init) # tid_fresh*{tid_fresh <- tid_fresh*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:137.1-141.79
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:158.1-162.79
 relation Parameters_ok: cursor typingContext |- parameter* : parameterListIR # tid*
 
   ;; ../../../../spec-concrete/5.09-typing-parameter.watsup:52.1-53.27
@@ -15786,7 +15933,7 @@ relation Parameters_ok: cursor typingContext |- parameter* : parameterListIR # t
     -- Parameters_ok: p TC |- parameter_t*{parameter_t <- parameter_t*} : parameterIR_t*{parameterIR_t <- parameterIR_t*} # tid_fresh_t*{tid_fresh_t <- tid_fresh_t*}
     -- output: % % |- % : parameterIR_h :: parameterIR_t*{parameterIR_t <- parameterIR_t*} # tid_fresh_h*{tid_fresh_h <- tid_fresh_h*} ++ tid_fresh_t*{tid_fresh_t <- tid_fresh_t*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:143.1-148.86
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:164.1-169.86
 relation ConstructorParameter_ok: cursor typingContext |- constructorParameter : constructorParameterIR # tid*
 
   ;; ../../../../spec-concrete/5.09-typing-parameter.watsup:67.1-70.64
@@ -15803,7 +15950,7 @@ relation ConstructorParameter_ok: cursor typingContext |- constructorParameter :
     -- Parameter_ok: p TC |- constructorParameter : constructorParameterIR # tid_fresh*{tid_fresh <- tid_fresh*}
     -- output: % % |- % : constructorParameterIR # tid_fresh*{tid_fresh <- tid_fresh*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:150.1-155.91
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:171.1-176.91
 relation ConstructorParameters_ok: cursor typingContext |- constructorParameter* : constructorParameterListIR # tid*
 
   ;; ../../../../spec-concrete/5.09-typing-parameter.watsup:78.1-81.66
@@ -15820,7 +15967,7 @@ relation ConstructorParameters_ok: cursor typingContext |- constructorParameter*
     -- Parameters_ok: p TC |- constructorParameter*{constructorParameter <- constructorParameter*} : constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} # tid_fresh*{tid_fresh <- tid_fresh*}
     -- output: % % |- % : constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} # tid_fresh*{tid_fresh <- tid_fresh*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:161.1-166.86
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:182.1-187.86
 relation ExternMethod_ok: typingContext tid |- externMethodPrototype : typingContext externMethodPrototypeIR
 
   ;; ../../../../spec-concrete/5.12-typing-extern-method.watsup:9.1-39.79
@@ -15885,7 +16032,7 @@ relation ExternMethod_ok: typingContext tid |- externMethodPrototype : typingCon
     -- let externMethodPrototypeIR = annotationList abstract typeIR_ret nameIR < tid_expl*{tid_expl <- tid_expl*} , tid_impl*{tid_impl <- tid_impl*} >( parameterIR*{parameterIR <- parameterIR*} ) ;
     -- output: % % |- % : TC_4 externMethodPrototypeIR
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:168.1-173.87
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:189.1-194.87
 relation ExternMethods_ok: typingContext tid |- externMethodPrototype* : typingContext externMethodPrototypeIR*
 
   ;; ../../../../spec-concrete/5.12-typing-extern-method.watsup:81.1-82.32
@@ -15919,7 +16066,7 @@ relation ExternMethods_ok: typingContext tid |- externMethodPrototype* : typingC
     -- ExternMethods_ok: TC_1 tid_extern |- externMethodPrototype_t*{externMethodPrototype_t <- externMethodPrototype_t*} : TC_2 externMethodPrototypeIR_t*{externMethodPrototypeIR_t <- externMethodPrototypeIR_t*}
     -- output: % % |- % : TC_2 externMethodPrototypeIR_h :: externMethodPrototypeIR_t*{externMethodPrototypeIR_t <- externMethodPrototypeIR_t*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:175.1-180.91
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:196.1-201.91
 relation ExternConstructor_ok: typingContext tid |- externConstructorPrototype : typingContext externConstructorPrototypeIR
 
   ;; ../../../../spec-concrete/5.12-typing-extern-method.watsup:100.1-124.80
@@ -15950,7 +16097,7 @@ relation ExternConstructor_ok: typingContext tid |- externConstructorPrototype :
     -- let externConstructorPrototypeIR = annotationList nameIR <, tid_impl*{tid_impl <- tid_impl*} >( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} );
     -- output: % % |- % : TC_1 externConstructorPrototypeIR
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:182.1-187.92
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:203.1-208.92
 relation ExternConstructors_ok: typingContext tid |- externConstructorPrototype* : typingContext externConstructorPrototypeIR*
 
   ;; ../../../../spec-concrete/5.12-typing-extern-method.watsup:132.1-133.32
@@ -15984,7 +16131,7 @@ relation ExternConstructors_ok: typingContext tid |- externConstructorPrototype*
     -- ExternConstructors_ok: TC_1 tid_extern |- externConstructorPrototype_t*{externConstructorPrototype_t <- externConstructorPrototype_t*} : TC_2 externConstructorPrototypeIR_t*{externConstructorPrototypeIR_t <- externConstructorPrototypeIR_t*}
     -- output: % % |- % : TC_2 externConstructorPrototypeIR_h :: externConstructorPrototypeIR_t*{externConstructorPrototypeIR_t <- externConstructorPrototypeIR_t*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:193.1-197.54
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:214.1-218.54
 relation ParserTransition_ok: typingContext nameIR* |- transitionStatement : transitionStatementIR
 
   ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:11.1-15.7
@@ -16021,7 +16168,7 @@ relation ParserTransition_ok: typingContext nameIR* |- transitionStatement : tra
     -- let transitionStatementIR = transition nameIR ;
     -- output: % % |- % : transitionStatementIR
 
-  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:313.1-328.75
+  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:302.1-317.75
   rulegroup select
 
    match
@@ -16045,10 +16192,10 @@ relation ParserTransition_ok: typingContext nameIR* |- transitionStatement : tra
     -- let transitionStatementIR = transition select( typedExpressionIR_key*{typedExpressionIR_key <- typedExpressionIR_key*} ){ selectCaseIR*{selectCaseIR <- selectCaseIR*} } as stateExpressionIR
     -- output: % % |- % : transitionStatementIR
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:199.1-203.86
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:220.1-224.86
 relation ParserStmt_ok: typingContext |- parserStatement : typingContext parserStatementIR
 
-  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:338.1-342.55
+  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:327.1-331.55
   rulegroup constantDeclaration
 
    match
@@ -16066,7 +16213,7 @@ relation ParserStmt_ok: typingContext |- parserStatement : typingContext parserS
     -- let constantDeclarationIR = declarationIR as constantDeclarationIR
     -- output: % |- % : TC_1 constantDeclarationIR as parserStatementIR
 
-  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:348.1-386.2
+  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:337.1-375.2
   rulegroup variableDeclaration
 
    match
@@ -16106,7 +16253,7 @@ relation ParserStmt_ok: typingContext |- parserStatement : typingContext parserS
     -- let variableDeclarationIR = annotationList typeIR nameIR ?(= typedExpressionIR_init_cast) ;
     -- output: % |- % : TC_1 variableDeclarationIR as parserStatementIR
 
-  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:390.1-394.57
+  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:379.1-383.63
   rulegroup emptyStatement
 
    match
@@ -16119,14 +16266,14 @@ relation ParserStmt_ok: typingContext |- parserStatement : typingContext parserS
    paths
 
     rulepath emptyStatement
-    -- Stmt_ok: local TC cont |- emptyStatement as statement : typingContext flow statementIR
+    -- Stmt_ok: local TC cont noloop |- emptyStatement as statement : typingContext flow statementIR
     -- if (typingContext = TC)
     -- if flow matches `CONT`
     -- if statementIR <: emptyStatementIR
     -- let emptyStatementIR = statementIR as emptyStatementIR
     -- output: % |- % : TC emptyStatementIR as parserStatementIR
 
-  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:398.1-402.65
+  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:387.1-391.72
   rulegroup assignmentStatement
 
    match
@@ -16139,13 +16286,13 @@ relation ParserStmt_ok: typingContext |- parserStatement : typingContext parserS
    paths
 
     rulepath assignmentStatement
-    -- Stmt_ok: local TC_0 cont |- assignmentStatement as statement : TC_1 flow statementIR
+    -- Stmt_ok: local TC_0 cont noloop |- assignmentStatement as statement : TC_1 flow statementIR
     -- if flow matches `CONT`
     -- if statementIR <: assignmentStatementIR
     -- let assignmentStatementIR = statementIR as assignmentStatementIR
     -- output: % |- % : TC_1 assignmentStatementIR as parserStatementIR
 
-  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:406.1-410.59
+  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:395.1-399.66
   rulegroup callStatement
 
    match
@@ -16158,13 +16305,13 @@ relation ParserStmt_ok: typingContext |- parserStatement : typingContext parserS
    paths
 
     rulepath callStatement
-    -- Stmt_ok: local TC_0 cont |- callStatement as statement : TC_1 flow statementIR
+    -- Stmt_ok: local TC_0 cont noloop |- callStatement as statement : TC_1 flow statementIR
     -- if flow matches `CONT`
     -- if statementIR <: callStatementIR
     -- let callStatementIR = statementIR as callStatementIR
     -- output: % |- % : TC_1 callStatementIR as parserStatementIR
 
-  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:414.1-418.72
+  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:403.1-407.79
   rulegroup directApplicationStatement
 
    match
@@ -16177,13 +16324,13 @@ relation ParserStmt_ok: typingContext |- parserStatement : typingContext parserS
    paths
 
     rulepath directApplicationStatement
-    -- Stmt_ok: local TC_0 cont |- directApplicationStatement as statement : TC_1 flow statementIR
+    -- Stmt_ok: local TC_0 cont noloop |- directApplicationStatement as statement : TC_1 flow statementIR
     -- if flow matches `CONT`
     -- if statementIR <: directApplicationStatementIR
     -- let directApplicationStatementIR = statementIR as directApplicationStatementIR
     -- output: % |- % : TC_1 directApplicationStatementIR as parserStatementIR
 
-  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:423.1-433.72
+  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:412.1-422.72
   rulegroup parserBlockStatement
 
    match
@@ -16203,7 +16350,7 @@ relation ParserStmt_ok: typingContext |- parserStatement : typingContext parserS
     -- let parserBlockStatementIR = annotationList { parserStatementIR*{parserStatementIR <- parserStatementIR*} }
     -- output: % |- % : TC_1 parserBlockStatementIR as parserStatementIR
 
-  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:441.1-473.2
+  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:430.1-462.2
   rulegroup parserConditionalStatement
 
    match
@@ -16236,10 +16383,10 @@ relation ParserStmt_ok: typingContext |- parserStatement : typingContext parserS
     -- ParserStmt_ok: TC |- parserStatement_else : TC_else parserStatementIR_else
     -- output: % |- % : TC if( typedExpressionIR_cond ) parserStatementIR_then else parserStatementIR_else as parserStatementIR
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:205.1-209.87
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:226.1-230.87
 relation ParserStmts_ok: typingContext |- parserStatement* : typingContext parserStatementIR*
 
-  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:481.1-482.21
+  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:470.1-471.21
   rulegroup nil
 
    match
@@ -16253,7 +16400,7 @@ relation ParserStmts_ok: typingContext |- parserStatement* : typingContext parse
     rulepath nil
     -- output: % |- % : TC []
 
-  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:484.1-490.55
+  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:473.1-479.55
   rulegroup cons
 
    match
@@ -16270,7 +16417,7 @@ relation ParserStmts_ok: typingContext |- parserStatement* : typingContext parse
     -- ParserStmts_ok: TC_1 |- parserStatement_t*{parserStatement_t <- parserStatement_t*} : TC_2 parserStatementIR_t*{parserStatementIR_t <- parserStatementIR_t*}
     -- output: % |- % : TC_2 parserStatementIR_h :: parserStatementIR_t*{parserStatementIR_t <- parserStatementIR_t*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:211.1-215.46
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:232.1-236.46
 relation ParserState_ok: typingContext nameIR* |- parserState : parserStateIR
 
   ;; ../../../../spec-concrete/5.13.2-typing-parser-state.watsup:8.1-26.82
@@ -16293,7 +16440,7 @@ relation ParserState_ok: typingContext nameIR* |- parserState : parserStateIR
     -- let parserStateIR = annotationList state nameIR { parserStatementIR*{parserStatementIR <- parserStatementIR*} transitionStatementIR }
     -- output: % % |- % : parserStateIR
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:217.1-221.47
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:238.1-242.47
 relation ParserStates_ok: typingContext |- parserState* : parserStateIR*
 
   ;; ../../../../spec-concrete/5.13.2-typing-parser-state.watsup:34.1-46.77
@@ -16316,7 +16463,7 @@ relation ParserStates_ok: typingContext |- parserState* : parserStateIR*
     -- (ParserState_ok: TC nameIR_state_impl*{nameIR_state_impl <- nameIR_state_impl*} |- parserState : parserStateIR)*{parserState <- parserState*, parserStateIR <- parserStateIR*}
     -- output: % |- % : parserStateIR*{parserStateIR <- parserStateIR*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:223.1-228.94
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:244.1-249.94
 relation ParserLocalDecl_ok: typingContext |- parserLocalDeclaration : typingContext parserLocalDeclarationIR
 
   ;; ../../../../spec-concrete/5.13.3-typing-parser-declaration.watsup:9.1-13.55
@@ -16421,7 +16568,7 @@ relation ParserLocalDecl_ok: typingContext |- parserLocalDeclaration : typingCon
     -- let valueSetDeclarationIR = annotationList value_set< typeIR >( typedExpressionIR ) nameIR ;
     -- output: % |- % : TC_1 valueSetDeclarationIR as parserLocalDeclarationIR
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:230.1-235.95
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:251.1-256.95
 relation ParserLocalDecls_ok: typingContext |- parserLocalDeclaration* : typingContext parserLocalDeclarationIR*
 
   ;; ../../../../spec-concrete/5.13.3-typing-parser-declaration.watsup:98.1-99.21
@@ -16455,7 +16602,7 @@ relation ParserLocalDecls_ok: typingContext |- parserLocalDeclaration* : typingC
     -- ParserLocalDecls_ok: TC_1 |- parserLocalDeclaration_t*{parserLocalDeclaration_t <- parserLocalDeclaration_t*} : TC_2 parserLocalDeclarationIR_t*{parserLocalDeclarationIR_t <- parserLocalDeclarationIR_t*}
     -- output: % |- % : TC_2 parserLocalDeclarationIR_h :: parserLocalDeclarationIR_t*{parserLocalDeclarationIR_t <- parserLocalDeclarationIR_t*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:241.1-245.78
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:262.1-266.78
 relation TableKey_ok: typingContext tableContext |- tableKey : tableContext tableKeyIR
 
   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:45.1-63.77
@@ -16480,7 +16627,7 @@ relation TableKey_ok: typingContext tableContext |- tableKey : tableContext tabl
     -- let tableKeyIR = typedExpressionIR : nameIR_matchkind annotationList ;
     -- output: % % |- % : TBLC_2 tableKeyIR
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:247.1-251.79
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:268.1-272.79
 relation TableKeys_ok: typingContext tableContext |- tableKey* : tableContext tableKeyListIR
 
   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:71.1-72.28
@@ -16514,7 +16661,7 @@ relation TableKeys_ok: typingContext tableContext |- tableKey* : tableContext ta
     -- TableKeys_ok: TC TBLC_1 |- tableKey_t*{tableKey_t <- tableKey_t*} : TBLC_2 tableKeyIR_t*{tableKeyIR_t <- tableKeyIR_t*}
     -- output: % % |- % : TBLC_2 tableKeyIR_h :: tableKeyIR_t*{tableKeyIR_t <- tableKeyIR_t*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:253.1-258.47
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:274.1-279.47
 relation Call_action_partial_ok: typingContext |- parameterIR* @ argumentListIR : parameterIR* , parameterIR* @ argumentListIR
 
   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:102.1-114.42
@@ -16533,7 +16680,7 @@ relation Call_action_partial_ok: typingContext |- parameterIR* @ argumentListIR 
     -- Call_convention_ok: local TC action |- parameterIR_data*{parameterIR_data <- parameterIR_data*} @ argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- output: % |- % @ % : parameterIR_data*{parameterIR_data <- parameterIR_data*} , parameterIR_control*{parameterIR_control <- parameterIR_control*} @ argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:260.1-264.81
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:281.1-285.81
 relation TableAction_ok: typingContext tableContext |- tableAction : tableContext tableActionIR
 
   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:121.1-137.63
@@ -16587,7 +16734,7 @@ relation TableAction_ok: typingContext tableContext |- tableAction : tableContex
     -- let tableActionIR = annotationList prefixedNameIR ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} ) #( parameterIR_data*{parameterIR_data <- parameterIR_data*} , parameterIR_control*{parameterIR_control <- parameterIR_control*} );
     -- output: % % |- % : TBLC_1 tableActionIR
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:266.1-270.82
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:287.1-291.82
 relation TableActions_ok: typingContext tableContext |- tableAction* : tableContext tableActionListIR
 
   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:168.1-169.28
@@ -16621,7 +16768,7 @@ relation TableActions_ok: typingContext tableContext |- tableAction* : tableCont
     -- TableActions_ok: TC TBLC_1 |- tableAction_t*{tableAction_t <- tableAction_t*} : TBLC_2 tableActionIR_t*{tableActionIR_t <- tableActionIR_t*}
     -- output: % % |- % : TBLC_2 tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:272.1-277.47
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:293.1-298.47
 relation Call_action_default_ok: typingContext |- parameterIR* @ argumentListIR : parameterIR* , parameterIR* @ argumentListIR
 
   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:183.1-193.42
@@ -16639,7 +16786,7 @@ relation Call_action_default_ok: typingContext |- parameterIR* @ argumentListIR 
     -- Call_convention_ok: local TC action |- parameterIR*{parameterIR <- parameterIR*} @ argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- output: % |- % @ % : parameterIR_data*{parameterIR_data <- parameterIR_data*} , parameterIR_control*{parameterIR_control <- parameterIR_control*} @ argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:279.1-283.48
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:300.1-304.48
 relation TableDefaultAction_ok: typingContext tableContext |- initializer : tableActionReferenceIR
 
   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:197.1-202.56
@@ -16688,7 +16835,7 @@ relation TableDefaultAction_ok: typingContext tableContext |- initializer : tabl
     -- (if (argumentIR_action_data = argumentIR_cast_data))*{argumentIR_action_data <- argumentIR_action_data*, argumentIR_cast_data <- argumentIR_cast_data*}
     -- output: % % |- % : prefixedNameIR ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:285.1-289.86
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:306.1-310.86
 relation TableEntry_keyset_ok: typingContext tableContext |- keysetExpression : tableEntryState keysetExpressionIR
 
   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:431.1-438.53
@@ -16915,7 +17062,7 @@ relation TableEntry_keyset_ok: typingContext tableContext |- keysetExpression : 
     -- TableEntry_keysets_simple_ok: TC TBLC nolpm |- TBLC.keys @ simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*} : TBLS simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*}
     -- output: % % |- % : TBLS ( simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} ) as keysetExpressionIR
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:291.1-295.56
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:312.1-316.56
 relation TableEntry_action_ok: typingContext tableContext |- tableActionReference : tableActionReferenceIR
 
   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:577.1-581.56
@@ -16960,7 +17107,7 @@ relation TableEntry_action_ok: typingContext tableContext |- tableActionReferenc
     -- (if (argumentIR_action_data = argumentIR_cast_data))*{argumentIR_action_data <- argumentIR_action_data*, argumentIR_cast_data <- argumentIR_cast_data*}
     -- output: % % |- % : prefixedNameIR ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:297.1-303.89
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:318.1-324.89
 relation TableEntry_priority_ok: typingContext tableContext tableEntryState |- tableEntryPriority? : tableContext tableEntryPriorityOptIR
 
   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:616.1-680.2
@@ -17112,7 +17259,7 @@ relation TableEntry_priority_ok: typingContext tableContext tableEntryState |- t
     -- let TBLC_1 = $add_table_priority(TBLC_0, n)
     -- output: % % % |- % : TBLC_1 ?(priority=( typedExpressionIR ):)
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:305.1-309.80
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:326.1-330.80
 relation TableEntry_ok: typingContext tableContext |- tableEntry : tableContext tableEntryIR
 
   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:755.1-770.73
@@ -17155,7 +17302,7 @@ relation TableEntry_ok: typingContext tableContext |- tableEntry : tableContext 
     -- let tableEntryIR = constOptIR tableEntryPriorityOptIR keysetExpressionIR : tableActionReferenceIR annotationList ;
     -- output: % % |- % : TBLC_1 tableEntryIR
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:311.1-315.82
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:332.1-336.82
 relation TableEntries_ok: typingContext tableContext |- tableEntry* : tableContext tableEntryListIR
 
   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:796.1-797.28
@@ -17189,7 +17336,7 @@ relation TableEntries_ok: typingContext tableContext |- tableEntry* : tableConte
     -- TableEntries_ok: TC TBLC_1 |- tableEntry_t*{tableEntry_t <- tableEntry_t*} : TBLC_2 tableEntryIR_t*{tableEntryIR_t <- tableEntryIR_t*}
     -- output: % % |- % : TBLC_2 tableEntryIR_h :: tableEntryIR_t*{tableEntryIR_t <- tableEntryIR_t*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:317.1-321.83
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:338.1-342.83
 relation TableProperty_ok: typingContext tableContext |- tableProperty : tableContext tablePropertyIR
 
   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:813.1-817.63
@@ -17329,7 +17476,7 @@ relation TableProperty_ok: typingContext tableContext |- tableProperty : tableCo
     -- let tablePropertyIR = annotationList constOptIR custom nameIR = typedExpressionIR ; as tablePropertyIR
     -- output: % % |- % : TBLC tablePropertyIR
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:323.1-327.85
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:344.1-348.85
 relation TableProperties_ok: typingContext tableContext |- tableProperty* : tableContext tablePropertyListIR
 
   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:940.1-941.28
@@ -17363,7 +17510,7 @@ relation TableProperties_ok: typingContext tableContext |- tableProperty* : tabl
     -- TableProperties_ok: TC TBLC_1 |- tableProperty_t*{tableProperty_t <- tableProperty_t*} : TBLC_2 tablePropertyIR_t*{tablePropertyIR_t <- tablePropertyIR_t*}
     -- output: % % |- % : TBLC_2 tablePropertyIR_h :: tablePropertyIR_t*{tablePropertyIR_t <- tablePropertyIR_t*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:329.1-333.75
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:350.1-354.75
 relation Table_ok: typingContext |- tableProperty* : tableContext tablePropertyListIR
 
   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:1010.1-1042.2
@@ -17394,7 +17541,7 @@ relation Table_ok: typingContext |- tableProperty* : tableContext tablePropertyL
     -- TableProperties_ok: TC TBLC_0 |- tableProperty*{tableProperty <- tableProperty*} : TBLC_1 tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}
     -- output: % |- % : TBLC_1 tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:335.1-339.74
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:356.1-360.74
 relation TableType_ok: typingContext tableContext |- name : typingContext typeIR
 
   ;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:1045.1-1069.67
@@ -17421,7 +17568,7 @@ relation TableType_ok: typingContext tableContext |- name : typingContext typeIR
     -- let typeIR_table = table nameIR { tableMetadataStructTypeIR } as typeIR
     -- output: % % |- % : TC_1 typeIR_table
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:341.1-346.95
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:362.1-367.95
 relation ControlLocalDecl_ok: typingContext |- controlLocalDeclaration : typingContext controlLocalDeclarationIR
 
   ;; ../../../../spec-concrete/5.14.2-typing-control-declaration.watsup:9.1-11.77
@@ -17543,7 +17690,7 @@ relation ControlLocalDecl_ok: typingContext |- controlLocalDeclaration : typingC
     -- let tableDeclarationIR = annotationList table typeIR_table nameIR { tablePropertyIR*{tablePropertyIR <- tablePropertyIR*} }
     -- output: % |- % : TC_3 tableDeclarationIR as controlLocalDeclarationIR
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:348.1-353.96
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:369.1-374.96
 relation ControlLocalDecls_ok: typingContext |- controlLocalDeclaration* : typingContext controlLocalDeclarationIR*
 
   ;; ../../../../spec-concrete/5.14.2-typing-control-declaration.watsup:98.1-99.21
@@ -17577,7 +17724,7 @@ relation ControlLocalDecls_ok: typingContext |- controlLocalDeclaration* : typin
     -- ControlLocalDecls_ok: TC_1 |- controlLocalDeclaration_t*{controlLocalDeclaration_t <- controlLocalDeclaration_t*} : TC_2 controlLocalDeclarationIR_t*{controlLocalDeclarationIR_t <- controlLocalDeclarationIR_t*}
     -- output: % |- % : TC_2 controlLocalDeclarationIR_h :: controlLocalDeclarationIR_t*{controlLocalDeclarationIR_t <- controlLocalDeclarationIR_t*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:359.1-363.82
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:380.1-384.82
 relation Decl_ok: cursor typingContext |- declaration : typingContext declarationIR
 
   ;; ../../../../spec-concrete/5.11-typing-declaration.watsup:9.1-29.57
@@ -17753,7 +17900,7 @@ relation Decl_ok: cursor typingContext |- declaration : typingContext declaratio
     -- Parameters_ok: local TC_1 |- parameter*{parameter <- parameter*} : parameterIR*{parameterIR <- parameterIR*} # tid_impl*{tid_impl <- tid_impl*}
     -- let TC_2 = $add_parameters_t(local, TC_1, parameterIR*{parameterIR <- parameterIR*})
     -- let TC_3 = TC_2[local.kind = function: typeIR_ret]
-    -- Block_ok: TC_3 cont |- blockStatement : _typingContext f blockStatementIR
+    -- Block_ok: TC_3 cont noloop |- blockStatement : _typingContext f blockStatementIR
     -- if ((f = ret) \/ (typeIR_ret = void as typeIR))
     -- let cid = $cid(name, parameterList)
     -- let definedFunctionTypeDefIR = function< tid_expl*{tid_expl <- tid_expl*} , tid_impl*{tid_impl <- tid_impl*} >( parameterIR*{parameterIR <- parameterIR*} ): typeIR_ret
@@ -17781,7 +17928,7 @@ relation Decl_ok: cursor typingContext |- declaration : typingContext declaratio
     -- Parameters_ok: local TC_1 |- parameter*{parameter <- parameter*} : parameterIR*{parameterIR <- parameterIR*} # tid*{tid <- tid*}
     -- if tid*{tid <- tid*} matches []
     -- let TC_2 = $add_parameters_t(local, TC_1, parameterIR*{parameterIR <- parameterIR*})
-    -- Block_ok: TC_2 cont |- blockStatement : _typingContext _flow blockStatementIR
+    -- Block_ok: TC_2 cont noloop |- blockStatement : _typingContext _flow blockStatementIR
     -- let cid = $cid(name, parameterList)
     -- let actionTypeDefIR = action( parameterIR*{parameterIR <- parameterIR*} )
     -- if CallableTypeDef_wf: $bound(p, TC_0) |- actionTypeDefIR as callableTypeDefIR holds
@@ -17973,7 +18120,7 @@ relation Decl_ok: cursor typingContext |- declaration : typingContext declaratio
     -- let controlLocalDeclaration*{controlLocalDeclaration <- controlLocalDeclaration*} = $flatten_controlLocalDeclarationList(controlLocalDeclarationList)
     -- ControlLocalDecls_ok: TC_3 |- controlLocalDeclaration*{controlLocalDeclaration <- controlLocalDeclaration*} : TC_4 controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*}
     -- let TC_5 = TC_4[local.kind = control_apply_method]
-    -- Block_ok: TC_5 cont |- controlBody : _typingContext _flow controlBodyIR
+    -- Block_ok: TC_5 cont noloop |- controlBody : _typingContext _flow controlBodyIR
     -- let callableTypeDefIR = control_apply( parameterIR*{parameterIR <- parameterIR*} ) as callableTypeDefIR
     -- if CallableTypeDef_wf: $bound(global, TC_0) |- callableTypeDefIR holds
     -- let cid = $cid_(name, constructorParameterListOpt)
@@ -18317,7 +18464,7 @@ relation Decl_ok: cursor typingContext |- declaration : typingContext declaratio
     -- let packageTypeDeclarationIR = annotationList package nameIR < tid_expl*{tid_expl <- tid_expl*} , tid_impl*{tid_impl <- tid_impl*} >( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} );
     -- output: % % |- % : TC_4 packageTypeDeclarationIR as declarationIR
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:365.1-370.83
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:386.1-391.83
 relation Decls_ok: cursor typingContext |- declaration* : typingContext declarationIR*
 
   ;; ../../../../spec-concrete/5.11-typing-declaration.watsup:999.1-1000.23
@@ -18351,7 +18498,7 @@ relation Decls_ok: cursor typingContext |- declaration* : typingContext declarat
     -- Decls_ok: p TC_1 |- declaration_t*{declaration_t <- declaration_t*} : TC_2 declarationIR_t*{declarationIR_t <- declarationIR_t*}
     -- output: % % |- % : TC_2 declarationIR_h :: declarationIR_t*{declarationIR_t <- declarationIR_t*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:372.1-376.44
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:393.1-397.44
 relation Program_ok: |- p4program : p4programIR
 
   ;; ../../../../spec-concrete/5.11-typing-declaration.watsup:1012.1-1016.65
@@ -18370,12 +18517,12 @@ relation Program_ok: |- p4program : p4programIR
     -- Decls_ok: global TC_0 |- declaration*{declaration <- declaration*} : TC_1 declarationIR*{declarationIR <- declarationIR*}
     -- output: |- % : declarationIR*{declarationIR <- declarationIR*} ;
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:386.18-386.35
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:407.18-407.35
 syntax actctxt = 
    | action
    | noaction
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:388.1-393.84
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:409.1-414.84
 relation Call_convention_expr_ok: cursor typingContext actctxt |- parameterIR @ typedExpressionIR : typedExpressionIR
 
   ;; ../../../../spec-concrete/5.15.1-typing-call-convention.watsup:58.1-63.59
@@ -18438,7 +18585,7 @@ relation Call_convention_expr_ok: cursor typingContext actctxt |- parameterIR @ 
     -- if (dyn =/= $ctk_of_typedExpressionIR(typedExpressionIR_arg))
     -- output: % % % |- % @ % : typedExpressionIR_arg
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:395.1-400.84
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:416.1-421.84
 relation Call_convention_argument_ok: cursor typingContext actctxt |- parameterIR @ argumentIR : argumentIR
 
   ;; ../../../../spec-concrete/5.15.1-typing-call-convention.watsup:145.1-150.45
@@ -18506,7 +18653,7 @@ relation Call_convention_argument_ok: cursor typingContext actctxt |- parameterI
     -- if direction matches `OUT`
     -- output: % % % |- % @ % : _
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:402.1-407.84
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:423.1-428.84
 relation Call_convention_ok: cursor typingContext actctxt |- parameterIR* @ argumentListIR : argumentListIR
 
   ;; ../../../../spec-concrete/5.15.1-typing-call-convention.watsup:178.1-179.35
@@ -18543,26 +18690,26 @@ relation Call_convention_ok: cursor typingContext actctxt |- parameterIR* @ argu
     -- Call_convention_ok: p TC actctxt |- parameterIR_t*{parameterIR_t <- parameterIR_t*} @ argumentIR_t*{argumentIR_t <- argumentIR_t*} : argumentIR_t_cast*{argumentIR_t_cast <- argumentIR_t_cast*}
     -- output: % % % |- % @ % : argumentIR_h_cast :: argumentIR_t_cast*{argumentIR_t_cast <- argumentIR_t_cast*}
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:417.1-417.54
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:438.1-438.54
 def $is_static_callableTarget(callableTargetIR) : ctk =
 
-  ;; ../../../../spec-concrete/5.04-typing-relation.watsup:419.1-421.56
+  ;; ../../../../spec-concrete/5.04-typing-relation.watsup:440.1-442.56
   clause 0 : (callableTargetIR) = lctk
   -- if callableTargetIR matches `%.%`
   -- let _typedExpressionIR . nameIR = callableTargetIR
   -- if nameIR <- ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]
 
-  ;; ../../../../spec-concrete/5.04-typing-relation.watsup:422.1-424.56
+  ;; ../../../../spec-concrete/5.04-typing-relation.watsup:443.1-445.56
   clause 1 : (callableTargetIR) = lctk
   -- if callableTargetIR matches `TYPE%.%`
   -- let type _prefixedNameIR . nameIR = callableTargetIR
   -- if nameIR <- ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]
 
-  ;; ../../../../spec-concrete/5.04-typing-relation.watsup:425.1-426.15
+  ;; ../../../../spec-concrete/5.04-typing-relation.watsup:446.1-447.15
   clause 2 : (_callableTargetIR) = dyn
   -- otherwise
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:428.1-432.49
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:449.1-453.49
 relation CallableTarget_ok: cursor typingContext |- callableTarget : callableTargetIR
 
   ;; ../../../../spec-concrete/5.15.4-typing-callable-call.watsup:13.1-26.2
@@ -18631,7 +18778,7 @@ relation CallableTarget_ok: cursor typingContext |- callableTarget : callableTar
     -- CallableTarget_ok: p TC |- expression : callableTargetIR
     -- output: % % |- % : ( callableTargetIR )
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:434.1-438.49
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:455.1-459.49
 relation CallableTarget_lvalue_ok: cursor typingContext |- lvalue : callableTargetIR
 
   ;; ../../../../spec-concrete/5.15.4-typing-callable-call.watsup:61.1-64.62
@@ -18649,7 +18796,7 @@ relation CallableTarget_lvalue_ok: cursor typingContext |- lvalue : callableTarg
     -- CallableTarget_ok: p TC |- expression : callableTargetIR
     -- output: % % |- % : callableTargetIR
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:440.1-443.29
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:461.1-464.29
 relation CallableType_ok: cursor typingContext |- callableTargetIR < typeArgumentListIR >( argumentIR* ): callableTypeIR <# tid* >(# id* )
 
   ;; ../../../../spec-concrete/5.15.4-typing-callable-call.watsup:75.1-104.2
@@ -18928,7 +19075,7 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR < typeArgumen
     -- CallableType_ok: p TC |- callableTargetIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} ): callableTypeIR <# tid_inserted*{tid_inserted <- tid_inserted*} >(# id_default*{id_default <- id_default*} )
     -- output: % % |- % < % >( % ): callableTypeIR <# tid_inserted*{tid_inserted <- tid_inserted*} >(# id_default*{id_default <- id_default*} )
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:450.1-454.35
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:471.1-475.35
 relation Call_ok: cursor typingContext |- callableTypeIR < typeArgumentListIR # tid* >( argumentListIR # id* ): typeIR < typeArgumentListIR >( argumentListIR )
 
   ;; ../../../../spec-concrete/5.15.4-typing-callable-call.watsup:262.1-279.38
@@ -19158,7 +19305,7 @@ relation Call_ok: cursor typingContext |- callableTypeIR < typeArgumentListIR # 
     -- if $callable_tableApplyMethod(p, TC)
     -- output: % % |- % < % # % >( % # % ): tableMetadataStructTypeIR as typeIR < [] >( [] )
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:464.1-467.29
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:485.1-488.29
 relation ConstructorType_ok: cursor typingContext |- prefixedNameIR < typeArgumentListIR >( argumentIR* ): constructorTypeIR <# tid* >(# id* )
 
   ;; ../../../../spec-concrete/5.15.3-typing-constructor-call.watsup:5.1-15.52
@@ -19180,12 +19327,12 @@ relation ConstructorType_ok: cursor typingContext |- prefixedNameIR < typeArgume
     -- if ConstructorType_wf: bound |- constructorTypeIR holds
     -- output: % % |- % < % >( % ): constructorTypeIR <# tid_impl*{tid_impl <- tid_impl*} >(# id_default*{id_default <- id_default*} )
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:474.19-474.31
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:495.19-495.31
 syntax instctxt = 
    | named
    | anon
 
-;; ../../../../spec-concrete/5.04-typing-relation.watsup:476.1-481.38
+;; ../../../../spec-concrete/5.04-typing-relation.watsup:497.1-502.38
 relation Inst_ok: cursor typingContext instctxt |- constructorTypeIR < typeArgumentListIR # tid* >( argumentListIR # id* ): typeIR < typeArgumentListIR >( argumentListIR )
 
   ;; ../../../../spec-concrete/5.15.3-typing-constructor-call.watsup:79.1-114.44
@@ -20059,33 +20206,279 @@ def $lvalue_to_expression(lvalue) : expression =
   -- let ( lvalue ) = lvalue'
   -- let expression = $lvalue_to_expression(lvalue)
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:113.1-113.46
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:112.1-112.46
 def $compat_direct_application(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:116.1-117.55
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:115.1-116.55
   clause 0 : (typeIR) = $compat'_direct_application($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:114.1-114.47
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:113.1-113.47
 def $compat'_direct_application(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:118.1-118.54
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:117.1-117.54
   clause 0 : (typeIR) = true
   -- if typeIR <: parserObjectTypeIR
   -- let parser( _parameterIR*{_parameterIR <- _parameterIR*} ) = typeIR as parserObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:119.1-119.55
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:118.1-118.55
   clause 1 : (typeIR) = true
   -- if typeIR <: controlObjectTypeIR
   -- let control( _parameterIR*{_parameterIR <- _parameterIR*} ) = typeIR as controlObjectTypeIR
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:120.1-121.15
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:119.1-120.15
   clause 2 : (typeIR) = false
   -- otherwise
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:239.1-241.26
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:233.1-235.20
+relation ForUpdateStmt_ok: typingContext |- forUpdateStatement : forUpdateStatementIR
+
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:240.1-257.2
+  rulegroup call
+
+   match
+
+    (signature) TC |- forUpdateStatement : %
+    TC |- forUpdateStatement : %
+
+   paths
+
+    rulepath no-typeArgumentList
+    -- let forUpdateStatement' = forUpdateStatement
+    -- if forUpdateStatement' matches `%(%)`
+    -- let lvalue_callable ( argumentList ) = forUpdateStatement'
+    -- Stmt_ok: local TC cont noloop |- lvalue_callable ( argumentList ); as statement : _typingContext _flow statementIR
+    -- if statementIR <: callStatementIR
+    -- let callableTargetIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} ); = statementIR as callStatementIR
+    -- output: % |- % : callableTargetIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} )
+
+    rulepath typeArgumentList
+    -- let forUpdateStatement' = forUpdateStatement
+    -- if forUpdateStatement' matches `%<%>(%)`
+    -- let lvalue_callable < typeArgumentList >( argumentList ) = forUpdateStatement'
+    -- Stmt_ok: local TC cont noloop |- lvalue_callable < typeArgumentList >( argumentList ); as statement : _typingContext _flow statementIR
+    -- if statementIR <: callStatementIR
+    -- let callableTargetIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} ); = statementIR as callStatementIR
+    -- output: % |- % : callableTargetIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} )
+
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:261.1-270.2
+  rulegroup assign
+
+   match
+
+    (signature) TC |- lvalue assignop expression : %
+    TC |- forUpdateStatement : %
+    -- if forUpdateStatement matches `%%%`
+    -- let lvalue assignop expression = forUpdateStatement
+
+   paths
+
+    rulepath eq
+    -- Stmt_ok: local TC cont noloop |- lvalue assignop expression ; as statement : _typingContext _flow statementIR
+    -- if statementIR <: assignmentStatementIR
+    -- let typedLvalueIR assignop' typedExpressionIR ; = statementIR as assignmentStatementIR
+    -- if (assignop' = assignop)
+    -- output: % |- % : typedLvalueIR assignop typedExpressionIR
+
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:274.1-276.20
+relation ForInitStmt_ok: typingContext |- forInitStatement : typingContext forInitStatementIR
+
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:280.1-312.2
+  rulegroup variableDeclaration
+
+   match
+
+    (signature) TC_0 |- annotationList type name initializerOpt : % %
+    TC_0 |- forInitStatement : % %
+    -- if forInitStatement matches `%%%%`
+    -- let annotationList type name initializerOpt = forInitStatement
+
+   paths
+
+    rulepath empty
+    -- if (initializerOpt = )
+    -- Type_ok: local TC_0 |- type as typeOrVoid : typeIR # tid*{tid <- tid*}
+    -- if tid*{tid <- tid*} matches []
+    -- if Type_wf: $bound(local, TC_0) |- typeIR holds
+    -- if $is_assignable_typeIR(typeIR)
+    -- let nameIR = $name(name)
+    -- let TC_1 = $add_var_t(local, TC_0, nameIR, inout typeIR dyn ?())
+    -- output: % |- % : TC_1 annotationList typeIR nameIR ?()
+
+    rulepath initializer
+    -- let initializerOpt' = initializerOpt
+    -- if initializerOpt' <: initializer
+    -- let = expression_init = initializerOpt' as initializer
+    -- Type_ok: local TC_0 |- type as typeOrVoid : typeIR # tid*{tid <- tid*}
+    -- if tid*{tid <- tid*} matches []
+    -- if Type_wf: $bound(local, TC_0) |- typeIR holds
+    -- if $is_assignable_typeIR(typeIR)
+    -- Expr_ok: local TC_0 |- expression_init : typedExpressionIR_init
+    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $coerce_unary(typedExpressionIR_init, typeIR)
+    -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
+    -- let ?(typedExpressionIR_init_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+    -- let nameIR = $name(name)
+    -- let TC_1 = $add_var_t(local, TC_0, nameIR, inout typeIR dyn ?())
+    -- output: % |- % : TC_1 annotationList typeIR nameIR ?(= typedExpressionIR_init_cast)
+
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:316.1-318.71
+  rulegroup forUpdateStatement
+
+   match
+
+    (signature) TC |- forUpdateStatement as forInitStatement : % %
+    TC |- forInitStatement : % %
+    -- if forInitStatement <: forUpdateStatement
+    -- let forUpdateStatement = forInitStatement as forUpdateStatement
+
+   paths
+
+    rulepath forUpdateStatement
+    -- ForUpdateStmt_ok: TC |- forUpdateStatement : forUpdateStatementIR
+    -- output: % |- % : TC forUpdateStatementIR as forInitStatementIR
+
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:322.1-324.20
+relation ForInitStmts_ok: typingContext |- forInitStatement* : typingContext forInitStatementIR*
+
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:326.1-327.21
+  rulegroup nil
+
+   match
+
+    (signature) TC |- [] : % %
+    TC |- forInitStatement*{forInitStatement <- forInitStatement*} : % %
+    -- if forInitStatement*{forInitStatement <- forInitStatement*} matches []
+
+   paths
+
+    rulepath nil
+    -- output: % |- % : TC []
+
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:329.1-335.61
+  rulegroup cons
+
+   match
+
+    (signature) TC_0 |- forInitStatement_h :: forInitStatement_t*{forInitStatement_t <- forInitStatement_t*} : % %
+    TC_0 |- forInitStatement*{forInitStatement <- forInitStatement*} : % %
+    -- if forInitStatement*{forInitStatement <- forInitStatement*} matches _ :: _
+    -- let forInitStatement_h :: forInitStatement_t*{forInitStatement_t <- forInitStatement_t*} = forInitStatement*{forInitStatement <- forInitStatement*}
+
+   paths
+
+    rulepath cons
+    -- ForInitStmt_ok: TC_0 |- forInitStatement_h : TC_1 forInitStatementIR_h
+    -- ForInitStmts_ok: TC_1 |- forInitStatement_t*{forInitStatement_t <- forInitStatement_t*} : TC_2 forInitStatementIR_t*{forInitStatementIR_t <- forInitStatementIR_t*}
+    -- output: % |- % : TC_2 forInitStatementIR_h :: forInitStatementIR_t*{forInitStatementIR_t <- forInitStatementIR_t*}
+
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:373.1-375.23
+relation ForCollectionExpr_ok: typingContext typeIR |- forCollectionExpression : forCollectionExpressionIR
+
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:377.1-397.2
+  rulegroup expression
+
+   match
+
+    (signature) TC typeIR_var |- expression as forCollectionExpression : %
+    TC typeIR_var |- forCollectionExpression : %
+    -- if forCollectionExpression <: expression
+    -- let expression = forCollectionExpression as expression
+
+   paths
+
+    rulepath list
+    -- Expr_ok: local TC |- expression : typedExpressionIR
+    -- let _expressionIR # ( typeIR_list _ctk ) = typedExpressionIR
+    -- let typeIR = $canon_typeIR(typeIR_list)
+    -- if typeIR <: listTypeIR
+    -- let list< typeIR_e > = typeIR as listTypeIR
+    -- if Sub_impl: typeIR_e <: typeIR_var holds
+    -- output: % % |- % : typedExpressionIR as forCollectionExpressionIR
+
+    rulepath header-stack
+    -- Expr_ok: local TC |- expression : typedExpressionIR
+    -- let _expressionIR # ( typeIR_stack _ctk ) = typedExpressionIR
+    -- let typeIR = $canon_typeIR(typeIR_stack)
+    -- if typeIR <: headerStackTypeIR
+    -- let typeIR_e [ _nat ] = typeIR as headerStackTypeIR
+    -- if Type_alpha: typeIR_e ~~ typeIR_var holds
+    -- output: % % |- % : typedExpressionIR as forCollectionExpressionIR
+
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:410.1-422.42
+  rulegroup range
+
+   match
+
+    (signature) TC typeIR_var |- expression_l .. expression_r : %
+    TC typeIR_var |- forCollectionExpression : %
+    -- if forCollectionExpression matches `%..%`
+    -- let expression_l .. expression_r = forCollectionExpression
+
+   paths
+
+    rulepath range
+    -- Expr_ok: local TC |- expression_l : typedExpressionIR_l
+    -- Expr_ok: local TC |- expression_r : typedExpressionIR_r
+    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $coerce_unary(typedExpressionIR_l, typeIR_var)
+    -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
+    -- let ?(typedExpressionIR_l_coerced) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+    -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $coerce_unary(typedExpressionIR_r, typeIR_var)
+    -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
+    -- let ?(typedExpressionIR_r_coerced) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- let _expressionIR # ( typeIR_l _ctk ) = typedExpressionIR_l_coerced
+    -- let _expressionIR' # ( typeIR_r _ctk' ) = typedExpressionIR_r_coerced
+    -- if $compat_range(typeIR_l, typeIR_r)
+    -- output: % % |- % : typedExpressionIR_l_coerced .. typedExpressionIR_r_coerced
+
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:399.1-399.41
+def $compat_range(typeIR, typeIR) : bool =
+
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:402.1-403.69
+  clause 0 : (typeIR_l, typeIR_r) = $compat'_range($canon_typeIR(typeIR_l), $canon_typeIR(typeIR_r))
+
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:400.1-400.42
+def $compat'_range(typeIR, typeIR) : bool =
+
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:404.1-404.36
+  clause 0 : (typeIR, typeIR') = true
+  -- if typeIR <: integerTypeIR
+  -- let integerTypeIR = typeIR as integerTypeIR
+  -- if integerTypeIR matches `INT`
+  -- if typeIR' <: integerTypeIR
+  -- let integerTypeIR' = typeIR' as integerTypeIR
+  -- if integerTypeIR' matches `INT`
+
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:405.1-405.50
+  clause 1 : (typeIR, typeIR') = true
+  -- if typeIR <: integerTypeIR
+  -- let integerTypeIR = typeIR as integerTypeIR
+  -- if integerTypeIR matches `INT<%>`
+  -- let int< w > = integerTypeIR
+  -- if typeIR' <: integerTypeIR
+  -- let integerTypeIR' = typeIR' as integerTypeIR
+  -- if integerTypeIR' matches `INT<%>`
+  -- let int< w' > = integerTypeIR'
+  -- if (w = w')
+
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:406.1-406.50
+  clause 2 : (typeIR, typeIR') = true
+  -- if typeIR <: integerTypeIR
+  -- let integerTypeIR = typeIR as integerTypeIR
+  -- if integerTypeIR matches `BIT<%>`
+  -- let bit< w > = integerTypeIR
+  -- if typeIR' <: integerTypeIR
+  -- let integerTypeIR' = typeIR' as integerTypeIR
+  -- if integerTypeIR' matches `BIT<%>`
+  -- let bit< w' > = integerTypeIR'
+  -- if (w = w')
+
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:407.1-408.15
+  clause 3 : (typeIR_l, typeIR_r) = false
+  -- otherwise
+
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:481.1-483.26
 relation SwitchLabel_table_ok: typingContext tid bool |- switchLabel : switchLabelIR
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:247.1-266.2
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:489.1-508.2
   rulegroup 
 
    match
@@ -20119,16 +20512,16 @@ relation SwitchLabel_table_ok: typingContext tid bool |- switchLabel : switchLab
     -- let typedExpressionIR_label = ` nameIR_label as expressionIR # ( typeIR_label ctk_label )
     -- output: % % % |- % : typedExpressionIR_label as switchLabelIR
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:270.1-272.29
-relation SwitchCase_table_ok: typingContext flow tid bool |- switchCase : flow switchCaseIR # switchLabel
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:512.1-515.32
+relation SwitchCase_table_ok: typingContext flow loopctxt tid bool |- switchCase : flow switchCaseIR # switchLabel
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:277.1-297.2
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:520.1-540.2
   rulegroup 
 
    match
 
-    (signature) TC f tid_table b_last |- switchCase : % % # %
-    TC f tid_table b_last |- switchCase : % % # %
+    (signature) TC f l tid_table b_last |- switchCase : % % # %
+    TC f l tid_table b_last |- switchCase : % % # %
 
    paths
 
@@ -20137,9 +20530,9 @@ relation SwitchCase_table_ok: typingContext flow tid bool |- switchCase : flow s
     -- if switchCase' matches `%:%`
     -- let switchLabel : blockStatement = switchCase'
     -- SwitchLabel_table_ok: TC tid_table b_last |- switchLabel : switchLabelIR
-    -- Block_ok: TC f |- blockStatement : TC_post f_post blockStatementIR
+    -- Block_ok: TC f l |- blockStatement : TC_post f_post blockStatementIR
     -- let switchCaseIR = switchLabelIR : blockStatementIR
-    -- output: % % % % |- % : f_post switchCaseIR # switchLabel
+    -- output: % % % % % |- % : f_post switchCaseIR # switchLabel
 
     rulepath non-blockStatement
     -- let switchCase' = switchCase
@@ -20147,32 +20540,32 @@ relation SwitchCase_table_ok: typingContext flow tid bool |- switchCase : flow s
     -- let switchLabel : = switchCase'
     -- SwitchLabel_table_ok: TC tid_table b_last |- switchLabel : switchLabelIR
     -- let switchCaseIR = switchLabelIR :
-    -- output: % % % % |- % : f switchCaseIR # switchLabel
+    -- output: % % % % % |- % : f switchCaseIR # switchLabel
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:301.1-303.26
-relation SwitchCases_table_ok: typingContext flow tid |- switchCase* : flow switchCaseListIR # switchLabel*
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:544.1-546.29
+relation SwitchCases_table_ok: typingContext flow loopctxt tid |- switchCase* : flow switchCaseListIR # switchLabel*
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:305.1-306.39
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:548.1-549.41
   rulegroup nil
 
    match
 
-    (signature) TC f tid_table |- [] : % % # %
-    TC f tid_table |- switchCase*{switchCase <- switchCase*} : % % # %
+    (signature) TC f l tid_table |- [] : % % # %
+    TC f l tid_table |- switchCase*{switchCase <- switchCase*} : % % # %
     -- if switchCase*{switchCase <- switchCase*} matches []
 
    paths
 
     rulepath nil
-    -- output: % % % |- % : f [] # []
+    -- output: % % % % |- % : f [] # []
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:308.1-315.80
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:551.1-558.82
   rulegroup cons
 
    match
 
-    (signature) TC f tid_table |- switchCase_h :: switchCase_t*{switchCase_t <- switchCase_t*} : % % # %
-    TC f tid_table |- switchCase*{switchCase <- switchCase*} : % % # %
+    (signature) TC f l tid_table |- switchCase_h :: switchCase_t*{switchCase_t <- switchCase_t*} : % % # %
+    TC f l tid_table |- switchCase*{switchCase <- switchCase*} : % % # %
     -- if switchCase*{switchCase <- switchCase*} matches _ :: _
     -- let switchCase_h :: switchCase_t*{switchCase_t <- switchCase_t*} = switchCase*{switchCase <- switchCase*}
 
@@ -20180,14 +20573,14 @@ relation SwitchCases_table_ok: typingContext flow tid |- switchCase* : flow swit
 
     rulepath cons
     -- let b_last = (switchCase_t*{switchCase_t <- switchCase_t*} = [])
-    -- SwitchCase_table_ok: TC f tid_table b_last |- switchCase_h : f_h switchCaseIR_h # switchLabel_h
-    -- SwitchCases_table_ok: TC f_h tid_table |- switchCase_t*{switchCase_t <- switchCase_t*} : f_t switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} # switchLabel_t*{switchLabel_t <- switchLabel_t*}
-    -- output: % % % |- % : f_t switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} # switchLabel_h :: switchLabel_t*{switchLabel_t <- switchLabel_t*}
+    -- SwitchCase_table_ok: TC f l tid_table b_last |- switchCase_h : f_h switchCaseIR_h # switchLabel_h
+    -- SwitchCases_table_ok: TC f_h l tid_table |- switchCase_t*{switchCase_t <- switchCase_t*} : f_t switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} # switchLabel_t*{switchLabel_t <- switchLabel_t*}
+    -- output: % % % % |- % : f_t switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} # switchLabel_h :: switchLabel_t*{switchLabel_t <- switchLabel_t*}
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:340.1-342.26
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:583.1-585.26
 relation SwitchLabel_general_ok: typingContext typeIR bool |- switchLabel : switchLabelIR
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:347.1-362.2
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:590.1-605.2
   rulegroup 
 
    match
@@ -20218,16 +20611,16 @@ relation SwitchLabel_general_ok: typingContext typeIR bool |- switchLabel : swit
     -- if ctk matches `LCTK`
     -- output: % % % |- % : typedExpressionIR_label_cast as switchLabelIR
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:366.1-368.29
-relation SwitchCase_general_ok: typingContext flow typeIR bool |- switchCase : flow switchCaseIR # switchLabel
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:609.1-612.32
+relation SwitchCase_general_ok: typingContext flow loopctxt typeIR bool |- switchCase : flow switchCaseIR # switchLabel
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:373.1-393.2
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:617.1-637.2
   rulegroup 
 
    match
 
-    (signature) TC f typeIR_switch b_last |- switchCase : % % # %
-    TC f typeIR_switch b_last |- switchCase : % % # %
+    (signature) TC f l typeIR_switch b_last |- switchCase : % % # %
+    TC f l typeIR_switch b_last |- switchCase : % % # %
 
    paths
 
@@ -20236,9 +20629,9 @@ relation SwitchCase_general_ok: typingContext flow typeIR bool |- switchCase : f
     -- if switchCase' matches `%:%`
     -- let switchLabel : blockStatement = switchCase'
     -- SwitchLabel_general_ok: TC typeIR_switch b_last |- switchLabel : switchLabelIR
-    -- Block_ok: TC f |- blockStatement : TC_post f_post blockStatementIR
+    -- Block_ok: TC f l |- blockStatement : TC_post f_post blockStatementIR
     -- let switchCaseIR = switchLabelIR : blockStatementIR
-    -- output: % % % % |- % : f_post switchCaseIR # switchLabel
+    -- output: % % % % % |- % : f_post switchCaseIR # switchLabel
 
     rulepath non-blockStatement
     -- let switchCase' = switchCase
@@ -20246,32 +20639,32 @@ relation SwitchCase_general_ok: typingContext flow typeIR bool |- switchCase : f
     -- let switchLabel : = switchCase'
     -- SwitchLabel_general_ok: TC typeIR_switch b_last |- switchLabel : switchLabelIR
     -- let switchCaseIR = switchLabelIR :
-    -- output: % % % % |- % : f switchCaseIR # switchLabel
+    -- output: % % % % % |- % : f switchCaseIR # switchLabel
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:397.1-399.26
-relation SwitchCases_general_ok: typingContext flow typeIR |- switchCase* : flow switchCaseListIR # switchLabel*
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:641.1-644.29
+relation SwitchCases_general_ok: typingContext flow loopctxt typeIR |- switchCase* : flow switchCaseListIR # switchLabel*
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:401.1-402.43
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:646.1-647.45
   rulegroup nil
 
    match
 
-    (signature) TC f typeIR_switch |- [] : % % # %
-    TC f typeIR_switch |- switchCase*{switchCase <- switchCase*} : % % # %
+    (signature) TC f l typeIR_switch |- [] : % % # %
+    TC f l typeIR_switch |- switchCase*{switchCase <- switchCase*} : % % # %
     -- if switchCase*{switchCase <- switchCase*} matches []
 
    paths
 
     rulepath nil
-    -- output: % % % |- % : f [] # []
+    -- output: % % % % |- % : f [] # []
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:404.1-412.84
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:649.1-659.70
   rulegroup cons
 
    match
 
-    (signature) TC f typeIR_switch |- switchCase_h :: switchCase_t*{switchCase_t <- switchCase_t*} : % % # %
-    TC f typeIR_switch |- switchCase*{switchCase <- switchCase*} : % % # %
+    (signature) TC f l typeIR_switch |- switchCase_h :: switchCase_t*{switchCase_t <- switchCase_t*} : % % # %
+    TC f l typeIR_switch |- switchCase*{switchCase <- switchCase*} : % % # %
     -- if switchCase*{switchCase <- switchCase*} matches _ :: _
     -- let switchCase_h :: switchCase_t*{switchCase_t <- switchCase_t*} = switchCase*{switchCase <- switchCase*}
 
@@ -20279,45 +20672,45 @@ relation SwitchCases_general_ok: typingContext flow typeIR |- switchCase* : flow
 
     rulepath cons
     -- let b_last = (switchCase_t*{switchCase_t <- switchCase_t*} = [])
-    -- SwitchCase_general_ok: TC f typeIR_switch b_last |- switchCase_h : f_h switchCaseIR_h # switchLabel_h
-    -- SwitchCases_general_ok: TC f_h typeIR_switch |- switchCase_t*{switchCase_t <- switchCase_t*} : f_t switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} # switchLabel_t*{switchLabel_t <- switchLabel_t*}
-    -- output: % % % |- % : f_t switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} # switchLabel_h :: switchLabel_t*{switchLabel_t <- switchLabel_t*}
+    -- SwitchCase_general_ok: TC f l typeIR_switch b_last |- switchCase_h : f_h switchCaseIR_h # switchLabel_h
+    -- SwitchCases_general_ok: TC f_h l typeIR_switch |- switchCase_t*{switchCase_t <- switchCase_t*} : f_t switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} # switchLabel_t*{switchLabel_t <- switchLabel_t*}
+    -- output: % % % % |- % : f_t switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} # switchLabel_h :: switchLabel_t*{switchLabel_t <- switchLabel_t*}
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:414.1-414.34
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:661.1-661.34
 def $compat_switch(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:417.1-418.43
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:664.1-665.43
   clause 0 : (typeIR) = $compat'_switch($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:415.1-415.35
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:662.1-662.35
 def $compat'_switch(typeIR) : bool =
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:419.1-419.34
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:666.1-666.34
   clause 0 : (typeIR) = true
   -- if typeIR <: errorTypeIR
   -- let errorTypeIR = typeIR as errorTypeIR
   -- if (errorTypeIR = error)
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:420.1-420.39
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:667.1-667.39
   clause 1 : (typeIR) = true
   -- if typeIR <: integerTypeIR
   -- let integerTypeIR = typeIR as integerTypeIR
   -- if integerTypeIR matches `INT<%>`
   -- let int< _nat > = integerTypeIR
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:421.1-421.39
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:668.1-668.39
   clause 2 : (typeIR) = true
   -- if typeIR <: integerTypeIR
   -- let integerTypeIR = typeIR as integerTypeIR
   -- if integerTypeIR matches `BIT<%>`
   -- let bit< _nat > = integerTypeIR
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:422.1-422.39
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:669.1-669.39
   clause 3 : (typeIR) = true
   -- if typeIR <: enumTypeIR
   -- let enumTypeIR = typeIR as enumTypeIR
 
-  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:423.1-424.15
+  ;; ../../../../spec-concrete/5.10-typing-statement.watsup:670.1-671.15
   clause 4 : (typeIR) = false
   -- otherwise
 
@@ -20348,7 +20741,7 @@ relation Decl_object_ok: cursor typingContext typeFrame externMethodTypeDefEnv |
     -- Parameters_ok: local TC_3 |- parameter*{parameter <- parameter*} : parameterIR*{parameterIR <- parameterIR*} # tid_impl*{tid_impl <- tid_impl*}
     -- let TC_4 = $add_parameters_t(local, TC_3, parameterIR*{parameterIR <- parameterIR*})
     -- let TC_5 = TC_4[local.kind = extern_method: typeIR_ret]
-    -- Block_ok: TC_5 cont |- blockStatement : _typingContext f blockStatementIR
+    -- Block_ok: TC_5 cont noloop |- blockStatement : _typingContext f blockStatementIR
     -- if ((f = ret) \/ (typeIR_ret = void as typeIR))
     -- let cid = $cid(name, parameterList)
     -- let externMethodTypeDefIR = extern_method< tid_expl*{tid_expl <- tid_expl*} , tid_impl*{tid_impl <- tid_impl*} >( parameterIR*{parameterIR <- parameterIR*} ): typeIR_ret
@@ -20628,7 +21021,7 @@ relation SelectCase_keyset_simple_ok: typingContext typeIR |- simpleKeysetExpres
     -- let ?(typedExpressionIR_r_coerced) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
     -- output: % % |- % : typedExpressionIR_l_coerced &&& typedExpressionIR_r_coerced
 
-  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:127.1-152.63
+  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:116.1-141.63
   rulegroup range
 
    match
@@ -20659,7 +21052,7 @@ relation SelectCase_keyset_simple_ok: typingContext typeIR |- simpleKeysetExpres
     -- let ?(typedExpressionIR_r_coerced) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
     -- output: % % |- % : typedExpressionIR_l_coerced .. typedExpressionIR_r_coerced
 
-  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:156.1-157.37
+  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:145.1-146.37
   rulegroup default
 
    match
@@ -20673,7 +21066,7 @@ relation SelectCase_keyset_simple_ok: typingContext typeIR |- simpleKeysetExpres
     rulepath default
     -- output: % % |- % : default
 
-  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:161.1-162.27
+  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:150.1-151.27
   rulegroup dontcare
 
    match
@@ -20733,56 +21126,10 @@ def $compat'_mask(typeIR, typeIR) : bool =
   clause 3 : (typeIR_l, typeIR_r) = false
   -- otherwise
 
-;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:116.1-116.41
-def $compat_range(typeIR, typeIR) : bool =
-
-  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:119.1-120.69
-  clause 0 : (typeIR_l, typeIR_r) = $compat'_range($canon_typeIR(typeIR_l), $canon_typeIR(typeIR_r))
-
-;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:117.1-117.42
-def $compat'_range(typeIR, typeIR) : bool =
-
-  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:121.1-121.36
-  clause 0 : (typeIR, typeIR') = true
-  -- if typeIR <: integerTypeIR
-  -- let integerTypeIR = typeIR as integerTypeIR
-  -- if integerTypeIR matches `INT`
-  -- if typeIR' <: integerTypeIR
-  -- let integerTypeIR' = typeIR' as integerTypeIR
-  -- if integerTypeIR' matches `INT`
-
-  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:122.1-122.50
-  clause 1 : (typeIR, typeIR') = true
-  -- if typeIR <: integerTypeIR
-  -- let integerTypeIR = typeIR as integerTypeIR
-  -- if integerTypeIR matches `INT<%>`
-  -- let int< w > = integerTypeIR
-  -- if typeIR' <: integerTypeIR
-  -- let integerTypeIR' = typeIR' as integerTypeIR
-  -- if integerTypeIR' matches `INT<%>`
-  -- let int< w' > = integerTypeIR'
-  -- if (w = w')
-
-  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:123.1-123.50
-  clause 2 : (typeIR, typeIR') = true
-  -- if typeIR <: integerTypeIR
-  -- let integerTypeIR = typeIR as integerTypeIR
-  -- if integerTypeIR matches `BIT<%>`
-  -- let bit< w > = integerTypeIR
-  -- if typeIR' <: integerTypeIR
-  -- let integerTypeIR' = typeIR' as integerTypeIR
-  -- if integerTypeIR' matches `BIT<%>`
-  -- let bit< w' > = integerTypeIR'
-  -- if (w = w')
-
-  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:124.1-125.15
-  clause 3 : (typeIR_l, typeIR_r) = false
-  -- otherwise
-
-;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:166.1-168.23
+;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:155.1-157.23
 relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keysetExpressionIR
 
-  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:175.1-178.61
+  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:164.1-167.61
   rulegroup simpleKeysetExpression-expression
 
    match
@@ -20800,7 +21147,7 @@ relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keyse
     -- SelectCase_keyset_simple_ok: TC typeIR_key |- expression as simpleKeysetExpression : simpleKeysetExpressionIR
     -- output: % % |- % : simpleKeysetExpressionIR as keysetExpressionIR
 
-  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:182.1-185.81
+  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:171.1-174.81
   rulegroup simpleKeysetExpression-mask
 
    match
@@ -20820,7 +21167,7 @@ relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keyse
     -- SelectCase_keyset_simple_ok: TC typeIR_key |- expression_l &&& expression_r : simpleKeysetExpressionIR
     -- output: % % |- % : simpleKeysetExpressionIR as keysetExpressionIR
 
-  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:189.1-192.80
+  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:178.1-181.80
   rulegroup simpleKeysetExpression-range
 
    match
@@ -20840,7 +21187,7 @@ relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keyse
     -- SelectCase_keyset_simple_ok: TC typeIR_key |- expression_l .. expression_r : simpleKeysetExpressionIR
     -- output: % % |- % : simpleKeysetExpressionIR as keysetExpressionIR
 
-  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:196.1-212.2
+  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:185.1-201.2
   rulegroup simpleKeysetExpression-default
 
    match
@@ -20870,7 +21217,7 @@ relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keyse
     -- SelectCase_keyset_simple_ok: TC seq< typeIR_key*{typeIR_key <- typeIR_key*} > as typeIR |- default : simpleKeysetExpressionIR
     -- output: % % |- % : simpleKeysetExpressionIR as keysetExpressionIR
 
-  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:216.1-229.2
+  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:205.1-218.2
   rulegroup simpleKeysetExpression-dontcare
 
    match
@@ -20896,7 +21243,7 @@ relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keyse
     -- SelectCase_keyset_simple_ok: TC seq< typeIR_key*{typeIR_key <- typeIR_key*} > as typeIR |- _ : simpleKeysetExpressionIR
     -- output: % % |- % : simpleKeysetExpressionIR as keysetExpressionIR
 
-  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:236.1-239.81
+  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:225.1-228.81
   rulegroup tupleKeysetExpression-mask
 
    match
@@ -20916,7 +21263,7 @@ relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keyse
     -- SelectCase_keyset_simple_ok: TC typeIR_key |- expression_l &&& expression_r : simpleKeysetExpressionIR
     -- output: % % |- % : ( [simpleKeysetExpressionIR] ) as keysetExpressionIR
 
-  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:243.1-246.80
+  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:232.1-235.80
   rulegroup tupleKeysetExpression-range
 
    match
@@ -20936,7 +21283,7 @@ relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keyse
     -- SelectCase_keyset_simple_ok: TC typeIR_key |- expression_l .. expression_r : simpleKeysetExpressionIR
     -- output: % % |- % : ( [simpleKeysetExpressionIR] ) as keysetExpressionIR
 
-  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:250.1-263.2
+  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:239.1-252.2
   rulegroup tupleKeysetExpression-default
 
    match
@@ -20962,7 +21309,7 @@ relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keyse
     -- SelectCase_keyset_simple_ok: TC seq< typeIR_key*{typeIR_key <- typeIR_key*} > as typeIR |- default : simpleKeysetExpressionIR
     -- output: % % |- % : ( [simpleKeysetExpressionIR] ) as keysetExpressionIR
 
-  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:267.1-280.2
+  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:256.1-269.2
   rulegroup tupleKeysetExpression-dontcare
 
    match
@@ -20988,7 +21335,7 @@ relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keyse
     -- SelectCase_keyset_simple_ok: TC seq< typeIR_key*{typeIR_key <- typeIR_key*} > as typeIR |- _ : simpleKeysetExpressionIR
     -- output: % % |- % : ( [simpleKeysetExpressionIR] ) as keysetExpressionIR
 
-  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:284.1-295.75
+  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:273.1-284.75
   rulegroup tupleKeysetExpression-list
 
    match
@@ -21009,10 +21356,10 @@ relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keyse
     -- (SelectCase_keyset_simple_ok: TC typeIR_key |- simpleKeysetExpression : simpleKeysetExpressionIR)*{simpleKeysetExpression <- simpleKeysetExpression*, simpleKeysetExpressionIR <- simpleKeysetExpressionIR*, typeIR_key <- typeIR_key*}
     -- output: % % |- % : ( simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} ) as keysetExpressionIR
 
-;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:299.1-301.26
+;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:288.1-290.26
 relation SelectCase_ok: typingContext nameIR* typeIR* |- selectCase : selectCaseIR
 
-  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:303.1-311.32
+  ;; ../../../../spec-concrete/5.13.1-typing-parser-statement.watsup:292.1-300.32
   rulegroup 
 
    match

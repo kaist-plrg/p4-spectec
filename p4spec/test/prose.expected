@@ -2876,16 +2876,16 @@ relation Lvalue_ok: `p`, `TC`, and `lvalue`
   ... Result in the typed lvalue `typedLvalueIR`.
 
 
-relation Stmt_ok: `p`, `TC`, `f`, and `statement`
+relation Stmt_ok: `p`, `TC`, `f`, `l`, and `statement'`
 
 
-. If let `emptyStatement` be `statement`:
+. If let `emptyStatement` be `statement'`:
  .. Group emptyStatement:
   ... Result in 
 * the typing context `TC`,
 * the abstract control flow `f`,
 * and the typed statement `;`.
-. Else if let `lvalue assignop' expression ;` be `statement`:
+. Else if let `lvalue assignop' expression ;` be `statement'`:
  .. Group asssignmentStatement:
   ... If `assignop'` matches pattern `=`:
    .... Let `typedLvalueIR` be the result of <<Lvalue_ok, typing `lvalue`, under cursor `p` and typing context `TC`>>.
@@ -2912,7 +2912,7 @@ relation Stmt_ok: `p`, `TC`, `f`, and `statement`
 * the typing context `TC`,
 * the abstract control flow `f`,
 * and the typed statement `typedLvalueIR assignop' typedExpressionIR~cast~ ;`.
-. Else if let `callStatement` be `statement`:
+. Else if let `callStatement` be `statement'`:
  .. Group callStatement:
   ... If let `lvalue~callable~ ( argumentList ) ;` be `callStatement`:
    .... Let `callableTargetIR` be the result of <<CallableTarget_lvalue_ok, typing `lvalue~callable~`, under cursor `p` and typing context `TC`>>.
@@ -2951,8 +2951,8 @@ for each `argument` in `argument^{asterisk}^`
 * the typing context `TC`,
 * the abstract control flow `f`,
 * and the typed statement `callStatementIR`.
-. Else if let `namedType . APPLY ( argumentList ) ;` be `statement`:
- .. Group directApplicationStatement:
+. Else if let `namedType . APPLY ( argumentList ) ;` be `statement'`:
+ .. Group directApplicationStatement-prefixedTypeName:
   ... Let <<typedExpressionIR, `expressionIR` annotated with type `typeIR~object~` and compile-time known-ness `++_++`>> be the result of <<Expr_ok, typing `namedType ( )`, under cursor `p` and typing context `TC`>>.
   ... Check that `expressionIR` has type `callExpressionIR`.
   ... Let `callExpressionIR` be `expressionIR`.
@@ -2964,7 +2964,7 @@ for each `argument` in `argument^{asterisk}^`
   ... Let `nameIR~object~` be `"__direct_application"`.
   ... Let `TC~1~` be <<add_var_t, `TC` with a mapping from `nameIR~object~` to `typeIR~object~ CTK None` added to the `p` layer>>.
   ... Let `lvalue` be `nameIR~object~ . "apply"`.
-  ... Let `++_++`, `++_++`, and `statementIR` be the result of <<Stmt_ok, typing `lvalue ( argumentList ) ;`, under cursor `p`, typing context `TC~1~`, and abstract control flow `f`>>.
+  ... Let `++_++`, `++_++`, and `statementIR` be the result of <<Stmt_ok, typing `l`, under cursor `p`, typing context `TC~1~`, abstract control flow `f`, and loop context `lvalue ( argumentList ) ;`>>.
   ... Check that `statementIR` has type `callStatementIR`.
   ... Let `callStatementIR` be `statementIR`.
   ... Let `callableTargetIR < typeArgumentIR'^{asterisk}^ > ( argumentIR~cast~^{asterisk}^ ) ;` be `callStatementIR`.
@@ -2975,19 +2975,19 @@ for each `argument` in `argument^{asterisk}^`
 * the typing context `TC`,
 * the abstract control flow `f`,
 * and the typed statement `directApplicationStatementIR`.
-. Else if let `exitStatement` be `statement`:
+. Else if let `exitStatement` be `statement'`:
  .. Group exitStatement:
   ... Result in 
 * the typing context `TC`,
 * the abstract control flow `f`,
 * and the typed statement `EXIT ;`.
-. Else if let `conditionalStatement` be `statement`:
+. Else if let `conditionalStatement` be `statement'`:
  .. Group conditionalStatement:
   ... If let `IF ( expression~cond~ ) statement~then~` be `conditionalStatement`:
    .... Let `typedExpressionIR~cond~` be the result of <<Expr_ok, typing `expression~cond~`, under cursor `p` and typing context `TC`>>.
    .... Let `typeIR~cond~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~cond~`>>.
    .... Check that `BOOL` is equal to <<canon_typeIR, the canonicalized form of `typeIR~cond~`>>.
-   .... Let `TC~then~`, `f~then~`, and `statementIR~then~` be the result of <<Stmt_ok, typing `statement~then~`, under cursor `p`, typing context `TC`, and abstract control flow `f`>>.
+   .... Let `TC~then~`, `f~then~`, and `statementIR~then~` be the result of <<Stmt_ok, typing `l`, under cursor `p`, typing context `TC`, abstract control flow `f`, and loop context `statement~then~`>>.
    .... Result in 
 * the typing context `TC`,
 * the abstract control flow `f`,
@@ -2996,15 +2996,15 @@ for each `argument` in `argument^{asterisk}^`
    .... Let `typedExpressionIR~cond~` be the result of <<Expr_ok, typing `expression~cond~`, under cursor `p` and typing context `TC`>>.
    .... Let `typeIR~cond~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~cond~`>>.
    .... Check that `BOOL` is equal to <<canon_typeIR, the canonicalized form of `typeIR~cond~`>>.
-   .... Let `TC~then~`, `f~then~`, and `statementIR~then~` be the result of <<Stmt_ok, typing `statement~then~`, under cursor `p`, typing context `TC`, and abstract control flow `f`>>.
-   .... Let `TC~else~`, `f~else~`, and `statementIR~else~` be the result of <<Stmt_ok, typing `statement~else~`, under cursor `p`, typing context `TC`, and abstract control flow `f`>>.
+   .... Let `TC~then~`, `f~then~`, and `statementIR~then~` be the result of <<Stmt_ok, typing `l`, under cursor `p`, typing context `TC`, abstract control flow `f`, and loop context `statement~then~`>>.
+   .... Let `TC~else~`, `f~else~`, and `statementIR~else~` be the result of <<Stmt_ok, typing `l`, under cursor `p`, typing context `TC`, abstract control flow `f`, and loop context `statement~else~`>>.
    .... Let `f~post~` be <<join_flow, the merged control flow of `f~then~` and `f~else~`>>.
    .... Result in 
 * the typing context `TC`,
 * the abstract control flow `f~post~`,
 * and the typed statement `IF ( typedExpressionIR~cond~ ) statementIR~then~ ELSE statementIR~else~`.
 . Check that `p` matches pattern `LOCAL`.
-. If let `returnStatement` be `statement`:
+. If let `returnStatement` be `statement'`:
  .. Group returnStatement:
   ... If `returnStatement` matches pattern `RETURN ;`:
    .... Check that `VOID` is equal to <<find_local_return_type_t, the expected return type in `TC`>>.
@@ -3021,16 +3021,66 @@ for each `argument` in `argument^{asterisk}^`
 * the typing context `TC`,
 * the abstract control flow `RET`,
 * and the typed statement `RETURN typedExpressionIR~cast~ ;`.
-. Else if let `blockStatement` be `statement`:
+. Else if let `blockStatement` be `statement'`:
  .. Group blockStatement:
   ... Let `TC~1~` be `<<enter_t, $enter_t(TC)>>`.
-  ... Let `TC~2~`, `f~1~`, and `blockStatementIR` be the result of <<Block_ok, typing `blockStatement`, under typing context `TC~1~` and abstract control flow `f`>>.
+  ... Let `TC~2~`, `f~1~`, and `blockStatementIR` be the result of <<Block_ok, typing `l`, under typing context `TC~1~`, abstract control flow `f`, and loop context `blockStatement`>>.
   ... Let `TC~3~` be `<<exit_t, $exit_t(TC~2~)>>`.
   ... Result in 
 * the typing context `TC~3~`,
 * the abstract control flow `f~1~`,
 * and the typed statement `blockStatementIR`.
-. Else if let `SWITCH ( expression~switch~ ) { switchCaseList }` be `statement`:
+. Else if let `forStatement` be `statement'`:
+ .. Check that `forStatement` matches pattern `% FOR ( % ; % ; % ) %`.
+ .. Let `annotationList FOR ( forInitStatementList ; expression ; forUpdateStatementList ) statement` be `forStatement`.
+ .. Group forStatement-three-clause:
+  ... Let `TC~1~` be `<<enter_t, $enter_t(TC)>>`.
+  ... Let `forInitStatement^{asterisk}^` be `<<flatten_forInitStatementList, $flatten_forInitStatementList(forInitStatementList)>>`.
+  ... Let <<ForInitStmts_ok, `TC~1~ |- forInitStatement^{asterisk}^ : TC~2~ forInitStatementIR^{asterisk}^`>>.
+  ... Let `typedExpressionIR` be the result of <<Expr_ok, typing `expression`, under cursor `LOCAL` and typing context `TC~2~`>>.
+  ... Let <<expressionNoteIR, type `typeIR` and compile-time known-ness `++_++`>> be the note of `typedExpressionIR`.
+  ... Check that `BOOL` is equal to <<canon_typeIR, the canonicalized form of `typeIR`>>.
+  ... Let `forUpdateStatement^{asterisk}^` be `<<flatten_forUpdateStatementList, $flatten_forUpdateStatementList(forUpdateStatementList)>>`.
+  ... Let `forUpdateStatementIR^{asterisk}^` be the list of `forUpdateStatementIR`, obtained by repeating:
++
+--
+      * Let <<ForUpdateStmt_ok, `TC~2~ |- forUpdateStatement : forUpdateStatementIR`>>.
+--
++
+for each `forUpdateStatement` in `forUpdateStatement^{asterisk}^`
+  ... Let `TC~3~`, `f~post~`, and `statementIR` be the result of <<Stmt_ok, typing `LOOP`, under cursor `LOCAL`, typing context `TC~2~`, abstract control flow `f`, and loop context `statement`>>.
+  ... Let `TC~4~` be `<<exit_t, $exit_t(TC~3~)>>`.
+  ... Let `forStatementIR` be `annotationList FOR ( forInitStatementIR^{asterisk}^ ; typedExpressionIR ; forUpdateStatementIR^{asterisk}^ ) statementIR`.
+  ... Result in 
+* the typing context `TC`,
+* the abstract control flow `f~post~`,
+* and the typed statement `forStatementIR`.
+ .. Group forStatement-in:
+  ... If let `annotationList FOR ( type name IN forCollectionExpression ) statement` be `forStatement`:
+   .... Let `typeIR` and `tid^{asterisk}^` be the result of <<Type_ok, typing `type`, under cursor `LOCAL` and typing context `TC`>>.
+   .... Check that `tid^{asterisk}^` is an empty list.
+   .... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `$bound(LOCAL, TC)`>>.
+   .... Check that `<<is_assignable_typeIR, $is_assignable_typeIR(typeIR)>>`.
+   .... Let <<ForCollectionExpr_ok, `TC typeIR |- forCollectionExpression : forCollectionExpressionIR`>>.
+   .... Let `TC~1~` be `<<enter_t, $enter_t(TC)>>`.
+   .... Let `nameIR` be <<name, the name of `name`>>.
+   .... Let `TC~2~` be <<add_var_t, `TC~1~` with a mapping from `nameIR` to `INOUT typeIR DYN None` added to the `LOCAL` layer>>.
+   .... Let `TC~3~`, `f~post~`, and `statementIR` be the result of <<Stmt_ok, typing `LOOP`, under cursor `LOCAL`, typing context `TC~2~`, abstract control flow `f`, and loop context `statement`>>.
+   .... Let `TC~4~` be `<<exit_t, $exit_t(TC~3~)>>`.
+   .... Let `forStatementIR` be `annotationList FOR ( typeIR nameIR IN forCollectionExpressionIR ) statementIR`.
+   .... Result in 
+* the typing context `TC`,
+* the abstract control flow `f~post~`,
+* and the typed statement `forStatementIR`.
+  ... Else if let `annotationList FOR ( annotationListNonEmpty type name IN forCollectionExpression ) statement` be `forStatement`:
+   .... Let `TC~1~`, `f~post~`, and `statementIR'` be the result of <<Stmt_ok, typing `l`, under cursor `LOCAL`, typing context `TC`, abstract control flow `f`, and loop context `annotationList FOR ( type name IN forCollectionExpression ) statement`>>.
+   .... Check that `statementIR'` has type `forStatementIR`.
+   .... Let `forStatementIR` be `statementIR'`.
+   .... Result in 
+* the typing context `TC`,
+* the abstract control flow `f~post~`,
+* and the typed statement `forStatementIR`.
+. Else if let `SWITCH ( expression~switch~ ) { switchCaseList }` be `statement'`:
  .. Group switchStatement-table:
   ... Let `typedExpressionIR~switch~` be the result of <<Expr_ok, typing `expression~switch~`, under cursor `LOCAL` and typing context `TC`>>.
   ... Let `typeIR~switch~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~switch~`>>.
@@ -3040,7 +3090,7 @@ for each `argument` in `argument^{asterisk}^`
   ... Let `text` be <<strip_suffix, the text `tid~table_enum~` with the suffix `")"` removed>>.
   ... Let `tid~table~` be <<strip_prefix, the text `text` with the prefix `"action_list("` removed>>.
   ... Let `switchCase^{asterisk}^` be <<flatten_switchCaseList, the list of switch cases in `switchCaseList`>>.
-  ... Let <<SwitchCases_table_ok, `TC f tid~table~ |- switchCase^{asterisk}^ : f~post~ switchCaseIR^{asterisk}^ # switchLabel^{asterisk}^`>>.
+  ... Let <<SwitchCases_table_ok, `TC f l tid~table~ |- switchCase^{asterisk}^ : f~post~ switchCaseIR^{asterisk}^ # switchLabel^{asterisk}^`>>.
   ... Check that <<distinct_, the elements of `switchLabel^{asterisk}^` are distinct>>.
   ... Let `switchStatementIR` be `SWITCH ( typedExpressionIR~switch~ ) { switchCaseIR^{asterisk}^ }`.
   ... Result in 
@@ -3052,16 +3102,29 @@ for each `argument` in `argument^{asterisk}^`
   ... Let `typeIR~switch~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~switch~`>>.
   ... Check that `<<compat_switch, $compat_switch(typeIR~switch~)>>`.
   ... Let `switchCase^{asterisk}^` be <<flatten_switchCaseList, the list of switch cases in `switchCaseList`>>.
-  ... Let <<SwitchCases_general_ok, `TC f typeIR~switch~ |- switchCase^{asterisk}^ : f~post~ switchCaseIR^{asterisk}^ # switchLabel^{asterisk}^`>>.
+  ... Let <<SwitchCases_general_ok, `TC f l typeIR~switch~ |- switchCase^{asterisk}^ : f~post~ switchCaseIR^{asterisk}^ # switchLabel^{asterisk}^`>>.
   ... Check that <<distinct_, the elements of `switchLabel^{asterisk}^` are distinct>>.
   ... Let `switchStatementIR` be `SWITCH ( typedExpressionIR~switch~ ) { switchCaseIR^{asterisk}^ }`.
   ... Result in 
 * the typing context `TC`,
 * the abstract control flow `f~post~`,
 * and the typed statement `switchStatementIR`.
+. Check that `l` matches pattern `LOOP`.
+. If let `breakStatement` be `statement'`:
+ .. Group break:
+  ... Result in 
+* the typing context `TC`,
+* the abstract control flow `f`,
+* and the typed statement `breakStatement`.
+. Else if let `continueStatement` be `statement'`:
+ .. Group continue:
+  ... Result in 
+* the typing context `TC`,
+* the abstract control flow `f`,
+* and the typed statement `continueStatement`.
 
 
-relation BlockElementStmt_ok: `TC~0~`, `f`, and `blockElementStatement`
+relation BlockElementStmt_ok: `TC~0~`, `f`, `l`, and `blockElementStatement`
 
 
 . If let `constantDeclaration` be `blockElementStatement`:
@@ -3103,14 +3166,14 @@ relation BlockElementStmt_ok: `TC~0~`, `f`, and `blockElementStatement`
 * and the typed block element statement `variableDeclarationIR`.
 . Else let `statement` be `blockElementStatement`:
  .. Group statement:
-  ... Let `TC~1~`, `f~post~`, and `statementIR` be the result of <<Stmt_ok, typing `statement`, under cursor `LOCAL`, typing context `TC~0~`, and abstract control flow `f`>>.
+  ... Let `TC~1~`, `f~post~`, and `statementIR` be the result of <<Stmt_ok, typing `l`, under cursor `LOCAL`, typing context `TC~0~`, abstract control flow `f`, and loop context `statement`>>.
   ... Result in 
 * the typing context `TC~1~`,
 * the abstract control flow `f~post~`,
 * and the typed block element statement `statementIR`.
 
 
-relation BlockElementStmts_ok: `TC`, `f`, and `blockElementStatement^{asterisk}^`
+relation BlockElementStmts_ok: `TC`, `f`, `l`, and `blockElementStatement^{asterisk}^`
 
 
 . If `blockElementStatement^{asterisk}^` is an empty list:
@@ -3121,20 +3184,20 @@ relation BlockElementStmts_ok: `TC`, `f`, and `blockElementStatement^{asterisk}^
 * and the typed block element statements `[ ]`.
 . Else let `blockElementStatement~h~ {two-colons} blockElementStatement~t~^{asterisk}^` be `blockElementStatement^{asterisk}^`:
  .. Group cons:
-  ... Let `TC~1~`, `f~1~`, and `blockElementStatementIR~h~` be the result of <<BlockElementStmt_ok, typing `blockElementStatement~h~`, under typing context `TC` and abstract control flow `f`>>.
-  ... Let `TC~2~`, `f~2~`, and `blockElementStatementIR~t~^{asterisk}^` be the result of <<BlockElementStmts_ok, typing `blockElementStatement~t~^{asterisk}^`, under typing context `TC~1~` and abstract control flow `f~1~`>>.
+  ... Let `TC~1~`, `f~1~`, and `blockElementStatementIR~h~` be the result of <<BlockElementStmt_ok, typing `l`, under typing context `TC`, abstract control flow `f`, and loop context `blockElementStatement~h~`>>.
+  ... Let `TC~2~`, `f~2~`, and `blockElementStatementIR~t~^{asterisk}^` be the result of <<BlockElementStmts_ok, typing `l`, under typing context `TC~1~`, abstract control flow `f~1~`, and loop context `blockElementStatement~t~^{asterisk}^`>>.
   ... Result in 
 * the typing context `TC~2~`,
 * the abstract control flow `f~2~`,
 * and the typed block element statements `blockElementStatementIR~h~ {two-colons} blockElementStatementIR~t~^{asterisk}^`.
 
 
-relation Block_ok: `TC~0~`, `f`, and `annotationList { blockElementStatementList }`
+relation Block_ok: `TC~0~`, `f`, `l`, and `annotationList { blockElementStatementList }`
 
 
 . Group :
  .. Let `blockElementStatement^{asterisk}^` be <<flatten_blockElementStatementList, the list of block element statements in `blockElementStatementList`>>.
- .. Let `TC~1~`, `f~post~`, and `blockElementStatementIR^{asterisk}^` be the result of <<BlockElementStmts_ok, typing `blockElementStatement^{asterisk}^`, under typing context `TC~0~` and abstract control flow `f`>>.
+ .. Let `TC~1~`, `f~post~`, and `blockElementStatementIR^{asterisk}^` be the result of <<BlockElementStmts_ok, typing `l`, under typing context `TC~0~`, abstract control flow `f`, and loop context `blockElementStatement^{asterisk}^`>>.
  .. Let `blockStatementIR` be `annotationList { blockElementStatementIR^{asterisk}^ }`.
  .. Result in 
 * the typing context `TC~1~`,
@@ -3373,7 +3436,7 @@ relation ParserStmt_ok: `TC~0~` and `parserStatement'`
    .... Result in the updated typing context `TC~1~` and the typed parser statement `variableDeclarationIR`.
 . Else if let `emptyStatement` be `parserStatement'`:
  .. Group emptyStatement:
-  ... Let `typingContext`, `flow`, and `statementIR` be the result of <<Stmt_ok, typing `emptyStatement`, under cursor `LOCAL`, typing context `TC~0~`, and abstract control flow `CONT`>>.
+  ... Let `typingContext`, `flow`, and `statementIR` be the result of <<Stmt_ok, typing `NOLOOP`, under cursor `LOCAL`, typing context `TC~0~`, abstract control flow `CONT`, and loop context `emptyStatement`>>.
   ... Check that `typingContext` is equal to `TC~0~`.
   ... Check that `flow` matches pattern `CONT`.
   ... Check that `statementIR` has type `emptyStatementIR`.
@@ -3381,21 +3444,21 @@ relation ParserStmt_ok: `TC~0~` and `parserStatement'`
   ... Result in the updated typing context `TC~0~` and the typed parser statement `emptyStatementIR`.
 . Else if let `assignmentStatement` be `parserStatement'`:
  .. Group assignmentStatement:
-  ... Let `TC~1~`, `flow`, and `statementIR` be the result of <<Stmt_ok, typing `assignmentStatement`, under cursor `LOCAL`, typing context `TC~0~`, and abstract control flow `CONT`>>.
+  ... Let `TC~1~`, `flow`, and `statementIR` be the result of <<Stmt_ok, typing `NOLOOP`, under cursor `LOCAL`, typing context `TC~0~`, abstract control flow `CONT`, and loop context `assignmentStatement`>>.
   ... Check that `flow` matches pattern `CONT`.
   ... Check that `statementIR` has type `assignmentStatementIR`.
   ... Let `assignmentStatementIR` be `statementIR`.
   ... Result in the updated typing context `TC~1~` and the typed parser statement `assignmentStatementIR`.
 . Else if let `callStatement` be `parserStatement'`:
  .. Group callStatement:
-  ... Let `TC~1~`, `flow`, and `statementIR` be the result of <<Stmt_ok, typing `callStatement`, under cursor `LOCAL`, typing context `TC~0~`, and abstract control flow `CONT`>>.
+  ... Let `TC~1~`, `flow`, and `statementIR` be the result of <<Stmt_ok, typing `NOLOOP`, under cursor `LOCAL`, typing context `TC~0~`, abstract control flow `CONT`, and loop context `callStatement`>>.
   ... Check that `flow` matches pattern `CONT`.
   ... Check that `statementIR` has type `callStatementIR`.
   ... Let `callStatementIR` be `statementIR`.
   ... Result in the updated typing context `TC~1~` and the typed parser statement `callStatementIR`.
 . Else if let `directApplicationStatement` be `parserStatement'`:
  .. Group directApplicationStatement:
-  ... Let `TC~1~`, `flow`, and `statementIR` be the result of <<Stmt_ok, typing `directApplicationStatement`, under cursor `LOCAL`, typing context `TC~0~`, and abstract control flow `CONT`>>.
+  ... Let `TC~1~`, `flow`, and `statementIR` be the result of <<Stmt_ok, typing `NOLOOP`, under cursor `LOCAL`, typing context `TC~0~`, abstract control flow `CONT`, and loop context `directApplicationStatement`>>.
   ... Check that `flow` matches pattern `CONT`.
   ... Check that `statementIR` has type `directApplicationStatementIR`.
   ... Let `directApplicationStatementIR` be `statementIR`.
@@ -4378,7 +4441,7 @@ for each `typeParameter` in `typeParameter^{asterisk}^`
   ... Let `parameterIR^{asterisk}^` and `tid~impl~^{asterisk}^` be the result of <<Parameters_ok, typing `parameter^{asterisk}^`, under cursor `LOCAL` and typing context `TC~1~`>>.
   ... Let `TC~2~` be `<<add_parameters_t, $add_parameters_t(LOCAL, TC~1~, parameterIR^{asterisk}^)>>`.
   ... Let `TC~3~` be `TC~2~[LOCAL.KIND = FUNCTION : typeIR~ret~]`.
-  ... Let `++_++`, `f`, and `blockStatementIR` be the result of <<Block_ok, typing `blockStatement`, under typing context `TC~3~` and abstract control flow `CONT`>>.
+  ... Let `++_++`, `f`, and `blockStatementIR` be the result of <<Block_ok, typing `NOLOOP`, under typing context `TC~3~`, abstract control flow `CONT`, and loop context `blockStatement`>>.
   ... Else if `f` matches pattern `RET`:
    .... Let `cid` be `<<cid, $cid(name, parameterList)>>`.
    .... Let `definedFunctionTypeDefIR` be `FUNCTION < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) : typeIR~ret~`.
@@ -4402,7 +4465,7 @@ for each `typeParameter` in `typeParameter^{asterisk}^`
   ... Let `parameterIR^{asterisk}^` and `tid^{asterisk}^` be the result of <<Parameters_ok, typing `parameter^{asterisk}^`, under cursor `LOCAL` and typing context `TC~1~`>>.
   ... Check that `tid^{asterisk}^` is an empty list.
   ... Let `TC~2~` be `<<add_parameters_t, $add_parameters_t(LOCAL, TC~1~, parameterIR^{asterisk}^)>>`.
-  ... Let `++_++`, `++_++`, and `blockStatementIR` be the result of <<Block_ok, typing `blockStatement`, under typing context `TC~2~` and abstract control flow `CONT`>>.
+  ... Let `++_++`, `++_++`, and `blockStatementIR` be the result of <<Block_ok, typing `NOLOOP`, under typing context `TC~2~`, abstract control flow `CONT`, and loop context `blockStatement`>>.
   ... Let `cid` be `<<cid, $cid(name, parameterList)>>`.
   ... Let `actionTypeDefIR` be `ACTION ( parameterIR^{asterisk}^ )`.
   ... Check that <<CallableTypeDef_wf, `actionTypeDefIR` is a well-formed type, assuming bound type ids `$bound(p, TC~0~)`>>.
@@ -4577,7 +4640,7 @@ for each `callableTypeDefIR` in `callableTypeDefIR^{asterisk}^`
   ... Let `controlLocalDeclaration^{asterisk}^` be <<flatten_controlLocalDeclarationList, the list of control local declarations in `controlLocalDeclarationList`>>.
   ... Let `TC~4~` and `controlLocalDeclarationIR^{asterisk}^` be the result of <<ControlLocalDecls_ok, typing `controlLocalDeclaration^{asterisk}^`, under typing context `TC~3~`>>.
   ... Let `TC~5~` be `TC~4~[LOCAL.KIND = CONTROL_APPLY_METHOD]`.
-  ... Let `++_++`, `++_++`, and `controlBodyIR` be the result of <<Block_ok, typing `controlBody`, under typing context `TC~5~` and abstract control flow `CONT`>>.
+  ... Let `++_++`, `++_++`, and `controlBodyIR` be the result of <<Block_ok, typing `NOLOOP`, under typing context `TC~5~`, abstract control flow `CONT`, and loop context `controlBody`>>.
   ... Let `callableTypeDefIR` be `CONTROL_APPLY ( parameterIR^{asterisk}^ )`.
   ... Check that <<CallableTypeDef_wf, `callableTypeDefIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
   ... Let `cid` be `<<cid_, $cid_(name, constructorParameterListOpt)>>`.
@@ -5506,6 +5569,98 @@ table $compat'_satplusminus:
 |===
 
 
+relation ForUpdateStmt_ok: `TC` and `forUpdateStatement`
+
+
+. Group call:
+ .. If let `lvalue~callable~ ( argumentList )` be `forUpdateStatement`:
+  ... Let `++_++`, `++_++`, and `statementIR` be the result of <<Stmt_ok, typing `NOLOOP`, under cursor `LOCAL`, typing context `TC`, abstract control flow `CONT`, and loop context `lvalue~callable~ ( argumentList ) ;`>>.
+  ... Check that `statementIR` has type `callStatementIR`.
+  ... Let `callableTargetIR < typeArgumentIR^{asterisk}^ > ( argumentIR^{asterisk}^ ) ;` be `statementIR`.
+  ... Result in `callableTargetIR < typeArgumentIR^{asterisk}^ > ( argumentIR^{asterisk}^ )`.
+ .. Else if let `lvalue~callable~ < typeArgumentList > ( argumentList )` be `forUpdateStatement`:
+  ... Let `++_++`, `++_++`, and `statementIR` be the result of <<Stmt_ok, typing `NOLOOP`, under cursor `LOCAL`, typing context `TC`, abstract control flow `CONT`, and loop context `lvalue~callable~ < typeArgumentList > ( argumentList ) ;`>>.
+  ... Check that `statementIR` has type `callStatementIR`.
+  ... Let `callableTargetIR < typeArgumentIR^{asterisk}^ > ( argumentIR^{asterisk}^ ) ;` be `statementIR`.
+  ... Result in `callableTargetIR < typeArgumentIR^{asterisk}^ > ( argumentIR^{asterisk}^ )`.
+. Check that `forUpdateStatement` matches pattern `%  %  %`.
+. Let `lvalue assignop expression` be `forUpdateStatement`.
+. Group assign:
+ .. Let `++_++`, `++_++`, and `statementIR` be the result of <<Stmt_ok, typing `NOLOOP`, under cursor `LOCAL`, typing context `TC`, abstract control flow `CONT`, and loop context `lvalue assignop expression ;`>>.
+ .. Check that `statementIR` has type `assignmentStatementIR`.
+ .. Let `typedLvalueIR assignop' typedExpressionIR ;` be `statementIR`.
+ .. Check that `assignop'` is equal to `assignop`.
+ .. Result in `typedLvalueIR assignop typedExpressionIR`.
+
+
+relation ForInitStmt_ok: `TC~0~` and `forInitStatement`
+
+
+. If let `annotationList type name initializerOpt` be `forInitStatement`:
+ .. Group variableDeclaration:
+  ... If `initializerOpt` matches pattern ``EMPTY`:
+   .... Let `typeIR` and `tid^{asterisk}^` be the result of <<Type_ok, typing `type`, under cursor `LOCAL` and typing context `TC~0~`>>.
+   .... Check that `tid^{asterisk}^` is an empty list.
+   .... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `$bound(LOCAL, TC~0~)`>>.
+   .... Check that `<<is_assignable_typeIR, $is_assignable_typeIR(typeIR)>>`.
+   .... Let `nameIR` be <<name, the name of `name`>>.
+   .... Let `TC~1~` be <<add_var_t, `TC~0~` with a mapping from `nameIR` to `INOUT typeIR DYN None` added to the `LOCAL` layer>>.
+   .... Result in `TC~1~` and `annotationList typeIR nameIR None`.
+  ... Else if let `= expression~init~` be `initializerOpt`:
+   .... Let `typeIR` and `tid^{asterisk}^` be the result of <<Type_ok, typing `type`, under cursor `LOCAL` and typing context `TC~0~`>>.
+   .... Check that `tid^{asterisk}^` is an empty list.
+   .... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `$bound(LOCAL, TC~0~)`>>.
+   .... Check that `<<is_assignable_typeIR, $is_assignable_typeIR(typeIR)>>`.
+   .... Let `typedExpressionIR~init~` be the result of <<Expr_ok, typing `expression~init~`, under cursor `LOCAL` and typing context `TC~0~`>>.
+   .... Let `typedExpressionIR~init_cast~` be <<option_get, *!*>> <<coerce_unary, `typedExpressionIR~init~` implicitly cast to `typeIR`>>.
+   .... Let `nameIR` be <<name, the name of `name`>>.
+   .... Let `TC~1~` be <<add_var_t, `TC~0~` with a mapping from `nameIR` to `INOUT typeIR DYN None` added to the `LOCAL` layer>>.
+   .... Result in `TC~1~` and `annotationList typeIR nameIR = typedExpressionIR~init_cast~`.
+. Else if let `forUpdateStatement` be `forInitStatement`:
+ .. Group forUpdateStatement:
+  ... Let <<ForUpdateStmt_ok, `TC~0~ |- forUpdateStatement : forUpdateStatementIR`>>.
+  ... Result in `TC~0~` and `forUpdateStatementIR`.
+
+
+relation ForInitStmts_ok: `TC` and `forInitStatement^{asterisk}^`
+
+
+. If `forInitStatement^{asterisk}^` is an empty list:
+ .. Group nil:
+  ... Result in `TC` and `[ ]`.
+. Else let `forInitStatement~h~ {two-colons} forInitStatement~t~^{asterisk}^` be `forInitStatement^{asterisk}^`:
+ .. Group cons:
+  ... Let <<ForInitStmt_ok, `TC |- forInitStatement~h~ : TC~1~ forInitStatementIR~h~`>>.
+  ... Let <<ForInitStmts_ok, `TC~1~ |- forInitStatement~t~^{asterisk}^ : TC~2~ forInitStatementIR~t~^{asterisk}^`>>.
+  ... Result in `TC~2~` and `forInitStatementIR~h~ {two-colons} forInitStatementIR~t~^{asterisk}^`.
+
+
+relation ForCollectionExpr_ok: `TC`, `typeIR~var~`, and `forCollectionExpression`
+
+
+. If let `expression` be `forCollectionExpression`:
+ .. Group expression:
+  ... Let `typedExpressionIR` be the result of <<Expr_ok, typing `expression`, under cursor `LOCAL` and typing context `TC`>>.
+  ... Let <<expressionNoteIR, type `typeIR~list~` and compile-time known-ness `++_++`>> be the note of `typedExpressionIR`.
+  ... Let `typeIR` be <<canon_typeIR, the canonicalized form of `typeIR~list~`>>.
+  ... If let `LIST < typeIR~e~ >` be `typeIR`:
+   .... Check that <<Sub_impl, `typeIR~e~` can be implicitly cast to `typeIR~var~`>>.
+   .... Result in `typedExpressionIR`.
+  ... Else if let `typeIR~e~ [ ++_++ ]` be `typeIR`:
+   .... Check that <<Type_alpha, `typeIR~e~` and `typeIR~var~` are the same type>>.
+   .... Result in `typedExpressionIR`.
+. Else if let `expression~l~ .. expression~r~` be `forCollectionExpression`:
+ .. Group range:
+  ... Let `typedExpressionIR~l~` be the result of <<Expr_ok, typing `expression~l~`, under cursor `LOCAL` and typing context `TC`>>.
+  ... Let `typedExpressionIR~r~` be the result of <<Expr_ok, typing `expression~r~`, under cursor `LOCAL` and typing context `TC`>>.
+  ... Let `typedExpressionIR~l_coerced~` be <<option_get, *!*>> <<coerce_unary, `typedExpressionIR~l~` implicitly cast to `typeIR~var~`>>.
+  ... Let `typedExpressionIR~r_coerced~` be <<option_get, *!*>> <<coerce_unary, `typedExpressionIR~r~` implicitly cast to `typeIR~var~`>>.
+  ... Let <<expressionNoteIR, type `typeIR~l~` and compile-time known-ness `++_++`>> be the note of `typedExpressionIR~l_coerced~`.
+  ... Let <<expressionNoteIR, type `typeIR~r~` and compile-time known-ness `++_++`>> be the note of `typedExpressionIR~r_coerced~`.
+  ... Check that `<<compat_range, $compat_range(typeIR~l~, typeIR~r~)>>`.
+  ... Result in `typedExpressionIR~l_coerced~ .. typedExpressionIR~r_coerced~`.
+
+
 relation SwitchLabel_table_ok: `TC`, `tid~table~`, `bool`, and `switchLabel`
 
 
@@ -5527,13 +5682,13 @@ relation SwitchLabel_table_ok: `TC`, `tid~table~`, `bool`, and `switchLabel`
   ... Result in `typedExpressionIR~label~`.
 
 
-relation SwitchCase_table_ok: `TC`, `f`, `tid~table~`, `b~last~`, and `switchCase`
+relation SwitchCase_table_ok: `TC`, `f`, `l`, `tid~table~`, `b~last~`, and `switchCase`
 
 
 . Group :
  .. If let `switchLabel : blockStatement` be `switchCase`:
   ... Let <<SwitchLabel_table_ok, `TC tid~table~ b~last~ |- switchLabel : switchLabelIR`>>.
-  ... Let `TC~post~`, `f~post~`, and `blockStatementIR` be the result of <<Block_ok, typing `blockStatement`, under typing context `TC` and abstract control flow `f`>>.
+  ... Let `TC~post~`, `f~post~`, and `blockStatementIR` be the result of <<Block_ok, typing `l`, under typing context `TC`, abstract control flow `f`, and loop context `blockStatement`>>.
   ... Let `switchCaseIR` be `switchLabelIR : blockStatementIR`.
   ... Result in `f~post~`, `switchCaseIR`, and `switchLabel`.
  .. Else let `switchLabel :` be `switchCase`:
@@ -5542,7 +5697,7 @@ relation SwitchCase_table_ok: `TC`, `f`, `tid~table~`, `b~last~`, and `switchCas
   ... Result in `f`, `switchCaseIR`, and `switchLabel`.
 
 
-relation SwitchCases_table_ok: `TC`, `f`, `tid~table~`, and `switchCase^{asterisk}^`
+relation SwitchCases_table_ok: `TC`, `f`, `l`, `tid~table~`, and `switchCase^{asterisk}^`
 
 
 . If `switchCase^{asterisk}^` is an empty list:
@@ -5551,8 +5706,8 @@ relation SwitchCases_table_ok: `TC`, `f`, `tid~table~`, and `switchCase^{asteris
 . Else let `switchCase~h~ {two-colons} switchCase~t~^{asterisk}^` be `switchCase^{asterisk}^`:
  .. Group cons:
   ... Let `b~last~` be `switchCase~t~^{asterisk}^` is equal to `[ ]`.
-  ... Let <<SwitchCase_table_ok, `TC f tid~table~ b~last~ |- switchCase~h~ : f~h~ switchCaseIR~h~ # switchLabel~h~`>>.
-  ... Let <<SwitchCases_table_ok, `TC f~h~ tid~table~ |- switchCase~t~^{asterisk}^ : f~t~ switchCaseIR~t~^{asterisk}^ # switchLabel~t~^{asterisk}^`>>.
+  ... Let <<SwitchCase_table_ok, `TC f l tid~table~ b~last~ |- switchCase~h~ : f~h~ switchCaseIR~h~ # switchLabel~h~`>>.
+  ... Let <<SwitchCases_table_ok, `TC f~h~ l tid~table~ |- switchCase~t~^{asterisk}^ : f~t~ switchCaseIR~t~^{asterisk}^ # switchLabel~t~^{asterisk}^`>>.
   ... Result in `f~t~`, `switchCaseIR~h~ {two-colons} switchCaseIR~t~^{asterisk}^`, and `switchLabel~h~ {two-colons} switchLabel~t~^{asterisk}^`.
 
 
@@ -5572,13 +5727,13 @@ relation SwitchLabel_general_ok: `TC`, `typeIR`, `bool`, and `switchLabel`
   ... Result in `typedExpressionIR~label_cast~`.
 
 
-relation SwitchCase_general_ok: `TC`, `f`, `typeIR~switch~`, `b~last~`, and `switchCase`
+relation SwitchCase_general_ok: `TC`, `f`, `l`, `typeIR~switch~`, `b~last~`, and `switchCase`
 
 
 . Group :
  .. If let `switchLabel : blockStatement` be `switchCase`:
   ... Let <<SwitchLabel_general_ok, `TC typeIR~switch~ b~last~ |- switchLabel : switchLabelIR`>>.
-  ... Let `TC~post~`, `f~post~`, and `blockStatementIR` be the result of <<Block_ok, typing `blockStatement`, under typing context `TC` and abstract control flow `f`>>.
+  ... Let `TC~post~`, `f~post~`, and `blockStatementIR` be the result of <<Block_ok, typing `l`, under typing context `TC`, abstract control flow `f`, and loop context `blockStatement`>>.
   ... Let `switchCaseIR` be `switchLabelIR : blockStatementIR`.
   ... Result in `f~post~`, `switchCaseIR`, and `switchLabel`.
  .. Else let `switchLabel :` be `switchCase`:
@@ -5587,7 +5742,7 @@ relation SwitchCase_general_ok: `TC`, `f`, `typeIR~switch~`, `b~last~`, and `swi
   ... Result in `f`, `switchCaseIR`, and `switchLabel`.
 
 
-relation SwitchCases_general_ok: `TC`, `f`, `typeIR~switch~`, and `switchCase^{asterisk}^`
+relation SwitchCases_general_ok: `TC`, `f`, `l`, `typeIR~switch~`, and `switchCase^{asterisk}^`
 
 
 . If `switchCase^{asterisk}^` is an empty list:
@@ -5596,8 +5751,8 @@ relation SwitchCases_general_ok: `TC`, `f`, `typeIR~switch~`, and `switchCase^{a
 . Else let `switchCase~h~ {two-colons} switchCase~t~^{asterisk}^` be `switchCase^{asterisk}^`:
  .. Group cons:
   ... Let `b~last~` be `switchCase~t~^{asterisk}^` is equal to `[ ]`.
-  ... Let <<SwitchCase_general_ok, `TC f typeIR~switch~ b~last~ |- switchCase~h~ : f~h~ switchCaseIR~h~ # switchLabel~h~`>>.
-  ... Let <<SwitchCases_general_ok, `TC f~h~ typeIR~switch~ |- switchCase~t~^{asterisk}^ : f~t~ switchCaseIR~t~^{asterisk}^ # switchLabel~t~^{asterisk}^`>>.
+  ... Let <<SwitchCase_general_ok, `TC f l typeIR~switch~ b~last~ |- switchCase~h~ : f~h~ switchCaseIR~h~ # switchLabel~h~`>>.
+  ... Let <<SwitchCases_general_ok, `TC f~h~ l typeIR~switch~ |- switchCase~t~^{asterisk}^ : f~t~ switchCaseIR~t~^{asterisk}^ # switchLabel~t~^{asterisk}^`>>.
   ... Result in `f~t~`, `switchCaseIR~h~ {two-colons} switchCaseIR~t~^{asterisk}^`, and `switchLabel~h~ {two-colons} switchLabel~t~^{asterisk}^`.
 
 
@@ -5623,7 +5778,7 @@ for each `typeParameter` in `typeParameter^{asterisk}^`
   ... Let `parameterIR^{asterisk}^` and `tid~impl~^{asterisk}^` be the result of <<Parameters_ok, typing `parameter^{asterisk}^`, under cursor `LOCAL` and typing context `TC~3~`>>.
   ... Let `TC~4~` be `<<add_parameters_t, $add_parameters_t(LOCAL, TC~3~, parameterIR^{asterisk}^)>>`.
   ... Let `TC~5~` be `TC~4~[LOCAL.KIND = EXTERN_METHOD : typeIR~ret~]`.
-  ... Let `++_++`, `f`, and `blockStatementIR` be the result of <<Block_ok, typing `blockStatement`, under typing context `TC~5~` and abstract control flow `CONT`>>.
+  ... Let `++_++`, `f`, and `blockStatementIR` be the result of <<Block_ok, typing `NOLOOP`, under typing context `TC~5~`, abstract control flow `CONT`, and loop context `blockStatement`>>.
   ... Else if `f` matches pattern `RET`:
    .... Let `cid` be `<<cid, $cid(name, parameterList)>>`.
    .... Let `externMethodTypeDefIR` be `EXTERN_METHOD < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) : typeIR~ret~`.

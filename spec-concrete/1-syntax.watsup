@@ -746,11 +746,28 @@ syntax conditionalStatement =
 
 syntax annotationListNonEmpty
 
-syntax forInitStatement =
-  | annotationList type name initializerOpt
+syntax forUpdateStatement =
   | lvalue `( argumentList )
   | lvalue `< typeArgumentList > `( argumentList )
-  | lvalue assignop expression
+  | lvalue assignop expression 
+
+syntax forUpdateStatementListNonEmpty =
+  | forUpdateStatement
+  | forUpdateStatementListNonEmpty `, forUpdateStatement
+
+syntax forUpdateStatementList =
+  | `EMPTY
+  | forUpdateStatementListNonEmpty
+
+dec $flatten_forUpdateStatementList(forUpdateStatementList) : forUpdateStatement*
+def $flatten_forUpdateStatementList(`EMPTY) = eps
+def $flatten_forUpdateStatementList(forUpdateStatement) = forUpdateStatement
+def $flatten_forUpdateStatementList(forUpdateStatementListNonEmpty `, forUpdateStatement)
+  = $flatten_forUpdateStatementList(forUpdateStatementListNonEmpty) ++ [ forUpdateStatement ]
+
+syntax forInitStatement =
+  | annotationList type name initializerOpt
+  | forUpdateStatement
 
 syntax forInitStatementListNonEmpty =
   | forInitStatement
@@ -760,15 +777,11 @@ syntax forInitStatementList =
   | `EMPTY
   | forInitStatementListNonEmpty
 
-syntax forUpdateStatement = forInitStatement
-
-syntax forUpdateStatementListNonEmpty =
-  | forUpdateStatement
-  | forUpdateStatementListNonEmpty `, forUpdateStatement
-
-syntax forUpdateStatementList =
-  | `EMPTY
-  | forUpdateStatementListNonEmpty
+dec $flatten_forInitStatementList(forInitStatementList) : forInitStatement*
+def $flatten_forInitStatementList(`EMPTY) = eps
+def $flatten_forInitStatementList(forInitStatement) = forInitStatement
+def $flatten_forInitStatementList(forInitStatementListNonEmpty `, forInitStatement)
+  = $flatten_forInitStatementList(forInitStatementListNonEmpty) ++ [ forInitStatement ]
 
 syntax forCollectionExpression =
   | expression
