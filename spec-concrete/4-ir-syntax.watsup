@@ -267,33 +267,50 @@ dec $type_of_typedLvalueIR(typedLvalueIR) : typeIR
   hint(prose_in "the type of lvalue " %0)
 def $type_of_typedLvalueIR(_ `# `( typeIR )) = typeIR
 
+dec $typedLvalueIR_as_typedExpressionIR(typedLvalueIR)
+  : typedExpressionIR?
+def $typedLvalueIR_as_typedExpressionIR(
+    referenceExpressionIR `# `( typeIR ))
+  = referenceExpressionIR `# `( typeIR DYN )
+def $typedLvalueIR_as_typedExpressionIR(
+    (typedLvalueIR `. nameIR) `# `( typeIR ))
+  = (typedExpressionIR `. nameIR) `# `( typeIR DYN )
+  -- if typedExpressionIR
+      = $typedLvalueIR_as_typedExpressionIR(typedLvalueIR)
+def $typedLvalueIR_as_typedExpressionIR(
+    (typedLvalueIR_base `[ typedExpressionIR_index ]) `# `( typeIR ))
+  = (typedExpressionIR_base `[ typedExpressionIR_index ]) `# `( typeIR DYN )
+  -- if typedExpressionIR_base
+      = $typedLvalueIR_as_typedExpressionIR(typedLvalueIR_base)
+def $typedLvalueIR_as_typedExpressionIR(
+    (typedLvalueIR_base `[ typedExpressionIR_hi `: typedExpressionIR_lo ]) `# `( typeIR ))
+  = (typedExpressionIR_base `[ typedExpressionIR_hi `: typedExpressionIR_lo ]) `# `( typeIR DYN )
+  -- if typedExpressionIR_base
+      = $typedLvalueIR_as_typedExpressionIR(typedLvalueIR_base)
+
 dec $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
   : typedLvalueIR?
 def $typedExpressionIR_as_typedLvalueIR(
-    referenceExpressionIR `# `( typeIR _ )
-  )
+    referenceExpressionIR `# `( typeIR _ ))
   = referenceExpressionIR `# `( typeIR )
 def $typedExpressionIR_as_typedLvalueIR(
-    (typedExpressionIR `. nameIR) `# `( typeIR _ )
-  )
+    (typedExpressionIR `. nameIR) `# `( typeIR _ ))
   = (typedLvalueIR `. nameIR) `# `( typeIR )
   -- if typedLvalueIR
       = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
 def $typedExpressionIR_as_typedLvalueIR(
-    (typedExpressionIR_base `[ typedExpressionIR_index ]) `# `( typeIR _ )
-  )
+    (typedExpressionIR_base `[ typedExpressionIR_index ]) `# `( typeIR _ ))
   = (typedLvalueIR_base `[ typedExpressionIR_index ]) `# `( typeIR )
   -- if typedLvalueIR_base
       = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base)
 def $typedExpressionIR_as_typedLvalueIR(
-    (typedExpressionIR_base `[ typedExpressionIR_hi `: typedExpressionIR_lo ]) `# `( typeIR _ )
-  )
+    (typedExpressionIR_base `[ typedExpressionIR_hi `: typedExpressionIR_lo ]) `# `( typeIR _ ))
   = (typedLvalueIR_base `[ typedExpressionIR_hi `: typedExpressionIR_lo ]) `# `( typeIR )
   -- if typedLvalueIR_base
       = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base)
 def $typedExpressionIR_as_typedLvalueIR(
-    (`( typedExpressionIR )) `# `( typeIR _ )
-  ) = (`( typedLvalueIR )) `# `( typeIR )
+    (`( typedExpressionIR )) `# `( typeIR _ ))
+  = (`( typedLvalueIR )) `# `( typeIR )
   -- if typedLvalueIR
       = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
 

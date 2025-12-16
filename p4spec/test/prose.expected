@@ -2885,18 +2885,33 @@ relation Stmt_ok: `p`, `TC`, `f`, and `statement`
 * the typing context `TC`,
 * the abstract control flow `f`,
 * and the typed statement `;`.
-. Else if let `lvalue assignop expression ;` be `statement`:
- .. Check that `assignop` matches pattern `=`.
- .. Group assignmentStatement-eq:
-  ... Let `typedLvalueIR` be the result of <<Lvalue_ok, typing `lvalue`, under cursor `p` and typing context `TC`>>.
-  ... Let `typedExpressionIR` be the result of <<Expr_ok, typing `expression`, under cursor `p` and typing context `TC`>>.
-  ... Let `typeIR~l~` be <<type_of_typedLvalueIR, the type of lvalue  `typedLvalueIR`>>.
-  ... Let `typeIR~r~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR`>>.
-  ... Let `typedExpressionIR~cast~` be <<option_get, *!*>> <<coerce_unary, `typedExpressionIR` implicitly cast to `typeIR~l~`>>.
-  ... Result in 
+. Else if let `lvalue assignop' expression ;` be `statement`:
+ .. Group asssignmentStatement:
+  ... If `assignop'` matches pattern `=`:
+   .... Let `typedLvalueIR` be the result of <<Lvalue_ok, typing `lvalue`, under cursor `p` and typing context `TC`>>.
+   .... Let `typedExpressionIR` be the result of <<Expr_ok, typing `expression`, under cursor `p` and typing context `TC`>>.
+   .... Let `typeIR~l~` be <<type_of_typedLvalueIR, the type of lvalue  `typedLvalueIR`>>.
+   .... Let `typeIR~r~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR`>>.
+   .... Let `typedExpressionIR~cast~` be <<option_get, *!*>> <<coerce_unary, `typedExpressionIR` implicitly cast to `typeIR~l~`>>.
+   .... Result in 
 * the typing context `TC`,
 * the abstract control flow `f`,
 * and the typed statement `typedLvalueIR = typedExpressionIR~cast~ ;`.
+  ... Else `assignop'` does not match pattern `=`:
+   .... Let `binop` be <<option_get, *!*>> <<assignop_as_binop, the binary operator corresponding to `assignop'`>>.
+   .... Let `typedLvalueIR` be the result of <<Lvalue_ok, typing `lvalue`, under cursor `p` and typing context `TC`>>.
+   .... Let `expression~lvalue~` be `<<lvalue_to_expression, $lvalue_to_expression(lvalue)>>`.
+   .... Let `expression~binary~` be `expression~lvalue~ binop expression`.
+   .... Let `typedExpressionIR~binary~` be the result of <<Expr_ok, typing `expression~binary~`, under cursor `p` and typing context `TC`>>.
+   .... Let `( typeIR~lvalue~ )` be the note of `typedLvalueIR`.
+   .... Let `expressionIR # ++_++` be <<option_get, *!*>> <<coerce_unary, `typedExpressionIR~binary~` implicitly cast to `typeIR~lvalue~`>>.
+   .... Check that `expressionIR` has type `binaryExpressionIR`.
+   .... Let `++_++ binop'' typedExpressionIR~cast~` be `expressionIR`.
+   .... Check that `binop''` is equal to `binop`.
+   .... Result in 
+* the typing context `TC`,
+* the abstract control flow `f`,
+* and the typed statement `typedLvalueIR assignop' typedExpressionIR~cast~ ;`.
 . Else if let `callStatement` be `statement`:
  .. Group callStatement:
   ... If let `lvalue~callable~ ( argumentList ) ;` be `callStatement`:
@@ -7674,8 +7689,7 @@ relation Stmt_eval: `p`, `EC`, `STO`, and `statementIR`
 * the evaluation context `EC`,
 * the updated store `STO`,
 * and the instantiated statement ``.
-. Else if let `typedLvalueIR assignop typedExpressionIR ;` be `statementIR`:
- .. Check that `assignop` matches pattern `=`.
+. Else if let `typedLvalueIR assignop' typedExpressionIR ;` be `statementIR`:
  .. Group assignmentStatementIR:
   ... Let <<Lvalue_eval, `p EC STO |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult`>>.
   ... If let `exitResult` be `storageReferenceResult`:
@@ -7686,7 +7700,11 @@ relation Stmt_eval: `p`, `EC`, `STO`, and `statementIR`
   ... Else let `storageReference'^?^` be `storageReferenceResult`:
    .... Check that `storageReference'^?^` is Some value.
    .... Let `storageReference` be `storageReference'^?^`.
-   .... Let `EC~2~`, `STO~2~`, and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR`, under cursor `p`, evaluation context `EC~1~`, and store `STO~1~`>>.
+   .... Check that `assignop'` does not match pattern `=`.
+   .... Let `binop` be <<option_get, *!*>> <<assignop_as_binop, the binary operator corresponding to `assignop'`>>.
+   .... Let `typedExpressionIR~self~` be <<option_get, *!*>> `<<typedLvalueIR_as_typedExpressionIR, $typedLvalueIR_as_typedExpressionIR(typedLvalueIR)>>`.
+   .... Let `typedExpressionIR~binary~` be <<typedExpressionIR, `typedExpressionIR~self~ binop typedExpressionIR` annotated with type `VOID` and compile-time known-ness `DYN`>>.
+   .... Let `EC~2~`, `STO~2~`, and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR~binary~`, under cursor `p`, evaluation context `EC~1~`, and store `STO~1~`>>.
    .... If let `exitResult` be `expressionResult`:
     ..... Result in 
 * the evaluation context `EC~2~`,
@@ -7695,6 +7713,23 @@ relation Stmt_eval: `p`, `EC`, `STO`, and `statementIR`
    .... Else let `value` be `expressionResult`:
     ..... Let <<Lvalue_write, `p EC~2~ STO~2~ |- storageReference -> value : EC~3~`>>.
     ..... Result in 
+* the evaluation context `EC~3~`,
+* the updated store `STO~2~`,
+* and the instantiated statement ``.
+  ... Check that `assignop'` matches pattern `=`.
+  ... Check that `storageReferenceResult` has type `continueResult<storageReference?>`.
+  ... Let `storageReference'^?^` be `storageReferenceResult`.
+  ... Check that `storageReference'^?^` is Some value.
+  ... Let `storageReference` be `storageReference'^?^`.
+  ... Let `EC~2~`, `STO~2~`, and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR`, under cursor `p`, evaluation context `EC~1~`, and store `STO~1~`>>.
+  ... If let `exitResult` be `expressionResult`:
+   .... Result in 
+* the evaluation context `EC~2~`,
+* the updated store `STO~2~`,
+* and the instantiated statement `EXIT`.
+  ... Else let `value` be `expressionResult`:
+   .... Let <<Lvalue_write, `p EC~2~ STO~2~ |- storageReference -> value : EC~3~`>>.
+   .... Result in 
 * the evaluation context `EC~3~`,
 * the updated store `STO~2~`,
 * and the instantiated statement ``.

@@ -4,6 +4,20 @@
 ;; syntax lvalue
 ;;
 
+dec $lvalue_to_expression(lvalue) : expression
+def $lvalue_to_expression(referenceExpression) = referenceExpression
+def $lvalue_to_expression(lvalue_base `. member)
+  = expression_base `. member
+  -- if expression_base = $lvalue_to_expression(lvalue_base)
+def $lvalue_to_expression(lvalue_base `[ expression_index ])
+  = expression_base `[ expression_index ]
+  -- if expression_base = $lvalue_to_expression(lvalue_base)
+def $lvalue_to_expression(lvalue_base `[ expression_hi `: expression_lo ])
+  = expression_base `[ expression_hi `: expression_lo ]
+  -- if expression_base = $lvalue_to_expression(lvalue_base)
+def $lvalue_to_expression(`( lvalue )) = `( expression )
+  -- if expression = $lvalue_to_expression(lvalue)
+
 ;;; referenceExpression
 ;;; syntax referenceExpression
 
