@@ -18204,7 +18204,7 @@ relation Call_convention_expr_ok: cursor typingContext actctxt |- parameterIR @ 
     -- if Expr_lvalue_ok: p TC |- typedExpressionIR_arg holds
     -- output: % % % |- % @ % : typedExpressionIR_arg
 
-  ;; ../../../../spec-concrete/5.15.1-typing-call-convention.watsup:121.1-140.2
+  ;; ../../../../spec-concrete/5.15.1-typing-call-convention.watsup:121.1-139.2
   rulegroup empty
 
    match
@@ -18224,16 +18224,16 @@ relation Call_convention_expr_ok: cursor typingContext actctxt |- parameterIR @ 
 
     rulepath non-action
     -- if (actctxt = noaction)
-    -- let typeIR_arg = $type_of_typedExpressionIR(typedExpressionIR_arg)
-    -- let ctk_arg = $ctk_of_typedExpressionIR(typedExpressionIR_arg)
-    -- if Type_alpha: typeIR_param ~~ typeIR_arg holds
-    -- if (ctk_arg =/= dyn)
+    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $coerce_unary(typedExpressionIR_arg, typeIR_param)
+    -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
+    -- let ?(typedExpressionIR_arg_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+    -- if (dyn =/= $ctk_of_typedExpressionIR(typedExpressionIR_arg))
     -- output: % % % |- % @ % : typedExpressionIR_arg
 
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:395.1-400.84
 relation Call_convention_argument_ok: cursor typingContext actctxt |- parameterIR @ argumentIR : argumentIR
 
-  ;; ../../../../spec-concrete/5.15.1-typing-call-convention.watsup:146.1-151.45
+  ;; ../../../../spec-concrete/5.15.1-typing-call-convention.watsup:145.1-150.45
   rulegroup typedExpression
 
    match
@@ -18249,7 +18249,7 @@ relation Call_convention_argument_ok: cursor typingContext actctxt |- parameterI
     -- Call_convention_expr_ok: p TC actctxt |- parameterIR @ typedExpressionIR : typedExpressionIR_cast
     -- output: % % % |- % @ % : typedExpressionIR_cast as argumentIR
 
-  ;; ../../../../spec-concrete/5.15.1-typing-call-convention.watsup:155.1-160.45
+  ;; ../../../../spec-concrete/5.15.1-typing-call-convention.watsup:154.1-159.45
   rulegroup nameIR-typedExpression
 
    match
@@ -18265,7 +18265,7 @@ relation Call_convention_argument_ok: cursor typingContext actctxt |- parameterI
     -- Call_convention_expr_ok: p TC actctxt |- parameterIR @ typedExpressionIR : typedExpressionIR_cast
     -- output: % % % |- % @ % : nameIR = typedExpressionIR_cast
 
-  ;; ../../../../spec-concrete/5.15.1-typing-call-convention.watsup:164.1-167.34
+  ;; ../../../../spec-concrete/5.15.1-typing-call-convention.watsup:163.1-166.34
   rulegroup nameIR-dontcare
 
    match
@@ -18282,7 +18282,7 @@ relation Call_convention_argument_ok: cursor typingContext actctxt |- parameterI
     -- if direction matches `OUT`
     -- output: % % % |- % @ % : nameIR =_
 
-  ;; ../../../../spec-concrete/5.15.1-typing-call-convention.watsup:171.1-173.34
+  ;; ../../../../spec-concrete/5.15.1-typing-call-convention.watsup:170.1-172.34
   rulegroup dontcare
 
    match
@@ -18301,7 +18301,7 @@ relation Call_convention_argument_ok: cursor typingContext actctxt |- parameterI
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:402.1-407.84
 relation Call_convention_ok: cursor typingContext actctxt |- parameterIR* @ argumentListIR : argumentListIR
 
-  ;; ../../../../spec-concrete/5.15.1-typing-call-convention.watsup:179.1-180.35
+  ;; ../../../../spec-concrete/5.15.1-typing-call-convention.watsup:178.1-179.35
   rulegroup nil
 
    match
@@ -18316,7 +18316,7 @@ relation Call_convention_ok: cursor typingContext actctxt |- parameterIR* @ argu
     rulepath nil
     -- output: % % % |- % @ % : []
 
-  ;; ../../../../spec-concrete/5.15.1-typing-call-convention.watsup:182.1-191.41
+  ;; ../../../../spec-concrete/5.15.1-typing-call-convention.watsup:181.1-190.41
   rulegroup cons
 
    match

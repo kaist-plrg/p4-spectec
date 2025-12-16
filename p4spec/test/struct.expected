@@ -20371,13 +20371,13 @@ relation Call_convention_expr_ok: p TC actctxt |- (_annotationList direction typ
 
       2. Case (% matches pattern `NOACTION`)
 
-        1. (Let typeIR_arg be $type_of_typedExpressionIR(typedExpressionIR_arg))
+        1. (Let (typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?} be $coerce_unary(typedExpressionIR_arg, typeIR_param))
 
-        2. (Let ctk_arg be $ctk_of_typedExpressionIR(typedExpressionIR_arg))
+        2. If (((typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?} matches pattern (_))), then
 
-        3. If (Type_alpha: typeIR_param ~~ typeIR_arg) holds, then
+          1. (Let ?(typedExpressionIR_arg_cast) be (typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?})
 
-          1. If (~(ctk_arg matches pattern `DYN`)), then
+          2. If (~($ctk_of_typedExpressionIR(typedExpressionIR_arg) matches pattern `DYN`)), then
 
             1. Result in : % % % |- % @ % : typedExpressionIR_arg
 
