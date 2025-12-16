@@ -1265,13 +1265,44 @@ for each `typedExpressionIR` in `typedExpressionIR^{asterisk}^`
     ..... Let `value` be <<option_get, *!*>> `<<assoc_, $assoc_<id, value>(nameIR, ((id~field~, value~field~))^{asterisk}^)>>`.
     ..... Result in `tid . nameIR . value`.
  .. Else if let `typedExpressionIR~base~` be `memberAccessBaseIR`:
-  ... Check that `nameIR` is equal to `"size"`.
-  ... Group memberAccessExpressionIR-expression-stack-size:
-   .... Let <<expressionNoteIR, type `typeIR~base~` and compile-time known-ness `++_++`>> be the note of `typedExpressionIR~base~`.
+  ... Group memberAccessExpressionIR-typedExpressionIR:
+   .... Check that `nameIR` is equal to `"size"`.
+   .... Let `typeIR~base~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~base~`>>.
    .... Let `typeIR` be <<canon_typeIR, the canonicalized form of `typeIR~base~`>>.
    .... Check that `typeIR` has type `headerStackTypeIR`.
    .... Let `++_++ [ n~size~ ]` be `typeIR`.
    .... Result in `D n~size~`.
+   .... Let `value'` be the result of <<Expr_eval_lctk, the local compile-time evaluation of `typedExpressionIR~base~`, under cursor `p` and typing context `TC`>>.
+   .... If let `structValue` be `value'`:
+    ..... Let `STRUCT ++_++ { (value~field~ id~field~ ;)^{asterisk}^ }` be `structValue`.
+    ..... Let `value` be <<option_get, *!*>> `<<assoc_, $assoc_<id, value>(nameIR, ((id~field~, value~field~))^{asterisk}^)>>`.
+    ..... Result in `value`.
+   .... Else if let `headerValue` be `value'`:
+    ..... Let `HEADER ++_++ { ++_++ ; (value~field~ id~field~ ;)^{asterisk}^ }` be `headerValue`.
+    ..... Let `value` be <<option_get, *!*>> `<<assoc_, $assoc_<id, value>(nameIR, ((id~field~, value~field~))^{asterisk}^)>>`.
+    ..... Result in `value`.
+   .... Else if let `headerUnionValue` be `value'`:
+    ..... Let `HEADER_UNION ++_++ { (value~field~ id~field~ ;)^{asterisk}^ }` be `headerUnionValue`.
+    ..... Let `value` be <<option_get, *!*>> `<<assoc_, $assoc_<id, value>(nameIR, ((id~field~, value~field~))^{asterisk}^)>>`.
+    ..... Result in `value`.
+. Else if let `typedExpressionIR~base~ [ typedExpressionIR~index~ ]` be `expressionIR`:
+ .. Group indexAccessExpressionIR:
+  ... Let `value~base~` be the result of <<Expr_eval_lctk, the local compile-time evaluation of `typedExpressionIR~base~`, under cursor `p` and typing context `TC`>>.
+  ... Let `value~index~` be the result of <<Expr_eval_lctk, the local compile-time evaluation of `typedExpressionIR~index~`, under cursor `p` and typing context `TC`>>.
+  ... If let `TUPLE ( value~e~^{asterisk}^ )` be `value~base~`:
+   .... Let `int` be <<int_of_value, the integer representation of  `value~index~`>>.
+   .... Check that `int` has type `nat`.
+   .... Let `n~index~` be `int`.
+   .... Check that `n~index~` is less than the length of `value~e~^{asterisk}^`.
+   .... Let `value` be `value~e~^{asterisk}^[n~index~]`.
+   .... Result in `value`.
+  ... Else if let `HEADER_STACK [ value~e~^{asterisk}^ ( ++_++ ; ++_++ ) ]` be `value~base~`:
+   .... Let `int` be <<int_of_value, the integer representation of  `value~index~`>>.
+   .... Check that `int` has type `nat`.
+   .... Let `n~index~` be `int`.
+   .... Check that `n~index~` is less than the length of `value~e~^{asterisk}^`.
+   .... Let `value` be `value~e~^{asterisk}^[n~index~]`.
+   .... Result in `value`.
 . Else if let `typedExpressionIR~base~ [ typedExpressionIR~hi~ : typedExpressionIR~lo~ ]` be `expressionIR`:
  .. Group sliceAccessExpressionIR:
   ... Let `value~base~` be the result of <<Expr_eval_lctk, the local compile-time evaluation of `typedExpressionIR~base~`, under cursor `p` and typing context `TC`>>.
@@ -2536,21 +2567,22 @@ for each `typedExpressionIR~f~` in `typedExpressionIR~f~^{asterisk}^`
      ...... Result in the typed expression <<typedExpressionIR, `typedExpressionIR~base~ . "next"` annotated with `expressionNoteIR`>>.
    .... Let `typedExpressionIR~base~` be the result of <<Expr_ok, typing `expression~base~`, under cursor `p` and typing context `TC`>>.
    .... Let `typeIR~base~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~base~`>>.
+   .... Let `ctk~base~` be <<ctk_of_typedExpressionIR, the compile-time known-ness of  `typedExpressionIR~base~`>>.
    .... Let `typeIR'` be <<canon_typeIR, the canonicalized form of `typeIR~base~`>>.
    .... If let `STRUCT ++_++ { (typeIR~f~ nameIR~f~ ;)^{asterisk}^ }` be `typeIR'`:
     ..... Let `nameIR` be <<name, the name of `member`>>.
     ..... Let `typeIR` be <<option_get, *!*>> `<<assoc_, $assoc_<nameIR, typeIR>(nameIR, ((nameIR~f~, typeIR~f~))^{asterisk}^)>>`.
-    ..... Let `expressionNoteIR` be <<expressionNoteIR, type `typeIR` and compile-time known-ness `DYN`>>.
+    ..... Let `expressionNoteIR` be <<expressionNoteIR, type `typeIR` and compile-time known-ness `ctk~base~`>>.
     ..... Result in the typed expression <<typedExpressionIR, `typedExpressionIR~base~ . nameIR` annotated with `expressionNoteIR`>>.
    .... Else if let `HEADER ++_++ { (typeIR~f~ nameIR~f~ ;)^{asterisk}^ }` be `typeIR'`:
     ..... Let `nameIR` be <<name, the name of `member`>>.
     ..... Let `typeIR` be <<option_get, *!*>> `<<assoc_, $assoc_<nameIR, typeIR>(nameIR, ((nameIR~f~, typeIR~f~))^{asterisk}^)>>`.
-    ..... Let `expressionNoteIR` be <<expressionNoteIR, type `typeIR` and compile-time known-ness `DYN`>>.
+    ..... Let `expressionNoteIR` be <<expressionNoteIR, type `typeIR` and compile-time known-ness `ctk~base~`>>.
     ..... Result in the typed expression <<typedExpressionIR, `typedExpressionIR~base~ . nameIR` annotated with `expressionNoteIR`>>.
    .... Else if let `HEADER_UNION ++_++ { (typeIR~f~ nameIR~f~ ;)^{asterisk}^ }` be `typeIR'`:
     ..... Let `nameIR` be <<name, the name of `member`>>.
     ..... Let `typeIR` be <<option_get, *!*>> `<<assoc_, $assoc_<nameIR, typeIR>(nameIR, ((nameIR~f~, typeIR~f~))^{asterisk}^)>>`.
-    ..... Let `expressionNoteIR` be <<expressionNoteIR, type `typeIR` and compile-time known-ness `DYN`>>.
+    ..... Let `expressionNoteIR` be <<expressionNoteIR, type `typeIR` and compile-time known-ness `ctk~base~`>>.
     ..... Result in the typed expression <<typedExpressionIR, `typedExpressionIR~base~ . nameIR` annotated with `expressionNoteIR`>>.
    .... Else if let `TABLE_STRUCT ++_++ { HIT boolTypeIR ; MISS ++_++ ; ACTION_RUN ++_++ ; }` be `typeIR'`:
     ..... Let `nameIR` be <<name, the name of `member`>>.
@@ -2580,7 +2612,7 @@ for each `typedExpressionIR~f~` in `typedExpressionIR~f~^{asterisk}^`
    .... Check that `int` has type `nat`.
    .... Let `n~index~` be `int`.
    .... Check that `n~index~` is less than the length of `typeIR~e~^{asterisk}^`.
-   .... Let `expressionNoteIR` be <<expressionNoteIR, type `typeIR~e~^{asterisk}^[n~index~]` and compile-time known-ness `DYN`>>.
+   .... Let `expressionNoteIR` be <<expressionNoteIR, type `typeIR~e~^{asterisk}^[n~index~]` and compile-time known-ness `ctk~base~`>>.
    .... Result in the typed expression <<typedExpressionIR, `typedExpressionIR~base~ [ typedExpressionIR~index_reduced~ ]` annotated with `expressionNoteIR`>>.
   ... Else if let `typeIR [ n~size~ ]` be `typeIR'`:
    .... If `ctk~index~` matches pattern `LCTK`:
@@ -2589,10 +2621,11 @@ for each `typedExpressionIR~f~` in `typedExpressionIR~f~^{asterisk}^`
     ..... Check that `int` has type `nat`.
     ..... Let `n~index~` be `int`.
     ..... Check that `n~index~` is less than `n~size~`.
-    ..... Let `expressionNoteIR` be <<expressionNoteIR, type `typeIR` and compile-time known-ness `DYN`>>.
+    ..... Let `expressionNoteIR` be <<expressionNoteIR, type `typeIR` and compile-time known-ness `ctk~base~`>>.
     ..... Result in the typed expression <<typedExpressionIR, `typedExpressionIR~base~ [ typedExpressionIR~index_reduced~ ]` annotated with `expressionNoteIR`>>.
    .... Else `ctk~index~` does not match pattern `LCTK`:
-    ..... Let `expressionNoteIR` be <<expressionNoteIR, type `typeIR` and compile-time known-ness `DYN`>>.
+    ..... Let `ctk` be `<<join_ctk, $join_ctk(ctk~base~, ctk~index~)>>`.
+    ..... Let `expressionNoteIR` be <<expressionNoteIR, type `typeIR` and compile-time known-ness `ctk`>>.
     ..... Result in the typed expression <<typedExpressionIR, `typedExpressionIR~base~ [ typedExpressionIR~index_reduced~ ]` annotated with `expressionNoteIR`>>.
 . Else if let `expression~base~ [ expression~hi~ : expression~lo~ ]` be `expression'''`:
  .. Group sliceAccessExpression:
@@ -6033,29 +6066,55 @@ relation Expr_inst: `p`, `IC`, `STO`, and <<typedExpressionIR, `expressionIR` an
   ... Let `value~error~` be `<<find_var_i, $find_var_i(p, IC, nameIR~error~)>>`.
   ... Result in `STO` and `value~error~`.
 . Else if let `memberAccessBaseIR . nameIR` be `expressionIR`:
- .. Check that `memberAccessBaseIR` matches pattern `TYPE %`.
- .. Let `TYPE prefixedNameIR` be `memberAccessBaseIR`.
- .. Group memberAccessExpressionIR-type:
-  ... Let `typeDefIR` be <<option_get, *!*>> `<<find_typeDef_i, $find_typeDef_i(p, IC, prefixedNameIR)>>`.
-  ... Check that `typeDefIR` has type `enumTypeIR`.
-  ... Let `enumTypeIR` be `typeDefIR`.
-  ... If let `ENUM tid { ++_++^{asterisk}^ }` be `enumTypeIR`:
-   .... Result in `STO` and `tid . nameIR`.
-  ... Else let `ENUM tid < ++_++ > { (id~member~ = value~member~ ;)^{asterisk}^ }` be `enumTypeIR`:
-   .... Let `value` be <<option_get, *!*>> `<<assoc_, $assoc_<nameIR, value>(nameIR, ((id~member~, value~member~))^{asterisk}^)>>`.
-   .... Result in `STO` and `tid . nameIR . value`.
-. Let `typeIR~base~` be the type of `++_++`.
-. If let `memberAccessBaseIR . text` be `expressionIR`:
- .. Check that `memberAccessBaseIR` has type `typedExpressionIR`.
- .. Let `typedExpressionIR~base~` be `memberAccessBaseIR`.
- .. Check that `text` is equal to `"size"`.
- .. Group memberAccessExpressionIR-expression-stack-size:
-  ... Let <<expressionNoteIR, type `typeIR` and compile-time known-ness `++_++`>> be the note of `typedExpressionIR~base~`.
-  ... Check that `typeIR` is equal to `typeIR~base~`.
-  ... Let `typeIR'` be <<canon_typeIR, the canonicalized form of `typeIR~base~`>>.
-  ... Check that `typeIR'` has type `headerStackTypeIR`.
-  ... Let `++_++ [ n~size~ ]` be `typeIR'`.
-  ... Result in `STO` and `D n~size~`.
+ .. Else if let `TYPE prefixedNameIR` be `memberAccessBaseIR`:
+  ... Group memberAccessExpressionIR-type:
+   .... Let `typeDefIR` be <<option_get, *!*>> `<<find_typeDef_i, $find_typeDef_i(p, IC, prefixedNameIR)>>`.
+   .... Check that `typeDefIR` has type `enumTypeIR`.
+   .... Let `enumTypeIR` be `typeDefIR`.
+   .... If let `ENUM tid { ++_++^{asterisk}^ }` be `enumTypeIR`:
+    ..... Result in `STO` and `tid . nameIR`.
+   .... Else let `ENUM tid < ++_++ > { (id~member~ = value~member~ ;)^{asterisk}^ }` be `enumTypeIR`:
+    ..... Let `value` be <<option_get, *!*>> `<<assoc_, $assoc_<nameIR, value>(nameIR, ((id~member~, value~member~))^{asterisk}^)>>`.
+    ..... Result in `STO` and `tid . nameIR . value`.
+ .. Else if let `typedExpressionIR~base~` be `memberAccessBaseIR`:
+  ... Group memberAccessExpressionIR-typedExpressionIR:
+   .... Check that `nameIR` is equal to `"size"`.
+   .... Let `typeIR~base~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~base~`>>.
+   .... Let `typeIR` be <<canon_typeIR, the canonicalized form of `typeIR~base~`>>.
+   .... Check that `typeIR` has type `headerStackTypeIR`.
+   .... Let `++_++ [ n~size~ ]` be `typeIR`.
+   .... Result in `STO` and `D n~size~`.
+   .... Let <<Expr_inst, `p IC STO |- typedExpressionIR~base~ : STO~1~ value'`>>.
+   .... If let `structValue` be `value'`:
+    ..... Let `STRUCT ++_++ { (value~field~ id~field~ ;)^{asterisk}^ }` be `structValue`.
+    ..... Let `value` be <<option_get, *!*>> `<<assoc_, $assoc_<id, value>(nameIR, ((id~field~, value~field~))^{asterisk}^)>>`.
+    ..... Result in `STO~1~` and `value`.
+   .... Else if let `headerValue` be `value'`:
+    ..... Let `HEADER ++_++ { ++_++ ; (value~field~ id~field~ ;)^{asterisk}^ }` be `headerValue`.
+    ..... Let `value` be <<option_get, *!*>> `<<assoc_, $assoc_<id, value>(nameIR, ((id~field~, value~field~))^{asterisk}^)>>`.
+    ..... Result in `STO~1~` and `value`.
+   .... Else if let `headerUnionValue` be `value'`:
+    ..... Let `HEADER_UNION ++_++ { (value~field~ id~field~ ;)^{asterisk}^ }` be `headerUnionValue`.
+    ..... Let `value` be <<option_get, *!*>> `<<assoc_, $assoc_<id, value>(nameIR, ((id~field~, value~field~))^{asterisk}^)>>`.
+    ..... Result in `STO~1~` and `value`.
+. Else if let `typedExpressionIR~base~ [ typedExpressionIR~index~ ]` be `expressionIR`:
+ .. Group indexAccessExpressionIR:
+  ... Let <<Expr_inst, `p IC STO |- typedExpressionIR~base~ : STO~1~ value~base~`>>.
+  ... Let <<Expr_inst, `p IC STO~1~ |- typedExpressionIR~index~ : STO~2~ value~index~`>>.
+  ... If let `TUPLE ( value~e~^{asterisk}^ )` be `value~base~`:
+   .... Let `int` be <<int_of_value, the integer representation of  `value~index~`>>.
+   .... Check that `int` has type `nat`.
+   .... Let `n~index~` be `int`.
+   .... Check that `n~index~` is less than the length of `value~e~^{asterisk}^`.
+   .... Let `value` be `value~e~^{asterisk}^[n~index~]`.
+   .... Result in `STO~2~` and `value`.
+  ... Else if let `HEADER_STACK [ value~e~^{asterisk}^ ( ++_++ ; ++_++ ) ]` be `value~base~`:
+   .... Let `int` be <<int_of_value, the integer representation of  `value~index~`>>.
+   .... Check that `int` has type `nat`.
+   .... Let `n~index~` be `int`.
+   .... Check that `n~index~` is less than the length of `value~e~^{asterisk}^`.
+   .... Let `value` be `value~e~^{asterisk}^[n~index~]`.
+   .... Result in `STO~2~` and `value`.
 . Else if let `typedExpressionIR~base~ [ typedExpressionIR~hi~ : typedExpressionIR~lo~ ]` be `expressionIR`:
  .. Group sliceAccessExpressionIR:
   ... Let <<Expr_inst, `p IC STO |- typedExpressionIR~base~ : STO~1~ value~base~`>>.
@@ -6094,7 +6153,7 @@ relation Expr_inst: `p`, `IC`, `STO`, and <<typedExpressionIR, `expressionIR` an
    .... Group callExpressionIR-parenthesized:
     ..... Let <<Expr_inst, `p IC STO |- callableTargetIR < typeArgumentListIR > ( argumentListIR ) # ++_++ : STO~1~ value`>>.
     ..... Result in `STO~1~` and `value`.
-. Else if let `( typedExpressionIR )` be `expressionIR`:
+. Else let `( typedExpressionIR )` be `expressionIR`:
  .. Group parenthesizedExpressionIR:
   ... Let <<Expr_inst, `p IC STO |- typedExpressionIR : STO~1~ value`>>.
   ... Result in `STO~1~` and `value`.

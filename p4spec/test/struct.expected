@@ -6699,7 +6699,7 @@ def $joins_ctk((ctk')*{ctk' <- ctk'*})
 
   1. Case (% matches pattern [])
 
-    1. Return (dyn)
+    1. Return (lctk)
 
   2. Case (% matches pattern [ _/1 ])
 
@@ -8473,7 +8473,13 @@ def $cast_op(typeIR, value')
 
     2. Return $default(typeIR)
 
-  9. Case (% has type setValue)
+  9. Case (% has type invalidHeaderValue)
+
+    1. (Let invalidHeaderValue be (value' as invalidHeaderValue))
+
+    2. Return $cast_invalid(typeIR)
+
+  10. Case (% has type setValue)
 
     1. (Let setValue be (value' as setValue))
 
@@ -8975,12 +8981,34 @@ def $cast_record'(typeIR, ((value_field, id_field))*{id_field <- id_field*, valu
 
       3. Return ((header tid { true ; ((value_field_cast id_field ;))*{id_field <- id_field*, value_field_cast <- value_field_cast*} }) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:728.1-729.23
+;; ../../../../spec-concrete/3-numerics.watsup:726.1-726.34
+def $cast_invalid(typeIR)
+
+1. Return $cast_invalid'($canon_typeIR(typeIR))
+
+;; ../../../../spec-concrete/3-numerics.watsup:727.1-727.35
+def $cast_invalid'(typeIR)
+
+1. Case analysis on typeIR
+
+  1. Case (% has type headerTypeIR)
+
+    1. (Let (header _tid { ((_typeIR _id ;))*{_id <- _id*, _typeIR <- _typeIR*} }) be (typeIR as headerTypeIR))
+
+    2. Return $default(typeIR)
+
+  2. Case (% has type headerUnionTypeIR)
+
+    1. (Let (header_union _tid { ((_typeIR _id ;))*{_id <- _id*, _typeIR <- _typeIR*} }) be (typeIR as headerUnionTypeIR))
+
+    2. Return $default(typeIR)
+
+;; ../../../../spec-concrete/3-numerics.watsup:741.1-742.23
 def $cast_set_singleton(typeIR, value)
 
 1. Return $cast_set_singleton'($canon_typeIR(typeIR), value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:730.1-731.23
+;; ../../../../spec-concrete/3-numerics.watsup:743.1-744.23
 def $cast_set_singleton'(typeIR'', value)
 
 1. If ((typeIR'' has type setTypeIR)), then
@@ -8993,12 +9021,12 @@ def $cast_set_singleton'(typeIR'', value)
 
     2. Return ((set{ $cast_op(typeIR, value) }) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:739.1-740.23
+;; ../../../../spec-concrete/3-numerics.watsup:752.1-753.23
 def $cast_set_mask(typeIR, value_b, value_m)
 
 1. Return $cast_set_mask'($canon_typeIR(typeIR), value_b, value_m)
 
-;; ../../../../spec-concrete/3-numerics.watsup:741.1-742.23
+;; ../../../../spec-concrete/3-numerics.watsup:754.1-755.23
 def $cast_set_mask'(typeIR'', value_b, value_m)
 
 1. If ((typeIR'' has type setTypeIR)), then
@@ -9015,12 +9043,12 @@ def $cast_set_mask'(typeIR'', value_b, value_m)
 
     4. Return ((set{ value_b_cast &&& value_m_cast }) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:752.1-753.23
+;; ../../../../spec-concrete/3-numerics.watsup:765.1-766.23
 def $cast_set_range(typeIR, value_l, value_u)
 
 1. Return $cast_set_range'($canon_typeIR(typeIR), value_l, value_u)
 
-;; ../../../../spec-concrete/3-numerics.watsup:754.1-755.23
+;; ../../../../spec-concrete/3-numerics.watsup:767.1-768.23
 def $cast_set_range'(typeIR'', value_l, value_u)
 
 1. If ((typeIR'' has type setTypeIR)), then
@@ -9037,7 +9065,7 @@ def $cast_set_range'(typeIR'', value_l, value_u)
 
     4. Return ((set{ value_l_cast .. value_u_cast }) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:820.1-821.23
+;; ../../../../spec-concrete/3-numerics.watsup:833.1-834.23
 def $bitacc_op(value_b, value_h, value_l)
 
 1. (Let i_b be $int_of_value(value_b))
@@ -9056,7 +9084,7 @@ def $bitacc_op(value_b, value_h, value_l)
 
   3. Return ((w w i) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:834.1-835.23
+;; ../../../../spec-concrete/3-numerics.watsup:847.1-848.23
 def $bitacc_replace_op(value_b, value_h, value_l, value_r)
 
 1. If ((value_b has type integerLiteral)), then
@@ -9083,7 +9111,7 @@ def $bitacc_replace_op(value_b, value_h, value_l, value_r)
 
         3. Return ((w w i) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:848.1-849.23
+;; ../../../../spec-concrete/3-numerics.watsup:861.1-862.23
 def $sizeof(typeIR, text)
 
 1. Case analysis on text
@@ -9104,17 +9132,17 @@ def $sizeof(typeIR, text)
 
     1. Return $sizeof_maxSizeInBytes(typeIR)
 
-;; ../../../../spec-concrete/3-numerics.watsup:851.1-852.23
+;; ../../../../spec-concrete/3-numerics.watsup:864.1-865.23
 def $sizeof_minSizeInBits(typeIR)
 
 1. Return ((d ($sizeof_minSizeInBits'(typeIR) as int)) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:853.1-854.23
+;; ../../../../spec-concrete/3-numerics.watsup:866.1-867.23
 def $sizeof_minSizeInBits'(typeIR)
 
 1. Return $sizeof_minSizeInBits''($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/3-numerics.watsup:855.1-856.23
+;; ../../../../spec-concrete/3-numerics.watsup:868.1-869.23
 def $sizeof_minSizeInBits''(typeIR')
 
 1. Case analysis on typeIR'
@@ -9195,24 +9223,24 @@ def $sizeof_minSizeInBits''(typeIR')
 
     2. Return $min_nat(($sizeof_minSizeInBits'(typeIR))*{typeIR <- typeIR*})
 
-;; ../../../../spec-concrete/3-numerics.watsup:858.1-859.23
+;; ../../../../spec-concrete/3-numerics.watsup:871.1-872.23
 def $sizeof_minSizeInBytes(typeIR)
 
 1. (Let n_size be $sizeof_minSizeInBits'(typeIR))
 
 2. Return ((d ((n_size / 8) as int)) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:861.1-862.23
+;; ../../../../spec-concrete/3-numerics.watsup:874.1-875.23
 def $sizeof_maxSizeInBits(typeIR)
 
 1. Return ((d ($sizeof_maxSizeInBits'(typeIR) as int)) as value)
 
-;; ../../../../spec-concrete/3-numerics.watsup:863.1-864.23
+;; ../../../../spec-concrete/3-numerics.watsup:876.1-877.23
 def $sizeof_maxSizeInBits'(typeIR)
 
 1. Return $sizeof_maxSizeInBits''($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/3-numerics.watsup:865.1-866.23
+;; ../../../../spec-concrete/3-numerics.watsup:878.1-879.23
 def $sizeof_maxSizeInBits''(typeIR')
 
 1. Case analysis on typeIR'
@@ -9293,7 +9321,7 @@ def $sizeof_maxSizeInBits''(typeIR')
 
     2. Return $max_nat(($sizeof_maxSizeInBits'(typeIR))*{typeIR <- typeIR*})
 
-;; ../../../../spec-concrete/3-numerics.watsup:868.1-869.23
+;; ../../../../spec-concrete/3-numerics.watsup:881.1-882.23
 def $sizeof_maxSizeInBytes(typeIR)
 
 1. (Let n_size be $sizeof_maxSizeInBits'(typeIR))
@@ -13969,11 +13997,11 @@ relation Expr_eval_lctk: p TC |- (expressionIR # _expressionNoteIR) ~> %
 
       1. (Let typedExpressionIR_base be (memberAccessBaseIR as typedExpressionIR))
 
-      2. If ((nameIR = "size")), then
+      2. Group memberAccessExpressionIR-typedExpressionIR: p TC |- ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # _expressionNoteIR) ~> %
 
-        1. Group memberAccessExpressionIR-expression-stack-size: p TC |- ((((typedExpressionIR_base as memberAccessBaseIR) . "size") as expressionIR) # _expressionNoteIR) ~> %
+        1. If ((nameIR = "size")), then
 
-          1. (Let (_expressionIR # (( typeIR_base _ctk ))) be typedExpressionIR_base)
+          1. (Let typeIR_base be $type_of_typedExpressionIR(typedExpressionIR_base))
 
           2. (Let typeIR be $canon_typeIR(typeIR_base))
 
@@ -13983,7 +14011,97 @@ relation Expr_eval_lctk: p TC |- (expressionIR # _expressionNoteIR) ~> %
 
             2. Result in : % % |- % ~> ((d (n_size as int)) as value)
 
-  4. Case (% has type sliceAccessExpressionIR)
+        2. (Expr_eval_lctk: p TC |- typedExpressionIR_base ~> value')
+
+        3. Case analysis on value'
+
+          1. Case (% has type structValue)
+
+            1. (Let structValue be (value' as structValue))
+
+            2. (Let (struct _tid { ((value_field id_field ;))*{id_field <- id_field*, value_field <- value_field*} }) be structValue)
+
+            3. (Let (value'')?{value'' <- value''?} be $assoc_<id, value>(nameIR, ((id_field, value_field))*{id_field <- id_field*, value_field <- value_field*}))
+
+            4. If (((value'')?{value'' <- value''?} matches pattern (_))), then
+
+              1. (Let ?(value) be (value'')?{value'' <- value''?})
+
+              2. Result in : % % |- % ~> value
+
+          2. Case (% has type headerValue)
+
+            1. (Let headerValue be (value' as headerValue))
+
+            2. (Let (header _tid { _bool ; ((value_field id_field ;))*{id_field <- id_field*, value_field <- value_field*} }) be headerValue)
+
+            3. (Let (value'')?{value'' <- value''?} be $assoc_<id, value>(nameIR, ((id_field, value_field))*{id_field <- id_field*, value_field <- value_field*}))
+
+            4. If (((value'')?{value'' <- value''?} matches pattern (_))), then
+
+              1. (Let ?(value) be (value'')?{value'' <- value''?})
+
+              2. Result in : % % |- % ~> value
+
+          3. Case (% has type headerUnionValue)
+
+            1. (Let headerUnionValue be (value' as headerUnionValue))
+
+            2. (Let (header_union _tid { ((value_field id_field ;))*{id_field <- id_field*, value_field <- value_field*} }) be headerUnionValue)
+
+            3. (Let (value'')?{value'' <- value''?} be $assoc_<id, value>(nameIR, ((id_field, value_field))*{id_field <- id_field*, value_field <- value_field*}))
+
+            4. If (((value'')?{value'' <- value''?} matches pattern (_))), then
+
+              1. (Let ?(value) be (value'')?{value'' <- value''?})
+
+              2. Result in : % % |- % ~> value
+
+  4. Case (% has type indexAccessExpressionIR)
+
+    1. (Let (typedExpressionIR_base [ typedExpressionIR_index ]) be (expressionIR as indexAccessExpressionIR))
+
+    2. Group indexAccessExpressionIR: p TC |- (((typedExpressionIR_base [ typedExpressionIR_index ]) as expressionIR) # _expressionNoteIR) ~> %
+
+      1. (Expr_eval_lctk: p TC |- typedExpressionIR_base ~> value_base)
+
+      2. (Expr_eval_lctk: p TC |- typedExpressionIR_index ~> value_index)
+
+      3. Case analysis on value_base
+
+        1. Case (% has type tupleValue)
+
+          1. (Let (tuple( (value_e)*{value_e <- value_e*} )) be (value_base as tupleValue))
+
+          2. (Let int be $int_of_value(value_index))
+
+          3. If ((int has type nat)), then
+
+            1. (Let n_index be (int as nat))
+
+            2. If ((n_index < |(value_e)*{value_e <- value_e*}|)), then
+
+              1. (Let value be (value_e)*{value_e <- value_e*}[n_index])
+
+              2. Result in : % % |- % ~> value
+
+        2. Case (% has type headerStackValue)
+
+          1. (Let (header_stack[ (value_e)*{value_e <- value_e*} ( _nat ; _nat' )]) be (value_base as headerStackValue))
+
+          2. (Let int be $int_of_value(value_index))
+
+          3. If ((int has type nat)), then
+
+            1. (Let n_index be (int as nat))
+
+            2. If ((n_index < |(value_e)*{value_e <- value_e*}|)), then
+
+              1. (Let value be (value_e)*{value_e <- value_e*}[n_index])
+
+              2. Result in : % % |- % ~> value
+
+  5. Case (% has type sliceAccessExpressionIR)
 
     1. (Let (typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ]) be (expressionIR as sliceAccessExpressionIR))
 
@@ -13997,7 +14115,7 @@ relation Expr_eval_lctk: p TC |- (expressionIR # _expressionNoteIR) ~> %
 
       4. Result in : % % |- % ~> $bitacc_op(value_base, value_hi, value_lo)
 
-  5. Case (% has type callExpressionIR)
+  6. Case (% has type callExpressionIR)
 
     1. (Let callExpressionIR be (expressionIR as callExpressionIR))
 
@@ -14063,7 +14181,7 @@ relation Expr_eval_lctk: p TC |- (expressionIR # _expressionNoteIR) ~> %
 
           2. Result in : % % |- % ~> value
 
-  6. Case (% has type parenthesizedExpressionIR)
+  7. Case (% has type parenthesizedExpressionIR)
 
     1. (Let (( typedExpressionIR )) be (expressionIR as parenthesizedExpressionIR))
 
@@ -16219,9 +16337,11 @@ relation Expr_ok: p TC |- expression''' : %
 
           6. (Let typeIR_base be $type_of_typedExpressionIR(typedExpressionIR_base))
 
-          7. (Let typeIR' be $canon_typeIR(typeIR_base))
+          7. (Let ctk_base be $ctk_of_typedExpressionIR(typedExpressionIR_base))
 
-          8. Case analysis on typeIR'
+          8. (Let typeIR' be $canon_typeIR(typeIR_base))
+
+          9. Case analysis on typeIR'
 
             1. Case (% has type structTypeIR)
 
@@ -16235,7 +16355,7 @@ relation Expr_ok: p TC |- expression''' : %
 
                 1. (Let ?(typeIR) be (typeIR'')?{typeIR'' <- typeIR''?})
 
-                2. (Let expressionNoteIR be (( typeIR (dyn) )))
+                2. (Let expressionNoteIR be (( typeIR ctk_base )))
 
                 3. Result in : % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # expressionNoteIR)
 
@@ -16251,7 +16371,7 @@ relation Expr_ok: p TC |- expression''' : %
 
                 1. (Let ?(typeIR) be (typeIR'')?{typeIR'' <- typeIR''?})
 
-                2. (Let expressionNoteIR be (( typeIR (dyn) )))
+                2. (Let expressionNoteIR be (( typeIR ctk_base )))
 
                 3. Result in : % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # expressionNoteIR)
 
@@ -16267,7 +16387,7 @@ relation Expr_ok: p TC |- expression''' : %
 
                 1. (Let ?(typeIR) be (typeIR'')?{typeIR'' <- typeIR''?})
 
-                2. (Let expressionNoteIR be (( typeIR (dyn) )))
+                2. (Let expressionNoteIR be (( typeIR ctk_base )))
 
                 3. Result in : % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # expressionNoteIR)
 
@@ -16341,7 +16461,7 @@ relation Expr_ok: p TC |- expression''' : %
 
                 2. If ((n_index < |(typeIR_e)*{typeIR_e <- typeIR_e*}|)), then
 
-                  1. (Let expressionNoteIR be (( (typeIR_e)*{typeIR_e <- typeIR_e*}[n_index] (dyn) )))
+                  1. (Let expressionNoteIR be (( (typeIR_e)*{typeIR_e <- typeIR_e*}[n_index] ctk_base )))
 
                   2. Result in : % % |- % : (((typedExpressionIR_base [ typedExpressionIR_index_reduced ]) as expressionIR) # expressionNoteIR)
 
@@ -16363,15 +16483,17 @@ relation Expr_ok: p TC |- expression''' : %
 
                   2. If ((n_index < n_size)), then
 
-                    1. (Let expressionNoteIR be (( typeIR (dyn) )))
+                    1. (Let expressionNoteIR be (( typeIR ctk_base )))
 
                     2. Result in : % % |- % : (((typedExpressionIR_base [ typedExpressionIR_index_reduced ]) as expressionIR) # expressionNoteIR)
 
               2. Case false
 
-                1. (Let expressionNoteIR be (( typeIR (dyn) )))
+                1. (Let ctk be $join_ctk(ctk_base, ctk_index))
 
-                2. Result in : % % |- % : (((typedExpressionIR_base [ typedExpressionIR_index_reduced ]) as expressionIR) # expressionNoteIR)
+                2. (Let expressionNoteIR be (( typeIR ctk )))
+
+                3. Result in : % % |- % : (((typedExpressionIR_base [ typedExpressionIR_index_reduced ]) as expressionIR) # expressionNoteIR)
 
   10. Case (% has type sliceAccessExpression)
 
@@ -21899,12 +22021,12 @@ def $compat'_logical(typeIR, typeIR')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:969.1-969.39
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:972.1-972.39
 def $compat_array_index(typeIR)
 
 1. Return $compat'_arrayindex($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:970.1-970.39
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:973.1-973.39
 def $compat'_arrayindex(typeIR)
 
 1. If ((typeIR has type integerTypeIR)), then
@@ -21933,12 +22055,12 @@ def $compat'_arrayindex(typeIR)
 
   1. Return false
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1072.1-1072.41
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1076.1-1076.41
 def $compat_bitslice_base(typeIR)
 
 1. Return $compat'_bitslice_base($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1073.1-1073.42
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1077.1-1077.42
 def $compat'_bitslice_base(typeIR)
 
 1. If ((typeIR has type integerTypeIR)), then
@@ -21967,12 +22089,12 @@ def $compat'_bitslice_base(typeIR)
 
   1. Return false
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1083.1-1083.42
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1087.1-1087.42
 def $compat_bitslice_index(typeIR)
 
 1. Return $compat'_bitslice_index($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1084.1-1084.43
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1088.1-1088.43
 def $compat'_bitslice_index(typeIR)
 
 1. If ((typeIR has type integerTypeIR)), then
@@ -22001,12 +22123,12 @@ def $compat'_bitslice_index(typeIR)
 
   1. Return false
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1094.1-1094.48
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1098.1-1098.48
 def $is_valid_bitslice(typeIR, n_lo, n_hi)
 
 1. Return ((n_lo <= n_hi) /\ $is_valid_bitslice'($canon_typeIR(typeIR), n_lo, n_hi))
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1095.1-1095.49
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1099.1-1099.49
 def $is_valid_bitslice'(typeIR, _nat, _nat')
 
 1. If ((typeIR has type integerTypeIR)), then
@@ -22047,12 +22169,12 @@ def $is_valid_bitslice'(typeIR, _nat, _nat')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1227.1-1227.46
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1231.1-1231.46
 def $is_concrete_extern_object(typeIR)
 
 1. Return $is_concrete_extern_object'($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1228.1-1228.47
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1232.1-1232.47
 def $is_concrete_extern_object'(typeIR)
 
 1. If (~$is_externObjectTypeIR(typeIR)), then
@@ -22071,7 +22193,7 @@ def $is_concrete_extern_object'(typeIR)
 
   1. Return false
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1229.1-1229.63
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1233.1-1233.63
 def $is_concrete_extern_object''(externMethodTypeDefIR)
 
 1. If ((externMethodTypeDefIR matches pattern `EXTERN_METHOD<%,%>(%):%`)), then
@@ -25701,35 +25823,115 @@ relation Expr_inst: p IC STO |- (expressionIR # _expressionNoteIR) : % %
 
                   2. Result in : % % % |- % : STO ((tid . nameIR . value) as value)
 
-2. (Let (( typeIR_base _ctk )) be _expressionNoteIR)
-
-3. Case analysis on expressionIR
-
-  1. Case (% has type memberAccessExpressionIR)
-
-    1. (Let (memberAccessBaseIR . text) be (expressionIR as memberAccessExpressionIR))
-
-    2. If ((memberAccessBaseIR has type typedExpressionIR)), then
+    3. If ((memberAccessBaseIR has type typedExpressionIR)), then
 
       1. (Let typedExpressionIR_base be (memberAccessBaseIR as typedExpressionIR))
 
-      2. If ((text = "size")), then
+      2. Group memberAccessExpressionIR-typedExpressionIR: p IC STO |- ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # _expressionNoteIR) : % %
 
-        1. Group memberAccessExpressionIR-expression-stack-size: p IC STO |- ((((typedExpressionIR_base as memberAccessBaseIR) . "size") as expressionIR) # (( typeIR_base _ctk ))) : % %
+        1. If ((nameIR = "size")), then
 
-          1. (Let (_expressionIR # (( typeIR _ctk' ))) be typedExpressionIR_base)
+          1. (Let typeIR_base be $type_of_typedExpressionIR(typedExpressionIR_base))
 
-          2. If ((typeIR = typeIR_base)), then
+          2. (Let typeIR be $canon_typeIR(typeIR_base))
 
-            1. (Let typeIR' be $canon_typeIR(typeIR_base))
+          3. If ((typeIR has type headerStackTypeIR)), then
 
-            2. If ((typeIR' has type headerStackTypeIR)), then
+            1. (Let (_typeIR [ n_size ]) be (typeIR as headerStackTypeIR))
 
-              1. (Let (_typeIR [ n_size ]) be (typeIR' as headerStackTypeIR))
+            2. Result in : % % % |- % : STO ((d (n_size as int)) as value)
 
-              2. Result in : % % % |- % : STO ((d (n_size as int)) as value)
+        2. (Expr_inst: p IC STO |- typedExpressionIR_base : STO_1 value')
 
-  2. Case (% has type sliceAccessExpressionIR)
+        3. Case analysis on value'
+
+          1. Case (% has type structValue)
+
+            1. (Let structValue be (value' as structValue))
+
+            2. (Let (struct _tid { ((value_field id_field ;))*{id_field <- id_field*, value_field <- value_field*} }) be structValue)
+
+            3. (Let (value'')?{value'' <- value''?} be $assoc_<id, value>(nameIR, ((id_field, value_field))*{id_field <- id_field*, value_field <- value_field*}))
+
+            4. If (((value'')?{value'' <- value''?} matches pattern (_))), then
+
+              1. (Let ?(value) be (value'')?{value'' <- value''?})
+
+              2. Result in : % % % |- % : STO_1 value
+
+          2. Case (% has type headerValue)
+
+            1. (Let headerValue be (value' as headerValue))
+
+            2. (Let (header _tid { _bool ; ((value_field id_field ;))*{id_field <- id_field*, value_field <- value_field*} }) be headerValue)
+
+            3. (Let (value'')?{value'' <- value''?} be $assoc_<id, value>(nameIR, ((id_field, value_field))*{id_field <- id_field*, value_field <- value_field*}))
+
+            4. If (((value'')?{value'' <- value''?} matches pattern (_))), then
+
+              1. (Let ?(value) be (value'')?{value'' <- value''?})
+
+              2. Result in : % % % |- % : STO_1 value
+
+          3. Case (% has type headerUnionValue)
+
+            1. (Let headerUnionValue be (value' as headerUnionValue))
+
+            2. (Let (header_union _tid { ((value_field id_field ;))*{id_field <- id_field*, value_field <- value_field*} }) be headerUnionValue)
+
+            3. (Let (value'')?{value'' <- value''?} be $assoc_<id, value>(nameIR, ((id_field, value_field))*{id_field <- id_field*, value_field <- value_field*}))
+
+            4. If (((value'')?{value'' <- value''?} matches pattern (_))), then
+
+              1. (Let ?(value) be (value'')?{value'' <- value''?})
+
+              2. Result in : % % % |- % : STO_1 value
+
+  13. Case (% has type indexAccessExpressionIR)
+
+    1. (Let (typedExpressionIR_base [ typedExpressionIR_index ]) be (expressionIR as indexAccessExpressionIR))
+
+    2. Group indexAccessExpressionIR: p IC STO |- (((typedExpressionIR_base [ typedExpressionIR_index ]) as expressionIR) # _expressionNoteIR) : % %
+
+      1. (Expr_inst: p IC STO |- typedExpressionIR_base : STO_1 value_base)
+
+      2. (Expr_inst: p IC STO_1 |- typedExpressionIR_index : STO_2 value_index)
+
+      3. Case analysis on value_base
+
+        1. Case (% has type tupleValue)
+
+          1. (Let (tuple( (value_e)*{value_e <- value_e*} )) be (value_base as tupleValue))
+
+          2. (Let int be $int_of_value(value_index))
+
+          3. If ((int has type nat)), then
+
+            1. (Let n_index be (int as nat))
+
+            2. If ((n_index < |(value_e)*{value_e <- value_e*}|)), then
+
+              1. (Let value be (value_e)*{value_e <- value_e*}[n_index])
+
+              2. Result in : % % % |- % : STO_2 value
+
+        2. Case (% has type headerStackValue)
+
+          1. (Let (header_stack[ (value_e)*{value_e <- value_e*} ( _nat ; _nat' )]) be (value_base as headerStackValue))
+
+          2. (Let int be $int_of_value(value_index))
+
+          3. If ((int has type nat)), then
+
+            1. (Let n_index be (int as nat))
+
+            2. If ((n_index < |(value_e)*{value_e <- value_e*}|)), then
+
+              1. (Let value be (value_e)*{value_e <- value_e*}[n_index])
+
+              2. Result in : % % % |- % : STO_2 value
+
+  14. Case (% has type sliceAccessExpressionIR)
 
     1. (Let (typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ]) be (expressionIR as sliceAccessExpressionIR))
 
@@ -25743,7 +25945,7 @@ relation Expr_inst: p IC STO |- (expressionIR # _expressionNoteIR) : % %
 
       4. Result in : % % % |- % : STO_3 $bitacc_op(value_base, value_hi, value_lo)
 
-  3. Case (% has type callExpressionIR)
+  15. Case (% has type callExpressionIR)
 
     1. (Let callExpressionIR be (expressionIR as callExpressionIR))
 
@@ -25833,7 +26035,7 @@ relation Expr_inst: p IC STO |- (expressionIR # _expressionNoteIR) : % %
 
             2. Result in : % % % |- % : STO_1 value
 
-  4. Case (% has type parenthesizedExpressionIR)
+  16. Case (% has type parenthesizedExpressionIR)
 
     1. (Let (( typedExpressionIR )) be (expressionIR as parenthesizedExpressionIR))
 
