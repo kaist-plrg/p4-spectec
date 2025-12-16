@@ -1,0 +1,64 @@
+== P4 callables
+
+// Added
+P4~16~ includes four entities that can be invoked: actions, functions, methods,
+and object constructors. Object constructors are explained in
+<<sec-def-object>>. The other three callable entities are collectively referred
+to as _callables_.
+
+// Modified Section 7.2.10.2 of the P4-16 Language Specification
+Callable types are created by the P4 compiler internally to represent the types
+of actions, functions, and methods during type-checking. We also call the type
+of a callable its signature. Libraries can contain callable declarations.
+
+For example, consider the following declarations:
+
+[source,p4]
+----
+extern void random(in bit<5> logRange, out bit<32> value);
+
+bit<32> add(in bit<32> left, in bit<32> right) {
+   return left + right;
+}
+----
+
+These declarations describe two objects:
+
+* `random`, which has an extern function type, representing the following information:
+    - the result type is `void`
+    - the function has two inputs
+    - the first formal parameter has direction `in`, type `bit<5>`, and name `logRange`
+    - the second formal parameter has direction `out`, type `bit<32>`, and name `value`
+* `add`, also has a function type, representing the following information:
+    - the result type is `bit<32>`
+    - the function has two inputs
+    - both inputs have direction `in` and type `bit<32>`
+
+Specifically, during type checking, callable declarations introduce a type
+constructor for the callable type:
+
+${syntax: callableTypeDefIR}
+
+These callable type definitions are used to construct callable types via
+specialization:
+
+${syntax: callableTypeIR}
+
+The well-formedness rules for callable types are checked by:
+
+[[CallableType_wf]]
+${relation: CallableType_wf}
+
+The runtime representation of a callable is given by:
+
+${syntax: callableDef}
+
+include::01-parameter.adoc[]
+
+include::02-callable-definition.adoc[]
+
+include::03-action.adoc[]
+
+include::04-function.adoc[]
+
+include::05-method.adoc[]

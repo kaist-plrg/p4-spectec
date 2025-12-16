@@ -1,0 +1,214 @@
+;;
+;; Types
+;;
+
+;;
+;;;; Base types
+;;
+
+;;
+;;;;;; Primitive types
+;;
+
+syntax primitiveTypeIR =
+  | VoidT
+  | BoolT
+  | ErrT
+  | MatchKindT
+  | StrT
+
+;;
+;;;;;;; Numeric types
+;;
+
+syntax numberTypeIR =
+  | IntT
+  | FIntT nat
+  | FBitT nat
+  | VBitT nat
+
+syntax baseTypeIR =
+  | primitiveTypeIR
+  | numberTypeIR
+
+;;
+;;;; Named types
+;;
+
+syntax typeIR
+syntax polyTypeDefIR
+
+syntax namedTypeIR =
+  | NameT tid
+  | SpecT polyTypeDefIR typeIR*
+
+;;
+;;;; Defined types
+;;
+
+;;
+;;;;;; Alias types
+;;
+
+syntax aliasTypeIR =
+  | DefT tid typeIR
+  | NewT tid typeIR
+
+;;
+;;;;;; Data types
+;;
+
+syntax listTypeIR = ListT typeIR
+syntax tupleTypeIR = TupleT typeIR*
+syntax headerStackTypeIR = HeaderStackT typeIR nat
+
+syntax fieldTypeIR = typeIR id
+
+syntax structTypeIR = StructT tid fieldTypeIR*
+syntax headerTypeIR = HeaderT tid fieldTypeIR*
+syntax headerUnionTypeIR = HeaderUnionT tid fieldTypeIR*
+
+syntax valueFieldIR = id value
+
+syntax enumTypeIR =
+  | EnumT tid id*
+  | SEnumT tid typeIR valueFieldIR*
+
+syntax dataTypeIR =
+  | listTypeIR
+  | tupleTypeIR
+  | headerStackTypeIR
+  | structTypeIR
+  | headerTypeIR
+  | headerUnionTypeIR
+  | enumTypeIR
+
+;;
+;;;;;; Object types
+;;
+
+syntax parameterTypeIR
+syntax routineTypeDefIR
+
+syntax externObjectTypeIR = ExternT tid map<rid, routineTypeDefIR>
+syntax parserObjectTypeIR = ParserT parameterTypeIR*
+syntax controlObjectTypeIR = ControlT parameterTypeIR*
+syntax packageObjectTypeIR = PackageT tid typeIR*
+syntax tableObjectTypeIR = TableT tid typeIR
+
+syntax objectTypeIR =
+  | externObjectTypeIR
+  | parserObjectTypeIR
+  | controlObjectTypeIR
+  | packageObjectTypeIR
+  | tableObjectTypeIR
+
+syntax definedTypeIR =
+  | aliasTypeIR
+  | dataTypeIR
+  | objectTypeIR
+
+;;
+;;;; Synthesized types
+;;
+
+syntax defaultTypeIR = DefaultT
+
+syntax invalidHeaderTypeIR = InvalidHeaderT
+
+syntax sequenceTypeIR =
+  | SeqT typeIR*
+  | SeqDefaultT typeIR*
+
+syntax recordTypeIR =
+  | RecordT fieldTypeIR*
+  | RecordDefaultT fieldTypeIR*
+
+syntax setTypeIR = SetT typeIR
+
+syntax tableTypeIR =
+  | TableEnumT tid id*
+  | TableStructT tid fieldTypeIR*
+
+syntax synthesizedTypeIR =
+  | defaultTypeIR
+  | invalidHeaderTypeIR
+  | sequenceTypeIR
+  | recordTypeIR
+  | setTypeIR
+  | tableTypeIR
+
+;;
+;;;; Types
+;;
+
+syntax typeIR =
+  | baseTypeIR
+  | namedTypeIR
+  | definedTypeIR
+  | synthesizedTypeIR
+
+;;
+;; Type definitions
+;;
+
+syntax monoTypeDefIR = MonoTD typeIR
+
+syntax polyTypeDefIR = PolyTD typeIR tid* tid*
+
+syntax typeDefIR =
+  | monoTypeDefIR
+  | polyTypeDefIR
+
+;;
+;;;; Parameter types
+;;
+
+syntax parameterTypeIR = direction typeIR id value?
+
+;;
+;; Routine types
+;;
+
+syntax routineTypeIR =
+  | BuiltinFuncT parameterTypeIR* typeIR
+  | FuncT parameterTypeIR* typeIR
+  | ExternFuncT parameterTypeIR* typeIR
+  | ActionT parameterTypeIR*
+  | BuiltinMethodT parameterTypeIR* typeIR
+  | ExternMethodT parameterTypeIR* typeIR
+  | ExternAbstractMethodT parameterTypeIR* typeIR
+  | ParserApplyMethodT parameterTypeIR*
+  | ControlApplyMethodT parameterTypeIR*
+  | TableApplyMethodT typeIR
+
+;;
+;; Routine type definitions
+;;
+
+syntax monoRoutineTypeDefIR = MonoTD routineTypeIR
+
+syntax polyRoutineTypeDefIR = PolyTD routineTypeIR tid* tid*
+
+syntax routineTypeDefIR =
+  | monoRoutineTypeDefIR
+  | polyRoutineTypeDefIR
+
+;;
+;;;; Constructor parameter types
+;;
+
+syntax constructorParameterTypeIR = parameterTypeIR
+
+;;
+;; Constructor types
+;;
+
+syntax constructorTypeIR =
+  ConstructorT constructorParameterTypeIR* typeIR
+
+;;
+;; Constructor type definitions
+;;
+
+syntax constructorTypeDefIR = PolyTD constructorTypeIR tid* tid*

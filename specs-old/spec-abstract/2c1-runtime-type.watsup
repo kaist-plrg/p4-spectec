@@ -1,0 +1,157 @@
+;;
+;; Forward declarations of mutually recursive syntax
+;;
+
+syntax typ, polytypdef, funcdef, exprIL
+
+;;
+;; Parameter Type
+;;
+
+;;
+;; Forward declaration of mutually recursive syntax
+;;
+
+syntax paramtyp = id dir typ exprIL?
+
+var pt : paramtyp
+
+;;
+;; Type
+;;
+
+;;
+;; Base type: primitive or numeric type
+;;
+
+syntax primtyp =
+  | VoidT
+  | ErrT
+  | MatchKindT
+  | StrT
+  | BoolT
+
+syntax numtyp =
+  | IntT
+  | FIntT width
+  | FBitT width
+  | VBitT width
+
+syntax basetyp = primtyp | numtyp
+
+;;
+;; Abstract type
+;;
+
+syntax abstyp =
+  | VarT id
+  | SpecT polytypdef typ*
+
+;;
+;; Defined type: alias or data or object type
+;;
+
+syntax aliastyp =
+  | DefT id typ
+
+syntax datatyp =
+  | NewT id typ
+  | EnumT id member*
+  | SEnumT id typ (member, val)*
+  | ListT typ
+  | TupleT typ*
+  | StackT typ int
+  | StructT id (member, typ)*
+  | HeaderT id (member, typ)*
+  | UnionT id (member, typ)*
+
+syntax objtyp =
+  | ExternT id map<fid, funcdef>
+  | ParserT id paramtyp*
+  | ControlT id paramtyp*
+  | PackageT id typ*
+  | TableT id typ
+
+syntax deftyp =
+  | aliastyp | datatyp | objtyp
+
+;;
+;; Synthesized type
+;;
+
+syntax synthtyp =
+  | DefaultT
+  | SeqT typ*
+  | SeqDefaultT typ*
+  | RecordT (member, typ)*
+  | RecordDefaultT (member, typ)*
+  | InvalidT
+  | SetT typ
+  | StateT
+  | TableEnumT id member*
+  | TableStructT id (member, typ)*
+  | AnyT
+
+syntax typ = basetyp | abstyp | deftyp | synthtyp
+
+;;
+;; Type Definition
+;;
+
+syntax monotypdef = MonoD typ
+syntax polytypdef = PolyD (tparam*, tparam*) -> typ
+
+syntax typdef = monotypdef | polytypdef
+
+var mtd : monotypdef
+var ptd : polytypdef
+var td : typdef
+
+;;
+;; Function Type
+;;
+
+syntax functyp =
+  | ActionT paramtyp*
+  | ExternFuncT paramtyp* typ
+  | FuncT paramtyp* typ
+  | BuiltinMethodT paramtyp* typ
+  | ExternMethodT paramtyp* typ
+  | ExternAbstractMethodT paramtyp* typ
+  | ParserApplyMethodT paramtyp*
+  | ControlApplyMethodT paramtyp*
+  | TableApplyMethodT typ
+
+var ft : functyp
+
+;;
+;; Function Definition
+;;
+
+syntax monofuncdef = MonoFD functyp
+
+syntax polyfuncdef = PolyFD (tparam*, tparam*) -> functyp
+
+syntax funcdef = monofuncdef | polyfuncdef
+
+var mfd : monofuncdef
+var pfd : polyfuncdef
+var fd : funcdef
+
+var fmap : map<fid, funcdef>
+
+;;
+;; Constructor Type
+;;
+
+syntax constyp = ConsT paramtyp* typ
+
+var ct : constyp
+
+;;
+;; Constructor Definition
+;;
+
+syntax consdef = ConsD (tparam*, tparam*) -> constyp
+
+var cd : consdef

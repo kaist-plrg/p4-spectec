@@ -1,0 +1,576 @@
+;;
+;; Parameters
+;;
+
+syntax constantInitializerIR
+
+syntax parameterIR =
+  direction typeIR name constantInitializerIR?
+
+;;
+;; Constructor parameters
+;;
+
+syntax constructorParameterIR = parameterIR
+
+;;
+;; Expression key-value pairs
+;;
+
+syntax typedExpressionIR
+
+syntax namedExpressionIR = name typedExpressionIR
+
+;;
+;; Expressions
+;;
+
+;;
+;;;; Literal expressions
+;;
+
+syntax literalExpressionIR = literalExpression
+
+;;
+;;;; Reference expressions
+;;
+
+syntax referenceExpressionIR = referenceExpression
+
+;;
+;;;; Default expressions
+;;
+
+syntax defaultExpressionIR = DefaultE
+
+;;
+;;;; Unary, binary, and ternary expressions
+;;
+
+syntax unaryExpressionIR =
+  UnE unop typedExpressionIR
+
+syntax binaryExpressionIR =
+  BinE typedExpressionIR binop typedExpressionIR
+
+syntax ternaryExpressionIR =
+  TernE typedExpressionIR typedExpressionIR typedExpressionIR
+
+;;
+;;;; Cast expressions
+;;
+
+syntax castExpressionIR = CastE typeIR typedExpressionIR
+
+;;
+;;;; Data (aggregate) expressions
+;;
+
+syntax dataExpressionIR =
+  | InvalidE
+  | SeqE typedExpressionIR*
+  | SeqDefaultE typedExpressionIR*
+  | RecordE namedExpressionIR*
+  | RecordDefaultE namedExpressionIR*
+
+;;
+;;;; Member and index access expressions
+;;
+
+syntax errorAccessExpressionIR = errorAccessExpression
+
+syntax memberAccessExpressionIR =
+  | TypeAccE prefixedName name
+  | ExprAccE typedExpressionIR name
+
+syntax indexAccessExpressionIR =
+  | ArrAccE typedExpressionIR typedExpressionIR
+  | BitAccE typedExpressionIR typedExpressionIR typedExpressionIR
+
+syntax accessExpressionIR =
+  | errorAccessExpressionIR
+  | memberAccessExpressionIR
+  | indexAccessExpressionIR
+
+;;
+;;;; Call expressions
+;;
+
+syntax argumentIR
+syntax typeArgumentIR
+
+syntax routineTargetIR
+
+syntax callExpressionIR =
+  | CallE routineTargetIR typeArgumentIR* argumentIR*
+  | InstE prefixedName typeArgumentIR* argumentIR*
+
+;;
+;;;; Expressions
+;;
+
+syntax expressionIR =
+  | literalExpressionIR
+  | referenceExpressionIR
+  | defaultExpressionIR
+  | unaryExpressionIR
+  | binaryExpressionIR
+  | ternaryExpressionIR
+  | castExpressionIR
+  | dataExpressionIR
+  | accessExpressionIR
+  | callExpressionIR
+
+syntax expressionNoteIR = `( typeIR ctk )
+
+syntax typedExpressionIR = expressionIR expressionNoteIR
+
+syntax routineTargetIR =
+  | FuncT prefixedName
+  | MethodT typedExpressionIR name
+  | TypeT prefixedName name
+
+;;
+;; Keyset expressions
+;;
+
+syntax keysetExpressionIR =
+  | ExprK typedExpressionIR
+  | MaskK typedExpressionIR typedExpressionIR
+  | RangeK typedExpressionIR typedExpressionIR
+  | DefaultK
+  | AnyK
+
+;;
+;; Type arguments
+;;
+
+syntax typeArgumentIR = typeIR
+
+;;
+;; Arguments
+;;
+
+syntax argumentIR =
+  | ExprA typedExpressionIR
+  | NameA name typedExpressionIR
+  | NameAnyA name
+  | AnyA 
+
+;;
+;; L-values
+;;
+
+syntax typedLvalueIR
+
+syntax lvalueIR =
+  | NameL prefixedName
+  | LvalueAccL typedLvalueIR name
+  | ArrAccL typedLvalueIR typedExpressionIR
+  | BitAccL typedLvalueIR typedExpressionIR typedExpressionIR
+
+syntax lvalueNoteIR = `( typeIR )
+
+syntax typedLvalueIR = lvalueIR lvalueNoteIR
+
+;;
+;; Statements
+;;
+
+;;
+;;;; Empty statements
+;;
+
+syntax emptyStatementIR = emptyStatement
+
+;;
+;;;; Assignment statements
+;;
+
+syntax assignmentStatementIR =
+  AssignS typedLvalueIR typedExpressionIR
+
+;;
+;;;; Call statements
+;;
+
+syntax callStatementIR =
+  CallS routineTargetIR typeArgumentIR* argumentIR*
+
+;;
+;;;; Direct application statements
+;;
+
+syntax directApplicationStatementIR =
+  InstS prefixedName argumentIR*
+
+;;
+;;;; Return statements
+;;
+
+syntax returnStatementIR =
+  ReturnS typedExpressionIR?
+
+;;
+;;;; Exit statements
+;;
+
+syntax exitStatementIR = exitStatement
+
+;;
+;;;; Block statements
+;;
+
+syntax blockElementStatementIR
+
+syntax blockStatementIR =
+  BlockS blockElementStatementIR*
+
+;;
+;;;; Conditional statements
+;;
+
+syntax statementIR
+
+syntax conditionalStatementIR =
+  IfS typedExpressionIR statementIR statementIR?
+
+;;
+;;;; Switch statements
+;;
+
+syntax switchLabelIR =
+  | DefaultL
+  | ExprL typedExpressionIR
+
+syntax switchCaseIR =
+  | FallC switchLabelIR
+  | MatchC switchLabelIR blockStatementIR
+
+syntax switchStatementIR =
+  SwitchS typedExpressionIR switchCaseIR*
+
+;;
+;;;; Statements
+;;
+
+syntax statementIR =
+  | emptyStatementIR
+  | assignmentStatementIR
+  | callStatementIR
+  | directApplicationStatementIR
+  | returnStatementIR
+  | exitStatementIR
+  | blockStatementIR
+  | conditionalStatementIR
+  | switchStatementIR
+
+;;
+;; Declarations
+;;
+
+;;
+;;;; Constant and variable declarations
+;;
+
+syntax constantInitializerIR = value
+
+syntax constantDeclarationIR =
+  ConstD typeIR name constantInitializerIR
+
+syntax initializerIR = typedExpressionIR
+
+syntax variableDeclarationIR =
+  VarD typeIR name initializerIR?
+
+syntax blockElementStatementIR =
+  | constantDeclarationIR
+  | variableDeclarationIR
+  | statementIR
+
+;;
+;;;; Function declarations
+;;
+
+syntax functionDeclarationIR =
+  FuncD typeIR name
+        typeParameter* typeParameter* parameterIR* blockStatementIR
+
+;;
+;;;; Action declarations
+;;
+
+syntax actionDeclarationIR =
+  ActionD name parameterIR* blockStatementIR
+
+;;
+;;;; Instantiations
+;;
+
+syntax objectInitializerIR
+
+syntax instantiationIR =
+  InstD typeIR prefixedName typeArgumentIR* argumentIR* name objectInitializerIR?
+
+syntax objectDeclarationIR =
+  | functionDeclarationIR
+  | instantiationIR
+
+syntax objectInitializerIR = objectDeclarationIR*
+
+;;
+;;;; Error declarations
+;;
+
+syntax errorDeclarationIR = errorDeclaration
+
+;;
+;;;; Match kind declarations
+;;
+
+syntax matchKindDeclarationIR = matchKindDeclaration
+
+;;
+;;;; Derived type declarations
+;;
+
+;;
+;;;;;; Enum type declarations
+;;
+
+syntax enumTypeDeclarationIR =
+  | EnumD name name*
+  | SEnumD typeIR name namedExpressionIR*
+
+;;
+;;;;;; Struct, header, and union type declarations
+;;
+
+syntax typeFieldIR = typeIR name
+
+syntax structTypeDeclarationIR =
+  StructD name typeParameter* typeParameter* typeFieldIR*
+
+syntax headerTypeDeclarationIR =
+  HeaderD name typeParameter* typeParameter* typeFieldIR*
+
+syntax headerUnionTypeDeclarationIR =
+  HeaderUnionD name typeParameter* typeParameter* typeFieldIR*
+
+syntax derivedTypeDeclarationIR =
+  | enumTypeDeclarationIR
+  | structTypeDeclarationIR
+  | headerTypeDeclarationIR
+  | headerUnionTypeDeclarationIR
+
+;;
+;;;; Typedef and newtype declarations
+;;
+
+syntax typedefTypeIR =
+  | PlainT typeIR
+  | DerivedT derivedTypeDeclarationIR
+
+syntax typedefDeclarationIR =
+  | TypeDefD typedefTypeIR name
+  | NewTypeD typeIR name
+
+;;
+;;;; Extern declarations
+;;
+
+syntax externFunctionDeclarationIR =
+  ExternFuncD typeIR name
+              typeParameter* typeParameter* parameterIR*
+
+syntax methodPrototypeIR =
+  | ConsM name typeParameter* constructorParameterIR*
+  | MethodM typeIR name typeParameter* typeParameter* parameterIR*
+  | AbstractMethodM typeIR name typeParameter* typeParameter* parameterIR*
+
+syntax externObjectDeclarationIR =
+  ExternObjectD name typeParameter* methodPrototypeIR*
+
+syntax externDeclarationIR =
+  | externFunctionDeclarationIR
+  | externObjectDeclarationIR
+
+;;
+;;;; Parser statements and declarations
+;;
+
+;;
+;;;;;; Select cases
+;;
+
+syntax selectCaseIR = keysetExpressionIR* name
+
+;;
+;;;;;; Transition statements
+;;
+
+syntax stateExpressionIR =
+  | NameE name
+  | SelectE typedExpressionIR* selectCaseIR*
+
+syntax transitionStatementIR =
+  TransS stateExpressionIR?
+
+;;
+;;;;;; Value set declarations
+;;
+
+syntax valueSetDeclarationIR =
+  ValueSetD typeIR typedExpressionIR name
+
+;;
+;;;;;; Parser type declarations
+;;
+
+syntax parserTypeDeclarationIR =
+  ParserTypeD name typeParameter* typeParameter* parameterIR*
+
+;;
+;;;;;; Parser declarations
+;;
+
+syntax parserStatementIR
+
+syntax parserBlockStatementIR =
+  ParserBlockS parserStatementIR*
+
+syntax parserStatementIR =
+  | constantDeclarationIR
+  | variableDeclarationIR
+  | emptyStatementIR
+  | assignmentStatementIR
+  | callStatementIR
+  | directApplicationStatementIR
+  | parserBlockStatementIR
+  | conditionalStatementIR
+
+syntax parserStateIR =
+  name parserStatementIR* transitionStatementIR
+
+syntax parserLocalDeclarationIR =
+  | constantDeclarationIR
+  | instantiationIR
+  | variableDeclarationIR
+  | valueSetDeclarationIR
+
+syntax parserDeclarationIR =
+  ParserD name typeParameter* parameterIR*
+          constructorParameterIR*
+          parserLocalDeclarationIR* parserStateIR*
+
+;;
+;;;; Control statements and declarations
+;;
+
+;;
+;;;;;; Table declarations
+;;
+
+;;
+;;;;;;;; Table key property 
+;;
+
+syntax tableKeyIR = typedExpressionIR name
+
+;;
+;;;;;;;; Table actions property
+;;
+
+syntax tableActionReferenceIR = prefixedName argumentIR*
+
+syntax tableActionIR = tableActionReferenceIR
+
+;;
+;;;;;;;; Table entry property
+;;
+
+syntax tableEntryPriorityIR = typedExpressionIR
+
+syntax tableEntryIR =
+  const? tableEntryPriorityIR?
+         keysetExpressionIR* tableActionReferenceIR
+
+;;
+;;;;;;;; Table properties
+;;
+
+syntax tablePropertyIR =
+  | KeyP tableKeyIR*
+  | ActionP tableActionIR*
+  | DefaultActionP const? tableActionIR
+  | EntryP const? tableEntryIR*
+  | CustomP const? name initializerIR
+  | CustomConstP const? name constantInitializerIR
+
+syntax tableDeclarationIR =
+  TableD typeIR name tablePropertyIR*
+
+;;
+;;;;;; Control type declarations
+;;
+
+syntax controlTypeDeclarationIR =
+  ControlTypeD name typeParameter* typeParameter* parameterIR*
+
+;;
+;;;;;; Control declarations
+;;
+
+syntax controlBodyIR = blockStatementIR
+
+syntax controlLocalDeclarationIR =
+  | constantDeclarationIR
+  | instantiationIR
+  | variableDeclarationIR
+  | actionDeclarationIR
+  | tableDeclarationIR
+
+syntax controlDeclarationIR =
+  ControlD name typeParameter* parameterIR*
+           constructorParameterIR*
+           controlLocalDeclarationIR* controlBodyIR
+
+;;
+;;;; Package type declarations
+;;
+
+syntax packageTypeDeclarationIR =
+  PackageTypeD name typeParameter* typeParameter* constructorParameterIR*
+
+;;
+;;;; Type declarations
+;;
+
+syntax typeDeclarationIR =
+  | derivedTypeDeclarationIR
+  | typedefDeclarationIR
+  | parserTypeDeclarationIR
+  | controlTypeDeclarationIR
+  | packageTypeDeclarationIR
+
+;;
+;;;; Declaration
+;;
+
+syntax declarationIR =
+  | constantDeclarationIR
+  | instantiationIR
+  | functionDeclarationIR
+  | actionDeclarationIR
+  | errorDeclarationIR
+  | matchKindDeclarationIR
+  | externDeclarationIR
+  | parserDeclarationIR
+  | controlDeclarationIR
+  | typeDeclarationIR
+
+;;
+;; P4 program
+;;
+
+syntax p4programIR = declarationIR*

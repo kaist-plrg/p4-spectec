@@ -46,9 +46,9 @@ def collect_p4_files(dirs: List[Directory]) -> List[Filepath]:
 def run_coverage(
     work_dir: Directory,
     spec_dir: Directory,
+    relname : str,
     include: Directory,
     exclude: Directory,
-    ignore_files: List[Filepath],
     testdata: Directory,
     output_path: Filepath,
 ) -> None:
@@ -69,8 +69,10 @@ def run_coverage(
 
     coverage_command = [
         "./p4spectec",
-        "cover-sl",
+        "cover-dangling",
         *SPEC_FILES,
+        "-rel",
+        relname,
         "-i",
         include,
         "-e",
@@ -78,7 +80,6 @@ def run_coverage(
         "-d",
         testdata,
         *[cmd for file in coverage_dirs for cmd in ["-d", file]],
-        *[cmd for file in ignore_files for cmd in ["-ignore", file]],
         "-cov",
         output_path,
     ]
@@ -124,6 +125,9 @@ if __name__ == "__main__":
         "--spec", type=Directory, default="spec", help="Spec directory for SpecTec"
     )
     parser.add_argument(
+        "--relname", type=str, default="Program_ok", help="Relation name to check"
+    )
+    parser.add_argument(
         "--include",
         type=Directory,
         default="p4c/p4include",
@@ -134,13 +138,6 @@ if __name__ == "__main__":
         type=Directory,
         default="excludes",
         help="Exclude directory for P4 tests",
-    )
-    parser.add_argument(
-        "--ignores",
-        nargs="*",
-        type=Directory,
-        default=["ignores/relation.ignore", "ignores/function.ignore"],
-        help="List of ignore files for skipping phantom ids",
     )
     parser.add_argument(
         "--testdata",
@@ -154,6 +151,9 @@ if __name__ == "__main__":
     if not os.path.isdir(SPEC_DIR):
         print(f"Error: Spec directory {SPEC_DIR} does not exist.")
         exit(1)
+
+    RELNAME: str = args.relname
+    print(f"[CONFIG] Relation name: {RELNAME}")
 
     INCLUDE_DIR: Directory = Directory(args.include)
     if not os.path.isdir(INCLUDE_DIR):
@@ -173,21 +173,21 @@ if __name__ == "__main__":
         exit(1)
     print(f"[CONFIG] Testdata directory: {TESTDATA_DIR}")
 
-    IGNORE_FILES: List[Filepath] = args.ignores
     WORK_DIR: Directory = Directory(args.dir)
 
-    # P4CHERRY_PATH must be set
-    if os.getenv("P4CHERRY_PATH") is None:
-        print("Error: P4CHERRY_PATH environment variable is not set.")
+    # P4SPECTEC_PATH must be set
+    if os.getenv("P4SPECTEC_PATH") is None:
+        print("Error: P4SPECTEC_PATH environment variable is not set.")
         exit(1)
-    P4SPECTEC_DIR: Directory = Directory(str(os.getenv("P4CHERRY_PATH")))
-    print(f"[CONFIG] P4CHERRY_PATH: {P4SPECTEC_DIR}")
+    P4SPECTEC_DIR: Directory = Directory(str(os.getenv("P4SPECTEC_PATH")))
+    print(f"[CONFIG] P4SPECTEC_PATH: {P4SPECTEC_DIR}")
     print(f"\n[INFO] === Starting cleanup ===")
     OUTPUT_PATH: Filepath = Filepath(os.path.join(WORK_DIR, "total.coverage"))
 
     # Default configurations for CReduce
     C_REDUCE_CONFIGS = CReduceConfigs(
         p4spectec_dir=P4SPECTEC_DIR,
+        relname=RELNAME,
         cores=None,
         timeout_interesting=10,
         timeout_creduce=25,
@@ -195,9 +195,9 @@ if __name__ == "__main__":
     run_coverage(
         WORK_DIR,
         SPEC_DIR,
+        RELNAME,
         INCLUDE_DIR,
         EXCLUDE_DIR,
-        IGNORE_FILES,
         TESTDATA_DIR,
         OUTPUT_PATH,
     )

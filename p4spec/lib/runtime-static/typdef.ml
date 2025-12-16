@@ -6,6 +6,8 @@ open El.Print (* Type definitions *)
 type t =
   (* Type parameter *)
   | Param
+  (* Extern type *)
+  | Extern 
   (* Type being defined *)
   | Defining of tparam list
   (* Type that is completely defined *)
@@ -20,6 +22,7 @@ type t =
 
 let to_string = function
   | Param -> "Param"
+  | Extern -> "Extern"
   | Defining tparams -> "Defining" ^ string_of_tparams tparams
   | Defined (tparams, typdef) -> (
       "Defined" ^ string_of_tparams tparams ^ " = "
@@ -32,6 +35,6 @@ let to_string = function
           string_of_nottyps " | " nottyps)
 
 let get_tparams = function
-  | Param -> []
+  | Param | Extern -> []
   | Defining tparams -> tparams
   | Defined (tparams, _) -> tparams

@@ -51,7 +51,7 @@ and string_of_plaintyps sep plaintyps =
 and string_of_nottyp nottyp =
   match nottyp.it with
   | AtomT atom -> string_of_atom atom
-  | SeqT typs -> "{" ^ string_of_typs " " typs ^ "}"
+  | SeqT typs -> string_of_typs " " typs
   | InfixT (typ_l, atom, typ_r) ->
       string_of_typ typ_l ^ " " ^ string_of_atom atom ^ " "
       ^ string_of_typ typ_r
@@ -234,10 +234,29 @@ and string_of_prem prem =
 and string_of_prems prems =
   String.concat "" (List.map (fun prem -> "\n -- " ^ string_of_prem prem) prems)
 
+(* Rules *)
+
+and string_of_rule rule =
+  let relid, ruleid, exp, prems = rule.it in
+  "rule " ^ string_of_relid relid ^ string_of_ruleid ruleid ^ ":\n  "
+  ^ string_of_exp exp ^ string_of_prems prems
+
+and string_of_rules rules = String.concat "\n" (List.map string_of_rule rules)
+
+(* Tables *)
+
+and string_of_tablerow tablerow =
+  let exp_pattern, exp_body = tablerow.it in
+  string_of_exp exp_pattern ^ " => " ^ string_of_exp exp_body
+
+and string_of_tablerows tablerows =
+  String.concat "\n  | " (List.map string_of_tablerow tablerows)
+
 (* Definitions *)
 
 let string_of_def def =
   match def.it with
+  | ExternSynD (typid, _hints) -> "extern syntax " ^ string_of_typid typid
   | SynD syns ->
       "syntax "
       ^ String.concat ", "
@@ -250,16 +269,33 @@ let string_of_def def =
       ^ string_of_deftyp deftyp
   | VarD (varid, plaintyp, _hints) ->
       "var " ^ string_of_varid varid ^ " : " ^ string_of_plaintyp plaintyp
+  | ExternRelD (relid, nottyp, _hints) ->
+      "extern relation " ^ string_of_relid relid ^ ": "
+      ^ string_of_nottyp nottyp
   | RelD (relid, nottyp, _hints) ->
       "relation " ^ string_of_relid relid ^ ": " ^ string_of_nottyp nottyp
-  | RuleD (relid, ruleid, exp, prems) ->
-      "rule " ^ string_of_relid relid ^ string_of_ruleid ruleid ^ ":\n  "
-      ^ string_of_exp exp ^ string_of_prems prems
-  | DecD (defid, tparams, params, plaintyp, _hints) ->
+  | RuleGroupD (relid, groupid, rules) ->
+      "rulegroup " ^ string_of_relid relid ^ string_of_ruleid groupid ^ ":\n  "
+      ^ String.concat "\n  " (List.map string_of_rule rules)
+  | ExternDecD (defid, tparams, params, plaintyp, _hints) ->
+      "extern dec " ^ string_of_defid defid ^ string_of_tparams tparams
+      ^ string_of_params params ^ " : "
+      ^ string_of_plaintyp plaintyp
+  | BuiltinDecD (defid, tparams, params, plaintyp, _hints) ->
+      "builtin dec " ^ string_of_defid defid ^ string_of_tparams tparams
+      ^ string_of_params params ^ " : "
+      ^ string_of_plaintyp plaintyp
+  | TableDecD (defid, params, plaintyp, _hints) ->
+      "tbl dec " ^ string_of_defid defid ^ string_of_params params ^ " : "
+      ^ string_of_plaintyp plaintyp
+  | FuncDecD (defid, tparams, params, plaintyp, _hints) ->
       "dec " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : "
       ^ string_of_plaintyp plaintyp
-  | DefD (defid, tparams, args, exp, prems) ->
+  | TableDefD (defid, tablerows) ->
+      "tbl def " ^ string_of_defid defid ^ " =\n  "
+      ^ string_of_tablerows tablerows
+  | FuncDefD (defid, tparams, args, exp, prems) ->
       "def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_args args ^ " = " ^ string_of_exp exp ^ string_of_prems prems
   | SepD -> "\n\n"

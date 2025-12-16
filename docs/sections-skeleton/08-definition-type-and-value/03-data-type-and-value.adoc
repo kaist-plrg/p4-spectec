@@ -1,0 +1,495 @@
+=== Data types and values
+
+// Added
+[[dataTypeIR]]
+[[dataValue]]
+${syntax: dataTypeIR dataValue}
+
+Data types represent the types that aggregate other types, including lists,
+tuples, header stacks, structs, headers, header unions, and enums.
+
+==== List types and values
+
+// Section 7.2.8 of the P4-16 Language Specification
+A list holds zero or more values, where every element must have the same type.
+The type of a list where all elements have type `T` is written as
+
+[source,p4]
+----
+list<T>
+----
+
+// Added
+[[listType]]
+[[listTypeIR]]
+[[listValue]]
+${syntax: listType listTypeIR listValue}
+
+[discrete]
+===== Type checking
+
+// Added
+${rulegroup: Type_ok/listType}
+${ruleprose: Type_ok/listType}
+
+[discrete]
+===== Well-formedness
+
+// Added
+${rulegroup: Type_wf/listTypeIR}
+${ruleprose: Type_wf/listTypeIR}
+
+==== Tuple types and values
+
+// Section 7.2.7 of the P4-16 Language Specification
+A tuple is similar to a `struct`, in that it holds multiple values. The type of
+tuples with `n` component types `T1`, ..., `Tn` is written as
+
+[source,p4]
+----
+tuple<T1, /* more fields omitted */, Tn>
+----
+
+// Added
+[[tupleType]]
+[[tupleTypeIR]]
+[[tupleValue]]
+${syntax: tupleType tupleTypeIR tupleValue}
+
+[discrete]
+===== Type checking
+
+// Added
+${rulegroup: Type_ok/tupleType}
+${ruleprose: Type_ok/tupleType}
+
+[discrete]
+===== Well-formedness
+
+// Added
+${rulegroup: Type_wf/tupleTypeIR}
+${ruleprose: Type_wf/tupleTypeIR}
+
+==== Header stack types and values
+
+// Section 7.2.4 of the P4-16 Language Specification
+A header stack represents an array of headers or header unions. A header stack
+type is defined as:
+
+// Added
+[[headerStackType]]
+[[headerStackTypeIR]]
+${syntax: headerStackType headerStackTypeIR}
+
+// Section 7.2.4 of the P4-16 Language Specification
+where `namedType` refers to a header or header union type. For a header stack
+`hs[n]`, the term `n` is the maximum defined size, and must be a local
+compile-time known value that is a positive integer. Nested header stacks are
+not supported.
+
+// Added
+${syntax: headerStackValue}
+
+// Section 7.2.4 of the P4-16 Language Specification
+At runtime a stack contains `n` values with type `namedType`, only some of
+which may be valid.
+
+For example, the following declarations,
+
+[source,p4]
+----
+header Mpls_h {
+    bit<20> label;
+    bit<3>  tc;
+    bit     bos;
+    bit<8>  ttl;
+}
+Mpls_h[10] mpls;
+----
+
+introduce a header stack called `mpls` containing ten entries, each of type
+`Mpls_h`.
+
+[discrete]
+===== Type checking
+
+// Added
+${rulegroup: Type_ok/headerStackType}
+${ruleprose: Type_ok/headerStackType}
+
+[discrete]
+===== Well-formedness
+
+// Added
+${rulegroup: Type_wf/headerStackTypeIR}
+${ruleprose: Type_wf/headerStackTypeIR}
+
+==== Array types and values
+
+NOTE: This feature will be added to P4 v1.2.5.6. It is not modeled in P4-SpecTec yet.
+
+==== Struct types and values
+
+// Section 7.2.6 of the P4-16 Language Specification
+P4 `struct` types are defined with the following syntax:
+
+${syntax: typeField structTypeDeclaration}
+
+// Modified Section 7.2.6 of the P4-16 Language Specification
+This declaration introduces a new struct type definition with the specified
+name in the current scope. Field names have to be distinct. An empty struct
+(with no fields) is legal.
+
+[[structTypeDefIR]]
+${syntax: structTypeDefIR}
+
+// Section 7.2.6 of the P4-16 Language Specification
+For example, the structure `Parsed_headers` below contains the headers
+recognized by a simple parser:
+
+[source,p4]
+----
+header Tcp_h { /* fields omitted */ }
+header Udp_h { /* fields omitted */ }
+struct Parsed_headers {
+    Ethernet_h ethernet;
+    Ip_h       ip;
+    Tcp_h      tcp;
+    Udp_h      udp;
+}
+----
+
+// Added
+Struct types can be used by referring to their names. Generic struct types can
+be used by specializing their type parameters with type arguments. Internally,
+struct types and values are represented as follows:
+
+[[structTypeIR]]
+[[structValue]]
+${syntax: fieldTypeIR structTypeIR fieldValue structValue}
+
+[discrete]
+===== Type checking
+
+// Added
+Struct types are introduced by `struct` declarations. Its typing rule is
+explained in <<sec-sem-Decl_ok-structTypeDeclaration>>.
+
+Struct types are then used by referencing their names. Thus struct types can
+be obtained from named types, as illustrated in <<sec-named-types>>.
+
+[discrete]
+===== Well-formedness
+
+// Added
+${rulegroup: Type_wf/structTypeIR}
+${ruleprose: Type_wf/structTypeIR}
+
+==== Header types and values
+
+// Section 7.2.2 of the P4-16 Language Specification
+The declaration of a `header` type is given by the following syntax:
+
+${syntax: typeField headerTypeDeclaration}
+
+where each `type` is restricted to a bit-string type (fixed or variable), a
+fixed-width signed integer type, a boolean type, or a struct that itself
+contains other struct fields, nested arbitrarily, as long as all of the "leaf"
+types are `bit<W>`, `int<W>`, a serializable `enum`, or a `bool`. If a `bool`
+is used inside a P4 header, all implementations encode the `bool` as a one bit
+long field, with the value `1` representing `true` and `0` representing
+`false`. Field names have to be distinct.
+
+// Modified section 7.2.2 of the P4-16 Language Specification
+A header declaration introduces a new identifier in the current scope; the type
+definition can be referred to using this identifier.
+
+[[headerTypeDefIR]]
+${syntax: headerTypeDefIR}
+
+// Section 7.2.2 of the P4-16 Language Specification
+A header is similar to a `struct` in C, containing all the specified fields.
+However, in addition, a header also contains a hidden Boolean "validity" field.
+When the "validity" bit is `true` we say that the "header is valid". When a
+local variable with a header type is declared, its "validity" bit is
+automatically set to `false`. The "validity" bit can be manipulated by using
+the header methods `isValid()`, `setValid()`, and `setInvalid()`.
+
+Header types may be empty:
+
+[source,p4]
+----
+header Empty_h { }
+----
+
+Note that an empty header still contains a validity bit.
+
+When a struct is inside of a header, the order of the fields for the purposes
+of `extract` and `emit` calls is the order of the fields as defined in the
+source code. An example of a header including a struct is included below.
+
+[source,p4]
+----
+struct ipv6_addr {
+    bit<32> Addr0;
+    bit<32> Addr1;
+    bit<32> Addr2;
+    bit<32> Addr3;
+}
+
+header ipv6_t {
+    bit<4>    version;
+    bit<8>    trafficClass;
+    bit<20>   flowLabel;
+    bit<16>   payloadLen;
+    bit<8>    nextHdr;
+    bit<8>    hopLimit;
+    ipv6_addr src;
+    ipv6_addr dst;
+}
+----
+
+Headers that do not contain any `varbit` field are "fixed size." Headers
+containing `varbit` fields have "variable size." The size (in bits) of a
+fixed-size header is simply the sum of the sizes of all component fields
+(without counting the validity bit). There is no padding or alignment of the
+header fields. Targets may impose additional constraints on header
+types---e.g., restricting headers to sizes that are an integer number of bytes.
+
+For example, the following declaration describes a typical Ethernet header:
+
+[source,p4]
+----
+header Ethernet_h {
+   bit<48> dstAddr;
+   bit<48> srcAddr;
+   bit<16> etherType;
+}
+----
+
+The following variable declaration uses the newly introduced type `Ethernet_h`:
+
+[source,p4]
+----
+Ethernet_h ethernetHeader;
+----
+
+P4's parser language provides an `extract` method that can be used to "fill in"
+the fields of a header from a network packet, as described in
+<<sec-packet-data-extraction>>. The successful execution of an `extract`
+operation also sets the validity bit of the extracted header to `true`.
+
+Here is an example of an IPv4 header with variable-sized options:
+
+[source,p4]
+----
+header IPv4_h {
+   bit<4>       version;
+   bit<4>       ihl;
+   bit<8>       diffserv;
+   bit<16>      totalLen;
+   bit<16>      identification;
+   bit<3>       flags;
+   bit<13>      fragOffset;
+   bit<8>       ttl;
+   bit<8>       protocol;
+   bit<16>      hdrChecksum;
+   bit<32>      srcAddr;
+   bit<32>      dstAddr;
+   varbit<320>  options;
+}
+----
+
+As demonstrated by a code example in <<sec-packet-extract-two>>, another way to
+support headers that contain variable-length fields is to define two headers --
+one fixed length, one containing a `varbit` field -- and extract each part in
+separate parsing steps.
+
+Notice that the names `isValid`, `setValid`, `minSizeInBits`, etc. are all
+valid header field names.
+
+// Added
+Internally, header types and values are represented as follows:
+
+[[headerTypeIR]]
+[[headerValue]]
+${syntax: headerTypeIR headerValue}
+
+[discrete]
+===== Type checking
+
+// Added
+Header types are introduced by `header` declarations. Its typing rule is
+explained in <<sec-sem-Decl_ok-headerTypeDeclaration>>.
+
+Header types are then used by referencing their names. Thus header types can
+be obtained from named types, as illustrated in <<sec-named-types>>.
+
+[discrete]
+===== Well-formedness
+
+// Added
+${rulegroup: Type_wf/headerTypeIR}
+${ruleprose: Type_wf/headerTypeIR}
+
+==== Header union types and values
+
+// Section 7.2.5 of the P4-16 Language Specification
+A header union represents an alternative containing at most one of several
+different headers. Header unions can be used to represent "options" in
+protocols like TCP and IP. They also provide hints to P4 compilers that only
+one alternative will be present, allowing them to conserve storage resources.
+
+A header union is defined as:
+
+${syntax: typeField headerUnionTypeDeclaration}
+
+// Modified Section 7.2.5 of the P4-16 Language Specification
+This declaration introduces a new type definition with the specified name in
+the current scope.
+
+[[headerUnionTypeDefIR]]
+${syntax: headerUnionTypeDefIR}
+
+// Section 7.2.5 of the P4-16 Language Specification
+Each element of the list of fields used to declare a header union must be of
+header type. An empty list of fields is legal. Field names have to be distinct.
+
+As an example, the type `Ip_h` below represents the union of an IPv4 and IPv6
+headers:
+
+A header union is not considered a type with fixed length.
+
+Internally, header union types and values are represented as follows:
+
+[[headerUnionTypeIR]]
+[[headerUnionValue]]
+${syntax: headerUnionTypeIR headerUnionValue}
+
+[discrete]
+===== Type checking
+
+// Added
+Header union types are introduced by `header_union` declarations. Its typing
+rule is explained in <<sec-sem-Decl_ok-headerUnionTypeDeclaration>>.
+
+Header union types are then used by referencing their names. Thus header union
+types can be obtained from named types, as illustrated in
+<<sec-named-types>>.
+
+[discrete]
+===== Well-formedness
+
+// Added
+${rulegroup: Type_wf/headerUnionTypeIR}
+${ruleprose: Type_wf/headerUnionTypeIR}
+
+==== Enum types and values
+
+// Section 7.2.1 of the P4-16 Language Specification
+The declaration of an `enum` type is given by the following syntax:
+
+${syntax: enumTypeDeclaration}
+
+Enums can be declared in two different ways, depending on whether or not an
+underlying representation type is provided. The two forms are described below.
+
+Enums cannot be parameterized over type parameters, thus is always monomorphic.
+
+[[enumTypeDefIR]]
+${syntax: enumTypeDefIR}
+
+// Added
+Internally, enum types and values are represented as follows:
+
+[[enumTypeIR]]
+[[enumValue]]
+${syntax: valueFieldIR enumTypeIR enumValue}
+
+===== Enum type declaration without an underlying type
+
+For example, the declaration
+
+[source,p4]
+----
+enum Suits { Clubs, Diamonds, Hearths, Spades }
+----
+
+introduces a new enumeration type, which contains four elements---e.g.,
+`Suits.Clubs`. An `enum` declaration introduces a new identifier in the current
+scope for naming the created type along with its distinct elements. The
+underlying representation of the `Suits` enum is not specified, so their "size"
+in bits is not specified (it is target-specific).
+
+===== Enum type declaration with an underlying type
+
+It is also possible to specify an `enum` with an underlying representation.
+These are sometimes called serializable ``enum``s, because headers are allowed
+to have fields with such `enum` types. This requires the programmer provide
+both the fixed-width unsigned (or signed) integer type and an associated
+integer value for each symbolic entry in the enumeration.
+
+For example, the declaration
+
+[source,p4]
+----
+enum bit<16> EtherType {
+  VLAN      = 0x8100,
+  QINQ      = 0x9100,
+  MPLS      = 0x8847,
+  IPV4      = 0x0800,
+  IPV6      = 0x86dd
+}
+----
+
+introduces a new enumeration type, which contains five elements---e.g.,
+`EtherType.IPV4`.  This `enum` declaration specifies the fixed-width unsigned
+integer representation for each entry in the `enum` and provides an underlying
+type: `bit<16>`. This kind of `enum` declaration can be thought of as declaring
+a new `bit<16>` type, where variables or fields of this type are expected to be
+unsigned 16-bit integer values, and the mapping of symbolic to numeric values
+defined by the `enum` are also defined as a part of this declaration.  In this
+way, an `enum` with an underlying type can be thought of as being a type
+derived from the underlying type carrying equality, assignment, and casts
+to/from the underlying type.
+
+Compiler implementations are expected to raise an error if the fixed-width
+integer representation for an enumeration entry falls outside the
+representation range of the underlying type.
+
+For example, the declaration
+
+[source,p4]
+----
+enum bit<8> FailingExample {
+  first           = 1,
+  second          = 2,
+  third           = 3,
+  unrepresentable = 300
+}
+----
+
+would raise an error because `300`, the value associated with
+`FailingExample.unrepresentable` cannot be represented as a `bit<8>` value.
+
+The `initializer` expression must be a local compile-time known value.
+
+Annotations, represented by the non-terminal `optAnnotations`, are described in
+<<sec-annotations>>.
+
+[discrete]
+===== Type checking
+
+// Added
+Enum types are introduced by `enum` declarations. Its typing rule is explained
+in <<sec-sem-Decl_ok-enumTypeDeclaration>>.
+
+Enum types are then used by referencing their names. Thus enum types can be
+obtained from named types, as illustrated in <<sec-named-types>>.
+
+[discrete]
+===== Well-formedness
+
+// Added
+${rulegroup: Type_wf/enumTypeIR}
+${ruleprose: Type_wf/enumTypeIR}

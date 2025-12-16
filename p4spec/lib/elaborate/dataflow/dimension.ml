@@ -153,12 +153,6 @@ let rec annotate_exp (bounds : VEnv.t) (exp : exp) : VEnv.t * exp =
       let occurs, args = annotate_args bounds args in
       let exp = CallE (id, targs, args) $$ (at, note) in
       (occurs, exp)
-  | HoldE (id, notexp) ->
-      let mixop, exps = notexp in
-      let occurs, exps = annotate_exps bounds exps in
-      let notexp = (mixop, exps) in
-      let exp = HoldE (id, notexp) $$ (at, note) in
-      (occurs, exp)
   | IterE (_, ((_, _ :: _) as iterexp)) ->
       error exp.at
         (Format.asprintf
@@ -251,6 +245,18 @@ and annotate_prem (binds : VEnv.t) (bounds : VEnv.t) (prem : prem) :
       let occurs, exp = annotate_exp bounds exp in
       let prem = IfPr exp $ at in
       (occurs, prem)
+  | IfHoldPr (id, notexp) ->
+      let mixop, exps = notexp in
+      let occurs, exps = annotate_exps bounds exps in
+      let notexp = (mixop, exps) in
+      let prem = IfHoldPr (id, notexp) $ at in
+      (occurs, prem)
+  | IfNotHoldPr (id, notexp) ->
+      let mixop, exps = notexp in
+      let occurs, exps = annotate_exps bounds exps in
+      let notexp = (mixop, exps) in
+      let prem = IfNotHoldPr (id, notexp) $ at in
+      (occurs, prem)
   | ElsePr -> (empty, prem)
   | LetPr (exp_l, exp_r) ->
       let occurs_l, exp_l = annotate_exp bounds exp_l in
@@ -325,6 +331,9 @@ let analyze_exp (bounds : VEnv.t) (exp : exp) : exp =
 
 let analyze_exps (bounds : VEnv.t) (exps : exp list) : exp list =
   analyze annotate_exps bounds exps
+
+let analyze_arg (bounds : VEnv.t) (arg : arg) : arg =
+  analyze annotate_arg bounds arg
 
 let analyze_args (bounds : VEnv.t) (args : arg list) : arg list =
   analyze annotate_args bounds args

@@ -1,12 +1,10 @@
 open Il.Ast
-open Il.Print
+module InputHint = Runtime_static.Rel.InputHint
 
 (* Relation *)
 
-type t = Runtime_static.Rel.Hint.t * rule list
+type t = Extern of InputHint.t | Defined of InputHint.t * rulegroup list
 
-let to_string (inputs, rules) =
-  "rel "
-  ^ Runtime_static.Rel.Hint.to_string inputs
-  ^ "\n"
-  ^ String.concat "\n   " (List.map string_of_rule rules)
+let to_string = function
+  | Extern _ -> "extern relation"
+  | Defined _ -> "defined relation"

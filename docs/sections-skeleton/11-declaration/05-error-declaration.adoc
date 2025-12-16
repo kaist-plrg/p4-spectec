@@ -1,0 +1,40 @@
+[#sec-errorDeclaration]
+=== Error declaration
+
+The error type contains opaque distinct values that can be used to signal
+errors. It is written as `error`. New elements of the error type are defined
+with the syntax:
+
+${syntax: errorDeclaration
+          errorDeclarationIR}
+
+All elements of the `error` type are inserted into the `error` namespace,
+irrespective of the place where an error is defined. `error` is similar to an
+enumeration (`enum`) type in other languages. A program can contain multiple
+`error` declarations, which the compiler will merge together. It is an error to
+declare the same identifier multiple times. Expressions of type `error` are
+described in <<sec-error-exprs>>.
+
+For example, the following declaration creates two elements of the `error` type
+(these errors are declared in the P4 core library):
+
+[source,p4]
+----
+error { ParseError, PacketTooShort }
+----
+
+The underlying representation of errors is target-dependent.
+
+[[sem-type-check-errorDeclaration]]
+[discrete]
+==== Type checking
+
+${rulegroup: Decl_ok/errorDeclaration}
+${ruleprose: Decl_ok/errorDeclaration}
+
+[[sem-compile-time-eval-errorDeclaration]]
+[discrete]
+==== Compile-time evaluation
+
+${rulegroup: Decl_inst/errorDeclarationIR}
+${ruleprose: Decl_inst/errorDeclarationIR}

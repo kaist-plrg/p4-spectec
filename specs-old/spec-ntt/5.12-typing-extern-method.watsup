@@ -1,0 +1,133 @@
+;;
+;; Extern method typing
+;;
+;; syntax methodPrototype
+;;
+
+;;; MethodM typeOrVoid name typeParameter* parameter*
+
+rule ExternMethod_ok/methodM:
+  TC_0 tid_extern |- MethodM typeOrVoid name typeParameter* parameter*
+                   : TC_4 methodPrototypeIR
+  ---- ;; check that method name does not overlap with the extern name
+  -- if name =/= tid_extern
+  ---- ;; check type parameters and add them to the context
+  -- if (tid_expl = typeParameter)*
+  -- if TC_1 = $add_types(LOCAL, TC_0, tid_expl*, (MonoTD (NameT tid_expl))*)
+  ---- ;; check return type
+  -- Type_ok: LOCAL TC_1 |- typeOrVoid : typeIR_ret eps
+  ---- ;; set local context
+  -- if TC_2 = TC_1[ .LOCAL.KIND = EXTERNMETHOD typeIR_ret ]
+  ---- ;; check parameters and add them to the context
+  -- Parameters_ok: LOCAL TC_2 |- parameter* : parameterIR* tid_impl*
+  -- if (parameterTypeIR = $parameterIR(parameterIR))*
+  -- if TC_3 = $add_parameters(LOCAL, TC_2, parameterTypeIR*)
+  ---- ;; create method type and add it to the context
+  -- if rid = $rid(name, parameter*)
+  -- if routineTypeIR
+      = ExternMethodT parameterTypeIR* typeIR_ret
+  -- if routineTypeDefIR = PolyTD routineTypeIR tid_expl* tid_impl*
+  -- RoutineTypeDef_wf: $bound(BLOCK, TC_0) |- routineTypeDefIR
+  -- if TC_4 = $add_routine_overload(BLOCK, TC_0, rid, routineTypeDefIR)
+  ---- ;; create IR
+  -- if methodPrototypeIR
+      = MethodM typeIR_ret name tid_expl* tid_impl* parameterIR*
+
+;;; AbstractMethodM typeOrVoid name typeParameter* parameter*
+
+rule ExternMethod_ok/abstractmethodM:
+  TC_0 tid_extern |- AbstractMethodM typeOrVoid name typeParameter* parameter*
+                   : TC_4 methodPrototypeIR
+  ---- ;; check that method name does not overlap with the extern name
+  -- if name =/= tid_extern
+  ---- ;; check type parameters and add them to the context
+  -- if (tid_expl = typeParameter)*
+  -- if TC_1 = $add_types(LOCAL, TC_0, tid_expl*, (MonoTD (NameT tid_expl))*)
+  ---- ;; check return type
+  -- Type_ok: LOCAL TC_1 |- typeOrVoid : typeIR_ret eps
+  ---- ;; set local context
+  -- if TC_2 = TC_1[ .LOCAL.KIND = EXTERNABSTRACTMETHOD typeIR_ret ]
+  ---- ;; check parameters and add them to the context
+  -- Parameters_ok: LOCAL TC_2 |- parameter* : parameterIR* tid_impl*
+  -- if (parameterTypeIR = $parameterIR(parameterIR))*
+  -- if TC_3 = $add_parameters(LOCAL, TC_2, parameterTypeIR*)
+  ---- ;; create method type and add it to the context
+  -- if rid = $rid(name, parameter*)
+  -- if routineTypeIR
+      = ExternAbstractMethodT parameterTypeIR* typeIR_ret
+  -- if routineTypeDefIR = PolyTD routineTypeIR tid_expl* tid_impl*
+  -- RoutineTypeDef_wf: $bound(BLOCK, TC_0) |- routineTypeDefIR
+  -- if TC_4 = $add_routine_non_overload(BLOCK, TC_0, rid, routineTypeDefIR)
+  ---- ;; create IR
+  -- if methodPrototypeIR
+      = AbstractMethodM typeIR_ret name tid_expl* tid_impl* parameterIR*
+
+;;
+;; Extern method list typing
+;;
+;; syntax methodPrototypeList
+;;
+
+rule ExternMethods_ok/nil:
+  TC tid_extern |- eps : TC eps
+
+rule ExternMethods_ok/cons:
+  TC_0 tid_extern |- methodPrototype_h :: methodPrototype_t*
+                   : TC_2 (methodPrototypeIR_h :: methodPrototypeIR_t*)
+  -- ExternMethod_ok: TC_0 tid_extern |- methodPrototype_h
+                                       : TC_1 methodPrototypeIR_h
+  -- ExternMethods_ok: TC_1 tid_extern |- methodPrototype_t*
+                                        : TC_2 methodPrototypeIR_t*
+
+;;
+;; Extern constructor typing
+;;
+;; syntax methodPrototype
+;;
+
+;;; ConsM name parameter*
+
+rule ExternConstructor_ok:
+  TC_0 tid_extern |- ConsM name constructorParameter* : TC_1 methodPrototypeIR
+  ---- ;; check that constructor name is the same as the extern name
+  -- if name = tid_extern
+  ---- ;; check constructor parameters
+  -- ConstructorParameters_ok: BLOCK TC_0 |- constructorParameter*
+                                           : constructorParameterIR* tid_impl*
+  -- if (constructorParameterTypeIR
+      = $constructorParameterIR(constructorParameterIR))*
+  ---- ;; find extern type
+  -- if PolyTD typeIR_extern tid_expl* eps = $find_type(GLOBAL, TC_0, CURRENT name)
+  ---- ;; add implicit type parameters to the constructor
+  ---- ;; and add it to the context
+  -- if cid = $cid(name, constructorParameter*)
+  -- if typeIR_extern_spec
+      = SpecT
+          (PolyTD typeIR_extern tid_expl* eps)
+          (NameT tid_expl)*
+  -- if constructorTypeIR
+      = ConstructorT constructorParameterTypeIR* typeIR_extern_spec
+  -- if constructorTypeDefIR
+      = PolyTD constructorTypeIR tid_expl* tid_impl*
+  -- ConstructorTypeDef_wf: $bound(BLOCK, TC_0) |- constructorTypeDefIR
+  -- if TC_1 = $add_constructor(TC_0, cid, constructorTypeDefIR)
+  ---- ;; create IR
+  -- if methodPrototypeIR
+      = ConsM name tid_impl* constructorParameterIR*
+
+;;
+;; Extern constructor list typing
+;;
+;; syntax methodPrototypeList
+;;
+
+rule ExternConstructors_ok/nil:
+  TC tid_extern |- eps : TC eps
+
+rule ExternConstructors_ok/cons:
+  TC_0 tid_extern |- methodPrototype_h :: methodPrototype_t*
+                  : TC_2 (methodPrototypeIR_h :: methodPrototypeIR_t*)
+  -- ExternConstructor_ok: TC_0 tid_extern |- methodPrototype_h
+                                            : TC_1 methodPrototypeIR_h
+  -- ExternConstructors_ok: TC_1 tid_extern |- methodPrototype_t*
+                                             : TC_2 methodPrototypeIR_t*

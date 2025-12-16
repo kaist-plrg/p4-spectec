@@ -29,9 +29,9 @@ class FuzzConfig:
     work_dir: Directory
     loops: int
     spec: Directory
+    relname: str
     include: Directory
     exclude: Directory
-    ignores: List[Filepath]
     coverage: Filepath
     mode: str
     reduce: bool
@@ -45,14 +45,9 @@ def parse_args() -> FuzzConfig:
     parser.add_argument("dir", type=str, help="Path to the working directory")
     parser.add_argument("--loops", type=int, default=2, help="Fuzz loop count")
     parser.add_argument("--spec", type=str, default="spec")
+    parser.add_argument("--relname", type=str, default="Program_ok")
     parser.add_argument("--include", type=str, default="p4c/p4include")
     parser.add_argument("--exclude", type=str, default="excludes")
-    parser.add_argument(
-        "--ignores",
-        nargs="*",
-        type=str,
-        default=["ignores/relation.ignore", "ignores/function.ignore"],
-    )
     parser.add_argument("--coverage", type=str, default="coverage/p4c-pos.coverage")
     parser.add_argument("--reduce", action="store_true")
     parser.add_argument("--timeout", type=int, default=12*60*60, help="Fuzzer timeout in seconds.")
@@ -63,26 +58,27 @@ def parse_args() -> FuzzConfig:
 
     args = parser.parse_args()
 
-    # P4CHERRY_PATH must be set
-    if os.getenv("P4CHERRY_PATH") is None:
-        print("Error: P4CHERRY_PATH environment variable is not set.")
+    # P4SPECTEC_PATH must be set
+    if os.getenv("P4SPECTEC_PATH") is None:
+        print("Error: P4SPECTEC_PATH environment variable is not set.")
         exit(1)
-    P4SPECTEC_DIR: Directory = Directory(str(os.getenv("P4CHERRY_PATH")))
-    print(f"[CONFIG] P4CHERRY_PATH: {P4SPECTEC_DIR}")
+    P4SPECTEC_DIR: Directory = Directory(str(os.getenv("P4SPECTEC_PATH")))
+    print(f"[CONFIG] P4SPECTEC_PATH: {P4SPECTEC_DIR}")
 
     return FuzzConfig(
         work_dir=args.dir,
         loops=args.loops,
         spec=args.spec,
+        relname=args.relname,
         include=args.include,
         exclude=args.exclude,
-        ignores=args.ignores,
         coverage=args.coverage,
         mode=args.mode,
         reduce=args.reduce,
         timeout=args.timeout,
         creduce_configs=CReduceConfigs(
             p4spectec_dir=P4SPECTEC_DIR,
+            relname=args.relname,
             cores=args.cores,
             timeout_interesting=args.timeout_interesting,
             timeout_creduce=args.timeout_creduce,
@@ -140,7 +136,6 @@ def fuzzing_campaign(config: FuzzConfig) -> None:
         exit(1)
     print(f"[CONFIG] Exclude directory: {EXCLUDE_DIR}")
 
-    IGNORE_FILES: List[Filepath] = config.ignores
     COVERAGE_FILE: Filepath = Filepath(config.coverage)
     if not os.path.isfile(COVERAGE_FILE):
         print(f"Error: Coverage file {COVERAGE_FILE} does not exist.")
@@ -159,12 +154,13 @@ def fuzzing_campaign(config: FuzzConfig) -> None:
         "./p4spectec",
         "testgen",
         *SPEC_FILES,
+        "-rel",
+        config.relname,
         "-silent",
         "-i",
         INCLUDE_DIR,
         "-e",
         EXCLUDE_DIR,
-        *[cmd for file in IGNORE_FILES for cmd in ("-ignore", file)],
         "-gen",
         WORK_DIR,
     ]
@@ -364,9 +360,9 @@ if __name__ == "__main__":
     run_coverage(
         config.work_dir,
         config.spec,
+        config.relname,
         config.include,
         config.exclude,
-        config.ignores,
         TESTDATA_DIR,
         OUTPUT_PATH,
     )

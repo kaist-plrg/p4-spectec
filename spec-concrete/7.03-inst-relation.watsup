@@ -1,0 +1,173 @@
+;;
+;;;; Expression instantiation
+;;
+
+relation Expr_inst:
+  cursor instContext store |- typedExpressionIR : store value
+  hint(input %0 %1 %2 %3)
+
+relation Exprs_inst:
+  cursor instContext store |- typedExpressionIR* : store value*
+  hint(input %0 %1 %2 %3)
+
+;;
+;;;; Argument instantiation
+;;
+
+relation Argument_inst:
+  cursor instContext store |- argumentIR : store value
+  hint(input %0 %1 %2 %3)
+
+;;
+;;;; Statement instantiation
+;;
+
+relation Stmt_inst:
+  cursor instContext store |- statementIR
+                            : instContext store statementIR
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "the compile-time evaluation of" %3#
+              ", under cursor" %0#", instantiation context" %1#", and store" %2)
+  hint(prose_out "\nthe instantiation context" %4#",\nthe updated store" %5#
+               ",\nand the instantiated statement" %6)
+
+relation BlockElementStmt_inst:
+  instContext store |- blockElementStatementIR
+                      : instContext store blockElementStatementIR?
+  hint(input %0 %1 %2)
+
+relation BlockElementStmts_inst:
+  instContext store |- blockElementStatementIR*
+                     : instContext store blockElementStatementIR*
+  hint(input %0 %1 %2)
+
+relation Block_inst:
+  instContext store |- blockStatementIR
+                     : instContext store blockStatementIR
+  hint(input %0 %1 %2)
+
+;;
+;;;; Extern method/constructor instantiation
+;;
+
+relation ExternMethod_inst:
+  instContext |- externMethodPrototypeIR : instContext
+  hint(input %0 %1)
+
+relation ExternMethods_inst:
+  instContext |- externMethodPrototypeIR* : instContext
+  hint(input %0 %1)
+
+;;
+;;;; Parser instantiation
+;;
+
+relation ParserStmt_inst:
+  instContext store |- parserStatementIR
+                     : instContext store parserStatementIR
+  hint(input %0 %1 %2)
+
+relation ParserStmts_inst:
+  instContext store |- parserStatementIR*
+                     : instContext store parserStatementIR*
+  hint(input %0 %1 %2)
+
+relation ParserState_inst:
+  instContext store |- parserStateIR
+                     : instContext store
+  hint(input %0 %1 %2)
+
+relation ParserStates_inst:
+  instContext store |- parserStateIR*
+                     : instContext store
+  hint(input %0 %1 %2)
+
+relation ParserLocalDecl_inst:
+  instContext store |- parserLocalDeclarationIR
+                     : instContext store parserLocalDeclarationIR
+  hint(input %0 %1 %2)
+
+relation ParserLocalDecls_inst:
+  instContext store |- parserLocalDeclarationIR*
+                     : instContext store parserLocalDeclarationIR*
+  hint(input %0 %1 %2)
+
+;;
+;;;; Control instantiation
+;;
+
+relation TableProperty_inst:
+  instContext store |- tablePropertyIR
+                     : store tablePropertyIR
+  hint(input %0 %1 %2)
+
+relation TableProperties_inst:
+  instContext store |- tablePropertyIR*
+                     : store tablePropertyIR*
+  hint(input %0 %1 %2)
+
+relation ControlLocalDecl_inst:
+  instContext store |- controlLocalDeclarationIR
+                     : instContext store controlLocalDeclarationIR?
+  hint(input %0 %1 %2)
+
+relation ControlLocalDecls_inst:
+  instContext store |- controlLocalDeclarationIR*
+                     : instContext store controlLocalDeclarationIR*
+  hint(input %0 %1 %2)
+
+;;
+;;;; Declaration instantiation
+;;
+
+relation Decl_inst:
+  cursor instContext store |- declarationIR
+                            : instContext store declarationIR?
+  hint(input %0 %1 %2 %3)
+
+relation Decls_inst:
+  cursor instContext store |- declarationIR*
+                            : instContext store declarationIR*
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "instantiating" %3#", under cursor" %0#
+                ", instantiation context" %1#", and store" %2)
+  hint(prose_out "\nthe modified instantiation context" %4#
+                 ",\nthe updated store" %5#
+                 ", and the instantiated declarations" %6)
+
+relation Program_inst:
+  |- p4program : globalInstLayer store
+  hint(input %0)
+  hint(prose_in "instantiating" %0)
+  hint(prose_out "\nthe global instantiation layer" %1#
+               ", and the store" %2)
+
+;;
+;;;; Argument Binding
+;;;; Instantiate constructor arguments using caller context,
+;;;; and bind them to callee context
+;;
+
+relation Bind_arg:
+  cursor instContext `|
+  cursor instContext store
+  |- id argumentIR : instContext store
+  hint(input %0 %1 %2 %3 %4 %5 %6)
+
+relation Bind_args:
+  cursor instContext `|
+  cursor instContext store
+  |- id* argumentIR* : instContext store
+  hint(input %0 %1 %2 %3 %4 %5 %6)
+
+;;
+;;;; Constructor instantiation
+;;;; takes a constructor and returns an object
+;;
+
+relation Constructor_inst:
+  cursor instContext store |- constructorDef
+                                `< typeArgumentListIR >
+                                `( argumentListIR `# id* )
+                             : store object
+  hint(input %0 %1 %2 %3 %4 %5 %6)

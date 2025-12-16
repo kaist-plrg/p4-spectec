@@ -27,6 +27,7 @@ Reductions = Dict[PID, List[Filepath]]
 @dataclass
 class CReduceConfigs:
     p4spectec_dir: Directory
+    relname : str
     cores: Optional[int]
     timeout_interesting: int
     timeout_creduce: int

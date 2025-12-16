@@ -1,0 +1,49 @@
+=== Parameters
+
+// Added
+${syntax: direction parameter}
+
+Callables can have parameters. Each parameter has a direction, a type, a
+name, and an optional default value.
+
+The type of a parameter is represented as:
+
+[[parameterTypeIR]]
+${syntax: parameterTypeIR}
+
+A parameter is internally represented as:
+
+[[parameterIR]]
+${syntax: parameterIR}
+
+The high-level overview of parameters with respect to the copy in/copy out
+calling convention is described in <<sec-call-convention-overview>>. Below are
+the formal typing and well-formedness rules for parameters that implement the
+restrictions described there.
+
+[discrete]
+==== Type checking
+
+// Added
+${relation: Parameter_ok}
+
+Typing a parameter produces a `parameterIR` if it is well-typed. A parameter
+is well-typed when its type is well-formed and its default value (if any) has
+the same type as the parameter type.
+
+${rulegroup: Parameter_ok}
+${ruleprose: Parameter_ok}
+
+[discrete]
+==== Well-formedness
+
+// Added
+${relation: ParameterType_wf}
+
+A parameter type is well-formed when its type is well-formed. Also, the type
+should not be a synthesized type. Types that can only be local compile-time
+known or compile-time known (e.g., `int` type) must be directionless. A default
+value can be specified for `in` or directionless parameters only.
+
+${rulegroup: ParameterType_wf}
+${ruleprose: ParameterType_wf}

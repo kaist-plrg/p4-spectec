@@ -96,49 +96,103 @@ let bound_metavar (ctx : t) (tid : TId.t) : bool =
 
 (* Finders for rules *)
 
-let find_rel_opt (ctx : t) (rid : RId.t) : (nottyp * int list) option =
-  REnv.find_opt rid ctx.renv
-  |> Option.map (fun (nottyp, inputs, _) -> (nottyp, inputs))
+let find_defined_rel_opt (ctx : t) (rid : RId.t) :
+    (nottyp * Il.Ast.nottyp * int list * Il.Ast.rulegroup list) option =
+  let rel_opt = REnv.find_opt rid ctx.renv in
+  Option.bind rel_opt (function
+    | Rel.Defined (nottyp, nottyp_il, inputs, rulegroups) ->
+        Some (nottyp, nottyp_il, inputs, rulegroups)
+    | Rel.Extern _ -> None)
 
-let find_rel (ctx : t) (rid : RId.t) : nottyp * int list =
-  match find_rel_opt ctx rid with
-  | Some (nottyp, inputs) -> (nottyp, inputs)
+let find_defined_rel (ctx : t) (rid : RId.t) :
+    nottyp * Il.Ast.nottyp * int list * Il.Ast.rulegroup list =
+  match find_defined_rel_opt ctx rid with
+  | Some (nottyp, nottyp_il, inputs, rulegroups) ->
+      (nottyp, nottyp_il, inputs, rulegroups)
+  | None -> error_undef rid.at "defined relation" rid.it
+
+let bound_defined_rel (ctx : t) (rid : RId.t) : bool =
+  find_defined_rel_opt ctx rid |> Option.is_some
+
+let find_rel_signature_opt (ctx : t) (rid : RId.t) :
+    (nottyp * Il.Ast.nottyp * int list) option =
+  REnv.find_opt rid ctx.renv
+  |> Option.map (function
+         | Rel.Extern (nottyp, nottyp_il, inputs)
+         | Rel.Defined (nottyp, nottyp_il, inputs, _)
+         -> (nottyp, nottyp_il, inputs))
+
+let find_rel_signature (ctx : t) (rid : RId.t) :
+    nottyp * Il.Ast.nottyp * int list =
+  match find_rel_signature_opt ctx rid with
+  | Some (nottyp, nottyp_il, inputs) -> (nottyp, nottyp_il, inputs)
   | None -> error_undef rid.at "relation" rid.it
 
 let bound_rel (ctx : t) (rid : RId.t) : bool =
-  find_rel_opt ctx rid |> Option.is_some
+  find_rel_signature_opt ctx rid |> Option.is_some
 
-let find_rules_opt (ctx : t) (rid : RId.t) : Il.Ast.rule list option =
-  REnv.find_opt rid ctx.renv |> Option.map (fun (_, _, rules) -> rules)
-
-let find_rules (ctx : t) (rid : RId.t) : Il.Ast.rule list =
-  match find_rules_opt ctx rid with
-  | Some rules -> rules
-  | None -> error_undef rid.at "relation" rid.it
+let bound_rulegroup (ctx : t) (rid : RId.t) (rulegroupid : Id.t) : bool =
+  match find_defined_rel_opt ctx rid with
+  | Some (_, _, _, rulegroups) ->
+      List.exists
+        (fun rulegroup ->
+          let id, _, _ = rulegroup.it in
+          Id.eq id rulegroupid)
+        rulegroups
+  | None -> false
 
 (* Finders for definitions *)
 
-let find_dec_opt (ctx : t) (fid : FId.t) :
+let find_table_func_opt (ctx : t) (fid : FId.t) :
+    (param list * plaintyp * Il.Ast.tablerow list) option =
+  let func_opt = FEnv.find_opt fid ctx.fenv in
+  Option.bind func_opt (function
+    | Func.Table (params, plaintyp, tablerows) ->
+        Some (params, plaintyp, tablerows)
+    | Func.Defined _ | Func.Extern _ | Func.Builtin _ -> None)
+
+let find_table_func (ctx : t) (fid : FId.t) :
+    param list * plaintyp * Il.Ast.tablerow list =
+  match find_table_func_opt ctx fid with
+  | Some (params, plaintyp, tablerows) -> (params, plaintyp, tablerows)
+  | None -> error_undef fid.at "table function" fid.it
+
+let find_defined_func_opt (ctx : t) (fid : FId.t) :
+    (tparam list * param list * plaintyp * Il.Ast.clause list) option =
+  let func_opt = FEnv.find_opt fid ctx.fenv in
+  Option.bind func_opt (function
+    | Func.Defined (tparams, params, plaintyp, clauses) ->
+        Some (tparams, params, plaintyp, clauses)
+    | Func.Table _ | Func.Extern _ | Func.Builtin _ -> None)
+
+let find_defined_func (ctx : t) (fid : FId.t) :
+    tparam list * param list * plaintyp * Il.Ast.clause list =
+  match find_defined_func_opt ctx fid with
+  | Some (tparams, params, plaintyp, clauses) ->
+      (tparams, params, plaintyp, clauses)
+  | None -> error_undef fid.at "plain function" fid.it
+
+let bound_defined_func (ctx : t) (fid : FId.t) : bool =
+  find_defined_func_opt ctx fid |> Option.is_some
+
+let find_func_signature_opt (ctx : t) (fid : FId.t) :
     (tparam list * param list * plaintyp) option =
   FEnv.find_opt fid ctx.fenv
-  |> Option.map (fun (tparams, params, plaintyp, _) ->
-         (tparams, params, plaintyp))
+  |> Option.map (function
+       | Func.Extern (tparams, params, plaintyp)
+       | Func.Builtin (tparams, params, plaintyp)
+       | Func.Defined (tparams, params, plaintyp, _) ->
+           (tparams, params, plaintyp)
+       | Func.Table (params, plaintyp, _) -> ([], params, plaintyp))
 
-let find_dec (ctx : t) (fid : FId.t) : tparam list * param list * plaintyp =
-  match find_dec_opt ctx fid with
-  | Some dec -> dec
+let find_func_signature (ctx : t) (fid : FId.t) :
+    tparam list * param list * plaintyp =
+  match find_func_signature_opt ctx fid with
+  | Some (tparams, params, plaintyp) -> (tparams, params, plaintyp)
   | None -> error_undef fid.at "function" fid.it
 
-let bound_dec (ctx : t) (fid : FId.t) : bool =
-  find_dec_opt ctx fid |> Option.is_some
-
-let find_clauses_opt (ctx : t) (fid : FId.t) : Il.Ast.clause list option =
-  FEnv.find_opt fid ctx.fenv |> Option.map (fun (_, _, _, clauses) -> clauses)
-
-let find_clauses (ctx : t) (fid : FId.t) : Il.Ast.clause list =
-  match find_clauses_opt ctx fid with
-  | Some clauses -> clauses
-  | None -> error_undef fid.at "function" fid.it
+let bound_func (ctx : t) (fid : FId.t) : bool =
+  find_func_signature_opt ctx fid |> Option.is_some
 
 (* Adders *)
 
@@ -185,32 +239,78 @@ let add_tparams (ctx : t) (tparams : tparam list) : t =
 
 (* Adders for rules *)
 
-let add_rel (ctx : t) (rid : RId.t) (nottyp : nottyp) (inputs : int list) : t =
+let add_extern_rel (ctx : t) (rid : RId.t) (nottyp : nottyp)
+    (nottyp_il : Il.Ast.nottyp) (inputs : int list) : t =
   if bound_rel ctx rid then error_dup rid.at "relation" rid.it;
-  let rel = (nottyp, inputs, []) in
+  let rel = Rel.Extern (nottyp, nottyp_il, inputs) in
   let renv = REnv.add rid rel ctx.renv in
   { ctx with renv }
 
-let add_rule (ctx : t) (rid : RId.t) (rule : Il.Ast.rule) : t =
-  if not (bound_rel ctx rid) then error_undef rid.at "relation" rid.it;
-  let nottyp, inputs, rules = REnv.find rid ctx.renv in
-  let rel = (nottyp, inputs, rules @ [ rule ]) in
+let add_defined_rel (ctx : t) (rid : RId.t) (nottyp : nottyp)
+    (nottyp_il : Il.Ast.nottyp) (inputs : int list) : t =
+  if bound_rel ctx rid then error_dup rid.at "relation" rid.it;
+  let rel = Rel.Defined (nottyp, nottyp_il, inputs, []) in
+  let renv = REnv.add rid rel ctx.renv in
+  { ctx with renv }
+
+let add_defined_rulegroup (ctx : t) (rid : RId.t) (rulegroup : Il.Ast.rulegroup)
+    : t =
+  if not (bound_defined_rel ctx rid) then error_undef rid.at "relation" rid.it;
+  let rulegroupid, _, _ = rulegroup.it in
+  if bound_rulegroup ctx rid rulegroupid then
+    error_dup rulegroupid.at "rulegroup" rulegroupid.it;
+  let nottyp, nottyp_il, inputs, rulegroups = find_defined_rel ctx rid in
+  let rulegroups = rulegroups @ [ rulegroup ] in
+  let rel = Rel.Defined (nottyp, nottyp_il, inputs, rulegroups) in
   let renv = REnv.add rid rel ctx.renv in
   { ctx with renv }
 
 (* Adders for definitions *)
 
-let add_dec (ctx : t) (fid : FId.t) (tparams : tparam list)
+let add_extern_func_dec (ctx : t) (fid : FId.t) (tparams : tparam list)
     (params : param list) (plaintyp : plaintyp) : t =
-  if bound_dec ctx fid then error_dup fid.at "function" fid.it;
-  let func = (tparams, params, plaintyp, []) in
+  if bound_func ctx fid then error_dup fid.at "extern function" fid.it;
+  let func = Func.Extern (tparams, params, plaintyp) in
   let fenv = FEnv.add fid func ctx.fenv in
   { ctx with fenv }
 
-let add_clause (ctx : t) (fid : FId.t) (clause : Il.Ast.clause) : t =
-  if not (bound_dec ctx fid) then error_undef clause.at "function" fid.it;
-  let tparams, params, plaintyp, clauses = FEnv.find fid ctx.fenv in
-  let func = (tparams, params, plaintyp, clauses @ [ clause ]) in
+let add_builtin_func_dec (ctx : t) (fid : FId.t) (tparams : tparam list)
+    (params : param list) (plaintyp : plaintyp) : t =
+  if bound_func ctx fid then error_dup fid.at "builtin function" fid.it;
+  let func = Func.Builtin (tparams, params, plaintyp) in
+  let fenv = FEnv.add fid func ctx.fenv in
+  { ctx with fenv }
+
+let add_table_func_dec (ctx : t) (fid : FId.t) (params : param list)
+    (plaintyp : plaintyp) : t =
+  if bound_func ctx fid then error_dup fid.at "table function" fid.it;
+  let func = Func.Table (params, plaintyp, []) in
+  let fenv = FEnv.add fid func ctx.fenv in
+  { ctx with fenv }
+
+let add_defined_func_dec (ctx : t) (fid : FId.t) (tparams : tparam list)
+    (params : param list) (plaintyp : plaintyp) : t =
+  if bound_func ctx fid then error_dup fid.at "function" fid.it;
+  let func = Func.Defined (tparams, params, plaintyp, []) in
+  let fenv = FEnv.add fid func ctx.fenv in
+  { ctx with fenv }
+
+let add_table_func_tablerows (ctx : t) (fid : FId.t)
+    (tablerows : Il.Ast.tablerow list) : t =
+  if not (bound_func ctx fid) then
+    error_undef (List.hd tablerows).at "table function" fid.it;
+  let params, plaintyp, tablerows_found = find_table_func ctx fid in
+  if List.length tablerows_found > 0 then
+    error_dup (List.hd tablerows_found).at "table function" fid.it;
+  let func = Func.Table (params, plaintyp, tablerows) in
+  let fenv = FEnv.add fid func ctx.fenv in
+  { ctx with fenv }
+
+let add_defined_func_clause (ctx : t) (fid : FId.t) (clause : Il.Ast.clause) : t
+    =
+  if not (bound_func ctx fid) then error_undef clause.at "function" fid.it;
+  let tparams, params, plaintyp, clauses = find_defined_func ctx fid in
+  let func = Func.Defined (tparams, params, plaintyp, clauses @ [ clause ]) in
   let fenv = FEnv.add fid func ctx.fenv in
   { ctx with fenv }
 

@@ -106,9 +106,6 @@ let rec rename_exp (rename : t) (exp : exp) : exp =
   | CallE (id, targs, args) ->
       let args = List.map (rename_arg rename) args in
       Il.Ast.CallE (id, targs, args) $$ (at, note)
-  | HoldE (id, (mixop, exps)) ->
-      let exps = List.map (rename_exp rename) exps in
-      Il.Ast.HoldE (id, (mixop, exps)) $$ (at, note)
   | IterE (exp, iterexp) ->
       let exp = rename_exp rename exp in
       let iterexp = rename_iterexp rename iterexp in
@@ -131,6 +128,9 @@ and rename_path (rename : t) (path : path) : path =
       let path = rename_path rename path in
       Il.Ast.DotP (path, atom) $$ (at, note)
 
+and rename_exps (rename : t) (exps : exp list) : exp list =
+  List.map (rename_exp rename) exps
+
 and rename_arg (rename : t) (arg : arg) : arg =
   let at = arg.at in
   match arg.it with
@@ -138,6 +138,9 @@ and rename_arg (rename : t) (arg : arg) : arg =
       let exp = rename_exp rename exp in
       Il.Ast.ExpA exp $ at
   | DefA _ -> arg
+
+and rename_args (rename : t) (args : arg list) : arg list =
+  List.map (rename_arg rename) args
 
 and rename_case (rename : t) (case : case) : case =
   let guard, instrs = case in
@@ -164,6 +167,12 @@ and rename_instr (rename : t) (instr : instr) : instr =
       let iterexps = List.map (rename_iterexp rename) iterexps in
       let instrs_then = List.map (rename_instr rename) instrs_then in
       IfI (exp_cond, iterexps, instrs_then) $ at
+  | HoldI (id, (mixop, exps), iterexps, instrs_hold, instrs_nothold) ->
+      let exps = List.map (rename_exp rename) exps in
+      let iterexps = List.map (rename_iterexp rename) iterexps in
+      let instrs_hold = List.map (rename_instr rename) instrs_hold in
+      let instrs_nothold = List.map (rename_instr rename) instrs_nothold in
+      HoldI (id, (mixop, exps), iterexps, instrs_hold, instrs_nothold) $ at
   | CaseI (exp, cases, total) ->
       let exp = rename_exp rename exp in
       let cases = List.map (rename_case rename) cases in
@@ -171,6 +180,10 @@ and rename_instr (rename : t) (instr : instr) : instr =
   | OtherwiseI instr ->
       let instr = rename_instr rename instr in
       OtherwiseI instr $ at
+  | GroupI (id_group, exps_group, instrs_group) ->
+      let instrs_group = List.map (rename_instr rename) instrs_group in
+      let exps_group = List.map (rename_exp rename) exps_group in
+      GroupI (id_group, exps_group, instrs_group) $ at
   | LetI (exp_l, exp_r, iterexps) ->
       let exp_l = rename_exp rename exp_l in
       let exp_r = rename_exp rename exp_r in
