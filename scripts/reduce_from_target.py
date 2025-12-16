@@ -4,7 +4,7 @@ from reduce import reduce_program
 
 
 def run_reductions_from_target(
-    target_file, reduce_dir, p4spectec_dir, cores=None, timeout_creduce=600
+    target_file, reduce_dir, p4spectec_dir, relname, cores=None, timeout_creduce=600
 ):
     """
     Reads a target file with (pid, file) pairs and runs reductions for each.
@@ -20,6 +20,7 @@ def run_reductions_from_target(
             pid=pid,
             filename=filename,
             p4spectec_dir=p4spectec_dir,
+            relname=relname,
             cores=cores,
             timeout=timeout_creduce,
         )
@@ -32,6 +33,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("reduce_dir", help="Directory for reductions")
     parser.add_argument("--p4spectec-dir", required=True, help="Path to p4spectec")
+    parser.add_argument("--relname", required=True, help="Name of the relation")
     parser.add_argument(
         "--cores", type=int, default=None, help="Number of creduce cores"
     )
@@ -44,6 +46,7 @@ if __name__ == "__main__":
         target_file=args.target_file,
         reduce_dir=args.reduce_dir,
         p4spectec_dir=args.p4spectec_dir,
+        relname=args.relname,
         cores=args.cores,
         timeout_creduce=args.timeout_creduce,
     )

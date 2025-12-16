@@ -1,0 +1,25 @@
+;;
+;; Interpret a bitstring with width as a raw integer
+;;
+
+dec $to_int(int, int) : int
+
+;;
+;; Convert a raw integer to a bitstring with width
+;; Ensures that the bitstring lies within the range of the width
+;;
+
+dec $to_bitstr(int, int) : int
+
+;;
+;; Underlying raw integer of a numeric value
+;;
+
+dec $to_number(value) : int?
+
+def $to_number(IntV i) = i
+def $to_number(FIntV w i) = $to_int(w, i)
+def $to_number(FBitV _ i) = i
+def $to_number(VBitV _ _ i) = i
+def $to_number(_) = eps
+  -- otherwise

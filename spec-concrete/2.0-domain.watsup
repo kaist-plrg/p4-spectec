@@ -1,11 +1,19 @@
 ;;
+;; Cursor for scoping
+;;
+
+syntax cursor = GLOBAL | BLOCK | LOCAL
+
+var p : cursor
+
+;;
 ;; Names
 ;;
 
 syntax nameIR = text
 
 dec $name(name) : nameIR
-
+  hint(prose_in "the name of" %0)
 def $name(`ID t) = t
 def $name(`TID t) = t
 def $name(APPLY) = "apply"
@@ -18,7 +26,7 @@ def $name(PRIORITY) = "priority"
 def $name(LIST) = "list"
 
 dec $tableCustomName(tableCustomName) : nameIR
-
+  hint(prose_in "the name of" %0)
 def $tableCustomName(`ID t) = t
 def $tableCustomName(`TID t) = t
 def $tableCustomName(APPLY) = "apply"
@@ -38,15 +46,18 @@ syntax id = text
 
 syntax tid = id
 
-dec $fresh_tid() : tid
-dec $fresh_tids(nat) : tid*
+builtin dec $fresh_tid() : tid
+  hint(prose_in "a fresh type variable")
 
+dec $fresh_tids(nat) : tid*
+  hint(prose_in %0 "fresh type variables")
 def $fresh_tids(0) = eps
-def $fresh_tids(n) = $fresh_tid() :: $fresh_tids($(n - 1))
-  -- otherwise
+def $fresh_tids(n) = $fresh_tid() :: $fresh_tids(n')
+  -- if n =/= 0
+  -- if n' = $(n - 1)
 
 ;;
-;; Routine names
+;; Callable names
 ;;
 ;; A pair of function name and a list of parameter names,
 ;; with a boolean flag indicating whether the parameter has
@@ -54,14 +65,18 @@ def $fresh_tids(n) = $fresh_tid() :: $fresh_tids($(n - 1))
 ;;
 
 syntax pid = id `# bool
-syntax rid = id `( pid* )
+syntax cid = id `( pid* )
 
-dec $rid(name, parameterList) : rid
+dec $cid(name, parameterList) : cid
+dec $cid_(name, constructorParameterListOpt) : cid
 dec $pids(parameterList) : pid*
 dec $pid(parameter) : pid
 
-def $rid(name, parameterList)
+def $cid(name, parameterList)
   = $name(name) `( $pids(parameterList) )
+
+def $cid_(name, `EMPTY) = $name(name) `( eps )
+def $cid_(name, `( parameterList )) = $cid(name, parameterList)
 
 def $pids(`EMPTY) = eps
 def $pids(parameter) = $pid(parameter)
@@ -72,28 +87,15 @@ def $pid(_ _ _ name `EMPTY) = $name(name) `# false
 def $pid(_ _ _ name initializer) = $name(name) `# true
 
 ;;
-;; Constructor names
-;;
-
-syntax cid = rid
-
-dec $cid(name, constructorParameterListOpt) : cid
-
-def $cid(name, `EMPTY) = $name(name) `( eps )
-def $cid(name, `( parameterList ))
-  = $name(name) `( $pids(parameterList) )
-
-
-
-dec $expression_as_lvalue(expression) : lvalue?
-
-def $expression_as_lvalue(referenceExpression) = referenceExpression
-def $expression_as_lvalue(expression `. member) = lvalue `. member
-  -- if lvalue = $expression_as_lvalue(expression)
-def $expression_as_lvalue(`( expression )) = `( lvalue )
-  -- if lvalue = $expression_as_lvalue(expression)
-;;
-;; Object names
+;; Object names (fully qualified paths)
 ;;
 
 syntax oid = id*
+
+dec $oid_ends_with(oid, id) : bool
+  hint(prose_in %0 "is an object name that ends with" %1)
+
+def $oid_ends_with(oid, id) = true
+  -- if id :: _ = $rev_<id>(oid)
+def $oid_ends_with(oid, id) = false
+  -- otherwise

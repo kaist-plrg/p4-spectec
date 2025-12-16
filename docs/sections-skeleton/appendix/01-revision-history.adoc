@@ -1,0 +1,164 @@
+[appendix]
+[#sec-revision-history]
+== Revision History
+
+===  Summary of changes made in unreleased version
+
+* Clarified that numeric priorities cannot be assigned to entries of a table that has `const entries` (<<sec-entries>>).
+* Clarified that `switch` statements are allowed in action and function bodies, and that `switch` statements with `action_run` expressions are only allowed in control `apply` blocks (<<sec-stmts>> and <<sec-switch-stmt>>).
+* Added standard branch prediction annotations (<<sec-branch-annotations>>)
+* Added support for compile-time string concatenation using `++` operator (<<sec-string-type>> and <<sec-string-ops>>).
+* Added compound assignment statements (<<sec-assignment>>)
+* Update the specification grammar for `for` loops to match the grammar used in the `p4c` implementation (<<sec-loop-stmt>>).
+
+=== Summary of changes made in version 1.2.5, released October 11, 2024
+
+* Improved type nesting rules (<<#sec-type-nesting>>).
+* Clarified that directionless extern parameters are passed by reference.
+* Introduced distinction between local compile-time known and compile-time known values (<<#sec-compile-time-known>>).
+
+=== Summary of changes made in version 1.2.4,released May 15, 2023
+
+* Added header stack expressions (<<sec-hs-init>>).
+* Allow casts from a type to itself (<<sec-casts>>).
+* Added an invalid header or header union expression `+{#}+` (<<sec-ops-on-hdrs>> and <<sec-expr-hu>>).
+* Added a concept of numeric values (<<sec-numeric-values>>).
+* Added a section on operations on extern objects (<<sec-extern-operations>>).
+* Added note in sections operations on types for types that support compile-time size determination.
+* Clarified that header stacks are arrays of headers or header unions.
+* Added distinctness of fields for types that have fields including error, match kind, struct, header, and header union.
+* Clarified types `bit<W>`, `int<W>`, and `varbit<W>` encompass the case where the width is a compile-time known expression evaluating to an appropriate integer (<<sec-unsigned-integers>>, <<sec-signed-integers>>, <<sec-dynamically-sized-integers>>).
+* Clarified restrictions for parameters with default values (<<sec-calling-convention>>).
+* Added optional trailing commas (<<sec-trailing-commas>>).
+* Clarified the scope of parser namespaces (<<sec-parser-decl>>).
+* Specified that algorithm for generating control-plane names for keys is optional (<<sec-cp-keys>>).
+* Clarified types of expressions that may appear in `select` (<<sec-select>>).
+* Added description of semantics of the core.p4 match kinds (<<sec-table-keys>>).
+* Explicitly disallow overloading of parsers, controls, and packages (<<sec-extern-objects>>).
+* Clarified implicit casts present in select expressions (<<sec-select>>).
+* Clarified that slices can be applied to arbitrary-precision integers (<<sec-varint-ops>>).
+* Clarified that direct invocation is not possible for objects that have constructor arguments (<<sec-direct-invocation>>).
+* Added comparison for tuples as a legal operation (<<sec-tuple-exprs>>).
+* Clarified the behavior of `lookahead` on header-typed values (<<sec-packet-lookahead>>).
+* Added `static_assert` function (<<sec-static-assert>>).
+* Clarified semantics of ranges where the start is bigger than the end (<<sec-ranges>>).
+* Allow ranges to be specified by serializable enums (<<sec-ranges>>).
+* Specified type produced by the `+*sizeInB*+` methods (<<sec-minsizeinbits>>).
+* Added section with operations on `match_kind` values (<<sec-match-kind-exprs>>).
+* Renamed infinite-precision integers to arbitrary-precision integers (<<sec-arbitrary-precision-integers>>).
+* compiler-inserted `default_action` is not `const` (<<sec-tables>>).
+* Clarified the restrictions on run time for tables with `const entries` (<<sec-entries>>).
+* renamed list expressions to tuple expressions
+* Added `list` type (<<sec-list-types>>).
+* Defined `entries` table property without `const`, for entries
+  installed when the P4 program is loaded, but the control plane can
+  later change them or add to them (<<sec-entries>>).
+* Clarified behavior of table with no `key` property, or if its list
+  of keys is empty (<<sec-table-keys>>).
+
+=== Summary of changes made in version 1.2.3, released July 11, 2022.
+
+* Extended `minSizeInBits` and `minSizeInBytes` to apply to more expressions (<<sec-minsizeinbits>>).
+* Added support for `maxSizeInBits` and `maxSizeInBytes` (<<sec-minsizeinbits>>).
+* Added support for empty lists of const entries in tables (<<sec-entries>>).
+* Added support for `switch` statements in actions (<<sec-actions>>).
+* Added support for direct invocation of controls and parsers (<<sec-parameterization>>).
+* Added parser `value_set` to list of control-plane visible names (<<sec-cp-names>>).
+* Added `match_kind` as a base type (<<sec-match-kind-type>>).
+* Removed structure initializers as they are subsumed by structure-valued expressions (<<sec-structure-expressions>>).
+* Specified operations on values typed as type variables (<<sec-type-variable-operations>>).
+* Clarified semantics of compile-time known values (<<sec-compile-time-known>>).
+* Clarified semantics of directionless parameters (<<sec-calling-convention>>).
+* Clarified semantics of arbitrary precision integers (<<sec-arbitrary-precision-integers>>).
+* Clarified semantics of bit slices, shifts, and concatenation (<<sec-bit-ops>>).
+* Clarified semantics of optional parameters (<<sec-optional-parameters>>).
+* Clarified restrictions on extern method and function invocation (<<sec-calling-restrictions>>).
+* Clarified semantics of implicit casts (<<sec-implicit-casts>>).
+
+=== Summary of changes made in version 1.2.2, released May 17, 2021
+
+* Added support for accessing tuple fields (<<sec-tuple-exprs>>).
+* Added support for generic structures (<<sec-type-spec>>).
+* Added support for integers, ``enum``s, and ``error``s in `switch` statements (<<sec-switch-stmt>>).
+* Added support for additional enumeration types (<<sec-enum-types>>).
+* Added support for abstract methods (<<sec-abstract-methods>>).
+* Added support for conditional statements and empty statements in parsers (<<sec-parser-state-stmt>>).
+* Added support for casts from `int` to `bool` (<<sec-casts>>).
+* Added support for 0-width bitstrings and varbits (<<sec-uninitialized-values-and-writing-invalid-headers>>).
+* Clarified that `default_action` is `NoAction` if otherwise unspecified (<<sec-tables>>).
+* Clarified the types of expressions that may be used as indexes for header stacks (<<sec-expr-hs>>).
+* Clarified representation of Booleans in headers (<<sec-header-types>>).
+* Clarified representation of empty types (<<sec-uninitialized-values-and-writing-invalid-headers>>).
+* Clarified that action data can be specified by the control plane, `default_action` table property, or `const entries` table property (<<sec-actions>>).
+* Fixed several typos and inconsistencies in grammar (<<sec-grammar>>).
+* Eliminated annotations on `const` entries in grammar (<<sec-grammar>>).
+
+=== Summary of changes made in version 1.2.1, released June 11, 2020
+
+* Added structure-value expressions (<<sec-structure-expressions>>).
+* Added support for default values (<<sec-default-values>>).
+* Added support for concatenating signed strings (<<sec-concatenation>>).
+* Added key-value and list-structured annotations (<<sec-annotations>>).
+* Added `@pure` and `@noSideEffects` annotations (<<sec-extern-annotations>>).
+* Added `@noWarn` annotation (<<sec-nowarn-anno>>).
+* Generalized typing for masks to allow serializable ``enum``s (<<sec-cubes>>).
+* Restricted the right operands of bit shifts involving
+  arbitrary-precision integers to be constant and positive (<<sec-varint-ops>>).
+* Clarified copy-out behavior for `return` (<<sec-return-stmt>>) and `exit` (<<sec-exit-stmt>>)
+  statements.
+* Clarified semantics of invalid header stacks (<<sec-uninitialized-values-and-writing-invalid-headers>>).
+* Clarified initialization semantics (<<sec-lvalues>> and
+  <<sec-calling-convention>>), especially for headers and local
+  variables.
+* Clarified evaluation order for table keys (<<sec-mau-semantics>>).
+* Fixed grammar to clarify parsing of right shift operator (`>>`),
+  allow empty statements in parser (<<sec-parser-state-stmt>>),
+  and eliminate annotations on const entries (<<sec-entries>>).
+
+=== Summary of changes made in version 1.2.0, released October 14, 2019
+
+* Added `table.apply().miss` (<<sec-invoke-mau>>).
+* Added `string` type (<<sec-string-type>>).
+* Added implicit casts from enum values (<<sec-enum-exprs>>).
+* Allow 1-bit signed values
+* Define the type of bit slices from signed and unsigned values to be unsigned.
+* Constrain `default` label position for `switch` statements.
+* Allow empty tuples.
+* Added `@deprecated` annotation.
+* Relaxed the structure of annotation bodies.
+* Removed the `@pkginfo` annotation, which is now defined by the P4Runtime specification.
+* Added `int` type (<<sec-arbitrary-precision-integers>>).
+* Added error `ParserInvalidArgument` (<<sec-packet-extract-two>>, <<sec-skip-bits>>).
+* Clarified the significance of order of entries in `const entries` (<<sec-entries>>).
+* Added methods to calculate header size (<<sec-ops-on-hdrs>>).
+
+=== Summary of changes made in version 1.1.0, released November 26, 2017.
+
+* Top-level functions (<<sec-functions>>)
+    - Functions may be declared at the top-level of a P4 program.
+* Optional and named parameters (<<sec-calling-convention>>)
+    - Parameters may be specified by name, with a default value, or designated as optional.
+* `enum` representations (<<sec-enum-exprs>>)
+    - `enum` values to be specified with a concrete representation.
+* Parser values sets (<<sec-value-set>>)
+    - `value_set` objects for control-plane programmable `select` labels.
+* Type definitions (<<sec-newtype>>)
+    - New types may be introduced in programs.
+* Saturating arithmetic (<<sec-bit-ops>>)
+    - Saturating arithmetic is supported on some targets.
+* Structured annotations (<<sec-annotations>>)
+    - Annotations may be specified as lists of key-value pairs
+* Globalname (<<sec-name-annotations>>)
+    - The reserved `globalname` annotation has been removed.
+* Table `size` property (<<sec-size-table-property>>)
+    - Meaning of optional `size` property for tables has been defined.
+* Invalid headers (<<sec-ops-on-hdrs>>)
+    - Clarified semantics of operations on invalid headers.
+* Calling restrictions (<<sec-calling-restrictions>>)
+    - Added restrictions on kinds of values that may be passed as arguments to calls.
+* Bitwise operator precedence (<<sec-grammar>>)
+    - Modified precedence conventions so that bitwise operators `&` `|` and `^` have higher precedence than relation operators `<` `>` `+<=+` `>=`.
+* Computed bitwidths (<<sec-base-types>>)
+    - Added support for specifying widths using expressions in `bit` and `varbit` types.
+
+=== Initial version 1.0.0, released May 17, 2017

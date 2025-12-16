@@ -1,0 +1,130 @@
+;;
+;; Interpret a bitstring with width as a raw integer
+;;
+
+builtin dec $bitstr_to_int(int, int) : int
+
+;;
+;; Convert a raw integer to a bitstring with width
+;; Ensures that the bitstring lies within the range of the width
+;;
+
+builtin dec $int_to_bitstr(int, int) : int
+
+;;
+;; Convert an actual bitstring to a raw integer and vice-versa
+;;
+
+syntax bits = bool*
+
+builtin dec $bits_to_int_unsigned(bits) : int
+builtin dec $bits_to_int_signed(bits) : int
+
+builtin dec $int_to_bits_unsigned(nat, int) : bits
+builtin dec $int_to_bits_signed(nat, int) : bits
+
+;;
+;; Underlying raw integer of a numeric value
+;;
+
+dec $to_number(value) : int
+
+def $to_number(D i) = i
+def $to_number(w S i) = $bitstr_to_int(w, i)
+def $to_number(w W i) = i
+def $to_number(w V i `# _) = i
+
+;;
+;; Update a field value
+;;
+
+dec $update_fieldValue(fieldValue*, id, value) : fieldValue*
+
+def $update_fieldValue(eps, id, value) = eps
+def $update_fieldValue(
+    (value_field_h id_field_h `;) :: fieldValue_t*,
+    id, value
+  ) = (value id `;) :: fieldValue_t*
+  -- if id_field_h = id
+def $update_fieldValue(
+    (value_field_h id_field_h `;) :: fieldValue_t*,
+    id, value
+  ) = (value_field_h id_field_h `;) ::
+      $update_fieldValue(fieldValue_t*, id, value)
+  -- otherwise
+
+;;
+;; Write bits to a value
+;;
+
+dec $write_value_from_bits(value, bool*) : value
+dec $write_value_from_bits'(value, bool*) : (value, bool*)
+dec $write_value_fields_from_bits'(fieldValue*, bool*) : (fieldValue*, bool*)
+dec $write_value_field_from_bits'(fieldValue, bool*) : (fieldValue, bool*)
+
+def $write_value_from_bits(value, b*)  = value_updated
+  -- if (value_updated, eps)
+      = $write_value_from_bits'(value, b*)
+
+def $write_value_from_bits'(B _, b_h :: b_t*) = (B b_h, b_t*)
+def $write_value_from_bits'(w W _, b*) = (w W i, b_t*)
+  -- if $(|b*| >= w)
+  -- if b_h* = b*[0 : w]
+  -- if n_t = $(|b*| - w)
+  -- if b_t* = b*[w : n_t]
+  -- if i = $int_to_bitstr(w, $bits_to_int_unsigned(b_h*))
+def $write_value_from_bits'(w S _, b*) = (w S i, b_t*)
+  -- if $(|b*| >= w)
+  -- if b_h* = b*[0 : w]
+  -- if n_t = $(|b*| - w)
+  -- if b_t* = b*[w : n_t]
+  -- if i = $int_to_bitstr(w, $bits_to_int_signed(b_h*))
+
+def $write_value_fields_from_bits'(eps, b*) = (eps, b*)
+def $write_value_fields_from_bits'(
+    fieldValue_h :: fieldValue_t*, b*
+  )
+  = (fieldValue_h_updated :: fieldValue_t_updated*, b_rest*)
+  -- if (fieldValue_h_updated, b_t*)
+      = $write_value_field_from_bits'(fieldValue_h, b*)
+  -- if (fieldValue_t_updated*, b_rest*)
+      = $write_value_fields_from_bits'(fieldValue_t*, b_t*)
+
+def $write_value_field_from_bits'(
+    value id `;, b*
+  )
+  = (value_updated id `;, b_rest*)
+  -- if (value_updated, b_rest*)
+      = $write_value_from_bits'(value, b*)
+
+def $write_value_from_bits'(
+    STRUCT tid `{ fieldValue* }, b*
+  ) = (STRUCT tid `{ fieldValue_updated* }, b_rest*)
+  -- if (fieldValue_updated*, b_rest*)
+      = $write_value_fields_from_bits'(fieldValue*, b*) 
+def $write_value_from_bits'(
+    HEADER tid `{ _ `; fieldValue* }, b*
+  ) = (HEADER tid `{ true `; fieldValue_updated* }, b_rest*)
+  -- if (fieldValue_updated*, b_rest*)
+      = $write_value_fields_from_bits'(fieldValue*, b*) 
+
+;;
+;; Write bits from a value
+;;
+
+dec $write_bits_from_value(value) : bool*
+
+def $write_bits_from_value(B b) = [ b ]
+def $write_bits_from_value(w S i)
+  = $int_to_bits_signed(w, i)
+def $write_bits_from_value(w W i)
+  = $int_to_bits_unsigned(w, i)
+
+def $write_bits_from_value(
+    STRUCT _ `{ (value_field id_field `;)* }
+  )
+  = $concat_<bool>($write_bits_from_value(value_field)*)
+def $write_bits_from_value(
+    HEADER _ `{ true `; (value_field id_field `;)* }
+  )
+  = $concat_<bool>($write_bits_from_value(value_field)*)

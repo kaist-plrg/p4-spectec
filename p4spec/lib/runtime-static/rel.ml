@@ -1,6 +1,6 @@
 (* Input hints for rules *)
 
-module Hint = struct
+module InputHint = struct
   type t = int list
 
   let to_string t =
@@ -34,9 +34,17 @@ end
 
 (* Relation *)
 
-type t = El.Ast.nottyp * Hint.t * Il.Ast.rule list
+type t =
+  | Extern of El.Ast.nottyp * Il.Ast.nottyp * InputHint.t
+  | Defined of
+      El.Ast.nottyp * Il.Ast.nottyp * InputHint.t * Il.Ast.rulegroup list
 
-let to_string (nottyp, inputs, rules) =
-  El.Print.string_of_nottyp nottyp
-  ^ " " ^ Hint.to_string inputs ^ " =\n"
-  ^ String.concat "\n   " (List.map Il.Print.string_of_rule rules)
+let to_string = function
+  | Extern (nottyp, nottyp_il, inputs) ->
+      El.Print.string_of_nottyp nottyp
+      ^ " " ^ InputHint.to_string inputs ^ " = extern "
+      ^ Il.Print.string_of_nottyp nottyp_il
+  | Defined (nottyp, nottyp_il, inputs, rulegroups) ->
+      El.Print.string_of_nottyp nottyp
+      ^ " " ^ InputHint.to_string inputs ^ " =\n\n"
+      ^ Il.Print.string_of_rulegroups nottyp_il inputs rulegroups

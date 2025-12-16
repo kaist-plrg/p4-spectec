@@ -1,0 +1,910 @@
+;;
+;; Relations for well-formedness
+;;
+
+relation Type_wf:
+  bound |- typeIR
+  hint(input %0 %1)
+  hint(prose_true %1 "is a well-formed type, assuming bound type ids" %0)
+
+relation TypeDef_wf:
+  bound |- typeDefIR
+  hint(input %0 %1)
+  hint(prose_true %1 "is a well-formed type, assuming bound type ids" %0)
+
+relation ParameterType_wf:
+  bound |- parameterTypeIR
+  hint(input %0 %1)
+  hint(prose_true %1 "is a well-formed type, assuming bound type ids" %0)
+
+relation ParameterTypes_wf:
+  bound |- parameterTypeIR*
+  hint(input %0 %1)
+  hint(prose_true %1 "is a well-formed type, assuming bound type ids" %0)
+
+relation RoutineType_wf:
+  bound |- routineTypeIR
+  hint(input %0 %1)
+  hint(prose_true %1 "is a well-formed type, assuming bound type ids" %0)
+
+relation RoutineTypeDef_wf:
+  bound |- routineTypeDefIR
+  hint(input %0 %1)
+  hint(prose_true %1 "is a well-formed type, assuming bound type ids" %0)
+
+relation ConstructorParameterType_wf:
+  bound |- parameterTypeIR
+  hint(input %0 %1)
+  hint(prose_true %1 "is a well-formed type, assuming bound type ids" %0)
+
+relation ConstructorParameterTypes_wf:
+  bound |- parameterTypeIR*
+  hint(input %0 %1)
+  hint(prose_true %1 "is a well-formed type, assuming bound type ids" %0)
+
+relation ConstructorType_wf:
+  bound |- constructorTypeIR
+  hint(input %0 %1)
+  hint(prose_true %1 "is a well-formed type, assuming bound type ids" %0)
+
+relation ConstructorTypeDef_wf:
+  bound |- constructorTypeDefIR
+  hint(input %0 %1)
+  hint(prose_true %1 "is a well-formed type, assuming bound type ids" %0)
+
+;;
+;;;; Well-formedness of parameter types
+;;
+
+rulegroup ParameterType_wf {
+
+  rule ParameterType_wf/non-default:
+    bound |- direction typeIR _ eps
+    -- Type_wf: bound |- typeIR
+    -- if ($is_string_typeIR($canon(typeIR))
+          \/ $is_arbitrary_int_typeIR($canon(typeIR))
+          \/ $is_objectTypeIR($canon(typeIR)))
+          => direction = `EMPTY
+
+  rule ParameterType_wf/default:
+    bound |- direction typeIR _ value
+    -- Type_wf: bound |- typeIR
+    -- if direction = IN \/ direction = `EMPTY
+    -- if ($is_string_typeIR($canon(typeIR))
+          \/ $is_arbitrary_int_typeIR($canon(typeIR))
+          \/ $is_objectTypeIR($canon(typeIR)))
+          => direction = `EMPTY
+
+}
+
+rule ParameterTypes_wf:
+  bound |- parameterTypeIR*
+  -- if (_ _ id _ = parameterTypeIR)*
+  -- if $distinct_<id>(id*)
+  -- (ParameterType_wf: bound |- parameterTypeIR)*
+
+;;
+;;;; Well-formedness of types
+;;
+
+;;; Base types
+
+rule Type_wf/baseTypeIR:
+  bound |- baseTypeIR
+
+;;; Named types
+
+rule Type_wf/nameTypeIR:
+  bound |- (TID tid)
+  -- if $in_set<tid>(tid, bound)
+
+rule Type_wf/specializedTypeIR:
+  bound |- polyTypeDefIR `< typeIR_arg* >
+  -- if typeIR = $specialize_typeDef(polyTypeDefIR, typeIR_arg*)
+  -- Type_wf: bound |- typeIR
+
+;;; Alias types
+
+dec $nestable_typedef(typeIR) : bool
+  hint(prose_true %0 "can be used in a typedef")
+  hint(prose_false %0 "cannot be used in a typedef")
+dec $nestable'_typedef(typeIR) : bool
+  hint(prose_true %0 "can be used in a typedef")
+  hint(prose_false %0 "cannot be used in a typedef")
+
+def $nestable_typedef(typeIR) = $nestable'_typedef(typeIR_canon)
+  -- if typeIR_canon = $canon(typeIR)
+def $nestable'_typedef(BOOL) = true
+def $nestable'_typedef(ERROR) = true
+def $nestable'_typedef(STRING) = true
+def $nestable'_typedef(numberTypeIR) = true
+def $nestable'_typedef(nameTypeIR) = true
+def $nestable'_typedef(newTypeIR) = true
+def $nestable'_typedef(dataTypeIR) = true
+def $nestable'_typedef(_) = false
+  -- otherwise
+
+rule Type_wf/typedefTypeIR:
+  bound |- TYPEDEF _ typeIR
+  -- if $nestable_typedef(typeIR)
+  -- Type_wf: bound |- typeIR
+
+dec $nestable_new(typeIR) : bool
+  hint(prose_true %0 "can be used in a new type")
+  hint(prose_false %0 "cannot be used in a new type")
+dec $nestable'_new(typeIR) : bool
+  hint(prose_true %0 "can be used in a new type")
+  hint(prose_false %0 "cannot be used in a new type")
+
+def $nestable_new(typeIR) = $nestable'_new(typeIR_canon)
+  -- if typeIR_canon = $canon(typeIR)
+def $nestable'_new(BOOL) = true
+def $nestable'_new(BIT `< _ >) = true
+def $nestable'_new(INT `< _ >) = true
+def $nestable'_new(nameTypeIR) = true
+def $nestable'_new(newTypeIR) = true
+def $nestable'_new(_) = false
+  -- otherwise
+
+rule Type_wf/newTypeIR:
+  bound |- TYPE _ typeIR
+  -- if $nestable_new(typeIR)
+  -- Type_wf: bound |- typeIR 
+
+;;; Data types
+
+dec $nestable_list(typeIR) : bool
+  hint(prose_true %0 "can be nested in a list type")
+  hint(prose_false %0 "cannot be nested in a list type")
+dec $nestable'_list(typeIR) : bool
+  hint(prose_true %0 "can be nested in a list type")
+  hint(prose_false %0 "cannot be nested in a list type")
+
+def $nestable_list(typeIR) = $nestable'_list(typeIR_canon)
+  -- if typeIR_canon = $canon(typeIR)
+def $nestable'_list(BOOL) = true
+def $nestable'_list(ERROR) = true
+def $nestable'_list(MATCH_KIND) = true
+def $nestable'_list(STRING) = true
+def $nestable'_list(numberTypeIR) = true
+def $nestable'_list(nameTypeIR) = true
+def $nestable'_list(newTypeIR) = true
+def $nestable'_list(dataTypeIR) = true
+def $nestable'_list(_) = false
+  -- otherwise
+
+rule Type_wf/listTypeIR:
+  bound |- LIST `< typeIR >
+  -- if $nestable_list(typeIR)
+  -- Type_wf: bound |- typeIR
+
+dec $nestable_tuple(typeIR) : bool
+  hint(prose_true %0 "can be nested in a tuple type")
+  hint(prose_false %0 "cannot be nested in a tuple type")
+dec $nestable'_tuple(typeIR) : bool
+  hint(prose_true %0 "can be nested in a tuple type")
+  hint(prose_false %0 "cannot be nested in a tuple type")
+
+def $nestable_tuple(typeIR) = $nestable'_tuple(typeIR_canon)
+  -- if typeIR_canon = $canon(typeIR)
+def $nestable'_tuple(BOOL) = true
+def $nestable'_tuple(ERROR) = true
+def $nestable'_tuple(BIT `< _ >) = true
+def $nestable'_tuple(INT `< _ >) = true
+def $nestable'_tuple(VARBIT `< _ >) = true
+def $nestable'_tuple(nameTypeIR) = true
+def $nestable'_tuple(newTypeIR) = true
+def $nestable'_tuple(tupleTypeIR) = true
+def $nestable'_tuple(headerStackTypeIR) = true
+def $nestable'_tuple(structTypeIR) = true
+def $nestable'_tuple(headerTypeIR) = true
+def $nestable'_tuple(headerUnionTypeIR) = true
+def $nestable'_tuple(enumTypeIR) = true
+def $nestable'_tuple(_) = false
+  -- otherwise
+
+rule Type_wf/tupleTypeIR:
+  bound |- TUPLE `< typeIR* >
+  -- if $nestable_tuple(typeIR)*
+  -- (Type_wf: bound |- typeIR)*
+
+dec $nestable_headerStack(typeIR) : bool
+  hint(prose_true %0 "can be nested in a header stack type")
+  hint(prose_false %0 "cannot be nested in a header stack type")
+dec $nestable'_headerStack(typeIR) : bool
+  hint(prose_true %0 "can be nested in a header stack type")
+  hint(prose_false %0 "cannot be nested in a header stack type")
+
+def $nestable_headerStack(typeIR)
+  = $nestable'_headerStack(typeIR_canon)
+  -- if typeIR_canon = $canon(typeIR)
+def $nestable'_headerStack(nameTypeIR) = true
+def $nestable'_headerStack(headerTypeIR) = true
+def $nestable'_headerStack(headerUnionTypeIR) = true
+def $nestable'_headerStack(_) = false
+  -- otherwise
+
+rule Type_wf/headerStackTypeIR:
+  bound |- typeIR `[ _ ]
+  -- if $nestable_headerStack(typeIR)
+  -- Type_wf: bound |- typeIR
+
+dec $nestable_struct(typeIR) : bool
+  hint(prose_true %0 "can be nested in a struct type")
+  hint(prose_false %0 "cannot be nested in a struct type")
+dec $nestable'_struct(typeIR) : bool
+  hint(prose_true %0 "can be nested in a struct type")
+  hint(prose_false %0 "cannot be nested in a struct type")
+
+def $nestable_struct(typeIR) = $nestable'_struct(typeIR_canon)
+  -- if typeIR_canon = $canon(typeIR)
+def $nestable'_struct(BOOL) = true
+def $nestable'_struct(ERROR) = true
+def $nestable'_struct(INT `< _ >) = true
+def $nestable'_struct(BIT `< _ >) = true
+def $nestable'_struct(VARBIT `< _ >) = true
+def $nestable'_struct(nameTypeIR) = true
+def $nestable'_struct(newTypeIR) = true
+def $nestable'_struct(tupleTypeIR) = true
+def $nestable'_struct(headerStackTypeIR) = true
+def $nestable'_struct(structTypeIR) = true
+def $nestable'_struct(headerTypeIR) = true
+def $nestable'_struct(headerUnionTypeIR) = true
+def $nestable'_struct(enumTypeIR) = true
+def $nestable'_struct(_) = false
+  -- otherwise
+
+rule Type_wf/structTypeIR:
+  bound |- STRUCT _ `{ (typeIR id `;)* }
+  -- if $distinct_<id>(id*)
+  -- if $nestable_struct(typeIR)*
+  -- (Type_wf: bound |- typeIR)*
+
+dec $nestable_header(typeIR) : bool
+  hint(prose_true %0 "can be used in a header type")
+  hint(prose_false %0 "cannot be used in a header type")
+dec $nestable'_header(typeIR) : bool
+  hint(prose_true %0 "can be used in a header type")
+  hint(prose_false %0 "cannot be used in a header type")
+dec $nestable_struct_in_header(typeIR) : bool
+  hint(prose_true %0 "can be used in a struct nested in a header type")
+  hint(prose_false %0 "cannot be used in a struct nested in a header type")
+dec $nestable'_struct_in_header(typeIR) : bool
+  hint(prose_true %0 "can be used in a struct nested in a header type")
+  hint(prose_false %0 "cannot be used in a struct nested in a header type")
+
+def $nestable_header(typeIR)
+  = $nestable'_header(typeIR_canon)
+  -- if typeIR_canon = $canon(typeIR)
+def $nestable'_header(BOOL) = true
+def $nestable'_header(INT `< _ >) = true
+def $nestable'_header(BIT `< _ >) = true
+def $nestable'_header(VARBIT `< _ >) = true
+def $nestable'_header(nameTypeIR) = true
+def $nestable'_header(newTypeIR) = true
+def $nestable'_header(ENUM _ `# _ `{ _ }) = true
+def $nestable'_header(STRUCT _ `{ (typeIR _ `;)* }) = true
+  -- if $nestable_struct_in_header(typeIR)*
+def $nestable'_header(_) = false
+  -- otherwise
+
+def $nestable_struct_in_header(typeIR)
+  = $nestable'_struct_in_header(typeIR_canon)
+  -- if typeIR_canon = $canon(typeIR)
+def $nestable'_struct_in_header(BOOL) = true
+def $nestable'_struct_in_header(INT `< _ >) = true
+def $nestable'_struct_in_header(BIT `< _ >) = true
+def $nestable'_struct_in_header(nameTypeIR) = true
+def $nestable'_struct_in_header(newTypeIR) = true
+def $nestable'_struct_in_header(ENUM _ `# _ `{ _ }) = true
+def $nestable'_struct_in_header(STRUCT _ `{ (typeIR _ `;)* }) = true
+  -- if $nestable_struct_in_header(typeIR)*
+def $nestable'_struct_in_header(_) = false
+  -- otherwise
+
+rule Type_wf/headerTypeIR:
+  bound |- HEADER _ `{ (typeIR id `;)* }
+  -- if $distinct_<id>(id*)
+  -- if $nestable_header(typeIR)*
+  -- (Type_wf: bound |- typeIR)*
+
+dec $nestable_headerUnion(typeIR) : bool
+  hint(prose_true %0 "can be used in a header union type")
+  hint(prose_false %0 "cannot be used in a header union type")
+dec $nestable'_headerUnion(typeIR) : bool
+  hint(prose_true %0 "can be used in a header union type")
+  hint(prose_false %0 "cannot be used in a header union type")
+
+def $nestable_headerUnion(typeIR)
+  = $nestable'_headerUnion(typeIR_canon)
+  -- if typeIR_canon = $canon(typeIR)
+def $nestable'_headerUnion(nameTypeIR) = true
+def $nestable'_headerUnion(newTypeIR) = true
+def $nestable'_headerUnion(headerTypeIR) = true
+def $nestable'_headerUnion(_) = false
+  -- otherwise
+
+rule Type_wf/headerUnionTypeIR:
+  bound |- HEADER_UNION _ `{ (typeIR id `;)* }
+  -- if $distinct_<id>(id*)
+  -- if $nestable_headerUnion(typeIR)*
+  -- (Type_wf: bound |- typeIR)*
+
+rule Type_wf/enumTypeIR-non-serializable:
+  bound |- ENUM _ `{ id* }
+  -- if $distinct_<id>(id*)
+
+dec $nestable_enum_serializable(typeIR) : bool
+  hint(prose_true %0 "can be used in a serializable enum type")
+  hint(prose_false %0 "cannot be used in a serializable enum type")
+dec $nestable'_enum_serializable(typeIR) : bool
+  hint(prose_true %0 "can be used in a serializable enum type")
+  hint(prose_false %0 "cannot be used in a serializable enum type")
+dec $nestable_new_in_enum_serializable(typeIR) : bool
+  hint(prose_true %0 "can be used in a new type nested in a serializable enum type")
+  hint(prose_false %0 "cannot be used in a new type nested in a serializable enum type")
+dec $nestable'_new_in_enum_serializable(typeIR) : bool
+  hint(prose_true %0 "can be used in a new type nested in a serializable enum type")
+  hint(prose_false %0 "cannot be used in a new type nested in a serializable enum type")
+
+def $nestable_enum_serializable(typeIR)
+  = $nestable'_enum_serializable(typeIR_canon)
+  -- if typeIR_canon = $canon(typeIR)
+def $nestable'_enum_serializable(INT `< _ >) = true
+def $nestable'_enum_serializable(BIT `< _ >) = true
+def $nestable'_enum_serializable(nameTypeIR) = true
+def $nestable'_enum_serializable(TYPE _ typeIR)
+  = $nestable_new_in_enum_serializable(typeIR)
+def $nestable'_enum_serializable(_) = false
+  -- otherwise
+
+def $nestable_new_in_enum_serializable(typeIR)
+  = $nestable'_new_in_enum_serializable(typeIR_canon)
+  -- if typeIR_canon = $canon(typeIR)
+def $nestable'_new_in_enum_serializable(INT `< _ >) = true
+def $nestable'_new_in_enum_serializable(BIT `< _ >) = true
+def $nestable'_new_in_enum_serializable(nameTypeIR) = true
+def $nestable'_new_in_enum_serializable(newTypeIR) = true
+def $nestable'_new_in_enum_serializable(_) = false
+  -- otherwise
+
+rule Type_wf/enumTypeIR-serializable:
+  bound |- ENUM _ `# typeIR `{ (id `= _ `;)* }
+  -- if $distinct_<id>(id*)
+  -- if $nestable_enum_serializable(typeIR)
+  -- Type_wf: bound |- typeIR
+
+;;; Object types
+
+rule Type_wf/externObjectTypeIR:
+  bound |- EXTERN _ (`{ (_ `: routineTypeDefIR)* })
+  -- (RoutineTypeDef_wf: bound |- routineTypeDefIR)*
+
+rule Type_wf/parserObjectTypeIR:
+  bound |- PARSER `( parameterTypeIR* )
+  -- ParameterTypes_wf: bound |- parameterTypeIR*
+
+rule Type_wf/controlObjectTypeIR:
+  bound |- CONTROL `( parameterTypeIR* )
+  -- ParameterTypes_wf: bound |- parameterTypeIR*
+
+rule Type_wf/packageObjectTypeIR:
+  bound |- PACKAGE `< typeIR* >
+  -- (Type_wf: bound |- typeIR)*
+
+rule Type_wf/tableObjectTypeIR:
+  bound |- TABLE _ `# typeIR
+  -- if TABLE_STRUCT _ `{ _ } = $canon(typeIR)
+  -- Type_wf: bound |- typeIR
+
+;;; Synthesized types
+
+rule Type_wf/defaultTypeIR:
+  bound |- DEFAULT
+
+rule Type_wf/invalidHeaderTypeIR:
+  bound |- HEADER_INVALID
+
+rulegroup Type_wf/sequenceTypeIR {
+
+  rule Type_wf/non-default:
+    bound |- SEQ `< typeIR* >
+    -- (Type_wf: bound |- typeIR)*
+
+  rule Type_wf/default:
+    bound |- SEQ `< typeIR* `, `... >
+    -- (Type_wf: bound |- typeIR)*
+
+}
+
+rulegroup Type_wf/recordTypeIR {
+
+  rule Type_wf/non-default:
+    bound |- RECORD `{ (typeIR id `;)* }
+    -- if $distinct_<id>(id*)
+    -- (Type_wf: bound |- typeIR)*
+
+  rule Type_wf/default:
+    bound |- RECORD `{ (typeIR id `;)* `, `... }
+    -- if $distinct_<id>(id*)
+    -- (Type_wf: bound |- typeIR)*
+
+}
+
+dec $nestable_set(typeIR) : bool
+  hint(prose_true %0 "can be used in a set type")
+  hint(prose_false %0 "cannot be used in a set type")
+dec $nestable'_set(typeIR) : bool
+  hint(prose_true %0 "can be used in a set type")
+  hint(prose_false %0 "cannot be used in a set type")
+dec $nestable_tuple_in_set(typeIR) : bool
+  hint(prose_true %0 "can be used in a tuple nested in a set type")
+  hint(prose_false %0 "cannot be used in a tuple nested in a set type")
+dec $nestable'_tuple_in_set(typeIR) : bool
+  hint(prose_true %0 "can be used in a tuple nested in a set type")
+  hint(prose_false %0 "cannot be used in a tuple nested in a set type")
+dec $nestable_sequence_in_set(typeIR) : bool
+  hint(prose_true %0 "can be used in a sequence nested in a set type")
+  hint(prose_false %0 "cannot be used in a sequence nested in a set type")
+dec $nestable'_sequence_in_set(typeIR) : bool
+  hint(prose_true %0 "can be used in a sequence nested in a set type")
+  hint(prose_false %0 "cannot be used in a sequence nested in a set type")
+
+def $nestable_set(typeIR) = $nestable'_set(typeIR_canon)
+  -- if typeIR_canon = $canon(typeIR)
+def $nestable'_set(BOOL) = true
+def $nestable'_set(ERROR) = true
+def $nestable'_set(INT `< _ >) = true
+def $nestable'_set(BIT `< _ >) = true
+def $nestable'_set(nameTypeIR) = true
+def $nestable'_set(newTypeIR) = true
+def $nestable'_set(TUPLE `< typeIR* >) = true
+  -- if $nestable_tuple_in_set(typeIR)*
+def $nestable'_set(enumTypeIR) = true
+def $nestable'_set(SEQ `< typeIR* >) = true
+  -- if $nestable_sequence_in_set(typeIR)*
+def $nestable'_set(_) = false
+  -- otherwise
+
+def $nestable_tuple_in_set(typeIR)
+  = $nestable'_tuple_in_set(typeIR_canon)
+  -- if typeIR_canon = $canon(typeIR)
+def $nestable'_tuple_in_set(BOOL) = true
+def $nestable'_tuple_in_set(INT `< _ >) = true
+def $nestable'_tuple_in_set(BIT `< _ >) = true
+def $nestable'_tuple_in_set(nameTypeIR) = true
+def $nestable'_tuple_in_set(newTypeIR) = true
+def $nestable'_tuple_in_set(TUPLE `< typeIR* >) = true
+  -- if $nestable_tuple_in_set(typeIR)*
+def $nestable'_tuple_in_set(enumTypeIR) = true
+def $nestable'_tuple_in_set(_) = false
+  -- otherwise
+
+def $nestable_sequence_in_set(typeIR)
+  = $nestable'_sequence_in_set(typeIR_canon)
+  -- if typeIR_canon = $canon(typeIR)
+def $nestable'_sequence_in_set(BOOL) = true
+def $nestable'_sequence_in_set(INT `< _ >) = true
+def $nestable'_sequence_in_set(BIT `< _ >) = true
+def $nestable'_sequence_in_set(nameTypeIR) = true
+def $nestable'_sequence_in_set(newTypeIR) = true
+def $nestable'_sequence_in_set(TUPLE `< typeIR* >) = true
+  -- if $nestable_sequence_in_set(typeIR)*
+def $nestable'_sequence_in_set(enumTypeIR) = true
+def $nestable'_sequence_in_set(SEQ `< typeIR* >) = true
+  -- if $nestable_sequence_in_set(typeIR)*
+def $nestable'_sequence_in_set(_) = false
+  -- otherwise
+
+rule Type_wf/setTypeIR:
+  bound |- SET `< typeIR >
+  -- if $nestable_set(typeIR)
+  -- Type_wf: bound |- typeIR
+
+rulegroup Type_wf/tableMetadataTypeIR {
+
+  rule Type_wf/enum:
+    bound |- TABLE_ENUM _ `{ id* }
+    -- if $distinct_<id>(id*)
+
+  rule Type_wf/struct:
+    bound |- TABLE_STRUCT _ `{ _ }
+  
+}
+
+;;
+;;;; Well-formedness of type definitions
+;;
+
+dec $definable_type_mono(typeIR) : bool
+  hint(prose_true %0 "can be defined as a monomorphic typedef")
+  hint(prose_false %0 "cannot be defined as a monomorphic typedef")
+
+def $definable_type_mono(nameTypeIR) = true
+def $definable_type_mono(aliasTypeIR) = true
+def $definable_type_mono(enumTypeIR) = true
+def $definable_type_mono(tableObjectTypeIR) = true
+def $definable_type_mono(_) = false
+  -- otherwise
+
+rule TypeDef_wf/monoTypeDefIR:
+  bound |- typeIR
+  -- if $definable_type_mono(typeIR)
+  -- Type_wf: bound |- typeIR
+
+dec $definable_type_poly(typeIR) : bool
+  hint(prose_true %0 "can be defined as a polymorphic typedef")
+  hint(prose_false %0 "cannot be defined as a polymorphic typedef")
+
+def $definable_type_poly(tupleTypeIR) = true
+def $definable_type_poly(headerStackTypeIR) = true
+def $definable_type_poly(structTypeIR) = true
+def $definable_type_poly(headerTypeIR) = true
+def $definable_type_poly(headerUnionTypeIR) = true
+def $definable_type_poly(externObjectTypeIR) = true
+def $definable_type_poly(parserObjectTypeIR) = true
+def $definable_type_poly(controlObjectTypeIR) = true
+def $definable_type_poly(packageObjectTypeIR) = true
+def $definable_type_poly(_) = false
+  -- otherwise
+
+rule TypeDef_wf/polyTypeDefIR:
+  bound |- typeIR `< tid_expl* `, tid_impl* >
+  -- if $definable_type_poly(typeIR)
+  -- if $distinct_<tid>(tid_expl* ++ tid_impl*)
+  -- if bound_inner
+      = $union_set<tid>(bound, `{ tid_expl* ++ tid_impl* })
+  -- Type_wf: bound_inner |- typeIR
+
+;;
+;;;; Well-formedness of routine types
+;;
+
+;;; Action types
+
+dec $directionless_trailing(direction*) : bool
+  hint(prose_true "directionless parameters in" %0 "only appear at the end")
+  hint(prose_false "directionless parameters in" %0 "do not only appear at the end")
+dec $directionless_trailing'(bool, direction*) : bool
+
+def $directionless_trailing(direction*)
+  = $directionless_trailing'(true, $rev_<direction>(direction*))
+
+def $directionless_trailing'(_, eps) = true
+def $directionless_trailing'(true, `EMPTY :: direction_t*)
+  = $directionless_trailing'(true, direction_t*)
+def $directionless_trailing'(false, `EMPTY :: direction_t*) = false
+def $directionless_trailing'(_, direction_h :: direction_t*)
+  = $directionless_trailing'(false, direction_t*)
+  -- if direction_h =/= `EMPTY
+
+dec $nestable_action(typeIR) : bool
+  hint(prose_true %0 "can be used in an action type")
+  hint(prose_false %0 "cannot be used in an action type")
+dec $nestable'_action(typeIR) : bool
+  hint(prose_true %0 "can be used in an action type")
+  hint(prose_false %0 "cannot be used in an action type")
+
+def $nestable_action(typeIR)
+  = $nestable'_action(typeIR_canon)
+  -- if typeIR_canon = $canon(typeIR)
+def $nestable'_action(INT) = false
+def $nestable'_action(objectTypeIR) = false
+def $nestable'_action(synthesizedTypeIR) = false
+def $nestable'_action(_) = true
+  -- otherwise
+
+rule RoutineType_wf/actionTypeIR:
+  bound |- ACTION `( parameterTypeIR* )
+  -- ParameterTypes_wf: bound |- parameterTypeIR*
+  -- if (direction typeIR _ _ = parameterTypeIR)*
+  -- if $directionless_trailing(direction*)
+  -- if $nestable_action(typeIR)*
+
+;;; Function types
+
+dec $nestable_function(typeIR) : bool
+  hint(prose_true %0 "can be used in a function type")
+  hint(prose_false %0 "cannot be used in a function type")
+dec $nestable'_function(typeIR) : bool
+  hint(prose_true %0 "can be used in a function type")
+  hint(prose_false %0 "cannot be used in a function type")
+
+def $nestable_function(typeIR)
+  = $nestable'_function(typeIR_canon)
+  -- if typeIR_canon = $canon(typeIR)
+def $nestable'_function(objectTypeIR) = false
+def $nestable'_function(synthesizedTypeIR) = false
+def $nestable'_function(_) = true
+  -- otherwise
+
+rule RoutineType_wf/definedFunctionTypeIR:
+  bound |- FUNCTION `( parameterTypeIR* ) `-> typeIR_ret
+  -- ParameterTypes_wf: bound |- parameterTypeIR*
+  -- if (_ typeIR _ _ = parameterTypeIR)* 
+  -- if $nestable_function(typeIR)*
+  -- Type_wf: bound |- typeIR_ret
+
+dec $nestable_externfunction(typeIR) : bool
+  hint(prose_true %0 "can be used in an extern function type")
+  hint(prose_false %0 "cannot be used in an extern function type")
+dec $nestable'_externfunction(typeIR) : bool
+  hint(prose_true %0 "can be used in an extern function type")
+  hint(prose_false %0 "cannot be used in an extern function type")
+
+def $nestable_externfunction(typeIR)
+  = $nestable'_externfunction(typeIR_canon)
+  -- if typeIR_canon = $canon(typeIR)
+def $nestable'_externfunction(parserObjectTypeIR) = false
+def $nestable'_externfunction(controlObjectTypeIR) = false
+def $nestable'_externfunction(packageObjectTypeIR) = false
+def $nestable'_externfunction(tableObjectTypeIR) = false
+def $nestable'_externfunction(_) = true
+  -- otherwise
+
+rule RoutineType_wf/externFunctionTypeIR:
+  bound |- EXTERN_FUNCTION `( parameterTypeIR* ) `-> typeIR_ret
+  -- ParameterTypes_wf: bound |- parameterTypeIR*
+  -- if (_ typeIR _ _ = parameterTypeIR)* 
+  -- if $nestable_externfunction(typeIR)*
+  -- Type_wf: bound |- typeIR_ret
+
+;;; Method types
+
+rule RoutineType_wf/builtinMethodTypeIR:
+  bound |- BUILTIN_METHOD `( parameterTypeIR* ) `-> typeIR_ret
+  -- ParameterTypes_wf: bound |- parameterTypeIR*
+  -- Type_wf: bound |- typeIR_ret
+
+dec $nestable_externmethod(typeIR) : bool
+  hint(prose_true %0 "can be used in an extern method type")
+  hint(prose_false %0 "cannot be used in an extern method type")
+dec $nestable'_externmethod(typeIR) : bool
+  hint(prose_true %0 "can be used in an extern method type")
+  hint(prose_false %0 "cannot be used in an extern method type")
+
+def $nestable_externmethod(typeIR)
+  = $nestable'_externmethod(typeIR_canon)
+  -- if typeIR_canon = $canon(typeIR)
+def $nestable'_externmethod(parserObjectTypeIR) = false
+def $nestable'_externmethod(controlObjectTypeIR) = false
+def $nestable'_externmethod(packageObjectTypeIR) = false
+def $nestable'_externmethod(tableObjectTypeIR) = false
+def $nestable'_externmethod(_) = true
+  -- otherwise
+
+rule RoutineType_wf/externMethodTypeIR-non-abstract:
+  bound |- EXTERN_METHOD `( parameterTypeIR* ) `-> typeIR_ret
+  -- ParameterTypes_wf: bound |- parameterTypeIR*
+  -- if (_ typeIR _ _ = parameterTypeIR)* 
+  -- if $nestable_externmethod(typeIR)*
+  -- Type_wf: bound |- typeIR_ret
+
+dec $nestable_externabstractmethod(typeIR) : bool
+  hint(prose_true %0 "can be used in an extern abstract method type")
+  hint(prose_false %0 "cannot be used in an extern abstract method type")
+dec $nestable'_externabstractmethod(typeIR) : bool
+  hint(prose_true %0 "can be used in an extern abstract method type")
+  hint(prose_false %0 "cannot be used in an extern abstract method type")
+
+def $nestable_externabstractmethod(typeIR)
+  = $nestable'_externabstractmethod(typeIR_canon)
+  -- if typeIR_canon = $canon(typeIR)
+def $nestable'_externabstractmethod(parserObjectTypeIR) = false
+def $nestable'_externabstractmethod(controlObjectTypeIR) = false
+def $nestable'_externabstractmethod(packageObjectTypeIR) = false
+def $nestable'_externabstractmethod(tableObjectTypeIR) = false
+def $nestable'_externabstractmethod(_) = true
+  -- otherwise
+
+rule RoutineType_wf/externMethodTypeIR-abstract:
+  bound |- EXTERN_METHOD ABSTRACT `( parameterTypeIR* ) `-> typeIR_ret
+  -- ParameterTypes_wf: bound |- parameterTypeIR*
+  -- if (_ typeIR _ _ = parameterTypeIR)* 
+  -- if $nestable_externabstractmethod(typeIR)*
+  -- Type_wf: bound |- typeIR_ret
+
+dec $nestable_parserapplymethod(typeIR) : bool
+  hint(prose_true %0 "can be used in a parser apply method type")
+  hint(prose_false %0 "cannot be used in a parser apply method type")
+dec $nestable'_parserapplymethod(typeIR) : bool
+  hint(prose_true %0 "can be used in a parser apply method type")
+  hint(prose_false %0 "cannot be used in a parser apply method type")
+
+def $nestable_parserapplymethod(typeIR)
+  = $nestable'_parserapplymethod(typeIR_canon)
+  -- if typeIR_canon = $canon(typeIR)
+def $nestable'_parserapplymethod(parserObjectTypeIR) = false
+def $nestable'_parserapplymethod(controlObjectTypeIR) = false
+def $nestable'_parserapplymethod(packageObjectTypeIR) = false
+def $nestable'_parserapplymethod(tableObjectTypeIR) = false
+def $nestable'_parserapplymethod(_) = true
+  -- otherwise
+
+rule RoutineType_wf/parserApplyMethodTypeIR:
+  bound |- PARSER_APPLY `( parameterTypeIR* )
+  -- ParameterTypes_wf: bound |- parameterTypeIR*
+  -- if (_ typeIR _ _ = parameterTypeIR)* 
+  -- if $nestable_parserapplymethod(typeIR)*
+
+dec $nestable_controlapplymethod(typeIR) : bool
+  hint(prose_true %0 "can be used in a control apply method type")
+  hint(prose_false %0 "cannot be used in a control apply method type")
+dec $nestable'_controlapplymethod(typeIR) : bool
+  hint(prose_true %0 "can be used in a control apply method type")
+  hint(prose_false %0 "cannot be used in a control apply method type")
+
+def $nestable_controlapplymethod(typeIR)
+  = $nestable'_controlapplymethod(typeIR_canon)
+  -- if typeIR_canon = $canon(typeIR)
+def $nestable'_controlapplymethod(parserObjectTypeIR) = false
+def $nestable'_controlapplymethod(packageObjectTypeIR) = false
+def $nestable'_controlapplymethod(tableObjectTypeIR) = false
+def $nestable'_controlapplymethod(_) = true
+  -- otherwise
+
+rule RoutineType_wf/controlApplyMethodTypeIR:
+  bound |- CONTROL_APPLY `( parameterTypeIR* )
+  -- ParameterTypes_wf: bound |- parameterTypeIR*
+  -- if (_ typeIR _ _ = parameterTypeIR)* 
+  -- if $nestable_controlapplymethod(typeIR)*
+
+rule RoutineType_wf/tableApplyMethodTypeIR:
+  bound |- TABLE_APPLY `-> (TABLE_STRUCT _ `{ _ })
+
+;;
+;;;; Well-formedness of routine type definitions
+;;
+
+dec $definable_routine_mono(routineTypeIR) : bool
+  hint(prose_true %0 "can be defined as a monomorphic routine")
+  hint(prose_false %0 "cannot be defined as a monomorphic routine")
+
+def $definable_routine_mono(actionTypeIR) = true
+def $definable_routine_mono(builtinMethodTypeIR) = true
+def $definable_routine_mono(parserApplyMethodTypeIR) = true
+def $definable_routine_mono(controlApplyMethodTypeIR) = true
+def $definable_routine_mono(tableApplyMethodTypeIR) = true
+def $definable_routine_mono(_) = false
+  -- otherwise
+
+rule RoutineTypeDef_wf/monoRoutineTypeDefIR:
+  bound |- routineTypeIR
+  -- if $definable_routine_mono(routineTypeIR)
+  -- RoutineType_wf: bound |- routineTypeIR
+
+dec $definable_routine_poly(routineTypeIR) : bool
+  hint(prose_true %0 "can be defined as a polymorphic routine")
+  hint(prose_false %0 "cannot be defined as a polymorphic routine")
+
+def $definable_routine_poly(definedFunctionTypeIR) = true
+def $definable_routine_poly(externFunctionTypeIR) = true
+def $definable_routine_poly(externMethodTypeIR) = true
+def $definable_routine_poly(_) = false
+  -- otherwise
+
+rule RoutineTypeDef_wf/polyRoutineTypeDefIR:
+  bound |- routineTypeIR `< tid_expl* `, tid_impl* >
+  -- if $definable_routine_poly(routineTypeIR)
+  -- if $distinct_<tid>(tid_expl* ++ tid_impl*)
+  -- if bound_inner
+      = $union_set<tid>(bound, `{ tid_expl* ++ tid_impl* })
+  -- RoutineType_wf: bound_inner |- routineTypeIR
+
+;;
+;;;; Well-formedness of constructor paramter types
+;;
+
+rule ConstructorParameterType_wf:
+  bound |- `EMPTY typeIR _ _
+  -- Type_wf: bound |- typeIR
+
+rule ConstructorParameterTypes_wf:
+  bound |- parameterTypeIR*
+  -- if (_ _ id _ = parameterTypeIR)*
+  -- if $distinct_<id>(id*)
+  -- (ConstructorParameterType_wf: bound |- parameterTypeIR)*
+
+;;
+;;;; Well-formedness of constructor types
+;;
+
+dec $nestable_constructor_extern(typeIR) : bool
+dec $nestable'_constructor_extern(typeIR) : bool
+
+def $nestable_constructor_extern(typeIR)
+  = $nestable'_constructor_extern($canon(typeIR))
+def $nestable'_constructor_extern(parserObjectTypeIR) = false
+def $nestable'_constructor_extern(controlObjectTypeIR) = false
+def $nestable'_constructor_extern(packageObjectTypeIR) = false
+def $nestable'_constructor_extern(tableObjectTypeIR) = false
+def $nestable'_constructor_extern(_) = true
+  -- otherwise
+
+rule ConstructorType_wf/externObjectTypeIR:
+  bound |- CONSTRUCTOR `( parameterTypeIR* ) `-> typeIR_object
+  -- ConstructorParameterTypes_wf: bound |- parameterTypeIR*
+  -- Type_wf: bound |- typeIR_object
+  -- if externObjectTypeIR = $canon(typeIR_object)
+  -- if (_ typeIR _ _ = parameterTypeIR)*
+  -- if $nestable_constructor_extern(typeIR)*
+
+dec $nestable_constructor_parser(typeIR) : bool
+dec $nestable'_constructor_parser(typeIR) : bool
+
+def $nestable_constructor_parser(typeIR)
+  = $nestable'_constructor_parser($canon(typeIR))
+def $nestable'_constructor_parser(controlObjectTypeIR) = false
+def $nestable'_constructor_parser(packageObjectTypeIR) = false
+def $nestable'_constructor_parser(tableObjectTypeIR) = false
+def $nestable'_constructor_parser(_) = true
+  -- otherwise
+
+rule ConstructorType_wf/parserObjectTypeIR:
+  bound |- CONSTRUCTOR `( parameterTypeIR* ) `-> typeIR_object
+  -- ConstructorParameterTypes_wf: bound |- parameterTypeIR*
+  -- Type_wf: bound |- typeIR_object
+  -- if parserObjectTypeIR = $canon(typeIR_object)
+  -- if (_ typeIR _ _ = parameterTypeIR)*
+  -- if $nestable_constructor_parser(typeIR)*
+
+dec $nestable_constructor_control(typeIR) : bool
+dec $nestable'_constructor_control(typeIR) : bool
+
+def $nestable_constructor_control(typeIR)
+  = $nestable'_constructor_control($canon(typeIR))
+def $nestable'_constructor_control(parserObjectTypeIR) = false
+def $nestable'_constructor_control(packageObjectTypeIR) = false
+def $nestable'_constructor_control(tableObjectTypeIR) = false
+def $nestable'_constructor_control(_) = true
+  -- otherwise
+
+rule ConstructorType_wf/controlObjectTypeIR:
+  bound |- CONSTRUCTOR `( parameterTypeIR* ) `-> typeIR_object
+  -- ConstructorParameterTypes_wf: bound |- parameterTypeIR*
+  -- Type_wf: bound |- typeIR_object
+  -- if controlObjectTypeIR = $canon(typeIR_object)
+  -- if (_ typeIR _ _ = parameterTypeIR)*
+  -- if $nestable_constructor_control(typeIR)*
+
+dec $nestable_constructor_package(typeIR) : bool
+dec $nestable'_constructor_package(typeIR) : bool
+
+def $nestable_constructor_package(typeIR)
+  = $nestable'_constructor_package($canon(typeIR))
+def $nestable'_constructor_package(tableObjectTypeIR) = false
+def $nestable'_constructor_package(_) = true
+  -- otherwise
+
+rule ConstructorType_wf/packageObjectTypeIR:
+  bound |- CONSTRUCTOR `( parameterTypeIR* ) `-> typeIR_object
+  -- ConstructorParameterTypes_wf: bound |- parameterTypeIR*
+  -- Type_wf: bound |- typeIR_object
+  -- if packageObjectTypeIR = $canon(typeIR_object)
+  -- if (_ typeIR _ _ = parameterTypeIR)*
+  -- if $nestable_constructor_package(typeIR)*
+
+;;
+;;;; Well-formedness of constructor definitions
+;;
+
+dec $definable_constructor(typeIR) : bool
+dec $definable'_constructor(typeIR) : bool
+
+def $definable_constructor(typeIR)
+  = $definable'_constructor($canon(typeIR))
+def $definable'_constructor(externObjectTypeIR) = true
+def $definable'_constructor(parserObjectTypeIR) = true
+def $definable'_constructor(controlObjectTypeIR) = true
+def $definable'_constructor(packageObjectTypeIR) = true
+def $definable'_constructor(_) = false
+  -- otherwise
+
+rule ConstructorTypeDef_wf:
+  bound |- constructorTypeIR `< tid_expl* `, tid_impl* >
+  -- if CONSTRUCTOR `( _ ) `-> typeIR_object = constructorTypeIR
+  -- if $definable_constructor(typeIR_object)
+  -- if $distinct_<tid>(tid_expl* ++ tid_impl*)
+  -- if bound_inner
+      = $union_set<tid>(bound, `{ tid_expl* ++ tid_impl* })
+  -- ConstructorType_wf: bound_inner |- constructorTypeIR

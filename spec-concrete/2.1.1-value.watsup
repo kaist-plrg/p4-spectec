@@ -6,45 +6,41 @@
 ;;;; Base values
 ;;
 
-;;
-;;;; Primitive values
-;;
+syntax boolValue = B bool
+syntax errorValue = ERROR `. id
+syntax matchKindValue = MATCH_KIND `. id
+syntax stringValue = stringLiteral
 
-syntax primitiveValue =
-  | B bool
-  | ERROR `. id
-  | MATCH_KIND `. id
-  | `" text `"
+syntax integerValue =
+  | integerLiteral
+  | nat `. nat V int
 
-;;
-;;;; Numeric values
-;;
-
-syntax numberValue =
-  | number
-  | nat V int `# nat
-
-syntax baseValue = | primitiveValue | numberValue
+syntax baseValue =
+  | boolValue
+  | errorValue
+  | matchKindValue
+  | stringValue
+  | integerValue
 
 ;;
-;;;; Composite values
+;;;; Data values
 ;;
 
 syntax value
 
-syntax listValue = `[ value* ]
-syntax tupleValue = `( value* )
-syntax headerStackValue = `[ value* `# `( nat; nat ) ]
+syntax listValue = LIST `[ value* ]
+syntax tupleValue = TUPLE `( value* )
+syntax headerStackValue = HEADER_STACK `[ value* `( nat; nat ) ]
 
 syntax fieldValue = value id `;
 
 syntax structValue = STRUCT tid `{ fieldValue* }
-syntax headerValue = HEADER tid `{ fieldValue* }
+syntax headerValue = HEADER tid `{ bool `; fieldValue* }
 syntax headerUnionValue = HEADER_UNION tid `{ fieldValue* }
 
 syntax enumValue =
   | tid `. id
-  | tid `. id `# value
+  | tid `. id `. value
 
 syntax dataValue =
   | listValue
@@ -54,6 +50,12 @@ syntax dataValue =
   | headerValue
   | headerUnionValue
   | enumValue
+
+;;
+;;;; Object reference values
+;;
+
+syntax objectReferenceValue = `! oid
 
 ;;
 ;;;; Synthesized values
@@ -75,10 +77,18 @@ syntax setValue =
   | SET `{ value }
   | SET `{ value `&&& value }
   | SET `{ value `.. value }
+  | SET `{ `... }
 
-syntax tableValue =
-  | TABLE_ENUM tid `. id
-  | TABLE_STRUCT tid `{ fieldValue* }
+syntax tableMetadataEnumValue = TABLE_ENUM tid `. id
+
+syntax tableMetadataStructValue =
+  TABLE_STRUCT tid `{ HIT boolValue `;
+                      MISS boolValue `;
+                      ACTION_RUN tableMetadataEnumValue `; }
+
+syntax tableMetadataValue =
+  | tableMetadataEnumValue
+  | tableMetadataStructValue
 
 syntax synthesizedValue =
   | defaultValue
@@ -86,13 +96,7 @@ syntax synthesizedValue =
   | sequenceValue
   | recordValue
   | setValue
-  | tableValue
-
-;;
-;;;; Reference values
-;;
-
-syntax objectReferenceValue = `! oid
+  | tableMetadataValue
 
 ;;
 ;;;; Values
@@ -101,6 +105,5 @@ syntax objectReferenceValue = `! oid
 syntax value =
   | baseValue
   | dataValue
-  | synthesizedValue
   | objectReferenceValue
-
+  | synthesizedValue

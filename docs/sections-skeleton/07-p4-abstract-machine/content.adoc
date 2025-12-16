@@ -1,0 +1,44 @@
+[#sec-p4-abstract-machine]
+== The P4 Abstract Machine
+
+The evaluation of a P4 program is done in four stages:
+
+- *preprocessing*: at compile time the P4 program is preprocessed to handle
+  directives such as `#include` and `#define`.
+- *type checking*: at compile time the P4 program is type checked according to
+  the P4 type system.
+- *instantiation*: at compile time all stateful blocks in the P4 program are
+  instantiated.
+- *dynamic evaluation*: at runtime each P4 functional block is executed to
+  completion, in isolation, when it receives control from the architecture
+
+The preprocessing stage is described in <<sec-abstract-machine-preprocessing>>.
+
+The type system is described in <<sec-abstract-machine-type-checking>>. In
+addition to checking the types, the type system also converts an input P4
+program into an intermediate representation (P4~IR~). P4~IR~ is an extension of the
+surface syntax of P4, e.g., the types of all expressions are made explicit,
+implicit type casts are inserted, and omitted type arguments are inferred.
+P4~IR~ is described in <<sec-abstract-machine-p4-ir>>.
+
+The instantiation stage is described in <<sec-abstract-machine-instantiation>>.
+It traverses the type checked P4~IR~ program, and recursively instantiates all
+stateful blocks. The result of the instantiation stage is a global store that
+holds all instantiated stateful blocks.
+
+The dynamic evaluation stage is described in
+<<sec-abstract-machine-dynamic-evaluation>>. It describes how each P4 blocks,
+represented as stateful objects within the global store, is executed to
+completion. These blocks are orchestrated by the architecture to compose the
+overall packet processing pipeline.
+
+NOTE: Added an overview of the P4 abstract machine. The contents are either
+added or gathered from various sections of the P4 Language Specification.
+
+include::01-preprocessing.adoc[]
+
+include::02-type-checking.adoc[]
+
+include::03-instantiation.adoc[]
+
+include::04-dynamic-evaluation.adoc[]

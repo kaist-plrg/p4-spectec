@@ -1,0 +1,387 @@
+;;
+;; Static evaluation of expression
+;;
+;; syntax typedExpressionIR =
+;;   expressionIR `( typeIR ctk )
+;;
+
+;;; syntax expressionIR
+
+;;;; literalExpressionIR
+;;;; syntax literalExpressionIR = literalExpression
+
+;;;;; BoolE bool
+
+rule Eval_static/literalExpressionIR-boolE:
+  p TC |- (BoolE b) `( _ _ ) ~> BoolV b 
+
+;;;;; NumE number
+
+rule Eval_static/literalExpressionIR-numE-arbint:
+  p TC |- (NumE (INT i)) `( _ _ ) ~> IntV i
+
+rule Eval_static/literalExpressionIR-numE-fixbit:
+  p TC |- (NumE (FBIT n i)) `( _ _ ) ~> FBitV n i
+
+rule Eval_static/literalExpressionIR-numE-fixint:
+  p TC |- (NumE (FINT n i)) `( _ _ ) ~> FIntV n i
+
+;;;;; StrE text
+
+rule Eval_static/literalExpressionIR-strE:
+  p TC |- (StrE t) `( _ _ ) ~> StrV t
+
+;;;; referenceExpressionIR
+;;;; syntax referenceExpressionIR = referenceExpression
+
+rule Eval_static/referenceExpression:
+  p TC |- (NameE prefixedName) `( _ _ ) ~> value
+  -- if value = $find_value(p, TC, prefixedName)
+
+;;;; defaultExpressionIR
+;;;; syntax defaultExpressionIR = defaultExpression
+
+rule Eval_static/defaultExpressionIR:
+  p TC |- DefaultE `( _ _ ) ~> DefaultV
+
+;;;; unaryExpressionIR
+;;;; syntax unaryExpressionIR = UnE unop typedExpressionIR
+
+rule Eval_static/unaryExpressionIR-bnot:
+  p TC |- (UnE BNOT typedExpressionIR) `( _ _ ) ~> $un_bnot(value)
+  -- Eval_static: p TC |- typedExpressionIR ~> value
+
+rule Eval_static/unaryExpressionIR-lnot:
+  p TC |- (UnE LNOT typedExpressionIR) `( _ _ ) ~> $un_lnot(value)
+  -- Eval_static: p TC |- typedExpressionIR ~> value
+
+rule Eval_static/unaryExpressionIR-plus:
+  p TC |- (UnE UPLUS typedExpressionIR) `( _ _ ) ~> $un_plus(value)
+  -- Eval_static: p TC |- typedExpressionIR ~> value
+
+rule Eval_static/unaryExpressionIR-minus:
+  p TC |- (UnE UMINUS typedExpressionIR) `( _ _ ) ~> $un_minus(value)
+  -- Eval_static: p TC |- typedExpressionIR ~> value
+
+;;;; binaryExpressionIR
+;;;; syntax binaryExpressionIR =
+;;;;  BinE typedExpressionIR binop typedExpressionIR
+
+rule Eval_static/binaryExpressionIR-plus:
+  p TC |- (BinE typedExpressionIR_l PLUS typedExpressionIR_r) `( _ _ )
+       ~> $bin_plus(value_l, value_r)
+  -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
+  -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
+
+rule Eval_static/binaryExpressionIR-satplus:
+  p TC |- (BinE typedExpressionIR_l SPLUS typedExpressionIR_r) `( _ _ )
+       ~> $bin_satplus(value_l, value_r)
+  -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
+  -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
+
+rule Eval_static/binaryExpressionIR-minus:
+  p TC |- (BinE typedExpressionIR_l MINUS typedExpressionIR_r) `( _ _ )
+       ~> $bin_minus(value_l, value_r)
+  -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
+  -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
+
+rule Eval_static/binaryExpressionIR-satminus:
+  p TC |- (BinE typedExpressionIR_l SMINUS typedExpressionIR_r) `( _ _ )
+       ~> $bin_satminus(value_l, value_r)
+  -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
+  -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
+
+rule Eval_static/binaryExpressionIR-mul:
+  p TC |- (BinE typedExpressionIR_l MUL typedExpressionIR_r) `( _ _ )
+       ~> $bin_mul(value_l, value_r)
+  -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
+  -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
+
+rule Eval_static/binaryExpressionIR-div:
+  p TC |- (BinE typedExpressionIR_l DIV typedExpressionIR_r) `( _ _ )
+       ~> $bin_div(value_l, value_r)
+  -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
+  -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
+
+rule Eval_static/binaryExpressionIR-mod:
+  p TC |- (BinE typedExpressionIR_l MOD typedExpressionIR_r) `( _ _ )
+       ~> $bin_mod(value_l, value_r)
+  -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
+  -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
+
+rule Eval_static/binaryExpressionIR-shl:
+  p TC |- (BinE typedExpressionIR_l SHL typedExpressionIR_r) `( _ _ )
+       ~> $bin_shl(value_l, value_r)
+  -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
+  -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
+
+rule Eval_static/binaryExpressionIR-shr:
+  p TC |- (BinE typedExpressionIR_l SHR typedExpressionIR_r) `( _ _ )
+       ~> $bin_shr(value_l, value_r)
+  -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
+  -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
+
+rule Eval_static/binaryExpressionIR-le:
+  p TC |- (BinE typedExpressionIR_l LE typedExpressionIR_r) `( _ _ )
+       ~> (BoolV $bin_le(value_l, value_r))
+  -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
+  -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
+
+rule Eval_static/binaryExpressionIR-ge:
+  p TC |- (BinE typedExpressionIR_l GE typedExpressionIR_r) `( _ _ )
+       ~> (BoolV $bin_ge(value_l, value_r))
+  -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
+  -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
+
+rule Eval_static/binaryExpressionIR-lt:
+  p TC |- (BinE typedExpressionIR_l LT typedExpressionIR_r) `( _ _ )
+       ~> (BoolV $bin_lt(value_l, value_r))
+  -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
+  -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
+
+rule Eval_static/binaryExpressionIR-gt:
+  p TC |- (BinE typedExpressionIR_l GT typedExpressionIR_r) `( _ _ )
+       ~> (BoolV $bin_gt(value_l, value_r))
+  -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
+  -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
+
+rule Eval_static/binaryExpressionIR-eq:
+  p TC |- (BinE typedExpressionIR_l EQ typedExpressionIR_r) `( _ _ )
+       ~> (BoolV $bin_eq(value_l, value_r))
+  -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
+  -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
+
+rule Eval_static/binaryExpressionIR-ne:
+  p TC |- (BinE typedExpressionIR_l NE typedExpressionIR_r) `( _ _ )
+       ~> (BoolV $bin_ne(value_l, value_r))
+  -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
+  -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
+
+rule Eval_static/binaryExpressionIR-band:
+  p TC |- (BinE typedExpressionIR_l BAND typedExpressionIR_r) `( _ _ )
+       ~> $bin_band(value_l, value_r)
+  -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
+  -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
+
+rule Eval_static/binaryExpressionIR-bxor:
+  p TC |- (BinE typedExpressionIR_l BXOR typedExpressionIR_r) `( _ _ )
+       ~> $bin_bxor(value_l, value_r)
+  -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
+  -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
+
+rule Eval_static/binaryExpressionIR-bor:
+  p TC |- (BinE typedExpressionIR_l BOR typedExpressionIR_r) `( _ _ )
+       ~> $bin_bor(value_l, value_r)
+  -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
+  -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
+
+rule Eval_static/binaryExpressionIR-concat:
+  p TC |- (BinE typedExpressionIR_l CONCAT typedExpressionIR_r) `( _ _ )
+       ~> $bin_concat(value_l, value_r)
+  -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
+  -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
+
+rule Eval_static/binaryExpressionIR-land:
+  p TC |- (BinE typedExpressionIR_l LAND typedExpressionIR_r) `( _ _ )
+       ~> $bin_land(value_l, value_r)
+  -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
+  -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
+
+rule Eval_static/binaryExpressionIR-lor:
+  p TC |- (BinE typedExpressionIR_l LOR typedExpressionIR_r) `( _ _ )
+       ~> $bin_lor(value_l, value_r)
+  -- Eval_static: p TC |- typedExpressionIR_l ~> value_l
+  -- Eval_static: p TC |- typedExpressionIR_r ~> value_r
+
+;;;; ternaryExpressionIR
+;;;; syntax ternaryExpressionIR =
+;;;;   TernE typedExpressionIR typedExpressionIR typedExpressionIR
+
+rule Eval_static/ternaryExpressionIR-true:
+  p TC |- (TernE typedExpressionIR_cond typedExpressionIR_true typedExpressionIR_false)
+          `( _ _ )
+       ~> value_true
+  -- Eval_static: p TC |- typedExpressionIR_cond ~> (BoolV true)
+  -- Eval_static: p TC |- typedExpressionIR_true ~> value_true
+
+rule Eval_static/ternaryExpressionIR-false:
+  p TC |- (TernE typedExpressionIR_cond typedExpressionIR_true typedExpressionIR_false)
+          `( _ _ )
+       ~> value_false
+  -- Eval_static: p TC |- typedExpressionIR_cond ~> (BoolV false)
+  -- Eval_static: p TC |- typedExpressionIR_false ~> value_false
+
+;;;; castExpressionIR
+;;;; syntax castExpressionIR = CastE typeIR typedExpressionIR
+
+rule Eval_static/castExpression:
+  p TC |- (CastE typeIR typedExpressionIR) `( _ _ ) ~> value_cast
+  -- Eval_static: p TC |- typedExpressionIR ~> value
+  -- if value_cast = $cast_op(typeIR, value)
+
+;;;; dataExpressionIR
+;;;; syntax dataExpressionIR
+
+;;;;; InvalidE
+
+rule Eval_static/dataExpressionIR-invalidE:
+  p TC |- InvalidE `( _ _ ) ~> InvalidHeaderV
+
+;;;;; SeqE typedExpressionIR*
+
+rule Eval_static/dataExpressionIR-seqE:
+  p TC |- (SeqE typedExpressionIR*) `( _ _ ) ~> SeqV value*
+  -- (Eval_static: p TC |- typedExpressionIR ~> value)*
+
+;;;;; SeqDefaultE typedExpressionIR*
+
+rule Eval_static/dataExpressionIR-seqdefaultE:
+  p TC |- (SeqDefaultE typedExpressionIR*) `( _ _ ) ~> SeqDefaultV value*
+  -- (Eval_static: p TC |- typedExpressionIR ~> value)*
+
+;;;;; RecordE namedExpressionIR*
+
+rule Eval_static/dataExpressionIR-recordE:
+  p TC |- (RecordE (name typedExpressionIR)*) `( _ _ )
+       ~> RecordV (value name)*
+  -- (Eval_static: p TC |- typedExpressionIR ~> value)*
+
+;;;;; RecordDefaultE namedExpressionIR*
+
+rule Eval_static/dataExpressionIR-recorddefaultE:
+  p TC |- (RecordDefaultE (name typedExpressionIR)*) `( _ _ )
+       ~> RecordDefaultV (value name)*
+  -- (Eval_static: p TC |- typedExpressionIR ~> value)*
+
+;;;; accessExpressionIR
+;;;; syntax accessExpressionIR
+
+;;;;; errorAccessExpressionIR
+;;;;; syntax errorAccessExpressionIR = errorAccessExpression
+
+rule Eval_static/errorAccessExpressionIR:
+  p TC |- (ErrAccE name) `( _ _ ) ~> value_error
+  -- if name_error = "error." ++ name
+  -- if value_error = $find_value(p, TC, CURRENT name_error)
+
+;;;;; memberAccessExpressionIR
+;;;;; syntax memberAccessExpressionIR
+
+;;;;;; TypeAccE prefixedName name
+
+rule Eval_static/memberAccessExpressionIR-typeaccE-enum:
+  p TC |- (TypeAccE prefixedName name) `( typeIR_base _ )
+       ~> EnumV tid name
+  -- if MonoTD (EnumT tid id_member*)
+      = $find_type(p, TC, prefixedName)
+  -- if name <- id_member*
+
+rule Eval_static/memberAccessExpressionIR-typeaccE-senum:
+  p TC |- (TypeAccE prefixedName name) `( typeIR_base _ )
+       ~> SEnumV tid name value
+  -- if MonoTD (SEnumT tid typeIR (id_member value_member)*)
+      = $find_type(p, TC, prefixedName)
+  -- if value
+      = $assoc_<id, value>(name, (id_member, value_member)*)
+
+;;;;;; ExprAccE typedExpressionIR name
+
+rule Eval_static/memberAccessExpressionIR-expraccE-headerstack:
+  p TC |- (ExprAccE typedExpressionIR_base "size") `( typeIR_base _ )
+       ~> IntV n_size
+  -- if HeaderStackT _ n_size = typeIR_base
+
+rule Eval_static/memberAccessExpressionIR-expraccE-struct:
+  p TC |- (ExprAccE typedExpressionIR_base name) `( typeIR_base _ )
+       ~> value
+  -- Eval_static: p TC |- typedExpressionIR_base ~> value_base
+  -- if StructV _ (value_field id_field)* = value_base
+  -- if value = $assoc_<id, value>(name, (id_field, value_field)*)
+
+rule Eval_static/memberAccessExpressionIR-expraccE-header:
+  p TC |- (ExprAccE typedExpressionIR_base name) `( typeIR_base _ )
+       ~> value
+  -- Eval_static: p TC |- typedExpressionIR_base ~> value_base
+  -- if HeaderV _ _ (value_field id_field)* = value_base
+  -- if value = $assoc_<id, value>(name, (id_field, value_field)*)
+
+rule Eval_static/memberAccessExpressionIR-expraccE-headerunion:
+  p TC |- (ExprAccE typedExpressionIR_base name) `( typeIR_base _ )
+       ~> value
+  -- Eval_static: p TC |- typedExpressionIR_base ~> value_base
+  -- if HeaderUnionV _ (value_field id_field)* = value_base
+  -- if value = $assoc_<id, value>(name, (id_field, value_field)*)
+
+;;;;; indexAccessExpressionIR
+;;;;; syntax indexAccessExpressionIR
+
+;;;;;; ArrAccE typedExpressionIR typedExpressionIR
+
+rule Eval_static/indexAccessExpressionIR-arraccE-tuple:
+  p TC |- (ArrAccE typedExpressionIR_base typedExpressionIR_index) `( _ _ )
+       ~> value
+  -- Eval_static: p TC |- typedExpressionIR_base ~> value_base
+  -- Eval_static: p TC |- typedExpressionIR_index ~> value_index
+  -- if TupleV value_e* = value_base
+  -- if n_index = $to_number(value_index)
+  -- if $(n_index < |value_e*|)
+  -- if value = value_e*[n_index]
+
+rule Eval_static/indexAccessExpressionIR-arraccE-stack:
+  p TC |- (ArrAccE typedExpressionIR_base typedExpressionIR_index) `( _ _ )
+       ~> value
+  -- Eval_static: p TC |- typedExpressionIR_base ~> value_base
+  -- Eval_static: p TC |- typedExpressionIR_index ~> value_index
+  -- if HeaderStackV value_e* _ _ = value_base
+  -- if n_index = $to_number(value_index)
+  -- if $(n_index < |value_e*|)
+  -- if value = value_e*[n_index]
+
+;;;;;; BitAccE typedExpressionIR typedExpressionIR typedExpressionIR
+
+rule Eval_static/indexAccessExpressionIR-bitaccE:
+  p TC |- (BitAccE typedExpressionIR_base typedExpressionIR_hi typedExpressionIR_lo)
+          `( _ _ )
+       ~> $bitacc_op(value_base, value_hi, value_lo)
+  -- Eval_static: p TC |- typedExpressionIR_base ~> value_base
+  -- Eval_static: p TC |- typedExpressionIR_hi ~> value_hi
+  -- Eval_static: p TC |- typedExpressionIR_lo ~> value_lo
+
+;;;; callExpressionIR
+;;;; syntax callExpressionIR
+
+;;;;; CallE routineTargetIR typeArgumentIR* argumentIR*
+;;;;;; syntax routineTargetIR
+
+;;;;;;; FuncT prefixedName 
+;;;;;;; function/action calls are not evaluated statically
+
+;;;;;;; MethodT typedExpressionIR name
+
+rule Eval_static/callExpressionIR-methodT-size:
+  p TC |- (CallE (MethodT typedExpressionIR_base name) eps eps) `( _ _ )
+       ~> $sizeof(typeIR_base, name)
+  -- if _ `( typeIR_base _ ) = typedExpressionIR_base
+  -- if name <- [ "minSizeInBits", "minSizeInBytes",
+                  "maxSizeInBits", "maxSizeInBytes" ]
+
+;;;;;;; TypeT prefixedName name
+
+rule Eval_static/callExpressionIR-typeT-size-mono:
+  p TC |- (CallE (TypeT prefixedName name) eps eps) `( _ _ )
+       ~> $sizeof(typeIR_base, name)
+  -- if MonoTD typeIR_base = $find_type(p, TC, prefixedName)
+  -- if name <- [ "minSizeInBits", "minSizeInBytes",
+                  "maxSizeInBits", "maxSizeInBytes" ]
+
+rule Eval_static/callExpressionIR-typeT-size-poly:
+  p TC |- (CallE (TypeT prefixedName name) eps eps) `( _ _ )
+       ~> $sizeof(typeIR_base, name)
+  -- if PolyTD typeIR_base eps eps = $find_type(p, TC, prefixedName)
+  -- if name <- [ "minSizeInBits", "minSizeInBytes",
+                  "maxSizeInBits", "maxSizeInBytes" ]
+
+;;;;; InstE namedTypeIR argumentIR*
+;;;;; constructor calls are not evaluated statically
+
+

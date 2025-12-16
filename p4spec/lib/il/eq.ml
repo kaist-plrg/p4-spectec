@@ -73,6 +73,11 @@ and eq_typ (typ_a : typ) (typ_b : typ) : bool =
 and eq_typs (typs_a : typ list) (typs_b : typ list) : bool =
   List.length typs_a = List.length typs_b && List.for_all2 eq_typ typs_a typs_b
 
+and eq_nottyp (nottyp_a : nottyp) (nottyp_b : nottyp) : bool =
+  let mixop_a, typs_a = nottyp_a.it in
+  let mixop_b, typs_b = nottyp_b.it in
+  eq_mixop mixop_a mixop_b && eq_typs typs_a typs_b
+
 (* Values *)
 
 and eq_value ?(dbg = false) (value_a : value) (value_b : value) : bool =
@@ -94,6 +99,7 @@ and eq_value ?(dbg = false) (value_a : value) (value_b : value) : bool =
     | OptV None, OptV None -> true
     | ListV values_a, ListV values_b -> eq_values ~dbg values_a values_b
     | FuncV id_a, FuncV id_b -> id_a = id_b
+    | ExternV json_a, ExternV json_b -> Yojson.Safe.equal json_a json_b
     | _ -> false
   in
   if dbg && not eq then
@@ -109,8 +115,10 @@ and eq_values ?(dbg = false) (values_a : value list) (values_b : value list) :
 
 (* Expressions *)
 
-and eq_exp (exp_a : exp) (exp_b : exp) : bool =
-  match (exp_a.it, exp_b.it) with
+and eq_exp (exp_a : exp) (exp_b : exp) : bool = eq_exp' exp_a.it exp_b.it
+
+and eq_exp' (exp_a' : exp') (exp_b' : exp') : bool =
+  match (exp_a', exp_b') with
   | BoolE b_a, BoolE b_b -> b_a = b_b
   | NumE n_a, NumE n_b -> Num.eq n_a n_b
   | TextE t_a, TextE t_b -> t_a = t_b
@@ -160,8 +168,6 @@ and eq_exp (exp_a : exp) (exp_b : exp) : bool =
       eq_exp exp_b_a exp_b_b && eq_path path_a path_b && eq_exp exp_f_a exp_f_b
   | CallE (id_a, targs_a, args_a), CallE (id_b, targs_b, args_b) ->
       eq_id id_a id_b && eq_targs targs_a targs_b && eq_args args_a args_b
-  | HoldE (id_a, (mixop_a, exps_a)), HoldE (id_b, (mixop_b, exps_b)) ->
-      eq_id id_a id_b && eq_mixop mixop_a mixop_b && eq_exps exps_a exps_b
   | IterE (exp_a, iterexp_a), IterE (exp_b, iterexp_b) ->
       eq_exp exp_a exp_b && eq_iterexp iterexp_a iterexp_b
   | _ -> false

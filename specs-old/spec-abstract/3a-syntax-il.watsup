@@ -1,0 +1,293 @@
+;;
+;; Numbers
+;;
+
+syntax numIL = num
+
+;;
+;; Texts
+;;
+
+;;
+;; Identifiers
+;;
+
+syntax idIL = id
+
+;;
+;; Variables (scoped identifiers)
+;;
+
+syntax nameIL = name
+
+;;
+;; Members
+;;
+
+syntax memberIL = idIL
+
+;;
+;; Match kinds
+;;
+
+syntax matchkindIL = idIL
+
+;;
+;; State labels
+;;
+
+syntax statelabelIL = idIL
+
+;;
+;; Unary operators
+;;
+
+syntax unopIL = unop
+
+;;
+;; Binary operators
+;;
+
+syntax binopIL = binop
+
+;;
+;; Directions
+;;
+
+syntax dirIL = dir
+
+;;
+;; Forward declarations of mutually recursive syntax
+;;
+
+syntax stmtIL, switchcaseIL, declIL, tblpropIL
+
+;;
+;; Types
+;;
+
+syntax typeIL = typ
+
+;;
+;; Type parameters
+;;
+
+syntax tparamIL = id
+
+;;
+;; Parameters
+;;
+
+syntax paramIL = idIL dirIL typeIL exprIL?
+
+;;
+;; Constructor parameters
+;;
+
+syntax cparamIL = paramIL
+
+;;
+;; Type arguments
+;;
+
+syntax targIL = typeIL
+
+;;
+;; Arguments
+;;
+
+syntax argIL =
+  | ExprA exprIL
+  | NameA idIL exprIL?
+  | AnyA
+
+;;
+;; Keyset expressions
+;;
+
+syntax keysetIL =
+  | ExprK exprIL
+  | DefaultK
+  | AnyK
+
+;;
+;; Select-cases for select
+;;
+
+syntax selectcaseIL = keysetIL* statelabelIL
+
+;;
+;; Expressions
+;;
+
+syntax annotIL = `(typ; ctk)
+syntax exprIL =
+  | ValueE val annotIL
+  | BoolE bool annotIL
+  | StrE text annotIL
+  | NumE num annotIL
+  | NameE nameIL annotIL
+  | SeqE exprIL* annotIL
+  | SeqDefaultE exprIL* annotIL
+  | RecordE (memberIL, exprIL)* annotIL
+  | RecordDefaultE (memberIL, exprIL)* annotIL
+  | DefaultE annotIL
+  | InvalidE annotIL
+  | UnE unopIL exprIL annotIL
+  | BinE binopIL exprIL exprIL annotIL
+  | TernE exprIL exprIL exprIL annotIL
+  | CastE typeIL exprIL annotIL
+  | MaskE exprIL exprIL annotIL
+  | RangeE exprIL exprIL annotIL
+  | SelectE exprIL* selectcaseIL* annotIL
+  | ArrAccE exprIL exprIL annotIL
+  | BitAccE exprIL exprIL exprIL annotIL
+  | ErrAccE memberIL annotIL
+  | TypeAccE nameIL memberIL annotIL
+  | ExprAccE exprIL memberIL annotIL
+  | CallFuncE nameIL targIL* argIL* annotIL
+  | CallMethodE exprIL memberIL targIL* argIL* annotIL
+  | CallTypeE nameIL memberIL targIL* argIL* annotIL
+  | InstE nameIL targIL* argIL* annotIL
+
+;;
+;; Blocks (sequence of statements)
+;;
+
+syntax blockIL = BlockB stmtIL*
+
+;;
+;; Statements
+;;
+
+syntax stmtIL =
+  | EmptyS
+  | AssignS exprIL exprIL
+  | SwitchS exprIL switchcaseIL*
+  | IfS exprIL stmtIL stmtIL
+  | BlockS blockIL
+  | ExitS
+  | RetS exprIL?
+  | CallFuncS nameIL targIL* argIL*
+  | CallMethodS exprIL memberIL targIL* argIL*
+  | CallInstS typeIL nameIL targIL* argIL*
+  | TransS exprIL
+  | DeclS declIL
+
+;;
+;; Match labels and cases for switch
+;;
+
+syntax switchlabelIL =
+  | ExprL exprIL
+  | DefaultL
+
+syntax switchcaseIL =
+  | MatchC switchlabelIL blockIL
+  | FallC switchlabelIL
+
+;;
+;; Parser state machine
+;;
+
+syntax parserstateIL = statelabelIL blockIL
+
+;;
+;; Tables
+;;
+
+syntax tblIL = tblpropIL*
+
+;;
+;; Table keys
+;;
+
+syntax tblkeyIL = exprIL matchkindIL
+syntax tblkeypropIL = tblkeyIL*
+
+;;
+;; Table actions
+;;
+
+syntax tblactionIL = nameIL argIL* paramIL* paramIL*
+syntax tblactionpropIL = tblactionIL*
+
+;;
+;; Table entries
+;;
+
+syntax tblentryIL = bool keysetIL* tblactionIL val?
+syntax tblentrypropIL = bool tblentryIL*
+
+;;
+;; Table default properties
+;;
+
+syntax tbldefaultpropIL = bool tblactionIL
+
+;;
+;; Table custom properties
+;;
+
+syntax tblcustompropIL = bool memberIL exprIL
+
+;;
+;; Table properties
+;;
+
+syntax tblpropIL =
+  | KeyP tblkeypropIL
+  | ActionP tblactionpropIL
+  | EntryP tblentrypropIL
+  | DefaultP tbldefaultpropIL
+  | CustomP tblcustompropIL
+
+;;
+;; Methods
+;;
+
+syntax methodIL =
+  | ExternConsM idIL tparamIL* cparamIL*
+  | ExternAbstractM idIL typeIL tparamIL* tparamIL* paramIL*
+  | ExternM idIL typeIL tparamIL* tparamIL* paramIL*
+
+;;
+;; Declarations
+;;
+
+syntax typedefIL
+
+syntax declIL =
+  | ConstD idIL typeIL val
+  | VarD idIL typeIL exprIL?
+  | ErrD memberIL*
+  | MatchKindD memberIL*
+  | InstD idIL typeIL nameIL targIL* argIL* declIL*
+  | StructD idIL tparamIL* tparamIL* (memberIL, typeIL)*
+  | HeaderD idIL tparamIL* tparamIL* (memberIL, typeIL)*
+  | UnionD idIL tparamIL* tparamIL* (memberIL, typeIL)*
+  | EnumD idIL memberIL*
+  | SEnumD idIL typeIL (memberIL, val)*
+  | NewTypeD idIL typedefIL
+  | TypeDefD idIL typedefIL
+  | ValueSetD idIL typeIL exprIL
+  | ParserTypeD idIL tparamIL* tparamIL* paramIL*
+  | ParserD idIL paramIL* cparamIL* declIL* parserstateIL*
+  | TableD idIL typeIL tblIL
+  | ControlTypeD idIL tparamIL* tparamIL* paramIL*
+  | ControlD idIL paramIL* cparamIL* declIL* blockIL
+  | ActionD idIL paramIL* blockIL
+  | FuncD idIL typeIL tparamIL* tparamIL* paramIL* blockIL
+  | ExternFuncD idIL typeIL tparamIL* tparamIL* paramIL*
+  | ExternObjectD idIL tparamIL* methodIL*
+  | PackageTypeD idIL tparamIL* tparamIL* cparamIL*
+
+syntax typedefIL =
+  | TypeD typeIL
+  | DeclD declIL
+
+;;
+;; Program
+;;
+
+syntax programIL = declIL*

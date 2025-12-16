@@ -16,7 +16,7 @@ module TDEnv = MakeTIdEnv (Typdef)
 
 (* Relation environment *)
 
-module HEnv = MakeIdEnv (Rel.Hint)
+module IEnv = MakeIdEnv (Rel.InputHint)
 module REnv = MakeRIdEnv (Rel)
 
 (* Definition environment *)

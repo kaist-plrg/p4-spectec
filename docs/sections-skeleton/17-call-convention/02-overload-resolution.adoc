@@ -1,0 +1,25 @@
+[#sec-overload-resolution]
+=== Overload resolution 
+
+Functions and methods are the only P4 constructs that support overloading:
+there can exist multiple methods with the same name in the same scope.  When
+overloading is used, the compiler must be able to disambiguate at
+compile-time which method or function is being called, either by the number
+of arguments or by the names of the arguments, when calls are specifying
+argument names.  Argument type information is not used in disambiguating
+calls.
+
+Notice that overloading of abstract methods, parsers, controls, or packages
+is not allowed:
+
+[source,p4]
+----
+parser p(packet_in p, out bit<32> value) {
+  ...
+}
+
+// The following will cause an error about a duplicate declaration
+//parser p(packet_in p, out Headers headers) {
+//   ...
+//}
+----

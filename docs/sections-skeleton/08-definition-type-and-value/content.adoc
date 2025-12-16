@@ -1,0 +1,57 @@
+[#sec-p4-types-and-values]
+== P4 types and values
+
+// Section 7 of the P4-16 Language Specification
+P4~16~ is a statically-typed language. Programs that do not pass the type
+checker are considered invalid and rejected by the compiler. P4 provides a
+number of base types as well as type operators that construct derived types.
+// Some values can be converted to a different type using casts. However, to make
+// user intents clear, implicit casts are only allowed in a few circumstances and
+// the range of casts available is intentionally restricted.
+
+// Added
+The syntax for P4 types is as follows:
+
+[[type]]
+[[typeOrVoid]]
+${syntax: type typeOrVoid}
+
+These types are represented in P4~IR~ as follows:
+
+[[typeIR]]
+${syntax: typeIR}
+
+`typeIR` is constructed from type checking the surface syntax of P4 types
+(`type`) with the following relation:
+
+[[Type_ok]]
+${relation: Type_ok}
+
+The P4 type system also imposes well-formedness constraints on types, which
+enforce additional restrictions on the structure of types, such as type
+nesting.
+
+[[Type_wf]]
+${relation: Type_wf}
+
+The types represent the kinds of values that can be used in P4 programs. The
+runtime representation of P4 values is as follows:
+
+[[value]]
+${syntax: value}
+
+include::01-base-type-and-value.adoc[]
+
+include::02-named-type.adoc[]
+
+include::03-data-type-and-value.adoc[]
+
+include::04-object-type-and-value.adoc[]
+
+include::05-alias-type.adoc[]
+
+include::06-synthesized-type-and-value.adoc[]
+
+include::07-canonicalization.adoc[]
+
+include::08-subtyping.adoc[]

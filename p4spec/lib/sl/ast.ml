@@ -4,102 +4,103 @@ open Util.Source
 
 (* Numbers *)
 
-type num = Il.Ast.num
+type num = Il.Ast.num [@@deriving yojson]
 
 (* Texts *)
 
-type text = Il.Ast.text
+type text = Il.Ast.text [@@deriving yojson]
 
 (* Identifiers *)
 
-type id = Il.Ast.id
+type id = Il.Ast.id [@@deriving yojson]
 type id' = Il.Ast.id'
 
 (* Atoms *)
 
-type atom = Il.Ast.atom
+type atom = Il.Ast.atom [@@deriving yojson]
 type atom' = Il.Ast.atom'
 
 (* Mixfix operators *)
 
-type mixop = Il.Ast.mixop
+type mixop = Il.Ast.mixop [@@deriving yojson]
 
 (* Iterators *)
 
-type iter = Il.Ast.iter
+type iter = Il.Ast.iter [@@deriving yojson]
 
 (* Variables *)
 
-type var = Il.Ast.var
+type var = Il.Ast.var [@@deriving yojson]
 
 (* Types *)
 
-type typ = Il.Ast.typ
+type typ = Il.Ast.typ [@@deriving yojson]
 type typ' = Il.Ast.typ'
 
-type nottyp = Il.Ast.nottyp
+type nottyp = Il.Ast.nottyp [@@deriving yojson]
 type nottyp' = Il.Ast.nottyp'
 
-type deftyp = Il.Ast.deftyp
+type deftyp = Il.Ast.deftyp [@@deriving yojson]
 type deftyp' = Il.Ast.deftyp'
 
-type typfield = Il.Ast.typfield
-type typcase = Il.Ast.typcase
+type typfield = Il.Ast.typfield [@@deriving yojson]
+type typcase = Il.Ast.typcase [@@deriving yojson]
 
 (* Values *)
 
 type vid = Il.Ast.vid
 type vnote = Il.Ast.vnote
 
-type value = Il.Ast.value
+type value = Il.Ast.value [@@deriving yojson]
 type value' = Il.Ast.value'
 
-type valuefield = atom * value
-type valuecase = mixop * value list
+type valuefield = atom * value [@@deriving yojson]
+type valuecase = mixop * value list [@@deriving yojson]
 
 (* Operators *)
 
-type numop = Il.Ast.numop
-type unop = Il.Ast.unop
-type binop = Il.Ast.binop
-type cmpop = Il.Ast.cmpop
-type optyp = Il.Ast.optyp
+type numop = Il.Ast.numop [@@deriving yojson]
+type unop = Il.Ast.unop [@@deriving yojson]
+type binop = Il.Ast.binop [@@deriving yojson]
+type cmpop = Il.Ast.cmpop [@@deriving yojson]
+type optyp = Il.Ast.optyp [@@deriving yojson]
 
 (* Expressions *)
 
-type exp = Il.Ast.exp
+type exp = Il.Ast.exp [@@deriving yojson]
 type exp' = Il.Ast.exp'
 
-type notexp = Il.Ast.notexp
-type iterexp = Il.Ast.iterexp
+type notexp = Il.Ast.notexp [@@deriving yojson]
+type iterexp = Il.Ast.iterexp [@@deriving yojson]
 
 (* Patterns *)
 
 type pattern = Il.Ast.pattern
+[@@deriving yojson]
 
 (* Path *)
 
-type path = Il.Ast.path
+type path = Il.Ast.path [@@deriving yojson]
 type path' = Il.Ast.path'
 
 (* Parameters *)
 
-type param = Il.Ast.param
+type param = Il.Ast.param [@@deriving yojson]
 type param' = Il.Ast.param'
 
 (* Type parameters *)
 
-type tparam = Il.Ast.tparam
+type tparam = Il.Ast.tparam [@@deriving yojson]
 type tparam' = Il.Ast.tparam'
 
 (* Arguments *)
 
-type arg = Il.Ast.arg
+type arg = Il.Ast.arg [@@deriving yojson]
 type arg' = Il.Ast.arg'
 
 (* Type arguments *)
 
-type targ = Il.Ast.targ
+type targ = Il.Ast.targ [@@deriving yojson]
 type targ' = Il.Ast.targ'
 
 (* Path conditions *)
@@ -107,15 +108,28 @@ type targ' = Il.Ast.targ'
 and pid = int
 
 and phantom = pid * pathcond list
+[@@deriving yojson]
 
 and pathcond =
-  | ForallC of exp * iterexp list
-  | ExistsC of exp * iterexp list
+  | ForallC of pathcond * iterexp list
+  | ExistsC of pathcond * iterexp list
   | PlainC of exp
+  | HoldC of id * notexp
+  | NotHoldC of id * notexp
+[@@deriving yojson]
+
+(* Holding conditions *)
+
+and holdcase =
+  | BothH of instr list * instr list
+  | HoldH of instr list * phantom option
+  | NotHoldH of instr list * phantom option
+[@@deriving yojson]
 
 (* Case analysis *)
 
 and case = guard * instr list
+[@@deriving yojson]
 
 and guard =
   | BoolG of bool
@@ -123,35 +137,88 @@ and guard =
   | SubG of typ
   | MatchG of pattern
   | MemG of exp
+[@@deriving yojson]
 
 (* Instructions *)
 
 and instr = instr' phrase
 and instr' =
+  (* Branching instructions *)
   | IfI of exp * iterexp list * instr list * phantom option
+  | HoldI of id * notexp * iterexp list * holdcase
   | CaseI of exp * case list * phantom option 
   | OtherwiseI of instr
+  (* Aggregate instructions *)
+  | GroupI of id * exp list * instr list
+  (* Binding instructions *)
   | LetI of exp * exp * iterexp list
   | RuleI of id * notexp * iterexp list
+  (* Result/Return instructions *)
   | ResultI of exp list
   | ReturnI of exp
+  (* Debugging instructions *)
   | DebugI of exp
+[@@deriving yojson]
 
 (* Hints *)
 
-type hint = { hintid : id; hintexp : El.Ast.exp }
+type hint = El.Ast.hint
+[@@deriving yojson]
+
+(* Relations *)
+
+(* id `:` mixop `hint(input` `%`int* `)` exp* hint* *)
+type externrel = id * (mixop * int list) * exp list * hint list
+[@@deriving yojson]
+
+(* id `:` mixop `hint(input` `%`int* `)` exp* instr* hint* *)
+type rel = id * (mixop * int list) * exp list * instr list * hint list
+[@@deriving yojson]
+
+(* Functions *)
+
+(* id `<` list(tparam, `,`) `>` list(param, `,`) `:` hint* *)
+type externfunc = id * tparam list * arg list * typ * hint list
+[@@deriving yojson]
+
+(* id `<` list(tparam, `,`) `>` list(param, `,`) `:` hint* *)
+type builtinfunc = id * tparam list * arg list * typ * hint list
+[@@deriving yojson]
+
+(* arg* -> instr* *)
+type tablerow = exp list * exp * instr list
+[@@deriving yojson]
+
+(* id list(arg, `,`) `:` instr* hint* *)
+type tablefunc = id * arg list * typ * tablerow list * hint list
+[@@deriving yojson]
+
+(* id `<` list(tparam, `,`) `>` list(param, `,`) `:` instr* hint* *)
+type definedfunc = id * tparam list * arg list * typ * instr list * hint list
+[@@deriving yojson]
 
 (* Definitions *)
 
 type def = def' phrase
 and def' =
-  (* `syntax` id `<` list(tparam, `,`) `>` `=` deftyp *)
-  | TypD of id * tparam list * deftyp
-  (* `relation` id `:` mixop `hint(input` `%`int* `)` list(exp, `,`) `:` instr* *)
-  | RelD of id * (mixop * int list) * exp list * instr list
-  (* `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ instr* *)
-  | DecD of id * tparam list * arg list * instr list
+  (* `extern` `syntax` id hint* *)
+  | ExternTypD of id * hint list
+  (* `syntax` id `<` list(tparam, `,`) `>` `=` deftyp hint* *)
+  | TypD of id * tparam list * deftyp * hint list
+  (* `extern` `relation` rel *)
+  | ExternRelD of externrel
+  (* `relation` rel *)
+  | RelD of rel
+  (* `extern `dec` externfunc *)
+  | ExternDecD of externfunc
+  (* `builtin` `dec` builtinfunc *)
+  | BuiltinDecD of builtinfunc
+  (* `tbl` `dec` tablefunc *)
+  | TableDecD of tablefunc
+  (* `dec` func *)
+  | FuncDecD of definedfunc
+[@@deriving yojson]
 
 (* Spec *)
 
-type spec = def list
+type spec = def list [@@deriving yojson]

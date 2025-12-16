@@ -21,13 +21,13 @@ rule TypeArgument_ok/void:
 ;;;;  `_
 
 rule TypeArgument_ok/dontcare:
-  p TC |- `_ : (TID tid_impl) `# tid_impl 
+  p TC |- `_ : (`` tid_impl) `# tid_impl 
   -- if tid_impl = $fresh_tid()
 
 ;;; nonTypeName
 
 rule TypeArgument_ok/nonTypeName:
-  p TC |- nonTypeName : (TID tid) `# eps
+  p TC |- nonTypeName : (`` tid) `# eps
   -- if tid = $name(nonTypeName)
 
 ;;
@@ -36,10 +36,10 @@ rule TypeArgument_ok/nonTypeName:
 ;; syntax typeArgumentList
 ;;
 
-rule TypeArguments_ok:
+rule TypeArguments_ok/nil:
   p TC |- eps : eps `# eps
 
-rule TypeArguments_ok:
+rule TypeArguments_ok/cons:
   p TC |- typeArgument_h :: typeArgument_t*
         : (typeArgumentIR_h :: typeArgumentIR_t*) `# tid_impl*
   -- TypeArgument_ok: p TC |- typeArgument_h

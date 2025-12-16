@@ -60,6 +60,7 @@ let exit_scope () = vars := List.hd !scopes; scopes := List.tl !scopes
 %token ARROW ARROW_SUB
 %token DOUBLE_ARROW DOUBLE_ARROW_SUB DOUBLE_ARROW_BOTH DOUBLE_ARROW_LONG
 %token SQARROW SQARROW_STAR
+
 %token AND OR
 %token DOT DOT2 DOT3
 %token COMMA COMMA_NL SEMICOLON COLON COLON2 COLON_SLASH
@@ -72,8 +73,9 @@ let exit_scope () = vars := List.hd !scopes; scopes := List.tl !scopes
 %token<int> HOLE_NUM
 %token HOLE_MULTI HOLE_NIL
 %token EQ NEQ UP BAR
+
 %token LATEX BOOL NAT INT TEXT
-%token SYNTAX RELATION RULE VAR DEC DEF
+%token SYNTAX EXTERN TABLE RELATION RULEGROUP RULE VAR BUILTIN DEC DEF
 %token IF OTHERWISE DEBUG HINT_LPAREN EPS
 %token<bool> BOOLLIT
 %token<Bigint.t> NATLIT HEXLIT
@@ -116,12 +118,10 @@ check_atom :
 (* Lists *)
 
 %inline bar :
-  | BAR {}
-  | NL_BAR {}
+  | BAR | NL_BAR {}
 
 %inline comma :
-  | COMMA {}
-  | COMMA_NL {}
+  | COMMA | COMMA_NL {}
 
 comma_list(X) :
   | (* empty *) { [] }
@@ -137,6 +137,10 @@ dash_list(X) :
   | (* empty *) { [] }
   | DASH DASH dash_list(X) { $3 }
   | DASH X dash_list(X) { $2 :: $3 }
+
+newline_list(X) :
+  | (* empty *) { [] }
+  | X NL2 newline_list(X) { $1 :: $3 }
 
 (* Identifiers *)
 
@@ -168,6 +172,8 @@ relid : id { $1 @@@ $sloc }
 ruleid : ruleid_ { $1 }
 ruleid_ :
   | id { $1 }
+  | EXTERN { "extern" }
+  | BUILTIN { "builtin" }
   | NATLIT { Bigint.to_string $1 }
   | BOOLLIT { Bool.string_of_bool $1 }
   | ruleid_ DOTID { $1 ^ "." ^ $2 }
@@ -702,6 +708,16 @@ prem_ :
     }
   | DEBUG exp { DebugPr $2 }
 
+(* Matchecases *)
+
+table_body :
+  | bar tablerows = bar_list(tablerow) { tablerows }
+
+tablerow :
+  | pattern = exp_seq DOUBLE_ARROW body = exp_bin
+    { let region = over_region [ pattern.at; body.at ] in
+      (pattern, body) $ region }
+
 (* Hints *)
 
 hint :
@@ -710,11 +726,29 @@ hint :
   | HINT_LPAREN hintid RPAREN
     { { hintid = $2 @@@ $loc($2); hintexp = SeqE [] @@@ $loc($2) } }
 
+(* Rules *)
+
+rule :
+  | rule_ { $1 @@@ $sloc }
+rule_ :
+  | RULE relid ruleids COLON exp prem_list
+    { let id = if $3 = "" then "" else String.sub $3 1 (String.length $3 - 1) in
+      ($2, id @@@ $loc($3), $5, $6) }
+
+rules :
+  | (* empty *) { [] }
+  | NL3 rules { $2 }
+  | NL2* rule NL2* rules { $2 :: $4 }
+
 (* Definitions *)
 
 def :
   | def_ NL2* { $1 @@@ $loc($1) }
 def_ :
+  (* Extern syntax declaration *)
+  | EXTERN SYNTAX varid hint*
+    { ExternSynD ($3, $4) }
+  (* Syntax declaration *)
   | SYNTAX comma_list(synid)
     {
       match $2 with
@@ -725,29 +759,70 @@ def_ :
     { TypD ($2, [], $5, $3) }
   | SYNTAX varid_langle_bind enter_scope comma_list(tparam) RANGLE hint* EQ deftyp exit_scope
     { TypD ($2, $4, $8, $6) }
+  (* Variable declaration *)
   | VAR varid_bind COLON plaintyp hint*
     { VarD ($2, $4, $5) }
+  (* Extern relation declaration *)
+  | EXTERN RELATION relid COLON nottyp hint*
+    { ExternRelD ($3, $5, $6) }
+  (* Relation declaration *)
   | RELATION relid COLON nottyp hint*
     { RelD ($2, $4, $5) }
+  (* Rule group declaration *)
+  | RULEGROUP relid ruleids LBRACE rules RBRACE
+    { let id = if $3 = "" then "" else String.sub $3 1 (String.length $3 - 1) in
+      RuleGroupD ($2, id @@@ $loc($3), $5) }
+  (* Rule declaration *)
   | RULE relid ruleids COLON exp prem_list
     { let id = if $3 = "" then "" else String.sub $3 1 (String.length $3 - 1) in
-      RuleD ($2, id @@@ $loc($3), $5, $6) }
+      let region = over_region [ (at $loc($1)); (at $loc($6)) ] in
+      let rule = ($2, id @@@ $loc($3), $5, $6) $ region in
+      RuleGroupD ($2, id @@@ $loc($3), [ rule ]) }
+  (* Extern function declaration *)
+  | EXTERN DEC DOLLAR defid COLON plaintyp hint*
+    { ExternDecD ($4, [], [], $6, $7) }
+  | EXTERN DEC DOLLAR defid_lparen enter_scope comma_list(param) RPAREN COLON plaintyp hint* exit_scope
+    { ExternDecD ($4, [], $6, $9, $10) }
+  | EXTERN DEC DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE COLON plaintyp hint* exit_scope
+    { ExternDecD ($4, $6, [], $9, $10) }
+  | EXTERN DEC DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE_LPAREN comma_list(param) RPAREN COLON plaintyp hint* exit_scope
+    { ExternDecD ($4, $6, $8, $11, $12) }
+  (* Builtin function declaration *)
+  | BUILTIN DEC DOLLAR defid COLON plaintyp hint*
+    { BuiltinDecD ($4, [], [], $6, $7) }
+  | BUILTIN DEC DOLLAR defid_lparen enter_scope comma_list(param) RPAREN COLON plaintyp hint* exit_scope
+    { BuiltinDecD ($4, [], $6, $9, $10) }
+  | BUILTIN DEC DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE COLON plaintyp hint* exit_scope
+    { BuiltinDecD ($4, $6, [], $9, $10) }
+  | BUILTIN DEC DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE_LPAREN comma_list(param) RPAREN COLON plaintyp hint* exit_scope
+    { BuiltinDecD ($4, $6, $8, $11, $12) }
+  (* Table function declaration *)
+  | TABLE DEC DOLLAR id = defid COLON typ_ret = plaintyp hints = hint*
+    { TableDecD (id, [], typ_ret, hints) }
+  | TABLE DEC DOLLAR id = defid_lparen params = comma_list(param) RPAREN COLON typ_ret = plaintyp hints = hint*
+    { TableDecD (id, params, typ_ret, hints) }
+  (* Function declaration *)
   | DEC DOLLAR defid COLON plaintyp hint*
-    { DecD ($3, [], [], $5, $6) }
+    { FuncDecD ($3, [], [], $5, $6) }
   | DEC DOLLAR defid_lparen enter_scope comma_list(param) RPAREN COLON plaintyp hint* exit_scope
-    { DecD ($3, [], $5, $8, $9) }
+    { FuncDecD ($3, [], $5, $8, $9) }
   | DEC DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE COLON plaintyp hint* exit_scope
-    { DecD ($3, $5, [], $8, $9) }
+    { FuncDecD ($3, $5, [], $8, $9) }
   | DEC DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE_LPAREN comma_list(param) RPAREN COLON plaintyp hint* exit_scope
-    { DecD ($3, $5, $7, $10, $11) }
+    { FuncDecD ($3, $5, $7, $10, $11) }
+  (* Table function body definition *)
+  | TABLE DEF DOLLAR id = defid EQ body = table_body
+    { TableDefD (id, body) }
+  (* Function clause declaration *)
   | DEF DOLLAR defid EQ exp prem_list
-    { DefD ($3, [], [], $5, $6) }
+    { FuncDefD ($3, [], [], $5, $6) }
   | DEF DOLLAR defid_lparen enter_scope comma_list(arg) RPAREN EQ exp prem_list exit_scope
-    { DefD ($3, [], $5, $8, $9) }
+    { FuncDefD ($3, [], $5, $8, $9) }
   | DEF DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE EQ exp prem_list exit_scope
-    { DefD ($3, $5, [], $8, $9) }
+    { FuncDefD ($3, $5, [], $8, $9) }
   | DEF DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE_LPAREN comma_list(arg) RPAREN EQ exp prem_list exit_scope
-    { DefD ($3, $5, $7, $10, $11) }
+    { FuncDefD ($3, $5, $7, $10, $11) }
+  (* Separator *)
   | NL3
     { SepD }
 

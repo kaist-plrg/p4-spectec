@@ -16,15 +16,18 @@ let string_of_text text = text
 let string_of_varid varid = varid.it
 let string_of_typid typid = typid.it
 let string_of_relid relid = relid.it
-let string_of_ruleid ruleid = ruleid.it
+let string_of_rulegroupid rulegroupid = rulegroupid.it
+let string_of_rulepathid rulepathid = rulepathid.it
 let string_of_defid defid = "$" ^ defid.it
 
 (* Atoms *)
 
-let string_of_atom atom =
+let string_of_atom ?(lower = true) atom =
   match atom.it with
   | Atom.SilentAtom _ -> ""
-  | _ -> Atom.string_of_atom atom.it |> String.lowercase_ascii
+  | _ ->
+      if lower then Atom.string_of_atom atom.it |> String.lowercase_ascii
+      else Atom.string_of_atom atom.it
 
 let string_of_atoms atoms =
   match atoms with
@@ -129,6 +132,7 @@ and string_of_value ?(short = false) ?(level = 0) value =
               values))
         (indent level)
   | FuncV id -> string_of_defid id
+  | ExternV _ -> "extern"
 
 and string_of_notval ?(level = 0) notval =
   let mixop, values = notval in
@@ -198,8 +202,6 @@ and string_of_exp exp =
       ^ string_of_exp exp_f ^ "]"
   | CallE (defid, targs, args) ->
       string_of_defid defid ^ string_of_targs targs ^ string_of_args args
-  | HoldE (relid, notexp) ->
-      string_of_relid relid ^ ": " ^ string_of_notexp notexp ^ " holds"
   | IterE (exp, iterexp) -> string_of_exp exp ^ string_of_iterexp iterexp
 
 and string_of_exps sep exps = String.concat sep (List.map string_of_exp exps)
@@ -295,36 +297,17 @@ and string_of_targs targs =
   | [] -> ""
   | targs -> "<" ^ String.concat ", " (List.map string_of_targ targs) ^ ">"
 
-(* Rules *)
-
-and string_of_rule rule =
-  let ruleid, notexp, prems = rule.it in
-  ";; " ^ string_of_region rule.at ^ "\n   rule " ^ string_of_ruleid ruleid
-  ^ ": " ^ string_of_notexp notexp ^ string_of_prems prems
-
-and string_of_rules rules =
-  String.concat ""
-    (List.map (fun rule -> "\n\n   " ^ string_of_rule rule) rules)
-
-(* Clause *)
-
-and string_of_clause idx clause =
-  let args, exp, prems = clause.it in
-  ";; " ^ string_of_region clause.at ^ "\n   clause " ^ string_of_int idx
-  ^ string_of_args args ^ " = " ^ string_of_exp exp ^ string_of_prems prems
-
-and string_of_clauses clauses =
-  String.concat ""
-    (List.mapi
-       (fun idx clause -> "\n\n   " ^ string_of_clause idx clause)
-       clauses)
-
 (* Premises *)
 
 and string_of_prem prem =
   match prem.it with
   | RulePr (id, notexp) -> string_of_relid id ^ ": " ^ string_of_notexp notexp
   | IfPr exp -> "if " ^ string_of_exp exp
+  | IfHoldPr (id, notexp) ->
+      "if " ^ string_of_relid id ^ ": " ^ string_of_notexp notexp ^ " holds"
+  | IfNotHoldPr (id, notexp) ->
+      "if " ^ string_of_relid id ^ ": " ^ string_of_notexp notexp
+      ^ " does not hold"
   | ElsePr -> "otherwise"
   | LetPr (exp_l, exp_r) ->
       "let " ^ string_of_exp exp_l ^ " = " ^ string_of_exp exp_r
@@ -334,14 +317,119 @@ and string_of_prem prem =
       "(" ^ string_of_prem prem ^ ")" ^ string_of_iterexp iterexp
   | DebugPr exp -> "debug " ^ string_of_exp exp
 
-and string_of_prems prems =
+and string_of_prems ?(level = 0) prems =
+  let indent = indent level in
   String.concat ""
-    (List.map (fun prem -> "\n      -- " ^ string_of_prem prem) prems)
+    (List.map (fun prem -> "\n" ^ indent ^ "-- " ^ string_of_prem prem) prems)
+
+(* Rules *)
+
+and string_of_ruleinput nottyp inputs exps_input =
+  let mixop, typs = nottyp.it in
+  let exps_input = List.combine inputs exps_input in
+  let exps =
+    List.init (List.length typs) (fun idx ->
+        match List.assoc_opt idx exps_input with
+        | Some exp_input -> exp_input
+        | None -> VarE ("%" $ no_region) $$ (no_region, TextT))
+  in
+  let notexp = (mixop, exps) in
+  string_of_notexp notexp
+
+and string_of_ruleoutput nottyp inputs exps_output =
+  let mixop, typs = nottyp.it in
+  let outputs =
+    List.init (List.length typs) (fun idx ->
+        if List.mem idx inputs then None else Some idx)
+    |> List.filter_map Fun.id
+  in
+  let exps_output = List.combine outputs exps_output in
+  match exps_output with
+  | [] -> "-- the relation holds"
+  | _ ->
+      let exps =
+        List.init (List.length typs) (fun idx ->
+            match List.assoc_opt idx exps_output with
+            | Some exp_output -> exp_output
+            | None -> VarE ("%" $ no_region) $$ (no_region, TextT))
+      in
+      let notexp = (mixop, exps) in
+      "-- output: " ^ string_of_notexp notexp
+
+and string_of_rulematch nottyp inputs rulematch =
+  let exps_signature, exps_input, prems = rulematch in
+  indent 2 ^ "(signature) "
+  ^ string_of_ruleinput nottyp inputs exps_signature
+  ^ "\n" ^ indent 2
+  ^ string_of_ruleinput nottyp inputs exps_input
+  ^ string_of_prems ~level:2 prems
+
+and string_of_rulepath nottyp inputs rulepath =
+  let rulepathid, prems, exps_output = rulepath in
+  indent 2 ^ "rulepath "
+  ^ string_of_rulepathid rulepathid
+  ^ string_of_prems ~level:2 prems
+  ^ "\n" ^ indent 2
+  ^ string_of_ruleoutput nottyp inputs exps_output
+
+and string_of_rulepaths nottyp inputs rulepaths =
+  rulepaths
+  |> List.map (string_of_rulepath nottyp inputs)
+  |> String.concat "\n\n"
+
+and string_of_rulegroup nottyp inputs rulegroup =
+  let rulegroupid, rulematch, rulepaths = rulegroup.it in
+  indent 1 ^ ";; "
+  ^ string_of_region rulegroup.at
+  ^ "\n" ^ indent 1 ^ "rulegroup "
+  ^ string_of_rulegroupid rulegroupid
+  ^ "\n\n " ^ indent 1 ^ "match\n\n"
+  ^ string_of_rulematch nottyp inputs rulematch
+  ^ "\n\n " ^ indent 1 ^ "paths\n\n"
+  ^ string_of_rulepaths nottyp inputs rulepaths
+
+and string_of_rulegroups nottyp inputs rulegroups =
+  rulegroups
+  |> List.map (string_of_rulegroup nottyp inputs)
+  |> String.concat "\n\n"
+
+(* Clause *)
+
+and string_of_clause idx clause =
+  let args, exp, prems = clause.it in
+  ";; " ^ string_of_region clause.at ^ "\n" ^ indent 1 ^ "clause "
+  ^ string_of_int idx ^ " : " ^ string_of_args args ^ " = " ^ string_of_exp exp
+  ^ string_of_prems ~level:1 prems
+
+and string_of_clauses clauses =
+  String.concat ""
+    (List.mapi
+       (fun idx clause -> "\n\n" ^ indent 1 ^ string_of_clause idx clause)
+       clauses)
+
+(* Table rows *)
+
+and string_of_tablerow tablerow =
+  let exps_signature, args, exp, prems = tablerow.it in
+  "\n" ^ indent 2 ^ "(signature) "
+  ^ string_of_exps ", " exps_signature
+  ^ "\n" ^ indent 2 ^ string_of_args args ^ " -> " ^ string_of_exp exp
+  ^ string_of_prems ~level:2 prems
+
+and string_of_tablerows tablerows =
+  String.concat ""
+    (List.mapi
+       (fun idx tablerow ->
+         "\n" ^ indent 1 ^ "row " ^ string_of_int idx ^ " :"
+         ^ string_of_tablerow tablerow)
+       tablerows)
 
 (* Hints *)
 
 and string_of_hint hint =
-  " hint(" ^ hint.hintid.it ^ " " ^ El.Print.string_of_exp hint.hintexp ^ ")"
+  " hint(" ^ hint.El.Ast.hintid.it ^ " "
+  ^ El.Print.string_of_exp hint.hintexp
+  ^ ")"
 
 and string_of_hints hints = String.concat "" (List.map string_of_hint hints)
 
@@ -351,13 +439,28 @@ let rec string_of_def def =
   ";; " ^ string_of_region def.at ^ "\n"
   ^
   match def.it with
-  | TypD (typid, tparams, deftyp) ->
+  | ExternTypD (id, _) -> "extern syntax " ^ string_of_typid id
+  | TypD (typid, tparams, deftyp, _) ->
       "syntax " ^ string_of_typid typid ^ string_of_tparams tparams ^ " = "
       ^ string_of_deftyp deftyp
-  | RelD (relid, nottyp, _, rules) ->
+  | ExternRelD (relid, nottyp, _, _) ->
+      "extern relation " ^ string_of_relid relid ^ ": "
+      ^ string_of_nottyp nottyp
+  | RelD (relid, nottyp, inputs, rulegroups, _) ->
       "relation " ^ string_of_relid relid ^ ": " ^ string_of_nottyp nottyp
-      ^ string_of_rules rules
-  | DecD (defid, tparams, params, typ, clauses) ->
+      ^ "\n\n"
+      ^ string_of_rulegroups nottyp inputs rulegroups
+  | ExternDecD (defid, tparams, params, typ, _) ->
+      "extern def " ^ string_of_defid defid ^ string_of_tparams tparams
+      ^ string_of_params params ^ " : " ^ string_of_typ typ
+  | BuiltinDecD (defid, tparams, params, typ, _) ->
+      "builtin def " ^ string_of_defid defid ^ string_of_tparams tparams
+      ^ string_of_params params ^ " : " ^ string_of_typ typ
+  | TableDecD (defid, params, typ, tablerows, _) ->
+      "tbl def " ^ string_of_defid defid ^ string_of_params params ^ " : "
+      ^ string_of_typ typ ^ " ="
+      ^ string_of_tablerows tablerows
+  | FuncDecD (defid, tparams, params, typ, clauses, _) ->
       "def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : " ^ string_of_typ typ ^ " ="
       ^ string_of_clauses clauses

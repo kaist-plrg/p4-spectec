@@ -42,7 +42,6 @@ let rec free_exp (exp : exp) : t =
   | UpdE (exp_b, path, exp_f) ->
       free_exp exp_b + free_path path + free_exp exp_f
   | CallE (_, _, args) -> free_args args
-  | HoldE (_, (_, exps)) -> free_exps exps
   | IterE (exp, _) -> free_exp exp
 
 and free_exps (exps : exp list) : t =
@@ -72,6 +71,8 @@ let rec free_prem (prem : prem) : t =
   match prem.it with
   | RulePr (_, (_, exps)) -> free_exps exps
   | IfPr exp -> free_exp exp
+  | IfHoldPr (_, (_, exps)) -> free_exps exps
+  | IfNotHoldPr (_, (_, exps)) -> free_exps exps
   | LetPr (exp_l, exp_r) -> free_exp exp_l + free_exp exp_r
   | ElsePr -> empty
   | IterPr (prem, _) -> free_prem prem
@@ -80,14 +81,27 @@ let rec free_prem (prem : prem) : t =
 and free_prems (prems : prem list) : t =
   prems |> List.map free_prem |> List.fold_left ( + ) empty
 
-(* Definitions *)
+(* Rules *)
 
-let free_rule (rule : rule) : t =
-  let _, (_, exps), prems = rule.it in
-  free_exps exps + free_prems prems
+let free_rulematch (rulematch : rulematch) : t =
+  let exps_signature, exps_input, prems = rulematch in
+  free_exps exps_signature + free_exps exps_input + free_prems prems
 
-let free_rules (rules : rule list) : t =
-  rules |> List.map free_rule |> List.fold_left ( + ) empty
+let free_rulepath (rulepath : rulepath) : t =
+  let _, prems, exps_output = rulepath in
+  free_prems prems + free_exps exps_output
+
+let free_rulepaths (rulepaths : rulepath list) : t =
+  rulepaths |> List.map free_rulepath |> List.fold_left ( + ) empty
+
+let free_rulegroup (rulegroup : rulegroup) : t =
+  let _, rulematch, rulepaths = rulegroup.it in
+  free_rulematch rulematch + free_rulepaths rulepaths
+
+let free_rulegroups (rulegroups : rulegroup list) : t =
+  rulegroups |> List.map free_rulegroup |> List.fold_left ( + ) empty
+
+(* Clauses *)
 
 let free_clause (clause : clause) : t =
   let args, exp, prems = clause.it in
@@ -96,8 +110,20 @@ let free_clause (clause : clause) : t =
 let free_clauses (clauses : clause list) : t =
   clauses |> List.map free_clause |> List.fold_left ( + ) empty
 
+(* Table rows *)
+
+let free_tablerow (tablerow : tablerow) : t =
+  let _exps_signature, args, exp, prems = tablerow.it in
+  free_args args + free_exp exp + free_prems prems
+
+let free_tablerows (tablerows : tablerow list) : t =
+  tablerows |> List.map free_tablerow |> List.fold_left ( + ) empty
+
+(* Definitions *)
+
 let free_def (def : def) : t =
   match def.it with
-  | RelD (_, _, _, rules) -> free_rules rules
-  | DecD (_, _, _, _, clauses) -> free_clauses clauses
+  | RelD (_, _, _, rulegroups, _) -> free_rulegroups rulegroups
+  | TableDecD (_, _, _, tablerows, _) -> free_tablerows tablerows
+  | FuncDecD (_, _, _, _, clauses, _) -> free_clauses clauses
   | _ -> empty

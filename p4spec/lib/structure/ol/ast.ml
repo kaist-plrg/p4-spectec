@@ -8,8 +8,10 @@ type instr = instr' phrase
 
 and instr' =
   | IfI of exp * iterexp list * instr list
+  | HoldI of id * notexp * iterexp list * instr list * instr list
   | CaseI of exp * case list * bool
   | OtherwiseI of instr
+  | GroupI of id * exp list * instr list
   | LetI of exp * exp * iterexp list
   | RuleI of id * notexp * iterexp list
   | ResultI of exp list

@@ -19,6 +19,11 @@ module Branch = struct
 
   let init (id : id) : t = { origin = id; status = Miss [] }
 
+  (* Equivalence *)
+
+  let eq (branch_a : t) (branch_b : t) : bool =
+    branch_a.origin.it = branch_b.origin.it && branch_a.status = branch_b.status
+
   (* Printer *)
 
   let to_string (branch : t) : string =
@@ -46,6 +51,25 @@ module Cover = struct
             let branch = Branch.init id in
             add pid branch cover
         | None -> cover)
+    | HoldI (_, _, _, holdcase) -> (
+        match holdcase with
+        | BothH (instrs_hold, instrs_nothold) ->
+            let cover = init_instrs cover id instrs_hold in
+            init_instrs cover id instrs_nothold
+        | HoldH (instrs_hold, phantom_opt) -> (
+            let cover = init_instrs cover id instrs_hold in
+            match phantom_opt with
+            | Some (pid, _) ->
+                let branch = Branch.init id in
+                add pid branch cover
+            | None -> cover)
+        | NotHoldH (instrs_nothold, phantom_opt) -> (
+            let cover = init_instrs cover id instrs_nothold in
+            match phantom_opt with
+            | Some (pid, _) ->
+                let branch = Branch.init id in
+                add pid branch cover
+            | None -> cover))
     | CaseI (_, cases, phantom_opt) -> (
         let blocks = cases |> List.split |> snd in
         let cover =
@@ -59,19 +83,40 @@ module Cover = struct
             add pid branch cover
         | None -> cover)
     | OtherwiseI instr -> init_instr cover id instr
+    | GroupI (_, _, instrs_group) -> init_instrs cover id instrs_group
     | _ -> cover
 
   and init_instrs (cover : t) (id : id) (instrs : instr list) : t =
     List.fold_left (fun cover instr -> init_instr cover id instr) cover instrs
 
-  let init_def (ignores : IdSet.t) (cover : t) (def : def) : t =
-    match def.it with
-    | TypD _ -> cover
-    | RelD (id, _, _, instrs) | DecD (id, _, _, instrs) ->
-        if IdSet.mem id ignores then cover else init_instrs cover id instrs
+  let init_tablerow (cover : t) (id : id) (tablerow : tablerow) : t =
+    let _, _, instrs = tablerow in
+    init_instrs cover id instrs
 
-  let init_spec (ignores : IdSet.t) (spec : spec) : t =
-    List.fold_left (init_def ignores) empty spec
+  let init_tablerows (cover : t) (id : id) (tablerows : tablerow list) : t =
+    List.fold_left
+      (fun cover tablerow -> init_tablerow cover id tablerow)
+      cover tablerows
+
+  let init_def (cover : t) (def : def) : t =
+    match def.it with
+    | RelD (id, _, _, instrs, hints) | FuncDecD (id, _, _, _, instrs, hints) ->
+        if
+          List.exists
+            (fun (hint : hint) -> hint.hintid.it = "testgen_ignore")
+            hints
+        then cover
+        else init_instrs cover id instrs
+    | TableDecD (id, _, _, tablerows, hints) ->
+        if
+          List.exists
+            (fun (hint : hint) -> hint.hintid.it = "testgen_ignore")
+            hints
+        then cover
+        else init_tablerows cover id tablerows
+    | _ -> cover
+
+  let init_spec (spec : spec) : t = List.fold_left init_def empty spec
 end
 
 (* Querying coverage *)
@@ -127,5 +172,5 @@ let collect_miss (cover : Cover.t) : (pid * vid list) list =
 
 (* Constructor *)
 
-let init (ignores : IdSet.t) (spec : spec) : Cover.t =
-  Cover.init_spec ignores spec
+let init (spec : spec) : Cover.t = Cover.init_spec spec
+let empty : Cover.t = Cover.empty
