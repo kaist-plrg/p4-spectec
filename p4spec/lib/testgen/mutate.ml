@@ -63,9 +63,9 @@ and gen_from_typ' (depth : int) (tdenv : TDEnv.t) (texts : value' list)
   | VarT (tid, targs) -> (
       let td = TDEnv.find_opt tid tdenv in
       match td with
-      | Some (tparams, typdef) -> (
+      | Some (Defined (tparams, td)) -> (
           let theta = List.combine tparams targs |> TDEnv.of_list in
-          match typdef.it with
+          match td.it with
           | PlainT typ ->
               typ |> Typ.subst_typ theta |> gen_from_typ depth tdenv texts
           | StructT typfields ->
@@ -93,7 +93,7 @@ and gen_from_typ' (depth : int) (tdenv : TDEnv.t) (texts : value' list)
               List.map expand_nottyp' nottyps'
               |> List.filter Option.is_some |> List.map Option.get
               |> Rand.random_select |> wrap_value_opt typ.it)
-      | None -> None)
+      | _ -> None)
   | TupleT typs_inner ->
       let* values_inner = gen_from_typs depth tdenv texts typs_inner in
       TupleV values_inner |> Option.some |> wrap_value_opt typ.it
@@ -193,7 +193,7 @@ let rec shuffle_list' (value : value) : value =
   | ListV values ->
       let values_shuffled = Rand.shuffle values in
       ListV values_shuffled |> wrap_value typ
-  | FuncV _ -> value.it |> wrap_value typ
+  | FuncV _ | ExternV _ -> value.it |> wrap_value typ
 
 let shuffle_list (value : value) : value option =
   let value_shuffled = shuffle_list' value in
@@ -224,7 +224,7 @@ let rec duplicate_list' (value : value) : value =
           let values = value :: values in
           ListV values |> wrap_value typ
       | None -> value.it |> wrap_value typ)
-  | FuncV _ -> value.it |> wrap_value typ
+  | FuncV _ | ExternV _ -> value.it |> wrap_value typ
 
 let duplicate_list (value : value) : value option =
   let value_duplicated = duplicate_list' value in
@@ -254,7 +254,7 @@ let rec shrink_list' (value : value) : value =
       let size = Random.int (List.length values) in
       let values = Rand.random_sample size values in
       ListV values |> wrap_value typ
-  | FuncV _ -> value.it |> wrap_value typ
+  | FuncV _ | ExternV _ -> value.it |> wrap_value typ
 
 let shrink_list (value : value) : value option =
   let value_shrinked = shrink_list' value in
@@ -310,7 +310,7 @@ let mutate_walk (tdenv : TDEnv.t) (mixopenv : MixopEnv.t) (texts : value' list)
       key_max := key;
       path_best := List.rev path);
     match value.it with
-    | BoolV _ | NumV _ | TextV _ | OptV _ | FuncV _ -> ()
+    | BoolV _ | NumV _ | TextV _ | OptV _ | FuncV _ | ExternV _ -> ()
     | StructV valuefields ->
         List.iteri
           (fun idx (_, value) -> traverse (idx :: path) value (depth + 1))
@@ -333,7 +333,7 @@ let mutate_walk (tdenv : TDEnv.t) (mixopenv : MixopEnv.t) (texts : value' list)
         value |> Option.some
     | idx :: path, value -> (
         match value.it with
-        | BoolV _ | NumV _ | TextV _ | OptV _ | FuncV _ ->
+        | BoolV _ | NumV _ | TextV _ | OptV _ | FuncV _ | ExternV _ ->
             value.it |> wrap_value typ |> Option.some
         | StructV valuefields ->
             let atoms, values = List.split valuefields in

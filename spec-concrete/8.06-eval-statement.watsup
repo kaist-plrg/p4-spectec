@@ -1,0 +1,593 @@
+;;
+;; Statement evaluation
+;;
+;; syntax statementIR
+;;
+
+;;; emptyStatementIR
+
+rule Stmt_eval/emptyStatementIR:
+  p EC STO |- `; : EC STO ``
+
+;;; assignmentStatementIR
+;;; syntax assignmentStatementIR = typedLvalueIR assignop typedExpressionIR `;
+
+rulegroup Stmt_eval/assignmentStatementIR {
+
+  rule Stmt_eval/typedLvalueIR-exit:
+    p EC_0 STO_0 |- typedLvalueIR assignop typedExpressionIR `;
+                  : EC_1 STO_1 EXIT
+    ---- ;; evaluate l-value
+    -- Lvalue_eval:
+        p EC_0 STO_0 |- typedLvalueIR
+                      : EC_1 STO_1 EXIT
+
+  rule Stmt_eval/typedLvalueIR-cont-eq-typedExpressionIR-exit:
+    p EC_0 STO_0 |- typedLvalueIR `= typedExpressionIR `;
+                  : EC_2 STO_2 EXIT
+    ---- ;; evaluate l-value
+    -- Lvalue_eval:
+        p EC_0 STO_0 |- typedLvalueIR
+                      : EC_1 STO_1 (`` storageReference)
+    ---- ;; evaluate expression
+    -- Expr_eval:
+        p EC_1 STO_1 |- typedExpressionIR
+                      : EC_2 STO_2 EXIT
+
+  rule Stmt_eval/typedLvalueIR-cont-compound-typedExpressionIR-exit:
+    p EC_0 STO_0 |- typedLvalueIR assignop typedExpressionIR `;
+                  : EC_2 STO_2 EXIT
+    ---- ;; evaluate l-value
+    -- Lvalue_eval:
+        p EC_0 STO_0 |- typedLvalueIR
+                      : EC_1 STO_1 (`` storageReference)
+    ---- ;; evaluate expression
+    -- if assignop =/= `=
+    -- if binop = $assignop_as_binop(assignop)
+    -- if typedExpressionIR_self
+        = $typedLvalueIR_as_typedExpressionIR(typedLvalueIR)
+    -- if typedExpressionIR_binary
+        = (typedExpressionIR_self binop typedExpressionIR) `# `( VOID DYN )
+    -- Expr_eval:
+        p EC_1 STO_1 |- typedExpressionIR_binary
+                      : EC_2 STO_2 EXIT
+
+  rule Stmt_eval/typedLvalueIR-cont-eq-typedExpressionIR-cont:
+    p EC_0 STO_0 |- typedLvalueIR `= typedExpressionIR `;
+                  : EC_3 STO_2 ``
+    ---- ;; evaluate l-value
+    -- Lvalue_eval:
+        p EC_0 STO_0 |- typedLvalueIR
+                      : EC_1 STO_1 (`` storageReference)
+    ---- ;; evaluate expression
+    -- Expr_eval:
+        p EC_1 STO_1 |- typedExpressionIR
+                      : EC_2 STO_2 (`` value)
+    ---- ;; perform assignment
+    -- Lvalue_write:
+        p EC_2 STO_2 |- storageReference -> value
+                      : EC_3
+
+  rule Stmt_eval/typedLvalueIR-cont-compound-typedExpressionIR-cont:
+    p EC_0 STO_0 |- typedLvalueIR assignop typedExpressionIR `;
+                  : EC_3 STO_2 ``
+    ---- ;; evaluate l-value
+    -- Lvalue_eval:
+        p EC_0 STO_0 |- typedLvalueIR
+                      : EC_1 STO_1 (`` storageReference)
+    ---- ;; evaluate expression
+    -- if assignop =/= `=
+    -- if binop = $assignop_as_binop(assignop)
+    -- if typedExpressionIR_self
+        = $typedLvalueIR_as_typedExpressionIR(typedLvalueIR)
+    -- if typedExpressionIR_binary
+        = (typedExpressionIR_self binop typedExpressionIR) `# `( VOID DYN )
+    -- Expr_eval:
+        p EC_1 STO_1 |- typedExpressionIR_binary
+                      : EC_2 STO_2 (`` value)
+    ---- ;; perform assignment
+    -- Lvalue_write:
+        p EC_2 STO_2 |- storageReference -> value
+                      : EC_3
+
+}
+
+;;; callStatementIR
+;;; syntax callStatementIR =
+;;;   routineTargetIR `< typeArgumentListIR > `( argumentListIR ) `;
+
+rulegroup Stmt_eval/callStatementIR {
+
+  rule Stmt_eval/callee-exit:
+    p EC_0 STO_0 |- callableTargetIR `< typeArgumentIR* > `( argumentIR* ) `;
+                  : EC_1 STO_1 EXIT
+    -- if callStatementIR = callableTargetIR `< typeArgumentIR* > `( argumentIR* ) `;
+    -- Callee_eval:
+        p EC_0 STO_0 |- callableTargetIR `< `_ > `( argumentIR* )
+                      : EC_1 STO_1 EXIT
+
+  rule Stmt_eval/callee-cont-call-exit:
+    p EC_0 STO_0 |- callableTargetIR `< typeArgumentIR* > `( argumentIR* ) `;
+                  : EC_2 STO_2 EXIT
+    -- Callee_eval:
+        p EC_0 STO_0 |- callableTargetIR `< `_ > `( argumentIR* )
+                      : EC_1 STO_1 (`` callee)
+    -- Call_eval:
+        p EC_1 STO_1 |- callee `@ `< typeArgumentIR* > `( argumentIR* )
+                      : EC_2 STO_2 EXIT
+
+  rule Stmt_eval/callee-cont-call-reject:
+    p EC_0 STO_0 |- callableTargetIR `< typeArgumentIR* > `( argumentIR* ) `;
+                  : EC_2 STO_2 rejectTransitionResult
+    -- Callee_eval:
+        p EC_0 STO_0 |- callableTargetIR `< `_ > `( argumentIR* )
+                      : EC_1 STO_1 (`` callee)
+    -- Call_eval:
+        p EC_1 STO_1 |- callee `@ `< typeArgumentIR* > `( argumentIR* )
+                      : EC_2 STO_2 rejectTransitionResult
+
+  rule Stmt_eval/callee-cont-call-return:
+    p EC_0 STO_0 |- callableTargetIR `< typeArgumentIR* > `( argumentIR* ) `;
+                  : EC_2 STO_2 ``
+    -- Callee_eval:
+        p EC_0 STO_0 |- callableTargetIR `< `_ > `( argumentIR* )
+                      : EC_1 STO_1 (`` callee)
+    -- Call_eval:
+        p EC_1 STO_1 |- callee `@ `< typeArgumentIR* > `( argumentIR* )
+                      : EC_2 STO_2 returnResult
+
+}
+
+;;; directApplicationStatementIR
+;;; direct applications should have been handled during instantiation
+
+;;; returnStatementIR
+;;; syntax returnStatementIR
+
+;;;; RETURN `;
+;;;; RETURN typedExpressionIR `;
+
+rulegroup Stmt_eval/returnStatementIR {
+
+  rule Stmt_eval/non-expression:
+    LOCAL EC STO |- RETURN `; : EC STO (RETURN eps)
+
+  rule Stmt_eval/expression-exit:
+    LOCAL EC_0 STO_0 |- RETURN typedExpressionIR `;
+                      : EC_1 STO_1 EXIT
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR
+                          : EC_1 STO_1 EXIT
+
+  rule Stmt_eval/expression-cont:
+    LOCAL EC_0 STO_0 |- RETURN typedExpressionIR `;
+                      : EC_1 STO_1 (RETURN value)
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR
+                          : EC_1 STO_1 (`` value)
+
+}
+
+;;; exitStatementIR
+;;; syntax exitStatementIR = EXIT `;
+
+rule Stmt_eval/exitStatement:
+  p EC STO |- EXIT `; : EC STO EXIT
+
+;;; syntax blockStatementIR =
+;;;   annotationList `{ blockElementStatementListIR }
+
+rule Stmt_eval/blockStatement:
+  p EC_0 STO_0 |- blockStatementIR
+                : EC_3 STO_1 statementResult
+  -- if EC_1 = $enter_e(EC_0)
+  -- Block_eval:
+      EC_1 STO_0 |- blockStatementIR
+                  : EC_2 STO_1 statementResult
+  -- if EC_3 = $exit_e(EC_2)
+
+;;; conditionalStatementIR
+;;; syntax conditionalStatementIR
+
+;;;; IF `( typedExpressionIR ) statementIR
+;;;; IF `( typedExpressionIR ) statementIR ELSE statementIR
+
+rulegroup Stmt_eval/conditionalStatementIR {
+
+  rule Stmt_eval/non-else-exit:
+    p EC STO |- IF `( typedExpressionIR_cond ) statementIR_then
+              : EC_cond STO_cond EXIT
+    -- Expr_eval:
+        p EC STO |- typedExpressionIR_cond
+                  : EC_cond STO_cond EXIT
+
+  rule Stmt_eval/non-else-cont-true:
+    p EC STO |- IF `( typedExpressionIR_cond ) statementIR_then
+              : EC_then STO_then statementResult
+    -- Expr_eval:
+        p EC STO |- typedExpressionIR_cond
+                  : EC_cond STO_cond (`` (B true))
+    -- Stmt_eval:
+        p EC_cond STO_cond |- statementIR_then
+                            : EC_then STO_then statementResult
+
+  rule Stmt_eval/non-else-cont-false:
+    p EC STO |- IF `( typedExpressionIR_cond ) statementIR_then
+              : EC_cond STO_cond ``
+    -- Expr_eval:
+        p EC STO |- typedExpressionIR_cond
+                  : EC_cond STO_cond (`` (B false))
+
+  rule Stmt_eval/else-exit:
+    p EC STO |- IF `( typedExpressionIR_cond ) statementIR_then
+                ELSE statementIR_else
+              : EC_cond STO_cond EXIT
+    -- Expr_eval:
+        p EC STO |- typedExpressionIR_cond
+                  : EC_cond STO_cond EXIT
+
+  rule Stmt_eval/else-cont-true:
+    p EC STO |- IF `( typedExpressionIR_cond ) statementIR_then
+                ELSE statementIR_else
+              : EC_then STO_then statementResult
+    -- Expr_eval:
+        p EC STO |- typedExpressionIR_cond
+                  : EC_cond STO_cond (`` (B true))
+    -- Stmt_eval:
+        p EC_cond STO_cond |- statementIR_then
+                            : EC_then STO_then statementResult
+
+  rule Stmt_eval/else-cont-false:
+    p EC STO |- IF `( typedExpressionIR_cond ) statementIR_then
+                ELSE statementIR_else
+              : EC_else STO_else statementResult
+    -- Expr_eval:
+        p EC STO |- typedExpressionIR_cond
+                  : EC_cond STO_cond (`` (B false))
+    -- Stmt_eval:
+        p EC_cond STO_cond |- statementIR_else
+                            : EC_else STO_else statementResult
+
+}
+
+;;; (TODO) forStatement
+
+;;; (TODO) breakStatement
+
+;;; (TODO) continueStatement
+
+;;; switchStatementIR
+;;; syntax switchStatementIR =
+;;;   SWITCH `( typedExpressionIR ) `{ switchCaseListIR }
+
+;;;; Switch on table apply method result
+
+;;;;; syntax switchLabelIR
+;;;;;; DEFAULT
+;;;;;; typedExpressionIR
+
+dec $match_switchLabelIR_table(id, switchLabelIR) : bool
+def $match_switchLabelIR_table(id, DEFAULT) = true
+def $match_switchLabelIR_table(id, (`` id) `# _) = true
+def $match_switchLabelIR_table(id, _) = false
+  -- otherwise
+
+;;;;; syntax switchCaseListIR
+;;;;;; switchLabelIR `: blockStatementIR
+;;;;;; switchLabelIR `: 
+
+relation SwitchCases_table_eval:
+  id |- switchCaseListIR : blockStatementIR?
+  hint(input %0 %1)
+
+dec $is_non_fallthrough_switchCaseIR(switchCaseIR) : bool
+def $is_non_fallthrough_switchCaseIR(switchLabelIR `: blockStatementIR) = true
+def $is_non_fallthrough_switchCaseIR(switchLabelIR `: ) = false
+
+rulegroup SwitchCases_table_eval {
+
+  rule SwitchCases_table_eval/nil:
+    id |- eps : eps
+
+  rule SwitchCases_table_eval/cons-non-fallthrough-match:
+    id |- switchCaseIR_h :: switchCaseIR_t* : blockStatementIR_h
+    ---- ;; if not fallthrough
+    -- if switchLabelIR_h `: blockStatementIR_h = switchCaseIR_h
+    ---- ;; if match
+    -- if $match_switchLabelIR_table(id, switchLabelIR_h)
+
+  rule SwitchCases_table_eval/cons-non-fallthrough-no-match:
+    id |- switchCaseIR_h :: switchCaseIR_t* : blockStatementIR?
+    ---- ;; if not fallthrough
+    -- if switchLabelIR_h `: blockStatementIR_h = switchCaseIR_h
+    ---- ;; if no match
+    -- if ~$match_switchLabelIR_table(id, switchLabelIR_h)
+    -- SwitchCases_table_eval:
+        id |- switchCaseIR_t* : blockStatementIR?
+
+  rule SwitchCases_table_eval/cons-fallthrough-match:
+    id |- switchCaseIR_h :: switchCaseIR_t* : blockStatementIR
+    ---- ;; if fallthrough
+    -- if switchLabelIR_h `: = switchCaseIR_h
+    ---- ;; if match
+    -- if $match_switchLabelIR_table(id, switchLabelIR_h)
+    ---- ;; take the closest non-fallthrough case
+    -- if (_ `: blockStatementIR) :: _
+        = $filter_<switchCaseIR>(switchCaseIR_t*, def $is_non_fallthrough_switchCaseIR)
+
+  rule SwitchCases_table_eval/cons-fallthrough-no-match:
+    id |- switchCaseIR_h :: switchCaseIR_t* : blockStatementIR?
+    ---- ;; if fallthrough
+    -- if switchLabelIR_h `: = switchCaseIR_h
+    ---- ;; if no match
+    -- if ~$match_switchLabelIR_table(id, switchLabelIR_h)
+    -- SwitchCases_table_eval:
+        id |- switchCaseIR_t* : blockStatementIR?
+
+}
+
+relation SwitchLabelIR_general_eval:
+  cursor evalContext store |- switchLabelIR : evalContext store expressionResult
+  hint(input %0 %1 %2 %3)
+
+rulegroup SwitchLabelIR_general_eval {
+
+  rule SwitchLabelIR_general_eval/default:
+    LOCAL EC_0 STO_0 |- DEFAULT : EC_0 STO_0 (`` DEFAULT)
+
+  rule SwitchLabelIR_general_eval/typedExpressionIR-exit:
+    LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 EXIT
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 EXIT
+
+  rule SwitchLabelIR_general_eval/typedExpressionIR-cont:
+    LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` value)
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` value)
+
+}
+
+dec $match_switchLabelIR_general(value, value) : bool
+def $match_switchLabelIR_general(value, DEFAULT) = true
+def $match_switchLabelIR_general(w_a W i_a, w_b W i_b) = (w_a = w_b) /\ (i_a = i_b)
+def $match_switchLabelIR_general(w_a S i_a, w_b W i_b) = (w_a = w_b) /\ (i_a = i_b)
+def $match_switchLabelIR_general(enumValue_a, enumValue_b) = $bin_eq(enumValue_a, enumValue_b)
+def $match_switchLabelIR_general(errorValue_a, errorValue_b) = $bin_eq(errorValue_a, errorValue_b)
+def $match_switchLabelIR_general(value, _) = false
+  -- otherwise
+
+relation SwitchCases_general_eval:
+  cursor evalContext store value |- switchCaseListIR : evalContext store blockStatementIR?
+  hint(input %0 %1 %2 %3 %4)
+
+rulegroup SwitchCases_general_eval {
+
+  rule SwitchCases_general_eval/nil:
+    LOCAL EC_0 STO_0 value |- eps : EC_0 STO_0 eps
+
+  rule SwitchCases_general_eval/cons-non-fallthrough-match:
+    LOCAL EC_0 STO_0 value |- (switchCaseIR_h :: switchCaseIR_t*) : EC_1 STO_1 blockStatementIR_h
+    ---- ;; if not fall-through
+    -- if switchLabelIR_h `: blockStatementIR_h = switchCaseIR_h
+    -- SwitchLabelIR_general_eval:
+        LOCAL EC_0 STO_0 |- switchLabelIR_h : EC_1 STO_1 (`` value_label)
+    ---- ;; if match
+    -- if $match_switchLabelIR_general(value, value_label)
+
+  rule SwitchCases_general_eval/cons-non-fallthrough-no-match:
+    LOCAL EC_0 STO_0 value |- (switchCaseIR_h :: switchCaseIR_t*) : EC_2 STO_2 blockStatementIR_h
+    ---- ;; if not fall-through
+    -- if switchLabelIR_h `: blockStatementIR_h = switchCaseIR_h
+    -- SwitchLabelIR_general_eval:
+        LOCAL EC_0 STO_0 |- switchLabelIR_h : EC_1 STO_1 (`` value_label)
+    ---- ;; if not match
+    -- if ~$match_switchLabelIR_general(value, value_label)
+    -- SwitchCases_general_eval:
+        LOCAL EC_1 STO_1 value |- switchCaseIR_t* : EC_2 STO_2 blockStatementIR?
+
+  rule SwitchCases_general_eval/cons-fallthrough-match:
+    LOCAL EC_0 STO_0 value |- (switchCaseIR_h :: switchCaseIR_t*) : EC_1 STO_1 blockStatementIR
+    ---- ;; if fallthrough
+    -- if switchLabelIR_h `: = switchCaseIR_h
+    -- SwitchLabelIR_general_eval:
+        LOCAL EC_0 STO_0 |- switchLabelIR_h : EC_1 STO_1 (`` value_label)
+    ---- ;; if match
+    -- if $match_switchLabelIR_general(value, value_label)
+    ---- ;; take the closest non-fallthrough case
+    -- if (_ `: blockStatementIR) :: _
+        = $filter_<switchCaseIR>(switchCaseIR_t*, def $is_non_fallthrough_switchCaseIR)
+
+  rule SwitchCases_general_eval/cons-fallthrough-no-match:
+    LOCAL EC_0 STO_0 value |- (switchCaseIR_h :: switchCaseIR_t*) : EC_2 STO_2 blockStatementIR?
+    ---- ;; if fallthrough
+    -- if switchLabelIR_h `: = switchCaseIR_h
+    -- SwitchLabelIR_general_eval:
+        LOCAL EC_0 STO_0 |- switchLabelIR_h : EC_1 STO_1 (`` value_label)
+    ---- ;; if no match
+    -- if ~$match_switchLabelIR_general(value, value_label)
+    -- SwitchCases_general_eval:
+        LOCAL EC_1 STO_1 value |- switchCaseIR_t* : EC_2 STO_2 blockStatementIR?
+
+}
+
+rulegroup Stmt_eval/switchStatementIR-table {
+
+  rule Stmt_eval/target-exit:
+    LOCAL EC_0 STO_0 |- SWITCH `( typedExpressionIR ) `{ switchCaseIR* }
+                      : EC_1 STO_1 EXIT
+    ---- ;; evaluate switch target
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 EXIT
+
+  rule Stmt_eval/target-cont-match:
+    LOCAL EC_0 STO_0 |- SWITCH `( typedExpressionIR ) `{ switchCaseIR* }
+                      : EC_2 STO_2 statementResult
+    ---- ;; evaluate switch target
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` value)
+    ---- ;; if switch on table apply result
+    -- if TABLE_ENUM _ `. id_enum = value
+    ---- ;; find matching case
+    -- SwitchCases_table_eval:
+        id_enum |- switchCaseIR* : blockStatementIR
+    ---- ;; evaluate matching case
+    -- Stmt_eval:
+        LOCAL EC_1 STO_1 |- blockStatementIR : EC_2 STO_2 statementResult
+
+  rule Stmt_eval/target-cont-no-match:
+    LOCAL EC_0 STO_0 |- SWITCH `( typedExpressionIR ) `{ switchCaseIR* }
+                      : EC_1 STO_1 ``
+    ---- ;; evaluate switch target
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` value)
+    ---- ;; if switch on table apply result
+    -- if TABLE_ENUM _ `. id_enum = value
+    ---- ;; find matching case
+    -- SwitchCases_table_eval:
+        id_enum |- switchCaseIR* : eps
+
+}
+
+rulegroup Stmt_eval/switchStatementIR-general {
+
+  ;; target-exit is covered in Stmt_eval/switchStatementIR-table
+
+  rule Stmt_eval/target-cont-match:
+    LOCAL EC_0 STO_0 |- SWITCH `( typedExpressionIR ) `{ switchCaseIR* }
+                      : EC_2 STO_2 statementResult
+    ---- ;; evaluate switch target
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` value)
+    ---- ;; find matching case
+    -- SwitchCases_general_eval:
+        LOCAL EC_0 STO_0 value |- switchCaseIR* : EC_1 STO_1 blockStatementIR
+    ---- ;; evaluate matching case
+    -- Stmt_eval:
+        LOCAL EC_1 STO_1 |- blockStatementIR : EC_2 STO_2 statementResult
+
+  rule Stmt_eval/target-cont-no-match:
+    LOCAL EC_0 STO_0 |- SWITCH `( typedExpressionIR ) `{ switchCaseIR* }
+                      : EC_1 STO_1 ``
+    ---- ;; evaluate switch target
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` value)
+    ---- ;; find matching case
+    -- SwitchCases_general_eval:
+        LOCAL EC_0 STO_0 value |- switchCaseIR* : EC_1 STO_1 eps
+
+}
+
+;;
+;; Block statement instantiation
+;;
+
+;;
+;; syntax blockElementStatementIR
+;;
+;;; constantDeclarationIR
+
+rulegroup BlockElementStmt_eval/constantDeclarationIR {
+
+  rule BlockElementStmt_eval/exit:
+    EC_0 STO_0 |- constantDeclarationIR
+                : EC_1 STO_1 EXIT
+    -- Decl_eval:
+        LOCAL EC_0 STO_0 |- constantDeclarationIR
+                          : EC_1 STO_1 EXIT
+
+  rule BlockElementStmt_eval/cont:
+    EC_0 STO_0 |- constantDeclarationIR
+                : EC_1 STO_1 ``
+    -- Decl_eval:
+        LOCAL EC_0 STO_0 |- constantDeclarationIR
+                          : EC_1 STO_1 ``
+
+}
+
+;;; variableDeclarationIR
+
+rulegroup BlockElementStmt_eval/variableDeclarationIR {
+
+  rule BlockElementStmt_eval/non-initializer:
+    EC_0 STO |- annotationList typeIR nameIR eps `;
+              : EC_1 STO ``
+    ---- ;; get initial value
+    -- if typeIR_subst = $subst_type_e(LOCAL, EC_0, typeIR)
+    -- if value_init = $default(typeIR)
+    ---- ;; update evaluation context
+    -- if EC_1 = $add_var_e(LOCAL, EC_0, `` nameIR, value_init)
+
+  rule BlockElementStmt_eval/initializer-exit:
+    EC_0 STO_0 |- annotationList typeIR nameIR (`= typedExpressionIR_init) `;
+                : EC_1 STO_1 EXIT
+    ---- ;; evaluate initializer
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR_init
+                          : EC_1 STO_1 EXIT
+
+  rule BlockElementStmt_eval/initializer-cont:
+    EC_0 STO_0 |- annotationList typeIR nameIR (`= typedExpressionIR_init) `;
+                : EC_2 STO_1 ``
+    ---- ;; evaluate initializer
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR_init
+                          : EC_1 STO_1 (`` value_init)
+    ---- ;; update evaluation context
+    -- if EC_2 = $add_var_e(LOCAL, EC_1, `` nameIR, value_init)
+
+}
+
+;;; statementIR
+
+rule BlockElementStmt_eval/statementIR:
+  EC_0 STO_0 |- statementIR
+              : EC_1 STO_1 statementResult
+  -- Stmt_eval:
+      LOCAL EC_0 STO_0 |- statementIR
+                        : EC_1 STO_1 statementResult
+
+;;
+;; syntax blockElementStatementListIR
+;;
+
+rulegroup BlockElementStmts_eval {
+
+  rule BlockElementStmts_eval/nil:
+    EC STO |- eps : EC STO ``
+
+  rule BlockElementStmts_eval/cons-head-exit:
+    EC_0 STO_0 |- blockElementStatementIR_h :: blockElementStatementIR_t*
+                : EC_1 STO_1 EXIT
+    -- BlockElementStmt_eval:
+        EC_0 STO_0 |- blockElementStatementIR_h
+                    : EC_1 STO_1 EXIT
+
+  rule BlockElementStmts_eval/cons-head-return:
+    EC_0 STO_0 |- blockElementStatementIR_h :: blockElementStatementIR_t*
+                : EC_1 STO_1 returnResult
+    -- BlockElementStmt_eval:
+        EC_0 STO_0 |- blockElementStatementIR_h
+                    : EC_1 STO_1 returnResult
+
+  rule BlockElementStmts_eval/cons-head-cont:
+    EC_0 STO_0 |- blockElementStatementIR_h :: blockElementStatementIR_t*
+                : EC_2 STO_2 statementResult
+    -- BlockElementStmt_eval:
+        EC_0 STO_0 |- blockElementStatementIR_h
+                    : EC_1 STO_1 ``
+    -- BlockElementStmts_eval:
+        EC_1 STO_1 |- blockElementStatementIR_t*
+                    : EC_2 STO_2 statementResult
+
+}
+
+;;
+;; syntax blockStatmentIR = annotationList `{ blockElementStatementListIR }
+;;
+
+rule Block_eval:
+  EC_0 STO_0 |- annotationList `{ blockElementStatementListIR }
+              : EC_1 STO_1 statementResult
+  -- BlockElementStmts_eval:
+      EC_0 STO_0 |- blockElementStatementListIR
+                  : EC_1 STO_1 statementResult

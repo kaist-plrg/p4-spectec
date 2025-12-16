@@ -2,18 +2,30 @@ SPEC = p4spectec
 
 # Compile
 
-.PHONY: build build-spec
+.PHONY: build
 
 EXESPEC = p4spec/_build/default/bin/main.exe
 
-build: build-spec
+build:
+	rm -f ./$(SPEC)
+	rm -f ./p4spec/lib/parsing/parser.ml ./p4spec/lib/parsing/parser.mli
+	opam switch 5.1.0
+	cd p4spec && opam exec -- dune build bin/main.exe && echo
+	ln -f $(EXESPEC) ./$(SPEC)
 
-build-spec:
+release:
 	rm -f ./$(SPEC)
 	rm -f ./p4spec/lib/parsing/parser.ml ./p4spec/lib/parsing/parser.mli
 	opam switch 5.1.0
 	cd p4spec && opam exec -- dune build --profile=release bin/main.exe && echo
 	ln -f $(EXESPEC) ./$(SPEC)
+
+# Spec
+
+spec:
+	cd docs && make build && cd ..
+spec-html:
+	cd docs && make build-html && cd ..
 
 # Format
 
@@ -48,6 +60,11 @@ test-p4inst:
 	echo "#### Running (dune build @p4inst)"
 	opam switch 5.1.0
 	cd p4spec && opam exec -- dune build @p4inst --profile=release && echo OK || (echo "####>" Failure running dune build @p4inst. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
+
+test-p4sim:
+	echo "#### Running (dune build @p4sim)"
+	opam switch 5.1.0
+	cd p4spec && opam exec -- dune build @p4sim --profile=release && echo OK || (echo "####>" Failure running dune build @p4sim. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
 
 test-p4ntt:
 	echo "#### Running (dune build @p4ntt)"

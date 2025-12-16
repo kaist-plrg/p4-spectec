@@ -1,17 +1,14 @@
-open Il.Ast
 open Il.Eq
 open Xl
 open Util.Source
 open Flatten
 open Hint
-module Num = Num
+module Value = Runtime_dynamic.Value
 module F = Format
-
-(**** SpecTec IL ****)
 
 (* Numbers *)
 
-let pp_num fmt (num : num) : unit =
+let pp_num fmt (num : Il.Ast.num) : unit =
   match num with
   | `Nat n -> F.fprintf fmt "%s" (Bigint.to_string n)
   | `Int i ->
@@ -21,13 +18,13 @@ let pp_num fmt (num : num) : unit =
 
 (* Atoms *)
 
-let pp_atom fmt (atom : atom) : unit =
+let pp_atom fmt (atom : Il.Ast.atom) : unit =
   match atom.it with
   | Atom.SilentAtom _ -> F.fprintf fmt ""
   | _ ->
       F.fprintf fmt "%s" (Atom.string_of_atom atom.it |> String.lowercase_ascii)
 
-let pp_atoms fmt (atoms : atom list) : unit =
+let pp_atoms fmt (atoms : Il.Ast.atom list) : unit =
   match atoms with
   | [] -> F.fprintf fmt ""
   | _ ->
@@ -40,7 +37,7 @@ let pp_atoms fmt (atoms : atom list) : unit =
 
 (* Values *)
 
-let rec pp_value (hmap : hmap) fmt (value : value) : unit =
+let rec pp_value (hmap : hmap) fmt (value : Value.t) : unit =
   match value.it with
   | BoolV b -> F.fprintf fmt "%b" b
   | NumV n -> F.fprintf fmt "%a" pp_num n
@@ -57,19 +54,19 @@ let rec pp_value (hmap : hmap) fmt (value : value) : unit =
 
 (* TextV *)
 
-and pp_text_v fmt (value : value) : unit =
+and pp_text_v fmt (value : Value.t) : unit =
   match value.it with
   | TextV text -> F.fprintf fmt "%s" (String.escaped text)
   | _ -> failwith "@pp_text_v: expected TextV value"
 
 (* CaseV *)
 
-and pp_case_v (hmap : hmap) fmt (value : value) : unit =
+and pp_case_v (hmap : hmap) fmt (value : Value.t) : unit =
   match flatten_case_v_opt value with
   | Some (id, _, values) -> (
       let matches_hint nottyp value =
         match value.it with
-        | CaseV (mixop, _) -> eq_mixop (fst nottyp.it) mixop
+        | Il.Ast.CaseV (mixop, _) -> eq_mixop (fst nottyp.it) mixop
         | _ -> false
       in
       let find_hint id value =
@@ -84,13 +81,13 @@ and pp_case_v (hmap : hmap) fmt (value : value) : unit =
       | None -> pp_default_case_v hmap fmt value)
   | _ -> assert false
 
-and pp_hint_case_v (hmap : hmap) (exp : El.Ast.exp) fmt (values : value list) :
-    unit =
+and pp_hint_case_v (hmap : hmap) (exp : El.Ast.exp) fmt (values : Value.t list)
+    : unit =
   let _, str = pp_hint_case_v' hmap 0 exp values in
   F.fprintf fmt "%s" str
 
 and pp_hint_case_v' (hmap : hmap) (cur : int) (exp : El.Ast.exp)
-    (values : value list) : int * string =
+    (values : Value.t list) : int * string =
   match exp.it with
   | TextE text -> (cur, text)
   | AtomE atom -> (cur, F.asprintf "%a" pp_atom atom)
@@ -123,7 +120,7 @@ and pp_hint_case_v' (hmap : hmap) (cur : int) (exp : El.Ast.exp)
       (cur_r, str_l ^ str_r)
   | _ -> (cur, El.Print.string_of_exp exp)
 
-and pp_default_case_v (hmap : hmap) fmt (value : value) : unit =
+and pp_default_case_v (hmap : hmap) fmt (value : Value.t) : unit =
   match value.it with
   | CaseV (mixop, values) ->
       let len = List.length mixop + List.length values in
@@ -137,7 +134,7 @@ and pp_default_case_v (hmap : hmap) fmt (value : value) : unit =
 
 (* OptV *)
 
-and pp_opt_v (hmap : hmap) fmt (value : value) : unit =
+and pp_opt_v (hmap : hmap) fmt (value : Value.t) : unit =
   match value.it with
   | OptV (Some v) -> F.fprintf fmt "%a" (pp_value hmap) v
   | OptV None -> ()
@@ -145,7 +142,7 @@ and pp_opt_v (hmap : hmap) fmt (value : value) : unit =
 
 (* ListV *)
 
-and pp_list_v (hmap : hmap) fmt (value : value) : unit =
+and pp_list_v (hmap : hmap) fmt (value : Value.t) : unit =
   let values =
     match value.it with
     | ListV values -> values
@@ -158,6 +155,10 @@ and pp_list_v (hmap : hmap) fmt (value : value) : unit =
 
 (* P4 program *)
 
-let pp_program (spec : spec) fmt (value : value) : unit =
-  let hmap = hints_of_spec spec in
+let pp_program_il (spec_il : Il.Ast.spec) fmt (value : Value.t) : unit =
+  let hmap = hints_of_spec_il spec_il in
+  pp_value hmap fmt value
+
+let pp_program_sl (spec_sl : Sl.Ast.spec) fmt (value : Value.t) : unit =
+  let hmap = hints_of_spec_sl spec_sl in
   pp_value hmap fmt value

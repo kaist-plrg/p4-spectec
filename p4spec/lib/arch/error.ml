@@ -1,0 +1,12 @@
+open Util.Error
+open Util.Source
+
+(* Error *)
+
+let error (at : region) (msg : string) = error_arch at msg
+let error_no_region (msg : string) = error_arch no_region msg
+
+(* Check *)
+
+let check (b : bool) (at : region) (msg : string) : unit =
+  if not b then error at msg

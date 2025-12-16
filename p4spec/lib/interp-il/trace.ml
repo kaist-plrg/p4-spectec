@@ -60,10 +60,7 @@ let close_time (time_start : time) (subtraces : t list) : time =
            | Rel { time; _ } | Dec { time; _ } | Iter { time; _ } -> (
                match time with
                | END (duration_acc, _) ->
-                   if duration_acc < 0.0 then
-                     Format.asprintf "negative inner acc: %.6f" duration_acc
-                     |> print_endline;
-                   duration_acc
+                   if duration_acc < 0.0 then 0.0 else duration_acc
                | CACHED -> 0.0
                | _ -> assert false)
            | _ -> 0.0)

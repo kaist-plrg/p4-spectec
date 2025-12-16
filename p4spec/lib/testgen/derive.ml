@@ -1,5 +1,6 @@
 open Domain.Lib
 open Sl.Ast
+module Sim = Runtime_simulator.Simulator
 module Dep = Runtime_testgen.Dep
 module SCov = Runtime_testgen.Cov.Single
 module F = Format
@@ -58,11 +59,11 @@ let derive_phantom (pid : pid) (graph : Dep.Graph.t) (cover : SCov.Cover.t) :
 (* Entry point for debugging close-ASTs *)
 
 let debug_phantom (spec : spec) (relname : string) (includes_p4 : string list)
-    (filename_p4 : string) (filenames_ignore : string list)
-    (dirname_debug : string) (pid : pid) : unit =
+    (filename_p4 : string) (dirname_debug : string) (pid : pid) : unit =
+  let (module Runner) = Arch.Gen.gen_placeholder () in
+  let spec_sim = Sim.SL spec in
   match
-    Interp_sl.Run.run ~derive:true spec relname includes_p4 filename_p4
-      filenames_ignore
+    Runner.run_program ~derive:true spec_sim relname includes_p4 filename_p4
   with
   | Fail _ -> print_endline "failed"
   | IllFormed _ -> print_endline "ill-formed"
@@ -93,7 +94,7 @@ let debug_phantom (spec : spec) (relname : string) (includes_p4 : string list)
           in
           let filename_dot =
             F.asprintf "%s/%s_p%d_v%d.dot" dirname_debug
-              (Filesys.base ~suffix:".p4" filename_p4)
+              (Util.Filesys.base ~suffix:".p4" filename_p4)
               pid vid_related
           in
           let oc_dot = open_out filename_dot in
@@ -101,7 +102,7 @@ let debug_phantom (spec : spec) (relname : string) (includes_p4 : string list)
           close_out oc_dot;
           let filename_dot_sub =
             F.asprintf "%s/%s_p%d_v%d_sub.dot" dirname_debug
-              (Filesys.base ~suffix:".p4" filename_p4)
+              (Util.Filesys.base ~suffix:".p4" filename_p4)
               pid vid_related
           in
           let oc_dot_sub = open_out filename_dot_sub in
@@ -131,7 +132,7 @@ let debug_phantom (spec : spec) (relname : string) (includes_p4 : string list)
               F.asprintf "Found close-AST for pid %d" pid |> print_endline;
               let filename_value =
                 F.asprintf "%s/%s_p%d_v%d.value" dirname_debug
-                  (Filesys.base ~suffix:".p4" filename_p4)
+                  (Util.Filesys.base ~suffix:".p4" filename_p4)
                   pid vid_related
               in
               let oc_value = open_out filename_value in

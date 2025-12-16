@@ -8,9 +8,9 @@ open Util.Source
 
 let rec overlap_exp (tdenv : Envs.TDEnv.t) (frees : IdSet.t)
     (unifiers : IdSet.t) (exp_template : exp) (exp : exp) :
-    (IdSet.t * IdSet.t * exp) attempt =
+    (IdSet.t * IdSet.t * exp) attempt_unit =
   let at, note = (exp_template.at, exp_template.note) in
-  let overlap_exp_unequal' () : (IdSet.t * IdSet.t * exp) attempt =
+  let overlap_exp_unequal' () : (IdSet.t * IdSet.t * exp) attempt_unit =
     match (exp_template.it, exp.it) with
     | VarE id_template, _ when IdSet.mem id_template unifiers ->
         Ok (frees, unifiers, exp_template)
@@ -37,12 +37,12 @@ let rec overlap_exp (tdenv : Envs.TDEnv.t) (frees : IdSet.t)
         in
         Ok (frees, unifiers, exp_template)
     | _ ->
-        fail exp.at
+        fail_unit exp.at
           (Format.asprintf "cannot anti-unify expressions %s and %s"
              (Il.Print.string_of_exp exp_template)
              (Il.Print.string_of_exp exp))
   in
-  let overlap_exp_unequal () : (IdSet.t * IdSet.t * exp) attempt =
+  let overlap_exp_unequal () : (IdSet.t * IdSet.t * exp) attempt_unit =
     match overlap_exp_unequal' () with
     | Ok (frees, unifiers, exp_template) -> Ok (frees, unifiers, exp_template)
     | Fail _ ->
@@ -51,13 +51,13 @@ let rec overlap_exp (tdenv : Envs.TDEnv.t) (frees : IdSet.t)
         let plaintyp = exp.note $ exp.at |> Plaintyp.of_internal_typ in
         if not (Types.Equiv.equiv_plaintyp tdenv plaintyp_template plaintyp)
         then
-          fail exp.at
+          fail_unit exp.at
             (Format.asprintf "cannot anti-unify expressions %s and %s"
                (Il.Print.string_of_exp exp_template)
                (Il.Print.string_of_exp exp))
         else
           let id_fresh, typ_fresh, iter_fresh =
-            Fresh.fresh_from_typ frees exp_template.at typ_template
+            Fresh.fresh_var_from_typ frees exp_template.at typ_template
           in
           let frees = IdSet.add id_fresh frees in
           let unifiers = IdSet.add id_fresh unifiers in
@@ -69,7 +69,7 @@ let rec overlap_exp (tdenv : Envs.TDEnv.t) (frees : IdSet.t)
 
 and overlap_exps (tdenv : Envs.TDEnv.t) (frees : IdSet.t) (unifiers : IdSet.t)
     (exps_template : exp list) (exps : exp list) :
-    (IdSet.t * IdSet.t * exp list) attempt =
+    (IdSet.t * IdSet.t * exp list) attempt_unit =
   match (exps_template, exps) with
   | [], [] -> Ok (frees, unifiers, [])
   | exp_template :: exps_template, exp :: exps ->
@@ -81,7 +81,8 @@ and overlap_exps (tdenv : Envs.TDEnv.t) (frees : IdSet.t) (unifiers : IdSet.t)
       in
       Ok (frees, unifiers, exp_template :: exps_template)
   | _ ->
-      fail no_region "cannot anti-unify expression lists of different lengths"
+      fail_unit no_region
+        "cannot anti-unify expression lists of different lengths"
 
 let overlap_exp_group (tdenv : Envs.TDEnv.t) (frees : IdSet.t) (exps : exp list)
     : IdSet.t * IdSet.t * exp =
@@ -127,7 +128,7 @@ let rec populate_exp (unifiers : IdSet.t) (exp_template : exp) (exp : exp) :
     match (exp_template.it, exp.it) with
     | VarE id_template, _ when IdSet.mem id_template unifiers ->
         let exp_match =
-          CmpE (`EqOp, `BoolT, exp, exp_template) $$ (exp.at, BoolT)
+          CmpE (`EqOp, `BoolT, exp_template, exp) $$ (exp.at, BoolT)
         in
         let prem_match = IfPr exp_match $ exp_match.at in
         [ prem_match ]
@@ -141,7 +142,7 @@ let rec populate_exp (unifiers : IdSet.t) (exp_template : exp) (exp : exp) :
         populate_exps unifiers exps_template exps
     | _ ->
         let exp_match =
-          CmpE (`EqOp, `BoolT, exp, exp_template) $$ (exp.at, BoolT)
+          CmpE (`EqOp, `BoolT, exp_template, exp) $$ (exp.at, BoolT)
         in
         let prem_match = IfPr exp_match $ exp_match.at in
         [ prem_match ]

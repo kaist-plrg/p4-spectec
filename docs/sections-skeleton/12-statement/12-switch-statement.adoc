@@ -1,0 +1,150 @@
+[#sec-switchStatement]
+=== Switch statements
+
+${syntax: switchLabel
+          switchCase
+          switchStatement
+          switchLabelIR
+          switchCaseIR
+          switchStatementIR}
+
+The `switch` statement can only be used within `control` blocks, `action`
+bodies, or function bodies.
+
+The `expressionNonBrace` is the same as `expression` as defined in
+<<sec-exprs>>, except it does not include any cases that can
+begin with a left brace `{` character, to avoid syntactic ambiguity
+with a block statement.
+
+There are two kinds of `switch` expressions allowed, described
+separately in the following two subsections.
+
+==== Notes common to all switch statements
+
+It is a compile-time error if two labels of a `switch` statement equal
+each other.  The switch label values need not include all possible
+values of the switch expression.  It is optional to have a `switch`
+case with the `default` label, but if one is present, it must be the
+last one in the `switch` statement.
+
+If a switch label is not followed by a block statement, it falls
+through to the next label. However, if a block statement is present,
+it does not fall through. Note that this is different from C-style
+`switch` statements, where a `break` is needed to prevent
+fall-through.  If the last switch label is not followed by a block
+statement, the behavior is the same as if the last switch label were
+followed by an empty block statement `{ }`.
+
+When a `switch` statement is executed, first the switch expression is
+evaluated, and any side effects from evaluating this expression are
+visible to any `switch` case that is executed.  Among switch labels
+that are not `default`, at most one of them can equal the value of the
+switch expression. If one is equal, that switch case is executed.
+
+If no labels are equal to the `switch` expression, then:
+
+- if there is a `default` label, the case with the `default` label is
+  executed.
+- if there is no `default` label, then no switch case is executed, and
+  execution continues after the end of the `switch` statement, with no
+  side effects (except any that were caused by evaluating the `switch`
+  expression).
+
+See "Implementing generalized P4_16 switch statements" for possible techniques
+that one might use to implement generalized switch
+statements.footnote:GeneralizedSwitchStatements[<https://github.com/p4lang/p4-spec/blob/master/p4-16/spec/docs/implementing-generalized-switch-statements.md>]
+
+[#sec-switchStatement-table]
+==== Switch statement on match-action table result
+
+This type of `switch` statement can only be used within control `apply`
+blocks.  For this variant of `switch` statement, the expression must be
+of the form `t.apply().action_run`, where `t` is the name of a table
+(see <<sec-invoke-mau>>).  All switch labels must be names of
+actions of the table `t`, or `default`.
+
+[source,p4]
+----
+switch (t.apply().action_run) {
+   action1:          // fall-through to action2:
+   action2: { /* body omitted */ }
+   action3: { /* body omitted */ }  // no fall-through from action2 to action3 labels
+   default: { /* body omitted */ }
+}
+----
+
+Note that the `default` label of the `switch` statement is used to
+match on the kind of action executed, no matter whether there was a
+table hit or miss. The `default` label does not indicate that the
+table missed and the `default_action` was executed.
+
+[[sem-type-check-switchStatement-table]]
+[discrete]
+===== Type checking
+
+${relation: SwitchLabel_table_ok}
+
+${rulegroup: SwitchLabel_table_ok}
+${ruleprose: SwitchLabel_table_ok}
+
+${relation: SwitchCase_table_ok}
+
+${rulegroup: SwitchCase_table_ok}
+${ruleprose: SwitchCase_table_ok}
+
+${rulegroup: Stmt_ok/switchStatement-table}
+${ruleprose: Stmt_ok/switchStatement-table}
+
+[#sec-switchStatement-general]
+==== Switch statement on numeric or enumerated type
+
+For this variant of `switch` statement, the expression must evaluate
+to a result with one of these types:
+
+- `bit<W>`
+- `int<W>`
+- `enum`, either with or without an underlying representation specified
+- `error`
+
+All switch labels must be expressions with compile-time known values,
+and must have a type that can be implicitly cast to the type of the
+`switch` expression (see <<sec-implicit-casts>>).  Switch
+labels must not begin with a left brace character `{`, to avoid
+ambiguity with a block statement.
+
+[source,p4]
+----
+// Assume the expression hdr.ethernet.etherType has type bit<16>.
+switch (hdr.ethernet.etherType) {
+   0x86dd: { /* body omitted */ }
+   0x0800:          // fall-through to the next body
+   0x0802: { /* body omitted */ }
+   0xcafe: { /* body omitted */ }
+   default: { /* body omitted */ }
+}
+----
+
+${relation: SwitchLabel_general_ok}
+
+${rulegroup: SwitchLabel_general_ok}
+${ruleprose: SwitchLabel_general_ok}
+
+${relation: SwitchCase_general_ok}
+
+${rulegroup: SwitchCase_general_ok}
+${ruleprose: SwitchCase_general_ok}
+
+${rulegroup: Stmt_ok/switchStatement-general}
+${ruleprose: Stmt_ok/switchStatement-general}
+
+[[sem-compile-time-eval-switchStatement]]
+[discrete]
+==== Compile-time evaluation
+
+${relation: SwitchCase_inst}
+
+${rulegroup: SwitchCase_inst}
+${ruleprose: SwitchCase_inst}
+
+${rulegroup: Stmt_inst/switchStatementIR}
+${ruleprose: Stmt_inst/switchStatementIR}

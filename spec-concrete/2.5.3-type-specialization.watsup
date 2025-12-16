@@ -1,0 +1,123 @@
+;;
+;; Specializations
+;;
+;; Inserts fresh type variables when type arguments are omitted
+;;
+
+;;
+;;;; Type definition specializations
+;;
+
+dec $specialize_typeDefIR(typeDefIR, typeIR*) : typeIR
+  hint(prose_in %0 "specialized by" %1)
+
+def $specialize_typeDefIR(typeDefIR_base, typeIR_arg*)
+  = typeIR_spec
+  ---- ;; retrieve type parameters
+  -- if (tid_tparam_expl*, tid_tparam_impl*)
+      = $type_parameters_of_typeDefIR(typeDefIR_base)
+  -- if tid_tparam* = tid_tparam_expl* ++ tid_tparam_impl*
+  ---- ;; check arity
+  -- if |tid_tparam*| = |typeIR_arg*|
+  ---- ;; specialize
+  -- if theta = `{ (tid_tparam `: typeIR_arg)* }
+  -- if typeIR_base = $type_of_typeDefIR(typeDefIR_base)
+  -- if typeIR_spec = $subst_typeIR(theta, typeIR_base)
+
+;;
+;;;; Callable type definition specializations
+;;
+
+dec $specialize_callableTypeDefIR(callableTypeDefIR, typeIR*)
+  : (callableTypeIR, tid*)
+
+def $specialize_callableTypeDefIR(callableTypeDefIR_base, typeIR_arg*)
+  = (callableTypeIR_spec, tid_fresh*)
+  ---- ;; retrieve type parameters
+  -- if (tid_tparam_expl*, tid_tparam_impl*)
+      = $type_parameters_of_callableTypeDefIR(callableTypeDefIR_base)
+  -- if tid_tparam* = tid_tparam_expl* ++ tid_tparam_impl*
+  ---- ;; if all explicit type arguments are supplied,
+  ---- ;; and all implicit type arguments are omitted
+  -- if $(|tid_tparam_expl*| = |typeIR_arg*|)
+  ---- ;; create fresh type arguments for implicit type parameters
+  -- if tid_fresh* = $fresh_tids(|tid_tparam_impl*|)
+  -- if (typeIR_arg_impl = `` tid_fresh)*
+  ---- ;; specialize
+  -- if theta
+      = `{ (tid_tparam_expl `: typeIR_arg)*
+           ++ (tid_tparam_impl `: typeIR_arg_impl)* }
+  -- if callableTypeIR_base
+      = $type_of_callableTypeDefIR(callableTypeDefIR_base)
+  -- if callableTypeIR_spec
+      = $subst_callableTypeIR(theta, callableTypeIR_base)
+
+def $specialize_callableTypeDefIR(callableTypeDefIR_base, typeIR_arg*)
+  = (callableTypeIR_spec, tid_fresh*)
+  ---- ;; retrieve type parameters
+  -- if (tid_tparam_expl*, tid_tparam_impl*)
+      = $type_parameters_of_callableTypeDefIR(callableTypeDefIR_base)
+  -- if tid_tparam* = tid_tparam_expl* ++ tid_tparam_impl*
+  ---- ;; if all type arguments are omitted
+  -- if $(|tid_tparam_expl*| > 0) /\ $(|typeIR_arg*| = 0)
+  ---- ;; create fresh type arguments
+  -- if tid_fresh* = $fresh_tids(|tid_tparam*|)
+  -- if (typeIR_arg_fresh = `` tid_fresh)*
+  ---- ;; specialize
+  -- if theta = `{ (tid_tparam `: typeIR_arg_fresh)* }
+  -- if callableTypeIR_base
+      = $type_of_callableTypeDefIR(callableTypeDefIR_base)
+  -- if callableTypeIR_spec
+      = $subst_callableTypeIR(theta, callableTypeIR_base)
+
+;;
+;;;; Constructor type definition specializations
+;;
+
+dec $specialize_constructorTypeDefIR(constructorTypeDefIR, typeIR*)
+  : (constructorTypeIR, tid*)
+
+def $specialize_constructorTypeDefIR(
+    CONSTRUCTOR `< tid_tparam_expl* `, tid_tparam_impl* >
+      `( constructorParameterIR* ) `: typeIR,
+    typeIR_arg*
+  )
+  = (constructorTypeIR_spec, tid_fresh*)
+  ---- ;; retrieve type parameters
+  -- if tid_tparam* = tid_tparam_expl* ++ tid_tparam_impl*
+  ---- ;; if all explicit type arguments are supplied,
+  ---- ;; and all implicit type arguments are omitted
+  -- if $(|tid_tparam_expl*| = |typeIR_arg*|)
+  ---- ;; create fresh type arguments for implicit type parameters
+  -- if tid_fresh* = $fresh_tids(|tid_tparam_impl*|)
+  -- if (typeIR_arg_impl = `` tid_fresh)*
+  ---- ;; specialize
+  -- if theta
+      = `{ (tid_tparam_expl `: typeIR_arg)*
+           ++ (tid_tparam_impl `: typeIR_arg_impl)* }
+  -- if constructorTypeIR_spec
+      = $subst_constructorTypeIR(
+          theta,
+          CONSTRUCTOR `( constructorParameterIR* ) `: typeIR
+        )
+
+def $specialize_constructorTypeDefIR(
+    CONSTRUCTOR `< tid_tparam_expl* `, tid_tparam_impl* >
+      `( constructorParameterIR* ) `: typeIR,
+    typeIR_arg*
+  )
+  = (constructorTypeIR_spec, tid_fresh*)
+  ---- ;; retrieve type parameters
+  -- if tid_tparam* = tid_tparam_expl* ++ tid_tparam_impl*
+  ---- ;; if all type arguments are omitted
+  -- if $(|tid_tparam_expl*| > 0) /\ $(|typeIR_arg*| = 0)
+  ---- ;; create fresh type arguments
+  -- if tid_fresh* = $fresh_tids(|tid_tparam*|)
+  -- if (typeIR_arg_fresh = `` tid_fresh)*
+  ---- ;; specialize
+  -- if theta = `{ (tid_tparam `: typeIR_arg_fresh)* }
+  -- if constructorTypeIR_spec
+      = $subst_constructorTypeIR(
+          theta,
+          CONSTRUCTOR `( constructorParameterIR* ) `: typeIR
+        )

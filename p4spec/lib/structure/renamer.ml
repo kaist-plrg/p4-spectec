@@ -128,6 +128,9 @@ and rename_path (rename : t) (path : path) : path =
       let path = rename_path rename path in
       Il.Ast.DotP (path, atom) $$ (at, note)
 
+and rename_exps (rename : t) (exps : exp list) : exp list =
+  List.map (rename_exp rename) exps
+
 and rename_arg (rename : t) (arg : arg) : arg =
   let at = arg.at in
   match arg.it with
@@ -135,6 +138,9 @@ and rename_arg (rename : t) (arg : arg) : arg =
       let exp = rename_exp rename exp in
       Il.Ast.ExpA exp $ at
   | DefA _ -> arg
+
+and rename_args (rename : t) (args : arg list) : arg list =
+  List.map (rename_arg rename) args
 
 and rename_case (rename : t) (case : case) : case =
   let guard, instrs = case in
@@ -176,6 +182,7 @@ and rename_instr (rename : t) (instr : instr) : instr =
       OtherwiseI instr $ at
   | GroupI (id_group, exps_group, instrs_group) ->
       let instrs_group = List.map (rename_instr rename) instrs_group in
+      let exps_group = List.map (rename_exp rename) exps_group in
       GroupI (id_group, exps_group, instrs_group) $ at
   | LetI (exp_l, exp_r, iterexps) ->
       let exp_l = rename_exp rename exp_l in

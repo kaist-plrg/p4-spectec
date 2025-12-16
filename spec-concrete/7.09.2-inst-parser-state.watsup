@@ -1,0 +1,37 @@
+;;
+;; Parser state instantiation
+;;
+;; syntax parserStateIR =
+;;   annotationList STATE nameIR
+;;     `{ parserStatementListIR transitionStatementIR }
+;;
+
+rule ParserState_inst:
+  IC_0 STO_0 |- annotationList STATE nameIR
+                  `{ parserStatementListIR transitionStatementIR }
+              : IC_2 STO_1
+  ---- ;; instantiate parser statements
+  -- ParserStmts_inst:
+      IC_0 STO_0 |- parserStatementListIR
+                  : IC_1 STO_1 parserStatementListIR_inst
+  ---- ;; bind parser state to state environment
+  -- if state
+      = annotationList STATE `{ parserStatementListIR_inst transitionStatementIR }
+  -- if IC_2 = $add_state_i(BLOCK, IC_1, nameIR, state)
+
+;;
+;; Parser state list instantiation
+;;
+;; syntax parserStateListIR
+;;
+
+rule ParserStates_inst/nil:
+  IC STO |- eps : IC STO
+
+rule ParserStates_inst/cons:
+  IC_0 STO_0 |- parserStateIR_h :: parserStateIR_t*
+              : IC_2 STO_2
+  -- ParserState_inst: IC_0 STO_0 |- parserStateIR_h
+                                   : IC_1 STO_1
+  -- ParserStates_inst: IC_1 STO_1 |- parserStateIR_t*
+                                    : IC_2 STO_2

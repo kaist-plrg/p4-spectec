@@ -13,6 +13,8 @@
    (ignore-outputs
     (diff struct.expected struct.actual))
    (ignore-outputs
+    (diff prose.expected prose.actual))
+   (ignore-outputs
     (diff run_il_type_pos_p4c.expected run_il_type_pos_p4c.actual))
    (ignore-outputs
     (diff run_il_type_neg_p4c.expected run_il_type_neg_p4c.actual))
@@ -24,6 +26,8 @@
     (diff run_sl_type_neg_p4c.expected run_sl_type_neg_p4c.actual))
    (ignore-outputs
     (diff run_sl_inst_p4c.expected run_sl_inst_p4c.actual))
+   (ignore-outputs
+    (diff sim_sl_v1model_p4c.expected sim_sl_v1model_p4c.actual))
    (ignore-outputs
     (diff cover_dangling_p4c.expected cover_dangling_p4c.actual))
    (ignore-outputs
@@ -40,53 +44,64 @@
    (ignore-outputs
     (diff elab.expected elab.actual))
    (ignore-outputs
-    (diff struct.expected struct.actual)))))
+    (diff struct.expected struct.actual))
+   (ignore-outputs
+    (diff prose.expected prose.actual)))))
 
 ;; P4 typing tests
 
 (rule
-  (alias p4type)
-  (action
-   (progn
-    (ignore-outputs
-     (diff run_il_type_pos_p4c.expected run_il_type_pos_p4c.actual))
-    (ignore-outputs
-     (diff run_il_type_neg_p4c.expected run_il_type_neg_p4c.actual))
-    (ignore-outputs
-     (diff run_sl_type_pos_p4c.expected run_sl_type_pos_p4c.actual))
-    (ignore-outputs
-     (diff run_sl_type_neg_p4c.expected run_sl_type_neg_p4c.actual)))))
+ (alias p4type)
+ (action
+  (progn
+   (ignore-outputs
+    (diff run_il_type_pos_p4c.expected run_il_type_pos_p4c.actual))
+   (ignore-outputs
+    (diff run_il_type_neg_p4c.expected run_il_type_neg_p4c.actual))
+   (ignore-outputs
+    (diff run_sl_type_pos_p4c.expected run_sl_type_pos_p4c.actual))
+   (ignore-outputs
+    (diff run_sl_type_neg_p4c.expected run_sl_type_neg_p4c.actual)))))
 
 ;; P4 instantiation tests
 
 (rule
-  (alias p4inst)
-  (action
-   (progn
-    (ignore-outputs
-     (diff run_il_inst_p4c.expected run_il_inst_p4c.actual))
-    (ignore-outputs
-     (diff run_sl_inst_p4c.expected run_sl_inst_p4c.actual)))))
+ (alias p4inst)
+ (action
+  (progn
+   (ignore-outputs
+    (diff run_il_inst_p4c.expected run_il_inst_p4c.actual))
+   (ignore-outputs
+    (diff run_sl_inst_p4c.expected run_sl_inst_p4c.actual)))))
+
+;; P4 simulation tests
+
+(rule
+ (alias p4sim)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_sl_v1model_p4c.expected sim_sl_v1model_p4c.actual)))))
 
 ;; Testgen - dangling coverage tests
 
 (rule
-  (alias p4ntt)
-  (action
-   (progn
-    (ignore-outputs
-     (diff cover_dangling_p4c.expected cover_dangling_p4c.actual)))))
+ (alias p4ntt)
+ (action
+  (progn
+   (ignore-outputs
+    (diff cover_dangling_p4c.expected cover_dangling_p4c.actual)))))
 
 ;; P4 parsing tests
 
 (rule
-  (alias p4parse)
-  (action
-   (progn
-    (ignore-outputs
-     (diff parser_pos_p4c.expected parser_pos_p4c.actual))
-    (ignore-outputs
-     (diff parser_neg_p4c.expected parser_neg_p4c.actual)))))
+ (alias p4parse)
+ (action
+  (progn
+   (ignore-outputs
+    (diff parser_pos_p4c.expected parser_pos_p4c.actual))
+   (ignore-outputs
+    (diff parser_neg_p4c.expected parser_neg_p4c.actual)))))
 
 ;; Rules to generate outputs
 
@@ -109,6 +124,15 @@
     (run ./test.exe struct -s ../../../../spec-concrete)))))
 
 (rule
+ (target prose.actual)
+ (action
+  (with-stdout-to
+   prose.actual
+   (with-stderr-to
+    prose.err
+    (run ./test.exe prose -s ../../../../spec-concrete)))))
+
+(rule
  (target run_il_type_pos_p4c.actual)
  (action
   (with-stdout-to
@@ -117,7 +141,8 @@
     run_il_type_pos_p4c.err
     (run
      ./test.exe
-     run-il
+     run
+     -il
      -s
      ../../../../spec-concrete
      -rel
@@ -138,7 +163,8 @@
     run_il_type_neg_p4c.err
     (run
      ./test.exe
-     run-il
+     run
+     -il
      -s
      ../../../../spec-concrete
      -rel
@@ -160,7 +186,8 @@
     run_il_inst_p4c.err
     (run
      ./test.exe
-     run-il
+     run
+     -il
      -s
      ../../../../spec-concrete
      -rel
@@ -181,7 +208,8 @@
     run_sl_type_pos_p4c.err
     (run
      ./test.exe
-     run-sl
+     run
+     -sl
      -s
      ../../../../spec-concrete
      -rel
@@ -202,7 +230,8 @@
     run_sl_type_neg_p4c.err
     (run
      ./test.exe
-     run-sl
+     run
+     -sl
      -s
      ../../../../spec-concrete
      -rel
@@ -224,7 +253,8 @@
     run_sl_inst_p4c.err
     (run
      ./test.exe
-     run-sl
+     run
+     -sl
      -s
      ../../../../spec-concrete
      -rel
@@ -235,6 +265,30 @@
      ../../../../excludes
      -d
      ../../../../p4c/testdata/p4_16_samples)))))
+
+(rule
+ (target sim_sl_v1model_p4c.actual)
+ (action
+  (with-stdout-to
+   sim_sl_v1model_p4c.actual
+   (with-stderr-to
+    sim_sl_v1model_p4c.err
+    (run
+     ./test.exe
+     sim
+     -sl
+     -arch
+     v1model
+     -s
+     ../../../../spec-concrete
+     -i
+     ../../../../p4c/p4include
+     -e
+     ../../../../excludes
+     -d
+     ../../../../p4c/testdata/p4_16_samples
+     -p
+     ../../../../patches/v1model)))))
 
 (rule
  (target cover_dangling_p4c.actual)

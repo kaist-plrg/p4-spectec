@@ -64,7 +64,7 @@ RUN apt-get update && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN python3 -m pip install psutil
-COPY patches/creduce /usr/bin/creduce
+COPY creduce-patches/creduce /usr/bin/creduce
 RUN chmod +x /usr/bin/creduce
 
 ENV P4SPECTEC_PATH=/home/p4-spectec

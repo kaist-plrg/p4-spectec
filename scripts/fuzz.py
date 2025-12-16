@@ -32,7 +32,6 @@ class FuzzConfig:
     relname: str
     include: Directory
     exclude: Directory
-    ignores: List[Filepath]
     coverage: Filepath
     mode: str
     reduce: bool
@@ -49,12 +48,6 @@ def parse_args() -> FuzzConfig:
     parser.add_argument("--relname", type=str, default="Program_ok")
     parser.add_argument("--include", type=str, default="p4c/p4include")
     parser.add_argument("--exclude", type=str, default="excludes")
-    parser.add_argument(
-        "--ignores",
-        nargs="*",
-        type=str,
-        default=["ignores/relation.ignore", "ignores/function.ignore"],
-    )
     parser.add_argument("--coverage", type=str, default="coverage/p4c-pos.coverage")
     parser.add_argument("--reduce", action="store_true")
     parser.add_argument("--timeout", type=int, default=12*60*60, help="Fuzzer timeout in seconds.")
@@ -79,7 +72,6 @@ def parse_args() -> FuzzConfig:
         relname=args.relname,
         include=args.include,
         exclude=args.exclude,
-        ignores=args.ignores,
         coverage=args.coverage,
         mode=args.mode,
         reduce=args.reduce,
@@ -144,7 +136,6 @@ def fuzzing_campaign(config: FuzzConfig) -> None:
         exit(1)
     print(f"[CONFIG] Exclude directory: {EXCLUDE_DIR}")
 
-    IGNORE_FILES: List[Filepath] = config.ignores
     COVERAGE_FILE: Filepath = Filepath(config.coverage)
     if not os.path.isfile(COVERAGE_FILE):
         print(f"Error: Coverage file {COVERAGE_FILE} does not exist.")
@@ -170,7 +161,6 @@ def fuzzing_campaign(config: FuzzConfig) -> None:
         INCLUDE_DIR,
         "-e",
         EXCLUDE_DIR,
-        *[cmd for file in IGNORE_FILES for cmd in ("-ignore", file)],
         "-gen",
         WORK_DIR,
     ]
@@ -373,7 +363,6 @@ if __name__ == "__main__":
         config.relname,
         config.include,
         config.exclude,
-        config.ignores,
         TESTDATA_DIR,
         OUTPUT_PATH,
     )

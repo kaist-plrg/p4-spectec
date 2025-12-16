@@ -88,7 +88,7 @@
 %type <Il.Ast.value>
   (* Aux *) int externName declarationList
   (* Misc *) trailingCommaOpt (* Booleans *) booleanLiteral
-  (* Numbers *) numberLiteral (* Strings *) stringLiteral
+  (* Integers *) integerLiteral (* Strings *) stringLiteral
   (* Names *)
   identifier typeIdentifier nonTypeName prefixedNonTypeName typeName prefixedTypeName tableCustomName name nameList member
   (* Directions *) direction
@@ -108,8 +108,8 @@
   errorAccessExpression memberAccessExpression indexAccessExpression accessExpression
   memberAccessExpressionNonBrace indexAccessExpressionNonBrace accessExpressionNonBrace
   (* >> Call expressions *)
-  routineTarget constructorTarget callTarget callExpression
-  routineTargetNonBrace callTargetNonBrace callExpressionNonBrace
+  callableTarget constructorTarget callTarget callExpression
+  callableTargetNonBrace callTargetNonBrace callExpressionNonBrace
   (* >> Parenthesized Expressions *) parenthesizedExpression
   (* >> Expressions *)
   expression expressionList memberAccessBase sequenceElementExpression recordElementExpression dataElementExpression
@@ -135,9 +135,10 @@
   (* >> Match kind declarations *) matchKindDeclaration
   (* >> Derived type declarations *)
   enumTypeDeclaration typeField typeFieldList structTypeDeclaration headerTypeDeclaration headerUnionTypeDeclaration derivedTypeDeclaration
-  (* >> Typedef and newtype declarations *) typedefType typedefDeclaration
+  (* >> Typedef and newtype declarations *) typedef typedefDeclaration
   (* >> Extern declarations *)
-  externFunctionDeclaration methodPrototype methodPrototypeList externObjectDeclaration externDeclaration
+  externFunctionDeclaration externConstructorPrototype externMethodPrototype
+  externConstructorOrMethodPrototypeList externObjectDeclaration externDeclaration
   (* >> Parser statements and declarations *)
   (* >>>> Select expressions *) selectCase selectCaseList selectExpression
   (* >>>> Transition statements *) stateExpression transitionStatement
@@ -234,10 +235,10 @@ trailingCommaOpt:
   | TRUE { [ Term "TRUE" ] #@ "booleanLiteral" }
   | FALSE { [ Term "FALSE" ] #@ "booleanLiteral" }
 
-(* Numbers *)
-numberLiteral:
+(* Integers *)
+integerLiteral:
 	| int = int
-    { [ Term "D"; NT int ] #@ "numberLiteral" }
+    { [ Term "D"; NT int ] #@ "integerLiteral" }
 (* Processed by lexer *)
 	| number = NUMBER
     { fst number }
@@ -461,7 +462,7 @@ namedExpressionList:
 (* >> Literal expressions *)
 %inline literalExpression:
   | bool = booleanLiteral { bool }
-	| num = numberLiteral { num }
+	| int = integerLiteral { int }
 	| str = stringLiteral { str }
 ;
 
@@ -560,14 +561,18 @@ namedExpressionList:
 %inline indexAccessExpression:
 	| a = expression L_BRACKET i = expression R_BRACKET
 		{ [ NT a; Term "["; NT i; Term "]" ] #@ "indexAccessExpression" }
-	| a = expression L_BRACKET h = expression COLON l = expression R_BRACKET
-		{ [ NT a; Term "["; NT h; Term ":"; NT l; Term "]" ] #@ "indexAccessExpression" }
+;
+
+%inline sliceAccessExpression:
+  | a = expression L_BRACKET h = expression COLON l = expression R_BRACKET
+    { [ NT a; Term "["; NT h; Term ":"; NT l; Term "]" ] #@ "sliceAccessExpression" }
 ;
 
 %inline accessExpression:
 	| e = errorAccessExpression
 	| e = memberAccessExpression
 	| e = indexAccessExpression
+  | e = sliceAccessExpression
 		{ e }
 ;
 
@@ -579,19 +584,23 @@ namedExpressionList:
 %inline indexAccessExpressionNonBrace:
 	| a = expressionNonBrace L_BRACKET i = expression R_BRACKET
 		{ [ NT a; Term "["; NT i; Term "]" ] #@ "indexAccessExpressionNonBrace" }
-	| a = expressionNonBrace L_BRACKET h = expression COLON l = expression R_BRACKET
-		{ [ NT a; Term "["; NT h; Term ":"; NT l; Term "]" ] #@ "indexAccessExpressionNonBrace" }
+;
+
+%inline sliceAccessExpressionNonBrace:
+  | a = expressionNonBrace L_BRACKET h = expression COLON l = expression R_BRACKET
+    { [ NT a; Term "["; NT h; Term ":"; NT l; Term "]" ] #@ "sliceAccessExpressionNonBrace" }
 ;
 
 %inline accessExpressionNonBrace:
 	| e = errorAccessExpression
 	| e = memberAccessExpressionNonBrace
 	| e = indexAccessExpressionNonBrace
+  | e = sliceAccessExpressionNonBrace
 		{ e }
 ;
 
 (* >> Call expressions *)
-%inline routineTarget:
+%inline callableTarget:
   | e = expression { e }
 ;
 
@@ -600,7 +609,7 @@ namedExpressionList:
 ;
 
 %inline callTarget:
-	| t = routineTarget
+	| t = callableTarget
 	| t = constructorTarget
 		{ t }
 ;
@@ -608,17 +617,17 @@ namedExpressionList:
 %inline callExpression:
 	| t = callTarget L_PAREN args = argumentList R_PAREN
 		{ [ NT t; Term "("; NT args; Term ")" ] #@ "callExpression" }
-	| t = routineTarget l_angle targs = realTypeArgumentList r_angle L_PAREN args = argumentList R_PAREN
+	| t = callableTarget l_angle targs = realTypeArgumentList r_angle L_PAREN args = argumentList R_PAREN
 		{ [ NT t; Term "<"; NT targs; Term ">"; Term "("; NT args; Term ")" ]
       #@ "callExpression" }
 ;
 
-%inline routineTargetNonBrace:
+%inline callableTargetNonBrace:
   | e = expressionNonBrace { e }
 ;
 
 %inline callTargetNonBrace:
-	| t = routineTargetNonBrace
+	| t = callableTargetNonBrace
 	| t = constructorTarget
 		{ t }
 ;
@@ -626,7 +635,7 @@ namedExpressionList:
 %inline callExpressionNonBrace:
 	| t = callTargetNonBrace L_PAREN args = argumentList R_PAREN
 		{ [ NT t; Term "("; NT args; Term ")" ] #@ "callExpressionNonBrace" }
-	| t = routineTargetNonBrace l_angle targs = realTypeArgumentList r_angle L_PAREN args = argumentList R_PAREN
+	| t = callableTargetNonBrace l_angle targs = realTypeArgumentList r_angle L_PAREN args = argumentList R_PAREN
 		{ [ NT t; Term "<"; NT targs; Term ">"; Term "("; NT args; Term ")" ]
       #@ "callExpressionNonBrace" }
 
@@ -1164,14 +1173,14 @@ derivedTypeDeclaration:
 ;
 
 (* >> Typedef and newtype declarations *)
-typedefType:
+typedef:
 	| t = typeRef
 	| t = derivedTypeDeclaration
 		{ t }
 ;
 
 typedefDeclaration:
-	| al = annotationList TYPEDEF t = typedefType n = name SEMICOLON
+	| al = annotationList TYPEDEF t = typedef n = name SEMICOLON
     { [ NT al; Term "TYPEDEF"; NT t; NT n; Term ";" ] #@ "typedefDeclaration" }
 	| al = annotationList TYPE t = typeRef n = name SEMICOLON
     { [ NT al; Term "TYPE"; NT t; NT n; Term ";" ] #@ "typedefDeclaration" }
@@ -1187,25 +1196,33 @@ externFunctionDeclaration:
       decl }
 ;
 
-methodPrototype:
+%inline externConstructorPrototype:
 	| al = annotationList tid = typeIdentifier L_PAREN pl = parameterList R_PAREN SEMICOLON
-    { [ NT al; NT tid; Term "("; NT pl; Term ")"; Term ";" ] #@ "methodPrototype" }
+    { [ NT al; NT tid; Term "("; NT pl; Term ")"; Term ";" ] #@ "externConstructorPrototype" }
+
+%inline externMethodPrototype:
 	| al = annotationList p = functionPrototype pop_scope SEMICOLON
-    { [ NT al; NT p; Term ";" ] #@ "methodPrototype" }
+    { [ NT al; NT p; Term ";" ] #@ "externMethodPrototype" }
 	| al = annotationList ABSTRACT p = functionPrototype
     pop_scope SEMICOLON
-    { [ NT al; Term "ABSTRACT"; NT p; Term ";" ] #@ "methodPrototype" }
+    { [ NT al; Term "ABSTRACT"; NT p; Term ";" ] #@ "externMethodPrototype" }
 ;
 
-methodPrototypeList:
-  | (* empty *) { [ Term "`EMPTY" ] #@ "methodPrototypeList" }
-  | ps = methodPrototypeList p = methodPrototype
-    { [ NT ps; NT p ] #@ "methodPrototypeList" }
+externConstructorOrMethodPrototype:
+  | p = externConstructorPrototype
+  | p = externMethodPrototype
+    { p }
+;
+
+externConstructorOrMethodPrototypeList:
+  | (* empty *) { [ Term "`EMPTY" ] #@ "externConstructorOrMethodPrototypeList" }
+  | pl = externConstructorOrMethodPrototypeList p = externConstructorOrMethodPrototype
+    { [ NT pl; NT p ] #@ "externConstructorOrMethodPrototypeList" }
 ;
 
 externObjectDeclaration:
   | al = annotationList EXTERN n = push_externName tpl = typeParameterListOpt
-    L_BRACE pl = methodPrototypeList R_BRACE pop_scope
+    L_BRACE pl = externConstructorOrMethodPrototypeList R_BRACE pop_scope
     { let decl =
         [ NT al; Term "EXTERN"; NT n; NT tpl; Term "{"; NT pl; Term "}" ]
           #@ "externObjectDeclaration"
@@ -1282,6 +1299,15 @@ parserBlockStatement:
     { [ NT al; Term "{"; NT sl; Term "}" ] #@ "parserBlockStatement" }
 ;
 
+parserConditionalStatement:
+	| IF L_PAREN c = expression R_PAREN t = parserStatement %prec THEN
+    { [ Term "IF"; Term "("; NT c; Term ")"; NT t ]
+      #@ "parserConditionalStatement" }
+	| IF L_PAREN c = expression R_PAREN t = parserStatement ELSE f = parserStatement
+    { [ Term "IF"; Term "("; NT c; Term ")"; NT t; Term "ELSE"; NT f ]
+      #@ "parserConditionalStatement" }
+;
+
 parserStatement:
   | s = constantDeclaration
   | s = variableDeclaration
@@ -1290,7 +1316,7 @@ parserStatement:
   | s = callStatement
   | s = directApplicationStatement
   | s = parserBlockStatement
-  | s = conditionalStatement
+  | s = parserConditionalStatement
     { s }
 ;
 
@@ -1374,8 +1400,8 @@ tableActionList:
 
 (* >>>>>> Table entry property *)
 tableEntryPriority:
-  | PRIORITY ASSIGN num = numberLiteral COLON
-    { [ Term "PRIORITY"; Term "="; NT num; Term ":" ] #@ "tableEntryPriority" }
+  | PRIORITY ASSIGN int = integerLiteral COLON
+    { [ Term "PRIORITY"; Term "="; NT int; Term ":" ] #@ "tableEntryPriority" }
   | PRIORITY ASSIGN L_PAREN e = expression R_PAREN COLON
     { [ Term "PRIORITY"; Term "="; Term "("; NT e; Term ")"; Term ":" ] #@ "tableEntryPriority" }
 ;
@@ -1604,8 +1630,8 @@ annotationToken:
     { tid }
 	| str = stringLiteral
     { str }
-	| num = numberLiteral
-    { num }
+	| int = integerLiteral
+    { int }
 	| MASK
     { [ Term "&&&" ] #@ "annotationToken" }
   (* TODO: missing DOTS "..." in spec *)

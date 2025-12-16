@@ -35,3 +35,13 @@ let string_of_mixop mixop =
          mixop)
   in
   "`" ^ smixop ^ "`"
+
+let render_mixop mixop =
+  let mixop = List.map (List.map it) mixop in
+  let smixop =
+    String.concat "%"
+      (List.map
+         (fun atoms -> String.concat "" (List.map Atom.render_atom atoms))
+         mixop)
+  in
+  "`" ^ smixop ^ "`"

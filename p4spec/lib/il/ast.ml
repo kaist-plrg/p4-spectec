@@ -79,6 +79,7 @@ and value' =
   | OptV of value option
   | ListV of value list
   | FuncV of id
+  | ExternV of Yojson.Safe.t
 [@@deriving yojson]
 
 and valuefield = atom * value
@@ -196,20 +197,35 @@ and rulegroup' = id * rulematch * rulepath list
 and clause = clause' phrase
 and clause' = arg list * exp * prem list
 
+(* Table rows *)
+
+and tablerow = tablerow' phrase
+and tablerow' = exp list * arg list * exp * prem list
+
 (* Hints *)
 
-and hint = { hintid : id; hintexp : El.Ast.exp }
+and hint = El.Ast.hint
 
 (* Definitions *)
 
 type def = def' phrase
 and def' =
-  (* `syntax` id `<` list(tparam, `,`) `>` `=` deftyp *)
-  | TypD of id * tparam list * deftyp
-  (* `relation` id `:` nottyp `hint(input` `%`int* `)` rulegroup* *)
-  | RelD of id * nottyp * int list * rulegroup list
-  (* `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ clause* *)
-  | DecD of id * tparam list * param list * typ * clause list
+  (* `extern` `syntax` id hint* *)
+  | ExternTypD of id * hint list
+  (* `syntax` id `<` list(tparam, `,`) `>` `=` deftyp hint* *)
+  | TypD of id * tparam list * deftyp * hint list
+  (* `extern` `relation` id `:` nottyp `hint(input` `%`int* `)` hint* *)
+  | ExternRelD of id * nottyp * int list * hint list
+  (* `relation` id `:` nottyp `hint(input` `%`int* `)` rulegroup* hint* *)
+  | RelD of id * nottyp * int list * rulegroup list * hint list
+  (* `extern` `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ hint* *)
+  | ExternDecD of id * tparam list * param list * typ * hint list
+  (* `builtin` `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ hint* *)
+  | BuiltinDecD of id * tparam list * param list * typ * hint list
+  (* `table` `dec` id list(param, `,`) `:` typ hint* *)
+  | TableDecD of id * param list * typ * tablerow list * hint list
+  (* `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ clause* hint* *)
+  | FuncDecD of id * tparam list * param list * typ * clause list * hint list
 
 (* Spec *)
 

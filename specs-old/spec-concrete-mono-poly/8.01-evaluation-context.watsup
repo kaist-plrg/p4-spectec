@@ -1,0 +1,293 @@
+;;
+;; Layered context
+;;
+
+;; Global layer
+
+syntax globalEvaluationLayer = globalInstantiationLayer
+
+;; Block Layer
+
+syntax blockEvaluationLayer = blockInstantiationLayer
+
+;; Local layer
+
+syntax localEvaluationLayer = localInstantiationLayer
+
+;;
+;; Instantiation context
+;;
+
+syntax evaluationContext =
+  { GLOBAL globalEvaluationLayer,
+    BLOCK blockEvaluationLayer,
+    LOCAL localEvaluationLayer }
+
+var EC : evaluationContext
+
+;;
+;; Frame entry and exit
+;;
+
+dec $enter_eval(evaluationContext) : evaluationContext
+
+def $enter_eval(EC) = EC[ .LOCAL.FRAMES = $empty_frame :: EC.LOCAL.FRAMES ]
+
+dec $exit_eval(evaluationContext) : evaluationContext
+
+def $exit_eval(EC) = EC[ .LOCAL.FRAMES = frame_t* ]
+  -- if EC.LOCAL.FRAMES = frame_h :: frame_t*
+
+;;
+;; Context inheritance
+;;
+
+dec $inherit_evaluationContext(cursor, evaluationContext)
+  : evaluationContext
+
+def $inherit_evaluationContext(GLOBAL, EC)
+  = EC[ .BLOCK = blockEvaluationLayer ][ .LOCAL = localEvaluationLayer ]
+  -- if blockEvaluationLayer
+      = { TYPE $empty_tenv,
+          ROUTINE $empty_renv,
+          STATE $empty_senv,
+          FRAME $empty_frame }
+  -- if localEvaluationLayer
+      = { TYPE $empty_tenv,
+          FRAMES ([ $empty_frame ]) }
+def $inherit_evaluationContext(BLOCK, EC)
+  = EC[ .LOCAL = localEvaluationLayer ]
+  -- if localEvaluationLayer
+      = { TYPE $empty_tenv,
+          FRAMES ([ $empty_frame ]) }
+def $inherit_evaluationContext(LOCAL, EC) = EC
+
+;;
+;; Adders
+;;
+
+;;; Adder for values
+
+dec $add_value_eval(cursor, evaluationContext, prefixedNameIR, value): evaluationContext
+dec $add_values_eval(cursor, evaluationContext, prefixedNameIR*, value*): evaluationContext
+
+def $add_value_eval(GLOBAL, EC, `. id, value) = EC[ .GLOBAL.FRAME = frame ]
+  -- if frame = $add_map<id, value>(EC.GLOBAL.FRAME, id, value)
+def $add_value_eval(GLOBAL, EC, `` id, value) = EC[ .GLOBAL.FRAME = frame ]
+  -- if frame = $add_map<id, value>(EC.GLOBAL.FRAME, id, value)
+def $add_value_eval(BLOCK, EC, `` id, value) = EC[ .BLOCK.FRAME = frame ]
+  -- if frame = $add_map<id, value>(EC.BLOCK.FRAME, id, value)
+def $add_value_eval(LOCAL, EC, `` id, value) = EC[ .LOCAL.FRAMES = frame_h' :: frame_t* ]
+  -- if EC.LOCAL.FRAMES = frame_h :: frame_t*
+  -- if frame_h' = $add_map<id, value>(frame_h, id, value)
+
+def $add_values_eval(p, EC, eps, eps) = EC
+def $add_values_eval(p, EC, prefixedNameIR_h :: prefixedNameIR_t*, value_h :: value_t*) = EC''
+  -- if EC' = $add_value_eval(p, EC, prefixedNameIR_h, value_h)
+  -- if EC'' = $add_values_eval(p, EC', prefixedNameIR_t*, value_t*)
+
+;;; Adder for type definitions
+
+dec $add_typedef_eval(cursor, evaluationContext, tid, typeDefIR) : evaluationContext
+
+def $add_typedef_eval(GLOBAL, EC, tid, typeDefIR) = EC[ .GLOBAL.TYPE = tdenv ]
+  -- if $add_map<tid, typeDefIR>(EC.GLOBAL.TYPE, tid, typeDefIR) = tdenv
+
+;;; Adder for parser states
+
+dec $add_state_eval(cursor, evaluationContext, nameIR, state) : evaluationContext
+
+def $add_state_eval(BLOCK, EC, nameIR, state) = EC[ .BLOCK.STATE = senv ]
+  -- if senv = $add_map<nameIR, state>(EC.BLOCK.STATE, nameIR, state)
+
+;;; Adder for type variables
+
+dec $add_types_eval(cursor, evaluationContext, tid*, typeIR*) : evaluationContext
+dec $add_type_eval(cursor, evaluationContext, tid, typeIR) : evaluationContext
+
+def $add_types_eval(p, EC, eps, eps) = EC
+def $add_types_eval(p, EC, tid_h :: tid_t*, typeIR_h :: typeIR_t*) =
+    $add_types_eval(p, EC', tid_t*, typeIR_t*)
+  -- if EC' = $add_type_eval(p, EC, tid_h, typeIR_h)
+
+def $add_type_eval(BLOCK, EC, tid, typeIR) = EC[ .BLOCK.TYPE = tenv ]
+  -- if tenv = $add_map<tid, typeIR>(EC.BLOCK.TYPE, tid, typeIR)
+def $add_type_eval(LOCAL, EC, tid, typeIR) = EC[ .LOCAL.TYPE = tenv ]
+  -- if tenv = $add_map<tid, typeIR>(EC.LOCAL.TYPE, tid, typeIR)
+
+;;; Adder for routines
+
+dec $add_routine_overload_eval(cursor, evaluationContext, rid, routine)
+  : evaluationContext
+
+def $add_routine_overload_eval(GLOBAL, EC, rid, routine) = EC[ .GLOBAL.ROUTINE = renv ]
+  -- if renv = $add_map<rid, routine>(EC.GLOBAL.ROUTINE, rid, routine)
+def $add_routine_overload_eval(BLOCK, EC, rid, routine) = EC[ .BLOCK.ROUTINE = renv ]
+  -- if renv = $add_map<rid, routine>(EC.BLOCK.ROUTINE, rid, routine)
+
+dec $add_routine_non_overload_eval(cursor, evaluationContext, rid, routine)
+  : evaluationContext
+
+def $add_routine_non_overload_eval(GLOBAL, EC, rid, routine) = EC[ .GLOBAL.ROUTINE = renv ]
+  -- if id `( _ ) = rid
+  -- if `{ (id_k `( _ ))* } = $dom_map<rid, routine>(EC.GLOBAL.ROUTINE)
+  -- if renv = $add_map<rid, routine>(EC.GLOBAL.ROUTINE, rid, routine)
+def $add_routine_non_overload_eval(BLOCK, EC, rid, routine) = EC[ .BLOCK.ROUTINE = renv ]
+  -- if id `( _ ) = rid
+  -- if `{ (id_k `( _ ))* } = $dom_map<rid, routine>(EC.BLOCK.ROUTINE)
+  -- if renv = $add_map<rid, routine>(EC.BLOCK.ROUTINE, rid, routine)
+
+;;; Adder for constructors
+
+dec $add_constructor_eval(evaluationContext, cid, constructor)
+  : evaluationContext
+
+def $add_constructor_eval(EC, cid, constructor)
+  = EC[ .GLOBAL.CONSTRUCTOR = cenv ]
+  -- if cenv
+      = $add_map<cid, constructor>(EC.GLOBAL.CONSTRUCTOR, cid, constructor)
+
+dec $add_constructors_eval(evaluationContext, cid*, constructor*)
+  : evaluationContext
+
+def $add_constructors_eval(EC, eps, eps) = EC
+def $add_constructors_eval(EC, cid_h :: cid_t*, constructor_h :: constructor_t*)
+  = $add_constructors_eval(EC', cid_t*, constructor_t*)
+  -- if EC' = $add_constructor_eval(EC, cid_h, constructor_h)
+
+;;
+;; Finders
+;;
+
+;;; Finder for values
+
+dec $find_value_eval(cursor, evaluationContext, prefixedNameIR) : value
+
+def $find_value_eval(p, EC, `. id) = value
+  -- if value = $find_map<id, value>(EC.GLOBAL.FRAME, id)
+def $find_value_eval(GLOBAL, EC, `` id) = value
+  -- if value = $find_map<id, value>(EC.GLOBAL.FRAME, id)
+def $find_value_eval(BLOCK, EC, `` id) = value
+  -- if value = $find_map<id, value>(EC.BLOCK.FRAME, id)
+def $find_value_eval(BLOCK, EC, `` id)
+  = $find_value_eval(GLOBAL, EC, `` id)
+  -- if eps = $find_map<id, value>(EC.BLOCK.FRAME, id)
+def $find_value_eval(LOCAL, EC, `` id) = value
+  -- if value = $find_maps<id, value>(EC.LOCAL.FRAMES, id)
+def $find_value_eval(LOCAL, EC, `` id)
+  = $find_value_eval(BLOCK, EC, `` id)
+  -- if eps = $find_maps<id, value>(EC.LOCAL.FRAMES, id)
+
+dec $find_value_cursor_eval(cursor, evaluationContext, prefixedNameIR) : cursor
+
+def $find_value_cursor_eval(p, EC, `. id) = GLOBAL
+  -- if value = $find_map<id, value>(EC.GLOBAL.FRAME, id)
+def $find_value_cursor_eval(GLOBAL, EC, `` id) = GLOBAL
+  -- if value = $find_map<id, value>(EC.GLOBAL.FRAME, id)
+def $find_value_cursor_eval(BLOCK, EC, `` id) = BLOCK
+  -- if value = $find_map<id, value>(EC.BLOCK.FRAME, id)
+def $find_value_cursor_eval(BLOCK, EC, `` id)
+  = $find_value_cursor_eval(GLOBAL, EC, `` id)
+  -- if eps = $find_map<id, value>(EC.BLOCK.FRAME, id)
+def $find_value_cursor_eval(LOCAL, EC, `` id) = LOCAL
+  -- if value = $find_maps<id, value>(EC.LOCAL.FRAMES, id)
+def $find_value_cursor_eval(LOCAL, EC, `` id)
+  = $find_value_cursor_eval(BLOCK, EC, `` id)
+  -- if eps = $find_maps<id, value>(EC.LOCAL.FRAMES, id)
+
+;;; Finder for typedefs
+
+dec $find_typeDef_eval(cursor, evaluationContext, prefixedNameIR) : typeDefIR?
+
+def $find_typeDef_eval(_, EC, `` nameIR)
+  = $find_map<tid, typeDefIR>(EC.GLOBAL.TYPE, nameIR)
+def $find_typeDef_eval(_, EC, `. nameIR)
+  = $find_map<tid, typeDefIR>(EC.GLOBAL.TYPE, nameIR)
+
+;;; Finder for types
+
+dec $find_type_eval(cursor, evaluationContext, nameIR) : typeIR?
+
+def $find_type_eval(BLOCK, EC, nameIR)
+  = $find_map<tid, typeIR>(EC.BLOCK.TYPE, nameIR)
+def $find_type_eval(LOCAL, EC, nameIR)
+  = $find_map<tid, typeIR>(EC.LOCAL.TYPE, nameIR)
+def $find_type_eval(LOCAL, EC, nameIR)
+  = $find_type_eval(BLOCK, EC, nameIR)
+  -- if eps = $find_map<tid, typeIR>(EC.LOCAL.TYPE, nameIR)
+
+;;; Finder for routines
+
+dec $find_routine_overloaded_eval(cursor, evaluationContext, prefixedNameIR, argumentIR*)
+  : (cursor, rid, routine, id*)?
+
+def $find_routine_overloaded_eval(GLOBAL, EC, `` id, argumentIR*)
+  = (GLOBAL, rid, routine, id_default*)
+  -- if (id_arg?)* = $ids_arguments(argumentIR*)
+  -- if (rid, routine, id_default*)
+      = $find_overloaded<routine>(EC.GLOBAL.ROUTINE, id, (id_arg?)*)
+def $find_routine_overloaded_eval(GLOBAL, EC, `` id, argumentIR*)
+  = eps
+  -- if (id_arg?)* = $ids_arguments(argumentIR*)
+  -- if eps
+      = $find_overloaded<routine>(EC.GLOBAL.ROUTINE, id, (id_arg?)*)
+def $find_routine_overloaded_eval(GLOBAL, EC, `. id, argumentIR*)
+  = (GLOBAL, rid, routine, id_default*)
+  -- if (id_arg?)* = $ids_arguments(argumentIR*)
+  -- if (rid, routine, id_default*)
+      = $find_overloaded<routine>(EC.GLOBAL.ROUTINE, id, (id_arg?)*)
+def $find_routine_overloaded_eval(GLOBAL, EC, `. id, argumentIR*)
+  = eps
+  -- if (id_arg?)* = $ids_arguments(argumentIR*)
+  -- if eps
+      = $find_overloaded<routine>(EC.GLOBAL.ROUTINE, id, (id_arg?)*)
+def $find_routine_overloaded_eval(BLOCK, EC, `` id, argumentIR*)
+  = (BLOCK, rid, routine, id_default*)
+  -- if (id_arg?)* = $ids_arguments(argumentIR*)
+  -- if (rid, routine, id_default*)
+      = $find_overloaded<routine>(EC.BLOCK.ROUTINE, id, (id_arg?)*)
+def $find_routine_overloaded_eval(BLOCK, EC, `` id, argumentIR*)
+  = $find_routine_overloaded_eval(GLOBAL, EC, `` id, argumentIR*)
+  -- if (id_arg?)* = $ids_arguments(argumentIR*)
+  -- if eps
+      = $find_overloaded<routine>(EC.BLOCK.ROUTINE, id, (id_arg?)*)
+def $find_routine_overloaded_eval(LOCAL, EC, `` id, argumentIR*)
+  = $find_routine_overloaded_eval(BLOCK, EC, `` id, argumentIR*)
+
+;;; Finder for constructors 
+
+dec $find_constructor_eval(evaluationContext, prefixedNameIR, argumentIR*)
+  : (cid, constructor, id*)?
+
+def $find_constructor_eval(EC, `` id, argumentIR*)
+  = $find_overloaded<constructor>(EC.GLOBAL.CONSTRUCTOR, id, (id_arg?)*)
+  -- if (id_arg?)* = $ids_arguments(argumentIR*)
+def $find_constructor_eval(EC, `. id, argumentIR*)
+  = $find_overloaded<constructor>(EC.GLOBAL.CONSTRUCTOR, id, (id_arg?)*)
+  -- if (id_arg?)* = $ids_arguments(argumentIR*)
+
+;;; Finder for states
+
+dec $find_state(cursor, evaluationContext, nameIR) : state?
+
+def $find_state(GLOBAL, EC, nameIR) = eps
+def $find_state(BLOCK, EC, nameIR)
+  = $find_map<nameIR, state>(EC.BLOCK.STATE, nameIR)
+def $find_state(LOCAL, EC, nameIR)
+  = $find_map<nameIR, state>(EC.BLOCK.STATE, nameIR)
+
+;;
+;; Type substitutions
+;;
+
+dec $subst_type_eval(cursor, evaluationContext, typeIR) : typeIR
+
+def $subst_type_eval(GLOBAL, EC, typeIR) = typeIR
+def $subst_type_eval(BLOCK, EC, typeIR) = typeIR_subst
+  -- if tenv = EC.BLOCK.TYPE
+  -- if typeIR_subst = $subst_type(tenv, typeIR)
+def $subst_type_eval(LOCAL, EC, typeIR) = typeIR_subst
+  -- if tenv_block = EC.BLOCK.TYPE
+  -- if tenv_local = EC.LOCAL.TYPE
+  -- if tenv = $extend_map<tid, typeIR>(tenv_block, tenv_local)
+  -- if typeIR_subst = $subst_type(tenv, typeIR)

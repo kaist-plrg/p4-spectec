@@ -167,24 +167,42 @@ and hint = { hintid : id; hintexp : exp }
 and rule = rule' phrase 
 and rule' = id * id * exp * prem list
 
+(* Tables *)
+
+(* exp `=>` exp *)
+and tablerow = tablerow' phrase
+and tablerow' = exp * exp
+
 (* Definitions *)
 
 type def = def' phrase
 and def' =
+  (* `extern` `syntax` id hint* *)
+  | ExternSynD of id * hint list
   (* `syntax` list(id `<` list(tparam, `,`) `>`, `,`) *)
   | SynD of (id * tparam list) list
   (* `syntax` id `<` list(tparam, `,`) `>` hint* `=` deftyp *)
   | TypD of id * tparam list * deftyp * hint list
   (* `var` id `:` plaintyp hint* *)
   | VarD of id * plaintyp * hint list
+  (* `extern` `relation` id `:` nottyp hint* *)
+  | ExternRelD of id * nottyp * hint list
   (* `relation` id `:` nottyp hint* *)
   | RelD of id * nottyp * hint list
   (* `rulegroup` id`/`id `:` `{` rule* `}` *)
   | RuleGroupD of id * id * rule list
+  (* `extern` `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` plaintyp hint* *)
+  | ExternDecD of id * tparam list * param list * plaintyp * hint list
+  (* `builtin` `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` plaintyp hint* *)
+  | BuiltinDecD of id * tparam list * param list * plaintyp * hint list
+  (* `tbl` `dec` id list(param, `,`) `:` plaintyp hint* *)
+  | TableDecD of id * param list * plaintyp * hint list
   (* `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` plaintyp hint* *)
-  | DecD of id * tparam list * param list * plaintyp * hint list
+  | FuncDecD of id * tparam list * param list * plaintyp * hint list
+  (* `tbl` `def` id `=` list(`|` tablerow, nl) *)
+  | TableDefD of id * tablerow list
   (* `def` id `<` list(tparam, `,`) `>` list(arg, `,`) `=` exp list(`--` prem, nl) *)
-  | DefD of id * tparam list * arg list * exp * prem list
+  | FuncDefD of id * tparam list * arg list * exp * prem list
   | SepD
 
 (* Spec *)

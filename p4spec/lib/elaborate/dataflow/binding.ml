@@ -97,6 +97,51 @@ let analyze_args_as_bind (dctx : Dctx.t) (args : arg list) :
   let prems = prems_partial @ sideconditions_multi in
   (dctx, venv, args, prems)
 
+let analyze_args_as_bind_shallow (dctx : Dctx.t) (args : arg list) :
+    Dctx.t * VEnv.t * arg list * prem list =
+  check
+    (Shallowbind.check_shallow_args args)
+    (List.hd args).at
+    (Format.asprintf "bindings are not shallow: %s"
+       (Il.Print.string_of_args args));
+  let binds = Collectbind.collect_args dctx args in
+  let venv = BEnv.flatten binds in
+  let dctx, renv_multi, args =
+    let renv_multi = Multibind.REnv.init binds in
+    Multibind.rename_args dctx renv_multi args
+  in
+  let venv = update_venv_multi venv renv_multi in
+  let sideconditions_multi = Multibind.gen_sideconditions binds renv_multi in
+  check
+    (List.is_empty sideconditions_multi)
+    (List.hd args).at
+    (Format.asprintf
+       "shallow binding should not generate sideconditions, but got: %s"
+       (List.map Il.Print.string_of_prem sideconditions_multi
+       |> String.concat ", "));
+  let dctx, renv_partial, args =
+    Partialbind.rename_args dctx (VEnv.dom venv) Partialbind.REnv.empty args
+  in
+  let venv = update_venv_partial venv renv_partial in
+  let prems_partial = Partialbind.gen_prems dctx renv_partial in
+  let prems = prems_partial in
+  (dctx, venv, args, prems)
+
+let analyze_arg_as_bound_shallow (dctx : Dctx.t) (arg : arg) : unit =
+  check
+    (Shallowbind.check_shallow_arg arg)
+    arg.at
+    (Format.asprintf "bindings are not shallow: %s"
+       (Il.Print.string_of_arg arg));
+  let binds = Collectbind.collect_arg dctx arg in
+  if not (BEnv.is_empty binds) then
+    error arg.at
+      (Format.asprintf "argument has free variable(s): %s"
+         (BEnv.to_string binds))
+
+let analyze_args_as_bound_shallow (dctx : Dctx.t) (args : arg list) : unit =
+  List.iter (analyze_arg_as_bound_shallow dctx) args
+
 (* Premise binding analysis *)
 
 let rec analyze_prem (dctx : Dctx.t) (prem : prem) :
@@ -121,7 +166,7 @@ and analyze_rule_prem (dctx : Dctx.t) (at : region) (id : id) (notexp : notexp)
     : Dctx.t * VEnv.t * prem * prem list =
   let mixop, exps = notexp in
   let hint = Dctx.find_hint dctx id in
-  let exps_input, exps_output = Hint.split_exps hint exps in
+  let exps_input, exps_output = InputHint.split_exps hint exps in
   List.map snd exps_input |> analyze_exps_as_bound dctx;
   let dctx, venv, exps_output, sideconditions =
     let idxs, exps_output = List.split exps_output in
@@ -131,7 +176,7 @@ and analyze_rule_prem (dctx : Dctx.t) (at : region) (id : id) (notexp : notexp)
     let exps_output = List.combine idxs exps_output in
     (dctx, venv, exps_output, sideconditions)
   in
-  let exps = Hint.combine_exps exps_input exps_output in
+  let exps = InputHint.combine_exps exps_input exps_output in
   let notexp = (mixop, exps) in
   let prem = RulePr (id, notexp) $ at in
   (dctx, venv, prem, sideconditions)

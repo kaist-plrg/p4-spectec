@@ -1,4 +1,5 @@
 open Domain.Lib
+module InputHint = Runtime_static.Rel.InputHint
 open Runtime_dynamic
 open Runtime_dynamic_il
 open Envs
@@ -48,8 +49,6 @@ type local = {
 }
 
 type t = {
-  (* Filename of the source file *)
-  filename : string;
   (* Config *)
   config : config;
   (* Execution trace *)
@@ -155,6 +154,12 @@ let find_typdef (cursor : cursor) (ctx : t) (tid : TId.t) : Typdef.t =
   | Some td -> td
   | None -> error_undef tid.at "type" tid.it
 
+let find_defined_typdef (cursor : cursor) (ctx : t) (tid : TId.t) :
+    tparam list * deftyp =
+  match find_typdef cursor ctx tid with
+  | Extern -> error_undef tid.at "defined type" tid.it
+  | Defined (tparams, deftyp) -> (tparams, deftyp)
+
 let bound_typdef (cursor : cursor) (ctx : t) (tid : TId.t) : bool =
   find_typdef_opt cursor ctx tid |> Option.is_some
 
@@ -167,6 +172,10 @@ let find_rel (cursor : cursor) (ctx : t) (rid : RId.t) : Rel.t =
   match find_rel_opt cursor ctx rid with
   | Some rel -> rel
   | None -> error_undef rid.at "relation" rid.it
+
+let find_rel_inputs (cursor : cursor) (ctx : t) (rid : RId.t) : InputHint.t =
+  let rel = find_rel cursor ctx rid in
+  match rel with Rel.Extern inputs | Rel.Defined (inputs, _) -> inputs
 
 let bound_rel (cursor : cursor) (ctx : t) (rid : RId.t) : bool =
   find_rel_opt cursor ctx rid |> Option.is_some
@@ -247,12 +256,12 @@ let empty_global () : global =
 let empty_local () : local =
   { tdenv = TDEnv.empty; fenv = FEnv.empty; venv = VEnv.empty }
 
-let empty ~(debug : bool) ~(profile : bool) (filename : string) : t =
+let empty ~(debug : bool) ~(profile : bool) : t =
   let config = { debug; profile } in
   let trace = Trace.Empty in
   let global = empty_global () in
   let local = empty_local () in
-  { filename; config; trace; global; local }
+  { config; trace; global; local }
 
 (* Constructing a local context *)
 
@@ -263,7 +272,29 @@ let localize (ctx : t) : t =
 
 (* Constructing sub-contexts *)
 
-let sub_opt (ctx : t) (vars : var list) : t option attempt =
+(* Transpose a matrix of values, as a list of value batches
+   that are to be each fed into an iterated expression *)
+
+let transpose (value_matrix : value list list) : value list list attempt_reason
+    =
+  match value_matrix with
+  | [] -> Ok []
+  | rows ->
+      let width = List.length (List.hd rows) in
+      let* _ =
+        check_fail
+          (List.for_all (fun row -> List.length row = width) rows)
+          no_region "cannot transpose a matrix of value batches"
+      in
+      let value_matrix =
+        List.fold_right
+          (List.map2 (fun element row -> element :: row))
+          rows
+          (List.init width (fun _ -> []))
+      in
+      Ok value_matrix
+
+let sub_opt (ctx : t) (vars : var list) : t option attempt_reason =
   (* First collect the values that are to be iterated over *)
   let values =
     List.map
@@ -282,31 +313,11 @@ let sub_opt (ctx : t) (vars : var list) : t option attempt =
     in
     Ok (Some ctx_sub)
   else if List.for_all Option.is_none values then Ok None
-  else fail no_region "mismatch in optionality of iterated variables"
+  else
+    fail_without_reason no_region
+      "mismatch in optionality of iterated variables"
 
-(* Transpose a matrix of values, as a list of value batches
-   that are to be each fed into an iterated expression *)
-
-let transpose (value_matrix : value list list) : value list list attempt =
-  match value_matrix with
-  | [] -> Ok []
-  | _ ->
-      let width = List.length (List.hd value_matrix) in
-      let* _ =
-        check_fail
-          (List.for_all
-             (fun value_row -> List.length value_row = width)
-             value_matrix)
-          no_region "cannot transpose a matrix of value batches"
-      in
-      let value_matrix =
-        List.init width (fun j ->
-            List.init (List.length value_matrix) (fun i ->
-                List.nth (List.nth value_matrix i) j))
-      in
-      Ok value_matrix
-
-let sub_list (ctx : t) (vars : var list) : t list attempt =
+let sub_list (ctx : t) (vars : var list) : t list attempt_reason =
   (* First break the values that are to be iterated over,
      into a batch of values *)
   let* values_batch =

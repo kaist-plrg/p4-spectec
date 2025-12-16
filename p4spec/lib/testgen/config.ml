@@ -1,11 +1,12 @@
 open Domain.Lib
 open Sl.Ast
+module TypDef = Runtime_dynamic.Typdef
 module TDEnv = Runtime_dynamic_sl.Envs.TDEnv
 module Mixops = Runtime_testgen.Mixops
 module MixopEnv = Runtime_testgen.Envs.MixopEnv
-module Ignore = Runtime_testgen.Cov.Ignore
 module SCov = Runtime_testgen.Cov.Single
 module MCov = Runtime_testgen.Cov.Multiple
+module Sim = Runtime_simulator.Simulator
 
 (* Hyperparameters for the fuzzing loop *)
 
@@ -29,13 +30,13 @@ let timeout_seed = 30
 
 (* Environment for the spec *)
 type specenv = {
-  spec_il : Il.Ast.spec;
+  runner : (module Sim.DRIVER);
+  printer : Sl.Ast.value -> string;
   spec : spec;
   relname : string;
   tdenv : TDEnv.t;
   mixopenv : MixopEnv.t;
   includes_p4 : string list;
-  ignores : IdSet.t;
 }
 
 (* Storage for generated files *)
@@ -67,7 +68,7 @@ type t = {
 
 let load_mixops (mixopenv : MixopEnv.t) (def : def) : MixopEnv.t =
   match def.it with
-  | TypD (id, _, deftyp) -> (
+  | TypD (id, _, deftyp, _) -> (
       match deftyp.it with
       | VariantT typcases ->
           let nottyps = List.map fst typcases in
@@ -116,9 +117,12 @@ let load_mixops (mixopenv : MixopEnv.t) (def : def) : MixopEnv.t =
 
 let load_def (tdenv : TDEnv.t) (def : def) : TDEnv.t =
   match def.it with
-  | TypD (id, tparams, deftyp) ->
-      let typdef = (tparams, deftyp) in
-      TDEnv.add id typdef tdenv
+  | ExternTypD (id, _) ->
+      let td = TypDef.Extern in
+      TDEnv.add id td tdenv
+  | TypD (id, tparams, deftyp, _) ->
+      let td = TypDef.Defined (tparams, deftyp) in
+      TDEnv.add id td tdenv
   | _ -> tdenv
 
 (* Loader *)
@@ -132,23 +136,28 @@ let load_spec (tdenv : TDEnv.t) (mixopenv : MixopEnv.t) (spec : spec) :
 (* Constructor *)
 
 let init_specenv (spec_il : Il.Ast.spec) (spec : spec) (relname : string)
-    (includes_p4 : string list) (filenames_ignore : string list) : specenv =
+    (includes_p4 : string list) : specenv =
+  let runner = Arch.Gen.gen_placeholder () in
+  let printer value_program =
+    Format.asprintf "%a\n"
+      (Interface.Unparse.pp_program_il spec_il)
+      value_program
+  in
   let tdenv, mixopenv = load_spec TDEnv.empty MixopEnv.empty spec in
-  let ignores = Ignore.init filenames_ignore in
-  { spec_il; spec; relname; tdenv; mixopenv; includes_p4; ignores }
+  { runner; printer; spec; relname; tdenv; mixopenv; includes_p4 }
 
 let init_storage (dirname_gen : string) : storage =
-  Filesys.mkdir dirname_gen;
+  Util.Filesys.mkdir dirname_gen;
   let dirname_log = dirname_gen ^ "/log" in
-  Filesys.mkdir dirname_log;
+  Util.Filesys.mkdir dirname_log;
   let dirname_query = dirname_gen ^ "/query" in
-  Filesys.mkdir dirname_query;
+  Util.Filesys.mkdir dirname_query;
   let dirname_close_miss_p4 = dirname_gen ^ "/closemiss" in
-  Filesys.mkdir dirname_close_miss_p4;
+  Util.Filesys.mkdir dirname_close_miss_p4;
   let dirname_welltyped_p4 = dirname_gen ^ "/welltyped" in
-  Filesys.mkdir dirname_welltyped_p4;
+  Util.Filesys.mkdir dirname_welltyped_p4;
   let dirname_illtyped_p4 = dirname_gen ^ "/illtyped" in
-  Filesys.mkdir dirname_illtyped_p4;
+  Util.Filesys.mkdir dirname_illtyped_p4;
   {
     dirname_gen;
     dirname_log;

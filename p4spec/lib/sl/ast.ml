@@ -143,45 +143,80 @@ and guard =
 
 and instr = instr' phrase
 and instr' =
+  (* Branching instructions *)
   | IfI of exp * iterexp list * instr list * phantom option
   | HoldI of id * notexp * iterexp list * holdcase
   | CaseI of exp * case list * phantom option 
   | OtherwiseI of instr
+  (* Aggregate instructions *)
   | GroupI of id * exp list * instr list
+  (* Binding instructions *)
   | LetI of exp * exp * iterexp list
   | RuleI of id * notexp * iterexp list
+  (* Result/Return instructions *)
   | ResultI of exp list
   | ReturnI of exp
+  (* Debugging instructions *)
   | DebugI of exp
-[@@deriving yojson]
-
-(* Relations *)
-
-(* id `:` mixop `hint(input` `%`int* `)` exp* instr* *)
-type rel = id * (mixop * int list) * exp list * instr list
-[@@deriving yojson]
-
-(* Functions *)
-
-(* id `<` list(tparam, `,`) `>` list(param, `,`) `:` instr* *)
-type func = id * tparam list * arg list * instr list
 [@@deriving yojson]
 
 (* Hints *)
 
-type hint = { hintid : id; hintexp : El.Ast.exp }
+type hint = El.Ast.hint
+[@@deriving yojson]
+
+(* Relations *)
+
+(* id `:` mixop `hint(input` `%`int* `)` exp* hint* *)
+type externrel = id * (mixop * int list) * exp list * hint list
+[@@deriving yojson]
+
+(* id `:` mixop `hint(input` `%`int* `)` exp* instr* hint* *)
+type rel = id * (mixop * int list) * exp list * instr list * hint list
+[@@deriving yojson]
+
+(* Functions *)
+
+(* id `<` list(tparam, `,`) `>` list(param, `,`) `:` hint* *)
+type externfunc = id * tparam list * arg list * typ * hint list
+[@@deriving yojson]
+
+(* id `<` list(tparam, `,`) `>` list(param, `,`) `:` hint* *)
+type builtinfunc = id * tparam list * arg list * typ * hint list
+[@@deriving yojson]
+
+(* arg* -> instr* *)
+type tablerow = exp list * exp * instr list
+[@@deriving yojson]
+
+(* id list(arg, `,`) `:` instr* hint* *)
+type tablefunc = id * arg list * typ * tablerow list * hint list
+[@@deriving yojson]
+
+(* id `<` list(tparam, `,`) `>` list(param, `,`) `:` instr* hint* *)
+type definedfunc = id * tparam list * arg list * typ * instr list * hint list
 [@@deriving yojson]
 
 (* Definitions *)
 
 type def = def' phrase
 and def' =
-  (* `syntax` id `<` list(tparam, `,`) `>` `=` deftyp *)
-  | TypD of id * tparam list * deftyp
+  (* `extern` `syntax` id hint* *)
+  | ExternTypD of id * hint list
+  (* `syntax` id `<` list(tparam, `,`) `>` `=` deftyp hint* *)
+  | TypD of id * tparam list * deftyp * hint list
+  (* `extern` `relation` rel *)
+  | ExternRelD of externrel
   (* `relation` rel *)
   | RelD of rel
+  (* `extern `dec` externfunc *)
+  | ExternDecD of externfunc
+  (* `builtin` `dec` builtinfunc *)
+  | BuiltinDecD of builtinfunc
+  (* `tbl` `dec` tablefunc *)
+  | TableDecD of tablefunc
   (* `dec` func *)
-  | DecD of func
+  | FuncDecD of definedfunc
 [@@deriving yojson]
 
 (* Spec *)
