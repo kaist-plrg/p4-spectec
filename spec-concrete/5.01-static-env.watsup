@@ -236,27 +236,25 @@ def $find_overloaded<V>(
 ;; Callable non-overload resolution
 ;;
 
-dec $find_non_overloaded<V>(map<cid, V>, id) : V?
-dec $find_non_overloaded'<V>(map<cid, V>, id) : V*
+dec $find_non_overloaded<V>(map<cid, V>, id) : (cid, V)?
+dec $find_non_overloadeds<V>(map<cid, V>, id) : (cid, V)*
 
-def $find_non_overloaded<V>(`{ (cid `: V)* }, id) = V'
-  -- if V' = $find_non_overloaded'<V>(`{ (cid `: V)* }, id)
+def $find_non_overloaded<V>(`{ (cid `: V)* }, id) = (cid', V')
+  -- if (cid', V') = $find_non_overloadeds<V>(`{ (cid `: V)* }, id)
 def $find_non_overloaded<V>(`{ (cid `: V)* }, id) = eps
   -- otherwise
 
-def $find_non_overloaded'<V>(`{ eps }, id) = eps
-def $find_non_overloaded'<V>(
-    `{ (cid_h `: V_h) :: (cid_t `: V_t)* }, id
-  )
-  = V_h :: V_t_found*
+def $find_non_overloadeds<V>(`{ eps }, id) = eps
+def $find_non_overloadeds<V>(
+    `{ (cid_h `: V_h) :: (cid_t `: V_t)* }, id)
+  = (cid_h, V_h) :: (cid_t_found, V_t_found)*
   -- if id `( _ ) = cid_h
-  -- if V_t_found*
-      = $find_non_overloaded'<V>(`{ (cid_t `: V_t)* }, id)
-def $find_non_overloaded'<V>(
-    `{ (cid_h `: V_h) :: (cid_t `: V_t)* }, id
-  )
-  = V_t_found*
+  -- if (cid_t_found, V_t_found)*
+      = $find_non_overloadeds<V>(`{ (cid_t `: V_t)* }, id)
+def $find_non_overloadeds<V>(
+    `{ (cid_h `: V_h) :: (cid_t `: V_t)* }, id)
+  = (cid_t_found, V_t_found)*
   -- if id_h `( _ ) = cid_h
   -- if id =/= id_h
-  -- if V_t_found*
-      = $find_non_overloaded'<V>(`{ (cid_t `: V_t)* }, id)
+  -- if (cid_t_found, V_t_found)*
+      = $find_non_overloadeds<V>(`{ (cid_t `: V_t)* }, id)

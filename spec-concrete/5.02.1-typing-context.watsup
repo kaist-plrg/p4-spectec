@@ -414,15 +414,15 @@ def $find_callableDef_overloaded_t(LOCAL, TC, `` id, argumentIR*)
   = $find_callableDef_overloaded_t(BLOCK, TC, `` id, argumentIR*) 
 
 dec $find_callableDef_non_overloaded_t(cursor, typingContext, prefixedNameIR)
-  : callableTypeDefIR?
+  : (cid, callableTypeDefIR)?
   hint(prose_in "the non-overloaded callable definition of" %2 "in the" %0 "layer of" %1)
 
 def $find_callableDef_non_overloaded_t(p, TC, `. id)
   = $find_non_overloaded<callableTypeDefIR>(TC.GLOBAL.CALLABLE, id)
 def $find_callableDef_non_overloaded_t(GLOBAL, TC, `` id)
   = $find_non_overloaded<callableTypeDefIR>(TC.GLOBAL.CALLABLE, id)
-def $find_callableDef_non_overloaded_t(BLOCK, TC, `` id) = callableTypeDefIR
-  -- if callableTypeDefIR
+def $find_callableDef_non_overloaded_t(BLOCK, TC, `` id) = (cid, callableTypeDefIR)
+  -- if (cid, callableTypeDefIR)
       = $find_non_overloaded<callableTypeDefIR>(TC.BLOCK.CALLABLE, id)
 def $find_callableDef_non_overloaded_t(BLOCK, TC, `` id)
   = $find_callableDef_non_overloaded_t(GLOBAL, TC, `` id)
