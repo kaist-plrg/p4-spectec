@@ -135,8 +135,7 @@ rule Decl_object_ok/functionDeclaration:
   -- if externMethodTypeDefEnv_init
       = $update_map<cid, externMethodTypeDefIR>(
           externMethodTypeDefEnv,
-          cid, externMethodTypeDefIR
-        )
+          cid, externMethodTypeDefIR)
   ---- ;; create IR
   -- if nameIR = $name(name)
   -- if functionDeclarationIR
@@ -182,45 +181,42 @@ rule Decls_object_ok/cons:
        : typeFrame_2 externMethodTypeDefEnv_2 objectDeclarationIR_t*
 
 dec $subst_externMethodTypeDefEnv(
-    theta, externMethodTypeDefEnv, externMethodTypeDefEnv
-  )
+    theta, externMethodTypeDefEnv, externMethodTypeDefEnv)
   : externMethodTypeDefEnv
 
 def $subst_externMethodTypeDefEnv(
-    theta, externMethodTypeDefEnv_extern, `{ eps }
-  )
+    theta, externMethodTypeDefEnv_extern, `{ eps })
   = externMethodTypeDefEnv_extern
 
 def $subst_externMethodTypeDefEnv(
     theta, externMethodTypeDefEnv_extern,
     `{ (cid_init_h `: externMethodTypeDefIR_init_h)
-       :: (cid_init_t `: externMethodTypeDefIR_init_t)* }
-  )
+       :: (cid_init_t `: externMethodTypeDefIR_init_t)* })
   = $subst_externMethodTypeDefEnv(
       theta, externMethodTypeDefEnv_extern_subst,
-      `{ (cid_init_t `: externMethodTypeDefIR_init_t)* }
-    )
-  ---- ;; find abstract extern method
+      `{ (cid_init_t `: externMethodTypeDefIR_init_t)* })
+  ---- ;; find abstract extern method by name
+  -- if id_init_h `( _ ) = cid_init_h
+  -- if (cid, externMethodTypeDefIR_abstract)
+      = $find_non_overloaded<externMethodTypeDefIR>(
+          externMethodTypeDefEnv_extern, id_init_h)
   -- if EXTERN_METHOD ABSTRACT `< tid_expl* `, tid_impl* >
           `( parameterIR* ) `: typeIR_ret
-      = $find_map<cid, externMethodTypeDefIR>(
-          externMethodTypeDefEnv_extern, cid_init_h
-        )
+      = externMethodTypeDefIR_abstract
   ---- ;; concretize abstract extern method
-  -- if externMethodTypeDefIR
+  -- if externMethodTypeDefIR_concrete
       = EXTERN_METHOD `< tid_expl* `, tid_impl* >
           `( parameterIR* ) `: typeIR_ret
-  -- if externMethodTypeDefIR_subst
-      = $subst_callableTypeDefIR(theta, externMethodTypeDefIR)
+  -- if externMethodTypeDefIR_concrete_subst
+      = $subst_callableTypeDefIR(theta, externMethodTypeDefIR_concrete)
   ---- ;; concretized extern method should be the same as the one initialized
   -- CallableTypeDef_alpha:
-      externMethodTypeDefIR_subst ~~ externMethodTypeDefIR_init_h
+      externMethodTypeDefIR_concrete_subst ~~ externMethodTypeDefIR_init_h
   ---- ;; update the map
   -- if externMethodTypeDefEnv_extern_subst
       = $update_map<cid, externMethodTypeDefIR>(
           externMethodTypeDefEnv_extern,
-          cid_init_h, externMethodTypeDefIR_subst
-        )
+          cid, externMethodTypeDefIR_concrete_subst)
 
 rulegroup Decl_ok/instantiation-objectInitializer {
 

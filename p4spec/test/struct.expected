@@ -10689,23 +10689,23 @@ def $find_overloaded<V>(({ ((cid : V))*{V <- V*, cid <- cid*} }), id_r, ((id_arg
 
     2. Return ?((cid', V', (id_default)*{id_default <- id_default*}))
 
-;; ../../../../spec-concrete/5.01-static-env.watsup:239.1-239.50
+;; ../../../../spec-concrete/5.01-static-env.watsup:239.1-239.57
 def $find_non_overloaded<V>(({ ((cid : V))*{V <- V*, cid <- cid*} }), id)
 
-1. (Let (V'')*{V'' <- V''*} be $find_non_overloaded'<V>(({ ((cid : V))*{V <- V*, cid <- cid*} }), id))
+1. (Let ((cid, V))*{(cid, V) <- (cid, V)*} be $find_non_overloadeds<V>(({ ((cid : V))*{V <- V*, cid <- cid*} }), id))
 
-2. If (((V'')*{V'' <- V''*} matches pattern [ _/1 ])), then
+2. If ((((cid, V))*{(cid, V) <- (cid, V)*} matches pattern [ _/1 ])), then
 
-  1. (Let [V'] be (V'')*{V'' <- V''*})
+  1. (Let [(cid', V')] be ((cid, V))*{(cid, V) <- (cid, V)*})
 
-  2. Return ?(V')
+  2. Return ?((cid', V'))
 
 3. Otherwise
 
   1. Return ?()
 
-;; ../../../../spec-concrete/5.01-static-env.watsup:240.1-240.51
-def $find_non_overloaded'<V>(set<pair<cid, V>>, id)
+;; ../../../../spec-concrete/5.01-static-env.watsup:240.1-240.58
+def $find_non_overloadeds<V>(set<pair<cid, V>>, id)
 
 1. If ((set<pair<cid, V>> = ({ [] }))), then
 
@@ -10723,15 +10723,15 @@ def $find_non_overloaded'<V>(set<pair<cid, V>>, id)
 
     1. Case (% = id)
 
-      1. (Let (V_t_found)*{V_t_found <- V_t_found*} be $find_non_overloaded'<V>(({ ((cid_t : V_t))*{V_t <- V_t*, cid_t <- cid_t*} }), id))
+      1. (Let ((cid_t_found, V_t_found))*{V_t_found <- V_t_found*, cid_t_found <- cid_t_found*} be $find_non_overloadeds<V>(({ ((cid_t : V_t))*{V_t <- V_t*, cid_t <- cid_t*} }), id))
 
-      2. Return V_h :: (V_t_found)*{V_t_found <- V_t_found*}
+      2. Return (cid_h, V_h) :: ((cid_t_found, V_t_found))*{V_t_found <- V_t_found*, cid_t_found <- cid_t_found*}
 
     2. Case (% =/= id)
 
-      1. (Let (V_t_found)*{V_t_found <- V_t_found*} be $find_non_overloaded'<V>(({ ((cid_t : V_t))*{V_t <- V_t*, cid_t <- cid_t*} }), id))
+      1. (Let ((cid_t_found, V_t_found))*{V_t_found <- V_t_found*, cid_t_found <- cid_t_found*} be $find_non_overloadeds<V>(({ ((cid_t : V_t))*{V_t <- V_t*, cid_t <- cid_t*} }), id))
 
-      2. Return (V_t_found)*{V_t_found <- V_t_found*}
+      2. Return ((cid_t_found, V_t_found))*{V_t_found <- V_t_found*, cid_t_found <- cid_t_found*}
 
 ;; ../../../../spec-concrete/5.02.1-typing-context.watsup:8.3-11.22
 syntax globalTypingLayer = {constructor constructorTypeDefEnv, type typeDefEnv, callable callableTypeDefEnv, frame typeFrame}
@@ -11495,13 +11495,13 @@ def $find_callableDef_non_overloaded_t(p, TC, prefixedNameIR)
 
       1. (Let (` id) be prefixedNameIR)
 
-      2. (Let (callableTypeDefIR')?{callableTypeDefIR' <- callableTypeDefIR'?} be $find_non_overloaded<callableTypeDefIR>(TC.block.callable, id))
+      2. (Let ((cid, callableTypeDefIR))?{(cid, callableTypeDefIR) <- (cid, callableTypeDefIR)?} be $find_non_overloaded<callableTypeDefIR>(TC.block.callable, id))
 
-      3. If (((callableTypeDefIR')?{callableTypeDefIR' <- callableTypeDefIR'?} matches pattern (_))), then
+      3. If ((((cid, callableTypeDefIR))?{(cid, callableTypeDefIR) <- (cid, callableTypeDefIR)?} matches pattern (_))), then
 
-        1. (Let ?(callableTypeDefIR) be (callableTypeDefIR')?{callableTypeDefIR' <- callableTypeDefIR'?})
+        1. (Let ?((cid, callableTypeDefIR)) be ((cid, callableTypeDefIR))?{(cid, callableTypeDefIR) <- (cid, callableTypeDefIR)?})
 
-        2. Return ?(callableTypeDefIR)
+        2. Return ?((cid, callableTypeDefIR))
 
       4. If ((?() = $find_non_overloaded<callableTypeDefIR>(TC.block.callable, id))), then
 
@@ -18001,7 +18001,7 @@ relation ExternMethod_ok: TC_0 tid_extern |- externMethodPrototype : % %
 
           7. If (CallableTypeDef_wf: $bound((block), TC_0) |- (externMethodTypeDefIR as callableTypeDefIR)) holds, then
 
-            1. (Let TC_4 be $add_callableDef_overload_t((block), TC_0, cid, (externMethodTypeDefIR as callableTypeDefIR)))
+            1. (Let TC_4 be $add_callableDef_non_overload_t((block), TC_0, cid, (externMethodTypeDefIR as callableTypeDefIR)))
 
             2. (Let externMethodPrototypeIR be (annotationList abstract (typeIR_ret nameIR < (tid_expl)*{tid_expl <- tid_expl*} , (tid_impl)*{tid_impl <- tid_impl*} >( (parameterIR)*{parameterIR <- parameterIR*} )) ;))
 
@@ -18609,11 +18609,11 @@ relation TableAction_ok: TC TBLC_0 |- (annotationList tableActionReference ;) : 
 
     1. (Let prefixedNameIR be $prefixedNonTypeName(prefixedNonTypeName))
 
-    2. (Let (callableTypeDefIR')?{callableTypeDefIR' <- callableTypeDefIR'?} be $find_callableDef_non_overloaded_t((local), TC, prefixedNameIR))
+    2. (Let ((cid, callableTypeDefIR))?{(cid, callableTypeDefIR) <- (cid, callableTypeDefIR)?} be $find_callableDef_non_overloaded_t((local), TC, prefixedNameIR))
 
-    3. If (((callableTypeDefIR')?{callableTypeDefIR' <- callableTypeDefIR'?} matches pattern (_))), then
+    3. If ((((cid, callableTypeDefIR))?{(cid, callableTypeDefIR) <- (cid, callableTypeDefIR)?} matches pattern (_))), then
 
-      1. (Let ?(callableTypeDefIR) be (callableTypeDefIR')?{callableTypeDefIR' <- callableTypeDefIR'?})
+      1. (Let ?((_cid, callableTypeDefIR)) be ((cid, callableTypeDefIR))?{(cid, callableTypeDefIR) <- (cid, callableTypeDefIR)?})
 
       2. If ((callableTypeDefIR has type actionTypeIR)), then
 
@@ -18637,11 +18637,11 @@ relation TableAction_ok: TC TBLC_0 |- (annotationList tableActionReference ;) : 
 
     1. (Let prefixedNameIR be $prefixedNonTypeName(prefixedNonTypeName))
 
-    2. (Let (callableTypeDefIR')?{callableTypeDefIR' <- callableTypeDefIR'?} be $find_callableDef_non_overloaded_t((local), TC, prefixedNameIR))
+    2. (Let ((cid, callableTypeDefIR))?{(cid, callableTypeDefIR) <- (cid, callableTypeDefIR)?} be $find_callableDef_non_overloaded_t((local), TC, prefixedNameIR))
 
-    3. If (((callableTypeDefIR')?{callableTypeDefIR' <- callableTypeDefIR'?} matches pattern (_))), then
+    3. If ((((cid, callableTypeDefIR))?{(cid, callableTypeDefIR) <- (cid, callableTypeDefIR)?} matches pattern (_))), then
 
-      1. (Let ?(callableTypeDefIR) be (callableTypeDefIR')?{callableTypeDefIR' <- callableTypeDefIR'?})
+      1. (Let ?((_cid, callableTypeDefIR)) be ((cid, callableTypeDefIR))?{(cid, callableTypeDefIR) <- (cid, callableTypeDefIR)?})
 
       2. If ((callableTypeDefIR has type actionTypeIR)), then
 
@@ -23325,7 +23325,7 @@ relation Decl_object_ok: p TC_0 typeFrame externMethodTypeDefEnv |- objectDeclar
 
           3. Result in : % % % % |- % : typeFrame_init externMethodTypeDefEnv (instantiationIR as objectDeclarationIR)
 
-;; ../../../../spec-concrete/5.11-typing-declaration.watsup:161.1-165.29
+;; ../../../../spec-concrete/5.11-typing-declaration.watsup:160.1-164.29
 relation Decls_object_ok: p TC typeFrame externMethodTypeDefEnv |- (objectDeclaration)*{objectDeclaration <- objectDeclaration*} : % % %
 
 1. Case analysis on (objectDeclaration)*{objectDeclaration <- objectDeclaration*}
@@ -23348,7 +23348,7 @@ relation Decls_object_ok: p TC typeFrame externMethodTypeDefEnv |- (objectDeclar
 
       3. Result in : % % % % |- % : typeFrame_2 externMethodTypeDefEnv_2 objectDeclarationIR_h :: (objectDeclarationIR_t)*{objectDeclarationIR_t <- objectDeclarationIR_t*}
 
-;; ../../../../spec-concrete/5.11-typing-declaration.watsup:184.1-187.27
+;; ../../../../spec-concrete/5.11-typing-declaration.watsup:183.1-185.27
 def $subst_externMethodTypeDefEnv(theta, externMethodTypeDefEnv_extern, set<pair<cid, externMethodTypeDefIR>>)
 
 1. If ((set<pair<cid, externMethodTypeDefIR>> = ({ [] }))), then
@@ -23361,31 +23361,33 @@ def $subst_externMethodTypeDefEnv(theta, externMethodTypeDefEnv_extern, set<pair
 
   1. (Let (cid_init_h : externMethodTypeDefIR_init_h) :: ((cid_init_t : externMethodTypeDefIR_init_t))*{cid_init_t <- cid_init_t*, externMethodTypeDefIR_init_t <- externMethodTypeDefIR_init_t*} be (pair<cid, externMethodTypeDefIR>)*{pair<cid, externMethodTypeDefIR> <- pair<cid, externMethodTypeDefIR>*})
 
-  2. (Let (externMethodTypeDefIR'')?{externMethodTypeDefIR'' <- externMethodTypeDefIR''?} be $find_map<cid, externMethodTypeDefIR>(externMethodTypeDefEnv_extern, cid_init_h))
+  2. (Let (id_init_h ( (_pid)*{_pid <- _pid*} )) be cid_init_h)
 
-  3. If (((externMethodTypeDefIR'')?{externMethodTypeDefIR'' <- externMethodTypeDefIR''?} matches pattern (_))), then
+  3. (Let ((cid, externMethodTypeDefIR))?{(cid, externMethodTypeDefIR) <- (cid, externMethodTypeDefIR)?} be $find_non_overloaded<externMethodTypeDefIR>(externMethodTypeDefEnv_extern, id_init_h))
 
-    1. (Let ?(externMethodTypeDefIR') be (externMethodTypeDefIR'')?{externMethodTypeDefIR'' <- externMethodTypeDefIR''?})
+  4. If ((((cid, externMethodTypeDefIR))?{(cid, externMethodTypeDefIR) <- (cid, externMethodTypeDefIR)?} matches pattern (_))), then
 
-    2. If ((externMethodTypeDefIR' matches pattern `EXTERN_METHODABSTRACT<%,%>(%):%`)), then
+    1. (Let ?((cid, externMethodTypeDefIR_abstract)) be ((cid, externMethodTypeDefIR))?{(cid, externMethodTypeDefIR) <- (cid, externMethodTypeDefIR)?})
 
-      1. (Let (extern_methodabstract< (tid_expl)*{tid_expl <- tid_expl*} , (tid_impl)*{tid_impl <- tid_impl*} >( (parameterIR)*{parameterIR <- parameterIR*} ): typeIR_ret) be externMethodTypeDefIR')
+    2. If ((externMethodTypeDefIR_abstract matches pattern `EXTERN_METHODABSTRACT<%,%>(%):%`)), then
 
-      2. (Let externMethodTypeDefIR be (extern_method< (tid_expl)*{tid_expl <- tid_expl*} , (tid_impl)*{tid_impl <- tid_impl*} >( (parameterIR)*{parameterIR <- parameterIR*} ): typeIR_ret))
+      1. (Let (extern_methodabstract< (tid_expl)*{tid_expl <- tid_expl*} , (tid_impl)*{tid_impl <- tid_impl*} >( (parameterIR)*{parameterIR <- parameterIR*} ): typeIR_ret) be externMethodTypeDefIR_abstract)
 
-      3. (Let callableTypeDefIR be $subst_callableTypeDefIR(theta, (externMethodTypeDefIR as callableTypeDefIR)))
+      2. (Let externMethodTypeDefIR_concrete be (extern_method< (tid_expl)*{tid_expl <- tid_expl*} , (tid_impl)*{tid_impl <- tid_impl*} >( (parameterIR)*{parameterIR <- parameterIR*} ): typeIR_ret))
+
+      3. (Let callableTypeDefIR be $subst_callableTypeDefIR(theta, (externMethodTypeDefIR_concrete as callableTypeDefIR)))
 
       4. If ((callableTypeDefIR has type externMethodTypeDefIR)), then
 
-        1. (Let externMethodTypeDefIR_subst be (callableTypeDefIR as externMethodTypeDefIR))
+        1. (Let externMethodTypeDefIR_concrete_subst be (callableTypeDefIR as externMethodTypeDefIR))
 
-        2. If (CallableTypeDef_alpha: (externMethodTypeDefIR_subst as callableTypeDefIR) ~~ (externMethodTypeDefIR_init_h as callableTypeDefIR)) holds, then
+        2. If (CallableTypeDef_alpha: (externMethodTypeDefIR_concrete_subst as callableTypeDefIR) ~~ (externMethodTypeDefIR_init_h as callableTypeDefIR)) holds, then
 
-          1. (Let externMethodTypeDefEnv_extern_subst be $update_map<cid, externMethodTypeDefIR>(externMethodTypeDefEnv_extern, cid_init_h, externMethodTypeDefIR_subst))
+          1. (Let externMethodTypeDefEnv_extern_subst be $update_map<cid, externMethodTypeDefIR>(externMethodTypeDefEnv_extern, cid, externMethodTypeDefIR_concrete_subst))
 
           2. Return $subst_externMethodTypeDefEnv(theta, externMethodTypeDefEnv_extern_subst, ({ ((cid_init_t : externMethodTypeDefIR_init_t))*{cid_init_t <- cid_init_t*, externMethodTypeDefIR_init_t <- externMethodTypeDefIR_init_t*} }))
 
-;; ../../../../spec-concrete/5.11-typing-declaration.watsup:465.1-465.78
+;; ../../../../spec-concrete/5.11-typing-declaration.watsup:461.1-461.78
 def $is_externConstructorPrototype(externConstructorOrMethodPrototype)
 
 1. If ((externConstructorOrMethodPrototype has type externConstructorPrototype)), then
@@ -23398,7 +23400,7 @@ def $is_externConstructorPrototype(externConstructorOrMethodPrototype)
 
   1. Return false
 
-;; ../../../../spec-concrete/5.11-typing-declaration.watsup:471.1-471.73
+;; ../../../../spec-concrete/5.11-typing-declaration.watsup:467.1-467.73
 def $is_externMethodPrototype(externConstructorOrMethodPrototype)
 
 1. If ((externConstructorOrMethodPrototype has type externMethodPrototype)), then
@@ -23411,7 +23413,7 @@ def $is_externMethodPrototype(externConstructorOrMethodPrototype)
 
   1. Return false
 
-;; ../../../../spec-concrete/5.11-typing-declaration.watsup:660.1-663.26
+;; ../../../../spec-concrete/5.11-typing-declaration.watsup:656.1-659.26
 relation Enum_serializable_field_ok: TC_0 nameIR_enum typeIR |- (name = expression) : % % # %
 
 1. Group : TC_0 nameIR_enum typeIR |- (name = expression) : % % # %
@@ -23440,7 +23442,7 @@ relation Enum_serializable_field_ok: TC_0 nameIR_enum typeIR |- (name = expressi
 
       7. Result in : % % % |- % : TC_1 (nameIR = typedExpressionIR_cast) # value
 
-;; ../../../../spec-concrete/5.11-typing-declaration.watsup:682.1-685.26
+;; ../../../../spec-concrete/5.11-typing-declaration.watsup:678.1-681.26
 relation Enum_serializable_fields_ok: TC nameIR_enum typeIR |- (namedExpression)*{namedExpression <- namedExpression*} : % % # %
 
 1. Case analysis on (namedExpression)*{namedExpression <- namedExpression*}

@@ -3313,7 +3313,7 @@ for each `typeParameter` in `typeParameter^{asterisk}^`
   ... Let `cid` be `<<cid, $cid(name, parameterList)>>`.
   ... Let `externMethodTypeDefIR` be `EXTERN_METHOD ABSTRACT < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) : typeIR~ret~`.
   ... Check that <<CallableTypeDef_wf, `externMethodTypeDefIR` is a well-formed type, assuming bound type ids `$bound(BLOCK, TC~0~)`>>.
-  ... Let `TC~4~` be `<<add_callableDef_overload_t, $add_callableDef_overload_t(BLOCK, TC~0~, cid, externMethodTypeDefIR)>>`.
+  ... Let `TC~4~` be `<<add_callableDef_non_overload_t, $add_callableDef_non_overload_t(BLOCK, TC~0~, cid, externMethodTypeDefIR)>>`.
   ... Let `externMethodPrototypeIR` be `annotationList ABSTRACT typeIR~ret~ nameIR < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) ;`.
   ... Result in the updated typing context `TC~4~` and the typed method prototype `externMethodPrototypeIR`.
 
@@ -3662,7 +3662,7 @@ relation TableAction_ok: `TC`, `TBLC~0~`, and `annotationList tableActionReferen
 . If let `prefixedNonTypeName` be `tableActionReference`:
  .. Group prefixedNonTypeName:
   ... Let `prefixedNameIR` be <<prefixedNonTypeName, the prefixed name of  `prefixedNonTypeName`>>.
-  ... Let `callableTypeDefIR` be <<option_get, *!*>> <<find_callableDef_non_overloaded_t, the non-overloaded callable definition of `prefixedNameIR` in the `LOCAL` layer of `TC`>>.
+  ... Let `(++_++, callableTypeDefIR)` be <<option_get, *!*>> <<find_callableDef_non_overloaded_t, the non-overloaded callable definition of `prefixedNameIR` in the `LOCAL` layer of `TC`>>.
   ... Check that `callableTypeDefIR` has type `actionTypeIR`.
   ... Let `ACTION ( parameterIR^{asterisk}^ )` be `callableTypeDefIR`.
   ... Let `parameterIR~data~^{asterisk}^`, `parameterIR~control~^{asterisk}^`, and `argumentIR^{asterisk}^` be the result of <<Call_action_partial_ok, typing `[ ]`, under typing context `TC`>>.
@@ -3673,7 +3673,7 @@ relation TableAction_ok: `TC`, `TBLC~0~`, and `annotationList tableActionReferen
 . Else if let `prefixedNonTypeName ( argumentList )` be `tableActionReference`:
  .. Group prefixedNonTypeName-argumentList:
   ... Let `prefixedNameIR` be <<prefixedNonTypeName, the prefixed name of  `prefixedNonTypeName`>>.
-  ... Let `callableTypeDefIR` be <<option_get, *!*>> <<find_callableDef_non_overloaded_t, the non-overloaded callable definition of `prefixedNameIR` in the `LOCAL` layer of `TC`>>.
+  ... Let `(++_++, callableTypeDefIR)` be <<option_get, *!*>> <<find_callableDef_non_overloaded_t, the non-overloaded callable definition of `prefixedNameIR` in the `LOCAL` layer of `TC`>>.
   ... Check that `callableTypeDefIR` has type `actionTypeIR`.
   ... Let `ACTION ( parameterIR^{asterisk}^ )` be `callableTypeDefIR`.
   ... Let `argument^{asterisk}^` be <<flatten_argumentList, the list of arguments in `argumentList`>>.
