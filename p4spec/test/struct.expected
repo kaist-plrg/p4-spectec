@@ -20938,7 +20938,7 @@ relation Call_convention_expr_ok: p TC actctxt |- (_annotationList direction typ
 
           2. If (~($ctk_of_typedExpressionIR(typedExpressionIR_arg) matches pattern `DYN`)), then
 
-            1. Result in : % % % |- % @ % : typedExpressionIR_arg
+            1. Result in : % % % |- % @ % : typedExpressionIR_arg_cast
 
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:416.1-421.84
 relation Call_convention_argument_ok: p TC actctxt |- parameterIR @ argumentIR : %
@@ -22538,12 +22538,12 @@ def $compat'_logical(typeIR, typeIR')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:977.1-977.39
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:976.1-976.39
 def $compat_array_index(typeIR)
 
 1. Return $compat'_arrayindex($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:978.1-978.39
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:977.1-977.39
 def $compat'_arrayindex(typeIR)
 
 1. If ((typeIR has type integerTypeIR)), then
@@ -22572,12 +22572,12 @@ def $compat'_arrayindex(typeIR)
 
   1. Return false
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1081.1-1081.41
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1080.1-1080.41
 def $compat_bitslice_base(typeIR)
 
 1. Return $compat'_bitslice_base($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1082.1-1082.42
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1081.1-1081.42
 def $compat'_bitslice_base(typeIR)
 
 1. If ((typeIR has type integerTypeIR)), then
@@ -22606,12 +22606,12 @@ def $compat'_bitslice_base(typeIR)
 
   1. Return false
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1092.1-1092.42
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1091.1-1091.42
 def $compat_bitslice_index(typeIR)
 
 1. Return $compat'_bitslice_index($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1093.1-1093.43
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1092.1-1092.43
 def $compat'_bitslice_index(typeIR)
 
 1. If ((typeIR has type integerTypeIR)), then
@@ -22640,12 +22640,12 @@ def $compat'_bitslice_index(typeIR)
 
   1. Return false
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1103.1-1103.48
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1102.1-1102.48
 def $is_valid_bitslice(typeIR, n_lo, n_hi)
 
 1. Return ((n_lo <= n_hi) /\ $is_valid_bitslice'($canon_typeIR(typeIR), n_lo, n_hi))
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1104.1-1104.49
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1103.1-1103.49
 def $is_valid_bitslice'(typeIR, _nat, _nat')
 
 1. If ((typeIR has type integerTypeIR)), then
@@ -22686,12 +22686,12 @@ def $is_valid_bitslice'(typeIR, _nat, _nat')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1236.1-1236.46
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1235.1-1235.46
 def $is_concrete_extern_object(typeIR)
 
 1. Return $is_concrete_extern_object'($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1237.1-1237.47
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1236.1-1236.47
 def $is_concrete_extern_object'(typeIR)
 
 1. If (~$is_externObjectTypeIR(typeIR)), then
@@ -22710,7 +22710,7 @@ def $is_concrete_extern_object'(typeIR)
 
   1. Return false
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1238.1-1238.63
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1237.1-1237.63
 def $is_concrete_extern_object''(externMethodTypeDefIR)
 
 1. If ((externMethodTypeDefIR matches pattern `EXTERN_METHOD<%,%>(%):%`)), then
@@ -24433,7 +24433,7 @@ def $filter_default_parameterIRs((parameterIR)*{parameterIR <- parameterIR*}, (i
 
       1. Return parameterIR_h :: $filter_default_parameterIRs((parameterIR_t)*{parameterIR_t <- parameterIR_t*}, (id_default)*{id_default <- id_default*})
 
-;; ../../../../spec-concrete/5.15.1-typing-call-convention.watsup:27.1-28.17
+;; ../../../../spec-concrete/5.15.1-typing-call-convention.watsup:25.1-26.17
 def $align_parameterIRs((parameterIR)*{parameterIR <- parameterIR*}, (argumentIR)*{argumentIR <- argumentIR*})
 
 1. (Let (_annotationList _direction _typeIR nameIR _constantInitializerOptIR) be parameterIR)*{_annotationList <- _annotationList*, _constantInitializerOptIR <- _constantInitializerOptIR*, _direction <- _direction*, _typeIR <- _typeIR*, nameIR <- nameIR*, parameterIR <- parameterIR*}
@@ -24446,7 +24446,7 @@ def $align_parameterIRs((parameterIR)*{parameterIR <- parameterIR*}, (argumentIR
 
   2. Return (parameterIR_aligned)*{parameterIR_aligned <- parameterIR_aligned*}
 
-;; ../../../../spec-concrete/5.15.1-typing-call-convention.watsup:29.1-31.18
+;; ../../../../spec-concrete/5.15.1-typing-call-convention.watsup:27.1-29.17
 def $align_parameterIRs'(_map<id, parameterIR>, parameterIR', argumentIR)
 
 1. If ((argumentIR has type typedExpressionIR)), then
@@ -24475,7 +24475,7 @@ def $align_parameterIRs'(_map<id, parameterIR>, parameterIR', argumentIR)
 
     1. Return ?(parameterIR')
 
-;; ../../../../spec-concrete/5.15.1-typing-call-convention.watsup:67.1-70.82
+;; ../../../../spec-concrete/5.15.1-typing-call-convention.watsup:64.1-67.82
 relation Expr_lvalue_ok: p TC |- (expressionIR # (( _typeIR _ctk )))
 
 1. Case analysis on expressionIR
