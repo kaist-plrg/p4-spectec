@@ -213,21 +213,21 @@ for each `cid~a~` in `cid~a~^{asterisk}^`
 for each `externMethodTypeDefIR'^?^` in `externMethodTypeDefIR'^?^^{asterisk}^`
   ... Check that <<CallableTypeDef_alpha, `externMethodTypeDefIR~a'~` and `externMethodTypeDefIR~b'~` are the same type>>, for all `externMethodTypeDefIR~a'~` in `externMethodTypeDefIR~a'~^{asterisk}^` and `externMethodTypeDefIR~b'~` in `externMethodTypeDefIR~b'~^{asterisk}^`.
   ... The relation holds.
-. Else if let `PARSER ( parameterIR~a~^{asterisk}^ )` be `typeIR'`:
+. Else if let `PARSER ++_++ ( parameterIR~a~^{asterisk}^ )` be `typeIR'`:
  .. Check that `typeIR'''` has type `parserObjectTypeIR`.
- .. Let `PARSER ( parameterIR~b~^{asterisk}^ )` be `typeIR'''`.
+ .. Let `PARSER ++_++ ( parameterIR~b~^{asterisk}^ )` be `typeIR'''`.
  .. Group parserObjectTypeIR:
   ... Check that <<ParameterType_alpha, `parameterIR~a~` and `parameterIR~b~` are the same type>>, for all `parameterIR~a~` in `parameterIR~a~^{asterisk}^` and `parameterIR~b~` in `parameterIR~b~^{asterisk}^`.
   ... The relation holds.
-. Else if let `CONTROL ( parameterIR~a~^{asterisk}^ )` be `typeIR'`:
+. Else if let `CONTROL ++_++ ( parameterIR~a~^{asterisk}^ )` be `typeIR'`:
  .. Check that `typeIR'''` has type `controlObjectTypeIR`.
- .. Let `CONTROL ( parameterIR~b~^{asterisk}^ )` be `typeIR'''`.
+ .. Let `CONTROL ++_++ ( parameterIR~b~^{asterisk}^ )` be `typeIR'''`.
  .. Group controlObjectTypeIR:
   ... Check that <<ParameterType_alpha, `parameterIR~a~` and `parameterIR~b~` are the same type>>, for all `parameterIR~a~` in `parameterIR~a~^{asterisk}^` and `parameterIR~b~` in `parameterIR~b~^{asterisk}^`.
   ... The relation holds.
-. Else if let `PACKAGE { typeIR~a~^{asterisk}^ }` be `typeIR'`:
+. Else if let `PACKAGE ++_++ { typeIR~a~^{asterisk}^ }` be `typeIR'`:
  .. Check that `typeIR'''` has type `packageObjectTypeIR`.
- .. Let `PACKAGE { typeIR~b~^{asterisk}^ }` be `typeIR'''`.
+ .. Let `PACKAGE ++_++ { typeIR~b~^{asterisk}^ }` be `typeIR'''`.
  .. Group packetObjectTypeIR:
   ... Check that <<Type_alpha, `typeIR~a~` and `typeIR~b~` are the same type>>, for all `typeIR~a~` in `typeIR~a~^{asterisk}^` and `typeIR~b~` in `typeIR~b~^{asterisk}^`.
   ... The relation holds.
@@ -463,15 +463,15 @@ relation Type_wf: `bound` and `typeIR''`
  .. Group externObjectTypeIR:
   ... Check that <<CallableTypeDef_wf, `externMethodTypeDefIR` is a well-formed type, assuming bound type ids `bound`>>, for all `externMethodTypeDefIR` in `externMethodTypeDefIR^{asterisk}^`.
   ... The relation holds.
-. Else if let `PARSER ( parameterIR^{asterisk}^ )` be `typeIR''`:
+. Else if let `PARSER ++_++ ( parameterIR^{asterisk}^ )` be `typeIR''`:
  .. Group parserObjectTypeIR:
   ... Check that <<ParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
   ... The relation holds.
-. Else if let `CONTROL ( parameterIR^{asterisk}^ )` be `typeIR''`:
+. Else if let `CONTROL ++_++ ( parameterIR^{asterisk}^ )` be `typeIR''`:
  .. Group controlObjectTypeIR:
   ... Check that <<ParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
   ... The relation holds.
-. Else if let `PACKAGE { typeIR^{asterisk}^ }` be `typeIR''`:
+. Else if let `PACKAGE ++_++ { typeIR^{asterisk}^ }` be `typeIR''`:
  .. Group packageObjectTypeIR:
   ... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `bound`>>, for all `typeIR` in `typeIR^{asterisk}^`.
   ... The relation holds.
@@ -798,6 +798,10 @@ table $nestable'_typedef:
 | nameTypeIR | true
 | newTypeIR | true
 | dataTypeIR | true
+| externObjectTypeIR | true
+| parserObjectTypeIR | true
+| controlObjectTypeIR | true
+| packageObjectTypeIR | true
 | ++_++ | false
 
 |===
@@ -4616,13 +4620,13 @@ for each `callableTypeDefIR` in `callableTypeDefIR^{asterisk}^`
   ... Let `parserStateIR^{asterisk}^` be the result of <<ParserStates_ok, typing `parserState^{asterisk}^`, under typing context `TC~5~`>>.
   ... Let `callableTypeDefIR` be `PARSER_APPLY ( parameterIR^{asterisk}^ )`.
   ... Check that <<CallableTypeDef_wf, `callableTypeDefIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
+  ... Let `nameIR` be <<name, the name of `name`>>.
   ... Let `cid` be `<<cid_, $cid_(name, constructorParameterListOpt)>>`.
-  ... Let `parserObjectTypeDefIR` be `PARSER < [ ] , [ ] > ( parameterIR^{asterisk}^ )`.
+  ... Let `parserObjectTypeDefIR` be `PARSER nameIR < [ ] , [ ] > ( parameterIR^{asterisk}^ )`.
   ... Let `typeIR~parser_spec~` be `parserObjectTypeDefIR < [ ] >`.
   ... Let `constructorTypeDefIR` be `CONSTRUCTOR < [ ] , [ ] > ( constructorParameterIR^{asterisk}^ ) : typeIR~parser_spec~`.
   ... Check that <<ConstructorTypeDef_wf, `constructorTypeDefIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
   ... Let `TC~6~` be `<<add_constructorDef_t, $add_constructorDef_t(TC~0~, cid, constructorTypeDefIR)>>`.
-  ... Let `nameIR` be <<name, the name of `name`>>.
   ... Let `parserDeclarationIR` be `annotationList PARSER nameIR < [ ] > ( parameterIR^{asterisk}^ ) ( constructorParameterIR^{asterisk}^ ) { parserLocalDeclarationIR^{asterisk}^ parserStateIR^{asterisk}^ }`.
   ... Result in the modified typing context `TC~6~` and the typed declaration `parserDeclarationIR`.
 . Else if let `annotationList CONTROL name typeParameterListOpt ( parameterList ) constructorParameterListOpt { controlLocalDeclarationList APPLY controlBody }` be `declaration`:
@@ -4643,13 +4647,13 @@ for each `callableTypeDefIR` in `callableTypeDefIR^{asterisk}^`
   ... Let `++_++`, `++_++`, and `controlBodyIR` be the result of <<Block_ok, typing `NOLOOP`, under typing context `TC~5~`, abstract control flow `CONT`, and loop context `controlBody`>>.
   ... Let `callableTypeDefIR` be `CONTROL_APPLY ( parameterIR^{asterisk}^ )`.
   ... Check that <<CallableTypeDef_wf, `callableTypeDefIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
+  ... Let `nameIR` be <<name, the name of `name`>>.
   ... Let `cid` be `<<cid_, $cid_(name, constructorParameterListOpt)>>`.
-  ... Let `controlObjectTypeDefIR` be `CONTROL < [ ] , [ ] > ( parameterIR^{asterisk}^ )`.
+  ... Let `controlObjectTypeDefIR` be `CONTROL nameIR < [ ] , [ ] > ( parameterIR^{asterisk}^ )`.
   ... Let `typeIR~control_spec~` be `controlObjectTypeDefIR < [ ] >`.
   ... Let `constructorTypeDefIR` be `CONSTRUCTOR < [ ] , [ ] > ( constructorParameterIR^{asterisk}^ ) : typeIR~control_spec~`.
   ... Check that <<ConstructorTypeDef_wf, `constructorTypeDefIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
   ... Let `TC~6~` be `<<add_constructorDef_t, $add_constructorDef_t(TC~0~, cid, constructorTypeDefIR)>>`.
-  ... Let `nameIR` be <<name, the name of `name`>>.
   ... Let `controlDeclarationIR` be `annotationList CONTROL nameIR < [ ] > ( parameterIR^{asterisk}^ ) ( constructorParameterIR^{asterisk}^ ) { controlLocalDeclarationIR^{asterisk}^ APPLY controlBodyIR }`.
   ... Result in the modified typing context `TC~6~` and the typed declaration `controlDeclarationIR`.
 . Else if let `enumTypeDeclaration` be `declaration`:
@@ -4890,7 +4894,7 @@ for each `typeParameter` in `typeParameter^{asterisk}^`
   ... Let `parameter^{asterisk}^` be <<flatten_parameterList, the list of parameters in `parameterList`>>.
   ... Let `parameterIR^{asterisk}^` and `tid~impl~^{asterisk}^` be the result of <<Parameters_ok, typing `parameter^{asterisk}^`, under cursor `BLOCK` and typing context `TC~2~`>>.
   ... Let `nameIR` be <<name, the name of `name`>>.
-  ... Let `parserObjectTypeDefIR` be `PARSER < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ )`.
+  ... Let `parserObjectTypeDefIR` be `PARSER nameIR < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ )`.
   ... Check that <<TypeDef_wf, `parserObjectTypeDefIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
   ... Let `TC~3~` be `<<add_typeDef_t, $add_typeDef_t(GLOBAL, TC~0~, nameIR, parserObjectTypeDefIR)>>`.
   ... Let `parserTypeDeclarationIR` be `annotationList PARSER nameIR < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) ;`.
@@ -4910,7 +4914,7 @@ for each `typeParameter` in `typeParameter^{asterisk}^`
   ... Let `parameter^{asterisk}^` be <<flatten_parameterList, the list of parameters in `parameterList`>>.
   ... Let `parameterIR^{asterisk}^` and `tid~impl~^{asterisk}^` be the result of <<Parameters_ok, typing `parameter^{asterisk}^`, under cursor `BLOCK` and typing context `TC~2~`>>.
   ... Let `nameIR` be <<name, the name of `name`>>.
-  ... Let `controlObjectTypeDefIR` be `CONTROL < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ )`.
+  ... Let `controlObjectTypeDefIR` be `CONTROL nameIR < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ )`.
   ... Check that <<TypeDef_wf, `controlObjectTypeDefIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
   ... Let `TC~3~` be `<<add_typeDef_t, $add_typeDef_t(GLOBAL, TC~0~, nameIR, controlObjectTypeDefIR)>>`.
   ... Let `controlTypeDeclarationIR` be `annotationList CONTROL nameIR < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) ;`.
@@ -4937,7 +4941,7 @@ for each `typeParameter` in `typeParameter^{asterisk}^`
 --
 +
 for each `constructorParameterIR` in `constructorParameterIR^{asterisk}^`
-  ... Let `packageObjectTypeDefIR` be `PACKAGE < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > { typeIR~package_inner~^{asterisk}^ }`.
+  ... Let `packageObjectTypeDefIR` be `PACKAGE nameIR < tid~expl~^{asterisk}^ , tid~impl~^{asterisk}^ > { typeIR~package_inner~^{asterisk}^ }`.
   ... Check that <<TypeDef_wf, `packageObjectTypeDefIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
   ... Let `TC~3~` be `<<add_typeDef_t, $add_typeDef_t(GLOBAL, TC~0~, nameIR, packageObjectTypeDefIR)>>`.
   ... Let `cid` be `<<cid_, $cid_(name, ( parameterList ))>>`.
@@ -5163,7 +5167,7 @@ relation CallableType_ok: `p`, `TC`, `callableTargetIR'`, `typeArgumentIR'^{aste
    .... Let `typeIR~base~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~base~`>>.
    .... Let `typeIR` be <<canon_typeIR, the canonicalized form of `typeIR~base~`>>.
    .... Check that `typeIR` has type `parserObjectTypeIR`.
-   .... Let `PARSER ( parameterIR^{asterisk}^ )` be `typeIR`.
+   .... Let `PARSER ++_++ ( parameterIR^{asterisk}^ )` be `typeIR`.
    .... Let `parserApplyMethodTypeIR` be `PARSER_APPLY ( parameterIR^{asterisk}^ )`.
    .... Let `id~param~^{asterisk}^` be the list of `id~param~` and `value~param~^?^^{asterisk}^` be the list of `value~param~^?^`, obtained by repeating:
 +
@@ -5188,7 +5192,7 @@ for each `id~param~` in `id~param~^{asterisk}^` and `value~param~^?^` in `value~
    .... Let `typeIR~base~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~base~`>>.
    .... Let `typeIR` be <<canon_typeIR, the canonicalized form of `typeIR~base~`>>.
    .... Check that `typeIR` has type `controlObjectTypeIR`.
-   .... Let `CONTROL ( parameterIR^{asterisk}^ )` be `typeIR`.
+   .... Let `CONTROL ++_++ ( parameterIR^{asterisk}^ )` be `typeIR`.
    .... Let `controlApplyMethodTypeIR` be `CONTROL_APPLY ( parameterIR^{asterisk}^ )`.
    .... Let `id~param~^{asterisk}^` be the list of `id~param~` and `value~param~^?^^{asterisk}^` be the list of `value~param~^?^`, obtained by repeating:
 +
@@ -5416,11 +5420,33 @@ for each `parameterIR~aligned~` in `parameterIR~aligned~^{asterisk}^`
   ... Result in `tableMetadataStructTypeIR`, `[ ]`, and `[ ]`.
 
 
-relation ConstructorType_ok: `p`, `TC`, `prefixedNameIR`, `typeArgumentIR^{asterisk}^`, and `argumentIR^{asterisk}^`
+relation ConstructorType_ok: `p`, `TC`, `prefixedNameIR`, `typeArgumentIR'^{asterisk}^`, and `argumentIR^{asterisk}^`
 
 
-. Group :
+. Group non-aliased-none-type:
+ .. Check that `None` is equal to <<find_typeDef_t, the type definition of `prefixedNameIR` in the `p` layer of `TC`>>.
  .. Let `(cid, constructorTypeDefIR, id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_constructorDef_overloaded_t, $find_constructorDef_overloaded_t(TC, prefixedNameIR, argumentIR^{asterisk}^)>>`.
+ .. Let `(constructorTypeIR, tid~impl~^{asterisk}^)` be `<<specialize_constructorTypeDefIR, $specialize_constructorTypeDefIR(constructorTypeDefIR, typeArgumentIR'^{asterisk}^)>>`.
+ .. Let `bound'` be `<<bound, $bound(p, TC)>>`.
+ .. Let `bound` be <<union_set, the union of the sets `bound'` and `{ tid~impl~^{asterisk}^ }`>>.
+ .. Check that <<ConstructorType_wf, `constructorTypeIR` is a well-formed type, assuming bound type ids `bound`>>.
+ .. Result in `constructorTypeIR`, `tid~impl~^{asterisk}^`, and `id~default~^{asterisk}^`.
+. Group non-aliased-some-type:
+ .. Let `typeDefIR` be <<option_get, *!*>> <<find_typeDef_t, the type definition of `prefixedNameIR` in the `p` layer of `TC`>>.
+ .. Check that `~<<is_typedefTypeDefIR, $is_typedefTypeDefIR(typeDefIR)>>`.
+ .. Let `(cid, constructorTypeDefIR, id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_constructorDef_overloaded_t, $find_constructorDef_overloaded_t(TC, prefixedNameIR, argumentIR^{asterisk}^)>>`.
+ .. Let `(constructorTypeIR, tid~impl~^{asterisk}^)` be `<<specialize_constructorTypeDefIR, $specialize_constructorTypeDefIR(constructorTypeDefIR, typeArgumentIR'^{asterisk}^)>>`.
+ .. Let `bound'` be `<<bound, $bound(p, TC)>>`.
+ .. Let `bound` be <<union_set, the union of the sets `bound'` and `{ tid~impl~^{asterisk}^ }`>>.
+ .. Check that <<ConstructorType_wf, `constructorTypeIR` is a well-formed type, assuming bound type ids `bound`>>.
+ .. Result in `constructorTypeIR`, `tid~impl~^{asterisk}^`, and `id~default~^{asterisk}^`.
+. Check that `typeArgumentIR'^{asterisk}^` is an empty list.
+. Group aliased:
+ .. Let `typeDefIR` be <<option_get, *!*>> <<find_typeDef_t, the type definition of `prefixedNameIR` in the `p` layer of `TC`>>.
+ .. Check that `typeDefIR` has type `typedefTypeIR`.
+ .. Let `TYPEDEF nameIR~alias~ typeIR~alias~` be `typeDefIR`.
+ .. Let `(nameIR, typeArgumentIR^{asterisk}^)` be `<<resolve_type_alias, $resolve_type_alias(typeIR~alias~)>>`.
+ .. Let `(cid, constructorTypeDefIR, id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_constructorDef_overloaded_t, $find_constructorDef_overloaded_t(TC, nameIR, argumentIR^{asterisk}^)>>`.
  .. Let `(constructorTypeIR, tid~impl~^{asterisk}^)` be `<<specialize_constructorTypeDefIR, $specialize_constructorTypeDefIR(constructorTypeDefIR, typeArgumentIR^{asterisk}^)>>`.
  .. Let `bound'` be `<<bound, $bound(p, TC)>>`.
  .. Let `bound` be <<union_set, the union of the sets `bound'` and `{ tid~impl~^{asterisk}^ }`>>.
@@ -5436,7 +5462,7 @@ relation Inst_ok: `cursor`, `TC`, `instctxt`, `constructorTypeIR`, `typeArgument
  .. Let `CONSTRUCTOR ( parameterIR^{asterisk}^ ) : typeIR~object~` be `constructorTypeIR`.
  .. Let `typeIR` be <<canon_typeIR, the canonicalized form of `typeIR~object~`>>.
  .. Check that `typeIR` has type `packageObjectTypeIR`.
- .. Let `PACKAGE { ++_++^{asterisk}^ }` be `typeIR`.
+ .. Let `PACKAGE ++_++ { ++_++^{asterisk}^ }` be `typeIR`.
  .. Let `parameterIR~non_default~^{asterisk}^` be `<<filter_default_parameterIRs, $filter_default_parameterIRs(parameterIR^{asterisk}^, id~default~^{asterisk}^)>>`.
  .. Check that the length of `parameterIR~non_default~^{asterisk}^` is equal to the length of `argumentIR^{asterisk}^`.
  .. Let `parameterIR~aligned~^{asterisk}^` be `<<align_parameterIRs, $align_parameterIRs(parameterIR~non_default~^{asterisk}^, argumentIR^{asterisk}^)>>`.
@@ -5565,6 +5591,18 @@ table $compat'_satplusminus:
 | INT < w~l~ >, INT < w~r~ > | w~l~ = w~r~
 | BIT < w~l~ >, BIT < w~r~ > | w~l~ = w~r~
 | ++_++, ++_++ | false
+
+|===
+
+
+table $compat'_direct_application:
+[cols="2", options="header"]
+|===
+| (`typeIR'`) | `bool`
+
+| parserObjectTypeIR | true
+| controlObjectTypeIR | true
+| ++_++ | false
 
 |===
 
@@ -6294,8 +6332,8 @@ relation Expr_inst: `p`, `IC`, `STO`, and <<typedExpressionIR, `expressionIR` an
 . Else if let `callExpressionIR` be `expressionIR`:
  .. If let `prefixedNameIR < typeArgumentListIR > ( argumentListIR )` be `callExpressionIR`:
   ... Group callExpressionIR-constructor:
-   .... Let `(++_++, constructorDef, id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_constructorDef_i, $find_constructorDef_i(IC, prefixedNameIR, argumentListIR)>>`.
-   .... Let <<Constructor_inst, `p IC STO |- constructorDef < typeArgumentListIR > ( argumentListIR # id~default~^{asterisk}^ ) : STO~1~ object`>>.
+   .... Let <<Constructor_inst, `p IC |- prefixedNameIR < typeArgumentListIR > ( argumentListIR ) : constructorDef < typeArgumentListIR~inst~ > ( # id~default~^{asterisk}^ )`>>.
+   .... Let <<Constructor_call, `p IC STO |- constructorDef < typeArgumentListIR~inst~ > ( argumentListIR # id~default~^{asterisk}^ ) : STO~1~ object`>>.
    .... Let `STO~2~` be `<<add_map, $add_map<oid, object>(STO~1~, IC.PATH, object)>>`.
    .... Let `value~ref~` be `! IC.PATH`.
    .... Result in `STO~2~` and `value~ref~`.
@@ -6378,8 +6416,10 @@ relation Stmt_inst: `p`, `IC`, `STO`, and `statementIR`
 * and the instantiated statement `callStatementIR`.
 . Else if let `prefixedNameIR . APPLY ( argumentListIR ) ;` be `statementIR`:
  .. Group directApplicationStatementIR:
-  ... Let `(++_++, constructorDef, ++_++^{asterisk}^)` be <<option_get, *!*>> `<<find_constructorDef_i, $find_constructorDef_i(IC, prefixedNameIR, [ ])>>`.
-  ... Let <<Constructor_inst, `p IC STO |- constructorDef < [ ] > ( [ ] # [ ] ) : STO~1~ object`>>.
+  ... Let <<Constructor_inst, `p IC |- prefixedNameIR < [ ] > ( [ ] ) : constructorDef < typeArgumentIR^{asterisk}^ > ( # id^{asterisk}^ )`>>.
+  ... Check that `typeArgumentIR^{asterisk}^` is an empty list.
+  ... Check that `id^{asterisk}^` is an empty list.
+  ... Let <<Constructor_call, `p IC STO |- constructorDef < [ ] > ( [ ] # [ ] ) : STO~1~ object`>>.
   ... Let `tid~fresh~` be <<fresh_tid, a fresh type variable>>.
   ... Let `tid` be <<flatten_prefixedNameIR, the string form of  `prefixedNameIR`>>.
   ... Let `typeIR` be `tid`.
@@ -6552,8 +6592,10 @@ relation ParserStmt_inst: `IC~0~`, `STO~0~`, and `parserStatementIR`
   ... Result in `IC~1~`, `STO~1~`, and `callStatementIR~inst~`.
 . Else if let `prefixedNameIR . APPLY ( argumentListIR ) ;` be `parserStatementIR`:
  .. Group directApplicationStatementIR:
-  ... Let `(++_++, constructorDef, ++_++^{asterisk}^)` be <<option_get, *!*>> `<<find_constructorDef_i, $find_constructorDef_i(IC~0~, prefixedNameIR, [ ])>>`.
-  ... Let <<Constructor_inst, `LOCAL IC~0~ STO~0~ |- constructorDef < [ ] > ( [ ] # [ ] ) : STO~1~ object`>>.
+  ... Let <<Constructor_inst, `LOCAL IC~0~ |- prefixedNameIR < [ ] > ( [ ] ) : constructorDef < typeArgumentIR^{asterisk}^ > ( # id^{asterisk}^ )`>>.
+  ... Check that `typeArgumentIR^{asterisk}^` is an empty list.
+  ... Check that `id^{asterisk}^` is an empty list.
+  ... Let <<Constructor_call, `LOCAL IC~0~ STO~0~ |- constructorDef < [ ] > ( [ ] # [ ] ) : STO~1~ object`>>.
   ... Let `tid` be <<flatten_prefixedNameIR, the string form of  `prefixedNameIR`>>.
   ... Let `tid~fresh~` be <<fresh_tid, a fresh type variable>>.
   ... Let `nameIR` be `tid {pp} "_" {pp} tid~fresh~`.
@@ -6726,7 +6768,7 @@ relation ControlLocalDecl_inst: `IC~0~`, `STO~0~`, and `controlLocalDeclarationI
 . Else let `annotationList TABLE typeIR nameIR { tablePropertyListIR }` be `controlLocalDeclarationIR`:
  .. Group tableDeclarationIR:
   ... Let `IC~inner~` be `<<enter_path_i, $enter_path_i(IC~0~, nameIR)>>`.
-  ... Let <<Constructor_inst, `BLOCK IC~0~ STO~0~ |- TABLE nameIR { tablePropertyListIR } < [ ] > ( [ ] # [ ] ) : STO~1~ object~table~`>>.
+  ... Let <<Constructor_call, `BLOCK IC~0~ STO~0~ |- TABLE nameIR { tablePropertyListIR } < [ ] > ( [ ] # [ ] ) : STO~1~ object~table~`>>.
   ... Let `oid` be `IC~0~.PATH {pp} [nameIR]`.
   ... Let `STO~2~` be `<<add_map, $add_map<oid, object>(STO~1~, oid, object~table~)>>`.
   ... Let `IC~1~` be `<<add_var_i, $add_var_i(BLOCK, IC~0~, nameIR, ! oid)>>`.
@@ -6769,9 +6811,9 @@ relation Decl_inst: `cursor`, `IC~0~`, `STO`, and `declarationIR`
 . Else if let `annotationList typeIR prefixedNameIR < typeArgumentListIR > ( argumentListIR ) nameIR objectInitializerOptIR ;` be `declarationIR`:
  .. Group instantiationIR:
   ... If `cursor` matches pattern `GLOBAL`:
-   .... Let `(++_++, constructorDef, id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_constructorDef_i, $find_constructorDef_i(IC~0~, prefixedNameIR, argumentListIR)>>`.
+   .... Let <<Constructor_inst, `GLOBAL IC~0~ |- prefixedNameIR < typeArgumentListIR > ( argumentListIR ) : constructorDef < typeArgumentListIR~inst~ > ( # id~default~^{asterisk}^ )`>>.
    .... Let `IC~inner~` be `<<enter_path_i, $enter_path_i(IC~0~, nameIR)>>`.
-   .... Let <<Constructor_inst, `GLOBAL IC~inner~ STO |- constructorDef < typeArgumentListIR > ( argumentListIR # id~default~^{asterisk}^ ) : STO~1~ object`>>.
+   .... Let <<Constructor_call, `GLOBAL IC~inner~ STO |- constructorDef < typeArgumentListIR~inst~ > ( argumentListIR # id~default~^{asterisk}^ ) : STO~1~ object`>>.
    .... Else if let `EXTERN tid < theta > { externState frame externMethodDefEnv }` be `object`:
     ..... Let `IC~decl~` be `<<empty_instContext, $empty_instContext>>[PATH = IC~0~.PATH][GLOBAL = IC~0~.GLOBAL]`.
     ..... Let `objectDeclarationListIR` be `<<flatten_objectInitializerOptIR, $flatten_objectInitializerOptIR(objectInitializerOptIR)>>`.
@@ -6789,9 +6831,9 @@ relation Decl_inst: `cursor`, `IC~0~`, `STO`, and `declarationIR`
     ..... Let `IC~1~` be `<<add_var_i, $add_var_i(GLOBAL, IC~0~, nameIR, ! oid)>>`.
     ..... Result in `IC~1~`, `STO~2~`, and `None`.
   ... Else `cursor` does not match pattern `GLOBAL`:
-   .... Let `(++_++, constructorDef, id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_constructorDef_i, $find_constructorDef_i(IC~0~, prefixedNameIR, argumentListIR)>>`.
+   .... Let <<Constructor_inst, `cursor IC~0~ |- prefixedNameIR < typeArgumentListIR > ( argumentListIR ) : constructorDef < typeArgumentListIR~inst~ > ( # id~default~^{asterisk}^ )`>>.
    .... Let `IC~inner~` be `<<enter_path_i, $enter_path_i(IC~0~, nameIR)>>`.
-   .... Let <<Constructor_inst, `cursor IC~inner~ STO |- constructorDef < typeArgumentListIR > ( argumentListIR # id~default~^{asterisk}^ ) : STO~1~ object`>>.
+   .... Let <<Constructor_call, `cursor IC~inner~ STO |- constructorDef < typeArgumentListIR~inst~ > ( argumentListIR # id~default~^{asterisk}^ ) : STO~1~ object`>>.
    .... Else if let `EXTERN tid < theta > { externState frame externMethodDefEnv }` be `object`:
     ..... Let `IC~decl~` be `<<empty_instContext, $empty_instContext>>[PATH = IC~0~.PATH][GLOBAL = IC~0~.GLOBAL]`.
     ..... Let `objectDeclarationListIR` be `<<flatten_objectInitializerOptIR, $flatten_objectInitializerOptIR(objectInitializerOptIR)>>`.
@@ -7041,12 +7083,12 @@ for each `typeFieldIR` in `typeFieldIR^{asterisk}^`
    .... Result in `IC~1~`, `STO`, and `None`.
 . Else if let `annotationList PARSER nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR^{asterisk}^ ) ;` be `declarationIR`:
  .. Group parserTypeDeclarationIR:
-  ... Let `parserObjectTypeDefIR` be `PARSER < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR^{asterisk}^ )`.
+  ... Let `parserObjectTypeDefIR` be `PARSER nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR^{asterisk}^ )`.
   ... Let `IC~1~` be `<<add_typeDef_i, $add_typeDef_i(GLOBAL, IC~0~, nameIR, parserObjectTypeDefIR)>>`.
   ... Result in `IC~1~`, `STO`, and `None`.
 . Else if let `annotationList CONTROL nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR^{asterisk}^ ) ;` be `declarationIR`:
  .. Group controlTypeDeclarationIR:
-  ... Let `controlObjectTypeDefIR` be `CONTROL < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR^{asterisk}^ )`.
+  ... Let `controlObjectTypeDefIR` be `CONTROL nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR^{asterisk}^ )`.
   ... Let `IC~1~` be `<<add_typeDef_i, $add_typeDef_i(GLOBAL, IC~0~, nameIR, controlObjectTypeDefIR)>>`.
   ... Result in `IC~1~`, `STO`, and `None`.
 . Else if let `annotationList PACKAGE nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR^{asterisk}^ ) ;` be `declarationIR`:
@@ -7058,7 +7100,7 @@ for each `typeFieldIR` in `typeFieldIR^{asterisk}^`
 --
 +
 for each `parameterIR` in `parameterIR^{asterisk}^`
-  ... Let `packageObjectTypeDefIR` be `PACKAGE < typeParameterListIR , typeParameterListIR~inferred~ > { typeIR^{asterisk}^ }`.
+  ... Let `packageObjectTypeDefIR` be `PACKAGE nameIR < typeParameterListIR , typeParameterListIR~inferred~ > { typeIR^{asterisk}^ }`.
   ... Let `IC~1~` be `<<add_typeDef_i, $add_typeDef_i(GLOBAL, IC~0~, nameIR, packageObjectTypeDefIR)>>`.
   ... Let `cid` be `<<cid_IR, $cid_IR(nameIR, parameterIR^{asterisk}^)>>`.
   ... Let `constructorDef` be `PACKAGE < typeParameterListIR {pp} typeParameterListIR~inferred~ > ( parameterIR^{asterisk}^ )`.
@@ -7131,7 +7173,29 @@ relation Bind_args: `p~caller~`, `IC~caller~`, `p~callee~`, `IC~callee~`, `STO`,
   ... Result in `IC~callee_2~` and `STO~2~`.
 
 
-relation Constructor_inst: `p`, `IC`, `STO~0~`, `constructorDef`, `typeArgumentIR^{asterisk}^`, `argumentIR^{asterisk}^`, and `id~default~^{asterisk}^`
+relation Constructor_inst: `p`, `IC`, `prefixedNameIR`, `typeArgumentIR'^{asterisk}^`, and `argumentIR^{asterisk}^`
+
+
+. Group non-aliased-none-type:
+ .. Check that `None` is equal to `<<find_typeDef_i, $find_typeDef_i(p, IC, prefixedNameIR)>>`.
+ .. Let `(++_++, constructorDef, id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_constructorDef_i, $find_constructorDef_i(IC, prefixedNameIR, argumentIR^{asterisk}^)>>`.
+ .. Result in `constructorDef`, `typeArgumentIR'^{asterisk}^`, and `id~default~^{asterisk}^`.
+. Group non-aliased-some-type:
+ .. Let `typeDefIR` be <<option_get, *!*>> `<<find_typeDef_i, $find_typeDef_i(p, IC, prefixedNameIR)>>`.
+ .. Check that `~<<is_typedefTypeDefIR, $is_typedefTypeDefIR(typeDefIR)>>`.
+ .. Let `(++_++, constructorDef, id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_constructorDef_i, $find_constructorDef_i(IC, prefixedNameIR, argumentIR^{asterisk}^)>>`.
+ .. Result in `constructorDef`, `typeArgumentIR'^{asterisk}^`, and `id~default~^{asterisk}^`.
+. Check that `typeArgumentIR'^{asterisk}^` is an empty list.
+. Group aliased:
+ .. Let `typeDefIR` be <<option_get, *!*>> `<<find_typeDef_i, $find_typeDef_i(p, IC, prefixedNameIR)>>`.
+ .. Check that `typeDefIR` has type `typedefTypeIR`.
+ .. Let `TYPEDEF nameIR~alias~ typeIR~alias~` be `typeDefIR`.
+ .. Let `(nameIR, typeArgumentIR^{asterisk}^)` be `<<resolve_type_alias, $resolve_type_alias(typeIR~alias~)>>`.
+ .. Let `(++_++, constructorDef, id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_constructorDef_i, $find_constructorDef_i(IC, nameIR, argumentIR^{asterisk}^)>>`.
+ .. Result in `constructorDef`, `typeArgumentIR^{asterisk}^`, and `id~default~^{asterisk}^`.
+
+
+relation Constructor_call: `p`, `IC`, `STO~0~`, `constructorDef`, `typeArgumentIR^{asterisk}^`, `argumentIR^{asterisk}^`, and `id~default~^{asterisk}^`
 
 
 . If let `EXTERN nameIR < typeParameterIR^{asterisk}^ > ( constructorParameterIR^{asterisk}^ ) { externMethodPrototypeIR^{asterisk}^ }` be `constructorDef`:
@@ -9247,8 +9311,10 @@ relation Extern_init: `EC`, `STO~0~`, and `nameIR`
 
 . Group :
  .. Let `IC` be {PATH `[ ]`, GLOBAL `EC.GLOBAL`, BLOCK `EC.BLOCK`, LOCAL `EC.LOCAL`}.
- .. Let `(++_++, constructorDef, ++_++^{asterisk}^)` be <<option_get, *!*>> `<<find_constructorDef_i, $find_constructorDef_i(IC, nameIR, [ ])>>`.
- .. Let <<Constructor_inst, `GLOBAL IC STO~0~ |- constructorDef < [ ] > ( [ ] # [ ] ) : STO~1~ object`>>.
+ .. Let <<Constructor_inst, `GLOBAL IC |- nameIR < [ ] > ( [ ] ) : constructorDef < typeArgumentIR^{asterisk}^ > ( # id^{asterisk}^ )`>>.
+ .. Check that `typeArgumentIR^{asterisk}^` is an empty list.
+ .. Check that `id^{asterisk}^` is an empty list.
+ .. Let <<Constructor_call, `GLOBAL IC STO~0~ |- constructorDef < [ ] > ( [ ] # [ ] ) : STO~1~ object`>>.
  .. Let `oid~object~` be `[nameIR]`.
  .. Let `STO~2~` be `<<add_map, $add_map<oid, object>(STO~1~, oid~object~, object)>>`.
  .. Result in the resulting store `STO~2~`.

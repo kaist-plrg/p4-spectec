@@ -38,8 +38,10 @@ rule Extern_init:
                GLOBAL EC.GLOBAL,
                BLOCK EC.BLOCK,
                LOCAL EC.LOCAL }
-  -- if (_, constructorDef, _) = $find_constructorDef_i(IC, `` nameIR, eps)
   -- Constructor_inst:
+      GLOBAL IC |- (`` nameIR) `< eps > `( eps )
+                 : constructorDef `< eps > `( `# eps )
+  -- Constructor_call:
       GLOBAL IC STO_0 |- constructorDef `< eps > `( eps `# eps )
                        : STO_1 object
   -- if oid_object = [ nameIR ]

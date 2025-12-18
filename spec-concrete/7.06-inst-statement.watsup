@@ -27,9 +27,10 @@ rule Stmt_inst/directApplicationStatementIR:
   p IC STO_0 |- prefixedNameIR `. APPLY `( argumentListIR ) `;
               : IC STO_2 blockStatementIR
   ---- ;; find and instantiate constructor
-  -- if (_, constructorDef, _)
-      = $find_constructorDef_i(IC, prefixedNameIR, eps)
   -- Constructor_inst:
+      p IC |- prefixedNameIR `< eps > `( eps )
+            : constructorDef `< eps > `( `# eps )
+  -- Constructor_call:
       p IC STO_0 |- constructorDef `< eps > `( eps `# eps ) : STO_1 object
   ---- ;; assign new tid with random string appended
   -- if tid_fresh = $fresh_tid()

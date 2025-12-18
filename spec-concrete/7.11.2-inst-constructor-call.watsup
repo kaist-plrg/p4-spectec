@@ -149,7 +149,7 @@ rule Bind_args/cons:
       |- id_t* argumentIR_t* : IC_callee_2 STO_2
 
 ;;
-;; Constructor instantiation
+;; Constructor calls
 ;;
 ;; syntax constructorDef
 ;;
@@ -159,7 +159,7 @@ rule Bind_args/cons:
 ;;;   EXTERN nameIR `< typeParameterListIR >
 ;;;     `( constructorParameterListIR ) `{ methodPrototypeListIR }
 
-rule Constructor_inst/externConstructorDef:
+rule Constructor_call/externConstructorDef:
   p IC STO_0 |- (EXTERN nameIR `< typeParameterIR* >
                   `( constructorParameterIR* ) `{ externMethodPrototypeIR* })
                   `< typeArgumentIR* > `( argumentIR* `# id_default* )
@@ -205,7 +205,7 @@ rule Constructor_inst/externConstructorDef:
 ;;;     `{ parserLocalDeclarationListIR
 ;;;         parserStateListIR }
 
-rule Constructor_inst/parserConstructorDef:
+rule Constructor_call/parserConstructorDef:
   p IC STO_0 |- (PARSER `( parameterIR* )`( constructorParameterIR* )
                   `{ parserLocalDeclarationIR* parserStateIR* })
                   `< eps > `( argumentIR* `# id_default* )
@@ -247,7 +247,7 @@ rule Constructor_inst/parserConstructorDef:
 ;;;     `{ controlLocalDeclarationListIR
 ;;;       APPLY controlBodyIR }
 
-rule Constructor_inst/controlConstructorDef:
+rule Constructor_call/controlConstructorDef:
   p IC STO_0 |- (CONTROL `( parameterIR* ) `( constructorParameterIR* )
                   `{ controlLocalDeclarationIR* APPLY controlBodyIR })
                   `< eps > `( argumentIR* `# id_default* )
@@ -290,7 +290,7 @@ rule Constructor_inst/controlConstructorDef:
 ;;; syntax packageObjectConstructorDef =
 ;;;   PACKAGE `< typeParameterListIR > `( constructorParameterListIR )
 
-rule Constructor_inst/packageConstructorDef:
+rule Constructor_call/packageConstructorDef:
   p IC STO_0 |- (PACKAGE `< typeParameterIR* > `( constructorParameterIR*))
                   `< typeArgumentIR* > `( argumentIR* `# id_default* )
               : STO_1 object_package
@@ -322,7 +322,7 @@ rule Constructor_inst/packageConstructorDef:
 ;;; syntax tableObjectConstructorDef =
 ;;;   TABLE nameIR `{ tablePropertyListIR }
 
-rule Constructor_inst/tableConstructorDef:
+rule Constructor_call/tableConstructorDef:
   p IC STO_0 |- (TABLE nameIR `{ tablePropertyListIR })
                   `< eps > `( eps `# eps )
               : STO_1 object_table

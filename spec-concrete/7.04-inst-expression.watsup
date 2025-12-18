@@ -285,11 +285,12 @@ rule Expr_inst/callExpressionIR-constructor:
   p IC STO_0 |- ((prefixedNameIR `< typeArgumentListIR >) `( argumentListIR )) `# _
             : STO_2 value_ref
   ---- ;; find and instantiate constructor
-  -- if (_, constructorDef, id_default*)
-      = $find_constructorDef_i(IC, prefixedNameIR, argumentListIR)
   -- Constructor_inst:
+      p IC |- prefixedNameIR `< typeArgumentListIR > `( argumentListIR )
+            : constructorDef `< typeArgumentListIR_inst > `( `# id_default* )
+  -- Constructor_call:
       p IC STO_0 |- constructorDef
-                      `< typeArgumentListIR > `( argumentListIR `# id_default* )
+                      `< typeArgumentListIR_inst > `( argumentListIR `# id_default* )
                   : STO_1 object
   ---- ;; add object to caller store
   -- if STO_2 = $add_map<oid, object>(STO_1, IC.PATH, object)

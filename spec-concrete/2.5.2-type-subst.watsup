@@ -127,18 +127,18 @@ def $subst_typeIR'(
   -- if (externMethodTypeDefIR_subst
         = $subst_callableTypeDefIR'(theta, externMethodTypeDefIR))*
 
-def $subst_typeIR'(theta, PARSER `( parameterIR* ))
-  = PARSER `( parameterIR_subst* )
+def $subst_typeIR'(theta, PARSER tid `( parameterIR* ))
+  = PARSER tid `( parameterIR_subst* )
   -- if (parameterIR_subst
       = $subst_parameterIR'(theta, parameterIR))*
 
-def $subst_typeIR'(theta, CONTROL `( parameterIR* ))
-  = CONTROL `( parameterIR_subst* )
+def $subst_typeIR'(theta, CONTROL tid `( parameterIR* ))
+  = CONTROL tid `( parameterIR_subst* )
   -- (if parameterIR_subst
       = $subst_parameterIR'(theta, parameterIR))*
 
-def $subst_typeIR'(theta, PACKAGE `{ typeIR* })
-  = PACKAGE `{ typeIR_subst* }
+def $subst_typeIR'(theta, PACKAGE tid `{ typeIR* })
+  = PACKAGE tid `{ typeIR_subst* }
   -- if (typeIR_subst = $subst_typeIR'(theta, typeIR))*
 
 def $subst_typeIR'(theta, tableObjectTypeIR) = tableObjectTypeIR
@@ -252,10 +252,10 @@ def $subst_typeDefIR'(
 
 def $subst_typeDefIR'(
     theta,
-    PARSER `< tid_expl* `, tid_impl* > `( parameterIR* )
+    PARSER tid `< tid_expl* `, tid_impl* > `( parameterIR* )
   )
-  = PARSER `< tid_expl_fresh* `, tid_impl_fresh* > `( parameterIR_subst* )
-  -- if bound = $free_typeIR(PARSER `( parameterIR* ))
+  = PARSER tid `< tid_expl_fresh* `, tid_impl_fresh* > `( parameterIR_subst* )
+  -- if bound = $free_typeIR(PARSER tid `( parameterIR* ))
   -- if (theta_fresh, tid_expl_fresh*, tid_impl_fresh*)
       = $capture_avoiding(theta, tid_expl*, tid_impl*, bound)
   -- if (parameterIR_subst
@@ -263,22 +263,21 @@ def $subst_typeDefIR'(
 
 def $subst_typeDefIR'(
     theta,
-    CONTROL `< tid_expl* `, tid_impl* > `( parameterIR* )
+    CONTROL tid `< tid_expl* `, tid_impl* > `( parameterIR* )
   )
-  = CONTROL `< tid_expl_fresh* `, tid_impl_fresh* > `( parameterIR_subst* )
-  -- if bound = $free_typeIR(CONTROL `( parameterIR* ))
+  = CONTROL tid `< tid_expl_fresh* `, tid_impl_fresh* > `( parameterIR_subst* )
+  -- if bound = $free_typeIR(CONTROL tid `( parameterIR* ))
   -- if (theta_fresh, tid_expl_fresh*, tid_impl_fresh*)
       = $capture_avoiding(theta, tid_expl*, tid_impl*, bound)
   -- if (parameterIR_subst
       = $subst_parameterIR(theta_fresh, parameterIR))*
 
-
 def $subst_typeDefIR'(
     theta,
-    PACKAGE `< tid_expl* `, tid_impl* > `{ typeIR* }
+    PACKAGE tid `< tid_expl* `, tid_impl* > `{ typeIR* }
   )
-  = PACKAGE `< tid_expl_fresh* `, tid_impl_fresh* > `{ typeIR_subst* }
-  -- if bound = $free_typeIR(PACKAGE `{ typeIR* })
+  = PACKAGE tid `< tid_expl_fresh* `, tid_impl_fresh* > `{ typeIR_subst* }
+  -- if bound = $free_typeIR(PACKAGE tid `{ typeIR* })
   -- if (theta_fresh, tid_expl_fresh*, tid_impl_fresh*)
       = $capture_avoiding(theta, tid_expl*, tid_impl*, bound)
   -- if (typeIR_subst = $subst_typeIR(theta_fresh, typeIR))*

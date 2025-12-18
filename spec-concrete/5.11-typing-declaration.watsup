@@ -558,8 +558,9 @@ rule Decl_ok/parserDeclaration:
   -- if callableTypeDefIR = PARSER_APPLY `( parameterIR* )
   -- CallableTypeDef_wf: $bound(GLOBAL, TC_0) |- callableTypeDefIR
   ---- ;; create parser object constructor and add to context
+  -- if nameIR = $name(name)
   -- if cid = $cid_(name, constructorParameterListOpt)
-  -- if parserObjectTypeDefIR = PARSER `< eps `, eps > `( parameterIR* )
+  -- if parserObjectTypeDefIR = PARSER nameIR `< eps `, eps > `( parameterIR* )
   -- if typeIR_parser_spec = parserObjectTypeDefIR `< eps >
   -- if constructorTypeDefIR
       = CONSTRUCTOR `< eps `, eps >
@@ -567,7 +568,6 @@ rule Decl_ok/parserDeclaration:
   -- ConstructorTypeDef_wf: $bound(GLOBAL, TC_0) |- constructorTypeDefIR
   -- if TC_6 = $add_constructorDef_t(TC_0, cid, constructorTypeDefIR)
   ---- ;; create IR
-  -- if nameIR = $name(name)
   -- if parserDeclarationIR
       = annotationList PARSER nameIR `< eps >
           `( parameterIR* ) `( constructorParameterIR* )
@@ -609,8 +609,9 @@ rule Decl_ok/controlDeclaration:
   -- if callableTypeDefIR = CONTROL_APPLY `( parameterIR* )
   -- CallableTypeDef_wf: $bound(GLOBAL, TC_0) |- callableTypeDefIR
   ---- ;; create control object constructor and add to context
+  -- if nameIR = $name(name)
   -- if cid = $cid_(name, constructorParameterListOpt)
-  -- if controlObjectTypeDefIR = CONTROL `< eps `, eps > `( parameterIR* )
+  -- if controlObjectTypeDefIR = CONTROL nameIR `< eps `, eps > `( parameterIR* )
   -- if typeIR_control_spec = controlObjectTypeDefIR `< eps >
   -- if constructorTypeDefIR
       = CONSTRUCTOR `< eps `, eps >
@@ -618,7 +619,6 @@ rule Decl_ok/controlDeclaration:
   -- ConstructorTypeDef_wf: $bound(GLOBAL, TC_0) |- constructorTypeDefIR
   -- if TC_6 = $add_constructorDef_t(TC_0, cid, constructorTypeDefIR)
   ---- ;; create IR
-  -- if nameIR = $name(name)
   -- if controlDeclarationIR
       = annotationList CONTROL nameIR `< eps >
         `( parameterIR* ) `( constructorParameterIR* )
@@ -921,7 +921,7 @@ rule Decl_ok/parserTypeDeclaration:
   ---- ;; update the context with parser type
   -- if nameIR = $name(name)
   -- if parserObjectTypeDefIR
-      = PARSER `< tid_expl* `, tid_impl* > `( parameterIR* )
+      = PARSER nameIR `< tid_expl* `, tid_impl* > `( parameterIR* )
   -- TypeDef_wf: $bound(GLOBAL, TC_0) |- parserObjectTypeDefIR
   -- if TC_3 = $add_typeDef_t(GLOBAL, TC_0, nameIR, parserObjectTypeDefIR)
   ---- ;; create IR
@@ -947,7 +947,7 @@ rule Decl_ok/controlTypeDeclaration:
   ---- ;; update the context with control type
   -- if nameIR = $name(name)
   -- if controlObjectTypeDefIR
-      = CONTROL `< tid_expl* `, tid_impl* > `( parameterIR* )
+      = CONTROL nameIR `< tid_expl* `, tid_impl* > `( parameterIR* )
   -- TypeDef_wf: $bound(GLOBAL, TC_0) |- controlObjectTypeDefIR
   -- if TC_3 = $add_typeDef_t(GLOBAL, TC_0, nameIR, controlObjectTypeDefIR)
   ---- ;; create IR
@@ -975,7 +975,7 @@ rule Decl_ok/packageTypeDeclaration:
   -- if nameIR = $name(name)
   -- if (_ _ typeIR_package_inner _ _ = constructorParameterIR)*
   -- if packageObjectTypeDefIR
-      = PACKAGE `< tid_expl* `, tid_impl* > `{ typeIR_package_inner* }
+      = PACKAGE nameIR `< tid_expl* `, tid_impl* > `{ typeIR_package_inner* }
   -- TypeDef_wf: $bound(GLOBAL, TC_0) |- packageObjectTypeDefIR
   -- if TC_3 = $add_typeDef_t(GLOBAL, TC_0, nameIR, packageObjectTypeDefIR)
   ---- ;; update the context with package constructor

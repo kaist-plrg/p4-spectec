@@ -110,14 +110,14 @@ rulegroup Stmt_ok/callStatement {
 ;;; syntax directApplicationStatement = namedType `. APPLY `( argumentList ) `;
 
 dec $compat_direct_application(typeIR) : bool
-dec $compat'_direct_application(typeIR) : bool
+tbl dec $compat'_direct_application(typeIR) : bool
 
 def $compat_direct_application(typeIR)
   = $compat'_direct_application($canon_typeIR(typeIR))
-def $compat'_direct_application(PARSER `( _ )) = true
-def $compat'_direct_application(CONTROL `( _ )) = true
-def $compat'_direct_application(typeIR) = false
-  -- otherwise
+tbl def $compat'_direct_application =
+  | parserObjectTypeIR => true
+  | controlObjectTypeIR => true
+  | _ => false
 
 rule Stmt_ok/directApplicationStatement-prefixedTypeName:
   p TC_0 f l |- namedType `. APPLY `( argumentList ) `;

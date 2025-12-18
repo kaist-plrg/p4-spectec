@@ -91,6 +91,10 @@ tbl def $nestable'_typedef =
   | nameTypeIR => true
   | newTypeIR => true
   | dataTypeIR => true
+  | externObjectTypeIR => true
+  | parserObjectTypeIR => true
+  | controlObjectTypeIR => true
+  | packageObjectTypeIR => true
   | _ => false
 
 rule Type_wf/typedefTypeIR:
@@ -340,15 +344,15 @@ rule Type_wf/externObjectTypeIR:
   -- (CallableTypeDef_wf: bound |- externMethodTypeDefIR)*
 
 rule Type_wf/parserObjectTypeIR:
-  bound |- PARSER `( parameterIR* )
+  bound |- PARSER _ `( parameterIR* )
   -- ParameterTypes_wf: bound |- parameterIR*
 
 rule Type_wf/controlObjectTypeIR:
-  bound |- CONTROL `( parameterIR* )
+  bound |- CONTROL _ `( parameterIR* )
   -- ParameterTypes_wf: bound |- parameterIR*
 
 rule Type_wf/packageObjectTypeIR:
-  bound |- PACKAGE `{ typeIR* }
+  bound |- PACKAGE _ `{ typeIR* }
   -- (Type_wf: bound |- typeIR)*
 
 rule Type_wf/tableObjectTypeIR:

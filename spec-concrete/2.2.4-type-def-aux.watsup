@@ -1,4 +1,46 @@
 ;;
+;; Type definition constructor checks
+;;
+
+dec $is_typedefTypeDefIR(typeDefIR) : bool
+
+def $is_typedefTypeDefIR(typedefTypeIR) = true
+def $is_typedefTypeDefIR(typeDefIR) = false
+  -- otherwise
+
+;;
+;; Name of a type definition
+;;
+
+dec $name_of_typeDefIR(typeDefIR) : nameIR
+  hint(prose_in "the name of" %0)
+
+;;; Name type definitions
+
+def $name_of_typeDefIR(`` tid) = tid
+
+;;; Alias type definitions
+
+def $name_of_typeDefIR(TYPEDEF tid _) = tid
+def $name_of_typeDefIR(TYPE tid _) = tid
+
+;;; Data type definitions
+
+def $name_of_typeDefIR(STRUCT tid `< _ `, _ > `{ _ }) = tid
+def $name_of_typeDefIR(HEADER tid `< _ `, _ > `{ _ }) = tid
+def $name_of_typeDefIR(HEADER_UNION tid `< _ `, _ > `{ _ }) = tid
+def $name_of_typeDefIR(ENUM tid `{ _ }) = tid
+def $name_of_typeDefIR(ENUM tid `< _ > `{ _ }) = tid
+
+;;; Object type definitions
+
+def $name_of_typeDefIR(EXTERN tid `< _ `, _ > `{ _ }) = tid
+def $name_of_typeDefIR(PARSER tid `< _ `, _ > `( _ )) = tid
+def $name_of_typeDefIR(CONTROL tid `< _ `, _ > `( _ )) = tid
+def $name_of_typeDefIR(PACKAGE tid `< _ `, _ > `{ _ }) = tid
+def $name_of_typeDefIR(TABLE tid `{ _ }) = tid
+
+;;
 ;; Base type of a type definition
 ;;
 
@@ -39,14 +81,14 @@ def $type_of_typeDefIR(
   )
   = EXTERN tid `{ (cid `: externMethodTypeDefIR)* }
 
-def $type_of_typeDefIR(PARSER `< _ `, _ > `( parameterIR* ))
-  = PARSER `( parameterIR* )
+def $type_of_typeDefIR(PARSER tid `< _ `, _ > `( parameterIR* ))
+  = PARSER tid `( parameterIR* )
 
-def $type_of_typeDefIR(CONTROL `< _ `, _ > `( parameterIR* ))
-  = CONTROL `( parameterIR* )
+def $type_of_typeDefIR(CONTROL tid `< _ `, _ > `( parameterIR* ))
+  = CONTROL tid `( parameterIR* )
 
-def $type_of_typeDefIR(PACKAGE `< _ `, _ > `{ typeIR* })
-  = PACKAGE `{ typeIR* }
+def $type_of_typeDefIR(PACKAGE tid `< _ `, _ > `{ typeIR* })
+  = PACKAGE tid `{ typeIR* }
 
 def $type_of_typeDefIR(tableObjectTypeDefIR) = tableObjectTypeDefIR
 
@@ -92,17 +134,17 @@ def $type_parameters_of_typeDefIR(
   = (tid_expl* , tid_impl*)
 
 def $type_parameters_of_typeDefIR(
-    PARSER `< tid_expl* `, tid_impl* > `( _ )
+    PARSER _ `< tid_expl* `, tid_impl* > `( _ )
   )
   = (tid_expl* , tid_impl*)
 
 def $type_parameters_of_typeDefIR(
-    CONTROL `< tid_expl* `, tid_impl* > `( _ )
+    CONTROL _ `< tid_expl* `, tid_impl* > `( _ )
   )
   = (tid_expl* , tid_impl*)
 
 def $type_parameters_of_typeDefIR(
-    PACKAGE `< tid_expl* `, tid_impl* > `{ _ }
+    PACKAGE _ `< tid_expl* `, tid_impl* > `{ _ }
   )
   = (tid_expl* , tid_impl*)
 
