@@ -166,6 +166,13 @@ relation Bind_args:
 ;;
 
 relation Constructor_inst:
+  cursor instContext |- prefixedNameIR
+                          `< typeArgumentListIR >
+                          `( argumentListIR )
+                      : constructorDef `< typeArgumentListIR > `( `# id* )
+  hint(input %0 %1 %2 %3 %4)
+
+relation Constructor_call:
   cursor instContext store |- constructorDef
                                 `< typeArgumentListIR >
                                 `( argumentListIR `# id* )

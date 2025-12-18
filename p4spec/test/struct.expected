@@ -3713,16 +3713,16 @@ syntax namedTypeIR =
 
 ;; ../../../../spec-concrete/2.2.1-type.watsup:49.3-50.17
 syntax typedefTypeIR = 
-   | typedef tid typeIR hint(print %1)
+   | typedef tid typeIR hint(print %0)
 
 ;; ../../../../spec-concrete/2.2.1-type.watsup:53.3-54.17
 syntax newTypeIR = 
-   | type tid typeIR hint(print %1)
+   | type tid typeIR hint(print %0)
 
 ;; ../../../../spec-concrete/2.2.1-type.watsup:57.1-58.14
 syntax aliasTypeIR = 
-   | typedef tid typeIR hint(print %1)
-   | type tid typeIR hint(print %1)
+   | typedef tid typeIR hint(print %0)
+   | type tid typeIR hint(print %0)
 
 ;; ../../../../spec-concrete/2.2.1-type.watsup:64.21-64.37
 syntax listTypeIR = 
@@ -3742,15 +3742,15 @@ syntax fieldTypeIR =
 
 ;; ../../../../spec-concrete/2.2.1-type.watsup:71.3-72.17
 syntax structTypeIR = 
-   | struct tid { fieldTypeIR* } hint(print %1)
+   | struct tid { fieldTypeIR* } hint(print %0)
 
 ;; ../../../../spec-concrete/2.2.1-type.watsup:74.3-75.17
 syntax headerTypeIR = 
-   | header tid { fieldTypeIR* } hint(print %1)
+   | header tid { fieldTypeIR* } hint(print %0)
 
 ;; ../../../../spec-concrete/2.2.1-type.watsup:77.3-78.17
 syntax headerUnionTypeIR = 
-   | header_union tid { fieldTypeIR* } hint(print %1)
+   | header_union tid { fieldTypeIR* } hint(print %0)
 
 ;; ../../../../spec-concrete/2.2.1-type.watsup:80.23-80.37
 syntax valueFieldIR = 
@@ -3758,87 +3758,87 @@ syntax valueFieldIR =
 
 ;; ../../../../spec-concrete/2.2.1-type.watsup:83.1-84.61
 syntax enumTypeIR = 
-   | enum tid { id* } hint(print %1)
-   | enum tid < typeIR >{ valueFieldIR* } hint(print %1)
+   | enum tid { id* } hint(print %0)
+   | enum tid < typeIR >{ valueFieldIR* } hint(print %0)
 
 ;; ../../../../spec-concrete/2.2.1-type.watsup:87.1-93.15
 syntax dataTypeIR = 
    | list< typeIR >
    | tuple< typeIR* >
    | typeIR [ nat ]
-   | struct tid { fieldTypeIR* } hint(print %1)
-   | header tid { fieldTypeIR* } hint(print %1)
-   | header_union tid { fieldTypeIR* } hint(print %1)
-   | enum tid { id* } hint(print %1)
-   | enum tid < typeIR >{ valueFieldIR* } hint(print %1)
+   | struct tid { fieldTypeIR* } hint(print %0)
+   | header tid { fieldTypeIR* } hint(print %0)
+   | header_union tid { fieldTypeIR* } hint(print %0)
+   | enum tid { id* } hint(print %0)
+   | enum tid < typeIR >{ valueFieldIR* } hint(print %0)
 
 ;; ../../../../spec-concrete/2.2.1-type.watsup:103.33-103.64
 syntax externMethodTypeDefEnv = map<cid, externMethodTypeDefIR>
 
 ;; ../../../../spec-concrete/2.2.1-type.watsup:106.3-107.17
 syntax externObjectTypeIR = 
-   | extern tid externMethodTypeDefEnv hint(print %1)
+   | extern tid externMethodTypeDefEnv hint(print %0)
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:109.29-109.53
+;; ../../../../spec-concrete/2.2.1-type.watsup:110.3-111.17
 syntax parserObjectTypeIR = 
-   | parser( parameterIR* )
+   | parser tid ( parameterIR* ) hint(print %0)
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:111.30-111.55
+;; ../../../../spec-concrete/2.2.1-type.watsup:114.3-115.17
 syntax controlObjectTypeIR = 
-   | control( parameterIR* )
+   | control tid ( parameterIR* ) hint(print %0)
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:113.30-113.50
+;; ../../../../spec-concrete/2.2.1-type.watsup:118.3-119.17
 syntax packageObjectTypeIR = 
-   | package{ typeIR* }
+   | package tid { typeIR* } hint(print %0)
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:116.3-117.17
+;; ../../../../spec-concrete/2.2.1-type.watsup:122.3-123.17
 syntax tableObjectTypeIR = 
-   | table tid { tableMetadataStructTypeIR } hint(print %1)
+   | table tid { tableMetadataStructTypeIR } hint(print %0)
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:120.1-124.22
+;; ../../../../spec-concrete/2.2.1-type.watsup:126.1-130.22
 syntax objectTypeIR = 
-   | extern tid externMethodTypeDefEnv hint(print %1)
-   | parser( parameterIR* )
-   | control( parameterIR* )
-   | package{ typeIR* }
-   | table tid { tableMetadataStructTypeIR } hint(print %1)
+   | extern tid externMethodTypeDefEnv hint(print %0)
+   | parser tid ( parameterIR* ) hint(print %0)
+   | control tid ( parameterIR* ) hint(print %0)
+   | package tid { typeIR* } hint(print %0)
+   | table tid { tableMetadataStructTypeIR } hint(print %0)
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:130.24-130.31
+;; ../../../../spec-concrete/2.2.1-type.watsup:136.24-136.31
 syntax defaultTypeIR = 
    | default
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:132.30-132.44
+;; ../../../../spec-concrete/2.2.1-type.watsup:138.30-138.44
 syntax invalidHeaderTypeIR = 
    | header_invalid
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:135.1-136.29
+;; ../../../../spec-concrete/2.2.1-type.watsup:141.1-142.29
 syntax sequenceTypeIR = 
    | seq< typeIR* >
    | seq< typeIR* ,...>
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:139.1-140.37
+;; ../../../../spec-concrete/2.2.1-type.watsup:145.1-146.37
 syntax recordTypeIR = 
    | record{ fieldTypeIR* }
    | record{ fieldTypeIR* ,...}
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:142.20-142.36
+;; ../../../../spec-concrete/2.2.1-type.watsup:148.20-148.36
 syntax setTypeIR = 
    | set< typeIR* >
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:145.3-145.26
+;; ../../../../spec-concrete/2.2.1-type.watsup:151.3-151.26
 syntax tableMetadataEnumTypeIR = 
    | table_enum tid { id* }
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:148.3-150.62
+;; ../../../../spec-concrete/2.2.1-type.watsup:154.3-156.62
 syntax tableMetadataStructTypeIR = 
    | table_struct tid {hit boolTypeIR ;miss boolTypeIR ;action_run tableMetadataEnumTypeIR ;}
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:153.1-154.30
+;; ../../../../spec-concrete/2.2.1-type.watsup:159.1-160.30
 syntax tableMetadataTypeIR = 
    | table_enum tid { id* }
    | table_struct tid {hit boolTypeIR ;miss boolTypeIR ;action_run tableMetadataEnumTypeIR ;}
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:157.1-162.24
+;; ../../../../spec-concrete/2.2.1-type.watsup:163.1-168.24
 syntax synthesizedTypeIR = 
    | default
    | header_invalid
@@ -3850,7 +3850,7 @@ syntax synthesizedTypeIR =
    | table_enum tid { id* }
    | table_struct tid {hit boolTypeIR ;miss boolTypeIR ;action_run tableMetadataEnumTypeIR ;}
 
-;; ../../../../spec-concrete/2.2.1-type.watsup:169.1-174.22
+;; ../../../../spec-concrete/2.2.1-type.watsup:175.1-180.22
 syntax typeIR = 
    | void
    | bool
@@ -3863,21 +3863,21 @@ syntax typeIR =
    | varbit< nat >
    | ` tid hint(print %0)
    | typeDefIR < typeIR* >
-   | typedef tid typeIR hint(print %1)
-   | type tid typeIR hint(print %1)
+   | typedef tid typeIR hint(print %0)
+   | type tid typeIR hint(print %0)
    | list< typeIR >
    | tuple< typeIR* >
    | typeIR [ nat ]
-   | struct tid { fieldTypeIR* } hint(print %1)
-   | header tid { fieldTypeIR* } hint(print %1)
-   | header_union tid { fieldTypeIR* } hint(print %1)
-   | enum tid { id* } hint(print %1)
-   | enum tid < typeIR >{ valueFieldIR* } hint(print %1)
-   | extern tid externMethodTypeDefEnv hint(print %1)
-   | parser( parameterIR* )
-   | control( parameterIR* )
-   | package{ typeIR* }
-   | table tid { tableMetadataStructTypeIR } hint(print %1)
+   | struct tid { fieldTypeIR* } hint(print %0)
+   | header tid { fieldTypeIR* } hint(print %0)
+   | header_union tid { fieldTypeIR* } hint(print %0)
+   | enum tid { id* } hint(print %0)
+   | enum tid < typeIR >{ valueFieldIR* } hint(print %0)
+   | extern tid externMethodTypeDefEnv hint(print %0)
+   | parser tid ( parameterIR* ) hint(print %0)
+   | control tid ( parameterIR* ) hint(print %0)
+   | package tid { typeIR* } hint(print %0)
+   | table tid { tableMetadataStructTypeIR } hint(print %0)
    | default
    | header_invalid
    | seq< typeIR* >
@@ -3914,51 +3914,51 @@ syntax dataTypeDefIR =
    | struct tid < tid* , tid* >{ fieldTypeIR* } hint(print %1)
    | header tid < tid* , tid* >{ fieldTypeIR* } hint(print %1)
    | header_union tid < tid* , tid* >{ fieldTypeIR* } hint(print %1)
-   | enum tid { id* } hint(print %1)
-   | enum tid < typeIR >{ valueFieldIR* } hint(print %1)
+   | enum tid { id* } hint(print %0)
+   | enum tid < typeIR >{ valueFieldIR* } hint(print %0)
 
 ;; ../../../../spec-concrete/2.2.2-type-def.watsup:44.3-45.17
 syntax externObjectTypeDefIR = 
-   | extern tid < tid* , tid* > externMethodTypeDefEnv hint(print %1)
+   | extern tid < tid* , tid* > externMethodTypeDefEnv hint(print %0)
 
-;; ../../../../spec-concrete/2.2.2-type-def.watsup:48.3-48.45
+;; ../../../../spec-concrete/2.2.2-type-def.watsup:48.3-49.17
 syntax parserObjectTypeDefIR = 
-   | parser< tid* , tid* >( parameterIR* )
+   | parser tid < tid* , tid* >( parameterIR* ) hint(print %0)
 
-;; ../../../../spec-concrete/2.2.2-type-def.watsup:51.3-51.46
+;; ../../../../spec-concrete/2.2.2-type-def.watsup:52.3-53.17
 syntax controlObjectTypeDefIR = 
-   | control< tid* , tid* >( parameterIR* )
+   | control tid < tid* , tid* >( parameterIR* ) hint(print %0)
 
-;; ../../../../spec-concrete/2.2.2-type-def.watsup:54.3-54.41
+;; ../../../../spec-concrete/2.2.2-type-def.watsup:56.3-57.17
 syntax packageObjectTypeDefIR = 
-   | package< tid* , tid* >{ typeIR* }
+   | package tid < tid* , tid* >{ typeIR* } hint(print %0)
 
-;; ../../../../spec-concrete/2.2.2-type-def.watsup:56.31-56.48
+;; ../../../../spec-concrete/2.2.2-type-def.watsup:59.31-59.48
 syntax tableObjectTypeDefIR = tableObjectTypeIR
 
-;; ../../../../spec-concrete/2.2.2-type-def.watsup:59.1-63.25
+;; ../../../../spec-concrete/2.2.2-type-def.watsup:62.1-66.25
 syntax objectTypeDefIR = 
-   | extern tid < tid* , tid* > externMethodTypeDefEnv hint(print %1)
-   | parser< tid* , tid* >( parameterIR* )
-   | control< tid* , tid* >( parameterIR* )
-   | package< tid* , tid* >{ typeIR* }
-   | table tid { tableMetadataStructTypeIR } hint(print %1)
+   | extern tid < tid* , tid* > externMethodTypeDefEnv hint(print %0)
+   | parser tid < tid* , tid* >( parameterIR* ) hint(print %0)
+   | control tid < tid* , tid* >( parameterIR* ) hint(print %0)
+   | package tid < tid* , tid* >{ typeIR* } hint(print %0)
+   | table tid { tableMetadataStructTypeIR } hint(print %0)
 
-;; ../../../../spec-concrete/2.2.2-type-def.watsup:70.1-73.20
+;; ../../../../spec-concrete/2.2.2-type-def.watsup:73.1-76.20
 syntax typeDefIR = 
    | ` tid hint(print %0)
-   | typedef tid typeIR hint(print %1)
-   | type tid typeIR hint(print %1)
+   | typedef tid typeIR hint(print %0)
+   | type tid typeIR hint(print %0)
    | struct tid < tid* , tid* >{ fieldTypeIR* } hint(print %1)
    | header tid < tid* , tid* >{ fieldTypeIR* } hint(print %1)
    | header_union tid < tid* , tid* >{ fieldTypeIR* } hint(print %1)
-   | enum tid { id* } hint(print %1)
-   | enum tid < typeIR >{ valueFieldIR* } hint(print %1)
-   | extern tid < tid* , tid* > externMethodTypeDefEnv hint(print %1)
-   | parser< tid* , tid* >( parameterIR* )
-   | control< tid* , tid* >( parameterIR* )
-   | package< tid* , tid* >{ typeIR* }
-   | table tid { tableMetadataStructTypeIR } hint(print %1)
+   | enum tid { id* } hint(print %0)
+   | enum tid < typeIR >{ valueFieldIR* } hint(print %0)
+   | extern tid < tid* , tid* > externMethodTypeDefEnv hint(print %0)
+   | parser tid < tid* , tid* >( parameterIR* ) hint(print %0)
+   | control tid < tid* , tid* >( parameterIR* ) hint(print %0)
+   | package tid < tid* , tid* >{ typeIR* } hint(print %0)
+   | table tid { tableMetadataStructTypeIR } hint(print %0)
 
 ;; ../../../../spec-concrete/2.2.3-type-aux.watsup:9.1-9.34
 def $is_baseTypeIR(typeIR)
@@ -4230,7 +4230,109 @@ def $is_setTypeIR(typeIR)
 
   1. Return false
 
-;; ../../../../spec-concrete/2.2.4-type-def-aux.watsup:5.1-6.45
+;; ../../../../spec-concrete/2.2.4-type-def-aux.watsup:5.1-5.43
+def $is_typedefTypeDefIR(typeDefIR)
+
+1. If ((typeDefIR has type typedefTypeIR)), then
+
+  1. (Let typedefTypeIR be (typeDefIR as typedefTypeIR))
+
+  2. Return true
+
+2. Otherwise
+
+  1. Return false
+
+;; ../../../../spec-concrete/2.2.4-type-def-aux.watsup:15.1-16.34
+def $name_of_typeDefIR(typeDefIR)
+
+1. Case analysis on typeDefIR
+
+  1. Case (% has type nameTypeIR)
+
+    1. (Let (` tid) be (typeDefIR as nameTypeIR))
+
+    2. Return tid
+
+  2. Case (% has type typedefTypeIR)
+
+    1. (Let (typedef tid _typeIR) be (typeDefIR as typedefTypeIR))
+
+    2. Return tid
+
+  3. Case (% has type newTypeIR)
+
+    1. (Let (type tid _typeIR) be (typeDefIR as newTypeIR))
+
+    2. Return tid
+
+  4. Case (% has type structTypeDefIR)
+
+    1. (Let (struct tid < (_tid)*{_tid <- _tid*} , (_tid')*{_tid' <- _tid'*} >{ (_fieldTypeIR)*{_fieldTypeIR <- _fieldTypeIR*} }) be (typeDefIR as structTypeDefIR))
+
+    2. Return tid
+
+  5. Case (% has type headerTypeDefIR)
+
+    1. (Let (header tid < (_tid)*{_tid <- _tid*} , (_tid')*{_tid' <- _tid'*} >{ (_fieldTypeIR)*{_fieldTypeIR <- _fieldTypeIR*} }) be (typeDefIR as headerTypeDefIR))
+
+    2. Return tid
+
+  6. Case (% has type headerUnionTypeDefIR)
+
+    1. (Let (header_union tid < (_tid)*{_tid <- _tid*} , (_tid')*{_tid' <- _tid'*} >{ (_fieldTypeIR)*{_fieldTypeIR <- _fieldTypeIR*} }) be (typeDefIR as headerUnionTypeDefIR))
+
+    2. Return tid
+
+  7. Case (% has type enumTypeIR)
+
+    1. (Let enumTypeIR be (typeDefIR as enumTypeIR))
+
+    2. Case analysis on enumTypeIR
+
+      1. Case (% matches pattern `ENUM%{%}`)
+
+        1. (Let (enum tid { (_id)*{_id <- _id*} }) be enumTypeIR)
+
+        2. Return tid
+
+      2. Case (% matches pattern `ENUM%<%>{%}`)
+
+        1. (Let (enum tid < _typeIR >{ (_valueFieldIR)*{_valueFieldIR <- _valueFieldIR*} }) be enumTypeIR)
+
+        2. Return tid
+
+  8. Case (% has type externObjectTypeDefIR)
+
+    1. (Let (extern tid < (_tid)*{_tid <- _tid*} , (_tid')*{_tid' <- _tid'*} > ({ (_pair<cid, externMethodTypeDefIR>)*{_pair<cid, externMethodTypeDefIR> <- _pair<cid, externMethodTypeDefIR>*} })) be (typeDefIR as externObjectTypeDefIR))
+
+    2. Return tid
+
+  9. Case (% has type parserObjectTypeDefIR)
+
+    1. (Let (parser tid < (_tid)*{_tid <- _tid*} , (_tid')*{_tid' <- _tid'*} >( (_parameterIR)*{_parameterIR <- _parameterIR*} )) be (typeDefIR as parserObjectTypeDefIR))
+
+    2. Return tid
+
+  10. Case (% has type controlObjectTypeDefIR)
+
+    1. (Let (control tid < (_tid)*{_tid <- _tid*} , (_tid')*{_tid' <- _tid'*} >( (_parameterIR)*{_parameterIR <- _parameterIR*} )) be (typeDefIR as controlObjectTypeDefIR))
+
+    2. Return tid
+
+  11. Case (% has type packageObjectTypeDefIR)
+
+    1. (Let (package tid < (_tid)*{_tid <- _tid*} , (_tid')*{_tid' <- _tid'*} >{ (_typeIR)*{_typeIR <- _typeIR*} }) be (typeDefIR as packageObjectTypeDefIR))
+
+    2. Return tid
+
+  12. Case (% has type tableObjectTypeIR)
+
+    1. (Let (table tid { _tableMetadataStructTypeIR }) be (typeDefIR as tableObjectTypeIR))
+
+    2. Return tid
+
+;; ../../../../spec-concrete/2.2.4-type-def-aux.watsup:47.1-48.45
 def $type_of_typeDefIR(typeDefIR)
 
 1. Case analysis on typeDefIR
@@ -4279,21 +4381,21 @@ def $type_of_typeDefIR(typeDefIR)
 
   8. Case (% has type parserObjectTypeDefIR)
 
-    1. (Let (parser< (_tid)*{_tid <- _tid*} , (_tid')*{_tid' <- _tid'*} >( (parameterIR)*{parameterIR <- parameterIR*} )) be (typeDefIR as parserObjectTypeDefIR))
+    1. (Let (parser tid < (_tid)*{_tid <- _tid*} , (_tid')*{_tid' <- _tid'*} >( (parameterIR)*{parameterIR <- parameterIR*} )) be (typeDefIR as parserObjectTypeDefIR))
 
-    2. Return ((parser( (parameterIR)*{parameterIR <- parameterIR*} )) as typeIR)
+    2. Return ((parser tid ( (parameterIR)*{parameterIR <- parameterIR*} )) as typeIR)
 
   9. Case (% has type controlObjectTypeDefIR)
 
-    1. (Let (control< (_tid)*{_tid <- _tid*} , (_tid')*{_tid' <- _tid'*} >( (parameterIR)*{parameterIR <- parameterIR*} )) be (typeDefIR as controlObjectTypeDefIR))
+    1. (Let (control tid < (_tid)*{_tid <- _tid*} , (_tid')*{_tid' <- _tid'*} >( (parameterIR)*{parameterIR <- parameterIR*} )) be (typeDefIR as controlObjectTypeDefIR))
 
-    2. Return ((control( (parameterIR)*{parameterIR <- parameterIR*} )) as typeIR)
+    2. Return ((control tid ( (parameterIR)*{parameterIR <- parameterIR*} )) as typeIR)
 
   10. Case (% has type packageObjectTypeDefIR)
 
-    1. (Let (package< (_tid)*{_tid <- _tid*} , (_tid')*{_tid' <- _tid'*} >{ (typeIR)*{typeIR <- typeIR*} }) be (typeDefIR as packageObjectTypeDefIR))
+    1. (Let (package tid < (_tid)*{_tid <- _tid*} , (_tid')*{_tid' <- _tid'*} >{ (typeIR)*{typeIR <- typeIR*} }) be (typeDefIR as packageObjectTypeDefIR))
 
-    2. Return ((package{ (typeIR)*{typeIR <- typeIR*} }) as typeIR)
+    2. Return ((package tid { (typeIR)*{typeIR <- typeIR*} }) as typeIR)
 
   11. Case (% has type tableObjectTypeDefIR)
 
@@ -4301,7 +4403,7 @@ def $type_of_typeDefIR(typeDefIR)
 
     2. Return (tableObjectTypeDefIR as typeIR)
 
-;; ../../../../spec-concrete/2.2.4-type-def-aux.watsup:57.1-58.45
+;; ../../../../spec-concrete/2.2.4-type-def-aux.watsup:99.1-100.45
 def $type_parameters_of_typeDefIR(typeDefIR)
 
 1. Case analysis on typeDefIR
@@ -4350,19 +4452,19 @@ def $type_parameters_of_typeDefIR(typeDefIR)
 
   8. Case (% has type parserObjectTypeDefIR)
 
-    1. (Let (parser< (tid_expl)*{tid_expl <- tid_expl*} , (tid_impl)*{tid_impl <- tid_impl*} >( (_parameterIR)*{_parameterIR <- _parameterIR*} )) be (typeDefIR as parserObjectTypeDefIR))
+    1. (Let (parser _tid < (tid_expl)*{tid_expl <- tid_expl*} , (tid_impl)*{tid_impl <- tid_impl*} >( (_parameterIR)*{_parameterIR <- _parameterIR*} )) be (typeDefIR as parserObjectTypeDefIR))
 
     2. Return ((tid_expl)*{tid_expl <- tid_expl*}, (tid_impl)*{tid_impl <- tid_impl*})
 
   9. Case (% has type controlObjectTypeDefIR)
 
-    1. (Let (control< (tid_expl)*{tid_expl <- tid_expl*} , (tid_impl)*{tid_impl <- tid_impl*} >( (_parameterIR)*{_parameterIR <- _parameterIR*} )) be (typeDefIR as controlObjectTypeDefIR))
+    1. (Let (control _tid < (tid_expl)*{tid_expl <- tid_expl*} , (tid_impl)*{tid_impl <- tid_impl*} >( (_parameterIR)*{_parameterIR <- _parameterIR*} )) be (typeDefIR as controlObjectTypeDefIR))
 
     2. Return ((tid_expl)*{tid_expl <- tid_expl*}, (tid_impl)*{tid_impl <- tid_impl*})
 
   10. Case (% has type packageObjectTypeDefIR)
 
-    1. (Let (package< (tid_expl)*{tid_expl <- tid_expl*} , (tid_impl)*{tid_impl <- tid_impl*} >{ (_typeIR)*{_typeIR <- _typeIR*} }) be (typeDefIR as packageObjectTypeDefIR))
+    1. (Let (package _tid < (tid_expl)*{tid_expl <- tid_expl*} , (tid_impl)*{tid_impl <- tid_impl*} >{ (_typeIR)*{_typeIR <- _typeIR*} }) be (typeDefIR as packageObjectTypeDefIR))
 
     2. Return ((tid_expl)*{tid_expl <- tid_expl*}, (tid_impl)*{tid_impl <- tid_impl*})
 
@@ -4372,7 +4474,7 @@ def $type_parameters_of_typeDefIR(typeDefIR)
 
     2. Return ([], [])
 
-;; ../../../../spec-concrete/2.2.4-type-def-aux.watsup:115.1-116.37
+;; ../../../../spec-concrete/2.2.4-type-def-aux.watsup:157.1-158.37
 def $is_monomorphic_typeDefIR(typeDefIR)
 
 1. Case analysis on typeDefIR
@@ -4405,7 +4507,7 @@ def $is_monomorphic_typeDefIR(typeDefIR)
 
   1. Return false
 
-;; ../../../../spec-concrete/2.2.4-type-def-aux.watsup:117.1-118.37
+;; ../../../../spec-concrete/2.2.4-type-def-aux.watsup:159.1-160.37
 def $is_polymorphic_typeDefIR(typeDefIR)
 
 1. Return ~$is_monomorphic_typeDefIR(typeDefIR)
@@ -4750,7 +4852,7 @@ def $free_typeIR(typeIR')
 
   14. Case (% has type parserObjectTypeIR)
 
-    1. (Let (parser( (parameterIR)*{parameterIR <- parameterIR*} )) be (typeIR' as parserObjectTypeIR))
+    1. (Let (parser _tid ( (parameterIR)*{parameterIR <- parameterIR*} )) be (typeIR' as parserObjectTypeIR))
 
     2. (Let bound_params be $unions_set<tid>(($free_parameterIR(parameterIR))*{parameterIR <- parameterIR*}))
 
@@ -4758,7 +4860,7 @@ def $free_typeIR(typeIR')
 
   15. Case (% has type controlObjectTypeIR)
 
-    1. (Let (control( (parameterIR)*{parameterIR <- parameterIR*} )) be (typeIR' as controlObjectTypeIR))
+    1. (Let (control _tid ( (parameterIR)*{parameterIR <- parameterIR*} )) be (typeIR' as controlObjectTypeIR))
 
     2. (Let bound_params be $unions_set<tid>(($free_parameterIR(parameterIR))*{parameterIR <- parameterIR*}))
 
@@ -4766,7 +4868,7 @@ def $free_typeIR(typeIR')
 
   16. Case (% has type packageObjectTypeIR)
 
-    1. (Let (package{ (typeIR)*{typeIR <- typeIR*} }) be (typeIR' as packageObjectTypeIR))
+    1. (Let (package _tid { (typeIR)*{typeIR <- typeIR*} }) be (typeIR' as packageObjectTypeIR))
 
     2. Return $unions_set<tid>(($free_typeIR(typeIR))*{typeIR <- typeIR*})
 
@@ -5133,27 +5235,27 @@ def $subst_typeIR'(theta, typeIR')
 
   14. Case (% has type parserObjectTypeIR)
 
-    1. (Let (parser( (parameterIR)*{parameterIR <- parameterIR*} )) be (typeIR' as parserObjectTypeIR))
+    1. (Let (parser tid ( (parameterIR)*{parameterIR <- parameterIR*} )) be (typeIR' as parserObjectTypeIR))
 
     2. (Let parameterIR_subst be $subst_parameterIR'(theta, parameterIR))*{parameterIR <- parameterIR*, parameterIR_subst <- parameterIR_subst*}
 
-    3. Return ((parser( (parameterIR_subst)*{parameterIR_subst <- parameterIR_subst*} )) as typeIR)
+    3. Return ((parser tid ( (parameterIR_subst)*{parameterIR_subst <- parameterIR_subst*} )) as typeIR)
 
   15. Case (% has type controlObjectTypeIR)
 
-    1. (Let (control( (parameterIR)*{parameterIR <- parameterIR*} )) be (typeIR' as controlObjectTypeIR))
+    1. (Let (control tid ( (parameterIR)*{parameterIR <- parameterIR*} )) be (typeIR' as controlObjectTypeIR))
 
     2. (Let parameterIR_subst be $subst_parameterIR'(theta, parameterIR))*{parameterIR <- parameterIR*, parameterIR_subst <- parameterIR_subst*}
 
-    3. Return ((control( (parameterIR_subst)*{parameterIR_subst <- parameterIR_subst*} )) as typeIR)
+    3. Return ((control tid ( (parameterIR_subst)*{parameterIR_subst <- parameterIR_subst*} )) as typeIR)
 
   16. Case (% has type packageObjectTypeIR)
 
-    1. (Let (package{ (typeIR)*{typeIR <- typeIR*} }) be (typeIR' as packageObjectTypeIR))
+    1. (Let (package tid { (typeIR)*{typeIR <- typeIR*} }) be (typeIR' as packageObjectTypeIR))
 
     2. (Let typeIR_subst be $subst_typeIR'(theta, typeIR))*{typeIR <- typeIR*, typeIR_subst <- typeIR_subst*}
 
-    3. Return ((package{ (typeIR_subst)*{typeIR_subst <- typeIR_subst*} }) as typeIR)
+    3. Return ((package tid { (typeIR_subst)*{typeIR_subst <- typeIR_subst*} }) as typeIR)
 
   17. Case (% has type tableObjectTypeIR)
 
@@ -5337,39 +5439,39 @@ def $subst_typeDefIR'(theta, typeDefIR)
 
   8. Case (% has type parserObjectTypeDefIR)
 
-    1. (Let (parser< (tid_expl)*{tid_expl <- tid_expl*} , (tid_impl)*{tid_impl <- tid_impl*} >( (parameterIR)*{parameterIR <- parameterIR*} )) be (typeDefIR as parserObjectTypeDefIR))
+    1. (Let (parser tid < (tid_expl)*{tid_expl <- tid_expl*} , (tid_impl)*{tid_impl <- tid_impl*} >( (parameterIR)*{parameterIR <- parameterIR*} )) be (typeDefIR as parserObjectTypeDefIR))
 
-    2. (Let bound be $free_typeIR(((parser( (parameterIR)*{parameterIR <- parameterIR*} )) as typeIR)))
+    2. (Let bound be $free_typeIR(((parser tid ( (parameterIR)*{parameterIR <- parameterIR*} )) as typeIR)))
 
     3. (Let (theta_fresh, (tid_expl_fresh)*{tid_expl_fresh <- tid_expl_fresh*}, (tid_impl_fresh)*{tid_impl_fresh <- tid_impl_fresh*}) be $capture_avoiding(theta, (tid_expl)*{tid_expl <- tid_expl*}, (tid_impl)*{tid_impl <- tid_impl*}, bound))
 
     4. (Let parameterIR_subst be $subst_parameterIR(theta_fresh, parameterIR))*{parameterIR <- parameterIR*, parameterIR_subst <- parameterIR_subst*}
 
-    5. Return ((parser< (tid_expl_fresh)*{tid_expl_fresh <- tid_expl_fresh*} , (tid_impl_fresh)*{tid_impl_fresh <- tid_impl_fresh*} >( (parameterIR_subst)*{parameterIR_subst <- parameterIR_subst*} )) as typeDefIR)
+    5. Return ((parser tid < (tid_expl_fresh)*{tid_expl_fresh <- tid_expl_fresh*} , (tid_impl_fresh)*{tid_impl_fresh <- tid_impl_fresh*} >( (parameterIR_subst)*{parameterIR_subst <- parameterIR_subst*} )) as typeDefIR)
 
   9. Case (% has type controlObjectTypeDefIR)
 
-    1. (Let (control< (tid_expl)*{tid_expl <- tid_expl*} , (tid_impl)*{tid_impl <- tid_impl*} >( (parameterIR)*{parameterIR <- parameterIR*} )) be (typeDefIR as controlObjectTypeDefIR))
+    1. (Let (control tid < (tid_expl)*{tid_expl <- tid_expl*} , (tid_impl)*{tid_impl <- tid_impl*} >( (parameterIR)*{parameterIR <- parameterIR*} )) be (typeDefIR as controlObjectTypeDefIR))
 
-    2. (Let bound be $free_typeIR(((control( (parameterIR)*{parameterIR <- parameterIR*} )) as typeIR)))
+    2. (Let bound be $free_typeIR(((control tid ( (parameterIR)*{parameterIR <- parameterIR*} )) as typeIR)))
 
     3. (Let (theta_fresh, (tid_expl_fresh)*{tid_expl_fresh <- tid_expl_fresh*}, (tid_impl_fresh)*{tid_impl_fresh <- tid_impl_fresh*}) be $capture_avoiding(theta, (tid_expl)*{tid_expl <- tid_expl*}, (tid_impl)*{tid_impl <- tid_impl*}, bound))
 
     4. (Let parameterIR_subst be $subst_parameterIR(theta_fresh, parameterIR))*{parameterIR <- parameterIR*, parameterIR_subst <- parameterIR_subst*}
 
-    5. Return ((control< (tid_expl_fresh)*{tid_expl_fresh <- tid_expl_fresh*} , (tid_impl_fresh)*{tid_impl_fresh <- tid_impl_fresh*} >( (parameterIR_subst)*{parameterIR_subst <- parameterIR_subst*} )) as typeDefIR)
+    5. Return ((control tid < (tid_expl_fresh)*{tid_expl_fresh <- tid_expl_fresh*} , (tid_impl_fresh)*{tid_impl_fresh <- tid_impl_fresh*} >( (parameterIR_subst)*{parameterIR_subst <- parameterIR_subst*} )) as typeDefIR)
 
   10. Case (% has type packageObjectTypeDefIR)
 
-    1. (Let (package< (tid_expl)*{tid_expl <- tid_expl*} , (tid_impl)*{tid_impl <- tid_impl*} >{ (typeIR)*{typeIR <- typeIR*} }) be (typeDefIR as packageObjectTypeDefIR))
+    1. (Let (package tid < (tid_expl)*{tid_expl <- tid_expl*} , (tid_impl)*{tid_impl <- tid_impl*} >{ (typeIR)*{typeIR <- typeIR*} }) be (typeDefIR as packageObjectTypeDefIR))
 
-    2. (Let bound be $free_typeIR(((package{ (typeIR)*{typeIR <- typeIR*} }) as typeIR)))
+    2. (Let bound be $free_typeIR(((package tid { (typeIR)*{typeIR <- typeIR*} }) as typeIR)))
 
     3. (Let (theta_fresh, (tid_expl_fresh)*{tid_expl_fresh <- tid_expl_fresh*}, (tid_impl_fresh)*{tid_impl_fresh <- tid_impl_fresh*}) be $capture_avoiding(theta, (tid_expl)*{tid_expl <- tid_expl*}, (tid_impl)*{tid_impl <- tid_impl*}, bound))
 
     4. (Let typeIR_subst be $subst_typeIR(theta_fresh, typeIR))*{typeIR <- typeIR*, typeIR_subst <- typeIR_subst*}
 
-    5. Return ((package< (tid_expl_fresh)*{tid_expl_fresh <- tid_expl_fresh*} , (tid_impl_fresh)*{tid_impl_fresh <- tid_impl_fresh*} >{ (typeIR_subst)*{typeIR_subst <- typeIR_subst*} }) as typeDefIR)
+    5. Return ((package tid < (tid_expl_fresh)*{tid_expl_fresh <- tid_expl_fresh*} , (tid_impl_fresh)*{tid_impl_fresh <- tid_impl_fresh*} >{ (typeIR_subst)*{typeIR_subst <- typeIR_subst*} }) as typeDefIR)
 
   11. Case (% has type tableObjectTypeDefIR)
 
@@ -6372,13 +6474,13 @@ relation Type_alpha: typeIR' ~~ typeIR'''
 
   10. Case (% has type parserObjectTypeIR)
 
-    1. (Let (parser( (parameterIR_a)*{parameterIR_a <- parameterIR_a*} )) be (typeIR' as parserObjectTypeIR))
+    1. (Let (parser _tid ( (parameterIR_a)*{parameterIR_a <- parameterIR_a*} )) be (typeIR' as parserObjectTypeIR))
 
     2. If ((typeIR''' has type parserObjectTypeIR)), then
 
-      1. (Let (parser( (parameterIR_b)*{parameterIR_b <- parameterIR_b*} )) be (typeIR''' as parserObjectTypeIR))
+      1. (Let (parser _tid' ( (parameterIR_b)*{parameterIR_b <- parameterIR_b*} )) be (typeIR''' as parserObjectTypeIR))
 
-      2. Group parserObjectTypeIR: ((parser( (parameterIR_a)*{parameterIR_a <- parameterIR_a*} )) as typeIR) ~~ ((parser( (parameterIR_b)*{parameterIR_b <- parameterIR_b*} )) as typeIR)
+      2. Group parserObjectTypeIR: ((parser _tid ( (parameterIR_a)*{parameterIR_a <- parameterIR_a*} )) as typeIR) ~~ ((parser _tid' ( (parameterIR_b)*{parameterIR_b <- parameterIR_b*} )) as typeIR)
 
         1. If (ParameterType_alpha: parameterIR_a ~~ parameterIR_b)*{parameterIR_a <- parameterIR_a*, parameterIR_b <- parameterIR_b*} holds, then
 
@@ -6386,13 +6488,13 @@ relation Type_alpha: typeIR' ~~ typeIR'''
 
   11. Case (% has type controlObjectTypeIR)
 
-    1. (Let (control( (parameterIR_a)*{parameterIR_a <- parameterIR_a*} )) be (typeIR' as controlObjectTypeIR))
+    1. (Let (control _tid ( (parameterIR_a)*{parameterIR_a <- parameterIR_a*} )) be (typeIR' as controlObjectTypeIR))
 
     2. If ((typeIR''' has type controlObjectTypeIR)), then
 
-      1. (Let (control( (parameterIR_b)*{parameterIR_b <- parameterIR_b*} )) be (typeIR''' as controlObjectTypeIR))
+      1. (Let (control _tid' ( (parameterIR_b)*{parameterIR_b <- parameterIR_b*} )) be (typeIR''' as controlObjectTypeIR))
 
-      2. Group controlObjectTypeIR: ((control( (parameterIR_a)*{parameterIR_a <- parameterIR_a*} )) as typeIR) ~~ ((control( (parameterIR_b)*{parameterIR_b <- parameterIR_b*} )) as typeIR)
+      2. Group controlObjectTypeIR: ((control _tid ( (parameterIR_a)*{parameterIR_a <- parameterIR_a*} )) as typeIR) ~~ ((control _tid' ( (parameterIR_b)*{parameterIR_b <- parameterIR_b*} )) as typeIR)
 
         1. If (ParameterType_alpha: parameterIR_a ~~ parameterIR_b)*{parameterIR_a <- parameterIR_a*, parameterIR_b <- parameterIR_b*} holds, then
 
@@ -6400,13 +6502,13 @@ relation Type_alpha: typeIR' ~~ typeIR'''
 
   12. Case (% has type packageObjectTypeIR)
 
-    1. (Let (package{ (typeIR_a)*{typeIR_a <- typeIR_a*} }) be (typeIR' as packageObjectTypeIR))
+    1. (Let (package _tid { (typeIR_a)*{typeIR_a <- typeIR_a*} }) be (typeIR' as packageObjectTypeIR))
 
     2. If ((typeIR''' has type packageObjectTypeIR)), then
 
-      1. (Let (package{ (typeIR_b)*{typeIR_b <- typeIR_b*} }) be (typeIR''' as packageObjectTypeIR))
+      1. (Let (package _tid' { (typeIR_b)*{typeIR_b <- typeIR_b*} }) be (typeIR''' as packageObjectTypeIR))
 
-      2. Group packetObjectTypeIR: ((package{ (typeIR_a)*{typeIR_a <- typeIR_a*} }) as typeIR) ~~ ((package{ (typeIR_b)*{typeIR_b <- typeIR_b*} }) as typeIR)
+      2. Group packetObjectTypeIR: ((package _tid { (typeIR_a)*{typeIR_a <- typeIR_a*} }) as typeIR) ~~ ((package _tid' { (typeIR_b)*{typeIR_b <- typeIR_b*} }) as typeIR)
 
         1. If (Type_alpha: typeIR_a ~~ typeIR_b)*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*} holds, then
 
@@ -10066,21 +10168,21 @@ syntax typedefIR =
    | varbit< nat >
    | ` tid hint(print %0)
    | typeDefIR < typeIR* >
-   | typedef tid typeIR hint(print %1)
-   | type tid typeIR hint(print %1)
+   | typedef tid typeIR hint(print %0)
+   | type tid typeIR hint(print %0)
    | list< typeIR >
    | tuple< typeIR* >
    | typeIR [ nat ]
-   | struct tid { fieldTypeIR* } hint(print %1)
-   | header tid { fieldTypeIR* } hint(print %1)
-   | header_union tid { fieldTypeIR* } hint(print %1)
-   | enum tid { id* } hint(print %1)
-   | enum tid < typeIR >{ valueFieldIR* } hint(print %1)
-   | extern tid externMethodTypeDefEnv hint(print %1)
-   | parser( parameterIR* )
-   | control( parameterIR* )
-   | package{ typeIR* }
-   | table tid { tableMetadataStructTypeIR } hint(print %1)
+   | struct tid { fieldTypeIR* } hint(print %0)
+   | header tid { fieldTypeIR* } hint(print %0)
+   | header_union tid { fieldTypeIR* } hint(print %0)
+   | enum tid { id* } hint(print %0)
+   | enum tid < typeIR >{ valueFieldIR* } hint(print %0)
+   | extern tid externMethodTypeDefEnv hint(print %0)
+   | parser tid ( parameterIR* ) hint(print %0)
+   | control tid ( parameterIR* ) hint(print %0)
+   | package tid { typeIR* } hint(print %0)
+   | table tid { tableMetadataStructTypeIR } hint(print %0)
    | default
    | header_invalid
    | seq< typeIR* >
@@ -11941,9 +12043,9 @@ relation Type_wf: bound |- typeIR''
 
   14. Case (% has type parserObjectTypeIR)
 
-    1. (Let (parser( (parameterIR)*{parameterIR <- parameterIR*} )) be (typeIR'' as parserObjectTypeIR))
+    1. (Let (parser _tid ( (parameterIR)*{parameterIR <- parameterIR*} )) be (typeIR'' as parserObjectTypeIR))
 
-    2. Group parserObjectTypeIR: bound |- ((parser( (parameterIR)*{parameterIR <- parameterIR*} )) as typeIR)
+    2. Group parserObjectTypeIR: bound |- ((parser _tid ( (parameterIR)*{parameterIR <- parameterIR*} )) as typeIR)
 
       1. If (ParameterTypes_wf: bound |- (parameterIR)*{parameterIR <- parameterIR*}) holds, then
 
@@ -11951,9 +12053,9 @@ relation Type_wf: bound |- typeIR''
 
   15. Case (% has type controlObjectTypeIR)
 
-    1. (Let (control( (parameterIR)*{parameterIR <- parameterIR*} )) be (typeIR'' as controlObjectTypeIR))
+    1. (Let (control _tid ( (parameterIR)*{parameterIR <- parameterIR*} )) be (typeIR'' as controlObjectTypeIR))
 
-    2. Group controlObjectTypeIR: bound |- ((control( (parameterIR)*{parameterIR <- parameterIR*} )) as typeIR)
+    2. Group controlObjectTypeIR: bound |- ((control _tid ( (parameterIR)*{parameterIR <- parameterIR*} )) as typeIR)
 
       1. If (ParameterTypes_wf: bound |- (parameterIR)*{parameterIR <- parameterIR*}) holds, then
 
@@ -11961,9 +12063,9 @@ relation Type_wf: bound |- typeIR''
 
   16. Case (% has type packageObjectTypeIR)
 
-    1. (Let (package{ (typeIR)*{typeIR <- typeIR*} }) be (typeIR'' as packageObjectTypeIR))
+    1. (Let (package _tid { (typeIR)*{typeIR <- typeIR*} }) be (typeIR'' as packageObjectTypeIR))
 
-    2. Group packageObjectTypeIR: bound |- ((package{ (typeIR)*{typeIR <- typeIR*} }) as typeIR)
+    2. Group packageObjectTypeIR: bound |- ((package _tid { (typeIR)*{typeIR <- typeIR*} }) as typeIR)
 
       1. If (Type_wf: bound |- typeIR)*{typeIR <- typeIR*} holds, then
 
@@ -12492,18 +12594,50 @@ tbl def $nestable'_typedef(typeIR') =
 
       2. Return true
 
+  Row : (externObjectTypeIR as typeIR) -> true:
+
+    1. If ((typeIR' has type externObjectTypeIR)), then
+
+      1. (Let externObjectTypeIR be (typeIR' as externObjectTypeIR))
+
+      2. Return true
+
+  Row : (parserObjectTypeIR as typeIR) -> true:
+
+    1. If ((typeIR' has type parserObjectTypeIR)), then
+
+      1. (Let parserObjectTypeIR be (typeIR' as parserObjectTypeIR))
+
+      2. Return true
+
+  Row : (controlObjectTypeIR as typeIR) -> true:
+
+    1. If ((typeIR' has type controlObjectTypeIR)), then
+
+      1. (Let controlObjectTypeIR be (typeIR' as controlObjectTypeIR))
+
+      2. Return true
+
+  Row : (packageObjectTypeIR as typeIR) -> true:
+
+    1. If ((typeIR' has type packageObjectTypeIR)), then
+
+      1. (Let packageObjectTypeIR be (typeIR' as packageObjectTypeIR))
+
+      2. Return true
+
   Row : _typeIR -> false:
 
     1. Return false
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:101.1-103.54
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:105.1-107.54
 def $nestable_new(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_new(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:104.1-106.54
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:108.1-110.54
 tbl def $nestable'_new(typeIR') =
 
   Row : ((bool) as typeIR) -> true:
@@ -12558,14 +12692,14 @@ tbl def $nestable'_new(typeIR') =
 
     1. Return false
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:125.1-127.57
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:129.1-131.57
 def $nestable_list(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_list(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:128.1-130.57
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:132.1-134.57
 tbl def $nestable'_list(typeIR') =
 
   Row : ((bool) as typeIR) -> true:
@@ -12636,14 +12770,14 @@ tbl def $nestable'_list(typeIR') =
 
     1. Return false
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:150.1-152.58
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:154.1-156.58
 def $nestable_tuple(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_tuple(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:153.1-155.58
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:157.1-159.58
 tbl def $nestable'_tuple(typeIR') =
 
   Row : ((bool) as typeIR) -> true:
@@ -12766,14 +12900,14 @@ tbl def $nestable'_tuple(typeIR') =
 
     1. Return false
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:180.1-182.65
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:184.1-186.65
 def $nestable_headerStack(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_headerStack(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:183.1-185.65
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:187.1-189.65
 tbl def $nestable'_headerStack(typeIR') =
 
   Row : (nameTypeIR as typeIR) -> true:
@@ -12804,26 +12938,26 @@ tbl def $nestable'_headerStack(typeIR') =
 
     1. Return false
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:202.1-204.59
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:206.1-208.59
 def $nestable_struct(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_struct(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:205.1-207.59
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:209.1-211.59
 def $nestable'_struct(typeIR)
 
 1. Return $nestable'_tuple(typeIR)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:219.1-221.57
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:223.1-225.57
 def $nestable_header(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_header(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:222.1-224.57
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:226.1-228.57
 tbl def $nestable'_header(typeIR') =
 
   Row : ((bool) as typeIR) -> true:
@@ -12910,14 +13044,14 @@ tbl def $nestable'_header(typeIR') =
 
     1. Return false
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:225.1-227.76
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:229.1-231.76
 def $nestable_struct_in_header(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_struct_in_header(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:228.1-230.76
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:232.1-234.76
 tbl def $nestable'_struct_in_header(typeIR') =
 
   Row : ((bool) as typeIR) -> true:
@@ -12992,14 +13126,14 @@ tbl def $nestable'_struct_in_header(typeIR') =
 
     1. Return false
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:267.1-269.63
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:271.1-273.63
 def $nestable_headerUnion(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_headerUnion(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:270.1-272.63
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:274.1-276.63
 tbl def $nestable'_headerUnion(typeIR') =
 
   Row : (nameTypeIR as typeIR) -> true:
@@ -13030,14 +13164,14 @@ tbl def $nestable'_headerUnion(typeIR') =
 
     1. Return false
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:289.1-291.68
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:293.1-295.68
 def $nestable_enum_serializable(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_enum_serializable(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:292.1-294.68
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:296.1-298.68
 tbl def $nestable'_enum_serializable(typeIR'') =
 
   Row : ((int< _nat >) as typeIR) -> true:
@@ -13084,14 +13218,14 @@ tbl def $nestable'_enum_serializable(typeIR'') =
 
     1. Return false
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:295.1-297.89
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:299.1-301.89
 def $nestable_new_in_enum_serializable(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_new_in_enum_serializable(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:298.1-300.89
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:302.1-304.89
 tbl def $nestable'_new_in_enum_serializable(typeIR') =
 
   Row : ((int< _nat >) as typeIR) -> true:
@@ -13138,14 +13272,14 @@ tbl def $nestable'_new_in_enum_serializable(typeIR') =
 
     1. Return false
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:392.1-394.54
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:396.1-398.54
 def $nestable_set(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_set(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:395.1-397.54
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:399.1-401.54
 tbl def $nestable'_set(typeIR'') =
 
   Row : ((bool) as typeIR) -> true:
@@ -13236,14 +13370,14 @@ tbl def $nestable'_set(typeIR'') =
 
     1. Return false
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:398.1-400.72
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:402.1-404.72
 def $nestable_tuple_in_set(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_tuple_in_set(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:401.1-403.72
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:405.1-407.72
 tbl def $nestable'_tuple_in_set(typeIR'') =
 
   Row : ((bool) as typeIR) -> true:
@@ -13314,14 +13448,14 @@ tbl def $nestable'_tuple_in_set(typeIR'') =
 
     1. Return false
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:404.1-406.75
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:408.1-410.75
 def $nestable_sequence_in_set(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_sequence_in_set(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:407.1-409.75
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:411.1-413.75
 tbl def $nestable'_sequence_in_set(typeIR'') =
 
   Row : ((bool) as typeIR) -> true:
@@ -13404,12 +13538,12 @@ tbl def $nestable'_sequence_in_set(typeIR'') =
 
     1. Return false
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:526.1-528.85
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:530.1-532.85
 def $directionless_trailing((direction)*{direction <- direction*})
 
 1. Return $directionless_trailing'(true, $rev_<direction>((direction)*{direction <- direction*}))
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:529.1-529.54
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:533.1-533.54
 def $directionless_trailing'(_bool, (direction')*{direction' <- direction'*})
 
 1. Case analysis on (direction')*{direction' <- direction'*}
@@ -13448,14 +13582,14 @@ def $directionless_trailing'(_bool, (direction')*{direction' <- direction'*})
 
         1. Return false
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:542.1-544.58
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:546.1-548.58
 def $nestable_action(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_action(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:545.1-547.58
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:549.1-551.58
 tbl def $nestable'_action(typeIR') =
 
   Row : ((int) as typeIR) -> false:
@@ -13488,14 +13622,14 @@ tbl def $nestable'_action(typeIR') =
 
     1. Return true
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:566.1-568.67
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:570.1-572.67
 def $nestable_definedFunction(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_definedFunction(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:569.1-571.67
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:573.1-575.67
 tbl def $nestable'_definedFunction(typeIR') =
 
   Row : (objectTypeIR as typeIR) -> false:
@@ -13518,14 +13652,14 @@ tbl def $nestable'_definedFunction(typeIR') =
 
     1. Return true
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:588.1-590.67
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:592.1-594.67
 def $nestable_externFunction(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_externFunction(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:591.1-593.67
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:595.1-597.67
 tbl def $nestable'_externFunction(typeIR') =
 
   Row : (parserObjectTypeIR as typeIR) -> false:
@@ -13564,14 +13698,14 @@ tbl def $nestable'_externFunction(typeIR') =
 
     1. Return true
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:619.1-621.65
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:623.1-625.65
 def $nestable_externMethod(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_externMethod(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:622.1-624.65
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:626.1-628.65
 tbl def $nestable'_externMethod(typeIR') =
 
   Row : (parserObjectTypeIR as typeIR) -> false:
@@ -13610,14 +13744,14 @@ tbl def $nestable'_externMethod(typeIR') =
 
     1. Return true
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:654.1-656.70
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:658.1-660.70
 def $nestable_parserApplyMethod(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_parserApplyMethod(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:657.1-659.70
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:661.1-663.70
 tbl def $nestable'_parserApplyMethod(typeIR') =
 
   Row : (parserObjectTypeIR as typeIR) -> false:
@@ -13656,14 +13790,14 @@ tbl def $nestable'_parserApplyMethod(typeIR') =
 
     1. Return true
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:677.1-679.71
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:681.1-683.71
 def $nestable_controlApplyMethod(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_controlApplyMethod(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:680.1-682.71
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:684.1-686.71
 tbl def $nestable'_controlApplyMethod(typeIR') =
 
   Row : (parserObjectTypeIR as typeIR) -> false:
@@ -13694,12 +13828,12 @@ tbl def $nestable'_controlApplyMethod(typeIR') =
 
     1. Return true
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:736.1-736.48
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:740.1-740.48
 def $nestable_constructor_extern(typeIR)
 
 1. Return $nestable'_constructor_extern($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:737.1-737.53
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:741.1-741.53
 tbl def $nestable'_constructor_extern(typeIR') =
 
   Row : (parserObjectTypeIR as typeIR) -> false:
@@ -13738,12 +13872,12 @@ tbl def $nestable'_constructor_extern(typeIR') =
 
     1. Return true
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:756.1-756.48
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:760.1-760.48
 def $nestable_constructor_parser(typeIR)
 
 1. Return $nestable'_constructor_parser($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:757.1-757.53
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:761.1-761.53
 tbl def $nestable'_constructor_parser(typeIR') =
 
   Row : (controlObjectTypeIR as typeIR) -> false:
@@ -13774,12 +13908,12 @@ tbl def $nestable'_constructor_parser(typeIR') =
 
     1. Return true
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:775.1-775.49
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:779.1-779.49
 def $nestable_constructor_control(typeIR)
 
 1. Return $nestable'_constructor_control($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:776.1-776.54
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:780.1-780.54
 tbl def $nestable'_constructor_control(typeIR') =
 
   Row : (parserObjectTypeIR as typeIR) -> false:
@@ -13810,12 +13944,12 @@ tbl def $nestable'_constructor_control(typeIR') =
 
     1. Return true
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:794.1-794.49
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:798.1-798.49
 def $nestable_constructor_package(typeIR)
 
 1. Return $nestable'_constructor_package($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:795.1-795.50
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:799.1-799.50
 def $nestable'_constructor_package(typeIR)
 
 1. If ((typeIR has type tableObjectTypeIR)), then
@@ -13828,12 +13962,12 @@ def $nestable'_constructor_package(typeIR)
 
   1. Return true
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:815.1-815.42
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:819.1-819.42
 def $definable_constructor(typeIR)
 
 1. Return $definable'_constructor($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:816.1-816.47
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:820.1-820.47
 tbl def $definable'_constructor(typeIR') =
 
   Row : (externObjectTypeIR as typeIR) -> true:
@@ -20224,23 +20358,23 @@ relation Decl_ok: p TC_0 |- declaration : % %
 
               8. If (CallableTypeDef_wf: $bound((global), TC_0) |- callableTypeDefIR) holds, then
 
-                1. (Let cid be $cid_(name, constructorParameterListOpt))
+                1. (Let nameIR be $name(name))
 
-                2. (Let parserObjectTypeDefIR be (parser< [] , [] >( (parameterIR)*{parameterIR <- parameterIR*} )))
+                2. (Let cid be $cid_(name, constructorParameterListOpt))
 
-                3. (Let typeIR_parser_spec be (((parserObjectTypeDefIR as typeDefIR) < [] >) as typeIR))
+                3. (Let parserObjectTypeDefIR be (parser nameIR < [] , [] >( (parameterIR)*{parameterIR <- parameterIR*} )))
 
-                4. (Let constructorTypeDefIR be (constructor< [] , [] >( (constructorParameterIR)*{constructorParameterIR <- constructorParameterIR*} ): typeIR_parser_spec))
+                4. (Let typeIR_parser_spec be (((parserObjectTypeDefIR as typeDefIR) < [] >) as typeIR))
 
-                5. If (ConstructorTypeDef_wf: $bound((global), TC_0) |- constructorTypeDefIR) holds, then
+                5. (Let constructorTypeDefIR be (constructor< [] , [] >( (constructorParameterIR)*{constructorParameterIR <- constructorParameterIR*} ): typeIR_parser_spec))
+
+                6. If (ConstructorTypeDef_wf: $bound((global), TC_0) |- constructorTypeDefIR) holds, then
 
                   1. (Let TC_6 be $add_constructorDef_t(TC_0, cid, constructorTypeDefIR))
 
-                  2. (Let nameIR be $name(name))
+                  2. (Let parserDeclarationIR be (annotationList parser nameIR < [] >( (parameterIR)*{parameterIR <- parameterIR*} )( (constructorParameterIR)*{constructorParameterIR <- constructorParameterIR*} ){ (parserLocalDeclarationIR)*{parserLocalDeclarationIR <- parserLocalDeclarationIR*} (parserStateIR)*{parserStateIR <- parserStateIR*} }))
 
-                  3. (Let parserDeclarationIR be (annotationList parser nameIR < [] >( (parameterIR)*{parameterIR <- parameterIR*} )( (constructorParameterIR)*{constructorParameterIR <- constructorParameterIR*} ){ (parserLocalDeclarationIR)*{parserLocalDeclarationIR <- parserLocalDeclarationIR*} (parserStateIR)*{parserStateIR <- parserStateIR*} }))
-
-                  4. Result in : % % |- % : TC_6 (parserDeclarationIR as declarationIR)
+                  3. Result in : % % |- % : TC_6 (parserDeclarationIR as declarationIR)
 
     6. Case (% has type controlDeclaration)
 
@@ -20280,23 +20414,23 @@ relation Decl_ok: p TC_0 |- declaration : % %
 
               7. If (CallableTypeDef_wf: $bound((global), TC_0) |- callableTypeDefIR) holds, then
 
-                1. (Let cid be $cid_(name, constructorParameterListOpt))
+                1. (Let nameIR be $name(name))
 
-                2. (Let controlObjectTypeDefIR be (control< [] , [] >( (parameterIR)*{parameterIR <- parameterIR*} )))
+                2. (Let cid be $cid_(name, constructorParameterListOpt))
 
-                3. (Let typeIR_control_spec be (((controlObjectTypeDefIR as typeDefIR) < [] >) as typeIR))
+                3. (Let controlObjectTypeDefIR be (control nameIR < [] , [] >( (parameterIR)*{parameterIR <- parameterIR*} )))
 
-                4. (Let constructorTypeDefIR be (constructor< [] , [] >( (constructorParameterIR)*{constructorParameterIR <- constructorParameterIR*} ): typeIR_control_spec))
+                4. (Let typeIR_control_spec be (((controlObjectTypeDefIR as typeDefIR) < [] >) as typeIR))
 
-                5. If (ConstructorTypeDef_wf: $bound((global), TC_0) |- constructorTypeDefIR) holds, then
+                5. (Let constructorTypeDefIR be (constructor< [] , [] >( (constructorParameterIR)*{constructorParameterIR <- constructorParameterIR*} ): typeIR_control_spec))
+
+                6. If (ConstructorTypeDef_wf: $bound((global), TC_0) |- constructorTypeDefIR) holds, then
 
                   1. (Let TC_6 be $add_constructorDef_t(TC_0, cid, constructorTypeDefIR))
 
-                  2. (Let nameIR be $name(name))
+                  2. (Let controlDeclarationIR be (annotationList control nameIR < [] >( (parameterIR)*{parameterIR <- parameterIR*} )( (constructorParameterIR)*{constructorParameterIR <- constructorParameterIR*} ){ (controlLocalDeclarationIR)*{controlLocalDeclarationIR <- controlLocalDeclarationIR*} apply controlBodyIR }))
 
-                  3. (Let controlDeclarationIR be (annotationList control nameIR < [] >( (parameterIR)*{parameterIR <- parameterIR*} )( (constructorParameterIR)*{constructorParameterIR <- constructorParameterIR*} ){ (controlLocalDeclarationIR)*{controlLocalDeclarationIR <- controlLocalDeclarationIR*} apply controlBodyIR }))
-
-                  4. Result in : % % |- % : TC_6 (controlDeclarationIR as declarationIR)
+                  3. Result in : % % |- % : TC_6 (controlDeclarationIR as declarationIR)
 
     7. Case (% has type enumTypeDeclaration)
 
@@ -20602,7 +20736,7 @@ relation Decl_ok: p TC_0 |- declaration : % %
 
         7. (Let nameIR be $name(name))
 
-        8. (Let parserObjectTypeDefIR be (parser< (tid_expl)*{tid_expl <- tid_expl*} , (tid_impl)*{tid_impl <- tid_impl*} >( (parameterIR)*{parameterIR <- parameterIR*} )))
+        8. (Let parserObjectTypeDefIR be (parser nameIR < (tid_expl)*{tid_expl <- tid_expl*} , (tid_impl)*{tid_impl <- tid_impl*} >( (parameterIR)*{parameterIR <- parameterIR*} )))
 
         9. If (TypeDef_wf: $bound((global), TC_0) |- (parserObjectTypeDefIR as typeDefIR)) holds, then
 
@@ -20632,7 +20766,7 @@ relation Decl_ok: p TC_0 |- declaration : % %
 
         7. (Let nameIR be $name(name))
 
-        8. (Let controlObjectTypeDefIR be (control< (tid_expl)*{tid_expl <- tid_expl*} , (tid_impl)*{tid_impl <- tid_impl*} >( (parameterIR)*{parameterIR <- parameterIR*} )))
+        8. (Let controlObjectTypeDefIR be (control nameIR < (tid_expl)*{tid_expl <- tid_expl*} , (tid_impl)*{tid_impl <- tid_impl*} >( (parameterIR)*{parameterIR <- parameterIR*} )))
 
         9. If (TypeDef_wf: $bound((global), TC_0) |- (controlObjectTypeDefIR as typeDefIR)) holds, then
 
@@ -20664,7 +20798,7 @@ relation Decl_ok: p TC_0 |- declaration : % %
 
         8. (Let (_annotationList _direction typeIR_package_inner _nameIR _constantInitializerOptIR) be constructorParameterIR)*{_annotationList <- _annotationList*, _constantInitializerOptIR <- _constantInitializerOptIR*, _direction <- _direction*, _nameIR <- _nameIR*, constructorParameterIR <- constructorParameterIR*, typeIR_package_inner <- typeIR_package_inner*}
 
-        9. (Let packageObjectTypeDefIR be (package< (tid_expl)*{tid_expl <- tid_expl*} , (tid_impl)*{tid_impl <- tid_impl*} >{ (typeIR_package_inner)*{typeIR_package_inner <- typeIR_package_inner*} }))
+        9. (Let packageObjectTypeDefIR be (package nameIR < (tid_expl)*{tid_expl <- tid_expl*} , (tid_impl)*{tid_impl <- tid_impl*} >{ (typeIR_package_inner)*{typeIR_package_inner <- typeIR_package_inner*} }))
 
         10. If (TypeDef_wf: $bound((global), TC_0) |- (packageObjectTypeDefIR as typeDefIR)) holds, then
 
@@ -21144,7 +21278,7 @@ relation CallableType_ok: p TC |- callableTargetIR' < (typeArgumentIR')*{typeArg
 
           3. If ((typeIR has type parserObjectTypeIR)), then
 
-            1. (Let (parser( (parameterIR)*{parameterIR <- parameterIR*} )) be (typeIR as parserObjectTypeIR))
+            1. (Let (parser _tid ( (parameterIR)*{parameterIR <- parameterIR*} )) be (typeIR as parserObjectTypeIR))
 
             2. (Let parserApplyMethodTypeIR be (parser_apply( (parameterIR)*{parameterIR <- parameterIR*} )))
 
@@ -21174,7 +21308,7 @@ relation CallableType_ok: p TC |- callableTargetIR' < (typeArgumentIR')*{typeArg
 
           3. If ((typeIR has type controlObjectTypeIR)), then
 
-            1. (Let (control( (parameterIR)*{parameterIR <- parameterIR*} )) be (typeIR as controlObjectTypeIR))
+            1. (Let (control _tid ( (parameterIR)*{parameterIR <- parameterIR*} )) be (typeIR as controlObjectTypeIR))
 
             2. (Let controlApplyMethodTypeIR be (control_apply( (parameterIR)*{parameterIR <- parameterIR*} )))
 
@@ -21482,23 +21616,79 @@ relation Call_ok: p TC |- callableTypeIR < (typeArgumentIR)*{typeArgumentIR <- t
                 1. Result in : % % |- % < % # % >( % # % ): (tableMetadataStructTypeIR as typeIR) < [] >( [] )
 
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:485.1-488.29
-relation ConstructorType_ok: p TC |- prefixedNameIR < (typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*} >( (argumentIR)*{argumentIR <- argumentIR*} ): % <# % >(# % )
+relation ConstructorType_ok: p TC |- prefixedNameIR < (typeArgumentIR')*{typeArgumentIR' <- typeArgumentIR'*} >( (argumentIR)*{argumentIR <- argumentIR*} ): % <# % >(# % )
 
-1. Group : p TC |- prefixedNameIR < (typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*} >( (argumentIR)*{argumentIR <- argumentIR*} ): % <# % >(# % )
+1. Group non-aliased-none-type: p TC |- prefixedNameIR < (typeArgumentIR')*{typeArgumentIR' <- typeArgumentIR'*} >( (argumentIR)*{argumentIR <- argumentIR*} ): % <# % >(# % )
 
-  1. (Let ((cid, constructorTypeDefIR, id*))?{(cid, constructorTypeDefIR, id*) <- (cid, constructorTypeDefIR, id*)?} be $find_constructorDef_overloaded_t(TC, prefixedNameIR, (argumentIR)*{argumentIR <- argumentIR*}))
+  1. If ((?() = $find_typeDef_t(p, TC, prefixedNameIR))), then
 
-  2. If ((((cid, constructorTypeDefIR, id*))?{(cid, constructorTypeDefIR, id*) <- (cid, constructorTypeDefIR, id*)?} matches pattern (_))), then
+    1. (Let ((cid, constructorTypeDefIR, id*))?{(cid, constructorTypeDefIR, id*) <- (cid, constructorTypeDefIR, id*)?} be $find_constructorDef_overloaded_t(TC, prefixedNameIR, (argumentIR)*{argumentIR <- argumentIR*}))
 
-    1. (Let ?((cid, constructorTypeDefIR, (id_default)*{id_default <- id_default*})) be ((cid, constructorTypeDefIR, id*))?{(cid, constructorTypeDefIR, id*) <- (cid, constructorTypeDefIR, id*)?})
+    2. If ((((cid, constructorTypeDefIR, id*))?{(cid, constructorTypeDefIR, id*) <- (cid, constructorTypeDefIR, id*)?} matches pattern (_))), then
 
-    2. (Let (constructorTypeIR, (tid_impl)*{tid_impl <- tid_impl*}) be $specialize_constructorTypeDefIR(constructorTypeDefIR, (typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*}))
+      1. (Let ?((cid, constructorTypeDefIR, (id_default)*{id_default <- id_default*})) be ((cid, constructorTypeDefIR, id*))?{(cid, constructorTypeDefIR, id*) <- (cid, constructorTypeDefIR, id*)?})
 
-    3. (Let bound be $union_set<tid>($bound(p, TC), ({ (tid_impl)*{tid_impl <- tid_impl*} })))
+      2. (Let (constructorTypeIR, (tid_impl)*{tid_impl <- tid_impl*}) be $specialize_constructorTypeDefIR(constructorTypeDefIR, (typeArgumentIR')*{typeArgumentIR' <- typeArgumentIR'*}))
 
-    4. If (ConstructorType_wf: bound |- constructorTypeIR) holds, then
+      3. (Let bound be $union_set<tid>($bound(p, TC), ({ (tid_impl)*{tid_impl <- tid_impl*} })))
 
-      1. Result in : % % |- % < % >( % ): constructorTypeIR <# (tid_impl)*{tid_impl <- tid_impl*} >(# (id_default)*{id_default <- id_default*} )
+      4. If (ConstructorType_wf: bound |- constructorTypeIR) holds, then
+
+        1. Result in : % % |- % < % >( % ): constructorTypeIR <# (tid_impl)*{tid_impl <- tid_impl*} >(# (id_default)*{id_default <- id_default*} )
+
+2. Group non-aliased-some-type: p TC |- prefixedNameIR < (typeArgumentIR')*{typeArgumentIR' <- typeArgumentIR'*} >( (argumentIR)*{argumentIR <- argumentIR*} ): % <# % >(# % )
+
+  1. (Let (typeDefIR')?{typeDefIR' <- typeDefIR'?} be $find_typeDef_t(p, TC, prefixedNameIR))
+
+  2. If (((typeDefIR')?{typeDefIR' <- typeDefIR'?} matches pattern (_))), then
+
+    1. (Let ?(typeDefIR) be (typeDefIR')?{typeDefIR' <- typeDefIR'?})
+
+    2. If (~$is_typedefTypeDefIR(typeDefIR)), then
+
+      1. (Let ((cid, constructorTypeDefIR, id*))?{(cid, constructorTypeDefIR, id*) <- (cid, constructorTypeDefIR, id*)?} be $find_constructorDef_overloaded_t(TC, prefixedNameIR, (argumentIR)*{argumentIR <- argumentIR*}))
+
+      2. If ((((cid, constructorTypeDefIR, id*))?{(cid, constructorTypeDefIR, id*) <- (cid, constructorTypeDefIR, id*)?} matches pattern (_))), then
+
+        1. (Let ?((cid, constructorTypeDefIR, (id_default)*{id_default <- id_default*})) be ((cid, constructorTypeDefIR, id*))?{(cid, constructorTypeDefIR, id*) <- (cid, constructorTypeDefIR, id*)?})
+
+        2. (Let (constructorTypeIR, (tid_impl)*{tid_impl <- tid_impl*}) be $specialize_constructorTypeDefIR(constructorTypeDefIR, (typeArgumentIR')*{typeArgumentIR' <- typeArgumentIR'*}))
+
+        3. (Let bound be $union_set<tid>($bound(p, TC), ({ (tid_impl)*{tid_impl <- tid_impl*} })))
+
+        4. If (ConstructorType_wf: bound |- constructorTypeIR) holds, then
+
+          1. Result in : % % |- % < % >( % ): constructorTypeIR <# (tid_impl)*{tid_impl <- tid_impl*} >(# (id_default)*{id_default <- id_default*} )
+
+3. If (((typeArgumentIR')*{typeArgumentIR' <- typeArgumentIR'*} matches pattern [])), then
+
+  1. Group aliased: p TC |- prefixedNameIR < [] >( (argumentIR)*{argumentIR <- argumentIR*} ): % <# % >(# % )
+
+    1. (Let (typeDefIR')?{typeDefIR' <- typeDefIR'?} be $find_typeDef_t(p, TC, prefixedNameIR))
+
+    2. If (((typeDefIR')?{typeDefIR' <- typeDefIR'?} matches pattern (_))), then
+
+      1. (Let ?(typeDefIR) be (typeDefIR')?{typeDefIR' <- typeDefIR'?})
+
+      2. If ((typeDefIR has type typedefTypeIR)), then
+
+        1. (Let (typedef nameIR_alias typeIR_alias) be (typeDefIR as typedefTypeIR))
+
+        2. (Let (nameIR, (typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*}) be $resolve_type_alias(typeIR_alias))
+
+        3. (Let ((cid, constructorTypeDefIR, id*))?{(cid, constructorTypeDefIR, id*) <- (cid, constructorTypeDefIR, id*)?} be $find_constructorDef_overloaded_t(TC, (` nameIR), (argumentIR)*{argumentIR <- argumentIR*}))
+
+        4. If ((((cid, constructorTypeDefIR, id*))?{(cid, constructorTypeDefIR, id*) <- (cid, constructorTypeDefIR, id*)?} matches pattern (_))), then
+
+          1. (Let ?((cid, constructorTypeDefIR, (id_default)*{id_default <- id_default*})) be ((cid, constructorTypeDefIR, id*))?{(cid, constructorTypeDefIR, id*) <- (cid, constructorTypeDefIR, id*)?})
+
+          2. (Let (constructorTypeIR, (tid_impl)*{tid_impl <- tid_impl*}) be $specialize_constructorTypeDefIR(constructorTypeDefIR, (typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*}))
+
+          3. (Let bound be $union_set<tid>($bound(p, TC), ({ (tid_impl)*{tid_impl <- tid_impl*} })))
+
+          4. If (ConstructorType_wf: bound |- constructorTypeIR) holds, then
+
+            1. Result in : % % |- % < % >( % ): constructorTypeIR <# (tid_impl)*{tid_impl <- tid_impl*} >(# (id_default)*{id_default <- id_default*} )
 
 ;; ../../../../spec-concrete/5.04-typing-relation.watsup:495.19-495.31
 syntax instctxt = 
@@ -21518,7 +21708,7 @@ relation Inst_ok: cursor TC instctxt |- constructorTypeIR < (typeArgumentIR)*{ty
 
     3. If ((typeIR has type packageObjectTypeIR)), then
 
-      1. (Let (package{ (_typeIR)*{_typeIR <- _typeIR*} }) be (typeIR as packageObjectTypeIR))
+      1. (Let (package _tid { (_typeIR)*{_typeIR <- _typeIR*} }) be (typeIR as packageObjectTypeIR))
 
       2. (Let (parameterIR_non_default)*{parameterIR_non_default <- parameterIR_non_default*} be $filter_default_parameterIRs((parameterIR)*{parameterIR <- parameterIR*}, (id_default)*{id_default <- id_default*}))
 
@@ -22543,26 +22733,28 @@ def $compat_direct_application(typeIR)
 
 1. Return $compat'_direct_application($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.10-typing-statement.watsup:113.1-113.47
-def $compat'_direct_application(typeIR)
+;; ../../../../spec-concrete/5.10-typing-statement.watsup:113.1-113.51
+tbl def $compat'_direct_application(typeIR') =
 
-1. Case analysis on typeIR
+  Row : (parserObjectTypeIR as typeIR) -> true:
 
-  1. Case (% has type parserObjectTypeIR)
+    1. If ((typeIR' has type parserObjectTypeIR)), then
 
-    1. (Let (parser( (_parameterIR)*{_parameterIR <- _parameterIR*} )) be (typeIR as parserObjectTypeIR))
+      1. (Let parserObjectTypeIR be (typeIR' as parserObjectTypeIR))
 
-    2. Return true
+      2. Return true
 
-  2. Case (% has type controlObjectTypeIR)
+  Row : (controlObjectTypeIR as typeIR) -> true:
 
-    1. (Let (control( (_parameterIR)*{_parameterIR <- _parameterIR*} )) be (typeIR as controlObjectTypeIR))
+    1. If ((typeIR' has type controlObjectTypeIR)), then
 
-    2. Return true
+      1. (Let controlObjectTypeIR be (typeIR' as controlObjectTypeIR))
 
-2. Otherwise
+      2. Return true
 
-  1. Return false
+  Row : _typeIR -> false:
+
+    1. Return false
 
 ;; ../../../../spec-concrete/5.10-typing-statement.watsup:233.1-235.20
 relation ForUpdateStmt_ok: TC |- forUpdateStatement : %
@@ -24579,11 +24771,11 @@ def $gen_constraint_typeIR(constraint, typeIR, typeIR_arg')
 
   12. Case (% has type parserObjectTypeIR)
 
-    1. (Let (parser( (parameterIR_param)*{parameterIR_param <- parameterIR_param*} )) be (typeIR as parserObjectTypeIR))
+    1. (Let (parser _tid ( (parameterIR_param)*{parameterIR_param <- parameterIR_param*} )) be (typeIR as parserObjectTypeIR))
 
     2. If ((typeIR_arg' has type parserObjectTypeIR)), then
 
-      1. (Let (parser( (parameterIR_arg)*{parameterIR_arg <- parameterIR_arg*} )) be (typeIR_arg' as parserObjectTypeIR))
+      1. (Let (parser _tid' ( (parameterIR_arg)*{parameterIR_arg <- parameterIR_arg*} )) be (typeIR_arg' as parserObjectTypeIR))
 
       2. (Let (_annotationList direction typeIR_param _nameIR _constantInitializerOptIR) be parameterIR_param)*{_annotationList <- _annotationList*, _constantInitializerOptIR <- _constantInitializerOptIR*, _nameIR <- _nameIR*, direction <- direction*, parameterIR_param <- parameterIR_param*, typeIR_param <- typeIR_param*}
 
@@ -24595,11 +24787,11 @@ def $gen_constraint_typeIR(constraint, typeIR, typeIR_arg')
 
   13. Case (% has type controlObjectTypeIR)
 
-    1. (Let (control( (parameterIR_param)*{parameterIR_param <- parameterIR_param*} )) be (typeIR as controlObjectTypeIR))
+    1. (Let (control _tid ( (parameterIR_param)*{parameterIR_param <- parameterIR_param*} )) be (typeIR as controlObjectTypeIR))
 
     2. If ((typeIR_arg' has type controlObjectTypeIR)), then
 
-      1. (Let (control( (parameterIR_arg)*{parameterIR_arg <- parameterIR_arg*} )) be (typeIR_arg' as controlObjectTypeIR))
+      1. (Let (control _tid' ( (parameterIR_arg)*{parameterIR_arg <- parameterIR_arg*} )) be (typeIR_arg' as controlObjectTypeIR))
 
       2. (Let (_annotationList direction typeIR_param _nameIR _constantInitializerOptIR) be parameterIR_param)*{_annotationList <- _annotationList*, _constantInitializerOptIR <- _constantInitializerOptIR*, _nameIR <- _nameIR*, direction <- direction*, parameterIR_param <- parameterIR_param*, typeIR_param <- typeIR_param*}
 
@@ -24611,11 +24803,11 @@ def $gen_constraint_typeIR(constraint, typeIR, typeIR_arg')
 
   14. Case (% has type packageObjectTypeIR)
 
-    1. (Let (package{ (typeIR_param)*{typeIR_param <- typeIR_param*} }) be (typeIR as packageObjectTypeIR))
+    1. (Let (package _tid { (typeIR_param)*{typeIR_param <- typeIR_param*} }) be (typeIR as packageObjectTypeIR))
 
     2. If ((typeIR_arg' has type packageObjectTypeIR)), then
 
-      1. (Let (package{ (typeIR_arg)*{typeIR_arg <- typeIR_arg*} }) be (typeIR_arg' as packageObjectTypeIR))
+      1. (Let (package _tid' { (typeIR_arg)*{typeIR_arg <- typeIR_arg*} }) be (typeIR_arg' as packageObjectTypeIR))
 
       2. Return $gen_constraint_typeIRs(constraint, (typeIR_param)*{typeIR_param <- typeIR_param*}, (typeIR_arg)*{typeIR_arg <- typeIR_arg*})
 
@@ -24814,7 +25006,28 @@ def $resolve_constraint(({ ((tid : infer))*{infer <- infer*, tid <- tid*} }))
 
   2. Return ({ ((tid : typeIR))*{tid <- tid*, typeIR <- typeIR*} })
 
-;; ../../../../spec-concrete/5.15.3-typing-constructor-call.watsup:21.1-21.65
+;; ../../../../spec-concrete/5.15.3-typing-constructor-call.watsup:5.1-5.52
+def $resolve_type_alias(typeIR)
+
+1. Case analysis on typeIR
+
+  1. Case (% has type specializedTypeIR)
+
+    1. (Let specializedTypeIR be (typeIR as specializedTypeIR))
+
+    2. (Let (typeDefIR < (typeIR_arg)*{typeIR_arg <- typeIR_arg*} >) be specializedTypeIR)
+
+    3. (Let nameIR_alias be $name_of_typeDefIR(typeDefIR))
+
+    4. Return (nameIR_alias, (typeIR_arg)*{typeIR_arg <- typeIR_arg*})
+
+  2. Case (% has type typedefTypeIR)
+
+    1. (Let (typedef nameIR_alias typeIR_alias) be (typeIR as typedefTypeIR))
+
+    2. Return $resolve_type_alias(typeIR_alias)
+
+;; ../../../../spec-concrete/5.15.3-typing-constructor-call.watsup:63.1-63.65
 def $instantiable_extern(cursor, TC, instctxt)
 
 1. Case analysis on cursor
@@ -24831,7 +25044,7 @@ def $instantiable_extern(cursor, TC, instctxt)
 
     1. Return true
 
-;; ../../../../spec-concrete/5.15.3-typing-constructor-call.watsup:27.1-27.65
+;; ../../../../spec-concrete/5.15.3-typing-constructor-call.watsup:69.1-69.65
 def $instantiable_parser(cursor, TC, instctxt)
 
 1. Case analysis on cursor
@@ -24848,7 +25061,7 @@ def $instantiable_parser(cursor, TC, instctxt)
 
     1. Return $is_parser_state_localKind(TC.local.kind)
 
-;; ../../../../spec-concrete/5.15.3-typing-constructor-call.watsup:36.1-36.66
+;; ../../../../spec-concrete/5.15.3-typing-constructor-call.watsup:78.1-78.66
 def $instantiable_control(cursor, TC, instctxt)
 
 1. Case analysis on cursor
@@ -24865,7 +25078,7 @@ def $instantiable_control(cursor, TC, instctxt)
 
     1. Return $is_control_apply_method_localKind(TC.local.kind)
 
-;; ../../../../spec-concrete/5.15.3-typing-constructor-call.watsup:45.1-45.66
+;; ../../../../spec-concrete/5.15.3-typing-constructor-call.watsup:87.1-87.66
 def $instantiable_package(cursor, TC, instctxt)
 
 1. Case analysis on cursor
@@ -24882,7 +25095,7 @@ def $instantiable_package(cursor, TC, instctxt)
 
     1. Return false
 
-;; ../../../../spec-concrete/5.15.3-typing-constructor-call.watsup:52.1-52.64
+;; ../../../../spec-concrete/5.15.3-typing-constructor-call.watsup:94.1-94.64
 def $instantiable_table(cursor, TC, instctxt)
 
 1. Case analysis on cursor
@@ -24899,7 +25112,7 @@ def $instantiable_table(cursor, TC, instctxt)
 
     1. Return false
 
-;; ../../../../spec-concrete/5.15.3-typing-constructor-call.watsup:59.1-59.66
+;; ../../../../spec-concrete/5.15.3-typing-constructor-call.watsup:101.1-101.66
 def $instantiable(p, TC, instctxt, typeIR)
 
 1. If ($is_externObjectTypeIR($canon_typeIR(typeIR))), then
@@ -26483,19 +26696,15 @@ relation Expr_inst: p IC STO |- (expressionIR # _expressionNoteIR) : % %
 
         2. Group callExpressionIR-constructor: p IC STO |- ((((prefixedNameIR < typeArgumentListIR >) ( argumentListIR )) as expressionIR) # _expressionNoteIR) : % %
 
-          1. (Let ((cid, constructorDef, id*))?{(cid, constructorDef, id*) <- (cid, constructorDef, id*)?} be $find_constructorDef_i(IC, prefixedNameIR, argumentListIR))
+          1. (Constructor_inst: p IC |- prefixedNameIR < typeArgumentListIR >( argumentListIR ): constructorDef < typeArgumentListIR_inst >(# (id_default)*{id_default <- id_default*} ))
 
-          2. If ((((cid, constructorDef, id*))?{(cid, constructorDef, id*) <- (cid, constructorDef, id*)?} matches pattern (_))), then
+          2. (Constructor_call: p IC STO |- constructorDef < typeArgumentListIR_inst >( argumentListIR # (id_default)*{id_default <- id_default*} ): STO_1 object)
 
-            1. (Let ?((_cid, constructorDef, (id_default)*{id_default <- id_default*})) be ((cid, constructorDef, id*))?{(cid, constructorDef, id*) <- (cid, constructorDef, id*)?})
+          3. (Let STO_2 be $add_map<oid, object>(STO_1, IC.path, object))
 
-            2. (Constructor_inst: p IC STO |- constructorDef < typeArgumentListIR >( argumentListIR # (id_default)*{id_default <- id_default*} ): STO_1 object)
+          4. (Let value_ref be ((! IC.path) as value))
 
-            3. (Let STO_2 be $add_map<oid, object>(STO_1, IC.path, object))
-
-            4. (Let value_ref be ((! IC.path) as value))
-
-            5. Result in : % % % |- % : STO_2 value_ref
+          5. Result in : % % % |- % : STO_2 value_ref
 
       2. Case (% matches pattern `%<%>(%)`)
 
@@ -26652,35 +26861,35 @@ relation Stmt_inst: p IC STO |- statementIR : % % %
 
     2. Group directApplicationStatementIR: p IC STO |- ((prefixedNameIR .apply( argumentListIR );) as statementIR) : % % %
 
-      1. (Let ((cid, constructorDef, id*))?{(cid, constructorDef, id*) <- (cid, constructorDef, id*)?} be $find_constructorDef_i(IC, prefixedNameIR, []))
+      1. (Constructor_inst: p IC |- prefixedNameIR < [] >( [] ): constructorDef < (typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*} >(# (id)*{id <- id*} ))
 
-      2. If ((((cid, constructorDef, id*))?{(cid, constructorDef, id*) <- (cid, constructorDef, id*)?} matches pattern (_))), then
+      2. If (((typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*} matches pattern [])), then
 
-        1. (Let ?((_cid, constructorDef, (_id)*{_id <- _id*})) be ((cid, constructorDef, id*))?{(cid, constructorDef, id*) <- (cid, constructorDef, id*)?})
+        1. If (((id)*{id <- id*} matches pattern [])), then
 
-        2. (Constructor_inst: p IC STO |- constructorDef < [] >( [] # [] ): STO_1 object)
+          1. (Constructor_call: p IC STO |- constructorDef < [] >( [] # [] ): STO_1 object)
 
-        3. (Let tid_fresh be $fresh_tid)
+          2. (Let tid_fresh be $fresh_tid)
 
-        4. (Let tid be $flatten_prefixedNameIR(prefixedNameIR))
+          3. (Let tid be $flatten_prefixedNameIR(prefixedNameIR))
 
-        5. (Let typeIR be ((` tid) as typeIR))
+          4. (Let typeIR be ((` tid) as typeIR))
 
-        6. (Let nameIR be $concat_text([tid, "_", tid_fresh]))
+          5. (Let nameIR be $concat_text([tid, "_", tid_fresh]))
 
-        7. (Let oid be IC.path ++ [nameIR])
+          6. (Let oid be IC.path ++ [nameIR])
 
-        8. (Let STO_2 be $add_map<oid, object>(STO_1, oid, object))
+          7. (Let STO_2 be $add_map<oid, object>(STO_1, oid, object))
 
-        9. (Let constantDeclarationIR be (() const typeIR nameIR (= ((! oid) as value)) ;))
+          8. (Let constantDeclarationIR be (() const typeIR nameIR (= ((! oid) as value)) ;))
 
-        10. (Let callableTargetIR be ((((` nameIR) as expressionIR) # (( typeIR (ctk) ))) . "apply"))
+          9. (Let callableTargetIR be ((((` nameIR) as expressionIR) # (( typeIR (ctk) ))) . "apply"))
 
-        11. (Let callStatementIR be (callableTargetIR < [] >( argumentListIR );))
+          10. (Let callStatementIR be (callableTargetIR < [] >( argumentListIR );))
 
-        12. (Let blockStatementIR be (() { [(constantDeclarationIR as blockElementStatementIR), (callStatementIR as blockElementStatementIR)] }))
+          11. (Let blockStatementIR be (() { [(constantDeclarationIR as blockElementStatementIR), (callStatementIR as blockElementStatementIR)] }))
 
-        13. Result in : % % % |- % : IC STO_2 (blockStatementIR as statementIR)
+          12. Result in : % % % |- % : IC STO_2 (blockStatementIR as statementIR)
 
   5. Case (% has type exitStatementIR)
 
@@ -26974,35 +27183,35 @@ relation ParserStmt_inst: IC_0 STO_0 |- parserStatementIR : % % %
 
     2. Group directApplicationStatementIR: IC_0 STO_0 |- ((prefixedNameIR .apply( argumentListIR );) as parserStatementIR) : % % %
 
-      1. (Let ((cid, constructorDef, id*))?{(cid, constructorDef, id*) <- (cid, constructorDef, id*)?} be $find_constructorDef_i(IC_0, prefixedNameIR, []))
+      1. (Constructor_inst: (local) IC_0 |- prefixedNameIR < [] >( [] ): constructorDef < (typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*} >(# (id)*{id <- id*} ))
 
-      2. If ((((cid, constructorDef, id*))?{(cid, constructorDef, id*) <- (cid, constructorDef, id*)?} matches pattern (_))), then
+      2. If (((typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*} matches pattern [])), then
 
-        1. (Let ?((_cid, constructorDef, (_id)*{_id <- _id*})) be ((cid, constructorDef, id*))?{(cid, constructorDef, id*) <- (cid, constructorDef, id*)?})
+        1. If (((id)*{id <- id*} matches pattern [])), then
 
-        2. (Constructor_inst: (local) IC_0 STO_0 |- constructorDef < [] >( [] # [] ): STO_1 object)
+          1. (Constructor_call: (local) IC_0 STO_0 |- constructorDef < [] >( [] # [] ): STO_1 object)
 
-        3. (Let tid be $flatten_prefixedNameIR(prefixedNameIR))
+          2. (Let tid be $flatten_prefixedNameIR(prefixedNameIR))
 
-        4. (Let tid_fresh be $fresh_tid)
+          3. (Let tid_fresh be $fresh_tid)
 
-        5. (Let nameIR be tid ++ "_" ++ tid_fresh)
+          4. (Let nameIR be tid ++ "_" ++ tid_fresh)
 
-        6. (Let oid be IC_0.path ++ [nameIR])
+          5. (Let oid be IC_0.path ++ [nameIR])
 
-        7. (Let STO_2 be $add_map<oid, object>(STO_1, oid, object))
+          6. (Let STO_2 be $add_map<oid, object>(STO_1, oid, object))
 
-        8. (Let typeIR be ((` tid) as typeIR))
+          7. (Let typeIR be ((` tid) as typeIR))
 
-        9. (Let constantDeclarationIR be (() const typeIR nameIR (= ((! oid) as value)) ;))
+          8. (Let constantDeclarationIR be (() const typeIR nameIR (= ((! oid) as value)) ;))
 
-        10. (Let callableTargetIR be ((((` tid) as expressionIR) # (( typeIR (ctk) ))) . "apply"))
+          9. (Let callableTargetIR be ((((` tid) as expressionIR) # (( typeIR (ctk) ))) . "apply"))
 
-        11. (Let callStatementIR be (callableTargetIR < [] >( argumentListIR );))
+          10. (Let callStatementIR be (callableTargetIR < [] >( argumentListIR );))
 
-        12. (Let parserBlockStatementIR be (() { [(constantDeclarationIR as parserStatementIR), (callStatementIR as parserStatementIR)] }))
+          11. (Let parserBlockStatementIR be (() { [(constantDeclarationIR as parserStatementIR), (callStatementIR as parserStatementIR)] }))
 
-        13. Result in : % % |- % : IC_0 STO_2 (parserBlockStatementIR as parserStatementIR)
+          12. Result in : % % |- % : IC_0 STO_2 (parserBlockStatementIR as parserStatementIR)
 
   7. Case (% has type parserBlockStatementIR)
 
@@ -27336,7 +27545,7 @@ relation ControlLocalDecl_inst: IC_0 STO_0 |- controlLocalDeclarationIR : % % %
 
       1. (Let IC_inner be $enter_path_i(IC_0, nameIR))
 
-      2. (Constructor_inst: (block) IC_0 STO_0 |- ((table nameIR { tablePropertyListIR }) as constructorDef) < [] >( [] # [] ): STO_1 object_table)
+      2. (Constructor_call: (block) IC_0 STO_0 |- ((table nameIR { tablePropertyListIR }) as constructorDef) < [] >( [] # [] ): STO_1 object_table)
 
       3. (Let oid be IC_0.path ++ [nameIR])
 
@@ -27422,99 +27631,91 @@ relation Decl_inst: cursor IC_0 STO |- declarationIR : % % %
 
         1. Case true
 
-          1. (Let ((cid, constructorDef, id*))?{(cid, constructorDef, id*) <- (cid, constructorDef, id*)?} be $find_constructorDef_i(IC_0, prefixedNameIR, argumentListIR))
+          1. (Constructor_inst: (global) IC_0 |- prefixedNameIR < typeArgumentListIR >( argumentListIR ): constructorDef < typeArgumentListIR_inst >(# (id_default)*{id_default <- id_default*} ))
 
-          2. If ((((cid, constructorDef, id*))?{(cid, constructorDef, id*) <- (cid, constructorDef, id*)?} matches pattern (_))), then
+          2. (Let IC_inner be $enter_path_i(IC_0, nameIR))
 
-            1. (Let ?((_cid, constructorDef, (id_default)*{id_default <- id_default*})) be ((cid, constructorDef, id*))?{(cid, constructorDef, id*) <- (cid, constructorDef, id*)?})
+          3. (Constructor_call: (global) IC_inner STO |- constructorDef < typeArgumentListIR_inst >( argumentListIR # (id_default)*{id_default <- id_default*} ): STO_1 object)
 
-            2. (Let IC_inner be $enter_path_i(IC_0, nameIR))
+          4. If ((object has type externObject)), then
 
-            3. (Constructor_inst: (global) IC_inner STO |- constructorDef < typeArgumentListIR >( argumentListIR # (id_default)*{id_default <- id_default*} ): STO_1 object)
+            1. (Let (extern tid < theta >{ externState frame externMethodDefEnv }) be (object as externObject))
 
-            4. If ((object has type externObject)), then
+            2. (Let IC_decl be $empty_instContext[path = IC_0.path][global = IC_0.global])
 
-              1. (Let (extern tid < theta >{ externState frame externMethodDefEnv }) be (object as externObject))
+            3. (Let objectDeclarationListIR be $flatten_objectInitializerOptIR(objectInitializerOptIR))
 
-              2. (Let IC_decl be $empty_instContext[path = IC_0.path][global = IC_0.global])
+            4. (Decls_inst: (block) IC_decl STO_1 |- (objectDeclarationListIR as declarationIR*) : IC_decl_post STO_2 (_declarationIR)*{_declarationIR <- _declarationIR*})
 
-              3. (Let objectDeclarationListIR be $flatten_objectInitializerOptIR(objectInitializerOptIR))
+            5. (Let frame_merged be $merge_frames(frame, IC_decl_post.block.frame))
 
-              4. (Decls_inst: (block) IC_decl STO_1 |- (objectDeclarationListIR as declarationIR*) : IC_decl_post STO_2 (_declarationIR)*{_declarationIR <- _declarationIR*})
+            6. (Let externMethodDefEnv_merged be $merge_externMethodDefEnvs(externMethodDefEnv, IC_decl_post.block.callable))
 
-              5. (Let frame_merged be $merge_frames(frame, IC_decl_post.block.frame))
+            7. (Let object_merged be ((extern tid < theta >{ externState frame_merged externMethodDefEnv_merged }) as object))
 
-              6. (Let externMethodDefEnv_merged be $merge_externMethodDefEnvs(externMethodDefEnv, IC_decl_post.block.callable))
+            8. (Let oid be IC_0.path ++ [nameIR])
 
-              7. (Let object_merged be ((extern tid < theta >{ externState frame_merged externMethodDefEnv_merged }) as object))
+            9. (Let STO_3 be $add_map<oid, object>(STO_2, oid, object_merged))
 
-              8. (Let oid be IC_0.path ++ [nameIR])
+            10. (Let IC_1 be $add_var_i((global), IC_0, nameIR, ((! oid) as value)))
 
-              9. (Let STO_3 be $add_map<oid, object>(STO_2, oid, object_merged))
+            11. Result in : % % % |- % : IC_1 STO_3 ?()
 
-              10. (Let IC_1 be $add_var_i((global), IC_0, nameIR, ((! oid) as value)))
+          5. If (~$is_externObject(object)), then
 
-              11. Result in : % % % |- % : IC_1 STO_3 ?()
+            1. (Let oid be IC_0.path ++ [nameIR])
 
-            5. If (~$is_externObject(object)), then
+            2. (Let STO_2 be $add_map<oid, object>(STO_1, oid, object))
 
-              1. (Let oid be IC_0.path ++ [nameIR])
+            3. (Let IC_1 be $add_var_i((global), IC_0, nameIR, ((! oid) as value)))
 
-              2. (Let STO_2 be $add_map<oid, object>(STO_1, oid, object))
-
-              3. (Let IC_1 be $add_var_i((global), IC_0, nameIR, ((! oid) as value)))
-
-              4. Result in : % % % |- % : IC_1 STO_2 ?()
+            4. Result in : % % % |- % : IC_1 STO_2 ?()
 
         2. Case false
 
-          1. (Let ((cid, constructorDef, id*))?{(cid, constructorDef, id*) <- (cid, constructorDef, id*)?} be $find_constructorDef_i(IC_0, prefixedNameIR, argumentListIR))
+          1. (Constructor_inst: cursor IC_0 |- prefixedNameIR < typeArgumentListIR >( argumentListIR ): constructorDef < typeArgumentListIR_inst >(# (id_default)*{id_default <- id_default*} ))
 
-          2. If ((((cid, constructorDef, id*))?{(cid, constructorDef, id*) <- (cid, constructorDef, id*)?} matches pattern (_))), then
+          2. (Let IC_inner be $enter_path_i(IC_0, nameIR))
 
-            1. (Let ?((_cid, constructorDef, (id_default)*{id_default <- id_default*})) be ((cid, constructorDef, id*))?{(cid, constructorDef, id*) <- (cid, constructorDef, id*)?})
+          3. (Constructor_call: cursor IC_inner STO |- constructorDef < typeArgumentListIR_inst >( argumentListIR # (id_default)*{id_default <- id_default*} ): STO_1 object)
 
-            2. (Let IC_inner be $enter_path_i(IC_0, nameIR))
+          4. If ((object has type externObject)), then
 
-            3. (Constructor_inst: cursor IC_inner STO |- constructorDef < typeArgumentListIR >( argumentListIR # (id_default)*{id_default <- id_default*} ): STO_1 object)
+            1. (Let (extern tid < theta >{ externState frame externMethodDefEnv }) be (object as externObject))
 
-            4. If ((object has type externObject)), then
+            2. (Let IC_decl be $empty_instContext[path = IC_0.path][global = IC_0.global])
 
-              1. (Let (extern tid < theta >{ externState frame externMethodDefEnv }) be (object as externObject))
+            3. (Let objectDeclarationListIR be $flatten_objectInitializerOptIR(objectInitializerOptIR))
 
-              2. (Let IC_decl be $empty_instContext[path = IC_0.path][global = IC_0.global])
+            4. (Decls_inst: (block) IC_decl STO_1 |- (objectDeclarationListIR as declarationIR*) : IC_decl_post STO_2 (_declarationIR)*{_declarationIR <- _declarationIR*})
 
-              3. (Let objectDeclarationListIR be $flatten_objectInitializerOptIR(objectInitializerOptIR))
+            5. (Let frame_merged be $merge_frames(frame, IC_decl_post.block.frame))
 
-              4. (Decls_inst: (block) IC_decl STO_1 |- (objectDeclarationListIR as declarationIR*) : IC_decl_post STO_2 (_declarationIR)*{_declarationIR <- _declarationIR*})
+            6. (Let externMethodDefEnv_merged be $merge_externMethodDefEnvs(externMethodDefEnv, IC_decl_post.block.callable))
 
-              5. (Let frame_merged be $merge_frames(frame, IC_decl_post.block.frame))
+            7. (Let object_merged be ((extern tid < theta >{ externState frame_merged externMethodDefEnv_merged }) as object))
 
-              6. (Let externMethodDefEnv_merged be $merge_externMethodDefEnvs(externMethodDefEnv, IC_decl_post.block.callable))
+            8. (Let oid be IC_0.path ++ [nameIR])
 
-              7. (Let object_merged be ((extern tid < theta >{ externState frame_merged externMethodDefEnv_merged }) as object))
+            9. (Let STO_3 be $add_map<oid, object>(STO_2, oid, object_merged))
 
-              8. (Let oid be IC_0.path ++ [nameIR])
+            10. (Let IC_1 be $add_var_i((global), IC_0, nameIR, ((! oid) as value)))
 
-              9. (Let STO_3 be $add_map<oid, object>(STO_2, oid, object_merged))
+            11. (Let constantDeclarationIR be (() const typeIR nameIR (= ((! oid) as value)) ;))
 
-              10. (Let IC_1 be $add_var_i((global), IC_0, nameIR, ((! oid) as value)))
+            12. Result in : % % % |- % : IC_1 STO_3 ?((constantDeclarationIR as declarationIR))
 
-              11. (Let constantDeclarationIR be (() const typeIR nameIR (= ((! oid) as value)) ;))
+          5. If (~$is_externObject(object)), then
 
-              12. Result in : % % % |- % : IC_1 STO_3 ?((constantDeclarationIR as declarationIR))
+            1. (Let oid be IC_0.path ++ [nameIR])
 
-            5. If (~$is_externObject(object)), then
+            2. (Let STO_2 be $add_map<oid, object>(STO_1, oid, object))
 
-              1. (Let oid be IC_0.path ++ [nameIR])
+            3. (Let IC_1 be $add_var_i(cursor, IC_0, nameIR, ((! oid) as value)))
 
-              2. (Let STO_2 be $add_map<oid, object>(STO_1, oid, object))
+            4. (Let constantDeclarationIR be (() const typeIR nameIR (= ((! oid) as value)) ;))
 
-              3. (Let IC_1 be $add_var_i(cursor, IC_0, nameIR, ((! oid) as value)))
-
-              4. (Let constantDeclarationIR be (() const typeIR nameIR (= ((! oid) as value)) ;))
-
-              5. Result in : % % % |- % : IC_1 STO_2 ?((constantDeclarationIR as declarationIR))
+            5. Result in : % % % |- % : IC_1 STO_2 ?((constantDeclarationIR as declarationIR))
 
   3. Case (% has type functionDeclarationIR)
 
@@ -27836,7 +28037,7 @@ relation Decl_inst: cursor IC_0 STO |- declarationIR : % % %
 
       2. Group parserTypeDeclarationIR: (global) IC_0 STO |- ((annotationList parser nameIR < typeParameterListIR , typeParameterListIR_inferred >( (parameterIR)*{parameterIR <- parameterIR*} );) as declarationIR) : % % %
 
-        1. (Let parserObjectTypeDefIR be (parser< typeParameterListIR , typeParameterListIR_inferred >( (parameterIR)*{parameterIR <- parameterIR*} )))
+        1. (Let parserObjectTypeDefIR be (parser nameIR < typeParameterListIR , typeParameterListIR_inferred >( (parameterIR)*{parameterIR <- parameterIR*} )))
 
         2. (Let IC_1 be $add_typeDef_i((global), IC_0, nameIR, (parserObjectTypeDefIR as typeDefIR)))
 
@@ -27848,7 +28049,7 @@ relation Decl_inst: cursor IC_0 STO |- declarationIR : % % %
 
       2. Group controlTypeDeclarationIR: (global) IC_0 STO |- ((annotationList control nameIR < typeParameterListIR , typeParameterListIR_inferred >( (parameterIR)*{parameterIR <- parameterIR*} );) as declarationIR) : % % %
 
-        1. (Let controlObjectTypeDefIR be (control< typeParameterListIR , typeParameterListIR_inferred >( (parameterIR)*{parameterIR <- parameterIR*} )))
+        1. (Let controlObjectTypeDefIR be (control nameIR < typeParameterListIR , typeParameterListIR_inferred >( (parameterIR)*{parameterIR <- parameterIR*} )))
 
         2. (Let IC_1 be $add_typeDef_i((global), IC_0, nameIR, (controlObjectTypeDefIR as typeDefIR)))
 
@@ -27862,7 +28063,7 @@ relation Decl_inst: cursor IC_0 STO |- declarationIR : % % %
 
         1. (Let (_annotationList _direction typeIR _nameIR _constantInitializerOptIR) be parameterIR)*{_annotationList <- _annotationList*, _constantInitializerOptIR <- _constantInitializerOptIR*, _direction <- _direction*, _nameIR <- _nameIR*, parameterIR <- parameterIR*, typeIR <- typeIR*}
 
-        2. (Let packageObjectTypeDefIR be (package< typeParameterListIR , typeParameterListIR_inferred >{ (typeIR)*{typeIR <- typeIR*} }))
+        2. (Let packageObjectTypeDefIR be (package nameIR < typeParameterListIR , typeParameterListIR_inferred >{ (typeIR)*{typeIR <- typeIR*} }))
 
         3. (Let IC_1 be $add_typeDef_i((global), IC_0, nameIR, (packageObjectTypeDefIR as typeDefIR)))
 
@@ -27970,8 +28171,65 @@ relation Bind_args: p_caller IC_caller | p_callee IC_callee STO |- (id)*{id <- i
 
         3. Result in : % % | % % % |- % % : IC_callee_2 STO_2
 
-;; ../../../../spec-concrete/7.03-inst-relation.watsup:168.1-173.35
-relation Constructor_inst: p IC STO_0 |- constructorDef < (typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*} >( (argumentIR)*{argumentIR <- argumentIR*} # (id_default)*{id_default <- id_default*} ): % %
+;; ../../../../spec-concrete/7.03-inst-relation.watsup:168.1-173.29
+relation Constructor_inst: p IC |- prefixedNameIR < (typeArgumentIR')*{typeArgumentIR' <- typeArgumentIR'*} >( (argumentIR)*{argumentIR <- argumentIR*} ): % < % >(# % )
+
+1. Group non-aliased-none-type: p IC |- prefixedNameIR < (typeArgumentIR')*{typeArgumentIR' <- typeArgumentIR'*} >( (argumentIR)*{argumentIR <- argumentIR*} ): % < % >(# % )
+
+  1. If ((?() = $find_typeDef_i(p, IC, prefixedNameIR))), then
+
+    1. (Let ((cid, constructorDef, id*))?{(cid, constructorDef, id*) <- (cid, constructorDef, id*)?} be $find_constructorDef_i(IC, prefixedNameIR, (argumentIR)*{argumentIR <- argumentIR*}))
+
+    2. If ((((cid, constructorDef, id*))?{(cid, constructorDef, id*) <- (cid, constructorDef, id*)?} matches pattern (_))), then
+
+      1. (Let ?((_cid, constructorDef, (id_default)*{id_default <- id_default*})) be ((cid, constructorDef, id*))?{(cid, constructorDef, id*) <- (cid, constructorDef, id*)?})
+
+      2. Result in : % % |- % < % >( % ): constructorDef < (typeArgumentIR')*{typeArgumentIR' <- typeArgumentIR'*} >(# (id_default)*{id_default <- id_default*} )
+
+2. Group non-aliased-some-type: p IC |- prefixedNameIR < (typeArgumentIR')*{typeArgumentIR' <- typeArgumentIR'*} >( (argumentIR)*{argumentIR <- argumentIR*} ): % < % >(# % )
+
+  1. (Let (typeDefIR')?{typeDefIR' <- typeDefIR'?} be $find_typeDef_i(p, IC, prefixedNameIR))
+
+  2. If (((typeDefIR')?{typeDefIR' <- typeDefIR'?} matches pattern (_))), then
+
+    1. (Let ?(typeDefIR) be (typeDefIR')?{typeDefIR' <- typeDefIR'?})
+
+    2. If (~$is_typedefTypeDefIR(typeDefIR)), then
+
+      1. (Let ((cid, constructorDef, id*))?{(cid, constructorDef, id*) <- (cid, constructorDef, id*)?} be $find_constructorDef_i(IC, prefixedNameIR, (argumentIR)*{argumentIR <- argumentIR*}))
+
+      2. If ((((cid, constructorDef, id*))?{(cid, constructorDef, id*) <- (cid, constructorDef, id*)?} matches pattern (_))), then
+
+        1. (Let ?((_cid, constructorDef, (id_default)*{id_default <- id_default*})) be ((cid, constructorDef, id*))?{(cid, constructorDef, id*) <- (cid, constructorDef, id*)?})
+
+        2. Result in : % % |- % < % >( % ): constructorDef < (typeArgumentIR')*{typeArgumentIR' <- typeArgumentIR'*} >(# (id_default)*{id_default <- id_default*} )
+
+3. If (((typeArgumentIR')*{typeArgumentIR' <- typeArgumentIR'*} matches pattern [])), then
+
+  1. Group aliased: p IC |- prefixedNameIR < [] >( (argumentIR)*{argumentIR <- argumentIR*} ): % < % >(# % )
+
+    1. (Let (typeDefIR')?{typeDefIR' <- typeDefIR'?} be $find_typeDef_i(p, IC, prefixedNameIR))
+
+    2. If (((typeDefIR')?{typeDefIR' <- typeDefIR'?} matches pattern (_))), then
+
+      1. (Let ?(typeDefIR) be (typeDefIR')?{typeDefIR' <- typeDefIR'?})
+
+      2. If ((typeDefIR has type typedefTypeIR)), then
+
+        1. (Let (typedef nameIR_alias typeIR_alias) be (typeDefIR as typedefTypeIR))
+
+        2. (Let (nameIR, (typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*}) be $resolve_type_alias(typeIR_alias))
+
+        3. (Let ((cid, constructorDef, id*))?{(cid, constructorDef, id*) <- (cid, constructorDef, id*)?} be $find_constructorDef_i(IC, (` nameIR), (argumentIR)*{argumentIR <- argumentIR*}))
+
+        4. If ((((cid, constructorDef, id*))?{(cid, constructorDef, id*) <- (cid, constructorDef, id*)?} matches pattern (_))), then
+
+          1. (Let ?((_cid, constructorDef, (id_default)*{id_default <- id_default*})) be ((cid, constructorDef, id*))?{(cid, constructorDef, id*) <- (cid, constructorDef, id*)?})
+
+          2. Result in : % % |- % < % >( % ): constructorDef < (typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*} >(# (id_default)*{id_default <- id_default*} )
+
+;; ../../../../spec-concrete/7.03-inst-relation.watsup:175.1-180.35
+relation Constructor_call: p IC STO_0 |- constructorDef < (typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*} >( (argumentIR)*{argumentIR <- argumentIR*} # (id_default)*{id_default <- id_default*} ): % %
 
 1. Case analysis on constructorDef
 
@@ -28143,7 +28401,7 @@ relation Constructor_inst: p IC STO_0 |- constructorDef < (typeArgumentIR)*{type
 
               3. Result in : % % % |- % < % >( % # % ): STO_1 object_table
 
-;; ../../../../spec-concrete/7.06-inst-statement.watsup:115.1-118.26
+;; ../../../../spec-concrete/7.06-inst-statement.watsup:116.1-119.26
 relation SwitchCase_inst: p IC store |- switchCaseIR : % %
 
 1. Group : p IC store |- switchCaseIR : % %
@@ -28168,7 +28426,7 @@ relation SwitchCase_inst: p IC store |- switchCaseIR : % %
 
       2. Result in : % % % |- % : store (switchLabelIR :)
 
-;; ../../../../spec-concrete/7.06-inst-statement.watsup:139.1-142.26
+;; ../../../../spec-concrete/7.06-inst-statement.watsup:140.1-143.26
 relation SwitchCases_inst: p IC STO |- (switchCaseIR)*{switchCaseIR <- switchCaseIR*} : % %
 
 1. Case analysis on (switchCaseIR)*{switchCaseIR <- switchCaseIR*}
@@ -28219,7 +28477,7 @@ def $merge_externMethodDefEnvs(externMethodDefEnv, set<pair<cid, callableDef>>)
 
     4. Return $merge_externMethodDefEnvs(externMethodDefEnv_post, ({ ((cid_t : callableDef_t))*{callableDef_t <- callableDef_t*, cid_t <- cid_t*} }))
 
-;; ../../../../spec-concrete/7.07-inst-declaration.watsup:258.1-259.42
+;; ../../../../spec-concrete/7.07-inst-declaration.watsup:262.1-263.42
 def $cid_of_externMethodPrototypeIR(externMethodPrototypeIR)
 
 1. Case analysis on externMethodPrototypeIR
@@ -28236,7 +28494,7 @@ def $cid_of_externMethodPrototypeIR(externMethodPrototypeIR)
 
     2. Return $cid_IR(nameIR, parameterListIR)
 
-;; ../../../../spec-concrete/7.07-inst-declaration.watsup:270.1-272.55
+;; ../../../../spec-concrete/7.07-inst-declaration.watsup:274.1-276.55
 def $type_of_externMethodPrototypeIR(externMethodPrototypeIR)
 
 1. Case analysis on externMethodPrototypeIR
@@ -28257,12 +28515,12 @@ def $type_of_externMethodPrototypeIR(externMethodPrototypeIR)
 
     3. Return externMethodTypeDefIR
 
-;; ../../../../spec-concrete/7.07-inst-declaration.watsup:294.1-295.45
+;; ../../../../spec-concrete/7.07-inst-declaration.watsup:298.1-299.45
 def $cid_of_externConstructorPrototypeIR((_annotationList nameIR <, _typeParameterListIR >( (parameterIR)*{parameterIR <- parameterIR*} );))
 
 1. Return $cid_IR(nameIR, (parameterIR)*{parameterIR <- parameterIR*})
 
-;; ../../../../spec-concrete/7.07-inst-declaration.watsup:302.1-307.88
+;; ../../../../spec-concrete/7.07-inst-declaration.watsup:306.1-311.88
 def $constructor_of_externConstructorPrototypeIR(typeParameterListIR_expl, externMethodPrototypeListIR, (_annotationList nameIR <, typeParameterListIR_impl >( (parameterIR)*{parameterIR <- parameterIR*} );))
 
 1. (Let typeParameterListIR be typeParameterListIR_expl ++ typeParameterListIR_impl)
@@ -28409,7 +28667,7 @@ def $init_tableEntries((tablePropertyIR)*{tablePropertyIR <- tablePropertyIR*})
 
 3. Return (() ?() entries={ [] })
 
-;; ../../../../spec-concrete/7.11-inst-constructor-call.watsup:7.1-8.33
+;; ../../../../spec-concrete/7.11.2-inst-constructor-call.watsup:7.1-8.33
 def $partition_default_parameters((parameterIR)*{parameterIR <- parameterIR*}, (id_default)*{id_default <- id_default*})
 
 1. Case analysis on (parameterIR)*{parameterIR <- parameterIR*}
@@ -28436,7 +28694,7 @@ def $partition_default_parameters((parameterIR)*{parameterIR <- parameterIR*}, (
 
         1. Return (parameterIR_h :: (parameterIR_nondefault)*{parameterIR_nondefault <- parameterIR_nondefault*}, (parameterIR_default)*{parameterIR_default <- parameterIR_default*})
 
-;; ../../../../spec-concrete/7.11-inst-constructor-call.watsup:33.1-34.76
+;; ../../../../spec-concrete/7.11.2-inst-constructor-call.watsup:33.1-34.76
 def $align_cparams_with_args((constructorParameterIR)*{constructorParameterIR <- constructorParameterIR*}, (argumentIR)*{argumentIR <- argumentIR*}, (id_default)*{id_default <- id_default*})
 
 1. (Let ((constructorParameterIR_non_default)*{constructorParameterIR_non_default <- constructorParameterIR_non_default*}, (constructorParameterIR_default)*{constructorParameterIR_default <- constructorParameterIR_default*}) be $partition_default_parameters((constructorParameterIR)*{constructorParameterIR <- constructorParameterIR*}, (id_default)*{id_default <- id_default*}))
@@ -28453,7 +28711,7 @@ def $align_cparams_with_args((constructorParameterIR)*{constructorParameterIR <-
 
   2. Return ((constructorParameterIR_aligned)*{constructorParameterIR_aligned <- constructorParameterIR_aligned*}, (argumentIR_aligned)*{argumentIR_aligned <- argumentIR_aligned*}, (constructorParameterIR_default)*{constructorParameterIR_default <- constructorParameterIR_default*}, (value_default)*{value_default <- value_default*})
 
-;; ../../../../spec-concrete/7.11-inst-constructor-call.watsup:35.1-36.43
+;; ../../../../spec-concrete/7.11.2-inst-constructor-call.watsup:35.1-36.43
 def $align_cparams_with_args'(({ ((id : constructorParameterIR))*{constructorParameterIR <- constructorParameterIR*, id <- id*} }), (constructorParameterIR')*{constructorParameterIR' <- constructorParameterIR'*}, (argumentIR)*{argumentIR <- argumentIR*})
 
 1. Case analysis on (constructorParameterIR')*{constructorParameterIR' <- constructorParameterIR'*}
@@ -33573,21 +33831,21 @@ relation Extern_init: EC STO_0 |- nameIR : %
 
   1. (Let IC be {path [], global EC.global, block EC.block, local EC.local})
 
-  2. (Let ((cid, constructorDef, id*))?{(cid, constructorDef, id*) <- (cid, constructorDef, id*)?} be $find_constructorDef_i(IC, (` nameIR), []))
+  2. (Constructor_inst: (global) IC |- (` nameIR) < [] >( [] ): constructorDef < (typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*} >(# (id)*{id <- id*} ))
 
-  3. If ((((cid, constructorDef, id*))?{(cid, constructorDef, id*) <- (cid, constructorDef, id*)?} matches pattern (_))), then
+  3. If (((typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*} matches pattern [])), then
 
-    1. (Let ?((_cid, constructorDef, (_id)*{_id <- _id*})) be ((cid, constructorDef, id*))?{(cid, constructorDef, id*) <- (cid, constructorDef, id*)?})
+    1. If (((id)*{id <- id*} matches pattern [])), then
 
-    2. (Constructor_inst: (global) IC STO_0 |- constructorDef < [] >( [] # [] ): STO_1 object)
+      1. (Constructor_call: (global) IC STO_0 |- constructorDef < [] >( [] # [] ): STO_1 object)
 
-    3. (Let oid_object be [nameIR])
+      2. (Let oid_object be [nameIR])
 
-    4. (Let STO_2 be $add_map<oid, object>(STO_1, oid_object, object))
+      3. (Let STO_2 be $add_map<oid, object>(STO_1, oid_object, object))
 
-    5. Result in : % % |- % : STO_2
+      4. Result in : % % |- % : STO_2
 
-;; ../../../../spec-concrete/9.0-eval-arch.watsup:54.1-58.72
+;; ../../../../spec-concrete/9.0-eval-arch.watsup:56.1-60.72
 relation Program_init: |- p4program : % %
 
 1. Group : |- p4program : % %

@@ -57,9 +57,10 @@ rule ParserStmt_inst/directApplicationStatementIR:
   IC STO_0 |- prefixedNameIR `. APPLY `( argumentListIR ) `;
             : IC STO_2 parserBlockStatementIR
   ---- ;; find and instantiate constructor
-  -- if (_, constructorDef, _)
-      = $find_constructorDef_i(IC, prefixedNameIR, eps)
   -- Constructor_inst:
+      LOCAL IC |- prefixedNameIR `< eps > `( eps )
+                : constructorDef `< eps > `( `# eps )
+  -- Constructor_call:
       LOCAL IC STO_0 |- constructorDef `< eps > `( eps `# eps )
                       : STO_1 object
   ---- ;; assign new tid with random string appended

@@ -67,11 +67,12 @@ rulegroup Decl_inst/instantiationIR {
                           `( argumentListIR ) nameIR objectInitializerOptIR `;
                        : IC_1 STO_3 eps
     ---- ;; find and instantiate constructor
-    -- if (_, constructorDef, id_default*)
-        = $find_constructorDef_i(IC_0, prefixedNameIR, argumentListIR)
-    -- if IC_inner = $enter_path_i(IC_0, nameIR)
     -- Constructor_inst:
-        GLOBAL IC_inner STO_0 |- constructorDef `< typeArgumentListIR >
+        GLOBAL IC_0 |- prefixedNameIR `< typeArgumentListIR > `( argumentListIR )
+                     : constructorDef `< typeArgumentListIR_inst > `( `# id_default* )
+    -- if IC_inner = $enter_path_i(IC_0, nameIR)
+    -- Constructor_call:
+        GLOBAL IC_inner STO_0 |- constructorDef `< typeArgumentListIR_inst >
                                   `( argumentListIR `# id_default* )
                                : STO_1 object
     ---- ;; if object is an extern
@@ -105,11 +106,12 @@ rulegroup Decl_inst/instantiationIR {
     ---- ;; if not at global scope
     -- if p =/= GLOBAL
     ---- ;; find and instantiate constructor
-    -- if (_, constructorDef, id_default*)
-        = $find_constructorDef_i(IC_0, prefixedNameIR, argumentListIR)
-    -- if IC_inner = $enter_path_i(IC_0, nameIR)
     -- Constructor_inst:
-        p IC_inner STO_0 |- constructorDef `< typeArgumentListIR >
+        p IC_0 |- prefixedNameIR `< typeArgumentListIR > `( argumentListIR )
+                : constructorDef `< typeArgumentListIR_inst > `( `# id_default* )
+    -- if IC_inner = $enter_path_i(IC_0, nameIR)
+    -- Constructor_call:
+        p IC_inner STO_0 |- constructorDef `< typeArgumentListIR_inst >
                               `( argumentListIR `# id_default* )
                           : STO_1 object
     ---- ;; if object is an extern
@@ -144,11 +146,12 @@ rulegroup Decl_inst/instantiationIR {
                           `( argumentListIR ) nameIR objectInitializerOptIR `;
                      : IC_1 STO_2 eps
     ---- ;; find and instantiate constructor
-    -- if (_, constructorDef, id_default*)
-        = $find_constructorDef_i(IC_0, prefixedNameIR, argumentListIR)
-    -- if IC_inner = $enter_path_i(IC_0, nameIR)
     -- Constructor_inst:
-        GLOBAL IC_inner STO_0 |- constructorDef `< typeArgumentListIR >
+        GLOBAL IC_0 |- prefixedNameIR `< typeArgumentListIR > `( argumentListIR )
+                     : constructorDef `< typeArgumentListIR_inst > `( `# id_default* )
+    -- if IC_inner = $enter_path_i(IC_0, nameIR)
+    -- Constructor_call:
+        GLOBAL IC_inner STO_0 |- constructorDef `< typeArgumentListIR_inst >
                                   `( argumentListIR `# id_default* )
                                : STO_1 object
     ---- ;; if object is not an extern
@@ -166,11 +169,12 @@ rulegroup Decl_inst/instantiationIR {
     ---- ;; if not at global scope
     -- if p =/= GLOBAL
     ---- ;; find and instantiate constructor
-    -- if (_, constructorDef, id_default*)
-        = $find_constructorDef_i(IC_0, prefixedNameIR, argumentListIR)
-    -- if IC_inner = $enter_path_i(IC_0, nameIR)
     -- Constructor_inst:
-        p IC_inner STO_0 |- constructorDef `< typeArgumentListIR >
+        p IC_0 |- prefixedNameIR `< typeArgumentListIR > `( argumentListIR )
+                : constructorDef `< typeArgumentListIR_inst > `( `# id_default* )
+    -- if IC_inner = $enter_path_i(IC_0, nameIR)
+    -- Constructor_call:
+        p IC_inner STO_0 |- constructorDef `< typeArgumentListIR_inst >
                               `( argumentListIR `# id_default* )
                           : STO_1 object
     ---- ;; if object is not an extern
@@ -585,7 +589,7 @@ rule Decl_inst/parserTypeDeclarationIR:
                  : IC_1 STO eps
   ---- ;; bind parser type to typedef environment
   -- if parserObjectTypeDefIR
-      = PARSER `< typeParameterListIR `, typeParameterListIR_inferred >
+      = PARSER nameIR `< typeParameterListIR `, typeParameterListIR_inferred >
           `( parameterIR* )
   -- if IC_1 = $add_typeDef_i(GLOBAL, IC_0, nameIR, parserObjectTypeDefIR)
 
@@ -602,7 +606,7 @@ rule Decl_inst/controlTypeDeclarationIR:
                  : IC_1 STO eps
   ---- ;; bind control type to typedef environment
   -- if controlObjectTypeDefIR
-      = CONTROL `< typeParameterListIR `, typeParameterListIR_inferred >
+      = CONTROL nameIR `< typeParameterListIR `, typeParameterListIR_inferred >
           `( parameterIR* )
   -- if IC_1 = $add_typeDef_i(GLOBAL, IC_0, nameIR, controlObjectTypeDefIR)
 
@@ -620,7 +624,7 @@ rule Decl_inst/packageTypeDeclarationIR:
   ---- ;; bind package type to typedef environment
   -- if (_ _ typeIR _ _ = parameterIR)*
   -- if packageObjectTypeDefIR
-      = PACKAGE `< typeParameterListIR `, typeParameterListIR_inferred > `{ typeIR* }
+      = PACKAGE nameIR `< typeParameterListIR `, typeParameterListIR_inferred > `{ typeIR* }
   -- if IC_1 = $add_typeDef_i(GLOBAL, IC_0, nameIR, packageObjectTypeDefIR)
   ---- ;; bind package constructor to constructor environment
   -- if cid = $cid_IR(nameIR, parameterIR*)
