@@ -480,6 +480,7 @@ dec $compat'_concat(typeIR, typeIR) : bool
 
 def $compat_concat(typeIR_l, typeIR_r)
   = $compat'_concat($canon_typeIR(typeIR_l), $canon_typeIR(typeIR_r))
+def $compat'_concat(STRING, STRING) = true
 def $compat'_concat(INT `< _ >, INT `< _ >) = true
 def $compat'_concat(INT `< _ >, BIT `< _ >) = true
 def $compat'_concat(BIT `< _ >, INT `< _ >) = true
@@ -492,6 +493,7 @@ dec $result'_concat(typeIR, typeIR) : typeIR?
 
 def $result_concat(typeIR_l, typeIR_r)
   = $result'_concat($canon_typeIR(typeIR_l), $canon_typeIR(typeIR_r))
+def $result'_concat(STRING, STRING) = STRING
 def $result'_concat(INT `< w_a >, INT `< w_b >) = INT `< $(w_a + w_b) >
 def $result'_concat(INT `< w_a >, BIT `< w_b >) = INT `< $(w_a + w_b) >
 def $result'_concat(BIT `< w_a >, INT `< w_b >) = BIT `< $(w_a + w_b) >
@@ -518,6 +520,9 @@ rule Expr_ok/binaryExpression-concat:
   -- if ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
   -- if typeIR_r_reduced = $type_of_typedExpressionIR(typedExpressionIR_r_reduced)
   -- if ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
+  ---- ;; if concatenating two strings, the two must be local compile-time known
+  -- if (typeIR_l_reduced = STRING /\ typeIR_r_reduced = STRING)
+          => (ctk_l_reduced = LCTK /\ ctk_r_reduced = LCTK)
   ---- ;; compute the result type
   -- if typeIR_reduced
       = $result_concat(typeIR_l_reduced, typeIR_r_reduced)
