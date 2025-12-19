@@ -169,8 +169,7 @@ def $write_value_from_bits'(n_max `. _ V _, n_var, b*) = (n_max `. n_var V i, b_
 
 def $write_value_fields_from_bits'(eps, n_var, b*) = (eps, b*)
 def $write_value_fields_from_bits'(
-    fieldValue_h :: fieldValue_t*, n_var, b*
-  )
+    fieldValue_h :: fieldValue_t*, n_var, b*)
   = (fieldValue_h_updated :: fieldValue_t_updated*, b_rest*)
   -- if (fieldValue_h_updated, b_t*)
       = $write_value_field_from_bits'(fieldValue_h, n_var, b*)
@@ -178,22 +177,26 @@ def $write_value_fields_from_bits'(
       = $write_value_fields_from_bits'(fieldValue_t*, n_var, b_t*)
 
 def $write_value_field_from_bits'(
-    value id `;, n_var, b*
-  )
+    value id `;, n_var, b*)
   = (value_updated id `;, b_rest*)
   -- if (value_updated, b_rest*)
       = $write_value_from_bits'(value, n_var, b*)
 
 def $write_value_from_bits'(
-    STRUCT tid `{ fieldValue* }, n_var, b*
-  ) = (STRUCT tid `{ fieldValue_updated* }, b_rest*)
+    STRUCT tid `{ fieldValue* }, n_var, b*)
+  = (STRUCT tid `{ fieldValue_updated* }, b_rest*)
   -- if (fieldValue_updated*, b_rest*)
       = $write_value_fields_from_bits'(fieldValue*, n_var, b*) 
 def $write_value_from_bits'(
-    HEADER tid `{ _ `; fieldValue* }, n_var, b*
-  ) = (HEADER tid `{ true `; fieldValue_updated* }, b_rest*)
+    HEADER tid `{ _ `; fieldValue* }, n_var, b*)
+  = (HEADER tid `{ true `; fieldValue_updated* }, b_rest*)
   -- if (fieldValue_updated*, b_rest*)
-      = $write_value_fields_from_bits'(fieldValue*, n_var, b*) 
+      = $write_value_fields_from_bits'(fieldValue*, n_var, b*)
+
+def $write_value_from_bits'(
+    tid `. id `. value, n_var, b*)
+  = (tid `. "__UNSPECIFIED" `. value_updated, b_rest*)
+  -- if (value_updated, b_rest*) = $write_value_from_bits'(value, n_var, b*)
 
 ;;
 ;; Write bits from a value
@@ -210,19 +213,19 @@ def $write_bits_from_value(_ `. w V i)
   = $int_to_bits_unsigned(w, i)
 
 def $write_bits_from_value(
-    HEADER_STACK `[ value_element* `( _; _ ) ]
-  )
+    HEADER_STACK `[ value_element* `( _; _ ) ])
   = $concat_<bool>($write_bits_from_value(value_element)*)
+
 def $write_bits_from_value(
-    STRUCT _ `{ (value_field id_field `;)* }
-  )
+    STRUCT _ `{ (value_field id_field `;)* })
   = $concat_<bool>($write_bits_from_value(value_field)*)
 def $write_bits_from_value(
-    HEADER _ `{ true `; (value_field id_field `;)* }
-  )
+    HEADER _ `{ true `; (value_field id_field `;)* })
   = $concat_<bool>($write_bits_from_value(value_field)*)
 def $write_bits_from_value(HEADER _ `{ false `; _ }) = eps
 def $write_bits_from_value(
-    HEADER_UNION _ `{ (value id `;)* }
-  )
+    HEADER_UNION _ `{ (value id `;)* })
   = $concat_<bool>($write_bits_from_value(value)*)
+
+def $write_bits_from_value(tid `. id `. value)
+  = $write_bits_from_value(value) 
