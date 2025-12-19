@@ -555,7 +555,7 @@ dec $cast_arbint'(typeIR, int) : value
 
 def $cast_arbint(typeIR, i) = $cast_arbint'($canon_typeIR(typeIR), i)
 
-def $cast_arbint'(BOOL, i) = B (i = 0)
+def $cast_arbint'(BOOL, i) = B (i =/= 0)
 def $cast_arbint'(INT, i) = D i
 def $cast_arbint'(BIT `< w >, i) = w W ($int_to_bitstr(w, i))
 def $cast_arbint'(INT `< w >, i) = w S ($int_to_bitstr(w, i))
@@ -573,7 +573,7 @@ dec $cast_fixbit'(typeIR, nat, int) : value
 
 def $cast_fixbit(typeIR, w, i) = $cast_fixbit'($canon_typeIR(typeIR), w, i)
 
-def $cast_fixbit'(BOOL, w, i) = B (i = 1)
+def $cast_fixbit'(BOOL, w, i) = B (i =/= 0)
 def $cast_fixbit'(INT, _, i) = D i
 def $cast_fixbit'(BIT `< w_to >, _, i) = w_to W i'
   -- if i' = $int_to_bitstr(w_to, i)
