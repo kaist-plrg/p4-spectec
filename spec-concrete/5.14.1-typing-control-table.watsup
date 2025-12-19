@@ -47,20 +47,23 @@ rule TableKey_ok:
              : TBLC_2 tableKeyIR
   ---- ;; check expression
   -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
-  -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
+  ---- ;; reduce serializable enums
+  -- if typedExpressionIR_reduced
+      = $reduce_serenum(typedExpressionIR)
+  -- if typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_reduced)
   ---- ;; check that the expression can be embedded in a set
-  -- Type_wf: $bound(LOCAL, TC) |- SET `< typeIR >
+  -- Type_wf: $bound(LOCAL, TC) |- SET `< typeIR_reduced >
   ---- ;; check match kind
   -- if nameIR_matchkind = $name(name_matchkind)
   -- if MATCH_KIND `. nameIR_matchkind
       = $find_var_value_t(LOCAL, TC, `` nameIR_matchkind)
   ---- ;; check compatibility with the match kind
-  -- if $compat_table_key(nameIR_matchkind, typeIR)
+  -- if $compat_table_key(nameIR_matchkind, typeIR_reduced)
   ---- ;; update table context
-  -- if TBLC_1 = $update_mode(TBLC_0, nameIR_matchkind, typeIR)
-  -- if TBLC_2 = $add_key(TBLC_1, nameIR_matchkind, typeIR)
+  -- if TBLC_1 = $update_mode(TBLC_0, nameIR_matchkind, typeIR_reduced)
+  -- if TBLC_2 = $add_key(TBLC_1, nameIR_matchkind, typeIR_reduced)
   ---- ;; create IR
-  -- if tableKeyIR = typedExpressionIR `: nameIR_matchkind annotationList `;
+  -- if tableKeyIR = typedExpressionIR_reduced `: nameIR_matchkind annotationList `;
 
 ;;
 ;; Table key property list typing
@@ -1040,7 +1043,6 @@ rulegroup Table_ok {
     -- TableProperties_ok: TC TBLC_0 |- tableProperty* : TBLC_1 tablePropertyIR*
 
 }
-
 
 rule TableType_ok:
   TC_0 TBLC |- name : TC_1 typeIR_table

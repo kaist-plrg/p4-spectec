@@ -305,16 +305,17 @@ rule ParserTransition_ok/select:
   ---- ;; check select key expressions
   -- if expression_key* = $flatten_expressionList(expressionList_key)
   -- (Expr_ok: LOCAL TC_0 |- expression_key : typedExpressionIR_key)*
-  -- if (typeIR_key
-      = $type_of_typedExpressionIR(typedExpressionIR_key))*
+  ---- ;; reduce serializable enums
+  -- if (typedExpressionIR_key_reduced = $reduce_serenum(typedExpressionIR_key))*
+  -- if (typeIR_key_reduced = $type_of_typedExpressionIR(typedExpressionIR_key_reduced))*
   ---- ;; check that the keys form a valid set type
-  -- (Type_wf: $bound(LOCAL, TC_0) |- SET `< typeIR_key >)*
+  -- (Type_wf: $bound(LOCAL, TC_0) |- SET `< typeIR_key_reduced >)*
   ---- ;; check select cases
   -- if selectCase* = $flatten_selectCaseList(selectCaseList)
-  -- (SelectCase_ok: TC_0 nameIR_state* typeIR_key* |- selectCase : selectCaseIR)*
+  -- (SelectCase_ok: TC_0 nameIR_state* typeIR_key_reduced* |- selectCase : selectCaseIR)*
   ---- ;; create IR
   -- if transitionStatementIR
-      = TRANSITION (SELECT `( typedExpressionIR_key* ) `{ selectCaseIR* })
+      = TRANSITION (SELECT `( typedExpressionIR_key_reduced* ) `{ selectCaseIR* })
 
 ;;
 ;; Parser statement typing

@@ -3388,23 +3388,30 @@ relation ParserTransition_ok: `TC~0~`, `nameIR~state~^{asterisk}^`, and `transit
 --
 +
 for each `expression~key~` in `expression~key~^{asterisk}^`
-   .... Let `typeIR~key~^{asterisk}^` be the list of `typeIR~key~`, obtained by repeating:
+   .... Let `typedExpressionIR~key_reduced~^{asterisk}^` be the list of `typedExpressionIR~key_reduced~`, obtained by repeating:
 +
 --
-        * Let `typeIR~key~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~key~`>>.
+        * Let `typedExpressionIR~key_reduced~` be `<<reduce_serenum, $reduce_serenum(typedExpressionIR~key~)>>`.
 --
 +
 for each `typedExpressionIR~key~` in `typedExpressionIR~key~^{asterisk}^`
-   .... Check that <<Type_wf, `SET < [typeIR~key~] >` is a well-formed type, assuming bound type ids `$bound(LOCAL, TC~0~)`>>, for all `typeIR~key~` in `typeIR~key~^{asterisk}^`.
+   .... Let `typeIR~key_reduced~^{asterisk}^` be the list of `typeIR~key_reduced~`, obtained by repeating:
++
+--
+        * Let `typeIR~key_reduced~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~key_reduced~`>>.
+--
++
+for each `typedExpressionIR~key_reduced~` in `typedExpressionIR~key_reduced~^{asterisk}^`
+   .... Check that <<Type_wf, `SET < [typeIR~key_reduced~] >` is a well-formed type, assuming bound type ids `$bound(LOCAL, TC~0~)`>>, for all `typeIR~key_reduced~` in `typeIR~key_reduced~^{asterisk}^`.
    .... Let `selectCase^{asterisk}^` be <<flatten_selectCaseList, the list of select cases in `selectCaseList`>>.
    .... Let `selectCaseIR^{asterisk}^` be the list of `selectCaseIR`, obtained by repeating:
 +
 --
-        * Let <<SelectCase_ok, `TC~0~ nameIR~state~^{asterisk}^ typeIR~key~^{asterisk}^ |- selectCase : selectCaseIR`>>.
+        * Let <<SelectCase_ok, `TC~0~ nameIR~state~^{asterisk}^ typeIR~key_reduced~^{asterisk}^ |- selectCase : selectCaseIR`>>.
 --
 +
 for each `selectCase` in `selectCase^{asterisk}^`
-   .... Let `transitionStatementIR` be `TRANSITION SELECT ( typedExpressionIR~key~^{asterisk}^ ) { selectCaseIR^{asterisk}^ }`.
+   .... Let `transitionStatementIR` be `TRANSITION SELECT ( typedExpressionIR~key_reduced~^{asterisk}^ ) { selectCaseIR^{asterisk}^ }`.
    .... Result in the typed transition statement `transitionStatementIR`.
 
 
@@ -3623,14 +3630,15 @@ relation TableKey_ok: `TC`, `TBLC~0~`, and `expression : name~matchkind~ annotat
 
 . Group :
  .. Let `typedExpressionIR` be the result of <<Expr_ok, typing `expression`, under cursor `LOCAL` and typing context `TC`>>.
- .. Let `typeIR` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR`>>.
- .. Check that <<Type_wf, `SET < [typeIR] >` is a well-formed type, assuming bound type ids `$bound(LOCAL, TC)`>>.
+ .. Let `typedExpressionIR~reduced~` be `<<reduce_serenum, $reduce_serenum(typedExpressionIR)>>`.
+ .. Let `typeIR~reduced~` be <<type_of_typedExpressionIR, the type of  `typedExpressionIR~reduced~`>>.
+ .. Check that <<Type_wf, `SET < [typeIR~reduced~] >` is a well-formed type, assuming bound type ids `$bound(LOCAL, TC)`>>.
  .. Let `nameIR~matchkind~` be <<name, the name of `name~matchkind~`>>.
  .. Check that `MATCH_KIND . nameIR~matchkind~` is equal to <<find_var_value_t, the value of variable `nameIR~matchkind~` in the `LOCAL` layer of `TC`>>.
- .. Check that `<<compat_table_key, $compat_table_key(nameIR~matchkind~, typeIR)>>`.
- .. Let `TBLC~1~` be `<<update_mode, $update_mode(TBLC~0~, nameIR~matchkind~, typeIR)>>`.
- .. Let `TBLC~2~` be `<<add_key, $add_key(TBLC~1~, nameIR~matchkind~, typeIR)>>`.
- .. Let `tableKeyIR` be `typedExpressionIR : nameIR~matchkind~ annotationList ;`.
+ .. Check that `<<compat_table_key, $compat_table_key(nameIR~matchkind~, typeIR~reduced~)>>`.
+ .. Let `TBLC~1~` be `<<update_mode, $update_mode(TBLC~0~, nameIR~matchkind~, typeIR~reduced~)>>`.
+ .. Let `TBLC~2~` be `<<add_key, $add_key(TBLC~1~, nameIR~matchkind~, typeIR~reduced~)>>`.
+ .. Let `tableKeyIR` be `typedExpressionIR~reduced~ : nameIR~matchkind~ annotationList ;`.
  .. Result in the updated table context `TBLC~2~` and the typed table key `tableKeyIR`.
 
 
