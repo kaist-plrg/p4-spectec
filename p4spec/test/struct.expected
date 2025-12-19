@@ -3896,24 +3896,24 @@ syntax aliasTypeDefIR = aliasTypeIR
 
 ;; ../../../../spec-concrete/2.2.2-type-def.watsup:22.3-23.17
 syntax structTypeDefIR = 
-   | struct tid < tid* , tid* >{ fieldTypeIR* } hint(print %1)
+   | struct tid < tid* , tid* >{ fieldTypeIR* } hint(print %0)
 
 ;; ../../../../spec-concrete/2.2.2-type-def.watsup:25.3-26.17
 syntax headerTypeDefIR = 
-   | header tid < tid* , tid* >{ fieldTypeIR* } hint(print %1)
+   | header tid < tid* , tid* >{ fieldTypeIR* } hint(print %0)
 
 ;; ../../../../spec-concrete/2.2.2-type-def.watsup:28.3-29.17
 syntax headerUnionTypeDefIR = 
-   | header_union tid < tid* , tid* >{ fieldTypeIR* } hint(print %1)
+   | header_union tid < tid* , tid* >{ fieldTypeIR* } hint(print %0)
 
 ;; ../../../../spec-concrete/2.2.2-type-def.watsup:31.24-31.34
 syntax enumTypeDefIR = enumTypeIR
 
 ;; ../../../../spec-concrete/2.2.2-type-def.watsup:34.1-37.18
 syntax dataTypeDefIR = 
-   | struct tid < tid* , tid* >{ fieldTypeIR* } hint(print %1)
-   | header tid < tid* , tid* >{ fieldTypeIR* } hint(print %1)
-   | header_union tid < tid* , tid* >{ fieldTypeIR* } hint(print %1)
+   | struct tid < tid* , tid* >{ fieldTypeIR* } hint(print %0)
+   | header tid < tid* , tid* >{ fieldTypeIR* } hint(print %0)
+   | header_union tid < tid* , tid* >{ fieldTypeIR* } hint(print %0)
    | enum tid { id* } hint(print %0)
    | enum tid < typeIR >{ valueFieldIR* } hint(print %0)
 
@@ -3949,9 +3949,9 @@ syntax typeDefIR =
    | ` tid hint(print %0)
    | typedef tid typeIR hint(print %0)
    | type tid typeIR hint(print %0)
-   | struct tid < tid* , tid* >{ fieldTypeIR* } hint(print %1)
-   | header tid < tid* , tid* >{ fieldTypeIR* } hint(print %1)
-   | header_union tid < tid* , tid* >{ fieldTypeIR* } hint(print %1)
+   | struct tid < tid* , tid* >{ fieldTypeIR* } hint(print %0)
+   | header tid < tid* , tid* >{ fieldTypeIR* } hint(print %0)
+   | header_union tid < tid* , tid* >{ fieldTypeIR* } hint(print %0)
    | enum tid { id* } hint(print %0)
    | enum tid < typeIR >{ valueFieldIR* } hint(print %0)
    | extern tid < tid* , tid* > externMethodTypeDefEnv hint(print %0)
@@ -8911,7 +8911,7 @@ def $cast_arbint'(typeIR'', i)
 
     1. (Let boolTypeIR be (typeIR'' as boolTypeIR))
 
-    2. Return ((b (i = (0 as int))) as value)
+    2. Return ((b (i =/= (0 as int))) as value)
 
   2. Case (% has type integerTypeIR)
 
@@ -8965,7 +8965,7 @@ def $cast_fixbit'(typeIR'', w, i)
 
     1. (Let boolTypeIR be (typeIR'' as boolTypeIR))
 
-    2. Return ((b (i = (1 as int))) as value)
+    2. Return ((b (i =/= (0 as int))) as value)
 
   2. Case (% has type integerTypeIR)
 
@@ -19982,7 +19982,7 @@ relation Decl_ok: p TC_0 |- declaration : % %
 
               11. (Let TC_1 be $add_var_t(p, TC_0, nameIR, (() typeIR_object (ctk) ?())))
 
-              12. (Let instantiationIR be (annotationList typeIR_object prefixedNameIR < (typeArgumentIR_inferred)*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( (argumentIR)*{argumentIR <- argumentIR*} ) nameIR ?() ;))
+              12. (Let instantiationIR be (annotationList typeIR_object prefixedNameIR < (typeArgumentIR_inferred)*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( (argumentIR_cast)*{argumentIR_cast <- argumentIR_cast*} ) nameIR ?() ;))
 
               13. Result in : % % |- % : TC_1 (instantiationIR as declarationIR)
 
@@ -20042,7 +20042,7 @@ relation Decl_ok: p TC_0 |- declaration : % %
 
                         2. (Let TC_2 be $add_var_t(p, TC_0, nameIR, (() typeIR_object_init (ctk) ?())))
 
-                        3. (Let instantiationIR be (annotationList typeIR_object_init prefixedNameIR < (typeArgumentIR_inferred)*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( (argumentIR)*{argumentIR <- argumentIR*} ) nameIR ?((={ (objectDeclarationIR)*{objectDeclarationIR <- objectDeclarationIR*} })) ;))
+                        3. (Let instantiationIR be (annotationList typeIR_object_init prefixedNameIR < (typeArgumentIR_inferred)*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( (argumentIR_cast)*{argumentIR_cast <- argumentIR_cast*} ) nameIR ?((={ (objectDeclarationIR)*{objectDeclarationIR <- objectDeclarationIR*} })) ;))
 
                         4. Result in : % % |- % : TC_2 (instantiationIR as declarationIR)
 
@@ -20100,7 +20100,7 @@ relation Decl_ok: p TC_0 |- declaration : % %
 
                         2. (Let TC_2 be $add_var_t(p, TC_0, nameIR, (() typeIR_object_init (ctk) ?())))
 
-                        3. (Let instantiationIR be (annotationList typeIR_object_init prefixedNameIR < (typeArgumentIR_inferred)*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( (argumentIR)*{argumentIR <- argumentIR*} ) nameIR ?((={ (objectDeclarationIR)*{objectDeclarationIR <- objectDeclarationIR*} })) ;))
+                        3. (Let instantiationIR be (annotationList typeIR_object_init prefixedNameIR < (typeArgumentIR_inferred)*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( (argumentIR_cast)*{argumentIR_cast <- argumentIR_cast*} ) nameIR ?((={ (objectDeclarationIR)*{objectDeclarationIR <- objectDeclarationIR*} })) ;))
 
                         4. Result in : % % |- % : TC_2 (instantiationIR as declarationIR)
 
@@ -23425,7 +23425,7 @@ def $subst_externMethodTypeDefEnv(theta, externMethodTypeDefEnv_extern, set<pair
 
           2. Return $subst_externMethodTypeDefEnv(theta, externMethodTypeDefEnv_extern_subst, ({ ((cid_init_t : externMethodTypeDefIR_init_t))*{cid_init_t <- cid_init_t*, externMethodTypeDefIR_init_t <- externMethodTypeDefIR_init_t*} }))
 
-;; ../../../../spec-concrete/5.11-typing-declaration.watsup:461.1-461.78
+;; ../../../../spec-concrete/5.11-typing-declaration.watsup:460.1-460.78
 def $is_externConstructorPrototype(externConstructorOrMethodPrototype)
 
 1. If ((externConstructorOrMethodPrototype has type externConstructorPrototype)), then
@@ -23438,7 +23438,7 @@ def $is_externConstructorPrototype(externConstructorOrMethodPrototype)
 
   1. Return false
 
-;; ../../../../spec-concrete/5.11-typing-declaration.watsup:467.1-467.73
+;; ../../../../spec-concrete/5.11-typing-declaration.watsup:466.1-466.73
 def $is_externMethodPrototype(externConstructorOrMethodPrototype)
 
 1. If ((externConstructorOrMethodPrototype has type externMethodPrototype)), then
@@ -23451,7 +23451,7 @@ def $is_externMethodPrototype(externConstructorOrMethodPrototype)
 
   1. Return false
 
-;; ../../../../spec-concrete/5.11-typing-declaration.watsup:656.1-659.26
+;; ../../../../spec-concrete/5.11-typing-declaration.watsup:655.1-658.26
 relation Enum_serializable_field_ok: TC_0 nameIR_enum typeIR |- (name = expression) : % % # %
 
 1. Group : TC_0 nameIR_enum typeIR |- (name = expression) : % % # %
@@ -23480,7 +23480,7 @@ relation Enum_serializable_field_ok: TC_0 nameIR_enum typeIR |- (name = expressi
 
       7. Result in : % % % |- % : TC_1 (nameIR = typedExpressionIR_cast) # value
 
-;; ../../../../spec-concrete/5.11-typing-declaration.watsup:678.1-681.26
+;; ../../../../spec-concrete/5.11-typing-declaration.watsup:677.1-680.26
 relation Enum_serializable_fields_ok: TC nameIR_enum typeIR |- (namedExpression)*{namedExpression <- namedExpression*} : % % # %
 
 1. Case analysis on (namedExpression)*{namedExpression <- namedExpression*}
@@ -25430,9 +25430,9 @@ syntax functionCallee =
 syntax builtinMethodCallee = 
    | builtin_method storageReference . nameIR < typeArgumentListIR >( parameterListIR )
 
-;; ../../../../spec-concrete/6.2.2-callable-callee.watsup:38.3-40.36
+;; ../../../../spec-concrete/6.2.2-callable-callee.watsup:38.3-40.45
 syntax externMethodCallee = 
-   | extern_method oid . nameIR < typeParameterListIR >( parameterListIR # id* ){ frame ; blockStatementIR? }
+   | extern_method oid . nameIR < typeParameterListIR >( parameterListIR # id* ){ theta ; frame ; blockStatementIR? }
 
 ;; ../../../../spec-concrete/6.2.2-callable-callee.watsup:43.3-44.59
 syntax parserApplyMethodCallee = 
@@ -25449,7 +25449,7 @@ syntax tableApplyMethodCallee =
 ;; ../../../../spec-concrete/6.2.2-callable-callee.watsup:54.1-58.27
 syntax methodCallee = 
    | builtin_method storageReference . nameIR < typeArgumentListIR >( parameterListIR )
-   | extern_method oid . nameIR < typeParameterListIR >( parameterListIR # id* ){ frame ; blockStatementIR? }
+   | extern_method oid . nameIR < typeParameterListIR >( parameterListIR # id* ){ theta ; frame ; blockStatementIR? }
    | parser oid .apply( parameterListIR # id* ){ frame ; parserLocalDeclarationListIR ; stateEnv }
    | control oid .apply( parameterListIR # id* ){ frame ; controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR }
    | table oid .apply{ frame ; tableObjectProperty }
@@ -25460,7 +25460,7 @@ syntax callee =
    | function nameIR < typeParameterListIR >( parameterListIR # id* ) blockStatementIR
    | extern_function nameIR < typeParameterListIR >( parameterListIR # id* )
    | builtin_method storageReference . nameIR < typeArgumentListIR >( parameterListIR )
-   | extern_method oid . nameIR < typeParameterListIR >( parameterListIR # id* ){ frame ; blockStatementIR? }
+   | extern_method oid . nameIR < typeParameterListIR >( parameterListIR # id* ){ theta ; frame ; blockStatementIR? }
    | parser oid .apply( parameterListIR # id* ){ frame ; parserLocalDeclarationListIR ; stateEnv }
    | control oid .apply( parameterListIR # id* ){ frame ; controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR }
    | table oid .apply{ frame ; tableObjectProperty }
@@ -30685,37 +30685,33 @@ relation Stmt_eval: p EC STO |- statementIR : % % %
 
             2. If (~(assignop' matches pattern `=`)), then
 
-              1. (Let (binop')?{binop' <- binop'?} be $assignop_as_binop(assignop'))
+              1. (Lvalue_read: p EC_1 STO_1 |- storageReference : value_l)
 
-              2. If (((binop')?{binop' <- binop'?} matches pattern (_))), then
+              2. (Expr_eval: p EC_1 STO_1 |- typedExpressionIR : EC_2 STO_2 expressionResult)
 
-                1. (Let ?(binop) be (binop')?{binop' <- binop'?})
+              3. Case analysis on expressionResult
 
-                2. (Let (typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?} be $typedLvalueIR_as_typedExpressionIR(typedLvalueIR))
+                1. Case (% has type exitResult)
 
-                3. If (((typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?} matches pattern (_))), then
+                  1. (Let exitResult be (expressionResult as exitResult))
 
-                  1. (Let ?(typedExpressionIR_self) be (typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?})
+                  2. Result in : % % % |- % : EC_2 STO_2 ((exit) as statementResult)
 
-                  2. (Let typedExpressionIR_binary be (((typedExpressionIR_self binop typedExpressionIR) as expressionIR) # (( ((void) as typeIR) (dyn) ))))
+                2. Case (% has type continueResult<value>)
 
-                  3. (Expr_eval: p EC_1 STO_1 |- typedExpressionIR_binary : EC_2 STO_2 expressionResult)
+                  1. (Let (` value_r) be (expressionResult as continueResult<value>))
 
-                  4. Case analysis on expressionResult
+                  2. (Let (binop')?{binop' <- binop'?} be $assignop_as_binop(assignop'))
 
-                    1. Case (% has type exitResult)
+                  3. If (((binop')?{binop' <- binop'?} matches pattern (_))), then
 
-                      1. (Let exitResult be (expressionResult as exitResult))
+                    1. (Let ?(binop) be (binop')?{binop' <- binop'?})
 
-                      2. Result in : % % % |- % : EC_2 STO_2 ((exit) as statementResult)
+                    2. (Let value_update be $bin_op(binop, value_l, value_r))
 
-                    2. Case (% has type continueResult<value>)
+                    3. (Lvalue_write: p EC_2 STO_2 |- storageReference -> value_update : EC_3)
 
-                      1. (Let (` value) be (expressionResult as continueResult<value>))
-
-                      2. (Lvalue_write: p EC_2 STO_2 |- storageReference -> value : EC_3)
-
-                      3. Result in : % % % |- % : EC_3 STO_2 ((`) as statementResult)
+                    4. Result in : % % % |- % : EC_3 STO_2 ((`) as statementResult)
 
       3. If ((assignop' matches pattern `=`)), then
 
@@ -31910,7 +31906,7 @@ relation Callee_eval: p EC STO |- callableTargetIR <_>( argumentListIR ): % % %
 
                 2. If ((object has type externObject)), then
 
-                  1. (Let (extern _tid < _theta >{ _externState frame externMethodDefEnv }) be (object as externObject))
+                  1. (Let (extern _tid < theta >{ _externState frame externMethodDefEnv }) be (object as externObject))
 
                   2. (Let ((id_arg)?{id_arg <- id_arg?})*{id_arg? <- id_arg?*} be $ids_arguments(argumentListIR))
 
@@ -31926,7 +31922,7 @@ relation Callee_eval: p EC STO |- callableTargetIR <_>( argumentListIR ): % % %
 
                       2. If ((nameIR' = nameIR')), then
 
-                        1. (Let externMethodCallee be (extern_method oid . nameIR' < typeParameterListIR >( parameterListIR # (id_default)*{id_default <- id_default*} ){ frame ; (blockStatementIR)?{blockStatementIR <- blockStatementIR?} }))
+                        1. (Let externMethodCallee be (extern_method oid . nameIR' < typeParameterListIR >( parameterListIR # (id_default)*{id_default <- id_default*} ){ theta ; frame ; (blockStatementIR)?{blockStatementIR <- blockStatementIR?} }))
 
                         2. Result in : % % % |- % <_>( % ): EC_1 STO_1 ((` (externMethodCallee as callee)) as calleeResult)
 
@@ -32458,27 +32454,29 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentList
 
     1. (Let definedFunctionCallee be (callee as definedFunctionCallee))
 
-    2. Group definedFunctionCallee: p EC_0 STO_0 |- (definedFunctionCallee as callee) @< typeArgumentListIR >( argumentListIR ): % % %
+    2. Group definedFunctionCallee: p EC_0 STO_0 |- (definedFunctionCallee as callee) @< (typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*} >( argumentListIR ): % % %
 
-      1. (Let (function nameIR < typeParameterListIR >( (parameterIR)*{parameterIR <- parameterIR*} # (id_default)*{id_default <- id_default*} ) blockStatementIR) be definedFunctionCallee)
+      1. (Let (function nameIR < (typeParameterIR)*{typeParameterIR <- typeParameterIR*} >( (parameterIR)*{parameterIR <- parameterIR*} # (id_default)*{id_default <- id_default*} ) blockStatementIR) be definedFunctionCallee)
 
       2. (Let EC_callee_0 be $inherit_e((global), EC_0))
 
-      3. (Let ((parameterIR_aligned)*{parameterIR_aligned <- parameterIR_aligned*}, (argumentIR_aligned)*{argumentIR_aligned <- argumentIR_aligned*}, (parameterIR_default)*{parameterIR_default <- parameterIR_default*}, (value_default)*{value_default <- value_default*}) be $align_params_with_args((parameterIR)*{parameterIR <- parameterIR*}, argumentListIR, (id_default)*{id_default <- id_default*}))
+      3. (Let EC_callee_1 be EC_callee_0[local.type = ({ ((typeParameterIR : typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} })])
 
-      4. (Copy_in: STO_0 p EC_0 (parameterIR_aligned)*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_0 (argumentIR_aligned)*{argumentIR_aligned <- argumentIR_aligned*} ~> STO_1 EC_1 @ EC_callee_1 # copyInListResult)
+      4. (Let ((parameterIR_aligned)*{parameterIR_aligned <- parameterIR_aligned*}, (argumentIR_aligned)*{argumentIR_aligned <- argumentIR_aligned*}, (parameterIR_default)*{parameterIR_default <- parameterIR_default*}, (value_default)*{value_default <- value_default*}) be $align_params_with_args((parameterIR)*{parameterIR <- parameterIR*}, argumentListIR, (id_default)*{id_default <- id_default*}))
 
-      5. If ((copyInListResult has type continueResult<storageReference?*>)), then
+      5. (Copy_in: STO_0 p EC_0 (parameterIR_aligned)*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_1 (argumentIR_aligned)*{argumentIR_aligned <- argumentIR_aligned*} ~> STO_1 EC_1 @ EC_callee_2 # copyInListResult)
+
+      6. If ((copyInListResult has type continueResult<storageReference?*>)), then
 
         1. (Let (` ((storageReference)?{storageReference <- storageReference?})*{storageReference? <- storageReference?*}) be (copyInListResult as continueResult<storageReference?*>))
 
-        2. (Copy_in_default: (parameterIR_default)*{parameterIR_default <- parameterIR_default*} @ (local) EC_callee_1 (value_default)*{value_default <- value_default*} ~>@ EC_callee_2)
+        2. (Copy_in_default: (parameterIR_default)*{parameterIR_default <- parameterIR_default*} @ (local) EC_callee_2 (value_default)*{value_default <- value_default*} ~>@ EC_callee_3)
 
-        3. (DefinedFunctionBody_eval: EC_callee_2 STO_1 |- blockStatementIR : EC_callee_3 STO_2 definedFunctionResult)
+        3. (DefinedFunctionBody_eval: EC_callee_3 STO_1 |- blockStatementIR : EC_callee_4 STO_2 definedFunctionResult)
 
         4. (Let EC_2 be EC_1[global.frame = EC_callee_3.global.frame])
 
-        5. (Copy_out: STO_2 p EC_2 (parameterIR_aligned)*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_3 ((storageReference)?{storageReference <- storageReference?})*{storageReference? <- storageReference?*} ~> EC_3)
+        5. (Copy_out: STO_2 p EC_2 (parameterIR_aligned)*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_4 ((storageReference)?{storageReference <- storageReference?})*{storageReference? <- storageReference?*} ~> EC_3)
 
         6. Result in : % % % |- % @< % >( % ): EC_3 STO_2 (definedFunctionResult as callResult)
 
@@ -32738,33 +32736,35 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentList
 
     2. Group externMethodCallee: p EC_0 STO_0 |- (externMethodCallee as callee) @< (typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*} >( (argumentIR)*{argumentIR <- argumentIR*} ): % % %
 
-      1. (Let (extern_method oid . nameIR < (typeParameterIR)*{typeParameterIR <- typeParameterIR*} >( (parameterIR)*{parameterIR <- parameterIR*} # (id_default)*{id_default <- id_default*} ){ frame ; (blockStatementIR)?{blockStatementIR <- blockStatementIR?} }) be externMethodCallee)
+      1. (Let (extern_method oid . nameIR < (typeParameterIR)*{typeParameterIR <- typeParameterIR*} >( (parameterIR)*{parameterIR <- parameterIR*} # (id_default)*{id_default <- id_default*} ){ theta ; frame ; (blockStatementIR)?{blockStatementIR <- blockStatementIR?} }) be externMethodCallee)
 
       2. If (((blockStatementIR)?{blockStatementIR <- blockStatementIR?} matches pattern ())), then
 
         1. (Let EC_callee_0 be $inherit_e((global), EC_0))
 
-        2. (Let EC_callee_1 be EC_callee_0[block.frame = frame])
+        2. (Let EC_callee_1 be EC_callee_0[block.type = theta])
 
-        3. (Let EC_callee_2 be EC_callee_1[local.type = ({ ((typeParameterIR : typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} })])
+        3. (Let EC_callee_2 be EC_callee_1[block.frame = frame])
 
-        4. (Let ((parameterIR_aligned)*{parameterIR_aligned <- parameterIR_aligned*}, (argumentIR_aligned)*{argumentIR_aligned <- argumentIR_aligned*}, (parameterIR_default)*{parameterIR_default <- parameterIR_default*}, (value_default)*{value_default <- value_default*}) be $align_params_with_args((parameterIR)*{parameterIR <- parameterIR*}, (argumentIR)*{argumentIR <- argumentIR*}, (id_default)*{id_default <- id_default*}))
+        4. (Let EC_callee_3 be EC_callee_2[local.type = ({ ((typeParameterIR : typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} })])
 
-        5. (Copy_in: STO_0 p EC_0 (parameterIR_aligned)*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_2 (argumentIR_aligned)*{argumentIR_aligned <- argumentIR_aligned*} ~> STO_1 EC_1 @ EC_callee_3 # copyInListResult)
+        5. (Let ((parameterIR_aligned)*{parameterIR_aligned <- parameterIR_aligned*}, (argumentIR_aligned)*{argumentIR_aligned <- argumentIR_aligned*}, (parameterIR_default)*{parameterIR_default <- parameterIR_default*}, (value_default)*{value_default <- value_default*}) be $align_params_with_args((parameterIR)*{parameterIR <- parameterIR*}, (argumentIR)*{argumentIR <- argumentIR*}, (id_default)*{id_default <- id_default*}))
 
-        6. If ((copyInListResult has type continueResult<storageReference?*>)), then
+        6. (Copy_in: STO_0 p EC_0 (parameterIR_aligned)*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_3 (argumentIR_aligned)*{argumentIR_aligned <- argumentIR_aligned*} ~> STO_1 EC_1 @ EC_callee_4 # copyInListResult)
+
+        7. If ((copyInListResult has type continueResult<storageReference?*>)), then
 
           1. (Let (` ((storageReference)?{storageReference <- storageReference?})*{storageReference? <- storageReference?*}) be (copyInListResult as continueResult<storageReference?*>))
 
-          2. (Copy_in_default: (parameterIR_default)*{parameterIR_default <- parameterIR_default*} @ (local) EC_callee_3 (value_default)*{value_default <- value_default*} ~>@ EC_callee_4)
+          2. (Copy_in_default: (parameterIR_default)*{parameterIR_default <- parameterIR_default*} @ (local) EC_callee_4 (value_default)*{value_default <- value_default*} ~>@ EC_callee_5)
 
           3. (Let (_annotationList _direction _typeIR nameIR_param _constantInitializerOptIR) be parameterIR)*{_annotationList <- _annotationList*, _constantInitializerOptIR <- _constantInitializerOptIR*, _direction <- _direction*, _typeIR <- _typeIR*, nameIR_param <- nameIR_param*, parameterIR <- parameterIR*}
 
-          4. (ExternMethodCall_eval: EC_callee_4 STO_1 |- oid . nameIR ( (nameIR_param)*{nameIR_param <- nameIR_param*} ): EC_callee_5 STO_2 callResult)
+          4. (ExternMethodCall_eval: EC_callee_5 STO_1 |- oid . nameIR ( (nameIR_param)*{nameIR_param <- nameIR_param*} ): EC_callee_6 STO_2 callResult)
 
           5. (Let EC_2 be EC_1[global.frame = EC_callee_5.global.frame])
 
-          6. (Copy_out: STO_2 p EC_2 (parameterIR_aligned)*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_5 ((storageReference)?{storageReference <- storageReference?})*{storageReference? <- storageReference?*} ~> EC_3)
+          6. (Copy_out: STO_2 p EC_2 (parameterIR_aligned)*{parameterIR_aligned <- parameterIR_aligned*} @ (local) EC_callee_6 ((storageReference)?{storageReference <- storageReference?})*{storageReference? <- storageReference?*} ~> EC_3)
 
           7. Result in : % % % |- % @< % >( % ): EC_3 STO_2 callResult
 
@@ -33173,7 +33173,7 @@ relation Exprs_eval_keyset_simple: evalContext store |- (simpleKeysetExpressionI
 
             3. Result in : % % |- % : EC_2 STO_2 keysetExpressionResult
 
-;; ../../../../spec-concrete/8.06-eval-statement.watsup:269.1-269.57
+;; ../../../../spec-concrete/8.06-eval-statement.watsup:268.1-268.57
 def $match_switchLabelIR_table(id, switchLabelIR)
 
 1. If ((switchLabelIR matches pattern `DEFAULT`)), then
@@ -33200,7 +33200,7 @@ def $match_switchLabelIR_table(id, switchLabelIR)
 
   1. Return false
 
-;; ../../../../spec-concrete/8.06-eval-statement.watsup:279.1-281.20
+;; ../../../../spec-concrete/8.06-eval-statement.watsup:278.1-280.20
 relation SwitchCases_table_eval: id |- (switchCaseIR)*{switchCaseIR <- switchCaseIR*} : %
 
 1. Group : id |- (switchCaseIR)*{switchCaseIR <- switchCaseIR*} : %
@@ -33259,7 +33259,7 @@ relation SwitchCases_table_eval: id |- (switchCaseIR)*{switchCaseIR <- switchCas
 
             2. Result in : % |- % : (blockStatementIR)?{blockStatementIR <- blockStatementIR?}
 
-;; ../../../../spec-concrete/8.06-eval-statement.watsup:283.1-283.58
+;; ../../../../spec-concrete/8.06-eval-statement.watsup:282.1-282.58
 def $is_non_fallthrough_switchCaseIR(switchCaseIR)
 
 1. Case analysis on switchCaseIR
@@ -33276,7 +33276,7 @@ def $is_non_fallthrough_switchCaseIR(switchCaseIR)
 
     2. Return false
 
-;; ../../../../spec-concrete/8.06-eval-statement.watsup:329.1-331.26
+;; ../../../../spec-concrete/8.06-eval-statement.watsup:328.1-330.26
 relation SwitchLabelIR_general_eval: cursor EC_0 STO_0 |- switchLabelIR : % % %
 
 1. If ((cursor matches pattern `LOCAL`)), then
@@ -33307,7 +33307,7 @@ relation SwitchLabelIR_general_eval: cursor EC_0 STO_0 |- switchLabelIR : % % %
 
           2. Result in : % % % |- % : EC_1 STO_1 ((` value) as expressionResult)
 
-;; ../../../../spec-concrete/8.06-eval-statement.watsup:350.1-350.54
+;; ../../../../spec-concrete/8.06-eval-statement.watsup:349.1-349.54
 def $match_switchLabelIR_general(value, value')
 
 1. If ((value' has type defaultValue)), then
@@ -33376,7 +33376,7 @@ def $match_switchLabelIR_general(value, value')
 
   1. Return false
 
-;; ../../../../spec-concrete/8.06-eval-statement.watsup:359.1-361.29
+;; ../../../../spec-concrete/8.06-eval-statement.watsup:358.1-360.29
 relation SwitchCases_general_eval: cursor EC_0 STO_0 value |- (switchCaseIR)*{switchCaseIR <- switchCaseIR*} : % % %
 
 1. If ((cursor matches pattern `LOCAL`)), then
@@ -33848,7 +33848,7 @@ relation DefinedFunctionBody_eval: EC_0 STO_0 |- blockStatementIR : % % %
 
       2. Result in : % % |- % : EC_1 STO_1 (returnResult as definedFunctionResult)
 
-;; ../../../../spec-concrete/8.10.4-eval-call.watsup:329.1-329.43
+;; ../../../../spec-concrete/8.10.4-eval-call.watsup:332.1-332.43
 def $isValid_fieldValue((value id ;))
 
 1. Return $isValid_header(value)

@@ -41,15 +41,13 @@ rulegroup Stmt_eval/assignmentStatementIR {
     -- Lvalue_eval:
         p EC_0 STO_0 |- typedLvalueIR
                       : EC_1 STO_1 (`` storageReference)
-    ---- ;; evaluate expression
+    ---- ;; read from l-value
     -- if assignop =/= `=
-    -- if binop = $assignop_as_binop(assignop)
-    -- if typedExpressionIR_self
-        = $typedLvalueIR_as_typedExpressionIR(typedLvalueIR)
-    -- if typedExpressionIR_binary
-        = (typedExpressionIR_self binop typedExpressionIR) `# `( VOID DYN )
+    -- Lvalue_read:
+        p EC_1 STO_1 |- storageReference : value_l
+    ---- ;; evaluate expression
     -- Expr_eval:
-        p EC_1 STO_1 |- typedExpressionIR_binary
+        p EC_1 STO_1 |- typedExpressionIR
                       : EC_2 STO_2 EXIT
 
   rule Stmt_eval/typedLvalueIR-cont-eq-typedExpressionIR-cont:
@@ -75,19 +73,20 @@ rulegroup Stmt_eval/assignmentStatementIR {
     -- Lvalue_eval:
         p EC_0 STO_0 |- typedLvalueIR
                       : EC_1 STO_1 (`` storageReference)
-    ---- ;; evaluate expression
+    ---- ;; read from l-value
     -- if assignop =/= `=
-    -- if binop = $assignop_as_binop(assignop)
-    -- if typedExpressionIR_self
-        = $typedLvalueIR_as_typedExpressionIR(typedLvalueIR)
-    -- if typedExpressionIR_binary
-        = (typedExpressionIR_self binop typedExpressionIR) `# `( VOID DYN )
+    -- Lvalue_read:
+        p EC_1 STO_1 |- storageReference : value_l
+    ---- ;; evaluate expression
     -- Expr_eval:
-        p EC_1 STO_1 |- typedExpressionIR_binary
-                      : EC_2 STO_2 (`` value)
+        p EC_1 STO_1 |- typedExpressionIR
+                      : EC_2 STO_2 (`` value_r)
+    ---- ;; compute binary operation
+    -- if binop = $assignop_as_binop(assignop)
+    -- if value_update = $bin_op(binop, value_l, value_r)
     ---- ;; perform assignment
     -- Lvalue_write:
-        p EC_2 STO_2 |- storageReference -> value
+        p EC_2 STO_2 |- storageReference -> value_update
                       : EC_3
 
 }

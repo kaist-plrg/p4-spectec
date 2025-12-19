@@ -4360,7 +4360,7 @@ for each `argument` in `argument^{asterisk}^`
     ..... Let <<Inst_ok, `p TC~0~ NAMED |- constructorTypeIR < typeArgumentIR^{asterisk}^ # tid~infer~^{asterisk}^ > ( argumentIR^{asterisk}^ # id~default~^{asterisk}^ ) : typeIR~object~ < typeArgumentIR~inferred~^{asterisk}^ > ( argumentIR~cast~^{asterisk}^ )`>>.
     ..... Let `nameIR` be <<name, the name of `name`>>.
     ..... Let `TC~1~` be <<add_var_t, `TC~0~` with a mapping from `nameIR` to `typeIR~object~ CTK None` added to the `p` layer>>.
-    ..... Let `instantiationIR` be `annotationList typeIR~object~ prefixedNameIR < typeArgumentIR~inferred~^{asterisk}^ > ( argumentIR^{asterisk}^ ) nameIR None ;`.
+    ..... Let `instantiationIR` be `annotationList typeIR~object~ prefixedNameIR < typeArgumentIR~inferred~^{asterisk}^ > ( argumentIR~cast~^{asterisk}^ ) nameIR None ;`.
     ..... Result in the modified typing context `TC~1~` and the typed declaration `instantiationIR`.
  .. Else let `annotationList type ( argumentList ) name = { objectDeclarationList } ;` be `instantiation`:
   ... Group instantiation-objectInitializer:
@@ -4393,7 +4393,7 @@ for each `argument` in `argument^{asterisk}^`
     ..... Check that `<<is_concrete_extern_object, $is_concrete_extern_object(typeIR~object_init~)>>`.
     ..... Let `nameIR` be <<name, the name of `name`>>.
     ..... Let `TC~2~` be <<add_var_t, `TC~0~` with a mapping from `nameIR` to `typeIR~object_init~ CTK None` added to the `p` layer>>.
-    ..... Let `instantiationIR` be `annotationList typeIR~object_init~ prefixedNameIR < typeArgumentIR~inferred~^{asterisk}^ > ( argumentIR^{asterisk}^ ) nameIR = { objectDeclarationIR^{asterisk}^ } ;`.
+    ..... Let `instantiationIR` be `annotationList typeIR~object_init~ prefixedNameIR < typeArgumentIR~inferred~^{asterisk}^ > ( argumentIR~cast~^{asterisk}^ ) nameIR = { objectDeclarationIR^{asterisk}^ } ;`.
     ..... Result in the modified typing context `TC~2~` and the typed declaration `instantiationIR`.
    .... Else if let `prefixedTypeName < typeArgumentList >` be `type`:
     ..... Let `typeArgument^{asterisk}^` be <<flatten_typeArgumentList, the list of type arguments in `typeArgumentList`>>.
@@ -4427,7 +4427,7 @@ for each `argument` in `argument^{asterisk}^`
     ..... Check that `<<is_concrete_extern_object, $is_concrete_extern_object(typeIR~object_init~)>>`.
     ..... Let `nameIR` be <<name, the name of `name`>>.
     ..... Let `TC~2~` be <<add_var_t, `TC~0~` with a mapping from `nameIR` to `typeIR~object_init~ CTK None` added to the `p` layer>>.
-    ..... Let `instantiationIR` be `annotationList typeIR~object_init~ prefixedNameIR < typeArgumentIR~inferred~^{asterisk}^ > ( argumentIR^{asterisk}^ ) nameIR = { objectDeclarationIR^{asterisk}^ } ;`.
+    ..... Let `instantiationIR` be `annotationList typeIR~object_init~ prefixedNameIR < typeArgumentIR~inferred~^{asterisk}^ > ( argumentIR~cast~^{asterisk}^ ) nameIR = { objectDeclarationIR^{asterisk}^ } ;`.
     ..... Result in the modified typing context `TC~2~` and the typed declaration `instantiationIR`.
 . Else if let `annotationList typeOrVoid name typeParameterListOpt ( parameterList ) blockStatement` be `declaration`:
  .. Group functionDeclaration:
@@ -7921,17 +7921,17 @@ relation Stmt_eval: `p`, `EC`, `STO`, and `statementIR`
    .... Check that `storageReference'^?^` is Some value.
    .... Let `storageReference` be `storageReference'^?^`.
    .... Check that `assignop'` does not match pattern `=`.
-   .... Let `binop` be <<option_get, *!*>> <<assignop_as_binop, the binary operator corresponding to `assignop'`>>.
-   .... Let `typedExpressionIR~self~` be <<option_get, *!*>> `<<typedLvalueIR_as_typedExpressionIR, $typedLvalueIR_as_typedExpressionIR(typedLvalueIR)>>`.
-   .... Let `typedExpressionIR~binary~` be <<typedExpressionIR, `typedExpressionIR~self~ binop typedExpressionIR` annotated with type `VOID` and compile-time known-ness `DYN`>>.
-   .... Let `EC~2~`, `STO~2~`, and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR~binary~`, under cursor `p`, evaluation context `EC~1~`, and store `STO~1~`>>.
+   .... Let <<Lvalue_read, `p EC~1~ STO~1~ |- storageReference : value~l~`>>.
+   .... Let `EC~2~`, `STO~2~`, and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR`, under cursor `p`, evaluation context `EC~1~`, and store `STO~1~`>>.
    .... If let `exitResult` be `expressionResult`:
     ..... Result in 
 * the evaluation context `EC~2~`,
 * the updated store `STO~2~`,
 * and the instantiated statement `EXIT`.
-   .... Else let `value` be `expressionResult`:
-    ..... Let <<Lvalue_write, `p EC~2~ STO~2~ |- storageReference -> value : EC~3~`>>.
+   .... Else let `value~r~` be `expressionResult`:
+    ..... Let `binop` be <<option_get, *!*>> <<assignop_as_binop, the binary operator corresponding to `assignop'`>>.
+    ..... Let `value~update~` be <<bin_op, `value~l~` `binop` `value~r~`>>.
+    ..... Let <<Lvalue_write, `p EC~2~ STO~2~ |- storageReference -> value~update~ : EC~3~`>>.
     ..... Result in 
 * the evaluation context `EC~3~`,
 * the updated store `STO~2~`,
@@ -8526,13 +8526,13 @@ relation Callee_eval: `p`, `EC`, `STO`, `callableTargetIR`, and `argumentListIR`
    .... Let `! oid` be `value`.
    .... Let `object` be <<option_get, *!*>> `<<find_map, $find_map<oid, object>(STO~1~, oid)>>`.
    .... Check that `object` has type `externObject`.
-   .... Let `EXTERN ++_++ < ++_++ > { ++_++ frame externMethodDefEnv }` be `object`.
+   .... Let `EXTERN ++_++ < theta > { ++_++ frame externMethodDefEnv }` be `object`.
    .... Let `(id~arg~^?^)^{asterisk}^` be `<<ids_arguments, $ids_arguments(argumentListIR)>>`.
    .... Let `(++_++, externMethodDef, id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_overloaded, $find_overloaded<externMethodDef>(externMethodDefEnv, nameIR', (id~arg~^?^)^{asterisk}^)>>`.
    .... Check that `externMethodDef` matches pattern `EXTERN_METHOD % < % > ( % ) %`.
    .... Let `EXTERN_METHOD nameIR' < typeParameterListIR > ( parameterListIR ) blockStatementIR^?^` be `externMethodDef`.
    .... Check that `nameIR'` is equal to `nameIR'`.
-   .... Let `externMethodCallee` be `EXTERN_METHOD oid . nameIR' < typeParameterListIR > ( parameterListIR # id~default~^{asterisk}^ ) { frame ; blockStatementIR^?^ }`.
+   .... Let `externMethodCallee` be `EXTERN_METHOD oid . nameIR' < typeParameterListIR > ( parameterListIR # id~default~^{asterisk}^ ) { theta ; frame ; blockStatementIR^?^ }`.
    .... Result in `EC~1~`, `STO~1~`, and `externMethodCallee`.
  .. Check that `nameIR'` is equal to `"apply"`.
  .. Group typedExpressionIR-nameIR-parser-apply-method:
@@ -8768,16 +8768,17 @@ relation Call_eval: `p`, `EC~0~`, `STO~0~`, `callee`, `typeArgumentListIR`, and 
     ..... Result in the resulting evaluation context `EC~3~`, store `STO~2~`, and call result `RETURN None`.
 . Else if let `definedFunctionCallee` be `callee`:
  .. Group definedFunctionCallee:
-  ... Let `FUNCTION nameIR < typeParameterListIR > ( parameterIR^{asterisk}^ # id~default~^{asterisk}^ ) blockStatementIR` be `definedFunctionCallee`.
+  ... Let `FUNCTION nameIR < typeParameterIR^{asterisk}^ > ( parameterIR^{asterisk}^ # id~default~^{asterisk}^ ) blockStatementIR` be `definedFunctionCallee`.
   ... Let `EC~callee_0~` be `<<inherit_e, $inherit_e(GLOBAL, EC~0~)>>`.
+  ... Let `EC~callee_1~` be `EC~callee_0~[LOCAL.TYPE = { (typeParameterIR : typeArgumentIR)^{asterisk}^ }]`.
   ... Let `(parameterIR~aligned~^{asterisk}^, argumentIR~aligned~^{asterisk}^, parameterIR~default~^{asterisk}^, value~default~^{asterisk}^)` be `<<align_params_with_args, $align_params_with_args(parameterIR^{asterisk}^, argumentListIR, id~default~^{asterisk}^)>>`.
-  ... Let <<Copy_in, `STO~0~ p EC~0~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_0~ argumentIR~aligned~^{asterisk}^ ~> STO~1~ EC~1~ @ EC~callee_1~ # copyInListResult`>>.
+  ... Let <<Copy_in, `STO~0~ p EC~0~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_1~ argumentIR~aligned~^{asterisk}^ ~> STO~1~ EC~1~ @ EC~callee_2~ # copyInListResult`>>.
   ... Check that `copyInListResult` has type `continueResult<storageReference?*>`.
   ... Let `(storageReference^?^)^{asterisk}^` be `copyInListResult`.
-  ... Let <<Copy_in_default, `parameterIR~default~^{asterisk}^ @ LOCAL EC~callee_1~ value~default~^{asterisk}^ ~> @ EC~callee_2~`>>.
-  ... Let <<DefinedFunctionBody_eval, `EC~callee_2~ STO~1~ |- blockStatementIR : EC~callee_3~ STO~2~ definedFunctionResult`>>.
+  ... Let <<Copy_in_default, `parameterIR~default~^{asterisk}^ @ LOCAL EC~callee_2~ value~default~^{asterisk}^ ~> @ EC~callee_3~`>>.
+  ... Let <<DefinedFunctionBody_eval, `EC~callee_3~ STO~1~ |- blockStatementIR : EC~callee_4~ STO~2~ definedFunctionResult`>>.
   ... Let `EC~2~` be `EC~1~[GLOBAL.FRAME = EC~callee_3~.GLOBAL.FRAME]`.
-  ... Let <<Copy_out, `STO~2~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_3~ (storageReference^?^)^{asterisk}^ ~> EC~3~`>>.
+  ... Let <<Copy_out, `STO~2~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_4~ (storageReference^?^)^{asterisk}^ ~> EC~3~`>>.
   ... Result in the resulting evaluation context `EC~3~`, store `STO~2~`, and call result `definedFunctionResult`.
 . Let `argumentIR^{asterisk}^` be `argumentListIR`.
 . If let `externFunctionCallee` be `callee`:
@@ -8909,16 +8910,17 @@ for each `value~back~` in `value~back~^{asterisk}^`
     ..... Result in the resulting evaluation context `EC~1~`, store `STO~0~`, and call result `returnResult`.
 . Else if let `externMethodCallee` be `callee`:
  .. Group externMethodCallee:
-  ... Let `EXTERN_METHOD oid . nameIR < typeParameterIR^{asterisk}^ > ( parameterIR^{asterisk}^ # id~default~^{asterisk}^ ) { frame ; blockStatementIR^?^ }` be `externMethodCallee`.
+  ... Let `EXTERN_METHOD oid . nameIR < typeParameterIR^{asterisk}^ > ( parameterIR^{asterisk}^ # id~default~^{asterisk}^ ) { theta ; frame ; blockStatementIR^?^ }` be `externMethodCallee`.
   ... Check that `blockStatementIR^?^` is None.
   ... Let `EC~callee_0~` be `<<inherit_e, $inherit_e(GLOBAL, EC~0~)>>`.
-  ... Let `EC~callee_1~` be `EC~callee_0~[BLOCK.FRAME = frame]`.
-  ... Let `EC~callee_2~` be `EC~callee_1~[LOCAL.TYPE = { (typeParameterIR : typeArgumentIR)^{asterisk}^ }]`.
+  ... Let `EC~callee_1~` be `EC~callee_0~[BLOCK.TYPE = theta]`.
+  ... Let `EC~callee_2~` be `EC~callee_1~[BLOCK.FRAME = frame]`.
+  ... Let `EC~callee_3~` be `EC~callee_2~[LOCAL.TYPE = { (typeParameterIR : typeArgumentIR)^{asterisk}^ }]`.
   ... Let `(parameterIR~aligned~^{asterisk}^, argumentIR~aligned~^{asterisk}^, parameterIR~default~^{asterisk}^, value~default~^{asterisk}^)` be `<<align_params_with_args, $align_params_with_args(parameterIR^{asterisk}^, argumentIR^{asterisk}^, id~default~^{asterisk}^)>>`.
-  ... Let <<Copy_in, `STO~0~ p EC~0~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_2~ argumentIR~aligned~^{asterisk}^ ~> STO~1~ EC~1~ @ EC~callee_3~ # copyInListResult`>>.
+  ... Let <<Copy_in, `STO~0~ p EC~0~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_3~ argumentIR~aligned~^{asterisk}^ ~> STO~1~ EC~1~ @ EC~callee_4~ # copyInListResult`>>.
   ... Check that `copyInListResult` has type `continueResult<storageReference?*>`.
   ... Let `(storageReference^?^)^{asterisk}^` be `copyInListResult`.
-  ... Let <<Copy_in_default, `parameterIR~default~^{asterisk}^ @ LOCAL EC~callee_3~ value~default~^{asterisk}^ ~> @ EC~callee_4~`>>.
+  ... Let <<Copy_in_default, `parameterIR~default~^{asterisk}^ @ LOCAL EC~callee_4~ value~default~^{asterisk}^ ~> @ EC~callee_5~`>>.
   ... Let `nameIR~param~^{asterisk}^` be the list of `nameIR~param~`, obtained by repeating:
 +
 --
@@ -8926,9 +8928,9 @@ for each `value~back~` in `value~back~^{asterisk}^`
 --
 +
 for each `parameterIR` in `parameterIR^{asterisk}^`
-  ... Let `EC~callee_5~`, `STO~2~`, and `callResult` be the result of <<ExternMethodCall_eval, calling an extern method `oid``nameIR` on object `STO~1~`, under evaluation context `EC~callee_4~`, and store `nameIR~param~^{asterisk}^`>>.
+  ... Let `EC~callee_6~`, `STO~2~`, and `callResult` be the result of <<ExternMethodCall_eval, calling an extern method `oid``nameIR` on object `STO~1~`, under evaluation context `EC~callee_5~`, and store `nameIR~param~^{asterisk}^`>>.
   ... Let `EC~2~` be `EC~1~[GLOBAL.FRAME = EC~callee_5~.GLOBAL.FRAME]`.
-  ... Let <<Copy_out, `STO~2~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_5~ (storageReference^?^)^{asterisk}^ ~> EC~3~`>>.
+  ... Let <<Copy_out, `STO~2~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_6~ (storageReference^?^)^{asterisk}^ ~> EC~3~`>>.
   ... Result in the resulting evaluation context `EC~3~`, store `STO~2~`, and call result `callResult`.
 . Else if let `parserApplyMethodCallee` be `callee`:
  .. Group parserApplyMethodCallee:
