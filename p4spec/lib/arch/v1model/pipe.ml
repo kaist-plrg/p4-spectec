@@ -51,6 +51,7 @@ struct
     | PacketIn of Core.Object.PacketIn.t
     | PacketOut of Core.Object.PacketOut.t
     | Counter of Object.Counter.t
+    | Register of Object.Register.t
   [@@deriving yojson]
 
   let get_extern (value_sto : Value.t) (value_oid : Value.t) : extern =
@@ -86,6 +87,10 @@ struct
         let counter = Object.Counter.init value_type_args value_args in
         let counter = Counter counter in
         counter |> extern_to_yojson |> wrap_extern_v "externState"
+    | "register" ->
+        let register = Object.Register.init value_type_args value_args in
+        let register = Register register in
+        register |> extern_to_yojson |> wrap_extern_v "externState"
     | _ -> wrap_extern_v "externState" `Null
 
   let eval_extern_func_call (values_input : Value.t list) : Value.t list =
@@ -185,6 +190,18 @@ struct
           in
           let counter = Counter counter in
           (counter, value_ctx, value_sto, value_callResult)
+      | Register register, "read", [ "result"; "index" ] ->
+          let register, value_ctx, value_sto, value_callResult =
+            Object.Register.read value_ctx value_sto register
+          in
+          let register = Register register in
+          (register, value_ctx, value_sto, value_callResult)
+      | Register register, "write", [ "index"; "value" ] ->
+          let register, value_ctx, value_sto, value_callResult =
+            Object.Register.write value_ctx value_sto register
+          in
+          let register = Register register in
+          (register, value_ctx, value_sto, value_callResult)
       | _ ->
           let oid =
             value_oid |> unwrap_list_v |> List.map unwrap_text_v

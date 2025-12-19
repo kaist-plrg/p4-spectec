@@ -83,7 +83,7 @@ rulegroup Decl_ok/instantiation-non-objectInitializer {
     ---- ;; create IR
     -- if instantiationIR
         = annotationList typeIR_object prefixedNameIR
-            `< typeArgumentIR_inferred* > `( argumentIR* ) nameIR eps `;
+            `< typeArgumentIR_inferred* > `( argumentIR_cast* ) nameIR eps `;
 
 }
 
@@ -253,8 +253,7 @@ rulegroup Decl_ok/instantiation-objectInitializer {
     -- if theta = `{ (tid `: typeIR_arg)* }
     -- if externMethodTypeDefEnv_init_subst
         = $subst_externMethodTypeDefEnv(
-            theta, externMethodTypeDefEnv_extern, externMethodTypeDefEnv_init
-          )
+            theta, externMethodTypeDefEnv_extern, externMethodTypeDefEnv_init)
     -- if typeDefIR_object_init
         = EXTERN tid_extern `< tid_expl* `, tid_impl* > externMethodTypeDefEnv_init_subst
     -- if typeIR_object_init = typeDefIR_object_init `< typeIR_arg* >
@@ -266,7 +265,7 @@ rulegroup Decl_ok/instantiation-objectInitializer {
     ---- ;; create IR
     -- if instantiationIR
         = annotationList typeIR_object_init prefixedNameIR
-            `< typeArgumentIR_inferred* > `( argumentIR* ) nameIR (`= `{ objectDeclarationIR* }) `;
+            `< typeArgumentIR_inferred* > `( argumentIR_cast* ) nameIR (`= `{ objectDeclarationIR* }) `;
 
   rule Decl_ok/specializedType:
     p TC_0 |- annotationList
@@ -319,7 +318,7 @@ rulegroup Decl_ok/instantiation-objectInitializer {
     ---- ;; create IR
     -- if instantiationIR
         = annotationList typeIR_object_init prefixedNameIR
-            `< typeArgumentIR_inferred* > `( argumentIR* ) nameIR (`= `{ objectDeclarationIR* }) `;
+            `< typeArgumentIR_inferred* > `( argumentIR_cast* ) nameIR (`= `{ objectDeclarationIR* }) `;
 
 }
 

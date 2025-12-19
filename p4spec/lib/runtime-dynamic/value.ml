@@ -14,7 +14,7 @@ let fresh () =
 
 (* Value *)
 
-type t = value
+type t = value [@@deriving yojson]
 type id = vid
 
 (* Stringifier *)
