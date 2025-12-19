@@ -56,10 +56,30 @@ test-p4type:
 	opam switch 5.1.0
 	cd p4spec && opam exec -- dune build @p4type --profile=release && echo OK || (echo "####>" Failure running dune build @p4type. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
 
+test-p4type-il:
+	echo "#### Running (dune build @p4type-il)"
+	opam switch 5.1.0
+	cd p4spec && opam exec -- dune build @p4type-il --profile=release && echo OK || (echo "####>" Failure running dune build @p4type. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
+
+test-p4type-sl:
+	echo "#### Running (dune build @p4type-sl)"
+	opam switch 5.1.0
+	cd p4spec && opam exec -- dune build @p4type-sl --profile=release && echo OK || (echo "####>" Failure running dune build @p4type. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
+
 test-p4inst:
 	echo "#### Running (dune build @p4inst)"
 	opam switch 5.1.0
 	cd p4spec && opam exec -- dune build @p4inst --profile=release && echo OK || (echo "####>" Failure running dune build @p4inst. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
+
+test-p4inst-il:
+	echo "#### Running (dune build @p4inst-il)"
+	opam switch 5.1.0
+	cd p4spec && opam exec -- dune build @p4inst-il --profile=release && echo OK || (echo "####>" Failure running dune build @p4inst. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
+
+test-p4inst-sl:
+	echo "#### Running (dune build @p4inst-sl)"
+	opam switch 5.1.0
+	cd p4spec && opam exec -- dune build @p4inst-sl --profile=release && echo OK || (echo "####>" Failure running dune build @p4inst. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
 
 test-p4sim:
 	echo "#### Running (dune build @p4sim)"
