@@ -18143,15 +18143,17 @@ relation ParserTransition_ok: TC_0 (nameIR_state)*{nameIR_state <- nameIR_state*
 
         2. (Expr_ok: (local) TC_0 |- expression_key : typedExpressionIR_key)*{expression_key <- expression_key*, typedExpressionIR_key <- typedExpressionIR_key*}
 
-        3. (Let typeIR_key be $type_of_typedExpressionIR(typedExpressionIR_key))*{typeIR_key <- typeIR_key*, typedExpressionIR_key <- typedExpressionIR_key*}
+        3. (Let typedExpressionIR_key_reduced be $reduce_serenum(typedExpressionIR_key))*{typedExpressionIR_key <- typedExpressionIR_key*, typedExpressionIR_key_reduced <- typedExpressionIR_key_reduced*}
 
-        4. If (Type_wf: $bound((local), TC_0) |- ((set< [typeIR_key] >) as typeIR))*{typeIR_key <- typeIR_key*} holds, then
+        4. (Let typeIR_key_reduced be $type_of_typedExpressionIR(typedExpressionIR_key_reduced))*{typeIR_key_reduced <- typeIR_key_reduced*, typedExpressionIR_key_reduced <- typedExpressionIR_key_reduced*}
+
+        5. If (Type_wf: $bound((local), TC_0) |- ((set< [typeIR_key_reduced] >) as typeIR))*{typeIR_key_reduced <- typeIR_key_reduced*} holds, then
 
           1. (Let (selectCase)*{selectCase <- selectCase*} be $flatten_selectCaseList(selectCaseList))
 
-          2. (SelectCase_ok: TC_0 (nameIR_state)*{nameIR_state <- nameIR_state*} (typeIR_key)*{typeIR_key <- typeIR_key*} |- selectCase : selectCaseIR)*{selectCase <- selectCase*, selectCaseIR <- selectCaseIR*}
+          2. (SelectCase_ok: TC_0 (nameIR_state)*{nameIR_state <- nameIR_state*} (typeIR_key_reduced)*{typeIR_key_reduced <- typeIR_key_reduced*} |- selectCase : selectCaseIR)*{selectCase <- selectCase*, selectCaseIR <- selectCaseIR*}
 
-          3. (Let transitionStatementIR be (transition ((select( (typedExpressionIR_key)*{typedExpressionIR_key <- typedExpressionIR_key*} ){ (selectCaseIR)*{selectCaseIR <- selectCaseIR*} }) as stateExpressionIR)))
+          3. (Let transitionStatementIR be (transition ((select( (typedExpressionIR_key_reduced)*{typedExpressionIR_key_reduced <- typedExpressionIR_key_reduced*} ){ (selectCaseIR)*{selectCaseIR <- selectCaseIR*} }) as stateExpressionIR)))
 
           4. Result in : % % |- % : transitionStatementIR
 
@@ -18558,21 +18560,23 @@ relation TableKey_ok: TC TBLC_0 |- (expression : name_matchkind annotationList ;
 
   1. (Expr_ok: (local) TC |- expression : typedExpressionIR)
 
-  2. (Let typeIR be $type_of_typedExpressionIR(typedExpressionIR))
+  2. (Let typedExpressionIR_reduced be $reduce_serenum(typedExpressionIR))
 
-  3. If (Type_wf: $bound((local), TC) |- ((set< [typeIR] >) as typeIR)) holds, then
+  3. (Let typeIR_reduced be $type_of_typedExpressionIR(typedExpressionIR_reduced))
+
+  4. If (Type_wf: $bound((local), TC) |- ((set< [typeIR_reduced] >) as typeIR)) holds, then
 
     1. (Let nameIR_matchkind be $name(name_matchkind))
 
     2. If ((((match_kind. nameIR_matchkind) as value) = $find_var_value_t((local), TC, (` nameIR_matchkind)))), then
 
-      1. If ($compat_table_key(nameIR_matchkind, typeIR)), then
+      1. If ($compat_table_key(nameIR_matchkind, typeIR_reduced)), then
 
-        1. (Let TBLC_1 be $update_mode(TBLC_0, nameIR_matchkind, typeIR))
+        1. (Let TBLC_1 be $update_mode(TBLC_0, nameIR_matchkind, typeIR_reduced))
 
-        2. (Let TBLC_2 be $add_key(TBLC_1, nameIR_matchkind, typeIR))
+        2. (Let TBLC_2 be $add_key(TBLC_1, nameIR_matchkind, typeIR_reduced))
 
-        3. (Let tableKeyIR be (typedExpressionIR : nameIR_matchkind annotationList ;))
+        3. (Let tableKeyIR be (typedExpressionIR_reduced : nameIR_matchkind annotationList ;))
 
         4. Result in : % % |- % : TBLC_2 tableKeyIR
 
@@ -21790,7 +21794,32 @@ relation Inst_ok: cursor TC instctxt |- constructorTypeIR < (typeArgumentIR)*{ty
 
             2. Result in : % % % |- % < % # % >( % # % ): typeIR_object_inferred < (typeArgumentIR_inferred)*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( (argumentIR_cast)*{argumentIR_cast <- argumentIR_cast*} )
 
-;; ../../../../spec-concrete/5.05.2-typing-subtyping.watsup:420.1-424.23
+;; ../../../../spec-concrete/5.05.2-typing-subtyping.watsup:418.1-418.59
+def $reduce_serenum(typedExpressionIR)
+
+1. (Let typeIR be $type_of_typedExpressionIR(typedExpressionIR))
+
+2. (Let ctk be $ctk_of_typedExpressionIR(typedExpressionIR))
+
+3. (Let typeIR' be $canon_typeIR(typeIR))
+
+4. If ((typeIR' has type enumTypeIR)), then
+
+  1. (Let enumTypeIR be (typeIR' as enumTypeIR))
+
+  2. If ((enumTypeIR matches pattern `ENUM%<%>{%}`)), then
+
+    1. (Let (enum _tid < typeIR_underlying >{ (_valueFieldIR)*{_valueFieldIR <- _valueFieldIR*} }) be enumTypeIR)
+
+    2. (Let typedExpressionIR_reduced be (((( typeIR_underlying ) typedExpressionIR) as expressionIR) # (( typeIR_underlying ctk ))))
+
+    3. Return typedExpressionIR_reduced
+
+5. Otherwise
+
+  1. Return typedExpressionIR
+
+;; ../../../../spec-concrete/5.05.2-typing-subtyping.watsup:431.1-434.23
 def $reduce_serenum_unary(typedExpressionIR, $check)
 
 1. (Let (_expressionIR # (( typeIR _ctk ))) be typedExpressionIR)
@@ -21821,7 +21850,7 @@ def $reduce_serenum_unary(typedExpressionIR, $check)
 
   1. Return ?()
 
-;; ../../../../spec-concrete/5.05.2-typing-subtyping.watsup:445.1-450.44
+;; ../../../../spec-concrete/5.05.2-typing-subtyping.watsup:454.1-458.44
 def $reduce_serenum_binary(typedExpressionIR_l, typedExpressionIR_r, $check)
 
 1. (Let (_expressionIR # (( typeIR_l _ctk ))) be typedExpressionIR_l)
@@ -21868,7 +21897,7 @@ def $reduce_serenum_binary(typedExpressionIR_l, typedExpressionIR_r, $check)
 
   1. Return ?()
 
-;; ../../../../spec-concrete/5.05.2-typing-subtyping.watsup:490.1-491.44
+;; ../../../../spec-concrete/5.05.2-typing-subtyping.watsup:498.1-499.44
 def $coerce_unary(typedExpressionIR, typeIR_to)
 
 1. (Let (_expressionIR # (( typeIR _ctk ))) be typedExpressionIR)
@@ -21885,7 +21914,7 @@ def $coerce_unary(typedExpressionIR, typeIR_to)
 
     2. Return ?(typedExpressionIR_cast)
 
-;; ../../../../spec-concrete/5.05.2-typing-subtyping.watsup:506.1-508.62
+;; ../../../../spec-concrete/5.05.2-typing-subtyping.watsup:514.1-516.62
 def $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
 
 1. (Let (_expressionIR # (( typeIR_l _ctk ))) be typedExpressionIR_l)
@@ -21911,6 +21940,22 @@ def $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
       1. (Let typedExpressionIR_r_cast be (((( typeIR_l ) typedExpressionIR_r) as expressionIR) # (( typeIR_l _ctk' ))))
 
       2. Return ?((typedExpressionIR_l, typedExpressionIR_r_cast))
+
+    1. Else,
+
+      1. (Let typedExpressionIR_l_cast be $reduce_serenum(typedExpressionIR_l))
+
+      2. If ((typedExpressionIR_l =/= typedExpressionIR_l_cast)), then
+
+        1. Return $coerce_binary(typedExpressionIR_l_cast, typedExpressionIR_r)
+
+      3. If ((typedExpressionIR_l = $reduce_serenum(typedExpressionIR_l))), then
+
+        1. (Let typedExpressionIR_r_cast be $reduce_serenum(typedExpressionIR_r))
+
+        2. If ((typedExpressionIR_r =/= typedExpressionIR_r_cast)), then
+
+          1. Return $coerce_binary(typedExpressionIR_l, typedExpressionIR_r_cast)
 
 4. Otherwise
 
@@ -24065,7 +24110,7 @@ def $compat_table_key(nameIR, typeIR)
 
   1. Return false
 
-;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:86.1-87.33
+;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:89.1-90.33
 def $split_dataplane_parameters((parameterIR)*{parameterIR <- parameterIR*})
 
 1. Case analysis on (parameterIR)*{parameterIR <- parameterIR*}
@@ -24094,7 +24139,7 @@ def $split_dataplane_parameters((parameterIR)*{parameterIR <- parameterIR*})
 
         2. Return (parameterIR_h :: (parameterIR_data)*{parameterIR_data <- parameterIR_data*}, (parameterIR_control)*{parameterIR_control <- parameterIR_control*})
 
-;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:241.1-244.26
+;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:244.1-247.26
 relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key, text) @ simpleKeysetExpression : % %
 
 1. If ((simpleKeysetExpression has type expression)), then
@@ -24297,7 +24342,7 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key, text) @ simpleKeys
 
             2. Result in : % % |- % @ % : (nolpm) (typedExpressionIR_l_reduced .. typedExpressionIR_r_reduced)
 
-;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:400.1-403.29
+;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:403.1-406.29
 relation TableEntry_keysets_simple_ok: TC TBLC TBLS |- (matchKey)*{matchKey <- matchKey*} @ (simpleKeysetExpression)*{simpleKeysetExpression <- simpleKeysetExpression*} : % %
 
 1. Case analysis on (matchKey)*{matchKey <- matchKey*}
@@ -24328,7 +24373,7 @@ relation TableEntry_keysets_simple_ok: TC TBLC TBLS |- (matchKey)*{matchKey <- m
 
         4. Result in : % % % |- % @ % : TBLS_3 simpleKeysetExpressionIR_h :: (simpleKeysetExpressionIR_t)*{simpleKeysetExpressionIR_t <- simpleKeysetExpressionIR_t*}
 
-;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:955.1-955.48
+;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:958.1-958.48
 def $is_tableKeysProperty(tableProperty)
 
 1. If ((tableProperty matches pattern `KEY={%}`)), then
@@ -24341,7 +24386,7 @@ def $is_tableKeysProperty(tableProperty)
 
   1. Return false
 
-;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:960.1-960.51
+;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:963.1-963.51
 def $is_tableActionsProperty(tableProperty)
 
 1. If ((tableProperty matches pattern `ACTIONS={%}`)), then
@@ -24354,7 +24399,7 @@ def $is_tableActionsProperty(tableProperty)
 
   1. Return false
 
-;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:965.1-965.57
+;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:968.1-968.57
 def $is_tableDefaultActionProperty(tableProperty)
 
 1. If ((tableProperty matches pattern `%%%%;`)), then
@@ -24369,7 +24414,7 @@ def $is_tableDefaultActionProperty(tableProperty)
 
   1. Return false
 
-;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:971.1-974.37
+;; ../../../../spec-concrete/5.14.1-typing-control-table.watsup:974.1-977.37
 def $insert_NoAction_tablePropertyIR(TBLC, (tablePropertyIR)*{tablePropertyIR <- tablePropertyIR*})
 
 1. Case analysis on (tablePropertyIR)*{tablePropertyIR <- tablePropertyIR*}
