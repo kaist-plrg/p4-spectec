@@ -12292,7 +12292,20 @@ relation ParameterTypes_wf: bound |- (parameterIR)*{parameterIR <- parameterIR*}
 
       1. The relation holds
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:25.1-28.74
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:25.1-28.81
+relation ReturnType_wf: bound |- typeIR_ret
+
+1. Group : bound |- typeIR_ret
+
+  1. If (Type_wf: bound |- typeIR_ret) holds, then
+
+    1. (Let typeIR_canon be $canon_typeIR(typeIR_ret))
+
+    2. If (((~$is_stringTypeIR(typeIR_canon) /\ ~$is_arbitraryIntTypeIR(typeIR_canon)) /\ ~$is_objectTypeIR(typeIR_canon))), then
+
+      1. The relation holds
+
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:30.1-33.74
 relation CallableType_wf: bound |- callableTypeIR
 
 1. Case analysis on callableTypeIR
@@ -12325,7 +12338,7 @@ relation CallableType_wf: bound |- callableTypeIR
 
         2. If ($nestable_definedFunction(typeIR))*{typeIR <- typeIR*}, then
 
-          1. If (Type_wf: bound |- typeIR_ret) holds, then
+          1. If (ReturnType_wf: bound |- typeIR_ret) holds, then
 
             1. The relation holds
 
@@ -12341,7 +12354,7 @@ relation CallableType_wf: bound |- callableTypeIR
 
         2. If ($nestable_externFunction(typeIR))*{typeIR <- typeIR*}, then
 
-          1. If (Type_wf: bound |- typeIR_ret) holds, then
+          1. If (ReturnType_wf: bound |- typeIR_ret) holds, then
 
             1. The relation holds
 
@@ -12353,7 +12366,7 @@ relation CallableType_wf: bound |- callableTypeIR
 
       1. If (ParameterTypes_wf: bound |- (parameterIR)*{parameterIR <- parameterIR*}) holds, then
 
-        1. If (Type_wf: bound |- typeIR_ret) holds, then
+        1. If (ReturnType_wf: bound |- typeIR_ret) holds, then
 
           1. The relation holds
 
@@ -12375,7 +12388,7 @@ relation CallableType_wf: bound |- callableTypeIR
 
             2. If ($nestable_externMethod(typeIR))*{typeIR <- typeIR*}, then
 
-              1. If (Type_wf: bound |- typeIR_ret) holds, then
+              1. If (ReturnType_wf: bound |- typeIR_ret) holds, then
 
                 1. The relation holds
 
@@ -12389,7 +12402,7 @@ relation CallableType_wf: bound |- callableTypeIR
 
             2. If ($nestable_externMethod(typeIR))*{typeIR <- typeIR*}, then
 
-              1. If (Type_wf: bound |- typeIR_ret) holds, then
+              1. If (ReturnType_wf: bound |- typeIR_ret) holds, then
 
                 1. The relation holds
 
@@ -12429,7 +12442,7 @@ relation CallableType_wf: bound |- callableTypeIR
 
       1. The relation holds
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:30.1-33.74
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:35.1-38.74
 relation CallableTypeDef_wf: bound |- callableTypeDefIR
 
 1. Group : bound |- callableTypeDefIR
@@ -12446,7 +12459,7 @@ relation CallableTypeDef_wf: bound |- callableTypeDefIR
 
       1. The relation holds
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:35.1-38.74
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:40.1-43.74
 relation ConstructorParameterType_wf: bound |- (_annotationList direction typeIR _nameIR _constantInitializerOptIR)
 
 1. If ((direction matches pattern ``EMPTY`)), then
@@ -12459,7 +12472,7 @@ relation ConstructorParameterType_wf: bound |- (_annotationList direction typeIR
 
         1. The relation holds
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:40.1-43.74
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:45.1-48.74
 relation ConstructorParameterTypes_wf: bound |- (parameterIR)*{parameterIR <- parameterIR*}
 
 1. Group : bound |- (parameterIR)*{parameterIR <- parameterIR*}
@@ -12472,7 +12485,7 @@ relation ConstructorParameterTypes_wf: bound |- (parameterIR)*{parameterIR <- pa
 
       1. The relation holds
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:45.1-48.74
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:50.1-53.74
 relation ConstructorType_wf: bound |- (constructor( (parameterIR)*{parameterIR <- parameterIR*} ): typeIR_object)
 
 1. Group externObjectTypeIR: bound |- (constructor( (parameterIR)*{parameterIR <- parameterIR*} ): typeIR_object)
@@ -12547,7 +12560,7 @@ relation ConstructorType_wf: bound |- (constructor( (parameterIR)*{parameterIR <
 
           1. The relation holds
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:50.1-53.74
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:55.1-58.74
 relation ConstructorTypeDef_wf: bound |- (constructor< (tid_tparam_expl)*{tid_tparam_expl <- tid_tparam_expl*} , (tid_tparam_impl)*{tid_tparam_impl <- tid_tparam_impl*} >( (parameterIR)*{parameterIR <- parameterIR*} ): typeIR_object)
 
 1. Group : bound |- (constructor< (tid_tparam_expl)*{tid_tparam_expl <- tid_tparam_expl*} , (tid_tparam_impl)*{tid_tparam_impl <- tid_tparam_impl*} >( (parameterIR)*{parameterIR <- parameterIR*} ): typeIR_object)
@@ -12562,14 +12575,14 @@ relation ConstructorTypeDef_wf: bound |- (constructor< (tid_tparam_expl)*{tid_tp
 
         1. The relation holds
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:77.1-79.53
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:82.1-84.53
 def $nestable_typedef(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_typedef(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:80.1-82.53
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:85.1-87.53
 tbl def $nestable'_typedef(typeIR') =
 
   Row : ((bool) as typeIR) -> true:
@@ -12664,14 +12677,14 @@ tbl def $nestable'_typedef(typeIR') =
 
     1. Return false
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:105.1-107.54
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:110.1-112.54
 def $nestable_new(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_new(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:108.1-110.54
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:113.1-115.54
 tbl def $nestable'_new(typeIR') =
 
   Row : ((bool) as typeIR) -> true:
@@ -12726,14 +12739,14 @@ tbl def $nestable'_new(typeIR') =
 
     1. Return false
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:129.1-131.57
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:134.1-136.57
 def $nestable_list(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_list(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:132.1-134.57
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:137.1-139.57
 tbl def $nestable'_list(typeIR') =
 
   Row : ((bool) as typeIR) -> true:
@@ -12804,14 +12817,14 @@ tbl def $nestable'_list(typeIR') =
 
     1. Return false
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:154.1-156.58
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:159.1-161.58
 def $nestable_tuple(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_tuple(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:157.1-159.58
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:162.1-164.58
 tbl def $nestable'_tuple(typeIR') =
 
   Row : ((bool) as typeIR) -> true:
@@ -12934,14 +12947,14 @@ tbl def $nestable'_tuple(typeIR') =
 
     1. Return false
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:184.1-186.65
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:189.1-191.65
 def $nestable_headerStack(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_headerStack(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:187.1-189.65
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:192.1-194.65
 tbl def $nestable'_headerStack(typeIR') =
 
   Row : (nameTypeIR as typeIR) -> true:
@@ -12972,26 +12985,26 @@ tbl def $nestable'_headerStack(typeIR') =
 
     1. Return false
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:206.1-208.59
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:211.1-213.59
 def $nestable_struct(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_struct(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:209.1-211.59
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:214.1-216.59
 def $nestable'_struct(typeIR)
 
 1. Return $nestable'_tuple(typeIR)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:223.1-225.57
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:228.1-230.57
 def $nestable_header(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_header(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:226.1-228.57
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:231.1-233.57
 tbl def $nestable'_header(typeIR') =
 
   Row : ((bool) as typeIR) -> true:
@@ -13078,14 +13091,14 @@ tbl def $nestable'_header(typeIR') =
 
     1. Return false
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:229.1-231.76
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:234.1-236.76
 def $nestable_struct_in_header(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_struct_in_header(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:232.1-234.76
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:237.1-239.76
 tbl def $nestable'_struct_in_header(typeIR') =
 
   Row : ((bool) as typeIR) -> true:
@@ -13160,14 +13173,14 @@ tbl def $nestable'_struct_in_header(typeIR') =
 
     1. Return false
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:271.1-273.63
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:276.1-278.63
 def $nestable_headerUnion(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_headerUnion(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:274.1-276.63
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:279.1-281.63
 tbl def $nestable'_headerUnion(typeIR') =
 
   Row : (nameTypeIR as typeIR) -> true:
@@ -13198,14 +13211,14 @@ tbl def $nestable'_headerUnion(typeIR') =
 
     1. Return false
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:293.1-295.68
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:298.1-300.68
 def $nestable_enum_serializable(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_enum_serializable(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:296.1-298.68
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:301.1-303.68
 tbl def $nestable'_enum_serializable(typeIR'') =
 
   Row : ((int< _nat >) as typeIR) -> true:
@@ -13252,14 +13265,14 @@ tbl def $nestable'_enum_serializable(typeIR'') =
 
     1. Return false
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:299.1-301.89
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:304.1-306.89
 def $nestable_new_in_enum_serializable(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_new_in_enum_serializable(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:302.1-304.89
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:307.1-309.89
 tbl def $nestable'_new_in_enum_serializable(typeIR') =
 
   Row : ((int< _nat >) as typeIR) -> true:
@@ -13306,14 +13319,14 @@ tbl def $nestable'_new_in_enum_serializable(typeIR') =
 
     1. Return false
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:396.1-398.54
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:401.1-403.54
 def $nestable_set(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_set(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:399.1-401.54
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:404.1-406.54
 tbl def $nestable'_set(typeIR'') =
 
   Row : ((bool) as typeIR) -> true:
@@ -13404,14 +13417,14 @@ tbl def $nestable'_set(typeIR'') =
 
     1. Return false
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:402.1-404.72
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:407.1-409.72
 def $nestable_tuple_in_set(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_tuple_in_set(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:405.1-407.72
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:410.1-412.72
 tbl def $nestable'_tuple_in_set(typeIR'') =
 
   Row : ((bool) as typeIR) -> true:
@@ -13482,14 +13495,14 @@ tbl def $nestable'_tuple_in_set(typeIR'') =
 
     1. Return false
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:408.1-410.75
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:413.1-415.75
 def $nestable_sequence_in_set(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_sequence_in_set(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:411.1-413.75
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:416.1-418.75
 tbl def $nestable'_sequence_in_set(typeIR'') =
 
   Row : ((bool) as typeIR) -> true:
@@ -13572,12 +13585,12 @@ tbl def $nestable'_sequence_in_set(typeIR'') =
 
     1. Return false
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:530.1-532.85
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:547.1-549.85
 def $directionless_trailing((direction)*{direction <- direction*})
 
 1. Return $directionless_trailing'(true, $rev_<direction>((direction)*{direction <- direction*}))
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:533.1-533.54
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:550.1-550.54
 def $directionless_trailing'(_bool, (direction')*{direction' <- direction'*})
 
 1. Case analysis on (direction')*{direction' <- direction'*}
@@ -13616,14 +13629,14 @@ def $directionless_trailing'(_bool, (direction')*{direction' <- direction'*})
 
         1. Return false
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:546.1-548.58
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:563.1-565.58
 def $nestable_action(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_action(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:549.1-551.58
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:566.1-568.58
 tbl def $nestable'_action(typeIR') =
 
   Row : ((int) as typeIR) -> false:
@@ -13656,14 +13669,14 @@ tbl def $nestable'_action(typeIR') =
 
     1. Return true
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:570.1-572.67
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:587.1-589.67
 def $nestable_definedFunction(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_definedFunction(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:573.1-575.67
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:590.1-592.67
 tbl def $nestable'_definedFunction(typeIR') =
 
   Row : (objectTypeIR as typeIR) -> false:
@@ -13686,14 +13699,14 @@ tbl def $nestable'_definedFunction(typeIR') =
 
     1. Return true
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:592.1-594.67
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:609.1-611.67
 def $nestable_externFunction(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_externFunction(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:595.1-597.67
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:612.1-614.67
 tbl def $nestable'_externFunction(typeIR') =
 
   Row : (parserObjectTypeIR as typeIR) -> false:
@@ -13732,14 +13745,14 @@ tbl def $nestable'_externFunction(typeIR') =
 
     1. Return true
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:623.1-625.65
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:640.1-642.65
 def $nestable_externMethod(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_externMethod(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:626.1-628.65
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:643.1-645.65
 tbl def $nestable'_externMethod(typeIR') =
 
   Row : (parserObjectTypeIR as typeIR) -> false:
@@ -13778,14 +13791,14 @@ tbl def $nestable'_externMethod(typeIR') =
 
     1. Return true
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:658.1-660.70
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:675.1-677.70
 def $nestable_parserApplyMethod(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_parserApplyMethod(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:661.1-663.70
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:678.1-680.70
 tbl def $nestable'_parserApplyMethod(typeIR') =
 
   Row : (parserObjectTypeIR as typeIR) -> false:
@@ -13824,14 +13837,14 @@ tbl def $nestable'_parserApplyMethod(typeIR') =
 
     1. Return true
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:681.1-683.71
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:698.1-700.71
 def $nestable_controlApplyMethod(typeIR)
 
 1. (Let typeIR_canon be $canon_typeIR(typeIR))
 
 2. Return $nestable'_controlApplyMethod(typeIR_canon)
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:684.1-686.71
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:701.1-703.71
 tbl def $nestable'_controlApplyMethod(typeIR') =
 
   Row : (parserObjectTypeIR as typeIR) -> false:
@@ -13862,12 +13875,12 @@ tbl def $nestable'_controlApplyMethod(typeIR') =
 
     1. Return true
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:740.1-740.48
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:757.1-757.48
 def $nestable_constructor_extern(typeIR)
 
 1. Return $nestable'_constructor_extern($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:741.1-741.53
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:758.1-758.53
 tbl def $nestable'_constructor_extern(typeIR') =
 
   Row : (parserObjectTypeIR as typeIR) -> false:
@@ -13906,12 +13919,12 @@ tbl def $nestable'_constructor_extern(typeIR') =
 
     1. Return true
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:760.1-760.48
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:777.1-777.48
 def $nestable_constructor_parser(typeIR)
 
 1. Return $nestable'_constructor_parser($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:761.1-761.53
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:778.1-778.53
 tbl def $nestable'_constructor_parser(typeIR') =
 
   Row : (controlObjectTypeIR as typeIR) -> false:
@@ -13942,12 +13955,12 @@ tbl def $nestable'_constructor_parser(typeIR') =
 
     1. Return true
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:779.1-779.49
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:796.1-796.49
 def $nestable_constructor_control(typeIR)
 
 1. Return $nestable'_constructor_control($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:780.1-780.54
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:797.1-797.54
 tbl def $nestable'_constructor_control(typeIR') =
 
   Row : (parserObjectTypeIR as typeIR) -> false:
@@ -13978,12 +13991,12 @@ tbl def $nestable'_constructor_control(typeIR') =
 
     1. Return true
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:798.1-798.49
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:815.1-815.49
 def $nestable_constructor_package(typeIR)
 
 1. Return $nestable'_constructor_package($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:799.1-799.50
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:816.1-816.50
 def $nestable'_constructor_package(typeIR)
 
 1. If ((typeIR has type tableObjectTypeIR)), then
@@ -13996,12 +14009,12 @@ def $nestable'_constructor_package(typeIR)
 
   1. Return true
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:819.1-819.42
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:836.1-836.42
 def $definable_constructor(typeIR)
 
 1. Return $definable'_constructor($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:820.1-820.47
+;; ../../../../spec-concrete/5.03-typing-wellformed.watsup:837.1-837.47
 tbl def $definable'_constructor(typeIR') =
 
   Row : (externObjectTypeIR as typeIR) -> true:

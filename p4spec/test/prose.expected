@@ -570,6 +570,16 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
  .. The relation holds.
 
 
+relation ReturnType_wf: `bound` and `typeIR~ret~`
+
+
+. Group :
+ .. Check that <<Type_wf, `typeIR~ret~` is a well-formed type, assuming bound type ids `bound`>>.
+ .. Let `typeIR~canon~` be <<canon_typeIR, the canonicalized form of `typeIR~ret~`>>.
+ .. Check that `~<<is_stringTypeIR, $is_stringTypeIR(typeIR~canon~)>> /\ ~<<is_arbitraryIntTypeIR, $is_arbitraryIntTypeIR(typeIR~canon~)>>` *and* `~<<is_objectTypeIR, $is_objectTypeIR(typeIR~canon~)>>`.
+ .. The relation holds.
+
+
 relation CallableType_wf: `bound` and `callableTypeIR`
 
 
@@ -597,7 +607,7 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
 +
 for each `parameterIR` in `parameterIR^{asterisk}^`
   ... Check that <<nestable_definedFunction, `typeIR` can be used in a defined function type>>, for all `typeIR` in `typeIR^{asterisk}^`.
-  ... Check that <<Type_wf, `typeIR~ret~` is a well-formed type, assuming bound type ids `bound`>>.
+  ... Check that <<ReturnType_wf, `typeIR~ret~` is a well-formed return type, assuming bound type ids `bound`>>.
   ... The relation holds.
 . Else if let `EXTERN_FUNCTION ( parameterIR^{asterisk}^ ) : typeIR~ret~` be `callableTypeIR`:
  .. Group externFunctionTypeIR:
@@ -610,12 +620,12 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
 +
 for each `parameterIR` in `parameterIR^{asterisk}^`
   ... Check that <<nestable_externFunction, `typeIR` can be used in an extern function type>>, for all `typeIR` in `typeIR^{asterisk}^`.
-  ... Check that <<Type_wf, `typeIR~ret~` is a well-formed type, assuming bound type ids `bound`>>.
+  ... Check that <<ReturnType_wf, `typeIR~ret~` is a well-formed return type, assuming bound type ids `bound`>>.
   ... The relation holds.
 . Else if let `BUILTIN_METHOD ( parameterIR^{asterisk}^ ) : typeIR~ret~` be `callableTypeIR`:
  .. Group builtinMethodTypeIR:
   ... Check that <<ParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
-  ... Check that <<Type_wf, `typeIR~ret~` is a well-formed type, assuming bound type ids `bound`>>.
+  ... Check that <<ReturnType_wf, `typeIR~ret~` is a well-formed return type, assuming bound type ids `bound`>>.
   ... The relation holds.
 . Else if let `externMethodTypeIR` be `callableTypeIR`:
  .. Group externMethodTypeIR:
@@ -629,7 +639,7 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
 +
 for each `parameterIR` in `parameterIR^{asterisk}^`
    .... Check that <<nestable_externMethod, `typeIR` can be used in an extern method type>>, for all `typeIR` in `typeIR^{asterisk}^`.
-   .... Check that <<Type_wf, `typeIR~ret~` is a well-formed type, assuming bound type ids `bound`>>.
+   .... Check that <<ReturnType_wf, `typeIR~ret~` is a well-formed return type, assuming bound type ids `bound`>>.
    .... The relation holds.
   ... Else let `EXTERN_METHOD ABSTRACT ( parameterIR^{asterisk}^ ) : typeIR~ret~` be `externMethodTypeIR`:
    .... Check that <<ParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
@@ -641,7 +651,7 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
 +
 for each `parameterIR` in `parameterIR^{asterisk}^`
    .... Check that <<nestable_externMethod, `typeIR` can be used in an extern method type>>, for all `typeIR` in `typeIR^{asterisk}^`.
-   .... Check that <<Type_wf, `typeIR~ret~` is a well-formed type, assuming bound type ids `bound`>>.
+   .... Check that <<ReturnType_wf, `typeIR~ret~` is a well-formed return type, assuming bound type ids `bound`>>.
    .... The relation holds.
 . Else if let `PARSER_APPLY ( parameterIR^{asterisk}^ )` be `callableTypeIR`:
  .. Group parserApplyMethodTypeIR:
