@@ -16056,11 +16056,13 @@ relation Expr_ok: p TC |- expression''' : %
 
           6. If ($is_fixedBitTypeIR(typeIR_r_reduced)), then
 
-            1. (Let ctk_reduced be $join_ctk(ctk_l_reduced, ctk_r_reduced))
+            1. If (($is_arbitraryIntTypeIR(typeIR_l_reduced) => (ctk_r_reduced = (lctk)))), then
 
-            2. (Let expressionNoteIR be (( typeIR_l_reduced ctk_reduced )))
+              1. (Let ctk_reduced be $join_ctk(ctk_l_reduced, ctk_r_reduced))
 
-            3. Result in : % % |- % : (((typedExpressionIR_l_reduced binop typedExpressionIR_r_reduced) as expressionIR) # expressionNoteIR)
+              2. (Let expressionNoteIR be (( typeIR_l_reduced ctk_reduced )))
+
+              3. Result in : % % |- % : (((typedExpressionIR_l_reduced binop typedExpressionIR_r_reduced) as expressionIR) # expressionNoteIR)
 
           7. If ((ctk_r_reduced matches pattern `LCTK`)), then
 
@@ -22342,12 +22344,12 @@ def $compat'_shift(typeIR, typeIR')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:403.1-403.43
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:404.1-404.43
 def $compat_compare(typeIR_l, typeIR_r)
 
 1. Return $compat'_compare($canon_typeIR(typeIR_l), $canon_typeIR(typeIR_r))
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:404.1-404.44
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:405.1-405.44
 def $compat'_compare(typeIR, typeIR')
 
 1. If ((typeIR has type integerTypeIR)), then
@@ -22402,12 +22404,12 @@ def $compat'_compare(typeIR, typeIR')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:441.1-441.43
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:442.1-442.43
 def $compat_bitwise(typeIR_l, typeIR_r)
 
 1. Return $compat'_bitwise($canon_typeIR(typeIR_l), $canon_typeIR(typeIR_r))
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:442.1-442.44
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:443.1-443.44
 def $compat'_bitwise(typeIR, typeIR')
 
 1. If ((typeIR has type integerTypeIR)), then
@@ -22452,12 +22454,12 @@ def $compat'_bitwise(typeIR, typeIR')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:478.1-478.42
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:479.1-479.42
 def $compat_concat(typeIR_l, typeIR_r)
 
 1. Return $compat'_concat($canon_typeIR(typeIR_l), $canon_typeIR(typeIR_r))
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:479.1-479.43
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:480.1-480.43
 def $compat'_concat(typeIR, typeIR')
 
 1. Case analysis on typeIR
@@ -22526,12 +22528,12 @@ def $compat'_concat(typeIR, typeIR')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:491.1-491.45
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:492.1-492.45
 def $result_concat(typeIR_l, typeIR_r)
 
 1. Return $result'_concat($canon_typeIR(typeIR_l), $canon_typeIR(typeIR_r))
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:492.1-492.46
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:493.1-493.46
 def $result'_concat(typeIR, typeIR')
 
 1. Case analysis on typeIR
@@ -22600,12 +22602,12 @@ def $result'_concat(typeIR, typeIR')
 
   1. Return ?()
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:535.1-535.43
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:536.1-536.43
 def $compat_logical(typeIR_l, typeIR_r)
 
 1. Return $compat'_logical($canon_typeIR(typeIR_l), $canon_typeIR(typeIR_r))
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:536.1-536.44
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:537.1-537.44
 def $compat'_logical(typeIR, typeIR')
 
 1. If ((typeIR has type boolTypeIR)), then
@@ -22622,12 +22624,12 @@ def $compat'_logical(typeIR, typeIR')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:976.1-976.39
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:977.1-977.39
 def $compat_array_index(typeIR)
 
 1. Return $compat'_arrayindex($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:977.1-977.39
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:978.1-978.39
 def $compat'_arrayindex(typeIR)
 
 1. If ((typeIR has type integerTypeIR)), then
@@ -22656,12 +22658,12 @@ def $compat'_arrayindex(typeIR)
 
   1. Return false
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1080.1-1080.41
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1081.1-1081.41
 def $compat_bitslice_base(typeIR)
 
 1. Return $compat'_bitslice_base($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1081.1-1081.42
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1082.1-1082.42
 def $compat'_bitslice_base(typeIR)
 
 1. If ((typeIR has type integerTypeIR)), then
@@ -22690,12 +22692,12 @@ def $compat'_bitslice_base(typeIR)
 
   1. Return false
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1091.1-1091.42
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1092.1-1092.42
 def $compat_bitslice_index(typeIR)
 
 1. Return $compat'_bitslice_index($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1092.1-1092.43
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1093.1-1093.43
 def $compat'_bitslice_index(typeIR)
 
 1. If ((typeIR has type integerTypeIR)), then
@@ -22724,12 +22726,12 @@ def $compat'_bitslice_index(typeIR)
 
   1. Return false
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1102.1-1102.48
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1103.1-1103.48
 def $is_valid_bitslice(typeIR, n_lo, n_hi)
 
 1. Return ((n_lo <= n_hi) /\ $is_valid_bitslice'($canon_typeIR(typeIR), n_lo, n_hi))
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1103.1-1103.49
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1104.1-1104.49
 def $is_valid_bitslice'(typeIR, _nat, _nat')
 
 1. If ((typeIR has type integerTypeIR)), then
@@ -22770,12 +22772,12 @@ def $is_valid_bitslice'(typeIR, _nat, _nat')
 
   1. Return false
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1235.1-1235.46
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1236.1-1236.46
 def $is_concrete_extern_object(typeIR)
 
 1. Return $is_concrete_extern_object'($canon_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1236.1-1236.47
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1237.1-1237.47
 def $is_concrete_extern_object'(typeIR)
 
 1. If (~$is_externObjectTypeIR(typeIR)), then
@@ -22794,7 +22796,7 @@ def $is_concrete_extern_object'(typeIR)
 
   1. Return false
 
-;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1237.1-1237.63
+;; ../../../../spec-concrete/5.06.1-typing-expression.watsup:1238.1-1238.63
 def $is_concrete_extern_object''(externMethodTypeDefIR)
 
 1. If ((externMethodTypeDefIR matches pattern `EXTERN_METHOD<%,%>(%):%`)), then

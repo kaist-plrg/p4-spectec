@@ -332,8 +332,7 @@ rulegroup Expr_ok/binaryExpression-shift {
           = $reduce_serenum_binary(
               typedExpressionIR_l,
               typedExpressionIR_r,
-              def $compat_shift
-            )
+              def $compat_shift)
     ---- ;; fetch annotations
     -- if typeIR_l_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- if ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
@@ -341,6 +340,9 @@ rulegroup Expr_ok/binaryExpression-shift {
     -- if ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
     ---- ;; check that the right-hand side is fixed bit type
     -- if $is_fixedBitTypeIR(typeIR_r_reduced)
+    ---- ;; check that if the left-hand side is int type,
+    ---- ;; the right-hand side is local compile-time known
+    -- if $is_arbitraryIntTypeIR(typeIR_l_reduced) => (ctk_r_reduced = LCTK)
     ---- ;; create typed expression
     -- if ctk_reduced = $join_ctk(ctk_l_reduced, ctk_r_reduced)
     -- if expressionNoteIR = `( typeIR_l_reduced ctk_reduced )
@@ -358,8 +360,7 @@ rulegroup Expr_ok/binaryExpression-shift {
           = $reduce_serenum_binary(
               typedExpressionIR_l,
               typedExpressionIR_r,
-              def $compat_shift
-            )
+              def $compat_shift)
     ---- ;; fetch annotations
     -- if typeIR_l_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- if ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
