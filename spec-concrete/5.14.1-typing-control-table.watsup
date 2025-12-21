@@ -86,6 +86,8 @@ rule TableKeys_ok/cons:
 ;; syntax tableAction
 ;;
 
+;;; Splitting data-plane and control-plane parameters
+
 dec $split_dataplane_parameters(parameterIR*)
   : (parameterIR*, parameterIR*)
 
@@ -102,6 +104,107 @@ def $split_dataplane_parameters(parameterIR_h :: parameterIR_t*)
   -- if (parameterIR_data*, parameterIR_control*)
       = $split_dataplane_parameters(parameterIR_t*)
 
+;;; Detecting table apply expressions
+
+dec $has_table_apply_arg(argumentIR) : bool
+dec $has_table_apply_expr(typedExpressionIR) : bool
+dec $has_table_apply_expr'(expressionIR) : bool
+
+;;;; Arguments
+
+def $has_table_apply_arg(typedExpressionIR)
+  = $has_table_apply_expr(typedExpressionIR)
+
+def $has_table_apply_arg(nameIR `= typedExpressionIR)
+  = $has_table_apply_expr(typedExpressionIR)
+
+def $has_table_apply_arg(nameIR `= `_) = false
+def $has_table_apply_arg(`_) = false
+
+;;;; Expressions
+
+def $has_table_apply_expr(_ `# `( typeIR _))
+  = true
+  -- if $is_tableMetadataStructTypeIR($canon_typeIR(typeIR))
+def $has_table_apply_expr(expressionIR `# _)
+  = $has_table_apply_expr'(expressionIR)
+  -- otherwise
+
+def $has_table_apply_expr'(literalExpressionIR) = false
+def $has_table_apply_expr'(referenceExpressionIR) = false
+def $has_table_apply_expr'(defaultExpressionIR) = false
+
+def $has_table_apply_expr'(unop typedExpressionIR)
+  = $has_table_apply_expr(typedExpressionIR)
+
+def $has_table_apply_expr'(
+    typedExpressionIR_l binop typedExpressionIR_r)
+  = $has_table_apply_expr(typedExpressionIR_l)
+    \/ $has_table_apply_expr(typedExpressionIR_r)
+
+def $has_table_apply_expr'(
+    typedExpressionIR_cond `?
+    typedExpressionIR_then `: typedExpressionIR_else)
+  = $has_table_apply_expr(typedExpressionIR_cond)
+    \/ $has_table_apply_expr(typedExpressionIR_then)
+    \/ $has_table_apply_expr(typedExpressionIR_else)
+
+def $has_table_apply_expr'(`( typeIR ) typedExpressionIR)
+  = $has_table_apply_expr(typedExpressionIR)
+
+def $has_table_apply_expr'(`{#}) = false
+
+def $has_table_apply_expr'(SEQ `{ typedExpressionIR* })
+  = $exists_($has_table_apply_expr(typedExpressionIR)*)
+def $has_table_apply_expr'(SEQ `{ typedExpressionIR* `, `... })
+  = $exists_($has_table_apply_expr(typedExpressionIR)*)
+
+def $has_table_apply_expr'(RECORD `{ (nameIR `= typedExpressionIR)* })
+  = $exists_($has_table_apply_expr(typedExpressionIR)*)
+def $has_table_apply_expr'(RECORD `{ (nameIR `= typedExpressionIR)* `, `... })
+  = $exists_($has_table_apply_expr(typedExpressionIR)*)
+
+def $has_table_apply_expr'(errorAccessExpressionIR) = false
+def $has_table_apply_expr'(
+    (TYPE prefixedNameIR) `. nameIR)
+  = false
+def $has_table_apply_expr'(
+    typedExpressionIR `. nameIR)
+  = $has_table_apply_expr(typedExpressionIR)
+
+def $has_table_apply_expr'(
+    typedExpressionIR_base `[ typedExpressionIR_index ])
+  = $has_table_apply_expr(typedExpressionIR_base)
+    \/ $has_table_apply_expr(typedExpressionIR_index)
+
+def $has_table_apply_expr'(
+    typedExpressionIR_base
+      `[ typedExpressionIR_hi `: typedExpressionIR_lo ])
+  = $has_table_apply_expr(typedExpressionIR_base)
+    \/ $has_table_apply_expr(typedExpressionIR_lo)
+    \/ $has_table_apply_expr(typedExpressionIR_hi)
+
+def $has_table_apply_expr'(
+    (prefixedNameIR `< typeArgumentIR* >) `( argumentIR* ))
+  = $exists_($has_table_apply_arg(argumentIR)*)
+def $has_table_apply_expr'(
+    referenceExpressionIR `< typeArgumentIR* > `( argumentIR* ))
+  = $exists_($has_table_apply_arg(argumentIR)*)
+def $has_table_apply_expr'(
+    (typedExpressionIR `. nameIR) `< typeArgumentIR* > `( argumentIR* ))
+  = $has_table_apply_expr(typedExpressionIR)
+    \/ $exists_($has_table_apply_arg(argumentIR)*)
+def $has_table_apply_expr'(
+    (TYPE prefixedNameIR `. nameIR) `< typeArgumentIR* > `( argumentIR* ))
+  = $exists_($has_table_apply_arg(argumentIR)*)
+def $has_table_apply_expr'(
+    `( callableTargetIR ) `< typeArgumentIR* > `( argumentIR* ))
+  = $has_table_apply_expr'(
+      callableTargetIR `< typeArgumentIR* > `( argumentIR* ))
+
+def $has_table_apply_expr'(`( typedExpressionIR ))
+  = $has_table_apply_expr(typedExpressionIR)
+
 rule Call_action_partial_ok:
   TC |- parameterIR* `@ argumentIR*
       : parameterIR_data* `, parameterIR_control*
@@ -111,6 +214,8 @@ rule Call_action_partial_ok:
       = $split_dataplane_parameters(parameterIR*)
   ---- ;; check arity 
   -- if $(|parameterIR_data*| = |argumentIR*|)
+  ---- ;; table apply expressions are not allowed as action arguments
+  -- if $forall_((~$has_table_apply_arg(argumentIR))*)
   ---- ;; check calling convention on dataplane parameters
   -- Call_convention_ok:
       LOCAL TC ACTION |- parameterIR_data* `@ argumentIR*
@@ -190,6 +295,8 @@ rule Call_action_default_ok:
   ---- ;; split parameters into data- and control-planes
   -- if (parameterIR_data*, parameterIR_control*)
       = $split_dataplane_parameters(parameterIR*)
+  ---- ;; table apply expressions are not allowed as action arguments
+  -- if $forall_((~$has_table_apply_arg(argumentIR))*)
   ---- ;; check calling convention
   -- Call_convention_ok:
       LOCAL TC ACTION |- parameterIR* `@ argumentIR*
