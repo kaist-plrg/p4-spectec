@@ -22,6 +22,11 @@ relation ParameterTypes_wf:
   hint(input %0 %1)
   hint(prose_true %1 "is a well-formed type, assuming bound type ids" %0)
 
+relation ReturnType_wf:
+  bound |- typeIR
+  hint(input %0 %1)
+  hint(prose_true %1 "is a well-formed return type, assuming bound type ids" %0)
+
 relation CallableType_wf:
   bound |- callableTypeIR
   hint(input %0 %1)
@@ -522,6 +527,18 @@ rule ParameterTypes_wf:
   -- (ParameterType_wf: bound |- parameterIR)*
 
 ;;
+;;;; Well-formedness of return types
+;;
+
+rule ReturnType_wf:
+  bound |- typeIR_ret
+  -- Type_wf: bound |- typeIR_ret
+  -- if typeIR_canon = $canon_typeIR(typeIR_ret)
+  -- if ~$is_stringTypeIR(typeIR_canon)
+        /\ ~$is_arbitraryIntTypeIR(typeIR_canon)
+        /\ ~$is_objectTypeIR(typeIR_canon)
+
+;;
 ;;;; Well-formedness of callable types
 ;;
 
@@ -587,7 +604,7 @@ rule CallableType_wf/definedFunctionTypeIR:
   -- ParameterTypes_wf: bound |- parameterIR*
   -- if (_ _ typeIR _ _ = parameterIR)* 
   -- if $nestable_definedFunction(typeIR)*
-  -- Type_wf: bound |- typeIR_ret
+  -- ReturnType_wf: bound |- typeIR_ret
 
 dec $nestable_externFunction(typeIR) : bool
   hint(prose_true %0 "can be used in an extern function type")
@@ -611,14 +628,14 @@ rule CallableType_wf/externFunctionTypeIR:
   -- ParameterTypes_wf: bound |- parameterIR*
   -- if (_ _ typeIR _ _ = parameterIR)* 
   -- if $nestable_externFunction(typeIR)*
-  -- Type_wf: bound |- typeIR_ret
+  -- ReturnType_wf: bound |- typeIR_ret
 
 ;;; Method types
 
 rule CallableType_wf/builtinMethodTypeIR:
   bound |- BUILTIN_METHOD `( parameterIR* ) `: typeIR_ret
   -- ParameterTypes_wf: bound |- parameterIR*
-  -- Type_wf: bound |- typeIR_ret
+  -- ReturnType_wf: bound |- typeIR_ret
 
 dec $nestable_externMethod(typeIR) : bool
   hint(prose_true %0 "can be used in an extern method type")
@@ -644,14 +661,14 @@ rulegroup CallableType_wf/externMethodTypeIR {
     -- ParameterTypes_wf: bound |- parameterIR*
     -- if (_ _ typeIR _ _ = parameterIR)* 
     -- if $nestable_externMethod(typeIR)*
-    -- Type_wf: bound |- typeIR_ret
+    -- ReturnType_wf: bound |- typeIR_ret
 
   rule CallableType_wf/abstract:
     bound |- EXTERN_METHOD ABSTRACT `( parameterIR* ) `: typeIR_ret
     -- ParameterTypes_wf: bound |- parameterIR*
     -- if (_ _ typeIR _ _ = parameterIR)* 
     -- if $nestable_externMethod(typeIR)*
-    -- Type_wf: bound |- typeIR_ret
+    -- ReturnType_wf: bound |- typeIR_ret
 
 }
 
