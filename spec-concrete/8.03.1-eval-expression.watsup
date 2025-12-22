@@ -323,16 +323,16 @@ rulegroup Expr_eval/memberAccessExpressionIR-type {
   rule Expr_eval/enum:
     p EC STO |- ((TYPE prefixedNameIR) `. nameIR) `# _
               : EC STO expressionResult
-    -- if ENUM tid `{ _ } = $find_typeDef_e(p, EC, prefixedNameIR)
-    -- if expressionResult = `` (tid `. nameIR)
+    -- if ENUM typeId `{ _ } = $find_typeDef_e(p, EC, prefixedNameIR)
+    -- if expressionResult = `` (typeId `. nameIR)
 
   rule Expr_eval/serenum:
     p EC STO |- ((TYPE prefixedNameIR) `. nameIR) `# _
               : EC STO expressionResult
-    -- if ENUM tid `< _ > `{ (id_member `= value_member `;)* }
+    -- if ENUM typeId `< _ > `{ (nameIR_member `= value_member `;)* }
         = $find_typeDef_e(p, EC, prefixedNameIR)
-    -- if value = $assoc_<nameIR, value>(nameIR, (id_member, value_member)*)
-    -- if expressionResult = `` (tid `. nameIR `. value)
+    -- if value = $assoc_<nameIR, value>(nameIR, (nameIR_member, value_member)*)
+    -- if expressionResult = `` (typeId `. nameIR `. value)
 
 }
 

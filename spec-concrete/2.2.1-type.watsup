@@ -33,7 +33,7 @@ syntax baseTypeIR =
 syntax typeIR
 syntax typeDefIR
 
-syntax nameTypeIR = `` tid hint(print %0)
+syntax nameTypeIR = `` typeId hint(print %0)
 
 syntax specializedTypeIR = typeDefIR `< typeIR* >
 
@@ -46,11 +46,11 @@ syntax namedTypeIR =
 ;;
 
 syntax typedefTypeIR =
-  TYPEDEF tid typeIR
+  TYPEDEF typeId typeIR
   hint(print %0)
 
 syntax newTypeIR =
-  TYPE tid typeIR
+  TYPE typeId typeIR
   hint(print %0)
 
 syntax aliasTypeIR =
@@ -65,23 +65,23 @@ syntax listTypeIR = LIST `< typeIR >
 syntax tupleTypeIR = TUPLE `< typeIR* >
 syntax headerStackTypeIR = typeIR `[ nat ]
 
-syntax fieldTypeIR = typeIR id `;
+syntax fieldTypeIR = typeIR nameIR `;
 
 syntax structTypeIR =
-  STRUCT tid `{ fieldTypeIR* }
+  STRUCT typeId `{ fieldTypeIR* }
   hint(print %0)
 syntax headerTypeIR =
-  HEADER tid `{ fieldTypeIR* }
+  HEADER typeId `{ fieldTypeIR* }
   hint(print %0)
 syntax headerUnionTypeIR =
-  HEADER_UNION tid `{ fieldTypeIR* }
+  HEADER_UNION typeId `{ fieldTypeIR* }
   hint(print %0)
 
-syntax valueFieldIR = id `= value `;
+syntax valueFieldIR = nameIR `= value `;
 
 syntax enumTypeIR =
-  | ENUM tid `{ id* }                         hint(print %0)
-  | ENUM tid `< typeIR > `{ valueFieldIR* }   hint(print %0)
+  | ENUM typeId `{ nameIR* }                     hint(print %0)
+  | ENUM typeId `< typeIR > `{ valueFieldIR* }   hint(print %0)
 
 syntax dataTypeIR =
   | listTypeIR
@@ -100,26 +100,26 @@ syntax parameterIR
 syntax externMethodTypeDefIR
 syntax tableMetadataStructTypeIR
 
-syntax externMethodTypeDefEnv = map<cid, externMethodTypeDefIR>
+syntax externMethodTypeDefEnv = map<callableId, externMethodTypeDefIR>
 
 syntax externObjectTypeIR =
-  EXTERN tid externMethodTypeDefEnv
+  EXTERN typeId externMethodTypeDefEnv
   hint(print %0)
 
 syntax parserObjectTypeIR =
-  PARSER tid `( parameterIR* )
+  PARSER typeId `( parameterIR* )
   hint(print %0)
 
 syntax controlObjectTypeIR =
-  CONTROL tid `( parameterIR* )
+  CONTROL typeId `( parameterIR* )
   hint(print %0)
 
 syntax packageObjectTypeIR =
-  PACKAGE tid `{ typeIR* }
+  PACKAGE typeId `{ typeIR* }
   hint(print %0)
 
 syntax tableObjectTypeIR =
-  TABLE tid `{ tableMetadataStructTypeIR }
+  TABLE typeId `{ tableMetadataStructTypeIR }
   hint(print %0)
 
 syntax objectTypeIR =
@@ -148,12 +148,14 @@ syntax recordTypeIR =
 syntax setTypeIR = SET `< typeIR* >
 
 syntax tableMetadataEnumTypeIR =
-  TABLE_ENUM tid `{ id* }
+  TABLE_ENUM typeId `{ nameIR* }
+  hint(print %0)
 
 syntax tableMetadataStructTypeIR =
-  TABLE_STRUCT tid `{ HIT boolTypeIR `;
-                      MISS boolTypeIR `;
-                      ACTION_RUN tableMetadataEnumTypeIR `; }
+  TABLE_STRUCT typeId `{ HIT boolTypeIR `;
+                         MISS boolTypeIR `;
+                         ACTION_RUN tableMetadataEnumTypeIR `; }
+  hint(print %0)
 
 syntax tableMetadataTypeIR =
   | tableMetadataEnumTypeIR

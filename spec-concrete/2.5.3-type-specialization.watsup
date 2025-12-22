@@ -14,13 +14,13 @@ dec $specialize_typeDefIR(typeDefIR, typeIR*) : typeIR
 def $specialize_typeDefIR(typeDefIR_base, typeIR_arg*)
   = typeIR_spec
   ---- ;; retrieve type parameters
-  -- if (tid_tparam_expl*, tid_tparam_impl*)
+  -- if (typeId_tparam_expl*, typeId_tparam_impl*)
       = $type_parameters_of_typeDefIR(typeDefIR_base)
-  -- if tid_tparam* = tid_tparam_expl* ++ tid_tparam_impl*
+  -- if typeId_tparam* = typeId_tparam_expl* ++ typeId_tparam_impl*
   ---- ;; check arity
-  -- if |tid_tparam*| = |typeIR_arg*|
+  -- if |typeId_tparam*| = |typeIR_arg*|
   ---- ;; specialize
-  -- if theta = `{ (tid_tparam `: typeIR_arg)* }
+  -- if theta = `{ (typeId_tparam `: typeIR_arg)* }
   -- if typeIR_base = $type_of_typeDefIR(typeDefIR_base)
   -- if typeIR_spec = $subst_typeIR(theta, typeIR_base)
 
@@ -29,42 +29,42 @@ def $specialize_typeDefIR(typeDefIR_base, typeIR_arg*)
 ;;
 
 dec $specialize_callableTypeDefIR(callableTypeDefIR, typeIR*)
-  : (callableTypeIR, tid*)
+  : (callableTypeIR, typeId*)
 
 def $specialize_callableTypeDefIR(callableTypeDefIR_base, typeIR_arg*)
-  = (callableTypeIR_spec, tid_fresh*)
+  = (callableTypeIR_spec, typeId_fresh*)
   ---- ;; retrieve type parameters
-  -- if (tid_tparam_expl*, tid_tparam_impl*)
+  -- if (typeId_tparam_expl*, typeId_tparam_impl*)
       = $type_parameters_of_callableTypeDefIR(callableTypeDefIR_base)
-  -- if tid_tparam* = tid_tparam_expl* ++ tid_tparam_impl*
+  -- if typeId_tparam* = typeId_tparam_expl* ++ typeId_tparam_impl*
   ---- ;; if all explicit type arguments are supplied,
   ---- ;; and all implicit type arguments are omitted
-  -- if $(|tid_tparam_expl*| = |typeIR_arg*|)
+  -- if $(|typeId_tparam_expl*| = |typeIR_arg*|)
   ---- ;; create fresh type arguments for implicit type parameters
-  -- if tid_fresh* = $fresh_tids(|tid_tparam_impl*|)
-  -- if (typeIR_arg_impl = `` tid_fresh)*
+  -- if typeId_fresh* = $fresh_typeIds(|typeId_tparam_impl*|)
+  -- if (typeIR_arg_impl = `` typeId_fresh)*
   ---- ;; specialize
   -- if theta
-      = `{ (tid_tparam_expl `: typeIR_arg)*
-           ++ (tid_tparam_impl `: typeIR_arg_impl)* }
+      = `{ (typeId_tparam_expl `: typeIR_arg)*
+           ++ (typeId_tparam_impl `: typeIR_arg_impl)* }
   -- if callableTypeIR_base
       = $type_of_callableTypeDefIR(callableTypeDefIR_base)
   -- if callableTypeIR_spec
       = $subst_callableTypeIR(theta, callableTypeIR_base)
 
 def $specialize_callableTypeDefIR(callableTypeDefIR_base, typeIR_arg*)
-  = (callableTypeIR_spec, tid_fresh*)
+  = (callableTypeIR_spec, typeId_fresh*)
   ---- ;; retrieve type parameters
-  -- if (tid_tparam_expl*, tid_tparam_impl*)
+  -- if (typeId_tparam_expl*, typeId_tparam_impl*)
       = $type_parameters_of_callableTypeDefIR(callableTypeDefIR_base)
-  -- if tid_tparam* = tid_tparam_expl* ++ tid_tparam_impl*
+  -- if typeId_tparam* = typeId_tparam_expl* ++ typeId_tparam_impl*
   ---- ;; if all type arguments are omitted
-  -- if $(|tid_tparam_expl*| > 0) /\ $(|typeIR_arg*| = 0)
+  -- if $(|typeId_tparam_expl*| > 0) /\ $(|typeIR_arg*| = 0)
   ---- ;; create fresh type arguments
-  -- if tid_fresh* = $fresh_tids(|tid_tparam*|)
-  -- if (typeIR_arg_fresh = `` tid_fresh)*
+  -- if typeId_fresh* = $fresh_typeIds(|typeId_tparam*|)
+  -- if (typeIR_arg_fresh = `` typeId_fresh)*
   ---- ;; specialize
-  -- if theta = `{ (tid_tparam `: typeIR_arg_fresh)* }
+  -- if theta = `{ (typeId_tparam `: typeIR_arg_fresh)* }
   -- if callableTypeIR_base
       = $type_of_callableTypeDefIR(callableTypeDefIR_base)
   -- if callableTypeIR_spec
@@ -75,26 +75,26 @@ def $specialize_callableTypeDefIR(callableTypeDefIR_base, typeIR_arg*)
 ;;
 
 dec $specialize_constructorTypeDefIR(constructorTypeDefIR, typeIR*)
-  : (constructorTypeIR, tid*)
+  : (constructorTypeIR, typeId*)
 
 def $specialize_constructorTypeDefIR(
-    CONSTRUCTOR `< tid_tparam_expl* `, tid_tparam_impl* >
+    CONSTRUCTOR `< typeId_tparam_expl* `, typeId_tparam_impl* >
       `( constructorParameterIR* ) `: typeIR,
     typeIR_arg*
   )
-  = (constructorTypeIR_spec, tid_fresh*)
+  = (constructorTypeIR_spec, typeId_fresh*)
   ---- ;; retrieve type parameters
-  -- if tid_tparam* = tid_tparam_expl* ++ tid_tparam_impl*
+  -- if typeId_tparam* = typeId_tparam_expl* ++ typeId_tparam_impl*
   ---- ;; if all explicit type arguments are supplied,
   ---- ;; and all implicit type arguments are omitted
-  -- if $(|tid_tparam_expl*| = |typeIR_arg*|)
+  -- if $(|typeId_tparam_expl*| = |typeIR_arg*|)
   ---- ;; create fresh type arguments for implicit type parameters
-  -- if tid_fresh* = $fresh_tids(|tid_tparam_impl*|)
-  -- if (typeIR_arg_impl = `` tid_fresh)*
+  -- if typeId_fresh* = $fresh_typeIds(|typeId_tparam_impl*|)
+  -- if (typeIR_arg_impl = `` typeId_fresh)*
   ---- ;; specialize
   -- if theta
-      = `{ (tid_tparam_expl `: typeIR_arg)*
-           ++ (tid_tparam_impl `: typeIR_arg_impl)* }
+      = `{ (typeId_tparam_expl `: typeIR_arg)*
+           ++ (typeId_tparam_impl `: typeIR_arg_impl)* }
   -- if constructorTypeIR_spec
       = $subst_constructorTypeIR(
           theta,
@@ -102,20 +102,20 @@ def $specialize_constructorTypeDefIR(
         )
 
 def $specialize_constructorTypeDefIR(
-    CONSTRUCTOR `< tid_tparam_expl* `, tid_tparam_impl* >
+    CONSTRUCTOR `< typeId_tparam_expl* `, typeId_tparam_impl* >
       `( constructorParameterIR* ) `: typeIR,
     typeIR_arg*
   )
-  = (constructorTypeIR_spec, tid_fresh*)
+  = (constructorTypeIR_spec, typeId_fresh*)
   ---- ;; retrieve type parameters
-  -- if tid_tparam* = tid_tparam_expl* ++ tid_tparam_impl*
+  -- if typeId_tparam* = typeId_tparam_expl* ++ typeId_tparam_impl*
   ---- ;; if all type arguments are omitted
-  -- if $(|tid_tparam_expl*| > 0) /\ $(|typeIR_arg*| = 0)
+  -- if $(|typeId_tparam_expl*| > 0) /\ $(|typeIR_arg*| = 0)
   ---- ;; create fresh type arguments
-  -- if tid_fresh* = $fresh_tids(|tid_tparam*|)
-  -- if (typeIR_arg_fresh = `` tid_fresh)*
+  -- if typeId_fresh* = $fresh_typeIds(|typeId_tparam*|)
+  -- if (typeIR_arg_fresh = `` typeId_fresh)*
   ---- ;; specialize
-  -- if theta = `{ (tid_tparam `: typeIR_arg_fresh)* }
+  -- if theta = `{ (typeId_tparam `: typeIR_arg_fresh)* }
   -- if constructorTypeIR_spec
       = $subst_constructorTypeIR(
           theta,

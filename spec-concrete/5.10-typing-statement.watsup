@@ -73,9 +73,9 @@ rulegroup Stmt_ok/callStatement {
     ---- ;; check lvalue as callable
     -- CallableType_ok:
         p TC |- callableTargetIR `< eps > `( argumentIR* )
-              : callableTypeIR `< `# tid_impl* > `( `# id_default* )
+              : callableTypeIR `< `# typeId_impl* > `( `# id_default* )
     ---- ;; check calling convention
-    -- Call_ok: p TC |- callableTypeIR `< eps `# tid_impl* > `( argumentIR* `# id_default* )
+    -- Call_ok: p TC |- callableTypeIR `< eps `# typeId_impl* > `( argumentIR* `# id_default* )
                       : typeIR_ret `< typeArgumentIR_inferred* > `( argumentIR_cast* )
     ---- ;; create IR
     -- if callStatementIR
@@ -88,17 +88,17 @@ rulegroup Stmt_ok/callStatement {
     -- CallableTarget_lvalue_ok: p TC |- lvalue_callable : callableTargetIR
     ---- ;; check type arguments
     -- if typeArgument* = $flatten_typeArgumentList(typeArgumentList)
-    -- TypeArguments_ok: p TC |- typeArgument* : typeArgumentIR* `# tid_impl*
+    -- TypeArguments_ok: p TC |- typeArgument* : typeArgumentIR* `# typeId_impl*
     ---- ;; check arguments
     -- if argument* = $flatten_argumentList(argumentList)
     -- (Argument_ok: p TC |- argument : argumentIR)*
     ---- ;; check lvalue as callable
     -- CallableType_ok:
         p TC |- callableTargetIR `< typeArgumentIR* > `( argumentIR* )
-              : callableTypeIR `< `# tid_inserted* > `( `# id_default* )
+              : callableTypeIR `< `# typeId_inserted* > `( `# id_default* )
     ---- ;; check calling convention
-    -- if tid_infer* = tid_impl* ++ tid_inserted*
-    -- Call_ok: p TC |- callableTypeIR `< typeArgumentIR* `# tid_infer* > `( argumentIR* `# id_default* )
+    -- if typeId_infer* = typeId_impl* ++ typeId_inserted*
+    -- Call_ok: p TC |- callableTypeIR `< typeArgumentIR* `# typeId_infer* > `( argumentIR* `# id_default* )
                       : typeIR_ret `< typeArgumentIR_inferred* > `( argumentIR_cast* )
     ---- ;; create IR
     -- if callStatementIR
@@ -479,7 +479,7 @@ rule Stmt_ok/continue:
 ;;;;; syntax switchLabel
 
 relation SwitchLabel_table_ok:
-  typingContext tid bool |- switchLabel : switchLabelIR
+  typingContext typeId bool |- switchLabel : switchLabelIR
   hint(input %0 %1 %2 %3)
 
 ;;;;;;  DEFAULT
@@ -489,18 +489,18 @@ relation SwitchLabel_table_ok:
 rulegroup SwitchLabel_table_ok {
 
   rule SwitchLabel_table_ok/default:
-    TC tid_table true |- DEFAULT : DEFAULT
+    TC typeId_table true |- DEFAULT : DEFAULT
 
   rule SwitchLabel_table_ok/expressionNonBrace-prefixedNonTypeName:
-    TC tid_table _ |- prefixedNonTypeName : typedExpressionIR_label
+    TC typeId_table _ |- prefixedNonTypeName : typedExpressionIR_label
     ---- ;; check that the label is a valid table action reference
     -- if `` nameIR_label = $prefixedNonTypeName(prefixedNonTypeName)
-    -- if tid_table_enum = "action_list(" ++ tid_table ++ ")" 
-    -- if id_label = tid_table_enum ++ "." ++ nameIR_label
+    -- if typeId_table_enum = "action_list(" ++ typeId_table ++ ")" 
+    -- if id_label = typeId_table_enum ++ "." ++ nameIR_label
     -- if _ typeIR_label ctk_label value_label
         = $find_var_t(LOCAL, TC, `` id_label)
     -- if value_label
-        = TABLE_ENUM tid_table_enum `. nameIR_label
+        = TABLE_ENUM typeId_table_enum `. nameIR_label
     ---- ;; create typed switch label
     -- if typedExpressionIR_label
         = (`` nameIR_label) `# `( typeIR_label ctk_label )
@@ -510,7 +510,7 @@ rulegroup SwitchLabel_table_ok {
 ;;;;; syntax switchCase
 
 relation SwitchCase_table_ok:
-  typingContext flow loopctxt tid bool |- switchCase
+  typingContext flow loopctxt typeId bool |- switchCase
                                         : flow switchCaseIR `# switchLabel
   hint(input %0 %1 %2 %3 %4 %5)
 
@@ -520,20 +520,20 @@ relation SwitchCase_table_ok:
 rulegroup SwitchCase_table_ok {
 
   rule SwitchCase_table_ok/blockStatement:
-    TC f l tid_table b_last |- switchLabel `: blockStatement
+    TC f l typeId_table b_last |- switchLabel `: blockStatement
                              : f_post switchCaseIR `# switchLabel
     ---- ;; check switch label
-    -- SwitchLabel_table_ok: TC tid_table b_last |- switchLabel : switchLabelIR
+    -- SwitchLabel_table_ok: TC typeId_table b_last |- switchLabel : switchLabelIR
     ---- ;; check block statement
     -- Block_ok: TC f l |- blockStatement : TC_post f_post blockStatementIR
     ---- ;; create IR
     -- if switchCaseIR = switchLabelIR `: blockStatementIR
 
   rule SwitchCase_table_ok/non-blockStatement:
-    TC f l tid_table b_last |- switchLabel `:
+    TC f l typeId_table b_last |- switchLabel `:
                            : f switchCaseIR `# switchLabel
     ---- ;; check switch label
-    -- SwitchLabel_table_ok: TC tid_table b_last |- switchLabel : switchLabelIR
+    -- SwitchLabel_table_ok: TC typeId_table b_last |- switchLabel : switchLabelIR
     ---- ;; create IR
     -- if switchCaseIR = switchLabelIR `:
 
@@ -542,20 +542,20 @@ rulegroup SwitchCase_table_ok {
 ;;;;; syntax switchCaseList
 
 relation SwitchCases_table_ok:
-  typingContext flow loopctxt tid |- switchCase* : flow switchCaseListIR `# switchLabel*
+  typingContext flow loopctxt typeId |- switchCase* : flow switchCaseListIR `# switchLabel*
   hint(input %0 %1 %2 %3 %4)
 
 rule SwitchCases_table_ok/nil:
-  TC f l tid_table |- eps : f eps `# eps
+  TC f l typeId_table |- eps : f eps `# eps
 
 rule SwitchCases_table_ok/cons:
-  TC f l tid_table |- switchCase_h :: switchCase_t*
+  TC f l typeId_table |- switchCase_h :: switchCase_t*
                     : f_t (switchCaseIR_h :: switchCaseIR_t*) `# (switchLabel_h :: switchLabel_t*)
   -- if b_last = (switchCase_t* = eps)
   -- SwitchCase_table_ok:
-      TC f l tid_table b_last |- switchCase_h : f_h switchCaseIR_h `# switchLabel_h
+      TC f l typeId_table b_last |- switchCase_h : f_h switchCaseIR_h `# switchLabel_h
   -- SwitchCases_table_ok:
-      TC f_h l tid_table |- switchCase_t* : f_t switchCaseIR_t* `# switchLabel_t*
+      TC f_h l typeId_table |- switchCase_t* : f_t switchCaseIR_t* `# switchLabel_t*
 
 rule Stmt_ok/switchStatement-table:
   LOCAL TC f l |- SWITCH `( expression_switch ) `{ switchCaseList }
@@ -564,12 +564,12 @@ rule Stmt_ok/switchStatement-table:
   -- Expr_ok: LOCAL TC |- expression_switch : typedExpressionIR_switch
   -- if typeIR_switch = $type_of_typedExpressionIR(typedExpressionIR_switch)
   ---- ;; if the expression is the result of table apply method
-  -- if TABLE_ENUM tid_table_enum `{ _ } = $canon_typeIR(typeIR_switch)
-  -- if tid_table = $strip_prefix($strip_suffix(tid_table_enum, ")"), "action_list(")
+  -- if TABLE_ENUM typeId_table_enum `{ _ } = $canon_typeIR(typeIR_switch)
+  -- if typeId_table = $strip_prefix($strip_suffix(typeId_table_enum, ")"), "action_list(")
   ---- ;; check switch cases
   -- if switchCase* = $flatten_switchCaseList(switchCaseList)
   -- SwitchCases_table_ok:
-      TC f l tid_table |- switchCase* : f_post switchCaseIR* `# switchLabel*
+      TC f l typeId_table |- switchCase* : f_post switchCaseIR* `# switchLabel*
   ---- ;; switch labels must be unique
   -- if $distinct_<switchLabel>(switchLabel*)
   ---- ;; create typed statement

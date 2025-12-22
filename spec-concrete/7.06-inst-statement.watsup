@@ -32,17 +32,17 @@ rule Stmt_inst/directApplicationStatementIR:
             : constructorDef `< eps > `( `# eps )
   -- Constructor_call:
       p IC STO_0 |- constructorDef `< eps > `( eps `# eps ) : STO_1 object
-  ---- ;; assign new tid with random string appended
-  -- if tid_fresh = $fresh_tid()
-  -- if tid = $flatten_prefixedNameIR(prefixedNameIR)
-  -- if typeIR = `` tid
-  -- if nameIR = $concat_text([ tid, "_", tid_fresh])
+  ---- ;; assign new typeId with random string appended
+  -- if typeId_fresh = $fresh_typeId()
+  -- if typeId = $flatten_prefixedNameIR(prefixedNameIR)
+  -- if typeIR = `` typeId
+  -- if nameIR = $concat_text([ typeId, "_", typeId_fresh])
   ---- ;; add object to store
-  -- if oid = IC.PATH ++ nameIR
-  -- if STO_2 = $add_map<oid, object>(STO_1, oid, object)
+  -- if objectId = IC.PATH ++ nameIR
+  -- if STO_2 = $add_map<objectId, object>(STO_1, objectId, object)
   ---- ;; replace with constant declaration and call statement
   -- if constantDeclarationIR
-      = `EMPTY CONST typeIR nameIR (`= (`! oid)) `;
+      = `EMPTY CONST typeIR nameIR (`= (`! objectId)) `;
   -- if callableTargetIR
       = ((`` nameIR) `# `( typeIR CTK )) `. "apply"
   -- if callStatementIR

@@ -370,36 +370,36 @@ def $bin_eq(
   )
   = $bin_eqs(value_a*, value_b*) /\ (n_size_a = n_size_b)
 def $bin_eq(
-    STRUCT tid_a `{ (value_field_a id_field_a `;)* },
-    STRUCT tid_b `{ (value_field_b id_field_b `;)* }
+    STRUCT typeId_a `{ (value_field_a nameIR_field_a `;)* },
+    STRUCT typeId_b `{ (value_field_b nameIR_field_b `;)* }
   )
-  = (tid_a = tid_b)
+  = (typeId_a = typeId_b)
     /\ $bin_eqs_fields(
-        (value_field_a, id_field_a)*,
-        (value_field_b, id_field_b)*)
+        (value_field_a, nameIR_field_a)*,
+        (value_field_b, nameIR_field_b)*)
 def $bin_eq(
-    HEADER tid_a `{ _ `; (value_field_a id_field_a `;)* },
-    HEADER tid_b `{ _ `; (value_field_b id_field_b `;)* }
+    HEADER typeId_a `{ _ `; (value_field_a nameIR_field_a `;)* },
+    HEADER typeId_b `{ _ `; (value_field_b nameIR_field_b `;)* }
   )
-  = (tid_a = tid_b)
+  = (typeId_a = typeId_b)
     /\ $bin_eqs_fields(
-        (value_field_a, id_field_a)*,
-        (value_field_b, id_field_b)*)
+        (value_field_a, nameIR_field_a)*,
+        (value_field_b, nameIR_field_b)*)
 def $bin_eq(
-    HEADER_UNION tid_a `{ (value_field_a id_field_a `;)* },
-    HEADER_UNION tid_b `{ (value_field_b id_field_b `;)* }
+    HEADER_UNION typeId_a `{ (value_field_a nameIR_field_a `;)* },
+    HEADER_UNION typeId_b `{ (value_field_b nameIR_field_b `;)* }
   )
-  = (tid_a = tid_b)
+  = (typeId_a = typeId_b)
     /\ $bin_eqs_fields(
-        (value_field_a, id_field_a)*,
-        (value_field_b, id_field_b)*)
-def $bin_eq(tid_a `. id_field_a, tid_b `. id_field_b)
-  = (tid_a = tid_b) /\ (id_field_a = id_field_b)
+        (value_field_a, nameIR_field_a)*,
+        (value_field_b, nameIR_field_b)*)
+def $bin_eq(typeId_a `. nameIR_field_a, typeId_b `. nameIR_field_b)
+  = (typeId_a = typeId_b) /\ (nameIR_field_a = nameIR_field_b)
 def $bin_eq(
-    tid_a `. id_field_a `. value_field_a,
-    tid_b `. id_field_b `. value_field_b
+    typeId_a `. nameIR_field_a `. value_field_a,
+    typeId_b `. nameIR_field_b `. value_field_b
   )
-  = (tid_a = tid_b) /\ $bin_eq(value_field_a, value_field_b)
+  = (typeId_a = typeId_b) /\ $bin_eq(value_field_a, value_field_b)
 
 def $bin_eq(`{#}, `{#}) = true
 
@@ -617,35 +617,35 @@ def $cast_op(typeIR, w_max `. w V i) = $cast_varbit(typeIR, w_max, w, i)
 
 ;;; Cast from struct
 
-dec $cast_struct(typeIR, tid, (value, id)*) : value
+dec $cast_struct(typeIR, typeId, (value, id)*) : value
   hint(testgen_ignore)
-dec $cast_struct'(typeIR, tid, (value, id)*) : value
+dec $cast_struct'(typeIR, typeId, (value, id)*) : value
   hint(testgen_ignore)
 
-def $cast_struct(typeIR, tid, (value_field, id_field)*)
-  = $cast_struct'($canon_typeIR(typeIR), tid, (value_field, id_field)*)
+def $cast_struct(typeIR, typeId, (value_field, nameIR_field)*)
+  = $cast_struct'($canon_typeIR(typeIR), typeId, (value_field, nameIR_field)*)
 
-def $cast_struct'(STRUCT tid `{ _ }, tid, (value_field, id_field)*)
-  = STRUCT tid `{ (value_field id_field `;)* }
+def $cast_struct'(STRUCT typeId `{ _ }, typeId, (value_field, nameIR_field)*)
+  = STRUCT typeId `{ (value_field nameIR_field `;)* }
 
-def $cast_op(typeIR, STRUCT tid `{ (value_field id_field `;)* })
-  = $cast_struct(typeIR, tid, (value_field, id_field)*)
+def $cast_op(typeIR, STRUCT typeId `{ (value_field nameIR_field `;)* })
+  = $cast_struct(typeIR, typeId, (value_field, nameIR_field)*)
 
 ;;; Cast from header
 
-dec $cast_header(typeIR, tid, bool, (value, id)*) : value
+dec $cast_header(typeIR, typeId, bool, (value, id)*) : value
   hint(testgen_ignore)
-dec $cast_header'(typeIR, tid, bool, (value, id)*) : value
+dec $cast_header'(typeIR, typeId, bool, (value, id)*) : value
   hint(testgen_ignore)
 
-def $cast_header(typeIR, tid, b, (value_field, id_field)*)
-  = $cast_header'($canon_typeIR(typeIR), tid, b, (value_field, id_field)*)
+def $cast_header(typeIR, typeId, b, (value_field, nameIR_field)*)
+  = $cast_header'($canon_typeIR(typeIR), typeId, b, (value_field, nameIR_field)*)
 
-def $cast_header'(HEADER tid `{ _ }, tid, b, (value_field, id_field)*)
-  = HEADER tid `{ b `; (value_field id_field `;)* }
+def $cast_header'(HEADER typeId `{ _ }, typeId, b, (value_field, nameIR_field)*)
+  = HEADER typeId `{ b `; (value_field nameIR_field `;)* }
 
-def $cast_op(typeIR, HEADER tid `{ b `; (value_field id_field `;)* })
-  = $cast_header(typeIR, tid, b, (value_field, id_field)*)
+def $cast_op(typeIR, HEADER typeId `{ b `; (value_field nameIR_field `;)* })
+  = $cast_header(typeIR, typeId, b, (value_field, nameIR_field)*)
 
 ;;; Cast from serializable enum field
 
@@ -672,12 +672,12 @@ def $cast_sequence'(typeIR `[ n_size ], value*)
   -- if (value_cast = $cast_op(typeIR, value))*
   -- if n_idx = |value*|
 
-def $cast_sequence'(STRUCT tid `{ (typeIR_field id_field `;)* }, value*)
-  = STRUCT tid `{ (value_cast id_field `;)* }
+def $cast_sequence'(STRUCT typeId `{ (typeIR_field nameIR_field `;)* }, value*)
+  = STRUCT typeId `{ (value_cast nameIR_field `;)* }
   -- if (value_cast = $cast_op(typeIR_field, value))*
 
-def $cast_sequence'(HEADER tid `{ (typeIR_field id_field `;)* }, value*)
-  = HEADER tid `{ true `; (value_cast id_field `;)* }
+def $cast_sequence'(HEADER typeId `{ (typeIR_field nameIR_field `;)* }, value*)
+  = HEADER typeId `{ true `; (value_cast nameIR_field `;)* }
   -- if (value_cast = $cast_op(typeIR_field, value))*
 
 def $cast_op(typeIR, SEQ `( value* )) = $cast_sequence(typeIR, value*)
@@ -695,21 +695,21 @@ def $cast_record(typeIR, (value, id)*)
   = $cast_record'($canon_typeIR(typeIR), (value, id)*)
 
 def $cast_record'(
-    STRUCT tid `{ (typeIR_t_field id_t_field `;)* },
-    (value_field, id_field)*
+    STRUCT typeId `{ (typeIR_t_field id_t_field `;)* },
+    (value_field, nameIR_field)*
   )
-  = STRUCT tid `{ (value_field_cast id_field `;)* }
+  = STRUCT typeId `{ (value_field_cast nameIR_field `;)* }
   -- if (value_field'
-      = $find_map<id, value>(`{ (id_field `: value_field)* }, id_t_field))*
+      = $find_map<id, value>(`{ (nameIR_field `: value_field)* }, id_t_field))*
   -- if (value_field_cast = $cast_op(typeIR_t_field, value_field'))*
 
 def $cast_record'(
-    HEADER tid `{ (typeIR_t_field id_t_field `;)* },
-    (value_field, id_field)*
+    HEADER typeId `{ (typeIR_t_field id_t_field `;)* },
+    (value_field, nameIR_field)*
   )
-  = HEADER tid `{ true `; (value_field_cast id_field `;)* }
+  = HEADER typeId `{ true `; (value_field_cast nameIR_field `;)* }
   -- if (value_field'
-      = $find_map<id, value>(`{ (id_field `: value_field)* }, id_t_field))*
+      = $find_map<id, value>(`{ (nameIR_field `: value_field)* }, id_t_field))*
   -- if (value_field_cast = $cast_op(typeIR_t_field, value_field'))*
 
 def $cast_op(typeIR, RECORD `{ (value id `;)* })
@@ -804,26 +804,26 @@ def $default'(TUPLE `< typeIR* >) = TUPLE `( $default(typeIR)* )
 def $default'(typeIR `[ n_s ]) = HEADER_STACK `[ value* `( 0; n_s ) ]
   -- if value* = $repeat_<value>($default(typeIR), n_s)
 
-def $default'(STRUCT tid `{ (typeIR_f id_f `;)* })
-  = STRUCT tid `{ ($default(typeIR_f) id_f `;)* }
+def $default'(STRUCT typeId `{ (typeIR_f id_f `;)* })
+  = STRUCT typeId `{ ($default(typeIR_f) id_f `;)* }
 
-def $default'(HEADER tid `{ (typeIR_f id_f `;)* })
-  = HEADER tid `{ false `; ($default(typeIR_f) id_f `;)* }
+def $default'(HEADER typeId `{ (typeIR_f id_f `;)* })
+  = HEADER typeId `{ false `; ($default(typeIR_f) id_f `;)* }
 
-def $default'(HEADER_UNION tid `{ (typeIR_f id_f `;)* })
-  = HEADER_UNION tid `{ ($default(typeIR_f) id_f `;)* }
+def $default'(HEADER_UNION typeId `{ (typeIR_f id_f `;)* })
+  = HEADER_UNION typeId `{ ($default(typeIR_f) id_f `;)* }
 
-def $default'(ENUM tid `{ id_f_h :: _ }) = tid `. id_f_h
+def $default'(ENUM typeId `{ id_f_h :: _ }) = typeId `. id_f_h
 
-def $default'(ENUM tid `< typeIR > `{ (id_field `= value_field `;)* })
-  = tid `. id_zero `. value_zero
+def $default'(ENUM typeId `< typeIR > `{ (nameIR_field `= value_field `;)* })
+  = typeId `. id_zero `. value_zero
   -- if value_zero = $cast_arbint(typeIR, 0)
-  -- if id_zero = $assoc_<value, id>(value_zero, (value_field, id_field)*)
+  -- if id_zero = $assoc_<value, id>(value_zero, (value_field, nameIR_field)*)
 
-def $default'(ENUM tid `< typeIR > `{ (id_field `= value_field `;)* })
-  = tid `. id_zero `. value_zero
+def $default'(ENUM typeId `< typeIR > `{ (nameIR_field `= value_field `;)* })
+  = typeId `. id_zero `. value_zero
   -- if value_zero = $cast_arbint(typeIR, 0)
-  -- if eps = $assoc_<value, id>(value_zero, (value_field, id_field)*)
+  -- if eps = $assoc_<value, id>(value_zero, (value_field, nameIR_field)*)
   -- if id_zero = "__UNSPECIFIED"
 
 ;;

@@ -63,19 +63,19 @@ rule ParserStmt_inst/directApplicationStatementIR:
   -- Constructor_call:
       LOCAL IC STO_0 |- constructorDef `< eps > `( eps `# eps )
                       : STO_1 object
-  ---- ;; assign new tid with random string appended
-  -- if tid = $flatten_prefixedNameIR(prefixedNameIR)
-  -- if tid_fresh = $fresh_tid()
-  -- if nameIR = tid ++ "_" ++ tid_fresh
+  ---- ;; assign new typeId with random string appended
+  -- if typeId = $flatten_prefixedNameIR(prefixedNameIR)
+  -- if typeId_fresh = $fresh_typeId()
+  -- if nameIR = typeId ++ "_" ++ typeId_fresh
   ---- ;; add object to store
-  -- if oid = IC.PATH ++ nameIR
-  -- if STO_2 = $add_map<oid, object>(STO_1, oid, object)
+  -- if objectId = IC.PATH ++ nameIR
+  -- if STO_2 = $add_map<objectId, object>(STO_1, objectId, object)
   ---- ;; replace with constant declaration and call statement
-  -- if typeIR = `` tid
+  -- if typeIR = `` typeId
   -- if constantDeclarationIR
-      = `EMPTY CONST typeIR nameIR (`= (`! oid)) `;
+      = `EMPTY CONST typeIR nameIR (`= (`! objectId)) `;
   -- if callableTargetIR
-      = ((`` tid) `# `( typeIR CTK )) `. "apply"
+      = ((`` typeId) `# `( typeIR CTK )) `. "apply"
   -- if callStatementIR
       = callableTargetIR `< eps > `( argumentListIR ) `;
   ---- ;; create parser block

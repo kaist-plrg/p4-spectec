@@ -26,23 +26,23 @@ relation Argument_eval_lctk:
 
 ;;
 ;;;; Type evaluation
-;;;; Inserts fresh type variables (`# tid*) for don't care type arguments (`_)
+;;;; Inserts fresh type variables (`# typeId*) for don't care type arguments (`_)
 ;;
 
 relation Type_ok:
-  cursor typingContext |- typeOrVoid : typeIR `# tid*
+  cursor typingContext |- typeOrVoid : typeIR `# typeId*
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
   hint(prose_out "the type" %3 "and a set of fresh type variables" %4)
 
 relation TypeArgument_ok:
-  cursor typingContext |- typeArgument : typeArgumentIR `# tid*
+  cursor typingContext |- typeArgument : typeArgumentIR `# typeId*
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
   hint(prose_out "the type argument" %3 "and set of fresh type variables" %4)
 
 relation TypeArguments_ok:
-  cursor typingContext |- typeArgument* : typeArgumentListIR `# tid*
+  cursor typingContext |- typeArgument* : typeArgumentListIR `# typeId*
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
   hint(prose_out "the type argument list" %3 "and set of fresh type variables" %4)
@@ -165,27 +165,27 @@ relation Block_ok:
 ;;
 
 relation Parameter_ok:
-  cursor typingContext |- parameter : parameterIR `# tid*
+  cursor typingContext |- parameter : parameterIR `# typeId*
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
   hint(prose_out "the parameter" %3 "and set of fresh type variables" %4)
 
 relation Parameters_ok:
-  cursor typingContext |- parameter* : parameterListIR `# tid*
+  cursor typingContext |- parameter* : parameterListIR `# typeId*
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
   hint(prose_out "the parameter list" %3 "and set of fresh type variables" %4)
 
 relation ConstructorParameter_ok:
   cursor typingContext |- constructorParameter
-                        : constructorParameterIR `# tid*
+                        : constructorParameterIR `# typeId*
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
   hint(prose_out "the constructor parameter" %3 "and set of fresh type variables" %4)
 
 relation ConstructorParameters_ok:
   cursor typingContext |- constructorParameter*
-                        : constructorParameterListIR `# tid*
+                        : constructorParameterListIR `# typeId*
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
   hint(prose_out "the constructor parameter list" %3 "and set of fresh type variables" %4)
@@ -195,28 +195,28 @@ relation ConstructorParameters_ok:
 ;;
 
 relation ExternMethod_ok:
-  typingContext tid |- externMethodPrototype
+  typingContext typeId |- externMethodPrototype
                      : typingContext externMethodPrototypeIR
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under typing context" %0 "for an extern object" %1)
   hint(prose_out "the updated typing context" %3 "and the typed method prototype" %4)
 
 relation ExternMethods_ok:
-  typingContext tid |- externMethodPrototype*
+  typingContext typeId |- externMethodPrototype*
                      : typingContext externMethodPrototypeIR*
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under typing context" %0 "for an extern object" %1)
   hint(prose_out "the updated typing context" %3 "and the typed method prototypes" %4)
 
 relation ExternConstructor_ok:
-  typingContext tid |- externConstructorPrototype
+  typingContext typeId |- externConstructorPrototype
                      : typingContext externConstructorPrototypeIR
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under typing context" %0 "for an extern object" %1)
   hint(prose_out "the updated typing context" %3 "and the typed constructor prototype" %4)
 
 relation ExternConstructors_ok:
-  typingContext tid |- externConstructorPrototype*
+  typingContext typeId |- externConstructorPrototype*
                      : typingContext externConstructorPrototypeIR*
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under typing context" %0 "for an extern object" %1)
@@ -447,7 +447,7 @@ relation Call_convention_ok:
 ;;
 
 ;; Finds the type of a callable target,
-;; inserts fresh type variables for parameters with don't care types, (tid*)
+;; inserts fresh type variables for parameters with don't care types, (typeId*)
 ;; and also identifies the ids of default arguments (id*)
 
 dec $is_static_callableTarget(callableTargetIR) : ctk
@@ -477,7 +477,7 @@ relation CallableTarget_lvalue_ok:
 
 relation CallableType_ok:
   cursor typingContext |- callableTargetIR `< typeArgumentListIR > `( argumentIR* )
-                        : callableTypeIR `< `# tid* > `( `# id* )
+                        : callableTypeIR `< `# typeId* > `( `# id* )
   hint(input %0 %1 %2 %3 %4)
 
 ;; Checks that an action/function/method invocation is valid,
@@ -486,7 +486,7 @@ relation CallableType_ok:
 ;; and inserts implicit casts for arguments, if necessary
 
 relation Call_ok:
-  cursor typingContext |- callableTypeIR `< typeArgumentListIR `# tid* >
+  cursor typingContext |- callableTypeIR `< typeArgumentListIR `# typeId* >
                             `( argumentListIR `# id* )
                         : typeIR `< typeArgumentListIR > `( argumentListIR )
   hint(input %0 %1 %2 %3 %4 %5 %6)
@@ -496,12 +496,12 @@ relation Call_ok:
 ;;
 
 ;; Finds the type of a constructor,
-;; inserts fresh type variables for parameters with don't care types, (tid*)
+;; inserts fresh type variables for parameters with don't care types, (typeId*)
 ;; and also identifies the ids of default arguments (id*)
 
 relation ConstructorType_ok:
   cursor typingContext |- prefixedNameIR `< typeArgumentListIR > `( argumentIR* )
-                        : constructorTypeIR `< `# tid* > `( `# id* )
+                        : constructorTypeIR `< `# typeId* > `( `# id* )
   hint(input %0 %1 %2 %3 %4)
 
 ;; Checks that a constructor invocation is valid,
@@ -513,7 +513,7 @@ syntax instctxt = NAMED | ANON
 
 relation Inst_ok:
   cursor typingContext instctxt |- constructorTypeIR
-                                    `< typeArgumentListIR `# tid* > `( argumentListIR `# id* )
+                                    `< typeArgumentListIR `# typeId* > `( argumentListIR `# id* )
                                  : typeIR
                                     `< typeArgumentListIR > `( argumentListIR )
   hint(input %0 %1 %2 %3 %4 %5 %6 %7)

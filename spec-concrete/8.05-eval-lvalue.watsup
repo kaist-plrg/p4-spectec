@@ -113,9 +113,9 @@ rulegroup Lvalue_read/storageReference-nameIR {
     -- Lvalue_read:
         p EC_0 STO |- storageReference : value_base
     ---- ;; if the base value is a reference to a package
-    -- if `! oid = value_base
+    -- if `! objectId = value_base
     -- if PACKAGE `< _ > `{ frame }
-        = $find_map<oid, object>(STO, oid)
+        = $find_map<objectId, object>(STO, objectId)
     ---- ;; look up the name in the package frame
     -- if value
         = $find_map<nameIR, value>(frame, nameIR)
@@ -135,10 +135,10 @@ rulegroup Lvalue_read/storageReference-nameIR {
     -- Lvalue_read:
         p EC_0 STO |- storageReference : value_base
     ---- ;; if the base value is a struct
-    -- if STRUCT tid `{ (value_field id_field `;)* } = value_base
+    -- if STRUCT _ `{ (value_field nameIR_field `;)* } = value_base
     ---- ;; look up the field in the struct
     -- if value
-        = $assoc_<id, value>(nameIR, (id_field, value_field)*)
+        = $assoc_<id, value>(nameIR, (nameIR_field, value_field)*)
 
   rule Lvalue_read/header:
     p EC_0 STO |- storageReference `. nameIR : value
@@ -146,10 +146,10 @@ rulegroup Lvalue_read/storageReference-nameIR {
     -- Lvalue_read:
         p EC_0 STO |- storageReference : value_base
     ---- ;; if the base value is a header 
-    -- if HEADER tid `{ _ `; (value_field id_field `;)* } = value_base
+    -- if HEADER _ `{ _ `; (value_field nameIR_field `;)* } = value_base
     ---- ;; look up the field in the header
     -- if value
-        = $assoc_<id, value>(nameIR, (id_field, value_field)*)
+        = $assoc_<id, value>(nameIR, (nameIR_field, value_field)*)
 
   rule Lvalue_read/header-union:
     p EC_0 STO |- storageReference `. nameIR : value
@@ -157,10 +157,10 @@ rulegroup Lvalue_read/storageReference-nameIR {
     -- Lvalue_read:
         p EC_0 STO |- storageReference : value_base
     ---- ;; if the base value is a struct
-    -- if HEADER_UNION _ `{ (value_field id_field `;)* } = value_base
+    -- if HEADER_UNION _ `{ (value_field nameIR_field `;)* } = value_base
     ---- ;; look up the field in the struct
     -- if value
-        = $assoc_<id, value>(nameIR, (id_field, value_field)*)
+        = $assoc_<id, value>(nameIR, (nameIR_field, value_field)*)
 
 }
 
@@ -185,8 +185,8 @@ rulegroup Lvalue_read/storageReference-indexAccess {
     -- if n_idx = $int_of_value(value_index)
     ---- ;; index access overflow
     -- if $(n_idx >= n_size)
-    -- if HEADER tid `{ b_valid `; fieldValue* } = value_element*[ 0 ]
-    -- if value = HEADER tid `{ false `; fieldValue* }
+    -- if HEADER typeId `{ b_valid `; fieldValue* } = value_element*[ 0 ]
+    -- if value = HEADER typeId `{ false `; fieldValue* }
 
 }
 
@@ -234,12 +234,12 @@ rulegroup Lvalue_write/storageReference-nameIR {
     -- Lvalue_read:
         p EC_0 STO |- storageReference : value_base
     ---- ;; if the base value is a struct
-    -- if STRUCT tid `{ fieldValue* } = value_base
+    -- if STRUCT typeId `{ fieldValue* } = value_base
     ---- ;; update the field and write back
     -- if fieldValue_update*
         = $update_fieldValue(fieldValue*, nameIR, value)
     -- if value_base_update
-        = STRUCT tid `{ fieldValue_update* }
+        = STRUCT typeId `{ fieldValue_update* }
     -- Lvalue_write:
         p EC_0 STO |- storageReference -> value_base_update : EC_1
 
@@ -249,12 +249,12 @@ rulegroup Lvalue_write/storageReference-nameIR {
     -- Lvalue_read:
         p EC_0 STO |- storageReference : value_base
     ---- ;; if the base value is a header
-    -- if HEADER tid `{ b_valid `; fieldValue* } = value_base
+    -- if HEADER typeId `{ b_valid `; fieldValue* } = value_base
     ---- ;; update the field and write back
     -- if fieldValue_update*
         = $update_fieldValue(fieldValue*, nameIR, value)
     -- if value_base_update
-        = HEADER tid `{ b_valid `; fieldValue_update* }
+        = HEADER typeId `{ b_valid `; fieldValue_update* }
     -- Lvalue_write:
         p EC_0 STO |- storageReference -> value_base_update : EC_1
 
@@ -263,10 +263,10 @@ rulegroup Lvalue_write/storageReference-nameIR {
     ---- ;; read base value
     -- Lvalue_read:
         p EC_0 STO |- storageReference : value_base
-    -- if HEADER_UNION tid `{ fieldValue* } = value_base
+    -- if HEADER_UNION typeId `{ fieldValue* } = value_base
     ----
-    -- if (value_field id_field `;)* = fieldValue*
-    -- if value_old = $assoc_<nameIR, value>(nameIR, (id_field, value_field)*)
+    -- if (value_field nameIR_field `;)* = fieldValue*
+    -- if value_old = $assoc_<nameIR, value>(nameIR, (nameIR_field, value_field)*)
     -- if HEADER _ `{ b_valid_old `; _ } = value_old
     ----
     -- if fieldValue_update*
@@ -277,7 +277,7 @@ rulegroup Lvalue_write/storageReference-nameIR {
         = ((~b_valid_old /\ b_valid_new) \/ (b_valid_old /\ ~b_valid_new))
     -- if ~b_toggled
     -- if value_base_update
-        = HEADER_UNION tid `{ fieldValue_update* }
+        = HEADER_UNION typeId `{ fieldValue_update* }
     -- Lvalue_write:
         p EC_0 STO |- storageReference -> value_base_update : EC_1
 
@@ -286,10 +286,10 @@ rulegroup Lvalue_write/storageReference-nameIR {
     ---- ;; read base value
     -- Lvalue_read:
         p EC_0 STO |- storageReference : value_base
-    -- if HEADER_UNION tid `{ fieldValue* } = value_base
+    -- if HEADER_UNION typeId `{ fieldValue* } = value_base
     ----
-    -- if (value_field id_field `;)* = fieldValue*
-    -- if value_old = $assoc_<nameIR, value>(nameIR, (id_field, value_field)*)
+    -- if (value_field nameIR_field `;)* = fieldValue*
+    -- if value_old = $assoc_<nameIR, value>(nameIR, (nameIR_field, value_field)*)
     -- if HEADER _ `{ b_valid_old `; _ } = value_old
     ----
     -- if fieldValue_update*
@@ -302,7 +302,7 @@ rulegroup Lvalue_write/storageReference-nameIR {
     -- if fieldValue_update'*
         = $update_headerUnion(fieldValue_update*, nameIR)
     -- if value_base_update
-        = HEADER_UNION tid `{ fieldValue_update'* }
+        = HEADER_UNION typeId `{ fieldValue_update'* }
     -- Lvalue_write:
         p EC_0 STO |- storageReference -> value_base_update : EC_1
 

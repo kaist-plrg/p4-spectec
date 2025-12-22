@@ -4,17 +4,18 @@
 
 ;;
 ;;;; Extern object
-;;;; Name of the extern object (tid), bound type variables (theta),
+;;;; Name of the extern object (typeId), bound type variables (theta),
 ;;;; internal state (externState) which is invisible to the P4 program,
 ;;;; value environment (frame), and environment for methods (externMethodDefEnv)
 ;;
 
 extern syntax externState
-syntax externMethodDefEnv = map<cid, externMethodDef>
+syntax externMethodDefEnv = map<callableId, externMethodDef>
 
 extern dec $init_externState(nameIR, typeIR*, value*) : externState
 
-syntax externObject = EXTERN tid `< theta > `{ externState frame externMethodDefEnv }
+syntax externObject =
+  EXTERN typeId `< theta > `{ externState frame externMethodDefEnv }
 
 ;;
 ;;;; Parser object
@@ -35,7 +36,7 @@ syntax parserObject =
 ;;;; routine environment for actions (actionDefEnv), and body (controlBodyIR)
 ;;
 
-syntax actionDefEnv = map<cid, actionDef>
+syntax actionDefEnv = map<callableId, actionDef>
 
 syntax controlObject =
   CONTROL `( parameterListIR )
@@ -46,7 +47,7 @@ syntax controlObject =
 
 ;;
 ;;;; Package object
-;;;; Name of the package (tid), bound type variables (theta),
+;;;; Name of the package (typeId), bound type variables (theta),
 ;;;; and value environment (frame)
 ;;
 
@@ -54,7 +55,7 @@ syntax packageObject = PACKAGE `< theta > `{ frame }
 
 ;;
 ;;;; Table object
-;;;; Name of the table (tid) and value environment (frame)
+;;;; Name of the table (typeId) and value environment (frame)
 ;;
 
 syntax tableObjectProperty =
@@ -68,7 +69,7 @@ var TBL : tableObjectProperty
 
 ;; (TODO) Why is frame needed here?
 syntax tableObject =
-  TABLE tid `{ frame tableObjectProperty }
+  TABLE typeId `{ frame tableObjectProperty }
 
 syntax object =
   | externObject

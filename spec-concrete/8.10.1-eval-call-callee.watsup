@@ -157,10 +157,10 @@ rulegroup Callee_eval/typedExpressionIR-nameIR-extern-method {
                       : EC_1 STO_1 (`` storageReference)
     ---- ;; read value of storage reference
     -- Lvalue_read:
-        p EC_1 STO_1 |- storageReference : (`! oid)
+        p EC_1 STO_1 |- storageReference : (`! objectId)
     ---- ;; if the value is an object reference to an extern
     -- if EXTERN _ `< theta > `{ _ frame externMethodDefEnv } 
-        = $find_map<oid, object>(STO_1, oid)
+        = $find_map<objectId, object>(STO_1, objectId)
     ---- ;; find the method being called
     -- if (id_arg?)* = $ids_arguments(argumentListIR)
     -- if (_, externMethodDef, id_default*)
@@ -172,7 +172,7 @@ rulegroup Callee_eval/typedExpressionIR-nameIR-extern-method {
             `( parameterListIR ) blockStatementIR?
         = externMethodDef
     -- if externMethodCallee
-        = EXTERN_METHOD oid `. nameIR `< typeParameterListIR >
+        = EXTERN_METHOD objectId `. nameIR `< typeParameterListIR >
             `( parameterListIR `# id_default* )
             `{ theta `; frame `; blockStatementIR? }
 
@@ -204,24 +204,24 @@ rulegroup Callee_eval/typedExpressionIR-nameIR-parser-apply-method {
     ---- ;; read value of storage reference
     ---- ;; if the value is an object reference to a parser
     -- Lvalue_read:
-        p EC_1 STO_1 |- storageReference : (`! oid)
+        p EC_1 STO_1 |- storageReference : (`! objectId)
     -- if PARSER `( parameterListIR )
             `{ frame parserLocalDeclarationListIR stateEnv }
-        = $find_map<oid, object>(STO_1, oid)
+        = $find_map<objectId, object>(STO_1, objectId)
     ---- ;; perform default resolution
-    -- if cid = $cid_IR("apply", parameterListIR)
+    -- if callableId = $callableId_IR("apply", parameterListIR)
     -- if parserApplyMethodDef
         = PARSER_APPLY `( parameterListIR )
             `{ parserLocalDeclarationListIR `; stateEnv }
     -- if (id_arg?)* = $ids_arguments(argumentListIR)
     -- if (_, _, id_default*)
         = $find_overloaded<parserApplyMethodDef>(
-            `{ (cid `: parserApplyMethodDef) },
+            `{ (callableId `: parserApplyMethodDef) },
             "apply", (id_arg?)*
           )
     ---- ;; prepare the callee
     -- if parserApplyMethodCallee
-        = PARSER oid `. APPLY `( parameterListIR `# id_default* )
+        = PARSER objectId `. APPLY `( parameterListIR `# id_default* )
             `{ frame `; parserLocalDeclarationListIR `; stateEnv }
 
 }
@@ -250,26 +250,26 @@ rulegroup Callee_eval/typedExpressionIR-nameIR-control-apply-method {
                       : EC_1 STO_1 (`` storageReference)
     ---- ;; read value of storage reference
     -- Lvalue_read:
-        p EC_1 STO_1 |- storageReference : (`! oid)
+        p EC_1 STO_1 |- storageReference : (`! objectId)
     ---- ;; if the value is an object reference to a control
     -- if CONTROL `( parameterListIR )
             `{ frame controlLocalDeclarationListIR
                actionDefEnv controlBodyIR }
-        = $find_map<oid, object>(STO_1, oid)
+        = $find_map<objectId, object>(STO_1, objectId)
     ---- ;; perform default resolution
-    -- if cid = $cid_IR("apply", parameterListIR)
+    -- if callableId = $callableId_IR("apply", parameterListIR)
     -- if controlApplyMethodDef
         = CONTROL_APPLY `( parameterListIR )
             `{ controlLocalDeclarationListIR `; actionDefEnv `; controlBodyIR }
     -- if (id_arg?)* = $ids_arguments(argumentListIR)
     -- if (_, _, id_default*)
         = $find_overloaded<controlApplyMethodDef>(
-            `{ (cid `: controlApplyMethodDef) },
+            `{ (callableId `: controlApplyMethodDef) },
             "apply", (id_arg?)*
           )
     ---- ;; prepare the callee
     -- if controlApplyMethodCallee
-        = CONTROL oid `. APPLY `( parameterListIR `# id_default* )
+        = CONTROL objectId `. APPLY `( parameterListIR `# id_default* )
             `{ frame `; controlLocalDeclarationListIR `;
                actionDefEnv `; controlBodyIR }
 
@@ -299,13 +299,13 @@ rulegroup Callee_eval/typedExpressionIR-nameIR-table-apply-method {
                       : EC_1 STO_1 (`` storageReference)
     ---- ;; read value of storage reference
     -- Lvalue_read:
-        p EC_1 STO_1 |- storageReference : (`! oid)
+        p EC_1 STO_1 |- storageReference : (`! objectId)
     ---- ;; if the value is an object reference to a table
-    -- if TABLE tid `{ frame TBL }
-        = $find_map<oid, object>(STO_1, oid)
+    -- if TABLE typeId `{ frame TBL }
+        = $find_map<objectId, object>(STO_1, objectId)
     ---- ;; prepare the callee
     -- if tableApplyMethodCallee
-        = TABLE oid `. APPLY `{ frame `; TBL }
+        = TABLE objectId `. APPLY `{ frame `; TBL }
 
 }
 

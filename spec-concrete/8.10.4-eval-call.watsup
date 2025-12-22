@@ -439,7 +439,7 @@ rulegroup Call_eval/builtinMethodCallee {
     ---- ;; read the value
     -- Lvalue_read: 
         p EC STO |- storageReference : headerUnionValue
-    -- if HEADER_UNION tid `{ fieldValue* } = headerUnionValue
+    -- if HEADER_UNION typeId `{ fieldValue* } = headerUnionValue
     -- if fieldValue_valid* = $filter_<fieldValue>(fieldValue*, def $isValid_fieldValue)
     -- if b_valid = (fieldValue_valid* = eps)
     -- if returnResult = RETURN (B b_valid)
@@ -454,8 +454,8 @@ rulegroup Call_eval/builtinMethodCallee {
     ---- ;; read the value
     -- Lvalue_read: 
         p EC_0 STO |- storageReference : headerValue
-    -- if HEADER tid `{ _ `; fieldValue* } = headerValue
-    -- if value = HEADER tid `{ true `; fieldValue* }
+    -- if HEADER typeId `{ _ `; fieldValue* } = headerValue
+    -- if value = HEADER typeId `{ true `; fieldValue* }
     -- Lvalue_write:
         p EC_0 STO |- storageReference -> value
                       : EC_1
@@ -471,8 +471,8 @@ rulegroup Call_eval/builtinMethodCallee {
     ---- ;; read the value
     -- Lvalue_read: 
         p EC_0 STO |- storageReference : headerValue
-    -- if HEADER tid `{ _ `; fieldValue* } = headerValue
-    -- if value = HEADER tid `{ false `; fieldValue* }
+    -- if HEADER typeId `{ _ `; fieldValue* } = headerValue
+    -- if value = HEADER typeId `{ false `; fieldValue* }
     -- Lvalue_write:
         p EC_0 STO |- storageReference -> value
                       : EC_1
@@ -481,7 +481,7 @@ rulegroup Call_eval/builtinMethodCallee {
 }
 
 ;;;; syntax externMethodCallee =
-;;;;   EXTERN_METHOD oid `. nameIR `< typeParameterListIR >
+;;;;   EXTERN_METHOD objectId `. nameIR `< typeParameterListIR >
 ;;;;     `( parameterListIR `# id* )
 ;;;;     `{ theta `; frame `; blockStatementIR? }
 
@@ -493,7 +493,7 @@ rulegroup Call_eval/externMethodCallee {
                   : EC_3 STO_2 callResult
     ---- ;; unpack the extern method callee
     ---- ;; if the extern method is non-abstract
-    -- if EXTERN_METHOD oid `. nameIR `< typeParameterIR* >
+    -- if EXTERN_METHOD objectId `. nameIR `< typeParameterIR* >
             `( parameterIR* `# id_default* )
             `{ theta `; frame `; eps }
         = externMethodCallee
@@ -519,7 +519,7 @@ rulegroup Call_eval/externMethodCallee {
     ---- ;; evaluate method body
     -- if (_ _ _ nameIR_param _ = parameterIR)*
     -- ExternMethodCall_eval:
-        EC_callee_5 STO_1 |- oid `. nameIR `( nameIR_param* )
+        EC_callee_5 STO_1 |- objectId `. nameIR `( nameIR_param* )
                            : EC_callee_6 STO_2 callResult
     ---- ;; propagate shared layer
     -- if EC_2 = EC_1[ .GLOBAL.FRAME = EC_callee_5.GLOBAL.FRAME ]
@@ -632,10 +632,10 @@ rulegroup Call_eval/controlApplyMethodCallee {
         = controlApplyMethodCallee
     ---- ;; create the callee context
     -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
-    -- if `{ (cid `: actionDef)* } = actionDefEnv
+    -- if `{ (callableId `: actionDef)* } = actionDefEnv
     -- if EC_callee_1
         = EC_callee_0[ .BLOCK.FRAME = frame ]
-                     [ .BLOCK.CALLABLE = `{ (cid `: actionDef)* } ]
+                     [ .BLOCK.CALLABLE = `{ (callableId `: actionDef)* } ]
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
            parameterIR_default*, value_default*)
@@ -675,10 +675,10 @@ rulegroup Call_eval/controlApplyMethodCallee {
         = controlApplyMethodCallee
     ---- ;; create the callee context
     -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
-    -- if `{ (cid `: actionDef)* } = actionDefEnv
+    -- if `{ (callableId `: actionDef)* } = actionDefEnv
     -- if EC_callee_1
         = EC_callee_0[ .BLOCK.FRAME = frame ]
-                     [ .BLOCK.CALLABLE = `{ (cid `: actionDef)* } ]
+                     [ .BLOCK.CALLABLE = `{ (callableId `: actionDef)* } ]
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
            parameterIR_default*, value_default*)
@@ -715,15 +715,15 @@ rule Call_eval/tableApplyMethodCallee:
                   `@ `< typeArgumentListIR > `( argumentListIR )
                 : EC_1 STO_1 returnResult
   ---- ;; unpack the table apply method callee
-  -- if TABLE oid `. APPLY `{ frame `; TBL }
+  -- if TABLE objectId `. APPLY `{ frame `; TBL }
       = tableApplyMethodCallee
   ---- ;; create the callee context
   -- if EC_callee_0 = $inherit_e(BLOCK, EC_0)
   -- if EC_callee_1 = EC_callee_0[ .LOCAL.FRAMES = [ frame ] ]
   ---- ;; evaluate match-action
-  -- if tid :: _ = $rev_<id>(oid)
+  -- if typeId :: _ = $rev_<id>(objectId)
   -- Table_eval:
-      EC_callee_1 STO_0 |- tid TBL
+      EC_callee_1 STO_0 |- typeId TBL
                          : EC_callee_2 STO_1 returnResult
   ---- ;; propagate shared layers
   -- if EC_1 = EC_0[ .BLOCK.FRAME = EC_callee_2.BLOCK.FRAME ]

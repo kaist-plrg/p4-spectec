@@ -1184,9 +1184,9 @@ rulegroup Expr_ok/callExpression-callable {
     ---- ;; check callable
     -- CallableType_ok:
         p TC |- callableTargetIR `< eps > `( argumentIR* )
-             : callableTypeIR `< `# tid_infer* > `( `# id_default* )
+             : callableTypeIR `< `# typeId_infer* > `( `# id_default* )
     ---- ;; check calling convention
-    -- Call_ok: p TC |- callableTypeIR `< eps `# tid_infer* > `( argumentIR* `# id_default* )
+    -- Call_ok: p TC |- callableTypeIR `< eps `# typeId_infer* > `( argumentIR* `# id_default* )
                       : typeIR_ret `< typeArgumentIR_inferred* > `( argumentIR_cast* )
     ---- ;; call must not return void on expression level
     -- if typeIR_ret =/= VOID
@@ -1204,18 +1204,18 @@ rulegroup Expr_ok/callExpression-callable {
     -- CallableTarget_ok: p TC |- callableTarget : callableTargetIR
     ---- ;; check type arguments
     -- if realTypeArgument* = $flatten_realTypeArgumentList(realTypeArgumentList)
-    -- TypeArguments_ok: p TC |- realTypeArgument* : typeArgumentIR* `# tid_impl*
+    -- TypeArguments_ok: p TC |- realTypeArgument* : typeArgumentIR* `# typeId_impl*
     ---- ;; check arguments
     -- if argument* = $flatten_argumentList(argumentList)
     -- (Argument_ok: p TC |- argument : argumentIR)*
     ---- ;; check callable
     -- CallableType_ok:
         p TC |- callableTargetIR `< typeArgumentIR* > `( argumentIR* )
-              : callableTypeIR `< `# tid_inserted* > `( `# id_default* )
+              : callableTypeIR `< `# typeId_inserted* > `( `# id_default* )
     ---- ;; check calling convention
-    -- if tid_infer* = tid_impl* ++ tid_inserted*
+    -- if typeId_infer* = typeId_impl* ++ typeId_inserted*
     -- Call_ok:
-        p TC |- callableTypeIR `< typeArgumentIR* `# tid_infer* > `( argumentIR* `# id_default* )
+        p TC |- callableTypeIR `< typeArgumentIR* `# typeId_infer* > `( argumentIR* `# id_default* )
               : typeIR_ret `< typeArgumentIR_inferred* > `( argumentIR_cast* )
     ---- ;; call must not return void on expression level
     -- if typeIR_ret =/= VOID
@@ -1264,10 +1264,11 @@ rulegroup Expr_ok/callExpression-constructor {
     ---- ;; check constructor type
     -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
     -- ConstructorType_ok: p TC |- prefixedNameIR `< eps > `( argumentIR* )
-                                 : constructorTypeIR `< `# tid_impl* > `( `# id_default* )
+                                 : constructorTypeIR `< `# typeId_impl* > `( `# id_default* )
     ---- ;; check instantiation convention
     -- Inst_ok:
-        p TC ANON |- constructorTypeIR `< eps `# tid_impl* > `( argumentIR* `# id_default* )
+        p TC ANON |- constructorTypeIR `< eps `# typeId_impl* >
+                      `( argumentIR* `# id_default* )
                    : typeIR_object `< typeArgumentIR_inferred* > `( argumentIR_cast* )
     ---- ;; constructed object may not contain an abstract method
     -- if $is_concrete_extern_object(typeIR_object)
@@ -1281,7 +1282,7 @@ rulegroup Expr_ok/callExpression-constructor {
           : callExpressionIR `# expressionNoteIR
     ---- ;; check type arguments
     -- if typeArgument* = $flatten_typeArgumentList(typeArgumentList)
-    -- TypeArguments_ok: p TC |- typeArgument* : typeArgumentIR* `# tid_impl*
+    -- TypeArguments_ok: p TC |- typeArgument* : typeArgumentIR* `# typeId_impl*
     ---- ;; check arguments
     -- if argument* = $flatten_argumentList(argumentList)
     -- (Argument_ok: p TC |- argument : argumentIR)*
@@ -1289,11 +1290,12 @@ rulegroup Expr_ok/callExpression-constructor {
     -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
     -- ConstructorType_ok:
         p TC |- prefixedNameIR `< typeArgumentIR* > `( argumentIR* )
-             : constructorTypeIR `< `# tid_inserted* > `( `# id_default* )
+             : constructorTypeIR `< `# typeId_inserted* > `( `# id_default* )
     ---- ;; check instantiation convention
-    -- if tid_infer* = tid_impl* ++ tid_inserted*
+    -- if typeId_infer* = typeId_impl* ++ typeId_inserted*
     -- Inst_ok:
-        p TC ANON |- constructorTypeIR `< typeArgumentIR* `# tid_infer* > `( argumentIR* `# id_default* )
+        p TC ANON |- constructorTypeIR `< typeArgumentIR* `# typeId_infer* >
+                      `( argumentIR* `# id_default* )
                    : typeIR_object `< typeArgumentIR_inferred* > `( argumentIR_cast* )
     ---- ;; constructed object may not contain an abstract method
     -- if $is_concrete_extern_object(typeIR_object)

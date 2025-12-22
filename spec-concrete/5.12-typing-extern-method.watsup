@@ -7,70 +7,70 @@
 ;;; annotationList functionPrototype `;
 
 rule ExternMethod_ok/non-abstract:
-  TC_0 tid_extern |- annotationList
-                      (typeOrVoid name typeParameterListOpt `( parameterList )) `;
-                   : TC_4 externMethodPrototypeIR
+  TC_0 typeId_extern |- annotationList
+                          (typeOrVoid name typeParameterListOpt `( parameterList )) `;
+                      : TC_4 externMethodPrototypeIR
   ---- ;; check that method name does not overlap with the extern name
   -- if nameIR = $name(name)
-  -- if nameIR =/= tid_extern
+  -- if nameIR =/= typeId_extern
   ---- ;; check type parameters and add them to the context
   -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
-  -- if (tid_expl = $name(typeParameter))*
-  -- if TC_1 = $add_typeDefs_t(LOCAL, TC_0, tid_expl*, (`` tid_expl)*)
+  -- if (typeId_expl = $name(typeParameter))*
+  -- if TC_1 = $add_typeDefs_t(LOCAL, TC_0, typeId_expl*, (`` typeId_expl)*)
   ---- ;; check return type
   -- Type_ok: LOCAL TC_1 |- typeOrVoid : typeIR_ret `# eps
   ---- ;; set local context
   -- if TC_2 = TC_1[ .LOCAL.KIND = EXTERN_METHOD `: typeIR_ret ]
   ---- ;; check parameters and add them to the context
   -- if parameter* = $flatten_parameterList(parameterList)
-  -- Parameters_ok: LOCAL TC_2 |- parameter* : parameterIR* `# tid_impl*
+  -- Parameters_ok: LOCAL TC_2 |- parameter* : parameterIR* `# typeId_impl*
   -- if TC_3 = $add_parameters_t(LOCAL, TC_2, parameterIR*)
   ---- ;; create method type and add it to the context
-  -- if cid = $cid(name, parameterList)
+  -- if callableId = $callableId(name, parameterList)
   -- if externMethodTypeDefIR
-      = EXTERN_METHOD `< tid_expl* `, tid_impl* >
+      = EXTERN_METHOD `< typeId_expl* `, typeId_impl* >
           `( parameterIR* ) `: typeIR_ret
   -- CallableTypeDef_wf: $bound(BLOCK, TC_0) |- externMethodTypeDefIR
   -- if TC_4
-      = $add_callableDef_overload_t(BLOCK, TC_0, cid, externMethodTypeDefIR)
+      = $add_callableDef_overload_t(BLOCK, TC_0, callableId, externMethodTypeDefIR)
   ---- ;; create IR
   -- if externMethodPrototypeIR
       = annotationList
-          (typeIR_ret nameIR `< tid_expl* `, tid_impl* > `( parameterIR* )) `;
+          (typeIR_ret nameIR `< typeId_expl* `, typeId_impl* > `( parameterIR* )) `;
 
 ;;; annotationList ABSTRACT functionPrototype `;
 
 rule ExternMethod_ok/abstract:
-  TC_0 tid_extern |- annotationList ABSTRACT
-                      (typeOrVoid name typeParameterListOpt `( parameterList )) `;
-                   : TC_4 externMethodPrototypeIR
+  TC_0 typeId_extern |- annotationList ABSTRACT
+                          (typeOrVoid name typeParameterListOpt `( parameterList )) `;
+                      : TC_4 externMethodPrototypeIR
   ---- ;; check that method name does not overlap with the extern name
   -- if nameIR = $name(name)
-  -- if nameIR =/= tid_extern
+  -- if nameIR =/= typeId_extern
   ---- ;; check type parameters and add them to the context
   -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
-  -- if (tid_expl = $name(typeParameter))*
-  -- if TC_1 = $add_typeDefs_t(LOCAL, TC_0, tid_expl*, (`` tid_expl)*)
+  -- if (typeId_expl = $name(typeParameter))*
+  -- if TC_1 = $add_typeDefs_t(LOCAL, TC_0, typeId_expl*, (`` typeId_expl)*)
   ---- ;; check return type
   -- Type_ok: LOCAL TC_1 |- typeOrVoid : typeIR_ret `# eps
   ---- ;; set local context
   -- if TC_2 = TC_1[ .LOCAL.KIND = EXTERN_METHOD ABSTRACT `: typeIR_ret ]
   ---- ;; check parameters and add them to the context
   -- if parameter* = $flatten_parameterList(parameterList)
-  -- Parameters_ok: LOCAL TC_2 |- parameter* : parameterIR* `# tid_impl*
+  -- Parameters_ok: LOCAL TC_2 |- parameter* : parameterIR* `# typeId_impl*
   -- if TC_3 = $add_parameters_t(LOCAL, TC_2, parameterIR*)
   ---- ;; create method type and add it to the context
-  -- if cid = $cid(name, parameterList)
+  -- if callableId = $callableId(name, parameterList)
   -- if externMethodTypeDefIR
-      = EXTERN_METHOD ABSTRACT `< tid_expl* `, tid_impl* >
+      = EXTERN_METHOD ABSTRACT `< typeId_expl* `, typeId_impl* >
           `( parameterIR* ) `: typeIR_ret
   -- CallableTypeDef_wf: $bound(BLOCK, TC_0) |- externMethodTypeDefIR
   -- if TC_4
-      = $add_callableDef_non_overload_t(BLOCK, TC_0, cid, externMethodTypeDefIR)
+      = $add_callableDef_non_overload_t(BLOCK, TC_0, callableId, externMethodTypeDefIR)
   ---- ;; create IR
   -- if externMethodPrototypeIR
       = annotationList ABSTRACT
-          (typeIR_ret nameIR `< tid_expl* `, tid_impl* > `( parameterIR* )) `;
+          (typeIR_ret nameIR `< typeId_expl* `, typeId_impl* > `( parameterIR* )) `;
 
 ;;
 ;; Extern method list typing
@@ -79,15 +79,15 @@ rule ExternMethod_ok/abstract:
 ;;
 
 rule ExternMethods_ok/nil:
-  TC tid_extern |- eps : TC eps
+  TC typeId_extern |- eps : TC eps
 
 rule ExternMethods_ok/cons:
-  TC_0 tid_extern |- externMethodPrototype_h :: externMethodPrototype_t*
-                   : TC_2 (externMethodPrototypeIR_h :: externMethodPrototypeIR_t*)
-  -- ExternMethod_ok: TC_0 tid_extern |- externMethodPrototype_h
-                                       : TC_1 externMethodPrototypeIR_h
-  -- ExternMethods_ok: TC_1 tid_extern |- externMethodPrototype_t*
-                                        : TC_2 externMethodPrototypeIR_t*
+  TC_0 typeId_extern |- externMethodPrototype_h :: externMethodPrototype_t*
+                      : TC_2 (externMethodPrototypeIR_h :: externMethodPrototypeIR_t*)
+  -- ExternMethod_ok: TC_0 typeId_extern |- externMethodPrototype_h
+                                          : TC_1 externMethodPrototypeIR_h
+  -- ExternMethods_ok: TC_1 typeId_extern |- externMethodPrototype_t*
+                                            : TC_2 externMethodPrototypeIR_t*
 
 ;;
 ;; Extern constructor typing
@@ -98,30 +98,30 @@ rule ExternMethods_ok/cons:
 ;;; annotationList typeIdentifier `( parameterList ) `;
 
 rule ExternConstructor_ok:
-  TC_0 tid_extern |- annotationList typeIdentifier `( parameterList ) `;
-                   : TC_1 externConstructorPrototypeIR
+  TC_0 typeId_extern |- annotationList typeIdentifier `( parameterList ) `;
+                      : TC_1 externConstructorPrototypeIR
   ---- ;; check that constructor name is the same as the extern name
   -- if nameIR = $name(typeIdentifier)
-  -- if nameIR = tid_extern
+  -- if nameIR = typeId_extern
   ---- ;; check constructor parameters
   -- if constructorParameter* = $flatten_parameterList(parameterList)
   -- ConstructorParameters_ok: BLOCK TC_0 |- constructorParameter*
-                                           : constructorParameterIR* `# tid_impl*
+                                           : constructorParameterIR* `# typeId_impl*
   ---- ;; find extern type
-  -- if typeDefIR_extern = $find_typeDef_t(GLOBAL, TC_0, `` tid_extern)
-  -- if (tid_expl*, eps) = $type_parameters_of_typeDefIR(typeDefIR_extern)
+  -- if typeDefIR_extern = $find_typeDef_t(GLOBAL, TC_0, `` typeId_extern)
+  -- if (typeId_expl*, eps) = $type_parameters_of_typeDefIR(typeDefIR_extern)
   ---- ;; add implicit type parameters to the constructor
   ---- ;; and add it to the context
-  -- if cid = $cid_(typeIdentifier, `( parameterList ))
-  -- if typeIR_extern_spec = typeDefIR_extern `< (`` tid_expl)* >
+  -- if callableId = $callableId_(typeIdentifier, `( parameterList ))
+  -- if typeIR_extern_spec = typeDefIR_extern `< (`` typeId_expl)* >
   -- if constructorTypeDefIR
-      = CONSTRUCTOR `< tid_expl* `, tid_impl* >
+      = CONSTRUCTOR `< typeId_expl* `, typeId_impl* >
           `( constructorParameterIR* ) `: typeIR_extern_spec
   -- ConstructorTypeDef_wf: $bound(BLOCK, TC_0) |- constructorTypeDefIR
-  -- if TC_1 = $add_constructorDef_t(TC_0, cid, constructorTypeDefIR)
+  -- if TC_1 = $add_constructorDef_t(TC_0, callableId, constructorTypeDefIR)
   ---- ;; create IR
   -- if externConstructorPrototypeIR
-      = annotationList nameIR `< `, tid_impl* > `( constructorParameterIR* ) `;
+      = annotationList nameIR `< `, typeId_impl* > `( constructorParameterIR* ) `;
 
 ;;
 ;; Extern constructor list typing
@@ -130,12 +130,12 @@ rule ExternConstructor_ok:
 ;;
 
 rule ExternConstructors_ok/nil:
-  TC tid_extern |- eps : TC eps
+  TC typeId_extern |- eps : TC eps
 
 rule ExternConstructors_ok/cons:
-  TC_0 tid_extern |- externConstructorPrototype_h :: externConstructorPrototype_t*
-                  : TC_2 (externConstructorPrototypeIR_h :: externConstructorPrototypeIR_t*)
-  -- ExternConstructor_ok: TC_0 tid_extern |- externConstructorPrototype_h
+  TC_0 typeId_extern |- externConstructorPrototype_h :: externConstructorPrototype_t*
+                      : TC_2 (externConstructorPrototypeIR_h :: externConstructorPrototypeIR_t*)
+  -- ExternConstructor_ok: TC_0 typeId_extern |- externConstructorPrototype_h
                                             : TC_1 externConstructorPrototypeIR_h
-  -- ExternConstructors_ok: TC_1 tid_extern |- externConstructorPrototype_t*
+  -- ExternConstructors_ok: TC_1 typeId_extern |- externConstructorPrototype_t*
                                              : TC_2 externConstructorPrototypeIR_t*

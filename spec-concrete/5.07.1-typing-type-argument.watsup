@@ -10,8 +10,8 @@
 ;;;;  type
 
 rule TypeArgument_ok/type:
-  p TC |- type : typeIR `# tid_impl*
-  -- Type_ok: p TC |- type : typeIR `# tid_impl*
+  p TC |- type : typeIR `# typeId_impl*
+  -- Type_ok: p TC |- type : typeIR `# typeId_impl*
 
 ;;;;  VOID
 
@@ -21,14 +21,14 @@ rule TypeArgument_ok/void:
 ;;;;  `_
 
 rule TypeArgument_ok/dontcare:
-  p TC |- `_ : (`` tid_impl) `# tid_impl 
-  -- if tid_impl = $fresh_tid()
+  p TC |- `_ : (`` typeId_impl) `# typeId_impl 
+  -- if typeId_impl = $fresh_typeId()
 
 ;;; nonTypeName
 
 rule TypeArgument_ok/nonTypeName:
-  p TC |- nonTypeName : (`` tid) `# eps
-  -- if tid = $name(nonTypeName)
+  p TC |- nonTypeName : (`` typeId) `# eps
+  -- if typeId = $name(nonTypeName)
 
 ;;
 ;; Type argument list typing
@@ -41,9 +41,9 @@ rule TypeArguments_ok/nil:
 
 rule TypeArguments_ok/cons:
   p TC |- typeArgument_h :: typeArgument_t*
-        : (typeArgumentIR_h :: typeArgumentIR_t*) `# tid_impl*
+        : (typeArgumentIR_h :: typeArgumentIR_t*) `# typeId_impl*
   -- TypeArgument_ok: p TC |- typeArgument_h
-                            : typeArgumentIR_h `# tid_impl_h*
+                            : typeArgumentIR_h `# typeId_impl_h*
   -- TypeArguments_ok: p TC |- typeArgument_t*
-                             : typeArgumentIR_t* `# tid_impl_t*
-  -- if tid_impl* = tid_impl_h* ++ tid_impl_t*
+                             : typeArgumentIR_t* `# typeId_impl_t*
+  -- if typeId_impl* = typeId_impl_h* ++ typeId_impl_t*

@@ -75,7 +75,7 @@ rule Constructor_call/externConstructorDef:
   -- ExternMethods_inst:
       IC_callee_3 |- externMethodPrototypeIR* : IC_callee_4
   ---- ;; create an extern object with the final callee context
-  -- if `{ (cid `: externMethodDef)* } = IC_callee_4.BLOCK.CALLABLE
+  -- if `{ (callableId `: externMethodDef)* } = IC_callee_4.BLOCK.CALLABLE
   ---- ;; initialize extern state
   -- if (_ _ _ id_cparam _ = constructorParameterIR)*
   -- if (value_cparam = $find_map<id, value>(IC_callee_4.BLOCK.FRAME, id_cparam))*
@@ -84,7 +84,7 @@ rule Constructor_call/externConstructorDef:
       = EXTERN nameIR `< IC_callee_4.BLOCK.TYPE >
                       `{ externState
                          IC_callee_4.BLOCK.FRAME
-                         `{ (cid `: externMethodDef)* } }
+                         `{ (callableId `: externMethodDef)* } }
 
 ;;; parserObjectConstructorDef
 ;;; syntax parserObjectConstructorDef =
@@ -166,11 +166,11 @@ rule Constructor_call/controlConstructorDef:
                         : IC_local_1 STO_3 controlBodyIR'
   ---- ;; create control object with callee value environment
   ---- ;; and local action definition environment
-  -- if `{ (cid `: actionDef)* } = IC_local_1.BLOCK.CALLABLE
+  -- if `{ (callableId `: actionDef)* } = IC_local_1.BLOCK.CALLABLE
   -- if object_control
       = CONTROL `( parameterIR* ) `{ IC_callee_2.BLOCK.FRAME
                                      controlLocalDeclarationIR'*
-                                     `{ (cid `: actionDef)* }
+                                     `{ (callableId `: actionDef)* }
                                      controlBodyIR' }
 
 ;;; packageObjectConstructorDef

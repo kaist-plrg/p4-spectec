@@ -14,247 +14,263 @@ def $empty_typeFrame = $empty_map<id, varTypeIR>
 
 ;; Map from type identifiers to type definitions
 
-syntax typeDefEnv = map<tid, typeDefIR>
+syntax typeDefEnv = map<typeId, typeDefIR>
 
 dec $empty_typeDefEnv : typeDefEnv
-def $empty_typeDefEnv = $empty_map<tid, typeDefIR>
+def $empty_typeDefEnv = $empty_map<typeId, typeDefIR>
 
 ;; Map from callable identifiers to callable type definitions
 
-syntax callableTypeDefEnv = map<cid, callableTypeDefIR>
+syntax callableTypeDefEnv = map<callableId, callableTypeDefIR>
 
 dec $empty_callableTypeDefEnv : callableTypeDefEnv
-def $empty_callableTypeDefEnv = $empty_map<cid, callableTypeDefIR>
+def $empty_callableTypeDefEnv = $empty_map<callableId, callableTypeDefIR>
 
 ;; Map from constructor identifiers to constructor type definitions
 
-syntax constructorTypeDefEnv = map<cid, constructorTypeDefIR>
+syntax constructorTypeDefEnv = map<callableId, constructorTypeDefIR>
 
 dec $empty_constructorTypeDefEnv : constructorTypeDefEnv
-def $empty_constructorTypeDefEnv = $empty_map<cid, constructorTypeDefIR>
+def $empty_constructorTypeDefEnv = $empty_map<callableId, constructorTypeDefIR>
 
 ;;
 ;; Callable overload resolution
 ;;
 
-dec $check_callable_name(id, id) : bool
-def $check_callable_name(id_l, id_r) = id_l = id_r
+dec $check_callable_name(nameIR, nameIR) : bool
+def $check_callable_name(nameIR_l, nameIR_r) = nameIR_l = nameIR_r
 
-dec $check_arity((id?)*, id*) : bool
-def $check_arity((id_arg?)*, id_param*) = $(|(id_arg?)*| = |id_param*|)
+dec $check_arity((nameIR?)*, nameIR*) : bool
+def $check_arity((nameIR_arg?)*, nameIR_param*)
+  = $(|(nameIR_arg?)*| = |nameIR_param*|)
 
-dec $check_arity_more((id?)*, id*) : bool
-def $check_arity_more((id_arg?)*, id_param*) = $(|(id_arg?)*| > |id_param*|)
+dec $check_arity_more((nameIR?)*, nameIR*) : bool
+def $check_arity_more((nameIR_arg?)*, nameIR_param*)
+  = $(|(nameIR_arg?)*| > |nameIR_param*|)
 
-dec $check_arity_less((id?)*, id*) : bool
-def $check_arity_less((id_arg?)*, id_param*) = $(|(id_arg?)*| < |id_param*|)
+dec $check_arity_less((nameIR?)*, nameIR*) : bool
+def $check_arity_less((nameIR_arg?)*, nameIR_param*)
+  = $(|(nameIR_arg?)*| < |nameIR_param*|)
 
-dec $get_missing_parameters(id*, id*) : id*
+dec $get_missing_parameters(nameIR*, nameIR*) : nameIR*
 
-def $get_missing_parameters(eps, id_arg*) = eps
+def $get_missing_parameters(eps, nameIR_arg*) = eps
 def $get_missing_parameters(
-    id_param_h :: id_param_t*,
-    id_arg*
-  )
-  = id_param_h :: $get_missing_parameters(id_param_t*, id_arg*)
-  -- if ~$in_set<id>(id_param_h, `{ id_arg* })
+    nameIR_param_h :: nameIR_param_t*,
+    nameIR_arg*)
+  = nameIR_param_h :: $get_missing_parameters(nameIR_param_t*, nameIR_arg*)
+  -- if ~$in_set<id>(nameIR_param_h, `{ nameIR_arg* })
 def $get_missing_parameters(
-    id_param_h :: id_param_t*,
-    id_arg*
-  )
-  = $get_missing_parameters(id_param_t*, id_arg*)
+    nameIR_param_h :: nameIR_param_t*,
+    nameIR_arg*)
+  = $get_missing_parameters(nameIR_param_t*, nameIR_arg*)
   -- otherwise
 
 ;; Check match between parameters and named arguments
 
-dec $find_match_named<V>(cid, V, id*, pid*) : (cid, V, id*)?
+dec $find_match_named<V>(callableId, V, nameIR*, parameterId*) : (callableId, V, nameIR*)?
 
-def $find_match_named<V>(cid, V, id_arg*, (id_param `# bool_param)*)
-  = (cid, V, eps)
-  -- if $eq_set<id>(`{ id_arg* }, `{ id_param* })
-def $find_match_named<V>(cid, V, id_arg*, pid*) = eps
+def $find_match_named<V>(callableId, V, nameIR_arg*, (nameIR_param `# bool_param)*)
+  = (callableId, V, eps)
+  -- if $eq_set<id>(`{ nameIR_arg* }, `{ nameIR_param* })
+
+def $find_match_named<V>(callableId, V, nameIR_arg*, parameterId*) = eps
   -- otherwise
 
 ;; Check match between parameters and named arguments, with default arguments
 
-dec $find_match_named_default<V>(cid, V, id*, pid*) : (cid, V, id*)?
+dec $find_match_named_default<V>(callableId, V, nameIR*, parameterId*)
+  : (callableId, V, nameIR*)?
 
-def $find_match_named_default<V>(cid, V, id_arg*, (id_param `# bool_param)*)
-  = (cid, V, id_default*)
-  -- if id_default* = $get_missing_parameters(id_param*, id_arg*)
+def $find_match_named_default<V>(
+    callableId, V, nameIR_arg*, (nameIR_param `# bool_param)*)
+  = (callableId, V, nameIR_default*)
+  -- if nameIR_default*
+      = $get_missing_parameters(nameIR_param*, nameIR_arg*)
   -- if $find_match_named<V>(
-          cid, V,
-          id_arg* ++ id_default*,
-          (id_param `# bool_param)*
-        ) =/= eps
-def $find_match_named_default<V>(cid, V, id_arg*, pid*) = eps
+          callableId, V,
+          nameIR_arg* ++ nameIR_default*,
+          (nameIR_param `# bool_param)*)
+        =/= eps
+def $find_match_named_default<V>(
+    callableId, V, nameIR_arg*, parameterId*)
+  = eps
   -- otherwise
 
 ;; Check match between parameters and unnamed arguments, with default arguments
 
-dec $find_match_unnamed_default<V>(cid, V, (id?)*, pid*) : (cid, V, id*)?
+dec $find_match_unnamed_default<V>(callableId, V, (nameIR?)*, parameterId*)
+  : (callableId, V, nameIR*)?
 
-def $find_match_unnamed_default<V>(cid, V, (id_arg?)*, pid*)
-  = (cid, V, id_default*)
-  -- if (_, (id_default `# true)*) = $partition_<pid>(pid*, |(id_arg?)*|)
-def $find_match_unnamed_default<V>(cid, V, (id_arg?)*, pid*) = eps
+def $find_match_unnamed_default<V>(callableId, V, (nameIR_arg?)*, parameterId*)
+  = (callableId, V, nameIR_default*)
+  -- if (_, (nameIR_default `# true)*)
+      = $partition_<parameterId>(parameterId*, |(nameIR_arg?)*|)
+
+def $find_match_unnamed_default<V>(
+    callableId, V, (nameIR_arg?)*, parameterId*)
+  = eps
   -- otherwise
 
 ;; Check if a callable matches the given name and arguments
 
-dec $check_overloaded<V>(id, (id?)*, id*, cid, V) : (cid, V, id*)?
+dec $check_overloaded<V>(
+    nameIR, (nameIR?)*, nameIR*, callableId, V)
+  : (callableId, V, nameIR*)?
 
 ;;; When callable names do not match
 
-def $check_overloaded<V>(id_r, (id_arg?)*, id_arg'*, id_r' `( pid_r'* ), V)
+def $check_overloaded<V>(
+    nameIR_f, (nameIR_arg?)*, nameIR_arg'*,
+    nameIR_f' `( parameterId_f'* ), V)
   = eps
-  -- if ~$check_callable_name(id_r, id_r')
+  -- if ~$check_callable_name(nameIR_f, nameIR_f')
 
 ;;; When callable names match, but the arity of arguments is greater than that of parameters
 
 def $check_overloaded<V>(
-    id_r, (id_arg?)*, id_arg'*,
-    id_r' `( (id_param' `# bool_param')* ), V
-  )
+    nameIR_f, (nameIR_arg?)*, nameIR_arg'*,
+    nameIR_f' `( (nameIR_param' `# bool_param')* ), V)
   = eps
-  -- if $check_callable_name(id_r, id_r')
-  -- if $check_arity_more((id_arg?)*, id_param'*)
+  -- if $check_callable_name(nameIR_f, nameIR_f')
+  -- if $check_arity_more((nameIR_arg?)*, nameIR_param'*)
 
 ;;; When callable names and arity match on named arguments, i.e., no default arguments
 
 def $check_overloaded<V>(
-    id_r, (id_arg?)*, id_arg'*,
-    id_r' `( (id_param' `# bool_param')* ), V
-  )
+    nameIR_f, (nameIR_arg?)*, nameIR_arg'*,
+    nameIR_f' `( (nameIR_param' `# bool_param')* ), V)
   = $find_match_named<V>(
-      id_r' `( (id_param' `# bool_param')* ),
-      V, id_arg'*, (id_param' `# bool_param')*
-    )
-  -- if $(|id_arg'*| > 0)
-  -- if $check_callable_name(id_r, id_r')
-  -- if $check_arity((id_arg?)*, id_param'*)
+      nameIR_f' `( (nameIR_param' `# bool_param')* ),
+      V, nameIR_arg'*, (nameIR_param' `# bool_param')*)
+  -- if $(|nameIR_arg'*| > 0)
+  -- if $check_callable_name(nameIR_f, nameIR_f')
+  -- if $check_arity((nameIR_arg?)*, nameIR_param'*)
 
 ;;; When callable names and arity match on unnamed arguments, i.e., no default arguments
 
 def $check_overloaded<V>(
-    id_r, (id_arg?)*, eps,
-    id_r' `( (id_param' `# bool_param')* ), V
-  )
-  = (id_r' `( (id_param' `# bool_param')* ), V, eps)
-  -- if $check_callable_name(id_r, id_r')
-  -- if $check_arity((id_arg?)*, id_param'*)
+    nameIR_f, (nameIR_arg?)*, eps,
+    nameIR_f' `( (nameIR_param' `# bool_param')* ), V)
+  = (nameIR_f' `( (nameIR_param' `# bool_param')* ), V, eps)
+  -- if $check_callable_name(nameIR_f, nameIR_f')
+  -- if $check_arity((nameIR_arg?)*, nameIR_param'*)
 
 ;;; When callable names match and arity is less than that of parameters, with named arguments
 
 def $check_overloaded<V>(
-    id_r, (id_arg?)*, id_arg'*,
-    id_r' `( (id_param' `# bool_param')* ), V
-  )
+    nameIR_f, (nameIR_arg?)*, nameIR_arg'*,
+    nameIR_f' `( (nameIR_param' `# bool_param')* ), V)
   = $find_match_named_default<V>(
-      id_r' `( (id_param' `# bool_param')* ),
-      V, id_arg'*, (id_param' `# bool_param')*
-    )
-  -- if $(|id_arg'*| > 0)
-  -- if $check_callable_name(id_r, id_r')
-  -- if $check_arity_less((id_arg?)*, id_param'*)
+      nameIR_f' `( (nameIR_param' `# bool_param')* ),
+      V, nameIR_arg'*, (nameIR_param' `# bool_param')*)
+  -- if $(|nameIR_arg'*| > 0)
+  -- if $check_callable_name(nameIR_f, nameIR_f')
+  -- if $check_arity_less((nameIR_arg?)*, nameIR_param'*)
 
 ;;; When callable names match and arity is less than that of parameters, with unnamed arguments
 
 def $check_overloaded<V>(
-    id_r, (id_arg?)*, eps,
-    id_r' `( (id_param' `# bool_param')* ), V
-  )
+    nameIR_f, (nameIR_arg?)*, eps,
+    nameIR_f' `( (nameIR_param' `# bool_param')* ), V)
   = $find_match_unnamed_default<V>(
-      id_r' `( (id_param' `# bool_param' )* ),
-      V, (id_arg?)*, (id_param' `# bool_param')*
+      nameIR_f' `( (nameIR_param' `# bool_param' )* ),
+      V, (nameIR_arg?)*, (nameIR_param' `# bool_param')*
     )
-  -- if $check_callable_name(id_r, id_r')
-  -- if $check_arity_less((id_arg?)*, id_param'*)
+  -- if $check_callable_name(nameIR_f, nameIR_f')
+  -- if $check_arity_less((nameIR_arg?)*, nameIR_param'*)
 
 ;; Find all callables that match the given name and arguments
 
-dec $find_overloadeds<V>(id, (id?)*, id*, cid*, V*) : (cid, V, id*)*
+dec $find_overloadeds<V>(nameIR, (nameIR?)*, nameIR*, callableId*, V*)
+  : (callableId, V, nameIR*)*
 
 def $find_overloadeds<V>(
-    id_r, (id_arg?)*, id_arg'*,
-    eps, eps
-  )
+    nameIR_f, (nameIR_arg?)*, nameIR_arg'*,
+    eps, eps)
   = eps
+
 def $find_overloadeds<V>(
-    id_r, (id_arg?)*, id_arg'*,
-    cid_h :: cid_t*, V_h :: V_t*
-  )
-  = $find_overloadeds<V>(id_r, (id_arg?)*, id_arg'*, cid_t*, V_t*)
-  -- if $check_overloaded<V>(id_r, (id_arg?)*, id_arg'*, cid_h, V_h) = eps
+    nameIR_f, (nameIR_arg?)*, nameIR_arg'*,
+    callableId_h :: callableId_t*, V_h :: V_t*)
+  = $find_overloadeds<V>(
+      nameIR_f, (nameIR_arg?)*, nameIR_arg'*,
+      callableId_t*, V_t*)
+  -- if $check_overloaded<V>(
+          nameIR_f, (nameIR_arg?)*, nameIR_arg'*,
+          callableId_h, V_h)
+      = eps
+
 def $find_overloadeds<V>(
-    id_r, (id_arg?)*, id_arg'*,
-    cid_h :: cid_t*, V_h :: V_t*
-  )
-  = (cid, V, id_default*) :: $find_overloadeds<V>(id_r, (id_arg?)*, id_arg'*, cid_t*, V_t*)
-  -- if (cid, V, id_default*)
-      = $check_overloaded<V>(id_r, (id_arg?)*, id_arg'*, cid_h, V_h)
+    nameIR_f, (nameIR_arg?)*, nameIR_arg'*,
+    callableId_h :: callableId_t*, V_h :: V_t*)
+  = (callableId, V, nameIR_default*) ::
+      $find_overloadeds<V>(
+        nameIR_f, (nameIR_arg?)*, nameIR_arg'*,
+        callableId_t*, V_t*)
+  -- if (callableId, V, nameIR_default*)
+      = $check_overloaded<V>(
+          nameIR_f, (nameIR_arg?)*, nameIR_arg'*,
+          callableId_h, V_h)
 
 ;; Find a matching callable, given a callable name and arguments
 
-dec $find_overloaded<V>(map<cid, V>, id, (id?)*) : (cid, V, id*)?
+dec $find_overloaded<V>(map<callableId, V>, nameIR, (nameIR?)*) : (callableId, V, nameIR*)?
 
 ;;; When all arguments are named
 
 def $find_overloaded<V>(
-    `{ (cid `: V)* }, id_r, (id_arg?)*
-  )
+    `{ (callableId `: V)* }, nameIR_f, (nameIR_arg?)*)
   = eps
-  -- if $(|(id_arg?)*| > 0)
-  -- if (id_arg? = id_arg')*
-  -- if $find_overloadeds<V>(id_r, (id_arg?)*, id_arg'*, cid*, V*) = eps
+  -- if $(|(nameIR_arg?)*| > 0)
+  -- if (nameIR_arg? = nameIR_arg')*
+  -- if $find_overloadeds<V>(nameIR_f, (nameIR_arg?)*, nameIR_arg'*, callableId*, V*) = eps
 def $find_overloaded<V>(
-    `{ (cid `: V)* }, id_r, (id_arg?)*
+    `{ (callableId `: V)* }, nameIR_f, (nameIR_arg?)*
   )
-  = (cid', V', id_default*)
-  -- if $(|(id_arg?)*| > 0)
-  -- if (id_arg? = id_arg')*
-  -- if (cid', V', id_default*)
-      = $find_overloadeds<V>(id_r, (id_arg?)*, id_arg'*, cid*, V*)
+  = (callableId', V', nameIR_default*)
+  -- if $(|(nameIR_arg?)*| > 0)
+  -- if (nameIR_arg? = nameIR_arg')*
+  -- if (callableId', V', nameIR_default*)
+      = $find_overloadeds<V>(nameIR_f, (nameIR_arg?)*, nameIR_arg'*, callableId*, V*)
 
 ;;; When all arguments are unnamed
 
 def $find_overloaded<V>(
-    `{ (cid `: V)* }, id_r, (id_arg?)*
-  )
+    `{ (callableId `: V)* }, nameIR_f, (nameIR_arg?)*)
   = eps
-  -- if (id_arg? = eps)*
-  -- if $find_overloadeds<V>(id_r, (id_arg?)*, eps, cid*, V*) = eps
+  -- if (nameIR_arg? = eps)*
+  -- if $find_overloadeds<V>(nameIR_f, (nameIR_arg?)*, eps, callableId*, V*) = eps
 def $find_overloaded<V>(
-    `{ (cid `: V)* }, id_r, (id_arg?)*
-  )
-  = (cid', V', id_default*)
-  -- if (id_arg? = eps)*
-  -- if (cid', V', id_default*)
-      = $find_overloadeds<V>(id_r, (id_arg?)*, eps, cid*, V*)
+    `{ (callableId `: V)* }, nameIR_f, (nameIR_arg?)*)
+  = (callableId', V', nameIR_default*)
+  -- if (nameIR_arg? = eps)*
+  -- if (callableId', V', nameIR_default*)
+      = $find_overloadeds<V>(nameIR_f, (nameIR_arg?)*, eps, callableId*, V*)
 
 ;;
 ;; Callable non-overload resolution
 ;;
 
-dec $find_non_overloaded<V>(map<cid, V>, id) : (cid, V)?
-dec $find_non_overloadeds<V>(map<cid, V>, id) : (cid, V)*
+dec $find_non_overloaded<V>(map<callableId, V>, id) : (callableId, V)?
+dec $find_non_overloadeds<V>(map<callableId, V>, id) : (callableId, V)*
 
-def $find_non_overloaded<V>(`{ (cid `: V)* }, id) = (cid', V')
-  -- if (cid', V') = $find_non_overloadeds<V>(`{ (cid `: V)* }, id)
-def $find_non_overloaded<V>(`{ (cid `: V)* }, id) = eps
+def $find_non_overloaded<V>(`{ (callableId `: V)* }, nameIR_f) = (callableId', V')
+  -- if (callableId', V') = $find_non_overloadeds<V>(`{ (callableId `: V)* }, nameIR_f)
+def $find_non_overloaded<V>(`{ (callableId `: V)* }, nameIR_f) = eps
   -- otherwise
 
-def $find_non_overloadeds<V>(`{ eps }, id) = eps
+def $find_non_overloadeds<V>(`{ eps }, nameIR_f) = eps
 def $find_non_overloadeds<V>(
-    `{ (cid_h `: V_h) :: (cid_t `: V_t)* }, id)
-  = (cid_h, V_h) :: (cid_t_found, V_t_found)*
-  -- if id `( _ ) = cid_h
-  -- if (cid_t_found, V_t_found)*
-      = $find_non_overloadeds<V>(`{ (cid_t `: V_t)* }, id)
+    `{ (callableId_h `: V_h) :: (callableId_t `: V_t)* }, nameIR_f)
+  = (callableId_h, V_h) :: (callableId_t_found, V_t_found)*
+  -- if nameIR_f `( _ ) = callableId_h
+  -- if (callableId_t_found, V_t_found)*
+      = $find_non_overloadeds<V>(`{ (callableId_t `: V_t)* }, nameIR_f)
 def $find_non_overloadeds<V>(
-    `{ (cid_h `: V_h) :: (cid_t `: V_t)* }, id)
-  = (cid_t_found, V_t_found)*
-  -- if id_h `( _ ) = cid_h
-  -- if id =/= id_h
-  -- if (cid_t_found, V_t_found)*
-      = $find_non_overloadeds<V>(`{ (cid_t `: V_t)* }, id)
+    `{ (callableId_h `: V_h) :: (callableId_t `: V_t)* }, nameIR_f)
+  = (callableId_t_found, V_t_found)*
+  -- if nameIR_f_h `( _ ) = callableId_h
+  -- if nameIR_f =/= nameIR_f_h
+  -- if (callableId_t_found, V_t_found)*
+      = $find_non_overloadeds<V>(`{ (callableId_t `: V_t)* }, nameIR_f)

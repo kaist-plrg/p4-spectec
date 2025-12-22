@@ -38,21 +38,21 @@ def $tableCustomName(PRIORITY) = "priority"
 ;; Variable names
 ;;
 
-syntax id = text
+syntax id = nameIR
 
 ;;
 ;; Type variable names
 ;;
 
-syntax tid = id
+syntax typeId = nameIR
 
-builtin dec $fresh_tid() : tid
+builtin dec $fresh_typeId() : typeId
   hint(prose_in "a fresh type variable")
 
-dec $fresh_tids(nat) : tid*
+dec $fresh_typeIds(nat) : typeId*
   hint(prose_in %0 "fresh type variables")
-def $fresh_tids(0) = eps
-def $fresh_tids(n) = $fresh_tid() :: $fresh_tids(n')
+def $fresh_typeIds(0) = eps
+def $fresh_typeIds(n) = $fresh_typeId() :: $fresh_typeIds(n')
   -- if n =/= 0
   -- if n' = $(n - 1)
 
@@ -64,38 +64,38 @@ def $fresh_tids(n) = $fresh_tid() :: $fresh_tids(n')
 ;; a default value
 ;;
 
-syntax pid = id `# bool
-syntax cid = id `( pid* )
+syntax parameterId = nameIR `# bool
+syntax callableId = nameIR `( parameterId* )
 
-dec $cid(name, parameterList) : cid
-dec $cid_(name, constructorParameterListOpt) : cid
-dec $pids(parameterList) : pid*
-dec $pid(parameter) : pid
+dec $callableId(name, parameterList) : callableId
+dec $callableId_(name, constructorParameterListOpt) : callableId
+dec $parameterIds(parameterList) : parameterId*
+dec $parameterId(parameter) : parameterId
 
-def $cid(name, parameterList)
-  = $name(name) `( $pids(parameterList) )
+def $callableId(name, parameterList)
+  = $name(name) `( $parameterIds(parameterList) )
 
-def $cid_(name, `EMPTY) = $name(name) `( eps )
-def $cid_(name, `( parameterList )) = $cid(name, parameterList)
+def $callableId_(name, `EMPTY) = $name(name) `( eps )
+def $callableId_(name, `( parameterList )) = $callableId(name, parameterList)
 
-def $pids(`EMPTY) = eps
-def $pids(parameter) = $pid(parameter)
-def $pids(nonEmptyParameterList `, parameter)
-  = $pids(nonEmptyParameterList) ++ [ $pid(parameter) ]
+def $parameterIds(`EMPTY) = eps
+def $parameterIds(parameter) = $parameterId(parameter)
+def $parameterIds(nonEmptyParameterList `, parameter)
+  = $parameterIds(nonEmptyParameterList) ++ [ $parameterId(parameter) ]
 
-def $pid(_ _ _ name `EMPTY) = $name(name) `# false
-def $pid(_ _ _ name initializer) = $name(name) `# true
+def $parameterId(_ _ _ name `EMPTY) = $name(name) `# false
+def $parameterId(_ _ _ name initializer) = $name(name) `# true
 
 ;;
 ;; Object names (fully qualified paths)
 ;;
 
-syntax oid = id*
+syntax objectId = nameIR*
 
-dec $oid_ends_with(oid, id) : bool
+dec $objectId_ends_with(objectId, id) : bool
   hint(prose_in %0 "is an object name that ends with" %1)
 
-def $oid_ends_with(oid, id) = true
-  -- if id :: _ = $rev_<id>(oid)
-def $oid_ends_with(oid, id) = false
+def $objectId_ends_with(objectId, id) = true
+  -- if id :: _ = $rev_<id>(objectId)
+def $objectId_ends_with(objectId, id) = false
   -- otherwise

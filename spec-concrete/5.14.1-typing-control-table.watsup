@@ -1155,24 +1155,24 @@ rule TableType_ok:
   TC_0 TBLC |- name : TC_1 typeIR_table
   -- if nameIR = $name(name)
   ---- ;; create table enum type
-  -- if tid_enum = "action_list(" ++ nameIR ++ ")"
+  -- if typeId_enum = "action_list(" ++ nameIR ++ ")"
   -- if (prefixedNameIR_action, _, _)* = TBLC.ACTIONS
-  -- if (id_enum_field = $flatten_prefixedNameIR(prefixedNameIR_action))*
-  -- if tableMetadataEnumTypeIR = TABLE_ENUM tid_enum `{ id_enum_field* }
+  -- if (nameIR_enum_field = $flatten_prefixedNameIR(prefixedNameIR_action))*
+  -- if tableMetadataEnumTypeIR = TABLE_ENUM typeId_enum `{ nameIR_enum_field* }
   ---- ;; add enum fields to context
-  -- if (value_enum_field = TABLE_ENUM tid_enum `. id_enum_field)*
+  -- if (value_enum_field = TABLE_ENUM typeId_enum `. nameIR_enum_field)*
   -- if (varTypeIR_enum_field
         = `EMPTY tableMetadataEnumTypeIR LCTK value_enum_field)*
   -- if TC_1
       = $add_vars_t(
           BLOCK, TC_0,
-          (tid_enum ++ "." ++ id_enum_field)*,
+          (typeId_enum ++ "." ++ nameIR_enum_field)*,
           varTypeIR_enum_field*
         )
   ---- ;; create table struct type
-  -- if tid_struct = "apply_result(" ++ nameIR ++ ")"
+  -- if typeId_struct = "apply_result(" ++ nameIR ++ ")"
   -- if tableMetadataStructTypeIR
-      = TABLE_STRUCT tid_struct
+      = TABLE_STRUCT typeId_struct
           `{ HIT BOOL `; MISS BOOL `; ACTION_RUN tableMetadataEnumTypeIR `; }
   ---- ;; create table type
   -- if typeIR_table = TABLE nameIR `{ tableMetadataStructTypeIR }

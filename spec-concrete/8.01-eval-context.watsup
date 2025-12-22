@@ -166,31 +166,31 @@ def $find_var_cursor_e(LOCAL, EC, `` id)
 dec $find_typeDef_e(cursor, evalContext, prefixedNameIR) : typeDefIR?
 
 def $find_typeDef_e(_, EC, `` nameIR)
-  = $find_map<tid, typeDefIR>(EC.GLOBAL.TYPE, nameIR)
+  = $find_map<typeId, typeDefIR>(EC.GLOBAL.TYPE, nameIR)
 def $find_typeDef_e(_, EC, `. nameIR)
-  = $find_map<tid, typeDefIR>(EC.GLOBAL.TYPE, nameIR)
+  = $find_map<typeId, typeDefIR>(EC.GLOBAL.TYPE, nameIR)
 
 ;;; Finder for types
 
 dec $find_type_e(cursor, evalContext, nameIR) : typeIR?
 
 def $find_type_e(BLOCK, EC, nameIR)
-  = $find_map<tid, typeIR>(EC.BLOCK.TYPE, nameIR)
+  = $find_map<typeId, typeIR>(EC.BLOCK.TYPE, nameIR)
 def $find_type_e(LOCAL, EC, nameIR) = typeIR
-  -- if typeIR = $find_map<tid, typeIR>(EC.LOCAL.TYPE, nameIR)
+  -- if typeIR = $find_map<typeId, typeIR>(EC.LOCAL.TYPE, nameIR)
 def $find_type_e(LOCAL, EC, nameIR)
   = $find_type_e(BLOCK, EC, nameIR)
-  -- if eps = $find_map<tid, typeIR>(EC.LOCAL.TYPE, nameIR)
+  -- if eps = $find_map<typeId, typeIR>(EC.LOCAL.TYPE, nameIR)
 
 ;;; Finder for callable definitions
 
 dec $find_callableDef_overloaded_e(cursor, evalContext, prefixedNameIR, argumentIR*)
-  : (cursor, cid, callableDef, id*)?
+  : (cursor, callableId, callableDef, id*)?
 
 def $find_callableDef_overloaded_e(GLOBAL, EC, `` id, argumentIR*)
-  = (GLOBAL, cid, callableDef, id_default*)
+  = (GLOBAL, callableId, callableDef, id_default*)
   -- if (id_arg?)* = $ids_arguments(argumentIR*)
-  -- if (cid, callableDef, id_default*)
+  -- if (callableId, callableDef, id_default*)
       = $find_overloaded<callableDef>(EC.GLOBAL.CALLABLE, id, (id_arg?)*)
 def $find_callableDef_overloaded_e(GLOBAL, EC, `` id, argumentIR*)
   = eps
@@ -198,9 +198,9 @@ def $find_callableDef_overloaded_e(GLOBAL, EC, `` id, argumentIR*)
   -- if eps
       = $find_overloaded<callableDef>(EC.GLOBAL.CALLABLE, id, (id_arg?)*)
 def $find_callableDef_overloaded_e(GLOBAL, EC, `. id, argumentIR*)
-  = (GLOBAL, cid, callableDef, id_default*)
+  = (GLOBAL, callableId, callableDef, id_default*)
   -- if (id_arg?)* = $ids_arguments(argumentIR*)
-  -- if (cid, callableDef, id_default*)
+  -- if (callableId, callableDef, id_default*)
       = $find_overloaded<callableDef>(EC.GLOBAL.CALLABLE, id, (id_arg?)*)
 def $find_callableDef_overloaded_e(GLOBAL, EC, `. id, argumentIR*)
   = eps
@@ -208,9 +208,9 @@ def $find_callableDef_overloaded_e(GLOBAL, EC, `. id, argumentIR*)
   -- if eps
       = $find_overloaded<callableDef>(EC.GLOBAL.CALLABLE, id, (id_arg?)*)
 def $find_callableDef_overloaded_e(BLOCK, EC, `` id, argumentIR*)
-  = (BLOCK, cid, callableDef, id_default*)
+  = (BLOCK, callableId, callableDef, id_default*)
   -- if (id_arg?)* = $ids_arguments(argumentIR*)
-  -- if (cid, callableDef, id_default*)
+  -- if (callableId, callableDef, id_default*)
       = $find_overloaded<callableDef>(EC.BLOCK.CALLABLE, id, (id_arg?)*)
 def $find_callableDef_overloaded_e(BLOCK, EC, `` id, argumentIR*)
   = $find_callableDef_overloaded_e(GLOBAL, EC, `` id, argumentIR*)
@@ -223,7 +223,7 @@ def $find_callableDef_overloaded_e(LOCAL, EC, `` id, argumentIR*)
 ;;; Finder for constructors 
 
 dec $find_constructorDef_e(evalContext, prefixedNameIR, argumentIR*)
-  : (cid, constructorDef, id*)?
+  : (callableId, constructorDef, id*)?
 
 def $find_constructorDef_e(EC, `` id, argumentIR*)
   = $find_overloaded<constructorDef>(EC.GLOBAL.CONSTRUCTOR, id, (id_arg?)*)
@@ -255,5 +255,5 @@ def $subst_type_e(BLOCK, EC, typeIR) = typeIR_subst
 def $subst_type_e(LOCAL, EC, typeIR) = typeIR_subst
   -- if theta_block = EC.BLOCK.TYPE
   -- if theta_local = EC.LOCAL.TYPE
-  -- if theta = $extend_map<tid, typeIR>(theta_block, theta_local)
+  -- if theta = $extend_map<typeId, typeIR>(theta_block, theta_local)
   -- if typeIR_subst = $subst_typeIR(theta, typeIR)

@@ -191,14 +191,14 @@ rulegroup Expr_inst/memberAccessExpressionIR-type {
 
   rule Expr_inst/enum:
     p IC STO |- ((TYPE prefixedNameIR) `. nameIR) `# _
-            : STO (tid `. nameIR)
-    -- if ENUM tid `{ _ }
+            : STO (typeId `. nameIR)
+    -- if ENUM typeId `{ _ }
         = $find_typeDef_i(p, IC, prefixedNameIR)
 
   rule Expr_inst/serenum:
     p IC STO |- ((TYPE prefixedNameIR) `. nameIR) `# _
-            : STO (tid `. nameIR `. value)
-    -- if ENUM tid `< _ > `{ (id_member `= value_member `;)* }
+            : STO (typeId `. nameIR `. value)
+    -- if ENUM typeId `< _ > `{ (id_member `= value_member `;)* }
         = $find_typeDef_i(p, IC, prefixedNameIR)
     -- if value = $assoc_<nameIR, value>(nameIR, (id_member, value_member)*)
 
@@ -293,7 +293,7 @@ rule Expr_inst/callExpressionIR-constructor:
                       `< typeArgumentListIR_inst > `( argumentListIR `# id_default* )
                   : STO_1 object
   ---- ;; add object to caller store
-  -- if STO_2 = $add_map<oid, object>(STO_1, IC.PATH, object)
+  -- if STO_2 = $add_map<objectId, object>(STO_1, IC.PATH, object)
   ---- ;; create reference value
   -- if value_ref = `! IC.PATH
 

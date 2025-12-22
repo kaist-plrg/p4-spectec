@@ -189,23 +189,23 @@ rulegroup Expr_eval_lctk/memberAccessExpressionIR-type {
 
   rule Expr_eval_lctk/enum:
     p TC |- ((TYPE prefixedNameIR_base) `. nameIR) `# _
-         ~> tid `. nameIR
+         ~> typeId `. nameIR
     -- if typeDefIR_base = $find_typeDef_t(p, TC, prefixedNameIR_base)
     -- if $is_monomorphic_typeDefIR(typeDefIR_base)
     -- if typeIR_base = $type_of_typeDefIR(typeDefIR_base)
-    -- if ENUM tid `{ id_field* } = $canon_typeIR(typeIR_base)
-    -- if nameIR <- id_field*
+    -- if ENUM typeId `{ nameIR_field* } = $canon_typeIR(typeIR_base)
+    -- if nameIR <- nameIR_field*
 
   rule Expr_eval_lctk/serenum:
     p TC |- ((TYPE prefixedNameIR_base) `. nameIR) `# _
-         ~> tid `. nameIR `. value
+         ~> typeId `. nameIR `. value
     -- if typeDefIR_base = $find_typeDef_t(p, TC, prefixedNameIR_base)
     -- if $is_monomorphic_typeDefIR(typeDefIR_base)
     -- if typeIR_base = $type_of_typeDefIR(typeDefIR_base)
-    -- if ENUM tid `< typeIR > `{ (id_field `= value_field `;)* }
+    -- if ENUM typeId `< typeIR > `{ (nameIR_field `= value_field `;)* }
         = $canon_typeIR(typeIR_base)
     -- if value
-        = $assoc_<id, value>(nameIR, (id_field, value_field)*)
+        = $assoc_<nameIR, value>(nameIR, (nameIR_field, value_field)*)
 
 }
 
@@ -223,22 +223,22 @@ rulegroup Expr_eval_lctk/memberAccessExpressionIR-typedExpressionIR {
     p TC |- (typedExpressionIR_base `. nameIR) `# _
          ~> value
     -- Expr_eval_lctk: p TC |- typedExpressionIR_base ~> structValue
-    -- if STRUCT _ `{ (value_field id_field `;)* } = structValue
-    -- if value = $assoc_<id, value>(nameIR, (id_field, value_field)*)
+    -- if STRUCT _ `{ (value_field nameIR_field `;)* } = structValue
+    -- if value = $assoc_<nameIR, value>(nameIR, (nameIR_field, value_field)*)
 
   rule Expr_eval_lctk/header:
     p TC |- (typedExpressionIR_base `. nameIR) `# _
          ~> value
     -- Expr_eval_lctk: p TC |- typedExpressionIR_base ~> headerValue
-    -- if HEADER _ `{ _ `; (value_field id_field `;)* } = headerValue
-    -- if value = $assoc_<id, value>(nameIR, (id_field, value_field)*)
+    -- if HEADER _ `{ _ `; (value_field nameIR_field `;)* } = headerValue
+    -- if value = $assoc_<nameIR, value>(nameIR, (nameIR_field, value_field)*)
 
   rule Expr_eval_lctk/header-union:
     p TC |- (typedExpressionIR_base `. nameIR) `# _
          ~> value
     -- Expr_eval_lctk: p TC |- typedExpressionIR_base ~> headerUnionValue
-    -- if HEADER_UNION _ `{ (value_field id_field `;)* } = headerUnionValue
-    -- if value = $assoc_<id, value>(nameIR, (id_field, value_field)*)
+    -- if HEADER_UNION _ `{ (value_field nameIR_field `;)* } = headerUnionValue
+    -- if value = $assoc_<nameIR, value>(nameIR, (nameIR_field, value_field)*)
 
 }
 

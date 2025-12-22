@@ -69,8 +69,8 @@ rule Type_wf/baseTypeIR:
 ;;; Named types
 
 rule Type_wf/nameTypeIR:
-  bound |- `` tid
-  -- if $in_set<tid>(tid, bound)
+  bound |- `` typeId
+  -- if $in_set<typeId>(typeId, bound)
 
 rule Type_wf/specializedTypeIR:
   bound |- typeDefIR_base `< typeIR_arg* >
@@ -220,8 +220,8 @@ def $nestable_struct(typeIR) = $nestable'_struct(typeIR_canon)
 def $nestable'_struct(typeIR) = $nestable'_tuple(typeIR)
 
 rule Type_wf/structTypeIR:
-  bound |- STRUCT _ `{ (typeIR_field id_field `;)* }
-  -- if $distinct_<id>(id_field*)
+  bound |- STRUCT _ `{ (typeIR_field nameIR_field `;)* }
+  -- if $distinct_<nameIR>(nameIR_field*)
   -- if $nestable_struct(typeIR_field)*
   -- (Type_wf: bound |- typeIR_field)*
 
@@ -268,8 +268,8 @@ tbl def $nestable'_struct_in_header =
   | _ => false
 
 rule Type_wf/headerTypeIR:
-  bound |- HEADER _ `{ (typeIR_field id_field `;)* }
-  -- if $distinct_<id>(id_field*)
+  bound |- HEADER _ `{ (typeIR_field nameIR_field `;)* }
+  -- if $distinct_<nameIR>(nameIR_field*)
   -- if $nestable_header(typeIR_field)*
   -- (Type_wf: bound |- typeIR_field)*
 
@@ -290,8 +290,8 @@ tbl def $nestable'_headerUnion =
   | _ => false
 
 rule Type_wf/headerUnionTypeIR:
-  bound |- HEADER_UNION _ `{ (typeIR_field id_field `;)* }
-  -- if $distinct_<id>(id_field*)
+  bound |- HEADER_UNION _ `{ (typeIR_field nameIR_field `;)* }
+  -- if $distinct_<nameIR>(nameIR_field*)
   -- if $nestable_headerUnion(typeIR_field)*
   -- (Type_wf: bound |- typeIR_field)*
 
@@ -331,12 +331,12 @@ tbl def $nestable'_new_in_enum_serializable =
 rulegroup Type_wf/enumTypeIR {
 
   rule Type_wf/non-serializable:
-    bound |- ENUM _ `{ id_field* }
-    -- if $distinct_<id>(id_field*)
+    bound |- ENUM _ `{ nameIR_field* }
+    -- if $distinct_<nameIR>(nameIR_field*)
 
   rule Type_wf/serializable:
-    bound |- ENUM _ `< typeIR > `{ (id_field `= _ `;)* }
-    -- if $distinct_<id>(id_field*)
+    bound |- ENUM _ `< typeIR > `{ (nameIR_field `= _ `;)* }
+    -- if $distinct_<nameIR>(nameIR_field*)
     -- if $nestable_enum_serializable(typeIR)
     -- Type_wf: bound |- typeIR
 
@@ -387,13 +387,13 @@ rulegroup Type_wf/sequenceTypeIR {
 rulegroup Type_wf/recordTypeIR {
 
   rule Type_wf/non-default:
-    bound |- RECORD `{ (typeIR_field id_field `;)* }
-    -- if $distinct_<id>(id_field*)
+    bound |- RECORD `{ (typeIR_field nameIR_field `;)* }
+    -- if $distinct_<nameIR>(nameIR_field*)
     -- (Type_wf: bound |- typeIR_field)*
 
   rule Type_wf/default:
-    bound |- RECORD `{ (typeIR_field id_field `;)* `, `... }
-    -- if $distinct_<id>(id_field*)
+    bound |- RECORD `{ (typeIR_field nameIR_field `;)* `, `... }
+    -- if $distinct_<nameIR>(nameIR_field*)
     -- (Type_wf: bound |- typeIR_field)*
 
 }
@@ -466,8 +466,8 @@ rule Type_wf/setTypeIR:
 rulegroup Type_wf/tableMetadataTypeIR {
 
   rule Type_wf/enum:
-    bound |- TABLE_ENUM _ `{ id* }
-    -- if $distinct_<id>(id*)
+    bound |- TABLE_ENUM _ `{ nameIR* }
+    -- if $distinct_<nameIR>(nameIR*)
 
   rule Type_wf/struct:
     bound |- TABLE_STRUCT _ `{ HIT _ `;
@@ -483,12 +483,12 @@ rulegroup Type_wf/tableMetadataTypeIR {
 
 rule TypeDef_wf:
   bound |- typeDefIR
-  -- if (tid_tparam_expl*, tid_tparam_impl*)
+  -- if (typeId_tparam_expl*, typeId_tparam_impl*)
       = $type_parameters_of_typeDefIR(typeDefIR)
-  -- if $distinct_<tid>(tid_tparam_expl* ++ tid_tparam_impl*)
+  -- if $distinct_<typeId>(typeId_tparam_expl* ++ typeId_tparam_impl*)
   -- if typeIR_base = $type_of_typeDefIR(typeDefIR)
   -- if bound_inner
-      = $union_set<tid>(bound, `{ tid_tparam_expl* ++ tid_tparam_impl* })
+      = $union_set<typeId>(bound, `{ typeId_tparam_expl* ++ typeId_tparam_impl* })
   -- Type_wf: bound_inner |- typeIR_base
 
 ;;
@@ -726,13 +726,13 @@ rule CallableType_wf/tableApplyMethodTypeIR:
 
 rule CallableTypeDef_wf:
   bound |- callableTypeDefIR
-  -- if (tid_tparam_expl*, tid_tparam_impl*)
+  -- if (typeId_tparam_expl*, typeId_tparam_impl*)
       = $type_parameters_of_callableTypeDefIR(callableTypeDefIR)
-  -- if $distinct_<tid>(tid_tparam_expl* ++ tid_tparam_impl*)
+  -- if $distinct_<typeId>(typeId_tparam_expl* ++ typeId_tparam_impl*)
   -- if callableTypeIR_base
       = $type_of_callableTypeDefIR(callableTypeDefIR)
   -- if bound_inner
-      = $union_set<tid>(bound, `{ tid_tparam_expl* ++ tid_tparam_impl* })
+      = $union_set<typeId>(bound, `{ typeId_tparam_expl* ++ typeId_tparam_impl* })
   -- CallableType_wf: bound_inner |- callableTypeIR_base
 
 ;;
@@ -846,11 +846,11 @@ tbl def $definable'_constructor =
   |  _ => false
 
 rule ConstructorTypeDef_wf:
-  bound |- CONSTRUCTOR `< tid_tparam_expl* `, tid_tparam_impl* >
+  bound |- CONSTRUCTOR `< typeId_tparam_expl* `, typeId_tparam_impl* >
             `( parameterIR* ) `: typeIR_object
   -- if $definable_constructor(typeIR_object)
-  -- if $distinct_<tid>(tid_tparam_expl* ++ tid_tparam_impl*)
+  -- if $distinct_<typeId>(typeId_tparam_expl* ++ typeId_tparam_impl*)
   -- if bound_inner
-      = $union_set<tid>(bound, `{ tid_tparam_expl* ++ tid_tparam_impl* })
+      = $union_set<typeId>(bound, `{ typeId_tparam_expl* ++ typeId_tparam_impl* })
   -- ConstructorType_wf:
       bound_inner |- CONSTRUCTOR `( parameterIR* ) `: typeIR_object

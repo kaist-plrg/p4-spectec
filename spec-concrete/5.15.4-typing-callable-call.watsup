@@ -78,27 +78,24 @@ rulegroup CallableType_ok/referenceExpressionIR {
     p TC |- prefixedNameIR `< eps > `( argumentIR* )
           : actionTypeIR `< `# eps > `( `# id_default* )
     ---- ;; find the action type definition
-    -- if (cid, actionTypeIR, id_default*)
+    -- if (callableId, actionTypeIR, id_default*)
         = $find_callableDef_overloaded_t(
-            p, TC, prefixedNameIR, argumentIR*
-          )
+            p, TC, prefixedNameIR, argumentIR*)
     ---- ;; check that the action type is well-formed
     -- CallableType_wf: $bound(p, TC) |- actionTypeIR
 
   rule CallableType_ok/functionTypeIR:
     p TC |- prefixedNameIR `< typeArgumentIR* > `( argumentIR* )
-          : functionTypeIR `< `# tid_impl* > `( `# id_default* )
+          : functionTypeIR `< `# typeId_impl* > `( `# id_default* )
     ---- ;; find and specialize the function type definition
-    -- if (cid, functionTypeDefIR, id_default*)
+    -- if (callableId, functionTypeDefIR, id_default*)
         = $find_callableDef_overloaded_t(
-            p, TC, prefixedNameIR, argumentIR*
-          )
-    -- if (functionTypeIR, tid_impl*)
+            p, TC, prefixedNameIR, argumentIR*)
+    -- if (functionTypeIR, typeId_impl*)
         = $specialize_callableTypeDefIR(
-            functionTypeDefIR, typeArgumentIR*
-          )
+            functionTypeDefIR, typeArgumentIR*)
     ---- ;; check that the function type is well-formed
-    -- if bound = $union_set<tid>($bound(p, TC), `{ tid_impl* })
+    -- if bound = $union_set<typeId>($bound(p, TC), `{ typeId_impl* })
     -- CallableType_wf: bound |- functionTypeIR
 
 }
@@ -162,24 +159,24 @@ rule CallableType_ok/typedExpressionIR-nameIR-builtin-method-header-set-ValidInv
 
 rule CallableType_ok/typedExpressionIR-nameIR-extern-method:
   p TC |- (typedExpressionIR_base `. nameIR) `< typeArgumentIR* > `( argumentIR* )
-        : externMethodTypeIR `< `# tid_impl* > `( `# id_default* )
+        : externMethodTypeIR `< `# typeId_impl* > `( `# id_default* )
   ---- ;; if the base type is an extern
   -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
-  -- if EXTERN _ `{ (cid_extern `: externMethodTypeDefIR_extern)* }
+  -- if EXTERN _ `{ (callableId_extern `: externMethodTypeDefIR_extern)* }
       = $canon_typeIR(typeIR_base)
   ---- ;; find method type
   -- if (id_arg?)* = $ids_arguments(argumentIR*)
   -- if (_, externMethodTypeDefIR, id_default*)
       = $find_overloaded<externMethodTypeDefIR>(
-          `{ (cid_extern `: externMethodTypeDefIR_extern)* },
+          `{ (callableId_extern `: externMethodTypeDefIR_extern)* },
           nameIR, (id_arg?)*)
   ---- ;; specialize callable type
-  -- if (externMethodTypeIR, tid_impl*)
+  -- if (externMethodTypeIR, typeId_impl*)
       = $specialize_callableTypeDefIR(
           externMethodTypeDefIR, typeArgumentIR*
         )
   ---- ;; check that the callable type is well-formed
-  -- if bound = $union_set<tid>($bound(p, TC), `{ tid_impl* })
+  -- if bound = $union_set<typeId>($bound(p, TC), `{ typeId_impl* })
   -- CallableType_wf: bound |- externMethodTypeIR
 
 rule CallableType_ok/typedExpressionIR-nameIR-parser-apply-method:
@@ -192,13 +189,13 @@ rule CallableType_ok/typedExpressionIR-nameIR-parser-apply-method:
   -- if parserApplyMethodTypeIR = PARSER_APPLY `( parameterIR* )
   ---- ;; create callable id
   -- if (_ _ _ id_param (`= value_param)? = parameterIR)*
-  -- if (pid = id_param `# (value_param? =/= eps))*
-  -- if cid = "apply" `( pid* )
+  -- if (parameterId = id_param `# (value_param? =/= eps))*
+  -- if callableId = "apply" `( parameterId* )
   ---- ;; perform overload resoultion
   -- if (id_arg?)* = $ids_arguments(argumentIR*)
   -- if (_, parserApplyMethodTypeIR, id_default*)
       = $find_overloaded<parserApplyMethodTypeIR>(
-          `{ (cid `: parserApplyMethodTypeIR) },
+          `{ (callableId `: parserApplyMethodTypeIR) },
           "apply",
           (id_arg?)*)
 
@@ -212,13 +209,13 @@ rule CallableType_ok/typedExpressionIR-nameIR-control-apply-method:
   -- if controlApplyMethodTypeIR = CONTROL_APPLY `( parameterIR* )
   ---- ;; create callable id
   -- if (_ _ _ id_param (`= value_param)? = parameterIR)*
-  -- if (pid = id_param `# (value_param? =/= eps))*
-  -- if cid = "apply" `( pid* )
+  -- if (parameterId = id_param `# (value_param? =/= eps))*
+  -- if callableId = "apply" `( parameterId* )
   ---- ;; perform default resoultion
   -- if (id_arg?)* = $ids_arguments(argumentIR*)
   -- if (_, controlApplyMethodTypeIR, id_default*)
       = $find_overloaded<controlApplyMethodTypeDefIR>(
-          `{ (cid `: controlApplyMethodTypeIR) },
+          `{ (callableId `: controlApplyMethodTypeIR) },
           "apply",
           (id_arg?)*)
 
@@ -237,10 +234,10 @@ rule CallableType_ok/typedExpressionIR-nameIR-table-apply-method:
 
 rule CallableType_ok/parenthesized:
   p TC |- (`( callableTargetIR )) `< typeArgumentIR* > `( argumentIR* )
-        : callableTypeIR `< `# tid_inserted* > `( `# id_default* )
+        : callableTypeIR `< `# typeId_inserted* > `( `# id_default* )
   -- CallableType_ok:
       p TC |- callableTargetIR `< typeArgumentIR* > `( argumentIR* )
-            : callableTypeIR `< `# tid_inserted* > `( `# id_default* )
+            : callableTypeIR `< `# typeId_inserted* > `( `# id_default* )
 
 ;;
 ;; Call typing
@@ -292,14 +289,14 @@ def $callable_definedFunction(LOCAL, TC)
 
 rule Call_ok/definedFunctionTypeIR:
   p TC |- (FUNCTION `( parameterIR* ) `: typeIR_ret)
-          `< typeArgumentIR* `# tid_infer* > `( argumentIR* `# id_default* )
+          `< typeArgumentIR* `# typeId_infer* > `( argumentIR* `# id_default* )
         : typeIR_ret_inferred `< typeArgumentIR_inferred* > `( argumentIR_cast* )
   ---- ;; align parameters with arguments
   -- if (parameterIR_aligned*, argumentIR_aligned*, _, _)
       = $align_parameterListIR(parameterIR*, argumentIR*, id_default*)
   ---- ;; perform type inference
-  -- if inference = $infer(tid_infer*, parameterIR_aligned*, argumentIR*)
-  -- if (typeIR_inferred = $find_map<tid, typeIR>(inference, tid_infer))*
+  -- if inference = $infer(typeId_infer*, parameterIR_aligned*, argumentIR*)
+  -- if (typeIR_inferred = $find_map<typeId, typeIR>(inference, typeId_infer))*
   -- if typeArgumentIR_inferred* = typeArgumentIR* ++ typeIR_inferred*
   ---- ;; substitute inferred types
   -- if (parameterIR_aligned_inferred
@@ -331,14 +328,14 @@ def $callable_externFunction(LOCAL, TC) = true
 
 rule Call_ok/externFunctionTypeIR:
   p TC |- (EXTERN_FUNCTION `( parameterIR* ) `: typeIR_ret)
-            `< typeArgumentIR* `# tid_infer* > `( argumentIR* `# id_default* )
+            `< typeArgumentIR* `# typeId_infer* > `( argumentIR* `# id_default* )
         : typeIR_ret_inferred `< typeArgumentIR_inferred* > `( argumentIR_cast* )
   ---- ;; align parameters with arguments
   -- if (parameterIR_aligned*, argumentIR_aligned*, _, _)
       = $align_parameterListIR(parameterIR*, argumentIR*, id_default*)
   ---- ;; perform type inference
-  -- if inference = $infer(tid_infer*, parameterIR_aligned*, argumentIR*)
-  -- if (typeIR_inferred = $find_map<tid, typeIR>(inference, tid_infer))*
+  -- if inference = $infer(typeId_infer*, parameterIR_aligned*, argumentIR*)
+  -- if (typeIR_inferred = $find_map<typeId, typeIR>(inference, typeId_infer))*
   -- if typeArgumentIR_inferred* = typeArgumentIR* ++ typeIR_inferred*
   ---- ;; substitute inferred types
   -- if (parameterIR_aligned_inferred
@@ -398,14 +395,14 @@ def $callable_externMethod(LOCAL, TC) = true
 
 rule Call_ok/externMethodTypeIR-non-abstract:
   p TC |- (EXTERN_METHOD `( parameterIR* ) `: typeIR_ret)
-            `< typeArgumentIR* `# tid_infer* > `( argumentIR* `# id_default* )
+            `< typeArgumentIR* `# typeId_infer* > `( argumentIR* `# id_default* )
         : typeIR_ret_inferred `< typeArgumentIR_inferred* > `( argumentIR_cast* )
   ---- ;; align parameters with arguments
   -- if (parameterIR_aligned*, argumentIR_aligned*, _, _)
       = $align_parameterListIR(parameterIR*, argumentIR*, id_default*)
   ---- ;; perform type inference
-  -- if inference = $infer(tid_infer*, parameterIR_aligned*, argumentIR*)
-  -- if (typeIR_inferred = $find_map<tid, typeIR>(inference, tid_infer))*
+  -- if inference = $infer(typeId_infer*, parameterIR_aligned*, argumentIR*)
+  -- if (typeIR_inferred = $find_map<typeId, typeIR>(inference, typeId_infer))*
   -- if typeArgumentIR_inferred* = typeArgumentIR* ++ typeIR_inferred*
   ---- ;; substitute inferred types
   -- if (parameterIR_aligned_inferred
@@ -435,14 +432,14 @@ def $callable_externAbstractMethod(LOCAL, TC) = true
 
 rule Call_ok/externMethodTypeIR-abstract:
   p TC |- (EXTERN_METHOD ABSTRACT `( parameterIR* ) `: typeIR_ret)
-            `< typeArgumentIR* `# tid_infer* > `( argumentIR* `# id_default* )
+            `< typeArgumentIR* `# typeId_infer* > `( argumentIR* `# id_default* )
         : typeIR_ret_inferred `< typeArgumentIR_inferred* > `( argumentIR_cast* )
   ---- ;; align parameters with arguments
   -- if (parameterIR_aligned*, argumentIR_aligned*, _, _)
       = $align_parameterListIR(parameterIR*, argumentIR*, id_default*)
   ---- ;; perform type inference
-  -- if inference = $infer(tid_infer*, parameterIR_aligned*, argumentIR*)
-  -- if (typeIR_inferred = $find_map<tid, typeIR>(inference, tid_infer))*
+  -- if inference = $infer(typeId_infer*, parameterIR_aligned*, argumentIR*)
+  -- if (typeIR_inferred = $find_map<typeId, typeIR>(inference, typeId_infer))*
   -- if typeArgumentIR_inferred* = typeArgumentIR* ++ typeIR_inferred*
   ---- ;; substitute inferred types
   -- if (parameterIR_aligned_inferred

@@ -225,7 +225,7 @@ def $select_action(TBL, tableMatch*) = tableActionReferenceIR_h
   -- if tableActionReferenceIR_h :: _ = tableActionReferenceIR_sorted*
 
 rule Table_eval:
-  EC_0 STO_0 |- tid TBL : EC_3 STO_3 (RETURN tableMetadataStructValue)
+  EC_0 STO_0 |- typeId TBL : EC_3 STO_3 (RETURN tableMetadataStructValue)
   ---- ;; evaluate table keys
   -- if KEY `= `{ tableKeyListIR } = TBL.KEYS
   -- TableKeys_eval:
@@ -246,10 +246,10 @@ rule Table_eval:
   -- if b_hit = ~(tableMatch* = eps)
   -- if b_miss = ~b_hit
   -- if tableMetadataEnumValue =
-          TABLE_ENUM ("action_list(" ++ tid ++ ")")
+          TABLE_ENUM ("action_list(" ++ typeId ++ ")")
             `. $flatten_prefixedNameIR(prefixedNameIR)
   -- if tableMetadataStructValue =
-          TABLE_STRUCT ("apply_result(" ++ tid ++ ")")
+          TABLE_STRUCT ("apply_result(" ++ typeId ++ ")")
             `{ HIT (B b_hit) `;
                MISS (B b_miss) `;
                ACTION_RUN tableMetadataEnumValue `; }

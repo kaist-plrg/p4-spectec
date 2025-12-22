@@ -2,12 +2,12 @@
 ;; Substitution (capture-avoiding)
 ;;
 
-syntax theta = map<tid, typeIR>
+syntax theta = map<typeId, typeIR>
 
 dec $empty_theta : theta
-def $empty_theta = $empty_map<tid, typeIR>
+def $empty_theta = $empty_map<typeId, typeIR>
 
-dec $capture_avoiding(theta, tid*, tid*, bound) : (theta, tid*, tid*)
+dec $capture_avoiding(theta, typeId*, typeId*, bound) : (theta, typeId*, typeId*)
 
 dec $subst_typeIR(theta, typeIR) : typeIR
   hint(prose_in %0 "substituted by" %1)
@@ -30,26 +30,26 @@ dec $subst_constructorTypeIR'(theta, constructorTypeIR) : constructorTypeIR
 ;;;; Capture avoidance
 ;;
 
-def $capture_avoiding(theta, tid_expl*, tid_impl*, bound)
-  = (theta_fresh, tid_expl_fresh*, tid_impl_fresh*)
+def $capture_avoiding(theta, typeId_expl*, typeId_impl*, bound)
+  = (theta_fresh, typeId_expl_fresh*, typeId_impl_fresh*)
   ---- ;; collect free type variables
-  -- if `{ tid_free* }
-      = $diff_set<tid>(bound, `{ tid_expl* ++ tid_impl* })
+  -- if `{ typeId_free* }
+      = $diff_set<typeId>(bound, `{ typeId_expl* ++ typeId_impl* })
   ---- ;; compute captured type variables
-  -- if (typeIR_free = $find_map<tid, typeIR>(theta, tid_free))*
+  -- if (typeIR_free = $find_map<typeId, typeIR>(theta, typeId_free))*
   -- if bound_capture
-      = $unions_set<tid>($free_typeIR(typeIR_free)*)
+      = $unions_set<typeId>($free_typeIR(typeIR_free)*)
   ---- ;; create fresh type variables to avoid capture
-  -- if tid_fresh* = $fresh_tids(|tid_expl* ++ tid_impl*|)
-  -- if (~$in_set<tid>(tid_fresh, bound_capture))*
-  -- if tid_expl_fresh* = tid_fresh*[0 : |tid_expl*|]
-  -- if tid_impl_fresh* = tid_fresh*[|tid_expl*| : |tid_impl*|]
+  -- if typeId_fresh* = $fresh_typeIds(|typeId_expl* ++ typeId_impl*|)
+  -- if (~$in_set<typeId>(typeId_fresh, bound_capture))*
+  -- if typeId_expl_fresh* = typeId_fresh*[0 : |typeId_expl*|]
+  -- if typeId_impl_fresh* = typeId_fresh*[|typeId_expl*| : |typeId_impl*|]
   ---- ;; update substitution mapping
   -- if theta_fresh
-      = $adds_map<tid, typeIR>(
+      = $adds_map<typeId, typeIR>(
           theta,
-          tid_expl* ++ tid_impl*,
-          (`` tid_expl_fresh)* ++ (`` tid_impl_fresh)*
+          typeId_expl* ++ typeId_impl*,
+          (`` typeId_expl_fresh)* ++ (`` typeId_impl_fresh)*
         )
 
 ;;
@@ -66,8 +66,8 @@ def $subst_typeIR'(theta, baseTypeIR) = baseTypeIR
 
 ;;; Named types
 
-def $subst_typeIR'(theta, `` tid) = typeIR
-  -- if typeIR = $find_map<tid, typeIR>(theta, tid)
+def $subst_typeIR'(theta, `` typeId) = typeIR
+  -- if typeIR = $find_map<typeId, typeIR>(theta, typeId)
 
 def $subst_typeIR'(theta, typeDefIR `< typeIR* >)
   = typeDefIR_subst `< typeIR_subst* >
@@ -77,12 +77,12 @@ def $subst_typeIR'(theta, typeDefIR `< typeIR* >)
 
 ;;; Alias types
 
-def $subst_typeIR'(theta, TYPEDEF tid typeIR)
-  = TYPEDEF tid typeIR_subst
+def $subst_typeIR'(theta, TYPEDEF typeId typeIR)
+  = TYPEDEF typeId typeIR_subst
   -- if typeIR_subst = $subst_typeIR'(theta, typeIR)
 
-def $subst_typeIR'(theta, TYPE tid typeIR)
-  = TYPE tid typeIR_subst
+def $subst_typeIR'(theta, TYPE typeId typeIR)
+  = TYPE typeId typeIR_subst
   -- if typeIR_subst = $subst_typeIR'(theta, typeIR)
 
 ;;; Data types
@@ -99,46 +99,45 @@ def $subst_typeIR'(theta, typeIR `[ n_size ])
   = typeIR_subst `[ n_size ]
   -- if typeIR_subst = $subst_typeIR'(theta, typeIR)
 
-def $subst_typeIR'(theta, STRUCT tid `{ (typeIR_field id_field `;)* })
-  = STRUCT tid `{ (typeIR_field_subst id_field `;)* }
+def $subst_typeIR'(theta, STRUCT typeId `{ (typeIR_field id_field `;)* })
+  = STRUCT typeId `{ (typeIR_field_subst id_field `;)* }
   -- if (typeIR_field_subst = $subst_typeIR'(theta, typeIR_field))*
 
-def $subst_typeIR'(theta, HEADER tid `{ (typeIR_field id_field `;)* })
-  = HEADER tid `{ (typeIR_field_subst id_field `;)* }
+def $subst_typeIR'(theta, HEADER typeId `{ (typeIR_field id_field `;)* })
+  = HEADER typeId `{ (typeIR_field_subst id_field `;)* }
   -- if (typeIR_field_subst = $subst_typeIR'(theta, typeIR_field))*
 
-def $subst_typeIR'(theta, HEADER_UNION tid `{ (typeIR_field id_field `;)* })
-  = HEADER_UNION tid `{ (typeIR_field_subst id_field `;)* }
+def $subst_typeIR'(theta, HEADER_UNION typeId `{ (typeIR_field id_field `;)* })
+  = HEADER_UNION typeId `{ (typeIR_field_subst id_field `;)* }
   -- if (typeIR_field_subst = $subst_typeIR'(theta, typeIR_field))*
 
-def $subst_typeIR'(theta, ENUM tid `{ id_field* })
-  = ENUM tid `{ id_field* }
+def $subst_typeIR'(theta, ENUM typeId `{ id_field* })
+  = ENUM typeId `{ id_field* }
 
-def $subst_typeIR'(theta, ENUM tid `< typeIR > `{ valueFieldIR* })
-  = ENUM tid `< typeIR_subst > `{ valueFieldIR* }
+def $subst_typeIR'(theta, ENUM typeId `< typeIR > `{ valueFieldIR* })
+  = ENUM typeId `< typeIR_subst > `{ valueFieldIR* }
   -- if typeIR_subst = $subst_typeIR'(theta, typeIR)
 
 ;;; Object types
 
 def $subst_typeIR'(
-    theta, EXTERN tid `{ (cid `: externMethodTypeDefIR)* }
-  )
-  = EXTERN tid `{ (cid `: externMethodTypeDefIR_subst)* }
+    theta, EXTERN typeId `{ (callableId `: externMethodTypeDefIR)* })
+  = EXTERN typeId `{ (callableId `: externMethodTypeDefIR_subst)* }
   -- if (externMethodTypeDefIR_subst
         = $subst_callableTypeDefIR'(theta, externMethodTypeDefIR))*
 
-def $subst_typeIR'(theta, PARSER tid `( parameterIR* ))
-  = PARSER tid `( parameterIR_subst* )
+def $subst_typeIR'(theta, PARSER typeId `( parameterIR* ))
+  = PARSER typeId `( parameterIR_subst* )
   -- if (parameterIR_subst
       = $subst_parameterIR'(theta, parameterIR))*
 
-def $subst_typeIR'(theta, CONTROL tid `( parameterIR* ))
-  = CONTROL tid `( parameterIR_subst* )
+def $subst_typeIR'(theta, CONTROL typeId `( parameterIR* ))
+  = CONTROL typeId `( parameterIR_subst* )
   -- (if parameterIR_subst
       = $subst_parameterIR'(theta, parameterIR))*
 
-def $subst_typeIR'(theta, PACKAGE tid `{ typeIR* })
-  = PACKAGE tid `{ typeIR_subst* }
+def $subst_typeIR'(theta, PACKAGE typeId `{ typeIR* })
+  = PACKAGE typeId `{ typeIR_subst* }
   -- if (typeIR_subst = $subst_typeIR'(theta, typeIR))*
 
 def $subst_typeIR'(theta, tableObjectTypeIR) = tableObjectTypeIR
@@ -198,38 +197,38 @@ def $subst_typeDefIR'(theta, aliasTypeDefIR) = aliasTypeDefIR_subst
 
 def $subst_typeDefIR'(
     theta,
-    STRUCT tid `< tid_expl* `, tid_impl* >
+    STRUCT typeId `< typeId_expl* `, typeId_impl* >
       `{ (typeIR_field id_field `;)* }
   )
-  = STRUCT tid `< tid_expl_fresh* `, tid_impl_fresh* >
+  = STRUCT typeId `< typeId_expl_fresh* `, typeId_impl_fresh* >
       `{ (typeIR_field_subst id_field `;)* }
-  -- if bound = $free_typeIR(STRUCT tid `{ (typeIR_field id_field `;)* })
-  -- if (theta_fresh, tid_expl_fresh*, tid_impl_fresh*)
-      = $capture_avoiding(theta, tid_expl*, tid_impl*, bound)
+  -- if bound = $free_typeIR(STRUCT typeId `{ (typeIR_field id_field `;)* })
+  -- if (theta_fresh, typeId_expl_fresh*, typeId_impl_fresh*)
+      = $capture_avoiding(theta, typeId_expl*, typeId_impl*, bound)
   -- if (typeIR_field_subst = $subst_typeIR(theta_fresh, typeIR_field))*
 
 def $subst_typeDefIR'(
     theta,
-    HEADER tid `< tid_expl* `, tid_impl* >
+    HEADER typeId `< typeId_expl* `, typeId_impl* >
       `{ (typeIR_field id_field `;)* }
   )
-  = HEADER tid `< tid_expl_fresh* `, tid_impl_fresh* >
+  = HEADER typeId `< typeId_expl_fresh* `, typeId_impl_fresh* >
       `{ (typeIR_field_subst id_field `;)* }
-  -- if bound = $free_typeIR(HEADER tid `{ (typeIR_field id_field `;)* })
-  -- if (theta_fresh, tid_expl_fresh*, tid_impl_fresh*)
-      = $capture_avoiding(theta, tid_expl*, tid_impl*, bound)
+  -- if bound = $free_typeIR(HEADER typeId `{ (typeIR_field id_field `;)* })
+  -- if (theta_fresh, typeId_expl_fresh*, typeId_impl_fresh*)
+      = $capture_avoiding(theta, typeId_expl*, typeId_impl*, bound)
   -- if (typeIR_field_subst = $subst_typeIR(theta_fresh, typeIR_field))*
 
 def $subst_typeDefIR'(
     theta,
-    HEADER_UNION tid `< tid_expl* `, tid_impl* >
+    HEADER_UNION typeId `< typeId_expl* `, typeId_impl* >
       `{ (typeIR_field id_field `;)* }
   )
-  = HEADER_UNION tid `< tid_expl_fresh* `, tid_impl_fresh* >
+  = HEADER_UNION typeId `< typeId_expl_fresh* `, typeId_impl_fresh* >
       `{ (typeIR_field_subst id_field `;)* }
-  -- if bound = $free_typeIR(HEADER_UNION tid `{ (typeIR_field id_field `;)* })
-  -- if (theta_fresh, tid_expl_fresh*, tid_impl_fresh*)
-      = $capture_avoiding(theta, tid_expl*, tid_impl*, bound)
+  -- if bound = $free_typeIR(HEADER_UNION typeId `{ (typeIR_field id_field `;)* })
+  -- if (theta_fresh, typeId_expl_fresh*, typeId_impl_fresh*)
+      = $capture_avoiding(theta, typeId_expl*, typeId_impl*, bound)
   -- if (typeIR_field_subst = $subst_typeIR(theta_fresh, typeIR_field))*
 
 def $subst_typeDefIR'(theta, enumTypeDefIR) = enumTypeDefIR_subst
@@ -239,47 +238,43 @@ def $subst_typeDefIR'(theta, enumTypeDefIR) = enumTypeDefIR_subst
 
 def $subst_typeDefIR'(
     theta,
-    EXTERN tid `< tid_expl* `, tid_impl* >
-      `{ (cid `: externMethodTypeDefIR)* }
-  )
-  = EXTERN tid `< tid_expl_fresh* `, tid_impl_fresh* >
-      `{ (cid `: externMethodTypeDefIR_subst)* }
-  -- if bound = $free_typeIR(EXTERN tid `{ (cid `: externMethodTypeDefIR)* })
-  -- if (theta_fresh, tid_expl_fresh*, tid_impl_fresh*)
-      = $capture_avoiding(theta, tid_expl*, tid_impl*, bound)
+    EXTERN typeId `< typeId_expl* `, typeId_impl* >
+      `{ (callableId `: externMethodTypeDefIR)* })
+  = EXTERN typeId `< typeId_expl_fresh* `, typeId_impl_fresh* >
+      `{ (callableId `: externMethodTypeDefIR_subst)* }
+  -- if bound = $free_typeIR(EXTERN typeId `{ (callableId `: externMethodTypeDefIR)* })
+  -- if (theta_fresh, typeId_expl_fresh*, typeId_impl_fresh*)
+      = $capture_avoiding(theta, typeId_expl*, typeId_impl*, bound)
   -- if (externMethodTypeDefIR_subst
         = $subst_callableTypeDefIR(theta_fresh, externMethodTypeDefIR))*
 
 def $subst_typeDefIR'(
     theta,
-    PARSER tid `< tid_expl* `, tid_impl* > `( parameterIR* )
-  )
-  = PARSER tid `< tid_expl_fresh* `, tid_impl_fresh* > `( parameterIR_subst* )
-  -- if bound = $free_typeIR(PARSER tid `( parameterIR* ))
-  -- if (theta_fresh, tid_expl_fresh*, tid_impl_fresh*)
-      = $capture_avoiding(theta, tid_expl*, tid_impl*, bound)
+    PARSER typeId `< typeId_expl* `, typeId_impl* > `( parameterIR* ))
+  = PARSER typeId `< typeId_expl_fresh* `, typeId_impl_fresh* > `( parameterIR_subst* )
+  -- if bound = $free_typeIR(PARSER typeId `( parameterIR* ))
+  -- if (theta_fresh, typeId_expl_fresh*, typeId_impl_fresh*)
+      = $capture_avoiding(theta, typeId_expl*, typeId_impl*, bound)
   -- if (parameterIR_subst
-      = $subst_parameterIR(theta_fresh, parameterIR))*
+      = $subst_parameterIR'(theta_fresh, parameterIR))*
 
 def $subst_typeDefIR'(
     theta,
-    CONTROL tid `< tid_expl* `, tid_impl* > `( parameterIR* )
-  )
-  = CONTROL tid `< tid_expl_fresh* `, tid_impl_fresh* > `( parameterIR_subst* )
-  -- if bound = $free_typeIR(CONTROL tid `( parameterIR* ))
-  -- if (theta_fresh, tid_expl_fresh*, tid_impl_fresh*)
-      = $capture_avoiding(theta, tid_expl*, tid_impl*, bound)
+    CONTROL typeId `< typeId_expl* `, typeId_impl* > `( parameterIR* ))
+  = CONTROL typeId `< typeId_expl_fresh* `, typeId_impl_fresh* > `( parameterIR_subst* )
+  -- if bound = $free_typeIR(CONTROL typeId `( parameterIR* ))
+  -- if (theta_fresh, typeId_expl_fresh*, typeId_impl_fresh*)
+      = $capture_avoiding(theta, typeId_expl*, typeId_impl*, bound)
   -- if (parameterIR_subst
-      = $subst_parameterIR(theta_fresh, parameterIR))*
+      = $subst_parameterIR'(theta_fresh, parameterIR))*
 
 def $subst_typeDefIR'(
     theta,
-    PACKAGE tid `< tid_expl* `, tid_impl* > `{ typeIR* }
-  )
-  = PACKAGE tid `< tid_expl_fresh* `, tid_impl_fresh* > `{ typeIR_subst* }
-  -- if bound = $free_typeIR(PACKAGE tid `{ typeIR* })
-  -- if (theta_fresh, tid_expl_fresh*, tid_impl_fresh*)
-      = $capture_avoiding(theta, tid_expl*, tid_impl*, bound)
+    PACKAGE typeId `< typeId_expl* `, typeId_impl* > `{ typeIR* })
+  = PACKAGE typeId `< typeId_expl_fresh* `, typeId_impl_fresh* > `{ typeIR_subst* }
+  -- if bound = $free_typeIR(PACKAGE typeId `{ typeIR* })
+  -- if (theta_fresh, typeId_expl_fresh*, typeId_impl_fresh*)
+      = $capture_avoiding(theta, typeId_expl*, typeId_impl*, bound)
   -- if (typeIR_subst = $subst_typeIR(theta_fresh, typeIR))*
 
 def $subst_typeDefIR'(theta, tableObjectTypeDefIR) = tableObjectTypeDefIR_subst
@@ -383,34 +378,34 @@ def $subst_callableTypeDefIR'(theta, actionTypeDefIR)
 
 def $subst_callableTypeDefIR'(
     theta,
-    FUNCTION `< tid_expl* `, tid_impl* >
+    FUNCTION `< typeId_expl* `, typeId_impl* >
       `( parameterIR* ) `: typeIR
   )
-  = FUNCTION `< tid_expl_fresh* `, tid_impl_fresh* >
+  = FUNCTION `< typeId_expl_fresh* `, typeId_impl_fresh* >
       `( parameterIR_subst* ) `: typeIR_subst
   -- if bound
       = $free_callableTypeIR(
           FUNCTION `( parameterIR* ) `: typeIR
         )
-  -- if (theta_fresh, tid_expl_fresh*, tid_impl_fresh*)
-      = $capture_avoiding(theta, tid_expl*, tid_impl*, bound)
+  -- if (theta_fresh, typeId_expl_fresh*, typeId_impl_fresh*)
+      = $capture_avoiding(theta, typeId_expl*, typeId_impl*, bound)
   -- if (parameterIR_subst
       = $subst_parameterIR(theta_fresh, parameterIR))*
   -- if typeIR_subst = $subst_typeIR(theta_fresh, typeIR)
 
 def $subst_callableTypeDefIR'(
     theta,
-    EXTERN_FUNCTION `< tid_expl* `, tid_impl* >
+    EXTERN_FUNCTION `< typeId_expl* `, typeId_impl* >
       `( parameterIR* ) `: typeIR
   )
-  = EXTERN_FUNCTION `< tid_expl_fresh* `, tid_impl_fresh* >
+  = EXTERN_FUNCTION `< typeId_expl_fresh* `, typeId_impl_fresh* >
       `( parameterIR_subst* ) `: typeIR_subst
   -- if bound
       = $free_callableTypeIR(
           EXTERN_FUNCTION `( parameterIR* ) `: typeIR
         )
-  -- if (theta_fresh, tid_expl_fresh*, tid_impl_fresh*)
-      = $capture_avoiding(theta, tid_expl*, tid_impl*, bound)
+  -- if (theta_fresh, typeId_expl_fresh*, typeId_impl_fresh*)
+      = $capture_avoiding(theta, typeId_expl*, typeId_impl*, bound)
   -- if (parameterIR_subst
       = $subst_parameterIR(theta_fresh, parameterIR))*
   -- if typeIR_subst = $subst_typeIR(theta_fresh, typeIR)
@@ -419,34 +414,34 @@ def $subst_callableTypeDefIR'(
 
 def $subst_callableTypeDefIR'(
     theta,
-    EXTERN_METHOD `< tid_expl* `, tid_impl* >
+    EXTERN_METHOD `< typeId_expl* `, typeId_impl* >
       `( parameterIR* ) `: typeIR
   )
-  = EXTERN_METHOD `< tid_expl_fresh* `, tid_impl_fresh* >
+  = EXTERN_METHOD `< typeId_expl_fresh* `, typeId_impl_fresh* >
       `( parameterIR_subst* ) `: typeIR_subst
   -- if bound
       = $free_callableTypeIR(
           EXTERN_METHOD `( parameterIR* ) `: typeIR
         )
-  -- if (theta_fresh, tid_expl_fresh*, tid_impl_fresh*)
-      = $capture_avoiding(theta, tid_expl*, tid_impl*, bound)
+  -- if (theta_fresh, typeId_expl_fresh*, typeId_impl_fresh*)
+      = $capture_avoiding(theta, typeId_expl*, typeId_impl*, bound)
   -- if (parameterIR_subst
       = $subst_parameterIR(theta_fresh, parameterIR))*
   -- if typeIR_subst = $subst_typeIR(theta_fresh, typeIR)
 
 def $subst_callableTypeDefIR'(
     theta,
-    EXTERN_METHOD ABSTRACT `< tid_expl* `, tid_impl* >
+    EXTERN_METHOD ABSTRACT `< typeId_expl* `, typeId_impl* >
       `( parameterIR* ) `: typeIR
   )
-  = EXTERN_METHOD ABSTRACT `< tid_expl_fresh* `, tid_impl_fresh* >
+  = EXTERN_METHOD ABSTRACT `< typeId_expl_fresh* `, typeId_impl_fresh* >
       `( parameterIR_subst* ) `: typeIR_subst
   -- if bound
       = $free_callableTypeIR(
           EXTERN_METHOD ABSTRACT `( parameterIR* ) `: typeIR
         )
-  -- if (theta_fresh, tid_expl_fresh*, tid_impl_fresh*)
-      = $capture_avoiding(theta, tid_expl*, tid_impl*, bound)
+  -- if (theta_fresh, typeId_expl_fresh*, typeId_impl_fresh*)
+      = $capture_avoiding(theta, typeId_expl*, typeId_impl*, bound)
   -- if (parameterIR_subst
       = $subst_parameterIR(theta_fresh, parameterIR))*
   -- if typeIR_subst = $subst_typeIR(theta_fresh, typeIR)
