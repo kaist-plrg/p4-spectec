@@ -292,7 +292,39 @@ rule Expr_eval_lctk/sliceAccessExpressionIR:
 ;;;;;; syntax routineTargetIR
 
 ;;;;;;; referenceExpressionIR
-;;;;;;; function/action calls are not evaluated statically
+;;;;;;; function/action calls, except static_assert, are not evaluated statically
+
+rule Expr_eval_lctk/callExpressionIR-static_assert:
+  p TC |- (prefixedNameIR `< eps > `( argumentIR* )) `# _ ~> boolValue
+  ---- ;; if calling static_assert
+  -- if (prefixedNameIR = `. "static_assert")
+        \/ (prefixedNameIR = `` "static_assert")
+  ---- ;; resolve the callee
+  -- CallableType_ok:
+      p TC |- prefixedNameIR `< eps > `( argumentIR* )
+            : externFunctionTypeIR `< `# eps > `( `# eps )
+  -- if EXTERN_FUNCTION `( parameterIR* ) `: BOOL
+      = externFunctionTypeIR
+  -- (if _ _ _ nameIR_param _ = parameterIR)*
+  ---- ;; create callee context
+  -- if TC_callee_0 = $empty_typingContext
+  ---- ;; align parameters with arguments
+  -- if (parameterIR_aligned*, argumentIR_aligned*, eps, eps) 
+      = $align_parameterListIR(parameterIR*, argumentIR*, eps)
+  ---- ;; evaluate arguments
+  -- (Argument_eval_lctk: p TC |- argumentIR_aligned ~> value_argument)*
+  ---- ;; add arguments to callee context
+  -- (if _ direction_param_aligned typeIR_param_aligned nameIR_param_aligned _
+      = parameterIR_aligned)*
+  -- if (varTypeIR
+      = direction_param_aligned typeIR_param_aligned LCTK value_argument)*
+  -- if TC_callee_1
+      = $add_vars_t(LOCAL, TC_callee_0, nameIR_param_aligned*, varTypeIR*)
+  ---- ;; call the extern
+  -- ExternFunctionCall_eval_lctk:
+      TC_callee_1 |- "static_assert" `( nameIR_param* ) ~> boolValue
+  ---- ;; static_assert should return true
+  -- if B true = boolValue
 
 ;;;;;;; typedExpressionIR `. nameIR
 ;;;;;;; TYPE prefixedNameIR `. nameIR
@@ -341,3 +373,25 @@ rule Expr_eval_lctk/callExpressionIR-parenthesized:
 rule Expr_eval_lctk/parenthesizedExpressionIR:
   p TC |- (`( typedExpressionIR )) `# _ ~> value
   -- Expr_eval_lctk: p TC |- typedExpressionIR ~> value
+
+;;
+;; Static evaluation of argument
+;;
+;; syntax argumentIR
+;;
+
+;;; typedExpressionIR
+
+rule Argument_eval_lctk/typedExpressionIR:
+  p TC |- typedExpressionIR ~> value
+  -- Expr_eval_lctk: p TC |- typedExpressionIR ~> value
+
+;;; nameIR `= typedExpressionIR
+
+rule Argument_eval_lctk/namedArgumentIR:
+  p TC |- nameIR `= typedExpressionIR ~> value
+  -- Expr_eval_lctk: p TC |- typedExpressionIR ~> value
+
+;;; nameIR `= `_
+;;; `_
+;;; don't care arguments are not evaluated statically

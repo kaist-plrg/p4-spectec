@@ -19,6 +19,7 @@ module Make
 
   let run_program ~(derive : bool) (spec : spec) (relname : string)
       (includes_p4 : string list) (filename_p4 : string) : program_result =
+    Arch.init spec;
     match spec with
     | IL spec_il ->
         if derive then
@@ -32,6 +33,7 @@ module Make
   let run_program_internal ~(derive : bool) (spec : Sl.Ast.spec)
       (relname : string) (value_program : Sl.Ast.value) : rel_result =
     derive |> ignore;
+    Arch.init (SL spec);
     Interp_SL.eval_rel spec relname [ value_program ]
 
   (* STF test runner *)
@@ -207,5 +209,6 @@ module Make
 
   let cover_programs (spec : Sl.Ast.spec) (relname : string)
       (includes_p4 : string list) (filenames_p4 : string list) : MCov.Cover.t =
+    Arch.init (SL spec);
     Interp_SL.cover_programs spec relname includes_p4 filenames_p4
 end

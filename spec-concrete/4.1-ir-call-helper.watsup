@@ -1,0 +1,107 @@
+;;
+;; Call helpers for P4IR
+;;
+
+;;; Partitioning parameters into default and non-default parameters
+
+dec $partition_parameterListIR_default(parameterIR*, nameIR*)
+  : (parameterIR*, parameterIR*)
+
+def $partition_parameterListIR_default(eps, nameIR_default*) = (eps, eps)
+
+def $partition_parameterListIR_default(
+    parameterIR_h :: parameterIR_t*,
+    nameIR_default*)
+  = (parameterIR_nondefault*, parameterIR_h :: parameterIR_default*)
+  -- if _ _ _ nameIR_h _ = parameterIR_h
+  -- if $partition_parameterListIR_default(parameterIR_t*, nameIR_default*)
+      = (parameterIR_nondefault*, parameterIR_default*)
+  -- if nameIR_h <- nameIR_default*
+
+def $partition_parameterListIR_default(
+    parameterIR_h :: parameterIR_t*,
+    nameIR_default*)
+  = (parameterIR_h :: parameterIR_nondefault*, parameterIR_default*)
+  -- if _ _ _ nameIR_h _ = parameterIR_h
+  -- if $partition_parameterListIR_default(parameterIR_t*, nameIR_default*)
+      = (parameterIR_nondefault*, parameterIR_default*)
+  -- if ~(nameIR_h <- nameIR_default*)
+
+;;; Aligning parameters with arguments
+
+dec $align_parameterListIR(parameterIR*, argumentIR*, nameIR*)
+  : (parameterIR*, argumentIR*, parameterIR*, value*)
+dec $align_parameterListIR'(map<id, parameterIR>, parameterIR*, argumentIR*)
+  : (parameterIR*, argumentIR*)
+
+def $align_parameterListIR(parameterIR*, argumentIR*, nameIR_default*)
+  = (parameterIR_aligned*, argumentIR_aligned*,
+     parameterIR_default*, value_default*)
+  -- if (parameterIR_non_default*, parameterIR_default*)
+      = $partition_parameterListIR_default(parameterIR*, nameIR_default*)
+  -- if (_ _ _ nameIR_param _ = parameterIR_non_default)*
+  -- if (parameterIR_aligned*, argumentIR_aligned*)
+      = $align_parameterListIR'(
+          `{ (nameIR_param `: parameterIR_non_default)* },
+          parameterIR_non_default*,
+          argumentIR*)
+  -- if (_ _ _ _ (`= value_default) = parameterIR_default)*
+
+def $align_parameterListIR'(`{ (id `: parameterIR)* }, eps, eps)
+  = (eps, eps)
+
+def $align_parameterListIR'(
+    `{ (id `: parameterIR)* },
+    parameterIR_h :: parameterIR_t*,
+    argumentIR_h ::argumentIR_t*,)
+  = (parameterIR_h :: parameterIR_aligned*,
+     argumentIR_h :: argumentIR_aligned*)
+  -- if argumentIR_h = typedExpressionIR 
+  -- if (parameterIR_aligned*, argumentIR_aligned*)
+      = $align_parameterListIR'(
+          `{ (id `: parameterIR)* },
+          parameterIR_t*,
+          argumentIR_t*)
+
+def $align_parameterListIR'(
+    `{ (id `: parameterIR)* },
+    parameterIR_h :: parameterIR_t*,
+    argumentIR_h ::argumentIR_t*)
+  = (parameterIR_h :: parameterIR_aligned*,
+     argumentIR_h :: argumentIR_aligned*)
+  -- if argumentIR_h = `_
+  -- if (parameterIR_aligned*, argumentIR_aligned*)
+      = $align_parameterListIR'(
+          `{ (id `:  parameterIR)* },
+          parameterIR_t*,
+          argumentIR_t*)
+
+def $align_parameterListIR'(
+    `{ (id `: parameterIR)* },
+    parameterIR_h :: parameterIR_t*,
+    argumentIR_h ::argumentIR_t*)
+  = (parameterIR_match :: parameterIR_aligned*,
+     argumentIR_h :: argumentIR_aligned*)
+  -- if argumentIR_h = nameIR `= _
+  -- if parameterIR_match
+      = $find_map<id, parameterIR>(`{ (id `: parameterIR)* }, nameIR)
+  -- if (parameterIR_aligned*, argumentIR_aligned*)
+      = $align_parameterListIR'(
+          `{ (id `:  parameterIR)* },
+          parameterIR_t*,
+          argumentIR_t*)
+
+def $align_parameterListIR'(
+    `{ (id `: parameterIR)* },
+    parameterIR_h :: parameterIR_t*,
+    argumentIR_h ::argumentIR_t*)
+  = (parameterIR_match :: parameterIR_aligned*,
+     argumentIR_h :: argumentIR_aligned*)
+  -- if argumentIR_h = nameIR `= `_
+  -- if parameterIR_match
+      = $find_map<id, parameterIR>(`{ (id `: parameterIR)* }, nameIR)
+  -- if (parameterIR_aligned*, argumentIR_aligned*)
+      = $align_parameterListIR'(
+          `{ (id `:  parameterIR)* },
+          parameterIR_t*,
+          argumentIR_t*)

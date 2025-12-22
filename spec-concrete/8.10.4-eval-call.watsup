@@ -1,16 +1,4 @@
 ;;
-;; Helpers
-;;
-
-;;; Aligning parameters
-
-dec $align_params_with_args(parameterIR*, argumentIR*, id*)
-  : (parameterIR*, argumentIR*, parameterIR*, value*)
-
-def $align_params_with_args(parameterIR*, argumentIR*, id*)
-  = $align_cparams_with_args(parameterIR*, argumentIR*, id*)
-
-;;
 ;; Call evaluation
 ;;
 ;; syntax callee
@@ -70,7 +58,7 @@ rulegroup Call_eval/actionCallee {
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
            parameterIR_default*, value_default*)
-        = $align_params_with_args(parameterIR*, argumentListIR, id_default*)
+        = $align_parameterListIR(parameterIR*, argumentListIR, id_default*)
     ---- ;; copy-in
     -- Copy_in:
         STO_0 p EC_0 parameterIR_aligned*
@@ -105,7 +93,7 @@ rulegroup Call_eval/actionCallee {
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
            parameterIR_default*, value_default*)
-        = $align_params_with_args(parameterIR*, argumentListIR, id_default*)
+        = $align_parameterListIR(parameterIR*, argumentListIR, id_default*)
     ---- ;; copy-in
     -- Copy_in:
         STO_0 p EC_0 parameterIR_aligned*
@@ -141,7 +129,7 @@ rulegroup Call_eval/actionCallee {
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
            parameterIR_default*, value_default*)
-        = $align_params_with_args(parameterIR*, argumentListIR, id_default*)
+        = $align_parameterListIR(parameterIR*, argumentListIR, id_default*)
     ---- ;; copy-in
     -- Copy_in:
         STO_0 p EC_0 parameterIR_aligned*
@@ -178,7 +166,7 @@ rulegroup Call_eval/actionCallee {
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
            parameterIR_default*, value_default*)
-        = $align_params_with_args(parameterIR*, argumentListIR, id_default*)
+        = $align_parameterListIR(parameterIR*, argumentListIR, id_default*)
     ---- ;; copy-in
     -- Copy_in:
         STO_0 p EC_0 parameterIR_aligned*
@@ -256,7 +244,7 @@ rule Call_eval/definedFunctionCallee:
   ---- ;; align parameters with arguments
   -- if (parameterIR_aligned*, argumentIR_aligned*,
          parameterIR_default*, value_default*)
-      = $align_params_with_args(parameterIR*, argumentListIR, id_default*)
+      = $align_parameterListIR(parameterIR*, argumentListIR, id_default*)
   ---- ;; copy-in
   -- Copy_in:
       STO_0 p EC_0 parameterIR_aligned*
@@ -299,7 +287,7 @@ rule Call_eval/externFunctionCallee:
   ---- ;; align parameters with arguments
   -- if (parameterIR_aligned*, argumentIR_aligned*,
          parameterIR_default*, value_default*)
-      = $align_params_with_args(parameterIR*, argumentIR*, id_default*)
+      = $align_parameterListIR(parameterIR*, argumentIR*, id_default*)
   ---- ;; copy-in
   -- Copy_in:
       STO_0 p EC_0 parameterIR_aligned*
@@ -519,7 +507,7 @@ rulegroup Call_eval/externMethodCallee {
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
            parameterIR_default*, value_default*)
-        = $align_params_with_args(parameterIR*, argumentIR*, id_default*)
+        = $align_parameterListIR(parameterIR*, argumentIR*, id_default*)
     ---- ;; copy-in
     -- Copy_in:
         STO_0 p EC_0 parameterIR_aligned*
@@ -562,7 +550,7 @@ rulegroup Call_eval/parserApplyMethodCallee {
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
            parameterIR_default*, value_default*)
-        = $align_params_with_args(parameterListIR, argumentListIR, id_default*)
+        = $align_parameterListIR(parameterListIR, argumentListIR, id_default*)
     ---- ;; copy-in
     -- Copy_in:
         STO_0 p EC_0 parameterIR_aligned*
@@ -602,7 +590,7 @@ rulegroup Call_eval/parserApplyMethodCallee {
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
            parameterIR_default*, value_default*)
-        = $align_params_with_args(parameterListIR, argumentListIR, id_default*)
+        = $align_parameterListIR(parameterListIR, argumentListIR, id_default*)
     ---- ;; copy-in
     -- Copy_in:
         STO_0 p EC_0 parameterIR_aligned*
@@ -651,7 +639,7 @@ rulegroup Call_eval/controlApplyMethodCallee {
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
            parameterIR_default*, value_default*)
-        = $align_params_with_args(parameterListIR, argumentListIR, id_default*)
+        = $align_parameterListIR(parameterListIR, argumentListIR, id_default*)
     ---- ;; copy-in
     -- Copy_in:
         STO_0 p EC_0 parameterIR_aligned*
@@ -694,7 +682,7 @@ rulegroup Call_eval/controlApplyMethodCallee {
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
            parameterIR_default*, value_default*)
-        = $align_params_with_args(parameterListIR, argumentListIR, id_default*)
+        = $align_parameterListIR(parameterListIR, argumentListIR, id_default*)
     ---- ;; copy-in
     -- Copy_in:
         STO_0 p EC_0 parameterIR_aligned*

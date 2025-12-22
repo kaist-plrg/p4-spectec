@@ -1232,6 +1232,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
   and invoke_extern_rel (ctx : Ctx.t) (id : id) (values_input : value list) :
       (Ctx.t * value list) attempt_reason =
     match id.it with
+    | "ExternFunctionCall_eval_lctk" ->
+        let values_output = Arch.eval_extern_func_lctk_call values_input in
+        Ok (ctx, values_output)
     | "ExternFunctionCall_eval" ->
         let values_output = Arch.eval_extern_func_call values_input in
         Ok (ctx, values_output)

@@ -2,119 +2,6 @@
 ;; Helpers
 ;;
 
-;; Partitioning constructor parameters into default and non-default parameters
-
-dec $partition_default_parameters(parameterIR*, id*)
-  : (parameterIR*, parameterIR*)
-
-def $partition_default_parameters(eps, id_default*) = (eps, eps)
-def $partition_default_parameters(
-    parameterIR_h :: parameterIR_t*,
-    id_default*
-  )
-  = (parameterIR_nondefault*, parameterIR_h :: parameterIR_default*)
-  -- if parameterIR_h = _ _ _ id_h _
-  -- if $partition_default_parameters(parameterIR_t*, id_default*)
-      = (parameterIR_nondefault*, parameterIR_default*)
-  -- if id_h <- id_default*
-
-def $partition_default_parameters(
-    parameterIR_h :: parameterIR_t*,
-    id_default*
-  )
-  = (parameterIR_h :: parameterIR_nondefault*, parameterIR_default*)
-  -- if parameterIR_h = _ _ _ id_h _
-  -- if $partition_default_parameters(parameterIR_t*, id_default*)
-      = (parameterIR_nondefault*, parameterIR_default*)
-  -- if ~(id_h <- id_default*)
-
-;; Aligning constructor parameters with arguments
-
-dec $align_cparams_with_args(constructorParameterIR*, argumentIR*, id*)
-  : (constructorParameterIR*, argumentIR*, constructorParameterIR*, value*)
-dec $align_cparams_with_args'(map<id, constructorParameterIR>, constructorParameterIR*, argumentIR*)
-  : (constructorParameterIR*, argumentIR*)
-
-def $align_cparams_with_args(constructorParameterIR*, argumentIR*, id_default*)
-  = (constructorParameterIR_aligned*, argumentIR_aligned*,
-     constructorParameterIR_default*, value_default*)
-  -- if (constructorParameterIR_non_default*, constructorParameterIR_default*)
-      = $partition_default_parameters(constructorParameterIR*, id_default*)
-  -- if (_ _ _ id _ = constructorParameterIR_non_default)*
-  -- if (constructorParameterIR_aligned*, argumentIR_aligned*)
-      = $align_cparams_with_args'(
-          `{ (id `: constructorParameterIR_non_default)* },
-          constructorParameterIR_non_default*,
-          argumentIR*
-        )
-  -- if (_ _ _ _ (`= value_default) = constructorParameterIR_default)*
-
-def $align_cparams_with_args'(
-    `{ (id `: constructorParameterIR)* },
-    eps, eps
-  )
-  = (eps, eps)
-def $align_cparams_with_args'(
-    `{ (id `: constructorParameterIR)* },
-    constructorParameterIR_h :: constructorParameterIR_t*,
-    argumentIR_h ::argumentIR_t*,
-  )
-  = (constructorParameterIR_h :: constructorParameterIR_aligned*,
-     argumentIR_h :: argumentIR_aligned*)
-  -- if argumentIR_h = typedExpressionIR 
-  -- if (constructorParameterIR_aligned*, argumentIR_aligned*)
-      = $align_cparams_with_args'(
-          `{ (id `: constructorParameterIR)* },
-          constructorParameterIR_t*,
-          argumentIR_t*
-        )
-def $align_cparams_with_args'(
-    `{ (id `: constructorParameterIR)* },
-    constructorParameterIR_h :: constructorParameterIR_t*,
-    argumentIR_h ::argumentIR_t*,
-  )
-  = (constructorParameterIR_h :: constructorParameterIR_aligned*,
-     argumentIR_h :: argumentIR_aligned*)
-  -- if argumentIR_h = `_
-  -- if (constructorParameterIR_aligned*, argumentIR_aligned*)
-      = $align_cparams_with_args'(
-          `{ (id `:  constructorParameterIR)* },
-          constructorParameterIR_t*,
-          argumentIR_t*
-        )
-def $align_cparams_with_args'(
-    `{ (id `: constructorParameterIR)* },
-    constructorParameterIR_h :: constructorParameterIR_t*,
-    argumentIR_h ::argumentIR_t*,
-  )
-  = (constructorParameterIR_match :: constructorParameterIR_aligned*,
-     argumentIR_h :: argumentIR_aligned*)
-  -- if argumentIR_h = nameIR `= _
-  -- if constructorParameterIR_match
-      = $find_map<id, constructorParameterIR>(`{ (id `: constructorParameterIR)* }, nameIR)
-  -- if (constructorParameterIR_aligned*, argumentIR_aligned*)
-      = $align_cparams_with_args'(
-          `{ (id `:  constructorParameterIR)* },
-          constructorParameterIR_t*,
-          argumentIR_t*
-        )
-def $align_cparams_with_args'(
-    `{ (id `: constructorParameterIR)* },
-    constructorParameterIR_h :: constructorParameterIR_t*,
-    argumentIR_h ::argumentIR_t*,
-  )
-  = (constructorParameterIR_match :: constructorParameterIR_aligned*,
-     argumentIR_h :: argumentIR_aligned*)
-  -- if argumentIR_h = nameIR `= `_
-  -- if constructorParameterIR_match
-      = $find_map<id, constructorParameterIR>(`{ (id `: constructorParameterIR)* }, nameIR)
-  -- if (constructorParameterIR_aligned*, argumentIR_aligned*)
-      = $align_cparams_with_args'(
-          `{ (id `:  constructorParameterIR)* },
-          constructorParameterIR_t*,
-          argumentIR_t*
-        )
-
 ;;
 ;; Argument binding
 ;;
@@ -173,7 +60,7 @@ rule Constructor_call/externConstructorDef:
   ---- ;; align constructor parameters with arguments
   -- if (constructorParameterIR_aligned*, argumentIR_aligned*,
          constructorParameterIR_default*, value_default*)
-      = $align_cparams_with_args(constructorParameterIR*, argumentIR*, id_default*)
+      = $align_parameterListIR(constructorParameterIR*, argumentIR*, id_default*)
   ---- ;; bind non-default arguments to the callee context
   -- if (_ _ _ id_aligned _ = constructorParameterIR_aligned)*
   -- Bind_args:
@@ -216,7 +103,7 @@ rule Constructor_call/parserConstructorDef:
   ---- ;; align constructor parameters with arguments
   -- if (constructorParameterIR_aligned*, argumentIR_aligned*,
          constructorParameterIR_default*, value_default*)
-      = $align_cparams_with_args(constructorParameterIR*, argumentIR*, id_default*)
+      = $align_parameterListIR(constructorParameterIR*, argumentIR*, id_default*)
   ---- ;; bind non-default arguments to callee context
   -- if (_ _ _ id_aligned _ = constructorParameterIR_aligned)*
   -- Bind_args:
@@ -258,7 +145,7 @@ rule Constructor_call/controlConstructorDef:
   ---- ;; align constructor parameters with arguments
   -- if (constructorParameterIR_aligned*, argumentIR_aligned*,
          constructorParameterIR_default*, value_default*)
-      = $align_cparams_with_args(constructorParameterIR*, argumentIR*, id_default*)
+      = $align_parameterListIR(constructorParameterIR*, argumentIR*, id_default*)
   ---- ;; bind non-default arguments to the callee context
   -- if (_ _ _ id_aligned _ = constructorParameterIR_aligned)*
   -- Bind_args:
@@ -303,7 +190,7 @@ rule Constructor_call/packageConstructorDef:
   ---- ;; align constructor parameters with arguments
   -- if (constructorParameterIR_aligned*, argumentIR_aligned*,
          constructorParameterIR_default*, value_default*)
-      = $align_cparams_with_args(constructorParameterIR*, argumentIR*, id_default*)
+      = $align_parameterListIR(constructorParameterIR*, argumentIR*, id_default*)
   ---- ;; bind non-default arguments to callee context
   -- if (_ _ _ id_aligned _ = constructorParameterIR_aligned)*
   -- Bind_args:

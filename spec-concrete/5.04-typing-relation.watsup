@@ -1,13 +1,28 @@
 ;;
 ;;;; Static evaluation
-;;;; of expressions that are local compile-time known
+;;;; of expressions/arguments that are local compile-time known
 ;;
+
+extern relation ExternFunctionCall_eval_lctk:
+  typingContext |- nameIR `( nameIR* ) ~> value
+  hint(input %0 %1 %2)
+  hint(testgen_ignore)
+  hint(prose_in "calling an extern function" %1#"("#%2#")" "under typing context" %0)
+  hint(prose_out "the resulting value" %3)
 
 relation Expr_eval_lctk:
   cursor typingContext |- typedExpressionIR ~> value
   hint(input %0 %1 %2)
   hint(testgen_ignore)
   hint(prose_in "the local compile-time evaluation of" %2#", under cursor" %0 "and typing context" %1)
+  hint(prose_out "the resulting value" %3)
+
+relation Argument_eval_lctk:
+  cursor typingContext |- argumentIR ~> value
+  hint(input %0 %1 %2)
+  hint(testgen_ignore)
+  hint(prose_in "the local compile-time evaluation of" %2#", under cursor" %0 "and typing context" %1)
+  hint(prose_out "the resulting value" %3)
 
 ;;
 ;;;; Type evaluation
@@ -437,6 +452,8 @@ relation Call_convention_ok:
 
 dec $is_static_callableTarget(callableTargetIR) : ctk
 
+def $is_static_callableTarget(`. "static_assert") = LCTK
+def $is_static_callableTarget(`` "static_assert") = LCTK
 def $is_static_callableTarget(_ `. nameIR) = LCTK
   -- if nameIR <- [ "minSizeInBits", "minSizeInBytes",
                     "maxSizeInBits", "maxSizeInBytes" ]

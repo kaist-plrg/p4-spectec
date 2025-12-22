@@ -127,14 +127,9 @@ rule Inst_ok/package:
   -- if CONSTRUCTOR `( parameterIR* ) `: typeIR_object
       = constructorTypeIR
   -- if PACKAGE _ `{ _ } = $canon_typeIR(typeIR_object)
-  ---- ;; filter default arguments
-  -- if parameterIR_non_default*
-      = $filter_default_parameterIRs(parameterIR*, id_default*)
-  ---- ;; check arity
-  -- if $(|parameterIR_non_default*| = |argumentIR*|)
-  ---- ;; align parameters and arguments if named
-  -- if parameterIR_aligned*
-      = $align_parameterIRs(parameterIR_non_default*, argumentIR*)
+  ---- ;; align parameters with arguments
+  -- if (parameterIR_aligned*, argumentIR_aligned*, _, _)
+      = $align_parameterListIR(parameterIR*, argumentIR*, id_default*)
   ---- ;; perform type inference
   -- if inference = $infer(tid_infer*, parameterIR_aligned*, argumentIR*)
   -- if (typeIR_inferred = $find_map<tid, typeIR>(inference, tid_infer))*
@@ -166,14 +161,9 @@ rule Inst_ok/non-package:
   -- if CONSTRUCTOR `( parameterIR* ) `: typeIR_object
       = constructorTypeIR
   -- if ~$is_packageObjectTypeIR($canon_typeIR(typeIR_object))
-  ---- ;; filter default arguments
-  -- if parameterIR_non_default*
-      = $filter_default_parameterIRs(parameterIR*, id_default*)
-  ---- ;; check arity
-  -- if $(|parameterIR_non_default*| = |argumentIR*|)
-  ---- ;; align parameters and arguments if named
-  -- if parameterIR_aligned*
-      = $align_parameterIRs(parameterIR_non_default*, argumentIR*)
+  ---- ;; align parameters with arguments
+  -- if (parameterIR_aligned*, argumentIR_aligned*, _, _)
+      = $align_parameterListIR(parameterIR*, argumentIR*, id_default*)
   ---- ;; perform type inference
   -- if inference = $infer(tid_infer*, parameterIR_aligned*, argumentIR*)
   -- if (typeIR_inferred = $find_map<tid, typeIR>(inference, tid_infer))*

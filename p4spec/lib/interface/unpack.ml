@@ -17,6 +17,12 @@ let unpack_p4_bool (value : Value.t) : bool =
 (* matchKindValue = MATCH_KIND `. id *)
 (* stringValue = stringLiteral *)
 
+let unpack_p4_string (value : Value.t) : string =
+  match flatten_case_v_opt value with
+  | Some (_, [ [ "\"" ]; [ "\"" ] ], [ value_string ]) ->
+      unwrap_text_v value_string
+  | _ -> assert false
+
 (* D int *)
 
 (* nat W int *)
