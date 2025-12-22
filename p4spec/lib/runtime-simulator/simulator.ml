@@ -31,6 +31,7 @@ module type ARCH = sig
   (* Extern evaluation *)
 
   val eval_extern_init : Value.t list -> Value.t
+  val eval_extern_func_lctk_call : Value.t list -> Value.t list
   val eval_extern_func_call : Value.t list -> Value.t list
   val eval_extern_method_call : Value.t list -> Value.t list
 
@@ -51,6 +52,7 @@ module type ARCH = sig
 
   (* Pipeline evaluation *)
 
+  val init : spec -> unit
   val init_pipe : spec -> string list -> string -> Value.t * Value.t
 
   val drive_pipe :

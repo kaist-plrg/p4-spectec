@@ -70,8 +70,6 @@ struct
     | PacketOut packet_out -> packet_out
     | _ -> error_no_region "packet_out extern not found"
 
-  (* Extern functions *)
-
   (* Extern calls *)
 
   let eval_extern_init (values_input : Value.t list) : Value.t =
@@ -92,6 +90,10 @@ struct
         let register = Register register in
         register |> extern_to_yojson |> wrap_extern_v "externState"
     | _ -> wrap_extern_v "externState" `Null
+
+  let eval_extern_func_lctk_call (_values_input : Value.t list) : Value.t list =
+    error_no_region
+      "eval_extern_func_lctk_call not implemented for the placeholder simulator"
 
   let eval_extern_func_call (values_input : Value.t list) : Value.t list =
     let value_ctx, value_sto, value_name_func, value_names_param =
@@ -259,13 +261,18 @@ struct
     (* Update store with modified table object *)
     update_table value_sto value_tableName value_tableObject
 
+  (* Initializer *)
+
+  let init (spec_ : Sim.spec) : unit =
+    init_spec spec_;
+    init_call_rel ();
+    init_call_func ()
+
   (* Pipeline initializer *)
 
   let init_pipe (spec_ : Sim.spec) (includes_p4 : string list)
       (filename_p4 : string) : Value.t * Value.t =
-    init_spec spec_;
-    init_call_rel ();
-    init_call_func ();
+    init spec_;
     let result =
       match !spec with
       | IL spec_il ->
