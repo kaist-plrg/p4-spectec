@@ -162,11 +162,11 @@ rulegroup Callee_eval/typedExpressionIR-nameIR-extern-method {
     -- if EXTERN _ `< theta > `{ _ frame externMethodDefEnv } 
         = $find_map<objectId, object>(STO_1, objectId)
     ---- ;; find the method being called
-    -- if (id_arg?)* = $ids_arguments(argumentListIR)
+    -- if callTargetKey = $callTargetKey(nameIR, argumentListIR)
     -- if (_, externMethodDef, id_default*)
         = $find_overloaded<externMethodDef>(
-            externMethodDefEnv, nameIR, (id_arg?)*
-          )
+            externMethodDefEnv, callTargetKey,
+            def $parameters_of_externMethodDef)
     ---- ;; prepare the callee
     -- if EXTERN_METHOD nameIR `< typeParameterListIR >
             `( parameterListIR ) blockStatementIR?
@@ -213,12 +213,12 @@ rulegroup Callee_eval/typedExpressionIR-nameIR-parser-apply-method {
     -- if parserApplyMethodDef
         = PARSER_APPLY `( parameterListIR )
             `{ parserLocalDeclarationListIR `; stateEnv }
-    -- if (id_arg?)* = $ids_arguments(argumentListIR)
+    -- if callTargetKey = $callTargetKey("apply", argumentListIR)
     -- if (_, _, id_default*)
         = $find_overloaded<parserApplyMethodDef>(
             `{ (callableId `: parserApplyMethodDef) },
-            "apply", (id_arg?)*
-          )
+            callTargetKey,
+            def $parameters_of_parserApplyMethodDef)
     ---- ;; prepare the callee
     -- if parserApplyMethodCallee
         = PARSER objectId `. APPLY `( parameterListIR `# id_default* )
@@ -261,12 +261,12 @@ rulegroup Callee_eval/typedExpressionIR-nameIR-control-apply-method {
     -- if controlApplyMethodDef
         = CONTROL_APPLY `( parameterListIR )
             `{ controlLocalDeclarationListIR `; actionDefEnv `; controlBodyIR }
-    -- if (id_arg?)* = $ids_arguments(argumentListIR)
+    -- if callTargetKey = $callTargetKey("apply", argumentListIR)
     -- if (_, _, id_default*)
         = $find_overloaded<controlApplyMethodDef>(
             `{ (callableId `: controlApplyMethodDef) },
-            "apply", (id_arg?)*
-          )
+            callTargetKey,
+            def $parameters_of_controlApplyMethodDef)
     ---- ;; prepare the callee
     -- if controlApplyMethodCallee
         = CONTROL objectId `. APPLY `( parameterListIR `# id_default* )

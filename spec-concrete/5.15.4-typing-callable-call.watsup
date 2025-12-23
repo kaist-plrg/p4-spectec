@@ -165,16 +165,16 @@ rule CallableType_ok/typedExpressionIR-nameIR-extern-method:
   -- if EXTERN _ `{ (callableId_extern `: externMethodTypeDefIR_extern)* }
       = $canon_typeIR(typeIR_base)
   ---- ;; find method type
-  -- if (id_arg?)* = $ids_arguments(argumentIR*)
+  -- if callTargetKey = $callTargetKey(nameIR, argumentIR*)
   -- if (_, externMethodTypeDefIR, id_default*)
       = $find_overloaded<externMethodTypeDefIR>(
           `{ (callableId_extern `: externMethodTypeDefIR_extern)* },
-          nameIR, (id_arg?)*)
+          callTargetKey,
+          def $parameters_of_externMethodTypeDefIR)
   ---- ;; specialize callable type
   -- if (externMethodTypeIR, typeId_impl*)
       = $specialize_callableTypeDefIR(
-          externMethodTypeDefIR, typeArgumentIR*
-        )
+          externMethodTypeDefIR, typeArgumentIR*)
   ---- ;; check that the callable type is well-formed
   -- if bound = $union_set<typeId>($bound(p, TC), `{ typeId_impl* })
   -- CallableType_wf: bound |- externMethodTypeIR
@@ -188,16 +188,15 @@ rule CallableType_ok/typedExpressionIR-nameIR-parser-apply-method:
   ---- ;; create method type
   -- if parserApplyMethodTypeIR = PARSER_APPLY `( parameterIR* )
   ---- ;; create callable id
-  -- if (_ _ _ id_param (`= value_param)? = parameterIR)*
-  -- if (parameterId = id_param `# (value_param? =/= eps))*
-  -- if callableId = "apply" `( parameterId* )
+  -- if (_ _ _ id_param _ = parameterIR)*
+  -- if callableId = "apply" `( id_param* )
   ---- ;; perform overload resoultion
-  -- if (id_arg?)* = $ids_arguments(argumentIR*)
+  -- if callTargetKey = $callTargetKey("apply", argumentIR*)
   -- if (_, parserApplyMethodTypeIR, id_default*)
       = $find_overloaded<parserApplyMethodTypeIR>(
           `{ (callableId `: parserApplyMethodTypeIR) },
-          "apply",
-          (id_arg?)*)
+          callTargetKey,
+          def $parameters_of_parserApplyMethodTypeIR)
 
 rule CallableType_ok/typedExpressionIR-nameIR-control-apply-method:
   p TC |- (typedExpressionIR_base `. "apply") `< eps > `( argumentIR* )
@@ -208,16 +207,15 @@ rule CallableType_ok/typedExpressionIR-nameIR-control-apply-method:
   ---- ;; create method type
   -- if controlApplyMethodTypeIR = CONTROL_APPLY `( parameterIR* )
   ---- ;; create callable id
-  -- if (_ _ _ id_param (`= value_param)? = parameterIR)*
-  -- if (parameterId = id_param `# (value_param? =/= eps))*
-  -- if callableId = "apply" `( parameterId* )
+  -- if (_ _ _ id_param _ = parameterIR)*
+  -- if callableId = "apply" `( id_param* )
   ---- ;; perform default resoultion
-  -- if (id_arg?)* = $ids_arguments(argumentIR*)
+  -- if callTargetKey = $callTargetKey("apply", argumentIR*)
   -- if (_, controlApplyMethodTypeIR, id_default*)
       = $find_overloaded<controlApplyMethodTypeDefIR>(
           `{ (callableId `: controlApplyMethodTypeIR) },
-          "apply",
-          (id_arg?)*)
+          callTargetKey,
+          def $parameters_of_controlApplyMethodTypeIR)
 
 rule CallableType_ok/typedExpressionIR-nameIR-table-apply-method:
   p TC |- (typedExpressionIR_base `. "apply") `< eps > `( eps )

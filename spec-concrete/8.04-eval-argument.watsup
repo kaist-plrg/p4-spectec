@@ -46,8 +46,10 @@ rule Argument_eval_lvalue/typedExpressionIR:
 rule Argument_eval_lvalue/nameIR-typedExpressionIR:
   p EC_0 STO_0 |- nameIR `= typedExpressionIR
                 : EC_1 STO_1 storageReferenceResult
-  -- Expr_eval_lvalue:
-      p EC_0 STO_0 |- typedExpressionIR
+  -- if typedLvalueIR
+      = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
+  -- Lvalue_eval:
+      p EC_0 STO_0 |- typedLvalueIR
                     : EC_1 STO_1 storageReferenceResult
 
 ;;; nameIR `= `_

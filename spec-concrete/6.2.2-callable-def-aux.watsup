@@ -1,0 +1,84 @@
+;;
+;; Parameters of a callable definition
+;;
+
+dec $parameters_of_callableDef(callableDef)
+  : parameterIR*
+
+;;; Action definitions
+
+dec $parameters_of_actionDef(actionDef) : parameterIR*
+def $parameters_of_actionDef(
+    ACTION _ `( parameterListIR ) _)
+  = parameterListIR
+
+def $parameters_of_callableDef(actionDef)
+  = $parameters_of_actionDef(actionDef)
+
+;;; Function definitions
+
+dec $parameters_of_functionDef(functionDef)
+  : parameterIR*
+
+dec $parameters_of_definedFunctionDef(definedFunctionDef)
+  : parameterIR*
+def $parameters_of_definedFunctionDef(
+    FUNCTION _ `< _ > `( parameterListIR ) _)
+  = parameterListIR
+
+dec $parameters_of_externFunctionDef(externFunctionDef)
+  : parameterIR*
+def $parameters_of_externFunctionDef(
+    EXTERN_FUNCTION _ `< _ > `( parameterListIR ))
+  = parameterListIR
+
+def $parameters_of_functionDef(definedFunctionDef)
+  = $parameters_of_definedFunctionDef(definedFunctionDef)
+def $parameters_of_functionDef(externFunctionDef)
+  = $parameters_of_externFunctionDef(externFunctionDef)
+
+def $parameters_of_callableDef(functionDef)
+  = $parameters_of_functionDef(functionDef)
+
+;;; Method definitions
+
+dec $parameters_of_methodDef(methodDef)
+  : parameterIR*
+
+dec $parameters_of_externMethodDef(externMethodDef)
+  : parameterIR*
+def $parameters_of_externMethodDef(
+    EXTERN_METHOD _ `< _ > `( parameterListIR ) _)
+  = parameterListIR
+def $parameters_of_externMethodDef(
+    EXTERN_METHOD ABSTRACT _ `< _ > `( parameterListIR ))
+  = parameterListIR
+
+dec $parameters_of_parserApplyMethodDef(parserApplyMethodDef)
+  : parameterIR*
+def $parameters_of_parserApplyMethodDef(
+    PARSER_APPLY `( parameterListIR ) `{ _ `; _ })
+  = parameterListIR
+
+dec $parameters_of_controlApplyMethodDef(controlApplyMethodDef)
+  : parameterIR*
+def $parameters_of_controlApplyMethodDef(
+    CONTROL_APPLY `( parameterListIR ) `{ _ `; _ `; _ })
+  = parameterListIR
+
+dec $parameters_of_tableApplyMethodDef(tableApplyMethodDef)
+  : parameterIR*
+def $parameters_of_tableApplyMethodDef(TABLE_APPLY `{ _ })
+  = eps
+
+def $parameters_of_methodDef(externMethodDef)
+  = $parameters_of_externMethodDef(externMethodDef)
+def $parameters_of_methodDef(parserApplyMethodDef)
+  = $parameters_of_parserApplyMethodDef(parserApplyMethodDef)
+def $parameters_of_methodDef(controlApplyMethodDef)
+  = $parameters_of_controlApplyMethodDef(controlApplyMethodDef)
+def $parameters_of_methodDef(tableApplyMethodDef)
+  = $parameters_of_tableApplyMethodDef(tableApplyMethodDef)
+
+def $parameters_of_callableDef(methodDef)
+  = $parameters_of_methodDef(methodDef)

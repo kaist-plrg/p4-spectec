@@ -187,50 +187,74 @@ def $find_type_e(LOCAL, EC, nameIR)
 dec $find_callableDef_overloaded_e(cursor, evalContext, prefixedNameIR, argumentIR*)
   : (cursor, callableId, callableDef, id*)?
 
-def $find_callableDef_overloaded_e(GLOBAL, EC, `` id, argumentIR*)
+def $find_callableDef_overloaded_e(GLOBAL, EC, `` nameIR, argumentIR*)
   = (GLOBAL, callableId, callableDef, id_default*)
-  -- if (id_arg?)* = $ids_arguments(argumentIR*)
+  -- if callTargetKey = $callTargetKey(nameIR, argumentIR*)
   -- if (callableId, callableDef, id_default*)
-      = $find_overloaded<callableDef>(EC.GLOBAL.CALLABLE, id, (id_arg?)*)
-def $find_callableDef_overloaded_e(GLOBAL, EC, `` id, argumentIR*)
+      = $find_overloaded<callableDef>(
+          EC.GLOBAL.CALLABLE,
+          callTargetKey,
+          def $parameters_of_callableDef)
+def $find_callableDef_overloaded_e(GLOBAL, EC, `` nameIR, argumentIR*)
   = eps
-  -- if (id_arg?)* = $ids_arguments(argumentIR*)
+  -- if callTargetKey = $callTargetKey(nameIR, argumentIR*)
   -- if eps
-      = $find_overloaded<callableDef>(EC.GLOBAL.CALLABLE, id, (id_arg?)*)
-def $find_callableDef_overloaded_e(GLOBAL, EC, `. id, argumentIR*)
+      = $find_overloaded<callableDef>(
+          EC.GLOBAL.CALLABLE,
+          callTargetKey,
+          def $parameters_of_callableDef)
+def $find_callableDef_overloaded_e(GLOBAL, EC, `. nameIR, argumentIR*)
   = (GLOBAL, callableId, callableDef, id_default*)
-  -- if (id_arg?)* = $ids_arguments(argumentIR*)
+  -- if callTargetKey = $callTargetKey(nameIR, argumentIR*)
   -- if (callableId, callableDef, id_default*)
-      = $find_overloaded<callableDef>(EC.GLOBAL.CALLABLE, id, (id_arg?)*)
-def $find_callableDef_overloaded_e(GLOBAL, EC, `. id, argumentIR*)
+      = $find_overloaded<callableDef>(
+          EC.GLOBAL.CALLABLE,
+          callTargetKey,
+          def $parameters_of_callableDef)
+def $find_callableDef_overloaded_e(GLOBAL, EC, `. nameIR, argumentIR*)
   = eps
-  -- if (id_arg?)* = $ids_arguments(argumentIR*)
+  -- if callTargetKey = $callTargetKey(nameIR, argumentIR*)
   -- if eps
-      = $find_overloaded<callableDef>(EC.GLOBAL.CALLABLE, id, (id_arg?)*)
-def $find_callableDef_overloaded_e(BLOCK, EC, `` id, argumentIR*)
+      = $find_overloaded<callableDef>(
+          EC.GLOBAL.CALLABLE,
+          callTargetKey,
+          def $parameters_of_callableDef)
+def $find_callableDef_overloaded_e(BLOCK, EC, `` nameIR, argumentIR*)
   = (BLOCK, callableId, callableDef, id_default*)
-  -- if (id_arg?)* = $ids_arguments(argumentIR*)
+  -- if callTargetKey = $callTargetKey(nameIR, argumentIR*)
   -- if (callableId, callableDef, id_default*)
-      = $find_overloaded<callableDef>(EC.BLOCK.CALLABLE, id, (id_arg?)*)
-def $find_callableDef_overloaded_e(BLOCK, EC, `` id, argumentIR*)
-  = $find_callableDef_overloaded_e(GLOBAL, EC, `` id, argumentIR*)
-  -- if (id_arg?)* = $ids_arguments(argumentIR*)
+      = $find_overloaded<callableDef>(
+          EC.BLOCK.CALLABLE,
+          callTargetKey,
+          def $parameters_of_callableDef)
+def $find_callableDef_overloaded_e(BLOCK, EC, `` nameIR, argumentIR*)
+  = $find_callableDef_overloaded_e(GLOBAL, EC, `` nameIR, argumentIR*)
+  -- if callTargetKey = $callTargetKey(nameIR, argumentIR*)
   -- if eps
-      = $find_overloaded<callableDef>(EC.BLOCK.CALLABLE, id, (id_arg?)*)
-def $find_callableDef_overloaded_e(LOCAL, EC, `` id, argumentIR*)
-  = $find_callableDef_overloaded_e(BLOCK, EC, `` id, argumentIR*)
+      = $find_overloaded<callableDef>(
+          EC.BLOCK.CALLABLE,
+          callTargetKey,
+          def $parameters_of_callableDef)
+def $find_callableDef_overloaded_e(LOCAL, EC, `` nameIR, argumentIR*)
+  = $find_callableDef_overloaded_e(BLOCK, EC, `` nameIR, argumentIR*)
 
 ;;; Finder for constructors 
 
 dec $find_constructorDef_e(evalContext, prefixedNameIR, argumentIR*)
   : (callableId, constructorDef, id*)?
 
-def $find_constructorDef_e(EC, `` id, argumentIR*)
-  = $find_overloaded<constructorDef>(EC.GLOBAL.CONSTRUCTOR, id, (id_arg?)*)
-  -- if (id_arg?)* = $ids_arguments(argumentIR*)
-def $find_constructorDef_e(EC, `. id, argumentIR*)
-  = $find_overloaded<constructorDef>(EC.GLOBAL.CONSTRUCTOR, id, (id_arg?)*)
-  -- if (id_arg?)* = $ids_arguments(argumentIR*)
+def $find_constructorDef_e(EC, `` nameIR, argumentIR*)
+  = $find_overloaded<constructorDef>(
+      EC.GLOBAL.CONSTRUCTOR,
+      callTargetKey,
+      def $parameters_of_constructorDef)
+  -- if callTargetKey = $callTargetKey(nameIR, argumentIR*)
+def $find_constructorDef_e(EC, `. nameIR, argumentIR*)
+  = $find_overloaded<constructorDef>(
+      EC.GLOBAL.CONSTRUCTOR,
+      callTargetKey,
+      def $parameters_of_constructorDef)
+  -- if callTargetKey = $callTargetKey(nameIR, argumentIR*)
 
 ;;; Finder for states
 

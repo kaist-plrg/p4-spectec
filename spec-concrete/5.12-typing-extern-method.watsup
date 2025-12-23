@@ -112,13 +112,13 @@ rule ExternConstructor_ok:
   -- if (typeId_expl*, eps) = $type_parameters_of_typeDefIR(typeDefIR_extern)
   ---- ;; add implicit type parameters to the constructor
   ---- ;; and add it to the context
-  -- if callableId = $callableId_(typeIdentifier, `( parameterList ))
+  -- if constructorId = $constructorId(typeIdentifier, `( parameterList ))
   -- if typeIR_extern_spec = typeDefIR_extern `< (`` typeId_expl)* >
   -- if constructorTypeDefIR
       = CONSTRUCTOR `< typeId_expl* `, typeId_impl* >
           `( constructorParameterIR* ) `: typeIR_extern_spec
   -- ConstructorTypeDef_wf: $bound(BLOCK, TC_0) |- constructorTypeDefIR
-  -- if TC_1 = $add_constructorDef_t(TC_0, callableId, constructorTypeDefIR)
+  -- if TC_1 = $add_constructorDef_t(TC_0, constructorId, constructorTypeDefIR)
   ---- ;; create IR
   -- if externConstructorPrototypeIR
       = annotationList nameIR `< `, typeId_impl* > `( constructorParameterIR* ) `;
@@ -135,7 +135,9 @@ rule ExternConstructors_ok/nil:
 rule ExternConstructors_ok/cons:
   TC_0 typeId_extern |- externConstructorPrototype_h :: externConstructorPrototype_t*
                       : TC_2 (externConstructorPrototypeIR_h :: externConstructorPrototypeIR_t*)
-  -- ExternConstructor_ok: TC_0 typeId_extern |- externConstructorPrototype_h
-                                            : TC_1 externConstructorPrototypeIR_h
-  -- ExternConstructors_ok: TC_1 typeId_extern |- externConstructorPrototype_t*
-                                             : TC_2 externConstructorPrototypeIR_t*
+  -- ExternConstructor_ok:
+      TC_0 typeId_extern |- externConstructorPrototype_h
+                          : TC_1 externConstructorPrototypeIR_h
+  -- ExternConstructors_ok:
+      TC_1 typeId_extern |- externConstructorPrototype_t*
+                          : TC_2 externConstructorPrototypeIR_t*

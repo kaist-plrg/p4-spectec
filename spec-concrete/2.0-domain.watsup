@@ -57,34 +57,30 @@ def $fresh_typeIds(n) = $fresh_typeId() :: $fresh_typeIds(n')
   -- if n' = $(n - 1)
 
 ;;
-;; Callable names
+;; Call target
 ;;
-;; A pair of function name and a list of parameter names,
-;; with a boolean flag indicating whether the parameter has
-;; a default value
+;; A pair of function name and a list of parameter names
 ;;
 
-syntax parameterId = nameIR `# bool
-syntax callableId = nameIR `( parameterId* )
+syntax callTargetId = nameIR `( id* )
+syntax callableId = callTargetId
+syntax constructorId = callTargetId
 
 dec $callableId(name, parameterList) : callableId
-dec $callableId_(name, constructorParameterListOpt) : callableId
-dec $parameterIds(parameterList) : parameterId*
-dec $parameterId(parameter) : parameterId
+dec $callableId'(parameterList) : id*
+
+dec $constructorId(name, constructorParameterListOpt) : constructorId
 
 def $callableId(name, parameterList)
-  = $name(name) `( $parameterIds(parameterList) )
+  = $name(name) `( $callableId'(parameterList) )
 
-def $callableId_(name, `EMPTY) = $name(name) `( eps )
-def $callableId_(name, `( parameterList )) = $callableId(name, parameterList)
+def $constructorId(name, `EMPTY) = $name(name) `( eps )
+def $constructorId(name, `( parameterList )) = $callableId(name, parameterList)
 
-def $parameterIds(`EMPTY) = eps
-def $parameterIds(parameter) = $parameterId(parameter)
-def $parameterIds(nonEmptyParameterList `, parameter)
-  = $parameterIds(nonEmptyParameterList) ++ [ $parameterId(parameter) ]
-
-def $parameterId(_ _ _ name `EMPTY) = $name(name) `# false
-def $parameterId(_ _ _ name initializer) = $name(name) `# true
+def $callableId'(`EMPTY) = eps
+def $callableId'(_ _ _ name _) = $name(name)
+def $callableId'(nonEmptyParameterList `, (_ _ _ name _))
+  = $callableId'(nonEmptyParameterList) ++ [ $name(name) ]
 
 ;;
 ;; Object names (fully qualified paths)

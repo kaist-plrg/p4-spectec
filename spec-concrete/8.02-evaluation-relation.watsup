@@ -47,15 +47,6 @@ relation Exprs_eval:
   hint(prose_in "evaluating" %3#", under cursor" %0#", evaluation context" %1#", and store" %2)
   hint(prose_out "the resulting evaluation context" %4#", store" %5#" and expression list result" %6)
 
-syntax storageReferenceResult =
-  | continueResult<storageReference?>
-  | exitResult
-
-relation Expr_eval_lvalue:
-  cursor evalContext store |- typedExpressionIR
-                            : evalContext store storageReferenceResult
-  hint(input %0 %1 %2 %3)
-
 syntax keysetExpressionResult =
   | continueResult<setValue*>
   | exitResult
@@ -73,6 +64,10 @@ relation Argument_eval:
   cursor evalContext store |- argumentIR
                             : evalContext store expressionResult
   hint(input %0 %1 %2 %3)
+
+syntax storageReferenceResult =
+  | continueResult<storageReference?>
+  | exitResult
 
 relation Argument_eval_lvalue:
   cursor evalContext store |- argumentIR

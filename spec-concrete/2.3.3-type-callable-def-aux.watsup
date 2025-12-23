@@ -1,0 +1,176 @@
+;;
+;; Name and default-ness of a parameter
+;;
+
+dec $id_of_parameterIR(parameterIR) : id
+def $id_of_parameterIR(_ _ _ id _) = id
+
+dec $default_of_parameterIR(parameterIR) : bool
+def $default_of_parameterIR(_ _ _ _ eps) = false
+def $default_of_parameterIR(_ _ _ _ _) = true
+  -- otherwise
+
+;;
+;; Base callable type of a callable type definition
+;;
+
+dec $type_of_callableTypeDefIR(callableTypeDefIR)
+  : callableTypeIR
+
+;;; Action type definitions
+
+def $type_of_callableTypeDefIR(actionTypeDefIR)
+  = actionTypeDefIR
+
+;;; Function type definitions
+
+def $type_of_callableTypeDefIR(
+    FUNCTION `< _ `, _ > `( parameterIR* ) `: typeIR)
+  = FUNCTION `( parameterIR* ) `: typeIR
+
+def $type_of_callableTypeDefIR(
+    EXTERN_FUNCTION `< _ `, _ > `( parameterIR* ) `: typeIR)
+  = EXTERN_FUNCTION `( parameterIR* ) `: typeIR
+
+;;; Method type definitions
+
+def $type_of_callableTypeDefIR(
+    EXTERN_METHOD `< _ `, _ > `( parameterIR* ) `: typeIR)
+  = EXTERN_METHOD `( parameterIR* ) `: typeIR
+
+def $type_of_callableTypeDefIR(
+    EXTERN_METHOD ABSTRACT `< _ `, _ > `( parameterIR* ) `: typeIR)
+  = EXTERN_METHOD ABSTRACT `( parameterIR* ) `: typeIR
+
+def $type_of_callableTypeDefIR(
+    parserApplyMethodTypeDefIR)
+  = parserApplyMethodTypeDefIR
+
+def $type_of_callableTypeDefIR(
+    controlApplyMethodTypeDefIR)
+  = controlApplyMethodTypeDefIR
+
+;;
+;; Type parameters of a callable type definition
+;;
+
+dec $type_parameters_of_callableTypeDefIR(callableTypeDefIR)
+  : (typeId*, typeId*)
+
+;;; Action type definitions
+
+def $type_parameters_of_callableTypeDefIR(actionTypeDefIR)
+  = (eps, eps)
+
+;;; Function type definitions
+
+def $type_parameters_of_callableTypeDefIR(
+    FUNCTION `< typeId_expl* `, typeId_impl* > `( _ ) `: _)
+  = (typeId_expl*, typeId_impl*)
+
+def $type_parameters_of_callableTypeDefIR(
+    EXTERN_FUNCTION `< typeId_expl* `, typeId_impl* > `( _ ) `: _)
+  = (typeId_expl*, typeId_impl*)
+
+;;; Method type definitions
+
+def $type_parameters_of_callableTypeDefIR(
+    EXTERN_METHOD `< typeId_expl* `, typeId_impl* > `( _ ) `: _)
+  = (typeId_expl*, typeId_impl*)
+
+def $type_parameters_of_callableTypeDefIR(
+    EXTERN_METHOD ABSTRACT `< typeId_expl* `, typeId_impl* > `( _ ) `: _)
+  = (typeId_expl*, typeId_impl*)
+
+def $type_parameters_of_callableTypeDefIR(
+    parserApplyMethodTypeDefIR)
+  = (eps, eps)
+
+def $type_parameters_of_callableTypeDefIR(
+    controlApplyMethodTypeDefIR)
+  = (eps, eps)
+
+;;
+;; Parameters of a callable type definition
+;;
+
+dec $parameters_of_callableTypeDefIR(callableTypeDefIR)
+  : parameterIR*
+
+;;; Action type definitions
+
+dec $parameters_of_actionTypeDefIR(actionTypeDefIR)
+  : parameterIR*
+def $parameters_of_actionTypeDefIR(ACTION `( parameterIR* ))
+  = parameterIR*
+
+def $parameters_of_callableTypeDefIR(actionTypeDefIR)
+  = $parameters_of_actionTypeDefIR(actionTypeDefIR)
+
+;;; Function type definitions
+
+dec $parameters_of_functionTypeDefIR(functionTypeDefIR)
+  : parameterIR*
+
+dec $parameters_of_definedFunctionTypeDefIR(definedFunctionTypeDefIR)
+  : parameterIR*
+def $parameters_of_definedFunctionTypeDefIR(
+    FUNCTION `< _ `, _ > `( parameterIR* ) `: _)
+  = parameterIR*
+
+dec $parameters_of_externFunctionTypeDefIR(externFunctionTypeDefIR)
+  : parameterIR*
+def $parameters_of_externFunctionTypeDefIR(
+    EXTERN_FUNCTION `< _ `, _ > `( parameterIR* ) `: _)
+  = parameterIR*
+
+def $parameters_of_functionTypeDefIR(definedFunctionTypeDefIR)
+  = $parameters_of_definedFunctionTypeDefIR(definedFunctionTypeDefIR)
+def $parameters_of_functionTypeDefIR(externFunctionTypeDefIR)
+  = $parameters_of_externFunctionTypeDefIR(externFunctionTypeDefIR)
+
+def $parameters_of_callableTypeDefIR(functionTypeDefIR)
+  = $parameters_of_functionTypeDefIR(functionTypeDefIR)
+
+;;; Method type definitions
+
+dec $parameters_of_methodTypeDefIR(methodTypeDefIR)
+  : parameterIR*
+
+dec $parameters_of_externMethodTypeDefIR(externMethodTypeDefIR)
+  : parameterIR*
+def $parameters_of_externMethodTypeDefIR(
+    EXTERN_METHOD `< _ `, _ > `( parameterIR* ) `: _)
+  = parameterIR*
+def $parameters_of_externMethodTypeDefIR(
+    EXTERN_METHOD ABSTRACT `< _ `, _ > `( parameterIR* ) `: _)
+  = parameterIR*
+
+dec $parameters_of_parserApplyMethodTypeIR(parserApplyMethodTypeIR)
+  : parameterIR*
+def $parameters_of_parserApplyMethodTypeIR(
+    PARSER_APPLY `( parameterIR* ))
+  = parameterIR*
+
+dec $parameters_of_controlApplyMethodTypeIR(controlApplyMethodTypeIR)
+  : parameterIR*
+def $parameters_of_controlApplyMethodTypeIR(
+    CONTROL_APPLY `( parameterIR* ))
+  = parameterIR*
+
+dec $parameters_of_tableApplyMethodTypeDefIR(tableApplyMethodTypeDefIR)
+  : parameterIR*
+def $parameters_of_tableApplyMethodTypeDefIR(tableApplyMethodTypeIR)
+  = eps
+
+def $parameters_of_methodTypeDefIR(externMethodTypeDefIR)
+  = $parameters_of_externMethodTypeDefIR(externMethodTypeDefIR)
+def $parameters_of_methodTypeDefIR(parserApplyMethodTypeIR)
+  = $parameters_of_parserApplyMethodTypeIR(parserApplyMethodTypeIR)
+def $parameters_of_methodTypeDefIR(controlApplyMethodTypeIR)
+  = $parameters_of_controlApplyMethodTypeIR(controlApplyMethodTypeIR)
+def $parameters_of_methodTypeDefIR(tableApplyMethodTypeDefIR)
+  = $parameters_of_tableApplyMethodTypeDefIR(tableApplyMethodTypeDefIR)
+
+def $parameters_of_callableTypeDefIR(methodTypeDefIR)
+  = $parameters_of_methodTypeDefIR(methodTypeDefIR)

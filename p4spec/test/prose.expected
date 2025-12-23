@@ -3468,11 +3468,11 @@ relation ExternConstructor_ok: `TC~0~`, `typeId~extern~`, and `annotationList ty
  .. Let `typeDefIR~extern~` be <<option_get, *!*>> <<find_typeDef_t, the type definition of `typeId~extern~` in the `GLOBAL` layer of `TC~0~`>>.
  .. Let `(typeId~expl~^{asterisk}^, typeId^{asterisk}^)` be <<type_parameters_of_typeDefIR, the type parameters of `typeDefIR~extern~`>>.
  .. Check that `typeId^{asterisk}^` is an empty list.
- .. Let `callableId` be `<<callableId_, $callableId_(typeIdentifier, ( parameterList ))>>`.
+ .. Let `constructorId` be `<<constructorId, $constructorId(typeIdentifier, ( parameterList ))>>`.
  .. Let `typeIR~extern_spec~` be `typeDefIR~extern~ < (typeId~expl~)^{asterisk}^ >`.
  .. Let `constructorTypeDefIR` be `CONSTRUCTOR < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > ( constructorParameterIR^{asterisk}^ ) : typeIR~extern_spec~`.
  .. Check that <<ConstructorTypeDef_wf, `constructorTypeDefIR` is a well-formed type, assuming bound type ids `$bound(BLOCK, TC~0~)`>>.
- .. Let `TC~1~` be `<<add_constructorDef_t, $add_constructorDef_t(TC~0~, callableId, constructorTypeDefIR)>>`.
+ .. Let `TC~1~` be `<<add_constructorDef_t, $add_constructorDef_t(TC~0~, constructorId, constructorTypeDefIR)>>`.
  .. Let `externConstructorPrototypeIR` be `annotationList nameIR < , typeId~impl~^{asterisk}^ > ( constructorParameterIR^{asterisk}^ ) ;`.
  .. Result in the updated typing context `TC~1~` and the typed constructor prototype `externConstructorPrototypeIR`.
 
@@ -4757,12 +4757,12 @@ for each `callableTypeDefIR` in `callableTypeDefIR^{asterisk}^`
   ... Let `callableTypeDefIR` be `PARSER_APPLY ( parameterIR^{asterisk}^ )`.
   ... Check that <<CallableTypeDef_wf, `callableTypeDefIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
   ... Let `nameIR` be <<name, the name of `name`>>.
-  ... Let `callableId` be `<<callableId_, $callableId_(name, constructorParameterListOpt)>>`.
+  ... Let `constructorId` be `<<constructorId, $constructorId(name, constructorParameterListOpt)>>`.
   ... Let `parserObjectTypeDefIR` be `PARSER nameIR < [ ] , [ ] > ( parameterIR^{asterisk}^ )`.
   ... Let `typeIR~parser_spec~` be `parserObjectTypeDefIR < [ ] >`.
   ... Let `constructorTypeDefIR` be `CONSTRUCTOR < [ ] , [ ] > ( constructorParameterIR^{asterisk}^ ) : typeIR~parser_spec~`.
   ... Check that <<ConstructorTypeDef_wf, `constructorTypeDefIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
-  ... Let `TC~6~` be `<<add_constructorDef_t, $add_constructorDef_t(TC~0~, callableId, constructorTypeDefIR)>>`.
+  ... Let `TC~6~` be `<<add_constructorDef_t, $add_constructorDef_t(TC~0~, constructorId, constructorTypeDefIR)>>`.
   ... Let `parserDeclarationIR` be `annotationList PARSER nameIR < [ ] > ( parameterIR^{asterisk}^ ) ( constructorParameterIR^{asterisk}^ ) { parserLocalDeclarationIR^{asterisk}^ parserStateIR^{asterisk}^ }`.
   ... Result in the modified typing context `TC~6~` and the typed declaration `parserDeclarationIR`.
 . Else if let `annotationList CONTROL name typeParameterListOpt ( parameterList ) constructorParameterListOpt { controlLocalDeclarationList APPLY controlBody }` be `declaration`:
@@ -4784,12 +4784,12 @@ for each `callableTypeDefIR` in `callableTypeDefIR^{asterisk}^`
   ... Let `callableTypeDefIR` be `CONTROL_APPLY ( parameterIR^{asterisk}^ )`.
   ... Check that <<CallableTypeDef_wf, `callableTypeDefIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
   ... Let `nameIR` be <<name, the name of `name`>>.
-  ... Let `callableId` be `<<callableId_, $callableId_(name, constructorParameterListOpt)>>`.
+  ... Let `constructorId` be `<<constructorId, $constructorId(name, constructorParameterListOpt)>>`.
   ... Let `controlObjectTypeDefIR` be `CONTROL nameIR < [ ] , [ ] > ( parameterIR^{asterisk}^ )`.
   ... Let `typeIR~control_spec~` be `controlObjectTypeDefIR < [ ] >`.
   ... Let `constructorTypeDefIR` be `CONSTRUCTOR < [ ] , [ ] > ( constructorParameterIR^{asterisk}^ ) : typeIR~control_spec~`.
   ... Check that <<ConstructorTypeDef_wf, `constructorTypeDefIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
-  ... Let `TC~6~` be `<<add_constructorDef_t, $add_constructorDef_t(TC~0~, callableId, constructorTypeDefIR)>>`.
+  ... Let `TC~6~` be `<<add_constructorDef_t, $add_constructorDef_t(TC~0~, constructorId, constructorTypeDefIR)>>`.
   ... Let `controlDeclarationIR` be `annotationList CONTROL nameIR < [ ] > ( parameterIR^{asterisk}^ ) ( constructorParameterIR^{asterisk}^ ) { controlLocalDeclarationIR^{asterisk}^ APPLY controlBodyIR }`.
   ... Result in the modified typing context `TC~6~` and the typed declaration `controlDeclarationIR`.
 . Else if let `enumTypeDeclaration` be `declaration`:
@@ -5080,11 +5080,11 @@ for each `constructorParameterIR` in `constructorParameterIR^{asterisk}^`
   ... Let `packageObjectTypeDefIR` be `PACKAGE nameIR < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > { typeIR~package_inner~^{asterisk}^ }`.
   ... Check that <<TypeDef_wf, `packageObjectTypeDefIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
   ... Let `TC~3~` be `<<add_typeDef_t, $add_typeDef_t(GLOBAL, TC~0~, nameIR, packageObjectTypeDefIR)>>`.
-  ... Let `callableId` be `<<callableId_, $callableId_(name, ( parameterList ))>>`.
+  ... Let `constructorId` be `<<constructorId, $constructorId(name, ( parameterList ))>>`.
   ... Let `typeIR~package_spec~` be `packageObjectTypeDefIR < (typeId~expl~)^{asterisk}^ {pp} (typeId~impl~)^{asterisk}^ >`.
   ... Let `constructorTypeDefIR` be `CONSTRUCTOR < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > ( constructorParameterIR^{asterisk}^ ) : typeIR~package_spec~`.
   ... Check that <<ConstructorTypeDef_wf, `constructorTypeDefIR` is a well-formed type, assuming bound type ids `$bound(GLOBAL, TC~0~)`>>.
-  ... Let `TC~4~` be `<<add_constructorDef_t, $add_constructorDef_t(TC~3~, callableId, constructorTypeDefIR)>>`.
+  ... Let `TC~4~` be `<<add_constructorDef_t, $add_constructorDef_t(TC~3~, constructorId, constructorTypeDefIR)>>`.
   ... Let `packageTypeDeclarationIR` be `annotationList PACKAGE nameIR < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > ( constructorParameterIR^{asterisk}^ ) ;`.
   ... Result in the modified typing context `TC~4~` and the typed declaration `packageTypeDeclarationIR`.
 
@@ -5288,8 +5288,8 @@ relation CallableType_ok: `p`, `TC`, `callableTargetIR'`, `typeArgumentIR'^{aste
   ... Let `typeIR` be <<canon_typeIR, the canonicalized form of `typeIR~base~`>>.
   ... Check that `typeIR` has type `externObjectTypeIR`.
   ... Let `EXTERN ++_++ { (callableId~extern~ : externMethodTypeDefIR~extern~)^{asterisk}^ }` be `typeIR`.
-  ... Let `(id~arg~^?^)^{asterisk}^` be `<<ids_arguments, $ids_arguments(argumentIR'^{asterisk}^)>>`.
-  ... Let `(++_++, externMethodTypeDefIR, id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_overloaded, $find_overloaded<externMethodTypeDefIR>({ (callableId~extern~ : externMethodTypeDefIR~extern~)^{asterisk}^ }, nameIR, (id~arg~^?^)^{asterisk}^)>>`.
+  ... Let `callTargetKey` be `<<callTargetKey, $callTargetKey(nameIR, argumentIR'^{asterisk}^)>>`.
+  ... Let `(++_++, externMethodTypeDefIR, id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_overloaded, $find_overloaded<externMethodTypeDefIR>({ (callableId~extern~ : externMethodTypeDefIR~extern~)^{asterisk}^ }, callTargetKey, $parameters_of_externMethodTypeDefIR)>>`.
   ... Let `(callableTypeIR, typeId*)` be `<<specialize_callableTypeDefIR, $specialize_callableTypeDefIR(externMethodTypeDefIR, typeArgumentIR'^{asterisk}^)>>`.
   ... Check that `(callableTypeIR, typeId*)` has type `(externMethodTypeIR, typeId*)`.
   ... Let `(externMethodTypeIR, typeId~impl~^{asterisk}^)` be `(callableTypeIR, typeId*)`.
@@ -5305,23 +5305,16 @@ relation CallableType_ok: `p`, `TC`, `callableTargetIR'`, `typeArgumentIR'^{aste
    .... Check that `typeIR` has type `parserObjectTypeIR`.
    .... Let `PARSER ++_++ ( parameterIR^{asterisk}^ )` be `typeIR`.
    .... Let `parserApplyMethodTypeIR` be `PARSER_APPLY ( parameterIR^{asterisk}^ )`.
-   .... Let `id~param~^{asterisk}^` be the list of `id~param~` and `value~param~^?^^{asterisk}^` be the list of `value~param~^?^`, obtained by repeating:
+   .... Let `id~param~^{asterisk}^` be the list of `id~param~`, obtained by repeating:
 +
 --
-        * Let `id~param~` and `(= value~param~)^?^` be the name and the default initializer of `parameterIR`.
+        * Let `id~param~` be the name of `parameterIR`.
 --
 +
 for each `parameterIR` in `parameterIR^{asterisk}^`
-   .... Let `parameterId^{asterisk}^` be the list of `parameterId`, obtained by repeating:
-+
---
-        * Let `parameterId` be `id~param~ # value~param~^?^ =/= None`.
---
-+
-for each `id~param~` in `id~param~^{asterisk}^` and `value~param~^?^` in `value~param~^?^^{asterisk}^`
-   .... Let `callableId` be `"apply" ( parameterId^{asterisk}^ )`.
-   .... Let `(id~arg~^?^)^{asterisk}^` be `<<ids_arguments, $ids_arguments(argumentIR'^{asterisk}^)>>`.
-   .... Let `(++_++, parserApplyMethodTypeIR', id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_overloaded, $find_overloaded<parserApplyMethodTypeIR>({ [callableId : parserApplyMethodTypeIR] }, "apply", (id~arg~^?^)^{asterisk}^)>>`.
+   .... Let `callableId` be `"apply" ( id~param~^{asterisk}^ )`.
+   .... Let `callTargetKey` be `<<callTargetKey, $callTargetKey("apply", argumentIR'^{asterisk}^)>>`.
+   .... Let `(++_++, parserApplyMethodTypeIR', id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_overloaded, $find_overloaded<parserApplyMethodTypeIR>({ [callableId : parserApplyMethodTypeIR] }, callTargetKey, $parameters_of_parserApplyMethodTypeIR)>>`.
    .... Check that `parserApplyMethodTypeIR'` is equal to `parserApplyMethodTypeIR`.
    .... Result in `parserApplyMethodTypeIR`, `[ ]`, and `id~default~^{asterisk}^`.
   ... Group typedExpressionIR-nameIR-control-apply-method:
@@ -5330,23 +5323,16 @@ for each `id~param~` in `id~param~^{asterisk}^` and `value~param~^?^` in `value~
    .... Check that `typeIR` has type `controlObjectTypeIR`.
    .... Let `CONTROL ++_++ ( parameterIR^{asterisk}^ )` be `typeIR`.
    .... Let `controlApplyMethodTypeIR` be `CONTROL_APPLY ( parameterIR^{asterisk}^ )`.
-   .... Let `id~param~^{asterisk}^` be the list of `id~param~` and `value~param~^?^^{asterisk}^` be the list of `value~param~^?^`, obtained by repeating:
+   .... Let `id~param~^{asterisk}^` be the list of `id~param~`, obtained by repeating:
 +
 --
-        * Let `id~param~` and `(= value~param~)^?^` be the name and the default initializer of `parameterIR`.
+        * Let `id~param~` be the name of `parameterIR`.
 --
 +
 for each `parameterIR` in `parameterIR^{asterisk}^`
-   .... Let `parameterId^{asterisk}^` be the list of `parameterId`, obtained by repeating:
-+
---
-        * Let `parameterId` be `id~param~ # value~param~^?^ =/= None`.
---
-+
-for each `id~param~` in `id~param~^{asterisk}^` and `value~param~^?^` in `value~param~^?^^{asterisk}^`
-   .... Let `callableId` be `"apply" ( parameterId^{asterisk}^ )`.
-   .... Let `(id~arg~^?^)^{asterisk}^` be `<<ids_arguments, $ids_arguments(argumentIR'^{asterisk}^)>>`.
-   .... Let `(++_++, controlApplyMethodTypeIR', id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_overloaded, $find_overloaded<controlApplyMethodTypeDefIR>({ [callableId : controlApplyMethodTypeIR] }, "apply", (id~arg~^?^)^{asterisk}^)>>`.
+   .... Let `callableId` be `"apply" ( id~param~^{asterisk}^ )`.
+   .... Let `callTargetKey` be `<<callTargetKey, $callTargetKey("apply", argumentIR'^{asterisk}^)>>`.
+   .... Let `(++_++, controlApplyMethodTypeIR', id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_overloaded, $find_overloaded<controlApplyMethodTypeDefIR>({ [callableId : controlApplyMethodTypeIR] }, callTargetKey, $parameters_of_controlApplyMethodTypeIR)>>`.
    .... Check that `controlApplyMethodTypeIR'` is equal to `controlApplyMethodTypeIR`.
    .... Result in `controlApplyMethodTypeIR`, `[ ]`, and `id~default~^{asterisk}^`.
   ... Check that `argumentIR'^{asterisk}^` is an empty list.
@@ -7793,12 +7779,6 @@ relation Exprs_eval: `p`, `evalContext`, `store`, and `typedExpressionIR^{asteri
     ..... Result in the resulting evaluation context `EC~2~`, store `STO~2~` and expression list result `value~h~ {two-colons} value~t~^{asterisk}^`.
 
 
-relation Expr_eval_lvalue: `cursor`, `evalContext`, `store`, and `typedExpressionIR`
-
-
-
-
-
 relation Expr_eval_keyset: `EC~0~`, `STO~0~`, and `keysetExpressionIR`
 
 
@@ -7832,7 +7812,8 @@ relation Argument_eval_lvalue: `p`, `EC~0~`, `STO~0~`, and `argumentIR`
  .. Result in `EC~1~`, `STO~1~`, and `storageReferenceResult`.
 . If let `nameIR = typedExpressionIR` be `argumentIR`:
  .. Group nameIR-typedExpressionIR:
-  ... Let <<Expr_eval_lvalue, `p EC~0~ STO~0~ |- typedExpressionIR : EC~1~ STO~1~ storageReferenceResult`>>.
+  ... Let `typedLvalueIR` be <<option_get, *!*>> `<<typedExpressionIR_as_typedLvalueIR, $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)>>`.
+  ... Let <<Lvalue_eval, `p EC~0~ STO~0~ |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult`>>.
   ... Result in `EC~1~`, `STO~1~`, and `storageReferenceResult`.
 . Else if let `nameIR = _` be `argumentIR`:
  .. Group nameIR-dontcare:
@@ -8642,8 +8623,8 @@ relation Callee_eval: `p`, `EC`, `STO`, `callableTargetIR`, and `argumentListIR`
    .... Let `object` be <<option_get, *!*>> `<<find_map, $find_map<objectId, object>(STO~1~, objectId)>>`.
    .... Check that `object` has type `externObject`.
    .... Let `EXTERN ++_++ < theta > { ++_++ frame externMethodDefEnv }` be `object`.
-   .... Let `(id~arg~^?^)^{asterisk}^` be `<<ids_arguments, $ids_arguments(argumentListIR)>>`.
-   .... Let `(++_++, externMethodDef, id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_overloaded, $find_overloaded<externMethodDef>(externMethodDefEnv, nameIR', (id~arg~^?^)^{asterisk}^)>>`.
+   .... Let `callTargetKey` be `<<callTargetKey, $callTargetKey(nameIR', argumentListIR)>>`.
+   .... Let `(++_++, externMethodDef, id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_overloaded, $find_overloaded<externMethodDef>(externMethodDefEnv, callTargetKey, $parameters_of_externMethodDef)>>`.
    .... Check that `externMethodDef` matches pattern `EXTERN_METHOD % < % > ( % ) %`.
    .... Let `EXTERN_METHOD nameIR' < typeParameterListIR > ( parameterListIR ) blockStatementIR^?^` be `externMethodDef`.
    .... Check that `nameIR'` is equal to `nameIR'`.
@@ -8666,8 +8647,8 @@ relation Callee_eval: `p`, `EC`, `STO`, `callableTargetIR`, and `argumentListIR`
    .... Let `PARSER ( parameterListIR ) { frame parserLocalDeclarationListIR stateEnv }` be `object`.
    .... Let `callableId` be `<<callableId_IR, $callableId_IR("apply", parameterListIR)>>`.
    .... Let `parserApplyMethodDef` be `PARSER_APPLY ( parameterListIR ) { parserLocalDeclarationListIR ; stateEnv }`.
-   .... Let `(id~arg~^?^)^{asterisk}^` be `<<ids_arguments, $ids_arguments(argumentListIR)>>`.
-   .... Let `(++_++, ++_++, id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_overloaded, $find_overloaded<parserApplyMethodDef>({ [callableId : parserApplyMethodDef] }, "apply", (id~arg~^?^)^{asterisk}^)>>`.
+   .... Let `callTargetKey` be `<<callTargetKey, $callTargetKey("apply", argumentListIR)>>`.
+   .... Let `(++_++, ++_++, id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_overloaded, $find_overloaded<parserApplyMethodDef>({ [callableId : parserApplyMethodDef] }, callTargetKey, $parameters_of_parserApplyMethodDef)>>`.
    .... Let `parserApplyMethodCallee` be `PARSER objectId . APPLY ( parameterListIR # id~default~^{asterisk}^ ) { frame ; parserLocalDeclarationListIR ; stateEnv }`.
    .... Result in `EC~1~`, `STO~1~`, and `parserApplyMethodCallee`.
  .. Group typedExpressionIR-nameIR-control-apply-method:
@@ -8686,8 +8667,8 @@ relation Callee_eval: `p`, `EC`, `STO`, `callableTargetIR`, and `argumentListIR`
    .... Let `CONTROL ( parameterListIR ) { frame controlLocalDeclarationListIR actionDefEnv controlBodyIR }` be `object`.
    .... Let `callableId` be `<<callableId_IR, $callableId_IR("apply", parameterListIR)>>`.
    .... Let `controlApplyMethodDef` be `CONTROL_APPLY ( parameterListIR ) { controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR }`.
-   .... Let `(id~arg~^?^)^{asterisk}^` be `<<ids_arguments, $ids_arguments(argumentListIR)>>`.
-   .... Let `(++_++, ++_++, id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_overloaded, $find_overloaded<controlApplyMethodDef>({ [callableId : controlApplyMethodDef] }, "apply", (id~arg~^?^)^{asterisk}^)>>`.
+   .... Let `callTargetKey` be `<<callTargetKey, $callTargetKey("apply", argumentListIR)>>`.
+   .... Let `(++_++, ++_++, id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_overloaded, $find_overloaded<controlApplyMethodDef>({ [callableId : controlApplyMethodDef] }, callTargetKey, $parameters_of_controlApplyMethodDef)>>`.
    .... Let `controlApplyMethodCallee` be `CONTROL objectId . APPLY ( parameterListIR # id~default~^{asterisk}^ ) { frame ; controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR }`.
    .... Result in `EC~1~`, `STO~1~`, and `controlApplyMethodCallee`.
  .. Group typedExpressionIR-nameIR-table-apply-method:

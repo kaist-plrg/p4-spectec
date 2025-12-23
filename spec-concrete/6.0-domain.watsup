@@ -3,10 +3,9 @@
 ;;
 
 dec $callableId_IR(nameIR, parameterListIR) : callableId
-dec $parameterId_IR(parameterIR) : parameterId
+dec $parameterId_IR(parameterIR) : nameIR
 
 def $callableId_IR(nameIR, parameterIR*)
   = nameIR `( $parameterId_IR(parameterIR)* )
 
-def $parameterId_IR(_ _ _ nameIR eps) = nameIR `# false
-def $parameterId_IR(_ _ _ nameIR constantInitializerIR) = nameIR `# true
+def $parameterId_IR(_ _ _ nameIR _) = nameIR

@@ -251,9 +251,15 @@ def $find_typeDef_i(_, IC, `. nameIR)
 dec $find_constructorDef_i(instContext, prefixedNameIR, argumentIR*)
   : (callableId, constructorDef, id*)?
 
-def $find_constructorDef_i(IC, `` id, argumentIR*)
-  = $find_overloaded<constructorDef>(IC.GLOBAL.CONSTRUCTOR, id, (id_arg?)*)
-  -- if (id_arg?)* = $ids_arguments(argumentIR*)
-def $find_constructorDef_i(IC, `. id, argumentIR*)
-  = $find_overloaded<constructorDef>(IC.GLOBAL.CONSTRUCTOR, id, (id_arg?)*)
-  -- if (id_arg?)* = $ids_arguments(argumentIR*)
+def $find_constructorDef_i(IC, `` nameIR, argumentIR*)
+  = $find_overloaded<constructorDef>(
+      IC.GLOBAL.CONSTRUCTOR,
+      callTargetKey,
+      def $parameters_of_constructorDef)
+  -- if callTargetKey = $callTargetKey(nameIR, argumentIR*)
+def $find_constructorDef_i(IC, `. nameIR, argumentIR*)
+  = $find_overloaded<constructorDef>(
+      IC.GLOBAL.CONSTRUCTOR,
+      callTargetKey,
+      def $parameters_of_constructorDef)
+  -- if callTargetKey = $callTargetKey(nameIR, argumentIR*)
