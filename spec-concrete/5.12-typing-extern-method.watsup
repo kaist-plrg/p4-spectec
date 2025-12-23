@@ -108,15 +108,17 @@ rule ExternConstructor_ok:
   -- ConstructorParameters_ok: BLOCK TC_0 |- constructorParameter*
                                            : constructorParameterIR* `# typeId_impl*
   ---- ;; find extern type
-  -- if typeDefIR_extern = $find_typeDef_t(GLOBAL, TC_0, `` typeId_extern)
-  -- if (typeId_expl*, eps) = $type_parameters_of_typeDefIR(typeDefIR_extern)
+  -- if externObjectTypeDefIR
+      = $find_typeDef_t(GLOBAL, TC_0, `` typeId_extern)
+  -- if (typeId_expl*, eps)
+      = $typeParameterListIR_of_typeDefIR(externObjectTypeDefIR)
   ---- ;; add implicit type parameters to the constructor
   ---- ;; and add it to the context
   -- if constructorId = $constructorId(typeIdentifier, `( parameterList ))
-  -- if typeIR_extern_spec = typeDefIR_extern `< (`` typeId_expl)* >
+  -- if typeIR_extern = $type_of_typeDefIR(externObjectTypeDefIR)
   -- if constructorTypeDefIR
       = CONSTRUCTOR `< typeId_expl* `, typeId_impl* >
-          `( constructorParameterIR* ) `: typeIR_extern_spec
+          `( constructorParameterIR* ) `: typeIR_extern
   -- ConstructorTypeDef_wf: $bound(BLOCK, TC_0) |- constructorTypeDefIR
   -- if TC_1 = $add_constructorDef_t(TC_0, constructorId, constructorTypeDefIR)
   ---- ;; create IR

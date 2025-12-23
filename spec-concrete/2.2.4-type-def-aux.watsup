@@ -12,7 +12,7 @@ def $is_typedefTypeDefIR(typeDefIR) = false
 ;; Name of a type definition
 ;;
 
-dec $name_of_typeDefIR(typeDefIR) : nameIR
+dec $name_of_typeDefIR(typeDefIR) : typeId
   hint(prose_in "the name of" %0)
 
 ;;; Name type definitions
@@ -58,33 +58,44 @@ def $type_of_typeDefIR(aliasTypeDefIR) = aliasTypeDefIR
 ;;; Data type definitions
 
 def $type_of_typeDefIR(
-    STRUCT typeId `< _ `, _ > `{ fieldTypeIR* })
-  = STRUCT typeId `{ fieldTypeIR* }
+    STRUCT typeId `< typeParameterIR_expl* `, typeParameterIR_impl* > `{ fieldTypeIR* })
+  = STRUCT typeId `< (`` typeParameterIR)* > `{ fieldTypeIR* }
+  -- if typeParameterIR* = typeParameterIR_expl* ++ typeParameterIR_impl*
 
 def $type_of_typeDefIR(
-    HEADER typeId `< _ `, _ > `{ fieldTypeIR* })
-  = HEADER typeId `{ fieldTypeIR* }
+    HEADER typeId `< typeParameterIR_expl* `, typeParameterIR_impl* > `{ fieldTypeIR* })
+  = HEADER typeId `< (`` typeParameterIR)* > `{ fieldTypeIR* }
+  -- if typeParameterIR* = typeParameterIR_expl* ++ typeParameterIR_impl*
 
 def $type_of_typeDefIR(
-    HEADER_UNION typeId `< _ `, _ > `{ fieldTypeIR* })
-  = HEADER_UNION typeId `{ fieldTypeIR* }
+    HEADER_UNION typeId `< typeParameterIR_expl* `, typeParameterIR_impl* > `{ fieldTypeIR* })
+  = HEADER_UNION typeId `< (`` typeParameterIR)* > `{ fieldTypeIR* }
+  -- if typeParameterIR* = typeParameterIR_expl* ++ typeParameterIR_impl*
 
 def $type_of_typeDefIR(enumTypeDefIR) = enumTypeDefIR
 
 ;;; Object type definitions
 
 def $type_of_typeDefIR(
-    EXTERN typeId `< _ `, _ > `{ (callableId `: externMethodTypeDefIR)* })
-  = EXTERN typeId `{ (callableId `: externMethodTypeDefIR)* }
+    EXTERN typeId `< typeParameterIR_expl* `, typeParameterIR_impl* >
+      `{ (callableId `: externMethodTypeDefIR)* })
+  = EXTERN typeId `< (`` typeParameterIR)* > `{ (callableId `: externMethodTypeDefIR)* }
+  -- if typeParameterIR* = typeParameterIR_expl* ++ typeParameterIR_impl*
 
-def $type_of_typeDefIR(PARSER typeId `< _ `, _ > `( parameterIR* ))
-  = PARSER typeId `( parameterIR* )
+def $type_of_typeDefIR(
+    PARSER typeId `< typeParameterIR_expl* `, typeParameterIR_impl* > `( parameterIR* ))
+  = PARSER typeId `< (`` typeParameterIR)* > `( parameterIR* )
+  -- if typeParameterIR* = typeParameterIR_expl* ++ typeParameterIR_impl*
 
-def $type_of_typeDefIR(CONTROL typeId `< _ `, _ > `( parameterIR* ))
-  = CONTROL typeId `( parameterIR* )
+def $type_of_typeDefIR(
+    CONTROL typeId `< typeParameterIR_expl* `, typeParameterIR_impl* > `( parameterIR* ))
+  = CONTROL typeId `< (`` typeParameterIR)* > `( parameterIR* )
+  -- if typeParameterIR* = typeParameterIR_expl* ++ typeParameterIR_impl*
 
-def $type_of_typeDefIR(PACKAGE typeId `< _ `, _ > `{ typeIR* })
-  = PACKAGE typeId `{ typeIR* }
+def $type_of_typeDefIR(
+    PACKAGE typeId `< typeParameterIR_expl* `, typeParameterIR_impl* > `{ typeIR* })
+  = PACKAGE typeId `< (`` typeParameterIR)* > `{ typeIR* }
+  -- if typeParameterIR* = typeParameterIR_expl* ++ typeParameterIR_impl*
 
 def $type_of_typeDefIR(tableObjectTypeDefIR) = tableObjectTypeDefIR
 
@@ -92,52 +103,53 @@ def $type_of_typeDefIR(tableObjectTypeDefIR) = tableObjectTypeDefIR
 ;; Type parameters of a type definition
 ;;
 
-dec $type_parameters_of_typeDefIR(typeDefIR) : (typeId* , typeId*)
+dec $typeParameterListIR_of_typeDefIR(typeDefIR)
+  : (typeParameterIR* , typeParameterIR*)
   hint(prose_in "the type parameters of" %0)
 
 ;;; Name type definitions
 
-def $type_parameters_of_typeDefIR(nameTypeDefIR) = (eps, eps)
+def $typeParameterListIR_of_typeDefIR(nameTypeDefIR) = (eps, eps)
 
 ;;; Alias type definitions
 
-def $type_parameters_of_typeDefIR(aliasTypeDefIR) = (eps, eps)
+def $typeParameterListIR_of_typeDefIR(aliasTypeDefIR) = (eps, eps)
 
 ;;; Data type definitions
 
-def $type_parameters_of_typeDefIR(
-    STRUCT _ `< typeId_expl* `, typeId_impl* > `{ _ })
-  = (typeId_expl* , typeId_impl*)
+def $typeParameterListIR_of_typeDefIR(
+    STRUCT _ `< typeParameterIR_expl* `, typeParameterIR_impl* > `{ _ })
+  = (typeParameterIR_expl* , typeParameterIR_impl*)
 
-def $type_parameters_of_typeDefIR(
-    HEADER _ `< typeId_expl* `, typeId_impl* > `{ _ })
-  = (typeId_expl* , typeId_impl*)
+def $typeParameterListIR_of_typeDefIR(
+    HEADER _ `< typeParameterIR_expl* `, typeParameterIR_impl* > `{ _ })
+  = (typeParameterIR_expl* , typeParameterIR_impl*)
 
-def $type_parameters_of_typeDefIR(
-    HEADER_UNION _ `< typeId_expl* `, typeId_impl* > `{ _ })
-  = (typeId_expl* , typeId_impl*)
+def $typeParameterListIR_of_typeDefIR(
+    HEADER_UNION _ `< typeParameterIR_expl* `, typeParameterIR_impl* > `{ _ })
+  = (typeParameterIR_expl* , typeParameterIR_impl*)
 
-def $type_parameters_of_typeDefIR(enumTypeDefIR) = (eps, eps)
+def $typeParameterListIR_of_typeDefIR(enumTypeDefIR) = (eps, eps)
 
 ;;; Object type definitions
 
-def $type_parameters_of_typeDefIR(
-    EXTERN _ `< typeId_expl* `, typeId_impl* > `{ _ })
-  = (typeId_expl* , typeId_impl*)
+def $typeParameterListIR_of_typeDefIR(
+    EXTERN _ `< typeParameterIR_expl* `, typeParameterIR_impl* > `{ _ })
+  = (typeParameterIR_expl* , typeParameterIR_impl*)
 
-def $type_parameters_of_typeDefIR(
-    PARSER _ `< typeId_expl* `, typeId_impl* > `( _ ))
-  = (typeId_expl* , typeId_impl*)
+def $typeParameterListIR_of_typeDefIR(
+    PARSER _ `< typeParameterIR_expl* `, typeParameterIR_impl* > `( _ ))
+  = (typeParameterIR_expl* , typeParameterIR_impl*)
 
-def $type_parameters_of_typeDefIR(
-    CONTROL _ `< typeId_expl* `, typeId_impl* > `( _ ))
-  = (typeId_expl* , typeId_impl*)
+def $typeParameterListIR_of_typeDefIR(
+    CONTROL _ `< typeParameterIR_expl* `, typeParameterIR_impl* > `( _ ))
+  = (typeParameterIR_expl* , typeParameterIR_impl*)
 
-def $type_parameters_of_typeDefIR(
-    PACKAGE _ `< typeId_expl* `, typeId_impl* > `{ _ })
-  = (typeId_expl* , typeId_impl*)
+def $typeParameterListIR_of_typeDefIR(
+    PACKAGE _ `< typeParameterIR_expl* `, typeParameterIR_impl* > `{ _ })
+  = (typeParameterIR_expl* , typeParameterIR_impl*)
 
-def $type_parameters_of_typeDefIR(tableObjectTypeDefIR) = (eps, eps)
+def $typeParameterListIR_of_typeDefIR(tableObjectTypeDefIR) = (eps, eps)
 
 ;;
 ;; Monomorphic or polymorphic type definition

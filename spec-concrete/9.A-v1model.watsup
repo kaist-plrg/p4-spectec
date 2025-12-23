@@ -71,7 +71,8 @@ rule V1Model_init_globals:
   ---- ;; standard_metadata
   -- if typeDefIR_standard_metadata
       = $find_typeDef_e(GLOBAL, EC_2, `` "standard_metadata_t")
-  -- if typeIR_std_meta = typeDefIR_standard_metadata `< eps >
+  -- if typeIR_std_meta
+      = $specialize_typeDefIR(typeDefIR_standard_metadata, eps)
   -- Var_init: EC_2 |- typeIR_std_meta "standard_metadata" : EC_3
   ---- ;; setup port
   -- if storageReference_port = (`` "standard_metadata") `. "ingress_port"
@@ -87,7 +88,8 @@ dec $V1Model_setup_packet_in_argument(evalContext) : argumentIR
 def $V1Model_setup_packet_in_argument(EC) = argumentIR_packet_in
   -- if typeDefIR_packet_in
       = $find_typeDef_e(GLOBAL, EC, `` "packet_in")
-  -- if typeIR_packet_in = typeDefIR_packet_in `< eps >
+  -- if typeIR_packet_in
+      = $specialize_typeDefIR(typeDefIR_packet_in, eps)
   -- if argumentIR_packet_in
       = (`. "packet_in") `# `( typeIR_packet_in CTK )
 
@@ -95,7 +97,8 @@ dec $V1Model_setup_packet_out_argument(evalContext) : argumentIR
 def $V1Model_setup_packet_out_argument(EC) = argumentIR_packet_out
   -- if typeDefIR_packet_out
       = $find_typeDef_e(GLOBAL, EC, `` "packet_out")
-  -- if typeIR_packet_out = typeDefIR_packet_out `< eps >
+  -- if typeIR_packet_out
+      = $specialize_typeDefIR(typeDefIR_packet_out, eps)
   -- if argumentIR_packet_out
       = (`. "packet_out") `# `( typeIR_packet_out CTK )
 
@@ -120,7 +123,7 @@ def $V1Model_setup_standard_metadata_argument(EC) = argumentIR_standard_metadata
   -- if typeDefIR_standard_metadata
       = $find_typeDef_e(GLOBAL, EC, `` "standard_metadata_t")
   -- if typeIR_std_meta
-      = typeDefIR_standard_metadata `< eps >
+      = $specialize_typeDefIR(typeDefIR_standard_metadata, eps)
   -- if argumentIR_standard_metadata
       = (`. "standard_metadata") `# `( typeIR_std_meta DYN )
 
@@ -135,7 +138,8 @@ def $V1Model_setup_main_callee(EC, STO) = typedExpressionIR_main
   -- if typeIR_hdr = $find_map<typeId, typeIR>(theta, "H")
   -- if typeIR_meta = $find_map<typeId, typeIR>(theta, "M")
   ---- ;; create callee
-  -- if typeIR_package = typeDefIR_package `< [ typeIR_hdr, typeIR_meta ] >
+  -- if typeIR_package
+      = $specialize_typeDefIR(typeDefIR_package, [ typeIR_hdr, typeIR_meta ])
   -- if typedExpressionIR_main
       = (`` "main") `# `( typeIR_package CTK )
 
@@ -155,7 +159,8 @@ def $V1Model_setup_parser_callee(
   -- if typeIR_hdr = $find_map<typeId, typeIR>(theta, "H")
   -- if typeIR_meta = $find_map<typeId, typeIR>(theta, "M")
   ---- ;; create callee
-  -- if typeIR_parser = typeDefIR_parser `< [ typeIR_hdr, typeIR_meta ] >
+  -- if typeIR_parser
+      = $specialize_typeDefIR(typeDefIR_parser, [ typeIR_hdr, typeIR_meta ])
   -- if typedExpressionIR_parser
       = (typedExpressionIR_main `. "p") `# `( typeIR_parser CTK )
 
@@ -176,7 +181,8 @@ def $V1Model_setup_verify_callee(
   -- if typeIR_hdr = $find_map<typeId, typeIR>(theta, "H")
   -- if typeIR_meta = $find_map<typeId, typeIR>(theta, "M")
   ---- ;; create callee
-  -- if typeIR_verify = typeDefIR_verify `< [ typeIR_hdr, typeIR_meta ] >
+  -- if typeIR_verify
+      = $specialize_typeDefIR(typeDefIR_verify, [ typeIR_hdr, typeIR_meta ])
   -- if typedExpressionIR_verify
       = (typedExpressionIR_main `. "vr") `# `( typeIR_verify CTK )
 
@@ -197,7 +203,8 @@ def $V1Model_setup_ingress_callee(
   -- if typeIR_hdr = $find_map<typeId, typeIR>(theta, "H")
   -- if typeIR_meta = $find_map<typeId, typeIR>(theta, "M")
   ---- ;; create callee
-  -- if typeIR_ingress = typeDefIR_ingress `< [ typeIR_hdr, typeIR_meta ] >
+  -- if typeIR_ingress
+      = $specialize_typeDefIR(typeDefIR_ingress, [ typeIR_hdr, typeIR_meta ])
   -- if typedExpressionIR_ingress
       = (typedExpressionIR_main `. "ig") `# `( typeIR_ingress CTK )
 
@@ -218,7 +225,8 @@ def $V1Model_setup_egress_callee(
   -- if typeIR_hdr = $find_map<typeId, typeIR>(theta, "H")
   -- if typeIR_meta = $find_map<typeId, typeIR>(theta, "M")
   ---- ;; create callee
-  -- if typeIR_egress = typeDefIR_egress `< [ typeIR_hdr, typeIR_meta ] >
+  -- if typeIR_egress
+      = $specialize_typeDefIR(typeDefIR_egress, [ typeIR_hdr, typeIR_meta ])
   -- if typedExpressionIR_egress
       = (typedExpressionIR_main `. "eg") `# `( typeIR_egress CTK )
 
@@ -239,7 +247,8 @@ def $V1Model_setup_check_callee(
   -- if typeIR_hdr = $find_map<typeId, typeIR>(theta, "H")
   -- if typeIR_meta = $find_map<typeId, typeIR>(theta, "M")
   ---- ;; create callee
-  -- if typeIR_check = typeDefIR_check `< [ typeIR_hdr, typeIR_meta ] >
+  -- if typeIR_check
+      = $specialize_typeDefIR(typeDefIR_check, [ typeIR_hdr, typeIR_meta ])
   -- if typedExpressionIR_check
       = (typedExpressionIR_main `. "ck") `# `( typeIR_check CTK )
 
@@ -259,7 +268,8 @@ def $V1Model_setup_deparse_callee(
       = $find_map<objectId, object>(STO, [ "main" ])
   -- if typeIR_hdr = $find_map<typeId, typeIR>(theta, "H")
   ---- ;; create callee
-  -- if typeIR_deparse = typeDefIR_deparse `< [ typeIR_hdr ] >
+  -- if typeIR_deparse
+      = $specialize_typeDefIR(typeDefIR_deparse, [ typeIR_hdr ])
   -- if typedExpressionIR_deparse
       = (typedExpressionIR_main `. "dep") `# `( typeIR_deparse CTK )
 

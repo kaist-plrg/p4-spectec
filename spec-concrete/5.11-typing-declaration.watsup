@@ -181,25 +181,25 @@ rule Decls_object_ok/cons:
        : typeFrame_2 externMethodTypeDefEnv_2 objectDeclarationIR_t*
 
 dec $subst_externMethodTypeDefEnv(
-    theta, externMethodTypeDefEnv, externMethodTypeDefEnv)
+    externMethodTypeDefEnv, externMethodTypeDefEnv)
   : externMethodTypeDefEnv
 
 def $subst_externMethodTypeDefEnv(
-    theta, externMethodTypeDefEnv_extern, `{ eps })
+    externMethodTypeDefEnv_extern, `{ eps })
   = externMethodTypeDefEnv_extern
 
 def $subst_externMethodTypeDefEnv(
-    theta, externMethodTypeDefEnv_extern,
+    externMethodTypeDefEnv_extern,
     `{ (callableId_init_h `: externMethodTypeDefIR_init_h)
        :: (callableId_init_t `: externMethodTypeDefIR_init_t)* })
   = $subst_externMethodTypeDefEnv(
-      theta, externMethodTypeDefEnv_extern_subst,
+      externMethodTypeDefEnv_extern_subst,
       `{ (callableId_init_t `: externMethodTypeDefIR_init_t)* })
   ---- ;; find abstract extern method by name
-  -- if id_init_h `( _ ) = callableId_init_h
+  -- if nameIR_init_h `( _ ) = callableId_init_h
   -- if (callableId, externMethodTypeDefIR_abstract)
       = $find_non_overloaded<externMethodTypeDefIR>(
-          externMethodTypeDefEnv_extern, id_init_h)
+          externMethodTypeDefEnv_extern, nameIR_init_h)
   -- if EXTERN_METHOD ABSTRACT `< typeId_expl* `, typeId_impl* >
           `( parameterIR* ) `: typeIR_ret
       = externMethodTypeDefIR_abstract
@@ -207,16 +207,14 @@ def $subst_externMethodTypeDefEnv(
   -- if externMethodTypeDefIR_concrete
       = EXTERN_METHOD `< typeId_expl* `, typeId_impl* >
           `( parameterIR* ) `: typeIR_ret
-  -- if externMethodTypeDefIR_concrete_subst
-      = $subst_callableTypeDefIR(theta, externMethodTypeDefIR_concrete)
   ---- ;; concretized extern method should be the same as the one initialized
   -- CallableTypeDef_alpha:
-      externMethodTypeDefIR_concrete_subst ~~ externMethodTypeDefIR_init_h
+      externMethodTypeDefIR_concrete ~~ externMethodTypeDefIR_init_h
   ---- ;; update the map
   -- if externMethodTypeDefEnv_extern_subst
       = $update_map<callableId, externMethodTypeDefIR>(
           externMethodTypeDefEnv_extern,
-          callableId, externMethodTypeDefIR_concrete_subst)
+          callableId, externMethodTypeDefIR_concrete)
 
 rulegroup Decl_ok/instantiation-objectInitializer {
 
@@ -236,10 +234,9 @@ rulegroup Decl_ok/instantiation-objectInitializer {
         p TC_0 NAMED |- constructorTypeIR `< eps `# typeId_impl* > `( argumentIR* `# id_default* )
                       : typeIR_object `< typeArgumentIR_inferred* > `( argumentIR_cast* )
     ---- ;; object initializer can be specified for an extern object
-    -- if $is_externObjectTypeIR($canon_typeIR(typeIR_object))
-    -- if typeDefIR_object `< typeIR_arg* > = typeIR_object
-    -- if EXTERN typeId_extern `< typeId_expl* `, typeId_impl* > externMethodTypeDefEnv_extern
-        = typeDefIR_object
+    -- if $is_externObjectTypeIR($unroll_typeIR(typeIR_object))
+    -- if EXTERN typeId_extern `< typeIR_arg* > externMethodTypeDefEnv_extern
+        = typeIR_object
     ---- ;; temporarily add "this" to the context
     -- if TC_1 = $add_var_t(LOCAL, TC_0, "this", `EMPTY typeIR_object CTK eps)
     ---- ;; check object initializer
@@ -249,14 +246,11 @@ rulegroup Decl_ok/instantiation-objectInitializer {
         |- objectDeclaration*
          : typeFrame_init externMethodTypeDefEnv_init objectDeclarationIR*
     ---- ;; create updated extern type
-    -- if typeId* = typeId_expl* ++ typeId_impl*
-    -- if theta = `{ (typeId `: typeIR_arg)* }
     -- if externMethodTypeDefEnv_init_subst
         = $subst_externMethodTypeDefEnv(
-            theta, externMethodTypeDefEnv_extern, externMethodTypeDefEnv_init)
-    -- if typeDefIR_object_init
-        = EXTERN typeId_extern `< typeId_expl* `, typeId_impl* > externMethodTypeDefEnv_init_subst
-    -- if typeIR_object_init = typeDefIR_object_init `< typeIR_arg* >
+            externMethodTypeDefEnv_extern, externMethodTypeDefEnv_init)
+    -- if typeIR_object_init
+        = EXTERN typeId_extern `< typeIR_arg* > externMethodTypeDefEnv_init_subst
     ---- ;; constructed object may not contain an abstract method
     -- if $is_concrete_extern_object(typeIR_object_init)
     ---- ;; update the context with the instantiated object
@@ -285,13 +279,12 @@ rulegroup Decl_ok/instantiation-objectInitializer {
     ---- ;; check instantiation convention
     -- if typeId_infer* = typeId_impl* ++ typeId_inserted*
     -- Inst_ok:
-        p TC_0 NAMED |- constructorTypeIR `< typeArgumentIR* `# typeId_infer* > `( argumentIR* `# id_default* )
+        p TC_0 NAMED |- constructorTypeIR `< typeArgumentIR* `# typeId_infer* >
+                          `( argumentIR* `# id_default* )
                       : typeIR_object `< typeArgumentIR_inferred* > `( argumentIR_cast* )
     ---- ;; object initializer can be specified for an extern object
-    -- if $is_externObjectTypeIR($canon_typeIR(typeIR_object))
-    -- if typeDefIR_object `< typeIR_arg* > = typeIR_object
-    -- if EXTERN typeId_extern `< typeId_expl* `, typeId_impl* > externMethodTypeDefEnv_extern
-        = typeDefIR_object
+    -- if EXTERN typeId_extern `< typeIR_arg* > externMethodTypeDefEnv_extern
+        = $unroll_typeIR(typeIR_object)
     ---- ;; temporarily add "this" to the context
     -- if TC_1 = $add_var_t(LOCAL, TC_0, "this", `EMPTY typeIR_object CTK eps)
     ---- ;; check object initializer
@@ -301,15 +294,11 @@ rulegroup Decl_ok/instantiation-objectInitializer {
         |- objectDeclaration*
          : typeFrame_init externMethodTypeDefEnv_init objectDeclarationIR*
     ---- ;; create updated extern type
-    -- if typeId* = typeId_expl* ++ typeId_impl*
-    -- if theta = `{ (typeId `: typeIR_arg)* }
     -- if externMethodTypeDefEnv_init_subst
         = $subst_externMethodTypeDefEnv(
-            theta, externMethodTypeDefEnv_extern, externMethodTypeDefEnv_init
-          )
-    -- if typeDefIR_object_init
-        = EXTERN typeId_extern `< typeId_expl* `, typeId_impl* > externMethodTypeDefEnv_init_subst
-    -- if typeIR_object_init = typeDefIR_object_init `< typeIR_arg* >
+            externMethodTypeDefEnv_extern, externMethodTypeDefEnv_init)
+    -- if typeIR_object_init
+        = EXTERN typeId_extern `< typeIR_arg* > externMethodTypeDefEnv_init_subst
     ---- ;; constructed object may not contain an abstract method
     -- if $is_concrete_extern_object(typeIR_object_init)
     ---- ;; update the context with the instantiated object
@@ -318,7 +307,8 @@ rulegroup Decl_ok/instantiation-objectInitializer {
     ---- ;; create IR
     -- if instantiationIR
         = annotationList typeIR_object_init prefixedNameIR
-            `< typeArgumentIR_inferred* > `( argumentIR_cast* ) nameIR (`= `{ objectDeclarationIR* }) `;
+            `< typeArgumentIR_inferred* > `( argumentIR_cast* )
+            nameIR (`= `{ objectDeclarationIR* }) `;
 
 }
 
@@ -555,11 +545,10 @@ rule Decl_ok/parserDeclaration:
   ---- ;; create parser object constructor and add to context
   -- if nameIR = $name(name)
   -- if constructorId = $constructorId(name, constructorParameterListOpt)
-  -- if parserObjectTypeDefIR = PARSER nameIR `< eps `, eps > `( parameterIR* )
-  -- if typeIR_parser_spec = parserObjectTypeDefIR `< eps >
+  -- if typeIR_parser = PARSER nameIR `< eps > `( parameterIR* )
   -- if constructorTypeDefIR
       = CONSTRUCTOR `< eps `, eps >
-          `( constructorParameterIR* ) `: typeIR_parser_spec
+          `( constructorParameterIR* ) `: typeIR_parser
   -- ConstructorTypeDef_wf: $bound(GLOBAL, TC_0) |- constructorTypeDefIR
   -- if TC_6 = $add_constructorDef_t(TC_0, constructorId, constructorTypeDefIR)
   ---- ;; create IR
@@ -606,11 +595,10 @@ rule Decl_ok/controlDeclaration:
   ---- ;; create control object constructor and add to context
   -- if nameIR = $name(name)
   -- if constructorId = $constructorId(name, constructorParameterListOpt)
-  -- if controlObjectTypeDefIR = CONTROL nameIR `< eps `, eps > `( parameterIR* )
-  -- if typeIR_control_spec = controlObjectTypeDefIR `< eps >
+  -- if typeIR_control = CONTROL nameIR `< eps > `( parameterIR* )
   -- if constructorTypeDefIR
       = CONSTRUCTOR `< eps `, eps >
-          `( constructorParameterIR* ) `: typeIR_control_spec
+          `( constructorParameterIR* ) `: typeIR_control
   -- ConstructorTypeDef_wf: $bound(GLOBAL, TC_0) |- constructorTypeDefIR
   -- if TC_6 = $add_constructorDef_t(TC_0, constructorId, constructorTypeDefIR)
   ---- ;; create IR
@@ -868,10 +856,11 @@ rulegroup Decl_ok/typedefDeclaration-typedef {
     -- if typeDefIR = $find_typeDef_t(GLOBAL, TC_1, `` typeId)
     ---- ;; if the type is polymorphic, yet has no type parameters
     -- if ~$is_monomorphic_typeDefIR(typeDefIR)
-    -- if (eps, eps) = $type_parameters_of_typeDefIR(typeDefIR)
+    -- if (eps, eps) = $typeParameterListIR_of_typeDefIR(typeDefIR)
     ---- ;; create typedef and add to context
     -- if nameIR = $name(name)
-    -- if typedefTypeIR = TYPEDEF nameIR (typeDefIR `< eps >)
+    -- if typeIR = $specialize_typeDefIR(typeDefIR, eps)
+    -- if typedefTypeIR = TYPEDEF nameIR typeIR
     -- TypeDef_wf: $bound(GLOBAL, TC_0) |- typedefTypeIR
     -- if TC_2 = $add_typeDef_t(GLOBAL, TC_0, nameIR, typedefTypeIR)
     ---- ;; create IR
@@ -975,11 +964,10 @@ rule Decl_ok/packageTypeDeclaration:
   -- if TC_3 = $add_typeDef_t(GLOBAL, TC_0, nameIR, packageObjectTypeDefIR)
   ---- ;; update the context with package constructor
   -- if constructorId = $constructorId(name, `( parameterList ))
-  -- if typeIR_package_spec
-      = packageObjectTypeDefIR `< (`` typeId_expl)* ++ (`` typeId_impl)* >
+  -- if typeIR_package = $type_of_typeDefIR(packageObjectTypeDefIR)
   -- if constructorTypeDefIR
       = CONSTRUCTOR `< typeId_expl* `, typeId_impl* >
-          `( constructorParameterIR* ) `: typeIR_package_spec
+          `( constructorParameterIR* ) `: typeIR_package
   -- ConstructorTypeDef_wf: $bound(GLOBAL, TC_0) |- constructorTypeDefIR
   -- if TC_4 = $add_constructorDef_t(TC_3, constructorId, constructorTypeDefIR)
   ---- ;; create IR

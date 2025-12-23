@@ -101,32 +101,47 @@ def $add_table_priority(TBLC, n)
 ;;; Updater for modes
 
 dec $update_mode(tableContext, id, typeIR) : tableContext
-dec $update_mode'(tableContext, id, typeIR) : tableContext
 
-def $update_mode(TBLC, id, typeIR) = $update_mode'(TBLC, id, $canon_typeIR(typeIR))
-def $update_mode'(TBLC, "lpm", INT `< n >) = TBLC[ .MODE = NOPRILPM n ]
+def $update_mode(TBLC, "lpm", INT `< n >)
+  = TBLC[ .MODE = NOPRILPM n ]
   -- if TBLC.MODE = NOPRI
-def $update_mode'(TBLC, "lpm", BIT `< n >) = TBLC[ .MODE = NOPRILPM n ]
+def $update_mode(TBLC, "lpm", BIT `< n >)
+  = TBLC[ .MODE = NOPRILPM n ]
   -- if TBLC.MODE = NOPRI
-def $update_mode'(TBLC, "lpm", VARBIT `< n >) = TBLC[ .MODE = NOPRILPM n ]
+def $update_mode(TBLC, "lpm", VARBIT `< n >)
+  = TBLC[ .MODE = NOPRILPM n ]
   -- if TBLC.MODE = NOPRI
-def $update_mode'(TBLC, "lpm", TYPE _ typeIR)
+
+def $update_mode(TBLC, "lpm", TYPEDEF _ typeIR)
   = $update_mode(TBLC, "lpm", typeIR)
-def $update_mode'(TBLC, "lpm", _) = TBLC[ .MODE = PRILPM ]
+def $update_mode(TBLC, "lpm", TYPE _ typeIR)
+  = $update_mode(TBLC, "lpm", typeIR)
+
+def $update_mode(TBLC, "lpm", _)
+  = TBLC[ .MODE = PRILPM ]
   -- if TBLC.MODE = PRI
-def $update_mode'(TBLC, "range", _) = TBLC[ .MODE = PRI ]
+
+def $update_mode(TBLC, "range", _)
+  = TBLC[ .MODE = PRI ]
   -- if TBLC.MODE = NOPRI
-def $update_mode'(TBLC, "ternary", _) = TBLC[ .MODE = PRI ]
+def $update_mode(TBLC, "ternary", _)
+  = TBLC[ .MODE = PRI ]
   -- if TBLC.MODE = NOPRI
-def $update_mode'(TBLC, "optional", _) = TBLC[ .MODE = PRI ]
+def $update_mode(TBLC, "optional", _)
+  = TBLC[ .MODE = PRI ]
   -- if TBLC.MODE = NOPRI
-def $update_mode'(TBLC, "range", _) = TBLC[ .MODE = PRILPM ]
+
+def $update_mode(TBLC, "range", _)
+  = TBLC[ .MODE = PRILPM ]
   -- if TBLC.MODE = NOPRILPM _
-def $update_mode'(TBLC, "ternary", _) = TBLC[ .MODE = PRILPM ]
+def $update_mode(TBLC, "ternary", _)
+  = TBLC[ .MODE = PRILPM ]
   -- if TBLC.MODE = NOPRILPM _
-def $update_mode'(TBLC, "optional", _) = TBLC[ .MODE = PRILPM ]
+def $update_mode(TBLC, "optional", _)
+  = TBLC[ .MODE = PRILPM ]
   -- if TBLC.MODE = NOPRILPM _
-def $update_mode'(TBLC, _, _) = TBLC
+
+def $update_mode(TBLC, _, _) = TBLC
   -- otherwise
 
 ;;

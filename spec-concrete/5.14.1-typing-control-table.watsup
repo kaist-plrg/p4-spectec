@@ -4,32 +4,26 @@
 ;; syntax tableKey = expression `: name annotationList `;
 ;;
 
-dec $compat_table_exact_optional_key(typeIR) : bool
-dec $compat'_table_exact_optional_key(typeIR) : bool
+tbl dec $compat_table_exact_optional_key(typeIR) : bool
+tbl def $compat_table_exact_optional_key =
+  | BOOL => true
+  | ERROR => true
+  | integerTypeIR => true
+  | TYPEDEF _ typeIR => $compat_table_exact_optional_key(typeIR)
+  | TYPE _ typeIR => $compat_table_exact_optional_key(typeIR)
+  | ENUM _ `{ _ } => true
+  | ENUM _ `< typeIR > `{ _ } => $compat_table_exact_optional_key(typeIR)
+  | _ => false
 
-def $compat_table_exact_optional_key(typeIR)
-  = $compat'_table_exact_optional_key($canon_typeIR(typeIR))
-def $compat'_table_exact_optional_key(BOOL) = true
-def $compat'_table_exact_optional_key(ERROR) = true
-def $compat'_table_exact_optional_key(integerTypeIR) = true
-def $compat'_table_exact_optional_key(TYPE _ typeIR)
-  = $compat_table_exact_optional_key(typeIR)
-def $compat'_table_exact_optional_key(ENUM _ `{ _ }) = true
-def $compat'_table_exact_optional_key(ENUM _ `< typeIR > `{ _ })
-  = $compat_table_exact_optional_key(typeIR)
-
-dec $compat_table_lpm_ternary_range_key(typeIR) : bool
-dec $compat'_table_lpm_ternary_range_key(typeIR) : bool
-
-def $compat_table_lpm_ternary_range_key(typeIR)
-  = $compat'_table_lpm_ternary_range_key($canon_typeIR(typeIR))
-def $compat'_table_lpm_ternary_range_key(INT) = true
-def $compat'_table_lpm_ternary_range_key(INT `< _ >) = true
-def $compat'_table_lpm_ternary_range_key(BIT `< _ >) = true
-def $compat'_table_lpm_ternary_range_key(TYPE _ typeIR)
-  = $compat_table_lpm_ternary_range_key(typeIR)
-def $compat'_table_lpm_ternary_range_key(ENUM _ `< typeIR > `{ _ })
-  = $compat_table_lpm_ternary_range_key(typeIR)
+tbl dec $compat_table_lpm_ternary_range_key(typeIR) : bool
+tbl def $compat_table_lpm_ternary_range_key =
+  | INT => true
+  | INT `< _ > => true
+  | BIT `< _ > => true
+  | TYPEDEF _ typeIR => $compat_table_lpm_ternary_range_key(typeIR)
+  | TYPE _ typeIR => $compat_table_lpm_ternary_range_key(typeIR)
+  | ENUM _ `< typeIR > `{ _ } => $compat_table_lpm_ternary_range_key(typeIR)
+  | _ => false
 
 dec $compat_table_key(nameIR, typeIR) : bool
 
@@ -123,9 +117,8 @@ def $has_table_apply_arg(`_) = false
 
 ;;;; Expressions
 
-def $has_table_apply_expr(_ `# `( typeIR _))
-  = true
-  -- if $is_tableMetadataStructTypeIR($canon_typeIR(typeIR))
+def $has_table_apply_expr(_ `# `( typeIR _)) = true
+  -- if $is_tableMetadataStructTypeIR($unroll_typeIR(typeIR))
 def $has_table_apply_expr(expressionIR `# _)
   = $has_table_apply_expr'(expressionIR)
   -- otherwise
@@ -420,8 +413,8 @@ rulegroup TableEntry_keyset_simple_ok/mask {
         = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
     ---- ;; statically evaluate the right hand side to get its width
     -- if ctk_r_reduced = LCTK
-    -- Expr_eval_lctk: LOCAL TC |- typedExpressionIR_r_reduced ~> value_r
-    -- if i_r = $int_of_value(value_r)
+    -- Expr_eval_lctk: LOCAL TC |- typedExpressionIR_r_reduced ~> integerValue_r
+    -- if i_r = $int_of_integerValue(integerValue_r)
     ---- ;; compute the table entry state
     -- if n_prefix = $tableEntry_lpm_prefix(n W $int_to_bitstr(n, i_r))
 
@@ -441,8 +434,7 @@ rulegroup TableEntry_keyset_simple_ok/mask {
           = $reduce_serenum_binary(
               typedExpressionIR_l_cast,
               typedExpressionIR_r_cast,
-              def $compat_mask
-            )
+              def $compat_mask)
 
 }
 
@@ -464,8 +456,7 @@ rule TableEntry_keyset_simple_ok/range-range:
         = $reduce_serenum_binary(
             typedExpressionIR_l_cast,
             typedExpressionIR_r_cast,
-            def $compat_range
-          )
+            def $compat_range)
 
 ;;;;;; DEFAULT
 
@@ -802,7 +793,7 @@ rulegroup TableEntry_priority_ok/specified-number {
     ---- ;; if no priority has been specified yet
     -- if TBLC_0.PRIORITIES.VALUES = eps
     ---- ;; evaluate and initialize the priority
-    -- if n = $int_of_value(integerLiteral)
+    -- if n = $int_of_integerValue(integerLiteral)
     -- if TBLC_1 = TBLC_0[ .PRIORITIES.INIT = true ]
     -- if TBLC_2 = $add_table_priority(TBLC_1, n)
 
@@ -816,7 +807,7 @@ rulegroup TableEntry_priority_ok/specified-number {
     -- if TBLC_0.PRIORITIES.VALUES =/= eps
     -- if TBLC_0.PRIORITIES.INIT
     ---- ;; evaluate and initialize the priority
-    -- if n = $int_of_value(integerLiteral)
+    -- if n = $int_of_integerValue(integerLiteral)
     -- if TBLC_1 = $add_table_priority(TBLC_0, n)
 
 }
@@ -836,8 +827,8 @@ rulegroup TableEntry_priority_ok/specified-expression {
     ---- ;; evaluate and initialize the priority
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
     -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR)
-    -- Expr_eval_lctk: LOCAL TC |- typedExpressionIR ~> value
-    -- if n = $int_of_value(value)
+    -- Expr_eval_lctk: LOCAL TC |- typedExpressionIR ~> integerValue
+    -- if n = $int_of_integerValue(integerValue)
     -- if TBLC_1 = TBLC_0[ .PRIORITIES.INIT = true ]
     -- if TBLC_2 = $add_table_priority(TBLC_1, n)
 
@@ -853,8 +844,8 @@ rulegroup TableEntry_priority_ok/specified-expression {
     ---- ;; evaluate and initialize the priority
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
     -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR)
-    -- Expr_eval_lctk: LOCAL TC |- typedExpressionIR ~> value
-    -- if n = $int_of_value(value)
+    -- Expr_eval_lctk: LOCAL TC |- typedExpressionIR ~> integerValue
+    -- if n = $int_of_integerValue(integerValue)
     -- if TBLC_1 = $add_table_priority(TBLC_0, n)
   
 }
@@ -974,9 +965,9 @@ rulegroup TableProperty_ok/custom {
     ---- ;; check initializer
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
     -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
-    -- if $is_arbitraryIntTypeIR($canon_typeIR(typeIR))
-          \/ $is_fixedIntTypeIR($canon_typeIR(typeIR))
-          \/ $is_fixedBitTypeIR($canon_typeIR(typeIR))
+    -- if $is_arbitraryIntTypeIR($unroll_typeIR(typeIR))
+          \/ $is_fixedIntTypeIR($unroll_typeIR(typeIR))
+          \/ $is_fixedBitTypeIR($unroll_typeIR(typeIR))
     ---- ;; create IR
     -- if constOptIR = $flatten_constOpt(constOpt)
     -- if tablePropertyIR
@@ -991,7 +982,7 @@ rulegroup TableProperty_ok/custom {
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
     -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
     -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR)
-    -- if BOOL = $canon_typeIR(typeIR)
+    -- if BOOL = $unroll_typeIR(typeIR)
     -- Expr_eval_lctk: LOCAL TC |- typedExpressionIR ~> B b_largest_priority_wins
     ---- ;; update table context
     -- if TBLC_1 = TBLC_0 [ .PRIORITIES.LARGEST_WINS = b_largest_priority_wins ]
@@ -1010,11 +1001,11 @@ rulegroup TableProperty_ok/custom {
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
     -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
     -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR)
-    -- if $is_arbitraryIntTypeIR($canon_typeIR(typeIR))
-          \/ $is_fixedIntTypeIR($canon_typeIR(typeIR))
-          \/ $is_fixedBitTypeIR($canon_typeIR(typeIR))
-    -- Expr_eval_lctk: LOCAL TC |- typedExpressionIR ~> value
-    -- if n_delta = $int_of_value(value)
+    -- if $is_arbitraryIntTypeIR($unroll_typeIR(typeIR))
+          \/ $is_fixedIntTypeIR($unroll_typeIR(typeIR))
+          \/ $is_fixedBitTypeIR($unroll_typeIR(typeIR))
+    -- Expr_eval_lctk: LOCAL TC |- typedExpressionIR ~> integerValue
+    -- if n_delta = $int_of_integerValue(integerValue)
     -- if $(n_delta > 0)
     ---- ;; update table context
     -- if TBLC_1 = TBLC_0 [ .PRIORITIES.DELTA = n_delta ]

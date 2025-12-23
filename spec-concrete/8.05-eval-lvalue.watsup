@@ -169,20 +169,20 @@ rulegroup Lvalue_read/storageReference-nameIR {
 rulegroup Lvalue_read/storageReference-indexAccess {
 
   rule Lvalue_read/stack-in-bounds:
-    p EC_0 STO |- storageReference `[ value_index ] : value
+    p EC_0 STO |- storageReference `[ integerValue_index ] : value
     -- Lvalue_read:
         p EC_0 STO |- storageReference : value_base
     -- if HEADER_STACK `[ value_element* `( _; n_size ) ] = value_base
-    -- if n_idx = $int_of_value(value_index)
+    -- if n_idx = $int_of_integerValue(integerValue_index)
     -- if $(n_idx < n_size)
     -- if value = value_element*[ n_idx ]
 
   rule Lvalue_read/stack-out-of-bounds:
-    p EC_0 STO |- storageReference `[ value_index ] : value
+    p EC_0 STO |- storageReference `[ integerValue_index ] : value
     -- Lvalue_read:
         p EC_0 STO |- storageReference : value_base
     -- if HEADER_STACK `[ value_element* `( _; n_size ) ] = value_base
-    -- if n_idx = $int_of_value(value_index)
+    -- if n_idx = $int_of_integerValue(integerValue_index)
     ---- ;; index access overflow
     -- if $(n_idx >= n_size)
     -- if HEADER typeId `{ b_valid `; fieldValue* } = value_element*[ 0 ]
@@ -311,11 +311,11 @@ rulegroup Lvalue_write/storageReference-nameIR {
 rulegroup Lvalue_write/storageReference-indexAccess {
 
   rule Lvalue_write/stack-in-bounds:
-    p EC_0 STO |- (storageReference `[ value_index ]) -> value : EC_1
+    p EC_0 STO |- (storageReference `[ integerValue_index ]) -> value : EC_1
     -- Lvalue_read:
         p EC_0 STO |- storageReference : value_base
     -- if HEADER_STACK `[ value_element* `( n_base_idx; n_size ) ] = value_base
-    -- if n_idx = $int_of_value(value_index)
+    -- if n_idx = $int_of_integerValue(integerValue_index)
     -- if $(n_idx < n_size)
     -- if value_element_update*
         = $update_headerStack(value_element*, value, n_idx, n_size)
@@ -324,11 +324,11 @@ rulegroup Lvalue_write/storageReference-indexAccess {
         p EC_0 STO |- storageReference -> value_base_update : EC_1
 
   rule Lvalue_write/stack-out-of-bounds:
-    p EC_0 STO |- (storageReference `[ value_index ]) -> value : EC_0
+    p EC_0 STO |- (storageReference `[ integerValue_index ]) -> value : EC_0
     -- Lvalue_read:
         p EC_0 STO |- storageReference : value_base
     -- if HEADER_STACK `[ value_element* `( _; n_size ) ] = value_base
-    -- if n_idx = $int_of_value(value_index)
+    -- if n_idx = $int_of_integerValue(integerValue_index)
     -- if $(n_idx >= n_size)
 
 }
@@ -340,5 +340,3 @@ rule Lvalue_write/sliceAccess:
   -- if value_base_update = $bitacc_replace_op(value_base, value_hi, value_lo, value)
   -- Lvalue_write:
       p EC_0 STO |- storageReference -> value_base_update : EC_1
-
-

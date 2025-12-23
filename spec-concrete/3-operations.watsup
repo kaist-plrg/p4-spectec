@@ -533,15 +533,12 @@ dec $default'(typeIR) : value
 
 dec $cast_bool(typeIR, bool) : value
   hint(testgen_ignore)
-dec $cast_bool'(typeIR, bool) : value
-  hint(testgen_ignore)
 
-def $cast_bool(typeIR, b) = $cast_bool'($canon_typeIR(typeIR), b)
-
-def $cast_bool'(BOOL, b) = B b
-def $cast_bool'(BIT `< w >, true) = w W 1
-def $cast_bool'(BIT `< w >, false) = w W 0
-def $cast_bool'(TYPE _ typeIR, b) = $cast_bool(typeIR, b)
+def $cast_bool(BOOL, b) = B b
+def $cast_bool(BIT `< w >, true) = w W 1
+def $cast_bool(BIT `< w >, false) = w W 0
+def $cast_bool(TYPEDEF _ typeIR, b) = $cast_bool(typeIR, b)
+def $cast_bool(TYPE _ typeIR, b) = $cast_bool(typeIR, b)
 
 def $cast_op(typeIR, B b) = $cast_bool(typeIR, b)
 
@@ -549,17 +546,14 @@ def $cast_op(typeIR, B b) = $cast_bool(typeIR, b)
 
 dec $cast_arbint(typeIR, int) : value
   hint(testgen_ignore)
-dec $cast_arbint'(typeIR, int) : value
-  hint(testgen_ignore)
 
-def $cast_arbint(typeIR, i) = $cast_arbint'($canon_typeIR(typeIR), i)
-
-def $cast_arbint'(BOOL, i) = B (i =/= 0)
-def $cast_arbint'(INT, i) = D i
-def $cast_arbint'(BIT `< w >, i) = w W ($int_to_bitstr(w, i))
-def $cast_arbint'(INT `< w >, i) = w S ($int_to_bitstr(w, i))
-def $cast_arbint'(TYPE _ typeIR, i) = $cast_arbint(typeIR, i)
-def $cast_arbint'(SET `< typeIR >, i) = SET `{ $cast_arbint(typeIR, i) }
+def $cast_arbint(BOOL, i) = B (i =/= 0)
+def $cast_arbint(INT, i) = D i
+def $cast_arbint(BIT `< w >, i) = w W ($int_to_bitstr(w, i))
+def $cast_arbint(INT `< w >, i) = w S ($int_to_bitstr(w, i))
+def $cast_arbint(TYPEDEF _ typeIR, i) = $cast_arbint(typeIR, i)
+def $cast_arbint(TYPE _ typeIR, i) = $cast_arbint(typeIR, i)
+def $cast_arbint(SET `< typeIR >, i) = SET `{ $cast_arbint(typeIR, i) }
 
 def $cast_op(typeIR, D i) = $cast_arbint(typeIR, i)
 
@@ -567,19 +561,16 @@ def $cast_op(typeIR, D i) = $cast_arbint(typeIR, i)
 
 dec $cast_fixbit(typeIR, nat, int) : value
   hint(testgen_ignore)
-dec $cast_fixbit'(typeIR, nat, int) : value
-  hint(testgen_ignore)
 
-def $cast_fixbit(typeIR, w, i) = $cast_fixbit'($canon_typeIR(typeIR), w, i)
-
-def $cast_fixbit'(BOOL, w, i) = B (i =/= 0)
-def $cast_fixbit'(INT, _, i) = D i
-def $cast_fixbit'(BIT `< w_to >, _, i) = w_to W i'
+def $cast_fixbit(BOOL, w, i) = B (i =/= 0)
+def $cast_fixbit(INT, _, i) = D i
+def $cast_fixbit(BIT `< w_to >, _, i) = w_to W i'
   -- if i' = $int_to_bitstr(w_to, i)
-def $cast_fixbit'(INT `< w_to >, _, i) = w_to S i'
+def $cast_fixbit(INT `< w_to >, _, i) = w_to S i'
   -- if i' = $int_to_bitstr(w_to, i)
-def $cast_fixbit'(TYPE _ typeIR, w, i) = $cast_fixbit(typeIR, w, i)
-def $cast_fixbit'(SET `< typeIR >, w, i) = SET `{ $cast_fixbit(typeIR, w, i) }
+def $cast_fixbit(TYPEDEF _ typeIR, w, i) = $cast_fixbit(typeIR, w, i)
+def $cast_fixbit(TYPE _ typeIR, w, i) = $cast_fixbit(typeIR, w, i)
+def $cast_fixbit(SET `< typeIR >, w, i) = SET `{ $cast_fixbit(typeIR, w, i) }
 
 def $cast_op(typeIR, w W i) = $cast_fixbit(typeIR, w, i)
 
@@ -587,18 +578,15 @@ def $cast_op(typeIR, w W i) = $cast_fixbit(typeIR, w, i)
 
 dec $cast_fixint(typeIR, nat, int) : value
   hint(testgen_ignore)
-dec $cast_fixint'(typeIR, nat, int) : value
-  hint(testgen_ignore)
 
-def $cast_fixint(typeIR, w, i) = $cast_fixint'($canon_typeIR(typeIR), w, i)
-
-def $cast_fixint'(INT, w, i) = D $bitstr_to_int(w, i)
-def $cast_fixint'(BIT `< w_to >, w_from, i) = w_to W i'
+def $cast_fixint(INT, w, i) = D $bitstr_to_int(w, i)
+def $cast_fixint(BIT `< w_to >, w_from, i) = w_to W i'
   -- if i' = $int_to_bitstr(w_to, $bitstr_to_int(w_from, i))
-def $cast_fixint'(INT `< w_to >, w_from, i) = w_to S i'
+def $cast_fixint(INT `< w_to >, w_from, i) = w_to S i'
   -- if i' = $int_to_bitstr(w_to, $bitstr_to_int(w_from, i))
-def $cast_fixint'(TYPE _ typeIR, w, i) = $cast_fixint(typeIR, w, i)
-def $cast_fixint'(SET `< typeIR >, w, i) = SET `{ $cast_fixint(typeIR, w, i) }
+def $cast_fixint(TYPEDEF _ typeIR, w, i) = $cast_fixint(typeIR, w, i)
+def $cast_fixint(TYPE _ typeIR, w, i) = $cast_fixint(typeIR, w, i)
+def $cast_fixint(SET `< typeIR >, w, i) = SET `{ $cast_fixint(typeIR, w, i) }
 
 def $cast_op(typeIR, w S i) = $cast_fixint(typeIR, w, i)
 
@@ -606,12 +594,10 @@ def $cast_op(typeIR, w S i) = $cast_fixint(typeIR, w, i)
 
 dec $cast_varbit(typeIR, nat, nat, int) : value
   hint(testgen_ignore)
-dec $cast_varbit'(typeIR, nat, nat, int) : value
-  hint(testgen_ignore)
 
-def $cast_varbit(typeIR, w_max, w, i)
-  = $cast_varbit'($canon_typeIR(typeIR), w_max, w, i)
-def $cast_varbit'(VARBIT `< w_max >, w_max, w, i) = w_max `. w V i
+def $cast_varbit(VARBIT `< w_max >, w_max, w, i) = w_max `. w V i
+def $cast_varbit(TYPEDEF _ typeIR, w_max, w, i)
+  = $cast_varbit(typeIR, w_max, w, i)
 
 def $cast_op(typeIR, w_max `. w V i) = $cast_varbit(typeIR, w_max, w, i)
 
@@ -619,13 +605,10 @@ def $cast_op(typeIR, w_max `. w V i) = $cast_varbit(typeIR, w_max, w, i)
 
 dec $cast_struct(typeIR, typeId, (value, id)*) : value
   hint(testgen_ignore)
-dec $cast_struct'(typeIR, typeId, (value, id)*) : value
-  hint(testgen_ignore)
 
-def $cast_struct(typeIR, typeId, (value_field, nameIR_field)*)
-  = $cast_struct'($canon_typeIR(typeIR), typeId, (value_field, nameIR_field)*)
-
-def $cast_struct'(STRUCT typeId `{ _ }, typeId, (value_field, nameIR_field)*)
+def $cast_struct(TYPEDEF _ typeIR, typeId, (value, id)*)
+  = $cast_struct(typeIR, typeId, (value, id)*)
+def $cast_struct(STRUCT typeId `< _ > `{ _ }, typeId, (value_field, nameIR_field)*)
   = STRUCT typeId `{ (value_field nameIR_field `;)* }
 
 def $cast_op(typeIR, STRUCT typeId `{ (value_field nameIR_field `;)* })
@@ -635,13 +618,10 @@ def $cast_op(typeIR, STRUCT typeId `{ (value_field nameIR_field `;)* })
 
 dec $cast_header(typeIR, typeId, bool, (value, id)*) : value
   hint(testgen_ignore)
-dec $cast_header'(typeIR, typeId, bool, (value, id)*) : value
-  hint(testgen_ignore)
 
-def $cast_header(typeIR, typeId, b, (value_field, nameIR_field)*)
-  = $cast_header'($canon_typeIR(typeIR), typeId, b, (value_field, nameIR_field)*)
-
-def $cast_header'(HEADER typeId `{ _ }, typeId, b, (value_field, nameIR_field)*)
+def $cast_header(TYPEDEF _ typeIR, typeId, b, (value, id)*)
+  = $cast_header(typeIR, typeId, b, (value, id)*)
+def $cast_header(HEADER typeId `< _ > `{ _ }, typeId, b, (value_field, nameIR_field)*)
   = HEADER typeId `{ b `; (value_field nameIR_field `;)* }
 
 def $cast_op(typeIR, HEADER typeId `{ b `; (value_field nameIR_field `;)* })
@@ -655,28 +635,26 @@ def $cast_op(typeIR, _ `. _ `. value) = $cast_op(typeIR, value)
 
 dec $cast_sequence(typeIR, value*) : value
   hint(testgen_ignore)
-dec $cast_sequence'(typeIR, value*) : value
-  hint(testgen_ignore)
 
-def $cast_sequence(typeIR, value*)
-  = $cast_sequence'($canon_typeIR(typeIR), value*)
+def $cast_sequence(TYPEDEF _ typeIR, value*)
+  = $cast_sequence(typeIR, value*)
 
-def $cast_sequence'(LIST `< typeIR >, value*)
+def $cast_sequence(LIST `< typeIR >, value*)
   = LIST `[ $cast_op(typeIR, value)* ]
 
-def $cast_sequence'(TUPLE `< typeIR* >, value*)
+def $cast_sequence(TUPLE `< typeIR* >, value*)
   = TUPLE `( $cast_op(typeIR, value)* )
 
-def $cast_sequence'(typeIR `[ n_size ], value*)
+def $cast_sequence(typeIR `[ n_size ], value*)
   = HEADER_STACK `[ value_cast* `( n_idx; n_size ) ]
   -- if (value_cast = $cast_op(typeIR, value))*
   -- if n_idx = |value*|
 
-def $cast_sequence'(STRUCT typeId `{ (typeIR_field nameIR_field `;)* }, value*)
+def $cast_sequence(STRUCT typeId `< _ > `{ (typeIR_field nameIR_field `;)* }, value*)
   = STRUCT typeId `{ (value_cast nameIR_field `;)* }
   -- if (value_cast = $cast_op(typeIR_field, value))*
 
-def $cast_sequence'(HEADER typeId `{ (typeIR_field nameIR_field `;)* }, value*)
+def $cast_sequence(HEADER typeId `< _ > `{ (typeIR_field nameIR_field `;)* }, value*)
   = HEADER typeId `{ true `; (value_cast nameIR_field `;)* }
   -- if (value_cast = $cast_op(typeIR_field, value))*
 
@@ -688,25 +666,21 @@ def $cast_op(typeIR, SEQ `( value* )) = $cast_sequence(typeIR, value*)
 
 dec $cast_record(typeIR, (value, id)*) : value
   hint(testgen_ignore)
-dec $cast_record'(typeIR, (value, id)*) : value
-  hint(testgen_ignore)
 
-def $cast_record(typeIR, (value, id)*)
-  = $cast_record'($canon_typeIR(typeIR), (value, id)*)
+def $cast_record(TYPEDEF _ typeIR, (value, id)*)
+  = $cast_record(typeIR, (value, id)*)
 
-def $cast_record'(
-    STRUCT typeId `{ (typeIR_t_field id_t_field `;)* },
-    (value_field, nameIR_field)*
-  )
+def $cast_record(
+    STRUCT typeId `< _ > `{ (typeIR_t_field id_t_field `;)* },
+    (value_field, nameIR_field)*)
   = STRUCT typeId `{ (value_field_cast nameIR_field `;)* }
   -- if (value_field'
       = $find_map<id, value>(`{ (nameIR_field `: value_field)* }, id_t_field))*
   -- if (value_field_cast = $cast_op(typeIR_t_field, value_field'))*
 
-def $cast_record'(
-    HEADER typeId `{ (typeIR_t_field id_t_field `;)* },
-    (value_field, nameIR_field)*
-  )
+def $cast_record(
+    HEADER typeId `< _ > `{ (typeIR_t_field id_t_field `;)* },
+    (value_field, nameIR_field)*)
   = HEADER typeId `{ true `; (value_field_cast nameIR_field `;)* }
   -- if (value_field'
       = $find_map<id, value>(`{ (nameIR_field `: value_field)* }, id_t_field))*
@@ -724,15 +698,10 @@ def $cast_op(typeIR, DEFAULT) = $default(typeIR)
 ;; Cast from invalid
 
 dec $cast_invalid(typeIR) : value
-dec $cast_invalid'(typeIR) : value
 
-def $cast_invalid(typeIR) = $cast_invalid'($canon_typeIR(typeIR))
-
-def $cast_invalid'(typeIR) = $default(typeIR)
-  -- if HEADER _ `{ (_ _ `;)* } = typeIR
-
-def $cast_invalid'(typeIR) = $default(typeIR)
-  -- if HEADER_UNION _ `{ (_ _ `;)* } = typeIR
+def $cast_invalid(TYPEDEF _ typeIR) = $cast_invalid(typeIR)
+def $cast_invalid(headerTypeIR) = $default(headerTypeIR)
+def $cast_invalid(headerUnionTypeIR) = $default(headerUnionTypeIR)
 
 def $cast_op(typeIR, `{#}) = $cast_invalid(typeIR)
 
@@ -740,37 +709,22 @@ def $cast_op(typeIR, `{#}) = $cast_invalid(typeIR)
 
 dec $cast_set_singleton(typeIR, value) : value
   hint(testgen_ignore)
-dec $cast_set_singleton'(typeIR, value) : value
-  hint(testgen_ignore)
 
-def $cast_set_singleton(typeIR, value)
-  = $cast_set_singleton'($canon_typeIR(typeIR), value)
-
-def $cast_set_singleton'(SET `< typeIR >, value)
+def $cast_set_singleton(SET `< typeIR >, value)
   = SET `{ $cast_op(typeIR, value) }
 
 dec $cast_set_mask(typeIR, value, value) : value
   hint(testgen_ignore)
-dec $cast_set_mask'(typeIR, value, value) : value
-  hint(testgen_ignore)
 
-def $cast_set_mask(typeIR, value_b, value_m)
-  = $cast_set_mask'($canon_typeIR(typeIR), value_b, value_m)
-
-def $cast_set_mask'(SET `< typeIR >, value_b, value_m)
+def $cast_set_mask(SET `< typeIR >, value_b, value_m)
   = SET `{ value_b_cast `&&& value_m_cast }
   -- if value_b_cast = $cast_op(typeIR, value_b)
   -- if value_m_cast = $cast_op(typeIR, value_m)
 
 dec $cast_set_range(typeIR, value, value) : value
   hint(testgen_ignore)
-dec $cast_set_range'(typeIR, value, value) : value
-  hint(testgen_ignore)
 
-def $cast_set_range(typeIR, value_l, value_u)
-  = $cast_set_range'($canon_typeIR(typeIR), value_l, value_u)
-
-def $cast_set_range'(SET `< typeIR >, value_l, value_u)
+def $cast_set_range(SET `< typeIR >, value_l, value_u)
   = SET `{ value_l_cast `.. value_u_cast }
   -- if value_l_cast = $cast_op(typeIR, value_l)
   -- if value_u_cast = $cast_op(typeIR, value_u)
@@ -787,40 +741,40 @@ def $cast_op(typeIR, SET `{ value_l `.. value_u })
 ;; (TODO) This should be target-specific
 ;;
 
-def $default(typeIR) = $default'($canon_typeIR(typeIR))
-
-def $default'(BOOL) = B false
-def $default'(ERROR) = ERROR `. "NoError"
-def $default'(STRING) = `" text_empty `"
+def $default(BOOL) = B false
+def $default(ERROR) = ERROR `. "NoError"
+def $default(STRING) = `" text_empty `"
   -- if text_empty = ""
 
-def $default'(INT) = D 0
-def $default'(BIT `< w >) = w W 0
-def $default'(INT `< w >) = w S 0
-def $default'(VARBIT `< w >) = w `. 0 V 0
+def $default(INT) = D 0
+def $default(BIT `< w >) = w W 0
+def $default(INT `< w >) = w S 0
+def $default(VARBIT `< w >) = w `. 0 V 0
 
-def $default'(TUPLE `< typeIR* >) = TUPLE `( $default(typeIR)* )
+def $default(TYPEDEF _ typeIR) = $default(typeIR)
 
-def $default'(typeIR `[ n_s ]) = HEADER_STACK `[ value* `( 0; n_s ) ]
+def $default(TUPLE `< typeIR* >) = TUPLE `( $default(typeIR)* )
+
+def $default(typeIR `[ n_s ]) = HEADER_STACK `[ value* `( 0; n_s ) ]
   -- if value* = $repeat_<value>($default(typeIR), n_s)
 
-def $default'(STRUCT typeId `{ (typeIR_f id_f `;)* })
+def $default(STRUCT typeId `< _ > `{ (typeIR_f id_f `;)* })
   = STRUCT typeId `{ ($default(typeIR_f) id_f `;)* }
 
-def $default'(HEADER typeId `{ (typeIR_f id_f `;)* })
+def $default(HEADER typeId `< _ > `{ (typeIR_f id_f `;)* })
   = HEADER typeId `{ false `; ($default(typeIR_f) id_f `;)* }
 
-def $default'(HEADER_UNION typeId `{ (typeIR_f id_f `;)* })
+def $default(HEADER_UNION typeId `< _ > `{ (typeIR_f id_f `;)* })
   = HEADER_UNION typeId `{ ($default(typeIR_f) id_f `;)* }
 
-def $default'(ENUM typeId `{ id_f_h :: _ }) = typeId `. id_f_h
+def $default(ENUM typeId `{ id_f_h :: _ }) = typeId `. id_f_h
 
-def $default'(ENUM typeId `< typeIR > `{ (nameIR_field `= value_field `;)* })
+def $default(ENUM typeId `< typeIR > `{ (nameIR_field `= value_field `;)* })
   = typeId `. id_zero `. value_zero
   -- if value_zero = $cast_arbint(typeIR, 0)
   -- if id_zero = $assoc_<value, id>(value_zero, (value_field, nameIR_field)*)
 
-def $default'(ENUM typeId `< typeIR > `{ (nameIR_field `= value_field `;)* })
+def $default(ENUM typeId `< typeIR > `{ (nameIR_field `= value_field `;)* })
   = typeId `. id_zero `. value_zero
   -- if value_zero = $cast_arbint(typeIR, 0)
   -- if eps = $assoc_<value, id>(value_zero, (value_field, nameIR_field)*)
@@ -833,10 +787,10 @@ def $default'(ENUM typeId `< typeIR > `{ (nameIR_field `= value_field `;)* })
 dec $bitacc_op(value, value, value) : value
   hint(testgen_ignore)
 
-def $bitacc_op(value_b, value_h, value_l) = w W i
-  -- if i_b = $int_of_value(value_b)
-  -- if i_h = $int_of_value(value_h)
-  -- if i_l = $int_of_value(value_l)
+def $bitacc_op(integerValue_b, integerValue_h, integerValue_l) = w W i
+  -- if i_b = $int_of_integerValue(integerValue_b)
+  -- if i_h = $int_of_integerValue(integerValue_h)
+  -- if i_l = $int_of_integerValue(integerValue_l)
   -- if w = $(i_h + 1 - i_l)
   -- if i = $bitacc(i_b, i_h, i_l)
 
@@ -847,11 +801,11 @@ def $bitacc_op(value_b, value_h, value_l) = w W i
 dec $bitacc_replace_op(value, value, value, value) : value
   hint(testgen_ignore)
 
-def $bitacc_replace_op(value_b, value_h, value_l, value_r) = w W i
-  -- if w W i_b = value_b
-  -- if i_h = $int_of_value(value_h)
-  -- if i_l = $int_of_value(value_l)
-  -- if _ W i_r = value_r
+def $bitacc_replace_op(integerValue_b, integerValue_h, integerValue_l, integerValue_r) = w W i
+  -- if w W i_b = integerValue_b
+  -- if i_h = $int_of_integerValue(integerValue_h)
+  -- if i_l = $int_of_integerValue(integerValue_l)
+  -- if _ W i_r = integerValue_r
   -- if i = $bitacc_replace(i_b, i_h, i_l, i_r)
 
 ;;
@@ -884,19 +838,27 @@ dec $sizeof_maxSizeInBytes(typeIR) : value
 ;;; Minimum size in bits
 
 def $sizeof_minSizeInBits(typeIR) = D $sizeof_minSizeInBits'(typeIR)
-def $sizeof_minSizeInBits'(typeIR) = $sizeof_minSizeInBits''($canon_typeIR(typeIR))
 
-def $sizeof_minSizeInBits''(BOOL) = 1
-def $sizeof_minSizeInBits''(INT `< w >) = w
-def $sizeof_minSizeInBits''(BIT `< w >) = w
-def $sizeof_minSizeInBits''(VARBIT `< _ >) = 0
-def $sizeof_minSizeInBits''(TYPE _ typeIR) = $sizeof_minSizeInBits'(typeIR)
-def $sizeof_minSizeInBits''(ENUM _ `< typeIR > `{ _ }) = $sizeof_minSizeInBits'(typeIR)
-def $sizeof_minSizeInBits''(TUPLE `< typeIR* >) = $sum_nat($sizeof_minSizeInBits'(typeIR)*)
-def $sizeof_minSizeInBits''(typeIR `[ n_size ]) = $($sizeof_minSizeInBits'(typeIR) * n_size)
-def $sizeof_minSizeInBits''(STRUCT _ `{ (typeIR _ `;)* }) = $sum_nat($sizeof_minSizeInBits'(typeIR)*)
-def $sizeof_minSizeInBits''(HEADER _ `{ (typeIR _ `;)* }) = $sum_nat($sizeof_minSizeInBits'(typeIR)*)
-def $sizeof_minSizeInBits''(HEADER_UNION _ `{ (typeIR _ `;)* }) = $min_nat($sizeof_minSizeInBits'(typeIR)*)
+def $sizeof_minSizeInBits'(BOOL) = 1
+def $sizeof_minSizeInBits'(INT `< w >) = w
+def $sizeof_minSizeInBits'(BIT `< w >) = w
+def $sizeof_minSizeInBits'(VARBIT `< _ >) = 0
+def $sizeof_minSizeInBits'(TYPEDEF _ typeIR)
+  = $sizeof_minSizeInBits'(typeIR)
+def $sizeof_minSizeInBits'(TYPE _ typeIR)
+  = $sizeof_minSizeInBits'(typeIR)
+def $sizeof_minSizeInBits'(ENUM _ `< typeIR > `{ _ })
+  = $sizeof_minSizeInBits'(typeIR)
+def $sizeof_minSizeInBits'(TUPLE `< typeIR* >)
+  = $sum_nat($sizeof_minSizeInBits'(typeIR)*)
+def $sizeof_minSizeInBits'(typeIR `[ n_size ])
+  = $($sizeof_minSizeInBits'(typeIR) * n_size)
+def $sizeof_minSizeInBits'(STRUCT _ `< _ > `{ (typeIR _ `;)* })
+  = $sum_nat($sizeof_minSizeInBits'(typeIR)*)
+def $sizeof_minSizeInBits'(HEADER _ `< _ > `{ (typeIR _ `;)* })
+  = $sum_nat($sizeof_minSizeInBits'(typeIR)*)
+def $sizeof_minSizeInBits'(HEADER_UNION _ `< _ > `{ (typeIR _ `;)* })
+  = $min_nat($sizeof_minSizeInBits'(typeIR)*)
 
 def $sizeof(typeIR, "minSizeInBits") = $sizeof_minSizeInBits(typeIR)
 
@@ -910,19 +872,27 @@ def $sizeof(typeIR, "minSizeInBytes") = $sizeof_minSizeInBytes(typeIR)
 ;; Maximum size in bits
 
 def $sizeof_maxSizeInBits(typeIR) = D $sizeof_maxSizeInBits'(typeIR)
-def $sizeof_maxSizeInBits'(typeIR) = $sizeof_maxSizeInBits''($canon_typeIR(typeIR))
 
-def $sizeof_maxSizeInBits''(BOOL) = 1
-def $sizeof_maxSizeInBits''(INT `< w >) = w
-def $sizeof_maxSizeInBits''(BIT `< w >) = w
-def $sizeof_maxSizeInBits''(VARBIT `< w >) = w
-def $sizeof_maxSizeInBits''(TYPE _ typeIR) = $sizeof_maxSizeInBits'(typeIR)
-def $sizeof_maxSizeInBits''(ENUM _ `< typeIR > `{ _ }) = $sizeof_maxSizeInBits'(typeIR)
-def $sizeof_maxSizeInBits''(TUPLE `< typeIR* >) = $sum_nat($sizeof_maxSizeInBits'(typeIR)*)
-def $sizeof_maxSizeInBits''(typeIR `[ n_size ]) = $($sizeof_maxSizeInBits'(typeIR) * n_size)
-def $sizeof_maxSizeInBits''(STRUCT _ `{ (typeIR _ `;)* }) = $sum_nat($sizeof_maxSizeInBits'(typeIR)*)
-def $sizeof_maxSizeInBits''(HEADER _ `{ (typeIR _ `;)* }) = $sum_nat($sizeof_maxSizeInBits'(typeIR)*)
-def $sizeof_maxSizeInBits''(HEADER_UNION _ `{ (typeIR _ `;)* }) = $max_nat($sizeof_maxSizeInBits'(typeIR)*)
+def $sizeof_maxSizeInBits'(BOOL) = 1
+def $sizeof_maxSizeInBits'(INT `< w >) = w
+def $sizeof_maxSizeInBits'(BIT `< w >) = w
+def $sizeof_maxSizeInBits'(VARBIT `< w >) = w
+def $sizeof_maxSizeInBits'(TYPEDEF _ typeIR)
+  = $sizeof_maxSizeInBits'(typeIR)
+def $sizeof_maxSizeInBits'(TYPE _ typeIR)
+  = $sizeof_maxSizeInBits'(typeIR)
+def $sizeof_maxSizeInBits'(ENUM _ `< typeIR > `{ _ })
+  = $sizeof_maxSizeInBits'(typeIR)
+def $sizeof_maxSizeInBits'(TUPLE `< typeIR* >)
+  = $sum_nat($sizeof_maxSizeInBits'(typeIR)*)
+def $sizeof_maxSizeInBits'(typeIR `[ n_size ])
+  = $($sizeof_maxSizeInBits'(typeIR) * n_size)
+def $sizeof_maxSizeInBits'(STRUCT _ `< _ > `{ (typeIR _ `;)* })
+  = $sum_nat($sizeof_maxSizeInBits'(typeIR)*)
+def $sizeof_maxSizeInBits'(HEADER _ `< _ > `{ (typeIR _ `;)* })
+  = $sum_nat($sizeof_maxSizeInBits'(typeIR)*)
+def $sizeof_maxSizeInBits'(HEADER_UNION _ `< _ > `{ (typeIR _ `;)* })
+  = $max_nat($sizeof_maxSizeInBits'(typeIR)*)
 
 def $sizeof(typeIR, "maxSizeInBits") = $sizeof_maxSizeInBits(typeIR)
 

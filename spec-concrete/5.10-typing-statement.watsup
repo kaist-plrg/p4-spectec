@@ -109,12 +109,9 @@ rulegroup Stmt_ok/callStatement {
 ;;; directApplicationStatement
 ;;; syntax directApplicationStatement = namedType `. APPLY `( argumentList ) `;
 
-dec $compat_direct_application(typeIR) : bool
-tbl dec $compat'_direct_application(typeIR) : bool
-
-def $compat_direct_application(typeIR)
-  = $compat'_direct_application($canon_typeIR(typeIR))
-tbl def $compat'_direct_application =
+tbl dec $compat_direct_application(typeIR) : bool
+tbl def $compat_direct_application =
+  | TYPEDEF _ typeIR => $compat_direct_application(typeIR)
   | parserObjectTypeIR => true
   | controlObjectTypeIR => true
   | _ => false
@@ -202,7 +199,7 @@ rulegroup Stmt_ok/conditionalStatement {
     ---- ;; fetch annotation
     ---- ;; the condition must be a boolean type
     -- if typeIR_cond = $type_of_typedExpressionIR(typedExpressionIR_cond)
-    -- if BOOL = $canon_typeIR(typeIR_cond)
+    -- if BOOL = $unroll_typeIR(typeIR_cond)
     ---- ;; check then statement
     -- Stmt_ok: p TC f l |- statement_then : TC_then f_then statementIR_then
 
@@ -215,7 +212,7 @@ rulegroup Stmt_ok/conditionalStatement {
     ---- ;; fetch annotation
     ---- ;; the condition must be a boolean type
     -- if typeIR_cond = $type_of_typedExpressionIR(typedExpressionIR_cond)
-    -- if BOOL = $canon_typeIR(typeIR_cond)
+    -- if BOOL = $unroll_typeIR(typeIR_cond)
     ---- ;; check then and else statements
     -- Stmt_ok: p TC f l |- statement_then : TC_then f_then statementIR_then
     -- Stmt_ok: p TC f l |- statement_else : TC_else f_else statementIR_else
@@ -348,7 +345,7 @@ rule Stmt_ok/forStatement-three-clause:
   ---- ;; check condition expression
   -- Expr_ok: LOCAL TC_2 |- expression : typedExpressionIR
   -- if _ `# `( typeIR _ ) = typedExpressionIR
-  -- if BOOL = $canon_typeIR(typeIR)
+  -- if BOOL = $unroll_typeIR(typeIR)
   ---- ;; check update statements
   -- if forUpdateStatement*
       = $flatten_forUpdateStatementList(forUpdateStatementList)
@@ -382,7 +379,7 @@ rulegroup ForCollectionExpr_ok/expression {
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
     ---- ;; check list type
     -- if _ `# `( typeIR_list _ ) = typedExpressionIR
-    -- if LIST `< typeIR_e > = $canon_typeIR(typeIR_list)
+    -- if LIST `< typeIR_e > = $unroll_typeIR(typeIR_list)
     -- Sub_impl: typeIR_e <: typeIR_var
 
   rule ForCollectionExpr_ok/header-stack:
@@ -391,21 +388,19 @@ rulegroup ForCollectionExpr_ok/expression {
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
     ---- ;; check header stack type
     -- if _ `# `( typeIR_stack _ ) = typedExpressionIR
-    -- if typeIR_e `[ _ ] = $canon_typeIR(typeIR_stack)
+    -- if typeIR_e `[ _ ] = $unroll_typeIR(typeIR_stack)
     -- Type_alpha: typeIR_e ~~ typeIR_var
 
 }
 
-dec $compat_range(typeIR, typeIR) : bool
-dec $compat'_range(typeIR, typeIR) : bool
-
-def $compat_range(typeIR_l, typeIR_r)
-  = $compat'_range($canon_typeIR(typeIR_l), $canon_typeIR(typeIR_r))
-def $compat'_range(INT, INT) = true
-def $compat'_range(INT `< w >, INT `< w >) = true
-def $compat'_range(BIT `< w >, BIT `< w >) = true
-def $compat'_range(typeIR_l, typeIR_r) = false
-  -- otherwise
+tbl dec $compat_range(typeIR, typeIR) : bool
+tbl def $compat_range =
+  | (INT, INT) => true
+  | (INT `< w_l >, INT `< w_r >) => $(w_l = w_r)
+  | (BIT `< w_l >, BIT `< w_r >) => $(w_l = w_r)
+  | (TYPEDEF _ typeIR_l, typeIR_r) => $compat_range(typeIR_l, typeIR_r)
+  | (typeIR_l, TYPEDEF _ typeIR_r) => $compat_range(typeIR_l, typeIR_r)
+  | (_, _) => false
 
 rule ForCollectionExpr_ok/range:
   TC typeIR_var |- expression_l `.. expression_r
@@ -564,8 +559,10 @@ rule Stmt_ok/switchStatement-table:
   -- Expr_ok: LOCAL TC |- expression_switch : typedExpressionIR_switch
   -- if typeIR_switch = $type_of_typedExpressionIR(typedExpressionIR_switch)
   ---- ;; if the expression is the result of table apply method
-  -- if TABLE_ENUM typeId_table_enum `{ _ } = $canon_typeIR(typeIR_switch)
-  -- if typeId_table = $strip_prefix($strip_suffix(typeId_table_enum, ")"), "action_list(")
+  -- if TABLE_ENUM typeId_table_enum `{ _ }
+      = $unroll_typeIR(typeIR_switch)
+  -- if typeId_table
+      = $strip_prefix($strip_suffix(typeId_table_enum, ")"), "action_list(")
   ---- ;; check switch cases
   -- if switchCase* = $flatten_switchCaseList(switchCaseList)
   -- SwitchCases_table_ok:
@@ -658,17 +655,14 @@ rule SwitchCases_general_ok/cons:
       TC f_h l typeIR_switch |- switchCase_t*
                               : f_t switchCaseIR_t* `# switchLabel_t*
 
-dec $compat_switch(typeIR) : bool
-dec $compat'_switch(typeIR) : bool
-
-def $compat_switch(typeIR)
-  = $compat'_switch($canon_typeIR(typeIR))
-def $compat'_switch(ERROR) = true
-def $compat'_switch(INT `< _ >) = true
-def $compat'_switch(BIT `< _ >) = true
-def $compat'_switch(enumTypeIR) = true
-def $compat'_switch(typeIR) = false
-  -- otherwise
+tbl dec $compat_switch(typeIR) : bool
+tbl def $compat_switch =
+  | ERROR => true
+  | INT `< _ > => true
+  | BIT `< _ > => true
+  | TYPEDEF _ typeIR => $compat_switch(typeIR)
+  | enumTypeIR => true
+  | _ => false
 
 rule Stmt_ok/switchStatement-general:
   LOCAL TC f l |- SWITCH `( expression_switch ) `{ switchCaseList }

@@ -77,12 +77,10 @@ rule Expr_ok/defaultExpression:
 
 ;;;; `!
 
-dec $compat_lnot(typeIR) : bool
-tbl dec $compat'_lnot(typeIR) : bool
-
-def $compat_lnot(typeIR) = $compat'_lnot($canon_typeIR(typeIR))
-tbl def $compat'_lnot =
+tbl dec $compat_lnot(typeIR) : bool
+tbl def $compat_lnot =
   | BOOL => true
+  | TYPEDEF _ typeIR => $compat_lnot(typeIR)
   | _ => false
 
 rule Expr_ok/unaryExpression-lnot:
@@ -100,13 +98,11 @@ rule Expr_ok/unaryExpression-lnot:
 
 ;;;; `~
 
-dec $compat_bnot(typeIR) : bool
-tbl dec $compat'_bnot(typeIR) : bool
-
-def $compat_bnot(typeIR) = $compat'_bnot($canon_typeIR(typeIR))
-tbl def $compat'_bnot =
+tbl dec $compat_bnot(typeIR) : bool
+tbl def $compat_bnot =
   | INT `< _ > => true
   | BIT `< _ > => true
+  | TYPEDEF _ typeIR => $compat_bnot(typeIR)
   | _ => false
 
 rule Expr_ok/unaryExpression-bnot:
@@ -124,14 +120,12 @@ rule Expr_ok/unaryExpression-bnot:
 
 ;;;; `+ | `-
 
-dec $compat_uplusminus(typeIR) : bool
-tbl dec $compat'_uplusminus(typeIR) : bool
-
-def $compat_uplusminus(typeIR) = $compat'_uplusminus($canon_typeIR(typeIR))
-tbl def $compat'_uplusminus =
+tbl dec $compat_uplusminus(typeIR) : bool
+tbl def $compat_uplusminus =
   | INT => true
   | INT `< _ > => true
   | BIT `< _ > => true
+  | TYPEDEF _ typeIR => $compat_uplusminus(typeIR)
   | _ => false
 
 rule Expr_ok/unaryExpression-uplusminus:
@@ -152,15 +146,15 @@ rule Expr_ok/unaryExpression-uplusminus:
 
 ;;;; `+ | `- | `*
 
-dec $compat_plusminusmult(typeIR, typeIR) : bool
-tbl dec $compat'_plusminusmult(typeIR, typeIR) : bool
-
-def $compat_plusminusmult(typeIR_l, typeIR_r)
-  = $compat'_plusminusmult($canon_typeIR(typeIR_l), $canon_typeIR(typeIR_r))
-tbl def $compat'_plusminusmult =
+tbl dec $compat_plusminusmult(typeIR, typeIR) : bool
+tbl def $compat_plusminusmult =
   | (INT, INT) => true
   | (INT `< w_l >, INT `< w_r >) => $(w_l = w_r)
   | (BIT `< w_l >, BIT `< w_r >) => $(w_l = w_r)
+  | (TYPEDEF _ typeIR_l, typeIR_r)
+      => $compat_plusminusmult(typeIR_l, typeIR_r)
+  | (typeIR_l, TYPEDEF _ typeIR_r)
+      => $compat_plusminusmult(typeIR_l, typeIR_r)
   | (_, _) => false
 
 rule Expr_ok/binaryExpression-plusminusmult:
@@ -190,14 +184,14 @@ rule Expr_ok/binaryExpression-plusminusmult:
 
 ;;;; `|+| | `|-|
 
-dec $compat_satplusminus(typeIR, typeIR) : bool
-tbl dec $compat'_satplusminus(typeIR, typeIR) : bool
-
-def $compat_satplusminus(typeIR_l, typeIR_r)
-  = $compat'_satplusminus($canon_typeIR(typeIR_l), $canon_typeIR(typeIR_r))
-tbl def $compat'_satplusminus =
+tbl dec $compat_satplusminus(typeIR, typeIR) : bool
+tbl def $compat_satplusminus =
   | (INT `< w_l >, INT `< w_r >) => $(w_l = w_r)
   | (BIT `< w_l >, BIT `< w_r >) => $(w_l = w_r)
+  | (TYPEDEF _ typeIR_l, typeIR_r)
+      => $compat_satplusminus(typeIR_l, typeIR_r)
+  | (typeIR_l, TYPEDEF _ typeIR_r)
+      => $compat_satplusminus(typeIR_l, typeIR_r)
   | (_, _) => false
 
 rule Expr_ok/binaryExpression-satplusminus:
@@ -227,14 +221,14 @@ rule Expr_ok/binaryExpression-satplusminus:
 
 ;;;; `/ | `%
 
-dec $compat_divmod(typeIR, typeIR) : bool
-dec $compat'_divmod(typeIR, typeIR) : bool
-
-def $compat_divmod(typeIR_l, typeIR_r)
-  = $compat'_divmod($canon_typeIR(typeIR_l), $canon_typeIR(typeIR_r))
-def $compat'_divmod(INT, INT) = true
-def $compat'_divmod(typeIR_l, typeIR_r) = false
-  -- otherwise
+tbl dec $compat_divmod(typeIR, typeIR) : bool
+tbl def $compat_divmod =
+  | (INT, INT) => true
+  | (TYPEDEF _ typeIR_l, typeIR_r)
+      => $compat_divmod(typeIR_l, typeIR_r)
+  | (typeIR_l, TYPEDEF _ typeIR_r)
+      => $compat_divmod(typeIR_l, typeIR_r)
+  | (_, _) => false
 
 rulegroup Expr_ok/binaryExpression-divmod {
 
@@ -261,8 +255,8 @@ rulegroup Expr_ok/binaryExpression-divmod {
     -- if ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
     ---- ;; check that the divisor is local compile-time known and is positive
     -- if ctk_r_reduced = LCTK
-    -- Expr_eval_lctk: p TC |- typedExpressionIR_r_reduced ~> value_r
-    -- if n_r = $int_of_value(value_r)
+    -- Expr_eval_lctk: p TC |- typedExpressionIR_r_reduced ~> integerValue_r
+    -- if n_r = $int_of_integerValue(integerValue_r)
     -- if $(n_r > 0)
     ---- ;; create typed expression
     -- if ctk_reduced = $join_ctk(ctk_l_reduced, ctk_r_reduced)
@@ -300,22 +294,22 @@ rulegroup Expr_ok/binaryExpression-divmod {
 
 ;;;; `<< | `>>
 
-dec $compat_shift(typeIR, typeIR) : bool
-dec $compat'_shift(typeIR, typeIR) : bool
-
-def $compat_shift(typeIR_l, typeIR_r)
-  = $compat'_shift($canon_typeIR(typeIR_l), $canon_typeIR(typeIR_r))
-def $compat'_shift(INT, INT) = true
-def $compat'_shift(INT, INT `< _ >) = true
-def $compat'_shift(INT, BIT `< _ >) = true
-def $compat'_shift(INT `< _ >, INT) = true
-def $compat'_shift(INT `< _ >, INT `< _ >) = true
-def $compat'_shift(INT `< _ >, BIT `< _ >) = true
-def $compat'_shift(BIT `< _ >, INT) = true
-def $compat'_shift(BIT `< _ >, INT `< _ >) = true
-def $compat'_shift(BIT `< _ >, BIT `< _ >) = true
-def $compat'_shift(typeIR_l, typeIR_r) = false
-  -- otherwise
+tbl dec $compat_shift(typeIR, typeIR) : bool
+tbl def $compat_shift =
+  | (INT, INT) => true
+  | (INT, INT `< _ >) => true
+  | (INT, BIT `< _ >) => true
+  | (INT `< _ >, INT) => true
+  | (INT `< _ >, INT `< _ >) => true
+  | (INT `< _ >, BIT `< _ >) => true
+  | (BIT `< _ >, INT) => true
+  | (BIT `< _ >, INT `< _ >) => true
+  | (BIT `< _ >, BIT `< _ >) => true
+  | (TYPEDEF _ typeIR_l, typeIR_r)
+      => $compat_shift(typeIR_l, typeIR_r)
+  | (typeIR_l, TYPEDEF _ typeIR_r)
+      => $compat_shift(typeIR_l, typeIR_r)
+  | (_, _) => false
 
 rulegroup Expr_ok/binaryExpression-shift {
 
@@ -401,16 +395,16 @@ rule Expr_ok/binaryExpression-equality:
 
 ;;;; `<= | `>= | ``< | ``>
 
-dec $compat_compare(typeIR, typeIR) : bool
-dec $compat'_compare(typeIR, typeIR) : bool
-
-def $compat_compare(typeIR_l, typeIR_r)
-  = $compat'_compare($canon_typeIR(typeIR_l), $canon_typeIR(typeIR_r))
-def $compat'_compare(INT, INT) = true
-def $compat'_compare(INT `< w >, INT `< w >) = true
-def $compat'_compare(BIT `< w >, BIT `< w >) = true
-def $compat'_compare(typeIR_l, typeIR_r) = false
-  -- otherwise
+tbl dec $compat_compare(typeIR, typeIR) : bool
+tbl def $compat_compare =
+  | (INT, INT) => true
+  | (INT `< w_l >, INT `< w_r >) => $(w_l = w_r)
+  | (BIT `< w_l >, BIT `< w_r >) => $(w_l = w_r)
+  | (TYPEDEF _ typeIR_l, typeIR_r)
+      => $compat_compare(typeIR_l, typeIR_r)
+  | (typeIR_l, TYPEDEF _ typeIR_r)
+      => $compat_compare(typeIR_l, typeIR_r)
+  | (_, _) => false
 
 rule Expr_ok/binaryExpression-comparison:
   p TC |- expression_l binop expression_r
@@ -439,15 +433,15 @@ rule Expr_ok/binaryExpression-comparison:
 
 ;;;; `& | `^ | `|
 
-dec $compat_bitwise(typeIR, typeIR) : bool
-dec $compat'_bitwise(typeIR, typeIR) : bool
-
-def $compat_bitwise(typeIR_l, typeIR_r)
-  = $compat'_bitwise($canon_typeIR(typeIR_l), $canon_typeIR(typeIR_r))
-def $compat'_bitwise(INT `< w >, INT `< w >) = true
-def $compat'_bitwise(BIT `< w >, BIT `< w >) = true
-def $compat'_bitwise(typeIR_l, typeIR_r) = false
-  -- otherwise
+tbl dec $compat_bitwise(typeIR, typeIR) : bool
+tbl def $compat_bitwise =
+  | (INT `< w_l >, INT `< w_r >) => $(w_l = w_r)
+  | (BIT `< w_l >, BIT `< w_r >) => $(w_l = w_r)
+  | (TYPEDEF _ typeIR_l, typeIR_r)
+      => $compat_bitwise(typeIR_l, typeIR_r)
+  | (typeIR_l, TYPEDEF _ typeIR_r)
+      => $compat_bitwise(typeIR_l, typeIR_r)
+  | (_, _) => false
 
 rule Expr_ok/binaryExpression-bitwise:
   p TC |- expression_l binop expression_r
@@ -476,31 +470,30 @@ rule Expr_ok/binaryExpression-bitwise:
 
 ;;;; `++
 
-dec $compat_concat(typeIR, typeIR) : bool
-dec $compat'_concat(typeIR, typeIR) : bool
+tbl dec $compat_concat(typeIR, typeIR) : bool
+tbl def $compat_concat =
+  | (STRING, STRING) => true
+  | (INT `< _ >, INT `< _ >) => true
+  | (INT `< _ >, BIT `< _ >) => true
+  | (BIT `< _ >, INT `< _ >) => true
+  | (BIT `< _ >, BIT `< _ >) => true
+  | (TYPEDEF _ typeIR_l, typeIR_r)
+      => $compat_concat(typeIR_l, typeIR_r)
+  | (typeIR_l, TYPEDEF _ typeIR_r)
+      => $compat_concat(typeIR_l, typeIR_r)
+  | (_, _) => false
 
-def $compat_concat(typeIR_l, typeIR_r)
-  = $compat'_concat($canon_typeIR(typeIR_l), $canon_typeIR(typeIR_r))
-def $compat'_concat(STRING, STRING) = true
-def $compat'_concat(INT `< _ >, INT `< _ >) = true
-def $compat'_concat(INT `< _ >, BIT `< _ >) = true
-def $compat'_concat(BIT `< _ >, INT `< _ >) = true
-def $compat'_concat(BIT `< _ >, BIT `< _ >) = true
-def $compat'_concat(typeIR_l, typeIR_r) = false
-  -- otherwise
+dec $result_concat(typeIR, typeIR) : typeIR
 
-dec $result_concat(typeIR, typeIR) : typeIR?
-dec $result'_concat(typeIR, typeIR) : typeIR?
-
-def $result_concat(typeIR_l, typeIR_r)
-  = $result'_concat($canon_typeIR(typeIR_l), $canon_typeIR(typeIR_r))
-def $result'_concat(STRING, STRING) = STRING
-def $result'_concat(INT `< w_a >, INT `< w_b >) = INT `< $(w_a + w_b) >
-def $result'_concat(INT `< w_a >, BIT `< w_b >) = INT `< $(w_a + w_b) >
-def $result'_concat(BIT `< w_a >, INT `< w_b >) = BIT `< $(w_a + w_b) >
-def $result'_concat(BIT `< w_a >, BIT `< w_b >) = BIT `< $(w_a + w_b) >
-def $result'_concat(typeIR_l, typeIR_r) = eps
-  -- otherwise
+def $result_concat(STRING, STRING) = STRING
+def $result_concat(INT `< w_a >, INT `< w_b >) = INT `< $(w_a + w_b) >
+def $result_concat(INT `< w_a >, BIT `< w_b >) = INT `< $(w_a + w_b) >
+def $result_concat(BIT `< w_a >, INT `< w_b >) = BIT `< $(w_a + w_b) >
+def $result_concat(BIT `< w_a >, BIT `< w_b >) = BIT `< $(w_a + w_b) >
+def $result_concat(TYPEDEF _ typeIR_l, typeIR_r)
+  = $result_concat(typeIR_l, typeIR_r)
+def $result_concat(typeIR_l, TYPEDEF _ typeIR_r)
+  = $result_concat(typeIR_l, typeIR_r)
 
 rule Expr_ok/binaryExpression-concat:
   p TC |- expression_l `++ expression_r
@@ -514,8 +507,7 @@ rule Expr_ok/binaryExpression-concat:
         = $reduce_serenum_binary(
             typedExpressionIR_l,
             typedExpressionIR_r,
-            def $compat_concat
-          )
+            def $compat_concat)
   ---- ;; fetch annotations
   -- if typeIR_l_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
   -- if ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
@@ -533,14 +525,14 @@ rule Expr_ok/binaryExpression-concat:
 
 ;;;; `&& | `||
 
-dec $compat_logical(typeIR, typeIR) : bool
-dec $compat'_logical(typeIR, typeIR) : bool
-
-def $compat_logical(typeIR_l, typeIR_r)
-  = $compat'_logical($canon_typeIR(typeIR_l), $canon_typeIR(typeIR_r))
-def $compat'_logical(BOOL, BOOL) = true
-def $compat'_logical(typeIR_l, typeIR_r) = false
-  -- otherwise
+tbl dec $compat_logical(typeIR, typeIR) : bool
+tbl def $compat_logical =
+  | (BOOL, BOOL) => true
+  | (TYPEDEF _ typeIR_l, typeIR_r)
+      => $compat_logical(typeIR_l, typeIR_r)
+  | (typeIR_l, TYPEDEF _ typeIR_r)
+      => $compat_logical(typeIR_l, typeIR_r)
+  | (_, _) => false
 
 rule Expr_ok/binaryExpression-logical:
   p TC |- expression_l binop expression_r
@@ -778,7 +770,7 @@ rulegroup Expr_ok/memberAccessExpression-type {
     -- if $is_monomorphic_typeDefIR(typeDefIR_base)
     -- if typeIR_base = $type_of_typeDefIR(typeDefIR_base)
     ---- ;; check that the type is an enum
-    -- if ENUM _ `{ nameIR_field* } = $canon_typeIR(typeIR_base)
+    -- if ENUM _ `{ nameIR_field* } = $unroll_typeIR(typeIR_base)
     ---- ;; check that the member is defined
     -- if nameIR = $name(member)
     -- if nameIR <- nameIR_field*
@@ -794,7 +786,7 @@ rulegroup Expr_ok/memberAccessExpression-type {
     -- if $is_monomorphic_typeDefIR(typeDefIR_base)
     -- if typeIR_base = $type_of_typeDefIR(typeDefIR_base)
     ---- ;; check that the type is a serializable enum
-    -- if ENUM _ `< _ > `{ (nameIR_field `= _ `;)* } = $canon_typeIR(typeIR_base)
+    -- if ENUM _ `< _ > `{ (nameIR_field `= _ `;)* } = $unroll_typeIR(typeIR_base)
     ---- ;; check that the member is defined
     -- if nameIR = $name(member)
     -- if nameIR <- nameIR_field*
@@ -817,7 +809,7 @@ rulegroup Expr_ok/memberAccessExpression-expression {
     ---- ;; fetch annotation
     -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     ---- ;; check that the expression is a header stack
-    -- if typeIR `[ n_size ] = $canon_typeIR(typeIR_base)
+    -- if typeIR `[ n_size ] = $unroll_typeIR(typeIR_base)
     ---- ;; create typed expression
     -- if expressionNoteIR = `( (BIT `< 32 >) LCTK )
 
@@ -834,7 +826,7 @@ rulegroup Expr_ok/memberAccessExpression-expression {
     ---- ;; fetch annotation
     -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     ---- ;; check that the expression is a header stack
-    -- if typeIR `[ n_size ] = $canon_typeIR(typeIR_base)
+    -- if typeIR `[ n_size ] = $unroll_typeIR(typeIR_base)
     ---- ;; create typed expression
     -- if expressionNoteIR = `( (BIT `< 32 >) DYN )
 
@@ -851,7 +843,7 @@ rulegroup Expr_ok/memberAccessExpression-expression {
     ---- ;; fetch annotation
     -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     ---- ;; check that the expression is a header stack
-    -- if typeIR `[ n_size ] = $canon_typeIR(typeIR_base)
+    -- if typeIR `[ n_size ] = $unroll_typeIR(typeIR_base)
     ---- ;; create typed expression
     -- if expressionNoteIR = `( typeIR DYN )
 
@@ -868,7 +860,7 @@ rulegroup Expr_ok/memberAccessExpression-expression {
     ---- ;; fetch annotation
     -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     ---- ;; check that the expression is a header stack
-    -- if typeIR `[ n_size ] = $canon_typeIR(typeIR_base)
+    -- if typeIR `[ n_size ] = $unroll_typeIR(typeIR_base)
     ---- ;; create typed expression
     -- if expressionNoteIR = `( typeIR DYN )
 
@@ -881,7 +873,8 @@ rulegroup Expr_ok/memberAccessExpression-expression {
     -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     -- if ctk_base = $ctk_of_typedExpressionIR(typedExpressionIR_base)
     ---- ;; check that the expression is a struct
-    -- if STRUCT _ `{ (typeIR_f nameIR_f `;)* } = $canon_typeIR(typeIR_base)
+    -- if STRUCT _ `< _ > `{ (typeIR_f nameIR_f `;)* }
+        = $unroll_typeIR(typeIR_base)
     ---- ;; find the field
     -- if nameIR = $name(member)
     -- if typeIR = $assoc_<nameIR, typeIR>(nameIR, (nameIR_f, typeIR_f)*)
@@ -897,7 +890,8 @@ rulegroup Expr_ok/memberAccessExpression-expression {
     -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     -- if ctk_base = $ctk_of_typedExpressionIR(typedExpressionIR_base)
     ---- ;; check that the expression is a header
-    -- if HEADER _ `{ (typeIR_f nameIR_f `;)* } = $canon_typeIR(typeIR_base)
+    -- if HEADER _ `< _ > `{ (typeIR_f nameIR_f `;)* }
+        = $unroll_typeIR(typeIR_base)
     ---- ;; find the field
     -- if nameIR = $name(member)
     -- if typeIR = $assoc_<nameIR, typeIR>(nameIR, (nameIR_f, typeIR_f)*)
@@ -913,7 +907,8 @@ rulegroup Expr_ok/memberAccessExpression-expression {
     -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     -- if ctk_base = $ctk_of_typedExpressionIR(typedExpressionIR_base)
     ---- ;; check that the expression is a header union 
-    -- if HEADER_UNION _ `{ (typeIR_f nameIR_f `;)* } = $canon_typeIR(typeIR_base)
+    -- if HEADER_UNION _ `< _ > `{ (typeIR_f nameIR_f `;)* }
+        = $unroll_typeIR(typeIR_base)
     ---- ;; find the field
     -- if nameIR = $name(member)
     -- if typeIR = $assoc_<nameIR, typeIR>(nameIR, (nameIR_f, typeIR_f)*)
@@ -929,7 +924,7 @@ rulegroup Expr_ok/memberAccessExpression-expression {
     -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     ---- ;; check that the expression is a table struct
     -- if TABLE_STRUCT _ `{ HIT boolTypeIR `; MISS _ `; ACTION_RUN _ `; }
-        = $canon_typeIR(typeIR_base)
+        = $unroll_typeIR(typeIR_base)
     ---- ;; check member
     -- if nameIR = $name(member)
     -- if nameIR = "hit"
@@ -945,7 +940,7 @@ rulegroup Expr_ok/memberAccessExpression-expression {
     -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     ---- ;; check that the expression is a table struct
     -- if TABLE_STRUCT _ `{ HIT _ `; MISS boolTypeIR `; ACTION_RUN _ `; }
-        = $canon_typeIR(typeIR_base)
+        = $unroll_typeIR(typeIR_base)
     ---- ;; check member
     -- if nameIR = $name(member)
     -- if nameIR = "miss"
@@ -961,7 +956,7 @@ rulegroup Expr_ok/memberAccessExpression-expression {
     -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     ---- ;; check that the expression is a table struct
     -- if TABLE_STRUCT _ `{ HIT _ `; MISS _ `; ACTION_RUN tableMetadataEnumTypeIR `; }
-        = $canon_typeIR(typeIR_base)
+        = $unroll_typeIR(typeIR_base)
     ---- ;; check member
     -- if nameIR = $name(member)
     -- if nameIR = "action_run"
@@ -974,16 +969,14 @@ rulegroup Expr_ok/memberAccessExpression-expression {
 ;;;; syntax indexAccessExpression =
 ;;;;; expression `[ expression ]
 
-dec $compat_array_index(typeIR) : bool
-dec $compat'_arrayindex(typeIR) : bool
-
-def $compat_array_index(typeIR)
-  = $compat'_arrayindex($canon_typeIR(typeIR))
-def $compat'_arrayindex(INT) = true
-def $compat'_arrayindex(INT `< _ >) = true
-def $compat'_arrayindex(BIT `< _ >) = true
-def $compat'_arrayindex(typeIR) = false
-  -- otherwise
+tbl dec $compat_array_index(typeIR) : bool
+tbl def $compat_array_index =
+  | INT => true
+  | INT `< _ > => true
+  | BIT `< _ > => true
+  | TYPEDEF _ typeIR
+      => $compat_array_index(typeIR)
+  | _ => false
 
 rulegroup Expr_ok/indexAccessExpression {
 
@@ -1008,10 +1001,10 @@ rulegroup Expr_ok/indexAccessExpression {
           )
     ---- ;; check that the base expression is a tuple
     ---- ;; then, index must be local compile-time known and in range
-    -- if TUPLE `< typeIR_e* > = $canon_typeIR(typeIR_base)
+    -- if TUPLE `< typeIR_e* > = $unroll_typeIR(typeIR_base)
     -- if ctk_index = LCTK
-    -- Expr_eval_lctk: p TC |- typedExpressionIR_index_reduced ~> value_index
-    -- if n_index = $int_of_value(value_index)
+    -- Expr_eval_lctk: p TC |- typedExpressionIR_index_reduced ~> integerValue_index
+    -- if n_index = $int_of_integerValue(integerValue_index)
     -- if $(n_index < |typeIR_e*|)
     ---- ;; create typed expression
     -- if expressionNoteIR = `( typeIR_e*[n_index] ctk_base )
@@ -1033,14 +1026,13 @@ rulegroup Expr_ok/indexAccessExpression {
     -- if typedExpressionIR_index_reduced
         = $reduce_serenum_unary(
             typedExpressionIR_index,
-            def $compat_array_index
-          )
+            def $compat_array_index)
     ---- ;; check that the base expression is a stack
     ---- ;; if the index is local compile-time known, then it must be in range
-    -- if typeIR `[ n_size ] = $canon_typeIR(typeIR_base)
+    -- if typeIR `[ n_size ] = $unroll_typeIR(typeIR_base)
     -- if ctk_index = LCTK
-    -- Expr_eval_lctk: p TC |- typedExpressionIR_index_reduced ~> value_index
-    -- if n_index = $int_of_value(value_index)
+    -- Expr_eval_lctk: p TC |- typedExpressionIR_index_reduced ~> integerValue_index
+    -- if n_index = $int_of_integerValue(integerValue_index)
     -- if $(n_index < n_size)
     ---- ;; create typed expression
     -- if expressionNoteIR = `( typeIR ctk_base )
@@ -1062,11 +1054,10 @@ rulegroup Expr_ok/indexAccessExpression {
     -- if typedExpressionIR_index_reduced
         = $reduce_serenum_unary(
             typedExpressionIR_index,
-            def $compat_array_index
-          )
+            def $compat_array_index)
     ---- ;; check that the base expression is a stack
     ---- ;; if the index is not local compile-time known, no range check is done
-    -- if typeIR `[ n_size ] = $canon_typeIR(typeIR_base)
+    -- if typeIR `[ n_size ] = $unroll_typeIR(typeIR_base)
     -- if ctk_index =/= LCTK
     ---- ;; create typed expression
     -- if ctk = $join_ctk(ctk_base, ctk_index)
@@ -1078,41 +1069,36 @@ rulegroup Expr_ok/indexAccessExpression {
 ;;;; syntax sliceAccessExpression =
 ;;;;  expression `[ expression `: expression ]
 
-dec $compat_bitslice_base(typeIR) : bool
-dec $compat'_bitslice_base(typeIR) : bool
+tbl dec $compat_bitslice_base(typeIR) : bool
+tbl def $compat_bitslice_base =
+  | INT => true
+  | INT `< w > => $(w > 0)
+  | BIT `< _ > => true
+  | TYPEDEF _ typeIR
+      => $compat_bitslice_base(typeIR)
+  | _ => false
 
-def $compat_bitslice_base(typeIR)
-  = $compat'_bitslice_base($canon_typeIR(typeIR))
-def $compat'_bitslice_base(INT) = true
-def $compat'_bitslice_base(INT `< w >) = $(w > 0)
-def $compat'_bitslice_base(BIT `< _ >) = true
-def $compat'_bitslice_base(typeIR) = false
-  -- otherwise
-
-dec $compat_bitslice_index(typeIR) : bool
-dec $compat'_bitslice_index(typeIR) : bool
-
-def $compat_bitslice_index(typeIR)
-  = $compat'_bitslice_index($canon_typeIR(typeIR))
-def $compat'_bitslice_index(INT) = true
-def $compat'_bitslice_index(INT `< _ >) = true
-def $compat'_bitslice_index(BIT `< _ >) = true
-def $compat'_bitslice_index(typeIR) = false
-  -- otherwise
+tbl dec $compat_bitslice_index(typeIR) : bool
+tbl def $compat_bitslice_index =
+  | INT => true
+  | INT `< _ > => true
+  | BIT `< _ > => true
+  | TYPEDEF _ typeIR
+      => $compat_bitslice_index(typeIR)
+  | _ => false
 
 dec $is_valid_bitslice(typeIR, nat, nat) : bool
-dec $is_valid_bitslice'(typeIR, nat, nat) : bool
 
-def $is_valid_bitslice(typeIR, n_lo, n_hi)
-  = $(n_lo <= n_hi) /\ $is_valid_bitslice'($canon_typeIR(typeIR), n_lo, n_hi)
-def $is_valid_bitslice'(INT, _, _) = true
-def $is_valid_bitslice'(INT `< w >, n_lo, n_hi)
-  = $(n_hi <= w) /\ $(w_slice <= w)
+def $is_valid_bitslice(INT, n_lo, n_hi) = $(n_lo <= n_hi)
+def $is_valid_bitslice(INT `< w >, n_lo, n_hi)
+  = $(n_lo <= n_hi) /\ $(n_hi <= w) /\ $(w_slice <= w)
   -- if w_slice = $(n_hi - n_lo + 1)
-def $is_valid_bitslice'(BIT `< w >, n_lo, n_hi)
-  = $(n_hi <= w) /\ $(w_slice <= w)
+def $is_valid_bitslice(BIT `< w >, n_lo, n_hi)
+  = $(n_lo <= n_hi) /\ $(n_hi <= w) /\ $(w_slice <= w)
   -- if w_slice = $(n_hi - n_lo + 1)
-def $is_valid_bitslice'(_, _, _) = false
+def $is_valid_bitslice(TYPEDEF _ typeIR, n_lo, n_hi)
+  = $is_valid_bitslice(typeIR, n_lo, n_hi)
+def $is_valid_bitslice(_, _, _) = false
   -- otherwise
 
 rule Expr_ok/sliceAccessExpression:
@@ -1129,8 +1115,7 @@ rule Expr_ok/sliceAccessExpression:
   -- if typedExpressionIR_base_reduced
       = $reduce_serenum_unary(
           typedExpressionIR_base,
-          def $compat_bitslice_base
-        )
+          def $compat_bitslice_base)
   ---- ;; fetch base annotation
   -- if typeIR_base_reduced = $type_of_typedExpressionIR(typedExpressionIR_base_reduced)
   -- if ctk_base_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_base_reduced)
@@ -1139,13 +1124,11 @@ rule Expr_ok/sliceAccessExpression:
   -- if typedExpressionIR_hi_reduced
       = $reduce_serenum_unary(
           typedExpressionIR_hi,
-          def $compat_bitslice_index
-        )
+          def $compat_bitslice_index)
   -- if typedExpressionIR_lo_reduced
       = $reduce_serenum_unary(
           typedExpressionIR_lo,
-          def $compat_bitslice_index
-        )
+          def $compat_bitslice_index)
   ---- ;; fetch index annotations
   -- if typeIR_hi_reduced = $type_of_typedExpressionIR(typedExpressionIR_hi_reduced)
   -- if ctk_hi_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_hi_reduced)
@@ -1153,11 +1136,11 @@ rule Expr_ok/sliceAccessExpression:
   -- if ctk_lo_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_lo_reduced)
   ---- ;; check that the indices are local compile-time known
   -- if ctk_hi_reduced = LCTK
-  -- Expr_eval_lctk: p TC |- typedExpressionIR_hi_reduced ~> value_hi
-  -- if n_hi = $int_of_value(value_hi)
+  -- Expr_eval_lctk: p TC |- typedExpressionIR_hi_reduced ~> integerValue_hi
+  -- if n_hi = $int_of_integerValue(integerValue_hi)
   -- if ctk_lo_reduced = LCTK
-  -- Expr_eval_lctk: p TC |- typedExpressionIR_lo_reduced ~> value_lo
-  -- if n_lo = $int_of_value(value_lo)
+  -- Expr_eval_lctk: p TC |- typedExpressionIR_lo_reduced ~> integerValue_lo
+  -- if n_lo = $int_of_integerValue(integerValue_lo)
   ---- ;; check that the slice is valid
   -- if $is_valid_bitslice(typeIR_base_reduced, n_lo, n_hi)
   ---- ;; create typed expression
@@ -1237,11 +1220,13 @@ dec $is_concrete_extern_object'(typeIR) : bool
 dec $is_concrete_extern_object''(externMethodTypeDefIR) : bool
 
 def $is_concrete_extern_object(typeIR)
-    = $is_concrete_extern_object'($canon_typeIR(typeIR))
+    = $is_concrete_extern_object'($unroll_typeIR(typeIR))
 
 def $is_concrete_extern_object'(typeIR) = true
   -- if ~$is_externObjectTypeIR(typeIR)
-def $is_concrete_extern_object'(EXTERN _ `{ (_ `: externMethodTypeDefIR)* }) = true
+def $is_concrete_extern_object'(
+    EXTERN _ `< _ > `{ (_ `: externMethodTypeDefIR)* })
+  = true
   -- if ($is_concrete_extern_object''(externMethodTypeDefIR))*
 def $is_concrete_extern_object'(typeIR) = false
   -- otherwise

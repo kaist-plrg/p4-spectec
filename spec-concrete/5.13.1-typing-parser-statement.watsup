@@ -41,7 +41,7 @@ rule SelectCase_keyset_simple_ok/expression-set-alpha:
   ---- ;; check keyset expression
   -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
   -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
-  -- if SET `< typeIR_base > = $canon_typeIR(typeIR)
+  -- if SET `< typeIR_base > = $unroll_typeIR(typeIR)
   ---- ;; if the keyset type equals the key type
   -- Type_alpha: typeIR_base ~~ typeIR_key
 
@@ -50,7 +50,7 @@ rule SelectCase_keyset_simple_ok/expression-set-subtype:
   ---- ;; check keyset expression
   -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
   -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
-  -- if SET `< typeIR_base > = $canon_typeIR(typeIR)
+  -- if SET `< typeIR_base > = $unroll_typeIR(typeIR)
   ---- ;; if the keyset type is a subtype of the key type
   -- Type_alpha:/ typeIR_base ~~ typeIR_key
   -- Sub_impl: typeIR_base <: typeIR_key
@@ -65,7 +65,7 @@ rule SelectCase_keyset_simple_ok/expression-non-set:
   -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
   -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
   ---- ;; if the keyset type is not a set type
-  -- if ~$is_setTypeIR($canon_typeIR(typeIR))
+  -- if ~$is_setTypeIR($unroll_typeIR(typeIR))
   ---- ;; if the keyset type is a subtype of the key type
   -- Sub_impl: typeIR <: typeIR_key
   ---- ;; cast the expression to the key type
@@ -75,16 +75,14 @@ rule SelectCase_keyset_simple_ok/expression-non-set:
 
 ;;;;;; expression `&&& expression
 
-dec $compat_mask(typeIR, typeIR) : bool
-dec $compat'_mask(typeIR, typeIR) : bool
-
-def $compat_mask(typeIR_l, typeIR_r)
-  = $compat'_mask($canon_typeIR(typeIR_l), $canon_typeIR(typeIR_r))
-def $compat'_mask(INT, INT) = true
-def $compat'_mask(INT `< w >, INT `< w >) = true
-def $compat'_mask(BIT `< w >, BIT `< w >) = true
-def $compat'_mask(typeIR_l, typeIR_r) = false
-  -- otherwise
+tbl dec $compat_mask(typeIR, typeIR) : bool
+tbl def $compat_mask =
+  | (INT, INT) => true
+  | (INT `< w_l >, INT `< w_r >) => $(w_l = w_r)
+  | (BIT `< w_l >, BIT `< w_r >) => $(w_l = w_r)
+  | (TYPEDEF _ typeIR_l, typeIR_r) => $compat_mask(typeIR_l, typeIR_r)
+  | (typeIR_l, TYPEDEF _ typeIR_r) => $compat_mask(typeIR_l, typeIR_r)
+  | (_, _) => false
 
 rule SelectCase_keyset_simple_ok/mask:
   TC typeIR_key |- expression_l `&&& expression_r
@@ -100,8 +98,7 @@ rule SelectCase_keyset_simple_ok/mask:
         = $reduce_serenum_binary(
             typedExpressionIR_l_cast,
             typedExpressionIR_r_cast,
-            def $compat_mask
-          )
+            def $compat_mask)
   ---- ;; fetch the type
   -- if typeIR_reduced
       = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
@@ -127,8 +124,7 @@ rule SelectCase_keyset_simple_ok/range:
         = $reduce_serenum_binary(
             typedExpressionIR_l_cast,
             typedExpressionIR_r_cast,
-            def $compat_range
-          )
+            def $compat_range)
   ---- ;; fetch the types of both sides
   -- if typeIR_reduced
       = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
@@ -438,7 +434,7 @@ rulegroup ParserStmt_ok/parserConditionalStatement {
     ---- ;; fetch annotation
     ---- ;; the condition must be a boolean type
     -- if typeIR_cond = $type_of_typedExpressionIR(typedExpressionIR_cond)
-    -- if BOOL = $canon_typeIR(typeIR_cond)
+    -- if BOOL = $unroll_typeIR(typeIR_cond)
     ---- ;; check then statement
     -- ParserStmt_ok: TC |- parserStatement_then
                           : TC_then parserStatementIR_then
@@ -453,7 +449,7 @@ rulegroup ParserStmt_ok/parserConditionalStatement {
     ---- ;; fetch annotation
     ---- ;; the condition must be a boolean type
     -- if typeIR_cond = $type_of_typedExpressionIR(typedExpressionIR_cond)
-    -- if BOOL = $canon_typeIR(typeIR_cond)
+    -- if BOOL = $unroll_typeIR(typeIR_cond)
     ---- ;; check then and else statements
     -- ParserStmt_ok: TC |- parserStatement_then
                           : TC_then parserStatementIR_then

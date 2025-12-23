@@ -2,6 +2,8 @@
 ;; Type definitions
 ;;
 
+syntax typeParameterIR = typeId
+
 ;;
 ;;;; Name type definitions (to represent type parameters)
 ;;
@@ -19,14 +21,11 @@ syntax aliasTypeDefIR = aliasTypeIR
 ;;
 
 syntax structTypeDefIR =
-  STRUCT typeId `< typeId* `, typeId* > `{ fieldTypeIR* }
-  hint(print %0)
+  STRUCT typeId `< typeParameterIR* `, typeParameterIR* > `{ fieldTypeIR* }
 syntax headerTypeDefIR =
-  HEADER typeId `< typeId* `, typeId* > `{ fieldTypeIR* }
-  hint(print %0)
+  HEADER typeId `< typeParameterIR* `, typeParameterIR* > `{ fieldTypeIR* }
 syntax headerUnionTypeDefIR =
-  HEADER_UNION typeId `< typeId* `, typeId* > `{ fieldTypeIR* }
-  hint(print %0)
+  HEADER_UNION typeId `< typeParameterIR* `, typeParameterIR* > `{ fieldTypeIR* }
 
 syntax enumTypeDefIR = enumTypeIR
 
@@ -41,20 +40,16 @@ syntax dataTypeDefIR =
 ;;
 
 syntax externObjectTypeDefIR =
-  EXTERN typeId `< typeId* `, typeId* > externMethodTypeDefEnv
-  hint(print %0)
+  EXTERN typeId `< typeParameterIR* `, typeParameterIR* > externMethodTypeDefEnv
 
 syntax parserObjectTypeDefIR =
-  PARSER typeId `< typeId* `, typeId* > `( parameterIR* )
-  hint(print %0)
+  PARSER typeId `< typeParameterIR* `, typeParameterIR* > `( parameterIR* )
 
 syntax controlObjectTypeDefIR =
-  CONTROL typeId `< typeId* `, typeId* > `( parameterIR* )
-  hint(print %0)
+  CONTROL typeId `< typeParameterIR* `, typeParameterIR* > `( parameterIR* )
 
 syntax packageObjectTypeDefIR =
-  PACKAGE typeId `< typeId* `, typeId* > `{ typeIR* }
-  hint(print %0)
+  PACKAGE typeId `< typeParameterIR* `, typeParameterIR* > `{ typeIR* }
 
 syntax tableObjectTypeDefIR = tableObjectTypeIR
 

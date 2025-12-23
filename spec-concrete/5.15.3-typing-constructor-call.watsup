@@ -4,12 +4,12 @@
 
 dec $resolve_type_alias(typeIR) : (nameIR, typeIR*)
 
-def $resolve_type_alias(specializedTypeIR)
-  = (nameIR_alias, typeIR_arg*)
-  -- if typeDefIR `< typeIR_arg* > = specializedTypeIR
-  -- if nameIR_alias = $name_of_typeDefIR(typeDefIR)
 def $resolve_type_alias(TYPEDEF nameIR_alias typeIR_alias)
   = $resolve_type_alias(typeIR_alias)
+def $resolve_type_alias(EXTERN nameIR_alias `< typeIR_arg* > _)
+  = (nameIR_alias, typeIR_arg*)
+def $resolve_type_alias(PACKAGE nameIR_alias `< typeIR_arg* > `{ _ })
+  = (nameIR_alias, typeIR_arg*)
 
 rule ConstructorType_ok/non-aliased-none-type:
   p TC |- prefixedNameIR `< typeArgumentIR* > `( argumentIR* )
@@ -102,19 +102,19 @@ dec $instantiable(cursor, typingContext, instctxt, typeIR) : bool
 
 def $instantiable(p, TC, instctxt, typeIR)
   = $instantiable_extern(p, TC, instctxt)
-  -- if $is_externObjectTypeIR($canon_typeIR(typeIR))
+  -- if $is_externObjectTypeIR($unroll_typeIR(typeIR))
 def $instantiable(p, TC, instctxt, typeIR)
   = $instantiable_parser(p, TC, instctxt)
-  -- if $is_parserObjectTypeIR($canon_typeIR(typeIR))
+  -- if $is_parserObjectTypeIR($unroll_typeIR(typeIR))
 def $instantiable(p, TC, instctxt, typeIR)
   = $instantiable_control(p, TC, instctxt)
-  -- if $is_controlObjectTypeIR($canon_typeIR(typeIR))
+  -- if $is_controlObjectTypeIR($unroll_typeIR(typeIR))
 def $instantiable(p, TC, instctxt, typeIR)
   = $instantiable_package(p, TC, instctxt)
-  -- if $is_packageObjectTypeIR($canon_typeIR(typeIR))
+  -- if $is_packageObjectTypeIR($unroll_typeIR(typeIR))
 def $instantiable(p, TC, instctxt, typeIR)
   = $instantiable_table(p, TC, instctxt)
-  -- if $is_tableObjectTypeIR($canon_typeIR(typeIR))
+  -- if $is_tableObjectTypeIR($unroll_typeIR(typeIR))
 
 ;;; Instantiation of a package
 
@@ -126,7 +126,7 @@ rule Inst_ok/package:
   ---- ;; if the constructor is for a package object
   -- if CONSTRUCTOR `( parameterIR* ) `: typeIR_object
       = constructorTypeIR
-  -- if PACKAGE _ `{ _ } = $canon_typeIR(typeIR_object)
+  -- if PACKAGE _ `< _ > `{ _ } = $unroll_typeIR(typeIR_object)
   ---- ;; align parameters with arguments
   -- if (parameterIR_aligned*, argumentIR_aligned*, _, _)
       = $align_parameterListIR(parameterIR*, argumentIR*, id_default*)
@@ -160,7 +160,7 @@ rule Inst_ok/non-package:
   ---- ;; if the constructor is not for a package object
   -- if CONSTRUCTOR `( parameterIR* ) `: typeIR_object
       = constructorTypeIR
-  -- if ~$is_packageObjectTypeIR($canon_typeIR(typeIR_object))
+  -- if ~$is_packageObjectTypeIR($unroll_typeIR(typeIR_object))
   ---- ;; align parameters with arguments
   -- if (parameterIR_aligned*, argumentIR_aligned*, _, _)
       = $align_parameterListIR(parameterIR*, argumentIR*, id_default*)
