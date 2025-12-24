@@ -36,7 +36,7 @@ You may also need `libgmp-dev` and `pkg-config`, if the error message says so.
 ### To Elaborate the P4-SpecTec Specification
 
 ```shell
-$ ./p4spectec elab spec-concrete/*.watsup
+$ ./p4spectec elab spec-concrete/*/*.watsup
 ```
 
 ### To Run the P4-SpecTec Specification
@@ -46,9 +46,9 @@ Given a P4 program, below command runs a particular relation on it.
 
 ```shell
 # To run the IL
-$ ./p4spectec run spec-concrete/*.watsup -rel [RELNAME] -i p4c/p4include -p [FILENAME].p4 -il
+$ ./p4spectec run spec-concrete/*/*.watsup -rel [RELNAME] -i p4c/p4include -p [FILENAME].p4 -il
 # To run the SL
-$ ./p4spectec run spec-concrete/*.watsup -rel [RELNAME] -i p4c/p4include -p [FILENAME].p4 -sl
+$ ./p4spectec run spec-concrete/*/*.watsup -rel [RELNAME] -i p4c/p4include -p [FILENAME].p4 -sl
 ```
 
 ### To Run the P4-SpecTec Specification with an Architecture Simulator
@@ -59,15 +59,15 @@ Currently, we only support a limited subset of the V1Model architecture.
 
 ```shell
 # To run the IL
-$ ./p4spectec sim spec-concrete/*.watsup -arch v1model -i p4c/p4include -p [FILENAME].p4 -stf [STF FILENAME].stf -il
+$ ./p4spectec sim spec-concrete/*/*.watsup -arch v1model -i p4c/p4include -p [FILENAME].p4 -stf [STF FILENAME].stf -il
 # To run the SL
-$ ./p4spectec sim spec-concrete/*.watsup -arch v1model -i p4c/p4include -p [FILENAME].p4 -stf [STF FILENAME].stf -sl
+$ ./p4spectec sim spec-concrete/*/*.watsup -arch v1model -i p4c/p4include -p [FILENAME].p4 -stf [STF FILENAME].stf -sl
 ```
 
 ### To Initiate a Fuzz Loop for Generating (intentionally) Ill-typed P4 Programs
 
 ```shell
-$ ./p4spectec testgen spec-concrete/*.watsup -rel Program_ok -i p4c/p4include -seed [SEED DIR] -gen [GEN DIR] -fuel [NUM]
+$ ./p4spectec testgen spec-concrete/*/*.watsup -rel Program_ok -i p4c/p4include -seed [SEED DIR] -gen [GEN DIR] -fuel [NUM]
 ```
 
 This will generate P4 programs in the directory `[GEN DIR]` using the seed files in the directory `[SEED DIR]`.
@@ -79,7 +79,7 @@ query files for mutations `query.log` and an initial coverage file `boot.cov`.
 In later runs with the same seed directory, you can use warm boot to skip the pre-loop phase.
 
 ```shell
-$ ./p4spectec testgen spec-concrete/*.watsup -rel Program_ok -i p4c/p4include -seed [SEED DIR] -gen [GEN DIR] -fuel [NUM] -warm [COV FILE]
+$ ./p4spectec testgen spec-concrete/*/*.watsup -rel Program_ok -i p4c/p4include -seed [SEED DIR] -gen [GEN DIR] -fuel [NUM] -warm [COV FILE]
 ```
 
 At a high level, the fuzz loop will:
@@ -89,7 +89,7 @@ At a high level, the fuzz loop will:
 To see what values are derived from a given P4 program and a phantom id, run:
 
 ```
-$ ./p4spectec testgen-dbg spec-concrete/*.watsup -rel Program_ok -i p4c/p4include -p [FILENAME].p4 -pid [PID] -debug [DEBUG DIR]
+$ ./p4spectec testgen-dbg spec-concrete/*/*.watsup -rel Program_ok -i p4c/p4include -p [FILENAME].p4 -pid [PID] -debug [DEBUG DIR]
 ```
 
 ### Contributing
