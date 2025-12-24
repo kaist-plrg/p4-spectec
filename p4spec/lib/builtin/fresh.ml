@@ -4,9 +4,9 @@ open Util.Source
 
 let ctr = ref 0
 
-(* dec $fresh_tid() : tid *)
+(* dec $fresh_typeId() : typeId *)
 
-let fresh_tid (add : value -> unit) (at : region) (targs : targ list)
+let fresh_typeId (add : value -> unit) (at : region) (targs : targ list)
     (values_input : value list) : value =
   Extract.zero at targs;
   Extract.zero at values_input;
@@ -14,7 +14,7 @@ let fresh_tid (add : value -> unit) (at : region) (targs : targ list)
   ctr := !ctr + 1;
   let value =
     let vid = Value.fresh () in
-    let typ = Il.Ast.VarT ("tid" $ no_region, []) in
+    let typ = Il.Ast.VarT ("typeId" $ no_region, []) in
     TextV tid $$$ { vid; typ }
   in
   add value;

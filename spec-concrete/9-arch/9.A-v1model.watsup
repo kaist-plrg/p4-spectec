@@ -1,0 +1,494 @@
+;;
+;; V1Model architecture initialization
+;;
+
+relation V1Model_init:
+  |- p4program : evalContext store
+  hint(input %0)
+  hint(prose_in "initializing the evaluation context and store for"
+                %0 "in the V1Model architecture")
+  hint(prose_out "the resulting evaluation context" %1#" and store" %2)
+
+rule V1Model_init:
+  |- p4program : EC_0 STO_0
+  ---- ;; instantiate the program
+  -- Program_init:
+      |- p4program : EC_0 STO_0
+
+;;
+;; V1Model packet setup
+;;
+
+relation V1Model_init_packet_in:
+  evalContext store |- externState : evalContext store
+  hint(input %0 %1 %2)
+
+rule V1Model_init_packet_in:
+  EC_0 STO_0 |- externState_packet_in : EC_1 STO_2
+  ---- ;; initialize packet_in extern
+  -- Extern_init: EC_0 STO_0 |- "packet_in" : STO_1
+  ---- ;; add packet_in to context
+  -- if EC_1 = $add_var_e(GLOBAL, EC_0, `` "packet_in", `! "packet_in")
+  ---- ;; initialize packet_in state and update store
+  -- if externObject_packet_in = $find_map<objectId, object>(STO_1, [ "packet_in" ])
+  -- if EXTERN typeId `< theta > `{ _ frame externMethodDefEnv }
+      = externObject_packet_in
+  -- if externObject_packet_in_init
+      = EXTERN typeId `< theta > `{ externState_packet_in frame externMethodDefEnv }
+  -- if STO_2 = $add_map<objectId, object>(STO_1, [ "packet_in" ], externObject_packet_in_init)
+
+relation V1Model_init_packet_out:
+  evalContext store |- externState : evalContext store
+  hint(input %0 %1 %2)
+
+rule V1Model_init_packet_out:
+  EC_0 STO_0 |- externState_packet_out : EC_1 STO_2
+  ---- ;; initialize packet_out extern
+  -- Extern_init: EC_0 STO_0 |- "packet_out" : STO_1
+  ---- ;; add packet_out to context
+  -- if EC_1 = $add_var_e(GLOBAL, EC_0, `` "packet_out", `! "packet_out")
+  ---- ;; initialize packet_out state and update store
+  -- if externObject_packet_out = $find_map<objectId, object>(STO_1, [ "packet_out" ])
+  -- if EXTERN typeId `< theta > `{ _ frame externMethodDefEnv }
+      = externObject_packet_out
+  -- if externObject_packet_out_init
+      = EXTERN typeId `< theta > `{ externState_packet_out frame externMethodDefEnv }
+  -- if STO_2 = $add_map<objectId, object>(STO_1, [ "packet_out" ], externObject_packet_out_init)
+
+relation V1Model_init_globals:
+  evalContext store |- int : evalContext
+  hint(input %0 %1 %2)
+
+rule V1Model_init_globals:
+  EC_0 STO |- i_port : EC_4
+  ---- ;; hdr and meta
+  -- if PACKAGE `< theta > `{ _ }
+      = $find_map<objectId, object>(STO, [ "main" ])
+  -- if typeIR_hdr = $find_map<typeId, typeIR>(theta, "H")
+  -- if typeIR_meta = $find_map<typeId, typeIR>(theta, "M")
+  -- Var_init: EC_0 |- typeIR_hdr "hdr" : EC_1
+  -- Var_init: EC_1 |- typeIR_meta "meta" : EC_2
+  ---- ;; standard_metadata
+  -- if typeDefIR_standard_metadata
+      = $find_typeDef_e(GLOBAL, EC_2, `` "standard_metadata_t")
+  -- if typeIR_std_meta
+      = $specialize_typeDefIR(typeDefIR_standard_metadata, eps)
+  -- Var_init: EC_2 |- typeIR_std_meta "standard_metadata" : EC_3
+  ---- ;; setup port
+  -- if storageReference_port = (`` "standard_metadata") `. "ingress_port"
+  -- if value_port = 9 W i_port
+  -- Lvalue_write:
+      GLOBAL EC_3 STO |- storageReference_port -> value_port : EC_4
+
+;;
+;; Setup helpers
+;;
+
+dec $V1Model_setup_packet_in_argument(evalContext) : argumentIR
+def $V1Model_setup_packet_in_argument(EC) = argumentIR_packet_in
+  -- if typeDefIR_packet_in
+      = $find_typeDef_e(GLOBAL, EC, `` "packet_in")
+  -- if typeIR_packet_in
+      = $specialize_typeDefIR(typeDefIR_packet_in, eps)
+  -- if argumentIR_packet_in
+      = (`. "packet_in") `# `( typeIR_packet_in CTK )
+
+dec $V1Model_setup_packet_out_argument(evalContext) : argumentIR
+def $V1Model_setup_packet_out_argument(EC) = argumentIR_packet_out
+  -- if typeDefIR_packet_out
+      = $find_typeDef_e(GLOBAL, EC, `` "packet_out")
+  -- if typeIR_packet_out
+      = $specialize_typeDefIR(typeDefIR_packet_out, eps)
+  -- if argumentIR_packet_out
+      = (`. "packet_out") `# `( typeIR_packet_out CTK )
+
+dec $V1Model_setup_hdr_argument(store) : argumentIR
+def $V1Model_setup_hdr_argument(STO) = argumentIR_hdr
+  -- if PACKAGE `< theta > `{ _ }
+      = $find_map<objectId, object>(STO, [ "main" ])
+  -- if typeIR_hdr = $find_map<typeId, typeIR>(theta, "H") 
+  -- if argumentIR_hdr
+      = (`. "hdr") `# `( typeIR_hdr DYN )
+
+dec $V1Model_setup_meta_argument(store) : argumentIR
+def $V1Model_setup_meta_argument(STO) = argumentIR_meta
+  -- if PACKAGE `< theta > `{ _ }
+      = $find_map<objectId, object>(STO, [ "main" ])
+  -- if typeIR_meta = $find_map<typeId, typeIR>(theta, "M") 
+  -- if argumentIR_meta
+      = (`. "meta") `# `( typeIR_meta DYN )
+
+dec $V1Model_setup_standard_metadata_argument(evalContext) : argumentIR
+def $V1Model_setup_standard_metadata_argument(EC) = argumentIR_standard_metadata
+  -- if typeDefIR_standard_metadata
+      = $find_typeDef_e(GLOBAL, EC, `` "standard_metadata_t")
+  -- if typeIR_std_meta
+      = $specialize_typeDefIR(typeDefIR_standard_metadata, eps)
+  -- if argumentIR_standard_metadata
+      = (`. "standard_metadata") `# `( typeIR_std_meta DYN )
+
+dec $V1Model_setup_main_callee(evalContext, store) : typedExpressionIR
+def $V1Model_setup_main_callee(EC, STO) = typedExpressionIR_main
+  ---- ;; get package type definition
+  -- if typeDefIR_package
+      = $find_typeDef_e(GLOBAL, EC, `` "V1Switch")
+  ---- ;; get package type arguments
+  -- if PACKAGE `< theta > `{ _ }
+      = $find_map<objectId, object>(STO, [ "main" ])
+  -- if typeIR_hdr = $find_map<typeId, typeIR>(theta, "H")
+  -- if typeIR_meta = $find_map<typeId, typeIR>(theta, "M")
+  ---- ;; create callee
+  -- if typeIR_package
+      = $specialize_typeDefIR(typeDefIR_package, [ typeIR_hdr, typeIR_meta ])
+  -- if typedExpressionIR_main
+      = (`` "main") `# `( typeIR_package CTK )
+
+dec $V1Model_setup_parser_callee(
+    evalContext, store, typedExpressionIR
+  )
+  : typedExpressionIR
+def $V1Model_setup_parser_callee(
+    EC, STO, typedExpressionIR_main
+  )
+  = typedExpressionIR_parser
+  ---- ;; get parser type definition
+  -- if typeDefIR_parser = $find_typeDef_e(GLOBAL, EC, `` "Parser")
+  ---- ;; get package type arguments
+  -- if PACKAGE `< theta > `{ _ }
+      = $find_map<objectId, object>(STO, [ "main" ])
+  -- if typeIR_hdr = $find_map<typeId, typeIR>(theta, "H")
+  -- if typeIR_meta = $find_map<typeId, typeIR>(theta, "M")
+  ---- ;; create callee
+  -- if typeIR_parser
+      = $specialize_typeDefIR(typeDefIR_parser, [ typeIR_hdr, typeIR_meta ])
+  -- if typedExpressionIR_parser
+      = (typedExpressionIR_main `. "p") `# `( typeIR_parser CTK )
+
+dec $V1Model_setup_verify_callee(
+    evalContext, store, typedExpressionIR
+  )
+  : typedExpressionIR
+def $V1Model_setup_verify_callee(
+    EC, STO, typedExpressionIR_main
+  )
+  = typedExpressionIR_verify
+  ---- ;; get parser type definition
+  -- if typeDefIR_verify
+      = $find_typeDef_e(GLOBAL, EC, `` "VerifyChecksum")
+  ---- ;; get package type arguments
+  -- if PACKAGE `< theta > `{ _ }
+      = $find_map<objectId, object>(STO, [ "main" ])
+  -- if typeIR_hdr = $find_map<typeId, typeIR>(theta, "H")
+  -- if typeIR_meta = $find_map<typeId, typeIR>(theta, "M")
+  ---- ;; create callee
+  -- if typeIR_verify
+      = $specialize_typeDefIR(typeDefIR_verify, [ typeIR_hdr, typeIR_meta ])
+  -- if typedExpressionIR_verify
+      = (typedExpressionIR_main `. "vr") `# `( typeIR_verify CTK )
+
+dec $V1Model_setup_ingress_callee(
+    evalContext, store, typedExpressionIR
+  )
+  : typedExpressionIR
+def $V1Model_setup_ingress_callee(
+    EC, STO, typedExpressionIR_main
+  )
+  = typedExpressionIR_ingress
+  ---- ;; get parser type definition
+  -- if typeDefIR_ingress
+      = $find_typeDef_e(GLOBAL, EC, `` "Ingress")
+  ---- ;; get package type arguments
+  -- if PACKAGE `< theta > `{ _ }
+      = $find_map<objectId, object>(STO, [ "main" ])
+  -- if typeIR_hdr = $find_map<typeId, typeIR>(theta, "H")
+  -- if typeIR_meta = $find_map<typeId, typeIR>(theta, "M")
+  ---- ;; create callee
+  -- if typeIR_ingress
+      = $specialize_typeDefIR(typeDefIR_ingress, [ typeIR_hdr, typeIR_meta ])
+  -- if typedExpressionIR_ingress
+      = (typedExpressionIR_main `. "ig") `# `( typeIR_ingress CTK )
+
+dec $V1Model_setup_egress_callee(
+    evalContext, store, typedExpressionIR
+  )
+  : typedExpressionIR
+def $V1Model_setup_egress_callee(
+    EC, STO, typedExpressionIR_main
+  )
+  = typedExpressionIR_egress
+  ---- ;; get parser type definition
+  -- if typeDefIR_egress
+      = $find_typeDef_e(GLOBAL, EC, `` "Egress")
+  ---- ;; get package type arguments
+  -- if PACKAGE `< theta > `{ _ }
+      = $find_map<objectId, object>(STO, [ "main" ])
+  -- if typeIR_hdr = $find_map<typeId, typeIR>(theta, "H")
+  -- if typeIR_meta = $find_map<typeId, typeIR>(theta, "M")
+  ---- ;; create callee
+  -- if typeIR_egress
+      = $specialize_typeDefIR(typeDefIR_egress, [ typeIR_hdr, typeIR_meta ])
+  -- if typedExpressionIR_egress
+      = (typedExpressionIR_main `. "eg") `# `( typeIR_egress CTK )
+
+dec $V1Model_setup_check_callee(
+    evalContext, store, typedExpressionIR
+  )
+  : typedExpressionIR
+def $V1Model_setup_check_callee(
+    EC, STO, typedExpressionIR_main
+  )
+  = typedExpressionIR_check
+  ---- ;; get parser type definition
+  -- if typeDefIR_check
+      = $find_typeDef_e(GLOBAL, EC, `` "ComputeChecksum")
+  ---- ;; get package type arguments
+  -- if PACKAGE `< theta > `{ _ }
+      = $find_map<objectId, object>(STO, [ "main" ])
+  -- if typeIR_hdr = $find_map<typeId, typeIR>(theta, "H")
+  -- if typeIR_meta = $find_map<typeId, typeIR>(theta, "M")
+  ---- ;; create callee
+  -- if typeIR_check
+      = $specialize_typeDefIR(typeDefIR_check, [ typeIR_hdr, typeIR_meta ])
+  -- if typedExpressionIR_check
+      = (typedExpressionIR_main `. "ck") `# `( typeIR_check CTK )
+
+dec $V1Model_setup_deparse_callee(
+    evalContext, store, typedExpressionIR
+  )
+  : typedExpressionIR
+def $V1Model_setup_deparse_callee(
+    EC, STO, typedExpressionIR_main
+  )
+  = typedExpressionIR_deparse
+  ---- ;; get parser type definition
+  -- if typeDefIR_deparse
+      = $find_typeDef_e(GLOBAL, EC, `` "Deparser")
+  ---- ;; get package type arguments
+  -- if PACKAGE `< theta > `{ _ }
+      = $find_map<objectId, object>(STO, [ "main" ])
+  -- if typeIR_hdr = $find_map<typeId, typeIR>(theta, "H")
+  ---- ;; create callee
+  -- if typeIR_deparse
+      = $specialize_typeDefIR(typeDefIR_deparse, [ typeIR_hdr ])
+  -- if typedExpressionIR_deparse
+      = (typedExpressionIR_main `. "dep") `# `( typeIR_deparse CTK )
+
+;;
+;; V1Model parser invocation
+;;
+
+relation V1Model_parser:
+  evalContext store |- evalContext store transitionResult
+  hint(input %0 %1)
+
+rulegroup V1Model_parser {
+
+  rule V1Model_parser/cont:
+    EC_0 STO_0 |- EC_1 STO_1 ACCEPT
+    ---- ;; prepare the arguments
+    -- if argumentIR_packet_in
+        = $V1Model_setup_packet_in_argument(EC_0)
+    -- if argumentIR_hdr
+        = $V1Model_setup_hdr_argument(STO_0)
+    -- if argumentIR_meta
+        = $V1Model_setup_meta_argument(STO_0)
+    -- if argumentIR_standard_metadata
+        = $V1Model_setup_standard_metadata_argument(EC_0)
+    -- if argumentIR*
+        = [ argumentIR_packet_in, argumentIR_hdr,
+            argumentIR_meta, argumentIR_standard_metadata ]
+    ---- ;; invoke the parser object (main.p)
+    -- if typedExpressionIR_main
+        = $V1Model_setup_main_callee(EC_0, STO_0)
+    -- if typedExpressionIR_p
+        = $V1Model_setup_parser_callee(EC_0, STO_0, typedExpressionIR_main)
+    -- if callableTargetIR = typedExpressionIR_p `. "apply"
+    -- Stmt_eval:
+        GLOBAL EC_0 STO_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+                           : EC_1 STO_1 ``
+
+  rule V1Model_parser/reject:
+    EC_0 STO_0 |- EC_1 STO_1 rejectTransitionResult
+    ---- ;; prepare the arguments
+    -- if argumentIR_packet_in
+        = $V1Model_setup_packet_in_argument(EC_0)
+    -- if argumentIR_hdr
+        = $V1Model_setup_hdr_argument(STO_0)
+    -- if argumentIR_meta
+        = $V1Model_setup_meta_argument(STO_0)
+    -- if argumentIR_standard_metadata
+        = $V1Model_setup_standard_metadata_argument(EC_0)
+    -- if argumentIR*
+        = [ argumentIR_packet_in, argumentIR_hdr,
+            argumentIR_meta, argumentIR_standard_metadata ]
+    ---- ;; invoke the parser object (main.p)
+    -- if typedExpressionIR_main
+        = $V1Model_setup_main_callee(EC_0, STO_0)
+    -- if typedExpressionIR_p
+        = $V1Model_setup_parser_callee(EC_0, STO_0, typedExpressionIR_main)
+    -- if callableTargetIR = typedExpressionIR_p `. "apply"
+    -- Stmt_eval:
+        GLOBAL EC_0 STO_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+                           : EC_1 STO_1 rejectTransitionResult
+
+}
+
+;;
+;; V1Model verify invocation
+;;
+
+relation V1Model_verify:
+  evalContext store |- evalContext store callResult
+  hint(input %0 %1)
+
+rule V1Model_verify:
+  EC_0 STO_0 |- EC_1 STO_1 (RETURN eps)
+  ---- ;; prepare the arguments
+  -- if argumentIR_hdr
+      = $V1Model_setup_hdr_argument(STO_0)
+  -- if argumentIR_meta
+      = $V1Model_setup_meta_argument(STO_0)
+  -- if argumentIR* = [ argumentIR_hdr, argumentIR_meta ]
+  ---- ;; invoke the verify object (main.vr)
+  -- if typedExpressionIR_main
+      = $V1Model_setup_main_callee(EC_0, STO_0)
+  -- if typedExpressionIR_vr
+      = $V1Model_setup_verify_callee(EC_0, STO_0, typedExpressionIR_main)
+  -- if callableTargetIR = typedExpressionIR_vr `. "apply"
+  -- Stmt_eval:
+      GLOBAL EC_0 STO_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+                         : EC_1 STO_1 ``
+
+;;
+;; V1Model ingress invocation
+;;
+
+relation V1Model_ingress:
+  evalContext store |- evalContext store callResult
+  hint(input %0 %1)
+
+rulegroup V1Model_ingress {
+
+  rule V1Model_ingress/exit:
+    EC_0 STO_0 |- EC_1 STO_1 EXIT
+    ---- ;; prepare the arguments
+    -- if argumentIR_hdr
+        = $V1Model_setup_hdr_argument(STO_0)
+    -- if argumentIR_meta
+        = $V1Model_setup_meta_argument(STO_0)
+    -- if argumentIR_standard_metadata
+        = $V1Model_setup_standard_metadata_argument(EC_0)
+    -- if argumentIR*
+        = [ argumentIR_hdr, argumentIR_meta, argumentIR_standard_metadata ]
+    ---- ;; invoke the ingress object (main.ig)
+    -- if typedExpressionIR_main
+        = $V1Model_setup_main_callee(EC_0, STO_0)
+    -- if typedExpressionIR_ig
+        = $V1Model_setup_ingress_callee(EC_0, STO_0, typedExpressionIR_main)
+    -- if callableTargetIR = typedExpressionIR_ig `. "apply"
+    -- Stmt_eval:
+        GLOBAL EC_0 STO_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+                           : EC_1 STO_1 EXIT
+
+  rule V1Model_ingress/cont:
+    EC_0 STO_0 |- EC_1 STO_1 (RETURN eps)
+    ---- ;; prepare the arguments
+    -- if argumentIR_hdr
+        = $V1Model_setup_hdr_argument(STO_0)
+    -- if argumentIR_meta
+        = $V1Model_setup_meta_argument(STO_0)
+    -- if argumentIR_standard_metadata
+        = $V1Model_setup_standard_metadata_argument(EC_0)
+    -- if argumentIR*
+        = [ argumentIR_hdr, argumentIR_meta, argumentIR_standard_metadata ]
+    ---- ;; invoke the ingress object (main.ig)
+    -- if typedExpressionIR_main
+        = $V1Model_setup_main_callee(EC_0, STO_0)
+    -- if typedExpressionIR_ig
+        = $V1Model_setup_ingress_callee(EC_0, STO_0, typedExpressionIR_main)
+    -- if callableTargetIR = typedExpressionIR_ig `. "apply"
+    -- Stmt_eval:
+        GLOBAL EC_0 STO_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+                           : EC_1 STO_1 ``
+}
+
+;;
+;; V1Model egress invocation
+;;
+
+relation V1Model_egress:
+  evalContext store |- evalContext store callResult
+  hint(input %0 %1)
+
+rule V1Model_egress:
+  EC_0 STO_0 |- EC_1 STO_1 (RETURN eps)
+  ---- ;; prepare the arguments
+  -- if argumentIR_hdr
+      = $V1Model_setup_hdr_argument(STO_0)
+  -- if argumentIR_meta
+      = $V1Model_setup_meta_argument(STO_0)
+  -- if argumentIR_standard_metadata
+      = $V1Model_setup_standard_metadata_argument(EC_0)
+  -- if argumentIR*
+      = [ argumentIR_hdr, argumentIR_meta, argumentIR_standard_metadata ]
+  ---- ;; invoke the egress object (main.eg)
+  -- if typedExpressionIR_main
+      = $V1Model_setup_main_callee(EC_0, STO_0)
+  -- if typedExpressionIR_eg
+      = $V1Model_setup_egress_callee(EC_0, STO_0, typedExpressionIR_main)
+  -- if callableTargetIR = typedExpressionIR_eg `. "apply"
+  -- Stmt_eval:
+      GLOBAL EC_0 STO_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+                         : EC_1 STO_1 ``
+
+;;
+;; V1Model check invocation
+;;
+
+relation V1Model_check:
+  evalContext store |- evalContext store callResult
+  hint(input %0 %1)
+
+rule V1Model_check:
+  EC_0 STO_0 |- EC_1 STO_1 (RETURN eps)
+  ---- ;; prepare the arguments
+  -- if argumentIR_hdr
+      = $V1Model_setup_hdr_argument(STO_0)
+  -- if argumentIR_meta
+      = $V1Model_setup_meta_argument(STO_0)
+  -- if argumentIR* = [ argumentIR_hdr, argumentIR_meta ]
+  ---- ;; invoke the check object (main.ck)
+  -- if typedExpressionIR_main
+      = $V1Model_setup_main_callee(EC_0, STO_0)
+  -- if typedExpressionIR_ck
+      = $V1Model_setup_check_callee(EC_0, STO_0, typedExpressionIR_main)
+  -- if callableTargetIR = typedExpressionIR_ck `. "apply"
+  -- Stmt_eval:
+      GLOBAL EC_0 STO_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+                         : EC_1 STO_1 ``
+
+;;
+;; V1Model deparser invocation
+;;
+
+relation V1Model_deparse:
+  evalContext store |- evalContext store callResult
+  hint(input %0 %1)
+
+rule V1Model_deparse:
+  EC_0 STO_0 |- EC_1 STO_1 (RETURN eps)
+  ---- ;; prepare the arguments
+  -- if argumentIR_packet_out
+      = $V1Model_setup_packet_out_argument(EC_0)
+  -- if argumentIR_hdr
+      = $V1Model_setup_hdr_argument(STO_0)
+  -- if argumentIR* = [ argumentIR_packet_out, argumentIR_hdr ]
+  ---- ;; invoke the deparse object (main.dep)
+  -- if typedExpressionIR_main
+      = $V1Model_setup_main_callee(EC_0, STO_0)
+  -- if typedExpressionIR_dep
+      = $V1Model_setup_deparse_callee(EC_0, STO_0, typedExpressionIR_main)
+  -- if callableTargetIR = typedExpressionIR_dep `. "apply"
+  -- Stmt_eval:
+      GLOBAL EC_0 STO_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+                         : EC_1 STO_1 ``

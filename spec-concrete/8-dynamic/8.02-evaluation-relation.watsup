@@ -1,0 +1,297 @@
+;;
+;;;; Results
+;;
+
+;;; Continue evaluation
+
+syntax continueEmptyResult = ``
+syntax continueResult<X> = `` X
+
+;;; Exit from evaluation
+
+syntax exitResult = EXIT
+
+;;; Return from evaluation
+
+syntax returnResult = RETURN value?
+
+;;; Transitions
+
+syntax acceptTransitionResult = ACCEPT
+syntax rejectTransitionResult = REJECT errorValue
+syntax stateTransitionResult = STATE id
+
+;;
+;;;; Expression evaluation
+;;
+
+syntax expressionResult =
+  | continueResult<value>
+  | exitResult
+
+relation Expr_eval:
+  cursor evalContext store |- typedExpressionIR
+                            : evalContext store expressionResult
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "evaluating" %3#", under cursor" %0#", evaluation context" %1#", and store" %2)
+  hint(prose_out "the resulting evaluation context" %4#", store" %5#" and expression result" %6)
+
+syntax expressionListResult =
+  | continueResult<value*>
+  | exitResult
+
+relation Exprs_eval:
+  cursor evalContext store |- typedExpressionIR*
+                            : evalContext store expressionListResult
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "evaluating" %3#", under cursor" %0#", evaluation context" %1#", and store" %2)
+  hint(prose_out "the resulting evaluation context" %4#", store" %5#" and expression list result" %6)
+
+syntax keysetExpressionResult =
+  | continueResult<setValue*>
+  | exitResult
+
+relation Expr_eval_keyset:
+  evalContext store |- keysetExpressionIR
+                     : evalContext store keysetExpressionResult
+  hint(input %0 %1 %2)
+
+;;
+;;;; Argument evaluation
+;;
+
+relation Argument_eval:
+  cursor evalContext store |- argumentIR
+                            : evalContext store expressionResult
+  hint(input %0 %1 %2 %3)
+
+syntax storageReferenceResult =
+  | continueResult<storageReference?>
+  | exitResult
+
+relation Argument_eval_lvalue:
+  cursor evalContext store |- argumentIR
+                            : evalContext store storageReferenceResult
+  hint(input %0 %1 %2 %3)
+
+;;
+;;;; L-value evaluation
+;;
+
+relation Lvalue_eval:
+  cursor evalContext store |- typedLvalueIR
+                            : evalContext store storageReferenceResult
+  hint(input %0 %1 %2 %3)
+
+relation Lvalue_read:
+  cursor evalContext store |- storageReference : value
+  hint(input %0 %1 %2 %3)
+
+relation Lvalue_write:
+  cursor evalContext store |- storageReference -> value
+                            : evalContext
+  hint(input %0 %1 %2 %3 %4)
+
+;;
+;;;; Statement evaluation
+;;
+
+syntax callResult =
+  | exitResult
+  | rejectTransitionResult
+  | returnResult
+
+syntax statementResult =
+  | continueEmptyResult
+  | callResult
+
+relation Stmt_eval:
+  cursor evalContext store |- statementIR
+                            : evalContext store statementResult
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "the compile-time evaluation of" %3#
+              ", under cursor" %0#", evaluation context" %1#", and store" %2)
+  hint(prose_out "\nthe evaluation context" %4#",\nthe updated store" %5#
+               ",\nand the instantiated statement" %6)
+
+relation BlockElementStmt_eval:
+  evalContext store |- blockElementStatementIR
+                     : evalContext store statementResult
+  hint(input %0 %1 %2)
+
+relation BlockElementStmts_eval:
+  evalContext store |- blockElementStatementListIR
+                     : evalContext store statementResult
+  hint(input %0 %1 %2)
+
+relation Block_eval:
+  evalContext store |- blockStatementIR
+                     : evalContext store statementResult
+  hint(input %0 %1 %2)
+
+;;
+;;;; Parser evaluation
+;;
+
+syntax parserStatementResult =
+  | continueEmptyResult
+  | rejectTransitionResult
+
+relation ParserStmt_eval:
+  evalContext store |- parserStatementIR
+                     : evalContext store parserStatementResult
+  hint(input %0 %1 %2)
+
+relation ParserStmts_eval:
+  evalContext store |- parserStatementListIR
+                     : evalContext store parserStatementResult
+  hint(input %0 %1 %2)
+
+syntax transitionResult =
+  | acceptTransitionResult
+  | rejectTransitionResult
+  | stateTransitionResult
+
+relation ParserTransition_eval:
+  evalContext store |- transitionStatementIR 
+                     : evalContext store transitionResult
+  hint(input %0 %1 %2)
+
+relation ParserState_eval:
+  evalContext store |- state
+                     : evalContext store transitionResult
+  hint(input %0 %1 %2)
+
+relation ParserState_trans:
+  evalContext store |- TRANSITION nameIR
+                     : evalContext store transitionResult
+  hint(input %0 %1 %2)
+
+relation ParserLocalDecl_eval:
+  evalContext store |- parserLocalDeclarationIR
+                     : evalContext store
+  hint(input %0 %1 %2)
+
+relation ParserLocalDecls_eval:
+  evalContext store |- parserLocalDeclarationIR*
+                     : evalContext store
+  hint(input %0 %1 %2)
+
+;;
+;;;; Control evaluation
+;;
+
+syntax tableResult =
+  | exitResult
+  | returnResult
+
+relation Table_eval:
+  evalContext store |- typeId tableObjectProperty
+                     : evalContext store tableResult
+  hint(input %0 %1 %2 %3)
+
+syntax controlBodyResult =
+  | exitResult
+  | returnResult
+
+relation ControlBody_eval:
+  evalContext store |- controlBodyIR
+                     : evalContext store controlBodyResult
+  hint(input %0 %1 %2)
+
+syntax declarationResult =
+  | continueEmptyResult
+  | exitResult
+
+relation ControlLocalDecl_eval:
+  evalContext store |- controlLocalDeclarationIR
+                     : evalContext store declarationResult
+  hint(input %0 %1 %2)
+
+relation ControlLocalDecls_eval:
+  evalContext store |- controlLocalDeclarationIR*
+                     : evalContext store declarationResult
+  hint(input %0 %1 %2)
+
+;;
+;;;; Declaration evaluation
+;;
+
+relation Decl_eval:
+  cursor evalContext store |- declarationIR
+                            : evalContext store declarationResult
+  hint(input %0 %1 %2 %3)
+
+;;
+;;;; Call evaluation
+;;
+
+syntax calleeResult =
+  | continueResult<callee>
+  | exitResult
+
+relation Callee_eval:
+  cursor evalContext store |- callableTargetIR `< `_ > `( argumentListIR )
+                            : evalContext store calleeResult
+  hint(input %0 %1 %2 %3 %4)
+
+syntax copyInResult =
+  | continueResult<storageReference?>
+  | exitResult
+
+relation Copy_in_argument:
+  store cursor evalContext parameterIR
+     `@ cursor evalContext argumentIR
+  ~> store evalContext `@ evalContext `# copyInResult
+  hint(input %0 %1 %2 %3 %4 %5 %6)
+  
+syntax copyInListResult =
+  | continueResult<storageReference?*>
+  | exitResult
+
+relation Copy_in:
+  store cursor evalContext parameterListIR
+     `@ cursor evalContext argumentListIR
+  ~> store evalContext `@ evalContext `# copyInListResult
+  hint(input %0 %1 %2 %3 %4 %5 %6)
+
+relation Copy_in_default:
+  parameterListIR `@ cursor evalContext value*
+  ~> `@ evalContext
+  hint(input %0 %1 %2 %3)
+
+relation Copy_out_argument:
+  store cursor evalContext parameterIR
+     `@ cursor evalContext storageReference?
+  ~> evalContext
+  hint(input %0 %1 %2 %3 %4 %5 %6)
+
+relation Copy_out:
+  store cursor evalContext parameterListIR
+     `@ cursor evalContext storageReference?*
+  ~> evalContext
+  hint(input %0 %1 %2 %3 %4 %5 %6)
+
+relation Call_eval:
+  cursor evalContext store |- callee `@ `< typeArgumentListIR >
+                                        `( argumentListIR )
+                            : evalContext store callResult
+  hint(input %0 %1 %2 %3 %4 %5)
+  hint(prose_in "calling" %3#%4#%5", under cursor" %0#", evaluation context" %1#", and store" %2)
+  hint(prose_out "the resulting evaluation context" %6#", store" %7#", and call result" %8)
+
+extern relation ExternFunctionCall_eval:
+  evalContext store |- nameIR `( nameIR* )
+                     : evalContext store callResult
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "calling an extern function" %1#%2
+                ", under evaluation context" %0#", and store" %3)
+  hint(prose_out "the resulting evaluation context" %4#", store" %5#", and call result" %6)
+
+extern relation ExternMethodCall_eval:
+  evalContext store |- objectId `. nameIR `( nameIR* )
+                     : evalContext store callResult
+  hint(input %0 %1 %2 %3 %4)
+  hint(prose_in "calling an extern method" %2#%3
+                "on object" %1#", under evaluation context" %0#", and store" %4)
+  hint(prose_out "the resulting evaluation context" %5#", store" %6#", and call result" %7)

@@ -1,0 +1,63 @@
+;;
+;; Argument evaluation as values
+;;
+;; syntax argumentIR
+;;
+
+;;; typedExpressionIR
+
+rule Argument_eval/typedExpressionIR:
+  p EC_0 STO_0 |- typedExpressionIR
+                : EC_1 STO_1 expressionResult
+  -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR
+                              : EC_1 STO_1 expressionResult
+
+;;; nameIR `= typedExpressionIR
+
+rule Argument_eval/nameIR-typedExpressionIR:
+  p EC_0 STO_0 |- nameIR `= typedExpressionIR
+                : EC_1 STO_1 expressionResult
+  -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR
+                              : EC_1 STO_1 expressionResult
+
+;;; nameIR `= `_
+;;; `_
+;;; should not evaluate don't care arguments down to values
+
+;;
+;; Argument evaluation as lvalues
+;;
+;; syntax argumentIR
+;;
+
+;;; typedExpressionIR
+
+rule Argument_eval_lvalue/typedExpressionIR:
+  p EC_0 STO_0 |- typedExpressionIR
+                : EC_1 STO_1 storageReferenceResult
+  -- if typedLvalueIR
+      = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
+  -- Lvalue_eval:
+      p EC_0 STO_0 |- typedLvalueIR
+                    : EC_1 STO_1 storageReferenceResult
+
+;;; nameIR `= typedExpressionIR
+
+rule Argument_eval_lvalue/nameIR-typedExpressionIR:
+  p EC_0 STO_0 |- nameIR `= typedExpressionIR
+                : EC_1 STO_1 storageReferenceResult
+  -- if typedLvalueIR
+      = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
+  -- Lvalue_eval:
+      p EC_0 STO_0 |- typedLvalueIR
+                    : EC_1 STO_1 storageReferenceResult
+
+;;; nameIR `= `_
+
+rule Argument_eval_lvalue/nameIR-dontcare:
+  p EC STO |- nameIR `= `_ : EC STO (`` eps)
+
+;;; `_
+
+rule Argument_eval_lvalue/dontcare:
+  p EC STO |- `_ : EC STO (`` eps)

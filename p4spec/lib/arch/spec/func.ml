@@ -65,8 +65,9 @@ let tableObject_add_entry (value_tableObject : Value.t)
 
 (* find/update_store_qualified/unqualified *)
 
-let find_store_qualified (value_sto : Value.t) (value_oid : Value.t) : Value.t =
-  !call "find_store_qualified" [] [ value_sto; value_oid ]
+let find_store_qualified (value_sto : Value.t) (value_objectId : Value.t) :
+    Value.t =
+  !call "find_store_qualified" [] [ value_sto; value_objectId ]
   |> unwrap_opt_v |> Option.get
 
 let find_store_unqualified (value_sto : Value.t) (value_id : Value.t) : Value.t
@@ -74,9 +75,9 @@ let find_store_unqualified (value_sto : Value.t) (value_id : Value.t) : Value.t
   !call "find_store_unqualified" [] [ value_sto; value_id ]
   |> unwrap_opt_v |> Option.get
 
-let update_store_qualified (value_sto : Value.t) (value_oid : Value.t)
+let update_store_qualified (value_sto : Value.t) (value_objectId : Value.t)
     (value_object : Value.t) : Value.t =
-  !call "update_store_qualified" [] [ value_sto; value_oid; value_object ]
+  !call "update_store_qualified" [] [ value_sto; value_objectId; value_object ]
 
 let update_store_unqualified (value_sto : Value.t) (value_id : Value.t)
     (value_object : Value.t) : Value.t =
@@ -84,15 +85,15 @@ let update_store_unqualified (value_sto : Value.t) (value_id : Value.t)
 
 (* find/update_store_externState *)
 
-let find_store_externState (value_sto : Value.t) (value_oid : Value.t) : Value.t
-    =
-  !call "find_store_externState" [] [ value_sto; value_oid ]
+let find_store_externState (value_sto : Value.t) (value_objectId : Value.t) :
+    Value.t =
+  !call "find_store_externState" [] [ value_sto; value_objectId ]
   |> unwrap_opt_v |> Option.get
 
-let update_store_externState (value_sto : Value.t) (value_oid : Value.t)
+let update_store_externState (value_sto : Value.t) (value_objectId : Value.t)
     (value_externState : Value.t) : Value.t =
   !call "update_store_externState" []
-    [ value_sto; value_oid; value_externState ]
+    [ value_sto; value_objectId; value_externState ]
   |> unwrap_opt_v |> Option.get
 
 (* find_type_e *)

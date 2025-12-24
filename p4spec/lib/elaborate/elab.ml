@@ -1808,6 +1808,7 @@ and pattern_set_covered_by_typ (ctx : Ctx.t) (typ_il : Il.Ast.typ) :
 and pattern_set_covered_by_exp (ctx : Ctx.t) (exp_il : Il.Ast.exp) :
     Pattern.PatternSet.t =
   match exp_il.it with
+  | VarE _ -> pattern_set_covered_by_typ ctx (exp_il.note $ exp_il.at)
   | UpCastE (_, { it = VarE _; note; at }) ->
       pattern_set_covered_by_typ ctx (note $ at)
   | UpCastE (_, { it = CaseE notexp_il; at; _ }) ->

@@ -1,0 +1,79 @@
+;;
+;; Objects
+;;
+
+;;
+;;;; Extern object
+;;;; Name of the extern object (typeId), bound type variables (theta),
+;;;; internal state (externState) which is invisible to the P4 program,
+;;;; value environment (frame), and environment for methods (externMethodDefEnv)
+;;
+
+extern syntax externState
+syntax externMethodDefEnv = map<callableId, externMethodDef>
+
+extern dec $init_externState(nameIR, typeIR*, value*) : externState
+
+syntax externObject =
+  EXTERN typeId `< theta > `{ externState frame externMethodDefEnv }
+
+;;
+;;;; Parser object
+;;;; Apply parameters (parameterListIR), value environment (frame),
+;;;; local declarations (parserLocalDeclarationListIR), and state environment (stateEnv)
+;;
+
+syntax parserObject =
+  PARSER `( parameterListIR )
+    `{ frame
+       parserLocalDeclarationListIR
+       stateEnv }
+
+;;
+;;;; Control object
+;;;; Apply parameters (parameterListIR), value environment (frame),
+;;;; local declarations (controlLocalDeclarationListIR),
+;;;; routine environment for actions (actionDefEnv), and body (controlBodyIR)
+;;
+
+syntax actionDefEnv = map<callableId, actionDef>
+
+syntax controlObject =
+  CONTROL `( parameterListIR )
+    `{ frame
+       controlLocalDeclarationListIR
+       actionDefEnv
+       controlBodyIR }
+
+;;
+;;;; Package object
+;;;; Name of the package (typeId), bound type variables (theta),
+;;;; and value environment (frame)
+;;
+
+syntax packageObject = PACKAGE `< theta > `{ frame }
+
+;;
+;;;; Table object
+;;;; Name of the table (typeId) and value environment (frame)
+;;
+
+syntax tableObjectProperty =
+  { KEYS tableKeysPropertyIR,
+    ACTIONS tableActionsPropertyIR,
+    DEFAULT_ACTION tableDefaultActionPropertyIR,
+    ENTRIES tableEntriesPropertyIR,
+    CUSTOMS tableCustomPropertyIR* }
+
+var TBL : tableObjectProperty
+
+;; (TODO) Why is frame needed here?
+syntax tableObject =
+  TABLE typeId `{ frame tableObjectProperty }
+
+syntax object =
+  | externObject
+  | parserObject
+  | controlObject
+  | packageObject
+  | tableObject

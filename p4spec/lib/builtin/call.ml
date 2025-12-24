@@ -51,7 +51,7 @@ let funcs =
   |> Funcs.add "adds_map" Maps.adds_map
   |> Funcs.add "update_map" Maps.update_map
   (* Fresh type id *)
-  |> Funcs.add "fresh_tid" Fresh.fresh_tid
+  |> Funcs.add "fresh_typeId" Fresh.fresh_typeId
   (* Numerics *)
   |> Funcs.add "shl" Numerics.shl
   |> Funcs.add "shr" Numerics.shr

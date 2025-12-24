@@ -1,0 +1,342 @@
+;;
+;; L-value evaluation to storage reference
+;;
+;; syntax typedLvalueIR = lvalueIR `# `( typeIR )
+;;
+
+;;; syntax lvalueIR
+
+;;;; referenceExpressionIR
+
+rule Lvalue_eval/referenceExpressionIR:
+  p EC STO |- referenceExpressionIR `# _
+            : EC STO (`` referenceExpressionIR)
+
+;;;; typedLvalueIR `. nameIR
+
+rulegroup Lvalue_eval/typedLvalueIR-nameIR {
+
+  rule Lvalue_eval/exit:
+    p EC_0 STO_0 |- (typedLvalueIR `. nameIR) `# _
+                  : EC_1 STO_1 EXIT
+    -- Lvalue_eval:
+        p EC_0 STO_0 |- typedLvalueIR
+                      : EC_1 STO_1 EXIT
+
+  rule Lvalue_eval/cont:
+    p EC_0 STO_0 |- (typedLvalueIR `. nameIR) `# _
+                  : EC_1 STO_1 storageReferenceResult
+    -- Lvalue_eval:
+        p EC_0 STO_0 |- typedLvalueIR
+                      : EC_1 STO_1 (`` storageReference)
+    -- if storageReferenceResult
+        = `` (storageReference `. nameIR)
+
+}
+
+;;;; typedLvalueIR `[ typedExpressionIR ]
+
+rulegroup Lvalue_eval/typedLvalueIR-indexAccess {
+
+  rule Lvalue_eval/base-exit:
+    p EC_0 STO_0 |- (typedLvalueIR `[ typedExpressionIR ]) `# _
+                  : EC_1 STO_1 EXIT
+    -- Lvalue_eval:
+        p EC_0 STO_0 |- typedLvalueIR
+                      : EC_1 STO_1 EXIT
+
+  rule Lvalue_eval/base-cont-index-exit:
+    p EC_0 STO_0 |- (typedLvalueIR `[ typedExpressionIR ]) `# _
+                  : EC_2 STO_2 EXIT
+    -- Lvalue_eval:
+        p EC_0 STO_0 |- typedLvalueIR
+                      : EC_1 STO_1 (`` storageReference)
+    -- Expr_eval:
+        p EC_1 STO_1 |- typedExpressionIR
+                      : EC_2 STO_2 EXIT
+
+  rule Lvalue_eval/base-cont-index-cont:
+    p EC_0 STO_0 |- (typedLvalueIR `[ typedExpressionIR ]) `# _
+                  : EC_2 STO_2 storageReferenceResult
+    -- Lvalue_eval:
+        p EC_0 STO_0 |- typedLvalueIR
+                      : EC_1 STO_1 (`` storageReference)
+    -- Expr_eval:
+        p EC_1 STO_1 |- typedExpressionIR
+                      : EC_2 STO_2 (`` value)
+    -- if storageReferenceResult
+        = `` (storageReference `[ value ])
+
+}
+
+;;;; typedLvalueIR `[ typedExpressionIR `: typedExpressionIR ]
+
+
+rulegroup Lvalue_eval/typedLvalueIR-sliceAccess {
+
+  rule Lvalue_eval/cont:
+    p EC_0 STO_0 |- (typedLvalueIR `[ typedExpressionIR_hi `: typedExpressionIR_lo ]) `# _
+                  : EC_1 STO_1 storageReferenceResult
+    -- Lvalue_eval:
+        p EC_0 STO_0 |- typedLvalueIR
+                      : EC_1 STO_1 (`` storageReference)
+    -- Exprs_eval:
+        p EC_1 STO_1 |- [ typedExpressionIR_hi, typedExpressionIR_lo ]
+                      : EC_2 STO_2 (`` ([ value_hi, value_lo ]))
+    -- if storageReferenceResult
+        = `` (storageReference `[ value_hi `: value_lo ])
+
+}
+
+;;;; `( typedLvalueIR )
+
+;;
+;; L-value read to value
+;;
+;; syntax storageReference
+;;
+
+;;; referenceExpressionIR
+;;; syntax referenceExpressionIR = prefixedNameIR
+
+rule Lvalue_read/referenceExpressionIR:
+  p EC STO |- prefixedNameIR : value
+  -- if value = $find_var_e(p, EC, prefixedNameIR)
+
+;;; storageReference `. nameIR
+
+rulegroup Lvalue_read/storageReference-nameIR {
+
+  rule Lvalue_read/package:
+    p EC_0 STO |- storageReference `. nameIR : value
+    ---- ;; read base value
+    -- Lvalue_read:
+        p EC_0 STO |- storageReference : value_base
+    ---- ;; if the base value is a reference to a package
+    -- if `! objectId = value_base
+    -- if PACKAGE `< _ > `{ frame }
+        = $find_map<objectId, object>(STO, objectId)
+    ---- ;; look up the name in the package frame
+    -- if value
+        = $find_map<nameIR, value>(frame, nameIR)
+
+  rule Lvalue_read/stack-next:
+    p EC_0 STO |- storageReference `. "next" : value
+    ---- ;; read base value
+    -- Lvalue_read:
+        p EC_0 STO |- storageReference : value_base
+    -- if HEADER_STACK `[ value_element* `( n_idx; n_size ) ] = value_base
+    -- if $(n_idx < n_size)
+    -- if value = value_element*[ n_idx ]
+
+  rule Lvalue_read/struct:
+    p EC_0 STO |- storageReference `. nameIR : value
+    ---- ;; read base value
+    -- Lvalue_read:
+        p EC_0 STO |- storageReference : value_base
+    ---- ;; if the base value is a struct
+    -- if STRUCT _ `{ (value_field nameIR_field `;)* } = value_base
+    ---- ;; look up the field in the struct
+    -- if value
+        = $assoc_<id, value>(nameIR, (nameIR_field, value_field)*)
+
+  rule Lvalue_read/header:
+    p EC_0 STO |- storageReference `. nameIR : value
+    ---- ;; read base value
+    -- Lvalue_read:
+        p EC_0 STO |- storageReference : value_base
+    ---- ;; if the base value is a header 
+    -- if HEADER _ `{ _ `; (value_field nameIR_field `;)* } = value_base
+    ---- ;; look up the field in the header
+    -- if value
+        = $assoc_<id, value>(nameIR, (nameIR_field, value_field)*)
+
+  rule Lvalue_read/header-union:
+    p EC_0 STO |- storageReference `. nameIR : value
+    ---- ;; read base value
+    -- Lvalue_read:
+        p EC_0 STO |- storageReference : value_base
+    ---- ;; if the base value is a struct
+    -- if HEADER_UNION _ `{ (value_field nameIR_field `;)* } = value_base
+    ---- ;; look up the field in the struct
+    -- if value
+        = $assoc_<id, value>(nameIR, (nameIR_field, value_field)*)
+
+}
+
+;;; storageReference `[ value ]
+
+rulegroup Lvalue_read/storageReference-indexAccess {
+
+  rule Lvalue_read/stack-in-bounds:
+    p EC_0 STO |- storageReference `[ integerValue_index ] : value
+    -- Lvalue_read:
+        p EC_0 STO |- storageReference : value_base
+    -- if HEADER_STACK `[ value_element* `( _; n_size ) ] = value_base
+    -- if n_idx = $int_of_integerValue(integerValue_index)
+    -- if $(n_idx < n_size)
+    -- if value = value_element*[ n_idx ]
+
+  rule Lvalue_read/stack-out-of-bounds:
+    p EC_0 STO |- storageReference `[ integerValue_index ] : value
+    -- Lvalue_read:
+        p EC_0 STO |- storageReference : value_base
+    -- if HEADER_STACK `[ value_element* `( _; n_size ) ] = value_base
+    -- if n_idx = $int_of_integerValue(integerValue_index)
+    ---- ;; index access overflow
+    -- if $(n_idx >= n_size)
+    -- if HEADER typeId `{ b_valid `; fieldValue* } = value_element*[ 0 ]
+    -- if value = HEADER typeId `{ false `; fieldValue* }
+
+}
+
+;;; storageReference `[ value `: value ]
+
+rule Lvalue_read/sliceAccess:
+  p EC_0 STO |- (storageReference `[ value_hi `: value_lo ]) : value
+  -- Lvalue_read:
+      p EC_0 STO |- storageReference : value_base
+  -- if value = $bitacc_op(value_base, value_hi, value_lo)
+
+;;
+;; L-value write to storage reference
+;;
+;; syntax storageReference
+;;
+
+;;; referenceExpressionIR
+;;; syntax referenceExpressionIR = prefixedNameIR
+
+rule Lvalue_write/referenceExpressionIR:
+  p EC_0 STO |- prefixedNameIR -> value : EC_1
+  -- if EC_1 = $update_var_e(p, EC_0, prefixedNameIR, value)
+
+;;; storageReference `. nameIR
+
+rulegroup Lvalue_write/storageReference-nameIR {
+
+  rule Lvalue_write/stack-next:
+    p EC_0 STO |- (storageReference `. "next") -> value : EC_1
+    ---- ;; read base value
+    -- Lvalue_read:
+        p EC_0 STO |- storageReference : value_base
+    -- if HEADER_STACK `[ value_element* `( n_idx; n_size ) ] = value_base
+    ;; -- if value_element_update* = value_element* [ [n_idx] = value ]
+    -- if value_element_update*
+        = $update_headerStack(value_element*, value, n_idx, n_size)
+    -- if value_base_update = HEADER_STACK `[ value_element_update* `( $(n_idx + 1); n_size ) ]
+    -- Lvalue_write:
+        p EC_0 STO |- storageReference -> value_base_update : EC_1
+
+  rule Lvalue_write/struct:
+    p EC_0 STO |- (storageReference `. nameIR) -> value : EC_1
+    ---- ;; read base value
+    -- Lvalue_read:
+        p EC_0 STO |- storageReference : value_base
+    ---- ;; if the base value is a struct
+    -- if STRUCT typeId `{ fieldValue* } = value_base
+    ---- ;; update the field and write back
+    -- if fieldValue_update*
+        = $update_fieldValue(fieldValue*, nameIR, value)
+    -- if value_base_update
+        = STRUCT typeId `{ fieldValue_update* }
+    -- Lvalue_write:
+        p EC_0 STO |- storageReference -> value_base_update : EC_1
+
+  rule Lvalue_write/header:
+    p EC_0 STO |- (storageReference `. nameIR) -> value : EC_1
+    ---- ;; read base value
+    -- Lvalue_read:
+        p EC_0 STO |- storageReference : value_base
+    ---- ;; if the base value is a header
+    -- if HEADER typeId `{ b_valid `; fieldValue* } = value_base
+    ---- ;; update the field and write back
+    -- if fieldValue_update*
+        = $update_fieldValue(fieldValue*, nameIR, value)
+    -- if value_base_update
+        = HEADER typeId `{ b_valid `; fieldValue_update* }
+    -- Lvalue_write:
+        p EC_0 STO |- storageReference -> value_base_update : EC_1
+
+  rule Lvalue_write/header-union-keep-valid-header:
+    p EC_0 STO |- (storageReference `. nameIR) -> value : EC_1
+    ---- ;; read base value
+    -- Lvalue_read:
+        p EC_0 STO |- storageReference : value_base
+    -- if HEADER_UNION typeId `{ fieldValue* } = value_base
+    ----
+    -- if (value_field nameIR_field `;)* = fieldValue*
+    -- if value_old = $assoc_<nameIR, value>(nameIR, (nameIR_field, value_field)*)
+    -- if HEADER _ `{ b_valid_old `; _ } = value_old
+    ----
+    -- if fieldValue_update*
+        = $update_fieldValue(fieldValue*, nameIR, value)
+    ----
+    -- if HEADER _ `{ b_valid_new `; _ } = value
+    -- if b_toggled
+        = ((~b_valid_old /\ b_valid_new) \/ (b_valid_old /\ ~b_valid_new))
+    -- if ~b_toggled
+    -- if value_base_update
+        = HEADER_UNION typeId `{ fieldValue_update* }
+    -- Lvalue_write:
+        p EC_0 STO |- storageReference -> value_base_update : EC_1
+
+  rule Lvalue_write/header-union-replace-valid-header:
+    p EC_0 STO |- (storageReference `. nameIR) -> value : EC_1
+    ---- ;; read base value
+    -- Lvalue_read:
+        p EC_0 STO |- storageReference : value_base
+    -- if HEADER_UNION typeId `{ fieldValue* } = value_base
+    ----
+    -- if (value_field nameIR_field `;)* = fieldValue*
+    -- if value_old = $assoc_<nameIR, value>(nameIR, (nameIR_field, value_field)*)
+    -- if HEADER _ `{ b_valid_old `; _ } = value_old
+    ----
+    -- if fieldValue_update*
+        = $update_fieldValue(fieldValue*, nameIR, value)
+    ----
+    -- if HEADER _ `{ b_valid_new `; _ } = value
+    -- if b_toggled
+        = ((~b_valid_old /\ b_valid_new) \/ (b_valid_old /\ ~b_valid_new))
+    -- if b_toggled
+    -- if fieldValue_update'*
+        = $update_headerUnion(fieldValue_update*, nameIR)
+    -- if value_base_update
+        = HEADER_UNION typeId `{ fieldValue_update'* }
+    -- Lvalue_write:
+        p EC_0 STO |- storageReference -> value_base_update : EC_1
+
+}
+
+rulegroup Lvalue_write/storageReference-indexAccess {
+
+  rule Lvalue_write/stack-in-bounds:
+    p EC_0 STO |- (storageReference `[ integerValue_index ]) -> value : EC_1
+    -- Lvalue_read:
+        p EC_0 STO |- storageReference : value_base
+    -- if HEADER_STACK `[ value_element* `( n_base_idx; n_size ) ] = value_base
+    -- if n_idx = $int_of_integerValue(integerValue_index)
+    -- if $(n_idx < n_size)
+    -- if value_element_update*
+        = $update_headerStack(value_element*, value, n_idx, n_size)
+    -- if value_base_update = HEADER_STACK `[ value_element_update* `( n_base_idx; n_size ) ]
+    -- Lvalue_write:
+        p EC_0 STO |- storageReference -> value_base_update : EC_1
+
+  rule Lvalue_write/stack-out-of-bounds:
+    p EC_0 STO |- (storageReference `[ integerValue_index ]) -> value : EC_0
+    -- Lvalue_read:
+        p EC_0 STO |- storageReference : value_base
+    -- if HEADER_STACK `[ value_element* `( _; n_size ) ] = value_base
+    -- if n_idx = $int_of_integerValue(integerValue_index)
+    -- if $(n_idx >= n_size)
+
+}
+
+rule Lvalue_write/sliceAccess:
+  p EC_0 STO |- (storageReference `[ value_hi `: value_lo ]) -> value : EC_1
+  -- Lvalue_read:
+      p EC_0 STO |- storageReference : value_base
+  -- if value_base_update = $bitacc_replace_op(value_base, value_hi, value_lo, value)
+  -- Lvalue_write:
+      p EC_0 STO |- storageReference -> value_base_update : EC_1
